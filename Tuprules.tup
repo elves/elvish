@@ -1,0 +1,9 @@
+.gitignore
+
+CC = clang
+LD = clang
+CFLAGS = -Wall -g
+LDFLAGS = -ljansson
+
+!cc = |> $(CC) $(CFLAGS) -c %f -o %o |>
+!ld = |> $(LD) $(LDFLAGS) %f -o %o |>
