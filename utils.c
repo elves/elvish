@@ -54,3 +54,16 @@ char *slurp(int fd) {
         }
     }
 }
+
+char *itos(int i) {
+    char *buf = 0;
+    int n = 2;
+    while (1) {
+        buf = realloc(buf, n);
+        if (snprintf(buf, n, "%d", i) < n) {
+            return buf;
+        } else {
+            n *= 2;
+        }
+    }
+}

@@ -12,51 +12,37 @@
 #include "parse.h"
 
 extern char **environ;
-
-int make_server_socket(const char *path) {
-    int listener;
-    check_1("socket", listener = socket(AF_UNIX, SOCK_STREAM, 0));
-
-    struct sockaddr_un local = {AF_UNIX};
-    strncpy(local.sun_path, path, sizeof(local.sun_path));
-    local.sun_path[sizeof(local.sun_path) - 1] = '\0';
-    path = local.sun_path;
-    if (access(path, F_OK) != -1) {
-        check_1("unlink", unlink(local.sun_path));
-    }
-
-    check_1("bind",
-            bind(listener, (struct sockaddr*) &local,
-                 strlen(path) + sizeof(local.sun_family)));
-
-    check_1("listen", listen(listener, 128));
-
-    return listener;
-}
+int exiting = 0;
 
 void external(command_t *cmd) {
     environ = cmd->envp;
     check_1("exec", execv(cmd->path, cmd->argv));
 }
 
-void worker(int socket) {
+char *pick_req(FILE *req) {
+    char *buf = 0;
+    size_t n;
+    getline(&buf, &n, req);
+    return buf;
+}
+
+void worker(FILE *req, FILE *res) {
     json_t *root;
     json_error_t error;
 
-    char *buf = slurp(socket);
-    close(socket);
+    char *buf = pick_req(req);
     root = json_loads(buf, 0, &error);
     free(buf);
     if (!root) {
         say("json: error on line %d: %s\n", error.line, error.text);
-        exit(1);
+        return;
     }
 
     command_t *cmd = parse_command(root);
 
     if (!cmd) {
         say("json: command doesn't conform to schema\n");
-        exit(1);
+        return;
     }
 
     pid_t pid;
@@ -84,38 +70,74 @@ void worker(int socket) {
             } else if (WIFCONTINUED(status)) {
                 printf("continued\n");
             } else {
-                printf("changed to some state dasd doesn't know\n");
+                printf("changed to some state das doesn't know\n");
             }
         }
     }
     json_decref(root);
     free_command(cmd);
-    exit(0);
 }
 
-int main() {
+int main(int argc, char **argv) {
+    if (argc > 2) {
+        fprintf(stderr, "Usage: das [path to dasc]\n");
+        return 1;
+    }
+
     root_pid = getpid();
-    int listener = make_server_socket("/tmp/das");
 
-    while (1) {
-        struct sockaddr_un remote;
-        unsigned len = sizeof(remote);
-        int socket;
-        check_1("accept",
-                socket = accept(listener, (struct sockaddr*)&remote, &len));
+    int reqp[2], resp[2];
+    pipe(reqp);
+    pipe(resp);
 
-        say("accepted a request\n");
+    pid_t pid;
+    check_1("fork", pid = fork());
+    if (pid == 0) {
+        // Child: write to req, read from res
+        close(reqp[0]);
+        close(resp[1]);
 
-        pid_t pid;
-        check_1("fork", pid = fork());
-        if (pid == 0) {
-            worker(socket);
+        // exec dasc
+        char *path;
+        if (argc == 2 && argv[1][0] == '/') {
+            path = argv[1];
         } else {
-            close(socket);
-            say("spawned worker: pid = %d, socket = %d\n", pid, socket);
+            const char *relpath = argc == 2 ? argv[1] : "dasc";
+            int nrel = strlen(relpath);
+            int n = 256;
+            char *buf = 0;
+            while (1) {
+                buf = realloc(buf, n + nrel + 1);
+                if (getcwd(buf, n)) {
+                    break;
+                } else if (errno != ERANGE) {
+                    check_1("getcwd", -1);
+                }
+                n *= 2;
+            }
+            path = buf;
+            strcat(path, "/");
+            strcat(path, relpath);
+        }
+        check_1("exec", execl(path, path, itos(reqp[1]), itos(resp[0]), 0));
+    }
+
+    // Parent: read from req, write to res
+    close(reqp[1]);
+    close(resp[0]);
+    FILE *req = fdopen(reqp[0], "r");
+    FILE *res = fdopen(resp[1], "w");
+
+    //do {
+        worker(req, res);
+    //} while (!exiting);
+
+    int status;
+    while(1) {
+        if (waitpid(pid, &status, 0) == -1 || WIFEXITED(status)) {
+            break;
         }
     }
 
-    close(listener);
     return 0;
 }
