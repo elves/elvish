@@ -96,19 +96,18 @@ char **parse_envp(json_t *root) {
 }
 
 command_t *parse_command(json_t *root) {
-    if (!json_is_object(root)) {
-        fprintf(stderr, "command not object\n");
-        return 0;
-    }
-
     command_t *cmd = alloc(command_t, 1);
 
-    int success = 
-        (cmd->path = parse_string(json_object_get(root, "path"))) &&
-        (cmd->argv = parse_argv(json_object_get(root, "args"))) &&
-        (cmd->envp = parse_envp(json_object_get(root, "env")));
+    const char *path;
+    json_t *args, *env;
+    int success =
+        (!json_unpack_ex(root, 0, JSON_STRICT, "{ss so so}",
+                         "path", &path, "args", &args, "env", &env) &&
+         (cmd->argv = parse_argv(args)) &&
+         (cmd->envp = parse_envp(env)));
 
     if (success) {
+        cmd->path = strdup(path);
         return cmd;
     } else {
         free_command(cmd);
