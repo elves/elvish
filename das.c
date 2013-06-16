@@ -40,14 +40,14 @@ void worker(FILE *req, FILE *res) {
     root = json_loads(buf, 0, &error);
     free(buf);
     if (!root) {
-        say("json: error on line %d: %s\n", error.line, error.text);
+        fprintf(res, "json: error on line %d: %s\n", error.line, error.text);
         return;
     }
 
     command_t *cmd = parse_command(root);
 
     if (!cmd) {
-        say("json: command doesn't conform to schema\n");
+        fprintf(res, "json: command doesn't conform to schema\n");
         return;
     }
 
@@ -58,7 +58,7 @@ void worker(FILE *req, FILE *res) {
         fclose(res);
         external(cmd);
     } else {
-        printf("spawned external: pid = %d\n", pid);
+        fprintf(res, "spawned external: pid = %d\n", pid);
         while (1) {
             int status;
             pid = wait(&status);
@@ -135,6 +135,7 @@ int main(int argc, char **argv) {
     close(resp[0]);
     FILE *req = fdopen(reqp[0], "r");
     FILE *res = fdopen(resp[1], "w");
+    setlinebuf(res);
 
     do {
         worker(req, res);
