@@ -54,6 +54,8 @@ void worker(FILE *req, FILE *res) {
     pid_t pid;
     check_1("fork", pid = fork());
     if (pid == 0) {
+        fclose(req);
+        fclose(res);
         external(cmd);
     } else {
         printf("spawned external: pid = %d\n", pid);
