@@ -21,7 +21,7 @@ void external(command_t *cmd) {
     check_1("exec", execv(cmd->path, cmd->argv));
 }
 
-char *pick_req() {
+char *recv_req() {
     char *buf = 0;
     size_t n;
     if (getline(&buf, &n, req) == -1) {
@@ -34,7 +34,7 @@ void worker() {
     json_t *root;
     json_error_t error;
 
-    char *buf = pick_req();
+    char *buf = recv_req();
     if (!buf) {
         exiting = 1;
         return;
