@@ -12,6 +12,8 @@
 #include "parse.h"
 
 extern char **environ;
+
+FILE *req, *res;
 int exiting = 0;
 
 void external(command_t *cmd) {
@@ -19,7 +21,7 @@ void external(command_t *cmd) {
     check_1("exec", execv(cmd->path, cmd->argv));
 }
 
-char *pick_req(FILE *req) {
+char *pick_req() {
     char *buf = 0;
     size_t n;
     if (getline(&buf, &n, req) == -1) {
@@ -28,11 +30,11 @@ char *pick_req(FILE *req) {
     return buf;
 }
 
-void worker(FILE *req, FILE *res) {
+void worker() {
     json_t *root;
     json_error_t error;
 
-    char *buf = pick_req(req);
+    char *buf = pick_req();
     if (!buf) {
         exiting = 1;
         return;
@@ -133,12 +135,12 @@ int main(int argc, char **argv) {
     // Parent: read from req, write to res
     close(reqp[1]);
     close(resp[0]);
-    FILE *req = fdopen(reqp[0], "r");
-    FILE *res = fdopen(resp[1], "w");
+    req = fdopen(reqp[0], "r");
+    res = fdopen(resp[1], "w");
     setlinebuf(res);
 
     do {
-        worker(req, res);
+        worker();
     } while (!exiting);
 
     int status;
