@@ -22,7 +22,9 @@ void external(command_t *cmd) {
 char *pick_req(FILE *req) {
     char *buf = 0;
     size_t n;
-    getline(&buf, &n, req);
+    if (getline(&buf, &n, req) == -1) {
+        return 0;
+    }
     return buf;
 }
 
@@ -31,6 +33,10 @@ void worker(FILE *req, FILE *res) {
     json_error_t error;
 
     char *buf = pick_req(req);
+    if (!buf) {
+        exiting = 1;
+        return;
+    }
     root = json_loads(buf, 0, &error);
     free(buf);
     if (!root) {
@@ -128,9 +134,9 @@ int main(int argc, char **argv) {
     FILE *req = fdopen(reqp[0], "r");
     FILE *res = fdopen(resp[1], "w");
 
-    //do {
+    do {
         worker(req, res);
-    //} while (!exiting);
+    } while (!exiting);
 
     int status;
     while(1) {
