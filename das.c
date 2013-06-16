@@ -61,11 +61,11 @@ void worker(FILE *req, FILE *res) {
         fprintf(res, "spawned external: pid = %d\n", pid);
         while (1) {
             int status;
-            pid = wait(&status);
-            if (pid == -1 && errno == ECHILD) {
+            pid_t ret = waitpid(pid, &status, 0);
+            if (ret == -1 && errno == ECHILD) {
                 break;
             }
-            check_1("wait", pid);
+            check_1("wait", ret);
             printf("external %d ", pid);
             if (WIFEXITED(status)) {
                 printf("terminated: %d\n", WEXITSTATUS(status));
@@ -142,11 +142,9 @@ int main(int argc, char **argv) {
     } while (!exiting);
 
     int status;
-    while(1) {
-        if (waitpid(pid, &status, 0) == -1 || WIFEXITED(status)) {
-            break;
-        }
-    }
+    do {
+        check_1("wait", waitpid(pid, &status, 0));
+    } while (!WIFEXITED(status) && !WIFSIGNALED(status));
 
     return 0;
 }
