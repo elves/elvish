@@ -5,6 +5,7 @@ import (
     "fmt"
     "bufio"
     "strconv"
+    "strings"
     "encoding/json"
 )
 
@@ -30,26 +31,64 @@ func getIntArg(i int) int {
     return -1
 }
 
+func prompt() {
+    fmt.Print("> ")
+}
+
+func lackeol() {
+    fmt.Println("\033[7m%\033[m")
+}
+
+func search(path string) string {
+    if path[0] == '/' {
+        return path
+    }
+    return "/bin/" + path
+}
+
+func readline(stdin *bufio.Reader) (line string, err error) {
+    line, err = stdin.ReadString('\n')
+    if err == nil {
+        line = line[:len(line)-1]
+    }
+    return
+}
+
 func main() {
     reqfd := uintptr(getIntArg(1))
     resfd := uintptr(getIntArg(2))
     req := os.NewFile(reqfd, "<request pipe>")
     res := bufio.NewReader(os.NewFile(resfd, "<response pipe>"))
 
-    cmd := command{
-        "/usr/bin/env",
-        []string{"/usr/bin/env"},
-        map[string]string{"some_key": "some_value"},
-    }
-    json, err := json.Marshal(cmd)
-    if err != nil {
-        panic("failed to marshal command")
-    }
-    req.Write(json)
-    req.WriteString("\n")
+    stdin := bufio.NewReader(os.Stdin)
 
-    msg, err := res.ReadBytes('\n')
-    if err == nil {
-        fmt.Printf("response: %s", msg)
+    for {
+        prompt()
+        line, err := readline(stdin)
+        if err != nil {
+            lackeol()
+            break
+        }
+        words := strings.Split(line, " ")
+        if len(words) == 0 {
+            continue
+        }
+        words[0] = search(words[0])
+        cmd := command{}
+        cmd.Path = words[0]
+        cmd.Args = words
+        cmd.Env = map[string]string{}
+
+        json, err := json.Marshal(cmd)
+        if err != nil {
+            panic("failed to marshal command")
+        }
+        req.Write(json)
+        req.WriteString("\n")
+
+        msg, err := res.ReadBytes('\n')
+        if err == nil {
+            fmt.Printf("response: %s", msg)
+        }
     }
 }
