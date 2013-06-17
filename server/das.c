@@ -15,14 +15,14 @@ extern char **environ;
 FILE *res;
 int exiting = 0;
 
-void external(req_command_t *cmd) {
+void external(ReqCmd *cmd) {
     environ = cmd->envp;
     check_1("exec", execv(cmd->path, cmd->argv));
 }
 
 void worker() {
     char *err;
-    req_command_t *cmd = (req_command_t*)recv_req(&err);
+    ReqCmd *cmd = (ReqCmd*)RecvReq(&err);
     if (!cmd) {
         fprintf(res, "%s\n", err);
         return;
@@ -58,7 +58,7 @@ void worker() {
             }
         }
     }
-    free_req(cmd);
+    FreeReq((Req*)cmd);
 }
 
 int main(int argc, char **argv) {
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     // Parent: read from req, write to res
     close(reqp[1]);
     close(resp[0]);
-    init_req(reqp[0]);
+    InitReq(reqp[0]);
     res = fdopen(resp[1], "w");
     setlinebuf(res);
 

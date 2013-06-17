@@ -11,7 +11,7 @@
 
 FILE *g_reqfile;
 
-void free_strings(char **p) {
+void freeStrings(char **p) {
     char **q;
     for (q = p; *q; q++) {
         free(*q);
@@ -19,24 +19,24 @@ void free_strings(char **p) {
     free(p);
 }
 
-void free_command(req_command_t *p) {
+void freeReqCmd(ReqCmd *p) {
     if (p->path) {
         free(p->path);
     }
     if (p->argv) {
-        free_strings(p->argv);
+        freeStrings(p->argv);
     }
     if (p->envp) {
-        free_strings(p->envp);
+        freeStrings(p->envp);
     }
     free(p);
 }
 
-void free_req(req_t *p) {
-    free_command((req_command_t*)p);
+void FreeReq(Req *p) {
+    freeReqCmd((ReqCmd*)p);
 }
 
-void print_command(req_command_t *cmd) {
+void printReqCmd(ReqCmd *cmd) {
     char **a;
     printf("path: %s\n", cmd->path);
     printf("args:\n");
@@ -45,7 +45,7 @@ void print_command(req_command_t *cmd) {
     }
 }
 
-char *load_string(json_t *root) {
+char *loadString(json_t *root) {
     if (!json_is_string(root)) {
         fprintf(stderr, "string\n");
         return 0;
@@ -53,7 +53,7 @@ char *load_string(json_t *root) {
     return strdup(json_string_value(root));
 }
 
-char **load_argv(json_t *root) {
+char **loadArgv(json_t *root) {
     if (!json_is_array(root)) {
         fprintf(stderr, "argv not array\n");
         return 0;
@@ -67,7 +67,7 @@ char **load_argv(json_t *root) {
         json_t *arg = json_array_get(root, i);
         if (!json_is_string(arg)) {
             fprintf(stderr, "argv element not string\n");
-            free_strings(argv);
+            freeStrings(argv);
             return 0;
         }
         argv[i] = strdup(json_string_value(arg));
@@ -75,7 +75,7 @@ char **load_argv(json_t *root) {
     return argv;
 }
 
-char **load_envp(json_t *root) {
+char **loadEnvp(json_t *root) {
     if (!json_is_object(root)) {
         fprintf(stderr, "envp not object\n");
         return 0;
@@ -90,7 +90,7 @@ char **load_envp(json_t *root) {
     json_object_foreach(root, key, value) {
         if (!json_is_string(value)) {
             fprintf(stderr, "envp value not object\n");
-            free_strings(envp);
+            freeStrings(envp);
             return 0;
         }
         const char *value_s = json_string_value(value);
@@ -103,27 +103,33 @@ char **load_envp(json_t *root) {
     return envp;
 }
 
-req_command_t *load_command(json_t *root) {
-    req_command_t *cmd = alloc(req_command_t, 1);
+ReqCmd *newReqCmd() {
+    ReqCmd *r = alloc(ReqCmd, 1);
+    r->type = REQ_TYPE_COMMAND;
+    return r;
+}
+
+ReqCmd *loadReqCmd(json_t *root) {
+    ReqCmd *cmd = newReqCmd();
 
     const char *path;
     json_t *args, *env;
     int success =
         (!json_unpack_ex(root, 0, JSON_STRICT, "{ss so so}",
                          "path", &path, "args", &args, "env", &env) &&
-         (cmd->argv = load_argv(args)) &&
-         (cmd->envp = load_envp(env)));
+         (cmd->argv = loadArgv(args)) &&
+         (cmd->envp = loadEnvp(env)));
 
     if (success) {
         cmd->path = strdup(path);
         return cmd;
     } else {
-        free_command(cmd);
+        freeReqCmd(cmd);
         return 0;
     }
 }
 
-req_t *load_req(json_t *root) {
+Req *loadReq(json_t *root) {
     char *type;
     json_t *data;
     if (json_unpack_ex(root, 0, JSON_STRICT, "{ss so}",
@@ -131,14 +137,14 @@ req_t *load_req(json_t *root) {
         return 0;
     }
     if (!strcmp(type, "command")) {
-        return (req_t*)load_command(data);
+        return (Req*)loadReqCmd(data);
     } else {
         // TODO error("bad request type")
         return 0;
     }
 }
 
-char *read_req() {
+char *readReq() {
     char *buf = 0;
     size_t n;
     if (getline(&buf, &n, g_reqfile) == -1) {
@@ -149,8 +155,8 @@ char *read_req() {
 
 extern int exiting;
 
-req_t *recv_req(char **err) {
-    char *buf = read_req();
+Req *RecvReq(char **err) {
+    char *buf = readReq();
     if (!buf) {
         exiting = 1;
         *err = strdup("exiting");
@@ -167,7 +173,7 @@ req_t *recv_req(char **err) {
         return 0;
     }
 
-    req_t *cmd = load_req(root);
+    Req *cmd = loadReq(root);
     json_decref(root);
 
     if (!cmd) {
@@ -177,7 +183,7 @@ req_t *recv_req(char **err) {
     return cmd;
 }
 
-void init_req(int fd) {
+void InitReq(int fd) {
     set_cloexec(fd);
     g_reqfile = fdopen(fd, "r");
 }

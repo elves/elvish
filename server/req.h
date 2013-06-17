@@ -6,27 +6,27 @@
 typedef enum {
     REQ_TYPE_COMMAND,
     REQ_TYPE_EXIT,
-} req_type_t;
+} ReqType;
 
-#define REQ_HEADER req_type_t type
-
-typedef struct {
-    REQ_HEADER;
-} req_t;
+#define REQ_HEADER ReqType type
 
 typedef struct {
     REQ_HEADER;
-} req_exit_t;
+} Req;
+
+typedef struct {
+    REQ_HEADER;
+} ReqExit;
 
 typedef struct {
     REQ_HEADER;
     char *path;
     char **argv;
     char **envp;
-} req_command_t;
+} ReqCmd;
 
-void free_req(req_t *r);
-req_t *recv_req(char **err);
-void init_req(int fd);
+void FreeReq(Req *r);
+Req *RecvReq(char **err);
+void InitReq(int fd);
 
 #endif
