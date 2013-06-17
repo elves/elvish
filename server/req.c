@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -5,6 +7,8 @@
 
 #include "common.h"
 #include "req.h"
+
+FILE *req;
 
 void free_strings(char **p) {
     char **q;
@@ -112,4 +116,18 @@ command_t *parse_command(json_t *root) {
         free_command(cmd);
         return 0;
     }
+}
+
+char *recv_req() {
+    char *buf = 0;
+    size_t n;
+    if (getline(&buf, &n, req) == -1) {
+        return 0;
+    }
+    return buf;
+}
+
+void init_req(int fd) {
+    set_cloexec(fd);
+    req = fdopen(fd, "r");
 }

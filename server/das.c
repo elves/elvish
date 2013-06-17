@@ -12,21 +12,12 @@
 
 extern char **environ;
 
-FILE *req, *res;
+FILE *res;
 int exiting = 0;
 
 void external(command_t *cmd) {
     environ = cmd->envp;
     check_1("exec", execv(cmd->path, cmd->argv));
-}
-
-char *recv_req() {
-    char *buf = 0;
-    size_t n;
-    if (getline(&buf, &n, req) == -1) {
-        return 0;
-    }
-    return buf;
 }
 
 void worker() {
@@ -55,7 +46,6 @@ void worker() {
     pid_t pid;
     check_1("fork", pid = fork());
     if (pid == 0) {
-        fclose(req);
         fclose(res);
         external(cmd);
     } else {
@@ -134,7 +124,7 @@ int main(int argc, char **argv) {
     // Parent: read from req, write to res
     close(reqp[1]);
     close(resp[0]);
-    req = fdopen(reqp[0], "r");
+    init_req(reqp[0]);
     res = fdopen(resp[1], "w");
     setlinebuf(res);
 

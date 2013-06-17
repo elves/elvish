@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
 
 #include "common.h"
 
@@ -66,4 +67,10 @@ char *itos(int i) {
             n *= 2;
         }
     }
+}
+
+void set_cloexec(int fd) {
+    int f = fcntl(fd, F_GETFD);
+    check_1("fcntl", f);
+    check_1("fcntl", fcntl(fd, F_SETFD, f | FD_CLOEXEC));
 }
