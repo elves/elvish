@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -118,13 +119,43 @@ command_t *parse_command(json_t *root) {
     }
 }
 
-char *recv_req() {
+char *read_req() {
     char *buf = 0;
     size_t n;
     if (getline(&buf, &n, req) == -1) {
         return 0;
     }
     return buf;
+}
+
+extern int exiting;
+
+char *recv_req(command_t **cmd) {
+    char *buf = read_req();
+    if (!buf) {
+        exiting = 1;
+        return strdup("exiting");
+    }
+
+    json_t *root;
+    json_error_t error;
+    root = json_loads(buf, 0, &error);
+    free(buf);
+
+    if (!root) {
+        char *err;
+        asprintf(&err, "json: error on line %d: %s", error.line, error.text);
+        return err;
+    }
+
+    *cmd = parse_command(root);
+    json_decref(root);
+
+    if (!*cmd) {
+        return strdup("json: command doesn't conform to schema");
+    }
+
+    return 0;
 }
 
 void init_req(int fd) {

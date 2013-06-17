@@ -21,25 +21,10 @@ void external(command_t *cmd) {
 }
 
 void worker() {
-    json_t *root;
-    json_error_t error;
-
-    char *buf = recv_req();
-    if (!buf) {
-        exiting = 1;
-        return;
-    }
-    root = json_loads(buf, 0, &error);
-    free(buf);
-    if (!root) {
-        fprintf(res, "json: error on line %d: %s\n", error.line, error.text);
-        return;
-    }
-
-    command_t *cmd = parse_command(root);
-
-    if (!cmd) {
-        fprintf(res, "json: command doesn't conform to schema\n");
+    command_t *cmd;
+    char *err = recv_req(&cmd);
+    if (err) {
+        fprintf(res, "%s\n", err);
         return;
     }
 
@@ -73,7 +58,6 @@ void worker() {
             }
         }
     }
-    json_decref(root);
     free_command(cmd);
 }
 
