@@ -1,5 +1,4 @@
 include_rules
 
-: foreach *.c |> !cc |> %B.o
-: *.o |> !ld |> das
-: dasc.go |> go build -o %o %f |> %B
+: server/*.o |> !ld |> das
+: client/dasc.go |> go build -o %o %f |> %B
