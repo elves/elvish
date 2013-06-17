@@ -21,9 +21,9 @@ void external(req_command_t *cmd) {
 }
 
 void worker() {
-    req_command_t *cmd;
-    char *err = recv_req(&cmd);
-    if (err) {
+    char *err;
+    req_command_t *cmd = (req_command_t*)recv_req(&err);
+    if (!cmd) {
         fprintf(res, "%s\n", err);
         return;
     }

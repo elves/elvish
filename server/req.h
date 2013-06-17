@@ -26,7 +26,7 @@ typedef struct {
 } req_command_t;
 
 void free_req(req_t *r);
-char *recv_req(req_t **r);
+req_t *recv_req(char **err);
 void init_req(int fd);
 
 #endif

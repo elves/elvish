@@ -134,11 +134,12 @@ char *read_req() {
 
 extern int exiting;
 
-char *recv_req(req_t **cmd) {
+req_t *recv_req(char **err) {
     char *buf = read_req();
     if (!buf) {
         exiting = 1;
-        return strdup("exiting");
+        *err = strdup("exiting");
+        return 0;
     }
 
     json_t *root;
@@ -147,19 +148,18 @@ char *recv_req(req_t **cmd) {
     free(buf);
 
     if (!root) {
-        char *err;
-        asprintf(&err, "json: error on line %d: %s", error.line, error.text);
-        return err;
+        asprintf(err, "json: error on line %d: %s", error.line, error.text);
+        return 0;
     }
 
-    *cmd = (req_t*)load_command(root);
+    req_t *cmd = (req_t*)load_command(root);
     json_decref(root);
 
-    if (!*cmd) {
-        return strdup("json: command doesn't conform to schema");
+    if (!cmd) {
+        *err = strdup("json: command doesn't conform to schema");
     }
 
-    return 0;
+    return cmd;
 }
 
 void init_req(int fd) {
