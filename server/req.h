@@ -1,9 +1,13 @@
-#ifndef __PARSE_H
-#define __PARSE_H
+#ifndef __REQ_H
+#define __REQ_H
 
 #include <jansson.h>
 
-#include "command.h"
+typedef struct {
+    char *path;
+    char **argv;
+    char **envp;
+} command_t;
 
 void free_strings(char **p);
 void free_command(command_t *p);

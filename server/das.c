@@ -8,8 +8,7 @@
 #include <sys/un.h>
 
 #include "common.h"
-#include "command.h"
-#include "parse.h"
+#include "req.h"
 
 extern char **environ;
 

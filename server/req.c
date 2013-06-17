@@ -4,8 +4,7 @@
 #include <jansson.h>
 
 #include "common.h"
-#include "command.h"
-#include "parse.h"
+#include "req.h"
 
 void free_strings(char **p) {
     char **q;
