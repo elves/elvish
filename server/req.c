@@ -19,7 +19,7 @@ void free_strings(char **p) {
     free(p);
 }
 
-void free_command(command_t *p) {
+void free_command(req_command_t *p) {
     if (p->path) {
         free(p->path);
     }
@@ -32,7 +32,11 @@ void free_command(command_t *p) {
     free(p);
 }
 
-void print_command(command_t *cmd) {
+void free_req(req_t *p) {
+    free_command((req_command_t*)p);
+}
+
+void print_command(req_command_t *cmd) {
     char **a;
     printf("path: %s\n", cmd->path);
     printf("args:\n");
@@ -99,8 +103,8 @@ char **parse_envp(json_t *root) {
     return envp;
 }
 
-command_t *parse_command(json_t *root) {
-    command_t *cmd = alloc(command_t, 1);
+req_command_t *parse_command(json_t *root) {
+    req_command_t *cmd = alloc(req_command_t, 1);
 
     const char *path;
     json_t *args, *env;
@@ -130,7 +134,7 @@ char *read_req() {
 
 extern int exiting;
 
-char *recv_req(command_t **cmd) {
+char *recv_req(req_t **cmd) {
     char *buf = read_req();
     if (!buf) {
         exiting = 1;
@@ -148,7 +152,7 @@ char *recv_req(command_t **cmd) {
         return err;
     }
 
-    *cmd = parse_command(root);
+    *cmd = (req_t*)parse_command(root);
     json_decref(root);
 
     if (!*cmd) {

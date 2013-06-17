@@ -15,13 +15,13 @@ extern char **environ;
 FILE *res;
 int exiting = 0;
 
-void external(command_t *cmd) {
+void external(req_command_t *cmd) {
     environ = cmd->envp;
     check_1("exec", execv(cmd->path, cmd->argv));
 }
 
 void worker() {
-    command_t *cmd;
+    req_command_t *cmd;
     char *err = recv_req(&cmd);
     if (err) {
         fprintf(res, "%s\n", err);
@@ -58,7 +58,7 @@ void worker() {
             }
         }
     }
-    free_command(cmd);
+    free_req(cmd);
 }
 
 int main(int argc, char **argv) {
