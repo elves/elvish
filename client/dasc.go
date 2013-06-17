@@ -15,6 +15,11 @@ type command struct {
     Env map[string]string `json:"env"`
 }
 
+type request struct {
+    Type string `json:"type"`
+    Data interface{} `json:"data"`
+}
+
 func usage() {
     fmt.Fprintf(os.Stderr, "Usage: dasc <req fd> <res fd>\n");
 }
@@ -79,9 +84,11 @@ func main() {
         cmd.Args = words
         cmd.Env = map[string]string{}
 
-        json, err := json.Marshal(cmd)
+        payload := request{"command", cmd}
+
+        json, err := json.Marshal(payload)
         if err != nil {
-            panic("failed to marshal command")
+            panic("failed to marshal request")
         }
         req.Write(json)
         req.WriteString("\n")

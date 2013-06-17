@@ -123,6 +123,21 @@ req_command_t *load_command(json_t *root) {
     }
 }
 
+req_t *load_req(json_t *root) {
+    char *type;
+    json_t *data;
+    if (json_unpack_ex(root, 0, JSON_STRICT, "{ss so}",
+                       "type", &type, "data", &data)) {
+        return 0;
+    }
+    if (!strcmp(type, "command")) {
+        return (req_t*)load_command(data);
+    } else {
+        // TODO error("bad request type")
+        return 0;
+    }
+}
+
 char *read_req() {
     char *buf = 0;
     size_t n;
@@ -152,7 +167,7 @@ req_t *recv_req(char **err) {
         return 0;
     }
 
-    req_t *cmd = (req_t*)load_command(root);
+    req_t *cmd = load_req(root);
     json_decref(root);
 
     if (!cmd) {
