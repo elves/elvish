@@ -45,7 +45,7 @@ void print_command(req_command_t *cmd) {
     }
 }
 
-char *parse_string(json_t *root) {
+char *load_string(json_t *root) {
     if (!json_is_string(root)) {
         fprintf(stderr, "string\n");
         return 0;
@@ -53,7 +53,7 @@ char *parse_string(json_t *root) {
     return strdup(json_string_value(root));
 }
 
-char **parse_argv(json_t *root) {
+char **load_argv(json_t *root) {
     if (!json_is_array(root)) {
         fprintf(stderr, "argv not array\n");
         return 0;
@@ -75,7 +75,7 @@ char **parse_argv(json_t *root) {
     return argv;
 }
 
-char **parse_envp(json_t *root) {
+char **load_envp(json_t *root) {
     if (!json_is_object(root)) {
         fprintf(stderr, "envp not object\n");
         return 0;
@@ -103,7 +103,7 @@ char **parse_envp(json_t *root) {
     return envp;
 }
 
-req_command_t *parse_command(json_t *root) {
+req_command_t *load_command(json_t *root) {
     req_command_t *cmd = alloc(req_command_t, 1);
 
     const char *path;
@@ -111,8 +111,8 @@ req_command_t *parse_command(json_t *root) {
     int success =
         (!json_unpack_ex(root, 0, JSON_STRICT, "{ss so so}",
                          "path", &path, "args", &args, "env", &env) &&
-         (cmd->argv = parse_argv(args)) &&
-         (cmd->envp = parse_envp(env)));
+         (cmd->argv = load_argv(args)) &&
+         (cmd->envp = load_envp(env)));
 
     if (success) {
         cmd->path = strdup(path);
@@ -152,7 +152,7 @@ char *recv_req(req_t **cmd) {
         return err;
     }
 
-    *cmd = (req_t*)parse_command(root);
+    *cmd = (req_t*)load_command(root);
     json_decref(root);
 
     if (!*cmd) {
