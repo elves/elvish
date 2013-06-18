@@ -41,7 +41,7 @@ void worker() {
             ResCmd *res = NewResCmd();
             res->pid = pid;
             SendRes((Res*)res);
-            free(res);
+            FreeRes((Res*)res);
             while (1) {
                 int status;
                 pid_t ret = waitpid(pid, &status, 0);
@@ -67,7 +67,7 @@ void worker() {
                 }
                 res->continued = WIFCONTINUED(status);
                 SendRes((Res*)res);
-                free(res);
+                FreeRes((Res*)res);
             }
         }
     } else if (type == REQ_TYPE_EXIT) {
