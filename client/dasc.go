@@ -67,6 +67,14 @@ func main() {
 
     stdin := bufio.NewReader(os.Stdin)
 
+    env := make(map[string]string)
+    for _, e := range os.Environ() {
+        arr := strings.SplitN(e, "=", 2)
+        if len(arr) == 2 {
+            env[arr[0]] = arr[1]
+        }
+    }
+
     for {
         prompt()
         line, err := readline(stdin)
@@ -79,10 +87,9 @@ func main() {
             continue
         }
         words[0] = search(words[0])
-        cmd := ReqCmd{}
-        cmd.Path = words[0]
-        cmd.Args = words
-        cmd.Env = map[string]string{}
+        cmd := ReqCmd{
+            words[0], words, env,
+        }
 
         payload := Req{"cmd", cmd}
 
