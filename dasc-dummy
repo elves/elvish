@@ -1,0 +1,16 @@
+#!/bin/sh
+req=$1 res=$2; shift 2
+
+{
+    while read line; do
+        printf 'response: %s\n' "$line"
+    done
+} <&$res &
+
+child=$!
+
+while read line; do
+    printf '%s\n' "$line" >&$req
+done
+
+kill $child
