@@ -34,28 +34,6 @@ void Check_1(const char *s, int ret) {
     }
 }
 
-char *Slurp(int fd) {
-    int cap = 32;
-    int begin = 0;
-    char *buf = malloc(cap);
-    while (1) {
-        if (cap == begin) {
-            cap *= 2;
-            buf = realloc(buf, cap);
-        }
-        int nr = read(fd, buf + begin, cap - begin);
-        if (nr < 0) {
-            free(buf);
-            return 0;
-        } else if (nr == 0) {
-            buf[begin] = '\0';
-            return buf;
-        } else {
-            begin += nr;
-        }
-    }
-}
-
 char *Itos(int i) {
     char *buf = 0;
     int n = 2;
