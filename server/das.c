@@ -9,10 +9,10 @@
 
 #include "common.h"
 #include "req.h"
+#include "res.h"
 
 extern char **environ;
 
-FILE *res;
 int exiting = 0;
 
 void external(ReqCmd *cmd) {
@@ -24,7 +24,7 @@ void worker() {
     char *err;
     Req *req = RecvReq(&err);
     if (!req) {
-        fprintf(res, "%s\n", err);
+        WriteRes("%s\n", err);
         return;
     }
 
@@ -33,10 +33,9 @@ void worker() {
         pid_t pid;
         Check_1("fork", pid = fork());
         if (pid == 0) {
-            fclose(res);
             external((ReqCmd*)req);
         } else {
-            fprintf(res, "spawned external: pid = %d\n", pid);
+            WriteRes("spawned external: pid = %d\n", pid);
             while (1) {
                 int status;
                 pid_t ret = waitpid(pid, &status, 0);
@@ -44,19 +43,19 @@ void worker() {
                     break;
                 }
                 Check_1("wait", ret);
-                printf("external %d ", pid);
+                WriteRes("external %d ", pid);
                 if (WIFEXITED(status)) {
-                    printf("terminated: %d\n", WEXITSTATUS(status));
+                    WriteRes("terminated: %d\n", WEXITSTATUS(status));
                 } else if (WIFSIGNALED(status)) {
-                    printf("terminated by signal: %d\n", WTERMSIG(status));
+                    WriteRes("terminated by signal: %d\n", WTERMSIG(status));
                 } else if (WCOREDUMP(status)) {
-                    printf("core dumped\n");
+                    WriteRes("core dumped\n");
                 } else if (WIFSTOPPED(status)) {
-                    printf("stopped by signal: %d\n", WSTOPSIG(status));
+                    WriteRes("stopped by signal: %d\n", WSTOPSIG(status));
                 } else if (WIFCONTINUED(status)) {
-                    printf("continued\n");
+                    WriteRes("continued\n");
                 } else {
-                    printf("changed to some state das doesn't know\n");
+                    WriteRes("changed to some state das doesn't know\n");
                 }
             }
         }
@@ -115,8 +114,7 @@ int main(int argc, char **argv) {
     close(reqp[1]);
     close(resp[0]);
     InitReq(reqp[0]);
-    res = fdopen(resp[1], "w");
-    setlinebuf(res);
+    InitRes(resp[1]);
 
     do {
         worker();
