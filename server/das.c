@@ -24,7 +24,10 @@ void worker() {
     char *err;
     Req *req = RecvReq(&err);
     if (!req) {
-        WriteRes("%s\n", err);
+        ResBadRequest *res = NewResBadRequest();
+        res->err = err;
+        SendRes((Res*)res);
+        FreeRes((Res*)res);
         return;
     }
 

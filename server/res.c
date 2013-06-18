@@ -18,8 +18,27 @@ ResProcState *NewResProcState() {
     return r;
 }
 
-void FreeRes(Res *r) {
+ResBadRequest *NewResBadRequest() {
+    ResBadRequest *r = alloc(ResBadRequest, 1);
+    r->type = RES_TYPE_BAD_REQUEST;
+    return r;
+}
+
+void freeResBadRequest(ResBadRequest *r) {
+    if (r->err) {
+        free(r->err);
+    }
     free(r);
+}
+
+void FreeRes(Res *r) {
+    switch (r->type) {
+    case RES_TYPE_BAD_REQUEST:
+        freeResBadRequest((ResBadRequest*)r);
+        break;
+    default:
+        free(r);
+    }
 }
 
 int WriteRes(const char *fmt, ...) {
@@ -47,6 +66,10 @@ json_t *buildResProcState(ResProcState *r) {
                      "Continued", r->continued);
 }
 
+json_t *buildResBadRequest(ResBadRequest *r) {
+    return json_pack("{si}", "Err", r->err);
+}
+
 int SendRes(Res *r) {
     const char *type;
     json_t *data;
@@ -56,6 +79,9 @@ int SendRes(Res *r) {
     } else if (r->type == RES_TYPE_PROC_STATE) {
         type = "procState";
         data = buildResProcState((ResProcState*)r);
+    } else if (r->type == RES_TYPE_BAD_REQUEST) {
+        type = "badRequest";
+        data = buildResBadRequest((ResBadRequest*)r);
     } else {
         return -1;
     }

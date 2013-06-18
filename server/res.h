@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 typedef enum {
+    RES_TYPE_BAD_REQUEST,
     RES_TYPE_CMD,
     RES_TYPE_PROC_STATE,
 } ResType;
@@ -14,6 +15,11 @@ typedef enum {
 typedef struct {
     RES_HEADER;
 } Res;
+
+typedef struct {
+    RES_HEADER;
+    char *err;
+} ResBadRequest;
 
 typedef struct {
     RES_HEADER;
@@ -35,6 +41,7 @@ typedef struct {
 
 ResCmd *NewResCmd();
 ResProcState *NewResProcState();
+ResBadRequest *NewResBadRequest();
 
 void FreeRes(Res *r);
 int WriteRes(const char *fmt, ...); // will be private soon
