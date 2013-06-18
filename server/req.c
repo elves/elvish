@@ -127,7 +127,7 @@ ReqCmd *loadReqCmd(json_t *root) {
     json_t *args, *env;
     int success =
         (!json_unpack_ex(root, 0, JSON_STRICT, "{ss so so}",
-                         "path", &path, "args", &args, "env", &env) &&
+                         "Path", &path, "Args", &args, "Env", &env) &&
          (cmd->argv = loadArgv(args)) &&
          (cmd->envp = loadEnvp(env)));
 
@@ -150,7 +150,7 @@ Req *loadReq(json_t *root) {
     char *type;
     json_t *data;
     if (json_unpack_ex(root, 0, JSON_STRICT, "{ss so}",
-                       "type", &type, "data", &data)) {
+                       "Type", &type, "Data", &data)) {
         return 0;
     }
     if (!strcmp(type, "command")) {

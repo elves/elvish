@@ -10,14 +10,14 @@ import (
 )
 
 type command struct {
-    Path string `json:"path"`
-    Args []string `json:"args"`
-    Env map[string]string `json:"env"`
+    Path string
+    Args []string
+    Env map[string]string
 }
 
 type request struct {
-    Type string `json:"type"`
-    Data interface{} `json:"data"`
+    Type string
+    Data interface{}
 }
 
 func usage() {
