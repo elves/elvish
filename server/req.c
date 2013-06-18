@@ -9,7 +9,7 @@
 #include "common.h"
 #include "req.h"
 
-FILE *g_reqfile;
+FILE *reqFile;
 
 void freeStrings(char **p) {
     char **q;
@@ -164,7 +164,7 @@ Req *loadReq(json_t *root) {
 char *readReq() {
     char *buf = 0;
     size_t n;
-    if (getline(&buf, &n, g_reqfile) == -1) {
+    if (getline(&buf, &n, reqFile) == -1) {
         return 0;
     }
     return buf;
@@ -197,6 +197,6 @@ Req *RecvReq(char **err) {
 }
 
 void InitReq(int fd) {
-    set_cloexec(fd);
-    g_reqfile = fdopen(fd, "r");
+    SetCloexec(fd);
+    reqFile = fdopen(fd, "r");
 }

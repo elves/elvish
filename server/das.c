@@ -17,7 +17,7 @@ int exiting = 0;
 
 void external(ReqCmd *cmd) {
     environ = cmd->envp;
-    check_1("exec", execv(cmd->path, cmd->argv));
+    Check_1("exec", execv(cmd->path, cmd->argv));
 }
 
 void worker() {
@@ -31,7 +31,7 @@ void worker() {
     ReqType type = req->type;
     if (type == REQ_TYPE_COMMAND) {
         pid_t pid;
-        check_1("fork", pid = fork());
+        Check_1("fork", pid = fork());
         if (pid == 0) {
             fclose(res);
             external((ReqCmd*)req);
@@ -43,7 +43,7 @@ void worker() {
                 if (ret == -1 && errno == ECHILD) {
                     break;
                 }
-                check_1("wait", ret);
+                Check_1("wait", ret);
                 printf("external %d ", pid);
                 if (WIFEXITED(status)) {
                     printf("terminated: %d\n", WEXITSTATUS(status));
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     pipe(resp);
 
     pid_t pid;
-    check_1("fork", pid = fork());
+    Check_1("fork", pid = fork());
     if (pid == 0) {
         // Child: write to req, read from res
         close(reqp[0]);
@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
                 if (getcwd(buf, n)) {
                     break;
                 } else if (errno != ERANGE) {
-                    check_1("getcwd", -1);
+                    Check_1("getcwd", -1);
                 }
                 n *= 2;
             }
@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
             strcat(path, "/");
             strcat(path, relpath);
         }
-        check_1("exec", execl(path, path, itos(reqp[1]), itos(resp[0]), 0));
+        Check_1("exec", execl(path, path, Itos(reqp[1]), Itos(resp[0]), 0));
     }
 
     // Parent: read from req, write to res
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
 
     int status;
     do {
-        check_1("wait", waitpid(pid, &status, 0));
+        Check_1("wait", waitpid(pid, &status, 0));
     } while (!WIFEXITED(status) && !WIFSIGNALED(status));
 
     return 0;

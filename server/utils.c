@@ -16,7 +16,7 @@ static void child_header() {
     }
 }
 
-void say(const char *fmt, ...) {
+void Say(const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
 
@@ -26,7 +26,7 @@ void say(const char *fmt, ...) {
     va_end(ap);
 }
 
-void check_1(const char *s, int ret) {
+void Check_1(const char *s, int ret) {
     if (ret == -1) {
         child_header();
         perror(s);
@@ -34,7 +34,7 @@ void check_1(const char *s, int ret) {
     }
 }
 
-char *slurp(int fd) {
+char *Slurp(int fd) {
     int cap = 32;
     int begin = 0;
     char *buf = malloc(cap);
@@ -56,7 +56,7 @@ char *slurp(int fd) {
     }
 }
 
-char *itos(int i) {
+char *Itos(int i) {
     char *buf = 0;
     int n = 2;
     while (1) {
@@ -69,8 +69,8 @@ char *itos(int i) {
     }
 }
 
-void set_cloexec(int fd) {
+void SetCloexec(int fd) {
     int f = fcntl(fd, F_GETFD);
-    check_1("fcntl", f);
-    check_1("fcntl", fcntl(fd, F_SETFD, f | FD_CLOEXEC));
+    Check_1("fcntl", f);
+    Check_1("fcntl", fcntl(fd, F_SETFD, f | FD_CLOEXEC));
 }

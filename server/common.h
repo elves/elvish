@@ -4,8 +4,8 @@
 
 extern pid_t root_pid;
 
-void say(const char *fmt, ...);
-void check_1(const char *s, int ret);
-char *slurp(int fd);
-char *itos(int i);
-void set_cloexec(int fd);
+void Say(const char *fmt, ...);
+void Check_1(const char *s, int ret);
+char *Slurp(int fd);
+char *Itos(int i);
+void SetCloexec(int fd);
