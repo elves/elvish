@@ -101,7 +101,7 @@ func main() {
             } else {
                 fmt.Printf("response: %s", msg)
             }
-            if strings.HasPrefix(msg, "external") {
+            if strings.Contains(msg, "procState") {
                 break
             }
         }

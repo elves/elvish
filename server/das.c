@@ -46,20 +46,25 @@ void worker() {
                     break;
                 }
                 Check_1("wait", ret);
-                WriteRes("external %d ", pid);
-                if (WIFEXITED(status)) {
-                    WriteRes("terminated: %d\n", WEXITSTATUS(status));
-                } else if (WIFSIGNALED(status)) {
-                    WriteRes("terminated by signal: %d\n", WTERMSIG(status));
-                } else if (WCOREDUMP(status)) {
-                    WriteRes("core dumped\n");
-                } else if (WIFSTOPPED(status)) {
-                    WriteRes("stopped by signal: %d\n", WSTOPSIG(status));
-                } else if (WIFCONTINUED(status)) {
-                    WriteRes("continued\n");
-                } else {
-                    WriteRes("changed to some state das doesn't know\n");
+
+                ResProcState *res = NewResProcState();
+                res->pid = pid;
+                res->exited = WIFEXITED(status);
+                if (res->exited) {
+                    res->exitStatus = WEXITSTATUS(status);
                 }
+                res->signaled = WIFSIGNALED(status);
+                if (res->signaled) {
+                    res->termSig = WTERMSIG(status);
+                }
+                res->coreDump = WCOREDUMP(status);
+                res->stopped = WIFSTOPPED(status);
+                if (res->stopped) {
+                    res->stopSig = WSTOPSIG(status);
+                }
+                res->continued = WIFCONTINUED(status);
+                SendRes((Res*)res);
+                free(res);
             }
         }
     } else if (type == REQ_TYPE_EXIT) {
