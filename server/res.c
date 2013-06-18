@@ -67,7 +67,7 @@ json_t *buildResProcState(ResProcState *r) {
 }
 
 json_t *buildResBadRequest(ResBadRequest *r) {
-    return json_pack("{si}", "Err", r->err);
+    return json_pack("{ss}", "Err", r->err);
 }
 
 int SendRes(Res *r) {
