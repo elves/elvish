@@ -32,8 +32,19 @@ void freeReqCmd(ReqCmd *p) {
     free(p);
 }
 
+void freeReqExit(ReqExit *p) {
+    free(p);
+}
+
 void FreeReq(Req *p) {
-    freeReqCmd((ReqCmd*)p);
+    switch (p->type) {
+    case REQ_TYPE_COMMAND:
+        freeReqCmd((ReqCmd*)p);
+        break;
+    case REQ_TYPE_EXIT:
+        freeReqExit((ReqExit*)p);
+        break;
+    }
 }
 
 void printReqCmd(ReqCmd *cmd) {
@@ -129,6 +140,12 @@ ReqCmd *loadReqCmd(json_t *root) {
     }
 }
 
+ReqExit *newReqExit() {
+    ReqExit *r = alloc(ReqExit, 1);
+    r->type = REQ_TYPE_EXIT;
+    return r;
+}
+
 Req *loadReq(json_t *root) {
     char *type;
     json_t *data;
@@ -153,14 +170,10 @@ char *readReq() {
     return buf;
 }
 
-extern int exiting;
-
 Req *RecvReq(char **err) {
     char *buf = readReq();
     if (!buf) {
-        exiting = 1;
-        *err = strdup("exiting");
-        return 0;
+        return (Req*)newReqExit();
     }
 
     json_t *root;

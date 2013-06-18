@@ -22,43 +22,49 @@ void external(ReqCmd *cmd) {
 
 void worker() {
     char *err;
-    ReqCmd *cmd = (ReqCmd*)RecvReq(&err);
-    if (!cmd) {
+    Req *req = RecvReq(&err);
+    if (!req) {
         fprintf(res, "%s\n", err);
         return;
     }
 
-    pid_t pid;
-    check_1("fork", pid = fork());
-    if (pid == 0) {
-        fclose(res);
-        external(cmd);
-    } else {
-        fprintf(res, "spawned external: pid = %d\n", pid);
-        while (1) {
-            int status;
-            pid_t ret = waitpid(pid, &status, 0);
-            if (ret == -1 && errno == ECHILD) {
-                break;
-            }
-            check_1("wait", ret);
-            printf("external %d ", pid);
-            if (WIFEXITED(status)) {
-                printf("terminated: %d\n", WEXITSTATUS(status));
-            } else if (WIFSIGNALED(status)) {
-                printf("terminated by signal: %d\n", WTERMSIG(status));
-            } else if (WCOREDUMP(status)) {
-                printf("core dumped\n");
-            } else if (WIFSTOPPED(status)) {
-                printf("stopped by signal: %d\n", WSTOPSIG(status));
-            } else if (WIFCONTINUED(status)) {
-                printf("continued\n");
-            } else {
-                printf("changed to some state das doesn't know\n");
+    ReqType type = req->type;
+    if (type == REQ_TYPE_COMMAND) {
+        pid_t pid;
+        check_1("fork", pid = fork());
+        if (pid == 0) {
+            fclose(res);
+            external((ReqCmd*)req);
+        } else {
+            fprintf(res, "spawned external: pid = %d\n", pid);
+            while (1) {
+                int status;
+                pid_t ret = waitpid(pid, &status, 0);
+                if (ret == -1 && errno == ECHILD) {
+                    break;
+                }
+                check_1("wait", ret);
+                printf("external %d ", pid);
+                if (WIFEXITED(status)) {
+                    printf("terminated: %d\n", WEXITSTATUS(status));
+                } else if (WIFSIGNALED(status)) {
+                    printf("terminated by signal: %d\n", WTERMSIG(status));
+                } else if (WCOREDUMP(status)) {
+                    printf("core dumped\n");
+                } else if (WIFSTOPPED(status)) {
+                    printf("stopped by signal: %d\n", WSTOPSIG(status));
+                } else if (WIFCONTINUED(status)) {
+                    printf("continued\n");
+                } else {
+                    printf("changed to some state das doesn't know\n");
+                }
             }
         }
+    } else if (type == REQ_TYPE_EXIT) {
+        exiting = 1;
     }
-    FreeReq((Req*)cmd);
+
+    FreeReq(req);
 }
 
 int main(int argc, char **argv) {
