@@ -7,8 +7,9 @@
 FILE *resFile;
 
 ResCmd *NewResCmd() {
-    // XXX STUB
-    return 0;
+    ResCmd *r = alloc(ResCmd, 1);
+    r->type = RES_TYPE_CMD;
+    return r;
 }
 
 ResProcState *NewResProcState() {
@@ -17,7 +18,7 @@ ResProcState *NewResProcState() {
 }
 
 void FreeRes(Res *r) {
-    // XXX STUB
+    free(r);
 }
 
 int WriteRes(const char *fmt, ...) {
@@ -28,8 +29,23 @@ int WriteRes(const char *fmt, ...) {
     return r;
 }
 
+json_t *buildResCmd(ResCmd *r) {
+    return json_pack("{si}", "Pid", r->pid);
+}
+
 int SendRes(Res *r) {
-    // XXX STUB
+    const char *type;
+    json_t *data;
+    if (r->type == RES_TYPE_CMD) {
+        type = "cmd";
+        data = buildResCmd((ResCmd*)r);
+    } else {
+        return -1;
+    }
+    json_t *root = json_pack("{ss so}", "Type", type, "Data", data);
+    json_dumpf(root, resFile, JSON_COMPACT); // XXX check return value
+    fprintf(resFile, "\n");
+    json_decref(root);
     return 0;
 }
 

@@ -35,7 +35,10 @@ void worker() {
         if (pid == 0) {
             external((ReqCmd*)req);
         } else {
-            WriteRes("spawned external: pid = %d\n", pid);
+            ResCmd *res = NewResCmd();
+            res->pid = pid;
+            SendRes((Res*)res);
+            free(res);
             while (1) {
                 int status;
                 pid_t ret = waitpid(pid, &status, 0);
