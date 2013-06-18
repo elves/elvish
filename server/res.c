@@ -41,14 +41,6 @@ void FreeRes(Res *r) {
     }
 }
 
-int WriteRes(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    int r = vfprintf(resFile, fmt, ap);
-    va_end(ap);
-    return r;
-}
-
 json_t *buildResCmd(ResCmd *r) {
     return json_pack("{si}", "Pid", r->pid);
 }

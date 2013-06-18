@@ -44,7 +44,6 @@ ResProcState *NewResProcState();
 ResBadRequest *NewResBadRequest();
 
 void FreeRes(Res *r);
-int WriteRes(const char *fmt, ...); // will be private soon
 int SendRes(Res *r);
 void InitRes(int fd);
 
