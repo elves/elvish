@@ -1,5 +1,0 @@
-{
-  "path": "/usr/bin/sleep",
-  "args": ["/usr/bin/sleep", "10"],
-  "env": {}
-}
