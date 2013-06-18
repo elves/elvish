@@ -2,7 +2,7 @@
 
 CC = clang
 LD = clang
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -D_GNU_SOURCE
 LDFLAGS = -ljansson
 
 !cc = |> $(CC) $(CFLAGS) -c %f -o %o |>
