@@ -93,9 +93,17 @@ func main() {
         req.Write(json)
         req.WriteString("\n")
 
-        msg, err := res.ReadBytes('\n')
-        if err == nil {
-            fmt.Printf("response: %s", msg)
+        for {
+            msg, err := res.ReadString('\n')
+            if err != nil {
+                fmt.Printf("broken response pipe, quitting")
+                os.Exit(1)
+            } else {
+                fmt.Printf("response: %s", msg)
+            }
+            if strings.HasPrefix(msg, "external") {
+                break
+            }
         }
     }
 }
