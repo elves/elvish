@@ -29,7 +29,7 @@ void worker() {
     }
 
     ReqType type = req->type;
-    if (type == REQ_TYPE_COMMAND) {
+    if (type == REQ_TYPE_CMD) {
         pid_t pid;
         Check_1("fork", pid = fork());
         if (pid == 0) {

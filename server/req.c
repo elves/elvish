@@ -38,7 +38,7 @@ void freeReqExit(ReqExit *p) {
 
 void FreeReq(Req *p) {
     switch (p->type) {
-    case REQ_TYPE_COMMAND:
+    case REQ_TYPE_CMD:
         freeReqCmd((ReqCmd*)p);
         break;
     case REQ_TYPE_EXIT:
@@ -116,7 +116,7 @@ char **loadEnvp(json_t *root) {
 
 ReqCmd *newReqCmd() {
     ReqCmd *r = alloc(ReqCmd, 1);
-    r->type = REQ_TYPE_COMMAND;
+    r->type = REQ_TYPE_CMD;
     return r;
 }
 
@@ -153,7 +153,7 @@ Req *loadReq(json_t *root) {
                        "Type", &type, "Data", &data)) {
         return 0;
     }
-    if (!strcmp(type, "command")) {
+    if (!strcmp(type, "cmd")) {
         return (Req*)loadReqCmd(data);
     } else {
         // TODO error("bad request type")

@@ -84,7 +84,7 @@ func main() {
         cmd.Args = words
         cmd.Env = map[string]string{}
 
-        payload := request{"command", cmd}
+        payload := request{"cmd", cmd}
 
         json, err := json.Marshal(payload)
         if err != nil {

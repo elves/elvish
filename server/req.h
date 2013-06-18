@@ -2,7 +2,7 @@
 #define __REQ_H
 
 typedef enum {
-    REQ_TYPE_COMMAND,
+    REQ_TYPE_CMD,
     REQ_TYPE_EXIT,
 } ReqType;
 
