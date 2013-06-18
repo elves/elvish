@@ -1,8 +1,6 @@
 #ifndef __REQ_H
 #define __REQ_H
 
-#include <jansson.h>
-
 typedef enum {
     REQ_TYPE_COMMAND,
     REQ_TYPE_EXIT,
