@@ -9,13 +9,13 @@ import (
     "encoding/json"
 )
 
-type command struct {
+type ReqCmd struct {
     Path string
     Args []string
     Env map[string]string
 }
 
-type request struct {
+type Req struct {
     Type string
     Data interface{}
 }
@@ -79,12 +79,12 @@ func main() {
             continue
         }
         words[0] = search(words[0])
-        cmd := command{}
+        cmd := ReqCmd{}
         cmd.Path = words[0]
         cmd.Args = words
         cmd.Env = map[string]string{}
 
-        payload := request{"cmd", cmd}
+        payload := Req{"cmd", cmd}
 
         json, err := json.Marshal(payload)
         if err != nil {
