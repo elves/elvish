@@ -6,19 +6,7 @@ import (
     "bufio"
     "strconv"
     "strings"
-    "encoding/json"
 )
-
-type ReqCmd struct {
-    Path string
-    Args []string
-    Env map[string]string
-}
-
-type Req struct {
-    Type string
-    Data interface{}
-}
 
 func usage() {
     fmt.Fprintf(os.Stderr, "Usage: dasc <req fd> <res fd>\n");
@@ -60,10 +48,8 @@ func readline(stdin *bufio.Reader) (line string, err error) {
 }
 
 func main() {
-    reqfd := uintptr(getIntArg(1))
-    resfd := uintptr(getIntArg(2))
-    req := os.NewFile(reqfd, "<request pipe>")
-    res := bufio.NewReader(os.NewFile(resfd, "<response pipe>"))
+    InitReq(uintptr(getIntArg(1)))
+    InitRes(uintptr(getIntArg(2)))
 
     stdin := bufio.NewReader(os.Stdin)
 
@@ -91,17 +77,10 @@ func main() {
             words[0], words, env,
         }
 
-        payload := Req{"cmd", cmd}
-
-        json, err := json.Marshal(payload)
-        if err != nil {
-            panic("failed to marshal request")
-        }
-        req.Write(json)
-        req.WriteString("\n")
+        SendReq(cmd)
 
         for {
-            msg, err := res.ReadString('\n')
+            msg, err := ReadRes()
             if err != nil {
                 fmt.Printf("broken response pipe, quitting")
                 os.Exit(1)
