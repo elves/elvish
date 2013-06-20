@@ -1,5 +1,5 @@
-#ifndef __RES_H
-#define __RES_H
+#ifndef _res_h_
+#define _res_h_
 
 #include <stdbool.h>
 #include <unistd.h>

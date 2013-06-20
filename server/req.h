@@ -1,5 +1,5 @@
-#ifndef __REQ_H
-#define __REQ_H
+#ifndef _req_h_
+#define _req_h_
 
 typedef enum {
     REQ_TYPE_CMD,

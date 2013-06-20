@@ -1,3 +1,6 @@
+#ifndef _common_h_
+#define _common_h_
+
 #include <sys/types.h>
 
 #define alloc(type, n) ((type*) calloc(sizeof(type), (n)))
@@ -8,3 +11,5 @@ void Say(const char *fmt, ...);
 void Check_1(const char *s, int ret);
 char *Itos(int i);
 void SetCloexec(int fd);
+
+#endif
