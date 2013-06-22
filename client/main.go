@@ -80,14 +80,16 @@ func main() {
         SendReq(cmd)
 
         for {
-            msg, err := ReadRes()
+            res, err := RecvRes()
             if err != nil {
                 fmt.Printf("broken response pipe, quitting")
                 os.Exit(1)
             } else {
-                fmt.Printf("response: %s", msg)
+                fmt.Printf("response: %v\n", res)
             }
-            if strings.Contains(msg, "procState") {
+
+            _, ok := res.(*ResProcState)
+            if ok {
                 break
             }
         }
