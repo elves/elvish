@@ -164,25 +164,13 @@ Req *loadReq(json_t *root) {
     return 0;
 }
 
-char *readReq() {
-    char *buf = 0;
-    size_t n;
-    if (getline(&buf, &n, reqFile) == -1) {
-        return 0;
-    }
-    return buf;
-}
-
 Req *RecvReq(char **err) {
-    char *buf = readReq();
-    if (!buf) {
+    if (feof(reqFile)) {
         return (Req*)newReqExit();
     }
-
     json_t *root;
     json_error_t error;
-    root = json_loads(buf, 0, &error);
-    free(buf);
+    root = json_loadf(reqFile, JSON_DISABLE_EOF_CHECK, &error);
 
     if (!root) {
         asprintf(err, "json: error on line %d: %s", error.line, error.text);
