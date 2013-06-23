@@ -2,7 +2,6 @@ package main
 
 import (
     "os"
-    "bufio"
     "encoding/json"
 )
 
@@ -27,23 +26,13 @@ type ResProcState struct {
     Continued bool
 }
 
-var resFile *bufio.Reader
+var resDecoder *json.Decoder
 
 func InitRes(fd uintptr) {
-    resFile = bufio.NewReader(os.NewFile(fd, "<response pipe>"))
+    resDecoder = json.NewDecoder(os.NewFile(fd, "<response pipe>"))
 }
 
-func ReadRes() (string, error) {
-    return resFile.ReadString('\n')
-}
-
-func RecvRes() (Res, error) {
-    pkt, err := resFile.ReadBytes('\n')
-    if err != nil {
-        return Res{}, err
-    }
-
-    var r Res
-    err = json.Unmarshal(pkt, &r)
-    return r, err
+func RecvRes() (r Res, err error) {
+    err = resDecoder.Decode(&r)
+    return
 }
