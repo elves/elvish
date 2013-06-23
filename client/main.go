@@ -77,7 +77,7 @@ func main() {
             words[0], words, env,
         }
 
-        SendReq(cmd)
+        SendReq(Req{Cmd: &cmd})
 
         for {
             res, err := RecvRes()

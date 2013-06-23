@@ -11,13 +11,8 @@ type ReqCmd struct {
     Env map[string]string
 }
 
-func (r ReqCmd) Type() string {
-    return "cmd"
-}
-
 type Req struct {
-    Type string
-    Data interface{}
+    Cmd *ReqCmd `json:",omitempty"`
 }
 
 var reqFile *os.File
@@ -26,8 +21,8 @@ func InitReq(fd uintptr) {
     reqFile = os.NewFile(fd, "<request pipe>")
 }
 
-func SendReq(req Typer) {
-    json, err := json.Marshal(Req{req.Type(), req})
+func SendReq(req Req) {
+    json, err := json.Marshal(req)
     if err != nil {
         panic("failed to marshal request")
     }

@@ -146,18 +146,22 @@ ReqExit *newReqExit() {
 }
 
 Req *loadReq(json_t *root) {
-    char *type;
-    json_t *data;
-    if (json_unpack_ex(root, 0, JSON_STRICT, "{ss so}",
-                       "Type", &type, "Data", &data)) {
+    if (!json_is_object(root)) {
+        fprintf(stderr, "req not object\n");
         return 0;
     }
-    if (!strcmp(type, "cmd")) {
-        return (Req*)loadReqCmd(data);
-    } else {
-        // TODO error("bad request type")
-        return 0;
+    const char *key;
+    json_t *value;
+    json_object_foreach(root, key, value) {
+        if (!strcmp(key, "Cmd")) {
+            return (Req*)loadReqCmd(value);
+        } else {
+            fprintf(stderr, "bad req type %s\n", key);
+            return 0;
+        }
     }
+    fprintf(stderr, "empty req\n");
+    return 0;
 }
 
 char *readReq() {
