@@ -3,16 +3,12 @@ package main
 import (
     "os"
     "bufio"
-    "errors"
     "encoding/json"
 )
 
-type TypePicker struct {
-    Type string
-}
-
-type DataPicker struct {
-    Data interface{}
+type Res struct {
+    Cmd *ResCmd
+    ProcState *ResProcState
 }
 
 type ResCmd struct {
@@ -41,29 +37,13 @@ func ReadRes() (string, error) {
     return resFile.ReadString('\n')
 }
 
-func RecvRes() (interface{}, error) {
+func RecvRes() (Res, error) {
     pkt, err := resFile.ReadBytes('\n')
     if err != nil {
-        return nil, err
+        return Res{}, err
     }
 
-    var tp TypePicker
-    err = json.Unmarshal(pkt, &tp)
-    if err != nil {
-        return nil, err
-    }
-    var dp DataPicker
-    switch (tp.Type) {
-    case "cmd":
-        dp.Data = &ResCmd{}
-    case "procState":
-        dp.Data = &ResProcState{}
-    default:
-        return nil, errors.New("Unknown response type")
-    }
-    err = json.Unmarshal(pkt, &dp)
-    if err != nil {
-        return nil, err
-    }
-    return dp.Data, err
+    var r Res
+    err = json.Unmarshal(pkt, &r)
+    return r, err
 }

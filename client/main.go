@@ -88,8 +88,7 @@ func main() {
                 fmt.Printf("response: %v\n", res)
             }
 
-            _, ok := res.(*ResProcState)
-            if ok {
+            if res.ProcState != nil {
                 break
             }
         }

@@ -66,18 +66,18 @@ int SendRes(Res *r) {
     const char *type;
     json_t *data;
     if (r->type == RES_TYPE_CMD) {
-        type = "cmd";
+        type = "Cmd";
         data = buildResCmd((ResCmd*)r);
     } else if (r->type == RES_TYPE_PROC_STATE) {
-        type = "procState";
+        type = "ProcState";
         data = buildResProcState((ResProcState*)r);
     } else if (r->type == RES_TYPE_BAD_REQUEST) {
-        type = "badRequest";
+        type = "BadRequest";
         data = buildResBadRequest((ResBadRequest*)r);
     } else {
         return -1;
     }
-    json_t *root = json_pack("{ss so}", "Type", type, "Data", data);
+    json_t *root = json_pack("{so}", type, data);
     json_dumpf(root, resFile, JSON_COMPACT); // XXX check return value
     fprintf(resFile, "\n");
     json_decref(root);
