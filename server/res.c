@@ -2,9 +2,8 @@
 #include <jansson.h>
 
 #include "common.h"
+#include "tube.h"
 #include "res.h"
-
-FILE *resFile;
 
 ResCmd *NewResCmd() {
     ResCmd *r = alloc(ResCmd, 1);
@@ -78,14 +77,8 @@ int SendRes(Res *r) {
         return -1;
     }
     json_t *root = json_pack("{so}", type, data);
-    json_dumpf(root, resFile, JSON_COMPACT); // XXX check return value
-    fprintf(resFile, "\n");
+    json_dumpf(root, TubeFile, JSON_COMPACT); // XXX check return value
+    fprintf(TubeFile, "\n");
     json_decref(root);
     return 0;
-}
-
-void InitRes(int fd) {
-    SetCloexec(fd);
-    resFile = fdopen(fd, "w");
-    setlinebuf(resFile);
 }

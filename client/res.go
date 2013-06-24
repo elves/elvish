@@ -1,10 +1,5 @@
 package main
 
-import (
-    "os"
-    "encoding/json"
-)
-
 type Res struct {
     Cmd *ResCmd
     ProcState *ResProcState
@@ -26,13 +21,7 @@ type ResProcState struct {
     Continued bool
 }
 
-var resDecoder *json.Decoder
-
-func InitRes(fd uintptr) {
-    resDecoder = json.NewDecoder(os.NewFile(fd, "<response pipe>"))
-}
-
 func RecvRes() (r Res, err error) {
-    err = resDecoder.Decode(&r)
+    err = ResDecoder.Decode(&r)
     return
 }

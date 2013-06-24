@@ -48,8 +48,7 @@ func readline(stdin *bufio.Reader) (line string, err error) {
 }
 
 func main() {
-    InitReq(uintptr(getIntArg(1)))
-    InitRes(uintptr(getIntArg(2)))
+    InitTube(uintptr(getIntArg(1)))
 
     stdin := bufio.NewReader(os.Stdin)
 

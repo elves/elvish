@@ -6,6 +6,7 @@
 #include <jansson.h>
 
 #include "common.h"
+#include "tube.h"
 #include "req.h"
 
 FILE *reqFile;
@@ -165,12 +166,12 @@ Req *loadReq(json_t *root) {
 }
 
 Req *RecvReq(char **err) {
-    if (feof(reqFile)) {
+    if (feof(TubeFile)) {
         return (Req*)newReqExit();
     }
     json_t *root;
     json_error_t error;
-    root = json_loadf(reqFile, JSON_DISABLE_EOF_CHECK, &error);
+    root = json_loadf(TubeFile, JSON_DISABLE_EOF_CHECK, &error);
 
     if (!root) {
         asprintf(err, "json: error on line %d: %s", error.line, error.text);
@@ -185,9 +186,4 @@ Req *RecvReq(char **err) {
     }
 
     return cmd;
-}
-
-void InitReq(int fd) {
-    SetCloexec(fd);
-    reqFile = fdopen(fd, "r");
 }

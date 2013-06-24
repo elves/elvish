@@ -25,6 +25,5 @@ typedef struct {
 
 void FreeReq(Req *r);
 Req *RecvReq(char **err);
-void InitReq(int fd);
 
 #endif

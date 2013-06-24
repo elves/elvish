@@ -8,6 +8,7 @@
 #include <sys/un.h>
 
 #include "common.h"
+#include "tube.h"
 #include "req.h"
 #include "res.h"
 
@@ -85,16 +86,14 @@ int main(int argc, char **argv) {
 
     root_pid = getpid();
 
-    int reqp[2], resp[2];
-    pipe(reqp);
-    pipe(resp);
+    int tube[2];
+    Check_1("socketpair", socketpair(AF_UNIX, SOCK_STREAM, 0, tube));
 
     pid_t pid;
     Check_1("fork", pid = fork());
     if (pid == 0) {
-        // Child: write to req, read from res
-        close(reqp[0]);
-        close(resp[1]);
+        // Child uses tube[0] - may result in smaller fd :)
+        close(tube[1]);
 
         // exec dasc
         char *path;
@@ -118,14 +117,12 @@ int main(int argc, char **argv) {
             strcat(path, "/");
             strcat(path, relpath);
         }
-        Check_1("exec", execl(path, path, Itos(reqp[1]), Itos(resp[0]), 0));
+        Check_1("exec", execl(path, path, Itos(tube[0]), 0));
     }
 
     // Parent: read from req, write to res
-    close(reqp[1]);
-    close(resp[0]);
-    InitReq(reqp[0]);
-    InitRes(resp[1]);
+    close(tube[0]);
+    InitTube(tube[1]);
 
     do {
         worker();

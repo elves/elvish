@@ -45,6 +45,5 @@ ResBadRequest *NewResBadRequest();
 
 void FreeRes(Res *r);
 int SendRes(Res *r);
-void InitRes(int fd);
 
 #endif
