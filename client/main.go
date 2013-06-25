@@ -82,7 +82,7 @@ func main() {
             Path: words[0],
             Args: words,
             Env: env,
-            RedirOutput: true,
+            // RedirOutput: true,
             Output: devnull,
         }
 
