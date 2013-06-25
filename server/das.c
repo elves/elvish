@@ -38,11 +38,15 @@ void worker() {
 
     ReqType type = req->type;
     if (type == REQ_TYPE_CMD) {
+        ReqCmd *cmd = (ReqCmd*)req;
         pid_t pid;
         Check_1("fork", pid = fork());
         if (pid == 0) {
-            external((ReqCmd*)req);
+            external(cmd);
         } else {
+            if (cmd->redirOutput) {
+                close(cmd->output);
+            }
             ResCmd *res = NewResCmd();
             res->pid = pid;
             SendRes((Res*)res);
