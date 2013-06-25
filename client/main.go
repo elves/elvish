@@ -10,7 +10,7 @@ import (
 )
 
 func usage() {
-    fmt.Fprintf(os.Stderr, "Usage: dasc <req fd> <res fd>\n");
+    fmt.Fprintf(os.Stderr, "Usage: dasc <text fd> <control fd>\n");
 }
 
 func getIntArg(i int) int {

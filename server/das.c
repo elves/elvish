@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
                 "exec");
     }
 
-    // Parent: read from req, write to res
+    // Parent uses *Tube[1]
     close(textTube[0]);
     close(fdTube[0]);
     InitTubes(textTube[1], fdTube[1]);
