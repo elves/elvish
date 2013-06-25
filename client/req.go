@@ -1,6 +1,8 @@
 package main
 
 import (
+    "fmt"
+    "syscall"
     "encoding/json"
 )
 
@@ -18,6 +20,14 @@ type Req struct {
     Cmd *ReqCmd `json:",omitempty"`
 }
 
+func sendFd(fd int) {
+    cmsg := syscall.UnixRights(fd)
+    err := syscall.Sendmsg(int(FdTube), nil, cmsg, nil, 0)
+    if err != nil {
+        fmt.Printf("Failed to sendmsg: %v\n", err)
+    }
+}
+
 func SendReq(req Req) {
     json, err := json.Marshal(req)
     if err != nil {
@@ -25,4 +35,14 @@ func SendReq(req Req) {
     }
     TubeFile.Write(json)
     TubeFile.WriteString("\n")
+
+    cmd := req.Cmd
+    if cmd != nil {
+        if cmd.RedirInput {
+            sendFd(cmd.Input)
+        }
+        if cmd.RedirOutput {
+            sendFd(cmd.Output)
+        }
+    }
 }

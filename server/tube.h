@@ -3,8 +3,10 @@
 
 #include <stdio.h>
 
+extern int TubeFd;
 extern FILE *TubeFile;
+extern int FdTubeFd;
 
-void InitTube(int fd);
+void InitTubes(int textTube, int fdTube);
 
 #endif

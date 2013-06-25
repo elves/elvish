@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 
 #include <jansson.h>
 
@@ -120,7 +121,44 @@ ReqCmd *newReqCmd() {
     return r;
 }
 
+enum { CONTROLLEN = CMSG_LEN(sizeof(int)) };
+
+int recvFd() {
+    struct cmsghdr *cmsg = malloc(CONTROLLEN);
+    char buf[1];
+    struct iovec iov = {
+        .iov_base = buf, .iov_len = sizeof(buf)
+    };
+    struct msghdr msg = {
+        .msg_name = 0, .msg_namelen = 0,
+        .msg_iov = &iov, .msg_iovlen = 1,
+        .msg_control = cmsg, .msg_controllen = CONTROLLEN,
+        .msg_flags = 0
+    };
+
+    fprintf(stderr, "Waiting for a fd\n");
+    Check_1("recvmsg", recvmsg(FdTubeFd, &msg, 0));
+    fprintf(stderr, "Got a fd\n");
+
+    int fd;
+    if (msg.msg_controllen < CONTROLLEN) {
+        fprintf(stderr, "Got control message of length %lu, "
+                "expected at least %d\n", msg.msg_controllen, CONTROLLEN);
+        fd = -1;
+    } else {
+        fd = *(int*) CMSG_DATA(cmsg);
+    }
+    free(cmsg);
+    return fd;
+}
+
 int recvFds(ReqCmd *cmd) {
+    if (cmd->redirInput && (cmd->input = recvFd()) < 0) {
+        return -1;
+    }
+    if (cmd->redirOutput && (cmd->output = recvFd()) < 0) {
+        return -1;
+    }
     return 0;
 }
 

@@ -86,14 +86,17 @@ int main(int argc, char **argv) {
 
     root_pid = getpid();
 
-    int tube[2];
-    Check_1("socketpair", socketpair(AF_UNIX, SOCK_STREAM, 0, tube));
+    int textTube[2];
+    int fdTube[2];
+    Check_1("socketpair", socketpair(AF_UNIX, SOCK_STREAM, 0, textTube));
+    Check_1("socketpair", socketpair(AF_UNIX, SOCK_STREAM, 0, fdTube));
 
     pid_t pid;
     Check_1("fork", pid = fork());
     if (pid == 0) {
-        // Child uses tube[0] - may result in smaller fd :)
-        close(tube[1]);
+        // Child uses *Tube[0] - may result in smaller fd :)
+        close(textTube[1]);
+        close(fdTube[1]);
 
         // exec dasc
         char *path;
@@ -117,12 +120,14 @@ int main(int argc, char **argv) {
             strcat(path, "/");
             strcat(path, relpath);
         }
-        Check_1("exec", execl(path, path, Itos(tube[0]), 0));
+        Check_1("exec", execl(path, path,
+                              Itos(textTube[0]), Itos(fdTube[0]), 0));
     }
 
     // Parent: read from req, write to res
-    close(tube[0]);
-    InitTube(tube[1]);
+    close(textTube[0]);
+    close(fdTube[0]);
+    InitTubes(textTube[1], fdTube[1]);
 
     do {
         worker();

@@ -6,6 +6,7 @@ import (
     "bufio"
     "strconv"
     "strings"
+    "syscall"
 )
 
 func usage() {
@@ -48,9 +49,14 @@ func readline(stdin *bufio.Reader) (line string, err error) {
 }
 
 func main() {
-    InitTube(uintptr(getIntArg(1)))
+    InitTube(uintptr(getIntArg(1)), uintptr(getIntArg(2)))
 
     stdin := bufio.NewReader(os.Stdin)
+    devnull, err := syscall.Open("/dev/null", syscall.O_RDONLY, 0)
+
+    if err != nil {
+        panic("Failed to open /dev/null")
+    }
 
     env := make(map[string]string)
     for _, e := range os.Environ() {
@@ -76,6 +82,8 @@ func main() {
             Path: words[0],
             Args: words,
             Env: env,
+            RedirOutput: true,
+            Output: devnull,
         }
 
         SendReq(Req{Cmd: &cmd})
