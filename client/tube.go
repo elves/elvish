@@ -7,10 +7,10 @@ import (
 
 var TextTube *os.File
 var ResDecoder *json.Decoder
-var FdTube uintptr
+var FdTube int
 
-func InitTube(textTube uintptr, fdTube uintptr) {
-    TextTube = os.NewFile(textTube, "<das tube>")
+func InitTube(textTube int, fdTube int) {
+    TextTube = os.NewFile(uintptr(textTube), "<das tube>")
     ResDecoder = json.NewDecoder(TextTube)
     FdTube = fdTube
 }

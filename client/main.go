@@ -49,7 +49,7 @@ func readline(stdin *bufio.Reader) (line string, err error) {
 }
 
 func main() {
-    InitTube(uintptr(getIntArg(1)), uintptr(getIntArg(2)))
+    InitTube(getIntArg(1), getIntArg(2))
 
     stdin := bufio.NewReader(os.Stdin)
     devnull, err := syscall.Open("/dev/null", syscall.O_WRONLY, 0)

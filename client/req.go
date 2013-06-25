@@ -20,7 +20,7 @@ type Req struct {
 
 func sendFd(fd int) {
     cmsg := syscall.UnixRights(fd)
-    err := syscall.Sendmsg(int(FdTube), nil, cmsg, nil, 0)
+    err := syscall.Sendmsg(FdTube, nil, cmsg, nil, 0)
     if err != nil {
         fmt.Printf("Failed to sendmsg: %v\n", err)
     }
