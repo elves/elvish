@@ -10,8 +10,6 @@
 #include "tube.h"
 #include "req.h"
 
-FILE *reqFile;
-
 void freeStrings(char **p) {
     char **q;
     for (q = p; *q; q++) {
