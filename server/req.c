@@ -151,9 +151,6 @@ int recvFd() {
 }
 
 int recvFds(ReqCmd *cmd) {
-    if (cmd->redirInput && (cmd->input = recvFd()) < 0) {
-        return -1;
-    }
     if (cmd->redirOutput && (cmd->output = recvFd()) < 0) {
         return -1;
     }
@@ -166,9 +163,8 @@ ReqCmd *loadReqCmd(json_t *root) {
     const char *path;
     json_t *args, *env;
     int success =
-        (!json_unpack_ex(root, 0, JSON_STRICT, "{ss so so sb sb}",
+        (!json_unpack_ex(root, 0, JSON_STRICT, "{ss so so sb}",
                          "Path", &path, "Args", &args, "Env", &env,
-                         "RedirInput", &cmd->redirInput,
                          "RedirOutput", &cmd->redirOutput) &&
          (cmd->argv = loadArgv(args)) &&
          (cmd->envp = loadEnvp(env)) &&

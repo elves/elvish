@@ -10,8 +10,6 @@ type ReqCmd struct {
     Path string
     Args []string
     Env map[string]string
-    RedirInput bool
-    Input int `json:"-"`
     RedirOutput bool
     Output int `json:"-"`
 }
@@ -38,9 +36,6 @@ func SendReq(req Req) {
 
     cmd := req.Cmd
     if cmd != nil {
-        if cmd.RedirInput {
-            sendFd(cmd.Input)
-        }
         if cmd.RedirOutput {
             sendFd(cmd.Output)
         }

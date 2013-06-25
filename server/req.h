@@ -21,8 +21,6 @@ typedef struct {
     char *path;
     char **argv;
     char **envp;
-    int redirInput;
-    int input;
     int redirOutput;
     int output;
 } ReqCmd;
