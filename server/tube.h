@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 
-extern int TubeFd;
 extern FILE *TextTube;
 extern int FdTube;
 
