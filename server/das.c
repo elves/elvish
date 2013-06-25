@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
                 if (getcwd(buf, n)) {
                     break;
                 } else if (errno != ERANGE) {
-                    DieIf_1(-1, "getcwd");
+                    DieIf(1, "getcwd");
                 }
                 n *= 2;
             }

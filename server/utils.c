@@ -26,12 +26,16 @@ void Say(const char *fmt, ...) {
     va_end(ap);
 }
 
-void DieIf_1(int ret, const char *s) {
-    if (ret == -1) {
+void DieIf(int cond, const char *s) {
+    if (cond) {
         child_header();
         perror(s);
         exit(1);
     }
+}
+
+void DieIf_1(int ret, const char *s) {
+    DieIf(ret == -1, s);
 }
 
 char *Itos(int i) {

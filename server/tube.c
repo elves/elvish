@@ -8,8 +8,6 @@ void InitTubes(int textTube, int fdTube) {
     SetCloexec(textTube);
     SetCloexec(fdTube);
     TextTube = fdopen(textTube, "a+");
-    if (!TextTube) {
-        DieIf_1(-1, "fdopen");
-    }
+    DieIf(TextTube == 0, "fdopen");
     FdTube = fdTube;
 }
