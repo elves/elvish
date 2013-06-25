@@ -77,8 +77,8 @@ int SendRes(Res *r) {
         return -1;
     }
     json_t *root = json_pack("{so}", type, data);
-    json_dumpf(root, TubeFile, JSON_COMPACT); // XXX check return value
-    fprintf(TubeFile, "\n");
+    json_dumpf(root, TextTube, JSON_COMPACT); // XXX check return value
+    fprintf(TextTube, "\n");
     json_decref(root);
     return 0;
 }

@@ -4,8 +4,8 @@
 #include <stdio.h>
 
 extern int TubeFd;
-extern FILE *TubeFile;
-extern int FdTubeFd;
+extern FILE *TextTube;
+extern int FdTube;
 
 void InitTubes(int textTube, int fdTube);
 

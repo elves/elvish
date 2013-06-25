@@ -135,7 +135,7 @@ int recvFd() {
     };
 
     fprintf(stderr, "Waiting for a fd\n");
-    Check_1("recvmsg", recvmsg(FdTubeFd, &msg, 0));
+    Check_1("recvmsg", recvmsg(FdTube, &msg, 0));
     fprintf(stderr, "Got a fd\n");
 
     int fd;
@@ -205,12 +205,12 @@ Req *loadReq(json_t *root) {
 }
 
 Req *RecvReq(char **err) {
-    if (feof(TubeFile)) {
+    if (feof(TextTube)) {
         return (Req*)newReqExit();
     }
     json_t *root;
     json_error_t error;
-    root = json_loadf(TubeFile, JSON_DISABLE_EOF_CHECK, &error);
+    root = json_loadf(TextTube, JSON_DISABLE_EOF_CHECK, &error);
 
     if (!root) {
         asprintf(err, "json: error on line %d: %s", error.line, error.text);

@@ -1,13 +1,13 @@
 #include "common.h"
 #include "tube.h"
 
-int FdTubeFd;
-FILE *TubeFile;
+int FdTube;
+FILE *TextTube;
 
 void InitTubes(int textTube, int fdTube) {
-    TubeFile = fdopen(textTube, "a+");
-    if (!TubeFile) {
+    TextTube = fdopen(textTube, "a+");
+    if (!TextTube) {
         Check_1("fdopen", -1);
     }
-    FdTubeFd = fdTube;
+    FdTube = fdTube;
 }
