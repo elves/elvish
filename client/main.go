@@ -52,7 +52,7 @@ func main() {
     InitTube(uintptr(getIntArg(1)), uintptr(getIntArg(2)))
 
     stdin := bufio.NewReader(os.Stdin)
-    devnull, err := syscall.Open("/dev/null", syscall.O_RDONLY, 0)
+    devnull, err := syscall.Open("/dev/null", syscall.O_WRONLY, 0)
 
     if err != nil {
         panic("Failed to open /dev/null")

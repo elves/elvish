@@ -18,6 +18,10 @@ int exiting = 0;
 
 void external(ReqCmd *cmd) {
     environ = cmd->envp;
+    if (cmd->redirOutput) {
+        Check_1("dup2", dup2(cmd->output, 1));
+        close(cmd->output);
+    }
     Check_1("exec", execv(cmd->path, cmd->argv));
 }
 
