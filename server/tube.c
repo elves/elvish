@@ -9,7 +9,7 @@ void InitTubes(int textTube, int fdTube) {
     SetCloexec(fdTube);
     TextTube = fdopen(textTube, "a+");
     if (!TextTube) {
-        Check_1("fdopen", -1);
+        DieIf_1(-1, "fdopen");
     }
     FdTube = fdTube;
 }

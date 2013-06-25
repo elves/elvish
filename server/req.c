@@ -135,7 +135,7 @@ int recvFd() {
     };
 
     fprintf(stderr, "Waiting for a fd\n");
-    Check_1("recvmsg", recvmsg(FdTube, &msg, 0));
+    DieIf_1(recvmsg(FdTube, &msg, 0), "recvmsg");
     fprintf(stderr, "Got a fd\n");
 
     int fd;

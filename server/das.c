@@ -19,10 +19,10 @@ int exiting = 0;
 void external(ReqCmd *cmd) {
     environ = cmd->envp;
     if (cmd->redirOutput) {
-        Check_1("dup2", dup2(cmd->output, 1));
+        DieIf_1(dup2(cmd->output, 1), "dup2");
         close(cmd->output);
     }
-    Check_1("exec", execv(cmd->path, cmd->argv));
+    DieIf_1(execv(cmd->path, cmd->argv), "exec");
 }
 
 void worker() {
@@ -40,7 +40,7 @@ void worker() {
     if (type == REQ_TYPE_CMD) {
         ReqCmd *cmd = (ReqCmd*)req;
         pid_t pid;
-        Check_1("fork", pid = fork());
+        DieIf_1(pid = fork(), "fork");
         if (pid == 0) {
             external(cmd);
         } else {
@@ -57,7 +57,7 @@ void worker() {
                 if (ret == -1 && errno == ECHILD) {
                     break;
                 }
-                Check_1("wait", ret);
+                DieIf_1(ret, "wait");
 
                 ResProcState *res = NewResProcState();
                 res->pid = pid;
@@ -96,11 +96,11 @@ int main(int argc, char **argv) {
 
     int textTube[2];
     int fdTube[2];
-    Check_1("socketpair", socketpair(AF_UNIX, SOCK_STREAM, 0, textTube));
-    Check_1("socketpair", socketpair(AF_UNIX, SOCK_STREAM, 0, fdTube));
+    DieIf_1(socketpair(AF_UNIX, SOCK_STREAM, 0, textTube), "socketpair");
+    DieIf_1(socketpair(AF_UNIX, SOCK_STREAM, 0, fdTube), "socketpair");
 
     pid_t pid;
-    Check_1("fork", pid = fork());
+    DieIf_1(pid = fork(), "fork");
     if (pid == 0) {
         // Child uses *Tube[0] - may result in smaller fd :)
         close(textTube[1]);
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
                 if (getcwd(buf, n)) {
                     break;
                 } else if (errno != ERANGE) {
-                    Check_1("getcwd", -1);
+                    DieIf_1(-1, "getcwd");
                 }
                 n *= 2;
             }
@@ -128,8 +128,8 @@ int main(int argc, char **argv) {
             strcat(path, "/");
             strcat(path, relpath);
         }
-        Check_1("exec", execl(path, path,
-                              Itos(textTube[0]), Itos(fdTube[0]), 0));
+        DieIf_1(execl(path, path, Itos(textTube[0]), Itos(fdTube[0]), 0),
+                "exec");
     }
 
     // Parent: read from req, write to res
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
 
     int status;
     do {
-        Check_1("wait", waitpid(pid, &status, 0));
+        DieIf_1(waitpid(pid, &status, 0), "wait");
     } while (!WIFEXITED(status) && !WIFSIGNALED(status));
 
     return 0;

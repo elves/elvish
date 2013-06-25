@@ -8,7 +8,7 @@
 extern pid_t root_pid;
 
 void Say(const char *fmt, ...);
-void Check_1(const char *s, int ret);
+void DieIf_1(int ret, const char *s);
 char *Itos(int i);
 void SetCloexec(int fd);
 

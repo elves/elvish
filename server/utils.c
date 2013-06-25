@@ -26,7 +26,7 @@ void Say(const char *fmt, ...) {
     va_end(ap);
 }
 
-void Check_1(const char *s, int ret) {
+void DieIf_1(int ret, const char *s) {
     if (ret == -1) {
         child_header();
         perror(s);
@@ -49,6 +49,6 @@ char *Itos(int i) {
 
 void SetCloexec(int fd) {
     int f = fcntl(fd, F_GETFD);
-    Check_1("fcntl", f);
-    Check_1("fcntl", fcntl(fd, F_SETFD, f | FD_CLOEXEC));
+    DieIf_1(f, "fcntl");
+    DieIf_1(fcntl(fd, F_SETFD, f | FD_CLOEXEC), "fcntl");
 }
