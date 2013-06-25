@@ -8,6 +8,10 @@ type ReqCmd struct {
     Path string
     Args []string
     Env map[string]string
+    RedirInput bool
+    Input int `json:"-"`
+    RedirOutput bool
+    Output int `json:"-"`
 }
 
 type Req struct {

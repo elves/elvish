@@ -73,7 +73,9 @@ func main() {
         }
         words[0] = search(words[0])
         cmd := ReqCmd{
-            words[0], words, env,
+            Path: words[0],
+            Args: words,
+            Env: env,
         }
 
         SendReq(Req{Cmd: &cmd})

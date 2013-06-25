@@ -120,16 +120,23 @@ ReqCmd *newReqCmd() {
     return r;
 }
 
+int recvFds(ReqCmd *cmd) {
+    return 0;
+}
+
 ReqCmd *loadReqCmd(json_t *root) {
     ReqCmd *cmd = newReqCmd();
 
     const char *path;
     json_t *args, *env;
     int success =
-        (!json_unpack_ex(root, 0, JSON_STRICT, "{ss so so}",
-                         "Path", &path, "Args", &args, "Env", &env) &&
+        (!json_unpack_ex(root, 0, JSON_STRICT, "{ss so so sb sb}",
+                         "Path", &path, "Args", &args, "Env", &env,
+                         "RedirInput", &cmd->redirInput,
+                         "RedirOutput", &cmd->redirOutput) &&
          (cmd->argv = loadArgv(args)) &&
-         (cmd->envp = loadEnvp(env)));
+         (cmd->envp = loadEnvp(env)) &&
+         !recvFds(cmd));
 
     if (success) {
         cmd->path = strdup(path);
