@@ -5,12 +5,12 @@ import (
     "encoding/json"
 )
 
-var TubeFile *os.File
+var TextTube *os.File
 var ResDecoder *json.Decoder
 var FdTube uintptr
 
 func InitTube(textTube uintptr, fdTube uintptr) {
-    TubeFile = os.NewFile(textTube, "<das tube>")
-    ResDecoder = json.NewDecoder(TubeFile)
+    TextTube = os.NewFile(textTube, "<das tube>")
+    ResDecoder = json.NewDecoder(TextTube)
     FdTube = fdTube
 }

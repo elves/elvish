@@ -31,8 +31,8 @@ func SendReq(req Req) {
     if err != nil {
         panic("failed to marshal request")
     }
-    TubeFile.Write(json)
-    TubeFile.WriteString("\n")
+    TextTube.Write(json)
+    TextTube.WriteString("\n")
 
     cmd := req.Cmd
     if cmd != nil {
