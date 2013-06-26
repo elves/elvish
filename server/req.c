@@ -119,10 +119,13 @@ ReqCmd *newReqCmd() {
     return r;
 }
 
-enum { CONTROLLEN = CMSG_LEN(sizeof(int)) };
+enum {
+    FD_CMSG_SPACE = CMSG_SPACE(sizeof(int)),
+    FD_CMSG_LEN = CMSG_LEN(sizeof(int))
+};
 
 int recvFd() {
-    struct cmsghdr *cmsg = malloc(CONTROLLEN);
+    struct cmsghdr *cmsg = malloc(FD_CMSG_SPACE);
     char buf[1];
     struct iovec iov = {
         .iov_base = buf, .iov_len = sizeof(buf)
@@ -130,7 +133,7 @@ int recvFd() {
     struct msghdr msg = {
         .msg_name = 0, .msg_namelen = 0,
         .msg_iov = &iov, .msg_iovlen = 1,
-        .msg_control = cmsg, .msg_controllen = CONTROLLEN,
+        .msg_control = cmsg, .msg_controllen = FD_CMSG_SPACE,
         .msg_flags = 0
     };
 
@@ -139,9 +142,9 @@ int recvFd() {
     fprintf(stderr, "Got a fd\n");
 
     int fd;
-    if (msg.msg_controllen < CONTROLLEN) {
-        fprintf(stderr, "Got control message of length %lu, "
-                "expected at least %d\n", msg.msg_controllen, CONTROLLEN);
+    if (cmsg->cmsg_len != FD_CMSG_LEN) {
+        fprintf(stderr, "Got control message of length %lu, expected %d\n",
+                cmsg->cmsg_len, FD_CMSG_LEN);
         fd = -1;
     } else {
         fd = *(int*) CMSG_DATA(cmsg);
