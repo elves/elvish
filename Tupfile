@@ -1,4 +1,4 @@
 include_rules
 
-: server/*.o |> !ld |> das
-: ./client |> go build -o %o %f |> dasc
+: ./src/cmd/das/*.o |> !ld |> das
+: ./src/cmd/dasc/ |> go build -o %o %f |> dasc
