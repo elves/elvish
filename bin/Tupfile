@@ -1,0 +1,4 @@
+include_rules
+
+: ../src/cmd/das/*.o |> !ld |> das
+: ../src/cmd/dasc/ |> go build -o %o %f |> dasc
