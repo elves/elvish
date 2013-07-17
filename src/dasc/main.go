@@ -94,7 +94,7 @@ func main() {
                 fmt.Printf("broken response pipe, quitting")
                 os.Exit(1)
             } else {
-                fmt.Printf("response: %s\n", res)
+                // fmt.Printf("response: %s\n", res)
             }
 
             if res.ProcState != nil {
