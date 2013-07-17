@@ -14,8 +14,12 @@ type ReqCmd struct {
     Output int `json:"-"`
 }
 
+type ReqExit struct {
+}
+
 type Req struct {
     Cmd *ReqCmd `json:",omitempty"`
+    Exit *ReqExit `json:",omitempty"`
 }
 
 func sendFd(fd int) {

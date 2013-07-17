@@ -188,6 +188,15 @@ ReqExit *newReqExit() {
     return r;
 }
 
+ReqExit *loadReqExit(json_t *root) {
+    int success = !json_unpack_ex(root, 0, JSON_STRICT, "{}");
+    if (success) {
+        return newReqExit();
+    } else {
+        return 0;
+    }
+}
+
 Req *loadReq(json_t *root) {
     if (!json_is_object(root)) {
         fprintf(stderr, "req not object\n");
@@ -198,6 +207,8 @@ Req *loadReq(json_t *root) {
     json_object_foreach(root, key, value) {
         if (!strcmp(key, "Cmd")) {
             return (Req*)loadReqCmd(value);
+        } else if (!strcmp(key, "Exit")) {
+            return (Req*)loadReqExit(value);
         } else {
             fprintf(stderr, "bad req type %s\n", key);
             return 0;

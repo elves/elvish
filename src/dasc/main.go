@@ -102,4 +102,5 @@ func main() {
             }
         }
     }
+    SendReq(Req{Exit: &ReqExit{}})
 }
