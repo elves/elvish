@@ -9,6 +9,9 @@ import (
     "syscall"
 )
 
+var env map[string]string
+var search_paths []string
+
 func usage() {
     fmt.Fprintf(os.Stderr, "Usage: dasc <text fd> <control fd>\n");
 }
@@ -33,11 +36,37 @@ func lackeol() {
     fmt.Println("\033[7m%\033[m")
 }
 
-func search(path string) string {
-    if path[0] == '/' {
-        return path
+// TODO return a separate error
+func isExecutable(path string) bool {
+    f, err := os.Open(path)
+    if err != nil {
+        return false
     }
-    return "/bin/" + path
+    defer f.Close()
+
+    fi, err := f.Stat()
+    if err != nil {
+        return false
+    }
+    fm := fi.Mode()
+    return !fm.IsDir() && (fm & 0111 != 0)
+}
+
+// Search for executable `exe`.
+// TODO return a separate error
+func search(exe string) string {
+    for _, p := range []string{"/", "./", "../"} {
+        if strings.HasPrefix(exe, p) {
+            return exe
+        }
+    }
+    for _, p := range search_paths {
+        full := p + "/" + exe
+        if isExecutable(full) {
+            return full
+        }
+    }
+    return ""
 }
 
 func readline(stdin *bufio.Reader) (line string, err error) {
@@ -58,12 +87,20 @@ func main() {
         panic("Failed to open /dev/null")
     }
 
-    env := make(map[string]string)
+    env = make(map[string]string)
     for _, e := range os.Environ() {
         arr := strings.SplitN(e, "=", 2)
         if len(arr) == 2 {
             env[arr[0]] = arr[1]
         }
+    }
+
+    path_var, ok := env["PATH"]
+    if ok {
+        search_paths = strings.Split(path_var, ":")
+        fmt.Printf("Search paths are %v\n", search_paths)
+    } else {
+        search_paths = []string{"/bin"}
     }
 
     for {
@@ -77,7 +114,12 @@ func main() {
         if len(words) == 0 {
             continue
         }
-        words[0] = search(words[0])
+        full := search(words[0])
+        if len(full) == 0 {
+            fmt.Printf("command not found: %s\n", words[0])
+            continue
+        }
+        words[0] = full
         cmd := ReqCmd{
             Path: words[0],
             Args: words,
