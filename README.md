@@ -6,4 +6,7 @@ communicate using UNIX sockets.
 
 `das` uses [tup](http://gittup.org/tup/) as the build system.
 
-The license is not yet determined.  Before that, all rights are reserved.
+License
+-------
+
+BSD 2-clause license.  See LICENSE for a copy.
