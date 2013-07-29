@@ -107,28 +107,8 @@ int main(int argc, char **argv) {
         close(fdTube[1]);
 
         // exec dasc
-        char *path;
-        if (argc == 2 && argv[1][0] == '/') {
-            path = argv[1];
-        } else {
-            const char *relpath = argc == 2 ? argv[1] : "dasc";
-            int nrel = strlen(relpath);
-            int n = 256;
-            char *buf = 0;
-            while (1) {
-                buf = realloc(buf, n + nrel + 1);
-                if (getcwd(buf, n)) {
-                    break;
-                } else if (errno != ERANGE) {
-                    DieIf(1, "getcwd");
-                }
-                n *= 2;
-            }
-            path = buf;
-            strcat(path, "/");
-            strcat(path, relpath);
-        }
-        DieIf_1(execl(path, path, Itos(textTube[0]), Itos(fdTube[0]), 0),
+        char *path = argc == 2 ? argv[1] : "./dasc";
+        DieIf_1(execlp(path, path, Itos(textTube[0]), Itos(fdTube[0]), 0),
                 "exec");
     }
 
