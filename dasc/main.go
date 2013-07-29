@@ -1,148 +1,148 @@
 package main
 
 import (
-    "os"
-    "fmt"
-    "bufio"
-    "strconv"
-    "strings"
-    "syscall"
+	"os"
+	"fmt"
+	"bufio"
+	"strconv"
+	"strings"
+	"syscall"
 )
 
 var env map[string]string
 var search_paths []string
 
 func usage() {
-    fmt.Fprintf(os.Stderr, "Usage: dasc <text fd> <control fd>\n");
+	fmt.Fprintf(os.Stderr, "Usage: dasc <text fd> <control fd>\n");
 }
 
 func getIntArg(i int) int {
-    if i < len(os.Args) {
-        a, err := strconv.Atoi(os.Args[i])
-        if err == nil {
-            return a
-        }
-    }
-    usage()
-    os.Exit(1)
-    return -1
+	if i < len(os.Args) {
+		a, err := strconv.Atoi(os.Args[i])
+		if err == nil {
+			return a
+		}
+	}
+	usage()
+	os.Exit(1)
+	return -1
 }
 
 func prompt() {
-    fmt.Print("> ")
+	fmt.Print("> ")
 }
 
 func lackeol() {
-    fmt.Println("\033[7m%\033[m")
+	fmt.Println("\033[7m%\033[m")
 }
 
 // TODO return a separate error
 func isExecutable(path string) bool {
-    f, err := os.Open(path)
-    if err != nil {
-        return false
-    }
-    defer f.Close()
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
 
-    fi, err := f.Stat()
-    if err != nil {
-        return false
-    }
-    fm := fi.Mode()
-    return !fm.IsDir() && (fm & 0111 != 0)
+	fi, err := f.Stat()
+	if err != nil {
+		return false
+	}
+	fm := fi.Mode()
+	return !fm.IsDir() && (fm & 0111 != 0)
 }
 
 // Search for executable `exe`.
 // TODO return a separate error
 func search(exe string) string {
-    for _, p := range []string{"/", "./", "../"} {
-        if strings.HasPrefix(exe, p) {
-            return exe
-        }
-    }
-    for _, p := range search_paths {
-        full := p + "/" + exe
-        if isExecutable(full) {
-            return full
-        }
-    }
-    return ""
+	for _, p := range []string{"/", "./", "../"} {
+		if strings.HasPrefix(exe, p) {
+			return exe
+		}
+	}
+	for _, p := range search_paths {
+		full := p + "/" + exe
+		if isExecutable(full) {
+			return full
+		}
+	}
+	return ""
 }
 
 func readline(stdin *bufio.Reader) (line string, err error) {
-    line, err = stdin.ReadString('\n')
-    if err == nil {
-        line = line[:len(line)-1]
-    }
-    return
+	line, err = stdin.ReadString('\n')
+	if err == nil {
+		line = line[:len(line)-1]
+	}
+	return
 }
 
 func main() {
-    InitTube(getIntArg(1), getIntArg(2))
+	InitTube(getIntArg(1), getIntArg(2))
 
-    stdin := bufio.NewReader(os.Stdin)
-    devnull, err := syscall.Open("/dev/null", syscall.O_WRONLY, 0)
+	stdin := bufio.NewReader(os.Stdin)
+	devnull, err := syscall.Open("/dev/null", syscall.O_WRONLY, 0)
 
-    if err != nil {
-        panic("Failed to open /dev/null")
-    }
+	if err != nil {
+		panic("Failed to open /dev/null")
+	}
 
-    env = make(map[string]string)
-    for _, e := range os.Environ() {
-        arr := strings.SplitN(e, "=", 2)
-        if len(arr) == 2 {
-            env[arr[0]] = arr[1]
-        }
-    }
+	env = make(map[string]string)
+	for _, e := range os.Environ() {
+		arr := strings.SplitN(e, "=", 2)
+		if len(arr) == 2 {
+			env[arr[0]] = arr[1]
+		}
+	}
 
-    path_var, ok := env["PATH"]
-    if ok {
-        search_paths = strings.Split(path_var, ":")
-        fmt.Printf("Search paths are %v\n", search_paths)
-    } else {
-        search_paths = []string{"/bin"}
-    }
+	path_var, ok := env["PATH"]
+	if ok {
+		search_paths = strings.Split(path_var, ":")
+		fmt.Printf("Search paths are %v\n", search_paths)
+	} else {
+		search_paths = []string{"/bin"}
+	}
 
-    for {
-        prompt()
-        line, err := readline(stdin)
-        if err != nil {
-            lackeol()
-            break
-        }
-        words := strings.Split(line, " ")
-        if len(words) == 0 {
-            continue
-        }
-        full := search(words[0])
-        if len(full) == 0 {
-            fmt.Printf("command not found: %s\n", words[0])
-            continue
-        }
-        words[0] = full
-        cmd := ReqCmd{
-            Path: words[0],
-            Args: words,
-            Env: env,
-            // RedirOutput: true,
-            Output: devnull,
-        }
+	for {
+		prompt()
+		line, err := readline(stdin)
+		if err != nil {
+			lackeol()
+			break
+		}
+		words := strings.Split(line, " ")
+		if len(words) == 0 {
+			continue
+		}
+		full := search(words[0])
+		if len(full) == 0 {
+			fmt.Printf("command not found: %s\n", words[0])
+			continue
+		}
+		words[0] = full
+		cmd := ReqCmd{
+			Path: words[0],
+			Args: words,
+			Env: env,
+			// RedirOutput: true,
+			Output: devnull,
+		}
 
-        SendReq(Req{Cmd: &cmd})
+		SendReq(Req{Cmd: &cmd})
 
-        for {
-            res, err := RecvRes()
-            if err != nil {
-                fmt.Printf("broken response pipe, quitting")
-                os.Exit(1)
-            } else {
-                // fmt.Printf("response: %s\n", res)
-            }
+		for {
+			res, err := RecvRes()
+			if err != nil {
+				fmt.Printf("broken response pipe, quitting")
+				os.Exit(1)
+			} else {
+				// fmt.Printf("response: %s\n", res)
+			}
 
-            if res.ProcState != nil {
-                break
-            }
-        }
-    }
-    SendReq(Req{Exit: &ReqExit{}})
+			if res.ProcState != nil {
+				break
+			}
+		}
+	}
+	SendReq(Req{Exit: &ReqExit{}})
 }
