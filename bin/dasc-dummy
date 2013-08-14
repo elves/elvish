@@ -13,4 +13,5 @@ while read line; do
     printf '%s\n' "$line" >&$tube
 done
 
+printf '{"Exit":{}}\n' >&$tube
 kill $child
