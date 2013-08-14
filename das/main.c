@@ -121,6 +121,9 @@ int main(int argc, char **argv) {
         worker();
     } while (!exiting);
 
+    close(textTube[1]);
+    close(fdTube[1]);
+
     int status;
     do {
         DieIf_1(waitpid(pid, &status, 0), "wait");
