@@ -107,7 +107,7 @@ func main() {
 	path_var, ok := env["PATH"]
 	if ok {
 		search_paths = strings.Split(path_var, ":")
-		fmt.Printf("Search paths are %v\n", search_paths)
+		// fmt.Printf("Search paths are %v\n", search_paths)
 	} else {
 		search_paths = []string{"/bin"}
 	}
