@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"./parse"
 )
 
 var env map[string]string
@@ -77,6 +78,14 @@ func readline(stdin *bufio.Reader) (line string, err error) {
 	return
 }
 
+func evalList(n *parse.ListNode) (words []string) {
+	words = make([]string, 0, len(n.Nodes))
+	for _, w := range n.Nodes {
+		words = append(words, w.(*parse.StringNode).Text)
+	}
+	return
+}
+
 func main() {
 	InitTube(getIntArg(1), getIntArg(2))
 
@@ -103,20 +112,30 @@ func main() {
 		search_paths = []string{"/bin"}
 	}
 
+	cmd_no := 0
+
 	for {
+		cmd_no++
+		name := fmt.Sprintf("<interactive code %d>", cmd_no)
+
 		prompt()
 		line, err := readline(stdin)
 		if err != nil {
 			lackeol()
 			break
 		}
-		words := strings.Split(line, " ")
+		tree, err := parse.Do(name, line)
+		if err != nil {
+			fmt.Println("Parser error:", err)
+			continue
+		}
+		words := evalList(tree.Root)
 		if len(words) == 0 {
 			continue
 		}
 		full := search(words[0])
 		if len(full) == 0 {
-			fmt.Printf("command not found: %s\n", words[0])
+			fmt.Println("command not found:", words[0])
 			continue
 		}
 		words[0] = full
