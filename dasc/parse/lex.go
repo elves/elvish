@@ -40,6 +40,7 @@ const (
 	itemBare         // a bare string literal
 	itemSingleQuoted // a single-quoted string literal
 	itemDoubleQuoted // a double-quoted string literal
+	itemGreater      // a greater-than sign
 )
 
 const eof = -1
@@ -153,6 +154,9 @@ func lexAny(l *lexer) stateFn {
 		return nil
 	case isSpace(r):
 		return lexSpace
+	case r == '>':
+		l.emit(itemGreater)
+		return lexAny
 	case r == '\n':
 		return lexEndOfLine
 	case r == '\'':

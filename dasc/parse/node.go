@@ -97,6 +97,17 @@ func (l *ListNode) Copy() Node {
 	return l.CopyList()
 }
 
+// CommandNode holds a command, with terms and redirections.
+// TODO only stdout redirection is supported now.
+type CommandNode struct {
+	ListNode
+	StdoutRedir Node
+}
+
+func newCommand(pos Pos) *CommandNode {
+	return &CommandNode{ListNode: *newList(NodeCommand, pos)}
+}
+
 // StringNode holds a string constant. The value has been "unquoted".
 type StringNode struct {
 	NodeType

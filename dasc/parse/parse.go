@@ -18,7 +18,7 @@ import (
 type Tree struct {
 	Name      string    // name of the script represented by the tree.
 	ParseName string    // name of the top-level script during parsing, for error messages.
-	Root      *ListNode // top-level root of the tree.
+	Root      *CommandNode // top-level root of the tree.
 	text      string    // text parsed to create the script (or its parent)
 	// Parsing only; cleared after parse.
 	lex       *lexer
@@ -199,13 +199,19 @@ func (t *Tree) Parse(text string) (tree *Tree, err error) {
 // parse is the top-level parser for a script.
 // TODO This now only parses a command.
 func (t *Tree) parse() {
-	t.Root = newList(NodeCommand, t.peek().pos)
-	for t.peekNonSpace().typ != itemEOF {
-		n := t.term()
-		if n == nil {
-			break
+	t.Root = newCommand(t.peek().pos)
+loop:
+	for {
+		switch t.peekNonSpace().typ {
+		case itemBare, itemSingleQuoted, itemDoubleQuoted:
+			t.Root.append(t.term())
+		case itemGreater:
+			t.next()
+			t.peekNonSpace()
+			t.Root.StdoutRedir = t.term()
+		default:
+			break loop
 		}
-		t.Root.append(n)
 	}
 }
 

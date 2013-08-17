@@ -78,10 +78,13 @@ func readline(stdin *bufio.Reader) (line string, err error) {
 	return
 }
 
-func evalList(n *parse.ListNode) (words []string) {
-	words = make([]string, 0, len(n.Nodes))
+func evalCommand(n *parse.CommandNode) (args []string, stdoutRedir *string) {
+	args = make([]string, 0, len(n.Nodes))
 	for _, w := range n.Nodes {
-		words = append(words, w.(*parse.StringNode).Text)
+		args = append(args, w.(*parse.StringNode).Text)
+	}
+	if n.StdoutRedir != nil {
+		stdoutRedir = &n.StdoutRedir.(*parse.StringNode).Text
 	}
 	return
 }
@@ -90,11 +93,6 @@ func main() {
 	InitTube(getIntArg(1), getIntArg(2))
 
 	stdin := bufio.NewReader(os.Stdin)
-	devnull, err := syscall.Open("/dev/null", syscall.O_WRONLY, 0)
-
-	if err != nil {
-		panic("Failed to open /dev/null")
-	}
 
 	env = make(map[string]string)
 	for _, e := range os.Environ() {
@@ -129,25 +127,39 @@ func main() {
 			fmt.Println("Parser error:", err)
 			continue
 		}
-		words := evalList(tree.Root)
-		if len(words) == 0 {
+		args, stdoutRedir := evalCommand(tree.Root)
+		if len(args) == 0 {
 			continue
 		}
-		full := search(words[0])
+		full := search(args[0])
 		if len(full) == 0 {
-			fmt.Println("command not found:", words[0])
+			fmt.Println("command not found:", args[0])
 			continue
 		}
-		words[0] = full
+		args[0] = full
 		cmd := ReqCmd{
-			Path: words[0],
-			Args: words,
+			Path: args[0],
+			Args: args,
 			Env: env,
-			// RedirOutput: true,
-			Output: devnull,
+		}
+		if stdoutRedir != nil {
+			cmd.RedirOutput = true
+			// TODO haz hardcoded permbits now
+			outputFd, err := syscall.Open(
+				*stdoutRedir, syscall.O_WRONLY | syscall.O_CREAT, 0644)
+			if err != nil {
+				fmt.Printf("Failed to open output file %v for writing: %s\n",
+				           *stdoutRedir, err)
+				continue
+			}
+			cmd.Output = outputFd
 		}
 
 		SendReq(Req{Cmd: &cmd})
+
+		if cmd.RedirOutput {
+			syscall.Close(cmd.Output)
+		}
 
 		for {
 			res, err := RecvRes()
