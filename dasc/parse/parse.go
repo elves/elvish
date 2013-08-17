@@ -231,7 +231,7 @@ func (t *Tree) term() Node {
 		}
 		return newString(token.pos, token.val, text)
 	default:
-		t.unexpected(token, "word")
+		t.unexpected(token, "term")
 		return nil
 	}
 }
