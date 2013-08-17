@@ -1,6 +1,7 @@
 Metacharacter viability in shells
 =================================
 
+```
 ~ +5
     sh: shorthand for $HOME at beginning of a word (+5)
 ` +5
@@ -64,3 +65,4 @@ _ -2
     sh: redir (+5)
 ? +5
     sh: glob
+```
