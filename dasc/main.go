@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"./parse"
+	"../libdasc/parse"
 )
 
 var env map[string]string
