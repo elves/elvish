@@ -122,7 +122,7 @@ func main() {
 			lackeol()
 			break
 		}
-		tree, err := parse.Do(name, line)
+		tree, err := parse.Do(name, line, false)
 		if err != nil {
 			fmt.Println("Parser error:", err)
 			continue

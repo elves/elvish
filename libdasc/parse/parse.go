@@ -19,16 +19,18 @@ type Tree struct {
 	Name      string    // name of the script represented by the tree.
 	ParseName string    // name of the top-level script during parsing, for error messages.
 	Root      *CommandNode // top-level root of the tree.
+	Ctx       Context
 	text      string    // text parsed to create the script (or its parent)
+	tab       bool
 	// Parsing only; cleared after parse.
 	lex       *lexer
 	token     [3]item // three-token lookahead for parser.
 	peekCount int
 }
 
-func Do(name, text string) (t *Tree, err error) {
+func Do(name, text string, tab bool) (t *Tree, err error) {
 	t = New(name)
-	_, err = t.Parse(text)
+	_, err = t.Parse(text, tab)
 	return
 }
 
@@ -182,12 +184,18 @@ func (t *Tree) startParse(lex *lexer) {
 // stopParse terminates parsing.
 func (t *Tree) stopParse() {
 	t.lex = nil
+	if t.tab {
+		t.Root = nil
+	} else {
+		t.Ctx = nil
+	}
 }
 
 // Parse parses the script to construct a representation of the script for
 // execution.
-func (t *Tree) Parse(text string) (tree *Tree, err error) {
+func (t *Tree) Parse(text string, tab bool) (tree *Tree, err error) {
 	defer t.recover(&err)
+	t.tab = tab
 	t.ParseName = t.Name
 	t.startParse(lex(t.Name, text))
 	t.text = text
@@ -234,6 +242,11 @@ func (t *Tree) term() Node {
 		text, err := unquote(token)
 		if err != nil {
 			t.error(err)
+		}
+		if token.end & mayContinue != 0 {
+			t.Ctx = NewArgContext(token.val)
+		} else {
+			t.Ctx = nil
 		}
 		return newString(token.pos, token.val, text)
 	default:

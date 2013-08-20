@@ -17,6 +17,7 @@ type item struct {
 	typ itemType // The type of this item.
 	pos Pos      // The starting position, in bytes, of this item in the input string.
 	val string   // The value of this item.
+	end itemEnd  // How an item ends.
 }
 
 func (i item) String() string {
@@ -41,6 +42,17 @@ const (
 	itemSingleQuoted // a single-quoted string literal
 	itemDoubleQuoted // a double-quoted string literal
 	itemGreater      // a greater-than sign
+)
+
+// itemEnd describes the ending of lex items.
+type itemEnd int
+
+const (
+	mayTerminate itemEnd = 1 << iota
+	mayContinue
+	itemTerminated   itemEnd = mayTerminate
+	itemUnterminated itemEnd = mayContinue
+	itemAmbiguious   itemEnd = mayTerminate | mayContinue
 )
 
 const eof = -1
@@ -85,8 +97,8 @@ func (l *lexer) backup() {
 }
 
 // emit passes an item back to the client.
-func (l *lexer) emit(t itemType) {
-	l.items <- item{t, l.start, l.input[l.start:l.pos]}
+func (l *lexer) emit(t itemType, e itemEnd) {
+	l.items <- item{t, l.start, l.input[l.start:l.pos], e}
 	l.start = l.pos
 }
 
@@ -116,7 +128,7 @@ func (l *lexer) lineNumber() int {
 // errorf returns an error token and terminates the scan by passing
 // back a nil pointer that will be the next state, terminating l.nextItem.
 func (l *lexer) errorf(format string, args ...interface{}) stateFn {
-	l.items <- item{itemError, l.start, fmt.Sprintf(format, args...)}
+	l.items <- item{itemError, l.start, fmt.Sprintf(format, args...), itemEnd(0)}
 	return nil
 }
 
@@ -150,12 +162,12 @@ func (l *lexer) run() {
 func lexAny(l *lexer) stateFn {
 	switch r := l.next(); {
 	case r == eof:
-		l.emit(itemEOF)
+		l.emit(itemEOF, itemTerminated)
 		return nil
 	case isSpace(r):
 		return lexSpace
 	case r == '>':
-		l.emit(itemGreater)
+		l.emit(itemGreater, itemTerminated)
 		return lexAny
 	case r == '\n':
 		return lexEndOfLine
@@ -174,13 +186,13 @@ func lexSpace(l *lexer) stateFn {
 	for isSpace(l.peek()) {
 		l.next()
 	}
-	l.emit(itemSpace)
+	l.emit(itemSpace, itemAmbiguious)
 	return lexAny
 }
 
 // lexEndOfLine scans a single EOL, which has already been seen.
 func lexEndOfLine(l *lexer) stateFn {
-	l.emit(itemEndOfLine)
+	l.emit(itemEndOfLine, itemTerminated)
 	return lexAny
 }
 
@@ -190,7 +202,7 @@ func lexBare(l *lexer) stateFn {
 	for !terminatesBare(l.peek()) {
 		l.next()
 	}
-	l.emit(itemBare)
+	l.emit(itemBare, itemAmbiguious)
 	return lexAny
 }
 
@@ -206,7 +218,8 @@ loop:
 	for {
 		switch l.next() {
 		case eof, '\n':
-			return l.errorf("unterminated single-quoted string")
+			l.emit(itemSingleQuoted, itemUnterminated)
+			return nil
 		case quote:
 			if l.peek() != quote {
 				break loop
@@ -214,7 +227,7 @@ loop:
 			l.next()
 		}
 	}
-	l.emit(itemSingleQuoted)
+	l.emit(itemSingleQuoted, itemAmbiguious)
 	return lexAny
 }
 
@@ -230,12 +243,13 @@ loop:
 			}
 			fallthrough
 		case eof, '\n':
-			return l.errorf("unterminated double-quoted string")
+			l.emit(itemDoubleQuoted, itemUnterminated)
+			return nil
 		case '"':
 			break loop
 		}
 	}
-	l.emit(itemDoubleQuoted)
+	l.emit(itemDoubleQuoted, itemTerminated)
 	return lexAny
 }
 
