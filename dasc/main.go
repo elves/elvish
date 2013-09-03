@@ -8,6 +8,7 @@ import (
 	"strings"
 	"syscall"
 	"../libdasc/parse"
+	"../libdasc/editor"
 )
 
 var env map[string]string
@@ -92,8 +93,6 @@ func evalCommand(n *parse.CommandNode) (args []string, stdoutRedir *string) {
 func main() {
 	InitTube(getIntArg(1), getIntArg(2))
 
-	stdin := bufio.NewReader(os.Stdin)
-
 	env = make(map[string]string)
 	for _, e := range os.Environ() {
 		arr := strings.SplitN(e, "=", 2)
@@ -116,12 +115,23 @@ func main() {
 		cmd_no++
 		name := fmt.Sprintf("<interactive code %d>", cmd_no)
 
-		prompt()
-		line, err := readline(stdin)
+		err := editor.Init()
 		if err != nil {
+			panic(err)
+		}
+		lr := editor.ReadLine("das> ")
+		err = editor.Cleanup()
+		if err != nil {
+			panic(err)
+		}
+
+		if lr.Eof {
 			lackeol()
 			break
+		} else if lr.Err != nil {
+			panic(lr.Err)
 		}
+		line := lr.Line
 		tree, err := parse.Do(name, line, false)
 		if err != nil {
 			fmt.Println("Parser error:", err)
