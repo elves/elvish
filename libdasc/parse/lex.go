@@ -12,71 +12,71 @@ import (
 	"unicode/utf8"
 )
 
-// item represents a token or text string returned from the scanner.
-type item struct {
-	typ itemType // The type of this item.
-	pos Pos      // The starting position, in bytes, of this item in the input string.
-	val string   // The value of this item.
-	end itemEnd  // How an item ends.
+// Item represents a token or text string returned from the scanner.
+type Item struct {
+	Typ ItemType // The type of this Item.
+	Pos Pos      // The starting position, in bytes, of this Item in the input string.
+	Val string   // The value of this Item.
+	End ItemEnd  // How an Item ends.
 }
 
-func (i item) String() string {
+func (i Item) String() string {
 	switch {
-	case i.typ == itemEOF:
+	case i.Typ == ItemEOF:
 		return "EOF"
-	case i.typ == itemError:
-		return i.val
+	case i.Typ == ItemError:
+		return i.Val
 	}
-	return fmt.Sprintf("%q", i.val)
+	return fmt.Sprintf("%q", i.Val)
 }
 
-// itemType identifies the type of lex items.
-type itemType int
+// ItemType identifies the type of lex items.
+type ItemType int
 
 const (
-	itemError        itemType = iota // error occurred; value is text of error
-	itemEOF
-	itemEndOfLine    // a single EOL
-	itemSpace        // run of spaces separating arguments
-	itemBare         // a bare string literal
-	itemSingleQuoted // a single-quoted string literal
-	itemDoubleQuoted // a double-quoted string literal
-	itemGreater      // a greater-than sign
+	ItemError        ItemType = iota // error occurred; value is text of error
+	ItemEOF
+	ItemEndOfLine    // a single EOL
+	ItemSpace        // run of spaces separating arguments
+	ItemBare         // a bare string literal
+	ItemSingleQuoted // a single-quoted string literal
+	ItemDoubleQuoted // a double-quoted string literal
+	ItemGreater      // a greater-than sign
 )
 
-// itemEnd describes the ending of lex items.
-type itemEnd int
+// ItemEnd describes the ending of lex items.
+type ItemEnd int
 
 const (
-	mayTerminate itemEnd = 1 << iota
-	mayContinue
-	itemTerminated   itemEnd = mayTerminate
-	itemUnterminated itemEnd = mayContinue
-	itemAmbiguious   itemEnd = mayTerminate | mayContinue
+	MayTerminate ItemEnd = 1 << iota
+	MayContinue
+	ItemTerminated   ItemEnd = MayTerminate
+	ItemUnterminated ItemEnd = MayContinue
+	ItemAmbiguious   ItemEnd = MayTerminate | MayContinue
 )
 
-const eof = -1
+const Eof = -1
 
 // stateFn represents the state of the scanner as a function that returns the next state.
-type stateFn func(*lexer) stateFn
+type stateFn func(*Lexer) stateFn
 
-// lexer holds the state of the scanner.
-type lexer struct {
+// Lexer holds the state of the scanner.
+type Lexer struct {
 	name       string    // the name of the input; used only for error reports
 	input      string    // the string being scanned
 	state      stateFn   // the next lexing function to enter
 	pos        Pos       // current position in the input
-	start      Pos       // start position of this item
+	start      Pos       // start position of this Item
 	width      Pos       // width of last rune read from input
-	lastPos    Pos       // position of most recent item returned by nextItem
-	items      chan item // channel of scanned items
+	lastPos    Pos       // position of most recent Item returned by NextItem
+	items      chan Item // channel of scanned items
 }
 
 // next returns the next rune in the input.
-func (l *lexer) next() rune {
+func (l *Lexer) next() rune {
 	if int(l.pos) >= len(l.input) {
 		l.width = 0
-		return eof
+		return Eof
 	}
 	r, w := utf8.DecodeRuneInString(l.input[l.pos:])
 	l.width = Pos(w)
@@ -85,25 +85,25 @@ func (l *lexer) next() rune {
 }
 
 // peek returns but does not consume the next rune in the input.
-func (l *lexer) peek() rune {
+func (l *Lexer) peek() rune {
 	r := l.next()
 	l.backup()
 	return r
 }
 
 // backup steps back one rune. Can only be called once per call of next.
-func (l *lexer) backup() {
+func (l *Lexer) backup() {
 	l.pos -= l.width
 }
 
-// emit passes an item back to the client.
-func (l *lexer) emit(t itemType, e itemEnd) {
-	l.items <- item{t, l.start, l.input[l.start:l.pos], e}
+// emit passes an Item back to the client.
+func (l *Lexer) emit(t ItemType, e ItemEnd) {
+	l.items <- Item{t, l.start, l.input[l.start:l.pos], e}
 	l.start = l.pos
 }
 
 // accept consumes the next rune if it's from the valid set.
-func (l *lexer) accept(valid string) bool {
+func (l *Lexer) accept(valid string) bool {
 	if strings.IndexRune(valid, l.next()) >= 0 {
 		return true
 	}
@@ -112,46 +112,46 @@ func (l *lexer) accept(valid string) bool {
 }
 
 // acceptRun consumes a run of runes from the valid set.
-func (l *lexer) acceptRun(valid string) {
+func (l *Lexer) acceptRun(valid string) {
 	for strings.IndexRune(valid, l.next()) >= 0 {
 	}
 	l.backup()
 }
 
 // lineNumber reports which line we're on, based on the position of
-// the previous item returned by nextItem. Doing it this way
+// the previous Item returned by NextItem. Doing it this way
 // means we don't have to worry about peek double counting.
-func (l *lexer) lineNumber() int {
+func (l *Lexer) lineNumber() int {
 	return 1 + strings.Count(l.input[:l.lastPos], "\n")
 }
 
 // errorf returns an error token and terminates the scan by passing
-// back a nil pointer that will be the next state, terminating l.nextItem.
-func (l *lexer) errorf(format string, args ...interface{}) stateFn {
-	l.items <- item{itemError, l.start, fmt.Sprintf(format, args...), itemEnd(0)}
+// back a nil pointer that will be the next state, terminating l.NextItem.
+func (l *Lexer) errorf(format string, args ...interface{}) stateFn {
+	l.items <- Item{ItemError, l.start, fmt.Sprintf(format, args...), ItemEnd(0)}
 	return nil
 }
 
-// nextItem returns the next item from the input.
-func (l *lexer) nextItem() item {
+// NextItem returns the next Item from the input.
+func (l *Lexer) NextItem() Item {
 	item := <-l.items
-	l.lastPos = item.pos
+	l.lastPos = item.Pos
 	return item
 }
 
-// lex creates a new scanner for the input string.
-func lex(name, input string) *lexer {
-	l := &lexer{
+// Lex creates a new scanner for the input string.
+func Lex(name, input string) *Lexer {
+	l := &Lexer{
 		name:       name,
 		input:      input,
-		items:      make(chan item),
+		items:      make(chan Item),
 	}
 	go l.run()
 	return l
 }
 
-// run runs the state machine for the lexer.
-func (l *lexer) run() {
+// run runs the state machine for the Lexer.
+func (l *Lexer) run() {
 	for l.state = lexAny; l.state != nil; {
 		l.state = l.state(l)
 	}
@@ -159,15 +159,15 @@ func (l *lexer) run() {
 
 // state functions
 
-func lexAny(l *lexer) stateFn {
+func lexAny(l *Lexer) stateFn {
 	switch r := l.next(); {
-	case r == eof:
-		l.emit(itemEOF, itemTerminated)
+	case r == Eof:
+		l.emit(ItemEOF, ItemTerminated)
 		return nil
 	case isSpace(r):
 		return lexSpace
 	case r == '>':
-		l.emit(itemGreater, itemTerminated)
+		l.emit(ItemGreater, ItemTerminated)
 		return lexAny
 	case r == '\n':
 		return lexEndOfLine
@@ -182,43 +182,43 @@ func lexAny(l *lexer) stateFn {
 
 // lexSpace scans a run of space characters.
 // One space has already been seen.
-func lexSpace(l *lexer) stateFn {
+func lexSpace(l *Lexer) stateFn {
 	for isSpace(l.peek()) {
 		l.next()
 	}
-	l.emit(itemSpace, itemAmbiguious)
+	l.emit(ItemSpace, ItemAmbiguious)
 	return lexAny
 }
 
 // lexEndOfLine scans a single EOL, which has already been seen.
-func lexEndOfLine(l *lexer) stateFn {
-	l.emit(itemEndOfLine, itemTerminated)
+func lexEndOfLine(l *Lexer) stateFn {
+	l.emit(ItemEndOfLine, ItemTerminated)
 	return lexAny
 }
 
 // lexBare scans a bare string.
 // The first rune has already been seen.
-func lexBare(l *lexer) stateFn {
+func lexBare(l *Lexer) stateFn {
 	for !terminatesBare(l.peek()) {
 		l.next()
 	}
-	l.emit(itemBare, itemAmbiguious)
+	l.emit(ItemBare, ItemAmbiguious)
 	return lexAny
 }
 
 func terminatesBare(r rune) bool {
-	return isSpace(r) || r == '\n' || r == eof
+	return isSpace(r) || r == '\n' || r == Eof
 }
 
 // lexSingleQuoted scans a single-quoted string.
 // The opening quote has already been seen.
-func lexSingleQuoted(l *lexer) stateFn {
+func lexSingleQuoted(l *Lexer) stateFn {
 	const quote = '\''
 loop:
 	for {
 		switch l.next() {
-		case eof, '\n':
-			l.emit(itemSingleQuoted, itemUnterminated)
+		case Eof, '\n':
+			l.emit(ItemSingleQuoted, ItemUnterminated)
 			return nil
 		case quote:
 			if l.peek() != quote {
@@ -227,29 +227,29 @@ loop:
 			l.next()
 		}
 	}
-	l.emit(itemSingleQuoted, itemAmbiguious)
+	l.emit(ItemSingleQuoted, ItemAmbiguious)
 	return lexAny
 }
 
 // lexDoubleQuoted scans a double-quoted string.
 // The opening quote has already been seen.
-func lexDoubleQuoted(l *lexer) stateFn {
+func lexDoubleQuoted(l *Lexer) stateFn {
 loop:
 	for {
 		switch l.next() {
 		case '\\':
-			if r:= l.next(); r != eof && r != '\n' {
+			if r:= l.next(); r != Eof && r != '\n' {
 				break
 			}
 			fallthrough
-		case eof, '\n':
-			l.emit(itemDoubleQuoted, itemUnterminated)
+		case Eof, '\n':
+			l.emit(ItemDoubleQuoted, ItemUnterminated)
 			return nil
 		case '"':
 			break loop
 		}
 	}
-	l.emit(itemDoubleQuoted, itemTerminated)
+	l.emit(ItemDoubleQuoted, ItemTerminated)
 	return lexAny
 }
 

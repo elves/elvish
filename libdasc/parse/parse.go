@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Das source lexer and parser.
+// Das source Lexer and parser.
 package parse
 
 import (
@@ -23,8 +23,8 @@ type Tree struct {
 	text      string    // text parsed to create the script (or its parent)
 	tab       bool
 	// Parsing only; cleared after parse.
-	lex       *lexer
-	token     [3]item // three-token lookahead for parser.
+	lex       *Lexer
+	token     [3]Item // three-token lookahead for parser.
 	peekCount int
 }
 
@@ -35,11 +35,11 @@ func Do(name, text string, tab bool) (t *Tree, err error) {
 }
 
 // next returns the next token.
-func (t *Tree) next() item {
+func (t *Tree) next() Item {
 	if t.peekCount > 0 {
 		t.peekCount--
 	} else {
-		t.token[0] = t.lex.nextItem()
+		t.token[0] = t.lex.NextItem()
 	}
 	return t.token[t.peekCount]
 }
@@ -51,34 +51,34 @@ func (t *Tree) backup() {
 
 // backup2 backs the input stream up two tokens.
 // The zeroth token is already there.
-func (t *Tree) backup2(t1 item) {
+func (t *Tree) backup2(t1 Item) {
 	t.token[1] = t1
 	t.peekCount = 2
 }
 
 // backup3 backs the input stream up three tokens
 // The zeroth token is already there.
-func (t *Tree) backup3(t2, t1 item) { // Reverse order: we're pushing back.
+func (t *Tree) backup3(t2, t1 Item) { // Reverse order: we're pushing back.
 	t.token[1] = t1
 	t.token[2] = t2
 	t.peekCount = 3
 }
 
 // peek returns but does not consume the next token.
-func (t *Tree) peek() item {
+func (t *Tree) peek() Item {
 	if t.peekCount > 0 {
 		return t.token[t.peekCount-1]
 	}
 	t.peekCount = 1
-	t.token[0] = t.lex.nextItem()
+	t.token[0] = t.lex.NextItem()
 	return t.token[0]
 }
 
 // nextNonSpace returns the next non-space token.
-func (t *Tree) nextNonSpace() (token item) {
+func (t *Tree) nextNonSpace() (token Item) {
 	for {
 		token = t.next()
-		if token.typ != itemSpace {
+		if token.Typ != ItemSpace {
 			break
 		}
 	}
@@ -86,10 +86,10 @@ func (t *Tree) nextNonSpace() (token item) {
 }
 
 // peekNonSpace returns but does not consume the next non-space token.
-func (t *Tree) peekNonSpace() (token item) {
+func (t *Tree) peekNonSpace() (token Item) {
 	for {
 		token = t.next()
-		if token.typ != itemSpace {
+		if token.Typ != ItemSpace {
 			break
 		}
 	}
@@ -138,25 +138,25 @@ func (t *Tree) error(err error) {
 }
 
 // expect consumes the next token and guarantees it has the required type.
-func (t *Tree) expect(expected itemType, context string) item {
+func (t *Tree) expect(expected ItemType, context string) Item {
 	token := t.nextNonSpace()
-	if token.typ != expected {
+	if token.Typ != expected {
 		t.unexpected(token, context)
 	}
 	return token
 }
 
 // expectOneOf consumes the next token and guarantees it has one of the required types.
-func (t *Tree) expectOneOf(expected1, expected2 itemType, context string) item {
+func (t *Tree) expectOneOf(expected1, expected2 ItemType, context string) Item {
 	token := t.nextNonSpace()
-	if token.typ != expected1 && token.typ != expected2 {
+	if token.Typ != expected1 && token.Typ != expected2 {
 		t.unexpected(token, context)
 	}
 	return token
 }
 
 // unexpected complains about the token and terminates processing.
-func (t *Tree) unexpected(token item, context string) {
+func (t *Tree) unexpected(token Item, context string) {
 	t.errorf("unexpected %s in %s", token, context)
 }
 
@@ -175,8 +175,8 @@ func (t *Tree) recover(errp *error) {
 	return
 }
 
-// startParse initializes the parser, using the lexer.
-func (t *Tree) startParse(lex *lexer) {
+// startParse initializes the parser, using the Lexer.
+func (t *Tree) startParse(lex *Lexer) {
 	t.Root = nil
 	t.lex = lex
 }
@@ -197,7 +197,7 @@ func (t *Tree) Parse(text string, tab bool) (tree *Tree, err error) {
 	defer t.recover(&err)
 	t.tab = tab
 	t.ParseName = t.Name
-	t.startParse(lex(t.Name, text))
+	t.startParse(Lex(t.Name, text))
 	t.text = text
 	t.parse()
 	t.stopParse()
@@ -207,13 +207,13 @@ func (t *Tree) Parse(text string, tab bool) (tree *Tree, err error) {
 // parse is the top-level parser for a script.
 // TODO This now only parses a command.
 func (t *Tree) parse() {
-	t.Root = newCommand(t.peek().pos)
+	t.Root = newCommand(t.peek().Pos)
 loop:
 	for {
-		switch t.peekNonSpace().typ {
-		case itemBare, itemSingleQuoted, itemDoubleQuoted:
+		switch t.peekNonSpace().Typ {
+		case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 			t.Root.append(t.term())
-		case itemGreater:
+		case ItemGreater:
 			t.next()
 			t.peekNonSpace()
 			t.Root.StdoutRedir = t.term()
@@ -223,32 +223,32 @@ loop:
 	}
 }
 
-func unquote(token item) (string, error) {
-	switch token.typ {
-	case itemBare:
-		return token.val, nil
-	case itemSingleQuoted:
-		return token.val[1:len(token.val)-1], nil
-	case itemDoubleQuoted:
-		return strconv.Unquote(token.val)
+func unquote(token Item) (string, error) {
+	switch token.Typ {
+	case ItemBare:
+		return token.Val, nil
+	case ItemSingleQuoted:
+		return token.Val[1:len(token.Val)-1], nil
+	case ItemDoubleQuoted:
+		return strconv.Unquote(token.Val)
 	default:
 		return "", fmt.Errorf("Can't unquote token: %v", token)
 	}
 }
 
 func (t *Tree) term() Node {
-	switch token := t.next(); token.typ {
-	case itemBare, itemSingleQuoted, itemDoubleQuoted:
+	switch token := t.next(); token.Typ {
+	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 		text, err := unquote(token)
 		if err != nil {
 			t.error(err)
 		}
-		if token.end & mayContinue != 0 {
-			t.Ctx = NewArgContext(token.val)
+		if token.End & MayContinue != 0 {
+			t.Ctx = NewArgContext(token.Val)
 		} else {
 			t.Ctx = nil
 		}
-		return newString(token.pos, token.val, text)
+		return newString(token.Pos, token.Val, text)
 	default:
 		t.unexpected(token, "term")
 		return nil
