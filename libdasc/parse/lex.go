@@ -219,7 +219,7 @@ loop:
 		switch l.next() {
 		case Eof, '\n':
 			l.emit(ItemSingleQuoted, ItemUnterminated)
-			return nil
+			return lexAny
 		case quote:
 			if l.peek() != quote {
 				break loop
@@ -244,7 +244,7 @@ loop:
 			fallthrough
 		case Eof, '\n':
 			l.emit(ItemDoubleQuoted, ItemUnterminated)
-			return nil
+			return lexAny
 		case '"':
 			break loop
 		}
