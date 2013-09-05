@@ -8,10 +8,14 @@ import (
 type writer struct {
 	line, col int
 	width int
+	file *os.File
 }
 
-func newWriter() *writer {
-	return &writer{width: int(tty.GetWinsize(0).Col)}
+func newWriter(file *os.File) *writer {
+	return &writer{
+		width: int(tty.GetWinsize(int(file.Fd())).Col),
+		file: file,
+	}
 }
 
 func (w *writer) write(r rune) error {
@@ -31,6 +35,6 @@ func (w *writer) write(r rune) error {
 		w.col++
 		s = string(r)
 	}
-	_, err := os.Stdout.WriteString(s)
+	_, err := w.file.WriteString(s)
 	return err
 }

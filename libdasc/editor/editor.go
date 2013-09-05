@@ -12,6 +12,7 @@ import (
 
 type Editor struct {
 	savedTermios *tty.Termios
+	file *os.File
 }
 
 type LineRead struct {
@@ -22,32 +23,36 @@ type LineRead struct {
 
 var savedTermios *tty.Termios
 
-func Init() (*Editor, error) {
-	term, err := tty.NewTermiosFromFd(0)
+func Init(fd int) (*Editor, error) {
+	term, err := tty.NewTermiosFromFd(fd)
 	if err != nil {
-		return nil, fmt.Errorf("Can't get terminal attribute of stdin: %s", err)
+		return nil, fmt.Errorf("Can't get terminal attribute: %s", err)
 	}
 
-	editor := &Editor{savedTermios: term.Copy()}
+	editor := &Editor{
+		savedTermios: term.Copy(),
+		file: os.NewFile(uintptr(fd), "<line editor terminal>"),
+	}
 
 	term.SetIcanon(false)
 	term.SetEcho(false)
 	term.SetMin(1)
 	term.SetTime(0)
 
-	err = term.ApplyToFd(0)
+	err = term.ApplyToFd(fd)
 	if err != nil {
-		return nil, fmt.Errorf("Can't set up terminal attribute of stdin: %s", err)
+		return nil, fmt.Errorf("Can't set up terminal attribute: %s", err)
 	}
 
-	fmt.Print("\033[?7l")
+	fmt.Fprint(editor.file, "\033[?7l")
 	return editor, nil
 }
 
 func (ed *Editor) Cleanup() error {
-	fmt.Print("\033[?7h")
+	fmt.Fprint(ed.file, "\033[?7h")
 
-	err := ed.savedTermios.ApplyToFd(0)
+	fd := int(ed.file.Fd())
+	err := ed.savedTermios.ApplyToFd(fd)
 	if err != nil {
 		return fmt.Errorf("Can't restore terminal attribute of stdin: %s", err)
 	}
@@ -59,7 +64,7 @@ func (ed *Editor) beep() {
 }
 
 func (ed *Editor) tip(s string) {
-	fmt.Printf("\n%s\033[A", s)
+	fmt.Fprintf(ed.file, "\n%s\033[A", s)
 }
 
 func (ed *Editor) tipf(format string, a ...interface{}) {
@@ -67,11 +72,11 @@ func (ed *Editor) tipf(format string, a ...interface{}) {
 }
 
 func (ed *Editor) clearTip() {
-	fmt.Printf("\n\033[K\033[A")
+	fmt.Fprintf(ed.file, "\n\033[K\033[A")
 }
 
 func (ed *Editor) refresh(prompt, text string) (newlines int, err error) {
-	w := newWriter()
+	w := newWriter(ed.file)
 	defer func() {
 		newlines = w.line
 	}()
@@ -103,16 +108,16 @@ func (ed *Editor) refresh(prompt, text string) (newlines int, err error) {
 }
 
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
-	stdin := bufio.NewReaderSize(os.Stdin, 0)
+	stdin := bufio.NewReaderSize(ed.file, 0)
 	line := ""
 
 	newlines := 0
 
 	for {
 		if newlines > 0 {
-			fmt.Printf("\033[%dA", newlines)
+			fmt.Fprintf(ed.file, "\033[%dA", newlines)
 		}
-		fmt.Printf("\r\033[J")
+		fmt.Fprintf(ed.file, "\r\033[J")
 
 		newlines, _ = ed.refresh(prompt, line)
 
@@ -124,7 +129,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		switch {
 		case r == '\n':
 			ed.clearTip()
-			fmt.Println()
+			fmt.Fprintln(ed.file)
 			return LineRead{Line: line}
 		case r == 0x7f: // Backspace
 			if l := len(line); l > 0 {
@@ -138,9 +143,9 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		case r == 0x4 && len(line) == 0: // ^D
 			return LineRead{Eof: true}
 		case r == 0x2: // ^B
-			fmt.Printf("\033[D")
+			fmt.Fprintf(ed.file, "\033[D")
 		case r == 0x6: // ^F
-			fmt.Printf("\033[C")
+			fmt.Fprintf(ed.file, "\033[C")
 		case unicode.IsGraphic(r):
 			line += string(r)
 		default:
