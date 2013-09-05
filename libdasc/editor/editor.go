@@ -23,13 +23,12 @@ type LineRead struct {
 var savedTermios *tty.Termios
 
 func Init() (*Editor, error) {
-	var err error
-	editor := &Editor{}
-	editor.savedTermios, err = tty.NewTermiosFromFd(0)
+	term, err := tty.NewTermiosFromFd(0)
 	if err != nil {
 		return nil, fmt.Errorf("Can't get terminal attribute of stdin: %s", err)
 	}
-	term := editor.savedTermios.Copy()
+
+	editor := &Editor{savedTermios: term.Copy()}
 
 	term.SetIcanon(false)
 	term.SetEcho(false)
