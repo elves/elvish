@@ -115,12 +115,12 @@ func main() {
 		cmd_no++
 		name := fmt.Sprintf("<interactive code %d>", cmd_no)
 
-		err := editor.Init()
+		ed, err := editor.Init()
 		if err != nil {
 			panic(err)
 		}
-		lr := editor.ReadLine("das> ")
-		err = editor.Cleanup()
+		lr := ed.ReadLine("das> ")
+		err = ed.Cleanup()
 		if err != nil {
 			panic(err)
 		}
