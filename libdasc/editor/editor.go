@@ -21,7 +21,7 @@ type Editor struct {
 	savedTermios *tty.Termios
 	file *os.File
 	oldBuf, buf buffer
-	line, col, width int
+	line, col, width, indent int
 }
 
 type LineRead struct {
@@ -121,6 +121,11 @@ func (ed *Editor) newline() {
 	ed.buf = append(ed.buf, make([]cell, ed.width))
 	ed.line++
 	ed.col = 0
+	if ed.indent > 0 {
+		for i := 0; i < ed.indent; i++ {
+			ed.appendToLine(cell{rune: ' '})
+		}
+	}
 }
 
 func (ed *Editor) write(r rune) {
@@ -145,19 +150,12 @@ func (ed *Editor) refresh(prompt, text string) error {
 		ed.write(r)
 	}
 
-	var indent int
 	if ed.col * 2 < ed.width {
-		indent = ed.col
+		ed.indent = ed.col
 	}
 
 	for _, r := range text {
 		ed.write(r)
-		if ed.col == 0 {
-			// XXX doesn't work on overflowed runes
-			for i := 0; i < indent; i++ {
-				ed.write(' ')
-			}
-		}
 	}
 
 	return ed.commitBuffer()
