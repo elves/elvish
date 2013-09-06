@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"fmt"
-	"bufio"
 	"strconv"
 	"strings"
 	"syscall"
@@ -69,14 +68,6 @@ func search(exe string) string {
 		}
 	}
 	return ""
-}
-
-func readline(stdin *bufio.Reader) (line string, err error) {
-	line, err = stdin.ReadString('\n')
-	if err == nil {
-		line = line[:len(line)-1]
-	}
-	return
 }
 
 func evalCommand(n *parse.CommandNode) (args []string, stdoutRedir *string) {
