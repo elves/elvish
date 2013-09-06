@@ -10,9 +10,18 @@ import (
 	"./tty"
 )
 
+type cell struct {
+	rune
+	width byte
+}
+
+type buffer [][]cell
+
 type Editor struct {
 	savedTermios *tty.Termios
 	file *os.File
+	oldBuf, buf buffer
+	line, col, width int
 }
 
 type LineRead struct {
@@ -32,6 +41,7 @@ func Init(fd int) (*Editor, error) {
 	editor := &Editor{
 		savedTermios: term.Copy(),
 		file: os.NewFile(uintptr(fd), "<line editor terminal>"),
+		oldBuf: [][]cell{[]cell{}},
 	}
 
 	term.SetIcanon(false)
@@ -75,51 +85,91 @@ func (ed *Editor) clearTip() {
 	fmt.Fprintf(ed.file, "\n\033[K\033[A")
 }
 
-func (ed *Editor) refresh(prompt, text string) (newlines int, err error) {
-	w := newWriter(ed.file)
-	defer func() {
-		newlines = w.line
-	}()
-	for _, r := range prompt {
-		err = w.write(r)
-		if err != nil {
-			return
-		}
+func (ed *Editor) startBuffer() {
+	ed.line = 0
+	ed.col = 0
+	ed.width = int(tty.GetWinsize(int(ed.file.Fd())).Col)
+	ed.buf = [][]cell{make([]cell, ed.width)}
+}
+
+func (ed *Editor) commitBuffer() error {
+	newlines := len(ed.oldBuf) - 1
+	if newlines > 0 {
+		fmt.Fprintf(ed.file, "\033[%dA", newlines)
 	}
-	var indent int
-	if w.col * 2 < w.width {
-		indent = w.col
-	}
-	for _, r := range text {
-		err = w.write(r)
-		if err != nil {
-			return
-		}
-		if w.col == 0 {
-			for i := 0; i < indent; i++ {
-				err = w.write(' ')
-				if err != nil {
-					return
-				}
+	fmt.Fprintf(ed.file, "\r\033[J")
+
+	for _, line := range ed.buf {
+		for _, c := range line {
+			_, err := ed.file.WriteString(string(c.rune))
+			if err != nil {
+				return err
 			}
 		}
 	}
-	return
+	ed.oldBuf = ed.buf
+	return nil
+}
+
+func (ed *Editor) appendToLine(c cell) {
+	ed.buf[ed.line] = append(ed.buf[ed.line], c)
+	ed.col += int(c.width)
+}
+
+func (ed *Editor) newline() {
+	ed.buf[ed.line] = append(ed.buf[ed.line], cell{rune: '\n'})
+	ed.buf = append(ed.buf, make([]cell, ed.width))
+	ed.line++
+	ed.col = 0
+}
+
+func (ed *Editor) write(r rune) {
+	wd := wcwidth(r)
+	c := cell{r, byte(wd)}
+
+	if ed.col + wd > ed.width {
+		ed.newline()
+		ed.appendToLine(c)
+	} else if ed.col + wd == ed.width {
+		ed.appendToLine(c)
+		ed.newline()
+	} else {
+		ed.appendToLine(c)
+	}
+}
+
+func (ed *Editor) refresh(prompt, text string) error {
+	ed.startBuffer()
+
+	for _, r := range prompt {
+		ed.write(r)
+	}
+
+	var indent int
+	if ed.col * 2 < ed.width {
+		indent = ed.col
+	}
+
+	for _, r := range text {
+		ed.write(r)
+		if ed.col == 0 {
+			// XXX doesn't work on overflowed runes
+			for i := 0; i < indent; i++ {
+				ed.write(' ')
+			}
+		}
+	}
+
+	return ed.commitBuffer()
 }
 
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	stdin := bufio.NewReaderSize(ed.file, 0)
 	line := ""
 
-	newlines := 0
-
 	for {
-		if newlines > 0 {
-			fmt.Fprintf(ed.file, "\033[%dA", newlines)
-		}
-		fmt.Fprintf(ed.file, "\r\033[J")
-
-		newlines, _ = ed.refresh(prompt, line)
+		// TODO handle err
+		ed.refresh(prompt, line)
 
 		r, _, err := stdin.ReadRune()
 		if err != nil {
