@@ -168,8 +168,10 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	line := ""
 
 	for {
-		// TODO handle err
-		ed.refresh(prompt, line)
+		err := ed.refresh(prompt, line)
+		if err != nil {
+			return LineRead{Err: err}
+		}
 
 		r, _, err := stdin.ReadRune()
 		if err != nil {
