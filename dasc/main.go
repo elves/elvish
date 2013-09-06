@@ -29,10 +29,6 @@ func getIntArg(i int) int {
 	return -1
 }
 
-func prompt() {
-	fmt.Print("> ")
-}
-
 func lackeol() {
 	fmt.Println("\033[7m%\033[m")
 }
