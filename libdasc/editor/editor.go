@@ -123,7 +123,7 @@ func (ed *Editor) newline() {
 	ed.col = 0
 	if ed.indent > 0 {
 		for i := 0; i < ed.indent; i++ {
-			ed.appendToLine(cell{rune: ' '})
+			ed.appendToLine(cell{rune: ' ', width: 1})
 		}
 	}
 }
