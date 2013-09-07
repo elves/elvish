@@ -10,11 +10,6 @@ import (
 	"./tty"
 )
 
-type cell struct {
-	rune
-	width byte
-}
-
 type buffer [][]cell
 
 type Editor struct {
