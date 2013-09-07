@@ -30,8 +30,6 @@ type LineRead struct {
 	Err error
 }
 
-var savedTermios *tty.Termios
-
 func Init(fd int) (*Editor, error) {
 	term, err := tty.NewTermiosFromFd(fd)
 	if err != nil {
