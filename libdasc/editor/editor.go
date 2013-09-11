@@ -10,8 +10,11 @@ import (
 	"./tty"
 )
 
+// buffer keeps the status of the screen that the line editor is concerned
+// with. It usually reflects the last n lines of the screen.
 type buffer [][]cell
 
+// Editor keeps the status of the line editor.
 type Editor struct {
 	savedTermios *tty.Termios
 	file *os.File
@@ -19,12 +22,15 @@ type Editor struct {
 	line, col, width, indent int
 }
 
+// LineRead is the result of ReadLine. Exactly one member is non-zero, making
+// it effectively a tagged union.
 type LineRead struct {
 	Line string
 	Eof bool
 	Err error
 }
 
+// Init initializes an Editor on the terminal referenced by fd.
 func Init(fd int) (*Editor, error) {
 	term, err := tty.NewTermiosFromFd(fd)
 	if err != nil {
@@ -51,6 +57,8 @@ func Init(fd int) (*Editor, error) {
 	return editor, nil
 }
 
+// Cleanup restores the terminal referenced by fd so that other commands
+// that use the terminal can be executed.
 func (ed *Editor) Cleanup() error {
 	fmt.Fprint(ed.file, "\033[?7h")
 
@@ -154,6 +162,7 @@ func (ed *Editor) refresh(prompt, text string) error {
 	return ed.commitBuffer()
 }
 
+// ReadLine reads a line interactively.
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	stdin := bufio.NewReaderSize(ed.file, 0)
 	line := ""
