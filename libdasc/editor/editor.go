@@ -5,6 +5,7 @@ import (
 	"os"
 	"fmt"
 	"bufio"
+	"bytes"
 	"unicode"
 	"unicode/utf8"
 	"./tty"
@@ -97,34 +98,32 @@ func (ed *Editor) startBuffer() {
 }
 
 func (ed *Editor) commitBuffer() error {
+	bytesBuf := new(bytes.Buffer)
+
 	newlines := len(ed.oldBuf) - 1
 	if newlines > 0 {
-		fmt.Fprintf(ed.file, "\033[%dA", newlines)
+		fmt.Fprintf(bytesBuf, "\033[%dA", newlines)
 	}
-	fmt.Fprintf(ed.file, "\r\033[J")
+	bytesBuf.WriteString("\r\033[J")
 
 	attr := ""
 	for _, line := range ed.buf {
 		for _, c := range line {
 			if c.width > 0 && c.attr != attr {
-				_, err := fmt.Fprintf(ed.file, "\033[%sm", c.attr)
-				if err != nil {
-					return err
-				}
+				fmt.Fprintf(bytesBuf, "\033[%sm", c.attr)
 				attr = c.attr
 			}
-			_, err := ed.file.WriteString(string(c.rune))
-			if err != nil {
-				return err
-			}
+			bytesBuf.WriteString(string(c.rune))
 		}
 	}
 	if attr != "" {
-		_, err := fmt.Fprint(ed.file, "\033[m")
-		if err != nil {
-			return err
-		}
+		bytesBuf.WriteString("\033[m")
 	}
+	_, err := ed.file.Write(bytesBuf.Bytes())
+	if err != nil {
+		return err
+	}
+
 	ed.oldBuf = ed.buf
 	return nil
 }
