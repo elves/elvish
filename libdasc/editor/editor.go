@@ -8,6 +8,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 	"./tty"
+	"../parse"
 )
 
 // buffer keeps the status of the screen that the line editor is concerned
@@ -20,6 +21,7 @@ type Editor struct {
 	file *os.File
 	oldBuf, buf buffer
 	line, col, width, indent int
+	currentAttr string
 }
 
 // LineRead is the result of ReadLine. Exactly one member is non-zero, making
@@ -91,6 +93,7 @@ func (ed *Editor) startBuffer() {
 	ed.col = 0
 	ed.width = int(tty.GetWinsize(int(ed.file.Fd())).Col)
 	ed.buf = [][]cell{make([]cell, ed.width)}
+	ed.currentAttr = ""
 }
 
 func (ed *Editor) commitBuffer() error {
@@ -100,12 +103,26 @@ func (ed *Editor) commitBuffer() error {
 	}
 	fmt.Fprintf(ed.file, "\r\033[J")
 
+	attr := ""
 	for _, line := range ed.buf {
 		for _, c := range line {
+			if c.width > 0 && c.attr != attr {
+				_, err := fmt.Fprintf(ed.file, "\033[%sm", c.attr)
+				if err != nil {
+					return err
+				}
+				attr = c.attr
+			}
 			_, err := ed.file.WriteString(string(c.rune))
 			if err != nil {
 				return err
 			}
+		}
+	}
+	if attr != "" {
+		_, err := fmt.Fprint(ed.file, "\033[m")
+		if err != nil {
+			return err
 		}
 	}
 	ed.oldBuf = ed.buf
@@ -131,7 +148,7 @@ func (ed *Editor) newline() {
 
 func (ed *Editor) write(r rune) {
 	wd := wcwidth(r)
-	c := cell{r, byte(wd)}
+	c := cell{r, byte(wd), ed.currentAttr}
 
 	if ed.col + wd > ed.width {
 		ed.newline()
@@ -155,8 +172,17 @@ func (ed *Editor) refresh(prompt, text string) error {
 		ed.indent = ed.col
 	}
 
-	for _, r := range text {
-		ed.write(r)
+	l := parse.Lex("<interactive code>", text)
+
+	for {
+		token := l.NextItem()
+		if token.Typ == parse.ItemEOF {
+			break
+		}
+		ed.currentAttr = attrForType[token.Typ]
+		for _, r := range token.Val {
+			ed.write(r)
+		}
 	}
 
 	return ed.commitBuffer()
