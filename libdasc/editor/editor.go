@@ -34,7 +34,8 @@ type LineRead struct {
 }
 
 // Init initializes an Editor on the terminal referenced by fd.
-func Init(fd int) (*Editor, error) {
+func Init(file *os.File) (*Editor, error) {
+	fd := int(file.Fd())
 	term, err := tty.NewTermiosFromFd(fd)
 	if err != nil {
 		return nil, fmt.Errorf("Can't get terminal attribute: %s", err)
@@ -42,7 +43,7 @@ func Init(fd int) (*Editor, error) {
 
 	editor := &Editor{
 		savedTermios: term.Copy(),
-		file: os.NewFile(uintptr(fd), "<line editor terminal>"),
+		file: file,
 		oldBuf: [][]cell{[]cell{}},
 	}
 

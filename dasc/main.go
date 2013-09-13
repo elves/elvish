@@ -102,7 +102,7 @@ func main() {
 		cmd_no++
 		name := fmt.Sprintf("<interactive code %d>", cmd_no)
 
-		ed, err := editor.Init(0)
+		ed, err := editor.Init(os.Stdin)
 		if err != nil {
 			panic(err)
 		}
