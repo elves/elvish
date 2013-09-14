@@ -185,12 +185,15 @@ func main() {
 			if err != nil {
 				fmt.Printf("broken response pipe, quitting")
 				os.Exit(1)
-			} else {
-				// fmt.Printf("response: %s\n", res)
 			}
 
 			if res.ProcState != nil {
 				break
+			} else if br := res.BadRequest; br != nil {
+				fmt.Printf("server complained bad request: %s\n", br.Err)
+				break
+			} else if c := res.Cmd; c != nil {
+				// fmt.Printf("forked: %d\n", c.Pid)
 			}
 		}
 	}
