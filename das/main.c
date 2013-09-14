@@ -20,13 +20,13 @@ void external(ReqCmd *cmd) {
     environ = cmd->envp;
     int i;
     for (i = 0; cmd->redirs[i][0] >= 0; i++) {
-        int newfd = cmd->redirs[i][0];
-        int oldfd = cmd->redirs[i][1];
-        if (newfd < 0) {
-            DieIf_1(close(oldfd), "close");
+        int fd = cmd->redirs[i][0];
+        int oldFd = cmd->redirs[i][1];
+        if (oldFd < 0) {
+            DieIf_1(close(fd), "close");
         } else {
-            DieIf_1(dup2(oldfd, newfd), "dup2");
-            close(oldfd);
+            DieIf_1(dup2(oldFd, fd), "dup2");
+            close(oldFd);
         }
     }
 

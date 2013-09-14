@@ -193,12 +193,12 @@ bool *recvFds(ReqCmd *cmd, int n) {
     int i;
     for (i = 0; i < n; i++) {
         if (cmd->redirs[i][1] == FD_SEND) {
-            int newfd;
-            if ((newfd = recvFd()) < 0) {
+            int oldFd;
+            if ((oldFd = recvFd()) < 0) {
                 free(isRecvedFds);
                 return 0;
             }
-            cmd->redirs[i][1] = newfd;
+            cmd->redirs[i][1] = oldFd;
         }
     }
     return isRecvedFds;

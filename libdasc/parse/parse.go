@@ -269,22 +269,22 @@ func (t *Tree) redir() Redir {
 		dir = leader.Val
 	}
 
-	// Determine the flag and default oldfd from the direction.
-	var oldfd, flag int
+	// Determine the flag and default (new) fd from the direction.
+	var fd, flag int
 
 	switch dir {
 	case "<":
 		flag = os.O_RDONLY
-		oldfd = 0
+		fd = 0
 	case "<>":
 		flag = os.O_RDWR | os.O_CREATE
-		oldfd = 0
+		fd = 0
 	case ">":
 		flag = os.O_WRONLY | os.O_CREATE
-		oldfd = 1
+		fd = 1
 	case ">>":
 		flag = os.O_WRONLY | os.O_CREATE | os.O_APPEND
-		oldfd = 1
+		fd = 1
 	default:
 		t.errorf("Unexpected redirection direction %q", dir)
 	}
@@ -297,30 +297,30 @@ func (t *Tree) redir() Redir {
 			rhs := qual[i+1:]
 			if len(lhs) > 0 {
 				var err error
-				oldfd, err = strconv.Atoi(lhs)
+				fd, err = strconv.Atoi(lhs)
 				if err != nil {
-					t.errorf("Invalid oldfd in qualified redirection %q", lhs)
+					t.errorf("Invalid new fd in qualified redirection %q", lhs)
 				}
 			}
 			if len(rhs) > 0 {
-				newfd, err := strconv.Atoi(rhs)
+				oldfd, err := strconv.Atoi(rhs)
 				if err != nil {
-					t.errorf("Invalid newfd in qualified redirection %q", rhs)
+					t.errorf("Invalid old fd in qualified redirection %q", rhs)
 				}
-				return newFdRedir(oldfd, newfd)
+				return newFdRedir(fd, oldfd)
 			} else {
-				return newCloseRedir(oldfd)
+				return newCloseRedir(fd)
 			}
 		} else {
-			// FilenameRedir with oldfd altered
+			// FilenameRedir with fd altered
 			var err error
-			oldfd, err = strconv.Atoi(qual)
+			fd, err = strconv.Atoi(qual)
 			if err != nil {
-				t.errorf("Invalid oldfd in qualified redirection %q", qual)
+				t.errorf("Invalid new fd in qualified redirection %q", qual)
 			}
 		}
 	}
 	// FilenameRedir
 	t.peekNonSpace()
-	return newFilenameRedir(oldfd, flag, t.term())
+	return newFilenameRedir(fd, flag, t.term())
 }

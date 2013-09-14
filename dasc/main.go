@@ -147,17 +147,17 @@ func main() {
 		}
 
 		for i, r := range tree.Root.Redirs {
-			cmd.Redirs[i][0] = r.Oldfd()
+			cmd.Redirs[i][0] = r.Fd()
 
 			switch r := r.(type) {
 			case *parse.FdRedir:
-				cmd.Redirs[i][1] = r.Newfd
+				cmd.Redirs[i][1] = r.OldFd
 			case *parse.CloseRedir:
 				cmd.Redirs[i][1] = FdClose
 			case *parse.FilenameRedir:
 				// TODO haz hardcoded permbits now
 				fname := evalTerm(r.Filename)
-				newfd, err := syscall.Open(fname, r.Flag, 0644)
+				oldFd, err := syscall.Open(fname, r.Flag, 0644)
 				if err != nil {
 					// TODO Should abort command execution
 					fmt.Fprintf(os.Stderr, "Failed to open file %q: %s\n",
@@ -165,7 +165,7 @@ func main() {
 					cmd.Redirs[i][1] = FdClose
 				} else {
 					cmd.Redirs[i][1] = FdSend
-					cmd.FdsToSend[i] = newfd
+					cmd.FdsToSend[i] = oldFd
 				}
 			default:
 				panic("unreachable")
