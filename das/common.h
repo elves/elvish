@@ -1,6 +1,7 @@
 #ifndef _common_h_
 #define _common_h_
 
+#include <stdbool.h>
 #include <sys/types.h>
 
 #define alloc(type, n) ((type*) calloc(sizeof(type), (n)))

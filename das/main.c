@@ -18,10 +18,18 @@ int exiting = 0;
 
 void external(ReqCmd *cmd) {
     environ = cmd->envp;
-    if (cmd->redirOutput) {
-        DieIf_1(dup2(cmd->output, 1), "dup2");
-        close(cmd->output);
+    int i;
+    for (i = 0; cmd->redirs[i][0] >= 0; i++) {
+        int newfd = cmd->redirs[i][0];
+        int oldfd = cmd->redirs[i][1];
+        if (newfd < 0) {
+            DieIf_1(close(oldfd), "close");
+        } else {
+            DieIf_1(dup2(oldfd, newfd), "dup2");
+            close(oldfd);
+        }
     }
+
     DieIf_1(execv(cmd->path, cmd->argv), "exec");
 }
 
@@ -44,9 +52,15 @@ void worker() {
         if (pid == 0) {
             external(cmd);
         } else {
-            if (cmd->redirOutput) {
-                close(cmd->output);
+            int i;
+            for (i = 0; cmd->redirs[i][0] >= 0; i++) {
+                if (cmd->isRecvedFd[i]) {
+                    // FDs received on the Unix socket isn't kept in the
+                    // parent process.
+                    close(cmd->redirs[i][1]);
+                }
             }
+
             ResCmd *res = NewResCmd();
             res->pid = pid;
             SendRes((Res*)res);

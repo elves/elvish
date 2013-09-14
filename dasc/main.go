@@ -70,18 +70,10 @@ func evalTerm(n parse.Node) string {
 	return n.(*parse.StringNode).Text
 }
 
-func evalCommand(n *parse.CommandNode) (args []string, stdoutRedir *string) {
+func evalCommandArgs(n *parse.CommandNode) (args []string) {
 	args = make([]string, 0, len(n.Nodes))
 	for _, w := range n.Nodes {
 		args = append(args, evalTerm(w))
-	}
-	for _, r := range n.Redirs {
-		// fmt.Printf("Found redir: %v\n", r)
-		rr, ok := r.(*parse.FilenameRedir)
-		if ok && rr.Oldfd() == 1 {
-			s := evalTerm(rr.Filename)
-			stdoutRedir = &s
-		}
 	}
 	return
 }
@@ -133,7 +125,7 @@ func main() {
 			fmt.Println("Parser error:", err)
 			continue
 		}
-		args, stdoutRedir := evalCommand(tree.Root)
+		args := evalCommandArgs(tree.Root)
 		if len(args) == 0 {
 			continue
 		}
@@ -143,28 +135,49 @@ func main() {
 			continue
 		}
 		args[0] = full
+
+		nredirs := len(tree.Root.Redirs)
+
 		cmd := ReqCmd{
 			Path: args[0],
 			Args: args,
 			Env: env,
+			Redirs: make([][2]int, nredirs),
+			FdsToSend: make([]int, nredirs),
 		}
-		if stdoutRedir != nil {
-			cmd.RedirOutput = true
-			// TODO haz hardcoded permbits now
-			outputFd, err := syscall.Open(
-				*stdoutRedir, syscall.O_WRONLY | syscall.O_CREAT, 0644)
-			if err != nil {
-				fmt.Printf("Failed to open output file %v for writing: %s\n",
-				           *stdoutRedir, err)
-				continue
+
+		for i, r := range tree.Root.Redirs {
+			cmd.Redirs[i][0] = r.Oldfd()
+
+			switch r := r.(type) {
+			case *parse.FdRedir:
+				cmd.Redirs[i][1] = r.Newfd
+			case *parse.CloseRedir:
+				cmd.Redirs[i][1] = FdClose
+			case *parse.FilenameRedir:
+				// TODO haz hardcoded permbits now
+				fname := evalTerm(r.Filename)
+				newfd, err := syscall.Open(fname, r.Flag, 0644)
+				if err != nil {
+					// TODO Should abort command execution
+					fmt.Fprintf(os.Stderr, "Failed to open file %q: %s\n",
+					            r.Filename, err)
+					cmd.Redirs[i][1] = FdClose
+				} else {
+					cmd.Redirs[i][1] = FdSend
+					cmd.FdsToSend[i] = newfd
+				}
+			default:
+				panic("unreachable")
 			}
-			cmd.Output = outputFd
 		}
 
 		SendReq(Req{Cmd: &cmd})
 
-		if cmd.RedirOutput {
-			syscall.Close(cmd.Output)
+		for i, r := range cmd.Redirs {
+			if r[1] == FdSend {
+				syscall.Close(cmd.FdsToSend[i])
+			}
 		}
 
 		for {

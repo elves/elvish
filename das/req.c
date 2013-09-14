@@ -113,6 +113,40 @@ char **loadEnvp(json_t *root) {
     return envp;
 }
 
+int (*loadRedirs(json_t *root, int *nredirs))[2] {
+    if (!json_is_array(root)) {
+        fprintf(stderr, "Redirs not array\n");
+        return 0;
+    }
+
+    int n = json_array_size(root);
+    *nredirs = n;
+    int (*redirs)[2] = calloc(sizeof(int[2]), n + 1);
+
+    int i, j;
+    for (i = 0; i < n; i++) {
+        json_t *fd_pair = json_array_get(root, i);
+        if (!json_is_array(fd_pair) || json_array_size(fd_pair) != 2) {
+            fprintf(stderr, "Redirs[%d] is not a pair\n", i);
+            free(redirs);
+            return 0;
+        }
+        for (j = 0; j < 2; j++) {
+            json_t *fd = json_array_get(fd_pair, j);
+            if (!json_is_integer(fd)) {
+                fprintf(stderr, "Redirs[%d][%d] is not an integer\n", i, j);
+                free(redirs);
+                return 0;
+            }
+            redirs[i][j] = json_integer_value(fd);
+        }
+    }
+    // End of list marker - 0 can't be used since it's a valid fd
+    redirs[i][0] = -1;
+
+    return redirs;
+}
+
 ReqCmd *newReqCmd() {
     ReqCmd *r = alloc(ReqCmd, 1);
     r->type = REQ_TYPE_CMD;
@@ -153,25 +187,37 @@ int recvFd() {
     return fd;
 }
 
-int recvFds(ReqCmd *cmd) {
-    if (cmd->redirOutput && (cmd->output = recvFd()) < 0) {
-        return -1;
+bool *recvFds(ReqCmd *cmd, int n) {
+    bool *isRecvedFds = alloc(bool, n + 1);
+
+    int i;
+    for (i = 0; i < n; i++) {
+        if (cmd->redirs[i][1] == FD_SEND) {
+            int newfd;
+            if ((newfd = recvFd()) < 0) {
+                free(isRecvedFds);
+                return 0;
+            }
+            cmd->redirs[i][1] = newfd;
+        }
     }
-    return 0;
+    return isRecvedFds;
 }
 
 ReqCmd *loadReqCmd(json_t *root) {
     ReqCmd *cmd = newReqCmd();
 
     const char *path;
-    json_t *args, *env;
+    int nredirs;
+    json_t *args, *env, *redirs;
     int success =
-        (!json_unpack_ex(root, 0, JSON_STRICT, "{ss so so sb}",
+        (!json_unpack_ex(root, 0, JSON_STRICT, "{ss so so so}",
                          "Path", &path, "Args", &args, "Env", &env,
-                         "RedirOutput", &cmd->redirOutput) &&
+                         "Redirs", &redirs) &&
          (cmd->argv = loadArgv(args)) &&
          (cmd->envp = loadEnvp(env)) &&
-         !recvFds(cmd));
+         (cmd->redirs = loadRedirs(redirs, &nredirs)) &&
+         (cmd->isRecvedFd = recvFds(cmd, nredirs)));
 
     if (success) {
         cmd->path = strdup(path);

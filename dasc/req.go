@@ -6,12 +6,20 @@ import (
 	"encoding/json"
 )
 
+// Special fds used in Redirs[i][1]. These are all negative.
+const (
+	FdClose int = -iota-1
+	FdSend
+)
+
 type ReqCmd struct {
 	Path string
 	Args []string
 	Env map[string]string
-	RedirOutput bool
-	Output int `json:"-"`
+	// A list of [oldfd, newfd] tuples. newfd may take negative special
+	// values.
+	Redirs [][2]int
+	FdsToSend []int `json:"-"`
 }
 
 type ReqExit struct {
@@ -40,8 +48,10 @@ func SendReq(req Req) {
 
 	cmd := req.Cmd
 	if cmd != nil {
-		if cmd.RedirOutput {
-			sendFd(cmd.Output)
+		for i, r := range cmd.Redirs {
+			if r[1] == FdSend {
+				sendFd(cmd.FdsToSend[i])
+			}
 		}
 	}
 }
