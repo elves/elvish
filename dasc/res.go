@@ -3,6 +3,7 @@ package main
 type Res struct {
 	Cmd *ResCmd
 	ProcState *ResProcState
+	BadRequest *ResBadRequest
 }
 
 type ResCmd struct {
@@ -19,6 +20,10 @@ type ResProcState struct {
 	Stopped bool
 	StopSig int
 	Continued bool
+}
+
+type ResBadRequest struct {
+	Err string
 }
 
 func RecvRes() (r Res, err error) {
