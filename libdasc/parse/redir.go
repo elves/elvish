@@ -4,6 +4,7 @@ package parse
 // the *Redir types below.
 type Redir interface {
 	Oldfd() int
+	// ensure only structs in this package can satisfy this interface
 	unexported()
 }
 
