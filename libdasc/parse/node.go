@@ -101,7 +101,7 @@ func (l *ListNode) Copy() Node {
 // TODO only stdout redirection is supported now.
 type CommandNode struct {
 	ListNode
-	StdoutRedir Node
+	Redirs []Redir
 }
 
 func newCommand(pos Pos) *CommandNode {

@@ -66,13 +66,22 @@ func search(exe string) string {
 	return ""
 }
 
+func evalTerm(n parse.Node) string {
+	return n.(*parse.StringNode).Text
+}
+
 func evalCommand(n *parse.CommandNode) (args []string, stdoutRedir *string) {
 	args = make([]string, 0, len(n.Nodes))
 	for _, w := range n.Nodes {
-		args = append(args, w.(*parse.StringNode).Text)
+		args = append(args, evalTerm(w))
 	}
-	if n.StdoutRedir != nil {
-		stdoutRedir = &n.StdoutRedir.(*parse.StringNode).Text
+	for _, r := range n.Redirs {
+		// fmt.Printf("Found redir: %v\n", r)
+		rr, ok := r.(*parse.FilenameRedir)
+		if ok && rr.Oldfd() == 1 {
+			s := evalTerm(rr.Filename)
+			stdoutRedir = &s
+		}
 	}
 	return
 }

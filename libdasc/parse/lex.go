@@ -41,7 +41,7 @@ const (
 	ItemBare         // a bare string literal
 	ItemSingleQuoted // a single-quoted string literal
 	ItemDoubleQuoted // a double-quoted string literal
-	ItemGreater      // a greater-than sign
+	ItemRedirLeader  // IO redirection leader
 )
 
 // ItemEnd describes the ending of lex items.
@@ -166,9 +166,9 @@ func lexAny(l *Lexer) stateFn {
 		return nil
 	case isSpace(r):
 		return lexSpace
-	case r == '>':
-		l.emit(ItemGreater, ItemTerminated)
-		return lexAny
+	case r == '>' || r == '<':
+		l.backup()
+		return lexRedirLeader
 	case r == '\n':
 		return lexEndOfLine
 	case r == '\'':
@@ -187,6 +187,39 @@ func lexSpace(l *Lexer) stateFn {
 		l.next()
 	}
 	l.emit(ItemSpace, ItemAmbiguious)
+	return lexAny
+}
+
+// lexRedirLeader scans an IO redirection leader.
+// It is started by one of < <> > >> and may be followed immediately by a
+// string surrounded by square brackets. The internal structure of the string
+// is not checked here.
+func lexRedirLeader(l *Lexer) stateFn {
+	switch l.next() {
+	case '<', '>':
+		if l.peek() == '>' {
+			l.next()
+		}
+	default:
+		panic("unreachable")
+	}
+
+	if l.peek() == '[' {
+loop:
+		for {
+			switch l.next() {
+			case ']':
+				l.emit(ItemRedirLeader, ItemTerminated)
+				break loop
+			case Eof:
+				l.emit(ItemRedirLeader, ItemUnterminated)
+				break loop
+			}
+		}
+	} else {
+		l.emit(ItemRedirLeader, ItemAmbiguious)
+	}
+
 	return lexAny
 }
 

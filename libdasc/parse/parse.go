@@ -8,6 +8,7 @@
 package parse
 
 import (
+	"os"
 	"fmt"
 	"runtime"
 	"strings"
@@ -213,10 +214,8 @@ loop:
 		switch t.peekNonSpace().Typ {
 		case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 			t.Root.append(t.term())
-		case ItemGreater:
-			t.next()
-			t.peekNonSpace()
-			t.Root.StdoutRedir = t.term()
+		case ItemRedirLeader:
+			t.Root.Redirs = append(t.Root.Redirs, t.redir())
 		default:
 			break loop
 		}
@@ -253,4 +252,75 @@ func (t *Tree) term() Node {
 		t.unexpected(token, "term")
 		return nil
 	}
+}
+
+// redir parses an IO redirection.
+func (t *Tree) redir() Redir {
+	leader := t.next()
+
+	// Partition the redirection leader into direction and qualifier parts.
+	// For example, if leader.Val == ">>[1=2]", dir == ">>" and qual == "1=2".
+	var dir, qual string
+
+	if i := strings.IndexRune(leader.Val, '['); i != -1 {
+		dir = leader.Val[:i]
+		qual = leader.Val[i+1:len(leader.Val)-1]
+	} else {
+		dir = leader.Val
+	}
+
+	// Determine the flag and default oldfd from the direction.
+	var oldfd, flag int
+
+	switch dir {
+	case "<":
+		flag = os.O_RDONLY
+		oldfd = 0
+	case "<>":
+		flag = os.O_RDWR | os.O_CREATE
+		oldfd = 0
+	case ">":
+		flag = os.O_WRONLY | os.O_CREATE
+		oldfd = 1
+	case ">>":
+		flag = os.O_WRONLY | os.O_CREATE | os.O_APPEND
+		oldfd = 1
+	default:
+		t.errorf("Unexpected redirection direction %q", dir)
+	}
+
+	if len(qual) > 0 {
+		// Qualified redirection
+		if i := strings.IndexRune(qual, '='); i != -1 {
+			// FdRedir or CloseRedir
+			lhs := qual[:i]
+			rhs := qual[i+1:]
+			if len(lhs) > 0 {
+				var err error
+				oldfd, err = strconv.Atoi(lhs)
+				if err != nil {
+					t.errorf("Invalid oldfd in qualified redirection %q", lhs)
+				}
+			}
+			if len(rhs) > 0 {
+				newfd, err := strconv.Atoi(rhs)
+				if err != nil {
+					t.errorf("Invalid newfd in qualified redirection %q", rhs)
+				}
+				return newFdRedir(oldfd, newfd)
+			} else {
+				return newCloseRedir(oldfd)
+			}
+		} else {
+			// FilenameRedir with oldfd altered
+			var err error
+			oldfd, err = strconv.Atoi(qual)
+			if err != nil {
+				t.errorf("Invalid oldfd in qualified redirection %q", qual)
+			}
+		}
+	}
+	// FilenameRedir
+	t.peekNonSpace()
+	return newFilenameRedir(oldfd, flag, t.term())
 }
