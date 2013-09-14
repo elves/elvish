@@ -171,9 +171,9 @@ int recvFd() {
         .msg_flags = 0
     };
 
-    fprintf(stderr, "Waiting for a fd\n");
+    // fprintf(stderr, "Waiting for a fd\n");
     DieIf_1(recvmsg(FdTube, &msg, 0), "recvmsg");
-    fprintf(stderr, "Got a fd\n");
+    // fprintf(stderr, "Got a fd\n");
 
     int fd;
     if (cmsg->cmsg_len != FD_CMSG_LEN) {
