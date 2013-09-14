@@ -199,6 +199,7 @@ bool *recvFds(ReqCmd *cmd, int n) {
                 return 0;
             }
             cmd->redirs[i][1] = oldFd;
+            isRecvedFds[i] = true;
         }
     }
     return isRecvedFds;
