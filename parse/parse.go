@@ -194,7 +194,7 @@ func (t *Tree) Parse(text string, tab bool) (tree *Tree, err error) {
 	t.lex = Lex(t.Name, text)
 	t.peekCount = 0
 
-	// TODO This now only parses a command.
+	// TODO This now only parses a pipeline.
 	t.Root = t.pipeline()
 
 	t.stopParse()
