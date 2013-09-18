@@ -78,7 +78,6 @@ func ExecCommand(cmd *parse.CommandNode) (pid int, err error) {
 	args[0] = full
 
 	files := []uintptr{0, 1, 2}
-	fdsToClose := make([]int, 0, 3)
 
 	for _, r := range cmd.Redirs {
 		fd := r.Fd()
@@ -104,8 +103,8 @@ func ExecCommand(cmd *parse.CommandNode) (pid int, err error) {
 				return 0, fmt.Errorf("failed to open file %q: %s",
 				                     r.Filename, err)
 			} else {
-				fdsToClose = append(fdsToClose, oldFd)
 				files[fd] = uintptr(oldFd)
+				defer syscall.Close(oldFd)
 			}
 		default:
 			panic("unreachable")
@@ -114,10 +113,5 @@ func ExecCommand(cmd *parse.CommandNode) (pid int, err error) {
 
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: envAsSlice(env), Files: files, Sys: &sys}
-	pid, err = syscall.ForkExec(full, args, &attr)
-
-	for _, fd := range fdsToClose {
-		syscall.Close(fd)
-	}
-	return
+	return syscall.ForkExec(full, args, &attr)
 }
