@@ -23,3 +23,4 @@ _testmain.go
 
 # Project specific
 /das
+/t/ # Small applications for manual testing go inside this directory
