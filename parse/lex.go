@@ -42,6 +42,7 @@ const (
 	ItemSingleQuoted // a single-quoted string literal
 	ItemDoubleQuoted // a double-quoted string literal
 	ItemRedirLeader  // IO redirection leader
+	ItemPipe         // pipeline connector, '|'
 )
 
 // ItemEnd describes the ending of lex items.
@@ -182,6 +183,9 @@ func lexAny(l *Lexer) stateFn {
 		return lexSingleQuoted
 	case r == '"':
 		return lexDoubleQuoted
+	case r == '|':
+		l.emit(ItemPipe, ItemTerminated)
+		return lexAny
 	default:
 		return lexBare
 	}
@@ -247,7 +251,7 @@ func lexBare(l *Lexer) stateFn {
 }
 
 func terminatesBare(r rune) bool {
-	return isSpace(r) || r == '\n' || r == Eof
+	return isSpace(r) || r == '\n' || r == '|' || r == Eof
 }
 
 // lexSingleQuoted scans a single-quoted string.
