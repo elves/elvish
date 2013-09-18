@@ -4,7 +4,7 @@ das, an experimental Unix shell
 Building
 --------
 
-`go build -o das ./main`
+Just run `make`.
 
 License
 -------

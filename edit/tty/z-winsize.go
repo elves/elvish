@@ -1,5 +1,5 @@
 // Created by cgo -godefs - DO NOT EDIT
-// cgo -godefs winsize.go
+// cgo -godefs edit/tty/winsize.go
 
 package tty
 
