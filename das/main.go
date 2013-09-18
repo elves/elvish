@@ -3,11 +3,14 @@ package main
 import (
 	"os"
 	"fmt"
-	"strconv"
 	"strings"
 	"syscall"
 	"../libdasc/parse"
 	"../libdasc/editor"
+)
+
+const (
+	FILE_CLOSE uintptr = ^uintptr(0)
 )
 
 var env map[string]string
@@ -15,18 +18,6 @@ var search_paths []string
 
 func usage() {
 	fmt.Fprintf(os.Stderr, "Usage: dasc <text fd> <control fd>\n");
-}
-
-func getIntArg(i int) int {
-	if i < len(os.Args) {
-		a, err := strconv.Atoi(os.Args[i])
-		if err == nil {
-			return a
-		}
-	}
-	usage()
-	os.Exit(1)
-	return -1
 }
 
 func lackeol() {
@@ -66,6 +57,14 @@ func search(exe string) string {
 	return ""
 }
 
+func envAsSlice(env map[string]string) (s []string) {
+	s = make([]string, len(env))
+	for k, v := range env {
+		s = append(s, fmt.Sprintf("%s=%s", k, v))
+	}
+	return
+}
+
 func evalTerm(n parse.Node) string {
 	return n.(*parse.StringNode).Text
 }
@@ -79,8 +78,6 @@ func evalCommandArgs(n *parse.CommandNode) (args []string) {
 }
 
 func main() {
-	InitTube(getIntArg(1), getIntArg(2))
-
 	env = make(map[string]string)
 	for _, e := range os.Environ() {
 		arr := strings.SplitN(e, "=", 2)
@@ -99,6 +96,7 @@ func main() {
 
 	cmd_no := 0
 
+repl:
 	for {
 		cmd_no++
 		name := fmt.Sprintf("<interactive code %d>", cmd_no)
@@ -136,66 +134,55 @@ func main() {
 		}
 		args[0] = full
 
-		nredirs := len(tree.Root.Redirs)
+		files := []uintptr{0, 1, 2}
 
-		cmd := ReqCmd{
-			Path: args[0],
-			Args: args,
-			Env: env,
-			Redirs: make([][2]int, nredirs),
-			FdsToSend: make([]int, nredirs),
-		}
+		for _, r := range tree.Root.Redirs {
+			fd := r.Fd()
 
-		for i, r := range tree.Root.Redirs {
-			cmd.Redirs[i][0] = r.Fd()
+			if fd > 2 {
+				fmt.Fprintln(os.Stderr, "Redir on fd > 2 not yet supported")
+				continue repl
+			}
 
 			switch r := r.(type) {
 			case *parse.FdRedir:
-				cmd.Redirs[i][1] = r.OldFd
+				oldFd := r.OldFd
+				if oldFd > 2 {
+					fmt.Fprintln(os.Stderr, "FD redir from fd > 2 not yet supported")
+					continue repl
+				}
+				files[fd] = files[oldFd]
 			case *parse.CloseRedir:
-				cmd.Redirs[i][1] = FdClose
+				files[fd] = FILE_CLOSE
 			case *parse.FilenameRedir:
 				// TODO haz hardcoded permbits now
 				fname := evalTerm(r.Filename)
 				oldFd, err := syscall.Open(fname, r.Flag, 0644)
 				if err != nil {
-					// TODO Should abort command execution
 					fmt.Fprintf(os.Stderr, "Failed to open file %q: %s\n",
 					            r.Filename, err)
-					cmd.Redirs[i][1] = FdClose
+					continue repl
 				} else {
-					cmd.Redirs[i][1] = FdSend
-					cmd.FdsToSend[i] = oldFd
+					files[fd] = uintptr(oldFd)
 				}
 			default:
 				panic("unreachable")
 			}
 		}
 
-		SendReq(Req{Cmd: &cmd})
+		sys := syscall.SysProcAttr{}
+		attr := syscall.ProcAttr{Env: envAsSlice(env), Files: files, Sys: &sys}
+		pid, err := syscall.ForkExec(full, args, &attr)
 
-		for i, r := range cmd.Redirs {
-			if r[1] == FdSend {
-				syscall.Close(cmd.FdsToSend[i])
-			}
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to fork/exec: %s", err)
+			continue repl
 		}
 
-		for {
-			res, err := RecvRes()
-			if err != nil {
-				fmt.Printf("broken response pipe, quitting")
-				os.Exit(1)
-			}
+		var ws syscall.WaitStatus
+		var ru syscall.Rusage
 
-			if res.ProcState != nil {
-				break
-			} else if br := res.BadRequest; br != nil {
-				fmt.Printf("server complained bad request: %s\n", br.Err)
-				break
-			} else if c := res.Cmd; c != nil {
-				// fmt.Printf("forked: %d\n", c.Pid)
-			}
-		}
+		// TODO Should check ws
+		syscall.Wait4(pid, &ws, 0, &ru)
 	}
-	SendReq(Req{Exit: &ReqExit{}})
 }

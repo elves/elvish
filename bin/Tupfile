@@ -1,5 +1,4 @@
 include_rules
 .gitignore
 
-: ../das/*.o |> !ld |> das
-: ../dasc/ | ../libdasc/editor/tty/* |> go build -o %o %f |> dasc
+: ../das/ | ../libdasc/editor/tty/* |> go build -o %o %f |> das
