@@ -26,6 +26,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
 		lr := ed.ReadLine("das> ")
 		err = ed.Cleanup()
 		if err != nil {
@@ -38,8 +39,8 @@ func main() {
 		} else if lr.Err != nil {
 			panic(lr.Err)
 		}
-		line := lr.Line
-		tree, err := parse.Parse(name, line, false)
+
+		tree, err := parse.Parse(name, lr.Line, false)
 		if err != nil {
 			fmt.Println("Parser error:", err)
 			continue
@@ -47,7 +48,6 @@ func main() {
 
 		cmd := tree.Root.(*parse.ListNode).Nodes[0].(*parse.CommandNode)
 		pid, err := eval.ExecCommand(cmd)
-
 		if err != nil {
 			fmt.Println(err)
 			continue
