@@ -139,6 +139,11 @@ func (l *Lexer) NextItem() Item {
 	return item
 }
 
+// Chan returns a channel of Item's.
+func (l *Lexer) Chan() chan Item {
+	return l.items
+}
+
 // Lex creates a new scanner for the input string.
 func Lex(name, input string) *Lexer {
 	l := &Lexer{
@@ -155,6 +160,7 @@ func (l *Lexer) run() {
 	for l.state = lexAny; l.state != nil; {
 		l.state = l.state(l)
 	}
+	close(l.items)
 }
 
 // state functions
