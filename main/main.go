@@ -85,6 +85,7 @@ func evalCommandArgs(n *parse.CommandNode) (args []string) {
 }
 
 func main() {
+	fmt.Printf("My pid is %d\n", syscall.Getpid())
 	env := envAsMap(os.Environ())
 
 	path_var, ok := env["PATH"]
