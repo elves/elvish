@@ -102,10 +102,9 @@ func ExecCommand(cmd *parse.CommandNode) (pid int, err error) {
 			if err != nil {
 				return 0, fmt.Errorf("failed to open file %q: %s",
 				                     r.Filename, err)
-			} else {
-				files[fd] = uintptr(oldFd)
-				defer syscall.Close(oldFd)
 			}
+			files[fd] = uintptr(oldFd)
+			defer syscall.Close(oldFd)
 		default:
 			panic("unreachable")
 		}
