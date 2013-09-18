@@ -124,7 +124,9 @@ repl:
 			fmt.Println("Parser error:", err)
 			continue
 		}
-		args := evalCommandArgs(tree.Root)
+
+		cmd := tree.Root.(*parse.ListNode).Nodes[0].(*parse.CommandNode)
+		args := evalCommandArgs(cmd)
 		if len(args) == 0 {
 			continue
 		}
@@ -137,7 +139,7 @@ repl:
 
 		files := []uintptr{0, 1, 2}
 
-		for _, r := range tree.Root.Redirs {
+		for _, r := range cmd.Redirs {
 			fd := r.Fd()
 
 			if fd > 2 {

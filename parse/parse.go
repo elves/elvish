@@ -18,7 +18,7 @@ import (
 // Tree is the representation of a single parsed script.
 type Tree struct {
 	Name      string    // name of the script represented by the tree.
-	Root      *CommandNode // top-level root of the tree.
+	Root      Node // top-level root of the tree.
 	Ctx       Context
 	text      string    // text parsed to create the script (or its parent)
 	tab       bool
@@ -195,10 +195,29 @@ func (t *Tree) Parse(text string, tab bool) (tree *Tree, err error) {
 	t.peekCount = 0
 
 	// TODO This now only parses a command.
-	t.Root = t.command()
+	t.Root = t.pipeline()
 
 	t.stopParse()
 	return t, nil
+}
+
+func (t *Tree) pipeline() *ListNode {
+	pipe := newList(t.peek().Pos)
+loop:
+	for {
+		n := t.command()
+		pipe.append(n)
+
+		switch token := t.next(); token.Typ {
+		case ItemPipe:
+			continue loop
+		case ItemEndOfLine, ItemEOF:
+			break loop
+		default:
+			t.unexpected(token, "end of pipeline")
+		}
+	}
+	return pipe
 }
 
 // command parses a command.
