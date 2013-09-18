@@ -230,6 +230,4 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			ed.tipf("Non-graphic: %#x", r)
 		}
 	}
-
-	panic("unreachable")
 }
