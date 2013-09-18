@@ -139,6 +139,7 @@ repl:
 		args[0] = full
 
 		files := []uintptr{0, 1, 2}
+		fdsToClose := make([]int, 0, 3)
 
 		for _, r := range cmd.Redirs {
 			fd := r.Fd()
@@ -167,6 +168,7 @@ repl:
 					            r.Filename, err)
 					continue repl
 				} else {
+					fdsToClose = append(fdsToClose, oldFd)
 					files[fd] = uintptr(oldFd)
 				}
 			default:
@@ -177,6 +179,10 @@ repl:
 		sys := syscall.SysProcAttr{}
 		attr := syscall.ProcAttr{Env: envAsSlice(env), Files: files, Sys: &sys}
 		pid, err := syscall.ForkExec(full, args, &attr)
+
+		for _, fd := range fdsToClose {
+			syscall.Close(fd)
+		}
 
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to fork/exec: %s", err)
