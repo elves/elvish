@@ -1,4 +1,0 @@
-include_rules
-.gitignore
-
-: ../das/ | ../libdasc/editor/tty/* |> go build -o %o %f |> das

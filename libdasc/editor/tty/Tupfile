@@ -1,3 +1,0 @@
-include_rules
-
-: winsize.go |> !godefs |> z-%f

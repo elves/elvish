@@ -1,8 +1,0 @@
-CC = clang
-LD = clang
-CFLAGS = -Wall -g -D_GNU_SOURCE
-LDFLAGS = -ljansson
-
-!cc = |> $(CC) $(CFLAGS) -c %f -o %o |>
-!ld = |> $(LD) $(LDFLAGS) %f -o %o |>
-!godefs = |> go tool cgo -godefs %f > %o; rm -r _obj |>

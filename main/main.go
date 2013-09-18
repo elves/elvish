@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"syscall"
-	"../libdasc/parse"
-	"../libdasc/editor"
+	"../parse"
+	"../editor"
 )
 
 const (
