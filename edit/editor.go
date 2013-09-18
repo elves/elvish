@@ -1,5 +1,5 @@
-// package editor implements a full-feature line editor.
-package editor
+// package edit implements a full-feature line editor.
+package edit
 
 import (
 	"os"

@@ -1,4 +1,4 @@
-package editor
+package edit
 
 // cell is an indivisible unit on the screen. It is not necessarily 1 column
 // wide.

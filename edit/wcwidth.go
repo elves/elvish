@@ -1,4 +1,4 @@
-package editor
+package edit
 
 // XXX
 // Taken from github.com/nsf/godit, not a genuine wcwidth implementation.

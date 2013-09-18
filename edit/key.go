@@ -1,4 +1,4 @@
-package editor
+package edit
 
 type Key struct {
 	rune

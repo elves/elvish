@@ -6,7 +6,7 @@ import (
 	"strings"
 	"syscall"
 	"../parse"
-	"../editor"
+	"../edit"
 )
 
 const (
@@ -101,7 +101,7 @@ repl:
 		cmd_no++
 		name := fmt.Sprintf("<interactive code %d>", cmd_no)
 
-		ed, err := editor.Init(os.Stdin)
+		ed, err := edit.Init(os.Stdin)
 		if err != nil {
 			panic(err)
 		}
