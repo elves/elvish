@@ -65,6 +65,17 @@ func envAsSlice(env map[string]string) (s []string) {
 	return
 }
 
+func envAsMap(env []string) (m map[string]string) {
+	m = make(map[string]string)
+	for _, e := range env {
+		arr := strings.SplitN(e, "=", 2)
+		if len(arr) == 2 {
+			m[arr[0]] = arr[1]
+		}
+	}
+	return
+}
+
 func evalTerm(n parse.Node) string {
 	return n.(*parse.StringNode).Text
 }
@@ -78,13 +89,7 @@ func evalCommandArgs(n *parse.CommandNode) (args []string) {
 }
 
 func main() {
-	env = make(map[string]string)
-	for _, e := range os.Environ() {
-		arr := strings.SplitN(e, "=", 2)
-		if len(arr) == 2 {
-			env[arr[0]] = arr[1]
-		}
-	}
+	env := envAsMap(os.Environ())
 
 	path_var, ok := env["PATH"]
 	if ok {
