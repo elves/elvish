@@ -21,13 +21,10 @@ type Item struct {
 }
 
 func (i Item) String() string {
-	switch {
-	case i.Typ == ItemEOF:
-		return "EOF"
-	case i.Typ == ItemError:
+	if i.Typ == ItemError {
 		return i.Val
 	}
-	return fmt.Sprintf("%q", i.Val)
+	return fmt.Sprintf("%s %q", ItemTypeNames[i.Typ], i.Val)
 }
 
 // ItemType identifies the type of lex items.
@@ -44,6 +41,18 @@ const (
 	ItemRedirLeader  // IO redirection leader
 	ItemPipe         // pipeline connector, '|'
 )
+
+var ItemTypeNames []string = []string {
+	"ItemError",
+	"ItemEOF",
+	"ItemEndOfLine",
+	"ItemSpace",
+	"ItemBare",
+	"ItemSingleQuoted",
+	"ItemDoubleQuoted",
+	"ItemRedirLeader",
+	"ItemPipe",
+}
 
 // ItemEnd describes the ending of lex items.
 type ItemEnd int
