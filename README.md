@@ -1,6 +1,11 @@
 das, an experimental Unix shell
 ===============================
 
+Building
+--------
+
+`go build -o das ./main`
+
 License
 -------
 
