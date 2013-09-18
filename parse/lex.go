@@ -165,6 +165,7 @@ func (l *Lexer) run() {
 
 // state functions
 
+// lexAny is the default state.
 func lexAny(l *Lexer) stateFn {
 	switch r := l.next(); {
 	case r == Eof:

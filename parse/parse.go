@@ -4,7 +4,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Das source Lexer and parser.
+// das source lexer and parser.
 package parse
 
 import (
@@ -18,7 +18,6 @@ import (
 // Tree is the representation of a single parsed script.
 type Tree struct {
 	Name      string    // name of the script represented by the tree.
-	ParseName string    // name of the top-level script during parsing, for error messages.
 	Root      *CommandNode // top-level root of the tree.
 	Ctx       Context
 	text      string    // text parsed to create the script (or its parent)
@@ -29,10 +28,9 @@ type Tree struct {
 	peekCount int
 }
 
-func Do(name, text string, tab bool) (t *Tree, err error) {
-	t = New(name)
-	_, err = t.Parse(text, tab)
-	return
+// Parse is shorthand for a New + *Tree.Parse combo.
+func Parse(name, text string, tab bool) (t *Tree, err error) {
+	return New(name).Parse(text, tab)
 }
 
 // next returns the next token.
@@ -123,13 +121,13 @@ func (t *Tree) ErrorContext(n Node) (location, context string) {
 	if len(context) > 20 {
 		context = fmt.Sprintf("%.20s...", context)
 	}
-	return fmt.Sprintf("%s:%d:%d", t.ParseName, lineNum, byteNum), context
+	return fmt.Sprintf("%s:%d:%d", t.Name, lineNum, byteNum), context
 }
 
 // errorf formats the error and terminates processing.
 func (t *Tree) errorf(format string, args ...interface{}) {
 	t.Root = nil
-	format = fmt.Sprintf("das: %s:%d: %s", t.ParseName, t.lex.lineNumber(), format)
+	format = fmt.Sprintf("das: %s:%d: %s", t.Name, t.lex.lineNumber(), format)
 	panic(fmt.Errorf(format, args...))
 }
 
@@ -176,12 +174,6 @@ func (t *Tree) recover(errp *error) {
 	return
 }
 
-// startParse initializes the parser, using the Lexer.
-func (t *Tree) startParse(lex *Lexer) {
-	t.Root = nil
-	t.lex = lex
-}
-
 // stopParse terminates parsing.
 func (t *Tree) stopParse() {
 	t.lex = nil
@@ -196,30 +188,34 @@ func (t *Tree) stopParse() {
 // execution.
 func (t *Tree) Parse(text string, tab bool) (tree *Tree, err error) {
 	defer t.recover(&err)
-	t.tab = tab
-	t.ParseName = t.Name
-	t.startParse(Lex(t.Name, text))
+
 	t.text = text
-	t.parse()
+	t.tab = tab
+	t.lex = Lex(t.Name, text)
+	t.peekCount = 0
+
+	// TODO This now only parses a command.
+	t.Root = t.command()
+
 	t.stopParse()
 	return t, nil
 }
 
-// parse is the top-level parser for a script.
-// TODO This now only parses a command.
-func (t *Tree) parse() {
-	t.Root = newCommand(t.peek().Pos)
+// command parses a command.
+func (t *Tree) command() *CommandNode {
+	cmd := newCommand(t.peek().Pos)
 loop:
 	for {
 		switch t.peekNonSpace().Typ {
 		case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
-			t.Root.append(t.term())
+			cmd.append(t.term())
 		case ItemRedirLeader:
-			t.Root.Redirs = append(t.Root.Redirs, t.redir())
+			cmd.Redirs = append(cmd.Redirs, t.redir())
 		default:
 			break loop
 		}
 	}
+	return cmd
 }
 
 func unquote(token Item) (string, error) {

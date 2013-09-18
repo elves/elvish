@@ -119,7 +119,7 @@ repl:
 			panic(lr.Err)
 		}
 		line := lr.Line
-		tree, err := parse.Do(name, line, false)
+		tree, err := parse.Parse(name, line, false)
 		if err != nil {
 			fmt.Println("Parser error:", err)
 			continue
