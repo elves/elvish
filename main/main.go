@@ -16,10 +16,6 @@ const (
 var env map[string]string
 var search_paths []string
 
-func usage() {
-	fmt.Fprintf(os.Stderr, "Usage: dasc <text fd> <control fd>\n");
-}
-
 func lackeol() {
 	fmt.Println("\033[7m%\033[m")
 }
