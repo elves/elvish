@@ -5,24 +5,16 @@ import (
 	"os"
 	"fmt"
 	"bufio"
-	"bytes"
 	"unicode"
 	"unicode/utf8"
 	"./tty"
-	"../parse"
 )
-
-// buffer keeps the status of the screen that the line editor is concerned
-// with. It usually reflects the last n lines of the screen.
-type buffer [][]cell
 
 // Editor keeps the status of the line editor.
 type Editor struct {
 	savedTermios *tty.Termios
 	file *os.File
-	oldBuf, buf buffer
-	line, col, width, indent int
-	currentAttr string
+	writer *writer
 }
 
 // LineRead is the result of ReadLine. Exactly one member is non-zero, making
@@ -44,7 +36,7 @@ func Init(file *os.File) (*Editor, error) {
 	editor := &Editor{
 		savedTermios: term.Copy(),
 		file: file,
-		oldBuf: [][]cell{[]cell{}},
+		writer: newWriter(),
 	}
 
 	term.SetIcanon(false)
@@ -90,102 +82,8 @@ func (ed *Editor) clearTip() {
 	fmt.Fprintf(ed.file, "\n\033[K\033[A")
 }
 
-func (ed *Editor) startBuffer() {
-	ed.line = 0
-	ed.col = 0
-	ed.width = int(tty.GetWinsize(int(ed.file.Fd())).Col)
-	ed.buf = [][]cell{make([]cell, ed.width)}
-	ed.currentAttr = ""
-}
-
-func (ed *Editor) commitBuffer() error {
-	bytesBuf := new(bytes.Buffer)
-
-	newlines := len(ed.oldBuf) - 1
-	if newlines > 0 {
-		fmt.Fprintf(bytesBuf, "\033[%dA", newlines)
-	}
-	bytesBuf.WriteString("\r\033[J")
-
-	attr := ""
-	for _, line := range ed.buf {
-		for _, c := range line {
-			if c.width > 0 && c.attr != attr {
-				fmt.Fprintf(bytesBuf, "\033[%sm", c.attr)
-				attr = c.attr
-			}
-			bytesBuf.WriteString(string(c.rune))
-		}
-	}
-	if attr != "" {
-		bytesBuf.WriteString("\033[m")
-	}
-	_, err := ed.file.Write(bytesBuf.Bytes())
-	if err != nil {
-		return err
-	}
-
-	ed.oldBuf = ed.buf
-	return nil
-}
-
-func (ed *Editor) appendToLine(c cell) {
-	ed.buf[ed.line] = append(ed.buf[ed.line], c)
-	ed.col += int(c.width)
-}
-
-func (ed *Editor) newline() {
-	ed.buf[ed.line] = append(ed.buf[ed.line], cell{rune: '\n'})
-	ed.buf = append(ed.buf, make([]cell, ed.width))
-	ed.line++
-	ed.col = 0
-	if ed.indent > 0 {
-		for i := 0; i < ed.indent; i++ {
-			ed.appendToLine(cell{rune: ' ', width: 1})
-		}
-	}
-}
-
-func (ed *Editor) write(r rune) {
-	wd := wcwidth(r)
-	c := cell{r, byte(wd), ed.currentAttr}
-
-	if ed.col + wd > ed.width {
-		ed.newline()
-		ed.appendToLine(c)
-	} else if ed.col + wd == ed.width {
-		ed.appendToLine(c)
-		ed.newline()
-	} else {
-		ed.appendToLine(c)
-	}
-}
-
 func (ed *Editor) refresh(prompt, text string) error {
-	ed.startBuffer()
-
-	for _, r := range prompt {
-		ed.write(r)
-	}
-
-	if ed.col * 2 < ed.width {
-		ed.indent = ed.col
-	}
-
-	l := parse.Lex("<interactive code>", text)
-
-	for {
-		token := l.NextItem()
-		if token.Typ == parse.ItemEOF {
-			break
-		}
-		ed.currentAttr = attrForType[token.Typ]
-		for _, r := range token.Val {
-			ed.write(r)
-		}
-	}
-
-	return ed.commitBuffer()
+	return ed.writer.refresh(prompt, text, ed.file)
 }
 
 // ReadLine reads a line interactively.
