@@ -46,17 +46,20 @@ func main() {
 			continue
 		}
 
-		cmd := tree.Root.(*parse.ListNode).Nodes[0].(*parse.CommandNode)
-		pid, err := eval.ExecCommand(cmd)
+		pids, err := eval.ExecPipeline(tree.Root.(*parse.ListNode))
 		if err != nil {
 			fmt.Println(err)
-			continue
+			if pids == nil {
+				continue
+			}
 		}
 
 		var ws syscall.WaitStatus
 		var ru syscall.Rusage
 
 		// TODO Should check ws
-		syscall.Wait4(pid, &ws, 0, &ru)
+		for _, pid := range pids {
+			syscall.Wait4(pid, &ws, 0, &ru)
+		}
 	}
 }

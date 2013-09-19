@@ -24,7 +24,9 @@ type FdRedir struct {
 	OldFd int
 }
 
-func newFdRedir(fd int, oldFd int) *FdRedir {
+// Public since we need to turn FilenameRedir -> FdRedir when evaluating
+// commands.
+func NewFdRedir(fd int, oldFd int) *FdRedir {
 	return &FdRedir{redir{fd}, oldFd}
 }
 

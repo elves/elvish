@@ -323,7 +323,7 @@ func (t *Tree) redir() Redir {
 				if err != nil {
 					t.errorf("Invalid old fd in qualified redirection %q", rhs)
 				}
-				return newFdRedir(fd, oldfd)
+				return NewFdRedir(fd, oldfd)
 			} else {
 				return newCloseRedir(fd)
 			}
