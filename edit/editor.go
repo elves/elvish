@@ -70,29 +70,18 @@ func (ed *Editor) Cleanup() error {
 func (ed *Editor) beep() {
 }
 
-func (ed *Editor) tip(s string) {
-	fmt.Fprintf(ed.file, "\n%s\033[A", s)
-}
-
-func (ed *Editor) tipf(format string, a ...interface{}) {
-	ed.tip(fmt.Sprintf(format, a...))
-}
-
-func (ed *Editor) clearTip() {
-	fmt.Fprintf(ed.file, "\n\033[K\033[A")
-}
-
-func (ed *Editor) refresh(prompt, text string) error {
-	return ed.writer.refresh(prompt, text, ed.file)
+func (ed *Editor) refresh(prompt, text, tip string) error {
+	return ed.writer.refresh(prompt, text, tip, ed.file)
 }
 
 // ReadLine reads a line interactively.
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	stdin := bufio.NewReaderSize(ed.file, 0)
 	line := ""
+	tip := ""
 
 	for {
-		err := ed.refresh(prompt, line)
+		err := ed.refresh(prompt, line, tip)
 		if err != nil {
 			return LineRead{Err: err}
 		}
@@ -104,7 +93,11 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 
 		switch {
 		case r == '\n':
-			ed.clearTip()
+			tip = ""
+			err := ed.refresh(prompt, line, tip)
+			if err != nil {
+				return LineRead{Err: err}
+			}
 			fmt.Fprintln(ed.file)
 			return LineRead{Line: line}
 		case r == 0x7f: // Backspace
@@ -125,7 +118,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		case unicode.IsGraphic(r):
 			line += string(r)
 		default:
-			ed.tipf("Non-graphic: %#x", r)
+			tip = fmt.Sprintf("Non-graphic: %#x", r)
 		}
 	}
 }
