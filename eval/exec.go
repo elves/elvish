@@ -10,6 +10,7 @@ import (
 
 const (
 	FILE_CLOSE uintptr = ^uintptr(0)
+	FILE_NONE  uintptr = ^uintptr(0)
 )
 
 func isExecutable(path string) bool {
@@ -102,7 +103,7 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 		return []int{}, nil
 	}
 
-	nextReadPipe := -1
+	nextReadPipe := FILE_NONE
 
 	for i, cmd := range pl.Nodes {
 		cmd := cmd.(*parse.CommandNode)
@@ -122,9 +123,9 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 		}
 
 		// Create pipes.
-		var readPipe, writePipe int
+		var readPipe, writePipe uintptr
 		readPipe = nextReadPipe
-		writePipe = -1
+		writePipe = FILE_NONE
 		if i != ncmds - 1 {
 			// os.Pipe sets O_CLOEXEC, which is what we want.
 			reader, writer, e := os.Pipe()
@@ -133,8 +134,8 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 			}
 			defer reader.Close()
 			defer writer.Close()
-			nextReadPipe = int(reader.Fd())
-			writePipe = int(writer.Fd())
+			nextReadPipe = reader.Fd()
+			writePipe = writer.Fd()
 		}
 
 		// Check IO redirections, turn all FilenameRedir to FdRedir.
@@ -143,9 +144,9 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 			fd := r.Fd()
 			if fd > 2 {
 				return nil, fmt.Errorf("redir on fd > 2 not yet supported")
-			} else if fd == 0 && readPipe != -1 {
+			} else if fd == 0 && readPipe != FILE_NONE {
 				return nil, fmt.Errorf("input already connected to pipe")
-			} else if fd == 1 && writePipe != -1 {
+			} else if fd == 1 && writePipe != FILE_NONE {
 				return nil, fmt.Errorf("output already connected to pipe")
 			}
 			switch r := r.(type) {
@@ -162,18 +163,18 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 					return nil, fmt.Errorf("failed to open file %q: %s",
 					                       r.Filename, err)
 				}
-				oldFd := int(f.Fd())
+				oldFd := f.Fd()
 				cmd.Redirs[j] = parse.NewFdRedir(fd, oldFd)
-				defer syscall.Close(oldFd)
+				defer f.Close()
 			}
 		}
 
 		// Connect pipes.
-		if readPipe != -1 {
+		if readPipe != FILE_NONE {
 			readRedir := parse.NewFdRedir(0, readPipe)
 			cmd.Redirs = append(cmd.Redirs, readRedir)
 		}
-		if writePipe != -1 {
+		if writePipe != FILE_NONE {
 			writeRedir := parse.NewFdRedir(1, writePipe)
 			cmd.Redirs = append(cmd.Redirs, writeRedir)
 		}

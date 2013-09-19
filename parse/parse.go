@@ -286,7 +286,10 @@ func (t *Tree) redir() Redir {
 	}
 
 	// Determine the flag and default (new) fd from the direction.
-	var fd, flag int
+	var (
+		fd uintptr
+		flag int
+	)
 
 	switch dir {
 	case "<":
@@ -313,13 +316,13 @@ func (t *Tree) redir() Redir {
 			rhs := qual[i+1:]
 			if len(lhs) > 0 {
 				var err error
-				fd, err = strconv.Atoi(lhs)
+				fd, err = Atou(lhs)
 				if err != nil {
 					t.errorf("Invalid new fd in qualified redirection %q", lhs)
 				}
 			}
 			if len(rhs) > 0 {
-				oldfd, err := strconv.Atoi(rhs)
+				oldfd, err := Atou(rhs)
 				if err != nil {
 					t.errorf("Invalid old fd in qualified redirection %q", rhs)
 				}
@@ -330,7 +333,7 @@ func (t *Tree) redir() Redir {
 		} else {
 			// FilenameRedir with fd altered
 			var err error
-			fd, err = strconv.Atoi(qual)
+			fd, err = Atou(qual)
 			if err != nil {
 				t.errorf("Invalid new fd in qualified redirection %q", qual)
 			}
