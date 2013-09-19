@@ -12,7 +12,6 @@ const (
 	FILE_CLOSE uintptr = ^uintptr(0)
 )
 
-// TODO return a separate error
 func isExecutable(path string) bool {
 	f, err := os.Open(path)
 	if err != nil {
@@ -29,20 +28,22 @@ func isExecutable(path string) bool {
 }
 
 // Search for executable `exe`.
-// TODO return a separate error
-func search(exe string) string {
+func search(exe string) (string, error) {
 	for _, p := range []string{"/", "./", "../"} {
 		if strings.HasPrefix(exe, p) {
-			return exe
+			if isExecutable(exe) {
+				return exe, nil
+			}
+			return "", fmt.Errorf("not executable")
 		}
 	}
 	for _, p := range search_paths {
 		full := p + "/" + exe
 		if isExecutable(full) {
-			return full
+			return full, nil
 		}
 	}
-	return ""
+	return "", fmt.Errorf("not found")
 }
 
 func envAsSlice(env map[string]string) (s []string) {
@@ -66,9 +67,9 @@ func evalTermList(ln *parse.ListNode) error {
 }
 
 func resolveExternal(n *parse.StringNode) error {
-	s := search(n.Text)
-	if len(s) == 0 {
-		return fmt.Errorf("not found")
+	s, err := search(n.Text)
+	if err != nil {
+		return err
 	}
 	n.Text = s
 	return nil
@@ -117,7 +118,7 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 
 		err = resolveExternal(cmd.Nodes[0].(*parse.StringNode))
 		if err != nil {
-			return nil, fmt.Errorf("can't resolve command #%d: %s", err)
+			return nil, fmt.Errorf("can't resolve command #%d: %s", i, err)
 		}
 
 		// Create pipes.
