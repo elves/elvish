@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	FILE_CLOSE uintptr = ^uintptr(0)
-	FILE_NONE  uintptr = ^uintptr(0)
+	// A special impossible fd value. Used for "close fd" in
+	// syscall.ProcAttr.Files and various other things internally.
+	FD_NIL uintptr = ^uintptr(0)
 )
 
 func isExecutable(path string) bool {
@@ -103,7 +104,7 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 		return []int{}, nil
 	}
 
-	nextReadPipe := FILE_NONE
+	nextReadPipe := FD_NIL
 
 	for i, cmd := range pl.Nodes {
 		cmd := cmd.(*parse.CommandNode)
@@ -125,7 +126,7 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 		// Create pipes.
 		var readPipe, writePipe uintptr
 		readPipe = nextReadPipe
-		writePipe = FILE_NONE
+		writePipe = FD_NIL
 		if i != ncmds - 1 {
 			// os.Pipe sets O_CLOEXEC, which is what we want.
 			reader, writer, e := os.Pipe()
@@ -144,9 +145,9 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 			fd := r.Fd()
 			if fd > 2 {
 				return nil, fmt.Errorf("redir on fd > 2 not yet supported")
-			} else if fd == 0 && readPipe != FILE_NONE {
+			} else if fd == 0 && readPipe != FD_NIL {
 				return nil, fmt.Errorf("input already connected to pipe")
-			} else if fd == 1 && writePipe != FILE_NONE {
+			} else if fd == 1 && writePipe != FD_NIL {
 				return nil, fmt.Errorf("output already connected to pipe")
 			}
 			switch r := r.(type) {
@@ -170,11 +171,11 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 		}
 
 		// Connect pipes.
-		if readPipe != FILE_NONE {
+		if readPipe != FD_NIL {
 			readRedir := parse.NewFdRedir(0, readPipe)
 			cmd.Redirs = append(cmd.Redirs, readRedir)
 		}
-		if writePipe != FILE_NONE {
+		if writePipe != FD_NIL {
 			writeRedir := parse.NewFdRedir(1, writePipe)
 			cmd.Redirs = append(cmd.Redirs, writeRedir)
 		}
@@ -228,7 +229,7 @@ func ExecCommand(cmd *parse.CommandNode) (pid int, err error) {
 				files[fd] = uintptr(oldFd)
 			}
 		case *parse.CloseRedir:
-			files[fd] = FILE_CLOSE
+			files[fd] = FD_NIL
 		case *parse.FilenameRedir:
 			panic("can't haz FilenameRedir here")
 		default:
