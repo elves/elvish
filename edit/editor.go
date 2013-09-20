@@ -91,8 +91,8 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			return LineRead{Err: err}
 		}
 
-		switch {
-		case k == PlainKey('\n'):
+		switch k {
+		case PlainKey('\n'):
 			tip = ""
 			err := ed.refresh(prompt, line, tip)
 			if err != nil {
@@ -100,25 +100,32 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			}
 			fmt.Fprintln(ed.file)
 			return LineRead{Line: line}
-		case k == PlainKey(Backspace): // Backspace
+		case PlainKey(Backspace): // Backspace
 			if l := len(line); l > 0 {
 				_, w := utf8.DecodeLastRuneInString(line)
 				line = line[:l-w]
 			} else {
 				ed.beep()
 			}
-		case k == CtrlKey('U'):
+		case CtrlKey('U'):
 			line = ""
-		case k == CtrlKey('D') && len(line) == 0:
-			return LineRead{Eof: true}
-		case k == CtrlKey('B'):
+		/*
+		case CtrlKey('B'):
 			fmt.Fprintf(ed.file, "\033[D")
-		case k == CtrlKey('F'):
+		case CtrlKey('F'):
 			fmt.Fprintf(ed.file, "\033[C")
-		case !(k.Ctrl || k.Alt) && unicode.IsGraphic(k.rune):
-			line += string(k.rune)
+		*/
+		case CtrlKey('D'):
+			if len(line) == 0 {
+				return LineRead{Eof: true}
+			}
+			fallthrough
 		default:
-			tip = fmt.Sprintf("Unknown: %v", k)
+			if !(k.Ctrl || k.Alt) && unicode.IsGraphic(k.rune) {
+				line += string(k.rune)
+			} else {
+				tip = fmt.Sprintf("Unknown: %v", k)
+			}
 		}
 	}
 }
