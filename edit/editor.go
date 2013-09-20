@@ -4,7 +4,6 @@ package edit
 import (
 	"os"
 	"fmt"
-	"bufio"
 	"unicode"
 	"unicode/utf8"
 	"./tty"
@@ -15,6 +14,7 @@ type Editor struct {
 	savedTermios *tty.Termios
 	file *os.File
 	writer *writer
+	reader *reader
 }
 
 // LineRead is the result of ReadLine. Exactly one member is non-zero, making
@@ -37,6 +37,7 @@ func Init(file *os.File) (*Editor, error) {
 		savedTermios: term.Copy(),
 		file: file,
 		writer: newWriter(),
+		reader: newReader(file),
 	}
 
 	term.SetIcanon(false)
@@ -76,7 +77,6 @@ func (ed *Editor) refresh(prompt, text, tip string) error {
 
 // ReadLine reads a line interactively.
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
-	stdin := bufio.NewReaderSize(ed.file, 0)
 	line := ""
 	tip := ""
 
@@ -86,13 +86,13 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			return LineRead{Err: err}
 		}
 
-		r, _, err := stdin.ReadRune()
+		k, err := ed.reader.readKey()
 		if err != nil {
 			return LineRead{Err: err}
 		}
 
 		switch {
-		case r == '\n':
+		case k == PlainKey('\n'):
 			tip = ""
 			err := ed.refresh(prompt, line, tip)
 			if err != nil {
@@ -100,25 +100,25 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			}
 			fmt.Fprintln(ed.file)
 			return LineRead{Line: line}
-		case r == 0x7f: // Backspace
+		case k == PlainKey(Backspace): // Backspace
 			if l := len(line); l > 0 {
 				_, w := utf8.DecodeLastRuneInString(line)
 				line = line[:l-w]
 			} else {
 				ed.beep()
 			}
-		case r == 0x15: // ^U
+		case k == CtrlKey('U'):
 			line = ""
-		case r == 0x4 && len(line) == 0: // ^D
+		case k == CtrlKey('D') && len(line) == 0:
 			return LineRead{Eof: true}
-		case r == 0x2: // ^B
+		case k == CtrlKey('B'):
 			fmt.Fprintf(ed.file, "\033[D")
-		case r == 0x6: // ^F
+		case k == CtrlKey('F'):
 			fmt.Fprintf(ed.file, "\033[C")
-		case unicode.IsGraphic(r):
-			line += string(r)
+		case !(k.Ctrl || k.Alt) && unicode.IsGraphic(k.rune):
+			line += string(k.rune)
 		default:
-			tip = fmt.Sprintf("Non-graphic: %#x", r)
+			tip = fmt.Sprintf("Unknown: %v", k)
 		}
 	}
 }
