@@ -124,7 +124,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			if !(k.Ctrl || k.Alt) && unicode.IsGraphic(k.rune) {
 				line += string(k.rune)
 			} else {
-				tip = fmt.Sprintf("Unknown: %v", k)
+				tip = fmt.Sprintf("Unknown: %s", k)
 			}
 		}
 	}

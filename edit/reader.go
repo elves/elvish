@@ -19,6 +19,17 @@ func CtrlKey(r rune) Key {
 	return Key{rune: r, Ctrl: true}
 }
 
+func (k Key) String() (s string) {
+	if k.Ctrl {
+		s += "Ctrl-"
+	}
+	if k.Alt {
+		s += "Alt-"
+	}
+	s += string(k.rune)
+	return
+}
+
 const (
 	F1 rune = -1-iota
 	F2
