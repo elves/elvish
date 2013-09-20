@@ -77,24 +77,26 @@ func (rd *reader) readKey() (k Key, err error) {
 	if err != nil {
 		return
 	}
-	switch {
-	case r == 0x0:
+	switch r {
+	case 0x0:
 		k = CtrlKey('`')
-	case r == 0x1d:
+	case 0x1d:
 		k = CtrlKey('6')
-	case r == 0x1f:
+	case 0x1f:
 		k = CtrlKey('/')
-	case r == 0x7f:
+	case 0x7f:
 		k = PlainKey(Backspace)
 	/*
-	case r == 0x1b:
+	case 0x1b:
 		// ^[, or Escape
 		k = CtrlKey('[')
 	*/
-	case 0x1 <= r && r <= 0x1d:
-		k = CtrlKey(r+0x40)
 	default:
-		k = PlainKey(r)
+		if 0x1 <= r && r <= 0x1d {
+			k = CtrlKey(r+0x40)
+		} else {
+			k = PlainKey(r)
+		}
 	}
 	return
 }
