@@ -3,6 +3,7 @@ package edit
 import (
 	"os"
 	"bufio"
+	"../async"
 )
 
 type Key struct {
@@ -63,12 +64,15 @@ const (
 // reader is the part of an Editor responsible for reading and decoding
 // terminal key sequences.
 type reader struct {
-	bufReader *bufio.Reader
+	runeReader *async.RuneReader
 	readAhead []Key
 }
 
 func newReader(f *os.File) *reader {
-	return &reader{bufio.NewReaderSize(f, 0), make([]Key, 0)}
+	return &reader{
+		async.NewRuneReader(bufio.NewReaderSize(f, 0)),
+		make([]Key, 0),
+	}
 }
 
 // type readerState func(rune) (bool, readerState)
@@ -80,11 +84,14 @@ func (rd *reader) readKey() (k Key, err error) {
 		return
 	}
 
-	r, _, err := rd.bufReader.ReadRune()
-	if err != nil {
+	rd.runeReader.Go <- true
+	item := <-rd.runeReader.Items
+
+	if err = item.Err; err != nil {
 		return
 	}
-	switch r {
+
+	switch r := item.rune; r {
 	case 0x0:
 		k = CtrlKey('`')
 	case 0x1d:
