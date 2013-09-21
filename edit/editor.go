@@ -36,7 +36,7 @@ func Init(file *os.File) (*Editor, error) {
 	editor := &Editor{
 		savedTermios: term.Copy(),
 		file: file,
-		writer: newWriter(),
+		writer: newWriter(file),
 		reader: newReader(file),
 	}
 
@@ -72,7 +72,7 @@ func (ed *Editor) beep() {
 }
 
 func (ed *Editor) refresh(prompt, text, tip string) error {
-	return ed.writer.refresh(prompt, text, tip, ed.file)
+	return ed.writer.refresh(prompt, text, tip)
 }
 
 // ReadLine reads a line interactively.

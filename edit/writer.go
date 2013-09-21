@@ -44,20 +44,22 @@ func (b *buffer) appendLine(w int) {
 // writer is the part of an Editor responsible for keeping the status of and
 // updating the screen.
 type writer struct {
+	file *os.File
 	oldBuf, buf *buffer
 	width, indent int
 	cursor pos
 	currentAttr string
 }
 
-func newWriter() *writer {
-	writer := &writer{oldBuf: newBuffer(0)}
+func newWriter(f *os.File) *writer {
+	writer := &writer{file: f, oldBuf: newBuffer(0)}
 	return writer
 }
 
-func (w *writer) startBuffer(file *os.File) {
+func (w *writer) startBuffer() {
+	fd := int(w.file.Fd())
 	w.cursor = pos{}
-	w.width = int(tty.GetWinsize(int(file.Fd())).Col)
+	w.width = int(tty.GetWinsize(fd).Col)
 	w.buf = newBuffer(w.width)
 	w.currentAttr = ""
 }
@@ -81,7 +83,7 @@ func deltaPos(from, to pos) []byte {
 	return buf.Bytes()
 }
 
-func (w *writer) commitBuffer(file *os.File) error {
+func (w *writer) commitBuffer() error {
 	bytesBuf := new(bytes.Buffer)
 
 	pLine := w.oldBuf.point.line
@@ -105,7 +107,7 @@ func (w *writer) commitBuffer(file *os.File) error {
 	}
 	bytesBuf.Write(deltaPos(w.cursor, w.buf.point))
 
-	_, err := file.Write(bytesBuf.Bytes())
+	_, err := w.file.Write(bytesBuf.Bytes())
 	if err != nil {
 		return err
 	}
@@ -147,8 +149,8 @@ func (w *writer) write(r rune) {
 	}
 }
 
-func (w *writer) refresh(prompt, text, tip string, file *os.File) error {
-	w.startBuffer(file)
+func (w *writer) refresh(prompt, text, tip string) error {
+	w.startBuffer()
 
 	for _, r := range prompt {
 		w.write(r)
@@ -180,5 +182,5 @@ func (w *writer) refresh(prompt, text, tip string, file *os.File) error {
 		}
 	}
 
-	return w.commitBuffer(file)
+	return w.commitBuffer()
 }
