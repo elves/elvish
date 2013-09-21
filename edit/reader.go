@@ -64,15 +64,22 @@ const (
 // terminal key sequences.
 type reader struct {
 	bufReader *bufio.Reader
+	readAhead []Key
 }
 
 func newReader(f *os.File) *reader {
-	return &reader{bufio.NewReaderSize(f, 0)}
+	return &reader{bufio.NewReaderSize(f, 0), make([]Key, 0)}
 }
 
 // type readerState func(rune) (bool, readerState)
 
 func (rd *reader) readKey() (k Key, err error) {
+	if n := len(rd.readAhead); n > 0 {
+		k = rd.readAhead[0]
+		rd.readAhead = rd.readAhead[1:]
+		return
+	}
+
 	r, _, err := rd.bufReader.ReadRune()
 	if err != nil {
 		return
