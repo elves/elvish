@@ -4,6 +4,43 @@ das, an experimental Unix shell
 This is a work in progress. Things may change and/or break without notice. You
 have been warned...
 
+Philosophy
+----------
+
+The basic idea is to have a shell that is also a decant programming language.
+Shells have long rejected such things as data structure beyond text arrays.
+Some support associative arrays, which may be assigned to variables but not
+passed as arguments to builtins or shell functions, making the use of them
+very tedious.
+
+The lesson of Tcl has taught us the "everything is (unstructured) text"
+philosophy, which is also the idea underpinning classical Unix pipelines, is
+too limited for proper programming. Indeed, the power of Tcl often lies in the
+dynamic interpretation of text, assuming some predefined structure in it. Yet
+with shells, where such facilities are nonexistent, the attempts to build
+maintainable
+
+However, the shell does come with a very powerful abstraction - the pipeline.
+It is basically a facility for concatenative programming. Consider the
+following code in lisp:
+
+```
+(set coll' (map f (filter pred coll)))
+```
+
+Written concatenatively, this can be - assuming `put` puts the argument to
+output (akin to `echo`), and `set` can take data from input in place of in the
+argument list:
+
+```
+put $coll | filter pred | map f | set coll2
+```
+
+The concatenative approach is much more natural (try reading both versions
+aloud).
+
+[to be finished]
+
 Building
 --------
 
