@@ -7,6 +7,7 @@ import (
 	"../parse"
 	"../edit"
 	"../eval"
+	"../async"
 )
 
 func lackeol() {
@@ -18,11 +19,13 @@ func main() {
 
 	cmd_no := 0
 
+	rr := async.NewRuneReader(os.Stdin, 0)
+
 	for {
 		cmd_no++
 		name := fmt.Sprintf("<interactive code %d>", cmd_no)
 
-		ed, err := edit.Init(os.Stdin)
+		ed, err := edit.Init(os.Stdin, rr)
 		if err != nil {
 			panic(err)
 		}

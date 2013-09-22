@@ -1,8 +1,6 @@
 package edit
 
 import (
-	"os"
-	"bufio"
 	"../async"
 )
 
@@ -68,9 +66,9 @@ type reader struct {
 	readAhead []Key
 }
 
-func newReader(f *os.File) *reader {
+func newReader(rr *async.RuneReader) *reader {
 	return &reader{
-		async.NewRuneReader(bufio.NewReaderSize(f, 0)),
+		rr,
 		make([]Key, 0),
 	}
 }
@@ -84,14 +82,13 @@ func (rd *reader) readKey() (k Key, err error) {
 		return
 	}
 
-	rd.runeReader.Go <- true
-	item := <-rd.runeReader.Items
+	r, _, err := rd.runeReader.ReadRune()
 
-	if err = item.Err; err != nil {
+	if err != nil {
 		return
 	}
 
-	switch r := item.rune; r {
+	switch r {
 	case 0x0:
 		k = CtrlKey('`')
 	case 0x1d:

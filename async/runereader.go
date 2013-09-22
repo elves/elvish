@@ -2,47 +2,51 @@ package async
 
 import (
 	"io"
-	"fmt"
+	"time"
 	"bufio"
 )
 
-type Item struct {
-	rune
-	Err error
+// ReadRuneRet packs the return value of (*bufio.Reader).ReadRune.
+type ReadRuneRet struct {
+	r rune
+	size int
+	err error
 }
 
-func (it Item) GoString() string {
-	return fmt.Sprintf("async.Item{rune: %q, Err: %v}", it.rune, it.Err)
-}
-
+// RuneReader wraps bufio.Reader to support ReadRune with timeout.
 type RuneReader struct {
-	reader *bufio.Reader
-	Items chan Item
-	Go chan bool
+	*bufio.Reader
+	Timeout time.Duration
+	rets chan ReadRuneRet
 }
 
-func NewRuneReaderSize(r *bufio.Reader, n int) *RuneReader {
-	rr := RuneReader{r, make(chan Item, n), make(chan bool)}
+func NewRuneReader(r io.Reader, d time.Duration) *RuneReader {
+	rr := RuneReader{bufio.NewReaderSize(r, 0), d, make(chan ReadRuneRet)}
 	go rr.serve()
 	return &rr
 }
 
-func NewRuneReader(r *bufio.Reader) *RuneReader {
-	return NewRuneReaderSize(r, 0)
-}
-
 func (rr *RuneReader) serve() {
 	for {
-		if !<-rr.Go {
-			break
-		}
-		r, _, err := rr.reader.ReadRune()
-		if err == io.EOF {
-			break
-		}
-		rr.Items <- Item{r, err}
+		r, size, err := rr.Reader.ReadRune()
+		rr.rets <- ReadRuneRet{r, size, err}
 	}
-	close(rr.Items)
-	close(rr.Go)
-	return
+}
+
+func (rr *RuneReader) ReadRune() (r rune, size int, err error) {
+	select {
+	case rt := <-rr.rets:
+		return rt.r, rt.size, rt.err
+	case <- after(rr.Timeout):
+		return 0, 0, Timeout
+	}
+}
+
+// after is like time.After but d == 0 returns a channel that is never sent
+// to.
+func after(d time.Duration) <-chan time.Time {
+	if d > 0 {
+		return time.After(d)
+	}
+	return make(chan time.Time)
 }

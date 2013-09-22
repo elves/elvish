@@ -7,6 +7,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 	"./tty"
+	"../async"
 )
 
 // Editor keeps the status of the line editor.
@@ -26,7 +27,7 @@ type LineRead struct {
 }
 
 // Init initializes an Editor on the terminal referenced by fd.
-func Init(file *os.File) (*Editor, error) {
+func Init(file *os.File, rr *async.RuneReader) (*Editor, error) {
 	fd := int(file.Fd())
 	term, err := tty.NewTermiosFromFd(fd)
 	if err != nil {
@@ -37,7 +38,7 @@ func Init(file *os.File) (*Editor, error) {
 		savedTermios: term.Copy(),
 		file: file,
 		writer: newWriter(file),
-		reader: newReader(file),
+		reader: newReader(rr),
 	}
 
 	term.SetIcanon(false)
