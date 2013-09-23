@@ -1,8 +1,11 @@
 package edit
 
 import (
+	"time"
 	"../async"
 )
+
+var EscTimeout = time.Millisecond * 10
 
 type Key struct {
 	rune
@@ -10,12 +13,18 @@ type Key struct {
 	Alt bool
 }
 
+var ZeroKey = Key{}
+
 func PlainKey(r rune) Key {
 	return Key{rune: r}
 }
 
 func CtrlKey(r rune) Key {
 	return Key{rune: r, Ctrl: true}
+}
+
+func AltKey(r rune) Key {
+	return Key{rune: r, Alt: true}
 }
 
 func (k Key) String() (s string) {
@@ -97,11 +106,15 @@ func (rd *reader) readKey() (k Key, err error) {
 		k = CtrlKey('/')
 	case 0x7f:
 		k = PlainKey(Backspace)
-	/*
 	case 0x1b:
 		// ^[, or Escape
-		k = CtrlKey('[')
-	*/
+		r, _, e := rd.runeReader.ReadRuneTimeout(EscTimeout)
+		if e == async.Timeout {
+			return CtrlKey('['), nil
+		} else if e != nil {
+			return ZeroKey, e
+		}
+		return AltKey(r), nil
 	default:
 		if 0x1 <= r && r <= 0x1d {
 			k = CtrlKey(r+0x40)
