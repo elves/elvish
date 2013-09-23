@@ -19,7 +19,7 @@ func main() {
 
 	cmd_no := 0
 
-	rr := async.NewRuneReader(os.Stdin, 0)
+	rr := async.NewRuneReader(os.Stdin)
 
 	for {
 		cmd_no++
