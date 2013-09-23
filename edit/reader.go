@@ -98,15 +98,14 @@ func (rd *reader) readKey() (k Key, err error) {
 
 	switch r {
 	case 0x0:
-		k = CtrlKey('`')
+		k = CtrlKey('`') // ^@
 	case 0x1d:
-		k = CtrlKey('6')
+		k = CtrlKey('6') // ^^
 	case 0x1f:
-		k = CtrlKey('/')
-	case 0x7f:
+		k = CtrlKey('/') // ^_
+	case 0x7f: // ^? Backspace
 		k = PlainKey(Backspace)
-	case 0x1b:
-		// ^[, or Escape
+	case 0x1b: // ^[ Escape
 		r, _, e := rd.runeReader.ReadRuneTimeout(EscTimeout)
 		if e == async.Timeout {
 			return CtrlKey('['), nil
@@ -115,6 +114,7 @@ func (rd *reader) readKey() (k Key, err error) {
 		}
 		return AltKey(r), nil
 	default:
+		// Sane Ctrl- sequences that agree with the keyboard...
 		if 0x1 <= r && r <= 0x1d {
 			k = CtrlKey(r+0x40)
 		} else {
