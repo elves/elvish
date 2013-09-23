@@ -93,7 +93,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		}
 
 		switch k {
-		case PlainKey('\n'):
+		case CtrlKey('J'):
 			tip = ""
 			err := ed.refresh(prompt, line, tip)
 			if err != nil {
