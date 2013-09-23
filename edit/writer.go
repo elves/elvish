@@ -174,6 +174,7 @@ func (w *writer) refresh(prompt, text, tip string) error {
 	}
 
 	w.buf.point = w.cursor
+	w.currentAttr = ""
 	if len(tip) > 0 {
 		w.indent = 0
 		w.newline()
