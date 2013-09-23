@@ -52,7 +52,6 @@ const (
 	F11
 	F12
 
-	Escape // ^[
 	Backspace // ^?
 
 	Up // ^[OA
