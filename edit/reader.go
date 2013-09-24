@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"fmt"
 	"time"
 	"../async"
 )
@@ -34,7 +35,11 @@ func (k Key) String() (s string) {
 	if k.Alt {
 		s += "Alt-"
 	}
-	s += string(k.rune)
+	if k.rune > 0 {
+		s += string(k.rune)
+	} else {
+		s += fmt.Sprintf("(special %d)", k.rune)
+	}
 	return
 }
 
@@ -111,6 +116,27 @@ func (rd *reader) readKey() (k Key, err error) {
 			return CtrlKey('['), nil
 		} else if e != nil {
 			return ZeroKey, e
+		}
+		if r == '[' {
+			r, _, e := rd.runeReader.ReadRuneTimeout(EscTimeout)
+			if e == async.Timeout {
+				return AltKey('['), nil
+			} else if e != nil {
+				return ZeroKey, e
+			}
+			switch r {
+			case 'A':
+				return PlainKey(Up), nil
+			case 'B':
+				return PlainKey(Down), nil
+			case 'C':
+				return PlainKey(Right), nil
+			case 'D':
+				return PlainKey(Left), nil
+			default:
+				rd.runeReader.UnreadRune()
+				return AltKey('['), nil
+			}
 		}
 		return AltKey(r), nil
 	default:
