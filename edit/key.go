@@ -1,9 +1,5 @@
 package edit
 
-import (
-	"fmt"
-)
-
 type Mod byte
 
 const (
@@ -31,9 +27,13 @@ func (k Key) String() (s string) {
 		s += "Alt-"
 	}
 	if k.rune > 0 {
-		s += string(k.rune)
+		if name, ok := KeyNames[k.rune]; ok {
+			s += name
+		} else {
+			s += string(k.rune)
+		}
 	} else {
-		s += fmt.Sprintf("(special %d)", k.rune)
+		s += FunctionKeyNames[-k.rune - 1]
 	}
 	return
 }
@@ -69,3 +69,13 @@ const (
 	Enter = '\n'
 	Backspace = 0x7f
 )
+
+var KeyNames = map[rune]string {
+	Tab: "Tab", Enter: "Enter", Backspace: "Backspace",
+}
+
+var FunctionKeyNames = [...]string {
+	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+	"Up", "Down", "Right", "Left",
+	"Home", "Insert", "Delete", "End", "PageUp", "PageDown",
+}
