@@ -14,14 +14,12 @@ var EscTimeout = time.Millisecond * 10
 type reader struct {
 	timed *async.TimedReader
 	buffed *bufio.Reader
-	readAhead []Key
 }
 
 func newReader(tr *async.TimedReader) *reader {
 	return &reader{
 		tr,
 		bufio.NewReaderSize(tr, 0),
-		make([]Key, 0),
 	}
 }
 
@@ -40,12 +38,6 @@ var g3Seq = map[rune]Key{
 var BadEscSeq = errors.New("bad function key sequence")
 
 func (rd *reader) readKey() (k Key, err error) {
-	if n := len(rd.readAhead); n > 0 {
-		k = rd.readAhead[0]
-		rd.readAhead = rd.readAhead[1:]
-		return
-	}
-
 	r, _, err := rd.buffed.ReadRune()
 
 	if err != nil {
