@@ -23,8 +23,6 @@ func newReader(tr *async.TimedReader) *reader {
 	}
 }
 
-// type readerState func(rune) (bool, readerState)
-
 // G3 style function key sequences: ^[O followed by exactly one character.
 var g3Seq = map[rune]rune{
 	// F1-F4: xterm, libvte and tmux

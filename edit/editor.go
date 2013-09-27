@@ -119,12 +119,6 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			}
 		case Key{'U', Ctrl}:
 			line = ""
-		/*
-		case CtrlKey('B'):
-			fmt.Fprintf(ed.file, "\033[D")
-		case CtrlKey('F'):
-			fmt.Fprintf(ed.file, "\033[C")
-		*/
 		case Key{'D', Ctrl}:
 			if len(line) == 0 {
 				return LineRead{Eof: true}
