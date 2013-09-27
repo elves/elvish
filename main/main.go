@@ -19,13 +19,16 @@ func main() {
 
 	cmd_no := 0
 
-	rr := async.NewRuneReader(os.Stdin)
+	tr, err := async.NewTimedReader(os.Stdin)
+	if err != nil {
+		panic(err)
+	}
 
 	for {
 		cmd_no++
 		name := fmt.Sprintf("<interactive code %d>", cmd_no)
 
-		ed, err := edit.Init(os.Stdin, rr)
+		ed, err := edit.Init(os.Stdin, tr)
 		if err != nil {
 			panic(err)
 		}

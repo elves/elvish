@@ -3,6 +3,7 @@ package edit
 import (
 	"fmt"
 	"time"
+	"bufio"
 	"../async"
 )
 
@@ -75,13 +76,15 @@ const (
 // reader is the part of an Editor responsible for reading and decoding
 // terminal key sequences.
 type reader struct {
-	runeReader *async.RuneReader
+	timed *async.TimedReader
+	buffed *bufio.Reader
 	readAhead []Key
 }
 
-func newReader(rr *async.RuneReader) *reader {
+func newReader(tr *async.TimedReader) *reader {
 	return &reader{
-		rr,
+		tr,
+		bufio.NewReaderSize(tr, 0),
 		make([]Key, 0),
 	}
 }
@@ -95,7 +98,7 @@ func (rd *reader) readKey() (k Key, err error) {
 		return
 	}
 
-	r, _, err := rd.runeReader.ReadRune()
+	r, _, err := rd.buffed.ReadRune()
 
 	if err != nil {
 		return
@@ -111,14 +114,16 @@ func (rd *reader) readKey() (k Key, err error) {
 	case 0x7f: // ^? Backspace
 		k = PlainKey(Backspace)
 	case 0x1b: // ^[ Escape
-		r, _, e := rd.runeReader.ReadRuneTimeout(EscTimeout)
+		rd.timed.Timeout = EscTimeout
+		defer func() { rd.timed.Timeout = -1 }()
+		r, _, e := rd.buffed.ReadRune()
 		if e == async.Timeout {
 			return CtrlKey('['), nil
 		} else if e != nil {
 			return ZeroKey, e
 		}
 		if r == '[' {
-			r, _, e := rd.runeReader.ReadRuneTimeout(EscTimeout)
+			r, _, e := rd.buffed.ReadRune()
 			if e == async.Timeout {
 				return AltKey('['), nil
 			} else if e != nil {
@@ -134,7 +139,7 @@ func (rd *reader) readKey() (k Key, err error) {
 			case 'D':
 				return PlainKey(Left), nil
 			default:
-				rd.runeReader.UnreadRune()
+				rd.buffed.UnreadRune()
 				return AltKey('['), nil
 			}
 		}
