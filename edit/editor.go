@@ -128,7 +128,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			if k.Mod == 0 && unicode.IsGraphic(k.rune) {
 				line += string(k.rune)
 			} else {
-				tip = pushTip(tip, fmt.Sprintf("Unknown: %s", k))
+				tip = pushTip(tip, fmt.Sprintf("Unbound: %s", k))
 			}
 		}
 	}
