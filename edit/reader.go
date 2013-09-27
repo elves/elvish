@@ -74,7 +74,7 @@ func (rd *reader) readKey() (k Key, err error) {
 				if e == async.Timeout {
 					return Key{'[', Alt}, nil
 				} else if e != nil {
-					return ZeroKey, nil
+					return ZeroKey, e
 				}
 				// After first rune read we turn off the timeout
 				rd.timed.Timeout = -1
