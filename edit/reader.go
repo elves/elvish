@@ -72,7 +72,7 @@ func (rd *reader) readKey() (k Key, err error) {
 				r, _, e = rd.buffed.ReadRune()
 				// Timeout can only happen at first ReadRune.
 				if e == async.Timeout {
-					return Key{'[', Ctrl}, nil
+					return Key{'[', Alt}, nil
 				} else if e != nil {
 					return ZeroKey, nil
 				}
