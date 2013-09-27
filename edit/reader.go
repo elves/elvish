@@ -45,14 +45,14 @@ func (rd *reader) readKey() (k Key, err error) {
 	}
 
 	switch r {
+	case Tab, Enter, Backspace:
+		k = Key{r, 0}
 	case 0x0:
 		k = Key{'`', Ctrl} // ^@
 	case 0x1d:
 		k = Key{'6', Ctrl} // ^^
 	case 0x1f:
 		k = Key{'/', Ctrl} // ^_
-	case 0x7f: // ^? Backspace
-		k = Key{Backspace, 0}
 	case 0x1b: // ^[ Escape
 		rd.timed.Timeout = EscTimeout
 		defer func() { rd.timed.Timeout = -1 }()

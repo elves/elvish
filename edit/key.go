@@ -52,8 +52,6 @@ const (
 	F11
 	F12
 
-	Backspace // ^?
-
 	Up
 	Down
 	Right
@@ -65,4 +63,9 @@ const (
 	End
 	PageUp
 	PageDown
+
+	// Some function key names are just aliases for their ASCII representation
+	Tab = '\t'
+	Enter = '\n'
+	Backspace = 0x7f
 )

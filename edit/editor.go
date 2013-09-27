@@ -102,7 +102,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		}
 
 		switch k {
-		case Key{'J', Ctrl}:
+		case Key{Enter, 0}:
 			tip = ""
 			err := ed.refresh(prompt, line, tip)
 			if err != nil {
@@ -110,7 +110,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			}
 			fmt.Fprintln(ed.file)
 			return LineRead{Line: line}
-		case Key{Backspace, 0}: // Backspace
+		case Key{Backspace, 0}:
 			if l := len(line); l > 0 {
 				_, w := utf8.DecodeLastRuneInString(line)
 				line = line[:l-w]
