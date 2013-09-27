@@ -140,7 +140,6 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 		}
 
 		// Check IO redirections, turn all FilenameRedir to FdRedir.
-		// XXX pipes are not yet connected.
 		for j, r := range cmd.Redirs {
 			fd := r.Fd()
 			if fd > 2 {
