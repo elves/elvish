@@ -106,7 +106,7 @@ func (rd *reader) readKey() (k Key, err error) {
 				return ZeroKey, BadEscSeq
 			}
 		}
-		return Key{r, Alt}, nil
+		return Key{r2, Alt}, nil
 	default:
 		// Sane Ctrl- sequences that agree with the keyboard...
 		if 0x1 <= r && r <= 0x1d {
