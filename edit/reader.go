@@ -26,13 +26,13 @@ func newReader(tr *async.TimedReader) *reader {
 // type readerState func(rune) (bool, readerState)
 
 // G3 style function key sequences: ^[O followed by exactly one character.
-var g3Seq = map[rune]Key{
+var g3Seq = map[rune]rune{
 	// F1-F4: xterm, libvte and tmux
-	'P': PlainKey(F1), 'Q': PlainKey(F2),
-	'R': PlainKey(F3), 'S': PlainKey(F4),
+	'P': F1, 'Q': F2,
+	'R': F3, 'S': F4,
 
 	// Home and End: libvte
-	'H': PlainKey(Home), 'F': PlainKey(End),
+	'H': Home, 'F': End,
 }
 
 var BadEscSeq = errors.New("bad function key sequence")
@@ -46,19 +46,19 @@ func (rd *reader) readKey() (k Key, err error) {
 
 	switch r {
 	case 0x0:
-		k = CtrlKey('`') // ^@
+		k = Key{'`', Ctrl} // ^@
 	case 0x1d:
-		k = CtrlKey('6') // ^^
+		k = Key{'6', Ctrl} // ^^
 	case 0x1f:
-		k = CtrlKey('/') // ^_
+		k = Key{'/', Ctrl} // ^_
 	case 0x7f: // ^? Backspace
-		k = PlainKey(Backspace)
+		k = Key{Backspace, 0}
 	case 0x1b: // ^[ Escape
 		rd.timed.Timeout = EscTimeout
 		defer func() { rd.timed.Timeout = -1 }()
 		r2, _, e := rd.buffed.ReadRune()
 		if e == async.Timeout {
-			return CtrlKey('['), nil
+			return Key{'[', Ctrl}, nil
 		} else if e != nil {
 			return ZeroKey, e
 		}
@@ -72,7 +72,7 @@ func (rd *reader) readKey() (k Key, err error) {
 				r, _, e = rd.buffed.ReadRune()
 				// Timeout can only happen at first ReadRune.
 				if e == async.Timeout {
-					return CtrlKey('['), nil
+					return Key{'[', Ctrl}, nil
 				} else if e != nil {
 					return ZeroKey, nil
 				}
@@ -97,24 +97,24 @@ func (rd *reader) readKey() (k Key, err error) {
 			// G3 style function key sequence: read one rune.
 			r3, _, e := rd.buffed.ReadRune()
 			if e == async.Timeout {
-				return AltKey(r2), nil
+				return Key{r2, Alt}, nil
 			} else if e != nil {
 				return ZeroKey, e
 			}
-			k, ok := g3Seq[r3]
+			r, ok := g3Seq[r3]
 			if ok {
-				return k, nil
+				return Key{r, 0}, nil
 			} else {
 				return ZeroKey, BadEscSeq
 			}
 		}
-		return AltKey(r), nil
+		return Key{r, Alt}, nil
 	default:
 		// Sane Ctrl- sequences that agree with the keyboard...
 		if 0x1 <= r && r <= 0x1d {
-			k = CtrlKey(r+0x40)
+			k = Key{r+0x40, Ctrl}
 		} else {
-			k = PlainKey(r)
+			k = Key{r, 0}
 		}
 	}
 	return
@@ -152,7 +152,7 @@ func parseCSI(nums []int, last rune) (Key, error) {
 	}
 
 	if r, ok := keyByLast[last]; ok {
-		k := PlainKey(r)
+		k := Key{r, 0}
 		if len(nums) == 0 {
 			return k, nil
 		} else if len(nums) != 2 || nums[0] != 1 {
@@ -164,7 +164,7 @@ func parseCSI(nums []int, last rune) (Key, error) {
 	if last == '~' {
 		if len(nums) == 1 || len(nums) == 2 {
 			if r, ok := keyByNum0[nums[0]]; ok {
-				k := PlainKey(r)
+				k := Key{r, 0}
 				if len(nums) == 2 {
 					return xtermModify(k, nums[1])
 				}
@@ -172,7 +172,7 @@ func parseCSI(nums []int, last rune) (Key, error) {
 			}
 		} else if len(nums) == 3 && nums[0] == 27 {
 			if r, ok := keyByNum2[nums[2]]; ok {
-				k := PlainKey(r)
+				k := Key{r, 0}
 				return xtermModify(k, nums[1])
 			}
 		}
@@ -186,12 +186,11 @@ func xtermModify(k Key, mod int) (Key, error) {
 	case 0:
 		// do nothing
 	case 3:
-		k.Alt = true
+		k.Mod |= Alt
 	case 5:
-		k.Ctrl = true
+		k.Mod |= Ctrl
 	case 7:
-		k.Alt = true
-		k.Ctrl = true
+		k.Mod |= Alt | Ctrl
 	default:
 		return ZeroKey, BadEscSeq
 	}

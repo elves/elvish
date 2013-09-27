@@ -4,31 +4,30 @@ import (
 	"fmt"
 )
 
+type Mod byte
+
+const (
+	Shift Mod = 1 << iota
+	Alt
+	Ctrl
+)
+
 type Key struct {
 	rune
-	Ctrl bool
-	Alt bool
+	Mod Mod
 }
 
 var ZeroKey = Key{}
 
-func PlainKey(r rune) Key {
-	return Key{rune: r}
-}
-
-func CtrlKey(r rune) Key {
-	return Key{rune: r, Ctrl: true}
-}
-
 func AltKey(r rune) Key {
-	return Key{rune: r, Alt: true}
+	return Key{r, Alt}
 }
 
 func (k Key) String() (s string) {
-	if k.Ctrl {
+	if k.Mod & Ctrl != 0 {
 		s += "Ctrl-"
 	}
-	if k.Alt {
+	if k.Mod & Alt != 0 {
 		s += "Alt-"
 	}
 	if k.rune > 0 {

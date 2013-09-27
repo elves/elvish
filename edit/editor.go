@@ -102,7 +102,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		}
 
 		switch k {
-		case CtrlKey('J'):
+		case Key{'J', Ctrl}:
 			tip = ""
 			err := ed.refresh(prompt, line, tip)
 			if err != nil {
@@ -110,14 +110,14 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			}
 			fmt.Fprintln(ed.file)
 			return LineRead{Line: line}
-		case PlainKey(Backspace): // Backspace
+		case Key{Backspace, 0}: // Backspace
 			if l := len(line); l > 0 {
 				_, w := utf8.DecodeLastRuneInString(line)
 				line = line[:l-w]
 			} else {
 				ed.beep()
 			}
-		case CtrlKey('U'):
+		case Key{'U', Ctrl}:
 			line = ""
 		/*
 		case CtrlKey('B'):
@@ -125,13 +125,13 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		case CtrlKey('F'):
 			fmt.Fprintf(ed.file, "\033[C")
 		*/
-		case CtrlKey('D'):
+		case Key{'D', Ctrl}:
 			if len(line) == 0 {
 				return LineRead{Eof: true}
 			}
 			fallthrough
 		default:
-			if !(k.Ctrl || k.Alt) && unicode.IsGraphic(k.rune) {
+			if k.Mod == 0 && unicode.IsGraphic(k.rune) {
 				line += string(k.rune)
 			} else {
 				tip = pushTip(tip, fmt.Sprintf("Unknown: %s", k))
