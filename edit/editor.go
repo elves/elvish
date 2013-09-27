@@ -76,6 +76,13 @@ func (ed *Editor) refresh(prompt, text, tip string) error {
 	return ed.writer.refresh(prompt, text, tip)
 }
 
+func pushTip(tip, more string) string {
+	if len(tip) == 0 {
+		return more
+	}
+	return tip + "; " + more
+}
+
 // ReadLine reads a line interactively.
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	line := ""
@@ -87,9 +94,11 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			return LineRead{Err: err}
 		}
 
+		tip = ""
+
 		k, err := ed.reader.readKey()
 		if err != nil {
-			return LineRead{Err: err}
+			tip = pushTip(tip, err.Error())
 		}
 
 		switch k {
@@ -125,7 +134,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			if !(k.Ctrl || k.Alt) && unicode.IsGraphic(k.rune) {
 				line += string(k.rune)
 			} else {
-				tip = fmt.Sprintf("Unknown: %s", k)
+				tip = pushTip(tip, fmt.Sprintf("Unknown: %s", k))
 			}
 		}
 	}
