@@ -185,12 +185,20 @@ func xtermModify(k Key, mod int) (Key, error) {
 	switch mod {
 	case 0:
 		// do nothing
+	case 2:
+		k.Mod |= Shift
 	case 3:
 		k.Mod |= Alt
+	case 4:
+		k.Mod |= Shift | Alt
 	case 5:
 		k.Mod |= Ctrl
+	case 6:
+		k.Mod |= Shift | Ctrl
 	case 7:
 		k.Mod |= Alt | Ctrl
+	case 8:
+		k.Mod |= Shift | Alt | Ctrl
 	default:
 		return ZeroKey, BadEscSeq
 	}
