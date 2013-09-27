@@ -15,10 +15,6 @@ type Key struct {
 
 var ZeroKey = Key{}
 
-func AltKey(r rune) Key {
-	return Key{r, Alt}
-}
-
 func (k Key) String() (s string) {
 	if k.Mod & Ctrl != 0 {
 		s += "Ctrl-"
