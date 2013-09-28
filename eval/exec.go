@@ -25,6 +25,11 @@ type externalCommand struct {
 	ios [3]uintptr
 }
 
+type builtinCommand struct {
+	command
+	ios [3]interface{} // either of uintptr or chan string
+}
+
 func isExecutable(path string) bool {
 	f, err := os.Open(path)
 	if err != nil {
