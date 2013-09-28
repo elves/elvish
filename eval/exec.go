@@ -104,61 +104,67 @@ func (ce CommandErrors) Error() string {
 	return fmt.Sprintf("%v", ce.Errors)
 }
 
-func evalCommand(n *parse.CommandNode, in interface{}, out interface{}) (command, []*os.File, error) {
-	var err error
+func evalCommand(n *parse.CommandNode, in, out interface{}) (c command, files []*os.File, err error) {
+	var e error
 
 	if len(n.Nodes) == 0 {
-		return nil, nil, fmt.Errorf("command is emtpy")
+		err = fmt.Errorf("command is emtpy")
+		return
 	}
 
 	// XXX Only support external command now
 	cmd := externalCommand{ios: [3]uintptr{1, 2, 3}}
-	cmd.args, err = evalTermList(&n.ListNode)
 
-	if err != nil {
-		return nil, nil, fmt.Errorf("error evaluating arguments")
+	cmd.args, e = evalTermList(&n.ListNode)
+	if e != nil {
+		err = fmt.Errorf("error evaluating arguments: %s", e)
+		return
 	}
 
 	// Save unresolved args[0] as name.
 	cmd.name = cmd.args[0]
 
-	cmd.args[0], err = search(n.Nodes[0].(*parse.StringNode).Text)
-	if err != nil {
-		return nil, nil, fmt.Errorf("can't resolve: %s", err)
+	cmd.args[0], e = search(n.Nodes[0].(*parse.StringNode).Text)
+	if e != nil {
+		err = fmt.Errorf("can't resolve: %s", e)
+		return
 	}
 
-	files := make([]*os.File, 0)
+	files = make([]*os.File, 0)
 	// Check IO redirections, turn all FilenameRedir to FdRedir.
 	for _, r := range n.Redirs {
 		fd := r.Fd()
 		if fd > 2 {
-			return nil, files, fmt.Errorf("redir on fd > 2 not yet supported")
+			err = fmt.Errorf("redir on fd > 2 not yet supported")
+			return
 		} else if fd == 0 && in != nil {
-			return nil, files, fmt.Errorf("input already connected to pipe")
+			err = fmt.Errorf("input already connected to pipe")
+			return
 		} else if fd == 1 && out != nil {
-			return nil, files, fmt.Errorf("output already connected to pipe")
+			err = fmt.Errorf("output already connected to pipe")
+			return
 		}
 		switch r := r.(type) {
 		case *parse.CloseRedir:
 			cmd.ios[fd] = FD_NIL
 		case *parse.FdRedir:
 			if r.OldFd > 2 {
-				return nil, files,
-				       fmt.Errorf("fd redir from fd > 2 not yet supported")
+				err = fmt.Errorf("fd redir from fd > 2 not yet supported")
+				return
 			}
 			cmd.ios[fd] = r.OldFd
 		case *parse.FilenameRedir:
-			fname, err := evalTerm(r.Filename)
-			if err != nil {
-				return nil, files,
-				       fmt.Errorf("failed to evaluate filename: %q: %s",
-				                  r.Filename, err)
+			fname, e := evalTerm(r.Filename)
+			if e != nil {
+				err = fmt.Errorf("failed to evaluate filename: %q: %s",
+				                 r.Filename, e)
+				return
 			}
 			// TODO haz hardcoded permbits now
-			f, err := os.OpenFile(fname, r.Flag, 0644)
-			if err != nil {
-				return nil, files,
-				       fmt.Errorf("failed to open file %q: %s", r.Filename, err)
+			f, e := os.OpenFile(fname, r.Flag, 0644)
+			if e != nil {
+				err = fmt.Errorf("failed to open file %q: %s", r.Filename, e)
+				return
 			}
 			files = append(files, f)
 			oldFd := f.Fd()
@@ -174,7 +180,8 @@ func evalCommand(n *parse.CommandNode, in interface{}, out interface{}) (command
 	if out != nil {
 		cmd.ios[1] = out.(uintptr)
 	}
-	return &cmd, files, nil
+	c = &cmd
+	return
 }
 
 // ExecPipeline executes a pipeline.
@@ -197,31 +204,33 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 
 	cmds := make([]*externalCommand, 0, ncmds)
 
-	var nextReadPipe interface{}
+	var nextIn interface{}
+	var filesToClose []*os.File
+	defer func() {
+		for _, f := range filesToClose {
+			f.Close()
+		}
+	}()
 
 	for i, n := range pl.Nodes {
 		// Create pipes.
 		// XXX Check whether output is fd IO
-		var readPipe, writePipe interface{}
-		readPipe = nextReadPipe
+		var in, out interface{}
+		in = nextIn
 		if i != ncmds - 1 {
 			// os.Pipe sets O_CLOEXEC, which is what we want.
 			reader, writer, e := os.Pipe()
 			if e != nil {
 				return nil, fmt.Errorf("failed to create pipe: %s", e)
 			}
-			defer reader.Close()
-			defer writer.Close()
-			nextReadPipe = reader.Fd()
-			writePipe = writer.Fd()
+			filesToClose = append(filesToClose, reader, writer)
+			nextIn = reader.Fd()
+			out = writer.Fd()
 		}
 
-		cmd, files, err := evalCommand(n.(*parse.CommandNode), readPipe, writePipe)
-		defer func() {
-			for _, f := range files {
-				f.Close()
-			}
-		}()
+		cmd, files, err := evalCommand(n.(*parse.CommandNode), in, out)
+		filesToClose = append(filesToClose, files...)
+
 		if err != nil {
 			return nil, fmt.Errorf("error with command #%d: %s", i, err)
 		}
