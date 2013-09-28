@@ -14,6 +14,14 @@ const (
 	FD_NIL uintptr = ^uintptr(0)
 )
 
+type cmdType int
+
+const (
+	externalCmd cmdType = iota
+	builtinCmd
+	functionCmd
+)
+
 func isExecutable(path string) bool {
 	f, err := os.Open(path)
 	if err != nil {
@@ -186,7 +194,8 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 	haserr := false
 
 	for i, cmd := range pl.Nodes {
-		pid, err := ExecCommand(cmd.(*parse.CommandNode))
+		cmd := cmd.(*parse.CommandNode)
+		pid, err := ExecCommand(externalCmd, extractTexts(&cmd.ListNode), cmd.Redirs)
 
 		if err != nil {
 			pids[i] = -1
@@ -212,11 +221,9 @@ func extractTexts(ln *parse.ListNode) (texts []string) {
 }
 
 // ExecCommand executes a command.
-func ExecCommand(cmd *parse.CommandNode) (pid int, err error) {
-	args := extractTexts(&cmd.ListNode)
-
+func ExecCommand(ct cmdType, args []string, redirs []parse.Redir) (pid int, err error) {
 	files := []uintptr{0, 1, 2}
-	for _, r := range cmd.Redirs {
+	for _, r := range redirs {
 		fd := r.Fd()
 
 		switch r := r.(type) {
