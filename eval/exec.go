@@ -14,13 +14,16 @@ const (
 	FD_NIL uintptr = ^uintptr(0)
 )
 
-type cmdType int
+type command struct {
+	name string // command name, used in error messages
+	// full argument list. args[0] is always some form of command name.
+	args []string
+}
 
-const (
-	externalCmd cmdType = iota
-	builtinCmd
-	functionCmd
-)
+type externalCommand struct {
+	command
+	ios [3]uintptr
+}
 
 func isExecutable(path string) bool {
 	f, err := os.Open(path)
@@ -64,25 +67,20 @@ func envAsSlice(env map[string]string) (s []string) {
 	return
 }
 
-func evalTerm(n parse.Node) error {
-	_ = n.(*parse.StringNode)
-	return nil
+func evalTerm(n parse.Node) (string, error) {
+	return n.(*parse.StringNode).Text, nil
 }
 
-func evalTermList(ln *parse.ListNode) error {
-	for _, n := range ln.Nodes {
-		evalTerm(n)
+func evalTermList(ln *parse.ListNode) ([]string, error) {
+	ss := make([]string, len(ln.Nodes))
+	for i, n := range ln.Nodes {
+		var e error
+		ss[i], e = evalTerm(n)
+		if e != nil {
+			return nil, e
+		}
 	}
-	return nil
-}
-
-func resolveExternal(n *parse.StringNode) error {
-	s, err := search(n.Text)
-	if err != nil {
-		return err
-	}
-	n.Text = s
-	return nil
+	return ss, nil
 }
 
 // CommandErrors holds multiple errors.
@@ -112,26 +110,34 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 		return []int{}, nil
 	}
 
+	cmds := make([]externalCommand, 0, ncmds)
+
 	nextReadPipe := FD_NIL
 
-	for i, cmd := range pl.Nodes {
-		cmd := cmd.(*parse.CommandNode)
+	for i, n := range pl.Nodes {
+		n := n.(*parse.CommandNode)
 
-		if len(cmd.Nodes) == 0 {
+		if len(n.Nodes) == 0 {
 			return nil, fmt.Errorf("command #%d is emtpy", i)
 		}
 
-		err = evalTermList(&cmd.ListNode)
+		cmd := externalCommand{ios: [3]uintptr{1, 2, 3}}
+		cmd.args, err = evalTermList(&n.ListNode)
+
 		if err != nil {
 			return nil, fmt.Errorf("error evaluating command #%d: %s", err)
 		}
 
-		err = resolveExternal(cmd.Nodes[0].(*parse.StringNode))
+		// Save unresolved args[0] as name.
+		cmd.name = cmd.args[0]
+
+		cmd.args[0], err = search(n.Nodes[0].(*parse.StringNode).Text)
 		if err != nil {
 			return nil, fmt.Errorf("can't resolve command #%d: %s", i, err)
 		}
 
 		// Create pipes.
+		// XXX Check whether output is fd IO
 		var readPipe, writePipe uintptr
 		readPipe = nextReadPipe
 		writePipe = FD_NIL
@@ -148,7 +154,7 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 		}
 
 		// Check IO redirections, turn all FilenameRedir to FdRedir.
-		for j, r := range cmd.Redirs {
+		for _, r := range n.Redirs {
 			fd := r.Fd()
 			if fd > 2 {
 				return nil, fmt.Errorf("redir on fd > 2 not yet supported")
@@ -158,13 +164,20 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 				return nil, fmt.Errorf("output already connected to pipe")
 			}
 			switch r := r.(type) {
+			case *parse.CloseRedir:
+				cmd.ios[fd] = FD_NIL
 			case *parse.FdRedir:
 				if r.OldFd > 2 {
 					return nil, fmt.Errorf("fd redir from fd > 2 not yet supported")
 				}
+				cmd.ios[fd] = r.OldFd
 			case *parse.FilenameRedir:
-				evalTerm(r.Filename)
-				fname := r.Filename.(*parse.StringNode).Text
+				fname, err := evalTerm(r.Filename)
+				if err != nil {
+					return nil,
+					       fmt.Errorf("failed to evaluate filename: %q: %s",
+					                  r.Filename, err)
+				}
 				// TODO haz hardcoded permbits now
 				f, err := os.OpenFile(fname, r.Flag, 0644)
 				if err != nil {
@@ -172,30 +185,28 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 					                       r.Filename, err)
 				}
 				oldFd := f.Fd()
-				cmd.Redirs[j] = parse.NewFdRedir(fd, oldFd)
+				cmd.ios[fd] = oldFd
 				defer f.Close()
 			}
 		}
 
 		// Connect pipes.
 		if readPipe != FD_NIL {
-			readRedir := parse.NewFdRedir(0, readPipe)
-			cmd.Redirs = append(cmd.Redirs, readRedir)
+			cmd.ios[0] = readPipe
 		}
 		if writePipe != FD_NIL {
-			writeRedir := parse.NewFdRedir(1, writePipe)
-			cmd.Redirs = append(cmd.Redirs, writeRedir)
+			cmd.ios[1] = writePipe
 		}
 
+		cmds = append(cmds, cmd)
 	}
 
 	pids = make([]int, ncmds)
 	cmderr := CommandErrors{Errors: make([]error, ncmds)}
 	haserr := false
 
-	for i, cmd := range pl.Nodes {
-		cmd := cmd.(*parse.CommandNode)
-		pid, err := ExecCommand(externalCmd, extractTexts(&cmd.ListNode), cmd.Redirs)
+	for i, cmd := range cmds {
+		pid, err := ExecCommand(&cmd)
 
 		if err != nil {
 			pids[i] = -1
@@ -212,39 +223,10 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 	return pids, nil
 }
 
-func extractTexts(ln *parse.ListNode) (texts []string) {
-	texts = make([]string, 0, len(ln.Nodes))
-	for _, n := range ln.Nodes {
-		texts = append(texts, n.(*parse.StringNode).Text)
-	}
-	return
-}
-
 // ExecCommand executes a command.
-func ExecCommand(ct cmdType, args []string, redirs []parse.Redir) (pid int, err error) {
-	files := []uintptr{0, 1, 2}
-	for _, r := range redirs {
-		fd := r.Fd()
-
-		switch r := r.(type) {
-		case *parse.FdRedir:
-			oldFd := r.OldFd
-			if oldFd < 3 {
-				files[fd] = files[r.OldFd]
-			} else {
-				files[fd] = uintptr(oldFd)
-			}
-		case *parse.CloseRedir:
-			files[fd] = FD_NIL
-		case *parse.FilenameRedir:
-			panic("can't haz FilenameRedir here")
-		default:
-			panic("unreachable")
-		}
-	}
-
+func ExecCommand(cmd *externalCommand) (pid int, err error) {
 	sys := syscall.SysProcAttr{}
-	attr := syscall.ProcAttr{Env: envAsSlice(env), Files: files, Sys: &sys}
+	attr := syscall.ProcAttr{Env: envAsSlice(env), Files: cmd.ios[:], Sys: &sys}
 
-	return syscall.ForkExec(args[0], args, &attr)
+	return syscall.ForkExec(cmd.args[0], cmd.args, &attr)
 }
