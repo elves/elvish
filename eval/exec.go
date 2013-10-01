@@ -34,6 +34,7 @@ type externalCommand struct {
 
 type builtinCommand struct {
 	commandBase
+	f builtinFunc
 	ios [3]interface{} // either of uintptr or chan string
 }
 
@@ -104,30 +105,55 @@ func (ce CommandErrors) Error() string {
 	return fmt.Sprintf("%v", ce.Errors)
 }
 
-func evalCommand(n *parse.CommandNode, in, out interface{}) (c command, files []*os.File, err error) {
-	var e error
+func ioCompatible(io interface{}, typ ioType) bool {
+	if io == nil {
+		return true
+	}
+	switch io.(type) {
+	case uintptr:
+		return typ == fdIO || typ == unusedIO
+	case chan string:
+		return typ == chanIO || typ == unusedIO
+	default:
+		return false
+	}
+}
 
+func evalCommand(n *parse.CommandNode, in, out interface{}) (c command, files []*os.File, err error) {
 	if len(n.Nodes) == 0 {
 		err = fmt.Errorf("command is emtpy")
 		return
 	}
 
-	// XXX Only support external command now
-	cmd := externalCommand{ios: [3]uintptr{1, 2, 3}}
-
-	cmd.args, e = evalTermList(&n.ListNode)
+	// Build argument list. This is universal for all command types.
+	args, e := evalTermList(&n.ListNode)
 	if e != nil {
 		err = fmt.Errorf("error evaluating arguments: %s", e)
 		return
 	}
 
 	// Save unresolved args[0] as name.
-	cmd.name = cmd.args[0]
+	name := args[0]
 
-	cmd.args[0], e = search(n.Nodes[0].(*parse.StringNode).Text)
-	if e != nil {
-		err = fmt.Errorf("can't resolve: %s", e)
-		return
+	// IO compatibility list, defaulting to all fdIO.
+	var ioTypes [3]ioType
+
+	bi, isBuiltin := builtins[name]
+	if isBuiltin {
+		ioTypes = bi.ioTypes
+	} else {
+		// Try external command
+		args[0], e = search(n.Nodes[0].(*parse.StringNode).Text)
+		if e != nil {
+			err = fmt.Errorf("can't resolve: %s", e)
+			return
+		}
+	}
+
+	// IO list.
+	ios := [3]interface{}{2: uintptr(2)}
+	if ioCompatible(uintptr(2), ioTypes[2]) {
+		ios[2] = uintptr(2)
 	}
 
 	files = make([]*os.File, 0)
@@ -144,16 +170,25 @@ func evalCommand(n *parse.CommandNode, in, out interface{}) (c command, files []
 			err = fmt.Errorf("output already connected to pipe")
 			return
 		}
+
 		switch r := r.(type) {
 		case *parse.CloseRedir:
-			cmd.ios[fd] = FD_NIL
+			ios[fd] = nil
 		case *parse.FdRedir:
+			if ioTypes[fd] == chanIO {
+				err = fmt.Errorf("fd redir on channel IO")
+				return
+			}
 			if r.OldFd > 2 {
 				err = fmt.Errorf("fd redir from fd > 2 not yet supported")
 				return
 			}
-			cmd.ios[fd] = r.OldFd
+			ios[fd] = r.OldFd
 		case *parse.FilenameRedir:
+			if ioTypes[fd] == chanIO {
+				err = fmt.Errorf("filename redir on channel IO")
+				return
+			}
 			fname, e := evalTerm(r.Filename)
 			if e != nil {
 				err = fmt.Errorf("failed to evaluate filename: %q: %s",
@@ -168,19 +203,40 @@ func evalCommand(n *parse.CommandNode, in, out interface{}) (c command, files []
 			}
 			files = append(files, f)
 			oldFd := f.Fd()
-			cmd.ios[fd] = oldFd
+			ios[fd] = oldFd
 		}
 	}
 
 	// Connect pipes.
-	// XXX assumes fd IO now
 	if in != nil {
-		cmd.ios[0] = in.(uintptr)
+		if !ioCompatible(in, ioTypes[0]) {
+			err = fmt.Errorf("Incompatible input pipe: %T", in)
+			return
+		}
+		ios[0] = in
 	}
 	if out != nil {
-		cmd.ios[1] = out.(uintptr)
+		if !ioCompatible(out, ioTypes[1]) {
+			err = fmt.Errorf("Incompatible output pipe: %T", out)
+			return
+		}
+		ios[1] = out
 	}
-	c = &cmd
+
+	if isBuiltin {
+		c = &builtinCommand{commandBase{name, args}, bi.f, ios}
+	} else {
+		var fds [3]uintptr
+		for i, io := range ios {
+			// io can only be either nil or of type uintptr.
+			if io == nil {
+				fds[i] = FD_NIL
+			} else {
+				fds[i] = io.(uintptr)
+			}
+		}
+		c = &externalCommand{commandBase{name, args}, fds}
+	}
 	return
 }
 
@@ -204,20 +260,30 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 
 	cmds := make([]*externalCommand, 0, ncmds)
 
-	var nextIn interface{}
 	var filesToClose []*os.File
+	var chansToClose []chan string
 	defer func() {
 		for _, f := range filesToClose {
 			f.Close()
 		}
+		for _, ch := range chansToClose {
+			close(ch)
+		}
 	}()
 
+	var nextIn interface{}
 	for i, n := range pl.Nodes {
 		// Create pipes.
 		// XXX Check whether output is fd IO
 		var in, out interface{}
-		in = nextIn
-		if i != ncmds - 1 {
+		if i == 0 {
+			in = uintptr(0)
+		} else {
+			in = nextIn
+		}
+		if i == ncmds - 1 {
+			out = uintptr(1)
+		} else {
 			// os.Pipe sets O_CLOEXEC, which is what we want.
 			reader, writer, e := os.Pipe()
 			if e != nil {
@@ -235,6 +301,10 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 			return nil, fmt.Errorf("error with command #%d: %s", i, err)
 		}
 
+		cmd, isExternal := cmd.(*externalCommand)
+		if !isExternal {
+			return nil, fmt.Errorf("Only external command is supported now")
+		}
 		cmds = append(cmds, cmd.(*externalCommand))
 	}
 
