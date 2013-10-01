@@ -22,7 +22,7 @@ func envAsMap(env []string) (m map[string]string) {
 }
 
 func init() {
-	env := envAsMap(os.Environ())
+	env = envAsMap(os.Environ())
 
 	path_var, ok := env["PATH"]
 	if ok {
