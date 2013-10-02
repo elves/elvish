@@ -22,6 +22,7 @@ type builtin struct {
 var builtins = map[string]builtin {
 	"put": builtin{implPut, [3]ioType{unusedIO, chanIO}},
 	"print": builtin{implPrint, [3]ioType{unusedIO}},
+	"println": builtin{implPrintln, [3]ioType{unusedIO}},
 }
 
 func implPut(args []string, ios [3]*io) {
@@ -40,4 +41,9 @@ func implPrint(args []string, ios [3]*io) {
 		args_if[i] = a
 	}
 	fmt.Fprint(out, args_if...)
+}
+
+func implPrintln(args []string, ios [3]*io) {
+	args = append(args, "\n")
+	implPrint(args, ios)
 }
