@@ -268,22 +268,22 @@ func ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error)
 
 	updates = make([]<-chan *StateUpdate, ncmds)
 	for i, cmd := range cmds {
-		updates[i] = ExecCommand(cmd)
+		updates[i] = execCommand(cmd)
 	}
 	return updates, nil
 }
 
-// ExecCommand executes a command.
-func ExecCommand(cmd *command) <-chan *StateUpdate {
+// execCommand executes a command.
+func execCommand(cmd *command) <-chan *StateUpdate {
 	if cmd.f != nil {
-		return ExecBuiltin(cmd)
+		return execBuiltin(cmd)
 	} else {
-		return ExecExternal(cmd)
+		return execExternal(cmd)
 	}
 }
 
-// ExecBuiltin executes a builtin command.
-func ExecBuiltin(cmd *command) <-chan *StateUpdate {
+// execBuiltin executes a builtin command.
+func execBuiltin(cmd *command) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
 		// XXX builtins should return an exit code
@@ -311,8 +311,8 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 	close(update)
 }
 
-// ExecExternal executes an external command.
-func ExecExternal(cmd *command) <-chan *StateUpdate {
+// execExternal executes an external command.
+func execExternal(cmd *command) <-chan *StateUpdate {
 	files := make([]uintptr, len(cmd.ios))
 	for i, io := range cmd.ios {
 		if io == nil || io.f == nil {
