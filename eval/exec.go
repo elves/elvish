@@ -14,13 +14,18 @@ const (
 	FD_NIL uintptr = ^uintptr(0)
 )
 
+// Represents an IO for commands. At most one of f and ch is non-nil. When
+// both are nil, the IO is closed.
 type io struct {
 	f *os.File
 	ch chan string
 }
 
 func (i *io) compatible(typ ioType) bool {
-	if i == nil || typ == unusedIO {
+	if i == nil {
+		return false
+	}
+	if typ == unusedIO {
 		return true
 	}
 	switch {
@@ -163,7 +168,7 @@ func evalCommand(n *parse.CommandNode, in, out *io) (cmd *command, files []*os.F
 
 		switch r := r.(type) {
 		case *parse.CloseRedir:
-			ios[fd] = nil
+			ios[fd] = &io{}
 		case *parse.FdRedir:
 			if ioTypes[fd] == chanIO {
 				err = fmt.Errorf("fd redir on channel IO")
