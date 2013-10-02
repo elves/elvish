@@ -247,7 +247,7 @@ func ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error)
 			out = &io{f: os.Stdout}
 		} else {
 			// os.Pipe sets O_CLOEXEC, which is what we want.
-			// XXX Check whether output is fd IO
+			// XXX Assumes fileIO now
 			reader, writer, e := os.Pipe()
 			if e != nil {
 				return nil, fmt.Errorf("failed to create pipe: %s", e)
