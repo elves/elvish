@@ -300,7 +300,7 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 func ExecCommand(cmd *command) (pid int, err error) {
 	files := make([]uintptr, len(cmd.ios))
 	for i, io := range cmd.ios {
-		if io.f == nil {
+		if io == nil || io.f == nil {
 			files[i] = FD_NIL
 		} else {
 			files[i] = io.f.Fd()
