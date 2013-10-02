@@ -309,7 +309,6 @@ func execCommand(cmd *command) <-chan *StateUpdate {
 func execBuiltin(cmd *command) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
-		// XXX builtins should return an exit code
 		msg := cmd.f(cmd.args, cmd.ios)
 		update <- &StateUpdate{Terminated: true, Msg: msg}
 		close(update)
