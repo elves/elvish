@@ -218,14 +218,12 @@ func ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error)
 
 	cmds := make([]*command, 0, ncmds)
 
+	// XXX Files opened in redirections shouldn't be closed for builtins since
+	// executing builtins doesn't involve a fork.
 	var filesToClose []*os.File
-	var chansToClose []chan string
 	defer func() {
 		for _, f := range filesToClose {
 			f.Close()
-		}
-		for _, ch := range chansToClose {
-			close(ch)
 		}
 	}()
 
@@ -281,7 +279,6 @@ func ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error)
 			case chanIO:
 				// TODO Buffered channel?
 				ch := make(chan string)
-				chansToClose = append(chansToClose, ch)
 				nextIn = &io{ch: ch}
 				cmd.ios[1] = &io{ch: ch}
 			default:
