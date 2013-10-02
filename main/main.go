@@ -52,20 +52,17 @@ func main() {
 			continue
 		}
 
-		pids, err := eval.ExecPipeline(tree.Root.(*parse.ListNode))
+		updates, err := eval.ExecPipeline(tree.Root.(*parse.ListNode))
 		if err != nil {
 			fmt.Println(err)
-			if pids == nil {
-				continue
-			}
+			continue
 		}
 
-		var ws syscall.WaitStatus
-		var ru syscall.Rusage
-
-		// TODO Should check ws
-		for _, pid := range pids {
-			syscall.Wait4(pid, &ws, 0, &ru)
+		for i, update := range updates {
+			// TODO Should check update.Msg
+			for up := range update {
+				fmt.Printf("Command #%d update: %s\n", i, up.Msg)
+			}
 		}
 	}
 }

@@ -42,6 +42,11 @@ type command struct {
 	f builtinFunc
 }
 
+type StateUpdate struct {
+	Terminated bool
+	Msg string
+}
+
 func isExecutable(path string) bool {
 	f, err := os.Open(path)
 	if err != nil {
@@ -98,15 +103,6 @@ func evalTermList(ln *parse.ListNode) ([]string, error) {
 		}
 	}
 	return ss, nil
-}
-
-// CommandErrors holds multiple errors.
-type CommandErrors struct {
-	Errors []error
-}
-
-func (ce CommandErrors) Error() string {
-	return fmt.Sprintf("%v", ce.Errors)
 }
 
 func evalCommand(n *parse.CommandNode, in, out *io) (cmd *command, files []*os.File, err error) {
@@ -219,10 +215,10 @@ func evalCommand(n *parse.CommandNode, in, out *io) (cmd *command, files []*os.F
 // corresponding elements in pids is -1 and err is typed *CommandErrors. For
 // each pids[i] == -1, err.(*CommandErrors)Errors[i] contains the
 // corresponding error.
-func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
+func ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error) {
 	ncmds := len(pl.Nodes)
 	if ncmds == 0 {
-		return []int{}, nil
+		return []<-chan *StateUpdate{}, nil
 	}
 
 	cmds := make([]*command, 0, ncmds)
@@ -274,30 +270,32 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 		cmds = append(cmds, cmd)
 	}
 
-	pids = make([]int, ncmds)
-	cmderr := CommandErrors{Errors: make([]error, ncmds)}
-	haserr := false
-
+	updates = make([]<-chan *StateUpdate, ncmds)
 	for i, cmd := range cmds {
-		pid, err := ExecCommand(cmd)
+		updates[i] = ExecCommand(cmd)
+	}
+	return updates, nil
+}
+
+func waitStateUpdate(pid int, update chan<- *StateUpdate) {
+	for {
+		var ws syscall.WaitStatus
+		_, err := syscall.Wait4(pid, &ws, 0, nil)
 
 		if err != nil {
-			pids[i] = -1
-			cmderr.Errors[i] = err
-			haserr = true
-		} else {
-			pids[i] = pid
+			if err != syscall.ECHILD {
+				update <- &StateUpdate{Msg: err.Error()}
+			}
+			break
 		}
+		update <- &StateUpdate{
+			Terminated: ws.Exited(), Msg: fmt.Sprintf("%v", ws)}
 	}
-
-	if haserr {
-		return pids, cmderr
-	}
-	return pids, nil
+	close(update)
 }
 
 // ExecCommand executes a command.
-func ExecCommand(cmd *command) (pid int, err error) {
+func ExecCommand(cmd *command) <-chan *StateUpdate {
 	files := make([]uintptr, len(cmd.ios))
 	for i, io := range cmd.ios {
 		if io == nil || io.f == nil {
@@ -309,6 +307,15 @@ func ExecCommand(cmd *command) (pid int, err error) {
 
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: envAsSlice(env), Files: files[:], Sys: &sys}
+	pid, err := syscall.ForkExec(cmd.args[0], cmd.args, &attr)
 
-	return syscall.ForkExec(cmd.args[0], cmd.args, &attr)
+	update := make(chan *StateUpdate)
+	if err != nil {
+		update <- &StateUpdate{Terminated: true, Msg: err.Error()}
+		close(update)
+	} else {
+		go waitStateUpdate(pid, update)
+	}
+
+	return update
 }
