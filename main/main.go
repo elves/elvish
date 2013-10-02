@@ -62,7 +62,7 @@ func main() {
 			// TODO Should check update.Msg
 			for up := range update {
 				switch up.Msg {
-				case "0", "ok":
+				case "0", "":
 				default:
 					fmt.Printf("Command #%d update: %s\n", i, up.Msg)
 				}
