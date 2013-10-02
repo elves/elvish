@@ -259,14 +259,10 @@ func ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error)
 
 		cmd, files, err := evalCommand(n.(*parse.CommandNode), in, out)
 		filesToClose = append(filesToClose, files...)
-
 		if err != nil {
 			return nil, fmt.Errorf("error with command #%d: %s", i, err)
 		}
 
-		if cmd.f != nil {
-			return nil, fmt.Errorf("Only external command is supported now")
-		}
 		cmds = append(cmds, cmd)
 	}
 
@@ -275,6 +271,27 @@ func ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error)
 		updates[i] = ExecCommand(cmd)
 	}
 	return updates, nil
+}
+
+// ExecCommand executes a command.
+func ExecCommand(cmd *command) <-chan *StateUpdate {
+	if cmd.f != nil {
+		return ExecBuiltin(cmd)
+	} else {
+		return ExecExternal(cmd)
+	}
+}
+
+// ExecBuiltin executes a builtin command.
+func ExecBuiltin(cmd *command) <-chan *StateUpdate {
+	update := make(chan *StateUpdate)
+	go func() {
+		// XXX builtins should return an exit code
+		cmd.f(cmd.args, cmd.ios)
+		update <- &StateUpdate{Terminated: true, Msg: "ok"}
+		close(update)
+	}()
+	return update
 }
 
 func waitStateUpdate(pid int, update chan<- *StateUpdate) {
@@ -294,8 +311,8 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 	close(update)
 }
 
-// ExecCommand executes a command.
-func ExecCommand(cmd *command) <-chan *StateUpdate {
+// ExecExternal executes an external command.
+func ExecExternal(cmd *command) <-chan *StateUpdate {
 	files := make([]uintptr, len(cmd.ios))
 	for i, io := range cmd.ios {
 		if io == nil || io.f == nil {
