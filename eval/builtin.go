@@ -23,6 +23,7 @@ var builtins = map[string]builtin {
 	"put": builtin{implPut, [3]ioType{unusedIO, chanIO}},
 	"print": builtin{implPrint, [3]ioType{unusedIO}},
 	"println": builtin{implPrintln, [3]ioType{unusedIO}},
+	"printchan": builtin{implPrintchan, [3]ioType{chanIO, fileIO}},
 }
 
 func implPut(args []string, ios [3]*io) string {
@@ -49,4 +50,17 @@ func implPrint(args []string, ios [3]*io) string {
 func implPrintln(args []string, ios [3]*io) string {
 	args = append(args, "\n")
 	return implPrint(args, ios)
+}
+
+func implPrintchan(args []string, ios [3]*io) string {
+	if len(args) > 1 {
+		return "args error"
+	}
+	in := ios[0].ch
+	out := ios[1].f
+
+	for s := range in {
+		fmt.Fprintf(out, "%q\n", s)
+	}
+	return ""
 }
