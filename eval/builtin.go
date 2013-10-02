@@ -1,5 +1,9 @@
 package eval
 
+import (
+	"fmt"
+)
+
 type ioType byte
 
 const (
@@ -17,6 +21,7 @@ type builtin struct {
 
 var builtins = map[string]builtin {
 	"put": builtin{implPut, [3]ioType{unusedIO, chanIO}},
+	"print": builtin{implPrint, [3]ioType{unusedIO}},
 }
 
 func implPut(args []string, ios [3]*io) {
@@ -24,4 +29,15 @@ func implPut(args []string, ios [3]*io) {
 	for i := 1; i < len(args); i++ {
 		out <- args[i]
 	}
+}
+
+func implPrint(args []string, ios [3]*io) {
+	out := ios[1].f
+
+	args = args[1:]
+	args_if := make([]interface{}, len(args))
+	for i, a := range args {
+		args_if[i] = a
+	}
+	fmt.Fprint(out, args_if...)
 }
