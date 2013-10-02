@@ -3,14 +3,12 @@ package eval
 type ioType byte
 
 const (
-	// Default IO type. Corresponding io argument is a uintptr representing a
-	// Unix fd.
-	fdIO ioType = iota
-	chanIO // Corresponding io argument is a chan string (for now).
-	unusedIO // Corresponding io argument is not used at all.
+	fileIO ioType = iota // Default IO type. Corresponds to io.f.
+	chanIO // Corresponds to io.ch.
+	unusedIO
 )
 
-type builtinFunc func([]string, [3]interface{})
+type builtinFunc func([]string, [3]*io)
 
 type builtin struct {
 	f builtinFunc
@@ -21,8 +19,8 @@ var builtins = map[string]builtin {
 	"put": builtin{implPut, [3]ioType{unusedIO, chanIO}},
 }
 
-func implPut(args []string, ios [3]interface{}) {
-	out := ios[1].(chan string)
+func implPut(args []string, ios [3]*io) {
+	out := ios[1].ch
 	for i := 1; i < len(args); i++ {
 		out <- args[i]
 	}

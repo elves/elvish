@@ -14,28 +14,32 @@ const (
 	FD_NIL uintptr = ^uintptr(0)
 )
 
-type command interface {
-	meiscommand()
+type io struct {
+	f *os.File
+	ch chan string
 }
 
-type commandBase struct {
-	name string // command name, used in error messages
-	// full argument list. args[0] is always some form of command name.
+func (i *io) compatible(typ ioType) bool {
+	if i == nil || typ == unusedIO {
+		return true
+	}
+	switch {
+	case i.f != nil:
+		return typ == fileIO
+	case i.ch != nil:
+		return typ == chanIO
+	default:
+		return true
+	}
+}
+
+type command struct {
+	name string // Command name, used in error messages.
+	// Full argument list. args[0] is always some form of command name.
 	args []string
-}
-
-func (cb *commandBase) meiscommand() {
-}
-
-type externalCommand struct {
-	commandBase
-	ios [3]uintptr
-}
-
-type builtinCommand struct {
-	commandBase
+	ios [3]*io // IOs for in, out and err.
+	// A pointer to the builtin function, if the command is builtin.
 	f builtinFunc
-	ios [3]interface{} // either of uintptr or chan string
 }
 
 func isExecutable(path string) bool {
@@ -105,21 +109,7 @@ func (ce CommandErrors) Error() string {
 	return fmt.Sprintf("%v", ce.Errors)
 }
 
-func ioCompatible(io interface{}, typ ioType) bool {
-	if io == nil {
-		return true
-	}
-	switch io.(type) {
-	case uintptr:
-		return typ == fdIO || typ == unusedIO
-	case chan string:
-		return typ == chanIO || typ == unusedIO
-	default:
-		return false
-	}
-}
-
-func evalCommand(n *parse.CommandNode, in, out interface{}) (c command, files []*os.File, err error) {
+func evalCommand(n *parse.CommandNode, in, out *io) (cmd *command, files []*os.File, err error) {
 	if len(n.Nodes) == 0 {
 		err = fmt.Errorf("command is emtpy")
 		return
@@ -135,7 +125,7 @@ func evalCommand(n *parse.CommandNode, in, out interface{}) (c command, files []
 	// Save unresolved args[0] as name.
 	name := args[0]
 
-	// IO compatibility list, defaulting to all fdIO.
+	// IO compatibility list, defaulting to all fileIO.
 	var ioTypes [3]ioType
 
 	bi, isBuiltin := builtins[name]
@@ -150,10 +140,20 @@ func evalCommand(n *parse.CommandNode, in, out interface{}) (c command, files []
 		}
 	}
 
+	if !in.compatible(ioTypes[0]) {
+		err = fmt.Errorf("Incompatible input pipe")
+		return
+	}
+	if !out.compatible(ioTypes[1]) {
+		err = fmt.Errorf("Incompatible output pipe")
+		return
+	}
+
 	// IO list.
-	ios := [3]interface{}{2: uintptr(2)}
-	if ioCompatible(uintptr(2), ioTypes[2]) {
-		ios[2] = uintptr(2)
+	ios := [3]*io{in, out}
+	defaultErrIO := &io{f: os.Stderr}
+	if defaultErrIO.compatible(ioTypes[2]) {
+		ios[2] = defaultErrIO
 	}
 
 	files = make([]*os.File, 0)
@@ -162,12 +162,6 @@ func evalCommand(n *parse.CommandNode, in, out interface{}) (c command, files []
 		fd := r.Fd()
 		if fd > 2 {
 			err = fmt.Errorf("redir on fd > 2 not yet supported")
-			return
-		} else if fd == 0 && in != nil {
-			err = fmt.Errorf("input already connected to pipe")
-			return
-		} else if fd == 1 && out != nil {
-			err = fmt.Errorf("output already connected to pipe")
 			return
 		}
 
@@ -183,7 +177,7 @@ func evalCommand(n *parse.CommandNode, in, out interface{}) (c command, files []
 				err = fmt.Errorf("fd redir from fd > 2 not yet supported")
 				return
 			}
-			ios[fd] = r.OldFd
+			ios[fd] = ios[r.OldFd]
 		case *parse.FilenameRedir:
 			if ioTypes[fd] == chanIO {
 				err = fmt.Errorf("filename redir on channel IO")
@@ -202,40 +196,13 @@ func evalCommand(n *parse.CommandNode, in, out interface{}) (c command, files []
 				return
 			}
 			files = append(files, f)
-			oldFd := f.Fd()
-			ios[fd] = oldFd
+			ios[fd] = &io{f: f}
 		}
 	}
 
-	// Connect pipes.
-	if in != nil {
-		if !ioCompatible(in, ioTypes[0]) {
-			err = fmt.Errorf("Incompatible input pipe: %T", in)
-			return
-		}
-		ios[0] = in
-	}
-	if out != nil {
-		if !ioCompatible(out, ioTypes[1]) {
-			err = fmt.Errorf("Incompatible output pipe: %T", out)
-			return
-		}
-		ios[1] = out
-	}
-
+	cmd = &command{name, args, ios, nil}
 	if isBuiltin {
-		c = &builtinCommand{commandBase{name, args}, bi.f, ios}
-	} else {
-		var fds [3]uintptr
-		for i, io := range ios {
-			// io can only be either nil or of type uintptr.
-			if io == nil {
-				fds[i] = FD_NIL
-			} else {
-				fds[i] = io.(uintptr)
-			}
-		}
-		c = &externalCommand{commandBase{name, args}, fds}
+		cmd.f = bi.f
 	}
 	return
 }
@@ -258,7 +225,7 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 		return []int{}, nil
 	}
 
-	cmds := make([]*externalCommand, 0, ncmds)
+	cmds := make([]*command, 0, ncmds)
 
 	var filesToClose []*os.File
 	var chansToClose []chan string
@@ -271,27 +238,27 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 		}
 	}()
 
-	var nextIn interface{}
+	var nextIn *io
 	for i, n := range pl.Nodes {
 		// Create pipes.
-		// XXX Check whether output is fd IO
-		var in, out interface{}
+		var in, out *io
 		if i == 0 {
-			in = uintptr(0)
+			in = &io{f: os.Stdin}
 		} else {
 			in = nextIn
 		}
 		if i == ncmds - 1 {
-			out = uintptr(1)
+			out = &io{f: os.Stdout}
 		} else {
 			// os.Pipe sets O_CLOEXEC, which is what we want.
+			// XXX Check whether output is fd IO
 			reader, writer, e := os.Pipe()
 			if e != nil {
 				return nil, fmt.Errorf("failed to create pipe: %s", e)
 			}
 			filesToClose = append(filesToClose, reader, writer)
-			nextIn = reader.Fd()
-			out = writer.Fd()
+			nextIn = &io{f: reader}
+			out = &io{f: writer}
 		}
 
 		cmd, files, err := evalCommand(n.(*parse.CommandNode), in, out)
@@ -301,11 +268,10 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 			return nil, fmt.Errorf("error with command #%d: %s", i, err)
 		}
 
-		cmd, isExternal := cmd.(*externalCommand)
-		if !isExternal {
+		if cmd.f != nil {
 			return nil, fmt.Errorf("Only external command is supported now")
 		}
-		cmds = append(cmds, cmd.(*externalCommand))
+		cmds = append(cmds, cmd)
 	}
 
 	pids = make([]int, ncmds)
@@ -331,9 +297,18 @@ func ExecPipeline(pl *parse.ListNode) (pids []int, err error) {
 }
 
 // ExecCommand executes a command.
-func ExecCommand(cmd *externalCommand) (pid int, err error) {
+func ExecCommand(cmd *command) (pid int, err error) {
+	files := make([]uintptr, len(cmd.ios))
+	for i, io := range cmd.ios {
+		if io.f == nil {
+			files[i] = FD_NIL
+		} else {
+			files[i] = io.f.Fd()
+		}
+	}
+
 	sys := syscall.SysProcAttr{}
-	attr := syscall.ProcAttr{Env: envAsSlice(env), Files: cmd.ios[:], Sys: &sys}
+	attr := syscall.ProcAttr{Env: envAsSlice(env), Files: files[:], Sys: &sys}
 
 	return syscall.ForkExec(cmd.args[0], cmd.args, &attr)
 }
