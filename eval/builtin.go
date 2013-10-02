@@ -30,6 +30,7 @@ func implPut(args []string, ios [3]*io) string {
 	for i := 1; i < len(args); i++ {
 		out <- args[i]
 	}
+	close(out)
 	return ""
 }
 
