@@ -157,7 +157,7 @@ func (w *writer) write(r rune) {
 	}
 }
 
-func (w *writer) refresh(prompt, text, tip string) error {
+func (w *writer) refresh(prompt, text, tip string, point int) error {
 	w.startBuffer()
 
 	for _, r := range prompt {
@@ -170,6 +170,11 @@ func (w *writer) refresh(prompt, text, tip string) error {
 
 	l := parse.Lex("<interactive code>", text)
 
+	// i keeps track of number of runes written.
+	i := 0
+	if point == 0 {
+		w.buf.point = w.cursor
+	}
 	for {
 		token := l.NextItem()
 		if token.Typ == parse.ItemEOF {
@@ -178,10 +183,13 @@ func (w *writer) refresh(prompt, text, tip string) error {
 		w.currentAttr = attrForType[token.Typ]
 		for _, r := range token.Val {
 			w.write(r)
+			i++
+			if point == i {
+				w.buf.point = w.cursor
+			}
 		}
 	}
 
-	w.buf.point = w.cursor
 	w.currentAttr = ""
 	if len(tip) > 0 {
 		w.indent = 0

@@ -72,8 +72,8 @@ func (ed *Editor) Cleanup() error {
 func (ed *Editor) beep() {
 }
 
-func (ed *Editor) refresh(prompt, text, tip string) error {
-	return ed.writer.refresh(prompt, text, tip)
+func (ed *Editor) refresh(prompt, text, tip string, point int) error {
+	return ed.writer.refresh(prompt, text, tip, point)
 }
 
 func pushTip(tip, more string) string {
@@ -87,9 +87,10 @@ func pushTip(tip, more string) string {
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	line := ""
 	tip := ""
+	point := 0
 
 	for {
-		err := ed.refresh(prompt, line, tip)
+		err := ed.refresh(prompt, line, tip, point)
 		if err != nil {
 			return LineRead{Err: err}
 		}
@@ -104,7 +105,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		switch k {
 		case Key{Enter, 0}:
 			tip = ""
-			err := ed.refresh(prompt, line, tip)
+			err := ed.refresh(prompt, line, tip, point)
 			if err != nil {
 				return LineRead{Err: err}
 			}
@@ -114,11 +115,13 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			if l := len(line); l > 0 {
 				_, w := utf8.DecodeLastRuneInString(line)
 				line = line[:l-w]
+				point--
 			} else {
 				ed.beep()
 			}
 		case Key{'U', Ctrl}:
 			line = ""
+			point = 0
 		case Key{'D', Ctrl}:
 			if len(line) == 0 {
 				return LineRead{Eof: true}
@@ -127,6 +130,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		default:
 			if k.Mod == 0 && unicode.IsGraphic(k.rune) {
 				line += string(k.rune)
+				point++
 			} else {
 				tip = pushTip(tip, fmt.Sprintf("Unbound: %s", k))
 			}
