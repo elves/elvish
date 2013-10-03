@@ -4,6 +4,7 @@ import (
 	"os"
 	"fmt"
 	"bytes"
+	"unicode"
 	"./tty"
 	"../parse"
 )
@@ -135,6 +136,13 @@ func (w *writer) newline() {
 }
 
 func (w *writer) write(r rune) {
+	if r == '\n' {
+		w.newline()
+		return
+	} else if !unicode.IsPrint(r) {
+		// XXX unprintable runes are dropped silently
+		return
+	}
 	wd := wcwidth(r)
 	c := cell{r, byte(wd), w.currentAttr}
 
