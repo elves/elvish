@@ -16,6 +16,9 @@ type Editor struct {
 	file *os.File
 	writer *writer
 	reader *reader
+	// Fields below are used when during ReadLine.
+	prompt, line, tip string
+	dot int
 }
 
 // LineRead is the result of ReadLine. Exactly one member is non-zero, making
@@ -72,71 +75,76 @@ func (ed *Editor) Cleanup() error {
 func (ed *Editor) beep() {
 }
 
-func pushTip(tip, more string) string {
-	if len(tip) == 0 {
-		return more
+func (ed *Editor) pushTip(more string) {
+	if len(ed.tip) == 0 {
+		ed.tip = more
+	} else {
+		ed.tip = ed.tip + "; " + more
 	}
-	return tip + "; " + more
+}
+
+func (ed *Editor) refresh() error {
+	return ed.writer.refresh(ed.prompt, ed.line, ed.tip, ed.dot)
 }
 
 // ReadLine reads a line interactively.
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
-	line := ""
-	tip := ""
-	dot := 0
+	ed.prompt = prompt
+	ed.line = ""
+	ed.tip = ""
+	ed.dot = 0
 
 	for {
-		err := ed.writer.refresh(prompt, line, tip, dot)
+		err := ed.refresh()
 		if err != nil {
 			return LineRead{Err: err}
 		}
 
-		tip = ""
+		ed.tip = ""
 
 		k, err := ed.reader.readKey()
 		if err != nil {
-			tip = pushTip(tip, err.Error())
+			ed.pushTip(err.Error())
 		}
 
 		switch k {
 		case Key{Enter, 0}:
-			tip = ""
-			err := ed.writer.refresh(prompt, line, tip, dot)
+			err := ed.refresh()
 			if err != nil {
 				return LineRead{Err: err}
 			}
 			fmt.Fprintln(ed.file)
-			return LineRead{Line: line}
+			return LineRead{Line: ed.line}
 		case Key{Backspace, 0}:
-			if dot > 0 {
-				_, w := utf8.DecodeLastRuneInString(line[:dot])
-				line = line[:dot-w] + line[dot:]
-				dot -= w
+			if ed.dot > 0 {
+				_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
+				ed.line = ed.line[:ed.dot-w] + ed.line[ed.dot:]
+				ed.dot -= w
 			} else {
 				ed.beep()
 			}
 		case Key{'U', Ctrl}:
-			line = line[dot:]
-			dot = 0
+			ed.line = ed.line[ed.dot:]
+			ed.dot = 0
 		case Key{'K', Ctrl}:
-			line = line[:dot]
+			ed.line = ed.line[:ed.dot]
 		case Key{Left, 0}:
-			_, w := utf8.DecodeLastRuneInString(line[:dot])
-			dot -= w
+			_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
+			ed.dot -= w
 		case Key{Right, 0}:
-			_, w := utf8.DecodeRuneInString(line[dot:])
-			dot += w
+			_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
+			ed.dot += w
 		case Key{'D', Ctrl}:
-			if len(line) == 0 {
+			if len(ed.line) == 0 {
 				return LineRead{Eof: true}
 			}
 			fallthrough
 		default:
 			if k.Mod == 0 && unicode.IsGraphic(k.rune) {
-				line = line[:dot] + string(k.rune) + line[dot:]
-				dot += utf8.RuneLen(k.rune)
+				ed.line = ed.line[:ed.dot] + string(k.rune) + ed.line[ed.dot:]
+				ed.dot += utf8.RuneLen(k.rune)
 			} else {
-				tip = pushTip(tip, fmt.Sprintf("Unbound: %s", k))
+				ed.pushTip(fmt.Sprintf("Unbound: %s", k))
 			}
 		}
 	}
