@@ -108,15 +108,15 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			fmt.Fprintln(ed.file)
 			return LineRead{Line: line}
 		case Key{Backspace, 0}:
-			if l := len(line); l > 0 {
-				_, w := utf8.DecodeLastRuneInString(line)
-				line = line[:l-w]
+			if point > 0 {
+				_, w := utf8.DecodeLastRuneInString(line[:point])
+				line = line[:point-w] + line[point:]
 				point -= w
 			} else {
 				ed.beep()
 			}
 		case Key{'U', Ctrl}:
-			line = ""
+			line = line[point:]
 			point = 0
 		case Key{'D', Ctrl}:
 			if len(line) == 0 {
@@ -125,7 +125,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			fallthrough
 		default:
 			if k.Mod == 0 && unicode.IsGraphic(k.rune) {
-				line += string(k.rune)
+				line = line[:point] + string(k.rune) + line[point:]
 				point += utf8.RuneLen(k.rune)
 			} else {
 				tip = pushTip(tip, fmt.Sprintf("Unbound: %s", k))
