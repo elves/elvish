@@ -111,7 +111,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			if l := len(line); l > 0 {
 				_, w := utf8.DecodeLastRuneInString(line)
 				line = line[:l-w]
-				point--
+				point -= w
 			} else {
 				ed.beep()
 			}
@@ -126,7 +126,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		default:
 			if k.Mod == 0 && unicode.IsGraphic(k.rune) {
 				line += string(k.rune)
-				point++
+				point += utf8.RuneLen(k.rune)
 			} else {
 				tip = pushTip(tip, fmt.Sprintf("Unbound: %s", k))
 			}

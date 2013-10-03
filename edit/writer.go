@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"bytes"
 	"unicode"
+	"unicode/utf8"
 	"./tty"
 	"../parse"
 )
@@ -192,7 +193,7 @@ func (w *writer) refresh(prompt, text, tip string, point int) error {
 		w.currentAttr = attrForType[token.Typ]
 		for _, r := range token.Val {
 			w.write(r)
-			i++
+			i += utf8.RuneLen(r)
 			if point == i {
 				w.buf.point = w.cursor
 			}
