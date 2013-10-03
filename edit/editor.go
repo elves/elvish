@@ -72,10 +72,6 @@ func (ed *Editor) Cleanup() error {
 func (ed *Editor) beep() {
 }
 
-func (ed *Editor) refresh(prompt, text, tip string, point int) error {
-	return ed.writer.refresh(prompt, text, tip, point)
-}
-
 func pushTip(tip, more string) string {
 	if len(tip) == 0 {
 		return more
@@ -90,7 +86,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	point := 0
 
 	for {
-		err := ed.refresh(prompt, line, tip, point)
+		err := ed.writer.refresh(prompt, line, tip, point)
 		if err != nil {
 			return LineRead{Err: err}
 		}
@@ -105,7 +101,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		switch k {
 		case Key{Enter, 0}:
 			tip = ""
-			err := ed.refresh(prompt, line, tip, point)
+			err := ed.writer.refresh(prompt, line, tip, point)
 			if err != nil {
 				return LineRead{Err: err}
 			}
