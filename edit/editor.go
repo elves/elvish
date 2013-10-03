@@ -118,6 +118,8 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		case Key{'U', Ctrl}:
 			line = line[dot:]
 			dot = 0
+		case Key{'K', Ctrl}:
+			line = line[:dot]
 		case Key{Left, 0}:
 			_, w := utf8.DecodeLastRuneInString(line[:dot])
 			dot -= w
