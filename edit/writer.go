@@ -47,6 +47,7 @@ func (b *buffer) appendLine(w int) {
 type writer struct {
 	file *os.File
 	oldBuf, buf *buffer
+	// Fields below are used when refreshing.
 	width, indent int
 	cursor pos
 	currentAttr string
@@ -65,6 +66,8 @@ func (w *writer) startBuffer() {
 	w.currentAttr = ""
 }
 
+// deltaPos calculates the escape sequence needed to move the cursor from one
+// position to another.
 func deltaPos(from, to pos) []byte {
 	buf := new(bytes.Buffer)
 	if from.line < to.line {
@@ -84,6 +87,9 @@ func deltaPos(from, to pos) []byte {
 	return buf.Bytes()
 }
 
+// commitBuffer updates the terminal display to reflect current buffer.
+// TODO Instead of erasing w.oldBuf entirely and then draw w.buf, compute a
+// delta between w.oldBuf and w.buf
 func (w *writer) commitBuffer() error {
 	bytesBuf := new(bytes.Buffer)
 
@@ -135,6 +141,7 @@ func (w *writer) newline() {
 	}
 }
 
+// write appends a single rune to w.buf.
 func (w *writer) write(r rune) {
 	if r == '\n' {
 		w.newline()
@@ -157,6 +164,8 @@ func (w *writer) write(r rune) {
 	}
 }
 
+// refresh puts prompt, text and tip into w.buf and the point placed
+// appropriately.
 func (w *writer) refresh(prompt, text, tip string, point int) error {
 	w.startBuffer()
 
