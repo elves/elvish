@@ -27,7 +27,7 @@ type pos struct {
 // with. It usually reflects the last n lines of the screen.
 type buffer struct {
 	cells [][]cell
-	point pos
+	dot pos
 }
 
 func newBuffer(w int) *buffer {
@@ -94,7 +94,7 @@ func deltaPos(from, to pos) []byte {
 func (w *writer) commitBuffer() error {
 	bytesBuf := new(bytes.Buffer)
 
-	pLine := w.oldBuf.point.line
+	pLine := w.oldBuf.dot.line
 	if pLine > 0 {
 		fmt.Fprintf(bytesBuf, "\033[%dA", pLine)
 	}
@@ -113,7 +113,7 @@ func (w *writer) commitBuffer() error {
 	if attr != "" {
 		bytesBuf.WriteString("\033[m")
 	}
-	bytesBuf.Write(deltaPos(w.cursor, w.buf.point))
+	bytesBuf.Write(deltaPos(w.cursor, w.buf.dot))
 
 	_, err := w.file.Write(bytesBuf.Bytes())
 	if err != nil {
@@ -165,9 +165,9 @@ func (w *writer) write(r rune) {
 	}
 }
 
-// refresh puts prompt, text and tip into w.buf and the point placed
+// refresh puts prompt, text and tip into w.buf and the dot placed
 // appropriately.
-func (w *writer) refresh(prompt, text, tip string, point int) error {
+func (w *writer) refresh(prompt, text, tip string, dot int) error {
 	w.startBuffer()
 
 	for _, r := range prompt {
@@ -182,8 +182,8 @@ func (w *writer) refresh(prompt, text, tip string, point int) error {
 
 	// i keeps track of number of runes written.
 	i := 0
-	if point == 0 {
-		w.buf.point = w.cursor
+	if dot == 0 {
+		w.buf.dot = w.cursor
 	}
 	for {
 		token := l.NextItem()
@@ -194,8 +194,8 @@ func (w *writer) refresh(prompt, text, tip string, point int) error {
 		for _, r := range token.Val {
 			w.write(r)
 			i += utf8.RuneLen(r)
-			if point == i {
-				w.buf.point = w.cursor
+			if dot == i {
+				w.buf.dot = w.cursor
 			}
 		}
 	}

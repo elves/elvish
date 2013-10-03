@@ -83,10 +83,10 @@ func pushTip(tip, more string) string {
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	line := ""
 	tip := ""
-	point := 0
+	dot := 0
 
 	for {
-		err := ed.writer.refresh(prompt, line, tip, point)
+		err := ed.writer.refresh(prompt, line, tip, dot)
 		if err != nil {
 			return LineRead{Err: err}
 		}
@@ -101,23 +101,23 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		switch k {
 		case Key{Enter, 0}:
 			tip = ""
-			err := ed.writer.refresh(prompt, line, tip, point)
+			err := ed.writer.refresh(prompt, line, tip, dot)
 			if err != nil {
 				return LineRead{Err: err}
 			}
 			fmt.Fprintln(ed.file)
 			return LineRead{Line: line}
 		case Key{Backspace, 0}:
-			if point > 0 {
-				_, w := utf8.DecodeLastRuneInString(line[:point])
-				line = line[:point-w] + line[point:]
-				point -= w
+			if dot > 0 {
+				_, w := utf8.DecodeLastRuneInString(line[:dot])
+				line = line[:dot-w] + line[dot:]
+				dot -= w
 			} else {
 				ed.beep()
 			}
 		case Key{'U', Ctrl}:
-			line = line[point:]
-			point = 0
+			line = line[dot:]
+			dot = 0
 		case Key{'D', Ctrl}:
 			if len(line) == 0 {
 				return LineRead{Eof: true}
@@ -125,8 +125,8 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			fallthrough
 		default:
 			if k.Mod == 0 && unicode.IsGraphic(k.rune) {
-				line = line[:point] + string(k.rune) + line[point:]
-				point += utf8.RuneLen(k.rune)
+				line = line[:dot] + string(k.rune) + line[dot:]
+				dot += utf8.RuneLen(k.rune)
 			} else {
 				tip = pushTip(tip, fmt.Sprintf("Unbound: %s", k))
 			}
