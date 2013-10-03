@@ -23,11 +23,11 @@ type pos struct {
 	line, col int
 }
 
-// buffer keeps the status of the screen that the line editor is concerned
-// with. It usually reflects the last n lines of the screen.
+// buffer is an internal reflection of the last few lines of the terminal, the
+// part the line editor is concerned with.
 type buffer struct {
-	cells [][]cell
-	dot pos
+	cells [][]cell // cells reflect the last len(cells) lines of the terminal.
+	dot pos // dot is what the user perceives as the cursor.
 }
 
 func newBuffer(w int) *buffer {
@@ -61,10 +61,11 @@ func newWriter(f *os.File) *writer {
 
 func (w *writer) startBuffer() {
 	fd := int(w.file.Fd())
-	w.cursor = pos{}
 	w.width = int(tty.GetWinsize(fd).Col)
-	w.buf = newBuffer(w.width)
+	w.indent = 0
+	w.cursor = pos{}
 	w.currentAttr = ""
+	w.buf = newBuffer(w.width)
 }
 
 // deltaPos calculates the escape sequence needed to move the cursor from one
@@ -165,8 +166,8 @@ func (w *writer) write(r rune) {
 	}
 }
 
-// refresh puts prompt, text and tip into w.buf and the dot placed
-// appropriately.
+// refresh redraws the line editor. The dot is passed as an index into text;
+// the corresponding position will be calculated.
 func (w *writer) refresh(prompt, text, tip string, dot int) error {
 	w.startBuffer()
 
