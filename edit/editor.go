@@ -87,6 +87,15 @@ func (ed *Editor) refresh() error {
 	return ed.writer.refresh(ed.prompt, ed.line, ed.tip, ed.dot)
 }
 
+// TODO Allow modifiable keybindings.
+var keyBindings = map[Key]string {
+	Key{'U', Ctrl}: "kill-line-b",
+	Key{'K', Ctrl}: "kill-line-f",
+	Key{Backspace, 0}: "kill-rune-b",
+	Key{Left, 0}: "move-dot-b",
+	Key{Right, 0}: "move-dot-f",
+}
+
 // ReadLine reads a line interactively.
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	ed.prompt = prompt
@@ -107,7 +116,14 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			ed.pushTip(err.Error())
 		}
 
+		if name, bound := keyBindings[k]; bound {
+			leBuiltins[name](ed)
+			continue
+		}
+
 		switch k {
+		// XXX Keybindings that affect the flow of ReadLine can't yet be
+		// implemented as functions.
 		case Key{Enter, 0}:
 			err := ed.refresh()
 			if err != nil {
@@ -115,25 +131,6 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			}
 			fmt.Fprintln(ed.file)
 			return LineRead{Line: ed.line}
-		case Key{Backspace, 0}:
-			if ed.dot > 0 {
-				_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
-				ed.line = ed.line[:ed.dot-w] + ed.line[ed.dot:]
-				ed.dot -= w
-			} else {
-				ed.beep()
-			}
-		case Key{'U', Ctrl}:
-			ed.line = ed.line[ed.dot:]
-			ed.dot = 0
-		case Key{'K', Ctrl}:
-			ed.line = ed.line[:ed.dot]
-		case Key{Left, 0}:
-			_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
-			ed.dot -= w
-		case Key{Right, 0}:
-			_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
-			ed.dot += w
 		case Key{'D', Ctrl}:
 			if len(ed.line) == 0 {
 				return LineRead{Eof: true}
