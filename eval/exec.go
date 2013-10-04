@@ -95,7 +95,23 @@ func envAsSlice(env map[string]string) (s []string) {
 }
 
 func evalFactor(n parse.Node) (string, error) {
-	return n.(*parse.StringNode).Text, nil
+	switch n := n.(type) {
+	case *parse.StringNode:
+		return n.Text, nil
+	case *parse.ListNode:
+		terms := make([]string, len(n.Nodes))
+		for i, m := range n.Nodes {
+			var e error
+			terms[i], e = evalTerm(m)
+			if e != nil {
+				return "", e
+			}
+		}
+		// XXX Should return a list instead
+		return strings.Join(terms, " "), nil
+	default:
+		panic("bad node type")
+	}
 }
 
 func evalTerm(n_ parse.Node) (string, error) {

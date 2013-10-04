@@ -290,14 +290,14 @@ func unquote(token Item) (string, error) {
 // a Factor.
 func startsFactor(t ItemType) bool {
 	switch t {
-	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
+	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted, ItemLParen:
 		return true
 	default:
 		return false
 	}
 }
 
-// Factor = bare | single-quoted | double-quoted
+// Factor = bare | single-quoted | double-quoted | '(' TermList ')'
 func (t *Tree) factor() Node {
 	switch token := t.next(); token.Typ {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
@@ -311,6 +311,12 @@ func (t *Tree) factor() Node {
 			t.Ctx = nil
 		}
 		return newString(token.Pos, token.Val, text)
+	case ItemLParen:
+		list := t.termList()
+		if token := t.next(); token.Typ != ItemRParen {
+			t.unexpected(token, "factor of item list")
+		}
+		return list
 	default:
 		t.unexpected(token, "factor")
 		return nil
