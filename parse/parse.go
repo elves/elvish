@@ -201,6 +201,7 @@ func (t *Tree) Parse(text string, tab bool) (tree *Tree, err error) {
 	return t, nil
 }
 
+// Pipeline = Command { "|" Command }
 func (t *Tree) pipeline() *ListNode {
 	pipe := newList(t.peek().Pos)
 loop:
@@ -221,6 +222,8 @@ loop:
 }
 
 // command parses a command.
+// Command = [ space ] Term { [ space ] Term } { [ space ] Redir }
+// XXX the parser is now more permissive than the described grammar.
 func (t *Tree) command() *CommandNode {
 	cmd := newCommand(t.peek().Pos)
 loop:
@@ -251,6 +254,7 @@ func unquote(token Item) (string, error) {
 	}
 }
 
+// Term = bare | single-quoted | double-quoted
 func (t *Tree) term() Node {
 	switch token := t.next(); token.Typ {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
@@ -271,6 +275,10 @@ func (t *Tree) term() Node {
 }
 
 // redir parses an IO redirection.
+// Redir = redir-leader [ [ space ] Term ]
+// NOTE The actual grammar is more complex than above, since 1) the inner
+// structure of redir-leader is also parsed here, and 2) the Term is not truly
+// optional, but sometimes required depending on the redir-leader.
 func (t *Tree) redir() Redir {
 	leader := t.next()
 
