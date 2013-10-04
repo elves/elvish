@@ -94,56 +94,6 @@ func envAsSlice(env map[string]string) (s []string) {
 	return
 }
 
-func evalFactor(n parse.Node) ([]string, error) {
-	switch n := n.(type) {
-	case *parse.StringNode:
-		return []string{n.Text}, nil
-	case *parse.ListNode:
-		return evalTermList(n)
-	default:
-		panic("bad node type")
-	}
-}
-
-func evalTerm(n_ parse.Node) ([]string, error) {
-	n := n_.(*parse.ListNode)
-	words := make([]string, 0, len(n.Nodes))
-	words = append(words, "")
-	for _, m := range n.Nodes {
-		a, e := evalFactor(m)
-		if e != nil {
-			return nil, e
-		}
-		if len(a) == 1 {
-			for i := range words {
-				words[i] += a[0]
-			}
-		} else {
-			// Do a Cartesian product
-			newWords := make([]string, len(words) * len(a))
-			for i := range words {
-				for j := range a {
-					newWords[i*len(a) + j] = words[i] + a[j]
-				}
-			}
-			words = newWords
-		}
-	}
-	return words, nil
-}
-
-func evalTermList(ln *parse.ListNode) ([]string, error) {
-	words := make([]string, 0, len(ln.Nodes))
-	for _, n := range ln.Nodes {
-		a, e := evalTerm(n)
-		if e != nil {
-			return nil, e
-		}
-		words = append(words, a...)
-	}
-	return words, nil
-}
-
 func evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files []*os.File, err error) {
 	if len(n.Nodes) == 0 {
 		err = fmt.Errorf("command is emtpy")
