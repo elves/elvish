@@ -179,6 +179,12 @@ func (l *Lexer) run() {
 
 // state functions
 
+var singleRuneToken = map[rune]ItemType{
+	'|': ItemPipe,
+	'(': ItemLParen, ')': ItemRParen,
+	'\n': ItemEndOfLine,
+}
+
 // lexAny is the default state.
 func lexAny(l *Lexer) stateFn {
 	var r rune
@@ -189,24 +195,17 @@ func lexAny(l *Lexer) stateFn {
 	case '>', '<':
 		l.backup()
 		return lexRedirLeader
-	case '\n':
-		return lexEndOfLine
 	case '\'':
 		return lexSingleQuoted
 	case '"':
 		return lexDoubleQuoted
-	case '|':
-		l.emit(ItemPipe, ItemTerminated)
-		return lexAny
-	case '(':
-		l.emit(ItemLParen, ItemTerminated)
-		return lexAny
-	case ')':
-		l.emit(ItemRParen, ItemTerminated)
-		return lexAny
 	}
 	if isSpace(r) {
 		return lexSpace
+	}
+	if it, ok := singleRuneToken[r]; ok {
+		l.emit(it, ItemTerminated)
+		return lexAny
 	}
 	return lexBare
 }
@@ -251,12 +250,6 @@ loop:
 		l.emit(ItemRedirLeader, ItemAmbiguious)
 	}
 
-	return lexAny
-}
-
-// lexEndOfLine scans a single EOL, which has already been seen.
-func lexEndOfLine(l *Lexer) stateFn {
-	l.emit(ItemEndOfLine, ItemTerminated)
 	return lexAny
 }
 
