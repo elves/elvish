@@ -40,6 +40,8 @@ const (
 	ItemDoubleQuoted // a double-quoted string literal
 	ItemRedirLeader  // IO redirection leader
 	ItemPipe         // pipeline connector, '|'
+	ItemLParen       // left paren '('
+	ItemRParen       // right paren ')'
 )
 
 var ItemTypeNames []string = []string {
@@ -52,6 +54,8 @@ var ItemTypeNames []string = []string {
 	"ItemDoubleQuoted",
 	"ItemRedirLeader",
 	"ItemPipe",
+	"ItemLParen",
+	"ItemRParen",
 }
 
 // ItemEnd describes the ending of lex items.
@@ -195,6 +199,12 @@ func lexAny(l *Lexer) stateFn {
 	case r == '|':
 		l.emit(ItemPipe, ItemTerminated)
 		return lexAny
+	case r == '(':
+		l.emit(ItemLParen, ItemTerminated)
+		return lexAny
+	case r == ')':
+		l.emit(ItemRParen, ItemTerminated)
+		return lexAny
 	default:
 		return lexBare
 	}
@@ -260,7 +270,7 @@ func lexBare(l *Lexer) stateFn {
 }
 
 func terminatesBare(r rune) bool {
-	return isSpace(r) || r == '\n' || r == Eof
+	return isSpace(r) || r == '\n' || r == '(' || r == ')' || r == Eof
 }
 
 // lexSingleQuoted scans a single-quoted string.
