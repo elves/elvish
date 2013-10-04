@@ -94,49 +94,54 @@ func envAsSlice(env map[string]string) (s []string) {
 	return
 }
 
-func evalFactor(n parse.Node) (string, error) {
+func evalFactor(n parse.Node) ([]string, error) {
 	switch n := n.(type) {
 	case *parse.StringNode:
-		return n.Text, nil
+		return []string{n.Text}, nil
 	case *parse.ListNode:
-		terms := make([]string, len(n.Nodes))
-		for i, m := range n.Nodes {
-			var e error
-			terms[i], e = evalTerm(m)
-			if e != nil {
-				return "", e
-			}
-		}
-		// XXX Should return a list instead
-		return strings.Join(terms, " "), nil
+		return evalTermList(n)
 	default:
 		panic("bad node type")
 	}
 }
 
-func evalTerm(n_ parse.Node) (string, error) {
+func evalTerm(n_ parse.Node) ([]string, error) {
 	n := n_.(*parse.ListNode)
-	facts := make([]string, len(n.Nodes))
-	for i, m := range n.Nodes {
-		var e error
-		facts[i], e = evalFactor(m)
-		if e != nil {
-			return "", e
-		}
-	}
-	return strings.Join(facts, ""), nil
-}
-
-func evalTermList(ln *parse.ListNode) ([]string, error) {
-	ss := make([]string, len(ln.Nodes))
-	for i, n := range ln.Nodes {
-		var e error
-		ss[i], e = evalTerm(n)
+	words := make([]string, 0, len(n.Nodes))
+	words = append(words, "")
+	for _, m := range n.Nodes {
+		a, e := evalFactor(m)
 		if e != nil {
 			return nil, e
 		}
+		if len(a) == 1 {
+			for i := range words {
+				words[i] += a[0]
+			}
+		} else {
+			// Do a Cartesian product
+			newWords := make([]string, len(words) * len(a))
+			for i := range words {
+				for j := range a {
+					newWords[i*len(a) + j] = words[i] + a[j]
+				}
+			}
+			words = newWords
+		}
 	}
-	return ss, nil
+	return words, nil
+}
+
+func evalTermList(ln *parse.ListNode) ([]string, error) {
+	words := make([]string, 0, len(ln.Nodes))
+	for _, n := range ln.Nodes {
+		a, e := evalTerm(n)
+		if e != nil {
+			return nil, e
+		}
+		words = append(words, a...)
+	}
+	return words, nil
 }
 
 func evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files []*os.File, err error) {
@@ -209,8 +214,12 @@ func evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files [
 				                 r.Filename, e)
 				return
 			}
+			if len(fname) != 1 {
+				err = fmt.Errorf("File name term must be exactly one word")
+				return
+			}
 			// TODO haz hardcoded permbits now
-			f, e := os.OpenFile(fname, r.Flag, 0644)
+			f, e := os.OpenFile(fname[0], r.Flag, 0644)
 			if e != nil {
 				err = fmt.Errorf("failed to open file %q: %s", r.Filename, e)
 				return
