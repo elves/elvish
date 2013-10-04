@@ -195,7 +195,7 @@ func lexAny(l *Lexer) stateFn {
 	case '>', '<':
 		l.backup()
 		return lexRedirLeader
-	case '\'':
+	case '`':
 		return lexSingleQuoted
 	case '"':
 		return lexDoubleQuoted
@@ -274,7 +274,7 @@ func terminatesBare(r rune) bool {
 // lexSingleQuoted scans a single-quoted string.
 // The opening quote has already been seen.
 func lexSingleQuoted(l *Lexer) stateFn {
-	const quote = '\''
+	const quote = '`'
 loop:
 	for {
 		switch l.next() {
