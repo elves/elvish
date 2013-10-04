@@ -181,33 +181,34 @@ func (l *Lexer) run() {
 
 // lexAny is the default state.
 func lexAny(l *Lexer) stateFn {
-	switch r := l.next(); {
-	case r == Eof:
+	var r rune
+	switch r = l.next(); r {
+	case Eof:
 		l.emit(ItemEOF, ItemTerminated)
 		return nil
-	case isSpace(r):
-		return lexSpace
-	case r == '>' || r == '<':
+	case '>', '<':
 		l.backup()
 		return lexRedirLeader
-	case r == '\n':
+	case '\n':
 		return lexEndOfLine
-	case r == '\'':
+	case '\'':
 		return lexSingleQuoted
-	case r == '"':
+	case '"':
 		return lexDoubleQuoted
-	case r == '|':
+	case '|':
 		l.emit(ItemPipe, ItemTerminated)
 		return lexAny
-	case r == '(':
+	case '(':
 		l.emit(ItemLParen, ItemTerminated)
 		return lexAny
-	case r == ')':
+	case ')':
 		l.emit(ItemRParen, ItemTerminated)
 		return lexAny
-	default:
-		return lexBare
 	}
+	if isSpace(r) {
+		return lexSpace
+	}
+	return lexBare
 }
 
 // lexSpace scans a run of space characters.
@@ -270,7 +271,11 @@ func lexBare(l *Lexer) stateFn {
 }
 
 func terminatesBare(r rune) bool {
-	return isSpace(r) || r == '\n' || r == '(' || r == ')' || r == Eof
+	switch r {
+	case '\n', '(', ')', Eof:
+		return true
+	}
+	return isSpace(r)
 }
 
 // lexSingleQuoted scans a single-quoted string.
