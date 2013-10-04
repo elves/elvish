@@ -260,7 +260,7 @@ func lexBare(l *Lexer) stateFn {
 }
 
 func terminatesBare(r rune) bool {
-	return isSpace(r) || r == '\n' || r == '|' || r == Eof
+	return isSpace(r) || r == '\n' || r == Eof
 }
 
 // lexSingleQuoted scans a single-quoted string.
