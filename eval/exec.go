@@ -94,8 +94,21 @@ func envAsSlice(env map[string]string) (s []string) {
 	return
 }
 
-func evalTerm(n parse.Node) (string, error) {
+func evalFactor(n parse.Node) (string, error) {
 	return n.(*parse.StringNode).Text, nil
+}
+
+func evalTerm(n_ parse.Node) (string, error) {
+	n := n_.(*parse.ListNode)
+	facts := make([]string, len(n.Nodes))
+	for i, m := range n.Nodes {
+		var e error
+		facts[i], e = evalFactor(m)
+		if e != nil {
+			return "", e
+		}
+	}
+	return strings.Join(facts, ""), nil
 }
 
 func evalTermList(ln *parse.ListNode) ([]string, error) {
@@ -132,7 +145,7 @@ func evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files [
 		ioTypes = bi.ioTypes
 	} else {
 		// Try external command
-		args[0], e = search(n.Nodes[0].(*parse.StringNode).Text)
+		args[0], e = search(name)
 		if e != nil {
 			err = fmt.Errorf("can't resolve: %s", e)
 			return

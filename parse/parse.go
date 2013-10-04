@@ -240,6 +240,22 @@ loop:
 	return cmd
 }
 
+// Term = Factor { Factor }
+func (t *Tree) term() Node {
+	term := newList(t.peek().Pos)
+	term.append(t.factor())
+loop:
+	for {
+		switch t.peek().Typ {
+		case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
+			term.append(t.factor())
+		default:
+			break loop
+		}
+	}
+	return term
+}
+
 func unquote(token Item) (string, error) {
 	switch token.Typ {
 	case ItemBare:
@@ -254,8 +270,8 @@ func unquote(token Item) (string, error) {
 	}
 }
 
-// Term = bare | single-quoted | double-quoted
-func (t *Tree) term() Node {
+// Factor = bare | single-quoted | double-quoted
+func (t *Tree) factor() Node {
 	switch token := t.next(); token.Typ {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 		text, err := unquote(token)
@@ -269,7 +285,7 @@ func (t *Tree) term() Node {
 		}
 		return newString(token.Pos, token.Val, text)
 	default:
-		t.unexpected(token, "term")
+		t.unexpected(token, "factor")
 		return nil
 	}
 }
