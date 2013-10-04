@@ -201,9 +201,12 @@ func (t *Tree) Parse(text string, tab bool) (tree *Tree, err error) {
 	return t, nil
 }
 
-// Pipeline = Command { "|" Command }
+// Pipeline = [ Command { "|" Command } ]
 func (t *Tree) pipeline() *ListNode {
 	pipe := newList(t.peek().Pos)
+	if t.peekNonSpace().Typ == ItemEOF {
+		return pipe
+	}
 loop:
 	for {
 		n := t.command()
@@ -222,15 +225,13 @@ loop:
 }
 
 // command parses a command.
-// Command = [ space ] Term { [ space ] Term } { [ space ] Redir }
-// XXX the parser is now more permissive than the described grammar.
+// Command = TermList { [ space ] Redir }
 func (t *Tree) command() *CommandNode {
 	cmd := newCommand(t.peek().Pos)
+	cmd.ListNode = *t.termList()
 loop:
 	for {
 		switch t.peekNonSpace().Typ {
-		case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
-			cmd.append(t.term())
 		case ItemRedirLeader:
 			cmd.Redirs = append(cmd.Redirs, t.redir())
 		default:
@@ -240,16 +241,30 @@ loop:
 	return cmd
 }
 
+// TermList = [ space ] Term { [ space ] Term } [ space ]
+func (t *Tree) termList() *ListNode {
+	list := newList(t.peek().Pos)
+	list.append(t.term())
+loop:
+	for {
+		if startsFactor(t.peekNonSpace().Typ) {
+			list.append(t.term())
+		} else {
+			break loop
+		}
+	}
+	return list
+}
+
 // Term = Factor { Factor }
 func (t *Tree) term() Node {
 	term := newList(t.peek().Pos)
 	term.append(t.factor())
 loop:
 	for {
-		switch t.peek().Typ {
-		case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
+		if startsFactor(t.peek().Typ) {
 			term.append(t.factor())
-		default:
+		} else {
 			break loop
 		}
 	}
@@ -267,6 +282,18 @@ func unquote(token Item) (string, error) {
 		return strconv.Unquote(token.Val)
 	default:
 		return "", fmt.Errorf("Can't unquote token: %v", token)
+	}
+}
+
+// startsFactor determines whether a token of type t can start a Factor.
+// Frequently used for lookahead, since a Term or TermList always starts with
+// a Factor.
+func startsFactor(t ItemType) bool {
+	switch t {
+	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
+		return true
+	default:
+		return false
 	}
 }
 
