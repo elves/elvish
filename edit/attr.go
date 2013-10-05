@@ -5,6 +5,7 @@ import (
 )
 
 var attrForType = map[parse.ItemType]string{
+	parse.ItemComment: "36",
 	parse.ItemSingleQuoted: "33",
 	parse.ItemDoubleQuoted: "33",
 	parse.ItemRedirLeader: "32",

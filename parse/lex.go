@@ -35,6 +35,7 @@ const (
 	ItemEOF
 	ItemEndOfLine    // a single EOL
 	ItemSpace        // run of spaces separating arguments
+	ItemComment      // a comment
 	ItemBare         // a bare string literal
 	ItemSingleQuoted // a single-quoted string literal
 	ItemDoubleQuoted // a double-quoted string literal
@@ -49,6 +50,7 @@ var ItemTypeNames []string = []string {
 	"ItemEOF",
 	"ItemEndOfLine",
 	"ItemSpace",
+	"ItemComment",
 	"ItemBare",
 	"ItemSingleQuoted",
 	"ItemDoubleQuoted",
@@ -171,7 +173,7 @@ func Lex(name, input string) *Lexer {
 
 // run runs the state machine for the Lexer.
 func (l *Lexer) run() {
-	for l.state = lexAny; l.state != nil; {
+	for l.state = lexAnyOrComment; l.state != nil; {
 		l.state = l.state(l)
 	}
 	close(l.items)
@@ -182,10 +184,9 @@ func (l *Lexer) run() {
 var singleRuneToken = map[rune]ItemType{
 	'|': ItemPipe,
 	'(': ItemLParen, ')': ItemRParen,
-	'\n': ItemEndOfLine,
 }
 
-// lexAny is the default state.
+// lexAny is the default state. It allows any token but ItemComment.
 func lexAny(l *Lexer) stateFn {
 	var r rune
 	switch r = l.next(); r {
@@ -199,6 +200,9 @@ func lexAny(l *Lexer) stateFn {
 		return lexSingleQuoted
 	case '"':
 		return lexDoubleQuoted
+	case '\n':
+		l.emit(ItemEndOfLine, ItemTerminated)
+		return lexAnyOrComment
 	}
 	if isSpace(r) {
 		return lexSpace
@@ -210,6 +214,29 @@ func lexAny(l *Lexer) stateFn {
 	return lexBare
 }
 
+// lexAnyOrComment like lexAny, but allows comments.
+func lexAnyOrComment(l *Lexer) stateFn {
+	if l.peek() == '#' {
+		return lexComment
+	}
+	return lexAny
+}
+
+// lexComment scans a (line) comment. It runs until the newline or EOF.
+// The leading hash has already been seen.
+func lexComment(l *Lexer) stateFn {
+loop:
+	for {
+		switch l.next() {
+		case '\n', Eof:
+			l.backup()
+			break loop
+		}
+	}
+	l.emit(ItemComment, ItemAmbiguious)
+	return lexAny
+}
+
 // lexSpace scans a run of space characters.
 // One space has already been seen.
 func lexSpace(l *Lexer) stateFn {
@@ -217,7 +244,7 @@ func lexSpace(l *Lexer) stateFn {
 		l.next()
 	}
 	l.emit(ItemSpace, ItemAmbiguious)
-	return lexAny
+	return lexAnyOrComment
 }
 
 // lexRedirLeader scans an IO redirection leader.
