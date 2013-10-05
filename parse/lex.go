@@ -292,7 +292,7 @@ func lexBare(l *Lexer) stateFn {
 
 func terminatesBare(r rune) bool {
 	switch r {
-	case '\n', '(', ')', '"', '\'', Eof:
+	case '\n', '(', ')', '"', '`', Eof:
 		return true
 	}
 	return isSpace(r)

@@ -276,7 +276,7 @@ func unquote(token Item) (string, error) {
 	case ItemBare:
 		return token.Val, nil
 	case ItemSingleQuoted:
-		return strings.Replace(token.Val[1:len(token.Val)-1], "''", "'", -1),
+		return strings.Replace(token.Val[1:len(token.Val)-1], "``", "`", -1),
 		       nil
 	case ItemDoubleQuoted:
 		return strconv.Unquote(token.Val)
