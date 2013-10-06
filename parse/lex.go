@@ -35,7 +35,6 @@ const (
 	ItemEOF
 	ItemEndOfLine    // a single EOL
 	ItemSpace        // run of spaces separating arguments
-	ItemComment      // a comment
 	ItemBare         // a bare string literal
 	ItemSingleQuoted // a single-quoted string literal
 	ItemDoubleQuoted // a double-quoted string literal
@@ -50,7 +49,6 @@ var ItemTypeNames []string = []string {
 	"ItemEOF",
 	"ItemEndOfLine",
 	"ItemSpace",
-	"ItemComment",
 	"ItemBare",
 	"ItemSingleQuoted",
 	"ItemDoubleQuoted",
@@ -186,7 +184,7 @@ var singleRuneToken = map[rune]ItemType{
 	'(': ItemLParen, ')': ItemRParen,
 }
 
-// lexAny is the default state. It allows any token but ItemComment.
+// lexAny is the default state. It allows any token but comment.
 func lexAny(l *Lexer) stateFn {
 	var r rune
 	switch r = l.next(); r {
@@ -233,7 +231,7 @@ loop:
 			break loop
 		}
 	}
-	l.emit(ItemComment, ItemAmbiguious)
+	l.emit(ItemSpace, ItemAmbiguious)
 	return lexAny
 }
 
