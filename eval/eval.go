@@ -4,7 +4,10 @@ package eval
 
 import (
 	"os"
+	"fmt"
 	"strings"
+	"syscall"
+	"strconv"
 	"../parse"
 )
 
@@ -34,15 +37,44 @@ func envAsMap(env []string) (m map[string]string) {
 	return
 }
 
+func resolveVar(name string) (string, error) {
+	if name == "!pid" {
+		return strconv.Itoa(syscall.Getpid()), nil
+	}
+	val, ok := env[name]
+	if !ok {
+		return "", fmt.Errorf("Variable not found: %s", name)
+	}
+	return val, nil
+}
+
 func evalFactor(n *parse.FactorNode) ([]string, error) {
+	var words []string
+	var err error
+
 	switch n := n.Node.(type) {
 	case *parse.StringNode:
-		return []string{n.Text}, nil
+		words = []string{n.Text}
+		// return []string{n.Text}, nil
 	case *parse.ListNode:
-		return evalTermList(n)
+		words, err = evalTermList(n)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		panic("bad node type")
 	}
+
+	if n.Dollar {
+		for i := range words {
+			words[i], err = resolveVar(words[i])
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return words, nil
 }
 
 func evalTerm(n *parse.ListNode) ([]string, error) {
