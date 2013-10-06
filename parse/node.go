@@ -80,7 +80,6 @@ func (l *ListNode) Copy() Node {
 }
 
 // CommandNode holds a command, with terms and redirections.
-// TODO only stdout redirection is supported now.
 type CommandNode struct {
 	ListNode
 	Redirs []Redir
