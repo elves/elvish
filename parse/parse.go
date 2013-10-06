@@ -105,25 +105,6 @@ func New(name string) *Tree {
 	}
 }
 
-// ErrorContext returns a textual representation of the location of the node in the input text.
-func (t *Tree) ErrorContext(n Node) (location, context string) {
-	pos := int(n.Position())
-	text := t.text[:pos]
-	byteNum := strings.LastIndex(text, "\n")
-	if byteNum == -1 {
-		byteNum = pos // On first line.
-	} else {
-		byteNum++ // After the newline.
-		byteNum = pos - byteNum
-	}
-	lineNum := 1 + strings.Count(text, "\n")
-	context = n.String()
-	if len(context) > 20 {
-		context = fmt.Sprintf("%.20s...", context)
-	}
-	return fmt.Sprintf("%s:%d:%d", t.Name, lineNum, byteNum), context
-}
-
 // errorf formats the error and terminates processing.
 func (t *Tree) errorf(format string, args ...interface{}) {
 	t.Root = nil
