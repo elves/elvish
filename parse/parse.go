@@ -298,7 +298,8 @@ func startsFactor(t ItemType) bool {
 }
 
 // Factor = bare | single-quoted | double-quoted | '(' TermList ')'
-func (t *Tree) factor() Node {
+func (t *Tree) factor() (fn *FactorNode) {
+	fn = &FactorNode{}
 	switch token := t.next(); token.Typ {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 		text, err := unquote(token)
@@ -310,13 +311,14 @@ func (t *Tree) factor() Node {
 		} else {
 			t.Ctx = nil
 		}
-		return newString(token.Pos, token.Val, text)
+		fn.Node = newString(token.Pos, token.Val, text)
+		return
 	case ItemLParen:
-		list := t.termList()
+		fn.Node = t.termList()
 		if token := t.next(); token.Typ != ItemRParen {
 			t.unexpected(token, "factor of item list")
 		}
-		return list
+		return
 	default:
 		t.unexpected(token, "factor")
 		return nil

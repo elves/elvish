@@ -89,6 +89,13 @@ func newCommand(pos Pos) *CommandNode {
 	return &CommandNode{ListNode: *newList(pos)}
 }
 
+// FactorNode represents a Factor. The embedded Node is either *ListNode or
+// *StringNode.
+type FactorNode struct {
+	Node
+	Dollar bool
+}
+
 // StringNode holds a string constant. The value has been "unquoted".
 type StringNode struct {
 	Pos

@@ -34,8 +34,8 @@ func envAsMap(env []string) (m map[string]string) {
 	return
 }
 
-func evalFactor(n parse.Node) ([]string, error) {
-	switch n := n.(type) {
+func evalFactor(n *parse.FactorNode) ([]string, error) {
+	switch n := n.Node.(type) {
 	case *parse.StringNode:
 		return []string{n.Text}, nil
 	case *parse.ListNode:
@@ -50,7 +50,7 @@ func evalTerm(n_ parse.Node) ([]string, error) {
 	words := make([]string, 0, len(n.Nodes))
 	words = append(words, "")
 	for _, m := range n.Nodes {
-		a, e := evalFactor(m)
+		a, e := evalFactor(m.(*parse.FactorNode))
 		if e != nil {
 			return nil, e
 		}
