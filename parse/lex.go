@@ -42,6 +42,7 @@ const (
 	ItemPipe         // pipeline connector, '|'
 	ItemLParen       // left paren '('
 	ItemRParen       // right paren ')'
+	ItemDollar       // dollar sign '$'
 )
 
 var ItemTypeNames []string = []string {
@@ -56,6 +57,7 @@ var ItemTypeNames []string = []string {
 	"ItemPipe",
 	"ItemLParen",
 	"ItemRParen",
+	"ItemDollar",
 }
 
 // ItemEnd describes the ending of lex items.
@@ -182,6 +184,7 @@ func (l *Lexer) run() {
 var singleRuneToken = map[rune]ItemType{
 	'|': ItemPipe,
 	'(': ItemLParen, ')': ItemRParen,
+	'$': ItemDollar,
 }
 
 // lexAny is the default state. It allows any token but comment.
