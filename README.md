@@ -1,5 +1,5 @@
-das, an experimental Unix shell
-===============================
+An experimental Unix shell
+==========================
 
 This is a work in progress. Things may change and/or break without notice. You
 have been warned...
@@ -17,8 +17,10 @@ The lesson of Tcl has taught us the "everything is (unstructured) text"
 philosophy, which is also the idea underpinning classical Unix pipelines, is
 too limited for proper programming. Indeed, the power of Tcl often lies in the
 dynamic interpretation of text, assuming some predefined structure in it. Yet
-with shells, where such facilities are nonexistent, the attempts to build
-maintainable
+with shells, where such facilities are basically nonexistent, it requires
+great discipline to build maintainable software. Traditional initscripts,
+program wrapper scripts and some of the more tricky tab-completion scripts are
+notable examples.
 
 However, the shell does come with a very powerful abstraction - the pipeline.
 It is basically a facility for concatenative programming. Consider the
@@ -39,7 +41,20 @@ put $coll | filter pred | map f | set coll2
 The concatenative approach is much more natural (try reading both versions
 aloud).
 
-[to be finished]
+Another defining character of shells is the easiness to invoke external
+programs; comparing `subprocess.call(['ls', '-l'])` with `ls -l` - the
+difference is clear. Being easy to invoking external programs is what makes
+shells shells *in its original sense*, i.e. user interface to the operating
+system.
+
+Putting together, the idea of this new Unix shell is starting from pipelines
+and external program interaction, adding in programming-language-ish flavors,
+towards building a decant programming language with a friendly (command line)
+user interface, suitable for both back-of-the-envolope computation **and**
+building more serious (but maybe not too big or complex!) software.
+
+This is not exactly an ambitious goal, but it's something I have always
+dreamed of.
 
 Building
 --------
@@ -66,6 +81,7 @@ is both too long and already taken.
 
 I'm not avoiding names ending in "sh" though; but I do find "bash" to be a
 terrible name. "fish" is clever, but it has a quite unpleasant adjective.
+I find "dash" really good though, which is why it came to my mind :).
 
 License
 -------
