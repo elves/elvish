@@ -257,7 +257,7 @@ loop:
 }
 
 // Term = Factor { Factor }
-func (t *Tree) term() Node {
+func (t *Tree) term() *ListNode {
 	term := newList(t.peek().Pos)
 	term.append(t.factor())
 loop:

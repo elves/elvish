@@ -45,8 +45,7 @@ func evalFactor(n *parse.FactorNode) ([]string, error) {
 	}
 }
 
-func evalTerm(n_ parse.Node) ([]string, error) {
-	n := n_.(*parse.ListNode)
+func evalTerm(n *parse.ListNode) ([]string, error) {
 	words := make([]string, 0, len(n.Nodes))
 	words = append(words, "")
 	for _, m := range n.Nodes {
@@ -75,7 +74,7 @@ func evalTerm(n_ parse.Node) ([]string, error) {
 func evalTermList(ln *parse.ListNode) ([]string, error) {
 	words := make([]string, 0, len(ln.Nodes))
 	for _, n := range ln.Nodes {
-		a, e := evalTerm(n)
+		a, e := evalTerm(n.(*parse.ListNode))
 		if e != nil {
 			return nil, e
 		}

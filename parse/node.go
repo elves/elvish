@@ -89,6 +89,8 @@ func newCommand(pos Pos) *CommandNode {
 	return &CommandNode{ListNode: *newList(pos)}
 }
 
+// A Term is represented by a ListNode of *FactorNode's.
+
 // FactorNode represents a Factor. The embedded Node is either *ListNode or
 // *StringNode.
 type FactorNode struct {

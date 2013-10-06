@@ -41,9 +41,9 @@ func newCloseRedir(fd uintptr) *CloseRedir {
 type FilenameRedir struct {
 	redir
 	Flag int
-	Filename Node
+	Filename *ListNode // a Term
 }
 
-func newFilenameRedir(fd uintptr, flag int, filename Node) *FilenameRedir {
+func newFilenameRedir(fd uintptr, flag int, filename *ListNode) *FilenameRedir {
 	return &FilenameRedir{redir{fd}, flag, filename}
 }
