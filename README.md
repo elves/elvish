@@ -4,7 +4,7 @@ An experimental Unix shell
 This is a work in progress. Things may change and/or break without notice. You
 have been warned...
 
-Philosophy
+Motivation
 ----------
 
 The basic idea is to have a shell that is also a decant programming language.
