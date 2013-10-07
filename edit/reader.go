@@ -161,28 +161,30 @@ var keyByNum2 = map[int]rune{
 
 // Parse a CSI-style function key sequence.
 func parseCSI(nums []int, last rune, seq string) (Key, error) {
-	if len(nums) != 0 && len(nums) != 2 {
-		return ZeroKey, newBadEscSeq(seq)
-	}
-
 	if r, ok := keyByLast[last]; ok {
 		k := Key{r, 0}
 		if len(nums) == 0 {
+			// Unmodified: \e[A (Up)
 			return k, nil
-		} else if len(nums) != 2 || nums[0] != 1 {
+		} else if len(nums) == 2 && nums[0] == 1 {
+			// Modified: \e[1;5A (Ctrl-Up)
+			return xtermModify(k, nums[1], seq)
+		} else {
 			return ZeroKey, newBadEscSeq(seq)
 		}
-		return xtermModify(k, nums[1], seq)
 	}
 
 	if last == '~' {
 		if len(nums) == 1 || len(nums) == 2 {
 			if r, ok := keyByNum0[nums[0]]; ok {
 				k := Key{r, 0}
-				if len(nums) == 2 {
+				if len(nums) == 1 {
+					// Unmodified: \e[5~ (PageUp)
+					return k, nil
+				} else {
+					// Modified: \e[5;5~ (Ctrl-PageUp)
 					return xtermModify(k, nums[1], seq)
 				}
-				return k, nil
 			}
 		} else if len(nums) == 3 && nums[0] == 27 {
 			if r, ok := keyByNum2[nums[2]]; ok {
