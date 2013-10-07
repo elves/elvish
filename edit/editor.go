@@ -114,6 +114,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		k, err := ed.reader.readKey()
 		if err != nil {
 			ed.pushTip(err.Error())
+			continue
 		}
 
 		if name, bound := keyBindings[k]; bound {
