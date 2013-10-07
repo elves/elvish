@@ -138,7 +138,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			}
 			fallthrough
 		default:
-			if k.Mod == 0 && unicode.IsGraphic(k.rune) {
+			if k.Mod == 0 && k.rune > 0 && unicode.IsGraphic(k.rune) {
 				ed.line = ed.line[:ed.dot] + string(k.rune) + ed.line[ed.dot:]
 				ed.dot += utf8.RuneLen(k.rune)
 			} else {
