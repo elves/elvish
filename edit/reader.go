@@ -1,9 +1,9 @@
 package edit
 
 import (
+	"fmt"
 	"time"
 	"bufio"
-	"errors"
 	"../async"
 )
 
@@ -23,6 +23,22 @@ func newReader(tr *async.TimedReader) *reader {
 	}
 }
 
+type BadEscSeq struct {
+	seq string
+}
+
+func newBadEscSeq(seq string) error {
+	return &BadEscSeq{seq}
+}
+
+func newBadEscSeqRunes(rs... rune)error {
+	return newBadEscSeq(string(rs))
+}
+
+func (bes *BadEscSeq) Error() string {
+	return fmt.Sprintf("Bad escape sequence: %q", bes.seq)
+}
+
 // G3 style function key sequences: ^[O followed by exactly one character.
 var g3Seq = map[rune]rune{
 	// F1-F4: xterm, libvte and tmux
@@ -32,8 +48,6 @@ var g3Seq = map[rune]rune{
 	// Home and End: libvte
 	'H': Home, 'F': End,
 }
-
-var BadEscSeq = errors.New("bad function key sequence")
 
 func (rd *reader) readKey() (k Key, err error) {
 	r, _, err := rd.buffed.ReadRune()
@@ -65,6 +79,7 @@ func (rd *reader) readKey() (k Key, err error) {
 			// CSI style function key sequence, looks like [\d;]*[^\d;]
 			// Read numeric parameters (if any)
 			nums := make([]int, 0, 2)
+			seq := "\x1b["
 			for {
 				var e error
 				r, _, e = rd.buffed.ReadRune()
@@ -74,6 +89,7 @@ func (rd *reader) readKey() (k Key, err error) {
 				} else if e != nil {
 					return ZeroKey, e
 				}
+				seq += string(r)
 				// After first rune read we turn off the timeout
 				rd.timed.Timeout = -1
 				if r != ';' && (r < '0' || r > '9') {
@@ -90,7 +106,7 @@ func (rd *reader) readKey() (k Key, err error) {
 					nums[cur] = nums[cur] * 10 + int(r - '0')
 				}
 			}
-			return parseCSI(nums, r)
+			return parseCSI(nums, r, seq)
 		case 'O':
 			// G3 style function key sequence: read one rune.
 			r3, _, e := rd.buffed.ReadRune()
@@ -103,7 +119,7 @@ func (rd *reader) readKey() (k Key, err error) {
 			if ok {
 				return Key{r, 0}, nil
 			} else {
-				return ZeroKey, BadEscSeq
+				return ZeroKey, newBadEscSeqRunes(0x1b, 'O', r3)
 			}
 		}
 		return Key{r2, Alt}, nil
@@ -144,9 +160,9 @@ var keyByNum2 = map[int]rune{
 }
 
 // Parse a CSI-style function key sequence.
-func parseCSI(nums []int, last rune) (Key, error) {
+func parseCSI(nums []int, last rune, seq string) (Key, error) {
 	if len(nums) != 0 && len(nums) != 2 {
-		return ZeroKey, BadEscSeq
+		return ZeroKey, newBadEscSeq(seq)
 	}
 
 	if r, ok := keyByLast[last]; ok {
@@ -154,9 +170,9 @@ func parseCSI(nums []int, last rune) (Key, error) {
 		if len(nums) == 0 {
 			return k, nil
 		} else if len(nums) != 2 || nums[0] != 1 {
-			return ZeroKey, BadEscSeq
+			return ZeroKey, newBadEscSeq(seq)
 		}
-		return xtermModify(k, nums[1])
+		return xtermModify(k, nums[1], seq)
 	}
 
 	if last == '~' {
@@ -164,22 +180,22 @@ func parseCSI(nums []int, last rune) (Key, error) {
 			if r, ok := keyByNum0[nums[0]]; ok {
 				k := Key{r, 0}
 				if len(nums) == 2 {
-					return xtermModify(k, nums[1])
+					return xtermModify(k, nums[1], seq)
 				}
 				return k, nil
 			}
 		} else if len(nums) == 3 && nums[0] == 27 {
 			if r, ok := keyByNum2[nums[2]]; ok {
 				k := Key{r, 0}
-				return xtermModify(k, nums[1])
+				return xtermModify(k, nums[1], seq)
 			}
 		}
 	}
 
-	return ZeroKey, BadEscSeq
+	return ZeroKey, newBadEscSeq(seq)
 }
 
-func xtermModify(k Key, mod int) (Key, error) {
+func xtermModify(k Key, mod int, seq string) (Key, error) {
 	switch mod {
 	case 0:
 		// do nothing
@@ -198,7 +214,7 @@ func xtermModify(k Key, mod int) (Key, error) {
 	case 8:
 		k.Mod |= Shift | Alt | Ctrl
 	default:
-		return ZeroKey, BadEscSeq
+		return ZeroKey, newBadEscSeq(seq)
 	}
 	return k, nil
 }
