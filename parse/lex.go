@@ -42,6 +42,8 @@ const (
 	ItemPipe         // pipeline connector, '|'
 	ItemLParen       // left paren '('
 	ItemRParen       // right paren ')'
+	ItemLBracket     // left bracket '['
+	ItemRBracket     // right bracket ']'
 	ItemDollar       // dollar sign '$'
 )
 
@@ -57,6 +59,8 @@ var ItemTypeNames []string = []string {
 	"ItemPipe",
 	"ItemLParen",
 	"ItemRParen",
+	"ItemLBracket",
+	"ItemRBracket",
 	"ItemDollar",
 }
 
@@ -184,6 +188,7 @@ func (l *Lexer) run() {
 var singleRuneToken = map[rune]ItemType{
 	'|': ItemPipe,
 	'(': ItemLParen, ')': ItemRParen,
+	'[': ItemLBracket, ']': ItemRBracket,
 	'$': ItemDollar,
 }
 
@@ -293,7 +298,7 @@ func lexBare(l *Lexer) stateFn {
 
 func terminatesBare(r rune) bool {
 	switch r {
-	case '\n', '(', ')', '"', '`', '$', Eof:
+	case '\n', '(', ')', '[', ']', '"', '`', '$', Eof:
 		return true
 	}
 	return isSpace(r)
