@@ -18,7 +18,7 @@ const (
 // both are nil, the IO is closed.
 type io struct {
 	f *os.File
-	ch chan string
+	ch chan Value
 }
 
 func (i *io) compatible(typ ioType) bool {
@@ -41,7 +41,7 @@ func (i *io) compatible(typ ioType) bool {
 type command struct {
 	name string // Command name, used in error messages.
 	// Full argument list. args[0] is always some form of command name.
-	args []string
+	args []Value
 	ios [3]*io // IOs for in, out and err.
 	// A pointer to the builtin function, if the command is builtin.
 	f builtinFunc
@@ -107,8 +107,13 @@ func evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files [
 		return
 	}
 
+	if _, ok := args[0].(*Scalar); !ok {
+		err = fmt.Errorf("first word is not scalar: %s", args[0])
+		return
+	}
+
 	// Save unresolved args[0] as name.
-	name := args[0]
+	name := args[0].String()
 
 	// Resolve command name.
 	bi, isBuiltin := builtins[name]
@@ -116,7 +121,7 @@ func evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files [
 		ioTypes = bi.ioTypes
 	} else {
 		// Try external command
-		args[0], e = search(name)
+		args[0].(*Scalar).str, e = search(name)
 		if e != nil {
 			err = fmt.Errorf("can't resolve: %s", e)
 			return
@@ -168,8 +173,12 @@ func evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files [
 				err = fmt.Errorf("File name term must be exactly one word")
 				return
 			}
+			if _, ok := fname[0].(*Scalar); !ok {
+				err = fmt.Errorf("file name not scalar: %s", fname[0])
+				return
+			}
 			// TODO haz hardcoded permbits now
-			f, e := os.OpenFile(fname[0], r.Flag, 0644)
+			f, e := os.OpenFile(fname[0].String(), r.Flag, 0644)
 			if e != nil {
 				err = fmt.Errorf("failed to open file %q: %s", r.Filename, e)
 				return
@@ -266,7 +275,7 @@ func ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error)
 				cmd.ios[1] = &io{f: writer}
 			case chanIO:
 				// TODO Buffered channel?
-				ch := make(chan string)
+				ch := make(chan Value)
 				nextIn = &io{ch: ch}
 				cmd.ios[1] = &io{ch: ch}
 			default:
@@ -332,9 +341,15 @@ func execExternal(cmd *command) <-chan *StateUpdate {
 		}
 	}
 
+	args := make([]string, len(cmd.args))
+	for i, a := range cmd.args {
+		// XXX Silently coerce all args into string
+		args[i] = a.String()
+	}
+
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: envAsSlice(env), Files: files[:], Sys: &sys}
-	pid, err := syscall.ForkExec(cmd.args[0], cmd.args, &attr)
+	pid, err := syscall.ForkExec(args[0], args, &attr)
 
 	update := make(chan *StateUpdate)
 	if err != nil {

@@ -37,25 +37,25 @@ func envAsMap(env []string) (m map[string]string) {
 	return
 }
 
-func resolveVar(name string) (string, error) {
+// XXX Makes up scalar values from env on the fly.
+func resolveVar(name string) (Value, error) {
 	if name == "!pid" {
-		return strconv.Itoa(syscall.Getpid()), nil
+		return NewScalar(strconv.Itoa(syscall.Getpid())), nil
 	}
 	val, ok := env[name]
 	if !ok {
-		return "", fmt.Errorf("Variable not found: %s", name)
+		return nil, fmt.Errorf("Variable not found: %s", name)
 	}
-	return val, nil
+	return NewScalar(val), nil
 }
 
-func evalFactor(n *parse.FactorNode) ([]string, error) {
-	var words []string
+func evalFactor(n *parse.FactorNode) ([]Value, error) {
+	var words []Value
 	var err error
 
 	switch n := n.Node.(type) {
 	case *parse.StringNode:
-		words = []string{n.Text}
-		// return []string{n.Text}, nil
+		words = []Value{NewScalar(n.Text)}
 	case *parse.ListNode:
 		words, err = evalTermList(n)
 		if err != nil {
@@ -67,7 +67,8 @@ func evalFactor(n *parse.FactorNode) ([]string, error) {
 
 	if n.Dollar {
 		for i := range words {
-			words[i], err = resolveVar(words[i])
+			// XXX Assumes scalar word.
+			words[i], err = resolveVar(words[i].(*Scalar).str)
 			if err != nil {
 				return nil, err
 			}
@@ -77,9 +78,15 @@ func evalFactor(n *parse.FactorNode) ([]string, error) {
 	return words, nil
 }
 
-func evalTerm(n *parse.ListNode) ([]string, error) {
-	words := make([]string, 0, len(n.Nodes))
-	words = append(words, "")
+func evalTerm(n *parse.ListNode) ([]Value, error) {
+	if len(n.Nodes) == 1 {
+		// Only one factor.
+		return evalFactor(n.Nodes[0].(*parse.FactorNode))
+	}
+	// More than one factor.
+	// The result is always a scalar list.
+	words := make([]Value, 1, len(n.Nodes))
+	words[0] = NewScalar("")
 	for _, m := range n.Nodes {
 		a, e := evalFactor(m.(*parse.FactorNode))
 		if e != nil {
@@ -87,14 +94,14 @@ func evalTerm(n *parse.ListNode) ([]string, error) {
 		}
 		if len(a) == 1 {
 			for i := range words {
-				words[i] += a[0]
+				words[i].(*Scalar).str += a[0].String()
 			}
 		} else {
 			// Do a Cartesian product
-			newWords := make([]string, len(words) * len(a))
+			newWords := make([]Value, len(words) * len(a))
 			for i := range words {
 				for j := range a {
-					newWords[i*len(a) + j] = words[i] + a[j]
+					newWords[i*len(a) + j] = NewScalar(words[i].String() + a[j].String())
 				}
 			}
 			words = newWords
@@ -103,8 +110,8 @@ func evalTerm(n *parse.ListNode) ([]string, error) {
 	return words, nil
 }
 
-func evalTermList(ln *parse.ListNode) ([]string, error) {
-	words := make([]string, 0, len(ln.Nodes))
+func evalTermList(ln *parse.ListNode) ([]Value, error) {
+	words := make([]Value, 0, len(ln.Nodes))
 	for _, n := range ln.Nodes {
 		a, e := evalTerm(n.(*parse.ListNode))
 		if e != nil {
