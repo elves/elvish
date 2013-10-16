@@ -25,7 +25,6 @@ func (s *Scalar) String() string {
 	return s.str
 }
 
-// TODO Not yet used.
 type Table struct {
 	list []Value
 	dict map[Value]Value
@@ -38,15 +37,20 @@ func NewTable() *Table {
 
 func (t *Table) String() string {
 	buf := new(bytes.Buffer)
-	sep := '['
+	buf.WriteRune('[')
+	sep := ""
 	for _, v := range t.list {
 		fmt.Fprint(buf, sep, v.String())
-		sep = ' '
+		sep = " "
 	}
 	for k, v := range t.dict {
-		fmt.Fprint(buf, sep, '(', k.String(), ' ', v.String())
-		sep = ' '
+		fmt.Fprint(buf, sep, k.String(), " = ", v.String())
+		sep = " "
 	}
 	buf.WriteRune(']')
 	return buf.String()
+}
+
+func (t *Table) append(vs... Value) {
+	t.list = append(t.list, vs...)
 }

@@ -49,6 +49,35 @@ func resolveVar(name string) (Value, error) {
 	return NewScalar(val), nil
 }
 
+func evalTable(tn *parse.TableNode) (*Table, error) {
+	// Evaluate list part.
+	t := NewTable()
+	for _, term := range tn.List {
+		vs, err := evalTerm(term)
+		if err != nil {
+			return nil, err
+		}
+		t.append(vs...)
+	}
+	for _, pair := range tn.Dict {
+		ks, err := evalTerm(pair.Key)
+		if err != nil {
+			return nil, err
+		}
+		vs, err := evalTerm(pair.Value)
+		if err != nil {
+			return nil, err
+		}
+		if len(ks) != len(vs) {
+			return nil, fmt.Errorf("Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
+		}
+		for i, k := range ks {
+			t.dict[k] = vs[i]
+		}
+	}
+	return t, nil
+}
+
 func evalFactor(n *parse.FactorNode) ([]Value, error) {
 	var words []Value
 	var err error
@@ -61,6 +90,12 @@ func evalFactor(n *parse.FactorNode) ([]Value, error) {
 		if err != nil {
 			return nil, err
 		}
+	case *parse.TableNode:
+		word, err := evalTable(n)
+		if err != nil {
+			return nil, err
+		}
+		words = []Value{word}
 	default:
 		panic("bad node type")
 	}
