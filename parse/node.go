@@ -79,6 +79,29 @@ func newFactor(pos Pos) *FactorNode {
 	return &FactorNode{Pos: pos}
 }
 
+type TablePair struct {
+	Key *ListNode
+	Value *ListNode
+}
+
+type TableNode struct {
+	Pos
+	List []*ListNode
+	Dict []*TablePair
+}
+
+func newTable(pos Pos) *TableNode {
+	return &TableNode{Pos: pos}
+}
+
+func (tn *TableNode) appendToList(term *ListNode) {
+	tn.List = append(tn.List, term)
+}
+
+func (tn *TableNode) appendToDict(key *ListNode, value *ListNode) {
+	tn.Dict = append(tn.Dict, &TablePair{key, value})
+}
+
 // StringNode holds a string constant. The value has been "unquoted".
 type StringNode struct {
 	Pos

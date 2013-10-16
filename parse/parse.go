@@ -281,8 +281,8 @@ func startsFactor(t ItemType) bool {
 }
 
 // Factor = '$' Factor
-//        = ( bare | single-quoted | double-quoted )
-//        = ( '(' TermList ')' | '[' TermList ']' )
+//        = ( bare | single-quoted | double-quoted | Table )
+//        = ( '(' TermList ')' )
 func (t *Tree) factor() (fn *FactorNode) {
 	fn = newFactor(t.peek().Pos)
 	for t.peek().Typ == ItemDollar {
@@ -308,9 +308,42 @@ func (t *Tree) factor() (fn *FactorNode) {
 			t.unexpected(token, "factor of item list")
 		}
 		return
+	case ItemLBracket:
+		fn.Node = t.table()
+		return
 	default:
 		t.unexpected(token, "factor")
 		return nil
+	}
+}
+
+// table parses a table literal. The opening bracket has been seen.
+// Table = '[' { [ space ] ( Term [ space ] '=' [ space ] Term | Term ) [ space ] } ']'
+// NOTE The '=' is actually special-cased Term.
+func (t *Tree) table() (tn *TableNode) {
+	tn = newTable(t.peek().Pos)
+
+	for {
+		token := t.nextNonSpace()
+		if startsFactor(token.Typ) {
+			t.backup()
+			term := t.term()
+
+			next := t.peekNonSpace()
+			if next.Typ == ItemBare && next.Val == "=" {
+				// New element of dict part. Skip spaces and find value term.
+				t.nextNonSpace()
+				valueTerm := t.term()
+				tn.appendToDict(term, valueTerm)
+			} else {
+				// New element of list part.
+				tn.appendToList(term)
+			}
+		} else if token.Typ == ItemRBracket {
+			return
+		} else {
+			t.unexpected(token, "table literal")
+		}
 	}
 }
 
