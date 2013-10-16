@@ -33,7 +33,7 @@ type Table struct {
 func (t *Table) meisvalue() {}
 
 func NewTable() *Table {
-	return &Table{make([]Value, 0), make(map[Value]Value)}
+	return &Table{dict: make(map[Value]Value)}
 }
 
 func (t *Table) String() string {
