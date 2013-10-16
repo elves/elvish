@@ -64,9 +64,8 @@ func newCommand(pos Pos) *CommandNode {
 // *ListNode (flat list (a b c), variable evaluation $(a^b))
 //     In case of $(...), the flat list must evaluate to exactly one scalar.
 //     Only useful for dynamic constructing of variable names, e.g. $($a$b).
-// TODO TableNode (table literal [a b c], ??? $[a b c])
-//     What should the syntax of the map part of a table be?
-//     What should the semantics of $[a b c] be?
+// TableNode (table literal [a b c k = v], ??? $[a b c])
+//     TODO What should the semantics of $[a b c] be?
 // TODO CommandNode (closure {cmd}, command output substituion ${cmd})
 
 type FactorNode struct {
