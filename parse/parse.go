@@ -271,19 +271,21 @@ func unquote(token Item) (string, error) {
 // a Factor.
 func startsFactor(t ItemType) bool {
 	switch t {
-	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted, ItemLParen, ItemDollar:
+	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted, ItemLParen, ItemLBracket, ItemDollar:
 		return true
 	default:
 		return false
 	}
 }
 
-// Factor = [ dollar ] ( bare | single-quoted | double-quoted | '(' TermList ')' )
+// Factor = '$' Factor
+//        = ( bare | single-quoted | double-quoted )
+//        = ( '(' TermList ')' | '[' TermList ']' )
 func (t *Tree) factor() (fn *FactorNode) {
-	fn = &FactorNode{}
-	if t.peek().Typ == ItemDollar {
+	fn = newFactor(t.peek().Pos)
+	for t.peek().Typ == ItemDollar {
 		t.next()
-		fn.Dollar = true
+		fn.Dollar++
 	}
 	switch token := t.next(); token.Typ {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:

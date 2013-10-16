@@ -65,13 +65,16 @@ func evalFactor(n *parse.FactorNode) ([]Value, error) {
 		panic("bad node type")
 	}
 
-	if n.Dollar {
-		for i := range words {
-			// XXX Assumes scalar word.
-			words[i], err = resolveVar(words[i].(*Scalar).str)
-			if err != nil {
-				return nil, err
-			}
+	for dollar := n.Dollar; dollar > 0; dollar-- {
+		if len(words) != 1 {
+			return nil, fmt.Errorf("Only a single value may be dollared")
+		}
+		if _, ok := words[0].(*Scalar); !ok {
+			return nil, fmt.Errorf("Only scalar may be dollared (for now)")
+		}
+		words[0], err = resolveVar(words[0].(*Scalar).str)
+		if err != nil {
+			return nil, err
 		}
 	}
 

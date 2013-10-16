@@ -58,11 +58,25 @@ func newCommand(pos Pos) *CommandNode {
 
 // A Term is represented by a ListNode of *FactorNode's.
 
-// FactorNode represents a Factor. The embedded Node is either *ListNode or
-// *StringNode.
+// A Factor is any of the following prefixed by any number of dollars:
+// *StringNode (scalar literal a `a` "a", variable evaluation $a $`a`)
+//     $`a` and $"a" can be used to refer to variables of funny names.
+// *ListNode (flat list (a b c), variable evaluation $(a^b))
+//     In case of $(...), the flat list must evaluate to exactly one scalar.
+//     Only useful for dynamic constructing of variable names, e.g. $($a$b).
+// TODO TableNode (table literal [a b c], ??? $[a b c])
+//     What should the syntax of the map part of a table be?
+//     What should the semantics of $[a b c] be?
+// TODO CommandNode (closure {cmd}, command output substituion ${cmd})
+
 type FactorNode struct {
-	Node
-	Dollar bool
+	Pos
+	Dollar int
+	Node Node
+}
+
+func newFactor(pos Pos) *FactorNode {
+	return &FactorNode{Pos: pos}
 }
 
 // StringNode holds a string constant. The value has been "unquoted".
