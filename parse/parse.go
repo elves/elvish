@@ -10,7 +10,6 @@ package parse
 import (
 	"os"
 	"fmt"
-	"runtime"
 	"strings"
 	"strconv"
 )
@@ -26,6 +25,16 @@ type Tree struct {
 	lex       *Lexer
 	token     [3]Item // three-token lookahead for parser.
 	peekCount int
+}
+
+type parseError struct {
+	name string
+	lineno int
+	msg string
+}
+
+func (pe *parseError) Error() string {
+	return fmt.Sprintf("%s:%d %s", pe.name, pe.lineno, pe.msg)
 }
 
 // Parse is shorthand for a New + *Tree.Parse combo.
@@ -108,13 +117,7 @@ func New(name string) *Tree {
 // errorf formats the error and terminates processing.
 func (t *Tree) errorf(format string, args ...interface{}) {
 	t.Root = nil
-	format = fmt.Sprintf("das: %s:%d: %s", t.Name, t.lex.lineNumber(), format)
-	panic(fmt.Errorf(format, args...))
-}
-
-// error terminates processing.
-func (t *Tree) error(err error) {
-	t.errorf("%s", err)
+	panic(&parseError{t.Name, t.lex.lineNumber(), fmt.Sprintf(format, args...)})
 }
 
 // expect consumes the next token and guarantees it has the required type.
@@ -143,16 +146,16 @@ func (t *Tree) unexpected(token Item, context string) {
 // recover is the handler that turns panics into returns from the top level of Parse.
 func (t *Tree) recover(errp *error) {
 	e := recover()
-	if e != nil {
-		if _, ok := e.(runtime.Error); ok {
-			panic(e)
-		}
-		if t != nil {
-			t.stopParse()
-		}
-		*errp = e.(error)
+	if e == nil {
+		return
 	}
-	return
+	if _, ok := e.(*parseError); !ok {
+		panic(e)
+	}
+	if t != nil {
+		t.stopParse()
+	}
+	*errp = e.(error)
 }
 
 // stopParse terminates parsing.
@@ -293,7 +296,7 @@ func (t *Tree) factor() (fn *FactorNode) {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 		text, err := unquote(token)
 		if err != nil {
-			t.error(err)
+			t.errorf("%s", err)
 		}
 		if token.End & MayContinue != 0 {
 			t.Ctx = NewArgContext(token.Val)
