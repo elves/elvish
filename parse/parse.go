@@ -331,8 +331,9 @@ func (t *Tree) table() (tn *TableNode) {
 
 			next := t.peekNonSpace()
 			if next.Typ == ItemBare && next.Val == "=" {
+				t.next()
 				// New element of dict part. Skip spaces and find value term.
-				t.nextNonSpace()
+				t.peekNonSpace()
 				valueTerm := t.term()
 				tn.appendToDict(term, valueTerm)
 			} else {
