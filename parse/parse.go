@@ -271,7 +271,9 @@ func unquote(token Item) (string, error) {
 // a Factor.
 func startsFactor(t ItemType) bool {
 	switch t {
-	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted, ItemLParen, ItemLBracket, ItemDollar:
+	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted,
+			ItemLParen, ItemLBracket,
+			ItemDollar:
 		return true
 	default:
 		return false
