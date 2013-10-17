@@ -27,39 +27,6 @@ type Tree struct {
 	peekCount int
 }
 
-// Given a position in a text, find its line number, corresponding line and
-// column numbers. Line and column numbers are counted from 0.
-// Used in diagnostic messages.
-func findContext(text string, pos int) (lineno, colno int, line string) {
-	var p int
-	for _, r := range text {
-		if p == pos {
-			break
-		}
-		if r == '\n' {
-			lineno++
-			colno = 0
-		} else {
-			colno++
-		}
-		p++
-	}
-	line = strings.SplitN(text[p-colno:], "\n", 2)[0]
-	return
-}
-
-type parseError struct {
-	name string
-	lineno int
-	colno int
-	line string
-	msg string
-}
-
-func (pe *parseError) Error() string {
-	return fmt.Sprintf("%s:%d:%d %s", pe.name, pe.lineno, pe.colno, pe.msg)
-}
-
 // Parse is shorthand for a New + *Tree.Parse combo.
 func Parse(name, text string, tab bool) (t *Tree, err error) {
 	return New(name).Parse(text, tab)
@@ -164,7 +131,7 @@ func (t *Tree) expectOneOf(expected1, expected2 ItemType, context string) Item {
 
 // unexpected complains about the token and terminates processing.
 func (t *Tree) unexpected(token Item, context string) {
-	t.errorf(int(token.Pos), "unexpected %s in %s", token, context)
+	t.errorf(int(token.Pos), "unexpected %s in %s", token.Typ, context)
 }
 
 // recover is the handler that turns panics into returns from the top level of Parse.
