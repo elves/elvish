@@ -26,7 +26,7 @@ func main() {
 
 	for {
 		cmd_no++
-		name := fmt.Sprintf("<interactive code %d>", cmd_no)
+		name := fmt.Sprintf("<tty %d>", cmd_no)
 
 		ed, err := edit.Init(os.Stdin, tr)
 		if err != nil {
@@ -46,9 +46,9 @@ func main() {
 			panic(lr.Err)
 		}
 
-		tree, err := parse.Parse(name, lr.Line, false)
-		if err != nil {
-			fmt.Println("Parser error:", err)
+		tree, pe := parse.Parse(name, lr.Line, false)
+		if pe != nil {
+			fmt.Print(pe.Pprint())
 			continue
 		}
 
