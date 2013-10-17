@@ -53,9 +53,9 @@ func main() {
 			continue
 		}
 
-		updates, err := ev.ExecPipeline(tree.Root.(*parse.ListNode))
-		if err != nil {
-			fmt.Println(err)
+		updates, ee := ev.ExecPipeline(tree.Root.(*parse.ListNode))
+		if ee != nil {
+			fmt.Println(ee)
 			continue
 		}
 
