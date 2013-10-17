@@ -140,7 +140,7 @@ func (ev *Evaluator) evalTerm(n *parse.ListNode) []Value {
 			newWords := make([]Value, len(words) * len(a))
 			for i := range words {
 				for j := range a {
-					newWords[i*len(a) + j] = NewScalar(words[i].String() + a[j].String())
+					newWords[i*len(a) + j] = words[i].Caret(a[j])
 				}
 			}
 			words = newWords

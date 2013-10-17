@@ -8,6 +8,7 @@ import (
 type Value interface {
 	meisvalue()
 	String() string
+	Caret(v Value) Value
 }
 
 // TODO Only str part is used.
@@ -23,6 +24,10 @@ func NewScalar(s string) *Scalar {
 
 func (s *Scalar) String() string {
 	return s.str
+}
+
+func (s *Scalar) Caret(v Value) Value {
+	return NewScalar(s.str + v.String())
 }
 
 type Table struct {
@@ -49,6 +54,11 @@ func (t *Table) String() string {
 	}
 	buf.WriteRune(']')
 	return buf.String()
+}
+
+func (t *Table) Caret(v Value) Value {
+	// TODO Implement indexing
+	return NewScalar(t.String() + v.String())
 }
 
 func (t *Table) append(vs... Value) {
