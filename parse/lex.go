@@ -21,10 +21,18 @@ type Item struct {
 }
 
 func (i Item) String() string {
-	if i.Typ == ItemError {
+	switch i.Typ {
+	case ItemError:
 		return i.Val
+	case ItemEOF:
+		return "EOF"
+	default:
+		return fmt.Sprintf("%q", i.Val)
 	}
-	return fmt.Sprintf("%s %q", i.Typ, i.Val)
+}
+
+func (i Item) GoString() string {
+	return fmt.Sprintf("parse.Item{%s, %d, %q, %d}", i.Typ, i.Pos, i.Val, i.End)
 }
 
 // ItemType identifies the type of lex items.

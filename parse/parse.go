@@ -131,7 +131,7 @@ func (t *Tree) expectOneOf(expected1, expected2 ItemType, context string) Item {
 
 // unexpected complains about the token and terminates processing.
 func (t *Tree) unexpected(token Item, context string) {
-	t.errorf(int(token.Pos), "unexpected %s in %s", token.Typ, context)
+	t.errorf(int(token.Pos), "unexpected %s in %s", token, context)
 }
 
 // recover is the handler that turns panics into returns from the top level of Parse.
