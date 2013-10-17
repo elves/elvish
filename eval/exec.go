@@ -68,7 +68,7 @@ func isExecutable(path string) bool {
 }
 
 // Search for executable `exe`.
-func search(exe string) (string, error) {
+func (ev *Evaluator) search(exe string) (string, error) {
 	for _, p := range []string{"/", "./", "../"} {
 		if strings.HasPrefix(exe, p) {
 			if isExecutable(exe) {
@@ -77,7 +77,7 @@ func search(exe string) (string, error) {
 			return "", fmt.Errorf("not executable")
 		}
 	}
-	for _, p := range search_paths {
+	for _, p := range ev.searchPaths {
 		full := p + "/" + exe
 		if isExecutable(full) {
 			return full, nil
@@ -94,14 +94,14 @@ func envAsSlice(env map[string]string) (s []string) {
 	return
 }
 
-func evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files []*os.File, err error) {
+func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files []*os.File, err error) {
 	if len(n.Nodes) == 0 {
 		err = fmt.Errorf("command is emtpy")
 		return
 	}
 
 	// Build argument list. This is universal for all command types.
-	args, e := evalTermList(&n.ListNode)
+	args, e := ev.evalTermList(&n.ListNode)
 	if e != nil {
 		err = fmt.Errorf("error evaluating arguments: %s", e)
 		return
@@ -121,7 +121,7 @@ func evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files [
 		ioTypes = bi.ioTypes
 	} else {
 		// Try external command
-		args[0].(*Scalar).str, e = search(name)
+		args[0].(*Scalar).str, e = ev.search(name)
 		if e != nil {
 			err = fmt.Errorf("can't resolve: %s", e)
 			return
@@ -163,7 +163,7 @@ func evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files [
 				err = fmt.Errorf("filename redir on channel IO")
 				return
 			}
-			fname, e := evalTerm(r.Filename)
+			fname, e := ev.evalTerm(r.Filename)
 			if e != nil {
 				err = fmt.Errorf("failed to evaluate filename: %q: %s",
 				                 r.Filename, e)
@@ -207,7 +207,7 @@ func evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType, files [
 // corresponding elements in pids is -1 and err is typed *CommandErrors. For
 // each pids[i] == -1, err.(*CommandErrors)Errors[i] contains the
 // corresponding error.
-func ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error) {
+func (ev *Evaluator) ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error) {
 	ncmds := len(pl.Nodes)
 	if ncmds == 0 {
 		return []<-chan *StateUpdate{}, nil
@@ -226,7 +226,7 @@ func ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error)
 
 	var nextIn *io
 	for i, n := range pl.Nodes {
-		cmd, ioTypes, files, err := evalCommand(n.(*parse.CommandNode))
+		cmd, ioTypes, files, err := ev.evalCommand(n.(*parse.CommandNode))
 		filesToClose = append(filesToClose, files...)
 		if err != nil {
 			return nil, fmt.Errorf("error with command #%d: %s", i, err)
@@ -288,22 +288,22 @@ func ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err error)
 
 	updates = make([]<-chan *StateUpdate, ncmds)
 	for i, cmd := range cmds {
-		updates[i] = execCommand(cmd)
+		updates[i] = ev.execCommand(cmd)
 	}
 	return updates, nil
 }
 
 // execCommand executes a command.
-func execCommand(cmd *command) <-chan *StateUpdate {
+func (ev *Evaluator) execCommand(cmd *command) <-chan *StateUpdate {
 	if cmd.f != nil {
-		return execBuiltin(cmd)
+		return ev.execBuiltin(cmd)
 	} else {
-		return execExternal(cmd)
+		return ev.execExternal(cmd)
 	}
 }
 
 // execBuiltin executes a builtin command.
-func execBuiltin(cmd *command) <-chan *StateUpdate {
+func (ev *Evaluator) execBuiltin(cmd *command) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
 		msg := cmd.f(cmd.args, cmd.ios)
@@ -331,7 +331,7 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 }
 
 // execExternal executes an external command.
-func execExternal(cmd *command) <-chan *StateUpdate {
+func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 	files := make([]uintptr, len(cmd.ios))
 	for i, io := range cmd.ios {
 		if io == nil || io.f == nil {
@@ -348,7 +348,7 @@ func execExternal(cmd *command) <-chan *StateUpdate {
 	}
 
 	sys := syscall.SysProcAttr{}
-	attr := syscall.ProcAttr{Env: envAsSlice(env), Files: files[:], Sys: &sys}
+	attr := syscall.ProcAttr{Env: envAsSlice(ev.env), Files: files[:], Sys: &sys}
 	pid, err := syscall.ForkExec(args[0], args, &attr)
 
 	update := make(chan *StateUpdate)

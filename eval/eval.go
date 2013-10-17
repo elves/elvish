@@ -3,7 +3,6 @@
 package eval
 
 import (
-	"os"
 	"fmt"
 	"strings"
 	"syscall"
@@ -11,19 +10,23 @@ import (
 	"../parse"
 )
 
-var env map[string]string
-var search_paths []string
+type Evaluator struct {
+	env map[string]string
+	searchPaths []string
+}
 
-func init() {
-	env = envAsMap(os.Environ())
+func NewEvaluator(env []string) *Evaluator {
+	ev := &Evaluator{env: envAsMap(env)}
 
-	path_var, ok := env["PATH"]
+	path, ok := ev.env["PATH"]
 	if ok {
-		search_paths = strings.Split(path_var, ":")
+		ev.searchPaths = strings.Split(path, ":")
 		// fmt.Printf("Search paths are %v\n", search_paths)
 	} else {
-		search_paths = []string{"/bin"}
+		ev.searchPaths = []string{"/bin"}
 	}
+
+	return ev
 }
 
 func envAsMap(env []string) (m map[string]string) {
@@ -38,33 +41,33 @@ func envAsMap(env []string) (m map[string]string) {
 }
 
 // XXX Makes up scalar values from env on the fly.
-func resolveVar(name string) (Value, error) {
+func (ev *Evaluator) resolveVar(name string) (Value, error) {
 	if name == "!pid" {
 		return NewScalar(strconv.Itoa(syscall.Getpid())), nil
 	}
-	val, ok := env[name]
+	val, ok := ev.env[name]
 	if !ok {
 		return nil, fmt.Errorf("Variable not found: %s", name)
 	}
 	return NewScalar(val), nil
 }
 
-func evalTable(tn *parse.TableNode) (*Table, error) {
+func (ev *Evaluator) evalTable(tn *parse.TableNode) (*Table, error) {
 	// Evaluate list part.
 	t := NewTable()
 	for _, term := range tn.List {
-		vs, err := evalTerm(term)
+		vs, err := ev.evalTerm(term)
 		if err != nil {
 			return nil, err
 		}
 		t.append(vs...)
 	}
 	for _, pair := range tn.Dict {
-		ks, err := evalTerm(pair.Key)
+		ks, err := ev.evalTerm(pair.Key)
 		if err != nil {
 			return nil, err
 		}
-		vs, err := evalTerm(pair.Value)
+		vs, err := ev.evalTerm(pair.Value)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +81,7 @@ func evalTable(tn *parse.TableNode) (*Table, error) {
 	return t, nil
 }
 
-func evalFactor(n *parse.FactorNode) ([]Value, error) {
+func (ev *Evaluator) evalFactor(n *parse.FactorNode) ([]Value, error) {
 	var words []Value
 	var err error
 
@@ -86,12 +89,12 @@ func evalFactor(n *parse.FactorNode) ([]Value, error) {
 	case *parse.StringNode:
 		words = []Value{NewScalar(n.Text)}
 	case *parse.ListNode:
-		words, err = evalTermList(n)
+		words, err = ev.evalTermList(n)
 		if err != nil {
 			return nil, err
 		}
 	case *parse.TableNode:
-		word, err := evalTable(n)
+		word, err := ev.evalTable(n)
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +110,7 @@ func evalFactor(n *parse.FactorNode) ([]Value, error) {
 		if _, ok := words[0].(*Scalar); !ok {
 			return nil, fmt.Errorf("Only scalar may be dollared (for now)")
 		}
-		words[0], err = resolveVar(words[0].(*Scalar).str)
+		words[0], err = ev.resolveVar(words[0].(*Scalar).str)
 		if err != nil {
 			return nil, err
 		}
@@ -116,17 +119,17 @@ func evalFactor(n *parse.FactorNode) ([]Value, error) {
 	return words, nil
 }
 
-func evalTerm(n *parse.ListNode) ([]Value, error) {
+func (ev *Evaluator) evalTerm(n *parse.ListNode) ([]Value, error) {
 	if len(n.Nodes) == 1 {
 		// Only one factor.
-		return evalFactor(n.Nodes[0].(*parse.FactorNode))
+		return ev.evalFactor(n.Nodes[0].(*parse.FactorNode))
 	}
 	// More than one factor.
 	// The result is always a scalar list.
 	words := make([]Value, 1, len(n.Nodes))
 	words[0] = NewScalar("")
 	for _, m := range n.Nodes {
-		a, e := evalFactor(m.(*parse.FactorNode))
+		a, e := ev.evalFactor(m.(*parse.FactorNode))
 		if e != nil {
 			return nil, e
 		}
@@ -148,10 +151,10 @@ func evalTerm(n *parse.ListNode) ([]Value, error) {
 	return words, nil
 }
 
-func evalTermList(ln *parse.ListNode) ([]Value, error) {
+func (ev *Evaluator) evalTermList(ln *parse.ListNode) ([]Value, error) {
 	words := make([]Value, 0, len(ln.Nodes))
 	for _, n := range ln.Nodes {
-		a, e := evalTerm(n.(*parse.ListNode))
+		a, e := ev.evalTerm(n.(*parse.ListNode))
 		if e != nil {
 			return nil, e
 		}

@@ -17,12 +17,13 @@ func lackeol() {
 func main() {
 	fmt.Printf("My pid is %d\n", syscall.Getpid())
 
-	cmd_no := 0
-
 	tr, err := async.NewTimedReader(os.Stdin)
 	if err != nil {
 		panic(err)
 	}
+
+	ev := eval.NewEvaluator(os.Environ())
+	cmd_no := 0
 
 	for {
 		cmd_no++
@@ -52,7 +53,7 @@ func main() {
 			continue
 		}
 
-		updates, err := eval.ExecPipeline(tree.Root.(*parse.ListNode))
+		updates, err := ev.ExecPipeline(tree.Root.(*parse.ListNode))
 		if err != nil {
 			fmt.Println(err)
 			continue
