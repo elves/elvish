@@ -27,14 +27,37 @@ type Tree struct {
 	peekCount int
 }
 
+// Given a position in a text, find its line number, corresponding line and
+// column numbers. Line and column numbers are counted from 0.
+// Used in diagnostic messages.
+func findContext(text string, pos int) (lineno, colno int, line string) {
+	var p int
+	for _, r := range text {
+		if p == pos {
+			break
+		}
+		if r == '\n' {
+			lineno++
+			colno = 0
+		} else {
+			colno++
+		}
+		p++
+	}
+	line = strings.SplitN(text[p-colno:], "\n", 2)[0]
+	return
+}
+
 type parseError struct {
 	name string
 	lineno int
+	colno int
+	line string
 	msg string
 }
 
 func (pe *parseError) Error() string {
-	return fmt.Sprintf("%s:%d %s", pe.name, pe.lineno, pe.msg)
+	return fmt.Sprintf("%s:%d:%d %s", pe.name, pe.lineno, pe.colno, pe.msg)
 }
 
 // Parse is shorthand for a New + *Tree.Parse combo.
@@ -115,9 +138,10 @@ func New(name string) *Tree {
 }
 
 // errorf formats the error and terminates processing.
-func (t *Tree) errorf(format string, args ...interface{}) {
+func (t *Tree) errorf(pos int, format string, args ...interface{}) {
 	t.Root = nil
-	panic(&parseError{t.Name, t.lex.lineNumber(), fmt.Sprintf(format, args...)})
+	lineno, colno, line := findContext(t.text, pos)
+	panic(&parseError{t.Name, lineno, colno, line, fmt.Sprintf(format, args...)})
 }
 
 // expect consumes the next token and guarantees it has the required type.
@@ -140,7 +164,7 @@ func (t *Tree) expectOneOf(expected1, expected2 ItemType, context string) Item {
 
 // unexpected complains about the token and terminates processing.
 func (t *Tree) unexpected(token Item, context string) {
-	t.errorf("unexpected %s in %s", token, context)
+	t.errorf(int(token.Pos), "unexpected %s in %s", token, context)
 }
 
 // recover is the handler that turns panics into returns from the top level of Parse.
@@ -296,7 +320,7 @@ func (t *Tree) factor() (fn *FactorNode) {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 		text, err := unquote(token)
 		if err != nil {
-			t.errorf("%s", err)
+			t.errorf(int(token.Pos), "%s", err)
 		}
 		if token.End & MayContinue != 0 {
 			t.Ctx = NewArgContext(token.Val)
@@ -390,7 +414,7 @@ func (t *Tree) redir() Redir {
 		flag = os.O_WRONLY | os.O_CREATE | os.O_APPEND
 		fd = 1
 	default:
-		t.errorf("Unexpected redirection direction %q", dir)
+		t.errorf(int(leader.Pos), "Unexpected redirection direction %q", dir)
 	}
 
 	if len(qual) > 0 {
@@ -403,13 +427,15 @@ func (t *Tree) redir() Redir {
 				var err error
 				fd, err = Atou(lhs)
 				if err != nil {
-					t.errorf("Invalid new fd in qualified redirection %q", lhs)
+					// TODO identify precious position
+					t.errorf(int(leader.Pos), "Invalid new fd in qualified redirection %q", lhs)
 				}
 			}
 			if len(rhs) > 0 {
 				oldfd, err := Atou(rhs)
 				if err != nil {
-					t.errorf("Invalid old fd in qualified redirection %q", rhs)
+					// TODO identify precious position
+					t.errorf(int(leader.Pos), "Invalid old fd in qualified redirection %q", rhs)
 				}
 				return NewFdRedir(fd, oldfd)
 			} else {
@@ -420,7 +446,8 @@ func (t *Tree) redir() Redir {
 			var err error
 			fd, err = Atou(qual)
 			if err != nil {
-				t.errorf("Invalid new fd in qualified redirection %q", qual)
+				// TODO identify precious position
+				t.errorf(int(leader.Pos), "Invalid new fd in qualified redirection %q", qual)
 			}
 		}
 	}

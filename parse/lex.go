@@ -24,7 +24,7 @@ func (i Item) String() string {
 	if i.Typ == ItemError {
 		return i.Val
 	}
-	return fmt.Sprintf("%s %q", ItemTypeNames[i.Typ], i.Val)
+	return fmt.Sprintf("%s %q", i.Typ, i.Val)
 }
 
 // ItemType identifies the type of lex items.
@@ -62,6 +62,10 @@ var ItemTypeNames []string = []string {
 	"ItemLBracket",
 	"ItemRBracket",
 	"ItemDollar",
+}
+
+func (it ItemType) String() string {
+	return ItemTypeNames[it]
 }
 
 // ItemEnd describes the ending of lex items.
@@ -136,13 +140,6 @@ func (l *Lexer) acceptRun(valid string) {
 	for strings.IndexRune(valid, l.next()) >= 0 {
 	}
 	l.backup()
-}
-
-// lineNumber reports which line we're on, based on the position of
-// the previous Item returned by NextItem. Doing it this way
-// means we don't have to worry about peek double counting.
-func (l *Lexer) lineNumber() int {
-	return 1 + strings.Count(l.input[:l.lastPos], "\n")
 }
 
 // errorf returns an error token and terminates the scan by passing
