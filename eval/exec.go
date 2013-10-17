@@ -10,7 +10,7 @@ import (
 
 const (
 	// A special impossible fd value. Used for "close fd" in
-	// syscall.ProcAttr.Files and various other things internally.
+	// syscall.ProcAttr.Files.
 	FD_NIL uintptr = ^uintptr(0)
 )
 
