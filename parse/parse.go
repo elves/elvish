@@ -231,13 +231,17 @@ loop:
 	return list
 }
 
-// Term = Factor { Factor }
+// Term = Factor { Factor | [ space ] '^' Factor [ space ] } [ space ]
 func (t *Tree) term() *ListNode {
 	term := newList(t.peek().Pos)
 	term.append(t.factor())
 loop:
 	for {
 		if startsFactor(t.peek().Typ) {
+			term.append(t.factor())
+		} else if t.peekNonSpace().Typ == ItemCaret {
+			t.next()
+			t.peekNonSpace()
 			term.append(t.factor())
 		} else {
 			break loop
