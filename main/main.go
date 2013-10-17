@@ -60,7 +60,6 @@ func main() {
 		}
 
 		for i, update := range updates {
-			// TODO Should check update.Msg
 			for up := range update {
 				switch up.Msg {
 				case "0", "":
