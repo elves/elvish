@@ -256,7 +256,7 @@ func unquote(token Item) (string, error) {
 	case ItemDoubleQuoted:
 		return strconv.Unquote(token.Val)
 	default:
-		return "", fmt.Errorf("Can't unquote token: %v", token)
+		return "", fmt.Errorf("Bad token type (%s)", token.Typ)
 	}
 }
 
