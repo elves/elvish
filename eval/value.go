@@ -3,6 +3,7 @@ package eval
 import (
 	"fmt"
 	"bytes"
+	"strings"
 )
 
 type Value interface {
@@ -63,4 +64,23 @@ func (t *Table) Caret(v Value) Value {
 
 func (t *Table) append(vs... Value) {
 	t.list = append(t.list, vs...)
+}
+
+func envAsSlice(env map[string]string) (s []string) {
+	s = make([]string, 0, len(env))
+	for k, v := range env {
+		s = append(s, fmt.Sprintf("%s=%s", k, v))
+	}
+	return
+}
+
+func envAsMap(env []string) (m map[string]string) {
+	m = make(map[string]string)
+	for _, e := range env {
+		arr := strings.SplitN(e, "=", 2)
+		if len(arr) == 2 {
+			m[arr[0]] = arr[1]
+		}
+	}
+	return
 }

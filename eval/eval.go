@@ -80,17 +80,6 @@ func (ev *Evaluator) recover(perr **util.ContextualError) {
 	*perr = r.(*util.ContextualError)
 }
 
-func envAsMap(env []string) (m map[string]string) {
-	m = make(map[string]string)
-	for _, e := range env {
-		arr := strings.SplitN(e, "=", 2)
-		if len(arr) == 2 {
-			m[arr[0]] = arr[1]
-		}
-	}
-	return
-}
-
 // XXX Makes up scalar values from env on the fly.
 func (ev *Evaluator) resolveVar(name string) Value {
 	if name == "!pid" {

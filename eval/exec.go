@@ -86,14 +86,6 @@ func (ev *Evaluator) search(exe string) (string, error) {
 	return "", fmt.Errorf("not found")
 }
 
-func envAsSlice(env map[string]string) (s []string) {
-	s = make([]string, 0, len(env))
-	for k, v := range env {
-		s = append(s, fmt.Sprintf("%s=%s", k, v))
-	}
-	return
-}
-
 func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType) {
 	var e error
 	if len(n.Nodes) == 0 {
