@@ -1,4 +1,4 @@
-package parse
+package util
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type Error struct {
+type ContextualError struct {
 	name string
 	lineno int
 	colno int
@@ -14,11 +14,16 @@ type Error struct {
 	msg string
 }
 
-func (e *Error) Error() string {
+func NewContextualError(name string, text string, pos int, format string, args ...interface{}) *ContextualError {
+	lineno, colno, line := FindContext(text, pos)
+	return &ContextualError{name, lineno, colno, line, fmt.Sprintf(format, args...)}
+}
+
+func (e *ContextualError) Error() string {
 	return fmt.Sprintf("%s:%d:%d %s", e.name, e.lineno, e.colno, e.msg)
 }
 
-func (e *Error) Pprint() string {
+func (e *ContextualError) Pprint() string {
 	buf := new(bytes.Buffer)
 	// Position info
 	fmt.Fprintf(buf, "\033[1m%s:%d:%d: ", e.name, e.lineno+1, e.colno+1)

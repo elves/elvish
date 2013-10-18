@@ -29,7 +29,7 @@ type Tree struct {
 }
 
 // Parse is shorthand for a New + *Tree.Parse combo.
-func Parse(name, text string, tab bool) (t *Tree, err *Error) {
+func Parse(name, text string, tab bool) (t *Tree, err *util.ContextualError) {
 	return New(name).Parse(text, tab)
 }
 
@@ -108,8 +108,7 @@ func New(name string) *Tree {
 // errorf formats the error and terminates processing.
 func (t *Tree) errorf(pos int, format string, args ...interface{}) {
 	t.Root = nil
-	lineno, colno, line := util.FindContext(t.text, pos)
-	panic(&Error{t.Name, lineno, colno, line, fmt.Sprintf(format, args...)})
+	panic(util.NewContextualError(t.Name, t.text, pos, format, args...))
 }
 
 // expect consumes the next token and guarantees it has the required type.
@@ -136,18 +135,18 @@ func (t *Tree) unexpected(token Item, context string) {
 }
 
 // recover is the handler that turns panics into returns from the top level of Parse.
-func (t *Tree) recover(errp **Error) {
+func (t *Tree) recover(errp **util.ContextualError) {
 	e := recover()
 	if e == nil {
 		return
 	}
-	if _, ok := e.(*Error); !ok {
+	if _, ok := e.(*util.ContextualError); !ok {
 		panic(e)
 	}
 	if t != nil {
 		t.stopParse()
 	}
-	*errp = e.(*Error)
+	*errp = e.(*util.ContextualError)
 }
 
 // stopParse terminates parsing.
@@ -162,7 +161,7 @@ func (t *Tree) stopParse() {
 
 // Parse parses the script to construct a representation of the script for
 // execution.
-func (t *Tree) Parse(text string, tab bool) (tree *Tree, err *Error) {
+func (t *Tree) Parse(text string, tab bool) (tree *Tree, err *util.ContextualError) {
 	defer t.recover(&err)
 
 	t.text = text
