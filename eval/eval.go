@@ -150,19 +150,17 @@ func (ev *Evaluator) evalTerm(n *parse.ListNode) []Value {
 	ev.push(n)
 	defer ev.pop()
 
-	if len(n.Nodes) == 1 {
-		// Only one factor.
-		return ev.evalFactor(n.Nodes[0].(*parse.FactorNode))
+	if len(n.Nodes) == 0 {
+		panic("evalTerm got an empty list")
 	}
-	// More than one factor.
-	// The result is always a scalar list.
-	words := make([]Value, 1, len(n.Nodes))
-	words[0] = NewScalar("")
-	for _, m := range n.Nodes {
+
+	words := ev.evalFactor(n.Nodes[0].(*parse.FactorNode))
+
+	for _, m := range n.Nodes[1:] {
 		a := ev.evalFactor(m.(*parse.FactorNode))
 		if len(a) == 1 {
 			for i := range words {
-				words[i].(*Scalar).str += a[0].String()
+				words[i] = words[i].Caret(a[0])
 			}
 		} else {
 			// Do a Cartesian product
