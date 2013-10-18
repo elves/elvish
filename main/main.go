@@ -7,7 +7,7 @@ import (
 	"../parse"
 	"../edit"
 	"../eval"
-	"../async"
+	"../util"
 )
 
 func lackeol() {
@@ -17,7 +17,7 @@ func lackeol() {
 func main() {
 	fmt.Printf("My pid is %d\n", syscall.Getpid())
 
-	tr, err := async.NewTimedReader(os.Stdin)
+	tr, err := util.NewTimedReader(os.Stdin)
 	if err != nil {
 		panic(err)
 	}

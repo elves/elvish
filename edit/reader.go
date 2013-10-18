@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 	"bufio"
-	"../async"
+	"../util"
 )
 
 var EscTimeout = time.Millisecond * 10
@@ -12,11 +12,11 @@ var EscTimeout = time.Millisecond * 10
 // reader is the part of an Editor responsible for reading and decoding
 // terminal key sequences.
 type reader struct {
-	timed *async.TimedReader
+	timed *util.TimedReader
 	buffed *bufio.Reader
 }
 
-func newReader(tr *async.TimedReader) *reader {
+func newReader(tr *util.TimedReader) *reader {
 	return &reader{
 		tr,
 		bufio.NewReaderSize(tr, 0),
@@ -69,7 +69,7 @@ func (rd *reader) readKey() (k Key, err error) {
 		rd.timed.Timeout = EscTimeout
 		defer func() { rd.timed.Timeout = -1 }()
 		r2, _, e := rd.buffed.ReadRune()
-		if e == async.Timeout {
+		if e == util.Timeout {
 			return Key{'[', Ctrl}, nil
 		} else if e != nil {
 			return ZeroKey, e
@@ -84,7 +84,7 @@ func (rd *reader) readKey() (k Key, err error) {
 				var e error
 				r, _, e = rd.buffed.ReadRune()
 				// Timeout can only happen at first ReadRune.
-				if e == async.Timeout {
+				if e == util.Timeout {
 					return Key{'[', Alt}, nil
 				} else if e != nil {
 					return ZeroKey, e
@@ -110,7 +110,7 @@ func (rd *reader) readKey() (k Key, err error) {
 		case 'O':
 			// G3 style function key sequence: read one rune.
 			r3, _, e := rd.buffed.ReadRune()
-			if e == async.Timeout {
+			if e == util.Timeout {
 				return Key{r2, Alt}, nil
 			} else if e != nil {
 				return ZeroKey, e

@@ -1,4 +1,4 @@
-package async
+package util
 
 import (
 	"os"
@@ -8,7 +8,10 @@ import (
 	"syscall"
 )
 
-var FdTooBig = errors.New("fd exceeds FD_SETSIZE")
+var (
+	Timeout = errors.New("timed out")
+	FdTooBig = errors.New("fd exceeds FD_SETSIZE")
+)
 
 type TimedReader struct {
 	File *os.File

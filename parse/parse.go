@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"strings"
 	"strconv"
+	"../util"
 )
 
 // Tree is the representation of a single parsed script.
@@ -107,7 +108,7 @@ func New(name string) *Tree {
 // errorf formats the error and terminates processing.
 func (t *Tree) errorf(pos int, format string, args ...interface{}) {
 	t.Root = nil
-	lineno, colno, line := findContext(t.text, pos)
+	lineno, colno, line := util.FindContext(t.text, pos)
 	panic(&Error{t.Name, lineno, colno, line, fmt.Sprintf(format, args...)})
 }
 
