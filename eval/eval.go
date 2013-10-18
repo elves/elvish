@@ -188,16 +188,16 @@ func (ev *Evaluator) evalTermList(ln *parse.ListNode) []Value {
 	return words
 }
 
-func (ev *Evaluator) assertSingleScalar(vs []Value, n parse.Node) *Scalar {
+func (ev *Evaluator) assertSingleScalar(vs []Value, n parse.Node, what string) *Scalar {
 	ev.push(n)
 	defer ev.pop()
 
 	if len(vs) != 1 {
-		ev.errorf("Expect exactly one word, got %d", len(vs))
+		ev.errorf("Expect exactly one word for %s, got %d", what, len(vs))
 	}
 	v, ok := vs[0].(*Scalar)
 	if !ok {
-		ev.errorf("Expect scalar, got %s", vs[0])
+		ev.errorf("Expect scalar for %s, got %s", what, vs[0])
 	}
 	return v
 }

@@ -150,7 +150,7 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 				ev.errorf("filename redir on channel IO")
 			}
 			fname := ev.evalTerm(r.Filename)
-			v := ev.assertSingleScalar(fname, r.Filename)
+			v := ev.assertSingleScalar(fname, r.Filename, "filename")
 			// TODO haz hardcoded permbits now
 			f, e := os.OpenFile(v.String(), r.Flag, 0644)
 			if e != nil {
