@@ -97,7 +97,7 @@ func envAsSlice(env map[string]string) (s []string) {
 func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType) {
 	var e error
 	if len(n.Nodes) == 0 {
-		ev.errorf(n, "command is emtpy")
+		ev.errorf("command is emtpy")
 	}
 
 	// Build argument list. This is universal for all command types.
@@ -105,7 +105,7 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 
 	if _, ok := args[0].(*Scalar); !ok {
 		// XXX
-		ev.errorf(n, "first word is not scalar: %s", args[0])
+		ev.errorf("first word is not scalar: %s", args[0])
 	}
 
 	// Save unresolved args[0] as name.
@@ -119,7 +119,7 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 		// Try external command
 		args[0].(*Scalar).str, e = ev.search(name)
 		if e != nil {
-			ev.errorf(n, "can't resolve: %s", e)
+			ev.errorf("can't resolve: %s", e)
 		}
 		// Use zero value (fileIO) for ioTypes
 	}
@@ -136,7 +136,7 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 		fd := r.Fd()
 		if fd > 2 {
 			// TODO locate redir node
-			ev.errorf(n, "redir on fd > 2 not yet supported")
+			ev.errorf("redir on fd > 2 not yet supported")
 		}
 
 		switch r := r.(type) {
@@ -145,30 +145,25 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 		case *parse.FdRedir:
 			if ioTypes[fd] == chanIO {
 				// TODO locate redir node
-				ev.errorf(n, "fd redir on channel IO")
+				ev.errorf("fd redir on channel IO")
 			}
 			if r.OldFd > 2 {
 				// TODO locate redir node
-				ev.errorf(n, "fd redir from fd > 2 not yet supported")
+				ev.errorf("fd redir from fd > 2 not yet supported")
 			}
 			ios[fd] = ios[r.OldFd]
 		case *parse.FilenameRedir:
 			if ioTypes[fd] == chanIO {
 				// TODO locate redir node
-				ev.errorf(n, "filename redir on channel IO")
+				ev.errorf("filename redir on channel IO")
 			}
 			fname := ev.evalTerm(r.Filename)
-			if len(fname) != 1 {
-				ev.errorf(r.Filename, "File name term must evaluate to exactly one word, got %d", len(fname))
-			}
-			if _, ok := fname[0].(*Scalar); !ok {
-				ev.errorf(r.Filename, "file name not scalar: %s", fname[0])
-				return
-			}
+			v := ev.assertSingleScalar(fname, r.Filename)
 			// TODO haz hardcoded permbits now
-			f, e := os.OpenFile(fname[0].String(), r.Flag, 0644)
+			f, e := os.OpenFile(v.String(), r.Flag, 0644)
 			if e != nil {
-				ev.errorf(r.Filename, "failed to open file %q: %s", fname[0], e)
+				// TODO locate redir node
+				ev.errorf("failed to open file %q: %s", fname[0], e)
 			}
 			ios[fd] = &io{f: f}
 			// XXX Files opened in redirections of builtins shouldn't be
@@ -196,8 +191,10 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 // corresponding elements in pids is -1 and err is typed *CommandErrors. For
 // each pids[i] == -1, err.(*CommandErrors)Errors[i] contains the
 // corresponding error.
-func (ev *Evaluator) ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUpdate, err *Error) {
-	defer ev.recover(&err)
+func (ev *Evaluator) ExecPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
+	ev.push(pl)
+	defer ev.pop()
+
 	defer func() {
 		for _, f := range ev.filesToClose {
 			f.Close()
@@ -207,7 +204,7 @@ func (ev *Evaluator) ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUp
 
 	ncmds := len(pl.Nodes)
 	if ncmds == 0 {
-		return []<-chan *StateUpdate{}, nil
+		return []<-chan *StateUpdate{}
 	}
 
 	cmds := make([]*command, 0, ncmds)
@@ -222,37 +219,38 @@ func (ev *Evaluator) ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUp
 			// present.
 			if cmd.ios[0] == nil {
 				if ioTypes[0] == chanIO {
-					ev.errorf(n, "channel input from user not yet supported")
+					// TODO locate command
+					ev.errorf("channel input from user not yet supported")
 				}
 				cmd.ios[0] = &io{f: os.Stdin}
 			}
 		} else {
 			if cmd.ios[0] != nil {
-				ev.errorf(n, "command #%d has both pipe input and input redirection")
+				ev.errorf("command #%d has both pipe input and input redirection")
 			} else if !nextIn.compatible(ioTypes[0]) {
-				ev.errorf(n, "command #%d has incompatible input pipe")
+				ev.errorf("command #%d has incompatible input pipe")
 			}
 			cmd.ios[0] = nextIn
 		}
 		if i == ncmds - 1 {
 			if cmd.ios[1] == nil {
 				if ioTypes[1] == chanIO {
-					ev.errorf(n, "channel output to user not yet supported")
+					ev.errorf("channel output to user not yet supported")
 				}
 				cmd.ios[1] = &io{f: os.Stdout}
 			}
 		} else {
 			if cmd.ios[1] != nil {
-				ev.errorf(n, "command #%d has both pipe output and output redirection", i)
+				ev.errorf("command #%d has both pipe output and output redirection", i)
 			}
 			switch ioTypes[1] {
 			case unusedIO:
-				ev.errorf(n, "command #%d has unused output connected in pipeline", i)
+				ev.errorf("command #%d has unused output connected in pipeline", i)
 			case fileIO:
 				// os.Pipe sets O_CLOEXEC, which is what we want.
 				reader, writer, e := os.Pipe()
 				if e != nil {
-					ev.errorf(n, "failed to create pipe: %s", e)
+					ev.errorf("failed to create pipe: %s", e)
 				}
 				// XXX The pipe end for builtins shouldn't be closed.
 				ev.filesToClose = append(ev.filesToClose, reader, writer)
@@ -272,11 +270,11 @@ func (ev *Evaluator) ExecPipeline(pl *parse.ListNode) (updates []<-chan *StateUp
 		cmds = append(cmds, cmd)
 	}
 
-	updates = make([]<-chan *StateUpdate, ncmds)
+	updates := make([]<-chan *StateUpdate, ncmds)
 	for i, cmd := range cmds {
 		updates[i] = ev.execCommand(cmd)
 	}
-	return updates, nil
+	return updates
 }
 
 // execCommand executes a command.

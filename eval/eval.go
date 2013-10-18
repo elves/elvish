@@ -4,17 +4,19 @@ package eval
 
 import (
 	"os"
-	"fmt"
 	"strings"
 	"syscall"
 	"strconv"
 	"../parse"
+	"../util"
 )
 
 type Evaluator struct {
+	name, text string
 	env map[string]string
 	searchPaths []string
 	filesToClose []*os.File
+	nodes []parse.Node // A stack that keeps track of nodes being evaluated.
 }
 
 func NewEvaluator(env []string) *Evaluator {
@@ -31,22 +33,51 @@ func NewEvaluator(env []string) *Evaluator {
 	return ev
 }
 
+// TODO This now only evaluates a pipeline.
+func (ev *Evaluator) Eval(name, text string, n parse.Node) (updates []<-chan *StateUpdate, err *util.ContextualError) {
+	defer ev.recover(&err)
+	ev.name = name
+	ev.text = text
+	updates = ev.ExecPipeline(n.(*parse.ListNode))
+	ev.stopEval()
+	return updates, nil
+}
+
+func (ev *Evaluator) stopEval() {
+	ev.name = ""
+	ev.text = ""
+}
+
+func (ev *Evaluator) push(n parse.Node) {
+	ev.nodes = append(ev.nodes, n)
+}
+
+func (ev *Evaluator) pop() {
+	n := len(ev.nodes) - 1
+	ev.nodes[n] = nil
+	ev.nodes = ev.nodes[:n-1]
+}
+
 // errorf stops the evaluator. Its panic is supposed to be caught by recover.
-func (ev *Evaluator) errorf(n parse.Node, format string, args...interface{}) {
-	panic(&Error{n, fmt.Sprintf(format, args...)})
+func (ev *Evaluator) errorf(format string, args...interface{}) {
+	n := ev.nodes[len(ev.nodes) - 1]
+	panic(util.NewContextualError(ev.name, ev.text, int(n.Position()), format, args...))
 }
 
 // recover is the handler that turns panics into returns from top level of
 // evaluation function (currently ExecPipeline).
-func (ev *Evaluator) recover(perr **Error) {
+func (ev *Evaluator) recover(perr **util.ContextualError) {
 	r := recover()
 	if r == nil {
 		return
 	}
-	if _, ok := r.(*Error); !ok {
+	if _, ok := r.(*util.ContextualError); !ok {
 		panic(r)
 	}
-	*perr = r.(*Error)
+	if (ev != nil) {
+		ev.stopEval()
+	}
+	*perr = r.(*util.ContextualError)
 }
 
 func envAsMap(env []string) (m map[string]string) {
@@ -61,18 +92,21 @@ func envAsMap(env []string) (m map[string]string) {
 }
 
 // XXX Makes up scalar values from env on the fly.
-func (ev *Evaluator) resolveVar(name string, n parse.Node) Value {
+func (ev *Evaluator) resolveVar(name string) Value {
 	if name == "!pid" {
 		return NewScalar(strconv.Itoa(syscall.Getpid()))
 	}
 	val, ok := ev.env[name]
 	if !ok {
-		ev.errorf(n, "Variable not found: %s", name)
+		ev.errorf("Variable %q not found", name)
 	}
 	return NewScalar(val)
 }
 
 func (ev *Evaluator) evalTable(tn *parse.TableNode) *Table {
+	ev.push(tn)
+	defer ev.pop()
+
 	// Evaluate list part.
 	t := NewTable()
 	for _, term := range tn.List {
@@ -83,7 +117,7 @@ func (ev *Evaluator) evalTable(tn *parse.TableNode) *Table {
 		ks := ev.evalTerm(pair.Key)
 		vs := ev.evalTerm(pair.Value)
 		if len(ks) != len(vs) {
-			ev.errorf(tn, "Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
+			ev.errorf("Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
 		}
 		for i, k := range ks {
 			t.dict[k] = vs[i]
@@ -93,6 +127,9 @@ func (ev *Evaluator) evalTable(tn *parse.TableNode) *Table {
 }
 
 func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
+	ev.push(n)
+	defer ev.pop()
+
 	var words []Value
 
 	switch n := n.Node.(type) {
@@ -109,18 +146,21 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 
 	for dollar := n.Dollar; dollar > 0; dollar-- {
 		if len(words) != 1 {
-			ev.errorf(n, "Only a single value may be dollared")
+			ev.errorf("Only a single value may be dollared")
 		}
 		if _, ok := words[0].(*Scalar); !ok {
-			ev.errorf(n, "Only scalar may be dollared (for now)")
+			ev.errorf("Only scalar may be dollared (for now)")
 		}
-		words[0] = ev.resolveVar(words[0].(*Scalar).str, n)
+		words[0] = ev.resolveVar(words[0].(*Scalar).str)
 	}
 
 	return words
 }
 
 func (ev *Evaluator) evalTerm(n *parse.ListNode) []Value {
+	ev.push(n)
+	defer ev.pop()
+
 	if len(n.Nodes) == 1 {
 		// Only one factor.
 		return ev.evalFactor(n.Nodes[0].(*parse.FactorNode))
@@ -150,10 +190,27 @@ func (ev *Evaluator) evalTerm(n *parse.ListNode) []Value {
 }
 
 func (ev *Evaluator) evalTermList(ln *parse.ListNode) []Value {
+	ev.push(ln)
+	defer ev.pop()
+
 	words := make([]Value, 0, len(ln.Nodes))
 	for _, n := range ln.Nodes {
 		a := ev.evalTerm(n.(*parse.ListNode))
 		words = append(words, a...)
 	}
 	return words
+}
+
+func (ev *Evaluator) assertSingleScalar(vs []Value, n parse.Node) *Scalar {
+	ev.push(n)
+	defer ev.pop()
+
+	if len(vs) != 1 {
+		ev.errorf("Expect exactly one word, got %d", len(vs))
+	}
+	v, ok := vs[0].(*Scalar)
+	if !ok {
+		ev.errorf("Expect scalar, got %s", vs[0])
+	}
+	return v
 }
