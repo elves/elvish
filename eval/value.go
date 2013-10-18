@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"bytes"
 	"strings"
+	"strconv"
 )
 
 type Value interface {
@@ -58,8 +59,29 @@ func (t *Table) String() string {
 }
 
 func (t *Table) Caret(v Value) Value {
-	// TODO Implement indexing
-	return NewScalar(t.String() + v.String())
+	switch v := v.(type) {
+	case *Scalar:
+		return NewScalar(t.String() + v.String())
+	case *Table:
+		if len(v.list) != 1 || len(v.dict) != 0 {
+			// TODO Use Evaluator.errorf
+			panic("subscription must be single-element list")
+		}
+		sub, ok := v.list[0].(*Scalar)
+		if !ok {
+			// TODO Use Evaluator.errorf
+			panic("subscription must be single-element scalar list")
+		}
+		// Need stricter notion of list indices
+		idx, err := strconv.ParseUint(sub.String(), 10, 0)
+		if err == nil {
+			return t.list[idx]
+		} else {
+			return t.dict[sub]
+		}
+	default:
+		panic("unreachable")
+	}
 }
 
 func (t *Table) append(vs... Value) {
