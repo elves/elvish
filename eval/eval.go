@@ -55,7 +55,7 @@ func (ev *Evaluator) push(n parse.Node) {
 func (ev *Evaluator) pop() {
 	n := len(ev.nodes) - 1
 	ev.nodes[n] = nil
-	ev.nodes = ev.nodes[:n-1]
+	ev.nodes = ev.nodes[:n]
 }
 
 // errorf stops the evaluator. Its panic is supposed to be caught by recover.
