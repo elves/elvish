@@ -47,7 +47,8 @@ func main() {
 			panic(lr.Err)
 		}
 
-		tree, pe := parse.Parse(name, lr.Line, false)
+		p := parse.NewParser(name)
+		tree, pe := p.Parse(lr.Line, false)
 		if pe != nil {
 			fmt.Print(pe.Pprint())
 			continue

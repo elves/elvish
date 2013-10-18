@@ -15,8 +15,7 @@ import (
 	"../util"
 )
 
-// Tree is the representation of a single parsed script.
-type Tree struct {
+type Parser struct {
 	Name      string    // name of the script represented by the tree.
 	Root      Node // top-level root of the tree.
 	Ctx       Context
@@ -28,55 +27,50 @@ type Tree struct {
 	peekCount int
 }
 
-// Parse is shorthand for a New + *Tree.Parse combo.
-func Parse(name, text string, tab bool) (t *Tree, err *util.ContextualError) {
-	return New(name).Parse(text, tab)
-}
-
 // next returns the next token.
-func (t *Tree) next() Item {
-	if t.peekCount > 0 {
-		t.peekCount--
+func (p *Parser) next() Item {
+	if p.peekCount > 0 {
+		p.peekCount--
 	} else {
-		t.token[0] = t.lex.NextItem()
+		p.token[0] = p.lex.NextItem()
 	}
-	return t.token[t.peekCount]
+	return p.token[p.peekCount]
 }
 
 // backup backs the input stream up one token.
-func (t *Tree) backup() {
-	t.peekCount++
+func (p *Parser) backup() {
+	p.peekCount++
 }
 
 // backup2 backs the input stream up two tokens.
 // The zeroth token is already there.
-func (t *Tree) backup2(t1 Item) {
-	t.token[1] = t1
-	t.peekCount = 2
+func (p *Parser) backup2(t1 Item) {
+	p.token[1] = t1
+	p.peekCount = 2
 }
 
 // backup3 backs the input stream up three tokens
 // The zeroth token is already there.
-func (t *Tree) backup3(t2, t1 Item) { // Reverse order: we're pushing back.
-	t.token[1] = t1
-	t.token[2] = t2
-	t.peekCount = 3
+func (p *Parser) backup3(t2, t1 Item) { // Reverse order: we're pushing back.
+	p.token[1] = t1
+	p.token[2] = t2
+	p.peekCount = 3
 }
 
 // peek returns but does not consume the next token.
-func (t *Tree) peek() Item {
-	if t.peekCount > 0 {
-		return t.token[t.peekCount-1]
+func (p *Parser) peek() Item {
+	if p.peekCount > 0 {
+		return p.token[p.peekCount-1]
 	}
-	t.peekCount = 1
-	t.token[0] = t.lex.NextItem()
-	return t.token[0]
+	p.peekCount = 1
+	p.token[0] = p.lex.NextItem()
+	return p.token[0]
 }
 
 // nextNonSpace returns the next non-space token.
-func (t *Tree) nextNonSpace() (token Item) {
+func (p *Parser) nextNonSpace() (token Item) {
 	for {
-		token = t.next()
+		token = p.next()
 		if token.Typ != ItemSpace {
 			break
 		}
@@ -85,57 +79,57 @@ func (t *Tree) nextNonSpace() (token Item) {
 }
 
 // peekNonSpace returns but does not consume the next non-space token.
-func (t *Tree) peekNonSpace() (token Item) {
+func (p *Parser) peekNonSpace() (token Item) {
 	for {
-		token = t.next()
+		token = p.next()
 		if token.Typ != ItemSpace {
 			break
 		}
 	}
-	t.backup()
+	p.backup()
 	return token
 }
 
 // Parsing.
 
-// New allocates a new parse tree with the given name.
-func New(name string) *Tree {
-	return &Tree{
+// NewParser allocates a new parse tree with the given name.
+func NewParser(name string) *Parser {
+	return &Parser{
 		Name:  name,
 	}
 }
 
 // errorf formats the error and terminates processing.
-func (t *Tree) errorf(pos int, format string, args ...interface{}) {
-	t.Root = nil
-	panic(util.NewContextualError(t.Name, t.text, pos, format, args...))
+func (p *Parser) errorf(pos int, format string, args ...interface{}) {
+	p.Root = nil
+	panic(util.NewContextualError(p.Name, p.text, pos, format, args...))
 }
 
 // expect consumes the next token and guarantees it has the required type.
-func (t *Tree) expect(expected ItemType, context string) Item {
-	token := t.nextNonSpace()
+func (p *Parser) expect(expected ItemType, context string) Item {
+	token := p.nextNonSpace()
 	if token.Typ != expected {
-		t.unexpected(token, context)
+		p.unexpected(token, context)
 	}
 	return token
 }
 
 // expectOneOf consumes the next token and guarantees it has one of the required types.
-func (t *Tree) expectOneOf(expected1, expected2 ItemType, context string) Item {
-	token := t.nextNonSpace()
+func (p *Parser) expectOneOf(expected1, expected2 ItemType, context string) Item {
+	token := p.nextNonSpace()
 	if token.Typ != expected1 && token.Typ != expected2 {
-		t.unexpected(token, context)
+		p.unexpected(token, context)
 	}
 	return token
 }
 
 // unexpected complains about the token and terminates processing.
-func (t *Tree) unexpected(token Item, context string) {
-	t.errorf(int(token.Pos), "unexpected %s in %s", token, context)
+func (p *Parser) unexpected(token Item, context string) {
+	p.errorf(int(token.Pos), "unexpected %s in %s", token, context)
 }
 
 // recover is the handler that turns panics into returns from the top level of Parse.
-func (t *Tree) recover(errp **util.ContextualError) {
+func (p *Parser) recover(errp **util.ContextualError) {
 	e := recover()
 	if e == nil {
 		return
@@ -143,57 +137,54 @@ func (t *Tree) recover(errp **util.ContextualError) {
 	if _, ok := e.(*util.ContextualError); !ok {
 		panic(e)
 	}
-	if t != nil {
-		t.stopParse()
+	if p != nil {
+		p.stopParse()
 	}
 	*errp = e.(*util.ContextualError)
 }
 
 // stopParse terminates parsing.
-func (t *Tree) stopParse() {
-	t.lex = nil
-	if t.tab {
-		t.Root = nil
-	} else {
-		t.Ctx = nil
-	}
+func (p *Parser) stopParse() {
+	p.lex = nil
+	p.Root = nil
+	p.Ctx = nil
 }
 
 // Parse parses the script to construct a representation of the script for
 // execution.
-func (t *Tree) Parse(text string, tab bool) (tree *Tree, err *util.ContextualError) {
-	defer t.recover(&err)
+func (p *Parser) Parse(text string, tab bool) (tree *Parser, err *util.ContextualError) {
+	defer p.recover(&err)
 
-	t.text = text
-	t.tab = tab
-	t.lex = Lex(t.Name, text)
-	t.peekCount = 0
+	p.text = text
+	p.tab = tab
+	p.lex = Lex(p.Name, text)
+	p.peekCount = 0
 
 	// TODO This now only parses a pipeline.
-	t.Root = t.pipeline()
+	p.Root = p.pipeline()
 
-	t.stopParse()
-	return t, nil
+	p.stopParse()
+	return p, nil
 }
 
 // Pipeline = [ Command { "|" Command } ]
-func (t *Tree) pipeline() *ListNode {
-	pipe := newList(t.peek().Pos)
-	if t.peekNonSpace().Typ == ItemEOF {
+func (p *Parser) pipeline() *ListNode {
+	pipe := newList(p.peek().Pos)
+	if p.peekNonSpace().Typ == ItemEOF {
 		return pipe
 	}
 loop:
 	for {
-		n := t.command()
+		n := p.command()
 		pipe.append(n)
 
-		switch token := t.next(); token.Typ {
+		switch token := p.next(); token.Typ {
 		case ItemPipe:
 			continue loop
 		case ItemEndOfLine, ItemEOF:
 			break loop
 		default:
-			t.unexpected(token, "end of pipeline")
+			p.unexpected(token, "end of pipeline")
 		}
 	}
 	return pipe
@@ -201,14 +192,14 @@ loop:
 
 // command parses a command.
 // Command = TermList { [ space ] Redir }
-func (t *Tree) command() *CommandNode {
-	cmd := newCommand(t.peek().Pos)
-	cmd.ListNode = *t.termList()
+func (p *Parser) command() *CommandNode {
+	cmd := newCommand(p.peek().Pos)
+	cmd.ListNode = *p.termList()
 loop:
 	for {
-		switch t.peekNonSpace().Typ {
+		switch p.peekNonSpace().Typ {
 		case ItemRedirLeader:
-			cmd.Redirs = append(cmd.Redirs, t.redir())
+			cmd.Redirs = append(cmd.Redirs, p.redir())
 		default:
 			break loop
 		}
@@ -217,13 +208,13 @@ loop:
 }
 
 // TermList = [ space ] Term { [ space ] Term } [ space ]
-func (t *Tree) termList() *ListNode {
-	list := newList(t.peek().Pos)
-	list.append(t.term())
+func (p *Parser) termList() *ListNode {
+	list := newList(p.peek().Pos)
+	list.append(p.term())
 loop:
 	for {
-		if startsFactor(t.peekNonSpace().Typ) {
-			list.append(t.term())
+		if startsFactor(p.peekNonSpace().Typ) {
+			list.append(p.term())
 		} else {
 			break loop
 		}
@@ -232,17 +223,17 @@ loop:
 }
 
 // Term = Factor { Factor | [ space ] '^' Factor [ space ] } [ space ]
-func (t *Tree) term() *ListNode {
-	term := newList(t.peek().Pos)
-	term.append(t.factor())
+func (p *Parser) term() *ListNode {
+	term := newList(p.peek().Pos)
+	term.append(p.factor())
 loop:
 	for {
-		if startsFactor(t.peek().Typ) {
-			term.append(t.factor())
-		} else if t.peekNonSpace().Typ == ItemCaret {
-			t.next()
-			t.peekNonSpace()
-			term.append(t.factor())
+		if startsFactor(p.peek().Typ) {
+			term.append(p.factor())
+		} else if p.peekNonSpace().Typ == ItemCaret {
+			p.next()
+			p.peekNonSpace()
+			term.append(p.factor())
 		} else {
 			break loop
 		}
@@ -264,11 +255,11 @@ func unquote(token Item) (string, error) {
 	}
 }
 
-// startsFactor determines whether a token of type t can start a Factor.
+// startsFactor determines whether a token of type p can start a Factor.
 // Frequently used for lookahead, since a Term or TermList always starts with
 // a Factor.
-func startsFactor(t ItemType) bool {
-	switch t {
+func startsFactor(p ItemType) bool {
+	switch p {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted,
 			ItemLParen, ItemLBracket,
 			ItemDollar:
@@ -281,36 +272,36 @@ func startsFactor(t ItemType) bool {
 // Factor = '$' Factor
 //        = ( bare | single-quoted | double-quoted | Table )
 //        = ( '(' TermList ')' )
-func (t *Tree) factor() (fn *FactorNode) {
-	fn = newFactor(t.peek().Pos)
-	for t.peek().Typ == ItemDollar {
-		t.next()
+func (p *Parser) factor() (fn *FactorNode) {
+	fn = newFactor(p.peek().Pos)
+	for p.peek().Typ == ItemDollar {
+		p.next()
 		fn.Dollar++
 	}
-	switch token := t.next(); token.Typ {
+	switch token := p.next(); token.Typ {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 		text, err := unquote(token)
 		if err != nil {
-			t.errorf(int(token.Pos), "%s", err)
+			p.errorf(int(token.Pos), "%s", err)
 		}
 		if token.End & MayContinue != 0 {
-			t.Ctx = NewArgContext(token.Val)
+			p.Ctx = NewArgContext(token.Val)
 		} else {
-			t.Ctx = nil
+			p.Ctx = nil
 		}
 		fn.Node = newString(token.Pos, token.Val, text)
 		return
 	case ItemLParen:
-		fn.Node = t.termList()
-		if token := t.next(); token.Typ != ItemRParen {
-			t.unexpected(token, "factor of item list")
+		fn.Node = p.termList()
+		if token := p.next(); token.Typ != ItemRParen {
+			p.unexpected(token, "factor of item list")
 		}
 		return
 	case ItemLBracket:
-		fn.Node = t.table()
+		fn.Node = p.table()
 		return
 	default:
-		t.unexpected(token, "factor")
+		p.unexpected(token, "factor")
 		return nil
 	}
 }
@@ -318,21 +309,21 @@ func (t *Tree) factor() (fn *FactorNode) {
 // table parses a table literal. The opening bracket has been seen.
 // Table = '[' { [ space ] ( Term [ space ] '=' [ space ] Term | Term ) [ space ] } ']'
 // NOTE The '=' is actually special-cased Term.
-func (t *Tree) table() (tn *TableNode) {
-	tn = newTable(t.peek().Pos)
+func (p *Parser) table() (tn *TableNode) {
+	tn = newTable(p.peek().Pos)
 
 	for {
-		token := t.nextNonSpace()
+		token := p.nextNonSpace()
 		if startsFactor(token.Typ) {
-			t.backup()
-			term := t.term()
+			p.backup()
+			term := p.term()
 
-			next := t.peekNonSpace()
+			next := p.peekNonSpace()
 			if next.Typ == ItemBare && next.Val == "=" {
-				t.next()
+				p.next()
 				// New element of dict part. Skip spaces and find value term.
-				t.peekNonSpace()
-				valueTerm := t.term()
+				p.peekNonSpace()
+				valueTerm := p.term()
 				tn.appendToDict(term, valueTerm)
 			} else {
 				// New element of list part.
@@ -341,7 +332,7 @@ func (t *Tree) table() (tn *TableNode) {
 		} else if token.Typ == ItemRBracket {
 			return
 		} else {
-			t.unexpected(token, "table literal")
+			p.unexpected(token, "table literal")
 		}
 	}
 }
@@ -351,8 +342,8 @@ func (t *Tree) table() (tn *TableNode) {
 // NOTE The actual grammar is more complex than above, since 1) the inner
 // structure of redir-leader is also parsed here, and 2) the Term is not truly
 // optional, but sometimes required depending on the redir-leader.
-func (t *Tree) redir() Redir {
-	leader := t.next()
+func (p *Parser) redir() Redir {
+	leader := p.next()
 
 	// Partition the redirection leader into direction and qualifier parts.
 	// For example, if leader.Val == ">>[1=2]", dir == ">>" and qual == "1=2".
@@ -385,7 +376,7 @@ func (t *Tree) redir() Redir {
 		flag = os.O_WRONLY | os.O_CREATE | os.O_APPEND
 		fd = 1
 	default:
-		t.errorf(int(leader.Pos), "Unexpected redirection direction %q", dir)
+		p.errorf(int(leader.Pos), "Unexpected redirection direction %q", dir)
 	}
 
 	if len(qual) > 0 {
@@ -399,14 +390,14 @@ func (t *Tree) redir() Redir {
 				fd, err = Atou(lhs)
 				if err != nil {
 					// TODO identify precious position
-					t.errorf(int(leader.Pos), "Invalid new fd in qualified redirection %q", lhs)
+					p.errorf(int(leader.Pos), "Invalid new fd in qualified redirection %q", lhs)
 				}
 			}
 			if len(rhs) > 0 {
 				oldfd, err := Atou(rhs)
 				if err != nil {
 					// TODO identify precious position
-					t.errorf(int(leader.Pos), "Invalid old fd in qualified redirection %q", rhs)
+					p.errorf(int(leader.Pos), "Invalid old fd in qualified redirection %q", rhs)
 				}
 				return NewFdRedir(fd, oldfd)
 			} else {
@@ -418,11 +409,11 @@ func (t *Tree) redir() Redir {
 			fd, err = Atou(qual)
 			if err != nil {
 				// TODO identify precious position
-				t.errorf(int(leader.Pos), "Invalid new fd in qualified redirection %q", qual)
+				p.errorf(int(leader.Pos), "Invalid new fd in qualified redirection %q", qual)
 			}
 		}
 	}
 	// FilenameRedir
-	t.peekNonSpace()
-	return newFilenameRedir(fd, flag, t.term())
+	p.peekNonSpace()
+	return newFilenameRedir(fd, flag, p.term())
 }
