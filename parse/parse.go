@@ -146,8 +146,6 @@ func (p *Parser) recover(errp **util.ContextualError) {
 // stopParse terminates parsing.
 func (p *Parser) stopParse() {
 	p.lex = nil
-	p.Root = nil
-	p.Ctx = nil
 }
 
 // Parse parses the script to construct a representation of the script for
