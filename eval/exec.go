@@ -324,7 +324,7 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 	}
 
 	sys := syscall.SysProcAttr{}
-	attr := syscall.ProcAttr{Env: envAsSlice(ev.env), Files: files[:], Sys: &sys}
+	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
 	pid, err := syscall.ForkExec(args[0], args, &attr)
 
 	update := make(chan *StateUpdate)

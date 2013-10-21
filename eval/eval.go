@@ -13,16 +13,20 @@ import (
 
 type Evaluator struct {
 	name, text string
-	env map[string]string
+	globals map[string]Value
+	env *Env
 	searchPaths []string
 	filesToClose []*os.File
 	nodes []parse.Node // A stack that keeps track of nodes being evaluated.
 }
 
 func NewEvaluator(env []string) *Evaluator {
-	ev := &Evaluator{env: envAsMap(env)}
+	g := make(map[string]Value)
+	e := NewEnv(env)
+	g["e"] = e
+	ev := &Evaluator{globals: g, env: e}
 
-	path, ok := ev.env["PATH"]
+	path, ok := e.m["PATH"]
 	if ok {
 		ev.searchPaths = strings.Split(path, ":")
 		// fmt.Printf("Search paths are %v\n", search_paths)
@@ -80,16 +84,15 @@ func (ev *Evaluator) recover(perr **util.ContextualError) {
 	*perr = r.(*util.ContextualError)
 }
 
-// XXX Makes up scalar values from env on the fly.
 func (ev *Evaluator) resolveVar(name string) Value {
 	if name == "!pid" {
 		return NewScalar(strconv.Itoa(syscall.Getpid()))
 	}
-	val, ok := ev.env[name]
+	val, ok := ev.globals[name]
 	if !ok {
 		ev.errorf("Variable %q not found", name)
 	}
-	return NewScalar(val)
+	return val
 }
 
 func (ev *Evaluator) evalTable(tn *parse.TableNode) *Table {

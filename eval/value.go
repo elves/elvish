@@ -73,6 +73,7 @@ func (t *Table) Caret(v Value) Value {
 			panic("subscription must be single-element scalar list")
 		}
 		// Need stricter notion of list indices
+		// TODO Handle invalid index
 		idx, err := strconv.ParseUint(sub.String(), 10, 0)
 		if err == nil {
 			return t.list[idx]
@@ -80,7 +81,8 @@ func (t *Table) Caret(v Value) Value {
 			return t.dict[sub]
 		}
 	default:
-		panic("unreachable")
+		// TODO Use Evaluator.errorf
+		panic("Table can only be careted with Scalar or Table")
 	}
 }
 
@@ -88,21 +90,49 @@ func (t *Table) append(vs... Value) {
 	t.list = append(t.list, vs...)
 }
 
-func envAsSlice(env map[string]string) (s []string) {
-	s = make([]string, 0, len(env))
-	for k, v := range env {
-		s = append(s, fmt.Sprintf("%s=%s", k, v))
-	}
-	return
+type Env struct {
+	m map[string]string
 }
+func (e *Env) meisvalue() {}
 
-func envAsMap(env []string) (m map[string]string) {
-	m = make(map[string]string)
-	for _, e := range env {
-		arr := strings.SplitN(e, "=", 2)
+func NewEnv(s []string) *Env {
+	e := &Env{make(map[string]string)}
+	for _, s := range s {
+		arr := strings.SplitN(s, "=", 2)
 		if len(arr) == 2 {
-			m[arr[0]] = arr[1]
+			e.m[arr[0]] = arr[1]
 		}
 	}
-	return
+	return e
+}
+
+func (e *Env) Export() []string {
+	s := make([]string, 0, len(e.m))
+	for k, v := range e.m {
+		s = append(s, fmt.Sprintf("%s=%s", k, v))
+	}
+	return s
+}
+
+func (e *Env) String() string {
+	return "$env"
+}
+
+func (e *Env) Caret(v Value) Value {
+	switch v := v.(type) {
+	case *Table:
+		if len(v.list) != 1 || len(v.dict) != 0 {
+			// TODO Use Evaluator.errorf
+			panic("subscription must be single-element list")
+		}
+		sub, ok := v.list[0].(*Scalar)
+		if !ok {
+			// TODO Use Evaluator.errorf
+			panic("subscription must be single-element scalar list")
+		}
+		// TODO Handle invalid index
+		return NewScalar(e.m[sub.String()])
+	default:
+		panic("Env can only be careted with Table")
+	}
 }
