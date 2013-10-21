@@ -74,7 +74,7 @@ func (ev *Evaluator) search(exe string) (string, error) {
 			if isExecutable(exe) {
 				return exe, nil
 			}
-			return "", fmt.Errorf("not executable")
+			return "", fmt.Errorf("external command not executable")
 		}
 	}
 	for _, p := range ev.searchPaths {
@@ -83,7 +83,7 @@ func (ev *Evaluator) search(exe string) (string, error) {
 			return full, nil
 		}
 	}
-	return "", fmt.Errorf("not found")
+	return "", fmt.Errorf("external command not found")
 }
 
 func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType) {
@@ -111,7 +111,7 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 		// Try external command
 		args[0].(*Scalar).str, e = ev.search(name)
 		if e != nil {
-			ev.errorf("can't resolve: %s", e)
+			ev.errorf("%s", e)
 		}
 		// Use zero value (fileIO) for ioTypes
 	}
