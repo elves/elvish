@@ -21,9 +21,11 @@ type Evaluator struct {
 }
 
 func NewEvaluator(env []string) *Evaluator {
-	g := make(map[string]Value)
 	e := NewEnv(env)
-	g["e"] = e
+	pid := NewScalar(strconv.Itoa(syscall.Getpid()))
+	g := map[string]Value{
+		"e": e, "pid": pid,
+	}
 	ev := &Evaluator{globals: g, env: e}
 
 	path, ok := e.m["PATH"]
@@ -85,9 +87,6 @@ func (ev *Evaluator) recover(perr **util.ContextualError) {
 }
 
 func (ev *Evaluator) resolveVar(name string) Value {
-	if name == "!pid" {
-		return NewScalar(strconv.Itoa(syscall.Getpid()))
-	}
 	val, ok := ev.globals[name]
 	if !ok {
 		ev.errorf("Variable %q not found", name)
