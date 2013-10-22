@@ -183,7 +183,7 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 // corresponding elements in pids is -1 and err is typed *CommandErrors. For
 // each pids[i] == -1, err.(*CommandErrors)Errors[i] contains the
 // corresponding error.
-func (ev *Evaluator) ExecPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
+func (ev *Evaluator) execPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
 	ev.push(pl)
 	defer ev.pop()
 

@@ -56,6 +56,7 @@ const (
 	ItemRBrace       // right brace '}'
 	ItemDollar       // dollar sign '$'
 	ItemCaret        // caret sign '^'
+	ItemSemicolon    // semicolon ';'
 )
 
 var ItemTypeNames []string = []string {
@@ -76,6 +77,7 @@ var ItemTypeNames []string = []string {
 	"ItemRBrace",
 	"ItemDollar",
 	"ItemCaret",
+	"ItemSemicolon",
 }
 
 func (it ItemType) String() string {
@@ -201,7 +203,7 @@ var singleRuneToken = map[rune]ItemType{
 	'(': ItemLParen, ')': ItemRParen,
 	'[': ItemLBracket, ']': ItemRBracket,
 	'{': ItemLBrace, '}': ItemRBrace,
-	'$': ItemDollar, '^': ItemCaret,
+	'$': ItemDollar, '^': ItemCaret, ';': ItemSemicolon,
 }
 
 // lexAny is the default state. It allows any token but comment.
@@ -310,7 +312,7 @@ func lexBare(l *Lexer) stateFn {
 
 func terminatesBare(r rune) bool {
 	switch r {
-	case '\n', '(', ')', '[', ']', '{', '}', '"', '`', '$', Eof:
+	case '\n', '(', ')', '[', ']', '{', '}', '"', '`', '$', ';', Eof:
 		return true
 	}
 	return isSpace(r)

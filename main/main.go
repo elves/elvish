@@ -51,20 +51,10 @@ func main() {
 			continue
 		}
 
-		updates, ee := ev.Eval(name, lr.Line, tree.Root)
+		ee := ev.Eval(name, lr.Line, tree.Root)
 		if ee != nil {
 			fmt.Println(ee.Pprint())
 			continue
-		}
-
-		for i, update := range updates {
-			for up := range update {
-				switch up.Msg {
-				case "0", "":
-				default:
-					fmt.Printf("Command #%d update: %s\n", i, up.Msg)
-				}
-			}
 		}
 	}
 }

@@ -4,6 +4,7 @@ package eval
 
 import (
 	"os"
+	"fmt"
 	"strings"
 	"syscall"
 	"strconv"
@@ -40,13 +41,13 @@ func NewEvaluator(env []string) *Evaluator {
 }
 
 // TODO This now only evaluates a pipeline.
-func (ev *Evaluator) Eval(name, text string, n parse.Node) (updates []<-chan *StateUpdate, err *util.ContextualError) {
+func (ev *Evaluator) Eval(name, text string, n parse.Node) (err *util.ContextualError) {
 	defer ev.recover(&err)
 	ev.name = name
 	ev.text = text
-	updates = ev.ExecPipeline(n.(*parse.ListNode))
+	ev.evalChunk(n.(*parse.ListNode))
 	ev.stopEval()
-	return updates, nil
+	return nil
 }
 
 func (ev *Evaluator) stopEval() {
@@ -202,4 +203,20 @@ func (ev *Evaluator) assertSingleScalar(vs []Value, n parse.Node, what string) *
 		ev.errorf("Expect scalar for %s, got %s", what, vs[0])
 	}
 	return v
+}
+
+// XXX Failure of one pipeline will abort the whole chunk.
+func (ev *Evaluator) evalChunk(ch *parse.ListNode) {
+	for _, n := range ch.Nodes {
+		updates := ev.execPipeline(n.(*parse.ListNode))
+		for i, update := range updates {
+			for up := range update {
+				switch up.Msg {
+				case "0", "":
+				default:
+					fmt.Printf("Command #%d update: %s\n", i, up.Msg)
+				}
+			}
+		}
+	}
 }

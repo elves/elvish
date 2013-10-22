@@ -158,38 +158,50 @@ func (p *Parser) Parse(text string, tab bool) (tree *Parser, err *util.Contextua
 	p.lex = Lex(p.Name, text)
 	p.peekCount = 0
 
-	// TODO This now only parses a pipeline.
-	p.Root = p.pipeline()
+	p.Root = p.chunk()
 
 	p.stopParse()
 	return p, nil
 }
 
-// Pipeline = [ Command { "|" Command } ]
-func (p *Parser) pipeline() *ListNode {
-	pipe := newList(p.peek().Pos)
+// Chunk = [ [ space ] Pipeline { (";" | "\n") Pipeline } ]
+func (p *Parser) chunk() *ListNode {
+	chunk := newList(p.peek().Pos)
 	if p.peekNonSpace().Typ == ItemEOF {
-		return pipe
+		return chunk
 	}
 loop:
 	for {
-		n := p.command()
-		pipe.append(n)
+		// Skip leading whitespaces
+		p.peekNonSpace()
+		chunk.append(p.pipeline())
 
 		switch token := p.next(); token.Typ {
-		case ItemPipe:
+		case ItemSemicolon, ItemEndOfLine:
 			continue loop
-		case ItemEndOfLine, ItemEOF:
+		case ItemEOF:
 			break loop
 		default:
-			p.unexpected(token, "end of pipeline")
+			p.unexpected(token, "end of chunk")
+		}
+	}
+	return chunk
+}
+
+// Pipeline = Command { "|" Command }
+func (p *Parser) pipeline() *ListNode {
+	pipe := newList(p.peek().Pos)
+	for {
+		pipe.append(p.command())
+		if p.peek().Typ != ItemPipe {
+			break
 		}
 	}
 	return pipe
 }
 
 // command parses a command.
-// Command = TermList { [ space ] Redir }
+// Command = TermList { [ space ] Redir } [ space ]
 func (p *Parser) command() *CommandNode {
 	cmd := newCommand(p.peek().Pos)
 	cmd.ListNode = *p.termList()
