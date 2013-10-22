@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"fmt"
-	"syscall"
 	"../parse"
 	"../edit"
 	"../eval"
@@ -15,8 +14,6 @@ func lackeol() {
 }
 
 func main() {
-	fmt.Printf("My pid is %d\n", syscall.Getpid())
-
 	tr, err := util.NewTimedReader(os.Stdin)
 	if err != nil {
 		panic(err)
