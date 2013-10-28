@@ -287,8 +287,12 @@ func startsFactor(p ItemType) bool {
 
 // Factor = '$' Factor
 //        = ( bare | single-quoted | double-quoted | Table )
-//        = ( '(' TermList ')' )
+//        = '{' TermList '}'
 //        = Closure
+// Closure and flat list are distinguished by the first token after the
+// opening brace. If startsFactor(token), it is considered a flat list.
+// This implies that whitespaces after opening brace always introduce a
+// closure: {echo} is a flat list, { echo } and {|| echo} are closures.
 func (p *Parser) factor() (fn *FactorNode) {
 	fn = newFactor(p.peek().Pos)
 	for p.peek().Typ == ItemDollar {
@@ -308,17 +312,18 @@ func (p *Parser) factor() (fn *FactorNode) {
 		}
 		fn.Node = newString(token.Pos, token.Val, text)
 		return
-	case ItemLParen:
-		fn.Node = p.termList()
-		if token := p.next(); token.Typ != ItemRParen {
-			p.unexpected(token, "factor of item list")
-		}
-		return
 	case ItemLBracket:
 		fn.Node = p.table()
 		return
 	case ItemLBrace:
-		fn.Node = p.closure()
+		if startsFactor(p.peek().Typ) {
+			fn.Node = p.termList()
+			if token := p.next(); token.Typ != ItemRBrace {
+				p.unexpected(token, "factor of item list")
+			}
+		} else {
+			fn.Node = p.closure()
+		}
 		return
 	default:
 		p.unexpected(token, "factor")
