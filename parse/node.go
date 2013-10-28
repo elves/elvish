@@ -61,12 +61,13 @@ func newCommand(pos Pos) *CommandNode {
 // A Factor is any of the following prefixed by any number of dollars:
 // *StringNode (scalar literal a `a` "a", variable evaluation $a $`a`)
 //     $`a` and $"a" can be used to refer to variables of funny names.
-// *ListNode (flat list (a b c), variable evaluation $(a^b))
-//     In case of $(...), the flat list must evaluate to exactly one scalar.
-//     Only useful for dynamic constructing of variable names, e.g. $($a$b).
-// TableNode (table literal [a b c k = v], ??? $[a b c])
-//     TODO What should the semantics of $[a b c] be?
-// TODO CommandNode (closure {cmd}, command output substituion ${cmd})
+// *ListNode (flat list {a b c}, variable evaluation ${a^b})
+//     In case of ${...}, the flat list must evaluate to exactly one scalar.
+//     Only useful for dynamic constructing of variable names, e.g. ${$a$b}.
+// TableNode (table literal [a b c &k v])
+//     TODO Can $[a b c &k v] be something useful?
+// CommandNode (closure {|a|cmd}, command output substituion ${cmd})
+// 	   TODO (cmd) as an alternate form of ${cmd}, resembling Lisp?
 
 type FactorNode struct {
 	Pos
