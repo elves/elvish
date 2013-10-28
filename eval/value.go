@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"strings"
 	"strconv"
+	"../parse"
 )
 
 type Value interface {
@@ -131,4 +132,23 @@ func (e *Env) Caret(ev *Evaluator, v Value) Value {
 	default:
 		panic("Env can only be careted with Table")
 	}
+}
+
+// XXX A closure is only a block now. Args and variable captures are missing.
+type Closure struct {
+	Chunk *parse.ListNode
+}
+func (c *Closure) meisvalue() {}
+
+func NewClosure(ch *parse.ListNode) *Closure {
+	return &Closure{ch}
+}
+
+func (c *Closure) String(ev *Evaluator) string {
+	return fmt.Sprintf("<closure %p>", c.Chunk)
+}
+
+func (c *Closure) Caret(ev *Evaluator, v Value) Value {
+	ev.errorf("Closure doesn't support careting")
+	return nil
 }
