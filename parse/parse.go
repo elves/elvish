@@ -288,7 +288,7 @@ func startsFactor(p ItemType) bool {
 // Factor = '$' Factor
 //        = ( bare | single-quoted | double-quoted | Table )
 //        = ( '(' TermList ')' )
-//        = Table | Closure
+//        = Closure
 func (p *Parser) factor() (fn *FactorNode) {
 	fn = newFactor(p.peek().Pos)
 	for p.peek().Typ == ItemDollar {
