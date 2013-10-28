@@ -289,8 +289,6 @@ func startsFactor(p ItemType) bool {
 //        = ( bare | single-quoted | double-quoted | Table )
 //        = '{' TermList '}'
 //        = Closure
-// XXX The following comment now applies to block, which is not yet
-// implemented, instead of closure.
 // Closure and flat list are distinguished by the first token after the
 // opening brace. If startsFactor(token), it is considered a flat list.
 // This implies that whitespaces after opening brace always introduce a
@@ -324,15 +322,8 @@ func (p *Parser) factor() (fn *FactorNode) {
 				p.unexpected(token, "factor of item list")
 			}
 		} else {
-			// TODO Store a block instead.
 			fn.Node = p.closure()
 		}
-		return
-	case ItemAmpersand:
-		if token := p.next(); token.Typ != ItemLBrace {
-			p.unexpected(token, "closure leader")
-		}
-		fn.Node = p.closure()
 		return
 	default:
 		p.unexpected(token, "factor")
@@ -340,9 +331,8 @@ func (p *Parser) factor() (fn *FactorNode) {
 	}
 }
 
-// closure parses a closure literal. The leading ampersand and opening brace
-// have been seen.
-// Closure  = '&' '{' [ space ] [ '|' TermList '|' [ space ] ] Chunk '}'
+// closure parses a closure literal. The opening brace has been seen.
+// Closure  = '{' [ space ] [ '|' TermList '|' [ space ] ] Chunk '}'
 func (p *Parser) closure() (tn *ClosureNode) {
 	tn = newClosure(p.peek().Pos)
 	if p.peekNonSpace().Typ == ItemPipe {
