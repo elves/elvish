@@ -158,10 +158,19 @@ func (p *Parser) Parse(text string, tab bool) (tree *Parser, err *util.Contextua
 	p.lex = Lex(p.Name, text)
 	p.peekCount = 0
 
-	p.Root = p.chunk()
+	p.Root = p.parse()
 
 	p.stopParse()
 	return p, nil
+}
+
+// parse parses a chunk and ensures there are no trailing tokens
+func (p *Parser) parse() *ListNode {
+	chunk := p.chunk()
+	if token := p.peekNonSpace(); token.Typ != ItemEOF {
+		p.unexpected(token, "end of script")
+	}
+	return chunk
 }
 
 // Chunk = [ [ space ] Pipeline { (";" | "\n") Pipeline } ]
@@ -170,20 +179,17 @@ func (p *Parser) chunk() *ListNode {
 	if p.peekNonSpace().Typ == ItemEOF {
 		return chunk
 	}
-loop:
+
 	for {
 		// Skip leading whitespaces
 		p.peekNonSpace()
 		chunk.append(p.pipeline())
 
-		switch token := p.next(); token.Typ {
-		case ItemSemicolon, ItemEndOfLine:
-			continue loop
-		case ItemEOF:
-			break loop
-		default:
-			p.unexpected(token, "end of chunk")
+		if typ := p.peek().Typ; typ != ItemSemicolon && typ != ItemEndOfLine {
+			break
 		}
+
+		p.next()
 	}
 	return chunk
 }
@@ -271,7 +277,7 @@ func unquote(token Item) (string, error) {
 func startsFactor(p ItemType) bool {
 	switch p {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted,
-			ItemLParen, ItemLBracket,
+			ItemLParen, ItemLBracket, ItemLBrace,
 			ItemDollar:
 		return true
 	default:
@@ -282,6 +288,7 @@ func startsFactor(p ItemType) bool {
 // Factor = '$' Factor
 //        = ( bare | single-quoted | double-quoted | Table )
 //        = ( '(' TermList ')' )
+//        = Table | Closure
 func (p *Parser) factor() (fn *FactorNode) {
 	fn = newFactor(p.peek().Pos)
 	for p.peek().Typ == ItemDollar {
@@ -310,10 +317,31 @@ func (p *Parser) factor() (fn *FactorNode) {
 	case ItemLBracket:
 		fn.Node = p.table()
 		return
+	case ItemLBrace:
+		fn.Node = p.closure()
+		return
 	default:
 		p.unexpected(token, "factor")
 		return nil
 	}
+}
+
+// closure parses a closure literal. The opening brace has been seen.
+// Closure  = ( '{' [ space ] [ '|' TermList '|' [ space ] ] Chunk '}' )
+func (p *Parser) closure() (tn *ClosureNode) {
+	tn = newClosure(p.peek().Pos)
+	if p.peekNonSpace().Typ == ItemPipe {
+		p.next()
+		tn.Args = p.termList()
+		if token := p.nextNonSpace(); token.Typ != ItemPipe {
+			p.unexpected(token, "argument list")
+		}
+	}
+	tn.Chunk = p.chunk()
+	if token := p.nextNonSpace(); token.Typ != ItemRBrace {
+		p.unexpected(token, "end of closure")
+	}
+	return
 }
 
 // table parses a table literal. The opening bracket has been seen.

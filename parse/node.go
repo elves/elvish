@@ -101,6 +101,16 @@ func (tn *TableNode) appendToDict(key *ListNode, value *ListNode) {
 	tn.Dict = append(tn.Dict, &TablePair{key, value})
 }
 
+type ClosureNode struct {
+	Pos
+	Args *ListNode
+	Chunk *ListNode
+}
+
+func newClosure(pos Pos) *ClosureNode {
+	return &ClosureNode{Pos: pos}
+}
+
 // StringNode holds a string constant. The value has been "unquoted".
 type StringNode struct {
 	Pos
