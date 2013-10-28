@@ -176,7 +176,7 @@ func (p *Parser) parse() *ListNode {
 // Chunk = [ [ space ] Pipeline { (";" | "\n") Pipeline } ]
 func (p *Parser) chunk() *ListNode {
 	chunk := newList(p.peek().Pos)
-	if p.peekNonSpace().Typ == ItemEOF {
+	if !startsFactor(p.peekNonSpace().Typ) {
 		return chunk
 	}
 
@@ -185,6 +185,9 @@ func (p *Parser) chunk() *ListNode {
 		p.peekNonSpace()
 		chunk.append(p.pipeline())
 
+		if !startsFactor(p.peek().Typ) {
+			break
+		}
 		if typ := p.peek().Typ; typ != ItemSemicolon && typ != ItemEndOfLine {
 			break
 		}
