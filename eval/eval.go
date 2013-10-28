@@ -193,7 +193,7 @@ func (ev *Evaluator) evalTermList(ln *parse.ListNode) []Value {
 	return words
 }
 
-func (ev *Evaluator) assertSingleScalar(vs []Value, n parse.Node, what string) *Scalar {
+func (ev *Evaluator) asSingleScalar(vs []Value, n parse.Node, what string) *Scalar {
 	ev.push(n)
 	defer ev.pop()
 
@@ -205,6 +205,10 @@ func (ev *Evaluator) assertSingleScalar(vs []Value, n parse.Node, what string) *
 		ev.errorf("Expect scalar for %s, got %s", what, vs[0])
 	}
 	return v
+}
+
+func (ev *Evaluator) evalTermSingleScalar(n *parse.ListNode, what string) *Scalar {
+	return ev.asSingleScalar(ev.evalTerm(n), n, what)
 }
 
 // XXX Failure of one pipeline will abort the whole chunk.

@@ -89,8 +89,7 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 	var e error
 
 	// Evaluate name and arguments. This is universal for all command types.
-	nameValue := ev.assertSingleScalar(ev.evalTerm(&n.Name), n.Name, "command name")
-	name := nameValue.str
+	name := ev.evalTermSingleScalar(&n.Name, "command name").str
 	args := ev.evalTermList(&n.Args)
 
 	// Resolve command name.
@@ -140,10 +139,9 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 				// TODO locate redir node
 				ev.errorf("filename redir on channel IO")
 			}
-			fname := ev.evalTerm(r.Filename)
-			v := ev.assertSingleScalar(fname, r.Filename, "filename")
+			fname := ev.evalTermSingleScalar(r.Filename, "filename").str
 			// TODO haz hardcoded permbits now
-			f, e := os.OpenFile(v.String(), r.Flag, 0644)
+			f, e := os.OpenFile(fname, r.Flag, 0644)
 			if e != nil {
 				// TODO locate redir node
 				ev.errorf("failed to open file %q: %s", fname[0], e)
