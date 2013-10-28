@@ -51,7 +51,7 @@ func (t *Table) String() string {
 		sep = " "
 	}
 	for k, v := range t.dict {
-		fmt.Fprint(buf, sep, k.String(), " = ", v.String())
+		fmt.Fprint(buf, sep, "&", k.String(), " ", v.String())
 		sep = " "
 	}
 	buf.WriteRune(']')

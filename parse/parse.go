@@ -278,7 +278,7 @@ func startsFactor(p ItemType) bool {
 	switch p {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted,
 			ItemLParen, ItemLBracket, ItemLBrace,
-			ItemDollar:
+			ItemDollar, ItemAmpersand:
 		return true
 	default:
 		return false
@@ -289,6 +289,8 @@ func startsFactor(p ItemType) bool {
 //        = ( bare | single-quoted | double-quoted | Table )
 //        = '{' TermList '}'
 //        = Closure
+// XXX The following comment now applies to block, which is not yet
+// implemented, instead of closure.
 // Closure and flat list are distinguished by the first token after the
 // opening brace. If startsFactor(token), it is considered a flat list.
 // This implies that whitespaces after opening brace always introduce a
@@ -322,8 +324,15 @@ func (p *Parser) factor() (fn *FactorNode) {
 				p.unexpected(token, "factor of item list")
 			}
 		} else {
+			// TODO Store a block instead.
 			fn.Node = p.closure()
 		}
+		return
+	case ItemAmpersand:
+		if token := p.next(); token.Typ != ItemLBrace {
+			p.unexpected(token, "closure leader")
+		}
+		fn.Node = p.closure()
 		return
 	default:
 		p.unexpected(token, "factor")
@@ -331,8 +340,9 @@ func (p *Parser) factor() (fn *FactorNode) {
 	}
 }
 
-// closure parses a closure literal. The opening brace has been seen.
-// Closure  = ( '{' [ space ] [ '|' TermList '|' [ space ] ] Chunk '}' )
+// closure parses a closure literal. The leading ampersand and opening brace
+// have been seen.
+// Closure  = '&' '{' [ space ] [ '|' TermList '|' [ space ] ] Chunk '}'
 func (p *Parser) closure() (tn *ClosureNode) {
 	tn = newClosure(p.peek().Pos)
 	if p.peekNonSpace().Typ == ItemPipe {
@@ -350,28 +360,23 @@ func (p *Parser) closure() (tn *ClosureNode) {
 }
 
 // table parses a table literal. The opening bracket has been seen.
-// Table = '[' { [ space ] ( Term [ space ] '=' [ space ] Term | Term ) [ space ] } ']'
-// NOTE The '=' is actually special-cased Term.
+// Table = '[' { [ space ] ( '& 'Term [ space ] Term | Term ) [ space ] } ']'
 func (p *Parser) table() (tn *TableNode) {
 	tn = newTable(p.peek().Pos)
 
 	for {
 		token := p.nextNonSpace()
-		if startsFactor(token.Typ) {
+		// & is used both as key marker and closure leader.
+		if token.Typ == ItemAmpersand && p.peek().Typ != ItemLBrace {
+			// Key-value pair, add to dict.
+			keyTerm := p.term()
+			p.peekNonSpace()
+			valueTerm := p.term()
+			tn.appendToDict(keyTerm, valueTerm)
+		} else if startsFactor(token.Typ) {
+			// Single element, add to list.
 			p.backup()
-			term := p.term()
-
-			next := p.peekNonSpace()
-			if next.Typ == ItemBare && next.Val == "=" {
-				p.next()
-				// New element of dict part. Skip spaces and find value term.
-				p.peekNonSpace()
-				valueTerm := p.term()
-				tn.appendToDict(term, valueTerm)
-			} else {
-				// New element of list part.
-				tn.appendToList(term)
-			}
+			tn.appendToList(p.term())
 		} else if token.Typ == ItemRBracket {
 			return
 		} else {
