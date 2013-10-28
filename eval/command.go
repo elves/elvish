@@ -42,8 +42,8 @@ type command struct {
 	name string // Command name, used in error messages.
 	args []Value // Argument list, minus command name.
 	ios [3]*io // IOs for in, out and err.
-	f builtinFunc // A builtin function, if the command is builtin.
-	p string // Command full path, if the command is external.
+	fn builtinFunc // A builtin function, if the command is builtin.
+	path string // Command full path, if the command is external.
 }
 
 type StateUpdate struct {
@@ -168,9 +168,9 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 
 	cmd = &command{name, args, ios, nil, ""}
 	if isBuiltin {
-		cmd.f = bi.f
+		cmd.fn = bi.fn
 	} else {
-		cmd.p = path
+		cmd.path = path
 	}
 	return
 }
@@ -275,7 +275,7 @@ func (ev *Evaluator) execPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
 
 // execCommand executes a command.
 func (ev *Evaluator) execCommand(cmd *command) <-chan *StateUpdate {
-	if cmd.f != nil {
+	if cmd.fn != nil {
 		return ev.execBuiltin(cmd)
 	} else {
 		return ev.execExternal(cmd)
@@ -286,7 +286,7 @@ func (ev *Evaluator) execCommand(cmd *command) <-chan *StateUpdate {
 func (ev *Evaluator) execBuiltin(cmd *command) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
-		msg := cmd.f(cmd.args, cmd.ios)
+		msg := cmd.fn(cmd.args, cmd.ios)
 		update <- &StateUpdate{Terminated: true, Msg: msg}
 		close(update)
 	}()
@@ -322,7 +322,7 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 	}
 
 	args := make([]string, len(cmd.args) + 1)
-	args[0] = cmd.p
+	args[0] = cmd.path
 	for i, a := range cmd.args {
 		// XXX Silently coerce all args into string
 		args[i+1] = a.String()
@@ -330,7 +330,7 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
-	pid, err := syscall.ForkExec(cmd.p, args, &attr)
+	pid, err := syscall.ForkExec(cmd.path, args, &attr)
 
 	update := make(chan *StateUpdate)
 	if err != nil {

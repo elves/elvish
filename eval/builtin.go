@@ -15,7 +15,7 @@ const (
 type builtinFunc func([]Value, [3]*io) string
 
 type builtin struct {
-	f builtinFunc
+	fn builtinFunc
 	ioTypes [3]ioType
 }
 
