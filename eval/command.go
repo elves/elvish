@@ -89,8 +89,8 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 	var e error
 
 	// Evaluate name and arguments. This is universal for all command types.
-	name := ev.evalTermSingleScalar(&n.Name, "command name").str
-	args := ev.evalTermList(&n.Args)
+	name := ev.evalTermSingleScalar(n.Name, "command name").str
+	args := ev.evalTermList(n.Args)
 
 	// Resolve command name.
 	var path string

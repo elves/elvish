@@ -49,8 +49,8 @@ func (l *ListNode) append(n Node) {
 // CommandNode holds a command, with terms and redirections.
 type CommandNode struct {
 	Pos
-	Name ListNode // A Term
-	Args ListNode // A ListNode of Term's
+	Name *ListNode // A Term
+	Args *ListNode // A ListNode of Term's
 	Redirs []Redir
 }
 

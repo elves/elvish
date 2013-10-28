@@ -213,8 +213,8 @@ func (p *Parser) pipeline() *ListNode {
 // Command = TermList { [ space ] Redir } [ space ]
 func (p *Parser) command() *CommandNode {
 	cmd := newCommand(p.peek().Pos)
-	cmd.Name = *p.term()
-	cmd.Args = *p.termList()
+	cmd.Name = p.term()
+	cmd.Args = p.termList()
 loop:
 	for {
 		switch p.peekNonSpace().Typ {
