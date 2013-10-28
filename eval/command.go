@@ -87,22 +87,11 @@ func (ev *Evaluator) search(exe string) (string, error) {
 
 func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType) {
 	var e error
-	if len(n.Nodes) == 0 {
-		ev.errorf("command is emtpy")
-	}
 
-	// Build argument list. This is universal for all command types.
-	terms := ev.evalTermList(&n.ListNode)
-
-	if _, ok := terms[0].(*Scalar); !ok {
-		// XXX
-		ev.errorf("first word is not scalar: %s", terms[0])
-	}
-
-	// Save unresolved terms[0] as name, build args.
-	name := terms[0].String()
-	terms[0] = nil
-	args := terms[1:]
+	// Evaluate name and arguments. This is universal for all command types.
+	nameValue := ev.assertSingleScalar(ev.evalTerm(&n.Name), n.Name, "command name")
+	name := nameValue.str
+	args := ev.evalTermList(&n.Args)
 
 	// Resolve command name.
 	var path string

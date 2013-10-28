@@ -48,12 +48,14 @@ func (l *ListNode) append(n Node) {
 
 // CommandNode holds a command, with terms and redirections.
 type CommandNode struct {
-	ListNode
+	Pos
+	Name ListNode // A Term
+	Args ListNode // A ListNode of Term's
 	Redirs []Redir
 }
 
 func newCommand(pos Pos) *CommandNode {
-	return &CommandNode{ListNode: *newList(pos)}
+	return &CommandNode{Pos: pos}
 }
 
 // A Term is represented by a ListNode of *FactorNode's.

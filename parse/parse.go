@@ -213,7 +213,8 @@ func (p *Parser) pipeline() *ListNode {
 // Command = TermList { [ space ] Redir } [ space ]
 func (p *Parser) command() *CommandNode {
 	cmd := newCommand(p.peek().Pos)
-	cmd.ListNode = *p.termList()
+	cmd.Name = *p.term()
+	cmd.Args = *p.termList()
 loop:
 	for {
 		switch p.peekNonSpace().Typ {
@@ -226,10 +227,9 @@ loop:
 	return cmd
 }
 
-// TermList = [ space ] Term { [ space ] Term } [ space ]
+// TermList = { [ space ] Term } [ space ]
 func (p *Parser) termList() *ListNode {
 	list := newList(p.peek().Pos)
-	list.append(p.term())
 loop:
 	for {
 		if startsFactor(p.peekNonSpace().Typ) {
