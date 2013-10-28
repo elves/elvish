@@ -57,6 +57,7 @@ const (
 	ItemDollar       // dollar sign '$'
 	ItemCaret        // caret sign '^'
 	ItemSemicolon    // semicolon ';'
+	ItemAmpersand    // ampersand '&'
 )
 
 var ItemTypeNames []string = []string {
@@ -78,6 +79,7 @@ var ItemTypeNames []string = []string {
 	"ItemDollar",
 	"ItemCaret",
 	"ItemSemicolon",
+	"ItemAmpersand",
 }
 
 func (it ItemType) String() string {
@@ -203,7 +205,7 @@ var singleRuneToken = map[rune]ItemType{
 	'(': ItemLParen, ')': ItemRParen,
 	'[': ItemLBracket, ']': ItemRBracket,
 	'{': ItemLBrace, '}': ItemRBrace,
-	'$': ItemDollar, '^': ItemCaret, ';': ItemSemicolon,
+	'$': ItemDollar, '^': ItemCaret, ';': ItemSemicolon, '&': ItemAmpersand,
 }
 
 // lexAny is the default state. It allows any token but comment.

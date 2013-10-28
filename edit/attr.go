@@ -17,4 +17,5 @@ var attrForType = map[parse.ItemType]string{
 	parse.ItemRBracket: "34;1",
 	parse.ItemLBrace: "34;1",
 	parse.ItemRBrace: "34;1",
+	parse.ItemAmpersand: "1",
 }
