@@ -85,7 +85,7 @@ func (ev *Evaluator) search(exe string) (string, error) {
 	return "", fmt.Errorf("external command not found")
 }
 
-func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType) {
+func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType) {
 	var e error
 
 	// Evaluate name and arguments. This is universal for all command types.
@@ -174,7 +174,7 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 // corresponding elements in pids is -1 and err is typed *CommandErrors. For
 // each pids[i] == -1, err.(*CommandErrors)Errors[i] contains the
 // corresponding error.
-func (ev *Evaluator) execPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
+func (ev *Evaluator) evalPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
 	ev.push(pl)
 	defer ev.pop()
 
@@ -194,7 +194,7 @@ func (ev *Evaluator) execPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
 
 	var nextIn *io
 	for i, n := range pl.Nodes {
-		cmd, ioTypes := ev.evalCommand(n.(*parse.CommandNode))
+		cmd, ioTypes := ev.preevalCommand(n.(*parse.CommandNode))
 
 		// Create and connect pipes.
 		if i == 0 {

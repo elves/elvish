@@ -214,7 +214,7 @@ func (ev *Evaluator) evalTermSingleScalar(n *parse.ListNode, what string) *Scala
 // XXX Failure of one pipeline will abort the whole chunk.
 func (ev *Evaluator) evalChunk(ch *parse.ListNode) {
 	for _, n := range ch.Nodes {
-		updates := ev.execPipeline(n.(*parse.ListNode))
+		updates := ev.evalPipeline(n.(*parse.ListNode))
 		for i, update := range updates {
 			for up := range update {
 				switch up.Msg {
