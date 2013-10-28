@@ -132,6 +132,8 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 	case *parse.TableNode:
 		word := ev.evalTable(n)
 		words = []Value{word}
+	case *parse.ClosureNode:
+		ev.errorf("Closure not yet implemented")
 	default:
 		panic("bad node type")
 	}
