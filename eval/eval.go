@@ -21,15 +21,15 @@ type Evaluator struct {
 	nodes []parse.Node // A stack that keeps track of nodes being evaluated.
 }
 
-func NewEvaluator(env []string) *Evaluator {
-	e := NewEnv(env)
+func NewEvaluator(envSlice []string) *Evaluator {
+	env := NewEnv(envSlice)
 	pid := NewScalar(strconv.Itoa(syscall.Getpid()))
 	g := map[string]Value{
-		"e": e, "pid": pid,
+		"env": env, "pid": pid,
 	}
-	ev := &Evaluator{globals: g, env: e}
+	ev := &Evaluator{globals: g, env: env}
 
-	path, ok := e.m["PATH"]
+	path, ok := env.m["PATH"]
 	if ok {
 		ev.searchPaths = strings.Split(path, ":")
 		// fmt.Printf("Search paths are %v\n", search_paths)
