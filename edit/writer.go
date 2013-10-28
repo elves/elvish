@@ -105,7 +105,7 @@ func (w *writer) commitBuffer() error {
 	for _, line := range w.buf.cells {
 		for _, c := range line {
 			if c.width > 0 && c.attr != attr {
-				fmt.Fprintf(bytesBuf, "\033[%sm", c.attr)
+				fmt.Fprintf(bytesBuf, "\033[m\033[%sm", c.attr)
 				attr = c.attr
 			}
 			bytesBuf.WriteString(string(c.rune))
