@@ -130,7 +130,8 @@ func (e *Env) Caret(ev *Evaluator, v Value) Value {
 		// TODO Handle invalid index
 		return NewScalar(e.m[sub.String(ev)])
 	default:
-		panic("Env can only be careted with Table")
+		ev.errorf("Env can only be careted with Table")
+		return nil
 	}
 }
 
