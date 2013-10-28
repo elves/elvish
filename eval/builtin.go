@@ -28,8 +28,8 @@ var builtins = map[string]builtin {
 
 func implPut(args []Value, ios [3]*io) string {
 	out := ios[1].ch
-	for i := 1; i < len(args); i++ {
-		out <- args[i]
+	for _, a := range args {
+		out <- a
 	}
 	close(out)
 	return ""
@@ -38,7 +38,6 @@ func implPut(args []Value, ios [3]*io) string {
 func implPrint(args []Value, ios [3]*io) string {
 	out := ios[1].f
 
-	args = args[1:]
 	args_if := make([]interface{}, len(args))
 	for i, a := range args {
 		args_if[i] = a
@@ -53,7 +52,7 @@ func implPrintln(args []Value, ios [3]*io) string {
 }
 
 func implPrintchan(args []Value, ios [3]*io) string {
-	if len(args) > 1 {
+	if len(args) > 0 {
 		return "args error"
 	}
 	in := ios[0].ch

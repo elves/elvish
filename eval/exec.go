@@ -40,11 +40,10 @@ func (i *io) compatible(typ ioType) bool {
 
 type command struct {
 	name string // Command name, used in error messages.
-	// Full argument list. args[0] is always some form of command name.
-	args []Value
+	args []Value // Argument list, minus command name.
 	ios [3]*io // IOs for in, out and err.
-	// A pointer to the builtin function, if the command is builtin.
-	f builtinFunc
+	f builtinFunc // A builtin function, if the command is builtin.
+	p string // Command full path, if the command is external.
 }
 
 type StateUpdate struct {
@@ -93,23 +92,26 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 	}
 
 	// Build argument list. This is universal for all command types.
-	args := ev.evalTermList(&n.ListNode)
+	terms := ev.evalTermList(&n.ListNode)
 
-	if _, ok := args[0].(*Scalar); !ok {
+	if _, ok := terms[0].(*Scalar); !ok {
 		// XXX
-		ev.errorf("first word is not scalar: %s", args[0])
+		ev.errorf("first word is not scalar: %s", terms[0])
 	}
 
-	// Save unresolved args[0] as name.
-	name := args[0].String()
+	// Save unresolved terms[0] as name, build args.
+	name := terms[0].String()
+	terms[0] = nil
+	args := terms[1:]
 
 	// Resolve command name.
+	var path string
 	bi, isBuiltin := builtins[name]
 	if isBuiltin {
 		ioTypes = bi.ioTypes
 	} else {
 		// Try external command
-		args[0].(*Scalar).str, e = ev.search(name)
+		path, e = ev.search(name)
 		if e != nil {
 			ev.errorf("%s", e)
 		}
@@ -164,9 +166,11 @@ func (ev *Evaluator) evalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3
 		}
 	}
 
-	cmd = &command{name, args, ios, nil}
+	cmd = &command{name, args, ios, nil, ""}
 	if isBuiltin {
 		cmd.f = bi.f
+	} else {
+		cmd.p = path
 	}
 	return
 }
@@ -317,15 +321,16 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 		}
 	}
 
-	args := make([]string, len(cmd.args))
+	args := make([]string, len(cmd.args) + 1)
+	args[0] = cmd.p
 	for i, a := range cmd.args {
 		// XXX Silently coerce all args into string
-		args[i] = a.String()
+		args[i+1] = a.String()
 	}
 
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
-	pid, err := syscall.ForkExec(args[0], args, &attr)
+	pid, err := syscall.ForkExec(cmd.p, args, &attr)
 
 	update := make(chan *StateUpdate)
 	if err != nil {
