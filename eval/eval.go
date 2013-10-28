@@ -165,14 +165,14 @@ func (ev *Evaluator) evalTerm(n *parse.ListNode) []Value {
 		a := ev.evalFactor(m.(*parse.FactorNode))
 		if len(a) == 1 {
 			for i := range words {
-				words[i] = words[i].Caret(a[0])
+				words[i] = words[i].Caret(ev, a[0])
 			}
 		} else {
 			// Do a Cartesian product
 			newWords := make([]Value, len(words) * len(a))
 			for i := range words {
 				for j := range a {
-					newWords[i*len(a) + j] = words[i].Caret(a[j])
+					newWords[i*len(a) + j] = words[i].Caret(ev, a[j])
 				}
 			}
 			words = newWords

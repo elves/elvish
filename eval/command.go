@@ -312,7 +312,7 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 	args[0] = cmd.path
 	for i, a := range cmd.args {
 		// XXX Silently coerce all args into string
-		args[i+1] = a.String()
+		args[i+1] = a.String(ev)
 	}
 
 	sys := syscall.SysProcAttr{}

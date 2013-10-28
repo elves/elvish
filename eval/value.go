@@ -9,8 +9,8 @@ import (
 
 type Value interface {
 	meisvalue()
-	String() string
-	Caret(v Value) Value
+	String(ev *Evaluator) string
+	Caret(ev *Evaluator, v Value) Value
 }
 
 // TODO Only str part is used.
@@ -24,12 +24,12 @@ func NewScalar(s string) *Scalar {
 	return &Scalar{str: s}
 }
 
-func (s *Scalar) String() string {
+func (s *Scalar) String(ev *Evaluator) string {
 	return s.str
 }
 
-func (s *Scalar) Caret(v Value) Value {
-	return NewScalar(s.str + v.String())
+func (s *Scalar) Caret(ev *Evaluator, v Value) Value {
+	return NewScalar(s.str + v.String(ev))
 }
 
 type Table struct {
@@ -42,47 +42,45 @@ func NewTable() *Table {
 	return &Table{dict: make(map[Value]Value)}
 }
 
-func (t *Table) String() string {
+func (t *Table) String(ev *Evaluator) string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
 	sep := ""
 	for _, v := range t.list {
-		fmt.Fprint(buf, sep, v.String())
+		fmt.Fprint(buf, sep, v.String(ev))
 		sep = " "
 	}
 	for k, v := range t.dict {
-		fmt.Fprint(buf, sep, "&", k.String(), " ", v.String())
+		fmt.Fprint(buf, sep, "&", k.String(ev), " ", v.String(ev))
 		sep = " "
 	}
 	buf.WriteRune(']')
 	return buf.String()
 }
 
-func (t *Table) Caret(v Value) Value {
+func (t *Table) Caret(ev *Evaluator, v Value) Value {
 	switch v := v.(type) {
 	case *Scalar:
-		return NewScalar(t.String() + v.String())
+		return NewScalar(t.String(ev) + v.String(ev))
 	case *Table:
 		if len(v.list) != 1 || len(v.dict) != 0 {
-			// TODO Use Evaluator.errorf
-			panic("subscription must be single-element list")
+			ev.errorf("subscription must be single-element list")
 		}
 		sub, ok := v.list[0].(*Scalar)
 		if !ok {
-			// TODO Use Evaluator.errorf
-			panic("subscription must be single-element scalar list")
+			ev.errorf("subscription must be single-element scalar list")
 		}
 		// Need stricter notion of list indices
 		// TODO Handle invalid index
-		idx, err := strconv.ParseUint(sub.String(), 10, 0)
+		idx, err := strconv.ParseUint(sub.String(ev), 10, 0)
 		if err == nil {
 			return t.list[idx]
 		} else {
 			return t.dict[sub]
 		}
 	default:
-		// TODO Use Evaluator.errorf
-		panic("Table can only be careted with Scalar or Table")
+		ev.errorf("Table can only be careted with Scalar or Table")
+		return nil
 	}
 }
 
@@ -114,24 +112,22 @@ func (e *Env) Export() []string {
 	return s
 }
 
-func (e *Env) String() string {
+func (e *Env) String(ev *Evaluator) string {
 	return "$env"
 }
 
-func (e *Env) Caret(v Value) Value {
+func (e *Env) Caret(ev *Evaluator, v Value) Value {
 	switch v := v.(type) {
 	case *Table:
 		if len(v.list) != 1 || len(v.dict) != 0 {
-			// TODO Use Evaluator.errorf
-			panic("subscription must be single-element list")
+			ev.errorf("subscription must be single-element list")
 		}
 		sub, ok := v.list[0].(*Scalar)
 		if !ok {
-			// TODO Use Evaluator.errorf
-			panic("subscription must be single-element scalar list")
+			ev.errorf("subscription must be single-element scalar list")
 		}
 		// TODO Handle invalid index
-		return NewScalar(e.m[sub.String()])
+		return NewScalar(e.m[sub.String(ev)])
 	default:
 		panic("Env can only be careted with Table")
 	}
