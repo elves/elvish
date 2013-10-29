@@ -64,10 +64,13 @@ func (ev *Evaluator) pop() {
 	ev.nodes = ev.nodes[:n]
 }
 
+func (ev *Evaluator) errorfNode(n parse.Node, format string, args ...interface{}) {
+	panic(util.NewContextualError(ev.name, ev.text, int(n.Position()), format, args...))
+}
+
 // errorf stops the evaluator. Its panic is supposed to be caught by recover.
 func (ev *Evaluator) errorf(format string, args...interface{}) {
-	n := ev.nodes[len(ev.nodes) - 1]
-	panic(util.NewContextualError(ev.name, ev.text, int(n.Position()), format, args...))
+	ev.errorfNode(ev.nodes[len(ev.nodes) - 1], format, args...)
 }
 
 // recover is the handler that turns panics into returns from top level of
