@@ -440,9 +440,9 @@ func (p *Parser) redir() Redir {
 					// TODO identify precious position
 					p.errorf(int(leader.Pos), "Invalid old fd in qualified redirection %q", rhs)
 				}
-				return NewFdRedir(fd, oldfd)
+				return NewFdRedir(leader.Pos, fd, oldfd)
 			} else {
-				return newCloseRedir(fd)
+				return newCloseRedir(leader.Pos, fd)
 			}
 		} else {
 			// FilenameRedir with fd altered
@@ -456,5 +456,5 @@ func (p *Parser) redir() Redir {
 	}
 	// FilenameRedir
 	p.peekNonSpace()
-	return newFilenameRedir(fd, flag, p.term())
+	return newFilenameRedir(leader.Pos, fd, flag, p.term())
 }

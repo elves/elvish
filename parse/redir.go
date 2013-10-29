@@ -3,12 +3,14 @@ package parse
 // Redir represents a single IO redirection. Its concrete type may be one of
 // the *Redir types below.
 type Redir interface {
+	Node
 	Fd() uintptr
 	// ensure only structs in this package can satisfy this interface
 	unexported()
 }
 
 type redir struct {
+	Pos
 	fd uintptr
 }
 
@@ -26,16 +28,16 @@ type FdRedir struct {
 
 // Public since we need to turn FilenameRedir -> FdRedir when evaluating
 // commands.
-func NewFdRedir(fd, oldFd uintptr) *FdRedir {
-	return &FdRedir{redir{fd}, oldFd}
+func NewFdRedir(pos Pos, fd, oldFd uintptr) *FdRedir {
+	return &FdRedir{redir{pos, fd}, oldFd}
 }
 
 type CloseRedir struct {
 	redir
 }
 
-func newCloseRedir(fd uintptr) *CloseRedir {
-	return &CloseRedir{redir{fd}}
+func newCloseRedir(pos Pos, fd uintptr) *CloseRedir {
+	return &CloseRedir{redir{pos, fd}}
 }
 
 type FilenameRedir struct {
@@ -44,6 +46,6 @@ type FilenameRedir struct {
 	Filename *ListNode // a Term
 }
 
-func newFilenameRedir(fd uintptr, flag int, filename *ListNode) *FilenameRedir {
-	return &FilenameRedir{redir{fd}, flag, filename}
+func newFilenameRedir(pos Pos, fd uintptr, flag int, filename *ListNode) *FilenameRedir {
+	return &FilenameRedir{redir{pos, fd}, flag, filename}
 }
