@@ -85,6 +85,43 @@ func (ev *Evaluator) search(exe string) (string, error) {
 	return "", fmt.Errorf("external command not found")
 }
 
+func (ev *Evaluator) evalRedir(r parse.Redir, ios []*io, ioTypes []ioType) {
+	ev.push(r)
+	defer ev.pop()
+
+	fd := r.Fd()
+	if fd > 2 {
+		ev.errorf("redir on fd > 2 not yet supported")
+	}
+
+	switch r := r.(type) {
+	case *parse.CloseRedir:
+		ios[fd] = &io{}
+	case *parse.FdRedir:
+		if ioTypes[fd] == chanIO {
+			ev.errorf("fd redir on channel IO")
+		}
+		if r.OldFd > 2 {
+			ev.errorf("fd redir from fd > 2 not yet supported")
+		}
+		ios[fd] = ios[r.OldFd]
+	case *parse.FilenameRedir:
+		if ioTypes[fd] == chanIO {
+			ev.errorf("filename redir on channel IO")
+		}
+		fname := ev.evalTermSingleScalar(r.Filename, "filename").str
+		// TODO haz hardcoded permbits now
+		f, e := os.OpenFile(fname, r.Flag, 0644)
+		if e != nil {
+			ev.errorf("failed to open file %q: %s", fname[0], e)
+		}
+		ios[fd] = &io{f: f}
+		// XXX Files opened in redirections of builtins shouldn't be
+		// closed.
+		ev.filesToClose = append(ev.filesToClose, f)
+	}
+}
+
 func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType) {
 	var e error
 
@@ -115,42 +152,7 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes
 
 	// Check IO redirections, turn all FilenameRedir to FdRedir.
 	for _, r := range n.Redirs {
-		fd := r.Fd()
-		if fd > 2 {
-			// TODO locate redir node
-			ev.errorf("redir on fd > 2 not yet supported")
-		}
-
-		switch r := r.(type) {
-		case *parse.CloseRedir:
-			ios[fd] = &io{}
-		case *parse.FdRedir:
-			if ioTypes[fd] == chanIO {
-				// TODO locate redir node
-				ev.errorf("fd redir on channel IO")
-			}
-			if r.OldFd > 2 {
-				// TODO locate redir node
-				ev.errorf("fd redir from fd > 2 not yet supported")
-			}
-			ios[fd] = ios[r.OldFd]
-		case *parse.FilenameRedir:
-			if ioTypes[fd] == chanIO {
-				// TODO locate redir node
-				ev.errorf("filename redir on channel IO")
-			}
-			fname := ev.evalTermSingleScalar(r.Filename, "filename").str
-			// TODO haz hardcoded permbits now
-			f, e := os.OpenFile(fname, r.Flag, 0644)
-			if e != nil {
-				// TODO locate redir node
-				ev.errorf("failed to open file %q: %s", fname[0], e)
-			}
-			ios[fd] = &io{f: f}
-			// XXX Files opened in redirections of builtins shouldn't be
-			// closed.
-			ev.filesToClose = append(ev.filesToClose, f)
-		}
+		ev.evalRedir(r, ios[:], ioTypes[:])
 	}
 
 	cmd = &command{name, args, ios, nil, ""}
