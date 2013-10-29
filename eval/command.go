@@ -275,7 +275,7 @@ func (ev *Evaluator) execCommand(cmd *command) <-chan *StateUpdate {
 func (ev *Evaluator) execBuiltin(cmd *command) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
-		msg := cmd.fn(cmd.args, cmd.ios)
+		msg := cmd.fn(ev, cmd.args, cmd.ios)
 		update <- &StateUpdate{Terminated: true, Msg: msg}
 		close(update)
 	}()

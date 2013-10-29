@@ -12,7 +12,7 @@ const (
 	unusedIO
 )
 
-type builtinFunc func([]Value, [3]*io) string
+type builtinFunc func(*Evaluator, []Value, [3]*io) string
 
 type builtin struct {
 	fn builtinFunc
@@ -26,7 +26,7 @@ var builtins = map[string]builtin {
 	"printchan": builtin{implPrintchan, [3]ioType{chanIO, fileIO}},
 }
 
-func implPut(args []Value, ios [3]*io) string {
+func implPut(ev *Evaluator, args []Value, ios [3]*io) string {
 	out := ios[1].ch
 	for _, a := range args {
 		out <- a
@@ -35,7 +35,7 @@ func implPut(args []Value, ios [3]*io) string {
 	return ""
 }
 
-func implPrint(args []Value, ios [3]*io) string {
+func implPrint(ev *Evaluator, args []Value, ios [3]*io) string {
 	out := ios[1].f
 
 	args_if := make([]interface{}, len(args))
@@ -46,12 +46,12 @@ func implPrint(args []Value, ios [3]*io) string {
 	return ""
 }
 
-func implPrintln(args []Value, ios [3]*io) string {
+func implPrintln(ev *Evaluator, args []Value, ios [3]*io) string {
 	args = append(args, NewScalar("\n"))
-	return implPrint(args, ios)
+	return implPrint(ev, args, ios)
 }
 
-func implPrintchan(args []Value, ios [3]*io) string {
+func implPrintchan(ev *Evaluator, args []Value, ios [3]*io) string {
 	if len(args) > 0 {
 		return "args error"
 	}
