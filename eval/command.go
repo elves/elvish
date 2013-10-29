@@ -44,6 +44,7 @@ type command struct {
 	ios [3]*io // IOs for in, out and err.
 	fn builtinFunc // A builtin function, if the command is builtin.
 	path string // Command full path, if the command is external.
+	closure *Closure // The closure value, if the command is a closure.
 }
 
 type StateUpdate struct {
@@ -123,44 +124,54 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ios []*io, ioTypes []ioType) {
 }
 
 func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType) {
-	var e error
+	// Evaluate name.
+	nameValues := ev.evalTerm(n.Name)
+	if len(nameValues) != 1 {
+		ev.errorfNode(n.Name, "command name must be a single value")
+	}
+	name := nameValues[0]
 
-	// Evaluate name and arguments. This is universal for all command types.
-	name := ev.evalTermSingleScalar(n.Name, "command name").str
-	args := ev.evalTermList(n.Args)
+	// Start building command.
+	cmd = &command{name: name.String(ev)}
 
-	// Resolve command name.
-	var path string
-	bi, isBuiltin := builtins[name]
-	if isBuiltin {
-		ioTypes = bi.ioTypes
-	} else {
-		// Try external command
-		path, e = ev.search(name)
-		if e != nil {
-			ev.errorf("%s", e)
+	// Resolve command. Assign one of cmd.{fn path closure} and ioTypes.
+	switch name := name.(type) {
+	case *Scalar:
+		nameStr := name.str
+		bi, isBuiltin := builtins[nameStr]
+		if isBuiltin {
+			cmd.fn = bi.fn
+			ioTypes = bi.ioTypes
+		} else {
+			// Try external command
+			path, e := ev.search(nameStr)
+			if e != nil {
+				ev.errorfNode(n.Name, "%s", e)
+			}
+			cmd.path = path
+			// Use zero value (fileIO) for ioTypes
 		}
-		// Use zero value (fileIO) for ioTypes
+	case *Closure:
+		cmd.closure = name
+		// XXX Use zero value (fileIO) for ioTypes now
+	default:
+		ev.errorfNode(n.Name, "Command name must be either scalar or closure")
 	}
 
 	// IO list.
-	ios := [3]*io{}
 	defaultErrIO := &io{f: os.Stderr}
+	// XXX Should we allow chan IO stderr at all?
 	if defaultErrIO.compatible(ioTypes[2]) {
-		ios[2] = defaultErrIO
+		cmd.ios[2] = defaultErrIO
 	}
 
-	// Check IO redirections, turn all FilenameRedir to FdRedir.
+	// Evaluate IO redirections.
 	for _, r := range n.Redirs {
-		ev.evalRedir(r, ios[:], ioTypes[:])
+		ev.evalRedir(r, cmd.ios[:], ioTypes[:])
 	}
 
-	cmd = &command{name, args, ios, nil, ""}
-	if isBuiltin {
-		cmd.fn = bi.fn
-	} else {
-		cmd.path = path
-	}
+	// Evaluate arguments after everything else.
+	cmd.args = ev.evalTermList(n.Args)
 	return
 }
 
