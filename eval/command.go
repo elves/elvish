@@ -275,11 +275,26 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
 
 // execCommand executes a command.
 func (ev *Evaluator) execCommand(cmd *command) <-chan *StateUpdate {
-	if cmd.fn != nil {
+	switch {
+	case cmd.fn != nil:
 		return ev.execBuiltin(cmd)
-	} else {
+	case cmd.path != "":
 		return ev.execExternal(cmd)
+	case cmd.closure != nil:
+		return ev.execClosure(cmd)
+	default:
+		panic("Bad eval.command struct")
 	}
+}
+
+func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
+	// XXX Executing the closure will block the whole goroutine.
+	// TODO Argument parsing is not implemented.
+	ev.evalChunk(cmd.closure.Chunk)
+	update := make(chan *StateUpdate, 1)
+	update <- &StateUpdate{Terminated: true}
+	close(update)
+	return update
 }
 
 // execBuiltin executes a builtin command.
