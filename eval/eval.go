@@ -40,7 +40,6 @@ func NewEvaluator(envSlice []string) *Evaluator {
 	return ev
 }
 
-// TODO This now only evaluates a pipeline.
 func (ev *Evaluator) Eval(name, text string, n parse.Node) (err *util.ContextualError) {
 	defer ev.recover(&err)
 	ev.name = name
