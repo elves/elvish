@@ -185,9 +185,6 @@ func (p *Parser) chunk() *ListNode {
 		p.peekNonSpace()
 		chunk.append(p.pipeline())
 
-		if !startsFactor(p.peek().Typ) {
-			break
-		}
 		if typ := p.peek().Typ; typ != ItemSemicolon && typ != ItemEndOfLine {
 			break
 		}
@@ -205,6 +202,7 @@ func (p *Parser) pipeline() *ListNode {
 		if p.peek().Typ != ItemPipe {
 			break
 		}
+		p.next()
 	}
 	return pipe
 }
@@ -212,7 +210,7 @@ func (p *Parser) pipeline() *ListNode {
 // command parses a command.
 // Command = TermList { [ space ] Redir } [ space ]
 func (p *Parser) command() *CommandNode {
-	cmd := newCommand(p.peek().Pos)
+	cmd := newCommand(p.peekNonSpace().Pos)
 	cmd.Name = p.term()
 	cmd.Args = p.termList()
 loop:
