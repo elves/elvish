@@ -37,12 +37,9 @@ func implPut(ev *Evaluator, args []Value, ios [3]*io) string {
 
 func implPrint(ev *Evaluator, args []Value, ios [3]*io) string {
 	out := ios[1].f
-
-	args_if := make([]interface{}, len(args))
-	for i, a := range args {
-		args_if[i] = a
+	for _, a := range args {
+		fmt.Fprint(out, a.String(ev))
 	}
-	fmt.Fprint(out, args_if...)
 	return ""
 }
 
