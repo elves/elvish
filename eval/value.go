@@ -5,11 +5,58 @@ import (
 	"bytes"
 	"strings"
 	"strconv"
+	"unicode"
+	"unicode/utf8"
 	"../parse"
 )
 
+func quote(s string) string {
+	if len(s) == 0 {
+		return "``"
+	}
+
+	printable := true
+	for _, r := range s {
+		if !unicode.IsPrint(r) {
+			printable = false
+			break
+		}
+	}
+	if printable {
+		r0, w0 := utf8.DecodeRuneInString(s)
+		if parse.StartsBare(r0) {
+			barewordPossible := true
+			for _, r := range s[w0:] {
+				if parse.TerminatesBare(r) {
+					barewordPossible = false
+					break
+				}
+			}
+			if barewordPossible {
+				return s
+			}
+		}
+
+		// Quote with backquote
+		buf := new(bytes.Buffer)
+		buf.WriteRune('`')
+		for _, r := range s {
+			buf.WriteRune(r)
+			if r == '`' {
+				buf.WriteRune('`')
+			}
+		}
+		buf.WriteRune('`')
+		return buf.String()
+	} else {
+		// Quote with double quote
+		return strconv.Quote(s)
+	}
+}
+
 type Value interface {
 	meisvalue()
+	Repr(ev *Evaluator) string
 	String(ev *Evaluator) string
 	Caret(ev *Evaluator, v Value) Value
 }
@@ -23,6 +70,10 @@ func (s *Scalar) meisvalue() {}
 
 func NewScalar(s string) *Scalar {
 	return &Scalar{str: s}
+}
+
+func (s *Scalar) Repr(ev *Evaluator) string {
+	return quote(s.str)
 }
 
 func (s *Scalar) String(ev *Evaluator) string {
@@ -43,20 +94,24 @@ func NewTable() *Table {
 	return &Table{dict: make(map[Value]Value)}
 }
 
-func (t *Table) String(ev *Evaluator) string {
+func (t *Table) Repr(ev *Evaluator) string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
 	sep := ""
 	for _, v := range t.list {
-		fmt.Fprint(buf, sep, v.String(ev))
+		fmt.Fprint(buf, sep, v.Repr(ev))
 		sep = " "
 	}
 	for k, v := range t.dict {
-		fmt.Fprint(buf, sep, "&", k.String(ev), " ", v.String(ev))
+		fmt.Fprint(buf, sep, "&", k.Repr(ev), " ", v.Repr(ev))
 		sep = " "
 	}
 	buf.WriteRune(']')
 	return buf.String()
+}
+
+func (t *Table) String(ev *Evaluator) string {
+	return t.Repr(ev)
 }
 
 func (t *Table) Caret(ev *Evaluator, v Value) Value {
@@ -113,8 +168,20 @@ func (e *Env) Export() []string {
 	return s
 }
 
+func (e *Env) Repr(ev *Evaluator) string {
+	buf := new(bytes.Buffer)
+	buf.WriteRune('[')
+	sep := ""
+	for k, v := range e.m {
+		fmt.Fprint(buf, sep, "&", quote(k), " ", quote(v))
+		sep = " "
+	}
+	buf.WriteRune(']')
+	return buf.String()
+}
+
 func (e *Env) String(ev *Evaluator) string {
-	return "$env"
+	return e.Repr(ev)
 }
 
 func (e *Env) Caret(ev *Evaluator, v Value) Value {
@@ -145,8 +212,12 @@ func NewClosure(ch *parse.ListNode) *Closure {
 	return &Closure{ch}
 }
 
-func (c *Closure) String(ev *Evaluator) string {
+func (c *Closure) Repr(ev *Evaluator) string {
 	return fmt.Sprintf("<closure %p>", c.Chunk)
+}
+
+func (c *Closure) String(ev *Evaluator) string {
+	return c.Repr(ev)
 }
 
 func (c *Closure) Caret(ev *Evaluator, v Value) Value {
