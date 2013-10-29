@@ -305,14 +305,29 @@ loop:
 // lexBare scans a bare string.
 // The first rune has already been seen.
 func lexBare(l *Lexer) stateFn {
-	for !terminatesBare(l.peek()) {
+	for !TerminatesBare(l.peek()) {
 		l.next()
 	}
 	l.emit(ItemBare, ItemAmbiguious)
 	return lexAny
 }
 
-func terminatesBare(r rune) bool {
+// XXX Must be maintained to match lexAny.
+func StartsBare(r rune) bool {
+	switch r {
+	case Eof, '>', '<', '`', '"', '\n':
+		return false
+	}
+	if isSpace(r) {
+		return false
+	}
+	if _, ok := singleRuneToken[r]; ok {
+		return false
+	}
+	return true
+}
+
+func TerminatesBare(r rune) bool {
 	switch r {
 	case '\n', '(', ')', '[', ']', '{', '}', '"', '`', '$', ';', Eof:
 		return true
