@@ -15,3 +15,7 @@ func Ioctl(fd int, req int, arg uintptr) error {
 		return nil
 	}
 }
+
+func FlushInput(fd int) error {
+	return Ioctl(fd, TCFLSH, TCIFLUSH)
+}
