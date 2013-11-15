@@ -14,12 +14,14 @@ var EscTimeout = time.Millisecond * 10
 type reader struct {
 	timed *util.TimedReader
 	buffed *bufio.Reader
+	unreadBuffer []rune
 }
 
 func newReader(tr *util.TimedReader) *reader {
 	return &reader{
 		tr,
 		bufio.NewReaderSize(tr, 0),
+		nil,
 	}
 }
 
@@ -49,8 +51,28 @@ var g3Seq = map[rune]rune{
 	'H': Home, 'F': End,
 }
 
+func (rd *reader) readRune() (r rune, err error) {
+	n := len(rd.unreadBuffer)
+	switch {
+	case n > 1:
+		r = rd.unreadBuffer[0]
+		rd.unreadBuffer = rd.unreadBuffer[1:]
+		fallthrough
+	case n == 1:
+		// Zero out unreadBuffer to avoid memory leak.
+		rd.unreadBuffer = nil
+	case n == 0:
+		r, _, err = rd.buffed.ReadRune()
+	}
+	return
+}
+
+func (rd *reader) unreadRune(r... rune) {
+	rd.unreadBuffer = append(rd.unreadBuffer, r...)
+}
+
 func (rd *reader) readKey() (k Key, err error) {
-	r, _, err := rd.buffed.ReadRune()
+	r, err := rd.readRune()
 
 	if err != nil {
 		return
@@ -68,7 +90,7 @@ func (rd *reader) readKey() (k Key, err error) {
 	case 0x1b: // ^[ Escape
 		rd.timed.Timeout = EscTimeout
 		defer func() { rd.timed.Timeout = -1 }()
-		r2, _, e := rd.buffed.ReadRune()
+		r2, e := rd.readRune()
 		if e == util.Timeout {
 			return Key{'[', Ctrl}, nil
 		} else if e != nil {
@@ -82,8 +104,8 @@ func (rd *reader) readKey() (k Key, err error) {
 			seq := "\x1b["
 			for {
 				var e error
-				r, _, e = rd.buffed.ReadRune()
-				// Timeout can only happen at first ReadRune.
+				r, e = rd.readRune()
+				// Timeout can only happen at first readRune.
 				if e == util.Timeout {
 					return Key{'[', Alt}, nil
 				} else if e != nil {
@@ -109,7 +131,7 @@ func (rd *reader) readKey() (k Key, err error) {
 			return parseCSI(nums, r, seq)
 		case 'O':
 			// G3 style function key sequence: read one rune.
-			r3, _, e := rd.buffed.ReadRune()
+			r3, e := rd.readRune()
 			if e == util.Timeout {
 				return Key{r2, Alt}, nil
 			} else if e != nil {
