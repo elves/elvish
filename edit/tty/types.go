@@ -11,10 +11,16 @@ import (
 	"unsafe"
 )
 
+const (
+	TCFLSH     = C.TCFLSH
+	TCIFLUSH   = C.TCIFLUSH
+	TIOCGWINSZ = C.TIOCGWINSZ
+)
+
 type Winsize C.struct_winsize
 
 func GetWinsize(fd int) Winsize {
 	var ws Winsize
-	Ioctl(fd, C.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws)))
+	Ioctl(fd, TIOCGWINSZ, uintptr(unsafe.Pointer(&ws)))
 	return ws
 }
