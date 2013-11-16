@@ -15,30 +15,31 @@ type reader struct {
 	timed *util.TimedReader
 	buffed *bufio.Reader
 	unreadBuffer []rune
+	currentSeq string
 }
 
 func newReader(tr *util.TimedReader) *reader {
 	return &reader{
-		tr,
-		bufio.NewReaderSize(tr, 0),
-		nil,
+		timed: tr,
+		buffed: bufio.NewReaderSize(tr, 0),
 	}
 }
 
 type BadEscSeq struct {
 	seq string
+	msg string
 }
 
-func newBadEscSeq(seq string) error {
-	return &BadEscSeq{seq}
-}
-
-func newBadEscSeqRunes(rs... rune)error {
-	return newBadEscSeq(string(rs))
+func newBadEscSeq(seq string, msg string) *BadEscSeq {
+	return &BadEscSeq{seq, msg}
 }
 
 func (bes *BadEscSeq) Error() string {
-	return fmt.Sprintf("Bad escape sequence: %q", bes.seq)
+	return fmt.Sprintf("Bad escape sequence %q: ", bes.seq, bes.msg)
+}
+
+func (rd *reader) badEscSeq(msg string) {
+	util.Panic(newBadEscSeq(rd.currentSeq, msg))
 }
 
 // G3 style function key sequences: ^[O followed by exactly one character.
@@ -51,7 +52,11 @@ var g3Seq = map[rune]rune{
 	'H': Home, 'F': End,
 }
 
-func (rd *reader) readRune() (r rune, err error) {
+const (
+	RUNE_TIMEOUT rune = -1
+)
+
+func (rd *reader) readRune() (r rune) {
 	n := len(rd.unreadBuffer)
 	switch {
 	case n > 1:
@@ -62,75 +67,64 @@ func (rd *reader) readRune() (r rune, err error) {
 		// Zero out unreadBuffer to avoid memory leak.
 		rd.unreadBuffer = nil
 	case n == 0:
+		var err error
 		r, _, err = rd.buffed.ReadRune()
+		if err == util.Timeout {
+			return RUNE_TIMEOUT
+		} else if err != nil {
+			util.Panic(err)
+		}
 	}
+	rd.currentSeq += string(r)
 	return
 }
 
 func (rd *reader) unreadRune(r... rune) {
+	// XXX Should back up rd.currentSeq too
 	rd.unreadBuffer = append(rd.unreadBuffer, r...)
+}
+
+func (rd *reader) readAssertedRune(r rune) {
+	if rd.readRune() != r {
+		rd.badEscSeq("Expect " + string(r))
+	}
 }
 
 // readCPR reads a cursor position report, in the form \033 [ y ; x R
 func (rd *reader) readCPR() (x int, y int, err error) {
-	var r rune
-	if r, err = rd.readRune(); err != nil {
-		return
-	}
-	if r != 0x1b {
-		err = newBadEscSeqRunes(r)
-		return
-	}
-	if r, err = rd.readRune(); err != nil {
-		return
-	}
-	if r != '[' {
-		return
-	}
-
+	rd.readAssertedRune(0x1b)
+	rd.readAssertedRune('[')
 yloop:
 	for {
-		if r, err = rd.readRune(); err != nil {
-			return
-		}
-		switch {
+		switch r := rd.readRune(); {
 		case r == ';':
 			break yloop
 		case '0' <= r && r <= '9':
 			y = y * 10 + int(r - '0')
 		default:
-			// XXX Fake a sequence
-			err = newBadEscSeqRunes('\033', '[', '.', '.', '.', r)
-			return
+			rd.badEscSeq("Expect number or semicolon")
 		}
 	}
 xloop:
 	for {
-		if r, err = rd.readRune(); err != nil {
-			return
-		}
-		switch {
+		switch r := rd.readRune(); {
 		case r == 'R':
 			break xloop
 		case '0' <= r && r <= '9':
 			x = x * 10 + int(r - '0')
 		default:
-			// XXX Fake a sequence
-			err = newBadEscSeqRunes('\033', '[', '.', '.', '.', r)
-			return
+			rd.badEscSeq("Expect number or 'R'")
 		}
 	}
 	return
 }
 
 func (rd *reader) readKey() (k Key, err error) {
-	r, err := rd.readRune()
+	defer util.Recover(&err)
 
-	if err != nil {
-		return
-	}
+	rd.currentSeq = ""
 
-	switch r {
+	switch r := rd.readRune(); r {
 	case Tab, Enter, Backspace:
 		k = Key{r, 0}
 	case 0x0:
@@ -142,11 +136,9 @@ func (rd *reader) readKey() (k Key, err error) {
 	case 0x1b: // ^[ Escape
 		rd.timed.Timeout = EscTimeout
 		defer func() { rd.timed.Timeout = -1 }()
-		r2, e := rd.readRune()
-		if e == util.Timeout {
+		r2 := rd.readRune()
+		if r2 == RUNE_TIMEOUT {
 			return Key{'[', Ctrl}, nil
-		} else if e != nil {
-			return ZeroKey, e
 		}
 		switch r2 {
 		case '[':
@@ -155,13 +147,10 @@ func (rd *reader) readKey() (k Key, err error) {
 			nums := make([]int, 0, 2)
 			seq := "\x1b["
 			for {
-				var e error
-				r, e = rd.readRune()
+				r = rd.readRune()
 				// Timeout can only happen at first readRune.
-				if e == util.Timeout {
+				if r == RUNE_TIMEOUT {
 					return Key{'[', Alt}, nil
-				} else if e != nil {
-					return ZeroKey, e
 				}
 				seq += string(r)
 				// After first rune read we turn off the timeout
@@ -183,17 +172,15 @@ func (rd *reader) readKey() (k Key, err error) {
 			return parseCSI(nums, r, seq)
 		case 'O':
 			// G3 style function key sequence: read one rune.
-			r3, e := rd.readRune()
-			if e == util.Timeout {
+			r = rd.readRune()
+			if r == RUNE_TIMEOUT {
 				return Key{r2, Alt}, nil
-			} else if e != nil {
-				return ZeroKey, e
 			}
-			r, ok := g3Seq[r3]
+			r, ok := g3Seq[r]
 			if ok {
 				return Key{r, 0}, nil
 			} else {
-				return ZeroKey, newBadEscSeqRunes(0x1b, 'O', r3)
+				rd.badEscSeq("")
 			}
 		}
 		return Key{r2, Alt}, nil
@@ -244,7 +231,7 @@ func parseCSI(nums []int, last rune, seq string) (Key, error) {
 			// Modified: \e[1;5A (Ctrl-Up)
 			return xtermModify(k, nums[1], seq)
 		} else {
-			return ZeroKey, newBadEscSeq(seq)
+			return ZeroKey, newBadEscSeq(seq, "")
 		}
 	}
 
@@ -268,7 +255,7 @@ func parseCSI(nums []int, last rune, seq string) (Key, error) {
 		}
 	}
 
-	return ZeroKey, newBadEscSeq(seq)
+	return ZeroKey, newBadEscSeq(seq, "")
 }
 
 func xtermModify(k Key, mod int, seq string) (Key, error) {
@@ -290,7 +277,7 @@ func xtermModify(k Key, mod int, seq string) (Key, error) {
 	case 8:
 		k.Mod |= Shift | Alt | Ctrl
 	default:
-		return ZeroKey, newBadEscSeq(seq)
+		return ZeroKey, newBadEscSeq(seq, "")
 	}
 	return k, nil
 }
