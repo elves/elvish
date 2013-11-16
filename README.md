@@ -50,8 +50,8 @@ system.
 Putting together, the idea of this new Unix shell is starting from pipelines
 and external program interaction, adding in programming-language-ish flavors,
 towards building a decant programming language with a friendly (command line)
-user interface, suitable for both back-of-the-envolope computation **and**
-building more serious (but maybe not too big or complex!) software.
+user interface, suitable for both *back-of-the-envolope* computation **and**
+building more complex (but maybe not too complex!) software.
 
 This is not exactly an ambitious goal, but it's something I have always
 dreamed of.
@@ -69,10 +69,10 @@ Indeed, **das** is not a very good name for a Unix shell. The name is actually
 a corrupted form of **dash**, which also happens to be the German definite
 neuter article.
 
-I have some other ideas in mind. One of them is **elv**, since I found elvish
-to be a great adjective - I can't use "elf" though, since it's already
-[taken](http://www.cs.cmu.edu/~fp/elf.html) and may be confused with the well
-known [file
+I have some other ideas in mind. One of them is **elv**, since I found
+"elvish" to be a great adjective - I can't use "elf" though, since it's
+already [taken](http://www.cs.cmu.edu/~fp/elf.html) and may be confused with
+the well known [file
 format](http://en.wikipedia.org/wiki/Executable_and_Linkable_Format).
 
 Another possible source of names is the names of actual seashells; but my
@@ -80,8 +80,9 @@ English vocabulary is too small for me to recall any beyond "nautilus", which
 is both too long and already taken.
 
 I'm not avoiding names ending in "sh" though; but I do find "bash" to be a
-terrible name. "fish" is clever, but it has a quite unpleasant adjective.
-I find "dash" really good though, which is why it came to my mind :).
+terrible name. "fish" is clever, but it has a quite [unpleasant
+adjective](https://en.wiktionary.org/wiki/fishy). I find "dash" really good
+though, which is why it came to my mind :).
 
 License
 -------
