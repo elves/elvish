@@ -71,6 +71,58 @@ func (rd *reader) unreadRune(r... rune) {
 	rd.unreadBuffer = append(rd.unreadBuffer, r...)
 }
 
+// readCPR reads a cursor position report, in the form \033 [ y ; x R
+func (rd *reader) readCPR() (x int, y int, err error) {
+	var r rune
+	if r, err = rd.readRune(); err != nil {
+		return
+	}
+	if r != 0x1b {
+		err = newBadEscSeqRunes(r)
+		return
+	}
+	if r, err = rd.readRune(); err != nil {
+		return
+	}
+	if r != '[' {
+		return
+	}
+
+yloop:
+	for {
+		if r, err = rd.readRune(); err != nil {
+			return
+		}
+		switch {
+		case r == ';':
+			break yloop
+		case '0' <= r && r <= '9':
+			y = y * 10 + int(r - '0')
+		default:
+			// XXX Fake a sequence
+			err = newBadEscSeqRunes('\033', '[', '.', '.', '.', r)
+			return
+		}
+	}
+xloop:
+	for {
+		if r, err = rd.readRune(); err != nil {
+			return
+		}
+		switch {
+		case r == 'R':
+			break xloop
+		case '0' <= r && r <= '9':
+			x = x * 10 + int(r - '0')
+		default:
+			// XXX Fake a sequence
+			err = newBadEscSeqRunes('\033', '[', '.', '.', '.', r)
+			return
+		}
+	}
+	return
+}
+
 func (rd *reader) readKey() (k Key, err error) {
 	r, err := rd.readRune()
 

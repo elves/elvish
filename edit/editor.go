@@ -10,6 +10,8 @@ import (
 	"../util"
 )
 
+var lackeol = "\033[7m\u23ce\033[m\n"
+
 // Editor keeps the status of the line editor.
 type Editor struct {
 	savedTermios *tty.Termios
@@ -55,6 +57,24 @@ func Init(file *os.File, tr *util.TimedReader) (*Editor, error) {
 	}
 
 	fmt.Fprint(editor.file, "\033[?7l")
+
+	err = tty.FlushInput(fd)
+	if err != nil {
+		return nil, err
+	}
+
+	file.WriteString("\033[6n")
+	// XXX Possible race condition: user input sneaked in between WriteString
+	// and readCPR
+	x, _, err := editor.reader.readCPR()
+	if err != nil {
+		return nil, err
+	}
+
+	if x != 1 {
+		file.WriteString(lackeol)
+	}
+
 	return editor, nil
 }
 
