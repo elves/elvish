@@ -40,12 +40,12 @@ func NewEvaluator(envSlice []string) *Evaluator {
 	return ev
 }
 
-func (ev *Evaluator) Eval(name, text string, n parse.Node) (err *util.ContextualError) {
-	defer ev.recover(&err)
+func (ev *Evaluator) Eval(name, text string, n parse.Node) (err error) {
+	defer util.Recover(&err)
+	defer ev.stopEval()
 	ev.name = name
 	ev.text = text
 	ev.evalChunk(n.(*parse.ListNode))
-	ev.stopEval()
 	return nil
 }
 
@@ -65,28 +65,12 @@ func (ev *Evaluator) pop() {
 }
 
 func (ev *Evaluator) errorfNode(n parse.Node, format string, args ...interface{}) {
-	panic(util.NewContextualError(ev.name, ev.text, int(n.Position()), format, args...))
+	util.Panic(util.NewContextualError(ev.name, ev.text, int(n.Position()), format, args...))
 }
 
 // errorf stops the evaluator. Its panic is supposed to be caught by recover.
 func (ev *Evaluator) errorf(format string, args...interface{}) {
 	ev.errorfNode(ev.nodes[len(ev.nodes) - 1], format, args...)
-}
-
-// recover is the handler that turns panics into returns from top level of
-// evaluation function (currently ExecPipeline).
-func (ev *Evaluator) recover(perr **util.ContextualError) {
-	r := recover()
-	if r == nil {
-		return
-	}
-	if _, ok := r.(*util.ContextualError); !ok {
-		panic(r)
-	}
-	if (ev != nil) {
-		ev.stopEval()
-	}
-	*perr = r.(*util.ContextualError)
 }
 
 func (ev *Evaluator) resolveVar(name string) Value {

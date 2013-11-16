@@ -102,7 +102,7 @@ func NewParser(name string) *Parser {
 // errorf formats the error and terminates processing.
 func (p *Parser) errorf(pos int, format string, args ...interface{}) {
 	p.Root = nil
-	panic(util.NewContextualError(p.Name, p.text, pos, format, args...))
+	util.Panic(util.NewContextualError(p.Name, p.text, pos, format, args...))
 }
 
 // expect consumes the next token and guarantees it has the required type.
@@ -128,21 +128,6 @@ func (p *Parser) unexpected(token Item, context string) {
 	p.errorf(int(token.Pos), "unexpected %s in %s", token, context)
 }
 
-// recover is the handler that turns panics into returns from the top level of Parse.
-func (p *Parser) recover(errp **util.ContextualError) {
-	e := recover()
-	if e == nil {
-		return
-	}
-	if _, ok := e.(*util.ContextualError); !ok {
-		panic(e)
-	}
-	if p != nil {
-		p.stopParse()
-	}
-	*errp = e.(*util.ContextualError)
-}
-
 // stopParse terminates parsing.
 func (p *Parser) stopParse() {
 	p.lex = nil
@@ -150,8 +135,9 @@ func (p *Parser) stopParse() {
 
 // Parse parses the script to construct a representation of the script for
 // execution.
-func (p *Parser) Parse(text string, tab bool) (tree *Parser, err *util.ContextualError) {
-	defer p.recover(&err)
+func (p *Parser) Parse(text string, tab bool) (tree *Parser, err error) {
+	defer util.Recover(&err)
+	defer p.stopParse()
 
 	p.text = text
 	p.tab = tab
