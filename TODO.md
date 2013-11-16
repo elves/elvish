@@ -16,3 +16,4 @@
       Python/Lua/...  and/or error value handling a la golang)
     - Support evaluating script
 * All the TODO and XXX's in source :)
+* Some utilities to faciliate in-package panic/recover
