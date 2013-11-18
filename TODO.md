@@ -1,10 +1,9 @@
 # Next steps
 
 * edit:
-    - Send queries to and decode responses from terminal (deciding position of
-      cursor when intializing editor, etc.)
     - Highlighting beyond lexer and maybe even parser (highlighting of valid
-      and invalid command names, a la fish)
+      and invalid command names a la fish, and valid and invalid variable
+      expansions)
     - Multiline editing
 * eval:
     - Implement internal variable and lexical scoping - maybe just steal
