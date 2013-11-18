@@ -210,6 +210,7 @@ func (ev *Evaluator) evalChunk(ch *parse.ListNode) {
 				switch up.Msg {
 				case "0", "":
 				default:
+					// XXX Update of commands in subevaluators should not be printed.
 					fmt.Printf("Command #%d update: %s\n", i, up.Msg)
 				}
 			}

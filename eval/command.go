@@ -288,12 +288,25 @@ func (ev *Evaluator) execCommand(cmd *command) <-chan *StateUpdate {
 }
 
 func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
-	// XXX Executing the closure will block the whole goroutine.
-	// TODO Argument parsing is not implemented.
-	ev.evalChunk(cmd.closure.Chunk)
+	locals := make(map[string]Value)
+	// TODO Implement argument parsing by populating locals.
+
+	// Make a subevaluator.
+	// TODO Guard against concurrent writes to globals.
+	newEv := Evaluator{
+		globals: ev.globals,
+		locals: locals,
+		env: ev.env,
+		searchPaths: ev.searchPaths,
+	}
 	update := make(chan *StateUpdate, 1)
-	update <- &StateUpdate{Terminated: true}
-	close(update)
+	go func() {
+		// TODO Support calling closure originated in another source.
+		newEv.Eval(ev.name, ev.text, cmd.closure.Chunk)
+		// TODO Support returning value.
+		update <- &StateUpdate{Terminated: true}
+		close(update)
+	}()
 	return update
 }
 
