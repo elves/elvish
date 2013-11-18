@@ -21,20 +21,36 @@ type builtin struct {
 
 var builtins = map[string]builtin {
 	"set": builtin{implSet, [3]ioType{unusedIO, unusedIO}},
+	"fn": builtin{implFn, [3]ioType{unusedIO, unusedIO}},
 	"put": builtin{implPut, [3]ioType{unusedIO, chanIO}},
 	"print": builtin{implPrint, [3]ioType{unusedIO}},
 	"println": builtin{implPrintln, [3]ioType{unusedIO}},
 	"printchan": builtin{implPrintchan, [3]ioType{chanIO, fileIO}},
 }
 
-func implSet(ev *Evaluator, args []Value, ios [3]*io) string {
+func doSet(ev *Evaluator, name Value, value Value) string {
 	// TODO Support setting locals
 	// TODO Prevent overriding builtin variables e.g. $pid $env
+	ev.globals[name.String(ev)] = value
+	return ""
+}
+
+func implSet(ev *Evaluator, args []Value, ios [3]*io) string {
 	if len(args) != 3 || args[1].String(ev) != "=" {
 		return "args error"
 	}
-	ev.globals[args[0].String(ev)] = args[2]
-	return ""
+	return doSet(ev, args[0], args[2])
+}
+
+func implFn(ev *Evaluator, args []Value, ios [3]*io) string {
+	// TODO Support `fn f a b c { cmd }` as sugar for `fn f { | a b c | cmd }`
+	if len(args) != 2 {
+		return "args error"
+	}
+	if _, ok := args[1].(*Closure); !ok {
+		return "args error"
+	}
+	return doSet(ev, args[0], args[1])
 }
 
 func implPut(ev *Evaluator, args []Value, ios [3]*io) string {
