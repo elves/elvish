@@ -20,10 +20,21 @@ type builtin struct {
 }
 
 var builtins = map[string]builtin {
+	"set": builtin{implSet, [3]ioType{unusedIO, unusedIO}},
 	"put": builtin{implPut, [3]ioType{unusedIO, chanIO}},
 	"print": builtin{implPrint, [3]ioType{unusedIO}},
 	"println": builtin{implPrintln, [3]ioType{unusedIO}},
 	"printchan": builtin{implPrintchan, [3]ioType{chanIO, fileIO}},
+}
+
+func implSet(ev *Evaluator, args []Value, ios [3]*io) string {
+	// TODO Support setting locals
+	// TODO Prevent overriding builtin variables e.g. $pid $env
+	if len(args) != 3 || args[1].String(ev) != "=" {
+		return "args error"
+	}
+	ev.globals[args[0].String(ev)] = args[2]
+	return ""
 }
 
 func implPut(ev *Evaluator, args []Value, ios [3]*io) string {
