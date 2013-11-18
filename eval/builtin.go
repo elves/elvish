@@ -20,6 +20,7 @@ type builtin struct {
 }
 
 var builtins = map[string]builtin {
+	"var": builtin{var_, [3]ioType{unusedIO, unusedIO}},
 	"set": builtin{set, [3]ioType{unusedIO, unusedIO}},
 	"fn": builtin{fn, [3]ioType{unusedIO, unusedIO}},
 	"put": builtin{put, [3]ioType{unusedIO, chanIO}},
@@ -28,10 +29,29 @@ var builtins = map[string]builtin {
 	"printchan": builtin{printchan, [3]ioType{chanIO, fileIO}},
 }
 
-func doSet(ev *Evaluator, name Value, value Value) string {
-	// TODO Support setting locals
+func doSet(ev *Evaluator, nameVal Value, value Value) string {
+	name := nameVal.String(ev)
 	// TODO Prevent overriding builtin variables e.g. $pid $env
-	ev.locals[name.String(ev)] = value
+	if _, ok := ev.locals[name]; !ok {
+		return fmt.Sprintf("Variable %q doesn't exist", name)
+	}
+	ev.locals[name] = value
+	return ""
+}
+
+func var_(ev *Evaluator, args []Value, ios [3]*io) string {
+	var names []string
+	for _, nameVal := range args {
+		name := nameVal.String(ev)
+		if _, ok := ev.locals[name]; ok {
+			return fmt.Sprintf("Variable %q already exists", name)
+		}
+		names = append(names, name)
+	}
+
+	for _, name := range names {
+		ev.locals[name] = nil
+	}
 	return ""
 }
 
