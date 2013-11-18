@@ -20,12 +20,12 @@ type builtin struct {
 }
 
 var builtins = map[string]builtin {
-	"set": builtin{implSet, [3]ioType{unusedIO, unusedIO}},
-	"fn": builtin{implFn, [3]ioType{unusedIO, unusedIO}},
-	"put": builtin{implPut, [3]ioType{unusedIO, chanIO}},
-	"print": builtin{implPrint, [3]ioType{unusedIO}},
-	"println": builtin{implPrintln, [3]ioType{unusedIO}},
-	"printchan": builtin{implPrintchan, [3]ioType{chanIO, fileIO}},
+	"set": builtin{set, [3]ioType{unusedIO, unusedIO}},
+	"fn": builtin{fn, [3]ioType{unusedIO, unusedIO}},
+	"put": builtin{put, [3]ioType{unusedIO, chanIO}},
+	"print": builtin{print, [3]ioType{unusedIO}},
+	"println": builtin{println, [3]ioType{unusedIO}},
+	"printchan": builtin{printchan, [3]ioType{chanIO, fileIO}},
 }
 
 func doSet(ev *Evaluator, name Value, value Value) string {
@@ -35,14 +35,14 @@ func doSet(ev *Evaluator, name Value, value Value) string {
 	return ""
 }
 
-func implSet(ev *Evaluator, args []Value, ios [3]*io) string {
+func set(ev *Evaluator, args []Value, ios [3]*io) string {
 	if len(args) != 3 || args[1].String(ev) != "=" {
 		return "args error"
 	}
 	return doSet(ev, args[0], args[2])
 }
 
-func implFn(ev *Evaluator, args []Value, ios [3]*io) string {
+func fn(ev *Evaluator, args []Value, ios [3]*io) string {
 	// TODO Support `fn f a b c { cmd }` as sugar for `fn f { | a b c | cmd }`
 	if len(args) != 2 {
 		return "args error"
@@ -53,7 +53,7 @@ func implFn(ev *Evaluator, args []Value, ios [3]*io) string {
 	return doSet(ev, args[0], args[1])
 }
 
-func implPut(ev *Evaluator, args []Value, ios [3]*io) string {
+func put(ev *Evaluator, args []Value, ios [3]*io) string {
 	out := ios[1].ch
 	for _, a := range args {
 		out <- a
@@ -62,7 +62,7 @@ func implPut(ev *Evaluator, args []Value, ios [3]*io) string {
 	return ""
 }
 
-func implPrint(ev *Evaluator, args []Value, ios [3]*io) string {
+func print(ev *Evaluator, args []Value, ios [3]*io) string {
 	out := ios[1].f
 	for _, a := range args {
 		fmt.Fprint(out, a.String(ev))
@@ -70,12 +70,12 @@ func implPrint(ev *Evaluator, args []Value, ios [3]*io) string {
 	return ""
 }
 
-func implPrintln(ev *Evaluator, args []Value, ios [3]*io) string {
+func println(ev *Evaluator, args []Value, ios [3]*io) string {
 	args = append(args, NewScalar("\n"))
-	return implPrint(ev, args, ios)
+	return print(ev, args, ios)
 }
 
-func implPrintchan(ev *Evaluator, args []Value, ios [3]*io) string {
+func printchan(ev *Evaluator, args []Value, ios [3]*io) string {
 	if len(args) > 0 {
 		return "args error"
 	}
