@@ -5,6 +5,7 @@
       cursor when intializing editor, etc.)
     - Highlighting beyond lexer and maybe even parser (highlighting of valid
       and invalid command names, a la fish)
+    - Multiline editing
 * eval:
     - Implement internal variable and lexical scoping - maybe just steal
       Python's local-closure-global scoping rule
