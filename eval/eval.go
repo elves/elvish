@@ -15,6 +15,7 @@ import (
 type Evaluator struct {
 	name, text string
 	globals map[string]Value
+	locals map[string]Value
 	env *Env
 	searchPaths []string
 	filesToClose []*os.File
@@ -74,11 +75,14 @@ func (ev *Evaluator) errorf(format string, args...interface{}) {
 }
 
 func (ev *Evaluator) resolveVar(name string) Value {
-	val, ok := ev.globals[name]
-	if !ok {
-		ev.errorf("Variable %q not found", name)
+	if val, ok := ev.locals[name]; ok {
+		return val
 	}
-	return val
+	if val, ok := ev.globals[name]; ok {
+		return val
+	}
+	ev.errorf("Variable %q not found", name)
+	return nil
 }
 
 func (ev *Evaluator) evalTable(tn *parse.TableNode) *Table {
