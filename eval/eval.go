@@ -28,7 +28,7 @@ func NewEvaluator(envSlice []string) *Evaluator {
 	g := map[string]Value{
 		"env": env, "pid": pid,
 	}
-	ev := &Evaluator{globals: g, env: env}
+	ev := &Evaluator{globals: g, locals: g, env: env}
 
 	path, ok := env.m["PATH"]
 	if ok {

@@ -31,7 +31,7 @@ var builtins = map[string]builtin {
 func doSet(ev *Evaluator, name Value, value Value) string {
 	// TODO Support setting locals
 	// TODO Prevent overriding builtin variables e.g. $pid $env
-	ev.globals[name.String(ev)] = value
+	ev.locals[name.String(ev)] = value
 	return ""
 }
 
