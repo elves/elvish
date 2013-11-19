@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 	"./tty"
 	"../parse"
+	"../eval"
 )
 
 // cell is an indivisible unit on the screen. It is not necessarily 1 column
@@ -48,14 +49,16 @@ func (b *buffer) appendLine(w int) {
 type writer struct {
 	file *os.File
 	oldBuf, buf *buffer
+	ev *eval.Evaluator
 	// Fields below are used when refreshing.
 	width, indent int
 	cursor pos
 	currentAttr string
 }
 
-func newWriter(f *os.File) *writer {
-	writer := &writer{file: f, oldBuf: newBuffer(0)}
+func newWriter(f *os.File, ev *eval.Evaluator) *writer {
+	// XXX Do we need a whole eval.Evaluator?
+	writer := &writer{file: f, oldBuf: newBuffer(0), ev: ev}
 	return writer
 }
 
@@ -179,15 +182,14 @@ func (w *writer) refresh(prompt, text, tip string, dot int) error {
 		w.indent = w.cursor.col
 	}
 
-	l := parse.Lex("<interactive code>", text)
-
 	// i keeps track of number of runes written.
 	i := 0
 	if dot == 0 {
 		w.buf.dot = w.cursor
 	}
-	for {
-		token := l.NextItem()
+
+	hl := Highlight("<interactive code>", text, w.ev)
+	for token := range hl {
 		if token.Typ == parse.ItemEOF {
 			break
 		}

@@ -1,9 +1,6 @@
 # Next steps
 
 * edit:
-    - Highlighting beyond lexer and maybe even parser (highlighting of valid
-      and invalid command names a la fish, and valid and invalid variable
-      expansions)
     - Multiline editing
 * eval:
     - Implement variable capture of closures

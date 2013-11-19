@@ -7,6 +7,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 	"./tty"
+	"../eval"
 	"../util"
 )
 
@@ -32,7 +33,7 @@ type LineRead struct {
 }
 
 // Init initializes an Editor on the terminal referenced by fd.
-func Init(file *os.File, tr *util.TimedReader) (*Editor, error) {
+func Init(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) (*Editor, error) {
 	fd := int(file.Fd())
 	term, err := tty.NewTermiosFromFd(fd)
 	if err != nil {
@@ -42,7 +43,7 @@ func Init(file *os.File, tr *util.TimedReader) (*Editor, error) {
 	editor := &Editor{
 		savedTermios: term.Copy(),
 		file: file,
-		writer: newWriter(file),
+		writer: newWriter(file, ev),
 		reader: newReader(tr),
 	}
 

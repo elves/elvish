@@ -26,7 +26,7 @@ func main() {
 		cmd_no++
 		name := fmt.Sprintf("<tty %d>", cmd_no)
 
-		ed, err := edit.Init(os.Stdin, tr)
+		ed, err := edit.Init(os.Stdin, tr, ev)
 		if err != nil {
 			panic(err)
 		}
