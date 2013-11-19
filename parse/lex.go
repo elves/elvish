@@ -329,7 +329,7 @@ func StartsBare(r rune) bool {
 
 func TerminatesBare(r rune) bool {
 	switch r {
-	case '\n', '(', ')', '[', ']', '{', '}', '"', '`', '$', ';', Eof:
+	case '\n', '(', ')', '[', ']', '{', '}', '"', '`', '$', ';', '|', Eof:
 		return true
 	}
 	return isSpace(r)
