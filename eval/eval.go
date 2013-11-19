@@ -74,6 +74,17 @@ func (ev *Evaluator) errorf(format string, args...interface{}) {
 	ev.errorfNode(ev.nodes[len(ev.nodes) - 1], format, args...)
 }
 
+// XXX Duplicate with resolveVar
+func (ev *Evaluator) getVar(name string) (Value, bool) {
+	if val, ok := ev.locals[name]; ok {
+		return val, true
+	}
+	if val, ok := ev.globals[name]; ok {
+		return val, true
+	}
+	return nil, false
+}
+
 func (ev *Evaluator) resolveVar(name string) Value {
 	if val, ok := ev.locals[name]; ok {
 		return val

@@ -138,19 +138,29 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes
 	switch name := name.(type) {
 	case *Scalar:
 		nameStr := name.str
-		bi, isBuiltin := builtins[nameStr]
-		if isBuiltin {
+		// Try function
+		if v, ok := ev.getVar("fn-" + nameStr); ok {
+			if fn, ok := v.(*Closure); ok {
+				cmd.closure = fn
+				// XXX Use zero value (fileIO) for ioTypes now
+				break
+			}
+		}
+
+		// Try builtin
+		if bi, ok := builtins[nameStr]; ok {
 			cmd.fn = bi.fn
 			ioTypes = bi.ioTypes
-		} else {
-			// Try external command
-			path, e := ev.search(nameStr)
-			if e != nil {
-				ev.errorfNode(n.Name, "%s", e)
-			}
-			cmd.path = path
-			// Use zero value (fileIO) for ioTypes
+			break
 		}
+
+		// Try external command
+		path, e := ev.search(nameStr)
+		if e != nil {
+			ev.errorfNode(n.Name, "%s", e)
+		}
+		cmd.path = path
+		// Use zero value (fileIO) for ioTypes
 	case *Closure:
 		cmd.closure = name
 		// XXX Use zero value (fileIO) for ioTypes now
