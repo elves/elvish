@@ -6,8 +6,7 @@
       expansions)
     - Multiline editing
 * eval:
-    - Implement internal variable and lexical scoping - maybe just steal
-      Python's local-closure-global scoping rule
+    - Implement lexical scoping (variable capture of closures)
     - Determine namespacing model (importable modules; relationship of
       functions vs. external commands, variables vs. environmental variables)
     - Implement control structures; settle down its syntax - special syntax or
