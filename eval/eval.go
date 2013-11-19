@@ -71,13 +71,14 @@ func (ev *Evaluator) errorfNode(n parse.Node, format string, args ...interface{}
 
 // errorf stops the evaluator. Its panic is supposed to be caught by recover.
 func (ev *Evaluator) errorf(format string, args...interface{}) {
-	ev.errorfNode(ev.nodes[len(ev.nodes) - 1], format, args...)
+	if n := len(ev.nodes); n > 0 {
+		ev.errorfNode(ev.nodes[n - 1], format, args...)
+	} else {
+		util.Panic(fmt.Errorf(format, args...))
+	}
 }
 
 func (ev *Evaluator) ResolveVar(name string) (v Value, err error) {
-	// XXX Push a dummy node
-	ev.push(parse.StringNode{0, name, name})
-	defer ev.pop()
 	defer util.Recover(&err)
 	return ev.resolveVar(name), nil
 }
@@ -218,6 +219,8 @@ func (ev *Evaluator) evalTermSingleScalar(n *parse.ListNode, what string) *Scala
 
 // XXX Failure of one pipeline will abort the whole chunk.
 func (ev *Evaluator) evalChunk(ch *parse.ListNode) {
+	ev.push(ch)
+	defer ev.pop()
 	for _, n := range ch.Nodes {
 		updates := ev.evalPipeline(n.(*parse.ListNode))
 		for i, update := range updates {

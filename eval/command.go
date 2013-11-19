@@ -127,14 +127,15 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ios []*io, ioTypes []ioType) {
 // TODO Expose resolveCommand more openly?
 func (ev *Evaluator) ResolveCommand(name string) (err error) {
 	defer util.Recover(&err)
-	// XXX Maybe expose parse.newString?
-	ev.resolveCommand(name, parse.StringNode{0, name, name})
+	ev.resolveCommand(name, nil)
 	return nil
 }
 
 func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd *command, ioTypes [3]ioType) {
-	ev.push(n)
-	defer ev.pop()
+	if n != nil {
+		ev.push(n)
+		defer ev.pop()
+	}
 
 	cmd = &command{name: name}
 	// Try function
