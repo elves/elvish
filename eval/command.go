@@ -139,7 +139,7 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes
 	case *Scalar:
 		nameStr := name.str
 		// Try function
-		if v, ok := ev.getVar("fn-" + nameStr); ok {
+		if v, err := ev.ResolveVar("fn-" + nameStr); err == nil {
 			if fn, ok := v.(*Closure); ok {
 				cmd.closure = fn
 				// XXX Use zero value (fileIO) for ioTypes now
