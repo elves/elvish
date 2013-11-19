@@ -63,14 +63,26 @@ func set(ev *Evaluator, args []Value, ios [3]*io) string {
 }
 
 func fn(ev *Evaluator, args []Value, ios [3]*io) string {
-	// TODO Support `fn f a b c { cmd }` as sugar for `fn f { | a b c | cmd }`
-	if len(args) != 2 {
+	n := len(args)
+	if n < 2 {
 		return "args error"
 	}
-	if _, ok := args[1].(*Closure); !ok {
+	closure, ok := args[n-1].(*Closure)
+	if !ok {
 		return "args error"
 	}
-	return doSet(ev, args[0], args[1])
+	if n > 2 && len(closure.ArgNames) != 0 {
+		return "can't define arg names list twice"
+	}
+	// XXX Should either make a copy of closure or forbid the following:
+	// var f; set f = { }
+	// fn g a b $f // Changes arity of $f!
+	for i := 1; i < n-1; i++ {
+		closure.ArgNames = append(closure.ArgNames, args[i].String(ev))
+	}
+	// TODO Warn about redefining fn?
+	ev.locals["fn-" + args[0].String(ev)] = closure
+	return ""
 }
 
 func put(ev *Evaluator, args []Value, ios [3]*io) string {
