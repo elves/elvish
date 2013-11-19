@@ -6,6 +6,7 @@ import (
 	"strings"
 	"syscall"
 	"../parse"
+	"../util"
 )
 
 const (
@@ -123,6 +124,45 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ios []*io, ioTypes []ioType) {
 	}
 }
 
+// TODO Expose resolveCommand more openly?
+func (ev *Evaluator) ResolveCommand(name string) (err error) {
+	defer util.Recover(&err)
+	// XXX Maybe expose parse.newString?
+	ev.resolveCommand(name, parse.StringNode{0, name, name})
+	return nil
+}
+
+func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd *command, ioTypes [3]ioType) {
+	ev.push(n)
+	defer ev.pop()
+
+	cmd = &command{name: name}
+	// Try function
+	if v, err := ev.ResolveVar("fn-" + name); err == nil {
+		if fn, ok := v.(*Closure); ok {
+			cmd.closure = fn
+			// XXX Use zero value (fileIO) for ioTypes now
+			return
+		}
+	}
+
+	// Try builtin
+	if bi, ok := builtins[name]; ok {
+		cmd.fn = bi.fn
+		ioTypes = bi.ioTypes
+		return
+	}
+
+	// Try external command
+	path, e := ev.search(name)
+	if e != nil {
+		ev.errorf("%s", e)
+	}
+	cmd.path = path
+	// Use zero value (fileIO) for ioTypes
+	return
+}
+
 func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType) {
 	// Evaluate name.
 	nameValues := ev.evalTerm(n.Name)
@@ -132,37 +172,14 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes
 	name := nameValues[0]
 
 	// Start building command.
-	cmd = &command{name: name.String(ev)}
+	nameStr := name.String(ev)
 
 	// Resolve command. Assign one of cmd.{fn path closure} and ioTypes.
 	switch name := name.(type) {
 	case *Scalar:
-		nameStr := name.str
-		// Try function
-		if v, err := ev.ResolveVar("fn-" + nameStr); err == nil {
-			if fn, ok := v.(*Closure); ok {
-				cmd.closure = fn
-				// XXX Use zero value (fileIO) for ioTypes now
-				break
-			}
-		}
-
-		// Try builtin
-		if bi, ok := builtins[nameStr]; ok {
-			cmd.fn = bi.fn
-			ioTypes = bi.ioTypes
-			break
-		}
-
-		// Try external command
-		path, e := ev.search(nameStr)
-		if e != nil {
-			ev.errorfNode(n.Name, "%s", e)
-		}
-		cmd.path = path
-		// Use zero value (fileIO) for ioTypes
+		cmd, ioTypes = ev.resolveCommand(nameStr, n.Name)
 	case *Closure:
-		cmd.closure = name
+		cmd = &command{name: nameStr, closure: name}
 		// XXX Use zero value (fileIO) for ioTypes now
 	default:
 		ev.errorfNode(n.Name, "Command name must be either scalar or closure")
