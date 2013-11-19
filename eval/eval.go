@@ -75,6 +75,9 @@ func (ev *Evaluator) errorf(format string, args...interface{}) {
 }
 
 func (ev *Evaluator) ResolveVar(name string) (v Value, err error) {
+	// XXX Push a dummy node
+	ev.push(parse.StringNode{0, name, name})
+	defer ev.pop()
 	defer util.Recover(&err)
 	return ev.resolveVar(name), nil
 }
