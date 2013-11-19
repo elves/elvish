@@ -204,12 +204,13 @@ func (e *Env) Caret(ev *Evaluator, v Value) Value {
 
 // XXX A closure is only a block now. Args and variable captures are missing.
 type Closure struct {
+	ArgNames []string
 	Chunk *parse.ListNode
 }
 func (c *Closure) meisvalue() {}
 
-func NewClosure(ch *parse.ListNode) *Closure {
-	return &Closure{ch}
+func NewClosure(argNames []string, ch *parse.ListNode) *Closure {
+	return &Closure{argNames, ch}
 }
 
 func (c *Closure) Repr(ev *Evaluator) string {

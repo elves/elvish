@@ -123,7 +123,12 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 		word := ev.evalTable(n)
 		words = []Value{word}
 	case *parse.ClosureNode:
-		words = []Value{NewClosure(n.Chunk)}
+		nameValues := ev.evalTermList(n.Args)
+		var names []string
+		for _, v := range nameValues {
+			names = append(names, v.String(ev))
+		}
+		words = []Value{NewClosure(names, n.Chunk)}
 	default:
 		panic("bad node type")
 	}

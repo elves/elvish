@@ -288,8 +288,20 @@ func (ev *Evaluator) execCommand(cmd *command) <-chan *StateUpdate {
 }
 
 func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
+	update := make(chan *StateUpdate, 1)
+
 	locals := make(map[string]Value)
-	// TODO Implement argument parsing by populating locals.
+	// TODO Support optional/rest argument
+	if len(cmd.args) != len(cmd.closure.ArgNames) {
+		// TODO Check arity before exec'ing
+		update <- &StateUpdate{Terminated: true, Msg: "arity mismatch"}
+		close(update)
+		return update
+	}
+	// Pass argument by populating locals.
+	for i, name := range cmd.closure.ArgNames {
+		locals[name] = cmd.args[i]
+	}
 
 	// Make a subevaluator.
 	// TODO Guard against concurrent writes to globals.
@@ -299,7 +311,6 @@ func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
 		env: ev.env,
 		searchPaths: ev.searchPaths,
 	}
-	update := make(chan *StateUpdate, 1)
 	go func() {
 		// TODO Support calling closure originated in another source.
 		newEv.Eval(ev.name, ev.text, cmd.closure.Chunk)
