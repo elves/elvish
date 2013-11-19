@@ -324,7 +324,7 @@ func (p *Parser) closure() (tn *ClosureNode) {
 	tn = newClosure(p.peek().Pos)
 	if p.peekNonSpace().Typ == ItemPipe {
 		p.next()
-		tn.Args = p.termList()
+		tn.ArgNames = p.termList()
 		if token := p.nextNonSpace(); token.Typ != ItemPipe {
 			p.unexpected(token, "argument list")
 		}

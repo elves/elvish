@@ -124,8 +124,8 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 		words = []Value{word}
 	case *parse.ClosureNode:
 		var names []string
-		if n.Args != nil {
-			nameValues := ev.evalTermList(n.Args)
+		if n.ArgNames != nil {
+			nameValues := ev.evalTermList(n.ArgNames)
 			for _, v := range nameValues {
 				names = append(names, v.String(ev))
 			}

@@ -106,7 +106,7 @@ func (tn *TableNode) appendToDict(key *ListNode, value *ListNode) {
 
 type ClosureNode struct {
 	Pos
-	Args *ListNode
+	ArgNames *ListNode
 	Chunk *ListNode
 }
 
