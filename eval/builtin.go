@@ -29,20 +29,30 @@ var builtins = map[string]builtin {
 	"printchan": builtin{printchan, [3]ioType{chanIO, fileIO}},
 }
 
-func doSet(ev *Evaluator, nameVal Value, value Value) string {
-	name := nameVal.String(ev)
-	// TODO Prevent overriding builtin variables e.g. $pid $env
-	if _, ok := ev.locals[name]; !ok {
-		return fmt.Sprintf("Variable %q doesn't exist", name)
+func doSet(ev *Evaluator, names []string, values []Value) string {
+	// TODO Support assignment of mismatched arity in some restricted way -
+	// "optional" and "rest" arguments and the like
+	if len(names) != len(values) {
+		return "arity mismatch"
 	}
-	ev.locals[name] = value
+
+	for i, name := range names {
+		// TODO Prevent overriding builtin variables e.g. $pid $env
+		ev.locals[name] = values[i]
+	}
+
 	return ""
 }
 
 func var_(ev *Evaluator, args []Value, ios [3]*io) string {
 	var names []string
-	for _, nameVal := range args {
+	var values []Value
+	for i, nameVal := range args {
 		name := nameVal.String(ev)
+		if name == "=" {
+			values = args[i+1:]
+			break
+		}
 		if _, ok := ev.locals[name]; ok {
 			return fmt.Sprintf("Variable %q already exists", name)
 		}
@@ -52,14 +62,31 @@ func var_(ev *Evaluator, args []Value, ios [3]*io) string {
 	for _, name := range names {
 		ev.locals[name] = nil
 	}
+	if values != nil {
+		return doSet(ev, names, values)
+	}
 	return ""
 }
 
 func set(ev *Evaluator, args []Value, ios [3]*io) string {
-	if len(args) != 3 || args[1].String(ev) != "=" {
-		return "args error"
+	var names []string
+	var values []Value
+	for i, nameVal := range args {
+		name := nameVal.String(ev)
+		if name == "=" {
+			values = args[i+1:]
+			break
+		}
+		if _, ok := ev.locals[name]; !ok {
+			return fmt.Sprintf("Variable %q doesn't exists", name)
+		}
+		names = append(names, name)
 	}
-	return doSet(ev, args[0], args[2])
+
+	if values == nil {
+		return "missing equal sign"
+	}
+	return doSet(ev, names, values)
 }
 
 func fn(ev *Evaluator, args []Value, ios [3]*io) string {
