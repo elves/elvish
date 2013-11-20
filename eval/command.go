@@ -219,6 +219,8 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes
 
 // ExecPipeline executes a pipeline.
 //
+// XXX Outdated comments below
+//
 // As many things as possible are done before any command actually gets
 // executed, to avoid leaving the pipeline broken - resolving command names,
 // opening files, and in future, evaluating shell constructs. If any error is
