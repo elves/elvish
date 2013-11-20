@@ -39,13 +39,20 @@ func (i *io) compatible(typ ioType) bool {
 	}
 }
 
+// The "head" of a command is either a function, the path of an external
+// command or a closure.
+type CommandHead struct {
+	fn builtinFunc // A builtin function, if the command is builtin.
+	path string // Command full path, if the command is external.
+	closure *Closure // The closure value, if the command is a closure.
+}
+
+// command packs runtime states of a fully constructured command.
 type command struct {
 	name string // Command name, used in error messages.
 	args []Value // Argument list, minus command name.
 	ios [3]*io // IOs for in, out and err.
-	fn builtinFunc // A builtin function, if the command is builtin.
-	path string // Command full path, if the command is external.
-	closure *Closure // The closure value, if the command is a closure.
+	CommandHead
 }
 
 type StateUpdate struct {
@@ -180,7 +187,7 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes
 	case *Scalar:
 		cmd, ioTypes = ev.resolveCommand(nameStr, n.Name)
 	case *Closure:
-		cmd = &command{name: nameStr, closure: name}
+		cmd = &command{name: nameStr, CommandHead: CommandHead{closure: name}}
 		// XXX Use zero value (fileIO) for ioTypes now
 	default:
 		ev.errorfNode(n.Name, "Command name must be either scalar or closure")
