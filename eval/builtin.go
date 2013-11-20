@@ -12,10 +12,10 @@ const (
 	unusedIO
 )
 
-type builtinFunc func(*Evaluator, []Value, [3]*io) string
+type BuiltinFunc func(*Evaluator, []Value, [3]*io) string
 
 type builtin struct {
-	fn builtinFunc
+	fn BuiltinFunc
 	ioTypes [3]ioType
 }
 

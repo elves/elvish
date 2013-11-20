@@ -42,9 +42,9 @@ func (i *io) compatible(typ ioType) bool {
 // The "head" of a command is either a function, the path of an external
 // command or a closure.
 type CommandHead struct {
-	fn builtinFunc // A builtin function, if the command is builtin.
-	path string // Command full path, if the command is external.
-	closure *Closure // The closure value, if the command is a closure.
+	Func BuiltinFunc // A builtin function, if the command is builtin.
+	Path string // Command full path, if the command is external.
+	Closure *Closure // The closure value, if the command is a closure.
 }
 
 // command packs runtime states of a fully constructured command.
@@ -148,7 +148,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd *command, io
 	// Try function
 	if v, err := ev.ResolveVar("fn-" + name); err == nil {
 		if fn, ok := v.(*Closure); ok {
-			cmd.closure = fn
+			cmd.Closure = fn
 			// XXX Use zero value (fileIO) for ioTypes now
 			return
 		}
@@ -156,7 +156,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd *command, io
 
 	// Try builtin
 	if bi, ok := builtins[name]; ok {
-		cmd.fn = bi.fn
+		cmd.Func = bi.fn
 		ioTypes = bi.ioTypes
 		return
 	}
@@ -166,7 +166,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd *command, io
 	if e != nil {
 		ev.errorf("%s", e)
 	}
-	cmd.path = path
+	cmd.Path = path
 	// Use zero value (fileIO) for ioTypes
 	return
 }
@@ -187,7 +187,7 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes
 	case *Scalar:
 		cmd, ioTypes = ev.resolveCommand(nameStr, n.Name)
 	case *Closure:
-		cmd = &command{name: nameStr, CommandHead: CommandHead{closure: name}}
+		cmd = &command{name: nameStr, CommandHead: CommandHead{Closure: name}}
 		// XXX Use zero value (fileIO) for ioTypes now
 	default:
 		ev.errorfNode(n.Name, "Command name must be either scalar or closure")
@@ -311,11 +311,11 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
 // execCommand executes a command.
 func (ev *Evaluator) execCommand(cmd *command) <-chan *StateUpdate {
 	switch {
-	case cmd.fn != nil:
+	case cmd.Func != nil:
 		return ev.execBuiltin(cmd)
-	case cmd.path != "":
+	case cmd.Path != "":
 		return ev.execExternal(cmd)
-	case cmd.closure != nil:
+	case cmd.Closure != nil:
 		return ev.execClosure(cmd)
 	default:
 		panic("Bad eval.command struct")
@@ -327,14 +327,14 @@ func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
 
 	locals := make(map[string]Value)
 	// TODO Support optional/rest argument
-	if len(cmd.args) != len(cmd.closure.ArgNames) {
+	if len(cmd.args) != len(cmd.Closure.ArgNames) {
 		// TODO Check arity before exec'ing
 		update <- &StateUpdate{Terminated: true, Msg: "arity mismatch"}
 		close(update)
 		return update
 	}
 	// Pass argument by populating locals.
-	for i, name := range cmd.closure.ArgNames {
+	for i, name := range cmd.Closure.ArgNames {
 		locals[name] = cmd.args[i]
 	}
 
@@ -348,7 +348,7 @@ func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
 	}
 	go func() {
 		// TODO Support calling closure originated in another source.
-		newEv.Eval(ev.name, ev.text, cmd.closure.Chunk)
+		newEv.Eval(ev.name, ev.text, cmd.Closure.Chunk)
 		// TODO Support returning value.
 		update <- &StateUpdate{Terminated: true}
 		close(update)
@@ -360,7 +360,7 @@ func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
 func (ev *Evaluator) execBuiltin(cmd *command) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
-		msg := cmd.fn(ev, cmd.args, cmd.ios)
+		msg := cmd.Func(ev, cmd.args, cmd.ios)
 		update <- &StateUpdate{Terminated: true, Msg: msg}
 		close(update)
 	}()
@@ -396,7 +396,7 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 	}
 
 	args := make([]string, len(cmd.args) + 1)
-	args[0] = cmd.path
+	args[0] = cmd.Path
 	for i, a := range cmd.args {
 		// NOTE Maybe we should enfore scalar arguments instead of coercing all
 		// args into string
@@ -405,7 +405,7 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
-	pid, err := syscall.ForkExec(cmd.path, args, &attr)
+	pid, err := syscall.ForkExec(cmd.Path, args, &attr)
 
 	update := make(chan *StateUpdate)
 	if err != nil {
