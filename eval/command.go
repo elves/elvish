@@ -391,7 +391,8 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 	args := make([]string, len(cmd.args) + 1)
 	args[0] = cmd.path
 	for i, a := range cmd.args {
-		// XXX Silently coerce all args into string
+		// NOTE Maybe we should enfore scalar arguments instead of coercing all
+		// args into string
 		args[i+1] = a.String(ev)
 	}
 
