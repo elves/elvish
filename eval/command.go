@@ -132,23 +132,22 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ios []*io, ioTypes []ioType) {
 }
 
 // TODO Expose resolveCommand more openly?
-func (ev *Evaluator) ResolveCommand(name string) (err error) {
+func (ev *Evaluator) ResolveCommand(name string) (head CommandHead, err error) {
 	defer util.Recover(&err)
-	ev.resolveCommand(name, nil)
-	return nil
+	head, _ = ev.resolveCommand(name, nil)
+	return head, nil
 }
 
-func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd *command, ioTypes [3]ioType) {
+func (ev *Evaluator) resolveCommand(name string, n parse.Node) (head CommandHead, ioTypes [3]ioType) {
 	if n != nil {
 		ev.push(n)
 		defer ev.pop()
 	}
 
-	cmd = &command{name: name}
 	// Try function
 	if v, err := ev.ResolveVar("fn-" + name); err == nil {
 		if fn, ok := v.(*Closure); ok {
-			cmd.Closure = fn
+			head.Closure = fn
 			// XXX Use zero value (fileIO) for ioTypes now
 			return
 		}
@@ -156,7 +155,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd *command, io
 
 	// Try builtin
 	if bi, ok := builtins[name]; ok {
-		cmd.Func = bi.fn
+		head.Func = bi.fn
 		ioTypes = bi.ioTypes
 		return
 	}
@@ -166,7 +165,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd *command, io
 	if e != nil {
 		ev.errorf("%s", e)
 	}
-	cmd.Path = path
+	head.Path = path
 	// Use zero value (fileIO) for ioTypes
 	return
 }
@@ -181,13 +180,14 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes
 
 	// Start building command.
 	nameStr := name.String(ev)
+	cmd = &command{name: nameStr}
 
 	// Resolve command. Assign one of cmd.{fn path closure} and ioTypes.
 	switch name := name.(type) {
 	case *Scalar:
-		cmd, ioTypes = ev.resolveCommand(nameStr, n.Name)
+		cmd.CommandHead, ioTypes = ev.resolveCommand(nameStr, n.Name)
 	case *Closure:
-		cmd = &command{name: nameStr, CommandHead: CommandHead{Closure: name}}
+		cmd.CommandHead.Closure = name
 		// XXX Use zero value (fileIO) for ioTypes now
 	default:
 		ev.errorfNode(n.Name, "Command name must be either scalar or closure")

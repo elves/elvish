@@ -42,7 +42,7 @@ func (hl *Highlighter) run() {
 			// Mangle token.Typ
 			if command {
 				// Check validity of command
-				if err := hl.ev.ResolveCommand(token.Val); err == nil {
+				if _, err := hl.ev.ResolveCommand(token.Val); err == nil {
 					token.Typ = ItemValidCommand
 				} else {
 					token.Typ = ItemInvalidCommand
