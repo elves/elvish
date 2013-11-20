@@ -22,7 +22,15 @@ type io struct {
 	ch chan Value
 }
 
-func (i *io) compatible(typ ioType) bool {
+type IOType byte
+
+const (
+	fileIO IOType = iota // Default IO type. Corresponds to io.f.
+	chanIO // Corresponds to io.ch.
+	unusedIO
+)
+
+func (i *io) compatible(typ IOType) bool {
 	if i == nil {
 		return false
 	}
@@ -94,7 +102,7 @@ func (ev *Evaluator) search(exe string) (string, error) {
 	return "", fmt.Errorf("external command not found")
 }
 
-func (ev *Evaluator) evalRedir(r parse.Redir, ios []*io, ioTypes []ioType) {
+func (ev *Evaluator) evalRedir(r parse.Redir, ios []*io, ioTypes []IOType) {
 	ev.push(r)
 	defer ev.pop()
 
@@ -131,14 +139,13 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ios []*io, ioTypes []ioType) {
 	}
 }
 
-// TODO Expose resolveCommand more openly?
-func (ev *Evaluator) ResolveCommand(name string) (head CommandHead, err error) {
+func (ev *Evaluator) ResolveCommand(name string) (head CommandHead, ioTypes [3]IOType, err error) {
 	defer util.Recover(&err)
-	head, _ = ev.resolveCommand(name, nil)
-	return head, nil
+	head, ioTypes = ev.resolveCommand(name, nil)
+	return head, ioTypes, nil
 }
 
-func (ev *Evaluator) resolveCommand(name string, n parse.Node) (head CommandHead, ioTypes [3]ioType) {
+func (ev *Evaluator) resolveCommand(name string, n parse.Node) (head CommandHead, ioTypes [3]IOType) {
 	if n != nil {
 		ev.push(n)
 		defer ev.pop()
@@ -170,7 +177,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (head CommandHead
 	return
 }
 
-func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]ioType) {
+func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes [3]IOType) {
 	// Evaluate name.
 	nameValues := ev.evalTerm(n.Name)
 	if len(nameValues) != 1 {

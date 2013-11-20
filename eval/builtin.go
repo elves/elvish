@@ -4,29 +4,21 @@ import (
 	"fmt"
 )
 
-type ioType byte
-
-const (
-	fileIO ioType = iota // Default IO type. Corresponds to io.f.
-	chanIO // Corresponds to io.ch.
-	unusedIO
-)
-
 type BuiltinFunc func(*Evaluator, []Value, [3]*io) string
 
 type builtin struct {
 	fn BuiltinFunc
-	ioTypes [3]ioType
+	ioTypes [3]IOType
 }
 
 var builtins = map[string]builtin {
-	"var": builtin{var_, [3]ioType{unusedIO, unusedIO}},
-	"set": builtin{set, [3]ioType{unusedIO, unusedIO}},
-	"fn": builtin{fn, [3]ioType{unusedIO, unusedIO}},
-	"put": builtin{put, [3]ioType{unusedIO, chanIO}},
-	"print": builtin{print, [3]ioType{unusedIO}},
-	"println": builtin{println, [3]ioType{unusedIO}},
-	"printchan": builtin{printchan, [3]ioType{chanIO, fileIO}},
+	"var": builtin{var_, [3]IOType{unusedIO, unusedIO}},
+	"set": builtin{set, [3]IOType{unusedIO, unusedIO}},
+	"fn": builtin{fn, [3]IOType{unusedIO, unusedIO}},
+	"put": builtin{put, [3]IOType{unusedIO, chanIO}},
+	"print": builtin{print, [3]IOType{unusedIO}},
+	"println": builtin{println, [3]IOType{unusedIO}},
+	"printchan": builtin{printchan, [3]IOType{chanIO, fileIO}},
 }
 
 func doSet(ev *Evaluator, names []string, values []Value) string {
