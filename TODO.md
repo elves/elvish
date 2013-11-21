@@ -3,6 +3,8 @@
 * Editor (edit)
     - Tab completion
     - Multiline editing
+* Syntactic constructs
+    - Globbing?
 * General/misc runtime feature (eval)
     - Implement variable capture of closures
     - Implement control structures; settle down its syntax - special syntax or
