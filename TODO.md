@@ -1,9 +1,11 @@
 # Next steps
 
 * edit:
+    - Tab completion
     - Multiline editing
 * eval:
     - Implement variable capture of closures
+    - Implement output capture: ${}
     - Adopt the reference/value duality of $a, so that `set a []` is
       written as `set $a []` (like Perl)? Would faciliates variable capture of
       closures
