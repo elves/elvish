@@ -3,7 +3,6 @@
 package eval
 
 import (
-	"os"
 	"fmt"
 	"strings"
 	"syscall"
@@ -18,7 +17,6 @@ type Evaluator struct {
 	locals map[string]Value
 	env *Env
 	searchPaths []string
-	filesToClose []*os.File
 	nodes []parse.Node // A stack that keeps track of nodes being evaluated.
 }
 
@@ -222,16 +220,6 @@ func (ev *Evaluator) evalChunk(ch *parse.ListNode) {
 	ev.push(ch)
 	defer ev.pop()
 	for _, n := range ch.Nodes {
-		updates := ev.evalPipeline(n.(*parse.ListNode))
-		for i, update := range updates {
-			for up := range update {
-				switch up.Msg {
-				case "0", "":
-				default:
-					// XXX Update of commands in subevaluators should not be printed.
-					fmt.Printf("Command #%d update: %s\n", i, up.Msg)
-				}
-			}
-		}
+		ev.evalPipeline(n.(*parse.ListNode))
 	}
 }

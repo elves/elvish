@@ -63,6 +63,23 @@ type command struct {
 	CommandHead
 }
 
+func (cmd *command) closeIOs() {
+	for _, io := range cmd.ios {
+		if io == nil {
+			continue
+		}
+		switch io.f {
+		case nil, os.Stdin, os.Stdout, os.Stderr:
+			// XXX Is the heuristics correct?
+		default:
+			io.f.Close()
+		}
+		if io.ch != nil {
+			close(io.ch)
+		}
+	}
+}
+
 type StateUpdate struct {
 	Terminated bool
 	Msg string
@@ -133,9 +150,6 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ios []*io, ioTypes []IOType) {
 			ev.errorf("failed to open file %q: %s", fname[0], e)
 		}
 		ios[fd] = &io{f: f}
-		// XXX Files opened in redirections of builtins shouldn't be
-		// closed.
-		ev.filesToClose = append(ev.filesToClose, f)
 	}
 }
 
@@ -233,23 +247,21 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes
 // TODO Should return a slice of exit statuses.
 // XXX Unresolvable external command should always be regarded as run-time
 // error.
-func (ev *Evaluator) evalPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
+func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 	ev.push(pl)
 	defer ev.pop()
 
-	defer func() {
-		for _, f := range ev.filesToClose {
-			f.Close()
-		}
-		ev.filesToClose = ev.filesToClose[:0]
-	}()
-
 	ncmds := len(pl.Nodes)
 	if ncmds == 0 {
-		return []<-chan *StateUpdate{}
+		return
 	}
-
 	cmds := make([]*command, 0, ncmds)
+
+	defer func() {
+		for _, cmd := range cmds {
+			cmd.closeIOs()
+		}
+	}()
 
 	var nextIn *io
 	for i, n := range pl.Nodes {
@@ -294,13 +306,10 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
 				if e != nil {
 					ev.errorf("failed to create pipe: %s", e)
 				}
-				// XXX The pipe end for builtins shouldn't be closed.
-				ev.filesToClose = append(ev.filesToClose, reader, writer)
 				nextIn = &io{f: reader}
 				cmd.ios[1] = &io{f: writer}
 			case chanIO:
 				// TODO Buffered channel?
-				// XXX Builtins are relied on to close channels.
 				ch := make(chan Value)
 				nextIn = &io{ch: ch}
 				cmd.ios[1] = &io{ch: ch}
@@ -316,7 +325,17 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
 	for i, cmd := range cmds {
 		updates[i] = ev.execCommand(cmd)
 	}
-	return updates
+
+	for i, update := range updates {
+		for up := range update {
+			switch up.Msg {
+			case "0", "":
+			default:
+				// XXX Update of commands in subevaluators should not be printed.
+				fmt.Printf("Command #%d update: %s\n", i, up.Msg)
+			}
+		}
+	}
 }
 
 // execCommand executes a command.
@@ -360,6 +379,8 @@ func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
 	go func() {
 		// TODO Support calling closure originated in another source.
 		newEv.Eval(ev.name, ev.text, cmd.Closure.Chunk)
+		// IOs are closed after executaion of closure is complete.
+		cmd.closeIOs()
 		// TODO Support returning value.
 		update <- &StateUpdate{Terminated: true}
 		close(update)
@@ -372,6 +393,8 @@ func (ev *Evaluator) execBuiltin(cmd *command) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
 		msg := cmd.Func(ev, cmd.args, cmd.ios)
+		// IOs are closed after executaion of builtin is complete.
+		cmd.closeIOs()
 		update <- &StateUpdate{Terminated: true, Msg: msg}
 		close(update)
 	}()
@@ -417,6 +440,8 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
 	pid, err := syscall.ForkExec(cmd.Path, args, &attr)
+	// IOs are closed after fork-exec of external is complete.
+	cmd.closeIOs()
 
 	update := make(chan *StateUpdate)
 	if err != nil {
