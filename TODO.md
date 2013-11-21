@@ -18,7 +18,14 @@
     - Support evaluating script
 * eval/builtins
     - Failing, intermediate state:
-        ```var ${echo a | tee /tmp/a} b = 1```
+        ```
+        var ${echo a | tee /tmp/a} b = 1
+        ```
       Should arity mismatch be detected early and avoid the side-effect of
       writing `/tmp/a`? Should $a and $b be defined?
+* Signal handling
+* Simple job control
+    - Able to resume suspended jobs
+    - No need for too complex job control, the role is which is largely
+      subsumed by screen/tmux today
 * All the TODO and XXX's in source :)
