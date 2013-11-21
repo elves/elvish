@@ -241,7 +241,7 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
 		for _, f := range ev.filesToClose {
 			f.Close()
 		}
-		ev.filesToClose = ev.filesToClose[0:]
+		ev.filesToClose = ev.filesToClose[:0]
 	}()
 
 	ncmds := len(pl.Nodes)
