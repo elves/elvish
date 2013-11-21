@@ -219,18 +219,20 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, ioTypes
 
 // ExecPipeline executes a pipeline.
 //
-// XXX Outdated comments below
-//
 // As many things as possible are done before any command actually gets
 // executed, to avoid leaving the pipeline broken - resolving command names,
-// opening files, and in future, evaluating shell constructs. If any error is
-// encountered, pids is nil and err contains the error.
+// opening files, and in future, evaluating shell constructs. Such errors are
+// signalled with Evaluator.errorf and will abort the whole script that is
+// being evaluated. They are akin to "compile-time" errors.
 //
-// However, if error is encountered when executing individual commands, the
-// rest of the pipeline will still be executed. In that case, the
-// corresponding elements in pids is -1 and err is typed *CommandErrors. For
-// each pids[i] == -1, err.(*CommandErrors)Errors[i] contains the
-// corresponding error.
+// Another class of errors - nonzero return value from external command, etc.
+// can only be detected after trying to execute the command. They are akin to
+// "run-time" errors and do not affect the whole script. Instead, the errors
+// signaled are merely recorded and returned.
+//
+// TODO Should return a slice of exit statuses.
+// XXX Unresolvable external command should always be regarded as run-time
+// error.
 func (ev *Evaluator) evalPipeline(pl *parse.ListNode) []<-chan *StateUpdate {
 	ev.push(pl)
 	defer ev.pop()
