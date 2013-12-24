@@ -21,6 +21,8 @@ type Editor struct {
 	reader *reader
 	// Fields below are used when during ReadLine.
 	prompt, line, tip string
+	completions []string
+	currentCompletion int
 	dot int
 }
 
@@ -105,7 +107,7 @@ func (ed *Editor) pushTip(more string) {
 }
 
 func (ed *Editor) refresh() error {
-	return ed.writer.refresh(ed.prompt, ed.line, ed.tip, ed.dot)
+	return ed.writer.refresh(ed.prompt, ed.line, ed.tip, ed.completions, ed.currentCompletion, ed.dot)
 }
 
 // TODO Allow modifiable keybindings.
@@ -115,6 +117,7 @@ var keyBindings = map[Key]string {
 	Key{Backspace, 0}: "kill-rune-b",
 	Key{Left, 0}: "move-dot-b",
 	Key{Right, 0}: "move-dot-f",
+	Key{Tab, 0}: "complete",
 }
 
 // ReadLine reads a line interactively.
@@ -122,6 +125,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	ed.prompt = prompt
 	ed.line = ""
 	ed.tip = ""
+	ed.completions = nil
 	ed.dot = 0
 
 	for {

@@ -17,6 +17,7 @@ var leBuiltins = map[string]leBuiltin{
 	"kill-rune-b": killRuneB,
 	"move-dot-b": moveDotB,
 	"move-dot-f": moveDotF,
+	"complete": complete,
 }
 
 func killLineB(ed *Editor) {
@@ -46,4 +47,20 @@ func moveDotB(ed *Editor) {
 func moveDotF(ed *Editor) {
 	_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
 	ed.dot += w
+}
+
+func complete(ed *Editor) {
+	if ed.completions == nil {
+		// Fire the completion
+		// TODO stub here
+		ed.completions = []string{
+			"foobar1", "foobar2", "foobar3",
+		}
+		ed.currentCompletion = -1
+	} else {
+		ed.currentCompletion++
+		if ed.currentCompletion == len(ed.completions) {
+			ed.currentCompletion = 0
+		}
+	}
 }

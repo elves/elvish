@@ -4,6 +4,8 @@ import (
 	"../parse"
 )
 
+var attrForCurrentCompletion = "7"
+
 var attrForType = map[parse.ItemType]string{
 	parse.ItemSpace: "36", // only applies to comments
 	parse.ItemSingleQuoted: "33",
