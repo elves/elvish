@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"os"
 	"fmt"
 )
 
@@ -19,6 +20,7 @@ var builtins = map[string]builtin {
 	"print": builtin{print, [3]IOType{unusedIO}},
 	"println": builtin{println, [3]IOType{unusedIO}},
 	"printchan": builtin{printchan, [3]IOType{chanIO, fileIO}},
+	"cd": builtin{cd, [3]IOType{unusedIO, unusedIO}},
 }
 
 func doSet(ev *Evaluator, names []string, values []Value) string {
@@ -135,6 +137,22 @@ func printchan(ev *Evaluator, args []Value, ios [3]*io) string {
 
 	for s := range in {
 		fmt.Fprintf(out, "%q\n", s)
+	}
+	return ""
+}
+
+func cd(ev *Evaluator, args []Value, ios [3]*io) string {
+	var dir string
+	if len(args) == 0 {
+		dir = ""
+	} else if len(args) == 1 {
+		dir = args[0].String(ev)
+	} else {
+		return "args error"
+	}
+	err := os.Chdir(dir)
+	if err != nil {
+		return err.Error()
 	}
 	return ""
 }
