@@ -12,23 +12,23 @@ import (
 type leBuiltin func (ed *Editor)
 
 var leBuiltins = map[string]leBuiltin{
-	"kill-line-b": leKillLineB,
-	"kill-line-f": leKillLineF,
-	"kill-rune-b": leKillRuneB,
-	"move-dot-b": leMoveDotB,
-	"move-dot-f": leMoveDotF,
+	"kill-line-b": killLineB,
+	"kill-line-f": killLineF,
+	"kill-rune-b": killRuneB,
+	"move-dot-b": moveDotB,
+	"move-dot-f": moveDotF,
 }
 
-func leKillLineB(ed *Editor) {
+func killLineB(ed *Editor) {
 	ed.line = ed.line[ed.dot:]
 	ed.dot = 0
 }
 
-func leKillLineF(ed *Editor) {
+func killLineF(ed *Editor) {
 	ed.line = ed.line[:ed.dot]
 }
 
-func leKillRuneB(ed *Editor) {
+func killRuneB(ed *Editor) {
 	if ed.dot > 0 {
 		_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
 		ed.line = ed.line[:ed.dot-w] + ed.line[ed.dot:]
@@ -38,12 +38,12 @@ func leKillRuneB(ed *Editor) {
 	}
 }
 
-func leMoveDotB(ed *Editor) {
+func moveDotB(ed *Editor) {
 	_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
 	ed.dot -= w
 }
 
-func leMoveDotF(ed *Editor) {
+func moveDotF(ed *Editor) {
 	_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
 	ed.dot += w
 }
