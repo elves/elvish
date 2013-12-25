@@ -9,10 +9,6 @@ import (
 	"../util"
 )
 
-func lackeol() {
-	fmt.Println("\033[7m%\033[m")
-}
-
 func main() {
 	tr, err := util.NewTimedReader(os.Stdin)
 	if err != nil {
@@ -39,7 +35,7 @@ func main() {
 		}
 
 		if lr.Eof {
-			lackeol()
+			fmt.Print(edit.Lackeol)
 			break
 		} else if lr.Err != nil {
 			panic(lr.Err)

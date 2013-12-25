@@ -11,7 +11,7 @@ import (
 	"../util"
 )
 
-var lackeol = "\033[7m\u23ce\033[m\n"
+var Lackeol = "\033[7m\u23ce\033[m\n"
 
 // Editor keeps the status of the line editor.
 type Editor struct {
@@ -75,7 +75,7 @@ func Init(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) (*Editor, err
 	}
 
 	if x != 1 {
-		file.WriteString(lackeol)
+		file.WriteString(Lackeol)
 	}
 
 	return editor, nil
