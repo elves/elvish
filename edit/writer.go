@@ -171,7 +171,7 @@ func (w *writer) write(r rune) {
 
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
-func (w *writer) refresh(prompt, text, tip string, completions []string, currentCompletion int, dot int) error {
+func (w *writer) refresh(prompt, text, tip string, comp *completion, dot int) error {
 	w.startBuffer()
 
 	for _, r := range prompt {
@@ -212,15 +212,17 @@ func (w *writer) refresh(prompt, text, tip string, completions []string, current
 		}
 	}
 
-	for i, comp := range completions {
-		if i == currentCompletion {
-			w.currentAttr = attrForCurrentCompletion
-		} else {
-			w.currentAttr = ""
-		}
-		w.newline()
-		for _, r := range comp {
-			w.write(r)
+	if comp != nil {
+		for i, cand := range comp.candidates {
+			if i == comp.current {
+				w.currentAttr = attrForCurrentCompletion
+			} else {
+				w.currentAttr = ""
+			}
+			w.newline()
+			for _, r := range cand {
+				w.write(r)
+			}
 		}
 	}
 

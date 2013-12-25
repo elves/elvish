@@ -51,21 +51,22 @@ func moveDotF(ed *Editor) {
 }
 
 func complete(ed *Editor) {
-	if ed.completions == nil {
+	if ed.completion == nil {
 		// Fire the completion
 		// TODO stub here
-		ed.completions = []string{
-			"foobar1", "foobar2", "foobar3",
+		ed.completion = &completion {
+			[]string{ "foobar1", "foobar2", "foobar3" }, -1,
 		}
-		ed.currentCompletion = -1
 	} else {
-		ed.currentCompletion++
-		if ed.currentCompletion == len(ed.completions) {
-			ed.currentCompletion = 0
+		cur := ed.completion.current
+		cur++
+		if cur == len(ed.completion.candidates) {
+			cur = 0
 		}
+		ed.completion.current = cur
 	}
 }
 
 func cancelCompletion(ed *Editor) {
-	ed.completions = nil
+	ed.completion = nil
 }

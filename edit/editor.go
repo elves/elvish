@@ -13,6 +13,11 @@ import (
 
 var Lackeol = "\033[7m\u23ce\033[m\n"
 
+type completion struct {
+	candidates []string
+	current int
+}
+
 // Editor keeps the status of the line editor.
 type Editor struct {
 	savedTermios *tty.Termios
@@ -21,8 +26,7 @@ type Editor struct {
 	reader *reader
 	// Fields below are used when during ReadLine.
 	prompt, line, tip string
-	completions []string
-	currentCompletion int
+	completion *completion
 	dot int
 }
 
@@ -107,7 +111,7 @@ func (ed *Editor) pushTip(more string) {
 }
 
 func (ed *Editor) refresh() error {
-	return ed.writer.refresh(ed.prompt, ed.line, ed.tip, ed.completions, ed.currentCompletion, ed.dot)
+	return ed.writer.refresh(ed.prompt, ed.line, ed.tip, ed.completion, ed.dot)
 }
 
 // TODO Allow modifiable keybindings.
@@ -126,7 +130,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	ed.prompt = prompt
 	ed.line = ""
 	ed.tip = ""
-	ed.completions = nil
+	ed.completion = nil
 	ed.dot = 0
 
 	for {
@@ -153,7 +157,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		// implemented as functions.
 		case Key{Enter, 0}:
 			ed.tip = ""
-			ed.completions = nil
+			ed.completion = nil
 			err := ed.refresh()
 			if err != nil {
 				return LineRead{Err: err}
