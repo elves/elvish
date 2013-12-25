@@ -117,7 +117,13 @@ var keyBindings = map[Key]string {
 	Key{Left, 0}: "move-dot-b",
 	Key{Right, 0}: "move-dot-f",
 	Key{Tab, 0}: "complete",
-	Key{'[', Ctrl}: "cancel-completion",
+}
+
+var completionKeyBindings = map[Key]string {
+	Key{Tab, 0}: "next-candidate",
+	Key{Down, 0}: "next-candidate",
+	Key{Up, 0}: "prev-candidate",
+	Key{'[', Ctrl}: "exit-completion",
 }
 
 // ReadLine reads a line interactively.
@@ -140,6 +146,16 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		if err != nil {
 			ed.pushTip(err.Error())
 			continue
+		}
+
+		if ed.completion != nil {
+			if name, bound := completionKeyBindings[k]; bound {
+				leBuiltins[name](ed)
+				continue
+			} else {
+				// Implicitly exit completion and fall back to normal keybinding
+				ed.completion = nil
+			}
 		}
 
 		if name, bound := keyBindings[k]; bound {

@@ -18,7 +18,9 @@ var leBuiltins = map[string]leBuiltin{
 	"move-dot-b": moveDotB,
 	"move-dot-f": moveDotF,
 	"complete": complete,
-	"cancel-completion": cancelCompletion,
+	"prev-candidate": prevCandidate,
+	"next-candidate": nextCandidate,
+	"exit-completion": exitCompletion,
 }
 
 func killLineB(ed *Editor) {
@@ -51,17 +53,20 @@ func moveDotF(ed *Editor) {
 }
 
 func complete(ed *Editor) {
-	if ed.completion == nil {
-		// Fire the completion
-		// TODO stub here
-		ed.completion = &completion {
-			[]string{ "foobar1", "foobar2", "foobar3" }, -1,
-		}
-	} else {
-		ed.completion.next()
+	// Fire the completion
+	ed.completion = &completion {
+		findCandidates(ed.line[:ed.dot]), -1,
 	}
 }
 
-func cancelCompletion(ed *Editor) {
+func prevCandidate(ed *Editor) {
+	ed.completion.prev()
+}
+
+func nextCandidate(ed *Editor) {
+	ed.completion.next()
+}
+
+func exitCompletion(ed *Editor) {
 	ed.completion = nil
 }
