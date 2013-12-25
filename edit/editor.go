@@ -118,6 +118,7 @@ var keyBindings = map[Key]string {
 	Key{Left, 0}: "move-dot-b",
 	Key{Right, 0}: "move-dot-f",
 	Key{Tab, 0}: "complete",
+	Key{'[', Ctrl}: "cancel-completion",
 }
 
 // ReadLine reads a line interactively.

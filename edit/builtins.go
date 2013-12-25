@@ -18,6 +18,7 @@ var leBuiltins = map[string]leBuiltin{
 	"move-dot-b": moveDotB,
 	"move-dot-f": moveDotF,
 	"complete": complete,
+	"cancel-completion": cancelCompletion,
 }
 
 func killLineB(ed *Editor) {
@@ -63,4 +64,8 @@ func complete(ed *Editor) {
 			ed.currentCompletion = 0
 		}
 	}
+}
+
+func cancelCompletion(ed *Editor) {
+	ed.completions = nil
 }
