@@ -58,12 +58,7 @@ func complete(ed *Editor) {
 			[]string{ "foobar1", "foobar2", "foobar3" }, -1,
 		}
 	} else {
-		cur := ed.completion.current
-		cur++
-		if cur == len(ed.completion.candidates) {
-			cur = 0
-		}
-		ed.completion.current = cur
+		ed.completion.next()
 	}
 }
 

@@ -13,11 +13,6 @@ import (
 
 var Lackeol = "\033[7m\u23ce\033[m\n"
 
-type completion struct {
-	candidates []string
-	current int
-}
-
 // Editor keeps the status of the line editor.
 type Editor struct {
 	savedTermios *tty.Termios
