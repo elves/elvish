@@ -31,7 +31,8 @@ func main() {
 			panic(err)
 		}
 
-		lr := ed.ReadLine("das> ")
+		prompt := util.Getwd() + "> "
+		lr := ed.ReadLine(prompt)
 		err = ed.Cleanup()
 		if err != nil {
 			panic(err)
