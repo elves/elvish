@@ -152,6 +152,8 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		// XXX Keybindings that affect the flow of ReadLine can't yet be
 		// implemented as functions.
 		case Key{Enter, 0}:
+			ed.tip = ""
+			ed.completions = nil
 			err := ed.refresh()
 			if err != nil {
 				return LineRead{Err: err}
