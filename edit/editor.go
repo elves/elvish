@@ -19,7 +19,7 @@ type Editor struct {
 	file *os.File
 	writer *writer
 	reader *reader
-	// Fields below are used when during ReadLine.
+	// Fields below are used during ReadLine.
 	prompt, line, tip string
 	completion *completion
 	dot int
@@ -34,6 +34,8 @@ type LineRead struct {
 }
 
 // Init initializes an Editor on the terminal referenced by fd.
+// The Editor is reinitialized every time the control of the terminal is
+// transferred back to the line editor.
 func Init(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) (*Editor, error) {
 	fd := int(file.Fd())
 	term, err := tty.NewTermiosFromFd(fd)
