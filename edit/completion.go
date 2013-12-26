@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"io/ioutil"
 	"../parse"
 )
 
@@ -49,11 +50,20 @@ func findCandidates(text string) (candidates []*candidate) {
 			lastToken = token
 		}
 	}
-	cand := newCandidate()
-	cand.push(tokenPart{lastToken.Val, false})
-	cand2 := newCandidate()
-	cand2.push(tokenPart{lastToken.Val, false})
-	cand2.push(tokenPart{"-stub", true})
-	candidates = append(candidates, cand, cand2)
+	prefix := lastToken.Val
+
+	infos, err := ioutil.ReadDir(".")
+	if err != nil {
+		return
+	}
+	for _, info := range infos {
+		name := info.Name()
+		if len(name) >= len(prefix) && name[:len(prefix)] == prefix {
+			cand := newCandidate()
+			cand.push(tokenPart{prefix, false})
+			cand.push(tokenPart{name[len(prefix):], true})
+			candidates = append(candidates, cand)
+		}
+	}
 	return
 }
