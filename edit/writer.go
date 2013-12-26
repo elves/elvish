@@ -220,7 +220,7 @@ func (w *writer) refresh(prompt, text, tip string, comp *completion, dot int) er
 				w.currentAttr = ""
 			}
 			w.newline()
-			for _, r := range cand {
+			for _, r := range cand.text {
 				w.write(r)
 			}
 		}

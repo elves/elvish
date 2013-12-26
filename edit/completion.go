@@ -4,8 +4,27 @@ import (
 	"../parse"
 )
 
+type tokenPart struct {
+	text string
+	completed bool
+}
+
+type candidate struct {
+	text string
+	parts []tokenPart
+}
+
+func newCandidate() *candidate {
+	return &candidate{}
+}
+
+func (c *candidate) push(tp tokenPart) {
+	c.text += tp.text
+	c.parts = append(c.parts, tp)
+}
+
 type completion struct {
-	candidates []string
+	candidates []*candidate
 	current int
 }
 
@@ -21,7 +40,7 @@ func (c *completion) next() {
 	}
 }
 
-func findCandidates(text string) (candidates []string) {
+func findCandidates(text string) (candidates []*candidate) {
 	// Find last token
 	l := parse.Lex("<completion>", text)
 	var lastToken parse.Item
@@ -30,6 +49,11 @@ func findCandidates(text string) (candidates []string) {
 			lastToken = token
 		}
 	}
-	candidates = append(candidates, lastToken.String())
+	cand := newCandidate()
+	cand.push(tokenPart{lastToken.Val, false})
+	cand2 := newCandidate()
+	cand2.push(tokenPart{lastToken.Val, false})
+	cand2.push(tokenPart{"-stub", true})
+	candidates = append(candidates, cand, cand2)
 	return
 }
