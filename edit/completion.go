@@ -25,6 +25,7 @@ func (c *candidate) push(tp tokenPart) {
 }
 
 type completion struct {
+	original string
 	candidates []*candidate
 	current int
 }
@@ -41,7 +42,8 @@ func (c *completion) next() {
 	}
 }
 
-func findCandidates(text string) (candidates []*candidate) {
+func findCompletion(text string) (c *completion) {
+	c = &completion{current: -1}
 	// Find last token
 	l := parse.Lex("<completion>", text)
 	var lastToken parse.Item
@@ -51,6 +53,7 @@ func findCandidates(text string) (candidates []*candidate) {
 		}
 	}
 	prefix := lastToken.Val
+	c.original = prefix
 
 	infos, err := ioutil.ReadDir(".")
 	if err != nil {
@@ -62,7 +65,7 @@ func findCandidates(text string) (candidates []*candidate) {
 			cand := newCandidate()
 			cand.push(tokenPart{prefix, false})
 			cand.push(tokenPart{name[len(prefix):], true})
-			candidates = append(candidates, cand)
+			c.candidates = append(c.candidates, cand)
 		}
 	}
 	return
