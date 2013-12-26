@@ -132,6 +132,17 @@ var completionKeyBindings = map[Key]string {
 	Key{'[', Ctrl}: "exit-completion",
 }
 
+// Accpet currently selected completion candidate.
+func (ed *Editor) acceptCompletion() {
+	c := ed.completion
+	if 0 <= c.current && c.current < len(c.candidates) {
+		accepted := c.candidates[c.current].text
+		ed.line = ed.line[:ed.dot - len(c.original)] + accepted + ed.line[ed.dot:]
+		ed.dot += len(accepted) - len(c.original)
+	}
+	ed.completion = nil
+}
+
 // ReadLine reads a line interactively.
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	ed.prompt = prompt
@@ -168,8 +179,8 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 				leBuiltins[name](ed)
 				continue
 			} else {
-				// Implicitly exit completion and fall back to normal keybinding
-				ed.completion = nil
+				// Implicitly accept completion and fall back to normal keybinding
+				ed.acceptCompletion()
 			}
 		}
 
