@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 	"./tty"
 	"../eval"
+	"../parse"
 	"../util"
 )
 
@@ -19,7 +20,9 @@ type Editor struct {
 	file *os.File
 	writer *writer
 	reader *reader
+	ev *eval.Evaluator
 	// Fields below are used during ReadLine.
+	tokens []parse.Item
 	prompt, line, tip string
 	completion *completion
 	dot int
@@ -46,8 +49,9 @@ func Init(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) (*Editor, err
 	editor := &Editor{
 		savedTermios: term.Copy(),
 		file: file,
-		writer: newWriter(file, ev),
+		writer: newWriter(file),
 		reader: newReader(tr),
+		ev: ev,
 	}
 
 	term.SetIcanon(false)
@@ -108,7 +112,7 @@ func (ed *Editor) pushTip(more string) {
 }
 
 func (ed *Editor) refresh() error {
-	return ed.writer.refresh(ed.prompt, ed.line, ed.tip, ed.completion, ed.dot)
+	return ed.writer.refresh(ed.prompt, ed.tokens, ed.tip, ed.completion, ed.dot)
 }
 
 // TODO Allow modifiable keybindings.
@@ -137,6 +141,15 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	ed.dot = 0
 
 	for {
+		// Re-lex the line, unless we are in completion mode
+		if ed.completion == nil {
+			ed.tokens = nil
+			hl := Highlight("<interactive code>", ed.line, ed.ev)
+			for token := range hl {
+				ed.tokens = append(ed.tokens, token)
+			}
+		}
+
 		err := ed.refresh()
 		if err != nil {
 			return LineRead{Err: err}

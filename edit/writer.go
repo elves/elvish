@@ -8,7 +8,6 @@ import (
 	"unicode/utf8"
 	"./tty"
 	"../parse"
-	"../eval"
 )
 
 // cell is an indivisible unit on the screen. It is not necessarily 1 column
@@ -49,16 +48,14 @@ func (b *buffer) appendLine(w int) {
 type writer struct {
 	file *os.File
 	oldBuf, buf *buffer
-	ev *eval.Evaluator
 	// Fields below are used when refreshing.
 	width, indent int
 	cursor pos
 	currentAttr string
 }
 
-func newWriter(f *os.File, ev *eval.Evaluator) *writer {
-	// XXX Do we need a whole eval.Evaluator?
-	writer := &writer{file: f, oldBuf: newBuffer(0), ev: ev}
+func newWriter(f *os.File) *writer {
+	writer := &writer{file: f, oldBuf: newBuffer(0)}
 	return writer
 }
 
@@ -171,7 +168,7 @@ func (w *writer) write(r rune) {
 
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
-func (w *writer) refresh(prompt, text, tip string, comp *completion, dot int) error {
+func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *completion, dot int) error {
 	w.startBuffer()
 
 	for _, r := range prompt {
@@ -188,8 +185,7 @@ func (w *writer) refresh(prompt, text, tip string, comp *completion, dot int) er
 		w.buf.dot = w.cursor
 	}
 
-	hl := Highlight("<interactive code>", text, w.ev)
-	for token := range hl {
+	for _, token := range tokens {
 		if token.Typ == parse.ItemEOF {
 			break
 		}
