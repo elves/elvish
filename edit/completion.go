@@ -25,7 +25,7 @@ func (c *candidate) push(tp tokenPart) {
 }
 
 type completion struct {
-	original string
+	start, end int // The text to complete is Editor.line[start:end]
 	candidates []*candidate
 	current int
 }
@@ -42,10 +42,10 @@ func (c *completion) next() {
 	}
 }
 
-func findCompletion(text string) (c *completion) {
-	c = &completion{current: -1}
+func startCompletion(ed *Editor) {
+	c := &completion{current: -1}
 	// Find last token
-	l := parse.Lex("<completion>", text)
+	l := parse.Lex("<completion>", ed.line[:ed.dot])
 	var lastToken parse.Item
 	for token := range l.Chan() {
 		if token.Typ != parse.ItemEOF {
@@ -53,7 +53,8 @@ func findCompletion(text string) (c *completion) {
 		}
 	}
 	prefix := lastToken.Val
-	c.original = prefix
+	c.start = ed.dot - len(prefix)
+	c.end = ed.dot
 
 	infos, err := ioutil.ReadDir(".")
 	if err != nil {
@@ -68,5 +69,5 @@ func findCompletion(text string) (c *completion) {
 			c.candidates = append(c.candidates, cand)
 		}
 	}
-	return
+	ed.completion = c
 }

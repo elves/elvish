@@ -137,8 +137,8 @@ func (ed *Editor) acceptCompletion() {
 	c := ed.completion
 	if 0 <= c.current && c.current < len(c.candidates) {
 		accepted := c.candidates[c.current].text
-		ed.line = ed.line[:ed.dot - len(c.original)] + accepted + ed.line[ed.dot:]
-		ed.dot += len(accepted) - len(c.original)
+		ed.line = ed.line[:c.start] + accepted + ed.line[c.end:]
+		ed.dot += len(accepted) - (c.end - c.start)
 	}
 	ed.completion = nil
 }

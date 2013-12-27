@@ -53,7 +53,7 @@ func moveDotF(ed *Editor) {
 }
 
 func complete(ed *Editor) {
-	ed.completion = findCompletion(ed.line[:ed.dot])
+	startCompletion(ed)
 }
 
 func prevCandidate(ed *Editor) {
