@@ -19,9 +19,9 @@ var leBuiltins = map[string]leBuiltin{
 	"move-dot-b": moveDotB,
 	"move-dot-f": moveDotF,
 	"complete": complete,
-	"prev-candidate": prevCandidate,
-	"next-candidate": nextCandidate,
-	"exit-completion": exitCompletion,
+	"cancel-completion": cancelCompletion,
+	"select-cand-b": selectCandB,
+	"select-cand-f": selectCandF,
 }
 
 func killLineB(ed *Editor) {
@@ -63,14 +63,14 @@ func complete(ed *Editor) {
 	}
 }
 
-func prevCandidate(ed *Editor) {
+func selectCandB(ed *Editor) {
 	ed.completion.prev()
 }
 
-func nextCandidate(ed *Editor) {
+func selectCandF(ed *Editor) {
 	ed.completion.next()
 }
 
-func exitCompletion(ed *Editor) {
+func cancelCompletion(ed *Editor) {
 	ed.completion = nil
 }
