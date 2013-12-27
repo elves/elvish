@@ -85,6 +85,7 @@ func startCompletion(ed *Editor) {
 
 	names, err := fileNames(".")
 	if err != nil {
+		ed.pushTip(err.Error())
 		return
 	}
 	c.candidates = findCandidates(pattern, names)
