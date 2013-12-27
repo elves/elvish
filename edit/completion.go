@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"fmt"
 	"io/ioutil"
 	"../parse"
 )
@@ -51,8 +52,6 @@ func (c *completion) next(cycle bool) {
 			c.current--
 		}
 	}
-	if c.current < len(c.candidates) - 1 {
-	}
 }
 
 func findCandidates(p string, all []string) (cands []*candidate) {
@@ -93,7 +92,17 @@ func startCompletion(ed *Editor) {
 	pattern := lastToken.Val
 	c.start = ed.dot - len(pattern)
 	c.end = ed.dot
-	c.typ = lastToken.Typ
+	switch lastToken.Typ {
+	case parse.ItemSpace:
+		// Last token is space, start a new token instead
+		pattern = ""
+		fallthrough
+	case parse.ItemBare:
+		c.typ = parse.ItemBare
+	default:
+		ed.pushTip(fmt.Sprintf("Completion for %s tokens not yet supported :(", lastToken.Typ))
+		return
+	}
 
 	names, err := fileNames(".")
 	if err != nil {

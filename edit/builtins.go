@@ -57,8 +57,12 @@ func moveDotF(ed *Editor) {
 func complete(ed *Editor) {
 	startCompletion(ed)
 	c := ed.completion
+	if c == nil {
+		return
+	}
 	if len(c.candidates) == 0 {
 		ed.pushTip(fmt.Sprintf("No completion for %s", ed.line[c.start:c.end]))
+		ed.completion = nil
 	} else {
 		c.current = 0
 	}
