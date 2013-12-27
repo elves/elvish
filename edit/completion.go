@@ -43,6 +43,31 @@ func (c *completion) next() {
 	}
 }
 
+func findCandidates(p string, all []string) (cands []*candidate) {
+	// Prefix match
+	for _, s := range all {
+		if len(s) >= len(p) && s[:len(p)] == p {
+			cand := newCandidate()
+			cand.push(tokenPart{p, false})
+			cand.push(tokenPart{s[len(p):], true})
+			cands = append(cands, cand)
+		}
+	}
+	return
+}
+
+func fileNames(dir string) (names []string, err error) {
+	infos, e := ioutil.ReadDir(".")
+	if e != nil {
+		err = e
+		return
+	}
+	for _, info := range infos {
+		names = append(names, info.Name())
+	}
+	return
+}
+
 func startCompletion(ed *Editor) {
 	c := &completion{current: -1}
 	// Find last token
@@ -53,23 +78,15 @@ func startCompletion(ed *Editor) {
 			lastToken = token
 		}
 	}
-	prefix := lastToken.Val
-	c.start = ed.dot - len(prefix)
+	pattern := lastToken.Val
+	c.start = ed.dot - len(pattern)
 	c.end = ed.dot
 	c.typ = lastToken.Typ
 
-	infos, err := ioutil.ReadDir(".")
+	names, err := fileNames(".")
 	if err != nil {
 		return
 	}
-	for _, info := range infos {
-		name := info.Name()
-		if len(name) >= len(prefix) && name[:len(prefix)] == prefix {
-			cand := newCandidate()
-			cand.push(tokenPart{prefix, false})
-			cand.push(tokenPart{name[len(prefix):], true})
-			c.candidates = append(c.candidates, cand)
-		}
-	}
+	c.candidates = findCandidates(pattern, names)
 	ed.completion = c
 }
