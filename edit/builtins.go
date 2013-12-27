@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"fmt"
 	"unicode/utf8"
 )
 
@@ -54,6 +55,12 @@ func moveDotF(ed *Editor) {
 
 func complete(ed *Editor) {
 	startCompletion(ed)
+	c := ed.completion
+	if len(c.candidates) == 0 {
+		ed.pushTip(fmt.Sprintf("No completion for %s", ed.line[c.start:c.end]))
+	} else {
+		c.current = 0
+	}
 }
 
 func prevCandidate(ed *Editor) {
