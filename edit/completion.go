@@ -31,15 +31,27 @@ type completion struct {
 	current int
 }
 
-func (c *completion) prev() {
-	if c.current > 0 {
-		c.current--
+func (c *completion) prev(cycle bool) {
+	c.current--
+	if c.current == -1 {
+		if cycle {
+			c.current = len(c.candidates) - 1
+		} else {
+			c.current++
+		}
 	}
 }
 
-func (c *completion) next() {
+func (c *completion) next(cycle bool) {
+	c.current++
+	if c.current == len(c.candidates) {
+		if cycle {
+			c.current = 0
+		} else {
+			c.current--
+		}
+	}
 	if c.current < len(c.candidates) - 1 {
-		c.current++
 	}
 }
 

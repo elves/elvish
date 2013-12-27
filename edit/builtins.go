@@ -22,6 +22,7 @@ var leBuiltins = map[string]leBuiltin{
 	"cancel-completion": cancelCompletion,
 	"select-cand-b": selectCandB,
 	"select-cand-f": selectCandF,
+	"cycle-cand-f": cycleCandF,
 }
 
 func killLineB(ed *Editor) {
@@ -64,11 +65,15 @@ func complete(ed *Editor) {
 }
 
 func selectCandB(ed *Editor) {
-	ed.completion.prev()
+	ed.completion.prev(false)
 }
 
 func selectCandF(ed *Editor) {
-	ed.completion.next()
+	ed.completion.next(false)
+}
+
+func cycleCandF(ed *Editor) {
+	ed.completion.next(true)
 }
 
 func cancelCompletion(ed *Editor) {

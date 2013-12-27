@@ -126,10 +126,10 @@ var keyBindings = map[Key]string {
 }
 
 var completionKeyBindings = map[Key]string {
-	Key{Tab, 0}: "select-cand-f",
+	Key{'[', Ctrl}: "cancel-completion",
 	Key{Up, 0}: "select-cand-b",
 	Key{Down, 0}: "select-cand-f",
-	Key{'[', Ctrl}: "cancel-completion",
+	Key{Tab, 0}: "cycle-cand-f",
 }
 
 // Accpet currently selected completion candidate.
