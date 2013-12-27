@@ -179,7 +179,7 @@ func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *c
 		w.indent = w.cursor.col
 	}
 
-	// i keeps track of number of runes written.
+	// i keeps track of number of bytes written.
 	i := 0
 	if dot == 0 {
 		w.buf.dot = w.cursor
