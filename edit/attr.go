@@ -4,7 +4,10 @@ import (
 	"../parse"
 )
 
-var attrForCurrentCompletion = "7"
+var (
+	attrForCurrentCompletion = "7"
+	attrForCompleted = ";4"
+)
 
 var attrForType = map[parse.ItemType]string{
 	parse.ItemSpace: "36", // only applies to comments
@@ -20,10 +23,10 @@ var attrForType = map[parse.ItemType]string{
 	parse.ItemLBrace: "34;1",
 	parse.ItemRBrace: "34;1",
 	parse.ItemAmpersand: "1",
-	parse.ItemDollar: "36;4",
+	parse.ItemDollar: "35",
 
 	ItemValidCommand: "32",
 	ItemInvalidCommand: "31",
-	ItemValidVariable: "32;4",
-	ItemInvalidVariable: "31;4",
+	ItemValidVariable: "35",
+	ItemInvalidVariable: "31",
 }

@@ -186,12 +186,26 @@ func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *c
 	}
 
 	for _, token := range tokens {
-		if token.Typ == parse.ItemEOF {
-			break
-		}
 		w.currentAttr = attrForType[token.Typ]
 		for _, r := range token.Val {
-			w.write(r)
+			if comp != nil && comp.current != -1 && comp.start <= i && i < comp.end {
+				// Silence the part that is being completed
+				if i == comp.start {
+					// Put the current candidate instead
+					// NOTE the cursor should be placed correctly (i.e. right after the candidate)
+					for _, part := range comp.candidates[comp.current].parts {
+						w.currentAttr = attrForType[comp.typ]
+						if part.completed {
+							w.currentAttr += attrForCompleted
+						}
+						for _, r := range part.text {
+							w.write(r)
+						}
+					}
+				}
+			} else {
+				w.write(r)
+			}
 			i += utf8.RuneLen(r)
 			if dot == i {
 				w.buf.dot = w.cursor

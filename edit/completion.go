@@ -26,6 +26,7 @@ func (c *candidate) push(tp tokenPart) {
 
 type completion struct {
 	start, end int // The text to complete is Editor.line[start:end]
+	typ parse.ItemType
 	candidates []*candidate
 	current int
 }
@@ -55,6 +56,7 @@ func startCompletion(ed *Editor) {
 	prefix := lastToken.Val
 	c.start = ed.dot - len(prefix)
 	c.end = ed.dot
+	c.typ = lastToken.Typ
 
 	infos, err := ioutil.ReadDir(".")
 	if err != nil {
