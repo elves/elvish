@@ -31,67 +31,67 @@ The Language
 
 * Basically prefix syntax without the outmost pair of parentheses (`>`
   represents the prompt):
-    ```
-    > + 1 2
-    3
-    > * (+ 1 2) 3
-    9
-    ```
+  ```
+  > + 1 2
+  3
+  > * (+ 1 2) 3
+  9
+  ```
 
 * Use backquote for literal string (so that you can write both single and
   double quotes inside), double backquotes for a literal backquote:
-    ```
-    > echo `"He's dead, Jim."`
-    "He's dead, Jim."
-    > echo ```He's dead, Jim."`
-    ``He's dead, Jim."
-    ```
+  ```
+  > echo `"He's dead, Jim."`
+  "He's dead, Jim."
+  > echo ```He's dead, Jim."`
+  ``He's dead, Jim."
+  ```
 
 * Barewords are string literals:
-    ```
-    > = a `a`
-    true
-    ```
+  ```
+  > = a `a`
+  true
+  ```
 
 * Tables are a hybrid of array and hash (a la Lua); tables are first-class
   values (`put` is the builtin for outputting):
-    ```
-    > put [a b c &key value]
-    [a b c &key value]
-    > put [a b c &key value][0]
-    a
-    > put [a b c &key value][key]
-    value
-    ```
+  ```
+  > put [a b c &key value]
+  [a b c &key value]
+  > put [a b c &key value][0]
+  a
+  > put [a b c &key value][key]
+  value
+  ```
 
 * Declare variable with `var`, set value with `set`; `var` also:
-    ```
-    > var v
-    > set v = [foo bar]
-    > var u = [foo bar] # equivalent to var-set combo
-    ```
+  ```
+  > var v
+  > set v = [foo bar]
+  > var u = [foo bar] # equivalent to var-set combo
+  ```
 
 * First-class closures, lisp-like functional programming:
-    ```
-    > map {|x| * 2 $x} [1 2 3]
-    [2 4 6]
-    > filter {|x| > x 2} [1 2 3 4 5]
-    [3 4 5]
-    > map {|x| * 2 $x} (filter {|x| > x 2} [1 2 3 4 5])
-    ```
+  ```
+  > map {|x| * 2 $x} [1 2 3]
+  [2 4 6]
+  > filter {|x| > x 2} [1 2 3 4 5]
+  [3 4 5]
+  > map {|x| * 2 $x} (filter {|x| > x 2} [1 2 3 4 5])
+  ```
 
 * Get rid of lots of irritating superfluous parentheses with pipelines:
-    ```
-    > put [1 2 3 4 5] | filter {|x| > x 2} | map {|x| * 2 $x}
-    [6 8 10]
-    ```
+  ```
+  > put [1 2 3 4 5] | filter {|x| > x 2} | map {|x| * 2 $x}
+  [6 8 10]
+  ```
 
 * Use the table `$env` for environmental variables:
-    ```
-    > put $env[HOME]
-    /home/xiaq
-    > set env[PATH] = $env[PATH]:/bin
-    ```
+  ```
+  > put $env[HOME]
+  /home/xiaq
+  > set env[PATH] = $env[PATH]:/bin
+  ```
 
 There are many parts of the language that is not yet decided. See TODO.md for
 a list of things I'm currently thinking about.
