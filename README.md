@@ -29,10 +29,16 @@ And:
 The Language
 ------------
 
-* Running external programs, of course:
+(Like the previous section, many things are not yet implemented.)
+
+* Running external programs and pipelines, of course:
   ```
   > vim README.md
+  ...
   > cat -v /dev/random
+  ...
+  > dmesg | grep bar
+  ...
   ```
 
 * Basically prefix syntax without the outmost pair of parentheses (`>`
