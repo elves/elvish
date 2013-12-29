@@ -29,6 +29,12 @@ And:
 The Language
 ------------
 
+* Running external programs, of course:
+  ```
+  > vim README.md
+  > cat -v /dev/random
+  ```
+
 * Basically prefix syntax without the outmost pair of parentheses (`>`
   represents the prompt):
   ```
