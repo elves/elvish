@@ -87,14 +87,14 @@ The Language
   ```
   > map {|x| * 2 $x} [1 2 3]
   [2 4 6]
-  > filter {|x| > x 2} [1 2 3 4 5]
+  > filter {|x| > $x 2} [1 2 3 4 5]
   [3 4 5]
-  > map {|x| * 2 $x} (filter {|x| > x 2} [1 2 3 4 5])
+  > map {|x| * 2 $x} (filter {|x| > $x 2} [1 2 3 4 5])
   ```
 
 * Get rid of lots of irritating superfluous parentheses with pipelines:
   ```
-  > put [1 2 3 4 5] | filter {|x| > x 2} | map {|x| * 2 $x}
+  > put [1 2 3 4 5] | filter {|x| > $x 2} | map {|x| * 2 $x}
   [6 8 10]
   ```
 
