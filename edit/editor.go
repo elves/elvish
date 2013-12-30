@@ -112,6 +112,14 @@ func (ed *Editor) pushTip(more string) {
 }
 
 func (ed *Editor) refresh() error {
+	// Re-lex the line, unless we are in completion mode
+	if ed.completion == nil {
+		ed.tokens = nil
+		hl := Highlight("<interactive code>", ed.line, ed.ev)
+		for token := range hl {
+			ed.tokens = append(ed.tokens, token)
+		}
+	}
 	return ed.writer.refresh(ed.prompt, ed.tokens, ed.tip, ed.completion, ed.dot)
 }
 
@@ -152,15 +160,6 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	ed.dot = 0
 
 	for {
-		// Re-lex the line, unless we are in completion mode
-		if ed.completion == nil {
-			ed.tokens = nil
-			hl := Highlight("<interactive code>", ed.line, ed.ev)
-			for token := range hl {
-				ed.tokens = append(ed.tokens, token)
-			}
-		}
-
 		err := ed.refresh()
 		if err != nil {
 			return LineRead{Err: err}
