@@ -90,7 +90,6 @@ func startCompletion(ed *Editor) {
 		}
 	}
 	pattern := lastToken.Val
-	c.start = ed.dot - len(pattern)
 	c.end = ed.dot
 	switch lastToken.Typ {
 	case parse.ItemSpace:
@@ -103,6 +102,7 @@ func startCompletion(ed *Editor) {
 		ed.pushTip(fmt.Sprintf("Completion for %s tokens not yet supported :(", lastToken.Typ))
 		return
 	}
+	c.start = ed.dot - len(pattern)
 
 	names, err := fileNames(".")
 	if err != nil {
