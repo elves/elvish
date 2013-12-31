@@ -24,3 +24,10 @@ func wcwidth(r rune) int {
 	}
 	return 1
 }
+
+func wcwidths(s string) (w int) {
+	for _, r := range s {
+		w += wcwidth(r)
+	}
+	return
+}

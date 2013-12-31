@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 	"./tty"
 	"../parse"
+	"../util"
 )
 
 // cell is an indivisible unit on the screen. It is not necessarily 1 column
@@ -226,15 +227,44 @@ func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *c
 	}
 
 	if comp != nil {
-		for i, cand := range comp.candidates {
-			if i == comp.current {
-				w.currentAttr = attrForCurrentCompletion
-			} else {
-				w.currentAttr = ""
+		// Layout candidates in multiple columns
+		cands := comp.candidates
+
+		// First decide the shape (# of rows and columns)
+		colWidth := 0
+		colMargin := 2
+		for _, cand := range cands {
+			width := wcwidths(cand.text)
+			if colWidth < width {
+				colWidth = width
 			}
+		}
+
+		cols := (w.width + colMargin) / (colWidth + colMargin)
+		lines := util.CeilDiv(len(cands), cols)
+
+		for i := 0; i < lines; i++ {
 			w.newline()
-			for _, r := range cand.text {
-				w.write(r)
+			for j := 0; j < cols; j++ {
+				k := j * lines + i
+				if k >= len(cands) {
+					continue
+				}
+				if k == comp.current {
+					w.currentAttr = attrForCurrentCompletion
+				} else {
+					w.currentAttr = ""
+				}
+				for _, r := range cands[k].text {
+					w.write(r)
+				}
+				for l := wcwidths(cands[k].text); l < colWidth; l++ {
+					w.write(' ')
+				}
+				w.currentAttr = ""
+				for l := 0; l < colMargin; l++ {
+					w.write(' ')
+				}
 			}
 		}
 	}
