@@ -4,6 +4,7 @@ import (
 	"os"
 	"fmt"
 	"bytes"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 	"./tty"
@@ -167,14 +168,18 @@ func (w *writer) write(r rune) {
 	}
 }
 
+func (w *writer) writes(s string) {
+	for _, r := range s {
+		w.write(r)
+	}
+}
+
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
 func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *completion, dot int) error {
 	w.startBuffer()
 
-	for _, r := range prompt {
-		w.write(r)
-	}
+	w.writes(prompt)
 
 	if w.cursor.col * 2 < w.width {
 		w.indent = w.cursor.col
@@ -205,9 +210,7 @@ func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *c
 					if part.completed {
 						w.currentAttr += attrForCompleted
 					}
-					for _, r := range part.text {
-						w.write(r)
-					}
+					w.writes(part.text)
 				}
 				suppress = true;
 			}
@@ -221,9 +224,7 @@ func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *c
 	w.currentAttr = ""
 	if len(tip) > 0 {
 		w.newline()
-		for _, r := range tip {
-			w.write(r)
-		}
+		w.writes(tip)
 	}
 
 	if comp != nil {
@@ -255,16 +256,11 @@ func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *c
 				} else {
 					w.currentAttr = ""
 				}
-				for _, r := range cands[k].text {
-					w.write(r)
-				}
-				for l := wcwidths(cands[k].text); l < colWidth; l++ {
-					w.write(' ')
-				}
+				text := cands[k].text
+				w.writes(text)
+				w.writes(strings.Repeat(" ", colWidth - wcwidths(text)))
 				w.currentAttr = ""
-				for l := 0; l < colMargin; l++ {
-					w.write(' ')
-				}
+				w.writes(strings.Repeat(" ", colMargin))
 			}
 		}
 	}
