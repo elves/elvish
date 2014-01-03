@@ -111,4 +111,5 @@ func startCompletion(ed *Editor) {
 	}
 	c.candidates = findCandidates(pattern, names)
 	ed.completion = c
+	ed.mode = ModeCompleting
 }

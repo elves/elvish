@@ -221,6 +221,18 @@ func (w *writer) refresh(bs *bufferState) error {
 	}
 
 	w.indent = 0
+
+	if bs.mode != ModeInsert {
+		w.newline()
+		w.currentAttr = attrForMode
+		switch bs.mode {
+		case ModeCommand:
+			w.writes("-- COMMAND --")
+		case ModeCompleting:
+			w.writes("-- COMPLETING --")
+		}
+	}
+
 	w.currentAttr = ""
 	if len(bs.tip) > 0 {
 		w.newline()

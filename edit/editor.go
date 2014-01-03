@@ -14,12 +14,29 @@ import (
 
 var Lackeol = "\033[7m\u23ce\033[m\n"
 
+type bufferMode int
+
+const (
+	ModeInsert bufferMode = iota
+	ModeCommand
+	ModeCompleting
+)
+
 type bufferState struct {
 	// States used during ReadLine.
 	tokens []parse.Item
 	prompt, line, tip string
+	mode bufferMode
 	completion *completion
 	dot int
+}
+
+func (bs *bufferState) finish() {
+	// Clean up the state before exiting the editor.
+	bs.tip = ""
+	bs.mode = ModeInsert
+	bs.completion = nil
+	bs.dot = len(bs.line)
 }
 
 // Editor keeps the status of the line editor.
@@ -116,8 +133,8 @@ func (ed *Editor) pushTip(more string) {
 }
 
 func (ed *Editor) refresh() error {
-	// Re-lex the line, unless we are in completion mode
-	if ed.completion == nil {
+	// Re-lex the line, unless we are in ModeCompleting
+	if ed.mode != ModeCompleting {
 		ed.tokens = nil
 		hl := Highlight("<interactive code>", ed.line, ed.ev)
 		for token := range hl {
@@ -153,12 +170,14 @@ func (ed *Editor) acceptCompletion() {
 		ed.dot += len(accepted) - (c.end - c.start)
 	}
 	ed.completion = nil
+	ed.mode = ModeInsert
 }
 
 // ReadLine reads a line interactively.
 func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 	ed.prompt = prompt
 	ed.line = ""
+	ed.mode = ModeInsert
 	ed.tip = ""
 	ed.completion = nil
 	ed.dot = 0
@@ -177,7 +196,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			continue
 		}
 
-		if ed.completion != nil {
+		if ed.mode == ModeCompleting {
 			if name, bound := completionKeyBindings[k]; bound {
 				leBuiltins[name](ed)
 				continue
@@ -196,8 +215,7 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 		// XXX Keybindings that affect the flow of ReadLine can't yet be
 		// implemented as functions.
 		case Key{Enter, 0}:
-			ed.tip = ""
-			ed.completion = nil
+			ed.finish()
 			err := ed.refresh()
 			if err != nil {
 				return LineRead{Err: err}

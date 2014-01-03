@@ -82,4 +82,5 @@ func cycleCandF(ed *Editor) {
 
 func cancelCompletion(ed *Editor) {
 	ed.completion = nil
+	ed.mode = ModeInsert
 }
