@@ -4,8 +4,6 @@ package edit
 import (
 	"os"
 	"fmt"
-	"unicode"
-	"unicode/utf8"
 	"./tty"
 	"../eval"
 	"../parse"
@@ -145,20 +143,25 @@ func (ed *Editor) refresh() error {
 }
 
 // TODO Allow modifiable keybindings.
-var keyBindings = map[Key]string {
-	Key{'U', Ctrl}: "kill-line-b",
-	Key{'K', Ctrl}: "kill-line-f",
-	Key{Backspace, 0}: "kill-rune-b",
-	Key{Left, 0}: "move-dot-b",
-	Key{Right, 0}: "move-dot-f",
-	Key{Tab, 0}: "complete",
-}
-
-var completionKeyBindings = map[Key]string {
-	Key{'[', Ctrl}: "cancel-completion",
-	Key{Up, 0}: "select-cand-b",
-	Key{Down, 0}: "select-cand-f",
-	Key{Tab, 0}: "cycle-cand-f",
+var keyBindings = map[bufferMode]map[Key]string {
+	ModeInsert: map[Key]string{
+		Key{'U', Ctrl}: "kill-line-b",
+		Key{'K', Ctrl}: "kill-line-f",
+		Key{Backspace, 0}: "kill-rune-b",
+		Key{Left, 0}: "move-dot-b",
+		Key{Right, 0}: "move-dot-f",
+		Key{Enter, 0}: "accept-line",
+		Key{Tab, 0}: "complete",
+		Key{'D', Ctrl}: "return-eof",
+		DefaultBinding: "default-insert",
+	},
+	ModeCompleting: map[Key]string{
+		Key{'[', Ctrl}: "cancel-completion",
+		Key{Up, 0}: "select-cand-b",
+		Key{Down, 0}: "select-cand-f",
+		Key{Tab, 0}: "cycle-cand-f",
+		DefaultBinding: "default-completing",
+	},
 }
 
 // Accpet currently selected completion candidate.
@@ -196,44 +199,32 @@ func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
 			continue
 		}
 
-		if ed.mode == ModeCompleting {
-			if name, bound := completionKeyBindings[k]; bound {
-				leBuiltins[name](ed)
-				continue
-			} else {
-				// Implicitly accept completion and fall back to normal keybinding
-				ed.acceptCompletion()
-			}
-		}
-
-		if name, bound := keyBindings[k]; bound {
-			leBuiltins[name](ed)
+		lookup_key:
+		keyBinding, ok := keyBindings[ed.mode]
+		if !ok {
+			ed.pushTip("No binding for current mode")
 			continue
 		}
 
-		switch k {
-		// XXX Keybindings that affect the flow of ReadLine can't yet be
-		// implemented as functions.
-		case Key{Enter, 0}:
-			ed.finish()
-			err := ed.refresh()
-			if err != nil {
-				return LineRead{Err: err}
-			}
-			fmt.Fprintln(ed.file)
-			return LineRead{Line: ed.line}
-		case Key{'D', Ctrl}:
-			if len(ed.line) == 0 {
-				return LineRead{Eof: true}
-			}
-			fallthrough
-		default:
-			if k.Mod == 0 && k.rune > 0 && unicode.IsGraphic(k.rune) {
-				ed.line = ed.line[:ed.dot] + string(k.rune) + ed.line[ed.dot:]
-				ed.dot += utf8.RuneLen(k.rune)
-			} else {
-				ed.pushTip(fmt.Sprintf("Unbound: %s", k))
-			}
+		name, bound := keyBinding[k]
+		if !bound {
+			name = keyBinding[DefaultBinding]
+		}
+		ret := leBuiltins[name](ed, k)
+		if ret == nil {
+			continue
+		}
+		switch ret.action {
+		case noAction:
+			continue
+		case changeMode:
+			ed.mode = ret.newMode
+			continue
+		case changeModeAndReprocess:
+			ed.mode = ret.newMode
+			goto lookup_key
+		case exitReadLine:
+			return ret.readLineReturn
 		}
 	}
 }

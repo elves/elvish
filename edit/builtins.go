@@ -2,6 +2,7 @@ package edit
 
 import (
 	"fmt"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -25,7 +26,7 @@ type leReturn struct {
 	readLineReturn LineRead
 }
 
-type leBuiltin func (ed *Editor) *leReturn
+type leBuiltin func (ed *Editor, k Key) *leReturn
 
 var leBuiltins = map[string]leBuiltin{
 	"kill-line-b": killLineB,
@@ -33,25 +34,29 @@ var leBuiltins = map[string]leBuiltin{
 	"kill-rune-b": killRuneB,
 	"move-dot-b": moveDotB,
 	"move-dot-f": moveDotF,
+	"accept-line": acceptLine,
 	"complete": complete,
+	"return-eof": returnEof,
+	"default-insert": defaultInsert,
 	"cancel-completion": cancelCompletion,
 	"select-cand-b": selectCandB,
 	"select-cand-f": selectCandF,
 	"cycle-cand-f": cycleCandF,
+	"default-completing": defaultCompleting,
 }
 
-func killLineB(ed *Editor) *leReturn {
+func killLineB(ed *Editor, k Key) *leReturn {
 	ed.line = ed.line[ed.dot:]
 	ed.dot = 0
 	return nil
 }
 
-func killLineF(ed *Editor) *leReturn {
+func killLineF(ed *Editor, k Key) *leReturn {
 	ed.line = ed.line[:ed.dot]
 	return nil
 }
 
-func killRuneB(ed *Editor) *leReturn {
+func killRuneB(ed *Editor, k Key) *leReturn {
 	if ed.dot > 0 {
 		_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
 		ed.line = ed.line[:ed.dot-w] + ed.line[ed.dot:]
@@ -62,19 +67,29 @@ func killRuneB(ed *Editor) *leReturn {
 	return nil
 }
 
-func moveDotB(ed *Editor) *leReturn {
+func moveDotB(ed *Editor, k Key) *leReturn {
 	_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
 	ed.dot -= w
 	return nil
 }
 
-func moveDotF(ed *Editor) *leReturn {
+func moveDotF(ed *Editor, k Key) *leReturn {
 	_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
 	ed.dot += w
 	return nil
 }
 
-func complete(ed *Editor) *leReturn {
+func acceptLine(ed *Editor, k Key) *leReturn {
+	ed.finish()
+	err := ed.refresh()
+	if err != nil {
+		return &leReturn{action: exitReadLine, readLineReturn: LineRead{Err: err}}
+	}
+	fmt.Fprintln(ed.file)
+	return &leReturn{action: exitReadLine, readLineReturn: LineRead{Line: ed.line}}
+}
+
+func complete(ed *Editor, k Key) *leReturn {
 	startCompletion(ed)
 	c := ed.completion
 	if c == nil {
@@ -89,23 +104,45 @@ func complete(ed *Editor) *leReturn {
 	return nil
 }
 
-func selectCandB(ed *Editor) *leReturn {
+func returnEof(ed *Editor, k Key) *leReturn {
+	if len(ed.line) == 0 {
+		return &leReturn{action: exitReadLine, readLineReturn: LineRead{Eof: true}}
+	}
+	return nil
+}
+
+func selectCandB(ed *Editor, k Key) *leReturn {
 	ed.completion.prev(false)
 	return nil
 }
 
-func selectCandF(ed *Editor) *leReturn {
+func selectCandF(ed *Editor, k Key) *leReturn {
 	ed.completion.next(false)
 	return nil
 }
 
-func cycleCandF(ed *Editor) *leReturn {
+func cycleCandF(ed *Editor, k Key) *leReturn {
 	ed.completion.next(true)
 	return nil
 }
 
-func cancelCompletion(ed *Editor) *leReturn {
+func cancelCompletion(ed *Editor, k Key) *leReturn {
 	ed.completion = nil
 	ed.mode = ModeInsert
 	return nil
+}
+
+func defaultInsert(ed *Editor, k Key) *leReturn {
+	if k.Mod == 0 && k.rune > 0 && unicode.IsGraphic(k.rune) {
+		ed.line = ed.line[:ed.dot] + string(k.rune) + ed.line[ed.dot:]
+		ed.dot += utf8.RuneLen(k.rune)
+	} else {
+		ed.pushTip(fmt.Sprintf("Unbound: %s", k))
+	}
+	return nil
+}
+
+func defaultCompleting(ed *Editor, k Key) *leReturn {
+	ed.acceptCompletion()
+	return &leReturn{action: changeModeAndReprocess, newMode: ModeInsert}
 }
