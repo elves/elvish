@@ -114,6 +114,7 @@ func complete(ed *Editor, k Key) *leReturn {
 	if len(c.candidates) == 0 {
 		ed.pushTip(fmt.Sprintf("No completion for %s", ed.line[c.start:c.end]))
 		ed.completion = nil
+		ed.mode = ModeInsert
 	} else {
 		c.current = 0
 	}
