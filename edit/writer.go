@@ -191,7 +191,7 @@ func (w *writer) refresh(bs *bufferState) error {
 	}
 
 	comp := bs.completion
-	var suppress = false;
+	var suppress = false
 	for _, token := range bs.tokens {
 		w.currentAttr = attrForType[token.Typ]
 		for _, r := range token.Val {
@@ -212,7 +212,7 @@ func (w *writer) refresh(bs *bufferState) error {
 					}
 					w.writes(part.text)
 				}
-				suppress = true;
+				suppress = true
 			}
 			if bs.dot == i {
 				w.buf.dot = w.cursor
