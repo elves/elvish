@@ -107,17 +107,6 @@ func acceptLine(ed *Editor, k Key) *leReturn {
 
 func complete(ed *Editor, k Key) *leReturn {
 	startCompletion(ed)
-	c := ed.completion
-	if c == nil {
-		return nil
-	}
-	if len(c.candidates) == 0 {
-		ed.pushTip(fmt.Sprintf("No completion for %s", ed.line[c.start:c.end]))
-		ed.completion = nil
-		ed.mode = ModeInsert
-	} else {
-		c.current = 0
-	}
 	return nil
 }
 

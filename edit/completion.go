@@ -80,7 +80,7 @@ func fileNames(dir string) (names []string, err error) {
 }
 
 func startCompletion(ed *Editor) {
-	c := &completion{current: -1}
+	c := &completion{}
 	// Find last token
 	l := parse.Lex("<completion>", ed.line[:ed.dot])
 	var lastToken parse.Item
@@ -110,6 +110,10 @@ func startCompletion(ed *Editor) {
 		return
 	}
 	c.candidates = findCandidates(pattern, names)
-	ed.completion = c
-	ed.mode = ModeCompleting
+	if len(c.candidates) > 0 {
+		ed.completion = c
+		ed.mode = ModeCompleting
+	} else {
+		ed.pushTip(fmt.Sprintf("No completion for %s", pattern))
+	}
 }
