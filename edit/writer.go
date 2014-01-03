@@ -8,7 +8,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 	"./tty"
-	"../parse"
 	"../util"
 )
 
@@ -176,10 +175,10 @@ func (w *writer) writes(s string) {
 
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
-func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *completion, dot int) error {
+func (w *writer) refresh(bs *bufferState) error {
 	w.startBuffer()
 
-	w.writes(prompt)
+	w.writes(bs.prompt)
 
 	if w.cursor.col * 2 < w.width {
 		w.indent = w.cursor.col
@@ -187,12 +186,13 @@ func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *c
 
 	// i keeps track of number of bytes written.
 	i := 0
-	if dot == 0 {
+	if bs.dot == 0 {
 		w.buf.dot = w.cursor
 	}
 
+	comp := bs.completion
 	var suppress = false;
-	for _, token := range tokens {
+	for _, token := range bs.tokens {
 		w.currentAttr = attrForType[token.Typ]
 		for _, r := range token.Val {
 			if suppress && i < comp.end {
@@ -214,7 +214,7 @@ func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *c
 				}
 				suppress = true;
 			}
-			if dot == i {
+			if bs.dot == i {
 				w.buf.dot = w.cursor
 			}
 		}
@@ -222,9 +222,9 @@ func (w *writer) refresh(prompt string, tokens []parse.Item, tip string, comp *c
 
 	w.indent = 0
 	w.currentAttr = ""
-	if len(tip) > 0 {
+	if len(bs.tip) > 0 {
 		w.newline()
-		w.writes(tip)
+		w.writes(bs.tip)
 	}
 
 	if comp != nil {

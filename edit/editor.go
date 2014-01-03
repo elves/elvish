@@ -14,6 +14,14 @@ import (
 
 var Lackeol = "\033[7m\u23ce\033[m\n"
 
+type bufferState struct {
+	// States used during ReadLine.
+	tokens []parse.Item
+	prompt, line, tip string
+	completion *completion
+	dot int
+}
+
 // Editor keeps the status of the line editor.
 type Editor struct {
 	savedTermios *tty.Termios
@@ -21,11 +29,7 @@ type Editor struct {
 	writer *writer
 	reader *reader
 	ev *eval.Evaluator
-	// Fields below are used during ReadLine.
-	tokens []parse.Item
-	prompt, line, tip string
-	completion *completion
-	dot int
+	bufferState
 }
 
 // LineRead is the result of ReadLine. Exactly one member is non-zero, making
@@ -120,7 +124,7 @@ func (ed *Editor) refresh() error {
 			ed.tokens = append(ed.tokens, token)
 		}
 	}
-	return ed.writer.refresh(ed.prompt, ed.tokens, ed.tip, ed.completion, ed.dot)
+	return ed.writer.refresh(&ed.bufferState)
 }
 
 // TODO Allow modifiable keybindings.
