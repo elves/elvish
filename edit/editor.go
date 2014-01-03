@@ -144,7 +144,15 @@ func (ed *Editor) refresh() error {
 
 // TODO Allow modifiable keybindings.
 var keyBindings = map[bufferMode]map[Key]string {
+	ModeCommand: map[Key]string{
+		Key{'i', 0}: "insert-mode",
+		Key{'h', 0}: "move-dot-b",
+		Key{'l', 0}: "move-dot-f",
+		Key{'D', 0}: "kill-line-f",
+		DefaultBinding: "default-command",
+	},
 	ModeInsert: map[Key]string{
+		Key{'[', Ctrl}: "command-mode",
 		Key{'U', Ctrl}: "kill-line-b",
 		Key{'K', Ctrl}: "kill-line-f",
 		Key{Backspace, 0}: "kill-rune-b",

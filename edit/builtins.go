@@ -29,6 +29,9 @@ type leReturn struct {
 type leBuiltin func (ed *Editor, k Key) *leReturn
 
 var leBuiltins = map[string]leBuiltin{
+	"insert-mode": insertMode,
+	"default-command": defaultCommand,
+	"command-mode": commandMode,
 	"kill-line-b": killLineB,
 	"kill-line-f": killLineF,
 	"kill-rune-b": killRuneB,
@@ -43,6 +46,19 @@ var leBuiltins = map[string]leBuiltin{
 	"select-cand-f": selectCandF,
 	"cycle-cand-f": cycleCandF,
 	"default-completing": defaultCompleting,
+}
+
+func insertMode(ed *Editor, k Key) *leReturn {
+	return &leReturn{action: changeMode, newMode: ModeInsert}
+}
+
+func defaultCommand(ed *Editor, k Key) *leReturn {
+	ed.pushTip(fmt.Sprintf("Unbound: %s", k))
+	return nil
+}
+
+func commandMode(ed *Editor, k Key) *leReturn {
+	return &leReturn{action: changeMode, newMode: ModeCommand}
 }
 
 func killLineB(ed *Editor, k Key) *leReturn {
