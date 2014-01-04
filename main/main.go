@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"fmt"
+	"os/user"
 	"../parse"
 	"../edit"
 	"../eval"
@@ -18,6 +19,17 @@ func main() {
 	ev := eval.NewEvaluator(os.Environ())
 	cmd_no := 0
 
+	username := "???"
+	user, err := user.Current()
+	if err == nil {
+		username = user.Username
+	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "???"
+	}
+	rprompt := username + "@" + hostname
+
 	for {
 		cmd_no++
 		name := fmt.Sprintf("<tty %d>", cmd_no)
@@ -28,7 +40,7 @@ func main() {
 		}
 
 		prompt := util.Getwd() + "> "
-		lr := ed.ReadLine(prompt)
+		lr := ed.ReadLine(prompt, rprompt)
 		err = ed.Cleanup()
 		if err != nil {
 			panic(err)

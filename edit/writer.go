@@ -220,6 +220,15 @@ func (w *writer) refresh(bs *bufferState) error {
 		}
 	}
 
+	// Write rprompt
+	padding := w.width - 1 - w.cursor.col - wcwidths(bs.rprompt)
+	if padding >= 1 {
+		w.writes(strings.Repeat(" ", padding))
+		w.currentAttr = attrForRprompt
+		w.writes(bs.rprompt)
+		w.currentAttr = ""
+	}
+
 	w.indent = 0
 
 	if bs.mode != ModeInsert {

@@ -8,6 +8,7 @@ var (
 	attrForCurrentCompletion = "7"
 	attrForCompleted = ";4"
 	attrForMode = "1;7;33"
+	attrForRprompt = "7"
 )
 
 var attrForType = map[parse.ItemType]string{

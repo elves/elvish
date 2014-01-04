@@ -23,7 +23,7 @@ const (
 type bufferState struct {
 	// States used during ReadLine.
 	tokens []parse.Item
-	prompt, line, tip string
+	prompt, rprompt, line, tip string
 	mode bufferMode
 	completion *completion
 	dot int
@@ -35,6 +35,8 @@ func (bs *bufferState) finish() {
 	bs.mode = ModeInsert
 	bs.completion = nil
 	bs.dot = len(bs.line)
+	// TODO Perhaps make it optional to NOT clear the rprompt
+	bs.rprompt = ""
 }
 
 // Editor keeps the status of the line editor.
@@ -185,8 +187,9 @@ func (ed *Editor) acceptCompletion() {
 }
 
 // ReadLine reads a line interactively.
-func (ed *Editor) ReadLine(prompt string) (lr LineRead) {
+func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 	ed.prompt = prompt
+	ed.rprompt = rprompt
 	ed.line = ""
 	ed.mode = ModeInsert
 	ed.tip = ""
