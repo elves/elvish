@@ -47,7 +47,6 @@ func main() {
 		}
 
 		if lr.Eof {
-			fmt.Print(edit.Lackeol)
 			break
 		} else if lr.Err != nil {
 			panic(lr.Err)

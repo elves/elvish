@@ -235,6 +235,9 @@ func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 			ed.mode = ret.newMode
 			goto lookup_key
 		case exitReadLine:
+			ed.finish()
+			ed.refresh() // XXX Ignore possible error
+			fmt.Fprintln(ed.file)
 			return ret.readLineReturn
 		}
 	}

@@ -96,12 +96,6 @@ func moveDotF(ed *Editor, k Key) *leReturn {
 }
 
 func acceptLine(ed *Editor, k Key) *leReturn {
-	ed.finish()
-	err := ed.refresh()
-	if err != nil {
-		return &leReturn{action: exitReadLine, readLineReturn: LineRead{Err: err}}
-	}
-	fmt.Fprintln(ed.file)
 	return &leReturn{action: exitReadLine, readLineReturn: LineRead{Line: ed.line}}
 }
 
