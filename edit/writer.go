@@ -263,6 +263,9 @@ func (w *writer) refresh(bs *bufferState) error {
 		}
 
 		cols := (w.width + colMargin) / (colWidth + colMargin)
+		if cols == 0 {
+			cols = 1
+		}
 		lines := util.CeilDiv(len(cands), cols)
 
 		for i := 0; i < lines; i++ {
