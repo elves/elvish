@@ -173,7 +173,7 @@ func (w *writer) writes(s string, attr string) {
 
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
-func (w *writer) refresh(bs *bufferState) error {
+func (w *writer) refresh(bs *editorState) error {
 	w.startBuffer()
 
 	w.writes(bs.prompt, attrForPrompt)

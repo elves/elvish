@@ -20,7 +20,7 @@ const (
 	ModeCompleting
 )
 
-type bufferState struct {
+type editorState struct {
 	// States used during ReadLine.
 	tokens []parse.Item
 	prompt, rprompt, line, tip string
@@ -29,7 +29,7 @@ type bufferState struct {
 	dot int
 }
 
-func (bs *bufferState) finish() {
+func (bs *editorState) finish() {
 	// Clean up the state before exiting the editor.
 	bs.tip = ""
 	bs.mode = ModeInsert
@@ -46,7 +46,7 @@ type Editor struct {
 	writer *writer
 	reader *reader
 	ev *eval.Evaluator
-	bufferState
+	editorState
 }
 
 // LineRead is the result of ReadLine. Exactly one member is non-zero, making
@@ -141,7 +141,7 @@ func (ed *Editor) refresh() error {
 			ed.tokens = append(ed.tokens, token)
 		}
 	}
-	return ed.writer.refresh(&ed.bufferState)
+	return ed.writer.refresh(&ed.editorState)
 }
 
 // TODO Allow modifiable keybindings.
