@@ -5,10 +5,12 @@ import (
 )
 
 var (
-	attrForCurrentCompletion = "7"
+	attrForPrompt = ""
+	attrForRprompt = "7"
 	attrForCompleted = ";4"
 	attrForMode = "1;7;33"
-	attrForRprompt = "7"
+	attrForTip = ""
+	attrForCurrentCompletion = "7"
 )
 
 var attrForType = map[parse.ItemType]string{

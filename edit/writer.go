@@ -52,7 +52,6 @@ type writer struct {
 	// Fields below are used when refreshing.
 	width, indent int
 	cursor pos
-	currentAttr string
 }
 
 func newWriter(f *os.File) *writer {
@@ -65,7 +64,6 @@ func (w *writer) startBuffer() {
 	w.width = int(tty.GetWinsize(fd).Col)
 	w.indent = 0
 	w.cursor = pos{}
-	w.currentAttr = ""
 	w.buf = newBuffer(w.width)
 }
 
@@ -145,7 +143,7 @@ func (w *writer) newline() {
 }
 
 // write appends a single rune to w.buf.
-func (w *writer) write(r rune) {
+func (w *writer) write(r rune, attr string) {
 	if r == '\n' {
 		w.newline()
 		return
@@ -154,7 +152,7 @@ func (w *writer) write(r rune) {
 		return
 	}
 	wd := wcwidth(r)
-	c := cell{r, byte(wd), w.currentAttr}
+	c := cell{r, byte(wd), attr}
 
 	if w.cursor.col + wd > w.width {
 		w.newline()
@@ -167,9 +165,9 @@ func (w *writer) write(r rune) {
 	}
 }
 
-func (w *writer) writes(s string) {
+func (w *writer) writes(s string, attr string) {
 	for _, r := range s {
-		w.write(r)
+		w.write(r, attr)
 	}
 }
 
@@ -178,7 +176,7 @@ func (w *writer) writes(s string) {
 func (w *writer) refresh(bs *bufferState) error {
 	w.startBuffer()
 
-	w.writes(bs.prompt)
+	w.writes(bs.prompt, attrForPrompt)
 
 	if w.cursor.col * 2 < w.width {
 		w.indent = w.cursor.col
@@ -193,12 +191,11 @@ func (w *writer) refresh(bs *bufferState) error {
 	comp := bs.completion
 	var suppress = false
 	for _, token := range bs.tokens {
-		w.currentAttr = attrForType[token.Typ]
 		for _, r := range token.Val {
 			if suppress && i < comp.end {
 				// Silence the part that is being completed
 			} else {
-				w.write(r)
+				w.write(r, attrForType[token.Typ])
 			}
 			i += utf8.RuneLen(r)
 			if comp != nil && comp.current != -1 && i == comp.start {
@@ -206,11 +203,11 @@ func (w *writer) refresh(bs *bufferState) error {
 				// to be suppressed. The cursor should be placed correctly
 				// (i.e. right after the candidate)
 				for _, part := range comp.candidates[comp.current].parts {
-					w.currentAttr = attrForType[comp.typ]
+					attr := attrForType[comp.typ]
 					if part.completed {
-						w.currentAttr += attrForCompleted
+						attr += attrForCompleted
 					}
-					w.writes(part.text)
+					w.writes(part.text, attr)
 				}
 				suppress = true
 			}
@@ -223,29 +220,25 @@ func (w *writer) refresh(bs *bufferState) error {
 	// Write rprompt
 	padding := w.width - 1 - w.cursor.col - wcwidths(bs.rprompt)
 	if padding >= 1 {
-		w.writes(strings.Repeat(" ", padding))
-		w.currentAttr = attrForRprompt
-		w.writes(bs.rprompt)
-		w.currentAttr = ""
+		w.writes(strings.Repeat(" ", padding), "")
+		w.writes(bs.rprompt, attrForRprompt)
 	}
 
 	w.indent = 0
 
 	if bs.mode != ModeInsert {
 		w.newline()
-		w.currentAttr = attrForMode
 		switch bs.mode {
 		case ModeCommand:
-			w.writes("-- COMMAND --")
+			w.writes("-- COMMAND --", attrForMode)
 		case ModeCompleting:
-			w.writes("-- COMPLETING --")
+			w.writes("-- COMPLETING --", attrForMode)
 		}
 	}
 
-	w.currentAttr = ""
 	if len(bs.tip) > 0 {
 		w.newline()
-		w.writes(bs.tip)
+		w.writes(bs.tip, attrForTip)
 	}
 
 	if comp != nil {
@@ -275,16 +268,14 @@ func (w *writer) refresh(bs *bufferState) error {
 				if k >= len(cands) {
 					continue
 				}
+				var attr string
 				if k == comp.current {
-					w.currentAttr = attrForCurrentCompletion
-				} else {
-					w.currentAttr = ""
+					attr = attrForCurrentCompletion
 				}
 				text := cands[k].text
-				w.writes(text)
-				w.writes(strings.Repeat(" ", colWidth - wcwidths(text)))
-				w.currentAttr = ""
-				w.writes(strings.Repeat(" ", colMargin))
+				w.writes(text, attr)
+				w.writes(strings.Repeat(" ", colWidth - wcwidths(text)), attr)
+				w.writes(strings.Repeat(" ", colMargin), "")
 			}
 		}
 	}
