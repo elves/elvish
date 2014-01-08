@@ -23,15 +23,16 @@ const (
 type editorState struct {
 	// States used during ReadLine.
 	tokens []parse.Item
-	prompt, rprompt, line, tip string
+	prompt, rprompt, line string
+	dot int
+	tips []string
 	mode bufferMode
 	completion *completion
-	dot int
 }
 
 func (bs *editorState) finish() {
 	// Clean up the state before exiting the editor.
-	bs.tip = ""
+	bs.tips = nil
 	bs.mode = ModeInsert
 	bs.completion = nil
 	bs.dot = len(bs.line)
@@ -125,11 +126,7 @@ func (ed *Editor) beep() {
 }
 
 func (ed *Editor) pushTip(more string) {
-	if len(ed.tip) == 0 {
-		ed.tip = more
-	} else {
-		ed.tip = ed.tip + "; " + more
-	}
+	ed.tips = append(ed.tips, more)
 }
 
 func (ed *Editor) refresh() error {
@@ -192,7 +189,7 @@ func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 	ed.rprompt = rprompt
 	ed.line = ""
 	ed.mode = ModeInsert
-	ed.tip = ""
+	ed.tips = nil
 	ed.completion = nil
 	ed.dot = 0
 
@@ -202,7 +199,7 @@ func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 			return LineRead{Err: err}
 		}
 
-		ed.tip = ""
+		ed.tips = nil
 
 		k, err := ed.reader.readKey()
 		if err != nil {

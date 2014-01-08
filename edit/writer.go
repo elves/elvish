@@ -236,9 +236,9 @@ func (w *writer) refresh(bs *editorState) error {
 		}
 	}
 
-	if len(bs.tip) > 0 {
+	if len(bs.tips) > 0 {
 		w.newline()
-		w.writes(bs.tip, attrForTip)
+		w.writes(strings.Join(bs.tips, ", "), attrForTip)
 	}
 
 	if comp != nil {
