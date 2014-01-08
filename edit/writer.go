@@ -24,10 +24,14 @@ type pos struct {
 	line, col int
 }
 
-// buffer is an internal reflection of the last few lines of the terminal, the
-// part the line editor is concerned with.
+// buffer reflects a continuous range of lines on the terminal. The Unix
+// terminal API provides only awkward ways of querying the terminal buffer, so
+// we keep an internal reflection and do one-way synchronizations (buffer ->
+// terminal, and not the other way around). This requires us to exactly match
+// the terminal's idea of the width of characters (wcwidth) and where to
+// insert soft carriage returns, so there could be bugs.
 type buffer struct {
-	cells [][]cell // cells reflect the last len(cells) lines of the terminal.
+	cells [][]cell // cells reflect len(cells) lines on the terminal.
 	dot pos // dot is what the user perceives as the cursor.
 }
 
