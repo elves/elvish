@@ -7,18 +7,18 @@ have been warned...
 The Editor
 ----------
 
-Those marked with :white_check_mark: are implemeneted (but could be broken from time to
+Those marked with ✔ are implemeneted (but could be broken from time to
 time).
 
 Like fish:
 
-* Syntax highlighting :white_check_mark:
+* Syntax highlighting ✔
 * Auto-suggestion
 
 Like zsh:
 
-* Right-hand-side prompt :white_check_mark:
-* Dropdown menu completion :white_check_mark:
+* Right-hand-side prompt ✔
+* Dropdown menu completion ✔
 * Programmable line editor
 
 And:
@@ -30,9 +30,9 @@ And:
 The Language
 ------------
 
-(Like the previous section, only those marked with :white_check_mark: have been implemented.)
+(Like the previous section, only those marked with ✔ have been implemented.)
 
-* Running external programs and pipelines, of course: :white_check_mark:
+* Running external programs and pipelines, of course: ✔
   ```
   > vim README.md
   ...
@@ -52,7 +52,7 @@ The Language
   ```
 
 * Use backquote for literal string (so that you can write both single and
-  double quotes inside), double backquotes for a literal backquote: :white_check_mark:
+  double quotes inside), double backquotes for a literal backquote: ✔
   ```
   > echo `"He's dead, Jim."`
   "He's dead, Jim."
@@ -67,7 +67,7 @@ The Language
   ```
 
 * Tables are a hybrid of array and hash (a la Lua); tables are first-class
-  values: :white_check_mark:
+  values: ✔
   ```
   > println [a b c &key value]
   [a b c &key value]
@@ -78,7 +78,7 @@ The Language
   ```
 
 * Declare variable with `var`, set value with `set`; `var` also serve as a
-  shorthand of var-set combo: :white_check_mark:
+  shorthand of var-set combo: ✔
   ```
   > var v
   > set v = [foo bar]
