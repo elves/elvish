@@ -7,8 +7,7 @@ have been warned...
 Obligatory screenshots
 ----------------------
 > All software websites should have screenshots.
-
-- Someone on the Internet
+> -- Someone on the Internet
 
 Syntax highlighting (also showcasing right-hand-side prompt):
 
