@@ -7,17 +7,18 @@ have been warned...
 The Editor
 ----------
 
-Note that this is currently more of a wish list than a feature list :)
+Those marked with :white_check_mark: are implemeneted (but could be broken from time to
+time).
 
 Like fish:
 
-* Syntax highlighting
+* Syntax highlighting :white_check_mark:
 * Auto-suggestion
 
 Like zsh:
 
-* Right-hand-side prompt
-* Dropdown menu completion
+* Right-hand-side prompt :white_check_mark:
+* Dropdown menu completion :white_check_mark:
 * Programmable line editor
 
 And:
@@ -29,9 +30,9 @@ And:
 The Language
 ------------
 
-(Like the previous section, many things are not yet implemented.)
+(Like the previous section, only those marked with :white_check_mark: have been implemented.)
 
-* Running external programs and pipelines, of course:
+* Running external programs and pipelines, of course: :white_check_mark:
   ```
   > vim README.md
   ...
@@ -51,7 +52,7 @@ The Language
   ```
 
 * Use backquote for literal string (so that you can write both single and
-  double quotes inside), double backquotes for a literal backquote:
+  double quotes inside), double backquotes for a literal backquote: :white_check_mark:
   ```
   > echo `"He's dead, Jim."`
   "He's dead, Jim."
@@ -66,21 +67,22 @@ The Language
   ```
 
 * Tables are a hybrid of array and hash (a la Lua); tables are first-class
-  values (`put` is the builtin for outputting):
+  values: :white_check_mark:
   ```
-  > put [a b c &key value]
+  > println [a b c &key value]
   [a b c &key value]
-  > put [a b c &key value][0]
+  > println [a b c &key value][0]
   a
-  > put [a b c &key value][key]
+  > println [a b c &key value][key]
   value
   ```
 
-* Declare variable with `var`, set value with `set`; `var` also:
+* Declare variable with `var`, set value with `set`; `var` also serve as a
+  shorthand of var-set combo: :white_check_mark:
   ```
   > var v
   > set v = [foo bar]
-  > var u = [foo bar] # equivalent to var-set combo
+  > var u = [foo bar] # equivalent
   ```
 
 * First-class closures, lisp-like functional programming:
@@ -92,7 +94,8 @@ The Language
   > map {|x| * 2 $x} (filter {|x| > $x 2} [1 2 3 4 5])
   ```
 
-* Get rid of lots of irritating superfluous parentheses with pipelines:
+* Get rid of lots of irritating superfluous parentheses with pipelines (`put`
+  is the builtin for outputting compound data):
   ```
   > put [1 2 3 4 5] | filter {|x| > $x 2} | map {|x| * 2 $x}
   [6 8 10]
