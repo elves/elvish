@@ -41,7 +41,7 @@ And:
 * More intuitive multiline editing
 * Some method to save typed snippets into a script
 * A "navigation mode" integrating functionalities of
-  [ranger][http://ranger.nongnu.org/]
+  [ranger](http://ranger.nongnu.org/)
 
 The Language
 ------------
