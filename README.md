@@ -4,10 +4,25 @@ An experimental Unix shell
 This is a work in progress. Things may change and/or break without notice. You
 have been warned...
 
+Obligatory screenshots
+----------------------
+> All software websites should have screenshots.
+
+- Someone on the Internet
+
+Syntax highlighting (also showcasing right-hand-side prompt):
+
+![syntax highlighting](./screenshots/syntax.png)
+
+Tab completion:
+
+![tab completion](./screenshots/completion.png)
+
+
 The Editor
 ----------
 
-Those marked with ✔ are implemeneted (but could be broken from time to
+Those marked with ✔ are implemented (but could be broken from time to
 time).
 
 Like fish:
@@ -24,8 +39,10 @@ Like zsh:
 And:
 
 * A vi keybinding that makes sense
-* More intuive multiline editing
-* An intuive method to save typed snippets into a script
+* More intuitive multiline editing
+* Some method to save typed snippets into a script
+* A "navigation mode" integrating functionalities of
+  [ranger][http://ranger.nongnu.org/]
 
 The Language
 ------------
@@ -42,7 +59,7 @@ The Language
   ...
   ```
 
-* Basically prefix syntax without the outmost pair of parentheses (`>`
+* Basically prefix syntax without the outermost pair of parentheses (`>`
   represents the prompt):
   ```
   > + 1 2
