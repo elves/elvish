@@ -62,6 +62,15 @@ func (b *buffer) newline() {
 	}
 }
 
+func (b *buffer) extend(b2 *buffer) {
+	if b2 != nil && b2.cells != nil {
+		b.indent = 0
+		b.appendCell(cell{rune: '\n'})
+		b.cells = append(b.cells, b2.cells...)
+		b.col = b2.col
+	}
+}
+
 // write appends a single rune to a buffer.
 func (b *buffer) write(r rune, attr string) {
 	if r == '\n' {
@@ -103,18 +112,12 @@ func (b *buffer) cursor() pos {
 // updating the screen.
 type writer struct {
 	file *os.File
-	oldBuf, buf *buffer
+	oldBuf *buffer
 }
 
 func newWriter(f *os.File) *writer {
 	writer := &writer{file: f, oldBuf: newBuffer(0)}
 	return writer
-}
-
-func (w *writer) startBuffer() {
-	fd := int(w.file.Fd())
-	width := int(tty.GetWinsize(fd).Col)
-	w.buf = newBuffer(width)
 }
 
 // deltaPos calculates the escape sequence needed to move the cursor from one
@@ -139,9 +142,9 @@ func deltaPos(from, to pos) []byte {
 }
 
 // commitBuffer updates the terminal display to reflect current buffer.
-// TODO Instead of erasing w.oldBuf entirely and then draw w.buf, compute a
-// delta between w.oldBuf and w.buf
-func (w *writer) commitBuffer() error {
+// TODO Instead of erasing w.oldBuf entirely and then draw buf, compute a
+// delta between w.oldBuf and buf
+func (w *writer) commitBuffer(buf *buffer) error {
 	bytesBuf := new(bytes.Buffer)
 
 	pLine := w.oldBuf.dot.line
@@ -151,7 +154,7 @@ func (w *writer) commitBuffer() error {
 	bytesBuf.WriteString("\r\033[J")
 
 	attr := ""
-	for _, line := range w.buf.cells {
+	for _, line := range buf.cells {
 		for _, c := range line {
 			if c.width > 0 && c.attr != attr {
 				fmt.Fprintf(bytesBuf, "\033[m\033[%sm", c.attr)
@@ -163,22 +166,27 @@ func (w *writer) commitBuffer() error {
 	if attr != "" {
 		bytesBuf.WriteString("\033[m")
 	}
-	bytesBuf.Write(deltaPos(w.buf.cursor(), w.buf.dot))
+	bytesBuf.Write(deltaPos(buf.cursor(), buf.dot))
 
 	_, err := w.file.Write(bytesBuf.Bytes())
 	if err != nil {
 		return err
 	}
 
-	w.oldBuf = w.buf
+	w.oldBuf = buf
 	return nil
 }
 
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
 func (w *writer) refresh(bs *editorState) error {
-	w.startBuffer()
-	b := w.buf
+	fd := int(w.file.Fd())
+	width := int(tty.GetWinsize(fd).Col)
+
+	var bufLine, bufMode, bufTips, bufCompletion, buf *buffer
+	// bufLine
+	b := newBuffer(width)
+	bufLine = b
 
 	b.writes(bs.prompt, attrForPrompt)
 
@@ -228,10 +236,10 @@ func (w *writer) refresh(bs *editorState) error {
 		b.writes(bs.rprompt, attrForRprompt)
 	}
 
-	b.indent = 0
-
+	// bufMode
 	if bs.mode != ModeInsert {
-		b.newline()
+		b := newBuffer(width)
+		bufMode = b
 		switch bs.mode {
 		case ModeCommand:
 			b.writes("-- COMMAND --", attrForMode)
@@ -240,12 +248,17 @@ func (w *writer) refresh(bs *editorState) error {
 		}
 	}
 
+	// bufTips
 	if len(bs.tips) > 0 {
-		b.newline()
+		b := newBuffer(width)
+		bufTips = b
 		b.writes(strings.Join(bs.tips, ", "), attrForTip)
 	}
 
+	// bufCompletion
 	if comp != nil {
+		b := newBuffer(width)
+		bufCompletion = b
 		// Layout candidates in multiple columns
 		cands := comp.candidates
 
@@ -266,7 +279,9 @@ func (w *writer) refresh(bs *editorState) error {
 		lines := util.CeilDiv(len(cands), cols)
 
 		for i := 0; i < lines; i++ {
-			b.newline()
+			if i > 0 {
+				b.newline()
+			}
 			for j := 0; j < cols; j++ {
 				k := j * lines + i
 				if k >= len(cands) {
@@ -284,5 +299,10 @@ func (w *writer) refresh(bs *editorState) error {
 		}
 	}
 
-	return w.commitBuffer()
+	// reuse bufLine
+	buf = bufLine
+	buf.extend(bufMode)
+	buf.extend(bufTips)
+	buf.extend(bufCompletion)
+	return w.commitBuffer(buf)
 }
