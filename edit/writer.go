@@ -97,6 +97,10 @@ func (b *buffer) writes(s string, attr string) {
 	}
 }
 
+func (b *buffer) writePadding(w int, attr string) {
+	b.writes(strings.Repeat(" ", w), attr)
+}
+
 func (b *buffer) line() int {
 	return len(b.cells) - 1
 }
@@ -232,7 +236,7 @@ func (w *writer) refresh(bs *editorState) error {
 	// Write rprompt
 	padding := b.width - 1 - b.col - wcwidths(bs.rprompt)
 	if padding >= 1 {
-		b.writes(strings.Repeat(" ", padding), "")
+		b.writePadding(padding, "")
 		b.writes(bs.rprompt, attrForRprompt)
 	}
 
@@ -293,8 +297,8 @@ func (w *writer) refresh(bs *editorState) error {
 				}
 				text := cands[k].text
 				b.writes(text, attr)
-				b.writes(strings.Repeat(" ", colWidth - wcwidths(text)), attr)
-				b.writes(strings.Repeat(" ", colMargin), "")
+				b.writePadding(colWidth - wcwidths(text), attr)
+				b.writePadding(colMargin, "")
 			}
 		}
 	}
