@@ -243,17 +243,18 @@ func (w *writer) refresh(bs *editorState) error {
 		bufMode = b
 		switch bs.mode {
 		case ModeCommand:
-			b.writes("-- COMMAND --", attrForMode)
+			b.writes(trimWcwidth("-- COMMAND --", width), attrForMode)
 		case ModeCompleting:
-			b.writes("-- COMPLETING --", attrForMode)
+			b.writes(trimWcwidth("-- COMPLETING --", width), attrForMode)
 		}
 	}
 
 	// bufTips
+	// TODO tips is assumed to contain no newlines.
 	if len(bs.tips) > 0 {
 		b := newBuffer(width)
 		bufTips = b
-		b.writes(strings.Join(bs.tips, ", "), attrForTip)
+		b.writes(trimWcwidth(strings.Join(bs.tips, ", "), width), attrForTip)
 	}
 
 	// bufCompletion

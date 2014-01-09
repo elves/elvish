@@ -31,3 +31,14 @@ func wcwidths(s string) (w int) {
 	}
 	return
 }
+
+func trimWcwidth(s string, wmax int) string {
+	w := 0
+	for i, r := range s {
+		w += wcwidth(r)
+		if w > wmax {
+			return s[:i]
+		}
+	}
+	return s
+}
