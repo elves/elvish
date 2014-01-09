@@ -31,21 +31,72 @@ type pos struct {
 // the terminal's idea of the width of characters (wcwidth) and where to
 // insert soft carriage returns, so there could be bugs.
 type buffer struct {
+	width, col, indent int
 	cells [][]cell // cells reflect len(cells) lines on the terminal.
 	dot pos // dot is what the user perceives as the cursor.
 }
 
-func newBuffer(w int) *buffer {
-	return &buffer{cells: [][]cell{make([]cell, 0, w)}}
+func newBuffer(width int) *buffer {
+	return &buffer{width: width, cells: [][]cell{make([]cell, 0, width)}}
 }
 
 func (b *buffer) appendCell(c cell) {
 	n := len(b.cells)
 	b.cells[n-1] = append(b.cells[n-1], c)
+	b.col += int(c.width)
 }
 
-func (b *buffer) appendLine(w int) {
-	b.cells = append(b.cells, make([]cell, 0, w))
+func (b *buffer) appendLine() {
+	b.cells = append(b.cells, make([]cell, 0, b.width))
+	b.col = 0
+}
+
+func (b *buffer) newline() {
+	b.appendCell(cell{rune: '\n'})
+	b.appendLine()
+
+	if b.indent > 0 {
+		for i := 0; i < b.indent; i++ {
+			b.appendCell(cell{rune: ' ', width: 1})
+		}
+	}
+}
+
+// write appends a single rune to a buffer.
+func (b *buffer) write(r rune, attr string) {
+	if r == '\n' {
+		b.newline()
+		return
+	} else if !unicode.IsPrint(r) {
+		// XXX unprintable runes are dropped silently
+		return
+	}
+	wd := wcwidth(r)
+	c := cell{r, byte(wd), attr}
+
+	if b.col + wd > b.width {
+		b.newline()
+		b.appendCell(c)
+	} else if b.col + wd == b.width {
+		b.appendCell(c)
+		b.newline()
+	} else {
+		b.appendCell(c)
+	}
+}
+
+func (b *buffer) writes(s string, attr string) {
+	for _, r := range s {
+		b.write(r, attr)
+	}
+}
+
+func (b *buffer) line() int {
+	return len(b.cells) - 1
+}
+
+func (b *buffer) cursor() pos {
+	return pos{len(b.cells) - 1, b.col}
 }
 
 // writer is the part of an Editor responsible for keeping the status of and
@@ -53,9 +104,6 @@ func (b *buffer) appendLine(w int) {
 type writer struct {
 	file *os.File
 	oldBuf, buf *buffer
-	// Fields below are used when refreshing.
-	width, indent int
-	cursor pos
 }
 
 func newWriter(f *os.File) *writer {
@@ -65,10 +113,8 @@ func newWriter(f *os.File) *writer {
 
 func (w *writer) startBuffer() {
 	fd := int(w.file.Fd())
-	w.width = int(tty.GetWinsize(fd).Col)
-	w.indent = 0
-	w.cursor = pos{}
-	w.buf = newBuffer(w.width)
+	width := int(tty.GetWinsize(fd).Col)
+	w.buf = newBuffer(width)
 }
 
 // deltaPos calculates the escape sequence needed to move the cursor from one
@@ -117,7 +163,7 @@ func (w *writer) commitBuffer() error {
 	if attr != "" {
 		bytesBuf.WriteString("\033[m")
 	}
-	bytesBuf.Write(deltaPos(w.cursor, w.buf.dot))
+	bytesBuf.Write(deltaPos(w.buf.cursor(), w.buf.dot))
 
 	_, err := w.file.Write(bytesBuf.Bytes())
 	if err != nil {
@@ -128,68 +174,22 @@ func (w *writer) commitBuffer() error {
 	return nil
 }
 
-func (w *writer) appendToLine(c cell) {
-	w.buf.appendCell(c)
-	w.cursor.col += int(c.width)
-}
-
-func (w *writer) newline() {
-	w.buf.appendCell(cell{rune: '\n'})
-	w.buf.appendLine(w.width)
-
-	w.cursor.line++
-	w.cursor.col = 0
-	if w.indent > 0 {
-		for i := 0; i < w.indent; i++ {
-			w.appendToLine(cell{rune: ' ', width: 1})
-		}
-	}
-}
-
-// write appends a single rune to w.buf.
-func (w *writer) write(r rune, attr string) {
-	if r == '\n' {
-		w.newline()
-		return
-	} else if !unicode.IsPrint(r) {
-		// XXX unprintable runes are dropped silently
-		return
-	}
-	wd := wcwidth(r)
-	c := cell{r, byte(wd), attr}
-
-	if w.cursor.col + wd > w.width {
-		w.newline()
-		w.appendToLine(c)
-	} else if w.cursor.col + wd == w.width {
-		w.appendToLine(c)
-		w.newline()
-	} else {
-		w.appendToLine(c)
-	}
-}
-
-func (w *writer) writes(s string, attr string) {
-	for _, r := range s {
-		w.write(r, attr)
-	}
-}
-
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
 func (w *writer) refresh(bs *editorState) error {
 	w.startBuffer()
+	b := w.buf
 
-	w.writes(bs.prompt, attrForPrompt)
+	b.writes(bs.prompt, attrForPrompt)
 
-	if w.cursor.col * 2 < w.width {
-		w.indent = w.cursor.col
+	if b.col * 2 < b.width {
+		b.indent = b.col
 	}
 
 	// i keeps track of number of bytes written.
 	i := 0
 	if bs.dot == 0 {
-		w.buf.dot = w.cursor
+		b.dot = b.cursor()
 	}
 
 	comp := bs.completion
@@ -199,7 +199,7 @@ func (w *writer) refresh(bs *editorState) error {
 			if suppress && i < comp.end {
 				// Silence the part that is being completed
 			} else {
-				w.write(r, attrForType[token.Typ])
+				b.write(r, attrForType[token.Typ])
 			}
 			i += utf8.RuneLen(r)
 			if comp != nil && comp.current != -1 && i == comp.start {
@@ -211,38 +211,38 @@ func (w *writer) refresh(bs *editorState) error {
 					if part.completed {
 						attr += attrForCompleted
 					}
-					w.writes(part.text, attr)
+					b.writes(part.text, attr)
 				}
 				suppress = true
 			}
 			if bs.dot == i {
-				w.buf.dot = w.cursor
+				b.dot = b.cursor()
 			}
 		}
 	}
 
 	// Write rprompt
-	padding := w.width - 1 - w.cursor.col - wcwidths(bs.rprompt)
+	padding := b.width - 1 - b.col - wcwidths(bs.rprompt)
 	if padding >= 1 {
-		w.writes(strings.Repeat(" ", padding), "")
-		w.writes(bs.rprompt, attrForRprompt)
+		b.writes(strings.Repeat(" ", padding), "")
+		b.writes(bs.rprompt, attrForRprompt)
 	}
 
-	w.indent = 0
+	b.indent = 0
 
 	if bs.mode != ModeInsert {
-		w.newline()
+		b.newline()
 		switch bs.mode {
 		case ModeCommand:
-			w.writes("-- COMMAND --", attrForMode)
+			b.writes("-- COMMAND --", attrForMode)
 		case ModeCompleting:
-			w.writes("-- COMPLETING --", attrForMode)
+			b.writes("-- COMPLETING --", attrForMode)
 		}
 	}
 
 	if len(bs.tips) > 0 {
-		w.newline()
-		w.writes(strings.Join(bs.tips, ", "), attrForTip)
+		b.newline()
+		b.writes(strings.Join(bs.tips, ", "), attrForTip)
 	}
 
 	if comp != nil {
@@ -259,14 +259,14 @@ func (w *writer) refresh(bs *editorState) error {
 			}
 		}
 
-		cols := (w.width + colMargin) / (colWidth + colMargin)
+		cols := (b.width + colMargin) / (colWidth + colMargin)
 		if cols == 0 {
 			cols = 1
 		}
 		lines := util.CeilDiv(len(cands), cols)
 
 		for i := 0; i < lines; i++ {
-			w.newline()
+			b.newline()
 			for j := 0; j < cols; j++ {
 				k := j * lines + i
 				if k >= len(cands) {
@@ -277,9 +277,9 @@ func (w *writer) refresh(bs *editorState) error {
 					attr = attrForCurrentCompletion
 				}
 				text := cands[k].text
-				w.writes(text, attr)
-				w.writes(strings.Repeat(" ", colWidth - wcwidths(text)), attr)
-				w.writes(strings.Repeat(" ", colMargin), "")
+				b.writes(text, attr)
+				b.writes(strings.Repeat(" ", colWidth - wcwidths(text)), attr)
+				b.writes(strings.Repeat(" ", colMargin), "")
 			}
 		}
 	}
