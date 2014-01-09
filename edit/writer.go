@@ -83,9 +83,6 @@ func (b *buffer) write(r rune, attr string) {
 	if b.col + wd > b.width {
 		b.newline()
 		b.appendCell(c)
-	} else if b.col + wd == b.width {
-		b.appendCell(c)
-		b.newline()
 	} else {
 		b.appendCell(c)
 	}
