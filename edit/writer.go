@@ -52,7 +52,6 @@ func (b *buffer) appendLine() {
 }
 
 func (b *buffer) newline() {
-	b.appendCell(cell{rune: '\n'})
 	b.appendLine()
 
 	if b.indent > 0 {
@@ -64,8 +63,6 @@ func (b *buffer) newline() {
 
 func (b *buffer) extend(b2 *buffer) {
 	if b2 != nil && b2.cells != nil {
-		b.indent = 0
-		b.appendCell(cell{rune: '\n'})
 		b.cells = append(b.cells, b2.cells...)
 		b.col = b2.col
 	}
@@ -154,7 +151,10 @@ func (w *writer) commitBuffer(buf *buffer) error {
 	bytesBuf.WriteString("\r\033[J")
 
 	attr := ""
-	for _, line := range buf.cells {
+	for i, line := range buf.cells {
+		if i > 0 {
+			bytesBuf.WriteString("\n")
+		}
 		for _, c := range line {
 			if c.width > 0 && c.attr != attr {
 				fmt.Fprintf(bytesBuf, "\033[m\033[%sm", c.attr)
