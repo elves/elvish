@@ -106,6 +106,17 @@ func (b *buffer) cursor() pos {
 	return pos{len(b.cells) - 1, b.col}
 }
 
+func (b *buffer) trimToLines(low, high int) {
+	for i := 0; i < low; i++ {
+		b.cells[i] = nil
+	}
+	for i := high; i < len(b.cells); i++ {
+		b.cells[i] = nil
+	}
+	b.cells = b.cells[low:high]
+	b.dot.line -= low
+}
+
 // writer is the part of an Editor responsible for keeping the status of and
 // updating the screen.
 type writer struct {
@@ -178,11 +189,20 @@ func (w *writer) commitBuffer(buf *buffer) error {
 	return nil
 }
 
+func lines(bufs... *buffer) (l int) {
+	for _, buf := range bufs {
+		if buf != nil {
+			l += len(buf.cells)
+		}
+	}
+	return
+}
+
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
 func (w *writer) refresh(bs *editorState) error {
-	fd := int(w.file.Fd())
-	width := int(tty.GetWinsize(fd).Col)
+	winsize := tty.GetWinsize(int(w.file.Fd()))
+	width, height := int(winsize.Col), int(winsize.Row)
 
 	var bufLine, bufMode, bufTips, bufCompletion, buf *buffer
 	// bufLine
@@ -291,7 +311,9 @@ func (w *writer) refresh(bs *editorState) error {
 				}
 				var attr string
 				if k == comp.current {
+					// XXX abuse dot to represent line of current completion
 					attr = attrForCurrentCompletion
+					b.dot.line = i
 				}
 				text := cands[k].text
 				b.writes(text, attr)
@@ -301,10 +323,44 @@ func (w *writer) refresh(bs *editorState) error {
 		}
 	}
 
-	// reuse bufLine
+	// Trim lines to fit in screen
+	switch {
+	case height >= lines(bufLine, bufMode, bufTips, bufCompletion):
+		// No need to trim.
+	case height >= lines(bufLine, bufMode, bufTips):
+		h := height - lines(bufLine, bufMode, bufTips)
+		// Trim bufCompletion to h lines around the current candidate
+		lines := len(bufCompletion.cells)
+		low := bufCompletion.dot.line - h / 2
+		high := low + h
+		switch {
+		case low < 0:
+			// Near top of the list, move the window down
+			low = 0
+			high = low + h
+		case high > lines:
+			// Near bottom of the list, move the window down
+			high = lines
+			low = high - h
+		}
+		bufCompletion.trimToLines(low, high)
+	case height >= lines(bufLine, bufTips):
+		bufMode, bufCompletion = nil, nil
+	case height >= lines(bufLine):
+		bufTips, bufMode, bufCompletion = nil, nil, nil
+	case height >= 1:
+		bufTips, bufMode, bufCompletion = nil, nil, nil
+		dotLine := bufLine.dot.line
+		bufLine.trimToLines(dotLine + 1 - height, dotLine + 1)
+	default:
+		bufLine, bufTips, bufMode, bufCompletion = nil, nil, nil, nil
+	}
+
+	// Combine buffers (reusing bufLine)
 	buf = bufLine
 	buf.extend(bufMode)
 	buf.extend(bufTips)
 	buf.extend(bufCompletion)
+
 	return w.commitBuffer(buf)
 }
