@@ -310,6 +310,7 @@ func (w *writer) refresh(bs *editorState) error {
 			cols = 1
 		}
 		lines := util.CeilDiv(len(cands), cols)
+		bs.completionLines = lines
 
 		for i := 0; i < lines; i++ {
 			if i > 0 {

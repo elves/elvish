@@ -28,6 +28,7 @@ type editorState struct {
 	tips []string
 	mode bufferMode
 	completion *completion
+	completionLines int
 }
 
 func (bs *editorState) finish() {
@@ -166,6 +167,8 @@ var keyBindings = map[bufferMode]map[Key]string {
 		Key{'[', Ctrl}: "cancel-completion",
 		Key{Up, 0}: "select-cand-b",
 		Key{Down, 0}: "select-cand-f",
+		Key{Left, 0}: "select-cand-col-b",
+		Key{Right, 0}: "select-cand-col-f",
 		Key{Tab, 0}: "cycle-cand-f",
 		DefaultBinding: "default-completing",
 	},

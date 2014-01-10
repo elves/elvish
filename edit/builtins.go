@@ -44,6 +44,8 @@ var leBuiltins = map[string]leBuiltin{
 	"cancel-completion": cancelCompletion,
 	"select-cand-b": selectCandB,
 	"select-cand-f": selectCandF,
+	"select-cand-col-b": selectCandColB,
+	"select-cand-col-f": selectCandColF,
 	"cycle-cand-f": cycleCandF,
 	"default-completing": defaultCompleting,
 }
@@ -118,6 +120,20 @@ func selectCandB(ed *Editor, k Key) *leReturn {
 
 func selectCandF(ed *Editor, k Key) *leReturn {
 	ed.completion.next(false)
+	return nil
+}
+
+func selectCandColB(ed *Editor, k Key) *leReturn {
+	if c := ed.completion.current - ed.completionLines; c >= 0 {
+		ed.completion.current = c
+	}
+	return nil
+}
+
+func selectCandColF(ed *Editor, k Key) *leReturn {
+	if c := ed.completion.current + ed.completionLines; c < len(ed.completion.candidates) {
+		ed.completion.current = c
+	}
 	return nil
 }
 
