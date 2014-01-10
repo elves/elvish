@@ -32,6 +32,7 @@ type pos struct {
 // insert soft carriage returns, so there could be bugs.
 type buffer struct {
 	width, col, indent int
+	newlineWhenFull bool
 	cells [][]cell // cells reflect len(cells) lines on the terminal.
 	dot pos // dot is what the user perceives as the cursor.
 }
@@ -85,6 +86,9 @@ func (b *buffer) write(r rune, attr string) {
 		b.appendCell(c)
 	} else {
 		b.appendCell(c)
+		if b.col == b.width && b.newlineWhenFull {
+			b.newline()
+		}
 	}
 }
 
@@ -178,7 +182,11 @@ func (w *writer) commitBuffer(buf *buffer) error {
 	if attr != "" {
 		bytesBuf.WriteString("\033[m")
 	}
-	bytesBuf.Write(deltaPos(buf.cursor(), buf.dot))
+	cursor := buf.cursor()
+	if cursor.col == buf.width {
+		cursor.col--
+	}
+	bytesBuf.Write(deltaPos(cursor, buf.dot))
 
 	_, err := w.file.Write(bytesBuf.Bytes())
 	if err != nil {
@@ -208,6 +216,8 @@ func (w *writer) refresh(bs *editorState) error {
 	// bufLine
 	b := newBuffer(width)
 	bufLine = b
+
+	b.newlineWhenFull = true
 
 	b.writes(bs.prompt, attrForPrompt)
 
@@ -251,8 +261,9 @@ func (w *writer) refresh(bs *editorState) error {
 	}
 
 	// Write rprompt
-	padding := b.width - 1 - b.col - wcwidths(bs.rprompt)
+	padding := b.width - b.col - wcwidths(bs.rprompt)
 	if padding >= 1 {
+		b.newlineWhenFull = false
 		b.writePadding(padding, "")
 		b.writes(bs.rprompt, attrForRprompt)
 	}
