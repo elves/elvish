@@ -221,7 +221,7 @@ func (w *writer) refresh(bs *editorState) error {
 
 	b.writes(bs.prompt, attrForPrompt)
 
-	if b.col * 2 < b.width {
+	if b.line() == 0 && b.col * 2 < b.width {
 		b.indent = b.col
 	}
 
