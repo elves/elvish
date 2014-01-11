@@ -15,6 +15,7 @@ const (
 	FD_NIL uintptr = ^uintptr(0)
 )
 
+// TODO rename io, it conflicts with io module in stdlib
 // Represents an IO for commands. At most one of f and ch is non-nil. When
 // both are nil, the IO is closed.
 type io struct {
@@ -272,10 +273,22 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 			// present.
 			if cmd.ios[0] == nil {
 				if ioTypes[0] == chanIO {
-					// TODO Prepend an implicit feedchan
-					ev.errorf("channel input from user not yet supported")
+					// Prepend an implicit feedchan
+					ch := make(chan Value)
+					prependCmd = &command{
+						name: "(implicit feedchan)",
+						args: nil,
+						ios: [3]*io{
+							&io{f: os.Stdin},
+							&io{ch: ch},
+							&io{f: os.Stderr},
+						},
+						CommandHead: CommandHead{Func: feedchan},
+					}
+					cmd.ios[0] = &io{ch: ch}
+				} else {
+					cmd.ios[0] = &io{f: os.Stdin}
 				}
-				cmd.ios[0] = &io{f: os.Stdin}
 			}
 		} else {
 			if cmd.ios[0] != nil {
@@ -288,6 +301,7 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 		if i == ncmds - 1 {
 			if cmd.ios[1] == nil {
 				if ioTypes[1] == chanIO {
+					// Append an implicit printchan
 					ch := make(chan Value)
 					cmd.ios[1] = &io{ch: ch}
 					appendCmd = &command{

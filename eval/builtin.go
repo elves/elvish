@@ -1,8 +1,10 @@
 package eval
 
 import (
+	io_ "io"
 	"os"
 	"fmt"
+	"bufio"
 )
 
 type BuiltinFunc func(*Evaluator, []Value, [3]*io) string
@@ -20,6 +22,7 @@ var builtins = map[string]builtin {
 	"print": builtin{print, [3]IOType{unusedIO}},
 	"println": builtin{println, [3]IOType{unusedIO}},
 	"printchan": builtin{printchan, [3]IOType{chanIO, fileIO}},
+	"feedchan": builtin{feedchan, [3]IOType{fileIO, chanIO}},
 	"cd": builtin{cd, [3]IOType{unusedIO, unusedIO}},
 }
 
@@ -138,6 +141,30 @@ func printchan(ev *Evaluator, args []Value, ios [3]*io) string {
 		fmt.Fprintln(out, s.String(ev))
 	}
 	return ""
+}
+
+func feedchan(ev *Evaluator, args []Value, ios [3]*io) string {
+	if len(args) > 0 {
+		return "args error"
+	}
+	in := ios[0].f
+	out := ios[1].ch
+
+	fmt.Println("WARNING: Only string input is supported at the moment.")
+
+	bufferedIn := bufio.NewReader(in)
+	i := 0
+	for {
+		fmt.Printf("[%v] ", i)
+		line, err := bufferedIn.ReadString('\n')
+		if err == io_.EOF {
+			return ""
+		} else if err != nil {
+			return err.Error()
+		}
+		out <- NewScalar(line[:len(line)-1])
+		i++
+	}
 }
 
 func cd(ev *Evaluator, args []Value, ios [3]*io) string {
