@@ -111,7 +111,6 @@ func put(ev *Evaluator, args []Value, ios [3]*io) string {
 	for _, a := range args {
 		out <- a
 	}
-	close(out)
 	return ""
 }
 

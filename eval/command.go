@@ -64,7 +64,7 @@ type command struct {
 }
 
 func (cmd *command) closeIOs() {
-	for _, io := range cmd.ios {
+	for i, io := range cmd.ios {
 		if io == nil {
 			continue
 		}
@@ -75,7 +75,10 @@ func (cmd *command) closeIOs() {
 			io.f.Close()
 		}
 		if io.ch != nil {
-			close(io.ch)
+			// Only close output channels
+			if i == 1 {
+				close(io.ch)
+			}
 		}
 	}
 }
@@ -256,12 +259,6 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 		return
 	}
 	cmds := make([]*command, 0, ncmds)
-
-	defer func() {
-		for _, cmd := range cmds {
-			cmd.closeIOs()
-		}
-	}()
 
 	var nextIn *io
 	for i, n := range pl.Nodes {
