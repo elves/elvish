@@ -135,7 +135,7 @@ func printchan(ev *Evaluator, args []Value, ios [3]*io) string {
 	out := ios[1].f
 
 	for s := range in {
-		fmt.Fprintf(out, "%q\n", s)
+		fmt.Fprintln(out, s.String(ev))
 	}
 	return ""
 }

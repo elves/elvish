@@ -264,13 +264,15 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 	for i, n := range pl.Nodes {
 		cmd, ioTypes := ev.preevalCommand(n.(*parse.CommandNode))
 
+		var prependCmd, appendCmd *command
+
 		// Create and connect pipes.
 		if i == 0 {
 			// First command. Only connect input when no input redirection is
 			// present.
 			if cmd.ios[0] == nil {
 				if ioTypes[0] == chanIO {
-					// TODO locate command
+					// TODO Prepend an implicit feedchan
 					ev.errorf("channel input from user not yet supported")
 				}
 				cmd.ios[0] = &io{f: os.Stdin}
@@ -286,9 +288,21 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 		if i == ncmds - 1 {
 			if cmd.ios[1] == nil {
 				if ioTypes[1] == chanIO {
-					ev.errorf("channel output to user not yet supported")
+					ch := make(chan Value)
+					cmd.ios[1] = &io{ch: ch}
+					appendCmd = &command{
+						name: "(implicit printchan)",
+						args: nil,
+						ios: [3]*io{
+							&io{ch: ch},
+							&io{f: os.Stdout},
+							&io{f: os.Stderr},
+						},
+						CommandHead: CommandHead{Func: printchan},
+					}
+				} else {
+					cmd.ios[1] = &io{f: os.Stdout}
 				}
-				cmd.ios[1] = &io{f: os.Stdout}
 			}
 		} else {
 			if cmd.ios[1] != nil {
@@ -315,10 +329,16 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 			}
 		}
 
+		if prependCmd != nil {
+			cmds = append(cmds, prependCmd)
+		}
 		cmds = append(cmds, cmd)
+		if appendCmd != nil {
+			cmds = append(cmds, appendCmd)
+		}
 	}
 
-	updates := make([]<-chan *StateUpdate, ncmds)
+	updates := make([]<-chan *StateUpdate, len(cmds))
 	for i, cmd := range cmds {
 		updates[i] = ev.execCommand(cmd)
 	}
