@@ -3,27 +3,27 @@ package eval
 import (
 	"bufio"
 	"fmt"
-	io_ "io"
+	"io"
 	"os"
 )
 
-type BuiltinFunc func(*Evaluator, []Value, [3]*io) string
+type BuiltinFunc func(*Evaluator, []Value, [3]*port) string
 
 type builtin struct {
-	fn      BuiltinFunc
-	ioTypes [3]IOType
+	fn          BuiltinFunc
+	streamTypes [3]StreamType
 }
 
 var builtins = map[string]builtin{
-	"var":       builtin{var_, [3]IOType{unusedIO, unusedIO}},
-	"set":       builtin{set, [3]IOType{unusedIO, unusedIO}},
-	"fn":        builtin{fn, [3]IOType{unusedIO, unusedIO}},
-	"put":       builtin{put, [3]IOType{unusedIO, chanIO}},
-	"print":     builtin{print, [3]IOType{unusedIO}},
-	"println":   builtin{println, [3]IOType{unusedIO}},
-	"printchan": builtin{printchan, [3]IOType{chanIO, fileIO}},
-	"feedchan":  builtin{feedchan, [3]IOType{fileIO, chanIO}},
-	"cd":        builtin{cd, [3]IOType{unusedIO, unusedIO}},
+	"var":       builtin{var_, [3]StreamType{unusedStream, unusedStream}},
+	"set":       builtin{set, [3]StreamType{unusedStream, unusedStream}},
+	"fn":        builtin{fn, [3]StreamType{unusedStream, unusedStream}},
+	"put":       builtin{put, [3]StreamType{unusedStream, chanStream}},
+	"print":     builtin{print, [3]StreamType{unusedStream}},
+	"println":   builtin{println, [3]StreamType{unusedStream}},
+	"printchan": builtin{printchan, [3]StreamType{chanStream, fdStream}},
+	"feedchan":  builtin{feedchan, [3]StreamType{fdStream, chanStream}},
+	"cd":        builtin{cd, [3]StreamType{unusedStream, unusedStream}},
 }
 
 func doSet(ev *Evaluator, names []string, values []Value) string {
@@ -41,7 +41,7 @@ func doSet(ev *Evaluator, names []string, values []Value) string {
 	return ""
 }
 
-func var_(ev *Evaluator, args []Value, ios [3]*io) string {
+func var_(ev *Evaluator, args []Value, ports [3]*port) string {
 	var names []string
 	var values []Value
 	for i, nameVal := range args {
@@ -65,7 +65,7 @@ func var_(ev *Evaluator, args []Value, ios [3]*io) string {
 	return ""
 }
 
-func set(ev *Evaluator, args []Value, ios [3]*io) string {
+func set(ev *Evaluator, args []Value, ports [3]*port) string {
 	var names []string
 	var values []Value
 	for i, nameVal := range args {
@@ -86,7 +86,7 @@ func set(ev *Evaluator, args []Value, ios [3]*io) string {
 	return doSet(ev, names, values)
 }
 
-func fn(ev *Evaluator, args []Value, ios [3]*io) string {
+func fn(ev *Evaluator, args []Value, ports [3]*port) string {
 	n := len(args)
 	if n < 2 {
 		return "args error"
@@ -109,33 +109,33 @@ func fn(ev *Evaluator, args []Value, ios [3]*io) string {
 	return ""
 }
 
-func put(ev *Evaluator, args []Value, ios [3]*io) string {
-	out := ios[1].ch
+func put(ev *Evaluator, args []Value, ports [3]*port) string {
+	out := ports[1].ch
 	for _, a := range args {
 		out <- a
 	}
 	return ""
 }
 
-func print(ev *Evaluator, args []Value, ios [3]*io) string {
-	out := ios[1].f
+func print(ev *Evaluator, args []Value, ports [3]*port) string {
+	out := ports[1].f
 	for _, a := range args {
 		fmt.Fprint(out, a.String(ev))
 	}
 	return ""
 }
 
-func println(ev *Evaluator, args []Value, ios [3]*io) string {
+func println(ev *Evaluator, args []Value, ports [3]*port) string {
 	args = append(args, NewScalar("\n"))
-	return print(ev, args, ios)
+	return print(ev, args, ports)
 }
 
-func printchan(ev *Evaluator, args []Value, ios [3]*io) string {
+func printchan(ev *Evaluator, args []Value, ports [3]*port) string {
 	if len(args) > 0 {
 		return "args error"
 	}
-	in := ios[0].ch
-	out := ios[1].f
+	in := ports[0].ch
+	out := ports[1].f
 
 	for s := range in {
 		fmt.Fprintln(out, s.String(ev))
@@ -143,12 +143,12 @@ func printchan(ev *Evaluator, args []Value, ios [3]*io) string {
 	return ""
 }
 
-func feedchan(ev *Evaluator, args []Value, ios [3]*io) string {
+func feedchan(ev *Evaluator, args []Value, ports [3]*port) string {
 	if len(args) > 0 {
 		return "args error"
 	}
-	in := ios[0].f
-	out := ios[1].ch
+	in := ports[0].f
+	out := ports[1].ch
 
 	fmt.Println("WARNING: Only string input is supported at the moment.")
 
@@ -157,7 +157,7 @@ func feedchan(ev *Evaluator, args []Value, ios [3]*io) string {
 	for {
 		fmt.Printf("[%v] ", i)
 		line, err := bufferedIn.ReadString('\n')
-		if err == io_.EOF {
+		if err == io.EOF {
 			return ""
 		} else if err != nil {
 			return err.Error()
@@ -167,7 +167,7 @@ func feedchan(ev *Evaluator, args []Value, ios [3]*io) string {
 	}
 }
 
-func cd(ev *Evaluator, args []Value, ios [3]*io) string {
+func cd(ev *Evaluator, args []Value, ports [3]*port) string {
 	var dir string
 	if len(args) == 0 {
 		dir = ""
