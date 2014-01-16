@@ -1,23 +1,23 @@
 package util
 
 import (
-	"os"
-	"time"
 	"errors"
-	"unsafe"
+	"os"
 	"syscall"
+	"time"
+	"unsafe"
 )
 
 var (
-	Timeout = errors.New("timed out")
+	Timeout  = errors.New("timed out")
 	FdTooBig = errors.New("fd exceeds FD_SETSIZE")
 )
 
 type TimedReader struct {
-	File *os.File
+	File    *os.File
 	Timeout time.Duration
-	nfds int
-	set syscall.FdSet
+	nfds    int
+	set     syscall.FdSet
 }
 
 func NewTimedReader(f *os.File) (*TimedReader, error) {
@@ -27,7 +27,7 @@ func NewTimedReader(f *os.File) (*TimedReader, error) {
 	}
 	tr := &TimedReader{File: f, Timeout: -1, nfds: int(fd) + 1}
 	bitLength := unsafe.Sizeof(tr.set.Bits[0]) * 8
-	tr.set.Bits[fd / bitLength] |= 1 << (fd % bitLength)
+	tr.set.Bits[fd/bitLength] |= 1 << (fd % bitLength)
 	return tr, nil
 }
 

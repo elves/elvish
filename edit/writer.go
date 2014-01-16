@@ -1,14 +1,14 @@
 package edit
 
 import (
-	"os"
-	"fmt"
+	"../util"
+	"./tty"
 	"bytes"
+	"fmt"
+	"os"
 	"strings"
 	"unicode"
 	"unicode/utf8"
-	"./tty"
-	"../util"
 )
 
 // cell is an indivisible unit on the screen. It is not necessarily 1 column
@@ -16,7 +16,7 @@ import (
 type cell struct {
 	rune
 	width byte
-	attr string
+	attr  string
 }
 
 // pos is the position within a buffer.
@@ -32,9 +32,9 @@ type pos struct {
 // insert soft carriage returns, so there could be bugs.
 type buffer struct {
 	width, col, indent int
-	newlineWhenFull bool
-	cells [][]cell // cells reflect len(cells) lines on the terminal.
-	dot pos // dot is what the user perceives as the cursor.
+	newlineWhenFull    bool
+	cells              [][]cell // cells reflect len(cells) lines on the terminal.
+	dot                pos      // dot is what the user perceives as the cursor.
 }
 
 func newBuffer(width int) *buffer {
@@ -81,7 +81,7 @@ func (b *buffer) write(r rune, attr string) {
 	wd := wcwidth(r)
 	c := cell{r, byte(wd), attr}
 
-	if b.col + wd > b.width {
+	if b.col+wd > b.width {
 		b.newline()
 		b.appendCell(c)
 	} else {
@@ -124,7 +124,7 @@ func (b *buffer) trimToLines(low, high int) {
 // writer is the part of an Editor responsible for keeping the status of and
 // updating the screen.
 type writer struct {
-	file *os.File
+	file   *os.File
 	oldBuf *buffer
 }
 
@@ -139,17 +139,17 @@ func deltaPos(from, to pos) []byte {
 	buf := new(bytes.Buffer)
 	if from.line < to.line {
 		// move down
-		buf.WriteString(fmt.Sprintf("\033[%dB", to.line - from.line))
+		buf.WriteString(fmt.Sprintf("\033[%dB", to.line-from.line))
 	} else if from.line > to.line {
 		// move up
-		buf.WriteString(fmt.Sprintf("\033[%dA", from.line - to.line))
+		buf.WriteString(fmt.Sprintf("\033[%dA", from.line-to.line))
 	}
 	if from.col < to.col {
 		// move right
-		buf.WriteString(fmt.Sprintf("\033[%dC", to.col - from.col))
+		buf.WriteString(fmt.Sprintf("\033[%dC", to.col-from.col))
 	} else if from.col > to.col {
 		// move left
-		buf.WriteString(fmt.Sprintf("\033[%dD", from.col - to.col))
+		buf.WriteString(fmt.Sprintf("\033[%dD", from.col-to.col))
 	}
 	return buf.Bytes()
 }
@@ -197,7 +197,7 @@ func (w *writer) commitBuffer(buf *buffer) error {
 	return nil
 }
 
-func lines(bufs... *buffer) (l int) {
+func lines(bufs ...*buffer) (l int) {
 	for _, buf := range bufs {
 		if buf != nil {
 			l += len(buf.cells)
@@ -221,7 +221,7 @@ func (w *writer) refresh(bs *editorState) error {
 
 	b.writes(bs.prompt, attrForPrompt)
 
-	if b.line() == 0 && b.col * 2 < b.width {
+	if b.line() == 0 && b.col*2 < b.width {
 		b.indent = b.col
 	}
 
@@ -317,7 +317,7 @@ func (w *writer) refresh(bs *editorState) error {
 				b.newline()
 			}
 			for j := 0; j < cols; j++ {
-				k := j * lines + i
+				k := j*lines + i
 				if k >= len(cands) {
 					continue
 				}
@@ -329,7 +329,7 @@ func (w *writer) refresh(bs *editorState) error {
 				}
 				text := cands[k].text
 				b.writes(text, attr)
-				b.writePadding(colWidth - wcwidths(text), attr)
+				b.writePadding(colWidth-wcwidths(text), attr)
 				b.writePadding(colMargin, "")
 			}
 		}
@@ -343,7 +343,7 @@ func (w *writer) refresh(bs *editorState) error {
 		h := height - lines(bufLine, bufMode, bufTips)
 		// Trim bufCompletion to h lines around the current candidate
 		lines := len(bufCompletion.cells)
-		low := bufCompletion.dot.line - h / 2
+		low := bufCompletion.dot.line - h/2
 		high := low + h
 		switch {
 		case low < 0:
@@ -363,7 +363,7 @@ func (w *writer) refresh(bs *editorState) error {
 	case height >= 1:
 		bufTips, bufMode, bufCompletion = nil, nil, nil
 		dotLine := bufLine.dot.line
-		bufLine.trimToLines(dotLine + 1 - height, dotLine + 1)
+		bufLine.trimToLines(dotLine+1-height, dotLine+1)
 	default:
 		bufLine, bufTips, bufMode, bufCompletion = nil, nil, nil, nil
 	}

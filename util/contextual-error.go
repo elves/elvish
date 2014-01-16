@@ -1,17 +1,17 @@
 package util
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	"strings"
 )
 
 type ContextualError struct {
-	name string
+	name   string
 	lineno int
-	colno int
-	line string
-	msg string
+	colno  int
+	line   string
+	msg    string
 }
 
 func NewContextualError(name string, text string, pos int, format string, args ...interface{}) *ContextualError {

@@ -1,8 +1,8 @@
 package edit
 
 import (
-	"../parse"
 	"../eval"
+	"../parse"
 )
 
 // Pseudo-ItemType's used by the Highlighter. They are given negative values
@@ -10,7 +10,7 @@ import (
 // "sub-ItemType" of ItemBare, since only barewords are inspected and marked
 // with these pseudo-ItemType's.
 const (
-	ItemValidCommand   parse.ItemType = -iota - 1
+	ItemValidCommand parse.ItemType = -iota - 1
 	ItemInvalidCommand
 	ItemValidVariable
 	ItemInvalidVariable
@@ -28,7 +28,7 @@ const (
 // modified), or both.
 type Highlighter struct {
 	lexer *parse.Lexer
-	ev *eval.Evaluator
+	ev    *eval.Evaluator
 	items chan parse.Item
 }
 

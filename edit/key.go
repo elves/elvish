@@ -16,10 +16,10 @@ type Key struct {
 var ZeroKey = Key{}
 
 func (k Key) String() (s string) {
-	if k.Mod & Ctrl != 0 {
+	if k.Mod&Ctrl != 0 {
 		s += "Ctrl-"
 	}
-	if k.Mod & Alt != 0 {
+	if k.Mod&Alt != 0 {
 		s += "Alt-"
 	}
 	if k.rune > 0 {
@@ -29,30 +29,49 @@ func (k Key) String() (s string) {
 			s += string(k.rune)
 		}
 	} else {
-		s += FunctionKeyNames[-k.rune - 1]
+		s += FunctionKeyNames[-k.rune-1]
 	}
 	return
 }
 
 const (
-	F1 rune = -1-iota; F2; F3; F4; F5; F6; F7; F8; F9; F10; F11; F12;
-	Up; Down; Right; Left;
-	Home; Insert; Delete; End; PageUp; PageDown;
+	F1 rune = -1 - iota
+	F2
+	F3
+	F4
+	F5
+	F6
+	F7
+	F8
+	F9
+	F10
+	F11
+	F12
+	Up
+	Down
+	Right
+	Left
+	Home
+	Insert
+	Delete
+	End
+	PageUp
+	PageDown
 	DefaultBindingRune // Used in key of keyBinding for default binding
 
 	// Some function key names are just aliases for their ASCII representation
-	Tab = '\t'
-	Enter = '\n'
+	Tab       = '\t'
+	Enter     = '\n'
 	Backspace = 0x7f
 )
 
 var DefaultBinding = Key{DefaultBindingRune, 0}
 
-var KeyNames = map[rune]string {
+var KeyNames = map[rune]string{
 	Tab: "Tab", Enter: "Enter", Backspace: "Backspace",
 }
 
-var FunctionKeyNames = [...]string {
+var FunctionKeyNames = [...]string{
 	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
 	"Up", "Down", "Right", "Left",
 	"Home", "Insert", "Delete", "End", "PageUp", "PageDown",

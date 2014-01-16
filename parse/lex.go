@@ -39,7 +39,7 @@ func (i Item) GoString() string {
 type ItemType int
 
 const (
-	ItemError        ItemType = iota // error occurred; value is text of error
+	ItemError ItemType = iota // error occurred; value is text of error
 	ItemEOF
 	ItemEndOfLine    // a single EOL
 	ItemSpace        // run of spaces separating arguments
@@ -60,7 +60,7 @@ const (
 	ItemAmpersand    // ampersand '&'
 )
 
-var ItemTypeNames []string = []string {
+var ItemTypeNames []string = []string{
 	"ItemError",
 	"ItemEOF",
 	"ItemEndOfLine",
@@ -104,14 +104,14 @@ type stateFn func(*Lexer) stateFn
 
 // Lexer holds the state of the scanner.
 type Lexer struct {
-	name       string    // the name of the input; used only for error reports
-	input      string    // the string being scanned
-	state      stateFn   // the next lexing function to enter
-	pos        Pos       // current position in the input
-	start      Pos       // start position of this Item
-	width      Pos       // width of last rune read from input
-	lastPos    Pos       // position of most recent Item returned by NextItem
-	items      chan Item // channel of scanned items
+	name    string    // the name of the input; used only for error reports
+	input   string    // the string being scanned
+	state   stateFn   // the next lexing function to enter
+	pos     Pos       // current position in the input
+	start   Pos       // start position of this Item
+	width   Pos       // width of last rune read from input
+	lastPos Pos       // position of most recent Item returned by NextItem
+	items   chan Item // channel of scanned items
 }
 
 // next returns the next rune in the input.
@@ -182,9 +182,9 @@ func (l *Lexer) Chan() chan Item {
 // Lex creates a new scanner for the input string.
 func Lex(name, input string) *Lexer {
 	l := &Lexer{
-		name:       name,
-		input:      input,
-		items:      make(chan Item),
+		name:  name,
+		input: input,
+		items: make(chan Item),
 	}
 	go l.run()
 	return l
@@ -284,7 +284,7 @@ func lexRedirLeader(l *Lexer) stateFn {
 	}
 
 	if l.peek() == '[' {
-loop:
+	loop:
 		for {
 			switch l.next() {
 			case ']':
@@ -363,7 +363,7 @@ loop:
 	for {
 		switch l.next() {
 		case '\\':
-			if r:= l.next(); r != Eof && r != '\n' {
+			if r := l.next(); r != Eof && r != '\n' {
 				break
 			}
 			fallthrough

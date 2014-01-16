@@ -1,13 +1,13 @@
 package eval
 
 import (
-	"fmt"
+	"../parse"
 	"bytes"
-	"strings"
+	"fmt"
 	"strconv"
+	"strings"
 	"unicode"
 	"unicode/utf8"
-	"../parse"
 )
 
 func quote(s string) string {
@@ -66,6 +66,7 @@ type Scalar struct {
 	num float64
 	str string
 }
+
 func (s *Scalar) meisvalue() {}
 
 func NewScalar(s string) *Scalar {
@@ -88,6 +89,7 @@ type Table struct {
 	list []Value
 	dict map[Value]Value
 }
+
 func (t *Table) meisvalue() {}
 
 func NewTable() *Table {
@@ -140,13 +142,14 @@ func (t *Table) Caret(ev *Evaluator, v Value) Value {
 	}
 }
 
-func (t *Table) append(vs... Value) {
+func (t *Table) append(vs ...Value) {
 	t.list = append(t.list, vs...)
 }
 
 type Env struct {
 	m map[string]string
 }
+
 func (e *Env) meisvalue() {}
 
 func NewEnv(s []string) *Env {
@@ -204,8 +207,9 @@ func (e *Env) Caret(ev *Evaluator, v Value) Value {
 
 type Closure struct {
 	ArgNames []string
-	Chunk *parse.ListNode
+	Chunk    *parse.ListNode
 }
+
 func (c *Closure) meisvalue() {}
 
 func NewClosure(argNames []string, ch *parse.ListNode) *Closure {

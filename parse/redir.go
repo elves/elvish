@@ -42,7 +42,7 @@ func newCloseRedir(pos Pos, fd uintptr) *CloseRedir {
 
 type FilenameRedir struct {
 	redir
-	Flag int
+	Flag     int
 	Filename *ListNode // a Term
 }
 

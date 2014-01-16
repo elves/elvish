@@ -1,10 +1,10 @@
 package edit
 
 import (
+	"../util"
+	"bufio"
 	"fmt"
 	"time"
-	"bufio"
-	"../util"
 )
 
 var EscTimeout = time.Millisecond * 10
@@ -12,15 +12,15 @@ var EscTimeout = time.Millisecond * 10
 // reader is the part of an Editor responsible for reading and decoding
 // terminal key sequences.
 type reader struct {
-	timed *util.TimedReader
-	buffed *bufio.Reader
+	timed        *util.TimedReader
+	buffed       *bufio.Reader
 	unreadBuffer []rune
-	currentSeq string
+	currentSeq   string
 }
 
 func newReader(tr *util.TimedReader) *reader {
 	return &reader{
-		timed: tr,
+		timed:  tr,
 		buffed: bufio.NewReaderSize(tr, 0),
 	}
 }
@@ -79,7 +79,7 @@ func (rd *reader) readRune() (r rune) {
 	return
 }
 
-func (rd *reader) unreadRune(r... rune) {
+func (rd *reader) unreadRune(r ...rune) {
 	// XXX Should back up rd.currentSeq too
 	rd.unreadBuffer = append(rd.unreadBuffer, r...)
 }
@@ -100,7 +100,7 @@ yloop:
 		case r == ';':
 			break yloop
 		case '0' <= r && r <= '9':
-			y = y * 10 + int(r - '0')
+			y = y*10 + int(r-'0')
 		default:
 			rd.badEscSeq("Expect number or semicolon")
 		}
@@ -111,7 +111,7 @@ xloop:
 		case r == 'R':
 			break xloop
 		case '0' <= r && r <= '9':
-			x = x * 10 + int(r - '0')
+			x = x*10 + int(r-'0')
 		default:
 			rd.badEscSeq("Expect number or 'R'")
 		}
@@ -166,7 +166,7 @@ func (rd *reader) readKey() (k Key, err error) {
 					nums = append(nums, 0)
 				} else {
 					cur := len(nums) - 1
-					nums[cur] = nums[cur] * 10 + int(r - '0')
+					nums[cur] = nums[cur]*10 + int(r-'0')
 				}
 			}
 			return parseCSI(nums, r, seq)
@@ -187,7 +187,7 @@ func (rd *reader) readKey() (k Key, err error) {
 	default:
 		// Sane Ctrl- sequences that agree with the keyboard...
 		if 0x1 <= r && r <= 0x1d {
-			k = Key{r+0x40, Ctrl}
+			k = Key{r + 0x40, Ctrl}
 		} else {
 			k = Key{r, 0}
 		}

@@ -3,21 +3,21 @@
 package eval
 
 import (
-	"fmt"
-	"strings"
-	"syscall"
-	"strconv"
 	"../parse"
 	"../util"
+	"fmt"
+	"strconv"
+	"strings"
+	"syscall"
 )
 
 type Evaluator struct {
-	name, text string
-	globals map[string]Value
-	locals map[string]Value
-	env *Env
+	name, text  string
+	globals     map[string]Value
+	locals      map[string]Value
+	env         *Env
 	searchPaths []string
-	nodes []parse.Node // A stack that keeps track of nodes being evaluated.
+	nodes       []parse.Node // A stack that keeps track of nodes being evaluated.
 }
 
 func NewEvaluator(envSlice []string) *Evaluator {
@@ -68,9 +68,9 @@ func (ev *Evaluator) errorfNode(n parse.Node, format string, args ...interface{}
 }
 
 // errorf stops the evaluator. Its panic is supposed to be caught by recover.
-func (ev *Evaluator) errorf(format string, args...interface{}) {
+func (ev *Evaluator) errorf(format string, args ...interface{}) {
 	if n := len(ev.nodes); n > 0 {
-		ev.errorfNode(ev.nodes[n - 1], format, args...)
+		ev.errorfNode(ev.nodes[n-1], format, args...)
 	} else {
 		util.Panic(fmt.Errorf(format, args...))
 	}
@@ -173,10 +173,10 @@ func (ev *Evaluator) evalTerm(n *parse.ListNode) []Value {
 			}
 		} else {
 			// Do a Cartesian product
-			newWords := make([]Value, len(words) * len(a))
+			newWords := make([]Value, len(words)*len(a))
 			for i := range words {
 				for j := range a {
-					newWords[i*len(a) + j] = words[i].Caret(ev, a[j])
+					newWords[i*len(a)+j] = words[i].Caret(ev, a[j])
 				}
 			}
 			words = newWords

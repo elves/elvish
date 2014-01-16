@@ -1,13 +1,13 @@
 package main
 
 import (
-	"os"
-	"fmt"
-	"os/user"
-	"../parse"
 	"../edit"
 	"../eval"
+	"../parse"
 	"../util"
+	"fmt"
+	"os"
+	"os/user"
 )
 
 func main() {

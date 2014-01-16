@@ -1,12 +1,12 @@
 package eval
 
 import (
-	"os"
-	"fmt"
-	"strings"
-	"syscall"
 	"../parse"
 	"../util"
+	"fmt"
+	"os"
+	"strings"
+	"syscall"
 )
 
 const (
@@ -19,7 +19,7 @@ const (
 // Represents an IO for commands. At most one of f and ch is non-nil. When
 // both are nil, the IO is closed.
 type io struct {
-	f *os.File
+	f  *os.File
 	ch chan Value
 }
 
@@ -27,7 +27,7 @@ type IOType byte
 
 const (
 	fileIO IOType = iota // Default IO type. Corresponds to io.f.
-	chanIO // Corresponds to io.ch.
+	chanIO               // Corresponds to io.ch.
 	unusedIO
 )
 
@@ -51,16 +51,16 @@ func (i *io) compatible(typ IOType) bool {
 // The "head" of a command is either a function, the path of an external
 // command or a closure.
 type CommandHead struct {
-	Func BuiltinFunc // A builtin function, if the command is builtin.
-	Path string // Command full path, if the command is external.
-	Closure *Closure // The closure value, if the command is a closure.
+	Func    BuiltinFunc // A builtin function, if the command is builtin.
+	Path    string      // Command full path, if the command is external.
+	Closure *Closure    // The closure value, if the command is a closure.
 }
 
 // command packs runtime states of a fully constructured command.
 type command struct {
-	name string // Command name, used in error messages.
+	name string  // Command name, used in error messages.
 	args []Value // Argument list, minus command name.
-	ios [3]*io // IOs for in, out and err.
+	ios  [3]*io  // IOs for in, out and err.
 	CommandHead
 }
 
@@ -86,7 +86,7 @@ func (cmd *command) closeIOs() {
 
 type StateUpdate struct {
 	Terminated bool
-	Msg string
+	Msg        string
 }
 
 func isExecutable(path string) bool {
@@ -101,7 +101,7 @@ func isExecutable(path string) bool {
 		return false
 	}
 	fm := fi.Mode()
-	return !fm.IsDir() && (fm & 0111 != 0)
+	return !fm.IsDir() && (fm&0111 != 0)
 }
 
 // Search for executable `exe`.
@@ -298,7 +298,7 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 			}
 			cmd.ios[0] = nextIn
 		}
-		if i == ncmds - 1 {
+		if i == ncmds-1 {
 			if cmd.ios[1] == nil {
 				if ioTypes[1] == chanIO {
 					// Append an implicit printchan
@@ -402,9 +402,9 @@ func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
 	// Make a subevaluator.
 	// TODO Guard against concurrent writes to globals.
 	newEv := Evaluator{
-		globals: ev.globals,
-		locals: locals,
-		env: ev.env,
+		globals:     ev.globals,
+		locals:      locals,
+		env:         ev.env,
 		searchPaths: ev.searchPaths,
 	}
 	go func() {
@@ -460,7 +460,7 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 		}
 	}
 
-	args := make([]string, len(cmd.args) + 1)
+	args := make([]string, len(cmd.args)+1)
 	args[0] = cmd.Path
 	for i, a := range cmd.args {
 		// NOTE Maybe we should enfore scalar arguments instead of coercing all

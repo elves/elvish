@@ -21,32 +21,32 @@ const (
 )
 
 type leReturn struct {
-	action editorAction
-	newMode bufferMode
+	action         editorAction
+	newMode        bufferMode
 	readLineReturn LineRead
 }
 
-type leBuiltin func (ed *Editor, k Key) *leReturn
+type leBuiltin func(ed *Editor, k Key) *leReturn
 
 var leBuiltins = map[string]leBuiltin{
-	"insert-mode": insertMode,
-	"default-command": defaultCommand,
-	"command-mode": commandMode,
-	"kill-line-b": killLineB,
-	"kill-line-f": killLineF,
-	"kill-rune-b": killRuneB,
-	"move-dot-b": moveDotB,
-	"move-dot-f": moveDotF,
-	"accept-line": acceptLine,
-	"complete": complete,
-	"return-eof": returnEof,
-	"default-insert": defaultInsert,
-	"cancel-completion": cancelCompletion,
-	"select-cand-b": selectCandB,
-	"select-cand-f": selectCandF,
-	"select-cand-col-b": selectCandColB,
-	"select-cand-col-f": selectCandColF,
-	"cycle-cand-f": cycleCandF,
+	"insert-mode":        insertMode,
+	"default-command":    defaultCommand,
+	"command-mode":       commandMode,
+	"kill-line-b":        killLineB,
+	"kill-line-f":        killLineF,
+	"kill-rune-b":        killRuneB,
+	"move-dot-b":         moveDotB,
+	"move-dot-f":         moveDotF,
+	"accept-line":        acceptLine,
+	"complete":           complete,
+	"return-eof":         returnEof,
+	"default-insert":     defaultInsert,
+	"cancel-completion":  cancelCompletion,
+	"select-cand-b":      selectCandB,
+	"select-cand-f":      selectCandF,
+	"select-cand-col-b":  selectCandColB,
+	"select-cand-col-f":  selectCandColF,
+	"cycle-cand-f":       cycleCandF,
 	"default-completing": defaultCompleting,
 }
 

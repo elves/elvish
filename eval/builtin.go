@@ -1,29 +1,29 @@
 package eval
 
 import (
+	"bufio"
+	"fmt"
 	io_ "io"
 	"os"
-	"fmt"
-	"bufio"
 )
 
 type BuiltinFunc func(*Evaluator, []Value, [3]*io) string
 
 type builtin struct {
-	fn BuiltinFunc
+	fn      BuiltinFunc
 	ioTypes [3]IOType
 }
 
-var builtins = map[string]builtin {
-	"var": builtin{var_, [3]IOType{unusedIO, unusedIO}},
-	"set": builtin{set, [3]IOType{unusedIO, unusedIO}},
-	"fn": builtin{fn, [3]IOType{unusedIO, unusedIO}},
-	"put": builtin{put, [3]IOType{unusedIO, chanIO}},
-	"print": builtin{print, [3]IOType{unusedIO}},
-	"println": builtin{println, [3]IOType{unusedIO}},
+var builtins = map[string]builtin{
+	"var":       builtin{var_, [3]IOType{unusedIO, unusedIO}},
+	"set":       builtin{set, [3]IOType{unusedIO, unusedIO}},
+	"fn":        builtin{fn, [3]IOType{unusedIO, unusedIO}},
+	"put":       builtin{put, [3]IOType{unusedIO, chanIO}},
+	"print":     builtin{print, [3]IOType{unusedIO}},
+	"println":   builtin{println, [3]IOType{unusedIO}},
 	"printchan": builtin{printchan, [3]IOType{chanIO, fileIO}},
-	"feedchan": builtin{feedchan, [3]IOType{fileIO, chanIO}},
-	"cd": builtin{cd, [3]IOType{unusedIO, unusedIO}},
+	"feedchan":  builtin{feedchan, [3]IOType{fileIO, chanIO}},
+	"cd":        builtin{cd, [3]IOType{unusedIO, unusedIO}},
 }
 
 func doSet(ev *Evaluator, names []string, values []Value) string {
@@ -105,7 +105,7 @@ func fn(ev *Evaluator, args []Value, ios [3]*io) string {
 		closure.ArgNames = append(closure.ArgNames, args[i].String(ev))
 	}
 	// TODO Warn about redefining fn?
-	ev.locals["fn-" + args[0].String(ev)] = closure
+	ev.locals["fn-"+args[0].String(ev)] = closure
 	return ""
 }
 

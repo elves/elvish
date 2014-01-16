@@ -49,8 +49,8 @@ func (l *ListNode) append(n Node) {
 // CommandNode holds a command, with terms and redirections.
 type CommandNode struct {
 	Pos
-	Name *ListNode // A Term
-	Args *ListNode // A ListNode of Term's
+	Name   *ListNode // A Term
+	Args   *ListNode // A ListNode of Term's
 	Redirs []Redir
 }
 
@@ -74,7 +74,7 @@ func newCommand(pos Pos) *CommandNode {
 type FactorNode struct {
 	Pos
 	Dollar int
-	Node Node
+	Node   Node
 }
 
 func newFactor(pos Pos) *FactorNode {
@@ -82,7 +82,7 @@ func newFactor(pos Pos) *FactorNode {
 }
 
 type TablePair struct {
-	Key *ListNode
+	Key   *ListNode
 	Value *ListNode
 }
 
@@ -107,7 +107,7 @@ func (tn *TableNode) appendToDict(key *ListNode, value *ListNode) {
 type ClosureNode struct {
 	Pos
 	ArgNames *ListNode
-	Chunk *ListNode
+	Chunk    *ListNode
 }
 
 func newClosure(pos Pos) *ClosureNode {

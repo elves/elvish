@@ -1,18 +1,18 @@
 package edit
 
 import (
+	"../parse"
 	"fmt"
 	"io/ioutil"
-	"../parse"
 )
 
 type tokenPart struct {
-	text string
+	text      string
 	completed bool
 }
 
 type candidate struct {
-	text string
+	text  string
 	parts []tokenPart
 }
 
@@ -27,9 +27,9 @@ func (c *candidate) push(tp tokenPart) {
 
 type completion struct {
 	start, end int // The text to complete is Editor.line[start:end]
-	typ parse.ItemType
+	typ        parse.ItemType
 	candidates []*candidate
-	current int
+	current    int
 }
 
 func (c *completion) prev(cycle bool) {

@@ -8,19 +8,19 @@
 package parse
 
 import (
-	"os"
-	"fmt"
-	"strings"
-	"strconv"
 	"../util"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
 )
 
 type Parser struct {
-	Name      string    // name of the script represented by the tree.
-	Root      Node // top-level root of the tree.
-	Ctx       Context
-	text      string    // text parsed to create the script (or its parent)
-	tab       bool
+	Name string // name of the script represented by the tree.
+	Root Node   // top-level root of the tree.
+	Ctx  Context
+	text string // text parsed to create the script (or its parent)
+	tab  bool
 	// Parsing only; cleared after parse.
 	lex       *Lexer
 	token     [3]Item // three-token lookahead for parser.
@@ -95,7 +95,7 @@ func (p *Parser) peekNonSpace() (token Item) {
 // NewParser allocates a new parse tree with the given name.
 func NewParser(name string) *Parser {
 	return &Parser{
-		Name:  name,
+		Name: name,
 	}
 }
 
@@ -250,7 +250,7 @@ func unquote(token Item) (string, error) {
 		return token.Val, nil
 	case ItemSingleQuoted:
 		return strings.Replace(token.Val[1:len(token.Val)-1], "``", "`", -1),
-		       nil
+			nil
 	case ItemDoubleQuoted:
 		return strconv.Unquote(token.Val)
 	default:
@@ -264,8 +264,8 @@ func unquote(token Item) (string, error) {
 func startsFactor(p ItemType) bool {
 	switch p {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted,
-			ItemLParen, ItemLBracket, ItemLBrace,
-			ItemDollar, ItemAmpersand:
+		ItemLParen, ItemLBracket, ItemLBrace,
+		ItemDollar, ItemAmpersand:
 		return true
 	default:
 		return false
@@ -292,7 +292,7 @@ func (p *Parser) factor() (fn *FactorNode) {
 		if err != nil {
 			p.errorf(int(token.Pos), "%s", err)
 		}
-		if token.End & MayContinue != 0 {
+		if token.End&MayContinue != 0 {
 			p.Ctx = NewArgContext(token.Val)
 		} else {
 			p.Ctx = nil
@@ -376,14 +376,14 @@ func (p *Parser) redir() Redir {
 
 	if i := strings.IndexRune(leader.Val, '['); i != -1 {
 		dir = leader.Val[:i]
-		qual = leader.Val[i+1:len(leader.Val)-1]
+		qual = leader.Val[i+1 : len(leader.Val)-1]
 	} else {
 		dir = leader.Val
 	}
 
 	// Determine the flag and default (new) fd from the direction.
 	var (
-		fd uintptr
+		fd   uintptr
 		flag int
 	)
 
