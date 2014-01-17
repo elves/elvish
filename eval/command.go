@@ -181,7 +181,8 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (head CommandHead
 	// Try builtin
 	if bi, ok := builtins[name]; ok {
 		head.Func = bi.fn
-		streamTypes = bi.streamTypes
+		copy(streamTypes[:2], bi.streamTypes[:])
+		streamTypes[2] = fdStream
 		return
 	}
 
@@ -423,7 +424,9 @@ func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
 func (ev *Evaluator) execBuiltin(cmd *command) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
-		msg := cmd.Func(ev, cmd.args, cmd.ports)
+		var ports [2]*port
+		copy(ports[:], cmd.ports[:2])
+		msg := cmd.Func(ev, cmd.args, ports)
 		// Streams are closed after executaion of builtin is complete.
 		cmd.closePorts()
 		update <- &StateUpdate{Terminated: true, Msg: msg}

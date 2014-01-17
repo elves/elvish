@@ -7,23 +7,23 @@ import (
 	"os"
 )
 
-type BuiltinFunc func(*Evaluator, []Value, [3]*port) string
+type BuiltinFunc func(*Evaluator, []Value, [2]*port) string
 
 type builtin struct {
 	fn          BuiltinFunc
-	streamTypes [3]StreamType
+	streamTypes [2]StreamType
 }
 
 var builtins = map[string]builtin{
-	"var":       builtin{var_, [3]StreamType{unusedStream, unusedStream}},
-	"set":       builtin{set, [3]StreamType{unusedStream, unusedStream}},
-	"fn":        builtin{fn, [3]StreamType{unusedStream, unusedStream}},
-	"put":       builtin{put, [3]StreamType{unusedStream, chanStream}},
-	"print":     builtin{print, [3]StreamType{unusedStream}},
-	"println":   builtin{println, [3]StreamType{unusedStream}},
-	"printchan": builtin{printchan, [3]StreamType{chanStream, fdStream}},
-	"feedchan":  builtin{feedchan, [3]StreamType{fdStream, chanStream}},
-	"cd":        builtin{cd, [3]StreamType{unusedStream, unusedStream}},
+	"var":       builtin{var_, [2]StreamType{unusedStream, unusedStream}},
+	"set":       builtin{set, [2]StreamType{unusedStream, unusedStream}},
+	"fn":        builtin{fn, [2]StreamType{unusedStream, unusedStream}},
+	"put":       builtin{put, [2]StreamType{unusedStream, chanStream}},
+	"print":     builtin{print, [2]StreamType{unusedStream}},
+	"println":   builtin{println, [2]StreamType{unusedStream}},
+	"printchan": builtin{printchan, [2]StreamType{chanStream, fdStream}},
+	"feedchan":  builtin{feedchan, [2]StreamType{fdStream, chanStream}},
+	"cd":        builtin{cd, [2]StreamType{unusedStream, unusedStream}},
 }
 
 func doSet(ev *Evaluator, names []string, values []Value) string {
@@ -41,7 +41,7 @@ func doSet(ev *Evaluator, names []string, values []Value) string {
 	return ""
 }
 
-func var_(ev *Evaluator, args []Value, ports [3]*port) string {
+func var_(ev *Evaluator, args []Value, ports [2]*port) string {
 	var names []string
 	var values []Value
 	for i, nameVal := range args {
@@ -65,7 +65,7 @@ func var_(ev *Evaluator, args []Value, ports [3]*port) string {
 	return ""
 }
 
-func set(ev *Evaluator, args []Value, ports [3]*port) string {
+func set(ev *Evaluator, args []Value, ports [2]*port) string {
 	var names []string
 	var values []Value
 	for i, nameVal := range args {
@@ -86,7 +86,7 @@ func set(ev *Evaluator, args []Value, ports [3]*port) string {
 	return doSet(ev, names, values)
 }
 
-func fn(ev *Evaluator, args []Value, ports [3]*port) string {
+func fn(ev *Evaluator, args []Value, ports [2]*port) string {
 	n := len(args)
 	if n < 2 {
 		return "args error"
@@ -109,7 +109,7 @@ func fn(ev *Evaluator, args []Value, ports [3]*port) string {
 	return ""
 }
 
-func put(ev *Evaluator, args []Value, ports [3]*port) string {
+func put(ev *Evaluator, args []Value, ports [2]*port) string {
 	out := ports[1].ch
 	for _, a := range args {
 		out <- a
@@ -117,7 +117,7 @@ func put(ev *Evaluator, args []Value, ports [3]*port) string {
 	return ""
 }
 
-func print(ev *Evaluator, args []Value, ports [3]*port) string {
+func print(ev *Evaluator, args []Value, ports [2]*port) string {
 	out := ports[1].f
 	for _, a := range args {
 		fmt.Fprint(out, a.String(ev))
@@ -125,12 +125,12 @@ func print(ev *Evaluator, args []Value, ports [3]*port) string {
 	return ""
 }
 
-func println(ev *Evaluator, args []Value, ports [3]*port) string {
+func println(ev *Evaluator, args []Value, ports [2]*port) string {
 	args = append(args, NewScalar("\n"))
 	return print(ev, args, ports)
 }
 
-func printchan(ev *Evaluator, args []Value, ports [3]*port) string {
+func printchan(ev *Evaluator, args []Value, ports [2]*port) string {
 	if len(args) > 0 {
 		return "args error"
 	}
@@ -143,7 +143,7 @@ func printchan(ev *Evaluator, args []Value, ports [3]*port) string {
 	return ""
 }
 
-func feedchan(ev *Evaluator, args []Value, ports [3]*port) string {
+func feedchan(ev *Evaluator, args []Value, ports [2]*port) string {
 	if len(args) > 0 {
 		return "args error"
 	}
@@ -167,7 +167,7 @@ func feedchan(ev *Evaluator, args []Value, ports [3]*port) string {
 	}
 }
 
-func cd(ev *Evaluator, args []Value, ports [3]*port) string {
+func cd(ev *Evaluator, args []Value, ports [2]*port) string {
 	var dir string
 	if len(args) == 0 {
 		dir = ""
