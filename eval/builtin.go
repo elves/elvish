@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 )
 
 type BuiltinFunc func(*Evaluator, []Value, [2]*port) string
@@ -24,6 +25,10 @@ var builtins = map[string]builtin{
 	"printchan": builtin{printchan, [2]StreamType{chanStream, fdStream}},
 	"feedchan":  builtin{feedchan, [2]StreamType{fdStream, chanStream}},
 	"cd":        builtin{cd, [2]StreamType{unusedStream, unusedStream}},
+	"+":         builtin{plus, [2]StreamType{unusedStream, chanStream}},
+	"-":         builtin{minus, [2]StreamType{unusedStream, chanStream}},
+	"*":         builtin{times, [2]StreamType{unusedStream, chanStream}},
+	"/":         builtin{divide, [2]StreamType{unusedStream, chanStream}},
 }
 
 func doSet(ev *Evaluator, names []string, values []Value) string {
@@ -180,5 +185,82 @@ func cd(ev *Evaluator, args []Value, ports [2]*port) string {
 	if err != nil {
 		return err.Error()
 	}
+	return ""
+}
+
+func toFloats(args []Value) (nums []float64, err error) {
+	for _, a := range args {
+		a, ok := a.(*Scalar)
+		if !ok {
+			return nil, fmt.Errorf("must be scalar")
+		}
+		f, err := strconv.ParseFloat(a.str, 64)
+		if err != nil {
+			return nil, err
+		}
+		nums = append(nums, f)
+	}
+	return
+}
+
+func plus(ev *Evaluator, args []Value, ports [2]*port) string {
+	out := ports[1].ch
+	nums, err := toFloats(args)
+	if err != nil {
+		return err.Error()
+	}
+	sum := 0.0
+	for _, f := range nums {
+		sum += f
+	}
+	out <- NewScalar(fmt.Sprintf("%g", sum))
+	return ""
+}
+
+func minus(ev *Evaluator, args []Value, ports [2]*port) string {
+	out := ports[1].ch
+	if len(args) == 0 {
+		return "not enough args"
+	}
+	nums, err := toFloats(args)
+	if err != nil {
+		return err.Error()
+	}
+	sum := nums[0]
+	for _, f := range nums[1:] {
+		sum -= f
+	}
+	out <- NewScalar(fmt.Sprintf("%g", sum))
+	return ""
+}
+
+func times(ev *Evaluator, args []Value, ports [2]*port) string {
+	out := ports[1].ch
+	nums, err := toFloats(args)
+	if err != nil {
+		return err.Error()
+	}
+	prod := 1.0
+	for _, f := range nums {
+		prod *= f
+	}
+	out <- NewScalar(fmt.Sprintf("%g", prod))
+	return ""
+}
+
+func divide(ev *Evaluator, args []Value, ports [2]*port) string {
+	out := ports[1].ch
+	if len(args) == 0 {
+		return "not enough args"
+	}
+	nums, err := toFloats(args)
+	if err != nil {
+		return err.Error()
+	}
+	prod := nums[0]
+	for _, f := range nums[1:] {
+		prod /= f
+	}
+	out <- NewScalar(fmt.Sprintf("%g", prod))
 	return ""
 }
