@@ -276,6 +276,7 @@ func startsFactor(p ItemType) bool {
 //        = ( bare | single-quoted | double-quoted | Table )
 //        = '{' TermList '}'
 //        = Closure
+//        = '(' Pipeline ')'
 // Closure and flat list are distinguished by the first token after the
 // opening brace. If startsFactor(token), it is considered a flat list.
 // This implies that whitespaces after opening brace always introduce a
@@ -310,6 +311,12 @@ func (p *Parser) factor() (fn *FactorNode) {
 			}
 		} else {
 			fn.Node = p.closure()
+		}
+		return
+	case ItemLParen:
+		fn.Node = p.pipeline()
+		if token := p.next(); token.Typ != ItemRParen {
+			p.unexpected(token, "factor of pipeline capture")
 		}
 		return
 	default:
