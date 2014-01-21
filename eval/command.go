@@ -236,23 +236,9 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, streamT
 	return
 }
 
-// ExecPipeline executes a pipeline.
-//
-// As many things as possible are done before any command actually gets
-// executed, to avoid leaving the pipeline broken - resolving command names,
-// opening files, and in future, evaluating shell constructs. Such errors are
-// signalled with Evaluator.errorf and will abort the whole script that is
-// being evaluated. They are akin to "compile-time" errors.
-//
-// Another class of errors - nonzero return value from external command, etc.
-// can only be detected after trying to execute the command. They are akin to
-// "run-time" errors and do not affect the whole script. Instead, the errors
-// signaled are merely recorded and returned.
-//
-// TODO Should return a slice of exit statuses.
-// XXX Unresolvable external command should always be regarded as run-time
-// error.
-func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
+// preevalPipeline resolves commands, sets up pipes and applies redirections.
+// These are done before commands are actually executed.
+func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (cmds []*command, pipelineStreamTypes [3]StreamType) {
 	ev.push(pl)
 	defer ev.pop()
 
@@ -260,7 +246,7 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 	if ncmds == 0 {
 		return
 	}
-	cmds := make([]*command, 0, ncmds)
+	cmds = make([]*command, 0, ncmds)
 
 	var nextIn *port
 	for i, n := range pl.Nodes {
@@ -272,6 +258,7 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 		if i == 0 {
 			// First command. Only connect input when no input redirection is
 			// present.
+			pipelineStreamTypes[0] = streamTypes[0]
 			if cmd.ports[0] == nil {
 				if streamTypes[0] == chanStream {
 					// Prepend an implicit feedchan
@@ -300,6 +287,7 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 			cmd.ports[0] = nextIn
 		}
 		if i == ncmds-1 {
+			pipelineStreamTypes[1] = streamTypes[1]
 			if cmd.ports[1] == nil {
 				if streamTypes[1] == chanStream {
 					// Append an implicit printchan
@@ -352,7 +340,13 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 			cmds = append(cmds, appendCmd)
 		}
 	}
+	return
+}
 
+// execPipeline executes a pipeline set up by preevalPipeline.
+//
+// TODO Should return a slice of exit statuses.
+func (ev *Evaluator) execPipeline(cmds []*command) {
 	updates := make([]<-chan *StateUpdate, len(cmds))
 	for i, cmd := range cmds {
 		updates[i] = ev.execCommand(cmd)
@@ -368,6 +362,12 @@ func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 			}
 		}
 	}
+}
+
+// evalPipeline combines preevalPipeline and execPipeline.
+func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
+	cmds, _ := ev.preevalPipeline(pl)
+	ev.execPipeline(cmds)
 }
 
 // execCommand executes a command.
