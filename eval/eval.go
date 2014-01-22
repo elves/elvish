@@ -5,6 +5,7 @@ package eval
 import (
 	"../parse"
 	"../util"
+	"os"
 	"fmt"
 	"strconv"
 	"strings"
@@ -17,6 +18,7 @@ type Evaluator struct {
 	locals      map[string]Value
 	env         *Env
 	searchPaths []string
+	in, out     *port
 	nodes       []parse.Node // A stack that keeps track of nodes being evaluated.
 }
 
@@ -26,7 +28,10 @@ func NewEvaluator(envSlice []string) *Evaluator {
 	g := map[string]Value{
 		"env": env, "pid": pid,
 	}
-	ev := &Evaluator{globals: g, locals: g, env: env}
+	ev := &Evaluator{
+		globals: g, locals: g, env: env,
+		in: &port{f: os.Stdin}, out: &port{f: os.Stdout},
+	}
 
 	path, ok := env.m["PATH"]
 	if ok {
@@ -37,6 +42,12 @@ func NewEvaluator(envSlice []string) *Evaluator {
 	}
 
 	return ev
+}
+
+func (ev *Evaluator) copy() *Evaluator {
+	eu := new(Evaluator)
+	*eu = *ev
+	return eu
 }
 
 func (ev *Evaluator) Eval(name, text string, n parse.Node) (err error) {

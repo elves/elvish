@@ -64,13 +64,13 @@ type command struct {
 	CommandHead
 }
 
-func (cmd *command) closePorts() {
+func (cmd *command) closePorts(ev *Evaluator) {
 	for i, port := range cmd.ports {
 		if port == nil {
 			continue
 		}
 		switch port.f {
-		case nil, os.Stdin, os.Stdout, os.Stderr:
+		case nil, ev.in.f, ev.out.f, os.Stderr:
 			// XXX Is the heuristics correct?
 		default:
 			port.f.Close()
@@ -267,18 +267,14 @@ func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
 	}
 
 	// Make a subevaluator.
-	// TODO Guard against concurrent writes to globals.
-	newEv := Evaluator{
-		globals:     ev.globals,
-		locals:      locals,
-		env:         ev.env,
-		searchPaths: ev.searchPaths,
-	}
+	// XXX Concurrent access to globals, in and out can be problematic.
+	newEv := ev.copy()
+	newEv.locals = locals
 	go func() {
 		// TODO Support calling closure originated in another source.
 		newEv.Eval(ev.name, ev.text, cmd.Closure.Chunk)
 		// Streams are closed after executaion of closure is complete.
-		cmd.closePorts()
+		cmd.closePorts(ev)
 		// TODO Support returning value.
 		update <- &StateUpdate{Terminated: true}
 		close(update)
@@ -294,7 +290,7 @@ func (ev *Evaluator) execBuiltin(cmd *command) <-chan *StateUpdate {
 		copy(ports[:], cmd.ports[:2])
 		msg := cmd.Func(ev, cmd.args, ports)
 		// Streams are closed after executaion of builtin is complete.
-		cmd.closePorts()
+		cmd.closePorts(ev)
 		update <- &StateUpdate{Terminated: true, Msg: msg}
 		close(update)
 	}()
@@ -341,7 +337,7 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
 	pid, err := syscall.ForkExec(cmd.Path, args, &attr)
 	// Streams are closed after fork-exec of external is complete.
-	cmd.closePorts()
+	cmd.closePorts(ev)
 
 	update := make(chan *StateUpdate)
 	if err != nil {
@@ -385,7 +381,7 @@ func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (cmds []*command, pipel
 						name: "(implicit feedchan)",
 						args: nil,
 						ports: [3]*port{
-							&port{f: os.Stdin},
+							ev.in,
 							&port{ch: ch},
 							&port{f: os.Stderr},
 						},
@@ -393,7 +389,7 @@ func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (cmds []*command, pipel
 					}
 					cmd.ports[0] = &port{ch: ch}
 				} else {
-					cmd.ports[0] = &port{f: os.Stdin}
+					cmd.ports[0] = ev.in
 				}
 			}
 		} else {
@@ -416,13 +412,13 @@ func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (cmds []*command, pipel
 						args: nil,
 						ports: [3]*port{
 							&port{ch: ch},
-							&port{f: os.Stdout},
+							ev.out,
 							&port{f: os.Stderr},
 						},
 						CommandHead: CommandHead{Func: printchan},
 					}
 				} else {
-					cmd.ports[1] = &port{f: os.Stdout}
+					cmd.ports[1] = ev.out
 				}
 			}
 		} else {
