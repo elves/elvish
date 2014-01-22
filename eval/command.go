@@ -236,6 +236,124 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, streamT
 	return
 }
 
+// execCommand executes a command.
+func (ev *Evaluator) execCommand(cmd *command) <-chan *StateUpdate {
+	switch {
+	case cmd.Func != nil:
+		return ev.execBuiltin(cmd)
+	case cmd.Path != "":
+		return ev.execExternal(cmd)
+	case cmd.Closure != nil:
+		return ev.execClosure(cmd)
+	default:
+		panic("Bad eval.command struct")
+	}
+}
+
+func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
+	update := make(chan *StateUpdate, 1)
+
+	locals := make(map[string]Value)
+	// TODO Support optional/rest argument
+	if len(cmd.args) != len(cmd.Closure.ArgNames) {
+		// TODO Check arity before exec'ing
+		update <- &StateUpdate{Terminated: true, Msg: "arity mismatch"}
+		close(update)
+		return update
+	}
+	// Pass argument by populating locals.
+	for i, name := range cmd.Closure.ArgNames {
+		locals[name] = cmd.args[i]
+	}
+
+	// Make a subevaluator.
+	// TODO Guard against concurrent writes to globals.
+	newEv := Evaluator{
+		globals:     ev.globals,
+		locals:      locals,
+		env:         ev.env,
+		searchPaths: ev.searchPaths,
+	}
+	go func() {
+		// TODO Support calling closure originated in another source.
+		newEv.Eval(ev.name, ev.text, cmd.Closure.Chunk)
+		// Streams are closed after executaion of closure is complete.
+		cmd.closePorts()
+		// TODO Support returning value.
+		update <- &StateUpdate{Terminated: true}
+		close(update)
+	}()
+	return update
+}
+
+// execBuiltin executes a builtin command.
+func (ev *Evaluator) execBuiltin(cmd *command) <-chan *StateUpdate {
+	update := make(chan *StateUpdate)
+	go func() {
+		var ports [2]*port
+		copy(ports[:], cmd.ports[:2])
+		msg := cmd.Func(ev, cmd.args, ports)
+		// Streams are closed after executaion of builtin is complete.
+		cmd.closePorts()
+		update <- &StateUpdate{Terminated: true, Msg: msg}
+		close(update)
+	}()
+	return update
+}
+
+func waitStateUpdate(pid int, update chan<- *StateUpdate) {
+	for {
+		var ws syscall.WaitStatus
+		_, err := syscall.Wait4(pid, &ws, 0, nil)
+
+		if err != nil {
+			if err != syscall.ECHILD {
+				update <- &StateUpdate{Msg: err.Error()}
+			}
+			break
+		}
+		update <- &StateUpdate{
+			Terminated: ws.Exited(), Msg: fmt.Sprintf("%v", ws)}
+	}
+	close(update)
+}
+
+// execExternal executes an external command.
+func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
+	files := make([]uintptr, len(cmd.ports))
+	for i, port := range cmd.ports {
+		if port == nil || port.f == nil {
+			files[i] = FD_NIL
+		} else {
+			files[i] = port.f.Fd()
+		}
+	}
+
+	args := make([]string, len(cmd.args)+1)
+	args[0] = cmd.Path
+	for i, a := range cmd.args {
+		// NOTE Maybe we should enfore scalar arguments instead of coercing all
+		// args into string
+		args[i+1] = a.String(ev)
+	}
+
+	sys := syscall.SysProcAttr{}
+	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
+	pid, err := syscall.ForkExec(cmd.Path, args, &attr)
+	// Streams are closed after fork-exec of external is complete.
+	cmd.closePorts()
+
+	update := make(chan *StateUpdate)
+	if err != nil {
+		update <- &StateUpdate{Terminated: true, Msg: err.Error()}
+		close(update)
+	} else {
+		go waitStateUpdate(pid, update)
+	}
+
+	return update
+}
+
 // preevalPipeline resolves commands, sets up pipes and applies redirections.
 // These are done before commands are actually executed.
 func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (cmds []*command, pipelineStreamTypes [3]StreamType) {
@@ -368,122 +486,4 @@ func (ev *Evaluator) execPipeline(cmds []*command) {
 func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
 	cmds, _ := ev.preevalPipeline(pl)
 	ev.execPipeline(cmds)
-}
-
-// execCommand executes a command.
-func (ev *Evaluator) execCommand(cmd *command) <-chan *StateUpdate {
-	switch {
-	case cmd.Func != nil:
-		return ev.execBuiltin(cmd)
-	case cmd.Path != "":
-		return ev.execExternal(cmd)
-	case cmd.Closure != nil:
-		return ev.execClosure(cmd)
-	default:
-		panic("Bad eval.command struct")
-	}
-}
-
-func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
-	update := make(chan *StateUpdate, 1)
-
-	locals := make(map[string]Value)
-	// TODO Support optional/rest argument
-	if len(cmd.args) != len(cmd.Closure.ArgNames) {
-		// TODO Check arity before exec'ing
-		update <- &StateUpdate{Terminated: true, Msg: "arity mismatch"}
-		close(update)
-		return update
-	}
-	// Pass argument by populating locals.
-	for i, name := range cmd.Closure.ArgNames {
-		locals[name] = cmd.args[i]
-	}
-
-	// Make a subevaluator.
-	// TODO Guard against concurrent writes to globals.
-	newEv := Evaluator{
-		globals:     ev.globals,
-		locals:      locals,
-		env:         ev.env,
-		searchPaths: ev.searchPaths,
-	}
-	go func() {
-		// TODO Support calling closure originated in another source.
-		newEv.Eval(ev.name, ev.text, cmd.Closure.Chunk)
-		// Streams are closed after executaion of closure is complete.
-		cmd.closePorts()
-		// TODO Support returning value.
-		update <- &StateUpdate{Terminated: true}
-		close(update)
-	}()
-	return update
-}
-
-// execBuiltin executes a builtin command.
-func (ev *Evaluator) execBuiltin(cmd *command) <-chan *StateUpdate {
-	update := make(chan *StateUpdate)
-	go func() {
-		var ports [2]*port
-		copy(ports[:], cmd.ports[:2])
-		msg := cmd.Func(ev, cmd.args, ports)
-		// Streams are closed after executaion of builtin is complete.
-		cmd.closePorts()
-		update <- &StateUpdate{Terminated: true, Msg: msg}
-		close(update)
-	}()
-	return update
-}
-
-func waitStateUpdate(pid int, update chan<- *StateUpdate) {
-	for {
-		var ws syscall.WaitStatus
-		_, err := syscall.Wait4(pid, &ws, 0, nil)
-
-		if err != nil {
-			if err != syscall.ECHILD {
-				update <- &StateUpdate{Msg: err.Error()}
-			}
-			break
-		}
-		update <- &StateUpdate{
-			Terminated: ws.Exited(), Msg: fmt.Sprintf("%v", ws)}
-	}
-	close(update)
-}
-
-// execExternal executes an external command.
-func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
-	files := make([]uintptr, len(cmd.ports))
-	for i, port := range cmd.ports {
-		if port == nil || port.f == nil {
-			files[i] = FD_NIL
-		} else {
-			files[i] = port.f.Fd()
-		}
-	}
-
-	args := make([]string, len(cmd.args)+1)
-	args[0] = cmd.Path
-	for i, a := range cmd.args {
-		// NOTE Maybe we should enfore scalar arguments instead of coercing all
-		// args into string
-		args[i+1] = a.String(ev)
-	}
-
-	sys := syscall.SysProcAttr{}
-	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
-	pid, err := syscall.ForkExec(cmd.Path, args, &attr)
-	// Streams are closed after fork-exec of external is complete.
-	cmd.closePorts()
-
-	update := make(chan *StateUpdate)
-	if err != nil {
-		update <- &StateUpdate{Terminated: true, Msg: err.Error()}
-		close(update)
-	} else {
-		go waitStateUpdate(pid, update)
-	}
-
-	return update
 }
