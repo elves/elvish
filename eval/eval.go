@@ -136,7 +136,24 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 	case *parse.StringNode:
 		words = []Value{NewScalar(n.Text)}
 	case *parse.ListNode:
-		words = ev.evalTermList(n)
+		// XXX May be either a bracketed term list or pipeline capture. Decide
+		// it is which by peeking at the first element.
+		if len(n.Nodes) == 0 {
+			words = nil
+		} else if _, ok := n.Nodes[0].(*parse.CommandNode); ok {
+			// TODO Pipeline capture
+			newEv := ev.copy()
+			ch := make(chan Value)
+			newEv.out = &port{ch: ch}
+			updates := newEv.evalPipelineAsync(n)
+			for v := range ch {
+				words = append(words, v)
+			}
+			newEv.waitPipeline(updates)
+			return words
+		} else {
+			words = ev.evalTermList(n)
+		}
 	case *parse.TableNode:
 		word := ev.evalTable(n)
 		words = []Value{word}

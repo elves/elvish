@@ -59,7 +59,7 @@ The Language
   ```
 
 * Basically prefix syntax without the outermost pair of parentheses (`>`
-  represents the prompt):
+  represents the prompt): ✔
   ```
   > + 1 2
   3
