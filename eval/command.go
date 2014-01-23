@@ -446,7 +446,7 @@ func makeFeedchan(in *os.File, out chan Value) *command {
 // adaptors if needed.
 //
 // TODO Should return a slice of exit statuses.
-func (ev *Evaluator) execPipeline(cmds []*command, types [3]StreamType) {
+func (ev *Evaluator) execPipeline(cmds []*command, types [3]StreamType) []<-chan *StateUpdate {
 	var implicits [2]*command
 
 	// Pipeline input.
@@ -509,7 +509,10 @@ func (ev *Evaluator) execPipeline(cmds []*command, types [3]StreamType) {
 	for i, cmd := range cmds {
 		updates[i] = ev.execCommand(cmd)
 	}
+	return updates
+}
 
+func (ev *Evaluator) waitPipeline(updates []<-chan *StateUpdate) {
 	for i, update := range updates {
 		for up := range update {
 			switch up.Msg {
@@ -522,8 +525,12 @@ func (ev *Evaluator) execPipeline(cmds []*command, types [3]StreamType) {
 	}
 }
 
+func (ev *Evaluator) evalPipelineAsync(pl *parse.ListNode) []<-chan *StateUpdate {
+	cmds, types := ev.preevalPipeline(pl)
+	return ev.execPipeline(cmds, types)
+}
+
 // evalPipeline combines preevalPipeline and execPipeline.
 func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
-	cmds, types := ev.preevalPipeline(pl)
-	ev.execPipeline(cmds, types)
+	ev.waitPipeline(ev.evalPipelineAsync(pl))
 }
