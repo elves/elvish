@@ -345,7 +345,8 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 }
 
 // preevalPipeline resolves commands, sets up pipes and applies redirections.
-// These are done before commands are actually executed.
+// These are done before commands are actually executed. Input of first command
+// and output of last command are NOT connected to ev.{in out}.
 func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (cmds []*command, pipelineStreamTypes [3]StreamType) {
 	ev.push(pl)
 	defer ev.pop()
@@ -362,30 +363,11 @@ func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (cmds []*command, pipel
 
 		var prependCmd, appendCmd *command
 
-		// Create and connect pipes.
+		// Connect input pipe.
 		if i == 0 {
 			// First command. Only connect input when no input redirection is
 			// present.
 			pipelineStreamTypes[0] = streamTypes[0]
-			if cmd.ports[0] == nil {
-				if streamTypes[0] == chanStream {
-					// Prepend an implicit feedchan
-					ch := make(chan Value)
-					prependCmd = &command{
-						name: "(implicit feedchan)",
-						args: nil,
-						ports: [3]*port{
-							ev.in,
-							&port{ch: ch},
-							&port{f: os.Stderr},
-						},
-						CommandHead: CommandHead{Func: feedchan},
-					}
-					cmd.ports[0] = &port{ch: ch}
-				} else {
-					cmd.ports[0] = ev.in
-				}
-			}
 		} else {
 			if cmd.ports[0] != nil {
 				ev.errorf("command #%d has both pipe input and input redirection")
@@ -394,27 +376,9 @@ func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (cmds []*command, pipel
 			}
 			cmd.ports[0] = nextIn
 		}
+		// Create and connect output pipe.
 		if i == ncmds-1 {
 			pipelineStreamTypes[1] = streamTypes[1]
-			if cmd.ports[1] == nil {
-				if streamTypes[1] == chanStream {
-					// Append an implicit printchan
-					ch := make(chan Value)
-					cmd.ports[1] = &port{ch: ch}
-					appendCmd = &command{
-						name: "(implicit printchan)",
-						args: nil,
-						ports: [3]*port{
-							&port{ch: ch},
-							ev.out,
-							&port{f: os.Stderr},
-						},
-						CommandHead: CommandHead{Func: printchan},
-					}
-				} else {
-					cmd.ports[1] = ev.out
-				}
-			}
 		} else {
 			if cmd.ports[1] != nil {
 				ev.errorf("command #%d has both pipe output and output redirection", i)
@@ -451,10 +415,96 @@ func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (cmds []*command, pipel
 	return
 }
 
+func makePrintchan(in chan Value, out *os.File) *command {
+	return &command{
+		name: "(implicit printchan)",
+		args: nil,
+		ports: [3]*port{
+			&port{ch: in},
+			&port{f: out},
+			&port{f: os.Stderr},
+		},
+		CommandHead: CommandHead{Func: printchan},
+	}
+}
+
+func makeFeedchan(in *os.File, out chan Value) *command {
+	return &command{
+		name: "(implicit feedchan)",
+		args: nil,
+		ports: [3]*port{
+			&port{f: in},
+			&port{ch: out},
+			&port{f: os.Stderr},
+		},
+		CommandHead: CommandHead{Func: feedchan},
+	}
+}
+
 // execPipeline executes a pipeline set up by preevalPipeline.
+// It fullfils the input of cmds[0] and output of cmds[len(cmds)-1], inserting
+// adaptors if needed.
 //
 // TODO Should return a slice of exit statuses.
-func (ev *Evaluator) execPipeline(cmds []*command) {
+func (ev *Evaluator) execPipeline(cmds []*command, types [3]StreamType) {
+	var implicits [2]*command
+
+	// Pipeline input.
+	if ev.in.compatible(types[0]) {
+		cmds[0].ports[0] = ev.in
+	} else {
+		// Prepend an adapter.
+		// XXX This now assumes at least one of ev.in.{f ch} is not nil
+		switch types[0] {
+		case fdStream:
+			// chan -> fd adapter: printchan
+			reader, writer, e := os.Pipe()
+			if e != nil {
+				ev.errorf("failed to create pipe: %s", e)
+			}
+			implicits[0] = makePrintchan(ev.in.ch, writer)
+			cmds[0].ports[0] = &port{f: reader}
+		case chanStream:
+			// fd -> chan adapter: feedchan
+			ch := make(chan Value)
+			implicits[0] = makeFeedchan(ev.in.f, ch)
+			cmds[0].ports[0] = &port{ch: ch}
+		default:
+			panic("unreachable")
+		}
+	}
+
+	// Pipeline output
+	if ev.out.compatible(types[1]) {
+		cmds[len(cmds)-1].ports[1] = ev.out
+	} else {
+		// Append an adapter.
+		// XXX This now assumes at least one of ev.out.{f ch} is not nil
+		switch types[1] {
+		case fdStream:
+			// fd -> chan adapter: feedchan
+			reader, writer, e := os.Pipe()
+			if e != nil {
+				ev.errorf("failed to create pipe: %s", e)
+			}
+			implicits[1] = makeFeedchan(reader, ev.out.ch)
+			cmds[len(cmds)-1].ports[1] = &port{f: writer}
+		case chanStream:
+			// chan -> fd adapter: printchan
+			ch := make(chan Value)
+			implicits[1] = makePrintchan(ch, ev.out.f)
+			cmds[len(cmds)-1].ports[1] = &port{ch: ch}
+		default:
+			panic("unreachable")
+		}
+	}
+
+	for _, imp := range implicits {
+		if imp != nil {
+			cmds = append(cmds, imp)
+		}
+	}
+
 	updates := make([]<-chan *StateUpdate, len(cmds))
 	for i, cmd := range cmds {
 		updates[i] = ev.execCommand(cmd)
@@ -474,6 +524,6 @@ func (ev *Evaluator) execPipeline(cmds []*command) {
 
 // evalPipeline combines preevalPipeline and execPipeline.
 func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
-	cmds, _ := ev.preevalPipeline(pl)
-	ev.execPipeline(cmds)
+	cmds, types := ev.preevalPipeline(pl)
+	ev.execPipeline(cmds, types)
 }
