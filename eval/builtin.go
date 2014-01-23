@@ -158,9 +158,9 @@ func feedchan(ev *Evaluator, args []Value, ports [2]*port) string {
 	fmt.Println("WARNING: Only string input is supported at the moment.")
 
 	bufferedIn := bufio.NewReader(in)
-	i := 0
+	// i := 0
 	for {
-		fmt.Printf("[%v] ", i)
+		// fmt.Printf("[%v] ", i)
 		line, err := bufferedIn.ReadString('\n')
 		if err == io.EOF {
 			return ""
@@ -168,7 +168,7 @@ func feedchan(ev *Evaluator, args []Value, ports [2]*port) string {
 			return err.Error()
 		}
 		out <- NewScalar(line[:len(line)-1])
-		i++
+		// i++
 	}
 }
 
