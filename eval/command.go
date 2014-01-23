@@ -32,18 +32,12 @@ const (
 )
 
 func (i *port) compatible(typ StreamType) bool {
-	if i == nil {
-		return false
-	}
-	if typ == unusedStream {
-		return true
-	}
-	switch {
-	case i.f != nil:
-		return typ == fdStream
-	case i.ch != nil:
-		return typ == chanStream
-	default:
+	switch typ {
+	case fdStream:
+		return i != nil && i.f != nil
+	case chanStream:
+		return i != nil && i.ch != nil
+	default: // Actually case unusedStream:
 		return true
 	}
 }
