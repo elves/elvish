@@ -1,11 +1,9 @@
-An experimental Unix shell
-==========================
+# An experimental Unix shell
 
 This is a work in progress. Things may change and/or break without notice. You
 have been warned...
 
-Obligatory screenshots
-----------------------
+## Obligatory screenshots
 > All software websites should have screenshots.
 > -- Someone on the Internet
 
@@ -18,8 +16,7 @@ Tab completion:
 ![tab completion](./screenshots/completion.png)
 
 
-The Editor
-----------
+## The Editor
 
 Those marked with ✔ are implemented (but could be broken from time to
 time).
@@ -43,8 +40,7 @@ And:
 * A "navigation mode" integrating functionalities of
   [ranger](http://ranger.nongnu.org/)
 
-The Language
-------------
+## The Language
 
 (Like the previous section, only those marked with ✔ have been implemented.)
 
@@ -127,57 +123,71 @@ The Language
 There are many parts of the language that is not yet decided. See TODO.md for
 a list of things I'm currently thinking about.
 
-Motivation
-----------
+## Motivation
 
-The basic idea is to have a shell that is also a decant programming language.
-Shells have long rejected such things as data structure beyond text arrays.
-Some support associative arrays, which may be assigned to variables but not
-passed as arguments to builtins or shell functions, making the use of them
-very tedious.
+This experiment has a number of motivations. Some of them:
 
-The lesson of Tcl has taught us the "everything is (unstructured) text"
-philosophy, which is also the idea underpinning classical Unix pipelines, is
-too limited for proper programming. Indeed, the power of Tcl often lies in the
-dynamic interpretation of text, assuming some predefined structure in it. Yet
-with shells, where such facilities are basically nonexistent, it requires
-great discipline to build maintainable software. Traditional initscripts,
-program wrapper scripts and some of the more tricky tab-completion scripts are
-notable examples.
+* It attempts to prove that a shell language can be a handy interface to the
+  operating system **and** a decent programming language at the same time; Many
+  existing shells recognize the former but blatantly ignore the latter.
 
-However, the shell does come with a very powerful abstraction - the pipeline.
-It is basically a facility for concatenative programming. Consider the
-following code in lisp:
+* It attempts to build a **better interface** to the operating system, trying
+  to strike the right balance between the tool philosophy of Unix and the
+  tremendous usefulness of a more integrated system.
+
+* It also attempts to build a **better language**, learning from the success
+  and failure of programming language designs.
+
+* It attempts to exploit a facility very well-known to Shell programmers but
+  virtually nonexistent to other programmers - the pipeline. That leads us to
+  the topic of the next few sections.
+
+## Pipeline, the Good
+
+### A Concatenative Programming Facility
+
+(This section assumes some familiarity with basic functional programming.)
+
+Pipelines make for a natural notation of concatenative programming.
+
+So what's concatenative programming? In some of its most common use cases, we
+can say it's just functional programming without [lots of irritating
+superfluous parentheses](http://xkcd.com/297/). Consider this fictional piece
+of lisp to find in `strs`, a list of strings, all members containing "LOL",
+transform them into upper case, sort them, and store them in another list
+`lols`:
 
 ```
-(set coll' (map f (filter pred coll)))
+(def lols (sort (map upper-case
+                     (filter (lambda (x) (contains? x "LOL")) strs))))
 ```
 
-Written concatenatively, this can be - assuming `put` puts the argument to
-output (akin to `echo`), and `set` can take data from input in place of in the
-argument list:
+It looks OK until you try to read the code aloud:
+
+> Put in `lols` what results from sorting what results from turning into upper
+> case what results from filtering the strings that contain "LOL" in `strs`.
+
+An deep hierarchy of parentheses map into a deep hierarchy of clauses. Worse,
+this reads *backwards*.
+
+What would you do it in shell, with pipelines? Assuming that the strings are
+stored in the file `strs`, it is just:
 
 ```
-put $coll | filter pred | map f | set coll2
+lols=`cat strs | grep LOL | tr a-z A-Z | sort`
 ```
 
-The concatenative approach is much more natural (try reading both versions
-aloud).
+The assignment aside, it reads perfectly.
 
-Another defining character of shells is the easiness to invoke external
-programs; comparing `subprocess.call(['ls', '-l'])` with `ls -l` - the
-difference is clear. Being easy to invoking external programs is what makes
-shells shells *in its original sense*, i.e. user interface to the operating
-system.
+(TO BE CONTINUED)
 
-Putting together, the idea of this new Unix shell is starting from pipelines
-and external program interaction, adding in programming-language-ish flavors,
-towards building a decant programming language with a friendly (command line)
-user interface, suitable for both *back-of-the-envolope* computation **and**
-building more complex (but maybe not too complex!) software.
+### A Concurrency Construct
 
-This is not exactly an ambitious goal, but it's something I have always
-dreamed of.
+(TO BE WRITTEN)
+
+## Pipeline, the Bad
+
+(TO BE WRITTEN)
 
 Building
 --------
