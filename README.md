@@ -138,15 +138,13 @@ This experiment has a number of motivations. Some of them:
 * It also attempts to build a **better language**, learning from the success
   and failure of programming language designs.
 
-* It attempts to exploit a facility very well-known to Shell programmers but
-  virtually nonexistent to other programmers - the pipeline. That leads us to
+* It attempts to exploit a facility Shell programmers are very familiar with,
+  but virtually unknown to other programmers - the pipeline. That leads us to
   the topic of the next few sections.
 
 ## Pipeline, the Good
 
 ### A Concatenative Programming Facility
-
-(This section assumes some familiarity with basic functional programming.)
 
 Pipelines make for a natural notation of concatenative programming.
 
@@ -161,6 +159,8 @@ transform them into upper case, sort them, and store them in another list
 (def lols (sort (map upper-case
                      (filter (lambda (x) (contains? x "LOL")) strs))))
 ```
+
+(See [Appendix A](#appendix-a) for this piece of code in real lisps.)
 
 It looks OK until you try to read the code aloud:
 
@@ -177,15 +177,27 @@ stored in the file `strs`, it is just:
 lols=`cat strs | grep LOL | tr a-z A-Z | sort`
 ```
 
-The assignment aside, it reads perfectly.
+The historically weird names aside, it reads perfectly natural: assign to
+`lols` the result of the following: take the lines in `strs`, find those
+having "LOL", change them to upper case, and sort them. This matches our
+description of the procedure except for the assignment. There is an obvious
+restriction with this shell pipeline approach, but that will be the topic of
+the next section.
 
-(TO BE CONTINUED)
+Concatenative programming is the notion of building programs by connecting
+data-transforming constructs together. In our case, the constructs are `cat
+strs`, `grep LOL`, `tr a-z A-Z` and `sort`; the pipe symbol is the
+connector. The interesting thing is that each construct itself is actually a
+valid program; thus it could be said that a more complex program is formed by
+*concatenating* simpler programs, hence the term "concatenative programming".
+Compare this to the functional approach, where constructs are *nested* instead
+of connected one after another.
 
 ### A Concurrency Construct
 
 (TO BE WRITTEN)
 
-## Pipeline, the Bad
+## Pipeline, the Bad and the Ugly
 
 (TO BE WRITTEN)
 
@@ -218,3 +230,33 @@ though, which is why it came to my mind :).
 ## License
 
 BSD 2-clause license.  See LICENSE for a copy.
+
+## Appendix A
+
+This fictional lisp code:
+
+```
+(def lols (sort (map upper-case
+                     (filter (lambda (x) (contains? x "LOL")) strs))))
+```
+
+written in Clojure:
+
+```
+(require ['clojure.string :refer '(upper-case)])
+(def strs '("aha" "LOLaha" "hahaLOL" "hum?"))
+(def lols (sort (map upper-case
+                     (filter #(re-find #"LOL" %) strs))))
+```
+
+written in Racket:
+
+```
+(define strs '("aha" "LOLaha" "hahaLOL" "hum?"))
+(define lols (sort (map string-upcase
+                        (filter (lambda (x) (regexp-match? #rx"LOL" x)) strs))
+                   string<?))
+```
+
+I'm by no means a Lisp hacker, so feel free to fire an issue if my code is not
+idiomatic.
