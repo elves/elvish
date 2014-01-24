@@ -189,14 +189,12 @@ The assignment aside, it reads perfectly.
 
 (TO BE WRITTEN)
 
-Building
---------
+## Building
 
 You need go >= 1.1 to build this. Just run `make`. The resulting binary is
 called `das`.
 
-Name
-----
+## Name
 
 Indeed, **das** is not a very good name for a Unix shell. The name is actually
 a corrupted form of **dash**, which also happens to be the German definite
@@ -217,7 +215,6 @@ terrible name. "fish" is clever, but it has a quite [unpleasant
 adjective](https://en.wiktionary.org/wiki/fishy). I find "dash" really good
 though, which is why it came to my mind :).
 
-License
--------
+## License
 
 BSD 2-clause license.  See LICENSE for a copy.
