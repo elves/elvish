@@ -44,7 +44,8 @@ And:
 
 (Like the previous section, only those marked with ✔ have been implemented.)
 
-* Running external programs and pipelines, of course: ✔
+* Running external programs and pipelines, of course (`>` represents the
+  prompt): ✔
   ```
   > vim README.md
   ...
@@ -54,8 +55,7 @@ And:
   ...
   ```
 
-* Basically prefix syntax without the outermost pair of parentheses (`>`
-  represents the prompt): ✔
+* Some constructs look like lisp without the outermost pair of parentheses: ✔
   ```
   > + 1 2
   3
