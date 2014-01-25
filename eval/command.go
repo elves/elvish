@@ -452,52 +452,56 @@ func (ev *Evaluator) execPipeline(cmds []*command, types [3]StreamType) []<-chan
 	var implicits [2]*command
 
 	// Pipeline input.
-	if ev.in.compatible(types[0]) {
-		cmds[0].ports[0] = ev.in
-	} else {
-		// Prepend an adapter.
-		// XXX This now assumes at least one of ev.in.{f ch} is not nil
-		switch types[0] {
-		case fdStream:
-			// chan -> fd adapter: printchan
-			reader, writer, e := os.Pipe()
-			if e != nil {
-				ev.errorf("failed to create pipe: %s", e)
+	if cmds[0].ports[0] == nil {
+		if ev.in.compatible(types[0]) {
+			cmds[0].ports[0] = ev.in
+		} else {
+			// Prepend an adapter.
+			// XXX This now assumes at least one of ev.in.{f ch} is not nil
+			switch types[0] {
+			case fdStream:
+				// chan -> fd adapter: printchan
+				reader, writer, e := os.Pipe()
+				if e != nil {
+					ev.errorf("failed to create pipe: %s", e)
+				}
+				implicits[0] = makePrintchan(ev.in.ch, writer)
+				cmds[0].ports[0] = &port{f: reader}
+			case chanStream:
+				// fd -> chan adapter: feedchan
+				ch := make(chan Value)
+				implicits[0] = makeFeedchan(ev.in.f, ch)
+				cmds[0].ports[0] = &port{ch: ch}
+			default:
+				panic("unreachable")
 			}
-			implicits[0] = makePrintchan(ev.in.ch, writer)
-			cmds[0].ports[0] = &port{f: reader}
-		case chanStream:
-			// fd -> chan adapter: feedchan
-			ch := make(chan Value)
-			implicits[0] = makeFeedchan(ev.in.f, ch)
-			cmds[0].ports[0] = &port{ch: ch}
-		default:
-			panic("unreachable")
 		}
 	}
 
 	// Pipeline output
-	if ev.out.compatible(types[1]) {
-		cmds[len(cmds)-1].ports[1] = ev.out
-	} else {
-		// Append an adapter.
-		// XXX This now assumes at least one of ev.out.{f ch} is not nil
-		switch types[1] {
-		case fdStream:
-			// fd -> chan adapter: feedchan
-			reader, writer, e := os.Pipe()
-			if e != nil {
-				ev.errorf("failed to create pipe: %s", e)
+	if cmds[len(cmds)-1].ports[1] == nil {
+		if ev.out.compatible(types[1]) {
+			cmds[len(cmds)-1].ports[1] = ev.out
+		} else {
+			// Append an adapter.
+			// XXX This now assumes at least one of ev.out.{f ch} is not nil
+			switch types[1] {
+			case fdStream:
+				// fd -> chan adapter: feedchan
+				reader, writer, e := os.Pipe()
+				if e != nil {
+					ev.errorf("failed to create pipe: %s", e)
+				}
+				implicits[1] = makeFeedchan(reader, ev.out.ch)
+				cmds[len(cmds)-1].ports[1] = &port{f: writer}
+			case chanStream:
+				// chan -> fd adapter: printchan
+				ch := make(chan Value)
+				implicits[1] = makePrintchan(ch, ev.out.f)
+				cmds[len(cmds)-1].ports[1] = &port{ch: ch}
+			default:
+				panic("unreachable")
 			}
-			implicits[1] = makeFeedchan(reader, ev.out.ch)
-			cmds[len(cmds)-1].ports[1] = &port{f: writer}
-		case chanStream:
-			// chan -> fd adapter: printchan
-			ch := make(chan Value)
-			implicits[1] = makePrintchan(ch, ev.out.f)
-			cmds[len(cmds)-1].ports[1] = &port{ch: ch}
-		default:
-			panic("unreachable")
 		}
 	}
 
