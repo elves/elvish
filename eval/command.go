@@ -264,6 +264,8 @@ func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
 	// XXX Concurrent access to globals, in and out can be problematic.
 	newEv := ev.copy()
 	newEv.locals = locals
+	newEv.in = cmd.ports[0]
+	newEv.out = cmd.ports[1]
 	go func() {
 		// TODO Support calling closure originated in another source.
 		newEv.Eval(ev.name, ev.text, cmd.Closure.Chunk)
