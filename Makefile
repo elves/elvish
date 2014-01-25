@@ -3,7 +3,7 @@ PKGS := edit eval ./main ./parse ./util
 PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
 PKG_COVERAGES := $(addsuffix .coverage,$(PKGS))
 
-main:
+exe:
 	go build -o $(EXE) ./main
 
 test:
@@ -19,5 +19,4 @@ z-%.go: %.go
 
 pre-commit: edit/tty/z-types.go
 
-.PHONY: main test coverage main pre-commit
-.DEFAULT: main
+.PHONY: exe test coverage main pre-commit
