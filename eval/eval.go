@@ -141,7 +141,6 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 		if len(n.Nodes) == 0 {
 			words = nil
 		} else if _, ok := n.Nodes[0].(*parse.CommandNode); ok {
-			// TODO Pipeline capture
 			newEv := ev.copy()
 			ch := make(chan Value)
 			newEv.out = &port{ch: ch}
