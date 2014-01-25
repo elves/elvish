@@ -1,10 +1,10 @@
 package main
 
 import (
-	"../edit"
-	"../eval"
-	"../parse"
-	"../util"
+	"github.com/xiaq/das/edit"
+	"github.com/xiaq/das/eval"
+	"github.com/xiaq/das/parse"
+	"github.com/xiaq/das/util"
 	"fmt"
 	"os"
 	"os/user"

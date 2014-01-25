@@ -2,10 +2,10 @@
 package edit
 
 import (
-	"../eval"
-	"../parse"
-	"../util"
-	"./tty"
+	"github.com/xiaq/das/eval"
+	"github.com/xiaq/das/parse"
+	"github.com/xiaq/das/util"
+	"github.com/xiaq/das/edit/tty"
 	"fmt"
 	"os"
 )

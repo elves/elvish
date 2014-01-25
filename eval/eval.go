@@ -3,8 +3,8 @@
 package eval
 
 import (
-	"../parse"
-	"../util"
+	"github.com/xiaq/das/parse"
+	"github.com/xiaq/das/util"
 	"os"
 	"fmt"
 	"strconv"

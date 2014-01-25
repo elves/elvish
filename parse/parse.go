@@ -8,7 +8,7 @@
 package parse
 
 import (
-	"../util"
+	"github.com/xiaq/das/util"
 	"fmt"
 	"os"
 	"strconv"

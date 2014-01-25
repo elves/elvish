@@ -1,8 +1,8 @@
 package edit
 
 import (
-	"../util"
-	"./tty"
+	"github.com/xiaq/das/util"
+	"github.com/xiaq/das/edit/tty"
 	"bytes"
 	"fmt"
 	"os"
