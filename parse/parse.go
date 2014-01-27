@@ -195,19 +195,19 @@ func (p *Parser) pipeline() *ListNode {
 
 // Form = TermList { [ space ] Redir } [ space ]
 func (p *Parser) form() *FormNode {
-	cmd := newForm(p.peekNonSpace().Pos)
-	cmd.Name = p.term()
-	cmd.Args = p.termList()
+	fm := newForm(p.peekNonSpace().Pos)
+	fm.Name = p.term()
+	fm.Args = p.termList()
 loop:
 	for {
 		switch p.peekNonSpace().Typ {
 		case ItemRedirLeader:
-			cmd.Redirs = append(cmd.Redirs, p.redir())
+			fm.Redirs = append(fm.Redirs, p.redir())
 		default:
 			break loop
 		}
 	}
-	return cmd
+	return fm
 }
 
 // TermList = { [ space ] Term } [ space ]
