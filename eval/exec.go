@@ -42,24 +42,23 @@ func (i *port) compatible(typ StreamType) bool {
 	}
 }
 
-// The "head" of a command is either a function, the path of an external
-// command or a closure.
-type CommandHead struct {
+// A Command is either a function, an external command or a closure.
+type Command struct {
 	Func    BuiltinFunc // A builtin function, if the command is builtin.
 	Path    string      // Command full path, if the command is external.
 	Closure *Closure    // The closure value, if the command is a closure.
 }
 
-// command packs runtime states of a fully constructured command.
-type command struct {
+// form packs runtime states of a fully constructured form.
+type form struct {
 	name  string   // Command name, used in error messages.
 	args  []Value  // Argument list, minus command name.
 	ports [3]*port // Ports for in, out and err.
-	CommandHead
+	Command
 }
 
-func (cmd *command) closePorts(ev *Evaluator) {
-	for i, port := range cmd.ports {
+func (fm *form) closePorts(ev *Evaluator) {
+	for i, port := range fm.ports {
 		if port == nil {
 			continue
 		}
@@ -151,13 +150,13 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ports []*port, streamTypes []Strea
 	}
 }
 
-func (ev *Evaluator) ResolveCommand(name string) (head CommandHead, streamTypes [3]StreamType, err error) {
+func (ev *Evaluator) ResolveCommand(name string) (cmd Command, streamTypes [3]StreamType, err error) {
 	defer util.Recover(&err)
-	head, streamTypes = ev.resolveCommand(name, nil)
-	return head, streamTypes, nil
+	cmd, streamTypes = ev.resolveCommand(name, nil)
+	return cmd, streamTypes, nil
 }
 
-func (ev *Evaluator) resolveCommand(name string, n parse.Node) (head CommandHead, streamTypes [3]StreamType) {
+func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, streamTypes [3]StreamType) {
 	if n != nil {
 		ev.push(n)
 		defer ev.pop()
@@ -166,7 +165,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (head CommandHead
 	// Try function
 	if v, err := ev.ResolveVar("fn-" + name); err == nil {
 		if fn, ok := v.(*Closure); ok {
-			head.Closure = fn
+			cmd.Closure = fn
 			// XXX Use zero value (fileStream) for streamTypes now
 			return
 		}
@@ -174,7 +173,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (head CommandHead
 
 	// Try builtin
 	if bi, ok := builtins[name]; ok {
-		head.Func = bi.fn
+		cmd.Func = bi.fn
 		copy(streamTypes[:2], bi.streamTypes[:])
 		streamTypes[2] = fdStream
 		return
@@ -185,29 +184,29 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (head CommandHead
 	if e != nil {
 		ev.errorf("%s", e)
 	}
-	head.Path = path
+	cmd.Path = path
 	// Use zero value (fileStream) for streamTypes
 	return
 }
 
-func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, streamTypes [3]StreamType) {
+func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [3]StreamType) {
 	// Evaluate name.
 	nameValues := ev.evalTerm(n.Name)
 	if len(nameValues) != 1 {
-		ev.errorfNode(n.Name, "command name must be a single value")
+		ev.errorfNode(n.Name, "command must be a single value")
 	}
 	name := nameValues[0]
 
-	// Start building command.
+	// Start building form.
 	nameStr := name.String(ev)
-	cmd = &command{name: nameStr}
+	fm = &form{name: nameStr}
 
-	// Resolve command. Assign one of cmd.{fn path closure} and streamTypes.
+	// Resolve command. Assign one of fm.Command.{fn path closure} and streamTypes.
 	switch name := name.(type) {
 	case *Scalar:
-		cmd.CommandHead, streamTypes = ev.resolveCommand(nameStr, n.Name)
+		fm.Command, streamTypes = ev.resolveCommand(nameStr, n.Name)
 	case *Closure:
-		cmd.CommandHead.Closure = name
+		fm.Command.Closure = name
 		// XXX Use zero value (fileStream) for streamTypes now
 	default:
 		ev.errorfNode(n.Name, "Command name must be either scalar or closure")
@@ -217,60 +216,60 @@ func (ev *Evaluator) preevalCommand(n *parse.CommandNode) (cmd *command, streamT
 	defaultErrPort := &port{f: os.Stderr}
 	// XXX Should we allow chanStream stderr at all?
 	if defaultErrPort.compatible(streamTypes[2]) {
-		cmd.ports[2] = defaultErrPort
+		fm.ports[2] = defaultErrPort
 	}
 
 	// Evaluate stream redirections.
 	for _, r := range n.Redirs {
-		ev.evalRedir(r, cmd.ports[:], streamTypes[:])
+		ev.evalRedir(r, fm.ports[:], streamTypes[:])
 	}
 
 	// Evaluate arguments after everything else.
-	cmd.args = ev.evalTermList(n.Args)
+	fm.args = ev.evalTermList(n.Args)
 	return
 }
 
 // execCommand executes a command.
-func (ev *Evaluator) execCommand(cmd *command) <-chan *StateUpdate {
+func (ev *Evaluator) execForm(fm *form) <-chan *StateUpdate {
 	switch {
-	case cmd.Func != nil:
-		return ev.execBuiltin(cmd)
-	case cmd.Path != "":
-		return ev.execExternal(cmd)
-	case cmd.Closure != nil:
-		return ev.execClosure(cmd)
+	case fm.Func != nil:
+		return ev.execBuiltin(fm)
+	case fm.Path != "":
+		return ev.execExternal(fm)
+	case fm.Closure != nil:
+		return ev.execClosure(fm)
 	default:
-		panic("Bad eval.command struct")
+		panic("Bad eval.form struct")
 	}
 }
 
-func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
+func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 	update := make(chan *StateUpdate, 1)
 
 	locals := make(map[string]Value)
 	// TODO Support optional/rest argument
-	if len(cmd.args) != len(cmd.Closure.ArgNames) {
+	if len(fm.args) != len(fm.Closure.ArgNames) {
 		// TODO Check arity before exec'ing
 		update <- &StateUpdate{Terminated: true, Msg: "arity mismatch"}
 		close(update)
 		return update
 	}
 	// Pass argument by populating locals.
-	for i, name := range cmd.Closure.ArgNames {
-		locals[name] = cmd.args[i]
+	for i, name := range fm.Closure.ArgNames {
+		locals[name] = fm.args[i]
 	}
 
 	// Make a subevaluator.
 	// XXX Concurrent access to globals, in and out can be problematic.
 	newEv := ev.copy()
 	newEv.locals = locals
-	newEv.in = cmd.ports[0]
-	newEv.out = cmd.ports[1]
+	newEv.in = fm.ports[0]
+	newEv.out = fm.ports[1]
 	go func() {
 		// TODO Support calling closure originated in another source.
-		newEv.Eval(ev.name, ev.text, cmd.Closure.Chunk)
+		newEv.Eval(ev.name, ev.text, fm.Closure.Chunk)
 		// Streams are closed after executaion of closure is complete.
-		cmd.closePorts(ev)
+		fm.closePorts(ev)
 		// TODO Support returning value.
 		update <- &StateUpdate{Terminated: true}
 		close(update)
@@ -279,14 +278,14 @@ func (ev *Evaluator) execClosure(cmd *command) <-chan *StateUpdate {
 }
 
 // execBuiltin executes a builtin command.
-func (ev *Evaluator) execBuiltin(cmd *command) <-chan *StateUpdate {
+func (ev *Evaluator) execBuiltin(fm *form) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
 		var ports [2]*port
-		copy(ports[:], cmd.ports[:2])
-		msg := cmd.Func(ev, cmd.args, ports)
+		copy(ports[:], fm.ports[:2])
+		msg := fm.Func(ev, fm.args, ports)
 		// Streams are closed after executaion of builtin is complete.
-		cmd.closePorts(ev)
+		fm.closePorts(ev)
 		update <- &StateUpdate{Terminated: true, Msg: msg}
 		close(update)
 	}()
@@ -311,9 +310,9 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 }
 
 // execExternal executes an external command.
-func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
-	files := make([]uintptr, len(cmd.ports))
-	for i, port := range cmd.ports {
+func (ev *Evaluator) execExternal(fm *form) <-chan *StateUpdate {
+	files := make([]uintptr, len(fm.ports))
+	for i, port := range fm.ports {
 		if port == nil || port.f == nil {
 			files[i] = FD_NIL
 		} else {
@@ -321,9 +320,9 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 		}
 	}
 
-	args := make([]string, len(cmd.args)+1)
-	args[0] = cmd.Path
-	for i, a := range cmd.args {
+	args := make([]string, len(fm.args)+1)
+	args[0] = fm.Path
+	for i, a := range fm.args {
 		// NOTE Maybe we should enfore scalar arguments instead of coercing all
 		// args into string
 		args[i+1] = a.String(ev)
@@ -331,9 +330,9 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
-	pid, err := syscall.ForkExec(cmd.Path, args, &attr)
+	pid, err := syscall.ForkExec(fm.Path, args, &attr)
 	// Streams are closed after fork-exec of external is complete.
-	cmd.closePorts(ev)
+	fm.closePorts(ev)
 
 	update := make(chan *StateUpdate)
 	if err != nil {
@@ -347,47 +346,45 @@ func (ev *Evaluator) execExternal(cmd *command) <-chan *StateUpdate {
 }
 
 // preevalPipeline resolves commands, sets up pipes and applies redirections.
-// These are done before commands are actually executed. Input of first command
-// and output of last command are NOT connected to ev.{in out}.
-func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (cmds []*command, pipelineStreamTypes [3]StreamType) {
+// These are done before commands are actually executed. Input of first form
+// and output of last form are NOT connected to ev.{in out}.
+func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (fms []*form, pipelineStreamTypes [3]StreamType) {
 	ev.push(pl)
 	defer ev.pop()
 
-	ncmds := len(pl.Nodes)
-	if ncmds == 0 {
+	nfms := len(pl.Nodes)
+	if nfms == 0 {
 		return
 	}
-	cmds = make([]*command, 0, ncmds)
+	fms = make([]*form, 0, nfms)
 
 	var nextIn *port
 	for i, n := range pl.Nodes {
-		cmd, streamTypes := ev.preevalCommand(n.(*parse.CommandNode))
+		fm, streamTypes := ev.preevalForm(n.(*parse.FormNode))
 
-		var prependCmd, appendCmd *command
+		var prependCmd, appendCmd *form
 
 		// Connect input pipe.
 		if i == 0 {
-			// First command. Only connect input when no input redirection is
-			// present.
 			pipelineStreamTypes[0] = streamTypes[0]
 		} else {
-			if cmd.ports[0] != nil {
-				ev.errorf("command #%d has both pipe input and input redirection")
+			if fm.ports[0] != nil {
+				ev.errorf("form #%d has both pipe input and input redirection")
 			} else if !nextIn.compatible(streamTypes[0]) {
-				ev.errorf("command #%d has incompatible input pipe")
+				ev.errorf("form #%d has incompatible input pipe")
 			}
-			cmd.ports[0] = nextIn
+			fm.ports[0] = nextIn
 		}
 		// Create and connect output pipe.
-		if i == ncmds-1 {
+		if i == nfms-1 {
 			pipelineStreamTypes[1] = streamTypes[1]
 		} else {
-			if cmd.ports[1] != nil {
-				ev.errorf("command #%d has both pipe output and output redirection", i)
+			if fm.ports[1] != nil {
+				ev.errorf("form #%d has both pipe output and output redirection", i)
 			}
 			switch streamTypes[1] {
 			case unusedStream:
-				ev.errorf("command #%d has unused output connected in pipeline", i)
+				ev.errorf("form #%d has unused output connected in pipeline", i)
 			case fdStream:
 				// os.Pipe sets O_CLOEXEC, which is what we want.
 				reader, writer, e := os.Pipe()
@@ -395,30 +392,30 @@ func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (cmds []*command, pipel
 					ev.errorf("failed to create pipe: %s", e)
 				}
 				nextIn = &port{f: reader}
-				cmd.ports[1] = &port{f: writer}
+				fm.ports[1] = &port{f: writer}
 			case chanStream:
 				// TODO Buffered channel?
 				ch := make(chan Value)
 				nextIn = &port{ch: ch}
-				cmd.ports[1] = &port{ch: ch}
+				fm.ports[1] = &port{ch: ch}
 			default:
 				panic("unreachable")
 			}
 		}
 
 		if prependCmd != nil {
-			cmds = append(cmds, prependCmd)
+			fms = append(fms, prependCmd)
 		}
-		cmds = append(cmds, cmd)
+		fms = append(fms, fm)
 		if appendCmd != nil {
-			cmds = append(cmds, appendCmd)
+			fms = append(fms, appendCmd)
 		}
 	}
 	return
 }
 
-func makePrintchan(in chan Value, out *os.File) *command {
-	return &command{
+func makePrintchan(in chan Value, out *os.File) *form {
+	return &form{
 		name: "(implicit printchan)",
 		args: nil,
 		ports: [3]*port{
@@ -426,12 +423,12 @@ func makePrintchan(in chan Value, out *os.File) *command {
 			&port{f: out},
 			&port{f: os.Stderr},
 		},
-		CommandHead: CommandHead{Func: printchan},
+		Command: Command{Func: printchan},
 	}
 }
 
-func makeFeedchan(in *os.File, out chan Value) *command {
-	return &command{
+func makeFeedchan(in *os.File, out chan Value) *form {
+	return &form{
 		name: "(implicit feedchan)",
 		args: nil,
 		ports: [3]*port{
@@ -439,7 +436,7 @@ func makeFeedchan(in *os.File, out chan Value) *command {
 			&port{ch: out},
 			&port{f: os.Stderr},
 		},
-		CommandHead: CommandHead{Func: feedchan},
+		Command: Command{Func: feedchan},
 	}
 }
 
@@ -448,13 +445,13 @@ func makeFeedchan(in *os.File, out chan Value) *command {
 // adaptors if needed.
 //
 // TODO Should return a slice of exit statuses.
-func (ev *Evaluator) execPipeline(cmds []*command, types [3]StreamType) []<-chan *StateUpdate {
-	var implicits [2]*command
+func (ev *Evaluator) execPipeline(fms []*form, types [3]StreamType) []<-chan *StateUpdate {
+	var implicits [2]*form
 
 	// Pipeline input.
-	if cmds[0].ports[0] == nil {
+	if fms[0].ports[0] == nil {
 		if ev.in.compatible(types[0]) {
-			cmds[0].ports[0] = ev.in
+			fms[0].ports[0] = ev.in
 		} else {
 			// Prepend an adapter.
 			// XXX This now assumes at least one of ev.in.{f ch} is not nil
@@ -466,12 +463,12 @@ func (ev *Evaluator) execPipeline(cmds []*command, types [3]StreamType) []<-chan
 					ev.errorf("failed to create pipe: %s", e)
 				}
 				implicits[0] = makePrintchan(ev.in.ch, writer)
-				cmds[0].ports[0] = &port{f: reader}
+				fms[0].ports[0] = &port{f: reader}
 			case chanStream:
 				// fd -> chan adapter: feedchan
 				ch := make(chan Value)
 				implicits[0] = makeFeedchan(ev.in.f, ch)
-				cmds[0].ports[0] = &port{ch: ch}
+				fms[0].ports[0] = &port{ch: ch}
 			default:
 				panic("unreachable")
 			}
@@ -479,9 +476,9 @@ func (ev *Evaluator) execPipeline(cmds []*command, types [3]StreamType) []<-chan
 	}
 
 	// Pipeline output
-	if cmds[len(cmds)-1].ports[1] == nil {
+	if fms[len(fms)-1].ports[1] == nil {
 		if ev.out.compatible(types[1]) {
-			cmds[len(cmds)-1].ports[1] = ev.out
+			fms[len(fms)-1].ports[1] = ev.out
 		} else {
 			// Append an adapter.
 			// XXX This now assumes at least one of ev.out.{f ch} is not nil
@@ -493,12 +490,12 @@ func (ev *Evaluator) execPipeline(cmds []*command, types [3]StreamType) []<-chan
 					ev.errorf("failed to create pipe: %s", e)
 				}
 				implicits[1] = makeFeedchan(reader, ev.out.ch)
-				cmds[len(cmds)-1].ports[1] = &port{f: writer}
+				fms[len(fms)-1].ports[1] = &port{f: writer}
 			case chanStream:
 				// chan -> fd adapter: printchan
 				ch := make(chan Value)
 				implicits[1] = makePrintchan(ch, ev.out.f)
-				cmds[len(cmds)-1].ports[1] = &port{ch: ch}
+				fms[len(fms)-1].ports[1] = &port{ch: ch}
 			default:
 				panic("unreachable")
 			}
@@ -507,13 +504,13 @@ func (ev *Evaluator) execPipeline(cmds []*command, types [3]StreamType) []<-chan
 
 	for _, imp := range implicits {
 		if imp != nil {
-			cmds = append(cmds, imp)
+			fms = append(fms, imp)
 		}
 	}
 
-	updates := make([]<-chan *StateUpdate, len(cmds))
-	for i, cmd := range cmds {
-		updates[i] = ev.execCommand(cmd)
+	updates := make([]<-chan *StateUpdate, len(fms))
+	for i, fm := range fms {
+		updates[i] = ev.execForm(fm)
 	}
 	return updates
 }
@@ -532,8 +529,8 @@ func (ev *Evaluator) waitPipeline(updates []<-chan *StateUpdate) {
 }
 
 func (ev *Evaluator) evalPipelineAsync(pl *parse.ListNode) []<-chan *StateUpdate {
-	cmds, types := ev.preevalPipeline(pl)
-	return ev.execPipeline(cmds, types)
+	fms, types := ev.preevalPipeline(pl)
+	return ev.execPipeline(fms, types)
 }
 
 // evalPipeline combines preevalPipeline and execPipeline.

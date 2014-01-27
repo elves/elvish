@@ -180,11 +180,11 @@ func (p *Parser) chunk() *ListNode {
 	return chunk
 }
 
-// Pipeline = Command { "|" Command }
+// Pipeline = Form { "|" Form }
 func (p *Parser) pipeline() *ListNode {
 	pipe := newList(p.peek().Pos)
 	for {
-		pipe.append(p.command())
+		pipe.append(p.form())
 		if p.peek().Typ != ItemPipe {
 			break
 		}
@@ -193,10 +193,9 @@ func (p *Parser) pipeline() *ListNode {
 	return pipe
 }
 
-// command parses a command.
-// Command = TermList { [ space ] Redir } [ space ]
-func (p *Parser) command() *CommandNode {
-	cmd := newCommand(p.peekNonSpace().Pos)
+// Form = TermList { [ space ] Redir } [ space ]
+func (p *Parser) form() *FormNode {
+	cmd := newForm(p.peekNonSpace().Pos)
 	cmd.Name = p.term()
 	cmd.Args = p.termList()
 loop:

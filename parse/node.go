@@ -46,16 +46,16 @@ func (l *ListNode) append(n Node) {
 	l.Nodes = append(l.Nodes, n)
 }
 
-// CommandNode holds a command, with terms and redirections.
-type CommandNode struct {
+// FormNode holds a form.
+type FormNode struct {
 	Pos
 	Name   *ListNode // A Term
 	Args   *ListNode // A ListNode of Term's
 	Redirs []Redir
 }
 
-func newCommand(pos Pos) *CommandNode {
-	return &CommandNode{Pos: pos}
+func newForm(pos Pos) *FormNode {
+	return &FormNode{Pos: pos}
 }
 
 // A Term is represented by a ListNode of *FactorNode's.
@@ -68,7 +68,7 @@ func newCommand(pos Pos) *CommandNode {
 //     Only useful for dynamic constructing of variable names, e.g. ${$a$b}.
 // TableNode (table literal [a b c &k v])
 //     TODO Can $[a b c &k v] be something useful?
-// CommandNode (closure {|a|cmd}, command output substituion ${cmd})
+// FormNode (closure {|a|cmd}, command output substituion ${cmd})
 // 	   TODO (cmd) as an alternate form of ${cmd}, resembling Lisp?
 
 type FactorNode struct {

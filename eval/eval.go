@@ -140,7 +140,7 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 		// it is which by peeking at the first element.
 		if len(n.Nodes) == 0 {
 			words = nil
-		} else if _, ok := n.Nodes[0].(*parse.CommandNode); ok {
+		} else if _, ok := n.Nodes[0].(*parse.FormNode); ok {
 			newEv := ev.copy()
 			ch := make(chan Value)
 			newEv.out = &port{ch: ch}
