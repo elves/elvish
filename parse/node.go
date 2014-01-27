@@ -60,22 +60,28 @@ func newForm(pos Pos) *FormNode {
 
 // A Term is represented by a ListNode of *FactorNode's.
 
-// A Factor is any of the following prefixed by any number of dollars:
-// *StringNode (scalar literal a `a` "a", variable evaluation $a $`a`)
-//     $`a` and $"a" can be used to refer to variables of funny names.
-// *ListNode (flat list {a b c}, variable evaluation ${a^b})
-//     In case of ${...}, the flat list must evaluate to exactly one scalar.
-//     Only useful for dynamic constructing of variable names, e.g. ${$a$b}.
-// TableNode (table literal [a b c &k v])
-//     TODO Can $[a b c &k v] be something useful?
-// FormNode (closure {|a|cmd}, command output substituion ${cmd})
-// 	   TODO (cmd) as an alternate form of ${cmd}, resembling Lisp?
-
+// A Factor is any of:
+// StringFactor: a `a` "a"
+// VariableFactor: $a
+// TableFactor: [a b c &k v]
+// ClosureFactor: {|a| cmd}
+// ListFactor: {a b c}
+// CaptureFactor: (cmd)
 type FactorNode struct {
 	Pos
-	Dollar int
+	Typ FactorType
 	Node   Node
 }
+
+type FactorType int
+const (
+	StringFactor FactorType = iota
+	VariableFactor
+	TableFactor
+	ClosureFactor
+	ListFactor
+	CaptureFactor
+)
 
 func newFactor(pos Pos) *FactorNode {
 	return &FactorNode{Pos: pos}

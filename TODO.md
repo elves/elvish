@@ -6,8 +6,6 @@
     - History
 * Syntax (parse, eval)
     - Globbing?
-    - Clean up the "dollaring" thing, restrict the use of dollar to just
-      marking of variables
     - Adopt value/address duality of `$a`, so that `set a []` is written as
       `set $a []` - like Perl, but unlike old shell or Tcl
     - Introduce the distinction of special forms vs. functions

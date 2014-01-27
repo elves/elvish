@@ -132,51 +132,42 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 
 	var words []Value
 
-	switch n := n.Node.(type) {
-	case *parse.StringNode:
-		words = []Value{NewScalar(n.Text)}
-	case *parse.ListNode:
-		// XXX May be either a bracketed term list or pipeline capture. Decide
-		// it is which by peeking at the first element.
-		if len(n.Nodes) == 0 {
-			words = nil
-		} else if _, ok := n.Nodes[0].(*parse.FormNode); ok {
-			newEv := ev.copy()
-			ch := make(chan Value)
-			newEv.out = &port{ch: ch}
-			updates := newEv.evalPipelineAsync(n)
-			for v := range ch {
-				words = append(words, v)
-			}
-			newEv.waitPipeline(updates)
-			return words
-		} else {
-			words = ev.evalTermList(n)
+	switch n.Typ {
+	case parse.StringFactor:
+		m := n.Node.(*parse.StringNode)
+		words = []Value{NewScalar(m.Text)}
+	case parse.VariableFactor:
+		m := n.Node.(*parse.StringNode)
+		words = []Value{ev.resolveVar(m.Text)}
+	case parse.ListFactor:
+		m := n.Node.(*parse.ListNode)
+		words = ev.evalTermList(m)
+	case parse.CaptureFactor:
+		m := n.Node.(*parse.ListNode)
+		newEv := ev.copy()
+		ch := make(chan Value)
+		newEv.out = &port{ch: ch}
+		updates := newEv.evalPipelineAsync(m)
+		for v := range ch {
+			words = append(words, v)
 		}
-	case *parse.TableNode:
-		word := ev.evalTable(n)
+		newEv.waitPipeline(updates)
+	case parse.TableFactor:
+		m := n.Node.(*parse.TableNode)
+		word := ev.evalTable(m)
 		words = []Value{word}
-	case *parse.ClosureNode:
+	case parse.ClosureFactor:
+		m := n.Node.(*parse.ClosureNode)
 		var names []string
-		if n.ArgNames != nil {
-			nameValues := ev.evalTermList(n.ArgNames)
+		if m.ArgNames != nil {
+			nameValues := ev.evalTermList(m.ArgNames)
 			for _, v := range nameValues {
 				names = append(names, v.String(ev))
 			}
 		}
-		words = []Value{NewClosure(names, n.Chunk)}
+		words = []Value{NewClosure(names, m.Chunk)}
 	default:
-		panic("bad node type")
-	}
-
-	for dollar := n.Dollar; dollar > 0; dollar-- {
-		if len(words) != 1 {
-			ev.errorf("Only a single value may be dollared")
-		}
-		if _, ok := words[0].(*Scalar); !ok {
-			ev.errorf("Only scalar may be dollared (for now)")
-		}
-		words[0] = ev.resolveVar(words[0].(*Scalar).str)
+		panic("bad factor type")
 	}
 
 	return words

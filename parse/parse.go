@@ -271,7 +271,7 @@ func startsFactor(p ItemType) bool {
 	}
 }
 
-// Factor = '$' Factor
+// Factor = '$' bare
 //        = ( bare | single-quoted | double-quoted | Table )
 //        = '{' TermList '}'
 //        = Closure
@@ -282,11 +282,15 @@ func startsFactor(p ItemType) bool {
 // closure: {echo} is a flat list, { echo } and {|| echo} are closures.
 func (p *Parser) factor() (fn *FactorNode) {
 	fn = newFactor(p.peek().Pos)
-	for p.peek().Typ == ItemDollar {
-		p.next()
-		fn.Dollar++
-	}
 	switch token := p.next(); token.Typ {
+	case ItemDollar:
+		token := p.next()
+		if token.Typ != ItemBare {
+			p.unexpected(token, "factor of variable")
+		}
+		fn.Typ = VariableFactor
+		fn.Node = newString(token.Pos, token.Val, token.Val)
+		return
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 		text, err := unquote(token)
 		if err != nil {
@@ -297,22 +301,27 @@ func (p *Parser) factor() (fn *FactorNode) {
 		} else {
 			p.Ctx = nil
 		}
+		fn.Typ = StringFactor
 		fn.Node = newString(token.Pos, token.Val, text)
 		return
 	case ItemLBracket:
+		fn.Typ = TableFactor
 		fn.Node = p.table()
 		return
 	case ItemLBrace:
 		if startsFactor(p.peek().Typ) {
+			fn.Typ = ListFactor
 			fn.Node = p.termList()
 			if token := p.next(); token.Typ != ItemRBrace {
 				p.unexpected(token, "factor of item list")
 			}
 		} else {
+			fn.Typ = ClosureFactor
 			fn.Node = p.closure()
 		}
 		return
 	case ItemLParen:
+		fn.Typ = CaptureFactor
 		fn.Node = p.pipeline()
 		if token := p.next(); token.Typ != ItemRParen {
 			p.unexpected(token, "factor of pipeline capture")
