@@ -98,11 +98,12 @@ func (fn *FormNode) Isomorph(n Node) bool {
 // CaptureFactor: (cmd)
 type FactorNode struct {
 	Pos
-	Typ FactorType
-	Node   Node
+	Typ  FactorType
+	Node Node
 }
 
 type FactorType int
+
 const (
 	StringFactor FactorType = iota
 	VariableFactor

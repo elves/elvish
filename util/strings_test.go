@@ -2,11 +2,11 @@ package util
 
 import "testing"
 
-var findContextTests = []struct{
-	text string
-	pos int
+var findContextTests = []struct {
+	text          string
+	pos           int
 	lineno, colno int
-	line string
+	line          string
 }{
 	{"a\nb", 2, 1, 0, "b"},
 }

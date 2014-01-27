@@ -2,8 +2,8 @@ package parse
 
 import "testing"
 
-var lexTests = []struct{
-	in string
+var lexTests = []struct {
+	in  string
 	out []Item
 }{
 	// Literals
@@ -25,7 +25,7 @@ var lexTests = []struct{
 }
 
 func TestLex(t *testing.T) {
-	tt:
+tt:
 	for _, tt := range lexTests {
 		l := Lex("<test case>", tt.in)
 		var out []Item
