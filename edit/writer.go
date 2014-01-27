@@ -1,10 +1,10 @@
 package edit
 
 import (
-	"github.com/xiaq/das/util"
-	"github.com/xiaq/das/edit/tty"
 	"bytes"
 	"fmt"
+	"github.com/xiaq/das/edit/tty"
+	"github.com/xiaq/das/util"
 	"os"
 	"strings"
 	"unicode"

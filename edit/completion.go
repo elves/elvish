@@ -1,8 +1,8 @@
 package edit
 
 import (
-	"github.com/xiaq/das/parse"
 	"fmt"
+	"github.com/xiaq/das/parse"
 	"io/ioutil"
 )
 

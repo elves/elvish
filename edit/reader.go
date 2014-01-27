@@ -1,9 +1,9 @@
 package edit
 
 import (
-	"github.com/xiaq/das/util"
 	"bufio"
 	"fmt"
+	"github.com/xiaq/das/util"
 	"time"
 )
 

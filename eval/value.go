@@ -1,9 +1,9 @@
 package eval
 
 import (
-	"github.com/xiaq/das/parse"
 	"bytes"
 	"fmt"
+	"github.com/xiaq/das/parse"
 	"strconv"
 	"strings"
 	"unicode"
