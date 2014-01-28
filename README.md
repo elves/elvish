@@ -38,6 +38,15 @@ go get -u github.com/xiaq/das
 Remember to put the two `export`s above into your `bashrc` or `zshrc` (or
 whatever).
 
+## In Need of a Name!
+
+`das` is not the final name I intend to use for this project; it is just a
+little word I keep typing when I'm idle. Being impossible to google for German
+speakers, this is a terrible name for any project (and I'm not willing to call
+it `daslang` or `dasshell`). So if you happen to be here and have a good name
+in mind, drop me a line. Before that though, please read [Name](#name) for
+some of my thoughts about naming
+
 ## The Editor
 
 Those marked with ✔ are implemented (but could be broken from time to
@@ -225,9 +234,8 @@ of connected one after another.
 
 ## Name
 
-Indeed, **das** is not a very good name for a Unix shell. The name is actually
-a corrupted form of **dash**, which also happens to be the German definite
-neuter article.
+**das** is a corrupted form of **dash**. It also happens to be the German
+definite neuter article.
 
 I have some other ideas in mind. One of them is **elv**, since I found
 "elvish" to be a great adjective - I can't use "elf" though, since it's
