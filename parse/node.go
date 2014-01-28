@@ -75,7 +75,7 @@ func newForm(pos Pos) *FormNode {
 
 func (fn *FormNode) Isomorph(n Node) bool {
 	if fn2, ok := n.(*FormNode); ok {
-		if fn.Command.Isomorph(fn2) && fn.Args.Isomorph(fn2) {
+		if fn.Command.Isomorph(fn2.Command) && fn.Args.Isomorph(fn2.Args) && len(fn.Redirs) == len(fn2.Redirs) {
 			for i := range fn.Redirs {
 				if !fn.Redirs[i].Isomorph(fn2.Redirs[i]) {
 					return false
@@ -119,7 +119,7 @@ func newFactor(pos Pos) *FactorNode {
 
 func (fn *FactorNode) Isomorph(n Node) bool {
 	if fn2, ok := n.(*FactorNode); ok {
-		return fn.Typ == fn2.Typ && fn.Node.Isomorph(fn2)
+		return fn.Typ == fn2.Typ && fn.Node.Isomorph(fn2.Node)
 	}
 	return false
 }
