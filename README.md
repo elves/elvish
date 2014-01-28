@@ -17,8 +17,27 @@ Tab completion:
 
 ## Building
 
-You need go >= 1.2 to build this. Just run `make`. The resulting binary is
-called `das`.
+Go >= 1.1.1 is required. This repository is a go-getable package.
+
+In case you are new to Go, you are advised to read [How To Write Go
+Code](http://golang.org/doc/code.html), but here is a quick snippet:
+
+```
+mkdir ~/go
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
+go get github.com/xiaq/das
+das
+```
+
+To update and rebuild:
+
+```
+go get -u github.com/xiaq/das
+```
+
+Remember to put the two `export`s above into your `bashrc` or `zshrc` (or
+whatever).
 
 ## The Editor
 
