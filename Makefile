@@ -1,5 +1,5 @@
 EXE := das
-PKGS := edit eval ./main ./parse ./util
+PKGS := edit eval parse util
 PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
 PKG_COVERAGES := $(addsuffix .coverage,$(PKGS))
 
