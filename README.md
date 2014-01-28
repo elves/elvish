@@ -23,7 +23,6 @@ In case you are new to Go, you are advised to read [How To Write Go
 Code](http://golang.org/doc/code.html), but here is a quick snippet:
 
 ```
-mkdir ~/go
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOPATH/bin
 go get github.com/xiaq/das
