@@ -39,8 +39,8 @@ type ListNode struct {
 	Nodes []Node
 }
 
-func newList(pos Pos) *ListNode {
-	return &ListNode{Pos: pos}
+func newList(pos Pos, nodes... Node) *ListNode {
+	return &ListNode{Pos: pos, Nodes: nodes}
 }
 
 func (l *ListNode) Isomorph(n Node) bool {
