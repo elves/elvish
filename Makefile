@@ -4,7 +4,7 @@ PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
 PKG_COVERAGES := $(addsuffix .coverage,$(PKGS))
 
 exe:
-	go build -o $(EXE) ./main
+	go install github.com/xiaq/das
 
 test:
 	go test $(PKG_PATHS)
