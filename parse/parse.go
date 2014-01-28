@@ -207,7 +207,7 @@ func (p *Parser) pipeline() *ListNode {
 // Form = TermList { [ space ] Redir } [ space ]
 func (p *Parser) form() *FormNode {
 	fm := newForm(p.peekNonSpace().Pos)
-	fm.Name = p.term()
+	fm.Command = p.term()
 	fm.Args = p.termList()
 loop:
 	for {

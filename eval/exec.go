@@ -191,25 +191,25 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, str
 
 func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [3]StreamType) {
 	// Evaluate name.
-	nameValues := ev.evalTerm(n.Name)
-	if len(nameValues) != 1 {
-		ev.errorfNode(n.Name, "command must be a single value")
+	cmdValues := ev.evalTerm(n.Command)
+	if len(cmdValues) != 1 {
+		ev.errorfNode(n.Command, "command must be a single value")
 	}
-	name := nameValues[0]
+	cmd := cmdValues[0]
 
 	// Start building form.
-	nameStr := name.String(ev)
-	fm = &form{name: nameStr}
+	cmdStr := cmd.String(ev)
+	fm = &form{name: cmdStr}
 
 	// Resolve command. Assign one of fm.Command.{fn path closure} and streamTypes.
-	switch name := name.(type) {
+	switch cmd := cmd.(type) {
 	case *Scalar:
-		fm.Command, streamTypes = ev.resolveCommand(nameStr, n.Name)
+		fm.Command, streamTypes = ev.resolveCommand(cmdStr, n.Command)
 	case *Closure:
-		fm.Command.Closure = name
+		fm.Command.Closure = cmd
 		// XXX Use zero value (fileStream) for streamTypes now
 	default:
-		ev.errorfNode(n.Name, "Command name must be either scalar or closure")
+		ev.errorfNode(n.Command, "Command must be either scalar or closure")
 	}
 
 	// Port list.

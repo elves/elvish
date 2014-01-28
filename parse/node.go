@@ -64,7 +64,7 @@ func (l *ListNode) append(n Node) {
 // FormNode holds a form.
 type FormNode struct {
 	Pos
-	Name   *ListNode // A Term
+	Command *ListNode // A Term
 	Args   *ListNode // A ListNode of Term's
 	Redirs []Redir
 }
@@ -75,7 +75,7 @@ func newForm(pos Pos) *FormNode {
 
 func (fn *FormNode) Isomorph(n Node) bool {
 	if fn2, ok := n.(*FormNode); ok {
-		if fn.Name.Isomorph(fn2) && fn.Args.Isomorph(fn2) {
+		if fn.Command.Isomorph(fn2) && fn.Args.Isomorph(fn2) {
 			for i := range fn.Redirs {
 				if !fn.Redirs[i].Isomorph(fn2.Redirs[i]) {
 					return false
