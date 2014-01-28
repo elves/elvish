@@ -52,14 +52,13 @@ func main() {
 			panic(lr.Err)
 		}
 
-		p := parse.NewParser(name)
-		pe := p.Parse(lr.Line, false)
+		n, pe := parse.Parse(name, lr.Line)
 		if pe != nil {
 			fmt.Print(pe.(*util.ContextualError).Pprint())
 			continue
 		}
 
-		ee := ev.Eval(name, lr.Line, p.Root)
+		ee := ev.Eval(name, lr.Line, n)
 		if ee != nil {
 			fmt.Println(ee.(*util.ContextualError).Pprint())
 			continue

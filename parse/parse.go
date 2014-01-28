@@ -150,6 +150,17 @@ func (p *Parser) Parse(text string, tab bool) (err error) {
 	return nil
 }
 
+// Parse is a shorthand for constructing a Paser, call Parse and take out its
+// Root.
+func Parse(name, text string) (Node, error) {
+	p := NewParser(name)
+	err := p.Parse(text, false)
+	if err != nil {
+		return nil, err
+	}
+	return p.Root, nil
+}
+
 // parse parses a chunk and ensures there are no trailing tokens
 func (p *Parser) parse() *ListNode {
 	chunk := p.chunk()
