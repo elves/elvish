@@ -14,9 +14,12 @@ test:
 
 coverage: $(PKG_COVERAGES)
 
+gofmt:
+	gofmt -tabwidth=4 -w .
+
 z-%.go: %.go
 	go tool cgo -godefs $< > $@
 
-pre-commit: edit/tty/z-types.go
+pre-commit: gofmt edit/tty/z-types.go
 
-.PHONY: exe test coverage main pre-commit
+.PHONY: exe test coverage gofmt pre-commit
