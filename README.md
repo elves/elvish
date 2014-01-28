@@ -15,6 +15,10 @@ Tab completion:
 
 ![tab completion](./screenshots/completion.png)
 
+## Building
+
+You need go >= 1.2 to build this. Just run `make`. The resulting binary is
+called `das`.
 
 ## The Editor
 
@@ -200,11 +204,6 @@ of connected one after another.
 ## Pipeline, the Bad and the Ugly
 
 (TO BE WRITTEN)
-
-## Building
-
-You need go >= 1.1 to build this. Just run `make`. The resulting binary is
-called `das`.
 
 ## Name
 
