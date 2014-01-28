@@ -135,7 +135,7 @@ func (p *Parser) stopParse() {
 
 // Parse parses the script to construct a representation of the script for
 // execution.
-func (p *Parser) Parse(text string, tab bool) (tree *Parser, err error) {
+func (p *Parser) Parse(text string, tab bool) (err error) {
 	defer util.Recover(&err)
 	defer p.stopParse()
 
@@ -147,7 +147,7 @@ func (p *Parser) Parse(text string, tab bool) (tree *Parser, err error) {
 	p.Root = p.parse()
 
 	p.stopParse()
-	return p, nil
+	return nil
 }
 
 // parse parses a chunk and ensures there are no trailing tokens

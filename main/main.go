@@ -53,13 +53,13 @@ func main() {
 		}
 
 		p := parse.NewParser(name)
-		tree, pe := p.Parse(lr.Line, false)
+		pe := p.Parse(lr.Line, false)
 		if pe != nil {
 			fmt.Print(pe.(*util.ContextualError).Pprint())
 			continue
 		}
 
-		ee := ev.Eval(name, lr.Line, tree.Root)
+		ee := ev.Eval(name, lr.Line, p.Root)
 		if ee != nil {
 			fmt.Println(ee.(*util.ContextualError).Pprint())
 			continue
