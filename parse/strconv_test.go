@@ -5,18 +5,18 @@ import (
 	"testing"
 )
 
-var atouRangeTests = []uintptr {
+var atouRangeTests = []uintptr{
 	0, 1, 2, ^uintptr(0),
 }
 
 var atouFormatTests = []struct {
-	in string
+	in     string
 	wanted uintptr
 }{
 	{"012", 12},
 }
 
-var atouErrorTests = []string {
+var atouErrorTests = []string{
 	"1e2", "foo", "1.9", "0x12",
 }
 

@@ -39,7 +39,7 @@ type ListNode struct {
 	Nodes []Node
 }
 
-func newList(pos Pos, nodes... Node) *ListNode {
+func newList(pos Pos, nodes ...Node) *ListNode {
 	return &ListNode{Pos: pos, Nodes: nodes}
 }
 
@@ -65,8 +65,8 @@ func (l *ListNode) append(n Node) {
 type FormNode struct {
 	Pos
 	Command *ListNode // A Term
-	Args   *ListNode // A ListNode of Term's
-	Redirs []Redir
+	Args    *ListNode // A ListNode of Term's
+	Redirs  []Redir
 }
 
 func newForm(pos Pos) *FormNode {
