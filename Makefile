@@ -1,7 +1,7 @@
 EXE := das
 PKGS := edit eval parse util
 PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
-PKG_COVERAGES := $(addsuffix .coverage,$(PKGS))
+PKG_COVERAGES := $(addprefix coverage/,$(PKGS))
 
 exe:
 	go install github.com/xiaq/das
@@ -9,7 +9,8 @@ exe:
 test:
 	go test $(PKG_PATHS)
 
-%.coverage: %
+coverage/%: %
+	mkdir -p coverage
 	go test -coverprofile=$@ ./$<
 
 coverage: $(PKG_COVERAGES)
