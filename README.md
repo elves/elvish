@@ -99,7 +99,7 @@ And:
   ```
   > echo `"He's dead, Jim."`
   "He's dead, Jim."
-  > echo ```He's dead, Jim."`
+  > echo `````He's dead, Jim."`
   ``He's dead, Jim."
   ```
 
