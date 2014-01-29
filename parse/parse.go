@@ -18,7 +18,7 @@ import (
 type Parser struct {
 	Name string // name of the script represented by the tree.
 	Root Node   // top-level root of the tree.
-	Ctx  Context
+	Ctx  *Context
 	text string // text parsed to create the script (or its parent)
 	tab  bool
 	// Parsing only; cleared after parse.
@@ -163,7 +163,7 @@ func Parse(name, text string) (Node, error) {
 
 // Complete is a shorthand for constructing a Paser, call Parse and take out
 // its Ctx.
-func Complete(name, text string) (Context, error) {
+func Complete(name, text string) (*Context, error) {
 	p := NewParser(name)
 	err := p.Parse(text, true)
 	if err != nil {
@@ -319,7 +319,8 @@ func (p *Parser) factor() (fn *FactorNode) {
 			p.errorf(int(token.Pos), "%s", err)
 		}
 		if token.End&MayContinue != 0 {
-			p.Ctx = NewArgContext(token.Val)
+			// XXX Only support FilenameContext
+			p.Ctx = &Context{FilenameContext, token.Val}
 		} else {
 			p.Ctx = nil
 		}
