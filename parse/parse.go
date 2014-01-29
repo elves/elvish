@@ -20,7 +20,6 @@ type Parser struct {
 	Root Node   // top-level root of the tree.
 	Ctx  *Context
 	text string // text parsed to create the script (or its parent)
-	tab  bool
 	// Parsing only; cleared after parse.
 	lex       *Lexer
 	token     [3]Item // three-token lookahead for parser.
@@ -135,12 +134,11 @@ func (p *Parser) stopParse() {
 
 // Parse parses the script to construct a representation of the script for
 // execution.
-func (p *Parser) Parse(text string, tab bool) (err error) {
+func (p *Parser) Parse(text string) (err error) {
 	defer util.Recover(&err)
 	defer p.stopParse()
 
 	p.text = text
-	p.tab = tab
 	p.lex = Lex(p.Name, text)
 	p.peekCount = 0
 
@@ -154,7 +152,7 @@ func (p *Parser) Parse(text string, tab bool) (err error) {
 // Root.
 func Parse(name, text string) (Node, error) {
 	p := NewParser(name)
-	err := p.Parse(text, false)
+	err := p.Parse(text)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +163,7 @@ func Parse(name, text string) (Node, error) {
 // its Ctx.
 func Complete(name, text string) (*Context, error) {
 	p := NewParser(name)
-	err := p.Parse(text, true)
+	err := p.Parse(text)
 	if err != nil {
 		return nil, err
 	}
