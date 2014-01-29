@@ -161,6 +161,17 @@ func Parse(name, text string) (Node, error) {
 	return p.Root, nil
 }
 
+// Complete is a shorthand for constructing a Paser, call Parse and take out
+// its Ctx.
+func Complete(name, text string) (Context, error) {
+	p := NewParser(name)
+	err := p.Parse(text, true)
+	if err != nil {
+		return nil, err
+	}
+	return p.Ctx, nil
+}
+
 // parse parses a chunk and ensures there are no trailing tokens
 func (p *Parser) parse() *ListNode {
 	chunk := p.chunk()
