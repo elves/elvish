@@ -1,10 +1,10 @@
-EXE := das
+EXE := elvish
 PKGS := edit eval parse util
 PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
 PKG_COVERAGES := $(addprefix coverage/,$(PKGS))
 
 exe:
-	go install github.com/xiaq/das
+	go install github.com/xiaq/elvish
 
 test:
 	go test $(PKG_PATHS)

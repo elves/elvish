@@ -3,7 +3,7 @@ package eval
 import (
 	"bytes"
 	"fmt"
-	"github.com/xiaq/das/parse"
+	"github.com/xiaq/elvish/parse"
 	"strconv"
 	"strings"
 	"unicode"

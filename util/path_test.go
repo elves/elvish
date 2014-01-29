@@ -7,7 +7,7 @@ import (
 )
 
 func TestGetwd(t *testing.T) {
-	dir, error := ioutil.TempDir("", "dastest.")
+	dir, error := ioutil.TempDir("", "elvishtest.")
 	if error != nil {
 		t.Errorf("Got error when creating temp dir: %v", error)
 	} else {

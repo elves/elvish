@@ -1,8 +1,8 @@
 package edit
 
 import (
-	"github.com/xiaq/das/eval"
-	"github.com/xiaq/das/parse"
+	"github.com/xiaq/elvish/eval"
+	"github.com/xiaq/elvish/parse"
 )
 
 // Pseudo-ItemType's used by the Highlighter. They are given negative values

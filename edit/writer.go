@@ -3,8 +3,8 @@ package edit
 import (
 	"bytes"
 	"fmt"
-	"github.com/xiaq/das/edit/tty"
-	"github.com/xiaq/das/util"
+	"github.com/xiaq/elvish/edit/tty"
+	"github.com/xiaq/elvish/util"
 	"os"
 	"strings"
 	"unicode"

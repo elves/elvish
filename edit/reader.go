@@ -3,7 +3,7 @@ package edit
 import (
 	"bufio"
 	"fmt"
-	"github.com/xiaq/das/util"
+	"github.com/xiaq/elvish/util"
 	"time"
 )
 

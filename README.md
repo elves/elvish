@@ -25,25 +25,29 @@ Code](http://golang.org/doc/code.html), but here is a quick snippet:
 ```
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOPATH/bin
-go get github.com/xiaq/das
-das
+go get github.com/xiaq/elvish
+elvish
 ```
 
 To update and rebuild:
 
 ```
-go get -u github.com/xiaq/das
+go get -u github.com/xiaq/elvish
 ```
 
 Remember to put the two `export`s above into your `bashrc` or `zshrc` (or
 whatever).
 
+## Name
+
+In rogue-likes, elven items have a reputation of high quality. `elvish` is a corrupted form of `elvish`. In rogue-likes
+
 ## In Need of a Name!
 
-`das` is not the final name I intend to use for this project; it is just a
+`elvish` is not the final name I intend to use for this project; it is just a
 little word I keep typing when I'm idle. Being impossible to google for German
 speakers, this is a terrible name for any project (and I'm not willing to call
-it `daslang` or `dasshell`). So if you happen to be here and have a good name
+it `elvishlang` or `elvishshell`). So if you happen to be here and have a good name
 in mind, drop me a line. Before that though, please read [Name](#name) for
 some of my thoughts about naming
 
@@ -231,26 +235,6 @@ of connected one after another.
 ## Pipeline, the Bad and the Ugly
 
 (TO BE WRITTEN)
-
-## Name
-
-**das** is a corrupted form of **dash**. It also happens to be the German
-definite neuter article.
-
-I have some other ideas in mind. One of them is **elv**, since I found
-"elvish" to be a great adjective - I can't use "elf" though, since it's
-already [taken](http://www.cs.cmu.edu/~fp/elf.html) and may be confused with
-the well known [file
-format](http://en.wikipedia.org/wiki/Executable_and_Linkable_Format).
-
-Another possible source of names is the names of actual seashells; but my
-English vocabulary is too small for me to recall any beyond "nautilus", which
-is both too long and already taken.
-
-I'm not avoiding names ending in "sh" though; but I do find "bash" to be a
-terrible name. "fish" is clever, but it has a quite [unpleasant
-adjective](https://en.wiktionary.org/wiki/fishy). I find "dash" really good
-though, which is why it came to my mind :).
 
 ## License
 

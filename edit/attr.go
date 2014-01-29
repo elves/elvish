@@ -1,7 +1,7 @@
 package edit
 
 import (
-	"github.com/xiaq/das/parse"
+	"github.com/xiaq/elvish/parse"
 )
 
 var (

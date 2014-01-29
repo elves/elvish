@@ -4,8 +4,8 @@ package eval
 
 import (
 	"fmt"
-	"github.com/xiaq/das/parse"
-	"github.com/xiaq/das/util"
+	"github.com/xiaq/elvish/parse"
+	"github.com/xiaq/elvish/util"
 	"os"
 	"strconv"
 	"strings"
