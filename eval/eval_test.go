@@ -1,9 +1,9 @@
 package eval
 
 import (
-	"testing"
-	"syscall"
 	"strconv"
+	"syscall"
+	"testing"
 )
 
 func strsEqual(s1 []string, s2 []string) bool {

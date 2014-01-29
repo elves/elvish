@@ -10,6 +10,6 @@ const (
 )
 
 type Context struct {
-	Typ ContextType
+	Typ    ContextType
 	Prefix string
 }

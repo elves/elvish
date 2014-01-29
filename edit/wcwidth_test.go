@@ -4,8 +4,8 @@ import (
 	"testing"
 )
 
-var wcwidthTests = []struct{
-	in rune
+var wcwidthTests = []struct {
+	in     rune
 	wanted int
 }{
 	{'\u0301', 0}, // Combining acute accent
