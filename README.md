@@ -40,16 +40,16 @@ whatever).
 
 ## Name
 
-In rogue-likes, elven items have a reputation of high quality. `elvish` is a corrupted form of `elvish`. In rogue-likes
+In rogue-likes, items made by the elves have a reputation of high quality.
+These are usually called **elven** items, but I chose **elvish** for obvious
+reasons.
 
-## In Need of a Name!
+The adjective for elvish is also "elvish", not "elvishy" and definitely not
+"elvishish".
 
-`elvish` is not the final name I intend to use for this project; it is just a
-little word I keep typing when I'm idle. Being impossible to google for German
-speakers, this is a terrible name for any project (and I'm not willing to call
-it `elvishlang` or `elvishshell`). So if you happen to be here and have a good name
-in mind, drop me a line. Before that though, please read [Name](#name) for
-some of my thoughts about naming
+I am aware of the fictional [elvish
+language](https://en.wikipedia.org/wiki/Elvish_language), but I believe there
+is not much room for confusion and the google-ability is still pretty good.
 
 ## The Editor
 
