@@ -7,6 +7,7 @@ const (
 	FilenameContext
 	CommandContext
 	VariableNameContext
+	NewFactorContext // Have to begin a new factor
 )
 
 type Context struct {
