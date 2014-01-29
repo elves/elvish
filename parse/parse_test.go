@@ -27,3 +27,23 @@ func TestParse(t *testing.T) {
 		}
 	}
 }
+
+var completeTests = []struct {
+	in     string
+	wanted *Context
+}{
+	{"", &Context{CommandContext, ""}},
+	{"l", &Context{CommandContext, "l"}},
+	{"ls ", &Context{NewFactorContext, ""}},
+	{"ls a", &Context{FilenameContext, "a"}},
+	{"ls $a", &Context{VariableNameContext, "a"}},
+}
+
+func TestComplete(t *testing.T) {
+	for i, tt := range completeTests {
+		out, err := Complete(fmt.Sprintf("<test %d>", i), tt.in)
+		if out == nil || *out != *tt.wanted || err != nil {
+			t.Errorf("Complete(*, %q) => (%v, %v), want (%v, nil)", tt.in, out, err, tt.wanted)
+		}
+	}
+}
