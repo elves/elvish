@@ -6,6 +6,7 @@ const (
 	UnknownContext ContextType = iota
 	FilenameContext
 	CommandContext
+	VariableNameContext
 )
 
 type Context struct {
