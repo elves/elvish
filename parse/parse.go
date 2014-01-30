@@ -324,7 +324,7 @@ func (p *Parser) factor() (fn *FactorNode) {
 			p.errorf(int(token.Pos), "%s", err)
 		}
 		if token.End&MayContinue != 0 {
-			if p.Ctx.Typ == NewFactorContext {
+			if p.Ctx.Typ == NewTermContext {
 				// XXX All command arguments are assumed to be FilenameContext
 				p.Ctx.Typ = FilenameContext
 			}

@@ -34,7 +34,7 @@ var completeTests = []struct {
 }{
 	{"", &Context{CommandContext, ""}},
 	{"l", &Context{CommandContext, "l"}},
-	{"ls ", &Context{NewFactorContext, ""}},
+	{"ls ", &Context{NewTermContext, ""}},
 	{"ls a", &Context{FilenameContext, "a"}},
 	{"ls $a", &Context{VariableNameContext, "a"}},
 }

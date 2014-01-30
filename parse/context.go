@@ -3,7 +3,7 @@ package parse
 type ContextType int
 
 const (
-	NewFactorContext ContextType = iota
+	NewTermContext ContextType = iota
 	FilenameContext
 	CommandContext
 	VariableNameContext
