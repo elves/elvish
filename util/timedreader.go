@@ -13,6 +13,7 @@ var (
 	FdTooBig = errors.New("fd exceeds FD_SETSIZE")
 )
 
+// TimedReader provides the facility of reading from a fd with timeout.
 type TimedReader struct {
 	File    *os.File
 	Timeout time.Duration

@@ -217,11 +217,7 @@ func (p *Parser) pipeline() *ListNode {
 // Form = TermList { [ space ] Redir } [ space ]
 func (p *Parser) form() *FormNode {
 	fm := newForm(p.peekNonSpace().Pos)
-	*p.Ctx = Context{CommandContext, ""}
 	fm.Command = p.term()
-	if p.peekNonSpace().Typ != ItemEOF {
-		*p.Ctx = Context{}
-	}
 	fm.Args = p.termList()
 loop:
 	for {
@@ -240,9 +236,13 @@ func (p *Parser) termList() *ListNode {
 	list := newList(p.peek().Pos)
 loop:
 	for {
-		if startsFactor(p.peekNonSpace().Typ) {
+		switch t := p.peekNonSpace().Typ; {
+		case startsFactor(t):
 			list.append(p.term())
-		} else {
+		case t == ItemEOF:
+			*p.Ctx = Context{NewTermContext, ""}
+			fallthrough
+		default:
 			break loop
 		}
 	}
@@ -313,7 +313,9 @@ func (p *Parser) factor() (fn *FactorNode) {
 		if token.Typ != ItemBare {
 			p.unexpected(token, "factor of variable")
 		}
-		*p.Ctx = Context{VariableNameContext, token.Val}
+		if p.peek().Typ == ItemEOF {
+			*p.Ctx = Context{VariableNameContext, token.Val}
+		}
 		fn.Typ = VariableFactor
 		fn.Node = newString(token.Pos, token.Val, token.Val)
 		return
@@ -323,12 +325,10 @@ func (p *Parser) factor() (fn *FactorNode) {
 			// XXX Errors with unterminated quoted string
 			p.errorf(int(token.Pos), "%s", err)
 		}
-		if token.End&MayContinue != 0 {
-			if p.Ctx.Typ == NewTermContext {
-				// XXX All command arguments are assumed to be FilenameContext
-				p.Ctx.Typ = FilenameContext
-			}
-			p.Ctx.Prefix = token.Val
+		if p.peek().Typ == ItemEOF {
+		// if token.End&MayContinue != 0 {
+			// XXX All terms are assumed to be filenames
+			*p.Ctx = Context{FilenameContext, token.Val}
 		}
 		fn.Typ = StringFactor
 		fn.Node = newString(token.Pos, token.Val, text)
