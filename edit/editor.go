@@ -1,4 +1,4 @@
-// package edit implements a full-feature line editor.
+// Package edit implements a full-feature line editor.
 package edit
 
 import (

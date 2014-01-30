@@ -1,10 +1,9 @@
-// Derived from stdlib package text/template/parse.
-
 // Copyright 2011 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// elvish source lexer and parser.
+// Package parse parses elvish source. Derived from stdlib package
+// text/template/parse.
 package parse
 
 import (
