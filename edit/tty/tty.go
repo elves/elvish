@@ -11,9 +11,8 @@ func Ioctl(fd int, req int, arg uintptr) error {
 		syscall.SYS_IOCTL, uintptr(fd), uintptr(req), arg)
 	if e != 0 {
 		return os.NewSyscallError("ioctl", e)
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func FlushInput(fd int) error {

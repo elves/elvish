@@ -48,10 +48,9 @@ func quote(s string) string {
 		}
 		buf.WriteRune('`')
 		return buf.String()
-	} else {
-		// Quote with double quote
-		return strconv.Quote(s)
 	}
+	// Quote with double quote
+	return strconv.Quote(s)
 }
 
 type Value interface {
@@ -62,6 +61,7 @@ type Value interface {
 }
 
 // TODO Only str part is used.
+
 type Scalar struct {
 	num float64
 	str string
@@ -133,9 +133,8 @@ func (t *Table) Caret(ev *Evaluator, v Value) Value {
 		idx, err := strconv.ParseUint(sub.String(ev), 10, 0)
 		if err == nil {
 			return t.list[idx]
-		} else {
-			return t.dict[sub]
 		}
+		return t.dict[sub]
 	default:
 		ev.errorf("Table can only be careted with Scalar or Table")
 		return nil

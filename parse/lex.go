@@ -60,7 +60,7 @@ const (
 	ItemAmpersand    // ampersand '&'
 )
 
-var ItemTypeNames []string = []string{
+var ItemTypeNames = []string{
 	"ItemError",
 	"ItemEOF",
 	"ItemEndOfLine",
@@ -97,7 +97,7 @@ const (
 	ItemAmbiguious   ItemEnd = MayTerminate | MayContinue
 )
 
-const Eof = -1
+const EOF = -1
 
 // stateFn represents the state of the scanner as a function that returns the next state.
 type stateFn func(*Lexer) stateFn
@@ -118,7 +118,7 @@ type Lexer struct {
 func (l *Lexer) next() rune {
 	if int(l.pos) >= len(l.input) {
 		l.width = 0
-		return Eof
+		return EOF
 	}
 	r, w := utf8.DecodeRuneInString(l.input[l.pos:])
 	l.width = Pos(w)
@@ -212,7 +212,7 @@ var singleRuneToken = map[rune]ItemType{
 func lexAny(l *Lexer) stateFn {
 	var r rune
 	switch r = l.next(); r {
-	case Eof:
+	case EOF:
 		l.emit(ItemEOF, ItemTerminated)
 		return nil
 	case '>', '<':
@@ -250,7 +250,7 @@ func lexComment(l *Lexer) stateFn {
 loop:
 	for {
 		switch l.next() {
-		case '\n', Eof:
+		case '\n', EOF:
 			l.backup()
 			break loop
 		}
@@ -290,7 +290,7 @@ func lexRedirLeader(l *Lexer) stateFn {
 			case ']':
 				l.emit(ItemRedirLeader, ItemTerminated)
 				break loop
-			case Eof:
+			case EOF:
 				l.emit(ItemRedirLeader, ItemUnterminated)
 				break loop
 			}
@@ -313,9 +313,10 @@ func lexBare(l *Lexer) stateFn {
 }
 
 // XXX Must be maintained to match lexAny.
+
 func StartsBare(r rune) bool {
 	switch r {
-	case Eof, '>', '<', '`', '"', '\n':
+	case EOF, '>', '<', '`', '"', '\n':
 		return false
 	}
 	if isSpace(r) {
@@ -329,7 +330,7 @@ func StartsBare(r rune) bool {
 
 func TerminatesBare(r rune) bool {
 	switch r {
-	case '\n', '(', ')', '[', ']', '{', '}', '"', '`', '$', ';', '|', Eof:
+	case '\n', '(', ')', '[', ']', '{', '}', '"', '`', '$', ';', '|', EOF:
 		return true
 	}
 	return isSpace(r)
@@ -342,7 +343,7 @@ func lexSingleQuoted(l *Lexer) stateFn {
 loop:
 	for {
 		switch l.next() {
-		case Eof, '\n':
+		case EOF, '\n':
 			l.emit(ItemSingleQuoted, ItemUnterminated)
 			return lexAny
 		case quote:
@@ -363,11 +364,11 @@ loop:
 	for {
 		switch l.next() {
 		case '\\':
-			if r := l.next(); r != Eof && r != '\n' {
+			if r := l.next(); r != EOF && r != '\n' {
 				break
 			}
 			fallthrough
-		case Eof, '\n':
+		case EOF, '\n':
 			l.emit(ItemDoubleQuoted, ItemUnterminated)
 			return lexAny
 		case '"':

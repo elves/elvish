@@ -39,7 +39,7 @@ var leBuiltins = map[string]leBuiltin{
 	"move-dot-f":         moveDotF,
 	"accept-line":        acceptLine,
 	"complete":           complete,
-	"return-eof":         returnEof,
+	"return-eof":         returnEOF,
 	"default-insert":     defaultInsert,
 	"cancel-completion":  cancelCompletion,
 	"select-cand-b":      selectCandB,
@@ -106,9 +106,9 @@ func complete(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func returnEof(ed *Editor, k Key) *leReturn {
+func returnEOF(ed *Editor, k Key) *leReturn {
 	if len(ed.line) == 0 {
-		return &leReturn{action: exitReadLine, readLineReturn: LineRead{Eof: true}}
+		return &leReturn{action: exitReadLine, readLineReturn: LineRead{EOF: true}}
 	}
 	return nil
 }

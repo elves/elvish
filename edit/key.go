@@ -60,6 +60,7 @@ const (
 	DefaultBindingRune // Used in key of keyBinding for default binding
 
 	// Some function key names are just aliases for their ASCII representation
+
 	Tab       = '\t'
 	Enter     = '\n'
 	Backspace = 0x7f

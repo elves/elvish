@@ -19,7 +19,7 @@ func main() {
 	}
 
 	ev := eval.NewEvaluator(os.Environ())
-	cmd_no := 0
+	cmdNum := 0
 
 	username := "???"
 	user, err := user.Current()
@@ -33,8 +33,8 @@ func main() {
 	rprompt := username + "@" + hostname
 
 	for {
-		cmd_no++
-		name := fmt.Sprintf("<tty %d>", cmd_no)
+		cmdNum++
+		name := fmt.Sprintf("<tty %d>", cmdNum)
 
 		ed, err := edit.Init(os.Stdin, tr, ev)
 		if err != nil {
@@ -48,7 +48,7 @@ func main() {
 			panic(err)
 		}
 
-		if lr.Eof {
+		if lr.EOF {
 			break
 		} else if lr.Err != nil {
 			panic(lr.Err)

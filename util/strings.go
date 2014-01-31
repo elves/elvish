@@ -4,9 +4,9 @@ import (
 	"strings"
 )
 
-// Given a position in a text, find its line number, corresponding line and
-// column numbers. Line and column numbers are counted from 0.
-// Used in diagnostic messages.
+// FindContext takes a position in a text and finds its line number,
+// corresponding line and column numbers. Line and column numbers are counted
+// from 0. Used in diagnostic messages.
 func FindContext(text string, pos int) (lineno, colno int, line string) {
 	var p int
 	for _, r := range text {

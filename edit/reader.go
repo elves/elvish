@@ -53,7 +53,7 @@ var g3Seq = map[rune]rune{
 }
 
 const (
-	RUNE_TIMEOUT rune = -1
+	RuneTimeout rune = -1
 )
 
 func (rd *reader) readRune() (r rune) {
@@ -69,8 +69,8 @@ func (rd *reader) readRune() (r rune) {
 	case n == 0:
 		var err error
 		r, _, err = rd.buffed.ReadRune()
-		if err == util.Timeout {
-			return RUNE_TIMEOUT
+		if err == util.ErrTimeout {
+			return RuneTimeout
 		} else if err != nil {
 			util.Panic(err)
 		}
@@ -137,7 +137,7 @@ func (rd *reader) readKey() (k Key, err error) {
 		rd.timed.Timeout = EscTimeout
 		defer func() { rd.timed.Timeout = -1 }()
 		r2 := rd.readRune()
-		if r2 == RUNE_TIMEOUT {
+		if r2 == RuneTimeout {
 			return Key{'[', Ctrl}, nil
 		}
 		switch r2 {
@@ -149,7 +149,7 @@ func (rd *reader) readKey() (k Key, err error) {
 			for {
 				r = rd.readRune()
 				// Timeout can only happen at first readRune.
-				if r == RUNE_TIMEOUT {
+				if r == RuneTimeout {
 					return Key{'[', Alt}, nil
 				}
 				seq += string(r)
@@ -173,15 +173,14 @@ func (rd *reader) readKey() (k Key, err error) {
 		case 'O':
 			// G3 style function key sequence: read one rune.
 			r = rd.readRune()
-			if r == RUNE_TIMEOUT {
+			if r == RuneTimeout {
 				return Key{r2, Alt}, nil
 			}
 			r, ok := g3Seq[r]
 			if ok {
 				return Key{r, 0}, nil
-			} else {
-				rd.badEscSeq("")
 			}
+			rd.badEscSeq("")
 		}
 		return Key{r2, Alt}, nil
 	default:
@@ -242,10 +241,9 @@ func parseCSI(nums []int, last rune, seq string) (Key, error) {
 				if len(nums) == 1 {
 					// Unmodified: \e[5~ (PageUp)
 					return k, nil
-				} else {
-					// Modified: \e[5;5~ (Ctrl-PageUp)
-					return xtermModify(k, nums[1], seq)
 				}
+				// Modified: \e[5;5~ (Ctrl-PageUp)
+				return xtermModify(k, nums[1], seq)
 			}
 		} else if len(nums) == 3 && nums[0] == 27 {
 			if r, ok := keyByNum2[nums[2]]; ok {

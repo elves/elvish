@@ -308,7 +308,7 @@ func unquote(token Item) (string, error) {
 	case ItemDoubleQuoted:
 		return strconv.Unquote(token.Val)
 	default:
-		return "", fmt.Errorf("Bad token type (%s)", token.Typ)
+		return "", fmt.Errorf("bad token type (%s)", token.Typ)
 	}
 }
 
@@ -500,9 +500,8 @@ func (p *Parser) redir() Redir {
 					p.errorf(int(leader.Pos), "Invalid old fd in qualified redirection %q", rhs)
 				}
 				return NewFdRedir(leader.Pos, fd, oldfd)
-			} else {
-				return newCloseRedir(leader.Pos, fd)
 			}
+			return newCloseRedir(leader.Pos, fd)
 		} else {
 			// FilenameRedir with fd altered
 			var err error

@@ -16,7 +16,6 @@ func Getwd() string {
 	home = strings.TrimRight(home, "/")
 	if len(pwd) >= len(home) && pwd[:len(home)] == home {
 		return "~" + pwd[len(home):]
-	} else {
-		return pwd
 	}
+	return pwd
 }

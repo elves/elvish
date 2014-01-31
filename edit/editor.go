@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-var Lackeol = "\033[7m\u23ce\033[m\n"
+var LackEOL = "\033[7m\u23ce\033[m\n"
 
 type bufferMode int
 
@@ -55,7 +55,7 @@ type Editor struct {
 // it effectively a tagged union.
 type LineRead struct {
 	Line string
-	Eof  bool
+	EOF  bool
 	Err  error
 }
 
@@ -66,7 +66,7 @@ func Init(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) (*Editor, err
 	fd := int(file.Fd())
 	term, err := tty.NewTermiosFromFd(fd)
 	if err != nil {
-		return nil, fmt.Errorf("Can't get terminal attribute: %s", err)
+		return nil, fmt.Errorf("can't get terminal attribute: %s", err)
 	}
 
 	editor := &Editor{
@@ -84,7 +84,7 @@ func Init(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) (*Editor, err
 
 	err = term.ApplyToFd(fd)
 	if err != nil {
-		return nil, fmt.Errorf("Can't set up terminal attribute: %s", err)
+		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
 	}
 
 	fmt.Fprint(editor.file, "\033[?7l")
@@ -103,7 +103,7 @@ func Init(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) (*Editor, err
 	}
 
 	if x != 1 {
-		file.WriteString(Lackeol)
+		file.WriteString(LackEOL)
 	}
 
 	return editor, nil
@@ -117,7 +117,7 @@ func (ed *Editor) Cleanup() error {
 	fd := int(ed.file.Fd())
 	err := ed.savedTermios.ApplyToFd(fd)
 	if err != nil {
-		return fmt.Errorf("Can't restore terminal attribute of stdin: %s", err)
+		return fmt.Errorf("can't restore terminal attribute of stdin: %s", err)
 	}
 	ed.savedTermios = nil
 	return nil

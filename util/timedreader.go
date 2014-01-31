@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	Timeout  = errors.New("timed out")
-	FdTooBig = errors.New("fd exceeds FD_SETSIZE")
+	ErrTimeout  = errors.New("timed out")
+	ErrFdTooBig = errors.New("fd exceeds FD_SETSIZE")
 )
 
 // TimedReader provides the facility of reading from a fd with timeout.
@@ -24,7 +24,7 @@ type TimedReader struct {
 func NewTimedReader(f *os.File) (*TimedReader, error) {
 	fd := f.Fd()
 	if fd >= syscall.FD_SETSIZE {
-		return nil, FdTooBig
+		return nil, ErrFdTooBig
 	}
 	tr := &TimedReader{File: f, Timeout: -1, nfds: int(fd) + 1}
 	bitLength := unsafe.Sizeof(tr.set.Bits[0]) * 8
@@ -46,7 +46,7 @@ func (tr *TimedReader) Read(p []byte) (n int, err error) {
 		return 0, err
 	}
 	if nfd == 0 {
-		return 0, Timeout
+		return 0, ErrTimeout
 	}
 	return tr.File.Read(p)
 }

@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	// A special impossible fd value. Used for "close fd" in
+	// FdNil is a special impossible fd value. Used for "close fd" in
 	// syscall.ProcAttr.Files.
-	FD_NIL uintptr = ^uintptr(0)
+	FdNil uintptr = ^uintptr(0)
 )
 
 // A port conveys data stream. It may be a Unix fd (wrapped by os.File), where
@@ -314,7 +314,7 @@ func (ev *Evaluator) execExternal(fm *form) <-chan *StateUpdate {
 	files := make([]uintptr, len(fm.ports))
 	for i, port := range fm.ports {
 		if port == nil || port.f == nil {
-			files[i] = FD_NIL
+			files[i] = FdNil
 		} else {
 			files[i] = port.f.Fd()
 		}
