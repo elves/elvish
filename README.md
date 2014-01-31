@@ -3,8 +3,9 @@
 This is a work in progress. Things may change and/or break without notice. You
 have been warned...
 
-API doc:
+Badges:
 [![GoDoc](https://godoc.org/github.com/xiaq/elvish?status.png)](https://godoc.org/github.com/xiaq/elvish)
+[![Build Status](https://travis-ci.org/xiaq/elvish.png?branch=master)](https://travis-ci.org/xiaq/elvish)
 
 ## Obligatory screenshots
 > All software websites should have screenshots.
