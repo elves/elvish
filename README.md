@@ -3,6 +3,9 @@
 This is a work in progress. Things may change and/or break without notice. You
 have been warned...
 
+API doc:
+[![GoDoc](https://godoc.org/github.com/xiaq/elvish?status.png)](https://godoc.org/github.com/xiaq/elvish)
+
 ## Obligatory screenshots
 > All software websites should have screenshots.
 > -- Someone on the Internet
