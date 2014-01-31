@@ -132,13 +132,16 @@ func (p *Parser) stopParse() {
 	p.lex = nil
 }
 
-// When the parser is running in completing mode, raiseCtx causes Parse to
-// terminate immediately by panicking. The Context will be caught by
-// recoverCtx. When the parser is not running in completing mode, it does
-// nothing.
-func (p *Parser) raiseCtx(ctx *Context) {
+// A dummy struct used in foundCtx and recoverCtx.
+type ctxFound struct {
+}
+
+// When the parser is running in completing mode, foundCtx causes Parse to
+// terminate immediately by panicking. The panic will be stopped by recoverCtx.
+// When the parser is not running in completing mode, it does nothing.
+func (p *Parser) foundCtx() {
 	if p.completing {
-		panic(ctx)
+		panic(ctxFound{})
 	}
 }
 
@@ -149,9 +152,7 @@ func (p *Parser) recoverCtx() {
 	if r == nil {
 		return
 	}
-	if ctx, ok := r.(*Context); ok {
-		p.Ctx = ctx
-	} else {
+	if _, ok := r.(ctxFound); !ok {
 		panic(r)
 	}
 }
@@ -168,7 +169,7 @@ func (p *Parser) Parse(text string, completing bool) (err error) {
 	p.lex = Lex(p.Name, text)
 	p.peekCount = 0
 
-	p.Ctx = &Context{}
+	p.Ctx = &Context{newList(0), newList(0), &FactorNode{Node: newString(0, "", "")}}
 	p.Root = p.parse()
 
 	return nil
@@ -259,13 +260,16 @@ loop:
 // TermList = { [ space ] Term } [ space ]
 func (p *Parser) termList() *ListNode {
 	list := newList(p.peek().Pos)
+	p.Ctx.PrevTerms = list
 loop:
 	for {
 		switch t := p.peekNonSpace().Typ; {
 		case startsFactor(t):
 			list.append(p.term())
 		case t == ItemEOF:
-			p.raiseCtx(&Context{NewTermContext, ""})
+			p.Ctx.PrevFactors = newList(p.peek().Pos)
+			p.Ctx.ThisFactor = &FactorNode{Node: newString(p.peek().Pos, "", "")}
+			p.foundCtx()
 			fallthrough
 		default:
 			break loop
@@ -277,6 +281,7 @@ loop:
 // Term = Factor { Factor | [ space ] '^' Factor [ space ] } [ space ]
 func (p *Parser) term() *ListNode {
 	term := newList(p.peek().Pos)
+	p.Ctx.PrevFactors = term
 	term.append(p.factor())
 loop:
 	for {
@@ -332,17 +337,18 @@ func startsFactor(p ItemType) bool {
 // closure: {echo} is a flat list, { echo } and {|| echo} are closures.
 func (p *Parser) factor() (fn *FactorNode) {
 	fn = newFactor(p.peek().Pos)
+	p.Ctx.ThisFactor = fn
 	switch token := p.next(); token.Typ {
 	case ItemDollar:
 		token := p.next()
 		if token.Typ != ItemBare {
 			p.unexpected(token, "factor of variable")
 		}
-		if p.peek().Typ == ItemEOF {
-			p.raiseCtx(&Context{VariableNameContext, token.Val})
-		}
 		fn.Typ = VariableFactor
 		fn.Node = newString(token.Pos, token.Val, token.Val)
+		if p.peek().Typ == ItemEOF {
+			p.foundCtx()
+		}
 		return
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 		text, err := unquote(token)
@@ -350,13 +356,13 @@ func (p *Parser) factor() (fn *FactorNode) {
 			// XXX Errors with unterminated quoted string
 			p.errorf(int(token.Pos), "%s", err)
 		}
+		fn.Typ = StringFactor
+		fn.Node = newString(token.Pos, token.Val, text)
 		if p.peek().Typ == ItemEOF {
 			// if token.End&MayContinue != 0 {
 			// XXX All terms are assumed to be filenames
-			p.raiseCtx(&Context{FilenameContext, token.Val})
+			p.foundCtx()
 		}
-		fn.Typ = StringFactor
-		fn.Node = newString(token.Pos, token.Val, text)
 		return
 	case ItemLBracket:
 		fn.Typ = TableFactor
