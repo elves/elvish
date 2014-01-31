@@ -8,10 +8,10 @@ import (
 	"strconv"
 )
 
-type BuiltinFunc func(*Evaluator, []Value, [2]*port) string
+type builtinFunc func(*Evaluator, []Value, [2]*port) string
 
 type builtin struct {
-	fn          BuiltinFunc
+	fn          builtinFunc
 	streamTypes [2]StreamType
 }
 

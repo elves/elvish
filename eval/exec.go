@@ -44,7 +44,7 @@ func (i *port) compatible(typ StreamType) bool {
 
 // A Command is either a function, an external command or a closure.
 type Command struct {
-	Func    BuiltinFunc // A builtin function, if the command is builtin.
+	Func    builtinFunc // A builtin function, if the command is builtin.
 	Path    string      // Command full path, if the command is external.
 	Closure *Closure    // The closure value, if the command is a closure.
 }
