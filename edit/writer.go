@@ -269,13 +269,13 @@ func (w *writer) refresh(bs *editorState) error {
 	}
 
 	// bufMode
-	if bs.mode != ModeInsert {
+	if bs.mode != modeInsert {
 		b := newBuffer(width)
 		bufMode = b
 		switch bs.mode {
-		case ModeCommand:
+		case modeCommand:
 			b.writes(trimWcwidth("-- COMMAND --", width), attrForMode)
-		case ModeCompleting:
+		case modeCompleting:
 			b.writes(trimWcwidth("-- COMPLETING --", width), attrForMode)
 		}
 	}

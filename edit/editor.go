@@ -15,9 +15,9 @@ var LackEOL = "\033[7m\u23ce\033[m\n"
 type bufferMode int
 
 const (
-	ModeInsert bufferMode = iota
-	ModeCommand
-	ModeCompleting
+	modeInsert bufferMode = iota
+	modeCommand
+	modeCompleting
 )
 
 type editorState struct {
@@ -34,7 +34,7 @@ type editorState struct {
 func (bs *editorState) finish() {
 	// Clean up the state before exiting the editor.
 	bs.tips = nil
-	bs.mode = ModeInsert
+	bs.mode = modeInsert
 	bs.completion = nil
 	bs.dot = len(bs.line)
 	// TODO Perhaps make it optional to NOT clear the rprompt
@@ -132,7 +132,7 @@ func (ed *Editor) pushTip(more string) {
 
 func (ed *Editor) refresh() error {
 	// Re-lex the line, unless we are in ModeCompleting
-	if ed.mode != ModeCompleting {
+	if ed.mode != modeCompleting {
 		ed.tokens = nil
 		hl := Highlight("<interactive code>", ed.line, ed.ev)
 		for token := range hl {
@@ -144,14 +144,14 @@ func (ed *Editor) refresh() error {
 
 // TODO Allow modifiable keybindings.
 var keyBindings = map[bufferMode]map[Key]string{
-	ModeCommand: map[Key]string{
+	modeCommand: map[Key]string{
 		Key{'i', 0}:    "insert-mode",
 		Key{'h', 0}:    "move-dot-b",
 		Key{'l', 0}:    "move-dot-f",
 		Key{'D', 0}:    "kill-line-f",
 		DefaultBinding: "default-command",
 	},
-	ModeInsert: map[Key]string{
+	modeInsert: map[Key]string{
 		Key{'[', Ctrl}:    "command-mode",
 		Key{'U', Ctrl}:    "kill-line-b",
 		Key{'K', Ctrl}:    "kill-line-f",
@@ -163,7 +163,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{'D', Ctrl}:    "return-eof",
 		DefaultBinding:    "default-insert",
 	},
-	ModeCompleting: map[Key]string{
+	modeCompleting: map[Key]string{
 		Key{'[', Ctrl}: "cancel-completion",
 		Key{Up, 0}:     "select-cand-b",
 		Key{Down, 0}:   "select-cand-f",
@@ -183,7 +183,7 @@ func (ed *Editor) acceptCompletion() {
 		ed.dot += len(accepted) - (c.end - c.start)
 	}
 	ed.completion = nil
-	ed.mode = ModeInsert
+	ed.mode = modeInsert
 }
 
 // ReadLine reads a line interactively.
@@ -191,7 +191,7 @@ func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 	ed.prompt = prompt
 	ed.rprompt = rprompt
 	ed.line = ""
-	ed.mode = ModeInsert
+	ed.mode = modeInsert
 	ed.tips = nil
 	ed.completion = nil
 	ed.dot = 0

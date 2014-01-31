@@ -51,7 +51,7 @@ var leBuiltins = map[string]leBuiltin{
 }
 
 func insertMode(ed *Editor, k Key) *leReturn {
-	return &leReturn{action: changeMode, newMode: ModeInsert}
+	return &leReturn{action: changeMode, newMode: modeInsert}
 }
 
 func defaultCommand(ed *Editor, k Key) *leReturn {
@@ -60,7 +60,7 @@ func defaultCommand(ed *Editor, k Key) *leReturn {
 }
 
 func commandMode(ed *Editor, k Key) *leReturn {
-	return &leReturn{action: changeMode, newMode: ModeCommand}
+	return &leReturn{action: changeMode, newMode: modeCommand}
 }
 
 func killLineB(ed *Editor, k Key) *leReturn {
@@ -144,7 +144,7 @@ func cycleCandF(ed *Editor, k Key) *leReturn {
 
 func cancelCompletion(ed *Editor, k Key) *leReturn {
 	ed.completion = nil
-	ed.mode = ModeInsert
+	ed.mode = modeInsert
 	return nil
 }
 
@@ -160,5 +160,5 @@ func defaultInsert(ed *Editor, k Key) *leReturn {
 
 func defaultCompleting(ed *Editor, k Key) *leReturn {
 	ed.acceptCompletion()
-	return &leReturn{action: changeModeAndReprocess, newMode: ModeInsert}
+	return &leReturn{action: changeModeAndReprocess, newMode: modeInsert}
 }
