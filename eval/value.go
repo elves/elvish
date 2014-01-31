@@ -53,6 +53,7 @@ func quote(s string) string {
 	return strconv.Quote(s)
 }
 
+// Value is the runtime representation of an elvish value.
 type Value interface {
 	meisvalue()
 	Repr(ev *Evaluator) string
@@ -62,6 +63,7 @@ type Value interface {
 
 // TODO Only str part is used.
 
+// Scalar is a string.
 type Scalar struct {
 	num float64
 	str string
@@ -85,6 +87,7 @@ func (s *Scalar) Caret(ev *Evaluator, v Value) Value {
 	return NewScalar(s.str + v.String(ev))
 }
 
+// Table is a list-dict hybrid.
 type Table struct {
 	list []Value
 	dict map[Value]Value
@@ -145,6 +148,7 @@ func (t *Table) append(vs ...Value) {
 	t.list = append(t.list, vs...)
 }
 
+// Env is a special-cased Table. The only instance of it is the global $env.
 type Env struct {
 	m map[string]string
 }
@@ -204,6 +208,7 @@ func (e *Env) Caret(ev *Evaluator, v Value) Value {
 	}
 }
 
+// Closure is a closure.
 type Closure struct {
 	ArgNames []string
 	Chunk    *parse.ListNode

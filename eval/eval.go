@@ -12,6 +12,9 @@ import (
 	"syscall"
 )
 
+// Evaluator maintains runtime context of elvish code within a single
+// goroutine. When elvish code spawns goroutines, the Evaluator is copied and
+// has certain components replaced.
 type Evaluator struct {
 	name, text  string
 	globals     map[string]Value
@@ -22,6 +25,8 @@ type Evaluator struct {
 	nodes       []parse.Node // A stack that keeps track of nodes being evaluated.
 }
 
+// NewEvaluator creates a new Evaluator from a slice of environment strings
+// in the form "key=value".
 func NewEvaluator(envSlice []string) *Evaluator {
 	env := NewEnv(envSlice)
 	pid := NewScalar(strconv.Itoa(syscall.Getpid()))
@@ -50,6 +55,8 @@ func (ev *Evaluator) copy() *Evaluator {
 	return eu
 }
 
+// Eval evaluates a chunk node n. The name and text of it is used for
+// diagnostic messages.
 func (ev *Evaluator) Eval(name, text string, n parse.Node) (err error) {
 	defer util.Recover(&err)
 	defer ev.stopEval()
@@ -87,6 +94,9 @@ func (ev *Evaluator) errorf(format string, args ...interface{}) {
 	}
 }
 
+// ResolveVar tries to find an variable with the given name in the local and
+// then global context of the Evaluator. If no variable with the name exists,
+// err is non-nil.
 func (ev *Evaluator) ResolveVar(name string) (v Value, err error) {
 	defer util.Recover(&err)
 	return ev.resolveVar(name), nil

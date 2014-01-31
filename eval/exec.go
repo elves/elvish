@@ -23,8 +23,11 @@ type port struct {
 	ch chan Value
 }
 
+// StreamType represents what form of data stream a command expects on each
+// port.
 type StreamType byte
 
+// Possible values of StreamType.
 const (
 	fdStream   StreamType = iota // Default stream type. Corresponds to port.f.
 	chanStream                   // Corresponds to port.ch.
@@ -77,6 +80,7 @@ func (fm *form) closePorts(ev *Evaluator) {
 	}
 }
 
+// StateUpdate represents a change of state of a command.
 type StateUpdate struct {
 	Terminated bool
 	Msg        string
@@ -150,6 +154,9 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ports []*port, streamTypes []Strea
 	}
 }
 
+// ResolveCommand tries to find a command with the given name the stream types
+// it expects for three standard ports. If a command with that name doesn't
+// exists, err is non-nil.
 func (ev *Evaluator) ResolveCommand(name string) (cmd Command, streamTypes [3]StreamType, err error) {
 	defer util.Recover(&err)
 	cmd, streamTypes = ev.resolveCommand(name, nil)
