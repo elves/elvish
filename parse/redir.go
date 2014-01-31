@@ -21,13 +21,14 @@ func (r *redir) Fd() uintptr {
 func (r *redir) unexported() {
 }
 
+// FdRedir represents redirection into another fd, like >[2=3].
 type FdRedir struct {
 	redir
 	OldFd uintptr
 }
 
-// Public since we need to turn FilenameRedir -> FdRedir when evaluating
-// commands.
+// NewFdRedir creates a new FdRedir. Public since we need to turn FilenameRedir
+// -> FdRedir when evaluating commands.
 func NewFdRedir(pos Pos, fd, oldFd uintptr) *FdRedir {
 	return &FdRedir{redir{pos, fd}, oldFd}
 }
@@ -39,6 +40,7 @@ func (fr *FdRedir) Isomorph(n Node) bool {
 	return false
 }
 
+// CloseRedir represents the closing of a fd, like >[2=].
 type CloseRedir struct {
 	redir
 }
@@ -54,6 +56,7 @@ func (cr *CloseRedir) Isomorph(n Node) bool {
 	return false
 }
 
+// FilenameRedir represents redirection into a file, like >a.txt
 type FilenameRedir struct {
 	redir
 	Flag     int

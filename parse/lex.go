@@ -25,12 +25,13 @@ func (i Item) String() string {
 	case ItemError:
 		return i.Val
 	case ItemEOF:
-		return "EOF"
+		return "eof"
 	default:
 		return fmt.Sprintf("%q", i.Val)
 	}
 }
 
+// GoString returns the Go representation of an Item.
 func (i Item) GoString() string {
 	return fmt.Sprintf("parse.Item{%s, %d, %q, %d}", i.Typ, i.Pos, i.Val, i.End)
 }
@@ -38,9 +39,11 @@ func (i Item) GoString() string {
 // ItemType identifies the type of lex items.
 type ItemType int
 
+// ItemType constants.
 const (
 	ItemError ItemType = iota // error occurred; value is text of error
-	ItemEOF
+
+	ItemEOF          // end of file, always the last Item yielded
 	ItemEndOfLine    // a single EOL
 	ItemSpace        // run of spaces separating arguments
 	ItemBare         // a bare string literal
@@ -60,6 +63,7 @@ const (
 	ItemAmpersand    // ampersand '&'
 )
 
+// ItemType names.
 var ItemTypeNames = []string{
 	"ItemError",
 	"ItemEOF",
@@ -89,6 +93,7 @@ func (it ItemType) String() string {
 // ItemEnd describes the ending of lex items.
 type ItemEnd int
 
+// ItemEnd constants.
 const (
 	MayTerminate ItemEnd = 1 << iota
 	MayContinue
@@ -97,7 +102,7 @@ const (
 	ItemAmbiguious   ItemEnd = MayTerminate | MayContinue
 )
 
-const EOF = -1
+const eof = -1
 
 // stateFn represents the state of the scanner as a function that returns the next state.
 type stateFn func(*Lexer) stateFn
@@ -118,7 +123,7 @@ type Lexer struct {
 func (l *Lexer) next() rune {
 	if int(l.pos) >= len(l.input) {
 		l.width = 0
-		return EOF
+		return eof
 	}
 	r, w := utf8.DecodeRuneInString(l.input[l.pos:])
 	l.width = Pos(w)
@@ -212,7 +217,7 @@ var singleRuneToken = map[rune]ItemType{
 func lexAny(l *Lexer) stateFn {
 	var r rune
 	switch r = l.next(); r {
-	case EOF:
+	case eof:
 		l.emit(ItemEOF, ItemTerminated)
 		return nil
 	case '>', '<':
@@ -244,13 +249,13 @@ func lexAnyOrComment(l *Lexer) stateFn {
 	return lexAny
 }
 
-// lexComment scans a (line) comment. It runs until the newline or EOF.
+// lexComment scans a (line) comment. It runs until the newline or eof.
 // The leading hash has already been seen.
 func lexComment(l *Lexer) stateFn {
 loop:
 	for {
 		switch l.next() {
-		case '\n', EOF:
+		case '\n', eof:
 			l.backup()
 			break loop
 		}
@@ -290,7 +295,7 @@ func lexRedirLeader(l *Lexer) stateFn {
 			case ']':
 				l.emit(ItemRedirLeader, ItemTerminated)
 				break loop
-			case EOF:
+			case eof:
 				l.emit(ItemRedirLeader, ItemUnterminated)
 				break loop
 			}
@@ -314,9 +319,10 @@ func lexBare(l *Lexer) stateFn {
 
 // XXX Must be maintained to match lexAny.
 
+// StartsBare determines whether r may be the first rune of a bareword.
 func StartsBare(r rune) bool {
 	switch r {
-	case EOF, '>', '<', '`', '"', '\n':
+	case eof, '>', '<', '`', '"', '\n':
 		return false
 	}
 	if isSpace(r) {
@@ -328,9 +334,10 @@ func StartsBare(r rune) bool {
 	return true
 }
 
+// TerminatesBare determines whether r terminates a bareword.
 func TerminatesBare(r rune) bool {
 	switch r {
-	case '\n', '(', ')', '[', ']', '{', '}', '"', '`', '$', ';', '|', EOF:
+	case '\n', '(', ')', '[', ']', '{', '}', '"', '`', '$', ';', '|', eof:
 		return true
 	}
 	return isSpace(r)
@@ -343,7 +350,7 @@ func lexSingleQuoted(l *Lexer) stateFn {
 loop:
 	for {
 		switch l.next() {
-		case EOF, '\n':
+		case eof, '\n':
 			l.emit(ItemSingleQuoted, ItemUnterminated)
 			return lexAny
 		case quote:
@@ -364,11 +371,11 @@ loop:
 	for {
 		switch l.next() {
 		case '\\':
-			if r := l.next(); r != EOF && r != '\n' {
+			if r := l.next(); r != eof && r != '\n' {
 				break
 			}
 			fallthrough
-		case EOF, '\n':
+		case eof, '\n':
 			l.emit(ItemDoubleQuoted, ItemUnterminated)
 			return lexAny
 		case '"':

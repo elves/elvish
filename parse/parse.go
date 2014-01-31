@@ -14,6 +14,7 @@ import (
 	"strings"
 )
 
+// Parser maintains the states during parsing.
 type Parser struct {
 	Name       string // name of the script represented by the tree.
 	completing bool   // Whether the parser is running in completing mode

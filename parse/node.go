@@ -12,8 +12,8 @@ package parse
 // The interface contains an unexported method so that only
 // types local to this package can satisfy it.
 type Node interface {
-	Position() Pos // byte position of start of node in full original input string
-	Isomorph(n Node) bool
+	Position() Pos        // byte position of start of node in full original input string
+	Isomorph(n Node) bool // compares two Nodes, ignoring Pos
 	// Make sure only functions in this package can create Nodes.
 	meisnode()
 }
@@ -22,6 +22,7 @@ type Node interface {
 // this source was parsed.
 type Pos int
 
+// Position returns p itself.
 func (p Pos) Position() Pos {
 	return p
 }
@@ -89,28 +90,24 @@ func (fn *FormNode) Isomorph(n Node) bool {
 
 // A Term is represented by a ListNode of *FactorNode's.
 
-// A Factor is any of:
-// StringFactor: a `a` "a"
-// VariableFactor: $a
-// TableFactor: [a b c &k v]
-// ClosureFactor: {|a| cmd}
-// ListFactor: {a b c}
-// CaptureFactor: (cmd)
+// FactorNode represents a factor.
 type FactorNode struct {
 	Pos
 	Typ  FactorType
 	Node Node
 }
 
+// FactorType determines the type of a FactorNode.
 type FactorType int
 
+// FactorType constants.
 const (
-	StringFactor FactorType = iota
-	VariableFactor
-	TableFactor
-	ClosureFactor
-	ListFactor
-	CaptureFactor
+	StringFactor   FactorType = iota // string literal: a `a` a
+	VariableFactor                   // variable: $a
+	TableFactor                      // table: [a b c &k v]
+	ClosureFactor                    // closure: {|a| cmd}
+	ListFactor                       // list: {a b c}
+	CaptureFactor                    // pipeline capture: (cmd1|cmd2)
 )
 
 func newFactor(pos Pos) *FactorNode {
@@ -124,11 +121,13 @@ func (fn *FactorNode) Isomorph(n Node) bool {
 	return false
 }
 
+// TablePair represents a key/value pair in table literal.
 type TablePair struct {
 	Key   *ListNode
 	Value *ListNode
 }
 
+// TableNode holds a table literal.
 type TableNode struct {
 	Pos
 	List []*ListNode
@@ -169,6 +168,7 @@ func (tn *TableNode) appendToDict(key *ListNode, value *ListNode) {
 	tn.Dict = append(tn.Dict, &TablePair{key, value})
 }
 
+// ClosureNode holds a closure literal.
 type ClosureNode struct {
 	Pos
 	ArgNames *ListNode
@@ -186,7 +186,7 @@ func (cn *ClosureNode) Isomorph(n Node) bool {
 	return false
 }
 
-// StringNode holds a string constant. The value has been "unquoted".
+// StringNode holds a string literal. The value has been "unquoted".
 type StringNode struct {
 	Pos
 	Quoted string // The original text of the string, with quotes.
