@@ -33,7 +33,7 @@ func NewFdRedir(pos Pos, fd, oldFd uintptr) *FdRedir {
 	return &FdRedir{redir{pos, fd}, oldFd}
 }
 
-func (fr *FdRedir) Isomorph(n Node) bool {
+func (fr *FdRedir) isomorph(n Node) bool {
 	if fr2, ok := n.(*FdRedir); ok {
 		return fr.fd == fr2.fd && fr.OldFd == fr2.OldFd
 	}
@@ -49,7 +49,7 @@ func newCloseRedir(pos Pos, fd uintptr) *CloseRedir {
 	return &CloseRedir{redir{pos, fd}}
 }
 
-func (cr *CloseRedir) Isomorph(n Node) bool {
+func (cr *CloseRedir) isomorph(n Node) bool {
 	if cr2, ok := n.(*CloseRedir); ok {
 		return cr.fd == cr2.fd
 	}
@@ -67,9 +67,9 @@ func newFilenameRedir(pos Pos, fd uintptr, flag int, filename *ListNode) *Filena
 	return &FilenameRedir{redir{pos, fd}, flag, filename}
 }
 
-func (fr *FilenameRedir) Isomorph(n Node) bool {
+func (fr *FilenameRedir) isomorph(n Node) bool {
 	if fr2, ok := n.(*FilenameRedir); ok {
-		return fr.fd == fr2.fd && fr.Flag == fr2.Flag && fr.Filename.Isomorph(fr2.Filename)
+		return fr.fd == fr2.fd && fr.Flag == fr2.Flag && fr.Filename.isomorph(fr2.Filename)
 	}
 	return false
 }

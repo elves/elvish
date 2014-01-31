@@ -8,6 +8,6 @@ type Context struct {
 }
 
 // Isomorph compares two Contexts, ignoring all Pos'es.
-func (c *Context) Isomorph(c2 *Context) bool {
-	return c.PrevTerms.Isomorph(c2.PrevTerms) && c.PrevFactors.Isomorph(c2.PrevFactors) && c.ThisFactor.Isomorph(c2.ThisFactor)
+func (c *Context) isomorph(c2 *Context) bool {
+	return c.PrevTerms.isomorph(c2.PrevTerms) && c.PrevFactors.isomorph(c2.PrevFactors) && c.ThisFactor.isomorph(c2.ThisFactor)
 }

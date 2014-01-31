@@ -13,9 +13,7 @@ package parse
 // types local to this package can satisfy it.
 type Node interface {
 	Position() Pos        // byte position of start of node in full original input string
-	Isomorph(n Node) bool // compares two Nodes, ignoring Pos
-	// Make sure only functions in this package can create Nodes.
-	meisnode()
+	isomorph(n Node) bool // compares two Nodes, ignoring Pos
 }
 
 // Pos represents a byte position in the original input text from which
@@ -44,11 +42,11 @@ func newList(pos Pos, nodes ...Node) *ListNode {
 	return &ListNode{Pos: pos, Nodes: nodes}
 }
 
-func (l *ListNode) Isomorph(n Node) bool {
+func (l *ListNode) isomorph(n Node) bool {
 	if l2, ok := n.(*ListNode); ok {
 		if len(l.Nodes) == len(l2.Nodes) {
 			for i := range l.Nodes {
-				if !l.Nodes[i].Isomorph(l2.Nodes[i]) {
+				if !l.Nodes[i].isomorph(l2.Nodes[i]) {
 					return false
 				}
 			}
@@ -74,11 +72,11 @@ func newForm(pos Pos) *FormNode {
 	return &FormNode{Pos: pos}
 }
 
-func (fn *FormNode) Isomorph(n Node) bool {
+func (fn *FormNode) isomorph(n Node) bool {
 	if fn2, ok := n.(*FormNode); ok {
-		if fn.Command.Isomorph(fn2.Command) && fn.Args.Isomorph(fn2.Args) && len(fn.Redirs) == len(fn2.Redirs) {
+		if fn.Command.isomorph(fn2.Command) && fn.Args.isomorph(fn2.Args) && len(fn.Redirs) == len(fn2.Redirs) {
 			for i := range fn.Redirs {
-				if !fn.Redirs[i].Isomorph(fn2.Redirs[i]) {
+				if !fn.Redirs[i].isomorph(fn2.Redirs[i]) {
 					return false
 				}
 			}
@@ -114,9 +112,9 @@ func newFactor(pos Pos) *FactorNode {
 	return &FactorNode{Pos: pos}
 }
 
-func (fn *FactorNode) Isomorph(n Node) bool {
+func (fn *FactorNode) isomorph(n Node) bool {
 	if fn2, ok := n.(*FactorNode); ok {
-		return fn.Typ == fn2.Typ && fn.Node.Isomorph(fn2.Node)
+		return fn.Typ == fn2.Typ && fn.Node.isomorph(fn2.Node)
 	}
 	return false
 }
@@ -138,19 +136,19 @@ func newTable(pos Pos) *TableNode {
 	return &TableNode{Pos: pos}
 }
 
-func (tn *TableNode) Isomorph(n Node) bool {
+func (tn *TableNode) isomorph(n Node) bool {
 	if tn2, ok := n.(*TableNode); ok {
 		if len(tn.List) == len(tn2.List) && len(tn.Dict) == len(tn2.Dict) {
 			for i := range tn.List {
-				if !tn.List[i].Isomorph(tn2.List[i]) {
+				if !tn.List[i].isomorph(tn2.List[i]) {
 					return false
 				}
 			}
 			for i := range tn.Dict {
-				if !tn.Dict[i].Key.Isomorph(tn2.Dict[i].Key) {
+				if !tn.Dict[i].Key.isomorph(tn2.Dict[i].Key) {
 					return false
 				}
-				if !tn.Dict[i].Value.Isomorph(tn2.Dict[i].Value) {
+				if !tn.Dict[i].Value.isomorph(tn2.Dict[i].Value) {
 					return false
 				}
 			}
@@ -179,9 +177,9 @@ func newClosure(pos Pos) *ClosureNode {
 	return &ClosureNode{Pos: pos}
 }
 
-func (cn *ClosureNode) Isomorph(n Node) bool {
+func (cn *ClosureNode) isomorph(n Node) bool {
 	if cn2, ok := n.(*ClosureNode); ok {
-		return cn.ArgNames.Isomorph(cn2.ArgNames) && cn.Chunk.Isomorph(cn2.Chunk)
+		return cn.ArgNames.isomorph(cn2.ArgNames) && cn.Chunk.isomorph(cn2.Chunk)
 	}
 	return false
 }
@@ -197,7 +195,7 @@ func newString(pos Pos, orig, text string) *StringNode {
 	return &StringNode{Pos: pos, Quoted: orig, Text: text}
 }
 
-func (sn *StringNode) Isomorph(n Node) bool {
+func (sn *StringNode) isomorph(n Node) bool {
 	if sn2, ok := n.(*StringNode); ok {
 		return sn.Quoted == sn2.Quoted && sn.Text == sn2.Text
 	}

@@ -22,7 +22,7 @@ var parseTests = []struct {
 func TestParse(t *testing.T) {
 	for i, tt := range parseTests {
 		out, err := Parse(fmt.Sprintf("<test %d>", i), tt.in)
-		if out == nil || !out.Isomorph(tt.wanted) || err != nil {
+		if out == nil || !out.isomorph(tt.wanted) || err != nil {
 			t.Errorf("Parse(*, %q) => (%v, %v), want (%v, nil) (up to isomorphism)", tt.in, out, err, tt.wanted)
 		}
 	}
@@ -55,7 +55,7 @@ var completeTests = []struct {
 func TestComplete(t *testing.T) {
 	for i, tt := range completeTests {
 		out, err := Complete(fmt.Sprintf("<test %d>", i), tt.in)
-		if out == nil || !out.Isomorph(tt.wanted) || err != nil {
+		if out == nil || !out.isomorph(tt.wanted) || err != nil {
 			t.Errorf("Complete(*, %q) => (%v, %v), want (%v, nil)", tt.in, out, err, tt.wanted)
 		}
 	}
