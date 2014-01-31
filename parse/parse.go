@@ -15,10 +15,11 @@ import (
 )
 
 type Parser struct {
-	Name string // name of the script represented by the tree.
-	Root Node   // top-level root of the tree.
-	Ctx  *Context
-	text string // text parsed to create the script (or its parent)
+	Name       string // name of the script represented by the tree.
+	completing bool   // Whether the parser is running in completing mode
+	Root       Node   // top-level root of the tree.
+	Ctx        *Context
+	text       string // text parsed to create the script (or its parent)
 	// Parsing only; cleared after parse.
 	lex       *Lexer
 	token     [3]Item // three-token lookahead for parser.
@@ -131,12 +132,38 @@ func (p *Parser) stopParse() {
 	p.lex = nil
 }
 
+// When the parser is running in completing mode, raiseCtx causes Parse to
+// terminate immediately by panicking. The Context will be caught by
+// recoverCtx. When the parser is not running in completing mode, it does
+// nothing.
+func (p *Parser) raiseCtx(ctx *Context) {
+	if p.completing {
+		panic(ctx)
+	}
+}
+
+// recoverCtx stops the panic and sets p.Ctx only when the panic is caused by
+// raiseCtx.
+func (p *Parser) recoverCtx() {
+	r := recover()
+	if r == nil {
+		return
+	}
+	if ctx, ok := r.(*Context); ok {
+		p.Ctx = ctx
+	} else {
+		panic(r)
+	}
+}
+
 // Parse parses the script to construct a representation of the script for
 // execution.
-func (p *Parser) Parse(text string) (err error) {
+func (p *Parser) Parse(text string, completing bool) (err error) {
 	defer util.Recover(&err)
+	defer p.recoverCtx()
 	defer p.stopParse()
 
+	p.completing = completing
 	p.text = text
 	p.lex = Lex(p.Name, text)
 	p.peekCount = 0
@@ -144,7 +171,6 @@ func (p *Parser) Parse(text string) (err error) {
 	p.Ctx = &Context{}
 	p.Root = p.parse()
 
-	p.stopParse()
 	return nil
 }
 
@@ -152,7 +178,7 @@ func (p *Parser) Parse(text string) (err error) {
 // Root.
 func Parse(name, text string) (Node, error) {
 	p := NewParser(name)
-	err := p.Parse(text)
+	err := p.Parse(text, false)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +189,7 @@ func Parse(name, text string) (Node, error) {
 // its Ctx.
 func Complete(name, text string) (*Context, error) {
 	p := NewParser(name)
-	err := p.Parse(text)
+	err := p.Parse(text, true)
 	if err != nil {
 		return nil, err
 	}
@@ -239,7 +265,7 @@ loop:
 		case startsFactor(t):
 			list.append(p.term())
 		case t == ItemEOF:
-			*p.Ctx = Context{NewTermContext, ""}
+			p.raiseCtx(&Context{NewTermContext, ""})
 			fallthrough
 		default:
 			break loop
@@ -313,7 +339,7 @@ func (p *Parser) factor() (fn *FactorNode) {
 			p.unexpected(token, "factor of variable")
 		}
 		if p.peek().Typ == ItemEOF {
-			*p.Ctx = Context{VariableNameContext, token.Val}
+			p.raiseCtx(&Context{VariableNameContext, token.Val})
 		}
 		fn.Typ = VariableFactor
 		fn.Node = newString(token.Pos, token.Val, token.Val)
@@ -325,9 +351,9 @@ func (p *Parser) factor() (fn *FactorNode) {
 			p.errorf(int(token.Pos), "%s", err)
 		}
 		if p.peek().Typ == ItemEOF {
-		// if token.End&MayContinue != 0 {
+			// if token.End&MayContinue != 0 {
 			// XXX All terms are assumed to be filenames
-			*p.Ctx = Context{FilenameContext, token.Val}
+			p.raiseCtx(&Context{FilenameContext, token.Val})
 		}
 		fn.Typ = StringFactor
 		fn.Node = newString(token.Pos, token.Val, text)
