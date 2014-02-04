@@ -16,7 +16,7 @@ const (
 	ItemInvalidVariable
 )
 
-// A Highlighter is an enhanced Lexer with the knowledge of the validity of
+// Highlighter is an enhanced Lexer with the knowledge of the validity of
 // command names and variable names.
 //
 // Generally speaking, this is not possible without properly parsing and
