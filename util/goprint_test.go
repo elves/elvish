@@ -8,7 +8,7 @@ type S struct {
 	I  int
 	S  string
 	Pt *T
-	G G
+	G  G
 }
 
 type T struct {
@@ -16,6 +16,11 @@ type T struct {
 }
 
 type G struct {
+}
+
+type U struct {
+	I int
+	S string
 }
 
 func (g G) GoString() string {
@@ -30,10 +35,11 @@ var goPrintTests = []struct {
 	{"foobar", `"foobar"`},
 	{map[string]int{"foobar": 42}, `map[string]int{"foobar": 42}`},
 	{[]int{42, 44}, `[]int{42, 44}`},
-	{[]int(nil), `[]int(nil)`},
-	{(*int)(nil), `*int(nil)`},
+	{[]int(nil), `nil`},
+	{(*int)(nil), `nil`},
 	{&S{42, "DON'T PANIC", &T{map[string]string{"foo": "bar"}}, G{}},
 		`&util.S{I: 42, S: "DON'T PANIC", Pt: &util.T{M: map[string]string{"foo": "bar"}}, G: <G>}`},
+	{[]interface{}{&U{42, "DON'T PANIC"}, 42, "DON'T PANIC"}, `[]interface {}{&util.U{I: 42, S: "DON'T PANIC"}, 42, "DON'T PANIC"}`},
 }
 
 func TestGoPrint(t *testing.T) {
