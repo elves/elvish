@@ -33,12 +33,7 @@ func NewFdRedir(pos Pos, fd, oldFd uintptr) *FdRedir {
 	return &FdRedir{redir{pos, fd}, oldFd}
 }
 
-func (fr *FdRedir) isomorph(n Node) bool {
-	if fr2, ok := n.(*FdRedir); ok {
-		return fr.fd == fr2.fd && fr.OldFd == fr2.OldFd
-	}
-	return false
-}
+func (fr *FdRedir) isNode() {}
 
 // CloseRedir represents the closing of a fd, like >[2=].
 type CloseRedir struct {
@@ -49,12 +44,7 @@ func newCloseRedir(pos Pos, fd uintptr) *CloseRedir {
 	return &CloseRedir{redir{pos, fd}}
 }
 
-func (cr *CloseRedir) isomorph(n Node) bool {
-	if cr2, ok := n.(*CloseRedir); ok {
-		return cr.fd == cr2.fd
-	}
-	return false
-}
+func (cr *CloseRedir) isNode() {}
 
 // FilenameRedir represents redirection into a file, like >a.txt
 type FilenameRedir struct {
@@ -67,9 +57,4 @@ func newFilenameRedir(pos Pos, fd uintptr, flag int, filename *ListNode) *Filena
 	return &FilenameRedir{redir{pos, fd}, flag, filename}
 }
 
-func (fr *FilenameRedir) isomorph(n Node) bool {
-	if fr2, ok := n.(*FilenameRedir); ok {
-		return fr.fd == fr2.fd && fr.Flag == fr2.Flag && fr.Filename.isomorph(fr2.Filename)
-	}
-	return false
-}
+func (fr *FilenameRedir) isNode() {}

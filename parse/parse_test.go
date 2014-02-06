@@ -2,8 +2,9 @@ package parse
 
 import (
 	"fmt"
-	"testing"
 	"github.com/xiaq/elvish/util"
+	"reflect"
+	"testing"
 )
 
 var parseTests = []struct {
@@ -17,14 +18,14 @@ var parseTests = []struct {
 				0, newList( // term
 					0, &FactorNode{ // factor
 						0, StringFactor, newString(0, "ls", "ls")}),
-				newList(0), []Redir{}}))},
+				newList(2), nil}))},
 }
 
 func TestParse(t *testing.T) {
 	for i, tt := range parseTests {
 		out, err := Parse(fmt.Sprintf("<test %d>", i), tt.in)
-		if out == nil || !out.isomorph(tt.wanted) || err != nil {
-			t.Errorf("Parse(*, %q) => (%v, %v), want (%v, nil) (up to isomorphism)", tt.in, out, err, tt.wanted)
+		if !reflect.DeepEqual(out, tt.wanted) || err != nil {
+			t.Errorf("Parse(*, %q) =>\n(%s, %v), want\n(%s, nil) (up to DeepEqual)", tt.in, util.GoPrint(out), err, util.GoPrint(tt.wanted))
 		}
 	}
 }
@@ -33,7 +34,7 @@ var completeTests = []struct {
 	in     string
 	wanted *Context
 }{
-	/*
+/*
 	{"", &Context{
 		newList(0), newList(0),
 		&FactorNode{0, StringFactor, newString(0, "", "")}}},
@@ -52,13 +53,13 @@ var completeTests = []struct {
 		newList(0, newList(0, &FactorNode{0, StringFactor, newString(0, "ls", "ls")})),
 		newList(0),
 		&FactorNode{0, VariableFactor, newString(0, "a", "a")}}},
-	*/
+*/
 }
 
 func TestComplete(t *testing.T) {
 	for i, tt := range completeTests {
 		out, err := Complete(fmt.Sprintf("<test %d>", i), tt.in)
-		if out == nil || !out.isomorph(tt.wanted) || err != nil {
+		if !reflect.DeepEqual(out, tt.wanted) || err != nil {
 			t.Errorf("Complete(*, %q) => (%s, %v), want (%s, nil)", tt.in, util.GoPrint(out), err, util.GoPrint(tt.wanted))
 		}
 	}
