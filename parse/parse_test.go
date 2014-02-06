@@ -47,7 +47,7 @@ var completeTests = []struct {
 		newList(0, &FactorNode{0, StringFactor, newString(0, "ls", "ls")}),
 		newList(3),
 		newList(3),
-		&FactorNode{0, StringFactor, newString(3, "", "")}}},
+		&FactorNode{3, StringFactor, newString(3, "", "")}}},
 	{"ls a", &Context{
 		ArgContext,
 		newList(0, &FactorNode{0, StringFactor, newString(0, "ls", "ls")}),

@@ -271,8 +271,9 @@ loop:
 		case startsFactor(t):
 			list.append(p.term())
 		case t == ItemEOF:
-			p.Ctx.PrevFactors = newList(p.peek().Pos)
-			p.Ctx.ThisFactor = &FactorNode{Node: newString(p.peek().Pos, "", "")}
+			pos := p.peek().Pos
+			p.Ctx.PrevFactors = newList(pos)
+			p.Ctx.ThisFactor = &FactorNode{pos, StringFactor, newString(pos, "", "")}
 			p.foundCtx()
 			fallthrough
 		default:
