@@ -6,15 +6,15 @@ import (
 	"reflect"
 )
 
-// GoPrint is like printing with the %#v formatter of fmt, but it prints
+// DeepPrint is like printing with the %#v formatter of fmt, but it prints
 // pointer fields recursively.
-func GoPrint(x interface{}) string {
+func DeepPrint(x interface{}) string {
 	b := &bytes.Buffer{}
-	goPrint(b, reflect.ValueOf(x))
+	deepPrint(b, reflect.ValueOf(x))
 	return b.String()
 }
 
-func goPrint(b *bytes.Buffer, v reflect.Value) {
+func deepPrint(b *bytes.Buffer, v reflect.Value) {
 	i := v.Interface()
 	t := v.Type()
 
@@ -44,7 +44,7 @@ func goPrint(b *bytes.Buffer, v reflect.Value) {
 				if i > 0 {
 					b.WriteString(", ")
 				}
-				goPrint(b, v.Index(i))
+				deepPrint(b, v.Index(i))
 			}
 		case reflect.Map:
 			keys := v.MapKeys()
@@ -52,9 +52,9 @@ func goPrint(b *bytes.Buffer, v reflect.Value) {
 				if i > 0 {
 					b.WriteString(", ")
 				}
-				goPrint(b, k)
+				deepPrint(b, k)
 				b.WriteString(": ")
-				goPrint(b, v.MapIndex(k))
+				deepPrint(b, v.MapIndex(k))
 			}
 		case reflect.Struct:
 			for i := 0; i < t.NumField(); i++ {
@@ -63,16 +63,16 @@ func goPrint(b *bytes.Buffer, v reflect.Value) {
 				}
 				b.WriteString(t.Field(i).Name)
 				b.WriteString(": ")
-				goPrint(b, v.Field(i))
+				deepPrint(b, v.Field(i))
 			}
 		}
 		b.WriteRune('}')
 	case reflect.Ptr:
 		b.WriteRune('&')
-		goPrint(b, reflect.Indirect(v))
+		deepPrint(b, reflect.Indirect(v))
 		return
 	case reflect.Interface:
-		goPrint(b, v.Elem())
+		deepPrint(b, v.Elem())
 		return
 	default:
 		fmt.Fprintf(b, "%#v", i)

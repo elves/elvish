@@ -25,7 +25,7 @@ func TestParse(t *testing.T) {
 	for i, tt := range parseTests {
 		out, err := Parse(fmt.Sprintf("<test %d>", i), tt.in)
 		if !reflect.DeepEqual(out, tt.wanted) || err != nil {
-			t.Errorf("Parse(*, %q) =>\n(%s, %v), want\n(%s, nil) (up to DeepEqual)", tt.in, util.GoPrint(out), err, util.GoPrint(tt.wanted))
+			t.Errorf("Parse(*, %q) =>\n(%s, %v), want\n(%s, nil) (up to DeepEqual)", tt.in, util.DeepPrint(out), err, util.DeepPrint(tt.wanted))
 		}
 	}
 }
@@ -60,7 +60,7 @@ func TestComplete(t *testing.T) {
 	for i, tt := range completeTests {
 		out, err := Complete(fmt.Sprintf("<test %d>", i), tt.in)
 		if !reflect.DeepEqual(out, tt.wanted) || err != nil {
-			t.Errorf("Complete(*, %q) => (%s, %v), want (%s, nil)", tt.in, util.GoPrint(out), err, util.GoPrint(tt.wanted))
+			t.Errorf("Complete(*, %q) => (%s, %v), want (%s, nil)", tt.in, util.DeepPrint(out), err, util.DeepPrint(tt.wanted))
 		}
 	}
 }

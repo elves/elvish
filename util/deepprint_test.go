@@ -27,7 +27,7 @@ func (g G) GoString() string {
 	return "<G>"
 }
 
-var goPrintTests = []struct {
+var deepPrintTests = []struct {
 	in     interface{}
 	wanted string
 }{
@@ -42,9 +42,9 @@ var goPrintTests = []struct {
 	{[]interface{}{&U{42, "DON'T PANIC"}, 42, "DON'T PANIC"}, `[]interface {}{&util.U{I: 42, S: "DON'T PANIC"}, 42, "DON'T PANIC"}`},
 }
 
-func TestGoPrint(t *testing.T) {
-	for _, tt := range goPrintTests {
-		if out := GoPrint(tt.in); out != tt.wanted {
+func TestDeepPrint(t *testing.T) {
+	for _, tt := range deepPrintTests {
+		if out := DeepPrint(tt.in); out != tt.wanted {
 			t.Errorf("GoPrint(%v) => %#q, want %#q", tt.in, out, tt.wanted)
 		}
 	}
