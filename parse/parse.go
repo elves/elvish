@@ -170,7 +170,7 @@ func (p *Parser) Parse(text string, completing bool) (err error) {
 	p.lex = Lex(p.Name, text)
 	p.peekCount = 0
 
-	p.Ctx = &Context{newList(0), newList(0), &FactorNode{Node: newString(0, "", "")}}
+	p.Ctx = &Context{CommandContext, nil, newList(0), newList(0), &FactorNode{Node: newString(0, "", "")}}
 	p.Root = p.parse()
 
 	return nil
@@ -244,7 +244,10 @@ func (p *Parser) pipeline() *ListNode {
 // Form = TermList { [ space ] Redir } [ space ]
 func (p *Parser) form() *FormNode {
 	fm := newForm(p.peekNonSpace().Pos)
+	p.Ctx.Typ = CommandContext
 	fm.Command = p.term()
+	p.Ctx.CommandTerm = fm.Command
+	p.Ctx.Typ = ArgContext
 	fm.Args = p.termList()
 loop:
 	for {
@@ -515,5 +518,7 @@ func (p *Parser) redir() Redir {
 	}
 	// FilenameRedir
 	p.peekNonSpace()
+	p.Ctx.Typ = RedirFilenameContext
+	p.Ctx.PrevTerms = nil
 	return newFilenameRedir(leader.Pos, fd, flag, p.term())
 }
