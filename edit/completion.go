@@ -81,39 +81,45 @@ func fileNames(dir string) (names []string, err error) {
 
 func startCompletion(ed *Editor) {
 	c := &completion{}
-	// Find last token
-	l := parse.Lex("<completion>", ed.line[:ed.dot])
-	var lastToken parse.Item
-	for token := range l.Chan() {
-		if token.Typ != parse.ItemEOF {
-			lastToken = token
-		}
-	}
-	pattern := lastToken.Val
-	c.end = ed.dot
-	switch lastToken.Typ {
-	case parse.ItemSpace:
-		// Last token is space, start a new token instead
-		pattern = ""
-		fallthrough
-	case parse.ItemBare:
-		c.typ = parse.ItemBare
-	default:
-		ed.pushTip(fmt.Sprintf("Completion for %s tokens not yet supported :(", lastToken.Typ))
-		return
-	}
-	c.start = ed.dot - len(pattern)
-
-	names, err := fileNames(".")
+	ctx, err := parse.Complete("<completion>", ed.line[:ed.dot])
 	if err != nil {
-		ed.pushTip(err.Error())
+		ed.pushTip("parser error")
 		return
 	}
-	c.candidates = findCandidates(pattern, names)
-	if len(c.candidates) > 0 {
-		ed.completion = c
-		ed.mode = modeCompleting
-	} else {
-		ed.pushTip(fmt.Sprintf("No completion for %s", pattern))
+	pctx := ctx.EvalPlain()
+	if pctx == nil {
+		ed.pushTip("context not plain")
+		return
+	}
+	switch pctx.Typ {
+	case parse.CommandContext:
+		// BUG(xiaq): When completing, CommandContext is not supported
+		ed.pushTip("command context not yet supported :(")
+	case parse.ArgContext:
+		// BUG(xiaq): When completing, ArgContext is treated like RedirFilenameContext
+		fallthrough
+	case parse.RedirFilenameContext:
+		// BUG(xiaq): When completing, only the case of ctx.ThisFactor.Typ == StringFactor is supported
+		if pctx.ThisFactor.Typ != parse.StringFactor {
+			ed.pushTip("only StringFactor is supported :(")
+			return
+		}
+		pattern := pctx.PrevFactors + pctx.ThisFactor.Node.(*parse.StringNode).Text
+		names, err := fileNames(".")
+		if err != nil {
+			ed.pushTip(err.Error())
+			return
+		}
+		c.start = int(ctx.PrevFactors.Pos)
+		c.end = ed.dot
+		// BUG(xiaq) When completing, completion.typ is always ItemBare
+		c.typ = parse.ItemBare
+		c.candidates = findCandidates(pattern, names)
+		if len(c.candidates) > 0 {
+			ed.completion = c
+			ed.mode = modeCompleting
+		} else {
+			ed.pushTip(fmt.Sprintf("No completion for %s", pattern))
+		}
 	}
 }
