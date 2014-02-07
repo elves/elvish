@@ -103,13 +103,16 @@ func fn(ev *Evaluator, args []Value, ports [2]*port) string {
 	if n > 2 && len(closure.ArgNames) != 0 {
 		return "can't define arg names list twice"
 	}
-	// XXX Should either make a copy of closure or forbid the following:
+	// BUG(xiaq): the fn builtin now modifies the closure in place, making it
+	// possible to write:
+	//
 	// var f; set f = { }
+	//
 	// fn g a b $f // Changes arity of $f!
 	for i := 1; i < n-1; i++ {
 		closure.ArgNames = append(closure.ArgNames, args[i].String(ev))
 	}
-	// TODO Warn about redefining fn?
+	// TODO(xiaq): should fn warn about redefinition of functions?
 	ev.locals["fn-"+args[0].String(ev)] = closure
 	return ""
 }
