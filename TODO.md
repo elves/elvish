@@ -1,7 +1,6 @@
 # Next steps
 
 * Editor (edit)
-    - Parser-driven tab completion
     - Multiline editing
     - History
 * Syntax (parse, eval)
