@@ -3,10 +3,10 @@ PKGS := edit eval parse util
 PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
 PKG_COVERAGES := $(addprefix coverage/,$(PKGS))
 
-all: exe test
+all: bin test
 
-exe:
-	go install github.com/xiaq/elvish
+bin:
+	go install .
 
 test:
 	go test $(PKG_PATHS)
@@ -25,4 +25,4 @@ z-%.go: %.go
 
 pre-commit: gofmt edit/tty/z-types.go
 
-.PHONY: all exe test coverage gofmt pre-commit
+.PHONY: all bin test coverage gofmt pre-commit
