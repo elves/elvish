@@ -13,9 +13,9 @@ const (
 // Context contains information from the AST useful for tab completion.
 type Context struct {
 	Typ         ContextType
-	CommandTerm *ListNode
-	PrevTerms   *ListNode
-	PrevFactors *ListNode
+	CommandTerm *TermNode
+	PrevTerms   *TermListNode
+	PrevFactors *TermNode
 	ThisFactor  *FactorNode
 }
 
@@ -39,7 +39,7 @@ func evalPlainFactor(fn *FactorNode) string {
 	return fn.Node.(*StringNode).Text
 }
 
-func evalPlainTerm(tn *ListNode) (word string) {
+func evalPlainTerm(tn *TermNode) (word string) {
 	if tn == nil {
 		return
 	}
@@ -49,12 +49,12 @@ func evalPlainTerm(tn *ListNode) (word string) {
 	return
 }
 
-func evalPlainTermList(tn *ListNode) (words []string) {
+func evalPlainTermList(tn *TermListNode) (words []string) {
 	if tn == nil {
 		return
 	}
 	for _, n := range tn.Nodes {
-		words = append(words, evalPlainTerm(n.(*ListNode)))
+		words = append(words, evalPlainTerm(n.(*TermNode)))
 	}
 	return
 }

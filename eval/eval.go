@@ -150,7 +150,7 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 		m := n.Node.(*parse.StringNode)
 		words = []Value{ev.resolveVar(m.Text)}
 	case parse.ListFactor:
-		m := n.Node.(*parse.ListNode)
+		m := n.Node.(*parse.TermListNode)
 		words = ev.evalTermList(m)
 	case parse.CaptureFactor:
 		m := n.Node.(*parse.ListNode)
@@ -183,7 +183,7 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 	return words
 }
 
-func (ev *Evaluator) evalTerm(n *parse.ListNode) []Value {
+func (ev *Evaluator) evalTerm(n *parse.TermNode) []Value {
 	ev.push(n)
 	defer ev.pop()
 
@@ -213,13 +213,13 @@ func (ev *Evaluator) evalTerm(n *parse.ListNode) []Value {
 	return words
 }
 
-func (ev *Evaluator) evalTermList(ln *parse.ListNode) []Value {
+func (ev *Evaluator) evalTermList(ln *parse.TermListNode) []Value {
 	ev.push(ln)
 	defer ev.pop()
 
 	words := make([]Value, 0, len(ln.Nodes))
 	for _, n := range ln.Nodes {
-		a := ev.evalTerm(n.(*parse.ListNode))
+		a := ev.evalTerm(n.(*parse.TermNode))
 		words = append(words, a...)
 	}
 	return words
@@ -239,11 +239,12 @@ func (ev *Evaluator) asSingleScalar(vs []Value, n parse.Node, what string) *Scal
 	return v
 }
 
-func (ev *Evaluator) evalTermSingleScalar(n *parse.ListNode, what string) *Scalar {
+func (ev *Evaluator) evalTermSingleScalar(n *parse.TermNode, what string) *Scalar {
 	return ev.asSingleScalar(ev.evalTerm(n), n, what)
 }
 
-// XXX Failure of one pipeline will abort the whole chunk.
+// BUG(xiaq): When evaluating a chunk, failure of one pipeline will abort the
+// whole chunk.
 func (ev *Evaluator) evalChunk(ch *parse.ListNode) {
 	ev.push(ch)
 	defer ev.pop()

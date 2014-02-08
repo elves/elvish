@@ -170,7 +170,7 @@ func (p *Parser) Parse(text string, completing bool) (err error) {
 	p.lex = Lex(p.Name, text)
 	p.peekCount = 0
 
-	p.Ctx = &Context{CommandContext, nil, newList(0), newList(0), &FactorNode{Node: newString(0, "", "")}}
+	p.Ctx = &Context{CommandContext, nil, newTermList(0), newTerm(0), &FactorNode{Node: newString(0, "", "")}}
 	p.Root = p.parse()
 
 	return nil
@@ -262,8 +262,8 @@ loop:
 }
 
 // TermList = { [ space ] Term } [ space ]
-func (p *Parser) termList() *ListNode {
-	list := newList(p.peek().Pos)
+func (p *Parser) termList() *TermListNode {
+	list := newTermList(p.peek().Pos)
 	p.Ctx.PrevTerms = list
 loop:
 	for {
@@ -272,7 +272,7 @@ loop:
 			list.append(p.term())
 		case t == ItemEOF:
 			pos := p.peek().Pos
-			p.Ctx.PrevFactors = newList(pos)
+			p.Ctx.PrevFactors = newTerm(pos)
 			p.Ctx.ThisFactor = &FactorNode{pos, StringFactor, newString(pos, "", "")}
 			p.foundCtx()
 			fallthrough
@@ -284,8 +284,8 @@ loop:
 }
 
 // Term = Factor { Factor | [ space ] '^' Factor [ space ] } [ space ]
-func (p *Parser) term() *ListNode {
-	term := newList(p.peek().Pos)
+func (p *Parser) term() *TermNode {
+	term := newTerm(p.peek().Pos)
 	p.Ctx.PrevFactors = term
 	term.append(p.factor())
 loop:

@@ -50,10 +50,10 @@ func (cr *CloseRedir) isNode() {}
 type FilenameRedir struct {
 	redir
 	Flag     int
-	Filename *ListNode // a Term
+	Filename *TermNode
 }
 
-func newFilenameRedir(pos Pos, fd uintptr, flag int, filename *ListNode) *FilenameRedir {
+func newFilenameRedir(pos Pos, fd uintptr, flag int, filename *TermNode) *FilenameRedir {
 	return &FilenameRedir{redir{pos, fd}, flag, filename}
 }
 

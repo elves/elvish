@@ -51,8 +51,8 @@ func (l *ListNode) append(n Node) {
 // FormNode holds a form.
 type FormNode struct {
 	Pos
-	Command *ListNode // A Term
-	Args    *ListNode // A ListNode of Term's
+	Command *TermNode
+	Args    *TermListNode
 	Redirs  []Redir
 }
 
@@ -62,7 +62,23 @@ func newForm(pos Pos) *FormNode {
 
 func (fn *FormNode) isNode() {}
 
-// A Term is represented by a ListNode of *FactorNode's.
+// TermNode is a ListNode of FactorNode's.
+type TermNode struct {
+	ListNode
+}
+
+func newTerm(pos Pos, nodes ...Node) *TermNode {
+	return &TermNode{ListNode{Pos: pos, Nodes: nodes}}
+}
+
+// TermListNode is a ListNode of TermNode's.
+type TermListNode struct {
+	ListNode
+}
+
+func newTermList(pos Pos, nodes ...Node) *TermListNode {
+	return &TermListNode{ListNode{Pos: pos, Nodes: nodes}}
+}
 
 // FactorNode represents a factor.
 type FactorNode struct {
@@ -92,14 +108,14 @@ func (fn *FactorNode) isNode() {}
 
 // TablePair represents a key/value pair in table literal.
 type TablePair struct {
-	Key   *ListNode
-	Value *ListNode
+	Key   *TermNode
+	Value *TermNode
 }
 
 // TableNode holds a table literal.
 type TableNode struct {
 	Pos
-	List []*ListNode
+	List []*TermNode
 	Dict []*TablePair
 }
 
@@ -109,18 +125,18 @@ func newTable(pos Pos) *TableNode {
 
 func (tn *TableNode) isNode() {}
 
-func (tn *TableNode) appendToList(term *ListNode) {
+func (tn *TableNode) appendToList(term *TermNode) {
 	tn.List = append(tn.List, term)
 }
 
-func (tn *TableNode) appendToDict(key *ListNode, value *ListNode) {
+func (tn *TableNode) appendToDict(key *TermNode, value *TermNode) {
 	tn.Dict = append(tn.Dict, &TablePair{key, value})
 }
 
 // ClosureNode holds a closure literal.
 type ClosureNode struct {
 	Pos
-	ArgNames *ListNode
+	ArgNames *TermListNode
 	Chunk    *ListNode
 }
 
