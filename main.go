@@ -1,5 +1,5 @@
 // elvish is an experimental Unix shell. It tries to incorporate a powerful
-// programming language and an extendable, friendly user interface.
+// programming language with an extensible, friendly user interface.
 package main
 
 import (
