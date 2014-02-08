@@ -144,7 +144,7 @@ func deltaPos(from, to pos) []byte {
 		// move up
 		fmt.Fprintf(buf, "\033[%dA", from.line-to.line)
 	}
-	fmt.Fprintf(buf, "\033[%dG", to.col + 1)
+	fmt.Fprintf(buf, "\033[%dG", to.col+1)
 	return buf.Bytes()
 }
 
