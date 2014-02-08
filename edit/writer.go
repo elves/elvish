@@ -144,13 +144,7 @@ func deltaPos(from, to pos) []byte {
 		// move up
 		buf.WriteString(fmt.Sprintf("\033[%dA", from.line-to.line))
 	}
-	if from.col < to.col {
-		// move right
-		buf.WriteString(fmt.Sprintf("\033[%dC", to.col-from.col))
-	} else if from.col > to.col {
-		// move left
-		buf.WriteString(fmt.Sprintf("\033[%dD", from.col-to.col))
-	}
+	fmt.Fprintf(buf, "\033[%dG", to.col + 1)
 	return buf.Bytes()
 }
 
