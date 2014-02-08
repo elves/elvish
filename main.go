@@ -32,21 +32,18 @@ func main() {
 	}
 	rprompt := username + "@" + hostname
 
+	ed := edit.New(os.Stdin, tr, ev)
+
 	for {
 		cmdNum++
 		name := fmt.Sprintf("<tty %d>", cmdNum)
 
-		ed, err := edit.Init(os.Stdin, tr, ev)
 		if err != nil {
 			panic(err)
 		}
 
 		prompt := util.Getwd() + "> "
 		lr := ed.ReadLine(prompt, rprompt)
-		err = ed.Cleanup()
-		if err != nil {
-			panic(err)
-		}
 
 		if lr.EOF {
 			break

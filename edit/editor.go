@@ -31,16 +31,6 @@ type editorState struct {
 	completionLines       int
 }
 
-func (bs *editorState) finish() {
-	// Clean up the state before exiting the editor.
-	bs.tips = nil
-	bs.mode = modeInsert
-	bs.completion = nil
-	bs.dot = len(bs.line)
-	// TODO Perhaps make it optional to NOT clear the rprompt
-	bs.rprompt = ""
-}
-
 // Editor keeps the status of the line editor.
 type Editor struct {
 	savedTermios *tty.Termios
@@ -59,68 +49,15 @@ type LineRead struct {
 	Err  error
 }
 
-// Init initializes an Editor on the terminal referenced by fd.
-// The Editor is reinitialized every time the control of the terminal is
-// transferred back to the line editor.
-func Init(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) (*Editor, error) {
-	fd := int(file.Fd())
-	term, err := tty.NewTermiosFromFd(fd)
-	if err != nil {
-		return nil, fmt.Errorf("can't get terminal attribute: %s", err)
-	}
-
-	editor := &Editor{
-		savedTermios: term.Copy(),
+// New creates an Editor.
+func New(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) *Editor {
+	return &Editor{
+		// savedTermios: term.Copy(),
 		file:         file,
 		writer:       newWriter(file),
 		reader:       newReader(tr),
 		ev:           ev,
 	}
-
-	term.SetIcanon(false)
-	term.SetEcho(false)
-	term.SetMin(1)
-	term.SetTime(0)
-
-	err = term.ApplyToFd(fd)
-	if err != nil {
-		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
-	}
-
-	fmt.Fprint(editor.file, "\033[?7l")
-
-	err = tty.FlushInput(fd)
-	if err != nil {
-		return nil, err
-	}
-
-	file.WriteString("\033[6n")
-	// BUG(xiaq): In Init, there is a race condition when user input sneaked in
-	// between WriteString and readCPR
-	x, _, err := editor.reader.readCPR()
-	if err != nil {
-		return nil, err
-	}
-
-	if x != 1 {
-		file.WriteString(LackEOL)
-	}
-
-	return editor, nil
-}
-
-// Cleanup restores the terminal referenced by fd so that other commands
-// that use the terminal can be executed.
-func (ed *Editor) Cleanup() error {
-	fmt.Fprint(ed.file, "\033[?7h")
-
-	fd := int(ed.file.Fd())
-	err := ed.savedTermios.ApplyToFd(fd)
-	if err != nil {
-		return fmt.Errorf("can't restore terminal attribute of stdin: %s", err)
-	}
-	ed.savedTermios = nil
-	return nil
 }
 
 func (ed *Editor) beep() {
@@ -186,8 +123,82 @@ func (ed *Editor) acceptCompletion() {
 	ed.mode = modeInsert
 }
 
+// startsReadLine prepares the terminal for the editor.
+func (ed *Editor) startReadLine() error {
+	fd := int(ed.file.Fd())
+	term, err := tty.NewTermiosFromFd(fd)
+	if err != nil {
+		return fmt.Errorf("can't get terminal attribute: %s", err)
+	}
+
+	ed.savedTermios = term.Copy()
+
+	term.SetIcanon(false)
+	term.SetEcho(false)
+	term.SetMin(1)
+	term.SetTime(0)
+
+	err = term.ApplyToFd(fd)
+	if err != nil {
+		return fmt.Errorf("can't set up terminal attribute: %s", err)
+	}
+
+	// Set autowrap off
+	ed.file.WriteString("\033[?7l")
+
+	err = tty.FlushInput(fd)
+	if err != nil {
+		return fmt.Errorf("can't flush input: %s", err)
+	}
+
+	// Query cursor location
+	ed.file.WriteString("\033[6n")
+	// BUG(xiaq): In Editor.startReadLine, there is a race condition when user
+	// input sneaked in between WriteString and readCPR
+	x, _, err := ed.reader.readCPR()
+	if err != nil {
+		return err
+	}
+
+	if x != 1 {
+		ed.file.WriteString(LackEOL)
+	}
+
+	return nil
+}
+
+// finishReadLine puts the terminal in a state suitable for other programs to
+// use.
+func (ed *Editor) finishReadLine(lr *LineRead) {
+	ed.tips = nil
+	ed.mode = modeInsert
+	ed.completion = nil
+	ed.dot = len(ed.line)
+	// TODO Perhaps make it optional to NOT clear the rprompt
+	ed.rprompt = ""
+	ed.refresh() // XXX(xiaq): Ignore possible error
+	ed.file.WriteString("\n")
+
+	// Set autowrap on
+	ed.file.WriteString("\033[?7h")
+
+	fd := int(ed.file.Fd())
+	err := ed.savedTermios.ApplyToFd(fd)
+	if err != nil {
+		// BUG(xiaq): Error in Editor.finishReadLine may override earlier error
+		*lr = LineRead{Err: fmt.Errorf("can't restore terminal attribute: %s", err)}
+	}
+	ed.savedTermios = nil
+}
+
 // ReadLine reads a line interactively.
 func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
+	err := ed.startReadLine()
+	if err != nil {
+		return LineRead{Err: err}
+	}
+	defer ed.finishReadLine(&lr)
+
 	ed.prompt = prompt
 	ed.rprompt = rprompt
 	ed.line = ""
@@ -235,9 +246,6 @@ func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 			ed.mode = ret.newMode
 			goto lookup_key
 		case exitReadLine:
-			ed.finish()
-			ed.refresh() // XXX(xiaq): Ignore possible error
-			fmt.Fprintln(ed.file)
 			return ret.readLineReturn
 		}
 	}
