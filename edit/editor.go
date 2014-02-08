@@ -18,6 +18,7 @@ const (
 	modeInsert bufferMode = iota
 	modeCommand
 	modeCompleting
+	modeHistory
 )
 
 type editorState struct {
@@ -38,6 +39,7 @@ type Editor struct {
 	writer       *writer
 	reader       *reader
 	ev           *eval.Evaluator
+	history      []string
 	editorState
 }
 
@@ -79,6 +81,10 @@ func (ed *Editor) refresh() error {
 	return ed.writer.refresh(&ed.editorState)
 }
 
+func (ed *Editor) pushHistory(line string) {
+	ed.history = append(ed.history, line)
+}
+
 // TODO Allow modifiable keybindings.
 var keyBindings = map[bufferMode]map[Key]string{
 	modeCommand: map[Key]string{
@@ -108,6 +114,12 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{Right, 0}:  "select-cand-col-f",
 		Key{Tab, 0}:    "cycle-cand-f",
 		DefaultBinding: "default-completing",
+	},
+	modeHistory: map[Key]string{
+		Key{'[', Ctrl}: "cancel-history",
+		Key{Up, 0}:     "select-history-b",
+		Key{Down, 0}:   "select-history-f",
+		DefaultBinding: "default-history",
 	},
 }
 
@@ -170,6 +182,10 @@ func (ed *Editor) startReadLine() error {
 // finishReadLine puts the terminal in a state suitable for other programs to
 // use.
 func (ed *Editor) finishReadLine(lr *LineRead) {
+	if lr.EOF == false && lr.Err == nil {
+		ed.pushHistory(lr.Line)
+	}
+
 	ed.tips = nil
 	ed.mode = modeInsert
 	ed.completion = nil
