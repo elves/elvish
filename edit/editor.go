@@ -53,10 +53,10 @@ type LineRead struct {
 func New(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) *Editor {
 	return &Editor{
 		// savedTermios: term.Copy(),
-		file:         file,
-		writer:       newWriter(file),
-		reader:       newReader(tr),
-		ev:           ev,
+		file:   file,
+		writer: newWriter(file),
+		reader: newReader(tr),
+		ev:     ev,
 	}
 }
 
