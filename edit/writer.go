@@ -75,7 +75,7 @@ func (b *buffer) write(r rune, attr string) {
 		b.newline()
 		return
 	} else if !unicode.IsPrint(r) {
-		// XXX unprintable runes are dropped silently
+		// BUG(xiaq): buffer.write drops unprintable runes silently
 		return
 	}
 	wd := wcwidth(r)
@@ -323,7 +323,7 @@ func (w *writer) refresh(bs *editorState) error {
 				}
 				var attr string
 				if k == comp.current {
-					// XXX abuse dot to represent line of current completion
+					// XXX(xiaq): abuse dot to represent line of current completion
 					attr = attrForCurrentCompletion
 					b.dot.line = i
 				}

@@ -43,4 +43,4 @@
     - Simple job control: support suspending and resuming jobs; no need for
       too complex job control, the role is which is largely subsumed by
       screen/tmux today
-* All the TODO and XXX's in source :)
+* All the TODO, XXX and BUG's in source :)

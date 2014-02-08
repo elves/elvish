@@ -358,14 +358,13 @@ func (p *Parser) factor() (fn *FactorNode) {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 		text, err := unquote(token)
 		if err != nil {
-			// XXX Errors with unterminated quoted string
+			// BUG(xiaq): When completing, unterminated quoted string results
+			// in errors
 			p.errorf(int(token.Pos), "%s", err)
 		}
 		fn.Typ = StringFactor
 		fn.Node = newString(token.Pos, token.Val, text)
 		if p.peek().Typ == ItemEOF {
-			// if token.End&MayContinue != 0 {
-			// XXX All terms are assumed to be filenames
 			p.foundCtx()
 		}
 		return

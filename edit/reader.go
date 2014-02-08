@@ -80,7 +80,7 @@ func (rd *reader) readRune() (r rune) {
 }
 
 func (rd *reader) unreadRune(r ...rune) {
-	// XXX Should back up rd.currentSeq too
+	// BUG(xiaq): reader.unreadRune doesn't back up rd.currentSeq 
 	rd.unreadBuffer = append(rd.unreadBuffer, r...)
 }
 

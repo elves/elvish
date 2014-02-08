@@ -95,8 +95,8 @@ func Init(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) (*Editor, err
 	}
 
 	file.WriteString("\033[6n")
-	// XXX Possible race condition: user input sneaked in between WriteString
-	// and readCPR
+	// BUG(xiaq): In Init, there is a race condition when user input sneaked in
+	// between WriteString and readCPR
 	x, _, err := editor.reader.readCPR()
 	if err != nil {
 		return nil, err
@@ -236,7 +236,7 @@ func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 			goto lookup_key
 		case exitReadLine:
 			ed.finish()
-			ed.refresh() // XXX Ignore possible error
+			ed.refresh() // XXX(xiaq): Ignore possible error
 			fmt.Fprintln(ed.file)
 			return ret.readLineReturn
 		}

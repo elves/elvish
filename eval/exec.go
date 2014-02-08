@@ -67,7 +67,7 @@ func (fm *form) closePorts(ev *Evaluator) {
 		}
 		switch port.f {
 		case nil, ev.in.f, ev.out.f, os.Stderr:
-			// XXX Is the heuristics correct?
+			// XXX(xiaq) Is the heuristics correct?
 		default:
 			port.f.Close()
 		}
@@ -173,7 +173,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, str
 	if v, err := ev.ResolveVar("fn-" + name); err == nil {
 		if fn, ok := v.(*Closure); ok {
 			cmd.Closure = fn
-			// XXX Use zero value (fileStream) for streamTypes now
+			// BUG(xiaq): Functions are assumed to have zero streamTypes (fileStream)
 			return
 		}
 	}
@@ -214,14 +214,14 @@ func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [3]St
 		fm.Command, streamTypes = ev.resolveCommand(cmdStr, n.Command)
 	case *Closure:
 		fm.Command.Closure = cmd
-		// XXX Use zero value (fileStream) for streamTypes now
+		// BUG(xiaq): Closures are assumed to have zero streamTypes (fileStream)
 	default:
 		ev.errorfNode(n.Command, "Command must be either scalar or closure")
 	}
 
 	// Port list.
 	defaultErrPort := &port{f: os.Stderr}
-	// XXX Should we allow chanStream stderr at all?
+	// XXX(xiaq) Should we allow chanStream stderr at all?
 	if defaultErrPort.compatible(streamTypes[2]) {
 		fm.ports[2] = defaultErrPort
 	}
@@ -267,7 +267,7 @@ func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 	}
 
 	// Make a subevaluator.
-	// XXX Concurrent access to globals, in and out can be problematic.
+	// BUG(xiaq): When evaluating closures, async access to globals, in and out can be problematic.
 	newEv := ev.copy()
 	newEv.locals = locals
 	newEv.in = fm.ports[0]
@@ -461,7 +461,7 @@ func (ev *Evaluator) execPipeline(fms []*form, types [3]StreamType) []<-chan *St
 			fms[0].ports[0] = ev.in
 		} else {
 			// Prepend an adapter.
-			// XXX This now assumes at least one of ev.in.{f ch} is not nil
+			// XXX(xiaq): This now assumes at least one of ev.in.{f ch} is not nil
 			switch types[0] {
 			case fdStream:
 				// chan -> fd adapter: printchan
@@ -488,7 +488,7 @@ func (ev *Evaluator) execPipeline(fms []*form, types [3]StreamType) []<-chan *St
 			fms[len(fms)-1].ports[1] = ev.out
 		} else {
 			// Append an adapter.
-			// XXX This now assumes at least one of ev.out.{f ch} is not nil
+			// XXX(xiaq): This now assumes at least one of ev.out.{f ch} is not nil
 			switch types[1] {
 			case fdStream:
 				// fd -> chan adapter: feedchan
@@ -528,7 +528,8 @@ func (ev *Evaluator) waitPipeline(updates []<-chan *StateUpdate) {
 			switch up.Msg {
 			case "0", "":
 			default:
-				// XXX Update of commands in subevaluators should not be printed.
+				// BUG(xiaq): Command update of commands in subevaluators are
+				// always printed.
 				fmt.Printf("Command #%d update: %s\n", i, up.Msg)
 			}
 		}
