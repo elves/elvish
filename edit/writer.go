@@ -227,6 +227,8 @@ func (w *writer) refresh(bs *editorState) error {
 
 	comp := bs.completion
 	var suppress = false
+
+tokens:
 	for _, token := range bs.tokens {
 		for _, r := range token.Val {
 			if suppress && i < comp.end {
@@ -247,6 +249,14 @@ func (w *writer) refresh(bs *editorState) error {
 					b.writes(part.text, attr)
 				}
 				suppress = true
+			}
+			if bs.mode== modeHistory && i == len(bs.history.prefix) {
+				// Put the rest of current history, position the cursor at the
+				// end of the line, and finish writing
+				h := bs.history
+				b.writes(h.items[h.current][len(h.prefix):], attrForCompletedHistory)
+				b.dot = b.cursor()
+				break tokens
 			}
 			if bs.dot == i {
 				b.dot = b.cursor()
@@ -271,6 +281,8 @@ func (w *writer) refresh(bs *editorState) error {
 			b.writes(trimWcwidth("-- COMMAND --", width), attrForMode)
 		case modeCompleting:
 			b.writes(trimWcwidth("-- COMPLETING --", width), attrForMode)
+		case modeHistory:
+			b.writes(trimWcwidth("-- HISTORY --", width), attrForMode)
 		}
 	}
 

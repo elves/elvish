@@ -11,6 +11,7 @@ var (
 	attrForMode              = "1;7;33"
 	attrForTip               = ""
 	attrForCurrentCompletion = "7"
+	attrForCompletedHistory  = "4"
 )
 
 var attrForType = map[parse.ItemType]string{

@@ -8,6 +8,7 @@ import (
 	"github.com/xiaq/elvish/parse"
 	"github.com/xiaq/elvish/util"
 	"os"
+	"strings"
 )
 
 var LackEOL = "\033[7m\u23ce\033[m\n"
@@ -30,6 +31,13 @@ type editorState struct {
 	mode                  bufferMode
 	completion            *completion
 	completionLines       int
+	history               *historyState
+}
+
+type historyState struct {
+	items         []string
+	current       int
+	saved, prefix string
 }
 
 // Editor keeps the status of the line editor.
@@ -39,7 +47,6 @@ type Editor struct {
 	writer       *writer
 	reader       *reader
 	ev           *eval.Evaluator
-	history      []string
 	editorState
 }
 
@@ -51,6 +58,30 @@ type LineRead struct {
 	Err  error
 }
 
+func (hs *historyState) append(line string) {
+	hs.items = append(hs.items, line)
+}
+
+func (hs *historyState) prev() bool {
+	for i := hs.current - 1; i >= 0; i-- {
+		if strings.HasPrefix(hs.items[i], hs.prefix) {
+			hs.current = i
+			return true
+		}
+	}
+	return false
+}
+
+func (hs *historyState) next() bool {
+	for i := hs.current + 1; i < len(hs.items); i++ {
+		if strings.HasPrefix(hs.items[i], hs.prefix) {
+			hs.current = i
+			return true
+		}
+	}
+	return false
+}
+
 // New creates an Editor.
 func New(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) *Editor {
 	return &Editor{
@@ -59,6 +90,9 @@ func New(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) *Editor {
 		writer: newWriter(file),
 		reader: newReader(tr),
 		ev:     ev,
+		editorState: editorState{
+			history: &historyState{},
+		},
 	}
 }
 
@@ -81,10 +115,6 @@ func (ed *Editor) refresh() error {
 	return ed.writer.refresh(&ed.editorState)
 }
 
-func (ed *Editor) pushHistory(line string) {
-	ed.history = append(ed.history, line)
-}
-
 // TODO Allow modifiable keybindings.
 var keyBindings = map[bufferMode]map[Key]string{
 	modeCommand: map[Key]string{
@@ -103,6 +133,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{Right, 0}:     "move-dot-f",
 		Key{Enter, 0}:     "accept-line",
 		Key{Tab, 0}:       "complete",
+		Key{PageUp, 0}:    "start-history",
 		Key{'D', Ctrl}:    "return-eof",
 		DefaultBinding:    "default-insert",
 	},
@@ -116,10 +147,10 @@ var keyBindings = map[bufferMode]map[Key]string{
 		DefaultBinding: "default-completing",
 	},
 	modeHistory: map[Key]string{
-		Key{'[', Ctrl}: "cancel-history",
-		Key{Up, 0}:     "select-history-b",
-		Key{Down, 0}:   "select-history-f",
-		DefaultBinding: "default-history",
+		Key{'[', Ctrl}:   "cancel-history",
+		Key{PageUp, 0}:   "select-history-b",
+		Key{PageDown, 0}: "select-history-f",
+		DefaultBinding:   "default-history",
 	},
 }
 
@@ -133,6 +164,12 @@ func (ed *Editor) acceptCompletion() {
 	}
 	ed.completion = nil
 	ed.mode = modeInsert
+}
+
+// Accpet currently history.
+func (ed *Editor) acceptHistory() {
+	ed.line = ed.history.items[ed.history.current]
+	ed.dot = len(ed.line)
 }
 
 // startsReadLine prepares the terminal for the editor.
@@ -183,7 +220,7 @@ func (ed *Editor) startReadLine() error {
 // use.
 func (ed *Editor) finishReadLine(lr *LineRead) {
 	if lr.EOF == false && lr.Err == nil {
-		ed.pushHistory(lr.Line)
+		ed.history.append(lr.Line)
 	}
 
 	ed.tips = nil

@@ -48,6 +48,11 @@ var leBuiltins = map[string]leBuiltin{
 	"select-cand-col-f":  selectCandColF,
 	"cycle-cand-f":       cycleCandF,
 	"default-completing": defaultCompleting,
+	"start-history":      startHistory,
+	"cancel-history":     cancelHistory,
+	"select-history-b":   selectHistoryB,
+	"select-history-f":   selectHistoryF,
+	"default-history":    defaultHistory,
 }
 
 func insertMode(ed *Editor, k Key) *leReturn {
@@ -160,5 +165,37 @@ func defaultInsert(ed *Editor, k Key) *leReturn {
 
 func defaultCompleting(ed *Editor, k Key) *leReturn {
 	ed.acceptCompletion()
+	return &leReturn{action: changeModeAndReprocess, newMode: modeInsert}
+}
+
+func startHistory(ed *Editor, k Key) *leReturn {
+	ed.history.saved = ed.line
+	ed.history.prefix = ed.line[:ed.dot]
+	ed.history.current = len(ed.history.items)
+	if ed.history.prev() {
+		ed.mode = modeHistory
+	} else {
+		ed.pushTip("no matching history item")
+	}
+	return nil
+}
+
+func cancelHistory(ed *Editor, k Key) *leReturn {
+	ed.mode = modeInsert
+	return nil
+}
+
+func selectHistoryB(ed *Editor, k Key) *leReturn {
+	ed.history.prev()
+	return nil
+}
+
+func selectHistoryF(ed *Editor, k Key) *leReturn {
+	ed.history.next()
+	return nil
+}
+
+func defaultHistory(ed *Editor, k Key) *leReturn {
+	ed.acceptHistory()
 	return &leReturn{action: changeModeAndReprocess, newMode: modeInsert}
 }

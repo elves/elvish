@@ -2,7 +2,6 @@
 
 * Editor (edit)
     - Multiline editing
-    - History
 * Syntax (parse, eval)
     - Globbing?
     - Adopt value/address duality of `$a`, so that `set a []` is written as
