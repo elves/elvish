@@ -251,17 +251,20 @@ tokens:
 				suppress = true
 			}
 			if bs.mode== modeHistory && i == len(bs.history.prefix) {
-				// Put the rest of current history, position the cursor at the
-				// end of the line, and finish writing
-				h := bs.history
-				b.writes(h.items[h.current][len(h.prefix):], attrForCompletedHistory)
-				b.dot = b.cursor()
 				break tokens
 			}
 			if bs.dot == i {
 				b.dot = b.cursor()
 			}
 		}
+	}
+
+	if bs.mode== modeHistory {
+		// Put the rest of current history, position the cursor at the
+		// end of the line, and finish writing
+		h := bs.history
+		b.writes(h.items[h.current][len(h.prefix):], attrForCompletedHistory)
+		b.dot = b.cursor()
 	}
 
 	// Write rprompt
