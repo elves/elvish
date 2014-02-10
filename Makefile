@@ -6,10 +6,10 @@ PKG_COVERAGES := $(addprefix coverage/,$(PKGS))
 all: elvish elvishd test
 
 elvish:
-	go install .
+	go get .
 
 elvishd:
-	go install ./elvishd
+	go get ./elvishd
 
 test:
 	go test $(PKG_PATHS)
