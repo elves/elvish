@@ -25,11 +25,6 @@ func (p Pos) Position() Pos {
 	return p
 }
 
-// meisnode keeps Node implementations local to the package.
-// All implementations embed Pos, so this takes care of it.
-func (Pos) meisnode() {
-}
-
 // Nodes.
 
 // ListNode holds a sequence of nodes.

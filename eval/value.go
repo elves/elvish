@@ -56,7 +56,7 @@ func quote(s string) string {
 
 // Value is the runtime representation of an elvish value.
 type Value interface {
-	meisvalue()
+	isValue()
 	Repr(ev *Evaluator) string
 	String(ev *Evaluator) string
 	Caret(ev *Evaluator, v Value) Value
@@ -70,7 +70,7 @@ type Scalar struct {
 	str string
 }
 
-func (s *Scalar) meisvalue() {}
+func (s *Scalar) isValue() {}
 
 func NewScalar(s string) *Scalar {
 	return &Scalar{str: s}
@@ -94,7 +94,7 @@ type Table struct {
 	dict map[Value]Value
 }
 
-func (t *Table) meisvalue() {}
+func (t *Table) isValue() {}
 
 func NewTable() *Table {
 	return &Table{dict: make(map[Value]Value)}
@@ -154,7 +154,7 @@ type Env struct {
 	m map[string]string
 }
 
-func (e *Env) meisvalue() {}
+func (e *Env) isValue() {}
 
 func NewEnv(s []string) *Env {
 	e := &Env{make(map[string]string)}
@@ -215,7 +215,7 @@ type Closure struct {
 	Chunk    *parse.ListNode
 }
 
-func (c *Closure) meisvalue() {}
+func (c *Closure) isValue() {}
 
 func NewClosure(argNames []string, ch *parse.ListNode) *Closure {
 	return &Closure{argNames, ch}
