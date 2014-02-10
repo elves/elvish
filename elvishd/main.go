@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/coopernurse/gorp"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/xiaq/elvish/service"
 	"github.com/xiaq/elvish/util"
@@ -31,11 +32,12 @@ func main() {
 		log.Fatalln("listen to socket:", err)
 	}
 
-	// Open database
+	// Open database and construct dbmap
 	db, err := sql.Open("sqlite3", "./elvishd.db")
 	if err != nil {
 		log.Fatalln("open database:", err)
 	}
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
 
 	// Set up Unix signal handler
 	sigch := make(chan os.Signal, SignalBufferSize)
@@ -54,5 +56,8 @@ func main() {
 		}
 	}()
 
-	service.Serve(listener, db)
+	err = service.Serve(listener, dbmap)
+	if err != nil {
+		log.Fatalln("start service:", err)
+	}
 }
