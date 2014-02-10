@@ -3,6 +3,7 @@ package eval
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"unicode"
@@ -145,25 +146,32 @@ func (t *Table) append(vs ...Value) {
 	t.List = append(t.List, vs...)
 }
 
-// Env is a special-cased Table. The only instance of it is the global $env.
+// Env provides access to environment variables.
 type Env struct {
 	m map[string]string
 }
 
 func (e *Env) isValue() {}
 
-func NewEnv(s []string) *Env {
-	e := &Env{make(map[string]string)}
-	for _, s := range s {
+func NewEnv() *Env {
+	return &Env{}
+}
+
+func (e *Env) fill() {
+	if e.m != nil {
+		return
+	}
+	e.m = make(map[string]string)
+	for _, s := range os.Environ() {
 		arr := strings.SplitN(s, "=", 2)
 		if len(arr) == 2 {
 			e.m[arr[0]] = arr[1]
 		}
 	}
-	return e
 }
 
 func (e *Env) Export() []string {
+	e.fill()
 	s := make([]string, 0, len(e.m))
 	for k, v := range e.m {
 		s = append(s, fmt.Sprintf("%s=%s", k, v))
@@ -172,6 +180,7 @@ func (e *Env) Export() []string {
 }
 
 func (e *Env) Repr(ev *Evaluator) string {
+	e.fill()
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
 	sep := ""
@@ -184,10 +193,12 @@ func (e *Env) Repr(ev *Evaluator) string {
 }
 
 func (e *Env) String(ev *Evaluator) string {
+	e.fill()
 	return e.Repr(ev)
 }
 
 func (e *Env) Caret(ev *Evaluator, v Value) Value {
+	e.fill()
 	switch v := v.(type) {
 	case *Table:
 		if len(v.List) != 1 || len(v.Dict) != 0 {

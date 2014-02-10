@@ -19,7 +19,7 @@ func main() {
 		panic(err)
 	}
 
-	ev := eval.NewEvaluator(os.Environ())
+	ev := eval.NewEvaluator()
 	cmdNum := 0
 
 	username := "???"

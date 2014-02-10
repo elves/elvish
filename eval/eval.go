@@ -28,8 +28,8 @@ type Evaluator struct {
 
 // NewEvaluator creates a new Evaluator from a slice of environment strings
 // in the form "key=value".
-func NewEvaluator(envSlice []string) *Evaluator {
-	env := NewEnv(envSlice)
+func NewEvaluator() *Evaluator {
+	env := NewEnv()
 	pid := NewString(strconv.Itoa(syscall.Getpid()))
 	g := map[string]Value{
 		"env": env, "pid": pid,

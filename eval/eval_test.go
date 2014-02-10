@@ -19,13 +19,9 @@ func strsEqual(s1 []string, s2 []string) bool {
 }
 
 func TestNewEvaluator(t *testing.T) {
-	ev := NewEvaluator([]string{"foo=bar", "PATH=/usr/bin:/bin"})
+	ev := NewEvaluator()
 	pid := strconv.Itoa(syscall.Getpid())
 	if ev.globals["pid"].String(ev) != pid {
 		t.Errorf(`ev.globals["pid"] = %v, want %v`, ev.globals["pid"], pid)
-	}
-	searchPaths := []string{"/usr/bin", "/bin"}
-	if !strsEqual(ev.searchPaths, searchPaths) {
-		t.Errorf(`ev.searchPaths = %v, want %v`, ev.searchPaths, searchPaths)
 	}
 }
