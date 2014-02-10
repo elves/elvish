@@ -62,8 +62,6 @@ type Value interface {
 	Caret(ev *Evaluator, v Value) Value
 }
 
-// TODO Only str part is used.
-
 // String is a string.
 type String string
 
