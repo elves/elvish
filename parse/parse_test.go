@@ -2,9 +2,10 @@ package parse
 
 import (
 	"fmt"
-	"github.com/xiaq/elvish/util"
 	"reflect"
 	"testing"
+
+	"github.com/xiaq/elvish/util"
 )
 
 var parseTests = []struct {

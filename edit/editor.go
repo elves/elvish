@@ -3,12 +3,13 @@ package edit
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/xiaq/elvish/edit/tty"
 	"github.com/xiaq/elvish/eval"
 	"github.com/xiaq/elvish/parse"
 	"github.com/xiaq/elvish/util"
-	"os"
-	"strings"
 )
 
 var LackEOL = "\033[7m\u23ce\033[m\n"

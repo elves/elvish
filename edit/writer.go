@@ -3,12 +3,13 @@ package edit
 import (
 	"bytes"
 	"fmt"
-	"github.com/xiaq/elvish/edit/tty"
-	"github.com/xiaq/elvish/util"
 	"os"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/xiaq/elvish/edit/tty"
+	"github.com/xiaq/elvish/util"
 )
 
 // cell is an indivisible unit on the screen. It is not necessarily 1 column
@@ -250,7 +251,7 @@ tokens:
 				}
 				suppress = true
 			}
-			if bs.mode== modeHistory && i == len(bs.history.prefix) {
+			if bs.mode == modeHistory && i == len(bs.history.prefix) {
 				break tokens
 			}
 			if bs.dot == i {
@@ -259,7 +260,7 @@ tokens:
 		}
 	}
 
-	if bs.mode== modeHistory {
+	if bs.mode == modeHistory {
 		// Put the rest of current history, position the cursor at the
 		// end of the line, and finish writing
 		h := bs.history

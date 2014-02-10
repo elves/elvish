@@ -4,12 +4,13 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/user"
+
 	"github.com/xiaq/elvish/edit"
 	"github.com/xiaq/elvish/eval"
 	"github.com/xiaq/elvish/parse"
 	"github.com/xiaq/elvish/util"
-	"os"
-	"os/user"
 )
 
 func main() {

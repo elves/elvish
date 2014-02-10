@@ -4,12 +4,13 @@ package eval
 
 import (
 	"fmt"
-	"github.com/xiaq/elvish/parse"
-	"github.com/xiaq/elvish/util"
 	"os"
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/xiaq/elvish/parse"
+	"github.com/xiaq/elvish/util"
 )
 
 // Evaluator maintains runtime context of elvish code within a single

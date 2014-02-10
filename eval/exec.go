@@ -2,11 +2,12 @@ package eval
 
 import (
 	"fmt"
-	"github.com/xiaq/elvish/parse"
-	"github.com/xiaq/elvish/util"
 	"os"
 	"strings"
 	"syscall"
+
+	"github.com/xiaq/elvish/parse"
+	"github.com/xiaq/elvish/util"
 )
 
 const (

@@ -3,8 +3,9 @@ package edit
 import (
 	"bufio"
 	"fmt"
-	"github.com/xiaq/elvish/util"
 	"time"
+
+	"github.com/xiaq/elvish/util"
 )
 
 var EscTimeout = time.Millisecond * 10
@@ -80,7 +81,7 @@ func (rd *reader) readRune() (r rune) {
 }
 
 func (rd *reader) unreadRune(r ...rune) {
-	// BUG(xiaq): reader.unreadRune doesn't back up rd.currentSeq 
+	// BUG(xiaq): reader.unreadRune doesn't back up rd.currentSeq
 	rd.unreadBuffer = append(rd.unreadBuffer, r...)
 }
 

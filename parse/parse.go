@@ -8,10 +8,11 @@ package parse
 
 import (
 	"fmt"
-	"github.com/xiaq/elvish/util"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/xiaq/elvish/util"
 )
 
 // Parser maintains the states during parsing.

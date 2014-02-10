@@ -3,11 +3,12 @@ package eval
 import (
 	"bytes"
 	"fmt"
-	"github.com/xiaq/elvish/parse"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/xiaq/elvish/parse"
 )
 
 func quote(s string) string {

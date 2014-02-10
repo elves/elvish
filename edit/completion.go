@@ -2,8 +2,9 @@ package edit
 
 import (
 	"fmt"
-	"github.com/xiaq/elvish/parse"
 	"io/ioutil"
+
+	"github.com/xiaq/elvish/parse"
 )
 
 type tokenPart struct {
