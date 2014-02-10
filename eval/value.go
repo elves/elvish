@@ -64,28 +64,26 @@ type Value interface {
 
 // TODO Only str part is used.
 
-// Scalar is a string.
-type Scalar struct {
-	num float64
-	str string
+// String is a string.
+type String string
+
+func (s *String) isValue() {}
+
+func NewString(s string) *String {
+	ss := String(s)
+	return &ss
 }
 
-func (s *Scalar) isValue() {}
-
-func NewScalar(s string) *Scalar {
-	return &Scalar{str: s}
+func (s *String) Repr(ev *Evaluator) string {
+	return quote(string(*s))
 }
 
-func (s *Scalar) Repr(ev *Evaluator) string {
-	return quote(s.str)
+func (s *String) String(ev *Evaluator) string {
+	return string(*s)
 }
 
-func (s *Scalar) String(ev *Evaluator) string {
-	return s.str
-}
-
-func (s *Scalar) Caret(ev *Evaluator, v Value) Value {
-	return NewScalar(s.str + v.String(ev))
+func (s *String) Caret(ev *Evaluator, v Value) Value {
+	return NewString(string(*s) + v.String(ev))
 }
 
 // Table is a list-dict hybrid.
@@ -122,15 +120,15 @@ func (t *Table) String(ev *Evaluator) string {
 
 func (t *Table) Caret(ev *Evaluator, v Value) Value {
 	switch v := v.(type) {
-	case *Scalar:
-		return NewScalar(t.String(ev) + v.String(ev))
+	case *String:
+		return NewString(t.String(ev) + v.String(ev))
 	case *Table:
 		if len(v.list) != 1 || len(v.dict) != 0 {
 			ev.errorf("subscription must be single-element list")
 		}
-		sub, ok := v.list[0].(*Scalar)
+		sub, ok := v.list[0].(*String)
 		if !ok {
-			ev.errorf("subscription must be single-element scalar list")
+			ev.errorf("subscription must be single-element string list")
 		}
 		// Need stricter notion of list indices
 		// TODO Handle invalid index
@@ -140,7 +138,7 @@ func (t *Table) Caret(ev *Evaluator, v Value) Value {
 		}
 		return t.dict[sub]
 	default:
-		ev.errorf("Table can only be careted with Scalar or Table")
+		ev.errorf("Table can only be careted with String or Table")
 		return nil
 	}
 }
@@ -197,12 +195,12 @@ func (e *Env) Caret(ev *Evaluator, v Value) Value {
 		if len(v.list) != 1 || len(v.dict) != 0 {
 			ev.errorf("subscription must be single-element list")
 		}
-		sub, ok := v.list[0].(*Scalar)
+		sub, ok := v.list[0].(*String)
 		if !ok {
-			ev.errorf("subscription must be single-element scalar list")
+			ev.errorf("subscription must be single-element string list")
 		}
 		// TODO Handle invalid index
-		return NewScalar(e.m[sub.String(ev)])
+		return NewString(e.m[sub.String(ev)])
 	default:
 		ev.errorf("Env can only be careted with Table")
 		return nil

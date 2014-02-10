@@ -145,7 +145,7 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ports []*port, streamTypes []Strea
 		if streamTypes[fd] == chanStream {
 			ev.errorf("filename redir on channel port")
 		}
-		fname := ev.evalTermSingleScalar(r.Filename, "filename").str
+		fname := string(*ev.evalTermSingleString(r.Filename, "filename"))
 		// TODO haz hardcoded permbits now
 		f, e := os.OpenFile(fname, r.Flag, 0644)
 		if e != nil {
@@ -211,13 +211,13 @@ func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [3]St
 
 	// Resolve command. Assign one of fm.Command.{fn path closure} and streamTypes.
 	switch cmd := cmd.(type) {
-	case *Scalar:
+	case *String:
 		fm.Command, streamTypes = ev.resolveCommand(cmdStr, n.Command)
 	case *Closure:
 		fm.Command.Closure = cmd
 		// BUG(xiaq): Closures are assumed to have zero streamTypes (fileStream)
 	default:
-		ev.errorfNode(n.Command, "Command must be either scalar or closure")
+		ev.errorfNode(n.Command, "Command must be either string or closure")
 	}
 
 	// Port list.
@@ -331,7 +331,7 @@ func (ev *Evaluator) execExternal(fm *form) <-chan *StateUpdate {
 	args := make([]string, len(fm.args)+1)
 	args[0] = fm.Path
 	for i, a := range fm.args {
-		// NOTE Maybe we should enfore scalar arguments instead of coercing all
+		// NOTE Maybe we should enfore string arguments instead of coercing all
 		// args into string
 		args[i+1] = a.String(ev)
 	}

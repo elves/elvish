@@ -30,7 +30,7 @@ type Evaluator struct {
 // in the form "key=value".
 func NewEvaluator(envSlice []string) *Evaluator {
 	env := NewEnv(envSlice)
-	pid := NewScalar(strconv.Itoa(syscall.Getpid()))
+	pid := NewString(strconv.Itoa(syscall.Getpid()))
 	g := map[string]Value{
 		"env": env, "pid": pid,
 	}
@@ -146,7 +146,7 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 	switch n.Typ {
 	case parse.StringFactor:
 		m := n.Node.(*parse.StringNode)
-		words = []Value{NewScalar(m.Text)}
+		words = []Value{NewString(m.Text)}
 	case parse.VariableFactor:
 		m := n.Node.(*parse.StringNode)
 		words = []Value{ev.resolveVar(m.Text)}
@@ -226,22 +226,22 @@ func (ev *Evaluator) evalTermList(ln *parse.TermListNode) []Value {
 	return words
 }
 
-func (ev *Evaluator) asSingleScalar(vs []Value, n parse.Node, what string) *Scalar {
+func (ev *Evaluator) asSingleString(vs []Value, n parse.Node, what string) *String {
 	ev.push(n)
 	defer ev.pop()
 
 	if len(vs) != 1 {
 		ev.errorf("Expect exactly one word for %s, got %d", what, len(vs))
 	}
-	v, ok := vs[0].(*Scalar)
+	v, ok := vs[0].(*String)
 	if !ok {
-		ev.errorf("Expect scalar for %s, got %s", what, vs[0])
+		ev.errorf("Expect string for %s, got %s", what, vs[0])
 	}
 	return v
 }
 
-func (ev *Evaluator) evalTermSingleScalar(n *parse.TermNode, what string) *Scalar {
-	return ev.asSingleScalar(ev.evalTerm(n), n, what)
+func (ev *Evaluator) evalTermSingleString(n *parse.TermNode, what string) *String {
+	return ev.asSingleString(ev.evalTerm(n), n, what)
 }
 
 // BUG(xiaq): When evaluating a chunk, failure of one pipeline will abort the

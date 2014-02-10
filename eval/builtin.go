@@ -134,7 +134,7 @@ func print(ev *Evaluator, args []Value, ports [2]*port) string {
 }
 
 func println(ev *Evaluator, args []Value, ports [2]*port) string {
-	args = append(args, NewScalar("\n"))
+	args = append(args, NewString("\n"))
 	return print(ev, args, ports)
 }
 
@@ -170,7 +170,7 @@ func feedchan(ev *Evaluator, args []Value, ports [2]*port) string {
 		} else if err != nil {
 			return err.Error()
 		}
-		out <- NewScalar(line[:len(line)-1])
+		out <- NewString(line[:len(line)-1])
 		// i++
 	}
 }
@@ -193,11 +193,11 @@ func cd(ev *Evaluator, args []Value, ports [2]*port) string {
 
 func toFloats(args []Value) (nums []float64, err error) {
 	for _, a := range args {
-		a, ok := a.(*Scalar)
+		a, ok := a.(*String)
 		if !ok {
-			return nil, fmt.Errorf("must be scalar")
+			return nil, fmt.Errorf("must be string")
 		}
-		f, err := strconv.ParseFloat(a.str, 64)
+		f, err := strconv.ParseFloat(string(*a), 64)
 		if err != nil {
 			return nil, err
 		}
@@ -216,7 +216,7 @@ func plus(ev *Evaluator, args []Value, ports [2]*port) string {
 	for _, f := range nums {
 		sum += f
 	}
-	out <- NewScalar(fmt.Sprintf("%g", sum))
+	out <- NewString(fmt.Sprintf("%g", sum))
 	return ""
 }
 
@@ -233,7 +233,7 @@ func minus(ev *Evaluator, args []Value, ports [2]*port) string {
 	for _, f := range nums[1:] {
 		sum -= f
 	}
-	out <- NewScalar(fmt.Sprintf("%g", sum))
+	out <- NewString(fmt.Sprintf("%g", sum))
 	return ""
 }
 
@@ -247,7 +247,7 @@ func times(ev *Evaluator, args []Value, ports [2]*port) string {
 	for _, f := range nums {
 		prod *= f
 	}
-	out <- NewScalar(fmt.Sprintf("%g", prod))
+	out <- NewString(fmt.Sprintf("%g", prod))
 	return ""
 }
 
@@ -264,6 +264,6 @@ func divide(ev *Evaluator, args []Value, ports [2]*port) string {
 	for _, f := range nums[1:] {
 		prod /= f
 	}
-	out <- NewScalar(fmt.Sprintf("%g", prod))
+	out <- NewString(fmt.Sprintf("%g", prod))
 	return ""
 }
