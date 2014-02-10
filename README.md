@@ -42,6 +42,27 @@ go get -u github.com/xiaq/elvish
 Remember to put the two `export`s above into your `bashrc` or `zshrc` (or
 whatever).
 
+## Notes for Contributors
+
+The `.gitattributes` in this repo dictates that go sources be filtered through
+the `goimports` filter before checking in. If you would like to contribute,
+you are advised to set up the filter:
+
+1. Install `goimports`:
+
+    ```
+    go get code.google.com/p/go.tools/cmd/goimports
+    ```
+
+2. Put this in `~/.gitconfig`:
+
+    ```
+    [filter "goimports"]
+        clean = goimports -tabwidth=4
+        smudge = cat
+        required
+    ```
+
 ## Name
 
 In rogue-likes, items made by the elves have a reputation of high quality.
