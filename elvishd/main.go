@@ -8,6 +8,8 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"os/user"
+	"path"
 	"syscall"
 
 	"github.com/coopernurse/gorp"
@@ -32,8 +34,19 @@ func main() {
 		log.Fatalln("listen to socket:", err)
 	}
 
+	// Construct database filename
+	u, err := user.Current()
+	if err != nil {
+		log.Fatalln("get current user:", err)
+	}
+	home := u.HomeDir
+	if home == "" {
+		log.Fatalln("current user does not have a home directory")
+	}
+	dbname := path.Join(home, ".elvishd.db")
+
 	// Open database and construct dbmap
-	db, err := sql.Open("sqlite3", "./elvishd.db")
+	db, err := sql.Open("sqlite3", dbname)
 	if err != nil {
 		log.Fatalln("open database:", err)
 	}
