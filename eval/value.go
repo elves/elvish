@@ -88,25 +88,25 @@ func (s *String) Caret(ev *Evaluator, v Value) Value {
 
 // Table is a list-dict hybrid.
 type Table struct {
-	list []Value
-	dict map[Value]Value
+	List []Value
+	Dict map[Value]Value
 }
 
 func (t *Table) isValue() {}
 
 func NewTable() *Table {
-	return &Table{dict: make(map[Value]Value)}
+	return &Table{Dict: make(map[Value]Value)}
 }
 
 func (t *Table) Repr(ev *Evaluator) string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
 	sep := ""
-	for _, v := range t.list {
+	for _, v := range t.List {
 		fmt.Fprint(buf, sep, v.Repr(ev))
 		sep = " "
 	}
-	for k, v := range t.dict {
+	for k, v := range t.Dict {
 		fmt.Fprint(buf, sep, "&", k.Repr(ev), " ", v.Repr(ev))
 		sep = " "
 	}
@@ -123,10 +123,10 @@ func (t *Table) Caret(ev *Evaluator, v Value) Value {
 	case *String:
 		return NewString(t.String(ev) + v.String(ev))
 	case *Table:
-		if len(v.list) != 1 || len(v.dict) != 0 {
+		if len(v.List) != 1 || len(v.Dict) != 0 {
 			ev.errorf("subscription must be single-element list")
 		}
-		sub, ok := v.list[0].(*String)
+		sub, ok := v.List[0].(*String)
 		if !ok {
 			ev.errorf("subscription must be single-element string list")
 		}
@@ -134,9 +134,9 @@ func (t *Table) Caret(ev *Evaluator, v Value) Value {
 		// TODO Handle invalid index
 		idx, err := strconv.ParseUint(sub.String(ev), 10, 0)
 		if err == nil {
-			return t.list[idx]
+			return t.List[idx]
 		}
-		return t.dict[sub]
+		return t.Dict[sub]
 	default:
 		ev.errorf("Table can only be careted with String or Table")
 		return nil
@@ -144,7 +144,7 @@ func (t *Table) Caret(ev *Evaluator, v Value) Value {
 }
 
 func (t *Table) append(vs ...Value) {
-	t.list = append(t.list, vs...)
+	t.List = append(t.List, vs...)
 }
 
 // Env is a special-cased Table. The only instance of it is the global $env.
@@ -192,10 +192,10 @@ func (e *Env) String(ev *Evaluator) string {
 func (e *Env) Caret(ev *Evaluator, v Value) Value {
 	switch v := v.(type) {
 	case *Table:
-		if len(v.list) != 1 || len(v.dict) != 0 {
+		if len(v.List) != 1 || len(v.Dict) != 0 {
 			ev.errorf("subscription must be single-element list")
 		}
-		sub, ok := v.list[0].(*String)
+		sub, ok := v.List[0].(*String)
 		if !ok {
 			ev.errorf("subscription must be single-element string list")
 		}

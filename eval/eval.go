@@ -131,7 +131,7 @@ func (ev *Evaluator) evalTable(tn *parse.TableNode) *Table {
 			ev.errorf("Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
 		}
 		for i, k := range ks {
-			t.dict[k] = vs[i]
+			t.Dict[k] = vs[i]
 		}
 	}
 	return t
