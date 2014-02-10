@@ -2,6 +2,7 @@
 package service
 
 import (
+	"database/sql"
 	"errors"
 	"net"
 	"net/rpc"
@@ -15,11 +16,13 @@ var (
 	VersionMismatch = errors.New("version mismatch")
 )
 
-type Elvishd struct{}
+type Elvishd struct {
+	db *sql.DB
+}
 
 // Serve starts the RPC server on listener. Serve blocks.
-func Serve(listener net.Listener) {
-	server := &Elvishd{}
+func Serve(listener net.Listener, db *sql.DB) {
+	server := &Elvishd{db}
 	rpc.Register(server)
 	rpc.Accept(listener)
 }

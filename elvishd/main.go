@@ -3,12 +3,14 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/xiaq/elvish/service"
 	"github.com/xiaq/elvish/util"
 )
@@ -29,6 +31,12 @@ func main() {
 		log.Fatalln("listen to socket:", err)
 	}
 
+	// Open database
+	db, err := sql.Open("sqlite3", "./elvishd.db")
+	if err != nil {
+		log.Fatalln("open database:", err)
+	}
+
 	// Set up Unix signal handler
 	sigch := make(chan os.Signal, SignalBufferSize)
 	signal.Notify(sigch)
@@ -38,6 +46,7 @@ func main() {
 			case syscall.SIGINT, syscall.SIGTERM:
 				// TODO(xiaq): Notify current clients of termination
 				os.Remove(laddr)
+				db.Close() // Ignore possible errors
 				os.Exit(0)
 			default:
 				// Ignore all other signals
@@ -45,5 +54,5 @@ func main() {
 		}
 	}()
 
-	service.Serve(listener)
+	service.Serve(listener, db)
 }
