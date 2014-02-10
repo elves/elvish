@@ -5,7 +5,7 @@ have been warned...
 
 Fancy badges:
 [![GoDoc](https://godoc.org/github.com/xiaq/elvish?status.png)](https://godoc.org/github.com/xiaq/elvish)
-[![Build Status](https://travis-ci.org/xiaq/elvish.png?branch=master)](https://travis-ci.org/xiaq/elvish)
+[![Build Status](https://drone.io/github.com/xiaq/elvish/status.png)](https://drone.io/github.com/xiaq/elvish/latest)
 [![Coverage Status](https://coveralls.io/repos/xiaq/elvish/badge.png)](https://coveralls.io/r/xiaq/elvish)
 
 ## Obligatory screenshots
