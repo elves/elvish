@@ -3,10 +3,13 @@ PKGS := edit eval parse util
 PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
 PKG_COVERAGES := $(addprefix coverage/,$(PKGS))
 
-all: bin test
+all: elvish elvishd test
 
-bin:
+elvish:
 	go install .
+
+elvishd:
+	go install ./elvishd
 
 test:
 	go test $(PKG_PATHS)
@@ -25,4 +28,4 @@ z-%.go: %.go
 
 pre-commit: gofmt edit/tty/z-types.go
 
-.PHONY: all bin test coverage gofmt pre-commit
+.PHONY: all elvish elvishd test coverage gofmt pre-commit
