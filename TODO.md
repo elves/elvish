@@ -33,6 +33,7 @@
       writing `/tmp/a`? Should $a and $b be defined?
       (`var` is going to be a special form, needs another subtle example)
 * Data semantics, data passing (eval)
+    - First class IO values
     - Determine mutability (mutable tables like in conventional imperative
       languages, or immutable data structure a la clojure?)
     - Allow functions to declare and use channel I/O
