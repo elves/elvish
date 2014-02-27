@@ -6,29 +6,38 @@ import (
 	"io"
 	"os"
 	"strconv"
+
+	"github.com/xiaq/elvish/parse"
 )
 
-type builtinFunc func(*Evaluator, []Value, [2]*port) string
+type builtinFuncImpl func(*Evaluator, []Value, [2]*port) string
 
-type builtin struct {
-	fn          builtinFunc
+type builtinFunc struct {
+	fn          builtinFuncImpl
 	streamTypes [2]StreamType
 }
 
-var builtins = map[string]builtin{
-	"var":       builtin{var_, [2]StreamType{unusedStream, unusedStream}},
-	"set":       builtin{set, [2]StreamType{unusedStream, unusedStream}},
-	"fn":        builtin{fn, [2]StreamType{unusedStream, unusedStream}},
-	"put":       builtin{put, [2]StreamType{unusedStream, chanStream}},
-	"print":     builtin{print, [2]StreamType{unusedStream}},
-	"println":   builtin{println, [2]StreamType{unusedStream}},
-	"printchan": builtin{printchan, [2]StreamType{chanStream, fdStream}},
-	"feedchan":  builtin{feedchan, [2]StreamType{fdStream, chanStream}},
-	"cd":        builtin{cd, [2]StreamType{unusedStream, unusedStream}},
-	"+":         builtin{plus, [2]StreamType{unusedStream, chanStream}},
-	"-":         builtin{minus, [2]StreamType{unusedStream, chanStream}},
-	"*":         builtin{times, [2]StreamType{unusedStream, chanStream}},
-	"/":         builtin{divide, [2]StreamType{unusedStream, chanStream}},
+type builtinSpecialImpl func(*Evaluator, []parse.Node, [2]*port) string
+
+type builtinSpecial struct {
+	fn          builtinSpecialImpl
+	streamTypes [2]StreamType
+}
+
+var builtinFuncs = map[string]builtinFunc{
+	"var":       builtinFunc{var_, [2]StreamType{unusedStream, unusedStream}},
+	"set":       builtinFunc{set, [2]StreamType{unusedStream, unusedStream}},
+	"fn":        builtinFunc{fn, [2]StreamType{unusedStream, unusedStream}},
+	"put":       builtinFunc{put, [2]StreamType{unusedStream, chanStream}},
+	"print":     builtinFunc{print, [2]StreamType{unusedStream}},
+	"println":   builtinFunc{println, [2]StreamType{unusedStream}},
+	"printchan": builtinFunc{printchan, [2]StreamType{chanStream, fdStream}},
+	"feedchan":  builtinFunc{feedchan, [2]StreamType{fdStream, chanStream}},
+	"cd":        builtinFunc{cd, [2]StreamType{unusedStream, unusedStream}},
+	"+":         builtinFunc{plus, [2]StreamType{unusedStream, chanStream}},
+	"-":         builtinFunc{minus, [2]StreamType{unusedStream, chanStream}},
+	"*":         builtinFunc{times, [2]StreamType{unusedStream, chanStream}},
+	"/":         builtinFunc{divide, [2]StreamType{unusedStream, chanStream}},
 }
 
 func doSet(ev *Evaluator, names []string, values []Value) string {

@@ -46,11 +46,13 @@ func (i *port) compatible(typ StreamType) bool {
 	}
 }
 
-// A Command is either a function, an external command or a closure.
+// A Command is either a builtin function, a builtin special form, an external
+// command or a closure.
 type Command struct {
-	Func    builtinFunc // A builtin function, if the command is builtin.
-	Path    string      // Command full path, if the command is external.
-	Closure *Closure    // The closure value, if the command is a closure.
+	Func    builtinFuncImpl    // A builtin function
+	Special builtinSpecialImpl // A builtin special form
+	Path    string             // External command full path
+	Closure *Closure           // The closure value
 }
 
 // form packs runtime states of a fully constructured form.
@@ -180,7 +182,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, str
 	}
 
 	// Try builtin
-	if bi, ok := builtins[name]; ok {
+	if bi, ok := builtinFuncs[name]; ok {
 		cmd.Func = bi.fn
 		copy(streamTypes[:2], bi.streamTypes[:])
 		streamTypes[2] = fdStream
