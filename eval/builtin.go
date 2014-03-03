@@ -17,7 +17,7 @@ type builtinFunc struct {
 	streamTypes [2]StreamType
 }
 
-type builtinSpecialImpl func(*Evaluator, []parse.Node, [2]*port) string
+type builtinSpecialImpl func(*Evaluator, *parse.TermListNode, [2]*port) string
 
 type builtinSpecial struct {
 	fn          builtinSpecialImpl
@@ -25,8 +25,6 @@ type builtinSpecial struct {
 }
 
 var builtinFuncs = map[string]builtinFunc{
-	"var":       builtinFunc{var_, [2]StreamType{unusedStream, unusedStream}},
-	"set":       builtinFunc{set, [2]StreamType{unusedStream, unusedStream}},
 	"fn":        builtinFunc{fn, [2]StreamType{unusedStream, unusedStream}},
 	"put":       builtinFunc{put, [2]StreamType{unusedStream, chanStream}},
 	"print":     builtinFunc{print, [2]StreamType{unusedStream}},
@@ -40,64 +38,14 @@ var builtinFuncs = map[string]builtinFunc{
 	"/":         builtinFunc{divide, [2]StreamType{unusedStream, chanStream}},
 }
 
-func doSet(ev *Evaluator, names []string, values []Value) string {
-	// TODO Support assignment of mismatched arity in some restricted way -
-	// "optional" and "rest" arguments and the like
-	if len(names) != len(values) {
-		return "arity mismatch"
-	}
+var builtinSpecials map[string]builtinSpecial
 
-	for i, name := range names {
-		// TODO Prevent overriding builtin variables e.g. $pid $env
-		ev.locals[name] = values[i]
+func init() {
+	// Needed to avoid initialization loop
+	builtinSpecials = map[string]builtinSpecial{
+		"var": builtinSpecial{var_, [2]StreamType{unusedStream, unusedStream}},
+		"set": builtinSpecial{set, [2]StreamType{unusedStream, unusedStream}},
 	}
-
-	return ""
-}
-
-func var_(ev *Evaluator, args []Value, ports [2]*port) string {
-	var names []string
-	var values []Value
-	for i, nameVal := range args {
-		name := nameVal.String(ev)
-		if name == "=" {
-			values = args[i+1:]
-			break
-		}
-		if _, ok := ev.locals[name]; ok {
-			return fmt.Sprintf("Variable %q already exists", name)
-		}
-		names = append(names, name)
-	}
-
-	for _, name := range names {
-		ev.locals[name] = nil
-	}
-	if values != nil {
-		return doSet(ev, names, values)
-	}
-	return ""
-}
-
-func set(ev *Evaluator, args []Value, ports [2]*port) string {
-	var names []string
-	var values []Value
-	for i, nameVal := range args {
-		name := nameVal.String(ev)
-		if name == "=" {
-			values = args[i+1:]
-			break
-		}
-		if _, ok := ev.locals[name]; !ok {
-			return fmt.Sprintf("Variable %q doesn't exists", name)
-		}
-		names = append(names, name)
-	}
-
-	if values == nil {
-		return "missing equal sign"
-	}
-	return doSet(ev, names, values)
 }
 
 func fn(ev *Evaluator, args []Value, ports [2]*port) string {

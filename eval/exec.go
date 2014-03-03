@@ -57,9 +57,10 @@ type Command struct {
 
 // form packs runtime states of a fully constructured form.
 type form struct {
-	name  string   // Command name, used in error messages.
-	args  []Value  // Argument list, minus command name.
-	ports [3]*port // Ports for in, out and err.
+	name  string              // Command name, used in error messages.
+	nodes *parse.TermListNode // Unevaluated argument list, does not include command
+	args  []Value             // Evaluated argument list
+	ports [3]*port            // Ports for in, out and err.
 	Command
 }
 
@@ -181,7 +182,16 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, str
 		}
 	}
 
-	// Try builtin
+	// Try builtin special
+	if bi, ok := builtinSpecials[name]; ok {
+		cmd.Special = bi.fn
+		copy(streamTypes[:2], bi.streamTypes[:])
+		streamTypes[2] = fdStream
+		return
+	}
+
+	// Try builtin func
+	// XXX(xiaq): has duplicate code with builtin special
 	if bi, ok := builtinFuncs[name]; ok {
 		cmd.Func = bi.fn
 		copy(streamTypes[:2], bi.streamTypes[:])
@@ -235,7 +245,11 @@ func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [3]St
 	}
 
 	// Evaluate arguments after everything else.
-	fm.args = ev.evalTermList(n.Args)
+	if fm.Command.Special != nil {
+		fm.nodes = n.Args
+	} else {
+		fm.args = ev.evalTermList(n.Args)
+	}
 	return
 }
 
@@ -243,7 +257,9 @@ func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [3]St
 func (ev *Evaluator) execForm(fm *form) <-chan *StateUpdate {
 	switch {
 	case fm.Func != nil:
-		return ev.execBuiltin(fm)
+		return ev.execBuiltinFunc(fm)
+	case fm.Special != nil:
+		return ev.execBuiltinSpecial(fm)
 	case fm.Path != "":
 		return ev.execExternal(fm)
 	case fm.Closure != nil:
@@ -287,8 +303,24 @@ func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 	return update
 }
 
-// execBuiltin executes a builtin command.
-func (ev *Evaluator) execBuiltin(fm *form) <-chan *StateUpdate {
+// execBuiltinSpecial executes a builtin special form.
+func (ev *Evaluator) execBuiltinSpecial(fm *form) <-chan *StateUpdate {
+	update := make(chan *StateUpdate)
+	go func() {
+		var ports [2]*port
+		copy(ports[:], fm.ports[:2])
+		msg := fm.Special(ev, fm.nodes, ports)
+		// Streams are closed after executaion of builtin is complete.
+		fm.closePorts(ev)
+		update <- &StateUpdate{Terminated: true, Msg: msg}
+		close(update)
+	}()
+	return update
+}
+
+// execBuiltinFunc executes a builtin function.
+// XXX(xiaq): Duplicate with execBuiltinSpecial.
+func (ev *Evaluator) execBuiltinFunc(fm *form) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
 		var ports [2]*port
