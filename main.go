@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"os/user"
 
 	"github.com/xiaq/elvish/edit"
@@ -13,6 +14,11 @@ import (
 	"github.com/xiaq/elvish/util"
 )
 
+const (
+	sigchSize = 32
+)
+
+// TODO(xiaq): Currently only the editor deals with signals.
 func main() {
 	tr, err := util.NewTimedReader(os.Stdin)
 	if err != nil {
@@ -33,7 +39,10 @@ func main() {
 	}
 	rprompt := username + "@" + hostname
 
-	ed := edit.New(os.Stdin, tr, ev)
+	sigch := make(chan os.Signal, sigchSize)
+	signal.Notify(sigch)
+
+	ed := edit.New(os.Stdin, tr, ev, sigch)
 
 	for {
 		cmdNum++

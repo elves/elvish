@@ -48,6 +48,7 @@ type Editor struct {
 	writer       *writer
 	reader       *reader
 	ev           *eval.Evaluator
+	sigch        <-chan os.Signal
 	editorState
 }
 
@@ -84,13 +85,14 @@ func (hs *historyState) next() bool {
 }
 
 // New creates an Editor.
-func New(file *os.File, tr *util.TimedReader, ev *eval.Evaluator) *Editor {
+func New(file *os.File, tr *util.TimedReader, ev *eval.Evaluator, sigch <-chan os.Signal) *Editor {
 	return &Editor{
 		// savedTermios: term.Copy(),
 		file:   file,
 		writer: newWriter(file),
 		reader: newReader(tr),
 		ev:     ev,
+		sigch:  sigch,
 		editorState: editorState{
 			history: &historyState{},
 		},
@@ -246,6 +248,7 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 }
 
 // ReadLine reads a line interactively.
+// TODO(xiaq): ReadLine currently just ignores all signals.
 func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 	err := ed.startReadLine()
 	if err != nil {
