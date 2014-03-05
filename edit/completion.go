@@ -80,17 +80,17 @@ func fileNames(dir string) (names []string, err error) {
 	return
 }
 
-func startCompletion(ed *Editor) {
+func startCompletion(ed *Editor, k Key) *leReturn {
 	c := &completion{}
 	ctx, err := parse.Complete("<completion>", ed.line[:ed.dot])
 	if err != nil {
 		ed.pushTip("parser error")
-		return
+		return nil
 	}
 	pctx := ctx.EvalPlain()
 	if pctx == nil {
 		ed.pushTip("context not plain")
-		return
+		return nil
 	}
 	switch pctx.Typ {
 	case parse.CommandContext:
@@ -103,13 +103,13 @@ func startCompletion(ed *Editor) {
 		// BUG(xiaq): When completing, only the case of ctx.ThisFactor.Typ == StringFactor is supported
 		if pctx.ThisFactor.Typ != parse.StringFactor {
 			ed.pushTip("only StringFactor is supported :(")
-			return
+			return nil
 		}
 		pattern := pctx.PrevFactors + pctx.ThisFactor.Node.(*parse.StringNode).Text
 		names, err := fileNames(".")
 		if err != nil {
 			ed.pushTip(err.Error())
-			return
+			return nil
 		}
 		c.start = int(ctx.PrevFactors.Pos)
 		c.end = ed.dot
@@ -123,4 +123,5 @@ func startCompletion(ed *Editor) {
 			ed.pushTip(fmt.Sprintf("No completion for %s", pattern))
 		}
 	}
+	return nil
 }

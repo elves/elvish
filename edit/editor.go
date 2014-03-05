@@ -122,24 +122,24 @@ func (ed *Editor) refresh() error {
 // TODO Allow modifiable keybindings.
 var keyBindings = map[bufferMode]map[Key]string{
 	modeCommand: map[Key]string{
-		Key{'i', 0}:    "insert-mode",
+		Key{'i', 0}:    "start-insert",
 		Key{'h', 0}:    "move-dot-b",
 		Key{'l', 0}:    "move-dot-f",
 		Key{'D', 0}:    "kill-line-f",
 		DefaultBinding: "default-command",
 	},
 	modeInsert: map[Key]string{
-		Key{'[', Ctrl}:    "command-mode",
+		Key{'[', Ctrl}:    "start-command",
 		Key{'U', Ctrl}:    "kill-line-b",
 		Key{'K', Ctrl}:    "kill-line-f",
 		Key{Backspace, 0}: "kill-rune-b",
 		Key{Left, 0}:      "move-dot-b",
 		Key{Right, 0}:     "move-dot-f",
-		Key{Enter, 0}:     "accept-line",
-		Key{Tab, 0}:       "complete",
+		Key{Enter, 0}:     "return-line",
+		Key{'D', Ctrl}:    "return-eof",
+		Key{Tab, 0}:       "start-completion",
 		Key{PageUp, 0}:    "start-history",
 		Key{'N', Ctrl}:    "start-navigation",
-		Key{'D', Ctrl}:    "return-eof",
 		DefaultBinding:    "default-insert",
 	},
 	modeCompletion: map[Key]string{
@@ -160,6 +160,16 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{PageDown, 0}: "select-history-f",
 		DefaultBinding:   "default-history",
 	},
+}
+
+func init() {
+	for _, kb := range keyBindings {
+		for _, name := range kb {
+			if leBuiltins[name] == nil {
+				panic("bad keyBindings table: no editor builtin named " + name)
+			}
+		}
+	}
 }
 
 // Accpet currently selected completion candidate.

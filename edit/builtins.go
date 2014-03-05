@@ -9,7 +9,7 @@ import (
 // Line editor builtins.
 // These are not exposed to the user in anyway yet. Ideally, they should
 // reside in a dedicated namespace and callable by users, e.g.
-// le/kill-line-forward.
+// le:kill-line-f.
 
 type editorAction int
 
@@ -29,18 +29,21 @@ type leReturn struct {
 type leBuiltin func(ed *Editor, k Key) *leReturn
 
 var leBuiltins = map[string]leBuiltin{
-	"insert-mode":        insertMode,
-	"default-command":    defaultCommand,
-	"command-mode":       commandMode,
-	"kill-line-b":        killLineB,
-	"kill-line-f":        killLineF,
-	"kill-rune-b":        killRuneB,
-	"move-dot-b":         moveDotB,
-	"move-dot-f":         moveDotF,
-	"accept-line":        acceptLine,
-	"complete":           complete,
-	"return-eof":         returnEOF,
-	"default-insert":     defaultInsert,
+	// Command and insert mode
+	"start-insert":    startInsert,
+	"start-command":   startCommand,
+	"kill-line-b":     killLineB,
+	"kill-line-f":     killLineF,
+	"kill-rune-b":     killRuneB,
+	"move-dot-b":      moveDotB,
+	"move-dot-f":      moveDotF,
+	"return-line":     returnLine,
+	"return-eof":      returnEOF,
+	"default-command": defaultCommand,
+	"default-insert":  defaultInsert,
+
+	// Completion mode
+	"start-completion":   startCompletion,
 	"cancel-completion":  cancelCompletion,
 	"select-cand-b":      selectCandB,
 	"select-cand-f":      selectCandF,
@@ -48,16 +51,20 @@ var leBuiltins = map[string]leBuiltin{
 	"select-cand-col-f":  selectCandColF,
 	"cycle-cand-f":       cycleCandF,
 	"default-completion": defaultCompletion,
+
+	// Navigation mode
 	"start-navigation":   startNavigation,
 	"default-navigation": defaultNavigation,
-	"start-history":      startHistory,
-	"cancel-history":     cancelHistory,
-	"select-history-b":   selectHistoryB,
-	"select-history-f":   selectHistoryF,
-	"default-history":    defaultHistory,
+
+	// History mode
+	"start-history":    startHistory,
+	"cancel-history":   cancelHistory,
+	"select-history-b": selectHistoryB,
+	"select-history-f": selectHistoryF,
+	"default-history":  defaultHistory,
 }
 
-func insertMode(ed *Editor, k Key) *leReturn {
+func startInsert(ed *Editor, k Key) *leReturn {
 	return &leReturn{action: changeMode, newMode: modeInsert}
 }
 
@@ -66,7 +73,7 @@ func defaultCommand(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func commandMode(ed *Editor, k Key) *leReturn {
+func startCommand(ed *Editor, k Key) *leReturn {
 	return &leReturn{action: changeMode, newMode: modeCommand}
 }
 
@@ -104,13 +111,8 @@ func moveDotF(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func acceptLine(ed *Editor, k Key) *leReturn {
+func returnLine(ed *Editor, k Key) *leReturn {
 	return &leReturn{action: exitReadLine, readLineReturn: LineRead{Line: ed.line}}
-}
-
-func complete(ed *Editor, k Key) *leReturn {
-	startCompletion(ed)
-	return nil
 }
 
 func returnEOF(ed *Editor, k Key) *leReturn {
