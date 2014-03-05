@@ -118,7 +118,7 @@ func startCompletion(ed *Editor) {
 		c.candidates = findCandidates(pattern, names)
 		if len(c.candidates) > 0 {
 			ed.completion = c
-			ed.mode = modeCompleting
+			ed.mode = modeCompletion
 		} else {
 			ed.pushTip(fmt.Sprintf("No completion for %s", pattern))
 		}

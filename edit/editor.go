@@ -19,7 +19,7 @@ type bufferMode int
 const (
 	modeInsert bufferMode = iota
 	modeCommand
-	modeCompleting
+	modeCompletion
 	modeHistory
 )
 
@@ -107,8 +107,8 @@ func (ed *Editor) pushTip(more string) {
 }
 
 func (ed *Editor) refresh() error {
-	// Re-lex the line, unless we are in ModeCompleting
-	if ed.mode != modeCompleting {
+	// Re-lex the line, unless we are in modeCompletion
+	if ed.mode != modeCompletion {
 		ed.tokens = nil
 		hl := Highlight("<interactive code>", ed.line, ed.ev)
 		for token := range hl {
@@ -140,14 +140,14 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{'D', Ctrl}:    "return-eof",
 		DefaultBinding:    "default-insert",
 	},
-	modeCompleting: map[Key]string{
+	modeCompletion: map[Key]string{
 		Key{'[', Ctrl}: "cancel-completion",
 		Key{Up, 0}:     "select-cand-b",
 		Key{Down, 0}:   "select-cand-f",
 		Key{Left, 0}:   "select-cand-col-b",
 		Key{Right, 0}:  "select-cand-col-f",
 		Key{Tab, 0}:    "cycle-cand-f",
-		DefaultBinding: "default-completing",
+		DefaultBinding: "default-completion",
 	},
 	modeHistory: map[Key]string{
 		Key{'[', Ctrl}:   "cancel-history",

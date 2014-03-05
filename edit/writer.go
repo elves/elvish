@@ -283,7 +283,7 @@ tokens:
 		switch bs.mode {
 		case modeCommand:
 			b.writes(trimWcwidth("-- COMMAND --", width), attrForMode)
-		case modeCompleting:
+		case modeCompletion:
 			b.writes(trimWcwidth("-- COMPLETING --", width), attrForMode)
 		case modeHistory:
 			b.writes(trimWcwidth("-- HISTORY --", width), attrForMode)
