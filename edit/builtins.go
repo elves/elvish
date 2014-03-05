@@ -48,6 +48,8 @@ var leBuiltins = map[string]leBuiltin{
 	"select-cand-col-f":  selectCandColF,
 	"cycle-cand-f":       cycleCandF,
 	"default-completion": defaultCompletion,
+	"start-navigation":   startNavigation,
+	"default-navigation": defaultNavigation,
 	"start-history":      startHistory,
 	"cancel-history":     cancelHistory,
 	"select-history-b":   selectHistoryB,
@@ -166,6 +168,14 @@ func defaultInsert(ed *Editor, k Key) *leReturn {
 func defaultCompletion(ed *Editor, k Key) *leReturn {
 	ed.acceptCompletion()
 	return &leReturn{action: changeModeAndReprocess, newMode: modeInsert}
+}
+
+func startNavigation(ed *Editor, k Key) *leReturn {
+	return &leReturn{}
+}
+
+func defaultNavigation(ed *Editor, k Key) *leReturn {
+	return &leReturn{}
 }
 
 func startHistory(ed *Editor, k Key) *leReturn {

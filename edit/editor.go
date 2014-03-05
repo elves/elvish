@@ -20,6 +20,7 @@ const (
 	modeInsert bufferMode = iota
 	modeCommand
 	modeCompletion
+	modeNavigation
 	modeHistory
 )
 
@@ -137,6 +138,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{Enter, 0}:     "accept-line",
 		Key{Tab, 0}:       "complete",
 		Key{PageUp, 0}:    "start-history",
+		Key{'N', Ctrl}:    "start-navigation",
 		Key{'D', Ctrl}:    "return-eof",
 		DefaultBinding:    "default-insert",
 	},
@@ -148,6 +150,9 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{Right, 0}:  "select-cand-col-f",
 		Key{Tab, 0}:    "cycle-cand-f",
 		DefaultBinding: "default-completion",
+	},
+	modeNavigation: map[Key]string{
+		DefaultBinding: "default-navigation",
 	},
 	modeHistory: map[Key]string{
 		Key{'[', Ctrl}:   "cancel-history",
