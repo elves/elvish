@@ -207,7 +207,7 @@ func (w *writer) refresh(bs *editorState) error {
 	winsize := tty.GetWinsize(int(w.file.Fd()))
 	width, height := int(winsize.Col), int(winsize.Row)
 
-	var bufLine, bufMode, bufTips, bufCompletion, buf *buffer
+	var bufLine, bufMode, bufTips, bufListing, buf *buffer
 	// bufLine
 	b := newBuffer(width)
 	bufLine = b
@@ -298,10 +298,10 @@ tokens:
 		b.writes(trimWcwidth(strings.Join(bs.tips, ", "), width), attrForTip)
 	}
 
-	// bufCompletion
+	// bufListing, used for completion
 	if comp != nil {
 		b := newBuffer(width)
-		bufCompletion = b
+		bufListing = b
 		// Layout candidates in multiple columns
 		cands := comp.candidates
 
@@ -345,15 +345,52 @@ tokens:
 		}
 	}
 
+	// bufListing, used for completion
+	if nav := bs.navigation; nav != nil {
+		b := newBuffer(width)
+		bufListing = b
+		// XXX(xiaq): Should properly align two columns
+		// TODO(xiaq): When laying out the navigation listing, determine the
+		// width of two columns more intelligently instead of allocating half
+		// of screen for each. Maybe the algorithm used by ranger could be
+		// pirated.
+		colMargin := 1
+		parentWidth := (width + colMargin) / 2
+		currentWidth := width - colMargin - parentWidth
+		for i := 0; i < len(nav.filenames) || i < len(nav.parentFilenames); i++ {
+			if i > 0 {
+				b.newline()
+			}
+			text := ""
+			if i < len(nav.parentFilenames) {
+				text = nav.parentFilenames[i]
+			}
+			b.writes(trimWcwidth(text, parentWidth), "")
+			b.writePadding(parentWidth-wcwidths(text), "")
+			b.writePadding(colMargin, "")
+
+			if i < len(nav.filenames) {
+				attr := ""
+				if i == nav.selected {
+					attr = attrForSelectedFile
+					b.dot.line = i
+				}
+				text := nav.filenames[i]
+				b.writes(trimWcwidth(text, currentWidth), attr)
+				b.writePadding(currentWidth-wcwidths(text), attr)
+			}
+		}
+	}
+
 	// Trim lines to fit in screen
 	switch {
-	case height >= lines(bufLine, bufMode, bufTips, bufCompletion):
+	case height >= lines(bufLine, bufMode, bufTips, bufListing):
 		// No need to trim.
 	case height >= lines(bufLine, bufMode, bufTips):
 		h := height - lines(bufLine, bufMode, bufTips)
 		// Trim bufCompletion to h lines around the current candidate
-		lines := len(bufCompletion.cells)
-		low := bufCompletion.dot.line - h/2
+		lines := len(bufListing.cells)
+		low := bufListing.dot.line - h/2
 		high := low + h
 		switch {
 		case low < 0:
@@ -365,24 +402,24 @@ tokens:
 			high = lines
 			low = high - h
 		}
-		bufCompletion.trimToLines(low, high)
+		bufListing.trimToLines(low, high)
 	case height >= lines(bufLine, bufTips):
-		bufMode, bufCompletion = nil, nil
+		bufMode, bufListing = nil, nil
 	case height >= lines(bufLine):
-		bufTips, bufMode, bufCompletion = nil, nil, nil
+		bufTips, bufMode, bufListing = nil, nil, nil
 	case height >= 1:
-		bufTips, bufMode, bufCompletion = nil, nil, nil
+		bufTips, bufMode, bufListing = nil, nil, nil
 		dotLine := bufLine.dot.line
 		bufLine.trimToLines(dotLine+1-height, dotLine+1)
 	default:
-		bufLine, bufTips, bufMode, bufCompletion = nil, nil, nil, nil
+		bufLine, bufTips, bufMode, bufListing = nil, nil, nil, nil
 	}
 
 	// Combine buffers (reusing bufLine)
 	buf = bufLine
 	buf.extend(bufMode)
 	buf.extend(bufTips)
-	buf.extend(bufCompletion)
+	buf.extend(bufListing)
 
 	return w.commitBuffer(buf)
 }

@@ -173,10 +173,14 @@ func defaultCompletion(ed *Editor, k Key) *leReturn {
 }
 
 func startNavigation(ed *Editor, k Key) *leReturn {
+	ed.mode = modeNavigation
+	ed.navigation = newNavigation()
 	return &leReturn{}
 }
 
 func defaultNavigation(ed *Editor, k Key) *leReturn {
+	ed.mode = modeInsert
+	ed.navigation = nil
 	return &leReturn{}
 }
 

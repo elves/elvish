@@ -33,6 +33,7 @@ type editorState struct {
 	mode                  bufferMode
 	completion            *completion
 	completionLines       int
+	navigation            *navigation
 	history               *historyState
 }
 
