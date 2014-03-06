@@ -3,6 +3,7 @@ package edit
 import (
 	"errors"
 	"os"
+	"sort"
 )
 
 var (
@@ -40,6 +41,7 @@ func readdirnames(dir string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	sort.Strings(names)
 	return names, nil
 }
 
