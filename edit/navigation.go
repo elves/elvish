@@ -48,21 +48,26 @@ func readdirnames(dir string) ([]string, error) {
 // refresh rereads files in current and parent directories and maintains the
 // selected file if possible.
 func (n *navigation) refresh() error {
-	/*
-		selectedName := ""
-		if n.selected != -1 {
-			selectedName = n.filenames[n.selected]
-		}
-	*/
+	selectedName := ""
+	if n.selected != -1 {
+		selectedName = n.filenames[n.selected]
+	}
 
 	var err error
 	n.filenames, err = readdirnames(".")
 	if err != nil {
 		return err
 	}
-	if n.selected != -1 {
-		// TODO(xiaq): Maintain selected
-		n.resetSelected()
+	n.resetSelected()
+	if selectedName != "" {
+		// Maintain n.selected. The same file, if still present, is selected.
+		// Otherwise a file near it is selected.
+		// XXX(xiaq): This would break when we support alternative ordering.
+		i := sort.SearchStrings(n.filenames, selectedName)
+		if i == len(n.filenames) {
+			i--
+		}
+		n.selected = i
 	}
 
 	n.parentFilenames, err = readdirnames("..")
