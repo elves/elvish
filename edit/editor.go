@@ -177,7 +177,7 @@ func init() {
 	}
 }
 
-// Accpet currently selected completion candidate.
+// acceptCompletion accepts currently selected completion candidate.
 func (ed *Editor) acceptCompletion() {
 	c := ed.completion
 	if 0 <= c.current && c.current < len(c.candidates) {
@@ -189,7 +189,7 @@ func (ed *Editor) acceptCompletion() {
 	ed.mode = modeInsert
 }
 
-// Accpet currently history.
+// acceptHistory accepts currently history.
 func (ed *Editor) acceptHistory() {
 	ed.line = ed.history.items[ed.history.current]
 	ed.dot = len(ed.line)
