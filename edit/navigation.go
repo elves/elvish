@@ -11,26 +11,27 @@ var (
 	errorNoCwdInParent = errors.New("could not find current directory in ..")
 )
 
+type navColumn struct {
+	names    []string
+	selected int
+}
+
 type navigation struct {
-	filenames       []string
-	parentFilenames []string
-	selected        int
-	selectedParent  int
-	error           string
+	current, parent navColumn
 }
 
 func newNavigation() *navigation {
-	n := &navigation{selected: -1}
+	n := &navigation{current: navColumn{selected: -1}}
 	n.refresh()
 	n.resetSelected()
 	return n
 }
 
 func (n *navigation) resetSelected() {
-	if len(n.filenames) > 0 {
-		n.selected = 0
+	if len(n.current.names) > 0 {
+		n.current.selected = 0
 	} else {
-		n.selected = -1
+		n.current.selected = -1
 	}
 }
 
@@ -48,35 +49,35 @@ func readdirnames(dir string) ([]string, error) {
 }
 
 func (n *navigation) maintainSelected(name string) {
-	i := sort.SearchStrings(n.filenames, name)
-	if i == len(n.filenames) {
+	i := sort.SearchStrings(n.current.names, name)
+	if i == len(n.current.names) {
 		i--
 	}
-	n.selected = i
+	n.current.selected = i
 }
 
 // refresh rereads files in current and parent directories and maintains the
 // selected file if possible.
 func (n *navigation) refresh() error {
 	selectedName := ""
-	if n.selected != -1 {
-		selectedName = n.filenames[n.selected]
+	if n.current.selected != -1 {
+		selectedName = n.current.names[n.current.selected]
 	}
 
 	var err error
-	n.filenames, err = readdirnames(".")
+	n.current.names, err = readdirnames(".")
 	if err != nil {
 		return err
 	}
 	n.resetSelected()
 	if selectedName != "" {
-		// Maintain n.selected. The same file, if still present, is selected.
+		// Maintain n.current.selected. The same file, if still present, is selected.
 		// Otherwise a file near it is selected.
 		// XXX(xiaq): This would break when we support alternative ordering.
 		n.maintainSelected(selectedName)
 	}
 
-	n.parentFilenames, err = readdirnames("..")
+	n.parent.names, err = readdirnames("..")
 	if err != nil {
 		return err
 	}
@@ -84,15 +85,15 @@ func (n *navigation) refresh() error {
 	if err != nil {
 		return err
 	}
-	n.selectedParent = -1
-	for i, name := range n.parentFilenames {
+	n.parent.selected = -1
+	for i, name := range n.parent.names {
 		d, _ := os.Lstat("../" + name)
 		if os.SameFile(d, cwd) {
-			n.selectedParent = i
+			n.parent.selected = i
 			break
 		}
 	}
-	if n.selectedParent == -1 {
+	if n.parent.selected == -1 {
 		return errorNoCwdInParent
 	}
 	return nil
@@ -102,7 +103,7 @@ func (n *navigation) refresh() error {
 // TODO(xiaq): navigation.{ascend descend} bypasses the cd builtin. This can be
 // problematic if cd acquires more functionality (e.g. trigger a hook).
 func (n *navigation) ascend() error {
-	name := n.parentFilenames[n.selectedParent]
+	name := n.parent.names[n.parent.selected]
 	err := os.Chdir("..")
 	if err != nil {
 		return err
@@ -118,10 +119,10 @@ func (n *navigation) ascend() error {
 // descend changes current directory to the selected file, if it is a
 // directory.
 func (n *navigation) descend() error {
-	if n.selected == -1 {
+	if n.current.selected == -1 {
 		return errorEmptyCwd
 	}
-	name := n.filenames[n.selected]
+	name := n.current.names[n.current.selected]
 	err := os.Chdir(name)
 	if err != nil {
 		return err
@@ -131,14 +132,14 @@ func (n *navigation) descend() error {
 
 // prev selects the previous file.
 func (n *navigation) prev() {
-	if n.selected > 0 {
-		n.selected--
+	if n.current.selected > 0 {
+		n.current.selected--
 	}
 }
 
 // next selects the next file.
 func (n *navigation) next() {
-	if n.selected != -1 && n.selected < len(n.filenames)-1 {
-		n.selected++
+	if n.current.selected != -1 && n.current.selected < len(n.current.names)-1 {
+		n.current.selected++
 	}
 }

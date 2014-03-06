@@ -399,8 +399,8 @@ tokens:
 			b := newBuffer(width)
 			bufListing = b
 
-			filenames, low := trimToWindow(nav.filenames, nav.selected, listingHeight)
-			parentFilenames, parentLow := trimToWindow(nav.parentFilenames, nav.selectedParent, listingHeight)
+			filenames, low := trimToWindow(nav.current.names, nav.current.selected, listingHeight)
+			parentFilenames, parentLow := trimToWindow(nav.parent.names, nav.parent.selected, listingHeight)
 
 			// TODO(xiaq): When laying out the navigation listing, determine
 			// the width of two columns more intelligently instead of
@@ -417,7 +417,7 @@ tokens:
 				if i < len(parentFilenames) {
 					text = parentFilenames[i]
 				}
-				if i+parentLow == nav.selectedParent {
+				if i+parentLow == nav.parent.selected {
 					attr = attrForSelectedFile
 				}
 				b.writes(trimWcwidth(text, parentWidth), attr)
@@ -426,7 +426,7 @@ tokens:
 
 				if i < len(filenames) {
 					attr := ""
-					if i+low == nav.selected {
+					if i+low == nav.current.selected {
 						attr = attrForSelectedFile
 						b.dot.line = i
 					}
