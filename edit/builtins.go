@@ -54,6 +54,10 @@ var leBuiltins = map[string]leBuiltin{
 
 	// Navigation mode
 	"start-navigation":   startNavigation,
+	"select-nav-b":       selectNavB,
+	"select-nav-f":       selectNavF,
+	"ascend-nav":         ascendNav,
+	"descend-nav":        descendNav,
 	"default-navigation": defaultNavigation,
 
 	// History mode
@@ -175,6 +179,26 @@ func defaultCompletion(ed *Editor, k Key) *leReturn {
 func startNavigation(ed *Editor, k Key) *leReturn {
 	ed.mode = modeNavigation
 	ed.navigation = newNavigation()
+	return &leReturn{}
+}
+
+func selectNavB(ed *Editor, k Key) *leReturn {
+	ed.navigation.prev()
+	return &leReturn{}
+}
+
+func selectNavF(ed *Editor, k Key) *leReturn {
+	ed.navigation.next()
+	return &leReturn{}
+}
+
+func ascendNav(ed *Editor, k Key) *leReturn {
+	ed.navigation.ascend()
+	return &leReturn{}
+}
+
+func descendNav(ed *Editor, k Key) *leReturn {
+	ed.navigation.descend()
 	return &leReturn{}
 }
 

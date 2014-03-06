@@ -153,6 +153,10 @@ var keyBindings = map[bufferMode]map[Key]string{
 		DefaultBinding: "default-completion",
 	},
 	modeNavigation: map[Key]string{
+		Key{Up, 0}:     "select-nav-b",
+		Key{Down, 0}:   "select-nav-f",
+		Key{Left, 0}:   "ascend-nav",
+		Key{Right, 0}:  "descend-nav",
 		DefaultBinding: "default-navigation",
 	},
 	modeHistory: map[Key]string{
