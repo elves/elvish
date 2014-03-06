@@ -69,7 +69,7 @@ func main() {
 
 		ee := ev.Eval(name, lr.Line, n)
 		if ee != nil {
-			fmt.Println(ee.(*util.ContextualError).Pprint())
+			fmt.Print(ee.(*util.ContextualError).Pprint())
 			continue
 		}
 	}
