@@ -201,6 +201,33 @@ func lines(bufs ...*buffer) (l int) {
 	return
 }
 
+// findWindow finds a window of lines around the selected line in a total
+// number of height lines, that is at most max lines.
+func findWindow(height, selected, max int) (low, high int) {
+	if height > max {
+		low = selected - max/2
+		high = low + max
+		switch {
+		case low < 0:
+			// Near top of the list, move the window down
+			low = 0
+			high = low + max
+		case high > height:
+			// Near bottom of the list, move the window down
+			high = height
+			low = high - max
+		}
+		return
+	} else {
+		return 0, height
+	}
+}
+
+func trimToWindow(s []string, selected, max int) ([]string, int) {
+	low, high := findWindow(len(s), selected, max)
+	return s[low:high], low
+}
+
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
 func (w *writer) refresh(bs *editorState) error {
@@ -298,114 +325,11 @@ tokens:
 		b.writes(trimWcwidth(strings.Join(bs.tips, ", "), width), attrForTip)
 	}
 
-	// bufListing, used for completion
-	if comp != nil {
-		b := newBuffer(width)
-		bufListing = b
-		// Layout candidates in multiple columns
-		cands := comp.candidates
-
-		// First decide the shape (# of rows and columns)
-		colWidth := 0
-		colMargin := 2
-		for _, cand := range cands {
-			width := wcwidths(cand.text)
-			if colWidth < width {
-				colWidth = width
-			}
-		}
-
-		cols := (b.width + colMargin) / (colWidth + colMargin)
-		if cols == 0 {
-			cols = 1
-		}
-		lines := util.CeilDiv(len(cands), cols)
-		bs.completionLines = lines
-
-		for i := 0; i < lines; i++ {
-			if i > 0 {
-				b.newline()
-			}
-			for j := 0; j < cols; j++ {
-				k := j*lines + i
-				if k >= len(cands) {
-					continue
-				}
-				var attr string
-				if k == comp.current {
-					// XXX(xiaq): abuse dot to represent line of current completion
-					attr = attrForCurrentCompletion
-					b.dot.line = i
-				}
-				text := cands[k].text
-				b.writes(text, attr)
-				b.writePadding(colWidth-wcwidths(text), attr)
-				b.writePadding(colMargin, "")
-			}
-		}
-	}
-
-	// bufListing, used for completion
-	if nav := bs.navigation; nav != nil {
-		b := newBuffer(width)
-		bufListing = b
-		// XXX(xiaq): Should properly align two columns
-		// TODO(xiaq): When laying out the navigation listing, determine the
-		// width of two columns more intelligently instead of allocating half
-		// of screen for each. Maybe the algorithm used by ranger could be
-		// pirated.
-		colMargin := 1
-		parentWidth := (width + colMargin) / 2
-		currentWidth := width - colMargin - parentWidth
-		for i := 0; i < len(nav.filenames) || i < len(nav.parentFilenames); i++ {
-			if i > 0 {
-				b.newline()
-			}
-			text, attr := "", ""
-			if i < len(nav.parentFilenames) {
-				text = nav.parentFilenames[i]
-			}
-			if i == nav.selectedParent {
-				attr = attrForSelectedFile
-			}
-			b.writes(trimWcwidth(text, parentWidth), attr)
-			b.writePadding(parentWidth-wcwidths(text), attr)
-			b.writePadding(colMargin, "")
-
-			if i < len(nav.filenames) {
-				attr := ""
-				if i == nav.selected {
-					attr = attrForSelectedFile
-					b.dot.line = i
-				}
-				text := nav.filenames[i]
-				b.writes(trimWcwidth(text, currentWidth), attr)
-				b.writePadding(currentWidth-wcwidths(text), attr)
-			}
-		}
-	}
-
-	// Trim lines to fit in screen
+	listingHeight := 0
+	// Trim lines and determine the maximum height for bufListing
 	switch {
-	case height >= lines(bufLine, bufMode, bufTips, bufListing):
-		// No need to trim.
 	case height >= lines(bufLine, bufMode, bufTips):
-		h := height - lines(bufLine, bufMode, bufTips)
-		// Trim bufCompletion to h lines around the current candidate
-		lines := len(bufListing.cells)
-		low := bufListing.dot.line - h/2
-		high := low + h
-		switch {
-		case low < 0:
-			// Near top of the list, move the window down
-			low = 0
-			high = low + h
-		case high > lines:
-			// Near bottom of the list, move the window down
-			high = lines
-			low = high - h
-		}
-		bufListing.trimToLines(low, high)
+		listingHeight = height - lines(bufLine, bufMode, bufTips)
 	case height >= lines(bufLine, bufTips):
 		bufMode, bufListing = nil, nil
 	case height >= lines(bufLine):
@@ -416,6 +340,105 @@ tokens:
 		bufLine.trimToLines(dotLine+1-height, dotLine+1)
 	default:
 		bufLine, bufTips, bufMode, bufListing = nil, nil, nil, nil
+	}
+
+	// Render bufListing under the maximum height constraint
+	nav := bs.navigation
+	if listingHeight > 0 && comp != nil || nav != nil {
+		b := newBuffer(width)
+		bufListing = b
+		// Completion listing
+		if comp != nil {
+			// Layout candidates in multiple columns
+			cands := comp.candidates
+
+			// First decide the shape (# of rows and columns)
+			colWidth := 0
+			colMargin := 2
+			for _, cand := range cands {
+				width := wcwidths(cand.text)
+				if colWidth < width {
+					colWidth = width
+				}
+			}
+
+			cols := (b.width + colMargin) / (colWidth + colMargin)
+			if cols == 0 {
+				cols = 1
+			}
+			lines := util.CeilDiv(len(cands), cols)
+			bs.completionLines = lines
+
+			// Determine the window to show.
+			low, high := findWindow(lines, bufListing.dot.line, listingHeight)
+			for i := low; i < high; i++ {
+				if i > 0 {
+					b.newline()
+				}
+				for j := 0; j < cols; j++ {
+					k := j*lines + i
+					if k >= len(cands) {
+						continue
+					}
+					var attr string
+					if k == comp.current {
+						// XXX(xiaq): abuse dot to represent line of current completion
+						attr = attrForCurrentCompletion
+						b.dot.line = i
+					}
+					text := cands[k].text
+					b.writes(text, attr)
+					b.writePadding(colWidth-wcwidths(text), attr)
+					b.writePadding(colMargin, "")
+				}
+			}
+		}
+
+		// Navigation listing
+		if nav != nil {
+			b := newBuffer(width)
+			bufListing = b
+
+			filenames, low := trimToWindow(nav.filenames, nav.selected, listingHeight)
+			parentFilenames, parentLow := trimToWindow(nav.parentFilenames, nav.selectedParent, listingHeight)
+
+			// TODO(xiaq): When laying out the navigation listing, determine
+			// the width of two columns more intelligently instead of
+			// allocating half of screen for each. Maybe the algorithm used by
+			// ranger could be pirated.
+			colMargin := 1
+			parentWidth := (width + colMargin) / 2
+			currentWidth := width - colMargin - parentWidth
+			for i := 0; i < len(filenames) || i < len(parentFilenames); i++ {
+				if i > 0 {
+					b.newline()
+				}
+				text, attr := "", ""
+				if i < len(parentFilenames) {
+					text = parentFilenames[i]
+				}
+				if i+parentLow == nav.selectedParent {
+					attr = attrForSelectedFile
+				}
+				b.writes(trimWcwidth(text, parentWidth), attr)
+				b.writePadding(parentWidth-wcwidths(text), attr)
+				b.writePadding(colMargin, "")
+
+				if i < len(filenames) {
+					attr := ""
+					if i+low == nav.selected {
+						attr = attrForSelectedFile
+						b.dot.line = i
+					}
+					text := filenames[i]
+					b.writes(trimWcwidth(text, currentWidth), attr)
+					b.writePadding(currentWidth-wcwidths(text), attr)
+				}
+			}
+		}
+		// Trim bufListing.
+		// XXX This algorithm only works for completion listing.
+
 	}
 
 	// Combine buffers (reusing bufLine)
