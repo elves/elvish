@@ -111,7 +111,7 @@ func (n *navigation) prev() {
 
 // next selects the next file.
 func (n *navigation) next() {
-	if n.selected != -1 && n.selected < len(n.filenames) {
+	if n.selected != -1 && n.selected < len(n.filenames)-1 {
 		n.selected++
 	}
 }
