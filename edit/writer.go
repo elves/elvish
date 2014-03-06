@@ -375,9 +375,9 @@ tokens:
 			bs.completionLines = lines
 
 			// Determine the window to show.
-			low, high := findWindow(lines, bufListing.dot.line, listingHeight)
+			low, high := findWindow(lines, comp.current%lines, listingHeight)
 			for i := low; i < high; i++ {
-				if i > 0 {
+				if i > low {
 					b.newline()
 				}
 				for j := 0; j < cols; j++ {
@@ -385,11 +385,9 @@ tokens:
 					if k >= len(cands) {
 						continue
 					}
-					var attr string
+					attr := ""
 					if k == comp.current {
-						// XXX(xiaq): abuse dot to represent line of current completion
 						attr = attrForCurrentCompletion
-						b.dot.line = i
 					}
 					text := cands[k].text
 					b.writes(text, attr)
@@ -433,7 +431,6 @@ tokens:
 					attr := ""
 					if i+low == nav.current.selected {
 						attr = attrForSelectedFile
-						b.dot.line = i
 					}
 					text := filenames[i]
 					b.writes(trimWcwidth(text, currentWidth), attr)
