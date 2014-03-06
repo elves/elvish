@@ -361,12 +361,15 @@ tokens:
 			if i > 0 {
 				b.newline()
 			}
-			text := ""
+			text, attr := "", ""
 			if i < len(nav.parentFilenames) {
 				text = nav.parentFilenames[i]
 			}
-			b.writes(trimWcwidth(text, parentWidth), "")
-			b.writePadding(parentWidth-wcwidths(text), "")
+			if i == nav.selectedParent {
+				attr = attrForSelectedFile
+			}
+			b.writes(trimWcwidth(text, parentWidth), attr)
+			b.writePadding(parentWidth-wcwidths(text), attr)
 			b.writePadding(colMargin, "")
 
 			if i < len(nav.filenames) {

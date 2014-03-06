@@ -7,13 +7,15 @@ import (
 )
 
 var (
-	errorEmptyCwd = errors.New("current directory is empty")
+	errorEmptyCwd      = errors.New("current directory is empty")
+	errorNoCwdInParent = errors.New("could not find current directory in ..")
 )
 
 type navigation struct {
 	filenames       []string
 	parentFilenames []string
 	selected        int
+	selectedParent  int
 	error           string
 }
 
@@ -45,6 +47,14 @@ func readdirnames(dir string) ([]string, error) {
 	return names, nil
 }
 
+func (n *navigation) maintainSelected(name string) {
+	i := sort.SearchStrings(n.filenames, name)
+	if i == len(n.filenames) {
+		i--
+	}
+	n.selected = i
+}
+
 // refresh rereads files in current and parent directories and maintains the
 // selected file if possible.
 func (n *navigation) refresh() error {
@@ -63,16 +73,27 @@ func (n *navigation) refresh() error {
 		// Maintain n.selected. The same file, if still present, is selected.
 		// Otherwise a file near it is selected.
 		// XXX(xiaq): This would break when we support alternative ordering.
-		i := sort.SearchStrings(n.filenames, selectedName)
-		if i == len(n.filenames) {
-			i--
-		}
-		n.selected = i
+		n.maintainSelected(selectedName)
 	}
 
 	n.parentFilenames, err = readdirnames("..")
 	if err != nil {
 		return err
+	}
+	cwd, err := os.Stat(".")
+	if err != nil {
+		return err
+	}
+	n.selectedParent = -1
+	for i, name := range n.parentFilenames {
+		d, _ := os.Lstat("../" + name)
+		if os.SameFile(d, cwd) {
+			n.selectedParent = i
+			break
+		}
+	}
+	if n.selectedParent == -1 {
+		return errorNoCwdInParent
 	}
 	return nil
 }
@@ -81,11 +102,17 @@ func (n *navigation) refresh() error {
 // TODO(xiaq): navigation.{ascend descend} bypasses the cd builtin. This can be
 // problematic if cd acquires more functionality (e.g. trigger a hook).
 func (n *navigation) ascend() error {
+	name := n.parentFilenames[n.selectedParent]
 	err := os.Chdir("..")
 	if err != nil {
 		return err
 	}
-	return n.refresh()
+	err = n.refresh()
+	if err != nil {
+		return err
+	}
+	n.maintainSelected(name)
+	return nil
 }
 
 // descend changes current directory to the selected file, if it is a
