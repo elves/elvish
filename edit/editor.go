@@ -298,7 +298,7 @@ func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 			continue
 		}
 
-	lookup_key:
+	lookupKey:
 		keyBinding, ok := keyBindings[ed.mode]
 		if !ok {
 			ed.pushTip("No binding for current mode")
@@ -321,7 +321,7 @@ func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 			continue
 		case changeModeAndReprocess:
 			ed.mode = ret.newMode
-			goto lookup_key
+			goto lookupKey
 		case exitReadLine:
 			return ret.readLineReturn
 		}
