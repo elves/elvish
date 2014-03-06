@@ -307,14 +307,19 @@ tokens:
 	if bs.mode != modeInsert {
 		b := newBuffer(width)
 		bufMode = b
+		text := ""
 		switch bs.mode {
 		case modeCommand:
-			b.writes(trimWcwidth("-- COMMAND --", width), attrForMode)
+			text = "Command"
+			b.writes(trimWcwidth("Command", width), attrForMode)
 		case modeCompletion:
-			b.writes(trimWcwidth("-- COMPLETING --", width), attrForMode)
+			text = fmt.Sprintf("Completing %s", bs.line[comp.start:comp.end])
+		case modeNavigation:
+			text = "Navigating"
 		case modeHistory:
-			b.writes(trimWcwidth("-- HISTORY --", width), attrForMode)
+			text = fmt.Sprintf("History #%d", bs.history.current)
 		}
+		b.writes(trimWcwidth(text, width), attrForMode)
 	}
 
 	// bufTips
