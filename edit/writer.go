@@ -70,6 +70,32 @@ func (b *buffer) extend(b2 *buffer) {
 	}
 }
 
+func makePadding(n int) []cell {
+	s := make([]cell, n)
+	for i := 0; i < n; i++ {
+		s[i].rune = ' '
+		s[i].width = 1
+	}
+	return s
+}
+
+// extendHorizontal extends b horizontally, appending each line in b2 to b,
+// preceeded by m margin. If b2 has more lines than b, the last len(b2) -
+// len(b) lines are first filled with paddings of width w.
+func (b *buffer) extendHorizontal(b2 *buffer, w, m int) {
+	i := 0
+	margin := makePadding(m)
+	padding := makePadding(w + m)
+	for ; i < len(b.cells) && i < len(b2.cells); i++ {
+		b.cells[i] = append(append(b.cells[i], margin...), b2.cells[i]...)
+	}
+	for ; i < len(b2.cells); i++ {
+		row := make([]cell, 0, w+m+len(b2.cells[i]))
+		row = append(append(row, padding...), b2.cells[i]...)
+		b.cells = append(b.cells, row)
+	}
+}
+
 // write appends a single rune to a buffer.
 func (b *buffer) write(r rune, attr string) {
 	if r == '\n' {
@@ -226,6 +252,24 @@ func findWindow(height, selected, max int) (low, high int) {
 func trimToWindow(s []string, selected, max int) ([]string, int) {
 	low, high := findWindow(len(s), selected, max)
 	return s[low:high], low
+}
+
+func renderNavColumn(nc navColumn, w, h int) *buffer {
+	b := newBuffer(w)
+	low, high := findWindow(len(nc.names), nc.selected, h)
+	for i := low; i < high; i++ {
+		if i > low {
+			b.newline()
+		}
+		text := nc.names[i]
+		attr := ""
+		if i == nc.selected {
+			attr = attrForSelectedFile
+		}
+		b.writes(trimWcwidth(text, w), attr)
+		b.writePadding(w-wcwidths(text), attr)
+	}
+	return b
 }
 
 // refresh redraws the line editor. The dot is passed as an index into text;
@@ -399,48 +443,20 @@ tokens:
 
 		// Navigation listing
 		if nav != nil {
-			b := newBuffer(width)
-			bufListing = b
-
-			filenames, low := trimToWindow(nav.current.names, nav.current.selected, listingHeight)
-			parentFilenames, parentLow := trimToWindow(nav.parent.names, nav.parent.selected, listingHeight)
-
 			// TODO(xiaq): When laying out the navigation listing, determine
 			// the width of two columns more intelligently instead of
 			// allocating half of screen for each. Maybe the algorithm used by
 			// ranger could be pirated.
 			colMargin := 1
-			parentWidth := (width + colMargin) / 2
-			currentWidth := width - colMargin - parentWidth
-			for i := 0; i < len(filenames) || i < len(parentFilenames); i++ {
-				if i > 0 {
-					b.newline()
-				}
-				text, attr := "", ""
-				if i < len(parentFilenames) {
-					text = parentFilenames[i]
-				}
-				if i+parentLow == nav.parent.selected {
-					attr = attrForSelectedFile
-				}
-				b.writes(trimWcwidth(text, parentWidth), attr)
-				b.writePadding(parentWidth-wcwidths(text), attr)
-				b.writePadding(colMargin, "")
+			wParent := (width + colMargin) / 2
+			wCurrent := width - colMargin - wParent
 
-				if i < len(filenames) {
-					attr := ""
-					if i+low == nav.current.selected {
-						attr = attrForSelectedFile
-					}
-					text := filenames[i]
-					b.writes(trimWcwidth(text, currentWidth), attr)
-					b.writePadding(currentWidth-wcwidths(text), attr)
-				}
-			}
+			b := renderNavColumn(nav.parent, wParent, listingHeight)
+			bufListing = b
+
+			bCurrent := renderNavColumn(nav.current, wCurrent, listingHeight)
+			b.extendHorizontal(bCurrent, wParent, colMargin)
 		}
-		// Trim bufListing.
-		// XXX This algorithm only works for completion listing.
-
 	}
 
 	// Combine buffers (reusing bufLine)
