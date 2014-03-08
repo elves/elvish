@@ -2,6 +2,7 @@ package edit
 
 import (
 	"sort"
+	"strings"
 )
 
 // Taken from http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c (public domain)
@@ -106,4 +107,18 @@ func trimWcwidth(s string, wmax int) string {
 		}
 	}
 	return s
+}
+
+func forceWcwidth(s string, width int) string {
+	w := 0
+	for i, r := range s {
+		w0 := wcwidth(r)
+		w += w0
+		if w > width {
+			w -= w0
+			s = s[:i]
+			break
+		}
+	}
+	return s + strings.Repeat(" ", width-w)
 }

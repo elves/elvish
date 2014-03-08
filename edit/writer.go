@@ -254,7 +254,7 @@ func trimToWindow(s []string, selected, max int) ([]string, int) {
 	return s[low:high], low
 }
 
-func renderNavColumn(nc navColumn, w, h int) *buffer {
+func renderNavColumn(nc *navColumn, w, h int) *buffer {
 	b := newBuffer(w)
 	low, high := findWindow(len(nc.names), nc.selected, h)
 	for i := low; i < high; i++ {
@@ -266,8 +266,7 @@ func renderNavColumn(nc navColumn, w, h int) *buffer {
 		if i == nc.selected {
 			attr = attrForSelectedFile
 		}
-		b.writes(trimWcwidth(text, w), attr)
-		b.writePadding(w-wcwidths(text), attr)
+		b.writes(forceWcwidth(text, w), attr)
 	}
 	return b
 }
@@ -434,8 +433,7 @@ tokens:
 						attr = attrForCurrentCompletion
 					}
 					text := cands[k].text
-					b.writes(text, attr)
-					b.writePadding(colWidth-wcwidths(text), attr)
+					b.writes(forceWcwidth(text, colWidth), attr)
 					b.writePadding(colMargin, "")
 				}
 			}
@@ -443,19 +441,34 @@ tokens:
 
 		// Navigation listing
 		if nav != nil {
-			// TODO(xiaq): When laying out the navigation listing, determine
-			// the width of two columns more intelligently instead of
-			// allocating half of screen for each. Maybe the algorithm used by
-			// ranger could be pirated.
 			colMargin := 1
-			wParent := (width + colMargin) / 2
-			wCurrent := width - colMargin - wParent
+			var ratioParent, ratioCurrent, ratioPreview int
+			if nav.dirPreview != nil {
+				ratioParent = 15
+				ratioCurrent = 40
+				ratioPreview = 45
+			} else {
+				ratioParent = 15
+				ratioCurrent = 75
+				// Leave some space at the right side
+			}
+
+			w := width - colMargin*2
+
+			wParent := w * ratioParent / 100
+			wCurrent := w * ratioCurrent / 100
+			wPreview := w * ratioPreview / 100
 
 			b := renderNavColumn(nav.parent, wParent, listingHeight)
 			bufListing = b
 
 			bCurrent := renderNavColumn(nav.current, wCurrent, listingHeight)
 			b.extendHorizontal(bCurrent, wParent, colMargin)
+
+			if wPreview > 0 {
+				bPreview := renderNavColumn(nav.dirPreview, wPreview, listingHeight)
+				b.extendHorizontal(bPreview, wParent+wCurrent+colMargin, colMargin)
+			}
 		}
 	}
 
