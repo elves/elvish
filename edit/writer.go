@@ -211,7 +211,7 @@ func compareRows(r1, r2 []cell) (bool, int) {
 // delta between w.oldBuf and buf
 func (w *writer) commitBuffer(buf *buffer) error {
 	var fullRefresh bool
-	if buf.width != w.oldBuf.width {
+	if buf.width != w.oldBuf.width && w.oldBuf.cells != nil {
 		// Width change, force full refresh
 		w.oldBuf.cells = nil
 		fullRefresh = true
