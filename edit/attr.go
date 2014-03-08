@@ -12,7 +12,7 @@ var (
 	attrForTip               = ""
 	attrForCurrentCompletion = "7"
 	attrForCompletedHistory  = "4"
-	attrForSelectedFile      = "7"
+	attrForSelectedFile      = ";7"
 )
 
 var attrForType = map[parse.ItemType]string{

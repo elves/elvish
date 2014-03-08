@@ -3,6 +3,7 @@ package edit
 import (
 	"errors"
 	"os"
+	"path"
 	"sort"
 )
 
@@ -13,11 +14,12 @@ var (
 
 type navColumn struct {
 	names    []string
+	attrs    []string
 	selected int
 }
 
-func newNavColumn(names []string) *navColumn {
-	nc := &navColumn{names: names}
+func newNavColumn(names, attrs []string) *navColumn {
+	nc := &navColumn{names, attrs, 0}
 	nc.resetSelected()
 	return nc
 }
@@ -52,17 +54,21 @@ func newNavigation() *navigation {
 	return n
 }
 
-func readdirnames(dir string) ([]string, error) {
+func readdirnames(dir string) (names, attrs []string, err error) {
 	f, err := os.Open(dir)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	names, err := f.Readdirnames(0)
+	names, err = f.Readdirnames(0)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	sort.Strings(names)
-	return names, nil
+	attrs = make([]string, len(names))
+	for i, name := range names {
+		attrs[i] = defaultLsColor.determineAttr(path.Join(dir, name))
+	}
+	return names, attrs, nil
 }
 
 func (n *navigation) maintainSelected(name string) {
@@ -79,11 +85,11 @@ func (n *navigation) refresh() error {
 	selectedName := n.current.selectedName()
 
 	// n.current
-	names, err := readdirnames(".")
+	names, attrs, err := readdirnames(".")
 	if err != nil {
 		return err
 	}
-	n.current = newNavColumn(names)
+	n.current = newNavColumn(names, attrs)
 
 	if selectedName != "" {
 		// Maintain n.current.selected. The same file, if still present, is
@@ -93,11 +99,11 @@ func (n *navigation) refresh() error {
 	}
 
 	// n.parent
-	names, err = readdirnames("..")
+	names, attrs, err = readdirnames("..")
 	if err != nil {
 		return err
 	}
-	n.parent = newNavColumn(names)
+	n.parent = newNavColumn(names, attrs)
 
 	cwd, err := os.Stat(".")
 	if err != nil {
@@ -123,11 +129,11 @@ func (n *navigation) refresh() error {
 			return err
 		}
 		if fi.Mode().IsDir() {
-			names, err = readdirnames(name)
+			names, attrs, err = readdirnames(name)
 			if err != nil {
 				return err
 			}
-			n.dirPreview = newNavColumn(names)
+			n.dirPreview = newNavColumn(names, attrs)
 		} else {
 			// TODO(xiaq): Support regular file preview in navigation mode
 			n.dirPreview = nil

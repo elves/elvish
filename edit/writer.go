@@ -269,9 +269,9 @@ func renderNavColumn(nc *navColumn, w, h int) *buffer {
 			b.newline()
 		}
 		text := nc.names[i]
-		attr := ""
+		attr := nc.attrs[i]
 		if i == nc.selected {
-			attr = attrForSelectedFile
+			attr += attrForSelectedFile
 		}
 		if w >= navigationListingMinWidthForPadding {
 			padding := navigationListingColPadding
