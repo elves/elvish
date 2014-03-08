@@ -36,6 +36,7 @@ var leBuiltins = map[string]leBuiltin{
 	"kill-line-b":     killLineB,
 	"kill-line-f":     killLineF,
 	"kill-rune-b":     killRuneB,
+	"kill-rune-f":     killRuneF,
 	"move-dot-b":      moveDotB,
 	"move-dot-f":      moveDotF,
 	"insert-key":      insertKey,
@@ -106,6 +107,16 @@ func killRuneB(ed *Editor, k Key) *leReturn {
 		_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
 		ed.line = ed.line[:ed.dot-w] + ed.line[ed.dot:]
 		ed.dot -= w
+	} else {
+		ed.beep()
+	}
+	return nil
+}
+
+func killRuneF(ed *Editor, k Key) *leReturn {
+	if ed.dot < len(ed.line) {
+		_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
+		ed.line = ed.line[:ed.dot] + ed.line[ed.dot+w:]
 	} else {
 		ed.beep()
 	}
