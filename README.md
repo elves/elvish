@@ -15,9 +15,13 @@ Syntax highlighting (also showcasing right-hand-side prompt):
 
 ![syntax highlighting](./screenshots/syntax.png)
 
-Tab completion:
+Tab completion for files:
 
 ![tab completion](./screenshots/completion.png)
+
+Navigation mode (inspired by [ranger](http://ranger.nongnu.org/)):
+
+![navigation mode](./screenshots/navigation.png)
 
 ## Building
 
