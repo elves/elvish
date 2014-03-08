@@ -410,7 +410,6 @@ tokens:
 		switch bs.mode {
 		case modeCommand:
 			text = "Command"
-			b.writes(trimWcwidth("Command", width), attrForMode)
 		case modeCompletion:
 			text = fmt.Sprintf("Completing %s", bs.line[comp.start:comp.end])
 		case modeNavigation:
