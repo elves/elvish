@@ -85,7 +85,7 @@ func (b *buffer) extend(b2 *buffer) {
 	}
 }
 
-func makePadding(n int) []cell {
+func makeSpacing(n int) []cell {
 	s := make([]cell, n)
 	for i := 0; i < n; i++ {
 		s[i].rune = ' '
@@ -99,14 +99,14 @@ func makePadding(n int) []cell {
 // len(b) lines are first filled with paddings of width w.
 func (b *buffer) extendHorizontal(b2 *buffer, w, m int) {
 	i := 0
-	margin := makePadding(m)
+	margin := makeSpacing(m)
 	for ; i < len(b.cells) && i < len(b2.cells); i++ {
 		if w0 := lineWidth(b.cells[i]); w0 < w {
-			b.cells[i] = append(b.cells[i], makePadding(w-w0)...)
+			b.cells[i] = append(b.cells[i], makeSpacing(w-w0)...)
 		}
 		b.cells[i] = append(append(b.cells[i], margin...), b2.cells[i]...)
 	}
-	padding := makePadding(w + m)
+	padding := makeSpacing(w + m)
 	for ; i < len(b2.cells); i++ {
 		row := make([]cell, 0, w+m+len(b2.cells[i]))
 		row = append(append(row, padding...), b2.cells[i]...)
