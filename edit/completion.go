@@ -15,6 +15,7 @@ type tokenPart struct {
 type candidate struct {
 	text  string
 	parts []tokenPart
+	attr  string // Attribute used for preview
 }
 
 func newCandidate() *candidate {
@@ -117,6 +118,10 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 		c.typ = parse.ItemBare
 		c.candidates = findCandidates(pattern, names)
 		if len(c.candidates) > 0 {
+			// XXX assumes filename candidate
+			for _, c := range c.candidates {
+				c.attr = defaultLsColor.determineAttr(c.text)
+			}
 			ed.completion = c
 			ed.mode = modeCompletion
 		} else {

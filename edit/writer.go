@@ -453,9 +453,9 @@ tokens:
 					if k >= len(cands) {
 						continue
 					}
-					attr := ""
+					attr := cands[k].attr
 					if k == comp.current {
-						attr = attrForCurrentCompletion
+						attr += attrForCurrentCompletion
 					}
 					text := cands[k].text
 					b.writes(forceWcwidth(text, colWidth), attr)

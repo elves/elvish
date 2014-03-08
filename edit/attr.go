@@ -10,7 +10,7 @@ var (
 	attrForCompleted         = ";4"
 	attrForMode              = "1;7;33"
 	attrForTip               = ""
-	attrForCurrentCompletion = "7"
+	attrForCurrentCompletion = ";7"
 	attrForCompletedHistory  = "4"
 	attrForSelectedFile      = ";7"
 )
