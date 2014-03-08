@@ -210,9 +210,11 @@ func compareRows(r1, r2 []cell) (bool, int) {
 // TODO Instead of erasing w.oldBuf entirely and then draw buf, compute a
 // delta between w.oldBuf and buf
 func (w *writer) commitBuffer(buf *buffer) error {
+	var fullRefresh bool
 	if buf.width != w.oldBuf.width {
 		// Width change, force full refresh
 		w.oldBuf.cells = nil
+		fullRefresh = true
 	}
 
 	bytesBuf := new(bytes.Buffer)
@@ -247,7 +249,7 @@ func (w *writer) commitBuffer(buf *buffer) error {
 		}
 	}
 	// If the old buffer is higher, erase old content
-	if len(w.oldBuf.cells) > len(buf.cells) {
+	if len(w.oldBuf.cells) > len(buf.cells) || fullRefresh {
 		bytesBuf.WriteString("\n\033[J\033[A")
 	}
 	if attr != "" {
