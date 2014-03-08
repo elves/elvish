@@ -19,7 +19,8 @@ Tab completion for files:
 
 ![tab completion](./screenshots/completion.png)
 
-Navigation mode (inspired by [ranger](http://ranger.nongnu.org/)):
+Navigation mode (triggered with ^N, inspired by
+[ranger](http://ranger.nongnu.org/)):
 
 ![navigation mode](./screenshots/navigation.png)
 
@@ -101,8 +102,7 @@ And:
 * A vi keybinding that makes sense
 * More intuitive multiline editing
 * Some method to save typed snippets into a script
-* A "navigation mode" integrating functionalities of
-  [ranger](http://ranger.nongnu.org/) - trigger with Ctrl-N ✔
+* A navigation mode for easier casual exploration of directories ✔
 
 ## The Language
 
