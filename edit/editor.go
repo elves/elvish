@@ -136,6 +136,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{Backspace, 0}: "kill-rune-b",
 		Key{Left, 0}:      "move-dot-b",
 		Key{Right, 0}:     "move-dot-f",
+		Key{Enter, Alt}:   "insert-key",
 		Key{Enter, 0}:     "return-line",
 		Key{'D', Ctrl}:    "return-eof",
 		Key{Tab, 0}:       "start-completion",

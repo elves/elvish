@@ -37,6 +37,7 @@ var leBuiltins = map[string]leBuiltin{
 	"kill-rune-b":     killRuneB,
 	"move-dot-b":      moveDotB,
 	"move-dot-f":      moveDotF,
+	"insert-key":      insertKey,
 	"return-line":     returnLine,
 	"return-eof":      returnEOF,
 	"default-command": defaultCommand,
@@ -115,6 +116,12 @@ func moveDotF(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
+func insertKey(ed *Editor, k Key) *leReturn {
+	ed.line = ed.line[:ed.dot] + string(k.rune) + ed.line[ed.dot:]
+	ed.dot += utf8.RuneLen(k.rune)
+	return nil
+}
+
 func returnLine(ed *Editor, k Key) *leReturn {
 	return &leReturn{action: exitReadLine, readLineReturn: LineRead{Line: ed.line}}
 }
@@ -163,11 +170,9 @@ func cancelCompletion(ed *Editor, k Key) *leReturn {
 
 func defaultInsert(ed *Editor, k Key) *leReturn {
 	if k.Mod == 0 && k.rune > 0 && unicode.IsGraphic(k.rune) {
-		ed.line = ed.line[:ed.dot] + string(k.rune) + ed.line[ed.dot:]
-		ed.dot += utf8.RuneLen(k.rune)
-	} else {
-		ed.pushTip(fmt.Sprintf("Unbound: %s", k))
+		return insertKey(ed, k)
 	}
+	ed.pushTip(fmt.Sprintf("Unbound: %s", k))
 	return nil
 }
 
