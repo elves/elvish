@@ -12,6 +12,13 @@ import (
 	"github.com/xiaq/elvish/util"
 )
 
+const (
+	completionListingColMargin          int = 2
+	navigationListingColMargin              = 1
+	navigationListingColPadding             = 1
+	navigationListingMinWidthForPadding     = 5
+)
+
 // cell is an indivisible unit on the screen. It is not necessarily 1 column
 // wide.
 type cell struct {
@@ -266,7 +273,14 @@ func renderNavColumn(nc *navColumn, w, h int) *buffer {
 		if i == nc.selected {
 			attr = attrForSelectedFile
 		}
-		b.writes(forceWcwidth(text, w), attr)
+		if w >= navigationListingMinWidthForPadding {
+			padding := navigationListingColPadding
+			b.writePadding(padding, attr)
+			b.writes(forceWcwidth(text, w-2), attr)
+			b.writePadding(padding, attr)
+		} else {
+			b.writes(forceWcwidth(text, w), attr)
+		}
 	}
 	return b
 }
@@ -402,7 +416,7 @@ tokens:
 
 			// First decide the shape (# of rows and columns)
 			colWidth := 0
-			colMargin := 2
+			margin := completionListingColMargin
 			for _, cand := range cands {
 				width := wcwidths(cand.text)
 				if colWidth < width {
@@ -410,7 +424,7 @@ tokens:
 				}
 			}
 
-			cols := (b.width + colMargin) / (colWidth + colMargin)
+			cols := (b.width + margin) / (colWidth + margin)
 			if cols == 0 {
 				cols = 1
 			}
@@ -434,14 +448,14 @@ tokens:
 					}
 					text := cands[k].text
 					b.writes(forceWcwidth(text, colWidth), attr)
-					b.writePadding(colMargin, "")
+					b.writePadding(margin, "")
 				}
 			}
 		}
 
 		// Navigation listing
 		if nav != nil {
-			colMargin := 1
+			margin := navigationListingColMargin
 			var ratioParent, ratioCurrent, ratioPreview int
 			if nav.dirPreview != nil {
 				ratioParent = 15
@@ -453,7 +467,7 @@ tokens:
 				// Leave some space at the right side
 			}
 
-			w := width - colMargin*2
+			w := width - margin*2
 
 			wParent := w * ratioParent / 100
 			wCurrent := w * ratioCurrent / 100
@@ -463,11 +477,11 @@ tokens:
 			bufListing = b
 
 			bCurrent := renderNavColumn(nav.current, wCurrent, hListing)
-			b.extendHorizontal(bCurrent, wParent, colMargin)
+			b.extendHorizontal(bCurrent, wParent, margin)
 
 			if wPreview > 0 {
 				bPreview := renderNavColumn(nav.dirPreview, wPreview, hListing)
-				b.extendHorizontal(bPreview, wParent+wCurrent+colMargin, colMargin)
+				b.extendHorizontal(bPreview, wParent+wCurrent+margin, margin)
 			}
 		}
 	}
