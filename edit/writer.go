@@ -193,23 +193,41 @@ func deltaPos(from, to pos) []byte {
 	return buf.Bytes()
 }
 
+func identicalRows(r1, r2 []cell) bool {
+	if len(r1) != len(r2) {
+		return false
+	}
+	for i, c := range r1 {
+		if c != r2[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // commitBuffer updates the terminal display to reflect current buffer.
 // TODO Instead of erasing w.oldBuf entirely and then draw buf, compute a
 // delta between w.oldBuf and buf
 func (w *writer) commitBuffer(buf *buffer) error {
 	bytesBuf := new(bytes.Buffer)
 
-	pLine := w.oldBuf.dot.line
-	if pLine > 0 {
+	// Rewind cursor
+	if pLine := w.oldBuf.dot.line; pLine > 0 {
 		fmt.Fprintf(bytesBuf, "\033[%dA", pLine)
 	}
-	bytesBuf.WriteString("\r\033[J")
+	bytesBuf.WriteString("\r")
 
 	attr := ""
 	for i, line := range buf.cells {
 		if i > 0 {
 			bytesBuf.WriteString("\n")
 		}
+		// No need to update current line
+		if i < len(w.oldBuf.cells) && identicalRows(line, w.oldBuf.cells[i]) {
+			continue
+		}
+		// Erase current line
+		bytesBuf.WriteString("\033[K")
 		for _, c := range line {
 			if c.width > 0 && c.attr != attr {
 				fmt.Fprintf(bytesBuf, "\033[m\033[%sm", c.attr)
@@ -218,13 +236,14 @@ func (w *writer) commitBuffer(buf *buffer) error {
 			bytesBuf.WriteString(string(c.rune))
 		}
 	}
+	// If the old buffer is higher, erase old content
+	if len(w.oldBuf.cells) > len(buf.cells) {
+		bytesBuf.WriteString("\n\033[J\033[A")
+	}
 	if attr != "" {
 		bytesBuf.WriteString("\033[m")
 	}
 	cursor := buf.cursor()
-	if cursor.col == buf.width {
-		cursor.col--
-	}
 	bytesBuf.Write(deltaPos(cursor, buf.dot))
 
 	_, err := w.file.Write(bytesBuf.Bytes())
