@@ -99,26 +99,34 @@ func (n *navigation) refresh() error {
 	}
 
 	// n.parent
-	names, attrs, err = readdirnames("..")
+	wd, err := os.Getwd()
 	if err != nil {
-		return err
+		return nil
 	}
-	n.parent = newNavColumn(names, attrs)
-
-	cwd, err := os.Stat(".")
-	if err != nil {
-		return err
-	}
-	n.parent.selected = -1
-	for i, name := range n.parent.names {
-		d, _ := os.Lstat("../" + name)
-		if os.SameFile(d, cwd) {
-			n.parent.selected = i
-			break
+	if wd == "/" {
+		n.parent = newNavColumn(nil, nil)
+	} else {
+		names, attrs, err = readdirnames("..")
+		if err != nil {
+			return err
 		}
-	}
-	if n.parent.selected == -1 {
-		return errorNoCwdInParent
+		n.parent = newNavColumn(names, attrs)
+
+		cwd, err := os.Stat(".")
+		if err != nil {
+			return err
+		}
+		n.parent.selected = -1
+		for i, name := range n.parent.names {
+			d, _ := os.Lstat("../" + name)
+			if os.SameFile(d, cwd) {
+				n.parent.selected = i
+				break
+			}
+		}
+		if n.parent.selected == -1 {
+			return errorNoCwdInParent
+		}
 	}
 
 	// n.dirPreview
@@ -149,8 +157,16 @@ func (n *navigation) refresh() error {
 // TODO(xiaq): navigation.{ascend descend} bypasses the cd builtin. This can be
 // problematic if cd acquires more functionality (e.g. trigger a hook).
 func (n *navigation) ascend() error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	if wd == "/" {
+		return nil
+	}
+
 	name := n.parent.names[n.parent.selected]
-	err := os.Chdir("..")
+	err = os.Chdir("..")
 	if err != nil {
 		return err
 	}
