@@ -32,6 +32,14 @@ type pos struct {
 	line, col int
 }
 
+func lineWidth(cs []cell) int {
+	w := 0
+	for _, c := range cs {
+		w += int(c.width)
+	}
+	return w
+}
+
 // buffer reflects a continuous range of lines on the terminal. The Unix
 // terminal API provides only awkward ways of querying the terminal buffer, so
 // we keep an internal reflection and do one-way synchronizations (buffer ->
@@ -92,10 +100,13 @@ func makePadding(n int) []cell {
 func (b *buffer) extendHorizontal(b2 *buffer, w, m int) {
 	i := 0
 	margin := makePadding(m)
-	padding := makePadding(w + m)
 	for ; i < len(b.cells) && i < len(b2.cells); i++ {
+		if w0 := lineWidth(b.cells[i]); w0 < w {
+			b.cells[i] = append(b.cells[i], makePadding(w-w0)...)
+		}
 		b.cells[i] = append(append(b.cells[i], margin...), b2.cells[i]...)
 	}
+	padding := makePadding(w + m)
 	for ; i < len(b2.cells); i++ {
 		row := make([]cell, 0, w+m+len(b2.cells[i]))
 		row = append(append(row, padding...), b2.cells[i]...)
