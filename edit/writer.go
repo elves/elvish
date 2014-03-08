@@ -193,22 +193,28 @@ func deltaPos(from, to pos) []byte {
 	return buf.Bytes()
 }
 
-func identicalRows(r1, r2 []cell) bool {
-	if len(r1) != len(r2) {
-		return false
-	}
+func compareRows(r1, r2 []cell) (bool, int) {
 	for i, c := range r1 {
-		if c != r2[i] {
-			return false
+		if i >= len(r2) || c != r2[i] {
+			return false, i
 		}
 	}
-	return true
+	if len(r1) < len(r2) {
+		return false, len(r1)
+	} else {
+		return true, 0
+	}
 }
 
 // commitBuffer updates the terminal display to reflect current buffer.
 // TODO Instead of erasing w.oldBuf entirely and then draw buf, compute a
 // delta between w.oldBuf and buf
 func (w *writer) commitBuffer(buf *buffer) error {
+	if buf.width != w.oldBuf.width {
+		// Width change, force full refresh
+		w.oldBuf.cells = nil
+	}
+
 	bytesBuf := new(bytes.Buffer)
 
 	// Rewind cursor
@@ -222,13 +228,17 @@ func (w *writer) commitBuffer(buf *buffer) error {
 		if i > 0 {
 			bytesBuf.WriteString("\n")
 		}
+		var j int // First column where buf and oldBuf differ
 		// No need to update current line
-		if i < len(w.oldBuf.cells) && identicalRows(line, w.oldBuf.cells[i]) {
-			continue
+		if i < len(w.oldBuf.cells) {
+			var eq bool
+			if eq, j = compareRows(line, w.oldBuf.cells[i]); eq {
+				continue
+			}
 		}
-		// Erase current line
-		bytesBuf.WriteString("\033[K")
-		for _, c := range line {
+		// Move to the first differing column and erase the rest of line
+		fmt.Fprintf(bytesBuf, "\033[%dG\033[K", j+1)
+		for _, c := range line[j:] {
 			if c.width > 0 && c.attr != attr {
 				fmt.Fprintf(bytesBuf, "\033[m\033[%sm", c.attr)
 				attr = c.attr

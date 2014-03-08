@@ -283,6 +283,7 @@ func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 	ed.tips = nil
 	ed.completion = nil
 	ed.dot = 0
+	ed.writer.oldBuf.cells = nil
 
 	for {
 		err := ed.refresh()
