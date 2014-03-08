@@ -2,6 +2,7 @@ package edit
 
 import (
 	"fmt"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -83,13 +84,20 @@ func startCommand(ed *Editor, k Key) *leReturn {
 }
 
 func killLineB(ed *Editor, k Key) *leReturn {
-	ed.line = ed.line[ed.dot:]
-	ed.dot = 0
+	// Find last start of line
+	sol := strings.LastIndex(ed.line[:ed.dot], "\n") + 1
+	ed.line = ed.line[:sol] + ed.line[ed.dot:]
+	ed.dot = sol
 	return nil
 }
 
 func killLineF(ed *Editor, k Key) *leReturn {
-	ed.line = ed.line[:ed.dot]
+	// Find next end of line
+	eol := strings.IndexRune(ed.line[ed.dot:], '\n')
+	if eol == -1 {
+		eol = len(ed.line)
+	}
+	ed.line = ed.line[:ed.dot] + ed.line[eol:]
 	return nil
 }
 
