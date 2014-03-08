@@ -93,6 +93,10 @@ func parseLsColor(s string) *lsColor {
 	return lc
 }
 
+func is(u, p uint32) bool {
+	return u&p == p
+}
+
 func determineFeature(fname string, mh bool) (fileFeature, error) {
 	var stat syscall.Stat_t
 	err := syscall.Stat(fname, &stat)
@@ -103,7 +107,7 @@ func determineFeature(fname string, mh bool) (fileFeature, error) {
 	m := stat.Mode
 
 	// Symlink and OrphanedSymlink has highest precedence
-	if m&syscall.S_IFLNK != 0 {
+	if is(m, syscall.S_IFLNK) {
 		_, err := os.Stat(fname)
 		if err == nil {
 			return featureSymlink, nil
@@ -119,26 +123,26 @@ func determineFeature(fname string, mh bool) (fileFeature, error) {
 
 	// type bits features
 	switch {
-	case m&syscall.S_IFIFO != 0:
+	case is(m, syscall.S_IFIFO):
 		return featureNamedPipe, nil
-	case m&syscall.S_IFSOCK != 0:
+	case is(m, syscall.S_IFSOCK):
 		return featureSocket, nil
 		/*
 			case m | syscall.S_IFDOOR != 0:
 				return featureDoor, nil
 		*/
-	case m&syscall.S_IFBLK != 0:
+	case is(m, syscall.S_IFBLK):
 		return featureBlockDevice, nil
-	case m&syscall.S_IFCHR != 0:
+	case is(m, syscall.S_IFCHR):
 		return featureCharDevice, nil
-	case m&syscall.S_IFDIR != 0:
+	case is(m, syscall.S_IFDIR):
 		// Perm bits features for directory
 		switch {
-		case m&syscall.S_IWOTH&syscall.S_ISVTX != 0:
+		case is(m, syscall.S_IWOTH|syscall.S_ISVTX):
 			return featureWorldWritableStickyDirectory, nil
-		case m&syscall.S_IWOTH != 0:
+		case is(m, syscall.S_IWOTH):
 			return featureWorldWritableDirectory, nil
-		case m&syscall.S_ISVTX != 0:
+		case is(m, syscall.S_ISVTX):
 			return featureStickyDirectory, nil
 		default:
 			return featureDirectory, nil
@@ -149,9 +153,9 @@ func determineFeature(fname string, mh bool) (fileFeature, error) {
 
 	// Perm bits features for regular files
 	switch {
-	case m&syscall.S_ISUID != 0:
+	case is(m, syscall.S_ISUID):
 		return featureSetuid, nil
-	case m&syscall.S_ISGID != 0:
+	case is(m, syscall.S_ISGID):
 		return featureSetgid, nil
 	case m&(syscall.S_IXUSR|syscall.S_IXGRP|syscall.S_IXOTH) != 0:
 		return featureExecutable, nil
