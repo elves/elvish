@@ -173,7 +173,12 @@ func (n *navigation) descend() error {
 	if err != nil {
 		return err
 	}
-	return n.refresh()
+	err = n.refresh()
+	if err != nil {
+		return err
+	}
+	n.current.resetSelected()
+	return nil
 }
 
 // prev selects the previous file.
