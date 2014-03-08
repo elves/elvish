@@ -99,7 +99,7 @@ func is(u, p uint32) bool {
 
 func determineFeature(fname string, mh bool) (fileFeature, error) {
 	var stat syscall.Stat_t
-	err := syscall.Stat(fname, &stat)
+	err := syscall.Lstat(fname, &stat)
 	if err != nil {
 		return 0, err
 	}
