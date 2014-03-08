@@ -373,11 +373,11 @@ tokens:
 		b.writes(trimWcwidth(strings.Join(bs.tips, ", "), width), attrForTip)
 	}
 
-	listingHeight := 0
+	hListing := 0
 	// Trim lines and determine the maximum height for bufListing
 	switch {
 	case height >= lines(bufLine, bufMode, bufTips):
-		listingHeight = height - lines(bufLine, bufMode, bufTips)
+		hListing = height - lines(bufLine, bufMode, bufTips)
 	case height >= lines(bufLine, bufTips):
 		bufMode, bufListing = nil, nil
 	case height >= lines(bufLine):
@@ -392,7 +392,7 @@ tokens:
 
 	// Render bufListing under the maximum height constraint
 	nav := bs.navigation
-	if listingHeight > 0 && comp != nil || nav != nil {
+	if hListing > 0 && comp != nil || nav != nil {
 		b := newBuffer(width)
 		bufListing = b
 		// Completion listing
@@ -418,7 +418,7 @@ tokens:
 			bs.completionLines = lines
 
 			// Determine the window to show.
-			low, high := findWindow(lines, comp.current%lines, listingHeight)
+			low, high := findWindow(lines, comp.current%lines, hListing)
 			for i := low; i < high; i++ {
 				if i > low {
 					b.newline()
@@ -459,14 +459,14 @@ tokens:
 			wCurrent := w * ratioCurrent / 100
 			wPreview := w * ratioPreview / 100
 
-			b := renderNavColumn(nav.parent, wParent, listingHeight)
+			b := renderNavColumn(nav.parent, wParent, hListing)
 			bufListing = b
 
-			bCurrent := renderNavColumn(nav.current, wCurrent, listingHeight)
+			bCurrent := renderNavColumn(nav.current, wCurrent, hListing)
 			b.extendHorizontal(bCurrent, wParent, colMargin)
 
 			if wPreview > 0 {
-				bPreview := renderNavColumn(nav.dirPreview, wPreview, listingHeight)
+				bPreview := renderNavColumn(nav.dirPreview, wPreview, hListing)
 				b.extendHorizontal(bPreview, wParent+wCurrent+colMargin, colMargin)
 			}
 		}
