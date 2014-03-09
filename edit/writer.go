@@ -123,7 +123,7 @@ func (b *buffer) write(r rune, attr string) {
 		// BUG(xiaq): buffer.write drops unprintable runes silently
 		return
 	}
-	wd := wcwidth(r)
+	wd := WcWidth(r)
 	c := cell{r, byte(wd), attr}
 
 	if b.col+wd > b.width {
@@ -318,10 +318,10 @@ func renderNavColumn(nc *navColumn, w, h int) *buffer {
 		if w >= navigationListingMinWidthForPadding {
 			padding := navigationListingColPadding
 			b.writePadding(padding, attr)
-			b.writes(forceWcwidth(text, w-2), attr)
+			b.writes(ForceWcWidth(text, w-2), attr)
 			b.writePadding(padding, attr)
 		} else {
-			b.writes(forceWcwidth(text, w), attr)
+			b.writes(ForceWcWidth(text, w), attr)
 		}
 	}
 	return b
@@ -395,7 +395,7 @@ tokens:
 	}
 
 	// Write rprompt
-	padding := b.width - b.col - wcwidths(bs.rprompt)
+	padding := b.width - b.col - WcWidths(bs.rprompt)
 	if padding >= 1 {
 		b.newlineWhenFull = false
 		b.writePadding(padding, "")
@@ -417,7 +417,7 @@ tokens:
 		case modeHistory:
 			text = fmt.Sprintf("History #%d", bs.history.current)
 		}
-		b.writes(trimWcwidth(text, width), attrForMode)
+		b.writes(TrimWcWidth(text, width), attrForMode)
 	}
 
 	// bufTips
@@ -425,7 +425,7 @@ tokens:
 	if len(bs.tips) > 0 {
 		b := newBuffer(width)
 		bufTips = b
-		b.writes(trimWcwidth(strings.Join(bs.tips, ", "), width), attrForTip)
+		b.writes(TrimWcWidth(strings.Join(bs.tips, ", "), width), attrForTip)
 	}
 
 	hListing := 0
@@ -459,7 +459,7 @@ tokens:
 			colWidth := 0
 			margin := completionListingColMargin
 			for _, cand := range cands {
-				width := wcwidths(cand.text)
+				width := WcWidths(cand.text)
 				if colWidth < width {
 					colWidth = width
 				}
@@ -488,7 +488,7 @@ tokens:
 						attr += attrForCurrentCompletion
 					}
 					text := cands[k].text
-					b.writes(forceWcwidth(text, colWidth), attr)
+					b.writes(ForceWcWidth(text, colWidth), attr)
 					b.writePadding(margin, "")
 				}
 			}

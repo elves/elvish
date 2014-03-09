@@ -17,7 +17,7 @@ var wcwidthTests = []struct {
 
 func TestWcwidth(t *testing.T) {
 	for _, tt := range wcwidthTests {
-		out := wcwidth(tt.in)
+		out := WcWidth(tt.in)
 		if out != tt.wanted {
 			t.Errorf("wcwidth(%q) => %v, want %v", tt.in, out, tt.wanted)
 		}

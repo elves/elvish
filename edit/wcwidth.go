@@ -63,7 +63,7 @@ func isCombining(r rune) bool {
 	return i < n && r >= combining[i][0]
 }
 
-func wcwidth(r rune) int {
+func WcWidth(r rune) int {
 	switch {
 	case r == 0:
 		return 0
@@ -91,17 +91,17 @@ func wcwidth(r rune) int {
 	return 1
 }
 
-func wcwidths(s string) (w int) {
+func WcWidths(s string) (w int) {
 	for _, r := range s {
-		w += wcwidth(r)
+		w += WcWidth(r)
 	}
 	return
 }
 
-func trimWcwidth(s string, wmax int) string {
+func TrimWcWidth(s string, wmax int) string {
 	w := 0
 	for i, r := range s {
-		w += wcwidth(r)
+		w += WcWidth(r)
 		if w > wmax {
 			return s[:i]
 		}
@@ -109,10 +109,10 @@ func trimWcwidth(s string, wmax int) string {
 	return s
 }
 
-func forceWcwidth(s string, width int) string {
+func ForceWcWidth(s string, width int) string {
 	w := 0
 	for i, r := range s {
-		w0 := wcwidth(r)
+		w0 := WcWidth(r)
 		w += w0
 		if w > width {
 			w -= w0
