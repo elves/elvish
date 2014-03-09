@@ -22,6 +22,9 @@ func (k Key) String() (s string) {
 	if k.Mod&Alt != 0 {
 		s += "Alt-"
 	}
+	if k.Mod&Shift != 0 {
+		s += "Shift-"
+	}
 	if k.rune > 0 {
 		if name, ok := KeyNames[k.rune]; ok {
 			s += name

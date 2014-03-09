@@ -177,9 +177,11 @@ func (rd *reader) readKey() (k Key, err error) {
 	return
 }
 
-var keyByLast = map[rune]rune{
-	'A': Up, 'B': Down, 'C': Right, 'D': Left,
-	'H': Home, 'F': End,
+var keyByLast = map[rune]Key{
+	'A': Key{Up, 0}, 'B': Key{Down, 0},
+	'C': Key{Right, 0}, 'D': Key{Left, 0},
+	'H': Key{Home, 0}, 'F': Key{End, 0},
+	'Z': Key{Tab, Shift},
 }
 
 // last == '~'
@@ -204,8 +206,7 @@ var keyByNum2 = map[int]rune{
 
 // Parse a CSI-style function key sequence.
 func parseCSI(nums []int, last rune, seq string) (Key, error) {
-	if r, ok := keyByLast[last]; ok {
-		k := Key{r, 0}
+	if k, ok := keyByLast[last]; ok {
 		if len(nums) == 0 {
 			// Unmodified: \e[A (Up)
 			return k, nil
