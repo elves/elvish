@@ -97,6 +97,8 @@ func killLineRight(ed *Editor, k Key) *leReturn {
 	eol := strings.IndexRune(ed.line[ed.dot:], '\n')
 	if eol == -1 {
 		eol = len(ed.line)
+	} else {
+		eol += ed.dot
 	}
 	ed.line = ed.line[:ed.dot] + ed.line[eol:]
 	return nil
