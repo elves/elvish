@@ -10,7 +10,7 @@ import (
 // Line editor builtins.
 // These are not exposed to the user in anyway yet. Ideally, they should
 // reside in a dedicated namespace and callable by users, e.g.
-// le:kill-line-f.
+// le:kill-line-right.
 
 type editorAction int
 
@@ -33,42 +33,42 @@ var leBuiltins = map[string]leBuiltin{
 	// Command and insert mode
 	"start-insert":    startInsert,
 	"start-command":   startCommand,
-	"kill-line-b":     killLineB,
-	"kill-line-f":     killLineF,
-	"kill-rune-b":     killRuneB,
-	"kill-rune-f":     killRuneF,
-	"move-dot-b":      moveDotB,
-	"move-dot-f":      moveDotF,
+	"kill-line-left":  killLineLeft,
+	"kill-line-right": killLineRight,
+	"kill-rune-left":  killRuneLeft,
+	"kill-rune-right": killRuneRight,
+	"move-dot-left":   moveDotLeft,
+	"move-dot-right":  moveDotRight,
 	"insert-key":      insertKey,
 	"return-line":     returnLine,
-	"return-eof":      returnEOF,
+	"return-eof":      returnEORight,
 	"default-command": defaultCommand,
 	"default-insert":  defaultInsert,
 
 	// Completion mode
 	"start-completion":   startCompletion,
 	"cancel-completion":  cancelCompletion,
-	"select-cand-b":      selectCandB,
-	"select-cand-f":      selectCandF,
-	"select-cand-col-b":  selectCandColB,
-	"select-cand-col-f":  selectCandColF,
-	"cycle-cand-f":       cycleCandF,
+	"select-cand-up":     selectCandUp,
+	"select-cand-down":   selectCandDown,
+	"select-cand-left":   selectCandLeft,
+	"select-cand-right":  selectCandRight,
+	"cycle-cand-right":   cycleCandRight,
 	"default-completion": defaultCompletion,
 
 	// Navigation mode
 	"start-navigation":   startNavigation,
-	"select-nav-b":       selectNavB,
-	"select-nav-f":       selectNavF,
+	"select-nav-up":      selectNavUp,
+	"select-nav-down":    selectNavDown,
 	"ascend-nav":         ascendNav,
 	"descend-nav":        descendNav,
 	"default-navigation": defaultNavigation,
 
 	// History mode
-	"start-history":    startHistory,
-	"cancel-history":   cancelHistory,
-	"select-history-b": selectHistoryB,
-	"select-history-f": selectHistoryF,
-	"default-history":  defaultHistory,
+	"start-history":       startHistory,
+	"cancel-history":      cancelHistory,
+	"select-history-prev": selectHistoryPrev,
+	"select-history-next": selectHistoryNext,
+	"default-history":     defaultHistory,
 }
 
 func startInsert(ed *Editor, k Key) *leReturn {
@@ -84,7 +84,7 @@ func startCommand(ed *Editor, k Key) *leReturn {
 	return &leReturn{action: changeMode, newMode: modeCommand}
 }
 
-func killLineB(ed *Editor, k Key) *leReturn {
+func killLineLeft(ed *Editor, k Key) *leReturn {
 	// Find last start of line
 	sol := strings.LastIndex(ed.line[:ed.dot], "\n") + 1
 	ed.line = ed.line[:sol] + ed.line[ed.dot:]
@@ -92,7 +92,7 @@ func killLineB(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func killLineF(ed *Editor, k Key) *leReturn {
+func killLineRight(ed *Editor, k Key) *leReturn {
 	// Find next end of line
 	eol := strings.IndexRune(ed.line[ed.dot:], '\n')
 	if eol == -1 {
@@ -102,7 +102,7 @@ func killLineF(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func killRuneB(ed *Editor, k Key) *leReturn {
+func killRuneLeft(ed *Editor, k Key) *leReturn {
 	if ed.dot > 0 {
 		_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
 		ed.line = ed.line[:ed.dot-w] + ed.line[ed.dot:]
@@ -113,7 +113,7 @@ func killRuneB(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func killRuneF(ed *Editor, k Key) *leReturn {
+func killRuneRight(ed *Editor, k Key) *leReturn {
 	if ed.dot < len(ed.line) {
 		_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
 		ed.line = ed.line[:ed.dot] + ed.line[ed.dot+w:]
@@ -123,13 +123,13 @@ func killRuneF(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func moveDotB(ed *Editor, k Key) *leReturn {
+func moveDotLeft(ed *Editor, k Key) *leReturn {
 	_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
 	ed.dot -= w
 	return nil
 }
 
-func moveDotF(ed *Editor, k Key) *leReturn {
+func moveDotRight(ed *Editor, k Key) *leReturn {
 	_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
 	ed.dot += w
 	return nil
@@ -145,38 +145,38 @@ func returnLine(ed *Editor, k Key) *leReturn {
 	return &leReturn{action: exitReadLine, readLineReturn: LineRead{Line: ed.line}}
 }
 
-func returnEOF(ed *Editor, k Key) *leReturn {
+func returnEORight(ed *Editor, k Key) *leReturn {
 	if len(ed.line) == 0 {
 		return &leReturn{action: exitReadLine, readLineReturn: LineRead{EOF: true}}
 	}
 	return nil
 }
 
-func selectCandB(ed *Editor, k Key) *leReturn {
+func selectCandUp(ed *Editor, k Key) *leReturn {
 	ed.completion.prev(false)
 	return nil
 }
 
-func selectCandF(ed *Editor, k Key) *leReturn {
+func selectCandDown(ed *Editor, k Key) *leReturn {
 	ed.completion.next(false)
 	return nil
 }
 
-func selectCandColB(ed *Editor, k Key) *leReturn {
+func selectCandLeft(ed *Editor, k Key) *leReturn {
 	if c := ed.completion.current - ed.completionLines; c >= 0 {
 		ed.completion.current = c
 	}
 	return nil
 }
 
-func selectCandColF(ed *Editor, k Key) *leReturn {
+func selectCandRight(ed *Editor, k Key) *leReturn {
 	if c := ed.completion.current + ed.completionLines; c < len(ed.completion.candidates) {
 		ed.completion.current = c
 	}
 	return nil
 }
 
-func cycleCandF(ed *Editor, k Key) *leReturn {
+func cycleCandRight(ed *Editor, k Key) *leReturn {
 	ed.completion.next(true)
 	return nil
 }
@@ -206,12 +206,12 @@ func startNavigation(ed *Editor, k Key) *leReturn {
 	return &leReturn{}
 }
 
-func selectNavB(ed *Editor, k Key) *leReturn {
+func selectNavUp(ed *Editor, k Key) *leReturn {
 	ed.navigation.prev()
 	return &leReturn{}
 }
 
-func selectNavF(ed *Editor, k Key) *leReturn {
+func selectNavDown(ed *Editor, k Key) *leReturn {
 	ed.navigation.next()
 	return &leReturn{}
 }
@@ -249,12 +249,12 @@ func cancelHistory(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func selectHistoryB(ed *Editor, k Key) *leReturn {
+func selectHistoryPrev(ed *Editor, k Key) *leReturn {
 	ed.history.prev()
 	return nil
 }
 
-func selectHistoryF(ed *Editor, k Key) *leReturn {
+func selectHistoryNext(ed *Editor, k Key) *leReturn {
 	ed.history.next()
 	return nil
 }

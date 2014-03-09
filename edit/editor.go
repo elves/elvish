@@ -1,4 +1,4 @@
-// Package edit implements a full-feature line editor.
+// Package edit implements a full-righteature line editor.
 package edit
 
 import (
@@ -124,19 +124,19 @@ func (ed *Editor) refresh() error {
 var keyBindings = map[bufferMode]map[Key]string{
 	modeCommand: map[Key]string{
 		Key{'i', 0}:    "start-insert",
-		Key{'h', 0}:    "move-dot-b",
-		Key{'l', 0}:    "move-dot-f",
-		Key{'D', 0}:    "kill-line-f",
+		Key{'h', 0}:    "move-dot-left",
+		Key{'l', 0}:    "move-dot-right",
+		Key{'D', 0}:    "kill-line-right",
 		DefaultBinding: "default-command",
 	},
 	modeInsert: map[Key]string{
 		Key{'[', Ctrl}:    "start-command",
-		Key{'U', Ctrl}:    "kill-line-b",
-		Key{'K', Ctrl}:    "kill-line-f",
-		Key{Backspace, 0}: "kill-rune-b",
-		Key{Delete, 0}:    "kill-rune-f",
-		Key{Left, 0}:      "move-dot-b",
-		Key{Right, 0}:     "move-dot-f",
+		Key{'U', Ctrl}:    "kill-line-left",
+		Key{'K', Ctrl}:    "kill-line-right",
+		Key{Backspace, 0}: "kill-rune-left",
+		Key{Delete, 0}:    "kill-rune-right",
+		Key{Left, 0}:      "move-dot-left",
+		Key{Right, 0}:     "move-dot-right",
 		Key{Enter, Alt}:   "insert-key",
 		Key{Enter, 0}:     "return-line",
 		Key{'D', Ctrl}:    "return-eof",
@@ -147,24 +147,24 @@ var keyBindings = map[bufferMode]map[Key]string{
 	},
 	modeCompletion: map[Key]string{
 		Key{'[', Ctrl}: "cancel-completion",
-		Key{Up, 0}:     "select-cand-b",
-		Key{Down, 0}:   "select-cand-f",
-		Key{Left, 0}:   "select-cand-col-b",
-		Key{Right, 0}:  "select-cand-col-f",
-		Key{Tab, 0}:    "cycle-cand-f",
+		Key{Up, 0}:     "select-cand-up",
+		Key{Down, 0}:   "select-cand-down",
+		Key{Left, 0}:   "select-cand-left",
+		Key{Right, 0}:  "select-cand-right",
+		Key{Tab, 0}:    "cycle-cand-right",
 		DefaultBinding: "default-completion",
 	},
 	modeNavigation: map[Key]string{
-		Key{Up, 0}:     "select-nav-b",
-		Key{Down, 0}:   "select-nav-f",
+		Key{Up, 0}:     "select-nav-up",
+		Key{Down, 0}:   "select-nav-down",
 		Key{Left, 0}:   "ascend-nav",
 		Key{Right, 0}:  "descend-nav",
 		DefaultBinding: "default-navigation",
 	},
 	modeHistory: map[Key]string{
 		Key{'[', Ctrl}:   "cancel-history",
-		Key{PageUp, 0}:   "select-history-b",
-		Key{PageDown, 0}: "select-history-f",
+		Key{PageUp, 0}:   "select-history-prev",
+		Key{PageDown, 0}: "select-history-next",
 		DefaultBinding:   "default-history",
 	},
 }
