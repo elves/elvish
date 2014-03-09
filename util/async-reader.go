@@ -89,5 +89,8 @@ func (ar *AsyncReader) Start() <-chan rune {
 }
 
 func (ar *AsyncReader) Stop() {
-	ar.wQuit.Write([]byte("x"))
+	_, err := ar.wQuit.Write([]byte("x"))
+	if err != nil {
+		panic(err)
+	}
 }
