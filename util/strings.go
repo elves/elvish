@@ -24,3 +24,15 @@ func FindContext(text string, pos int) (lineno, colno int, line string) {
 	line = strings.SplitN(text[p-colno:], "\n", 2)[0]
 	return
 }
+
+func FindFirstEOL(s string) int {
+	eol := strings.IndexRune(s, '\n')
+	if eol == -1 {
+		eol = len(s)
+	}
+	return eol
+}
+
+func FindLastSOL(s string) int {
+	return strings.LastIndex(s, "\n") + 1
+}

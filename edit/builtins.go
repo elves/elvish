@@ -2,9 +2,10 @@ package edit
 
 import (
 	"fmt"
-	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/xiaq/elvish/util"
 )
 
 // Line editor builtins.
@@ -85,21 +86,14 @@ func startCommand(ed *Editor, k Key) *leReturn {
 }
 
 func killLineLeft(ed *Editor, k Key) *leReturn {
-	// Find last start of line
-	sol := strings.LastIndex(ed.line[:ed.dot], "\n") + 1
+	sol := util.FindLastSOL(ed.line[:ed.dot])
 	ed.line = ed.line[:sol] + ed.line[ed.dot:]
 	ed.dot = sol
 	return nil
 }
 
 func killLineRight(ed *Editor, k Key) *leReturn {
-	// Find next end of line
-	eol := strings.IndexRune(ed.line[ed.dot:], '\n')
-	if eol == -1 {
-		eol = len(ed.line)
-	} else {
-		eol += ed.dot
-	}
+	eol := util.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
 	ed.line = ed.line[:ed.dot] + ed.line[eol:]
 	return nil
 }
