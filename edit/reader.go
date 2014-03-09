@@ -35,7 +35,7 @@ func newBadEscSeq(seq string, msg string) *BadEscSeq {
 }
 
 func (bes *BadEscSeq) Error() string {
-	return fmt.Sprintf("Bad escape sequence %q: ", bes.seq, bes.msg)
+	return fmt.Sprintf("Bad escape sequence %q: %s", bes.seq, bes.msg)
 }
 
 func (rd *reader) badEscSeq(msg string) {
