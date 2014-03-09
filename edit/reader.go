@@ -13,10 +13,9 @@ var EscTimeout = time.Millisecond * 10
 // reader is the part of an Editor responsible for reading and decoding
 // terminal key sequences.
 type reader struct {
-	timed        *util.TimedReader
-	buffed       *bufio.Reader
-	unreadBuffer []rune
-	currentSeq   string
+	timed      *util.TimedReader
+	buffed     *bufio.Reader
+	currentSeq string
 }
 
 func newReader(tr *util.TimedReader) *reader {
@@ -57,32 +56,15 @@ const (
 	RuneTimeout rune = -1
 )
 
-func (rd *reader) readRune() (r rune) {
-	n := len(rd.unreadBuffer)
-	switch {
-	case n > 1:
-		r = rd.unreadBuffer[0]
-		rd.unreadBuffer = rd.unreadBuffer[1:]
-		fallthrough
-	case n == 1:
-		// Zero out unreadBuffer to avoid memory leak.
-		rd.unreadBuffer = nil
-	case n == 0:
-		var err error
-		r, _, err = rd.buffed.ReadRune()
-		if err == util.ErrTimeout {
-			return RuneTimeout
-		} else if err != nil {
-			util.Panic(err)
-		}
+func (rd *reader) readRune() rune {
+	r, _, err := rd.buffed.ReadRune()
+	if err == util.ErrTimeout {
+		return RuneTimeout
+	} else if err != nil {
+		util.Panic(err)
 	}
 	rd.currentSeq += string(r)
-	return
-}
-
-func (rd *reader) unreadRune(r ...rune) {
-	// BUG(xiaq): reader.unreadRune doesn't back up rd.currentSeq
-	rd.unreadBuffer = append(rd.unreadBuffer, r...)
+	return r
 }
 
 func (rd *reader) readAssertedRune(r rune) {
