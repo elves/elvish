@@ -1,7 +1,7 @@
 # Next steps
 
 * Editor (edit)
-    - Multiline editing
+     - Many...
 * Syntax (parse, eval)
     - Sigil as shorthand for function invocation
         + `vim =yaourt` is equivalent to `vim (= yaourt)`
@@ -41,9 +41,8 @@
       Should arity mismatch be detected early and avoid the side-effect of
       writing `/tmp/a`? Should $a and $b be defined?
       (`var` is going to be a special form, needs another subtle example)
-* Unix process stuff
-    - Signal handling
-    - Simple job control: support suspending and resuming jobs; no need for
-      too complex job control, the role is which is largely subsumed by
-      screen/tmux today
+* Simple job control
+    - Support suspending and resuming jobs
+    - No need for too complex job control, the role is which is largely
+      subsumed by screen/tmux today
 * All the TODO, XXX and BUG's in source :)
