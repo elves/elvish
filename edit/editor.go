@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/xiaq/elvish/edit/tty"
@@ -316,6 +317,7 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 	}
 	defer ed.finishReadLine(&lr)
 
+Begin:
 	ed.line = ""
 	ed.mode = modeInsert
 	ed.tips = nil
@@ -325,6 +327,7 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 
 	ones := ed.reader.Chan()
 
+MainLoop:
 	for {
 		ed.prompt = prompt()
 		ed.rprompt = rprompt()
@@ -336,6 +339,15 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 		ed.tips = nil
 
 		select {
+		case sig := <-ed.sigs:
+			// TODO(xiaq): Maybe support customizable handling of signals
+			switch sig {
+			case syscall.SIGINT:
+				// Start over
+				goto Begin
+			case syscall.SIGWINCH:
+				continue MainLoop
+			}
 		case or := <-ones:
 			// Alert about error
 			err := or.Err
