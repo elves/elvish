@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/user"
 	"strconv"
 
 	"github.com/xiaq/elvish/parse"
@@ -135,7 +136,10 @@ func feedchan(ev *Evaluator, args []Value, ports [2]*port) string {
 func cd(ev *Evaluator, args []Value, ports [2]*port) string {
 	var dir string
 	if len(args) == 0 {
-		dir = ""
+		user, err := user.Current()
+		if err == nil {
+			dir = user.HomeDir
+		}
 	} else if len(args) == 1 {
 		dir = args[0].String(ev)
 	} else {
