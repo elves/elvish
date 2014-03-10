@@ -54,7 +54,7 @@ type Editor struct {
 	writer       *writer
 	reader       *Reader
 	ev           *eval.Evaluator
-	sigch        <-chan os.Signal
+	sigs         <-chan os.Signal
 	editorState
 }
 
@@ -91,13 +91,13 @@ func (hs *historyState) next() bool {
 }
 
 // New creates an Editor.
-func New(file *os.File, ev *eval.Evaluator, sigch <-chan os.Signal) *Editor {
+func New(file *os.File, ev *eval.Evaluator, sigs <-chan os.Signal) *Editor {
 	return &Editor{
 		file:   file,
 		writer: newWriter(file),
 		reader: NewReader(file),
 		ev:     ev,
-		sigch:  sigch,
+		sigs:   sigs,
 		editorState: editorState{
 			history: &historyState{},
 		},
