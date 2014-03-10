@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/xiaq/elvish/edit/tty"
 	"github.com/xiaq/elvish/eval"
 	"github.com/xiaq/elvish/parse"
-	"github.com/xiaq/elvish/util"
+)
+
+const (
+	CPRWaitTimeout = 10 * time.Millisecond
 )
 
 var LackEOL = "\033[7m\u23ce\033[m\n"
@@ -48,7 +52,7 @@ type Editor struct {
 	savedTermios *tty.Termios
 	file         *os.File
 	writer       *writer
-	reader       *reader
+	reader       *Reader
 	ev           *eval.Evaluator
 	sigch        <-chan os.Signal
 	editorState
@@ -87,12 +91,11 @@ func (hs *historyState) next() bool {
 }
 
 // New creates an Editor.
-func New(file *os.File, tr *util.TimedReader, ev *eval.Evaluator, sigch <-chan os.Signal) *Editor {
+func New(file *os.File, ev *eval.Evaluator, sigch <-chan os.Signal) *Editor {
 	return &Editor{
-		// savedTermios: term.Copy(),
 		file:   file,
 		writer: newWriter(file),
-		reader: newReader(tr),
+		reader: NewReader(file),
 		ev:     ev,
 		sigch:  sigch,
 		editorState: editorState{
@@ -246,14 +249,31 @@ func (ed *Editor) startReadLine() error {
 
 	// Query cursor location
 	ed.file.WriteString("\033[6n")
-	// BUG(xiaq): In Editor.startReadLine, there is a race condition when user
-	// input sneaked in between WriteString and readCPR
-	x, _, err := ed.reader.readCPR()
-	if err != nil {
-		return err
+
+	ed.reader.Continue()
+	ones := ed.reader.Chan()
+
+	cpr := InvalidPos
+FindCPR:
+	for {
+		select {
+		case or := <-ones:
+			if or.CPR != InvalidPos {
+				cpr = or.CPR
+				break FindCPR
+			} else {
+				// Just discard
+			}
+		case <-time.After(CPRTimeout):
+			break FindCPR
+		}
 	}
 
-	if x != 1 {
+	if cpr == InvalidPos {
+		// Unable to get CPR, just rewind to column 1
+		ed.file.WriteString("\r")
+	} else if cpr.col != 1 {
+		// BUG(xiaq) startReadline assumes that column number starts from 0
 		ed.file.WriteString(LackEOL)
 	}
 
@@ -266,6 +286,8 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 	if lr.EOF == false && lr.Err == nil {
 		ed.history.append(lr.Line)
 	}
+
+	ed.reader.Stop()
 
 	ed.tips = nil
 	ed.mode = modeInsert
@@ -301,6 +323,8 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 	ed.dot = 0
 	ed.writer.oldBuf.cells = nil
 
+	ones := ed.reader.Chan()
+
 	for {
 		ed.prompt = prompt()
 		ed.rprompt = rprompt()
@@ -311,38 +335,49 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 
 		ed.tips = nil
 
-		k, err := ed.reader.readKey()
-		if err != nil {
-			ed.pushTip(err.Error())
-			continue
-		}
+		select {
+		case or := <-ones:
+			// Alert about error
+			err := or.Err
+			if err != nil {
+				ed.pushTip(err.Error())
+				continue
+			}
 
-	lookupKey:
-		keyBinding, ok := keyBindings[ed.mode]
-		if !ok {
-			ed.pushTip("No binding for current mode")
-			continue
-		}
+			// Ignore bogus CPR
+			if or.CPR != InvalidPos {
+				panic("got cpr")
+				continue
+			}
 
-		name, bound := keyBinding[k]
-		if !bound {
-			name = keyBinding[DefaultBinding]
-		}
-		ret := leBuiltins[name](ed, k)
-		if ret == nil {
-			continue
-		}
-		switch ret.action {
-		case noAction:
-			continue
-		case changeMode:
-			ed.mode = ret.newMode
-			continue
-		case changeModeAndReprocess:
-			ed.mode = ret.newMode
-			goto lookupKey
-		case exitReadLine:
-			return ret.readLineReturn
+			k := or.Key
+		lookupKey:
+			keyBinding, ok := keyBindings[ed.mode]
+			if !ok {
+				ed.pushTip("No binding for current mode")
+				continue
+			}
+
+			name, bound := keyBinding[k]
+			if !bound {
+				name = keyBinding[DefaultBinding]
+			}
+			ret := leBuiltins[name](ed, k)
+			if ret == nil {
+				continue
+			}
+			switch ret.action {
+			case noAction:
+				continue
+			case changeMode:
+				ed.mode = ret.newMode
+				continue
+			case changeModeAndReprocess:
+				ed.mode = ret.newMode
+				goto lookupKey
+			case exitReadLine:
+				return ret.readLineReturn
+			}
 		}
 	}
 }
