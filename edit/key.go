@@ -32,13 +32,14 @@ func (k Key) String() (s string) {
 			s += string(k.Rune)
 		}
 	} else {
-		s += FunctionKeyNames[-k.Rune-1]
+		s += FunctionKeyNames[-k.Rune]
 	}
 	return
 }
 
 const (
-	F1 rune = -1 - iota
+	Invalid rune = -iota
+	F1
 	F2
 	F3
 	F4
@@ -76,6 +77,7 @@ var KeyNames = map[rune]string{
 }
 
 var FunctionKeyNames = [...]string{
+	"(Invalid)",
 	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
 	"Up", "Down", "Right", "Left",
 	"Home", "Insert", "Delete", "End", "PageUp", "PageDown",
