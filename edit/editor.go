@@ -273,15 +273,13 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 
 // ReadLine reads a line interactively.
 // TODO(xiaq): ReadLine currently just ignores all signals.
-func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
+func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 	err := ed.startReadLine()
 	if err != nil {
 		return LineRead{Err: err}
 	}
 	defer ed.finishReadLine(&lr)
 
-	ed.prompt = prompt
-	ed.rprompt = rprompt
 	ed.line = ""
 	ed.mode = modeInsert
 	ed.tips = nil
@@ -290,6 +288,8 @@ func (ed *Editor) ReadLine(prompt string, rprompt string) (lr LineRead) {
 	ed.writer.oldBuf.cells = nil
 
 	for {
+		ed.prompt = prompt()
+		ed.rprompt = rprompt()
 		err := ed.refresh()
 		if err != nil {
 			return LineRead{Err: err}

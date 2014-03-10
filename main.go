@@ -37,7 +37,7 @@ func main() {
 	if err != nil {
 		hostname = "???"
 	}
-	rprompt := username + "@" + hostname
+	rpromptStr := username + "@" + hostname
 
 	sigch := make(chan os.Signal, sigchSize)
 	signal.Notify(sigch)
@@ -52,7 +52,13 @@ func main() {
 			panic(err)
 		}
 
-		prompt := util.Getwd() + "> "
+		prompt := func() string {
+			return util.Getwd() + "> "
+		}
+		rprompt := func() string {
+			return rpromptStr
+		}
+
 		lr := ed.ReadLine(prompt, rprompt)
 
 		if lr.EOF {
