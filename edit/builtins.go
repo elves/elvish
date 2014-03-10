@@ -40,6 +40,8 @@ var leBuiltins = map[string]leBuiltin{
 	"kill-rune-right": killRuneRight,
 	"move-dot-left":   moveDotLeft,
 	"move-dot-right":  moveDotRight,
+	"move-dot-up":     moveDotUp,
+	"move-dot-down":   moveDotDown,
 	"insert-key":      insertKey,
 	"return-line":     returnLine,
 	"return-eof":      returnEORight,
@@ -128,6 +130,33 @@ func moveDotLeft(ed *Editor, k Key) *leReturn {
 func moveDotRight(ed *Editor, k Key) *leReturn {
 	_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
 	ed.dot += w
+	return nil
+}
+
+func moveDotUp(ed *Editor, k Key) *leReturn {
+	sol := util.FindLastSOL(ed.line[:ed.dot])
+	if sol == 0 {
+		ed.beep()
+		return nil
+	}
+	prevEOL := sol - 1
+	prevSOL := util.FindLastSOL(ed.line[:prevEOL])
+	width := WcWidths(ed.line[sol:ed.dot])
+	ed.dot = prevSOL + len(TrimWcWidth(ed.line[prevSOL:prevEOL], width))
+	return nil
+}
+
+func moveDotDown(ed *Editor, k Key) *leReturn {
+	eol := util.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
+	if eol == len(ed.line) {
+		ed.beep()
+		return nil
+	}
+	nextSOL := eol + 1
+	nextEOL := util.FindFirstEOL(ed.line[nextSOL:]) + nextSOL
+	sol := util.FindLastSOL(ed.line[:ed.dot])
+	width := WcWidths(ed.line[sol:ed.dot])
+	ed.dot = nextSOL + len(TrimWcWidth(ed.line[nextSOL:nextEOL], width))
 	return nil
 }
 
