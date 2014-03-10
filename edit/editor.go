@@ -199,15 +199,14 @@ func (ed *Editor) acceptHistory() {
 	ed.dot = len(ed.line)
 }
 
-// startsReadLine prepares the terminal for the editor.
-func (ed *Editor) startReadLine() error {
-	fd := int(ed.file.Fd())
+func SetupTerminal(file *os.File) (*tty.Termios, error) {
+	fd := int(file.Fd())
 	term, err := tty.NewTermiosFromFd(fd)
 	if err != nil {
-		return fmt.Errorf("can't get terminal attribute: %s", err)
+		return nil, fmt.Errorf("can't get terminal attribute: %s", err)
 	}
 
-	ed.savedTermios = term.Copy()
+	savedTermios := term.Copy()
 
 	term.SetIcanon(false)
 	term.SetEcho(false)
@@ -216,16 +215,34 @@ func (ed *Editor) startReadLine() error {
 
 	err = term.ApplyToFd(fd)
 	if err != nil {
-		return fmt.Errorf("can't set up terminal attribute: %s", err)
+		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
 	}
 
 	// Set autowrap off
-	ed.file.WriteString("\033[?7l")
+	file.WriteString("\033[?7l")
 
 	err = tty.FlushInput(fd)
 	if err != nil {
-		return fmt.Errorf("can't flush input: %s", err)
+		return nil, fmt.Errorf("can't flush input: %s", err)
 	}
+
+	return savedTermios, nil
+}
+
+func CleanupTerminal(file *os.File, savedTermios *tty.Termios) error {
+	// Set autowrap on
+	file.WriteString("\033[?7h")
+	fd := int(file.Fd())
+	return savedTermios.ApplyToFd(fd)
+}
+
+// startsReadLine prepares the terminal for the editor.
+func (ed *Editor) startReadLine() error {
+	savedTermios, err := SetupTerminal(ed.file)
+	if err != nil {
+		return err
+	}
+	ed.savedTermios = savedTermios
 
 	// Query cursor location
 	ed.file.WriteString("\033[6n")
@@ -259,11 +276,8 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 	ed.refresh() // XXX(xiaq): Ignore possible error
 	ed.file.WriteString("\n")
 
-	// Set autowrap on
-	ed.file.WriteString("\033[?7h")
+	err := CleanupTerminal(ed.file, ed.savedTermios)
 
-	fd := int(ed.file.Fd())
-	err := ed.savedTermios.ApplyToFd(fd)
 	if err != nil {
 		// BUG(xiaq): Error in Editor.finishReadLine may override earlier error
 		*lr = LineRead{Err: fmt.Errorf("can't restore terminal attribute: %s", err)}
