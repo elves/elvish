@@ -161,8 +161,8 @@ func moveDotDown(ed *Editor, k Key) *leReturn {
 }
 
 func insertKey(ed *Editor, k Key) *leReturn {
-	ed.line = ed.line[:ed.dot] + string(k.rune) + ed.line[ed.dot:]
-	ed.dot += utf8.RuneLen(k.rune)
+	ed.line = ed.line[:ed.dot] + string(k.Rune) + ed.line[ed.dot:]
+	ed.dot += utf8.RuneLen(k.Rune)
 	return nil
 }
 
@@ -213,7 +213,7 @@ func cancelCompletion(ed *Editor, k Key) *leReturn {
 }
 
 func defaultInsert(ed *Editor, k Key) *leReturn {
-	if k.Mod == 0 && k.rune > 0 && unicode.IsGraphic(k.rune) {
+	if k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune) {
 		return insertKey(ed, k)
 	}
 	ed.pushTip(fmt.Sprintf("Unbound: %s", k))

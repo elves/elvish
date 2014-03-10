@@ -32,6 +32,8 @@ type pos struct {
 	line, col int
 }
 
+var InvalidPos = pos{-1, -1}
+
 func lineWidth(cs []cell) int {
 	w := 0
 	for _, c := range cs {

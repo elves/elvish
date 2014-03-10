@@ -9,8 +9,8 @@ const (
 )
 
 type Key struct {
-	rune
-	Mod Mod
+	Rune rune
+	Mod  Mod
 }
 
 var ZeroKey = Key{}
@@ -25,14 +25,14 @@ func (k Key) String() (s string) {
 	if k.Mod&Shift != 0 {
 		s += "Shift-"
 	}
-	if k.rune > 0 {
-		if name, ok := KeyNames[k.rune]; ok {
+	if k.Rune > 0 {
+		if name, ok := KeyNames[k.Rune]; ok {
 			s += name
 		} else {
-			s += string(k.rune)
+			s += string(k.Rune)
 		}
 	} else {
-		s += FunctionKeyNames[-k.rune-1]
+		s += FunctionKeyNames[-k.Rune-1]
 	}
 	return
 }
