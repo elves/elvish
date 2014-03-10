@@ -290,9 +290,10 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 
 	ed.reader.Stop()
 
-	ed.tips = nil
 	ed.mode = modeInsert
+	ed.tips = nil
 	ed.completion = nil
+	ed.navigation = nil
 	ed.dot = len(ed.line)
 	// TODO Perhaps make it optional to NOT clear the rprompt
 	ed.rprompt = ""
@@ -322,6 +323,7 @@ Begin:
 	ed.mode = modeInsert
 	ed.tips = nil
 	ed.completion = nil
+	ed.navigation = nil
 	ed.dot = 0
 	ed.writer.oldBuf.cells = nil
 
