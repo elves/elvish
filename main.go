@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"os/user"
 
 	"github.com/xiaq/elvish/edit"
@@ -34,7 +35,7 @@ func main() {
 	rpromptStr := username + "@" + hostname
 
 	sigch := make(chan os.Signal, sigchSize)
-	// signal.Notify(sigch)
+	signal.Notify(sigch)
 
 	ed := edit.New(os.Stdin, ev, sigch)
 
