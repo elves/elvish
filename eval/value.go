@@ -219,12 +219,12 @@ func (e *Env) Caret(ev *Evaluator, v Value) Value {
 // Closure is a closure.
 type Closure struct {
 	ArgNames []string
-	Chunk    *parse.ListNode
+	Chunk    *parse.ChunkNode
 }
 
 func (c *Closure) isValue() {}
 
-func NewClosure(argNames []string, ch *parse.ListNode) *Closure {
+func NewClosure(argNames []string, ch *parse.ChunkNode) *Closure {
 	return &Closure{argNames, ch}
 }
 

@@ -44,7 +44,7 @@ func evalPlainTerm(tn *TermNode) (word string) {
 		return
 	}
 	for _, n := range tn.Nodes {
-		word += evalPlainFactor(n.(*FactorNode))
+		word += evalPlainFactor(n)
 	}
 	return
 }
@@ -54,7 +54,7 @@ func evalPlainTermList(tn *TermListNode) (words []string) {
 		return
 	}
 	for _, n := range tn.Nodes {
-		words = append(words, evalPlainTerm(n.(*TermNode)))
+		words = append(words, evalPlainTerm(n))
 	}
 	return
 }

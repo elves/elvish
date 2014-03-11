@@ -27,20 +27,36 @@ func (p Pos) Position() Pos {
 
 // Nodes.
 
-// ListNode holds a sequence of nodes.
-type ListNode struct {
+// ChunkNode is a list of FormNode's.
+type ChunkNode struct {
 	Pos
-	Nodes []Node
+	Nodes []*PipelineNode
 }
 
-func newList(pos Pos, nodes ...Node) *ListNode {
-	return &ListNode{Pos: pos, Nodes: nodes}
+func newChunk(pos Pos, nodes ...*PipelineNode) *ChunkNode {
+	return &ChunkNode{pos, nodes}
 }
 
-func (l *ListNode) isNode() {}
+func (l *ChunkNode) isNode() {}
 
-func (l *ListNode) append(n Node) {
-	l.Nodes = append(l.Nodes, n)
+func (tn *ChunkNode) append(n *PipelineNode) {
+	tn.Nodes = append(tn.Nodes, n)
+}
+
+// PipelineNode is a list of FormNode's.
+type PipelineNode struct {
+	Pos
+	Nodes []*FormNode
+}
+
+func newPipeline(pos Pos, nodes ...*FormNode) *PipelineNode {
+	return &PipelineNode{pos, nodes}
+}
+
+func (l *PipelineNode) isNode() {}
+
+func (tn *PipelineNode) append(n *FormNode) {
+	tn.Nodes = append(tn.Nodes, n)
 }
 
 // FormNode holds a form.
@@ -57,22 +73,36 @@ func newForm(pos Pos) *FormNode {
 
 func (fn *FormNode) isNode() {}
 
-// TermNode is a ListNode of FactorNode's.
+// TermNode is a list of FactorNode's.
 type TermNode struct {
-	ListNode
+	Pos
+	Nodes []*FactorNode
 }
 
-func newTerm(pos Pos, nodes ...Node) *TermNode {
-	return &TermNode{ListNode{Pos: pos, Nodes: nodes}}
+func newTerm(pos Pos, nodes ...*FactorNode) *TermNode {
+	return &TermNode{pos, nodes}
 }
 
-// TermListNode is a ListNode of TermNode's.
+func (l *TermNode) isNode() {}
+
+func (tn *TermNode) append(n *FactorNode) {
+	tn.Nodes = append(tn.Nodes, n)
+}
+
+// TermListNode is a list of TermNode's.
 type TermListNode struct {
-	ListNode
+	Pos
+	Nodes []*TermNode
 }
 
-func newTermList(pos Pos, nodes ...Node) *TermListNode {
-	return &TermListNode{ListNode{Pos: pos, Nodes: nodes}}
+func newTermList(pos Pos, nodes ...*TermNode) *TermListNode {
+	return &TermListNode{pos, nodes}
+}
+
+func (l *TermListNode) isNode() {}
+
+func (tn *TermListNode) append(n *TermNode) {
+	tn.Nodes = append(tn.Nodes, n)
 }
 
 // FactorNode represents a factor.
@@ -132,7 +162,7 @@ func (tn *TableNode) appendToDict(key *TermNode, value *TermNode) {
 type ClosureNode struct {
 	Pos
 	ArgNames *TermListNode
-	Chunk    *ListNode
+	Chunk    *ChunkNode
 }
 
 func newClosure(pos Pos) *ClosureNode {

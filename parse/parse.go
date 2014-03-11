@@ -17,9 +17,9 @@ import (
 
 // Parser maintains the states during parsing.
 type Parser struct {
-	Name       string // name of the script represented by the tree.
-	completing bool   // Whether the parser is running in completing mode
-	Root       Node   // top-level root of the tree.
+	Name       string     // name of the script represented by the tree.
+	completing bool       // Whether the parser is running in completing mode
+	Root       *ChunkNode // top-level root of the tree.
 	Ctx        *Context
 	text       string // text parsed to create the script (or its parent)
 	// Parsing only; cleared after parse.
@@ -179,7 +179,7 @@ func (p *Parser) Parse(text string, completing bool) (err error) {
 
 // Parse is a shorthand for constructing a Paser, call Parse and take out its
 // Root.
-func Parse(name, text string) (Node, error) {
+func Parse(name, text string) (*ChunkNode, error) {
 	p := NewParser(name)
 	err := p.Parse(text, false)
 	if err != nil {
@@ -200,7 +200,7 @@ func Complete(name, text string) (*Context, error) {
 }
 
 // parse parses a chunk and ensures there are no trailing tokens
-func (p *Parser) parse() *ListNode {
+func (p *Parser) parse() *ChunkNode {
 	chunk := p.chunk()
 	if token := p.peekNonSpace(); token.Typ != ItemEOF {
 		p.unexpected(token, "end of script")
@@ -209,8 +209,8 @@ func (p *Parser) parse() *ListNode {
 }
 
 // Chunk = [ [ space ] Pipeline { (";" | "\n") Pipeline } ]
-func (p *Parser) chunk() *ListNode {
-	chunk := newList(p.peek().Pos)
+func (p *Parser) chunk() *ChunkNode {
+	chunk := newChunk(p.peek().Pos)
 	if !startsFactor(p.peekNonSpace().Typ) {
 		return chunk
 	}
@@ -230,8 +230,8 @@ func (p *Parser) chunk() *ListNode {
 }
 
 // Pipeline = Form { "|" Form }
-func (p *Parser) pipeline() *ListNode {
-	pipe := newList(p.peek().Pos)
+func (p *Parser) pipeline() *PipelineNode {
+	pipe := newPipeline(p.peek().Pos)
 	for {
 		pipe.append(p.form())
 		if p.peek().Typ != ItemPipe {

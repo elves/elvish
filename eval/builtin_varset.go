@@ -10,7 +10,7 @@ import (
 
 type varSetForm struct {
 	names  []string
-	values []parse.Node
+	values []*parse.TermNode
 }
 
 var (
@@ -29,11 +29,10 @@ var (
 func parseVarSetForm(args *parse.TermListNode) (*varSetForm, error) {
 	f := &varSetForm{}
 	for i, n := range args.Nodes {
-		n := n.(*parse.TermNode)
 		if len(n.Nodes) != 1 {
 			return nil, errorBadForm
 		}
-		nf := n.Nodes[0].(*parse.FactorNode)
+		nf := n.Nodes[0]
 
 		var text string
 		if m, ok := nf.Node.(*parse.StringNode); ok {
@@ -79,7 +78,7 @@ func var_(ev *Evaluator, args *parse.TermListNode, ports [2]*port) string {
 	}
 	if f.values != nil {
 		return doSet(ev, f.names, ev.evalTermList(
-			&parse.TermListNode{parse.ListNode{0, f.values}}))
+			&parse.TermListNode{0, f.values}))
 	}
 	return ""
 }
@@ -93,5 +92,5 @@ func set(ev *Evaluator, args *parse.TermListNode, ports [2]*port) string {
 		return "not implemented"
 	}
 	return doSet(ev, f.names, ev.evalTermList(
-		&parse.TermListNode{parse.ListNode{0, f.values}}))
+		&parse.TermListNode{0, f.values}))
 }

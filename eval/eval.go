@@ -58,12 +58,12 @@ func (ev *Evaluator) copy() *Evaluator {
 
 // Eval evaluates a chunk node n. The name and text of it is used for
 // diagnostic messages.
-func (ev *Evaluator) Eval(name, text string, n parse.Node) (err error) {
+func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) (err error) {
 	defer util.Recover(&err)
 	defer ev.stopEval()
 	ev.name = name
 	ev.text = text
-	ev.evalChunk(n.(*parse.ListNode))
+	ev.evalChunk(n)
 	return nil
 }
 
@@ -154,7 +154,7 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 		m := n.Node.(*parse.TermListNode)
 		words = ev.evalTermList(m)
 	case parse.CaptureFactor:
-		m := n.Node.(*parse.ListNode)
+		m := n.Node.(*parse.PipelineNode)
 		newEv := ev.copy()
 		ch := make(chan Value)
 		newEv.out = &port{ch: ch}
@@ -192,10 +192,10 @@ func (ev *Evaluator) evalTerm(n *parse.TermNode) []Value {
 		panic("evalTerm got an empty list")
 	}
 
-	words := ev.evalFactor(n.Nodes[0].(*parse.FactorNode))
+	words := ev.evalFactor(n.Nodes[0])
 
 	for _, m := range n.Nodes[1:] {
-		a := ev.evalFactor(m.(*parse.FactorNode))
+		a := ev.evalFactor(m)
 		if len(a) == 1 {
 			for i := range words {
 				words[i] = words[i].Caret(ev, a[0])
@@ -220,7 +220,7 @@ func (ev *Evaluator) evalTermList(ln *parse.TermListNode) []Value {
 
 	words := make([]Value, 0, len(ln.Nodes))
 	for _, n := range ln.Nodes {
-		a := ev.evalTerm(n.(*parse.TermNode))
+		a := ev.evalTerm(n)
 		words = append(words, a...)
 	}
 	return words
@@ -246,10 +246,10 @@ func (ev *Evaluator) evalTermSingleString(n *parse.TermNode, what string) *Strin
 
 // BUG(xiaq): When evaluating a chunk, failure of one pipeline will abort the
 // whole chunk.
-func (ev *Evaluator) evalChunk(ch *parse.ListNode) {
+func (ev *Evaluator) evalChunk(ch *parse.ChunkNode) {
 	ev.push(ch)
 	defer ev.pop()
 	for _, n := range ch.Nodes {
-		ev.evalPipeline(n.(*parse.ListNode))
+		ev.evalPipeline(n)
 	}
 }

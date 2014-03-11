@@ -390,7 +390,7 @@ func (ev *Evaluator) execExternal(fm *form) <-chan *StateUpdate {
 // preevalPipeline resolves commands, sets up pipes and applies redirections.
 // These are done before commands are actually executed. Input of first form
 // and output of last form are NOT connected to ev.{in out}.
-func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (fms []*form, pipelineStreamTypes [3]StreamType) {
+func (ev *Evaluator) preevalPipeline(pl *parse.PipelineNode) (fms []*form, pipelineStreamTypes [3]StreamType) {
 	ev.push(pl)
 	defer ev.pop()
 
@@ -402,7 +402,7 @@ func (ev *Evaluator) preevalPipeline(pl *parse.ListNode) (fms []*form, pipelineS
 
 	var nextIn *port
 	for i, n := range pl.Nodes {
-		fm, streamTypes := ev.preevalForm(n.(*parse.FormNode))
+		fm, streamTypes := ev.preevalForm(n)
 
 		var prependCmd, appendCmd *form
 
@@ -571,12 +571,12 @@ func (ev *Evaluator) waitPipeline(updates []<-chan *StateUpdate) {
 	}
 }
 
-func (ev *Evaluator) evalPipelineAsync(pl *parse.ListNode) []<-chan *StateUpdate {
+func (ev *Evaluator) evalPipelineAsync(pl *parse.PipelineNode) []<-chan *StateUpdate {
 	fms, types := ev.preevalPipeline(pl)
 	return ev.execPipeline(fms, types)
 }
 
 // evalPipeline combines preevalPipeline and execPipeline.
-func (ev *Evaluator) evalPipeline(pl *parse.ListNode) {
+func (ev *Evaluator) evalPipeline(pl *parse.PipelineNode) {
 	ev.waitPipeline(ev.evalPipelineAsync(pl))
 }

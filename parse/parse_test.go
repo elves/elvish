@@ -12,9 +12,9 @@ var parseTests = []struct {
 	in     string
 	wanted Node
 }{
-	{"", newList(0)},
-	{"ls", newList( // chunk
-		0, newList( // pipeline
+	{"", newChunk(0)},
+	{"ls", newChunk( // chunk
+		0, newPipeline( // pipeline
 			0, &FormNode{ // form
 				0, newTerm( // term
 					0, &FactorNode{ // factor
