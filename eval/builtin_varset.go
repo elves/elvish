@@ -74,7 +74,7 @@ func var_(ev *Evaluator, args *parse.TermListNode, ports [2]*port) string {
 		return err.Error()
 	}
 	for _, name := range f.names {
-		ev.locals[name] = nil
+		ev.locals[name] = NewString("")
 	}
 	if f.values != nil {
 		return doSet(ev, f.names, ev.evalTermList(
