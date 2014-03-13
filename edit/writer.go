@@ -331,7 +331,7 @@ func renderNavColumn(nc *navColumn, w, h int) *buffer {
 
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
-func (w *writer) refresh(bs *editorState) error {
+func (w *writer) refresh(bs *editorState, histories []string) error {
 	winsize := tty.GetWinsize(int(w.file.Fd()))
 	width, height := int(winsize.Col), int(winsize.Row)
 
@@ -392,7 +392,7 @@ tokens:
 		// Put the rest of current history, position the cursor at the
 		// end of the line, and finish writing
 		h := bs.history
-		b.writes(h.items[h.current][len(h.prefix):], attrForCompletedHistory)
+		b.writes(histories[h.current][len(h.prefix):], attrForCompletedHistory)
 		b.dot = b.cursor()
 	}
 

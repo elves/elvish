@@ -44,7 +44,6 @@ type editorState struct {
 }
 
 type historyState struct {
-	items   []string
 	current int
 	prefix  string
 }
@@ -119,7 +118,7 @@ func (ed *Editor) refresh() error {
 			ed.tokens = append(ed.tokens, token)
 		}
 	}
-	return ed.writer.refresh(&ed.editorState)
+	return ed.writer.refresh(&ed.editorState, ed.histories)
 }
 
 // TODO Allow modifiable keybindings.
@@ -197,7 +196,7 @@ func (ed *Editor) acceptCompletion() {
 
 // acceptHistory accepts currently history.
 func (ed *Editor) acceptHistory() {
-	ed.line = ed.history.items[ed.history.current]
+	ed.line = ed.histories[ed.history.current]
 	ed.dot = len(ed.line)
 }
 

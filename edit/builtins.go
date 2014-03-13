@@ -260,7 +260,7 @@ func defaultNavigation(ed *Editor, k Key) *leReturn {
 
 func startHistory(ed *Editor, k Key) *leReturn {
 	ed.history.prefix = ed.line[:ed.dot]
-	ed.history.current = len(ed.history.items)
+	ed.history.current = len(ed.histories)
 	if ed.prevHistory() {
 		ed.mode = modeHistory
 	} else {
