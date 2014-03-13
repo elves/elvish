@@ -258,10 +258,9 @@ func defaultNavigation(ed *Editor, k Key) *leReturn {
 }
 
 func startHistory(ed *Editor, k Key) *leReturn {
-	ed.history.saved = ed.line
 	ed.history.prefix = ed.line[:ed.dot]
 	ed.history.current = len(ed.history.items)
-	if ed.history.prev() {
+	if ed.prevHistory() {
 		ed.mode = modeHistory
 	} else {
 		ed.pushTip("no matching history item")
@@ -275,12 +274,12 @@ func cancelHistory(ed *Editor, k Key) *leReturn {
 }
 
 func selectHistoryPrev(ed *Editor, k Key) *leReturn {
-	ed.history.prev()
+	ed.prevHistory()
 	return nil
 }
 
 func selectHistoryNext(ed *Editor, k Key) *leReturn {
-	ed.history.next()
+	ed.nextHistory()
 	return nil
 }
 

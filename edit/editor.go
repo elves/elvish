@@ -30,7 +30,8 @@ const (
 )
 
 type editorState struct {
-	// States used during ReadLine.
+	// States used during ReadLine. Reset at the beginning of ReadLine.
+	savedTermios          *tty.Termios
 	tokens                []parse.Item
 	prompt, rprompt, line string
 	dot                   int
@@ -43,19 +44,19 @@ type editorState struct {
 }
 
 type historyState struct {
-	items         []string
-	current       int
-	saved, prefix string
+	items   []string
+	current int
+	prefix  string
 }
 
 // Editor keeps the status of the line editor.
 type Editor struct {
-	savedTermios *tty.Termios
-	file         *os.File
-	writer       *writer
-	reader       *Reader
-	ev           *eval.Evaluator
-	sigs         <-chan os.Signal
+	file      *os.File
+	writer    *writer
+	reader    *Reader
+	ev        *eval.Evaluator
+	sigs      <-chan os.Signal
+	histories []string
 	editorState
 }
 
@@ -67,24 +68,24 @@ type LineRead struct {
 	Err  error
 }
 
-func (hs *historyState) append(line string) {
-	hs.items = append(hs.items, line)
+func (ed *Editor) appendHistory(line string) {
+	ed.histories = append(ed.histories, line)
 }
 
-func (hs *historyState) prev() bool {
-	for i := hs.current - 1; i >= 0; i-- {
-		if strings.HasPrefix(hs.items[i], hs.prefix) {
-			hs.current = i
+func (ed *Editor) prevHistory() bool {
+	for i := ed.history.current - 1; i >= 0; i-- {
+		if strings.HasPrefix(ed.histories[i], ed.history.prefix) {
+			ed.history.current = i
 			return true
 		}
 	}
 	return false
 }
 
-func (hs *historyState) next() bool {
-	for i := hs.current + 1; i < len(hs.items); i++ {
-		if strings.HasPrefix(hs.items[i], hs.prefix) {
-			hs.current = i
+func (ed *Editor) nextHistory() bool {
+	for i := ed.history.current + 1; i < len(ed.histories); i++ {
+		if strings.HasPrefix(ed.histories[i], ed.history.prefix) {
+			ed.history.current = i
 			return true
 		}
 	}
@@ -282,7 +283,7 @@ FindCPR:
 // use.
 func (ed *Editor) finishReadLine(lr *LineRead) {
 	if lr.EOF == false && lr.Err == nil {
-		ed.history.append(lr.Line)
+		ed.appendHistory(lr.Line)
 	}
 
 	ed.reader.Stop()
@@ -309,22 +310,15 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 // ReadLine reads a line interactively.
 // TODO(xiaq): ReadLine currently just ignores all signals.
 func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
+	ed.editorState = editorState{}
+	ed.writer.oldBuf.cells = nil
+	ones := ed.reader.Chan()
+
 	err := ed.startReadLine()
 	if err != nil {
 		return LineRead{Err: err}
 	}
 	defer ed.finishReadLine(&lr)
-
-Begin:
-	ed.line = ""
-	ed.mode = modeInsert
-	ed.tips = nil
-	ed.completion = nil
-	ed.navigation = nil
-	ed.dot = 0
-	ed.writer.oldBuf.cells = nil
-
-	ones := ed.reader.Chan()
 
 MainLoop:
 	for {
@@ -343,7 +337,8 @@ MainLoop:
 			switch sig {
 			case syscall.SIGINT:
 				// Start over
-				goto Begin
+				ed.editorState = editorState{}
+				goto MainLoop
 			case syscall.SIGWINCH:
 				continue MainLoop
 			}
