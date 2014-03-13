@@ -39,7 +39,7 @@ type editorState struct {
 	completion            *completion
 	completionLines       int
 	navigation            *navigation
-	history               *historyState
+	history               historyState
 }
 
 type historyState struct {
@@ -99,9 +99,6 @@ func New(file *os.File, ev *eval.Evaluator, sigs <-chan os.Signal) *Editor {
 		reader: NewReader(file),
 		ev:     ev,
 		sigs:   sigs,
-		editorState: editorState{
-			history: &historyState{},
-		},
 	}
 }
 
