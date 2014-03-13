@@ -375,11 +375,7 @@ MainLoop:
 			switch ret.action {
 			case noAction:
 				continue
-			case changeMode:
-				ed.mode = ret.newMode
-				continue
-			case changeModeAndReprocess:
-				ed.mode = ret.newMode
+			case reprocessKey:
 				goto lookupKey
 			case exitReadLine:
 				return ret.readLineReturn

@@ -17,14 +17,12 @@ type editorAction int
 
 const (
 	noAction editorAction = iota
-	changeMode
-	changeModeAndReprocess
+	reprocessKey
 	exitReadLine
 )
 
 type leReturn struct {
 	action         editorAction
-	newMode        bufferMode
 	readLineReturn LineRead
 }
 
@@ -75,7 +73,8 @@ var leBuiltins = map[string]leBuiltin{
 }
 
 func startInsert(ed *Editor, k Key) *leReturn {
-	return &leReturn{action: changeMode, newMode: modeInsert}
+	ed.mode = modeInsert
+	return nil
 }
 
 func defaultCommand(ed *Editor, k Key) *leReturn {
@@ -84,7 +83,8 @@ func defaultCommand(ed *Editor, k Key) *leReturn {
 }
 
 func startCommand(ed *Editor, k Key) *leReturn {
-	return &leReturn{action: changeMode, newMode: modeCommand}
+	ed.mode = modeCommand
+	return nil
 }
 
 func killLineLeft(ed *Editor, k Key) *leReturn {
@@ -222,7 +222,8 @@ func defaultInsert(ed *Editor, k Key) *leReturn {
 
 func defaultCompletion(ed *Editor, k Key) *leReturn {
 	ed.acceptCompletion()
-	return &leReturn{action: changeModeAndReprocess, newMode: modeInsert}
+	ed.mode = modeInsert
+	return &leReturn{action: reprocessKey}
 }
 
 func startNavigation(ed *Editor, k Key) *leReturn {
@@ -285,5 +286,6 @@ func selectHistoryNext(ed *Editor, k Key) *leReturn {
 
 func defaultHistory(ed *Editor, k Key) *leReturn {
 	ed.acceptHistory()
-	return &leReturn{action: changeModeAndReprocess, newMode: modeInsert}
+	ed.mode = modeInsert
+	return &leReturn{action: reprocessKey}
 }
