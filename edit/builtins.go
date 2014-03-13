@@ -66,7 +66,6 @@ var leBuiltins = map[string]leBuiltin{
 
 	// History mode
 	"start-history":       startHistory,
-	"cancel-history":      cancelHistory,
 	"select-history-prev": selectHistoryPrev,
 	"select-history-next": selectHistoryNext,
 	"default-history":     defaultHistory,
@@ -266,11 +265,6 @@ func startHistory(ed *Editor, k Key) *leReturn {
 	} else {
 		ed.pushTip("no matching history item")
 	}
-	return nil
-}
-
-func cancelHistory(ed *Editor, k Key) *leReturn {
-	ed.mode = modeInsert
 	return nil
 }
 

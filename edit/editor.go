@@ -165,7 +165,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 		DefaultBinding: "default-navigation",
 	},
 	modeHistory: map[Key]string{
-		Key{'[', Ctrl}:   "cancel-history",
+		Key{'[', Ctrl}:   "start-insert",
 		Key{PageUp, 0}:   "select-history-prev",
 		Key{PageDown, 0}: "select-history-next",
 		DefaultBinding:   "default-history",
