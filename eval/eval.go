@@ -23,7 +23,19 @@ type Evaluator struct {
 	env         *Env
 	searchPaths []string
 	in, out     *port
+	statusCb    func([]string)
 	nodes       []parse.Node // A stack that keeps track of nodes being evaluated.
+}
+
+func statusOk(ss []string) bool {
+	for _, s := range ss {
+		switch s {
+		case "", "0":
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // NewEvaluator creates a new Evaluator from a slice of environment strings
@@ -37,6 +49,11 @@ func NewEvaluator() *Evaluator {
 	ev := &Evaluator{
 		globals: g, locals: g, env: env,
 		in: &port{f: os.Stdin}, out: &port{f: os.Stdout},
+		statusCb: func(s []string) {
+			if !statusOk(s) {
+				fmt.Println("Status:", s)
+			}
+		},
 	}
 
 	path, ok := env.m["PATH"]
@@ -250,6 +267,9 @@ func (ev *Evaluator) evalChunk(ch *parse.ChunkNode) {
 	ev.push(ch)
 	defer ev.pop()
 	for _, n := range ch.Nodes {
-		ev.evalPipeline(n)
+		s := ev.evalPipeline(n)
+		if ev.statusCb != nil {
+			ev.statusCb(s)
+		}
 	}
 }

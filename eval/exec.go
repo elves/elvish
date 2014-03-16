@@ -291,6 +291,7 @@ func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 	newEv.locals = locals
 	newEv.in = fm.ports[0]
 	newEv.out = fm.ports[1]
+	newEv.statusCb = nil
 	go func() {
 		// TODO Support calling closure originated in another source.
 		newEv.Eval(ev.name, ev.text, fm.Closure.Chunk)
@@ -557,18 +558,14 @@ func (ev *Evaluator) execPipeline(fms []*form, types [3]StreamType) []<-chan *St
 	return updates
 }
 
-func (ev *Evaluator) waitPipeline(updates []<-chan *StateUpdate) {
+func (ev *Evaluator) waitPipeline(updates []<-chan *StateUpdate) []string {
+	msgs := make([]string, len(updates))
 	for i, update := range updates {
 		for up := range update {
-			switch up.Msg {
-			case "0", "":
-			default:
-				// BUG(xiaq): Command update of commands in subevaluators are
-				// always printed.
-				fmt.Printf("Command #%d update: %s\n", i, up.Msg)
-			}
+			msgs[i] = up.Msg
 		}
 	}
+	return msgs
 }
 
 func (ev *Evaluator) evalPipelineAsync(pl *parse.PipelineNode) []<-chan *StateUpdate {
@@ -577,6 +574,6 @@ func (ev *Evaluator) evalPipelineAsync(pl *parse.PipelineNode) []<-chan *StateUp
 }
 
 // evalPipeline combines preevalPipeline and execPipeline.
-func (ev *Evaluator) evalPipeline(pl *parse.PipelineNode) {
-	ev.waitPipeline(ev.evalPipelineAsync(pl))
+func (ev *Evaluator) evalPipeline(pl *parse.PipelineNode) []string {
+	return ev.waitPipeline(ev.evalPipelineAsync(pl))
 }
