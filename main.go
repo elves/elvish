@@ -43,10 +43,6 @@ func main() {
 		cmdNum++
 		name := fmt.Sprintf("<tty %d>", cmdNum)
 
-		if err != nil {
-			panic(err)
-		}
-
 		prompt := func() string {
 			return util.Getwd() + "> "
 		}
@@ -59,7 +55,8 @@ func main() {
 		if lr.EOF {
 			break
 		} else if lr.Err != nil {
-			panic(lr.Err)
+			fmt.Println("Editor error:", lr.Err)
+			fmt.Println("My pid is", os.Getpid())
 		}
 
 		n, pe := parse.Parse(name, lr.Line)
