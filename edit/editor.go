@@ -281,7 +281,7 @@ FindCPR:
 // finishReadLine puts the terminal in a state suitable for other programs to
 // use.
 func (ed *Editor) finishReadLine(lr *LineRead) {
-	if lr.EOF == false && lr.Err == nil {
+	if lr.EOF == false && lr.Err == nil && lr.Line != "" {
 		ed.appendHistory(lr.Line)
 	}
 
