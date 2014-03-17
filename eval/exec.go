@@ -294,7 +294,10 @@ func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 	newEv.statusCb = nil
 	go func() {
 		// TODO Support calling closure originated in another source.
-		newEv.Eval(ev.name, ev.text, fm.Closure.Chunk)
+		err := newEv.Eval(ev.name, ev.text, fm.Closure.Chunk)
+		if err != nil {
+			fmt.Print(err.(*util.ContextualError).Pprint())
+		}
 		// Streams are closed after executaion of closure is complete.
 		fm.closePorts(ev)
 		// TODO Support returning value.
