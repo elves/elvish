@@ -50,8 +50,9 @@ const (
 	ItemSingleQuoted      // a single-quoted string literal
 	ItemDoubleQuoted      // a double-quoted string literal
 	ItemRedirLeader       // IO redirection leader
-	ItemStatusRedirLeader // status redirection leader, ">?"
+	ItemStatusRedirLeader // status redirection leader, "?>"
 	ItemPipe              // pipeline connector, '|'
+	ItemQuestionLParen    // question + left paren "?("
 	ItemLParen            // left paren '('
 	ItemRParen            // right paren ')'
 	ItemLBracket          // left bracket '['
@@ -231,6 +232,19 @@ func lexAny(l *Lexer) stateFn {
 	case '\n':
 		l.emit(ItemEndOfLine, ItemTerminated)
 		return lexAnyOrComment
+	case '?':
+		// TODO
+		switch l.next() {
+		case '>':
+			l.emit(ItemStatusRedirLeader, ItemTerminated)
+			return lexAny
+		case '(':
+			l.emit(ItemQuestionLParen, ItemTerminated)
+			return lexAny
+		default:
+			l.backup()
+			return lexBare
+		}
 	}
 	if isSpace(r) {
 		return lexSpace
@@ -282,13 +296,8 @@ func lexSpace(l *Lexer) stateFn {
 func lexRedirLeader(l *Lexer) stateFn {
 	switch r := l.next(); r {
 	case '<', '>':
-		r2 := l.peek()
-		if r2 == '>' {
+		if l.peek() == '>' {
 			l.next()
-		} else if r == '>' && r2 == '?' {
-			l.next()
-			l.emit(ItemStatusRedirLeader, ItemTerminated)
-			return lexAny
 		}
 	default:
 		panic("unreachable")
@@ -328,7 +337,7 @@ func lexBare(l *Lexer) stateFn {
 // StartsBare determines whether r may be the first rune of a bareword.
 func StartsBare(r rune) bool {
 	switch r {
-	case eof, '>', '<', '`', '"', '\n':
+	case eof, '>', '<', '`', '"', '\n', '?':
 		return false
 	}
 	if isSpace(r) {

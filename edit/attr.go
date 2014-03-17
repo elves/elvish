@@ -23,6 +23,7 @@ var attrForType = map[parse.ItemType]string{
 	parse.ItemStatusRedirLeader: "32",
 	parse.ItemPipe:              "32",
 	parse.ItemError:             "31",
+	parse.ItemQuestionLParen:    "34;1",
 	parse.ItemLParen:            "34;1",
 	parse.ItemRParen:            "34;1",
 	parse.ItemLBracket:          "34;1",
