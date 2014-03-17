@@ -62,9 +62,10 @@ func (tn *PipelineNode) append(n *FormNode) {
 // FormNode holds a form.
 type FormNode struct {
 	Pos
-	Command *TermNode
-	Args    *TermListNode
-	Redirs  []Redir
+	Command     *TermNode
+	Args        *TermListNode
+	Redirs      []Redir
+	StatusRedir string
 }
 
 func newForm(pos Pos) *FormNode {

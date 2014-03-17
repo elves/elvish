@@ -19,7 +19,7 @@ var parseTests = []struct {
 				0, newTerm( // term
 					0, &FactorNode{ // factor
 						0, StringFactor, newString(0, "ls", "ls")}),
-				newTermList(2), nil}))},
+				newTermList(2), nil, ""}))},
 }
 
 func TestParse(t *testing.T) {

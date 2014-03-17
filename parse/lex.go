@@ -43,24 +43,25 @@ type ItemType int
 const (
 	ItemError ItemType = iota // error occurred; value is text of error
 
-	ItemEOF          // end of file, always the last Item yielded
-	ItemEndOfLine    // a single EOL
-	ItemSpace        // run of spaces separating arguments
-	ItemBare         // a bare string literal
-	ItemSingleQuoted // a single-quoted string literal
-	ItemDoubleQuoted // a double-quoted string literal
-	ItemRedirLeader  // IO redirection leader
-	ItemPipe         // pipeline connector, '|'
-	ItemLParen       // left paren '('
-	ItemRParen       // right paren ')'
-	ItemLBracket     // left bracket '['
-	ItemRBracket     // right bracket ']'
-	ItemLBrace       // left brace '{'
-	ItemRBrace       // right brace '}'
-	ItemDollar       // dollar sign '$'
-	ItemCaret        // caret sign '^'
-	ItemSemicolon    // semicolon ';'
-	ItemAmpersand    // ampersand '&'
+	ItemEOF               // end of file, always the last Item yielded
+	ItemEndOfLine         // a single EOL
+	ItemSpace             // run of spaces separating arguments
+	ItemBare              // a bare string literal
+	ItemSingleQuoted      // a single-quoted string literal
+	ItemDoubleQuoted      // a double-quoted string literal
+	ItemRedirLeader       // IO redirection leader
+	ItemStatusRedirLeader // status redirection leader, ">?"
+	ItemPipe              // pipeline connector, '|'
+	ItemLParen            // left paren '('
+	ItemRParen            // right paren ')'
+	ItemLBracket          // left bracket '['
+	ItemRBracket          // right bracket ']'
+	ItemLBrace            // left brace '{'
+	ItemRBrace            // right brace '}'
+	ItemDollar            // dollar sign '$'
+	ItemCaret             // caret sign '^'
+	ItemSemicolon         // semicolon ';'
+	ItemAmpersand         // ampersand '&'
 )
 
 // ItemType names.
@@ -275,14 +276,19 @@ func lexSpace(l *Lexer) stateFn {
 }
 
 // lexRedirLeader scans an IO redirection leader.
-// It is started by one of < <> > >> and may be followed immediately by a
+// It is started by one of < <> > >> >? and may be followed immediately by a
 // string surrounded by square brackets. The internal structure of the string
 // is not checked here.
 func lexRedirLeader(l *Lexer) stateFn {
-	switch l.next() {
+	switch r := l.next(); r {
 	case '<', '>':
-		if l.peek() == '>' {
+		r2 := l.peek()
+		if r2 == '>' {
 			l.next()
+		} else if r == '>' && r2 == '?' {
+			l.next()
+			l.emit(ItemStatusRedirLeader, ItemTerminated)
+			return lexAny
 		}
 	default:
 		panic("unreachable")

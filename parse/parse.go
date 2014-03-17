@@ -255,6 +255,8 @@ loop:
 		switch p.peekNonSpace().Typ {
 		case ItemRedirLeader:
 			fm.Redirs = append(fm.Redirs, p.redir())
+		case ItemStatusRedirLeader:
+			fm.StatusRedir = p.statusRedir()
 		default:
 			break loop
 		}
@@ -440,6 +442,28 @@ func (p *Parser) table() (tn *TableNode) {
 			p.unexpected(token, "table literal")
 		}
 	}
+}
+
+// statusRedir parses a status redirection.
+// StatusRedir = status-redir-leader [ space ] Term
+// The term must consist of a single factor which in turn must be of type
+// VariableFactor.
+func (p *Parser) statusRedir() string {
+	// Skip status-redir-leader
+	p.next()
+
+	if token := p.peekNonSpace(); token.Typ != ItemDollar {
+		p.errorf(int(token.Pos), "expect variable")
+	}
+	term := p.term()
+	if len(term.Nodes) == 1 {
+		factor := term.Nodes[0]
+		if factor.Typ == VariableFactor {
+			return factor.Node.(*StringNode).Text
+		}
+	}
+	p.errorf(int(term.Pos), "expect variable")
+	return ""
 }
 
 // redir parses an IO redirection.
