@@ -170,7 +170,7 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 	case parse.ListFactor:
 		m := n.Node.(*parse.TermListNode)
 		words = ev.evalTermList(m)
-	case parse.CaptureFactor:
+	case parse.OutputCaptureFactor:
 		m := n.Node.(*parse.PipelineNode)
 		newEv := ev.copy()
 		ch := make(chan Value)
@@ -180,6 +180,13 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 			words = append(words, v)
 		}
 		newEv.waitPipeline(updates)
+	case parse.StatusCaptureFactor:
+		m := n.Node.(*parse.PipelineNode)
+		ss := ev.evalPipeline(m)
+		words = make([]Value, len(ss))
+		for i, s := range ss {
+			words[i] = NewString(s)
+		}
 	case parse.TableFactor:
 		m := n.Node.(*parse.TableNode)
 		word := ev.evalTable(m)

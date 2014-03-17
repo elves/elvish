@@ -326,7 +326,7 @@ func unquote(token Item) (string, error) {
 func startsFactor(p ItemType) bool {
 	switch p {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted,
-		ItemLParen, ItemLBracket, ItemLBrace,
+		ItemLParen, ItemQuestionLParen, ItemLBracket, ItemLBrace,
 		ItemDollar, ItemAmpersand:
 		return true
 	default:
@@ -387,8 +387,12 @@ func (p *Parser) factor() (fn *FactorNode) {
 			fn.Node = p.closure()
 		}
 		return
-	case ItemLParen:
-		fn.Typ = CaptureFactor
+	case ItemLParen, ItemQuestionLParen:
+		if token.Typ == ItemLParen {
+			fn.Typ = OutputCaptureFactor
+		} else {
+			fn.Typ = StatusCaptureFactor
+		}
 		fn.Node = p.pipeline()
 		if token := p.next(); token.Typ != ItemRParen {
 			p.unexpected(token, "factor of pipeline capture")

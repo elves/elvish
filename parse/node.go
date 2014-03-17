@@ -118,12 +118,13 @@ type FactorType int
 
 // FactorType constants.
 const (
-	StringFactor   FactorType = iota // string literal: a `a` a
-	VariableFactor                   // variable: $a
-	TableFactor                      // table: [a b c &k v]
-	ClosureFactor                    // closure: {|a| cmd}
-	ListFactor                       // list: {a b c}
-	CaptureFactor                    // pipeline capture: (cmd1|cmd2)
+	StringFactor        FactorType = iota // string literal: a `a` a
+	VariableFactor                        // variable: $a
+	TableFactor                           // table: [a b c &k v]
+	ClosureFactor                         // closure: {|a| cmd}
+	ListFactor                            // list: {a b c}
+	OutputCaptureFactor                   // output capture: (cmd1|cmd2)
+	StatusCaptureFactor                   // status capture: ?(cmd1|cmd2)
 )
 
 func newFactor(pos Pos) *FactorNode {
