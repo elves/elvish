@@ -24,14 +24,16 @@ type AsyncReader struct {
 	rd           *os.File
 	bufrd        *bufio.Reader
 	rCtrl, wCtrl *os.File
+	ackCtrl      chan bool // Used to synchronize receiving of ctrl message
 	ch           chan rune
 }
 
 func NewAsyncReader(rd *os.File) *AsyncReader {
 	ar := &AsyncReader{
-		rd:    rd,
-		bufrd: bufio.NewReaderSize(rd, 0),
-		ch:    make(chan rune, asyncReaderChanSize),
+		rd:      rd,
+		bufrd:   bufio.NewReaderSize(rd, 0),
+		ackCtrl: make(chan bool),
+		ch:      make(chan rune, asyncReaderChanSize),
 	}
 
 	r, w, err := os.Pipe()
@@ -56,6 +58,8 @@ func (ar *AsyncReader) run() {
 
 	defer close(ar.ch)
 
+	sys.SetNonblock(fd, true)
+
 	for {
 		fs.Set(fd, cfd)
 		_, err := sys.Select(maxfd+1, fs, nil, nil, nil)
@@ -72,16 +76,27 @@ func (ar *AsyncReader) run() {
 			ar.rCtrl.Read(cBuf[:])
 			switch cBuf[0] {
 			case asyncReaderQuit:
+				sys.SetNonblock(fd, false)
+				ar.ackCtrl <- true
 				return
+			case asyncReaderContinue:
+				ar.ackCtrl <- true
 			case asyncReaderStop:
+				sys.SetNonblock(fd, false)
+				ar.ackCtrl <- true
 			Stop:
 				for {
 					ar.rCtrl.Read(cBuf[:])
 					switch cBuf[0] {
 					case asyncReaderQuit:
+						ar.ackCtrl <- true
 						return
 					case asyncReaderContinue:
+						sys.SetNonblock(fd, true)
+						ar.ackCtrl <- true
 						break Stop
+					case asyncReaderStop:
+						ar.ackCtrl <- true
 					}
 				}
 			}
@@ -114,6 +129,7 @@ func (ar *AsyncReader) ctrl(r byte) {
 	if err != nil {
 		panic(err)
 	}
+	<-ar.ackCtrl
 }
 
 func (ar *AsyncReader) Stop() {

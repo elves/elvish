@@ -6,7 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/xiaq/elvish/sys"
 	"github.com/xiaq/elvish/util"
 )
 
@@ -66,9 +65,6 @@ type Reader struct {
 }
 
 func NewReader(f *os.File) *Reader {
-	if err := sys.SetNonblock(int(f.Fd()), true); err != nil {
-		panic(err)
-	}
 	rd := &Reader{
 		ar:   util.NewAsyncReader(f),
 		ones: make(chan OneRead, ReaderOutChanSize),
