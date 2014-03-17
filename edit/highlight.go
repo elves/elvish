@@ -56,7 +56,8 @@ func (hl *Highlighter) run() {
 			}
 			command = false
 			variable = false
-		case parse.ItemSemicolon, parse.ItemPipe, parse.ItemEndOfLine:
+		case parse.ItemSemicolon, parse.ItemPipe, parse.ItemEndOfLine,
+			parse.ItemLParen, parse.ItemQuestionLParen:
 			// NOTE ItemPipe can also be the pipe in {|a b| command...}
 			command = true
 		case parse.ItemDollar:
