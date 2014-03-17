@@ -66,7 +66,7 @@ type Reader struct {
 }
 
 func NewReader(f *os.File) *Reader {
-	if err := sys.SetNonblock(int(f.Fd())); err != nil {
+	if err := sys.SetNonblock(int(f.Fd()), true); err != nil {
 		panic(err)
 	}
 	rd := &Reader{

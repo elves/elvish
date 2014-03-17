@@ -19,7 +19,16 @@ func GetNonblock(fd int) (bool, error) {
 	return r&syscall.O_NONBLOCK != 0, err
 }
 
-func SetNonblock(fd int) error {
-	_, err := Fcntl(fd, syscall.F_SETFL, syscall.O_NONBLOCK)
+func SetNonblock(fd int, nonblock bool) error {
+	r, err := Fcntl(fd, syscall.F_GETFL, 0)
+	if err != nil {
+		return err
+	}
+	if nonblock {
+		r |= syscall.O_NONBLOCK
+	} else {
+		r &^= syscall.O_NONBLOCK
+	}
+	_, err = Fcntl(fd, syscall.F_SETFL, r)
 	return err
 }
