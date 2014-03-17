@@ -61,14 +61,16 @@ type Reader struct {
 	ar         *util.AsyncReader
 	ones       chan OneRead
 	ctrl       chan readerCtrl
+	ctrlAck    chan bool
 	currentSeq string
 }
 
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
-		ar:   util.NewAsyncReader(f),
-		ones: make(chan OneRead, ReaderOutChanSize),
-		ctrl: make(chan readerCtrl),
+		ar:      util.NewAsyncReader(f),
+		ones:    make(chan OneRead, ReaderOutChanSize),
+		ctrl:    make(chan readerCtrl),
+		ctrlAck: make(chan bool),
 	}
 	go rd.run()
 	return rd
@@ -78,19 +80,24 @@ func (rd *Reader) Chan() <-chan OneRead {
 	return rd.ones
 }
 
+func (rd *Reader) sendCtrl(c readerCtrl) {
+	rd.ctrl <- c
+	<-rd.ctrlAck
+}
+
 func (rd *Reader) Stop() {
 	rd.ar.Stop()
-	rd.ctrl <- readerStop
+	rd.sendCtrl(readerStop)
 }
 
 func (rd *Reader) Continue() {
 	rd.ar.Continue()
-	rd.ctrl <- readerContinue
+	rd.sendCtrl(readerContinue)
 }
 
 func (rd *Reader) Quit() {
 	rd.ar.Quit()
-	rd.ctrl <- readerQuit
+	rd.sendCtrl(readerQuit)
 }
 
 func (rd *Reader) badEscSeq(msg string) {
@@ -236,6 +243,7 @@ func (rd *Reader) stop() (quit bool) {
 	for {
 		select {
 		case ctrl := <-rd.ctrl:
+			rd.ctrlAck <- true
 			switch ctrl {
 			case readerQuit:
 				return true
@@ -257,6 +265,7 @@ func (rd *Reader) run() {
 			k, c, e := rd.readOne(r)
 			rd.ones <- OneRead{k, c, e}
 		case ctrl := <-rd.ctrl:
+			rd.ctrlAck <- true
 			switch ctrl {
 			case readerStop:
 				if rd.stop() {
