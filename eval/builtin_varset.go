@@ -68,6 +68,27 @@ func doSet(ev *Evaluator, names []string, values []Value) string {
 	return ""
 }
 
+func checkVar(ch *Checker, fn *parse.FormNode) interface{} {
+	f, err := parseVarSetForm(fn.Args)
+	if err != nil {
+		ch.errorf(fn, "%s", err.Error())
+	}
+	ch.checkTerms(f.values)
+	for _, name := range f.names {
+		ch.pushVar(name)
+	}
+	return f
+}
+
+func checkSet(ch *Checker, fn *parse.FormNode) interface{} {
+	f, err := parseVarSetForm(fn.Args)
+	if err != nil {
+		ch.errorf(fn, "%s", err.Error())
+	}
+	ch.checkTerms(f.values)
+	return f
+}
+
 func var_(ev *Evaluator, args *parse.TermListNode, ports [2]*port) string {
 	f, err := parseVarSetForm(args)
 	if err != nil {

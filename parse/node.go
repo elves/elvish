@@ -46,11 +46,12 @@ func (tn *ChunkNode) append(n *PipelineNode) {
 // PipelineNode is a list of FormNode's.
 type PipelineNode struct {
 	Pos
-	Nodes []*FormNode
+	Nodes      []*FormNode
+	Annotation interface{}
 }
 
 func newPipeline(pos Pos, nodes ...*FormNode) *PipelineNode {
-	return &PipelineNode{pos, nodes}
+	return &PipelineNode{Pos: pos, Nodes: nodes}
 }
 
 func (l *PipelineNode) isNode() {}
@@ -66,6 +67,7 @@ type FormNode struct {
 	Args        *TermListNode
 	Redirs      []Redir
 	StatusRedir string
+	Annotation  interface{}
 }
 
 func newForm(pos Pos) *FormNode {

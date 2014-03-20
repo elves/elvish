@@ -19,9 +19,11 @@ type builtinFunc struct {
 }
 
 type builtinSpecialImpl func(*Evaluator, *parse.TermListNode, [2]*port) string
+type builtinSpecialCheck func(*Checker, *parse.FormNode) interface{}
 
 type builtinSpecial struct {
 	fn          builtinSpecialImpl
+	check       builtinSpecialCheck
 	streamTypes [2]StreamType
 }
 
@@ -44,8 +46,8 @@ var builtinSpecials map[string]builtinSpecial
 func init() {
 	// Needed to avoid initialization loop
 	builtinSpecials = map[string]builtinSpecial{
-		"var": builtinSpecial{var_, [2]StreamType{unusedStream, unusedStream}},
-		"set": builtinSpecial{set, [2]StreamType{unusedStream, unusedStream}},
+		"var": builtinSpecial{var_, checkVar, [2]StreamType{unusedStream, unusedStream}},
+		"set": builtinSpecial{set, checkSet, [2]StreamType{unusedStream, unusedStream}},
 	}
 }
 
