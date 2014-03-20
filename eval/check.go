@@ -53,6 +53,7 @@ func (ch *Checker) checkChunk(cn *parse.ChunkNode) {
 // checkClosure checks a ClosureNode by checking the chunk it contains.
 // TODO(xiaq): Check that all pipelines have coherent IO ports.
 func (ch *Checker) checkClosure(cn *parse.ClosureNode) {
+	ch.checkChunk(cn.Chunk)
 }
 
 // checkPipeline checks a PipelineNode by checking all forms and checking that
