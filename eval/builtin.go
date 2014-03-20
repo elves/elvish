@@ -18,7 +18,7 @@ type builtinFunc struct {
 	streamTypes [2]StreamType
 }
 
-type builtinSpecialImpl func(*Evaluator, *parse.TermListNode, [2]*port) string
+type builtinSpecialImpl func(*Evaluator, *formAnnotation, [2]*port) string
 type builtinSpecialCheck func(*Checker, *parse.FormNode) interface{}
 
 type builtinSpecial struct {

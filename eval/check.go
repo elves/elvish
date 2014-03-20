@@ -134,7 +134,7 @@ func (ch *Checker) checkForm(fn *parse.FormNode) {
 	}
 
 	if annotation.commandType == commandBuiltinSpecial {
-		annotation.builtinSpecial.check(ch, fn)
+		annotation.specialAnnotation = annotation.builtinSpecial.check(ch, fn)
 	} else {
 		ch.checkTermList(fn.Args)
 	}

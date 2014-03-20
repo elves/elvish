@@ -57,10 +57,10 @@ type Command struct {
 
 // form packs runtime states of a fully constructured form.
 type form struct {
-	name  string              // Command name, used in error messages.
-	nodes *parse.TermListNode // Unevaluated argument list, does not include command
-	args  []Value             // Evaluated argument list
-	ports [3]*port            // Ports for in, out and err.
+	name       string   // Command name, used in error messages.
+	args       []Value  // Evaluated argument list
+	ports      [3]*port // Ports for in, out and err.
+	annotation *formAnnotation
 	Command
 }
 
@@ -219,7 +219,7 @@ func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [3]St
 
 	// Start building form.
 	cmdStr := cmd.String(ev)
-	fm = &form{name: cmdStr}
+	fm = &form{name: cmdStr, annotation: n.Annotation.(*formAnnotation)}
 
 	// Resolve command. Assign one of fm.Command.{fn path closure} and streamTypes.
 	switch cmd := cmd.(type) {
@@ -245,9 +245,7 @@ func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [3]St
 	}
 
 	// Evaluate arguments after everything else.
-	if fm.Command.Special != nil {
-		fm.nodes = n.Args
-	} else {
+	if fm.Command.Special == nil {
 		fm.args = ev.evalTermList(n.Args)
 	}
 	return
@@ -313,7 +311,7 @@ func (ev *Evaluator) execBuiltinSpecial(fm *form) <-chan *StateUpdate {
 	go func() {
 		var ports [2]*port
 		copy(ports[:], fm.ports[:2])
-		msg := fm.Special(ev, fm.nodes, ports)
+		msg := fm.Special(ev, fm.annotation, ports)
 		// Streams are closed after executaion of builtin is complete.
 		fm.closePorts(ev)
 		update <- &StateUpdate{Terminated: true, Msg: msg}

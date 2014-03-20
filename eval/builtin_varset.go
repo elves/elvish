@@ -89,11 +89,8 @@ func checkSet(ch *Checker, fn *parse.FormNode) interface{} {
 	return f
 }
 
-func var_(ev *Evaluator, args *parse.TermListNode, ports [2]*port) string {
-	f, err := parseVarSetForm(args)
-	if err != nil {
-		return err.Error()
-	}
+func var_(ev *Evaluator, a *formAnnotation, ports [2]*port) string {
+	f := a.specialAnnotation.(*varSetForm)
 	for _, name := range f.names {
 		ev.locals[name] = NewString("")
 	}
@@ -104,11 +101,8 @@ func var_(ev *Evaluator, args *parse.TermListNode, ports [2]*port) string {
 	return ""
 }
 
-func set(ev *Evaluator, args *parse.TermListNode, ports [2]*port) string {
-	f, err := parseVarSetForm(args)
-	if err != nil {
-		return err.Error()
-	}
+func set(ev *Evaluator, a *formAnnotation, ports [2]*port) string {
+	f := a.specialAnnotation.(*varSetForm)
 	if f.values == nil {
 		return "not implemented"
 	}
