@@ -91,8 +91,8 @@ func (ed *Editor) nextHistory() bool {
 	return false
 }
 
-// New creates an Editor.
-func New(file *os.File, ev *eval.Evaluator, sigs <-chan os.Signal) *Editor {
+// NewEditor creates an Editor.
+func NewEditor(file *os.File, ev *eval.Evaluator, sigs <-chan os.Signal) *Editor {
 	return &Editor{
 		file:   file,
 		writer: newWriter(file),

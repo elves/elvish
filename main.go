@@ -37,7 +37,7 @@ func main() {
 	sigch := make(chan os.Signal, sigchSize)
 	signal.Notify(sigch)
 
-	ed := edit.New(os.Stdin, ev, sigch)
+	ed := edit.NewEditor(os.Stdin, ev, sigch)
 
 	for {
 		cmdNum++
