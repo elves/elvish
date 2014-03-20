@@ -53,21 +53,6 @@ func parseVarSetForm(args *parse.TermListNode) (*varSetForm, error) {
 	return f, nil
 }
 
-func doSet(ev *Evaluator, names []string, values []Value) string {
-	// TODO Support assignment of mismatched arity in some restricted way -
-	// "optional" and "rest" arguments and the like
-	if len(names) != len(values) {
-		return "arity mismatch"
-	}
-
-	for i, name := range names {
-		// TODO Prevent overriding builtin variables e.g. $pid $env
-		ev.locals[name] = values[i]
-	}
-
-	return ""
-}
-
 func checkVar(ch *Checker, fn *parse.FormNode) interface{} {
 	f, err := parseVarSetForm(fn.Args)
 	if err != nil {
@@ -87,6 +72,21 @@ func checkSet(ch *Checker, fn *parse.FormNode) interface{} {
 	}
 	ch.checkTerms(f.values)
 	return f
+}
+
+func doSet(ev *Evaluator, names []string, values []Value) string {
+	// TODO Support assignment of mismatched arity in some restricted way -
+	// "optional" and "rest" arguments and the like
+	if len(names) != len(values) {
+		return "arity mismatch"
+	}
+
+	for i, name := range names {
+		// TODO Prevent overriding builtin variables e.g. $pid $env
+		ev.locals[name] = values[i]
+	}
+
+	return ""
 }
 
 func var_(ev *Evaluator, a *formAnnotation, ports [2]*port) string {
