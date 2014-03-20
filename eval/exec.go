@@ -59,7 +59,7 @@ type Command struct {
 type form struct {
 	name       string   // Command name, used in error messages.
 	args       []Value  // Evaluated argument list
-	ports      [3]*port // Ports for in, out and err.
+	ports      [2]*port // In- and out-ports.
 	annotation *formAnnotation
 	Command
 }
@@ -70,7 +70,7 @@ func (fm *form) closePorts(ev *Evaluator) {
 			continue
 		}
 		switch port.f {
-		case nil, ev.in.f, ev.out.f, os.Stderr:
+		case nil, ev.in.f, ev.out.f:
 			// XXX(xiaq) Is the heuristics correct?
 		default:
 			port.f.Close()
@@ -129,8 +129,8 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ports []*port, streamTypes []Strea
 	defer ev.pop()
 
 	fd := r.Fd()
-	if fd > 2 {
-		ev.errorf("redir on fd > 2 not yet supported")
+	if fd > 1 {
+		ev.errorf("redir on fd > 1 not yet supported")
 	}
 
 	switch r := r.(type) {
@@ -140,8 +140,8 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ports []*port, streamTypes []Strea
 		if streamTypes[fd] == chanStream {
 			ev.errorf("fd redir on channel port")
 		}
-		if r.OldFd > 2 {
-			ev.errorf("fd redir from fd > 2 not yet supported")
+		if r.OldFd > 1 {
+			ev.errorf("fd redir from fd > 1 not yet supported")
 		}
 		ports[fd] = ports[r.OldFd]
 	case *parse.FilenameRedir:
@@ -161,13 +161,13 @@ func (ev *Evaluator) evalRedir(r parse.Redir, ports []*port, streamTypes []Strea
 // ResolveCommand tries to find a command with the given name the stream types
 // it expects for three standard ports. If a command with that name doesn't
 // exists, err is non-nil.
-func (ev *Evaluator) ResolveCommand(name string) (cmd Command, streamTypes [3]StreamType, err error) {
+func (ev *Evaluator) ResolveCommand(name string) (cmd Command, streamTypes [2]StreamType, err error) {
 	defer util.Recover(&err)
 	cmd, streamTypes = ev.resolveCommand(name, nil)
 	return cmd, streamTypes, nil
 }
 
-func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, streamTypes [3]StreamType) {
+func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, streamTypes [2]StreamType) {
 	if n != nil {
 		ev.push(n)
 		defer ev.pop()
@@ -185,8 +185,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, str
 	// Try builtin special
 	if bi, ok := builtinSpecials[name]; ok {
 		cmd.Special = bi.fn
-		copy(streamTypes[:2], bi.streamTypes[:])
-		streamTypes[2] = fdStream
+		streamTypes = bi.streamTypes
 		return
 	}
 
@@ -194,8 +193,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, str
 	// XXX(xiaq): has duplicate code with builtin special
 	if bi, ok := builtinFuncs[name]; ok {
 		cmd.Func = bi.fn
-		copy(streamTypes[:2], bi.streamTypes[:])
-		streamTypes[2] = fdStream
+		streamTypes = bi.streamTypes
 		return
 	}
 
@@ -209,7 +207,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, str
 	return
 }
 
-func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [3]StreamType) {
+func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [2]StreamType) {
 	// Evaluate name.
 	cmdValues := ev.evalTerm(n.Command)
 	if len(cmdValues) != 1 {
@@ -230,13 +228,6 @@ func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [3]St
 		// BUG(xiaq): Closures are assumed to have zero streamTypes (fileStream)
 	default:
 		ev.errorfNode(n.Command, "Command must be either string or closure")
-	}
-
-	// Port list.
-	defaultErrPort := &port{f: os.Stderr}
-	// XXX(xiaq) Should we allow chanStream stderr at all?
-	if defaultErrPort.compatible(streamTypes[2]) {
-		fm.ports[2] = defaultErrPort
 	}
 
 	// Evaluate stream redirections.
@@ -309,9 +300,7 @@ func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 func (ev *Evaluator) execBuiltinSpecial(fm *form) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
-		var ports [2]*port
-		copy(ports[:], fm.ports[:2])
-		msg := fm.Special(ev, fm.annotation, ports)
+		msg := fm.Special(ev, fm.annotation, fm.ports)
 		// Streams are closed after executaion of builtin is complete.
 		fm.closePorts(ev)
 		update <- &StateUpdate{Terminated: true, Msg: msg}
@@ -462,10 +451,9 @@ func makePrintchan(in chan Value, out *os.File) *form {
 	return &form{
 		name: "(implicit printchan)",
 		args: nil,
-		ports: [3]*port{
+		ports: [2]*port{
 			&port{ch: in},
 			&port{f: out},
-			&port{f: os.Stderr},
 		},
 		Command: Command{Func: printchan},
 	}
@@ -475,10 +463,9 @@ func makeFeedchan(in *os.File, out chan Value) *form {
 	return &form{
 		name: "(implicit feedchan)",
 		args: nil,
-		ports: [3]*port{
+		ports: [2]*port{
 			&port{f: in},
 			&port{ch: out},
-			&port{f: os.Stderr},
 		},
 		Command: Command{Func: feedchan},
 	}
