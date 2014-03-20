@@ -474,8 +474,6 @@ func makeFeedchan(in *os.File, out chan Value) *form {
 // execPipeline executes a pipeline set up by preevalPipeline.
 // It fullfils the input of fms[0] and output of fms[len(fms)-1], inserting
 // adaptors if needed.
-//
-// TODO Should return a slice of exit statuses.
 func (ev *Evaluator) execPipeline(fms []*form, types [3]StreamType) []<-chan *StateUpdate {
 	var implicits [2]*form
 
