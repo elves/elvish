@@ -2,35 +2,25 @@ package eval
 
 // Implementation of var/set special forms.
 
-import (
-	"errors"
-
-	"github.com/xiaq/elvish/parse"
-)
+import "github.com/xiaq/elvish/parse"
 
 type varSetForm struct {
 	names  []string
 	values []*parse.TermNode
 }
 
-var (
-	errorBadForm = errors.New("bad form")
-)
-
-// parseVarSetForm parses arguments in the var/set special form into a
-// varSetForm.
+// checkVarSet checks a var or set special form.
 //
 // The arguments in the var/set special form must consist of zero or more
 // variable factors followed by `=` and then zero or more terms. The number of
 // values the terms evaluate to must be equal to the number of names, but
-// parseVarSetForm does not attempt to check this.
-//
-// TODO(xiaq): parseVarSetForm should return more detailed error messsage.
-func parseVarSetForm(args *parse.TermListNode) (*varSetForm, error) {
+// checkVarSet does not attempt to check this.
+func checkVarSet(ch *Checker, args *parse.TermListNode) *varSetForm {
 	f := &varSetForm{}
 	for i, n := range args.Nodes {
+		termReq := "must be a variable name or `=`"
 		if len(n.Nodes) != 1 {
-			return nil, errorBadForm
+			ch.errorf(n, "%s", termReq)
 		}
 		nf := n.Nodes[0]
 
@@ -38,7 +28,7 @@ func parseVarSetForm(args *parse.TermListNode) (*varSetForm, error) {
 		if m, ok := nf.Node.(*parse.StringNode); ok {
 			text = m.Text
 		} else {
-			return nil, errorBadForm
+			ch.errorf(n, "%s", termReq)
 		}
 
 		if nf.Typ == parse.StringFactor && text == "=" {
@@ -47,18 +37,15 @@ func parseVarSetForm(args *parse.TermListNode) (*varSetForm, error) {
 		} else if nf.Typ == parse.VariableFactor {
 			f.names = append(f.names, text)
 		} else {
-			return nil, errorBadForm
+			ch.errorf(n, "%s", termReq)
 		}
 	}
-	return f, nil
+	ch.checkTerms(f.values)
+	return f
 }
 
 func checkVar(ch *Checker, fn *parse.FormNode) interface{} {
-	f, err := parseVarSetForm(fn.Args)
-	if err != nil {
-		ch.errorf(fn, "%s", err.Error())
-	}
-	ch.checkTerms(f.values)
+	f := checkVarSet(ch, fn.Args)
 	for _, name := range f.names {
 		ch.pushVar(name)
 	}
@@ -66,12 +53,7 @@ func checkVar(ch *Checker, fn *parse.FormNode) interface{} {
 }
 
 func checkSet(ch *Checker, fn *parse.FormNode) interface{} {
-	f, err := parseVarSetForm(fn.Args)
-	if err != nil {
-		ch.errorf(fn, "%s", err.Error())
-	}
-	ch.checkTerms(f.values)
-	return f
+	return checkVarSet(ch, fn.Args)
 }
 
 func doSet(ev *Evaluator, names []string, values []Value) string {
