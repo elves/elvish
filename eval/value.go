@@ -44,7 +44,7 @@ type ClosureType struct {
 func (st ClosureType) Default() Value {
 	return NewClosure(
 		[]string{}, &parse.ChunkNode{0, []*parse.PipelineNode{}},
-		map[string]*Value{}, [2]StreamType{unusedStream, unusedStream})
+		map[string]*Value{}, st.Bounds)
 }
 
 var typenames = map[string]Type{
