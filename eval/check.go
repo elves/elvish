@@ -107,8 +107,6 @@ func (ch *Checker) resolveVar(name string, n *parse.FactorNode) Type {
 }
 
 func (ch *Checker) tryResolveVar(name string) Type {
-	// XXX(xiaq): Variables in outer scopes ("enclosed variables") are resolved
-	// correctly by the checker by not by the evaluator.
 	thisScope := len(ch.scopes) - 1
 	for i := thisScope; i >= 0; i-- {
 		if t := ch.scopes[i][name]; t != nil {
