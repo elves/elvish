@@ -28,13 +28,11 @@
         + Error parallel to value a la Icon?
         + Error as return value a la golang?
         + Error as special $status variable a la old Shell?
-    - Failing behavior of builtins; intermediate state:
+    - Intermediate state:
         ```
-        var (echo a | tee /tmp/a) b = 1
+        var $a $b = (echo a | tee /tmp/a)
         ```
-      Should arity mismatch be detected early and avoid the side-effect of
-      writing `/tmp/a`? Should $a and $b be defined?
-      (`var` is going to be a special form, needs another subtle example)
+      The command fails, but /tmp/a is written
 * Simple job control
     - Support suspending and resuming jobs
     - No need for too complex job control, the role is which is largely
