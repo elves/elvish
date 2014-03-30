@@ -120,10 +120,10 @@ func (ch *Checker) tryResolveVar(name string) Type {
 }
 
 func (ch *Checker) resolveCommand(name string, fa *formAnnotation) {
-	if ch.tryResolveVar("fn-"+name) != nil {
+	if ct, ok := ch.tryResolveVar("fn-" + name).(*ClosureType); ok {
 		// Defined function
-		// XXX(xiaq): Assume fdStream IO for closures
 		fa.commandType = commandDefinedFunction
+		fa.streamTypes = ct.Bounds
 	} else if bi, ok := builtinSpecials[name]; ok {
 		// Builtin special
 		fa.commandType = commandBuiltinSpecial
