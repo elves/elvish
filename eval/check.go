@@ -10,6 +10,7 @@ import (
 type Checker struct {
 	name, text string
 	scopes     []map[string]bool
+	enclosed   map[string]bool
 }
 
 func NewChecker() *Checker {
@@ -20,6 +21,7 @@ func (ch *Checker) Check(name, text string, n *parse.ChunkNode, scope map[string
 	ch.name = name
 	ch.text = text
 	ch.scopes = []map[string]bool{scope}
+	ch.enclosed = make(map[string]bool)
 
 	defer util.Recover(&err)
 	ch.checkChunk(n)
@@ -39,6 +41,10 @@ func (ch *Checker) pushVar(name string) {
 	ch.scopes[len(ch.scopes)-1][name] = true
 }
 
+func (ch *Checker) hasVarOnThisScope(name string) bool {
+	return ch.scopes[len(ch.scopes)-1][name]
+}
+
 func (ch *Checker) errorf(n parse.Node, format string, args ...interface{}) {
 	util.Panic(util.NewContextualError(ch.name, ch.text, int(n.Position()), format, args...))
 }
@@ -52,8 +58,17 @@ func (ch *Checker) checkChunk(cn *parse.ChunkNode) {
 
 // checkClosure checks a ClosureNode by checking the chunk it contains.
 // TODO(xiaq): Check that all pipelines have coherent IO ports.
-func (ch *Checker) checkClosure(cn *parse.ClosureNode) {
+func (ch *Checker) checkClosure(cn *parse.ClosureNode) *closureAnnotation {
+	ch.pushScope()
+	annotation := &closureAnnotation{}
+	cn.Annotation = annotation
+
 	ch.checkChunk(cn.Chunk)
+
+	annotation.enclosed = ch.enclosed
+	ch.enclosed = make(map[string]bool)
+	ch.popScope()
+	return annotation
 }
 
 // checkPipeline checks a PipelineNode by checking all forms and checking that
@@ -77,8 +92,12 @@ func (ch *Checker) resolveVar(name string, n *parse.FactorNode) {
 func (ch *Checker) tryResolveVar(name string) bool {
 	// XXX(xiaq): Variables in outer scopes ("enclosed variables") are resolved
 	// correctly by the checker by not by the evaluator.
-	for i := len(ch.scopes) - 1; i >= 0; i-- {
+	thisScope := len(ch.scopes) - 1
+	for i := thisScope; i >= 0; i-- {
 		if ch.scopes[i][name] {
+			if i < thisScope {
+				ch.enclosed[name] = true
+			}
 			return true
 		}
 	}
@@ -117,6 +136,8 @@ func (ch *Checker) checkForm(fn *parse.FormNode) {
 		ch.errorf(fn.Command, msg)
 	}
 	command := fn.Command.Nodes[0]
+	ch.checkFactor(command)
+
 	annotation := &formAnnotation{}
 	fn.Annotation = annotation
 	switch command.Typ {
@@ -177,7 +198,12 @@ func (ch *Checker) checkFactor(fn *parse.FactorNode) {
 			ch.checkTerm(tp.Value)
 		}
 	case parse.ClosureFactor:
-		ch.checkClosure(fn.Node.(*parse.ClosureNode))
+		ca := ch.checkClosure(fn.Node.(*parse.ClosureNode))
+		for name := range ca.enclosed {
+			if !ch.hasVarOnThisScope(name) {
+				ch.enclosed[name] = true
+			}
+		}
 	case parse.ListFactor:
 		ch.checkTermList(fn.Node.(*parse.TermListNode))
 	case parse.OutputCaptureFactor, parse.StatusCaptureFactor:

@@ -165,8 +165,9 @@ func (tn *TableNode) appendToDict(key *TermNode, value *TermNode) {
 // ClosureNode holds a closure literal.
 type ClosureNode struct {
 	Pos
-	ArgNames *TermListNode
-	Chunk    *ChunkNode
+	ArgNames   *TermListNode
+	Chunk      *ChunkNode
+	Annotation interface{}
 }
 
 func newClosure(pos Pos) *ClosureNode {

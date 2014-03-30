@@ -19,8 +19,7 @@ import (
 type Evaluator struct {
 	checker     *Checker
 	name, text  string
-	globals     map[string]Value
-	locals      map[string]Value
+	scope       map[string]*Value
 	env         *Env
 	searchPaths []string
 	in, out     *port
@@ -44,12 +43,12 @@ func statusOk(ss []string) bool {
 func NewEvaluator() *Evaluator {
 	env := NewEnv()
 	pid := NewString(strconv.Itoa(syscall.Getpid()))
-	g := map[string]Value{
-		"env": env, "pid": pid,
+	g := map[string]*Value{
+		"env": valuePtr(env), "pid": valuePtr(pid),
 	}
 	ev := &Evaluator{
 		checker: NewChecker(),
-		globals: g, locals: g, env: env,
+		scope:   g, env: env,
 		in: &port{f: os.Stdin}, out: &port{f: os.Stdout},
 		statusCb: func(s []string) {
 			if !statusOk(s) {
@@ -79,7 +78,7 @@ func (ev *Evaluator) copy() *Evaluator {
 // diagnostic messages.
 func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) (err error) {
 	scope := make(map[string]bool)
-	for name := range ev.globals {
+	for name := range ev.scope {
 		scope[name] = true
 	}
 	err = ev.checker.Check(name, text, n, scope)
@@ -128,17 +127,14 @@ func (ev *Evaluator) errorf(format string, args ...interface{}) {
 // err is non-nil.
 func (ev *Evaluator) ResolveVar(name string) (v Value, err error) {
 	defer util.Recover(&err)
-	return ev.resolveVar(name), nil
+	return *ev.resolveVar(name), nil
 }
 
-func (ev *Evaluator) resolveVar(name string) Value {
-	if val, ok := ev.locals[name]; ok {
+func (ev *Evaluator) resolveVar(name string) *Value {
+	if val, ok := ev.scope[name]; ok {
 		return val
 	}
-	if val, ok := ev.globals[name]; ok {
-		return val
-	}
-	ev.errorf("Variable %q not found", name)
+	ev.errorf("Variable %q not found, the checker has a bug", name)
 	return nil
 }
 
@@ -177,7 +173,7 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 		words = []Value{NewString(m.Text)}
 	case parse.VariableFactor:
 		m := n.Node.(*parse.StringNode)
-		words = []Value{ev.resolveVar(m.Text)}
+		words = []Value{*ev.resolveVar(m.Text)}
 	case parse.ListFactor:
 		m := n.Node.(*parse.TermListNode)
 		words = ev.evalTermList(m)
@@ -211,7 +207,12 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 				names = append(names, v.String(ev))
 			}
 		}
-		words = []Value{NewClosure(names, m.Chunk)}
+		enclosed := make(map[string]*Value)
+		annotation := m.Annotation.(*closureAnnotation)
+		for name := range annotation.enclosed {
+			enclosed[name] = ev.resolveVar(name)
+		}
+		words = []Value{NewClosure(names, m.Chunk, enclosed)}
 	default:
 		panic("bad factor type")
 	}

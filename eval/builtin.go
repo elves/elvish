@@ -73,7 +73,7 @@ func fn(ev *Evaluator, args []Value, ports [2]*port) string {
 		closure.ArgNames = append(closure.ArgNames, args[i].String(ev))
 	}
 	// TODO(xiaq): should fn warn about redefinition of functions?
-	ev.locals["fn-"+args[0].String(ev)] = closure
+	ev.scope["fn-"+args[0].String(ev)] = valuePtr(closure)
 	return ""
 }
 

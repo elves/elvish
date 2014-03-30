@@ -21,7 +21,7 @@ func strsEqual(s1 []string, s2 []string) bool {
 func TestNewEvaluator(t *testing.T) {
 	ev := NewEvaluator()
 	pid := strconv.Itoa(syscall.Getpid())
-	if ev.globals["pid"].String(ev) != pid {
-		t.Errorf(`ev.globals["pid"] = %v, want %v`, ev.globals["pid"], pid)
+	if (*ev.scope["pid"]).String(ev) != pid {
+		t.Errorf(`ev.scope["pid"] = %v, want %v`, ev.scope["pid"], pid)
 	}
 }

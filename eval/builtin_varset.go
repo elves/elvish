@@ -15,7 +15,7 @@ type varSetForm struct {
 // variable factors followed by `=` and then zero or more terms. The number of
 // values the terms evaluate to must be equal to the number of names, but
 // checkVarSet does not attempt to check this.
-func checkVarSet(ch *Checker, args *parse.TermListNode) *varSetForm {
+func checkVarSet(ch *Checker, args *parse.TermListNode, v bool) *varSetForm {
 	f := &varSetForm{}
 	for i, n := range args.Nodes {
 		termReq := "must be a variable name or `=`"
@@ -40,12 +40,16 @@ func checkVarSet(ch *Checker, args *parse.TermListNode) *varSetForm {
 			ch.errorf(n, "%s", termReq)
 		}
 	}
-	ch.checkTerms(f.values)
+	if v {
+		ch.checkTerms(f.values)
+	} else {
+		ch.checkTermList(args)
+	}
 	return f
 }
 
 func checkVar(ch *Checker, fn *parse.FormNode) interface{} {
-	f := checkVarSet(ch, fn.Args)
+	f := checkVarSet(ch, fn.Args, true)
 	for _, name := range f.names {
 		ch.pushVar(name)
 	}
@@ -53,7 +57,7 @@ func checkVar(ch *Checker, fn *parse.FormNode) interface{} {
 }
 
 func checkSet(ch *Checker, fn *parse.FormNode) interface{} {
-	return checkVarSet(ch, fn.Args)
+	return checkVarSet(ch, fn.Args, false)
 }
 
 func doSet(ev *Evaluator, names []string, values []Value) string {
@@ -65,7 +69,7 @@ func doSet(ev *Evaluator, names []string, values []Value) string {
 
 	for i, name := range names {
 		// TODO Prevent overriding builtin variables e.g. $pid $env
-		ev.locals[name] = values[i]
+		*ev.resolveVar(name) = values[i]
 	}
 
 	return ""
@@ -74,7 +78,7 @@ func doSet(ev *Evaluator, names []string, values []Value) string {
 func var_(ev *Evaluator, a *formAnnotation, ports [2]*port) string {
 	f := a.specialAnnotation.(*varSetForm)
 	for _, name := range f.names {
-		ev.locals[name] = NewString("")
+		ev.scope[name] = valuePtr(NewString(""))
 	}
 	if f.values != nil {
 		return doSet(ev, f.names, ev.evalTermList(

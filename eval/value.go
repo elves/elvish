@@ -63,6 +63,10 @@ type Value interface {
 	Caret(ev *Evaluator, v Value) Value
 }
 
+func valuePtr(v Value) *Value {
+	return &v
+}
+
 // String is a string.
 type String string
 
@@ -220,12 +224,13 @@ func (e *Env) Caret(ev *Evaluator, v Value) Value {
 type Closure struct {
 	ArgNames []string
 	Chunk    *parse.ChunkNode
+	Enclosed map[string]*Value
 }
 
 func (c *Closure) isValue() {}
 
-func NewClosure(argNames []string, ch *parse.ChunkNode) *Closure {
-	return &Closure{argNames, ch}
+func NewClosure(a []string, ch *parse.ChunkNode, e map[string]*Value) *Closure {
+	return &Closure{a, ch, e}
 }
 
 func (c *Closure) Repr(ev *Evaluator) string {
