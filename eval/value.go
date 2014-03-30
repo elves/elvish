@@ -225,16 +225,17 @@ type Closure struct {
 	ArgNames []string
 	Chunk    *parse.ChunkNode
 	Enclosed map[string]*Value
+	Bounds   [2]StreamType
 }
 
 func (c *Closure) isValue() {}
 
-func NewClosure(a []string, ch *parse.ChunkNode, e map[string]*Value) *Closure {
-	return &Closure{a, ch, e}
+func NewClosure(a []string, ch *parse.ChunkNode, e map[string]*Value, b [2]StreamType) *Closure {
+	return &Closure{a, ch, e, b}
 }
 
 func (c *Closure) Repr(ev *Evaluator) string {
-	return fmt.Sprintf("<closure %p>", c.Chunk)
+	return fmt.Sprintf("<Closure%v>", c)
 }
 
 func (c *Closure) String(ev *Evaluator) string {

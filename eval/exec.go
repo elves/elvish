@@ -35,6 +35,17 @@ const (
 	unusedStream
 )
 
+func (typ StreamType) commonType(typ2 StreamType) (StreamType, bool) {
+	switch {
+	case typ == unusedStream, typ == typ2:
+		return typ2, true
+	case typ2 == unusedStream:
+		return typ, true
+	default:
+		return 0, false
+	}
+}
+
 func (i *port) compatible(typ StreamType) bool {
 	switch typ {
 	case fdStream:

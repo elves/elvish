@@ -63,7 +63,20 @@ func (ch *Checker) checkClosure(cn *parse.ClosureNode) *closureAnnotation {
 	annotation := &closureAnnotation{}
 	cn.Annotation = annotation
 
-	ch.checkChunk(cn.Chunk)
+	bounds := [2]StreamType{unusedStream, unusedStream}
+	for _, pn := range cn.Chunk.Nodes {
+		annotation := ch.checkPipeline(pn)
+		var ok bool
+		bounds[0], ok = bounds[0].commonType(annotation.bounds[0])
+		if !ok {
+			ch.errorf(pn, "Pipeline input stream incompatible with previous ones")
+		}
+		bounds[1], ok = bounds[1].commonType(annotation.bounds[1])
+		if !ok {
+			ch.errorf(pn, "Pipeline output stream incompatible with previous ones")
+		}
+	}
+	annotation.bounds = bounds
 
 	annotation.enclosed = ch.enclosed
 	ch.enclosed = make(map[string]bool)
@@ -73,7 +86,7 @@ func (ch *Checker) checkClosure(cn *parse.ClosureNode) *closureAnnotation {
 
 // checkPipeline checks a PipelineNode by checking all forms and checking that
 // all connected ports are compatible. It also annotates the node.
-func (ch *Checker) checkPipeline(pn *parse.PipelineNode) {
+func (ch *Checker) checkPipeline(pn *parse.PipelineNode) *pipelineAnnotation {
 	for _, fn := range pn.Nodes {
 		ch.checkForm(fn)
 	}
@@ -81,6 +94,7 @@ func (ch *Checker) checkPipeline(pn *parse.PipelineNode) {
 	pn.Annotation = annotation
 	annotation.bounds[0] = pn.Nodes[0].Annotation.(*formAnnotation).streamTypes[0]
 	annotation.bounds[1] = pn.Nodes[len(pn.Nodes)-1].Annotation.(*formAnnotation).streamTypes[1]
+	return annotation
 }
 
 func (ch *Checker) resolveVar(name string, n *parse.FactorNode) {

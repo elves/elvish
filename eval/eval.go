@@ -212,7 +212,7 @@ func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
 		for name := range annotation.enclosed {
 			enclosed[name] = ev.resolveVar(name)
 		}
-		words = []Value{NewClosure(names, m.Chunk, enclosed)}
+		words = []Value{NewClosure(names, m.Chunk, enclosed, annotation.bounds)}
 	default:
 		panic("bad factor type")
 	}
