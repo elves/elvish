@@ -12,9 +12,51 @@ import (
 	"github.com/xiaq/elvish/parse"
 )
 
+type Type interface {
+	Default() Value
+}
+
+type StringType struct {
+}
+
+func (st StringType) Default() Value {
+	return NewString("")
+}
+
+type TableType struct {
+}
+
+func (tt TableType) Default() Value {
+	return NewTable()
+}
+
+type EnvType struct {
+}
+
+func (et EnvType) Default() Value {
+	return NewEnv()
+}
+
+type ClosureType struct {
+	Bounds [2]StreamType
+}
+
+func (st ClosureType) Default() Value {
+	return NewClosure(
+		[]string{}, &parse.ChunkNode{0, []*parse.PipelineNode{}},
+		map[string]*Value{}, [2]StreamType{unusedStream, unusedStream})
+}
+
+var typenames = map[string]Type{
+	"string":  StringType{},
+	"table":   TableType{},
+	"env":     EnvType{},
+	"closure": ClosureType{[2]StreamType{unusedStream, unusedStream}},
+}
+
 // Value is the runtime representation of an elvish value.
 type Value interface {
-	isValue()
+	Type() Type
 	Repr(ev *Evaluator) string
 	String(ev *Evaluator) string
 	Caret(ev *Evaluator, v Value) Value
@@ -27,7 +69,9 @@ func valuePtr(v Value) *Value {
 // String is a string.
 type String string
 
-func (s *String) isValue() {}
+func (s *String) Type() Type {
+	return StringType{}
+}
 
 func NewString(s string) *String {
 	ss := String(s)
@@ -95,7 +139,9 @@ type Table struct {
 	Dict map[Value]Value
 }
 
-func (t *Table) isValue() {}
+func (t *Table) Type() Type {
+	return TableType{}
+}
 
 func NewTable() *Table {
 	return &Table{Dict: make(map[Value]Value)}
@@ -155,7 +201,9 @@ type Env struct {
 	m map[string]string
 }
 
-func (e *Env) isValue() {}
+func (e *Env) Type() Type {
+	return EnvType{}
+}
 
 func NewEnv() *Env {
 	return &Env{}
@@ -228,7 +276,9 @@ type Closure struct {
 	Bounds   [2]StreamType
 }
 
-func (c *Closure) isValue() {}
+func (c *Closure) Type() Type {
+	return ClosureType{c.Bounds}
+}
 
 func NewClosure(a []string, ch *parse.ChunkNode, e map[string]*Value, b [2]StreamType) *Closure {
 	return &Closure{a, ch, e, b}

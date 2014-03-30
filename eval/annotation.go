@@ -23,6 +23,6 @@ type pipelineAnnotation struct {
 }
 
 type closureAnnotation struct {
-	enclosed map[string]bool
+	enclosed map[string]Type
 	bounds   [2]StreamType
 }

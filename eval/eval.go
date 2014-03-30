@@ -77,9 +77,9 @@ func (ev *Evaluator) copy() *Evaluator {
 // Eval evaluates a chunk node n. The name and text of it is used for
 // diagnostic messages.
 func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) (err error) {
-	scope := make(map[string]bool)
-	for name := range ev.scope {
-		scope[name] = true
+	scope := make(map[string]Type)
+	for name, value := range ev.scope {
+		scope[name] = (*value).Type()
 	}
 	err = ev.checker.Check(name, text, n, scope)
 	if err != nil {

@@ -9,19 +9,19 @@ import (
 // with static information that is useful during evaluation.
 type Checker struct {
 	name, text string
-	scopes     []map[string]bool
-	enclosed   map[string]bool
+	scopes     []map[string]Type
+	enclosed   map[string]Type
 }
 
 func NewChecker() *Checker {
 	return &Checker{}
 }
 
-func (ch *Checker) Check(name, text string, n *parse.ChunkNode, scope map[string]bool) (err error) {
+func (ch *Checker) Check(name, text string, n *parse.ChunkNode, scope map[string]Type) (err error) {
 	ch.name = name
 	ch.text = text
-	ch.scopes = []map[string]bool{scope}
-	ch.enclosed = make(map[string]bool)
+	ch.scopes = []map[string]Type{scope}
+	ch.enclosed = make(map[string]Type)
 
 	defer util.Recover(&err)
 	ch.checkChunk(n)
@@ -29,7 +29,7 @@ func (ch *Checker) Check(name, text string, n *parse.ChunkNode, scope map[string
 }
 
 func (ch *Checker) pushScope() {
-	ch.scopes = append(ch.scopes, make(map[string]bool))
+	ch.scopes = append(ch.scopes, make(map[string]Type))
 }
 
 func (ch *Checker) popScope() {
@@ -37,12 +37,13 @@ func (ch *Checker) popScope() {
 	ch.scopes = ch.scopes[:len(ch.scopes)-1]
 }
 
-func (ch *Checker) pushVar(name string) {
-	ch.scopes[len(ch.scopes)-1][name] = true
+func (ch *Checker) pushVar(name string, t Type) {
+	ch.scopes[len(ch.scopes)-1][name] = t
 }
 
 func (ch *Checker) hasVarOnThisScope(name string) bool {
-	return ch.scopes[len(ch.scopes)-1][name]
+	_, ok := ch.scopes[len(ch.scopes)-1][name]
+	return ok
 }
 
 func (ch *Checker) errorf(n parse.Node, format string, args ...interface{}) {
@@ -79,7 +80,7 @@ func (ch *Checker) checkClosure(cn *parse.ClosureNode) *closureAnnotation {
 	annotation.bounds = bounds
 
 	annotation.enclosed = ch.enclosed
-	ch.enclosed = make(map[string]bool)
+	ch.enclosed = make(map[string]Type)
 	ch.popScope()
 	return annotation
 }
@@ -97,29 +98,31 @@ func (ch *Checker) checkPipeline(pn *parse.PipelineNode) *pipelineAnnotation {
 	return annotation
 }
 
-func (ch *Checker) resolveVar(name string, n *parse.FactorNode) {
-	if !ch.tryResolveVar(name) {
-		ch.errorf(n, "undefined variable $%q", name)
+func (ch *Checker) resolveVar(name string, n *parse.FactorNode) Type {
+	if t := ch.tryResolveVar(name); t != nil {
+		return t
 	}
+	ch.errorf(n, "undefined variable $%q", name)
+	return nil
 }
 
-func (ch *Checker) tryResolveVar(name string) bool {
+func (ch *Checker) tryResolveVar(name string) Type {
 	// XXX(xiaq): Variables in outer scopes ("enclosed variables") are resolved
 	// correctly by the checker by not by the evaluator.
 	thisScope := len(ch.scopes) - 1
 	for i := thisScope; i >= 0; i-- {
-		if ch.scopes[i][name] {
+		if t := ch.scopes[i][name]; t != nil {
 			if i < thisScope {
-				ch.enclosed[name] = true
+				ch.enclosed[name] = t
 			}
-			return true
+			return t
 		}
 	}
-	return false
+	return nil
 }
 
 func (ch *Checker) resolveCommand(name string, fa *formAnnotation) {
-	if ch.tryResolveVar("fn-" + name) {
+	if ch.tryResolveVar("fn-"+name) != nil {
 		// Defined function
 		// XXX(xiaq): Assume fdStream IO for closures
 		fa.commandType = commandDefinedFunction
@@ -213,9 +216,9 @@ func (ch *Checker) checkFactor(fn *parse.FactorNode) {
 		}
 	case parse.ClosureFactor:
 		ca := ch.checkClosure(fn.Node.(*parse.ClosureNode))
-		for name := range ca.enclosed {
+		for name, typ := range ca.enclosed {
 			if !ch.hasVarOnThisScope(name) {
-				ch.enclosed[name] = true
+				ch.enclosed[name] = typ
 			}
 		}
 	case parse.ListFactor:
