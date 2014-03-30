@@ -12,6 +12,28 @@ import (
 	"github.com/xiaq/elvish/parse"
 )
 
+// Value is the runtime representation of an elvish value.
+type Value interface {
+	isValue()
+	Repr(ev *Evaluator) string
+	String(ev *Evaluator) string
+	Caret(ev *Evaluator, v Value) Value
+}
+
+func valuePtr(v Value) *Value {
+	return &v
+}
+
+// String is a string.
+type String string
+
+func (s *String) isValue() {}
+
+func NewString(s string) *String {
+	ss := String(s)
+	return &ss
+}
+
 func quote(s string) string {
 	if len(s) == 0 {
 		return "``"
@@ -53,28 +75,6 @@ func quote(s string) string {
 	}
 	// Quote with double quote
 	return strconv.Quote(s)
-}
-
-// Value is the runtime representation of an elvish value.
-type Value interface {
-	isValue()
-	Repr(ev *Evaluator) string
-	String(ev *Evaluator) string
-	Caret(ev *Evaluator, v Value) Value
-}
-
-func valuePtr(v Value) *Value {
-	return &v
-}
-
-// String is a string.
-type String string
-
-func (s *String) isValue() {}
-
-func NewString(s string) *String {
-	ss := String(s)
-	return &ss
 }
 
 func (s *String) Repr(ev *Evaluator) string {
