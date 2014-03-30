@@ -17,12 +17,15 @@ func NewChecker() *Checker {
 	return &Checker{}
 }
 
-func (ch *Checker) Check(name, text string, n *parse.ChunkNode, scope map[string]Type) (err error) {
+func (ch *Checker) startCheck(name, text string, scope map[string]Type) {
 	ch.name = name
 	ch.text = text
 	ch.scopes = []map[string]Type{scope}
 	ch.enclosed = make(map[string]Type)
+}
 
+func (ch *Checker) Check(name, text string, n *parse.ChunkNode, scope map[string]Type) (err error) {
+	ch.startCheck(name, text, scope)
 	defer util.Recover(&err)
 	ch.checkChunk(n)
 	return nil
