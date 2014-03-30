@@ -2,6 +2,7 @@ package edit
 
 import (
 	"fmt"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 
@@ -34,6 +35,7 @@ var leBuiltins = map[string]leBuiltin{
 	"start-command":   startCommand,
 	"kill-line-left":  killLineLeft,
 	"kill-line-right": killLineRight,
+	"kill-word-left":  killWordLeft,
 	"kill-rune-left":  killRuneLeft,
 	"kill-rune-right": killRuneRight,
 	"move-dot-left":   moveDotLeft,
@@ -96,6 +98,19 @@ func killLineLeft(ed *Editor, k Key) *leReturn {
 func killLineRight(ed *Editor, k Key) *leReturn {
 	eol := util.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
 	ed.line = ed.line[:ed.dot] + ed.line[eol:]
+	return nil
+}
+
+// NOTE(xiaq): A word is now defined as a series of non-whitespace chars.
+func killWordLeft(ed *Editor, k Key) *leReturn {
+	if ed.dot == 0 {
+		return nil
+	}
+	space := strings.LastIndexFunc(
+		strings.TrimRightFunc(ed.line[:ed.dot], unicode.IsSpace),
+		unicode.IsSpace) + 1
+	ed.line = ed.line[:space] + ed.line[ed.dot:]
+	ed.dot = space
 	return nil
 }
 

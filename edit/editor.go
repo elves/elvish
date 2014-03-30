@@ -134,6 +134,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{'[', Ctrl}:    "start-command",
 		Key{'U', Ctrl}:    "kill-line-left",
 		Key{'K', Ctrl}:    "kill-line-right",
+		Key{'W', Ctrl}:    "kill-word-left",
 		Key{Backspace, 0}: "kill-rune-left",
 		Key{Delete, 0}:    "kill-rune-right",
 		Key{Left, 0}:      "move-dot-left",
