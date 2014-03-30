@@ -161,7 +161,8 @@ func (ch *Checker) checkForm(fn *parse.FormNode) {
 	case parse.StringFactor:
 		ch.resolveCommand(command.Node.(*parse.StringNode).Text, annotation)
 	case parse.ClosureFactor:
-		// XXX(xiaq): Assume fdStream IO for closures
+		ca := command.Node.(*parse.ClosureNode).Annotation.(*closureAnnotation)
+		annotation.streamTypes = ca.bounds
 	default:
 		ch.errorf(fn.Command, msg)
 	}
