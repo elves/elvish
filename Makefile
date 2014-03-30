@@ -20,12 +20,9 @@ coverage/%: %
 
 coverage: $(PKG_COVERAGES)
 
-gofmt:
-	gofmt -tabwidth=4 -w .
-
 z-%.go: %.go
 	go tool cgo -godefs $< > $@
 
-pre-commit: gofmt edit/tty/z-types.go
+pre-commit: edit/tty/z-types.go
 
-.PHONY: all elvish elvishd test coverage gofmt pre-commit
+.PHONY: all elvish elvishd test coverage pre-commit
