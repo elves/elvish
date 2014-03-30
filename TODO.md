@@ -10,13 +10,7 @@
         + Sigils are lexically scoped (they are just functions after all)
         + A closed set of characters eligible as sigils
 * Code structure (eval)
-    - STATIC ANALYSER AND TYPE CHECKER
-    - Implement variable capturing of closures, so that the following sets
-      `$v`:
-        ```
-        var $v
-        { set $v 2 }
-        ```
+    - TYPE CHECKER
     - Implement control structures - as special syntax or high-order function?
     - Support evaluating script
     - Determine namespacing mechanism (importable modules; relationship of
