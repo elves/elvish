@@ -188,7 +188,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, str
 	if v, err := ev.ResolveVar("fn-" + name); err == nil {
 		if fn, ok := v.(*Closure); ok {
 			cmd.Closure = fn
-			// BUG(xiaq): Functions are assumed to have zero streamTypes (fileStream)
+			streamTypes = fn.Bounds
 			return
 		}
 	}
@@ -214,8 +214,7 @@ func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, str
 		ev.errorf("%s", e)
 	}
 	cmd.Path = path
-	// Use zero value (fileStream) for streamTypes
-	return
+	return cmd, [2]StreamType{fdStream, fdStream}
 }
 
 func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [2]StreamType) {
@@ -235,8 +234,7 @@ func (ev *Evaluator) preevalForm(n *parse.FormNode) (fm *form, streamTypes [2]St
 	case *String:
 		fm.Command, streamTypes = ev.resolveCommand(cmdStr, n.Command)
 	case *Closure:
-		fm.Command.Closure = cmd
-		// BUG(xiaq): Closures are assumed to have zero streamTypes (fileStream)
+		fm.Command.Closure, streamTypes = cmd, cmd.Bounds
 	default:
 		ev.errorfNode(n.Command, "Command must be either string or closure")
 	}

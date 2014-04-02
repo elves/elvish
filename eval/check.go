@@ -140,7 +140,7 @@ func (ch *Checker) resolveCommand(name string, fa *formAnnotation) {
 	} else {
 		// External command
 		fa.commandType = commandExternal
-		// Just use zero value (fdStream) for fa.streamTypes
+		fa.streamTypes = [2]StreamType{fdStream, fdStream}
 	}
 }
 
