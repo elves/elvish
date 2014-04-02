@@ -67,7 +67,7 @@ func (ch *Checker) checkClosure(cn *parse.ClosureNode) *closureAnnotation {
 	annotation := &closureAnnotation{}
 	cn.Annotation = annotation
 
-	bounds := [2]StreamType{unusedStream, unusedStream}
+	bounds := [2]StreamType{}
 	for _, pn := range cn.Chunk.Nodes {
 		annotation := ch.checkPipeline(pn)
 		var ok bool

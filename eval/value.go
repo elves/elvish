@@ -51,7 +51,7 @@ var typenames = map[string]Type{
 	"string":  StringType{},
 	"table":   TableType{},
 	"env":     EnvType{},
-	"closure": ClosureType{[2]StreamType{unusedStream, unusedStream}},
+	"closure": ClosureType{[2]StreamType{}},
 }
 
 // Value is the runtime representation of an elvish value.

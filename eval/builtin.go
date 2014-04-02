@@ -28,17 +28,17 @@ type builtinSpecial struct {
 }
 
 var builtinFuncs = map[string]builtinFunc{
-	"fn":        builtinFunc{fn, [2]StreamType{unusedStream, unusedStream}},
-	"put":       builtinFunc{put, [2]StreamType{unusedStream, chanStream}},
-	"print":     builtinFunc{print, [2]StreamType{unusedStream}},
-	"println":   builtinFunc{println, [2]StreamType{unusedStream}},
+	"fn":        builtinFunc{fn, [2]StreamType{}},
+	"put":       builtinFunc{put, [2]StreamType{0, chanStream}},
+	"print":     builtinFunc{print, [2]StreamType{0, fdStream}},
+	"println":   builtinFunc{println, [2]StreamType{0, fdStream}},
 	"printchan": builtinFunc{printchan, [2]StreamType{chanStream, fdStream}},
 	"feedchan":  builtinFunc{feedchan, [2]StreamType{fdStream, chanStream}},
-	"cd":        builtinFunc{cd, [2]StreamType{unusedStream, unusedStream}},
-	"+":         builtinFunc{plus, [2]StreamType{unusedStream, chanStream}},
-	"-":         builtinFunc{minus, [2]StreamType{unusedStream, chanStream}},
-	"*":         builtinFunc{times, [2]StreamType{unusedStream, chanStream}},
-	"/":         builtinFunc{divide, [2]StreamType{unusedStream, chanStream}},
+	"cd":        builtinFunc{cd, [2]StreamType{}},
+	"+":         builtinFunc{plus, [2]StreamType{0, chanStream}},
+	"-":         builtinFunc{minus, [2]StreamType{0, chanStream}},
+	"*":         builtinFunc{times, [2]StreamType{0, chanStream}},
+	"/":         builtinFunc{divide, [2]StreamType{0, chanStream}},
 }
 
 var builtinSpecials map[string]builtinSpecial
@@ -46,8 +46,8 @@ var builtinSpecials map[string]builtinSpecial
 func init() {
 	// Needed to avoid initialization loop
 	builtinSpecials = map[string]builtinSpecial{
-		"var": builtinSpecial{var_, checkVar, [2]StreamType{unusedStream, unusedStream}},
-		"set": builtinSpecial{set, checkSet, [2]StreamType{unusedStream, unusedStream}},
+		"var": builtinSpecial{var_, checkVar, [2]StreamType{}},
+		"set": builtinSpecial{set, checkSet, [2]StreamType{}},
 	}
 }
 

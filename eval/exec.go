@@ -30,9 +30,9 @@ type StreamType byte
 
 // Possible values of StreamType.
 const (
-	fdStream   StreamType = iota // Default stream type. Corresponds to port.f.
-	chanStream                   // Corresponds to port.ch.
-	unusedStream
+	unusedStream StreamType = iota
+	fdStream                // Corresponds to port.f.
+	chanStream              // Corresponds to port.ch.
 )
 
 func (typ StreamType) commonType(typ2 StreamType) (StreamType, bool) {
