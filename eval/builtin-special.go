@@ -29,7 +29,8 @@ type varSetForm struct {
 	values []*parse.TermNode
 }
 
-// checkVarSet checks a var or set special form.
+// checkVarSet checks a var or set special form. If v is true, a var special
+// form is being checked.
 //
 // The arguments in the var/set special form must consist of zero or more
 // variable factors followed by `=` and then zero or more terms. The number of
@@ -82,8 +83,11 @@ func checkVarSet(ch *Checker, args *parse.TermListNode, v bool) *varSetForm {
 		if len(f.types) != len(f.names) {
 			ch.errorf(args, "Some variables lack type")
 		}
+		// Skip checking of variable terms
 		ch.checkTerms(f.values)
 	} else {
+		// Do conventional checking of all terms, including ensuring that
+		// variables can be resolved
 		ch.checkTermList(args)
 	}
 	return f
