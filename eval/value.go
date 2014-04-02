@@ -285,7 +285,7 @@ func NewClosure(a []string, ch *parse.ChunkNode, e map[string]*Value, b [2]Strea
 }
 
 func (c *Closure) Repr(ev *Evaluator) string {
-	return fmt.Sprintf("<Closure%v>", c)
+	return fmt.Sprintf("<Closure%v>", *c)
 }
 
 func (c *Closure) String(ev *Evaluator) string {
