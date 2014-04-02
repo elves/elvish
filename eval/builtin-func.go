@@ -1,5 +1,7 @@
 package eval
 
+// Builtin functions.
+
 import (
 	"bufio"
 	"fmt"
@@ -7,23 +9,12 @@ import (
 	"os"
 	"os/user"
 	"strconv"
-
-	"github.com/xiaq/elvish/parse"
 )
 
 type builtinFuncImpl func(*Evaluator, []Value, [2]*port) string
 
 type builtinFunc struct {
 	fn          builtinFuncImpl
-	streamTypes [2]StreamType
-}
-
-type builtinSpecialImpl func(*Evaluator, *formAnnotation, [2]*port) string
-type builtinSpecialCheck func(*Checker, *parse.FormNode) interface{}
-
-type builtinSpecial struct {
-	fn          builtinSpecialImpl
-	check       builtinSpecialCheck
 	streamTypes [2]StreamType
 }
 
@@ -39,16 +30,6 @@ var builtinFuncs = map[string]builtinFunc{
 	"-":         builtinFunc{minus, [2]StreamType{0, chanStream}},
 	"*":         builtinFunc{times, [2]StreamType{0, chanStream}},
 	"/":         builtinFunc{divide, [2]StreamType{0, chanStream}},
-}
-
-var builtinSpecials map[string]builtinSpecial
-
-func init() {
-	// Needed to avoid initialization loop
-	builtinSpecials = map[string]builtinSpecial{
-		"var": builtinSpecial{var_, checkVar, [2]StreamType{}},
-		"set": builtinSpecial{set, checkSet, [2]StreamType{}},
-	}
 }
 
 func fn(ev *Evaluator, args []Value, ports [2]*port) string {

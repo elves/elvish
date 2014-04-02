@@ -1,8 +1,27 @@
 package eval
 
-// Implementation of var/set special forms.
+// Builtin special forms.
 
 import "github.com/xiaq/elvish/parse"
+
+type builtinSpecialImpl func(*Evaluator, *formAnnotation, [2]*port) string
+type builtinSpecialCheck func(*Checker, *parse.FormNode) interface{}
+
+type builtinSpecial struct {
+	fn          builtinSpecialImpl
+	check       builtinSpecialCheck
+	streamTypes [2]StreamType
+}
+
+var builtinSpecials map[string]builtinSpecial
+
+func init() {
+	// Needed to avoid initialization loop
+	builtinSpecials = map[string]builtinSpecial{
+		"var": builtinSpecial{var_, checkVar, [2]StreamType{}},
+		"set": builtinSpecial{set, checkSet, [2]StreamType{}},
+	}
+}
 
 type varSetForm struct {
 	names  []string
