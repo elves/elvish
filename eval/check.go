@@ -44,6 +44,10 @@ func (ch *Checker) pushVar(name string, t Type) {
 	ch.scopes[len(ch.scopes)-1][name] = t
 }
 
+func (ch *Checker) popVar(name string) {
+	delete(ch.scopes[len(ch.scopes)-1], name)
+}
+
 func (ch *Checker) hasVarOnThisScope(name string) bool {
 	_, ok := ch.scopes[len(ch.scopes)-1][name]
 	return ok

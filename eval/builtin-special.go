@@ -20,6 +20,7 @@ func init() {
 	builtinSpecials = map[string]builtinSpecial{
 		"var": builtinSpecial{var_, checkVar, [2]StreamType{}},
 		"set": builtinSpecial{set, checkSet, [2]StreamType{}},
+		"del": builtinSpecial{del, checkDel, [2]StreamType{}},
 	}
 }
 
@@ -27,6 +28,10 @@ type varSetForm struct {
 	names  []string
 	types  []Type
 	values []*parse.TermNode
+}
+
+type delForm struct {
+	names []string
 }
 
 // checkVarSet checks a var or set special form. If v is true, a var special
@@ -139,4 +144,36 @@ func set(ev *Evaluator, a *formAnnotation, ports [2]*port) string {
 	}
 	return doSet(ev, f.names, ev.evalTermList(
 		&parse.TermListNode{0, f.values}))
+}
+
+func checkDel(ch *Checker, fn *parse.FormNode) interface{} {
+	// Do conventional checking of all terms, including ensuring that
+	// variables can be resolved
+	ch.checkTermList(fn.Args)
+	f := &delForm{}
+	for _, n := range fn.Args.Nodes {
+		termReq := "must be a varible"
+		if len(n.Nodes) != 1 {
+			ch.errorf(n, "%s", termReq)
+		}
+		nf := n.Nodes[0]
+		if nf.Typ != parse.VariableFactor {
+			ch.errorf(n, "%s", termReq)
+		}
+		name := nf.Node.(*parse.StringNode).Text
+		if !ch.hasVarOnThisScope(name) {
+			ch.errorf(n, "can only delete variable on current scope")
+		}
+		ch.popVar(name)
+		f.names = append(f.names, name)
+	}
+	return f
+}
+
+func del(ev *Evaluator, a *formAnnotation, ports [2]*port) string {
+	f := a.specialAnnotation.(*delForm)
+	for _, name := range f.names {
+		delete(ev.scope, name)
+	}
+	return ""
 }
