@@ -17,7 +17,7 @@ import (
 // goroutine. When elvish code spawns goroutines, the Evaluator is copied and
 // has certain components replaced.
 type Evaluator struct {
-	checker     *Checker
+	Checker     *Checker
 	name, text  string
 	scope       map[string]*Value
 	env         *Env
@@ -47,7 +47,7 @@ func NewEvaluator() *Evaluator {
 		"env": valuePtr(env), "pid": valuePtr(pid),
 	}
 	ev := &Evaluator{
-		checker: NewChecker(),
+		Checker: NewChecker(),
 		scope:   g, env: env,
 		in: &port{f: os.Stdin}, out: &port{f: os.Stdout},
 		statusCb: func(s []string) {
@@ -81,7 +81,7 @@ func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) (err error) {
 	for name, value := range ev.scope {
 		scope[name] = (*value).Type()
 	}
-	err = ev.checker.Check(name, text, n, scope)
+	err = ev.Checker.Check(name, text, n, scope)
 	if err != nil {
 		return
 	}
