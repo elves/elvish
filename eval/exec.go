@@ -178,7 +178,7 @@ func (ev *Evaluator) ResolveCommand(name string) (cmd Command, streamTypes [2]St
 	return cmd, streamTypes, nil
 }
 
-func (ev *Evaluator) resolveCommand(name string, n parse.Node) (cmd Command, streamTypes [2]StreamType) {
+func (ev *Evaluator) resolveCommand(name string, n *parse.TermNode) (cmd Command, streamTypes [2]StreamType) {
 	if n != nil {
 		ev.push(n)
 		defer ev.pop()
