@@ -95,13 +95,26 @@ func (ch *Checker) checkClosure(cn *parse.ClosureNode) *closureAnnotation {
 // checkPipeline checks a PipelineNode by checking all forms and checking that
 // all connected ports are compatible. It also annotates the node.
 func (ch *Checker) checkPipeline(pn *parse.PipelineNode) *pipelineAnnotation {
-	for _, fn := range pn.Nodes {
-		ch.checkForm(fn)
-	}
 	annotation := &pipelineAnnotation{}
 	pn.Annotation = annotation
-	annotation.bounds[0] = pn.Nodes[0].Annotation.(*formAnnotation).streamTypes[0]
-	annotation.bounds[1] = pn.Nodes[len(pn.Nodes)-1].Annotation.(*formAnnotation).streamTypes[1]
+
+	var lastOutput StreamType
+	for i, fn := range pn.Nodes {
+		ch.checkForm(fn)
+		a := fn.Annotation.(*formAnnotation)
+		input := a.streamTypes[0]
+		if i == 0 {
+			annotation.bounds[0] = input
+		} else {
+			internal, ok := lastOutput.commonType(input)
+			if !ok {
+				ch.errorf(fn, "Form input type %v insatisfiable - previous form output is type %v", input, lastOutput)
+			}
+			annotation.internals = append(annotation.internals, internal)
+		}
+		lastOutput = a.streamTypes[1]
+	}
+	annotation.bounds[1] = lastOutput
 	return annotation
 }
 
@@ -173,9 +186,24 @@ func (ch *Checker) checkForm(fn *parse.FormNode) {
 	}
 
 	for _, rd := range fn.Redirs {
-		if rd.Fd() <= 1 {
-			annotation.streamTypes[rd.Fd()] = unusedStream
+		fd := rd.Fd()
+		if fd > 1 {
+			ch.errorf(rd, "redir on fd > 1 not yet supported")
 		}
+		switch rd := rd.(type) {
+		case *parse.FdRedir:
+			if annotation.streamTypes[fd] == chanStream {
+				ch.errorf(rd, "fd redir on channel port")
+			}
+			if rd.OldFd > 1 {
+				ch.errorf(rd, "fd redir from fd > 1 not yet supported")
+			}
+		case *parse.FilenameRedir:
+			if annotation.streamTypes[fd] == chanStream {
+				ch.errorf(rd, "filename redir on channel port")
+			}
+		}
+		annotation.streamTypes[fd] = unusedStream
 	}
 
 	if annotation.commandType == commandBuiltinSpecial {
