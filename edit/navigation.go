@@ -16,12 +16,17 @@ type navColumn struct {
 	names    []string
 	attrs    []string
 	selected int
+	err      error
 }
 
 func newNavColumn(names, attrs []string) *navColumn {
-	nc := &navColumn{names, attrs, 0}
+	nc := &navColumn{names, attrs, 0, nil}
 	nc.resetSelected()
 	return nc
+}
+
+func newErrNavColumn(err error) *navColumn {
+	return &navColumn{err: err}
 }
 
 func (nc *navColumn) selectedName() string {
@@ -79,42 +84,46 @@ func (n *navigation) maintainSelected(name string) {
 	n.current.selected = i
 }
 
-// refresh rereads files in current and parent directories and maintains the
-// selected file if possible.
-func (n *navigation) refresh() error {
+func (n *navigation) refreshCurrent() {
 	selectedName := n.current.selectedName()
 
 	// n.current
 	names, attrs, err := readdirnames(".")
 	if err != nil {
-		return err
+		n.current = newErrNavColumn(err)
+		return
 	}
 	n.current = newNavColumn(names, attrs)
-
 	if selectedName != "" {
 		// Maintain n.current.selected. The same file, if still present, is
 		// selected. Otherwise a file near it is selected.
-		// XXX(xiaq): This would break when we support alternative ordering.
+		// XXX(xiaq): This would break when we support alternative
+		// ordering.
 		n.maintainSelected(selectedName)
 	}
+}
 
+func (n *navigation) refreshParent() {
 	// n.parent
 	wd, err := os.Getwd()
 	if err != nil {
-		return nil
+		n.parent = newErrNavColumn(err)
+		return
 	}
 	if wd == "/" {
 		n.parent = newNavColumn(nil, nil)
 	} else {
-		names, attrs, err = readdirnames("..")
+		names, attrs, err := readdirnames("..")
 		if err != nil {
-			return err
+			n.parent = newErrNavColumn(err)
+			return
 		}
 		n.parent = newNavColumn(names, attrs)
 
 		cwd, err := os.Stat(".")
 		if err != nil {
-			return err
+			n.parent = newErrNavColumn(err)
+			return
 		}
 		n.parent.selected = -1
 		for i, name := range n.parent.names {
@@ -124,22 +133,28 @@ func (n *navigation) refresh() error {
 				break
 			}
 		}
-		if n.parent.selected == -1 {
-			return errorNoCwdInParent
-		}
+		/*
+			if n.parent.selected == -1 {
+				return errorNoCwdInParent
+			}
+		*/
 	}
+}
 
+func (n *navigation) refreshDirPreview() {
 	// n.dirPreview
 	if n.current.selected != -1 {
 		name := n.current.selectedName()
 		fi, err := os.Stat(name)
 		if err != nil {
-			return err
+			n.dirPreview = newErrNavColumn(err)
+			return
 		}
 		if fi.Mode().IsDir() {
-			names, attrs, err = readdirnames(name)
+			names, attrs, err := readdirnames(name)
 			if err != nil {
-				return err
+				n.dirPreview = newErrNavColumn(err)
+				return
 			}
 			n.dirPreview = newNavColumn(names, attrs)
 		} else {
@@ -149,8 +164,14 @@ func (n *navigation) refresh() error {
 	} else {
 		n.dirPreview = nil
 	}
+}
 
-	return nil
+// refresh rereads files in current and parent directories and maintains the
+// selected file if possible.
+func (n *navigation) refresh() {
+	n.refreshCurrent()
+	n.refreshParent()
+	n.refreshDirPreview()
 }
 
 // ascend changes current directory to the parent.
@@ -170,10 +191,7 @@ func (n *navigation) ascend() error {
 	if err != nil {
 		return err
 	}
-	err = n.refresh()
-	if err != nil {
-		return err
-	}
+	n.refresh()
 	n.maintainSelected(name)
 	return nil
 }
@@ -189,26 +207,23 @@ func (n *navigation) descend() error {
 	if err != nil {
 		return err
 	}
-	err = n.refresh()
-	if err != nil {
-		return err
-	}
+	n.refresh()
 	n.current.resetSelected()
 	return nil
 }
 
 // prev selects the previous file.
-func (n *navigation) prev() error {
+func (n *navigation) prev() {
 	if n.current.selected > 0 {
 		n.current.selected--
 	}
-	return n.refresh()
+	n.refresh()
 }
 
 // next selects the next file.
-func (n *navigation) next() error {
+func (n *navigation) next() {
 	if n.current.selected != -1 && n.current.selected < len(n.current.names)-1 {
 		n.current.selected++
 	}
-	return n.refresh()
+	n.refresh()
 }
