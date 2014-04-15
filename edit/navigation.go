@@ -86,8 +86,6 @@ func (n *navigation) maintainSelected(name string) {
 
 func (n *navigation) refreshCurrent() {
 	selectedName := n.current.selectedName()
-
-	// n.current
 	names, attrs, err := readdirnames(".")
 	if err != nil {
 		n.current = newErrNavColumn(err)
@@ -104,7 +102,6 @@ func (n *navigation) refreshCurrent() {
 }
 
 func (n *navigation) refreshParent() {
-	// n.parent
 	wd, err := os.Getwd()
 	if err != nil {
 		n.parent = newErrNavColumn(err)
@@ -133,16 +130,10 @@ func (n *navigation) refreshParent() {
 				break
 			}
 		}
-		/*
-			if n.parent.selected == -1 {
-				return errorNoCwdInParent
-			}
-		*/
 	}
 }
 
 func (n *navigation) refreshDirPreview() {
-	// n.dirPreview
 	if n.current.selected != -1 {
 		name := n.current.selectedName()
 		fi, err := os.Stat(name)
