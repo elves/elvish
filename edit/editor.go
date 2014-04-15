@@ -352,7 +352,6 @@ MainLoop:
 
 			// Ignore bogus CPR
 			if or.CPR != InvalidPos {
-				panic("got cpr")
 				continue
 			}
 
