@@ -32,45 +32,81 @@ type Highlighter struct {
 	items chan parse.Item
 }
 
-func (hl *Highlighter) run() {
-	command := true
-	variable := false
+func (hl *Highlighter) variable(token parse.Item) {
+	if token.Typ == parse.ItemBare {
+		if _, err := hl.ev.ResolveVar(token.Val); err == nil {
+			token.Typ = ItemValidVariable
+		} else {
+			token.Typ = ItemInvalidVariable
+		}
+	}
+	hl.items <- token
+}
 
-	for token := range hl.lexer.Chan() {
+func (hl *Highlighter) command(token parse.Item) {
+	if token.Typ == parse.ItemSpace {
+		hl.items <- token
+		token = <-hl.lexer.Chan()
+	}
+	if token.Typ == parse.ItemBare {
+		// Check validity of command
+		if _, _, err := hl.ev.ResolveCommand(token.Val); err == nil {
+			token.Typ = ItemValidCommand
+		} else {
+			token.Typ = ItemInvalidCommand
+		}
+	}
+	hl.items <- token
+}
+
+func (hl *Highlighter) run() {
+	tokens := hl.lexer.Chan()
+
+	// First token is command
+	// TODO Support other more interesting commands as soon as checker allows
+	hl.command(<-tokens)
+Loop:
+	for {
+		token := <-tokens
 		switch token.Typ {
-		case parse.ItemBare:
-			// Mangle token.Typ
-			if command {
-				// Check validity of command
-				if _, _, err := hl.ev.ResolveCommand(token.Val); err == nil {
-					token.Typ = ItemValidCommand
-				} else {
-					token.Typ = ItemInvalidCommand
-				}
-			} else if variable {
-				if _, err := hl.ev.ResolveVar(token.Val); err == nil {
-					token.Typ = ItemValidVariable
-				} else {
-					token.Typ = ItemInvalidVariable
-				}
-			}
-			command = false
-			variable = false
+		case parse.ItemDollar:
+			hl.items <- token
+			hl.variable(<-tokens)
 		case parse.ItemSemicolon, parse.ItemPipe, parse.ItemEndOfLine,
 			parse.ItemLParen, parse.ItemQuestionLParen:
-			// NOTE ItemPipe can also be the pipe in {|a b| command...}
-			command = true
-		case parse.ItemDollar:
-			variable = true
-		case parse.ItemSpace:
-			variable = false
+			hl.items <- token
+			hl.command(<-tokens)
+		case parse.ItemLBrace:
+			hl.items <- token
+			token = <-tokens
+			switch token.Typ {
+			case parse.ItemPipe:
+				hl.items <- token
+			Args:
+				for {
+					token = <-tokens
+					hl.items <- token
+					switch token.Typ {
+					case parse.ItemPipe:
+						break Args
+					case parse.ItemError, parse.ItemEOF:
+						break Loop
+					}
+				}
+				hl.command(<-tokens)
+			case parse.ItemSpace:
+				hl.command(token)
+			default:
+				hl.items <- token
+			}
+		case parse.ItemError, parse.ItemEOF:
+			hl.items <- token
+			break Loop
 		default:
-			command = false
-			variable = false
+			hl.items <- token
 		}
-		// TODO highlight `echo` in `{ echo a }`
-		hl.items <- token
 	}
+
 	close(hl.items)
 }
 
