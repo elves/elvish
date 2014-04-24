@@ -1,7 +1,9 @@
 # Next steps
 
 * Editor (edit)
-     - Many...
+    - Record mode for saving part of shell session as scripts
+    - Interactive debugger (steal some ideas from LightTable)
+    - Many...
 * Syntax (parse, eval)
     - Sigil as shorthand for function invocation
         + `vim =yaourt` is equivalent to `vim (= yaourt)`
