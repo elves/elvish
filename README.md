@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/xiaq/elvish.png?label=ready&title=Ready)](https://waffle.io/xiaq/elvish)
 # An experimental Unix shell
 
 This is a work in progress. Things may change and/or break without notice. You
