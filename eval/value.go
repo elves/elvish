@@ -55,8 +55,8 @@ var typenames = map[string]Type{
 // Value is the runtime representation of an elvish value.
 type Value interface {
 	Type() Type
-	Repr(ev *Evaluator) string
-	String(ev *Evaluator) string
+	Repr() string
+	String() string
 	Caret(ev *Evaluator, v Value) Value
 }
 
@@ -119,16 +119,16 @@ func quote(s string) string {
 	return strconv.Quote(s)
 }
 
-func (s *String) Repr(ev *Evaluator) string {
+func (s *String) Repr() string {
 	return quote(string(*s))
 }
 
-func (s *String) String(ev *Evaluator) string {
+func (s *String) String() string {
 	return string(*s)
 }
 
 func (s *String) Caret(ev *Evaluator, v Value) Value {
-	return NewString(string(*s) + v.String(ev))
+	return NewString(string(*s) + v.String())
 }
 
 // Table is a list-dict hybrid.
@@ -145,30 +145,30 @@ func NewTable() *Table {
 	return &Table{Dict: make(map[Value]Value)}
 }
 
-func (t *Table) Repr(ev *Evaluator) string {
+func (t *Table) Repr() string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
 	sep := ""
 	for _, v := range t.List {
-		fmt.Fprint(buf, sep, v.Repr(ev))
+		fmt.Fprint(buf, sep, v.Repr())
 		sep = " "
 	}
 	for k, v := range t.Dict {
-		fmt.Fprint(buf, sep, "&", k.Repr(ev), " ", v.Repr(ev))
+		fmt.Fprint(buf, sep, "&", k.Repr(), " ", v.Repr())
 		sep = " "
 	}
 	buf.WriteRune(']')
 	return buf.String()
 }
 
-func (t *Table) String(ev *Evaluator) string {
-	return t.Repr(ev)
+func (t *Table) String() string {
+	return t.Repr()
 }
 
 func (t *Table) Caret(ev *Evaluator, v Value) Value {
 	switch v := v.(type) {
 	case *String:
-		return NewString(t.String(ev) + v.String(ev))
+		return NewString(t.String() + v.String())
 	case *Table:
 		if len(v.List) != 1 || len(v.Dict) != 0 {
 			ev.errorf("subscription must be single-element list")
@@ -179,7 +179,7 @@ func (t *Table) Caret(ev *Evaluator, v Value) Value {
 		}
 		// Need stricter notion of list indices
 		// TODO Handle invalid index
-		idx, err := strconv.ParseUint(sub.String(ev), 10, 0)
+		idx, err := strconv.ParseUint(sub.String(), 10, 0)
 		if err == nil {
 			return t.List[idx]
 		}
@@ -229,7 +229,7 @@ func (e *Env) Export() []string {
 	return s
 }
 
-func (e *Env) Repr(ev *Evaluator) string {
+func (e *Env) Repr() string {
 	e.fill()
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
@@ -242,9 +242,9 @@ func (e *Env) Repr(ev *Evaluator) string {
 	return buf.String()
 }
 
-func (e *Env) String(ev *Evaluator) string {
+func (e *Env) String() string {
 	e.fill()
-	return e.Repr(ev)
+	return e.Repr()
 }
 
 func (e *Env) Caret(ev *Evaluator, v Value) Value {
@@ -259,7 +259,7 @@ func (e *Env) Caret(ev *Evaluator, v Value) Value {
 			ev.errorf("subscription must be single-element string list")
 		}
 		// TODO Handle invalid index
-		return NewString(e.m[sub.String(ev)])
+		return NewString(e.m[sub.String()])
 	default:
 		ev.errorf("Env can only be careted with Table")
 		return nil
@@ -282,12 +282,12 @@ func NewClosure(a []string, op Op, e map[string]*Value, b [2]StreamType) *Closur
 	return &Closure{a, op, e, b}
 }
 
-func (c *Closure) Repr(ev *Evaluator) string {
+func (c *Closure) Repr() string {
 	return fmt.Sprintf("<Closure%v>", *c)
 }
 
-func (c *Closure) String(ev *Evaluator) string {
-	return c.Repr(ev)
+func (c *Closure) String() string {
+	return c.Repr()
 }
 
 func (c *Closure) Caret(ev *Evaluator, v Value) Value {

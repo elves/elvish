@@ -55,21 +55,20 @@ func NewEvaluator() *Evaluator {
 		Compiler: &Compiler{},
 		scope:    g, env: env,
 		in: &port{f: os.Stdin}, out: &port{f: os.Stdout},
-	}
-	ev.statusCb = func(vs []Value) {
-		if statusOk(vs) {
-			return
-		}
-		fmt.Print("Status: ")
-		for i, v := range vs {
-			if i > 0 {
-				fmt.Print(", ")
+		statusCb: func(vs []Value) {
+			if statusOk(vs) {
+				return
 			}
-			fmt.Print(v.Repr(ev))
-		}
-		fmt.Println()
+			fmt.Print("Status: ")
+			for i, v := range vs {
+				if i > 0 {
+					fmt.Print(", ")
+				}
+				fmt.Print(v.Repr())
+			}
+			fmt.Println()
+		},
 	}
-
 	path, ok := env.m["PATH"]
 	if ok {
 		ev.searchPaths = strings.Split(path, ":")

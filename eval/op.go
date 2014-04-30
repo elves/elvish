@@ -101,7 +101,7 @@ func combineForm(n parse.Node, cmd valuesOp, tlist valuesOp, ports []portOp, a *
 		// XXX Currently it's guaranteed that cmd evaluates into a single
 		// Value.
 		cmd := cmd(ev)[0]
-		cmdStr := cmd.String(ev)
+		cmdStr := cmd.String()
 		fm := &form{
 			name:  cmdStr,
 			ports: [2]*port{ev.in, ev.out},

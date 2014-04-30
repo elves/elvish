@@ -51,10 +51,10 @@ func fn(ev *Evaluator, args []Value, ports [2]*port) string {
 	//
 	// fn g a b $f // Changes arity of $f!
 	for i := 1; i < n-1; i++ {
-		closure.ArgNames = append(closure.ArgNames, args[i].String(ev))
+		closure.ArgNames = append(closure.ArgNames, args[i].String())
 	}
 	// TODO(xiaq): should fn warn about redefinition of functions?
-	ev.scope["fn-"+args[0].String(ev)] = valuePtr(closure)
+	ev.scope["fn-"+args[0].String()] = valuePtr(closure)
 	return ""
 }
 
@@ -69,7 +69,7 @@ func put(ev *Evaluator, args []Value, ports [2]*port) string {
 func print(ev *Evaluator, args []Value, ports [2]*port) string {
 	out := ports[1].f
 	for _, a := range args {
-		fmt.Fprint(out, a.String(ev))
+		fmt.Fprint(out, a.String())
 	}
 	return ""
 }
@@ -87,7 +87,7 @@ func printchan(ev *Evaluator, args []Value, ports [2]*port) string {
 	out := ports[1].f
 
 	for s := range in {
-		fmt.Fprintln(out, s.String(ev))
+		fmt.Fprintln(out, s.String())
 	}
 	return ""
 }
@@ -124,7 +124,7 @@ func cd(ev *Evaluator, args []Value, ports [2]*port) string {
 			dir = user.HomeDir
 		}
 	} else if len(args) == 1 {
-		dir = args[0].String(ev)
+		dir = args[0].String()
 	} else {
 		return "args error"
 	}

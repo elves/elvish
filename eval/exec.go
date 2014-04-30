@@ -253,7 +253,7 @@ func (ev *Evaluator) execExternal(fm *form) <-chan *StateUpdate {
 	for i, a := range fm.args {
 		// NOTE Maybe we should enfore string arguments instead of coercing all
 		// args into string
-		args[i+1] = a.String(ev)
+		args[i+1] = a.String()
 	}
 
 	sys := syscall.SysProcAttr{}
