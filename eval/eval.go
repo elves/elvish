@@ -46,6 +46,7 @@ func statusOk(vs []Value) bool {
 // in the form "key=value".
 func NewEvaluator() *Evaluator {
 	env := NewEnv()
+	env.fill()
 	pid := NewString(strconv.Itoa(syscall.Getpid()))
 	g := map[string]*Value{
 		"env": valuePtr(env), "pid": valuePtr(pid),
