@@ -42,9 +42,7 @@ type ClosureType struct {
 }
 
 func (st ClosureType) Default() Value {
-	return NewClosure(
-		[]string{}, &parse.ChunkNode{0, []*parse.PipelineNode{}},
-		map[string]*Value{}, st.Bounds)
+	return NewClosure([]string{}, nil, map[string]*Value{}, st.Bounds)
 }
 
 var typenames = map[string]Type{
@@ -271,7 +269,7 @@ func (e *Env) Caret(ev *Evaluator, v Value) Value {
 // Closure is a closure.
 type Closure struct {
 	ArgNames []string
-	Chunk    *parse.ChunkNode
+	Op       Op
 	Enclosed map[string]*Value
 	Bounds   [2]StreamType
 }
@@ -280,8 +278,8 @@ func (c *Closure) Type() Type {
 	return ClosureType{c.Bounds}
 }
 
-func NewClosure(a []string, ch *parse.ChunkNode, e map[string]*Value, b [2]StreamType) *Closure {
-	return &Closure{a, ch, e, b}
+func NewClosure(a []string, op Op, e map[string]*Value, b [2]StreamType) *Closure {
+	return &Closure{a, op, e, b}
 }
 
 func (c *Closure) Repr(ev *Evaluator) string {

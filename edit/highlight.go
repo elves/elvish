@@ -34,7 +34,9 @@ type Highlighter struct {
 
 func (hl *Highlighter) variable(token parse.Item) {
 	if token.Typ == parse.ItemBare {
-		if _, err := hl.ev.ResolveVar(token.Val); err == nil {
+		// XXX Disabled until Compiler implements it
+		if true {
+			// if _, err := hl.ev.ResolveVar(token.Val); err == nil {
 			token.Typ = ItemValidVariable
 		} else {
 			token.Typ = ItemInvalidVariable
@@ -50,7 +52,9 @@ func (hl *Highlighter) command(token parse.Item) {
 	}
 	if token.Typ == parse.ItemBare {
 		// Check validity of command
-		if _, _, err := hl.ev.ResolveCommand(token.Val); err == nil {
+		// XXX Disabled until Compiler implements it
+		if true {
+			// if _, _, err := hl.ev.ResolveCommand(token.Val); err == nil {
 			token.Typ = ItemValidCommand
 		} else {
 			token.Typ = ItemInvalidCommand

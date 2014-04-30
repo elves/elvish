@@ -4,12 +4,11 @@ package eval
 
 import "github.com/xiaq/elvish/parse"
 
-type builtinSpecialImpl func(*Evaluator, *formAnnotation, [2]*port) string
-type builtinSpecialCheck func(*Checker, *parse.FormNode) interface{}
+type strOp func(*Evaluator) string
+type builtinSpecialCompile func(*Compiler, *parse.FormNode) strOp
 
 type builtinSpecial struct {
-	fn          builtinSpecialImpl
-	check       builtinSpecialCheck
+	compile     builtinSpecialCompile
 	streamTypes [2]StreamType
 }
 
@@ -18,9 +17,9 @@ var builtinSpecials map[string]builtinSpecial
 func init() {
 	// Needed to avoid initialization loop
 	builtinSpecials = map[string]builtinSpecial{
-		"var": builtinSpecial{var_, checkVar, [2]StreamType{}},
-		"set": builtinSpecial{set, checkSet, [2]StreamType{}},
-		"del": builtinSpecial{del, checkDel, [2]StreamType{}},
+		"var": builtinSpecial{compileVar, [2]StreamType{}},
+		"set": builtinSpecial{compileSet, [2]StreamType{}},
+		"del": builtinSpecial{compileDel, [2]StreamType{}},
 	}
 }
 
@@ -34,14 +33,14 @@ type delForm struct {
 	names []string
 }
 
-// checkVarSet checks a var or set special form. If v is true, a var special
-// form is being checked.
+// compileVarSet compiles a var or set special form. If v is true, a var special
+// form is being compiled.
 //
 // The arguments in the var/set special form must consist of zero or more
 // variable factors followed by `=` and then zero or more terms. The number of
 // values the terms evaluate to must be equal to the number of names, but
-// checkVarSet does not attempt to check this.
-func checkVarSet(ch *Checker, args *parse.TermListNode, v bool) *varSetForm {
+// compileVarSet does not attempt to compile this.
+func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 	f := &varSetForm{}
 	lastTyped := 0
 	for i, n := range args.Nodes {
@@ -52,7 +51,7 @@ func checkVarSet(ch *Checker, args *parse.TermListNode, v bool) *varSetForm {
 			termReq = "must be a variable or literal `=`"
 		}
 		if len(n.Nodes) != 1 {
-			ch.errorf(n, "%s", termReq)
+			cp.errorf(n, "%s", termReq)
 		}
 		nf := n.Nodes[0]
 
@@ -60,7 +59,7 @@ func checkVarSet(ch *Checker, args *parse.TermListNode, v bool) *varSetForm {
 		if m, ok := nf.Node.(*parse.StringNode); ok {
 			text = m.Text
 		} else {
-			ch.errorf(n, "%s", termReq)
+			cp.errorf(n, "%s", termReq)
 		}
 
 		if nf.Typ == parse.StringFactor {
@@ -69,45 +68,62 @@ func checkVarSet(ch *Checker, args *parse.TermListNode, v bool) *varSetForm {
 				break
 			} else if t := typenames[text]; v && t != nil {
 				if i == 0 {
-					ch.errorf(n, "type name must follow variables")
+					cp.errorf(n, "type name must follow variables")
 				}
 				for j := lastTyped; j < i; j++ {
 					f.types = append(f.types, t)
 				}
 				lastTyped = i
 			} else {
-				ch.errorf(n, "%s", termReq)
+				cp.errorf(n, "%s", termReq)
 			}
 		} else if nf.Typ == parse.VariableFactor {
+			if !v {
+				// For set, ensure that the variable can be resolved
+				cp.resolveVar(text, nf)
+			}
 			f.names = append(f.names, text)
 		} else {
-			ch.errorf(n, "%s", termReq)
+			cp.errorf(n, "%s", termReq)
 		}
 	}
 	if v {
 		if len(f.types) != len(f.names) {
-			ch.errorf(args, "Some variables lack type")
+			cp.errorf(args, "Some variables lack type")
 		}
-		// Skip checking of variable terms
-		ch.checkTerms(f.values)
+		for i, name := range f.names {
+			cp.pushVar(name, f.types[i])
+		}
+		var vop valuesOp
+		if f.values != nil {
+			vop = cp.compileTerms(f.values)
+		}
+		return func(ev *Evaluator) string {
+			for i, name := range f.names {
+				ev.scope[name] = valuePtr(f.types[i].Default())
+			}
+			if vop != nil {
+				return doSet(ev, f.names, vop(ev))
+			}
+			return ""
+		}
 	} else {
-		// Do conventional checking of all terms, including ensuring that
-		// variables can be resolved
-		ch.checkTermList(args)
+		if f.values == nil {
+			cp.errorf(args, "set form lacks equal sign")
+		}
+		vop := cp.compileTerms(f.values)
+		return func(ev *Evaluator) string {
+			return doSet(ev, f.names, vop(ev))
+		}
 	}
-	return f
 }
 
-func checkVar(ch *Checker, fn *parse.FormNode) interface{} {
-	f := checkVarSet(ch, fn.Args, true)
-	for i, name := range f.names {
-		ch.pushVar(name, f.types[i])
-	}
-	return f
+func compileVar(cp *Compiler, fn *parse.FormNode) strOp {
+	return compileVarSet(cp, fn.Args, true)
 }
 
-func checkSet(ch *Checker, fn *parse.FormNode) interface{} {
-	return checkVarSet(ch, fn.Args, false)
+func compileSet(cp *Compiler, fn *parse.FormNode) strOp {
+	return compileVarSet(cp, fn.Args, false)
 }
 
 func doSet(ev *Evaluator, names []string, values []Value) string {
@@ -119,61 +135,37 @@ func doSet(ev *Evaluator, names []string, values []Value) string {
 
 	for i, name := range names {
 		// TODO Prevent overriding builtin variables e.g. $pid $env
-		*ev.resolveVar(name) = values[i]
+		*ev.scope[name] = values[i]
 	}
 
 	return ""
 }
 
-func var_(ev *Evaluator, a *formAnnotation, ports [2]*port) string {
-	f := a.specialAnnotation.(*varSetForm)
-	for i, name := range f.names {
-		ev.scope[name] = valuePtr(f.types[i].Default())
-	}
-	if f.values != nil {
-		return doSet(ev, f.names, ev.evalTermList(
-			&parse.TermListNode{0, f.values}))
-	}
-	return ""
-}
-
-func set(ev *Evaluator, a *formAnnotation, ports [2]*port) string {
-	f := a.specialAnnotation.(*varSetForm)
-	if f.values == nil {
-		return "not implemented"
-	}
-	return doSet(ev, f.names, ev.evalTermList(
-		&parse.TermListNode{0, f.values}))
-}
-
-func checkDel(ch *Checker, fn *parse.FormNode) interface{} {
-	// Do conventional checking of all terms, including ensuring that
+func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
+	// Do conventional compiling of all terms, including ensuring that
 	// variables can be resolved
-	ch.checkTermList(fn.Args)
 	f := &delForm{}
 	for _, n := range fn.Args.Nodes {
 		termReq := "must be a varible"
 		if len(n.Nodes) != 1 {
-			ch.errorf(n, "%s", termReq)
+			cp.errorf(n, "%s", termReq)
 		}
 		nf := n.Nodes[0]
 		if nf.Typ != parse.VariableFactor {
-			ch.errorf(n, "%s", termReq)
+			cp.errorf(n, "%s", termReq)
 		}
 		name := nf.Node.(*parse.StringNode).Text
-		if !ch.hasVarOnThisScope(name) {
-			ch.errorf(n, "can only delete variable on current scope")
+		cp.resolveVar(name, nf)
+		if !cp.hasVarOnThisScope(name) {
+			cp.errorf(n, "can only delete variable on current scope")
 		}
-		ch.popVar(name)
+		cp.popVar(name)
 		f.names = append(f.names, name)
 	}
-	return f
-}
-
-func del(ev *Evaluator, a *formAnnotation, ports [2]*port) string {
-	f := a.specialAnnotation.(*delForm)
-	for _, name := range f.names {
-		delete(ev.scope, name)
+	return func(ev *Evaluator) string {
+		for _, name := range f.names {
+			delete(ev.scope, name)
+		}
+		return ""
 	}
-	return ""
 }

@@ -17,19 +17,23 @@ import (
 // goroutine. When elvish code spawns goroutines, the Evaluator is copied and
 // has certain components replaced.
 type Evaluator struct {
-	Checker     *Checker
+	Compiler    *Compiler
 	name, text  string
 	scope       map[string]*Value
 	env         *Env
 	searchPaths []string
 	in, out     *port
-	statusCb    func([]string)
+	statusCb    func([]Value)
 	nodes       []parse.Node // A stack that keeps track of nodes being evaluated.
 }
 
-func statusOk(ss []string) bool {
-	for _, s := range ss {
-		switch s {
+func statusOk(vs []Value) bool {
+	for _, v := range vs {
+		v, ok := v.(*String)
+		if !ok {
+			return false
+		}
+		switch string(*v) {
 		case "", "0":
 		default:
 			return false
@@ -47,14 +51,22 @@ func NewEvaluator() *Evaluator {
 		"env": valuePtr(env), "pid": valuePtr(pid),
 	}
 	ev := &Evaluator{
-		Checker: NewChecker(),
-		scope:   g, env: env,
+		Compiler: &Compiler{},
+		scope:    g, env: env,
 		in: &port{f: os.Stdin}, out: &port{f: os.Stdout},
-		statusCb: func(s []string) {
-			if !statusOk(s) {
-				fmt.Println("Status:", s)
+	}
+	ev.statusCb = func(vs []Value) {
+		if statusOk(vs) {
+			return
+		}
+		fmt.Print("Status: ")
+		for i, v := range vs {
+			if i > 0 {
+				fmt.Print(", ")
 			}
-		},
+			fmt.Print(v.Repr(ev))
+		}
+		fmt.Println()
 	}
 
 	path, ok := env.m["PATH"]
@@ -74,7 +86,7 @@ func (ev *Evaluator) copy() *Evaluator {
 	return eu
 }
 
-func (ev *Evaluator) MakeCheckerScope() map[string]Type {
+func (ev *Evaluator) MakeCompilerScope() map[string]Type {
 	scope := make(map[string]Type)
 	for name, value := range ev.scope {
 		scope[name] = (*value).Type()
@@ -84,17 +96,23 @@ func (ev *Evaluator) MakeCheckerScope() map[string]Type {
 
 // Eval evaluates a chunk node n. The name and text of it is used for
 // diagnostic messages.
-func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) (err error) {
-	err = ev.Checker.Check(name, text, n, ev.MakeCheckerScope())
+func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) error {
+	op, err := ev.Compiler.Compile(name, text, n, ev.MakeCompilerScope())
 	if err != nil {
-		return
+		return err
 	}
+	return ev.eval(name, text, op)
+}
 
+func (ev *Evaluator) eval(name, text string, op Op) (err error) {
+	if op == nil {
+		return nil
+	}
 	defer util.Recover(&err)
 	defer ev.stopEval()
 	ev.name = name
 	ev.text = text
-	ev.evalChunk(n)
+	op(ev)
 	return nil
 }
 
@@ -126,173 +144,13 @@ func (ev *Evaluator) errorf(format string, args ...interface{}) {
 	}
 }
 
-// ResolveVar tries to find an variable with the given name in the local and
-// then global context of the Evaluator. If no variable with the name exists,
-// err is non-nil.
-func (ev *Evaluator) ResolveVar(name string) (v Value, err error) {
-	defer util.Recover(&err)
-	return *ev.resolveVar(name), nil
-}
-
-func (ev *Evaluator) resolveVar(name string) *Value {
-	if val, ok := ev.scope[name]; ok {
-		return val
-	}
-	ev.errorf("Variable %q not found, the checker has a bug", name)
-	return nil
-}
-
-func (ev *Evaluator) evalTable(tn *parse.TableNode) *Table {
-	ev.push(tn)
-	defer ev.pop()
-
-	// Evaluate list part.
-	t := NewTable()
-	for _, term := range tn.List {
-		vs := ev.evalTerm(term)
-		t.append(vs...)
-	}
-	for _, pair := range tn.Dict {
-		ks := ev.evalTerm(pair.Key)
-		vs := ev.evalTerm(pair.Value)
-		if len(ks) != len(vs) {
-			ev.errorf("Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
-		}
-		for i, k := range ks {
-			t.Dict[k] = vs[i]
-		}
-	}
-	return t
-}
-
-func (ev *Evaluator) evalFactor(n *parse.FactorNode) []Value {
-	ev.push(n)
-	defer ev.pop()
-
-	var words []Value
-
-	switch n.Typ {
-	case parse.StringFactor:
-		m := n.Node.(*parse.StringNode)
-		words = []Value{NewString(m.Text)}
-	case parse.VariableFactor:
-		m := n.Node.(*parse.StringNode)
-		words = []Value{*ev.resolveVar(m.Text)}
-	case parse.ListFactor:
-		m := n.Node.(*parse.TermListNode)
-		words = ev.evalTermList(m)
-	case parse.OutputCaptureFactor:
-		m := n.Node.(*parse.PipelineNode)
-		newEv := ev.copy()
-		ch := make(chan Value)
-		newEv.out = &port{ch: ch}
-		updates := newEv.evalPipelineAsync(m)
-		for v := range ch {
-			words = append(words, v)
-		}
-		newEv.waitPipeline(updates)
-	case parse.StatusCaptureFactor:
-		m := n.Node.(*parse.PipelineNode)
-		ss := ev.evalPipeline(m)
-		words = make([]Value, len(ss))
-		for i, s := range ss {
-			words[i] = NewString(s)
-		}
-	case parse.TableFactor:
-		m := n.Node.(*parse.TableNode)
-		word := ev.evalTable(m)
-		words = []Value{word}
-	case parse.ClosureFactor:
-		m := n.Node.(*parse.ClosureNode)
-		var names []string
-		if m.ArgNames != nil {
-			nameValues := ev.evalTermList(m.ArgNames)
-			for _, v := range nameValues {
-				names = append(names, v.String(ev))
-			}
-		}
-		enclosed := make(map[string]*Value)
-		annotation := m.Annotation.(*closureAnnotation)
-		for name := range annotation.enclosed {
-			enclosed[name] = ev.resolveVar(name)
-		}
-		words = []Value{NewClosure(names, m.Chunk, enclosed, annotation.bounds)}
-	default:
-		panic("bad factor type")
-	}
-
-	return words
-}
-
-func (ev *Evaluator) evalTerm(n *parse.TermNode) []Value {
-	ev.push(n)
-	defer ev.pop()
-
-	if len(n.Nodes) == 0 {
-		panic("evalTerm got an empty list")
-	}
-
-	words := ev.evalFactor(n.Nodes[0])
-
-	for _, m := range n.Nodes[1:] {
-		a := ev.evalFactor(m)
-		if len(a) == 1 {
-			for i := range words {
-				words[i] = words[i].Caret(ev, a[0])
-			}
-		} else {
-			// Do a Cartesian product
-			newWords := make([]Value, len(words)*len(a))
-			for i := range words {
-				for j := range a {
-					newWords[i*len(a)+j] = words[i].Caret(ev, a[j])
-				}
-			}
-			words = newWords
-		}
-	}
-	return words
-}
-
-func (ev *Evaluator) evalTermList(ln *parse.TermListNode) []Value {
-	ev.push(ln)
-	defer ev.pop()
-
-	words := make([]Value, 0, len(ln.Nodes))
-	for _, n := range ln.Nodes {
-		a := ev.evalTerm(n)
-		words = append(words, a...)
-	}
-	return words
-}
-
-func (ev *Evaluator) asSingleString(vs []Value, n parse.Node, what string) *String {
-	ev.push(n)
-	defer ev.pop()
-
+func (ev *Evaluator) asSingleString(n parse.Node, vs []Value, what string) *String {
 	if len(vs) != 1 {
-		ev.errorf("Expect exactly one word for %s, got %d", what, len(vs))
+		ev.errorfNode(n, "Expect exactly one word for %s, got %d", what, len(vs))
 	}
 	v, ok := vs[0].(*String)
 	if !ok {
-		ev.errorf("Expect string for %s, got %s", what, vs[0])
+		ev.errorfNode(n, "Expect string for %s, got %s", what, vs[0])
 	}
 	return v
-}
-
-func (ev *Evaluator) evalTermSingleString(n *parse.TermNode, what string) *String {
-	return ev.asSingleString(ev.evalTerm(n), n, what)
-}
-
-// BUG(xiaq): When evaluating a chunk, failure of one pipeline will abort the
-// whole chunk.
-func (ev *Evaluator) evalChunk(ch *parse.ChunkNode) {
-	ev.push(ch)
-	defer ev.pop()
-	for _, n := range ch.Nodes {
-		s := ev.evalPipeline(n)
-		if ev.statusCb != nil {
-			ev.statusCb(s)
-		}
-	}
 }
