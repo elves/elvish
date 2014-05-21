@@ -19,8 +19,9 @@ const (
 // f is not nil, or a channel, where ch is not nil. When both are nil, the port
 // is closed and may not be used.
 type port struct {
-	f  *os.File
-	ch chan Value
+	f           *os.File
+	ch          chan Value
+	shouldClose bool
 }
 
 // StreamType represents what form of data stream a command expects on each
@@ -67,29 +68,23 @@ type Command struct {
 
 // form packs runtime states of a fully constructured form.
 type form struct {
-	name       string   // Command name, used in error messages.
-	args       []Value  // Evaluated argument list
-	ports      [2]*port // In- and out-ports.
+	name       string  // Command name, used in error messages.
+	args       []Value // Evaluated argument list
 	annotation *formAnnotation
 	Command
 }
 
-func (fm *form) closePorts(ev *Evaluator) {
-	for i, port := range fm.ports {
-		if port == nil {
+// closePorts closes all ports in ev.ports that were marked shouldClose.
+func (ev *Evaluator) closePorts() {
+	for _, port := range ev.ports {
+		if !port.shouldClose {
 			continue
 		}
-		switch port.f {
-		case nil, ev.in.f, ev.out.f:
-			// XXX(xiaq) Is the heuristics correct?
-		default:
+		if port.f != nil {
 			port.f.Close()
 		}
 		if port.ch != nil {
-			// Only close output channels
-			if i == 1 {
-				close(port.ch)
-			}
+			close(port.ch)
 		}
 	}
 }
@@ -173,8 +168,6 @@ func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 	for name, pvalue := range fm.Closure.Enclosed {
 		newEv.scope[name] = pvalue
 	}
-	newEv.in = fm.ports[0]
-	newEv.out = fm.ports[1]
 	newEv.statusCb = nil
 	go func() {
 		// TODO Support calling closure originated in another source.
@@ -182,8 +175,8 @@ func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 		if err != nil {
 			fmt.Print(err.(*util.ContextualError).Pprint())
 		}
-		// Streams are closed after executaion of closure is complete.
-		fm.closePorts(ev)
+		// Ports are closed after executaion of closure is complete.
+		newEv.closePorts()
 		// TODO Support returning value.
 		update <- &StateUpdate{Terminated: true}
 		close(update)
@@ -196,8 +189,8 @@ func (ev *Evaluator) execBuiltinSpecial(fm *form) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
 		msg := fm.Special(ev)
-		// Streams are closed after executaion of builtin is complete.
-		fm.closePorts(ev)
+		// Ports are closed after executaion of builtin is complete.
+		ev.closePorts()
 		update <- &StateUpdate{Terminated: true, Msg: msg}
 		close(update)
 	}()
@@ -209,11 +202,9 @@ func (ev *Evaluator) execBuiltinSpecial(fm *form) <-chan *StateUpdate {
 func (ev *Evaluator) execBuiltinFunc(fm *form) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
-		var ports [2]*port
-		copy(ports[:], fm.ports[:2])
-		msg := fm.Func(ev, fm.args, ports)
-		// Streams are closed after executaion of builtin is complete.
-		fm.closePorts(ev)
+		msg := fm.Func(ev, fm.args)
+		// Ports are closed after executaion of builtin is complete.
+		ev.closePorts()
 		update <- &StateUpdate{Terminated: true, Msg: msg}
 		close(update)
 	}()
@@ -239,8 +230,8 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 
 // execExternal executes an external command.
 func (ev *Evaluator) execExternal(fm *form) <-chan *StateUpdate {
-	files := make([]uintptr, len(fm.ports))
-	for i, port := range fm.ports {
+	files := make([]uintptr, len(ev.ports))
+	for i, port := range ev.ports {
 		if port == nil || port.f == nil {
 			files[i] = FdNil
 		} else {
@@ -259,8 +250,8 @@ func (ev *Evaluator) execExternal(fm *form) <-chan *StateUpdate {
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
 	pid, err := syscall.ForkExec(fm.Path, args, &attr)
-	// Streams are closed after fork-exec of external is complete.
-	fm.closePorts(ev)
+	// Ports are closed after fork-exec of external is complete.
+	ev.closePorts()
 
 	update := make(chan *StateUpdate)
 	if err != nil {

@@ -47,10 +47,10 @@ func combineClosure(ops []valuesOp, a *closureAnnotation) valuesOp {
 func combinePipeline(n parse.Node, ops []stateUpdatesOp, a *pipelineAnnotation) valuesOp {
 	return func(ev *Evaluator) []Value {
 		// TODO(xiaq): Should catch when compiling
-		if !ev.in.compatible(a.bounds[0]) {
+		if !ev.ports[0].compatible(a.bounds[0]) {
 			ev.errorfNode(n, "pipeline input not satisfiable")
 		}
-		if !ev.out.compatible(a.bounds[1]) {
+		if !ev.ports[1].compatible(a.bounds[1]) {
 			ev.errorfNode(n, "pipeline output not satisfiable")
 		}
 		var nextIn *port
@@ -58,13 +58,15 @@ func combinePipeline(n parse.Node, ops []stateUpdatesOp, a *pipelineAnnotation) 
 		// For each form, create a dedicated Evaluator and run
 		for i, op := range ops {
 			newEv := ev.copy()
+			newEv.ports = make([]*port, len(ev.ports))
+			copy(newEv.ports, ev.ports)
 			if i > 0 {
-				newEv.in = nextIn
+				newEv.ports[0] = nextIn
 			}
 			if i < len(ops)-1 {
 				switch a.internals[i] {
 				case unusedStream:
-					newEv.out = nil
+					newEv.ports[1] = nil
 					nextIn = nil
 				case fdStream:
 					// os.Pipe sets O_CLOEXEC, which is what we want.
@@ -72,12 +74,13 @@ func combinePipeline(n parse.Node, ops []stateUpdatesOp, a *pipelineAnnotation) 
 					if e != nil {
 						ev.errorfNode(n, "failed to create pipe: %s", e)
 					}
-					newEv.out = &port{f: writer}
-					nextIn = &port{f: reader}
+					newEv.ports[1] = &port{f: writer, shouldClose: true}
+					nextIn = &port{f: reader, shouldClose: true}
 				case chanStream:
 					// TODO Buffered channel?
 					ch := make(chan Value)
-					newEv.out = &port{ch: ch}
+					// Only the writer closes the channel port
+					newEv.ports[1] = &port{ch: ch, shouldClose: true}
 					nextIn = &port{ch: ch}
 				default:
 					panic("bad StreamType value")
@@ -103,18 +106,10 @@ func combineForm(n parse.Node, cmd valuesOp, tlist valuesOp, ports []portOp, a *
 		cmd := cmd(ev)[0]
 		cmdStr := cmd.String()
 		fm := &form{
-			name:  cmdStr,
-			ports: [2]*port{ev.in, ev.out},
+			name: cmdStr,
 		}
 		if tlist != nil {
 			fm.args = tlist(ev)
-		}
-
-		// XXX Assume len(ports) <= 2
-		for i, op := range ports {
-			if op != nil {
-				fm.ports[i] = op(ev)
-			}
 		}
 
 		switch a.commandType {
@@ -140,7 +135,22 @@ func combineForm(n parse.Node, cmd valuesOp, tlist valuesOp, ports []portOp, a *
 		default:
 			panic("bad commandType value")
 		}
-		return ev.execForm(fm)
+
+		newEv := ev.copy()
+		nports := len(ev.ports)
+		if nports < len(ports) {
+			nports = len(ports)
+		}
+		newEv.ports = make([]*port, nports)
+		copy(newEv.ports, ev.ports)
+
+		for i, op := range ports {
+			if op != nil {
+				newEv.ports[i] = op(ev)
+			}
+		}
+
+		return newEv.execForm(fm)
 	}
 }
 
@@ -224,8 +234,10 @@ func combineOutputCapture(op valuesOp, a *pipelineAnnotation) valuesOp {
 	return func(ev *Evaluator) []Value {
 		vs := []Value{}
 		newEv := ev.copy()
+		newEv.ports = make([]*port, len(ev.ports))
+		copy(newEv.ports, ev.ports)
 		ch := make(chan Value)
-		newEv.out = &port{ch: ch}
+		newEv.ports[1] = &port{ch: ch}
 		go func() {
 			for v := range ch {
 				vs = append(vs, v)

@@ -190,26 +190,29 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, *formAnnota
 		cp.errorf(fn.Command, msg)
 	}
 
-	ports := make([]portOp, 2)
+	var nports uintptr
+	for _, rd := range fn.Redirs {
+		if nports < rd.Fd()+1 {
+			nports = rd.Fd() + 1
+		}
+	}
+
+	ports := make([]portOp, nports)
 	for _, rd := range fn.Redirs {
 		fd := rd.Fd()
-		if fd > 1 {
-			cp.errorf(rd, "redir on fd > 1 not yet supported")
+		if fd < 2 {
+			switch rd := rd.(type) {
+			case *parse.FdRedir:
+				if annotation.streamTypes[fd] == chanStream {
+					cp.errorf(rd, "fd redir on channel port")
+				}
+			case *parse.FilenameRedir:
+				if annotation.streamTypes[fd] == chanStream {
+					cp.errorf(rd, "filename redir on channel port")
+				}
+			}
+			annotation.streamTypes[fd] = unusedStream
 		}
-		switch rd := rd.(type) {
-		case *parse.FdRedir:
-			if annotation.streamTypes[fd] == chanStream {
-				cp.errorf(rd, "fd redir on channel port")
-			}
-			if rd.OldFd > 1 {
-				cp.errorf(rd, "fd redir from fd > 1 not yet supported")
-			}
-		case *parse.FilenameRedir:
-			if annotation.streamTypes[fd] == chanStream {
-				cp.errorf(rd, "filename redir on channel port")
-			}
-		}
-		annotation.streamTypes[fd] = unusedStream
 		ports[fd] = cp.compileRedir(rd)
 	}
 
@@ -229,15 +232,13 @@ func (cp *Compiler) compileRedir(r parse.Redir) portOp {
 			return &port{}
 		}
 	case *parse.FdRedir:
-		if r.OldFd > 1 {
-			cp.errorf(r, "fd redir from fd > 1 not yet supported")
-		}
+		oldFd := int(r.OldFd)
 		return func(ev *Evaluator) *port {
-			if r.OldFd == 0 {
-				return ev.in
-			} else {
-				return ev.out
-			}
+			// Copied ports have shouldClose unmarked to avoid double close on
+			// channels
+			p := *ev.port(oldFd)
+			p.shouldClose = false
+			return &p
 		}
 	case *parse.FilenameRedir:
 		fnameOp := cp.compileTerm(r.Filename)
@@ -249,7 +250,7 @@ func (cp *Compiler) compileRedir(r parse.Redir) portOp {
 			if e != nil {
 				ev.errorfNode(r, "failed to open file %q: %s", fname[0], e)
 			}
-			return &port{f: f}
+			return &port{f: f, shouldClose: true}
 		}
 	default:
 		panic("bad Redir type")

@@ -22,7 +22,7 @@ type Evaluator struct {
 	scope       map[string]*Value
 	env         *Env
 	searchPaths []string
-	in, out     *port
+	ports       []*port
 	statusCb    func([]Value)
 	nodes       []parse.Node // A stack that keeps track of nodes being evaluated.
 }
@@ -54,7 +54,8 @@ func NewEvaluator() *Evaluator {
 	ev := &Evaluator{
 		Compiler: &Compiler{},
 		scope:    g, env: env,
-		in: &port{f: os.Stdin}, out: &port{f: os.Stdout},
+		ports: []*port{
+			&port{f: os.Stdin}, &port{f: os.Stdout}, &port{f: os.Stderr}},
 		statusCb: func(vs []Value) {
 			if statusOk(vs) {
 				return
@@ -84,6 +85,13 @@ func (ev *Evaluator) copy() *Evaluator {
 	eu := new(Evaluator)
 	*eu = *ev
 	return eu
+}
+
+func (ev *Evaluator) port(i int) *port {
+	if i >= len(ev.ports) {
+		return nil
+	}
+	return ev.ports[i]
 }
 
 func (ev *Evaluator) MakeCompilerScope() map[string]Type {

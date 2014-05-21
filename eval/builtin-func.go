@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-type builtinFuncImpl func(*Evaluator, []Value, [2]*port) string
+type builtinFuncImpl func(*Evaluator, []Value) string
 
 type builtinFunc struct {
 	fn          builtinFuncImpl
@@ -32,7 +32,7 @@ var builtinFuncs = map[string]builtinFunc{
 	"/":         builtinFunc{divide, [2]StreamType{0, chanStream}},
 }
 
-func fn(ev *Evaluator, args []Value, ports [2]*port) string {
+func fn(ev *Evaluator, args []Value) string {
 	n := len(args)
 	if n < 2 {
 		return "args error"
@@ -58,33 +58,33 @@ func fn(ev *Evaluator, args []Value, ports [2]*port) string {
 	return ""
 }
 
-func put(ev *Evaluator, args []Value, ports [2]*port) string {
-	out := ports[1].ch
+func put(ev *Evaluator, args []Value) string {
+	out := ev.ports[1].ch
 	for _, a := range args {
 		out <- a
 	}
 	return ""
 }
 
-func print(ev *Evaluator, args []Value, ports [2]*port) string {
-	out := ports[1].f
+func print(ev *Evaluator, args []Value) string {
+	out := ev.ports[1].f
 	for _, a := range args {
 		fmt.Fprint(out, a.String())
 	}
 	return ""
 }
 
-func println(ev *Evaluator, args []Value, ports [2]*port) string {
+func println(ev *Evaluator, args []Value) string {
 	args = append(args, NewString("\n"))
-	return print(ev, args, ports)
+	return print(ev, args)
 }
 
-func printchan(ev *Evaluator, args []Value, ports [2]*port) string {
+func printchan(ev *Evaluator, args []Value) string {
 	if len(args) > 0 {
 		return "args error"
 	}
-	in := ports[0].ch
-	out := ports[1].f
+	in := ev.ports[0].ch
+	out := ev.ports[1].f
 
 	for s := range in {
 		fmt.Fprintln(out, s.String())
@@ -92,12 +92,12 @@ func printchan(ev *Evaluator, args []Value, ports [2]*port) string {
 	return ""
 }
 
-func feedchan(ev *Evaluator, args []Value, ports [2]*port) string {
+func feedchan(ev *Evaluator, args []Value) string {
 	if len(args) > 0 {
 		return "args error"
 	}
-	in := ports[0].f
-	out := ports[1].ch
+	in := ev.ports[0].f
+	out := ev.ports[1].ch
 
 	fmt.Println("WARNING: Only string input is supported at the moment.")
 
@@ -116,7 +116,7 @@ func feedchan(ev *Evaluator, args []Value, ports [2]*port) string {
 	}
 }
 
-func cd(ev *Evaluator, args []Value, ports [2]*port) string {
+func cd(ev *Evaluator, args []Value) string {
 	var dir string
 	if len(args) == 0 {
 		user, err := user.Current()
@@ -150,8 +150,8 @@ func toFloats(args []Value) (nums []float64, err error) {
 	return
 }
 
-func plus(ev *Evaluator, args []Value, ports [2]*port) string {
-	out := ports[1].ch
+func plus(ev *Evaluator, args []Value) string {
+	out := ev.ports[1].ch
 	nums, err := toFloats(args)
 	if err != nil {
 		return err.Error()
@@ -164,8 +164,8 @@ func plus(ev *Evaluator, args []Value, ports [2]*port) string {
 	return ""
 }
 
-func minus(ev *Evaluator, args []Value, ports [2]*port) string {
-	out := ports[1].ch
+func minus(ev *Evaluator, args []Value) string {
+	out := ev.ports[1].ch
 	if len(args) == 0 {
 		return "not enough args"
 	}
@@ -181,8 +181,8 @@ func minus(ev *Evaluator, args []Value, ports [2]*port) string {
 	return ""
 }
 
-func times(ev *Evaluator, args []Value, ports [2]*port) string {
-	out := ports[1].ch
+func times(ev *Evaluator, args []Value) string {
+	out := ev.ports[1].ch
 	nums, err := toFloats(args)
 	if err != nil {
 		return err.Error()
@@ -195,8 +195,8 @@ func times(ev *Evaluator, args []Value, ports [2]*port) string {
 	return ""
 }
 
-func divide(ev *Evaluator, args []Value, ports [2]*port) string {
-	out := ports[1].ch
+func divide(ev *Evaluator, args []Value) string {
+	out := ev.ports[1].ch
 	if len(args) == 0 {
 		return "not enough args"
 	}
