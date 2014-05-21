@@ -211,6 +211,34 @@ func (ev *Evaluator) execBuiltinFunc(fm *form) <-chan *StateUpdate {
 	return update
 }
 
+func printStatus(ws syscall.WaitStatus) string {
+	switch {
+	case ws.Exited():
+		es := ws.ExitStatus()
+		if es == 0 {
+			return ""
+		}
+		return fmt.Sprintf("exited %v", es)
+	case ws.Signaled():
+		msg := fmt.Sprintf("signaled %v", ws.Signal())
+		if ws.CoreDump() {
+			msg += " (core dumped)"
+		}
+		return msg
+	case ws.Stopped():
+		msg := fmt.Sprintf("stopped %v", ws.StopSignal())
+		trap := ws.TrapCause()
+		if trap != -1 {
+			msg += fmt.Sprintf(" (trapped %v)", trap)
+		}
+		return msg
+	case ws.Continued():
+		return "continued"
+	default:
+		return fmt.Sprintf("unknown status %v", ws)
+	}
+}
+
 func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 	for {
 		var ws syscall.WaitStatus
@@ -223,7 +251,7 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 			break
 		}
 		update <- &StateUpdate{
-			Terminated: ws.Exited(), Msg: fmt.Sprintf("%v", ws)}
+			Terminated: ws.Exited(), Msg: printStatus(ws)}
 	}
 	close(update)
 }

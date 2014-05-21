@@ -33,9 +33,7 @@ func statusOk(vs []Value) bool {
 		if !ok {
 			return false
 		}
-		switch string(*v) {
-		case "", "0":
-		default:
+		if string(*v) != "" {
 			return false
 		}
 	}
