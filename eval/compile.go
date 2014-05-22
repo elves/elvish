@@ -178,7 +178,6 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, *formAnnota
 	cmdOp := cp.compileFactor(command)
 
 	annotation := &formAnnotation{}
-	fn.Annotation = annotation
 	switch command.Typ {
 	case parse.StringFactor:
 		cp.resolveCommand(command.Node.(*parse.StringNode).Text, annotation)
