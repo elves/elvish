@@ -32,15 +32,15 @@ func combineChunk(ops []valuesOp) Op {
 	}
 }
 
-func combineClosure(ops []valuesOp, a *closureAnnotation) valuesOp {
+func combineClosure(ops []valuesOp, enclosed map[string]Type, bounds [2]StreamType) valuesOp {
 	op := combineChunk(ops)
 	// BUG(xiaq): Closure arguments is (again) not supported
 	return func(ev *Evaluator) []Value {
-		enclosed := make(map[string]*Value, len(a.enclosed))
-		for name := range a.enclosed {
+		enclosed := make(map[string]*Value, len(enclosed))
+		for name := range enclosed {
 			enclosed[name] = ev.scope[name]
 		}
-		return []Value{NewClosure(nil, op, enclosed, a.bounds)}
+		return []Value{NewClosure(nil, op, enclosed, bounds)}
 	}
 }
 

@@ -70,12 +70,10 @@ func (cp *Compiler) compileChunk(cn *parse.ChunkNode) Op {
 	return combineChunk(ops)
 }
 
-func (cp *Compiler) compileClosure(cn *parse.ClosureNode) (valuesOp, *closureAnnotation) {
+func (cp *Compiler) compileClosure(cn *parse.ClosureNode) (valuesOp, map[string]Type, [2]StreamType) {
 	ops := make([]valuesOp, len(cn.Chunk.Nodes))
 
 	cp.pushScope()
-	annotation := &closureAnnotation{}
-	cn.Annotation = annotation
 
 	bounds := [2]StreamType{}
 	for i, pn := range cn.Chunk.Nodes {
@@ -92,13 +90,12 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) (valuesOp, *closureAnn
 			cp.errorf(pn, "Pipeline output stream incompatible with previous ones")
 		}
 	}
-	annotation.bounds = bounds
 
-	annotation.enclosed = cp.enclosed
+	enclosed := cp.enclosed
 	cp.enclosed = make(map[string]Type)
 	cp.popScope()
 
-	return combineClosure(ops, annotation), annotation
+	return combineClosure(ops, enclosed, bounds), enclosed, bounds
 }
 
 func (cp *Compiler) compilePipeline(pn *parse.PipelineNode) (valuesOp, [2]StreamType) {
@@ -176,16 +173,15 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, *formAnnota
 		cp.errorf(fn.Command, msg)
 	}
 	command := fn.Command.Nodes[0]
-	cmdOp := cp.compileFactor(command)
+	cmdOp, pbounds := cp.compileFactor(command)
 
 	annotation := &formAnnotation{}
 	switch command.Typ {
 	case parse.StringFactor:
 		cp.resolveCommand(command.Node.(*parse.StringNode).Text, annotation)
 	case parse.ClosureFactor:
-		ca := command.Node.(*parse.ClosureNode).Annotation.(*closureAnnotation)
 		annotation.commandType = commandClosure
-		annotation.streamTypes = ca.bounds
+		annotation.streamTypes = *pbounds
 	default:
 		cp.errorf(fn.Command, msg)
 	}
@@ -272,20 +268,20 @@ func (cp *Compiler) compileTermList(ln *parse.TermListNode) valuesOp {
 func (cp *Compiler) compileTerm(tn *parse.TermNode) valuesOp {
 	ops := make([]valuesOp, len(tn.Nodes))
 	for i, fn := range tn.Nodes {
-		ops[i] = cp.compileFactor(fn)
+		ops[i], _ = cp.compileFactor(fn)
 	}
 	return combineTerm(ops)
 }
 
-func (cp *Compiler) compileFactor(fn *parse.FactorNode) valuesOp {
+func (cp *Compiler) compileFactor(fn *parse.FactorNode) (valuesOp, *[2]StreamType) {
 	switch fn.Typ {
 	case parse.StringFactor:
 		text := fn.Node.(*parse.StringNode).Text
-		return makeString(text)
+		return makeString(text), nil
 	case parse.VariableFactor:
 		name := fn.Node.(*parse.StringNode).Text
 		cp.resolveVar(name, fn)
-		return makeVar(name)
+		return makeVar(name), nil
 	case parse.TableFactor:
 		table := fn.Node.(*parse.TableNode)
 		list := cp.compileTerms(table.List)
@@ -295,23 +291,23 @@ func (cp *Compiler) compileFactor(fn *parse.FactorNode) valuesOp {
 			keys[i] = cp.compileTerm(tp.Key)
 			values[i] = cp.compileTerm(tp.Value)
 		}
-		return combineTable(fn, list, keys, values)
+		return combineTable(fn, list, keys, values), nil
 	case parse.ClosureFactor:
-		op, ca := cp.compileClosure(fn.Node.(*parse.ClosureNode))
-		for name, typ := range ca.enclosed {
+		op, enclosed, bounds := cp.compileClosure(fn.Node.(*parse.ClosureNode))
+		for name, typ := range enclosed {
 			if !cp.hasVarOnThisScope(name) {
 				cp.enclosed[name] = typ
 			}
 		}
-		return op
+		return op, &bounds
 	case parse.ListFactor:
-		return cp.compileTermList(fn.Node.(*parse.TermListNode))
+		return cp.compileTermList(fn.Node.(*parse.TermListNode)), nil
 	case parse.OutputCaptureFactor:
 		op, b := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
-		return combineOutputCapture(op, b)
+		return combineOutputCapture(op, b), nil
 	case parse.StatusCaptureFactor:
 		op, _ := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
-		return op
+		return op, nil
 	default:
 		panic(fmt.Sprintln("bad FactorNode type", fn.Typ))
 	}

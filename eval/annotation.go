@@ -17,8 +17,3 @@ type formAnnotation struct {
 	builtinSpecial *builtinSpecial
 	specialOp      strOp
 }
-
-type closureAnnotation struct {
-	enclosed map[string]Type
-	bounds   [2]StreamType
-}
