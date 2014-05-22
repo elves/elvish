@@ -18,11 +18,6 @@ type formAnnotation struct {
 	specialOp      strOp
 }
 
-type pipelineAnnotation struct {
-	bounds    [2]StreamType
-	internals []StreamType
-}
-
 type closureAnnotation struct {
 	enclosed map[string]Type
 	bounds   [2]StreamType

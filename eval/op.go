@@ -44,13 +44,13 @@ func combineClosure(ops []valuesOp, a *closureAnnotation) valuesOp {
 	}
 }
 
-func combinePipeline(n parse.Node, ops []stateUpdatesOp, a *pipelineAnnotation) valuesOp {
+func combinePipeline(n parse.Node, ops []stateUpdatesOp, bounds [2]StreamType, internals []StreamType) valuesOp {
 	return func(ev *Evaluator) []Value {
 		// TODO(xiaq): Should catch when compiling
-		if !ev.ports[0].compatible(a.bounds[0]) {
+		if !ev.ports[0].compatible(bounds[0]) {
 			ev.errorfNode(n, "pipeline input not satisfiable")
 		}
-		if !ev.ports[1].compatible(a.bounds[1]) {
+		if !ev.ports[1].compatible(bounds[1]) {
 			ev.errorfNode(n, "pipeline output not satisfiable")
 		}
 		var nextIn *port
@@ -64,7 +64,7 @@ func combinePipeline(n parse.Node, ops []stateUpdatesOp, a *pipelineAnnotation) 
 				newEv.ports[0] = nextIn
 			}
 			if i < len(ops)-1 {
-				switch a.internals[i] {
+				switch internals[i] {
 				case unusedStream:
 					newEv.ports[1] = nil
 					nextIn = nil
@@ -230,7 +230,7 @@ func combineTable(n parse.Node, list valuesOp, keys []valuesOp, values []valuesO
 	}
 }
 
-func combineOutputCapture(op valuesOp, a *pipelineAnnotation) valuesOp {
+func combineOutputCapture(op valuesOp, bounds [2]StreamType) valuesOp {
 	return func(ev *Evaluator) []Value {
 		vs := []Value{}
 		newEv := ev.copy()

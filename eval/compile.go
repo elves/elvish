@@ -79,15 +79,15 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) (valuesOp, *closureAnn
 
 	bounds := [2]StreamType{}
 	for i, pn := range cn.Chunk.Nodes {
-		var a *pipelineAnnotation
-		ops[i], a = cp.compilePipeline(pn)
+		var b [2]StreamType
+		ops[i], b = cp.compilePipeline(pn)
 
 		var ok bool
-		bounds[0], ok = bounds[0].commonType(a.bounds[0])
+		bounds[0], ok = bounds[0].commonType(b[0])
 		if !ok {
 			cp.errorf(pn, "Pipeline input stream incompatible with previous ones")
 		}
-		bounds[1], ok = bounds[1].commonType(a.bounds[1])
+		bounds[1], ok = bounds[1].commonType(b[1])
 		if !ok {
 			cp.errorf(pn, "Pipeline output stream incompatible with previous ones")
 		}
@@ -101,9 +101,10 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) (valuesOp, *closureAnn
 	return combineClosure(ops, annotation), annotation
 }
 
-func (cp *Compiler) compilePipeline(pn *parse.PipelineNode) (valuesOp, *pipelineAnnotation) {
+func (cp *Compiler) compilePipeline(pn *parse.PipelineNode) (valuesOp, [2]StreamType) {
 	ops := make([]stateUpdatesOp, len(pn.Nodes))
-	annotation := &pipelineAnnotation{}
+	var bounds [2]StreamType
+	internals := make([]StreamType, len(pn.Nodes)-1)
 
 	var lastOutput StreamType
 	for i, fn := range pn.Nodes {
@@ -111,18 +112,18 @@ func (cp *Compiler) compilePipeline(pn *parse.PipelineNode) (valuesOp, *pipeline
 		ops[i], a = cp.compileForm(fn)
 		input := a.streamTypes[0]
 		if i == 0 {
-			annotation.bounds[0] = input
+			bounds[0] = input
 		} else {
 			internal, ok := lastOutput.commonType(input)
 			if !ok {
 				cp.errorf(fn, "Form input type %v insatisfiable - previous form output is type %v", input, lastOutput)
 			}
-			annotation.internals = append(annotation.internals, internal)
+			internals[i-1] = internal
 		}
 		lastOutput = a.streamTypes[1]
 	}
-	annotation.bounds[1] = lastOutput
-	return combinePipeline(pn, ops, annotation), annotation
+	bounds[1] = lastOutput
+	return combinePipeline(pn, ops, bounds, internals), bounds
 }
 
 func (cp *Compiler) resolveVar(name string, n *parse.FactorNode) Type {
@@ -306,8 +307,8 @@ func (cp *Compiler) compileFactor(fn *parse.FactorNode) valuesOp {
 	case parse.ListFactor:
 		return cp.compileTermList(fn.Node.(*parse.TermListNode))
 	case parse.OutputCaptureFactor:
-		op, a := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
-		return combineOutputCapture(op, a)
+		op, b := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
+		return combineOutputCapture(op, b)
 	case parse.StatusCaptureFactor:
 		op, _ := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
 		return op
