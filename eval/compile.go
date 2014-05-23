@@ -105,9 +105,9 @@ func (cp *Compiler) compilePipeline(pn *parse.PipelineNode) (valuesOp, [2]Stream
 
 	var lastOutput StreamType
 	for i, fn := range pn.Nodes {
-		var a *formAnnotation
-		ops[i], a = cp.compileForm(fn)
-		input := a.streamTypes[0]
+		var b [2]StreamType
+		ops[i], b = cp.compileForm(fn)
+		input := b[0]
 		if i == 0 {
 			bounds[0] = input
 		} else {
@@ -117,7 +117,7 @@ func (cp *Compiler) compilePipeline(pn *parse.PipelineNode) (valuesOp, [2]Stream
 			}
 			internals[i-1] = internal
 		}
-		lastOutput = a.streamTypes[1]
+		lastOutput = b[1]
 	}
 	bounds[1] = lastOutput
 	return combinePipeline(pn, ops, bounds, internals), bounds
@@ -166,7 +166,7 @@ func (cp *Compiler) resolveCommand(name string, fa *formAnnotation) {
 	}
 }
 
-func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, *formAnnotation) {
+func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, [2]StreamType) {
 	// TODO(xiaq): Allow more interesting terms to be used as commands
 	msg := "command must be a string or closure"
 	if len(fn.Command.Nodes) != 1 {
@@ -218,7 +218,7 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, *formAnnota
 	} else {
 		tlist = cp.compileTermList(fn.Args)
 	}
-	return combineForm(fn, cmdOp, tlist, ports, annotation), annotation
+	return combineForm(fn, cmdOp, tlist, ports, annotation), annotation.streamTypes
 }
 
 func (cp *Compiler) compileRedir(r parse.Redir) portOp {

@@ -68,9 +68,8 @@ type Command struct {
 
 // form packs runtime states of a fully constructured form.
 type form struct {
-	name       string  // Command name, used in error messages.
-	args       []Value // Evaluated argument list
-	annotation *formAnnotation
+	name string  // Command name, used in error messages.
+	args []Value // Evaluated argument list
 	Command
 }
 
