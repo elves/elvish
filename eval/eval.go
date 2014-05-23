@@ -79,10 +79,11 @@ func NewEvaluator() *Evaluator {
 	return ev
 }
 
-func (ev *Evaluator) copy() *Evaluator {
-	eu := new(Evaluator)
-	*eu = *ev
-	return eu
+func (ev *Evaluator) copy(name string) *Evaluator {
+	newEv := new(Evaluator)
+	*newEv = *ev
+	newEv.name = name
+	return newEv
 }
 
 func (ev *Evaluator) port(i int) *port {

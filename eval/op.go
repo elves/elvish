@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/xiaq/elvish/parse"
@@ -57,7 +58,7 @@ func combinePipeline(n parse.Node, ops []stateUpdatesOp, bounds [2]StreamType, i
 		updates := make([]<-chan *StateUpdate, len(ops))
 		// For each form, create a dedicated Evaluator and run
 		for i, op := range ops {
-			newEv := ev.copy()
+			newEv := ev.copy(fmt.Sprintf("<form op %v>", op))
 			newEv.ports = make([]*port, len(ev.ports))
 			copy(newEv.ports, ev.ports)
 			if i > 0 {
@@ -136,7 +137,7 @@ func combineForm(n parse.Node, cmd valuesOp, tlist valuesOp, ports []portOp, a *
 			panic("bad commandType value")
 		}
 
-		newEv := ev.copy()
+		newEv := ev.copy(fmt.Sprintf("<form redir %v>", fm))
 		nports := len(ev.ports)
 		if nports < len(ports) {
 			nports = len(ports)
@@ -233,7 +234,7 @@ func combineTable(n parse.Node, list valuesOp, keys []valuesOp, values []valuesO
 func combineOutputCapture(op valuesOp, bounds [2]StreamType) valuesOp {
 	return func(ev *Evaluator) []Value {
 		vs := []Value{}
-		newEv := ev.copy()
+		newEv := ev.copy(fmt.Sprintf("<output capture %v>", op))
 		newEv.ports = make([]*port, len(ev.ports))
 		copy(newEv.ports, ev.ports)
 		ch := make(chan Value)
