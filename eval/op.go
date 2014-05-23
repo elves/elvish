@@ -58,9 +58,7 @@ func combinePipeline(n parse.Node, ops []stateUpdatesOp, bounds [2]StreamType, i
 		updates := make([]<-chan *StateUpdate, len(ops))
 		// For each form, create a dedicated Evaluator and run
 		for i, op := range ops {
-			newEv := ev.copy(fmt.Sprintf("<form op %v>", op))
-			newEv.ports = make([]*port, len(ev.ports))
-			copy(newEv.ports, ev.ports)
+			newEv := ev.copy(fmt.Sprintf("<form op %v>", op), false)
 			if i > 0 {
 				newEv.ports[0] = nextIn
 			}
@@ -137,13 +135,8 @@ func combineForm(n parse.Node, cmd valuesOp, tlist valuesOp, ports []portOp, a *
 			panic("bad commandType value")
 		}
 
-		newEv := ev.copy(fmt.Sprintf("<form redir %v>", fm))
-		nports := len(ev.ports)
-		if nports < len(ports) {
-			nports = len(ports)
-		}
-		newEv.ports = make([]*port, nports)
-		copy(newEv.ports, ev.ports)
+		newEv := ev.copy(fmt.Sprintf("<form redir %v>", fm), true)
+		newEv.growPorts(len(ports))
 
 		for i, op := range ports {
 			if op != nil {
@@ -234,7 +227,7 @@ func combineTable(n parse.Node, list valuesOp, keys []valuesOp, values []valuesO
 func combineOutputCapture(op valuesOp, bounds [2]StreamType) valuesOp {
 	return func(ev *Evaluator) []Value {
 		vs := []Value{}
-		newEv := ev.copy(fmt.Sprintf("<output capture %v>", op))
+		newEv := ev.copy(fmt.Sprintf("<output capture %v>", op), true)
 		newEv.ports = make([]*port, len(ev.ports))
 		copy(newEv.ports, ev.ports)
 		ch := make(chan Value)

@@ -79,10 +79,24 @@ func NewEvaluator() *Evaluator {
 	return ev
 }
 
-func (ev *Evaluator) copy(name string) *Evaluator {
+func (ev *Evaluator) copy(name string, moveShouldClose bool) *Evaluator {
 	newEv := new(Evaluator)
 	*newEv = *ev
 	newEv.name = name
+	newEv.ports = make([]*port, len(ev.ports))
+	for i, p := range ev.ports {
+		newEv.ports[i] = &port{}
+		*newEv.ports[i] = *p
+	}
+	if moveShouldClose {
+		for _, port := range ev.ports {
+			port.shouldClose = false
+		}
+	} else {
+		for _, port := range newEv.ports {
+			port.shouldClose = false
+		}
+	}
 	return newEv
 }
 
@@ -91,6 +105,15 @@ func (ev *Evaluator) port(i int) *port {
 		return nil
 	}
 	return ev.ports[i]
+}
+
+func (ev *Evaluator) growPorts(n int) {
+	if len(ev.ports) >= n {
+		return
+	}
+	ports := ev.ports
+	ev.ports = make([]*port, n)
+	copy(ev.ports, ports)
 }
 
 func (ev *Evaluator) MakeCompilerScope() map[string]Type {

@@ -162,7 +162,7 @@ func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 
 	// Make a subevaluator.
 	// BUG(xiaq): When evaluating closures, async access to globals, in and out can be problematic.
-	newEv := ev.copy(fmt.Sprintf("<closure %v>", fm.Closure))
+	newEv := ev.copy(fmt.Sprintf("<closure %v>", fm.Closure), true)
 	newEv.scope = make(map[string]*Value)
 	for name, pvalue := range fm.Closure.Enclosed {
 		newEv.scope[name] = pvalue
