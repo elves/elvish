@@ -4,9 +4,11 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"os/user"
+	"unicode/utf8"
 
 	"github.com/xiaq/elvish/edit"
 	"github.com/xiaq/elvish/eval"
@@ -19,7 +21,7 @@ const (
 )
 
 // TODO(xiaq): Currently only the editor deals with signals.
-func main() {
+func interact() {
 	ev := eval.NewEvaluator()
 	cmdNum := 0
 
@@ -70,5 +72,54 @@ func main() {
 			fmt.Print(ee.(*util.ContextualError).Pprint())
 			continue
 		}
+	}
+}
+
+func script(name string) {
+	file, err := os.Open(name)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	bytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	if !utf8.Valid(bytes) {
+		fmt.Fprintf(os.Stderr, "source %v is not valid UTF-8\n", name)
+		os.Exit(1)
+	}
+	src := string(bytes)
+
+	ev := eval.NewEvaluator()
+
+	n, pe := parse.Parse(name, src)
+	if pe != nil {
+		fmt.Print(pe.(*util.ContextualError).Pprint())
+		os.Exit(1)
+	}
+
+	ee := ev.Eval(name, src, n)
+	if ee != nil {
+		fmt.Print(ee.(*util.ContextualError).Pprint())
+		os.Exit(1)
+	}
+}
+
+var usage = `Usage:
+    elvish
+    elvish <script>
+`
+
+func main() {
+	switch len(os.Args) {
+	case 1:
+		interact()
+	case 2:
+		script(os.Args[1])
+	default:
+		fmt.Fprintf(os.Stderr, usage)
+		os.Exit(1)
 	}
 }
