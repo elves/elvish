@@ -14,7 +14,6 @@
 * Code structure (eval)
     - TYPE CHECKER
     - Implement control structures - as special syntax or high-order function?
-    - Support evaluating script
     - Determine namespacing mechanism (importable modules; relationship of
       functions vs. external commands, variables vs. environmental variables)
 * Value semantics and data passing (eval)
