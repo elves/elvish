@@ -63,6 +63,7 @@ const (
 	ItemCaret             // caret sign '^'
 	ItemSemicolon         // semicolon ';'
 	ItemAmpersand         // ampersand '&'
+	ItemTypeCount
 )
 
 // ItemType names.
@@ -88,6 +89,12 @@ var ItemTypeNames = []string{
 	"ItemCaret",
 	"ItemSemicolon",
 	"ItemAmpersand",
+}
+
+func init() {
+	if len(ItemTypeNames) != int(ItemTypeCount) {
+		panic("len(ItemTypeNames) != ItemTypeCount")
+	}
 }
 
 func (it ItemType) String() string {
