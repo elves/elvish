@@ -130,7 +130,7 @@ func combineForm(n parse.Node, cmd valuesOp, tlist valuesOp, ports []portOp, a *
 			v, ok1 := ev.scope["fn-"+cmdStr]
 			fn, ok2 := (*v).(*Closure)
 			if !(ok1 && ok2) {
-				panic("Checker bug")
+				panic("Compiler bug")
 			}
 			fm.Command.Closure = fn
 		case commandClosure:
@@ -241,7 +241,7 @@ func makeVar(cp *Compiler, name string, fn *parse.FactorNode) valuesOp {
 	f := func(ev *Evaluator) []Value {
 		val, ok := ev.scope[name]
 		if !ok {
-			panic("Checker bug")
+			panic("Compiler bug")
 		}
 		return []Value{*val}
 	}
