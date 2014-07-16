@@ -102,8 +102,8 @@ func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 			for i, name := range f.names {
 				ev.scope[name] = valuePtr(f.types[i].Default())
 			}
-			if vop != nil {
-				return doSet(ev, f.names, vop(ev))
+			if vop.f != nil {
+				return doSet(ev, f.names, vop.f(ev))
 			}
 			return ""
 		}
@@ -113,7 +113,7 @@ func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 		}
 		vop := cp.compileTerms(f.values)
 		return func(ev *Evaluator) string {
-			return doSet(ev, f.names, vop(ev))
+			return doSet(ev, f.names, vop.f(ev))
 		}
 	}
 }

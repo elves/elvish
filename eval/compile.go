@@ -240,7 +240,7 @@ func (cp *Compiler) compileRedir(r parse.Redir) portOp {
 		fnameOp := cp.compileTerm(r.Filename)
 		return func(ev *Evaluator) *port {
 			fname := string(*ev.asSingleString(
-				r.Filename, fnameOp(ev), "filename"))
+				r.Filename, fnameOp.f(ev), "filename"))
 			// TODO haz hardcoded permbits now
 			f, e := os.OpenFile(fname, r.Flag, 0644)
 			if e != nil {
@@ -280,8 +280,7 @@ func (cp *Compiler) compileFactor(fn *parse.FactorNode) (valuesOp, *[2]StreamTyp
 		return makeString(text), nil
 	case parse.VariableFactor:
 		name := fn.Node.(*parse.StringNode).Text
-		cp.resolveVar(name, fn)
-		return makeVar(name), nil
+		return makeVar(cp, name, fn), nil
 	case parse.TableFactor:
 		table := fn.Node.(*parse.TableNode)
 		list := cp.compileTerms(table.List)

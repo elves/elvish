@@ -14,6 +14,18 @@ import (
 
 type Type interface {
 	Default() Value
+	Caret(t Type) Type
+}
+
+type AnyType struct {
+}
+
+func (at AnyType) Default() Value {
+	return NewString("")
+}
+
+func (at AnyType) Caret(t Type) Type {
+	return AnyType{}
 }
 
 type StringType struct {
@@ -23,11 +35,20 @@ func (st StringType) Default() Value {
 	return NewString("")
 }
 
+func (st StringType) Caret(t Type) Type {
+	return StringType{}
+}
+
 type TableType struct {
 }
 
 func (tt TableType) Default() Value {
 	return NewTable()
+}
+
+func (tt TableType) Caret(t Type) Type {
+	// TODO Should check t
+	return AnyType{}
 }
 
 type EnvType struct {
@@ -37,12 +58,22 @@ func (et EnvType) Default() Value {
 	return NewEnv()
 }
 
+func (et EnvType) Caret(t Type) Type {
+	// TODO Should check t
+	return StringType{}
+}
+
 type ClosureType struct {
 	Bounds [2]StreamType
 }
 
 func (st ClosureType) Default() Value {
 	return NewClosure([]string{}, nil, map[string]*Value{}, st.Bounds)
+}
+
+func (ct ClosureType) Caret(t Type) Type {
+	// TODO Should always be a Compiler error
+	return AnyType{}
 }
 
 var typenames = map[string]Type{
