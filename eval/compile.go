@@ -127,7 +127,7 @@ func (cp *Compiler) resolveVar(name string, n *parse.FactorNode) Type {
 	if t := cp.tryResolveVar(name); t != nil {
 		return t
 	}
-	cp.errorf(n, "undefined variable $%q", name)
+	cp.errorf(n, "undefined variable $%s", name)
 	return nil
 }
 
