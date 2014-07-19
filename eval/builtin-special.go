@@ -33,6 +33,21 @@ type delForm struct {
 	names []string
 }
 
+func checkSetType(cp *Compiler, args *parse.TermListNode, f *varSetForm, vop valuesOp) {
+	if len(f.names) != len(vop.ts) {
+		cp.errorf(args, "number of variables doesn't match that of values")
+	}
+	for i, name := range f.names {
+		if _, ok := vop.ts[i].(AnyType); ok {
+			// TODO Check type soundness at runtime
+			continue
+		}
+		if cp.tryResolveVar(name) != vop.ts[i] {
+			cp.errorf(f.values[i], "type mismatch")
+		}
+	}
+}
+
 // compileVarSet compiles a var or set special form. If v is true, a var special
 // form is being compiled.
 //
@@ -97,6 +112,7 @@ func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 		var vop valuesOp
 		if f.values != nil {
 			vop = cp.compileTerms(f.values)
+			checkSetType(cp, args, f, vop)
 		}
 		return func(ev *Evaluator) string {
 			for i, name := range f.names {
@@ -112,6 +128,7 @@ func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 			cp.errorf(args, "set form lacks equal sign")
 		}
 		vop := cp.compileTerms(f.values)
+		checkSetType(cp, args, f, vop)
 		return func(ev *Evaluator) string {
 			return doSet(ev, f.names, vop.f(ev))
 		}
