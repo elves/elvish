@@ -49,6 +49,9 @@ go get -u github.com/xiaq/elvish
 Remember to put the two `export`s above into your `bashrc` or `zshrc` (or
 whatever).
 
+Archlinux users can also try the AUR package
+[elvish-git](https://aur.archlinux.org/packages/elvish-git/).
+
 ## Notes for Contributors
 
 The `.gitattributes` in this repo dictates that go sources be filtered through
