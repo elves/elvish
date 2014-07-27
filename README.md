@@ -190,8 +190,8 @@ And:
   > set env[PATH] = $env[PATH]:/bin
   ```
 
-There are many parts of the language that is not yet decided. See TODO.md for
-a list of things I'm currently thinking about.
+There are many parts of the language that is not yet decided. The issues
+list contain many of things I'm currently thinking about.
 
 ## Motivation
 
