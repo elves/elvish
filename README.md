@@ -257,8 +257,8 @@ strs`, `grep LOL`, `tr a-z A-Z` and `sort`; the pipe symbol is the
 connector. The interesting thing is that each construct itself is actually a
 valid program; thus it could be said that a more complex program is formed by
 *concatenating* simpler programs, hence the term "concatenative programming".
-Compare this to the functional approach, where constructs are *nested* instead
-of connected one after another.
+Compare this to the conventional ("applicative") approach, where constructs
+are *nested* instead of connected one after another.
 
 ### A Concurrency Construct
 
