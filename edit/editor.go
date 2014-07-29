@@ -308,7 +308,8 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 }
 
 // ReadLine reads a line interactively.
-// TODO(xiaq): ReadLine currently just ignores all signals.
+// TODO(xiaq): ReadLine currently handles SIGINT and SIGWINCH and swallows all
+// other signals.
 func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 	ed.editorState = editorState{}
 	ed.writer.oldBuf.cells = nil
