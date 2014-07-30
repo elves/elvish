@@ -69,7 +69,11 @@ func interact() {
 
 		ee := ev.Eval(name, lr.Line, n)
 		if ee != nil {
-			fmt.Print(ee.(*util.ContextualError).Pprint())
+			if ce, ok := ee.(*util.ContextualError); ok {
+				fmt.Print(ce.Pprint())
+			} else {
+				fmt.Println(ee)
+			}
 			continue
 		}
 	}
