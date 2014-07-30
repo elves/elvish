@@ -212,9 +212,16 @@ func (t *Table) Caret(ev *Evaluator, v Value) Value {
 		// TODO Handle invalid index
 		idx, err := strconv.ParseUint(sub.String(), 10, 0)
 		if err == nil {
-			return t.List[idx]
+			if idx <= uint64(len(t.List)) {
+				return t.List[idx]
+			}
+			ev.errorf("index out of range")
 		}
-		return t.Dict[sub]
+		if v, ok := t.Dict[sub]; ok {
+			return v
+		}
+		ev.errorf("nonexistent key %q", sub)
+		return nil
 	default:
 		ev.errorf("Table can only be careted with String or Table")
 		return nil
