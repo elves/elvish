@@ -2,9 +2,12 @@ package persistent
 
 import "testing"
 
+const (
+	n = nodeCap*nodeCap + tailMaxLen + 1
+)
+
 func TestVector(t *testing.T) {
 	const (
-		n     = nodeCap*nodeCap + tailMaxLen + 1
 		subst = "233"
 	)
 
@@ -45,11 +48,17 @@ func TestVector(t *testing.T) {
 	}
 }
 
-func BenchmarkCons(b *testing.B) {
-	const (
-		n = nodeCap*nodeCap + tailMaxLen + 1
-	)
+func BenchmarkNativeAppend(b *testing.B) {
+	for r := 0; r < b.N; r++ {
+		var s []interface{}
+		var i uint
+		for i = 0; i < n; i++ {
+			s = append(s, i)
+		}
+	}
+}
 
+func BenchmarkCons(b *testing.B) {
 	for r := 0; r < b.N; r++ {
 		v := &Vector{}
 		var i uint
