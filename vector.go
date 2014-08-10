@@ -113,7 +113,7 @@ func (v *Vector) pushTail(height uint, n vectorNode, tail vectorNode) vectorNode
 	if height == 0 {
 		return tail
 	}
-	idx := ((v.count - 1) >> (height * 5)) & mask
+	idx := ((v.count - 1) >> (height * bitChunk)) & mask
 	m := n.clone()
 	child := n[idx]
 	if child == nil {
