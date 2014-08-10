@@ -1,18 +1,14 @@
 package persistent
 
-type vectorNode struct {
-	array []interface{}
+type vectorNode []interface{}
+
+func newVectorNode() vectorNode {
+	return vectorNode(make([]interface{}, nodeCap))
 }
 
-func newVectorNode() *vectorNode {
-	n := &vectorNode{}
-	n.array = make([]interface{}, nodeCap)
-	return n
-}
-
-func (n *vectorNode) clone() *vectorNode {
+func (n vectorNode) clone() vectorNode {
 	m := newVectorNode()
-	copy(m.array, n.array)
+	copy(m, n)
 	return m
 }
 
@@ -22,7 +18,7 @@ type Vector struct {
 	count uint
 	// height of the tree structure, defined to be 0 when root is a leaf.
 	height uint
-	root   *vectorNode
+	root   vectorNode
 	tail   []interface{}
 }
 
@@ -49,9 +45,9 @@ func (v *Vector) sliceFor(i uint) []interface{} {
 	}
 	n := v.root
 	for shift := v.height * bitChunk; shift > 0; shift -= bitChunk {
-		n = n.array[(i>>shift)&mask].(*vectorNode)
+		n = n[(i>>shift)&mask].(vectorNode)
 	}
-	return n.array
+	return n
 }
 
 // Nth returns the i-th element.
@@ -76,13 +72,13 @@ func (v *Vector) AssocN(i uint, val interface{}) *Vector {
 }
 
 // doAssoc returns a new tree with the i-th element replaced by val.
-func doAssoc(height uint, n *vectorNode, i uint, val interface{}) *vectorNode {
+func doAssoc(height uint, n vectorNode, i uint, val interface{}) vectorNode {
 	m := n.clone()
 	if height == 0 {
-		m.array[i&mask] = val
+		m[i&mask] = val
 	} else {
 		sub := (i >> (height * bitChunk)) & mask
-		m.array[sub] = doAssoc(height-1, m.array[sub].(*vectorNode), i, val)
+		m[sub] = doAssoc(height-1, m[sub].(vectorNode), i, val)
 	}
 	return m
 }
@@ -97,14 +93,14 @@ func (v *Vector) Cons(val interface{}) *Vector {
 		return &Vector{v.count + 1, v.height, v.root, newTail}
 	}
 	// Full tail; push into tree.
-	tailNode := &vectorNode{v.tail}
+	tailNode := vectorNode(v.tail)
 	newHeight := v.height
-	var newRoot *vectorNode
+	var newRoot vectorNode
 	// Overflow root?
 	if (v.count >> bitChunk) > (1 << (v.height * bitChunk)) {
 		newRoot = newVectorNode()
-		newRoot.array[0] = v.root
-		newRoot.array[1] = newPath(v.height, tailNode)
+		newRoot[0] = v.root
+		newRoot[1] = newPath(v.height, tailNode)
 		newHeight++
 	} else {
 		newRoot = v.pushTail(v.height, v.root, tailNode)
@@ -113,27 +109,27 @@ func (v *Vector) Cons(val interface{}) *Vector {
 }
 
 // pushTail returns a tree with tail appended.
-func (v *Vector) pushTail(height uint, n *vectorNode, tail *vectorNode) *vectorNode {
+func (v *Vector) pushTail(height uint, n vectorNode, tail vectorNode) vectorNode {
 	if height == 0 {
 		return tail
 	}
 	idx := ((v.count - 1) >> (height * 5)) & mask
 	m := n.clone()
-	child := n.array[idx]
+	child := n[idx]
 	if child == nil {
-		m.array[idx] = newPath(height-1, tail)
+		m[idx] = newPath(height-1, tail)
 	} else {
-		m.array[idx] = v.pushTail(height-1, child.(*vectorNode), tail)
+		m[idx] = v.pushTail(height-1, child.(vectorNode), tail)
 	}
 	return m
 }
 
 // newPath creates a left-branching tree of specified height and leaf.
-func newPath(height uint, leaf *vectorNode) *vectorNode {
+func newPath(height uint, leaf vectorNode) vectorNode {
 	if height == 0 {
 		return leaf
 	}
 	ret := newVectorNode()
-	ret.array[0] = newPath(height-1, leaf)
+	ret[0] = newPath(height-1, leaf)
 	return ret
 }
