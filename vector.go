@@ -22,6 +22,8 @@ type Vector struct {
 	tail   []interface{}
 }
 
+var emptyVector = &Vector{}
+
 // Count returns the number of elements in a Vector.
 func (v *Vector) Count() uint {
 	return v.count
@@ -132,4 +134,53 @@ func newPath(height uint, leaf vectorNode) vectorNode {
 	ret := newVectorNode()
 	ret[0] = newPath(height-1, leaf)
 	return ret
+}
+
+// Pop returns a new Vector with the last element removed.
+func (v *Vector) Pop() *Vector {
+	switch v.count {
+	case 0:
+		return nil
+	case 1:
+		return emptyVector
+	}
+	if v.count-v.tailoff() > 1 {
+		newTail := make([]interface{}, len(v.tail)-1)
+		copy(newTail, v.tail)
+		return &Vector{v.count - 1, v.height, v.root, newTail}
+	}
+	newTail := v.sliceFor(v.count - 2)
+	newRoot := v.popTail(v.height, v.root)
+	newHeight := v.height
+	if v.height > 0 && newRoot[1] == nil {
+		newRoot = newRoot[0].(vectorNode)
+		newHeight--
+	}
+	return &Vector{v.count - 1, newHeight, newRoot, newTail}
+}
+
+// popTail returns a new tree with the last leaf removed.
+func (v *Vector) popTail(level uint, n vectorNode) vectorNode {
+	idx := ((v.count - 2) >> (level * bitChunk)) & mask
+	if level > 1 {
+		newChild := v.popTail(level-1, n[idx].(vectorNode))
+		if newChild == nil && idx == 0 {
+			return nil
+		}
+		m := n.clone()
+		if newChild == nil {
+			// This is needed since `m[idx] = newChild` would store an
+			// interface{} with a non-nil type part, which is non-nil
+			m[idx] = nil
+		} else {
+			m[idx] = newChild
+		}
+		return m
+	} else if idx == 0 {
+		return nil
+	} else {
+		m := n.clone()
+		m[idx] = nil
+		return m
+	}
 }

@@ -46,6 +46,18 @@ func TestVector(t *testing.T) {
 			t.Errorf("v.Nth(%v) == %v, want %v", i, elem, subst)
 		}
 	}
+
+	for i = 0; i < n; i++ {
+		oldv := v
+		v = v.Pop()
+
+		if count := oldv.Count(); count != n-i {
+			t.Errorf("oldv.Count() == %v, want %v", count, n-i)
+		}
+		if count := v.Count(); count != n-i-1 {
+			t.Errorf("oldv.Count() == %v, want %v", count, n-i-1)
+		}
+	}
 }
 
 func BenchmarkNativeAppend(b *testing.B) {
