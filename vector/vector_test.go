@@ -1,4 +1,4 @@
-package persistent
+package vector
 
 import "testing"
 

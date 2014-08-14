@@ -1,13 +1,20 @@
-package persistent
+package vector
 
-type vectorNode []interface{}
+const (
+	bitChunk   = 5
+	nodeCap    = 1 << bitChunk
+	tailMaxLen = nodeCap
+	mask       = nodeCap - 1
+)
 
-func newVectorNode() vectorNode {
-	return vectorNode(make([]interface{}, nodeCap))
+type node []interface{}
+
+func newNode() node {
+	return node(make([]interface{}, nodeCap))
 }
 
-func (n vectorNode) clone() vectorNode {
-	m := newVectorNode()
+func (n node) clone() node {
+	m := newNode()
 	copy(m, n)
 	return m
 }
@@ -18,7 +25,7 @@ type Vector struct {
 	count uint
 	// height of the tree structure, defined to be 0 when root is a leaf.
 	height uint
-	root   vectorNode
+	root   node
 	tail   []interface{}
 }
 
@@ -47,7 +54,7 @@ func (v *Vector) sliceFor(i uint) []interface{} {
 	}
 	n := v.root
 	for shift := v.height * bitChunk; shift > 0; shift -= bitChunk {
-		n = n[(i>>shift)&mask].(vectorNode)
+		n = n[(i>>shift)&mask].(node)
 	}
 	return n
 }
@@ -74,13 +81,13 @@ func (v *Vector) AssocN(i uint, val interface{}) *Vector {
 }
 
 // doAssoc returns a new tree with the i-th element replaced by val.
-func doAssoc(height uint, n vectorNode, i uint, val interface{}) vectorNode {
+func doAssoc(height uint, n node, i uint, val interface{}) node {
 	m := n.clone()
 	if height == 0 {
 		m[i&mask] = val
 	} else {
 		sub := (i >> (height * bitChunk)) & mask
-		m[sub] = doAssoc(height-1, m[sub].(vectorNode), i, val)
+		m[sub] = doAssoc(height-1, m[sub].(node), i, val)
 	}
 	return m
 }
@@ -95,12 +102,12 @@ func (v *Vector) Cons(val interface{}) *Vector {
 		return &Vector{v.count + 1, v.height, v.root, newTail}
 	}
 	// Full tail; push into tree.
-	tailNode := vectorNode(v.tail)
+	tailNode := node(v.tail)
 	newHeight := v.height
-	var newRoot vectorNode
+	var newRoot node
 	// Overflow root?
 	if (v.count >> bitChunk) > (1 << (v.height * bitChunk)) {
-		newRoot = newVectorNode()
+		newRoot = newNode()
 		newRoot[0] = v.root
 		newRoot[1] = newPath(v.height, tailNode)
 		newHeight++
@@ -111,7 +118,7 @@ func (v *Vector) Cons(val interface{}) *Vector {
 }
 
 // pushTail returns a tree with tail appended.
-func (v *Vector) pushTail(height uint, n vectorNode, tail vectorNode) vectorNode {
+func (v *Vector) pushTail(height uint, n node, tail node) node {
 	if height == 0 {
 		return tail
 	}
@@ -121,17 +128,17 @@ func (v *Vector) pushTail(height uint, n vectorNode, tail vectorNode) vectorNode
 	if child == nil {
 		m[idx] = newPath(height-1, tail)
 	} else {
-		m[idx] = v.pushTail(height-1, child.(vectorNode), tail)
+		m[idx] = v.pushTail(height-1, child.(node), tail)
 	}
 	return m
 }
 
 // newPath creates a left-branching tree of specified height and leaf.
-func newPath(height uint, leaf vectorNode) vectorNode {
+func newPath(height uint, leaf node) node {
 	if height == 0 {
 		return leaf
 	}
-	ret := newVectorNode()
+	ret := newNode()
 	ret[0] = newPath(height-1, leaf)
 	return ret
 }
@@ -153,17 +160,17 @@ func (v *Vector) Pop() *Vector {
 	newRoot := v.popTail(v.height, v.root)
 	newHeight := v.height
 	if v.height > 0 && newRoot[1] == nil {
-		newRoot = newRoot[0].(vectorNode)
+		newRoot = newRoot[0].(node)
 		newHeight--
 	}
 	return &Vector{v.count - 1, newHeight, newRoot, newTail}
 }
 
 // popTail returns a new tree with the last leaf removed.
-func (v *Vector) popTail(level uint, n vectorNode) vectorNode {
+func (v *Vector) popTail(level uint, n node) node {
 	idx := ((v.count - 2) >> (level * bitChunk)) & mask
 	if level > 1 {
-		newChild := v.popTail(level-1, n[idx].(vectorNode))
+		newChild := v.popTail(level-1, n[idx].(node))
 		if newChild == nil && idx == 0 {
 			return nil
 		}
