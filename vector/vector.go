@@ -20,7 +20,7 @@ func (n node) clone() node {
 	return m
 }
 
-// Vector is an implementation of persistent vector. &Vector{} is a valid empty
+// Vector implements a persistent vector. The empty value is a valid empty
 // vector.
 type Vector struct {
 	count int
