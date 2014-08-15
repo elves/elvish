@@ -30,7 +30,7 @@ type Vector struct {
 	tail   []interface{}
 }
 
-var emptyVector = &Vector{}
+var Empty = &Vector{}
 
 // Count returns the number of elements in a Vector.
 func (v *Vector) Count() int {
@@ -150,7 +150,7 @@ func (v *Vector) Pop() *Vector {
 	case 0:
 		return nil
 	case 1:
-		return emptyVector
+		return Empty
 	}
 	if v.count-v.tailoff() > 1 {
 		newTail := make([]interface{}, len(v.tail)-1)
