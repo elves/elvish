@@ -1,3 +1,4 @@
+// Package vector implements persistent vector.
 package vector
 
 const (
