@@ -12,8 +12,7 @@ func TestVector(t *testing.T) {
 	)
 
 	v := &Vector{}
-	var i uint
-	for i = 0; i < n; i++ {
+	for i := 0; i < n; i++ {
 		oldv := v
 		v = v.Cons(i)
 
@@ -25,19 +24,19 @@ func TestVector(t *testing.T) {
 		}
 	}
 
-	for i = 0; i < n; i++ {
+	for i := 0; i < n; i++ {
 		elem := v.Nth(i)
-		if num, ok := elem.(uint); !ok || num != i {
+		if num, ok := elem.(int); !ok || num != i {
 			t.Errorf("v.Nth(%v) == %v, want %v", i, elem, i)
 		}
 	}
 
-	for i = 0; i < n; i++ {
+	for i := 0; i < n; i++ {
 		oldv := v
 		v = v.AssocN(i, subst)
 
 		elem := oldv.Nth(i)
-		if num, ok := elem.(uint); !ok || num != i {
+		if num, ok := elem.(int); !ok || num != i {
 			t.Errorf("oldv.Nth(%v) == %v, want %v", i, elem, i)
 		}
 
@@ -47,7 +46,7 @@ func TestVector(t *testing.T) {
 		}
 	}
 
-	for i = 0; i < n; i++ {
+	for i := 0; i < n; i++ {
 		oldv := v
 		v = v.Pop()
 
@@ -63,8 +62,7 @@ func TestVector(t *testing.T) {
 func BenchmarkNativeAppend(b *testing.B) {
 	for r := 0; r < b.N; r++ {
 		var s []interface{}
-		var i uint
-		for i = 0; i < n; i++ {
+		for i := 0; i < n; i++ {
 			s = append(s, i)
 		}
 	}
@@ -73,8 +71,7 @@ func BenchmarkNativeAppend(b *testing.B) {
 func BenchmarkCons(b *testing.B) {
 	for r := 0; r < b.N; r++ {
 		v := &Vector{}
-		var i uint
-		for i = 0; i < n; i++ {
+		for i := 0; i < n; i++ {
 			v = v.Cons(i)
 		}
 	}

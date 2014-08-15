@@ -22,7 +22,7 @@ func (n node) clone() node {
 // Vector is an implementation of persistent vector. &Vector{} is a valid empty
 // vector.
 type Vector struct {
-	count uint
+	count int
 	// height of the tree structure, defined to be 0 when root is a leaf.
 	height uint
 	root   node
@@ -32,12 +32,12 @@ type Vector struct {
 var emptyVector = &Vector{}
 
 // Count returns the number of elements in a Vector.
-func (v *Vector) Count() uint {
+func (v *Vector) Count() int {
 	return v.count
 }
 
 // tailoff returns the number of elements not stored in tail.
-func (v *Vector) tailoff() uint {
+func (v *Vector) tailoff() int {
 	if v.count < tailMaxLen {
 		return 0
 	}
@@ -45,7 +45,7 @@ func (v *Vector) tailoff() uint {
 }
 
 // sliceFor returns the slice where the i-th element is stored.
-func (v *Vector) sliceFor(i uint) []interface{} {
+func (v *Vector) sliceFor(i int) []interface{} {
 	if i < 0 || i >= v.count {
 		return nil
 	}
@@ -60,12 +60,12 @@ func (v *Vector) sliceFor(i uint) []interface{} {
 }
 
 // Nth returns the i-th element.
-func (v *Vector) Nth(i uint) interface{} {
+func (v *Vector) Nth(i int) interface{} {
 	return v.sliceFor(i)[i&mask]
 }
 
 // AssocN returns a new Vector with the i-th element replaced by val.
-func (v *Vector) AssocN(i uint, val interface{}) *Vector {
+func (v *Vector) AssocN(i int, val interface{}) *Vector {
 	if i < 0 || i > v.count {
 		return nil
 	} else if i == v.count {
@@ -81,7 +81,7 @@ func (v *Vector) AssocN(i uint, val interface{}) *Vector {
 }
 
 // doAssoc returns a new tree with the i-th element replaced by val.
-func doAssoc(height uint, n node, i uint, val interface{}) node {
+func doAssoc(height uint, n node, i int, val interface{}) node {
 	m := n.clone()
 	if height == 0 {
 		m[i&mask] = val
