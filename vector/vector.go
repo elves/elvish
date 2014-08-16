@@ -5,7 +5,7 @@ const (
 	bitChunk   = 5
 	nodeCap    = 1 << bitChunk
 	tailMaxLen = nodeCap
-	mask       = nodeCap - 1
+	chunkMask  = nodeCap - 1
 )
 
 type node []interface{}
@@ -55,14 +55,14 @@ func (v *Vector) sliceFor(i int) []interface{} {
 	}
 	n := v.root
 	for shift := v.height * bitChunk; shift > 0; shift -= bitChunk {
-		n = n[(i>>shift)&mask].(node)
+		n = n[(i>>shift)&chunkMask].(node)
 	}
 	return n
 }
 
 // Nth returns the i-th element.
 func (v *Vector) Nth(i int) interface{} {
-	return v.sliceFor(i)[i&mask]
+	return v.sliceFor(i)[i&chunkMask]
 }
 
 // AssocN returns a new Vector with the i-th element replaced by val.
@@ -75,7 +75,7 @@ func (v *Vector) AssocN(i int, val interface{}) *Vector {
 	if i >= v.tailoff() {
 		newTail := make([]interface{}, len(v.tail))
 		copy(newTail, v.tail)
-		newTail[i&mask] = val
+		newTail[i&chunkMask] = val
 		return &Vector{v.count, v.height, v.root, newTail}
 	}
 	return &Vector{v.count, v.height, doAssoc(v.height, v.root, i, val), v.tail}
@@ -85,9 +85,9 @@ func (v *Vector) AssocN(i int, val interface{}) *Vector {
 func doAssoc(height uint, n node, i int, val interface{}) node {
 	m := n.clone()
 	if height == 0 {
-		m[i&mask] = val
+		m[i&chunkMask] = val
 	} else {
-		sub := (i >> (height * bitChunk)) & mask
+		sub := (i >> (height * bitChunk)) & chunkMask
 		m[sub] = doAssoc(height-1, m[sub].(node), i, val)
 	}
 	return m
@@ -123,7 +123,7 @@ func (v *Vector) pushTail(height uint, n node, tail node) node {
 	if height == 0 {
 		return tail
 	}
-	idx := ((v.count - 1) >> (height * bitChunk)) & mask
+	idx := ((v.count - 1) >> (height * bitChunk)) & chunkMask
 	m := n.clone()
 	child := n[idx]
 	if child == nil {
@@ -169,7 +169,7 @@ func (v *Vector) Pop() *Vector {
 
 // popTail returns a new tree with the last leaf removed.
 func (v *Vector) popTail(level uint, n node) node {
-	idx := ((v.count - 2) >> (level * bitChunk)) & mask
+	idx := ((v.count - 2) >> (level * bitChunk)) & chunkMask
 	if level > 1 {
 		newChild := v.popTail(level-1, n[idx].(node))
 		if newChild == nil && idx == 0 {
