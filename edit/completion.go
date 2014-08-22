@@ -81,6 +81,54 @@ func fileNames(dir string) (names []string, err error) {
 	return
 }
 
+var (
+	notPlainFactor     = fmt.Errorf("not a plain FactorNode")
+	notPlainTerm       = fmt.Errorf("not a plain TermNode")
+	unknownContextType = fmt.Errorf("unknown context type")
+)
+
+func peekFactor(fn *parse.FactorNode) (string, error) {
+	if fn.Typ != parse.StringFactor {
+		return "", notPlainFactor
+	}
+	return fn.Node.(*parse.StringNode).Text, nil
+}
+
+func peekIncompleteTerm(tn *parse.TermNode) (string, int, error) {
+	text := ""
+	for _, n := range tn.Nodes {
+		s, e := peekFactor(n)
+		if e != nil {
+			return "", 0, notPlainTerm
+		}
+		text += s
+	}
+	return text, int(tn.Pos), nil
+}
+
+func peekCurrentTerm(ctx *parse.Context, dot int) (string, int, error) {
+	if ctx.Form == nil || ctx.Typ == parse.NewArgContext {
+		return "", dot, nil
+	}
+
+	switch ctx.Typ {
+	case parse.ArgContext:
+		terms := ctx.Form.Args.Nodes
+		lastTerm := terms[len(terms)-1]
+		return peekIncompleteTerm(lastTerm)
+	case parse.RedirFilenameContext:
+		redirs := ctx.Form.Redirs
+		lastRedir := redirs[len(redirs)-1]
+		fnRedir, ok := lastRedir.(*parse.FilenameRedir)
+		if !ok {
+			return "", 0, fmt.Errorf("last redir is not FilenameRedir")
+		}
+		return peekIncompleteTerm(fnRedir.Filename)
+	default:
+		return "", 0, unknownContextType
+	}
+}
+
 func startCompletion(ed *Editor, k Key) *leReturn {
 	c := &completion{}
 	ctx, err := parse.Complete("<completion>", ed.line[:ed.dot])
@@ -88,35 +136,30 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 		ed.pushTip("parser error")
 		return nil
 	}
-	pctx := ctx.EvalPlain()
-	if pctx == nil {
-		ed.pushTip("context not plain")
+	term, start, err := peekCurrentTerm(ctx, ed.dot)
+	if err != nil {
+		ed.pushTip("cannot complete :(")
 		return nil
 	}
-	switch pctx.Typ {
+	switch ctx.Typ {
 	case parse.CommandContext:
 		// BUG(xiaq): When completing, CommandContext is not supported
 		ed.pushTip("command context not yet supported :(")
-	case parse.ArgContext:
-		// BUG(xiaq): When completing, ArgContext is treated like RedirFilenameContext
+	case parse.NewArgContext, parse.ArgContext:
+		// BUG(xiaq): When completing, [New]ArgContext is treated like RedirFilenameContext
 		fallthrough
 	case parse.RedirFilenameContext:
 		// BUG(xiaq): When completing, only the case of ctx.ThisFactor.Typ == StringFactor is supported
-		if pctx.ThisFactor.Typ != parse.StringFactor {
-			ed.pushTip("only StringFactor is supported :(")
-			return nil
-		}
-		pattern := pctx.PrevFactors + pctx.ThisFactor.Node.(*parse.StringNode).Text
 		names, err := fileNames(".")
 		if err != nil {
 			ed.pushTip(err.Error())
 			return nil
 		}
-		c.start = int(ctx.PrevFactors.Pos)
+		c.start = start
 		c.end = ed.dot
 		// BUG(xiaq) When completing, completion.typ is always ItemBare
 		c.typ = parse.ItemBare
-		c.candidates = findCandidates(pattern, names)
+		c.candidates = findCandidates(term, names)
 		if len(c.candidates) > 0 {
 			// XXX assumes filename candidate
 			for _, c := range c.candidates {
@@ -125,7 +168,7 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 			ed.completion = c
 			ed.mode = modeCompletion
 		} else {
-			ed.pushTip(fmt.Sprintf("No completion for %s", pattern))
+			ed.pushTip(fmt.Sprintf("No completion for %s", term))
 		}
 	}
 	return nil

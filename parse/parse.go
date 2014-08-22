@@ -138,32 +138,23 @@ func (p *Parser) stopParse() {
 type ctxFound struct {
 }
 
-// When the parser is running in completing mode, foundCtx causes Parse to
-// terminate immediately by panicking. The panic will be stopped by recoverCtx.
-// When the parser is not running in completing mode, it does nothing.
-func (p *Parser) foundCtx() {
-	if p.completing {
-		panic(ctxFound{})
+// When the parser is running in completing mode and the next token is EOF,
+// foundCtx returns true and sets p.Ctx.Typ to typ if it's not already set.
+// Otherwise foundCtx returns false.
+func (p *Parser) foundCtx(typ ContextType) bool {
+	if p.completing && p.peek().Typ == ItemEOF {
+		if p.Ctx.Typ == UnknownContext {
+			p.Ctx.Typ = typ
+		}
+		return true
 	}
-}
-
-// recoverCtx stops the panic and sets p.Ctx only when the panic is caused by
-// raiseCtx.
-func (p *Parser) recoverCtx() {
-	r := recover()
-	if r == nil {
-		return
-	}
-	if _, ok := r.(ctxFound); !ok {
-		panic(r)
-	}
+	return false
 }
 
 // Parse parses the script to construct a representation of the script for
 // execution.
 func (p *Parser) Parse(text string, completing bool) (err error) {
 	defer util.Recover(&err)
-	defer p.recoverCtx()
 	defer p.stopParse()
 
 	p.completing = completing
@@ -171,7 +162,7 @@ func (p *Parser) Parse(text string, completing bool) (err error) {
 	p.lex = Lex(p.Name, text)
 	p.peekCount = 0
 
-	p.Ctx = &Context{CommandContext, nil, newTermList(0), newTerm(0), &FactorNode{Node: newString(0, "", "")}}
+	p.Ctx = &Context{}
 	p.Root = p.parse()
 
 	return nil
@@ -216,6 +207,9 @@ loop:
 	for {
 		// Skip leading whitespaces
 		token := p.peekNonSpace()
+		if p.foundCtx(CommandContext) {
+			break loop
+		}
 		switch token.Typ {
 		case ItemSemicolon, ItemEndOfLine:
 			p.next()
@@ -253,10 +247,8 @@ func (p *Parser) pipeline() *PipelineNode {
 // Form = TermList { [ space ] Redir } [ space ]
 func (p *Parser) form() *FormNode {
 	fm := newForm(p.peekNonSpace().Pos)
-	p.Ctx.Typ = CommandContext
-	fm.Command = p.term()
-	p.Ctx.CommandTerm = fm.Command
-	p.Ctx.Typ = ArgContext
+	p.Ctx.Form = fm
+	fm.Command = p.term(CommandContext)
 	fm.Args = p.termList()
 loop:
 	for {
@@ -275,19 +267,17 @@ loop:
 // TermList = { [ space ] Term } [ space ]
 func (p *Parser) termList() *TermListNode {
 	list := newTermList(p.peek().Pos)
-	p.Ctx.PrevTerms = list
 loop:
 	for {
-		switch t := p.peekNonSpace().Typ; {
-		case startsFactor(t):
-			list.append(p.term())
-		case t == ItemEOF:
-			pos := p.peek().Pos
-			p.Ctx.PrevFactors = newTerm(pos)
-			p.Ctx.ThisFactor = &FactorNode{pos, StringFactor, newString(pos, "", "")}
-			p.foundCtx()
-			fallthrough
-		default:
+		// Skip space tokens
+		p.peekNonSpace()
+		if p.foundCtx(NewArgContext) {
+			break loop
+		}
+
+		if startsFactor(p.peek().Typ) {
+			list.append(p.term(ArgContext))
+		} else {
 			break loop
 		}
 	}
@@ -295,14 +285,18 @@ loop:
 }
 
 // Term = Factor { Factor | [ space ] '^' Factor [ space ] } [ space ]
-func (p *Parser) term() *TermNode {
+func (p *Parser) term(ct ContextType) *TermNode {
 	term := newTerm(p.peek().Pos)
-	p.Ctx.PrevFactors = term
 	term.append(p.factor())
 loop:
 	for {
 		if startsFactor(p.peek().Typ) {
 			term.append(p.factor())
+			if p.foundCtx(ct) {
+				break loop
+			}
+		} else if p.foundCtx(ct) {
+			break loop
 		} else if p.peekNonSpace().Typ == ItemCaret {
 			p.next()
 			p.peekNonSpace()
@@ -353,7 +347,6 @@ func startsFactor(p ItemType) bool {
 // closure: {echo} is a flat list, { echo } and {|| echo} are closures.
 func (p *Parser) factor() (fn *FactorNode) {
 	fn = newFactor(p.peek().Pos)
-	p.Ctx.ThisFactor = fn
 	switch token := p.next(); token.Typ {
 	case ItemDollar:
 		token := p.next()
@@ -362,9 +355,6 @@ func (p *Parser) factor() (fn *FactorNode) {
 		}
 		fn.Typ = VariableFactor
 		fn.Node = newString(token.Pos, token.Val, token.Val)
-		if p.peek().Typ == ItemEOF {
-			p.foundCtx()
-		}
 		return
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
 		text, err := unquote(token)
@@ -375,9 +365,6 @@ func (p *Parser) factor() (fn *FactorNode) {
 		}
 		fn.Typ = StringFactor
 		fn.Node = newString(token.Pos, token.Val, text)
-		if p.peek().Typ == ItemEOF {
-			p.foundCtx()
-		}
 		return
 	case ItemLBracket:
 		fn.Typ = TableFactor
@@ -440,14 +427,14 @@ func (p *Parser) table() (tn *TableNode) {
 		// & is used both as key marker and closure leader.
 		if token.Typ == ItemAmpersand && p.peek().Typ != ItemLBrace {
 			// Key-value pair, add to dict.
-			keyTerm := p.term()
+			keyTerm := p.term(TableKeyContext)
 			p.peekNonSpace()
-			valueTerm := p.term()
+			valueTerm := p.term(TableValueContext)
 			tn.appendToDict(keyTerm, valueTerm)
 		} else if startsFactor(token.Typ) {
 			// Single element, add to list.
 			p.backup()
-			tn.appendToList(p.term())
+			tn.appendToList(p.term(TableElemContext))
 		} else if token.Typ == ItemRBracket {
 			return
 		} else {
@@ -467,7 +454,7 @@ func (p *Parser) statusRedir() string {
 	if token := p.peekNonSpace(); token.Typ != ItemDollar {
 		p.errorf(int(token.Pos), "expect variable")
 	}
-	term := p.term()
+	term := p.term(StatusRedirContext)
 	if len(term.Nodes) == 1 {
 		factor := term.Nodes[0]
 		if factor.Typ == VariableFactor {
@@ -555,7 +542,5 @@ func (p *Parser) redir() Redir {
 	}
 	// FilenameRedir
 	p.peekNonSpace()
-	p.Ctx.Typ = RedirFilenameContext
-	p.Ctx.PrevTerms = nil
-	return newFilenameRedir(leader.Pos, fd, flag, p.term())
+	return newFilenameRedir(leader.Pos, fd, flag, p.term(RedirFilenameContext))
 }

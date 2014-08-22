@@ -32,42 +32,21 @@ func TestParse(t *testing.T) {
 }
 
 var completeTests = []struct {
-	in     string
-	wanted *Context
+	in        string
+	wantedTyp ContextType
 }{
-	{"", &Context{
-		CommandContext, nil,
-		newTermList(0), newTerm(0),
-		&FactorNode{0, StringFactor, newString(0, "", "")}}},
-	{"l", &Context{
-		CommandContext, nil,
-		newTermList(0), newTerm(0),
-		&FactorNode{0, StringFactor, newString(0, "l", "l")}}},
-	{"ls ", &Context{
-		ArgContext,
-		newTerm(0, &FactorNode{0, StringFactor, newString(0, "ls", "ls")}),
-		newTermList(3),
-		newTerm(3),
-		&FactorNode{3, StringFactor, newString(3, "", "")}}},
-	{"ls a", &Context{
-		ArgContext,
-		newTerm(0, &FactorNode{0, StringFactor, newString(0, "ls", "ls")}),
-		newTermList(3),
-		newTerm(3),
-		&FactorNode{3, StringFactor, newString(3, "a", "a")}}},
-	{"ls $a", &Context{
-		ArgContext,
-		newTerm(0, &FactorNode{0, StringFactor, newString(0, "ls", "ls")}),
-		newTermList(3),
-		newTerm(3),
-		&FactorNode{3, VariableFactor, newString(4, "a", "a")}}},
+	{"", CommandContext},
+	{"l", CommandContext},
+	{"ls ", NewArgContext},
+	{"ls a", ArgContext},
+	{"ls $a", ArgContext},
 }
 
 func TestComplete(t *testing.T) {
 	for i, tt := range completeTests {
 		out, err := Complete(fmt.Sprintf("<test %d>", i), tt.in)
-		if !reflect.DeepEqual(out, tt.wanted) || err != nil {
-			t.Errorf("Complete(*, %q) =>\n(%s, %v), want\n(%s, nil)", tt.in, util.DeepPrint(out), err, util.DeepPrint(tt.wanted))
+		if out.Typ != tt.wantedTyp || err != nil {
+			t.Errorf("Complete(*, %q) => (Context{Typ: %v, ...}, %v), want (Context{Typ: %v, ...}, nil)", tt.in, out.Typ, err, tt.wantedTyp)
 		}
 	}
 }
