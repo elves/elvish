@@ -275,7 +275,7 @@ loop:
 			break loop
 		}
 
-		if startsFactor(p.peek().Typ) {
+		if startsPrimary(p.peek().Typ) {
 			list.append(p.term(ArgContext))
 		} else {
 			break loop
@@ -284,14 +284,14 @@ loop:
 	return list
 }
 
-// Term = Factor { Factor | [ space ] '^' Factor [ space ] } [ space ]
+// Term = Primary { Primary | [ space ] '^' Primary [ space ] } [ space ]
 func (p *Parser) term(ct ContextType) *TermNode {
 	term := newTerm(p.peek().Pos)
-	term.append(p.factor())
+	term.append(p.primary())
 loop:
 	for {
-		if startsFactor(p.peek().Typ) {
-			term.append(p.factor())
+		if startsPrimary(p.peek().Typ) {
+			term.append(p.primary())
 			if p.foundCtx(ct) {
 				break loop
 			}
@@ -300,7 +300,7 @@ loop:
 		} else if p.peekNonSpace().Typ == ItemCaret {
 			p.next()
 			p.peekNonSpace()
-			term.append(p.factor())
+			term.append(p.primary())
 		} else {
 			break loop
 		}
@@ -322,10 +322,10 @@ func unquote(token Item) (string, error) {
 	}
 }
 
-// startsFactor determines whether a token of type p can start a Factor.
+// startsPrimary determines whether a token of type p can start a Primary.
 // Frequently used for lookahead, since a Term or TermList always starts with
-// a Factor.
-func startsFactor(p ItemType) bool {
+// a Primary.
+func startsPrimary(p ItemType) bool {
 	switch p {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted,
 		ItemLParen, ItemQuestionLParen, ItemLBracket, ItemLBrace,
@@ -336,24 +336,24 @@ func startsFactor(p ItemType) bool {
 	}
 }
 
-// Factor = '$' bare
+// Primary = '$' bare
 //        = ( bare | single-quoted | double-quoted | Table )
 //        = '{' TermList '}'
 //        = Closure
 //        = '(' Pipeline ')'
 // Closure and flat list are distinguished by the first token after the
-// opening brace. If startsFactor(token), it is considered a flat list.
+// opening brace. If startsPrimary(token), it is considered a flat list.
 // This implies that whitespaces after opening brace always introduce a
 // closure: {echo} is a flat list, { echo } and {|| echo} are closures.
-func (p *Parser) factor() (fn *FactorNode) {
-	fn = newFactor(p.peek().Pos)
+func (p *Parser) primary() (fn *PrimaryNode) {
+	fn = newPrimary(p.peek().Pos)
 	switch token := p.next(); token.Typ {
 	case ItemDollar:
 		token := p.next()
 		if token.Typ != ItemBare {
-			p.unexpected(token, "factor of variable")
+			p.unexpected(token, "primary expression of variable")
 		}
-		fn.Typ = VariableFactor
+		fn.Typ = VariablePrimary
 		fn.Node = newString(token.Pos, token.Val, token.Val)
 		return
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted:
@@ -363,38 +363,38 @@ func (p *Parser) factor() (fn *FactorNode) {
 			// in errors
 			p.errorf(int(token.Pos), "%s", err)
 		}
-		fn.Typ = StringFactor
+		fn.Typ = StringPrimary
 		fn.Node = newString(token.Pos, token.Val, text)
 		return
 	case ItemLBracket:
-		fn.Typ = TableFactor
+		fn.Typ = TablePrimary
 		fn.Node = p.table()
 		return
 	case ItemLBrace:
-		if startsFactor(p.peek().Typ) {
-			fn.Typ = ListFactor
+		if startsPrimary(p.peek().Typ) {
+			fn.Typ = ListPrimary
 			fn.Node = p.termList()
 			if token := p.next(); token.Typ != ItemRBrace {
-				p.unexpected(token, "factor of item list")
+				p.unexpected(token, "primary expression of item list")
 			}
 		} else {
-			fn.Typ = ClosureFactor
+			fn.Typ = ClosurePrimary
 			fn.Node = p.closure()
 		}
 		return
 	case ItemLParen, ItemQuestionLParen:
 		if token.Typ == ItemLParen {
-			fn.Typ = OutputCaptureFactor
+			fn.Typ = OutputCapturePrimary
 		} else {
-			fn.Typ = StatusCaptureFactor
+			fn.Typ = StatusCapturePrimary
 		}
 		fn.Node = p.pipeline()
 		if token := p.next(); token.Typ != ItemRParen {
-			p.unexpected(token, "factor of pipeline capture")
+			p.unexpected(token, "primary expression of pipeline capture")
 		}
 		return
 	default:
-		p.unexpected(token, "factor")
+		p.unexpected(token, "primary expression")
 		return nil
 	}
 }
@@ -431,7 +431,7 @@ func (p *Parser) table() (tn *TableNode) {
 			p.peekNonSpace()
 			valueTerm := p.term(TableValueContext)
 			tn.appendToDict(keyTerm, valueTerm)
-		} else if startsFactor(token.Typ) {
+		} else if startsPrimary(token.Typ) {
 			// Single element, add to list.
 			p.backup()
 			tn.appendToList(p.term(TableElemContext))
@@ -445,8 +445,8 @@ func (p *Parser) table() (tn *TableNode) {
 
 // statusRedir parses a status redirection.
 // StatusRedir = status-redir-leader [ space ] Term
-// The term must consist of a single factor which in turn must be of type
-// VariableFactor.
+// The term must consist of a single primary expression which in turn must be
+// of type VariablePrimary.
 func (p *Parser) statusRedir() string {
 	// Skip status-redir-leader
 	p.next()
@@ -456,9 +456,9 @@ func (p *Parser) statusRedir() string {
 	}
 	term := p.term(StatusRedirContext)
 	if len(term.Nodes) == 1 {
-		factor := term.Nodes[0]
-		if factor.Typ == VariableFactor {
-			return factor.Node.(*StringNode).Text
+		primary := term.Nodes[0]
+		if primary.Typ == VariablePrimary {
+			return primary.Node.(*StringNode).Text
 		}
 	}
 	p.errorf(int(term.Pos), "expect variable")

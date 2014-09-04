@@ -52,8 +52,8 @@ func checkSetType(cp *Compiler, args *parse.TermListNode, f *varSetForm, vop val
 // form is being compiled.
 //
 // The arguments in the var/set special form must consist of zero or more
-// variable factors followed by `=` and then zero or more terms. The number of
-// values the terms evaluate to must be equal to the number of names, but
+// variables followed by `=` and then zero or more terms. The number of values
+// the terms evaluate to must be equal to the number of names, but
 // compileVarSet does not attempt to compile this.
 func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 	f := &varSetForm{}
@@ -77,7 +77,7 @@ func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 			cp.errorf(n, "%s", termReq)
 		}
 
-		if nf.Typ == parse.StringFactor {
+		if nf.Typ == parse.StringPrimary {
 			if text == "=" {
 				f.values = args.Nodes[i+1:]
 				break
@@ -92,7 +92,7 @@ func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 			} else {
 				cp.errorf(n, "%s", termReq)
 			}
-		} else if nf.Typ == parse.VariableFactor {
+		} else if nf.Typ == parse.VariablePrimary {
 			if !v {
 				// For set, ensure that the variable can be resolved
 				cp.resolveVar(text, nf)
@@ -168,7 +168,7 @@ func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
 			cp.errorf(n, "%s", termReq)
 		}
 		nf := n.Nodes[0]
-		if nf.Typ != parse.VariableFactor {
+		if nf.Typ != parse.VariablePrimary {
 			cp.errorf(n, "%s", termReq)
 		}
 		name := nf.Node.(*parse.StringNode).Text

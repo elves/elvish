@@ -236,7 +236,7 @@ func makeString(text string) valuesOp {
 	return literalValue(NewString(text))
 }
 
-func makeVar(cp *Compiler, name string, fn *parse.FactorNode) valuesOp {
+func makeVar(cp *Compiler, name string, fn *parse.PrimaryNode) valuesOp {
 	ts := []Type{cp.resolveVar(name, fn)}
 	f := func(ev *Evaluator) []Value {
 		val, ok := ev.scope[name]

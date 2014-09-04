@@ -123,7 +123,7 @@ func (cp *Compiler) compilePipeline(pn *parse.PipelineNode) (valuesOp, [2]Stream
 	return combinePipeline(pn, ops, bounds, internals), bounds
 }
 
-func (cp *Compiler) resolveVar(name string, n *parse.FactorNode) Type {
+func (cp *Compiler) resolveVar(name string, n *parse.PrimaryNode) Type {
 	if t := cp.tryResolveVar(name); t != nil {
 		return t
 	}
@@ -173,13 +173,13 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, [2]StreamTy
 		cp.errorf(fn.Command, msg)
 	}
 	command := fn.Command.Nodes[0]
-	cmdOp, pbounds := cp.compileFactor(command)
+	cmdOp, pbounds := cp.compilePrimary(command)
 
 	annotation := &formAnnotation{}
 	switch command.Typ {
-	case parse.StringFactor:
+	case parse.StringPrimary:
 		cp.resolveCommand(command.Node.(*parse.StringNode).Text, annotation)
-	case parse.ClosureFactor:
+	case parse.ClosurePrimary:
 		annotation.commandType = commandClosure
 		annotation.streamTypes = *pbounds
 	default:
@@ -268,20 +268,20 @@ func (cp *Compiler) compileTermList(ln *parse.TermListNode) valuesOp {
 func (cp *Compiler) compileTerm(tn *parse.TermNode) valuesOp {
 	ops := make([]valuesOp, len(tn.Nodes))
 	for i, fn := range tn.Nodes {
-		ops[i], _ = cp.compileFactor(fn)
+		ops[i], _ = cp.compilePrimary(fn)
 	}
 	return combineTerm(ops)
 }
 
-func (cp *Compiler) compileFactor(fn *parse.FactorNode) (valuesOp, *[2]StreamType) {
+func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) (valuesOp, *[2]StreamType) {
 	switch fn.Typ {
-	case parse.StringFactor:
+	case parse.StringPrimary:
 		text := fn.Node.(*parse.StringNode).Text
 		return makeString(text), nil
-	case parse.VariableFactor:
+	case parse.VariablePrimary:
 		name := fn.Node.(*parse.StringNode).Text
 		return makeVar(cp, name, fn), nil
-	case parse.TableFactor:
+	case parse.TablePrimary:
 		table := fn.Node.(*parse.TableNode)
 		list := cp.compileTerms(table.List)
 		keys := make([]valuesOp, len(table.Dict))
@@ -291,7 +291,7 @@ func (cp *Compiler) compileFactor(fn *parse.FactorNode) (valuesOp, *[2]StreamTyp
 			values[i] = cp.compileTerm(tp.Value)
 		}
 		return combineTable(fn, list, keys, values), nil
-	case parse.ClosureFactor:
+	case parse.ClosurePrimary:
 		op, enclosed, bounds := cp.compileClosure(fn.Node.(*parse.ClosureNode))
 		for name, typ := range enclosed {
 			if !cp.hasVarOnThisScope(name) {
@@ -299,15 +299,15 @@ func (cp *Compiler) compileFactor(fn *parse.FactorNode) (valuesOp, *[2]StreamTyp
 			}
 		}
 		return op, &bounds
-	case parse.ListFactor:
+	case parse.ListPrimary:
 		return cp.compileTermList(fn.Node.(*parse.TermListNode)), nil
-	case parse.OutputCaptureFactor:
+	case parse.OutputCapturePrimary:
 		op, b := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
 		return combineOutputCapture(op, b), nil
-	case parse.StatusCaptureFactor:
+	case parse.StatusCapturePrimary:
 		op, _ := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
 		return op, nil
 	default:
-		panic(fmt.Sprintln("bad FactorNode type", fn.Typ))
+		panic(fmt.Sprintln("bad PrimaryNode type", fn.Typ))
 	}
 }

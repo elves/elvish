@@ -17,8 +17,8 @@ var parseTests = []struct {
 		0, newPipeline( // pipeline
 			0, &FormNode{ // form
 				0, newTerm( // term
-					0, &FactorNode{ // factor
-						0, StringFactor, newString(0, "ls", "ls")}),
+					0, &PrimaryNode{
+						0, StringPrimary, newString(0, "ls", "ls")}),
 				newTermList(2), nil, ""}))},
 }
 

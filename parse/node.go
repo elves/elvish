@@ -74,19 +74,19 @@ func newForm(pos Pos) *FormNode {
 
 func (fn *FormNode) isNode() {}
 
-// TermNode is a list of FactorNode's.
+// TermNode is a list of PrimaryNode's.
 type TermNode struct {
 	Pos
-	Nodes []*FactorNode
+	Nodes []*PrimaryNode
 }
 
-func newTerm(pos Pos, nodes ...*FactorNode) *TermNode {
+func newTerm(pos Pos, nodes ...*PrimaryNode) *TermNode {
 	return &TermNode{pos, nodes}
 }
 
 func (l *TermNode) isNode() {}
 
-func (tn *TermNode) append(n *FactorNode) {
+func (tn *TermNode) append(n *PrimaryNode) {
 	tn.Nodes = append(tn.Nodes, n)
 }
 
@@ -106,32 +106,32 @@ func (tn *TermListNode) append(n *TermNode) {
 	tn.Nodes = append(tn.Nodes, n)
 }
 
-// FactorNode represents a factor.
-type FactorNode struct {
+// PrimaryNode represents a primary expression.
+type PrimaryNode struct {
 	Pos
-	Typ  FactorType
+	Typ  PrimaryType
 	Node Node
 }
 
-// FactorType determines the type of a FactorNode.
-type FactorType int
+// PrimaryType determines the type of a PrimaryNode.
+type PrimaryType int
 
-// FactorType constants.
+// PrimaryType constants.
 const (
-	StringFactor        FactorType = iota // string literal: a `a` a
-	VariableFactor                        // variable: $a
-	TableFactor                           // table: [a b c &k v]
-	ClosureFactor                         // closure: {|a| cmd}
-	ListFactor                            // list: {a b c}
-	OutputCaptureFactor                   // output capture: (cmd1|cmd2)
-	StatusCaptureFactor                   // status capture: ?(cmd1|cmd2)
+	StringPrimary        PrimaryType = iota // string literal: a `a` a
+	VariablePrimary                         // variable: $a
+	TablePrimary                            // table: [a b c &k v]
+	ClosurePrimary                          // closure: {|a| cmd}
+	ListPrimary                             // list: {a b c}
+	OutputCapturePrimary                    // output capture: (cmd1|cmd2)
+	StatusCapturePrimary                    // status capture: ?(cmd1|cmd2)
 )
 
-func newFactor(pos Pos) *FactorNode {
-	return &FactorNode{Pos: pos}
+func newPrimary(pos Pos) *PrimaryNode {
+	return &PrimaryNode{Pos: pos}
 }
 
-func (fn *FactorNode) isNode() {}
+func (fn *PrimaryNode) isNode() {}
 
 // TablePair represents a key/value pair in table literal.
 type TablePair struct {
