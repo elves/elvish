@@ -97,7 +97,10 @@ func peekPrimary(fn *parse.PrimaryNode) (string, error) {
 func peekIncompleteCompound(tn *parse.CompoundNode) (string, int, error) {
 	text := ""
 	for _, n := range tn.Nodes {
-		s, e := peekPrimary(n)
+		if n.Right != nil {
+			return "", 0, notPlainCompound
+		}
+		s, e := peekPrimary(n.Left)
 		if e != nil {
 			return "", 0, notPlainCompound
 		}

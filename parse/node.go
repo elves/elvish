@@ -74,19 +74,19 @@ func newForm(pos Pos) *FormNode {
 
 func (fn *FormNode) isNode() {}
 
-// CompoundNode is a list of PrimaryNode's.
+// CompoundNode is a list of SubscriptNode's.
 type CompoundNode struct {
 	Pos
-	Nodes []*PrimaryNode
+	Nodes []*SubscriptNode
 }
 
-func newCompound(pos Pos, nodes ...*PrimaryNode) *CompoundNode {
+func newCompound(pos Pos, nodes ...*SubscriptNode) *CompoundNode {
 	return &CompoundNode{pos, nodes}
 }
 
 func (l *CompoundNode) isNode() {}
 
-func (tn *CompoundNode) append(n *PrimaryNode) {
+func (tn *CompoundNode) append(n *SubscriptNode) {
 	tn.Nodes = append(tn.Nodes, n)
 }
 
@@ -105,6 +105,15 @@ func (l *SpacedNode) isNode() {}
 func (tn *SpacedNode) append(n *CompoundNode) {
 	tn.Nodes = append(tn.Nodes, n)
 }
+
+// SubscriptNode represents a subscript expression.
+type SubscriptNode struct {
+	Pos
+	Left  *PrimaryNode
+	Right *CompoundNode
+}
+
+func (s *SubscriptNode) isNode() {}
 
 // PrimaryNode represents a primary expression.
 type PrimaryNode struct {

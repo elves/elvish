@@ -9,6 +9,7 @@ const (
 	CommandContext
 	ArgContext
 	NewArgContext
+	SubscriptContext
 	TableKeyContext
 	TableValueContext
 	TableElemContext

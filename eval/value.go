@@ -14,7 +14,7 @@ import (
 
 type Type interface {
 	Default() Value
-	Caret(t Type) Type
+	Caret(Type) Type
 }
 
 type AnyType struct {
@@ -25,7 +25,7 @@ func (at AnyType) Default() Value {
 }
 
 func (at AnyType) Caret(t Type) Type {
-	return AnyType{}
+	return StringType{}
 }
 
 type StringType struct {
@@ -47,8 +47,7 @@ func (tt TableType) Default() Value {
 }
 
 func (tt TableType) Caret(t Type) Type {
-	// TODO Should check t
-	return AnyType{}
+	return StringType{}
 }
 
 type EnvType struct {
@@ -59,7 +58,6 @@ func (et EnvType) Default() Value {
 }
 
 func (et EnvType) Caret(t Type) Type {
-	// TODO Should check t
 	return StringType{}
 }
 
@@ -72,8 +70,7 @@ func (st ClosureType) Default() Value {
 }
 
 func (ct ClosureType) Caret(t Type) Type {
-	// TODO Should always be a Compiler error
-	return AnyType{}
+	return StringType{}
 }
 
 var typenames = map[string]Type{
@@ -197,35 +194,7 @@ func (t *Table) String() string {
 }
 
 func (t *Table) Caret(ev *Evaluator, v Value) Value {
-	switch v := v.(type) {
-	case *String:
-		return NewString(t.String() + v.String())
-	case *Table:
-		if len(v.List) != 1 || len(v.Dict) != 0 {
-			ev.errorf("subscription must be single-element list")
-		}
-		sub, ok := v.List[0].(*String)
-		if !ok {
-			ev.errorf("subscription must be single-element string list")
-		}
-		// Need stricter notion of list indices
-		// TODO Handle invalid index
-		idx, err := strconv.ParseUint(sub.String(), 10, 0)
-		if err == nil {
-			if idx <= uint64(len(t.List)) {
-				return t.List[idx]
-			}
-			ev.errorf("index out of range")
-		}
-		if v, ok := t.Dict[sub]; ok {
-			return v
-		}
-		ev.errorf("nonexistent key %q", sub)
-		return nil
-	default:
-		ev.errorf("Table can only be careted with String or Table")
-		return nil
-	}
+	return NewString(t.String() + v.String())
 }
 
 func (t *Table) append(vs ...Value) {
@@ -287,21 +256,7 @@ func (e *Env) String() string {
 
 func (e *Env) Caret(ev *Evaluator, v Value) Value {
 	e.fill()
-	switch v := v.(type) {
-	case *Table:
-		if len(v.List) != 1 || len(v.Dict) != 0 {
-			ev.errorf("subscription must be single-element list")
-		}
-		sub, ok := v.List[0].(*String)
-		if !ok {
-			ev.errorf("subscription must be single-element string list")
-		}
-		// TODO Handle invalid index
-		return NewString(e.m[sub.String()])
-	default:
-		ev.errorf("Env can only be careted with Table")
-		return nil
-	}
+	return NewString(e.String() + v.String())
 }
 
 // Closure is a closure.
@@ -329,6 +284,39 @@ func (c *Closure) String() string {
 }
 
 func (c *Closure) Caret(ev *Evaluator, v Value) Value {
-	ev.errorf("Closure doesn't support careting")
-	return nil
+	return NewString(c.String() + v.String())
+}
+
+func evalSubscript(ev *Evaluator, left, right Value, ln, rn parse.Node) Value {
+	var (
+		sub *String
+		ok  bool
+	)
+	if sub, ok = right.(*String); !ok {
+		ev.errorfNode(rn, "right operand of subscript must be of type string")
+	}
+
+	switch left.(type) {
+	case *Env:
+		return NewString(left.(*Env).m[sub.String()])
+	case *Table:
+		t := left.(*Table)
+		// Need stricter notion of list indices
+		// TODO Handle invalid index
+		idx, err := strconv.ParseUint(sub.String(), 10, 0)
+		if err == nil {
+			if idx <= uint64(len(t.List)) {
+				return t.List[idx]
+			}
+			ev.errorfNode(rn, "index out of range")
+		}
+		if v, ok := t.Dict[sub]; ok {
+			return v
+		}
+		ev.errorfNode(rn, "nonexistent key %q", sub)
+		return nil
+	default:
+		ev.errorfNode(ln, "left operand of subscript must be of type string, env, table or any")
+		return nil
+	}
 }

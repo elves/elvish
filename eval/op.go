@@ -249,6 +249,35 @@ func makeVar(cp *Compiler, name string, fn *parse.PrimaryNode) valuesOp {
 	return valuesOp{ts, f}
 }
 
+func combineSubscript(cp *Compiler, left, right valuesOp, ln, rn parse.Node) valuesOp {
+	if len(left.ts) != 1 {
+		cp.errorf(ln, "left operand of subscript must be a single value")
+	}
+	var t Type
+	switch left.ts[0].(type) {
+	case EnvType:
+		t = StringType{}
+	case TableType, AnyType:
+		t = AnyType{}
+	default:
+		cp.errorf(ln, "left operand of subscript must be of type string, env, table or any")
+	}
+
+	if len(right.ts) != 1 {
+		cp.errorf(rn, "right operand of subscript must be a single value")
+	}
+	if _, ok := right.ts[0].(StringType); !ok {
+		cp.errorf(rn, "right operand of subscript must be of type string")
+	}
+
+	f := func(ev *Evaluator) []Value {
+		l := left.f(ev)
+		r := right.f(ev)
+		return []Value{evalSubscript(ev, l[0], r[0], ln, rn)}
+	}
+	return valuesOp{[]Type{t}, f}
+}
+
 func combineTable(n parse.Node, list valuesOp, keys []valuesOp, values []valuesOp) valuesOp {
 	ts := []Type{TableType{}}
 	f := func(ev *Evaluator) []Value {

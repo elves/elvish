@@ -65,10 +65,10 @@ func compileVarSet(cp *Compiler, args *parse.SpacedNode, v bool) strOp {
 		} else {
 			compoundReq = "must be a variable or literal `=`"
 		}
-		if len(n.Nodes) != 1 {
+		if len(n.Nodes) != 1 || n.Nodes[0].Right != nil {
 			cp.errorf(n, "%s", compoundReq)
 		}
-		nf := n.Nodes[0]
+		nf := n.Nodes[0].Left
 
 		var text string
 		if m, ok := nf.Node.(*parse.StringNode); ok {
@@ -164,10 +164,10 @@ func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
 	f := &delForm{}
 	for _, n := range fn.Args.Nodes {
 		compoundReq := "must be a varible"
-		if len(n.Nodes) != 1 {
+		if len(n.Nodes) != 1 || n.Nodes[0].Right != nil {
 			cp.errorf(n, "%s", compoundReq)
 		}
-		nf := n.Nodes[0]
+		nf := n.Nodes[0].Left
 		if nf.Typ != parse.VariablePrimary {
 			cp.errorf(n, "%s", compoundReq)
 		}

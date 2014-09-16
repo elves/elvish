@@ -284,14 +284,14 @@ loop:
 	return list
 }
 
-// Compound = Primary { Primary | [ space ] '^' Primary [ space ] } [ space ]
+// Compound = Subscript { Subscript | [ space ] '^' Subscript [ space ] } [ space ]
 func (p *Parser) compound(ct ContextType) *CompoundNode {
 	compound := newCompound(p.peek().Pos)
-	compound.append(p.primary())
+	compound.append(p.subscript())
 loop:
 	for {
 		if startsPrimary(p.peek().Typ) {
-			compound.append(p.primary())
+			compound.append(p.subscript())
 			if p.foundCtx(ct) {
 				break loop
 			}
@@ -300,12 +300,25 @@ loop:
 		} else if p.peekNonSpace().Typ == ItemCaret {
 			p.next()
 			p.peekNonSpace()
-			compound.append(p.primary())
+			compound.append(p.subscript())
 		} else {
 			break loop
 		}
 	}
 	return compound
+}
+
+// Subscript = Primary [ '[' Compound ']' ]
+func (p *Parser) subscript() *SubscriptNode {
+	sub := &SubscriptNode{}
+	sub.Left = p.primary()
+	if p.peek().Typ == ItemLBracket {
+		p.next()
+		sub.Right = p.compound(SubscriptContext)
+		// TODO completion aware
+		p.expect(ItemRBracket, "subscript")
+	}
+	return sub
 }
 
 func unquote(token Item) (string, error) {
@@ -455,8 +468,8 @@ func (p *Parser) statusRedir() string {
 		p.errorf(int(token.Pos), "expect variable")
 	}
 	compound := p.compound(StatusRedirContext)
-	if len(compound.Nodes) == 1 {
-		primary := compound.Nodes[0]
+	if len(compound.Nodes) == 1 && compound.Nodes[0].Right == nil {
+		primary := compound.Nodes[0].Left
 		if primary.Typ == VariablePrimary {
 			return primary.Node.(*StringNode).Text
 		}

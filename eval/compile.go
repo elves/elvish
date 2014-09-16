@@ -170,10 +170,10 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, [2]StreamTy
 	// TODO(xiaq): Allow more interesting compound expressions to be used as
 	// commands
 	msg := "command must be a string or closure"
-	if len(fn.Command.Nodes) != 1 {
+	if len(fn.Command.Nodes) != 1 || fn.Command.Nodes[0].Right != nil {
 		cp.errorf(fn.Command, msg)
 	}
-	command := fn.Command.Nodes[0]
+	command := fn.Command.Nodes[0].Left
 	cmdOp, pbounds := cp.compilePrimary(command)
 
 	annotation := &formAnnotation{}
@@ -269,9 +269,18 @@ func (cp *Compiler) compileSpaced(ln *parse.SpacedNode) valuesOp {
 func (cp *Compiler) compileCompound(tn *parse.CompoundNode) valuesOp {
 	ops := make([]valuesOp, len(tn.Nodes))
 	for i, fn := range tn.Nodes {
-		ops[i], _ = cp.compilePrimary(fn)
+		ops[i], _ = cp.compileSubscript(fn)
 	}
 	return combineCompound(ops)
+}
+
+func (cp *Compiler) compileSubscript(sn *parse.SubscriptNode) (valuesOp, *[2]StreamType) {
+	if sn.Right == nil {
+		return cp.compilePrimary(sn.Left)
+	}
+	left, _ := cp.compilePrimary(sn.Left)
+	right := cp.compileCompound(sn.Right)
+	return combineSubscript(cp, left, right, sn.Left, sn.Right), nil
 }
 
 func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) (valuesOp, *[2]StreamType) {
