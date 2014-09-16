@@ -24,7 +24,6 @@ type Evaluator struct {
 	searchPaths []string
 	ports       []*port
 	statusCb    func([]Value)
-	nodes       []parse.Node // A stack that keeps track of nodes being evaluated.
 }
 
 func statusOk(vs []Value) bool {
@@ -151,27 +150,13 @@ func (ev *Evaluator) stopEval() {
 	ev.text = ""
 }
 
-func (ev *Evaluator) push(n parse.Node) {
-	ev.nodes = append(ev.nodes, n)
-}
-
-func (ev *Evaluator) pop() {
-	n := len(ev.nodes) - 1
-	ev.nodes[n] = nil
-	ev.nodes = ev.nodes[:n]
-}
-
 func (ev *Evaluator) errorfPos(p parse.Pos, format string, args ...interface{}) {
 	util.Panic(util.NewContextualError(ev.name, ev.text, int(p), format, args...))
 }
 
 // errorf stops the evaluator. Its panic is supposed to be caught by recover.
 func (ev *Evaluator) errorf(format string, args ...interface{}) {
-	if n := len(ev.nodes); n > 0 {
-		ev.errorfPos(ev.nodes[n-1].Position(), format, args...)
-	} else {
-		util.Panic(fmt.Errorf(format, args...))
-	}
+	util.Panic(fmt.Errorf(format, args...))
 }
 
 func (ev *Evaluator) asSingleString(n parse.Node, vs []Value, what string) *String {
