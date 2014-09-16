@@ -287,13 +287,13 @@ func (c *Closure) Caret(ev *Evaluator, v Value) Value {
 	return NewString(c.String() + v.String())
 }
 
-func evalSubscript(ev *Evaluator, left, right Value, ln, rn parse.Node) Value {
+func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 	var (
 		sub *String
 		ok  bool
 	)
 	if sub, ok = right.(*String); !ok {
-		ev.errorfNode(rn, "right operand of subscript must be of type string")
+		ev.errorfPos(rp, "right operand of subscript must be of type string")
 	}
 
 	switch left.(type) {
@@ -308,15 +308,15 @@ func evalSubscript(ev *Evaluator, left, right Value, ln, rn parse.Node) Value {
 			if idx < uint64(len(t.List)) {
 				return t.List[idx]
 			}
-			ev.errorfNode(rn, "index out of range")
+			ev.errorfPos(rp, "index out of range")
 		}
 		if v, ok := t.Dict[sub]; ok {
 			return v
 		}
-		ev.errorfNode(rn, "nonexistent key %q", sub)
+		ev.errorfPos(rp, "nonexistent key %q", sub)
 		return nil
 	default:
-		ev.errorfNode(ln, "left operand of subscript must be of type string, env, table or any")
+		ev.errorfPos(lp, "left operand of subscript must be of type string, env, table or any")
 		return nil
 	}
 }

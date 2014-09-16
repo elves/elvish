@@ -50,7 +50,7 @@ func combineClosure(ops []valuesOp, enclosed map[string]Type, bounds [2]StreamTy
 	return valuesOp{ts, f}
 }
 
-func combinePipeline(n parse.Node, ops []stateUpdatesOp, bounds [2]StreamType, internals []StreamType) valuesOp {
+func combinePipeline(p parse.Pos, ops []stateUpdatesOp, bounds [2]StreamType, internals []StreamType) valuesOp {
 	ts := make([]Type, len(ops))
 	for i := 0; i < len(ops); i++ {
 		ts[i] = &StringType{}
@@ -58,10 +58,10 @@ func combinePipeline(n parse.Node, ops []stateUpdatesOp, bounds [2]StreamType, i
 	f := func(ev *Evaluator) []Value {
 		// TODO(xiaq): Should catch when compiling
 		if !ev.ports[0].compatible(bounds[0]) {
-			ev.errorfNode(n, "pipeline input not satisfiable")
+			ev.errorfPos(p, "pipeline input not satisfiable")
 		}
 		if !ev.ports[1].compatible(bounds[1]) {
-			ev.errorfNode(n, "pipeline output not satisfiable")
+			ev.errorfPos(p, "pipeline output not satisfiable")
 		}
 		var nextIn *port
 		updates := make([]<-chan *StateUpdate, len(ops))
@@ -80,7 +80,7 @@ func combinePipeline(n parse.Node, ops []stateUpdatesOp, bounds [2]StreamType, i
 					// os.Pipe sets O_CLOEXEC, which is what we want.
 					reader, writer, e := os.Pipe()
 					if e != nil {
-						ev.errorfNode(n, "failed to create pipe: %s", e)
+						ev.errorfPos(p, "failed to create pipe: %s", e)
 					}
 					newEv.ports[1] = &port{f: writer, shouldClose: true}
 					nextIn = &port{f: reader, shouldClose: true}
@@ -108,7 +108,7 @@ func combinePipeline(n parse.Node, ops []stateUpdatesOp, bounds [2]StreamType, i
 	return valuesOp{ts, f}
 }
 
-func combineForm(n parse.Node, cmd valuesOp, tlist valuesOp, ports []portOp, a *formAnnotation) stateUpdatesOp {
+func combineForm(p parse.Pos, cmd valuesOp, tlist valuesOp, ports []portOp, a *formAnnotation) stateUpdatesOp {
 	return func(ev *Evaluator) <-chan *StateUpdate {
 		// XXX Currently it's guaranteed that cmd evaluates into a single
 		// Value.
@@ -138,7 +138,7 @@ func combineForm(n parse.Node, cmd valuesOp, tlist valuesOp, ports []portOp, a *
 		case commandExternal:
 			path, e := ev.search(cmdStr)
 			if e != nil {
-				ev.errorfNode(n, "%s", e)
+				ev.errorfPos(p, "%s", e)
 			}
 			fm.Command.Path = path
 		default:
@@ -237,8 +237,8 @@ func makeString(text string) valuesOp {
 	return literalValue(NewString(text))
 }
 
-func makeVar(cp *Compiler, name string, fn *parse.PrimaryNode) valuesOp {
-	ts := []Type{cp.resolveVar(name, fn)}
+func makeVar(cp *Compiler, name string, p parse.Pos) valuesOp {
+	ts := []Type{cp.resolveVar(name, p)}
 	f := func(ev *Evaluator) []Value {
 		val, ok := ev.scope[name]
 		if !ok {
@@ -249,9 +249,9 @@ func makeVar(cp *Compiler, name string, fn *parse.PrimaryNode) valuesOp {
 	return valuesOp{ts, f}
 }
 
-func combineSubscript(cp *Compiler, left, right valuesOp, ln, rn parse.Node) valuesOp {
+func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valuesOp {
 	if len(left.ts) != 1 {
-		cp.errorf(ln, "left operand of subscript must be a single value")
+		cp.errorf(lp, "left operand of subscript must be a single value")
 	}
 	var t Type
 	switch left.ts[0].(type) {
@@ -260,25 +260,25 @@ func combineSubscript(cp *Compiler, left, right valuesOp, ln, rn parse.Node) val
 	case TableType, AnyType:
 		t = AnyType{}
 	default:
-		cp.errorf(ln, "left operand of subscript must be of type string, env, table or any")
+		cp.errorf(lp, "left operand of subscript must be of type string, env, table or any")
 	}
 
 	if len(right.ts) != 1 {
-		cp.errorf(rn, "right operand of subscript must be a single value")
+		cp.errorf(rp, "right operand of subscript must be a single value")
 	}
 	if _, ok := right.ts[0].(StringType); !ok {
-		cp.errorf(rn, "right operand of subscript must be of type string")
+		cp.errorf(rp, "right operand of subscript must be of type string")
 	}
 
 	f := func(ev *Evaluator) []Value {
 		l := left.f(ev)
 		r := right.f(ev)
-		return []Value{evalSubscript(ev, l[0], r[0], ln, rn)}
+		return []Value{evalSubscript(ev, l[0], r[0], lp, rp)}
 	}
 	return valuesOp{[]Type{t}, f}
 }
 
-func combineTable(n parse.Node, list valuesOp, keys []valuesOp, values []valuesOp) valuesOp {
+func combineTable(p parse.Pos, list valuesOp, keys []valuesOp, values []valuesOp) valuesOp {
 	ts := []Type{TableType{}}
 	f := func(ev *Evaluator) []Value {
 		t := NewTable()
@@ -288,7 +288,7 @@ func combineTable(n parse.Node, list valuesOp, keys []valuesOp, values []valuesO
 			ks := kop.f(ev)
 			vs := vop.f(ev)
 			if len(ks) != len(vs) {
-				ev.errorfNode(n, "Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
+				ev.errorfPos(p, "Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
 			}
 			for j, k := range ks {
 				t.Dict[k] = vs[j]

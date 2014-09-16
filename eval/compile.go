@@ -58,8 +58,8 @@ func (cp *Compiler) hasVarOnThisScope(name string) bool {
 	return ok
 }
 
-func (cp *Compiler) errorf(n parse.Node, format string, args ...interface{}) {
-	util.Panic(util.NewContextualError(cp.name, cp.text, int(n.Position()), format, args...))
+func (cp *Compiler) errorf(p parse.Pos, format string, args ...interface{}) {
+	util.Panic(util.NewContextualError(cp.name, cp.text, int(p), format, args...))
 }
 
 func (cp *Compiler) compileChunk(cn *parse.ChunkNode) Op {
@@ -83,11 +83,11 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) (valuesOp, map[string]
 		var ok bool
 		bounds[0], ok = bounds[0].commonType(b[0])
 		if !ok {
-			cp.errorf(pn, "Pipeline input stream incompatible with previous ones")
+			cp.errorf(pn.Pos, "Pipeline input stream incompatible with previous ones")
 		}
 		bounds[1], ok = bounds[1].commonType(b[1])
 		if !ok {
-			cp.errorf(pn, "Pipeline output stream incompatible with previous ones")
+			cp.errorf(pn.Pos, "Pipeline output stream incompatible with previous ones")
 		}
 	}
 
@@ -113,21 +113,21 @@ func (cp *Compiler) compilePipeline(pn *parse.PipelineNode) (valuesOp, [2]Stream
 		} else {
 			internal, ok := lastOutput.commonType(input)
 			if !ok {
-				cp.errorf(fn, "Form input type %v insatisfiable - previous form output is type %v", input, lastOutput)
+				cp.errorf(fn.Pos, "Form input type %v insatisfiable - previous form output is type %v", input, lastOutput)
 			}
 			internals[i-1] = internal
 		}
 		lastOutput = b[1]
 	}
 	bounds[1] = lastOutput
-	return combinePipeline(pn, ops, bounds, internals), bounds
+	return combinePipeline(pn.Pos, ops, bounds, internals), bounds
 }
 
-func (cp *Compiler) resolveVar(name string, n *parse.PrimaryNode) Type {
+func (cp *Compiler) resolveVar(name string, p parse.Pos) Type {
 	if t := cp.tryResolveVar(name); t != nil {
 		return t
 	}
-	cp.errorf(n, "undefined variable $%s", name)
+	cp.errorf(p, "undefined variable $%s", name)
 	return nil
 }
 
@@ -171,7 +171,7 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, [2]StreamTy
 	// commands
 	msg := "command must be a string or closure"
 	if len(fn.Command.Nodes) != 1 || fn.Command.Nodes[0].Right != nil {
-		cp.errorf(fn.Command, msg)
+		cp.errorf(fn.Command.Pos, msg)
 	}
 	command := fn.Command.Nodes[0].Left
 	cmdOp, pbounds := cp.compilePrimary(command)
@@ -184,7 +184,7 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, [2]StreamTy
 		annotation.commandType = commandClosure
 		annotation.streamTypes = *pbounds
 	default:
-		cp.errorf(fn.Command, msg)
+		cp.errorf(fn.Command.Pos, msg)
 	}
 
 	var nports uintptr
@@ -201,11 +201,11 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, [2]StreamTy
 			switch rd := rd.(type) {
 			case *parse.FdRedir:
 				if annotation.streamTypes[fd] == chanStream {
-					cp.errorf(rd, "fd redir on channel port")
+					cp.errorf(rd.Pos, "fd redir on channel port")
 				}
 			case *parse.FilenameRedir:
 				if annotation.streamTypes[fd] == chanStream {
-					cp.errorf(rd, "filename redir on channel port")
+					cp.errorf(rd.Pos, "filename redir on channel port")
 				}
 			}
 			annotation.streamTypes[fd] = unusedStream
@@ -219,7 +219,7 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, [2]StreamTy
 	} else {
 		tlist = cp.compileSpaced(fn.Args)
 	}
-	return combineForm(fn, cmdOp, tlist, ports, annotation), annotation.streamTypes
+	return combineForm(fn.Pos, cmdOp, tlist, ports, annotation), annotation.streamTypes
 }
 
 func (cp *Compiler) compileRedir(r parse.Redir) portOp {
@@ -245,7 +245,7 @@ func (cp *Compiler) compileRedir(r parse.Redir) portOp {
 			// TODO haz hardcoded permbits now
 			f, e := os.OpenFile(fname, r.Flag, 0644)
 			if e != nil {
-				ev.errorfNode(r, "failed to open file %q: %s", fname[0], e)
+				ev.errorfPos(r.Pos, "failed to open file %q: %s", fname[0], e)
 			}
 			return &port{f: f, shouldClose: true}
 		}
@@ -280,7 +280,7 @@ func (cp *Compiler) compileSubscript(sn *parse.SubscriptNode) (valuesOp, *[2]Str
 	}
 	left, _ := cp.compilePrimary(sn.Left)
 	right := cp.compileCompound(sn.Right)
-	return combineSubscript(cp, left, right, sn.Left, sn.Right), nil
+	return combineSubscript(cp, left, right, sn.Left.Pos, sn.Right.Pos), nil
 }
 
 func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) (valuesOp, *[2]StreamType) {
@@ -290,7 +290,7 @@ func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) (valuesOp, *[2]StreamT
 		return makeString(text), nil
 	case parse.VariablePrimary:
 		name := fn.Node.(*parse.StringNode).Text
-		return makeVar(cp, name, fn), nil
+		return makeVar(cp, name, fn.Pos), nil
 	case parse.TablePrimary:
 		table := fn.Node.(*parse.TableNode)
 		list := cp.compileCompounds(table.List)
@@ -300,7 +300,7 @@ func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) (valuesOp, *[2]StreamT
 			keys[i] = cp.compileCompound(tp.Key)
 			values[i] = cp.compileCompound(tp.Value)
 		}
-		return combineTable(fn, list, keys, values), nil
+		return combineTable(fn.Pos, list, keys, values), nil
 	case parse.ClosurePrimary:
 		op, enclosed, bounds := cp.compileClosure(fn.Node.(*parse.ClosureNode))
 		for name, typ := range enclosed {

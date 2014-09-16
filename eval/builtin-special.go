@@ -35,7 +35,7 @@ type delForm struct {
 
 func checkSetType(cp *Compiler, args *parse.SpacedNode, f *varSetForm, vop valuesOp) {
 	if len(f.names) != len(vop.ts) {
-		cp.errorf(args, "number of variables doesn't match that of values")
+		cp.errorf(args.Pos, "number of variables doesn't match that of values")
 	}
 	for i, name := range f.names {
 		if _, ok := vop.ts[i].(AnyType); ok {
@@ -43,7 +43,7 @@ func checkSetType(cp *Compiler, args *parse.SpacedNode, f *varSetForm, vop value
 			continue
 		}
 		if cp.tryResolveVar(name) != vop.ts[i] {
-			cp.errorf(f.values[i], "type mismatch")
+			cp.errorf(f.values[i].Pos, "type mismatch")
 		}
 	}
 }
@@ -66,7 +66,7 @@ func compileVarSet(cp *Compiler, args *parse.SpacedNode, v bool) strOp {
 			compoundReq = "must be a variable or literal `=`"
 		}
 		if len(n.Nodes) != 1 || n.Nodes[0].Right != nil {
-			cp.errorf(n, "%s", compoundReq)
+			cp.errorf(n.Pos, "%s", compoundReq)
 		}
 		nf := n.Nodes[0].Left
 
@@ -74,7 +74,7 @@ func compileVarSet(cp *Compiler, args *parse.SpacedNode, v bool) strOp {
 		if m, ok := nf.Node.(*parse.StringNode); ok {
 			text = m.Text
 		} else {
-			cp.errorf(n, "%s", compoundReq)
+			cp.errorf(n.Pos, "%s", compoundReq)
 		}
 
 		if nf.Typ == parse.StringPrimary {
@@ -83,28 +83,28 @@ func compileVarSet(cp *Compiler, args *parse.SpacedNode, v bool) strOp {
 				break
 			} else if t := typenames[text]; v && t != nil {
 				if i == 0 {
-					cp.errorf(n, "type name must follow variables")
+					cp.errorf(n.Pos, "type name must follow variables")
 				}
 				for j := lastTyped; j < i; j++ {
 					f.types = append(f.types, t)
 				}
 				lastTyped = i
 			} else {
-				cp.errorf(n, "%s", compoundReq)
+				cp.errorf(n.Pos, "%s", compoundReq)
 			}
 		} else if nf.Typ == parse.VariablePrimary {
 			if !v {
 				// For set, ensure that the variable can be resolved
-				cp.resolveVar(text, nf)
+				cp.resolveVar(text, nf.Pos)
 			}
 			f.names = append(f.names, text)
 		} else {
-			cp.errorf(n, "%s", compoundReq)
+			cp.errorf(n.Pos, "%s", compoundReq)
 		}
 	}
 	if v {
 		if len(f.types) != len(f.names) {
-			cp.errorf(args, "Some variables lack type")
+			cp.errorf(args.Pos, "Some variables lack type")
 		}
 		for i, name := range f.names {
 			cp.pushVar(name, f.types[i])
@@ -125,7 +125,7 @@ func compileVarSet(cp *Compiler, args *parse.SpacedNode, v bool) strOp {
 		}
 	} else {
 		if f.values == nil {
-			cp.errorf(args, "set form lacks equal sign")
+			cp.errorf(args.Pos, "set form lacks equal sign")
 		}
 		vop := cp.compileCompounds(f.values)
 		checkSetType(cp, args, f, vop)
@@ -165,16 +165,16 @@ func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
 	for _, n := range fn.Args.Nodes {
 		compoundReq := "must be a varible"
 		if len(n.Nodes) != 1 || n.Nodes[0].Right != nil {
-			cp.errorf(n, "%s", compoundReq)
+			cp.errorf(n.Pos, "%s", compoundReq)
 		}
 		nf := n.Nodes[0].Left
 		if nf.Typ != parse.VariablePrimary {
-			cp.errorf(n, "%s", compoundReq)
+			cp.errorf(n.Pos, "%s", compoundReq)
 		}
 		name := nf.Node.(*parse.StringNode).Text
-		cp.resolveVar(name, nf)
+		cp.resolveVar(name, nf.Pos)
 		if !cp.hasVarOnThisScope(name) {
-			cp.errorf(n, "can only delete variable on current scope")
+			cp.errorf(n.Pos, "can only delete variable on current scope")
 		}
 		cp.popVar(name)
 		f.names = append(f.names, name)

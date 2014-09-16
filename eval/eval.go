@@ -161,14 +161,14 @@ func (ev *Evaluator) pop() {
 	ev.nodes = ev.nodes[:n]
 }
 
-func (ev *Evaluator) errorfNode(n parse.Node, format string, args ...interface{}) {
-	util.Panic(util.NewContextualError(ev.name, ev.text, int(n.Position()), format, args...))
+func (ev *Evaluator) errorfPos(p parse.Pos, format string, args ...interface{}) {
+	util.Panic(util.NewContextualError(ev.name, ev.text, int(p), format, args...))
 }
 
 // errorf stops the evaluator. Its panic is supposed to be caught by recover.
 func (ev *Evaluator) errorf(format string, args ...interface{}) {
 	if n := len(ev.nodes); n > 0 {
-		ev.errorfNode(ev.nodes[n-1], format, args...)
+		ev.errorfPos(ev.nodes[n-1].Position(), format, args...)
 	} else {
 		util.Panic(fmt.Errorf(format, args...))
 	}
@@ -176,11 +176,11 @@ func (ev *Evaluator) errorf(format string, args ...interface{}) {
 
 func (ev *Evaluator) asSingleString(n parse.Node, vs []Value, what string) *String {
 	if len(vs) != 1 {
-		ev.errorfNode(n, "Expect exactly one word for %s, got %d", what, len(vs))
+		ev.errorfPos(n.Position(), "Expect exactly one word for %s, got %d", what, len(vs))
 	}
 	v, ok := vs[0].(*String)
 	if !ok {
-		ev.errorfNode(n, "Expect string for %s, got %s", what, vs[0])
+		ev.errorfPos(n.Position(), "Expect string for %s, got %s", what, vs[0])
 	}
 	return v
 }
