@@ -305,7 +305,7 @@ func evalSubscript(ev *Evaluator, left, right Value, ln, rn parse.Node) Value {
 		// TODO Handle invalid index
 		idx, err := strconv.ParseUint(sub.String(), 10, 0)
 		if err == nil {
-			if idx <= uint64(len(t.List)) {
+			if idx < uint64(len(t.List)) {
 				return t.List[idx]
 			}
 			ev.errorfNode(rn, "index out of range")
