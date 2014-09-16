@@ -158,13 +158,14 @@ func combineForm(n parse.Node, cmd valuesOp, tlist valuesOp, ports []portOp, a *
 	}
 }
 
-func combineTermList(ops []valuesOp) valuesOp {
+func combineSpaced(ops []valuesOp) valuesOp {
 	ts := make([]Type, 0, len(ops))
 	for _, op := range ops {
 		ts = append(ts, op.ts...)
 	}
 	f := func(ev *Evaluator) []Value {
-		// Use number of terms as an estimation of the number of values
+		// Use number of compound expressions as an estimation of the number
+		// of values
 		vs := make([]Value, 0, len(ops))
 		for _, op := range ops {
 			us := op.f(ev)
@@ -175,7 +176,7 @@ func combineTermList(ops []valuesOp) valuesOp {
 	return valuesOp{ts, f}
 }
 
-func combineTerm(ops []valuesOp) valuesOp {
+func combineCompound(ops []valuesOp) valuesOp {
 	ts := ops[0].ts
 	for _, op := range ops[1:] {
 		rs := op.ts

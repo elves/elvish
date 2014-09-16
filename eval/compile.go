@@ -167,7 +167,8 @@ func (cp *Compiler) resolveCommand(name string, fa *formAnnotation) {
 }
 
 func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, [2]StreamType) {
-	// TODO(xiaq): Allow more interesting terms to be used as commands
+	// TODO(xiaq): Allow more interesting compound expressions to be used as
+	// commands
 	msg := "command must be a string or closure"
 	if len(fn.Command.Nodes) != 1 {
 		cp.errorf(fn.Command, msg)
@@ -216,7 +217,7 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, [2]StreamTy
 	if annotation.commandType == commandBuiltinSpecial {
 		annotation.specialOp = annotation.builtinSpecial.compile(cp, fn)
 	} else {
-		tlist = cp.compileTermList(fn.Args)
+		tlist = cp.compileSpaced(fn.Args)
 	}
 	return combineForm(fn, cmdOp, tlist, ports, annotation), annotation.streamTypes
 }
@@ -237,7 +238,7 @@ func (cp *Compiler) compileRedir(r parse.Redir) portOp {
 			return &p
 		}
 	case *parse.FilenameRedir:
-		fnameOp := cp.compileTerm(r.Filename)
+		fnameOp := cp.compileCompound(r.Filename)
 		return func(ev *Evaluator) *port {
 			fname := string(*ev.asSingleString(
 				r.Filename, fnameOp.f(ev), "filename"))
@@ -253,24 +254,24 @@ func (cp *Compiler) compileRedir(r parse.Redir) portOp {
 	}
 }
 
-func (cp *Compiler) compileTerms(tns []*parse.TermNode) valuesOp {
+func (cp *Compiler) compileCompounds(tns []*parse.CompoundNode) valuesOp {
 	ops := make([]valuesOp, len(tns))
 	for i, tn := range tns {
-		ops[i] = cp.compileTerm(tn)
+		ops[i] = cp.compileCompound(tn)
 	}
-	return combineTermList(ops)
+	return combineSpaced(ops)
 }
 
-func (cp *Compiler) compileTermList(ln *parse.TermListNode) valuesOp {
-	return cp.compileTerms(ln.Nodes)
+func (cp *Compiler) compileSpaced(ln *parse.SpacedNode) valuesOp {
+	return cp.compileCompounds(ln.Nodes)
 }
 
-func (cp *Compiler) compileTerm(tn *parse.TermNode) valuesOp {
+func (cp *Compiler) compileCompound(tn *parse.CompoundNode) valuesOp {
 	ops := make([]valuesOp, len(tn.Nodes))
 	for i, fn := range tn.Nodes {
 		ops[i], _ = cp.compilePrimary(fn)
 	}
-	return combineTerm(ops)
+	return combineCompound(ops)
 }
 
 func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) (valuesOp, *[2]StreamType) {
@@ -283,12 +284,12 @@ func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) (valuesOp, *[2]StreamT
 		return makeVar(cp, name, fn), nil
 	case parse.TablePrimary:
 		table := fn.Node.(*parse.TableNode)
-		list := cp.compileTerms(table.List)
+		list := cp.compileCompounds(table.List)
 		keys := make([]valuesOp, len(table.Dict))
 		values := make([]valuesOp, len(table.Dict))
 		for i, tp := range table.Dict {
-			keys[i] = cp.compileTerm(tp.Key)
-			values[i] = cp.compileTerm(tp.Value)
+			keys[i] = cp.compileCompound(tp.Key)
+			values[i] = cp.compileCompound(tp.Value)
 		}
 		return combineTable(fn, list, keys, values), nil
 	case parse.ClosurePrimary:
@@ -300,7 +301,7 @@ func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) (valuesOp, *[2]StreamT
 		}
 		return op, &bounds
 	case parse.ListPrimary:
-		return cp.compileTermList(fn.Node.(*parse.TermListNode)), nil
+		return cp.compileSpaced(fn.Node.(*parse.SpacedNode)), nil
 	case parse.OutputCapturePrimary:
 		op, b := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
 		return combineOutputCapture(op, b), nil

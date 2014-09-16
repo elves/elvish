@@ -26,14 +26,14 @@ func init() {
 type varSetForm struct {
 	names  []string
 	types  []Type
-	values []*parse.TermNode
+	values []*parse.CompoundNode
 }
 
 type delForm struct {
 	names []string
 }
 
-func checkSetType(cp *Compiler, args *parse.TermListNode, f *varSetForm, vop valuesOp) {
+func checkSetType(cp *Compiler, args *parse.SpacedNode, f *varSetForm, vop valuesOp) {
 	if len(f.names) != len(vop.ts) {
 		cp.errorf(args, "number of variables doesn't match that of values")
 	}
@@ -52,21 +52,21 @@ func checkSetType(cp *Compiler, args *parse.TermListNode, f *varSetForm, vop val
 // form is being compiled.
 //
 // The arguments in the var/set special form must consist of zero or more
-// variables followed by `=` and then zero or more terms. The number of values
-// the terms evaluate to must be equal to the number of names, but
+// variables followed by `=` and then zero or more compound expressions. The number of values
+// the compound expressions evaluate to must be equal to the number of names, but
 // compileVarSet does not attempt to compile this.
-func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
+func compileVarSet(cp *Compiler, args *parse.SpacedNode, v bool) strOp {
 	f := &varSetForm{}
 	lastTyped := 0
 	for i, n := range args.Nodes {
-		termReq := ""
+		compoundReq := ""
 		if v {
-			termReq = "must be a variable, literal type name or literal `=`"
+			compoundReq = "must be a variable, literal type name or literal `=`"
 		} else {
-			termReq = "must be a variable or literal `=`"
+			compoundReq = "must be a variable or literal `=`"
 		}
 		if len(n.Nodes) != 1 {
-			cp.errorf(n, "%s", termReq)
+			cp.errorf(n, "%s", compoundReq)
 		}
 		nf := n.Nodes[0]
 
@@ -74,7 +74,7 @@ func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 		if m, ok := nf.Node.(*parse.StringNode); ok {
 			text = m.Text
 		} else {
-			cp.errorf(n, "%s", termReq)
+			cp.errorf(n, "%s", compoundReq)
 		}
 
 		if nf.Typ == parse.StringPrimary {
@@ -90,7 +90,7 @@ func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 				}
 				lastTyped = i
 			} else {
-				cp.errorf(n, "%s", termReq)
+				cp.errorf(n, "%s", compoundReq)
 			}
 		} else if nf.Typ == parse.VariablePrimary {
 			if !v {
@@ -99,7 +99,7 @@ func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 			}
 			f.names = append(f.names, text)
 		} else {
-			cp.errorf(n, "%s", termReq)
+			cp.errorf(n, "%s", compoundReq)
 		}
 	}
 	if v {
@@ -111,7 +111,7 @@ func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 		}
 		var vop valuesOp
 		if f.values != nil {
-			vop = cp.compileTerms(f.values)
+			vop = cp.compileCompounds(f.values)
 			checkSetType(cp, args, f, vop)
 		}
 		return func(ev *Evaluator) string {
@@ -127,7 +127,7 @@ func compileVarSet(cp *Compiler, args *parse.TermListNode, v bool) strOp {
 		if f.values == nil {
 			cp.errorf(args, "set form lacks equal sign")
 		}
-		vop := cp.compileTerms(f.values)
+		vop := cp.compileCompounds(f.values)
 		checkSetType(cp, args, f, vop)
 		return func(ev *Evaluator) string {
 			return doSet(ev, f.names, vop.f(ev))
@@ -159,17 +159,17 @@ func doSet(ev *Evaluator, names []string, values []Value) string {
 }
 
 func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
-	// Do conventional compiling of all terms, including ensuring that
-	// variables can be resolved
+	// Do conventional compiling of all compound expressions, including
+	// ensuring that variables can be resolved
 	f := &delForm{}
 	for _, n := range fn.Args.Nodes {
-		termReq := "must be a varible"
+		compoundReq := "must be a varible"
 		if len(n.Nodes) != 1 {
-			cp.errorf(n, "%s", termReq)
+			cp.errorf(n, "%s", compoundReq)
 		}
 		nf := n.Nodes[0]
 		if nf.Typ != parse.VariablePrimary {
-			cp.errorf(n, "%s", termReq)
+			cp.errorf(n, "%s", compoundReq)
 		}
 		name := nf.Node.(*parse.StringNode).Text
 		cp.resolveVar(name, nf)

@@ -83,7 +83,7 @@ func fileNames(dir string) (names []string, err error) {
 
 var (
 	notPlainPrimary    = fmt.Errorf("not a plain PrimaryNode")
-	notPlainTerm       = fmt.Errorf("not a plain TermNode")
+	notPlainCompound   = fmt.Errorf("not a plain CompoundNode")
 	unknownContextType = fmt.Errorf("unknown context type")
 )
 
@@ -94,28 +94,28 @@ func peekPrimary(fn *parse.PrimaryNode) (string, error) {
 	return fn.Node.(*parse.StringNode).Text, nil
 }
 
-func peekIncompleteTerm(tn *parse.TermNode) (string, int, error) {
+func peekIncompleteCompound(tn *parse.CompoundNode) (string, int, error) {
 	text := ""
 	for _, n := range tn.Nodes {
 		s, e := peekPrimary(n)
 		if e != nil {
-			return "", 0, notPlainTerm
+			return "", 0, notPlainCompound
 		}
 		text += s
 	}
 	return text, int(tn.Pos), nil
 }
 
-func peekCurrentTerm(ctx *parse.Context, dot int) (string, int, error) {
+func peekCurrentCompound(ctx *parse.Context, dot int) (string, int, error) {
 	if ctx.Form == nil || ctx.Typ == parse.NewArgContext {
 		return "", dot, nil
 	}
 
 	switch ctx.Typ {
 	case parse.ArgContext:
-		terms := ctx.Form.Args.Nodes
-		lastTerm := terms[len(terms)-1]
-		return peekIncompleteTerm(lastTerm)
+		compounds := ctx.Form.Args.Nodes
+		lastCompound := compounds[len(compounds)-1]
+		return peekIncompleteCompound(lastCompound)
 	case parse.RedirFilenameContext:
 		redirs := ctx.Form.Redirs
 		lastRedir := redirs[len(redirs)-1]
@@ -123,7 +123,7 @@ func peekCurrentTerm(ctx *parse.Context, dot int) (string, int, error) {
 		if !ok {
 			return "", 0, fmt.Errorf("last redir is not FilenameRedir")
 		}
-		return peekIncompleteTerm(fnRedir.Filename)
+		return peekIncompleteCompound(fnRedir.Filename)
 	default:
 		return "", 0, unknownContextType
 	}
@@ -136,7 +136,7 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 		ed.pushTip("parser error")
 		return nil
 	}
-	term, start, err := peekCurrentTerm(ctx, ed.dot)
+	compound, start, err := peekCurrentCompound(ctx, ed.dot)
 	if err != nil {
 		ed.pushTip("cannot complete :(")
 		return nil
@@ -159,7 +159,7 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 		c.end = ed.dot
 		// BUG(xiaq) When completing, completion.typ is always ItemBare
 		c.typ = parse.ItemBare
-		c.candidates = findCandidates(term, names)
+		c.candidates = findCandidates(compound, names)
 		if len(c.candidates) > 0 {
 			// XXX assumes filename candidate
 			for _, c := range c.candidates {
@@ -168,7 +168,7 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 			ed.completion = c
 			ed.mode = modeCompletion
 		} else {
-			ed.pushTip(fmt.Sprintf("No completion for %s", term))
+			ed.pushTip(fmt.Sprintf("No completion for %s", compound))
 		}
 	}
 	return nil

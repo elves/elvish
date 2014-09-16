@@ -62,8 +62,8 @@ func (tn *PipelineNode) append(n *FormNode) {
 // FormNode holds a form.
 type FormNode struct {
 	Pos
-	Command     *TermNode
-	Args        *TermListNode
+	Command     *CompoundNode
+	Args        *SpacedNode
 	Redirs      []Redir
 	StatusRedir string
 }
@@ -74,35 +74,35 @@ func newForm(pos Pos) *FormNode {
 
 func (fn *FormNode) isNode() {}
 
-// TermNode is a list of PrimaryNode's.
-type TermNode struct {
+// CompoundNode is a list of PrimaryNode's.
+type CompoundNode struct {
 	Pos
 	Nodes []*PrimaryNode
 }
 
-func newTerm(pos Pos, nodes ...*PrimaryNode) *TermNode {
-	return &TermNode{pos, nodes}
+func newCompound(pos Pos, nodes ...*PrimaryNode) *CompoundNode {
+	return &CompoundNode{pos, nodes}
 }
 
-func (l *TermNode) isNode() {}
+func (l *CompoundNode) isNode() {}
 
-func (tn *TermNode) append(n *PrimaryNode) {
+func (tn *CompoundNode) append(n *PrimaryNode) {
 	tn.Nodes = append(tn.Nodes, n)
 }
 
-// TermListNode is a list of TermNode's.
-type TermListNode struct {
+// SpacedNode is a list of CompoundNode's.
+type SpacedNode struct {
 	Pos
-	Nodes []*TermNode
+	Nodes []*CompoundNode
 }
 
-func newTermList(pos Pos, nodes ...*TermNode) *TermListNode {
-	return &TermListNode{pos, nodes}
+func newSpaced(pos Pos, nodes ...*CompoundNode) *SpacedNode {
+	return &SpacedNode{pos, nodes}
 }
 
-func (l *TermListNode) isNode() {}
+func (l *SpacedNode) isNode() {}
 
-func (tn *TermListNode) append(n *TermNode) {
+func (tn *SpacedNode) append(n *CompoundNode) {
 	tn.Nodes = append(tn.Nodes, n)
 }
 
@@ -135,14 +135,14 @@ func (fn *PrimaryNode) isNode() {}
 
 // TablePair represents a key/value pair in table literal.
 type TablePair struct {
-	Key   *TermNode
-	Value *TermNode
+	Key   *CompoundNode
+	Value *CompoundNode
 }
 
 // TableNode holds a table literal.
 type TableNode struct {
 	Pos
-	List []*TermNode
+	List []*CompoundNode
 	Dict []*TablePair
 }
 
@@ -152,18 +152,18 @@ func newTable(pos Pos) *TableNode {
 
 func (tn *TableNode) isNode() {}
 
-func (tn *TableNode) appendToList(term *TermNode) {
-	tn.List = append(tn.List, term)
+func (tn *TableNode) appendToList(compound *CompoundNode) {
+	tn.List = append(tn.List, compound)
 }
 
-func (tn *TableNode) appendToDict(key *TermNode, value *TermNode) {
+func (tn *TableNode) appendToDict(key *CompoundNode, value *CompoundNode) {
 	tn.Dict = append(tn.Dict, &TablePair{key, value})
 }
 
 // ClosureNode holds a closure literal.
 type ClosureNode struct {
 	Pos
-	ArgNames   *TermListNode
+	ArgNames   *SpacedNode
 	Chunk      *ChunkNode
 	Annotation interface{}
 }

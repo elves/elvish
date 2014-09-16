@@ -244,12 +244,12 @@ func (p *Parser) pipeline() *PipelineNode {
 	return pipe
 }
 
-// Form = TermList { [ space ] Redir } [ space ]
+// Form = Spaced { [ space ] Redir } [ space ]
 func (p *Parser) form() *FormNode {
 	fm := newForm(p.peekNonSpace().Pos)
 	p.Ctx.Form = fm
-	fm.Command = p.term(CommandContext)
-	fm.Args = p.termList()
+	fm.Command = p.compound(CommandContext)
+	fm.Args = p.spaced()
 loop:
 	for {
 		switch p.peekNonSpace().Typ {
@@ -264,9 +264,9 @@ loop:
 	return fm
 }
 
-// TermList = { [ space ] Term } [ space ]
-func (p *Parser) termList() *TermListNode {
-	list := newTermList(p.peek().Pos)
+// Spaced = { [ space ] Compound } [ space ]
+func (p *Parser) spaced() *SpacedNode {
+	list := newSpaced(p.peek().Pos)
 loop:
 	for {
 		// Skip space tokens
@@ -276,7 +276,7 @@ loop:
 		}
 
 		if startsPrimary(p.peek().Typ) {
-			list.append(p.term(ArgContext))
+			list.append(p.compound(ArgContext))
 		} else {
 			break loop
 		}
@@ -284,14 +284,14 @@ loop:
 	return list
 }
 
-// Term = Primary { Primary | [ space ] '^' Primary [ space ] } [ space ]
-func (p *Parser) term(ct ContextType) *TermNode {
-	term := newTerm(p.peek().Pos)
-	term.append(p.primary())
+// Compound = Primary { Primary | [ space ] '^' Primary [ space ] } [ space ]
+func (p *Parser) compound(ct ContextType) *CompoundNode {
+	compound := newCompound(p.peek().Pos)
+	compound.append(p.primary())
 loop:
 	for {
 		if startsPrimary(p.peek().Typ) {
-			term.append(p.primary())
+			compound.append(p.primary())
 			if p.foundCtx(ct) {
 				break loop
 			}
@@ -300,12 +300,12 @@ loop:
 		} else if p.peekNonSpace().Typ == ItemCaret {
 			p.next()
 			p.peekNonSpace()
-			term.append(p.primary())
+			compound.append(p.primary())
 		} else {
 			break loop
 		}
 	}
-	return term
+	return compound
 }
 
 func unquote(token Item) (string, error) {
@@ -323,8 +323,8 @@ func unquote(token Item) (string, error) {
 }
 
 // startsPrimary determines whether a token of type p can start a Primary.
-// Frequently used for lookahead, since a Term or TermList always starts with
-// a Primary.
+// Frequently used for lookahead, since a Compound or Spaced also always
+// starts with a Primary.
 func startsPrimary(p ItemType) bool {
 	switch p {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted,
@@ -338,7 +338,7 @@ func startsPrimary(p ItemType) bool {
 
 // Primary = '$' bare
 //        = ( bare | single-quoted | double-quoted | Table )
-//        = '{' TermList '}'
+//        = '{' Spaced '}'
 //        = Closure
 //        = '(' Pipeline ')'
 // Closure and flat list are distinguished by the first token after the
@@ -373,7 +373,7 @@ func (p *Parser) primary() (fn *PrimaryNode) {
 	case ItemLBrace:
 		if startsPrimary(p.peek().Typ) {
 			fn.Typ = ListPrimary
-			fn.Node = p.termList()
+			fn.Node = p.spaced()
 			if token := p.next(); token.Typ != ItemRBrace {
 				p.unexpected(token, "primary expression of item list")
 			}
@@ -400,12 +400,12 @@ func (p *Parser) primary() (fn *PrimaryNode) {
 }
 
 // closure parses a closure literal. The opening brace has been seen.
-// Closure  = '{' [ space ] [ '|' TermList '|' [ space ] ] Chunk '}'
+// Closure  = '{' [ space ] [ '|' Spaced '|' [ space ] ] Chunk '}'
 func (p *Parser) closure() (tn *ClosureNode) {
 	tn = newClosure(p.peek().Pos)
 	if p.peekNonSpace().Typ == ItemPipe {
 		p.next()
-		tn.ArgNames = p.termList()
+		tn.ArgNames = p.spaced()
 		if token := p.nextNonSpace(); token.Typ != ItemPipe {
 			p.unexpected(token, "argument list")
 		}
@@ -418,7 +418,7 @@ func (p *Parser) closure() (tn *ClosureNode) {
 }
 
 // table parses a table literal. The opening bracket has been seen.
-// Table = '[' { [ space ] ( '& 'Term [ space ] Term | Term ) [ space ] } ']'
+// Table = '[' { [ space ] ( '&' Compound [ space ] Compound | Compound ) [ space ] } ']'
 func (p *Parser) table() (tn *TableNode) {
 	tn = newTable(p.peek().Pos)
 
@@ -427,14 +427,14 @@ func (p *Parser) table() (tn *TableNode) {
 		// & is used both as key marker and closure leader.
 		if token.Typ == ItemAmpersand && p.peek().Typ != ItemLBrace {
 			// Key-value pair, add to dict.
-			keyTerm := p.term(TableKeyContext)
+			keyCompound := p.compound(TableKeyContext)
 			p.peekNonSpace()
-			valueTerm := p.term(TableValueContext)
-			tn.appendToDict(keyTerm, valueTerm)
+			valCompound := p.compound(TableValueContext)
+			tn.appendToDict(keyCompound, valCompound)
 		} else if startsPrimary(token.Typ) {
 			// Single element, add to list.
 			p.backup()
-			tn.appendToList(p.term(TableElemContext))
+			tn.appendToList(p.compound(TableElemContext))
 		} else if token.Typ == ItemRBracket {
 			return
 		} else {
@@ -444,9 +444,9 @@ func (p *Parser) table() (tn *TableNode) {
 }
 
 // statusRedir parses a status redirection.
-// StatusRedir = status-redir-leader [ space ] Term
-// The term must consist of a single primary expression which in turn must be
-// of type VariablePrimary.
+// StatusRedir = status-redir-leader [ space ] Compound
+// The compound expression must consist of a single primary expression which
+// in turn must be of type VariablePrimary.
 func (p *Parser) statusRedir() string {
 	// Skip status-redir-leader
 	p.next()
@@ -454,22 +454,22 @@ func (p *Parser) statusRedir() string {
 	if token := p.peekNonSpace(); token.Typ != ItemDollar {
 		p.errorf(int(token.Pos), "expect variable")
 	}
-	term := p.term(StatusRedirContext)
-	if len(term.Nodes) == 1 {
-		primary := term.Nodes[0]
+	compound := p.compound(StatusRedirContext)
+	if len(compound.Nodes) == 1 {
+		primary := compound.Nodes[0]
 		if primary.Typ == VariablePrimary {
 			return primary.Node.(*StringNode).Text
 		}
 	}
-	p.errorf(int(term.Pos), "expect variable")
+	p.errorf(int(compound.Pos), "expect variable")
 	return ""
 }
 
 // redir parses an IO redirection.
-// Redir = redir-leader [ [ space ] Term ]
+// Redir = redir-leader [ [ space ] Compound ]
 // NOTE The actual grammar is more complex than above, since 1) the inner
-// structure of redir-leader is also parsed here, and 2) the Term is not truly
-// optional, but sometimes required depending on the redir-leader.
+// structure of redir-leader is also parsed here, and 2) the Compound is not
+// truly optional, but sometimes required depending on the redir-leader.
 func (p *Parser) redir() Redir {
 	leader := p.next()
 
@@ -542,5 +542,5 @@ func (p *Parser) redir() Redir {
 	}
 	// FilenameRedir
 	p.peekNonSpace()
-	return newFilenameRedir(leader.Pos, fd, flag, p.term(RedirFilenameContext))
+	return newFilenameRedir(leader.Pos, fd, flag, p.compound(RedirFilenameContext))
 }

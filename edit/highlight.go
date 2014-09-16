@@ -21,10 +21,10 @@ const (
 //
 // Generally speaking, this is not possible without properly parsing and
 // evaluating the source, performing its side effects. However in the case of
-// single bareword terms, some heuristics can be applied. Be noted though, the
-// heuristics can be quite fragile in case of syntax changes, so it's
-// important to keep the syntax either simple (so that the heuristics is easy
-// to implement) or stable (so that the heuristics doesn't have to be
+// single bareword expressions, some heuristics can be applied. Be noted
+// though, the heuristics can be quite fragile in case of syntax changes, so
+// it's important to keep the syntax either simple (so that the heuristics is
+// easy to implement) or stable (so that the heuristics doesn't have to be
 // modified), or both.
 type Highlighter struct {
 	lexer *parse.Lexer
