@@ -50,7 +50,7 @@ func combineClosure(ops []valuesOp, enclosed map[string]Type, bounds [2]StreamTy
 	return valuesOp{ts, f}
 }
 
-func combinePipeline(p parse.Pos, ops []stateUpdatesOp, bounds [2]StreamType, internals []StreamType) valuesOp {
+func combinePipeline(ops []stateUpdatesOp, bounds [2]StreamType, internals []StreamType, p parse.Pos) valuesOp {
 	ts := make([]Type, len(ops))
 	for i := 0; i < len(ops); i++ {
 		ts[i] = &StringType{}
@@ -108,7 +108,7 @@ func combinePipeline(p parse.Pos, ops []stateUpdatesOp, bounds [2]StreamType, in
 	return valuesOp{ts, f}
 }
 
-func combineForm(p parse.Pos, cmd valuesOp, tlist valuesOp, ports []portOp, a *formAnnotation) stateUpdatesOp {
+func combineForm(cmd valuesOp, tlist valuesOp, ports []portOp, a *formAnnotation, p parse.Pos) stateUpdatesOp {
 	return func(ev *Evaluator) <-chan *StateUpdate {
 		// XXX Currently it's guaranteed that cmd evaluates into a single
 		// Value.
@@ -278,7 +278,7 @@ func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valu
 	return valuesOp{[]Type{t}, f}
 }
 
-func combineTable(p parse.Pos, list valuesOp, keys []valuesOp, values []valuesOp) valuesOp {
+func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos) valuesOp {
 	ts := []Type{TableType{}}
 	f := func(ev *Evaluator) []Value {
 		t := NewTable()

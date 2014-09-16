@@ -120,7 +120,7 @@ func (cp *Compiler) compilePipeline(pn *parse.PipelineNode) (valuesOp, [2]Stream
 		lastOutput = b[1]
 	}
 	bounds[1] = lastOutput
-	return combinePipeline(pn.Pos, ops, bounds, internals), bounds
+	return combinePipeline(ops, bounds, internals, pn.Pos), bounds
 }
 
 func (cp *Compiler) resolveVar(name string, p parse.Pos) Type {
@@ -219,7 +219,7 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) (stateUpdatesOp, [2]StreamTy
 	} else {
 		tlist = cp.compileSpaced(fn.Args)
 	}
-	return combineForm(fn.Pos, cmdOp, tlist, ports, annotation), annotation.streamTypes
+	return combineForm(cmdOp, tlist, ports, annotation, fn.Pos), annotation.streamTypes
 }
 
 func (cp *Compiler) compileRedir(r parse.Redir) portOp {
@@ -241,7 +241,7 @@ func (cp *Compiler) compileRedir(r parse.Redir) portOp {
 		fnameOp := cp.compileCompound(r.Filename)
 		return func(ev *Evaluator) *port {
 			fname := string(*ev.asSingleString(
-				r.Filename, fnameOp.f(ev), "filename"))
+				fnameOp.f(ev), "filename", r.Filename.Pos))
 			// TODO haz hardcoded permbits now
 			f, e := os.OpenFile(fname, r.Flag, 0644)
 			if e != nil {
@@ -300,7 +300,7 @@ func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) (valuesOp, *[2]StreamT
 			keys[i] = cp.compileCompound(tp.Key)
 			values[i] = cp.compileCompound(tp.Value)
 		}
-		return combineTable(fn.Pos, list, keys, values), nil
+		return combineTable(list, keys, values, fn.Pos), nil
 	case parse.ClosurePrimary:
 		op, enclosed, bounds := cp.compileClosure(fn.Node.(*parse.ClosureNode))
 		for name, typ := range enclosed {
