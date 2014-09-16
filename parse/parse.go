@@ -199,6 +199,8 @@ func (p *Parser) parse() *ChunkNode {
 	return chunk
 }
 
+// chunk parses a chunk. The name is borrowed from Lua.
+//
 // Chunk = [ [ space ] Pipeline { (";" | "\n") Pipeline } ]
 func (p *Parser) chunk() *ChunkNode {
 	chunk := newChunk(p.peek().Pos)
@@ -231,6 +233,8 @@ loop:
 	return chunk
 }
 
+// pipeline parses a pipeline. The pipeline may not be empty.
+//
 // Pipeline = Form { "|" Form }
 func (p *Parser) pipeline() *PipelineNode {
 	pipe := newPipeline(p.peek().Pos)
@@ -244,6 +248,8 @@ func (p *Parser) pipeline() *PipelineNode {
 	return pipe
 }
 
+// form parses a form. The name is borrowed from Lisp.
+//
 // Form = Spaced { [ space ] Redir } [ space ]
 func (p *Parser) form() *FormNode {
 	fm := newForm(p.peekNonSpace().Pos)
@@ -264,6 +270,10 @@ loop:
 	return fm
 }
 
+// spaced parses a spaced expression. Many languages separate expressions with
+// commas or other punctuations, but shells have a traditional of separating
+// them with simple whitespaces.
+//
 // Spaced = { [ space ] Compound } [ space ]
 func (p *Parser) spaced() *SpacedNode {
 	list := newSpaced(p.peek().Pos)
@@ -284,7 +294,10 @@ loop:
 	return list
 }
 
-// Compound = Subscript { Subscript | [ space ] '^' Subscript [ space ] } [ space ]
+// compound parses a compound expression. The name is borrowed from
+// linguistics, where a compound word is roughly some words that run together.
+//
+// Compound = Subscript { Subscript | [ space ] '^' Subscript } [ space ]
 func (p *Parser) compound(ct ContextType) *CompoundNode {
 	compound := newCompound(p.peek().Pos)
 	compound.append(p.subscript())
@@ -308,6 +321,9 @@ loop:
 	return compound
 }
 
+// subscript parses a subscript expression. The subscript part is actually
+// optional.
+//
 // Subscript = Primary [ '[' Compound ']' ]
 func (p *Parser) subscript() *SubscriptNode {
 	sub := &SubscriptNode{}
@@ -349,11 +365,14 @@ func startsPrimary(p ItemType) bool {
 	}
 }
 
+// primary parses a primary expression.
+//
 // Primary = '$' bare
 //        = ( bare | single-quoted | double-quoted | Table )
 //        = '{' Spaced '}'
 //        = Closure
 //        = '(' Pipeline ')'
+//
 // Closure and flat list are distinguished by the first token after the
 // opening brace. If startsPrimary(token), it is considered a flat list.
 // This implies that whitespaces after opening brace always introduce a
@@ -413,6 +432,7 @@ func (p *Parser) primary() (fn *PrimaryNode) {
 }
 
 // closure parses a closure literal. The opening brace has been seen.
+//
 // Closure  = '{' [ space ] [ '|' Spaced '|' [ space ] ] Chunk '}'
 func (p *Parser) closure() (tn *ClosureNode) {
 	tn = newClosure(p.peek().Pos)
@@ -431,6 +451,7 @@ func (p *Parser) closure() (tn *ClosureNode) {
 }
 
 // table parses a table literal. The opening bracket has been seen.
+//
 // Table = '[' { [ space ] ( '&' Compound [ space ] Compound | Compound ) [ space ] } ']'
 func (p *Parser) table() (tn *TableNode) {
 	tn = newTable(p.peek().Pos)
@@ -457,7 +478,9 @@ func (p *Parser) table() (tn *TableNode) {
 }
 
 // statusRedir parses a status redirection.
+//
 // StatusRedir = status-redir-leader [ space ] Compound
+//
 // The compound expression must consist of a single primary expression which
 // in turn must be of type VariablePrimary.
 func (p *Parser) statusRedir() string {
@@ -479,10 +502,13 @@ func (p *Parser) statusRedir() string {
 }
 
 // redir parses an IO redirection.
+//
 // Redir = redir-leader [ [ space ] Compound ]
-// NOTE The actual grammar is more complex than above, since 1) the inner
-// structure of redir-leader is also parsed here, and 2) the Compound is not
-// truly optional, but sometimes required depending on the redir-leader.
+//
+// NOTE: The actual grammar is more complex than above, since
+// 1) the inner structure of redir-leader is also parsed here
+// 2) the Compound is not truly optional, but sometimes required depending on
+// the redir-leader.
 func (p *Parser) redir() Redir {
 	leader := p.next()
 
