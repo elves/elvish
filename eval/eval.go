@@ -150,22 +150,18 @@ func (ev *Evaluator) stopEval() {
 	ev.text = ""
 }
 
-func (ev *Evaluator) errorfPos(p parse.Pos, format string, args ...interface{}) {
-	util.Panic(util.NewContextualError(ev.name, ev.text, int(p), format, args...))
-}
-
 // errorf stops the evaluator. Its panic is supposed to be caught by recover.
-func (ev *Evaluator) errorf(format string, args ...interface{}) {
-	util.Panic(fmt.Errorf(format, args...))
+func (ev *Evaluator) errorf(p parse.Pos, format string, args ...interface{}) {
+	util.Panic(util.NewContextualError(ev.name, ev.text, int(p), format, args...))
 }
 
 func (ev *Evaluator) asSingleString(vs []Value, what string, p parse.Pos) *String {
 	if len(vs) != 1 {
-		ev.errorfPos(p, "Expect exactly one word for %s, got %d", what, len(vs))
+		ev.errorf(p, "Expect exactly one word for %s, got %d", what, len(vs))
 	}
 	v, ok := vs[0].(*String)
 	if !ok {
-		ev.errorfPos(p, "Expect string for %s, got %s", what, vs[0])
+		ev.errorf(p, "Expect string for %s, got %s", what, vs[0])
 	}
 	return v
 }

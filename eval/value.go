@@ -293,7 +293,7 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 		ok  bool
 	)
 	if sub, ok = right.(*String); !ok {
-		ev.errorfPos(rp, "right operand of subscript must be of type string")
+		ev.errorf(rp, "right operand of subscript must be of type string")
 	}
 
 	switch left.(type) {
@@ -308,15 +308,15 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 			if idx < uint64(len(t.List)) {
 				return t.List[idx]
 			}
-			ev.errorfPos(rp, "index out of range")
+			ev.errorf(rp, "index out of range")
 		}
 		if v, ok := t.Dict[sub]; ok {
 			return v
 		}
-		ev.errorfPos(rp, "nonexistent key %q", sub)
+		ev.errorf(rp, "nonexistent key %q", sub)
 		return nil
 	default:
-		ev.errorfPos(lp, "left operand of subscript must be of type string, env, table or any")
+		ev.errorf(lp, "left operand of subscript must be of type string, env, table or any")
 		return nil
 	}
 }

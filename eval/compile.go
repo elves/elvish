@@ -245,7 +245,7 @@ func (cp *Compiler) compileRedir(r parse.Redir) portOp {
 			// TODO haz hardcoded permbits now
 			f, e := os.OpenFile(fname, r.Flag, 0644)
 			if e != nil {
-				ev.errorfPos(r.Pos, "failed to open file %q: %s", fname[0], e)
+				ev.errorf(r.Pos, "failed to open file %q: %s", fname[0], e)
 			}
 			return &port{f: f, shouldClose: true}
 		}

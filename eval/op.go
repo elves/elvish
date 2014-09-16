@@ -58,10 +58,10 @@ func combinePipeline(ops []stateUpdatesOp, bounds [2]StreamType, internals []Str
 	f := func(ev *Evaluator) []Value {
 		// TODO(xiaq): Should catch when compiling
 		if !ev.ports[0].compatible(bounds[0]) {
-			ev.errorfPos(p, "pipeline input not satisfiable")
+			ev.errorf(p, "pipeline input not satisfiable")
 		}
 		if !ev.ports[1].compatible(bounds[1]) {
-			ev.errorfPos(p, "pipeline output not satisfiable")
+			ev.errorf(p, "pipeline output not satisfiable")
 		}
 		var nextIn *port
 		updates := make([]<-chan *StateUpdate, len(ops))
@@ -80,7 +80,7 @@ func combinePipeline(ops []stateUpdatesOp, bounds [2]StreamType, internals []Str
 					// os.Pipe sets O_CLOEXEC, which is what we want.
 					reader, writer, e := os.Pipe()
 					if e != nil {
-						ev.errorfPos(p, "failed to create pipe: %s", e)
+						ev.errorf(p, "failed to create pipe: %s", e)
 					}
 					newEv.ports[1] = &port{f: writer, shouldClose: true}
 					nextIn = &port{f: reader, shouldClose: true}
@@ -138,7 +138,7 @@ func combineForm(cmd valuesOp, tlist valuesOp, ports []portOp, a *formAnnotation
 		case commandExternal:
 			path, e := ev.search(cmdStr)
 			if e != nil {
-				ev.errorfPos(p, "%s", e)
+				ev.errorf(p, "%s", e)
 			}
 			fm.Command.Path = path
 		default:
@@ -288,7 +288,7 @@ func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos
 			ks := kop.f(ev)
 			vs := vop.f(ev)
 			if len(ks) != len(vs) {
-				ev.errorfPos(p, "Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
+				ev.errorf(p, "Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
 			}
 			for j, k := range ks {
 				t.Dict[k] = vs[j]
