@@ -12,6 +12,9 @@ import (
 	"github.com/xiaq/elvish/parse"
 )
 
+// XXX The behavior of caret is now always lhs.String(ev) + rhs.String(ev).
+// Caret methods should be removed from Type and Value interfaces.
+
 type Type interface {
 	Default() Value
 	Caret(Type) Type

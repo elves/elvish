@@ -12,9 +12,64 @@ import (
 // Op operates on an Evaluator.
 type Op func(*Evaluator)
 
+// typeStar is either a single Type or a Kleene star of a Type.
+type typeStar struct {
+	t    Type
+	star bool
+}
+
+// typeRun is a run of typeStar's.
+type typeRun []typeStar
+
+// count returns the least number of Type's in a typeRun, and whether the
+// actual number could be larger.
+func (tr typeRun) count() (ntypes int, more bool) {
+	for _, ts := range tr {
+		if ts.star {
+			more = true
+		} else {
+			ntypes++
+		}
+	}
+	return
+}
+
+// mayCountTo returns whether a run of n Type's may match the typeRun.
+func (tr typeRun) mayCountTo(n int) bool {
+	ntypes, more := tr.count()
+	if more {
+		return n >= ntypes
+	} else {
+		return n == ntypes
+	}
+}
+
+// newFixedTypeRun returns a typeRun where all typeStar's are simple
+// non-starred types.
+func newFixedTypeRun(ts ...Type) typeRun {
+	tr := make([]typeStar, len(ts))
+	for i, t := range ts {
+		tr[i].t = t
+	}
+	return tr
+}
+
+// newFixedTypeRun returns a typeRun representing n types of t, and followed by
+// a star of t if v is true.
+func newHomoTypeRun(t Type, n int, v bool) typeRun {
+	tr := make([]typeStar, n)
+	for i := 0; i < n; i++ {
+		tr[i].t = t
+	}
+	if v {
+		tr = append(tr, typeStar{t, true})
+	}
+	return tr
+}
+
 // valuesOp operates on an Evaluator and results in some values.
 type valuesOp struct {
-	ts []Type
+	tr typeRun
 	f  func(*Evaluator) []Value
 }
 
@@ -39,7 +94,6 @@ func combineChunk(ops []valuesOp) Op {
 func combineClosure(ops []valuesOp, enclosed map[string]Type, bounds [2]StreamType) valuesOp {
 	op := combineChunk(ops)
 	// BUG(xiaq): Closure arguments is (again) not supported
-	ts := []Type{&ClosureType{bounds}}
 	f := func(ev *Evaluator) []Value {
 		enclosed := make(map[string]*Value, len(enclosed))
 		for name := range enclosed {
@@ -47,14 +101,10 @@ func combineClosure(ops []valuesOp, enclosed map[string]Type, bounds [2]StreamTy
 		}
 		return []Value{NewClosure(nil, op, enclosed, bounds)}
 	}
-	return valuesOp{ts, f}
+	return valuesOp{newFixedTypeRun(&ClosureType{bounds}), f}
 }
 
 func combinePipeline(ops []stateUpdatesOp, bounds [2]StreamType, internals []StreamType, p parse.Pos) valuesOp {
-	ts := make([]Type, len(ops))
-	for i := 0; i < len(ops); i++ {
-		ts[i] = &StringType{}
-	}
 	f := func(ev *Evaluator) []Value {
 		// TODO(xiaq): Should catch when compiling
 		if !ev.ports[0].compatible(bounds[0]) {
@@ -105,7 +155,7 @@ func combinePipeline(ops []stateUpdatesOp, bounds [2]StreamType, internals []Str
 		}
 		return exits
 	}
-	return valuesOp{ts, f}
+	return valuesOp{newHomoTypeRun(&StringType{}, len(ops), false), f}
 }
 
 func combineForm(cmd valuesOp, tlist valuesOp, ports []portOp, a *formAnnotation, p parse.Pos) stateUpdatesOp {
@@ -159,10 +209,11 @@ func combineForm(cmd valuesOp, tlist valuesOp, ports []portOp, a *formAnnotation
 }
 
 func combineSpaced(ops []valuesOp) valuesOp {
-	ts := make([]Type, 0, len(ops))
+	tr := make(typeRun, 0, len(ops))
 	for _, op := range ops {
-		ts = append(ts, op.ts...)
+		tr = append(tr, op.tr...)
 	}
+
 	f := func(ev *Evaluator) []Value {
 		// Use number of compound expressions as an estimation of the number
 		// of values
@@ -173,28 +224,16 @@ func combineSpaced(ops []valuesOp) valuesOp {
 		}
 		return vs
 	}
-	return valuesOp{ts, f}
+	return valuesOp{tr, f}
 }
 
 func combineCompound(ops []valuesOp) valuesOp {
-	ts := ops[0].ts
-	for _, op := range ops[1:] {
-		rs := op.ts
-		if len(rs) == 1 {
-			r := rs[0]
-			for i := range ts {
-				ts[i] = ts[i].Caret(r)
-			}
-		} else {
-			// Do a cartesian product
-			newts := make([]Type, len(ts)*len(rs))
-			for i, t := range ts {
-				for j, r := range rs {
-					newts[i*len(rs)+j] = t.Caret(r)
-				}
-			}
-			ts = newts
-		}
+	n := 1
+	more := false
+	for _, op := range ops {
+		m, b := op.tr.count()
+		n *= m
+		more = more || b
 	}
 
 	f := func(ev *Evaluator) []Value {
@@ -219,18 +258,18 @@ func combineCompound(ops []valuesOp) valuesOp {
 		}
 		return vs
 	}
-	return valuesOp{ts, f}
+	return valuesOp{newHomoTypeRun(StringType{}, n, more), f}
 }
 
 func literalValue(v ...Value) valuesOp {
-	ts := make([]Type, len(v))
-	for i := 0; i < len(v); i++ {
-		ts[i] = v[i].Type()
+	tr := make(typeRun, len(v))
+	for i := range tr {
+		tr[i].t = v[i].Type()
 	}
 	f := func(e *Evaluator) []Value {
 		return v
 	}
-	return valuesOp{ts, f}
+	return valuesOp{tr, f}
 }
 
 func makeString(text string) valuesOp {
@@ -238,7 +277,7 @@ func makeString(text string) valuesOp {
 }
 
 func makeVar(cp *Compiler, name string, p parse.Pos) valuesOp {
-	ts := []Type{cp.resolveVar(name, p)}
+	tr := newFixedTypeRun(cp.resolveVar(name, p))
 	f := func(ev *Evaluator) []Value {
 		val, ok := ev.scope[name]
 		if !ok {
@@ -246,15 +285,16 @@ func makeVar(cp *Compiler, name string, p parse.Pos) valuesOp {
 		}
 		return []Value{*val}
 	}
-	return valuesOp{ts, f}
+	return valuesOp{tr, f}
 }
 
 func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valuesOp {
-	if len(left.ts) != 1 {
+	if !left.tr.mayCountTo(1) {
+		// TODO Also check at runtime
 		cp.errorf(lp, "left operand of subscript must be a single value")
 	}
 	var t Type
-	switch left.ts[0].(type) {
+	switch left.tr[0].t.(type) {
 	case EnvType:
 		t = StringType{}
 	case TableType, AnyType:
@@ -263,10 +303,11 @@ func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valu
 		cp.errorf(lp, "left operand of subscript must be of type string, env, table or any")
 	}
 
-	if len(right.ts) != 1 {
+	if !right.tr.mayCountTo(1) {
+		// TODO Also check at runtime
 		cp.errorf(rp, "right operand of subscript must be a single value")
 	}
-	if _, ok := right.ts[0].(StringType); !ok {
+	if _, ok := right.tr[0].t.(StringType); !ok {
 		cp.errorf(rp, "right operand of subscript must be of type string")
 	}
 
@@ -275,11 +316,10 @@ func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valu
 		r := right.f(ev)
 		return []Value{evalSubscript(ev, l[0], r[0], lp, rp)}
 	}
-	return valuesOp{[]Type{t}, f}
+	return valuesOp{newFixedTypeRun(t), f}
 }
 
 func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos) valuesOp {
-	ts := []Type{TableType{}}
 	f := func(ev *Evaluator) []Value {
 		t := NewTable()
 		t.append(list.f(ev)...)
@@ -296,12 +336,12 @@ func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos
 		}
 		return []Value{t}
 	}
-	return valuesOp{ts, f}
+	return valuesOp{newFixedTypeRun(TableType{}), f}
 }
 
 func combineOutputCapture(op valuesOp, bounds [2]StreamType) valuesOp {
-	// XXX Wrong type; ts should be variadic
-	ts := []Type{}
+	// XXX Wrong type; tr should be variadic
+	tr := newFixedTypeRun()
 	f := func(ev *Evaluator) []Value {
 		vs := []Value{}
 		newEv := ev.copy(fmt.Sprintf("<output capture %v>", op), true)
@@ -317,5 +357,5 @@ func combineOutputCapture(op valuesOp, bounds [2]StreamType) valuesOp {
 		op.f(newEv)
 		return vs
 	}
-	return valuesOp{ts, f}
+	return valuesOp{tr, f}
 }

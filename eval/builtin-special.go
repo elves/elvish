@@ -34,15 +34,21 @@ type delForm struct {
 }
 
 func checkSetType(cp *Compiler, args *parse.SpacedNode, f *varSetForm, vop valuesOp) {
-	if len(f.names) != len(vop.ts) {
+	if !vop.tr.mayCountTo(len(f.names)) {
 		cp.errorf(args.Pos, "number of variables doesn't match that of values")
 	}
+	_, more := vop.tr.count()
+	if more {
+		// TODO Try to check soundness to some extent
+		return
+	}
 	for i, name := range f.names {
-		if _, ok := vop.ts[i].(AnyType); ok {
+		t := vop.tr[i].t
+		if _, ok := t.(AnyType); ok {
 			// TODO Check type soundness at runtime
 			continue
 		}
-		if cp.tryResolveVar(name) != vop.ts[i] {
+		if cp.tryResolveVar(name) != t {
 			cp.errorf(f.values[i].Pos, "type mismatch")
 		}
 	}
