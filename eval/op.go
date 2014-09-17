@@ -227,6 +227,10 @@ func combineSpaced(ops []valuesOp) valuesOp {
 	return valuesOp{tr, f}
 }
 
+func caret(ev *Evaluator, lhs, rhs Value) Value {
+	return NewString(lhs.String() + rhs.String())
+}
+
 func combineCompound(ops []valuesOp) valuesOp {
 	n := 1
 	more := false
@@ -243,14 +247,14 @@ func combineCompound(ops []valuesOp) valuesOp {
 			if len(us) == 1 {
 				u := us[0]
 				for i := range vs {
-					vs[i] = vs[i].Caret(ev, u)
+					vs[i] = caret(ev, vs[i], u)
 				}
 			} else {
 				// Do a cartesian product
 				newvs := make([]Value, len(vs)*len(us))
 				for i, v := range vs {
 					for j, u := range us {
-						newvs[i*len(us)+j] = v.Caret(ev, u)
+						newvs[i*len(us)+j] = caret(ev, v, u)
 					}
 				}
 				vs = newvs

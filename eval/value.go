@@ -12,9 +12,6 @@ import (
 	"github.com/xiaq/elvish/parse"
 )
 
-// XXX The behavior of caret is now always lhs.String(ev) + rhs.String(ev).
-// Caret methods should be removed from Type and Value interfaces.
-
 type Type interface {
 	Default() Value
 }
@@ -67,7 +64,6 @@ type Value interface {
 	Type() Type
 	Repr() string
 	String() string
-	Caret(ev *Evaluator, v Value) Value
 }
 
 func valuePtr(v Value) *Value {
@@ -137,10 +133,6 @@ func (s *String) String() string {
 	return string(*s)
 }
 
-func (s *String) Caret(ev *Evaluator, v Value) Value {
-	return NewString(string(*s) + v.String())
-}
-
 // Table is a list-dict hybrid.
 type Table struct {
 	List []Value
@@ -173,10 +165,6 @@ func (t *Table) Repr() string {
 
 func (t *Table) String() string {
 	return t.Repr()
-}
-
-func (t *Table) Caret(ev *Evaluator, v Value) Value {
-	return NewString(t.String() + v.String())
 }
 
 func (t *Table) append(vs ...Value) {
@@ -236,11 +224,6 @@ func (e *Env) String() string {
 	return e.Repr()
 }
 
-func (e *Env) Caret(ev *Evaluator, v Value) Value {
-	e.fill()
-	return NewString(e.String() + v.String())
-}
-
 // Closure is a closure.
 type Closure struct {
 	ArgNames []string
@@ -263,10 +246,6 @@ func (c *Closure) Repr() string {
 
 func (c *Closure) String() string {
 	return c.Repr()
-}
-
-func (c *Closure) Caret(ev *Evaluator, v Value) Value {
-	return NewString(c.String() + v.String())
 }
 
 func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
