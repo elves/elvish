@@ -17,7 +17,6 @@ import (
 
 type Type interface {
 	Default() Value
-	Caret(Type) Type
 }
 
 type AnyType struct {
@@ -27,19 +26,11 @@ func (at AnyType) Default() Value {
 	return NewString("")
 }
 
-func (at AnyType) Caret(t Type) Type {
-	return StringType{}
-}
-
 type StringType struct {
 }
 
 func (st StringType) Default() Value {
 	return NewString("")
-}
-
-func (st StringType) Caret(t Type) Type {
-	return StringType{}
 }
 
 type TableType struct {
@@ -49,19 +40,11 @@ func (tt TableType) Default() Value {
 	return NewTable()
 }
 
-func (tt TableType) Caret(t Type) Type {
-	return StringType{}
-}
-
 type EnvType struct {
 }
 
 func (et EnvType) Default() Value {
 	return NewEnv()
-}
-
-func (et EnvType) Caret(t Type) Type {
-	return StringType{}
 }
 
 type ClosureType struct {
@@ -70,10 +53,6 @@ type ClosureType struct {
 
 func (st ClosureType) Default() Value {
 	return NewClosure([]string{}, nil, map[string]*Value{}, st.Bounds)
-}
-
-func (ct ClosureType) Caret(t Type) Type {
-	return StringType{}
 }
 
 var typenames = map[string]Type{
