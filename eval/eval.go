@@ -19,6 +19,7 @@ import (
 type Evaluator struct {
 	Compiler    *Compiler
 	name, text  string
+	context     string
 	scope       map[string]*Value
 	env         *Env
 	searchPaths []string
@@ -78,10 +79,10 @@ func NewEvaluator() *Evaluator {
 	return ev
 }
 
-func (ev *Evaluator) copy(name string, moveShouldClose bool) *Evaluator {
+func (ev *Evaluator) copy(context string, moveShouldClose bool) *Evaluator {
 	newEv := new(Evaluator)
 	*newEv = *ev
-	newEv.name = name
+	newEv.context = context
 	newEv.ports = make([]*port, len(ev.ports))
 	for i, p := range ev.ports {
 		newEv.ports[i] = &port{}
@@ -141,6 +142,7 @@ func (ev *Evaluator) eval(name, text string, op Op) (err error) {
 	defer ev.stopEval()
 	ev.name = name
 	ev.text = text
+	ev.context = "top"
 	op(ev)
 	return nil
 }
@@ -148,11 +150,14 @@ func (ev *Evaluator) eval(name, text string, op Op) (err error) {
 func (ev *Evaluator) stopEval() {
 	ev.name = ""
 	ev.text = ""
+	ev.context = ""
 }
 
 // errorf stops the evaluator. Its panic is supposed to be caught by recover.
 func (ev *Evaluator) errorf(p parse.Pos, format string, args ...interface{}) {
-	util.Panic(util.NewContextualError(ev.name, ev.text, int(p), format, args...))
+	util.Panic(util.NewContextualError(
+		fmt.Sprintf("%s (%s)", ev.name, ev.context),
+		ev.text, int(p), format, args...))
 }
 
 func (ev *Evaluator) asSingleString(vs []Value, what string, p parse.Pos) *String {

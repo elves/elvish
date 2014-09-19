@@ -117,7 +117,7 @@ func combinePipeline(ops []stateUpdatesOp, bounds [2]StreamType, internals []Str
 		updates := make([]<-chan *StateUpdate, len(ops))
 		// For each form, create a dedicated Evaluator and run
 		for i, op := range ops {
-			newEv := ev.copy(fmt.Sprintf("<form op %v>", op), false)
+			newEv := ev.copy(fmt.Sprintf("form op %v", op), false)
 			if i > 0 {
 				newEv.ports[0] = nextIn
 			}
@@ -195,7 +195,7 @@ func combineForm(cmd valuesOp, tlist valuesOp, ports []portOp, a *formAnnotation
 			panic("bad commandType value")
 		}
 
-		newEv := ev.copy(fmt.Sprintf("<form redir %v>", fm), true)
+		newEv := ev.copy(fmt.Sprintf("form redir %v", fm), true)
 		newEv.growPorts(len(ports))
 
 		for i, op := range ports {
@@ -348,7 +348,7 @@ func combineOutputCapture(op valuesOp, bounds [2]StreamType) valuesOp {
 	tr := newFixedTypeRun()
 	f := func(ev *Evaluator) []Value {
 		vs := []Value{}
-		newEv := ev.copy(fmt.Sprintf("<output capture %v>", op), false)
+		newEv := ev.copy(fmt.Sprintf("output capture %v", op), false)
 		newEv.ports = make([]*port, len(ev.ports))
 		copy(newEv.ports, ev.ports)
 		ch := make(chan Value)
