@@ -348,7 +348,7 @@ func combineOutputCapture(op valuesOp, bounds [2]StreamType) valuesOp {
 	tr := newFixedTypeRun()
 	f := func(ev *Evaluator) []Value {
 		vs := []Value{}
-		newEv := ev.copy(fmt.Sprintf("<output capture %v>", op), true)
+		newEv := ev.copy(fmt.Sprintf("<output capture %v>", op), false)
 		newEv.ports = make([]*port, len(ev.ports))
 		copy(newEv.ports, ev.ports)
 		ch := make(chan Value)
@@ -359,6 +359,7 @@ func combineOutputCapture(op valuesOp, bounds [2]StreamType) valuesOp {
 			}
 		}()
 		op.f(newEv)
+		newEv.closePorts()
 		return vs
 	}
 	return valuesOp{tr, f}
