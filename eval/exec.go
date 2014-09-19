@@ -15,9 +15,9 @@ const (
 	FdNil uintptr = ^uintptr(0)
 )
 
-// A port conveys data stream. It may be a Unix fd (wrapped by os.File), where
-// f is not nil, or a channel, where ch is not nil. When both are nil, the port
-// is closed and may not be used.
+// A port conveys data stream. When f is not nil, it may convey fdStream. When
+// ch is not nil, it may convey chanStream. When both are nil, it is always
+// closed and may not convey any stream (unusedStream).
 type port struct {
 	f           *os.File
 	ch          chan Value
@@ -35,6 +35,8 @@ const (
 	chanStream              // Corresponds to port.ch.
 )
 
+// commonType returns a StreamType compatible with both StreamType's. A
+// StreamType is compatible with itself or unusedStream.
 func (typ StreamType) commonType(typ2 StreamType) (StreamType, bool) {
 	switch {
 	case typ == unusedStream, typ == typ2:
@@ -46,7 +48,8 @@ func (typ StreamType) commonType(typ2 StreamType) (StreamType, bool) {
 	}
 }
 
-func (i *port) compatible(typ StreamType) bool {
+// mayConvey returns whether port may convey a stream of typ.
+func (i *port) mayConvey(typ StreamType) bool {
 	switch typ {
 	case fdStream:
 		return i != nil && i.f != nil
@@ -57,8 +60,8 @@ func (i *port) compatible(typ StreamType) bool {
 	}
 }
 
-// A Command is either a builtin function, a builtin special form, an external
-// command or a closure.
+// Command is exactly one of a builtin function, a builtin special form, an
+// external command or a closure.
 type Command struct {
 	Func    builtinFuncImpl // A builtin function
 	Special strOp           // A builtin special form
@@ -94,6 +97,7 @@ type StateUpdate struct {
 	Msg        string
 }
 
+// isExecutable determines whether path refers to an executable file.
 func isExecutable(path string) bool {
 	f, err := os.Open(path)
 	if err != nil {
@@ -109,7 +113,8 @@ func isExecutable(path string) bool {
 	return !fm.IsDir() && (fm&0111 != 0)
 }
 
-// Search for executable `exe`.
+// search tries to resolve an external command and return the full (possibly
+// relative) path.
 func (ev *Evaluator) search(exe string) (string, error) {
 	for _, p := range []string{"/", "./", "../"} {
 		if strings.HasPrefix(exe, p) {
@@ -128,13 +133,15 @@ func (ev *Evaluator) search(exe string) (string, error) {
 	return "", fmt.Errorf("external command not found")
 }
 
-// execCommand executes a command.
+// execForm executes a form.
+//
+// NOTE(xiaq): execForm is always called on an intermediate "form redir" where
+// only the form-local ports are marked shouldClose. ev.closePorts should be
+// called at appropriate moments.
 func (ev *Evaluator) execForm(fm *form) <-chan *StateUpdate {
 	switch {
-	case fm.Func != nil:
-		return ev.execBuiltinFunc(fm)
-	case fm.Special != nil:
-		return ev.execBuiltinSpecial(fm)
+	case fm.Func != nil, fm.Special != nil:
+		return ev.execBuiltin(fm)
 	case fm.Path != "":
 		return ev.execExternal(fm)
 	case fm.Closure != nil:
@@ -144,6 +151,7 @@ func (ev *Evaluator) execForm(fm *form) <-chan *StateUpdate {
 	}
 }
 
+// execClosure executes a closure form.
 func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 	update := make(chan *StateUpdate, 1)
 
@@ -183,11 +191,16 @@ func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 	return update
 }
 
-// execBuiltinSpecial executes a builtin special form.
-func (ev *Evaluator) execBuiltinSpecial(fm *form) <-chan *StateUpdate {
+// execBuiltin executes a builtin special form or builtin function.
+func (ev *Evaluator) execBuiltin(fm *form) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
-		msg := fm.Special(ev)
+		var msg string
+		if fm.Special != nil {
+			msg = fm.Special(ev)
+		} else {
+			msg = fm.Func(ev, fm.args)
+		}
 		// Ports are closed after executaion of builtin is complete.
 		ev.closePorts()
 		update <- &StateUpdate{Terminated: true, Msg: msg}
@@ -196,21 +209,9 @@ func (ev *Evaluator) execBuiltinSpecial(fm *form) <-chan *StateUpdate {
 	return update
 }
 
-// execBuiltinFunc executes a builtin function.
-// XXX(xiaq): Duplicate with execBuiltinSpecial.
-func (ev *Evaluator) execBuiltinFunc(fm *form) <-chan *StateUpdate {
-	update := make(chan *StateUpdate)
-	go func() {
-		msg := fm.Func(ev, fm.args)
-		// Ports are closed after executaion of builtin is complete.
-		ev.closePorts()
-		update <- &StateUpdate{Terminated: true, Msg: msg}
-		close(update)
-	}()
-	return update
-}
-
-func printStatus(ws syscall.WaitStatus) string {
+// sprintStatus returns a human-readable representation of a
+// syscall.WaitStatus.
+func sprintStatus(ws syscall.WaitStatus) string {
 	switch {
 	case ws.Exited():
 		es := ws.ExitStatus()
@@ -238,6 +239,8 @@ func printStatus(ws syscall.WaitStatus) string {
 	}
 }
 
+// waitStateUpdate wait(2)s for pid, and feeds the WaitStatus's into a
+// *StateUpdate channel after proper conversion.
 func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 	for {
 		var ws syscall.WaitStatus
@@ -250,12 +253,12 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 			break
 		}
 		update <- &StateUpdate{
-			Terminated: ws.Exited(), Msg: printStatus(ws)}
+			Terminated: ws.Exited(), Msg: sprintStatus(ws)}
 	}
 	close(update)
 }
 
-// execExternal executes an external command.
+// execExternal executes an external command form.
 func (ev *Evaluator) execExternal(fm *form) <-chan *StateUpdate {
 	files := make([]uintptr, len(ev.ports))
 	for i, port := range ev.ports {

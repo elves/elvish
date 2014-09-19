@@ -79,10 +79,15 @@ func NewEvaluator() *Evaluator {
 	return ev
 }
 
+// copy returns a copy of ev with context changed. ev.ports is copied deeply.
+// If moveShouldClose is true, all ports in ev has their shouldClose flags
+// reset. Otherwise all ports in the new Evaluator has their shouldClose flags
+// reset.
 func (ev *Evaluator) copy(context string, moveShouldClose bool) *Evaluator {
 	newEv := new(Evaluator)
 	*newEv = *ev
 	newEv.context = context
+	// Do a deep copy of ports.
 	newEv.ports = make([]*port, len(ev.ports))
 	for i, p := range ev.ports {
 		newEv.ports[i] = &port{}
@@ -116,6 +121,8 @@ func (ev *Evaluator) growPorts(n int) {
 	copy(ev.ports, ports)
 }
 
+// MakeCompilerScope generates from ev.scope (of type map[string]*Value) a
+// map[string]Type.
 func (ev *Evaluator) MakeCompilerScope() map[string]Type {
 	scope := make(map[string]Type)
 	for name, value := range ev.scope {
@@ -124,7 +131,7 @@ func (ev *Evaluator) MakeCompilerScope() map[string]Type {
 	return scope
 }
 
-// Eval evaluates a chunk node n. The name and text of it is used for
+// Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
 func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) error {
 	op, err := ev.Compiler.Compile(name, text, n, ev.MakeCompilerScope())
@@ -134,6 +141,7 @@ func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) error {
 	return ev.eval(name, text, op)
 }
 
+// eval evaluates an Op.
 func (ev *Evaluator) eval(name, text string, op Op) (err error) {
 	if op == nil {
 		return nil
@@ -153,14 +161,17 @@ func (ev *Evaluator) stopEval() {
 	ev.context = ""
 }
 
-// errorf stops the evaluator. Its panic is supposed to be caught by recover.
+// errorf stops the ev.eval immediately by panicking with a diagnostic message.
+// The panic is supposed to be caught by ev.eval.
 func (ev *Evaluator) errorf(p parse.Pos, format string, args ...interface{}) {
 	util.Panic(util.NewContextualError(
 		fmt.Sprintf("%s (%s)", ev.name, ev.context),
 		ev.text, int(p), format, args...))
 }
 
-func (ev *Evaluator) asSingleString(vs []Value, what string, p parse.Pos) *String {
+// mustSingleString returns a *String if that is the only element of vs.
+// Otherwise it errors.
+func (ev *Evaluator) mustSingleString(vs []Value, what string, p parse.Pos) *String {
 	if len(vs) != 1 {
 		ev.errorf(p, "Expect exactly one word for %s, got %d", what, len(vs))
 	}

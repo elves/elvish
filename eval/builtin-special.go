@@ -48,7 +48,7 @@ func checkSetType(cp *Compiler, args *parse.SpacedNode, f *varSetForm, vop value
 			// TODO Check type soundness at runtime
 			continue
 		}
-		if cp.tryResolveVar(name) != t {
+		if cp.ResolveVar(name) != t {
 			cp.errorf(f.values[i].Pos, "type mismatch")
 		}
 	}
@@ -58,9 +58,9 @@ func checkSetType(cp *Compiler, args *parse.SpacedNode, f *varSetForm, vop value
 // form is being compiled.
 //
 // The arguments in the var/set special form must consist of zero or more
-// variables followed by `=` and then zero or more compound expressions. The number of values
-// the compound expressions evaluate to must be equal to the number of names, but
-// compileVarSet does not attempt to compile this.
+// variables followed by `=` and then zero or more compound expressions. The
+// number of values the compound expressions evaluate to must be equal to the
+// number of variables, but compileVarSet does not attempt to check this.
 func compileVarSet(cp *Compiler, args *parse.SpacedNode, v bool) strOp {
 	f := &varSetForm{}
 	lastTyped := 0
@@ -101,7 +101,7 @@ func compileVarSet(cp *Compiler, args *parse.SpacedNode, v bool) strOp {
 		} else if nf.Typ == parse.VariablePrimary {
 			if !v {
 				// For set, ensure that the variable can be resolved
-				cp.resolveVar(text, nf.Pos)
+				cp.mustResolveVar(text, nf.Pos)
 			}
 			f.names = append(f.names, text)
 		} else {
@@ -178,7 +178,7 @@ func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
 			cp.errorf(n.Pos, "%s", compoundReq)
 		}
 		name := nf.Node.(*parse.StringNode).Text
-		cp.resolveVar(name, nf.Pos)
+		cp.mustResolveVar(name, nf.Pos)
 		if !cp.hasVarOnThisScope(name) {
 			cp.errorf(n.Pos, "can only delete variable on current scope")
 		}

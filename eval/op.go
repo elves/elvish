@@ -107,10 +107,10 @@ func combineClosure(ops []valuesOp, enclosed map[string]Type, bounds [2]StreamTy
 func combinePipeline(ops []stateUpdatesOp, bounds [2]StreamType, internals []StreamType, p parse.Pos) valuesOp {
 	f := func(ev *Evaluator) []Value {
 		// TODO(xiaq): Should catch when compiling
-		if !ev.ports[0].compatible(bounds[0]) {
+		if !ev.ports[0].mayConvey(bounds[0]) {
 			ev.errorf(p, "pipeline input not satisfiable")
 		}
-		if !ev.ports[1].compatible(bounds[1]) {
+		if !ev.ports[1].mayConvey(bounds[1]) {
 			ev.errorf(p, "pipeline output not satisfiable")
 		}
 		var nextIn *port
@@ -158,7 +158,7 @@ func combinePipeline(ops []stateUpdatesOp, bounds [2]StreamType, internals []Str
 	return valuesOp{newHomoTypeRun(&StringType{}, len(ops), false), f}
 }
 
-func combineForm(cmd valuesOp, tlist valuesOp, ports []portOp, a *formAnnotation, p parse.Pos) stateUpdatesOp {
+func combineForm(cmd valuesOp, tlist valuesOp, ports []portOp, a *commandResolution, p parse.Pos) stateUpdatesOp {
 	return func(ev *Evaluator) <-chan *StateUpdate {
 		// XXX Currently it's guaranteed that cmd evaluates into a single
 		// Value.
@@ -281,7 +281,7 @@ func makeString(text string) valuesOp {
 }
 
 func makeVar(cp *Compiler, name string, p parse.Pos) valuesOp {
-	tr := newFixedTypeRun(cp.resolveVar(name, p))
+	tr := newFixedTypeRun(cp.mustResolveVar(name, p))
 	f := func(ev *Evaluator) []Value {
 		val, ok := ev.scope[name]
 		if !ok {
