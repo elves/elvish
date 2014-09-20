@@ -179,7 +179,7 @@ func (cp *Compiler) ResolveVar(name string) Type {
 // resolveCommand tries to find a command with supplied name and modify the
 // commandResolution in place.
 func (cp *Compiler) resolveCommand(name string, cr *commandResolution) {
-	if ct, ok := cp.ResolveVar("fn-" + name).(*ClosureType); ok {
+	if ct, ok := cp.ResolveVar("fn-" + name).(ClosureType); ok {
 		// Defined function
 		cr.commandType = commandDefinedFunction
 		cr.streamTypes = ct.Bounds

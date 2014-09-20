@@ -101,7 +101,7 @@ func combineClosure(ops []valuesOp, enclosed map[string]Type, bounds [2]StreamTy
 		}
 		return []Value{NewClosure(nil, op, enclosed, bounds)}
 	}
-	return valuesOp{newFixedTypeRun(&ClosureType{bounds}), f}
+	return valuesOp{newFixedTypeRun(ClosureType{bounds}), f}
 }
 
 func combinePipeline(ops []stateUpdatesOp, bounds [2]StreamType, internals []StreamType, p parse.Pos) valuesOp {
