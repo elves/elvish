@@ -254,8 +254,18 @@ func lexAny(l *Lexer) stateFn {
 			l.backup()
 			return lexBare
 		}
-	case '=', '!', '%':
+	}
+	if isSigil(r) {
+		r2 := l.peek()
+		if TerminatesCompound(r2) {
+			// Lone sigil; treat as bareword
+			return lexBare
+		}
 		l.emit(ItemSigil, ItemTerminated)
+		if isSigil(r2) {
+			// Another sigil, parse as bareword
+			return lexBare
+		}
 		return lexAny
 	}
 	if isSpace(r) {
@@ -361,6 +371,20 @@ func StartsBare(r rune) bool {
 	return true
 }
 
+// TerminatesCompound determines whether r terminates a compound expression.
+// This is used to determine whether a sigil is "alone" and should be treated
+// as a bareword instead.
+//
+// XXX(xiaq): This is bad abstraction, since the lexer now knows something
+// about the the grammar. Perhaps there is a better way to do it.
+func TerminatesCompound(r rune) bool {
+	switch r {
+	case '\n', ')', ']', '}', ';', '|', eof:
+		return true
+	}
+	return isSpace(r)
+}
+
 // TerminatesBare determines whether r terminates a bareword.
 func TerminatesBare(r rune) bool {
 	switch r {
@@ -416,4 +440,14 @@ loop:
 // isSpace reports whether r is a space character.
 func isSpace(r rune) bool {
 	return r == ' ' || r == '\t'
+}
+
+// isSigil determines whether r is a sigil.
+func isSigil(r rune) bool {
+	switch r {
+	case '=', '!', '%':
+		return true
+	default:
+		return false
+	}
 }
