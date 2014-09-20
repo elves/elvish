@@ -17,12 +17,22 @@ import (
 )
 
 const (
-	sigchSize = 32
+	sigchSize     = 32
+	outChanSize   = 32
+	outChanLeader = "▶ "
 )
 
 // TODO(xiaq): Currently only the editor deals with signals.
 func interact() {
+	ch := make(chan eval.Value, outChanSize)
+	go func() {
+		for v := range ch {
+			fmt.Printf("%s%s\n", outChanLeader, v.String())
+		}
+	}()
+
 	ev := eval.NewEvaluator()
+	ev.SetChanOut(ch)
 	cmdNum := 0
 
 	username := "???"

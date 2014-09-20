@@ -79,6 +79,10 @@ func NewEvaluator() *Evaluator {
 	return ev
 }
 
+func (ev *Evaluator) SetChanOut(ch chan Value) {
+	ev.ports[1].ch = ch
+}
+
 // copy returns a copy of ev with context changed. ev.ports is copied deeply.
 // If moveShouldClose is true, all ports in ev has their shouldClose flags
 // reset. Otherwise all ports in the new Evaluator has their shouldClose flags

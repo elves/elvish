@@ -127,9 +127,9 @@ And:
 * Some constructs look like lisp without the outermost pair of parentheses: ✔
   ```
   > + 1 2
-  3
+  ▶ 3
   > * (+ 1 2) 3
-  9
+  ▶ 9
   ```
 
 * Use backquote for literal string (so that you can write both single and
