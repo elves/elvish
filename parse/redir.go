@@ -9,52 +9,52 @@ type Redir interface {
 	unexported()
 }
 
-type redir struct {
+type RedirBase struct {
 	Pos
-	fd uintptr
+	FD uintptr
 }
 
-func (r *redir) Fd() uintptr {
-	return r.fd
+func (r *RedirBase) Fd() uintptr {
+	return r.FD
 }
 
-func (r *redir) unexported() {
+func (r *RedirBase) unexported() {
 }
 
 // FdRedir represents redirection into another fd, like >[2=3].
 type FdRedir struct {
-	redir
+	RedirBase
 	OldFd uintptr
 }
 
 // NewFdRedir creates a new FdRedir. Public since we need to turn FilenameRedir
 // -> FdRedir when evaluating commands.
 func NewFdRedir(pos Pos, fd, oldFd uintptr) *FdRedir {
-	return &FdRedir{redir{pos, fd}, oldFd}
+	return &FdRedir{RedirBase{pos, fd}, oldFd}
 }
 
 func (fr *FdRedir) isNode() {}
 
 // CloseRedir represents the closing of a fd, like >[2=].
 type CloseRedir struct {
-	redir
+	RedirBase
 }
 
 func newCloseRedir(pos Pos, fd uintptr) *CloseRedir {
-	return &CloseRedir{redir{pos, fd}}
+	return &CloseRedir{RedirBase{pos, fd}}
 }
 
 func (cr *CloseRedir) isNode() {}
 
 // FilenameRedir represents redirection into a file, like >a.txt
 type FilenameRedir struct {
-	redir
+	RedirBase
 	Flag     int
 	Filename *CompoundNode
 }
 
 func newFilenameRedir(pos Pos, fd uintptr, flag int, filename *CompoundNode) *FilenameRedir {
-	return &FilenameRedir{redir{pos, fd}, flag, filename}
+	return &FilenameRedir{RedirBase{pos, fd}, flag, filename}
 }
 
 func (fr *FilenameRedir) isNode() {}
