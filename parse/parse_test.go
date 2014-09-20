@@ -17,7 +17,7 @@ var parseTests = []struct {
 		0, newPipeline( // pipeline
 			0, &FormNode{ // form
 				0, newCompound(
-					0, &SubscriptNode{
+					0, NoSigil, &SubscriptNode{
 						0, &PrimaryNode{
 							0, StringPrimary, newString(0, "ls", "ls")},
 						nil}),

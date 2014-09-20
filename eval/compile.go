@@ -312,7 +312,16 @@ func (cp *Compiler) compileCompound(tn *parse.CompoundNode) valuesOp {
 	for i, fn := range tn.Nodes {
 		ops[i], _ = cp.compileSubscript(fn)
 	}
-	return combineCompound(ops)
+	op := combineCompound(ops)
+	if tn.Sigil == parse.NoSigil {
+		return op
+	}
+	cmd := string(tn.Sigil)
+	cr := &commandResolution{}
+	cp.resolveCommand(cmd, cr)
+	fop := combineForm(makeString(cmd), op, nil, cr, tn.Pos)
+	pop := combinePipeline([]stateUpdatesOp{fop}, cr.streamTypes, nil, tn.Pos)
+	return combineOutputCapture(pop, cr.streamTypes)
 }
 
 // compileSubscript compiles a SubscriptNode into a valuesOp and if the

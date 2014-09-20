@@ -74,14 +74,17 @@ func newForm(pos Pos) *FormNode {
 
 func (fn *FormNode) isNode() {}
 
+const NoSigil rune = -1
+
 // CompoundNode is a list of SubscriptNode's.
 type CompoundNode struct {
 	Pos
+	Sigil rune
 	Nodes []*SubscriptNode
 }
 
-func newCompound(pos Pos, nodes ...*SubscriptNode) *CompoundNode {
-	return &CompoundNode{pos, nodes}
+func newCompound(pos Pos, sigil rune, nodes ...*SubscriptNode) *CompoundNode {
+	return &CompoundNode{pos, sigil, nodes}
 }
 
 func (l *CompoundNode) isNode() {}

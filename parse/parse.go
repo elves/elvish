@@ -20,6 +20,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/xiaq/elvish/util"
 )
@@ -306,9 +307,13 @@ loop:
 // compound parses a compound expression. The name is borrowed from
 // linguistics, where a compound word is roughly some words that run together.
 //
-// Compound = Subscript { Subscript } [ space ]
+// Compound = [ sigil ] Subscript { Subscript } [ space ]
 func (p *Parser) compound(ct ContextType) *CompoundNode {
-	compound := newCompound(p.peek().Pos)
+	compound := newCompound(p.peek().Pos, NoSigil)
+	if p.peek().Typ == ItemSigil {
+		token := p.next()
+		compound.Sigil, _ = utf8.DecodeRuneInString(token.Val)
+	}
 	compound.append(p.subscript())
 	for startsPrimary(p.peek().Typ) {
 		compound.append(p.subscript())
@@ -348,13 +353,16 @@ func unquote(token Item) (string, error) {
 }
 
 // startsPrimary determines whether a token of type p can start a Primary.
-// Frequently used for lookahead, since a Compound or Spaced also always
-// starts with a Primary.
+// Frequently used for lookahead, since a Subscript, Compound or Spaced also
+// always starts with a Primary.
+//
+// XXX(xiaq): The case with ItemSigil can be problematic. Compound or Spaced
+// may start with it, but it's illegal in Primary or Subscript.
 func startsPrimary(p ItemType) bool {
 	switch p {
 	case ItemBare, ItemSingleQuoted, ItemDoubleQuoted,
 		ItemLParen, ItemQuestionLParen, ItemLBracket, ItemLBrace,
-		ItemDollar, ItemAmpersand:
+		ItemDollar, ItemAmpersand, ItemSigil:
 		return true
 	default:
 		return false

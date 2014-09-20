@@ -62,6 +62,7 @@ const (
 	ItemDollar            // dollar sign '$'
 	ItemSemicolon         // semicolon ';'
 	ItemAmpersand         // ampersand '&'
+	ItemSigil             // one of predefined sigils
 	ItemTypeCount
 )
 
@@ -87,6 +88,7 @@ var ItemTypeNames = []string{
 	"ItemDollar",
 	"ItemSemicolon",
 	"ItemAmpersand",
+	"ItemSigil",
 }
 
 func init() {
@@ -252,6 +254,9 @@ func lexAny(l *Lexer) stateFn {
 			l.backup()
 			return lexBare
 		}
+	case '=', '!', '%':
+		l.emit(ItemSigil, ItemTerminated)
+		return lexAny
 	}
 	if isSpace(r) {
 		return lexSpace
