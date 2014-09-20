@@ -2,9 +2,18 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package parse parses elvish source. Derived from stdlib package
-// text/template/parse.
+// Package parse parses elvish source using a recursive descent parser.
+//
+// Some parser utilities are derived from stdlib package text/template/parse.
 package parse
+
+// The Elvish grammar is likely LL(2) (a more careful examinization may prove
+// otherwise). The non-terminals are documented in corresponding functions
+// using a liberal EBNF variant. In particular, [ option ] and { kleene star }
+// are used.
+//
+// Whitespaces are often significant in Elvish and are never omitted in the
+// grammar.
 
 import (
 	"fmt"
@@ -235,7 +244,7 @@ loop:
 
 // pipeline parses a pipeline. The pipeline may not be empty.
 //
-// Pipeline = Form { "|" Form }
+// Pipeline = Form { '|' Form }
 func (p *Parser) pipeline() *PipelineNode {
 	pipe := newPipeline(p.peek().Pos)
 	for {
@@ -355,10 +364,10 @@ func startsPrimary(p ItemType) bool {
 // primary parses a primary expression.
 //
 // Primary = '$' bare
-//        = ( bare | single-quoted | double-quoted | Table )
-//        = '{' Spaced '}'
-//        = Closure
-//        = '(' Pipeline ')'
+//         = ( bare | single-quoted | double-quoted | Table )
+//         = '{' Spaced '}'
+//         = Closure
+//         = '(' Pipeline ')'
 //
 // Closure and flat list are distinguished by the first token after the
 // opening brace. If startsPrimary(token), it is considered a flat list.
@@ -439,7 +448,10 @@ func (p *Parser) closure() (tn *ClosureNode) {
 
 // table parses a table literal. The opening bracket has been seen.
 //
-// Table = '[' { [ space ] ( '&' Compound [ space ] Compound | Compound ) [ space ] } ']'
+// Table = '[' { [ space ] TableElement  [ space ] } ']'
+//
+// TableElement = Compound
+//              = '&' Compound [ space ] Compound
 func (p *Parser) table() (tn *TableNode) {
 	tn = newTable(p.peek().Pos)
 
