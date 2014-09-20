@@ -286,6 +286,8 @@ loop:
 //
 // Spaced = { [ space ] Compound } [ space ]
 func (p *Parser) spaced() *SpacedNode {
+	// Skip leading spaces
+	p.peekNonSpace()
 	list := newSpaced(p.peek().Pos)
 loop:
 	for {
@@ -327,7 +329,7 @@ func (p *Parser) compound(ct ContextType) *CompoundNode {
 //
 // Subscript = Primary [ '[' Compound ']' ]
 func (p *Parser) subscript() *SubscriptNode {
-	sub := &SubscriptNode{}
+	sub := &SubscriptNode{Pos: p.peek().Pos}
 	sub.Left = p.primary()
 	if p.peek().Typ == ItemLBracket {
 		p.next()
