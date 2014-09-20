@@ -60,7 +60,6 @@ const (
 	ItemLBrace            // left brace '{'
 	ItemRBrace            // right brace '}'
 	ItemDollar            // dollar sign '$'
-	ItemCaret             // caret sign '^'
 	ItemSemicolon         // semicolon ';'
 	ItemAmpersand         // ampersand '&'
 	ItemTypeCount
@@ -86,7 +85,6 @@ var ItemTypeNames = []string{
 	"ItemLBrace",
 	"ItemRBrace",
 	"ItemDollar",
-	"ItemCaret",
 	"ItemSemicolon",
 	"ItemAmpersand",
 }
@@ -221,7 +219,7 @@ var singleRuneToken = map[rune]ItemType{
 	'(': ItemLParen, ')': ItemRParen,
 	'[': ItemLBracket, ']': ItemRBracket,
 	'{': ItemLBrace, '}': ItemRBrace,
-	'$': ItemDollar, '^': ItemCaret, ';': ItemSemicolon, '&': ItemAmpersand,
+	'$': ItemDollar, ';': ItemSemicolon, '&': ItemAmpersand,
 }
 
 // lexAny is the default state. It allows any token but comment.

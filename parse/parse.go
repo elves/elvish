@@ -297,27 +297,14 @@ loop:
 // compound parses a compound expression. The name is borrowed from
 // linguistics, where a compound word is roughly some words that run together.
 //
-// Compound = Subscript { Subscript | [ space ] '^' Subscript } [ space ]
+// Compound = Subscript { Subscript } [ space ]
 func (p *Parser) compound(ct ContextType) *CompoundNode {
 	compound := newCompound(p.peek().Pos)
 	compound.append(p.subscript())
-loop:
-	for {
-		if startsPrimary(p.peek().Typ) {
-			compound.append(p.subscript())
-			if p.foundCtx(ct) {
-				break loop
-			}
-		} else if p.foundCtx(ct) {
-			break loop
-		} else if p.peekNonSpace().Typ == ItemCaret {
-			p.next()
-			p.peekNonSpace()
-			compound.append(p.subscript())
-		} else {
-			break loop
-		}
+	for startsPrimary(p.peek().Typ) {
+		compound.append(p.subscript())
 	}
+	p.foundCtx(ct)
 	return compound
 }
 
