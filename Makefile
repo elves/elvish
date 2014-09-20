@@ -1,5 +1,5 @@
 EXE := elvish
-PKGS := edit eval parse util service elvishd sys
+PKGS := edit eval parse util sys #service elvishd
 PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
 PKG_COVERAGES := $(addprefix coverage/,$(PKGS))
 
