@@ -134,9 +134,11 @@ func (s *String) String() string {
 }
 
 // Table is a list-dict hybrid.
+//
+// TODO(xiaq): The dict part use string keys. It should use Value keys instead.
 type Table struct {
 	List []Value
-	Dict map[Value]Value
+	Dict map[string]Value
 }
 
 func (t *Table) Type() Type {
@@ -144,7 +146,7 @@ func (t *Table) Type() Type {
 }
 
 func NewTable() *Table {
-	return &Table{Dict: make(map[Value]Value)}
+	return &Table{Dict: make(map[string]Value)}
 }
 
 func (t *Table) Repr() string {
@@ -156,7 +158,7 @@ func (t *Table) Repr() string {
 		sep = " "
 	}
 	for k, v := range t.Dict {
-		fmt.Fprint(buf, sep, "&", k.Repr(), " ", v.Repr())
+		fmt.Fprint(buf, sep, "&", quote(k), " ", v.Repr())
 		sep = " "
 	}
 	buf.WriteRune(']')
@@ -271,7 +273,7 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 			}
 			ev.errorf(rp, "index out of range")
 		}
-		if v, ok := t.Dict[sub]; ok {
+		if v, ok := t.Dict[sub.String()]; ok {
 			return v
 		}
 		ev.errorf(rp, "nonexistent key %q", sub)

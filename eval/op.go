@@ -335,7 +335,7 @@ func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos
 				ev.errorf(p, "Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
 			}
 			for j, k := range ks {
-				t.Dict[k] = vs[j]
+				t.Dict[k.String()] = vs[j]
 			}
 		}
 		return []Value{t}
