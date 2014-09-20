@@ -8,7 +8,6 @@ package parse
 
 import (
 	"fmt"
-	"strings"
 	"unicode/utf8"
 )
 
@@ -158,29 +157,6 @@ func (l *Lexer) backup() {
 func (l *Lexer) emit(t ItemType, e ItemEnd) {
 	l.items <- Item{t, l.start, l.input[l.start:l.pos], e}
 	l.start = l.pos
-}
-
-// accept consumes the next rune if it's from the valid set.
-func (l *Lexer) accept(valid string) bool {
-	if strings.IndexRune(valid, l.next()) >= 0 {
-		return true
-	}
-	l.backup()
-	return false
-}
-
-// acceptRun consumes a run of runes from the valid set.
-func (l *Lexer) acceptRun(valid string) {
-	for strings.IndexRune(valid, l.next()) >= 0 {
-	}
-	l.backup()
-}
-
-// errorf returns an error token and terminates the scan by passing
-// back a nil pointer that will be the next state, terminating l.NextItem.
-func (l *Lexer) errorf(format string, args ...interface{}) stateFn {
-	l.items <- Item{ItemError, l.start, fmt.Sprintf(format, args...), ItemEnd(0)}
-	return nil
 }
 
 // NextItem returns the next Item from the input.
