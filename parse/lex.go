@@ -355,7 +355,7 @@ func StartsBare(r rune) bool {
 // about the the grammar. Perhaps there is a better way to do it.
 func TerminatesCompound(r rune) bool {
 	switch r {
-	case '\n', ')', ']', '}', ';', '|', eof:
+	case '\n', ')', ']', '}', '<', '>', '?', ';', '|', eof:
 		return true
 	}
 	return isSpace(r)
@@ -364,7 +364,8 @@ func TerminatesCompound(r rune) bool {
 // TerminatesBare determines whether r terminates a bareword.
 func TerminatesBare(r rune) bool {
 	switch r {
-	case '\n', '(', ')', '[', ']', '{', '}', '"', '`', '$', ';', '|', eof:
+	case '\n', '(', ')', '[', ']', '{', '}', '<', '>', '?',
+		'"', '`', '$', ';', '|', eof:
 		return true
 	}
 	return isSpace(r)
