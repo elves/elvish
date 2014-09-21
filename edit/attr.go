@@ -32,9 +32,4 @@ var attrForType = map[parse.ItemType]string{
 	parse.ItemRBrace:            "34;1",
 	parse.ItemAmpersand:         "1",
 	parse.ItemDollar:            "35",
-
-	ItemValidCommand:    "32",
-	ItemInvalidCommand:  "31",
-	ItemValidVariable:   "35",
-	ItemInvalidVariable: "31",
 }

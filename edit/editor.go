@@ -113,8 +113,8 @@ func (ed *Editor) refresh() error {
 	// Re-lex the line, unless we are in modeCompletion
 	if ed.mode != modeCompletion {
 		ed.tokens = nil
-		hl := Highlight("<interactive code>", ed.line, ed.ev)
-		for token := range hl {
+		lex := parse.Lex("<interactive code>", ed.line)
+		for token := range lex.Chan() {
 			ed.tokens = append(ed.tokens, token)
 		}
 	}
