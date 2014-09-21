@@ -15,7 +15,6 @@ import (
 	"github.com/coopernurse/gorp"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/xiaq/elvish/service"
-	"github.com/xiaq/elvish/util"
 )
 
 const (
@@ -23,7 +22,7 @@ const (
 )
 
 func main() {
-	laddr, err := util.SocketName()
+	laddr, err := service.SocketName()
 	if err != nil {
 		log.Fatalln("get socket name:", err)
 	}
