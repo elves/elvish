@@ -46,3 +46,24 @@ func TestSubstringByRune(t *testing.T) {
 		}
 	}
 }
+
+var NthRuneTests = []struct {
+	s          string
+	n          int
+	wantedRune rune
+	wantedErr  error
+}{
+	{"你好世界", -1, 0, IndexOutOfRange},
+	{"你好世界", 0, '你', nil},
+	{"你好世界", 4, 0, IndexOutOfRange},
+}
+
+func TestNthRune(t *testing.T) {
+	for _, tt := range NthRuneTests {
+		r, e := NthRune(tt.s, tt.n)
+		if r != tt.wantedRune || e != tt.wantedErr {
+			t.Errorf("NthRune(%q, %v) => (%q, %v), want (%q, %v)",
+				tt.s, tt.n, r, e, tt.wantedRune, tt.wantedErr)
+		}
+	}
+}

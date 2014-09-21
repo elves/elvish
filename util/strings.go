@@ -69,3 +69,18 @@ func SubstringByRune(s string, low, high int) (string, error) {
 	}
 	return s[bLow:bHigh], nil
 }
+
+// NthRune returns the n-th rune of s.
+func NthRune(s string, n int) (rune, error) {
+	if n < 0 {
+		return 0, IndexOutOfRange
+	}
+	var j int
+	for _, r := range s {
+		if j == n {
+			return r, nil
+		}
+		j++
+	}
+	return 0, IndexOutOfRange
+}
