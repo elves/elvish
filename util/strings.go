@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"strings"
 )
 
@@ -35,4 +36,36 @@ func FindFirstEOL(s string) int {
 
 func FindLastSOL(s string) int {
 	return strings.LastIndex(s, "\n") + 1
+}
+
+var (
+	IndexOutOfRange = errors.New("substring out of range")
+)
+
+// SubStringByRune returns the range of the i-th rune (inclusive) through the
+// j-th rune (exclusive) in s.
+func SubstringByRune(s string, low, high int) (string, error) {
+	if low > high || low < 0 || high < 0 {
+		return "", IndexOutOfRange
+	}
+	var bLow, bHigh, j int
+	for i := range s {
+		if j == low {
+			bLow = i
+		}
+		if j == high {
+			bHigh = i
+		}
+		j++
+	}
+	if j < high {
+		return "", IndexOutOfRange
+	}
+	if low == high {
+		return "", nil
+	}
+	if j == high {
+		bHigh = len(s)
+	}
+	return s[bLow:bHigh], nil
 }

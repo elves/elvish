@@ -20,3 +20,29 @@ func TestFindContext(t *testing.T) {
 		}
 	}
 }
+
+var SubstringByRuneTests = []struct {
+	s         string
+	low, high int
+	wantedStr string
+	wantedErr error
+}{
+	{"Hello world", 1, 4, "ell", nil},
+	{"你好世界", 0, 0, "", nil},
+	{"你好世界", 1, 1, "", nil},
+	{"你好世界", 1, 2, "好", nil},
+	{"你好世界", 1, 4, "好世界", nil},
+	{"你好世界", -1, -1, "", IndexOutOfRange},
+	{"你好世界", 0, 5, "", IndexOutOfRange},
+	{"你好世界", 5, 5, "", IndexOutOfRange},
+}
+
+func TestSubstringByRune(t *testing.T) {
+	for _, tt := range SubstringByRuneTests {
+		s, e := SubstringByRune(tt.s, tt.low, tt.high)
+		if s != tt.wantedStr || e != tt.wantedErr {
+			t.Errorf("SubstringByRune(%q, %v, %d) => (%q, %v), want (%q, %v)",
+				tt.s, tt.low, tt.high, s, e, tt.wantedStr, tt.wantedErr)
+		}
+	}
+}
