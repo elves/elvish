@@ -344,8 +344,7 @@ func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos
 }
 
 func combineOutputCapture(op valuesOp, bounds [2]StreamType) valuesOp {
-	// XXX Wrong type; tr should be variadic
-	tr := newFixedTypeRun()
+	tr := typeRun{typeStar{AnyType{}, true}}
 	f := func(ev *Evaluator) []Value {
 		vs := []Value{}
 		newEv := ev.copy(fmt.Sprintf("output capture %v", op), false)
