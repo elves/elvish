@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/xiaq/elvish/parse"
+	"github.com/xiaq/elvish/util"
 )
 
 type Type interface {
@@ -278,6 +279,35 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 		}
 		ev.errorf(rp, "nonexistent key %q", sub)
 		return nil
+	case *String:
+		invalidIndex := "invalid index, must be integer or integer:integer"
+
+		ss := strings.Split(sub.String(), ":")
+		if len(ss) > 2 {
+			ev.errorf(rp, invalidIndex)
+		}
+		idx := make([]int, len(ss))
+		for i, s := range ss {
+			n, err := strconv.ParseInt(s, 10, 0)
+			if err != nil {
+				ev.errorf(rp, invalidIndex)
+			}
+			idx[i] = int(n)
+		}
+
+		var s string
+		var e error
+		if len(idx) == 1 {
+			var r rune
+			r, e = util.NthRune(left.String(), idx[0])
+			s = string(r)
+		} else {
+			s, e = util.SubstringByRune(left.String(), idx[0], idx[1])
+		}
+		if e != nil {
+			ev.errorf(rp, "%v", e)
+		}
+		return NewString(s)
 	default:
 		ev.errorf(lp, "left operand of subscript must be of type string, env, table or any")
 		return nil

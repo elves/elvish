@@ -299,7 +299,7 @@ func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valu
 	}
 	var t Type
 	switch left.tr[0].t.(type) {
-	case EnvType:
+	case EnvType, StringType:
 		t = StringType{}
 	case TableType, AnyType:
 		t = AnyType{}
