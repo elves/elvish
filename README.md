@@ -68,7 +68,7 @@ you are advised to set up the filter:
 
     ```
     [filter "goimports"]
-        clean = goimports -tabwidth=4
+        clean = goimports
         smudge = cat
         required
     ```
