@@ -60,6 +60,11 @@ var parseTests = []struct {
 				compoundOfBare(5, "y")),
 			nil, ""})},
 
+	// Wow... such whitespace, much unnecessary, so valid
+	{"  ;\n\n  ls   ;\n", newChunk(0,
+		newPipeline(7,
+			&FormNode{7, compoundOfBare(7, "ls"), newSpaced(12), nil, ""}))},
+
 	// Multiple pipelines, multiple commands
 	{"a;b|c\n;d", newChunk(0,
 		newPipeline(0,
