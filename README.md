@@ -28,7 +28,8 @@ Navigation mode (triggered with ^N, inspired by
 
 ## Building
 
-Go >= 1.1.1 is required. This repository is a go-getable package.
+Go >= 1.1.1 is required. Only Linux is supported at this moment. This
+repository is a go-getable package.
 
 In case you are new to Go, you are advised to read [How To Write Go
 Code](http://golang.org/doc/code.html), but here is a quick snippet:
