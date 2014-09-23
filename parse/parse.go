@@ -405,6 +405,7 @@ func (p *Parser) primary() (fn *PrimaryNode) {
 		fn.Node = newString(token.Pos, token.Val, text)
 		return
 	case ItemLBracket:
+		p.backup()
 		fn.Typ = TablePrimary
 		fn.Node = p.table()
 		return
@@ -416,6 +417,7 @@ func (p *Parser) primary() (fn *PrimaryNode) {
 				p.unexpected(token, "primary expression of item list")
 			}
 		} else {
+			p.backup()
 			fn.Typ = ClosurePrimary
 			fn.Node = p.closure()
 		}
@@ -437,7 +439,7 @@ func (p *Parser) primary() (fn *PrimaryNode) {
 	}
 }
 
-// closure parses a closure literal. The opening brace has been seen.
+// closure parses a closure literal.
 //
 // Closure  = '{' [ space ] [ '|' Spaced '|' [ space ] ] Chunk '}'
 func (p *Parser) closure() (tn *ClosureNode) {
@@ -456,14 +458,14 @@ func (p *Parser) closure() (tn *ClosureNode) {
 	return
 }
 
-// table parses a table literal. The opening bracket has been seen.
+// table parses a table literal.
 //
 // Table = '[' { [ space ] TableElement  [ space ] } ']'
 //
 // TableElement = Compound
 //              = '&' Compound [ space ] Compound
 func (p *Parser) table() (tn *TableNode) {
-	tn = newTable(p.peek().Pos)
+	tn = newTable(p.next().Pos)
 
 	for {
 		token := p.nextNonSpace()
