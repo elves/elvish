@@ -151,6 +151,10 @@ type TablePair struct {
 	Value *CompoundNode
 }
 
+func newTablePair(k, v *CompoundNode) *TablePair {
+	return &TablePair{k, v}
+}
+
 // TableNode holds a table literal.
 type TableNode struct {
 	Pos
