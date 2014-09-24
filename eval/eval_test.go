@@ -72,6 +72,9 @@ var evalTests = []struct {
 	// Variable and compounding
 	{"var $x string = `SHELL`\nput `WOW, SUCH `$x`, MUCH COOL`\n",
 		stringValues("WOW, SUCH SHELL, MUCH COOL")},
+
+	// Status capture
+	{"put ?(true|false|false)", stringValues("", "exited 1", "exited 1")},
 }
 
 func TestEval(t *testing.T) {
@@ -90,7 +93,7 @@ func TestEval(t *testing.T) {
 			exhausted <- struct{}{}
 		}()
 
-		ev.ports[1] = &port{ch: out}
+		ev.ports[1].ch = out
 
 		e := ev.Eval(name, tt.text, n)
 		close(out)
