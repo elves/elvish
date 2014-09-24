@@ -37,9 +37,41 @@ var evalTests = []struct {
 	text   string
 	wanted []Value
 }{
+	// Empty chunk
 	{"", []Value{}},
-	{"put 233", stringValues("233")},
+
+	// Trivial command
+	{"put 233 lorem ipsum", stringValues("233", "lorem", "ipsum")},
+
+	// Byte Pipeline
+	{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e | feedchan`,
+		stringValues("A1bert", "Ber1in")},
+
+	// Arithmetics
+	// TODO test more edge cases
+	{"* 353 661", stringValues("233333")},
+	{"+ 233100 233", stringValues("233333")},
+	{"- 233333 233100", stringValues("233")},
+	{"/ 233333 353", stringValues("661")},
+	{"/ 1 0", stringValues("+Inf")},
+
+	// String literal
+	{"put `such \\\"``literal`", stringValues("such \\\"`literal")},
+	{`put "much \n\033[31;1m$cool\033[m"`,
+		stringValues("much \n\033[31;1m$cool\033[m")},
+
+	// Compounding list primaries
 	{"put {fi elvi}sh{1 2}", stringValues("fish1", "fish2", "elvish1", "elvish2")},
+
+	// Table and subscript
+	{"println [a b c &key value] | feedchan",
+		stringValues("[a b c &key value]")},
+	{"put [a b c &key value][2]", stringValues("c")},
+	{"put [a b c &key value][key]", stringValues("value")},
+
+	// Variable and compounding
+	{"var $x string = `SHELL`\nput `WOW, SUCH `$x`, MUCH COOL`\n",
+		stringValues("WOW, SUCH SHELL, MUCH COOL")},
 }
 
 func TestEval(t *testing.T) {
