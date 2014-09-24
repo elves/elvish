@@ -141,7 +141,33 @@ var parseTests = []struct {
 	// Double quote
 	{`a "b"`, chunkOfFormWithOnePrimary(
 		&PrimaryNode{2, StringPrimary, newString(2, `"b"`, "b")})},
-	// TODO(xiaq): Other types of primary expressions
+	// Table
+	{"a [1 &k v 2 &k2 v2 3]", chunkOfFormWithOnePrimary(
+		&PrimaryNode{2, TablePrimary, &TableNode{2,
+			[]*CompoundNode{
+				compoundOfBare(3, "1"),
+				compoundOfBare(10, "2"),
+				compoundOfBare(19, "3"),
+			},
+			[]*TablePair{
+				newTablePair(compoundOfBare(6, "k"), compoundOfBare(8, "v")),
+				newTablePair(compoundOfBare(13, "k2"), compoundOfBare(16, "v2")),
+			}}})},
+	// List
+	{"a {b c}", chunkOfFormWithOnePrimary(
+		&PrimaryNode{2, ListPrimary, newSpaced(3,
+			compoundOfBare(3, "b"),
+			compoundOfBare(5, "c"))})},
+	/*
+		// Closure
+		{"a { b c}", nil},
+		// Closure
+		{"a {|b|c}", nil},
+		// Output capture
+		{"a (b c)", nil},
+		// Status capture
+		{"a ?(b c)", nil},
+	*/
 }
 
 func TestParse(t *testing.T) {
