@@ -62,7 +62,8 @@ var evalTests = []struct {
 		stringValues("much \n\033[31;1m$cool\033[m"), false},
 
 	// Compounding list primaries
-	{"put {fi elvi}sh{1 2}", stringValues("fish1", "fish2", "elvish1", "elvish2"), false},
+	{"put {fi elvi}sh{1 2}",
+		stringValues("fish1", "fish2", "elvish1", "elvish2"), false},
 
 	// Table and subscript
 	{"println [a b c &key value] | feedchan",
@@ -75,14 +76,16 @@ var evalTests = []struct {
 		stringValues("WOW, SUCH SHELL, MUCH COOL"), false},
 
 	// var and set
-	{"var [$x $y string] [SUCH VAR]; put $x $y", stringValues("SUCH", "VAR"), false},
+	{"var [$x $y string] [SUCH VAR]; put $x $y",
+		stringValues("SUCH", "VAR"), false},
 	{"var [$x $y string]; set [$x $y] [SUCH SET]; put $x $y",
 		stringValues("SUCH", "SET"), false},
 	{"var $x", nil, true},
 	{"var [$x string $y]", nil, true},
 
 	// Status capture
-	{"put ?(true|false|false)", stringValues("", "exited 1", "exited 1"), false},
+	{"put ?(true|false|false)",
+		stringValues("", "exited 1", "exited 1"), false},
 }
 
 func TestEval(t *testing.T) {
