@@ -23,130 +23,224 @@ func init() {
 	}
 }
 
-type varSetForm struct {
-	names  []string
-	types  []Type
-	values []*parse.CompoundNode
-}
-
-type delForm struct {
-	names []string
-}
-
-func checkSetType(cp *Compiler, args *parse.SpacedNode, f *varSetForm, vop valuesOp) {
-	if !vop.tr.mayCountTo(len(f.names)) {
-		cp.errorf(args.Pos, "number of variables doesn't match that of values")
+func checkSetType(cp *Compiler, names []string, values []*parse.CompoundNode, vop valuesOp, p parse.Pos) {
+	if !vop.tr.mayCountTo(len(names)) {
+		cp.errorf(p, "number of variables doesn't match that of values")
 	}
 	_, more := vop.tr.count()
 	if more {
 		// TODO Try to check soundness to some extent
 		return
 	}
-	for i, name := range f.names {
+	for i, name := range names {
 		t := vop.tr[i].t
 		if _, ok := t.(AnyType); ok {
 			// TODO Check type soundness at runtime
 			continue
 		}
 		if cp.ResolveVar(name) != t {
-			cp.errorf(f.values[i].Pos, "type mismatch")
+			cp.errorf(values[i].Pos, "type mismatch")
 		}
 	}
 }
 
-// compileVarSet compiles a var or set special form. If v is true, a var special
-// form is being compiled.
-//
-// The arguments in the var/set special form must consist of zero or more
-// variables followed by `=` and then zero or more compound expressions. The
-// number of values the compound expressions evaluate to must be equal to the
-// number of variables, but compileVarSet does not attempt to check this.
-func compileVarSet(cp *Compiler, args *parse.SpacedNode, v bool) strOp {
-	f := &varSetForm{}
-	lastTyped := 0
-	for i, n := range args.Nodes {
-		compoundReq := ""
-		if v {
-			compoundReq = "must be a variable, literal type name or literal `=`"
-		} else {
-			compoundReq = "must be a variable or literal `=`"
-		}
-		if len(n.Nodes) != 1 || n.Nodes[0].Right != nil {
-			cp.errorf(n.Pos, "%s", compoundReq)
-		}
-		nf := n.Nodes[0].Left
-
-		var text string
-		if m, ok := nf.Node.(*parse.StringNode); ok {
-			text = m.Text
-		} else {
-			cp.errorf(n.Pos, "%s", compoundReq)
-		}
-
-		if nf.Typ == parse.StringPrimary {
-			if text == "=" {
-				f.values = args.Nodes[i+1:]
-				break
-			} else if t := typenames[text]; v && t != nil {
-				if i == 0 {
-					cp.errorf(n.Pos, "type name must follow variables")
-				}
-				for j := lastTyped; j < i; j++ {
-					f.types = append(f.types, t)
-				}
-				lastTyped = i
-			} else {
-				cp.errorf(n.Pos, "%s", compoundReq)
-			}
-		} else if nf.Typ == parse.VariablePrimary {
-			if !v {
-				// For set, ensure that the variable can be resolved
-				cp.mustResolveVar(text, nf.Pos)
-			}
-			f.names = append(f.names, text)
-		} else {
-			cp.errorf(n.Pos, "%s", compoundReq)
-		}
+func mustSinglePrimary(cp *Compiler, cn *parse.CompoundNode, msg string) *parse.PrimaryNode {
+	if len(cn.Nodes) != 1 || cn.Nodes[0].Right != nil {
+		cp.errorf(cn.Pos, msg)
 	}
-	if v {
-		if len(f.types) != len(f.names) {
-			cp.errorf(args.Pos, "Some variables lack type")
-		}
-		for i, name := range f.names {
-			cp.pushVar(name, f.types[i])
-		}
-		var vop valuesOp
-		if f.values != nil {
-			vop = cp.compileCompounds(f.values)
-			checkSetType(cp, args, f, vop)
-		}
-		return func(ev *Evaluator) string {
-			for i, name := range f.names {
-				ev.scope[name] = valuePtr(f.types[i].Default())
-			}
-			if vop.f != nil {
-				return doSet(ev, f.names, vop.f(ev))
-			}
-			return ""
-		}
-	} else {
-		if f.values == nil {
-			cp.errorf(args.Pos, "set form lacks equal sign")
-		}
-		vop := cp.compileCompounds(f.values)
-		checkSetType(cp, args, f, vop)
-		return func(ev *Evaluator) string {
-			return doSet(ev, f.names, vop.f(ev))
-		}
-	}
+	return cn.Nodes[0].Left
 }
 
+const (
+	varArg0Req          = "must be either a variable or a table"
+	varArg0ReqMultiElem = "must be either a variable or a string referring to a type"
+	varArg1ReqMulti     = "must be a table with no dict part"
+	varArg1ReqSingle    = "must be a string referring to a type"
+
+	setArg0Req          = varArg0Req
+	setArg0ReqMultiElem = "must be a variable"
+	setArg1ReqMulti     = varArg1ReqMulti
+)
+
+// The var special form can take any of the following forms:
+// var [$u $v type1 $x type2 ...]
+// var [$u $v type1 $x type2 ...] [value1 value2 ...]
+// var $v type       (short for var [$v type])
+// var $v type value (short for var [$v type] [value])
 func compileVar(cp *Compiler, fn *parse.FormNode) strOp {
-	return compileVarSet(cp, fn.Args, true)
+	var (
+		names  []string
+		types  []Type
+		values []*parse.CompoundNode
+	)
+
+	args := fn.Args
+	if len(args.Nodes) == 0 {
+		cp.errorf(fn.Pos, "empty var form")
+	}
+
+	p0 := mustSinglePrimary(cp, args.Nodes[0], varArg0Req)
+
+	switch p0.Typ {
+	case parse.VariablePrimary:
+		if len(args.Nodes) < 2 {
+			// TODO Identify the end of args.Nodes[0]
+			cp.errorf(args.Nodes[0].Pos, "must be followed by type")
+		}
+		if len(args.Nodes) > 3 {
+			cp.errorf(args.Nodes[3].Pos, "too many arguments")
+		}
+
+		names = []string{p0.Node.(*parse.StringNode).Text}
+
+		p1 := mustSinglePrimary(cp, args.Nodes[1], varArg1ReqSingle)
+		if p1.Typ != parse.StringPrimary {
+			cp.errorf(p1.Pos, varArg1ReqSingle)
+		}
+		p1s := p1.Node.(*parse.StringNode).Text
+		if t, ok := typenames[p1s]; !ok {
+			cp.errorf(p1.Pos, varArg1ReqSingle)
+		} else {
+			types = []Type{t}
+		}
+
+		if len(args.Nodes) == 3 {
+			values = []*parse.CompoundNode{args.Nodes[2]}
+		}
+	case parse.TablePrimary:
+		if len(args.Nodes) > 2 {
+			cp.errorf(args.Nodes[3].Pos, "too many arguments")
+		} else if len(args.Nodes) == 2 {
+			p1 := mustSinglePrimary(cp, args.Nodes[1], varArg1ReqMulti)
+			if p1.Typ != parse.TablePrimary {
+				cp.errorf(p1.Pos, varArg1ReqMulti)
+			}
+			t1 := p1.Node.(*parse.TableNode)
+			if len(t1.Dict) > 0 {
+				cp.errorf(t1.Pos, varArg1ReqMulti)
+			}
+			values = append(values, t1.List...)
+		}
+
+		t0 := p0.Node.(*parse.TableNode)
+		if len(t0.Dict) > 0 {
+			cp.errorf(t0.Pos, "must not contain dict part")
+		}
+		var firstUntyped *parse.PrimaryNode
+		for _, cn := range t0.List {
+			p := mustSinglePrimary(cp, cn, varArg0ReqMultiElem)
+			switch p.Typ {
+			case parse.StringPrimary:
+				ps := p.Node.(*parse.StringNode).Text
+				if t, ok := typenames[ps]; !ok {
+					cp.errorf(p.Pos, varArg0ReqMultiElem)
+				} else {
+					if len(names) == 0 {
+						cp.errorf(p.Pos, "first element must be variable")
+					} else if len(names) == len(types) {
+						cp.errorf(p.Pos, "duplicate type")
+					}
+					for i := len(types); i < len(names); i++ {
+						types = append(types, t)
+					}
+					firstUntyped = nil
+				}
+			case parse.VariablePrimary:
+				if firstUntyped == nil {
+					firstUntyped = p
+				}
+				names = append(names, p.Node.(*parse.StringNode).Text)
+			default:
+				cp.errorf(p.Pos, varArg0ReqMultiElem)
+			}
+		}
+		if len(types) < len(names) {
+			cp.errorf(firstUntyped.Pos, "variables from here lack type")
+		}
+	default:
+		cp.errorf(p0.Pos, varArg0Req)
+	}
+
+	for i, name := range names {
+		cp.pushVar(name, types[i])
+	}
+
+	var vop valuesOp
+	if values != nil {
+		vop = cp.compileCompounds(values)
+		checkSetType(cp, names, values, vop, fn.Pos)
+	}
+	return func(ev *Evaluator) string {
+		for i, name := range names {
+			ev.scope[name] = valuePtr(types[i].Default())
+		}
+		if vop.f != nil {
+			return doSet(ev, names, vop.f(ev))
+		}
+		return ""
+	}
 }
 
+// The set special form can take any of the following forms:
+// set [$u $v ...] [value1 value2 ...]
+// var $v value (short for set [$v] [value])
 func compileSet(cp *Compiler, fn *parse.FormNode) strOp {
-	return compileVarSet(cp, fn.Args, false)
+	var (
+		names  []string
+		values []*parse.CompoundNode
+	)
+
+	args := fn.Args
+	if len(args.Nodes) == 0 {
+		cp.errorf(fn.Pos, "empty var form")
+	} else if len(args.Nodes) == 1 {
+		// TODO Identify the end of args.Nodes[0]
+		cp.errorf(args.Nodes[0].Pos, "must be followed by value argument")
+	} else if len(args.Nodes) > 2 {
+		cp.errorf(args.Nodes[2].Pos, "too many arguments")
+	}
+
+	p0 := mustSinglePrimary(cp, args.Nodes[0], setArg0Req)
+
+	switch p0.Typ {
+	case parse.VariablePrimary:
+		names = []string{p0.Node.(*parse.StringNode).Text}
+		values = []*parse.CompoundNode{args.Nodes[1]}
+	case parse.TablePrimary:
+		t0 := p0.Node.(*parse.TableNode)
+		if len(t0.Dict) > 0 {
+			cp.errorf(t0.Pos, "must not contain dict part")
+		}
+		for _, cn := range t0.List {
+			p := mustSinglePrimary(cp, cn, setArg0ReqMultiElem)
+			switch p.Typ {
+			case parse.VariablePrimary:
+				names = append(names, p.Node.(*parse.StringNode).Text)
+			default:
+				cp.errorf(p.Pos, setArg0ReqMultiElem)
+			}
+		}
+
+		p1 := mustSinglePrimary(cp, args.Nodes[1], setArg1ReqMulti)
+		if p1.Typ != parse.TablePrimary {
+			cp.errorf(p1.Pos, setArg1ReqMulti)
+		}
+		t1 := p1.Node.(*parse.TableNode)
+		if len(t1.Dict) > 0 {
+			cp.errorf(t1.Pos, setArg1ReqMulti)
+		}
+		values = append(values, t1.List...)
+	default:
+		cp.errorf(p0.Pos, setArg0Req)
+	}
+
+	var vop valuesOp
+	vop = cp.compileCompounds(values)
+	checkSetType(cp, names, values, vop, fn.Pos)
+
+	return func(ev *Evaluator) string {
+		return doSet(ev, names, vop.f(ev))
+	}
 }
 
 func doSet(ev *Evaluator, names []string, values []Value) string {
@@ -167,7 +261,7 @@ func doSet(ev *Evaluator, names []string, values []Value) string {
 func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
 	// Do conventional compiling of all compound expressions, including
 	// ensuring that variables can be resolved
-	f := &delForm{}
+	var names []string
 	for _, n := range fn.Args.Nodes {
 		compoundReq := "must be a varible"
 		if len(n.Nodes) != 1 || n.Nodes[0].Right != nil {
@@ -183,10 +277,10 @@ func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
 			cp.errorf(n.Pos, "can only delete variable on current scope")
 		}
 		cp.popVar(name)
-		f.names = append(f.names, name)
+		names = append(names, name)
 	}
 	return func(ev *Evaluator) string {
-		for _, name := range f.names {
+		for _, name := range names {
 			delete(ev.scope, name)
 		}
 		return ""

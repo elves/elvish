@@ -162,9 +162,9 @@ And:
 * Declare variable with `var`, set value with `set`; `var` also serve as a
   shorthand of var-set combo: ✔
   ```
-  > var $v
-  > set $v = [foo bar]
-  > var $u = [foo bar] # equivalent
+  > var $v table
+  > set $v [foo bar]
+  > var $u table [foo bar] # equivalent
   ```
 
 * First-class closures, lisp-like functional programming:
