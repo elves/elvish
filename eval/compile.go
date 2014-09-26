@@ -321,7 +321,7 @@ func (cp *Compiler) compileCompound(tn *parse.CompoundNode) valuesOp {
 	cp.resolveCommand(cmd, cr)
 	fop := combineForm(makeString(cmd), op, nil, cr, tn.Pos)
 	pop := combinePipeline([]stateUpdatesOp{fop}, cr.streamTypes, nil, tn.Pos)
-	return combineOutputCapture(pop, cr.streamTypes)
+	return combineChanCapture(pop, cr.streamTypes)
 }
 
 // compileSubscript compiles a SubscriptNode into a valuesOp and if the
@@ -365,9 +365,9 @@ func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) (valuesOp, *[2]StreamT
 		return op, &bounds
 	case parse.ListPrimary:
 		return cp.compileSpaced(fn.Node.(*parse.SpacedNode)), nil
-	case parse.OutputCapturePrimary:
+	case parse.ChanCapturePrimary:
 		op, b := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
-		return combineOutputCapture(op, b), nil
+		return combineChanCapture(op, b), nil
 	case parse.StatusCapturePrimary:
 		op, _ := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
 		return op, nil

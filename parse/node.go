@@ -135,7 +135,7 @@ const (
 	TablePrimary                            // table: [a b c &k v]
 	ClosurePrimary                          // closure: {|a| cmd}
 	ListPrimary                             // list: {a b c}
-	OutputCapturePrimary                    // output capture: (cmd1|cmd2)
+	ChanCapturePrimary                      // channel output capture: (cmd1|cmd2)
 	StatusCapturePrimary                    // status capture: ?(cmd1|cmd2)
 )
 

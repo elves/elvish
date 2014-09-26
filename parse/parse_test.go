@@ -163,7 +163,7 @@ var parseTests = []struct {
 		{"a { b c}", nil},
 		// Closure
 		{"a {|b|c}", nil},
-		// Output capture
+		// Channel output capture
 		{"a (b c)", nil},
 		// Status capture
 		{"a ?(b c)", nil},

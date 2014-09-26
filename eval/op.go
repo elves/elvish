@@ -343,11 +343,11 @@ func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos
 	return valuesOp{newFixedTypeRun(TableType{}), f}
 }
 
-func combineOutputCapture(op valuesOp, bounds [2]StreamType) valuesOp {
+func combineChanCapture(op valuesOp, bounds [2]StreamType) valuesOp {
 	tr := typeRun{typeStar{AnyType{}, true}}
 	f := func(ev *Evaluator) []Value {
 		vs := []Value{}
-		newEv := ev.copy(fmt.Sprintf("output capture %v", op), false)
+		newEv := ev.copy(fmt.Sprintf("channel output capture %v", op), false)
 		ch := make(chan Value)
 		newEv.ports[1] = &port{ch: ch}
 		go func() {

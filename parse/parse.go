@@ -424,7 +424,7 @@ func (p *Parser) primary() (fn *PrimaryNode) {
 		return
 	case ItemLParen, ItemQuestionLParen:
 		if token.Typ == ItemLParen {
-			fn.Typ = OutputCapturePrimary
+			fn.Typ = ChanCapturePrimary
 		} else {
 			fn.Typ = StatusCapturePrimary
 		}
