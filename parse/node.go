@@ -130,13 +130,15 @@ type PrimaryType int
 
 // PrimaryType constants.
 const (
-	StringPrimary        PrimaryType = iota // string literal: a `a` a
-	VariablePrimary                         // variable: $a
-	TablePrimary                            // table: [a b c &k v]
-	ClosurePrimary                          // closure: {|a| cmd}
-	ListPrimary                             // list: {a b c}
-	ChanCapturePrimary                      // channel output capture: (cmd1|cmd2)
-	StatusCapturePrimary                    // status capture: ?(cmd1|cmd2)
+	BadPrimary PrimaryType = iota
+
+	StringPrimary        // string literal: a `a` a
+	VariablePrimary      // variable: $a
+	TablePrimary         // table: [a b c &k v]
+	ClosurePrimary       // closure: {|a| cmd}
+	ListPrimary          // list: {a b c}
+	ChanCapturePrimary   // channel output capture: (cmd1|cmd2)
+	StatusCapturePrimary // status capture: ?(cmd1|cmd2)
 )
 
 func newPrimary(pos Pos) *PrimaryNode {
