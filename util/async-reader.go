@@ -62,7 +62,7 @@ func (ar *AsyncReader) run() {
 
 	for {
 		fs.Set(fd, cfd)
-		_, err := sys.Select(maxfd+1, fs, nil, nil, nil)
+		err := sys.Select(maxfd+1, fs, nil, nil, nil)
 		if err != nil {
 			switch err {
 			case syscall.EINTR:

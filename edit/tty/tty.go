@@ -1,6 +1,10 @@
 // Package tty wraps tty ioctls.
 package tty
 
+/*
+#include <termios.h>
+*/
+import "C"
 import (
 	"os"
 	"syscall"
@@ -16,5 +20,6 @@ func Ioctl(fd int, req int, arg uintptr) error {
 }
 
 func FlushInput(fd int) error {
-	return Ioctl(fd, TCFLSH, TCIFLUSH)
+	_, err := C.tcflush((C.int)(fd), TCIFLUSH)
+	return err
 }

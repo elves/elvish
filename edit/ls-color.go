@@ -104,7 +104,8 @@ func determineFeature(fname string, mh bool) (fileFeature, error) {
 		return 0, err
 	}
 
-	m := stat.Mode
+	// The type of syscall.Stat_t.Mode is uint32 on Linux and uint16 on Mac
+	m := (uint32)(stat.Mode)
 
 	// Symlink and OrphanedSymlink has highest precedence
 	if is(m, syscall.S_IFLNK) {

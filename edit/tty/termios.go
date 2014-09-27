@@ -1,5 +1,9 @@
 package tty
 
+/*
+#include <termios.h>
+*/
+import "C"
 import (
 	"syscall"
 	"unsafe"
@@ -17,11 +21,15 @@ func NewTermiosFromFd(fd int) (*Termios, error) {
 }
 
 func (term *Termios) FromFd(fd int) error {
-	return Ioctl(fd, syscall.TCGETS, uintptr(unsafe.Pointer(term)))
+	_, err := C.tcgetattr((C.int)(fd),
+		(*C.struct_termios)(unsafe.Pointer(term)))
+	return err
 }
 
 func (term *Termios) ApplyToFd(fd int) error {
-	return Ioctl(fd, syscall.TCSETS, uintptr(unsafe.Pointer(term)))
+	_, err := C.tcsetattr((C.int)(fd), 0,
+		(*C.struct_termios)(unsafe.Pointer(term)))
+	return err
 }
 
 func (term *Termios) Copy() *Termios {
@@ -46,9 +54,9 @@ func setFlag(flag *uint32, mask uint32, v bool) {
 }
 
 func (term *Termios) SetIcanon(v bool) {
-	setFlag(&term.Lflag, syscall.ICANON, v)
+	setFlag((*uint32)(unsafe.Pointer(&term.Lflag)), syscall.ICANON, v)
 }
 
 func (term *Termios) SetEcho(v bool) {
-	setFlag(&term.Lflag, syscall.ECHO, v)
+	setFlag((*uint32)(unsafe.Pointer(&term.Lflag)), syscall.ECHO, v)
 }

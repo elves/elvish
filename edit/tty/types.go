@@ -8,13 +8,13 @@ package tty
 */
 import "C"
 import (
+	"syscall"
 	"unsafe"
 )
 
 const (
-	TCFLSH     = C.TCFLSH
-	TCIFLUSH   = C.TCIFLUSH
-	TIOCGWINSZ = C.TIOCGWINSZ
+	TCIFLUSH   = syscall.TCIFLUSH
+	TIOCGWINSZ = syscall.TIOCGWINSZ
 )
 
 type Winsize C.struct_winsize
