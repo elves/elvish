@@ -1,7 +1,7 @@
 EXE := elvish
 PKGS := edit eval parse util sys #service elvishd
 PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
-PKG_COVERAGES := $(addprefix cover/,$(PKGS))
+PKG_COVERS := $(addprefix cover/,$(PKGS))
 
 all: elvish elvishd test
 
@@ -18,7 +18,7 @@ cover/%: %
 	mkdir -p cover
 	go test -coverprofile=$@ ./$<
 
-cover: $(PKG_COVERAGES)
+cover: $(PKG_COVERS)
 
 z-%.go: %.go
 	go tool cgo -godefs $< > $@
