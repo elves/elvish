@@ -3,6 +3,7 @@ package util
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -12,7 +13,8 @@ func TestGetwd(t *testing.T) {
 		t.Errorf("Got error when creating temp dir: %v", error)
 	} else {
 		os.Chdir(dir)
-		if gotwd := Getwd(); gotwd != dir {
+		dir, error = filepath.EvalSymlinks(dir)
+		if gotwd := Getwd(); gotwd != dir || error != nil {
 			t.Errorf("Getwd() -> %v, want %v", gotwd, dir)
 		}
 		os.Remove(dir)

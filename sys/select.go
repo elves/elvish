@@ -61,7 +61,3 @@ func (fs *FdSet) Set(fds ...int) {
 func (fs *FdSet) Zero() {
 	C.fdzero(fs.c())
 }
-
-func Select(nfd int, r *FdSet, w *FdSet, e *FdSet, timeout *syscall.Timeval) (n int, err error) {
-	return syscall.Select(nfd, r.s(), w.s(), e.s(), timeout)
-}

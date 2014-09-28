@@ -1,16 +1,16 @@
 // Created by cgo -godefs - DO NOT EDIT
-// cgo -godefs edit/tty/types.go
+// cgo -godefs types.go
 
 package tty
 
 import (
+	"syscall"
 	"unsafe"
 )
 
 const (
-	TCFLSH     = 0x540b
-	TCIFLUSH   = 0x0
-	TIOCGWINSZ = 0x5413
+	TCIFLUSH   = syscall.TCIFLUSH
+	TIOCGWINSZ = syscall.TIOCGWINSZ
 )
 
 type Winsize struct {

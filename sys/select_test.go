@@ -43,10 +43,10 @@ func TestSelect(t *testing.T) {
 		syscall.Close(p1[1])
 		syscall.Close(p2[1])
 	}()
-	n, e := Select(maxfd+1, fs, nil, nil, nil)
-	if n < 1 || e != nil {
-		t.Errorf("Select(%v, %v, nil, nil, nil) => (%v, %v), want (>=1, <nil>)",
-			maxfd+1, fs, n, e)
+	e := Select(maxfd+1, fs, nil, nil, nil)
+	if e != nil {
+		t.Errorf("Select(%v, %v, nil, nil, nil) => %v, want <nil>",
+			maxfd+1, fs, e)
 	}
 	syscall.Close(p1[0])
 	syscall.Close(p2[0])
