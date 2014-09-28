@@ -55,24 +55,33 @@ Archlinux users can also try the AUR package
 
 ## Notes for Contributors
 
-The `.gitattributes` in this repo dictates that go sources be filtered through
-the `goimports` filter before checking in. If you would like to contribute,
-you are advised to set up the filter:
+### Testing
 
-1. Install `goimports`:
+Always run unit tests before committing. `make` will take care of this.
 
-    ```
-    go get code.google.com/p/go.tools/cmd/goimports
-    ```
+### Generated files
 
-2. Put this in `~/.gitconfig`:
+Some files are generated from other files. They should be commmited into the
+repository for this package to be go-getable. Run `make pre-commit` to
+re-generate them in case you modified the source. Read the Makefile for
+details.
 
-    ```
+### Formatting the Code
+
+Always format the code with `goimports` before committing. Run
+`go get code.google.com/p/go.tools/cmd/goimports` to install `goimports`, and
+`goimports -w .` to format all golang sources.
+
+To automate this you can set up a `goimports` filter for Git by putting this
+in `~/.gitconfig`:
+
     [filter "goimports"]
         clean = goimports
         smudge = cat
-        required
-    ```
+
+`.gitattributes` in this repository refers to this filter. Read more about Git
+attributes and filters
+[here](https://www.kernel.org/pub/software/scm/git/docs/gitattributes.html).
 
 ## Name
 
