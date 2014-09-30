@@ -1,15 +1,12 @@
 EXE := elvish
-PKGS := edit eval parse util sys #service elvishd
+PKGS := edit eval parse util sys
 PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
 PKG_COVERS := $(addprefix cover/,$(PKGS))
 
-all: elvish elvishd test
+all: elvish test
 
 elvish:
 	go get .
-
-elvishd:
-	go get ./elvishd
 
 test:
 	go test $(PKG_PATHS)
@@ -25,4 +22,4 @@ z-%.go: %.go
 
 pre-commit: edit/tty/z-types.go
 
-.PHONY: all elvish elvishd test cover pre-commit
+.PHONY: all elvish test cover pre-commit
