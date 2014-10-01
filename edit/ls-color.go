@@ -97,6 +97,14 @@ func is(u, p uint32) bool {
 	return u&p == p
 }
 
+// Weirdly, permission masks for group and other are missing on platforms other
+// than linux, darwin and netbsd. So we replicate some of them here.
+const (
+	S_IWOTH = 0x2 // Writable by other
+	S_IXGRP = 0x8 // Executable by group
+	S_IXOTH = 0x1 // Executable by other
+)
+
 func determineFeature(fname string, mh bool) (fileFeature, error) {
 	var stat syscall.Stat_t
 	err := syscall.Lstat(fname, &stat)
@@ -139,9 +147,9 @@ func determineFeature(fname string, mh bool) (fileFeature, error) {
 	case is(m, syscall.S_IFDIR):
 		// Perm bits features for directory
 		switch {
-		case is(m, syscall.S_IWOTH|syscall.S_ISVTX):
+		case is(m, S_IWOTH|syscall.S_ISVTX):
 			return featureWorldWritableStickyDirectory, nil
-		case is(m, syscall.S_IWOTH):
+		case is(m, S_IWOTH):
 			return featureWorldWritableDirectory, nil
 		case is(m, syscall.S_ISVTX):
 			return featureStickyDirectory, nil
@@ -158,7 +166,7 @@ func determineFeature(fname string, mh bool) (fileFeature, error) {
 		return featureSetuid, nil
 	case is(m, syscall.S_ISGID):
 		return featureSetgid, nil
-	case m&(syscall.S_IXUSR|syscall.S_IXGRP|syscall.S_IXOTH) != 0:
+	case m&(syscall.S_IXUSR|S_IXGRP|S_IXOTH) != 0:
 		return featureExecutable, nil
 	}
 
