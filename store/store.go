@@ -2,17 +2,17 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 	"net/url"
 
-	"github.com/coopernurse/gorp"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type Store struct {
-	dm *gorp.DbMap
+	db *sql.DB
 }
 
-var tableAdders []func(*gorp.DbMap)
+var createTable = map[string]string{}
 
 // DefaultDB returns the default database for storage.
 func DefaultDB() (*sql.DB, error) {
@@ -37,13 +37,14 @@ func NewStore() (*Store, error) {
 // NewStoreDB creates a new Store with a custom database. The database must be
 // a SQLite database.
 func NewStoreDB(db *sql.DB) (*Store, error) {
-	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.SqliteDialect{}}
-	for _, ta := range tableAdders {
-		ta(dbmap)
+	st := &Store{db}
+
+	for t, q := range createTable {
+		_, err := db.Exec(q)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create table %s: %v", t, q)
+		}
 	}
-	err := dbmap.CreateTablesIfNotExists()
-	if err != nil {
-		return nil, err
-	}
-	return &Store{dbmap}, nil
+
+	return st, nil
 }
