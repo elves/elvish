@@ -28,8 +28,11 @@ Navigation mode (triggered with ^N, inspired by
 
 ## Building
 
-Go >= 1.3 is required. Only Linux is supported at this moment. This repository
-is a go-getable package.
+Go >= 1.3 is required. This repository is a go-getable package.
+
+Linux is fully supported. I also try to ensure that it compiles on FreeBSD,
+which means it will also likely compile on other BSDs and Mac OS X. Windows is
+*not* yet supported, but it might be in future.
 
 In case you are new to Go, you are advised to read [How To Write Go
 Code](http://golang.org/doc/code.html), but here is a quick snippet:
