@@ -109,7 +109,7 @@ const (
 	MayContinue
 	ItemTerminated   ItemEnd = MayTerminate
 	ItemUnterminated ItemEnd = MayContinue
-	ItemAmbiguious   ItemEnd = MayTerminate | MayContinue
+	ItemAmbiguous    ItemEnd = MayTerminate | MayContinue
 )
 
 const eof = -1
@@ -273,7 +273,7 @@ loop:
 			break loop
 		}
 	}
-	l.emit(ItemSpace, ItemAmbiguious)
+	l.emit(ItemSpace, ItemAmbiguous)
 	return lexAny
 }
 
@@ -283,7 +283,7 @@ func lexSpace(l *Lexer) stateFn {
 	for isSpace(l.peek()) {
 		l.next()
 	}
-	l.emit(ItemSpace, ItemAmbiguious)
+	l.emit(ItemSpace, ItemAmbiguous)
 	return lexAnyOrComment
 }
 
@@ -314,7 +314,7 @@ func lexRedirLeader(l *Lexer) stateFn {
 			}
 		}
 	} else {
-		l.emit(ItemRedirLeader, ItemAmbiguious)
+		l.emit(ItemRedirLeader, ItemAmbiguous)
 	}
 
 	return lexAny
@@ -326,7 +326,7 @@ func lexBare(l *Lexer) stateFn {
 	for !TerminatesBare(l.peek()) {
 		l.next()
 	}
-	l.emit(ItemBare, ItemAmbiguious)
+	l.emit(ItemBare, ItemAmbiguous)
 	return lexAny
 }
 
@@ -388,7 +388,7 @@ loop:
 			l.next()
 		}
 	}
-	l.emit(ItemSingleQuoted, ItemAmbiguious)
+	l.emit(ItemSingleQuoted, ItemAmbiguous)
 	return lexAny
 }
 

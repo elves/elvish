@@ -8,19 +8,19 @@ var lexTests = []struct {
 }{
 	// Literals
 	{"a `b``c` \"d\\\"e\"", []Item{
-		{ItemBare, 0, "a", ItemAmbiguious},
-		{ItemSpace, 1, " ", ItemAmbiguious},
-		{ItemSingleQuoted, 2, "`b``c`", ItemAmbiguious},
-		{ItemSpace, 8, " ", ItemAmbiguious},
+		{ItemBare, 0, "a", ItemAmbiguous},
+		{ItemSpace, 1, " ", ItemAmbiguous},
+		{ItemSingleQuoted, 2, "`b``c`", ItemAmbiguous},
+		{ItemSpace, 8, " ", ItemAmbiguous},
 		{ItemDoubleQuoted, 9, `"d\"e"`, ItemTerminated},
 	}},
 	// Comment
 	{"a #b\nc", []Item{
-		{ItemBare, 0, "a", ItemAmbiguious},
-		{ItemSpace, 1, " ", ItemAmbiguious},
-		{ItemSpace, 2, "#b", ItemAmbiguious},
+		{ItemBare, 0, "a", ItemAmbiguous},
+		{ItemSpace, 1, " ", ItemAmbiguous},
+		{ItemSpace, 2, "#b", ItemAmbiguous},
 		{ItemEndOfLine, 4, "\n", ItemTerminated},
-		{ItemBare, 5, "c", ItemAmbiguious},
+		{ItemBare, 5, "c", ItemAmbiguous},
 	}},
 }
 
