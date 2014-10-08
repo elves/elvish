@@ -4,7 +4,7 @@ This is a work in progress. Things may change and/or break without notice. You
 have been warned...
 
 Fancy badges:
-[![GoDoc](https://godoc.org/github.com/xiaq/elvish?status.png)](https://godoc.org/github.com/xiaq/elvish)
+[![GoDoc](http://godoc.org/github.com/xiaq/elvish?status.png)](http://godoc.org/github.com/xiaq/elvish)
 [![Build Status](https://drone.io/github.com/xiaq/elvish/status.png)](https://drone.io/github.com/xiaq/elvish/latest)
 [![Stories in
 Ready](https://badge.waffle.io/xiaq/elvish.png?label=ready&title=Ready)](https://waffle.io/xiaq/elvish)
