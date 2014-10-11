@@ -86,6 +86,11 @@ in `~/.gitconfig`:
 attributes and filters
 [here](https://www.kernel.org/pub/software/scm/git/docs/gitattributes.html).
 
+### Licensing
+
+By contributing, you agree to license your code under the same license as
+existing source code of Elvish. See the [License](#license) section.
+
 ## Name
 
 In rogue-likes, items made by the elves have a reputation of high quality.
