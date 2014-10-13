@@ -17,14 +17,19 @@ import (
 // goroutine. When elvish code spawns goroutines, the Evaluator is copied and
 // has certain components replaced.
 type Evaluator struct {
-	Compiler    *Compiler
-	name, text  string
-	context     string
+	Compiler *Compiler
+	evaluatorEphemeral
 	scope       map[string]*Value
 	env         *Env
 	searchPaths []string
 	ports       []*port
 	statusCb    func([]Value)
+}
+
+// evaluatorEphemeral holds the ephemeral parts of an Evaluator, namely the
+// parts only valid through one startEval-stopEval cycle.
+type evaluatorEphemeral struct {
+	name, text, context string
 }
 
 func statusOk(vs []Value) bool {
@@ -150,19 +155,19 @@ func (ev *Evaluator) eval(name, text string, op Op) (err error) {
 	if op == nil {
 		return nil
 	}
-	defer util.Recover(&err)
+	ev.startEval(name, text)
 	defer ev.stopEval()
-	ev.name = name
-	ev.text = text
-	ev.context = "top"
+	defer util.Recover(&err)
 	op(ev)
 	return nil
 }
 
+func (ev *Evaluator) startEval(name, text string) {
+	ev.evaluatorEphemeral = evaluatorEphemeral{name, text, "top"}
+}
+
 func (ev *Evaluator) stopEval() {
-	ev.name = ""
-	ev.text = ""
-	ev.context = ""
+	ev.evaluatorEphemeral = evaluatorEphemeral{}
 }
 
 // errorf stops the ev.eval immediately by panicking with a diagnostic message.

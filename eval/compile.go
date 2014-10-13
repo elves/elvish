@@ -13,7 +13,8 @@ type Compiler struct {
 	compilerEphemeral
 }
 
-// compilerEphemeral wraps the ephemeral parts of a Compiler.
+// compilerEphemeral wraps the ephemeral parts of a Compiler, namely the parts
+// only valid through one startCompile-stopCompile cycle.
 type compilerEphemeral struct {
 	name, text string
 	scopes     []map[string]Type
@@ -50,10 +51,15 @@ func (cp *Compiler) startCompile(name, text string, scope map[string]Type) {
 	}
 }
 
+func (cp *Compiler) stopCompile() {
+	cp.compilerEphemeral = compilerEphemeral{}
+}
+
 // Compile compiles a ChunkNode into an Op, with the knowledge of current
 // scope. The supplied name and text are used in diagnostic messages.
 func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode, scope map[string]Type) (op Op, err error) {
 	cp.startCompile(name, text, scope)
+	defer cp.stopCompile()
 	defer util.Recover(&err)
 	return cp.compileChunk(n), nil
 }
