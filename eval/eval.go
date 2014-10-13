@@ -66,7 +66,7 @@ func NewEvaluator() *Evaluator {
 			fmt.Print("Status: ")
 			for i, v := range vs {
 				if i > 0 {
-					fmt.Print(", ")
+					fmt.Print(" ")
 				}
 				fmt.Print(v.Repr())
 			}
