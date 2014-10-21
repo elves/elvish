@@ -45,8 +45,7 @@ func statusOk(vs []Value) bool {
 	return true
 }
 
-// NewEvaluator creates a new Evaluator from a slice of environment strings
-// in the form "key=value".
+// NewEvaluator creates a new top-level Evaluator.
 func NewEvaluator() *Evaluator {
 	env := NewEnv()
 	env.fill()
@@ -55,8 +54,9 @@ func NewEvaluator() *Evaluator {
 		"env": valuePtr(env), "pid": valuePtr(pid),
 	}
 	ev := &Evaluator{
-		Compiler: &Compiler{},
-		scope:    g, env: env,
+		Compiler: NewCompiler(),
+		scope:    g,
+		env:      env,
 		ports: []*port{
 			&port{f: os.Stdin}, &port{f: os.Stdout}, &port{f: os.Stderr}},
 		statusCb: func(vs []Value) {
@@ -114,6 +114,8 @@ func (ev *Evaluator) copy(context string, moveShouldClose bool) *Evaluator {
 	return newEv
 }
 
+// port returns ev.ports[i] or nil if i is out of range. This makes it possible
+// to treat ev.ports as if it has an infinite tail of nil's.
 func (ev *Evaluator) port(i int) *port {
 	if i >= len(ev.ports) {
 		return nil
@@ -121,6 +123,7 @@ func (ev *Evaluator) port(i int) *port {
 	return ev.ports[i]
 }
 
+// growPorts makes the size of ev.ports at least n, adding nil's if necessary.
 func (ev *Evaluator) growPorts(n int) {
 	if len(ev.ports) >= n {
 		return
