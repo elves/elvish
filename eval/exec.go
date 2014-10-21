@@ -170,20 +170,19 @@ func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 
 	// Make a subevaluator.
 	// BUG(xiaq): When evaluating closures, async access to globals, in and out can be problematic.
-	newEv := ev.copy(fmt.Sprintf("closure %v", fm.Closure), true)
-	newEv.scope = make(map[string]*Value)
+	ev.scope = make(map[string]*Value)
 	for name, pvalue := range fm.Closure.Enclosed {
-		newEv.scope[name] = pvalue
+		ev.scope[name] = pvalue
 	}
-	newEv.statusCb = nil
+	ev.statusCb = nil
 	go func() {
 		// TODO Support calling closure originated in another source.
-		err := newEv.eval(ev.name, ev.text, fm.Closure.Op)
+		err := ev.eval(ev.name, ev.text, fm.Closure.Op)
 		if err != nil {
 			fmt.Print(err.(*util.ContextualError).Pprint())
 		}
 		// Ports are closed after executaion of closure is complete.
-		newEv.closePorts()
+		ev.closePorts()
 		// TODO Support returning value.
 		update <- &StateUpdate{Terminated: true}
 		close(update)

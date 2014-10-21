@@ -88,28 +88,20 @@ func (ev *Evaluator) SetChanOut(ch chan Value) {
 	ev.ports[1].ch = ch
 }
 
-// copy returns a copy of ev with context changed. ev.ports is copied deeply.
-// If moveShouldClose is true, all ports in ev has their shouldClose flags
-// reset. Otherwise all ports in the new Evaluator has their shouldClose flags
-// reset.
-func (ev *Evaluator) copy(context string, moveShouldClose bool) *Evaluator {
+// copy returns a copy of ev with context changed. ev.ports is copied deeply
+// and all shouldClose flags are reset.
+//
+// XXX Relying on the subevaluators to call closePorts can be error-prone.
+func (ev *Evaluator) copy(context string) *Evaluator {
 	newEv := new(Evaluator)
 	*newEv = *ev
 	newEv.context = context
-	// Do a deep copy of ports.
+	// Do a deep copy of ports and reset shouldClose flags
 	newEv.ports = make([]*port, len(ev.ports))
 	for i, p := range ev.ports {
 		newEv.ports[i] = &port{}
 		*newEv.ports[i] = *p
-	}
-	if moveShouldClose {
-		for _, port := range ev.ports {
-			port.shouldClose = false
-		}
-	} else {
-		for _, port := range newEv.ports {
-			port.shouldClose = false
-		}
+		newEv.ports[i].shouldClose = false
 	}
 	return newEv
 }
