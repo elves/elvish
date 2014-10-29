@@ -8,8 +8,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/xiaq/elvish/edit/tty"
-	"github.com/xiaq/elvish/util"
+	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/util"
 )
 
 const (

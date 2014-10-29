@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/xiaq/elvish/parse"
-	"github.com/xiaq/elvish/util"
+	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 // Compiler compiles an Elvish AST into an Op.

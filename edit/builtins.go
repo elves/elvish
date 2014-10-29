@@ -6,7 +6,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/xiaq/elvish/util"
+	"github.com/elves/elvish/util"
 )
 
 // Line editor builtins.

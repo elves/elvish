@@ -6,7 +6,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/xiaq/elvish/sys"
+	"github.com/elves/elvish/sys"
 )
 
 const (

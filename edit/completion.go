@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/xiaq/elvish/parse"
+	"github.com/elves/elvish/parse"
 )
 
 type tokenPart struct {

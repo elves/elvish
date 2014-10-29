@@ -2,7 +2,7 @@ package eval
 
 // Builtin special forms.
 
-import "github.com/xiaq/elvish/parse"
+import "github.com/elves/elvish/parse"
 
 type strOp func(*Evaluator) string
 type builtinSpecialCompile func(*Compiler, *parse.FormNode) strOp

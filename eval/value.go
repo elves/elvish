@@ -9,8 +9,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/xiaq/elvish/parse"
-	"github.com/xiaq/elvish/util"
+	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 type Type interface {

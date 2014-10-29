@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/xiaq/elvish/parse"
+	"github.com/elves/elvish/parse"
 )
 
 // Definition of Op and friends and combinators.

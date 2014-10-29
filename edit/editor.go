@@ -8,9 +8,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/xiaq/elvish/edit/tty"
-	"github.com/xiaq/elvish/eval"
-	"github.com/xiaq/elvish/parse"
+	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse"
 )
 
 const (

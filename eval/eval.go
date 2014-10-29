@@ -9,8 +9,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/xiaq/elvish/parse"
-	"github.com/xiaq/elvish/util"
+	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 // Evaluator maintains runtime context of elvish code within a single

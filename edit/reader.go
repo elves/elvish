@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/xiaq/elvish/util"
+	"github.com/elves/elvish/util"
 )
 
 const (

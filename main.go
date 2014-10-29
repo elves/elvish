@@ -10,10 +10,10 @@ import (
 	"os/user"
 	"unicode/utf8"
 
-	"github.com/xiaq/elvish/edit"
-	"github.com/xiaq/elvish/eval"
-	"github.com/xiaq/elvish/parse"
-	"github.com/xiaq/elvish/util"
+	"github.com/elves/elvish/edit"
+	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 const (

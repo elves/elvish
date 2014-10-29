@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/xiaq/elvish/util"
+	"github.com/elves/elvish/util"
 )
 
 func compoundOfOnePrimary(p *PrimaryNode) *CompoundNode {
