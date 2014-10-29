@@ -4,10 +4,10 @@ This is a work in progress. Things may change and/or break without notice. You
 have been warned...
 
 Fancy badges:
-[![GoDoc](http://godoc.org/github.com/xiaq/elvish?status.png)](http://godoc.org/github.com/xiaq/elvish)
-[![Build Status](https://drone.io/github.com/xiaq/elvish/status.png)](https://drone.io/github.com/xiaq/elvish/latest)
+[![GoDoc](http://godoc.org/github.com/elves/elvish?status.png)](http://godoc.org/github.com/elves/elvish)
+[![Build Status](https://drone.io/github.com/elves/elvish/status.png)](https://drone.io/github.com/elves/elvish/latest)
 [![Stories in
-Ready](https://badge.waffle.io/xiaq/elvish.png?label=ready&title=Ready)](https://waffle.io/xiaq/elvish)
+Ready](https://badge.waffle.io/elves/elvish.png?label=ready&title=Ready)](https://waffle.io/elves/elvish)
 
 ## Obligatory screenshots
 > All software websites should have screenshots.
@@ -40,14 +40,14 @@ Code](http://golang.org/doc/code.html), but here is a quick snippet:
 ```
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOPATH/bin
-go get github.com/xiaq/elvish
+go get github.com/elves/elvish
 elvish
 ```
 
 To update and rebuild:
 
 ```
-go get -u github.com/xiaq/elvish
+go get -u github.com/elves/elvish
 ```
 
 Remember to put the two `export`s above into your `bashrc` or `zshrc` (or
