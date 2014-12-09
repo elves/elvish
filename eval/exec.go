@@ -19,9 +19,10 @@ const (
 // ch is not nil, it may convey chanStream. When both are nil, it is always
 // closed and may not convey any stream (unusedStream).
 type port struct {
-	f           *os.File
-	ch          chan Value
-	shouldClose bool
+	f       *os.File
+	ch      chan Value
+	closeF  bool
+	closeCh bool
 }
 
 // StreamType represents what form of data stream a command expects on each
@@ -76,16 +77,14 @@ type form struct {
 	Command
 }
 
-// closePorts closes all ports in ev.ports that were marked shouldClose.
+// closePorts closes the suitable components of all ports in ev.ports that were
+// marked marked for closing.
 func (ev *Evaluator) closePorts() {
 	for _, port := range ev.ports {
-		if !port.shouldClose {
-			continue
-		}
-		if port.f != nil {
+		if port.closeF {
 			port.f.Close()
 		}
-		if port.ch != nil {
+		if port.closeCh {
 			close(port.ch)
 		}
 	}

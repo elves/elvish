@@ -99,9 +99,7 @@ func (ev *Evaluator) copy(context string) *Evaluator {
 	// Do a deep copy of ports and reset shouldClose flags
 	newEv.ports = make([]*port, len(ev.ports))
 	for i, p := range ev.ports {
-		newEv.ports[i] = &port{}
-		*newEv.ports[i] = *p
-		newEv.ports[i].shouldClose = false
+		newEv.ports[i] = &port{p.f, p.ch, false, false}
 	}
 	return newEv
 }

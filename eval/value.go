@@ -46,18 +46,17 @@ func (et EnvType) Default() Value {
 }
 
 type ClosureType struct {
-	Bounds [2]StreamType
 }
 
 func (st ClosureType) Default() Value {
-	return NewClosure([]string{}, nil, map[string]*Value{}, st.Bounds)
+	return NewClosure([]string{}, nil, map[string]*Value{})
 }
 
 var typenames = map[string]Type{
 	"string":  StringType{},
 	"table":   TableType{},
 	"env":     EnvType{},
-	"closure": ClosureType{[2]StreamType{}},
+	"closure": ClosureType{},
 }
 
 // Value is the runtime representation of an elvish value.
@@ -232,15 +231,14 @@ type Closure struct {
 	ArgNames []string
 	Op       Op
 	Enclosed map[string]*Value
-	Bounds   [2]StreamType
 }
 
 func (c *Closure) Type() Type {
-	return ClosureType{c.Bounds}
+	return ClosureType{}
 }
 
-func NewClosure(a []string, op Op, e map[string]*Value, b [2]StreamType) *Closure {
-	return &Closure{a, op, e, b}
+func NewClosure(a []string, op Op, e map[string]*Value) *Closure {
+	return &Closure{a, op, e}
 }
 
 func (c *Closure) Repr() string {

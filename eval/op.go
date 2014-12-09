@@ -91,7 +91,7 @@ func combineChunk(ops []valuesOp) Op {
 	}
 }
 
-func combineClosure(ops []valuesOp, enclosed map[string]Type, bounds [2]StreamType) valuesOp {
+func combineClosure(ops []valuesOp, enclosed map[string]Type) valuesOp {
 	op := combineChunk(ops)
 	// BUG(xiaq): Closure arguments is (again) not supported
 	f := func(ev *Evaluator) []Value {
@@ -99,20 +99,13 @@ func combineClosure(ops []valuesOp, enclosed map[string]Type, bounds [2]StreamTy
 		for name := range enclosed {
 			enclosed[name] = ev.scope[name]
 		}
-		return []Value{NewClosure(nil, op, enclosed, bounds)}
+		return []Value{NewClosure(nil, op, enclosed)}
 	}
-	return valuesOp{newFixedTypeRun(ClosureType{bounds}), f}
+	return valuesOp{newFixedTypeRun(ClosureType{}), f}
 }
 
-func combinePipeline(ops []stateUpdatesOp, bounds [2]StreamType, internals []StreamType, p parse.Pos) valuesOp {
+func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 	f := func(ev *Evaluator) []Value {
-		// TODO(xiaq): Should catch when compiling
-		if !ev.ports[0].mayConvey(bounds[0]) {
-			ev.errorf(p, "pipeline input not satisfiable")
-		}
-		if !ev.ports[1].mayConvey(bounds[1]) {
-			ev.errorf(p, "pipeline output not satisfiable")
-		}
 		var nextIn *port
 		updates := make([]<-chan *StateUpdate, len(ops))
 		// For each form, create a dedicated Evaluator and run
@@ -122,27 +115,19 @@ func combinePipeline(ops []stateUpdatesOp, bounds [2]StreamType, internals []Str
 				newEv.ports[0] = nextIn
 			}
 			if i < len(ops)-1 {
-				switch internals[i] {
-				case unusedStream:
-					newEv.ports[1] = nil
-					nextIn = nil
-				case fdStream:
-					// os.Pipe sets O_CLOEXEC, which is what we want.
-					reader, writer, e := os.Pipe()
-					if e != nil {
-						ev.errorf(p, "failed to create pipe: %s", e)
-					}
-					newEv.ports[1] = &port{f: writer, shouldClose: true}
-					nextIn = &port{f: reader, shouldClose: true}
-				case chanStream:
-					// TODO Buffered channel?
-					ch := make(chan Value)
-					// Only the writer closes the channel port
-					newEv.ports[1] = &port{ch: ch, shouldClose: true}
-					nextIn = &port{ch: ch}
-				default:
-					panic("bad StreamType value")
+				// Each internal port pair consists of a (byte) pipe pair and a
+				// channel.
+				// os.Pipe sets O_CLOEXEC, which is what we want.
+				reader, writer, e := os.Pipe()
+				if e != nil {
+					ev.errorf(p, "failed to create pipe: %s", e)
 				}
+				// TODO Buffered channel?
+				ch := make(chan Value)
+				newEv.ports[1] = &port{
+					f: writer, ch: ch, closeF: true, closeCh: true}
+				nextIn = &port{
+					f: reader, ch: ch, closeF: true, closeCh: false}
 			}
 			updates[i] = op(newEv)
 		}
@@ -344,7 +329,7 @@ func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos
 	return valuesOp{newFixedTypeRun(TableType{}), f}
 }
 
-func combineChanCapture(op valuesOp, bounds [2]StreamType) valuesOp {
+func combineChanCapture(op valuesOp) valuesOp {
 	tr := typeRun{typeStar{AnyType{}, true}}
 	f := func(ev *Evaluator) []Value {
 		vs := []Value{}
