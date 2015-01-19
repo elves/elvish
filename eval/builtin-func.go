@@ -70,7 +70,7 @@ func put(ev *Evaluator, args []Value) string {
 func typeof(ev *Evaluator, args []Value) string {
 	out := ev.ports[1].ch
 	for _, a := range args {
-		out <- NewString(fmt.Sprintf("%#v", a.Type()))
+		out <- NewString(a.Type().String())
 	}
 	return ""
 }
