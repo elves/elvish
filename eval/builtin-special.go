@@ -44,11 +44,38 @@ func checkSetType(cp *Compiler, names []string, values []*parse.CompoundNode, vo
 	}
 }
 
-func mustSinglePrimary(cp *Compiler, cn *parse.CompoundNode, msg string) *parse.PrimaryNode {
+// ensure that a CompoundNode contains exactly one PrimaryNode.
+func ensurePrimary(cp *Compiler, cn *parse.CompoundNode, msg string) *parse.PrimaryNode {
 	if len(cn.Nodes) != 1 || cn.Nodes[0].Right != nil {
 		cp.errorf(cn.Pos, msg)
 	}
 	return cn.Nodes[0].Left
+}
+
+// ensure that a CompoundNode contains exactly one PrimaryNode of type
+// VariablePrimary or StringPrimary
+func ensureVariableOrStringPrimary(cp *Compiler, cn *parse.CompoundNode, msg string) (*parse.PrimaryNode, string) {
+	pn := ensurePrimary(cp, cn, msg)
+	switch pn.Typ {
+	case parse.VariablePrimary, parse.StringPrimary:
+		return pn, pn.Node.(*parse.StringNode).Text
+	default:
+		cp.errorf(cn.Pos, msg)
+		return nil, ""
+	}
+}
+
+// ensure the first compound of the form is a VariablePrimary. This is merely
+// for better error messages; No actual processing is done.
+func ensureStartWithVariable(cp *Compiler, fn *parse.FormNode, form string) {
+	if len(fn.Args.Nodes) == 0 {
+		cp.errorf(fn.Pos, "expect variable after %s", form)
+	}
+	expect := "expect variable"
+	pn := ensurePrimary(cp, fn.Args.Nodes[0], expect)
+	if pn.Typ != parse.VariablePrimary {
+		cp.errorf(pn.Pos, expect)
+	}
 }
 
 const (
@@ -62,11 +89,19 @@ const (
 	setArg1ReqMulti     = varArg1ReqMulti
 )
 
-// The var special form can take any of the following forms:
-// var [$u $v type1 $x type2 ...]
-// var [$u $v type1 $x type2 ...] [value1 value2 ...]
-// var $v type       (short for var [$v type])
-// var $v type value (short for var [$v type] [value])
+// An invocation of the var special form looks like:
+//
+// VarForm    = 'var' { VarGroup } [ { VariablePrimary } ] [ Assignment ]
+// VarGroup   = { VariablePrimary } StringPrimary
+// Assignment = '=' { Compound }
+//
+// Variables in the same VarGroup has the type specified by the StringPrimary.
+// Trailing variables have type Any. For instance,
+//
+// var $u $v Type1 $x $y Type2 $z = a b c d e
+//
+// gives $u and $v type Type1, $x $y type Type2 and $z type Any and
+// assigns them the values a, b, c, d, e respectively.
 func compileVar(cp *Compiler, fn *parse.FormNode) strOp {
 	var (
 		names  []string
@@ -74,91 +109,34 @@ func compileVar(cp *Compiler, fn *parse.FormNode) strOp {
 		values []*parse.CompoundNode
 	)
 
-	args := fn.Args
-	if len(args.Nodes) == 0 {
-		cp.errorf(fn.Pos, "empty var form")
-	}
+	ensureStartWithVariable(cp, fn, "var")
 
-	p0 := mustSinglePrimary(cp, args.Nodes[0], varArg0Req)
-
-	switch p0.Typ {
-	case parse.VariablePrimary:
-		if len(args.Nodes) < 2 {
-			// TODO Identify the end of args.Nodes[0]
-			cp.errorf(args.Nodes[0].Pos, "must be followed by type")
-		}
-		if len(args.Nodes) > 3 {
-			cp.errorf(args.Nodes[3].Pos, "too many arguments")
-		}
-
-		names = []string{p0.Node.(*parse.StringNode).Text}
-
-		p1 := mustSinglePrimary(cp, args.Nodes[1], varArg1ReqSingle)
-		if p1.Typ != parse.StringPrimary {
-			cp.errorf(p1.Pos, varArg1ReqSingle)
-		}
-		p1s := p1.Node.(*parse.StringNode).Text
-		if t, ok := typenames[p1s]; !ok {
-			cp.errorf(p1.Pos, varArg1ReqSingle)
+	for i, cn := range fn.Args.Nodes {
+		expect := "expect variable, type or equal sign"
+		pn, text := ensureVariableOrStringPrimary(cp, cn, expect)
+		if pn.Typ == parse.VariablePrimary {
+			names = append(names, text)
 		} else {
-			types = []Type{t}
-		}
-
-		if len(args.Nodes) == 3 {
-			values = []*parse.CompoundNode{args.Nodes[2]}
-		}
-	case parse.TablePrimary:
-		if len(args.Nodes) > 2 {
-			cp.errorf(args.Nodes[3].Pos, "too many arguments")
-		} else if len(args.Nodes) == 2 {
-			p1 := mustSinglePrimary(cp, args.Nodes[1], varArg1ReqMulti)
-			if p1.Typ != parse.TablePrimary {
-				cp.errorf(p1.Pos, varArg1ReqMulti)
-			}
-			t1 := p1.Node.(*parse.TableNode)
-			if len(t1.Dict) > 0 {
-				cp.errorf(t1.Pos, varArg1ReqMulti)
-			}
-			values = append(values, t1.List...)
-		}
-
-		t0 := p0.Node.(*parse.TableNode)
-		if len(t0.Dict) > 0 {
-			cp.errorf(t0.Pos, "must not contain dict part")
-		}
-		var firstUntyped *parse.PrimaryNode
-		for _, cn := range t0.List {
-			p := mustSinglePrimary(cp, cn, varArg0ReqMultiElem)
-			switch p.Typ {
-			case parse.StringPrimary:
-				ps := p.Node.(*parse.StringNode).Text
-				if t, ok := typenames[ps]; !ok {
-					cp.errorf(p.Pos, varArg0ReqMultiElem)
+			if text == "=" {
+				values = fn.Args.Nodes[i+1:]
+				break
+			} else {
+				if t, ok := typenames[text]; !ok {
+					cp.errorf(pn.Pos, "%v is not a valid type name", text)
 				} else {
-					if len(names) == 0 {
-						cp.errorf(p.Pos, "first element must be variable")
-					} else if len(names) == len(types) {
-						cp.errorf(p.Pos, "duplicate type")
+					if len(names) == len(types) {
+						cp.errorf(pn.Pos, "duplicate type")
 					}
 					for i := len(types); i < len(names); i++ {
 						types = append(types, t)
 					}
-					firstUntyped = nil
 				}
-			case parse.VariablePrimary:
-				if firstUntyped == nil {
-					firstUntyped = p
-				}
-				names = append(names, p.Node.(*parse.StringNode).Text)
-			default:
-				cp.errorf(p.Pos, varArg0ReqMultiElem)
 			}
 		}
-		if len(types) < len(names) {
-			cp.errorf(firstUntyped.Pos, "variables from here lack type")
-		}
-	default:
-		cp.errorf(p0.Pos, varArg0Req)
+	}
+
+	for i := len(types); i < len(names); i++ {
+		types = append(types, AnyType{})
 	}
 
 	for i, name := range names {
@@ -181,57 +159,29 @@ func compileVar(cp *Compiler, fn *parse.FormNode) strOp {
 	}
 }
 
-// The set special form can take any of the following forms:
-// set [$u $v ...] [value1 value2 ...]
-// var $v value (short for set [$v] [value])
+// An invocation of the set special form looks like:
+//
+// SetForm = 'set' { VariablePrimary } '=' { Compound }
 func compileSet(cp *Compiler, fn *parse.FormNode) strOp {
 	var (
 		names  []string
 		values []*parse.CompoundNode
 	)
 
-	args := fn.Args
-	if len(args.Nodes) == 0 {
-		cp.errorf(fn.Pos, "empty var form")
-	} else if len(args.Nodes) == 1 {
-		// TODO Identify the end of args.Nodes[0]
-		cp.errorf(args.Nodes[0].Pos, "must be followed by value argument")
-	} else if len(args.Nodes) > 2 {
-		cp.errorf(args.Nodes[2].Pos, "too many arguments")
-	}
+	ensureStartWithVariable(cp, fn, "set")
 
-	p0 := mustSinglePrimary(cp, args.Nodes[0], setArg0Req)
-
-	switch p0.Typ {
-	case parse.VariablePrimary:
-		names = []string{p0.Node.(*parse.StringNode).Text}
-		values = []*parse.CompoundNode{args.Nodes[1]}
-	case parse.TablePrimary:
-		t0 := p0.Node.(*parse.TableNode)
-		if len(t0.Dict) > 0 {
-			cp.errorf(t0.Pos, "must not contain dict part")
-		}
-		for _, cn := range t0.List {
-			p := mustSinglePrimary(cp, cn, setArg0ReqMultiElem)
-			switch p.Typ {
-			case parse.VariablePrimary:
-				names = append(names, p.Node.(*parse.StringNode).Text)
-			default:
-				cp.errorf(p.Pos, setArg0ReqMultiElem)
+	for i, cn := range fn.Args.Nodes {
+		expect := "expect variable or equal sign"
+		pn, text := ensureVariableOrStringPrimary(cp, cn, expect)
+		if pn.Typ == parse.VariablePrimary {
+			names = append(names, text)
+		} else {
+			if text != "=" {
+				cp.errorf(pn.Pos, expect)
 			}
+			values = fn.Args.Nodes[i+1:]
+			break
 		}
-
-		p1 := mustSinglePrimary(cp, args.Nodes[1], setArg1ReqMulti)
-		if p1.Typ != parse.TablePrimary {
-			cp.errorf(p1.Pos, setArg1ReqMulti)
-		}
-		t1 := p1.Node.(*parse.TableNode)
-		if len(t1.Dict) > 0 {
-			cp.errorf(t1.Pos, setArg1ReqMulti)
-		}
-		values = append(values, t1.List...)
-	default:
-		cp.errorf(p0.Pos, setArg0Req)
 	}
 
 	var vop valuesOp

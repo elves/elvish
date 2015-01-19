@@ -72,16 +72,16 @@ var evalTests = []struct {
 	{"put [a b c &key value][key]", stringValues("value"), false},
 
 	// Variable and compounding
-	{"var $x string `SHELL`\nput `WOW, SUCH `$x`, MUCH COOL`\n",
+	{"var $x string = `SHELL`\nput `WOW, SUCH `$x`, MUCH COOL`\n",
 		stringValues("WOW, SUCH SHELL, MUCH COOL"), false},
 
 	// var and set
-	{"var [$x $y string] [SUCH VAR]; put $x $y",
+	{"var $x $y string = SUCH VAR; put $x $y",
 		stringValues("SUCH", "VAR"), false},
-	{"var [$x $y string]; set [$x $y] [SUCH SET]; put $x $y",
+	{"var $x $y string; set $x $y = SUCH SET; put $x $y",
 		stringValues("SUCH", "SET"), false},
-	{"var $x", nil, true},
-	{"var [$x string $y]", nil, true},
+	{"var $x", stringValues(), false},
+	{"var $x string $y", stringValues(), false},
 
 	// Status capture
 	{"put ?(true|false|false)",
