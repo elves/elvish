@@ -33,13 +33,14 @@ func checkSetType(cp *Compiler, names []string, values []*parse.CompoundNode, vo
 		return
 	}
 	for i, name := range names {
-		t := vop.tr[i].t
-		if _, ok := t.(AnyType); ok {
+		tval := vop.tr[i].t
+		tvar := cp.ResolveVar(name)
+		if isAny(tval) || isAny(tvar) {
 			// TODO Check type soundness at runtime
 			continue
 		}
-		if cp.ResolveVar(name) != t {
-			cp.errorf(values[i].Pos, "type mismatch")
+		if tvar != tval {
+			cp.errorf(values[i].Pos, "type mismatch: assigning %#v value to %#v variable", tval, tvar)
 		}
 	}
 }

@@ -59,6 +59,11 @@ var typenames = map[string]Type{
 	"closure": ClosureType{},
 }
 
+func isAny(t Type) bool {
+	_, ok := t.(AnyType)
+	return ok
+}
+
 // Value is the runtime representation of an elvish value.
 type Value interface {
 	Type() Type
