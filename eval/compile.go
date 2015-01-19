@@ -138,17 +138,23 @@ func (cp *Compiler) mustResolveVar(name string, p parse.Pos) Type {
 	return nil
 }
 
+// resolveVarOnThisScope returns the type of the named variable on current
+// scope. When such a variable does not exist, nil is returned.
+func (cp *Compiler) resolveVarOnThisScope(name string) Type {
+	return cp.scopes[len(cp.scopes)-1][name]
+}
+
 // ResolveVar returns the type of a variable with supplied name, found in
 // current or upper scopes. If such a variable is nonexistent, a nil is
 // returned. When the value to resolve is not on the current scope, it is added
 // to cp.enclosed.
 func (cp *Compiler) ResolveVar(name string) Type {
-	thisScope := len(cp.scopes) - 1
-	for i := thisScope; i >= 0; i-- {
+	if t := cp.resolveVarOnThisScope(name); t != nil {
+		return t
+	}
+	for i := len(cp.scopes) - 2; i >= 0; i-- {
 		if t := cp.scopes[i][name]; t != nil {
-			if i < thisScope {
-				cp.enclosed[name] = t
-			}
+			cp.enclosed[name] = t
 			return t
 		}
 	}
@@ -323,8 +329,9 @@ func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) valuesOp {
 		return combineTable(list, keys, values, fn.Pos)
 	case parse.ClosurePrimary:
 		op, enclosed := cp.compileClosure(fn.Node.(*parse.ClosureNode))
+		// Added variables enclosed on inner closures to cp.enclosed
 		for name, typ := range enclosed {
-			if !cp.hasVarOnThisScope(name) {
+			if cp.resolveVarOnThisScope(name) == nil {
 				cp.enclosed[name] = typ
 			}
 		}
