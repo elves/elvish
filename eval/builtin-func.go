@@ -21,6 +21,7 @@ type builtinFunc struct {
 var builtinFuncs = map[string]builtinFunc{
 	"fn":        builtinFunc{fn, [2]StreamType{}},
 	"put":       builtinFunc{put, [2]StreamType{0, chanStream}},
+	"typeof":    builtinFunc{typeof, [2]StreamType{0, fdStream}},
 	"print":     builtinFunc{print, [2]StreamType{0, fdStream}},
 	"println":   builtinFunc{println, [2]StreamType{0, fdStream}},
 	"printchan": builtinFunc{printchan, [2]StreamType{chanStream, fdStream}},
@@ -62,6 +63,14 @@ func put(ev *Evaluator, args []Value) string {
 	out := ev.ports[1].ch
 	for _, a := range args {
 		out <- a
+	}
+	return ""
+}
+
+func typeof(ev *Evaluator, args []Value) string {
+	out := ev.ports[1].ch
+	for _, a := range args {
+		out <- NewString(fmt.Sprintf("%#v", a.Type()))
 	}
 	return ""
 }
