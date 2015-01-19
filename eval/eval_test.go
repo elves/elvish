@@ -82,6 +82,8 @@ var evalTests = []struct {
 		stringValues("SUCH", "SET"), false},
 	{"var $x", stringValues(), false},
 	{"var $x string $y", stringValues(), false},
+	{"var $x table; set $x = [lorem ipsum]; put $x[1]",
+		stringValues("ipsum"), false},
 
 	// Status capture
 	{"put ?(true|false|false)",

@@ -270,11 +270,16 @@ func (cp *Compiler) compileSpaced(ln *parse.SpacedNode) valuesOp {
 
 // compileCompound compiles a CompoundNode into a valuesOp.
 func (cp *Compiler) compileCompound(tn *parse.CompoundNode) valuesOp {
-	ops := make([]valuesOp, len(tn.Nodes))
-	for i, fn := range tn.Nodes {
-		ops[i] = cp.compileSubscript(fn)
+	var op valuesOp
+	if len(tn.Nodes) == 1 {
+		op = cp.compileSubscript(tn.Nodes[0])
+	} else {
+		ops := make([]valuesOp, len(tn.Nodes))
+		for i, fn := range tn.Nodes {
+			ops[i] = cp.compileSubscript(fn)
+		}
+		op = combineCompound(ops)
 	}
-	op := combineCompound(ops)
 	if tn.Sigil == parse.NoSigil {
 		return op
 	}
