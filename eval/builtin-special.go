@@ -2,7 +2,11 @@ package eval
 
 // Builtin special forms.
 
-import "github.com/elves/elvish/parse"
+import (
+	"fmt"
+
+	"github.com/elves/elvish/parse"
+)
 
 type strOp func(*Evaluator) string
 type builtinSpecialCompile func(*Compiler, *parse.FormNode) strOp
@@ -20,6 +24,8 @@ func init() {
 		"var": builtinSpecial{compileVar, [2]StreamType{}},
 		"set": builtinSpecial{compileSet, [2]StreamType{}},
 		"del": builtinSpecial{compileDel, [2]StreamType{}},
+		"static-typeof": builtinSpecial{
+			compileStaticTypeof, [2]StreamType{0, fdStream}},
 	}
 }
 
@@ -233,6 +239,22 @@ func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
 	return func(ev *Evaluator) string {
 		for _, name := range names {
 			delete(ev.scope, name)
+		}
+		return ""
+	}
+}
+
+func compileStaticTypeof(cp *Compiler, fn *parse.FormNode) strOp {
+	// Do conventional compiling of all compounds, only keeping the static type
+	// information
+	var trs []typeRun
+	for _, cn := range fn.Args.Nodes {
+		trs = append(trs, cp.compileCompound(cn).tr)
+	}
+	return func(ev *Evaluator) string {
+		out := ev.ports[1].ch
+		for _, tr := range trs {
+			out <- NewString(fmt.Sprintf("%#v", tr))
 		}
 		return ""
 	}
