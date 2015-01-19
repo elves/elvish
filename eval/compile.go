@@ -140,7 +140,8 @@ func (cp *Compiler) mustResolveVar(name string, p parse.Pos) Type {
 
 // ResolveVar returns the type of a variable with supplied name, found in
 // current or upper scopes. If such a variable is nonexistent, a nil is
-// returned.
+// returned. When the value to resolve is not on the current scope, it is added
+// to cp.enclosed.
 func (cp *Compiler) ResolveVar(name string) Type {
 	thisScope := len(cp.scopes) - 1
 	for i := thisScope; i >= 0; i-- {
