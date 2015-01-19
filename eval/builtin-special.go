@@ -2,11 +2,7 @@ package eval
 
 // Builtin special forms.
 
-import (
-	"fmt"
-
-	"github.com/elves/elvish/parse"
-)
+import "github.com/elves/elvish/parse"
 
 type strOp func(*Evaluator) string
 type builtinSpecialCompile func(*Compiler, *parse.FormNode) strOp
@@ -254,7 +250,7 @@ func compileStaticTypeof(cp *Compiler, fn *parse.FormNode) strOp {
 	return func(ev *Evaluator) string {
 		out := ev.ports[1].ch
 		for _, tr := range trs {
-			out <- NewString(fmt.Sprintf("%#v", tr))
+			out <- NewString(tr.String())
 		}
 		return ""
 	}

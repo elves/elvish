@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 
@@ -18,8 +19,27 @@ type typeStar struct {
 	star bool
 }
 
+func (ts typeStar) String() string {
+	s := ts.t.String()
+	if ts.star {
+		s += "*"
+	}
+	return s
+}
+
 // typeRun is a run of typeStar's.
 type typeRun []typeStar
+
+func (tr typeRun) String() string {
+	var buf bytes.Buffer
+	for i, ts := range tr {
+		if i > 0 {
+			buf.WriteByte(' ')
+		}
+		buf.WriteString(ts.String())
+	}
+	return buf.String()
+}
 
 // count returns the least number of Type's in a typeRun, and whether the
 // actual number could be larger.
