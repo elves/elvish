@@ -180,8 +180,8 @@ And:
   shorthand of var-set combo: ✔
   ```
   > var $v table
-  > set $v [foo bar]
-  > var $u table [foo bar] # equivalent
+  > set $v = [foo bar]
+  > var $u table = [foo bar] # equivalent
   ```
 
 * First-class closures, lisp-like functional programming:
