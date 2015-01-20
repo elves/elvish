@@ -99,6 +99,12 @@ var evalTests = []struct {
 	// Variable enclosure
 	{"var $x = lorem; { put $x; set $x = ipsum }; put $x",
 		stringValues("lorem", "ipsum"), false},
+	// Shadowing
+	{"var $x = ipsum; { var $x = lorem; put $x }; put $x",
+		stringValues("lorem", "ipsum"), false},
+	// Shadowing by argument
+	{"var $x = ipsum; { |$x| put $x; set $x = BAD } lorem; put $x",
+		stringValues("lorem", "ipsum"), false},
 }
 
 func TestEval(t *testing.T) {
