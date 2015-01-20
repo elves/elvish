@@ -215,29 +215,20 @@ func (p *Parser) parse() *ChunkNode {
 func (p *Parser) chunk() *ChunkNode {
 	chunk := newChunk(p.peek().Pos)
 
-loop:
 	for {
 		// Skip leading whitespaces
 		token := p.peekNonSpace()
 		if p.foundCtx(CommandContext) {
-			break loop
+			break
 		}
-		switch token.Typ {
-		case ItemSemicolon, ItemEndOfLine:
+		if token.Typ == ItemSemicolon || token.Typ == ItemEndOfLine {
+			// Skip empty pipeline
 			p.next()
-			continue loop
-		case ItemEOF:
-			break loop
-		default:
-		}
-
-		chunk.append(p.pipeline())
-
-		switch p.peek().Typ {
-		case ItemSemicolon, ItemEndOfLine:
-			p.next()
-		default:
-			break loop
+			continue
+		} else if startsPrimary(token.Typ) {
+			chunk.append(p.pipeline())
+		} else {
+			break
 		}
 	}
 	return chunk
