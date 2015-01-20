@@ -158,11 +158,24 @@ var parseTests = []struct {
 		&PrimaryNode{2, ListPrimary, newSpaced(3,
 			compoundOfBare(3, "b"),
 			compoundOfBare(5, "c"))})},
+	// Closure: empty
+	{"a { }", chunkOfFormWithOnePrimary(
+		&PrimaryNode{2, ClosurePrimary, &ClosureNode{3, nil, newChunk(4)}})},
+	// Closure: parameterless
+	{"a { b c}", chunkOfFormWithOnePrimary(
+		&PrimaryNode{2, ClosurePrimary, &ClosureNode{3, nil, chunkOfOneForm(
+			&FormNode{4,
+				compoundOfBare(4, "b"),
+				newSpaced(6, compoundOfBare(6, "c")),
+				nil, ""})}})},
+	// Closure: simple with parameters
+	{"a {|b|c}", chunkOfFormWithOnePrimary(
+		&PrimaryNode{2, ClosurePrimary, &ClosureNode{3,
+			newSpaced(4, compoundOfBare(4, "b")),
+			chunkOfOneForm(
+				&FormNode{6,
+					compoundOfBare(6, "c"), newSpaced(7), nil, ""})}})},
 	/*
-		// Closure
-		{"a { b c}", nil},
-		// Closure
-		{"a {|b|c}", nil},
 		// Channel output capture
 		{"a (b c)", nil},
 		// Status capture
