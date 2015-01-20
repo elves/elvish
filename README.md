@@ -186,18 +186,18 @@ And:
 
 * First-class closures, lisp-like functional programming:
   ```
-  > map {|x| * 2 $x} [1 2 3]
+  > map {|$x| * 2 $x} [1 2 3]
   [2 4 6]
-  > filter {|x| > $x 2} [1 2 3 4 5]
+  > filter {|$x| > $x 2} [1 2 3 4 5]
   [3 4 5]
-  > map {|x| * 2 $x} (filter {|x| > $x 2} [1 2 3 4 5])
+  > map {|$x| * 2 $x} (filter {|$x| > $x 2} [1 2 3 4 5])
   [6 8 10]
   ```
 
 * Get rid of lots of irritating superfluous parentheses with pipelines (`put`
   is the builtin for outputting compound data):
   ```
-  > put 1 2 3 4 5 | filter {|x| > $x 2} | map {|x| * 2 $x}
+  > put 1 2 3 4 5 | filter {|$x| > $x 2} | map {|$x| * 2 $x}
   6 8 10
   ```
 

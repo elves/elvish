@@ -91,6 +91,10 @@ var evalTests = []struct {
 	// Status capture
 	{"put ?(true|false|false)",
 		stringValues("", "exited 1", "exited 1"), false},
+
+	// Closure evaluation
+	{"{ }", stringValues(), false},
+	{"{|$x| put $x} foo", stringValues("foo"), false},
 }
 
 func TestEval(t *testing.T) {

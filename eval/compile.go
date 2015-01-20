@@ -84,8 +84,30 @@ func (cp *Compiler) compileChunk(cn *parse.ChunkNode) Op {
 // and the external stream types it expects.
 func (cp *Compiler) compileClosure(cn *parse.ClosureNode) (valuesOp, map[string]Type) {
 	ops := make([]valuesOp, len(cn.Chunk.Nodes))
+	nargs := 0
+	if cn.ArgNames != nil {
+		nargs = len(cn.ArgNames.Nodes)
+	}
+	argNames := make([]string, nargs)
+
+	if nargs > 0 {
+		// TODO Allow types for arguments. Maybe share code with the var
+		// builtin.
+		for i, cn := range cn.ArgNames.Nodes {
+			expect := "expect variable"
+			pn, name := ensureVariableOrStringPrimary(cp, cn, expect)
+			if pn.Typ != parse.VariablePrimary {
+				cp.errorf(cn.Pos, expect)
+			}
+			argNames[i] = name
+		}
+	}
 
 	cp.pushScope()
+
+	for _, name := range argNames {
+		cp.pushVar(name, AnyType{})
+	}
 
 	for i, pn := range cn.Chunk.Nodes {
 		ops[i] = cp.compilePipeline(pn)
@@ -95,7 +117,7 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) (valuesOp, map[string]
 	cp.enclosed = make(map[string]Type)
 	cp.popScope()
 
-	return combineClosure(ops, enclosed), enclosed
+	return combineClosure(argNames, ops, enclosed), enclosed
 }
 
 // compilePipeline compiles a PipelineNode into a valuesOp along with the

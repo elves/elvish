@@ -111,7 +111,7 @@ func combineChunk(ops []valuesOp) Op {
 	}
 }
 
-func combineClosure(ops []valuesOp, enclosed map[string]Type) valuesOp {
+func combineClosure(argNames []string, ops []valuesOp, enclosed map[string]Type) valuesOp {
 	op := combineChunk(ops)
 	// BUG(xiaq): Closure arguments is (again) not supported
 	f := func(ev *Evaluator) []Value {
@@ -119,7 +119,7 @@ func combineClosure(ops []valuesOp, enclosed map[string]Type) valuesOp {
 		for name := range enclosed {
 			enclosed[name] = ev.scope[name]
 		}
-		return []Value{NewClosure(nil, op, enclosed)}
+		return []Value{NewClosure(argNames, op, enclosed)}
 	}
 	return valuesOp{newFixedTypeRun(ClosureType{}), f}
 }
