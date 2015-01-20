@@ -175,12 +175,22 @@ var parseTests = []struct {
 			chunkOfOneForm(
 				&FormNode{6,
 					compoundOfBare(6, "c"), newSpaced(7), nil, ""})}})},
-	/*
-		// Channel output capture
-		{"a (b c)", nil},
-		// Status capture
-		{"a ?(b c)", nil},
-	*/
+	// Channel output capture
+	{"a (b c)", chunkOfFormWithOnePrimary(
+		&PrimaryNode{2, ChanCapturePrimary,
+			newPipeline(3,
+				&FormNode{3,
+					compoundOfBare(3, "b"),
+					newSpaced(5, compoundOfBare(5, "c")),
+					nil, ""})})},
+	// Status capture
+	{"a ?(b c)", chunkOfFormWithOnePrimary(
+		&PrimaryNode{2, StatusCapturePrimary,
+			newPipeline(4,
+				&FormNode{4,
+					compoundOfBare(4, "b"),
+					newSpaced(6, compoundOfBare(6, "c")),
+					nil, ""})})},
 }
 
 func TestParse(t *testing.T) {
