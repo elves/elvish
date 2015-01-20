@@ -85,6 +85,9 @@ var evalTests = []struct {
 	{"var $x table; set $x = [lorem ipsum]; put $x[1]",
 		stringValues("ipsum"), false},
 
+	// Channel capture
+	{"put (put lorem ipsum)", stringValues("lorem", "ipsum"), false},
+
 	// Status capture
 	{"put ?(true|false|false)",
 		stringValues("", "exited 1", "exited 1"), false},
