@@ -183,3 +183,13 @@ func (ev *Evaluator) mustSingleString(vs []Value, what string, p parse.Pos) *Str
 	}
 	return v
 }
+
+func (ev *Evaluator) applyPortOps(ports []portOp) {
+	ev.growPorts(len(ports))
+
+	for i, op := range ports {
+		if op != nil {
+			ev.ports[i] = op(ev)
+		}
+	}
+}

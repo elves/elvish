@@ -154,63 +154,45 @@ func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 		// Collect exit values
 		exits := make([]Value, len(ops))
 		for i, update := range updates {
+			msg := "<no exit msg>"
 			for up := range update {
-				exits[i] = NewString(up.Msg)
+				msg = up.Msg
 			}
+			exits[i] = NewString(msg)
 		}
 		return exits
 	}
 	return valuesOp{newHomoTypeRun(&StringType{}, len(ops), false), f}
 }
 
-func combineForm(cmd valuesOp, tlist valuesOp, ports []portOp, a *commandResolution, p parse.Pos) stateUpdatesOp {
+func combineSpecialForm(op strOp, ports []portOp, p parse.Pos) stateUpdatesOp {
 	// ev here is always a subevaluator created in combinePipeline, so it can
 	// be safely modified.
 	return func(ev *Evaluator) <-chan *StateUpdate {
-		// XXX Currently it's guaranteed that cmd evaluates into a single
-		// Value.
-		cmd := cmd.f(ev)[0]
-		cmdStr := cmd.String()
-		fm := &form{
-			name: cmdStr,
-		}
-		if tlist.f != nil {
-			fm.args = tlist.f(ev)
-		}
+		ev.applyPortOps(ports)
+		return ev.execSpecial(op)
+	}
+}
 
-		switch a.commandType {
-		case commandBuiltinFunction:
-			fm.Command.Func = a.builtinFunc.fn
-		case commandBuiltinSpecial:
-			fm.Command.Special = a.specialOp
-		case commandDefinedFunction:
-			v, ok1 := ev.scope["fn-"+cmdStr]
-			fn, ok2 := (*v).(*Closure)
-			if !(ok1 && ok2) {
-				panic("Compiler bug")
-			}
-			fm.Command.Closure = fn
-		case commandClosure:
-			fm.Command.Closure = cmd.(*Closure)
-		case commandExternal:
-			path, e := ev.search(cmdStr)
-			if e != nil {
-				ev.errorf(p, "%s", e)
-			}
-			fm.Command.Path = path
+func combineNonSpecialForm(cmdOp, argsOp valuesOp, ports []portOp, p parse.Pos) stateUpdatesOp {
+	// ev here is always a subevaluator created in combinePipeline, so it can
+	// be safely modified.
+	return func(ev *Evaluator) <-chan *StateUpdate {
+		ev.applyPortOps(ports)
+
+		cmd := cmdOp.f(ev)
+		expect := "expect a single string or closure value"
+		if len(cmd) != 1 {
+			ev.errorf(p, expect)
+		}
+		switch cmd[0].(type) {
+		case *String, *Closure:
 		default:
-			panic("bad commandType value")
+			ev.errorf(p, expect)
 		}
 
-		ev.growPorts(len(ports))
-
-		for i, op := range ports {
-			if op != nil {
-				ev.ports[i] = op(ev)
-			}
-		}
-
-		return ev.execForm(fm)
+		args := argsOp.f(ev)
+		return ev.execNonSpecial(cmd[0], args)
 	}
 }
 

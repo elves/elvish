@@ -21,25 +21,6 @@ type compilerEphemeral struct {
 	enclosed   map[string]Type
 }
 
-type commandType int
-
-const (
-	commandBuiltinFunction commandType = iota
-	commandBuiltinSpecial
-	commandDefinedFunction
-	commandClosure
-	commandExternal
-)
-
-// commandResolution packs information known about a command.
-type commandResolution struct {
-	// streamTypes    [2]StreamType
-	commandType    commandType
-	builtinFunc    *builtinFunc
-	builtinSpecial *builtinSpecial
-	specialOp      strOp
-}
-
 // NewCompiler returns a new compiler.
 func NewCompiler() *Compiler {
 	return &Compiler{}
@@ -161,67 +142,53 @@ func (cp *Compiler) ResolveVar(name string) Type {
 	return nil
 }
 
-// resolveCommand tries to find a command with supplied name and modify the
-// commandResolution in place.
-func (cp *Compiler) resolveCommand(name string, cr *commandResolution) {
-	if _, ok := cp.ResolveVar("fn-" + name).(ClosureType); ok {
-		// Defined function
-		cr.commandType = commandDefinedFunction
-	} else if bi, ok := builtinSpecials[name]; ok {
-		// Builtin special
-		cr.commandType = commandBuiltinSpecial
-		cr.builtinSpecial = &bi
-	} else if bi, ok := builtinFuncs[name]; ok {
-		// Builtin func
-		cr.commandType = commandBuiltinFunction
-		cr.builtinFunc = &bi
+func resolveBuiltinSpecial(cmd *parse.CompoundNode) *builtinSpecial {
+	if len(cmd.Nodes) == 1 {
+		sn := cmd.Nodes[0]
+		if sn.Right == nil {
+			pn := sn.Left
+			if pn.Typ == parse.StringPrimary {
+				name := pn.Node.(*parse.StringNode).Text
+				if bi, ok := builtinSpecials[name]; ok {
+					return &bi
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// compileForm compiles a FormNode into a stateUpdatesOp.
+func (cp *Compiler) compileForm(fn *parse.FormNode) stateUpdatesOp {
+	bi := resolveBuiltinSpecial(fn.Command)
+	ports := cp.compileRedirs(fn.Redirs)
+
+	if bi != nil {
+		specialOp := bi.compile(cp, fn)
+		return combineSpecialForm(specialOp, ports, fn.Pos)
 	} else {
-		// External command
-		cr.commandType = commandExternal
+		cmdOp := cp.compileCompound(fn.Command)
+		argsOp := cp.compileSpaced(fn.Args)
+		return combineNonSpecialForm(cmdOp, argsOp, ports, fn.Pos)
 	}
 }
 
-// compileForm compiles a FormNode into a stateUpdatesOp along with the
-// external stream types it expects.
-func (cp *Compiler) compileForm(fn *parse.FormNode) stateUpdatesOp {
-	// TODO(xiaq): Allow more interesting compound expressions to be used as
-	// commands
-	msg := "command must be a string or closure"
-	if len(fn.Command.Nodes) != 1 || fn.Command.Nodes[0].Right != nil {
-		cp.errorf(fn.Command.Pos, msg)
-	}
-	command := fn.Command.Nodes[0].Left
-	cmdOp := cp.compilePrimary(command)
-
-	resolution := &commandResolution{}
-	switch command.Typ {
-	case parse.StringPrimary:
-		cp.resolveCommand(command.Node.(*parse.StringNode).Text, resolution)
-	case parse.ClosurePrimary:
-		resolution.commandType = commandClosure
-	default:
-		cp.errorf(fn.Command.Pos, msg)
-	}
-
+// compileRedirs compiles a slice of Redir's into a slice of portOp's. The
+// resulting slice is indexed by the original fd.
+func (cp *Compiler) compileRedirs(rs []parse.Redir) []portOp {
 	var nports uintptr
-	for _, rd := range fn.Redirs {
+	for _, rd := range rs {
 		if nports < rd.Fd()+1 {
 			nports = rd.Fd() + 1
 		}
 	}
 
 	ports := make([]portOp, nports)
-	for _, rd := range fn.Redirs {
+	for _, rd := range rs {
 		ports[rd.Fd()] = cp.compileRedir(rd)
 	}
 
-	var tlist valuesOp
-	if resolution.commandType == commandBuiltinSpecial {
-		resolution.specialOp = resolution.builtinSpecial.compile(cp, fn)
-	} else {
-		tlist = cp.compileSpaced(fn.Args)
-	}
-	return combineForm(cmdOp, tlist, ports, resolution, fn.Pos)
+	return ports
 }
 
 // compileRedir compiles a Redir into a portOp.
@@ -290,10 +257,8 @@ func (cp *Compiler) compileCompound(tn *parse.CompoundNode) valuesOp {
 	if tn.Sigil == parse.NoSigil {
 		return op
 	}
-	cmd := string(tn.Sigil)
-	cr := &commandResolution{}
-	cp.resolveCommand(cmd, cr)
-	fop := combineForm(makeString(cmd), op, nil, cr, tn.Pos)
+	cmdOp := makeString(string(tn.Sigil))
+	fop := combineNonSpecialForm(cmdOp, op, nil, tn.Pos)
 	pop := combinePipeline([]stateUpdatesOp{fop}, tn.Pos)
 	return combineChanCapture(pop)
 }

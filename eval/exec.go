@@ -61,22 +61,6 @@ func (i *port) mayConvey(typ StreamType) bool {
 	}
 }
 
-// Command is exactly one of a builtin function, a builtin special form, an
-// external command or a closure.
-type Command struct {
-	Func    builtinFuncImpl // A builtin function
-	Special strOp           // A builtin special form
-	Path    string          // External command full path
-	Closure *Closure        // The closure value
-}
-
-// form packs runtime states of a fully constructured form.
-type form struct {
-	name string  // Command name, used in error messages.
-	args []Value // Evaluated argument list
-	Command
-}
-
 // closePorts closes the suitable components of all ports in ev.ports that were
 // marked marked for closing.
 func (ev *Evaluator) closePorts() {
@@ -132,51 +116,90 @@ func (ev *Evaluator) search(exe string) (string, error) {
 	return "", fmt.Errorf("external command not found")
 }
 
-// execForm executes a form.
+// execSpecial executes a builtin special form.
 //
-// NOTE(xiaq): execForm is always called on an intermediate "form redir" where
-// only the form-local ports are marked shouldClose. ev.closePorts should be
-// called at appropriate moments.
-func (ev *Evaluator) execForm(fm *form) <-chan *StateUpdate {
-	switch {
-	case fm.Func != nil, fm.Special != nil:
-		return ev.execBuiltin(fm)
-	case fm.Path != "":
-		return ev.execExternal(fm)
-	case fm.Closure != nil:
-		return ev.execClosure(fm)
-	default:
-		panic("Bad eval.form struct")
+// NOTE(xiaq): execSpecial and execNonSpecial are always called on an
+// intermediate "form redir" where only the form-local ports are marked
+// shouldClose. ev.closePorts should be called at appropriate moments.
+func (ev *Evaluator) execSpecial(op strOp) <-chan *StateUpdate {
+	update := make(chan *StateUpdate)
+	go func() {
+		msg := op(ev)
+		// Ports are closed after executaion of builtin is complete.
+		ev.closePorts()
+		update <- &StateUpdate{Terminated: true, Msg: msg}
+		close(update)
+	}()
+	return update
+}
+
+// execNonSpecial executes a form that is not a special form.
+func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate {
+	// Closure
+	if closure, ok := cmd.(*Closure); ok {
+		return ev.execClosure(closure, args)
 	}
+
+	cmdStr := cmd.String()
+
+	// Defined function
+	if v, ok := ev.scope["fn-"+cmdStr]; ok {
+		if closure, ok := (*v).(*Closure); ok {
+			return ev.execClosure(closure, args)
+		}
+	}
+
+	// Builtin function
+	if bi, ok := builtinFuncs[cmdStr]; ok {
+		return ev.execBuiltinFunc(bi.fn, args)
+	}
+
+	// External command
+	return ev.execExternal(cmdStr, args)
+}
+
+// execBuiltinFunc executes a builtin function.
+func (ev *Evaluator) execBuiltinFunc(fn builtinFuncImpl, args []Value) <-chan *StateUpdate {
+	update := make(chan *StateUpdate)
+	go func() {
+		msg := fn(ev, args)
+		// Ports are closed after executaion of builtin is complete.
+		ev.closePorts()
+		update <- &StateUpdate{Terminated: true, Msg: msg}
+		close(update)
+	}()
+	return update
 }
 
 // execClosure executes a closure form.
-func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
+func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUpdate {
 	update := make(chan *StateUpdate, 1)
 
-	locals := make(map[string]Value)
 	// TODO Support optional/rest argument
-	if len(fm.args) != len(fm.Closure.ArgNames) {
+	if len(args) != len(closure.ArgNames) {
 		// TODO Check arity before exec'ing
 		update <- &StateUpdate{Terminated: true, Msg: "arity mismatch"}
 		close(update)
 		return update
 	}
-	// Pass argument by populating locals.
-	for i, name := range fm.Closure.ArgNames {
-		locals[name] = fm.args[i]
-	}
 
 	// Make a subevaluator.
-	// BUG(xiaq): When evaluating closures, async access to globals, in and out can be problematic.
+	// BUG(xiaq): When evaluating closures, async access to global variables
+	// and ports can be problematic.
 	ev.scope = make(map[string]*Value)
-	for name, pvalue := range fm.Closure.Enclosed {
+	for name, pvalue := range closure.Enclosed {
 		ev.scope[name] = pvalue
 	}
+	// Pass arguments.
+	for i, name := range closure.ArgNames {
+		ev.scope[name] = valuePtr(args[i])
+	}
+
 	ev.statusCb = nil
+
 	go func() {
 		// TODO Support calling closure originated in another source.
-		err := ev.eval(ev.name, ev.text, fm.Closure.Op)
+		err := ev.eval(ev.name, ev.text, closure.Op)
 		if err != nil {
 			fmt.Print(err.(*util.ContextualError).Pprint())
 		}
@@ -184,24 +207,6 @@ func (ev *Evaluator) execClosure(fm *form) <-chan *StateUpdate {
 		ev.closePorts()
 		// TODO Support returning value.
 		update <- &StateUpdate{Terminated: true}
-		close(update)
-	}()
-	return update
-}
-
-// execBuiltin executes a builtin special form or builtin function.
-func (ev *Evaluator) execBuiltin(fm *form) <-chan *StateUpdate {
-	update := make(chan *StateUpdate)
-	go func() {
-		var msg string
-		if fm.Special != nil {
-			msg = fm.Special(ev)
-		} else {
-			msg = fm.Func(ev, fm.args)
-		}
-		// Ports are closed after executaion of builtin is complete.
-		ev.closePorts()
-		update <- &StateUpdate{Terminated: true, Msg: msg}
 		close(update)
 	}()
 	return update
@@ -245,19 +250,19 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 		_, err := syscall.Wait4(pid, &ws, 0, nil)
 
 		if err != nil {
-			if err != syscall.ECHILD {
-				update <- &StateUpdate{Msg: err.Error()}
-			}
+			update <- &StateUpdate{Msg: err.Error()}
 			break
 		}
-		update <- &StateUpdate{
-			Terminated: ws.Exited(), Msg: sprintStatus(ws)}
+		update <- &StateUpdate{Terminated: ws.Exited(), Msg: sprintStatus(ws)}
+		if ws.Exited() {
+			break
+		}
 	}
 	close(update)
 }
 
 // execExternal executes an external command form.
-func (ev *Evaluator) execExternal(fm *form) <-chan *StateUpdate {
+func (ev *Evaluator) execExternal(cmd string, argVals []Value) <-chan *StateUpdate {
 	files := make([]uintptr, len(ev.ports))
 	for i, port := range ev.ports {
 		if port == nil || port.f == nil {
@@ -267,9 +272,8 @@ func (ev *Evaluator) execExternal(fm *form) <-chan *StateUpdate {
 		}
 	}
 
-	args := make([]string, len(fm.args)+1)
-	args[0] = fm.Path
-	for i, a := range fm.args {
+	args := make([]string, len(argVals)+1)
+	for i, a := range argVals {
 		// NOTE Maybe we should enfore string arguments instead of coercing all
 		// args into string
 		args[i+1] = a.String()
@@ -277,7 +281,14 @@ func (ev *Evaluator) execExternal(fm *form) <-chan *StateUpdate {
 
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
-	pid, err := syscall.ForkExec(fm.Path, args, &attr)
+
+	path, err := ev.search(cmd)
+	var pid int
+
+	if err == nil {
+		args[0] = path
+		pid, err = syscall.ForkExec(path, args, &attr)
+	}
 	// Ports are closed after fork-exec of external is complete.
 	ev.closePorts()
 
