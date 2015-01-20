@@ -417,7 +417,6 @@ func (p *Parser) primary() (fn *PrimaryNode) {
 				p.unexpected(token, "primary expression of item list")
 			}
 		} else {
-			p.backup()
 			fn.Typ = ClosurePrimary
 			fn.Node = p.closure()
 		}
@@ -439,7 +438,7 @@ func (p *Parser) primary() (fn *PrimaryNode) {
 	}
 }
 
-// closure parses a closure literal.
+// closure parses a closure literal. The opening brace has already been seen.
 //
 // Closure  = '{' [ space ] [ '|' Spaced '|' [ space ] ] Chunk '}'
 func (p *Parser) closure() (tn *ClosureNode) {
