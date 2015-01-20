@@ -10,8 +10,8 @@ Fancy badges:
 Ready](https://badge.waffle.io/elves/elvish.png?label=ready&title=Ready)](https://waffle.io/elves/elvish)
 
 ## Obligatory screenshots
-> All software websites should have screenshots.
-> -- Someone on the Internet
+> I love software websites without screenshots of the actual thing.
+> -- No one ever
 
 Syntax highlighting (also showcasing right-hand-side prompt):
 
