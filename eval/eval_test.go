@@ -95,6 +95,10 @@ var evalTests = []struct {
 	// Closure evaluation
 	{"{ }", stringValues(), false},
 	{"{|$x| put $x} foo", stringValues("foo"), false},
+
+	// Variable enclosure
+	{"var $x = lorem; { put $x; set $x = ipsum }; put $x",
+		stringValues("lorem", "ipsum"), false},
 }
 
 func TestEval(t *testing.T) {
