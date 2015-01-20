@@ -113,7 +113,7 @@ func NewParser(name string) *Parser {
 // errorf formats the error and terminates processing.
 func (p *Parser) errorf(pos int, format string, args ...interface{}) {
 	p.Root = nil
-	util.Panic(util.NewContextualError(p.Name, p.text, pos, format, args...))
+	util.Panic(util.NewContextualError(p.Name, "parsing error", p.text, pos, format, args...))
 }
 
 // expect consumes the next token and guarantees it has the required type.

@@ -167,7 +167,7 @@ func (ev *Evaluator) stopEval() {
 // The panic is supposed to be caught by ev.eval.
 func (ev *Evaluator) errorf(p parse.Pos, format string, args ...interface{}) {
 	util.Panic(util.NewContextualError(
-		fmt.Sprintf("%s (%s)", ev.name, ev.context),
+		fmt.Sprintf("%s (%s)", ev.name, ev.context), "evalling error",
 		ev.text, int(p), format, args...))
 }
 

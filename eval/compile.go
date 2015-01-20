@@ -68,7 +68,7 @@ func (cp *Compiler) hasVarOnThisScope(name string) bool {
 }
 
 func (cp *Compiler) errorf(p parse.Pos, format string, args ...interface{}) {
-	util.Panic(util.NewContextualError(cp.name, cp.text, int(p), format, args...))
+	util.Panic(util.NewContextualError(cp.name, "compiling error", cp.text, int(p), format, args...))
 }
 
 // compileChunk compiles a ChunkNode into an Op.

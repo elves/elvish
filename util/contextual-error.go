@@ -7,28 +7,29 @@ import (
 )
 
 type ContextualError struct {
-	name   string
-	lineno int
-	colno  int
-	line   string
-	msg    string
+	srcname string
+	title   string
+	line    string
+	lineno  int
+	colno   int
+	msg     string
 }
 
-func NewContextualError(name string, text string, pos int, format string, args ...interface{}) *ContextualError {
+func NewContextualError(srcname, title, text string, pos int, format string, args ...interface{}) *ContextualError {
 	lineno, colno, line := FindContext(text, pos)
-	return &ContextualError{name, lineno, colno, line, fmt.Sprintf(format, args...)}
+	return &ContextualError{srcname, title, line, lineno, colno, fmt.Sprintf(format, args...)}
 }
 
 func (e *ContextualError) Error() string {
-	return fmt.Sprintf("%s:%d:%d %s", e.name, e.lineno, e.colno, e.msg)
+	return fmt.Sprintf("%s:%d:%d %s:%s", e.srcname, e.lineno, e.colno, e.title, e.msg)
 }
 
 func (e *ContextualError) Pprint() string {
 	buf := new(bytes.Buffer)
 	// Position info
-	fmt.Fprintf(buf, "\033[1m%s:%d:%d: ", e.name, e.lineno+1, e.colno+1)
+	fmt.Fprintf(buf, "\033[1m%s:%d:%d: ", e.srcname, e.lineno+1, e.colno+1)
 	// "error:"
-	fmt.Fprintf(buf, "\033[31merror: ")
+	fmt.Fprintf(buf, "\033[31m%s: ", e.title)
 	// Message
 	fmt.Fprintf(buf, "\033[m\033[1m%s\033[m\n", e.msg)
 	// Context: line
