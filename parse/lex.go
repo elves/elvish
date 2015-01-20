@@ -22,7 +22,7 @@ type Item struct {
 func (i Item) String() string {
 	switch i.Typ {
 	case ItemError:
-		return i.Val
+		return "error: " + i.Val
 	case ItemEOF:
 		return "eof"
 	default:
