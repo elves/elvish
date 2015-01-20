@@ -136,7 +136,7 @@ func (p *Parser) expectOneOf(expected1, expected2 ItemType, context string) Item
 
 // unexpected complains about the token and terminates processing.
 func (p *Parser) unexpected(token Item, context string) {
-	p.errorf(int(token.Pos), "unexpected %s in %s", token, context)
+	p.errorf(int(token.Pos), "unexpected %s (%s) in %s", token, token.Typ, context)
 }
 
 // stopParse terminates parsing.
