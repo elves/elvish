@@ -28,7 +28,7 @@ func interact() {
 	ch := make(chan eval.Value, outChanSize)
 	go func() {
 		for v := range ch {
-			fmt.Printf("%s%s\n", outChanLeader, v.String())
+			fmt.Printf("%s%s\n", outChanLeader, v.Repr())
 		}
 	}()
 
