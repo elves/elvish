@@ -52,6 +52,8 @@ func NewEvaluator() *Evaluator {
 		"env":     valuePtr(env),
 		"pid":     valuePtr(pid),
 		"success": valuePtr(success),
+		"true":    valuePtr(Bool(true)),
+		"false":   valuePtr(Bool(false)),
 	}
 	ev := &Evaluator{
 		Compiler: NewCompiler(),

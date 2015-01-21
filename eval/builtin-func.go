@@ -159,7 +159,7 @@ func each(ev *Evaluator, args []Value) Exitus {
 }
 
 // if takes a sequence of values and a trailing nullary closure. If all of the
-// values are true (= are empty strings), the closure is executed.
+// values are true, the closure is executed.
 func ifFn(ev *Evaluator, args []Value) Exitus {
 	if len(args) == 0 {
 		return argsError
@@ -170,7 +170,7 @@ func ifFn(ev *Evaluator, args []Value) Exitus {
 		return argsError
 	} else {
 		for _, a := range args[:len(args)-1] {
-			if a.String() != "" {
+			if !a.Bool() {
 				return success
 			}
 		}

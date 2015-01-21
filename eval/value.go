@@ -40,6 +40,17 @@ func (st StringType) String() string {
 	return "string"
 }
 
+type BoolType struct {
+}
+
+func (bt BoolType) Default() Value {
+	return Bool(true)
+}
+
+func (bt BoolType) String() string {
+	return "bool"
+}
+
 type ExitusType struct {
 }
 
@@ -87,6 +98,7 @@ func (ct ClosureType) String() string {
 var typenames = map[string]Type{
 	"string":  StringType{},
 	"exitus":  ExitusType{},
+	"bool":    BoolType{},
 	"table":   TableType{},
 	"env":     EnvType{},
 	"closure": ClosureType{},
@@ -102,6 +114,7 @@ type Value interface {
 	Type() Type
 	Repr() string
 	String() string
+	Bool() bool
 }
 
 func valuePtr(v Value) *Value {
@@ -170,6 +183,36 @@ func (s String) String() string {
 	return string(s)
 }
 
+func (s String) Bool() bool {
+	return true
+}
+
+type Bool bool
+
+func (b Bool) Type() Type {
+	return BoolType{}
+}
+
+func (b Bool) Repr() string {
+	if b {
+		return "$true"
+	} else {
+		return "$false"
+	}
+}
+
+func (b Bool) String() string {
+	if b {
+		return "true"
+	} else {
+		return "false"
+	}
+}
+
+func (b Bool) Bool() bool {
+	return bool(b)
+}
+
 type Exitus struct {
 	Success bool
 	Failure string
@@ -199,6 +242,10 @@ func (e Exitus) String() string {
 	} else {
 		return "failure: " + e.Failure
 	}
+}
+
+func (e Exitus) Bool() bool {
+	return e.Success
 }
 
 // Table is a list-dict hybrid.
@@ -235,6 +282,10 @@ func (t *Table) Repr() string {
 
 func (t *Table) String() string {
 	return t.Repr()
+}
+
+func (t *Table) Bool() bool {
+	return t.Bool()
 }
 
 func (t *Table) append(vs ...Value) {
@@ -287,6 +338,10 @@ func (e Env) String() string {
 	return e.Repr()
 }
 
+func (e Env) Bool() bool {
+	return true
+}
+
 // Closure is a closure.
 type Closure struct {
 	ArgNames []string
@@ -308,6 +363,10 @@ func (c *Closure) Repr() string {
 
 func (c *Closure) String() string {
 	return c.Repr()
+}
+
+func (c *Closure) Bool() bool {
+	return true
 }
 
 func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
