@@ -32,6 +32,8 @@ var builtinFuncs = map[string]builtinFunc{
 
 	"each": builtinFunc{each, [2]StreamType{chanStream, hybridStream}},
 
+	"if": builtinFunc{ifFn, [2]StreamType{hybridStream, hybridStream}},
+
 	"cd": builtinFunc{cd, [2]StreamType{}},
 
 	"+": builtinFunc{plus, [2]StreamType{0, chanStream}},
@@ -138,6 +140,28 @@ func each(ev *Evaluator, args []Value) string {
 		}
 	}
 	return ""
+}
+
+// if takes a sequence of values and a trailing nullary closure. If all of the
+// values are true (= are empty strings), the closure is executed.
+func ifFn(ev *Evaluator, args []Value) string {
+	if len(args) == 0 {
+		return "args error"
+	}
+	if f, ok := args[len(args)-1].(*Closure); !ok {
+		return "args error"
+	} else if len(f.ArgNames) > 0 {
+		return "args error"
+	} else {
+		for _, a := range args[:len(args)-1] {
+			if a.String() != "" {
+				return ""
+			}
+		}
+		su := ev.execClosure(f, []Value{})
+		<-su
+		return ""
+	}
 }
 
 func cd(ev *Evaluator, args []Value) string {
