@@ -20,7 +20,7 @@ type builtinFunc struct {
 
 var builtinFuncs = map[string]builtinFunc{
 	"put":       builtinFunc{put, [2]StreamType{0, chanStream}},
-	"typeof":    builtinFunc{typeof, [2]StreamType{0, fdStream}},
+	"typeof":    builtinFunc{typeof, [2]StreamType{0, chanStream}},
 	"print":     builtinFunc{print, [2]StreamType{0, fdStream}},
 	"println":   builtinFunc{println, [2]StreamType{0, fdStream}},
 	"printchan": builtinFunc{printchan, [2]StreamType{chanStream, fdStream}},
