@@ -40,6 +40,17 @@ func (st StringType) String() string {
 	return "string"
 }
 
+type ExitusType struct {
+}
+
+func (et ExitusType) Default() Value {
+	return success
+}
+
+func (et ExitusType) String() string {
+	return "exitus"
+}
+
 type TableType struct {
 }
 
@@ -75,6 +86,7 @@ func (ct ClosureType) String() string {
 
 var typenames = map[string]Type{
 	"string":  StringType{},
+	"exitus":  ExitusType{},
 	"table":   TableType{},
 	"env":     EnvType{},
 	"closure": ClosureType{},
@@ -156,6 +168,37 @@ func (s String) Repr() string {
 
 func (s String) String() string {
 	return string(s)
+}
+
+type Exitus struct {
+	Success bool
+	Failure string
+}
+
+var success = Exitus{true, ""}
+
+func newFailure(s string) Exitus {
+	return Exitus{false, s}
+}
+
+func (e Exitus) Type() Type {
+	return ExitusType{}
+}
+
+func (e Exitus) Repr() string {
+	if e.Success {
+		return "$success"
+	} else {
+		return "(failure " + quote(e.Failure) + ")"
+	}
+}
+
+func (e Exitus) String() string {
+	if e.Success {
+		return "success"
+	} else {
+		return "failure: " + e.Failure
+	}
 }
 
 // Table is a list-dict hybrid.
