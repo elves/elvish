@@ -136,7 +136,8 @@ func each(ev *Evaluator, args []Value) string {
 		in := ev.ports[0].ch
 		for v := range in {
 			su := ev.execClosure(f, []Value{v})
-			<-su
+			for _ = range su {
+			}
 		}
 	}
 	return ""
@@ -159,7 +160,8 @@ func ifFn(ev *Evaluator, args []Value) string {
 			}
 		}
 		su := ev.execClosure(f, []Value{})
-		<-su
+		for _ = range su {
+		}
 		return ""
 	}
 }
