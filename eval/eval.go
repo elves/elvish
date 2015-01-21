@@ -49,7 +49,9 @@ func statusOk(vs []Value) bool {
 func NewEvaluator() *Evaluator {
 	pid := NewString(strconv.Itoa(syscall.Getpid()))
 	g := map[string]*Value{
-		"env": valuePtr(env), "pid": valuePtr(pid),
+		"env":     valuePtr(env),
+		"pid":     valuePtr(pid),
+		"success": valuePtr(success),
 	}
 	ev := &Evaluator{
 		Compiler: NewCompiler(),

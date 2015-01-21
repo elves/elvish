@@ -30,6 +30,8 @@ var builtinFuncs = map[string]builtinFunc{
 
 	"typeof": builtinFunc{typeof, [2]StreamType{0, chanStream}},
 
+	"failure": builtinFunc{failure, [2]StreamType{0, chanStream}},
+
 	"each": builtinFunc{each, [2]StreamType{chanStream, hybridStream}},
 
 	"if": builtinFunc{ifFn, [2]StreamType{hybridStream, hybridStream}},
@@ -55,6 +57,15 @@ func typeof(ev *Evaluator, args []Value) string {
 	for _, a := range args {
 		out <- NewString(a.Type().String())
 	}
+	return ""
+}
+
+func failure(ev *Evaluator, args []Value) string {
+	if len(args) != 1 {
+		return "args error"
+	}
+	out := ev.ports[1].ch
+	out <- newFailure(args[0].String())
 	return ""
 }
 
