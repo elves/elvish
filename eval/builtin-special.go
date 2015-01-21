@@ -55,8 +55,8 @@ func ensurePrimary(cp *Compiler, cn *parse.CompoundNode, msg string) *parse.Prim
 	return cn.Nodes[0].Left
 }
 
-// ensure that a CompoundNode contains exactly one PrimaryNode of type
-// VariablePrimary or StringPrimary
+// ensureVariableOrStringPrimary ensures that a CompoundNode contains exactly
+// one PrimaryNode of type VariablePrimary or StringPrimary.
 func ensureVariableOrStringPrimary(cp *Compiler, cn *parse.CompoundNode, msg string) (*parse.PrimaryNode, string) {
 	pn := ensurePrimary(cp, cn, msg)
 	switch pn.Typ {
@@ -68,38 +68,32 @@ func ensureVariableOrStringPrimary(cp *Compiler, cn *parse.CompoundNode, msg str
 	}
 }
 
-// ensure the first compound of the form is a VariablePrimary. This is merely
-// for better error messages; No actual processing is done.
+// ensureVariablePrimary ensures that a CompoundNode contains exactly one
+// PrimaryNode of type VariablePrimary.
+func ensureVariablePrimary(cp *Compiler, cn *parse.CompoundNode, msg string) (*parse.PrimaryNode, string) {
+	pn, text := ensureVariableOrStringPrimary(cp, cn, msg)
+	if pn.Typ != parse.VariablePrimary {
+		cp.errorf(pn.Pos, msg)
+	}
+	return pn, text
+}
+
+// ensureStartWithVariabl ensures the first compound of the form is a
+// VariablePrimary. This is merely for better error messages; No actual
+// processing is done.
 func ensureStartWithVariable(cp *Compiler, fn *parse.FormNode, form string) {
 	if len(fn.Args.Nodes) == 0 {
 		cp.errorf(fn.Pos, "expect variable after %s", form)
 	}
-	expect := "expect variable"
-	pn := ensurePrimary(cp, fn.Args.Nodes[0], expect)
-	if pn.Typ != parse.VariablePrimary {
-		cp.errorf(pn.Pos, expect)
-	}
+	ensureVariablePrimary(cp, fn.Args.Nodes[0], "expect variable")
 }
 
-const (
-	varArg0Req          = "must be either a variable or a table"
-	varArg0ReqMultiElem = "must be either a variable or a string referring to a type"
-	varArg1ReqMulti     = "must be a table with no dict part"
-	varArg1ReqSingle    = "must be a string referring to a type"
-
-	setArg0Req          = varArg0Req
-	setArg0ReqMultiElem = "must be a variable"
-	setArg1ReqMulti     = varArg1ReqMulti
-)
-
-// An invocation of the var special form looks like:
-//
-// VarForm    = 'var' { VarGroup } [ { VariablePrimary } ] [ Assignment ]
-// VarGroup   = { VariablePrimary } StringPrimary
-// Assignment = '=' { Compound }
+// VarForm    = 'var' { VarGroup } [ '=' Compound ]
+// VarGroup   = { VariablePrimary } [ StringPrimary ]
 //
 // Variables in the same VarGroup has the type specified by the StringPrimary.
-// Trailing variables have type Any. For instance,
+// Only in the last VarGroup the StringPrimary may be omitted, in which case it
+// defaults to "any". For instance,
 //
 // var $u $v Type1 $x $y Type2 $z = a b c d e
 //
@@ -162,8 +156,6 @@ func compileVar(cp *Compiler, fn *parse.FormNode) strOp {
 	}
 }
 
-// An invocation of the set special form looks like:
-//
 // SetForm = 'set' { VariablePrimary } '=' { Compound }
 func compileSet(cp *Compiler, fn *parse.FormNode) strOp {
 	var (
@@ -211,24 +203,19 @@ func doSet(ev *Evaluator, names []string, values []Value) string {
 	return ""
 }
 
+// DelForm = 'del' { VariablePrimary }
 func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
 	// Do conventional compiling of all compound expressions, including
 	// ensuring that variables can be resolved
 	var names []string
-	for _, n := range fn.Args.Nodes {
-		compoundReq := "must be a varible"
-		if len(n.Nodes) != 1 || n.Nodes[0].Right != nil {
-			cp.errorf(n.Pos, "%s", compoundReq)
+	for _, cn := range fn.Args.Nodes {
+		pn, name := ensureVariablePrimary(cp, cn, "expect variable")
+
+		cp.mustResolveVar(name, pn.Pos)
+		if cp.resolveVarOnThisScope(name) == nil {
+			cp.errorf(cn.Pos, "can only delete variable on current scope")
 		}
-		nf := n.Nodes[0].Left
-		if nf.Typ != parse.VariablePrimary {
-			cp.errorf(n.Pos, "%s", compoundReq)
-		}
-		name := nf.Node.(*parse.StringNode).Text
-		cp.mustResolveVar(name, nf.Pos)
-		if !cp.hasVarOnThisScope(name) {
-			cp.errorf(n.Pos, "can only delete variable on current scope")
-		}
+
 		cp.popVar(name)
 		names = append(names, name)
 	}

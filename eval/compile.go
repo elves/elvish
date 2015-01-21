@@ -62,11 +62,6 @@ func (cp *Compiler) popVar(name string) {
 	delete(cp.scopes[len(cp.scopes)-1], name)
 }
 
-func (cp *Compiler) hasVarOnThisScope(name string) bool {
-	_, ok := cp.scopes[len(cp.scopes)-1][name]
-	return ok
-}
-
 func (cp *Compiler) errorf(p parse.Pos, format string, args ...interface{}) {
 	util.Panic(util.NewContextualError(cp.name, "compiling error", cp.text, int(p), format, args...))
 }
@@ -94,11 +89,7 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) (valuesOp, map[string]
 		// TODO Allow types for arguments. Maybe share code with the var
 		// builtin.
 		for i, cn := range cn.ArgNames.Nodes {
-			expect := "expect variable"
-			pn, name := ensureVariableOrStringPrimary(cp, cn, expect)
-			if pn.Typ != parse.VariablePrimary {
-				cp.errorf(cn.Pos, expect)
-			}
+			_, name := ensureVariablePrimary(cp, cn, "expect variable")
 			argNames[i] = name
 		}
 	}
