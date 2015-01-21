@@ -77,7 +77,7 @@ func (cp *Compiler) compileChunk(cn *parse.ChunkNode) Op {
 
 // compileClosure compiles a ClosureNode into a valuesOp along with its capture
 // and the external stream types it expects.
-func (cp *Compiler) compileClosure(cn *parse.ClosureNode) (valuesOp, map[string]Type) {
+func (cp *Compiler) compileClosure(cn *parse.ClosureNode) valuesOp {
 	ops := make([]valuesOp, len(cn.Chunk.Nodes))
 	nargs := 0
 	if cn.ArgNames != nil {
@@ -108,7 +108,14 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) (valuesOp, map[string]
 	cp.enclosed = make(map[string]Type)
 	cp.popScope()
 
-	return combineClosure(argNames, ops, enclosed), enclosed
+	// Added variables enclosed on inner closures to cp.enclosed
+	for name, typ := range enclosed {
+		if cp.resolveVarOnThisScope(name) == nil {
+			cp.enclosed[name] = typ
+		}
+	}
+
+	return combineClosure(argNames, ops, enclosed)
 }
 
 // compilePipeline compiles a PipelineNode into a valuesOp along with the
@@ -306,14 +313,7 @@ func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) valuesOp {
 		}
 		return combineTable(list, keys, values, fn.Pos)
 	case parse.ClosurePrimary:
-		op, enclosed := cp.compileClosure(fn.Node.(*parse.ClosureNode))
-		// Added variables enclosed on inner closures to cp.enclosed
-		for name, typ := range enclosed {
-			if cp.resolveVarOnThisScope(name) == nil {
-				cp.enclosed[name] = typ
-			}
-		}
-		return op
+		return cp.compileClosure(fn.Node.(*parse.ClosureNode))
 	case parse.ListPrimary:
 		return cp.compileSpaced(fn.Node.(*parse.SpacedNode))
 	case parse.ChanCapturePrimary:
