@@ -5,7 +5,7 @@ have been warned...
 
 Fancy badges:
 [![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
-[![Build Status](https://drone.io/github.com/elves/elvish/status.png)](https://drone.io/github.com/elves/elvish/latest)
+[![Build Status](https://travis-ci.org/elves/elvish.svg?branch=master)](https://travis-ci.org/elves/elvish)
 [![Stories in
 Ready](https://badge.waffle.io/elves/elvish.png?label=ready&title=Ready)](https://waffle.io/elves/elvish)
 
