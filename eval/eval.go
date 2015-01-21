@@ -20,7 +20,7 @@ type Evaluator struct {
 	Compiler *Compiler
 	evaluatorEphemeral
 	scope       map[string]*Value
-	env         *Env
+	env         Env
 	searchPaths []string
 	ports       []*port
 	statusCb    func([]Value)
@@ -47,8 +47,6 @@ func statusOk(vs []Value) bool {
 
 // NewEvaluator creates a new top-level Evaluator.
 func NewEvaluator() *Evaluator {
-	env := NewEnv()
-	env.fill()
 	pid := NewString(strconv.Itoa(syscall.Getpid()))
 	g := map[string]*Value{
 		"env": valuePtr(env), "pid": valuePtr(pid),
@@ -73,7 +71,7 @@ func NewEvaluator() *Evaluator {
 			fmt.Println()
 		},
 	}
-	path, ok := env.m["PATH"]
+	path, ok := env["PATH"]
 	if ok {
 		ev.searchPaths = strings.Split(path, ":")
 		// fmt.Printf("Search paths are %v\n", search_paths)

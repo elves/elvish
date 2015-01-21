@@ -200,46 +200,40 @@ func (t *Table) append(vs ...Value) {
 }
 
 // Env provides access to environment variables.
-type Env struct {
-	m map[string]string
-}
+type Env map[string]string
 
-func (e *Env) Type() Type {
+var env = Env(make(map[string]string))
+
+func (e Env) Type() Type {
 	return EnvType{}
 }
 
-func NewEnv() *Env {
-	return &Env{}
+func NewEnv() Env {
+	return env
 }
 
-func (e *Env) fill() {
-	if e.m != nil {
-		return
-	}
-	e.m = make(map[string]string)
+func init() {
 	for _, s := range os.Environ() {
 		arr := strings.SplitN(s, "=", 2)
 		if len(arr) == 2 {
-			e.m[arr[0]] = arr[1]
+			env[arr[0]] = arr[1]
 		}
 	}
 }
 
-func (e *Env) Export() []string {
-	e.fill()
-	s := make([]string, 0, len(e.m))
-	for k, v := range e.m {
+func (e Env) Export() []string {
+	s := make([]string, 0, len(e))
+	for k, v := range e {
 		s = append(s, fmt.Sprintf("%s=%s", k, v))
 	}
 	return s
 }
 
-func (e *Env) Repr() string {
-	e.fill()
+func (e Env) Repr() string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
 	sep := ""
-	for k, v := range e.m {
+	for k, v := range e {
 		fmt.Fprint(buf, sep, "&", quote(k), " ", quote(v))
 		sep = " "
 	}
@@ -247,8 +241,7 @@ func (e *Env) Repr() string {
 	return buf.String()
 }
 
-func (e *Env) String() string {
-	e.fill()
+func (e Env) String() string {
 	return e.Repr()
 }
 
@@ -285,8 +278,8 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 	}
 
 	switch left.(type) {
-	case *Env:
-		return NewString(left.(*Env).m[sub.String()])
+	case Env:
+		return NewString(left.(Env)[sub.String()])
 	case *Table:
 		t := left.(*Table)
 		// Need stricter notion of list indices
