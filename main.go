@@ -13,6 +13,7 @@ import (
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
+	_ "github.com/elves/elvish/store"
 	"github.com/elves/elvish/util"
 )
 
