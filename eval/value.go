@@ -99,13 +99,12 @@ func valuePtr(v Value) *Value {
 // String is a string.
 type String string
 
-func (s *String) Type() Type {
+func (s String) Type() Type {
 	return StringType{}
 }
 
-func NewString(s string) *String {
-	ss := String(s)
-	return &ss
+func NewString(s string) String {
+	return String(s)
 }
 
 func quote(s string) string {
@@ -151,12 +150,12 @@ func quote(s string) string {
 	return strconv.Quote(s)
 }
 
-func (s *String) Repr() string {
-	return quote(string(*s))
+func (s String) Repr() string {
+	return quote(string(s))
 }
 
-func (s *String) String() string {
-	return string(*s)
+func (s String) String() string {
+	return string(s)
 }
 
 // Table is a list-dict hybrid.
@@ -270,10 +269,10 @@ func (c *Closure) String() string {
 
 func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 	var (
-		sub *String
+		sub String
 		ok  bool
 	)
-	if sub, ok = right.(*String); !ok {
+	if sub, ok = right.(String); !ok {
 		ev.errorf(rp, "right operand of subscript must be of type string")
 	}
 
@@ -296,7 +295,7 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 		}
 		ev.errorf(rp, "nonexistent key %q", sub)
 		return nil
-	case *String:
+	case String:
 		invalidIndex := "invalid index, must be integer or integer:integer"
 
 		ss := strings.Split(sub.String(), ":")

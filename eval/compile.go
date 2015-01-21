@@ -231,7 +231,7 @@ func (cp *Compiler) compileRedir(r parse.Redir) portOp {
 	case *parse.FilenameRedir:
 		fnameOp := cp.compileCompound(r.Filename)
 		return func(ev *Evaluator) *port {
-			fname := string(*ev.mustSingleString(
+			fname := string(ev.mustSingleString(
 				fnameOp.f(ev), "filename", r.Filename.Pos))
 			// TODO haz hardcoded permbits now
 			f, e := os.OpenFile(fname, r.Flag, 0644)

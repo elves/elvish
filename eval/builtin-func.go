@@ -187,11 +187,11 @@ func cd(ev *Evaluator, args []Value) string {
 
 func toFloats(args []Value) (nums []float64, err error) {
 	for _, a := range args {
-		a, ok := a.(*String)
+		a, ok := a.(String)
 		if !ok {
 			return nil, fmt.Errorf("must be string")
 		}
-		f, err := strconv.ParseFloat(string(*a), 64)
+		f, err := strconv.ParseFloat(string(a), 64)
 		if err != nil {
 			return nil, err
 		}

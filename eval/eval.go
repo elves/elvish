@@ -169,13 +169,13 @@ func (ev *Evaluator) errorf(p parse.Pos, format string, args ...interface{}) {
 		ev.text, int(p), format, args...))
 }
 
-// mustSingleString returns a *String if that is the only element of vs.
+// mustSingleString returns a String if that is the only element of vs.
 // Otherwise it errors.
-func (ev *Evaluator) mustSingleString(vs []Value, what string, p parse.Pos) *String {
+func (ev *Evaluator) mustSingleString(vs []Value, what string, p parse.Pos) String {
 	if len(vs) != 1 {
 		ev.errorf(p, "Expect exactly one word for %s, got %d", what, len(vs))
 	}
-	v, ok := vs[0].(*String)
+	v, ok := vs[0].(String)
 	if !ok {
 		ev.errorf(p, "Expect string for %s, got %s", what, vs[0])
 	}
