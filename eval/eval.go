@@ -34,11 +34,11 @@ type evaluatorEphemeral struct {
 
 func statusOk(vs []Value) bool {
 	for _, v := range vs {
-		v, ok := v.(String)
+		v, ok := v.(Exitus)
 		if !ok {
 			return false
 		}
-		if string(v) != "" {
+		if !v.Success {
 			return false
 		}
 	}

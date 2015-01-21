@@ -124,6 +124,8 @@ func combineClosure(argNames []string, ops []valuesOp, enclosed map[string]Type)
 	return valuesOp{newFixedTypeRun(ClosureType{}), f}
 }
 
+var noExitus = newFailure("no exitus")
+
 func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 	f := func(ev *Evaluator) []Value {
 		var nextIn *port
@@ -154,18 +156,18 @@ func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 		// Collect exit values
 		exits := make([]Value, len(ops))
 		for i, update := range updates {
-			msg := "<no exit msg>"
+			ex := noExitus
 			for up := range update {
-				msg = up.Msg
+				ex = up.Exitus
 			}
-			exits[i] = NewString(msg)
+			exits[i] = ex
 		}
 		return exits
 	}
 	return valuesOp{newHomoTypeRun(&StringType{}, len(ops), false), f}
 }
 
-func combineSpecialForm(op strOp, ports []portOp, p parse.Pos) stateUpdatesOp {
+func combineSpecialForm(op exitusOp, ports []portOp, p parse.Pos) stateUpdatesOp {
 	// ev here is always a subevaluator created in combinePipeline, so it can
 	// be safely modified.
 	return func(ev *Evaluator) <-chan *StateUpdate {

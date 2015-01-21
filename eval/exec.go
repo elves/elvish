@@ -52,8 +52,17 @@ func (ev *Evaluator) closePorts() {
 
 // StateUpdate represents a change of state of a command.
 type StateUpdate struct {
-	Terminated bool
-	Msg        string
+	Exited bool
+	Exitus Exitus
+	Update string
+}
+
+func newExitedStateUpdate(e Exitus) *StateUpdate {
+	return &StateUpdate{Exited: true, Exitus: e}
+}
+
+func newUnexitedStateUpdate(u string) *StateUpdate {
+	return &StateUpdate{Exited: false, Update: u}
 }
 
 // isExecutable determines whether path refers to an executable file.
@@ -97,13 +106,13 @@ func (ev *Evaluator) search(exe string) (string, error) {
 // NOTE(xiaq): execSpecial and execNonSpecial are always called on an
 // intermediate "form redir" where only the form-local ports are marked
 // shouldClose. ev.closePorts should be called at appropriate moments.
-func (ev *Evaluator) execSpecial(op strOp) <-chan *StateUpdate {
+func (ev *Evaluator) execSpecial(op exitusOp) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
-		msg := op(ev)
+		ex := op(ev)
 		// Ports are closed after executaion of builtin is complete.
 		ev.closePorts()
-		update <- &StateUpdate{Terminated: true, Msg: msg}
+		update <- newExitedStateUpdate(ex)
 		close(update)
 	}()
 	return update
@@ -138,10 +147,10 @@ func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate
 func (ev *Evaluator) execBuiltinFunc(fn builtinFuncImpl, args []Value) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
-		msg := fn(ev, args)
+		ex := fn(ev, args)
 		// Ports are closed after executaion of builtin is complete.
 		ev.closePorts()
-		update <- &StateUpdate{Terminated: true, Msg: msg}
+		update <- newExitedStateUpdate(ex)
 		close(update)
 	}()
 	return update
@@ -154,7 +163,7 @@ func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUp
 	// TODO Support optional/rest argument
 	if len(args) != len(closure.ArgNames) {
 		// TODO Check arity before exec'ing
-		update <- &StateUpdate{Terminated: true, Msg: "arity mismatch"}
+		update <- newExitedStateUpdate(arityMismatch)
 		close(update)
 		return update
 	}
@@ -182,39 +191,38 @@ func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUp
 		// Ports are closed after executaion of closure is complete.
 		ev.closePorts()
 		// TODO Support returning value.
-		update <- &StateUpdate{Terminated: true}
+		update <- newExitedStateUpdate(success)
 		close(update)
 	}()
 	return update
 }
 
-// sprintStatus returns a human-readable representation of a
-// syscall.WaitStatus.
-func sprintStatus(ws syscall.WaitStatus) string {
+// waitStatusToStateUpdate converts syscall.WaitStatus to a StateUpdate.
+func waitStatusToStateUpdate(ws syscall.WaitStatus) *StateUpdate {
 	switch {
 	case ws.Exited():
 		es := ws.ExitStatus()
 		if es == 0 {
-			return ""
+			return newExitedStateUpdate(success)
 		}
-		return fmt.Sprintf("exited %v", es)
+		return newExitedStateUpdate(newFailure(fmt.Sprint(es)))
 	case ws.Signaled():
 		msg := fmt.Sprintf("signaled %v", ws.Signal())
 		if ws.CoreDump() {
 			msg += " (core dumped)"
 		}
-		return msg
+		return newUnexitedStateUpdate(msg)
 	case ws.Stopped():
 		msg := fmt.Sprintf("stopped %v", ws.StopSignal())
 		trap := ws.TrapCause()
 		if trap != -1 {
 			msg += fmt.Sprintf(" (trapped %v)", trap)
 		}
-		return msg
+		return newUnexitedStateUpdate(msg)
 	case ws.Continued():
-		return "continued"
+		return newUnexitedStateUpdate("continued")
 	default:
-		return fmt.Sprintf("unknown status %v", ws)
+		return newUnexitedStateUpdate(fmt.Sprint("unknown status", ws))
 	}
 }
 
@@ -226,10 +234,10 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 		_, err := syscall.Wait4(pid, &ws, 0, nil)
 
 		if err != nil {
-			update <- &StateUpdate{Msg: err.Error()}
+			update <- newExitedStateUpdate(newFailure(err.Error()))
 			break
 		}
-		update <- &StateUpdate{Terminated: ws.Exited(), Msg: sprintStatus(ws)}
+		update <- waitStatusToStateUpdate(ws)
 		if ws.Exited() {
 			break
 		}
@@ -271,7 +279,7 @@ func (ev *Evaluator) execExternal(cmd string, argVals []Value) <-chan *StateUpda
 	update := make(chan *StateUpdate)
 	if err != nil {
 		go func() {
-			update <- &StateUpdate{Terminated: true, Msg: err.Error()}
+			update <- newExitedStateUpdate(newFailure(err.Error()))
 			close(update)
 		}()
 	} else {

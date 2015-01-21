@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-type builtinFuncImpl func(*Evaluator, []Value) string
+type builtinFuncImpl func(*Evaluator, []Value) Exitus
 
 type builtinFunc struct {
 	fn          builtinFuncImpl
@@ -44,47 +44,51 @@ var builtinFuncs = map[string]builtinFunc{
 	"/": builtinFunc{divide, [2]StreamType{0, chanStream}},
 }
 
-func put(ev *Evaluator, args []Value) string {
+var (
+	argsError = newFailure("args error")
+)
+
+func put(ev *Evaluator, args []Value) Exitus {
 	out := ev.ports[1].ch
 	for _, a := range args {
 		out <- a
 	}
-	return ""
+	return success
 }
 
-func typeof(ev *Evaluator, args []Value) string {
+func typeof(ev *Evaluator, args []Value) Exitus {
 	out := ev.ports[1].ch
 	for _, a := range args {
 		out <- NewString(a.Type().String())
 	}
-	return ""
+	return success
 }
 
-func failure(ev *Evaluator, args []Value) string {
+func failure(ev *Evaluator, args []Value) Exitus {
 	if len(args) != 1 {
-		return "args error"
+		return argsError
 	}
 	out := ev.ports[1].ch
 	out <- newFailure(args[0].String())
-	return ""
+	return success
 }
 
-func print(ev *Evaluator, args []Value) string {
+func print(ev *Evaluator, args []Value) Exitus {
 	out := ev.ports[1].f
 	for _, a := range args {
 		fmt.Fprint(out, a.String())
 	}
-	return ""
+	return success
 }
 
-func println(ev *Evaluator, args []Value) string {
+func println(ev *Evaluator, args []Value) Exitus {
 	args = append(args, NewString("\n"))
 	return print(ev, args)
 }
 
-func printchan(ev *Evaluator, args []Value) string {
+func printchan(ev *Evaluator, args []Value) Exitus {
 	if len(args) > 0 {
-		return "args error"
+		return argsError
 	}
 	in := ev.ports[0].ch
 	out := ev.ports[1].f
@@ -92,12 +96,12 @@ func printchan(ev *Evaluator, args []Value) string {
 	for s := range in {
 		fmt.Fprintln(out, s.String())
 	}
-	return ""
+	return success
 }
 
-func feedchan(ev *Evaluator, args []Value) string {
+func feedchan(ev *Evaluator, args []Value) Exitus {
 	if len(args) > 0 {
-		return "args error"
+		return argsError
 	}
 	in := ev.ports[0].f
 	out := ev.ports[1].ch
@@ -110,9 +114,9 @@ func feedchan(ev *Evaluator, args []Value) string {
 		// fmt.Printf("[%v] ", i)
 		line, err := bufferedIn.ReadString('\n')
 		if err == io.EOF {
-			return ""
+			return success
 		} else if err != nil {
-			return err.Error()
+			return newFailure(err.Error())
 		}
 		out <- NewString(line[:len(line)-1])
 		// i++
@@ -120,11 +124,11 @@ func feedchan(ev *Evaluator, args []Value) string {
 }
 
 // unpack takes any number of tables and output their list elements.
-func unpack(ev *Evaluator, args []Value) string {
+func unpack(ev *Evaluator, args []Value) Exitus {
 	out := ev.ports[1].ch
 	for _, a := range args {
 		if _, ok := a.(*Table); !ok {
-			return "args error"
+			return argsError
 		}
 	}
 	for _, a := range args {
@@ -133,16 +137,16 @@ func unpack(ev *Evaluator, args []Value) string {
 			out <- e
 		}
 	}
-	return ""
+	return success
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ev *Evaluator, args []Value) string {
+func each(ev *Evaluator, args []Value) Exitus {
 	if len(args) != 1 {
-		return "args error"
+		return argsError
 	}
 	if f, ok := args[0].(*Closure); !ok {
-		return "args error"
+		return argsError
 	} else {
 		in := ev.ports[0].ch
 		for v := range in {
@@ -151,33 +155,33 @@ func each(ev *Evaluator, args []Value) string {
 			}
 		}
 	}
-	return ""
+	return success
 }
 
 // if takes a sequence of values and a trailing nullary closure. If all of the
 // values are true (= are empty strings), the closure is executed.
-func ifFn(ev *Evaluator, args []Value) string {
+func ifFn(ev *Evaluator, args []Value) Exitus {
 	if len(args) == 0 {
-		return "args error"
+		return argsError
 	}
 	if f, ok := args[len(args)-1].(*Closure); !ok {
-		return "args error"
+		return argsError
 	} else if len(f.ArgNames) > 0 {
-		return "args error"
+		return argsError
 	} else {
 		for _, a := range args[:len(args)-1] {
 			if a.String() != "" {
-				return ""
+				return success
 			}
 		}
 		su := ev.execClosure(f, []Value{})
 		for _ = range su {
 		}
-		return ""
+		return success
 	}
 }
 
-func cd(ev *Evaluator, args []Value) string {
+func cd(ev *Evaluator, args []Value) Exitus {
 	var dir string
 	if len(args) == 0 {
 		user, err := user.Current()
@@ -187,13 +191,13 @@ func cd(ev *Evaluator, args []Value) string {
 	} else if len(args) == 1 {
 		dir = args[0].String()
 	} else {
-		return "args error"
+		return argsError
 	}
 	err := os.Chdir(dir)
 	if err != nil {
-		return err.Error()
+		return newFailure(err.Error())
 	}
-	return ""
+	return success
 }
 
 func toFloats(args []Value) (nums []float64, err error) {
@@ -211,64 +215,64 @@ func toFloats(args []Value) (nums []float64, err error) {
 	return
 }
 
-func plus(ev *Evaluator, args []Value) string {
+func plus(ev *Evaluator, args []Value) Exitus {
 	out := ev.ports[1].ch
 	nums, err := toFloats(args)
 	if err != nil {
-		return err.Error()
+		return newFailure(err.Error())
 	}
 	sum := 0.0
 	for _, f := range nums {
 		sum += f
 	}
 	out <- NewString(fmt.Sprintf("%g", sum))
-	return ""
+	return success
 }
 
-func minus(ev *Evaluator, args []Value) string {
+func minus(ev *Evaluator, args []Value) Exitus {
 	out := ev.ports[1].ch
 	if len(args) == 0 {
-		return "not enough args"
+		return argsError
 	}
 	nums, err := toFloats(args)
 	if err != nil {
-		return err.Error()
+		return newFailure(err.Error())
 	}
 	sum := nums[0]
 	for _, f := range nums[1:] {
 		sum -= f
 	}
 	out <- NewString(fmt.Sprintf("%g", sum))
-	return ""
+	return success
 }
 
-func times(ev *Evaluator, args []Value) string {
+func times(ev *Evaluator, args []Value) Exitus {
 	out := ev.ports[1].ch
 	nums, err := toFloats(args)
 	if err != nil {
-		return err.Error()
+		return newFailure(err.Error())
 	}
 	prod := 1.0
 	for _, f := range nums {
 		prod *= f
 	}
 	out <- NewString(fmt.Sprintf("%g", prod))
-	return ""
+	return success
 }
 
-func divide(ev *Evaluator, args []Value) string {
+func divide(ev *Evaluator, args []Value) Exitus {
 	out := ev.ports[1].ch
 	if len(args) == 0 {
-		return "not enough args"
+		return argsError
 	}
 	nums, err := toFloats(args)
 	if err != nil {
-		return err.Error()
+		return newFailure(err.Error())
 	}
 	prod := nums[0]
 	for _, f := range nums[1:] {
 		prod /= f
 	}
 	out <- NewString(fmt.Sprintf("%g", prod))
-	return ""
+	return success
 }

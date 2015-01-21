@@ -4,8 +4,8 @@ package eval
 
 import "github.com/elves/elvish/parse"
 
-type strOp func(*Evaluator) string
-type builtinSpecialCompile func(*Compiler, *parse.FormNode) strOp
+type exitusOp func(*Evaluator) Exitus
+type builtinSpecialCompile func(*Compiler, *parse.FormNode) exitusOp
 
 type builtinSpecial struct {
 	compile     builtinSpecialCompile
@@ -102,7 +102,7 @@ func ensureStartWithVariable(cp *Compiler, fn *parse.FormNode, form string) {
 //
 // gives $u and $v type Type1, $x $y type Type2 and $z type Any and
 // assigns them the values a, b, c, d, e respectively.
-func compileVar(cp *Compiler, fn *parse.FormNode) strOp {
+func compileVar(cp *Compiler, fn *parse.FormNode) exitusOp {
 	var (
 		names  []string
 		types  []Type
@@ -148,19 +148,19 @@ func compileVar(cp *Compiler, fn *parse.FormNode) strOp {
 		vop = cp.compileCompounds(values)
 		checkSetType(cp, names, values, vop, fn.Pos)
 	}
-	return func(ev *Evaluator) string {
+	return func(ev *Evaluator) Exitus {
 		for i, name := range names {
 			ev.scope[name] = valuePtr(types[i].Default())
 		}
 		if vop.f != nil {
 			return doSet(ev, names, vop.f(ev))
 		}
-		return ""
+		return success
 	}
 }
 
 // SetForm = 'set' { VariablePrimary } '=' { Compound }
-func compileSet(cp *Compiler, fn *parse.FormNode) strOp {
+func compileSet(cp *Compiler, fn *parse.FormNode) exitusOp {
 	var (
 		names  []string
 		values []*parse.CompoundNode
@@ -186,16 +186,20 @@ func compileSet(cp *Compiler, fn *parse.FormNode) strOp {
 	vop = cp.compileCompounds(values)
 	checkSetType(cp, names, values, vop, fn.Pos)
 
-	return func(ev *Evaluator) string {
+	return func(ev *Evaluator) Exitus {
 		return doSet(ev, names, vop.f(ev))
 	}
 }
 
-func doSet(ev *Evaluator, names []string, values []Value) string {
+var (
+	arityMismatch Exitus = newFailure("arity mismatch")
+)
+
+func doSet(ev *Evaluator, names []string, values []Value) Exitus {
 	// TODO Support assignment of mismatched arity in some restricted way -
 	// "optional" and "rest" arguments and the like
 	if len(names) != len(values) {
-		return "arity mismatch"
+		return arityMismatch
 	}
 
 	for i, name := range names {
@@ -203,11 +207,11 @@ func doSet(ev *Evaluator, names []string, values []Value) string {
 		*ev.scope[name] = values[i]
 	}
 
-	return ""
+	return success
 }
 
 // DelForm = 'del' { VariablePrimary }
-func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
+func compileDel(cp *Compiler, fn *parse.FormNode) exitusOp {
 	// Do conventional compiling of all compound expressions, including
 	// ensuring that variables can be resolved
 	var names []string
@@ -222,11 +226,11 @@ func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
 		cp.popVar(name)
 		names = append(names, name)
 	}
-	return func(ev *Evaluator) string {
+	return func(ev *Evaluator) Exitus {
 		for _, name := range names {
 			delete(ev.scope, name)
 		}
-		return ""
+		return success
 	}
 }
 
@@ -238,7 +242,7 @@ func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
 //
 // fn f $a $b { put (* $a $b) (/ $a *b) }
 // var $fn-f = { |$a $b| put (* $a $b) (/ $a $b) }
-func compileFn(cp *Compiler, fn *parse.FormNode) strOp {
+func compileFn(cp *Compiler, fn *parse.FormNode) exitusOp {
 	if len(fn.Args.Nodes) == 0 {
 		cp.errorf(fn.Pos, "expect function name after fn")
 	}
@@ -280,24 +284,24 @@ func compileFn(cp *Compiler, fn *parse.FormNode) strOp {
 
 	cp.pushVar(varName, ClosureType{})
 
-	return func(ev *Evaluator) string {
+	return func(ev *Evaluator) Exitus {
 		ev.scope[varName] = &op.f(ev)[0]
-		return ""
+		return success
 	}
 }
 
-func compileStaticTypeof(cp *Compiler, fn *parse.FormNode) strOp {
+func compileStaticTypeof(cp *Compiler, fn *parse.FormNode) exitusOp {
 	// Do conventional compiling of all compounds, only keeping the static type
 	// information
 	var trs []typeRun
 	for _, cn := range fn.Args.Nodes {
 		trs = append(trs, cp.compileCompound(cn).tr)
 	}
-	return func(ev *Evaluator) string {
+	return func(ev *Evaluator) Exitus {
 		out := ev.ports[1].ch
 		for _, tr := range trs {
 			out <- NewString(tr.String())
 		}
-		return ""
+		return success
 	}
 }
