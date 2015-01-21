@@ -26,6 +26,7 @@ var builtinFuncs = map[string]builtinFunc{
 	"printchan": builtinFunc{printchan, [2]StreamType{chanStream, fdStream}},
 	"feedchan":  builtinFunc{feedchan, [2]StreamType{fdStream, chanStream}},
 	"unpack":    builtinFunc{unpack, [2]StreamType{0, chanStream}},
+	"each":      builtinFunc{each, [2]StreamType{chanStream, chanStream}},
 	"cd":        builtinFunc{cd, [2]StreamType{}},
 	"+":         builtinFunc{plus, [2]StreamType{0, chanStream}},
 	"-":         builtinFunc{minus, [2]StreamType{0, chanStream}},
@@ -99,7 +100,7 @@ func feedchan(ev *Evaluator, args []Value) string {
 	}
 }
 
-// unpack takes any number of tables and output their list elements
+// unpack takes any number of tables and output their list elements.
 func unpack(ev *Evaluator, args []Value) string {
 	out := ev.ports[1].ch
 	for _, a := range args {
@@ -111,6 +112,23 @@ func unpack(ev *Evaluator, args []Value) string {
 		a := a.(*Table)
 		for _, e := range a.List {
 			out <- e
+		}
+	}
+	return ""
+}
+
+// each takes a single closure and applies it to all input values.
+func each(ev *Evaluator, args []Value) string {
+	if len(args) != 1 {
+		return "args error"
+	}
+	if f, ok := args[0].(*Closure); !ok {
+		return "args error"
+	} else {
+		in := ev.ports[0].ch
+		for v := range in {
+			su := ev.execClosure(f, []Value{v})
+			<-su
 		}
 	}
 	return ""
