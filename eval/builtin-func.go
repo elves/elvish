@@ -25,6 +25,7 @@ var builtinFuncs = map[string]builtinFunc{
 	"println":   builtinFunc{println, [2]StreamType{0, fdStream}},
 	"printchan": builtinFunc{printchan, [2]StreamType{chanStream, fdStream}},
 	"feedchan":  builtinFunc{feedchan, [2]StreamType{fdStream, chanStream}},
+	"unpack":    builtinFunc{unpack, [2]StreamType{0, chanStream}},
 	"cd":        builtinFunc{cd, [2]StreamType{}},
 	"+":         builtinFunc{plus, [2]StreamType{0, chanStream}},
 	"-":         builtinFunc{minus, [2]StreamType{0, chanStream}},
@@ -96,6 +97,23 @@ func feedchan(ev *Evaluator, args []Value) string {
 		out <- NewString(line[:len(line)-1])
 		// i++
 	}
+}
+
+// unpack takes any number of tables and output their list elements
+func unpack(ev *Evaluator, args []Value) string {
+	out := ev.ports[1].ch
+	for _, a := range args {
+		if _, ok := a.(*Table); !ok {
+			return "args error"
+		}
+	}
+	for _, a := range args {
+		a := a.(*Table)
+		for _, e := range a.List {
+			out <- e
+		}
+	}
+	return ""
 }
 
 func cd(ev *Evaluator, args []Value) string {
