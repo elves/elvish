@@ -20,7 +20,9 @@ func init() {
 		"var": builtinSpecial{compileVar, [2]StreamType{}},
 		"set": builtinSpecial{compileSet, [2]StreamType{}},
 		"del": builtinSpecial{compileDel, [2]StreamType{}},
-		"fn":  builtinSpecial{compileFn, [2]StreamType{}},
+
+		"fn": builtinSpecial{compileFn, [2]StreamType{}},
+
 		"static-typeof": builtinSpecial{
 			compileStaticTypeof, [2]StreamType{0, fdStream}},
 	}

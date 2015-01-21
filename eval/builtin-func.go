@@ -19,19 +19,25 @@ type builtinFunc struct {
 }
 
 var builtinFuncs = map[string]builtinFunc{
-	"put":       builtinFunc{put, [2]StreamType{0, chanStream}},
-	"typeof":    builtinFunc{typeof, [2]StreamType{0, chanStream}},
-	"print":     builtinFunc{print, [2]StreamType{0, fdStream}},
-	"println":   builtinFunc{println, [2]StreamType{0, fdStream}},
+	"print":   builtinFunc{print, [2]StreamType{0, fdStream}},
+	"println": builtinFunc{println, [2]StreamType{0, fdStream}},
+
 	"printchan": builtinFunc{printchan, [2]StreamType{chanStream, fdStream}},
 	"feedchan":  builtinFunc{feedchan, [2]StreamType{fdStream, chanStream}},
-	"unpack":    builtinFunc{unpack, [2]StreamType{0, chanStream}},
-	"each":      builtinFunc{each, [2]StreamType{chanStream, hybridStream}},
-	"cd":        builtinFunc{cd, [2]StreamType{}},
-	"+":         builtinFunc{plus, [2]StreamType{0, chanStream}},
-	"-":         builtinFunc{minus, [2]StreamType{0, chanStream}},
-	"*":         builtinFunc{times, [2]StreamType{0, chanStream}},
-	"/":         builtinFunc{divide, [2]StreamType{0, chanStream}},
+
+	"put":    builtinFunc{put, [2]StreamType{0, chanStream}},
+	"unpack": builtinFunc{unpack, [2]StreamType{0, chanStream}},
+
+	"typeof": builtinFunc{typeof, [2]StreamType{0, chanStream}},
+
+	"each": builtinFunc{each, [2]StreamType{chanStream, hybridStream}},
+
+	"cd": builtinFunc{cd, [2]StreamType{}},
+
+	"+": builtinFunc{plus, [2]StreamType{0, chanStream}},
+	"-": builtinFunc{minus, [2]StreamType{0, chanStream}},
+	"*": builtinFunc{times, [2]StreamType{0, chanStream}},
+	"/": builtinFunc{divide, [2]StreamType{0, chanStream}},
 }
 
 func put(ev *Evaluator, args []Value) string {
