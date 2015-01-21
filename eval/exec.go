@@ -31,35 +31,11 @@ type StreamType byte
 
 // Possible values of StreamType.
 const (
-	unusedStream StreamType = iota
-	fdStream                // Corresponds to port.f.
-	chanStream              // Corresponds to port.ch.
+	unusedStream StreamType = 0
+	fdStream                = 1 << iota // Corresponds to port.f.
+	chanStream                          // Corresponds to port.ch.
+	hybridStream = fdStream | chanStream
 )
-
-// commonType returns a StreamType compatible with both StreamType's. A
-// StreamType is compatible with itself or unusedStream.
-func (typ StreamType) commonType(typ2 StreamType) (StreamType, bool) {
-	switch {
-	case typ == unusedStream, typ == typ2:
-		return typ2, true
-	case typ2 == unusedStream:
-		return typ, true
-	default:
-		return 0, false
-	}
-}
-
-// mayConvey returns whether port may convey a stream of typ.
-func (i *port) mayConvey(typ StreamType) bool {
-	switch typ {
-	case fdStream:
-		return i != nil && i.f != nil
-	case chanStream:
-		return i != nil && i.ch != nil
-	default: // Actually case unusedStream:
-		return true
-	}
-}
 
 // closePorts closes the suitable components of all ports in ev.ports that were
 // marked marked for closing.

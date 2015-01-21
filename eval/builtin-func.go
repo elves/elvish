@@ -26,7 +26,7 @@ var builtinFuncs = map[string]builtinFunc{
 	"printchan": builtinFunc{printchan, [2]StreamType{chanStream, fdStream}},
 	"feedchan":  builtinFunc{feedchan, [2]StreamType{fdStream, chanStream}},
 	"unpack":    builtinFunc{unpack, [2]StreamType{0, chanStream}},
-	"each":      builtinFunc{each, [2]StreamType{chanStream, chanStream}},
+	"each":      builtinFunc{each, [2]StreamType{chanStream, hybridStream}},
 	"cd":        builtinFunc{cd, [2]StreamType{}},
 	"+":         builtinFunc{plus, [2]StreamType{0, chanStream}},
 	"-":         builtinFunc{minus, [2]StreamType{0, chanStream}},
