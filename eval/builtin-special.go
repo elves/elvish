@@ -20,6 +20,7 @@ func init() {
 		"var": builtinSpecial{compileVar, [2]StreamType{}},
 		"set": builtinSpecial{compileSet, [2]StreamType{}},
 		"del": builtinSpecial{compileDel, [2]StreamType{}},
+		"fn":  builtinSpecial{compileFn, [2]StreamType{}},
 		"static-typeof": builtinSpecial{
 			compileStaticTypeof, [2]StreamType{0, fdStream}},
 	}
@@ -223,6 +224,62 @@ func compileDel(cp *Compiler, fn *parse.FormNode) strOp {
 		for _, name := range names {
 			delete(ev.scope, name)
 		}
+		return ""
+	}
+}
+
+// FnForm = 'fn' StringPrimary { VariablePrimary } ClosurePrimary
+//
+// fn defines a function. This isn't strictly needed, since user-defined
+// functions are just variables. The following two lines should be exactly
+// equivalent:
+//
+// fn f $a $b { put (* $a $b) (/ $a *b) }
+// var $fn-f = { |$a $b| put (* $a $b) (/ $a $b) }
+func compileFn(cp *Compiler, fn *parse.FormNode) strOp {
+	if len(fn.Args.Nodes) == 0 {
+		cp.errorf(fn.Pos, "expect function name after fn")
+	}
+	pn, fnName := ensureVariableOrStringPrimary(cp, fn.Args.Nodes[0], "expect string literal")
+	varName := "fn-" + fnName
+	if cp.resolveVarOnThisScope(varName) != nil {
+		cp.errorf(pn.Pos, "redefinition of function %s", fnName)
+	}
+
+	var closureNode *parse.ClosureNode
+	var argNames []*parse.CompoundNode
+
+	for i, cn := range fn.Args.Nodes[1:] {
+		expect := "expect variable or closure"
+		pn := ensurePrimary(cp, cn, expect)
+		switch pn.Typ {
+		case parse.ClosurePrimary:
+			if i+2 != len(fn.Args.Nodes) {
+				cp.errorf(fn.Args.Nodes[i+2].Pos, "garbage after closure literal")
+			}
+			closureNode = pn.Node.(*parse.ClosureNode)
+			break
+		case parse.VariablePrimary:
+			argNames = append(argNames, cn)
+		default:
+			cp.errorf(pn.Pos, expect)
+		}
+	}
+
+	if len(argNames) > 0 {
+		closureNode = &parse.ClosureNode{
+			closureNode.Pos,
+			&parse.SpacedNode{argNames[0].Pos, argNames},
+			closureNode.Chunk,
+		}
+	}
+
+	op := cp.compileClosure(closureNode)
+
+	cp.pushVar(varName, ClosureType{})
+
+	return func(ev *Evaluator) string {
+		ev.scope[varName] = &op.f(ev)[0]
 		return ""
 	}
 }

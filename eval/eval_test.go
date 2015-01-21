@@ -105,6 +105,10 @@ var evalTests = []struct {
 	// Shadowing by argument
 	{"var $x = ipsum; { |$x| put $x; set $x = BAD } lorem; put $x",
 		stringValues("lorem", "ipsum"), false},
+
+	// fn
+	{"fn f $x { put $x ipsum }; f lorem",
+		stringValues("lorem", "ipsum"), false},
 }
 
 func TestEval(t *testing.T) {

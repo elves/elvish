@@ -19,7 +19,6 @@ type builtinFunc struct {
 }
 
 var builtinFuncs = map[string]builtinFunc{
-	"fn":        builtinFunc{fn, [2]StreamType{}},
 	"put":       builtinFunc{put, [2]StreamType{0, chanStream}},
 	"typeof":    builtinFunc{typeof, [2]StreamType{0, fdStream}},
 	"print":     builtinFunc{print, [2]StreamType{0, fdStream}},
@@ -31,32 +30,6 @@ var builtinFuncs = map[string]builtinFunc{
 	"-":         builtinFunc{minus, [2]StreamType{0, chanStream}},
 	"*":         builtinFunc{times, [2]StreamType{0, chanStream}},
 	"/":         builtinFunc{divide, [2]StreamType{0, chanStream}},
-}
-
-func fn(ev *Evaluator, args []Value) string {
-	n := len(args)
-	if n < 2 {
-		return "args error"
-	}
-	closure, ok := args[n-1].(*Closure)
-	if !ok {
-		return "args error"
-	}
-	if n > 2 && len(closure.ArgNames) != 0 {
-		return "can't define arg names list twice"
-	}
-	// BUG(xiaq): the fn builtin now modifies the closure in place, making it
-	// possible to write:
-	//
-	// var f; set f = { }
-	//
-	// fn g a b $f // Changes arity of $f!
-	for i := 1; i < n-1; i++ {
-		closure.ArgNames = append(closure.ArgNames, args[i].String())
-	}
-	// TODO(xiaq): should fn warn about redefinition of functions?
-	ev.scope["fn-"+args[0].String()] = valuePtr(closure)
-	return ""
 }
 
 func put(ev *Evaluator, args []Value) string {
