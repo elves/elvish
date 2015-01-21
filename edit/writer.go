@@ -444,7 +444,10 @@ tokens:
 		dotLine := bufLine.dot.line
 		bufLine.trimToLines(dotLine+1-height, dotLine+1)
 	default:
-		bufLine, bufTips, bufMode, bufListing = nil, nil, nil, nil
+		// Broken terminal. Still try to render one line of bufLine.
+		bufTips, bufMode, bufListing = nil, nil, nil
+		dotLine := bufLine.dot.line
+		bufLine.trimToLines(dotLine, dotLine+1)
 	}
 
 	// Render bufListing under the maximum height constraint
