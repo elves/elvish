@@ -16,7 +16,7 @@ func TestFindContext(t *testing.T) {
 		lineno, colno, line := FindContext(tt.text, tt.pos)
 		if lineno != tt.lineno || colno != tt.colno || line != tt.line {
 			t.Errorf("FindContext(%v, %v) => (%v, %v, %v), want (%v, %v, %v)",
-				lineno, colno, line, tt.lineno, tt.colno, tt.line)
+				tt.text, tt.pos, lineno, colno, line, tt.lineno, tt.colno, tt.line)
 		}
 	}
 }
