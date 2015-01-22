@@ -18,32 +18,39 @@ type builtinFunc struct {
 	streamTypes [2]StreamType
 }
 
-var builtinFuncs = map[string]builtinFunc{
-	"print":   builtinFunc{print, [2]StreamType{0, fdStream}},
-	"println": builtinFunc{println, [2]StreamType{0, fdStream}},
+var builtinFuncs map[string]builtinFunc
 
-	"printchan": builtinFunc{printchan, [2]StreamType{chanStream, fdStream}},
-	"feedchan":  builtinFunc{feedchan, [2]StreamType{fdStream, chanStream}},
+func init() {
+	// Needed to work around init loop.
+	builtinFuncs = map[string]builtinFunc{
+		"print":   builtinFunc{print, [2]StreamType{0, fdStream}},
+		"println": builtinFunc{println, [2]StreamType{0, fdStream}},
 
-	"put":    builtinFunc{put, [2]StreamType{0, chanStream}},
-	"unpack": builtinFunc{unpack, [2]StreamType{0, chanStream}},
+		"printchan": builtinFunc{printchan, [2]StreamType{chanStream, fdStream}},
+		"feedchan":  builtinFunc{feedchan, [2]StreamType{fdStream, chanStream}},
 
-	"typeof": builtinFunc{typeof, [2]StreamType{0, chanStream}},
+		"put":    builtinFunc{put, [2]StreamType{0, chanStream}},
+		"unpack": builtinFunc{unpack, [2]StreamType{0, chanStream}},
 
-	"failure": builtinFunc{failure, [2]StreamType{0, chanStream}},
+		"typeof": builtinFunc{typeof, [2]StreamType{0, chanStream}},
 
-	"each": builtinFunc{each, [2]StreamType{chanStream, hybridStream}},
+		"failure": builtinFunc{failure, [2]StreamType{0, chanStream}},
 
-	"if": builtinFunc{ifFn, [2]StreamType{hybridStream, hybridStream}},
+		"each": builtinFunc{each, [2]StreamType{chanStream, hybridStream}},
 
-	"cd": builtinFunc{cd, [2]StreamType{}},
+		"if": builtinFunc{ifFn, [2]StreamType{hybridStream, hybridStream}},
 
-	"+": builtinFunc{plus, [2]StreamType{0, chanStream}},
-	"-": builtinFunc{minus, [2]StreamType{0, chanStream}},
-	"*": builtinFunc{times, [2]StreamType{0, chanStream}},
-	"/": builtinFunc{divide, [2]StreamType{0, chanStream}},
+		"cd": builtinFunc{cd, [2]StreamType{}},
 
-	"=": builtinFunc{eq, [2]StreamType{0, chanStream}},
+		"source": builtinFunc{source, [2]StreamType{hybridStream, hybridStream}},
+
+		"+": builtinFunc{plus, [2]StreamType{0, chanStream}},
+		"-": builtinFunc{minus, [2]StreamType{0, chanStream}},
+		"*": builtinFunc{times, [2]StreamType{0, chanStream}},
+		"/": builtinFunc{divide, [2]StreamType{0, chanStream}},
+
+		"=": builtinFunc{eq, [2]StreamType{0, chanStream}},
+	}
 }
 
 var (
@@ -198,6 +205,18 @@ func cd(ev *Evaluator, args []Value) Exitus {
 	err := os.Chdir(dir)
 	if err != nil {
 		return newFailure(err.Error())
+	}
+	return success
+}
+
+func source(ev *Evaluator, args []Value) Exitus {
+	if len(args) != 1 {
+		return argsError
+	}
+	if fname, ok := args[0].(String); !ok {
+		return argsError
+	} else {
+		ev.Source(string(fname))
 	}
 	return success
 }
