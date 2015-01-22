@@ -106,11 +106,11 @@ var parseTests = []struct {
 	{"a>[2=]", chunkOfFormWithRedir("", &CloseRedir{RedirBase{1, 2}})},
 
 	// Compound with sigil
-	{"a =b$c", chunkOfOneForm(
+	{"a !b$c", chunkOfOneForm(
 		&FormNode{0,
 			compoundOfBare(0, "a"),
 			newSpaced(2,
-				newCompound(2, '=',
+				newCompound(2, '!',
 					&SubscriptNode{3,
 						&PrimaryNode{3, StringPrimary,
 							newString(3, "b", "b")},

@@ -422,7 +422,7 @@ func isSpace(r rune) bool {
 // isSigil determines whether r is a sigil.
 func isSigil(r rune) bool {
 	switch r {
-	case '=', '!', '%':
+	case '!', '%':
 		return true
 	default:
 		return false
