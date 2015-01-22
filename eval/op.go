@@ -275,7 +275,7 @@ func makeVar(cp *Compiler, name string, p parse.Pos) valuesOp {
 	f := func(ev *Evaluator) []Value {
 		variable, ok := ev.scope[name]
 		if !ok {
-			panic("Compiler bug")
+			ev.errorf(p, "variable $%s not found; the compiler has a bug", name)
 		}
 		return []Value{*variable.valuePtr}
 	}
