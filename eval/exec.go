@@ -172,7 +172,7 @@ func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUp
 	// BUG(xiaq): When evaluating closures, async access to global variables
 	// and ports can be problematic.
 	ev.scope = make(map[string]Variable)
-	for name, variable := range closure.Enclosed {
+	for name, variable := range closure.Captured {
 		ev.scope[name] = variable
 	}
 	// Pass arguments.

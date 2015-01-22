@@ -18,7 +18,7 @@ type Compiler struct {
 type compilerEphemeral struct {
 	name, text string
 	scopes     []map[string]Type
-	enclosed   map[string]Type
+	captured   map[string]Type
 }
 
 // NewCompiler returns a new compiler.
@@ -104,18 +104,18 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) valuesOp {
 		ops[i] = cp.compilePipeline(pn)
 	}
 
-	enclosed := cp.enclosed
-	cp.enclosed = make(map[string]Type)
+	captured := cp.captured
+	cp.captured = make(map[string]Type)
 	cp.popScope()
 
-	// Added variables enclosed on inner closures to cp.enclosed
-	for name, typ := range enclosed {
+	// Added variables captured on inner closures to cp.captured
+	for name, typ := range captured {
 		if cp.resolveVarOnThisScope(name) == nil {
-			cp.enclosed[name] = typ
+			cp.captured[name] = typ
 		}
 	}
 
-	return combineClosure(argNames, ops, enclosed)
+	return combineClosure(argNames, ops, captured)
 }
 
 // compilePipeline compiles a PipelineNode into a valuesOp along with the
@@ -148,14 +148,14 @@ func (cp *Compiler) resolveVarOnThisScope(name string) Type {
 // ResolveVar returns the type of a variable with supplied name, found in
 // current or upper scopes. If such a variable is nonexistent, a nil is
 // returned. When the value to resolve is not on the current scope, it is added
-// to cp.enclosed.
+// to cp.captured.
 func (cp *Compiler) ResolveVar(name string) Type {
 	if t := cp.resolveVarOnThisScope(name); t != nil {
 		return t
 	}
 	for i := len(cp.scopes) - 2; i >= 0; i-- {
 		if t := cp.scopes[i][name]; t != nil {
-			cp.enclosed[name] = t
+			cp.captured[name] = t
 			return t
 		}
 	}

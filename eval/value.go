@@ -343,7 +343,7 @@ func (e Env) Bool() bool {
 type Closure struct {
 	ArgNames []string
 	Op       Op
-	Enclosed map[string]Variable
+	Captured map[string]Variable
 }
 
 func (c *Closure) Type() Type {
