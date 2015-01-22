@@ -96,6 +96,7 @@ func (ct ClosureType) String() string {
 }
 
 var typenames = map[string]Type{
+	"any":     AnyType{},
 	"string":  StringType{},
 	"exitus":  ExitusType{},
 	"bool":    BoolType{},
