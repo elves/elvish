@@ -28,6 +28,15 @@ func init() {
 	}
 }
 
+func mayAssign(tvar, tval Type) bool {
+	if isAny(tval) || isAny(tvar) {
+		return true
+	}
+	// XXX This is not how you check the equality of two interfaces. But it
+	// happens to work when all the Type instances we have are empty structs.
+	return tval == tvar
+}
+
 func checkSetType(cp *Compiler, names []string, values []*parse.CompoundNode, vop valuesOp, p parse.Pos) {
 	if !vop.tr.mayCountTo(len(names)) {
 		cp.errorf(p, "number of variables doesn't match that of values")
@@ -40,11 +49,7 @@ func checkSetType(cp *Compiler, names []string, values []*parse.CompoundNode, vo
 	for i, name := range names {
 		tval := vop.tr[i].t
 		tvar := cp.ResolveVar(name)
-		if isAny(tval) || isAny(tvar) {
-			// TODO Check type soundness at runtime
-			continue
-		}
-		if tvar != tval {
+		if !mayAssign(tvar, tval) {
 			cp.errorf(values[i].Pos, "type mismatch: assigning %#v value to %#v variable", tval, tvar)
 		}
 	}
@@ -193,6 +198,7 @@ func compileSet(cp *Compiler, fn *parse.FormNode) exitusOp {
 
 var (
 	arityMismatch Exitus = newFailure("arity mismatch")
+	typeMismatch  Exitus = newFailure("type mismatch")
 )
 
 func doSet(ev *Evaluator, names []string, values []Value) Exitus {
@@ -204,7 +210,12 @@ func doSet(ev *Evaluator, names []string, values []Value) Exitus {
 
 	for i, name := range names {
 		// TODO Prevent overriding builtin variables e.g. $pid $env
-		// XXX Should check type
+		variable := ev.scope[name]
+		tvar := variable.staticType
+		tval := values[i].Type()
+		if !mayAssign(tvar, tval) {
+			return typeMismatch
+		}
 		*ev.scope[name].valuePtr = values[i]
 	}
 
