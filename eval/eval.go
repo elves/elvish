@@ -4,10 +4,12 @@ package eval
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 	"syscall"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
@@ -207,4 +209,30 @@ func (ev *Evaluator) applyPortOps(ports []portOp) {
 			ev.ports[i] = op(ev)
 		}
 	}
+}
+
+func (ev *Evaluator) Source(fname string) error {
+	file, err := os.Open(fname)
+	if err != nil {
+		return err
+	}
+	bytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return err
+	}
+	if !utf8.Valid(bytes) {
+		return fmt.Errorf("%s: source is not valid UTF-8", fname)
+	}
+	src := string(bytes)
+
+	n, err := parse.Parse(fname, src)
+	if err != nil {
+		return err
+		/*
+			fmt.Print(pe.(*util.ContextualError).Pprint())
+			os.Exit(1)
+		*/
+	}
+
+	return ev.Eval(fname, src, n)
 }

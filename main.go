@@ -4,11 +4,9 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"os/user"
-	"unicode/utf8"
 
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
@@ -23,8 +21,7 @@ const (
 	outChanLeader = "▶ "
 )
 
-// TODO(xiaq): Currently only the editor deals with signals.
-func interact() {
+func newEvaluator() *eval.Evaluator {
 	ch := make(chan eval.Value, outChanSize)
 	go func() {
 		for v := range ch {
@@ -34,6 +31,13 @@ func interact() {
 
 	ev := eval.NewEvaluator()
 	ev.SetChanOut(ch)
+	return ev
+}
+
+// TODO(xiaq): Currently only the editor deals with signals.
+func interact() {
+	ev := newEvaluator()
+
 	cmdNum := 0
 
 	username := "???"
@@ -90,34 +94,15 @@ func interact() {
 	}
 }
 
-func script(name string) {
-	file, err := os.Open(name)
+func script(fname string) {
+	ev := newEvaluator()
+	err := ev.Source(fname)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	bytes, err := ioutil.ReadAll(file)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
-	if !utf8.Valid(bytes) {
-		fmt.Fprintf(os.Stderr, "source %v is not valid UTF-8\n", name)
-		os.Exit(1)
-	}
-	src := string(bytes)
-
-	ev := eval.NewEvaluator()
-
-	n, pe := parse.Parse(name, src)
-	if pe != nil {
-		fmt.Print(pe.(*util.ContextualError).Pprint())
-		os.Exit(1)
-	}
-
-	ee := ev.Eval(name, src, n)
-	if ee != nil {
-		fmt.Print(ee.(*util.ContextualError).Pprint())
+		if ce, ok := err.(*util.ContextualError); ok {
+			fmt.Fprint(os.Stderr, ce.Pprint())
+		} else {
+			fmt.Fprint(os.Stderr, err.Error())
+		}
 		os.Exit(1)
 	}
 }
