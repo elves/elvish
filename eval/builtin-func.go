@@ -42,6 +42,8 @@ var builtinFuncs = map[string]builtinFunc{
 	"-": builtinFunc{minus, [2]StreamType{0, chanStream}},
 	"*": builtinFunc{times, [2]StreamType{0, chanStream}},
 	"/": builtinFunc{divide, [2]StreamType{0, chanStream}},
+
+	"=": builtinFunc{eq, [2]StreamType{0, chanStream}},
 }
 
 var (
@@ -274,5 +276,20 @@ func divide(ev *Evaluator, args []Value) Exitus {
 		prod /= f
 	}
 	out <- NewString(fmt.Sprintf("%g", prod))
+	return success
+}
+
+func eq(ev *Evaluator, args []Value) Exitus {
+	out := ev.ports[1].ch
+	if len(args) == 0 {
+		return argsError
+	}
+	for i := 0; i+1 < len(args); i++ {
+		if !valueEq(args[i], args[i+1]) {
+			out <- Bool(false)
+			return success
+		}
+	}
+	out <- Bool(true)
 	return success
 }

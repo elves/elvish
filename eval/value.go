@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
@@ -427,4 +428,10 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 		ev.errorf(lp, "left operand of subscript must be of type string, env, table or any")
 		return nil
 	}
+}
+
+func valueEq(a, b Value) bool {
+	// XXX This is cheating. May no longer be true after values get more
+	// complex.
+	return reflect.DeepEqual(a, b)
 }

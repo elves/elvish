@@ -159,10 +159,10 @@ And:
   ``He's dead, Jim."
   ```
 
-* Barewords are string literals:
+* Barewords are string literals: ✔
   ```
   > = a `a`
-  true
+  ▶ $true
   ```
 
 * Tables are a hybrid of array and hash (a la Lua); tables are first-class
