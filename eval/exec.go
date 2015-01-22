@@ -129,7 +129,7 @@ func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate
 
 	// Defined function
 	if v, ok := ev.scope["fn-"+cmdStr]; ok {
-		if closure, ok := (*v).(*Closure); ok {
+		if closure, ok := (*v.valuePtr).(*Closure); ok {
 			return ev.execClosure(closure, args)
 		}
 	}
@@ -171,13 +171,14 @@ func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUp
 	// Make a subevaluator.
 	// BUG(xiaq): When evaluating closures, async access to global variables
 	// and ports can be problematic.
-	ev.scope = make(map[string]*Value)
-	for name, pvalue := range closure.Enclosed {
-		ev.scope[name] = pvalue
+	ev.scope = make(map[string]Variable)
+	for name, variable := range closure.Enclosed {
+		ev.scope[name] = variable
 	}
 	// Pass arguments.
 	for i, name := range closure.ArgNames {
-		ev.scope[name] = valuePtr(args[i])
+		// XXX(xiaq): support static type of arguments
+		ev.scope[name] = newVariable(args[i], AnyType{})
 	}
 
 	ev.statusCb = nil

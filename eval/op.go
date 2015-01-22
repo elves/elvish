@@ -115,7 +115,7 @@ func combineClosure(argNames []string, ops []valuesOp, enclosed map[string]Type)
 	op := combineChunk(ops)
 	// BUG(xiaq): Closure arguments is (again) not supported
 	f := func(ev *Evaluator) []Value {
-		evEnclosed := make(map[string]*Value, len(enclosed))
+		evEnclosed := make(map[string]Variable, len(enclosed))
 		for name := range enclosed {
 			evEnclosed[name] = ev.scope[name]
 		}
@@ -273,11 +273,11 @@ func makeString(text string) valuesOp {
 func makeVar(cp *Compiler, name string, p parse.Pos) valuesOp {
 	tr := newFixedTypeRun(cp.mustResolveVar(name, p))
 	f := func(ev *Evaluator) []Value {
-		val, ok := ev.scope[name]
+		variable, ok := ev.scope[name]
 		if !ok {
 			panic("Compiler bug")
 		}
-		return []Value{*val}
+		return []Value{*variable.valuePtr}
 	}
 	return valuesOp{tr, f}
 }

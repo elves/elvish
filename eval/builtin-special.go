@@ -150,7 +150,7 @@ func compileVar(cp *Compiler, fn *parse.FormNode) exitusOp {
 	}
 	return func(ev *Evaluator) Exitus {
 		for i, name := range names {
-			ev.scope[name] = valuePtr(types[i].Default())
+			ev.scope[name] = newVariable(types[i].Default(), types[i])
 		}
 		if vop.f != nil {
 			return doSet(ev, names, vop.f(ev))
@@ -204,7 +204,8 @@ func doSet(ev *Evaluator, names []string, values []Value) Exitus {
 
 	for i, name := range names {
 		// TODO Prevent overriding builtin variables e.g. $pid $env
-		*ev.scope[name] = values[i]
+		// XXX Should check type
+		*ev.scope[name].valuePtr = values[i]
 	}
 
 	return success
@@ -285,7 +286,7 @@ func compileFn(cp *Compiler, fn *parse.FormNode) exitusOp {
 	cp.pushVar(varName, ClosureType{})
 
 	return func(ev *Evaluator) Exitus {
-		ev.scope[varName] = &op.f(ev)[0]
+		ev.scope[varName] = newVariable(op.f(ev)[0], ClosureType{})
 		return success
 	}
 }

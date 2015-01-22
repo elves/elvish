@@ -88,7 +88,7 @@ type ClosureType struct {
 }
 
 func (st ClosureType) Default() Value {
-	return NewClosure([]string{}, nil, map[string]*Value{})
+	return NewClosure([]string{}, nil, map[string]Variable{})
 }
 
 func (ct ClosureType) String() string {
@@ -116,10 +116,6 @@ type Value interface {
 	Repr() string
 	String() string
 	Bool() bool
-}
-
-func valuePtr(v Value) *Value {
-	return &v
 }
 
 // String is a string.
@@ -347,14 +343,14 @@ func (e Env) Bool() bool {
 type Closure struct {
 	ArgNames []string
 	Op       Op
-	Enclosed map[string]*Value
+	Enclosed map[string]Variable
 }
 
 func (c *Closure) Type() Type {
 	return ClosureType{}
 }
 
-func NewClosure(a []string, op Op, e map[string]*Value) *Closure {
+func NewClosure(a []string, op Op, e map[string]Variable) *Closure {
 	return &Closure{a, op, e}
 }
 

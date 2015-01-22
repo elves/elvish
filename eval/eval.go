@@ -19,7 +19,7 @@ import (
 type Evaluator struct {
 	Compiler *Compiler
 	evaluatorEphemeral
-	scope       map[string]*Value
+	scope       map[string]Variable
 	env         Env
 	searchPaths []string
 	ports       []*port
@@ -30,6 +30,19 @@ type Evaluator struct {
 // parts only valid through one startEval-stopEval cycle.
 type evaluatorEphemeral struct {
 	name, text, context string
+}
+
+type Variable struct {
+	valuePtr   *Value
+	staticType Type
+}
+
+func newVariable(v Value, t Type) Variable {
+	return Variable{&v, t}
+}
+
+func newVariableWithType(v Value) Variable {
+	return Variable{&v, v.Type()}
 }
 
 func statusOk(vs []Value) bool {
@@ -48,12 +61,12 @@ func statusOk(vs []Value) bool {
 // NewEvaluator creates a new top-level Evaluator.
 func NewEvaluator() *Evaluator {
 	pid := NewString(strconv.Itoa(syscall.Getpid()))
-	g := map[string]*Value{
-		"env":     valuePtr(env),
-		"pid":     valuePtr(pid),
-		"success": valuePtr(success),
-		"true":    valuePtr(Bool(true)),
-		"false":   valuePtr(Bool(false)),
+	g := map[string]Variable{
+		"env":     newVariableWithType(env),
+		"pid":     newVariableWithType(pid),
+		"success": newVariableWithType(success),
+		"true":    newVariableWithType(Bool(true)),
+		"false":   newVariableWithType(Bool(false)),
 	}
 	ev := &Evaluator{
 		Compiler: NewCompiler(),
@@ -129,8 +142,8 @@ func (ev *Evaluator) growPorts(n int) {
 // map[string]Type.
 func (ev *Evaluator) MakeCompilerScope() map[string]Type {
 	scope := make(map[string]Type)
-	for name, value := range ev.scope {
-		scope[name] = (*value).Type()
+	for name, variable := range ev.scope {
+		scope[name] = variable.staticType
 	}
 	return scope
 }
