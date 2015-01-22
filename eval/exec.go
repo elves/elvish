@@ -177,14 +177,14 @@ func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUp
 	}
 	// Pass arguments.
 	for i, name := range closure.ArgNames {
-		// XXX(xiaq): support static type of arguments
+		// TODO(xiaq): support static type of arguments
 		ev.scope[name] = newVariable(args[i], AnyType{})
 	}
 
 	ev.statusCb = nil
 
 	go func() {
-		// TODO Support calling closure originated in another source.
+		// TODO(xiaq): Support calling closure originated in another source.
 		err := ev.eval(ev.name, ev.text, closure.Op)
 		if err != nil {
 			fmt.Print(err.(*util.ContextualError).Pprint())

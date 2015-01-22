@@ -108,7 +108,7 @@ func (ev *Evaluator) SetChanOut(ch chan Value) {
 // copy returns a copy of ev with context changed. ev.ports is copied deeply
 // and all shouldClose flags are reset.
 //
-// XXX Relying on the subevaluators to call closePorts can be error-prone.
+// NOTE(xiaq): Subevaluators are relied upon for calling closePorts.
 func (ev *Evaluator) copy(context string) *Evaluator {
 	newEv := new(Evaluator)
 	*newEv = *ev

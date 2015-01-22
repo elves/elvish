@@ -330,9 +330,9 @@ func lexBare(l *Lexer) stateFn {
 	return lexAny
 }
 
-// XXX(xiaq): StartsBare must be carefully maintained to match lexAny.
-
 // StartsBare determines whether r may be the first rune of a bareword.
+//
+// XXX(xiaq): StartsBare must be carefully maintained to match lexAny.
 func StartsBare(r rune) bool {
 	switch r {
 	case eof, '>', '<', '`', '"', '\n', '?':

@@ -70,8 +70,8 @@ const defaultLsColorString = `rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=
 
 var defaultLsColor *lsColor
 
-// parseLsColor parses a string in the LS_COLORS format into lsColor.
-// XXX(xiaq): ignores erroneous fields
+// parseLsColor parses a string in the LS_COLORS format into lsColor. Erroneous
+// fields are silently ignored.
 func parseLsColor(s string) *lsColor {
 	lc := &lsColor{make(map[fileFeature]string), make(map[string]string)}
 	for _, spec := range strings.Split(s, ":") {

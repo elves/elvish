@@ -32,8 +32,9 @@ func mayAssign(tvar, tval Type) bool {
 	if isAny(tval) || isAny(tvar) {
 		return true
 	}
-	// XXX This is not how you check the equality of two interfaces. But it
-	// happens to work when all the Type instances we have are empty structs.
+	// XXX(xiaq) This is not how you check the equality of two interfaces. But
+	// it happens to work when all the Type instances we have are empty
+	// structs.
 	return tval == tvar
 }
 

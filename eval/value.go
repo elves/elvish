@@ -431,7 +431,7 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 }
 
 func valueEq(a, b Value) bool {
-	// XXX This is cheating. May no longer be true after values get more
+	// XXX(xiaq): This is cheating. May no longer be true after values get more
 	// complex.
 	return reflect.DeepEqual(a, b)
 }

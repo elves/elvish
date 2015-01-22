@@ -164,7 +164,7 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 		c.typ = parse.ItemBare
 		c.candidates = findCandidates(compound, names)
 		if len(c.candidates) > 0 {
-			// XXX assumes filename candidate
+			// TODO(xiaq): Support completions other than filename completion
 			for _, c := range c.candidates {
 				c.attr = defaultLsColor.determineAttr(c.text)
 			}
