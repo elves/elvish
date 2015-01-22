@@ -34,6 +34,16 @@ func newEvaluator() *eval.Evaluator {
 	return ev
 }
 
+func printError(err error) {
+	if err != nil {
+		if ce, ok := err.(*util.ContextualError); ok {
+			fmt.Fprint(os.Stderr, ce.Pprint())
+		} else {
+			fmt.Fprintln(os.Stderr, err.Error())
+		}
+	}
+}
+
 // TODO(xiaq): Currently only the editor deals with signals.
 func interact() {
 	ev := newEvaluator()
@@ -77,32 +87,18 @@ func interact() {
 		}
 
 		n, pe := parse.Parse(name, lr.Line)
-		if pe != nil {
-			fmt.Print(pe.(*util.ContextualError).Pprint())
-			continue
-		}
+		printError(pe)
 
 		ee := ev.Eval(name, lr.Line, n)
-		if ee != nil {
-			if ce, ok := ee.(*util.ContextualError); ok {
-				fmt.Print(ce.Pprint())
-			} else {
-				fmt.Println(ee)
-			}
-			continue
-		}
+		printError(ee)
 	}
 }
 
 func script(fname string) {
 	ev := newEvaluator()
 	err := ev.Source(fname)
+	printError(err)
 	if err != nil {
-		if ce, ok := err.(*util.ContextualError); ok {
-			fmt.Fprint(os.Stderr, ce.Pprint())
-		} else {
-			fmt.Fprint(os.Stderr, err.Error())
-		}
 		os.Exit(1)
 	}
 }
