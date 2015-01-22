@@ -335,10 +335,10 @@ func lexBare(l *Lexer) stateFn {
 // XXX(xiaq): StartsBare must be carefully maintained to match lexAny.
 func StartsBare(r rune) bool {
 	switch r {
-	case eof, '>', '<', '`', '"', '\n', '?':
+	case '#', eof, '>', '<', '`', '"', '\n', '?':
 		return false
 	}
-	if isSpace(r) {
+	if isSigil(r) || isSpace(r) {
 		return false
 	}
 	if _, ok := singleRuneToken[r]; ok {
