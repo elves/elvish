@@ -164,7 +164,7 @@ func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 		}
 		return exits
 	}
-	return valuesOp{newHomoTypeRun(&StringType{}, len(ops), false), f}
+	return valuesOp{newHomoTypeRun(&ExitusType{}, len(ops), false), f}
 }
 
 func combineSpecialForm(op exitusOp, ports []portOp, p parse.Pos) stateUpdatesOp {
