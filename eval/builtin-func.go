@@ -31,7 +31,7 @@ func init() {
 		"feedchan":  builtinFunc{feedchan, [2]StreamType{fdStream, chanStream}},
 
 		"put":    builtinFunc{put, [2]StreamType{0, chanStream}},
-		"unpack": builtinFunc{unpack, [2]StreamType{0, chanStream}},
+		"unpack": builtinFunc{unpack, [2]StreamType{chanStream, chanStream}},
 
 		"parse-json": builtinFunc{parseJSON, [2]StreamType{fdStream, chanStream}},
 
@@ -57,7 +57,8 @@ func init() {
 }
 
 var (
-	argsError = newFailure("args error")
+	argsError  = newFailure("args error")
+	inputError = newFailure("input error")
 )
 
 func put(ev *Evaluator, args []Value) Exitus {
@@ -137,18 +138,22 @@ func feedchan(ev *Evaluator, args []Value) Exitus {
 
 // unpack takes any number of tables and output their list elements.
 func unpack(ev *Evaluator, args []Value) Exitus {
+	if len(args) != 0 {
+		return argsError
+	}
+	in := ev.ports[0].ch
 	out := ev.ports[1].ch
-	for _, a := range args {
-		if _, ok := a.(*Table); !ok {
-			return argsError
+
+	for v := range in {
+		if t, ok := v.(*Table); !ok {
+			return inputError
+		} else {
+			for _, e := range t.List {
+				out <- e
+			}
 		}
 	}
-	for _, a := range args {
-		a := a.(*Table)
-		for _, e := range a.List {
-			out <- e
-		}
-	}
+
 	return success
 }
 
