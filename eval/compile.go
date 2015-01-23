@@ -134,8 +134,8 @@ func (cp *Compiler) compilePipeline(pn *parse.PipelineNode) valuesOp {
 
 // mustResolveVar calls ResolveVar and calls errorf if the variable is
 // nonexistent.
-func (cp *Compiler) mustResolveVar(name string, p parse.Pos) Type {
-	if t := cp.ResolveVar(name); t != nil {
+func (cp *Compiler) mustResolveVar(ns, name string, p parse.Pos) Type {
+	if t := cp.ResolveVar(ns, name); t != nil {
 		return t
 	}
 	cp.errorf(p, "undefined variable $%s", name)
@@ -159,13 +159,11 @@ func splitQualifiedName(qname string) (string, string) {
 	return qname[:i], qname[i+1:]
 }
 
-// ResolveVar returns the type of a variable with supplied name, found in
-// current or upper scopes. If such a variable is nonexistent, a nil is
-// returned. When the value to resolve is not on the current scope, it is added
-// to cp.captured.
-func (cp *Compiler) ResolveVar(qname string) Type {
-	ns, name := splitQualifiedName(qname)
-
+// ResolveVar returns the type of a variable with supplied name and on the
+// supplied namespace. If such a variable is nonexistent, a nil is returned.
+// When the value to resolve is on an outer current scope, it is added to
+// cp.captured.
+func (cp *Compiler) ResolveVar(ns, name string) Type {
 	may := func(n string) bool {
 		return ns == "" || ns == n
 	}

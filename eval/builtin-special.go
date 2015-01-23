@@ -49,7 +49,7 @@ func checkSetType(cp *Compiler, names []string, values []*parse.CompoundNode, vo
 	}
 	for i, name := range names {
 		tval := vop.tr[i].t
-		tvar := cp.ResolveVar(name)
+		tvar := cp.ResolveVar(splitQualifiedName(name))
 		if !mayAssign(tvar, tval) {
 			cp.errorf(values[i].Pos, "type mismatch: assigning %#v value to %#v variable", tval, tvar)
 		}
@@ -211,7 +211,7 @@ func doSet(ev *Evaluator, names []string, values []Value) Exitus {
 
 	for i, name := range names {
 		// TODO Prevent overriding builtin variables e.g. $pid $env
-		variable := ev.ResolveVar(name)
+		variable := ev.ResolveVar(splitQualifiedName(name))
 		tvar := variable.staticType
 		tval := values[i].Type()
 		if !mayAssign(tvar, tval) {
@@ -229,11 +229,13 @@ func compileDel(cp *Compiler, fn *parse.FormNode) exitusOp {
 	// ensuring that variables can be resolved
 	var names []string
 	for _, cn := range fn.Args.Nodes {
-		pn, name := ensureVariablePrimary(cp, cn, "expect variable")
-
-		cp.mustResolveVar(name, pn.Pos)
+		_, qname := ensureVariablePrimary(cp, cn, "expect variable")
+		ns, name := splitQualifiedName(qname)
+		if ns != "" && ns != "local" {
+			cp.errorf(cn.Pos, "can only delete a variable on local scope")
+		}
 		if cp.resolveVarOnThisScope(name) == nil {
-			cp.errorf(cn.Pos, "can only delete variable on current scope")
+			cp.errorf(cn.Pos, "variable $%s not found on current local scope", name)
 		}
 
 		cp.popVar(name)

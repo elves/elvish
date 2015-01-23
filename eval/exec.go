@@ -128,7 +128,8 @@ func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate
 	cmdStr := cmd.String()
 
 	// Defined function
-	if v := ev.ResolveVar(":fn-" + cmdStr); v.valuePtr != nil {
+	ns, name := splitQualifiedName(cmdStr)
+	if v := ev.ResolveVar(ns, "fn-"+name); v.valuePtr != nil {
 		if closure, ok := (*v.valuePtr).(*Closure); ok {
 			return ev.execClosure(closure, args)
 		}

@@ -242,9 +242,7 @@ func (ev *Evaluator) Source(fname string) error {
 
 var invalidVariable = Variable{}
 
-func (ev *Evaluator) ResolveVar(qname string) Variable {
-	ns, name := splitQualifiedName(qname)
-
+func (ev *Evaluator) ResolveVar(ns, name string) Variable {
 	may := func(n string) bool {
 		return ns == "" || ns == n
 	}

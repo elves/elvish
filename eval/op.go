@@ -117,7 +117,7 @@ func combineClosure(argNames []string, ops []valuesOp, captured map[string]Type)
 	f := func(ev *Evaluator) []Value {
 		evCaptured := make(map[string]Variable, len(captured))
 		for name := range captured {
-			evCaptured[name] = ev.ResolveVar(name)
+			evCaptured[name] = ev.ResolveVar("", name)
 		}
 		return []Value{NewClosure(argNames, op, evCaptured)}
 	}
@@ -270,10 +270,11 @@ func makeString(text string) valuesOp {
 	return literalValue(NewString(text))
 }
 
-func makeVar(cp *Compiler, name string, p parse.Pos) valuesOp {
-	tr := newFixedTypeRun(cp.mustResolveVar(name, p))
+func makeVar(cp *Compiler, qname string, p parse.Pos) valuesOp {
+	ns, name := splitQualifiedName(qname)
+	tr := newFixedTypeRun(cp.mustResolveVar(ns, name, p))
 	f := func(ev *Evaluator) []Value {
-		variable := ev.ResolveVar(name)
+		variable := ev.ResolveVar(ns, name)
 		if variable.valuePtr == nil {
 			ev.errorf(p, "variable $%s not found; the compiler has a bug", name)
 		}
