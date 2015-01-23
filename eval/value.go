@@ -430,6 +430,39 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 	}
 }
 
+// fromJSONInterface converts a interface{} that results from json.Unmarshal to
+// a Value.
+func fromJSONInterface(v interface{}) Value {
+	if v == nil {
+		// TODO Use a more appropriate type
+		return String("")
+	}
+	switch v.(type) {
+	case bool:
+		return Bool(v.(bool))
+	case float64, string:
+		// TODO Use a numeric type for float64
+		return String(fmt.Sprint(v))
+	case []interface{}:
+		a := v.([]interface{})
+		t := &Table{make([]Value, len(a)), make(map[string]Value)}
+		for i, v := range a {
+			t.List[i] = fromJSONInterface(v)
+		}
+		return t
+	case map[string]interface{}:
+		m := v.(map[string]interface{})
+		t := NewTable()
+		for k, v := range m {
+			t.Dict[k] = fromJSONInterface(v)
+		}
+		return t
+	default:
+		// TODO Find a better way to report error
+		return newFailure(fmt.Sprintf("unexpected json type: %T", v))
+	}
+}
+
 func valueEq(a, b Value) bool {
 	// XXX(xiaq): This is cheating. May no longer be true after values get more
 	// complex.

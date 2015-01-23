@@ -4,6 +4,7 @@ package eval
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -31,6 +32,8 @@ func init() {
 
 		"put":    builtinFunc{put, [2]StreamType{0, chanStream}},
 		"unpack": builtinFunc{unpack, [2]StreamType{0, chanStream}},
+
+		"parse-json": builtinFunc{parseJSON, [2]StreamType{fdStream, chanStream}},
 
 		"typeof": builtinFunc{typeof, [2]StreamType{0, chanStream}},
 
@@ -147,6 +150,29 @@ func unpack(ev *Evaluator, args []Value) Exitus {
 		}
 	}
 	return success
+}
+
+// parseJSON parses a stream of JSON data into Value's.
+func parseJSON(ev *Evaluator, args []Value) Exitus {
+	if len(args) > 0 {
+		return argsError
+	}
+	in := ev.ports[0].f
+	out := ev.ports[1].ch
+
+	dec := json.NewDecoder(in)
+	var v interface{}
+	for {
+		err := dec.Decode(&v)
+		if err != nil {
+			if err == io.EOF {
+				return success
+			} else {
+				return newFailure(err.Error())
+			}
+		}
+		out <- fromJSONInterface(v)
+	}
 }
 
 // each takes a single closure and applies it to all input values.
