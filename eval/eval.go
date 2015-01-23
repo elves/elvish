@@ -73,7 +73,7 @@ func NewEvaluator() *Evaluator {
 		"false":   newVariableWithType(Bool(false)),
 	}
 	ev := &Evaluator{
-		Compiler: NewCompiler(),
+		Compiler: NewCompiler(makeCompilerScope(bi)),
 		local:    make(map[string]Variable),
 		captured: make(map[string]Variable),
 		builtin:  bi,
@@ -156,8 +156,7 @@ func makeCompilerScope(s map[string]Variable) map[string]Type {
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
 func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) error {
-	op, err := ev.Compiler.Compile(name, text, n,
-		makeCompilerScope(ev.local), makeCompilerScope(ev.builtin))
+	op, err := ev.Compiler.Compile(name, text, n)
 	if err != nil {
 		return err
 	}

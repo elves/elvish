@@ -11,6 +11,9 @@ import (
 
 // Compiler compiles an Elvish AST into an Op.
 type Compiler struct {
+	builtin  map[string]Type
+	scopes   []map[string]Type
+	captured map[string]Type
 	compilerEphemeral
 }
 
@@ -18,20 +21,18 @@ type Compiler struct {
 // only valid through one startCompile-stopCompile cycle.
 type compilerEphemeral struct {
 	name, text string
-	scopes     []map[string]Type
-	builtin    map[string]Type
-	captured   map[string]Type
 }
 
 // NewCompiler returns a new compiler.
-func NewCompiler() *Compiler {
-	return &Compiler{}
+func NewCompiler(bi map[string]Type) *Compiler {
+	return &Compiler{
+		bi, []map[string]Type{map[string]Type{}}, make(map[string]Type),
+		compilerEphemeral{},
+	}
 }
 
-func (cp *Compiler) startCompile(name, text string, scope, builtin map[string]Type) {
-	cp.compilerEphemeral = compilerEphemeral{
-		name, text, []map[string]Type{scope}, builtin, make(map[string]Type),
-	}
+func (cp *Compiler) startCompile(name, text string) {
+	cp.compilerEphemeral = compilerEphemeral{name, text}
 }
 
 func (cp *Compiler) stopCompile() {
@@ -40,8 +41,8 @@ func (cp *Compiler) stopCompile() {
 
 // Compile compiles a ChunkNode into an Op, with the knowledge of current
 // scope. The supplied name and text are used in diagnostic messages.
-func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode, scope, builtin map[string]Type) (op Op, err error) {
-	cp.startCompile(name, text, scope, builtin)
+func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode) (op Op, err error) {
+	cp.startCompile(name, text)
 	defer cp.stopCompile()
 	defer util.Recover(&err)
 	return cp.compileChunk(n), nil
