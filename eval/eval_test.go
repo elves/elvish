@@ -12,8 +12,8 @@ import (
 func TestNewEvaluator(t *testing.T) {
 	ev := NewEvaluator()
 	pid := strconv.Itoa(syscall.Getpid())
-	if (*ev.scope["pid"].valuePtr).String() != pid {
-		t.Errorf(`ev.scope["pid"] = %v, want %v`, ev.scope["pid"], pid)
+	if (*ev.builtin["pid"].valuePtr).String() != pid {
+		t.Errorf(`ev.builtin["pid"] = %v, want %v`, ev.builtin["pid"], pid)
 	}
 }
 
@@ -109,6 +109,12 @@ var evalTests = []struct {
 	// fn
 	{"fn f $x { put $x ipsum }; f lorem",
 		stringValues("lorem", "ipsum"), false},
+
+	// Namespace
+	{"var $true = lorem; { var $true = ipsum; put $captured:true $local:true $builtin:true }",
+		[]Value{String("lorem"), String("ipsum"), Bool(true)}, false},
+	{"var $x = lorem; { set $captured:x = ipsum }; put $x",
+		stringValues("ipsum"), false},
 }
 
 func TestEval(t *testing.T) {

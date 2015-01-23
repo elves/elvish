@@ -3,6 +3,7 @@ package eval
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
@@ -18,6 +19,7 @@ type Compiler struct {
 type compilerEphemeral struct {
 	name, text string
 	scopes     []map[string]Type
+	builtin    map[string]Type
 	captured   map[string]Type
 }
 
@@ -26,9 +28,9 @@ func NewCompiler() *Compiler {
 	return &Compiler{}
 }
 
-func (cp *Compiler) startCompile(name, text string, scope map[string]Type) {
+func (cp *Compiler) startCompile(name, text string, scope, builtin map[string]Type) {
 	cp.compilerEphemeral = compilerEphemeral{
-		name, text, []map[string]Type{scope}, make(map[string]Type),
+		name, text, []map[string]Type{scope}, builtin, make(map[string]Type),
 	}
 }
 
@@ -38,8 +40,8 @@ func (cp *Compiler) stopCompile() {
 
 // Compile compiles a ChunkNode into an Op, with the knowledge of current
 // scope. The supplied name and text are used in diagnostic messages.
-func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode, scope map[string]Type) (op Op, err error) {
-	cp.startCompile(name, text, scope)
+func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode, scope, builtin map[string]Type) (op Op, err error) {
+	cp.startCompile(name, text, scope, builtin)
 	defer cp.stopCompile()
 	defer util.Recover(&err)
 	return cp.compileChunk(n), nil
@@ -145,17 +147,43 @@ func (cp *Compiler) resolveVarOnThisScope(name string) Type {
 	return cp.scopes[len(cp.scopes)-1][name]
 }
 
+// splitQualifiedName splits a qualified variable name into two parts separated
+// by a colon, the namespace and the name proper. When there is no colon, the
+// namespace part is empty.
+func splitQualifiedName(qname string) (string, string) {
+	i := strings.IndexRune(qname, ':')
+	if i == -1 {
+		return "", qname
+	}
+	return qname[:i], qname[i+1:]
+}
+
 // ResolveVar returns the type of a variable with supplied name, found in
 // current or upper scopes. If such a variable is nonexistent, a nil is
 // returned. When the value to resolve is not on the current scope, it is added
 // to cp.captured.
-func (cp *Compiler) ResolveVar(name string) Type {
-	if t := cp.resolveVarOnThisScope(name); t != nil {
-		return t
+func (cp *Compiler) ResolveVar(qname string) Type {
+	ns, name := splitQualifiedName(qname)
+
+	may := func(n string) bool {
+		return ns == "" || ns == n
 	}
-	for i := len(cp.scopes) - 2; i >= 0; i-- {
-		if t := cp.scopes[i][name]; t != nil {
-			cp.captured[name] = t
+
+	if may("local") {
+		if t := cp.resolveVarOnThisScope(name); t != nil {
+			return t
+		}
+	}
+	if may("captured") {
+		for i := len(cp.scopes) - 2; i >= 0; i-- {
+			if t, ok := cp.scopes[i][name]; ok {
+				cp.captured[name] = t
+				return t
+			}
+		}
+	}
+	if may("builtin") {
+		if t, ok := cp.builtin[name]; ok {
 			return t
 		}
 	}

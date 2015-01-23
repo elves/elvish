@@ -21,7 +21,9 @@ import (
 type Evaluator struct {
 	Compiler *Compiler
 	evaluatorEphemeral
-	scope       map[string]Variable
+	local       map[string]Variable
+	captured    map[string]Variable
+	builtin     map[string]Variable
 	env         Env
 	searchPaths []string
 	ports       []*port
@@ -63,7 +65,7 @@ func statusOk(vs []Value) bool {
 // NewEvaluator creates a new top-level Evaluator.
 func NewEvaluator() *Evaluator {
 	pid := NewString(strconv.Itoa(syscall.Getpid()))
-	g := map[string]Variable{
+	bi := map[string]Variable{
 		"env":     newVariableWithType(env),
 		"pid":     newVariableWithType(pid),
 		"success": newVariableWithType(success),
@@ -72,7 +74,9 @@ func NewEvaluator() *Evaluator {
 	}
 	ev := &Evaluator{
 		Compiler: NewCompiler(),
-		scope:    g,
+		local:    make(map[string]Variable),
+		captured: make(map[string]Variable),
+		builtin:  bi,
 		env:      env,
 		ports: []*port{
 			&port{f: os.Stdin}, &port{f: os.Stdout}, &port{f: os.Stderr}},
@@ -140,11 +144,10 @@ func (ev *Evaluator) growPorts(n int) {
 	copy(ev.ports, ports)
 }
 
-// MakeCompilerScope generates from ev.scope (of type map[string]*Value) a
-// map[string]Type.
-func (ev *Evaluator) MakeCompilerScope() map[string]Type {
+// makeCompilerScope extracts the type information from variables.
+func makeCompilerScope(s map[string]Variable) map[string]Type {
 	scope := make(map[string]Type)
-	for name, variable := range ev.scope {
+	for name, variable := range s {
 		scope[name] = variable.staticType
 	}
 	return scope
@@ -153,7 +156,8 @@ func (ev *Evaluator) MakeCompilerScope() map[string]Type {
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
 func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) error {
-	op, err := ev.Compiler.Compile(name, text, n, ev.MakeCompilerScope())
+	op, err := ev.Compiler.Compile(name, text, n,
+		makeCompilerScope(ev.local), makeCompilerScope(ev.builtin))
 	if err != nil {
 		return err
 	}
@@ -235,4 +239,31 @@ func (ev *Evaluator) Source(fname string) error {
 	}
 
 	return ev.Eval(fname, src, n)
+}
+
+var invalidVariable = Variable{}
+
+func (ev *Evaluator) ResolveVar(qname string) Variable {
+	ns, name := splitQualifiedName(qname)
+
+	may := func(n string) bool {
+		return ns == "" || ns == n
+	}
+
+	if may("local") {
+		if v, ok := ev.local[name]; ok {
+			return v
+		}
+	}
+	if may("captured") {
+		if v, ok := ev.captured[name]; ok {
+			return v
+		}
+	}
+	if may("builtin") {
+		if v, ok := ev.builtin[name]; ok {
+			return v
+		}
+	}
+	return invalidVariable
 }
