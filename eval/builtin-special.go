@@ -2,7 +2,11 @@ package eval
 
 // Builtin special forms.
 
-import "github.com/elves/elvish/parse"
+import (
+	"fmt"
+
+	"github.com/elves/elvish/parse"
+)
 
 type exitusOp func(*Evaluator) Exitus
 type builtinSpecialCompile func(*Compiler, *parse.FormNode) exitusOp
@@ -214,6 +218,9 @@ func doSet(ev *Evaluator, names []string, values []Value) Exitus {
 	for i, name := range names {
 		// TODO Prevent overriding builtin variables e.g. $pid $env
 		variable := ev.ResolveVar(splitQualifiedName(name))
+		if variable == nil {
+			return newFailure(fmt.Sprintf("variable $%s not found; the compiler has a bug", name))
+		}
 		tvar := variable.StaticType()
 		tval := values[i].Type()
 		if !mayAssign(tvar, tval) {
