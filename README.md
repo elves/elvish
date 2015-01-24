@@ -204,7 +204,7 @@ And:
 * Use the `env:` namespace for environmental variables: ✔
   ```
   > put $env:HOME
-  /home/xiaq
+  ▶ /home/xiaq
   > set $env:PATH = $env:PATH`:/bin`
   ```
 
