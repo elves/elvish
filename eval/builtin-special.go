@@ -4,7 +4,7 @@ package eval
 
 import (
 	"fmt"
-	"syscall"
+	"os"
 
 	"github.com/elves/elvish/parse"
 )
@@ -261,7 +261,7 @@ func compileDel(cp *Compiler, fn *parse.FormNode) exitusOp {
 		}
 		for _, name := range envNames {
 			// TODO(xiaq): Signify possible error
-			syscall.Unsetenv(name)
+			os.Unsetenv(name)
 		}
 		return success
 	}
