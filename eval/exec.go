@@ -129,8 +129,8 @@ func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate
 
 	// Defined function
 	ns, name := splitQualifiedName(cmdStr)
-	if v := ev.ResolveVar(ns, "fn-"+name); v.valuePtr != nil {
-		if closure, ok := (*v.valuePtr).(*Closure); ok {
+	if v := ev.ResolveVar(ns, "fn-"+name); v != nil {
+		if closure, ok := v.Get().(*Closure); ok {
 			return ev.execClosure(closure, args)
 		}
 	}
@@ -182,7 +182,7 @@ func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUp
 	ev.local = make(map[string]Variable)
 	for i, name := range closure.ArgNames {
 		// TODO(xiaq): support static type of arguments
-		ev.local[name] = newVariable(args[i], AnyType{})
+		ev.local[name] = newInternalVariable(args[i], AnyType{})
 	}
 
 	ev.statusCb = nil

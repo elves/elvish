@@ -275,10 +275,10 @@ func makeVar(cp *Compiler, qname string, p parse.Pos) valuesOp {
 	tr := newFixedTypeRun(cp.mustResolveVar(ns, name, p))
 	f := func(ev *Evaluator) []Value {
 		variable := ev.ResolveVar(ns, name)
-		if variable.valuePtr == nil {
+		if variable == nil {
 			ev.errorf(p, "variable $%s not found; the compiler has a bug", name)
 		}
-		return []Value{*variable.valuePtr}
+		return []Value{variable.Get()}
 	}
 	return valuesOp{tr, f}
 }

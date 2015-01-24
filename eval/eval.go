@@ -36,19 +36,6 @@ type evaluatorEphemeral struct {
 	name, text, context string
 }
 
-type Variable struct {
-	valuePtr   *Value
-	staticType Type
-}
-
-func newVariable(v Value, t Type) Variable {
-	return Variable{&v, t}
-}
-
-func newVariableWithType(v Value) Variable {
-	return Variable{&v, v.Type()}
-}
-
 func statusOk(vs []Value) bool {
 	for _, v := range vs {
 		v, ok := v.(Exitus)
@@ -66,11 +53,11 @@ func statusOk(vs []Value) bool {
 func NewEvaluator() *Evaluator {
 	pid := NewString(strconv.Itoa(syscall.Getpid()))
 	bi := map[string]Variable{
-		"env":     newVariableWithType(env),
-		"pid":     newVariableWithType(pid),
-		"success": newVariableWithType(success),
-		"true":    newVariableWithType(Bool(true)),
-		"false":   newVariableWithType(Bool(false)),
+		"env":     newInternalVariableWithType(env),
+		"pid":     newInternalVariableWithType(pid),
+		"success": newInternalVariableWithType(success),
+		"true":    newInternalVariableWithType(Bool(true)),
+		"false":   newInternalVariableWithType(Bool(false)),
 	}
 	ev := &Evaluator{
 		Compiler: NewCompiler(makeCompilerScope(bi)),
@@ -148,7 +135,7 @@ func (ev *Evaluator) growPorts(n int) {
 func makeCompilerScope(s map[string]Variable) map[string]Type {
 	scope := make(map[string]Type)
 	for name, variable := range s {
-		scope[name] = variable.staticType
+		scope[name] = variable.StaticType()
 	}
 	return scope
 }
@@ -240,8 +227,6 @@ func (ev *Evaluator) Source(fname string) error {
 	return ev.Eval(fname, src, n)
 }
 
-var invalidVariable = Variable{}
-
 func (ev *Evaluator) ResolveVar(ns, name string) Variable {
 	may := func(n string) bool {
 		return ns == "" || ns == n
@@ -262,5 +247,5 @@ func (ev *Evaluator) ResolveVar(ns, name string) Variable {
 			return v
 		}
 	}
-	return invalidVariable
+	return nil
 }

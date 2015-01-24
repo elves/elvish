@@ -186,6 +186,9 @@ func (cp *Compiler) ResolveVar(ns, name string) Type {
 			return t
 		}
 	}
+	if ns == "env" {
+		return StringType{}
+	}
 	return nil
 }
 

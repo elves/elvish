@@ -156,7 +156,7 @@ func compileVar(cp *Compiler, fn *parse.FormNode) exitusOp {
 	}
 	return func(ev *Evaluator) Exitus {
 		for i, name := range names {
-			ev.local[name] = newVariable(types[i].Default(), types[i])
+			ev.local[name] = newInternalVariable(types[i].Default(), types[i])
 		}
 		if vop.f != nil {
 			return doSet(ev, names, vop.f(ev))
@@ -214,12 +214,12 @@ func doSet(ev *Evaluator, names []string, values []Value) Exitus {
 	for i, name := range names {
 		// TODO Prevent overriding builtin variables e.g. $pid $env
 		variable := ev.ResolveVar(splitQualifiedName(name))
-		tvar := variable.staticType
+		tvar := variable.StaticType()
 		tval := values[i].Type()
 		if !mayAssign(tvar, tval) {
 			return typeMismatch
 		}
-		*variable.valuePtr = values[i]
+		variable.Set(values[i])
 	}
 
 	return success
@@ -302,7 +302,7 @@ func compileFn(cp *Compiler, fn *parse.FormNode) exitusOp {
 	cp.pushVar(varName, ClosureType{})
 
 	return func(ev *Evaluator) Exitus {
-		ev.local[varName] = newVariable(op.f(ev)[0], ClosureType{})
+		ev.local[varName] = newInternalVariable(op.f(ev)[0], ClosureType{})
 		return success
 	}
 }
