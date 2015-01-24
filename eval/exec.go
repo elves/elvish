@@ -269,7 +269,7 @@ func (ev *Evaluator) execExternal(cmd string, argVals []Value) <-chan *StateUpda
 	}
 
 	sys := syscall.SysProcAttr{}
-	attr := syscall.ProcAttr{Env: ev.env.Export(), Files: files[:], Sys: &sys}
+	attr := syscall.ProcAttr{Env: os.Environ(), Files: files[:], Sys: &sys}
 
 	path, err := ev.search(cmd)
 	var pid int

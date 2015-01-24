@@ -116,6 +116,9 @@ var evalTests = []struct {
 		[]Value{String("lorem"), String("ipsum"), Bool(true)}, false},
 	{"var $x = lorem; { set $captured:x = ipsum }; put $x",
 		stringValues("ipsum"), false},
+	// Pseudo-namespace env:
+	{"set $env:foo = lorem; put $env:foo", stringValues("lorem"), false},
+	{"del $env:foo; put $env:foo", stringValues(""), false},
 }
 
 func TestEval(t *testing.T) {

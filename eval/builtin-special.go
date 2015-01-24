@@ -4,6 +4,7 @@ package eval
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/elves/elvish/parse"
 )
@@ -236,23 +237,31 @@ func doSet(ev *Evaluator, names []string, values []Value) Exitus {
 func compileDel(cp *Compiler, fn *parse.FormNode) exitusOp {
 	// Do conventional compiling of all compound expressions, including
 	// ensuring that variables can be resolved
-	var names []string
+	var names, envNames []string
 	for _, cn := range fn.Args.Nodes {
 		_, qname := ensureVariablePrimary(cp, cn, "expect variable")
 		ns, name := splitQualifiedName(qname)
-		if ns != "" && ns != "local" {
-			cp.errorf(cn.Pos, "can only delete a variable on local scope")
-		}
-		if cp.resolveVarOnThisScope(name) == nil {
-			cp.errorf(cn.Pos, "variable $%s not found on current local scope", name)
+		switch ns {
+		case "", "local":
+			if cp.resolveVarOnThisScope(name) == nil {
+				cp.errorf(cn.Pos, "variable $%s not found on current local scope", name)
+			}
+			cp.popVar(name)
+			names = append(names, name)
+		case "env":
+			envNames = append(envNames, name)
+		default:
+			cp.errorf(cn.Pos, "can only delete a variable in local: or env: namespace")
 		}
 
-		cp.popVar(name)
-		names = append(names, name)
 	}
 	return func(ev *Evaluator) Exitus {
 		for _, name := range names {
 			delete(ev.local, name)
+		}
+		for _, name := range envNames {
+			// TODO(xiaq): Signify possible error
+			os.Unsetenv(name)
 		}
 		return success
 	}

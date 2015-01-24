@@ -74,17 +74,6 @@ func (tt TableType) String() string {
 	return "table"
 }
 
-type EnvType struct {
-}
-
-func (et EnvType) Default() Value {
-	return NewEnv()
-}
-
-func (et EnvType) String() string {
-	return "env"
-}
-
 type ClosureType struct {
 }
 
@@ -102,7 +91,6 @@ var typenames = map[string]Type{
 	"exitus":  ExitusType{},
 	"bool":    BoolType{},
 	"table":   TableType{},
-	"env":     EnvType{},
 	"closure": ClosureType{},
 }
 
@@ -290,56 +278,6 @@ func (t *Table) append(vs ...Value) {
 	t.List = append(t.List, vs...)
 }
 
-// Env provides access to environment variables.
-type Env map[string]string
-
-var env = Env(make(map[string]string))
-
-func (e Env) Type() Type {
-	return EnvType{}
-}
-
-func NewEnv() Env {
-	return env
-}
-
-func init() {
-	for _, s := range os.Environ() {
-		arr := strings.SplitN(s, "=", 2)
-		if len(arr) == 2 {
-			env[arr[0]] = arr[1]
-		}
-	}
-}
-
-func (e Env) Export() []string {
-	s := make([]string, 0, len(e))
-	for k, v := range e {
-		s = append(s, fmt.Sprintf("%s=%s", k, v))
-	}
-	return s
-}
-
-func (e Env) Repr() string {
-	buf := new(bytes.Buffer)
-	buf.WriteRune('[')
-	sep := ""
-	for k, v := range e {
-		fmt.Fprint(buf, sep, "&", quote(k), " ", quote(v))
-		sep = " "
-	}
-	buf.WriteRune(']')
-	return buf.String()
-}
-
-func (e Env) String() string {
-	return e.Repr()
-}
-
-func (e Env) Bool() bool {
-	return true
-}
-
 // Closure is a closure.
 type Closure struct {
 	ArgNames []string
@@ -377,8 +315,6 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 	}
 
 	switch left.(type) {
-	case Env:
-		return NewString(left.(Env)[sub.String()])
 	case *Table:
 		t := left.(*Table)
 		// Need stricter notion of list indices
@@ -499,4 +435,25 @@ func (iv InternalVariable) Get() Value {
 
 func (iv InternalVariable) StaticType() Type {
 	return iv.staticType
+}
+
+type EnvVariable struct {
+	name string
+}
+
+func newEnvVariable(name string) EnvVariable {
+	return EnvVariable{name}
+}
+
+func (ev EnvVariable) Set(val Value) {
+	// TODO(xiaq) Signify error
+	os.Setenv(ev.name, val.String())
+}
+
+func (ev EnvVariable) Get() Value {
+	return String(os.Getenv(ev.name))
+}
+
+func (ev EnvVariable) StaticType() Type {
+	return StringType{}
 }

@@ -24,7 +24,6 @@ type Evaluator struct {
 	local       map[string]Variable
 	captured    map[string]Variable
 	builtin     map[string]Variable
-	env         Env
 	searchPaths []string
 	ports       []*port
 	statusCb    func([]Value)
@@ -53,7 +52,6 @@ func statusOk(vs []Value) bool {
 func NewEvaluator() *Evaluator {
 	pid := NewString(strconv.Itoa(syscall.Getpid()))
 	bi := map[string]Variable{
-		"env":     newInternalVariableWithType(env),
 		"pid":     newInternalVariableWithType(pid),
 		"success": newInternalVariableWithType(success),
 		"true":    newInternalVariableWithType(Bool(true)),
@@ -64,7 +62,6 @@ func NewEvaluator() *Evaluator {
 		local:    make(map[string]Variable),
 		captured: make(map[string]Variable),
 		builtin:  bi,
-		env:      env,
 		ports: []*port{
 			&port{f: os.Stdin}, &port{f: os.Stdout}, &port{f: os.Stderr}},
 		statusCb: func(vs []Value) {
@@ -81,8 +78,8 @@ func NewEvaluator() *Evaluator {
 			fmt.Println()
 		},
 	}
-	path, ok := env["PATH"]
-	if ok {
+	path := os.Getenv("PATH")
+	if path != "" {
 		ev.searchPaths = strings.Split(path, ":")
 		// fmt.Printf("Search paths are %v\n", search_paths)
 	} else {
@@ -246,6 +243,9 @@ func (ev *Evaluator) ResolveVar(ns, name string) Variable {
 		if v, ok := ev.builtin[name]; ok {
 			return v
 		}
+	}
+	if ns == "env" {
+		return newEnvVariable(name)
 	}
 	return nil
 }

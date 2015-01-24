@@ -201,11 +201,11 @@ And:
   6 8 10
   ```
 
-* Use the table `$env` for environmental variables:
+* Use the `env:` namespace for environmental variables: ✔
   ```
-  > put $env[HOME]
+  > put $env:HOME
   /home/xiaq
-  > set env[PATH] = $env[PATH]:/bin
+  > set $env:PATH = $env:PATH`:/bin`
   ```
 
 There are many parts of the language that is not yet decided. The issues
