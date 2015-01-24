@@ -178,6 +178,8 @@ func compileSet(cp *Compiler, fn *parse.FormNode) exitusOp {
 		expect := "expect variable or equal sign"
 		pn, text := ensureVariableOrStringPrimary(cp, cn, expect)
 		if pn.Typ == parse.VariablePrimary {
+			ns, name := splitQualifiedName(text)
+			cp.mustResolveVar(ns, name, cn.Pos)
 			names = append(names, text)
 		} else {
 			if text != "=" {
