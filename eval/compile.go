@@ -81,7 +81,6 @@ func (cp *Compiler) compileChunk(cn *parse.ChunkNode) Op {
 // compileClosure compiles a ClosureNode into a valuesOp along with its capture
 // and the external stream types it expects.
 func (cp *Compiler) compileClosure(cn *parse.ClosureNode) valuesOp {
-	ops := make([]valuesOp, len(cn.Chunk.Nodes))
 	nargs := 0
 	if cn.ArgNames != nil {
 		nargs = len(cn.ArgNames.Nodes)
@@ -103,9 +102,7 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) valuesOp {
 		cp.pushVar(name, AnyType{})
 	}
 
-	for i, pn := range cn.Chunk.Nodes {
-		ops[i] = cp.compilePipeline(pn)
-	}
+	op := cp.compileChunk(cn.Chunk)
 
 	captured := cp.captured
 	cp.captured = make(map[string]Type)
@@ -118,7 +115,7 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) valuesOp {
 		}
 	}
 
-	return combineClosure(argNames, ops, captured)
+	return combineClosure(argNames, op, captured)
 }
 
 // compilePipeline compiles a PipelineNode into a valuesOp along with the
