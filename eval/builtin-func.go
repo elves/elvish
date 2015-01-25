@@ -190,7 +190,8 @@ func each(ev *Evaluator, args []Value) Exitus {
 	} else {
 		in := ev.ports[0].ch
 		for v := range in {
-			su := ev.execClosure(f, []Value{v})
+			newEv := ev.copy("closure of each")
+			su := newEv.execClosure(f, []Value{v})
 			for _ = range su {
 			}
 		}
@@ -214,7 +215,8 @@ func ifFn(ev *Evaluator, args []Value) Exitus {
 				return success
 			}
 		}
-		su := ev.execClosure(f, []Value{})
+		newEv := ev.copy("closure of if")
+		su := newEv.execClosure(f, []Value{})
 		for _ = range su {
 		}
 		return success
