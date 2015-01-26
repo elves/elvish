@@ -193,6 +193,14 @@ func (t *Table) append(vs ...Value) {
 	t.List = append(t.List, vs...)
 }
 
+type Callable interface {
+	Value
+	// Exec executes a callable asynchronously on an Evaluator. It assumes that
+	// it is the last callable to be executed on that Evaluator and thus
+	// responsible for cleaning up the ports.
+	Exec(ev *Evaluator, args []Value) <-chan *StateUpdate
+}
+
 // Closure is a closure.
 type Closure struct {
 	ArgNames []string

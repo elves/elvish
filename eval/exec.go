@@ -157,12 +157,11 @@ func (ev *Evaluator) execBuiltinFunc(fn builtinFuncImpl, args []Value) <-chan *S
 	return update
 }
 
-// execClosure executes a closure form.
-func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUpdate {
+func (c *Closure) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
 	update := make(chan *StateUpdate, 1)
 
 	// TODO Support optional/rest argument
-	if len(args) != len(closure.ArgNames) {
+	if len(args) != len(c.ArgNames) {
 		// TODO Check arity before exec'ing
 		update <- newExitedStateUpdate(arityMismatch)
 		close(update)
@@ -175,12 +174,12 @@ func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUp
 
 	// Make captured namespace and capture variables.
 	ev.captured = make(map[string]Variable)
-	for name, variable := range closure.Captured {
+	for name, variable := range c.Captured {
 		ev.captured[name] = variable
 	}
 	// Make local namespace and pass arguments.
 	ev.local = make(map[string]Variable)
-	for i, name := range closure.ArgNames {
+	for i, name := range c.ArgNames {
 		// TODO(xiaq): support static type of arguments
 		ev.local[name] = newInternalVariable(args[i], AnyType{})
 	}
@@ -189,7 +188,7 @@ func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUp
 
 	go func() {
 		// TODO(xiaq): Support calling closure originated in another source.
-		err := ev.eval(ev.name, ev.text, closure.Op)
+		err := ev.eval(ev.name, ev.text, c.Op)
 		if err != nil {
 			fmt.Print(err.(*util.ContextualError).Pprint())
 		}
@@ -200,6 +199,11 @@ func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUp
 		close(update)
 	}()
 	return update
+}
+
+// execClosure executes a closure form.
+func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUpdate {
+	return closure.Exec(ev, args)
 }
 
 // waitStatusToStateUpdate converts syscall.WaitStatus to a StateUpdate.
