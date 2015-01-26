@@ -9,47 +9,47 @@ type Variable interface {
 	StaticType() Type
 }
 
-type InternalVariable struct {
+type internalVariable struct {
 	valuePtr   *Value
 	staticType Type
 }
 
 func newInternalVariable(v Value, t Type) Variable {
-	return InternalVariable{&v, t}
+	return internalVariable{&v, t}
 }
 
 func newInternalVariableWithType(v Value) Variable {
-	return InternalVariable{&v, v.Type()}
+	return internalVariable{&v, v.Type()}
 }
 
-func (iv InternalVariable) Set(val Value) {
+func (iv internalVariable) Set(val Value) {
 	*iv.valuePtr = val
 }
 
-func (iv InternalVariable) Get() Value {
+func (iv internalVariable) Get() Value {
 	return *iv.valuePtr
 }
 
-func (iv InternalVariable) StaticType() Type {
+func (iv internalVariable) StaticType() Type {
 	return iv.staticType
 }
 
-type EnvVariable struct {
+type envVariable struct {
 	name string
 }
 
-func newEnvVariable(name string) EnvVariable {
-	return EnvVariable{name}
+func newEnvVariable(name string) envVariable {
+	return envVariable{name}
 }
 
-func (ev EnvVariable) Set(val Value) {
+func (ev envVariable) Set(val Value) {
 	os.Setenv(ev.name, toString(val))
 }
 
-func (ev EnvVariable) Get() Value {
-	return String(os.Getenv(ev.name))
+func (ev envVariable) Get() Value {
+	return str(os.Getenv(ev.name))
 }
 
-func (ev EnvVariable) StaticType() Type {
-	return StringType{}
+func (ev envVariable) StaticType() Type {
+	return stringType{}
 }

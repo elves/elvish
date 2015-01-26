@@ -12,42 +12,42 @@ import (
 	"strconv"
 )
 
-var builtinFns []*BuiltinFn
+var builtinFns []*builtinFn
 
 func init() {
 	// Needed to work around init loop.
-	builtinFns = []*BuiltinFn{
-		&BuiltinFn{"print", print},
-		&BuiltinFn{"println", println},
+	builtinFns = []*builtinFn{
+		&builtinFn{"print", print},
+		&builtinFn{"println", println},
 
-		&BuiltinFn{"printchan", printchan},
-		&BuiltinFn{"feedchan", feedchan},
+		&builtinFn{"printchan", printchan},
+		&builtinFn{"feedchan", feedchan},
 
-		&BuiltinFn{"put", put},
-		&BuiltinFn{"unpack", unpack},
+		&builtinFn{"put", put},
+		&builtinFn{"unpack", unpack},
 
-		&BuiltinFn{"parse-json", parseJSON},
+		&builtinFn{"parse-json", parseJSON},
 
-		&BuiltinFn{"typeof", typeof},
+		&builtinFn{"typeof", typeof},
 
-		&BuiltinFn{"failure", failure},
+		&builtinFn{"failure", failure},
 
-		&BuiltinFn{"each", each},
+		&builtinFn{"each", each},
 
-		&BuiltinFn{"if", ifFn},
+		&builtinFn{"if", ifFn},
 
-		&BuiltinFn{"cd", cd},
-		&BuiltinFn{"visited-dirs", visistedDirs},
-		&BuiltinFn{"jump-dir", jumpDir},
+		&builtinFn{"cd", cd},
+		&builtinFn{"visited-dirs", visistedDirs},
+		&builtinFn{"jump-dir", jumpDir},
 
-		&BuiltinFn{"source", source},
+		&builtinFn{"source", source},
 
-		&BuiltinFn{"+", plus},
-		&BuiltinFn{"-", minus},
-		&BuiltinFn{"*", times},
-		&BuiltinFn{"/", divide},
+		&builtinFn{"+", plus},
+		&builtinFn{"-", minus},
+		&builtinFn{"*", times},
+		&builtinFn{"/", divide},
 
-		&BuiltinFn{"=", eq},
+		&builtinFn{"=", eq},
 	}
 }
 
@@ -56,7 +56,7 @@ var (
 	inputError = newFailure("input error")
 )
 
-func put(ev *Evaluator, args []Value) Exitus {
+func put(ev *Evaluator, args []Value) exitus {
 	out := ev.ports[1].ch
 	for _, a := range args {
 		out <- a
@@ -64,15 +64,15 @@ func put(ev *Evaluator, args []Value) Exitus {
 	return success
 }
 
-func typeof(ev *Evaluator, args []Value) Exitus {
+func typeof(ev *Evaluator, args []Value) exitus {
 	out := ev.ports[1].ch
 	for _, a := range args {
-		out <- NewString(a.Type().String())
+		out <- str(a.Type().String())
 	}
 	return success
 }
 
-func failure(ev *Evaluator, args []Value) Exitus {
+func failure(ev *Evaluator, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
@@ -81,7 +81,7 @@ func failure(ev *Evaluator, args []Value) Exitus {
 	return success
 }
 
-func print(ev *Evaluator, args []Value) Exitus {
+func print(ev *Evaluator, args []Value) exitus {
 	out := ev.ports[1].f
 	for _, a := range args {
 		fmt.Fprint(out, toString(a))
@@ -89,12 +89,12 @@ func print(ev *Evaluator, args []Value) Exitus {
 	return success
 }
 
-func println(ev *Evaluator, args []Value) Exitus {
-	args = append(args, NewString("\n"))
+func println(ev *Evaluator, args []Value) exitus {
+	args = append(args, str("\n"))
 	return print(ev, args)
 }
 
-func printchan(ev *Evaluator, args []Value) Exitus {
+func printchan(ev *Evaluator, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}
@@ -107,7 +107,7 @@ func printchan(ev *Evaluator, args []Value) Exitus {
 	return success
 }
 
-func feedchan(ev *Evaluator, args []Value) Exitus {
+func feedchan(ev *Evaluator, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}
@@ -126,13 +126,13 @@ func feedchan(ev *Evaluator, args []Value) Exitus {
 		} else if err != nil {
 			return newFailure(err.Error())
 		}
-		out <- NewString(line[:len(line)-1])
+		out <- str(line[:len(line)-1])
 		// i++
 	}
 }
 
 // unpack takes any number of tables and output their list elements.
-func unpack(ev *Evaluator, args []Value) Exitus {
+func unpack(ev *Evaluator, args []Value) exitus {
 	if len(args) != 0 {
 		return argsError
 	}
@@ -140,7 +140,7 @@ func unpack(ev *Evaluator, args []Value) Exitus {
 	out := ev.ports[1].ch
 
 	for v := range in {
-		if t, ok := v.(*Table); !ok {
+		if t, ok := v.(*table); !ok {
 			return inputError
 		} else {
 			for _, e := range t.List {
@@ -153,7 +153,7 @@ func unpack(ev *Evaluator, args []Value) Exitus {
 }
 
 // parseJSON parses a stream of JSON data into Value's.
-func parseJSON(ev *Evaluator, args []Value) Exitus {
+func parseJSON(ev *Evaluator, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}
@@ -175,11 +175,11 @@ func parseJSON(ev *Evaluator, args []Value) Exitus {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ev *Evaluator, args []Value) Exitus {
+func each(ev *Evaluator, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
-	if f, ok := args[0].(*Closure); !ok {
+	if f, ok := args[0].(*closure); !ok {
 		return argsError
 	} else {
 		in := ev.ports[0].ch
@@ -194,11 +194,11 @@ func each(ev *Evaluator, args []Value) Exitus {
 
 // if takes a sequence of values and a trailing nullary closure. If all of the
 // values are true, the closure is executed.
-func ifFn(ev *Evaluator, args []Value) Exitus {
+func ifFn(ev *Evaluator, args []Value) exitus {
 	if len(args) == 0 {
 		return argsError
 	}
-	if f, ok := args[len(args)-1].(*Closure); !ok {
+	if f, ok := args[len(args)-1].(*closure); !ok {
 		return argsError
 	} else if len(f.ArgNames) > 0 {
 		return argsError
@@ -215,7 +215,7 @@ func ifFn(ev *Evaluator, args []Value) Exitus {
 	}
 }
 
-func cd(ev *Evaluator, args []Value) Exitus {
+func cd(ev *Evaluator, args []Value) exitus {
 	var dir string
 	if len(args) == 0 {
 		user, err := user.Current()
@@ -243,7 +243,7 @@ func cd(ev *Evaluator, args []Value) Exitus {
 
 var storeNotConnected = newFailure("store not connected")
 
-func visistedDirs(ev *Evaluator, args []Value) Exitus {
+func visistedDirs(ev *Evaluator, args []Value) exitus {
 	if ev.store == nil {
 		return storeNotConnected
 	}
@@ -253,9 +253,9 @@ func visistedDirs(ev *Evaluator, args []Value) Exitus {
 	}
 	out := ev.ports[1].ch
 	for _, dir := range dirs {
-		table := NewTable()
-		table.Dict["path"] = String(dir.Path)
-		table.Dict["score"] = String(fmt.Sprint(dir.Score))
+		table := newTable()
+		table.Dict["path"] = str(dir.Path)
+		table.Dict["score"] = str(fmt.Sprint(dir.Score))
 		out <- table
 	}
 	return success
@@ -263,7 +263,7 @@ func visistedDirs(ev *Evaluator, args []Value) Exitus {
 
 var noMatchingDir = newFailure("no matching directory")
 
-func jumpDir(ev *Evaluator, args []Value) Exitus {
+func jumpDir(ev *Evaluator, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
@@ -287,11 +287,11 @@ func jumpDir(ev *Evaluator, args []Value) Exitus {
 	return success
 }
 
-func source(ev *Evaluator, args []Value) Exitus {
+func source(ev *Evaluator, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
-	if fname, ok := args[0].(String); !ok {
+	if fname, ok := args[0].(str); !ok {
 		return argsError
 	} else {
 		ev.Source(string(fname))
@@ -301,7 +301,7 @@ func source(ev *Evaluator, args []Value) Exitus {
 
 func toFloats(args []Value) (nums []float64, err error) {
 	for _, a := range args {
-		a, ok := a.(String)
+		a, ok := a.(str)
 		if !ok {
 			return nil, fmt.Errorf("must be string")
 		}
@@ -314,7 +314,7 @@ func toFloats(args []Value) (nums []float64, err error) {
 	return
 }
 
-func plus(ev *Evaluator, args []Value) Exitus {
+func plus(ev *Evaluator, args []Value) exitus {
 	out := ev.ports[1].ch
 	nums, err := toFloats(args)
 	if err != nil {
@@ -324,11 +324,11 @@ func plus(ev *Evaluator, args []Value) Exitus {
 	for _, f := range nums {
 		sum += f
 	}
-	out <- NewString(fmt.Sprintf("%g", sum))
+	out <- str(fmt.Sprintf("%g", sum))
 	return success
 }
 
-func minus(ev *Evaluator, args []Value) Exitus {
+func minus(ev *Evaluator, args []Value) exitus {
 	out := ev.ports[1].ch
 	if len(args) == 0 {
 		return argsError
@@ -341,11 +341,11 @@ func minus(ev *Evaluator, args []Value) Exitus {
 	for _, f := range nums[1:] {
 		sum -= f
 	}
-	out <- NewString(fmt.Sprintf("%g", sum))
+	out <- str(fmt.Sprintf("%g", sum))
 	return success
 }
 
-func times(ev *Evaluator, args []Value) Exitus {
+func times(ev *Evaluator, args []Value) exitus {
 	out := ev.ports[1].ch
 	nums, err := toFloats(args)
 	if err != nil {
@@ -355,11 +355,11 @@ func times(ev *Evaluator, args []Value) Exitus {
 	for _, f := range nums {
 		prod *= f
 	}
-	out <- NewString(fmt.Sprintf("%g", prod))
+	out <- str(fmt.Sprintf("%g", prod))
 	return success
 }
 
-func divide(ev *Evaluator, args []Value) Exitus {
+func divide(ev *Evaluator, args []Value) exitus {
 	out := ev.ports[1].ch
 	if len(args) == 0 {
 		return argsError
@@ -372,21 +372,21 @@ func divide(ev *Evaluator, args []Value) Exitus {
 	for _, f := range nums[1:] {
 		prod /= f
 	}
-	out <- NewString(fmt.Sprintf("%g", prod))
+	out <- str(fmt.Sprintf("%g", prod))
 	return success
 }
 
-func eq(ev *Evaluator, args []Value) Exitus {
+func eq(ev *Evaluator, args []Value) exitus {
 	out := ev.ports[1].ch
 	if len(args) == 0 {
 		return argsError
 	}
 	for i := 0; i+1 < len(args); i++ {
 		if !valueEq(args[i], args[i+1]) {
-			out <- Bool(false)
+			out <- boolean(false)
 			return success
 		}
 	}
-	out <- Bool(true)
+	out <- boolean(true)
 	return success
 }

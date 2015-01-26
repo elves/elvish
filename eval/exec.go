@@ -18,12 +18,12 @@ const (
 // StateUpdate represents a change of state of a command.
 type StateUpdate struct {
 	Exited bool
-	Exitus Exitus
+	exitus exitus
 	Update string
 }
 
-func newExitedStateUpdate(e Exitus) *StateUpdate {
-	return &StateUpdate{Exited: true, Exitus: e}
+func newExitedStateUpdate(e exitus) *StateUpdate {
+	return &StateUpdate{Exited: true, exitus: e}
 }
 
 func newUnexitedStateUpdate(u string) *StateUpdate {
@@ -85,8 +85,8 @@ func (ev *Evaluator) execSpecial(op exitusOp) <-chan *StateUpdate {
 
 func (ev *Evaluator) resolveNonSpecial(cmd Value) Callable {
 	// Closure
-	if closure, ok := cmd.(*Closure); ok {
-		return closure
+	if cl, ok := cmd.(*closure); ok {
+		return cl
 	}
 
 	cmdStr := toString(cmd)
@@ -100,7 +100,7 @@ func (ev *Evaluator) resolveNonSpecial(cmd Value) Callable {
 	}
 
 	// External command
-	return External{cmdStr}
+	return externalCmd{cmdStr}
 }
 
 // execNonSpecial executes a form that is not a special form.
@@ -109,7 +109,7 @@ func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate
 }
 
 // Exec executes a builtin function.
-func (b *BuiltinFn) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
+func (b *builtinFn) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
 		ex := b.Impl(ev, args)
@@ -122,7 +122,7 @@ func (b *BuiltinFn) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
 }
 
 // Exec executes a closure.
-func (c *Closure) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
+func (c *closure) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
 	update := make(chan *StateUpdate, 1)
 
 	// TODO Support optional/rest argument
@@ -146,7 +146,7 @@ func (c *Closure) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
 	ev.local = make(map[string]Variable)
 	for i, name := range c.ArgNames {
 		// TODO(xiaq): support static type of arguments
-		ev.local[name] = newInternalVariable(args[i], AnyType{})
+		ev.local[name] = newInternalVariable(args[i], anyType{})
 	}
 
 	ev.statusCb = nil
@@ -215,7 +215,7 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 }
 
 // Exec executes an external command.
-func (e External) Exec(ev *Evaluator, argVals []Value) <-chan *StateUpdate {
+func (e externalCmd) Exec(ev *Evaluator, argVals []Value) <-chan *StateUpdate {
 	files := make([]uintptr, len(ev.ports))
 	for i, port := range ev.ports {
 		if port == nil || port.f == nil {

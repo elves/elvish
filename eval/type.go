@@ -8,85 +8,85 @@ type Type interface {
 	String() string
 }
 
-// AnyType is a special type that may be assigned or assigned to any another
+// anyType is a special type that may be assigned or assigned to any another
 // type.
-type AnyType struct {
+type anyType struct {
 }
 
-func (at AnyType) Default() Value {
-	return NewString("")
+func (at anyType) Default() Value {
+	return str("")
 }
 
-func (at AnyType) String() string {
+func (at anyType) String() string {
 	return "any"
 }
 
-type StringType struct {
+type stringType struct {
 }
 
-func (st StringType) Default() Value {
-	return NewString("")
+func (st stringType) Default() Value {
+	return str("")
 }
 
-func (st StringType) String() string {
+func (st stringType) String() string {
 	return "string"
 }
 
-type BoolType struct {
+type boolType struct {
 }
 
-func (bt BoolType) Default() Value {
-	return Bool(true)
+func (bt boolType) Default() Value {
+	return boolean(true)
 }
 
-func (bt BoolType) String() string {
+func (bt boolType) String() string {
 	return "bool"
 }
 
-type ExitusType struct {
+type exitusType struct {
 }
 
-func (et ExitusType) Default() Value {
+func (et exitusType) Default() Value {
 	return success
 }
 
-func (et ExitusType) String() string {
+func (et exitusType) String() string {
 	return "exitus"
 }
 
-type TableType struct {
+type tableType struct {
 }
 
-func (tt TableType) Default() Value {
-	return NewTable()
+func (tt tableType) Default() Value {
+	return newTable()
 }
 
-func (tt TableType) String() string {
+func (tt tableType) String() string {
 	return "table"
 }
 
-type CallableType struct {
+type callableType struct {
 }
 
-func (ct CallableType) Default() Value {
-	return NewClosure([]string{}, nil, map[string]Variable{})
+func (ct callableType) Default() Value {
+	return newClosure([]string{}, nil, map[string]Variable{})
 }
 
-func (ct CallableType) String() string {
+func (ct callableType) String() string {
 	return "callable"
 }
 
 var typenames = map[string]Type{
-	"any":      AnyType{},
-	"string":   StringType{},
-	"exitus":   ExitusType{},
-	"bool":     BoolType{},
-	"table":    TableType{},
-	"callable": CallableType{},
+	"any":      anyType{},
+	"string":   stringType{},
+	"exitus":   exitusType{},
+	"bool":     boolType{},
+	"table":    tableType{},
+	"callable": callableType{},
 }
 
 func isAny(t Type) bool {
-	_, ok := t.(AnyType)
+	_, ok := t.(anyType)
 	return ok
 }
 

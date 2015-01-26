@@ -39,7 +39,7 @@ type evaluatorEphemeral struct {
 
 func statusOk(vs []Value) bool {
 	for _, v := range vs {
-		v, ok := v.(Exitus)
+		v, ok := v.(exitus)
 		if !ok {
 			return false
 		}
@@ -52,12 +52,12 @@ func statusOk(vs []Value) bool {
 
 // NewEvaluator creates a new top-level Evaluator.
 func NewEvaluator(st *store.Store) *Evaluator {
-	pid := NewString(strconv.Itoa(syscall.Getpid()))
+	pid := str(strconv.Itoa(syscall.Getpid()))
 	bi := map[string]Variable{
 		"pid":     newInternalVariableWithType(pid),
 		"success": newInternalVariableWithType(success),
-		"true":    newInternalVariableWithType(Bool(true)),
-		"false":   newInternalVariableWithType(Bool(false)),
+		"true":    newInternalVariableWithType(boolean(true)),
+		"false":   newInternalVariableWithType(boolean(false)),
 	}
 	for _, b := range builtinFns {
 		bi["fn-"+b.Name] = newInternalVariableWithType(b)
@@ -184,11 +184,11 @@ func (ev *Evaluator) errorf(p parse.Pos, format string, args ...interface{}) {
 
 // mustSingleString returns a String if that is the only element of vs.
 // Otherwise it errors.
-func (ev *Evaluator) mustSingleString(vs []Value, what string, p parse.Pos) String {
+func (ev *Evaluator) mustSingleString(vs []Value, what string, p parse.Pos) str {
 	if len(vs) != 1 {
 		ev.errorf(p, "Expect exactly one word for %s, got %d", what, len(vs))
 	}
-	v, ok := vs[0].(String)
+	v, ok := vs[0].(str)
 	if !ok {
 		ev.errorf(p, "Expect string for %s, got %s", what, vs[0])
 	}

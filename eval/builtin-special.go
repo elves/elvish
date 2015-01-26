@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type exitusOp func(*Evaluator) Exitus
+type exitusOp func(*Evaluator) exitus
 type builtinSpecialCompile func(*Compiler, *parse.FormNode) exitusOp
 
 type builtinSpecial struct {
@@ -147,7 +147,7 @@ func compileVar(cp *Compiler, fn *parse.FormNode) exitusOp {
 	}
 
 	for i := len(types); i < len(names); i++ {
-		types = append(types, AnyType{})
+		types = append(types, anyType{})
 	}
 
 	for i, name := range names {
@@ -159,7 +159,7 @@ func compileVar(cp *Compiler, fn *parse.FormNode) exitusOp {
 		vop = cp.compileCompounds(values)
 		checkSetType(cp, names, values, vop, fn.Pos)
 	}
-	return func(ev *Evaluator) Exitus {
+	return func(ev *Evaluator) exitus {
 		for i, name := range names {
 			ev.local[name] = newInternalVariable(types[i].Default(), types[i])
 		}
@@ -199,7 +199,7 @@ func compileSet(cp *Compiler, fn *parse.FormNode) exitusOp {
 	vop = cp.compileCompounds(values)
 	checkSetType(cp, names, values, vop, fn.Pos)
 
-	return func(ev *Evaluator) Exitus {
+	return func(ev *Evaluator) exitus {
 		return doSet(ev, names, vop.f(ev))
 	}
 }
@@ -209,7 +209,7 @@ var (
 	typeMismatch  = newFailure("type mismatch")
 )
 
-func doSet(ev *Evaluator, names []string, values []Value) Exitus {
+func doSet(ev *Evaluator, names []string, values []Value) exitus {
 	// TODO Support assignment of mismatched arity in some restricted way -
 	// "optional" and "rest" arguments and the like
 	if len(names) != len(values) {
@@ -255,7 +255,7 @@ func compileDel(cp *Compiler, fn *parse.FormNode) exitusOp {
 		}
 
 	}
-	return func(ev *Evaluator) Exitus {
+	return func(ev *Evaluator) exitus {
 		for _, name := range names {
 			delete(ev.local, name)
 		}
@@ -315,10 +315,10 @@ func compileFn(cp *Compiler, fn *parse.FormNode) exitusOp {
 
 	op := cp.compileClosure(closureNode)
 
-	cp.pushVar(varName, CallableType{})
+	cp.pushVar(varName, callableType{})
 
-	return func(ev *Evaluator) Exitus {
-		ev.local[varName] = newInternalVariable(op.f(ev)[0], CallableType{})
+	return func(ev *Evaluator) exitus {
+		ev.local[varName] = newInternalVariable(op.f(ev)[0], callableType{})
 		return success
 	}
 }
@@ -330,10 +330,10 @@ func compileStaticTypeof(cp *Compiler, fn *parse.FormNode) exitusOp {
 	for _, cn := range fn.Args.Nodes {
 		trs = append(trs, cp.compileCompound(cn).tr)
 	}
-	return func(ev *Evaluator) Exitus {
+	return func(ev *Evaluator) exitus {
 		out := ev.ports[1].ch
 		for _, tr := range trs {
-			out <- NewString(tr.String())
+			out <- str(tr.String())
 		}
 		return success
 	}

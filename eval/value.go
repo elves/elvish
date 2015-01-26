@@ -19,23 +19,18 @@ type Value interface {
 	Repr() string
 }
 
-type Booler interface {
+type booler interface {
 	Bool() bool
 }
 
-type Stringer interface {
+type stringer interface {
 	String() string
 }
 
-// String is a string.
-type String string
+type str string
 
-func (s String) Type() Type {
-	return StringType{}
-}
-
-func NewString(s string) String {
-	return String(s)
+func (s str) Type() Type {
+	return stringType{}
 }
 
 func quote(s string) string {
@@ -81,88 +76,88 @@ func quote(s string) string {
 	return strconv.Quote(s)
 }
 
-func (s String) Repr() string {
+func (s str) Repr() string {
 	return quote(string(s))
 }
 
-func (s String) String() string {
+func (s str) String() string {
 	return string(s)
 }
 
-type Bool bool
+type boolean bool
 
-func (b Bool) Type() Type {
-	return BoolType{}
+func (b boolean) Type() Type {
+	return boolType{}
 }
 
-func (b Bool) Repr() string {
+func (b boolean) Repr() string {
 	if b {
 		return "$true"
 	}
 	return "$false"
 }
 
-func (b Bool) String() string {
+func (b boolean) String() string {
 	if b {
 		return "true"
 	}
 	return "false"
 }
 
-func (b Bool) Bool() bool {
+func (b boolean) Bool() bool {
 	return bool(b)
 }
 
-type Exitus struct {
+type exitus struct {
 	Success bool
 	Failure string
 }
 
-var success = Exitus{true, ""}
+var success = exitus{true, ""}
 
-func newFailure(s string) Exitus {
-	return Exitus{false, s}
+func newFailure(s string) exitus {
+	return exitus{false, s}
 }
 
-func (e Exitus) Type() Type {
-	return ExitusType{}
+func (e exitus) Type() Type {
+	return exitusType{}
 }
 
-func (e Exitus) Repr() string {
+func (e exitus) Repr() string {
 	if e.Success {
 		return "$success"
 	}
 	return "(failure " + quote(e.Failure) + ")"
 }
 
-func (e Exitus) String() string {
+func (e exitus) String() string {
 	if e.Success {
 		return "success"
 	}
 	return "failure: " + e.Failure
 }
 
-func (e Exitus) Bool() bool {
+func (e exitus) Bool() bool {
 	return e.Success
 }
 
-// Table is a list-dict hybrid.
+// table is a list-dict hybrid.
 //
 // TODO(xiaq): The dict part use string keys. It should use Value keys instead.
-type Table struct {
+type table struct {
 	List []Value
 	Dict map[string]Value
 }
 
-func (t *Table) Type() Type {
-	return TableType{}
+func (t *table) Type() Type {
+	return tableType{}
 }
 
-func NewTable() *Table {
-	return &Table{Dict: make(map[string]Value)}
+func newTable() *table {
+	return &table{Dict: make(map[string]Value)}
 }
 
-func (t *Table) Repr() string {
+func (t *table) Repr() string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
 	sep := ""
@@ -178,10 +173,11 @@ func (t *Table) Repr() string {
 	return buf.String()
 }
 
-func (t *Table) append(vs ...Value) {
+func (t *table) append(vs ...Value) {
 	t.List = append(t.List, vs...)
 }
 
+// Callable represents Value's that may be executed.
 type Callable interface {
 	Value
 	// Exec executes a callable asynchronously on an Evaluator. It assumes that
@@ -190,62 +186,62 @@ type Callable interface {
 	Exec(ev *Evaluator, args []Value) <-chan *StateUpdate
 }
 
-// Closure is a closure.
-type Closure struct {
+// closure is a closure.
+type closure struct {
 	ArgNames []string
 	Op       Op
 	Captured map[string]Variable
 }
 
-func (c *Closure) Type() Type {
-	return CallableType{}
+func (c *closure) Type() Type {
+	return callableType{}
 }
 
-func NewClosure(a []string, op Op, e map[string]Variable) *Closure {
-	return &Closure{a, op, e}
+func newClosure(a []string, op Op, e map[string]Variable) *closure {
+	return &closure{a, op, e}
 }
 
-func (c *Closure) Repr() string {
+func (c *closure) Repr() string {
 	return fmt.Sprintf("<Closure%v>", *c)
 }
 
-type BuiltinFn struct {
+type builtinFn struct {
 	Name string
-	Impl func(*Evaluator, []Value) Exitus
+	Impl func(*Evaluator, []Value) exitus
 }
 
-func (b *BuiltinFn) Type() Type {
-	return CallableType{}
+func (b *builtinFn) Type() Type {
+	return callableType{}
 }
 
-func (b *BuiltinFn) Repr() string {
+func (b *builtinFn) Repr() string {
 	return "$builtin:fn-" + b.Name
 }
 
-type External struct {
+type externalCmd struct {
 	Name string
 }
 
-func (e External) Type() Type {
-	return CallableType{}
+func (e externalCmd) Type() Type {
+	return callableType{}
 }
 
-func (e External) Repr() string {
+func (e externalCmd) Repr() string {
 	return "<external " + e.Name + " >"
 }
 
 func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 	var (
-		sub String
+		sub str
 		ok  bool
 	)
-	if sub, ok = right.(String); !ok {
+	if sub, ok = right.(str); !ok {
 		ev.errorf(rp, "right operand of subscript must be of type string")
 	}
 
 	switch left.(type) {
-	case *Table:
-		t := left.(*Table)
+	case *table:
+		t := left.(*table)
 		// Need stricter notion of list indices
 		// TODO Handle invalid index
 		idx, err := strconv.ParseUint(sub.String(), 10, 0)
@@ -260,7 +256,7 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 		}
 		ev.errorf(rp, "nonexistent key %q", sub)
 		return nil
-	case String:
+	case str:
 		invalidIndex := "invalid index, must be integer or integer:integer"
 
 		ss := strings.Split(sub.String(), ":")
@@ -288,7 +284,7 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 		if e != nil {
 			ev.errorf(rp, "%v", e)
 		}
-		return NewString(s)
+		return str(s)
 	default:
 		ev.errorf(lp, "left operand of subscript must be of type string, env, table or any")
 		return nil
@@ -300,24 +296,24 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 func fromJSONInterface(v interface{}) Value {
 	if v == nil {
 		// TODO Use a more appropriate type
-		return String("")
+		return str("")
 	}
 	switch v.(type) {
 	case bool:
-		return Bool(v.(bool))
+		return boolean(v.(bool))
 	case float64, string:
 		// TODO Use a numeric type for float64
-		return String(fmt.Sprint(v))
+		return str(fmt.Sprint(v))
 	case []interface{}:
 		a := v.([]interface{})
-		t := &Table{make([]Value, len(a)), make(map[string]Value)}
+		t := &table{make([]Value, len(a)), make(map[string]Value)}
 		for i, v := range a {
 			t.List[i] = fromJSONInterface(v)
 		}
 		return t
 	case map[string]interface{}:
 		m := v.(map[string]interface{})
-		t := NewTable()
+		t := newTable()
 		for k, v := range m {
 			t.Dict[k] = fromJSONInterface(v)
 		}
@@ -337,7 +333,7 @@ func valueEq(a, b Value) bool {
 // toString converts a Value to String. When the Value type implements
 // String(), it is used. Otherwise Repr() is used.
 func toString(v Value) string {
-	if s, ok := v.(Stringer); ok {
+	if s, ok := v.(stringer); ok {
 		return s.String()
 	}
 	return v.Repr()
@@ -346,7 +342,7 @@ func toString(v Value) string {
 // toBool converts a Value to bool. When the Value type implements Bool(), it
 // is used. Otherwise it is considered true.
 func toBool(v Value) bool {
-	if b, ok := v.(Booler); ok {
+	if b, ok := v.(booler); ok {
 		return b.Bool()
 	}
 	return true

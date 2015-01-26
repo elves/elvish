@@ -99,7 +99,7 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) valuesOp {
 	cp.pushScope()
 
 	for _, name := range argNames {
-		cp.pushVar(name, AnyType{})
+		cp.pushVar(name, anyType{})
 	}
 
 	op := cp.compileChunk(cn.Chunk)
@@ -184,7 +184,7 @@ func (cp *Compiler) ResolveVar(ns, name string) Type {
 		}
 	}
 	if ns == "env" {
-		return StringType{}
+		return stringType{}
 	}
 	return nil
 }

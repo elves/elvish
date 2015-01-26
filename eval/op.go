@@ -42,9 +42,9 @@ func combineClosure(argNames []string, op Op, captured map[string]Type) valuesOp
 		for name := range captured {
 			evCaptured[name] = ev.ResolveVar("", name)
 		}
-		return []Value{NewClosure(argNames, op, evCaptured)}
+		return []Value{newClosure(argNames, op, evCaptured)}
 	}
-	return valuesOp{newFixedTypeRun(CallableType{}), f}
+	return valuesOp{newFixedTypeRun(callableType{}), f}
 }
 
 var noExitus = newFailure("no exitus")
@@ -81,13 +81,13 @@ func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 		for i, update := range updates {
 			ex := noExitus
 			for up := range update {
-				ex = up.Exitus
+				ex = up.exitus
 			}
 			exits[i] = ex
 		}
 		return exits
 	}
-	return valuesOp{newHomoTypeRun(&ExitusType{}, len(ops), false), f}
+	return valuesOp{newHomoTypeRun(&exitusType{}, len(ops), false), f}
 }
 
 func combineSpecialForm(op exitusOp, ports []portOp, p parse.Pos) stateUpdatesOp {
@@ -111,7 +111,7 @@ func combineNonSpecialForm(cmdOp, argsOp valuesOp, ports []portOp, p parse.Pos) 
 			ev.errorf(p, expect)
 		}
 		switch cmd[0].(type) {
-		case String, *Closure:
+		case str, *closure:
 		default:
 			ev.errorf(p, expect)
 		}
@@ -141,7 +141,7 @@ func combineSpaced(ops []valuesOp) valuesOp {
 }
 
 func compound(ev *Evaluator, lhs, rhs Value) Value {
-	return NewString(toString(lhs) + toString(rhs))
+	return str(toString(lhs) + toString(rhs))
 }
 
 func combineCompound(ops []valuesOp) valuesOp {
@@ -175,7 +175,7 @@ func combineCompound(ops []valuesOp) valuesOp {
 		}
 		return vs
 	}
-	return valuesOp{newHomoTypeRun(StringType{}, n, more), f}
+	return valuesOp{newHomoTypeRun(stringType{}, n, more), f}
 }
 
 func literalValue(v ...Value) valuesOp {
@@ -190,7 +190,7 @@ func literalValue(v ...Value) valuesOp {
 }
 
 func makeString(text string) valuesOp {
-	return literalValue(NewString(text))
+	return literalValue(str(text))
 }
 
 func makeVar(cp *Compiler, qname string, p parse.Pos) valuesOp {
@@ -213,10 +213,10 @@ func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valu
 	}
 	var t Type
 	switch left.tr[0].t.(type) {
-	case StringType:
-		t = StringType{}
-	case TableType, AnyType:
-		t = AnyType{}
+	case stringType:
+		t = stringType{}
+	case tableType, anyType:
+		t = anyType{}
 	default:
 		cp.errorf(lp, "left operand of subscript must be of type string, env, table or any")
 	}
@@ -225,7 +225,7 @@ func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valu
 		// TODO Also check at runtime
 		cp.errorf(rp, "right operand of subscript must be a single value")
 	}
-	if _, ok := right.tr[0].t.(StringType); !ok {
+	if _, ok := right.tr[0].t.(stringType); !ok {
 		cp.errorf(rp, "right operand of subscript must be of type string")
 	}
 
@@ -239,7 +239,7 @@ func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valu
 
 func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos) valuesOp {
 	f := func(ev *Evaluator) []Value {
-		t := NewTable()
+		t := newTable()
 		t.append(list.f(ev)...)
 		for i, kop := range keys {
 			vop := values[i]
@@ -254,11 +254,11 @@ func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos
 		}
 		return []Value{t}
 	}
-	return valuesOp{newFixedTypeRun(TableType{}), f}
+	return valuesOp{newFixedTypeRun(tableType{}), f}
 }
 
 func combineChanCapture(op valuesOp) valuesOp {
-	tr := typeRun{typeStar{AnyType{}, true}}
+	tr := typeRun{typeStar{anyType{}, true}}
 	f := func(ev *Evaluator) []Value {
 		vs := []Value{}
 		newEv := ev.copy(fmt.Sprintf("channel output capture %v", op))

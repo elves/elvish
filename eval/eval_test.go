@@ -28,7 +28,7 @@ func mustParse(name, text string) *parse.ChunkNode {
 func stringValues(ss ...string) []Value {
 	vs := make([]Value, len(ss))
 	for i, s := range ss {
-		vs[i] = NewString(s)
+		vs[i] = str(s)
 	}
 	return vs
 }
@@ -113,7 +113,7 @@ var evalTests = []struct {
 	// Namespaces
 	// Pseudo-namespaces local: and captured:
 	{"var $true = lorem; { var $true = ipsum; put $captured:true $local:true $builtin:true }",
-		[]Value{String("lorem"), String("ipsum"), Bool(true)}, false},
+		[]Value{str("lorem"), str("ipsum"), boolean(true)}, false},
 	{"var $x = lorem; { set $captured:x = ipsum }; put $x",
 		stringValues("ipsum"), false},
 	// Pseudo-namespace env:
