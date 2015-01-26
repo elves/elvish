@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/util"
 )
 
@@ -27,6 +28,7 @@ type Evaluator struct {
 	searchPaths []string
 	ports       []*port
 	statusCb    func([]Value)
+	store       *store.Store
 }
 
 // evaluatorEphemeral holds the ephemeral parts of an Evaluator, namely the
@@ -49,7 +51,7 @@ func statusOk(vs []Value) bool {
 }
 
 // NewEvaluator creates a new top-level Evaluator.
-func NewEvaluator() *Evaluator {
+func NewEvaluator(st *store.Store) *Evaluator {
 	pid := NewString(strconv.Itoa(syscall.Getpid()))
 	bi := map[string]Variable{
 		"pid":     newInternalVariableWithType(pid),
@@ -80,6 +82,7 @@ func NewEvaluator() *Evaluator {
 			}
 			fmt.Println()
 		},
+		store: st,
 	}
 	path := os.Getenv("PATH")
 	if path != "" {

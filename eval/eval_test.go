@@ -10,7 +10,7 @@ import (
 )
 
 func TestNewEvaluator(t *testing.T) {
-	ev := NewEvaluator()
+	ev := NewEvaluator(nil)
 	pid := strconv.Itoa(syscall.Getpid())
 	if toString(ev.builtin["pid"].Get()) != pid {
 		t.Errorf(`ev.builtin["pid"] = %v, want %v`, ev.builtin["pid"], pid)
@@ -126,7 +126,7 @@ func TestEval(t *testing.T) {
 	for _, tt := range evalTests {
 		n := mustParse(name, tt.text)
 
-		ev := NewEvaluator()
+		ev := NewEvaluator(nil)
 		out := make(chan Value, len(tt.wanted))
 		outs := []Value{}
 		exhausted := make(chan struct{})
