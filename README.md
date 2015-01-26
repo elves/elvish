@@ -320,5 +320,17 @@ written in Racket:
                    string<?))
 ```
 
-I'm by no means a Lisp hacker, so feel free to fire an issue if my code is not
-idiomatic.
+The examples with Lisps are actually not very fair; thanks to the enormous
+power of macros, in Lisps it is actually possible to write concatenative code.
+For instance, Clojure has two macros, `->` and `->>` which "threads" an
+expression through consecutive forms. The last line of the Clojure code above
+can thus be rewritten as:
+
+```
+(def lols (->> strs (filter #(re-find #"LOL" %)) (map upper-case) (sort)))
+```
+
+Note that though this construct emulates concatenative programming well, the
+concurrency of pipelines is not emulated; under the hood the forms are
+executed serially. For concurrency constructs, one still need to resort other
+primitives.
