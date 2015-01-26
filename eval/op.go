@@ -23,7 +23,7 @@ type portOp func(*Evaluator) *port
 
 // stateUpdatesOp operates on an Evaluator and results in a receiving channel
 // of StateUpdate's.
-type stateUpdatesOp func(*Evaluator) <-chan *StateUpdate
+type stateUpdatesOp func(*Evaluator) <-chan *stateUpdate
 
 func combineChunk(ops []valuesOp) op {
 	return func(ev *Evaluator) {
@@ -52,7 +52,7 @@ var noExitus = newFailure("no exitus")
 func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 	f := func(ev *Evaluator) []Value {
 		var nextIn *port
-		updates := make([]<-chan *StateUpdate, len(ops))
+		updates := make([]<-chan *stateUpdate, len(ops))
 		// For each form, create a dedicated Evaluator and run
 		for i, op := range ops {
 			newEv := ev.copy(fmt.Sprintf("form op %v", op))
@@ -81,7 +81,7 @@ func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 		for i, update := range updates {
 			ex := noExitus
 			for up := range update {
-				ex = up.exitus
+				ex = up.Exitus
 			}
 			exits[i] = ex
 		}
@@ -93,7 +93,7 @@ func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 func combineSpecialForm(op exitusOp, ports []portOp, p parse.Pos) stateUpdatesOp {
 	// ev here is always a subevaluator created in combinePipeline, so it can
 	// be safely modified.
-	return func(ev *Evaluator) <-chan *StateUpdate {
+	return func(ev *Evaluator) <-chan *stateUpdate {
 		ev.applyPortOps(ports)
 		return ev.execSpecial(op)
 	}
@@ -102,7 +102,7 @@ func combineSpecialForm(op exitusOp, ports []portOp, p parse.Pos) stateUpdatesOp
 func combineNonSpecialForm(cmdOp, argsOp valuesOp, ports []portOp, p parse.Pos) stateUpdatesOp {
 	// ev here is always a subevaluator created in combinePipeline, so it can
 	// be safely modified.
-	return func(ev *Evaluator) <-chan *StateUpdate {
+	return func(ev *Evaluator) <-chan *stateUpdate {
 		ev.applyPortOps(ports)
 
 		cmd := cmdOp.f(ev)

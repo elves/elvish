@@ -178,12 +178,12 @@ func (t *table) append(vs ...Value) {
 }
 
 // Callable represents Value's that may be executed.
-type Callable interface {
+type callable interface {
 	Value
 	// Exec executes a callable asynchronously on an Evaluator. It assumes that
 	// it is the last callable to be executed on that Evaluator and thus
 	// responsible for cleaning up the ports.
-	Exec(ev *Evaluator, args []Value) <-chan *StateUpdate
+	Exec(ev *Evaluator, args []Value) <-chan *stateUpdate
 }
 
 // closure is a closure.
