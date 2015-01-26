@@ -249,6 +249,26 @@ func (b *BuiltinFn) Bool() bool {
 	return true
 }
 
+type External struct {
+	Name string
+}
+
+func (e External) Type() Type {
+	return CallableType{}
+}
+
+func (e External) Repr() string {
+	return "<external " + e.Name + " >"
+}
+
+func (e External) String() string {
+	return e.Repr()
+}
+
+func (e External) Bool() bool {
+	return true
+}
+
 func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 	var (
 		sub String

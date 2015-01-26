@@ -141,7 +141,7 @@ func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate
 	}
 
 	// External command
-	return ev.execExternal(cmdStr, args)
+	return ev.execExternal(External{cmdStr}, args)
 }
 
 func (b *BuiltinFn) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
@@ -258,8 +258,7 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 	close(update)
 }
 
-// execExternal executes an external command form.
-func (ev *Evaluator) execExternal(cmd string, argVals []Value) <-chan *StateUpdate {
+func (e External) Exec(ev *Evaluator, argVals []Value) <-chan *StateUpdate {
 	files := make([]uintptr, len(ev.ports))
 	for i, port := range ev.ports {
 		if port == nil || port.f == nil {
@@ -279,7 +278,7 @@ func (ev *Evaluator) execExternal(cmd string, argVals []Value) <-chan *StateUpda
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: os.Environ(), Files: files[:], Sys: &sys}
 
-	path, err := ev.search(cmd)
+	path, err := ev.search(e.Name)
 	var pid int
 
 	if err == nil {
@@ -300,4 +299,9 @@ func (ev *Evaluator) execExternal(cmd string, argVals []Value) <-chan *StateUpda
 	}
 
 	return update
+}
+
+// execExternal executes an external command form.
+func (ev *Evaluator) execExternal(e External, argVals []Value) <-chan *StateUpdate {
+	return e.Exec(ev, argVals)
 }
