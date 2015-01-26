@@ -126,17 +126,12 @@ func (ev *Evaluator) resolveNonSpecial(cmd Value) Callable {
 
 	cmdStr := toString(cmd)
 
-	// Defined function
+	// Defined callable
 	ns, name := splitQualifiedName(cmdStr)
 	if v := ev.ResolveVar(ns, "fn-"+name); v != nil {
-		if closure, ok := v.Get().(*Closure); ok {
-			return closure
+		if clb, ok := v.Get().(Callable); ok {
+			return clb
 		}
-	}
-
-	// Builtin function
-	if bi, ok := builtinFnsMap[cmdStr]; ok {
-		return bi
 	}
 
 	// External command

@@ -57,6 +57,9 @@ func NewEvaluator() *Evaluator {
 		"true":    newInternalVariableWithType(Bool(true)),
 		"false":   newInternalVariableWithType(Bool(false)),
 	}
+	for _, b := range builtinFns {
+		bi["fn-"+b.Name] = newInternalVariableWithType(b)
+	}
 	ev := &Evaluator{
 		Compiler: NewCompiler(makeCompilerScope(bi)),
 		local:    make(map[string]Variable),

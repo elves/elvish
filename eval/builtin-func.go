@@ -19,10 +19,7 @@ type builtinFunc struct {
 	streamTypes [2]StreamType
 }
 
-var (
-	builtinFns    []*BuiltinFn
-	builtinFnsMap map[string]*BuiltinFn
-)
+var builtinFns []*BuiltinFn
 
 func init() {
 	// Needed to work around init loop.
@@ -56,11 +53,6 @@ func init() {
 		&BuiltinFn{"/", divide},
 
 		&BuiltinFn{"=", eq},
-	}
-
-	builtinFnsMap = make(map[string]*BuiltinFn)
-	for _, b := range builtinFns {
-		builtinFnsMap[b.Name] = b
 	}
 }
 
