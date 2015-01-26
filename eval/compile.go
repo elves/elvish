@@ -39,8 +39,8 @@ func (cp *Compiler) stopCompile() {
 	cp.compilerEphemeral = compilerEphemeral{}
 }
 
-// Compile compiles a ChunkNode into an Op, with the knowledge of current
-// scope. The supplied name and text are used in diagnostic messages.
+// Compile compiles a ChunkNode into an Op. The supplied name and text are used
+// in diagnostic messages.
 func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode) (op Op, err error) {
 	cp.startCompile(name, text)
 	defer cp.stopCompile()
