@@ -230,7 +230,7 @@ This experiment has a number of motivations. Some of them:
   but virtually unknown to other programmers - the pipeline. That leads us to
   the topic of the next few sections.
 
-## Pipeline, the Good
+## The power of pipelines
 
 ### A Concatenative Programming Facility
 
@@ -342,7 +342,7 @@ are interweaved automatically. This is why we call pipelines a **concurrency**
 construct: the components that make up a pipeline run **concurrently** and
 there is really a pipe carrying data constantly flowing between them.
 
-## Pipeline, the Bad and the Ugly
+## The drawback of traditional pipelines
 
 (TO BE WRITTEN)
 
