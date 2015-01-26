@@ -12,13 +12,6 @@ import (
 	"strconv"
 )
 
-type builtinFuncImpl func(*Evaluator, []Value) Exitus
-
-type builtinFunc struct {
-	fn          builtinFuncImpl
-	streamTypes [2]StreamType
-}
-
 var builtinFns []*BuiltinFn
 
 func init() {
