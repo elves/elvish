@@ -342,9 +342,87 @@ are interweaved automatically. This is why we call pipelines a **concurrency**
 construct: the components that make up a pipeline run **concurrently** and
 there is really a pipe carrying data constantly flowing between them.
 
-## The drawback of traditional pipelines
+## The drawbacks of traditional pipelines
 
-(TO BE WRITTEN)
+Consider this *seemingly* correct program that finds all PNG files and sort
+them:
+
+```
+find . -name '*.png' | sort
+```
+
+It *seems* correct but is actually wrong. Suppose that the current directory
+contains only two files called `a\n.png` and `b\n.png` (`\n` representing a
+newline), the program will output the following:
+
+```
+./a
+./b
+.png
+.png
+```
+
+This is because both `find` and `sort` treat newlines as data boundaries. When
+the data itself contains newlines, the boundary is messed up.
+
+Modern tools do provide workarounds for such problems. Although newlines are
+perfectly legal in file names, `\0` is not; with the `-print0` option of
+`find` and `-z` of `sort`, they can be taught to use `\0` as the data
+boundary.
+
+```
+find . -name '*.png' -print0 | sort -z
+```
+
+Which works, but it is always clumsy to (remember and) add these little
+options. Worse, `\0` typically shows up as nothing on the terminal, making it
+even clumsier to debug such programs.
+
+We have outlined one drawback of traditional pipelines: they assume that data
+is separated by newline, which is not always true. Now instead of looking at
+the boundaries of data, we consider the data themselves. Consider the
+following series of tasks:
+
+1.  Find all lines in the file `strs` containing `lol`. This is trivial (the
+    useless use of `cat` is there for a reason):
+
+    ```
+    cat strs | grep lol
+    ```
+
+2.  Find all lines in the file `records`, where each line consists of
+    space-separated columns, whose second column contains `lol`.  This is
+    possible with the help of `awk`:
+
+    ```
+    cat records | awk '{ if (match($2, /lol/)) print; }'
+    ```
+
+3.  Find all lines in the file `jsons`, where each line is a JSON object,
+    whose `name` attribute contains `lol`. This is *still* possible with the
+    amazing [jq](https://github.com/stedolan/jq/) tool:
+
+    ```
+    cat jsons | jq -c 'select(.name | contains("lol"))'
+    ```
+
+Powerful as it seems, something is definitely going wrong here. Each type of
+complex data now requires a separate external tool, each with their own
+domain-specific language (DSL). As the complexity of the data grows, the part
+programmed in DSLs grows and the pipeline becomes almost superfluous. This
+brings us to the second drawback of traditional pipelines: they assume no to
+little internal structure of the data, which is again not always true.
+
+Argubly, this drawback is partly a problem of tooling instead of the pipeline
+itself. For some use cases, simple commands like `cut`, `paste` and `join`
+work well for space-separated columns and there is no need for `awk`. However,
+they are often clumsy to use - the problem is that these tools can only
+communicate with each other with structureless lines, limiting their
+combinatory power.
+
+### A richer pipeline
+
+(To be written)
 
 ## License
 
