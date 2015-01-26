@@ -155,7 +155,7 @@ func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) error {
 }
 
 // eval evaluates an Op.
-func (ev *Evaluator) eval(name, text string, op op) (err error) {
+func (ev *Evaluator) eval(name, text string, op Op) (err error) {
 	if op == nil {
 		return nil
 	}

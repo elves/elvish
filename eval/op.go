@@ -10,7 +10,7 @@ import (
 // Definition of Op and friends and combinators.
 
 // Op operates on an Evaluator.
-type op func(*Evaluator)
+type Op func(*Evaluator)
 
 // valuesOp operates on an Evaluator and results in some values.
 type valuesOp struct {
@@ -25,7 +25,7 @@ type portOp func(*Evaluator) *port
 // of StateUpdate's.
 type stateUpdatesOp func(*Evaluator) <-chan *stateUpdate
 
-func combineChunk(ops []valuesOp) op {
+func combineChunk(ops []valuesOp) Op {
 	return func(ev *Evaluator) {
 		for _, op := range ops {
 			s := op.f(ev)
@@ -36,7 +36,7 @@ func combineChunk(ops []valuesOp) op {
 	}
 }
 
-func combineClosure(argNames []string, op op, captured map[string]Type) valuesOp {
+func combineClosure(argNames []string, op Op, captured map[string]Type) valuesOp {
 	f := func(ev *Evaluator) []Value {
 		evCaptured := make(map[string]Variable, len(captured))
 		for name := range captured {

@@ -41,7 +41,7 @@ func (cp *Compiler) stopCompile() {
 
 // Compile compiles a ChunkNode into an Op, with the knowledge of current
 // scope. The supplied name and text are used in diagnostic messages.
-func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode) (op op, err error) {
+func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode) (op Op, err error) {
 	cp.startCompile(name, text)
 	defer cp.stopCompile()
 	defer util.Recover(&err)
@@ -70,7 +70,7 @@ func (cp *Compiler) errorf(p parse.Pos, format string, args ...interface{}) {
 }
 
 // compileChunk compiles a ChunkNode into an Op.
-func (cp *Compiler) compileChunk(cn *parse.ChunkNode) op {
+func (cp *Compiler) compileChunk(cn *parse.ChunkNode) Op {
 	ops := make([]valuesOp, len(cn.Nodes))
 	for i, pn := range cn.Nodes {
 		ops[i] = cp.compilePipeline(pn)
