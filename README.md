@@ -283,7 +283,64 @@ are *nested* instead of connected one after another.
 
 ### A Concurrency Construct
 
-(TO BE WRITTEN)
+There is any thing that is particular about pipelines. Consider this piece of
+(very realistic) shell code:
+
+```
+tail -f access.log | grep x
+```
+
+If a line containing `x` ever gets appended to `access.log`, it will appear on
+the console immediately. Every sysadmin knows that.
+
+However, if you try implementing this in another other language, you will
+quickly notice that this functionality is not trivial. The monitoring of
+`access.log` and the filtering for `x` are going on at the same time.
+
+Also consider this more subtle example:
+
+```
+cat *.go | grep .
+```
+
+This program concatenates all Go sources and filter out empty lines. Even if
+there are a lot of very large Go sources, this program will start pouring lines
+onto the terminal immediately. If we emulate the structure of this program -
+"cat, then grep" - with Python:
+
+```
+import sys
+from glob import glob
+# cat *.go
+lines = []
+for fname in glob('*.go'):
+    with open(fname) as f:
+        lines.extend(f.readlines())
+# grep .
+for line in lines:
+    if len(line) > 1:
+        sys.stdout.write(line)
+```
+
+There will be a hiatus in the presense of many large Go sources. To be
+efficient, you have to interweave the logic of `cat` and `grep`:
+
+```
+import sys
+from glob import glob
+# cat *.go
+for fname in glob('*.go'):
+    with open(fname) as f:
+        # grep .
+        for line in f:
+            if len(line) > 1:
+                sys.stdout.write(line)
+```
+
+However, in shell you separate `cat` and `grep` cleanly, yet their executions
+are interweaved automatically. This is why we call pipelines a **concurrency**
+construct: the components that make up a pipeline run **concurrently** and
+there is really a pipe carrying data constantly flowing between them.
 
 ## Pipeline, the Bad and the Ugly
 
