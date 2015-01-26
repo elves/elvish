@@ -118,11 +118,10 @@ func (ev *Evaluator) execSpecial(op exitusOp) <-chan *StateUpdate {
 	return update
 }
 
-// execNonSpecial executes a form that is not a special form.
-func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate {
+func (ev *Evaluator) resolveNonSpecial(cmd Value) Callable {
 	// Closure
 	if closure, ok := cmd.(*Closure); ok {
-		return ev.execClosure(closure, args)
+		return closure
 	}
 
 	cmdStr := cmd.String()
@@ -131,17 +130,22 @@ func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate
 	ns, name := splitQualifiedName(cmdStr)
 	if v := ev.ResolveVar(ns, "fn-"+name); v != nil {
 		if closure, ok := v.Get().(*Closure); ok {
-			return ev.execClosure(closure, args)
+			return closure
 		}
 	}
 
 	// Builtin function
 	if bi, ok := builtinFnsMap[cmdStr]; ok {
-		return ev.execBuiltinFunc(bi, args)
+		return bi
 	}
 
 	// External command
-	return ev.execExternal(External{cmdStr}, args)
+	return External{cmdStr}
+}
+
+// execNonSpecial executes a form that is not a special form.
+func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate {
+	return ev.resolveNonSpecial(cmd).Exec(ev, args)
 }
 
 func (b *BuiltinFn) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
@@ -154,11 +158,6 @@ func (b *BuiltinFn) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
 		close(update)
 	}()
 	return update
-}
-
-// execBuiltinFunc executes a builtin function.
-func (ev *Evaluator) execBuiltinFunc(b *BuiltinFn, args []Value) <-chan *StateUpdate {
-	return b.Exec(ev, args)
 }
 
 func (c *Closure) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
@@ -203,11 +202,6 @@ func (c *Closure) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
 		close(update)
 	}()
 	return update
-}
-
-// execClosure executes a closure form.
-func (ev *Evaluator) execClosure(closure *Closure, args []Value) <-chan *StateUpdate {
-	return closure.Exec(ev, args)
 }
 
 // waitStatusToStateUpdate converts syscall.WaitStatus to a StateUpdate.
@@ -299,9 +293,4 @@ func (e External) Exec(ev *Evaluator, argVals []Value) <-chan *StateUpdate {
 	}
 
 	return update
-}
-
-// execExternal executes an external command form.
-func (ev *Evaluator) execExternal(e External, argVals []Value) <-chan *StateUpdate {
-	return e.Exec(ev, argVals)
 }
