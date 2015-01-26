@@ -12,15 +12,15 @@ var (
 
 func TestDir(t *testing.T) {
 	for _, path := range dirsToAdd {
-		err := tStore.AddVisistedDir(path)
+		err := tStore.AddVisitedDir(path)
 		if err != nil {
-			t.Errorf("tStore.AddVisistedDir(%q) => %v, want <nil>", path, err)
+			t.Errorf("tStore.AddVisitedDir(%q) => %v, want <nil>", path, err)
 		}
 	}
 
 	dirs, err := tStore.FindVisitedDirs("usr")
 	if err != nil || !reflect.DeepEqual(dirs, wantedDirs) {
-		t.Errorf(`tStore.FindVisistedDirs("usr") => (%v, %v), want (%v, <nil>)`,
+		t.Errorf(`tStore.FindVisitedDirs("usr") => (%v, %v), want (%v, <nil>)`,
 			dirs, err, wantedDirs)
 	}
 }

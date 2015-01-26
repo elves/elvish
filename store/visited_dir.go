@@ -1,5 +1,7 @@
 package store
 
+import "database/sql"
+
 type VisitedDir struct {
 	Path  string
 	Score float64
@@ -13,7 +15,7 @@ func init() {
 	createTable["visited_dir"] = `create table if not exists visited_dir (path text unique primary key, score real default 0)`
 }
 
-func (s *Store) AddVisistedDir(d string) error {
+func (s *Store) AddVisitedDir(d string) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
@@ -31,13 +33,7 @@ func (s *Store) AddVisistedDir(d string) error {
 	return err
 }
 
-func (s *Store) FindVisitedDirs(p string) ([]VisitedDir, error) {
-	rows, err := s.db.Query(
-		"select path, score from visited_dir where path glob ? order by score desc",
-		"*"+EscapeGlob(p)+"*")
-	if err != nil {
-		return nil, err
-	}
+func convertVisitedDirs(rows *sql.Rows) ([]VisitedDir, error) {
 	var (
 		dir  VisitedDir
 		dirs []VisitedDir
@@ -47,8 +43,27 @@ func (s *Store) FindVisitedDirs(p string) ([]VisitedDir, error) {
 		rows.Scan(&dir.Path, &dir.Score)
 		dirs = append(dirs, dir)
 	}
-	if err = rows.Err(); err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return dirs, nil
+}
+
+func (s *Store) FindVisitedDirs(p string) ([]VisitedDir, error) {
+	rows, err := s.db.Query(
+		"select path, score from visited_dir where path glob ? order by score desc",
+		"*"+EscapeGlob(p)+"*")
+	if err != nil {
+		return nil, err
+	}
+	return convertVisitedDirs(rows)
+}
+
+func (s *Store) ListVisitedDirs() ([]VisitedDir, error) {
+	rows, err := s.db.Query(
+		"select path, score from visited_dir order by score desc")
+	if err != nil {
+		return nil, err
+	}
+	return convertVisitedDirs(rows)
 }
