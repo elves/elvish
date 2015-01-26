@@ -131,81 +131,81 @@ And:
 
 (Like the previous section, only those marked with ✔ have been implemented.)
 
-* Running external programs and pipelines, of course (`>` represents the
+* Running external programs and pipelines, of course (`~>` represents the
   prompt): ✔
   ```
-  > vim README.md
+  ~> vim README.md
   ...
-  > cat -v /dev/random
+  ~> cat -v /dev/random
   ...
-  > dmesg | grep bar
+  ~> dmesg | grep bar
   ...
   ```
 
 * Some constructs look like lisp without the outermost pair of parentheses: ✔
   ```
-  > + 1 2
+  ~> + 1 2
   ▶ 3
-  > * (+ 1 2) 3
+  ~> * (+ 1 2) 3
   ▶ 9
   ```
 
 * Use backquote for literal string (so that you can write both single and
   double quotes inside), double backquotes for a literal backquote: ✔
   ```
-  > echo `"He's dead, Jim."`
+  ~> echo `"He's dead, Jim."`
   "He's dead, Jim."
-  > echo `````He's dead, Jim."`
+  ~> echo `````He's dead, Jim."`
   ``He's dead, Jim."
   ```
 
 * Barewords are string literals: ✔
   ```
-  > = a `a`
+  ~> = a `a`
   ▶ $true
   ```
 
 * Tables are a hybrid of array and hash (a la Lua); tables are first-class
   values: ✔
   ```
-  > println [a b c &key value]
+  ~> println [a b c &key value]
   [a b c &key value]
-  > println [a b c &key value][0]
+  ~> println [a b c &key value][0]
   a
-  > println [a b c &key value][key]
+  ~> println [a b c &key value][key]
   value
   ```
 
 * Declare variable with `var`, set value with `set`; `var` also serve as a
   shorthand of var-set combo: ✔
   ```
-  > var $v table
-  > set $v = [foo bar]
-  > var $u table = [foo bar] # equivalent
+  ~> var $v table
+  ~> set $v = [foo bar]
+  ~> var $u table = [foo bar] # equivalent
   ```
 
 * First-class closures, lisp-like functional programming:
   ```
-  > map {|$x| * 2 $x} [1 2 3]
+  ~> map {|$x| * 2 $x} [1 2 3]
   [2 4 6]
-  > filter {|$x| > $x 2} [1 2 3 4 5]
+  ~> filter {|$x| > $x 2} [1 2 3 4 5]
   [3 4 5]
-  > map {|$x| * 2 $x} (filter {|$x| > $x 2} [1 2 3 4 5])
+  ~> map {|$x| * 2 $x} (filter {|$x| > $x 2} [1 2 3 4 5])
   [6 8 10]
   ```
 
 * Get rid of lots of irritating superfluous parentheses with pipelines (`put`
   is the builtin for outputting compound data):
   ```
-  > put 1 2 3 4 5 | filter {|$x| > $x 2} | map {|$x| * 2 $x}
+  ~> put 1 2 3 4 5 | filter {|$x| > $x 2} | map {|$x| * 2 $x}
   6 8 10
   ```
 
 * Use the `env:` namespace for environmental variables: ✔
   ```
-  > put $env:HOME
+  ~> put $env:HOME
   ▶ /home/xiaq
-  > set $env:PATH = $env:PATH`:/bin`
+  ~> set $env:PATH = $env:PATH`:/bin`
   ```
 
 There are many parts of the language that is not yet decided. The issues
