@@ -136,25 +136,29 @@ func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate
 	}
 
 	// Builtin function
-	if bi, ok := builtinFuncs[cmdStr]; ok {
-		return ev.execBuiltinFunc(bi.fn, args)
+	if bi, ok := builtinFnsMap[cmdStr]; ok {
+		return ev.execBuiltinFunc(bi, args)
 	}
 
 	// External command
 	return ev.execExternal(cmdStr, args)
 }
 
-// execBuiltinFunc executes a builtin function.
-func (ev *Evaluator) execBuiltinFunc(fn builtinFuncImpl, args []Value) <-chan *StateUpdate {
+func (b *BuiltinFn) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
-		ex := fn(ev, args)
+		ex := b.Impl(ev, args)
 		// Ports are closed after executaion of builtin is complete.
 		ev.closePorts()
 		update <- newExitedStateUpdate(ex)
 		close(update)
 	}()
 	return update
+}
+
+// execBuiltinFunc executes a builtin function.
+func (ev *Evaluator) execBuiltinFunc(b *BuiltinFn, args []Value) <-chan *StateUpdate {
+	return b.Exec(ev, args)
 }
 
 func (c *Closure) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {

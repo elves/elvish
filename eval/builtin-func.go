@@ -19,40 +19,48 @@ type builtinFunc struct {
 	streamTypes [2]StreamType
 }
 
-var builtinFuncs map[string]builtinFunc
+var (
+	builtinFns    []*BuiltinFn
+	builtinFnsMap map[string]*BuiltinFn
+)
 
 func init() {
 	// Needed to work around init loop.
-	builtinFuncs = map[string]builtinFunc{
-		"print":   builtinFunc{print, [2]StreamType{0, fdStream}},
-		"println": builtinFunc{println, [2]StreamType{0, fdStream}},
+	builtinFns = []*BuiltinFn{
+		&BuiltinFn{"print", print},
+		&BuiltinFn{"println", println},
 
-		"printchan": builtinFunc{printchan, [2]StreamType{chanStream, fdStream}},
-		"feedchan":  builtinFunc{feedchan, [2]StreamType{fdStream, chanStream}},
+		&BuiltinFn{"printchan", printchan},
+		&BuiltinFn{"feedchan", feedchan},
 
-		"put":    builtinFunc{put, [2]StreamType{0, chanStream}},
-		"unpack": builtinFunc{unpack, [2]StreamType{chanStream, chanStream}},
+		&BuiltinFn{"put", put},
+		&BuiltinFn{"unpack", unpack},
 
-		"parse-json": builtinFunc{parseJSON, [2]StreamType{fdStream, chanStream}},
+		&BuiltinFn{"parse-json", parseJSON},
 
-		"typeof": builtinFunc{typeof, [2]StreamType{0, chanStream}},
+		&BuiltinFn{"typeof", typeof},
 
-		"failure": builtinFunc{failure, [2]StreamType{0, chanStream}},
+		&BuiltinFn{"failure", failure},
 
-		"each": builtinFunc{each, [2]StreamType{chanStream, hybridStream}},
+		&BuiltinFn{"each", each},
 
-		"if": builtinFunc{ifFn, [2]StreamType{hybridStream, hybridStream}},
+		&BuiltinFn{"if", ifFn},
 
-		"cd": builtinFunc{cd, [2]StreamType{}},
+		&BuiltinFn{"cd", cd},
 
-		"source": builtinFunc{source, [2]StreamType{hybridStream, hybridStream}},
+		&BuiltinFn{"source", source},
 
-		"+": builtinFunc{plus, [2]StreamType{0, chanStream}},
-		"-": builtinFunc{minus, [2]StreamType{0, chanStream}},
-		"*": builtinFunc{times, [2]StreamType{0, chanStream}},
-		"/": builtinFunc{divide, [2]StreamType{0, chanStream}},
+		&BuiltinFn{"+", plus},
+		&BuiltinFn{"-", minus},
+		&BuiltinFn{"*", times},
+		&BuiltinFn{"/", divide},
 
-		"=": builtinFunc{eq, [2]StreamType{0, chanStream}},
+		&BuiltinFn{"=", eq},
+	}
+
+	builtinFnsMap = make(map[string]*BuiltinFn)
+	for _, b := range builtinFns {
+		builtinFnsMap[b.Name] = b
 	}
 }
 

@@ -228,6 +228,27 @@ func (c *Closure) Bool() bool {
 	return true
 }
 
+type BuiltinFn struct {
+	Name string
+	Impl func(*Evaluator, []Value) Exitus
+}
+
+func (b *BuiltinFn) Type() Type {
+	return CallableType{}
+}
+
+func (b *BuiltinFn) Repr() string {
+	return "$builtin:fn-" + b.Name
+}
+
+func (b *BuiltinFn) String() string {
+	return b.Repr()
+}
+
+func (b *BuiltinFn) Bool() bool {
+	return true
+}
+
 func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 	var (
 		sub String
