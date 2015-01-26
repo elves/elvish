@@ -17,11 +17,14 @@ import (
 type Value interface {
 	Type() Type
 	Repr() string
-	String() string
 }
 
 type Booler interface {
 	Bool() bool
+}
+
+type Stringer interface {
+	String() string
 }
 
 // String is a string.
@@ -179,10 +182,6 @@ func (t *Table) Repr() string {
 	return buf.String()
 }
 
-func (t *Table) String() string {
-	return t.Repr()
-}
-
 func (t *Table) append(vs ...Value) {
 	t.List = append(t.List, vs...)
 }
@@ -214,10 +213,6 @@ func (c *Closure) Repr() string {
 	return fmt.Sprintf("<Closure%v>", *c)
 }
 
-func (c *Closure) String() string {
-	return c.Repr()
-}
-
 type BuiltinFn struct {
 	Name string
 	Impl func(*Evaluator, []Value) Exitus
@@ -231,10 +226,6 @@ func (b *BuiltinFn) Repr() string {
 	return "$builtin:fn-" + b.Name
 }
 
-func (b *BuiltinFn) String() string {
-	return b.Repr()
-}
-
 type External struct {
 	Name string
 }
@@ -245,10 +236,6 @@ func (e External) Type() Type {
 
 func (e External) Repr() string {
 	return "<external " + e.Name + " >"
-}
-
-func (e External) String() string {
-	return e.Repr()
 }
 
 func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
@@ -297,10 +284,10 @@ func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
 		var e error
 		if len(idx) == 1 {
 			var r rune
-			r, e = util.NthRune(left.String(), idx[0])
+			r, e = util.NthRune(toString(left), idx[0])
 			s = string(r)
 		} else {
-			s, e = util.SubstringByRune(left.String(), idx[0], idx[1])
+			s, e = util.SubstringByRune(toString(left), idx[0], idx[1])
 		}
 		if e != nil {
 			ev.errorf(rp, "%v", e)
@@ -349,6 +336,15 @@ func valueEq(a, b Value) bool {
 	// XXX(xiaq): This is cheating. May no longer be true after values get more
 	// complex.
 	return reflect.DeepEqual(a, b)
+}
+
+// toString converts a Value to String. When the Value type implements
+// String(), it is used. Otherwise Repr() is used.
+func toString(v Value) string {
+	if s, ok := v.(Stringer); ok {
+		return s.String()
+	}
+	return v.Repr()
 }
 
 // toBool converts a Value to bool. When the Value type implements Bool(), it

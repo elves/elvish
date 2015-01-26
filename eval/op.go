@@ -142,7 +142,7 @@ func combineSpaced(ops []valuesOp) valuesOp {
 }
 
 func compound(ev *Evaluator, lhs, rhs Value) Value {
-	return NewString(lhs.String() + rhs.String())
+	return NewString(toString(lhs) + toString(rhs))
 }
 
 func combineCompound(ops []valuesOp) valuesOp {
@@ -250,7 +250,7 @@ func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos
 				ev.errorf(p, "Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
 			}
 			for j, k := range ks {
-				t.Dict[k.String()] = vs[j]
+				t.Dict[toString(k)] = vs[j]
 			}
 		}
 		return []Value{t}

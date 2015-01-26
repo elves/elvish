@@ -90,14 +90,14 @@ func failure(ev *Evaluator, args []Value) Exitus {
 		return argsError
 	}
 	out := ev.ports[1].ch
-	out <- newFailure(args[0].String())
+	out <- newFailure(toString(args[0]))
 	return success
 }
 
 func print(ev *Evaluator, args []Value) Exitus {
 	out := ev.ports[1].f
 	for _, a := range args {
-		fmt.Fprint(out, a.String())
+		fmt.Fprint(out, toString(a))
 	}
 	return success
 }
@@ -114,8 +114,8 @@ func printchan(ev *Evaluator, args []Value) Exitus {
 	in := ev.ports[0].ch
 	out := ev.ports[1].f
 
-	for s := range in {
-		fmt.Fprintln(out, s.String())
+	for v := range in {
+		fmt.Fprintln(out, toString(v))
 	}
 	return success
 }
@@ -237,7 +237,7 @@ func cd(ev *Evaluator, args []Value) Exitus {
 			dir = user.HomeDir
 		}
 	} else if len(args) == 1 {
-		dir = args[0].String()
+		dir = toString(args[0])
 	} else {
 		return argsError
 	}

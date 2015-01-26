@@ -12,7 +12,7 @@ import (
 func TestNewEvaluator(t *testing.T) {
 	ev := NewEvaluator()
 	pid := strconv.Itoa(syscall.Getpid())
-	if ev.builtin["pid"].Get().String() != pid {
+	if toString(ev.builtin["pid"].Get()) != pid {
 		t.Errorf(`ev.builtin["pid"] = %v, want %v`, ev.builtin["pid"], pid)
 	}
 }

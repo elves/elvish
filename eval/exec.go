@@ -124,7 +124,7 @@ func (ev *Evaluator) resolveNonSpecial(cmd Value) Callable {
 		return closure
 	}
 
-	cmdStr := cmd.String()
+	cmdStr := toString(cmd)
 
 	// Defined function
 	ns, name := splitQualifiedName(cmdStr)
@@ -266,7 +266,7 @@ func (e External) Exec(ev *Evaluator, argVals []Value) <-chan *StateUpdate {
 	for i, a := range argVals {
 		// NOTE Maybe we should enfore string arguments instead of coercing all
 		// args into string
-		args[i+1] = a.String()
+		args[i+1] = toString(a)
 	}
 
 	sys := syscall.SysProcAttr{}

@@ -43,8 +43,7 @@ func newEnvVariable(name string) EnvVariable {
 }
 
 func (ev EnvVariable) Set(val Value) {
-
-	os.Setenv(ev.name, val.String())
+	os.Setenv(ev.name, toString(val))
 }
 
 func (ev EnvVariable) Get() Value {
