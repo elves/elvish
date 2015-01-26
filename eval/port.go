@@ -12,18 +12,6 @@ type port struct {
 	closeCh bool
 }
 
-// StreamType represents what form of data stream a command expects on each
-// port.
-type StreamType byte
-
-// Possible values of StreamType.
-const (
-	unusedStream StreamType = 0
-	fdStream                = 1 << iota // Corresponds to port.f.
-	chanStream                          // Corresponds to port.ch.
-	hybridStream = fdStream | chanStream
-)
-
 // closePorts closes the suitable components of all ports in ev.ports that were
 // marked marked for closing.
 func (ev *Evaluator) closePorts() {

@@ -13,8 +13,7 @@ type exitusOp func(*Evaluator) exitus
 type builtinSpecialCompile func(*Compiler, *parse.FormNode) exitusOp
 
 type builtinSpecial struct {
-	compile     builtinSpecialCompile
-	streamTypes [2]StreamType
+	compile builtinSpecialCompile
 }
 
 var builtinSpecials map[string]builtinSpecial
@@ -22,14 +21,13 @@ var builtinSpecials map[string]builtinSpecial
 func init() {
 	// Needed to avoid initialization loop
 	builtinSpecials = map[string]builtinSpecial{
-		"var": builtinSpecial{compileVar, [2]StreamType{}},
-		"set": builtinSpecial{compileSet, [2]StreamType{}},
-		"del": builtinSpecial{compileDel, [2]StreamType{}},
+		"var": builtinSpecial{compileVar},
+		"set": builtinSpecial{compileSet},
+		"del": builtinSpecial{compileDel},
 
-		"fn": builtinSpecial{compileFn, [2]StreamType{}},
+		"fn": builtinSpecial{compileFn},
 
-		"static-typeof": builtinSpecial{
-			compileStaticTypeof, [2]StreamType{0, fdStream}},
+		"static-typeof": builtinSpecial{compileStaticTypeof},
 	}
 }
 
