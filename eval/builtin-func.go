@@ -37,6 +37,8 @@ func init() {
 		&BuiltinFn{"if", ifFn},
 
 		&BuiltinFn{"cd", cd},
+		&BuiltinFn{"visited-dirs", visistedDirs},
+		&BuiltinFn{"jump-dir", jumpDir},
 
 		&BuiltinFn{"source", source},
 
@@ -230,6 +232,59 @@ func cd(ev *Evaluator, args []Value) Exitus {
 	if err != nil {
 		return newFailure(err.Error())
 	}
+	if ev.store != nil {
+		pwd, err := os.Getwd()
+		// XXX(xiaq): ignores error
+		if err == nil {
+			ev.store.AddVisitedDir(pwd)
+		}
+	}
+	return success
+}
+
+var storeNotConnected = newFailure("store not connected")
+
+func visistedDirs(ev *Evaluator, args []Value) Exitus {
+	if ev.store == nil {
+		return storeNotConnected
+	}
+	dirs, err := ev.store.ListVisitedDirs()
+	if err != nil {
+		return newFailure("store error: " + err.Error())
+	}
+	out := ev.ports[1].ch
+	for _, dir := range dirs {
+		table := NewTable()
+		table.Dict["path"] = String(dir.Path)
+		table.Dict["score"] = String(fmt.Sprint(dir.Score))
+		out <- table
+	}
+	return success
+}
+
+var noMatchingDir = newFailure("no matching directory")
+
+func jumpDir(ev *Evaluator, args []Value) Exitus {
+	if len(args) != 1 {
+		return argsError
+	}
+	if ev.store == nil {
+		return storeNotConnected
+	}
+	dirs, err := ev.store.FindVisitedDirs(toString(args[0]))
+	if err != nil {
+		return newFailure("store error: " + err.Error())
+	}
+	if len(dirs) == 0 {
+		return noMatchingDir
+	}
+	dir := dirs[0].Path
+	err = os.Chdir(dir)
+	// TODO(xiaq): Remove directories that no longer exist
+	if err != nil {
+		return newFailure(err.Error())
+	}
+	ev.store.AddVisitedDir(dir)
 	return success
 }
 
