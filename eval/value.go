@@ -18,6 +18,9 @@ type Value interface {
 	Type() Type
 	Repr() string
 	String() string
+}
+
+type Booler interface {
 	Bool() bool
 }
 
@@ -81,10 +84,6 @@ func (s String) Repr() string {
 
 func (s String) String() string {
 	return string(s)
-}
-
-func (s String) Bool() bool {
-	return true
 }
 
 type Bool bool
@@ -184,10 +183,6 @@ func (t *Table) String() string {
 	return t.Repr()
 }
 
-func (t *Table) Bool() bool {
-	return t.Bool()
-}
-
 func (t *Table) append(vs ...Value) {
 	t.List = append(t.List, vs...)
 }
@@ -223,10 +218,6 @@ func (c *Closure) String() string {
 	return c.Repr()
 }
 
-func (c *Closure) Bool() bool {
-	return true
-}
-
 type BuiltinFn struct {
 	Name string
 	Impl func(*Evaluator, []Value) Exitus
@@ -244,10 +235,6 @@ func (b *BuiltinFn) String() string {
 	return b.Repr()
 }
 
-func (b *BuiltinFn) Bool() bool {
-	return true
-}
-
 type External struct {
 	Name string
 }
@@ -262,10 +249,6 @@ func (e External) Repr() string {
 
 func (e External) String() string {
 	return e.Repr()
-}
-
-func (e External) Bool() bool {
-	return true
 }
 
 func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
@@ -366,4 +349,13 @@ func valueEq(a, b Value) bool {
 	// XXX(xiaq): This is cheating. May no longer be true after values get more
 	// complex.
 	return reflect.DeepEqual(a, b)
+}
+
+// toBool converts a Value to bool. When the Value type implements Bool(), it
+// is used. Otherwise it is considered true.
+func toBool(v Value) bool {
+	if b, ok := v.(Booler); ok {
+		return b.Bool()
+	}
+	return true
 }

@@ -218,7 +218,7 @@ func ifFn(ev *Evaluator, args []Value) Exitus {
 		return argsError
 	} else {
 		for _, a := range args[:len(args)-1] {
-			if !a.Bool() {
+			if !toBool(a) {
 				return success
 			}
 		}
