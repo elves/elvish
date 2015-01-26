@@ -108,6 +108,7 @@ func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *StateUpdate
 	return ev.resolveNonSpecial(cmd).Exec(ev, args)
 }
 
+// Exec executes a builtin function.
 func (b *BuiltinFn) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
 	update := make(chan *StateUpdate)
 	go func() {
@@ -120,6 +121,7 @@ func (b *BuiltinFn) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
 	return update
 }
 
+// Exec executes a closure.
 func (c *Closure) Exec(ev *Evaluator, args []Value) <-chan *StateUpdate {
 	update := make(chan *StateUpdate, 1)
 
@@ -212,6 +214,7 @@ func waitStateUpdate(pid int, update chan<- *StateUpdate) {
 	close(update)
 }
 
+// Exec executes an external command.
 func (e External) Exec(ev *Evaluator, argVals []Value) <-chan *StateUpdate {
 	files := make([]uintptr, len(ev.ports))
 	for i, port := range ev.ports {

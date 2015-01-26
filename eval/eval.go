@@ -95,6 +95,7 @@ func NewEvaluator(st *store.Store) *Evaluator {
 	return ev
 }
 
+// SetChanOut sets the channel output.
 func (ev *Evaluator) SetChanOut(ch chan Value) {
 	ev.ports[1].ch = ch
 }
@@ -204,6 +205,7 @@ func (ev *Evaluator) applyPortOps(ports []portOp) {
 	}
 }
 
+// Source evaluates the content of a file.
 func (ev *Evaluator) Source(fname string) error {
 	file, err := os.Open(fname)
 	if err != nil {
@@ -221,15 +223,13 @@ func (ev *Evaluator) Source(fname string) error {
 	n, err := parse.Parse(fname, src)
 	if err != nil {
 		return err
-		/*
-			fmt.Print(pe.(*util.ContextualError).Pprint())
-			os.Exit(1)
-		*/
 	}
 
 	return ev.Eval(fname, src, n)
 }
 
+// ResolveVar resolves a variable. When the variable cannot be found, nil is
+// returned.
 func (ev *Evaluator) ResolveVar(ns, name string) Variable {
 	may := func(n string) bool {
 		return ns == "" || ns == n

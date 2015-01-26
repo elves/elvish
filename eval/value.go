@@ -98,17 +98,15 @@ func (b Bool) Type() Type {
 func (b Bool) Repr() string {
 	if b {
 		return "$true"
-	} else {
-		return "$false"
 	}
+	return "$false"
 }
 
 func (b Bool) String() string {
 	if b {
 		return "true"
-	} else {
-		return "false"
 	}
+	return "false"
 }
 
 func (b Bool) Bool() bool {
@@ -133,17 +131,15 @@ func (e Exitus) Type() Type {
 func (e Exitus) Repr() string {
 	if e.Success {
 		return "$success"
-	} else {
-		return "(failure " + quote(e.Failure) + ")"
 	}
+	return "(failure " + quote(e.Failure) + ")"
 }
 
 func (e Exitus) String() string {
 	if e.Success {
 		return "success"
-	} else {
-		return "failure: " + e.Failure
 	}
+	return "failure: " + e.Failure
 }
 
 func (e Exitus) Bool() bool {

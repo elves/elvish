@@ -213,11 +213,10 @@ func (cp *Compiler) compileForm(fn *parse.FormNode) stateUpdatesOp {
 	if bi != nil {
 		specialOp := bi.compile(cp, fn)
 		return combineSpecialForm(specialOp, ports, fn.Pos)
-	} else {
-		cmdOp := cp.compileCompound(fn.Command)
-		argsOp := cp.compileSpaced(fn.Args)
-		return combineNonSpecialForm(cmdOp, argsOp, ports, fn.Pos)
 	}
+	cmdOp := cp.compileCompound(fn.Command)
+	argsOp := cp.compileSpaced(fn.Args)
+	return combineNonSpecialForm(cmdOp, argsOp, ports, fn.Pos)
 }
 
 // compileRedirs compiles a slice of Redir's into a slice of portOp's. The

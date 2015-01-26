@@ -2,11 +2,14 @@ package eval
 
 import "bytes"
 
+// Type represents the static information of a Value.
 type Type interface {
 	Default() Value
 	String() string
 }
 
+// AnyType is a special type that may be assigned or assigned to any another
+// type.
 type AnyType struct {
 }
 
@@ -65,7 +68,7 @@ func (tt TableType) String() string {
 type CallableType struct {
 }
 
-func (st CallableType) Default() Value {
+func (ct CallableType) Default() Value {
 	return NewClosure([]string{}, nil, map[string]Variable{})
 }
 
@@ -133,9 +136,8 @@ func (tr typeRun) mayCountTo(n int) bool {
 	ntypes, more := tr.count()
 	if more {
 		return n >= ntypes
-	} else {
-		return n == ntypes
 	}
+	return n == ntypes
 }
 
 // newFixedTypeRun returns a typeRun where all typeStar's are simple

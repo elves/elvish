@@ -205,8 +205,8 @@ func compileSet(cp *Compiler, fn *parse.FormNode) exitusOp {
 }
 
 var (
-	arityMismatch Exitus = newFailure("arity mismatch")
-	typeMismatch  Exitus = newFailure("type mismatch")
+	arityMismatch = newFailure("arity mismatch")
+	typeMismatch  = newFailure("type mismatch")
 )
 
 func doSet(ev *Evaluator, names []string, values []Value) Exitus {

@@ -167,9 +167,8 @@ func parseJSON(ev *Evaluator, args []Value) Exitus {
 		if err != nil {
 			if err == io.EOF {
 				return success
-			} else {
-				return newFailure(err.Error())
 			}
+			return newFailure(err.Error())
 		}
 		out <- fromJSONInterface(v)
 	}
