@@ -62,24 +62,24 @@ func (tt TableType) String() string {
 	return "table"
 }
 
-type ClosureType struct {
+type CallableType struct {
 }
 
-func (st ClosureType) Default() Value {
+func (st CallableType) Default() Value {
 	return NewClosure([]string{}, nil, map[string]Variable{})
 }
 
-func (ct ClosureType) String() string {
-	return "closure"
+func (ct CallableType) String() string {
+	return "callable"
 }
 
 var typenames = map[string]Type{
-	"any":     AnyType{},
-	"string":  StringType{},
-	"exitus":  ExitusType{},
-	"bool":    BoolType{},
-	"table":   TableType{},
-	"closure": ClosureType{},
+	"any":      AnyType{},
+	"string":   StringType{},
+	"exitus":   ExitusType{},
+	"bool":     BoolType{},
+	"table":    TableType{},
+	"callable": CallableType{},
 }
 
 func isAny(t Type) bool {

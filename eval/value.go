@@ -201,7 +201,7 @@ type Closure struct {
 }
 
 func (c *Closure) Type() Type {
-	return ClosureType{}
+	return CallableType{}
 }
 
 func NewClosure(a []string, op Op, e map[string]Variable) *Closure {

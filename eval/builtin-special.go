@@ -315,10 +315,10 @@ func compileFn(cp *Compiler, fn *parse.FormNode) exitusOp {
 
 	op := cp.compileClosure(closureNode)
 
-	cp.pushVar(varName, ClosureType{})
+	cp.pushVar(varName, CallableType{})
 
 	return func(ev *Evaluator) Exitus {
-		ev.local[varName] = newInternalVariable(op.f(ev)[0], ClosureType{})
+		ev.local[varName] = newInternalVariable(op.f(ev)[0], CallableType{})
 		return success
 	}
 }

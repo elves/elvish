@@ -45,7 +45,7 @@ func combineClosure(argNames []string, op Op, captured map[string]Type) valuesOp
 		}
 		return []Value{NewClosure(argNames, op, evCaptured)}
 	}
-	return valuesOp{newFixedTypeRun(ClosureType{}), f}
+	return valuesOp{newFixedTypeRun(CallableType{}), f}
 }
 
 var noExitus = newFailure("no exitus")
