@@ -12,7 +12,7 @@ import (
 const (
 	// FdNil is a special impossible fd value. Used for "close fd" in
 	// syscall.ProcAttr.Files.
-	FdNil uintptr = ^uintptr(0)
+	fdNil uintptr = ^uintptr(0)
 )
 
 // StateUpdate represents a change of state of a command.
@@ -219,7 +219,7 @@ func (e externalCmd) Exec(ev *Evaluator, argVals []Value) <-chan *stateUpdate {
 	files := make([]uintptr, len(ev.ports))
 	for i, port := range ev.ports {
 		if port == nil || port.f == nil {
-			files[i] = FdNil
+			files[i] = fdNil
 		} else {
 			files[i] = port.f.Fd()
 		}
