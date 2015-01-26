@@ -37,7 +37,6 @@ func combineChunk(ops []valuesOp) Op {
 }
 
 func combineClosure(argNames []string, op Op, captured map[string]Type) valuesOp {
-	// BUG(xiaq): Closure arguments is (again) not supported
 	f := func(ev *Evaluator) []Value {
 		evCaptured := make(map[string]Variable, len(captured))
 		for name := range captured {
