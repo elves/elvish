@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"os"
 	"os/user"
 	"strconv"
@@ -22,6 +23,8 @@ func init() {
 
 		&builtinFn{"printchan", printchan},
 		&builtinFn{"feedchan", feedchan},
+
+		&builtinFn{"rat", ratFn},
 
 		&builtinFn{"put", put},
 		&builtinFn{"unpack", unpack},
@@ -129,6 +132,21 @@ func feedchan(ev *Evaluator, args []Value) exitus {
 		out <- str(line[:len(line)-1])
 		// i++
 	}
+}
+
+func ratFn(ev *Evaluator, args []Value) exitus {
+	if len(args) != 1 || args[0].Type().String() != "string" {
+		return argsError
+	}
+	out := ev.ports[1].ch
+	r := big.Rat{}
+	a := args[0].(str)
+	_, err := fmt.Sscanln(string(a), &r)
+	if err != nil {
+		return newFailure(err.Error())
+	}
+	out <- (*rat)(&r)
+	return success
 }
 
 // unpack takes any number of tables and output their list elements.

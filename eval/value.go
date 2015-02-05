@@ -3,6 +3,7 @@ package eval
 import (
 	"bytes"
 	"fmt"
+	"math/big"
 	"reflect"
 	"strconv"
 	"strings"
@@ -228,6 +229,24 @@ func (e externalCmd) Type() Type {
 
 func (e externalCmd) Repr() string {
 	return "<external " + e.Name + " >"
+}
+
+type rat big.Rat
+
+func (r *rat) Type() Type {
+	return ratType{}
+}
+
+func (r *rat) Repr() string {
+	return "(rat " + r.String() + ")"
+}
+
+func (r *rat) String() string {
+	br := (*big.Rat)(r)
+	if br.IsInt() {
+		return br.Num().String()
+	}
+	return br.String()
 }
 
 func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {

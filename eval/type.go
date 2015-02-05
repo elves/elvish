@@ -76,6 +76,16 @@ func (ct callableType) String() string {
 	return "callable"
 }
 
+type ratType struct{}
+
+func (rt ratType) Default() Value {
+	return &rat{}
+}
+
+func (rt ratType) String() string {
+	return "rat"
+}
+
 var typenames = map[string]Type{
 	"any":      anyType{},
 	"string":   stringType{},
@@ -83,6 +93,7 @@ var typenames = map[string]Type{
 	"bool":     boolType{},
 	"table":    tableType{},
 	"callable": callableType{},
+	"rat":      ratType{},
 }
 
 func isAny(t Type) bool {
