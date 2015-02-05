@@ -1,6 +1,9 @@
 package eval
 
-import "bytes"
+import (
+	"bytes"
+	"math/big"
+)
 
 // Type represents the static information of a Value.
 type Type interface {
@@ -79,7 +82,7 @@ func (ct callableType) String() string {
 type ratType struct{}
 
 func (rt ratType) Default() Value {
-	return &rat{}
+	return rat{&big.Rat{}}
 }
 
 func (rt ratType) String() string {

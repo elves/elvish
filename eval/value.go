@@ -232,22 +232,23 @@ func (e externalCmd) Repr() string {
 	return "<external " + e.Name + " >"
 }
 
-type rat big.Rat
+type rat struct {
+	b *big.Rat
+}
 
-func (r *rat) Type() Type {
+func (r rat) Type() Type {
 	return ratType{}
 }
 
-func (r *rat) Repr() string {
+func (r rat) Repr() string {
 	return "(rat " + r.String() + ")"
 }
 
-func (r *rat) String() string {
-	br := (*big.Rat)(r)
-	if br.IsInt() {
-		return br.Num().String()
+func (r rat) String() string {
+	if r.b.IsInt() {
+		return r.b.Num().String()
 	}
-	return br.String()
+	return r.b.String()
 }
 
 func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
@@ -372,18 +373,18 @@ var errOnlyStrOrRat = errors.New("Only str or rat may be converted to rat")
 
 // toRat converts a Value to rat. A str can be converted to a rat if it can be
 // parsed. A rat is returned as-is. Other types of values cannot be converted.
-func toRat(v Value) (*rat, error) {
+func toRat(v Value) (rat, error) {
 	switch v := v.(type) {
-	case *rat:
+	case rat:
 		return v, nil
 	case str:
 		r := big.Rat{}
 		_, err := fmt.Sscanln(string(v), &r)
 		if err != nil {
-			return nil, err
+			return rat{}, fmt.Errorf("%s cannot be parsed as rat", v.Repr())
 		}
-		return (*rat)(&r), nil
+		return rat{&r}, nil
 	default:
-		return nil, errOnlyStrOrRat
+		return rat{}, errOnlyStrOrRat
 	}
 }
