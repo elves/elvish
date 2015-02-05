@@ -236,6 +236,10 @@ type rat struct {
 	b *big.Rat
 }
 
+func newRat() rat {
+	return rat{&big.Rat{}}
+}
+
 func (r rat) Type() Type {
 	return ratType{}
 }
