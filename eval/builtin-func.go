@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math/big"
 	"os"
 	"os/user"
 	"strconv"
@@ -135,17 +134,15 @@ func feedchan(ev *Evaluator, args []Value) exitus {
 }
 
 func ratFn(ev *Evaluator, args []Value) exitus {
-	if len(args) != 1 || args[0].Type().String() != "string" {
+	if len(args) != 1 {
 		return argsError
 	}
 	out := ev.ports[1].ch
-	r := big.Rat{}
-	a := args[0].(str)
-	_, err := fmt.Sscanln(string(a), &r)
+	r, err := toRat(args[0])
 	if err != nil {
 		return newFailure(err.Error())
 	}
-	out <- (*rat)(&r)
+	out <- r
 	return success
 }
 

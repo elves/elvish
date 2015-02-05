@@ -2,6 +2,7 @@ package eval
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -365,4 +366,24 @@ func toBool(v Value) bool {
 		return b.Bool()
 	}
 	return true
+}
+
+var errOnlyStrOrRat = errors.New("Only str or rat may be converted to rat")
+
+// toRat converts a Value to rat. A str can be converted to a rat if it can be
+// parsed. A rat is returned as-is. Other types of values cannot be converted.
+func toRat(v Value) (*rat, error) {
+	switch v := v.(type) {
+	case *rat:
+		return v, nil
+	case str:
+		r := big.Rat{}
+		_, err := fmt.Sscanln(string(v), &r)
+		if err != nil {
+			return nil, err
+		}
+		return (*rat)(&r), nil
+	default:
+		return nil, errOnlyStrOrRat
+	}
 }
