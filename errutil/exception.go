@@ -1,6 +1,4 @@
-package util
-
-// This file provides an exception-like mechanism.
+package errutil
 
 // An exception wraps an error.
 type exception struct {

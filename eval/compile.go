@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/util"
 )
 
 // Compiler compiles an Elvish AST into an Op.
@@ -44,7 +44,7 @@ func (cp *Compiler) stopCompile() {
 func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode) (op Op, err error) {
 	cp.startCompile(name, text)
 	defer cp.stopCompile()
-	defer util.Catch(&err)
+	defer errutil.Catch(&err)
 	return cp.compileChunk(n), nil
 }
 
@@ -66,7 +66,7 @@ func (cp *Compiler) popVar(name string) {
 }
 
 func (cp *Compiler) errorf(p parse.Pos, format string, args ...interface{}) {
-	util.Throw(util.NewContextualError(cp.name, "compiling error", cp.text, int(p), format, args...))
+	errutil.Throw(errutil.NewContextualError(cp.name, "compiling error", cp.text, int(p), format, args...))
 }
 
 // compileChunk compiles a ChunkNode into an Op.

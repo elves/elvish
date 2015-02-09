@@ -22,7 +22,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/util"
+	"github.com/elves/elvish/errutil"
 )
 
 // Parser maintains the states during parsing.
@@ -113,7 +113,7 @@ func NewParser(name string) *Parser {
 // errorf formats the error and terminates processing.
 func (p *Parser) errorf(pos int, format string, args ...interface{}) {
 	p.Root = nil
-	util.Throw(util.NewContextualError(p.Name, "parsing error", p.text, pos, format, args...))
+	errutil.Throw(errutil.NewContextualError(p.Name, "parsing error", p.text, pos, format, args...))
 }
 
 // expect consumes the next token and guarantees it has the required type.
@@ -164,7 +164,7 @@ func (p *Parser) foundCtx(typ ContextType) bool {
 // Parse parses the script to construct a representation of the script for
 // execution.
 func (p *Parser) Parse(text string, completing bool) (err error) {
-	defer util.Catch(&err)
+	defer errutil.Catch(&err)
 	defer p.stopParse()
 
 	p.completing = completing

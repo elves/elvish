@@ -1,9 +1,12 @@
-package util
+// errutil provides an exception-like mechanism and the ContextualError type.
+package errutil
 
 import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	"github.com/elves/elvish/util"
 )
 
 type ContextualError struct {
@@ -16,7 +19,7 @@ type ContextualError struct {
 }
 
 func NewContextualError(srcname, title, text string, pos int, format string, args ...interface{}) *ContextualError {
-	lineno, colno, line := FindContext(text, pos)
+	lineno, colno, line := util.FindContext(text, pos)
 	return &ContextualError{srcname, title, line, lineno, colno, fmt.Sprintf(format, args...)}
 }
 

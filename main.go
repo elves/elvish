@@ -9,6 +9,7 @@ import (
 	"os/user"
 
 	"github.com/elves/elvish/edit"
+	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
@@ -41,7 +42,7 @@ func newEvaluator() *eval.Evaluator {
 
 func printError(err error) {
 	if err != nil {
-		if ce, ok := err.(*util.ContextualError); ok {
+		if ce, ok := err.(*errutil.ContextualError); ok {
 			fmt.Fprint(os.Stderr, ce.Pprint())
 		} else {
 			fmt.Fprintln(os.Stderr, err.Error())

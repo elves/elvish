@@ -6,7 +6,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/elves/elvish/util"
+	"github.com/elves/elvish/errutil"
 )
 
 const (
@@ -155,7 +155,7 @@ func (c *closure) Exec(ev *Evaluator, args []Value) <-chan *stateUpdate {
 		// TODO(xiaq): Support calling closure originated in another source.
 		err := ev.eval(ev.name, ev.text, c.Op)
 		if err != nil {
-			fmt.Print(err.(*util.ContextualError).Pprint())
+			fmt.Print(err.(*errutil.ContextualError).Pprint())
 		}
 		// Ports are closed after executaion of closure is complete.
 		ev.closePorts()

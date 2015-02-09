@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/util"
 )
 
@@ -101,7 +102,7 @@ func (rd *Reader) Quit() {
 }
 
 func (rd *Reader) badEscSeq(msg string) {
-	util.Throw(newBadEscSeq(rd.currentSeq, msg))
+	errutil.Throw(newBadEscSeq(rd.currentSeq, msg))
 }
 
 func (rd *Reader) readRune(d time.Duration) rune {
@@ -155,7 +156,7 @@ var g3Seq = map[rune]rune{
 }
 
 func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
-	defer util.Catch(&err)
+	defer errutil.Catch(&err)
 
 	rd.currentSeq = ""
 
