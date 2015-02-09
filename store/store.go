@@ -16,7 +16,7 @@ var createTable = map[string]string{}
 
 // DefaultDB returns the default database for storage.
 func DefaultDB() (*sql.DB, error) {
-	ddir, err := ensureDataDir()
+	ddir, err := EnsureDataDir()
 	if err != nil {
 		return nil, err
 	}
