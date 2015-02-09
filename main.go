@@ -53,6 +53,14 @@ func printError(err error) {
 // TODO(xiaq): Currently only the editor deals with signals.
 func interact() {
 	ev := newEvaluator()
+	datadir, err := store.EnsureDataDir()
+	printError(err)
+	if err == nil {
+		err := ev.Source(datadir + "/rc.elv")
+		if err != nil && !os.IsNotExist(err) {
+			printError(err)
+		}
+	}
 
 	cmdNum := 0
 
