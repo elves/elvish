@@ -161,7 +161,7 @@ func (ev *Evaluator) eval(name, text string, op Op) (err error) {
 	}
 	ev.startEval(name, text)
 	defer ev.stopEval()
-	defer util.Recover(&err)
+	defer util.Catch(&err)
 	op(ev)
 	return nil
 }
@@ -177,7 +177,7 @@ func (ev *Evaluator) stopEval() {
 // errorf stops the ev.eval immediately by panicking with a diagnostic message.
 // The panic is supposed to be caught by ev.eval.
 func (ev *Evaluator) errorf(p parse.Pos, format string, args ...interface{}) {
-	util.Panic(util.NewContextualError(
+	util.Throw(util.NewContextualError(
 		fmt.Sprintf("%s (%s)", ev.name, ev.context), "evalling error",
 		ev.text, int(p), format, args...))
 }

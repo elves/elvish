@@ -101,7 +101,7 @@ func (rd *Reader) Quit() {
 }
 
 func (rd *Reader) badEscSeq(msg string) {
-	util.Panic(newBadEscSeq(rd.currentSeq, msg))
+	util.Throw(newBadEscSeq(rd.currentSeq, msg))
 }
 
 func (rd *Reader) readRune(d time.Duration) rune {
@@ -155,7 +155,7 @@ var g3Seq = map[rune]rune{
 }
 
 func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
-	defer util.Recover(&err)
+	defer util.Catch(&err)
 
 	rd.currentSeq = ""
 

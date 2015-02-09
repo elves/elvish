@@ -44,7 +44,7 @@ func (cp *Compiler) stopCompile() {
 func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode) (op Op, err error) {
 	cp.startCompile(name, text)
 	defer cp.stopCompile()
-	defer util.Recover(&err)
+	defer util.Catch(&err)
 	return cp.compileChunk(n), nil
 }
 
@@ -66,7 +66,7 @@ func (cp *Compiler) popVar(name string) {
 }
 
 func (cp *Compiler) errorf(p parse.Pos, format string, args ...interface{}) {
-	util.Panic(util.NewContextualError(cp.name, "compiling error", cp.text, int(p), format, args...))
+	util.Throw(util.NewContextualError(cp.name, "compiling error", cp.text, int(p), format, args...))
 }
 
 // compileChunk compiles a ChunkNode into an Op.
