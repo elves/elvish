@@ -145,6 +145,11 @@ func compound(ev *Evaluator, lhs, rhs Value) Value {
 }
 
 func combineCompound(ops []valuesOp) valuesOp {
+	// Non-proper compound: just return the sole subscript
+	if len(ops) == 1 {
+		return ops[0]
+	}
+
 	n := 1
 	more := false
 	for _, op := range ops {
@@ -154,8 +159,8 @@ func combineCompound(ops []valuesOp) valuesOp {
 	}
 
 	f := func(ev *Evaluator) []Value {
-		vs := ops[0].f(ev)
-		for _, op := range ops[1:] {
+		vs := []Value{str("")}
+		for _, op := range ops {
 			us := op.f(ev)
 			if len(us) == 1 {
 				u := us[0]
