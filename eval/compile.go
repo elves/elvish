@@ -45,7 +45,7 @@ func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode) (op Op, err e
 	cp.startCompile(name, text)
 	defer cp.stopCompile()
 	defer errutil.Catch(&err)
-	return cp.compileChunk(n), nil
+	return cp.chunk(n), nil
 }
 
 func (cp *Compiler) pushScope() {
@@ -69,18 +69,17 @@ func (cp *Compiler) errorf(p parse.Pos, format string, args ...interface{}) {
 	errutil.Throw(errutil.NewContextualError(cp.name, "compiling error", cp.text, int(p), format, args...))
 }
 
-// compileChunk compiles a ChunkNode into an Op.
-func (cp *Compiler) compileChunk(cn *parse.ChunkNode) Op {
+// chunk compiles a ChunkNode into an Op.
+func (cp *Compiler) chunk(cn *parse.ChunkNode) Op {
 	ops := make([]valuesOp, len(cn.Nodes))
 	for i, pn := range cn.Nodes {
-		ops[i] = cp.compilePipeline(pn)
+		ops[i] = cp.pipeline(pn)
 	}
 	return combineChunk(ops)
 }
 
-// compileClosure compiles a ClosureNode into a valuesOp along with its capture
-// and the external stream types it expects.
-func (cp *Compiler) compileClosure(cn *parse.ClosureNode) valuesOp {
+// closure compiles a ClosureNode into a valuesOp.
+func (cp *Compiler) closure(cn *parse.ClosureNode) valuesOp {
 	nargs := 0
 	if cn.ArgNames != nil {
 		nargs = len(cn.ArgNames.Nodes)
@@ -102,7 +101,7 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) valuesOp {
 		cp.pushVar(name, anyType{})
 	}
 
-	op := cp.compileChunk(cn.Chunk)
+	op := cp.chunk(cn.Chunk)
 
 	captured := cp.captured
 	cp.captured = make(map[string]Type)
@@ -118,13 +117,12 @@ func (cp *Compiler) compileClosure(cn *parse.ClosureNode) valuesOp {
 	return combineClosure(argNames, op, captured)
 }
 
-// compilePipeline compiles a PipelineNode into a valuesOp along with the
-// external stream types it expects.
-func (cp *Compiler) compilePipeline(pn *parse.PipelineNode) valuesOp {
+// pipeline compiles a PipelineNode into a valuesOp.
+func (cp *Compiler) pipeline(pn *parse.PipelineNode) valuesOp {
 	ops := make([]stateUpdatesOp, len(pn.Nodes))
 
 	for i, fn := range pn.Nodes {
-		ops[i] = cp.compileForm(fn)
+		ops[i] = cp.form(fn)
 	}
 	return combinePipeline(ops, pn.Pos)
 }
@@ -205,23 +203,23 @@ func resolveBuiltinSpecial(cmd *parse.CompoundNode) *builtinSpecial {
 	return nil
 }
 
-// compileForm compiles a FormNode into a stateUpdatesOp.
-func (cp *Compiler) compileForm(fn *parse.FormNode) stateUpdatesOp {
+// form compiles a FormNode into a stateUpdatesOp.
+func (cp *Compiler) form(fn *parse.FormNode) stateUpdatesOp {
 	bi := resolveBuiltinSpecial(fn.Command)
-	ports := cp.compileRedirs(fn.Redirs)
+	ports := cp.redirs(fn.Redirs)
 
 	if bi != nil {
 		specialOp := bi.compile(cp, fn)
 		return combineSpecialForm(specialOp, ports, fn.Pos)
 	}
-	cmdOp := cp.compileCompound(fn.Command)
-	argsOp := cp.compileSpaced(fn.Args)
+	cmdOp := cp.compound(fn.Command)
+	argsOp := cp.spaced(fn.Args)
 	return combineNonSpecialForm(cmdOp, argsOp, ports, fn.Pos)
 }
 
-// compileRedirs compiles a slice of Redir's into a slice of portOp's. The
-// resulting slice is indexed by the original fd.
-func (cp *Compiler) compileRedirs(rs []parse.Redir) []portOp {
+// redirs compiles a slice of Redir's into a slice of portOp's. The resulting
+// slice is indexed by the original fd.
+func (cp *Compiler) redirs(rs []parse.Redir) []portOp {
 	var nports uintptr
 	for _, rd := range rs {
 		if nports < rd.Fd()+1 {
@@ -231,14 +229,14 @@ func (cp *Compiler) compileRedirs(rs []parse.Redir) []portOp {
 
 	ports := make([]portOp, nports)
 	for _, rd := range rs {
-		ports[rd.Fd()] = cp.compileRedir(rd)
+		ports[rd.Fd()] = cp.redir(rd)
 	}
 
 	return ports
 }
 
-// compileRedir compiles a Redir into a portOp.
-func (cp *Compiler) compileRedir(r parse.Redir) portOp {
+// redir compiles a Redir into a portOp.
+func (cp *Compiler) redir(r parse.Redir) portOp {
 	switch r := r.(type) {
 	case *parse.CloseRedir:
 		return func(ev *Evaluator) *port {
@@ -255,7 +253,7 @@ func (cp *Compiler) compileRedir(r parse.Redir) portOp {
 			return &p
 		}
 	case *parse.FilenameRedir:
-		fnameOp := cp.compileCompound(r.Filename)
+		fnameOp := cp.compound(r.Filename)
 		return func(ev *Evaluator) *port {
 			fname := string(ev.mustSingleString(
 				fnameOp.f(ev), "filename", r.Filename.Pos))
@@ -273,30 +271,30 @@ func (cp *Compiler) compileRedir(r parse.Redir) portOp {
 	}
 }
 
-// compileCompounds compiles a slice of CompoundNode's into a valuesOp. It can
+// compounds compiles a slice of CompoundNode's into a valuesOp. It can
 // be also used to compile a SpacedNode.
-func (cp *Compiler) compileCompounds(tns []*parse.CompoundNode) valuesOp {
+func (cp *Compiler) compounds(tns []*parse.CompoundNode) valuesOp {
 	ops := make([]valuesOp, len(tns))
 	for i, tn := range tns {
-		ops[i] = cp.compileCompound(tn)
+		ops[i] = cp.compound(tn)
 	}
 	return combineSpaced(ops)
 }
 
-// compileSpaced compiles a SpacedNode into a valuesOp.
-func (cp *Compiler) compileSpaced(ln *parse.SpacedNode) valuesOp {
-	return cp.compileCompounds(ln.Nodes)
+// spaced compiles a SpacedNode into a valuesOp.
+func (cp *Compiler) spaced(ln *parse.SpacedNode) valuesOp {
+	return cp.compounds(ln.Nodes)
 }
 
-// compileCompound compiles a CompoundNode into a valuesOp.
-func (cp *Compiler) compileCompound(tn *parse.CompoundNode) valuesOp {
+// compound compiles a CompoundNode into a valuesOp.
+func (cp *Compiler) compound(tn *parse.CompoundNode) valuesOp {
 	var op valuesOp
 	if len(tn.Nodes) == 1 {
-		op = cp.compileSubscript(tn.Nodes[0])
+		op = cp.subscript(tn.Nodes[0])
 	} else {
 		ops := make([]valuesOp, len(tn.Nodes))
 		for i, fn := range tn.Nodes {
-			ops[i] = cp.compileSubscript(fn)
+			ops[i] = cp.subscript(fn)
 		}
 		op = combineCompound(ops)
 	}
@@ -309,18 +307,18 @@ func (cp *Compiler) compileCompound(tn *parse.CompoundNode) valuesOp {
 	return combineChanCapture(pop)
 }
 
-// compileSubscript compiles a SubscriptNode into a valuesOp.
-func (cp *Compiler) compileSubscript(sn *parse.SubscriptNode) valuesOp {
+// subscript compiles a SubscriptNode into a valuesOp.
+func (cp *Compiler) subscript(sn *parse.SubscriptNode) valuesOp {
 	if sn.Right == nil {
-		return cp.compilePrimary(sn.Left)
+		return cp.primary(sn.Left)
 	}
-	left := cp.compilePrimary(sn.Left)
-	right := cp.compileCompound(sn.Right)
+	left := cp.primary(sn.Left)
+	right := cp.compound(sn.Right)
 	return combineSubscript(cp, left, right, sn.Left.Pos, sn.Right.Pos)
 }
 
-// compilePrimary compiles a PrimaryNode into a valuesOp.
-func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) valuesOp {
+// primary compiles a PrimaryNode into a valuesOp.
+func (cp *Compiler) primary(fn *parse.PrimaryNode) valuesOp {
 	switch fn.Typ {
 	case parse.StringPrimary:
 		text := fn.Node.(*parse.StringNode).Text
@@ -330,23 +328,23 @@ func (cp *Compiler) compilePrimary(fn *parse.PrimaryNode) valuesOp {
 		return makeVar(cp, name, fn.Pos)
 	case parse.TablePrimary:
 		table := fn.Node.(*parse.TableNode)
-		list := cp.compileCompounds(table.List)
+		list := cp.compounds(table.List)
 		keys := make([]valuesOp, len(table.Dict))
 		values := make([]valuesOp, len(table.Dict))
 		for i, tp := range table.Dict {
-			keys[i] = cp.compileCompound(tp.Key)
-			values[i] = cp.compileCompound(tp.Value)
+			keys[i] = cp.compound(tp.Key)
+			values[i] = cp.compound(tp.Value)
 		}
 		return combineTable(list, keys, values, fn.Pos)
 	case parse.ClosurePrimary:
-		return cp.compileClosure(fn.Node.(*parse.ClosureNode))
+		return cp.closure(fn.Node.(*parse.ClosureNode))
 	case parse.ListPrimary:
-		return cp.compileSpaced(fn.Node.(*parse.SpacedNode))
+		return cp.spaced(fn.Node.(*parse.SpacedNode))
 	case parse.ChanCapturePrimary:
-		op := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
+		op := cp.pipeline(fn.Node.(*parse.PipelineNode))
 		return combineChanCapture(op)
 	case parse.StatusCapturePrimary:
-		op := cp.compilePipeline(fn.Node.(*parse.PipelineNode))
+		op := cp.pipeline(fn.Node.(*parse.PipelineNode))
 		return op
 	default:
 		panic(fmt.Sprintln("bad PrimaryNode type", fn.Typ))

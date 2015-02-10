@@ -165,7 +165,7 @@ func compileVar(cp *Compiler, fn *parse.FormNode) exitusOp {
 
 	var vop valuesOp
 	if values != nil {
-		vop = cp.compileCompounds(values)
+		vop = cp.compounds(values)
 		checkSetType(cp, names, values, vop, fn.Pos)
 	}
 	return func(ev *Evaluator) exitus {
@@ -205,7 +205,7 @@ func compileSet(cp *Compiler, fn *parse.FormNode) exitusOp {
 	}
 
 	var vop valuesOp
-	vop = cp.compileCompounds(values)
+	vop = cp.compounds(values)
 	checkSetType(cp, names, values, vop, fn.Pos)
 
 	return func(ev *Evaluator) exitus {
@@ -319,7 +319,7 @@ func compileFn(cp *Compiler, fn *parse.FormNode) exitusOp {
 		}
 	}
 
-	op := cp.compileClosure(closureNode)
+	op := cp.closure(closureNode)
 
 	cp.pushVar(varName, callableType{})
 
@@ -364,11 +364,11 @@ func compileIf(cp *Compiler, fn *parse.FormNode) exitusOp {
 				if i == 0 {
 					cp.errorf(cn.Pos, "expect condition")
 				}
-				condition := cp.compileCompounds(conds)
+				condition := cp.compounds(conds)
 				if closure.ArgNames != nil && len(closure.ArgNames.Nodes) > 0 {
 					cp.errorf(closure.ArgNames.Pos, "unexpected arguments")
 				}
-				body := cp.compileClosure(closure)
+				body := cp.closure(closure)
 				branches = append(branches, &ifBranch{condition, body})
 				compounds = compounds[i+1:]
 				return
@@ -404,7 +404,7 @@ func compileIf(cp *Compiler, fn *parse.FormNode) exitusOp {
 				cp.errorf(compounds[1].Pos, "expect body")
 			}
 			branches = append(branches, &ifBranch{
-				literalValue(boolean(true)), cp.compileClosure(body)})
+				literalValue(boolean(true)), cp.closure(body)})
 		} else {
 			cp.errorf(compounds[0].Pos, "trailing garbage")
 		}
@@ -429,7 +429,7 @@ func compileStaticTypeof(cp *Compiler, fn *parse.FormNode) exitusOp {
 	// information
 	var trs []typeRun
 	for _, cn := range fn.Args.Nodes {
-		trs = append(trs, cp.compileCompound(cn).tr)
+		trs = append(trs, cp.compound(cn).tr)
 	}
 	return func(ev *Evaluator) exitus {
 		out := ev.ports[1].ch
