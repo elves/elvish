@@ -210,27 +210,32 @@ func (ev *Evaluator) applyPortOps(ports []portOp) {
 	}
 }
 
-// Source evaluates the content of a file.
-func (ev *Evaluator) Source(fname string) error {
-	file, err := os.Open(fname)
+func (ev *Evaluator) SourceText(name, src string) error {
+	n, err := parse.Parse(name, src)
 	if err != nil {
 		return err
 	}
-	bytes, err := ioutil.ReadAll(file)
+	return ev.Eval(name, src, n)
+}
+
+func readFileUTF8(fname string) (string, error) {
+	bytes, err := ioutil.ReadFile(fname)
 	if err != nil {
-		return err
+		return "", err
 	}
 	if !utf8.Valid(bytes) {
-		return fmt.Errorf("%s: source is not valid UTF-8", fname)
+		return "", fmt.Errorf("%s: source is not valid UTF-8", fname)
 	}
-	src := string(bytes)
+	return string(bytes), nil
+}
 
-	n, err := parse.Parse(fname, src)
+// Source evaluates the content of a file.
+func (ev *Evaluator) Source(fname string) error {
+	src, err := readFileUTF8(fname)
 	if err != nil {
 		return err
 	}
-
-	return ev.Eval(fname, src, n)
+	return ev.SourceText(fname, src)
 }
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is

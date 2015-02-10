@@ -5,6 +5,7 @@ package eval
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/elves/elvish/parse"
 )
@@ -24,6 +25,8 @@ func init() {
 		"var": builtinSpecial{compileVar},
 		"set": builtinSpecial{compileSet},
 		"del": builtinSpecial{compileDel},
+
+		"use": builtinSpecial{compileUse},
 
 		"fn": builtinSpecial{compileFn},
 		"if": builtinSpecial{compileIf},
@@ -272,6 +275,71 @@ func compileDel(cp *Compiler, fn *parse.FormNode) exitusOp {
 			// TODO(xiaq): Signify possible error
 			os.Unsetenv(name)
 		}
+		return success
+	}
+}
+
+func stem(fname string) string {
+	base := path.Base(fname)
+	ext := path.Ext(base)
+	return base[0 : len(base)-len(ext)]
+}
+
+// UseForm = 'use' StringPrimary.modname Primary.fname
+//         = 'use' StringPrimary.fname
+func compileUse(cp *Compiler, fn *parse.FormNode) exitusOp {
+	var fnameNode *parse.CompoundNode
+	var fname, modname string
+
+	switch len(fn.Args.Nodes) {
+	case 0:
+		cp.errorf(fn.Args.Pos, "expect module name or file name")
+	case 1, 2:
+		fnameNode = fn.Args.Nodes[0]
+		_, fname = ensureStringPrimary(cp, fnameNode, "expect string literal")
+		if len(fn.Args.Nodes) == 2 {
+			modnameNode := fn.Args.Nodes[1]
+			_, modname = ensureStringPrimary(
+				cp, modnameNode, "expect string literal")
+			if modname == "" {
+				cp.errorf(modnameNode.Pos, "module name is empty")
+			}
+		} else {
+			modname = stem(fname)
+			if modname == "" {
+				cp.errorf(fnameNode.Pos, "stem of file name is empty")
+			}
+		}
+	default:
+		cp.errorf(fn.Args.Nodes[2].Pos, "superfluous argument")
+	}
+	// TODO(xiaq): File name should be relative to the current source when it
+	// starts with . or .. and relative to ~/.elvish otherwise
+	src, err := readFileUTF8(fname)
+	if err != nil {
+		cp.errorf(fnameNode.Pos, "cannot read module: %s", err.Error())
+	}
+
+	cn, err := parse.Parse(fname, src)
+	if err != nil {
+		// TODO(xiaq): Pretty print
+		cp.errorf(fnameNode.Pos, "cannot parse module: %s", err.Error())
+	}
+
+	newCp := NewCompiler(cp.builtin)
+	op, err := newCp.Compile(fname, src, cn)
+	if err != nil {
+		// TODO(xiaq): Pretty print
+		cp.errorf(fnameNode.Pos, "cannot compile module: %s", err.Error())
+	}
+
+	cp.mod[modname] = newCp.scopes[0]
+
+	return func(ev *Evaluator) exitus {
+		// XXX(xiaq): Should use some part of ev
+		newEv := NewEvaluator(ev.store)
+		op(newEv)
+		ev.mod[modname] = newEv.local
 		return success
 	}
 }
