@@ -103,8 +103,10 @@ func interact() {
 		n, pe := parse.Parse(name, lr.Line)
 		printError(pe)
 
-		ee := ev.Eval(name, lr.Line, n)
-		printError(ee)
+		if pe == nil {
+			ee := ev.Eval(name, lr.Line, n)
+			printError(ee)
+		}
 	}
 }
 
