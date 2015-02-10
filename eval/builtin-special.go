@@ -90,6 +90,16 @@ func ensureVariablePrimary(cp *Compiler, cn *parse.CompoundNode, msg string) (*p
 	return pn, text
 }
 
+// ensureStringPrimary ensures that a CompoundNode contains exactly one
+// PrimaryNode of type VariablePrimary.
+func ensureStringPrimary(cp *Compiler, cn *parse.CompoundNode, msg string) (*parse.PrimaryNode, string) {
+	pn, text := ensureVariableOrStringPrimary(cp, cn, msg)
+	if pn.Typ != parse.StringPrimary {
+		cp.errorf(pn.Pos, msg)
+	}
+	return pn, text
+}
+
 // ensureStartWithVariabl ensures the first compound of the form is a
 // VariablePrimary. This is merely for better error messages; No actual
 // processing is done.
@@ -277,7 +287,7 @@ func compileFn(cp *Compiler, fn *parse.FormNode) exitusOp {
 	if len(fn.Args.Nodes) == 0 {
 		cp.errorf(fn.Pos, "expect function name after fn")
 	}
-	_, fnName := ensureVariableOrStringPrimary(cp, fn.Args.Nodes[0], "expect string literal")
+	_, fnName := ensureStringPrimary(cp, fn.Args.Nodes[0], "expect string literal")
 	varName := "fn-" + fnName
 
 	var closureNode *parse.ClosureNode
