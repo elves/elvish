@@ -100,12 +100,12 @@ func interact() {
 			fmt.Println("My pid is", os.Getpid())
 		}
 
-		n, pe := parse.Parse(name, lr.Line)
-		printError(pe)
+		n, err := parse.Parse(name, lr.Line)
+		printError(err)
 
-		if pe == nil {
-			ee := ev.Eval(name, lr.Line, n)
-			printError(ee)
+		if err == nil {
+			err := ev.Eval(name, lr.Line, n)
+			printError(err)
 		}
 	}
 }
