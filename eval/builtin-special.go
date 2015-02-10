@@ -277,11 +277,8 @@ func compileFn(cp *Compiler, fn *parse.FormNode) exitusOp {
 	if len(fn.Args.Nodes) == 0 {
 		cp.errorf(fn.Pos, "expect function name after fn")
 	}
-	pn, fnName := ensureVariableOrStringPrimary(cp, fn.Args.Nodes[0], "expect string literal")
+	_, fnName := ensureVariableOrStringPrimary(cp, fn.Args.Nodes[0], "expect string literal")
 	varName := "fn-" + fnName
-	if cp.resolveVarOnThisScope(varName) != nil {
-		cp.errorf(pn.Pos, "redefinition of function %s", fnName)
-	}
 
 	var closureNode *parse.ClosureNode
 	var argNames []*parse.CompoundNode
