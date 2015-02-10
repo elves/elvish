@@ -9,11 +9,14 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
+// staticNS is the static type information of a namespace.
+type staticNS map[string]Type
+
 // Compiler compiles an Elvish AST into an Op.
 type Compiler struct {
-	builtin  map[string]Type
-	scopes   []map[string]Type
-	captured map[string]Type
+	builtin  staticNS
+	scopes   []staticNS
+	captured staticNS
 	compilerEphemeral
 }
 
@@ -24,9 +27,9 @@ type compilerEphemeral struct {
 }
 
 // NewCompiler returns a new compiler.
-func NewCompiler(bi map[string]Type) *Compiler {
+func NewCompiler(bi staticNS) *Compiler {
 	return &Compiler{
-		bi, []map[string]Type{map[string]Type{}}, make(map[string]Type),
+		bi, []staticNS{staticNS{}}, staticNS{},
 		compilerEphemeral{},
 	}
 }
@@ -49,7 +52,7 @@ func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode) (op Op, err e
 }
 
 func (cp *Compiler) pushScope() {
-	cp.scopes = append(cp.scopes, make(map[string]Type))
+	cp.scopes = append(cp.scopes, staticNS{})
 }
 
 func (cp *Compiler) popScope() {
@@ -104,7 +107,7 @@ func (cp *Compiler) closure(cn *parse.ClosureNode) valuesOp {
 	op := cp.chunk(cn.Chunk)
 
 	captured := cp.captured
-	cp.captured = make(map[string]Type)
+	cp.captured = staticNS{}
 	cp.popScope()
 
 	// Added variables captured on inner closures to cp.captured

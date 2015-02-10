@@ -16,15 +16,18 @@ import (
 	"github.com/elves/elvish/store"
 )
 
+// ns is a namespace.
+type ns map[string]Variable
+
 // Evaluator maintains runtime context of elvish code within a single
 // goroutine. When elvish code spawns goroutines, the Evaluator is copied and
 // has certain components replaced.
 type Evaluator struct {
 	Compiler *Compiler
 	evaluatorEphemeral
-	local       map[string]Variable
-	captured    map[string]Variable
-	builtin     map[string]Variable
+	local       ns
+	captured    ns
+	builtin     ns
 	searchPaths []string
 	ports       []*port
 	statusCb    func([]Value)
@@ -53,7 +56,7 @@ func statusOk(vs []Value) bool {
 // NewEvaluator creates a new top-level Evaluator.
 func NewEvaluator(st *store.Store) *Evaluator {
 	pid := str(strconv.Itoa(syscall.Getpid()))
-	bi := map[string]Variable{
+	bi := ns{
 		"pid":     newInternalVariableWithType(pid),
 		"success": newInternalVariableWithType(success),
 		"true":    newInternalVariableWithType(boolean(true)),
@@ -64,8 +67,8 @@ func NewEvaluator(st *store.Store) *Evaluator {
 	}
 	ev := &Evaluator{
 		Compiler: NewCompiler(makeCompilerScope(bi)),
-		local:    make(map[string]Variable),
-		captured: make(map[string]Variable),
+		local:    ns{},
+		captured: ns{},
 		builtin:  bi,
 		ports: []*port{
 			&port{f: os.Stdin}, &port{f: os.Stdout}, &port{f: os.Stderr}},
@@ -136,8 +139,8 @@ func (ev *Evaluator) growPorts(n int) {
 }
 
 // makeCompilerScope extracts the type information from variables.
-func makeCompilerScope(s map[string]Variable) map[string]Type {
-	scope := make(map[string]Type)
+func makeCompilerScope(s ns) staticNS {
+	scope := staticNS{}
 	for name, variable := range s {
 		scope[name] = variable.StaticType()
 	}
