@@ -137,10 +137,10 @@ func (c *closure) Exec(ev *Evaluator, args []Value) <-chan *stateUpdate {
 	// BUG(xiaq): When evaluating closures, async access to global variables
 	// and ports can be problematic.
 
-	// Make captured namespace and capture variables.
-	ev.captured = make(map[string]Variable)
+	// Make up namespace and capture variables.
+	ev.up = make(map[string]Variable)
 	for name, variable := range c.Captured {
-		ev.captured[name] = variable
+		ev.up[name] = variable
 	}
 	// Make local namespace and pass arguments.
 	ev.local = make(map[string]Variable)

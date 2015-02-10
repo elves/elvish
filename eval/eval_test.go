@@ -117,10 +117,10 @@ var evalTests = []struct {
 		stringValues("z"), false},
 
 	// Namespaces
-	// Pseudo-namespaces local: and captured:
-	{"var $true = lorem; { var $true = ipsum; put $captured:true $local:true $builtin:true }",
+	// Pseudo-namespaces local: and up:
+	{"var $true = lorem; { var $true = ipsum; put $up:true $local:true $builtin:true }",
 		[]Value{str("lorem"), str("ipsum"), boolean(true)}, false},
-	{"var $x = lorem; { set $captured:x = ipsum }; put $x",
+	{"var $x = lorem; { set $up:x = ipsum }; put $x",
 		stringValues("ipsum"), false},
 	// Pseudo-namespace env:
 	{"set $env:foo = lorem; put $env:foo", stringValues("lorem"), false},

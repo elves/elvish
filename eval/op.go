@@ -36,10 +36,10 @@ func combineChunk(ops []valuesOp) Op {
 	}
 }
 
-func combineClosure(argNames []string, op Op, captured map[string]Type) valuesOp {
+func combineClosure(argNames []string, op Op, up map[string]Type) valuesOp {
 	f := func(ev *Evaluator) []Value {
-		evCaptured := make(map[string]Variable, len(captured))
-		for name := range captured {
+		evCaptured := make(map[string]Variable, len(up))
+		for name := range up {
 			evCaptured[name] = ev.ResolveVar("", name)
 		}
 		return []Value{newClosure(argNames, op, evCaptured)}

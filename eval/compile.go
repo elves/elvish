@@ -14,9 +14,9 @@ type staticNS map[string]Type
 
 // Compiler compiles an Elvish AST into an Op.
 type Compiler struct {
-	builtin  staticNS
-	scopes   []staticNS
-	captured staticNS
+	builtin staticNS
+	scopes  []staticNS
+	up      staticNS
 	compilerEphemeral
 }
 
@@ -106,18 +106,18 @@ func (cp *Compiler) closure(cn *parse.ClosureNode) valuesOp {
 
 	op := cp.chunk(cn.Chunk)
 
-	captured := cp.captured
-	cp.captured = staticNS{}
+	up := cp.up
+	cp.up = staticNS{}
 	cp.popScope()
 
-	// Added variables captured on inner closures to cp.captured
-	for name, typ := range captured {
+	// Added variables up on inner closures to cp.up
+	for name, typ := range up {
 		if cp.resolveVarOnThisScope(name) == nil {
-			cp.captured[name] = typ
+			cp.up[name] = typ
 		}
 	}
 
-	return combineClosure(argNames, op, captured)
+	return combineClosure(argNames, op, up)
 }
 
 // pipeline compiles a PipelineNode into a valuesOp.
@@ -160,7 +160,7 @@ func splitQualifiedName(qname string) (string, string) {
 // ResolveVar returns the type of a variable with supplied name and on the
 // supplied namespace. If such a variable is nonexistent, a nil is returned.
 // When the value to resolve is on an outer current scope, it is added to
-// cp.captured.
+// cp.up.
 func (cp *Compiler) ResolveVar(ns, name string) Type {
 	may := func(n string) bool {
 		return ns == "" || ns == n
@@ -171,10 +171,10 @@ func (cp *Compiler) ResolveVar(ns, name string) Type {
 			return t
 		}
 	}
-	if may("captured") {
+	if may("up") {
 		for i := len(cp.scopes) - 2; i >= 0; i-- {
 			if t, ok := cp.scopes[i][name]; ok {
-				cp.captured[name] = t
+				cp.up[name] = t
 				return t
 			}
 		}

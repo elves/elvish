@@ -26,7 +26,7 @@ type Evaluator struct {
 	Compiler *Compiler
 	evaluatorEphemeral
 	local       ns
-	captured    ns
+	up          ns
 	builtin     ns
 	searchPaths []string
 	ports       []*port
@@ -68,7 +68,7 @@ func NewEvaluator(st *store.Store) *Evaluator {
 	ev := &Evaluator{
 		Compiler: NewCompiler(makeCompilerScope(bi)),
 		local:    ns{},
-		captured: ns{},
+		up:       ns{},
 		builtin:  bi,
 		ports: []*port{
 			&port{f: os.Stdin}, &port{f: os.Stdout}, &port{f: os.Stderr}},
@@ -243,8 +243,8 @@ func (ev *Evaluator) ResolveVar(ns, name string) Variable {
 			return v
 		}
 	}
-	if may("captured") {
-		if v, ok := ev.captured[name]; ok {
+	if may("up") {
+		if v, ok := ev.up[name]; ok {
 			return v
 		}
 	}
