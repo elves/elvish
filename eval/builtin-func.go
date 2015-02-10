@@ -36,8 +36,6 @@ func init() {
 
 		&builtinFn{"each", each},
 
-		&builtinFn{"if", ifFn},
-
 		&builtinFn{"cd", cd},
 		&builtinFn{"visited-dirs", visistedDirs},
 		&builtinFn{"jump-dir", jumpDir},
@@ -205,29 +203,6 @@ func each(ev *Evaluator, args []Value) exitus {
 		}
 	}
 	return success
-}
-
-// if takes a sequence of values and a trailing nullary closure. If all of the
-// values are true, the closure is executed.
-func ifFn(ev *Evaluator, args []Value) exitus {
-	if len(args) == 0 {
-		return argsError
-	}
-	if f, ok := args[len(args)-1].(*closure); !ok {
-		return argsError
-	} else if len(f.ArgNames) > 0 {
-		return argsError
-	} else {
-		for _, a := range args[:len(args)-1] {
-			if !toBool(a) {
-				return success
-			}
-		}
-		su := f.Exec(ev.copy("closure of if"), []Value{})
-		for _ = range su {
-		}
-		return success
-	}
 }
 
 func cd(ev *Evaluator, args []Value) exitus {

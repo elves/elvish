@@ -373,6 +373,15 @@ func toBool(v Value) bool {
 	return true
 }
 
+func allTrue(vs []Value) bool {
+	for _, v := range vs {
+		if !toBool(v) {
+			return false
+		}
+	}
+	return true
+}
+
 var errOnlyStrOrRat = errors.New("Only str or rat may be converted to rat")
 
 // toRat converts a Value to rat. A str can be converted to a rat if it can be

@@ -109,6 +109,12 @@ var evalTests = []struct {
 	// fn
 	{"fn f $x { put $x ipsum }; f lorem",
 		stringValues("lorem", "ipsum"), false},
+	// if
+	{"if $true { put x }", stringValues("x"), false},
+	{"if $true $false { put x } else if $true { put y }",
+		stringValues("y"), false},
+	{"if $true $false { put x } else if $false { put y } else { put z }",
+		stringValues("z"), false},
 
 	// Namespaces
 	// Pseudo-namespaces local: and captured:

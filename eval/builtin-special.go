@@ -26,6 +26,7 @@ func init() {
 		"del": builtinSpecial{compileDel},
 
 		"fn": builtinSpecial{compileFn},
+		"if": builtinSpecial{compileIf},
 
 		"static-typeof": builtinSpecial{compileStaticTypeof},
 	}
@@ -324,6 +325,101 @@ func compileFn(cp *Compiler, fn *parse.FormNode) exitusOp {
 
 	return func(ev *Evaluator) exitus {
 		ev.local[varName] = newInternalVariable(op.f(ev)[0], callableType{})
+		return success
+	}
+}
+
+func maybeClosurePrimary(cn *parse.CompoundNode) (*parse.ClosureNode, bool) {
+	if len(cn.Nodes) == 1 && cn.Nodes[0].Right == nil && cn.Nodes[0].Left.Typ == parse.ClosurePrimary {
+		return cn.Nodes[0].Left.Node.(*parse.ClosureNode), true
+	}
+	return nil, false
+}
+
+func maybeStringPrimary(cn *parse.CompoundNode) (string, bool) {
+	if len(cn.Nodes) == 1 && cn.Nodes[0].Right == nil && cn.Nodes[0].Left.Typ == parse.StringPrimary {
+		return cn.Nodes[0].Left.Node.(*parse.StringNode).Text, true
+	}
+	return "", false
+}
+
+type ifBranch struct {
+	condition valuesOp
+	body      valuesOp
+}
+
+// IfForm = 'if' Branch { 'else' 'if' Branch } [ 'else' Branch ]
+// Branch = SpacedNode.condition ClosurePrimary.body
+//
+// The condition part of a Branch ends as soon as a Compound of a single
+// ClosurePrimary is encountered.
+func compileIf(cp *Compiler, fn *parse.FormNode) exitusOp {
+	compounds := fn.Args.Nodes
+	var branches []*ifBranch
+
+	nextBranch := func() {
+		var conds []*parse.CompoundNode
+		for i, cn := range compounds {
+			if closure, ok := maybeClosurePrimary(cn); ok {
+				if i == 0 {
+					cp.errorf(cn.Pos, "expect condition")
+				}
+				condition := cp.compileCompounds(conds)
+				if closure.ArgNames != nil && len(closure.ArgNames.Nodes) > 0 {
+					cp.errorf(closure.ArgNames.Pos, "unexpected arguments")
+				}
+				body := cp.compileClosure(closure)
+				branches = append(branches, &ifBranch{condition, body})
+				compounds = compounds[i+1:]
+				return
+			}
+			conds = append(conds, cn)
+		}
+		cp.errorf(compounds[len(compounds)-1].Pos, "expect body after this")
+	}
+	// if branch
+	nextBranch()
+	// else-if branches
+	for len(compounds) >= 2 {
+		s1, _ := maybeStringPrimary(compounds[0])
+		s2, _ := maybeStringPrimary(compounds[1])
+		if s1 == "else" && s2 == "if" {
+			compounds = compounds[2:]
+			nextBranch()
+		} else {
+			break
+		}
+	}
+	// else branch
+	if len(compounds) > 0 {
+		s, _ := maybeStringPrimary(compounds[0])
+		if s == "else" {
+			if len(compounds) == 1 {
+				cp.errorf(compounds[0].Pos, "expect body after this")
+			} else if len(compounds) > 2 {
+				cp.errorf(compounds[2].Pos, "trailing garbage")
+			}
+			body, ok := maybeClosurePrimary(compounds[1])
+			if !ok {
+				cp.errorf(compounds[1].Pos, "expect body")
+			}
+			branches = append(branches, &ifBranch{
+				literalValue(boolean(true)), cp.compileClosure(body)})
+		} else {
+			cp.errorf(compounds[0].Pos, "trailing garbage")
+		}
+	}
+	return func(ev *Evaluator) exitus {
+		for _, ib := range branches {
+			if allTrue(ib.condition.f(ev)) {
+				f := ib.body.f(ev)[0].(*closure)
+				su := f.Exec(ev.copy("closure of if"), []Value{})
+				for _ = range su {
+				}
+				// TODO(xiaq): Return the exitus of the body
+				return success
+			}
+		}
 		return success
 	}
 }
