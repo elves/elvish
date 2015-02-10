@@ -28,6 +28,7 @@ type Evaluator struct {
 	local       ns
 	up          ns
 	builtin     ns
+	mod         map[string]ns
 	searchPaths []string
 	ports       []*port
 	statusCb    func([]Value)
@@ -70,6 +71,7 @@ func NewEvaluator(st *store.Store) *Evaluator {
 		local:    ns{},
 		up:       ns{},
 		builtin:  bi,
+		mod:      map[string]ns{},
 		ports: []*port{
 			&port{f: os.Stdin}, &port{f: os.Stdout}, &port{f: os.Stderr}},
 		statusCb: func(vs []Value) {
@@ -234,10 +236,16 @@ func (ev *Evaluator) Source(fname string) error {
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
 func (ev *Evaluator) ResolveVar(ns, name string) Variable {
+	if ns == "env" {
+		return newEnvVariable(name)
+	}
+	if mod, ok := ev.mod[ns]; ok {
+		return mod[name]
+	}
+
 	may := func(n string) bool {
 		return ns == "" || ns == n
 	}
-
 	if may("local") {
 		if v, ok := ev.local[name]; ok {
 			return v
@@ -252,9 +260,6 @@ func (ev *Evaluator) ResolveVar(ns, name string) Variable {
 		if v, ok := ev.builtin[name]; ok {
 			return v
 		}
-	}
-	if ns == "env" {
-		return newEnvVariable(name)
 	}
 	return nil
 }

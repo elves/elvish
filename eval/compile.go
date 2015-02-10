@@ -17,6 +17,7 @@ type Compiler struct {
 	builtin staticNS
 	scopes  []staticNS
 	up      staticNS
+	mod     map[string]staticNS
 	compilerEphemeral
 }
 
@@ -29,7 +30,7 @@ type compilerEphemeral struct {
 // NewCompiler returns a new compiler.
 func NewCompiler(bi staticNS) *Compiler {
 	return &Compiler{
-		bi, []staticNS{staticNS{}}, staticNS{},
+		bi, []staticNS{staticNS{}}, staticNS{}, map[string]staticNS{},
 		compilerEphemeral{},
 	}
 }
@@ -162,10 +163,16 @@ func splitQualifiedName(qname string) (string, string) {
 // When the value to resolve is on an outer current scope, it is added to
 // cp.up.
 func (cp *Compiler) ResolveVar(ns, name string) Type {
+	if ns == "env" {
+		return stringType{}
+	}
+	if mod, ok := cp.mod[ns]; ok {
+		return mod[name]
+	}
+
 	may := func(n string) bool {
 		return ns == "" || ns == n
 	}
-
 	if may("local") {
 		if t := cp.resolveVarOnThisScope(name); t != nil {
 			return t
@@ -183,9 +190,6 @@ func (cp *Compiler) ResolveVar(ns, name string) Type {
 		if t, ok := cp.builtin[name]; ok {
 			return t
 		}
-	}
-	if ns == "env" {
-		return stringType{}
 	}
 	return nil
 }
