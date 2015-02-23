@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"syscall"
@@ -55,7 +56,7 @@ func statusOk(vs []Value) bool {
 }
 
 // NewEvaluator creates a new top-level Evaluator.
-func NewEvaluator(st *store.Store) *Evaluator {
+func NewEvaluator(st *store.Store, dataDir string) *Evaluator {
 	pid := str(strconv.Itoa(syscall.Getpid()))
 	bi := ns{
 		"pid":     newInternalVariableWithType(pid),
@@ -67,7 +68,7 @@ func NewEvaluator(st *store.Store) *Evaluator {
 		bi["fn-"+b.Name] = newInternalVariableWithType(b)
 	}
 	ev := &Evaluator{
-		Compiler: NewCompiler(makeCompilerScope(bi)),
+		Compiler: NewCompiler(makeCompilerScope(bi), dataDir),
 		local:    ns{},
 		up:       ns{},
 		builtin:  bi,
@@ -151,8 +152,8 @@ func makeCompilerScope(s ns) staticNS {
 
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaluator) Eval(name, text string, n *parse.ChunkNode) error {
-	op, err := ev.Compiler.Compile(name, text, n)
+func (ev *Evaluator) Eval(name, text, dir string, n *parse.ChunkNode) error {
+	op, err := ev.Compiler.Compile(name, text, dir, n)
 	if err != nil {
 		return err
 	}
@@ -210,12 +211,12 @@ func (ev *Evaluator) applyPortOps(ports []portOp) {
 	}
 }
 
-func (ev *Evaluator) SourceText(name, src string) error {
+func (ev *Evaluator) SourceText(name, src, dir string) error {
 	n, err := parse.Parse(name, src)
 	if err != nil {
 		return err
 	}
-	return ev.Eval(name, src, n)
+	return ev.Eval(name, src, dir, n)
 }
 
 func readFileUTF8(fname string) (string, error) {
@@ -235,7 +236,7 @@ func (ev *Evaluator) Source(fname string) error {
 	if err != nil {
 		return err
 	}
-	return ev.SourceText(fname, src)
+	return ev.SourceText(fname, src, path.Dir(fname))
 }
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is

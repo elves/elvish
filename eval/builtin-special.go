@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/elves/elvish/parse"
 )
@@ -313,8 +314,16 @@ func compileUse(cp *Compiler, fn *parse.FormNode) exitusOp {
 	default:
 		cp.errorf(fn.Args.Nodes[2].Pos, "superfluous argument")
 	}
-	// TODO(xiaq): File name should be relative to the current source when it
-	// starts with . or .. and relative to ~/.elvish otherwise
+	switch {
+	case strings.HasPrefix(fname, "/"):
+		// Absolute file name, do nothing
+	case strings.HasPrefix(fname, "./") || strings.HasPrefix(fname, "../"):
+		// File name relative to current source
+		fname = path.Clean(path.Join(cp.dir, fname))
+	default:
+		// File name relative to data dir
+		fname = path.Clean(path.Join(cp.dataDir, fname))
+	}
 	src, err := readFileUTF8(fname)
 	if err != nil {
 		cp.errorf(fnameNode.Pos, "cannot read module: %s", err.Error())
@@ -326,8 +335,8 @@ func compileUse(cp *Compiler, fn *parse.FormNode) exitusOp {
 		cp.errorf(fnameNode.Pos, "cannot parse module: %s", err.Error())
 	}
 
-	newCp := NewCompiler(cp.builtin)
-	op, err := newCp.Compile(fname, src, cn)
+	newCp := NewCompiler(cp.builtin, cp.dataDir)
+	op, err := newCp.Compile(fname, src, path.Dir(fname), cn)
 	if err != nil {
 		// TODO(xiaq): Pretty print
 		cp.errorf(fnameNode.Pos, "cannot compile module: %s", err.Error())
@@ -337,7 +346,7 @@ func compileUse(cp *Compiler, fn *parse.FormNode) exitusOp {
 
 	return func(ev *Evaluator) exitus {
 		// XXX(xiaq): Should use some part of ev
-		newEv := NewEvaluator(ev.store)
+		newEv := NewEvaluator(ev.store, cp.dataDir)
 		op(newEv)
 		ev.mod[modname] = newEv.local
 		return success

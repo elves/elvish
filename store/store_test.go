@@ -24,7 +24,13 @@ func init() {
 }
 
 func TestNewStore(t *testing.T) {
-	_, err := NewStore()
+	// XXX(xiaq): Also tests EnsureDataDir
+	dataDir, err := EnsureDataDir()
+	if err != nil {
+		t.Errorf("EnsureDataDir() -> (*, %v), want (*, <nil>)", err)
+	}
+
+	_, err = NewStore(dataDir)
 	if err != nil {
 		t.Errorf("NewStore() -> (*, %v), want (*, <nil>)", err)
 	}

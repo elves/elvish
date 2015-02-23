@@ -18,25 +18,26 @@ type Compiler struct {
 	scopes  []staticNS
 	up      staticNS
 	mod     map[string]staticNS
+	dataDir string
 	compilerEphemeral
 }
 
 // compilerEphemeral wraps the ephemeral parts of a Compiler, namely the parts
 // only valid through one startCompile-stopCompile cycle.
 type compilerEphemeral struct {
-	name, text string
+	name, text, dir string
 }
 
 // NewCompiler returns a new compiler.
-func NewCompiler(bi staticNS) *Compiler {
+func NewCompiler(bi staticNS, dataDir string) *Compiler {
 	return &Compiler{
-		bi, []staticNS{staticNS{}}, staticNS{}, map[string]staticNS{},
+		bi, []staticNS{staticNS{}}, staticNS{}, map[string]staticNS{}, dataDir,
 		compilerEphemeral{},
 	}
 }
 
-func (cp *Compiler) startCompile(name, text string) {
-	cp.compilerEphemeral = compilerEphemeral{name, text}
+func (cp *Compiler) startCompile(name, text, dir string) {
+	cp.compilerEphemeral = compilerEphemeral{name, text, dir}
 }
 
 func (cp *Compiler) stopCompile() {
@@ -45,8 +46,8 @@ func (cp *Compiler) stopCompile() {
 
 // Compile compiles a ChunkNode into an Op. The supplied name and text are used
 // in diagnostic messages.
-func (cp *Compiler) Compile(name, text string, n *parse.ChunkNode) (op Op, err error) {
-	cp.startCompile(name, text)
+func (cp *Compiler) Compile(name, text, dir string, n *parse.ChunkNode) (op Op, err error) {
+	cp.startCompile(name, text, dir)
 	defer cp.stopCompile()
 	defer errutil.Catch(&err)
 	return cp.chunk(n), nil

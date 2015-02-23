@@ -30,12 +30,20 @@ func newEvaluator() *eval.Evaluator {
 		}
 	}()
 
-	st, err := store.NewStore()
+	dataDir, err := store.EnsureDataDir()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Warning: cannot connect to store:", err)
+		fmt.Fprintln(os.Stderr, "Warning: cannot create data dir ~/.elvish")
 	}
 
-	ev := eval.NewEvaluator(st)
+	var st *store.Store
+	if err == nil {
+		st, err = store.NewStore(dataDir)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Warning: cannot connect to store:", err)
+		}
+	}
+
+	ev := eval.NewEvaluator(st, dataDir)
 	ev.SetChanOut(ch)
 	return ev
 }
@@ -105,7 +113,7 @@ func interact() {
 		printError(err)
 
 		if err == nil {
-			err := ev.Eval(name, lr.Line, n)
+			err := ev.Eval(name, lr.Line, ".", n)
 			printError(err)
 		}
 	}

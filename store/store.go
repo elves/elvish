@@ -15,19 +15,15 @@ type Store struct {
 var createTable = map[string]string{}
 
 // DefaultDB returns the default database for storage.
-func DefaultDB() (*sql.DB, error) {
-	ddir, err := EnsureDataDir()
-	if err != nil {
-		return nil, err
-	}
-	uri := "file:" + url.QueryEscape(ddir+"/db") +
+func DefaultDB(dataDir string) (*sql.DB, error) {
+	uri := "file:" + url.QueryEscape(dataDir+"/db") +
 		"?mode=rwc&cache=shared&vfs=unix-dotfile"
 	return sql.Open("sqlite3", uri)
 }
 
 // NewStore creates a new Store with the default database.
-func NewStore() (*Store, error) {
-	db, err := DefaultDB()
+func NewStore(dataDir string) (*Store, error) {
+	db, err := DefaultDB(dataDir)
 	if err != nil {
 		return nil, err
 	}
