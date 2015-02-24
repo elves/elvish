@@ -1,18 +1,27 @@
 package edit
 
+// Mod represents a modifier key.
 type Mod byte
 
+// Values for Mod.
 const (
+	// Shift is the shift modifier. It is only applied to special keys (e.g.
+	// Shift-F1). For instance 'A' and '@' which are typically entered with the
+	// shift key pressed, are not considered to be shift-modified.
 	Shift Mod = 1 << iota
+	// Alt is the alt modifier, traditionally known as the meta modifier.
 	Alt
 	Ctrl
 )
 
+// Key represents a single keyboard input, typically assembled from a escape
+// sequence.
 type Key struct {
 	Rune rune
 	Mod  Mod
 }
 
+// ZeroKey is the zero value of Key and is an invalid value.
 var ZeroKey = Key{}
 
 func (k Key) String() (s string) {
@@ -26,20 +35,20 @@ func (k Key) String() (s string) {
 		s += "Shift-"
 	}
 	if k.Rune > 0 {
-		if name, ok := KeyNames[k.Rune]; ok {
+		if name, ok := keyNames[k.Rune]; ok {
 			s += name
 		} else {
 			s += string(k.Rune)
 		}
 	} else {
-		s += FunctionKeyNames[-k.Rune]
+		s += functionKeyNames[-k.Rune]
 	}
 	return
 }
 
+// Special negative runes to represent function keys.
 const (
-	Invalid rune = -iota
-	F1
+	F1 rune = -iota - 1
 	F2
 	F3
 	F4
@@ -51,17 +60,20 @@ const (
 	F10
 	F11
 	F12
+
 	Up
 	Down
 	Right
 	Left
+
 	Home
 	Insert
 	Delete
 	End
 	PageUp
 	PageDown
-	DefaultBindingRune // Used in key of keyBinding for default binding
+
+	DefaultBindingRune // A special value used in DefaultBinding
 
 	// Some function key names are just aliases for their ASCII representation
 
@@ -70,13 +82,14 @@ const (
 	Backspace = 0x7f
 )
 
+// Used as a key of keyBindings to indicate default binding
 var DefaultBinding = Key{DefaultBindingRune, 0}
 
-var KeyNames = map[rune]string{
+var keyNames = map[rune]string{
 	Tab: "Tab", Enter: "Enter", Backspace: "Backspace",
 }
 
-var FunctionKeyNames = [...]string{
+var functionKeyNames = [...]string{
 	"(Invalid)",
 	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
 	"Up", "Down", "Right", "Left",

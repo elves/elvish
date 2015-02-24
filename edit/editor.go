@@ -12,11 +12,7 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-const (
-	CPRWaitTimeout = 10 * time.Millisecond
-)
-
-var LackEOL = "\033[7m\u23ce\033[m\n"
+const lackEOL = "\033[7m\u23ce\033[m\n"
 
 type bufferMode int
 
@@ -198,7 +194,7 @@ func (ed *Editor) acceptHistory() {
 	ed.dot = len(ed.line)
 }
 
-func SetupTerminal(file *os.File) (*tty.Termios, error) {
+func setupTerminal(file *os.File) (*tty.Termios, error) {
 	fd := int(file.Fd())
 	term, err := tty.NewTermiosFromFd(fd)
 	if err != nil {
@@ -207,10 +203,10 @@ func SetupTerminal(file *os.File) (*tty.Termios, error) {
 
 	savedTermios := term.Copy()
 
-	term.SetIcanon(false)
+	term.SetICanon(false)
 	term.SetEcho(false)
-	term.SetMin(1)
-	term.SetTime(0)
+	term.SetVMin(1)
+	term.SetVTime(0)
 
 	err = term.ApplyToFd(fd)
 	if err != nil {
@@ -228,7 +224,7 @@ func SetupTerminal(file *os.File) (*tty.Termios, error) {
 	return savedTermios, nil
 }
 
-func CleanupTerminal(file *os.File, savedTermios *tty.Termios) error {
+func cleanupTerminal(file *os.File, savedTermios *tty.Termios) error {
 	// Set autowrap on
 	file.WriteString("\033[?7h")
 	fd := int(file.Fd())
@@ -237,7 +233,7 @@ func CleanupTerminal(file *os.File, savedTermios *tty.Termios) error {
 
 // startsReadLine prepares the terminal for the editor.
 func (ed *Editor) startReadLine() error {
-	savedTermios, err := SetupTerminal(ed.file)
+	savedTermios, err := setupTerminal(ed.file)
 	if err != nil {
 		return err
 	}
@@ -249,28 +245,28 @@ func (ed *Editor) startReadLine() error {
 	ed.reader.Continue()
 	ones := ed.reader.Chan()
 
-	cpr := InvalidPos
+	cpr := invalidPos
 FindCPR:
 	for {
 		select {
 		case or := <-ones:
-			if or.CPR != InvalidPos {
+			if or.CPR != invalidPos {
 				cpr = or.CPR
 				break FindCPR
 			} else {
 				// Just discard
 			}
-		case <-time.After(CPRTimeout):
+		case <-time.After(cprTimeout):
 			break FindCPR
 		}
 	}
 
-	if cpr == InvalidPos {
+	if cpr == invalidPos {
 		// Unable to get CPR, just rewind to column 1
 		ed.file.WriteString("\r")
 	} else if cpr.col != 1 {
 		// BUG(xiaq) startReadline assumes that column number starts from 0
-		ed.file.WriteString(LackEOL)
+		ed.file.WriteString(lackEOL)
 	}
 
 	return nil
@@ -295,7 +291,7 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 	ed.refresh() // XXX(xiaq): Ignore possible error
 	ed.file.WriteString("\n")
 
-	err := CleanupTerminal(ed.file, ed.savedTermios)
+	err := cleanupTerminal(ed.file, ed.savedTermios)
 
 	if err != nil {
 		// BUG(xiaq): Error in Editor.finishReadLine may override earlier error
@@ -349,7 +345,7 @@ MainLoop:
 			}
 
 			// Ignore bogus CPR
-			if or.CPR != InvalidPos {
+			if or.CPR != invalidPos {
 				continue
 			}
 

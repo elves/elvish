@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -11,7 +10,7 @@ import (
 )
 
 const (
-	ReaderOutChanSize int = 16
+	readerOutChanSize int = 16
 )
 
 // readerCtrl is used to control the internal reader goroutine.
@@ -25,19 +24,14 @@ const (
 )
 
 const (
-	EscTimeout time.Duration = 10 * time.Millisecond
-	CPRTimeout               = 10 * time.Millisecond
+	escTimeout = 10 * time.Millisecond
+	cprTimeout = 10 * time.Millisecond
 )
 
-const (
-	RuneTimeout rune = -1
-)
+// special rune value used internally to represent a timeout
+const runeTimeout rune = -1
 
-var (
-	ErrTimeout = errors.New("timed out")
-	ErrBadCPR  = errors.New("bad CPR")
-)
-
+// BadEscSeq indicates that a bad escape sequence is read from the terminal.
 type BadEscSeq struct {
 	seq string
 	msg string
@@ -51,6 +45,8 @@ func (bes *BadEscSeq) Error() string {
 	return fmt.Sprintf("bad escape sequence %q: %s", bes.seq, bes.msg)
 }
 
+// OneRead is a single unit that is read, which is either a key, a CPR, or an
+// error.
 type OneRead struct {
 	Key Key
 	CPR pos
@@ -66,10 +62,11 @@ type Reader struct {
 	currentSeq string
 }
 
+// NewReader creates a new Reader on the given terminal file.
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
 		ar:      util.NewAsyncReader(f),
-		ones:    make(chan OneRead, ReaderOutChanSize),
+		ones:    make(chan OneRead, readerOutChanSize),
 		ctrl:    make(chan readerCtrl),
 		ctrlAck: make(chan bool),
 	}
@@ -77,6 +74,7 @@ func NewReader(f *os.File) *Reader {
 	return rd
 }
 
+// Chan returns the channel of OneRead of the Reader.
 func (rd *Reader) Chan() <-chan OneRead {
 	return rd.ones
 }
@@ -86,16 +84,20 @@ func (rd *Reader) sendCtrl(c readerCtrl) {
 	<-rd.ctrlAck
 }
 
+// Stop stops the reading process so that the file may be read by other
+// readers.
 func (rd *Reader) Stop() {
 	rd.ar.Stop()
 	rd.sendCtrl(readerStop)
 }
 
+// Continue continues the reading process.
 func (rd *Reader) Continue() {
 	rd.ar.Continue()
 	rd.sendCtrl(readerContinue)
 }
 
+// Quit terminates the reading process.
 func (rd *Reader) Quit() {
 	rd.ar.Quit()
 	rd.sendCtrl(readerQuit)
@@ -111,7 +113,7 @@ func (rd *Reader) readRune(d time.Duration) rune {
 		rd.currentSeq += string(r)
 		return r
 	case <-util.After(d):
-		return RuneTimeout
+		return runeTimeout
 	}
 }
 
@@ -170,11 +172,11 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 	case 0x1f:
 		k = Key{'/', Ctrl} // ^_
 	case 0x1b: // ^[ Escape
-		//rd.timed.Timeout = EscTimeout
+		//rd.timed.Timeout = escTimeout
 		//defer func() { rd.timed.Timeout = -1 }()
-		r2 := rd.readRune(EscTimeout)
-		if r2 == RuneTimeout {
-			return Key{'[', Ctrl}, InvalidPos, nil
+		r2 := rd.readRune(escTimeout)
+		if r2 == runeTimeout {
+			return Key{'[', Ctrl}, invalidPos, nil
 		}
 		switch r2 {
 		case '[':
@@ -182,12 +184,12 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 			// Read numeric parameters (if any)
 			nums := make([]int, 0, 2)
 			seq := "\x1b["
-			timeout := EscTimeout
+			timeout := escTimeout
 			for {
 				r = rd.readRune(timeout)
 				// Timeout can only happen at first readRune.
-				if r == RuneTimeout {
-					return Key{'[', Alt}, InvalidPos, nil
+				if r == runeTimeout {
+					return Key{'[', Alt}, invalidPos, nil
 				}
 				seq += string(r)
 				// After first rune read we turn off the timeout
@@ -214,20 +216,20 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 				return ZeroKey, pos{nums[0], nums[1]}, nil
 			}
 			k, err := parseCSI(nums, r, seq)
-			return k, InvalidPos, err
+			return k, invalidPos, err
 		case 'O':
 			// G3 style function key sequence: read one rune.
-			r = rd.readRune(EscTimeout)
-			if r == RuneTimeout {
-				return Key{r2, Alt}, InvalidPos, nil
+			r = rd.readRune(escTimeout)
+			if r == runeTimeout {
+				return Key{r2, Alt}, invalidPos, nil
 			}
 			r, ok := g3Seq[r]
 			if ok {
-				return Key{r, 0}, InvalidPos, nil
+				return Key{r, 0}, invalidPos, nil
 			}
 			rd.badEscSeq("")
 		}
-		return Key{r2, Alt}, InvalidPos, nil
+		return Key{r2, Alt}, invalidPos, nil
 	default:
 		// Sane Ctrl- sequences that agree with the keyboard...
 		if 0x1 <= r && r <= 0x1d {
@@ -236,7 +238,7 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 			k = Key{r, 0}
 		}
 	}
-	return k, InvalidPos, nil
+	return k, invalidPos, nil
 }
 
 func (rd *Reader) stop() (quit bool) {

@@ -63,6 +63,7 @@ func isCombining(r rune) bool {
 	return i < n && r >= combining[i][0]
 }
 
+// WcWidth returns the width of a rune when displayed on the terminal.
 func WcWidth(r rune) int {
 	switch {
 	case r == 0:
@@ -91,6 +92,8 @@ func WcWidth(r rune) int {
 	return 1
 }
 
+// WcWidths returns the width of a string when displayed on the terminal,
+// assuming no soft line breaks.
 func WcWidths(s string) (w int) {
 	for _, r := range s {
 		w += WcWidth(r)
@@ -98,6 +101,7 @@ func WcWidths(s string) (w int) {
 	return
 }
 
+// TrimWcWidth trims the string s so that it has a width of at most wmax.
 func TrimWcWidth(s string, wmax int) string {
 	w := 0
 	for i, r := range s {
@@ -109,6 +113,8 @@ func TrimWcWidth(s string, wmax int) string {
 	return s
 }
 
+// ForceWcWidth forces the string s to the given display width by trimming and
+// padding.
 func ForceWcWidth(s string, width int) string {
 	w := 0
 	for i, r := range s {

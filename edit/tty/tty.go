@@ -10,6 +10,7 @@ import (
 	"syscall"
 )
 
+// Ioctl wraps the ioctl syscall.
 func Ioctl(fd int, req int, arg uintptr) error {
 	_, _, e := syscall.Syscall(
 		syscall.SYS_IOCTL, uintptr(fd), uintptr(req), arg)
@@ -19,7 +20,8 @@ func Ioctl(fd int, req int, arg uintptr) error {
 	return nil
 }
 
+// FlushInput discards data written to a file descriptor but not read.
 func FlushInput(fd int) error {
-	_, err := C.tcflush((C.int)(fd), TCIFLUSH)
+	_, err := C.tcflush((C.int)(fd), syscall.TCIFLUSH)
 	return err
 }

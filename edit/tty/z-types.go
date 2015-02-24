@@ -1,16 +1,11 @@
 // Created by cgo -godefs - DO NOT EDIT
-// cgo -godefs types.go
+// cgo -godefs edit/tty/types.go
 
 package tty
 
 import (
 	"syscall"
 	"unsafe"
-)
-
-const (
-	TCIFLUSH   = syscall.TCIFLUSH
-	TIOCGWINSZ = syscall.TIOCGWINSZ
 )
 
 type Winsize struct {
@@ -22,6 +17,6 @@ type Winsize struct {
 
 func GetWinsize(fd int) Winsize {
 	var ws Winsize
-	Ioctl(fd, TIOCGWINSZ, uintptr(unsafe.Pointer(&ws)))
+	Ioctl(fd, syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws)))
 	return ws
 }
