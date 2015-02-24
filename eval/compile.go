@@ -247,12 +247,12 @@ func (cp *Compiler) redirs(rs []parse.Redir) []portOp {
 func (cp *Compiler) redir(r parse.Redir) portOp {
 	switch r := r.(type) {
 	case *parse.CloseRedir:
-		return func(ev *Evaluator) *port {
+		return func(ev *Evaler) *port {
 			return &port{}
 		}
 	case *parse.FdRedir:
 		oldFd := int(r.OldFd)
-		return func(ev *Evaluator) *port {
+		return func(ev *Evaler) *port {
 			// Copied ports have shouldClose unmarked to avoid double close on
 			// channels
 			p := *ev.port(oldFd)
@@ -262,7 +262,7 @@ func (cp *Compiler) redir(r parse.Redir) portOp {
 		}
 	case *parse.FilenameRedir:
 		fnameOp := cp.compound(r.Filename)
-		return func(ev *Evaluator) *port {
+		return func(ev *Evaler) *port {
 			fname := string(ev.mustSingleString(
 				fnameOp.f(ev), "filename", r.Filename.Pos))
 			// TODO haz hardcoded permbits now

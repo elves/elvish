@@ -48,7 +48,7 @@ func isExecutable(path string) bool {
 
 // search tries to resolve an external command and return the full (possibly
 // relative) path.
-func (ev *Evaluator) search(exe string) (string, error) {
+func (ev *Evaler) search(exe string) (string, error) {
 	for _, p := range []string{"/", "./", "../"} {
 		if strings.HasPrefix(exe, p) {
 			if isExecutable(exe) {
@@ -71,7 +71,7 @@ func (ev *Evaluator) search(exe string) (string, error) {
 // NOTE(xiaq): execSpecial and execNonSpecial are always called on an
 // intermediate "form redir" where only the form-local ports are marked
 // shouldClose. ev.closePorts should be called at appropriate moments.
-func (ev *Evaluator) execSpecial(op exitusOp) <-chan *stateUpdate {
+func (ev *Evaler) execSpecial(op exitusOp) <-chan *stateUpdate {
 	update := make(chan *stateUpdate)
 	go func() {
 		ex := op(ev)
@@ -83,7 +83,7 @@ func (ev *Evaluator) execSpecial(op exitusOp) <-chan *stateUpdate {
 	return update
 }
 
-func (ev *Evaluator) resolveNonSpecial(cmd Value) callable {
+func (ev *Evaler) resolveNonSpecial(cmd Value) callable {
 	// Closure
 	if cl, ok := cmd.(*closure); ok {
 		return cl
@@ -104,12 +104,12 @@ func (ev *Evaluator) resolveNonSpecial(cmd Value) callable {
 }
 
 // execNonSpecial executes a form that is not a special form.
-func (ev *Evaluator) execNonSpecial(cmd Value, args []Value) <-chan *stateUpdate {
+func (ev *Evaler) execNonSpecial(cmd Value, args []Value) <-chan *stateUpdate {
 	return ev.resolveNonSpecial(cmd).Exec(ev, args)
 }
 
 // Exec executes a builtin function.
-func (b *builtinFn) Exec(ev *Evaluator, args []Value) <-chan *stateUpdate {
+func (b *builtinFn) Exec(ev *Evaler, args []Value) <-chan *stateUpdate {
 	update := make(chan *stateUpdate)
 	go func() {
 		ex := b.Impl(ev, args)
@@ -122,7 +122,7 @@ func (b *builtinFn) Exec(ev *Evaluator, args []Value) <-chan *stateUpdate {
 }
 
 // Exec executes a closure.
-func (c *closure) Exec(ev *Evaluator, args []Value) <-chan *stateUpdate {
+func (c *closure) Exec(ev *Evaler, args []Value) <-chan *stateUpdate {
 	update := make(chan *stateUpdate, 1)
 
 	// TODO Support optional/rest argument
@@ -133,7 +133,7 @@ func (c *closure) Exec(ev *Evaluator, args []Value) <-chan *stateUpdate {
 		return update
 	}
 
-	// Make a subevaluator.
+	// Make a subevaler.
 	// BUG(xiaq): When evaluating closures, async access to global variables
 	// and ports can be problematic.
 
@@ -216,7 +216,7 @@ func waitStateUpdate(pid int, update chan<- *stateUpdate) {
 }
 
 // Exec executes an external command.
-func (e externalCmd) Exec(ev *Evaluator, argVals []Value) <-chan *stateUpdate {
+func (e externalCmd) Exec(ev *Evaler, argVals []Value) <-chan *stateUpdate {
 	files := make([]uintptr, len(ev.ports))
 	for i, port := range ev.ports {
 		if port == nil || port.f == nil {

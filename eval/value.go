@@ -182,10 +182,10 @@ func (t *table) append(vs ...Value) {
 // Callable represents Value's that may be executed.
 type callable interface {
 	Value
-	// Exec executes a callable asynchronously on an Evaluator. It assumes that
-	// it is the last callable to be executed on that Evaluator and thus
+	// Exec executes a callable asynchronously on an Evaler. It assumes that
+	// it is the last callable to be executed on that Evaler and thus
 	// responsible for cleaning up the ports.
-	Exec(ev *Evaluator, args []Value) <-chan *stateUpdate
+	Exec(ev *Evaler, args []Value) <-chan *stateUpdate
 }
 
 // closure is a closure.
@@ -209,7 +209,7 @@ func (c *closure) Repr() string {
 
 type builtinFn struct {
 	Name string
-	Impl func(*Evaluator, []Value) exitus
+	Impl func(*Evaler, []Value) exitus
 }
 
 func (b *builtinFn) Type() Type {
@@ -255,7 +255,7 @@ func (r rat) String() string {
 	return r.b.String()
 }
 
-func evalSubscript(ev *Evaluator, left, right Value, lp, rp parse.Pos) Value {
+func evalSubscript(ev *Evaler, left, right Value, lp, rp parse.Pos) Value {
 	var (
 		sub str
 		ok  bool

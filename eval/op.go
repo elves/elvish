@@ -9,24 +9,24 @@ import (
 
 // Definition of Op and friends and combinators.
 
-// Op operates on an Evaluator.
-type Op func(*Evaluator)
+// Op operates on an Evaler.
+type Op func(*Evaler)
 
-// valuesOp operates on an Evaluator and results in some values.
+// valuesOp operates on an Evaler and results in some values.
 type valuesOp struct {
 	tr typeRun
-	f  func(*Evaluator) []Value
+	f  func(*Evaler) []Value
 }
 
-// portOp operates on an Evaluator and results in a port.
-type portOp func(*Evaluator) *port
+// portOp operates on an Evaler and results in a port.
+type portOp func(*Evaler) *port
 
-// stateUpdatesOp operates on an Evaluator and results in a receiving channel
+// stateUpdatesOp operates on an Evaler and results in a receiving channel
 // of StateUpdate's.
-type stateUpdatesOp func(*Evaluator) <-chan *stateUpdate
+type stateUpdatesOp func(*Evaler) <-chan *stateUpdate
 
 func combineChunk(ops []valuesOp) Op {
-	return func(ev *Evaluator) {
+	return func(ev *Evaler) {
 		for _, op := range ops {
 			s := op.f(ev)
 			if ev.failHandler != nil && hasFailure(s) {
@@ -37,7 +37,7 @@ func combineChunk(ops []valuesOp) Op {
 }
 
 func combineClosure(argNames []string, op Op, up map[string]Type) valuesOp {
-	f := func(ev *Evaluator) []Value {
+	f := func(ev *Evaler) []Value {
 		evCaptured := make(map[string]Variable, len(up))
 		for name := range up {
 			evCaptured[name] = ev.ResolveVar("", name)
@@ -50,10 +50,10 @@ func combineClosure(argNames []string, op Op, up map[string]Type) valuesOp {
 var noExitus = newFailure("no exitus")
 
 func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
-	f := func(ev *Evaluator) []Value {
+	f := func(ev *Evaler) []Value {
 		var nextIn *port
 		updates := make([]<-chan *stateUpdate, len(ops))
-		// For each form, create a dedicated Evaluator and run
+		// For each form, create a dedicated Evaler and run
 		for i, op := range ops {
 			newEv := ev.copy(fmt.Sprintf("form op %v", op))
 			if i > 0 {
@@ -91,18 +91,18 @@ func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 }
 
 func combineSpecialForm(op exitusOp, ports []portOp, p parse.Pos) stateUpdatesOp {
-	// ev here is always a subevaluator created in combinePipeline, so it can
+	// ev here is always a subevaler created in combinePipeline, so it can
 	// be safely modified.
-	return func(ev *Evaluator) <-chan *stateUpdate {
+	return func(ev *Evaler) <-chan *stateUpdate {
 		ev.applyPortOps(ports)
 		return ev.execSpecial(op)
 	}
 }
 
 func combineNonSpecialForm(cmdOp, argsOp valuesOp, ports []portOp, p parse.Pos) stateUpdatesOp {
-	// ev here is always a subevaluator created in combinePipeline, so it can
+	// ev here is always a subevaler created in combinePipeline, so it can
 	// be safely modified.
-	return func(ev *Evaluator) <-chan *stateUpdate {
+	return func(ev *Evaler) <-chan *stateUpdate {
 		ev.applyPortOps(ports)
 
 		cmd := cmdOp.f(ev)
@@ -127,7 +127,7 @@ func combineSpaced(ops []valuesOp) valuesOp {
 		tr = append(tr, op.tr...)
 	}
 
-	f := func(ev *Evaluator) []Value {
+	f := func(ev *Evaler) []Value {
 		// Use number of compound expressions as an estimation of the number
 		// of values
 		vs := make([]Value, 0, len(ops))
@@ -140,7 +140,7 @@ func combineSpaced(ops []valuesOp) valuesOp {
 	return valuesOp{tr, f}
 }
 
-func compound(ev *Evaluator, lhs, rhs Value) Value {
+func compound(ev *Evaler, lhs, rhs Value) Value {
 	return str(toString(lhs) + toString(rhs))
 }
 
@@ -158,7 +158,7 @@ func combineCompound(ops []valuesOp) valuesOp {
 		more = more || b
 	}
 
-	f := func(ev *Evaluator) []Value {
+	f := func(ev *Evaler) []Value {
 		vs := []Value{str("")}
 		for _, op := range ops {
 			us := op.f(ev)
@@ -188,7 +188,7 @@ func literalValue(v ...Value) valuesOp {
 	for i := range tr {
 		tr[i].t = v[i].Type()
 	}
-	f := func(e *Evaluator) []Value {
+	f := func(e *Evaler) []Value {
 		return v
 	}
 	return valuesOp{tr, f}
@@ -201,7 +201,7 @@ func makeString(text string) valuesOp {
 func makeVar(cp *Compiler, qname string, p parse.Pos) valuesOp {
 	ns, name := splitQualifiedName(qname)
 	tr := newFixedTypeRun(cp.mustResolveVar(ns, name, p))
-	f := func(ev *Evaluator) []Value {
+	f := func(ev *Evaler) []Value {
 		variable := ev.ResolveVar(ns, name)
 		if variable == nil {
 			ev.errorf(p, "variable $%s not found; the compiler has a bug", name)
@@ -234,7 +234,7 @@ func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valu
 		cp.errorf(rp, "right operand of subscript must be of type string")
 	}
 
-	f := func(ev *Evaluator) []Value {
+	f := func(ev *Evaler) []Value {
 		l := left.f(ev)
 		r := right.f(ev)
 		return []Value{evalSubscript(ev, l[0], r[0], lp, rp)}
@@ -243,7 +243,7 @@ func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valu
 }
 
 func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos) valuesOp {
-	f := func(ev *Evaluator) []Value {
+	f := func(ev *Evaler) []Value {
 		t := newTable()
 		t.append(list.f(ev)...)
 		for i, kop := range keys {
@@ -264,7 +264,7 @@ func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos
 
 func combineChanCapture(op valuesOp) valuesOp {
 	tr := typeRun{typeStar{anyType{}, true}}
-	f := func(ev *Evaluator) []Value {
+	f := func(ev *Evaler) []Value {
 		vs := []Value{}
 		newEv := ev.copy(fmt.Sprintf("channel output capture %v", op))
 		ch := make(chan Value)

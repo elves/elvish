@@ -22,12 +22,12 @@ const fnPrefix = "fn-"
 // ns is a namespace.
 type ns map[string]Variable
 
-// Evaluator maintains runtime context of elvish code within a single
-// goroutine. When elvish code spawns goroutines, the Evaluator is copied and
-// has certain components replaced.
-type Evaluator struct {
+// Evaler maintains runtime context of elvish code within a single goroutine.
+// When elvish code spawns goroutines, the Evaler is copied and has certain
+// components replaced.
+type Evaler struct {
 	Compiler *Compiler
-	evaluatorEphemeral
+	evalerEphemeral
 	local       ns
 	up          ns
 	builtin     ns
@@ -38,9 +38,9 @@ type Evaluator struct {
 	store       *store.Store
 }
 
-// evaluatorEphemeral holds the ephemeral parts of an Evaluator, namely the
+// evalerEphemeral holds the ephemeral parts of an Evaler, namely the
 // parts only valid through one startEval-stopEval cycle.
-type evaluatorEphemeral struct {
+type evalerEphemeral struct {
 	name, text, context string
 }
 
@@ -58,8 +58,8 @@ func hasFailure(vs []Value) bool {
 	return false
 }
 
-// NewEvaluator creates a new top-level Evaluator.
-func NewEvaluator(st *store.Store, dataDir string) *Evaluator {
+// NewEvaler creates a new top-level Evaler.
+func NewEvaler(st *store.Store, dataDir string) *Evaler {
 	pid := str(strconv.Itoa(syscall.Getpid()))
 	bi := ns{
 		"pid":     newInternalVariableWithType(pid),
@@ -70,7 +70,7 @@ func NewEvaluator(st *store.Store, dataDir string) *Evaluator {
 	for _, b := range builtinFns {
 		bi[fnPrefix+b.Name] = newInternalVariableWithType(b)
 	}
-	ev := &Evaluator{
+	ev := &Evaler{
 		Compiler: NewCompiler(makeCompilerScope(bi), dataDir),
 		local:    ns{},
 		up:       ns{},
@@ -102,16 +102,16 @@ func NewEvaluator(st *store.Store, dataDir string) *Evaluator {
 }
 
 // SetChanOut sets the channel output.
-func (ev *Evaluator) SetChanOut(ch chan Value) {
+func (ev *Evaler) SetChanOut(ch chan Value) {
 	ev.ports[1].ch = ch
 }
 
 // copy returns a copy of ev with context changed. ev.ports is copied deeply
 // and all shouldClose flags are reset.
 //
-// NOTE(xiaq): Subevaluators are relied upon for calling closePorts.
-func (ev *Evaluator) copy(context string) *Evaluator {
-	newEv := new(Evaluator)
+// NOTE(xiaq): Subevalers are relied upon for calling closePorts.
+func (ev *Evaler) copy(context string) *Evaler {
+	newEv := new(Evaler)
 	*newEv = *ev
 	newEv.context = context
 	// Do a deep copy of ports and reset shouldClose flags
@@ -124,7 +124,7 @@ func (ev *Evaluator) copy(context string) *Evaluator {
 
 // port returns ev.ports[i] or nil if i is out of range. This makes it possible
 // to treat ev.ports as if it has an infinite tail of nil's.
-func (ev *Evaluator) port(i int) *port {
+func (ev *Evaler) port(i int) *port {
 	if i >= len(ev.ports) {
 		return nil
 	}
@@ -132,7 +132,7 @@ func (ev *Evaluator) port(i int) *port {
 }
 
 // growPorts makes the size of ev.ports at least n, adding nil's if necessary.
-func (ev *Evaluator) growPorts(n int) {
+func (ev *Evaler) growPorts(n int) {
 	if len(ev.ports) >= n {
 		return
 	}
@@ -152,7 +152,7 @@ func makeCompilerScope(s ns) staticNS {
 
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaluator) Eval(name, text, dir string, n *parse.Chunk) error {
+func (ev *Evaler) Eval(name, text, dir string, n *parse.Chunk) error {
 	op, err := ev.Compiler.Compile(name, text, dir, n)
 	if err != nil {
 		return err
@@ -161,7 +161,7 @@ func (ev *Evaluator) Eval(name, text, dir string, n *parse.Chunk) error {
 }
 
 // eval evaluates an Op.
-func (ev *Evaluator) eval(name, text string, op Op) (err error) {
+func (ev *Evaler) eval(name, text string, op Op) (err error) {
 	if op == nil {
 		return nil
 	}
@@ -172,17 +172,17 @@ func (ev *Evaluator) eval(name, text string, op Op) (err error) {
 	return nil
 }
 
-func (ev *Evaluator) startEval(name, text string) {
-	ev.evaluatorEphemeral = evaluatorEphemeral{name, text, "top"}
+func (ev *Evaler) startEval(name, text string) {
+	ev.evalerEphemeral = evalerEphemeral{name, text, "top"}
 }
 
-func (ev *Evaluator) stopEval() {
-	ev.evaluatorEphemeral = evaluatorEphemeral{}
+func (ev *Evaler) stopEval() {
+	ev.evalerEphemeral = evalerEphemeral{}
 }
 
 // errorf stops the ev.eval immediately by panicking with a diagnostic message.
 // The panic is supposed to be caught by ev.eval.
-func (ev *Evaluator) errorf(p parse.Pos, format string, args ...interface{}) {
+func (ev *Evaler) errorf(p parse.Pos, format string, args ...interface{}) {
 	errutil.Throw(errutil.NewContextualError(
 		fmt.Sprintf("%s (%s)", ev.name, ev.context), "evalling error",
 		ev.text, int(p), format, args...))
@@ -190,7 +190,7 @@ func (ev *Evaluator) errorf(p parse.Pos, format string, args ...interface{}) {
 
 // mustSingleString returns a String if that is the only element of vs.
 // Otherwise it errors.
-func (ev *Evaluator) mustSingleString(vs []Value, what string, p parse.Pos) str {
+func (ev *Evaler) mustSingleString(vs []Value, what string, p parse.Pos) str {
 	if len(vs) != 1 {
 		ev.errorf(p, "Expect exactly one word for %s, got %d", what, len(vs))
 	}
@@ -201,7 +201,7 @@ func (ev *Evaluator) mustSingleString(vs []Value, what string, p parse.Pos) str 
 	return v
 }
 
-func (ev *Evaluator) applyPortOps(ports []portOp) {
+func (ev *Evaler) applyPortOps(ports []portOp) {
 	ev.growPorts(len(ports))
 
 	for i, op := range ports {
@@ -212,7 +212,7 @@ func (ev *Evaluator) applyPortOps(ports []portOp) {
 }
 
 // SourceText evaluates a chunk of elvish source.
-func (ev *Evaluator) SourceText(name, src, dir string) error {
+func (ev *Evaler) SourceText(name, src, dir string) error {
 	n, err := parse.Parse(name, src)
 	if err != nil {
 		return err
@@ -232,7 +232,7 @@ func readFileUTF8(fname string) (string, error) {
 }
 
 // Source evaluates the content of a file.
-func (ev *Evaluator) Source(fname string) error {
+func (ev *Evaler) Source(fname string) error {
 	src, err := readFileUTF8(fname)
 	if err != nil {
 		return err
@@ -242,7 +242,7 @@ func (ev *Evaluator) Source(fname string) error {
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
-func (ev *Evaluator) ResolveVar(ns, name string) Variable {
+func (ev *Evaler) ResolveVar(ns, name string) Variable {
 	if ns == "env" {
 		return newEnvVariable(name)
 	}

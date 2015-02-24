@@ -56,7 +56,7 @@ var (
 	inputError = newFailure("input error")
 )
 
-func put(ev *Evaluator, args []Value) exitus {
+func put(ev *Evaler, args []Value) exitus {
 	out := ev.ports[1].ch
 	for _, a := range args {
 		out <- a
@@ -64,7 +64,7 @@ func put(ev *Evaluator, args []Value) exitus {
 	return success
 }
 
-func typeof(ev *Evaluator, args []Value) exitus {
+func typeof(ev *Evaler, args []Value) exitus {
 	out := ev.ports[1].ch
 	for _, a := range args {
 		out <- str(a.Type().String())
@@ -72,7 +72,7 @@ func typeof(ev *Evaluator, args []Value) exitus {
 	return success
 }
 
-func failure(ev *Evaluator, args []Value) exitus {
+func failure(ev *Evaler, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
@@ -81,7 +81,7 @@ func failure(ev *Evaluator, args []Value) exitus {
 	return success
 }
 
-func print(ev *Evaluator, args []Value) exitus {
+func print(ev *Evaler, args []Value) exitus {
 	out := ev.ports[1].f
 	for _, a := range args {
 		fmt.Fprint(out, toString(a))
@@ -89,12 +89,12 @@ func print(ev *Evaluator, args []Value) exitus {
 	return success
 }
 
-func println(ev *Evaluator, args []Value) exitus {
+func println(ev *Evaler, args []Value) exitus {
 	args = append(args, str("\n"))
 	return print(ev, args)
 }
 
-func printchan(ev *Evaluator, args []Value) exitus {
+func printchan(ev *Evaler, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}
@@ -107,7 +107,7 @@ func printchan(ev *Evaluator, args []Value) exitus {
 	return success
 }
 
-func feedchan(ev *Evaluator, args []Value) exitus {
+func feedchan(ev *Evaler, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}
@@ -131,7 +131,7 @@ func feedchan(ev *Evaluator, args []Value) exitus {
 	}
 }
 
-func ratFn(ev *Evaluator, args []Value) exitus {
+func ratFn(ev *Evaler, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
@@ -145,7 +145,7 @@ func ratFn(ev *Evaluator, args []Value) exitus {
 }
 
 // unpack takes any number of tables and output their list elements.
-func unpack(ev *Evaluator, args []Value) exitus {
+func unpack(ev *Evaler, args []Value) exitus {
 	if len(args) != 0 {
 		return argsError
 	}
@@ -166,7 +166,7 @@ func unpack(ev *Evaluator, args []Value) exitus {
 }
 
 // parseJSON parses a stream of JSON data into Value's.
-func parseJSON(ev *Evaluator, args []Value) exitus {
+func parseJSON(ev *Evaler, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}
@@ -188,7 +188,7 @@ func parseJSON(ev *Evaluator, args []Value) exitus {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ev *Evaluator, args []Value) exitus {
+func each(ev *Evaler, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
@@ -205,7 +205,7 @@ func each(ev *Evaluator, args []Value) exitus {
 	return success
 }
 
-func cd(ev *Evaluator, args []Value) exitus {
+func cd(ev *Evaler, args []Value) exitus {
 	var dir string
 	if len(args) == 0 {
 		user, err := user.Current()
@@ -233,7 +233,7 @@ func cd(ev *Evaluator, args []Value) exitus {
 
 var storeNotConnected = newFailure("store not connected")
 
-func visistedDirs(ev *Evaluator, args []Value) exitus {
+func visistedDirs(ev *Evaler, args []Value) exitus {
 	if ev.store == nil {
 		return storeNotConnected
 	}
@@ -253,7 +253,7 @@ func visistedDirs(ev *Evaluator, args []Value) exitus {
 
 var noMatchingDir = newFailure("no matching directory")
 
-func jumpDir(ev *Evaluator, args []Value) exitus {
+func jumpDir(ev *Evaler, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
@@ -277,7 +277,7 @@ func jumpDir(ev *Evaluator, args []Value) exitus {
 	return success
 }
 
-func source(ev *Evaluator, args []Value) exitus {
+func source(ev *Evaler, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
@@ -304,7 +304,7 @@ func toFloats(args []Value) (nums []float64, err error) {
 	return
 }
 
-func plus(ev *Evaluator, args []Value) exitus {
+func plus(ev *Evaler, args []Value) exitus {
 	out := ev.ports[1].ch
 	nums, err := toFloats(args)
 	if err != nil {
@@ -318,7 +318,7 @@ func plus(ev *Evaluator, args []Value) exitus {
 	return success
 }
 
-func minus(ev *Evaluator, args []Value) exitus {
+func minus(ev *Evaler, args []Value) exitus {
 	out := ev.ports[1].ch
 	if len(args) == 0 {
 		return argsError
@@ -335,7 +335,7 @@ func minus(ev *Evaluator, args []Value) exitus {
 	return success
 }
 
-func times(ev *Evaluator, args []Value) exitus {
+func times(ev *Evaler, args []Value) exitus {
 	out := ev.ports[1].ch
 	nums, err := toFloats(args)
 	if err != nil {
@@ -349,7 +349,7 @@ func times(ev *Evaluator, args []Value) exitus {
 	return success
 }
 
-func divide(ev *Evaluator, args []Value) exitus {
+func divide(ev *Evaler, args []Value) exitus {
 	out := ev.ports[1].ch
 	if len(args) == 0 {
 		return argsError
@@ -366,7 +366,7 @@ func divide(ev *Evaluator, args []Value) exitus {
 	return success
 }
 
-func eq(ev *Evaluator, args []Value) exitus {
+func eq(ev *Evaler, args []Value) exitus {
 	out := ev.ports[1].ch
 	if len(args) == 0 {
 		return argsError

@@ -22,7 +22,7 @@ const (
 	outChanLeader = "▶ "
 )
 
-func newEvaluator() *eval.Evaluator {
+func newEvaler() *eval.Evaler {
 	ch := make(chan eval.Value, outChanSize)
 	go func() {
 		for v := range ch {
@@ -43,7 +43,7 @@ func newEvaluator() *eval.Evaluator {
 		}
 	}
 
-	ev := eval.NewEvaluator(st, dataDir)
+	ev := eval.NewEvaler(st, dataDir)
 	ev.SetChanOut(ch)
 	return ev
 }
@@ -60,7 +60,7 @@ func printError(err error) {
 
 // TODO(xiaq): Currently only the editor deals with signals.
 func interact() {
-	ev := newEvaluator()
+	ev := newEvaler()
 	datadir, err := store.EnsureDataDir()
 	printError(err)
 	if err == nil {
@@ -120,7 +120,7 @@ func interact() {
 }
 
 func script(fname string) {
-	ev := newEvaluator()
+	ev := newEvaler()
 	err := ev.Source(fname)
 	printError(err)
 	if err != nil {

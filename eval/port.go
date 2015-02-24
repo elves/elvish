@@ -14,7 +14,7 @@ type port struct {
 
 // closePorts closes the suitable components of all ports in ev.ports that were
 // marked marked for closing.
-func (ev *Evaluator) closePorts() {
+func (ev *Evaler) closePorts() {
 	for _, port := range ev.ports {
 		if port.closeF {
 			port.f.Close()
