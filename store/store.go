@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3" // enable the "sqlite3" SQL driver
 )
 
 type Store struct {
