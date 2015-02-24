@@ -88,22 +88,22 @@ var parseTests = []struct {
 	// Output and status redir
 	{"a>b?>$c", chunkOfFormWithRedir("c",
 		&FilenameRedir{
-			RedirBase{1, 1}, os.O_WRONLY | os.O_CREATE,
+			redirBase{1, 1}, os.O_WRONLY | os.O_CREATE,
 			compoundOfBare(2, "b")})},
 	// Different direction
 	{"a>>b", chunkOfFormWithRedir("",
 		&FilenameRedir{
-			RedirBase{1, 1}, os.O_WRONLY | os.O_CREATE | os.O_APPEND,
+			redirBase{1, 1}, os.O_WRONLY | os.O_CREATE | os.O_APPEND,
 			compoundOfBare(3, "b")})},
 	// FilenameRedir with custom fd
 	{"a>[2]b", chunkOfFormWithRedir("",
 		&FilenameRedir{
-			RedirBase{1, 2}, os.O_WRONLY | os.O_CREATE,
+			redirBase{1, 2}, os.O_WRONLY | os.O_CREATE,
 			compoundOfBare(5, "b")})},
 	// FdRedir
-	{"a>[2=33]", chunkOfFormWithRedir("", &FdRedir{RedirBase{1, 2}, 33})},
+	{"a>[2=33]", chunkOfFormWithRedir("", &FdRedir{redirBase{1, 2}, 33})},
 	// CloseRedir
-	{"a>[2=]", chunkOfFormWithRedir("", &CloseRedir{RedirBase{1, 2}})},
+	{"a>[2=]", chunkOfFormWithRedir("", &CloseRedir{redirBase{1, 2}})},
 
 	// Compound with sigil
 	{"a !b$c", chunkOfOneForm(
