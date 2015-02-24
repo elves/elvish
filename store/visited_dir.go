@@ -51,8 +51,7 @@ func convertVisitedDirs(rows *sql.Rows) ([]VisitedDir, error) {
 
 func (s *Store) FindVisitedDirs(p string) ([]VisitedDir, error) {
 	rows, err := s.db.Query(
-		"select path, score from visited_dir where path glob ? order by score desc",
-		"*"+EscapeGlob(p)+"*")
+		"select path, score from visited_dir where instr(path, ?) > 0 order by score desc", p)
 	if err != nil {
 		return nil, err
 	}
