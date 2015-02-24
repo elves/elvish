@@ -118,11 +118,10 @@ func determineFeature(fname string, mh bool) (fileFeature, error) {
 	// Symlink and OrphanedSymlink has highest precedence
 	if is(m, syscall.S_IFLNK) {
 		_, err := os.Stat(fname)
-		if err == nil {
-			return featureSymlink, nil
-		} else {
+		if err != nil {
 			return featureOrphanedSymlink, nil
 		}
+		return featureSymlink, nil
 	}
 
 	// featureMultiHardLink

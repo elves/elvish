@@ -203,9 +203,8 @@ func compareRows(r1, r2 []cell) (bool, int) {
 	}
 	if len(r1) < len(r2) {
 		return false, len(r1)
-	} else {
-		return true, 0
 	}
+	return true, 0
 }
 
 // commitBuffer updates the terminal display to reflect current buffer.
@@ -281,23 +280,23 @@ func lines(bufs ...*buffer) (l int) {
 // findWindow finds a window of lines around the selected line in a total
 // number of height lines, that is at most max lines.
 func findWindow(height, selected, max int) (low, high int) {
-	if height > max {
-		low = selected - max/2
-		high = low + max
-		switch {
-		case low < 0:
-			// Near top of the list, move the window down
-			low = 0
-			high = low + max
-		case high > height:
-			// Near bottom of the list, move the window down
-			high = height
-			low = high - max
-		}
-		return
-	} else {
+	if height <= max {
+		// No need for windowing
 		return 0, height
 	}
+	low = selected - max/2
+	high = low + max
+	switch {
+	case low < 0:
+		// Near top of the list, move the window down
+		low = 0
+		high = low + max
+	case high > height:
+		// Near bottom of the list, move the window down
+		high = height
+		low = high - max
+	}
+	return
 }
 
 func trimToWindow(s []string, selected, max int) ([]string, int) {

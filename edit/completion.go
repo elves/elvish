@@ -82,14 +82,14 @@ func fileNames(dir string) (names []string, err error) {
 }
 
 var (
-	notPlainPrimary    = fmt.Errorf("not a plain PrimaryNode")
-	notPlainCompound   = fmt.Errorf("not a plain CompoundNode")
-	unknownContextType = fmt.Errorf("unknown context type")
+	errNotPlainPrimary    = fmt.Errorf("not a plain PrimaryNode")
+	errNotPlainCompound   = fmt.Errorf("not a plain CompoundNode")
+	errUnknownContextType = fmt.Errorf("unknown context type")
 )
 
 func peekPrimary(fn *parse.PrimaryNode) (string, error) {
 	if fn.Typ != parse.StringPrimary {
-		return "", notPlainPrimary
+		return "", errNotPlainPrimary
 	}
 	return fn.Node.(*parse.StringNode).Text, nil
 }
@@ -98,11 +98,11 @@ func peekIncompleteCompound(tn *parse.CompoundNode) (string, int, error) {
 	text := ""
 	for _, n := range tn.Nodes {
 		if n.Right != nil {
-			return "", 0, notPlainCompound
+			return "", 0, errNotPlainCompound
 		}
 		s, e := peekPrimary(n.Left)
 		if e != nil {
-			return "", 0, notPlainCompound
+			return "", 0, errNotPlainCompound
 		}
 		text += s
 	}
@@ -128,7 +128,7 @@ func peekCurrentCompound(ctx *parse.Context, dot int) (string, int, error) {
 		}
 		return peekIncompleteCompound(fnRedir.Filename)
 	default:
-		return "", 0, unknownContextType
+		return "", 0, errUnknownContextType
 	}
 }
 

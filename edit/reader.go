@@ -35,7 +35,7 @@ const (
 
 var (
 	ErrTimeout = errors.New("timed out")
-	BadCPR     = errors.New("bad CPR")
+	ErrBadCPR  = errors.New("bad CPR")
 )
 
 type BadEscSeq struct {
@@ -212,10 +212,9 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 					rd.badEscSeq("bad cpr")
 				}
 				return ZeroKey, pos{nums[0], nums[1]}, nil
-			} else {
-				k, err := parseCSI(nums, r, seq)
-				return k, InvalidPos, err
 			}
+			k, err := parseCSI(nums, r, seq)
+			return k, InvalidPos, err
 		case 'O':
 			// G3 style function key sequence: read one rune.
 			r = rd.readRune(EscTimeout)
