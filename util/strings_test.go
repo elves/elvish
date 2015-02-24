@@ -32,9 +32,9 @@ var SubstringByRuneTests = []struct {
 	{"你好世界", 1, 1, "", nil},
 	{"你好世界", 1, 2, "好", nil},
 	{"你好世界", 1, 4, "好世界", nil},
-	{"你好世界", -1, -1, "", IndexOutOfRange},
-	{"你好世界", 0, 5, "", IndexOutOfRange},
-	{"你好世界", 5, 5, "", IndexOutOfRange},
+	{"你好世界", -1, -1, "", ErrIndexOutOfRange},
+	{"你好世界", 0, 5, "", ErrIndexOutOfRange},
+	{"你好世界", 5, 5, "", ErrIndexOutOfRange},
 }
 
 func TestSubstringByRune(t *testing.T) {
@@ -53,9 +53,9 @@ var NthRuneTests = []struct {
 	wantedRune rune
 	wantedErr  error
 }{
-	{"你好世界", -1, 0, IndexOutOfRange},
+	{"你好世界", -1, 0, ErrIndexOutOfRange},
 	{"你好世界", 0, '你', nil},
-	{"你好世界", 4, 0, IndexOutOfRange},
+	{"你好世界", 4, 0, ErrIndexOutOfRange},
 }
 
 func TestNthRune(t *testing.T) {

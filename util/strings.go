@@ -39,14 +39,14 @@ func FindLastSOL(s string) int {
 }
 
 var (
-	IndexOutOfRange = errors.New("substring out of range")
+	ErrIndexOutOfRange = errors.New("substring out of range")
 )
 
-// SubStringByRune returns the range of the i-th rune (inclusive) through the
+// SubstringByRune returns the range of the i-th rune (inclusive) through the
 // j-th rune (exclusive) in s.
 func SubstringByRune(s string, low, high int) (string, error) {
 	if low > high || low < 0 || high < 0 {
-		return "", IndexOutOfRange
+		return "", ErrIndexOutOfRange
 	}
 	var bLow, bHigh, j int
 	for i := range s {
@@ -59,7 +59,7 @@ func SubstringByRune(s string, low, high int) (string, error) {
 		j++
 	}
 	if j < high {
-		return "", IndexOutOfRange
+		return "", ErrIndexOutOfRange
 	}
 	if low == high {
 		return "", nil
@@ -73,7 +73,7 @@ func SubstringByRune(s string, low, high int) (string, error) {
 // NthRune returns the n-th rune of s.
 func NthRune(s string, n int) (rune, error) {
 	if n < 0 {
-		return 0, IndexOutOfRange
+		return 0, ErrIndexOutOfRange
 	}
 	var j int
 	for _, r := range s {
@@ -82,5 +82,5 @@ func NthRune(s string, n int) (rune, error) {
 		}
 		j++
 	}
-	return 0, IndexOutOfRange
+	return 0, ErrIndexOutOfRange
 }
