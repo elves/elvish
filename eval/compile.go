@@ -46,7 +46,7 @@ func (cp *Compiler) stopCompile() {
 
 // Compile compiles a ChunkNode into an Op. The supplied name and text are used
 // in diagnostic messages.
-func (cp *Compiler) Compile(name, text, dir string, n *parse.ChunkNode) (op Op, err error) {
+func (cp *Compiler) Compile(name, text, dir string, n *parse.Chunk) (op Op, err error) {
 	cp.startCompile(name, text, dir)
 	defer cp.stopCompile()
 	defer errutil.Catch(&err)
@@ -75,7 +75,7 @@ func (cp *Compiler) errorf(p parse.Pos, format string, args ...interface{}) {
 }
 
 // chunk compiles a ChunkNode into an Op.
-func (cp *Compiler) chunk(cn *parse.ChunkNode) Op {
+func (cp *Compiler) chunk(cn *parse.Chunk) Op {
 	ops := make([]valuesOp, len(cn.Nodes))
 	for i, pn := range cn.Nodes {
 		ops[i] = cp.pipeline(pn)
@@ -84,7 +84,7 @@ func (cp *Compiler) chunk(cn *parse.ChunkNode) Op {
 }
 
 // closure compiles a ClosureNode into a valuesOp.
-func (cp *Compiler) closure(cn *parse.ClosureNode) valuesOp {
+func (cp *Compiler) closure(cn *parse.Closure) valuesOp {
 	nargs := 0
 	if cn.ArgNames != nil {
 		nargs = len(cn.ArgNames.Nodes)
@@ -123,7 +123,7 @@ func (cp *Compiler) closure(cn *parse.ClosureNode) valuesOp {
 }
 
 // pipeline compiles a PipelineNode into a valuesOp.
-func (cp *Compiler) pipeline(pn *parse.PipelineNode) valuesOp {
+func (cp *Compiler) pipeline(pn *parse.Pipeline) valuesOp {
 	ops := make([]stateUpdatesOp, len(pn.Nodes))
 
 	for i, fn := range pn.Nodes {
@@ -195,13 +195,13 @@ func (cp *Compiler) ResolveVar(ns, name string) Type {
 	return nil
 }
 
-func resolveBuiltinSpecial(cmd *parse.CompoundNode) *builtinSpecial {
+func resolveBuiltinSpecial(cmd *parse.Compound) *builtinSpecial {
 	if len(cmd.Nodes) == 1 {
 		sn := cmd.Nodes[0]
 		if sn.Right == nil {
 			pn := sn.Left
 			if pn.Typ == parse.StringPrimary {
-				name := pn.Node.(*parse.StringNode).Text
+				name := pn.Node.(*parse.String).Text
 				if bi, ok := builtinSpecials[name]; ok {
 					return &bi
 				}
@@ -212,7 +212,7 @@ func resolveBuiltinSpecial(cmd *parse.CompoundNode) *builtinSpecial {
 }
 
 // form compiles a FormNode into a stateUpdatesOp.
-func (cp *Compiler) form(fn *parse.FormNode) stateUpdatesOp {
+func (cp *Compiler) form(fn *parse.Form) stateUpdatesOp {
 	bi := resolveBuiltinSpecial(fn.Command)
 	ports := cp.redirs(fn.Redirs)
 
@@ -281,7 +281,7 @@ func (cp *Compiler) redir(r parse.Redir) portOp {
 
 // compounds compiles a slice of CompoundNode's into a valuesOp. It can
 // be also used to compile a SpacedNode.
-func (cp *Compiler) compounds(tns []*parse.CompoundNode) valuesOp {
+func (cp *Compiler) compounds(tns []*parse.Compound) valuesOp {
 	ops := make([]valuesOp, len(tns))
 	for i, tn := range tns {
 		ops[i] = cp.compound(tn)
@@ -290,12 +290,12 @@ func (cp *Compiler) compounds(tns []*parse.CompoundNode) valuesOp {
 }
 
 // spaced compiles a SpacedNode into a valuesOp.
-func (cp *Compiler) spaced(ln *parse.SpacedNode) valuesOp {
+func (cp *Compiler) spaced(ln *parse.Spaced) valuesOp {
 	return cp.compounds(ln.Nodes)
 }
 
 // compound compiles a CompoundNode into a valuesOp.
-func (cp *Compiler) compound(tn *parse.CompoundNode) valuesOp {
+func (cp *Compiler) compound(tn *parse.Compound) valuesOp {
 	var op valuesOp
 	if len(tn.Nodes) == 1 {
 		op = cp.subscript(tn.Nodes[0])
@@ -316,7 +316,7 @@ func (cp *Compiler) compound(tn *parse.CompoundNode) valuesOp {
 }
 
 // subscript compiles a SubscriptNode into a valuesOp.
-func (cp *Compiler) subscript(sn *parse.SubscriptNode) valuesOp {
+func (cp *Compiler) subscript(sn *parse.Subscript) valuesOp {
 	if sn.Right == nil {
 		return cp.primary(sn.Left)
 	}
@@ -326,16 +326,16 @@ func (cp *Compiler) subscript(sn *parse.SubscriptNode) valuesOp {
 }
 
 // primary compiles a PrimaryNode into a valuesOp.
-func (cp *Compiler) primary(fn *parse.PrimaryNode) valuesOp {
+func (cp *Compiler) primary(fn *parse.Primary) valuesOp {
 	switch fn.Typ {
 	case parse.StringPrimary:
-		text := fn.Node.(*parse.StringNode).Text
+		text := fn.Node.(*parse.String).Text
 		return makeString(text)
 	case parse.VariablePrimary:
-		name := fn.Node.(*parse.StringNode).Text
+		name := fn.Node.(*parse.String).Text
 		return makeVar(cp, name, fn.Pos)
 	case parse.TablePrimary:
-		table := fn.Node.(*parse.TableNode)
+		table := fn.Node.(*parse.Table)
 		list := cp.compounds(table.List)
 		keys := make([]valuesOp, len(table.Dict))
 		values := make([]valuesOp, len(table.Dict))
@@ -345,14 +345,14 @@ func (cp *Compiler) primary(fn *parse.PrimaryNode) valuesOp {
 		}
 		return combineTable(list, keys, values, fn.Pos)
 	case parse.ClosurePrimary:
-		return cp.closure(fn.Node.(*parse.ClosureNode))
+		return cp.closure(fn.Node.(*parse.Closure))
 	case parse.ListPrimary:
-		return cp.spaced(fn.Node.(*parse.SpacedNode))
+		return cp.spaced(fn.Node.(*parse.Spaced))
 	case parse.ChanCapturePrimary:
-		op := cp.pipeline(fn.Node.(*parse.PipelineNode))
+		op := cp.pipeline(fn.Node.(*parse.Pipeline))
 		return combineChanCapture(op)
 	case parse.StatusCapturePrimary:
-		op := cp.pipeline(fn.Node.(*parse.PipelineNode))
+		op := cp.pipeline(fn.Node.(*parse.Pipeline))
 		return op
 	default:
 		panic(fmt.Sprintln("bad PrimaryNode type", fn.Typ))

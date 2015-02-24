@@ -17,7 +17,7 @@ func TestNewEvaluator(t *testing.T) {
 	}
 }
 
-func mustParse(name, text string) *parse.ChunkNode {
+func mustParse(name, text string) *parse.Chunk {
 	n, e := parse.Parse(name, text)
 	if e != nil {
 		panic("parser error")

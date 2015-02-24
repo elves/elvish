@@ -27,100 +27,100 @@ func (p Pos) Position() Pos {
 
 // Nodes.
 
-// ChunkNode is a list of FormNode's.
-type ChunkNode struct {
+// Chunk is a list of Form's.
+type Chunk struct {
 	Pos
-	Nodes []*PipelineNode
+	Nodes []*Pipeline
 }
 
-func newChunk(pos Pos, nodes ...*PipelineNode) *ChunkNode {
-	return &ChunkNode{pos, nodes}
+func newChunk(pos Pos, nodes ...*Pipeline) *Chunk {
+	return &Chunk{pos, nodes}
 }
 
-func (cn *ChunkNode) isNode() {}
+func (cn *Chunk) isNode() {}
 
-func (cn *ChunkNode) append(n *PipelineNode) {
+func (cn *Chunk) append(n *Pipeline) {
 	cn.Nodes = append(cn.Nodes, n)
 }
 
-// PipelineNode is a list of FormNode's.
-type PipelineNode struct {
+// Pipeline is a list of Form's.
+type Pipeline struct {
 	Pos
-	Nodes []*FormNode
+	Nodes []*Form
 }
 
-func newPipeline(pos Pos, nodes ...*FormNode) *PipelineNode {
-	return &PipelineNode{Pos: pos, Nodes: nodes}
+func newPipeline(pos Pos, nodes ...*Form) *Pipeline {
+	return &Pipeline{Pos: pos, Nodes: nodes}
 }
 
-func (pn *PipelineNode) isNode() {}
+func (pn *Pipeline) isNode() {}
 
-func (pn *PipelineNode) append(n *FormNode) {
+func (pn *Pipeline) append(n *Form) {
 	pn.Nodes = append(pn.Nodes, n)
 }
 
-// FormNode holds a form.
-type FormNode struct {
+// Form holds a form.
+type Form struct {
 	Pos
-	Command     *CompoundNode
-	Args        *SpacedNode
+	Command     *Compound
+	Args        *Spaced
 	Redirs      []Redir
 	StatusRedir string
 }
 
-func newForm(pos Pos) *FormNode {
-	return &FormNode{Pos: pos}
+func newForm(pos Pos) *Form {
+	return &Form{Pos: pos}
 }
 
-func (fn *FormNode) isNode() {}
+func (fn *Form) isNode() {}
 
 // Special value for CompoundNode.Sigil to indicate no sigil is present.
 const NoSigil rune = -1
 
-// CompoundNode is a list of SubscriptNode's.
-type CompoundNode struct {
+// Compound is a list of Subscript's.
+type Compound struct {
 	Pos
 	Sigil rune
-	Nodes []*SubscriptNode
+	Nodes []*Subscript
 }
 
-func newCompound(pos Pos, sigil rune, nodes ...*SubscriptNode) *CompoundNode {
-	return &CompoundNode{pos, sigil, nodes}
+func newCompound(pos Pos, sigil rune, nodes ...*Subscript) *Compound {
+	return &Compound{pos, sigil, nodes}
 }
 
-func (cn *CompoundNode) isNode() {}
+func (cn *Compound) isNode() {}
 
-func (cn *CompoundNode) append(n *SubscriptNode) {
+func (cn *Compound) append(n *Subscript) {
 	cn.Nodes = append(cn.Nodes, n)
 }
 
-// SpacedNode is a list of CompoundNode's.
-type SpacedNode struct {
+// Spaced is a list of Compound's.
+type Spaced struct {
 	Pos
-	Nodes []*CompoundNode
+	Nodes []*Compound
 }
 
-func newSpaced(pos Pos, nodes ...*CompoundNode) *SpacedNode {
-	return &SpacedNode{pos, nodes}
+func newSpaced(pos Pos, nodes ...*Compound) *Spaced {
+	return &Spaced{pos, nodes}
 }
 
-func (sn *SpacedNode) isNode() {}
+func (sn *Spaced) isNode() {}
 
-func (sn *SpacedNode) append(n *CompoundNode) {
+func (sn *Spaced) append(n *Compound) {
 	sn.Nodes = append(sn.Nodes, n)
 }
 
-// SubscriptNode represents a subscript expression.
-type SubscriptNode struct {
+// Subscript represents a subscript expression.
+type Subscript struct {
 	Pos
-	Left  *PrimaryNode
-	Right *CompoundNode
+	Left  *Primary
+	Right *Compound
 }
 
-func (sn *SubscriptNode) isNode() {}
+func (sn *Subscript) isNode() {}
 
-// PrimaryNode represents a primary expression.
-type PrimaryNode struct {
+// Primary represents a primary expression.
+type Primary struct {
 	Pos
 	Typ  PrimaryType
 	Node Node
@@ -142,65 +142,65 @@ const (
 	StatusCapturePrimary // status capture: ?(cmd1|cmd2)
 )
 
-func newPrimary(pos Pos) *PrimaryNode {
-	return &PrimaryNode{Pos: pos}
+func newPrimary(pos Pos) *Primary {
+	return &Primary{Pos: pos}
 }
 
-func (pn *PrimaryNode) isNode() {}
+func (pn *Primary) isNode() {}
 
 // TablePair represents a key/value pair in table literal.
 type TablePair struct {
-	Key   *CompoundNode
-	Value *CompoundNode
+	Key   *Compound
+	Value *Compound
 }
 
-func newTablePair(k, v *CompoundNode) *TablePair {
+func newTablePair(k, v *Compound) *TablePair {
 	return &TablePair{k, v}
 }
 
-// TableNode holds a table literal.
-type TableNode struct {
+// Table holds a table literal.
+type Table struct {
 	Pos
-	List []*CompoundNode
+	List []*Compound
 	Dict []*TablePair
 }
 
-func newTable(pos Pos) *TableNode {
-	return &TableNode{Pos: pos}
+func newTable(pos Pos) *Table {
+	return &Table{Pos: pos}
 }
 
-func (tn *TableNode) isNode() {}
+func (tn *Table) isNode() {}
 
-func (tn *TableNode) appendToList(compound *CompoundNode) {
+func (tn *Table) appendToList(compound *Compound) {
 	tn.List = append(tn.List, compound)
 }
 
-func (tn *TableNode) appendToDict(key *CompoundNode, value *CompoundNode) {
+func (tn *Table) appendToDict(key *Compound, value *Compound) {
 	tn.Dict = append(tn.Dict, &TablePair{key, value})
 }
 
-// ClosureNode holds a closure literal.
-type ClosureNode struct {
+// Closure holds a closure literal.
+type Closure struct {
 	Pos
-	ArgNames *SpacedNode
-	Chunk    *ChunkNode
+	ArgNames *Spaced
+	Chunk    *Chunk
 }
 
-func newClosure(pos Pos) *ClosureNode {
-	return &ClosureNode{Pos: pos}
+func newClosure(pos Pos) *Closure {
+	return &Closure{Pos: pos}
 }
 
-func (cn *ClosureNode) isNode() {}
+func (cn *Closure) isNode() {}
 
-// StringNode holds a string literal. The value has been "unquoted".
-type StringNode struct {
+// String holds a string literal. The value has been "unquoted".
+type String struct {
 	Pos
 	Quoted string // The original text of the string, with quotes.
 	Text   string // The string, after quote processing.
 }
 
-func newString(pos Pos, orig, text string) *StringNode {
-	return &StringNode{Pos: pos, Quoted: orig, Text: text}
+func newString(pos Pos, orig, text string) *String {
+	return &String{Pos: pos, Quoted: orig, Text: text}
 }
 
-func (sn *StringNode) isNode() {}
+func (sn *String) isNode() {}

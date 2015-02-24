@@ -27,9 +27,9 @@ import (
 
 // Parser maintains the states during parsing.
 type Parser struct {
-	Name       string     // name of the script represented by the tree.
-	completing bool       // Whether the parser is running in completing mode
-	Root       *ChunkNode // top-level root of the tree.
+	Name       string // name of the script represented by the tree.
+	completing bool   // Whether the parser is running in completing mode
+	Root       *Chunk // top-level root of the tree.
 	Ctx        *Context
 	text       string // text parsed to create the script (or its parent)
 	// Parsing only; cleared after parse.
@@ -180,7 +180,7 @@ func (p *Parser) Parse(text string, completing bool) (err error) {
 
 // Parse is a shorthand for constructing a Paser, call Parse and take out its
 // Root.
-func Parse(name, text string) (*ChunkNode, error) {
+func Parse(name, text string) (*Chunk, error) {
 	p := NewParser(name)
 	err := p.Parse(text, false)
 	if err != nil {
@@ -201,7 +201,7 @@ func Complete(name, text string) (*Context, error) {
 }
 
 // parse parses a chunk and ensures there are no trailing tokens
-func (p *Parser) parse() *ChunkNode {
+func (p *Parser) parse() *Chunk {
 	chunk := p.chunk()
 	if token := p.peekNonSpace(); token.Typ != ItemEOF {
 		p.unexpected(token, "end of script")
@@ -212,7 +212,7 @@ func (p *Parser) parse() *ChunkNode {
 // chunk parses a chunk. The name is borrowed from Lua.
 //
 // Chunk = [ [ space ] Pipeline { (";" | "\n") Pipeline } ]
-func (p *Parser) chunk() *ChunkNode {
+func (p *Parser) chunk() *Chunk {
 	chunk := newChunk(p.peek().Pos)
 
 	for {
@@ -237,7 +237,7 @@ func (p *Parser) chunk() *ChunkNode {
 // pipeline parses a pipeline. The pipeline may not be empty.
 //
 // Pipeline = Form { '|' Form }
-func (p *Parser) pipeline() *PipelineNode {
+func (p *Parser) pipeline() *Pipeline {
 	pipe := newPipeline(p.peek().Pos)
 	for {
 		pipe.append(p.form())
@@ -252,7 +252,7 @@ func (p *Parser) pipeline() *PipelineNode {
 // form parses a form. The name is borrowed from Lisp.
 //
 // Form = Spaced { [ space ] Redir } [ space ]
-func (p *Parser) form() *FormNode {
+func (p *Parser) form() *Form {
 	fm := newForm(p.peekNonSpace().Pos)
 	p.Ctx.Form = fm
 	fm.Command = p.compound(CommandContext)
@@ -276,7 +276,7 @@ loop:
 // them with simple whitespaces.
 //
 // Spaced = { [ space ] Compound } [ space ]
-func (p *Parser) spaced() *SpacedNode {
+func (p *Parser) spaced() *Spaced {
 	// Skip leading spaces
 	p.peekNonSpace()
 	list := newSpaced(p.peek().Pos)
@@ -301,7 +301,7 @@ loop:
 // linguistics, where a compound word is roughly some words that run together.
 //
 // Compound = [ sigil ] Subscript { Subscript } [ space ]
-func (p *Parser) compound(ct ContextType) *CompoundNode {
+func (p *Parser) compound(ct ContextType) *Compound {
 	compound := newCompound(p.peek().Pos, NoSigil)
 	if p.peek().Typ == ItemSigil {
 		token := p.next()
@@ -319,8 +319,8 @@ func (p *Parser) compound(ct ContextType) *CompoundNode {
 // optional.
 //
 // Subscript = Primary [ '[' Compound ']' ]
-func (p *Parser) subscript() *SubscriptNode {
-	sub := &SubscriptNode{Pos: p.peek().Pos}
+func (p *Parser) subscript() *Subscript {
+	sub := &Subscript{Pos: p.peek().Pos}
 	sub.Left = p.primary()
 	if p.peek().Typ == ItemLBracket {
 		p.next()
@@ -374,7 +374,7 @@ func startsPrimary(p ItemType) bool {
 // opening brace. If startsPrimary(token), it is considered a flat list.
 // This implies that whitespaces after opening brace always introduce a
 // closure: {echo} is a flat list, { echo } and {|| echo} are closures.
-func (p *Parser) primary() (fn *PrimaryNode) {
+func (p *Parser) primary() (fn *Primary) {
 	fn = newPrimary(p.peek().Pos)
 	switch token := p.next(); token.Typ {
 	case ItemDollar:
@@ -432,7 +432,7 @@ func (p *Parser) primary() (fn *PrimaryNode) {
 // closure parses a closure literal. The opening brace has already been seen.
 //
 // Closure  = '{' [ space ] [ '|' Spaced '|' [ space ] ] Chunk '}'
-func (p *Parser) closure() (tn *ClosureNode) {
+func (p *Parser) closure() (tn *Closure) {
 	tn = newClosure(p.peek().Pos)
 	if p.peekNonSpace().Typ == ItemPipe {
 		p.next()
@@ -454,7 +454,7 @@ func (p *Parser) closure() (tn *ClosureNode) {
 //
 // TableElement = Compound
 //              = '&' Compound [ space ] Compound
-func (p *Parser) table() (tn *TableNode) {
+func (p *Parser) table() (tn *Table) {
 	tn = newTable(p.next().Pos)
 
 	for {
@@ -495,7 +495,7 @@ func (p *Parser) statusRedir() string {
 	if len(compound.Nodes) == 1 && compound.Nodes[0].Right == nil {
 		primary := compound.Nodes[0].Left
 		if primary.Typ == VariablePrimary {
-			return primary.Node.(*StringNode).Text
+			return primary.Node.(*String).Text
 		}
 	}
 	p.errorf(int(compound.Pos), "expect variable")

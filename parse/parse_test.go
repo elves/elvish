@@ -9,38 +9,38 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func compoundOfOnePrimary(p *PrimaryNode) *CompoundNode {
-	return newCompound(p.Pos, NoSigil, &SubscriptNode{p.Pos, p, nil})
+func compoundOfOnePrimary(p *Primary) *Compound {
+	return newCompound(p.Pos, NoSigil, &Subscript{p.Pos, p, nil})
 }
 
-func compoundOfBare(p Pos, s string) *CompoundNode {
+func compoundOfBare(p Pos, s string) *Compound {
 	return compoundOfOnePrimary(
-		&PrimaryNode{p, StringPrimary, newString(p, s, s)})
+		&Primary{p, StringPrimary, newString(p, s, s)})
 }
 
 // formWithRedir returns the expected FormNode of a "a" command followed by
 // status and output redirections.
-func formWithRedir(sr string, rs ...Redir) *FormNode {
-	return &FormNode{0, compoundOfBare(0, "a"), newSpaced(1), rs, sr}
+func formWithRedir(sr string, rs ...Redir) *Form {
+	return &Form{0, compoundOfBare(0, "a"), newSpaced(1), rs, sr}
 }
 
 // formWithOnePrimary returns the expected FormNode of a "a" command followed
 // by exactly one primary expression.
-func formWithOnePrimary(p *PrimaryNode) *FormNode {
-	return &FormNode{0,
+func formWithOnePrimary(p *Primary) *Form {
+	return &Form{0,
 		compoundOfBare(0, "a"),
 		newSpaced(2, compoundOfOnePrimary(p)), nil, ""}
 }
 
-func chunkOfOneForm(f *FormNode) *ChunkNode {
+func chunkOfOneForm(f *Form) *Chunk {
 	return newChunk(f.Pos, newPipeline(f.Pos, f))
 }
 
-func chunkOfFormWithRedir(sr string, rs ...Redir) *ChunkNode {
+func chunkOfFormWithRedir(sr string, rs ...Redir) *Chunk {
 	return chunkOfOneForm(formWithRedir(sr, rs...))
 }
 
-func chunkOfFormWithOnePrimary(p *PrimaryNode) *ChunkNode {
+func chunkOfFormWithOnePrimary(p *Primary) *Chunk {
 	return chunkOfOneForm(formWithOnePrimary(p))
 }
 
@@ -53,7 +53,7 @@ var parseTests = []struct {
 
 	// Command with arguments
 	{"ls x y", chunkOfOneForm(
-		&FormNode{0,
+		&Form{0,
 			compoundOfBare(0, "ls"),
 			newSpaced(3,
 				compoundOfBare(3, "x"),
@@ -63,23 +63,23 @@ var parseTests = []struct {
 	// Wow... such whitespace, much unnecessary, so valid
 	{"  ;\n\n  ls   ;\n", newChunk(0,
 		newPipeline(7,
-			&FormNode{7, compoundOfBare(7, "ls"), newSpaced(12), nil, ""}))},
+			&Form{7, compoundOfBare(7, "ls"), newSpaced(12), nil, ""}))},
 
 	// Multiple pipelines, multiple commands
 	{"a;b|c\n;d", newChunk(0,
 		newPipeline(0,
-			&FormNode{0,
+			&Form{0,
 				compoundOfBare(0, "a"),
 				newSpaced(1), nil, ""}),
 		newPipeline(2,
-			&FormNode{2,
+			&Form{2,
 				compoundOfBare(2, "b"),
 				newSpaced(3), nil, ""},
-			&FormNode{4,
+			&Form{4,
 				compoundOfBare(4, "c"),
 				newSpaced(5), nil, ""}),
 		newPipeline(7,
-			&FormNode{7,
+			&Form{7,
 				compoundOfBare(7, "d"),
 				newSpaced(8), nil, ""}))},
 
@@ -107,28 +107,28 @@ var parseTests = []struct {
 
 	// Compound with sigil
 	{"a !b$c", chunkOfOneForm(
-		&FormNode{0,
+		&Form{0,
 			compoundOfBare(0, "a"),
 			newSpaced(2,
 				newCompound(2, '!',
-					&SubscriptNode{3,
-						&PrimaryNode{3, StringPrimary,
+					&Subscript{3,
+						&Primary{3, StringPrimary,
 							newString(3, "b", "b")},
 						nil},
-					&SubscriptNode{4,
-						&PrimaryNode{4, VariablePrimary,
+					&Subscript{4,
+						&Primary{4, VariablePrimary,
 							newString(5, "c", "c")},
 						nil})),
 			nil, ""})},
 
 	// Subscript
 	{"a $b[c]", chunkOfOneForm(
-		&FormNode{0,
+		&Form{0,
 			compoundOfBare(0, "a"),
 			newSpaced(2,
 				newCompound(2, NoSigil,
-					&SubscriptNode{2,
-						&PrimaryNode{2, VariablePrimary,
+					&Subscript{2,
+						&Primary{2, VariablePrimary,
 							newString(3, "b", "b")},
 						compoundOfBare(5, "c")})),
 			nil, ""})},
@@ -137,14 +137,14 @@ var parseTests = []struct {
 	//
 	// Single quote
 	{"a `b`", chunkOfFormWithOnePrimary(
-		&PrimaryNode{2, StringPrimary, newString(2, "`b`", "b")})},
+		&Primary{2, StringPrimary, newString(2, "`b`", "b")})},
 	// Double quote
 	{`a "b"`, chunkOfFormWithOnePrimary(
-		&PrimaryNode{2, StringPrimary, newString(2, `"b"`, "b")})},
+		&Primary{2, StringPrimary, newString(2, `"b"`, "b")})},
 	// Table
 	{"a [1 &k v 2 &k2 v2 3]", chunkOfFormWithOnePrimary(
-		&PrimaryNode{2, TablePrimary, &TableNode{2,
-			[]*CompoundNode{
+		&Primary{2, TablePrimary, &Table{2,
+			[]*Compound{
 				compoundOfBare(3, "1"),
 				compoundOfBare(10, "2"),
 				compoundOfBare(19, "3"),
@@ -155,39 +155,39 @@ var parseTests = []struct {
 			}}})},
 	// List
 	{"a {b c}", chunkOfFormWithOnePrimary(
-		&PrimaryNode{2, ListPrimary, newSpaced(3,
+		&Primary{2, ListPrimary, newSpaced(3,
 			compoundOfBare(3, "b"),
 			compoundOfBare(5, "c"))})},
 	// Closure: empty
 	{"a { }", chunkOfFormWithOnePrimary(
-		&PrimaryNode{2, ClosurePrimary, &ClosureNode{3, nil, newChunk(4)}})},
+		&Primary{2, ClosurePrimary, &Closure{3, nil, newChunk(4)}})},
 	// Closure: parameterless
 	{"a { b c}", chunkOfFormWithOnePrimary(
-		&PrimaryNode{2, ClosurePrimary, &ClosureNode{3, nil, chunkOfOneForm(
-			&FormNode{4,
+		&Primary{2, ClosurePrimary, &Closure{3, nil, chunkOfOneForm(
+			&Form{4,
 				compoundOfBare(4, "b"),
 				newSpaced(6, compoundOfBare(6, "c")),
 				nil, ""})}})},
 	// Closure: simple with parameters
 	{"a {|b|c}", chunkOfFormWithOnePrimary(
-		&PrimaryNode{2, ClosurePrimary, &ClosureNode{3,
+		&Primary{2, ClosurePrimary, &Closure{3,
 			newSpaced(4, compoundOfBare(4, "b")),
 			chunkOfOneForm(
-				&FormNode{6,
+				&Form{6,
 					compoundOfBare(6, "c"), newSpaced(7), nil, ""})}})},
 	// Channel output capture
 	{"a (b c)", chunkOfFormWithOnePrimary(
-		&PrimaryNode{2, ChanCapturePrimary,
+		&Primary{2, ChanCapturePrimary,
 			newPipeline(3,
-				&FormNode{3,
+				&Form{3,
 					compoundOfBare(3, "b"),
 					newSpaced(5, compoundOfBare(5, "c")),
 					nil, ""})})},
 	// Status capture
 	{"a ?(b c)", chunkOfFormWithOnePrimary(
-		&PrimaryNode{2, StatusCapturePrimary,
+		&Primary{2, StatusCapturePrimary,
 			newPipeline(4,
-				&FormNode{4,
+				&Form{4,
 					compoundOfBare(4, "b"),
 					newSpaced(6, compoundOfBare(6, "c")),
 					nil, ""})})},

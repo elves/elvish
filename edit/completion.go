@@ -87,14 +87,14 @@ var (
 	errUnknownContextType = fmt.Errorf("unknown context type")
 )
 
-func peekPrimary(fn *parse.PrimaryNode) (string, error) {
+func peekPrimary(fn *parse.Primary) (string, error) {
 	if fn.Typ != parse.StringPrimary {
 		return "", errNotPlainPrimary
 	}
-	return fn.Node.(*parse.StringNode).Text, nil
+	return fn.Node.(*parse.String).Text, nil
 }
 
-func peekIncompleteCompound(tn *parse.CompoundNode) (string, int, error) {
+func peekIncompleteCompound(tn *parse.Compound) (string, int, error) {
 	text := ""
 	for _, n := range tn.Nodes {
 		if n.Right != nil {

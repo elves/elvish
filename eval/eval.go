@@ -154,7 +154,7 @@ func makeCompilerScope(s ns) staticNS {
 
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaluator) Eval(name, text, dir string, n *parse.ChunkNode) error {
+func (ev *Evaluator) Eval(name, text, dir string, n *parse.Chunk) error {
 	op, err := ev.Compiler.Compile(name, text, dir, n)
 	if err != nil {
 		return err

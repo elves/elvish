@@ -20,5 +20,5 @@ const (
 // Context contains an incomplete FormNode and indication of what to complete.
 type Context struct {
 	Typ  ContextType
-	Form *FormNode
+	Form *Form
 }
