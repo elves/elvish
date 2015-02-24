@@ -213,6 +213,7 @@ func (ev *Evaluator) applyPortOps(ports []portOp) {
 	}
 }
 
+// SourceText evaluates a chunk of elvish source.
 func (ev *Evaluator) SourceText(name, src, dir string) error {
 	n, err := parse.Parse(name, src)
 	if err != nil {

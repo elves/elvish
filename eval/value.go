@@ -382,7 +382,7 @@ func allTrue(vs []Value) bool {
 	return true
 }
 
-var errOnlyStrOrRat = errors.New("Only str or rat may be converted to rat")
+var errOnlyStrOrRat = errors.New("only str or rat may be converted to rat")
 
 // toRat converts a Value to rat. A str can be converted to a rat if it can be
 // parsed. A rat is returned as-is. Other types of values cannot be converted.
