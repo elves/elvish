@@ -570,14 +570,13 @@ func (p *Parser) redir() Redir {
 				return NewFdRedir(leader.Pos, fd, oldfd)
 			}
 			return newCloseRedir(leader.Pos, fd)
-		} else {
-			// FilenameRedir with fd altered
-			var err error
-			fd, err = Atou(qual)
-			if err != nil {
-				// TODO identify precious position
-				p.errorf(int(leader.Pos), "Invalid new fd in qualified redirection %q", qual)
-			}
+		}
+		// FilenameRedir with fd altered
+		var err error
+		fd, err = Atou(qual)
+		if err != nil {
+			// TODO identify precious position
+			p.errorf(int(leader.Pos), "Invalid new fd in qualified redirection %q", qual)
 		}
 	}
 	// FilenameRedir

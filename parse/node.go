@@ -37,10 +37,10 @@ func newChunk(pos Pos, nodes ...*PipelineNode) *ChunkNode {
 	return &ChunkNode{pos, nodes}
 }
 
-func (l *ChunkNode) isNode() {}
+func (cn *ChunkNode) isNode() {}
 
-func (tn *ChunkNode) append(n *PipelineNode) {
-	tn.Nodes = append(tn.Nodes, n)
+func (cn *ChunkNode) append(n *PipelineNode) {
+	cn.Nodes = append(cn.Nodes, n)
 }
 
 // PipelineNode is a list of FormNode's.
@@ -53,10 +53,10 @@ func newPipeline(pos Pos, nodes ...*FormNode) *PipelineNode {
 	return &PipelineNode{Pos: pos, Nodes: nodes}
 }
 
-func (l *PipelineNode) isNode() {}
+func (pn *PipelineNode) isNode() {}
 
-func (tn *PipelineNode) append(n *FormNode) {
-	tn.Nodes = append(tn.Nodes, n)
+func (pn *PipelineNode) append(n *FormNode) {
+	pn.Nodes = append(pn.Nodes, n)
 }
 
 // FormNode holds a form.
@@ -74,6 +74,7 @@ func newForm(pos Pos) *FormNode {
 
 func (fn *FormNode) isNode() {}
 
+// Special value for CompoundNode.Sigil to indicate no sigil is present.
 const NoSigil rune = -1
 
 // CompoundNode is a list of SubscriptNode's.
@@ -87,10 +88,10 @@ func newCompound(pos Pos, sigil rune, nodes ...*SubscriptNode) *CompoundNode {
 	return &CompoundNode{pos, sigil, nodes}
 }
 
-func (l *CompoundNode) isNode() {}
+func (cn *CompoundNode) isNode() {}
 
-func (tn *CompoundNode) append(n *SubscriptNode) {
-	tn.Nodes = append(tn.Nodes, n)
+func (cn *CompoundNode) append(n *SubscriptNode) {
+	cn.Nodes = append(cn.Nodes, n)
 }
 
 // SpacedNode is a list of CompoundNode's.
@@ -103,10 +104,10 @@ func newSpaced(pos Pos, nodes ...*CompoundNode) *SpacedNode {
 	return &SpacedNode{pos, nodes}
 }
 
-func (l *SpacedNode) isNode() {}
+func (sn *SpacedNode) isNode() {}
 
-func (tn *SpacedNode) append(n *CompoundNode) {
-	tn.Nodes = append(tn.Nodes, n)
+func (sn *SpacedNode) append(n *CompoundNode) {
+	sn.Nodes = append(sn.Nodes, n)
 }
 
 // SubscriptNode represents a subscript expression.
@@ -116,7 +117,7 @@ type SubscriptNode struct {
 	Right *CompoundNode
 }
 
-func (s *SubscriptNode) isNode() {}
+func (sn *SubscriptNode) isNode() {}
 
 // PrimaryNode represents a primary expression.
 type PrimaryNode struct {
@@ -145,7 +146,7 @@ func newPrimary(pos Pos) *PrimaryNode {
 	return &PrimaryNode{Pos: pos}
 }
 
-func (fn *PrimaryNode) isNode() {}
+func (pn *PrimaryNode) isNode() {}
 
 // TablePair represents a key/value pair in table literal.
 type TablePair struct {
