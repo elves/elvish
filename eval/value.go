@@ -217,7 +217,7 @@ func (b *builtinFn) Type() Type {
 }
 
 func (b *builtinFn) Repr() string {
-	return "$builtin:fn-" + b.Name
+	return "$builtin:" + fnPrefix + b.Name
 }
 
 type externalCmd struct {

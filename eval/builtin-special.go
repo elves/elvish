@@ -366,7 +366,7 @@ func compileFn(cp *Compiler, fn *parse.FormNode) exitusOp {
 		cp.errorf(fn.Pos, "expect function name after fn")
 	}
 	_, fnName := ensureStringPrimary(cp, fn.Args.Nodes[0], "expect string literal")
-	varName := "fn-" + fnName
+	varName := fnPrefix + fnName
 
 	var closureNode *parse.ClosureNode
 	var argNames []*parse.CompoundNode

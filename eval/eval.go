@@ -17,6 +17,8 @@ import (
 	"github.com/elves/elvish/store"
 )
 
+const fnPrefix = "fn-"
+
 // ns is a namespace.
 type ns map[string]Variable
 
@@ -65,7 +67,7 @@ func NewEvaluator(st *store.Store, dataDir string) *Evaluator {
 		"false":   newInternalVariableWithType(boolean(false)),
 	}
 	for _, b := range builtinFns {
-		bi["fn-"+b.Name] = newInternalVariableWithType(b)
+		bi[fnPrefix+b.Name] = newInternalVariableWithType(b)
 	}
 	ev := &Evaluator{
 		Compiler: NewCompiler(makeCompilerScope(bi), dataDir),

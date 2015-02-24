@@ -93,7 +93,7 @@ func (ev *Evaluator) resolveNonSpecial(cmd Value) callable {
 
 	// Defined callable
 	ns, name := splitQualifiedName(cmdStr)
-	if v := ev.ResolveVar(ns, "fn-"+name); v != nil {
+	if v := ev.ResolveVar(ns, fnPrefix+name); v != nil {
 		if clb, ok := v.Get().(callable); ok {
 			return clb
 		}
