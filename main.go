@@ -85,7 +85,7 @@ func interact() {
 
 	sigch := make(chan os.Signal, sigchSize)
 
-	ed := edit.NewEditor(os.Stdin, ev, sigch)
+	ed := edit.NewEditor(os.Stdin, sigch)
 
 	for {
 		cmdNum++

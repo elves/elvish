@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/elves/elvish/edit/tty"
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
 
@@ -53,7 +52,6 @@ type Editor struct {
 	file      *os.File
 	writer    *writer
 	reader    *Reader
-	ev        *eval.Evaluator
 	sigs      <-chan os.Signal
 	histories []string
 	editorState
@@ -92,12 +90,11 @@ func (ed *Editor) nextHistory() bool {
 }
 
 // NewEditor creates an Editor.
-func NewEditor(file *os.File, ev *eval.Evaluator, sigs <-chan os.Signal) *Editor {
+func NewEditor(file *os.File, sigs <-chan os.Signal) *Editor {
 	return &Editor{
 		file:   file,
 		writer: newWriter(file),
 		reader: NewReader(file),
-		ev:     ev,
 		sigs:   sigs,
 	}
 }
