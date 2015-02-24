@@ -34,7 +34,7 @@ type Evaluator struct {
 	mod         map[string]ns
 	searchPaths []string
 	ports       []*port
-	statusCb    func([]Value)
+	failHandler func([]Value)
 	store       *store.Store
 }
 
@@ -44,17 +44,18 @@ type evaluatorEphemeral struct {
 	name, text, context string
 }
 
-func statusOk(vs []Value) bool {
+func hasFailure(vs []Value) bool {
 	for _, v := range vs {
 		v, ok := v.(exitus)
 		if !ok {
-			return false
+			// Silently ignore non-exitus values
+			continue
 		}
 		if !v.Success {
-			return false
+			return true
 		}
 	}
-	return true
+	return false
 }
 
 // NewEvaluator creates a new top-level Evaluator.
@@ -77,10 +78,7 @@ func NewEvaluator(st *store.Store, dataDir string) *Evaluator {
 		mod:      map[string]ns{},
 		ports: []*port{
 			&port{f: os.Stdin}, &port{f: os.Stdout}, &port{f: os.Stderr}},
-		statusCb: func(vs []Value) {
-			if statusOk(vs) {
-				return
-			}
+		failHandler: func(vs []Value) {
 			fmt.Print("Status: ")
 			for i, v := range vs {
 				if i > 0 {

@@ -29,8 +29,8 @@ func combineChunk(ops []valuesOp) Op {
 	return func(ev *Evaluator) {
 		for _, op := range ops {
 			s := op.f(ev)
-			if ev.statusCb != nil {
-				ev.statusCb(s)
+			if ev.failHandler != nil && hasFailure(s) {
+				ev.failHandler(s)
 			}
 		}
 	}

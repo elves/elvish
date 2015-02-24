@@ -149,7 +149,8 @@ func (c *closure) Exec(ev *Evaluator, args []Value) <-chan *stateUpdate {
 		ev.local[name] = newInternalVariable(args[i], anyType{})
 	}
 
-	ev.statusCb = nil
+	// TODO(xiaq): The failure handler should let the whole closure fail.
+	ev.failHandler = nil
 
 	go func() {
 		// TODO(xiaq): Support calling closure originated in another source.
