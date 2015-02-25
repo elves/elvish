@@ -9,38 +9,38 @@ import (
 
 // Definition of Op and friends and combinators.
 
-// Op operates on an Evaler.
-type Op func(*Evaler)
+// Op operates on an evalCtx.
+type Op func(*evalCtx)
 
-// valuesOp operates on an Evaler and results in some values.
+// valuesOp operates on an evalCtx and results in some values.
 type valuesOp struct {
 	tr typeRun
-	f  func(*Evaler) []Value
+	f  func(*evalCtx) []Value
 }
 
-// portOp operates on an Evaler and results in a port.
-type portOp func(*Evaler) *port
+// portOp operates on an evalCtx and results in a port.
+type portOp func(*evalCtx) *port
 
-// stateUpdatesOp operates on an Evaler and results in a receiving channel
+// stateUpdatesOp operates on an evalCtx and results in a receiving channel
 // of StateUpdate's.
-type stateUpdatesOp func(*Evaler) <-chan *stateUpdate
+type stateUpdatesOp func(*evalCtx) <-chan *stateUpdate
 
 func combineChunk(ops []valuesOp) Op {
-	return func(ev *Evaler) {
+	return func(ec *evalCtx) {
 		for _, op := range ops {
-			s := op.f(ev)
-			if ev.failHandler != nil && hasFailure(s) {
-				ev.failHandler(s)
+			s := op.f(ec)
+			if ec.failHandler != nil && hasFailure(s) {
+				ec.failHandler(s)
 			}
 		}
 	}
 }
 
 func combineClosure(argNames []string, op Op, up map[string]Type) valuesOp {
-	f := func(ev *Evaler) []Value {
+	f := func(ec *evalCtx) []Value {
 		evCaptured := make(map[string]Variable, len(up))
 		for name := range up {
-			evCaptured[name] = ev.ResolveVar("", name)
+			evCaptured[name] = ec.ResolveVar("", name)
 		}
 		return []Value{newClosure(argNames, op, evCaptured)}
 	}
@@ -50,14 +50,14 @@ func combineClosure(argNames []string, op Op, up map[string]Type) valuesOp {
 var noExitus = newFailure("no exitus")
 
 func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
-	f := func(ev *Evaler) []Value {
+	f := func(ec *evalCtx) []Value {
 		var nextIn *port
 		updates := make([]<-chan *stateUpdate, len(ops))
-		// For each form, create a dedicated Evaler and run
+		// For each form, create a dedicated evalCtx and run
 		for i, op := range ops {
-			newEv := ev.copy(fmt.Sprintf("form op %v", op))
+			newEc := ec.copy(fmt.Sprintf("form op %v", op))
 			if i > 0 {
-				newEv.ports[0] = nextIn
+				newEc.ports[0] = nextIn
 			}
 			if i < len(ops)-1 {
 				// Each internal port pair consists of a (byte) pipe pair and a
@@ -65,16 +65,16 @@ func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 				// os.Pipe sets O_CLOEXEC, which is what we want.
 				reader, writer, e := os.Pipe()
 				if e != nil {
-					ev.errorf(p, "failed to create pipe: %s", e)
+					ec.errorf(p, "failed to create pipe: %s", e)
 				}
 				// TODO Buffered channel?
 				ch := make(chan Value)
-				newEv.ports[1] = &port{
+				newEc.ports[1] = &port{
 					f: writer, ch: ch, closeF: true, closeCh: true}
 				nextIn = &port{
 					f: reader, ch: ch, closeF: true, closeCh: false}
 			}
-			updates[i] = op(newEv)
+			updates[i] = op(newEc)
 		}
 		// Collect exit values
 		exits := make([]Value, len(ops))
@@ -91,33 +91,33 @@ func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 }
 
 func combineSpecialForm(op exitusOp, ports []portOp, p parse.Pos) stateUpdatesOp {
-	// ev here is always a subevaler created in combinePipeline, so it can
+	// ec here is always a subevaler created in combinePipeline, so it can
 	// be safely modified.
-	return func(ev *Evaler) <-chan *stateUpdate {
-		ev.applyPortOps(ports)
-		return ev.execSpecial(op)
+	return func(ec *evalCtx) <-chan *stateUpdate {
+		ec.applyPortOps(ports)
+		return ec.execSpecial(op)
 	}
 }
 
 func combineNonSpecialForm(cmdOp, argsOp valuesOp, ports []portOp, p parse.Pos) stateUpdatesOp {
-	// ev here is always a subevaler created in combinePipeline, so it can
+	// ec here is always a subevaler created in combinePipeline, so it can
 	// be safely modified.
-	return func(ev *Evaler) <-chan *stateUpdate {
-		ev.applyPortOps(ports)
+	return func(ec *evalCtx) <-chan *stateUpdate {
+		ec.applyPortOps(ports)
 
-		cmd := cmdOp.f(ev)
+		cmd := cmdOp.f(ec)
 		expect := "expect a single string or closure value"
 		if len(cmd) != 1 {
-			ev.errorf(p, expect)
+			ec.errorf(p, expect)
 		}
 		switch cmd[0].(type) {
 		case str, *closure:
 		default:
-			ev.errorf(p, expect)
+			ec.errorf(p, expect)
 		}
 
-		args := argsOp.f(ev)
-		return ev.execNonSpecial(cmd[0], args)
+		args := argsOp.f(ec)
+		return ec.execNonSpecial(cmd[0], args)
 	}
 }
 
@@ -127,12 +127,12 @@ func combineSpaced(ops []valuesOp) valuesOp {
 		tr = append(tr, op.tr...)
 	}
 
-	f := func(ev *Evaler) []Value {
+	f := func(ec *evalCtx) []Value {
 		// Use number of compound expressions as an estimation of the number
 		// of values
 		vs := make([]Value, 0, len(ops))
 		for _, op := range ops {
-			us := op.f(ev)
+			us := op.f(ec)
 			vs = append(vs, us...)
 		}
 		return vs
@@ -140,7 +140,7 @@ func combineSpaced(ops []valuesOp) valuesOp {
 	return valuesOp{tr, f}
 }
 
-func compound(ev *Evaler, lhs, rhs Value) Value {
+func compound(lhs, rhs Value) Value {
 	return str(toString(lhs) + toString(rhs))
 }
 
@@ -158,21 +158,21 @@ func combineCompound(ops []valuesOp) valuesOp {
 		more = more || b
 	}
 
-	f := func(ev *Evaler) []Value {
+	f := func(ec *evalCtx) []Value {
 		vs := []Value{str("")}
 		for _, op := range ops {
-			us := op.f(ev)
+			us := op.f(ec)
 			if len(us) == 1 {
 				u := us[0]
 				for i := range vs {
-					vs[i] = compound(ev, vs[i], u)
+					vs[i] = compound(vs[i], u)
 				}
 			} else {
 				// Do a cartesian product
 				newvs := make([]Value, len(vs)*len(us))
 				for i, v := range vs {
 					for j, u := range us {
-						newvs[i*len(us)+j] = compound(ev, v, u)
+						newvs[i*len(us)+j] = compound(v, u)
 					}
 				}
 				vs = newvs
@@ -188,7 +188,7 @@ func literalValue(v ...Value) valuesOp {
 	for i := range tr {
 		tr[i].t = v[i].Type()
 	}
-	f := func(e *Evaler) []Value {
+	f := func(e *evalCtx) []Value {
 		return v
 	}
 	return valuesOp{tr, f}
@@ -201,10 +201,10 @@ func makeString(text string) valuesOp {
 func makeVar(cp *Compiler, qname string, p parse.Pos) valuesOp {
 	ns, name := splitQualifiedName(qname)
 	tr := newFixedTypeRun(cp.mustResolveVar(ns, name, p))
-	f := func(ev *Evaler) []Value {
-		variable := ev.ResolveVar(ns, name)
+	f := func(ec *evalCtx) []Value {
+		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
-			ev.errorf(p, "variable $%s not found; the compiler has a bug", name)
+			ec.errorf(p, "variable $%s not found; the compiler has a bug", name)
 		}
 		return []Value{variable.Get()}
 	}
@@ -234,24 +234,24 @@ func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valu
 		cp.errorf(rp, "right operand of subscript must be of type string")
 	}
 
-	f := func(ev *Evaler) []Value {
-		l := left.f(ev)
-		r := right.f(ev)
-		return []Value{evalSubscript(ev, l[0], r[0], lp, rp)}
+	f := func(ec *evalCtx) []Value {
+		l := left.f(ec)
+		r := right.f(ec)
+		return []Value{evalSubscript(ec, l[0], r[0], lp, rp)}
 	}
 	return valuesOp{newFixedTypeRun(t), f}
 }
 
 func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos) valuesOp {
-	f := func(ev *Evaler) []Value {
+	f := func(ec *evalCtx) []Value {
 		t := newTable()
-		t.append(list.f(ev)...)
+		t.append(list.f(ec)...)
 		for i, kop := range keys {
 			vop := values[i]
-			ks := kop.f(ev)
-			vs := vop.f(ev)
+			ks := kop.f(ec)
+			vs := vop.f(ec)
 			if len(ks) != len(vs) {
-				ev.errorf(p, "Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
+				ec.errorf(p, "Number of keys doesn't match number of values: %d vs. %d", len(ks), len(vs))
 			}
 			for j, k := range ks {
 				t.Dict[toString(k)] = vs[j]
@@ -264,18 +264,18 @@ func combineTable(list valuesOp, keys []valuesOp, values []valuesOp, p parse.Pos
 
 func combineChanCapture(op valuesOp) valuesOp {
 	tr := typeRun{typeStar{anyType{}, true}}
-	f := func(ev *Evaler) []Value {
+	f := func(ec *evalCtx) []Value {
 		vs := []Value{}
-		newEv := ev.copy(fmt.Sprintf("channel output capture %v", op))
+		newEc := ec.copy(fmt.Sprintf("channel output capture %v", op))
 		ch := make(chan Value)
-		newEv.ports[1] = &port{ch: ch}
+		newEc.ports[1] = &port{ch: ch}
 		go func() {
 			for v := range ch {
 				vs = append(vs, v)
 			}
 		}()
-		op.f(newEv)
-		newEv.closePorts()
+		op.f(newEc)
+		newEc.closePorts()
 		return vs
 	}
 	return valuesOp{tr, f}

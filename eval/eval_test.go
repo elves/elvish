@@ -143,11 +143,10 @@ func TestEval(t *testing.T) {
 			exhausted <- struct{}{}
 		}()
 
-		ev.ports[1].ch = out
-
-		e := ev.Eval(name, tt.text, ".", n)
+		e := ev.evalWithChanOut(name, tt.text, ".", n, out)
 		close(out)
 		<-exhausted
+
 		if tt.wantError {
 			// Test for error, ignore output
 			if e == nil {

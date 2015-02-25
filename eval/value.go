@@ -185,7 +185,7 @@ type callable interface {
 	// Exec executes a callable asynchronously on an Evaler. It assumes that
 	// it is the last callable to be executed on that Evaler and thus
 	// responsible for cleaning up the ports.
-	Exec(ev *Evaler, args []Value) <-chan *stateUpdate
+	Exec(ec *evalCtx, args []Value) <-chan *stateUpdate
 }
 
 // closure is a closure.
@@ -209,7 +209,7 @@ func (c *closure) Repr() string {
 
 type builtinFn struct {
 	Name string
-	Impl func(*Evaler, []Value) exitus
+	Impl func(*evalCtx, []Value) exitus
 }
 
 func (b *builtinFn) Type() Type {
@@ -255,13 +255,13 @@ func (r rat) String() string {
 	return r.b.String()
 }
 
-func evalSubscript(ev *Evaler, left, right Value, lp, rp parse.Pos) Value {
+func evalSubscript(ec *evalCtx, left, right Value, lp, rp parse.Pos) Value {
 	var (
 		sub str
 		ok  bool
 	)
 	if sub, ok = right.(str); !ok {
-		ev.errorf(rp, "right operand of subscript must be of type string")
+		ec.errorf(rp, "right operand of subscript must be of type string")
 	}
 
 	switch left.(type) {
@@ -274,25 +274,25 @@ func evalSubscript(ev *Evaler, left, right Value, lp, rp parse.Pos) Value {
 			if idx < uint64(len(t.List)) {
 				return t.List[idx]
 			}
-			ev.errorf(rp, "index out of range")
+			ec.errorf(rp, "index out of range")
 		}
 		if v, ok := t.Dict[sub.String()]; ok {
 			return v
 		}
-		ev.errorf(rp, "nonexistent key %q", sub)
+		ec.errorf(rp, "nonexistent key %q", sub)
 		return nil
 	case str:
 		invalidIndex := "invalid index, must be integer or integer:integer"
 
 		ss := strings.Split(sub.String(), ":")
 		if len(ss) > 2 {
-			ev.errorf(rp, invalidIndex)
+			ec.errorf(rp, invalidIndex)
 		}
 		idx := make([]int, len(ss))
 		for i, s := range ss {
 			n, err := strconv.ParseInt(s, 10, 0)
 			if err != nil {
-				ev.errorf(rp, invalidIndex)
+				ec.errorf(rp, invalidIndex)
 			}
 			idx[i] = int(n)
 		}
@@ -307,11 +307,11 @@ func evalSubscript(ev *Evaler, left, right Value, lp, rp parse.Pos) Value {
 			s, e = util.SubstringByRune(toString(left), idx[0], idx[1])
 		}
 		if e != nil {
-			ev.errorf(rp, "%v", e)
+			ec.errorf(rp, "%v", e)
 		}
 		return str(s)
 	default:
-		ev.errorf(lp, "left operand of subscript must be of type string, env, table or any")
+		ec.errorf(lp, "left operand of subscript must be of type string, env, table or any")
 		return nil
 	}
 }

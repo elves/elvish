@@ -11,7 +11,7 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type exitusOp func(*Evaler) exitus
+type exitusOp func(*evalCtx) exitus
 type builtinSpecialCompile func(*Compiler, *parse.Form) exitusOp
 
 type builtinSpecial struct {
@@ -172,12 +172,12 @@ func compileVar(cp *Compiler, fn *parse.Form) exitusOp {
 		vop = cp.compounds(values)
 		checkSetType(cp, names, values, vop, fn.Pos)
 	}
-	return func(ev *Evaler) exitus {
+	return func(ec *evalCtx) exitus {
 		for i, name := range names {
-			ev.local[name] = newInternalVariable(types[i].Default(), types[i])
+			ec.local[name] = newInternalVariable(types[i].Default(), types[i])
 		}
 		if vop.f != nil {
-			return doSet(ev, names, vop.f(ev))
+			return doSet(ec, names, vop.f(ec))
 		}
 		return success
 	}
@@ -212,8 +212,8 @@ func compileSet(cp *Compiler, fn *parse.Form) exitusOp {
 	vop = cp.compounds(values)
 	checkSetType(cp, names, values, vop, fn.Pos)
 
-	return func(ev *Evaler) exitus {
-		return doSet(ev, names, vop.f(ev))
+	return func(ec *evalCtx) exitus {
+		return doSet(ec, names, vop.f(ec))
 	}
 }
 
@@ -222,7 +222,7 @@ var (
 	typeMismatch  = newFailure("type mismatch")
 )
 
-func doSet(ev *Evaler, names []string, values []Value) exitus {
+func doSet(ec *evalCtx, names []string, values []Value) exitus {
 	// TODO Support assignment of mismatched arity in some restricted way -
 	// "optional" and "rest" arguments and the like
 	if len(names) != len(values) {
@@ -231,7 +231,7 @@ func doSet(ev *Evaler, names []string, values []Value) exitus {
 
 	for i, name := range names {
 		// TODO Prevent overriding builtin variables e.g. $pid $env
-		variable := ev.ResolveVar(splitQualifiedName(name))
+		variable := ec.ResolveVar(splitQualifiedName(name))
 		if variable == nil {
 			return newFailure(fmt.Sprintf("variable $%s not found; the compiler has a bug", name))
 		}
@@ -268,9 +268,9 @@ func compileDel(cp *Compiler, fn *parse.Form) exitusOp {
 		}
 
 	}
-	return func(ev *Evaler) exitus {
+	return func(ec *evalCtx) exitus {
 		for _, name := range names {
-			delete(ev.local, name)
+			delete(ec.local, name)
 		}
 		for _, name := range envNames {
 			// TODO(xiaq): Signify possible error
@@ -344,11 +344,16 @@ func compileUse(cp *Compiler, fn *parse.Form) exitusOp {
 
 	cp.mod[modname] = newCp.scopes[0]
 
-	return func(ev *Evaler) exitus {
-		// XXX(xiaq): Should use some part of ev
-		newEv := NewEvaler(ev.store, cp.dataDir)
-		op(newEv)
-		ev.mod[modname] = newEv.local
+	return func(ec *evalCtx) exitus {
+		// TODO(xiaq): Should install a failHandler that fails the use call
+		newEc := &evalCtx{
+			ec.Evaler,
+			fname, src, "module " + modname,
+			ns{}, ns{},
+			ec.ports, nil,
+		}
+		op(newEc)
+		ec.mod[modname] = newEc.local
 		return success
 	}
 }
@@ -400,8 +405,8 @@ func compileFn(cp *Compiler, fn *parse.Form) exitusOp {
 
 	cp.pushVar(varName, callableType{})
 
-	return func(ev *Evaler) exitus {
-		ev.local[varName] = newInternalVariable(op.f(ev)[0], callableType{})
+	return func(ec *evalCtx) exitus {
+		ec.local[varName] = newInternalVariable(op.f(ec)[0], callableType{})
 		return success
 	}
 }
@@ -486,11 +491,11 @@ func compileIf(cp *Compiler, fn *parse.Form) exitusOp {
 			cp.errorf(compounds[0].Pos, "trailing garbage")
 		}
 	}
-	return func(ev *Evaler) exitus {
+	return func(ec *evalCtx) exitus {
 		for _, ib := range branches {
-			if allTrue(ib.condition.f(ev)) {
-				f := ib.body.f(ev)[0].(*closure)
-				su := f.Exec(ev.copy("closure of if"), []Value{})
+			if allTrue(ib.condition.f(ec)) {
+				f := ib.body.f(ec)[0].(*closure)
+				su := f.Exec(ec.copy("closure of if"), []Value{})
 				for _ = range su {
 				}
 				// TODO(xiaq): Return the exitus of the body
@@ -508,8 +513,8 @@ func compileStaticTypeof(cp *Compiler, fn *parse.Form) exitusOp {
 	for _, cn := range fn.Args.Nodes {
 		trs = append(trs, cp.compound(cn).tr)
 	}
-	return func(ev *Evaler) exitus {
-		out := ev.ports[1].ch
+	return func(ec *evalCtx) exitus {
+		out := ec.ports[1].ch
 		for _, tr := range trs {
 			out <- str(tr.String())
 		}

@@ -70,20 +70,20 @@ func (ev *Evaler) search(exe string) (string, error) {
 //
 // NOTE(xiaq): execSpecial and execNonSpecial are always called on an
 // intermediate "form redir" where only the form-local ports are marked
-// shouldClose. ev.closePorts should be called at appropriate moments.
-func (ev *Evaler) execSpecial(op exitusOp) <-chan *stateUpdate {
+// shouldClose. ec.closePorts should be called at appropriate moments.
+func (ec *evalCtx) execSpecial(op exitusOp) <-chan *stateUpdate {
 	update := make(chan *stateUpdate)
 	go func() {
-		ex := op(ev)
+		ex := op(ec)
 		// Ports are closed after executaion of builtin is complete.
-		ev.closePorts()
+		ec.closePorts()
 		update <- newExitedStateUpdate(ex)
 		close(update)
 	}()
 	return update
 }
 
-func (ev *Evaler) resolveNonSpecial(cmd Value) callable {
+func (ec *evalCtx) resolveNonSpecial(cmd Value) callable {
 	// Closure
 	if cl, ok := cmd.(*closure); ok {
 		return cl
@@ -93,7 +93,7 @@ func (ev *Evaler) resolveNonSpecial(cmd Value) callable {
 
 	// Defined callable
 	ns, name := splitQualifiedName(cmdStr)
-	if v := ev.ResolveVar(ns, fnPrefix+name); v != nil {
+	if v := ec.ResolveVar(ns, fnPrefix+name); v != nil {
 		if clb, ok := v.Get().(callable); ok {
 			return clb
 		}
@@ -104,17 +104,17 @@ func (ev *Evaler) resolveNonSpecial(cmd Value) callable {
 }
 
 // execNonSpecial executes a form that is not a special form.
-func (ev *Evaler) execNonSpecial(cmd Value, args []Value) <-chan *stateUpdate {
-	return ev.resolveNonSpecial(cmd).Exec(ev, args)
+func (ec *evalCtx) execNonSpecial(cmd Value, args []Value) <-chan *stateUpdate {
+	return ec.resolveNonSpecial(cmd).Exec(ec, args)
 }
 
 // Exec executes a builtin function.
-func (b *builtinFn) Exec(ev *Evaler, args []Value) <-chan *stateUpdate {
+func (b *builtinFn) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 	update := make(chan *stateUpdate)
 	go func() {
-		ex := b.Impl(ev, args)
+		ex := b.Impl(ec, args)
 		// Ports are closed after executaion of builtin is complete.
-		ev.closePorts()
+		ec.closePorts()
 		update <- newExitedStateUpdate(ex)
 		close(update)
 	}()
@@ -122,7 +122,7 @@ func (b *builtinFn) Exec(ev *Evaler, args []Value) <-chan *stateUpdate {
 }
 
 // Exec executes a closure.
-func (c *closure) Exec(ev *Evaler, args []Value) <-chan *stateUpdate {
+func (c *closure) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 	update := make(chan *stateUpdate, 1)
 
 	// TODO Support optional/rest argument
@@ -133,33 +133,33 @@ func (c *closure) Exec(ev *Evaler, args []Value) <-chan *stateUpdate {
 		return update
 	}
 
-	// Make a subevaler.
-	// BUG(xiaq): When evaluating closures, async access to global variables
+	// Make a subecaler.
+	// BUG(xiaq): When ecaluating closures, async access to global variables
 	// and ports can be problematic.
 
 	// Make up namespace and capture variables.
-	ev.up = make(map[string]Variable)
+	ec.up = make(map[string]Variable)
 	for name, variable := range c.Captured {
-		ev.up[name] = variable
+		ec.up[name] = variable
 	}
 	// Make local namespace and pass arguments.
-	ev.local = make(map[string]Variable)
+	ec.local = make(map[string]Variable)
 	for i, name := range c.ArgNames {
 		// TODO(xiaq): support static type of arguments
-		ev.local[name] = newInternalVariable(args[i], anyType{})
+		ec.local[name] = newInternalVariable(args[i], anyType{})
 	}
 
 	// TODO(xiaq): The failure handler should let the whole closure fail.
-	ev.failHandler = nil
+	ec.failHandler = nil
 
 	go func() {
 		// TODO(xiaq): Support calling closure originated in another source.
-		err := ev.eval(ev.name, ev.text, c.Op)
+		err := ec.eval(c.Op)
 		if err != nil {
 			fmt.Print(err.(*errutil.ContextualError).Pprint())
 		}
 		// Ports are closed after executaion of closure is complete.
-		ev.closePorts()
+		ec.closePorts()
 		// TODO Support returning value.
 		update <- newExitedStateUpdate(success)
 		close(update)
@@ -216,9 +216,9 @@ func waitStateUpdate(pid int, update chan<- *stateUpdate) {
 }
 
 // Exec executes an external command.
-func (e externalCmd) Exec(ev *Evaler, argVals []Value) <-chan *stateUpdate {
-	files := make([]uintptr, len(ev.ports))
-	for i, port := range ev.ports {
+func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
+	files := make([]uintptr, len(ec.ports))
+	for i, port := range ec.ports {
 		if port == nil || port.f == nil {
 			files[i] = fdNil
 		} else {
@@ -236,7 +236,7 @@ func (e externalCmd) Exec(ev *Evaler, argVals []Value) <-chan *stateUpdate {
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: os.Environ(), Files: files[:], Sys: &sys}
 
-	path, err := ev.search(e.Name)
+	path, err := ec.search(e.Name)
 	var pid int
 
 	if err == nil {
@@ -244,7 +244,7 @@ func (e externalCmd) Exec(ev *Evaler, argVals []Value) <-chan *stateUpdate {
 		pid, err = syscall.ForkExec(path, args, &attr)
 	}
 	// Ports are closed after fork-exec of external is complete.
-	ev.closePorts()
+	ec.closePorts()
 
 	update := make(chan *stateUpdate)
 	if err != nil {

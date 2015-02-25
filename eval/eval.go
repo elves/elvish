@@ -22,26 +22,25 @@ const fnPrefix = "fn-"
 // ns is a namespace.
 type ns map[string]Variable
 
-// Evaler maintains runtime context of elvish code within a single goroutine.
-// When elvish code spawns goroutines, the Evaler is copied and has certain
-// components replaced.
+// Evaler is used to evaluate elvish sources. It maintains runtime context
+// shared among all evalCtx instances.
 type Evaler struct {
-	Compiler *Compiler
-	evalerEphemeral
-	local       ns
-	up          ns
+	Compiler    *Compiler
 	builtin     ns
 	mod         map[string]ns
 	searchPaths []string
-	ports       []*port
-	failHandler func([]Value)
 	store       *store.Store
 }
 
-// evalerEphemeral holds the ephemeral parts of an Evaler, namely the
-// parts only valid through one startEval-stopEval cycle.
-type evalerEphemeral struct {
+// evalCtx maintains an Evaler along with its runtime context. After creation
+// an evalCtx is not modified, and new instances are created when needed.
+type evalCtx struct {
+	*Evaler
 	name, text, context string
+
+	local, up   ns
+	ports       []*port
+	failHandler func([]Value)
 }
 
 func hasFailure(vs []Value) bool {
@@ -58,87 +57,104 @@ func hasFailure(vs []Value) bool {
 	return false
 }
 
-// NewEvaler creates a new top-level Evaler.
+// NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store, dataDir string) *Evaler {
+	// Construct builtin namespace
 	pid := str(strconv.Itoa(syscall.Getpid()))
-	bi := ns{
+	builtin := ns{
 		"pid":     newInternalVariableWithType(pid),
 		"success": newInternalVariableWithType(success),
 		"true":    newInternalVariableWithType(boolean(true)),
 		"false":   newInternalVariableWithType(boolean(false)),
 	}
 	for _, b := range builtinFns {
-		bi[fnPrefix+b.Name] = newInternalVariableWithType(b)
+		builtin[fnPrefix+b.Name] = newInternalVariableWithType(b)
 	}
-	ev := &Evaler{
-		Compiler: NewCompiler(makeCompilerScope(bi), dataDir),
-		local:    ns{},
-		up:       ns{},
-		builtin:  bi,
-		mod:      map[string]ns{},
-		ports: []*port{
-			&port{f: os.Stdin}, &port{f: os.Stdout}, &port{f: os.Stderr}},
-		failHandler: func(vs []Value) {
-			fmt.Print("Status: ")
-			for i, v := range vs {
-				if i > 0 {
-					fmt.Print(" ")
-				}
-				fmt.Print(v.Repr())
-			}
-			fmt.Println()
-		},
-		store: st,
-	}
-	path := os.Getenv("PATH")
-	if path != "" {
-		ev.searchPaths = strings.Split(path, ":")
-		// fmt.Printf("Search paths are %v\n", search_paths)
+
+	// Construct searchPaths
+	var searchPaths []string
+	if path := os.Getenv("PATH"); path != "" {
+		searchPaths = strings.Split(path, ":")
 	} else {
-		ev.searchPaths = []string{"/bin"}
+		searchPaths = []string{"/bin"}
 	}
 
-	return ev
-}
-
-// SetChanOut sets the channel output.
-func (ev *Evaler) SetChanOut(ch chan Value) {
-	ev.ports[1].ch = ch
-}
-
-// copy returns a copy of ev with context changed. ev.ports is copied deeply
-// and all shouldClose flags are reset.
-//
-// NOTE(xiaq): Subevalers are relied upon for calling closePorts.
-func (ev *Evaler) copy(context string) *Evaler {
-	newEv := new(Evaler)
-	*newEv = *ev
-	newEv.context = context
-	// Do a deep copy of ports and reset shouldClose flags
-	newEv.ports = make([]*port, len(ev.ports))
-	for i, p := range ev.ports {
-		newEv.ports[i] = &port{p.f, p.ch, false, false}
+	return &Evaler{
+		NewCompiler(makeCompilerScope(builtin), dataDir),
+		builtin, map[string]ns{},
+		searchPaths, st,
 	}
-	return newEv
 }
 
-// port returns ev.ports[i] or nil if i is out of range. This makes it possible
-// to treat ev.ports as if it has an infinite tail of nil's.
-func (ev *Evaler) port(i int) *port {
-	if i >= len(ev.ports) {
+// printFailure is the default failure handler for top-level evalCtx.
+func printExituses(vs []Value) {
+	fmt.Print("Status: ")
+	for i, v := range vs {
+		if i > 0 {
+			fmt.Print(" ")
+		}
+		fmt.Print(v.Repr())
+	}
+	fmt.Println()
+}
+
+const (
+	outChanSize   = 32
+	outChanLeader = "▶ "
+)
+
+// newTopEvalCtx creates a top-level evalCtx.
+func newTopEvalCtx(ev *Evaler, name, text string) *evalCtx {
+	ch := make(chan Value, outChanSize)
+	go func() {
+		for v := range ch {
+			fmt.Printf("%s%s\n", outChanLeader, v.Repr())
+		}
+	}()
+
+	return &evalCtx{
+		ev,
+		name, text, "top",
+		ns{}, ns{},
+		[]*port{{f: os.Stdin},
+			{f: os.Stdout, ch: ch, closeCh: true}, {f: os.Stderr}},
+		printExituses,
+	}
+}
+
+// copy returns a copy of ec. The ports are copied deeply, with shouldClose
+// flags reset, and the context is changed to the given value. Other fields are
+// copied shallowly.
+func (ec *evalCtx) copy(newContext string) *evalCtx {
+	newPorts := make([]*port, len(ec.ports))
+	for i, p := range ec.ports {
+		newPorts[i] = &port{p.f, p.ch, false, false}
+	}
+	return &evalCtx{
+		ec.Evaler,
+		ec.name, ec.text, newContext,
+		ec.local, ec.up,
+		newPorts, ec.failHandler,
+	}
+}
+
+// port returns ec.ports[i] or nil if i is out of range. This makes it possible
+// to treat ec.ports as if it has an infinite tail of nil's.
+func (ec *evalCtx) port(i int) *port {
+	if i >= len(ec.ports) {
 		return nil
 	}
-	return ev.ports[i]
+	return ec.ports[i]
 }
 
-// growPorts makes the size of ev.ports at least n, adding nil's if necessary.
-func (ev *Evaler) growPorts(n int) {
-	if len(ev.ports) >= n {
+// growPorts makes the size of ec.ports at least n, adding nil's if necessary.
+func (ec *evalCtx) growPorts(n int) {
+	if len(ec.ports) >= n {
 		return
 	}
-	ports := ev.ports
-	ev.ports = make([]*port, n)
-	copy(ev.ports, ports)
+	ports := ec.ports
+	ec.ports = make([]*port, n)
+	copy(ec.ports, ports)
 }
 
 // makeCompilerScope extracts the type information from variables.
@@ -153,60 +169,63 @@ func makeCompilerScope(s ns) staticNS {
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
 func (ev *Evaler) Eval(name, text, dir string, n *parse.Chunk) error {
+	return ev.evalWithChanOut(name, text, dir, n, nil)
+}
+
+func (ev *Evaler) evalWithChanOut(name, text, dir string, n *parse.Chunk, ch chan Value) error {
 	op, err := ev.Compiler.Compile(name, text, dir, n)
 	if err != nil {
 		return err
 	}
-	return ev.eval(name, text, op)
+	ec := newTopEvalCtx(ev, name, text)
+	return ec.evalWithChanOut(op, ch)
 }
 
 // eval evaluates an Op.
-func (ev *Evaler) eval(name, text string, op Op) (err error) {
+func (ec *evalCtx) eval(op Op) error {
+	return ec.evalWithChanOut(op, nil)
+}
+
+func (ec *evalCtx) evalWithChanOut(op Op, ch chan Value) (err error) {
 	if op == nil {
 		return nil
 	}
-	ev.startEval(name, text)
-	defer ev.stopEval()
+	if ch != nil {
+		ec.ports[1] = &port{ch: ch, closeCh: false}
+	}
+	defer ec.closePorts()
 	defer errutil.Catch(&err)
-	op(ev)
+	op(ec)
 	return nil
 }
 
-func (ev *Evaler) startEval(name, text string) {
-	ev.evalerEphemeral = evalerEphemeral{name, text, "top"}
-}
-
-func (ev *Evaler) stopEval() {
-	ev.evalerEphemeral = evalerEphemeral{}
-}
-
-// errorf stops the ev.eval immediately by panicking with a diagnostic message.
-// The panic is supposed to be caught by ev.eval.
-func (ev *Evaler) errorf(p parse.Pos, format string, args ...interface{}) {
+// errorf stops the ec.ecal immediately by panicking with a diagnostic message.
+// The panic is supposed to be caught by ec.ecal.
+func (ec *evalCtx) errorf(p parse.Pos, format string, args ...interface{}) {
 	errutil.Throw(errutil.NewContextualError(
-		fmt.Sprintf("%s (%s)", ev.name, ev.context), "evalling error",
-		ev.text, int(p), format, args...))
+		fmt.Sprintf("%s (%s)", ec.name, ec.context), "ecalling error",
+		ec.text, int(p), format, args...))
 }
 
 // mustSingleString returns a String if that is the only element of vs.
 // Otherwise it errors.
-func (ev *Evaler) mustSingleString(vs []Value, what string, p parse.Pos) str {
+func (ec *evalCtx) mustSingleString(vs []Value, what string, p parse.Pos) str {
 	if len(vs) != 1 {
-		ev.errorf(p, "Expect exactly one word for %s, got %d", what, len(vs))
+		ec.errorf(p, "Expect exactly one word for %s, got %d", what, len(vs))
 	}
 	v, ok := vs[0].(str)
 	if !ok {
-		ev.errorf(p, "Expect string for %s, got %s", what, vs[0])
+		ec.errorf(p, "Expect string for %s, got %s", what, vs[0])
 	}
 	return v
 }
 
-func (ev *Evaler) applyPortOps(ports []portOp) {
-	ev.growPorts(len(ports))
+func (ec *evalCtx) applyPortOps(ports []portOp) {
+	ec.growPorts(len(ports))
 
 	for i, op := range ports {
 		if op != nil {
-			ev.ports[i] = op(ev)
+			ec.ports[i] = op(ec)
 		}
 	}
 }
@@ -242,11 +261,11 @@ func (ev *Evaler) Source(fname string) error {
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
-func (ev *Evaler) ResolveVar(ns, name string) Variable {
+func (ec *evalCtx) ResolveVar(ns, name string) Variable {
 	if ns == "env" {
 		return newEnvVariable(name)
 	}
-	if mod, ok := ev.mod[ns]; ok {
+	if mod, ok := ec.mod[ns]; ok {
 		return mod[name]
 	}
 
@@ -254,17 +273,17 @@ func (ev *Evaler) ResolveVar(ns, name string) Variable {
 		return ns == "" || ns == n
 	}
 	if may("local") {
-		if v, ok := ev.local[name]; ok {
+		if v, ok := ec.local[name]; ok {
 			return v
 		}
 	}
 	if may("up") {
-		if v, ok := ev.up[name]; ok {
+		if v, ok := ec.up[name]; ok {
 			return v
 		}
 	}
 	if may("builtin") {
-		if v, ok := ev.builtin[name]; ok {
+		if v, ok := ec.builtin[name]; ok {
 			return v
 		}
 	}

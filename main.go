@@ -23,13 +23,6 @@ const (
 )
 
 func newEvaler() *eval.Evaler {
-	ch := make(chan eval.Value, outChanSize)
-	go func() {
-		for v := range ch {
-			fmt.Printf("%s%s\n", outChanLeader, v.Repr())
-		}
-	}()
-
 	dataDir, err := store.EnsureDataDir()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Warning: cannot create data dir ~/.elvish")
@@ -43,9 +36,7 @@ func newEvaler() *eval.Evaler {
 		}
 	}
 
-	ev := eval.NewEvaler(st, dataDir)
-	ev.SetChanOut(ch)
-	return ev
+	return eval.NewEvaler(st, dataDir)
 }
 
 func printError(err error) {

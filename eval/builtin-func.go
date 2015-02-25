@@ -56,50 +56,50 @@ var (
 	inputError = newFailure("input error")
 )
 
-func put(ev *Evaler, args []Value) exitus {
-	out := ev.ports[1].ch
+func put(ec *evalCtx, args []Value) exitus {
+	out := ec.ports[1].ch
 	for _, a := range args {
 		out <- a
 	}
 	return success
 }
 
-func typeof(ev *Evaler, args []Value) exitus {
-	out := ev.ports[1].ch
+func typeof(ec *evalCtx, args []Value) exitus {
+	out := ec.ports[1].ch
 	for _, a := range args {
 		out <- str(a.Type().String())
 	}
 	return success
 }
 
-func failure(ev *Evaler, args []Value) exitus {
+func failure(ec *evalCtx, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
-	out := ev.ports[1].ch
+	out := ec.ports[1].ch
 	out <- newFailure(toString(args[0]))
 	return success
 }
 
-func print(ev *Evaler, args []Value) exitus {
-	out := ev.ports[1].f
+func print(ec *evalCtx, args []Value) exitus {
+	out := ec.ports[1].f
 	for _, a := range args {
 		fmt.Fprint(out, toString(a))
 	}
 	return success
 }
 
-func println(ev *Evaler, args []Value) exitus {
+func println(ec *evalCtx, args []Value) exitus {
 	args = append(args, str("\n"))
-	return print(ev, args)
+	return print(ec, args)
 }
 
-func printchan(ev *Evaler, args []Value) exitus {
+func printchan(ec *evalCtx, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}
-	in := ev.ports[0].ch
-	out := ev.ports[1].f
+	in := ec.ports[0].ch
+	out := ec.ports[1].f
 
 	for v := range in {
 		fmt.Fprintln(out, toString(v))
@@ -107,12 +107,12 @@ func printchan(ev *Evaler, args []Value) exitus {
 	return success
 }
 
-func feedchan(ev *Evaler, args []Value) exitus {
+func feedchan(ec *evalCtx, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}
-	in := ev.ports[0].f
-	out := ev.ports[1].ch
+	in := ec.ports[0].f
+	out := ec.ports[1].ch
 
 	fmt.Println("WARNING: Only string input is supported at the moment.")
 
@@ -131,11 +131,11 @@ func feedchan(ev *Evaler, args []Value) exitus {
 	}
 }
 
-func ratFn(ev *Evaler, args []Value) exitus {
+func ratFn(ec *evalCtx, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
-	out := ev.ports[1].ch
+	out := ec.ports[1].ch
 	r, err := toRat(args[0])
 	if err != nil {
 		return newFailure(err.Error())
@@ -145,12 +145,12 @@ func ratFn(ev *Evaler, args []Value) exitus {
 }
 
 // unpack takes any number of tables and output their list elements.
-func unpack(ev *Evaler, args []Value) exitus {
+func unpack(ec *evalCtx, args []Value) exitus {
 	if len(args) != 0 {
 		return argsError
 	}
-	in := ev.ports[0].ch
-	out := ev.ports[1].ch
+	in := ec.ports[0].ch
+	out := ec.ports[1].ch
 
 	for v := range in {
 		if t, ok := v.(*table); !ok {
@@ -166,12 +166,12 @@ func unpack(ev *Evaler, args []Value) exitus {
 }
 
 // parseJSON parses a stream of JSON data into Value's.
-func parseJSON(ev *Evaler, args []Value) exitus {
+func parseJSON(ec *evalCtx, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}
-	in := ev.ports[0].f
-	out := ev.ports[1].ch
+	in := ec.ports[0].f
+	out := ec.ports[1].ch
 
 	dec := json.NewDecoder(in)
 	var v interface{}
@@ -188,16 +188,16 @@ func parseJSON(ev *Evaler, args []Value) exitus {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ev *Evaler, args []Value) exitus {
+func each(ec *evalCtx, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
 	if f, ok := args[0].(*closure); !ok {
 		return argsError
 	} else {
-		in := ev.ports[0].ch
+		in := ec.ports[0].ch
 		for v := range in {
-			su := f.Exec(ev.copy("closure of each"), []Value{v})
+			su := f.Exec(ec.copy("closure of each"), []Value{v})
 			for _ = range su {
 			}
 		}
@@ -205,7 +205,7 @@ func each(ev *Evaler, args []Value) exitus {
 	return success
 }
 
-func cd(ev *Evaler, args []Value) exitus {
+func cd(ec *evalCtx, args []Value) exitus {
 	var dir string
 	if len(args) == 0 {
 		user, err := user.Current()
@@ -221,11 +221,11 @@ func cd(ev *Evaler, args []Value) exitus {
 	if err != nil {
 		return newFailure(err.Error())
 	}
-	if ev.store != nil {
+	if ec.store != nil {
 		pwd, err := os.Getwd()
 		// XXX(xiaq): ignores error
 		if err == nil {
-			ev.store.AddVisitedDir(pwd)
+			ec.store.AddVisitedDir(pwd)
 		}
 	}
 	return success
@@ -233,15 +233,15 @@ func cd(ev *Evaler, args []Value) exitus {
 
 var storeNotConnected = newFailure("store not connected")
 
-func visistedDirs(ev *Evaler, args []Value) exitus {
-	if ev.store == nil {
+func visistedDirs(ec *evalCtx, args []Value) exitus {
+	if ec.store == nil {
 		return storeNotConnected
 	}
-	dirs, err := ev.store.ListVisitedDirs()
+	dirs, err := ec.store.ListVisitedDirs()
 	if err != nil {
 		return newFailure("store error: " + err.Error())
 	}
-	out := ev.ports[1].ch
+	out := ec.ports[1].ch
 	for _, dir := range dirs {
 		table := newTable()
 		table.Dict["path"] = str(dir.Path)
@@ -253,14 +253,14 @@ func visistedDirs(ev *Evaler, args []Value) exitus {
 
 var noMatchingDir = newFailure("no matching directory")
 
-func jumpDir(ev *Evaler, args []Value) exitus {
+func jumpDir(ec *evalCtx, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
-	if ev.store == nil {
+	if ec.store == nil {
 		return storeNotConnected
 	}
-	dirs, err := ev.store.FindVisitedDirs(toString(args[0]))
+	dirs, err := ec.store.FindVisitedDirs(toString(args[0]))
 	if err != nil {
 		return newFailure("store error: " + err.Error())
 	}
@@ -273,18 +273,18 @@ func jumpDir(ev *Evaler, args []Value) exitus {
 	if err != nil {
 		return newFailure(err.Error())
 	}
-	ev.store.AddVisitedDir(dir)
+	ec.store.AddVisitedDir(dir)
 	return success
 }
 
-func source(ev *Evaler, args []Value) exitus {
+func source(ec *evalCtx, args []Value) exitus {
 	if len(args) != 1 {
 		return argsError
 	}
 	if fname, ok := args[0].(str); !ok {
 		return argsError
 	} else {
-		ev.Source(string(fname))
+		ec.Source(string(fname))
 	}
 	return success
 }
@@ -304,8 +304,8 @@ func toFloats(args []Value) (nums []float64, err error) {
 	return
 }
 
-func plus(ev *Evaler, args []Value) exitus {
-	out := ev.ports[1].ch
+func plus(ec *evalCtx, args []Value) exitus {
+	out := ec.ports[1].ch
 	nums, err := toFloats(args)
 	if err != nil {
 		return newFailure(err.Error())
@@ -318,8 +318,8 @@ func plus(ev *Evaler, args []Value) exitus {
 	return success
 }
 
-func minus(ev *Evaler, args []Value) exitus {
-	out := ev.ports[1].ch
+func minus(ec *evalCtx, args []Value) exitus {
+	out := ec.ports[1].ch
 	if len(args) == 0 {
 		return argsError
 	}
@@ -335,8 +335,8 @@ func minus(ev *Evaler, args []Value) exitus {
 	return success
 }
 
-func times(ev *Evaler, args []Value) exitus {
-	out := ev.ports[1].ch
+func times(ec *evalCtx, args []Value) exitus {
+	out := ec.ports[1].ch
 	nums, err := toFloats(args)
 	if err != nil {
 		return newFailure(err.Error())
@@ -349,8 +349,8 @@ func times(ev *Evaler, args []Value) exitus {
 	return success
 }
 
-func divide(ev *Evaler, args []Value) exitus {
-	out := ev.ports[1].ch
+func divide(ec *evalCtx, args []Value) exitus {
+	out := ec.ports[1].ch
 	if len(args) == 0 {
 		return argsError
 	}
@@ -366,8 +366,8 @@ func divide(ev *Evaler, args []Value) exitus {
 	return success
 }
 
-func eq(ev *Evaler, args []Value) exitus {
-	out := ev.ports[1].ch
+func eq(ec *evalCtx, args []Value) exitus {
+	out := ec.ports[1].ch
 	if len(args) == 0 {
 		return argsError
 	}

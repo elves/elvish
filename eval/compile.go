@@ -247,28 +247,28 @@ func (cp *Compiler) redirs(rs []parse.Redir) []portOp {
 func (cp *Compiler) redir(r parse.Redir) portOp {
 	switch r := r.(type) {
 	case *parse.CloseRedir:
-		return func(ev *Evaler) *port {
+		return func(ec *evalCtx) *port {
 			return &port{}
 		}
 	case *parse.FdRedir:
 		oldFd := int(r.OldFd)
-		return func(ev *Evaler) *port {
+		return func(ec *evalCtx) *port {
 			// Copied ports have shouldClose unmarked to avoid double close on
 			// channels
-			p := *ev.port(oldFd)
+			p := *ec.port(oldFd)
 			p.closeF = false
 			p.closeCh = false
 			return &p
 		}
 	case *parse.FilenameRedir:
 		fnameOp := cp.compound(r.Filename)
-		return func(ev *Evaler) *port {
-			fname := string(ev.mustSingleString(
-				fnameOp.f(ev), "filename", r.Filename.Pos))
+		return func(ec *evalCtx) *port {
+			fname := string(ec.mustSingleString(
+				fnameOp.f(ec), "filename", r.Filename.Pos))
 			// TODO haz hardcoded permbits now
 			f, e := os.OpenFile(fname, r.Flag, 0644)
 			if e != nil {
-				ev.errorf(r.Pos, "failed to open file %q: %s", fname[0], e)
+				ec.errorf(r.Pos, "failed to open file %q: %s", fname[0], e)
 			}
 			return &port{
 				f: f, ch: make(chan Value), closeF: true, closeCh: true,
