@@ -22,7 +22,7 @@ const (
 	outChanLeader = "▶ "
 )
 
-func newEvaler() *eval.Evaler {
+func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 	dataDir, err := store.EnsureDataDir()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Warning: cannot create data dir ~/.elvish")
@@ -36,7 +36,7 @@ func newEvaler() *eval.Evaler {
 		}
 	}
 
-	return eval.NewEvaler(st, dataDir)
+	return eval.NewEvaler(st, dataDir), st
 }
 
 func printError(err error) {
@@ -51,7 +51,7 @@ func printError(err error) {
 
 // TODO(xiaq): Currently only the editor deals with signals.
 func interact() {
-	ev := newEvaler()
+	ev, st := newEvalerAndStore()
 	datadir, err := store.EnsureDataDir()
 	printError(err)
 	if err == nil {
@@ -76,7 +76,7 @@ func interact() {
 
 	sigch := make(chan os.Signal, sigchSize)
 
-	ed := edit.NewEditor(os.Stdin, sigch)
+	ed := edit.NewEditor(os.Stdin, sigch, st)
 
 	for {
 		cmdNum++
@@ -111,7 +111,7 @@ func interact() {
 }
 
 func script(fname string) {
-	ev := newEvaler()
+	ev, _ := newEvalerAndStore()
 	err := ev.Source(fname)
 	printError(err)
 	if err != nil {
