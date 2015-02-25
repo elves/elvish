@@ -26,6 +26,7 @@ type ns map[string]Variable
 // shared among all evalCtx instances.
 type Evaler struct {
 	Compiler    *Compiler
+	global      ns
 	builtin     ns
 	mod         map[string]ns
 	searchPaths []string
@@ -81,7 +82,7 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 
 	return &Evaler{
 		NewCompiler(makeCompilerScope(builtin), dataDir),
-		builtin, map[string]ns{},
+		ns{}, builtin, map[string]ns{},
 		searchPaths, st,
 	}
 }
@@ -115,7 +116,7 @@ func newTopEvalCtx(ev *Evaler, name, text string) *evalCtx {
 	return &evalCtx{
 		ev,
 		name, text, "top",
-		ns{}, ns{},
+		ev.global, ns{},
 		[]*port{{f: os.Stdin},
 			{f: os.Stdout, ch: ch, closeCh: true}, {f: os.Stderr}},
 		printExituses,
