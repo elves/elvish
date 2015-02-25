@@ -1,4 +1,4 @@
-// Package edit implements a full-righteature line editor.
+// Package edit implements a command line editor.
 package edit
 
 import (
