@@ -9,7 +9,7 @@ func init() {
 	createTable["cmd"] = `create table if not exists cmd (content text)`
 }
 
-func (s *Store) GetNextCmdSeq() (int, error) {
+func (s *Store) NextCmdSeq() (int, error) {
 	row := s.db.QueryRow(`select ifnull(max(rowid), 0) + 1 from cmd`)
 	var seq int
 	err := row.Scan(&seq)
@@ -21,7 +21,7 @@ func (s *Store) AddCmd(cmd string) error {
 	return err
 }
 
-func (s *Store) GetCmd(seq int) (string, error) {
+func (s *Store) Cmd(seq int) (string, error) {
 	row := s.db.QueryRow(`select content from cmd where rowid = ?`, seq)
 	var cmd string
 	err := row.Scan(&cmd)
@@ -45,12 +45,12 @@ func convertCmd(row *sql.Row) (int, string, error) {
 	return seq, cmd, nil
 }
 
-func (s *Store) GetLastCmdWithPrefix(upto int, prefix string) (int, string, error) {
+func (s *Store) LastCmdWithPrefix(upto int, prefix string) (int, string, error) {
 	row := s.db.QueryRow(`select rowid, content from cmd where rowid < ? and substr(content, 1, ?) = ? order by rowid desc limit 1`, upto, len(prefix), prefix)
 	return convertCmd(row)
 }
 
-func (s *Store) GetFirstCmdWithPrefix(from int, prefix string) (int, string, error) {
+func (s *Store) FirstCmdWithPrefix(from int, prefix string) (int, string, error) {
 	row := s.db.QueryRow(`select rowid, content from cmd where rowid >= ? and substr(content, 1, ?) = ? order by rowid asc limit 1`, from, len(prefix), prefix)
 	return convertCmd(row)
 }

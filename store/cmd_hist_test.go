@@ -25,9 +25,9 @@ var (
 )
 
 func TestCmd(t *testing.T) {
-	startSeq, err := tStore.GetNextCmdSeq()
+	startSeq, err := tStore.NextCmdSeq()
 	if startSeq != 1 || err != nil {
-		t.Errorf("tStore.GetNextCmdSeq() => (%v, %v), want (1, nil)",
+		t.Errorf("tStore.NextCmdSeq() => (%v, %v), want (1, nil)",
 			startSeq, err)
 	}
 	for _, cmd := range cmds {
@@ -36,26 +36,26 @@ func TestCmd(t *testing.T) {
 			t.Errorf("tStore.AddCmd(%v) => %v, want nil", cmd, err)
 		}
 	}
-	endSeq, err := tStore.GetNextCmdSeq()
+	endSeq, err := tStore.NextCmdSeq()
 	wantedEndSeq := startSeq + len(cmds)
 	if endSeq != wantedEndSeq || err != nil {
-		t.Errorf("tStore.GetNextCmdSeq() => (%v, %v), want (%v, nil)",
+		t.Errorf("tStore.NextCmdSeq() => (%v, %v), want (%v, nil)",
 			endSeq, err, wantedEndSeq)
 	}
 	for i, wantedCmd := range cmds {
 		seq := i + startSeq
-		cmd, err := tStore.GetCmd(seq)
+		cmd, err := tStore.Cmd(seq)
 		if cmd != wantedCmd || err != nil {
-			t.Errorf("tStore.GetCmd(%v) => (%v, %v), want (%v, nil)",
+			t.Errorf("tStore.Cmd(%v) => (%v, %v), want (%v, nil)",
 				seq, cmd, err, wantedCmd)
 		}
 	}
 	for _, tt := range searches {
-		f := tStore.GetLastCmdWithPrefix
-		fname := "tStore.GetLastCmdWithPrefix"
+		f := tStore.LastCmdWithPrefix
+		fname := "tStore.LastCmdWithPrefix"
 		if tt.first {
-			f = tStore.GetFirstCmdWithPrefix
-			fname = "tStore.GetFirstCmdWithPrefix"
+			f = tStore.FirstCmdWithPrefix
+			fname = "tStore.FirstCmdWithPrefix"
 		}
 		seq, cmd, err := f(tt.seq, tt.prefix)
 		if seq != tt.wantedSeq || cmd != tt.wantedCmd || err != tt.wantedErr {
