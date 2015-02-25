@@ -198,9 +198,9 @@ func makeString(text string) valuesOp {
 	return literalValue(str(text))
 }
 
-func makeVar(cp *Compiler, qname string, p parse.Pos) valuesOp {
+func makeVar(cc *compileCtx, qname string, p parse.Pos) valuesOp {
 	ns, name := splitQualifiedName(qname)
-	tr := newFixedTypeRun(cp.mustResolveVar(ns, name, p))
+	tr := newFixedTypeRun(cc.mustResolveVar(ns, name, p))
 	f := func(ec *evalCtx) []Value {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
@@ -211,10 +211,10 @@ func makeVar(cp *Compiler, qname string, p parse.Pos) valuesOp {
 	return valuesOp{tr, f}
 }
 
-func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valuesOp {
+func combineSubscript(cc *compileCtx, left, right valuesOp, lp, rp parse.Pos) valuesOp {
 	if !left.tr.mayCountTo(1) {
 		// TODO Also check at runtime
-		cp.errorf(lp, "left operand of subscript must be a single value")
+		cc.errorf(lp, "left operand of subscript must be a single value")
 	}
 	var t Type
 	switch left.tr[0].t.(type) {
@@ -223,15 +223,15 @@ func combineSubscript(cp *Compiler, left, right valuesOp, lp, rp parse.Pos) valu
 	case tableType, anyType:
 		t = anyType{}
 	default:
-		cp.errorf(lp, "left operand of subscript must be of type string, env, table or any")
+		cc.errorf(lp, "left operand of subscript must be of type string, env, table or any")
 	}
 
 	if !right.tr.mayCountTo(1) {
 		// TODO Also check at runtime
-		cp.errorf(rp, "right operand of subscript must be a single value")
+		cc.errorf(rp, "right operand of subscript must be a single value")
 	}
 	if _, ok := right.tr[0].t.(stringType); !ok {
-		cp.errorf(rp, "right operand of subscript must be of type string")
+		cc.errorf(rp, "right operand of subscript must be of type string")
 	}
 
 	f := func(ec *evalCtx) []Value {

@@ -14,77 +14,81 @@ type staticNS map[string]Type
 
 // Compiler compiles an Elvish AST into an Op.
 type Compiler struct {
+	global  staticNS
 	builtin staticNS
-	scopes  []staticNS
-	up      staticNS
+	// scopes  []staticNS
 	mod     map[string]staticNS
 	dataDir string
-	compilerEphemeral
 }
 
-// compilerEphemeral wraps the ephemeral parts of a Compiler, namely the parts
-// only valid through one startCompile-stopCompile cycle.
-type compilerEphemeral struct {
+// compileCtx maintains a Compiler along with mutable states. After creation a
+// compilerCtx is never modified (but its fields may be), and new instances are
+// created when needed.
+type compileCtx struct {
+	*Compiler
 	name, text, dir string
+
+	scopes []staticNS
+	up     staticNS
+}
+
+func newCompileCtx(cp *Compiler, name, text, dir string) *compileCtx {
+	return &compileCtx{
+		cp,
+		name, text, dir,
+		[]staticNS{cp.global}, staticNS{},
+	}
 }
 
 // NewCompiler returns a new compiler.
 func NewCompiler(bi staticNS, dataDir string) *Compiler {
-	return &Compiler{
-		bi, []staticNS{staticNS{}}, staticNS{}, map[string]staticNS{}, dataDir,
-		compilerEphemeral{},
-	}
-}
-
-func (cp *Compiler) startCompile(name, text, dir string) {
-	cp.compilerEphemeral = compilerEphemeral{name, text, dir}
-}
-
-func (cp *Compiler) stopCompile() {
-	cp.compilerEphemeral = compilerEphemeral{}
+	return &Compiler{staticNS{}, bi, map[string]staticNS{}, dataDir}
 }
 
 // Compile compiles a ChunkNode into an Op. The supplied name and text are used
 // in diagnostic messages.
-func (cp *Compiler) Compile(name, text, dir string, n *parse.Chunk) (op Op, err error) {
-	cp.startCompile(name, text, dir)
-	defer cp.stopCompile()
+func (cp *Compiler) Compile(name, text, dir string, n *parse.Chunk) (Op, error) {
+	cc := newCompileCtx(cp, name, text, dir)
+	return cc.compile(n)
+}
+
+func (cc *compileCtx) compile(n *parse.Chunk) (op Op, err error) {
 	defer errutil.Catch(&err)
-	return cp.chunk(n), nil
+	return cc.chunk(n), nil
 }
 
-func (cp *Compiler) pushScope() {
-	cp.scopes = append(cp.scopes, staticNS{})
+func (cc *compileCtx) pushScope() {
+	cc.scopes = append(cc.scopes, staticNS{})
 }
 
-func (cp *Compiler) popScope() {
-	cp.scopes[len(cp.scopes)-1] = nil
-	cp.scopes = cp.scopes[:len(cp.scopes)-1]
+func (cc *compileCtx) popScope() {
+	cc.scopes[len(cc.scopes)-1] = nil
+	cc.scopes = cc.scopes[:len(cc.scopes)-1]
 }
 
-func (cp *Compiler) pushVar(name string, t Type) {
-	cp.scopes[len(cp.scopes)-1][name] = t
+func (cc *compileCtx) pushVar(name string, t Type) {
+	cc.scopes[len(cc.scopes)-1][name] = t
 }
 
-func (cp *Compiler) popVar(name string) {
-	delete(cp.scopes[len(cp.scopes)-1], name)
+func (cc *compileCtx) popVar(name string) {
+	delete(cc.scopes[len(cc.scopes)-1], name)
 }
 
-func (cp *Compiler) errorf(p parse.Pos, format string, args ...interface{}) {
-	errutil.Throw(errutil.NewContextualError(cp.name, "compiling error", cp.text, int(p), format, args...))
+func (cc *compileCtx) errorf(p parse.Pos, format string, args ...interface{}) {
+	errutil.Throw(errutil.NewContextualError(cc.name, "compiling error", cc.text, int(p), format, args...))
 }
 
 // chunk compiles a ChunkNode into an Op.
-func (cp *Compiler) chunk(cn *parse.Chunk) Op {
+func (cc *compileCtx) chunk(cn *parse.Chunk) Op {
 	ops := make([]valuesOp, len(cn.Nodes))
 	for i, pn := range cn.Nodes {
-		ops[i] = cp.pipeline(pn)
+		ops[i] = cc.pipeline(pn)
 	}
 	return combineChunk(ops)
 }
 
 // closure compiles a ClosureNode into a valuesOp.
-func (cp *Compiler) closure(cn *parse.Closure) valuesOp {
+func (cc *compileCtx) closure(cn *parse.Closure) valuesOp {
 	nargs := 0
 	if cn.ArgNames != nil {
 		nargs = len(cn.ArgNames.Nodes)
@@ -95,27 +99,27 @@ func (cp *Compiler) closure(cn *parse.Closure) valuesOp {
 		// TODO Allow types for arguments. Maybe share code with the var
 		// builtin.
 		for i, cn := range cn.ArgNames.Nodes {
-			_, name := ensureVariablePrimary(cp, cn, "expect variable")
+			_, name := ensureVariablePrimary(cc, cn, "expect variable")
 			argNames[i] = name
 		}
 	}
 
-	cp.pushScope()
+	cc.pushScope()
 
 	for _, name := range argNames {
-		cp.pushVar(name, anyType{})
+		cc.pushVar(name, anyType{})
 	}
 
-	op := cp.chunk(cn.Chunk)
+	op := cc.chunk(cn.Chunk)
 
-	up := cp.up
-	cp.up = staticNS{}
-	cp.popScope()
+	up := cc.up
+	cc.up = staticNS{}
+	cc.popScope()
 
-	// Added variables up on inner closures to cp.up
+	// Added variables up on inner closures to cc.up
 	for name, typ := range up {
-		if cp.resolveVarOnThisScope(name) == nil {
-			cp.up[name] = typ
+		if cc.resolveVarOnThisScope(name) == nil {
+			cc.up[name] = typ
 		}
 	}
 
@@ -123,29 +127,29 @@ func (cp *Compiler) closure(cn *parse.Closure) valuesOp {
 }
 
 // pipeline compiles a PipelineNode into a valuesOp.
-func (cp *Compiler) pipeline(pn *parse.Pipeline) valuesOp {
+func (cc *compileCtx) pipeline(pn *parse.Pipeline) valuesOp {
 	ops := make([]stateUpdatesOp, len(pn.Nodes))
 
 	for i, fn := range pn.Nodes {
-		ops[i] = cp.form(fn)
+		ops[i] = cc.form(fn)
 	}
 	return combinePipeline(ops, pn.Pos)
 }
 
 // mustResolveVar calls ResolveVar and calls errorf if the variable is
 // nonexistent.
-func (cp *Compiler) mustResolveVar(ns, name string, p parse.Pos) Type {
-	if t := cp.ResolveVar(ns, name); t != nil {
+func (cc *compileCtx) mustResolveVar(ns, name string, p parse.Pos) Type {
+	if t := cc.ResolveVar(ns, name); t != nil {
 		return t
 	}
-	cp.errorf(p, "undefined variable $%s", name)
+	cc.errorf(p, "undefined variable $%s", name)
 	return nil
 }
 
 // resolveVarOnThisScope returns the type of the named variable on current
 // scope. When such a variable does not exist, nil is returned.
-func (cp *Compiler) resolveVarOnThisScope(name string) Type {
-	return cp.scopes[len(cp.scopes)-1][name]
+func (cc *compileCtx) resolveVarOnThisScope(name string) Type {
+	return cc.scopes[len(cc.scopes)-1][name]
 }
 
 // splitQualifiedName splits a qualified variable name into two parts separated
@@ -162,12 +166,12 @@ func splitQualifiedName(qname string) (string, string) {
 // ResolveVar returns the type of a variable with supplied name and on the
 // supplied namespace. If such a variable is nonexistent, a nil is returned.
 // When the value to resolve is on an outer current scope, it is added to
-// cp.up.
-func (cp *Compiler) ResolveVar(ns, name string) Type {
+// cc.up.
+func (cc *compileCtx) ResolveVar(ns, name string) Type {
 	if ns == "env" {
 		return stringType{}
 	}
-	if mod, ok := cp.mod[ns]; ok {
+	if mod, ok := cc.mod[ns]; ok {
 		return mod[name]
 	}
 
@@ -175,20 +179,20 @@ func (cp *Compiler) ResolveVar(ns, name string) Type {
 		return ns == "" || ns == n
 	}
 	if may("local") {
-		if t := cp.resolveVarOnThisScope(name); t != nil {
+		if t := cc.resolveVarOnThisScope(name); t != nil {
 			return t
 		}
 	}
 	if may("up") {
-		for i := len(cp.scopes) - 2; i >= 0; i-- {
-			if t, ok := cp.scopes[i][name]; ok {
-				cp.up[name] = t
+		for i := len(cc.scopes) - 2; i >= 0; i-- {
+			if t, ok := cc.scopes[i][name]; ok {
+				cc.up[name] = t
 				return t
 			}
 		}
 	}
 	if may("builtin") {
-		if t, ok := cp.builtin[name]; ok {
+		if t, ok := cc.builtin[name]; ok {
 			return t
 		}
 	}
@@ -212,22 +216,22 @@ func resolveBuiltinSpecial(cmd *parse.Compound) *builtinSpecial {
 }
 
 // form compiles a FormNode into a stateUpdatesOp.
-func (cp *Compiler) form(fn *parse.Form) stateUpdatesOp {
+func (cc *compileCtx) form(fn *parse.Form) stateUpdatesOp {
 	bi := resolveBuiltinSpecial(fn.Command)
-	ports := cp.redirs(fn.Redirs)
+	ports := cc.redirs(fn.Redirs)
 
 	if bi != nil {
-		specialOp := bi.compile(cp, fn)
+		specialOp := bi.compile(cc, fn)
 		return combineSpecialForm(specialOp, ports, fn.Pos)
 	}
-	cmdOp := cp.compound(fn.Command)
-	argsOp := cp.spaced(fn.Args)
+	cmdOp := cc.compound(fn.Command)
+	argsOp := cc.spaced(fn.Args)
 	return combineNonSpecialForm(cmdOp, argsOp, ports, fn.Pos)
 }
 
 // redirs compiles a slice of Redir's into a slice of portOp's. The resulting
 // slice is indexed by the original fd.
-func (cp *Compiler) redirs(rs []parse.Redir) []portOp {
+func (cc *compileCtx) redirs(rs []parse.Redir) []portOp {
 	var nports uintptr
 	for _, rd := range rs {
 		if nports < rd.Fd()+1 {
@@ -237,14 +241,14 @@ func (cp *Compiler) redirs(rs []parse.Redir) []portOp {
 
 	ports := make([]portOp, nports)
 	for _, rd := range rs {
-		ports[rd.Fd()] = cp.redir(rd)
+		ports[rd.Fd()] = cc.redir(rd)
 	}
 
 	return ports
 }
 
 // redir compiles a Redir into a portOp.
-func (cp *Compiler) redir(r parse.Redir) portOp {
+func (cc *compileCtx) redir(r parse.Redir) portOp {
 	switch r := r.(type) {
 	case *parse.CloseRedir:
 		return func(ec *evalCtx) *port {
@@ -261,7 +265,7 @@ func (cp *Compiler) redir(r parse.Redir) portOp {
 			return &p
 		}
 	case *parse.FilenameRedir:
-		fnameOp := cp.compound(r.Filename)
+		fnameOp := cc.compound(r.Filename)
 		return func(ec *evalCtx) *port {
 			fname := string(ec.mustSingleString(
 				fnameOp.f(ec), "filename", r.Filename.Pos))
@@ -281,28 +285,28 @@ func (cp *Compiler) redir(r parse.Redir) portOp {
 
 // compounds compiles a slice of CompoundNode's into a valuesOp. It can
 // be also used to compile a SpacedNode.
-func (cp *Compiler) compounds(tns []*parse.Compound) valuesOp {
+func (cc *compileCtx) compounds(tns []*parse.Compound) valuesOp {
 	ops := make([]valuesOp, len(tns))
 	for i, tn := range tns {
-		ops[i] = cp.compound(tn)
+		ops[i] = cc.compound(tn)
 	}
 	return combineSpaced(ops)
 }
 
 // spaced compiles a SpacedNode into a valuesOp.
-func (cp *Compiler) spaced(ln *parse.Spaced) valuesOp {
-	return cp.compounds(ln.Nodes)
+func (cc *compileCtx) spaced(ln *parse.Spaced) valuesOp {
+	return cc.compounds(ln.Nodes)
 }
 
 // compound compiles a CompoundNode into a valuesOp.
-func (cp *Compiler) compound(tn *parse.Compound) valuesOp {
+func (cc *compileCtx) compound(tn *parse.Compound) valuesOp {
 	var op valuesOp
 	if len(tn.Nodes) == 1 {
-		op = cp.subscript(tn.Nodes[0])
+		op = cc.subscript(tn.Nodes[0])
 	} else {
 		ops := make([]valuesOp, len(tn.Nodes))
 		for i, fn := range tn.Nodes {
-			ops[i] = cp.subscript(fn)
+			ops[i] = cc.subscript(fn)
 		}
 		op = combineCompound(ops)
 	}
@@ -316,43 +320,43 @@ func (cp *Compiler) compound(tn *parse.Compound) valuesOp {
 }
 
 // subscript compiles a SubscriptNode into a valuesOp.
-func (cp *Compiler) subscript(sn *parse.Subscript) valuesOp {
+func (cc *compileCtx) subscript(sn *parse.Subscript) valuesOp {
 	if sn.Right == nil {
-		return cp.primary(sn.Left)
+		return cc.primary(sn.Left)
 	}
-	left := cp.primary(sn.Left)
-	right := cp.compound(sn.Right)
-	return combineSubscript(cp, left, right, sn.Left.Pos, sn.Right.Pos)
+	left := cc.primary(sn.Left)
+	right := cc.compound(sn.Right)
+	return combineSubscript(cc, left, right, sn.Left.Pos, sn.Right.Pos)
 }
 
 // primary compiles a PrimaryNode into a valuesOp.
-func (cp *Compiler) primary(fn *parse.Primary) valuesOp {
+func (cc *compileCtx) primary(fn *parse.Primary) valuesOp {
 	switch fn.Typ {
 	case parse.StringPrimary:
 		text := fn.Node.(*parse.String).Text
 		return makeString(text)
 	case parse.VariablePrimary:
 		name := fn.Node.(*parse.String).Text
-		return makeVar(cp, name, fn.Pos)
+		return makeVar(cc, name, fn.Pos)
 	case parse.TablePrimary:
 		table := fn.Node.(*parse.Table)
-		list := cp.compounds(table.List)
+		list := cc.compounds(table.List)
 		keys := make([]valuesOp, len(table.Dict))
 		values := make([]valuesOp, len(table.Dict))
 		for i, tp := range table.Dict {
-			keys[i] = cp.compound(tp.Key)
-			values[i] = cp.compound(tp.Value)
+			keys[i] = cc.compound(tp.Key)
+			values[i] = cc.compound(tp.Value)
 		}
 		return combineTable(list, keys, values, fn.Pos)
 	case parse.ClosurePrimary:
-		return cp.closure(fn.Node.(*parse.Closure))
+		return cc.closure(fn.Node.(*parse.Closure))
 	case parse.ListPrimary:
-		return cp.spaced(fn.Node.(*parse.Spaced))
+		return cc.spaced(fn.Node.(*parse.Spaced))
 	case parse.ChanCapturePrimary:
-		op := cp.pipeline(fn.Node.(*parse.Pipeline))
+		op := cc.pipeline(fn.Node.(*parse.Pipeline))
 		return combineChanCapture(op)
 	case parse.StatusCapturePrimary:
-		op := cp.pipeline(fn.Node.(*parse.Pipeline))
+		op := cc.pipeline(fn.Node.(*parse.Pipeline))
 		return op
 	default:
 		panic(fmt.Sprintln("bad PrimaryNode type", fn.Typ))
