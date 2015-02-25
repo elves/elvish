@@ -35,10 +35,10 @@ type editorState struct {
 	completion            *completion
 	completionLines       int
 	navigation            *navigation
-	history               historyState
+	history               history
 }
 
-type historyState struct {
+type history struct {
 	current int
 	prefix  string
 }
