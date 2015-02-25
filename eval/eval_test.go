@@ -127,14 +127,15 @@ var evalTests = []struct {
 	{"del $env:foo; put $env:foo", stringValues(""), false},
 }
 
-func TestEval(t *testing.T) {
+func evalAndCollect(texts []string, chsize int) ([]Value, error) {
 	name := "<eval test>"
-	for _, tt := range evalTests {
-		n := mustParse(name, tt.text)
+	ev := NewEvaler(nil, ".")
+	outs := []Value{}
 
-		ev := NewEvaler(nil, ".")
-		out := make(chan Value, len(tt.wanted))
-		outs := []Value{}
+	for _, text := range texts {
+		n := mustParse(name, text)
+
+		out := make(chan Value, chsize)
 		exhausted := make(chan struct{})
 		go func() {
 			for v := range out {
@@ -143,23 +144,44 @@ func TestEval(t *testing.T) {
 			exhausted <- struct{}{}
 		}()
 
-		e := ev.evalWithChanOut(name, tt.text, ".", n, out)
+		err := ev.evalWithChanOut(name, text, ".", n, out)
+		if err != nil {
+			return outs, err
+		}
 		close(out)
 		<-exhausted
+	}
+	return outs, nil
+}
+
+func TestEval(t *testing.T) {
+	for _, tt := range evalTests {
+		outs, err := evalAndCollect([]string{tt.text}, len(tt.wanted))
 
 		if tt.wantError {
 			// Test for error, ignore output
-			if e == nil {
-				t.Errorf("ev.Eval(*, %q, *) => <nil>, want non-nil", tt.text)
+			if err == nil {
+				t.Errorf("eval %q => <nil>, want non-nil", tt.text)
 			}
 		} else {
 			// Test for output
-			if e != nil {
-				t.Errorf("ev.Eval(*, %q, *) => %v, want <nil>", tt.text, e)
+			if err != nil {
+				t.Errorf("eval %q => %v, want <nil>", tt.text, err)
 			}
 			if !reflect.DeepEqual(outs, tt.wanted) {
 				t.Errorf("Evalling %q outputs %v, want %v", tt.text, outs, tt.wanted)
 			}
 		}
+	}
+}
+
+func TestMultipleEval(t *testing.T) {
+	outs, err := evalAndCollect([]string{"var $x = `hello`", "put $x"}, 1)
+	wanted := stringValues("hello")
+	if err != nil {
+		t.Errorf("eval %q => %v, want nil", err)
+	}
+	if !reflect.DeepEqual(outs, wanted) {
+		t.Errorf("eval %q outputs %v, want %v", outs, wanted)
 	}
 }
