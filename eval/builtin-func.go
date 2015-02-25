@@ -225,7 +225,7 @@ func cd(ec *evalCtx, args []Value) exitus {
 		pwd, err := os.Getwd()
 		// XXX(xiaq): ignores error
 		if err == nil {
-			ec.store.AddVisitedDir(pwd)
+			ec.store.AddDir(pwd)
 		}
 	}
 	return success
@@ -237,7 +237,7 @@ func visistedDirs(ec *evalCtx, args []Value) exitus {
 	if ec.store == nil {
 		return storeNotConnected
 	}
-	dirs, err := ec.store.ListVisitedDirs()
+	dirs, err := ec.store.ListDirs()
 	if err != nil {
 		return newFailure("store error: " + err.Error())
 	}
@@ -260,7 +260,7 @@ func jumpDir(ec *evalCtx, args []Value) exitus {
 	if ec.store == nil {
 		return storeNotConnected
 	}
-	dirs, err := ec.store.FindVisitedDirs(toString(args[0]))
+	dirs, err := ec.store.FindDirs(toString(args[0]))
 	if err != nil {
 		return newFailure("store error: " + err.Error())
 	}
@@ -273,7 +273,7 @@ func jumpDir(ec *evalCtx, args []Value) exitus {
 	if err != nil {
 		return newFailure(err.Error())
 	}
-	ec.store.AddVisitedDir(dir)
+	ec.store.AddDir(dir)
 	return success
 }
 
