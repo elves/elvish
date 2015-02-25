@@ -9,8 +9,8 @@ func init() {
 	createTable["line"] = `create table if not exists line (content text)`
 }
 
-func (s *Store) GetMaxLineSeq() (int, error) {
-	row := s.db.QueryRow(`select ifnull(max(rowid), 0) from line`)
+func (s *Store) GetNextLineSeq() (int, error) {
+	row := s.db.QueryRow(`select ifnull(max(rowid), 0) + 1 from line`)
 	var seq int
 	err := row.Scan(&seq)
 	return seq, err
@@ -30,9 +30,7 @@ func (s *Store) GetLine(seq int) (string, error) {
 
 var ErrNoMatchingLine = errors.New("no matching line")
 
-func (s *Store) GetLastLineWithPrefix(maxSeq int, prefix string) (int, string, error) {
-	// TODO(xiaq): There may be a nicer way to do prefix match with SQLite
-	row := s.db.QueryRow(`select rowid, content from line where rowid <= ? and substr(content, 1, ?) = ? order by rowid desc limit 1`, maxSeq, len(prefix), prefix)
+func convertLine(row *sql.Row) (int, string, error) {
 	var (
 		seq  int
 		line string
@@ -45,4 +43,14 @@ func (s *Store) GetLastLineWithPrefix(maxSeq int, prefix string) (int, string, e
 		return 0, "", err
 	}
 	return seq, line, nil
+}
+
+func (s *Store) GetLastLineWithPrefix(upto int, prefix string) (int, string, error) {
+	row := s.db.QueryRow(`select rowid, content from line where rowid < ? and substr(content, 1, ?) = ? order by rowid desc limit 1`, upto, len(prefix), prefix)
+	return convertLine(row)
+}
+
+func (s *Store) GetFirstLineWithPrefix(from int, prefix string) (int, string, error) {
+	row := s.db.QueryRow(`select rowid, content from line where rowid >= ? and substr(content, 1, ?) = ? order by rowid asc limit 1`, from, len(prefix), prefix)
+	return convertLine(row)
 }
