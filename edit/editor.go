@@ -41,6 +41,7 @@ type editorState struct {
 type history struct {
 	current int
 	prefix  string
+	line    string
 }
 
 // Editor keeps the status of the line editor.
@@ -69,6 +70,7 @@ func (ed *Editor) prevHistory() bool {
 	for i := ed.history.current - 1; i >= 0; i-- {
 		if strings.HasPrefix(ed.histories[i], ed.history.prefix) {
 			ed.history.current = i
+			ed.history.line = ed.histories[i]
 			return true
 		}
 	}
@@ -79,6 +81,7 @@ func (ed *Editor) nextHistory() bool {
 	for i := ed.history.current + 1; i < len(ed.histories); i++ {
 		if strings.HasPrefix(ed.histories[i], ed.history.prefix) {
 			ed.history.current = i
+			ed.history.line = ed.histories[i]
 			return true
 		}
 	}
@@ -111,7 +114,7 @@ func (ed *Editor) refresh() error {
 			ed.tokens = append(ed.tokens, token)
 		}
 	}
-	return ed.writer.refresh(&ed.editorState, ed.histories)
+	return ed.writer.refresh(&ed.editorState)
 }
 
 // TODO Allow modifiable keybindings.
@@ -190,7 +193,7 @@ func (ed *Editor) acceptCompletion() {
 
 // acceptHistory accepts currently history.
 func (ed *Editor) acceptHistory() {
-	ed.line = ed.histories[ed.history.current]
+	ed.line = ed.history.line
 	ed.dot = len(ed.line)
 }
 
