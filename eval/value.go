@@ -266,8 +266,9 @@ func evalSubscript(ec *evalCtx, left, right Value, lp, rp parse.Pos) Value {
 	switch left.(type) {
 	case *table:
 		t := left.(*table)
-		// Need stricter notion of list indices
-		// TODO Handle invalid index
+		// TODO(xiaq): An index is considered a list index if it can be parsed
+		// as an unsigned integer; otherwise it is a dict index. This is
+		// somewhat subtle.
 		idx, err := strconv.ParseUint(sub, 10, 0)
 		if err == nil {
 			if idx < uint64(len(t.List)) {
