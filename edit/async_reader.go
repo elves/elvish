@@ -1,4 +1,4 @@
-package util
+package edit
 
 import (
 	"bufio"
@@ -52,7 +52,7 @@ func (ar *AsyncReader) Chan() <-chan rune {
 func (ar *AsyncReader) run() {
 	fd := int(ar.rd.Fd())
 	cfd := int(ar.rCtrl.Fd())
-	maxfd := MaxInt(fd, cfd)
+	maxfd := max(fd, cfd)
 	fs := sys.NewFdSet()
 	var cBuf [1]byte
 

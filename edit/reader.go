@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/elves/elvish/errutil"
-	"github.com/elves/elvish/util"
 )
 
 const (
@@ -55,7 +54,7 @@ type OneRead struct {
 
 // Reader converts a stream of runes into a stream of Keys
 type Reader struct {
-	ar         *util.AsyncReader
+	ar         *AsyncReader
 	ones       chan OneRead
 	ctrl       chan readerCtrl
 	ctrlAck    chan bool
@@ -65,7 +64,7 @@ type Reader struct {
 // NewReader creates a new Reader on the given terminal file.
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
-		ar:      util.NewAsyncReader(f),
+		ar:      NewAsyncReader(f),
 		ones:    make(chan OneRead, readerOutChanSize),
 		ctrl:    make(chan readerCtrl),
 		ctrlAck: make(chan bool),
@@ -112,7 +111,7 @@ func (rd *Reader) readRune(d time.Duration) rune {
 	case r := <-rd.ar.Chan():
 		rd.currentSeq += string(r)
 		return r
-	case <-util.After(d):
+	case <-After(d):
 		return runeTimeout
 	}
 }
