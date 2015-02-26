@@ -1,5 +1,5 @@
 EXE := elvish
-PKGS := edit eval parse util sys store errutil sysutil
+PKGS := edit eval parse util sys store errutil sysutil strutil
 PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
 PKG_COVERS := $(addprefix cover/,$(PKGS))
 
