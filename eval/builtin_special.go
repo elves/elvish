@@ -53,7 +53,7 @@ func checkSetType(cc *compileCtx, names []string, values []*parse.Compound, vop 
 			cc.errorf(p, "number of variables (%d) can never match that of values (%d or more)", len(names), n)
 		}
 		// Only check the variables before the "more" part.
-		name = name[:n]
+		names = names[:n]
 	} else if n != len(names) {
 		cc.errorf(p, "number of variables (%d) doesn't match that of values (%d or more)", len(names), n)
 	}
