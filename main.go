@@ -13,7 +13,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
-	"github.com/elves/elvish/util"
+	"github.com/elves/elvish/sysutil"
 )
 
 const (
@@ -83,7 +83,7 @@ func interact() {
 		name := fmt.Sprintf("<tty %d>", cmdNum)
 
 		prompt := func() string {
-			return util.Getwd() + "> "
+			return sysutil.Getwd() + "> "
 		}
 		rprompt := func() string {
 			return rpromptStr
