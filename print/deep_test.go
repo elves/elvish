@@ -1,4 +1,4 @@
-package util
+package print
 
 import (
 	"testing"
@@ -27,7 +27,7 @@ func (g G) GoString() string {
 	return "<G>"
 }
 
-var deepPrintTests = []struct {
+var deepTests = []struct {
 	in     interface{}
 	wanted string
 }{
@@ -38,14 +38,14 @@ var deepPrintTests = []struct {
 	{[]int(nil), `nil`},
 	{(*int)(nil), `nil`},
 	{&S{42, "DON'T PANIC", &T{map[string]string{"foo": "bar"}}, G{}},
-		`&util.S{I: 42, S: "DON'T PANIC", Pt: &util.T{M: map[string]string{"foo": "bar"}}, G: <G>}`},
-	{[]interface{}{&U{42, "DON'T PANIC"}, 42, "DON'T PANIC"}, `[]interface {}{&util.U{I: 42, S: "DON'T PANIC"}, 42, "DON'T PANIC"}`},
+		`&print.S{I: 42, S: "DON'T PANIC", Pt: &print.T{M: map[string]string{"foo": "bar"}}, G: <G>}`},
+	{[]interface{}{&U{42, "DON'T PANIC"}, 42, "DON'T PANIC"}, `[]interface {}{&print.U{I: 42, S: "DON'T PANIC"}, 42, "DON'T PANIC"}`},
 }
 
-func TestDeepPrint(t *testing.T) {
-	for _, tt := range deepPrintTests {
-		if out := DeepPrint(tt.in); out != tt.wanted {
-			t.Errorf("GoPrint(%v) => %#q, want %#q", tt.in, out, tt.wanted)
+func TestDeep(t *testing.T) {
+	for _, tt := range deepTests {
+		if out := Deep(tt.in); out != tt.wanted {
+			t.Errorf("Deep(%v) => %#q, want %#q", tt.in, out, tt.wanted)
 		}
 	}
 }

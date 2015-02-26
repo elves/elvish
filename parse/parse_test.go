@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/util"
+	"github.com/elves/elvish/print"
 )
 
 func compoundOfOnePrimary(p *Primary) *Compound {
@@ -197,7 +197,7 @@ func TestParse(t *testing.T) {
 	for i, tt := range parseTests {
 		out, err := Parse(fmt.Sprintf("<test %d>", i), tt.in)
 		if !reflect.DeepEqual(out, tt.wanted) || err != nil {
-			t.Errorf("Parse(*, %q) =>\n(%s, %v), want\n(%s, <nil>) (up to DeepEqual)", tt.in, util.DeepPrint(out), err, util.DeepPrint(tt.wanted))
+			t.Errorf("Parse(*, %q) =>\n(%s, %v), want\n(%s, <nil>) (up to DeepEqual)", tt.in, print.Deep(out), err, print.Deep(tt.wanted))
 		}
 	}
 }
