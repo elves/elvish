@@ -213,7 +213,6 @@ func makeVar(cc *compileCtx, qname string, p parse.Pos) valuesOp {
 
 func combineSubscript(cc *compileCtx, left, right valuesOp, lp, rp parse.Pos) valuesOp {
 	if !left.tr.mayCountTo(1) {
-		// TODO Also check at runtime
 		cc.errorf(lp, "left operand of subscript must be a single value")
 	}
 	var t Type
@@ -227,7 +226,6 @@ func combineSubscript(cc *compileCtx, left, right valuesOp, lp, rp parse.Pos) va
 	}
 
 	if !right.tr.mayCountTo(1) {
-		// TODO Also check at runtime
 		cc.errorf(rp, "right operand of subscript must be a single value")
 	}
 	if _, ok := right.tr[0].t.(stringType); !ok {
@@ -236,7 +234,13 @@ func combineSubscript(cc *compileCtx, left, right valuesOp, lp, rp parse.Pos) va
 
 	f := func(ec *evalCtx) []Value {
 		l := left.f(ec)
+		if len(l) != 1 {
+			ec.errorf(lp, "left operand of subscript must be a single value")
+		}
 		r := right.f(ec)
+		if len(r) != 1 {
+			ec.errorf(rp, "right operand of subscript must be a single value")
+		}
 		return []Value{evalSubscript(ec, l[0], r[0], lp, rp)}
 	}
 	return valuesOp{newFixedTypeRun(t), f}
