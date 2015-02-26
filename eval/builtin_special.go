@@ -47,14 +47,17 @@ func mayAssign(tvar, tval Type) bool {
 }
 
 func checkSetType(cc *compileCtx, names []string, values []*parse.Compound, vop valuesOp, p parse.Pos) {
-	if !vop.tr.mayCountTo(len(names)) {
-		cc.errorf(p, "number of variables doesn't match that of values")
-	}
-	_, more := vop.tr.count()
+	n, more := vop.tr.count()
 	if more {
-		// TODO Try to check soundness to some extent
-		return
+		if n > len(names) {
+			cc.errorf(p, "number of variables (%d) can never match that of values (%d or more)", len(names), n)
+		}
+		// Only check the variables before the "more" part.
+		name = name[:n]
+	} else if n != len(names) {
+		cc.errorf(p, "number of variables (%d) doesn't match that of values (%d or more)", len(names), n)
 	}
+
 	for i, name := range names {
 		tval := vop.tr[i].t
 		tvar := cc.ResolveVar(splitQualifiedName(name))
