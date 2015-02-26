@@ -256,11 +256,10 @@ func (r rat) String() string {
 }
 
 func evalSubscript(ec *evalCtx, left, right Value, lp, rp parse.Pos) Value {
-	var (
-		sub str
-		ok  bool
-	)
-	if sub, ok = right.(str); !ok {
+	var sub string
+	if s, ok := right.(str); ok {
+		sub = string(s)
+	} else {
 		ec.errorf(rp, "right operand of subscript must be of type string")
 	}
 
@@ -269,14 +268,14 @@ func evalSubscript(ec *evalCtx, left, right Value, lp, rp parse.Pos) Value {
 		t := left.(*table)
 		// Need stricter notion of list indices
 		// TODO Handle invalid index
-		idx, err := strconv.ParseUint(sub.String(), 10, 0)
+		idx, err := strconv.ParseUint(sub, 10, 0)
 		if err == nil {
 			if idx < uint64(len(t.List)) {
 				return t.List[idx]
 			}
 			ec.errorf(rp, "index out of range")
 		}
-		if v, ok := t.Dict[sub.String()]; ok {
+		if v, ok := t.Dict[sub]; ok {
 			return v
 		}
 		ec.errorf(rp, "nonexistent key %q", sub)
@@ -284,7 +283,7 @@ func evalSubscript(ec *evalCtx, left, right Value, lp, rp parse.Pos) Value {
 	case str:
 		invalidIndex := "invalid index, must be integer or integer:integer"
 
-		ss := strings.Split(sub.String(), ":")
+		ss := strings.Split(sub, ":")
 		if len(ss) > 2 {
 			ec.errorf(rp, invalidIndex)
 		}
