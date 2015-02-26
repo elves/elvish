@@ -247,6 +247,8 @@ func (cc *compileCtx) redirs(rs []parse.Redir) []portOp {
 	return ports
 }
 
+const defaultFileRedirPerm = 0644
+
 // redir compiles a Redir into a portOp.
 func (cc *compileCtx) redir(r parse.Redir) portOp {
 	switch r := r.(type) {
@@ -269,8 +271,7 @@ func (cc *compileCtx) redir(r parse.Redir) portOp {
 		return func(ec *evalCtx) *port {
 			fname := string(ec.mustSingleString(
 				fnameOp.f(ec), "filename", r.Filename.Pos))
-			// TODO haz hardcoded permbits now
-			f, e := os.OpenFile(fname, r.Flag, 0644)
+			f, e := os.OpenFile(fname, r.Flag, defaultFileRedirPerm)
 			if e != nil {
 				ec.errorf(r.Pos, "failed to open file %q: %s", fname[0], e)
 			}
