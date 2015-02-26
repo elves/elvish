@@ -7,6 +7,10 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
+const (
+	pipelineChanBufferSize = 32
+)
+
 // Definition of Op and friends and combinators.
 
 // Op operates on an evalCtx.
@@ -67,8 +71,7 @@ func combinePipeline(ops []stateUpdatesOp, p parse.Pos) valuesOp {
 				if e != nil {
 					ec.errorf(p, "failed to create pipe: %s", e)
 				}
-				// TODO Buffered channel?
-				ch := make(chan Value)
+				ch := make(chan Value, pipelineChanBufferSize)
 				newEc.ports[1] = &port{
 					f: writer, ch: ch, closeF: true, closeCh: true}
 				nextIn = &port{
