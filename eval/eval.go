@@ -200,11 +200,11 @@ func (ec *evalCtx) evalWithChanOut(op Op, ch chan Value) (err error) {
 	return nil
 }
 
-// errorf stops the ec.ecal immediately by panicking with a diagnostic message.
-// The panic is supposed to be caught by ec.ecal.
+// errorf stops the ec.eval immediately by panicking with a diagnostic message.
+// The panic is supposed to be caught by ec.eval.
 func (ec *evalCtx) errorf(p parse.Pos, format string, args ...interface{}) {
 	errutil.Throw(errutil.NewContextualError(
-		fmt.Sprintf("%s (%s)", ec.name, ec.context), "ecalling error",
+		fmt.Sprintf("%s (%s)", ec.name, ec.context), "evalling error",
 		ec.text, int(p), format, args...))
 }
 

@@ -223,7 +223,7 @@ func cd(ec *evalCtx, args []Value) exitus {
 	}
 	if ec.store != nil {
 		pwd, err := os.Getwd()
-		// XXX(xiaq): ignores error
+		// BUG(xiaq): Possible error of os.Getwd after cd-ing is ignored.
 		if err == nil {
 			ec.store.AddDir(pwd)
 		}

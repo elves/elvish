@@ -40,8 +40,8 @@ func mayAssign(tvar, tval Type) bool {
 	if isAny(tval) || isAny(tvar) {
 		return true
 	}
-	// XXX(xiaq) This is not how you check the equality of two interfaces. But
-	// it happens to work when all the Type instances we have are empty
+	// BUG(xiaq): mayAssign uses a wrong way to check the equality of two
+	// interfaces, which happens to work when all the Type instances are empty
 	// structs.
 	return tval == tvar
 }
@@ -276,8 +276,8 @@ func compileDel(cc *compileCtx, fn *parse.Form) exitusOp {
 			delete(ec.local, name)
 		}
 		for _, name := range envNames {
-			// XXX(xiaq): We rely on the fact that os.Unsetenv always returns a
-			// nil error.
+			// BUG(xiaq): We rely on the fact that os.Unsetenv always returns
+			// nil.
 			os.Unsetenv(name)
 		}
 		return success

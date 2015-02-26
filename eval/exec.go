@@ -133,11 +133,11 @@ func (c *closure) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 		return update
 	}
 
-	// Make a subecaler.
-	// BUG(xiaq): When ecaluating closures, async access to global variables
+	// This evalCtx is dedicated to the current form, so we modify it in place.
+	// BUG(xiaq): When evaluating closures, async access to global variables
 	// and ports can be problematic.
 
-	// Make up namespace and capture variables.
+	// Make upvalue namespace and capture variables.
 	ec.up = make(map[string]Variable)
 	for name, variable := range c.Captured {
 		ec.up[name] = variable
@@ -152,8 +152,10 @@ func (c *closure) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 	// TODO(xiaq): The failure handler should let the whole closure fail.
 	ec.failHandler = nil
 
+	// TODO(xiaq): Also change ec.name and ec.text since the closure being
+	// called can come from another source.
+
 	go func() {
-		// TODO(xiaq): Support calling closure originated in another source.
 		err := ec.eval(c.Op)
 		if err != nil {
 			fmt.Print(err.(*errutil.ContextualError).Pprint())

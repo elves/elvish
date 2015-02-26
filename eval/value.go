@@ -350,8 +350,8 @@ func fromJSONInterface(v interface{}) Value {
 }
 
 func valueEq(a, b Value) bool {
-	// XXX(xiaq): This is cheating. May no longer be true after values get more
-	// complex.
+	// BUG(xiaq): valueEq uses reflect.DeepEqual to check the equality of two
+	// values, may can become wrong when values get more complex.
 	return reflect.DeepEqual(a, b)
 }
 
