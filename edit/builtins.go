@@ -6,7 +6,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/util"
+	"github.com/elves/elvish/strutil"
 )
 
 // Line editor builtins.
@@ -89,14 +89,14 @@ func startCommand(ed *Editor, k Key) *leReturn {
 }
 
 func killLineLeft(ed *Editor, k Key) *leReturn {
-	sol := util.FindLastSOL(ed.line[:ed.dot])
+	sol := strutil.FindLastSOL(ed.line[:ed.dot])
 	ed.line = ed.line[:sol] + ed.line[ed.dot:]
 	ed.dot = sol
 	return nil
 }
 
 func killLineRight(ed *Editor, k Key) *leReturn {
-	eol := util.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
+	eol := strutil.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
 	ed.line = ed.line[:ed.dot] + ed.line[eol:]
 	return nil
 }
@@ -148,27 +148,27 @@ func moveDotRight(ed *Editor, k Key) *leReturn {
 }
 
 func moveDotUp(ed *Editor, k Key) *leReturn {
-	sol := util.FindLastSOL(ed.line[:ed.dot])
+	sol := strutil.FindLastSOL(ed.line[:ed.dot])
 	if sol == 0 {
 		ed.beep()
 		return nil
 	}
 	prevEOL := sol - 1
-	prevSOL := util.FindLastSOL(ed.line[:prevEOL])
+	prevSOL := strutil.FindLastSOL(ed.line[:prevEOL])
 	width := WcWidths(ed.line[sol:ed.dot])
 	ed.dot = prevSOL + len(TrimWcWidth(ed.line[prevSOL:prevEOL], width))
 	return nil
 }
 
 func moveDotDown(ed *Editor, k Key) *leReturn {
-	eol := util.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
+	eol := strutil.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
 	if eol == len(ed.line) {
 		ed.beep()
 		return nil
 	}
 	nextSOL := eol + 1
-	nextEOL := util.FindFirstEOL(ed.line[nextSOL:]) + nextSOL
-	sol := util.FindLastSOL(ed.line[:ed.dot])
+	nextEOL := strutil.FindFirstEOL(ed.line[nextSOL:]) + nextSOL
+	sol := strutil.FindLastSOL(ed.line[:ed.dot])
 	width := WcWidths(ed.line[sol:ed.dot])
 	ed.dot = nextSOL + len(TrimWcWidth(ed.line[nextSOL:nextEOL], width))
 	return nil

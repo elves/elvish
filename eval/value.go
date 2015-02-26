@@ -12,7 +12,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/util"
+	"github.com/elves/elvish/strutil"
 )
 
 // Value is the runtime representation of an elvish value.
@@ -301,10 +301,10 @@ func evalSubscript(ec *evalCtx, left, right Value, lp, rp parse.Pos) Value {
 		var e error
 		if len(idx) == 1 {
 			var r rune
-			r, e = util.NthRune(toString(left), idx[0])
+			r, e = strutil.NthRune(toString(left), idx[0])
 			s = string(r)
 		} else {
-			s, e = util.SubstringByRune(toString(left), idx[0], idx[1])
+			s, e = strutil.SubstringByRune(toString(left), idx[0], idx[1])
 		}
 		if e != nil {
 			ec.errorf(rp, "%v", e)

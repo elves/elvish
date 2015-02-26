@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/util"
+	"github.com/elves/elvish/strutil"
 )
 
 // ContextualError is an error associated with a particular point in a source
@@ -23,7 +23,7 @@ type ContextualError struct {
 
 // NewContextualError creates a new ContextualError.
 func NewContextualError(srcname, title, text string, pos int, format string, args ...interface{}) *ContextualError {
-	lineno, colno, line := util.FindContext(text, pos)
+	lineno, colno, line := strutil.FindContext(text, pos)
 	return &ContextualError{srcname, title, line, lineno, colno, fmt.Sprintf(format, args...)}
 }
 
