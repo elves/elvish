@@ -8,7 +8,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/sys"
 )
 
 const (
@@ -330,7 +330,7 @@ func renderNavColumn(nc *navColumn, w, h int) *buffer {
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
 func (w *writer) refresh(bs *editorState) error {
-	winsize := tty.GetWinsize(int(w.file.Fd()))
+	winsize := sys.GetWinsize(int(w.file.Fd()))
 	width, height := int(winsize.Col), int(winsize.Row)
 
 	var bufLine, bufMode, bufTips, bufListing, buf *buffer

@@ -1,9 +1,5 @@
-// Package tty wraps tty ioctls.
-package tty
+package sys
 
-/*
-#include <termios.h>
-*/
 import "C"
 import (
 	"os"
@@ -18,10 +14,4 @@ func Ioctl(fd int, req int, arg uintptr) error {
 		return os.NewSyscallError("ioctl", e)
 	}
 	return nil
-}
-
-// FlushInput discards data written to a file descriptor but not read.
-func FlushInput(fd int) error {
-	_, err := C.tcflush((C.int)(fd), syscall.TCIFLUSH)
-	return err
 }

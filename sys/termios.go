@@ -1,11 +1,14 @@
-package tty
+package sys
 
 /*
 #include <termios.h>
 */
 import "C"
+import
 
 // Termios represents terminal attributes.
+"syscall"
+
 type Termios C.struct_termios
 
 // NewTermiosFromFd extracts the terminal attribute of the given file
@@ -67,4 +70,10 @@ func (term *Termios) SetICanon(v bool) {
 // SetEcho sets the echo flag.
 func (term *Termios) SetEcho(v bool) {
 	setFlag(&term.c_lflag, C.ECHO, v)
+}
+
+// FlushInput discards data written to a file descriptor but not read.
+func FlushInput(fd int) error {
+	_, err := C.tcflush((C.int)(fd), syscall.TCIFLUSH)
+	return err
 }

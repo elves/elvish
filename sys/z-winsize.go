@@ -1,7 +1,7 @@
 // Created by cgo -godefs - DO NOT EDIT
-// cgo -godefs edit/tty/types.go
+// cgo -godefs sys/winsize.go
 
-package tty
+package sys
 
 import (
 	"syscall"

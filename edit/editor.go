@@ -8,9 +8,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/sys"
 )
 
 const lackEOL = "\033[7m\u23ce\033[m\n"
@@ -27,7 +27,7 @@ const (
 
 type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
-	savedTermios          *tty.Termios
+	savedTermios          *sys.Termios
 	tokens                []parse.Item
 	prompt, rprompt, line string
 	dot                   int
@@ -263,9 +263,9 @@ func (ed *Editor) acceptHistory() {
 	ed.dot = len(ed.line)
 }
 
-func setupTerminal(file *os.File) (*tty.Termios, error) {
+func setupTerminal(file *os.File) (*sys.Termios, error) {
 	fd := int(file.Fd())
-	term, err := tty.NewTermiosFromFd(fd)
+	term, err := sys.NewTermiosFromFd(fd)
 	if err != nil {
 		return nil, fmt.Errorf("can't get terminal attribute: %s", err)
 	}
@@ -285,7 +285,7 @@ func setupTerminal(file *os.File) (*tty.Termios, error) {
 	// Set autowrap off
 	file.WriteString("\033[?7l")
 
-	err = tty.FlushInput(fd)
+	err = sys.FlushInput(fd)
 	if err != nil {
 		return nil, fmt.Errorf("can't flush input: %s", err)
 	}
@@ -293,7 +293,7 @@ func setupTerminal(file *os.File) (*tty.Termios, error) {
 	return savedTermios, nil
 }
 
-func cleanupTerminal(file *os.File, savedTermios *tty.Termios) error {
+func cleanupTerminal(file *os.File, savedTermios *sys.Termios) error {
 	// Set autowrap on
 	file.WriteString("\033[?7h")
 	fd := int(file.Fd())

@@ -20,6 +20,6 @@ cover: $(PKG_COVERS)
 z-%.go: %.go
 	go tool cgo -godefs $< > $@
 
-pre-commit: edit/tty/z-types.go
+pre-commit: sys/z-winsize.go
 
 .PHONY: all elvish test cover pre-commit
