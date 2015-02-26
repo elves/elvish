@@ -276,7 +276,8 @@ func compileDel(cc *compileCtx, fn *parse.Form) exitusOp {
 			delete(ec.local, name)
 		}
 		for _, name := range envNames {
-			// TODO(xiaq): Signify possible error
+			// XXX(xiaq): We rely on the fact that os.Unsetenv always returns a
+			// nil error.
 			os.Unsetenv(name)
 		}
 		return success
