@@ -1,4 +1,4 @@
-package util
+package edit
 
 // CeilDiv computes ceil(float(a)/b) but does not actually use float
 // arithmetics.

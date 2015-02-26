@@ -9,7 +9,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/tty"
-	"github.com/elves/elvish/util"
 )
 
 const (
@@ -473,7 +472,7 @@ tokens:
 			if cols == 0 {
 				cols = 1
 			}
-			lines := util.CeilDiv(len(cands), cols)
+			lines := CeilDiv(len(cands), cols)
 			bs.completionLines = lines
 
 			// Determine the window to show.
