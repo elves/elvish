@@ -1,3 +1,5 @@
+//go:generate stringer -type ItemType
+
 // Derived from stdlib package text/template/parse.
 
 // Copyright 2011 The Go Authors. All rights reserved.
@@ -64,41 +66,6 @@ const (
 	ItemSigil             // one of predefined sigils
 	ItemTypeCount
 )
-
-// ItemType names.
-var ItemTypeNames = []string{
-	"ItemError",
-	"ItemEOF",
-	"ItemEndOfLine",
-	"ItemSpace",
-	"ItemBare",
-	"ItemSingleQuoted",
-	"ItemDoubleQuoted",
-	"ItemRedirLeader",
-	"ItemStatusRedirLeader",
-	"ItemPipe",
-	"ItemQuestionLParen",
-	"ItemLParen",
-	"ItemRParen",
-	"ItemLBracket",
-	"ItemRBracket",
-	"ItemLBrace",
-	"ItemRBrace",
-	"ItemDollar",
-	"ItemSemicolon",
-	"ItemAmpersand",
-	"ItemSigil",
-}
-
-func init() {
-	if len(ItemTypeNames) != int(ItemTypeCount) {
-		panic("len(ItemTypeNames) != ItemTypeCount")
-	}
-}
-
-func (it ItemType) String() string {
-	return ItemTypeNames[it]
-}
 
 // ItemEnd describes the ending of lex items.
 type ItemEnd int
