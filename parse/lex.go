@@ -64,7 +64,6 @@ const (
 	ItemSemicolon         // semicolon ';'
 	ItemAmpersand         // ampersand '&'
 	ItemSigil             // one of predefined sigils
-	ItemTypeCount
 )
 
 // ItemEnd describes the ending of lex items.
