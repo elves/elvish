@@ -1,4 +1,4 @@
-// +build ignore
+// +build generate
 
 package sys
 

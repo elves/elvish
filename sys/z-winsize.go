@@ -1,5 +1,5 @@
 // Created by cgo -godefs - DO NOT EDIT
-// cgo -godefs sys/winsize.go
+// cgo -godefs winsize.go
 
 package sys
 

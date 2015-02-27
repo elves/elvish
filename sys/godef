@@ -1,0 +1,3 @@
+#!/bin/sh
+echo godef >> /tmp/xiaq
+go tool cgo -godefs "$1" > "$2"

@@ -1,15 +1,13 @@
-EXE := elvish
 PKGS := edit eval parse sys store errutil sysutil strutil print
-PKG_PATHS := $(addprefix ./,$(PKGS)) # go tools want an explicit ./
 PKG_COVERS := $(addprefix cover/,$(PKGS))
 
-all: elvish test
+all: get test
 
-elvish:
+get:
 	go get .
 
 test:
-	go test $(PKG_PATHS)
+	go test ./...
 
 cover/%: %
 	mkdir -p cover
@@ -17,9 +15,7 @@ cover/%: %
 
 cover: $(PKG_COVERS)
 
-z-%.go: %.go
-	go tool cgo -godefs $< > $@
+generate:
+	go generate ./...
 
-pre-commit: sys/z-winsize.go
-
-.PHONY: all elvish test cover pre-commit
+.PHONY: all get test cover generate
