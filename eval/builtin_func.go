@@ -17,6 +17,8 @@ var builtinFns []*builtinFn
 func init() {
 	// Needed to work around init loop.
 	builtinFns = []*builtinFn{
+		&builtinFn{":", nop},
+
 		&builtinFn{"print", print},
 		&builtinFn{"println", println},
 
@@ -55,6 +57,10 @@ var (
 	argsError  = newFailure("args error")
 	inputError = newFailure("input error")
 )
+
+func nop(ec *evalCtx, args []Value) exitus {
+	return success
+}
 
 func put(ec *evalCtx, args []Value) exitus {
 	out := ec.ports[1].ch
