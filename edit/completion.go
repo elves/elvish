@@ -3,6 +3,8 @@ package edit
 import (
 	"fmt"
 	"io/ioutil"
+	"path"
+	"strings"
 
 	"github.com/elves/elvish/parse"
 )
@@ -70,7 +72,7 @@ func findCandidates(p string, all []string) (cands []*candidate) {
 }
 
 func fileNames(dir string) (names []string, err error) {
-	infos, e := ioutil.ReadDir(".")
+	infos, e := ioutil.ReadDir(dir)
 	if e != nil {
 		err = e
 		return
@@ -144,6 +146,10 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 		ed.pushTip("cannot complete :(")
 		return nil
 	}
+
+	var findAll func() ([]string, error)
+	var makeCandidates func([]string) []*candidate
+
 	switch ctx.Typ {
 	case parse.CommandContext:
 		// BUG(xiaq): When completing, CommandContext is not supported
@@ -152,27 +158,42 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 		// BUG(xiaq): When completing, [New]ArgContext is treated like RedirFilenameContext
 		fallthrough
 	case parse.RedirFilenameContext:
-		// BUG(xiaq): When completing, only plain expressions are supported
-		names, err := fileNames(".")
-		if err != nil {
-			ed.pushTip(err.Error())
-			return nil
+		// BUG(xiaq): File name completion does not deal with meta characters.
+		// Assume that compound is an incomplete filename
+		dir, file := path.Split(compound)
+		findAll = func() ([]string, error) {
+			return fileNames(dir)
 		}
-		c.start = start
-		c.end = ed.dot
-		// BUG(xiaq) When completing, completion.typ is always ItemBare
-		c.typ = parse.ItemBare
-		c.candidates = findCandidates(compound, names)
-		if len(c.candidates) > 0 {
-			// TODO(xiaq): Support completions other than filename completion
-			for _, c := range c.candidates {
-				c.attr = defaultLsColor.determineAttr(c.text)
+		makeCandidates = func(all []string) (cands []*candidate) {
+			// Make candidates out of elements that match the file component.
+			for _, s := range all {
+				if strings.HasPrefix(s, file) {
+					cand := newCandidate()
+					cand.push(tokenPart{compound, false})
+					cand.push(tokenPart{s[len(file):], true})
+					cand.attr = defaultLsColor.determineAttr(cand.text)
+					cands = append(cands, cand)
+				}
 			}
-			ed.completion = c
-			ed.mode = modeCompletion
-		} else {
-			ed.pushTip(fmt.Sprintf("No completion for %s", compound))
+			return
 		}
+	}
+	// BUG(xiaq): When completing, only plain expressions are supported
+	all, err := findAll()
+	if err != nil {
+		ed.pushTip(err.Error())
+		return nil
+	}
+	c.start = start
+	c.end = ed.dot
+	// BUG(xiaq) When completing, completion.typ is always ItemBare
+	c.typ = parse.ItemBare
+	c.candidates = makeCandidates(all)
+	if len(c.candidates) > 0 {
+		ed.completion = c
+		ed.mode = modeCompletion
+	} else {
+		ed.pushTip(fmt.Sprintf("No completion for %s", compound))
 	}
 	return nil
 }
