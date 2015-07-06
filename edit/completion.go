@@ -177,6 +177,9 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 		// Assume that compound is an incomplete filename
 		dir, file := path.Split(compound)
 		findAll = func() ([]string, error) {
+			if dir == "" {
+				return fileNames(".")
+			}
 			return fileNames(dir)
 		}
 		makeCandidates = func(all []string) (cands []*candidate) {
