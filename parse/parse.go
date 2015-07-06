@@ -144,10 +144,6 @@ func (p *Parser) stopParse() {
 	p.lex = nil
 }
 
-// A dummy struct used in foundCtx and recoverCtx.
-type ctxFound struct {
-}
-
 // When the parser is running in completing mode and the next token is EOF,
 // foundCtx returns true and sets p.Ctx.Typ to typ if it's not already set.
 // Otherwise foundCtx returns false.
