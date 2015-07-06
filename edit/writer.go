@@ -353,35 +353,37 @@ func (w *writer) refresh(bs *editorState) error {
 	}
 
 	comp := bs.completion
-	var suppress = false
+	hasComp := comp != nil && comp.current != -1
 
+	nowAt := func(i int) {
+		if hasComp && comp.start == i {
+			// Put the current completion candidate.
+			for _, part := range comp.candidates[comp.current].parts {
+				attr := attrForType[comp.typ]
+				if part.completed {
+					attr += attrForCompleted
+				}
+				b.writes(part.text, attr)
+			}
+		}
+		if bs.dot == i {
+			b.dot = b.cursor()
+		}
+	}
+	nowAt(0)
 tokens:
 	for _, token := range bs.tokens {
 		for _, r := range token.Val {
-			if suppress && i < comp.end {
+			if hasComp && comp.start <= i && i < comp.end {
 				// Silence the part that is being completed
 			} else {
 				b.write(r, attrForType[token.Typ])
 			}
 			i += utf8.RuneLen(r)
-			if comp != nil && comp.current != -1 && i == comp.start {
-				// Put the current candidate and instruct text up to comp.end
-				// to be suppressed. The cursor should be placed correctly
-				// (i.e. right after the candidate)
-				for _, part := range comp.candidates[comp.current].parts {
-					attr := attrForType[comp.typ]
-					if part.completed {
-						attr += attrForCompleted
-					}
-					b.writes(part.text, attr)
-				}
-				suppress = true
-			}
+
+			nowAt(i)
 			if bs.mode == modeHistory && i == len(bs.history.prefix) {
 				break tokens
-			}
-			if bs.dot == i {
-				b.dot = b.cursor()
 			}
 		}
 	}

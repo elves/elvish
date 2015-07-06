@@ -19,6 +19,7 @@ type builtinSpecial struct {
 }
 
 var builtinSpecials map[string]builtinSpecial
+var BuiltinSpecialNames []string
 
 func init() {
 	// Needed to avoid initialization loop
@@ -33,6 +34,9 @@ func init() {
 		"if": builtinSpecial{compileIf},
 
 		"static-typeof": builtinSpecial{compileStaticTypeof},
+	}
+	for k, _ := range builtinSpecials {
+		BuiltinSpecialNames = append(BuiltinSpecialNames, k)
 	}
 }
 

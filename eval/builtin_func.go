@@ -13,6 +13,7 @@ import (
 )
 
 var builtinFns []*builtinFn
+var BuiltinFnNames []string
 
 func init() {
 	// Needed to work around init loop.
@@ -50,6 +51,9 @@ func init() {
 		&builtinFn{"/", divide},
 
 		&builtinFn{"=", eq},
+	}
+	for _, b := range builtinFns {
+		BuiltinFnNames = append(BuiltinFnNames, b.Name)
 	}
 }
 

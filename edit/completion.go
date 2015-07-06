@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
 
@@ -58,8 +59,8 @@ func (c *completion) next(cycle bool) {
 	}
 }
 
-func findCandidates(p string, all []string) (cands []*candidate) {
-	// Prefix match
+// Find candidates by matching against a prefix.
+func prefixMatchCandidates(p string, all []string) (cands []*candidate) {
 	for _, s := range all {
 		if len(s) >= len(p) && s[:len(p)] == p {
 			cand := newCandidate()
@@ -117,6 +118,8 @@ func peekCurrentCompound(ctx *parse.Context, dot int) (string, int, error) {
 	}
 
 	switch ctx.Typ {
+	case parse.CommandContext:
+		return peekIncompleteCompound(ctx.Form.Command)
 	case parse.ArgContext:
 		compounds := ctx.Form.Args.Nodes
 		lastCompound := compounds[len(compounds)-1]
@@ -132,6 +135,13 @@ func peekCurrentCompound(ctx *parse.Context, dot int) (string, int, error) {
 	default:
 		return "", 0, errUnknownContextType
 	}
+}
+
+var builtins []string
+
+func init() {
+	builtins = append(builtins, eval.BuiltinFnNames...)
+	builtins = append(builtins, eval.BuiltinSpecialNames...)
 }
 
 func startCompletion(ed *Editor, k Key) *leReturn {
@@ -152,8 +162,13 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 
 	switch ctx.Typ {
 	case parse.CommandContext:
-		// BUG(xiaq): When completing, CommandContext is not supported
-		ed.pushTip("command context not yet supported :(")
+		// BUG(xiaq): When completing commands, only builtins are searched
+		findAll = func() ([]string, error) {
+			return builtins, nil
+		}
+		makeCandidates = func(all []string) (cands []*candidate) {
+			return prefixMatchCandidates(compound, all)
+		}
 	case parse.NewArgContext, parse.ArgContext:
 		// BUG(xiaq): When completing, [New]ArgContext is treated like RedirFilenameContext
 		fallthrough
