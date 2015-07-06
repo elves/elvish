@@ -87,14 +87,22 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 	}
 }
 
+func printExitus(e exitus) {
+	if e.Success {
+		fmt.Print("\033[32msuccess\033[m")
+	} else {
+		fmt.Print("\033[31;1m" + e.Failure + "\033[m")
+	}
+}
+
 // printFailure is the default failure handler for top-level evalCtx.
 func printExituses(vs []Value) {
 	fmt.Print("Status: ")
 	for i, v := range vs {
 		if i > 0 {
-			fmt.Print(" ")
+			fmt.Print(" | ")
 		}
-		fmt.Print(v.Repr())
+		printExitus(v.(exitus))
 	}
 	fmt.Println()
 }
