@@ -148,12 +148,12 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 	c := &completion{}
 	ctx, err := parse.Complete("<completion>", ed.line[:ed.dot])
 	if err != nil {
-		ed.pushTip("parser error")
+		ed.pushTip("parser error: " + err.Error())
 		return nil
 	}
 	compound, start, err := peekCurrentCompound(ctx, ed.dot)
 	if err != nil {
-		ed.pushTip("cannot complete :(")
+		ed.pushTip("cannot complete: " + err.Error())
 		return nil
 	}
 
