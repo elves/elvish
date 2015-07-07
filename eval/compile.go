@@ -47,12 +47,12 @@ func NewCompiler(bi staticNS, dataDir string) *Compiler {
 
 // Compile compiles a ChunkNode into an Op. The supplied name and text are used
 // in diagnostic messages.
-func (cp *Compiler) Compile(name, text, dir string, n *parse.Chunk) (Op, error) {
+func (cp *Compiler) Compile(name, text, dir string, n *parse.Chunk) (valuesOp, error) {
 	cc := newCompileCtx(cp, name, text, dir)
 	return cc.compile(n)
 }
 
-func (cc *compileCtx) compile(n *parse.Chunk) (op Op, err error) {
+func (cc *compileCtx) compile(n *parse.Chunk) (op valuesOp, err error) {
 	defer errutil.Catch(&err)
 	return cc.chunk(n), nil
 }
@@ -79,7 +79,7 @@ func (cc *compileCtx) errorf(p parse.Pos, format string, args ...interface{}) {
 }
 
 // chunk compiles a ChunkNode into an Op.
-func (cc *compileCtx) chunk(cn *parse.Chunk) Op {
+func (cc *compileCtx) chunk(cn *parse.Chunk) valuesOp {
 	ops := make([]valuesOp, len(cn.Nodes))
 	for i, pn := range cn.Nodes {
 		ops[i] = cc.pipeline(pn)

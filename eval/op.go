@@ -29,18 +29,20 @@ type portOp func(*evalCtx) *port
 // of StateUpdate's.
 type stateUpdatesOp func(*evalCtx) <-chan *stateUpdate
 
-func combineChunk(ops []valuesOp) Op {
-	return func(ec *evalCtx) {
+func combineChunk(ops []valuesOp) valuesOp {
+	f := func(ec *evalCtx) []Value {
 		for _, op := range ops {
 			s := op.f(ec)
-			if ec.failHandler != nil && hasFailure(s) {
-				ec.failHandler(s)
+			if hasFailure(s) {
+				return s
 			}
 		}
+		return []Value{success}
 	}
+	return valuesOp{newHomoTypeRun(&exitusType{}, 1, true), f}
 }
 
-func combineClosure(argNames []string, op Op, up map[string]Type) valuesOp {
+func combineClosure(argNames []string, op valuesOp, up map[string]Type) valuesOp {
 	f := func(ec *evalCtx) []Value {
 		evCaptured := make(map[string]Variable, len(up))
 		for name := range up {

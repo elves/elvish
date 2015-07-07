@@ -55,10 +55,12 @@ func interact() {
 	datadir, err := store.EnsureDataDir()
 	printError(err)
 	if err == nil {
-		err := ev.Source(datadir + "/rc.elv")
+		// XXX
+		vs, err := ev.Source(datadir + "/rc.elv")
 		if err != nil && !os.IsNotExist(err) {
 			printError(err)
 		}
+		eval.PrintExituses(vs)
 	}
 
 	cmdNum := 0
@@ -104,16 +106,18 @@ func interact() {
 		printError(err)
 
 		if err == nil {
-			err := ev.Eval(name, lr.Line, ".", n)
+			vs, err := ev.Eval(name, lr.Line, ".", n)
 			printError(err)
+			eval.PrintExituses(vs)
 		}
 	}
 }
 
 func script(fname string) {
 	ev, _ := newEvalerAndStore()
-	err := ev.Source(fname)
+	vs, err := ev.Source(fname)
 	printError(err)
+	eval.PrintExituses(vs)
 	if err != nil {
 		os.Exit(1)
 	}

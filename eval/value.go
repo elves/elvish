@@ -191,7 +191,7 @@ type callable interface {
 // closure is a closure.
 type closure struct {
 	ArgNames []string
-	Op       Op
+	Op       valuesOp
 	Captured map[string]Variable
 }
 
@@ -199,7 +199,7 @@ func (c *closure) Type() Type {
 	return callableType{}
 }
 
-func newClosure(a []string, op Op, e map[string]Variable) *closure {
+func newClosure(a []string, op valuesOp, e map[string]Variable) *closure {
 	return &closure{a, op, e}
 }
 

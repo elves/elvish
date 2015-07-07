@@ -358,14 +358,14 @@ func compileUse(cc *compileCtx, fn *parse.Form) exitusOp {
 	cc.mod[modname] = newCc.scopes[0]
 
 	return func(ec *evalCtx) exitus {
-		// TODO(xiaq): Should install a failHandler that fails the use call
+		// TODO(xiaq): Should handle failures when evaluting the module
 		newEc := &evalCtx{
 			ec.Evaler,
 			fname, src, "module " + modname,
 			ns{}, ns{},
-			ec.ports, nil,
+			ec.ports,
 		}
-		op(newEc)
+		op.f(newEc)
 		ec.mod[modname] = newEc.local
 		return success
 	}

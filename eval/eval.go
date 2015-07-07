@@ -39,9 +39,8 @@ type evalCtx struct {
 	*Evaler
 	name, text, context string
 
-	local, up   ns
-	ports       []*port
-	failHandler func([]Value)
+	local, up ns
+	ports     []*port
 }
 
 func hasFailure(vs []Value) bool {
@@ -95,8 +94,10 @@ func printExitus(e exitus) {
 	}
 }
 
-// printFailure is the default failure handler for top-level evalCtx.
-func printExituses(vs []Value) {
+func PrintExituses(vs []Value) {
+	if !hasFailure(vs) {
+		return
+	}
 	fmt.Print("Status: ")
 	for i, v := range vs {
 		if i > 0 {
@@ -127,7 +128,6 @@ func newTopEvalCtx(ev *Evaler, name, text string) *evalCtx {
 		ev.global, ns{},
 		[]*port{{f: os.Stdin},
 			{f: os.Stdout, ch: ch, closeCh: true}, {f: os.Stderr}},
-		printExituses,
 	}
 }
 
@@ -143,7 +143,7 @@ func (ec *evalCtx) copy(newContext string) *evalCtx {
 		ec.Evaler,
 		ec.name, ec.text, newContext,
 		ec.local, ec.up,
-		newPorts, ec.failHandler,
+		newPorts,
 	}
 }
 
@@ -177,35 +177,35 @@ func makeCompilerScope(s ns) staticNS {
 
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) Eval(name, text, dir string, n *parse.Chunk) error {
+func (ev *Evaler) Eval(name, text, dir string, n *parse.Chunk) ([]Value, error) {
 	return ev.evalWithChanOut(name, text, dir, n, nil)
 }
 
-func (ev *Evaler) evalWithChanOut(name, text, dir string, n *parse.Chunk, ch chan Value) error {
+func (ev *Evaler) evalWithChanOut(name, text, dir string, n *parse.Chunk, ch chan Value) ([]Value, error) {
 	op, err := ev.Compiler.Compile(name, text, dir, n)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	ec := newTopEvalCtx(ev, name, text)
 	return ec.evalWithChanOut(op, ch)
 }
 
 // eval evaluates an Op.
-func (ec *evalCtx) eval(op Op) error {
+func (ec *evalCtx) eval(op valuesOp) ([]Value, error) {
 	return ec.evalWithChanOut(op, nil)
 }
 
-func (ec *evalCtx) evalWithChanOut(op Op, ch chan Value) (err error) {
-	if op == nil {
-		return nil
+func (ec *evalCtx) evalWithChanOut(op valuesOp, ch chan Value) (vs []Value, err error) {
+	if op.f == nil {
+		return nil, nil
 	}
 	if ch != nil {
 		ec.ports[1] = &port{ch: ch, closeCh: false}
 	}
 	defer ec.closePorts()
 	defer errutil.Catch(&err)
-	op(ec)
-	return nil
+	vs = op.f(ec)
+	return vs, nil
 }
 
 // errorf stops the ec.eval immediately by panicking with a diagnostic message.
@@ -240,10 +240,10 @@ func (ec *evalCtx) applyPortOps(ports []portOp) {
 }
 
 // SourceText evaluates a chunk of elvish source.
-func (ev *Evaler) SourceText(name, src, dir string) error {
+func (ev *Evaler) SourceText(name, src, dir string) ([]Value, error) {
 	n, err := parse.Parse(name, src)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return ev.Eval(name, src, dir, n)
 }
@@ -260,10 +260,10 @@ func readFileUTF8(fname string) (string, error) {
 }
 
 // Source evaluates the content of a file.
-func (ev *Evaler) Source(fname string) error {
+func (ev *Evaler) Source(fname string) ([]Value, error) {
 	src, err := readFileUTF8(fname)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return ev.SourceText(fname, src, path.Dir(fname))
 }

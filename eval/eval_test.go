@@ -144,7 +144,8 @@ func evalAndCollect(texts []string, chsize int) ([]Value, error) {
 			exhausted <- struct{}{}
 		}()
 
-		err := ev.evalWithChanOut(name, text, ".", n, out)
+		// XXX(xiaq): Ignore failures
+		_, err := ev.evalWithChanOut(name, text, ".", n, out)
 		if err != nil {
 			return outs, err
 		}

@@ -149,21 +149,22 @@ func (c *closure) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 		ec.local[name] = newInternalVariable(args[i], anyType{})
 	}
 
-	// TODO(xiaq): The failure handler should let the whole closure fail.
-	ec.failHandler = nil
-
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.
 
 	go func() {
-		err := ec.eval(c.Op)
+		vs, err := ec.eval(c.Op)
 		if err != nil {
 			fmt.Print(err.(*errutil.ContextualError).Pprint())
 		}
 		// Ports are closed after executaion of closure is complete.
 		ec.closePorts()
-		// TODO Support returning value.
-		update <- newExitedStateUpdate(success)
+		if hasFailure(vs) {
+			// TODO(xiaq): Wrap the original failure
+			update <- newExitedStateUpdate(newFailure("chunk failure"))
+		} else {
+			update <- newExitedStateUpdate(success)
+		}
 		close(update)
 	}()
 	return update
