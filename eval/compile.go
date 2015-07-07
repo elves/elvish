@@ -75,7 +75,7 @@ func (cc *compileCtx) popVar(name string) {
 }
 
 func (cc *compileCtx) errorf(p parse.Pos, format string, args ...interface{}) {
-	errutil.Throw(errutil.NewContextualError(cc.name, "compiling error", cc.text, int(p), format, args...))
+	errutil.Throw(errutil.NewContextualError(cc.name, "static error", cc.text, int(p), format, args...))
 }
 
 // chunk compiles a ChunkNode into an Op.

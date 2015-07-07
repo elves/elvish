@@ -212,7 +212,7 @@ func (ec *evalCtx) evalWithChanOut(op Op, ch chan Value) (err error) {
 // The panic is supposed to be caught by ec.eval.
 func (ec *evalCtx) errorf(p parse.Pos, format string, args ...interface{}) {
 	errutil.Throw(errutil.NewContextualError(
-		fmt.Sprintf("%s (%s)", ec.name, ec.context), "evalling error",
+		fmt.Sprintf("%s (%s)", ec.name, ec.context), "error",
 		ec.text, int(p), format, args...))
 }
 
