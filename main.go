@@ -118,7 +118,7 @@ func script(fname string) {
 	vs, err := ev.Source(fname)
 	printError(err)
 	eval.PrintExituses(vs)
-	if err != nil {
+	if err != nil || eval.HasFailure(vs) {
 		os.Exit(1)
 	}
 }

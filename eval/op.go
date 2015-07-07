@@ -33,7 +33,7 @@ func combineChunk(ops []valuesOp) valuesOp {
 	f := func(ec *evalCtx) []Value {
 		for _, op := range ops {
 			s := op.f(ec)
-			if hasFailure(s) {
+			if HasFailure(s) {
 				return s
 			}
 		}

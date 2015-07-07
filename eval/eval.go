@@ -43,7 +43,7 @@ type evalCtx struct {
 	ports     []*port
 }
 
-func hasFailure(vs []Value) bool {
+func HasFailure(vs []Value) bool {
 	for _, v := range vs {
 		v, ok := v.(exitus)
 		if !ok {
@@ -95,7 +95,7 @@ func printExitus(e exitus) {
 }
 
 func PrintExituses(vs []Value) {
-	if !hasFailure(vs) {
+	if !HasFailure(vs) {
 		return
 	}
 	fmt.Print("Status: ")
