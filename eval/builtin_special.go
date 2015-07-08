@@ -371,6 +371,22 @@ func compileUse(cc *compileCtx, fn *parse.Form) exitusOp {
 	}
 }
 
+// makeFnOp wraps a valuesOp such that a return is converted to a success.
+func makeFnOp(op valuesOp) valuesOp {
+	f := func(ec *evalCtx) []Value {
+		vs := op.f(ec)
+		if len(vs) == 1 {
+			if e, ok := vs[0].(exitus); ok {
+				if e.Sort == Return {
+					return []Value{newFlowExitus(Success)}
+				}
+			}
+		}
+		return vs
+	}
+	return valuesOp{op.tr, f}
+}
+
 // FnForm = 'fn' StringPrimary { VariablePrimary } ClosurePrimary
 //
 // fn defines a function. This isn't strictly needed, since user-defined
@@ -419,7 +435,9 @@ func compileFn(cc *compileCtx, fn *parse.Form) exitusOp {
 	cc.pushVar(varName, callableType{})
 
 	return func(ec *evalCtx) exitus {
-		ec.local[varName] = newInternalVariable(op.f(ec)[0], callableType{})
+		closure := op.f(ec)[0].(*closure)
+		closure.Op = makeFnOp(closure.Op)
+		ec.local[varName] = newInternalVariable(closure, callableType{})
 		return success
 	}
 }
