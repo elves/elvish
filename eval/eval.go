@@ -101,6 +101,9 @@ func printExitus(e exitus) {
 			printExitus(c)
 		}
 		fmt.Print(")")
+	default:
+		// Control flow sorts
+		fmt.Print("\033[33m" + flowExitusNames[e.Sort] + "\033[m")
 	}
 }
 

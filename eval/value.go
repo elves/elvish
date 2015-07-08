@@ -121,7 +121,16 @@ const (
 	Success exitusSort = iota
 	Failure
 	Traceback
+
+	// Control flow sorts
+	Return
+	Break
+	Continue
 )
+
+var flowExitusNames = map[exitusSort]string{
+	Return: "return", Break: "break", Continue: "continue",
+}
 
 type exitus struct {
 	Sort      exitusSort
@@ -137,6 +146,10 @@ func newTraceback(es []exitus) exitus {
 
 func newFailure(s string) exitus {
 	return exitus{Failure, s, nil}
+}
+
+func newFlowExitus(s exitusSort) exitus {
+	return exitus{s, "", nil}
 }
 
 func (e exitus) Type() Type {
@@ -158,8 +171,9 @@ func (e exitus) Repr() string {
 		}
 		b.WriteString(")")
 		return b.String()
+	default:
+		return "?(" + flowExitusNames[e.Sort] + ")"
 	}
-	return "unknown exitusSort"
 }
 
 func (e exitus) String() string {
@@ -178,8 +192,10 @@ func (e exitus) String() string {
 			b.WriteString(c.String())
 		}
 		b.WriteString(")")
+		return b.String()
+	default:
+		return flowExitusNames[e.Sort]
 	}
-	return "unknown exitusSort"
 }
 
 func (e exitus) Bool() bool {
