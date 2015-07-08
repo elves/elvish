@@ -227,14 +227,12 @@ func each(ec *evalCtx, args []Value) exitus {
 			// F.Exec will put exactly one stateUpdate on the channel
 			e := (<-su).Exitus
 			switch e.Sort {
-			case Failure, Traceback, Return:
-				return e
 			case Success, Continue:
 				// nop
 			case Break:
 				break in
 			default:
-				return newFailure(fmt.Sprintf("unknown exitusSort %v", e.Sort))
+				return e
 			}
 		}
 	}
