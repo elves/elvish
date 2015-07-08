@@ -126,6 +126,7 @@ const (
 	Return
 	Break
 	Continue
+	FlowSortLower = Return
 )
 
 var flowExitusNames = map[exitusSort]string{

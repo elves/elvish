@@ -160,11 +160,21 @@ func (c *closure) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 		// Ports are closed after executaion of closure is complete.
 		ec.closePorts()
 		if HasFailure(vs) {
+			var flow exitusSort
 			es := make([]exitus, len(vs))
+			// NOTE(xiaq): If there is a flow exitus, the last one is
+			// re-returned. Maybe we could use a more elegant semantics.
 			for i, v := range vs {
 				es[i] = v.(exitus)
+				if es[i].Sort >= FlowSortLower {
+					flow = es[i].Sort
+				}
 			}
-			update <- newExitedStateUpdate(newTraceback(es))
+			if flow != 0 {
+				update <- newExitedStateUpdate(newFlowExitus(flow))
+			} else {
+				update <- newExitedStateUpdate(newTraceback(es))
+			}
 		} else {
 			update <- newExitedStateUpdate(success)
 		}
