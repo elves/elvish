@@ -116,7 +116,7 @@ func combineNonSpecialForm(cmdOp, argsOp valuesOp, ports []portOp, p parse.Pos) 
 			ec.errorf(p, expect)
 		}
 		switch cmd[0].(type) {
-		case str, *closure:
+		case str, callable:
 		default:
 			ec.errorf(p, expect)
 		}

@@ -85,7 +85,7 @@ func (ec *evalCtx) execSpecial(op exitusOp) <-chan *stateUpdate {
 
 func (ec *evalCtx) resolveNonSpecial(cmd Value) callable {
 	// Closure
-	if cl, ok := cmd.(*closure); ok {
+	if cl, ok := cmd.(callable); ok {
 		return cl
 	}
 
