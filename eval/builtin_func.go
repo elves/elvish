@@ -221,9 +221,20 @@ func each(ec *evalCtx, args []Value) exitus {
 		return argsError
 	} else {
 		in := ec.ports[0].ch
+	in:
 		for v := range in {
 			su := f.Exec(ec.copy("closure of each"), []Value{v})
-			for _ = range su {
+			// F.Exec will put exactly one stateUpdate on the channel
+			e := (<-su).Exitus
+			switch e.Sort {
+			case Failure, Traceback, Return:
+				return e
+			case Success, Continue:
+				// nop
+			case Break:
+				break in
+			default:
+				return newFailure(fmt.Sprintf("unknown exitusSort %v", e.Sort))
 			}
 		}
 	}
