@@ -50,7 +50,7 @@ func HasFailure(vs []Value) bool {
 			// Silently ignore non-exitus values
 			continue
 		}
-		if !v.Success {
+		if v.Sort != Success {
 			return true
 		}
 	}
@@ -87,9 +87,12 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 }
 
 func printExitus(e exitus) {
-	if e.Success {
+	switch e.Sort {
+	case Success:
 		fmt.Print("\033[32msuccess\033[m")
-	} else if e.Traceback != nil {
+	case Failure:
+		fmt.Print("\033[31;1m" + e.Failure + "\033[m")
+	case Traceback:
 		fmt.Print("(")
 		for i, c := range e.Traceback.causes {
 			if i > 0 {
@@ -98,8 +101,6 @@ func printExitus(e exitus) {
 			printExitus(c)
 		}
 		fmt.Print(")")
-	} else {
-		fmt.Print("\033[31;1m" + e.Failure + "\033[m")
 	}
 }
 

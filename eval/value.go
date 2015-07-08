@@ -115,20 +115,28 @@ type traceback struct {
 	causes []exitus
 }
 
+type exitusSort byte
+
+const (
+	Success exitusSort = iota
+	Failure
+	Traceback
+)
+
 type exitus struct {
-	Success   bool
+	Sort      exitusSort
 	Failure   string
 	Traceback *traceback
 }
 
-var success = exitus{true, "", nil}
+var success = exitus{Success, "", nil}
 
 func newTraceback(es []exitus) exitus {
-	return exitus{false, "", &traceback{es}}
+	return exitus{Traceback, "", &traceback{es}}
 }
 
 func newFailure(s string) exitus {
-	return exitus{false, s, nil}
+	return exitus{Failure, s, nil}
 }
 
 func (e exitus) Type() Type {
@@ -136,10 +144,12 @@ func (e exitus) Type() Type {
 }
 
 func (e exitus) Repr() string {
-	if e.Success {
+	switch e.Sort {
+	case Success:
 		return "$success"
-	}
-	if e.Traceback != nil {
+	case Failure:
+		return "(failure " + quote(e.Failure) + ")"
+	case Traceback:
 		b := new(bytes.Buffer)
 		b.WriteString("(traceback")
 		for _, c := range e.Traceback.causes {
@@ -149,14 +159,16 @@ func (e exitus) Repr() string {
 		b.WriteString(")")
 		return b.String()
 	}
-	return "(failure " + quote(e.Failure) + ")"
+	return "unknown exitusSort"
 }
 
 func (e exitus) String() string {
-	if e.Success {
+	switch e.Sort {
+	case Success:
 		return "success"
-	}
-	if e.Traceback != nil {
+	case Failure:
+		return "failure: " + e.Failure
+	case Traceback:
 		b := new(bytes.Buffer)
 		b.WriteString("traceback: (")
 		for i, c := range e.Traceback.causes {
@@ -167,11 +179,11 @@ func (e exitus) String() string {
 		}
 		b.WriteString(")")
 	}
-	return "failure: " + e.Failure
+	return "unknown exitusSort"
 }
 
 func (e exitus) Bool() bool {
-	return e.Success
+	return e.Sort == Success
 }
 
 // table is a list-dict hybrid.
