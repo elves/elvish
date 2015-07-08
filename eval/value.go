@@ -110,15 +110,25 @@ func (b boolean) Bool() bool {
 	return bool(b)
 }
 
-type exitus struct {
-	Success bool
-	Failure string
+type traceback struct {
+	// TODO(xiaq): Add context information
+	causes []exitus
 }
 
-var success = exitus{true, ""}
+type exitus struct {
+	Success   bool
+	Failure   string
+	Traceback *traceback
+}
+
+var success = exitus{true, "", nil}
+
+func newTraceback(es []exitus) exitus {
+	return exitus{false, "", &traceback{es}}
+}
 
 func newFailure(s string) exitus {
-	return exitus{false, s}
+	return exitus{false, s, nil}
 }
 
 func (e exitus) Type() Type {
@@ -129,12 +139,33 @@ func (e exitus) Repr() string {
 	if e.Success {
 		return "$success"
 	}
+	if e.Traceback != nil {
+		b := new(bytes.Buffer)
+		b.WriteString("(traceback")
+		for _, c := range e.Traceback.causes {
+			b.WriteString(" ")
+			b.WriteString(c.Repr())
+		}
+		b.WriteString(")")
+		return b.String()
+	}
 	return "(failure " + quote(e.Failure) + ")"
 }
 
 func (e exitus) String() string {
 	if e.Success {
 		return "success"
+	}
+	if e.Traceback != nil {
+		b := new(bytes.Buffer)
+		b.WriteString("traceback: (")
+		for i, c := range e.Traceback.causes {
+			if i > 0 {
+				b.WriteString(" | ")
+			}
+			b.WriteString(c.String())
+		}
+		b.WriteString(")")
 	}
 	return "failure: " + e.Failure
 }

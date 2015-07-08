@@ -89,6 +89,15 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 func printExitus(e exitus) {
 	if e.Success {
 		fmt.Print("\033[32msuccess\033[m")
+	} else if e.Traceback != nil {
+		fmt.Print("(")
+		for i, c := range e.Traceback.causes {
+			if i > 0 {
+				fmt.Print(" | ")
+			}
+			printExitus(c)
+		}
+		fmt.Print(")")
 	} else {
 		fmt.Print("\033[31;1m" + e.Failure + "\033[m")
 	}

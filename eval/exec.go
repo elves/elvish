@@ -160,8 +160,11 @@ func (c *closure) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 		// Ports are closed after executaion of closure is complete.
 		ec.closePorts()
 		if HasFailure(vs) {
-			// TODO(xiaq): Wrap the original failure
-			update <- newExitedStateUpdate(newFailure("chunk failure"))
+			es := make([]exitus, len(vs))
+			for i, v := range vs {
+				es[i] = v.(exitus)
+			}
+			update <- newExitedStateUpdate(newTraceback(es))
 		} else {
 			update <- newExitedStateUpdate(success)
 		}
