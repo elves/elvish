@@ -36,6 +36,9 @@ func init() {
 		&builtinFn{"typeof", typeof},
 
 		&builtinFn{"failure", failure},
+		&builtinFn{"return", returnFn},
+		&builtinFn{"break", breakFn},
+		&builtinFn{"continue", continueFn},
 
 		&builtinFn{"each", each},
 
@@ -89,6 +92,18 @@ func failure(ec *evalCtx, args []Value) exitus {
 	out := ec.ports[1].ch
 	out <- newFailure(toString(args[0]))
 	return success
+}
+
+func returnFn(ec *evalCtx, args []Value) exitus {
+	return newFlowExitus(Return)
+}
+
+func breakFn(ec *evalCtx, args []Value) exitus {
+	return newFlowExitus(Break)
+}
+
+func continueFn(ec *evalCtx, args []Value) exitus {
+	return newFlowExitus(Continue)
 }
 
 func print(ec *evalCtx, args []Value) exitus {
