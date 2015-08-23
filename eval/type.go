@@ -47,7 +47,7 @@ type exitusType struct {
 }
 
 func (et exitusType) Default() Value {
-	return success
+	return ok
 }
 
 func (et exitusType) String() string {

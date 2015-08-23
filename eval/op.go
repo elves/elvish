@@ -37,7 +37,7 @@ func combineChunk(ops []valuesOp) valuesOp {
 				return s
 			}
 		}
-		return []Value{success}
+		return []Value{ok}
 	}
 	return valuesOp{newHomoTypeRun(&exitusType{}, 1, true), f}
 }

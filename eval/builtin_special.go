@@ -186,7 +186,7 @@ func compileVar(cc *compileCtx, fn *parse.Form) exitusOp {
 		if vop.f != nil {
 			return doSet(ec, names, vop.f(ec))
 		}
-		return success
+		return ok
 	}
 }
 
@@ -250,7 +250,7 @@ func doSet(ec *evalCtx, names []string, values []Value) exitus {
 		variable.Set(values[i])
 	}
 
-	return success
+	return ok
 }
 
 // DelForm = 'del' { VariablePrimary }
@@ -284,7 +284,7 @@ func compileDel(cc *compileCtx, fn *parse.Form) exitusOp {
 			// nil.
 			os.Unsetenv(name)
 		}
-		return success
+		return ok
 	}
 }
 
@@ -367,18 +367,18 @@ func compileUse(cc *compileCtx, fn *parse.Form) exitusOp {
 		}
 		op.f(newEc)
 		ec.mod[modname] = newEc.local
-		return success
+		return ok
 	}
 }
 
-// makeFnOp wraps a valuesOp such that a return is converted to a success.
+// makeFnOp wraps a valuesOp such that a return is converted to an ok.
 func makeFnOp(op valuesOp) valuesOp {
 	f := func(ec *evalCtx) []Value {
 		vs := op.f(ec)
 		if len(vs) == 1 {
 			if e, ok := vs[0].(exitus); ok {
 				if e.Sort == Return {
-					return []Value{newFlowExitus(Success)}
+					return []Value{newFlowExitus(Ok)}
 				}
 			}
 		}
@@ -438,7 +438,7 @@ func compileFn(cc *compileCtx, fn *parse.Form) exitusOp {
 		closure := op.f(ec)[0].(*closure)
 		closure.Op = makeFnOp(closure.Op)
 		ec.local[varName] = newInternalVariable(closure, callableType{})
-		return success
+		return ok
 	}
 }
 
@@ -530,10 +530,10 @@ func compileIf(cc *compileCtx, fn *parse.Form) exitusOp {
 				for _ = range su {
 				}
 				// TODO(xiaq): Return the exitus of the body
-				return success
+				return ok
 			}
 		}
-		return success
+		return ok
 	}
 }
 
@@ -549,6 +549,6 @@ func compileStaticTypeof(cc *compileCtx, fn *parse.Form) exitusOp {
 		for _, tr := range trs {
 			out <- str(tr.String())
 		}
-		return success
+		return ok
 	}
 }

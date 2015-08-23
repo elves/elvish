@@ -176,7 +176,7 @@ func (c *closure) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 				update <- newExitedStateUpdate(newTraceback(es))
 			}
 		} else {
-			update <- newExitedStateUpdate(success)
+			update <- newExitedStateUpdate(ok)
 		}
 		close(update)
 	}()
@@ -189,7 +189,7 @@ func waitStatusToStateUpdate(ws syscall.WaitStatus) *stateUpdate {
 	case ws.Exited():
 		es := ws.ExitStatus()
 		if es == 0 {
-			return newExitedStateUpdate(success)
+			return newExitedStateUpdate(ok)
 		}
 		return newExitedStateUpdate(newFailure(fmt.Sprint(es)))
 	case ws.Signaled():

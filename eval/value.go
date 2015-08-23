@@ -118,7 +118,7 @@ type traceback struct {
 type exitusSort byte
 
 const (
-	Success exitusSort = iota
+	Ok exitusSort = iota
 	Failure
 	Traceback
 
@@ -139,7 +139,7 @@ type exitus struct {
 	Traceback *traceback
 }
 
-var success = exitus{Success, "", nil}
+var ok = exitus{Ok, "", nil}
 
 func newTraceback(es []exitus) exitus {
 	return exitus{Traceback, "", &traceback{es}}
@@ -159,8 +159,8 @@ func (e exitus) Type() Type {
 
 func (e exitus) Repr() string {
 	switch e.Sort {
-	case Success:
-		return "$success"
+	case Ok:
+		return "$ok"
 	case Failure:
 		return "(failure " + quote(e.Failure) + ")"
 	case Traceback:
@@ -179,8 +179,8 @@ func (e exitus) Repr() string {
 
 func (e exitus) String() string {
 	switch e.Sort {
-	case Success:
-		return "success"
+	case Ok:
+		return "ok"
 	case Failure:
 		return "failure: " + e.Failure
 	case Traceback:
@@ -200,7 +200,7 @@ func (e exitus) String() string {
 }
 
 func (e exitus) Bool() bool {
-	return e.Sort == Success
+	return e.Sort == Ok
 }
 
 // table is a list-dict hybrid.

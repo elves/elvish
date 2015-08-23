@@ -90,7 +90,7 @@ var evalTests = []struct {
 
 	// Status capture
 	{"put ?(true|false|false)",
-		[]Value{success, newFailure("1"), newFailure("1")}, false},
+		[]Value{ok, newFailure("1"), newFailure("1")}, false},
 
 	// Closure evaluation
 	{"{ }", stringValues(), false},

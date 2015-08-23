@@ -66,7 +66,7 @@ var (
 )
 
 func nop(ec *evalCtx, args []Value) exitus {
-	return success
+	return ok
 }
 
 func put(ec *evalCtx, args []Value) exitus {
@@ -74,7 +74,7 @@ func put(ec *evalCtx, args []Value) exitus {
 	for _, a := range args {
 		out <- a
 	}
-	return success
+	return ok
 }
 
 func typeof(ec *evalCtx, args []Value) exitus {
@@ -82,7 +82,7 @@ func typeof(ec *evalCtx, args []Value) exitus {
 	for _, a := range args {
 		out <- str(a.Type().String())
 	}
-	return success
+	return ok
 }
 
 func failure(ec *evalCtx, args []Value) exitus {
@@ -91,7 +91,7 @@ func failure(ec *evalCtx, args []Value) exitus {
 	}
 	out := ec.ports[1].ch
 	out <- newFailure(toString(args[0]))
-	return success
+	return ok
 }
 
 func returnFn(ec *evalCtx, args []Value) exitus {
@@ -111,7 +111,7 @@ func print(ec *evalCtx, args []Value) exitus {
 	for _, a := range args {
 		fmt.Fprint(out, toString(a))
 	}
-	return success
+	return ok
 }
 
 func println(ec *evalCtx, args []Value) exitus {
@@ -129,7 +129,7 @@ func printchan(ec *evalCtx, args []Value) exitus {
 	for v := range in {
 		fmt.Fprintln(out, toString(v))
 	}
-	return success
+	return ok
 }
 
 func feedchan(ec *evalCtx, args []Value) exitus {
@@ -147,7 +147,7 @@ func feedchan(ec *evalCtx, args []Value) exitus {
 		// fmt.Printf("[%v] ", i)
 		line, err := bufferedIn.ReadString('\n')
 		if err == io.EOF {
-			return success
+			return ok
 		} else if err != nil {
 			return newFailure(err.Error())
 		}
@@ -166,7 +166,7 @@ func ratFn(ec *evalCtx, args []Value) exitus {
 		return newFailure(err.Error())
 	}
 	out <- r
-	return success
+	return ok
 }
 
 // unpack takes any number of tables and output their list elements.
@@ -187,7 +187,7 @@ func unpack(ec *evalCtx, args []Value) exitus {
 		}
 	}
 
-	return success
+	return ok
 }
 
 // parseJSON parses a stream of JSON data into Value's.
@@ -204,7 +204,7 @@ func parseJSON(ec *evalCtx, args []Value) exitus {
 		err := dec.Decode(&v)
 		if err != nil {
 			if err == io.EOF {
-				return success
+				return ok
 			}
 			return newFailure(err.Error())
 		}
@@ -227,7 +227,7 @@ func each(ec *evalCtx, args []Value) exitus {
 			// F.Exec will put exactly one stateUpdate on the channel
 			e := (<-su).Exitus
 			switch e.Sort {
-			case Success, Continue:
+			case Ok, Continue:
 				// nop
 			case Break:
 				break in
@@ -236,7 +236,7 @@ func each(ec *evalCtx, args []Value) exitus {
 			}
 		}
 	}
-	return success
+	return ok
 }
 
 func cd(ec *evalCtx, args []Value) exitus {
@@ -262,7 +262,7 @@ func cd(ec *evalCtx, args []Value) exitus {
 			ec.store.AddDir(pwd)
 		}
 	}
-	return success
+	return ok
 }
 
 var storeNotConnected = newFailure("store not connected")
@@ -282,7 +282,7 @@ func visistedDirs(ec *evalCtx, args []Value) exitus {
 		table.Dict["score"] = str(fmt.Sprint(dir.Score))
 		out <- table
 	}
-	return success
+	return ok
 }
 
 var noMatchingDir = newFailure("no matching directory")
@@ -308,7 +308,7 @@ func jumpDir(ec *evalCtx, args []Value) exitus {
 		return newFailure(err.Error())
 	}
 	ec.store.AddDir(dir)
-	return success
+	return ok
 }
 
 func source(ec *evalCtx, args []Value) exitus {
@@ -320,7 +320,7 @@ func source(ec *evalCtx, args []Value) exitus {
 	} else {
 		ec.Source(string(fname))
 	}
-	return success
+	return ok
 }
 
 func toFloats(args []Value) (nums []float64, err error) {
@@ -349,7 +349,7 @@ func plus(ec *evalCtx, args []Value) exitus {
 		sum += f
 	}
 	out <- str(fmt.Sprintf("%g", sum))
-	return success
+	return ok
 }
 
 func minus(ec *evalCtx, args []Value) exitus {
@@ -366,7 +366,7 @@ func minus(ec *evalCtx, args []Value) exitus {
 		sum -= f
 	}
 	out <- str(fmt.Sprintf("%g", sum))
-	return success
+	return ok
 }
 
 func times(ec *evalCtx, args []Value) exitus {
@@ -380,7 +380,7 @@ func times(ec *evalCtx, args []Value) exitus {
 		prod *= f
 	}
 	out <- str(fmt.Sprintf("%g", prod))
-	return success
+	return ok
 }
 
 func divide(ec *evalCtx, args []Value) exitus {
@@ -397,7 +397,7 @@ func divide(ec *evalCtx, args []Value) exitus {
 		prod /= f
 	}
 	out <- str(fmt.Sprintf("%g", prod))
-	return success
+	return ok
 }
 
 func eq(ec *evalCtx, args []Value) exitus {
@@ -408,9 +408,9 @@ func eq(ec *evalCtx, args []Value) exitus {
 	for i := 0; i+1 < len(args); i++ {
 		if !valueEq(args[i], args[i+1]) {
 			out <- boolean(false)
-			return success
+			return ok
 		}
 	}
 	out <- boolean(true)
-	return success
+	return ok
 }

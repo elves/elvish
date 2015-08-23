@@ -50,7 +50,7 @@ func HasFailure(vs []Value) bool {
 			// Silently ignore non-exitus values
 			continue
 		}
-		if v.Sort != Success {
+		if v.Sort != Ok {
 			return true
 		}
 	}
@@ -62,10 +62,10 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 	// Construct builtin namespace
 	pid := str(strconv.Itoa(syscall.Getpid()))
 	builtin := ns{
-		"pid":     newInternalVariableWithType(pid),
-		"success": newInternalVariableWithType(success),
-		"true":    newInternalVariableWithType(boolean(true)),
-		"false":   newInternalVariableWithType(boolean(false)),
+		"pid":   newInternalVariableWithType(pid),
+		"ok":    newInternalVariableWithType(ok),
+		"true":  newInternalVariableWithType(boolean(true)),
+		"false": newInternalVariableWithType(boolean(false)),
 	}
 	for _, b := range builtinFns {
 		builtin[fnPrefix+b.Name] = newInternalVariableWithType(b)
@@ -88,8 +88,8 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 
 func printExitus(e exitus) {
 	switch e.Sort {
-	case Success:
-		fmt.Print("\033[32msuccess\033[m")
+	case Ok:
+		fmt.Print("\033[32mok\033[m")
 	case Failure:
 		fmt.Print("\033[31;1m" + e.Failure + "\033[m")
 	case Traceback:
