@@ -277,14 +277,18 @@ func combineChanCapture(op valuesOp) valuesOp {
 		vs := []Value{}
 		newEc := ec.copy(fmt.Sprintf("channel output capture %v", op))
 		ch := make(chan Value)
+		collected := make(chan bool)
 		newEc.ports[1] = &port{ch: ch}
 		go func() {
 			for v := range ch {
 				vs = append(vs, v)
 			}
+			collected <- true
 		}()
 		op.f(newEc)
 		newEc.closePorts()
+		close(ch)
+		<-collected
 		return vs
 	}
 	return valuesOp{tr, f}
