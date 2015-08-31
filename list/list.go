@@ -1,3 +1,4 @@
+// Package list implements persistent list.
 package list
 
 // List implements a persistent list. The empty value is a valid empty list.
@@ -10,7 +11,7 @@ type List struct {
 var Empty = &List{}
 
 func (l *List) Cons(val interface{}) *List {
-	return &List{val, l, l.count+1}
+	return &List{val, l, l.count + 1}
 }
 
 func (l *List) First() interface{} {
