@@ -13,16 +13,16 @@ Fancy badges:
 
 Syntax highlighting (also showcasing right-hand-side prompt):
 
-![syntax highlighting](./screenshots/syntax.png)
+![syntax highlighting](./graphics/screenshots/syntax.png)
 
 Tab completion for files:
 
-![tab completion](./screenshots/completion.png)
+![tab completion](./graphics/screenshots/completion.png)
 
 Navigation mode (triggered with ^N, inspired by
 [ranger](http://ranger.nongnu.org/)):
 
-![navigation mode](./screenshots/navigation.png)
+![navigation mode](./graphics/screenshots/navigation.png)
 
 ## Building
 
