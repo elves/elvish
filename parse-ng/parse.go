@@ -3,7 +3,11 @@ package parse
 //go:generate ./boilerplate.py
 //go:generate stringer -type=PrimaryType,RedirMode -output=string.go
 
-import "bytes"
+import (
+	"bytes"
+
+	"github.com/elves/elvish/errutil"
+)
 
 type Node interface {
 	n() *node
@@ -711,11 +715,12 @@ func (bn *Chunk) parse(rd *reader) {
 	}
 }
 
-func Parse(src string) (*Chunk, error) {
+func Parse(name, src string) (*Chunk, error) {
 	rd := &reader{src, 0, nil}
 	bn := parseChunk(rd)
 	if rd.error != nil {
-		return nil, rd.error
+		return nil, errutil.NewContextualError(
+			name, "syntax error", src, rd.pos, rd.error.Error())
 	}
 	return bn, nil
 }
