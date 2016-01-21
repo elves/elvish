@@ -15,7 +15,7 @@ type ast struct {
 }
 
 func a(c ...interface{}) ast {
-	return ast{"Chunk/Pipeline/Form", fs{"Head": "a", "Compounds": c}}
+	return ast{"Chunk/Pipeline/Form", fs{"Head": "a", "Args": c}}
 }
 
 var goodCases = []struct {
@@ -31,8 +31,8 @@ var goodCases = []struct {
 
 	// Form
 	{"ls x y", ast{"Chunk/Pipeline/Form", fs{
-		"Head":      "ls",
-		"Compounds": []string{"x", "y"}}}},
+		"Head": "ls",
+		"Args": []string{"x", "y"}}}},
 	// Redirections
 	{"a>b", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",

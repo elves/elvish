@@ -121,13 +121,13 @@ func (n *Form) setHead(ch *Compound) {
 	addChild(n, ch)
 }
 
-func (n *Form) addToCompounds(ch *Compound) {
-	n.Compounds = append(n.Compounds, ch)
+func (n *Form) addToArgs(ch *Compound) {
+	n.Args = append(n.Args, ch)
 	addChild(n, ch)
 }
 
-func (n *Form) addToMapPairs(ch *MapPair) {
-	n.MapPairs = append(n.MapPairs, ch)
+func (n *Form) addToNamedArgs(ch *MapPair) {
+	n.NamedArgs = append(n.NamedArgs, ch)
 	addChild(n, ch)
 }
 

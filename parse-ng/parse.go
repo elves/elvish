@@ -680,8 +680,8 @@ func (ern *ExitusRedir) parse(rd *reader) {
 type Form struct {
 	node
 	Head        *Compound
-	Compounds   []*Compound
-	MapPairs    []*MapPair
+	Args        []*Compound
+	NamedArgs   []*MapPair
 	Redirs      []*Redir
 	ExitusRedir *ExitusRedir
 }
@@ -706,7 +706,7 @@ func (fn *Form) parse(rd *reader) {
 		r := rd.peek()
 		switch {
 		case r == '&':
-			fn.addToMapPairs(parseMapPair(rd))
+			fn.addToNamedArgs(parseMapPair(rd))
 		case startsCompound(r):
 			if rd.hasPrefix("?>") {
 				if fn.ExitusRedir != nil {
@@ -732,7 +732,7 @@ func (fn *Form) parse(rd *reader) {
 
 				fn.addToRedirs(rn)
 			} else {
-				fn.addToCompounds(cn)
+				fn.addToArgs(cn)
 			}
 		case isRedirSign(r):
 			fn.addToRedirs(parseRedir(rd))
