@@ -573,7 +573,7 @@ func (cn *Compound) parse(rd *reader, cut runePred) {
 	}
 }
 
-// Array = { Space } { Indexed { Space } }
+// Array = { Space } { Compound { Space } }
 type Array struct {
 	node
 	Compounds []*Compound
