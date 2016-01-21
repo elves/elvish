@@ -5,6 +5,7 @@ package parse
 
 import (
 	"bytes"
+	"unicode"
 
 	"github.com/elves/elvish/errutil"
 )
@@ -256,11 +257,11 @@ func (pn *Primary) doubleQuoted(rd *reader) {
 }
 
 // The following are allowed in variable names:
-// * Anything beyond ASCII
+// * Anything beyond ASCII that is printable
 // * Letters and numbers
 // * The symbols "-_:"
 func allowedInVariableName(r rune) bool {
-	return r >= 0x80 ||
+	return (r >= 0x80 && unicode.IsPrint(r)) ||
 		('0' <= r && r <= '9') ||
 		('a' <= r && r <= 'z') ||
 		('A' <= r && r <= 'Z') ||
@@ -300,6 +301,78 @@ func (pn *Primary) bareword(rd *reader) {
 	for allowedInBareword(rd.peek()) {
 		rd.next()
 	}
+}
+
+func quoteSingle(s string) string {
+	var buf bytes.Buffer
+	buf.WriteByte('\'')
+	for _, r := range s {
+		buf.WriteRune(r)
+		if r == '\'' {
+			buf.WriteByte('\'')
+		}
+	}
+	buf.WriteByte('\'')
+	return buf.String()
+}
+
+func rtohex(r rune, w int) []byte {
+	bytes := make([]byte, w)
+	for i := w - 1; i >= 0; i-- {
+		d := byte(r % 16)
+		r /= 16
+		if d <= 9 {
+			bytes[i] = '0' + d
+		} else {
+			bytes[i] = 'a' + d - 10
+		}
+	}
+	return bytes
+}
+
+func quoteDouble(s string) string {
+	var buf bytes.Buffer
+	buf.WriteByte('"')
+	for _, r := range s {
+		if r == '\\' || r == '"' {
+			buf.WriteByte('\\')
+			buf.WriteRune(r)
+		} else if !unicode.IsPrint(r) {
+			buf.WriteByte('\\')
+			if r <= 0xff {
+				buf.WriteByte('x')
+				buf.Write(rtohex(r, 2))
+			} else if r <= 0xffff {
+				buf.WriteByte('u')
+				buf.Write(rtohex(r, 4))
+			} else {
+				buf.WriteByte('U')
+				buf.Write(rtohex(r, 8))
+			}
+		} else {
+			buf.WriteRune(r)
+		}
+	}
+	buf.WriteByte('"')
+	return buf.String()
+}
+
+// Quote returns a representation of s in elvish syntax. Bareword is tried
+// first after single quoted string and finally double quoted string.
+func Quote(s string) string {
+	bare := true
+	for _, r := range s {
+		if !unicode.IsPrint(r) {
+			return quoteDouble(s)
+		}
+		if !allowedInBareword(r) {
+			bare = false
+		}
+	}
+	if bare {
+		return s
+	}
+	return quoteSingle(s)
 }
 
 func isWildcard(r rune) bool {
