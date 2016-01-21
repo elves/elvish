@@ -18,7 +18,7 @@ func parseMapPair(rd *reader) *MapPair {
 	return n
 }
 
-func (n *Primary) setList(ch *Spaced) {
+func (n *Primary) setList(ch *Array) {
 	n.List = ch
 	addChild(n, ch)
 }
@@ -46,7 +46,7 @@ func (n *Indexed) setHead(ch *Primary) {
 	addChild(n, ch)
 }
 
-func (n *Indexed) addToIndicies(ch *Spaced) {
+func (n *Indexed) addToIndicies(ch *Array) {
 	n.Indicies = append(n.Indicies, ch)
 	addChild(n, ch)
 }
@@ -72,13 +72,13 @@ func parseCompound(rd *reader) *Compound {
 	return n
 }
 
-func (n *Spaced) addToCompounds(ch *Compound) {
+func (n *Array) addToCompounds(ch *Compound) {
 	n.Compounds = append(n.Compounds, ch)
 	addChild(n, ch)
 }
 
-func parseSpaced(rd *reader) *Spaced {
-	n := &Spaced{node: node{Begin: rd.pos}}
+func parseArray(rd *reader) *Array {
+	n := &Array{node: node{Begin: rd.pos}}
 	n.parse(rd)
 	n.End = rd.pos
 	n.SourceText = rd.src[n.Begin:n.End]

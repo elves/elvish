@@ -107,7 +107,7 @@ type Primary struct {
 	// The unquoted string value. Valid for Bareword, SingleQuoted,
 	// DoubleQuoted, Variable and Wildcard.
 	Value    string
-	List     *Spaced    // Valid for List and Lambda
+	List     *Array     // Valid for List and Lambda
 	Chunk    *Chunk     // Valid for OutputCapture, ExitusCapture and Lambda
 	MapPairs []*MapPair // Valid for Map
 }
@@ -422,16 +422,16 @@ func (pn *Primary) outputCapture(rd *reader) {
 	}
 }
 
-// List   = '[' { Space } Spaced ']'
+// List   = '[' { Space } Array ']'
 // Lambda = List '{' Chunk '}'
 // Map    = '[' { Space } '&' { Space } ']'
 //        = '[' { Space } { MapPair { Space } } ']'
 
 var (
-	shouldBeAmpersandOrSpaced = newError("", "'&'", "spaced")
-	shouldBeRBracket          = newError("", "']'")
-	shouldBeRBrace            = newError("", "'}'")
-	shouldBeAmpersand         = newError("", "'&'")
+	shouldBeAmpersandOrArray = newError("", "'&'", "spaced")
+	shouldBeRBracket         = newError("", "']'")
+	shouldBeRBrace           = newError("", "'}'")
+	shouldBeAmpersand        = newError("", "'&'")
 )
 
 func (pn *Primary) lbracket(rd *reader) {
@@ -439,8 +439,8 @@ func (pn *Primary) lbracket(rd *reader) {
 	parseSpaces(pn, rd)
 	r := rd.peek()
 	switch {
-	case r == ']' || startsSpaced(r):
-		pn.setList(parseSpaced(rd))
+	case r == ']' || startsArray(r):
+		pn.setList(parseArray(rd))
 		if !parseSep(pn, rd, ']') {
 			rd.error = shouldBeRBracket
 			return
@@ -483,7 +483,7 @@ func (pn *Primary) lbracket(rd *reader) {
 			rd.error = shouldBeRBracket
 		}
 	default:
-		rd.error = shouldBeAmpersandOrSpaced
+		rd.error = shouldBeAmpersandOrArray
 	}
 }
 
@@ -522,11 +522,11 @@ func (pn *Primary) parse(rd *reader) {
 	}
 }
 
-// Indexed = Primary { '[' Spaced ']' }
+// Indexed = Primary { '[' Array ']' }
 type Indexed struct {
 	node
 	Head     *Primary
-	Indicies []*Spaced
+	Indicies []*Array
 }
 
 func startsIndexed(r rune) bool {
@@ -534,16 +534,16 @@ func startsIndexed(r rune) bool {
 }
 
 var (
-	shouldBeSpaced = newError("", "spaced")
+	shouldBeArray = newError("", "spaced")
 )
 
 func (in *Indexed) parse(rd *reader) {
 	in.setHead(parsePrimary(rd))
 	for parseSep(in, rd, '[') {
-		if !startsSpaced(rd.peek()) {
-			rd.error = shouldBeSpaced
+		if !startsArray(rd.peek()) {
+			rd.error = shouldBeArray
 		}
-		in.addToIndicies(parseSpaced(rd))
+		in.addToIndicies(parseArray(rd))
 		if !parseSep(in, rd, ']') {
 			rd.error = shouldBeRBracket
 			return
@@ -567,8 +567,8 @@ func (cn *Compound) parse(rd *reader) {
 	}
 }
 
-// Spaced = { Space } { Indexed { Space } }
-type Spaced struct {
+// Array = { Space } { Indexed { Space } }
+type Array struct {
 	node
 	Compounds []*Compound
 }
@@ -577,11 +577,11 @@ func isSpace(r rune) bool {
 	return r == ' ' || r == '\t'
 }
 
-func startsSpaced(r rune) bool {
+func startsArray(r rune) bool {
 	return isSpace(r) || startsIndexed(r)
 }
 
-func (sn *Spaced) parse(rd *reader) {
+func (sn *Array) parse(rd *reader) {
 	parseSpaces(sn, rd)
 	for startsCompound(rd.peek()) {
 		sn.addToCompounds(parseCompound(rd))

@@ -80,16 +80,16 @@ var goodCases = []struct {
 		ast{"Compound/Indexed/Primary", fs{"Type": List}},
 		ast{"Compound/Indexed/Primary", fs{
 			"Type": List,
-			"List": ast{"Spaced", fs{"Compounds": []string{"1"}}}}},
+			"List": ast{"Array", fs{"Compounds": []string{"1"}}}}},
 		ast{"Compound/Indexed/Primary", fs{
 			"Type": List,
-			"List": ast{"Spaced", fs{"Compounds": []string{"2"}}}}},
+			"List": ast{"Array", fs{"Compounds": []string{"2"}}}}},
 		ast{"Compound/Indexed/Primary", fs{
 			"Type": List,
-			"List": ast{"Spaced", fs{"Compounds": []string{"3"}}}}},
+			"List": ast{"Array", fs{"Compounds": []string{"3"}}}}},
 		ast{"Compound/Indexed/Primary", fs{
 			"Type": List,
-			"List": ast{"Spaced", fs{
+			"List": ast{"Array", fs{
 				"Compounds": []string{"4", "5", "6", "7"}}}}},
 	)},
 	// Map
