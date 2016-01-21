@@ -30,6 +30,12 @@ func addChild(p Node, ch Node) {
 	ch.n().Parent = p
 }
 
+type runePred func(rune) bool
+
+func (rp runePred) matches(r rune) bool {
+	return rp != nil && rp(r)
+}
+
 // Sep is the catch-all node type for leaf nodes that lack internal structures
 // and semantics, and serve solely for syntactic purposes. The parsing of
 // separators depend on the Parent node; as such it lacks a genuine parse
@@ -91,14 +97,14 @@ func (mpn *MapPair) parse(rd *reader) {
 		rd.error = shouldBeCompound
 		return
 	}
-	mpn.setKey(parseCompound(rd))
+	mpn.setKey(parseCompound(rd, nil))
 
 	parseSpaces(mpn, rd)
 	if !startsCompound(rd.peek()) {
 		rd.error = shouldBeCompound
 		return
 	}
-	mpn.setValue(parseCompound(rd))
+	mpn.setValue(parseCompound(rd, nil))
 }
 
 type Primary struct {
@@ -272,16 +278,16 @@ var (
 	shouldBeVariableName = newError("", "variable name")
 )
 
-func (pn *Primary) variable(rd *reader) {
+func (pn *Primary) variable(rd *reader, cut runePred) {
 	pn.Type = Variable
 	defer func() { pn.Value = rd.src[pn.Begin:rd.pos] }()
 	rd.next()
-	if !allowedInVariableName(rd.next()) {
+	if r := rd.next(); !allowedInVariableName(r) || cut.matches(r) {
 		rd.backup()
 		rd.error = shouldBeVariableName
 		return
 	}
-	for allowedInVariableName(rd.peek()) {
+	for allowedInVariableName(rd.peek()) && !cut.matches(rd.peek()) {
 		rd.next()
 	}
 }
@@ -295,10 +301,10 @@ func allowedInBareword(r rune) bool {
 		r == '.' || r == '/' || r == '=' || r == '@'
 }
 
-func (pn *Primary) bareword(rd *reader) {
+func (pn *Primary) bareword(rd *reader, cut runePred) {
 	pn.Type = Bareword
 	defer func() { pn.Value = rd.src[pn.Begin:rd.pos] }()
-	for allowedInBareword(rd.peek()) {
+	for allowedInBareword(rd.peek()) && !cut.matches(rd.peek()) {
 		rd.next()
 	}
 }
@@ -492,7 +498,7 @@ func startsPrimary(r rune) bool {
 		r == '?' || r == '*' || r == '(' || r == '['
 }
 
-func (pn *Primary) parse(rd *reader) {
+func (pn *Primary) parse(rd *reader, cut runePred) {
 	r := rd.peek()
 	if !startsPrimary(r) {
 		rd.error = ShouldBePrimary
@@ -504,7 +510,7 @@ func (pn *Primary) parse(rd *reader) {
 	case '"':
 		pn.doubleQuoted(rd)
 	case '$':
-		pn.variable(rd)
+		pn.variable(rd, cut)
 	case '*':
 		pn.wildcard(rd)
 	case '?':
@@ -518,7 +524,7 @@ func (pn *Primary) parse(rd *reader) {
 	case '[':
 		pn.lbracket(rd)
 	default:
-		pn.bareword(rd)
+		pn.bareword(rd, cut)
 	}
 }
 
@@ -537,8 +543,8 @@ var (
 	shouldBeArray = newError("", "spaced")
 )
 
-func (in *Indexed) parse(rd *reader) {
-	in.setHead(parsePrimary(rd))
+func (in *Indexed) parse(rd *reader, cut runePred) {
+	in.setHead(parsePrimary(rd, cut))
 	for parseSep(in, rd, '[') {
 		if !startsArray(rd.peek()) {
 			rd.error = shouldBeArray
@@ -561,9 +567,9 @@ func startsCompound(r rune) bool {
 	return startsIndexed(r)
 }
 
-func (cn *Compound) parse(rd *reader) {
-	for startsIndexed(rd.peek()) {
-		cn.addToIndexeds(parseIndexed(rd))
+func (cn *Compound) parse(rd *reader, cut runePred) {
+	for startsIndexed(rd.peek()) && !cut.matches(rd.peek()) {
+		cn.addToIndexeds(parseIndexed(rd, cut))
 	}
 }
 
@@ -584,7 +590,7 @@ func startsArray(r rune) bool {
 func (sn *Array) parse(rd *reader) {
 	parseSpaces(sn, rd)
 	for startsCompound(rd.peek()) {
-		sn.addToCompounds(parseCompound(rd))
+		sn.addToCompounds(parseCompound(rd, nil))
 		parseSpaces(sn, rd)
 	}
 }
@@ -652,7 +658,7 @@ func (rn *Redir) parse(rd *reader) {
 		}
 		return
 	}
-	rn.setSource(parseCompound(rd))
+	rn.setSource(parseCompound(rd, nil))
 }
 
 // ExitusRedir = '?' '>' { Space } Compound
@@ -667,7 +673,7 @@ func (ern *ExitusRedir) parse(rd *reader) {
 	rd.next()
 	addSep(ern, begin, rd.pos)
 	parseSpaces(ern, rd)
-	ern.setDest(parseCompound(rd))
+	ern.setDest(parseCompound(rd, nil))
 }
 
 // Form = { Space } Compound { Space } { ( Compound | MapPair | Redir | ExitusRedir ) { Space } }
@@ -694,7 +700,7 @@ func (fn *Form) parse(rd *reader) {
 		rd.error = shouldBeCompound
 		return
 	}
-	fn.setHead(parseCompound(rd))
+	fn.setHead(parseCompound(rd, nil))
 	parseSpaces(fn, rd)
 	for {
 		r := rd.peek()
@@ -710,7 +716,7 @@ func (fn *Form) parse(rd *reader) {
 				fn.setExitusRedir(parseExitusRedir(rd))
 				continue
 			}
-			cn := parseCompound(rd)
+			cn := parseCompound(rd, nil)
 			if isRedirSign(rd.peek()) {
 				// Redir
 				rn := parseRedir(rd)

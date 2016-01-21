@@ -19,7 +19,7 @@ func (n *{parent}) addTo{field}(ch *{child}) {{
 
 
 def put_parse(out, typename, extraargs):
-    extranames = ', '.join(a.split()[0] for a in extraargs.split(', ')) if extraargs else ''
+    extranames = ', '.join(a.split(' ')[0] for a in extraargs.split(', ')) if extraargs else ''
     print >>out, '''
 func parse{typename}(rd *reader{extraargs}) *{typename} {{
     n := &{typename}{{node: node{{Begin: rd.pos}}}}
@@ -56,7 +56,7 @@ def main():
             in_type = m.group(1)
             continue
         m = re.match(
-            r'^func \(.* \*(.*)\) parse\(rd \*reader(.*?)\)', line)
+            r'^func \(.* \*(.*)\) parse\(rd \*reader(.*?)\) {$', line)
         if m:
             typename, extraargs = m.groups()
             put_parse(out, typename, extraargs)

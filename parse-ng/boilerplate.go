@@ -33,9 +33,9 @@ func (n *Primary) addToMapPairs(ch *MapPair) {
 	addChild(n, ch)
 }
 
-func parsePrimary(rd *reader) *Primary {
+func parsePrimary(rd *reader, cut runePred) *Primary {
 	n := &Primary{node: node{Begin: rd.pos}}
-	n.parse(rd)
+	n.parse(rd, cut)
 	n.End = rd.pos
 	n.SourceText = rd.src[n.Begin:n.End]
 	return n
@@ -51,9 +51,9 @@ func (n *Indexed) addToIndicies(ch *Array) {
 	addChild(n, ch)
 }
 
-func parseIndexed(rd *reader) *Indexed {
+func parseIndexed(rd *reader, cut runePred) *Indexed {
 	n := &Indexed{node: node{Begin: rd.pos}}
-	n.parse(rd)
+	n.parse(rd, cut)
 	n.End = rd.pos
 	n.SourceText = rd.src[n.Begin:n.End]
 	return n
@@ -64,9 +64,9 @@ func (n *Compound) addToIndexeds(ch *Indexed) {
 	addChild(n, ch)
 }
 
-func parseCompound(rd *reader) *Compound {
+func parseCompound(rd *reader, cut runePred) *Compound {
 	n := &Compound{node: node{Begin: rd.pos}}
-	n.parse(rd)
+	n.parse(rd, cut)
 	n.End = rd.pos
 	n.SourceText = rd.src[n.Begin:n.End]
 	return n
