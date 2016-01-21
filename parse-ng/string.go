@@ -4,9 +4,9 @@ package parse
 
 import "fmt"
 
-const _PrimaryType_name = "BadPrimaryBarewordSingleQuotedDoubleQuotedVariableWildcardExitusCaptureOutputCaptureListLambdaMap"
+const _PrimaryType_name = "BadPrimaryBarewordSingleQuotedDoubleQuotedVariableWildcardExitusCaptureOutputCaptureListLambdaMapBraced"
 
-var _PrimaryType_index = [...]uint8{0, 10, 18, 30, 42, 50, 58, 71, 84, 88, 94, 97}
+var _PrimaryType_index = [...]uint8{0, 10, 18, 30, 42, 50, 58, 71, 84, 88, 94, 97, 103}
 
 func (i PrimaryType) String() string {
 	if i < 0 || i+1 >= PrimaryType(len(_PrimaryType_index)) {

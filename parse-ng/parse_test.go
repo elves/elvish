@@ -151,6 +151,12 @@ var goodCases = []struct {
 		ast{"Compound/Indexed/Primary", fs{
 			"Type": ExitusCapture, "Chunk": "b;c",
 		}})},
+	// Braced
+	{"a {a,c-f}", a(
+		ast{"Compound/Indexed/Primary", fs{
+			"Type":    Braced,
+			"Braced":  []string{"a", "c", "f"},
+			"IsRange": []bool{false, true}}})},
 }
 
 func checkParseTree(n Node) error {
@@ -194,13 +200,16 @@ func checkNode(got Node, want interface{}) error {
 	}
 }
 
+var nodeType = reflect.TypeOf((*Node)(nil)).Elem()
+
 func checkAny(got interface{}, want interface{}, ctx string) error {
-	switch reflect.TypeOf(got).Kind() {
-	case reflect.Ptr:
-		// Assumed to be a Node
+	if got, ok := got.(Node); ok {
+		// A Node
 		return checkNode(got.(Node), want)
-	case reflect.Slice:
-		// Assumed to be a slice of Nodes
+	}
+	tgot := reflect.TypeOf(got)
+	if tgot.Kind() == reflect.Slice && tgot.Elem().Implements(nodeType) {
+		// A slice of Nodes
 		vgot := reflect.ValueOf(got)
 		vwant := reflect.ValueOf(want)
 		if vgot.Len() != vwant.Len() {
@@ -213,10 +222,11 @@ func checkAny(got interface{}, want interface{}, ctx string) error {
 				return err
 			}
 		}
-	default:
-		if !reflect.DeepEqual(want, got) {
-			return fmt.Errorf("want %v, got %v (%s)", want, got, ctx)
-		}
+		return nil
+	}
+
+	if !reflect.DeepEqual(want, got) {
+		return fmt.Errorf("want %v, got %v (%s)", want, got, ctx)
 	}
 	return nil
 }

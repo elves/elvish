@@ -33,6 +33,11 @@ func (n *Primary) addToMapPairs(ch *MapPair) {
 	addChild(n, ch)
 }
 
+func (n *Primary) addToBraced(ch *Compound) {
+	n.Braced = append(n.Braced, ch)
+	addChild(n, ch)
+}
+
 func parsePrimary(rd *reader, cut runePred) *Primary {
 	n := &Primary{node: node{Begin: rd.pos}}
 	n.parse(rd, cut)

@@ -113,9 +113,11 @@ type Primary struct {
 	// The unquoted string value. Valid for Bareword, SingleQuoted,
 	// DoubleQuoted, Variable and Wildcard.
 	Value    string
-	List     *Array     // Valid for List and Lambda
-	Chunk    *Chunk     // Valid for OutputCapture, ExitusCapture and Lambda
-	MapPairs []*MapPair // Valid for Map
+	List     *Array      // Valid for List and Lambda
+	Chunk    *Chunk      // Valid for OutputCapture, ExitusCapture and Lambda
+	MapPairs []*MapPair  // Valid for Map
+	Braced   []*Compound // Valid for Braced
+	IsRange  []bool      // Valid for Braced
 }
 
 type PrimaryType int
@@ -132,6 +134,7 @@ const (
 	List
 	Lambda
 	Map
+	Braced
 )
 
 var (
@@ -493,9 +496,38 @@ func (pn *Primary) lbracket(rd *reader) {
 	}
 }
 
+func isBracedSep(r rune) bool {
+	return r == ',' || r == '-'
+}
+
+var (
+	shouldBeBraceSepOrRBracket = newError("", "'-'", "','", "'}'")
+)
+
+// Braced = '{' Compound { (','|'-') Compounds } '}'
+func (pn *Primary) braced(rd *reader) {
+	pn.Type = Braced
+	parseSep(pn, rd, '{')
+	// XXX: we don't actually know what happens with an empty Compound.
+	pn.addToBraced(parseCompound(rd, isBracedSep))
+	for isBracedSep(rd.peek()) {
+		if rd.peek() == '-' {
+			parseSep(pn, rd, '-')
+			pn.IsRange = append(pn.IsRange, true)
+		} else {
+			parseSep(pn, rd, ',')
+			pn.IsRange = append(pn.IsRange, false)
+		}
+		pn.addToBraced(parseCompound(rd, isBracedSep))
+	}
+	if !parseSep(pn, rd, '}') {
+		rd.error = shouldBeBraceSepOrRBracket
+	}
+}
+
 func startsPrimary(r rune) bool {
 	return r == '\'' || r == '"' || r == '$' || allowedInBareword(r) ||
-		r == '?' || r == '*' || r == '(' || r == '['
+		r == '?' || r == '*' || r == '(' || r == '[' || r == '{'
 }
 
 func (pn *Primary) parse(rd *reader, cut runePred) {
@@ -523,6 +555,8 @@ func (pn *Primary) parse(rd *reader, cut runePred) {
 		pn.outputCapture(rd)
 	case '[':
 		pn.lbracket(rd)
+	case '{':
+		pn.braced(rd)
 	default:
 		pn.bareword(rd, cut)
 	}
