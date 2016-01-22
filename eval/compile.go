@@ -258,9 +258,7 @@ func cat(lhs, rhs Value) Value {
 	return str(toString(lhs) + toString(rhs))
 }
 
-func (cp *compiler) array(n *parse.Array) valuesOp {
-	ops := cp.compounds(n.Compounds)
-
+func catOps(ops []valuesOp) valuesOp {
 	return func(ec *evalCtx) []Value {
 		// Use number of compound expressions as an estimation of the number
 		// of values
@@ -271,6 +269,10 @@ func (cp *compiler) array(n *parse.Array) valuesOp {
 		}
 		return vs
 	}
+}
+
+func (cp *compiler) array(n *parse.Array) valuesOp {
+	return catOps(cp.compounds(n.Compounds))
 }
 
 func (cp *compiler) indexed(n *parse.Indexed) valuesOp {
@@ -471,17 +473,7 @@ func (cp *compiler) braced(n *parse.Primary) valuesOp {
 	ops := cp.compounds(n.Braced)
 	// TODO: n.IsRange
 	// isRange := n.IsRange
-	// XXX This is now a copy of compiler.array.
-	return func(ec *evalCtx) []Value {
-		// Use number of compound expressions as an estimation of the number
-		// of values
-		vs := make([]Value, 0, len(ops))
-		for _, op := range ops {
-			us := op(ec)
-			vs = append(vs, us...)
-		}
-		return vs
-	}
+	return catOps(ops)
 }
 
 // splitQualifiedName splits a qualified variable name into two parts separated

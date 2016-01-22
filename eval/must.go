@@ -96,7 +96,7 @@ func mustVariableOrString(cp *compiler, cn *parse.Compound, msg string) (*parse.
 
 // mustVariable musts that a Compound contains exactly one Primary of type
 // Variable.
-func mustVariablePrimary(cp *compiler, cn *parse.Compound, msg string) (*parse.Primary, string) {
+func mustVariable(cp *compiler, cn *parse.Compound, msg string) (*parse.Primary, string) {
 	pn, text := mustVariableOrString(cp, cn, msg)
 	if pn.Type != parse.Variable {
 		// cp.errorf(pn.Pos, msg)
@@ -113,15 +113,3 @@ func mustString(cp *compiler, cn *parse.Compound, msg string) (*parse.Primary, s
 	}
 	return pn, text
 }
-
-/*
-// mustStartWithVariabl musts the first compound of the form is a
-// VariablePrimary. This is merely for better error messages; No actual
-// processing is done.
-func mustStartWithVariable(cp *compiler, fn *parse.Form, form string) {
-	if len(fn.Args.Nodes) == 0 {
-		cp.errorf(fn.Pos, "expect variable after %s", form)
-	}
-	mustVariablePrimary(cp, fn.Args.Nodes[0], "expect variable")
-}
-*/
