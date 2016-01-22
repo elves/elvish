@@ -835,5 +835,9 @@ func Parse(name, src string) (*Chunk, error) {
 		return nil, errutil.NewContextualError(
 			name, "syntax error", src, rd.pos, rd.error.Error())
 	}
+	if rd.pos != len(src) {
+		return bn, errutil.NewContextualError(
+			name, "syntax error", src, rd.pos, "unexpected rune")
+	}
 	return bn, nil
 }
