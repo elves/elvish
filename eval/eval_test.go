@@ -51,10 +51,10 @@ var evalTests = []struct {
 	// Pure byte pipeline
 	{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`,
 		[]Value{}, more{wantBytesOut: []byte("A1bert\nBer1in\n")}},
+	// TODO: Add a useful channel pipeline sample
+	// TODO: Add a useful hybrid pipeline sample
 
-	// Trivial command
-	{"put 233 lorem ipsum", strs("233", "lorem", "ipsum"), nomore},
-
+	// Builtin functions
 	// Arithmetics
 	// TODO test more edge cases
 	{"* 353 661", strs("233333"), nomore},
@@ -68,7 +68,7 @@ var evalTests = []struct {
 	{`put "much \n\033[31;1m$cool\033[m"`,
 		strs("much \n\033[31;1m$cool\033[m"), nomore},
 
-	// Compounding list primaries
+	// Compounding
 	{"put {fi,elvi}sh{1.0,1.1}",
 		strs("fish1.0", "fish1.1", "elvish1.0", "elvish1.1"), nomore},
 
@@ -78,22 +78,22 @@ var evalTests = []struct {
 	{"put [a b c][2]", strs("c"), nomore},
 	{"put [&key value][key]", strs("value"), nomore},
 
+	// Output capture
+	{"put (put lorem ipsum)", strs("lorem", "ipsum"), nomore},
+
+	// Status capture
+	{"put ?(true|false|false)",
+		[]Value{ok, newFailure("1"), newFailure("1")}, nomore},
+
 	/*
 		// Variable and compounding
 		{"set x = `SHELL`\nput `WOW, SUCH `$x`, MUCH COOL`\n",
 			strs("WOW, SUCH SHELL, MUCH COOL"), nomore},
 
-		// Channel capture
-		{"put (put lorem ipsum)", strs("lorem", "ipsum"), nomore},
-
-		// Status capture
-		{"put ?(true|false|false)",
-			[]Value{ok, newFailure("1"), newFailure("1")}, nomore},
-
-		// Closure evaluation
+		// Closure
+		// Basics
 		{"[]{ }", strs(), nomore},
 		{"[x]{put $x} foo", strs("foo"), nomore},
-
 		// Variable enclosure
 		{"set x = lorem; []{ put $x; set x = ipsum }; put $x",
 			strs("lorem", "ipsum"), nomore},
@@ -122,6 +122,7 @@ var evalTests = []struct {
 		// Pseudo-namespace env:
 		{"set env:foo = lorem; put $env:foo", strs("lorem"), nomore},
 		{"del env:foo; put $env:foo", strs(""), nomore},
+		// TODO: Test module namespace
 	*/
 }
 
