@@ -8,10 +8,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 
-	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/parse-ng"
 	"github.com/elves/elvish/strutil"
 )
 
@@ -35,51 +33,8 @@ func (s str) Type() Type {
 	return stringType{}
 }
 
-func quote(s string) string {
-	if len(s) == 0 {
-		return "``"
-	}
-
-	printable := true
-	for _, r := range s {
-		if !unicode.IsPrint(r) {
-			printable = false
-			break
-		}
-	}
-	if printable {
-		r0, w0 := utf8.DecodeRuneInString(s)
-		if parse.StartsBare(r0) {
-			barewordPossible := true
-			for _, r := range s[w0:] {
-				if parse.TerminatesBare(r) {
-					barewordPossible = false
-					break
-				}
-			}
-			if barewordPossible {
-				return s
-			}
-		}
-
-		// Quote with backquote
-		buf := new(bytes.Buffer)
-		buf.WriteRune('`')
-		for _, r := range s {
-			buf.WriteRune(r)
-			if r == '`' {
-				buf.WriteRune('`')
-			}
-		}
-		buf.WriteRune('`')
-		return buf.String()
-	}
-	// Quote with double quote
-	return strconv.Quote(s)
-}
-
 func (s str) Repr() string {
-	return quote(string(s))
+	return parse.Quote(string(s))
 }
 
 func (s str) String() string {
@@ -162,7 +117,7 @@ func (e exitus) Repr() string {
 	case Ok:
 		return "$ok"
 	case Failure:
-		return "(failure " + quote(e.Failure) + ")"
+		return "(failure " + parse.Quote(e.Failure) + ")"
 	case Traceback:
 		b := new(bytes.Buffer)
 		b.WriteString("(traceback")
@@ -228,7 +183,7 @@ func (t *table) Repr() string {
 		sep = " "
 	}
 	for k, v := range t.Dict {
-		fmt.Fprint(buf, sep, "&", quote(k), " ", v.Repr())
+		fmt.Fprint(buf, sep, "&", parse.Quote(k), " ", v.Repr())
 		sep = " "
 	}
 	buf.WriteRune(']')
@@ -315,7 +270,7 @@ func (r rat) String() string {
 	return r.b.String()
 }
 
-func evalSubscript(ec *evalCtx, left, right Value, lp, rp parse.Pos) Value {
+func evalSubscript(ec *evalCtx, left, right Value, lp, rp int) Value {
 	var sub string
 	if s, ok := right.(str); ok {
 		sub = string(s)

@@ -1,155 +1,463 @@
 package eval
 
+//go:generate ./boilerplate.py
+
 import (
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/elves/elvish/errutil"
-	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/parse-ng"
 )
 
-// staticNS is the static type information of a namespace.
-type staticNS map[string]Type
+type scope map[string]bool
 
-// Compiler compiles an Elvish AST into an Op.
-type Compiler struct {
-	global  staticNS
-	builtin staticNS
-	// scopes  []staticNS
-	mod     map[string]staticNS
-	dataDir string
+type (
+	op             func(*evalCtx)
+	valuesOp       func(*evalCtx) []Value
+	stateUpdatesOp func(*evalCtx) <-chan *stateUpdate
+	exitusOp       func(*evalCtx) exitus
+)
+
+// compiler maintains the set of states needed when compiling a single source
+// file.
+type compiler struct {
+	// Used in error messages.
+	name, source string
+	// Lexical scopes.
+	scopes []scope
+	// Variables captured from outer scopes.
+	capture scope
+	// Stored error.
+	error error
 }
 
-// compileCtx maintains a Compiler along with mutable states. After creation a
-// compilerCtx is never modified (but its fields may be), and new instances are
-// created when needed.
-type compileCtx struct {
-	*Compiler
-	name, text, dir string
-
-	scopes []staticNS
-	up     staticNS
+func (cp *compiler) thisScope() scope {
+	return cp.scopes[len(cp.scopes)-1]
 }
 
-func newCompileCtx(cp *Compiler, name, text, dir string) *compileCtx {
-	return &compileCtx{
-		cp,
-		name, text, dir,
-		[]staticNS{cp.global}, staticNS{},
+func compile(name, source string, sc scope, n *parse.Chunk) (valuesOp, error) {
+	cp := &compiler{name, source, []scope{sc}, scope{}, nil}
+	op := cp.chunk(n)
+	return op, cp.error
+}
+
+func (cp *compiler) chunk(n *parse.Chunk) valuesOp {
+	ops := cp.pipelines(n.Pipelines)
+
+	return func(ec *evalCtx) []Value {
+		for _, op := range ops {
+			s := op(ec)
+			if HasFailure(s) {
+				return s
+			}
+		}
+		return []Value{ok}
 	}
 }
 
-// NewCompiler returns a new compiler.
-func NewCompiler(bi staticNS, dataDir string) *Compiler {
-	return &Compiler{staticNS{}, bi, map[string]staticNS{}, dataDir}
-}
+const pipelineChanBufferSize = 32
 
-// Compile compiles a ChunkNode into an Op. The supplied name and text are used
-// in diagnostic messages.
-func (cp *Compiler) Compile(name, text, dir string, n *parse.Chunk) (valuesOp, error) {
-	cc := newCompileCtx(cp, name, text, dir)
-	return cc.compile(n)
-}
+var noExitus = newFailure("no exitus")
 
-func (cc *compileCtx) compile(n *parse.Chunk) (op valuesOp, err error) {
-	defer errutil.Catch(&err)
-	return cc.chunk(n), nil
-}
+func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
+	ops := cp.forms(n.Forms)
+	p := n.Begin
 
-func (cc *compileCtx) pushScope() {
-	cc.scopes = append(cc.scopes, staticNS{})
-}
-
-func (cc *compileCtx) popScope() {
-	cc.scopes[len(cc.scopes)-1] = nil
-	cc.scopes = cc.scopes[:len(cc.scopes)-1]
-}
-
-func (cc *compileCtx) pushVar(name string, t Type) {
-	cc.scopes[len(cc.scopes)-1][name] = t
-}
-
-func (cc *compileCtx) popVar(name string) {
-	delete(cc.scopes[len(cc.scopes)-1], name)
-}
-
-func (cc *compileCtx) errorf(p parse.Pos, format string, args ...interface{}) {
-	errutil.Throw(errutil.NewContextualError(cc.name, "static error", cc.text, int(p), format, args...))
-}
-
-// chunk compiles a ChunkNode into an Op.
-func (cc *compileCtx) chunk(cn *parse.Chunk) valuesOp {
-	ops := make([]valuesOp, len(cn.Nodes))
-	for i, pn := range cn.Nodes {
-		ops[i] = cc.pipeline(pn)
+	return func(ec *evalCtx) []Value {
+		var nextIn *port
+		updates := make([]<-chan *stateUpdate, len(ops))
+		// For each form, create a dedicated evalCtx and run
+		for i, op := range ops {
+			newEc := ec.copy(fmt.Sprintf("form op %v", op))
+			if i > 0 {
+				newEc.ports[0] = nextIn
+			}
+			if i < len(ops)-1 {
+				// Each internal port pair consists of a (byte) pipe pair and a
+				// channel.
+				// os.Pipe sets O_CLOEXEC, which is what we want.
+				reader, writer, e := os.Pipe()
+				if e != nil {
+					ec.errorf(p, "failed to create pipe: %s", e)
+				}
+				ch := make(chan Value, pipelineChanBufferSize)
+				newEc.ports[1] = &port{
+					f: writer, ch: ch, closeF: true, closeCh: true}
+				nextIn = &port{
+					f: reader, ch: ch, closeF: true, closeCh: false}
+			}
+			updates[i] = op(newEc)
+		}
+		// Collect exit values
+		exits := make([]Value, len(ops))
+		for i, update := range updates {
+			ex := noExitus
+			for up := range update {
+				ex = up.Exitus
+			}
+			exits[i] = ex
+		}
+		return exits
 	}
-	return combineChunk(ops)
 }
 
-// closure compiles a ClosureNode into a valuesOp.
-func (cc *compileCtx) closure(cn *parse.Closure) valuesOp {
-	nargs := 0
-	if cn.ArgNames != nil {
-		nargs = len(cn.ArgNames.Nodes)
-	}
-	argNames := make([]string, nargs)
+func (cp *compiler) form(n *parse.Form) stateUpdatesOp {
+	headOp := cp.compound(n.Head)
+	argOps := cp.compounds(n.Args)
+	// TODO: n.NamedArgs
+	redirOps := cp.redirs(n.Redirs)
+	// TODO: n.ExitusRedir
 
-	if nargs > 0 {
-		// TODO Allow types for arguments. Maybe share code with the var
-		// builtin.
-		for i, cn := range cn.ArgNames.Nodes {
-			_, name := ensureVariablePrimary(cc, cn, "expect variable")
-			argNames[i] = name
+	p := n.Begin
+	// ec here is always a subevaler created in compiler.pipeline, so it can
+	// be safely modified.
+	return func(ec *evalCtx) <-chan *stateUpdate {
+		// head
+		headValues := headOp(ec)
+		headMust := ec.must(headValues, "the head of command", p)
+		headMust.mustLen(1)
+		switch headValues[0].(type) {
+		case str, callable:
+		default:
+			headMust.error("a string or closure", headValues[0].Type().String())
+		}
+
+		// args
+		var args []Value
+		for _, argOp := range argOps {
+			args = append(args, argOp(ec)...)
+		}
+
+		// redirs
+		for _, redirOp := range redirOps {
+			redirOp(ec)
+		}
+
+		return ec.execNonSpecial(headValues[0], args)
+	}
+}
+
+func makeFlag(m parse.RedirMode) int {
+	switch m {
+	case parse.Read:
+		return os.O_RDONLY
+	case parse.Write:
+		return os.O_WRONLY | os.O_CREATE
+	case parse.ReadWrite:
+		return os.O_RDWR | os.O_CREATE
+	case parse.Append:
+		return os.O_WRONLY | os.O_CREATE | os.O_APPEND
+	default:
+		// XXX should report parser bug
+		panic("bad RedirMode; parser bug")
+	}
+}
+
+const defaultFileRedirPerm = 0644
+
+// redir compiles a Redir into a op.
+func (cp *compiler) redir(n *parse.Redir) op {
+	var dstOp valuesOp
+	if n.Dest != nil {
+		dstOp = cp.compound(n.Dest)
+	}
+	p := n.Begin
+	srcOp := cp.compound(n.Source)
+	sourceIsFd := n.SourceIsFd
+	pSrc := n.Source.Begin
+	mode := n.Mode
+	flag := makeFlag(mode)
+
+	return func(ec *evalCtx) {
+		var dst int
+		if dstOp == nil {
+			// use default dst fd
+			switch mode {
+			case parse.Read:
+				dst = 0
+			case parse.Write, parse.ReadWrite, parse.Append:
+				dst = 1
+			default:
+				// XXX should report parser bug
+				panic("bad RedirMode; parser bug")
+			}
+		} else {
+			// dst must be a valid fd
+			dst = ec.must(dstOp(ec), "FD", p).mustOneNonNegativeInt()
+		}
+
+		ec.growPorts(dst + 1)
+		ec.ports[dst].close()
+
+		srcMust := ec.must(srcOp(ec), "redirection source", pSrc)
+		src := string(srcMust.mustOneStr())
+		if sourceIsFd {
+			if src == "-" {
+				// close
+				ec.ports[dst] = &port{}
+			} else {
+				fd := srcMust.zerothMustNonNegativeInt()
+				ec.ports[dst] = ec.ports[fd]
+				if ec.ports[dst] != nil {
+					ec.ports[dst].closeF = false
+					ec.ports[dst].closeCh = false
+				}
+			}
+		} else {
+			f, err := os.OpenFile(src, flag, defaultFileRedirPerm)
+			if err != nil {
+				ec.errorf(p, "failed to open file %q: %s", src, err)
+			}
+			ec.ports[dst] = &port{
+				f: f, ch: make(chan Value), closeF: true, closeCh: true,
+			}
 		}
 	}
+}
 
-	cc.pushScope()
-
-	for _, name := range argNames {
-		cc.pushVar(name, anyType{})
+func (cp *compiler) compound(n *parse.Compound) valuesOp {
+	if len(n.Indexeds) == 1 {
+		return cp.indexed(n.Indexeds[0])
 	}
 
-	op := cc.chunk(cn.Chunk)
+	ops := cp.indexeds(n.Indexeds)
 
-	up := cc.up
-	cc.up = staticNS{}
-	cc.popScope()
-
-	// Added variables up on inner closures to cc.up
-	for name, typ := range up {
-		if cc.resolveVarOnThisScope(name) == nil {
-			cc.up[name] = typ
+	return func(ec *evalCtx) []Value {
+		// start with a single "", do Cartesian products one by one
+		vs := []Value{str("")}
+		for _, op := range ops {
+			us := op(ec)
+			if len(us) == 1 {
+				// short path: reuse vs
+				u := us[0]
+				for i := range vs {
+					vs[i] = cat(vs[i], u)
+				}
+			} else {
+				newvs := make([]Value, len(vs)*len(us))
+				for i, v := range vs {
+					for j, u := range us {
+						newvs[i*len(us)+j] = cat(v, u)
+					}
+				}
+				vs = newvs
+			}
 		}
+		return vs
 	}
-
-	return combineClosure(argNames, op, up)
 }
 
-// pipeline compiles a PipelineNode into a valuesOp.
-func (cc *compileCtx) pipeline(pn *parse.Pipeline) valuesOp {
-	ops := make([]stateUpdatesOp, len(pn.Nodes))
-
-	for i, fn := range pn.Nodes {
-		ops[i] = cc.form(fn)
-	}
-	return combinePipeline(ops, pn.Pos)
+func cat(lhs, rhs Value) Value {
+	return str(toString(lhs) + toString(rhs))
 }
 
-// mustResolveVar calls ResolveVar and calls errorf if the variable is
-// nonexistent.
-func (cc *compileCtx) mustResolveVar(ns, name string, p parse.Pos) Type {
-	if t := cc.ResolveVar(ns, name); t != nil {
-		return t
+func (cp *compiler) array(n *parse.Array) valuesOp {
+	ops := cp.compounds(n.Compounds)
+
+	return func(ec *evalCtx) []Value {
+		// Use number of compound expressions as an estimation of the number
+		// of values
+		vs := make([]Value, 0, len(ops))
+		for _, op := range ops {
+			us := op(ec)
+			vs = append(vs, us...)
+		}
+		return vs
 	}
-	cc.errorf(p, "undefined variable $%s", name)
-	return nil
 }
 
-// resolveVarOnThisScope returns the type of the named variable on current
-// scope. When such a variable does not exist, nil is returned.
-func (cc *compileCtx) resolveVarOnThisScope(name string) Type {
-	return cc.scopes[len(cc.scopes)-1][name]
+func (cp *compiler) indexed(n *parse.Indexed) valuesOp {
+	if len(n.Indicies) == 0 {
+		return cp.primary(n.Head)
+	}
+
+	headOp := cp.primary(n.Head)
+	indexOps := cp.arrays(n.Indicies)
+	p := n.Begin
+	indexPoses := make([]int, len(n.Indicies))
+	for i, index := range n.Indicies {
+		indexPoses[i] = index.Begin
+	}
+
+	return func(ec *evalCtx) []Value {
+		v := ec.must(headOp(ec), "the indexed value", p).mustOne()
+		for i, indexOp := range indexOps {
+			index := ec.must(indexOp(ec), "the index", p).mustOne()
+			v = evalSubscript(ec, v, index, p, indexPoses[i])
+		}
+		return []Value{v}
+	}
+}
+
+func literalValues(v ...Value) valuesOp {
+	return func(e *evalCtx) []Value {
+		return v
+	}
+}
+
+func literalStr(text string) valuesOp {
+	return literalValues(str(text))
+}
+
+func variable(qname string, p int) valuesOp {
+	ns, name := splitQualifiedName(qname)
+	return func(ec *evalCtx) []Value {
+		variable := ec.ResolveVar(ns, name)
+		if variable == nil {
+			ec.errorf(p, "variable $%s not found", qname)
+		}
+		return []Value{variable.Get()}
+	}
+}
+
+func (cp *compiler) registerVariableAccess(qname string) {
+	ns, name := splitQualifiedName(qname)
+	if ns == "up" || (ns == "" && !cp.thisScope()[name]) {
+		cp.capture[name] = true
+	}
+}
+
+func (cp *compiler) primary(n *parse.Primary) valuesOp {
+	switch n.Type {
+	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
+		return literalStr(n.Value)
+	case parse.Variable:
+		qname := n.Value[1:]
+		cp.registerVariableAccess(qname)
+		return variable(qname, n.Begin)
+	// case parse.Wildcard:
+	case parse.ExitusCapture:
+		return cp.chunk(n.Chunk)
+	case parse.OutputCapture:
+		return cp.outputCapture(n)
+	case parse.List:
+		op := cp.array(n.List)
+		return func(ec *evalCtx) []Value {
+			t := newTable()
+			t.List = op(ec)
+			return []Value{t}
+		}
+	case parse.Lambda:
+		return cp.lambda(n)
+	case parse.Map:
+		return cp.map_(n)
+	case parse.Braced:
+		return cp.braced(n)
+	default:
+		// XXX: Primary types not yet implemented are just treated as
+		// barewords. Should report parser bug of bad PrimaryType after they
+		// have been implemented.
+		return literalStr(n.SourceText)
+		// panic("bad PrimaryType; parser bug")
+	}
+}
+
+func (cp *compiler) outputCapture(n *parse.Primary) valuesOp {
+	op := cp.chunk(n.Chunk)
+	return func(ec *evalCtx) []Value {
+		vs := []Value{}
+		newEc := ec.copy(fmt.Sprintf("channel output capture %v", op))
+		ch := make(chan Value)
+		collected := make(chan bool)
+		newEc.ports[1] = &port{ch: ch}
+		go func() {
+			for v := range ch {
+				vs = append(vs, v)
+			}
+			collected <- true
+		}()
+		// XXX The exitus is discarded.
+		op(newEc)
+		newEc.closePorts()
+		close(ch)
+		<-collected
+		return vs
+	}
+}
+
+func (cp *compiler) pushScope() scope {
+	sc := scope{}
+	cp.scopes = append(cp.scopes, sc)
+	return sc
+}
+
+func (cp *compiler) popScope() {
+	cp.scopes[len(cp.scopes)-1] = nil
+	cp.scopes = cp.scopes[:len(cp.scopes)-1]
+}
+
+func (cp *compiler) lambda(n *parse.Primary) valuesOp {
+	// Collect argument names
+	argNames := make([]string, len(n.List.Compounds))
+	for i, arg := range n.List.Compounds {
+		_, name := mustString(cp, arg, "expect string")
+		argNames[i] = name
+	}
+
+	thisScope := cp.pushScope()
+	for _, argName := range argNames {
+		thisScope[argName] = true
+	}
+	op := cp.chunk(n.Chunk)
+	capture := cp.capture
+	cp.capture = scope{}
+	cp.popScope()
+
+	for name := range capture {
+		cp.registerVariableAccess(name)
+	}
+
+	return func(ec *evalCtx) []Value {
+		evCapture := make(map[string]Variable, len(capture))
+		for name := range capture {
+			evCapture[name] = ec.ResolveVar("", name)
+		}
+		return []Value{newClosure(argNames, op, evCapture)}
+	}
+}
+
+func (cp *compiler) map_(n *parse.Primary) valuesOp {
+	nn := len(n.MapPairs)
+	keysOps := make([]valuesOp, nn)
+	valuesOps := make([]valuesOp, nn)
+	poses := make([]int, nn)
+	for i := 0; i < nn; i++ {
+		keysOps[i] = cp.compound(n.MapPairs[i].Key)
+		valuesOps[i] = cp.compound(n.MapPairs[i].Value)
+		poses[i] = n.MapPairs[i].Begin
+	}
+	return func(ec *evalCtx) []Value {
+		t := newTable()
+		for i := 0; i < nn; i++ {
+			keys := keysOps[i](ec)
+			values := valuesOps[i](ec)
+			if len(keys) != len(values) {
+				ec.errorf(poses[i], "%d keys but %d values", len(keys), len(values))
+			}
+			for j, key := range keys {
+				t.Dict[toString(key)] = values[j]
+			}
+		}
+		return []Value{t}
+	}
+}
+
+func (cp *compiler) braced(n *parse.Primary) valuesOp {
+	ops := cp.compounds(n.Braced)
+	// TODO: n.IsRange
+	// isRange := n.IsRange
+	// XXX This is now a copy of compiler.array.
+	return func(ec *evalCtx) []Value {
+		// Use number of compound expressions as an estimation of the number
+		// of values
+		vs := make([]Value, 0, len(ops))
+		for _, op := range ops {
+			us := op(ec)
+			vs = append(vs, us...)
+		}
+		return vs
+	}
 }
 
 // splitQualifiedName splits a qualified variable name into two parts separated
@@ -161,205 +469,4 @@ func splitQualifiedName(qname string) (string, string) {
 		return "", qname
 	}
 	return qname[:i], qname[i+1:]
-}
-
-// ResolveVar returns the type of a variable with supplied name and on the
-// supplied namespace. If such a variable is nonexistent, a nil is returned.
-// When the value to resolve is on an outer current scope, it is added to
-// cc.up.
-func (cc *compileCtx) ResolveVar(ns, name string) Type {
-	if ns == "env" {
-		return stringType{}
-	}
-	if mod, ok := cc.mod[ns]; ok {
-		return mod[name]
-	}
-
-	may := func(n string) bool {
-		return ns == "" || ns == n
-	}
-	if may("local") {
-		if t := cc.resolveVarOnThisScope(name); t != nil {
-			return t
-		}
-	}
-	if may("up") {
-		for i := len(cc.scopes) - 2; i >= 0; i-- {
-			if t, ok := cc.scopes[i][name]; ok {
-				cc.up[name] = t
-				return t
-			}
-		}
-	}
-	if may("builtin") {
-		if t, ok := cc.builtin[name]; ok {
-			return t
-		}
-	}
-	return nil
-}
-
-func resolveBuiltinSpecial(cmd *parse.Compound) *builtinSpecial {
-	if len(cmd.Nodes) == 1 {
-		sn := cmd.Nodes[0]
-		if sn.Right == nil {
-			pn := sn.Left
-			if pn.Typ == parse.StringPrimary {
-				name := pn.Node.(*parse.String).Text
-				if bi, ok := builtinSpecials[name]; ok {
-					return &bi
-				}
-			}
-		}
-	}
-	return nil
-}
-
-// form compiles a FormNode into a stateUpdatesOp.
-func (cc *compileCtx) form(fn *parse.Form) stateUpdatesOp {
-	bi := resolveBuiltinSpecial(fn.Command)
-	ports := cc.redirs(fn.Redirs)
-
-	if bi != nil {
-		specialOp := bi.compile(cc, fn)
-		return combineSpecialForm(specialOp, ports, fn.Pos)
-	}
-	cmdOp := cc.compound(fn.Command)
-	argsOp := cc.spaced(fn.Args)
-	return combineNonSpecialForm(cmdOp, argsOp, ports, fn.Pos)
-}
-
-// redirs compiles a slice of Redir's into a slice of portOp's. The resulting
-// slice is indexed by the original fd.
-func (cc *compileCtx) redirs(rs []parse.Redir) []portOp {
-	var nports uintptr
-	for _, rd := range rs {
-		if nports < rd.Fd()+1 {
-			nports = rd.Fd() + 1
-		}
-	}
-
-	ports := make([]portOp, nports)
-	for _, rd := range rs {
-		ports[rd.Fd()] = cc.redir(rd)
-	}
-
-	return ports
-}
-
-const defaultFileRedirPerm = 0644
-
-// redir compiles a Redir into a portOp.
-func (cc *compileCtx) redir(r parse.Redir) portOp {
-	switch r := r.(type) {
-	case *parse.CloseRedir:
-		return func(ec *evalCtx) *port {
-			return &port{}
-		}
-	case *parse.FdRedir:
-		oldFd := int(r.OldFd)
-		return func(ec *evalCtx) *port {
-			// Copied ports have shouldClose unmarked to avoid double close on
-			// channels
-			p := *ec.port(oldFd)
-			p.closeF = false
-			p.closeCh = false
-			return &p
-		}
-	case *parse.FilenameRedir:
-		fnameOp := cc.compound(r.Filename)
-		return func(ec *evalCtx) *port {
-			fname := string(ec.mustSingleString(
-				fnameOp.f(ec), "filename", r.Filename.Pos))
-			f, e := os.OpenFile(fname, r.Flag, defaultFileRedirPerm)
-			if e != nil {
-				ec.errorf(r.Pos, "failed to open file %q: %s", fname[0], e)
-			}
-			return &port{
-				f: f, ch: make(chan Value), closeF: true, closeCh: true,
-			}
-		}
-	default:
-		panic("bad Redir type")
-	}
-}
-
-// compounds compiles a slice of CompoundNode's into a valuesOp. It can
-// be also used to compile a SpacedNode.
-func (cc *compileCtx) compounds(tns []*parse.Compound) valuesOp {
-	ops := make([]valuesOp, len(tns))
-	for i, tn := range tns {
-		ops[i] = cc.compound(tn)
-	}
-	return combineSpaced(ops)
-}
-
-// spaced compiles a SpacedNode into a valuesOp.
-func (cc *compileCtx) spaced(ln *parse.Spaced) valuesOp {
-	return cc.compounds(ln.Nodes)
-}
-
-// compound compiles a CompoundNode into a valuesOp.
-func (cc *compileCtx) compound(tn *parse.Compound) valuesOp {
-	var op valuesOp
-	if len(tn.Nodes) == 1 {
-		op = cc.subscript(tn.Nodes[0])
-	} else {
-		ops := make([]valuesOp, len(tn.Nodes))
-		for i, fn := range tn.Nodes {
-			ops[i] = cc.subscript(fn)
-		}
-		op = combineCompound(ops)
-	}
-	if tn.Sigil == parse.NoSigil {
-		return op
-	}
-	cmdOp := makeString(string(tn.Sigil))
-	fop := combineNonSpecialForm(cmdOp, op, nil, tn.Pos)
-	pop := combinePipeline([]stateUpdatesOp{fop}, tn.Pos)
-	return combineChanCapture(pop)
-}
-
-// subscript compiles a SubscriptNode into a valuesOp.
-func (cc *compileCtx) subscript(sn *parse.Subscript) valuesOp {
-	if sn.Right == nil {
-		return cc.primary(sn.Left)
-	}
-	left := cc.primary(sn.Left)
-	right := cc.compound(sn.Right)
-	return combineSubscript(cc, left, right, sn.Left.Pos, sn.Right.Pos)
-}
-
-// primary compiles a PrimaryNode into a valuesOp.
-func (cc *compileCtx) primary(fn *parse.Primary) valuesOp {
-	switch fn.Typ {
-	case parse.StringPrimary:
-		text := fn.Node.(*parse.String).Text
-		return makeString(text)
-	case parse.VariablePrimary:
-		name := fn.Node.(*parse.String).Text
-		return makeVar(cc, name, fn.Pos)
-	case parse.TablePrimary:
-		table := fn.Node.(*parse.Table)
-		list := cc.compounds(table.List)
-		keys := make([]valuesOp, len(table.Dict))
-		values := make([]valuesOp, len(table.Dict))
-		for i, tp := range table.Dict {
-			keys[i] = cc.compound(tp.Key)
-			values[i] = cc.compound(tp.Value)
-		}
-		return combineTable(list, keys, values, fn.Pos)
-	case parse.ClosurePrimary:
-		return cc.closure(fn.Node.(*parse.Closure))
-	case parse.ListPrimary:
-		return cc.spaced(fn.Node.(*parse.Spaced))
-	case parse.ChanCapturePrimary:
-		op := cc.pipeline(fn.Node.(*parse.Pipeline))
-		return combineChanCapture(op)
-	case parse.StatusCapturePrimary:
-		op := cc.pipeline(fn.Node.(*parse.Pipeline))
-		return op
-	default:
-		panic(fmt.Sprintln("bad PrimaryNode type", fn.Typ))
-	}
 }

@@ -69,7 +69,7 @@ type callableType struct {
 }
 
 func (ct callableType) Default() Value {
-	return newClosure([]string{}, valuesOp{}, map[string]Variable{})
+	return newClosure([]string{}, func(*evalCtx) []Value { return nil }, map[string]Variable{})
 }
 
 func (ct callableType) String() string {

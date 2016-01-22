@@ -121,6 +121,10 @@ func (b *builtinFn) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 	return update
 }
 
+var (
+	arityMismatch = newFailure("arity mismatch")
+)
+
 // Exec executes a closure.
 func (c *closure) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 	update := make(chan *stateUpdate, 1)

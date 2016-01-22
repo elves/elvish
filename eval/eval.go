@@ -13,7 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/errutil"
-	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/parse-ng"
 	"github.com/elves/elvish/store"
 )
 
@@ -25,7 +25,6 @@ type ns map[string]Variable
 // Evaler is used to evaluate elvish sources. It maintains runtime context
 // shared among all evalCtx instances.
 type Evaler struct {
-	Compiler    *Compiler
 	global      ns
 	builtin     ns
 	mod         map[string]ns
@@ -80,7 +79,6 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 	}
 
 	return &Evaler{
-		NewCompiler(makeCompilerScope(builtin), dataDir),
 		ns{}, builtin, map[string]ns{},
 		searchPaths, st,
 	}
@@ -179,23 +177,22 @@ func (ec *evalCtx) growPorts(n int) {
 	copy(ec.ports, ports)
 }
 
-// makeCompilerScope extracts the type information from variables.
-func makeCompilerScope(s ns) staticNS {
-	scope := staticNS{}
-	for name, variable := range s {
-		scope[name] = variable.StaticType()
+func makeScope(s ns) scope {
+	sc := scope{}
+	for name, _ := range s {
+		sc[name] = true
 	}
-	return scope
+	return sc
 }
 
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) Eval(name, text, dir string, n *parse.Chunk) ([]Value, error) {
-	return ev.evalWithChanOut(name, text, dir, n, nil)
+func (ev *Evaler) Eval(name, text string, n *parse.Chunk) ([]Value, error) {
+	return ev.evalWithChanOut(name, text, n, nil)
 }
 
-func (ev *Evaler) evalWithChanOut(name, text, dir string, n *parse.Chunk, ch chan Value) ([]Value, error) {
-	op, err := ev.Compiler.Compile(name, text, dir, n)
+func (ev *Evaler) evalWithChanOut(name, text string, n *parse.Chunk, ch chan Value) ([]Value, error) {
+	op, err := compile(name, text, makeScope(ev.global), n)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +206,7 @@ func (ec *evalCtx) eval(op valuesOp) ([]Value, error) {
 }
 
 func (ec *evalCtx) evalWithChanOut(op valuesOp, ch chan Value) (vs []Value, err error) {
-	if op.f == nil {
+	if op == nil {
 		return nil, nil
 	}
 	if ch != nil {
@@ -217,21 +214,21 @@ func (ec *evalCtx) evalWithChanOut(op valuesOp, ch chan Value) (vs []Value, err 
 	}
 	defer ec.closePorts()
 	defer errutil.Catch(&err)
-	vs = op.f(ec)
+	vs = op(ec)
 	return vs, nil
 }
 
 // errorf stops the ec.eval immediately by panicking with a diagnostic message.
 // The panic is supposed to be caught by ec.eval.
-func (ec *evalCtx) errorf(p parse.Pos, format string, args ...interface{}) {
+func (ec *evalCtx) errorf(p int, format string, args ...interface{}) {
 	errutil.Throw(errutil.NewContextualError(
 		fmt.Sprintf("%s (%s)", ec.name, ec.context), "error",
-		ec.text, int(p), format, args...))
+		ec.text, p, format, args...))
 }
 
 // mustSingleString returns a String if that is the only element of vs.
 // Otherwise it errors.
-func (ec *evalCtx) mustSingleString(vs []Value, what string, p parse.Pos) str {
+func (ec *evalCtx) mustSingleString(vs []Value, what string, p int) str {
 	if len(vs) != 1 {
 		ec.errorf(p, "Expect exactly one word for %s, got %d", what, len(vs))
 	}
@@ -242,23 +239,13 @@ func (ec *evalCtx) mustSingleString(vs []Value, what string, p parse.Pos) str {
 	return v
 }
 
-func (ec *evalCtx) applyPortOps(ports []portOp) {
-	ec.growPorts(len(ports))
-
-	for i, op := range ports {
-		if op != nil {
-			ec.ports[i] = op(ec)
-		}
-	}
-}
-
 // SourceText evaluates a chunk of elvish source.
 func (ev *Evaler) SourceText(name, src, dir string) ([]Value, error) {
 	n, err := parse.Parse(name, src)
 	if err != nil {
 		return nil, err
 	}
-	return ev.Eval(name, src, dir, n)
+	return ev.Eval(name, src, n)
 }
 
 func readFileUTF8(fname string) (string, error) {
