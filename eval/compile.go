@@ -317,10 +317,28 @@ func variable(qname string, p int) valuesOp {
 	}
 }
 
-func (cp *compiler) registerVariableAccess(qname string) {
+func (cp *compiler) registerVariableGet(qname string) {
 	ns, name := splitQualifiedName(qname)
 	if ns == "up" || (ns == "" && !cp.thisScope()[name]) {
 		cp.capture[name] = true
+	}
+}
+
+func (cp *compiler) registerVariableSet(qname string) {
+	ns, name := splitQualifiedName(qname)
+	switch ns {
+	case "local":
+		cp.thisScope()[name] = true
+	case "":
+		// Determine whether this is a new name by walking down the scope stack
+		for i := len(cp.scopes); i >= 0; i-- {
+			if _, ok := cp.scopes[i][name]; ok {
+				// Existing name. Do nothing
+				return
+			}
+		}
+		// New name. Register on this scope!
+		cp.thisScope()[name] = true
 	}
 }
 
@@ -330,7 +348,7 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 		return literalStr(n.Value)
 	case parse.Variable:
 		qname := n.Value[1:]
-		cp.registerVariableAccess(qname)
+		cp.registerVariableGet(qname)
 		return variable(qname, n.Begin)
 	// case parse.Wildcard:
 	case parse.ExitusCapture:
@@ -411,7 +429,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 	cp.popScope()
 
 	for name := range capture {
-		cp.registerVariableAccess(name)
+		cp.registerVariableGet(name)
 	}
 
 	return func(ec *evalCtx) []Value {
