@@ -1,8 +1,8 @@
 package errutil
 
-// An exception wraps an error.
+// type marker for exceptions
 type exception struct {
-	err error
+	error
 }
 
 // Throw panics with err wrapped properly so that it can be catched by Catch.
@@ -18,7 +18,7 @@ func Catch(perr *error) {
 		return
 	}
 	if exc, ok := r.(exception); ok {
-		*perr = exc.err
+		*perr = exc.error
 	} else {
 		panic(r)
 	}
