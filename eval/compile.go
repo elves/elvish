@@ -109,6 +109,17 @@ func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
 }
 
 func (cp *compiler) form(n *parse.Form) stateUpdatesOp {
+	headStr, ok := oneString(n.Head)
+	if ok {
+		compileForm, ok := builtinSpecials[headStr]
+		if ok {
+			// special form
+			op := compileForm(cp, n)
+			return func(ec *evalCtx) <-chan *stateUpdate {
+				return ec.execSpecial(op)
+			}
+		}
+	}
 	headOp := cp.compound(n.Head)
 	argOps := cp.compounds(n.Args)
 	// TODO: n.NamedArgs
@@ -333,7 +344,7 @@ func (cp *compiler) registerVariableSet(qname string) {
 		cp.thisScope()[name] = true
 	case "":
 		// Determine whether this is a new name by walking down the scope stack
-		for i := len(cp.scopes); i >= 0; i-- {
+		for i := len(cp.scopes) - 1; i >= 0; i-- {
 			if _, ok := cp.scopes[i][name]; ok {
 				// Existing name. Do nothing
 				return
@@ -417,7 +428,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 	// Collect argument names
 	argNames := make([]string, len(n.List.Compounds))
 	for i, arg := range n.List.Compounds {
-		_, name := mustString(cp, arg, "expect string")
+		name := mustString(cp, arg, "expect string")
 		argNames[i] = name
 	}
 

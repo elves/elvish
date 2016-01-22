@@ -74,42 +74,38 @@ func (m *muster) mustOneNonNegativeInt() int {
 	return m.zerothMustNonNegativeInt()
 }
 
+func onePrimary(cn *parse.Compound) *parse.Primary {
+	if len(cn.Indexeds) == 1 && len(cn.Indexeds[0].Indicies) == 0 {
+		return cn.Indexeds[0].Head
+	}
+	return nil
+}
+
+func oneString(cn *parse.Compound) (string, bool) {
+	pn := onePrimary(cn)
+	if pn != nil {
+		switch pn.Type {
+		case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
+			return pn.Value, true
+		}
+	}
+	return "", false
+}
+
 func mustPrimary(cp *compiler, cn *parse.Compound, msg string) *parse.Primary {
-	if len(cn.Indexeds) != 1 || len(cn.Indexeds[0].Indicies) > 0 {
-		// cp.errorf(cn.Begin, msg)
+	p := onePrimary(cn)
+	if p == nil {
+		cp.errorf(cn.Begin, msg)
 	}
-	return cn.Indexeds[0].Head
-}
-
-func mustVariableOrString(cp *compiler, cn *parse.Compound, msg string) (*parse.Primary, string) {
-	pn := mustPrimary(cp, cn, msg)
-	switch pn.Type {
-	case parse.Variable:
-		return pn, pn.Value[1:]
-	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
-		return pn, pn.Value
-	default:
-		// cp.errorf(cn.Pos, msg)
-		return nil, ""
-	}
-}
-
-// mustVariable musts that a Compound contains exactly one Primary of type
-// Variable.
-func mustVariable(cp *compiler, cn *parse.Compound, msg string) (*parse.Primary, string) {
-	pn, text := mustVariableOrString(cp, cn, msg)
-	if pn.Type != parse.Variable {
-		// cp.errorf(pn.Pos, msg)
-	}
-	return pn, text
+	return p
 }
 
 // mustString musts that a Compound contains exactly one Primary of type
 // Variable.
-func mustString(cp *compiler, cn *parse.Compound, msg string) (*parse.Primary, string) {
-	pn, text := mustVariableOrString(cp, cn, msg)
-	if pn.Type == parse.Variable {
-		// cp.errorf(pn.Pos, msg)
+func mustString(cp *compiler, cn *parse.Compound, msg string) string {
+	s, ok := oneString(cn)
+	if !ok {
+		cp.errorf(cn.Begin, msg)
 	}
-	return pn, text
+	return s
 }

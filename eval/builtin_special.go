@@ -1,16 +1,11 @@
-// +build ignore
-
 package eval
 
 // Builtin special forms.
 
 import (
-	"fmt"
 	"os"
-	"path"
-	"strings"
 
-	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/parse-ng"
 )
 
 type compileBuiltin func(*compiler, *parse.Form) exitusOp
@@ -21,125 +16,47 @@ var BuiltinSpecialNames []string
 func init() {
 	// Needed to avoid initialization loop
 	builtinSpecials = map[string]compileBuiltin{
-		"var": compileVar,
 		"set": compileSet,
 		"del": compileDel,
-
-		"use": compileUse,
-
-		"fn": compileFn,
-		// "if": builtinSpecial{compileIf},
+		/*
+			"use": compileUse,
+			"fn": compileFn,
+		*/
 	}
 	for k, _ := range builtinSpecials {
 		BuiltinSpecialNames = append(BuiltinSpecialNames, k)
 	}
 }
 
-// ensureStartWithVariabl ensures the first compound of the form is a
-// VariablePrimary. This is merely for better error messages; No actual
-// processing is done.
-func ensureStartWithVariable(cp *compiler, fn *parse.Form, form string) {
-	if len(fn.Args.Nodes) == 0 {
-		cp.errorf(fn.Pos, "expect variable after %s", form)
-	}
-	ensureVariablePrimary(cp, fn.Args.Nodes[0], "expect variable")
-}
-
-// VarForm    = 'var' { StringPrimary } [ '=' Compound ]
-func compileVar(cp *compiler, fn *parse.Form) exitusOp {
-	var (
-		names  []string
-		types  []Type
-		values []*parse.Compound
-	)
-
-	ensureStartWithVariable(cp, fn, "var")
-
-	for i, cn := range fn.Args.Nodes {
-		expect := "expect variable, type or equal sign"
-		pn, text := ensureVariableOrStringPrimary(cp, cn, expect)
-		if pn.Typ == parse.VariablePrimary {
-			names = append(names, text)
-		} else {
-			if text == "=" {
-				values = fn.Args.Nodes[i+1:]
-				break
-			} else {
-				if t, ok := typenames[text]; !ok {
-					cp.errorf(pn.Pos, "%v is not a valid type name", text)
-				} else {
-					if len(names) == len(types) {
-						cp.errorf(pn.Pos, "duplicate type")
-					}
-					for i := len(types); i < len(names); i++ {
-						types = append(types, t)
-					}
-				}
-			}
-		}
-	}
-
-	for i := len(types); i < len(names); i++ {
-		types = append(types, anyType{})
-	}
-
-	for i, name := range names {
-		cp.pushVar(name, types[i])
-	}
-
-	var vop valuesOp
-	if values != nil {
-		vop = cp.compounds(values)
-		checkSetType(cp, names, values, vop, fn.Pos)
-	}
-	return func(ec *evalCtx) exitus {
-		for i, name := range names {
-			ec.local[name] = newInternalVariable(types[i].Default(), types[i])
-		}
-		if vop.f != nil {
-			return doSet(ec, names, vop.f(ec))
-		}
-		return ok
-	}
-}
-
-// SetForm = 'set' { VariablePrimary } '=' { Compound }
+// SetForm = 'set' { StringPrimary } '=' { Compound }
 func compileSet(cp *compiler, fn *parse.Form) exitusOp {
 	var (
 		names  []string
 		values []*parse.Compound
 	)
 
-	ensureStartWithVariable(cp, fn, "set")
+	if len(fn.Args) == 0 {
+		cp.errorf(fn.Begin, "empty set")
+	}
+	mustString(cp, fn.Args[0], "should be a literal variable name")
 
-	for i, cn := range fn.Args.Nodes {
-		expect := "expect variable or equal sign"
-		pn, text := ensureVariableOrStringPrimary(cp, cn, expect)
-		if pn.Typ == parse.VariablePrimary {
-			ns, name := splitQualifiedName(text)
-			cp.mustResolveVar(ns, name, cn.Pos)
-			names = append(names, text)
-		} else {
-			if text != "=" {
-				cp.errorf(pn.Pos, expect)
-			}
-			values = fn.Args.Nodes[i+1:]
+	for i, cn := range fn.Args {
+		name := mustString(cp, cn, "should be a literal variable name or equal sign")
+		if name == "=" {
+			values = fn.Args[i+1:]
 			break
 		}
+		cp.registerVariableSet(name)
+		names = append(names, name)
 	}
 
-	var vop valuesOp
-	vop = cp.compounds(values)
-	checkSetType(cp, names, values, vop, fn.Pos)
+	valueOps := cp.compounds(values)
+	valuesOp := catOps(valueOps)
 
 	return func(ec *evalCtx) exitus {
-		return doSet(ec, names, vop.f(ec))
+		return doSet(ec, names, valuesOp(ec))
 	}
 }
-
-var (
-	arityMismatch = newFailure("arity mismatch")
-)
 
 func doSet(ec *evalCtx, names []string, values []Value) exitus {
 	// TODO Support assignment of mismatched arity in some restricted way -
@@ -148,18 +65,17 @@ func doSet(ec *evalCtx, names []string, values []Value) exitus {
 		return arityMismatch
 	}
 
-	for i, name := range names {
+	for i, qname := range names {
 		// TODO Prevent overriding builtin variables e.g. $pid $env
-		variable := ec.ResolveVar(splitQualifiedName(name))
+		ns, name := splitQualifiedName(qname)
+		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
-			return newFailure(fmt.Sprintf("variable $%s not found; the compiler has a bug", name))
+			// New variable
+			variable = newInternalVariable(values[i], stringType{})
+			ec.local[name] = variable
+		} else {
+			variable.Set(values[i])
 		}
-		tvar := variable.StaticType()
-		tval := values[i].Type()
-		if !mayAssign(tvar, tval) {
-			return typeMismatch
-		}
-		variable.Set(values[i])
 	}
 
 	return ok
@@ -170,20 +86,20 @@ func compileDel(cp *compiler, fn *parse.Form) exitusOp {
 	// Do conventional compiling of all compound expressions, including
 	// ensuring that variables can be resolved
 	var names, envNames []string
-	for _, cn := range fn.Args.Nodes {
-		_, qname := ensureVariablePrimary(cp, cn, "expect variable")
+	for _, cn := range fn.Args {
+		qname := mustString(cp, cn, "should be a literal variable name")
 		ns, name := splitQualifiedName(qname)
 		switch ns {
 		case "", "local":
-			if cp.resolveVarOnThisScope(name) == nil {
-				cp.errorf(cn.Pos, "variable $%s not found on current local scope", name)
+			if !cp.thisScope()[name] {
+				cp.errorf(cn.Begin, "variable $%s not found on current local scope", name)
 			}
-			cp.popVar(name)
+			delete(cp.thisScope(), name)
 			names = append(names, name)
 		case "env":
 			envNames = append(envNames, name)
 		default:
-			cp.errorf(cn.Pos, "can only delete a variable in local: or env: namespace")
+			cp.errorf(cn.Begin, "can only delete a variable in local: or env:")
 		}
 
 	}
@@ -200,6 +116,7 @@ func compileDel(cp *compiler, fn *parse.Form) exitusOp {
 	}
 }
 
+/*
 func stem(fname string) string {
 	base := path.Base(fname)
 	ext := path.Ext(base)
@@ -354,99 +271,4 @@ func compileFn(cp *compiler, fn *parse.Form) exitusOp {
 	}
 }
 
-func maybeClosurePrimary(cn *parse.Compound) (*parse.Closure, bool) {
-	if len(cn.Nodes) == 1 && cn.Nodes[0].Right == nil && cn.Nodes[0].Left.Typ == parse.ClosurePrimary {
-		return cn.Nodes[0].Left.Node.(*parse.Closure), true
-	}
-	return nil, false
-}
-
-func maybeStringPrimary(cn *parse.Compound) (string, bool) {
-	if len(cn.Nodes) == 1 && cn.Nodes[0].Right == nil && cn.Nodes[0].Left.Typ == parse.StringPrimary {
-		return cn.Nodes[0].Left.Node.(*parse.String).Text, true
-	}
-	return "", false
-}
-
-/*
-type ifBranch struct {
-	condition valuesOp
-	body      valuesOp
-}
-
-// IfForm = 'if' Branch { 'else' 'if' Branch } [ 'else' Branch ]
-// Branch = SpacedNode.condition ClosurePrimary.body
-//
-// The condition part of a Branch ends as soon as a Compound of a single
-// ClosurePrimary is encountered.
-func compileIf(cp *compiler, fn *parse.Form) exitusOp {
-	compounds := fn.Args.Nodes
-	var branches []*ifBranch
-
-	nextBranch := func() {
-		var conds []*parse.Compound
-		for i, cn := range compounds {
-			if closure, ok := maybeClosurePrimary(cn); ok {
-				if i == 0 {
-					cp.errorf(cn.Pos, "expect condition")
-				}
-				condition := cp.compounds(conds)
-				if closure.ArgNames != nil && len(closure.ArgNames.Nodes) > 0 {
-					cp.errorf(closure.ArgNames.Pos, "unexpected arguments")
-				}
-				body := cp.closure(closure)
-				branches = append(branches, &ifBranch{condition, body})
-				compounds = compounds[i+1:]
-				return
-			}
-			conds = append(conds, cn)
-		}
-		cp.errorf(compounds[len(compounds)-1].Pos, "expect body after this")
-	}
-	// if branch
-	nextBranch()
-	// else-if branches
-	for len(compounds) >= 2 {
-		s1, _ := maybeStringPrimary(compounds[0])
-		s2, _ := maybeStringPrimary(compounds[1])
-		if s1 == "else" && s2 == "if" {
-			compounds = compounds[2:]
-			nextBranch()
-		} else {
-			break
-		}
-	}
-	// else branch
-	if len(compounds) > 0 {
-		s, _ := maybeStringPrimary(compounds[0])
-		if s == "else" {
-			if len(compounds) == 1 {
-				cp.errorf(compounds[0].Pos, "expect body after this")
-			} else if len(compounds) > 2 {
-				cp.errorf(compounds[2].Pos, "trailing garbage")
-			}
-			body, ok := maybeClosurePrimary(compounds[1])
-			if !ok {
-				cp.errorf(compounds[1].Pos, "expect body")
-			}
-			branches = append(branches, &ifBranch{
-				literalValue(boolean(true)), cp.closure(body)})
-		} else {
-			cp.errorf(compounds[0].Pos, "trailing garbage")
-		}
-	}
-	return func(ec *evalCtx) exitus {
-		for _, ib := range branches {
-			if allTrue(ib.condition.f(ec)) {
-				f := ib.body.f(ec)[0].(*closure)
-				su := f.Exec(ec.copy("closure of if"), []Value{})
-				for _ = range su {
-				}
-				// TODO(xiaq): Return the exitus of the body
-				return ok
-			}
-		}
-		return ok
-	}
-}
 */

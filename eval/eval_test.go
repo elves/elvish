@@ -85,25 +85,25 @@ var evalTests = []struct {
 	{"put ?(true|false|false)",
 		[]Value{ok, newFailure("1"), newFailure("1")}, nomore},
 
+	// Variable and compounding
+	{"set x = 'SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
+		strs("WOW, SUCH SHELL, MUCH COOL"), nomore},
+
+	// Closure
+	// Basics
+	{"[]{ }", strs(), nomore},
+	{"[x]{put $x} foo", strs("foo"), nomore},
+	// Variable enclosure
+	{"set x = lorem; []{ put $x; set x = ipsum }; put $x",
+		strs("lorem", "ipsum"), nomore},
+	// Shadowing
+	{"set x = ipsum; []{ set local:x = lorem; put $x }; put $x",
+		strs("lorem", "ipsum"), nomore},
+	// Shadowing by argument
+	{"set x = ipsum; [x]{ put $x; set x = BAD } lorem; put $x",
+		strs("lorem", "ipsum"), nomore},
+
 	/*
-		// Variable and compounding
-		{"set x = `SHELL`\nput `WOW, SUCH `$x`, MUCH COOL`\n",
-			strs("WOW, SUCH SHELL, MUCH COOL"), nomore},
-
-		// Closure
-		// Basics
-		{"[]{ }", strs(), nomore},
-		{"[x]{put $x} foo", strs("foo"), nomore},
-		// Variable enclosure
-		{"set x = lorem; []{ put $x; set x = ipsum }; put $x",
-			strs("lorem", "ipsum"), nomore},
-		// Shadowing
-		{"set x = ipsum; []{ var x = lorem; put $x }; put $x",
-			strs("lorem", "ipsum"), nomore},
-		// Shadowing by argument
-		{"set x = ipsum; [x]{ put $x; set x = BAD } lorem; put $x",
-			strs("lorem", "ipsum"), nomore},
-
 		// fn
 		{"fn f [x]{ put $x ipsum }; f lorem",
 			strs("lorem", "ipsum"), nomore},
