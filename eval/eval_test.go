@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"os"
 	"reflect"
 	"strconv"
 	"syscall"
@@ -17,7 +18,7 @@ func TestNewEvaler(t *testing.T) {
 	}
 }
 
-func stringValues(ss ...string) []Value {
+func strs(ss ...string) []Value {
 	vs := make([]Value, len(ss))
 	for i, s := range ss {
 		vs[i] = str(s)
@@ -25,87 +26,103 @@ func stringValues(ss ...string) []Value {
 	return vs
 }
 
+type more struct {
+	wantBytesOut []byte
+	wantExitus   []Value
+	wantError    bool
+}
+
+var nomore more
+
 var evalTests = []struct {
-	text      string
-	wanted    []Value
-	wantError bool
+	text    string
+	wantOut []Value
+	more
 }{
+	// Chunks
 	// Empty chunk
-	{"", []Value{}, false},
+	{"", []Value{}, nomore},
+	// Outputs of pipelines in a chunk are concatenated
+	{"put x; put y; put z", strs("x", "y", "z"), nomore},
+	// A failed pipeline cause the whole chunk to fail
+	{"put a; false; put b", strs("a"), more{wantExitus: []Value{newFailure("1")}}},
+
+	// Pipelines
+	// Pure byte pipeline
+	{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`,
+		[]Value{}, more{wantBytesOut: []byte("A1bert\nBer1in\n")}},
 
 	// Trivial command
-	{"put 233 lorem ipsum", stringValues("233", "lorem", "ipsum"), false},
-
-	// Byte Pipeline
-	{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e | feedchan`,
-		stringValues("A1bert", "Ber1in"), false},
+	{"put 233 lorem ipsum", strs("233", "lorem", "ipsum"), nomore},
 
 	// Arithmetics
 	// TODO test more edge cases
-	{"* 353 661", stringValues("233333"), false},
-	{"+ 233100 233", stringValues("233333"), false},
-	{"- 233333 233100", stringValues("233"), false},
-	{"/ 233333 353", stringValues("661"), false},
-	{"/ 1 0", stringValues("+Inf"), false},
+	{"* 353 661", strs("233333"), nomore},
+	{"+ 233100 233", strs("233333"), nomore},
+	{"- 233333 233100", strs("233"), nomore},
+	{"/ 233333 353", strs("661"), nomore},
+	{"/ 1 0", strs("+Inf"), nomore},
 
 	// String literal
-	{`put 'such \"''literal'`, stringValues(`such \"'literal`), false},
+	{`put 'such \"''literal'`, strs(`such \"'literal`), nomore},
 	{`put "much \n\033[31;1m$cool\033[m"`,
-		stringValues("much \n\033[31;1m$cool\033[m"), false},
+		strs("much \n\033[31;1m$cool\033[m"), nomore},
 
 	// Compounding list primaries
 	{"put {fi,elvi}sh{1.0,1.1}",
-		stringValues("fish1.0", "fish1.1", "elvish1.0", "elvish1.1"), false},
+		strs("fish1.0", "fish1.1", "elvish1.0", "elvish1.1"), nomore},
 
 	// List, map and indexing
 	{"println [a b c] [&key value] | feedchan",
-		stringValues("[a b c][&key value]"), false},
-	{"put [a b c][2]", stringValues("c"), false},
-	{"put [&key value][key]", stringValues("value"), false},
+		strs("[a b c][&key value]"), nomore},
+	{"put [a b c][2]", strs("c"), nomore},
+	{"put [&key value][key]", strs("value"), nomore},
 
-	// Variable and compounding
-	{"set x = `SHELL`\nput `WOW, SUCH `$x`, MUCH COOL`\n",
-		stringValues("WOW, SUCH SHELL, MUCH COOL"), false},
+	/*
+		// Variable and compounding
+		{"set x = `SHELL`\nput `WOW, SUCH `$x`, MUCH COOL`\n",
+			strs("WOW, SUCH SHELL, MUCH COOL"), nomore},
 
-	// Channel capture
-	{"put (put lorem ipsum)", stringValues("lorem", "ipsum"), false},
+		// Channel capture
+		{"put (put lorem ipsum)", strs("lorem", "ipsum"), nomore},
 
-	// Status capture
-	{"put ?(true|false|false)",
-		[]Value{ok, newFailure("1"), newFailure("1")}, false},
+		// Status capture
+		{"put ?(true|false|false)",
+			[]Value{ok, newFailure("1"), newFailure("1")}, nomore},
 
-	// Closure evaluation
-	{"[]{ }", stringValues(), false},
-	{"[x]{put $x} foo", stringValues("foo"), false},
+		// Closure evaluation
+		{"[]{ }", strs(), nomore},
+		{"[x]{put $x} foo", strs("foo"), nomore},
 
-	// Variable enclosure
-	{"set x = lorem; []{ put $x; set x = ipsum }; put $x",
-		stringValues("lorem", "ipsum"), false},
-	// Shadowing
-	{"set x = ipsum; []{ var x = lorem; put $x }; put $x",
-		stringValues("lorem", "ipsum"), false},
-	// Shadowing by argument
-	{"set x = ipsum; [x]{ put $x; set x = BAD } lorem; put $x",
-		stringValues("lorem", "ipsum"), false},
+		// Variable enclosure
+		{"set x = lorem; []{ put $x; set x = ipsum }; put $x",
+			strs("lorem", "ipsum"), nomore},
+		// Shadowing
+		{"set x = ipsum; []{ var x = lorem; put $x }; put $x",
+			strs("lorem", "ipsum"), nomore},
+		// Shadowing by argument
+		{"set x = ipsum; [x]{ put $x; set x = BAD } lorem; put $x",
+			strs("lorem", "ipsum"), nomore},
 
-	// fn
-	{"fn f [x]{ put $x ipsum }; f lorem",
-		stringValues("lorem", "ipsum"), false},
-	// if
-	{"if true; then put x", stringValues("x"), false},
-	{"if true; false; then put x; else put y",
-		stringValues("y"), false},
-	{"if true; false; then put x; else if false; put y; else put z",
-		stringValues("z"), false},
+		// fn
+		{"fn f [x]{ put $x ipsum }; f lorem",
+			strs("lorem", "ipsum"), nomore},
+		// if
+		{"if true; then put x", strs("x"), nomore},
+		{"if true; false; then put x; else put y",
+			strs("y"), nomore},
+		{"if true; false; then put x; else if false; put y; else put z",
+			strs("z"), nomore},
 
-	// Namespaces
-	// Pseudo-namespaces local: and up:
-	{"set true = lorem; []{set true = ipsum; put $up:true $local:true $builtin:true}",
-		[]Value{str("lorem"), str("ipsum"), boolean(true)}, false},
-	{"set x = lorem; []{set up:x = ipsum}; put x", stringValues("ipsum"), false},
-	// Pseudo-namespace env:
-	{"set env:foo = lorem; put $env:foo", stringValues("lorem"), false},
-	{"del env:foo; put $env:foo", stringValues(""), false},
+		// Namespaces
+		// Pseudo-namespaces local: and up:
+		{"set true = lorem; []{set true = ipsum; put $up:true $local:true $builtin:true}",
+			[]Value{str("lorem"), str("ipsum"), boolean(true)}, nomore},
+		{"set x = lorem; []{set up:x = ipsum}; put x", strs("ipsum"), nomore},
+		// Pseudo-namespace env:
+		{"set env:foo = lorem; put $env:foo", strs("lorem"), nomore},
+		{"del env:foo; put $env:foo", strs(""), nomore},
+	*/
 }
 
 func mustParse(t *testing.T, name, text string) *parse.Chunk {
@@ -116,10 +133,31 @@ func mustParse(t *testing.T, name, text string) *parse.Chunk {
 	return n
 }
 
-func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, error) {
+func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, []Value, error) {
 	name := "<eval test>"
 	ev := NewEvaler(nil, ".")
+
+	// Collect byte output
+	outBytes := []byte{}
+	pr, pw, _ := os.Pipe()
+	bytesExhausted := make(chan bool)
+	go func() {
+		for {
+			var buf [64]byte
+			nr, err := pr.Read(buf[:])
+			outBytes = append(outBytes, buf[:nr]...)
+			if err != nil {
+				break
+			}
+		}
+		bytesExhausted <- true
+	}()
+
+	// Channel output
 	outs := []Value{}
+
+	// Exitus. Only the exitus of the last text is saved.
+	var ex []Value
 
 	for _, text := range texts {
 		n := mustParse(t, name, text)
@@ -133,34 +171,33 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, error) {
 			exhausted <- struct{}{}
 		}()
 
-		// XXX(xiaq): Ignore failures
-		_, err := ev.evalWithChanOut(name, text, n, out)
+		var err error
+		ex, err = ev.evalWithOut(name, text, n, &port{ch: out, closeCh: true, f: pw})
 		if err != nil {
-			return outs, err
+			return outs, outBytes, ex, err
 		}
-		close(out)
 		<-exhausted
 	}
-	return outs, nil
+	pw.Close()
+	<-bytesExhausted
+	return outs, outBytes, ex, nil
 }
 
 func TestEval(t *testing.T) {
 	for _, tt := range evalTests {
-		outs, err := evalAndCollect(t, []string{tt.text}, len(tt.wanted))
+		out, bytesOut, ex, err := evalAndCollect(t, []string{tt.text}, len(tt.wantOut))
 
-		if tt.wantError {
-			// Test for error, ignore output
-			if err == nil {
-				t.Errorf("eval %q => <nil>, want non-nil", tt.text)
+		if (tt.wantError) != (err != nil) ||
+			(tt.wantBytesOut != nil && !reflect.DeepEqual(tt.wantBytesOut, bytesOut)) ||
+			(tt.wantExitus != nil && !reflect.DeepEqual(tt.wantExitus, ex)) ||
+			!reflect.DeepEqual(tt.wantOut, out) {
+
+			wantError := "nil"
+			if tt.wantError {
+				wantError = "non-nil"
 			}
-		} else {
-			// Test for output
-			if err != nil {
-				t.Errorf("eval %q => %v, want <nil>", tt.text, err)
-			}
-			if !reflect.DeepEqual(outs, tt.wanted) {
-				t.Errorf("Evalling %q outputs %v, want %v", tt.text, outs, tt.wanted)
-			}
+			t.Errorf("eval %q out=%v, bytesOut=%q, exitus=%v, err=%v; want out=%v, bytesOut=%q, exitus=%v, err=%s",
+				tt.text, out, bytesOut, ex, err, tt.wantOut, tt.wantBytesOut, tt.wantExitus, wantError)
 		}
 	}
 }
@@ -168,7 +205,7 @@ func TestEval(t *testing.T) {
 /*
 func TestMultipleEval(t *testing.T) {
 	outs, err := evalAndCollect([]string{"var $x = `hello`", "put $x"}, 1)
-	wanted := stringValues("hello")
+	wanted := strs("hello")
 	if err != nil {
 		t.Errorf("eval %q => %v, want nil", err)
 	}

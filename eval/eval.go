@@ -188,29 +188,25 @@ func makeScope(s ns) scope {
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
 func (ev *Evaler) Eval(name, text string, n *parse.Chunk) ([]Value, error) {
-	return ev.evalWithChanOut(name, text, n, nil)
+	return ev.evalWithOut(name, text, n, nil)
 }
 
-func (ev *Evaler) evalWithChanOut(name, text string, n *parse.Chunk, ch chan Value) ([]Value, error) {
+func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) ([]Value, error) {
 	op, err := compile(name, text, makeScope(ev.global), n)
 	if err != nil {
 		return nil, err
 	}
 	ec := newTopEvalCtx(ev, name, text)
-	return ec.evalWithChanOut(op, ch)
+	if out != nil {
+		ec.ports[1] = out
+	}
+	return ec.eval(op)
 }
 
 // eval evaluates an Op.
-func (ec *evalCtx) eval(op valuesOp) ([]Value, error) {
-	return ec.evalWithChanOut(op, nil)
-}
-
-func (ec *evalCtx) evalWithChanOut(op valuesOp, ch chan Value) (vs []Value, err error) {
+func (ec *evalCtx) eval(op valuesOp) (vs []Value, err error) {
 	if op == nil {
 		return nil, nil
-	}
-	if ch != nil {
-		ec.ports[1] = &port{ch: ch, closeCh: false}
 	}
 	defer ec.closePorts()
 	defer errutil.Catch(&err)

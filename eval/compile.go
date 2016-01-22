@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/parse-ng"
 )
 
@@ -36,10 +37,15 @@ func (cp *compiler) thisScope() scope {
 	return cp.scopes[len(cp.scopes)-1]
 }
 
-func compile(name, source string, sc scope, n *parse.Chunk) (valuesOp, error) {
+func (cp *compiler) errorf(p int, format string, args ...interface{}) {
+	errutil.Throw(errutil.NewContextualError(cp.name, "syntax error", cp.source, p, format, args...))
+}
+
+func compile(name, source string, sc scope, n *parse.Chunk) (op valuesOp, err error) {
 	cp := &compiler{name, source, []scope{sc}, scope{}, nil}
-	op := cp.chunk(n)
-	return op, cp.error
+	defer errutil.Catch(&err)
+	op = cp.chunk(n)
+	return op, nil
 }
 
 func (cp *compiler) chunk(n *parse.Chunk) valuesOp {
