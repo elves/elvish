@@ -61,13 +61,13 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 	// Construct builtin namespace
 	pid := str(strconv.Itoa(syscall.Getpid()))
 	builtin := ns{
-		"pid":   newInternalVariableWithType(pid),
-		"ok":    newInternalVariableWithType(ok),
-		"true":  newInternalVariableWithType(boolean(true)),
-		"false": newInternalVariableWithType(boolean(false)),
+		"pid":   newInternalVariable(pid),
+		"ok":    newInternalVariable(ok),
+		"true":  newInternalVariable(boolean(true)),
+		"false": newInternalVariable(boolean(false)),
 	}
 	for _, b := range builtinFns {
-		builtin[fnPrefix+b.Name] = newInternalVariableWithType(b)
+		builtin[fnPrefix+b.Name] = newInternalVariable(b)
 	}
 
 	// Construct searchPaths

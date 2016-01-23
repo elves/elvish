@@ -6,20 +6,14 @@ import "os"
 type Variable interface {
 	Set(v Value)
 	Get() Value
-	StaticType() Type
 }
 
 type internalVariable struct {
-	valuePtr   *Value
-	staticType Type
+	valuePtr *Value
 }
 
-func newInternalVariable(v Value, t Type) Variable {
-	return internalVariable{&v, t}
-}
-
-func newInternalVariableWithType(v Value) Variable {
-	return internalVariable{&v, v.Type()}
+func newInternalVariable(v Value) Variable {
+	return internalVariable{&v}
 }
 
 func (iv internalVariable) Set(val Value) {
@@ -28,10 +22,6 @@ func (iv internalVariable) Set(val Value) {
 
 func (iv internalVariable) Get() Value {
 	return *iv.valuePtr
-}
-
-func (iv internalVariable) StaticType() Type {
-	return iv.staticType
 }
 
 type envVariable struct {
@@ -48,8 +38,4 @@ func (ev envVariable) Set(val Value) {
 
 func (ev envVariable) Get() Value {
 	return str(os.Getenv(ev.name))
-}
-
-func (ev envVariable) StaticType() Type {
-	return stringType{}
 }

@@ -149,8 +149,7 @@ func (c *closure) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 	// Make local namespace and pass arguments.
 	ec.local = make(map[string]Variable)
 	for i, name := range c.ArgNames {
-		// TODO(xiaq): support static type of arguments
-		ec.local[name] = newInternalVariable(args[i], anyType{})
+		ec.local[name] = newInternalVariable(args[i])
 	}
 
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
