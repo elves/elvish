@@ -113,17 +113,18 @@ var evalTests = []struct {
 			strs("y"), nomore},
 		{"if true; false; then put x; else if false; put y; else put z",
 			strs("z"), nomore},
-
-		// Namespaces
-		// Pseudo-namespaces local: and up:
-		{"set true = lorem; []{set true = ipsum; put $up:true $local:true $builtin:true}",
-			[]Value{str("lorem"), str("ipsum"), boolean(true)}, nomore},
-		{"set x = lorem; []{set up:x = ipsum}; put x", strs("ipsum"), nomore},
-		// Pseudo-namespace env:
-		{"set env:foo = lorem; put $env:foo", strs("lorem"), nomore},
-		{"del env:foo; put $env:foo", strs(""), nomore},
-		// TODO: Test module namespace
 	*/
+
+	// Namespaces
+	// Pseudo-namespaces local: and up:
+	{"set x = lorem; []{set local:x = ipsum; put $up:x $local:x}",
+		strs("lorem", "ipsum"), nomore},
+	{"set x = lorem; []{set up:x = ipsum; put $x}; put $x",
+		strs("ipsum", "ipsum"), nomore},
+	// Pseudo-namespace env:
+	{"set env:foo = lorem; put $env:foo", strs("lorem"), nomore},
+	{"del env:foo; put $env:foo", strs(""), nomore},
+	// TODO: Test module namespace
 }
 
 func mustParse(t *testing.T, name, text string) *parse.Chunk {
@@ -203,9 +204,8 @@ func TestEval(t *testing.T) {
 	}
 }
 
-/*
 func TestMultipleEval(t *testing.T) {
-	outs, err := evalAndCollect([]string{"var $x = `hello`", "put $x"}, 1)
+	outs, _, _, err := evalAndCollect(t, []string{"set x = hello", "put $x"}, 1)
 	wanted := strs("hello")
 	if err != nil {
 		t.Errorf("eval %q => %v, want nil", err)
@@ -214,4 +214,3 @@ func TestMultipleEval(t *testing.T) {
 		t.Errorf("eval %q outputs %v, want %v", outs, wanted)
 	}
 }
-*/
