@@ -103,10 +103,10 @@ var evalTests = []struct {
 	{"set x = ipsum; [x]{ put $x; set x = BAD } lorem; put $x",
 		strs("lorem", "ipsum"), nomore},
 
+	// fn
+	{"fn f [x]{ put $x ipsum }; f lorem",
+		strs("lorem", "ipsum"), nomore},
 	/*
-		// fn
-		{"fn f [x]{ put $x ipsum }; f lorem",
-			strs("lorem", "ipsum"), nomore},
 		// if
 		{"if true; then put x", strs("x"), nomore},
 		{"if true; false; then put x; else put y",
@@ -189,17 +189,33 @@ func TestEval(t *testing.T) {
 	for _, tt := range evalTests {
 		out, bytesOut, ex, err := evalAndCollect(t, []string{tt.text}, len(tt.wantOut))
 
-		if (tt.wantError) != (err != nil) ||
-			(tt.wantBytesOut != nil && !reflect.DeepEqual(tt.wantBytesOut, bytesOut)) ||
-			(tt.wantExitus != nil && !reflect.DeepEqual(tt.wantExitus, ex)) ||
-			!reflect.DeepEqual(tt.wantOut, out) {
+		good := true
+		errorf := func(format string, args ...interface{}) {
+			if good {
+				good = false
+				t.Errorf("eval(%q) fails:", tt.text)
+			}
+			t.Errorf(format, args...)
+		}
 
+		if tt.wantError != (err != nil) {
 			wantError := "nil"
 			if tt.wantError {
 				wantError = "non-nil"
 			}
-			t.Errorf("eval %q out=%v, bytesOut=%q, exitus=%v, err=%v; want out=%v, bytesOut=%q, exitus=%v, err=%s",
-				tt.text, out, bytesOut, ex, err, tt.wantOut, tt.wantBytesOut, tt.wantExitus, wantError)
+			errorf("got err=%v, want %s", err, wantError)
+		}
+		if tt.wantBytesOut != nil && !reflect.DeepEqual(tt.wantBytesOut, bytesOut) {
+			errorf("got bytesOut=%q, want %q", bytesOut, tt.wantBytesOut)
+		}
+		if tt.wantExitus != nil && !reflect.DeepEqual(tt.wantExitus, ex) {
+			errorf("got exitus=%v, want %v", ex, tt.wantExitus)
+		}
+		if !reflect.DeepEqual(tt.wantOut, out) {
+			errorf("got out=%v, want %v", out, tt.wantOut)
+		}
+		if !good {
+			t.Errorf("--------------")
 		}
 	}
 }

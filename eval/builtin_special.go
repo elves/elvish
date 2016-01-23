@@ -18,10 +18,8 @@ func init() {
 	builtinSpecials = map[string]compileBuiltin{
 		"set": compileSet,
 		"del": compileDel,
-		/*
-			"use": compileUse,
-			"fn": compileFn,
-		*/
+		"fn":  compileFn,
+		//"use": compileUse,
 	}
 	for k, _ := range builtinSpecials {
 		BuiltinSpecialNames = append(BuiltinSpecialNames, k)
@@ -199,21 +197,21 @@ func compileUse(cp *compiler, fn *parse.Form) exitusOp {
 		return ok
 	}
 }
+*/
 
 // makeFnOp wraps a valuesOp such that a return is converted to an ok.
 func makeFnOp(op valuesOp) valuesOp {
-	f := func(ec *evalCtx) []Value {
-		vs := op.f(ec)
+	return func(ec *evalCtx) []Value {
+		vs := op(ec)
 		if len(vs) == 1 {
-			if e, ok := vs[0].(exitus); ok {
+			if e, ok_ := vs[0].(exitus); ok_ {
 				if e.Sort == Return {
-					return []Value{newFlowExitus(Ok)}
+					return []Value{ok}
 				}
 			}
 		}
 		return vs
 	}
-	return valuesOp{op.tr, f}
 }
 
 // FnForm = 'fn' StringPrimary { VariablePrimary } ClosurePrimary
@@ -225,50 +223,30 @@ func makeFnOp(op valuesOp) valuesOp {
 // fn f $a $b { put (* $a $b) (/ $a *b) }
 // var $fn-f = { |$a $b| put (* $a $b) (/ $a $b) }
 func compileFn(cp *compiler, fn *parse.Form) exitusOp {
-	if len(fn.Args.Nodes) == 0 {
-		cp.errorf(fn.Pos, "expect function name after fn")
+	if len(fn.Args) == 0 {
+		cp.errorf(fn.End, "should be followed by function name")
 	}
-	_, fnName := ensureStringPrimary(cp, fn.Args.Nodes[0], "expect string literal")
+	fnName := mustString(cp, fn.Args[0], "must be a literal string")
 	varName := fnPrefix + fnName
 
-	var closureNode *parse.Closure
-	var argNames []*parse.Compound
-
-	for i, cn := range fn.Args.Nodes[1:] {
-		expect := "expect variable or closure"
-		pn := ensurePrimary(cp, cn, expect)
-		switch pn.Typ {
-		case parse.ClosurePrimary:
-			if i+2 != len(fn.Args.Nodes) {
-				cp.errorf(fn.Args.Nodes[i+2].Pos, "garbage after closure literal")
-			}
-			closureNode = pn.Node.(*parse.Closure)
-			break
-		case parse.VariablePrimary:
-			argNames = append(argNames, cn)
-		default:
-			cp.errorf(pn.Pos, expect)
-		}
+	if len(fn.Args) == 1 {
+		cp.errorf(fn.Args[0].End, "should be followed by a lambda")
+	}
+	pn := mustPrimary(cp, fn.Args[1], "should be a lambda")
+	if pn.Type != parse.Lambda {
+		cp.errorf(pn.Begin, "should be a lambda")
+	}
+	if len(fn.Args) > 2 {
+		cp.errorf(fn.Args[2].Begin, "superfluous argument")
 	}
 
-	if len(argNames) > 0 {
-		closureNode = &parse.Closure{
-			closureNode.Pos,
-			&parse.Spaced{argNames[0].Pos, argNames},
-			closureNode.Chunk,
-		}
-	}
-
-	op := cp.closure(closureNode)
-
-	cp.pushVar(varName, callableType{})
+	cp.registerVariableSet(varName)
+	op := cp.lambda(pn)
 
 	return func(ec *evalCtx) exitus {
-		closure := op.f(ec)[0].(*closure)
+		closure := op(ec)[0].(*closure)
 		closure.Op = makeFnOp(closure.Op)
 		ec.local[varName] = newInternalVariable(closure, callableType{})
 		return ok
 	}
 }
-
-*/
