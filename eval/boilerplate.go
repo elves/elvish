@@ -65,3 +65,35 @@ func (cp *compiler) primarys(ns []*parse.Primary) []valuesOp {
 	}
 	return ops
 }
+
+func (cp *compiler) outputCaptures(ns []*parse.Primary) []valuesOp {
+	ops := make([]valuesOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.outputCapture(n)
+	}
+	return ops
+}
+
+func (cp *compiler) lambdas(ns []*parse.Primary) []valuesOp {
+	ops := make([]valuesOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.lambda(n)
+	}
+	return ops
+}
+
+func (cp *compiler) map_s(ns []*parse.Primary) []valuesOp {
+	ops := make([]valuesOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.map_(n)
+	}
+	return ops
+}
+
+func (cp *compiler) braceds(ns []*parse.Primary) []valuesOp {
+	ops := make([]valuesOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.braced(n)
+	}
+	return ops
+}

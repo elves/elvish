@@ -1,5 +1,7 @@
 package eval
 
+//go:generate stringer -type=Type
+
 import (
 	"bytes"
 	"errors"
@@ -27,10 +29,22 @@ type stringer interface {
 	String() string
 }
 
+type Type int
+
+const (
+	invalidType Type = iota
+	stringType
+	exitusType
+	boolType
+	tableType
+	callableType
+	ratType
+)
+
 type str string
 
 func (s str) Type() Type {
-	return stringType{}
+	return stringType
 }
 
 func (s str) Repr() string {
@@ -44,7 +58,7 @@ func (s str) String() string {
 type boolean bool
 
 func (b boolean) Type() Type {
-	return boolType{}
+	return boolType
 }
 
 func (b boolean) Repr() string {
@@ -109,7 +123,7 @@ func newFlowExitus(s exitusSort) exitus {
 }
 
 func (e exitus) Type() Type {
-	return exitusType{}
+	return exitusType
 }
 
 func (e exitus) Repr() string {
@@ -167,7 +181,7 @@ type table struct {
 }
 
 func (t *table) Type() Type {
-	return tableType{}
+	return tableType
 }
 
 func newTable() *table {
@@ -211,7 +225,7 @@ type closure struct {
 }
 
 func (c *closure) Type() Type {
-	return callableType{}
+	return callableType
 }
 
 func newClosure(a []string, op valuesOp, e map[string]Variable) *closure {
@@ -228,7 +242,7 @@ type builtinFn struct {
 }
 
 func (b *builtinFn) Type() Type {
-	return callableType{}
+	return callableType
 }
 
 func (b *builtinFn) Repr() string {
@@ -240,7 +254,7 @@ type externalCmd struct {
 }
 
 func (e externalCmd) Type() Type {
-	return callableType{}
+	return callableType
 }
 
 func (e externalCmd) Repr() string {
@@ -256,7 +270,7 @@ func newRat() rat {
 }
 
 func (r rat) Type() Type {
-	return ratType{}
+	return ratType
 }
 
 func (r rat) Repr() string {
