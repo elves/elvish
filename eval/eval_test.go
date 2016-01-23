@@ -211,6 +211,9 @@ func TestEval(t *testing.T) {
 		if tt.wantExitus != nil && !reflect.DeepEqual(tt.wantExitus, ex) {
 			errorf("got exitus=%v, want %v", ex, tt.wantExitus)
 		}
+		if tt.wantExitus == nil && HasFailure(ex) {
+			errorf("got exitus=%v, want all ok", ex)
+		}
 		if !reflect.DeepEqual(tt.wantOut, out) {
 			errorf("got out=%v, want %v", out, tt.wantOut)
 		}
