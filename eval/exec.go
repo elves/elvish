@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/errutil"
+	"github.com/elves/elvish/parse"
 )
 
 const (
@@ -54,7 +55,7 @@ func (ev *Evaler) search(exe string) (string, error) {
 			if isExecutable(exe) {
 				return exe, nil
 			}
-			return "", fmt.Errorf("external command not executable")
+			return "", fmt.Errorf("external command %s not executable", parse.Quote(exe))
 		}
 	}
 	for _, p := range ev.searchPaths {
@@ -63,7 +64,7 @@ func (ev *Evaler) search(exe string) (string, error) {
 			return full, nil
 		}
 	}
-	return "", fmt.Errorf("external command not found")
+	return "", fmt.Errorf("external command %s not found", parse.Quote(exe))
 }
 
 // execSpecial executes a builtin special form.
