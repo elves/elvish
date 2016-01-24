@@ -22,10 +22,10 @@ def put_parse(out, typename, extraargs):
     extranames = ', '.join(a.split(' ')[0] for a in extraargs.split(', ')) if extraargs else ''
     print >>out, '''
 func parse{typename}(rd *reader{extraargs}) *{typename} {{
-    n := &{typename}{{node: node{{Begin: rd.pos}}}}
+    n := &{typename}{{node: node{{begin: rd.pos}}}}
     n.parse(rd{extranames})
-    n.End = rd.pos
-    n.SourceText = rd.src[n.Begin:n.End]
+    n.end = rd.pos
+    n.sourceText = rd.src[n.begin:n.end]
     return n
 }}'''.format(typename=typename, extraargs=extraargs, extranames=extranames)
 

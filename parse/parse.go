@@ -10,24 +10,9 @@ import (
 	"github.com/elves/elvish/errutil"
 )
 
-type Node interface {
-	N() *node
-}
-
-type node struct {
-	Parent     Node
-	Begin, End int
-	SourceText string
-	Children   []Node
-}
-
-func (n *node) N() *node {
-	return n
-}
-
 func addChild(p Node, ch Node) {
-	p.N().Children = append(p.N().Children, ch)
-	ch.N().Parent = p
+	p.n().children = append(p.n().children, ch)
+	ch.n().parent = p
 }
 
 type runePred func(rune) bool
@@ -283,7 +268,7 @@ var (
 
 func (pn *Primary) variable(rd *reader, cut runePred) {
 	pn.Type = Variable
-	defer func() { pn.Value = rd.src[pn.Begin:rd.pos] }()
+	defer func() { pn.Value = rd.src[pn.begin:rd.pos] }()
 	rd.next()
 	if r := rd.next(); !allowedInVariableName(r) || cut.matches(r) {
 		rd.backup()
@@ -306,7 +291,7 @@ func allowedInBareword(r rune) bool {
 
 func (pn *Primary) bareword(rd *reader, cut runePred) {
 	pn.Type = Bareword
-	defer func() { pn.Value = rd.src[pn.Begin:rd.pos] }()
+	defer func() { pn.Value = rd.src[pn.begin:rd.pos] }()
 	for allowedInBareword(rd.peek()) && !cut.matches(rd.peek()) {
 		rd.next()
 	}
@@ -393,7 +378,7 @@ func (pn *Primary) wildcard(rd *reader) {
 	for isWildcard(rd.peek()) {
 		rd.next()
 	}
-	pn.Value = rd.src[pn.Begin:rd.pos]
+	pn.Value = rd.src[pn.begin:rd.pos]
 }
 
 var (
@@ -756,13 +741,13 @@ func (fn *Form) parse(rd *reader) {
 				rn := parseRedir(rd)
 				// XXX(xiaq): Redir.parse doesn't deal with Dest, so we patch
 				// it here.
-				rn.Begin = cn.Begin
+				rn.begin = cn.begin
 				rn.Dest = cn
 
-				children := rn.Children
-				rn.Children = make([]Node, len(children)+1)
-				copy(rn.Children[1:], children)
-				rn.Children[0] = cn
+				children := rn.children
+				rn.children = make([]Node, len(children)+1)
+				copy(rn.children[1:], children)
+				rn.children[0] = cn
 
 				fn.addToRedirs(rn)
 			} else {

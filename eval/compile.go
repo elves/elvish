@@ -68,7 +68,7 @@ var noExitus = newFailure("no exitus")
 
 func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
 	ops := cp.forms(n.Forms)
-	p := n.Begin
+	p := n.Begin()
 
 	return func(ec *evalCtx) []Value {
 		var nextIn *port
@@ -126,7 +126,7 @@ func (cp *compiler) form(n *parse.Form) stateUpdatesOp {
 	redirOps := cp.redirs(n.Redirs)
 	// TODO: n.ExitusRedir
 
-	p := n.Begin
+	p := n.Begin()
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
 	return func(ec *evalCtx) <-chan *stateUpdate {
@@ -179,10 +179,10 @@ func (cp *compiler) redir(n *parse.Redir) op {
 	if n.Dest != nil {
 		dstOp = cp.compound(n.Dest)
 	}
-	p := n.Begin
+	p := n.Begin()
 	srcOp := cp.compound(n.Source)
 	sourceIsFd := n.SourceIsFd
-	pSrc := n.Source.Begin
+	pSrc := n.Source.Begin()
 	mode := n.Mode
 	flag := makeFlag(mode)
 
@@ -293,10 +293,10 @@ func (cp *compiler) indexed(n *parse.Indexed) valuesOp {
 
 	headOp := cp.primary(n.Head)
 	indexOps := cp.arrays(n.Indicies)
-	p := n.Begin
+	p := n.Begin()
 	indexPoses := make([]int, len(n.Indicies))
 	for i, index := range n.Indicies {
-		indexPoses[i] = index.Begin
+		indexPoses[i] = index.Begin()
 	}
 
 	return func(ec *evalCtx) []Value {
@@ -362,7 +362,7 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 	case parse.Variable:
 		qname := n.Value[1:]
 		cp.registerVariableGet(qname)
-		return variable(qname, n.Begin)
+		return variable(qname, n.Begin())
 	// case parse.Wildcard:
 	case parse.ExitusCapture:
 		return cp.chunk(n.Chunk)
@@ -385,7 +385,7 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 		// XXX: Primary types not yet implemented are just treated as
 		// barewords. Should report parser bug of bad PrimaryType after they
 		// have been implemented.
-		return literalStr(n.SourceText)
+		return literalStr(n.SourceText())
 		// panic("bad PrimaryType; parser bug")
 	}
 }
@@ -462,7 +462,7 @@ func (cp *compiler) map_(n *parse.Primary) valuesOp {
 	for i := 0; i < nn; i++ {
 		keysOps[i] = cp.compound(n.MapPairs[i].Key)
 		valuesOps[i] = cp.compound(n.MapPairs[i].Value)
-		poses[i] = n.MapPairs[i].Begin
+		poses[i] = n.MapPairs[i].Begin()
 	}
 	return func(ec *evalCtx) []Value {
 		t := newTable()

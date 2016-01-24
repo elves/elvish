@@ -160,23 +160,23 @@ var goodCases = []struct {
 }
 
 func checkParseTree(n Node) error {
-	b := n.N()
-	if len(b.Children) == 0 {
+	children := n.Children()
+	if len(children) == 0 {
 		return nil
 	}
-	if b.Children[0].N().Begin != b.Begin {
+	if children[0].Begin() != n.Begin() {
 		return fmt.Errorf("gap between node and first child: %s", summary(n))
 	}
-	nch := len(b.Children)
-	if b.Children[nch-1].N().End != b.End {
+	nch := len(children)
+	if children[nch-1].End() != n.End() {
 		return fmt.Errorf("gap between node and last child: %s", summary(n))
 	}
 	for i := 0; i < nch-1; i++ {
-		if b.Children[i].N().End != b.Children[i+1].N().Begin {
+		if children[i].End() != children[i+1].Begin() {
 			return fmt.Errorf("gap beteen child %d and %d of: %s", i, i+1, summary(n))
 		}
 	}
-	for _, ch := range b.Children {
+	for _, ch := range n.Children() {
 		err := checkParseTree(ch)
 		if err != nil {
 			return err
@@ -188,7 +188,7 @@ func checkParseTree(n Node) error {
 func checkNode(got Node, want interface{}) error {
 	switch want := want.(type) {
 	case string:
-		text := got.N().SourceText
+		text := got.SourceText()
 		if want != text {
 			return fmt.Errorf("want %q, got %q (%s)", want, text, summary(got))
 		}
@@ -243,22 +243,22 @@ func checkAST(n Node, want ast) error {
 		if i == len(wantnames)-1 {
 			break
 		}
-		fields := n.N().Children
+		fields := n.Children()
 		if len(fields) != 1 {
 			return fmt.Errorf("want exactly 1 child, got %d (%s)", len(fields), summary(n))
 		}
 		n = fields[0]
 	}
 
-	if want.fields == nil && len(n.N().Children) != 0 {
+	if want.fields == nil && len(n.Children()) != 0 {
 		return fmt.Errorf("want leaf, got inner node (%s)", summary(n))
 	}
 	nv := reflect.ValueOf(n).Elem()
 
 	for fieldname, wantfield := range want.fields {
 		if fieldname == "text" {
-			if n.N().SourceText != wantfield.(string) {
-				return fmt.Errorf("want %q, got %q (%s)", wantfield, n.N().SourceText)
+			if n.SourceText() != wantfield.(string) {
+				return fmt.Errorf("want %q, got %q (%s)", wantfield, n.SourceText())
 			}
 		} else {
 			fv := nv.FieldByName(fieldname)

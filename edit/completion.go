@@ -139,7 +139,7 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 		ed.pushTip(err.Error())
 		return nil
 	}
-	c.start = node.N().Begin
+	c.start = node.Begin()
 	c.end = ed.dot
 	// BUG(xiaq) When completing, completion.typ is always ItemBare
 	c.typ = Bareword
@@ -163,7 +163,7 @@ func tokenAtDot(ed *Editor) Token {
 		return ed.tokens[len(ed.tokens)-1]
 	}
 	for _, token := range ed.tokens {
-		if ed.dot < token.Node.N().End {
+		if ed.dot < token.Node.End() {
 			return token
 		}
 	}
@@ -175,9 +175,9 @@ func isFormHead(n parse.Node) bool {
 		return true
 	}
 	if n, ok := n.(*parse.Primary); ok {
-		if n, ok := n.N().Parent.(*parse.Indexed); ok {
-			if n, ok := n.N().Parent.(*parse.Compound); ok {
-				if _, ok := n.N().Parent.(*parse.Form); ok {
+		if n, ok := n.Parent().(*parse.Indexed); ok {
+			if n, ok := n.Parent().(*parse.Compound); ok {
+				if _, ok := n.Parent().(*parse.Form); ok {
 					return true
 				}
 			}

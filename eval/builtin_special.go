@@ -34,7 +34,7 @@ func compileSet(cp *compiler, fn *parse.Form) exitusOp {
 	)
 
 	if len(fn.Args) == 0 {
-		cp.errorf(fn.Begin, "empty set")
+		cp.errorf(fn.Begin(), "empty set")
 	}
 	mustString(cp, fn.Args[0], "should be a literal variable name")
 
@@ -90,14 +90,14 @@ func compileDel(cp *compiler, fn *parse.Form) exitusOp {
 		switch ns {
 		case "", "local":
 			if !cp.thisScope()[name] {
-				cp.errorf(cn.Begin, "variable $%s not found on current local scope", name)
+				cp.errorf(cn.Begin(), "variable $%s not found on current local scope", name)
 			}
 			delete(cp.thisScope(), name)
 			names = append(names, name)
 		case "env":
 			envNames = append(envNames, name)
 		default:
-			cp.errorf(cn.Begin, "can only delete a variable in local: or env:")
+			cp.errorf(cn.Begin(), "can only delete a variable in local: or env:")
 		}
 
 	}
@@ -224,20 +224,20 @@ func makeFnOp(op valuesOp) valuesOp {
 // var $fn-f = { |$a $b| put (* $a $b) (/ $a $b) }
 func compileFn(cp *compiler, fn *parse.Form) exitusOp {
 	if len(fn.Args) == 0 {
-		cp.errorf(fn.End, "should be followed by function name")
+		cp.errorf(fn.End(), "should be followed by function name")
 	}
 	fnName := mustString(cp, fn.Args[0], "must be a literal string")
 	varName := fnPrefix + fnName
 
 	if len(fn.Args) == 1 {
-		cp.errorf(fn.Args[0].End, "should be followed by a lambda")
+		cp.errorf(fn.Args[0].End(), "should be followed by a lambda")
 	}
 	pn := mustPrimary(cp, fn.Args[1], "should be a lambda")
 	if pn.Type != parse.Lambda {
-		cp.errorf(pn.Begin, "should be a lambda")
+		cp.errorf(pn.Begin(), "should be a lambda")
 	}
 	if len(fn.Args) > 2 {
-		cp.errorf(fn.Args[2].Begin, "superfluous argument")
+		cp.errorf(fn.Args[2].Begin(), "superfluous argument")
 	}
 
 	cp.registerVariableSet(varName)

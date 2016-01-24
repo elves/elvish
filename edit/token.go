@@ -34,12 +34,12 @@ func tokenize(src string) ([]Token, error) {
 
 	go func() {
 		for token := range tokenCh {
-			begin := token.Node.N().Begin
+			begin := token.Node.Begin()
 			if begin > lastEnd {
 				tokens = append(tokens, Token{ParserError, src[lastEnd:begin], nil})
 			}
 			tokens = append(tokens, token)
-			lastEnd = token.Node.N().End
+			lastEnd = token.Node.End()
 		}
 		tokensDone <- true
 	}()
@@ -54,7 +54,7 @@ func tokenize(src string) ([]Token, error) {
 }
 
 func produceTokens(n parse.Node, tokenCh chan<- Token) {
-	if len(n.N().Children) == 0 {
+	if len(n.Children()) == 0 {
 		tokenType := ParserError
 		switch n := n.(type) {
 		case *parse.Primary:
@@ -71,9 +71,9 @@ func produceTokens(n parse.Node, tokenCh chan<- Token) {
 		case *parse.Sep:
 			tokenType = Sep
 		}
-		tokenCh <- Token{tokenType, n.N().SourceText, n}
+		tokenCh <- Token{tokenType, n.SourceText(), n}
 	}
-	for _, child := range n.N().Children {
+	for _, child := range n.Children() {
 		produceTokens(child, tokenCh)
 	}
 }

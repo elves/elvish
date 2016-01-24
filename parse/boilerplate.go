@@ -11,10 +11,10 @@ func (n *MapPair) setValue(ch *Compound) {
 }
 
 func parseMapPair(rd *reader) *MapPair {
-	n := &MapPair{node: node{Begin: rd.pos}}
+	n := &MapPair{node: node{begin: rd.pos}}
 	n.parse(rd)
-	n.End = rd.pos
-	n.SourceText = rd.src[n.Begin:n.End]
+	n.end = rd.pos
+	n.sourceText = rd.src[n.begin:n.end]
 	return n
 }
 
@@ -39,10 +39,10 @@ func (n *Primary) addToBraced(ch *Compound) {
 }
 
 func parsePrimary(rd *reader, cut runePred) *Primary {
-	n := &Primary{node: node{Begin: rd.pos}}
+	n := &Primary{node: node{begin: rd.pos}}
 	n.parse(rd, cut)
-	n.End = rd.pos
-	n.SourceText = rd.src[n.Begin:n.End]
+	n.end = rd.pos
+	n.sourceText = rd.src[n.begin:n.end]
 	return n
 }
 
@@ -57,10 +57,10 @@ func (n *Indexed) addToIndicies(ch *Array) {
 }
 
 func parseIndexed(rd *reader, cut runePred) *Indexed {
-	n := &Indexed{node: node{Begin: rd.pos}}
+	n := &Indexed{node: node{begin: rd.pos}}
 	n.parse(rd, cut)
-	n.End = rd.pos
-	n.SourceText = rd.src[n.Begin:n.End]
+	n.end = rd.pos
+	n.sourceText = rd.src[n.begin:n.end]
 	return n
 }
 
@@ -70,10 +70,10 @@ func (n *Compound) addToIndexeds(ch *Indexed) {
 }
 
 func parseCompound(rd *reader, cut runePred) *Compound {
-	n := &Compound{node: node{Begin: rd.pos}}
+	n := &Compound{node: node{begin: rd.pos}}
 	n.parse(rd, cut)
-	n.End = rd.pos
-	n.SourceText = rd.src[n.Begin:n.End]
+	n.end = rd.pos
+	n.sourceText = rd.src[n.begin:n.end]
 	return n
 }
 
@@ -83,10 +83,10 @@ func (n *Array) addToCompounds(ch *Compound) {
 }
 
 func parseArray(rd *reader) *Array {
-	n := &Array{node: node{Begin: rd.pos}}
+	n := &Array{node: node{begin: rd.pos}}
 	n.parse(rd)
-	n.End = rd.pos
-	n.SourceText = rd.src[n.Begin:n.End]
+	n.end = rd.pos
+	n.sourceText = rd.src[n.begin:n.end]
 	return n
 }
 
@@ -101,10 +101,10 @@ func (n *Redir) setSource(ch *Compound) {
 }
 
 func parseRedir(rd *reader) *Redir {
-	n := &Redir{node: node{Begin: rd.pos}}
+	n := &Redir{node: node{begin: rd.pos}}
 	n.parse(rd)
-	n.End = rd.pos
-	n.SourceText = rd.src[n.Begin:n.End]
+	n.end = rd.pos
+	n.sourceText = rd.src[n.begin:n.end]
 	return n
 }
 
@@ -114,10 +114,10 @@ func (n *ExitusRedir) setDest(ch *Compound) {
 }
 
 func parseExitusRedir(rd *reader) *ExitusRedir {
-	n := &ExitusRedir{node: node{Begin: rd.pos}}
+	n := &ExitusRedir{node: node{begin: rd.pos}}
 	n.parse(rd)
-	n.End = rd.pos
-	n.SourceText = rd.src[n.Begin:n.End]
+	n.end = rd.pos
+	n.sourceText = rd.src[n.begin:n.end]
 	return n
 }
 
@@ -147,10 +147,10 @@ func (n *Form) setExitusRedir(ch *ExitusRedir) {
 }
 
 func parseForm(rd *reader) *Form {
-	n := &Form{node: node{Begin: rd.pos}}
+	n := &Form{node: node{begin: rd.pos}}
 	n.parse(rd)
-	n.End = rd.pos
-	n.SourceText = rd.src[n.Begin:n.End]
+	n.end = rd.pos
+	n.sourceText = rd.src[n.begin:n.end]
 	return n
 }
 
@@ -160,10 +160,10 @@ func (n *Pipeline) addToForms(ch *Form) {
 }
 
 func parsePipeline(rd *reader) *Pipeline {
-	n := &Pipeline{node: node{Begin: rd.pos}}
+	n := &Pipeline{node: node{begin: rd.pos}}
 	n.parse(rd)
-	n.End = rd.pos
-	n.SourceText = rd.src[n.Begin:n.End]
+	n.end = rd.pos
+	n.sourceText = rd.src[n.begin:n.end]
 	return n
 }
 
@@ -173,9 +173,9 @@ func (n *Chunk) addToPipelines(ch *Pipeline) {
 }
 
 func parseChunk(rd *reader) *Chunk {
-	n := &Chunk{node: node{Begin: rd.pos}}
+	n := &Chunk{node: node{begin: rd.pos}}
 	n.parse(rd)
-	n.End = rd.pos
-	n.SourceText = rd.src[n.Begin:n.End]
+	n.end = rd.pos
+	n.sourceText = rd.src[n.begin:n.end]
 	return n
 }
