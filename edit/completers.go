@@ -68,8 +68,9 @@ func complArg(n parse.Node) []*candidate {
 	if dir == "" {
 		// XXX ignore error
 		all, _ = fileNames(".")
+	} else {
+		all, _ = fileNames(dir)
 	}
-	all, _ = fileNames(dir)
 
 	cands := []*candidate{}
 	// Make candidates out of elements that match the file component.
