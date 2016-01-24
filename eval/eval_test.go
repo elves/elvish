@@ -102,6 +102,11 @@ var evalTests = []struct {
 	// Shadowing by argument
 	{"set x = ipsum; [x]{ put $x; set x = BAD } lorem; put $x",
 		strs("lorem", "ipsum"), nomore},
+	// Closure captures new local variables every time
+	{`fn f []{ set x = 0; put []{set x = (+ $x 1)} []{put $x} }
+set inc1 put1 = (f); $put1; $inc1; $put1
+set inc2 put2 = (f); $put2; $inc2; $put2`,
+		strs("0", "1", "0", "1"), nomore},
 
 	// fn
 	{"fn f [x]{ put $x ipsum }; f lorem",
