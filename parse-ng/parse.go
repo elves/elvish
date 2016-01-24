@@ -44,8 +44,8 @@ type Sep struct {
 	node
 }
 
-func addSep(n Node, begin, end int) {
-	addChild(n, &Sep{node{Begin: begin, End: end}})
+func addSep(n Node, begin int, rd *reader) {
+	addChild(n, &Sep{node{nil, begin, rd.pos, rd.src[begin:rd.pos], nil}})
 }
 
 func eatRun(rd *reader, r rune) {
@@ -58,7 +58,7 @@ func parseSep(n Node, rd *reader, sep rune) bool {
 	begin := rd.pos
 	if rd.peek() == sep {
 		rd.next()
-		addSep(n, begin, rd.pos)
+		addSep(n, begin, rd)
 		return true
 	}
 	return false
@@ -73,7 +73,7 @@ func parseRunAsSep(n Node, rd *reader, isSep func(rune) bool) {
 	for isSep(rd.peek()) {
 		rd.next()
 	}
-	addSep(n, begin, rd.pos)
+	addSep(n, begin, rd)
 }
 
 func parseSpaces(n Node, rd *reader) {
@@ -405,7 +405,7 @@ func (pn *Primary) exitusCapture(rd *reader) {
 	begin := rd.pos
 	rd.next()
 	rd.next()
-	addSep(pn, begin, rd.pos)
+	addSep(pn, begin, rd)
 
 	pn.Type = ExitusCapture
 	if !startsChunk(rd.peek()) && rd.peek() != ')' {
@@ -478,7 +478,7 @@ func (pn *Primary) lbracket(rd *reader) {
 		switch {
 		case isSpace(r), r == ']':
 			// '&' { Space } ']': '&' is a sep
-			addSep(pn, amp, rd.pos)
+			addSep(pn, amp, rd)
 			parseSpaces(pn, rd)
 		default:
 			// { MapPair { Space } } ']': Wind back
@@ -679,7 +679,7 @@ func (rn *Redir) parse(rd *reader) {
 		rd.error = badRedirSign
 		return
 	}
-	addSep(rn, begin, rd.pos)
+	addSep(rn, begin, rd)
 	parseSpaces(rn, rd)
 	if parseSep(rn, rd, '&') {
 		rn.SourceIsFd = true
@@ -705,7 +705,7 @@ func (ern *ExitusRedir) parse(rd *reader) {
 	begin := rd.pos
 	rd.next()
 	rd.next()
-	addSep(ern, begin, rd.pos)
+	addSep(ern, begin, rd)
 	parseSpaces(ern, rd)
 	ern.setDest(parseCompound(rd, nil))
 }
