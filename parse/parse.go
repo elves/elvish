@@ -817,7 +817,7 @@ func Parse(name, src string) (*Chunk, error) {
 	rd := &reader{src, 0, nil}
 	bn := parseChunk(rd)
 	if rd.error != nil {
-		return nil, errutil.NewContextualError(
+		return bn, errutil.NewContextualError(
 			name, "syntax error", src, rd.pos, rd.error.Error())
 	}
 	if rd.pos != len(src) {
