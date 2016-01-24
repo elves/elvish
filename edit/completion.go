@@ -176,9 +176,9 @@ func isFormHead(n parse.Node) bool {
 	}
 	if n, ok := n.(*parse.Primary); ok {
 		if n, ok := n.Parent().(*parse.Indexed); ok {
-			if n, ok := n.Parent().(*parse.Compound); ok {
-				if _, ok := n.Parent().(*parse.Form); ok {
-					return true
+			if compound, ok := n.Parent().(*parse.Compound); ok {
+				if form, ok := compound.Parent().(*parse.Form); ok {
+					return compound == form.Head
 				}
 			}
 		}
