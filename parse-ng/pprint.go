@@ -66,8 +66,8 @@ func pprintASTRec(n Node, wr io.Writer, indent int, leading string) {
 	}
 
 	// has only one child and no properties: coalesce
-	if len(propertyFields) == 0 && len(n.n().Children) == 1 {
-		pprintASTRec(n.n().Children[0], wr, indent, leading+nt.Name()+"/")
+	if len(propertyFields) == 0 && len(n.N().Children) == 1 {
+		pprintASTRec(n.N().Children[0], wr, indent, leading+nt.Name()+"/")
 		return
 	}
 	// print heading
@@ -119,7 +119,7 @@ func (n *node) String() string {
 }
 
 func summary(n Node) string {
-	b := n.n()
+	b := n.N()
 	return fmt.Sprintf("%s %s %d-%d", reflect.TypeOf(n).Elem().Name(),
 		compactQuote(b.SourceText), b.Begin, b.End)
 }
@@ -127,11 +127,11 @@ func summary(n Node) string {
 // pprint the parse tree
 func pprintParseTreeRec(n Node, wr io.Writer, indent int) {
 	leading := ""
-	for len(n.n().Children) == 1 {
+	for len(n.N().Children) == 1 {
 		leading += reflect.TypeOf(n).Elem().Name() + "/"
-		n = n.n().Children[0]
+		n = n.N().Children[0]
 	}
-	b := n.n()
+	b := n.N()
 	fmt.Fprintf(wr, "%*s%s%s\n", indent, "", leading, summary(n))
 	for _, ch := range b.Children {
 		pprintParseTreeRec(ch, wr, indent+indentInc)

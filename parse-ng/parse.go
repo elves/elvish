@@ -11,7 +11,7 @@ import (
 )
 
 type Node interface {
-	n() *node
+	N() *node
 }
 
 type node struct {
@@ -21,13 +21,13 @@ type node struct {
 	Children   []Node
 }
 
-func (n *node) n() *node {
+func (n *node) N() *node {
 	return n
 }
 
 func addChild(p Node, ch Node) {
-	p.n().Children = append(p.n().Children, ch)
-	ch.n().Parent = p
+	p.N().Children = append(p.N().Children, ch)
+	ch.N().Parent = p
 }
 
 type runePred func(rune) bool

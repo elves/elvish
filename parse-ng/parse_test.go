@@ -160,19 +160,19 @@ var goodCases = []struct {
 }
 
 func checkParseTree(n Node) error {
-	b := n.n()
+	b := n.N()
 	if len(b.Children) == 0 {
 		return nil
 	}
-	if b.Children[0].n().Begin != b.Begin {
+	if b.Children[0].N().Begin != b.Begin {
 		return fmt.Errorf("gap between node and first child: %s", summary(n))
 	}
 	nch := len(b.Children)
-	if b.Children[nch-1].n().End != b.End {
+	if b.Children[nch-1].N().End != b.End {
 		return fmt.Errorf("gap between node and last child: %s", summary(n))
 	}
 	for i := 0; i < nch-1; i++ {
-		if b.Children[i].n().End != b.Children[i+1].n().Begin {
+		if b.Children[i].N().End != b.Children[i+1].N().Begin {
 			return fmt.Errorf("gap beteen child %d and %d of: %s", i, i+1, summary(n))
 		}
 	}
@@ -188,7 +188,7 @@ func checkParseTree(n Node) error {
 func checkNode(got Node, want interface{}) error {
 	switch want := want.(type) {
 	case string:
-		text := got.n().SourceText
+		text := got.N().SourceText
 		if want != text {
 			return fmt.Errorf("want %q, got %q (%s)", want, text, summary(got))
 		}
@@ -243,22 +243,22 @@ func checkAST(n Node, want ast) error {
 		if i == len(wantnames)-1 {
 			break
 		}
-		fields := n.n().Children
+		fields := n.N().Children
 		if len(fields) != 1 {
 			return fmt.Errorf("want exactly 1 child, got %d (%s)", len(fields), summary(n))
 		}
 		n = fields[0]
 	}
 
-	if want.fields == nil && len(n.n().Children) != 0 {
+	if want.fields == nil && len(n.N().Children) != 0 {
 		return fmt.Errorf("want leaf, got inner node (%s)", summary(n))
 	}
 	nv := reflect.ValueOf(n).Elem()
 
 	for fieldname, wantfield := range want.fields {
 		if fieldname == "text" {
-			if n.n().SourceText != wantfield.(string) {
-				return fmt.Errorf("want %q, got %q (%s)", wantfield, n.n().SourceText)
+			if n.N().SourceText != wantfield.(string) {
+				return fmt.Errorf("want %q, got %q (%s)", wantfield, n.N().SourceText)
 			}
 		} else {
 			fv := nv.FieldByName(fieldname)
