@@ -1,9 +1,5 @@
 package edit
 
-import (
-	"github.com/elves/elvish/parse"
-)
-
 var (
 	attrForPrompt            = ""
 	attrForRprompt           = "7"
@@ -15,21 +11,27 @@ var (
 	attrForSelectedFile      = ";7"
 )
 
-var attrForType = map[parse.ItemType]string{
-	parse.ItemSpace:             "36", // only applies to comments
-	parse.ItemSingleQuoted:      "33",
-	parse.ItemDoubleQuoted:      "33",
-	parse.ItemRedirLeader:       "32",
-	parse.ItemStatusRedirLeader: "32",
-	parse.ItemPipe:              "32",
-	parse.ItemError:             "31",
-	parse.ItemQuestionLParen:    "34;1",
-	parse.ItemLParen:            "34;1",
-	parse.ItemRParen:            "34;1",
-	parse.ItemLBracket:          "34;1",
-	parse.ItemRBracket:          "34;1",
-	parse.ItemLBrace:            "34;1",
-	parse.ItemRBrace:            "34;1",
-	parse.ItemAmpersand:         "1",
-	parse.ItemDollar:            "35",
+var attrForType = map[TokenType]string{
+	ParserError:  "31;3",
+	Bareword:     "",
+	SingleQuoted: "33",
+	DoubleQuoted: "33",
+	Variable:     "35",
+	Sep:          "",
+	/*
+		parse.ItemSpace:             "36", // only applies to comments
+		parse.ItemRedirLeader:       "32",
+		parse.ItemStatusRedirLeader: "32",
+		parse.ItemPipe:              "32",
+		parse.ItemError:             "31",
+		parse.ItemQuestionLParen:    "34;1",
+		parse.ItemLParen:            "34;1",
+		parse.ItemRParen:            "34;1",
+		parse.ItemLBracket:          "34;1",
+		parse.ItemRBracket:          "34;1",
+		parse.ItemLBrace:            "34;1",
+		parse.ItemRBrace:            "34;1",
+		parse.ItemAmpersand:         "1",
+		parse.ItemDollar:            "35",
+	*/
 }

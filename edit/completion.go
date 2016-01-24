@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/parse-ng"
 )
 
 type tokenPart struct {
@@ -32,7 +32,7 @@ func (c *candidate) push(tp tokenPart) {
 
 type completion struct {
 	start, end int // The text to complete is Editor.line[start:end]
-	typ        parse.ItemType
+	typ        TokenType
 	candidates []*candidate
 	current    int
 }
@@ -84,59 +84,6 @@ func fileNames(dir string) (names []string, err error) {
 	return
 }
 
-var (
-	errNotPlainPrimary    = fmt.Errorf("not a plain PrimaryNode")
-	errNotPlainCompound   = fmt.Errorf("not a plain CompoundNode")
-	errUnknownContextType = fmt.Errorf("unknown context type")
-)
-
-func peekPrimary(fn *parse.Primary) (string, error) {
-	if fn.Typ != parse.StringPrimary {
-		return "", errNotPlainPrimary
-	}
-	return fn.Node.(*parse.String).Text, nil
-}
-
-func peekIncompleteCompound(tn *parse.Compound) (string, int, error) {
-	text := ""
-	for _, n := range tn.Nodes {
-		if n.Right != nil {
-			return "", 0, errNotPlainCompound
-		}
-		s, e := peekPrimary(n.Left)
-		if e != nil {
-			return "", 0, errNotPlainCompound
-		}
-		text += s
-	}
-	return text, int(tn.Pos), nil
-}
-
-func peekCurrentCompound(ctx *parse.Context, dot int) (string, int, error) {
-	if ctx.Form == nil || ctx.Typ == parse.NewArgContext {
-		return "", dot, nil
-	}
-
-	switch ctx.Typ {
-	case parse.CommandContext:
-		return peekIncompleteCompound(ctx.Form.Command)
-	case parse.ArgContext:
-		compounds := ctx.Form.Args.Nodes
-		lastCompound := compounds[len(compounds)-1]
-		return peekIncompleteCompound(lastCompound)
-	case parse.RedirFilenameContext:
-		redirs := ctx.Form.Redirs
-		lastRedir := redirs[len(redirs)-1]
-		fnRedir, ok := lastRedir.(*parse.FilenameRedir)
-		if !ok {
-			return "", 0, fmt.Errorf("last redir is not FilenameRedir")
-		}
-		return peekIncompleteCompound(fnRedir.Filename)
-	default:
-		return "", 0, errUnknownContextType
-	}
-}
-
 var builtins []string
 
 func init() {
@@ -146,36 +93,25 @@ func init() {
 
 func startCompletion(ed *Editor, k Key) *leReturn {
 	c := &completion{}
-	ctx, err := parse.Complete("<completion>", ed.line[:ed.dot])
-	if err != nil {
-		ed.pushTip("parser error: " + err.Error())
-		return nil
-	}
-	compound, start, err := peekCurrentCompound(ctx, ed.dot)
-	if err != nil {
-		ed.pushTip("cannot complete: " + err.Error())
-		return nil
-	}
-
+	token := tokenAtDot(ed)
+	node := token.Node
 	var findAll func() ([]string, error)
 	var makeCandidates func([]string) []*candidate
 
-	switch ctx.Typ {
-	case parse.CommandContext:
+	head := token.Text
+
+	ed.pushTip(fmt.Sprintf("current node is %T", node))
+	if isFormHead(node) {
 		// BUG(xiaq): When completing commands, only builtins are searched
 		findAll = func() ([]string, error) {
 			return builtins, nil
 		}
 		makeCandidates = func(all []string) (cands []*candidate) {
-			return prefixMatchCandidates(compound, all)
+			return prefixMatchCandidates(head, all)
 		}
-	case parse.NewArgContext, parse.ArgContext:
-		// BUG(xiaq): When completing, [New]ArgContext is treated like RedirFilenameContext
-		fallthrough
-	case parse.RedirFilenameContext:
-		// BUG(xiaq): File name completion does not deal with meta characters.
-		// Assume that compound is an incomplete filename
-		dir, file := path.Split(compound)
+	} else {
+		// Assume that the token is an incomplete filename
+		dir, file := path.Split(head)
 		findAll = func() ([]string, error) {
 			if dir == "" {
 				return fileNames(".")
@@ -187,7 +123,7 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 			for _, s := range all {
 				if strings.HasPrefix(s, file) {
 					cand := newCandidate()
-					cand.push(tokenPart{compound, false})
+					cand.push(tokenPart{head, false})
 					cand.push(tokenPart{s[len(file):], true})
 					cand.attr = defaultLsColor.determineAttr(cand.text)
 					cands = append(cands, cand)
@@ -196,22 +132,56 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 			return
 		}
 	}
+
 	// BUG(xiaq): When completing, only plain expressions are supported
 	all, err := findAll()
 	if err != nil {
 		ed.pushTip(err.Error())
 		return nil
 	}
-	c.start = start
+	c.start = node.N().Begin
 	c.end = ed.dot
 	// BUG(xiaq) When completing, completion.typ is always ItemBare
-	c.typ = parse.ItemBare
+	c.typ = Bareword
 	c.candidates = makeCandidates(all)
 	if len(c.candidates) > 0 {
 		ed.completion = c
 		ed.mode = modeCompletion
 	} else {
-		ed.pushTip(fmt.Sprintf("No completion for %s", compound))
+		ed.pushTip(fmt.Sprintf("No completion for %s", head))
 	}
 	return nil
+}
+
+var BadToken = Token{}
+
+func tokenAtDot(ed *Editor) Token {
+	if len(ed.tokens) == 0 || ed.dot > len(ed.line) {
+		return BadToken
+	}
+	if ed.dot == len(ed.line) {
+		return ed.tokens[len(ed.tokens)-1]
+	}
+	for _, token := range ed.tokens {
+		if ed.dot < token.Node.N().End {
+			return token
+		}
+	}
+	return BadToken
+}
+
+func isFormHead(n parse.Node) bool {
+	if _, ok := n.(*parse.Chunk); ok {
+		return true
+	}
+	if n, ok := n.(*parse.Primary); ok {
+		if n, ok := n.N().Parent.(*parse.Indexed); ok {
+			if n, ok := n.N().Parent.(*parse.Compound); ok {
+				if _, ok := n.N().Parent.(*parse.Form); ok {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }

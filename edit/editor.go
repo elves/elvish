@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
 )
@@ -28,7 +27,7 @@ const (
 type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
 	savedTermios          *sys.Termios
-	tokens                []parse.Item
+	tokens                []Token
 	prompt, rprompt, line string
 	dot                   int
 	tips                  []string
@@ -174,11 +173,8 @@ func (ed *Editor) pushTip(more string) {
 func (ed *Editor) refresh() error {
 	// Re-lex the line, unless we are in modeCompletion
 	if ed.mode != modeCompletion {
-		ed.tokens = nil
-		lex := parse.Lex("<interactive code>", ed.line)
-		for token := range lex.Chan() {
-			ed.tokens = append(ed.tokens, token)
-		}
+		// XXX Ignore error
+		ed.tokens, _ = tokenize(ed.line)
 	}
 	return ed.writer.refresh(&ed.editorState)
 }

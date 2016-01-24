@@ -373,11 +373,11 @@ func (w *writer) refresh(bs *editorState) error {
 	nowAt(0)
 tokens:
 	for _, token := range bs.tokens {
-		for _, r := range token.Val {
+		for _, r := range token.Text {
 			if hasComp && comp.start <= i && i < comp.end {
 				// Silence the part that is being completed
 			} else {
-				b.write(r, attrForType[token.Typ])
+				b.write(r, attrForType[token.Type])
 			}
 			i += utf8.RuneLen(r)
 
