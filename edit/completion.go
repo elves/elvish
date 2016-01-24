@@ -1,14 +1,6 @@
 package edit
 
-import (
-	"fmt"
-	"io/ioutil"
-	"path"
-	"strings"
-
-	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/parse"
-)
+import "fmt"
 
 type tokenPart struct {
 	text      string
@@ -21,8 +13,12 @@ type candidate struct {
 	attr  string // Attribute used for preview
 }
 
-func newCandidate() *candidate {
-	return &candidate{}
+func newCandidate(tps ...tokenPart) *candidate {
+	c := &candidate{}
+	for _, tp := range tps {
+		c.push(tp)
+	}
+	return c
 }
 
 func (c *candidate) push(tp tokenPart) {
@@ -59,96 +55,30 @@ func (c *completion) next(cycle bool) {
 	}
 }
 
-// Find candidates by matching against a prefix.
-func prefixMatchCandidates(p string, all []string) (cands []*candidate) {
-	for _, s := range all {
-		if len(s) >= len(p) && s[:len(p)] == p {
-			cand := newCandidate()
-			cand.push(tokenPart{p, false})
-			cand.push(tokenPart{s[len(p):], true})
-			cands = append(cands, cand)
-		}
-	}
-	return
-}
-
-func fileNames(dir string) (names []string, err error) {
-	infos, e := ioutil.ReadDir(dir)
-	if e != nil {
-		err = e
-		return
-	}
-	for _, info := range infos {
-		names = append(names, info.Name())
-	}
-	return
-}
-
-var builtins []string
-
-func init() {
-	builtins = append(builtins, eval.BuiltinFnNames...)
-	builtins = append(builtins, eval.BuiltinSpecialNames...)
-}
-
 func startCompletion(ed *Editor, k Key) *leReturn {
-	c := &completion{}
 	token := tokenAtDot(ed)
 	node := token.Node
-	var findAll func() ([]string, error)
-	var makeCandidates func([]string) []*candidate
 
-	head := token.Text
+	c := &completion{
+		start: node.Begin(),
+		end:   ed.dot,
+		typ:   Bareword, // TODO set the actual type
+	}
+	for _, compl := range completers {
+		candidates := compl.completer(node)
+		if candidates != nil {
+			c.candidates = candidates
+			break
+		}
+	}
 
-	ed.pushTip(fmt.Sprintf("current node is %T", node))
-	if isFormHead(node) {
-		// BUG(xiaq): When completing commands, only builtins are searched
-		findAll = func() ([]string, error) {
-			return builtins, nil
-		}
-		makeCandidates = func(all []string) (cands []*candidate) {
-			return prefixMatchCandidates(head, all)
-		}
+	if c.candidates == nil {
+		ed.pushTip("unsupported completion :(")
+	} else if len(c.candidates) == 0 {
+		ed.pushTip(fmt.Sprintf("no completion for %s", token.Text))
 	} else {
-		// Assume that the token is an incomplete filename
-		dir, file := path.Split(head)
-		findAll = func() ([]string, error) {
-			if dir == "" {
-				return fileNames(".")
-			}
-			return fileNames(dir)
-		}
-		makeCandidates = func(all []string) (cands []*candidate) {
-			// Make candidates out of elements that match the file component.
-			for _, s := range all {
-				if strings.HasPrefix(s, file) {
-					cand := newCandidate()
-					cand.push(tokenPart{head, false})
-					cand.push(tokenPart{s[len(file):], true})
-					cand.attr = defaultLsColor.determineAttr(cand.text)
-					cands = append(cands, cand)
-				}
-			}
-			return
-		}
-	}
-
-	// BUG(xiaq): When completing, only plain expressions are supported
-	all, err := findAll()
-	if err != nil {
-		ed.pushTip(err.Error())
-		return nil
-	}
-	c.start = node.Begin()
-	c.end = ed.dot
-	// BUG(xiaq) When completing, completion.typ is always ItemBare
-	c.typ = Bareword
-	c.candidates = makeCandidates(all)
-	if len(c.candidates) > 0 {
 		ed.completion = c
 		ed.mode = modeCompletion
-	} else {
-		ed.pushTip(fmt.Sprintf("No completion for %s", head))
 	}
 	return nil
 }
@@ -168,20 +98,4 @@ func tokenAtDot(ed *Editor) Token {
 		}
 	}
 	return BadToken
-}
-
-func isFormHead(n parse.Node) bool {
-	if _, ok := n.(*parse.Chunk); ok {
-		return true
-	}
-	if n, ok := n.(*parse.Primary); ok {
-		if n, ok := n.Parent().(*parse.Indexed); ok {
-			if compound, ok := n.Parent().(*parse.Compound); ok {
-				if form, ok := compound.Parent().(*parse.Form); ok {
-					return compound == form.Head
-				}
-			}
-		}
-	}
-	return false
 }
