@@ -11,7 +11,7 @@ import (
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/parse-ng"
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sysutil"
 )

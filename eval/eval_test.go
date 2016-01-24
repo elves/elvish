@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/elves/elvish/parse-ng"
+	"github.com/elves/elvish/parse"
 )
 
 func TestNewEvaler(t *testing.T) {

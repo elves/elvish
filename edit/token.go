@@ -1,6 +1,6 @@
 package edit
 
-import "github.com/elves/elvish/parse-ng"
+import "github.com/elves/elvish/parse"
 
 type TokenType int
 

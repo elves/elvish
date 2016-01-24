@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/parse-ng"
+	"github.com/elves/elvish/parse"
 )
 
 type tokenPart struct {

@@ -13,7 +13,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/errutil"
-	"github.com/elves/elvish/parse-ng"
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 )
 

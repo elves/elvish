@@ -1,6 +1,6 @@
 package eval
 
-import "github.com/elves/elvish/parse-ng"
+import "github.com/elves/elvish/parse"
 
 func (cp *compiler) chunks(ns []*parse.Chunk) []valuesOp {
 	ops := make([]valuesOp, len(ns))

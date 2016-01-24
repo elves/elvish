@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/parse-ng"
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/strutil"
 )
 

@@ -5,7 +5,7 @@ package eval
 import (
 	"os"
 
-	"github.com/elves/elvish/parse-ng"
+	"github.com/elves/elvish/parse"
 )
 
 type compileBuiltin func(*compiler, *parse.Form) exitusOp
