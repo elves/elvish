@@ -29,6 +29,7 @@ func (c *candidate) push(tp tokenPart) {
 type completion struct {
 	start, end int // The text to complete is Editor.line[start:end]
 	typ        TokenType
+	completer  string
 	candidates []*candidate
 	current    int
 }
@@ -65,8 +66,10 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 		typ:   Bareword, // TODO set the actual type
 	}
 	for _, compl := range completers {
-		candidates := compl.completer(node)
+		candidates, begin := compl.completer(node, ed)
 		if candidates != nil {
+			c.completer = compl.name
+			c.start = begin
 			c.candidates = candidates
 			break
 		}
@@ -75,7 +78,7 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 	if c.candidates == nil {
 		ed.pushTip("unsupported completion :(")
 	} else if len(c.candidates) == 0 {
-		ed.pushTip(fmt.Sprintf("no completion for %s", token.Text))
+		ed.pushTip(fmt.Sprintf("no candidate for %s", c.completer))
 	} else {
 		ed.completion = c
 		ed.mode = modeCompletion

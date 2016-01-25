@@ -413,7 +413,7 @@ tokens:
 		case modeCommand:
 			text = "Command"
 		case modeCompletion:
-			text = fmt.Sprintf("Completing %s", bs.line[comp.start:comp.end])
+			text = fmt.Sprintf("Completing %s", comp.completer)
 		case modeNavigation:
 			text = "Navigating"
 		case modeHistory:

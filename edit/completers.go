@@ -10,7 +10,7 @@ import (
 )
 
 // A completer takes the current node
-type completer func(parse.Node) []*candidate
+type completer func(parse.Node, *Editor) ([]*candidate, int)
 
 var completers = []struct {
 	name string
@@ -20,11 +20,11 @@ var completers = []struct {
 	{"argument", complArg},
 }
 
-func complFormHead(n parse.Node) []*candidate {
-	if !isFormHead(n) {
-		return nil
+func complFormHead(n parse.Node, ed *Editor) ([]*candidate, int) {
+	n, head := formHead(n)
+	if n == nil {
+		return nil, 0
 	}
-	head := n.SourceText()
 
 	cands := []*candidate{}
 	for _, s := range builtins {
@@ -33,7 +33,7 @@ func complFormHead(n parse.Node) []*candidate {
 				tokenPart{head, false}, tokenPart{s[len(head):], true}))
 		}
 	}
-	return cands
+	return cands, n.Begin()
 }
 
 var builtins []string
@@ -43,26 +43,64 @@ func init() {
 	builtins = append(builtins, eval.BuiltinSpecialNames...)
 }
 
-func isFormHead(n parse.Node) bool {
+func formHead(n parse.Node) (parse.Node, string) {
 	if _, ok := n.(*parse.Chunk); ok {
-		return true
+		return n, ""
 	}
-	if n, ok := n.(*parse.Primary); ok {
-		if n, ok := n.Parent().(*parse.Indexed); ok {
-			if compound, ok := n.Parent().(*parse.Compound); ok {
-				if form, ok := compound.Parent().(*parse.Form); ok {
-					return compound == form.Head
-				}
+
+	if primary, ok := n.(*parse.Primary); ok {
+		compound, head := simpleCompound(primary)
+		if form, ok := compound.Parent().(*parse.Form); ok {
+			if form.Head == compound {
+				return compound, head
 			}
 		}
 	}
-	return false
+
+	return nil, ""
 }
 
-func complArg(n parse.Node) []*candidate {
-	head := n.SourceText()
+func simpleCompound(pn *parse.Primary) (*parse.Compound, string) {
+	thisIndexed, ok := pn.Parent().(*parse.Indexed)
+	if !ok {
+		return nil, ""
+	}
 
-	// Assume that the token is an incomplete filename
+	thisCompound, ok := thisIndexed.Parent().(*parse.Compound)
+	if !ok {
+		return nil, ""
+	}
+
+	head := ""
+	for _, in := range thisCompound.Indexeds {
+		if len(in.Indicies) > 0 {
+			return nil, ""
+		}
+		typ := in.Head.Type
+		if typ != parse.Bareword &&
+			typ != parse.SingleQuoted &&
+			typ != parse.DoubleQuoted {
+			return nil, ""
+		}
+		head += in.Head.Value
+		if in == thisIndexed {
+			break
+		}
+	}
+	return thisCompound, head
+}
+
+func complArg(n parse.Node, ed *Editor) ([]*candidate, int) {
+	pn, ok := n.(*parse.Primary)
+	if !ok {
+		return nil, 0
+	}
+	cn, head := simpleCompound(pn)
+	if cn == nil {
+		return nil, 0
+	}
+
+	// Assume that the argument is an incomplete filename
 	dir, file := path.Split(head)
 	var all []string
 	if dir == "" {
@@ -82,7 +120,8 @@ func complArg(n parse.Node) []*candidate {
 			cands = append(cands, cand)
 		}
 	}
-	return cands
+
+	return cands, cn.Begin()
 }
 
 func fileNames(dir string) (names []string, err error) {
