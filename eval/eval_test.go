@@ -93,7 +93,8 @@ var evalTests = []struct {
 	// Basics
 	{"[]{ }", strs(), nomore},
 	{"[x]{put $x} foo", strs("foo"), nomore},
-	// Variable enclosure
+	// Variable capture
+	{"set x = lorem; []{set x = ipsum}; put $x", strs("ipsum"), nomore},
 	{"set x = lorem; []{ put $x; set x = ipsum }; put $x",
 		strs("lorem", "ipsum"), nomore},
 	// Shadowing
