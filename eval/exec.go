@@ -47,9 +47,9 @@ func isExecutable(path string) bool {
 	return !fm.IsDir() && (fm&0111 != 0)
 }
 
-// search tries to resolve an external command and return the full (possibly
+// Search tries to resolve an external command and return the full (possibly
 // relative) path.
-func (ev *Evaler) search(exe string) (string, error) {
+func (ev *Evaler) Search(exe string) (string, error) {
 	for _, p := range []string{"/", "./", "../"} {
 		if strings.HasPrefix(exe, p) {
 			if isExecutable(exe) {
@@ -256,7 +256,7 @@ func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
 	sys := syscall.SysProcAttr{}
 	attr := syscall.ProcAttr{Env: os.Environ(), Files: files[:], Sys: &sys}
 
-	path, err := ec.search(e.Name)
+	path, err := ec.Search(e.Name)
 	var pid int
 
 	if err == nil {
