@@ -260,10 +260,9 @@ func (ev *Evaler) Source(fname string) ([]Value, error) {
 	return ev.SourceText(fname, src, path.Dir(fname))
 }
 
-// HasVariable reports whether a variable is found in the global or builtin
-// namespace of an Evaler.
-func (ev *Evaler) HasVariable(name string) bool {
-	return ev.global[name] != nil
+// Global returns the global namespace.
+func (ev *Evaler) Global() ns {
+	return ev.global
 }
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is

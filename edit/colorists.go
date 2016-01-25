@@ -28,7 +28,7 @@ func goodFormHead(head string, ed *Editor) bool {
 	if eval.DontSearch(head) {
 		return eval.IsExecutable(head)
 	} else {
-		return ed.evaler.HasVariable("fn-"+head) || ed.isExternal[head]
+		return ed.evaler.Global()["fn-"+head] != nil || ed.isExternal[head]
 	}
 }
 
@@ -40,8 +40,7 @@ func colorVariable(n parse.Node, ed *Editor) string {
 	if pn.Type != parse.Variable || len(pn.Value) == 0 {
 		return ""
 	}
-	has := ed.evaler.HasVariable(pn.Value[1:])
-	if has {
+	if ed.evaler.Global()[pn.Value[1:]] != nil {
 		return ""
 	}
 	return styleForBadVariable
