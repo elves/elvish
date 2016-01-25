@@ -12,12 +12,6 @@ var (
 	attrForSelectedFile      = ";7"
 )
 
-// Styles for semantic coloring.
-var (
-	styleForBadCommand  = "31;3"
-	styleForBadVariable = "31;3"
-)
-
 var attrForType = map[TokenType]string{
 	ParserError:  "31;3",
 	Bareword:     "",
@@ -46,3 +40,9 @@ var styleForSep = map[byte]string{
 
 	'&': "1",
 }
+
+// Styles for semantic coloring.
+var (
+	styleForBadCommand  = ";31;3"
+	styleForBadVariable = ";31;3"
+)

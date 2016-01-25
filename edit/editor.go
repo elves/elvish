@@ -178,9 +178,9 @@ func (ed *Editor) refresh() error {
 	if ed.mode != modeCompletion {
 		// XXX Ignore error
 		ed.tokens, _ = tokenize(ed.line)
-		for _, t := range ed.tokens {
+		for i, t := range ed.tokens {
 			for _, colorist := range colorists {
-				t.MoreStyle += colorist(t.Node, ed.evaler)
+				ed.tokens[i].MoreStyle += colorist(t.Node, ed.evaler)
 			}
 		}
 	}
