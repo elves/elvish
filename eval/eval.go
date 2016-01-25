@@ -26,7 +26,6 @@ type ns map[string]Variable
 // shared among all evalCtx instances.
 type Evaler struct {
 	global      ns
-	builtin     ns
 	mod         map[string]ns
 	searchPaths []string
 	store       *store.Store
@@ -58,16 +57,16 @@ func HasFailure(vs []Value) bool {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store, dataDir string) *Evaler {
-	// Construct builtin namespace
+	// Construct initial global namespace
 	pid := str(strconv.Itoa(syscall.Getpid()))
-	builtin := ns{
+	global := ns{
 		"pid":   newInternalVariable(pid),
 		"ok":    newInternalVariable(ok),
 		"true":  newInternalVariable(boolean(true)),
 		"false": newInternalVariable(boolean(false)),
 	}
 	for _, b := range builtinFns {
-		builtin[fnPrefix+b.Name] = newInternalVariable(b)
+		global[fnPrefix+b.Name] = newInternalVariable(b)
 	}
 
 	// Construct searchPaths
@@ -78,10 +77,7 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 		searchPaths = []string{"/bin"}
 	}
 
-	return &Evaler{
-		ns{}, builtin, map[string]ns{},
-		searchPaths, st,
-	}
+	return &Evaler{global, map[string]ns{}, searchPaths, st}
 }
 
 func printExitus(e exitus) {
@@ -267,7 +263,7 @@ func (ev *Evaler) Source(fname string) ([]Value, error) {
 // HasVariable reports whether a variable is found in the global or builtin
 // namespace of an Evaler.
 func (ev *Evaler) HasVariable(name string) bool {
-	return ev.global[name] != nil || ev.builtin[name] != nil
+	return ev.global[name] != nil
 }
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
@@ -290,11 +286,6 @@ func (ec *evalCtx) ResolveVar(ns, name string) Variable {
 	}
 	if may("up") {
 		if v, ok := ec.up[name]; ok {
-			return v
-		}
-	}
-	if may("builtin") {
-		if v, ok := ec.builtin[name]; ok {
 			return v
 		}
 	}
