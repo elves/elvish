@@ -1,5 +1,6 @@
 package edit
 
+// Styles for UI.
 var (
 	attrForPrompt            = ""
 	attrForRprompt           = "7"
@@ -9,6 +10,12 @@ var (
 	attrForCurrentCompletion = ";7"
 	attrForCompletedHistory  = "4"
 	attrForSelectedFile      = ";7"
+)
+
+// Styles for semantic coloring.
+var (
+	styleForBadCommand  = "31;3"
+	styleForBadVariable = "31;3"
 )
 
 var attrForType = map[TokenType]string{

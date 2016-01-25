@@ -59,6 +59,9 @@ func (c *completion) next(cycle bool) {
 func startCompletion(ed *Editor, k Key) *leReturn {
 	token := tokenAtDot(ed)
 	node := token.Node
+	if node == nil {
+		return nil
+	}
 
 	c := &completion{
 		start: node.Begin(),
