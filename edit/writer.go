@@ -329,7 +329,7 @@ func renderNavColumn(nc *navColumn, w, h int) *buffer {
 
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
-func (w *writer) refresh(bs *editorState) error {
+func (w *writer) refresh(es *editorState) error {
 	winsize := sys.GetWinsize(int(w.file.Fd()))
 	width, height := int(winsize.Col), int(winsize.Row)
 
@@ -340,7 +340,7 @@ func (w *writer) refresh(bs *editorState) error {
 
 	b.newlineWhenFull = true
 
-	b.writes(bs.prompt, attrForPrompt)
+	b.writes(es.prompt, attrForPrompt)
 
 	if b.line() == 0 && b.col*2 < b.width {
 		b.indent = b.col
@@ -348,11 +348,11 @@ func (w *writer) refresh(bs *editorState) error {
 
 	// i keeps track of number of bytes written.
 	i := 0
-	if bs.dot == 0 {
+	if es.dot == 0 {
 		b.dot = b.cursor()
 	}
 
-	comp := bs.completion
+	comp := es.completion
 	hasComp := comp != nil && comp.current != -1
 
 	nowAt := func(i int) {
@@ -366,13 +366,13 @@ func (w *writer) refresh(bs *editorState) error {
 				b.writes(part.text, attr)
 			}
 		}
-		if bs.dot == i {
+		if es.dot == i {
 			b.dot = b.cursor()
 		}
 	}
 	nowAt(0)
 tokens:
-	for _, token := range bs.tokens {
+	for _, token := range es.tokens {
 		for _, r := range token.Text {
 			if hasComp && comp.start <= i && i < comp.end {
 				// Silence the part that is being completed
@@ -382,34 +382,34 @@ tokens:
 			i += utf8.RuneLen(r)
 
 			nowAt(i)
-			if bs.mode == modeHistory && i == len(bs.history.prefix) {
+			if es.mode == modeHistory && i == len(es.history.prefix) {
 				break tokens
 			}
 		}
 	}
 
-	if bs.mode == modeHistory {
+	if es.mode == modeHistory {
 		// Put the rest of current history, position the cursor at the
 		// end of the line, and finish writing
-		h := bs.history
+		h := es.history
 		b.writes(h.line[len(h.prefix):], attrForCompletedHistory)
 		b.dot = b.cursor()
 	}
 
 	// Write rprompt
-	padding := b.width - b.col - WcWidths(bs.rprompt)
+	padding := b.width - b.col - WcWidths(es.rprompt)
 	if padding >= 1 {
 		b.newlineWhenFull = false
 		b.writePadding(padding, "")
-		b.writes(bs.rprompt, attrForRprompt)
+		b.writes(es.rprompt, attrForRprompt)
 	}
 
 	// bufMode
-	if bs.mode != modeInsert {
+	if es.mode != modeInsert {
 		b := newBuffer(width)
 		bufMode = b
 		text := ""
-		switch bs.mode {
+		switch es.mode {
 		case modeCommand:
 			text = "COMMAND"
 		case modeCompletion:
@@ -417,17 +417,17 @@ tokens:
 		case modeNavigation:
 			text = "NAVIGATING"
 		case modeHistory:
-			text = fmt.Sprintf("HISTORY #%d", bs.history.current)
+			text = fmt.Sprintf("HISTORY #%d", es.history.current)
 		}
 		b.writes(TrimWcWidth(" "+text+" ", width), attrForMode)
 	}
 
 	// bufTips
 	// TODO tips is assumed to contain no newlines.
-	if len(bs.tips) > 0 {
+	if len(es.tips) > 0 {
 		b := newBuffer(width)
 		bufTips = b
-		b.writes(TrimWcWidth(strings.Join(bs.tips, ", "), width), attrForTip)
+		b.writes(TrimWcWidth(strings.Join(es.tips, ", "), width), attrForTip)
 	}
 
 	hListing := 0
@@ -451,7 +451,7 @@ tokens:
 	}
 
 	// Render bufListing under the maximum height constraint
-	nav := bs.navigation
+	nav := es.navigation
 	if hListing > 0 && comp != nil || nav != nil {
 		b := newBuffer(width)
 		bufListing = b
@@ -475,7 +475,7 @@ tokens:
 				cols = 1
 			}
 			lines := CeilDiv(len(cands), cols)
-			bs.completionLines = lines
+			es.completionLines = lines
 
 			// Determine the window to show.
 			low, high := findWindow(lines, comp.current%lines, hListing)
