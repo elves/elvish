@@ -14,18 +14,23 @@ const (
 )
 
 type Token struct {
-	Type TokenType
-	Text string
-	Node parse.Node
+	Type      TokenType
+	Text      string
+	Node      parse.Node
+	MoreStyle string
 }
 
 var tokensBufferSize = 16
+
+func parserError(text string) Token {
+	return Token{ParserError, text, nil, ""}
+}
 
 func tokenize(src string) ([]Token, error) {
 	lastEnd := 0
 	n, err := parse.Parse("[interactive code]", src)
 	if n == nil {
-		return []Token{{ParserError, src, nil}}, err
+		return []Token{{ParserError, src, nil, ""}}, err
 	}
 
 	tokenCh := make(chan Token, tokensBufferSize)
@@ -36,7 +41,7 @@ func tokenize(src string) ([]Token, error) {
 		for token := range tokenCh {
 			begin := token.Node.Begin()
 			if begin > lastEnd {
-				tokens = append(tokens, Token{ParserError, src[lastEnd:begin], nil})
+				tokens = append(tokens, parserError(src[lastEnd:begin]))
 			}
 			tokens = append(tokens, token)
 			lastEnd = token.Node.End()
@@ -48,7 +53,7 @@ func tokenize(src string) ([]Token, error) {
 
 	<-tokensDone
 	if lastEnd != len(src) {
-		tokens = append(tokens, Token{ParserError, src[lastEnd:], nil})
+		tokens = append(tokens, parserError(src[lastEnd:]))
 	}
 	return tokens, err
 }
@@ -71,7 +76,7 @@ func produceTokens(n parse.Node, tokenCh chan<- Token) {
 		case *parse.Sep:
 			tokenType = Sep
 		}
-		tokenCh <- Token{tokenType, n.SourceText(), n}
+		tokenCh <- Token{tokenType, n.SourceText(), n, ""}
 	}
 	for _, child := range n.Children() {
 		produceTokens(child, tokenCh)

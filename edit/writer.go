@@ -377,7 +377,7 @@ tokens:
 			if hasComp && comp.start <= i && i < comp.end {
 				// Silence the part that is being completed
 			} else {
-				b.write(r, attrForType[token.Type])
+				b.write(r, attrForType[token.Type]+token.MoreStyle)
 			}
 			i += utf8.RuneLen(r)
 
