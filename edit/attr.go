@@ -43,6 +43,7 @@ var styleForSep = map[byte]string{
 
 // Styles for semantic coloring.
 var (
-	styleForBadCommand  = ";31;3"
+	styleForGoodCommand = ";32"
+	styleForBadCommand  = ";31"
 	styleForBadVariable = ";31;3"
 )

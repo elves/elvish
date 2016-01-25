@@ -37,6 +37,7 @@ type editorState struct {
 	completionLines       int
 	navigation            *navigation
 	history               history
+	isExternal            map[string]bool
 }
 
 type history struct {
@@ -180,7 +181,7 @@ func (ed *Editor) refresh() error {
 		ed.tokens, _ = tokenize(ed.line)
 		for i, t := range ed.tokens {
 			for _, colorist := range colorists {
-				ed.tokens[i].MoreStyle += colorist(t.Node, ed.evaler)
+				ed.tokens[i].MoreStyle += colorist(t.Node, ed)
 			}
 		}
 	}
@@ -380,6 +381,8 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 // other signals.
 func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 	ed.editorState = editorState{}
+	go ed.updateIsExternal()
+
 	ed.writer.oldBuf.cells = nil
 	ones := ed.reader.Chan()
 

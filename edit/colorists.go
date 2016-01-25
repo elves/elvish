@@ -5,19 +5,34 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type colorist func(parse.Node, *eval.Evaler) string
+type colorist func(parse.Node, *Editor) string
 
 var colorists = []colorist{
 	colorFormHead,
 	colorVariable,
 }
 
-func colorFormHead(n parse.Node, ev *eval.Evaler) string {
+func colorFormHead(n parse.Node, ed *Editor) string {
 	// BUG doesn't work when the form head is compound
-	return ""
+	n, head := formHead(n)
+	if n == nil {
+		return ""
+	}
+	if goodFormHead(head, ed) {
+		return styleForGoodCommand
+	}
+	return styleForBadCommand
 }
 
-func colorVariable(n parse.Node, ev *eval.Evaler) string {
+func goodFormHead(head string, ed *Editor) bool {
+	if eval.DontSearch(head) {
+		return eval.IsExecutable(head)
+	} else {
+		return ed.evaler.HasVariable("fn-"+head) || ed.isExternal[head]
+	}
+}
+
+func colorVariable(n parse.Node, ed *Editor) string {
 	pn, ok := n.(*parse.Primary)
 	if !ok {
 		return ""
@@ -25,7 +40,7 @@ func colorVariable(n parse.Node, ev *eval.Evaler) string {
 	if pn.Type != parse.Variable || len(pn.Value) == 0 {
 		return ""
 	}
-	has := ev.HasVariable(pn.Value[1:])
+	has := ed.evaler.HasVariable(pn.Value[1:])
 	if has {
 		return ""
 	}

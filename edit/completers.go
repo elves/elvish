@@ -33,6 +33,13 @@ func complFormHead(n parse.Node, ed *Editor) ([]*candidate, int) {
 				tokenPart{head, false}, tokenPart{s[len(head):], true}))
 		}
 	}
+	// XXX reduplication
+	for s := range ed.isExternal {
+		if strings.HasPrefix(s, head) {
+			cands = append(cands, newCandidate(
+				tokenPart{head, false}, tokenPart{s[len(head):], true}))
+		}
+	}
 	return cands, n.Begin()
 }
 
