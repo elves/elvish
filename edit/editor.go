@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
 )
@@ -52,6 +53,7 @@ type Editor struct {
 	sigs      <-chan os.Signal
 	histories []string
 	store     *store.Store
+	evaler    *eval.Evaler
 	cmdSeq    int
 	editorState
 }
@@ -142,7 +144,7 @@ func (ed *Editor) nextHistory() bool {
 }
 
 // NewEditor creates an Editor.
-func NewEditor(file *os.File, sigs <-chan os.Signal, st *store.Store) *Editor {
+func NewEditor(file *os.File, sigs <-chan os.Signal, ev *eval.Evaler, st *store.Store) *Editor {
 	seq := -1
 	if st != nil {
 		var err error
@@ -159,6 +161,7 @@ func NewEditor(file *os.File, sigs <-chan os.Signal, st *store.Store) *Editor {
 		reader: NewReader(file),
 		sigs:   sigs,
 		store:  st,
+		evaler: ev,
 		cmdSeq: seq,
 	}
 }
