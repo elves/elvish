@@ -61,6 +61,7 @@ func tokenize(src string) ([]Token, error) {
 func produceTokens(n parse.Node, tokenCh chan<- Token) {
 	if len(n.Children()) == 0 {
 		tokenType := ParserError
+		moreStyle := ""
 		switch n := n.(type) {
 		case *parse.Primary:
 			switch n.Type {
@@ -75,8 +76,9 @@ func produceTokens(n parse.Node, tokenCh chan<- Token) {
 			}
 		case *parse.Sep:
 			tokenType = Sep
+			moreStyle = styleForSep[n.SourceText()[0]]
 		}
-		tokenCh <- Token{tokenType, n.SourceText(), n, ""}
+		tokenCh <- Token{tokenType, n.SourceText(), n, moreStyle}
 	}
 	for _, child := range n.Children() {
 		produceTokens(child, tokenCh)

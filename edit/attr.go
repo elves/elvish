@@ -18,20 +18,24 @@ var attrForType = map[TokenType]string{
 	DoubleQuoted: "33",
 	Variable:     "35",
 	Sep:          "",
-	/*
-		parse.ItemSpace:             "36", // only applies to comments
-		parse.ItemRedirLeader:       "32",
-		parse.ItemStatusRedirLeader: "32",
-		parse.ItemPipe:              "32",
-		parse.ItemError:             "31",
-		parse.ItemQuestionLParen:    "34;1",
-		parse.ItemLParen:            "34;1",
-		parse.ItemRParen:            "34;1",
-		parse.ItemLBracket:          "34;1",
-		parse.ItemRBracket:          "34;1",
-		parse.ItemLBrace:            "34;1",
-		parse.ItemRBrace:            "34;1",
-		parse.ItemAmpersand:         "1",
-		parse.ItemDollar:            "35",
-	*/
+}
+
+var styleForSep = map[byte]string{
+	// unknown : "31",
+	'#': "36",
+
+	'>': "32",
+	'<': "32",
+	'?': "32", // applies to both ?( and ?>
+	// "?(": "34;1",
+	'|': "32",
+
+	'(': "1",
+	')': "1",
+	'[': "1",
+	']': "1",
+	'{': "1",
+	'}': "1",
+
+	'&': "1",
 }
