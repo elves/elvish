@@ -4,7 +4,7 @@ var (
 	attrForPrompt            = ""
 	attrForRprompt           = "7"
 	attrForCompleted         = ";4"
-	attrForMode              = "1;7;33"
+	attrForMode              = "1;3;35"
 	attrForTip               = ""
 	attrForCurrentCompletion = ";7"
 	attrForCompletedHistory  = "4"

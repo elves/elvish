@@ -411,15 +411,15 @@ tokens:
 		text := ""
 		switch bs.mode {
 		case modeCommand:
-			text = "Command"
+			text = "COMMAND"
 		case modeCompletion:
-			text = fmt.Sprintf("Completing %s", comp.completer)
+			text = fmt.Sprintf("COMPLETING %s", comp.completer)
 		case modeNavigation:
-			text = "Navigating"
+			text = "NAVIGATING"
 		case modeHistory:
-			text = fmt.Sprintf("History #%d", bs.history.current)
+			text = fmt.Sprintf("HISTORY #%d", bs.history.current)
 		}
-		b.writes(TrimWcWidth(text, width), attrForMode)
+		b.writes(TrimWcWidth(" "+text+" ", width), attrForMode)
 	}
 
 	// bufTips
