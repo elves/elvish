@@ -3,11 +3,9 @@ package eval
 import (
 	"fmt"
 	"os"
-	"strings"
 	"syscall"
 
 	"github.com/elves/elvish/errutil"
-	"github.com/elves/elvish/parse"
 )
 
 const (
@@ -29,42 +27,6 @@ func newExitedStateUpdate(e exitus) *stateUpdate {
 
 func newUnexitedStateUpdate(u string) *stateUpdate {
 	return &stateUpdate{Exited: false, Update: u}
-}
-
-// isExecutable determines whether path refers to an executable file.
-func isExecutable(path string) bool {
-	f, err := os.Open(path)
-	if err != nil {
-		return false
-	}
-	defer f.Close()
-
-	fi, err := f.Stat()
-	if err != nil {
-		return false
-	}
-	fm := fi.Mode()
-	return !fm.IsDir() && (fm&0111 != 0)
-}
-
-// Search tries to resolve an external command and return the full (possibly
-// relative) path.
-func (ev *Evaler) Search(exe string) (string, error) {
-	for _, p := range []string{"/", "./", "../"} {
-		if strings.HasPrefix(exe, p) {
-			if isExecutable(exe) {
-				return exe, nil
-			}
-			return "", fmt.Errorf("external command %s not executable", parse.Quote(exe))
-		}
-	}
-	for _, p := range ev.searchPaths {
-		full := p + "/" + exe
-		if isExecutable(full) {
-			return full, nil
-		}
-	}
-	return "", fmt.Errorf("external command %s not found", parse.Quote(exe))
 }
 
 // execSpecial executes a builtin special form.
