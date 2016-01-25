@@ -797,19 +797,40 @@ func isPipelineSep(r rune) bool {
 	return r == '\n' || r == ';'
 }
 
-func isPipelineSepOrSpace(r rune) bool {
-	return isPipelineSep(r) || isSpace(r)
-}
-
 func startsChunk(r rune) bool {
 	return isPipelineSep(r) || startsPipeline(r)
 }
 
+func (bn *Chunk) parseSeps(rd *reader) {
+	for {
+		r := rd.peek()
+		if isPipelineSep(r) {
+			// parse as a Sep
+			parseSep(bn, rd, r)
+		} else if isSpace(r) {
+			// parse a run of spaces as a Sep
+			parseSpaces(bn, rd)
+		} else if r == '#' {
+			// parse a comment as a Sep
+			begin := rd.pos
+			for {
+				r := rd.next()
+				if r == EOF || r == '\n' {
+					break
+				}
+			}
+			addSep(bn, begin, rd)
+		} else {
+			break
+		}
+	}
+}
+
 func (bn *Chunk) parse(rd *reader) {
-	parseRunAsSep(bn, rd, isPipelineSepOrSpace)
+	bn.parseSeps(rd)
 	for startsPipeline(rd.peek()) {
 		bn.addToPipelines(parsePipeline(rd))
-		parseRunAsSep(bn, rd, isPipelineSepOrSpace)
+		bn.parseSeps(rd)
 	}
 }
 
