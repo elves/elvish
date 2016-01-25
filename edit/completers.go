@@ -16,8 +16,27 @@ var completers = []struct {
 	name string
 	completer
 }{
+	{"variable", complVariable},
 	{"command name", complFormHead},
 	{"argument", complArg},
+}
+
+func complVariable(n parse.Node, ed *Editor) ([]*candidate, int) {
+	primary, ok := n.(*parse.Primary)
+	if !ok || primary.Type != parse.Variable {
+		return nil, 0
+	}
+
+	head := primary.Value[1:]
+	cands := []*candidate{}
+	for variable := range ed.evaler.Global() {
+		if strings.HasPrefix(variable, head) {
+			cands = append(cands, newCandidate(
+				tokenPart{primary.Value, false},
+				tokenPart{variable[len(head):], true}))
+		}
+	}
+	return cands, n.Begin()
 }
 
 func complFormHead(n parse.Node, ed *Editor) ([]*candidate, int) {
