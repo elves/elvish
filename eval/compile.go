@@ -118,6 +118,9 @@ func (cp *compiler) form(n *parse.Form) stateUpdatesOp {
 			return func(ec *evalCtx) <-chan *stateUpdate {
 				return ec.execSpecial(op)
 			}
+		} else {
+			cp.registerVariableGet(fnPrefix + headStr)
+			// XXX Dynamic head names should always refer to external commands
 		}
 	}
 	headOp := cp.compound(n.Head)
@@ -330,28 +333,65 @@ func variable(qname string, p int) valuesOp {
 	}
 }
 
-func (cp *compiler) registerVariableGet(qname string) {
+func (cp *compiler) registerVariableGet(qname string) bool {
 	ns, name := splitQualifiedName(qname)
-	if ns == "up" || (ns == "" && !cp.thisScope()[name]) {
-		cp.capture[name] = true
+	if ns != "" && ns != "local" && ns != "up" {
+		// Variable in another mod, do nothing
+		return true
 	}
+	// Find in local scope
+	if ns == "" || ns == "local" {
+		if cp.thisScope()[name] {
+			return true
+		} else if ns == "local" {
+			return false
+		}
+	}
+	// Find in upper scopes
+	for i := len(cp.scopes) - 2; i >= 0; i-- {
+		if cp.scopes[i][name] {
+			// Existing name: record capture and return.
+			cp.capture[name] = true
+			return true
+		}
+	}
+	return false
 }
 
-func (cp *compiler) registerVariableSet(qname string) {
+func (cp *compiler) registerVariableSet(qname string) bool {
 	ns, name := splitQualifiedName(qname)
 	switch ns {
 	case "local":
 		cp.thisScope()[name] = true
+		return true
+	case "up":
+		for i := len(cp.scopes) - 2; i >= 0; i-- {
+			if cp.scopes[i][name] {
+				// Existing name: record capture and return.
+				cp.capture[name] = true
+				return true
+			}
+		}
+		return false
 	case "":
-		// Determine whether this is a new name by walking down the scope stack
-		for i := len(cp.scopes) - 1; i >= 0; i-- {
-			if _, ok := cp.scopes[i][name]; ok {
+		if cp.thisScope()[name] {
+			// A name on current scope. Do nothing.
+			return true
+		}
+		// Walk up the upper scopes
+		for i := len(cp.scopes) - 2; i >= 0; i-- {
+			if cp.scopes[i][name] {
 				// Existing name. Do nothing
-				return
+				cp.capture[name] = true
+				return true
 			}
 		}
 		// New name. Register on this scope!
 		cp.thisScope()[name] = true
+		return true
+	default:
+		// Variable in another mod, do nothing
+		return true
 	}
 }
 
@@ -361,7 +401,9 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 		return literalStr(n.Value)
 	case parse.Variable:
 		qname := n.Value[1:]
-		cp.registerVariableGet(qname)
+		if !cp.registerVariableGet(qname) {
+			cp.errorf(n.Begin(), "variable %s not found", n.Value)
+		}
 		return variable(qname, n.Begin())
 	// case parse.Wildcard:
 	case parse.ExitusCapture:
@@ -432,6 +474,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 		argNames[i] = name
 	}
 
+	// XXX The fiddlings with cp.capture is likely wrong.
 	thisScope := cp.pushScope()
 	for _, argName := range argNames {
 		thisScope[argName] = true

@@ -44,7 +44,9 @@ func compileSet(cp *compiler, fn *parse.Form) exitusOp {
 			values = fn.Args[i+1:]
 			break
 		}
-		cp.registerVariableSet(name)
+		if !cp.registerVariableSet(name) {
+			cp.errorf(cn.Begin(), "variable $%s not found", name)
+		}
 		names = append(names, name)
 	}
 
@@ -240,7 +242,7 @@ func compileFn(cp *compiler, fn *parse.Form) exitusOp {
 		cp.errorf(fn.Args[2].Begin(), "superfluous argument")
 	}
 
-	cp.registerVariableSet(varName)
+	cp.registerVariableSet(":" + varName)
 	op := cp.lambda(pn)
 
 	return func(ec *evalCtx) exitus {
