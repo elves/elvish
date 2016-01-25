@@ -8,10 +8,11 @@ func formHead(n parse.Node) (parse.Node, string) {
 	}
 
 	if primary, ok := n.(*parse.Primary); ok {
-		compound, head := simpleCompound(primary)
-		if form, ok := compound.Parent().(*parse.Form); ok {
-			if form.Head == compound {
-				return compound, head
+		if compound, head := simpleCompound(primary); compound != nil {
+			if form, ok := compound.Parent().(*parse.Form); ok {
+				if form.Head == compound {
+					return compound, head
+				}
 			}
 		}
 	}
