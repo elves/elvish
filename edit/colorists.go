@@ -25,10 +25,20 @@ func colorFormHead(n parse.Node, ed *Editor) string {
 }
 
 func goodFormHead(head string, ed *Editor) bool {
-	if eval.DontSearch(head) {
+	if isBuiltinSpecial[head] {
+		return true
+	} else if eval.DontSearch(head) {
 		return eval.IsExecutable(head)
 	} else {
 		return ed.evaler.Global()["fn-"+head] != nil || ed.isExternal[head]
+	}
+}
+
+var isBuiltinSpecial = map[string]bool{}
+
+func init() {
+	for _, name := range eval.BuiltinSpecialNames {
+		isBuiltinSpecial[name] = true
 	}
 }
 
