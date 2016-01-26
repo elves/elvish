@@ -19,6 +19,7 @@ func init() {
 	// Needed to work around init loop.
 	builtinFns = []*builtinFn{
 		&builtinFn{":", nop},
+		&builtinFn{"true", nop},
 
 		&builtinFn{"print", print},
 		&builtinFn{"println", println},
