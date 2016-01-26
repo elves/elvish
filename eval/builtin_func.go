@@ -23,15 +23,15 @@ func init() {
 		&builtinFn{"print", print},
 		&builtinFn{"println", println},
 
-		&builtinFn{"printchan", printchan},
-		&builtinFn{"feedchan", feedchan},
+		&builtinFn{"into-lines", intoLines},
+		&builtinFn{"from-lines", fromLines},
 
 		&builtinFn{"rat", ratFn},
 
 		&builtinFn{"put", put},
 		&builtinFn{"unpack", unpack},
 
-		&builtinFn{"parse-json", parseJSON},
+		&builtinFn{"from-json", fromJSON},
 
 		&builtinFn{"typeof", typeof},
 
@@ -119,7 +119,7 @@ func println(ec *evalCtx, args []Value) exitus {
 	return print(ec, args)
 }
 
-func printchan(ec *evalCtx, args []Value) exitus {
+func intoLines(ec *evalCtx, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}
@@ -132,19 +132,15 @@ func printchan(ec *evalCtx, args []Value) exitus {
 	return ok
 }
 
-func feedchan(ec *evalCtx, args []Value) exitus {
+func fromLines(ec *evalCtx, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}
 	in := ec.ports[0].f
 	out := ec.ports[1].ch
 
-	fmt.Println("WARNING: Only string input is supported at the moment.")
-
 	bufferedIn := bufio.NewReader(in)
-	// i := 0
 	for {
-		// fmt.Printf("[%v] ", i)
 		line, err := bufferedIn.ReadString('\n')
 		if err == io.EOF {
 			return ok
@@ -152,7 +148,6 @@ func feedchan(ec *evalCtx, args []Value) exitus {
 			return newFailure(err.Error())
 		}
 		out <- str(line[:len(line)-1])
-		// i++
 	}
 }
 
@@ -190,8 +185,8 @@ func unpack(ec *evalCtx, args []Value) exitus {
 	return ok
 }
 
-// parseJSON parses a stream of JSON data into Value's.
-func parseJSON(ec *evalCtx, args []Value) exitus {
+// fromJSON parses a stream of JSON data into Value's.
+func fromJSON(ec *evalCtx, args []Value) exitus {
 	if len(args) > 0 {
 		return argsError
 	}

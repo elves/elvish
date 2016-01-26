@@ -73,7 +73,7 @@ var evalTests = []struct {
 		strs("fish1.0", "fish1.1", "elvish1.0", "elvish1.1"), nomore},
 
 	// List, map and indexing
-	{"println [a b c] [&key value] | feedchan",
+	{"println [a b c] [&key value] | from-lines",
 		strs("[a b c][&key value]"), nomore},
 	{"put [a b c][2]", strs("c"), nomore},
 	{"put [&key value][key]", strs("value"), nomore},
