@@ -5,6 +5,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
 
@@ -82,7 +83,7 @@ func complFormHeadInner(head string, ed *Editor) []*candidate {
 		foundCommand(special)
 	}
 	for variable := range ed.evaler.Global() {
-		if len(variable) > 3 && variable[:3] == "fn-" {
+		if strings.HasPrefix(variable, eval.FnPrefix) {
 			foundCommand(variable[3:])
 		}
 	}

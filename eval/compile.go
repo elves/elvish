@@ -119,7 +119,7 @@ func (cp *compiler) form(n *parse.Form) stateUpdatesOp {
 				return ec.execSpecial(op)
 			}
 		} else {
-			cp.registerVariableGet(fnPrefix + headStr)
+			cp.registerVariableGet(FnPrefix + headStr)
 			// XXX Dynamic head names should always refer to external commands
 		}
 	}

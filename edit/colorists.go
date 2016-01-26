@@ -30,7 +30,8 @@ func goodFormHead(head string, ed *Editor) bool {
 	} else if eval.DontSearch(head) {
 		return eval.IsExecutable(head)
 	} else {
-		return ed.evaler.Global()["fn-"+head] != nil || ed.isExternal[head]
+		return ed.evaler.Global()[eval.FnPrefix+head] != nil ||
+			ed.isExternal[head]
 	}
 }
 

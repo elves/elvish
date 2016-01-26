@@ -56,7 +56,7 @@ func (ec *evalCtx) resolveNonSpecial(cmd Value) callable {
 
 	// Defined callable
 	ns, name := splitQualifiedName(cmdStr)
-	if v := ec.ResolveVar(ns, fnPrefix+name); v != nil {
+	if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
 		if clb, ok := v.Get().(callable); ok {
 			return clb
 		}

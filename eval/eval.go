@@ -17,7 +17,7 @@ import (
 	"github.com/elves/elvish/store"
 )
 
-const fnPrefix = "fn-"
+const FnPrefix = "fn-"
 
 // ns is a namespace.
 type ns map[string]Variable
@@ -66,7 +66,7 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 		"false": newInternalVariable(boolean(false)),
 	}
 	for _, b := range builtinFns {
-		global[fnPrefix+b.Name] = newInternalVariable(b)
+		global[FnPrefix+b.Name] = newInternalVariable(b)
 	}
 
 	// Construct searchPaths

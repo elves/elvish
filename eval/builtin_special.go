@@ -216,20 +216,15 @@ func makeFnOp(op valuesOp) valuesOp {
 	}
 }
 
-// FnForm = 'fn' StringPrimary { VariablePrimary } ClosurePrimary
+// FnForm = 'fn' StringPrimary LambdaPrimary
 //
-// fn defines a function. This isn't strictly needed, since user-defined
-// functions are just variables. The following two lines should be exactly
-// equivalent:
-//
-// fn f $a $b { put (* $a $b) (/ $a *b) }
-// var $fn-f = { |$a $b| put (* $a $b) (/ $a $b) }
+// fn f []{foobar} is a shorthand for set $fn-f = []{foobar}.
 func compileFn(cp *compiler, fn *parse.Form) exitusOp {
 	if len(fn.Args) == 0 {
 		cp.errorf(fn.End(), "should be followed by function name")
 	}
 	fnName := mustString(cp, fn.Args[0], "must be a literal string")
-	varName := fnPrefix + fnName
+	varName := FnPrefix + fnName
 
 	if len(fn.Args) == 1 {
 		cp.errorf(fn.Args[0].End(), "should be followed by a lambda")
