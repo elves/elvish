@@ -37,18 +37,17 @@ Planned features:
 
 Some things that the language is already capable of:
 
-* Running external programs and pipelines, of course (`~>` represents the
-  prompt): ✔
+* External programs and pipelines: (`~>` is the prompt):
   ```
   ~> vim README.md
   ...
   ~> cat -v /dev/random
   ...
-  ~> dmesg | grep bar
+  ~> dmesg | grep -i acpi
   ...
   ```
 
-* Some constructs look like lisp without the outermost pair of parentheses: ✔
+* Arithmetics using the prefix notation:
   ```
   ~> + 1 2
   ▶ 3
@@ -56,19 +55,13 @@ Some things that the language is already capable of:
   ▶ 9
   ```
 
-* Use single and double quotes to preserve spaces and special characters: ✔
+* Quoting:
   ```
   ~> echo "|  C'est pas une pipe."
   |  C'est pas une pipe.
   ```
 
-* Barewords are string literals: ✔
-  ```
-  ~> = a 'a'
-  ▶ $true
-  ```
-
-* Lists and maps admit indexing and are first-class values: ✔
+* Lists and maps:
   ```
   ~> println list: [a list] map: [&key &value]
   list: [a list] map: [&key value]
@@ -78,7 +71,7 @@ Some things that the language is already capable of:
   value
   ```
 
-* Set variable with `set`: ✔
+* Variables:
   ```
   ~> set v = [&foo bar]; put $v[foo]
   ▶ bar
@@ -105,7 +98,7 @@ Some things that the language is already capable of:
   ▶ 6.5
   ```
 
-* Use the `env:` namespace for environmental variables:
+* A separate `env:` namespace for environmental variables:
   ```
   ~> put $env:HOME
   ▶ /home/xiaq
@@ -118,16 +111,17 @@ currently working on.
 
 ## Name
 
-In rogue-likes, items made by the elves have a reputation of high quality.
-These are usually called **elven** items, but I chose **elvish** for an
-obvious reason.
+In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the
+elves have a reputation of high quality.  These are usually called **elven**
+items, but I chose **elvish** for an obvious reason.
 
 The adjective for elvish is also "elvish", not "elvishy" and definitely not
 "elvishish".
 
-I am aware of the fictional [elvish
-language](https://en.wikipedia.org/wiki/Elvish_language), but I believe there
-is not much room for confusion and the google-ability is still pretty good.
+It is not directly related to the fictional
+[elvish language](https://en.wikipedia.org/wiki/Elvish_language), but I
+believe there is not much room for confusion and the google-ability is still
+pretty good.
 
 
 ## Building
