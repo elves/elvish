@@ -348,9 +348,6 @@ func (w *writer) refresh(es *editorState) error {
 
 	// i keeps track of number of bytes written.
 	i := 0
-	if es.dot == 0 {
-		b.dot = b.cursor()
-	}
 
 	comp := es.completion
 	hasComp := comp != nil && comp.current != -1
