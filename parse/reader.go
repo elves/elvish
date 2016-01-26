@@ -11,9 +11,10 @@ import (
 //
 // NOTE: The str member is assumed to be valid UF-8.
 type reader struct {
-	src   string
-	pos   int
-	error error
+	src     string
+	pos     int
+	overEOF int
+	error   error
 }
 
 const (
@@ -61,6 +62,7 @@ func (rd *reader) next() rune {
 		return ParseError
 	}
 	if rd.pos == len(rd.src) {
+		rd.overEOF += 1
 		return EOF
 	}
 	r, s := utf8.DecodeRuneInString(rd.src[rd.pos:])
@@ -69,6 +71,10 @@ func (rd *reader) next() rune {
 }
 
 func (rd *reader) backup() {
+	if rd.overEOF > 0 {
+		rd.overEOF -= 1
+		return
+	}
 	_, s := utf8.DecodeLastRuneInString(rd.src[:rd.pos])
 	rd.pos -= s
 }

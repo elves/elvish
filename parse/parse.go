@@ -835,7 +835,7 @@ func (bn *Chunk) parse(rd *reader) {
 }
 
 func Parse(name, src string) (*Chunk, error) {
-	rd := &reader{src, 0, nil}
+	rd := &reader{src, 0, 0, nil}
 	bn := parseChunk(rd)
 	if rd.error != nil {
 		return bn, errutil.NewContextualError(
