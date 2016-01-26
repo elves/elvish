@@ -30,6 +30,7 @@ func init() {
 		&builtinFn{"rat", wrapFn(ratFn)},
 
 		&builtinFn{"put", put},
+		&builtinFn{"put-all", wrapFn(putAll)},
 		&builtinFn{"unpack", wrapFn(unpack)},
 
 		&builtinFn{"from-json", wrapFn(fromJSON)},
@@ -158,6 +159,16 @@ func put(ec *evalCtx, args []Value) exitus {
 	out := ec.ports[1].ch
 	for _, a := range args {
 		out <- a
+	}
+	return ok
+}
+
+func putAll(ec *evalCtx, lists ...*table) exitus {
+	out := ec.ports[1].ch
+	for _, list := range lists {
+		for _, x := range list.List {
+			out <- x
+		}
 	}
 	return ok
 }
