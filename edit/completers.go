@@ -17,8 +17,9 @@ var completers = []struct {
 	completer
 }{
 	{"variable", complVariable},
-	{"command name", complEmptyChunk},
+	{"command name", complNewForm},
 	{"command name", makeCompoundCompleter(complFormHead)},
+	{"argument", complNewArg},
 	{"argument", makeCompoundCompleter(complArg)},
 }
 
@@ -40,8 +41,11 @@ func complVariable(n parse.Node, ed *Editor) []*candidate {
 	return cands
 }
 
-func complEmptyChunk(n parse.Node, ed *Editor) []*candidate {
+func complNewForm(n parse.Node, ed *Editor) []*candidate {
 	if _, ok := n.(*parse.Chunk); ok {
+		return complFormHeadInner("", ed)
+	}
+	if _, ok := n.Parent().(*parse.Chunk); ok {
 		return complFormHeadInner("", ed)
 	}
 	return nil
@@ -93,7 +97,22 @@ func complFormHeadInner(head string, ed *Editor) []*candidate {
 	return cands
 }
 
+func complNewArg(n parse.Node, ed *Editor) []*candidate {
+	sn, ok := n.(*parse.Sep)
+	if !ok {
+		return nil
+	}
+	if _, ok := sn.Parent().(*parse.Form); !ok {
+		return nil
+	}
+	return complArgInner("")
+}
+
 func complArg(cn *parse.Compound, head string, ed *Editor) []*candidate {
+	return complArgInner(head)
+}
+
+func complArgInner(head string) []*candidate {
 	// Assume that the argument is an incomplete filename
 	dir, file := path.Split(head)
 	var all []string
