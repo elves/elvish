@@ -5,7 +5,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
 
@@ -79,20 +78,18 @@ func complFormHeadInner(head string, ed *Editor) []*candidate {
 			})
 		}
 	}
-	for _, s := range builtins {
-		foundCommand(s)
+	for special := range isBuiltinSpecial {
+		foundCommand(special)
 	}
-	for s := range ed.isExternal {
-		foundCommand(s)
+	for variable := range ed.evaler.Global() {
+		if len(variable) > 3 && variable[:3] == "fn-" {
+			foundCommand(variable[3:])
+		}
+	}
+	for command := range ed.isExternal {
+		foundCommand(command)
 	}
 	return cands
-}
-
-var builtins []string
-
-func init() {
-	builtins = append(builtins, eval.BuiltinFnNames...)
-	builtins = append(builtins, eval.BuiltinSpecialNames...)
 }
 
 func complArg(cn *parse.Compound, head string, ed *Editor) []*candidate {
