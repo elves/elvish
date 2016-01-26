@@ -397,7 +397,7 @@ func plus(ec *evalCtx, nums ...float64) exitus {
 
 func minus(ec *evalCtx, sum float64, nums ...float64) exitus {
 	out := ec.ports[1].ch
-	for _, f := range nums[1:] {
+	for _, f := range nums {
 		sum -= f
 	}
 	out <- str(fmt.Sprintf("%g", sum))
