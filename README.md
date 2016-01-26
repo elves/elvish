@@ -1,15 +1,13 @@
-# An experimental Unix shell
+# A novel Unix shell
 
-This is a work in progress. Things may change and/or break without notice. You
-have been warned...
-
-Fancy badges:
 [![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
 [![Build Status](https://travis-ci.org/elves/elvish.svg?branch=master)](https://travis-ci.org/elves/elvish)
 
-## Obligatory screenshots
-> I love software websites without screenshots of the actual thing.
-> -- No one ever
+This project aims to explore the potentials of the Unix shell. It is a work in
+progress; things will change without warning.
+
+
+## The Interface
 
 Syntax highlighting (also showcasing right-hand-side prompt):
 
@@ -23,6 +21,114 @@ Navigation mode (triggered with ^N, inspired by
 [ranger](http://ranger.nongnu.org/)):
 
 ![navigation mode](./screenshots/navigation.png)
+
+
+Planned features:
+
+* Auto-suggestion (like fish)
+* Programmable line editor
+* Directory jumping (#27)
+* A vi keybinding that makes sense
+* History listing (like
+  [ptpython](https://github.com/jonathanslenders/ptpython))
+* Intuitive multiline editing
+
+## The Language
+
+Some things that the language is already capable of:
+
+* Running external programs and pipelines, of course (`~>` represents the
+  prompt): ✔
+  ```
+  ~> vim README.md
+  ...
+  ~> cat -v /dev/random
+  ...
+  ~> dmesg | grep bar
+  ...
+  ```
+
+* Some constructs look like lisp without the outermost pair of parentheses: ✔
+  ```
+  ~> + 1 2
+  ▶ 3
+  ~> * (+ 1 2) 3
+  ▶ 9
+  ```
+
+* Use single and double quotes to preserve spaces and special characters: ✔
+  ```
+  ~> echo "|  C'est pas une pipe."
+  |  C'est pas une pipe.
+  ```
+
+* Barewords are string literals: ✔
+  ```
+  ~> = a 'a'
+  ▶ $true
+  ```
+
+* Lists and maps admit indexing and are first-class values: ✔
+  ```
+  ~> println list: [a list] map: [&key &value]
+  list: [a list] map: [&key value]
+  ~> println [a b c][0]
+  a
+  ~> println [&key value][key]
+  value
+  ```
+
+* Set variable with `set`: ✔
+  ```
+  ~> set v = [&foo bar]; put $v[foo]
+  ▶ bar
+  ```
+
+* Defining functions:
+  ```
+  ~> fn map [f xs]{ put [(put-all $xs | each $f)] }
+  ```
+
+* Lisp-like functional programming:
+  ```
+  ~> map [x]{+ 10 $x} [1 2 3]
+  [11 12 13]
+  ~> map [x]{/ $x 2} (map [x]{+ 10 $x} [1 2 3])
+  [5.5 6 6.5]
+  ```
+
+* More natural concatenative style:
+  ```
+  ~> put 1 2 3 | each [x]{+ 10 $x} | each [x]{/ $x 2}
+  ▶ 5.5
+  ▶ 6
+  ▶ 6.5
+  ```
+
+* Use the `env:` namespace for environmental variables:
+  ```
+  ~> put $env:HOME
+  ▶ /home/xiaq
+  ~> set $env:PATH = $env:PATH":/bin"
+  ```
+
+The language is not yet complete. Notably, control structures like `if` and
+`while` are not yet implemented. The issues list contain some of things I'm
+currently working on.
+
+## Name
+
+In rogue-likes, items made by the elves have a reputation of high quality.
+These are usually called **elven** items, but I chose **elvish** for an
+obvious reason.
+
+The adjective for elvish is also "elvish", not "elvishy" and definitely not
+"elvishish".
+
+I am aware of the fictional [elvish
+language](https://en.wikipedia.org/wiki/Elvish_language), but I believe there
+is not much room for confusion and the google-ability is still pretty good.
+
 
 ## Building
 
@@ -88,137 +194,4 @@ attributes and filters
 
 By contributing, you agree to license your code under the same license as
 existing source code of Elvish. See the [License](#license) section.
-
-## Name
-
-In rogue-likes, items made by the elves have a reputation of high quality.
-These are usually called **elven** items, but I chose **elvish** for obvious
-reasons.
-
-The adjective for elvish is also "elvish", not "elvishy" and definitely not
-"elvishish".
-
-I am aware of the fictional [elvish
-language](https://en.wikipedia.org/wiki/Elvish_language), but I believe there
-is not much room for confusion and the google-ability is still pretty good.
-
-## The Editor
-
-Those marked with ✔ are implemented (but could be broken from time to
-time).
-
-Like fish:
-
-* Syntax highlighting ✔
-* Auto-suggestion
-
-Like zsh:
-
-* Right-hand-side prompt ✔
-* Dropdown menu completion ✔
-* Programmable line editor
-
-And:
-
-* A vi keybinding that makes sense
-* More intuitive multiline editing
-* Some method to save typed snippets into a script
-* A navigation mode for easier casual exploration of directories ✔
-
-## The Language
-
-(Like the previous section, only those marked with ✔ have been implemented.)
-
-* Running external programs and pipelines, of course (`~>` represents the
-  prompt): ✔
-  ```
-  ~> vim README.md
-  ...
-  ~> cat -v /dev/random
-  ...
-  ~> dmesg | grep bar
-  ...
-  ```
-
-* Some constructs look like lisp without the outermost pair of parentheses: ✔
-  ```
-  ~> + 1 2
-  ▶ 3
-  ~> * (+ 1 2) 3
-  ▶ 9
-  ```
-
-* Use single and double quotes to preserve spaces and special characters: ✔
-  ```
-  ~> echo "|  C'est pas une pipe."
-  |  C'est pas une pipe.
-  ```
-
-* Barewords are string literals: ✔
-  ```
-  ~> = a 'a'
-  ▶ $true
-  ```
-
-* Lists and maps admit indexing and are first-class values: ✔
-  ```
-  ~> println list: [a list] map: [&key &value]
-  list: [a list] map: [&key value]
-  ~> println [a b c][0]
-  a
-  ~> println [&key value][key]
-  value
-  ```
-
-* Set variable with `set`: ✔
-  ```
-  ~> set v = [&foo bar]; put $v[foo]
-  ▶ bar
-  ```
-
-* First-class closures, lisp-like functional programming:
-  ```
-  ~> map [x]{* 2 $x} [1 2 3]
-  [2 4 6]
-  ~> filter [x]{> $x 2} [1 2 3 4 5]
-  [3 4 5]
-  ~> map [x]{* 2 $x} (filter [x]{> $x 2} [1 2 3 4 5])
-  [6 8 10]
-  ```
-
-* Get rid of lots of irritating superfluous parentheses with pipelines (`put`
-  is the builtin for outputting compound data):
-  ```
-  ~> put 1 2 3 4 5 | filter [x]{> $x 2} | map [x]{* 2 $x}
-  6 8 10
-  ```
-
-* Use the `env:` namespace for environmental variables: ✔
-  ```
-  ~> put $env:HOME
-  ▶ /home/xiaq
-  ~> set $env:PATH = $env:PATH":/bin"
-  ```
-
-The language is not yet complete. The issues list contain many of things
-I'm currently thinking about.
-
-## Motivation
-
-This experiment has a number of motivations. Some of them:
-
-* It attempts to prove that a shell language can be a handy interface to the
-  operating system **and** a decent programming language at the same time; Many
-  existing shells recognize the former but blatantly ignore the latter.
-
-* It attempts to build a **better interface** to the operating system, trying
-  to strike the right balance between the tool philosophy of Unix and the
-  tremendous usefulness of a more integrated system.
-
-* It also attempts to build a **better language**, learning from the success
-  and failure of programming language designs.
-
-* It attempts to exploit a facility Shell programmers are very familiar with,
-  but virtually unknown to other programmers - the pipeline. That leads us to
-  the topic of the next few sections.
 
