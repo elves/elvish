@@ -2,6 +2,13 @@ package edit
 
 import "github.com/elves/elvish/parse"
 
+func isFormHead(compound *parse.Compound) bool {
+	if form, ok := compound.Parent().(*parse.Form); ok {
+		return form.Head == compound
+	}
+	return false
+}
+
 func formHead(n parse.Node) (parse.Node, string) {
 	if _, ok := n.(*parse.Chunk); ok {
 		return n, ""

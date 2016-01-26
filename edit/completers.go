@@ -17,8 +17,9 @@ var completers = []struct {
 	completer
 }{
 	{"variable", complVariable},
-	{"command name", complFormHead},
-	{"argument", complArg},
+	{"command name", complEmptyChunk},
+	{"command name", makeCompoundCompleter(complFormHead)},
+	{"argument", makeCompoundCompleter(complArg)},
 }
 
 func complVariable(n parse.Node, ed *Editor) ([]*candidate, int) {
@@ -39,27 +40,50 @@ func complVariable(n parse.Node, ed *Editor) ([]*candidate, int) {
 	return cands, n.Begin()
 }
 
-func complFormHead(n parse.Node, ed *Editor) ([]*candidate, int) {
-	n, head := formHead(n)
-	if n == nil {
-		return nil, 0
+func complEmptyChunk(n parse.Node, ed *Editor) ([]*candidate, int) {
+	if _, ok := n.(*parse.Chunk); ok {
+		return complFormHeadInner("", ed), n.Begin()
 	}
+	return nil, 0
+}
 
+func makeCompoundCompleter(
+	f func(*parse.Compound, string, *Editor) []*candidate) completer {
+	return func(n parse.Node, ed *Editor) ([]*candidate, int) {
+		pn, ok := n.(*parse.Primary)
+		if !ok {
+			return nil, 0
+		}
+		cn, head := simpleCompound(pn)
+		if cn == nil {
+			return nil, 0
+		}
+		return f(cn, head, ed), cn.Begin()
+	}
+}
+
+func complFormHead(cn *parse.Compound, head string, ed *Editor) []*candidate {
+	if isFormHead(cn) {
+		return complFormHeadInner(head, ed)
+	}
+	return nil
+}
+
+func complFormHeadInner(head string, ed *Editor) []*candidate {
 	cands := []*candidate{}
+	foundCommand := func(s string) {
+		if strings.HasPrefix(s, head) {
+			cands = append(cands, newCandidate(
+				tokenPart{head, false}, tokenPart{s[len(head):], true}))
+		}
+	}
 	for _, s := range builtins {
-		if strings.HasPrefix(s, head) {
-			cands = append(cands, newCandidate(
-				tokenPart{head, false}, tokenPart{s[len(head):], true}))
-		}
+		foundCommand(s)
 	}
-	// XXX reduplication
 	for s := range ed.isExternal {
-		if strings.HasPrefix(s, head) {
-			cands = append(cands, newCandidate(
-				tokenPart{head, false}, tokenPart{s[len(head):], true}))
-		}
+		foundCommand(s)
 	}
-	return cands, n.Begin()
+	return cands
 }
 
 var builtins []string
@@ -69,16 +93,7 @@ func init() {
 	builtins = append(builtins, eval.BuiltinSpecialNames...)
 }
 
-func complArg(n parse.Node, ed *Editor) ([]*candidate, int) {
-	pn, ok := n.(*parse.Primary)
-	if !ok {
-		return nil, 0
-	}
-	cn, head := simpleCompound(pn)
-	if cn == nil {
-		return nil, 0
-	}
-
+func complArg(cn *parse.Compound, head string, ed *Editor) []*candidate {
 	// Assume that the argument is an incomplete filename
 	dir, file := path.Split(head)
 	var all []string
@@ -100,7 +115,7 @@ func complArg(n parse.Node, ed *Editor) ([]*candidate, int) {
 		}
 	}
 
-	return cands, cn.Begin()
+	return cands
 }
 
 func fileNames(dir string) (names []string, err error) {
