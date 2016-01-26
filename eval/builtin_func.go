@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"os/user"
+	"reflect"
 	"strconv"
 )
 
@@ -20,38 +21,38 @@ func init() {
 		&builtinFn{":", nop},
 		&builtinFn{"true", nop},
 
-		&builtinFn{"print", print},
-		&builtinFn{"println", println},
+		&builtinFn{"print", wrapFn(print)},
+		&builtinFn{"println", wrapFn(println)},
 
-		&builtinFn{"into-lines", intoLines},
-		&builtinFn{"from-lines", fromLines},
+		&builtinFn{"into-lines", wrapFn(intoLines)},
+		&builtinFn{"from-lines", wrapFn(fromLines)},
 
-		&builtinFn{"rat", ratFn},
+		&builtinFn{"rat", wrapFn(ratFn)},
 
 		&builtinFn{"put", put},
-		&builtinFn{"unpack", unpack},
+		&builtinFn{"unpack", wrapFn(unpack)},
 
-		&builtinFn{"from-json", fromJSON},
+		&builtinFn{"from-json", wrapFn(fromJSON)},
 
 		&builtinFn{"typeof", typeof},
 
-		&builtinFn{"failure", failure},
-		&builtinFn{"return", returnFn},
-		&builtinFn{"break", breakFn},
-		&builtinFn{"continue", continueFn},
+		&builtinFn{"failure", wrapFn(failure)},
+		&builtinFn{"return", wrapFn(returnFn)},
+		&builtinFn{"break", wrapFn(breakFn)},
+		&builtinFn{"continue", wrapFn(continueFn)},
 
-		&builtinFn{"each", each},
+		&builtinFn{"each", wrapFn(each)},
 
 		&builtinFn{"cd", cd},
-		&builtinFn{"visited-dirs", visistedDirs},
-		&builtinFn{"jump-dir", jumpDir},
+		&builtinFn{"visited-dirs", wrapFn(visistedDirs)},
+		&builtinFn{"jump-dir", wrapFn(jumpDir)},
 
-		&builtinFn{"source", source},
+		&builtinFn{"source", wrapFn(source)},
 
-		&builtinFn{"+", plus},
-		&builtinFn{"-", minus},
-		&builtinFn{"*", times},
-		&builtinFn{"/", divide},
+		&builtinFn{"+", wrapFn(plus)},
+		&builtinFn{"-", wrapFn(minus)},
+		&builtinFn{"*", wrapFn(times)},
+		&builtinFn{"/", wrapFn(divide)},
 
 		&builtinFn{"=", eq},
 	}
@@ -61,6 +62,93 @@ var (
 	argsError  = newFailure("args error")
 	inputError = newFailure("input error")
 )
+
+var (
+	evalCtxType = reflect.TypeOf((*evalCtx)(nil))
+	exitusType_ = reflect.TypeOf(exitus{})
+	valueType   = reflect.TypeOf((*Value)(nil)).Elem()
+)
+
+// wrapFn wraps an inner function into one suitable as a builtin function. It
+// generates argument checking and conversion code according to the signature
+// of the inner function. The inner function must accept evalCtx* as the first
+// argument and return an exitus.
+func wrapFn(inner interface{}) func(*evalCtx, []Value) exitus {
+	type_ := reflect.TypeOf(inner)
+	if type_.In(0) != evalCtxType || type_.Out(0) != exitusType_ {
+		panic("bad func")
+	}
+
+	requiredArgs := type_.NumIn() - 1
+	isVariadic := type_.IsVariadic()
+	var variadicType reflect.Type
+	if isVariadic {
+		requiredArgs -= 1
+		variadicType = type_.In(type_.NumIn() - 1).Elem()
+		if !supportedIn(variadicType) {
+			panic("bad func argument")
+		}
+	}
+
+	for i := 0; i < requiredArgs; i++ {
+		if !supportedIn(type_.In(i + 1)) {
+			panic("bad func argument")
+		}
+	}
+
+	return func(ec *evalCtx, args []Value) exitus {
+		if len(args) < requiredArgs || (!isVariadic && len(args) > requiredArgs) {
+			return argsError
+		}
+		callArgs := make([]reflect.Value, len(args)+1)
+		callArgs[0] = reflect.ValueOf(ec)
+
+		ok := convertArgs(args[:requiredArgs], callArgs[1:],
+			func(i int) reflect.Type { return type_.In(i + 1) })
+		if !ok {
+			return argsError
+		}
+		if isVariadic {
+			ok := convertArgs(args[requiredArgs:], callArgs[1+requiredArgs:],
+				func(i int) reflect.Type { return variadicType })
+			if !ok {
+				return argsError
+			}
+		}
+		return reflect.ValueOf(inner).Call(callArgs)[0].Interface().(exitus)
+	}
+}
+
+func supportedIn(t reflect.Type) bool {
+	return t.Kind() == reflect.String || t.Kind() == reflect.Float64 ||
+		t.Implements(valueType)
+}
+
+func convertArgs(args []Value, callArgs []reflect.Value, callType func(int) reflect.Type) bool {
+	for i, arg := range args {
+		var callArg interface{}
+		switch callType(i).Kind() {
+		case reflect.String:
+			callArg = toString(arg)
+		case reflect.Float64:
+			var err error
+			callArg, err = toFloat(arg)
+			if err != nil {
+				return false
+				// return err
+			}
+		default:
+			if reflect.TypeOf(arg).ConvertibleTo(callType(i)) {
+				callArg = arg
+			} else {
+				return false
+				// return argsError
+			}
+		}
+		callArgs[i] = reflect.ValueOf(callArg)
+	}
+	return true
+}
 
 func nop(ec *evalCtx, args []Value) exitus {
 	return ok
@@ -82,44 +170,42 @@ func typeof(ec *evalCtx, args []Value) exitus {
 	return ok
 }
 
-func failure(ec *evalCtx, args []Value) exitus {
-	if len(args) != 1 {
-		return argsError
-	}
+func failure(ec *evalCtx, arg Value) exitus {
 	out := ec.ports[1].ch
-	out <- newFailure(toString(args[0]))
+	out <- newFailure(toString(arg))
 	return ok
 }
 
-func returnFn(ec *evalCtx, args []Value) exitus {
+func returnFn(ec *evalCtx) exitus {
 	return newFlowExitus(Return)
 }
 
-func breakFn(ec *evalCtx, args []Value) exitus {
+func breakFn(ec *evalCtx) exitus {
 	return newFlowExitus(Break)
 }
 
-func continueFn(ec *evalCtx, args []Value) exitus {
+func continueFn(ec *evalCtx) exitus {
 	return newFlowExitus(Continue)
 }
 
-func print(ec *evalCtx, args []Value) exitus {
+func print(ec *evalCtx, args ...string) exitus {
 	out := ec.ports[1].f
-	for _, a := range args {
-		fmt.Fprint(out, toString(a))
+	for i, arg := range args {
+		if i > 0 {
+			out.WriteString(" ")
+		}
+		out.WriteString(arg)
 	}
 	return ok
 }
 
-func println(ec *evalCtx, args []Value) exitus {
-	args = append(args, str("\n"))
-	return print(ec, args)
+func println(ec *evalCtx, args ...string) exitus {
+	print(ec, args...)
+	ec.ports[1].f.WriteString("\n")
+	return ok
 }
 
-func intoLines(ec *evalCtx, args []Value) exitus {
-	if len(args) > 0 {
-		return argsError
-	}
+func intoLines(ec *evalCtx) exitus {
 	in := ec.ports[0].ch
 	out := ec.ports[1].f
 
@@ -129,10 +215,7 @@ func intoLines(ec *evalCtx, args []Value) exitus {
 	return ok
 }
 
-func fromLines(ec *evalCtx, args []Value) exitus {
-	if len(args) > 0 {
-		return argsError
-	}
+func fromLines(ec *evalCtx) exitus {
 	in := ec.ports[0].f
 	out := ec.ports[1].ch
 
@@ -148,12 +231,9 @@ func fromLines(ec *evalCtx, args []Value) exitus {
 	}
 }
 
-func ratFn(ec *evalCtx, args []Value) exitus {
-	if len(args) != 1 {
-		return argsError
-	}
+func ratFn(ec *evalCtx, arg Value) exitus {
 	out := ec.ports[1].ch
-	r, err := toRat(args[0])
+	r, err := toRat(arg)
 	if err != nil {
 		return newFailure(err.Error())
 	}
@@ -162,10 +242,7 @@ func ratFn(ec *evalCtx, args []Value) exitus {
 }
 
 // unpack takes any number of tables and output their list elements.
-func unpack(ec *evalCtx, args []Value) exitus {
-	if len(args) != 0 {
-		return argsError
-	}
+func unpack(ec *evalCtx) exitus {
 	in := ec.ports[0].ch
 	out := ec.ports[1].ch
 
@@ -183,10 +260,7 @@ func unpack(ec *evalCtx, args []Value) exitus {
 }
 
 // fromJSON parses a stream of JSON data into Value's.
-func fromJSON(ec *evalCtx, args []Value) exitus {
-	if len(args) > 0 {
-		return argsError
-	}
+func fromJSON(ec *evalCtx) exitus {
 	in := ec.ports[0].f
 	out := ec.ports[1].ch
 
@@ -205,27 +279,21 @@ func fromJSON(ec *evalCtx, args []Value) exitus {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ec *evalCtx, args []Value) exitus {
-	if len(args) != 1 {
-		return argsError
-	}
-	if f, ok := args[0].(*closure); !ok {
-		return argsError
-	} else {
-		in := ec.ports[0].ch
-	in:
-		for v := range in {
-			su := f.Exec(ec.copy("closure of each"), []Value{v})
-			// F.Exec will put exactly one stateUpdate on the channel
-			e := (<-su).Exitus
-			switch e.Sort {
-			case Ok, Continue:
-				// nop
-			case Break:
-				break in
-			default:
-				return e
-			}
+func each(ec *evalCtx, f *closure) exitus {
+	in := ec.ports[0].ch
+in:
+	for v := range in {
+		su := f.Exec(ec.copy("closure of each"), []Value{v})
+		// F.Exec will put exactly one stateUpdate on the channel
+		e := (<-su).Exitus
+		switch e.Sort {
+		case Ok, Continue:
+			// nop
+		case Break:
+			break in
+		default:
+			// TODO wrap it
+			return e
 		}
 	}
 	return ok
@@ -259,7 +327,7 @@ func cd(ec *evalCtx, args []Value) exitus {
 
 var storeNotConnected = newFailure("store not connected")
 
-func visistedDirs(ec *evalCtx, args []Value) exitus {
+func visistedDirs(ec *evalCtx) exitus {
 	if ec.store == nil {
 		return storeNotConnected
 	}
@@ -279,14 +347,11 @@ func visistedDirs(ec *evalCtx, args []Value) exitus {
 
 var noMatchingDir = newFailure("no matching directory")
 
-func jumpDir(ec *evalCtx, args []Value) exitus {
-	if len(args) != 1 {
-		return argsError
-	}
+func jumpDir(ec *evalCtx, arg string) exitus {
 	if ec.store == nil {
 		return storeNotConnected
 	}
-	dirs, err := ec.store.FindDirs(toString(args[0]))
+	dirs, err := ec.store.FindDirs(arg)
 	if err != nil {
 		return newFailure("store error: " + err.Error())
 	}
@@ -303,39 +368,25 @@ func jumpDir(ec *evalCtx, args []Value) exitus {
 	return ok
 }
 
-func source(ec *evalCtx, args []Value) exitus {
-	if len(args) != 1 {
-		return argsError
-	}
-	if fname, ok := args[0].(str); !ok {
-		return argsError
-	} else {
-		ec.Source(string(fname))
-	}
+func source(ec *evalCtx, fname string) exitus {
+	ec.Source(fname)
 	return ok
 }
 
-func toFloats(args []Value) (nums []float64, err error) {
-	for _, a := range args {
-		a, ok := a.(str)
-		if !ok {
-			return nil, fmt.Errorf("must be string")
-		}
-		f, err := strconv.ParseFloat(string(a), 64)
-		if err != nil {
-			return nil, err
-		}
-		nums = append(nums, f)
+func toFloat(arg Value) (float64, error) {
+	arg, ok := arg.(str)
+	if !ok {
+		return 0, fmt.Errorf("must be string")
 	}
-	return
+	num, err := strconv.ParseFloat(string(arg.(str)), 64)
+	if err != nil {
+		return 0, err
+	}
+	return num, nil
 }
 
-func plus(ec *evalCtx, args []Value) exitus {
+func plus(ec *evalCtx, nums ...float64) exitus {
 	out := ec.ports[1].ch
-	nums, err := toFloats(args)
-	if err != nil {
-		return newFailure(err.Error())
-	}
 	sum := 0.0
 	for _, f := range nums {
 		sum += f
@@ -344,16 +395,8 @@ func plus(ec *evalCtx, args []Value) exitus {
 	return ok
 }
 
-func minus(ec *evalCtx, args []Value) exitus {
+func minus(ec *evalCtx, sum float64, nums ...float64) exitus {
 	out := ec.ports[1].ch
-	if len(args) == 0 {
-		return argsError
-	}
-	nums, err := toFloats(args)
-	if err != nil {
-		return newFailure(err.Error())
-	}
-	sum := nums[0]
 	for _, f := range nums[1:] {
 		sum -= f
 	}
@@ -361,12 +404,8 @@ func minus(ec *evalCtx, args []Value) exitus {
 	return ok
 }
 
-func times(ec *evalCtx, args []Value) exitus {
+func times(ec *evalCtx, nums ...float64) exitus {
 	out := ec.ports[1].ch
-	nums, err := toFloats(args)
-	if err != nil {
-		return newFailure(err.Error())
-	}
 	prod := 1.0
 	for _, f := range nums {
 		prod *= f
@@ -375,17 +414,9 @@ func times(ec *evalCtx, args []Value) exitus {
 	return ok
 }
 
-func divide(ec *evalCtx, args []Value) exitus {
+func divide(ec *evalCtx, prod float64, nums ...float64) exitus {
 	out := ec.ports[1].ch
-	if len(args) == 0 {
-		return argsError
-	}
-	nums, err := toFloats(args)
-	if err != nil {
-		return newFailure(err.Error())
-	}
-	prod := nums[0]
-	for _, f := range nums[1:] {
+	for _, f := range nums {
 		prod /= f
 	}
 	out <- str(fmt.Sprintf("%g", prod))

@@ -74,7 +74,7 @@ var evalTests = []struct {
 
 	// List, map and indexing
 	{"println [a b c] [&key value] | from-lines",
-		strs("[a b c][&key value]"), nomore},
+		strs("[a b c] [&key value]"), nomore},
 	{"put [a b c][2]", strs("c"), nomore},
 	{"put [&key value][key]", strs("value"), nomore},
 
