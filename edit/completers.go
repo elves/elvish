@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path"
 	"strings"
@@ -105,27 +106,29 @@ func complNewArg(n parse.Node, ed *Editor) []*candidate {
 	if _, ok := sn.Parent().(*parse.Form); !ok {
 		return nil
 	}
-	return complArgInner("")
+	return complArgInner("", ed)
 }
 
 func complArg(cn *parse.Compound, head string, ed *Editor) []*candidate {
-	return complArgInner(head)
+	return complArgInner(head, ed)
 }
 
-func complArgInner(head string) []*candidate {
+func complArgInner(head string, ed *Editor) []*candidate {
 	// Assume that the argument is an incomplete filename
 	dir, file := path.Split(head)
-	var all []string
 	if dir == "" {
-		// XXX ignore error
-		all, _ = fileNames(".")
-	} else {
-		all, _ = fileNames(dir)
+		dir = "."
+	}
+	names, err := fileNames(dir)
+	cands := []*candidate{}
+
+	if err != nil {
+		ed.pushTip(fmt.Sprintf("cannot list directory %s: %v", dir, err))
+		return cands
 	}
 
-	cands := []*candidate{}
 	// Make candidates out of elements that match the file component.
-	for _, s := range all {
+	for s := range names {
 		if strings.HasPrefix(s, file) {
 			cands = append(cands, &candidate{
 				source: styled{s[len(file):], ""},
@@ -137,14 +140,17 @@ func complArgInner(head string) []*candidate {
 	return cands
 }
 
-func fileNames(dir string) (names []string, err error) {
-	infos, e := ioutil.ReadDir(dir)
-	if e != nil {
-		err = e
-		return
+func fileNames(dir string) (<-chan string, error) {
+	infos, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
 	}
-	for _, info := range infos {
-		names = append(names, info.Name())
-	}
-	return
+	names := make(chan string, 32)
+	go func() {
+		for _, info := range infos {
+			names <- info.Name()
+		}
+		close(names)
+	}()
+	return names, nil
 }
