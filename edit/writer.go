@@ -356,17 +356,12 @@ func (w *writer) refresh(es *editorState) error {
 	hasComp := comp != nil && comp.current != -1
 
 	nowAt := func(i int) {
-		if hasComp && comp.start == i {
-			// Put the current completion candidate.
-			for _, part := range comp.candidates[comp.current].parts {
-				attr := attrForType[comp.typ]
-				if part.completed {
-					attr += attrForCompleted
-				}
-				b.writes(part.text, attr)
-			}
-		}
 		if es.dot == i {
+			if hasComp {
+				// Put the current completion candidate.
+				candSource := comp.candidates[comp.current].source
+				b.writes(candSource.text, candSource.style+attrForCompleted)
+			}
 			b.dot = b.cursor()
 		}
 	}
@@ -374,11 +369,7 @@ func (w *writer) refresh(es *editorState) error {
 tokens:
 	for _, token := range es.tokens {
 		for _, r := range token.Text {
-			if hasComp && comp.start <= i && i < comp.end {
-				// Silence the part that is being completed
-			} else {
-				b.write(r, attrForType[token.Type]+token.MoreStyle)
-			}
+			b.write(r, attrForType[token.Type]+token.MoreStyle)
 			i += utf8.RuneLen(r)
 
 			nowAt(i)
@@ -464,7 +455,7 @@ tokens:
 			colWidth := 0
 			margin := completionListingColMargin
 			for _, cand := range cands {
-				width := WcWidths(cand.text)
+				width := WcWidths(cand.menu.text)
 				if colWidth < width {
 					colWidth = width
 				}
@@ -488,11 +479,11 @@ tokens:
 					if k >= len(cands) {
 						continue
 					}
-					attr := cands[k].attr
+					attr := cands[k].menu.style
 					if k == comp.current {
 						attr += attrForCurrentCompletion
 					}
-					text := cands[k].text
+					text := cands[k].menu.text
 					b.writes(ForceWcWidth(text, colWidth), attr)
 					b.writePadding(margin, "")
 				}

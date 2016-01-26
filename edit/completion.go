@@ -2,33 +2,16 @@ package edit
 
 import "fmt"
 
-type tokenPart struct {
-	text      string
-	completed bool
+type styled struct {
+	text  string
+	style string
 }
 
 type candidate struct {
-	text  string
-	parts []tokenPart
-	attr  string // Attribute used for preview
-}
-
-func newCandidate(tps ...tokenPart) *candidate {
-	c := &candidate{}
-	for _, tp := range tps {
-		c.push(tp)
-	}
-	return c
-}
-
-func (c *candidate) push(tp tokenPart) {
-	c.text += tp.text
-	c.parts = append(c.parts, tp)
+	source, menu styled
 }
 
 type completion struct {
-	start, end int // The text to complete is Editor.line[start:end]
-	typ        TokenType
 	completer  string
 	candidates []*candidate
 	current    int
@@ -63,16 +46,11 @@ func startCompletion(ed *Editor, k Key) *leReturn {
 		return nil
 	}
 
-	c := &completion{
-		start: node.Begin(),
-		end:   ed.dot,
-		typ:   Bareword, // TODO set the actual type
-	}
+	c := &completion{}
 	for _, compl := range completers {
-		candidates, begin := compl.completer(node, ed)
+		candidates := compl.completer(node, ed)
 		if candidates != nil {
 			c.completer = compl.name
-			c.start = begin
 			c.candidates = candidates
 			break
 		}

@@ -256,9 +256,11 @@ func init() {
 func (ed *Editor) acceptCompletion() {
 	c := ed.completion
 	if 0 <= c.current && c.current < len(c.candidates) {
-		accepted := c.candidates[c.current].text
-		ed.line = ed.line[:c.start] + accepted + ed.line[c.end:]
-		ed.dot += len(accepted) - (c.end - c.start)
+		accepted := c.candidates[c.current].source.text
+		// Insert the accepted completion text at ed.dot and move ed.dot after
+		// the newly inserted text
+		ed.line = ed.line[:ed.dot] + accepted + ed.line[ed.dot:]
+		ed.dot += len(accepted)
 	}
 	ed.completion = nil
 	ed.mode = modeInsert
