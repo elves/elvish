@@ -316,12 +316,19 @@ func cd(ec *evalCtx, args []Value) exitus {
 		user, err := user.Current()
 		if err == nil {
 			dir = user.HomeDir
+		} else {
+			return newFailure("cannot get current user: " + err.Error())
 		}
 	} else if len(args) == 1 {
 		dir = toString(args[0])
 	} else {
 		return argsError
 	}
+
+	return cdInner(dir, ec)
+}
+
+func cdInner(dir string, ec *evalCtx) exitus {
 	err := os.Chdir(dir)
 	if err != nil {
 		return newFailure(err.Error())

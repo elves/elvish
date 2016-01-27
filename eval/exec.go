@@ -197,8 +197,26 @@ func waitStateUpdate(pid int, update chan<- *stateUpdate) {
 	close(update)
 }
 
+var (
+	cdNoArg = newFailure("implicit cd accepts no arguments")
+)
+
 // Exec executes an external command.
 func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
+	update := make(chan *stateUpdate, 1)
+
+	if DontSearch(e.Name) {
+		stat, err := os.Stat(e.Name)
+		if err == nil && stat.IsDir() {
+			// implicit cd
+			ex := cdInner(e.Name, ec)
+			ec.closePorts()
+			update <- newExitedStateUpdate(ex)
+			close(update)
+			return update
+		}
+	}
+
 	files := make([]uintptr, len(ec.ports))
 	for i, port := range ec.ports {
 		if port == nil || port.f == nil {
@@ -228,12 +246,9 @@ func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
 	// Ports are closed after fork-exec of external is complete.
 	ec.closePorts()
 
-	update := make(chan *stateUpdate)
 	if err != nil {
-		go func() {
-			update <- newExitedStateUpdate(newFailure(err.Error()))
-			close(update)
-		}()
+		update <- newExitedStateUpdate(newFailure(err.Error()))
+		close(update)
 	} else {
 		go waitStateUpdate(pid, update)
 	}
