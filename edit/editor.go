@@ -167,7 +167,8 @@ func NewEditor(file *os.File, sigs <-chan os.Signal, ev *eval.Evaler, st *store.
 	}
 }
 
-func (ed *Editor) beep() {
+func (ed *Editor) flash() {
+	// TODO implement fish-like flash effect
 }
 
 func (ed *Editor) pushTip(more string) {

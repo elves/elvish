@@ -120,7 +120,7 @@ func killRuneLeft(ed *Editor, k Key) *leReturn {
 		ed.line = ed.line[:ed.dot-w] + ed.line[ed.dot:]
 		ed.dot -= w
 	} else {
-		ed.beep()
+		ed.flash()
 	}
 	return nil
 }
@@ -130,7 +130,7 @@ func killRuneRight(ed *Editor, k Key) *leReturn {
 		_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
 		ed.line = ed.line[:ed.dot] + ed.line[ed.dot+w:]
 	} else {
-		ed.beep()
+		ed.flash()
 	}
 	return nil
 }
@@ -150,7 +150,7 @@ func moveDotRight(ed *Editor, k Key) *leReturn {
 func moveDotUp(ed *Editor, k Key) *leReturn {
 	sol := strutil.FindLastSOL(ed.line[:ed.dot])
 	if sol == 0 {
-		ed.beep()
+		ed.flash()
 		return nil
 	}
 	prevEOL := sol - 1
@@ -163,7 +163,7 @@ func moveDotUp(ed *Editor, k Key) *leReturn {
 func moveDotDown(ed *Editor, k Key) *leReturn {
 	eol := strutil.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
 	if eol == len(ed.line) {
-		ed.beep()
+		ed.flash()
 		return nil
 	}
 	nextSOL := eol + 1
