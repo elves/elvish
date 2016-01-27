@@ -3,6 +3,7 @@ package edit
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 
@@ -106,18 +107,25 @@ func complNewArg(n parse.Node, ed *Editor) []*candidate {
 	if _, ok := sn.Parent().(*parse.Form); !ok {
 		return nil
 	}
-	return complArgInner("", ed)
+	return complArgInner("", false, ed)
 }
 
 func complArg(cn *parse.Compound, head string, ed *Editor) []*candidate {
-	return complArgInner(head, ed)
+	return complArgInner(head, false, ed)
 }
 
-func complArgInner(head string, ed *Editor) []*candidate {
-	// Assume that the argument is an incomplete filename
-	dir, file := path.Split(head)
-	if dir == "" {
-		dir = "."
+// TODO: all of fileNames, determineAttr and the final directory check do
+// stat on files.
+func complArgInner(head string, indir bool, ed *Editor) []*candidate {
+	var dir, file, indirSlash string
+	if indir {
+		dir = head
+		indirSlash = "/"
+	} else {
+		dir, file = path.Split(head)
+		if dir == "" {
+			dir = "."
+		}
 	}
 	names, err := fileNames(dir)
 	cands := []*candidate{}
@@ -127,17 +135,32 @@ func complArgInner(head string, ed *Editor) []*candidate {
 		return cands
 	}
 
+	hasHead := false
 	// Make candidates out of elements that match the file component.
 	for s := range names {
 		if strings.HasPrefix(s, file) {
-			cands = append(cands, &candidate{
-				source: styled{s[len(file):], ""},
+			if s == file {
+				hasHead = true
+			}
+			cand := &candidate{
+				source: styled{indirSlash + s[len(file):], ""},
 				menu:   styled{s, defaultLsColor.determineAttr(s)},
-			})
+			}
+			cands = append(cands, cand)
 		}
 	}
 
+	if !indir && hasHead && len(cands) == 1 && isDir(head) {
+		// Completing an unambiguous directory name.
+		return complArgInner(head, true, ed)
+	}
+
 	return cands
+}
+
+func isDir(fname string) bool {
+	stat, err := os.Stat(fname)
+	return err == nil && stat.IsDir()
 }
 
 func fileNames(dir string) (<-chan string, error) {
