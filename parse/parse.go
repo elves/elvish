@@ -270,7 +270,8 @@ func (pn *Primary) variable(rd *reader, cut runePred) {
 	pn.Type = Variable
 	defer func() { pn.Value = rd.src[pn.begin:rd.pos] }()
 	rd.next()
-	if r := rd.next(); !allowedInVariableName(r) || cut.matches(r) {
+	// The character of the variable name can be anything.
+	if r := rd.next(); cut.matches(r) {
 		rd.backup()
 		rd.error = shouldBeVariableName
 		return
