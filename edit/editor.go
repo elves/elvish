@@ -399,7 +399,10 @@ MainLoop:
 	for {
 		ed.prompt = prompt()
 		ed.rprompt = rprompt()
+
+		ed.reader.Stop()
 		err := ed.refresh()
+		ed.reader.Continue()
 		if err != nil {
 			return LineRead{Err: err}
 		}
