@@ -7,7 +7,7 @@ get:
 	go get .
 
 test:
-	go test ./...
+	go test -v ./...
 
 cover/%: %
 	mkdir -p cover
