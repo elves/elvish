@@ -28,7 +28,8 @@ func goodFormHead(head string, ed *Editor) bool {
 	if isBuiltinSpecial[head] {
 		return true
 	} else if eval.DontSearch(head) {
-		return eval.IsExecutable(head)
+		// XXX don't stat twice
+		return eval.IsExecutable(head) || isDir(head)
 	} else {
 		return ed.evaler.Global()[eval.FnPrefix+head] != nil ||
 			ed.isExternal[head]
