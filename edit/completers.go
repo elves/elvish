@@ -147,12 +147,13 @@ func complArgInner(head string, indir bool, ed *Editor, formHead bool) []*candid
 			if s == file {
 				hasHead = true
 			}
-			if formHead && !isExecutableOrDir(s) {
+			full := head + s[len(file):]
+			if formHead && !isExecutableOrDir(full) {
 				continue
 			}
 			cand := &candidate{
 				source: styled{indirSlash + s[len(file):], ""},
-				menu:   styled{s, defaultLsColor.determineAttr(s)},
+				menu:   styled{s, defaultLsColor.determineAttr(full)},
 			}
 			cands = append(cands, cand)
 		}
