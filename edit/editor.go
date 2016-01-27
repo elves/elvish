@@ -176,6 +176,8 @@ func (ed *Editor) pushTip(more string) {
 }
 
 func (ed *Editor) refresh() error {
+	ed.reader.Stop()
+	defer ed.reader.Continue()
 	// Re-lex the line, unless we are in modeCompletion
 	if ed.mode != modeCompletion {
 		// XXX Ignore error
@@ -225,7 +227,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{Down, 0}:   "select-cand-down",
 		Key{Left, 0}:   "select-cand-left",
 		Key{Right, 0}:  "select-cand-right",
-		Key{Tab, 0}:    "cycle-cand-right",
+		// Key{Tab, 0}:    "cycle-cand-right",
 		DefaultBinding: "default-completion",
 	},
 	modeNavigation: map[Key]string{
@@ -400,9 +402,7 @@ MainLoop:
 		ed.prompt = prompt()
 		ed.rprompt = rprompt()
 
-		ed.reader.Stop()
 		err := ed.refresh()
-		ed.reader.Continue()
 		if err != nil {
 			return LineRead{Err: err}
 		}
@@ -453,6 +453,10 @@ MainLoop:
 			case noAction:
 				continue
 			case reprocessKey:
+				err = ed.refresh()
+				if err != nil {
+					return LineRead{Err: err}
+				}
 				goto lookupKey
 			case exitReadLine:
 				return ret.readLineReturn
