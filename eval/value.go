@@ -256,7 +256,7 @@ func (m map_) Repr() string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
 	for k, v := range m {
-		if buf.Len() > 0 {
+		if buf.Len() > 1 {
 			buf.WriteByte(' ')
 		}
 		buf.WriteByte('&')
