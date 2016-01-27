@@ -124,12 +124,14 @@ const (
 )
 
 // newTopEvalCtx creates a top-level evalCtx.
-func newTopEvalCtx(ev *Evaler, name, text string) *evalCtx {
+func newTopEvalCtx(ev *Evaler, name, text string) (*evalCtx, chan bool) {
 	ch := make(chan Value, outChanSize)
+	done := make(chan bool)
 	go func() {
 		for v := range ch {
 			fmt.Printf("%s%s\n", outChanLeader, v.Repr())
 		}
+		done <- true
 	}()
 
 	return &evalCtx{
@@ -138,7 +140,7 @@ func newTopEvalCtx(ev *Evaler, name, text string) *evalCtx {
 		ev.global, ns{},
 		[]*port{{f: os.Stdin},
 			{f: os.Stdout, ch: ch, closeCh: true}, {f: os.Stderr}},
-	}
+	}, done
 }
 
 // copy returns a copy of ec. The ports are copied deeply, with shouldClose
@@ -195,11 +197,16 @@ func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) ([]V
 	if err != nil {
 		return nil, err
 	}
-	ec := newTopEvalCtx(ev, name, text)
+	ec, outdone := newTopEvalCtx(ev, name, text)
 	if out != nil {
 		ec.ports[1] = out
 	}
-	return ec.eval(op)
+	vs, err := ec.eval(op)
+	if err == nil {
+		// XXX maybe the out channel is always closed regardless of the error? need some checking
+		<-outdone
+	}
+	return vs, err
 }
 
 // eval evaluates an Op.
