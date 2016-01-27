@@ -77,6 +77,7 @@ func interact() {
 	rpromptStr := username + "@" + hostname
 
 	sigch := make(chan os.Signal, sigchSize)
+	signal.Notify(sigch)
 
 	ed := edit.NewEditor(os.Stdin, sigch, ev, st)
 
@@ -91,9 +92,8 @@ func interact() {
 			return rpromptStr
 		}
 
-		signal.Notify(sigch)
 		lr := ed.ReadLine(prompt, rprompt)
-		signal.Stop(sigch)
+		// signal.Stop(sigch)
 
 		if lr.EOF {
 			break
