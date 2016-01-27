@@ -188,6 +188,12 @@ func newTable() *table {
 	return &table{Dict: make(map[string]Value)}
 }
 
+func (t *table) appendStrings(ss []string) {
+	for _, s := range ss {
+		t.List = append(t.List, str(s))
+	}
+}
+
 func (t *table) Repr() string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')

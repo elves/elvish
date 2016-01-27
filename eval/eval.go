@@ -57,24 +57,27 @@ func HasFailure(vs []Value) bool {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store, dataDir string) *Evaler {
-	// Construct initial global namespace
-	pid := str(strconv.Itoa(syscall.Getpid()))
-	global := ns{
-		"pid":   newInternalVariable(pid),
-		"ok":    newInternalVariable(ok),
-		"true":  newInternalVariable(boolean(true)),
-		"false": newInternalVariable(boolean(false)),
-	}
-	for _, b := range builtinFns {
-		global[FnPrefix+b.Name] = newInternalVariable(b)
-	}
-
 	// Construct searchPaths
 	var searchPaths []string
 	if path := os.Getenv("PATH"); path != "" {
 		searchPaths = strings.Split(path, ":")
 	} else {
 		searchPaths = []string{"/bin"}
+	}
+
+	// Construct initial global namespace
+	pid := str(strconv.Itoa(syscall.Getpid()))
+	paths := newTable()
+	paths.appendStrings(searchPaths)
+	global := ns{
+		"pid":   newInternalVariable(pid),
+		"ok":    newInternalVariable(ok),
+		"true":  newInternalVariable(boolean(true)),
+		"false": newInternalVariable(boolean(false)),
+		"paths": newInternalVariable(paths),
+	}
+	for _, b := range builtinFns {
+		global[FnPrefix+b.Name] = newInternalVariable(b)
 	}
 
 	return &Evaler{global, map[string]ns{}, searchPaths, st}
