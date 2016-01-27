@@ -360,8 +360,6 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 		ed.appendHistory(lr.Line)
 	}
 
-	ed.reader.Stop()
-
 	ed.mode = modeInsert
 	ed.tips = nil
 	ed.completion = nil
@@ -371,6 +369,8 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 	ed.rprompt = ""
 	ed.refresh() // XXX(xiaq): Ignore possible error
 	ed.file.WriteString("\n")
+
+	ed.reader.Stop()
 
 	err := cleanupTerminal(ed.file, ed.savedTermios)
 
