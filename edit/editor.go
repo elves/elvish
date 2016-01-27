@@ -168,6 +168,7 @@ func NewEditor(file *os.File, sigs <-chan os.Signal, ev *eval.Evaler, st *store.
 }
 
 func (ed *Editor) beep() {
+	fmt.Print("\a")
 }
 
 func (ed *Editor) pushTip(more string) {
