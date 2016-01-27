@@ -3,7 +3,10 @@ package eval
 //go:generate ./boilerplate.py
 
 import (
+	"bufio"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"strings"
 
@@ -432,25 +435,53 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 	}
 }
 
+var outputCaptureBufferSize = 16
+
 func (cp *compiler) outputCapture(n *parse.Primary) valuesOp {
 	op := cp.chunk(n.Chunk)
+	p := n.Chunk.Begin()
 	return func(ec *evalCtx) []Value {
 		vs := []Value{}
 		newEc := ec.copy(fmt.Sprintf("channel output capture %v", op))
-		ch := make(chan Value)
-		collected := make(chan bool)
-		newEc.ports[1] = &port{ch: ch}
+
+		pipeRead, pipeWrite, err := os.Pipe()
+		if err != nil {
+			ec.errorf(p, "failed to create pipe: %v", err)
+		}
+		bufferedPipeRead := bufio.NewReader(pipeRead)
+		ch := make(chan Value, outputCaptureBufferSize)
+		bytesCollected := make(chan bool)
+		chCollected := make(chan bool)
+		newEc.ports[1] = &port{ch: ch, f: pipeWrite, closeF: true}
 		go func() {
 			for v := range ch {
 				vs = append(vs, v)
 			}
-			collected <- true
+			chCollected <- true
 		}()
+		go func() {
+			for {
+				line, err := bufferedPipeRead.ReadString('\n')
+				if err == io.EOF {
+					break
+				} else if err != nil {
+					// TODO report error
+					log.Println()
+					break
+				}
+				ch <- str(line[:len(line)-1])
+			}
+			bytesCollected <- true
+		}()
+
 		// XXX The exitus is discarded.
 		op(newEc)
+
 		newEc.closePorts()
+		<-bytesCollected
 		close(ch)
-		<-collected
+		<-chCollected
+
 		return vs
 	}
 }
