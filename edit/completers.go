@@ -76,7 +76,12 @@ func complFormHead(cn *parse.Compound, head string, ed *Editor) []*candidate {
 }
 
 func complFormHeadInner(head string, ed *Editor) []*candidate {
+	if eval.DontSearch(head) {
+		return complArgInner(head, false, ed, true)
+	}
+
 	cands := []*candidate{}
+
 	foundCommand := func(s string) {
 		if strings.HasPrefix(s, head) {
 			cands = append(cands, &candidate{
@@ -107,16 +112,16 @@ func complNewArg(n parse.Node, ed *Editor) []*candidate {
 	if _, ok := sn.Parent().(*parse.Form); !ok {
 		return nil
 	}
-	return complArgInner("", false, ed)
+	return complArgInner("", false, ed, false)
 }
 
 func complArg(cn *parse.Compound, head string, ed *Editor) []*candidate {
-	return complArgInner(head, false, ed)
+	return complArgInner(head, false, ed, false)
 }
 
 // TODO: all of fileNames, determineAttr and the final directory check do
 // stat on files.
-func complArgInner(head string, indir bool, ed *Editor) []*candidate {
+func complArgInner(head string, indir bool, ed *Editor, formHead bool) []*candidate {
 	var dir, file, indirSlash string
 	if indir {
 		dir = head
@@ -142,6 +147,9 @@ func complArgInner(head string, indir bool, ed *Editor) []*candidate {
 			if s == file {
 				hasHead = true
 			}
+			if formHead && !isExecutableOrDir(s) {
+				continue
+			}
 			cand := &candidate{
 				source: styled{indirSlash + s[len(file):], ""},
 				menu:   styled{s, defaultLsColor.determineAttr(s)},
@@ -152,7 +160,7 @@ func complArgInner(head string, indir bool, ed *Editor) []*candidate {
 
 	if !indir && hasHead && len(cands) == 1 && isDir(head) {
 		// Completing an unambiguous directory name.
-		return complArgInner(head, true, ed)
+		return complArgInner(head, true, ed, formHead)
 	}
 
 	return cands
@@ -161,6 +169,11 @@ func complArgInner(head string, indir bool, ed *Editor) []*candidate {
 func isDir(fname string) bool {
 	stat, err := os.Stat(fname)
 	return err == nil && stat.IsDir()
+}
+
+func isExecutableOrDir(fname string) bool {
+	stat, err := os.Stat(fname)
+	return err == nil && (stat.Mode()&0111 != 0)
 }
 
 func fileNames(dir string) (<-chan string, error) {

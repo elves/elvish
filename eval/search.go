@@ -44,7 +44,8 @@ func (ev *Evaler) AllExecutables(names chan<- string) {
 // DontSearch determines whether the path to an external command should be
 // taken literally and not searched.
 func DontSearch(exe string) bool {
-	return strings.HasPrefix(exe, "/") ||
+	return exe == ".." ||
+		strings.HasPrefix(exe, "/") ||
 		strings.HasPrefix(exe, "./") ||
 		strings.HasPrefix(exe, "../")
 }
