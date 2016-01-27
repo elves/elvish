@@ -17,7 +17,7 @@ import (
 	"github.com/elves/elvish/store"
 )
 
-const FnPrefix = "fn-"
+const FnPrefix = "&"
 
 // ns is a namespace.
 type ns map[string]Variable

@@ -218,7 +218,7 @@ func makeFnOp(op valuesOp) valuesOp {
 
 // FnForm = 'fn' StringPrimary LambdaPrimary
 //
-// fn f []{foobar} is a shorthand for set $fn-f = []{foobar}.
+// fn f []{foobar} is a shorthand for set '&'f = []{foobar}.
 func compileFn(cp *compiler, fn *parse.Form) exitusOp {
 	if len(fn.Args) == 0 {
 		cp.errorf(fn.End(), "should be followed by function name")
