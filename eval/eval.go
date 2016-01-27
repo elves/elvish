@@ -67,7 +67,7 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 
 	// Construct initial global namespace
 	pid := str(strconv.Itoa(syscall.Getpid()))
-	paths := newTable()
+	paths := newList()
 	paths.appendStrings(searchPaths)
 	global := ns{
 		"pid":   newInternalVariable(pid),

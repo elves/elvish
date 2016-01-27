@@ -163,10 +163,10 @@ func put(ec *evalCtx, args []Value) exitus {
 	return ok
 }
 
-func putAll(ec *evalCtx, lists ...*table) exitus {
+func putAll(ec *evalCtx, lists ...*list) exitus {
 	out := ec.ports[1].ch
 	for _, list := range lists {
-		for _, x := range list.List {
+		for _, x := range *list {
 			out <- x
 		}
 	}
@@ -258,10 +258,10 @@ func unpack(ec *evalCtx) exitus {
 	out := ec.ports[1].ch
 
 	for v := range in {
-		if t, ok := v.(*table); !ok {
+		if list, ok := v.(*list); !ok {
 			return inputError
 		} else {
-			for _, e := range t.List {
+			for _, e := range *list {
 				out <- e
 			}
 		}
@@ -348,10 +348,10 @@ func visistedDirs(ec *evalCtx) exitus {
 	}
 	out := ec.ports[1].ch
 	for _, dir := range dirs {
-		table := newTable()
-		table.Dict["path"] = str(dir.Path)
-		table.Dict["score"] = str(fmt.Sprint(dir.Score))
-		out <- table
+		m := newMap()
+		m["path"] = str(dir.Path)
+		m["score"] = str(fmt.Sprint(dir.Score))
+		out <- m
 	}
 	return ok
 }

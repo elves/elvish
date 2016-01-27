@@ -416,9 +416,8 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 	case parse.List:
 		op := cp.array(n.List)
 		return func(ec *evalCtx) []Value {
-			t := newTable()
-			t.List = op(ec)
-			return []Value{t}
+			list := list(op(ec))
+			return []Value{&list}
 		}
 	case parse.Lambda:
 		return cp.lambda(n)
@@ -539,7 +538,7 @@ func (cp *compiler) map_(n *parse.Primary) valuesOp {
 		poses[i] = n.MapPairs[i].Begin()
 	}
 	return func(ec *evalCtx) []Value {
-		t := newTable()
+		m := newMap()
 		for i := 0; i < nn; i++ {
 			keys := keysOps[i](ec)
 			values := valuesOps[i](ec)
@@ -547,10 +546,10 @@ func (cp *compiler) map_(n *parse.Primary) valuesOp {
 				ec.errorf(poses[i], "%d keys but %d values", len(keys), len(values))
 			}
 			for j, key := range keys {
-				t.Dict[toString(key)] = values[j]
+				m[toString(key)] = values[j]
 			}
 		}
-		return []Value{t}
+		return []Value{m}
 	}
 }
 

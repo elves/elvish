@@ -9,7 +9,6 @@ import (
 	"math/big"
 	"reflect"
 	"strconv"
-	"strings"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/strutil"
@@ -29,6 +28,10 @@ type stringer interface {
 	String() string
 }
 
+type indexer interface {
+	Index(idx string) (Value, error)
+}
+
 type Type int
 
 const (
@@ -36,7 +39,8 @@ const (
 	stringType
 	exitusType
 	boolType
-	tableType
+	listType
+	mapType
 	callableType
 	ratType
 )
@@ -53,6 +57,23 @@ func (s str) Repr() string {
 
 func (s str) String() string {
 	return string(s)
+}
+
+var (
+	needIntIndex = errors.New("need integer index")
+)
+
+func (s str) Index(idx string) (Value, error) {
+	i, err := strconv.Atoi(idx)
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := strutil.NthRune(string(s), i)
+	if err != nil {
+		return nil, err
+	}
+	return str(string(r)), nil
 }
 
 type boolean bool
@@ -172,46 +193,87 @@ func (e exitus) Bool() bool {
 	return e.Sort == Ok
 }
 
-// table is a list-dict hybrid.
-//
-// TODO(xiaq): The dict part use string keys. It should use Value keys instead.
-type table struct {
-	List []Value
-	Dict map[string]Value
+// list is a list of Value's.
+type list []Value
+
+func newList() *list {
+	l := list([]Value{})
+	return &l
 }
 
-func (t *table) Type() Type {
-	return tableType
+func (l *list) Type() Type {
+	return listType
 }
 
-func newTable() *table {
-	return &table{Dict: make(map[string]Value)}
-}
-
-func (t *table) appendStrings(ss []string) {
+func (l *list) appendStrings(ss []string) {
 	for _, s := range ss {
-		t.List = append(t.List, str(s))
+		*l = append(*l, str(s))
 	}
 }
 
-func (t *table) Repr() string {
+func (l *list) Repr() string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
-	sep := ""
-	for _, v := range t.List {
-		fmt.Fprint(buf, sep, v.Repr())
-		sep = " "
-	}
-	for k, v := range t.Dict {
-		fmt.Fprint(buf, sep, "&", parse.Quote(k), " ", v.Repr())
-		sep = " "
+	for i, v := range *l {
+		if i > 0 {
+			buf.WriteByte(' ')
+		}
+		buf.WriteString(v.Repr())
 	}
 	buf.WriteRune(']')
 	return buf.String()
 }
 
-func (t *table) append(vs ...Value) {
-	t.List = append(t.List, vs...)
+var indexOutOfRange = errors.New("index out of range")
+
+func (l *list) Index(idx string) (Value, error) {
+	i, err := strconv.Atoi(idx)
+	if err != nil {
+		return nil, err
+	}
+	if i < 0 {
+		i += len(*l)
+	}
+	if i < 0 || i >= len(*l) {
+		return nil, indexOutOfRange
+	}
+	return (*l)[i], nil
+}
+
+// map_ is a map from string to Value.
+// TODO(xiaq): support Value keys.
+type map_ map[string]Value
+
+func newMap() map_ {
+	return map_(make(map[string]Value))
+}
+
+func (m map_) Type() Type {
+	return mapType
+}
+
+func (m map_) Repr() string {
+	buf := new(bytes.Buffer)
+	buf.WriteRune('[')
+	for k, v := range m {
+		if buf.Len() > 0 {
+			buf.WriteByte(' ')
+		}
+		buf.WriteByte('&')
+		buf.WriteString(parse.Quote(k))
+		buf.WriteByte(' ')
+		buf.WriteString(v.Repr())
+	}
+	buf.WriteRune(']')
+	return buf.String()
+}
+
+func (m map_) Index(idx string) (Value, error) {
+	v, ok := m[idx]
+	if !ok {
+		return nil, errors.New("no such key: " + idx)
+	}
+	return v, nil
 }
 
 // Callable represents Value's that may be executed.
@@ -290,65 +352,22 @@ func (r rat) String() string {
 	return r.b.String()
 }
 
-func evalSubscript(ec *evalCtx, left, right Value, lp, rp int) Value {
-	var sub string
-	if s, ok := right.(str); ok {
-		sub = string(s)
-	} else {
-		ec.errorf(rp, "right operand of subscript must be of type string")
+func evalSubscript(ec *evalCtx, l, r Value, lp, rp int) Value {
+	left, ok := l.(indexer)
+	if !ok {
+		ec.errorf(lp, "%s value cannot be indexed", l.Type())
 	}
 
-	switch left.(type) {
-	case *table:
-		t := left.(*table)
-		// TODO(xiaq): An index is considered a list index if it can be parsed
-		// as an unsigned integer; otherwise it is a dict index. This is
-		// somewhat subtle.
-		idx, err := strconv.ParseUint(sub, 10, 0)
-		if err == nil {
-			if idx < uint64(len(t.List)) {
-				return t.List[idx]
-			}
-			ec.errorf(rp, "index out of range")
-		}
-		if v, ok := t.Dict[sub]; ok {
-			return v
-		}
-		ec.errorf(rp, "nonexistent key %q", sub)
-		return nil
-	case str:
-		invalidIndex := "invalid index, must be integer or integer:integer"
-
-		ss := strings.Split(sub, ":")
-		if len(ss) > 2 {
-			ec.errorf(rp, invalidIndex)
-		}
-		idx := make([]int, len(ss))
-		for i, s := range ss {
-			n, err := strconv.ParseInt(s, 10, 0)
-			if err != nil {
-				ec.errorf(rp, invalidIndex)
-			}
-			idx[i] = int(n)
-		}
-
-		var s string
-		var e error
-		if len(idx) == 1 {
-			var r rune
-			r, e = strutil.NthRune(toString(left), idx[0])
-			s = string(r)
-		} else {
-			s, e = strutil.SubstringByRune(toString(left), idx[0], idx[1])
-		}
-		if e != nil {
-			ec.errorf(rp, "%v", e)
-		}
-		return str(s)
-	default:
-		ec.errorf(lp, "left operand of subscript must be of type string, env, table or any")
-		return nil
+	right, ok := r.(str)
+	if !ok {
+		ec.errorf(rp, "%s invalid cannot be used as index", r.Type())
 	}
+
+	v, err := left.Index(string(right))
+	if err != nil {
+		ec.errorf(lp, "%v", err)
+	}
+	return v
 }
 
 // fromJSONInterface converts a interface{} that results from json.Unmarshal to
@@ -366,18 +385,18 @@ func fromJSONInterface(v interface{}) Value {
 		return str(fmt.Sprint(v))
 	case []interface{}:
 		a := v.([]interface{})
-		t := &table{make([]Value, len(a)), make(map[string]Value)}
+		vs := list(make([]Value, len(a)))
 		for i, v := range a {
-			t.List[i] = fromJSONInterface(v)
+			vs[i] = fromJSONInterface(v)
 		}
-		return t
+		return &vs
 	case map[string]interface{}:
 		m := v.(map[string]interface{})
-		t := newTable()
+		m_ := newMap()
 		for k, v := range m {
-			t.Dict[k] = fromJSONInterface(v)
+			m_[k] = fromJSONInterface(v)
 		}
-		return t
+		return m_
 	default:
 		// TODO Find a better way to report error
 		return newFailure(fmt.Sprintf("unexpected json type: %T", v))
