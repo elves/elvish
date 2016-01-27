@@ -240,3 +240,19 @@ func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
 
 	return update
 }
+
+func (t *table) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
+	update := make(chan *stateUpdate)
+	go func() {
+		var v Value = t
+		for _, idx := range argVals {
+			// XXX the positions are obviously wrong.
+			v = evalSubscript(ec, v, idx, 0, 0)
+		}
+		ec.ports[1].ch <- v
+		ec.closePorts()
+		update <- newExitedStateUpdate(ok)
+		close(update)
+	}()
+	return update
+}
