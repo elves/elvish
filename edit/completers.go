@@ -90,7 +90,7 @@ func complFormHeadInner(head string, ed *Editor) []*candidate {
 	}
 	for variable := range ed.evaler.Global() {
 		if strings.HasPrefix(variable, eval.FnPrefix) {
-			foundCommand(variable[3:])
+			foundCommand(variable[len(eval.FnPrefix):])
 		}
 	}
 	for command := range ed.isExternal {
