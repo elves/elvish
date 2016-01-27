@@ -199,10 +199,11 @@ func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) ([]V
 	}
 	ec, outdone := newTopEvalCtx(ev, name, text)
 	if out != nil {
+		outdone = nil
 		ec.ports[1] = out
 	}
 	vs, err := ec.eval(op)
-	if err == nil {
+	if err == nil && outdone != nil {
 		// XXX maybe the out channel is always closed regardless of the error? need some checking
 		<-outdone
 	}
