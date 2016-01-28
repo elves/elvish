@@ -2,16 +2,16 @@ package eval
 
 import "github.com/elves/elvish/parse"
 
-func (cp *compiler) chunks(ns []*parse.Chunk) []valuesOp {
-	ops := make([]valuesOp, len(ns))
+func (cp *compiler) chunks(ns []*parse.Chunk) []exitusOp {
+	ops := make([]exitusOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.chunk(n)
 	}
 	return ops
 }
 
-func (cp *compiler) pipelines(ns []*parse.Pipeline) []valuesOp {
-	ops := make([]valuesOp, len(ns))
+func (cp *compiler) pipelines(ns []*parse.Pipeline) []exitusOp {
+	ops := make([]exitusOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.pipeline(n)
 	}

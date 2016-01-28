@@ -129,9 +129,12 @@ type exitus struct {
 	Traceback *traceback
 }
 
-var ok = exitus{Ok, "", nil}
+var (
+	ok       = exitus{Ok, "", nil}
+	gfailure = exitus{Failure, "generic failure", nil}
+)
 
-func newTraceback(es []exitus) exitus {
+func newTraceback(es ...exitus) exitus {
 	return exitus{Traceback, "", &traceback{es}}
 }
 
@@ -191,6 +194,15 @@ func (e exitus) String() string {
 
 func (e exitus) Bool() bool {
 	return e.Sort == Ok
+}
+
+func allok(es []exitus) bool {
+	for _, e := range es {
+		if e.Sort != Ok {
+			return false
+		}
+	}
+	return true
 }
 
 // list is a list of Value's.
@@ -285,7 +297,7 @@ type callable interface {
 // closure is a closure.
 type closure struct {
 	ArgNames []string
-	Op       valuesOp
+	Op       exitusOp
 	Captured map[string]Variable
 }
 
@@ -293,7 +305,7 @@ func (c *closure) Type() Type {
 	return callableType
 }
 
-func newClosure(a []string, op valuesOp, e map[string]Variable) *closure {
+func newClosure(a []string, op exitusOp, e map[string]Variable) *closure {
 	return &closure{a, op, e}
 }
 

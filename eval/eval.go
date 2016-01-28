@@ -83,7 +83,7 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 	return &Evaler{global, map[string]ns{}, searchPaths, st}
 }
 
-func printExitus(e exitus) {
+func pprintExitus(e exitus) {
 	switch e.Sort {
 	case Ok:
 		fmt.Print("\033[32mok\033[m")
@@ -95,7 +95,7 @@ func printExitus(e exitus) {
 			if i > 0 {
 				fmt.Print(" | ")
 			}
-			printExitus(c)
+			pprintExitus(c)
 		}
 		fmt.Print(")")
 	default:
@@ -104,17 +104,12 @@ func printExitus(e exitus) {
 	}
 }
 
-func PrintExituses(vs []Value) {
-	if !HasFailure(vs) {
+func PprintBadExitus(ex exitus) {
+	if ex.Bool() {
 		return
 	}
 	fmt.Print("⤇ ")
-	for i, v := range vs {
-		if i > 0 {
-			fmt.Print(" | ")
-		}
-		printExitus(v.(exitus))
-	}
+	pprintExitus(ex)
 	fmt.Println()
 }
 
@@ -188,37 +183,36 @@ func makeScope(s ns) scope {
 
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) Eval(name, text string, n *parse.Chunk) ([]Value, error) {
+func (ev *Evaler) Eval(name, text string, n *parse.Chunk) (exitus, error) {
 	return ev.evalWithOut(name, text, n, nil)
 }
 
-func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) ([]Value, error) {
+func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) (exitus, error) {
 	op, err := compile(name, text, makeScope(ev.global), n)
 	if err != nil {
-		return nil, err
+		return gfailure, err
 	}
 	ec, outdone := newTopEvalCtx(ev, name, text)
 	if out != nil {
 		outdone = nil
 		ec.ports[1] = out
 	}
-	vs, err := ec.eval(op)
+	ex, err := ec.eval(op)
 	if err == nil && outdone != nil {
 		// XXX maybe the out channel is always closed regardless of the error? need some checking
 		<-outdone
 	}
-	return vs, err
+	return ex, err
 }
 
 // eval evaluates an Op.
-func (ec *evalCtx) eval(op valuesOp) (vs []Value, err error) {
+func (ec *evalCtx) eval(op exitusOp) (ex exitus, err error) {
 	if op == nil {
-		return nil, nil
+		return ok, nil
 	}
 	defer ec.closePorts()
 	defer errutil.Catch(&err)
-	vs = op(ec)
-	return vs, nil
+	return op(ec), nil
 }
 
 // errorf stops the ec.eval immediately by panicking with a diagnostic message.
@@ -243,10 +237,10 @@ func (ec *evalCtx) mustSingleString(vs []Value, what string, p int) str {
 }
 
 // SourceText evaluates a chunk of elvish source.
-func (ev *Evaler) SourceText(name, src, dir string) ([]Value, error) {
+func (ev *Evaler) SourceText(name, src, dir string) (exitus, error) {
 	n, err := parse.Parse(name, src)
 	if err != nil {
-		return nil, err
+		return gfailure, err
 	}
 	return ev.Eval(name, src, n)
 }
@@ -263,10 +257,10 @@ func readFileUTF8(fname string) (string, error) {
 }
 
 // Source evaluates the content of a file.
-func (ev *Evaler) Source(fname string) ([]Value, error) {
+func (ev *Evaler) Source(fname string) (exitus, error) {
 	src, err := readFileUTF8(fname)
 	if err != nil {
-		return nil, err
+		return gfailure, err
 	}
 	return ev.SourceText(fname, src, path.Dir(fname))
 }

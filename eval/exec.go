@@ -17,6 +17,7 @@ const (
 var (
 	arityMismatch = newFailure("arity mismatch")
 	cdNoArg       = newFailure("implicit cd accepts no arguments")
+	evalFailure   = newFailure("generic eval failure")
 )
 
 func (ec *evalCtx) exec(op exitusOp) exitus {
@@ -75,31 +76,13 @@ func (c *closure) Call(ec *evalCtx, args []Value) exitus {
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.
 
-	vs, err := ec.eval(c.Op)
+	ex, err := ec.eval(c.Op)
 	if err != nil {
 		fmt.Print(err.(*errutil.ContextualError).Pprint())
-		// XXX should return failure
+		return evalFailure
 	}
 
-	if HasFailure(vs) {
-		var flow exitusSort
-		es := make([]exitus, len(vs))
-		// NOTE(xiaq): If there is a flow exitus, the last one is
-		// re-returned. Maybe we could use a more elegant semantics.
-		for i, v := range vs {
-			es[i] = v.(exitus)
-			if es[i].Sort >= FlowSortLower {
-				flow = es[i].Sort
-			}
-		}
-		if flow != 0 {
-			return newFlowExitus(flow)
-		} else {
-			return newTraceback(es)
-		}
-	} else {
-		return ok
-	}
+	return ex
 }
 
 // waitStatusToExitus converts syscall.WaitStatus to an exitus.

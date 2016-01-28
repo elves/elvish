@@ -44,24 +44,23 @@ func (cp *compiler) errorf(p int, format string, args ...interface{}) {
 	errutil.Throw(errutil.NewContextualError(cp.name, "syntax error", cp.source, p, format, args...))
 }
 
-func compile(name, source string, sc scope, n *parse.Chunk) (op valuesOp, err error) {
+func compile(name, source string, sc scope, n *parse.Chunk) (op exitusOp, err error) {
 	cp := &compiler{name, source, []scope{sc}, scope{}, nil}
 	defer errutil.Catch(&err)
-	op = cp.chunk(n)
-	return op, nil
+	return cp.chunk(n), nil
 }
 
-func (cp *compiler) chunk(n *parse.Chunk) valuesOp {
+func (cp *compiler) chunk(n *parse.Chunk) exitusOp {
 	ops := cp.pipelines(n.Pipelines)
 
-	return func(ec *evalCtx) []Value {
+	return func(ec *evalCtx) exitus {
 		for _, op := range ops {
 			s := op(ec)
-			if HasFailure(s) {
+			if !s.Bool() {
 				return s
 			}
 		}
-		return []Value{ok}
+		return ok
 	}
 }
 
@@ -69,14 +68,14 @@ const pipelineChanBufferSize = 32
 
 var noExitus = newFailure("no exitus")
 
-func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
+func (cp *compiler) pipeline(n *parse.Pipeline) exitusOp {
 	ops := cp.forms(n.Forms)
 	p := n.Begin()
 
-	return func(ec *evalCtx) []Value {
+	return func(ec *evalCtx) exitus {
 		var nextIn *port
 
-		exituses := make([]Value, len(ops))
+		exituses := make([]exitus, len(ops))
 		finished := make(chan bool, len(ops))
 
 		// For each form, create a dedicated evalCtx and run asynchronously
@@ -110,7 +109,12 @@ func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
 		for i := 0; i < len(ops); i++ {
 			<-finished
 		}
-		return exituses
+		if len(exituses) == 1 {
+			return exituses[0]
+		} else if allok(exituses) {
+			return ok
+		}
+		return newTraceback(exituses...)
 	}
 }
 
@@ -410,7 +414,10 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 		return variable(qname, n.Begin())
 	// case parse.Wildcard:
 	case parse.ExitusCapture:
-		return cp.chunk(n.Chunk)
+		op := cp.chunk(n.Chunk)
+		return func(ec *evalCtx) []Value {
+			return []Value{op(ec)}
+		}
 	case parse.OutputCapture:
 		return cp.outputCapture(n)
 	case parse.List:

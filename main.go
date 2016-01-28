@@ -58,11 +58,13 @@ func interact() {
 	printError(err)
 	if err == nil {
 		// XXX
-		vs, err := ev.Source(datadir + "/rc.elv")
+		ex, err := ev.Source(datadir + "/rc.elv")
 		if err != nil && !os.IsNotExist(err) {
 			printError(err)
 		}
-		eval.PrintExituses(vs)
+		if !os.IsNotExist(err) {
+			eval.PprintBadExitus(ex)
+		}
 	}
 
 	cmdNum := 0
@@ -108,19 +110,19 @@ func interact() {
 		printError(err)
 
 		if err == nil {
-			vs, err := ev.Eval(name, lr.Line, n)
+			ex, err := ev.Eval(name, lr.Line, n)
 			printError(err)
-			eval.PrintExituses(vs)
+			eval.PprintBadExitus(ex)
 		}
 	}
 }
 
 func script(fname string) {
 	ev, _ := newEvalerAndStore()
-	vs, err := ev.Source(fname)
+	ex, err := ev.Source(fname)
 	printError(err)
-	eval.PrintExituses(vs)
-	if err != nil || eval.HasFailure(vs) {
+	eval.PprintBadExitus(ex)
+	if err != nil || !ex.Bool() {
 		os.Exit(1)
 	}
 }

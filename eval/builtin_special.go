@@ -201,18 +201,14 @@ func compileUse(cp *compiler, fn *parse.Form) exitusOp {
 }
 */
 
-// makeFnOp wraps a valuesOp such that a return is converted to an ok.
-func makeFnOp(op valuesOp) valuesOp {
-	return func(ec *evalCtx) []Value {
-		vs := op(ec)
-		if len(vs) == 1 {
-			if e, ok_ := vs[0].(exitus); ok_ {
-				if e.Sort == Return {
-					return []Value{ok}
-				}
-			}
+// makeFnOp wraps an exitusOp such that a return is converted to an ok.
+func makeFnOp(op exitusOp) exitusOp {
+	return func(ec *evalCtx) exitus {
+		ex := op(ec)
+		if ex.Sort == Return {
+			return ok
 		}
-		return vs
+		return ex
 	}
 }
 
