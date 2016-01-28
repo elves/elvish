@@ -14,21 +14,24 @@ const (
 	fdNil uintptr = ^uintptr(0)
 )
 
+var (
+	arityMismatch = newFailure("arity mismatch")
+	cdNoArg       = newFailure("implicit cd accepts no arguments")
+)
+
 // execSpecial executes a builtin special form.
 //
 // NOTE(xiaq): execSpecial and execNonSpecial are always called on an
 // intermediate "form redir" where only the form-local ports are marked
 // shouldClose. ec.closePorts should be called at appropriate moments.
-func (ec *evalCtx) execSpecial(op exitusOp) <-chan exitus {
-	update := make(chan exitus)
-	go func() {
-		ex := op(ec)
-		// Ports are closed after executaion of builtin is complete.
-		ec.closePorts()
-		update <- ex
-		close(update)
-	}()
-	return update
+func (ec *evalCtx) execSpecial(op exitusOp) exitus {
+	defer ec.closePorts()
+	return op(ec)
+}
+
+// execNonSpecial executes a form that is not a special form.
+func (ec *evalCtx) execNonSpecial(cmd Value, args []Value) exitus {
+	return ec.resolveNonSpecial(cmd).Exec(ec, args)
 }
 
 func (ec *evalCtx) resolveNonSpecial(cmd Value) callable {
@@ -51,38 +54,20 @@ func (ec *evalCtx) resolveNonSpecial(cmd Value) callable {
 	return externalCmd{cmdStr}
 }
 
-// execNonSpecial executes a form that is not a special form.
-func (ec *evalCtx) execNonSpecial(cmd Value, args []Value) <-chan exitus {
-	return ec.resolveNonSpecial(cmd).Exec(ec, args)
-}
-
 // Exec executes a builtin function.
-func (b *builtinFn) Exec(ec *evalCtx, args []Value) <-chan exitus {
-	update := make(chan exitus)
-	go func() {
-		ex := b.Impl(ec, args)
-		// Ports are closed after executaion of builtin is complete.
-		ec.closePorts()
-		update <- ex
-		close(update)
-	}()
-	return update
+func (b *builtinFn) Exec(ec *evalCtx, args []Value) exitus {
+	defer ec.closePorts()
+	return b.Impl(ec, args)
 }
-
-var (
-	arityMismatch = newFailure("arity mismatch")
-)
 
 // Exec executes a closure.
-func (c *closure) Exec(ec *evalCtx, args []Value) <-chan exitus {
-	update := make(chan exitus, 1)
+func (c *closure) Exec(ec *evalCtx, args []Value) exitus {
+	defer ec.closePorts()
 
 	// TODO Support optional/rest argument
 	if len(args) != len(c.ArgNames) {
 		// TODO Check arity before exec'ing
-		update <- arityMismatch
-		close(update)
-		return update
+		return arityMismatch
 	}
 
 	// This evalCtx is dedicated to the current form, so we modify it in place.
@@ -103,35 +88,31 @@ func (c *closure) Exec(ec *evalCtx, args []Value) <-chan exitus {
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.
 
-	go func() {
-		vs, err := ec.eval(c.Op)
-		if err != nil {
-			fmt.Print(err.(*errutil.ContextualError).Pprint())
+	vs, err := ec.eval(c.Op)
+	if err != nil {
+		fmt.Print(err.(*errutil.ContextualError).Pprint())
+		// XXX should return failure
+	}
+	// Ports are closed after executaion of closure is complete.
+	if HasFailure(vs) {
+		var flow exitusSort
+		es := make([]exitus, len(vs))
+		// NOTE(xiaq): If there is a flow exitus, the last one is
+		// re-returned. Maybe we could use a more elegant semantics.
+		for i, v := range vs {
+			es[i] = v.(exitus)
+			if es[i].Sort >= FlowSortLower {
+				flow = es[i].Sort
+			}
 		}
-		// Ports are closed after executaion of closure is complete.
-		ec.closePorts()
-		if HasFailure(vs) {
-			var flow exitusSort
-			es := make([]exitus, len(vs))
-			// NOTE(xiaq): If there is a flow exitus, the last one is
-			// re-returned. Maybe we could use a more elegant semantics.
-			for i, v := range vs {
-				es[i] = v.(exitus)
-				if es[i].Sort >= FlowSortLower {
-					flow = es[i].Sort
-				}
-			}
-			if flow != 0 {
-				update <- newFlowExitus(flow)
-			} else {
-				update <- newTraceback(es)
-			}
+		if flow != 0 {
+			return newFlowExitus(flow)
 		} else {
-			update <- ok
+			return newTraceback(es)
 		}
-		close(update)
-	}()
-	return update
+	} else {
+		return ok
+	}
 }
 
 // waitStatusToExitus converts syscall.WaitStatus to an exitus.
@@ -165,38 +146,15 @@ func waitStatusToExitus(ws syscall.WaitStatus) exitus {
 	}
 }
 
-// waitStateUpdate wait(2)s for pid, and feeds the WaitStatus into an
-// exitus channel after proper conversion.
-func waitStateUpdate(pid int, update chan<- exitus) {
-	var ws syscall.WaitStatus
-	_, err := syscall.Wait4(pid, &ws, 0, nil)
-
-	if err != nil {
-		update <- newFailure(fmt.Sprintf("wait:", err.Error()))
-	} else {
-		update <- waitStatusToExitus(ws)
-	}
-
-	close(update)
-}
-
-var (
-	cdNoArg = newFailure("implicit cd accepts no arguments")
-)
-
 // Exec executes an external command.
-func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan exitus {
-	update := make(chan exitus, 1)
+func (e externalCmd) Exec(ec *evalCtx, argVals []Value) exitus {
+	defer ec.closePorts()
 
 	if DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {
 			// implicit cd
-			ex := cdInner(e.Name, ec)
-			ec.closePorts()
-			update <- ex
-			close(update)
-			return update
+			return cdInner(e.Name, ec)
 		}
 	}
 
@@ -220,54 +178,46 @@ func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan exitus {
 	attr := syscall.ProcAttr{Env: os.Environ(), Files: files[:], Sys: &sys}
 
 	path, err := ec.Search(e.Name)
-	var pid int
-
-	if err == nil {
-		args[0] = path
-		pid, err = syscall.ForkExec(path, args, &attr)
-	}
-	// Ports are closed after fork-exec of external is complete.
-	ec.closePorts()
-
 	if err != nil {
-		update <- newFailure(err.Error())
-		close(update)
-	} else {
-		go waitStateUpdate(pid, update)
+		return newFailure("search: " + err.Error())
 	}
 
-	return update
+	args[0] = path
+	pid, err := syscall.ForkExec(path, args, &attr)
+	if err != nil {
+		return newFailure("forkExec: " + err.Error())
+	}
+
+	var ws syscall.WaitStatus
+	_, err = syscall.Wait4(pid, &ws, 0, nil)
+	if err != nil {
+		return newFailure(fmt.Sprintf("wait:", err.Error()))
+	} else {
+		return waitStatusToExitus(ws)
+	}
 }
 
-func (t *list) Exec(ec *evalCtx, argVals []Value) <-chan exitus {
-	update := make(chan exitus)
-	go func() {
-		var v Value = t
-		for _, idx := range argVals {
-			// XXX the positions are obviously wrong.
-			v = evalSubscript(ec, v, idx, 0, 0)
-		}
-		ec.ports[1].ch <- v
-		ec.closePorts()
-		update <- ok
-		close(update)
-	}()
-	return update
+func (t *list) Exec(ec *evalCtx, argVals []Value) exitus {
+	defer ec.closePorts()
+
+	var v Value = t
+	for _, idx := range argVals {
+		// XXX the positions are obviously wrong.
+		v = evalSubscript(ec, v, idx, 0, 0)
+	}
+	ec.ports[1].ch <- v
+	return ok
 }
 
 // XXX duplicate
-func (t map_) Exec(ec *evalCtx, argVals []Value) <-chan exitus {
-	update := make(chan exitus)
-	go func() {
-		var v Value = t
-		for _, idx := range argVals {
-			// XXX the positions are obviously wrong.
-			v = evalSubscript(ec, v, idx, 0, 0)
-		}
-		ec.ports[1].ch <- v
-		ec.closePorts()
-		update <- ok
-		close(update)
-	}()
-	return update
+func (t map_) Exec(ec *evalCtx, argVals []Value) exitus {
+	defer ec.closePorts()
+
+	var v Value = t
+	for _, idx := range argVals {
+		// XXX the positions are obviously wrong.
+		v = evalSubscript(ec, v, idx, 0, 0)
+	}
+	ec.ports[1].ch <- v
+	return ok
 }

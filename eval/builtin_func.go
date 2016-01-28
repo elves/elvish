@@ -297,9 +297,7 @@ func each(ec *evalCtx, f *closure) exitus {
 	in := ec.ports[0].ch
 in:
 	for v := range in {
-		su := f.Exec(ec.copy("closure of each"), []Value{v})
-		// F.Exec will put exactly one stateUpdate on the channel
-		e := <-su
+		e := f.Exec(ec.copy("closure of each"), []Value{v})
 		switch e.Sort {
 		case Ok, Continue:
 			// nop

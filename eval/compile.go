@@ -75,8 +75,11 @@ func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
 
 	return func(ec *evalCtx) []Value {
 		var nextIn *port
-		updates := make([]<-chan exitus, len(ops))
-		// For each form, create a dedicated evalCtx and run
+
+		exituses := make([]Value, len(ops))
+		finished := make(chan bool, len(ops))
+
+		// For each form, create a dedicated evalCtx and run asynchronously
 		for i, op := range ops {
 			newEc := ec.copy(fmt.Sprintf("form op %v", op))
 			if i > 0 {
@@ -96,25 +99,29 @@ func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
 				nextIn = &port{
 					f: reader, ch: ch, closeF: true, closeCh: false}
 			}
-			updates[i] = op(newEc)
+			thisOp := op
+			thisExitus := &exituses[i]
+			go func() {
+				*thisExitus = thisOp(newEc)
+				finished <- true
+			}()
 		}
-		// Collect exit values
-		exits := make([]Value, len(ops))
-		for i, update := range updates {
-			exits[i] = <-update
+		// Wait for all forms to finish
+		for i := 0; i < len(ops); i++ {
+			<-finished
 		}
-		return exits
+		return exituses
 	}
 }
 
-func (cp *compiler) form(n *parse.Form) exitusChOp {
+func (cp *compiler) form(n *parse.Form) exitusOp {
 	headStr, ok := oneString(n.Head)
 	if ok {
 		compileForm, ok := builtinSpecials[headStr]
 		if ok {
 			// special form
 			op := compileForm(cp, n)
-			return func(ec *evalCtx) <-chan exitus {
+			return func(ec *evalCtx) exitus {
 				return ec.execSpecial(op)
 			}
 		} else {
@@ -131,7 +138,7 @@ func (cp *compiler) form(n *parse.Form) exitusChOp {
 	p := n.Begin()
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
-	return func(ec *evalCtx) <-chan exitus {
+	return func(ec *evalCtx) exitus {
 		// head
 		headValues := headOp(ec)
 		headMust := ec.must(headValues, "the head of command", p)

@@ -126,7 +126,7 @@ const (
 // newTopEvalCtx creates a top-level evalCtx.
 func newTopEvalCtx(ev *Evaler, name, text string) (*evalCtx, chan bool) {
 	ch := make(chan Value, outChanSize)
-	done := make(chan bool)
+	done := make(chan bool, 1)
 	go func() {
 		for v := range ch {
 			fmt.Printf("%s%s\n", outChanLeader, v.Repr())
