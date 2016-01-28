@@ -276,13 +276,10 @@ func (m map_) Index(idx string) (Value, error) {
 	return v, nil
 }
 
-// Callable represents Value's that may be executed.
+// Callable represents Value's that may be called.
 type callable interface {
 	Value
-	// Exec executes a callable asynchronously on an Evaler. It assumes that
-	// it is the last callable to be executed on that Evaler and thus
-	// responsible for cleaning up the ports.
-	Exec(ec *evalCtx, args []Value) exitus
+	Call(ec *evalCtx, args []Value) exitus
 }
 
 // closure is a closure.

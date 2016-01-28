@@ -19,21 +19,6 @@ var (
 	cdNoArg       = newFailure("implicit cd accepts no arguments")
 )
 
-// execSpecial executes a builtin special form.
-//
-// NOTE(xiaq): execSpecial and execNonSpecial are always called on an
-// intermediate "form redir" where only the form-local ports are marked
-// shouldClose. ec.closePorts should be called at appropriate moments.
-func (ec *evalCtx) execSpecial(op exitusOp) exitus {
-	defer ec.closePorts()
-	return op(ec)
-}
-
-// execNonSpecial executes a form that is not a special form.
-func (ec *evalCtx) execNonSpecial(cmd Value, args []Value) exitus {
-	return ec.resolveNonSpecial(cmd).Exec(ec, args)
-}
-
 func (ec *evalCtx) resolveNonSpecial(cmd Value) callable {
 	// Closure
 	if cl, ok := cmd.(callable); ok {
@@ -54,16 +39,13 @@ func (ec *evalCtx) resolveNonSpecial(cmd Value) callable {
 	return externalCmd{cmdStr}
 }
 
-// Exec executes a builtin function.
-func (b *builtinFn) Exec(ec *evalCtx, args []Value) exitus {
-	defer ec.closePorts()
+// Call calls a builtin function.
+func (b *builtinFn) Call(ec *evalCtx, args []Value) exitus {
 	return b.Impl(ec, args)
 }
 
-// Exec executes a closure.
-func (c *closure) Exec(ec *evalCtx, args []Value) exitus {
-	defer ec.closePorts()
-
+// Call calls a closure.
+func (c *closure) Call(ec *evalCtx, args []Value) exitus {
 	// TODO Support optional/rest argument
 	if len(args) != len(c.ArgNames) {
 		// TODO Check arity before exec'ing
@@ -147,9 +129,7 @@ func waitStatusToExitus(ws syscall.WaitStatus) exitus {
 }
 
 // Exec executes an external command.
-func (e externalCmd) Exec(ec *evalCtx, argVals []Value) exitus {
-	defer ec.closePorts()
-
+func (e externalCmd) Call(ec *evalCtx, argVals []Value) exitus {
 	if DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {
@@ -197,9 +177,7 @@ func (e externalCmd) Exec(ec *evalCtx, argVals []Value) exitus {
 	}
 }
 
-func (t *list) Exec(ec *evalCtx, argVals []Value) exitus {
-	defer ec.closePorts()
-
+func (t *list) Call(ec *evalCtx, argVals []Value) exitus {
 	var v Value = t
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.
@@ -210,9 +188,7 @@ func (t *list) Exec(ec *evalCtx, argVals []Value) exitus {
 }
 
 // XXX duplicate
-func (t map_) Exec(ec *evalCtx, argVals []Value) exitus {
-	defer ec.closePorts()
-
+func (t map_) Call(ec *evalCtx, argVals []Value) exitus {
 	var v Value = t
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.

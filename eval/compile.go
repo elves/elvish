@@ -103,6 +103,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
 			thisExitus := &exituses[i]
 			go func() {
 				*thisExitus = thisOp(newEc)
+				newEc.closePorts()
 				finished <- true
 			}()
 		}
@@ -120,10 +121,7 @@ func (cp *compiler) form(n *parse.Form) exitusOp {
 		compileForm, ok := builtinSpecials[headStr]
 		if ok {
 			// special form
-			op := compileForm(cp, n)
-			return func(ec *evalCtx) exitus {
-				return ec.execSpecial(op)
-			}
+			return compileForm(cp, n)
 		} else {
 			cp.registerVariableGet(FnPrefix + headStr)
 			// XXX Dynamic head names should always refer to external commands
@@ -160,7 +158,7 @@ func (cp *compiler) form(n *parse.Form) exitusOp {
 			redirOp(ec)
 		}
 
-		return ec.execNonSpecial(headValues[0], args)
+		return ec.resolveNonSpecial(headValues[0]).Call(ec, args)
 	}
 }
 
