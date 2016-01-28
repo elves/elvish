@@ -81,7 +81,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
 
 		// For each form, create a dedicated evalCtx and run asynchronously
 		for i, op := range ops {
-			newEc := ec.copy(fmt.Sprintf("form op %v", op))
+			newEc := ec.fork(fmt.Sprintf("form op %v", op))
 			if i > 0 {
 				newEc.ports[0] = nextIn
 			}
@@ -444,7 +444,7 @@ func (cp *compiler) outputCapture(n *parse.Primary) valuesOp {
 	p := n.Chunk.Begin()
 	return func(ec *evalCtx) []Value {
 		vs := []Value{}
-		newEc := ec.copy(fmt.Sprintf("channel output capture %v", op))
+		newEc := ec.fork(fmt.Sprintf("channel output capture %v", op))
 
 		pipeRead, pipeWrite, err := os.Pipe()
 		if err != nil {

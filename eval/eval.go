@@ -143,10 +143,10 @@ func newTopEvalCtx(ev *Evaler, name, text string) (*evalCtx, chan bool) {
 	}, done
 }
 
-// copy returns a copy of ec. The ports are copied deeply, with shouldClose
-// flags reset, and the context is changed to the given value. Other fields are
-// copied shallowly.
-func (ec *evalCtx) copy(newContext string) *evalCtx {
+// fork returns a modified copy of ec. The ports are copied deeply, with
+// shouldClose flags reset, and the context is changed to the given value.
+// Other fields are copied shallowly.
+func (ec *evalCtx) fork(newContext string) *evalCtx {
 	newPorts := make([]*port, len(ec.ports))
 	for i, p := range ec.ports {
 		newPorts[i] = &port{p.f, p.ch, false, false}
