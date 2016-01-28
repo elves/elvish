@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/user"
 	"reflect"
+	"runtime"
 	"strconv"
 )
 
@@ -56,6 +57,8 @@ func init() {
 		&builtinFn{"/", wrapFn(divide)},
 
 		&builtinFn{"=", eq},
+
+		&builtinFn{"-stack", wrapFn(_stack)},
 	}
 }
 
@@ -453,5 +456,18 @@ func eq(ec *evalCtx, args []Value) exitus {
 		}
 	}
 	out <- boolean(true)
+	return ok
+}
+
+func _stack(ec *evalCtx) exitus {
+	out := ec.ports[1].f
+
+	// XXX dup with main.go
+	buf := make([]byte, 1024)
+	for runtime.Stack(buf, true) == cap(buf) {
+		buf = make([]byte, cap(buf)*2)
+	}
+	out.Write(buf)
+
 	return ok
 }
