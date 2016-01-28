@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/signal"
 	"os/user"
+	"runtime"
+	"syscall"
 
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/errutil"
@@ -128,7 +130,22 @@ var usage = `Usage:
     elvish <script>
 `
 
+func rescue() {
+	r := recover()
+	if r != nil {
+		buf := make([]byte, 1024)
+		for runtime.Stack(buf, true) == cap(buf) {
+			buf = make([]byte, cap(buf)*2)
+		}
+		print(string(buf))
+		println("execing recovery shell /bin/sh")
+		syscall.Exec("/bin/sh", []string{}, os.Environ())
+	}
+}
+
 func main() {
+	defer rescue()
+
 	switch len(os.Args) {
 	case 1:
 		interact()
