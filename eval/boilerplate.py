@@ -16,7 +16,7 @@ func (cp *compiler) {name}s(ns []{intype}) []{outtype} {{
 def main():
     out = open('boilerplate.go', 'w')
     print >>out, '''package eval
-import "github.com/elves/elvish/parse-ng"'''
+import "github.com/elves/elvish/parse"'''
     for line in file('compile.go'):
         m = re.match(r'^func \(cp \*compiler\) (\w+)\(\w+ (.+)\) (\w*[oO]p) {$', line)
         if m:
