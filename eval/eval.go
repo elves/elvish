@@ -108,7 +108,7 @@ func PrintExituses(vs []Value) {
 	if !HasFailure(vs) {
 		return
 	}
-	fmt.Print("Status: ")
+	fmt.Print("⤇ ")
 	for i, v := range vs {
 		if i > 0 {
 			fmt.Print(" | ")
