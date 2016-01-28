@@ -282,7 +282,7 @@ type callable interface {
 	// Exec executes a callable asynchronously on an Evaler. It assumes that
 	// it is the last callable to be executed on that Evaler and thus
 	// responsible for cleaning up the ports.
-	Exec(ec *evalCtx, args []Value) <-chan *stateUpdate
+	Exec(ec *evalCtx, args []Value) <-chan exitus
 }
 
 // closure is a closure.

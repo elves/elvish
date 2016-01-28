@@ -17,10 +17,10 @@ import (
 type scope map[string]bool
 
 type (
-	op             func(*evalCtx)
-	valuesOp       func(*evalCtx) []Value
-	stateUpdatesOp func(*evalCtx) <-chan *stateUpdate
-	exitusOp       func(*evalCtx) exitus
+	op         func(*evalCtx)
+	valuesOp   func(*evalCtx) []Value
+	exitusChOp func(*evalCtx) <-chan exitus
+	exitusOp   func(*evalCtx) exitus
 )
 
 // compiler maintains the set of states needed when compiling a single source
@@ -75,7 +75,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
 
 	return func(ec *evalCtx) []Value {
 		var nextIn *port
-		updates := make([]<-chan *stateUpdate, len(ops))
+		updates := make([]<-chan exitus, len(ops))
 		// For each form, create a dedicated evalCtx and run
 		for i, op := range ops {
 			newEc := ec.copy(fmt.Sprintf("form op %v", op))
@@ -101,24 +101,20 @@ func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
 		// Collect exit values
 		exits := make([]Value, len(ops))
 		for i, update := range updates {
-			ex := noExitus
-			for up := range update {
-				ex = up.Exitus
-			}
-			exits[i] = ex
+			exits[i] = <-update
 		}
 		return exits
 	}
 }
 
-func (cp *compiler) form(n *parse.Form) stateUpdatesOp {
+func (cp *compiler) form(n *parse.Form) exitusChOp {
 	headStr, ok := oneString(n.Head)
 	if ok {
 		compileForm, ok := builtinSpecials[headStr]
 		if ok {
 			// special form
 			op := compileForm(cp, n)
-			return func(ec *evalCtx) <-chan *stateUpdate {
+			return func(ec *evalCtx) <-chan exitus {
 				return ec.execSpecial(op)
 			}
 		} else {
@@ -135,7 +131,7 @@ func (cp *compiler) form(n *parse.Form) stateUpdatesOp {
 	p := n.Begin()
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
-	return func(ec *evalCtx) <-chan *stateUpdate {
+	return func(ec *evalCtx) <-chan exitus {
 		// head
 		headValues := headOp(ec)
 		headMust := ec.must(headValues, "the head of command", p)

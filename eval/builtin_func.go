@@ -299,7 +299,7 @@ in:
 	for v := range in {
 		su := f.Exec(ec.copy("closure of each"), []Value{v})
 		// F.Exec will put exactly one stateUpdate on the channel
-		e := (<-su).Exitus
+		e := <-su
 		switch e.Sort {
 		case Ok, Continue:
 			// nop

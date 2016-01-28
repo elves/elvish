@@ -14,33 +14,18 @@ const (
 	fdNil uintptr = ^uintptr(0)
 )
 
-// StateUpdate represents a change of state of a command.
-type stateUpdate struct {
-	Exited bool
-	Exitus exitus
-	Update string
-}
-
-func newExitedStateUpdate(e exitus) *stateUpdate {
-	return &stateUpdate{Exited: true, Exitus: e}
-}
-
-func newUnexitedStateUpdate(u string) *stateUpdate {
-	return &stateUpdate{Exited: false, Update: u}
-}
-
 // execSpecial executes a builtin special form.
 //
 // NOTE(xiaq): execSpecial and execNonSpecial are always called on an
 // intermediate "form redir" where only the form-local ports are marked
 // shouldClose. ec.closePorts should be called at appropriate moments.
-func (ec *evalCtx) execSpecial(op exitusOp) <-chan *stateUpdate {
-	update := make(chan *stateUpdate)
+func (ec *evalCtx) execSpecial(op exitusOp) <-chan exitus {
+	update := make(chan exitus)
 	go func() {
 		ex := op(ec)
 		// Ports are closed after executaion of builtin is complete.
 		ec.closePorts()
-		update <- newExitedStateUpdate(ex)
+		update <- ex
 		close(update)
 	}()
 	return update
@@ -67,18 +52,18 @@ func (ec *evalCtx) resolveNonSpecial(cmd Value) callable {
 }
 
 // execNonSpecial executes a form that is not a special form.
-func (ec *evalCtx) execNonSpecial(cmd Value, args []Value) <-chan *stateUpdate {
+func (ec *evalCtx) execNonSpecial(cmd Value, args []Value) <-chan exitus {
 	return ec.resolveNonSpecial(cmd).Exec(ec, args)
 }
 
 // Exec executes a builtin function.
-func (b *builtinFn) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
-	update := make(chan *stateUpdate)
+func (b *builtinFn) Exec(ec *evalCtx, args []Value) <-chan exitus {
+	update := make(chan exitus)
 	go func() {
 		ex := b.Impl(ec, args)
 		// Ports are closed after executaion of builtin is complete.
 		ec.closePorts()
-		update <- newExitedStateUpdate(ex)
+		update <- ex
 		close(update)
 	}()
 	return update
@@ -89,13 +74,13 @@ var (
 )
 
 // Exec executes a closure.
-func (c *closure) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
-	update := make(chan *stateUpdate, 1)
+func (c *closure) Exec(ec *evalCtx, args []Value) <-chan exitus {
+	update := make(chan exitus, 1)
 
 	// TODO Support optional/rest argument
 	if len(args) != len(c.ArgNames) {
 		// TODO Check arity before exec'ing
-		update <- newExitedStateUpdate(arityMismatch)
+		update <- arityMismatch
 		close(update)
 		return update
 	}
@@ -137,63 +122,61 @@ func (c *closure) Exec(ec *evalCtx, args []Value) <-chan *stateUpdate {
 				}
 			}
 			if flow != 0 {
-				update <- newExitedStateUpdate(newFlowExitus(flow))
+				update <- newFlowExitus(flow)
 			} else {
-				update <- newExitedStateUpdate(newTraceback(es))
+				update <- newTraceback(es)
 			}
 		} else {
-			update <- newExitedStateUpdate(ok)
+			update <- ok
 		}
 		close(update)
 	}()
 	return update
 }
 
-// waitStatusToStateUpdate converts syscall.WaitStatus to a StateUpdate.
-func waitStatusToStateUpdate(ws syscall.WaitStatus) *stateUpdate {
+// waitStatusToExitus converts syscall.WaitStatus to an exitus.
+func waitStatusToExitus(ws syscall.WaitStatus) exitus {
 	switch {
 	case ws.Exited():
 		es := ws.ExitStatus()
 		if es == 0 {
-			return newExitedStateUpdate(ok)
+			return ok
 		}
-		return newExitedStateUpdate(newFailure(fmt.Sprint(es)))
+		return newFailure(fmt.Sprint(es))
 	case ws.Signaled():
 		msg := fmt.Sprintf("signaled %v", ws.Signal())
 		if ws.CoreDump() {
 			msg += " (core dumped)"
 		}
-		return newUnexitedStateUpdate(msg)
+		return newFailure(msg)
 	case ws.Stopped():
 		msg := fmt.Sprintf("stopped %v", ws.StopSignal())
 		trap := ws.TrapCause()
 		if trap != -1 {
 			msg += fmt.Sprintf(" (trapped %v)", trap)
 		}
-		return newUnexitedStateUpdate(msg)
-	case ws.Continued():
-		return newUnexitedStateUpdate("continued")
+		return newFailure(msg)
+	/*
+		case ws.Continued():
+			return newUnexitedStateUpdate("continued")
+	*/
 	default:
-		return newUnexitedStateUpdate(fmt.Sprint("unknown status", ws))
+		return newFailure(fmt.Sprint("unknown WaitStatus", ws))
 	}
 }
 
-// waitStateUpdate wait(2)s for pid, and feeds the WaitStatus's into a
-// *StateUpdate channel after proper conversion.
-func waitStateUpdate(pid int, update chan<- *stateUpdate) {
-	for {
-		var ws syscall.WaitStatus
-		_, err := syscall.Wait4(pid, &ws, 0, nil)
+// waitStateUpdate wait(2)s for pid, and feeds the WaitStatus into an
+// exitus channel after proper conversion.
+func waitStateUpdate(pid int, update chan<- exitus) {
+	var ws syscall.WaitStatus
+	_, err := syscall.Wait4(pid, &ws, 0, nil)
 
-		if err != nil {
-			update <- newExitedStateUpdate(newFailure(err.Error()))
-			break
-		}
-		update <- waitStatusToStateUpdate(ws)
-		if ws.Exited() {
-			break
-		}
+	if err != nil {
+		update <- newFailure(fmt.Sprintf("wait:", err.Error()))
+	} else {
+		update <- waitStatusToExitus(ws)
 	}
+
 	close(update)
 }
 
@@ -202,8 +185,8 @@ var (
 )
 
 // Exec executes an external command.
-func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
-	update := make(chan *stateUpdate, 1)
+func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan exitus {
+	update := make(chan exitus, 1)
 
 	if DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
@@ -211,7 +194,7 @@ func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
 			// implicit cd
 			ex := cdInner(e.Name, ec)
 			ec.closePorts()
-			update <- newExitedStateUpdate(ex)
+			update <- ex
 			close(update)
 			return update
 		}
@@ -247,7 +230,7 @@ func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
 	ec.closePorts()
 
 	if err != nil {
-		update <- newExitedStateUpdate(newFailure(err.Error()))
+		update <- newFailure(err.Error())
 		close(update)
 	} else {
 		go waitStateUpdate(pid, update)
@@ -256,8 +239,8 @@ func (e externalCmd) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
 	return update
 }
 
-func (t *list) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
-	update := make(chan *stateUpdate)
+func (t *list) Exec(ec *evalCtx, argVals []Value) <-chan exitus {
+	update := make(chan exitus)
 	go func() {
 		var v Value = t
 		for _, idx := range argVals {
@@ -266,15 +249,15 @@ func (t *list) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
 		}
 		ec.ports[1].ch <- v
 		ec.closePorts()
-		update <- newExitedStateUpdate(ok)
+		update <- ok
 		close(update)
 	}()
 	return update
 }
 
 // XXX duplicate
-func (t map_) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
-	update := make(chan *stateUpdate)
+func (t map_) Exec(ec *evalCtx, argVals []Value) <-chan exitus {
+	update := make(chan exitus)
 	go func() {
 		var v Value = t
 		for _, idx := range argVals {
@@ -283,7 +266,7 @@ func (t map_) Exec(ec *evalCtx, argVals []Value) <-chan *stateUpdate {
 		}
 		ec.ports[1].ch <- v
 		ec.closePorts()
-		update <- newExitedStateUpdate(ok)
+		update <- ok
 		close(update)
 	}()
 	return update

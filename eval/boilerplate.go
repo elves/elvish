@@ -18,8 +18,8 @@ func (cp *compiler) pipelines(ns []*parse.Pipeline) []valuesOp {
 	return ops
 }
 
-func (cp *compiler) forms(ns []*parse.Form) []stateUpdatesOp {
-	ops := make([]stateUpdatesOp, len(ns))
+func (cp *compiler) forms(ns []*parse.Form) []exitusChOp {
+	ops := make([]exitusChOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.form(n)
 	}
