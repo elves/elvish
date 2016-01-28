@@ -147,7 +147,7 @@ func complArgInner(head string, indir bool, ed *Editor, formHead bool) []*candid
 			if s == file {
 				hasHead = true
 			}
-			full := head + s[len(file):]
+			full := head + indirSlash + s[len(file):]
 			if formHead && !isExecutableOrDir(full) {
 				continue
 			}
