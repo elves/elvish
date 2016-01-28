@@ -298,17 +298,17 @@ func each(ec *evalCtx, f *closure) exitus {
 in:
 	for v := range in {
 		newec := ec.fork("closure of each")
-		e := f.Call(newec, []Value{v})
+		ex := f.Call(newec, []Value{v})
 		newec.closePorts()
 
-		switch e.Sort {
+		switch ex.Sort {
 		case Ok, Continue:
 			// nop
 		case Break:
 			break in
 		default:
 			// TODO wrap it
-			return e
+			return ex
 		}
 	}
 	return ok

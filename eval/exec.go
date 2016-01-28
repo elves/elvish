@@ -19,6 +19,12 @@ var (
 	cdNoArg       = newFailure("implicit cd accepts no arguments")
 )
 
+func (ec *evalCtx) exec(op exitusOp) exitus {
+	ex := op(ec)
+	ec.closePorts()
+	return ex
+}
+
 func (ec *evalCtx) resolveNonSpecial(cmd Value) callable {
 	// Closure
 	if cl, ok := cmd.(callable); ok {
@@ -48,7 +54,6 @@ func (b *builtinFn) Call(ec *evalCtx, args []Value) exitus {
 func (c *closure) Call(ec *evalCtx, args []Value) exitus {
 	// TODO Support optional/rest argument
 	if len(args) != len(c.ArgNames) {
-		// TODO Check arity before exec'ing
 		return arityMismatch
 	}
 
@@ -75,7 +80,7 @@ func (c *closure) Call(ec *evalCtx, args []Value) exitus {
 		fmt.Print(err.(*errutil.ContextualError).Pprint())
 		// XXX should return failure
 	}
-	// Ports are closed after executaion of closure is complete.
+
 	if HasFailure(vs) {
 		var flow exitusSort
 		es := make([]exitus, len(vs))
@@ -128,7 +133,7 @@ func waitStatusToExitus(ws syscall.WaitStatus) exitus {
 	}
 }
 
-// Exec executes an external command.
+// Call calls an external command.
 func (e externalCmd) Call(ec *evalCtx, argVals []Value) exitus {
 	if DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)

@@ -102,8 +102,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) valuesOp {
 			thisOp := op
 			thisExitus := &exituses[i]
 			go func() {
-				*thisExitus = thisOp(newEc)
-				newEc.closePorts()
+				*thisExitus = newEc.exec(thisOp)
 				finished <- true
 			}()
 		}
@@ -476,8 +475,8 @@ func (cp *compiler) outputCapture(n *parse.Primary) valuesOp {
 
 		// XXX The exitus is discarded.
 		op(newEc)
-
 		newEc.closePorts()
+
 		<-bytesCollected
 		close(ch)
 		<-chCollected
