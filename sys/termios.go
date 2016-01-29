@@ -4,11 +4,9 @@ package sys
 #include <termios.h>
 */
 import "C"
-import
+import "syscall"
 
 // Termios represents terminal attributes.
-"syscall"
-
 type Termios C.struct_termios
 
 // NewTermiosFromFd extracts the terminal attribute of the given file
