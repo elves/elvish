@@ -1,3 +1,4 @@
+// Package parse implements the elvish parser.
 package parse
 
 //go:generate ./boilerplate.py
