@@ -1,6 +1,5 @@
 package sys
 
-import "C"
 import (
 	"os"
 	"syscall"

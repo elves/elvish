@@ -330,8 +330,7 @@ func renderNavColumn(nc *navColumn, w, h int) *buffer {
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
 func (w *writer) refresh(es *editorState) error {
-	winsize := sys.GetWinsize(int(w.file.Fd()))
-	width, height := int(winsize.Col), int(winsize.Row)
+	height, width := sys.GetWinsize(int(w.file.Fd()))
 
 	var bufLine, bufMode, bufTips, bufListing, buf *buffer
 	// bufLine
