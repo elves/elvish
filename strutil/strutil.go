@@ -1,3 +1,4 @@
+// Package strutil contains utilities for manipulating strings.
 package strutil
 
 import (
