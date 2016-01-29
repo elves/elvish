@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewEvaler(t *testing.T) {
-	ev := NewEvaler(nil, "")
+	ev := NewEvaler(nil)
 	pid := strconv.Itoa(syscall.Getpid())
 	if ToString(ev.global["pid"].Get()) != pid {
 		t.Errorf(`ev.global["pid"] = %v, want %v`, ev.global["pid"], pid)
@@ -144,7 +144,7 @@ func mustParse(t *testing.T, name, text string) *parse.Chunk {
 
 func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, Exitus, error) {
 	name := "<eval test>"
-	ev := NewEvaler(nil, ".")
+	ev := NewEvaler(nil)
 
 	// Collect byte output
 	outBytes := []byte{}

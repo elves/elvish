@@ -38,7 +38,7 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 		}
 	}
 
-	return eval.NewEvaler(st, dataDir), st
+	return eval.NewEvaler(st), st
 }
 
 func printError(err error) {

@@ -43,7 +43,7 @@ type evalCtx struct {
 }
 
 // NewEvaler creates a new Evaler.
-func NewEvaler(st *store.Store, dataDir string) *Evaler {
+func NewEvaler(st *store.Store) *Evaler {
 	// Construct searchPaths
 	var searchPaths []string
 	if path := os.Getenv("PATH"); path != "" {
