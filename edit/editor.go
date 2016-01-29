@@ -310,7 +310,7 @@ func setupTerminal(file *os.File) (*sys.Termios, error) {
 	return savedTermios, nil
 }
 
-// startsReadLine prepares the terminal for the editor.
+// startReadLine prepares the terminal for the editor.
 func (ed *Editor) startReadLine() error {
 	savedTermios, err := setupTerminal(ed.file)
 	if err != nil {
@@ -327,7 +327,7 @@ func (ed *Editor) startReadLine() error {
 	// was not in the first column.
 	//
 	// After that, we turn off autowrap. The editor has its own wrapping
-	// machanism.
+	// mechanism.
 	fmt.Fprintf(ed.file, "\033[?7h%s%*s\r \r\033[?7l", lackEOL, width-WcWidth(lackEOLRune), "")
 
 	return nil
