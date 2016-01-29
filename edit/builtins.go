@@ -225,8 +225,9 @@ func defaultInsert(ed *Editor) {
 	k := ed.lastKey
 	if k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune) {
 		insertKey(ed)
+	} else {
+		ed.pushTip(fmt.Sprintf("Unbound: %s", k))
 	}
-	ed.pushTip(fmt.Sprintf("Unbound: %s", k))
 }
 
 func defaultCompletion(ed *Editor) {
