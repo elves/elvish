@@ -42,20 +42,6 @@ type evalCtx struct {
 	ports     []*port
 }
 
-func HasFailure(vs []Value) bool {
-	for _, v := range vs {
-		v, ok := v.(Exitus)
-		if !ok {
-			// Silently ignore non-exitus values
-			continue
-		}
-		if v.Sort != Ok {
-			return true
-		}
-	}
-	return false
-}
-
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store, dataDir string) *Evaler {
 	// Construct searchPaths
