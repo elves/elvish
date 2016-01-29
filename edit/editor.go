@@ -6,14 +6,16 @@ import (
 	"os"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
 )
 
-const lackEOL = "\033[7m\u23ce\033[m\n"
+const (
+	lackEOLRune = '\u23ce'
+	lackEOL     = "\033[7m" + string(lackEOLRune) + "\033[m"
+)
 
 type bufferMode int
 
@@ -300,22 +302,12 @@ func setupTerminal(file *os.File) (*sys.Termios, error) {
 		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
 	}
 
-	// Set autowrap off
-	file.WriteString("\033[?7l")
-
 	err = sys.FlushInput(fd)
 	if err != nil {
 		return nil, fmt.Errorf("can't flush input: %s", err)
 	}
 
 	return savedTermios, nil
-}
-
-func cleanupTerminal(file *os.File, savedTermios *sys.Termios) error {
-	// Set autowrap on
-	file.WriteString("\033[?7h")
-	fd := int(file.Fd())
-	return savedTermios.ApplyToFd(fd)
 }
 
 // startsReadLine prepares the terminal for the editor.
@@ -326,35 +318,17 @@ func (ed *Editor) startReadLine() error {
 	}
 	ed.savedTermios = savedTermios
 
-	// Query cursor location
-	ed.file.WriteString("\033[6n")
-
-	ed.reader.Continue()
-	ones := ed.reader.Chan()
-
-	cpr := invalidPos
-FindCPR:
-	for {
-		select {
-		case or := <-ones:
-			if or.CPR != invalidPos {
-				cpr = or.CPR
-				break FindCPR
-			} else {
-				// Just discard
-			}
-		case <-time.After(cprTimeout):
-			break FindCPR
-		}
-	}
-
-	if cpr == invalidPos {
-		// Unable to get CPR, just rewind to column 1
-		ed.file.WriteString("\r")
-	} else if cpr.col != 1 {
-		// BUG(xiaq) startReadline assumes that column number starts from 0
-		ed.file.WriteString(lackEOL)
-	}
+	_, width := sys.GetWinsize(int(ed.file.Fd()))
+	// Turn on autowrap, write lackEOL along with enough padding to fill the
+	// whole screen. If the cursor was in the first column, we end up in the
+	// same line (just off the line boundary); otherwise we are now in the next
+	// line. We now rewind to the first column and erase anything there. The
+	// final effect is that a lackEOL gets written if and only if the cursor
+	// was not in the first column.
+	//
+	// After that, we turn off autowrap. The editor has its own wrapping
+	// machanism.
+	fmt.Fprintf(ed.file, "\033[?7h%s%*s\r \r\033[?7l", lackEOL, width-WcWidth(lackEOLRune), "")
 
 	return nil
 }
@@ -378,7 +352,11 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 
 	ed.reader.Stop()
 
-	err := cleanupTerminal(ed.file, ed.savedTermios)
+	// turn on autowrap
+	file.WriteString("\033[?7h")
+
+	// restore termios
+	err := ed.savedTermios.ApplyToFd(int(ed.file.Fd()))
 
 	if err != nil {
 		// BUG(xiaq): Error in Editor.finishReadLine may override earlier error
