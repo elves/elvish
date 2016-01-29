@@ -28,7 +28,6 @@ const (
 type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
 	savedTermios          *sys.Termios
-	lastKey               Key
 	tokens                []Token
 	prompt, rprompt, line string
 	dot                   int
@@ -39,6 +38,9 @@ type editorState struct {
 	navigation            *navigation
 	history               history
 	isExternal            map[string]bool
+	// Used for builtins.
+	lastKey    Key
+	nextAction action
 }
 
 type history struct {
@@ -251,7 +253,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 func init() {
 	for _, kb := range keyBindings {
 		for _, name := range kb {
-			if leBuiltins[name] == nil {
+			if builtins[name] == nil {
 				panic("bad keyBindings table: no editor builtin named " + name)
 			}
 		}
@@ -448,12 +450,13 @@ MainLoop:
 			if !bound {
 				name = keyBinding[DefaultBinding]
 			}
+
 			ed.lastKey = k
-			ret := leBuiltins[name](ed)
-			if ret == nil {
-				continue
-			}
-			switch ret.action {
+			builtins[name](ed)
+			act := ed.nextAction
+			ed.nextAction = action{}
+
+			switch act.actionType {
 			case noAction:
 				continue
 			case reprocessKey:
@@ -463,7 +466,7 @@ MainLoop:
 				}
 				goto lookupKey
 			case exitReadLine:
-				return ret.readLineReturn
+				return act.returnValue
 			}
 		}
 	}

@@ -39,11 +39,11 @@ func (c *completion) next(cycle bool) {
 	}
 }
 
-func startCompletion(ed *Editor) *leReturn {
+func startCompletion(ed *Editor) {
 	token := tokenAtDot(ed)
 	node := token.Node
 	if node == nil {
-		return nil
+		return
 	}
 
 	c := &completion{}
@@ -64,7 +64,6 @@ func startCompletion(ed *Editor) *leReturn {
 		ed.completion = c
 		ed.mode = modeCompletion
 	}
-	return nil
 }
 
 var BadToken = Token{}
