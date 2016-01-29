@@ -1,3 +1,5 @@
+// package print provides a function for printing Go values recursively,
+// which can be useful for debugging.
 package print
 
 import (
@@ -6,15 +8,15 @@ import (
 	"reflect"
 )
 
-// Deep is like printing with the %#v formatter of fmt, but it prints
+// Deeply is like printing with the %#v formatter of fmt, but it prints
 // pointer fields recursively.
-func Deep(x interface{}) string {
+func Deeply(x interface{}) string {
 	b := &bytes.Buffer{}
-	deep(b, reflect.ValueOf(x))
+	deeply(b, reflect.ValueOf(x))
 	return b.String()
 }
 
-func deep(b *bytes.Buffer, v reflect.Value) {
+func deeply(b *bytes.Buffer, v reflect.Value) {
 	i := v.Interface()
 	t := v.Type()
 
@@ -44,7 +46,7 @@ func deep(b *bytes.Buffer, v reflect.Value) {
 				if i > 0 {
 					b.WriteString(", ")
 				}
-				deep(b, v.Index(i))
+				deeply(b, v.Index(i))
 			}
 		case reflect.Map:
 			keys := v.MapKeys()
@@ -52,9 +54,9 @@ func deep(b *bytes.Buffer, v reflect.Value) {
 				if i > 0 {
 					b.WriteString(", ")
 				}
-				deep(b, k)
+				deeply(b, k)
 				b.WriteString(": ")
-				deep(b, v.MapIndex(k))
+				deeply(b, v.MapIndex(k))
 			}
 		case reflect.Struct:
 			for i := 0; i < t.NumField(); i++ {
@@ -63,16 +65,16 @@ func deep(b *bytes.Buffer, v reflect.Value) {
 				}
 				b.WriteString(t.Field(i).Name)
 				b.WriteString(": ")
-				deep(b, v.Field(i))
+				deeply(b, v.Field(i))
 			}
 		}
 		b.WriteRune('}')
 	case reflect.Ptr:
 		b.WriteRune('&')
-		deep(b, reflect.Indirect(v))
+		deeply(b, reflect.Indirect(v))
 		return
 	case reflect.Interface:
-		deep(b, v.Elem())
+		deeply(b, v.Elem())
 		return
 	default:
 		fmt.Fprintf(b, "%#v", i)

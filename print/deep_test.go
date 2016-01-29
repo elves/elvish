@@ -44,7 +44,7 @@ var deepTests = []struct {
 
 func TestDeep(t *testing.T) {
 	for _, tt := range deepTests {
-		if out := Deep(tt.in); out != tt.wanted {
+		if out := Deeply(tt.in); out != tt.wanted {
 			t.Errorf("Deep(%v) => %#q, want %#q", tt.in, out, tt.wanted)
 		}
 	}
