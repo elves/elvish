@@ -1,3 +1,4 @@
+// Package store abstracts the persistent storage used by elvish.
 package store
 
 import (
