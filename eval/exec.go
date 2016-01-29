@@ -26,33 +26,33 @@ func (ec *evalCtx) exec(op exitusOp) Exitus {
 	return ex
 }
 
-func (ec *evalCtx) resolveNonSpecial(cmd Value) callable {
+func (ec *evalCtx) resolveNonSpecial(cmd Value) Caller {
 	// Closure
-	if cl, ok := cmd.(callable); ok {
+	if cl, ok := cmd.(Caller); ok {
 		return cl
 	}
 
-	cmdStr := toString(cmd)
+	cmdStr := ToString(cmd)
 
 	// Defined callable
 	ns, name := splitQualifiedName(cmdStr)
 	if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
-		if clb, ok := v.Get().(callable); ok {
+		if clb, ok := v.Get().(Caller); ok {
 			return clb
 		}
 	}
 
 	// External command
-	return externalCmd{cmdStr}
+	return ExternalCmd{cmdStr}
 }
 
 // Call calls a builtin function.
-func (b *builtinFn) Call(ec *evalCtx, args []Value) Exitus {
+func (b *BuiltinFn) Call(ec *evalCtx, args []Value) Exitus {
 	return b.Impl(ec, args)
 }
 
 // Call calls a closure.
-func (c *closure) Call(ec *evalCtx, args []Value) Exitus {
+func (c *Closure) Call(ec *evalCtx, args []Value) Exitus {
 	// TODO Support optional/rest argument
 	if len(args) != len(c.ArgNames) {
 		return arityMismatch
@@ -117,7 +117,7 @@ func waitStatusToExitus(ws syscall.WaitStatus) Exitus {
 }
 
 // Call calls an external command.
-func (e externalCmd) Call(ec *evalCtx, argVals []Value) Exitus {
+func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) Exitus {
 	if DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {
@@ -139,7 +139,7 @@ func (e externalCmd) Call(ec *evalCtx, argVals []Value) Exitus {
 	for i, a := range argVals {
 		// NOTE Maybe we should enfore string arguments instead of coercing all
 		// args into string
-		args[i+1] = toString(a)
+		args[i+1] = ToString(a)
 	}
 
 	sys := syscall.SysProcAttr{}
@@ -165,22 +165,22 @@ func (e externalCmd) Call(ec *evalCtx, argVals []Value) Exitus {
 	}
 }
 
-func (t *list) Call(ec *evalCtx, argVals []Value) Exitus {
+func (t *List) Call(ec *evalCtx, argVals []Value) Exitus {
 	var v Value = t
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.
-		v = evalSubscript(ec, v, idx, 0, 0)
+		v = evalIndex(ec, v, idx, 0, 0)
 	}
 	ec.ports[1].ch <- v
 	return OK
 }
 
 // XXX duplicate
-func (t map_) Call(ec *evalCtx, argVals []Value) Exitus {
+func (t Map) Call(ec *evalCtx, argVals []Value) Exitus {
 	var v Value = t
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.
-		v = evalSubscript(ec, v, idx, 0, 0)
+		v = evalIndex(ec, v, idx, 0, 0)
 	}
 	ec.ports[1].ch <- v
 	return OK

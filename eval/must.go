@@ -32,9 +32,9 @@ func (m *muster) mustOne() Value {
 	return m.vs[0]
 }
 
-func (m *muster) zerothMustStr() str {
+func (m *muster) zerothMustStr() String {
 	v := m.vs[0]
-	s, ok := v.(str)
+	s, ok := v.(String)
 	if !ok {
 		m.ec.errorf(m.p, "%s must be a string; got %s (type %s)",
 			m.what, v.Repr(), v.Type())
@@ -42,7 +42,7 @@ func (m *muster) zerothMustStr() str {
 	return s
 }
 
-func (m *muster) mustOneStr() str {
+func (m *muster) mustOneStr() String {
 	m.mustLen(1)
 	return m.zerothMustStr()
 }

@@ -67,14 +67,14 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 	}
 
 	// Construct initial global namespace
-	pid := str(strconv.Itoa(syscall.Getpid()))
-	paths := newList()
+	pid := String(strconv.Itoa(syscall.Getpid()))
+	paths := NewList()
 	paths.appendStrings(searchPaths)
 	global := ns{
 		"pid":   newInternalVariable(pid),
 		"ok":    newInternalVariable(OK),
-		"true":  newInternalVariable(boolean(true)),
-		"false": newInternalVariable(boolean(false)),
+		"true":  newInternalVariable(Bool(true)),
+		"false": newInternalVariable(Bool(false)),
 		"paths": newInternalVariable(paths),
 	}
 	for _, b := range builtinFns {
@@ -90,9 +90,9 @@ func pprintExitus(e Exitus) {
 		fmt.Print("\033[32mok\033[m")
 	case Failure:
 		fmt.Print("\033[31;1m" + e.Failure + "\033[m")
-	case Traceback:
+	case MultiExitus:
 		fmt.Print("(")
-		for i, c := range e.Traceback.causes {
+		for i, c := range e.Traceback.exs {
 			if i > 0 {
 				fmt.Print(" | ")
 			}
@@ -226,11 +226,11 @@ func (ec *evalCtx) errorf(p int, format string, args ...interface{}) {
 
 // mustSingleString returns a String if that is the only element of vs.
 // Otherwise it errors.
-func (ec *evalCtx) mustSingleString(vs []Value, what string, p int) str {
+func (ec *evalCtx) mustSingleString(vs []Value, what string, p int) String {
 	if len(vs) != 1 {
 		ec.errorf(p, "Expect exactly one word for %s, got %d", what, len(vs))
 	}
-	v, ok := vs[0].(str)
+	v, ok := vs[0].(String)
 	if !ok {
 		ec.errorf(p, "Expect string for %s, got %s", what, vs[0])
 	}

@@ -114,7 +114,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) exitusOp {
 		} else if allok(exituses) {
 			return OK
 		}
-		return newTraceback(exituses...)
+		return newMultiExitus(exituses...)
 	}
 }
 
@@ -145,7 +145,7 @@ func (cp *compiler) form(n *parse.Form) exitusOp {
 		headMust := ec.must(headValues, "the head of command", p)
 		headMust.mustLen(1)
 		switch headValues[0].(type) {
-		case str, callable:
+		case String, Caller:
 		default:
 			headMust.error("a string or closure", headValues[0].Type().String())
 		}
@@ -252,7 +252,7 @@ func (cp *compiler) compound(n *parse.Compound) valuesOp {
 
 	return func(ec *evalCtx) []Value {
 		// start with a single "", do Cartesian products one by one
-		vs := []Value{str("")}
+		vs := []Value{String("")}
 		for _, op := range ops {
 			us := op(ec)
 			if len(us) == 1 {
@@ -276,7 +276,7 @@ func (cp *compiler) compound(n *parse.Compound) valuesOp {
 }
 
 func cat(lhs, rhs Value) Value {
-	return str(toString(lhs) + toString(rhs))
+	return String(ToString(lhs) + ToString(rhs))
 }
 
 func catOps(ops []valuesOp) valuesOp {
@@ -313,7 +313,7 @@ func (cp *compiler) indexed(n *parse.Indexed) valuesOp {
 		v := ec.must(headOp(ec), "the indexed value", p).mustOne()
 		for i, indexOp := range indexOps {
 			index := ec.must(indexOp(ec), "the index", p).mustOne()
-			v = evalSubscript(ec, v, index, p, indexPoses[i])
+			v = evalIndex(ec, v, index, p, indexPoses[i])
 		}
 		return []Value{v}
 	}
@@ -326,7 +326,7 @@ func literalValues(v ...Value) valuesOp {
 }
 
 func literalStr(text string) valuesOp {
-	return literalValues(str(text))
+	return literalValues(String(text))
 }
 
 func variable(qname string, p int) valuesOp {
@@ -423,7 +423,7 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 	case parse.List:
 		op := cp.array(n.List)
 		return func(ec *evalCtx) []Value {
-			list := list(op(ec))
+			list := List(op(ec))
 			return []Value{&list}
 		}
 	case parse.Lambda:
@@ -475,7 +475,7 @@ func (cp *compiler) outputCapture(n *parse.Primary) valuesOp {
 					log.Println()
 					break
 				}
-				ch <- str(line[:len(line)-1])
+				ch <- String(line[:len(line)-1])
 			}
 			bytesCollected <- true
 		}()
@@ -545,7 +545,7 @@ func (cp *compiler) map_(n *parse.Primary) valuesOp {
 		poses[i] = n.MapPairs[i].Begin()
 	}
 	return func(ec *evalCtx) []Value {
-		m := newMap()
+		m := NewMap()
 		for i := 0; i < nn; i++ {
 			keys := keysOps[i](ec)
 			values := valuesOps[i](ec)
@@ -553,7 +553,7 @@ func (cp *compiler) map_(n *parse.Primary) valuesOp {
 				ec.errorf(poses[i], "%d keys but %d values", len(keys), len(values))
 			}
 			for j, key := range keys {
-				m[toString(key)] = values[j]
+				m[ToString(key)] = values[j]
 			}
 		}
 		return []Value{m}

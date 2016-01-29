@@ -33,9 +33,9 @@ func newEnvVariable(name string) envVariable {
 }
 
 func (ev envVariable) Set(val Value) {
-	os.Setenv(ev.name, toString(val))
+	os.Setenv(ev.name, ToString(val))
 }
 
 func (ev envVariable) Get() Value {
-	return str(os.Getenv(ev.name))
+	return String(os.Getenv(ev.name))
 }

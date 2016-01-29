@@ -13,7 +13,7 @@ import (
 func TestNewEvaler(t *testing.T) {
 	ev := NewEvaler(nil, "")
 	pid := strconv.Itoa(syscall.Getpid())
-	if toString(ev.global["pid"].Get()) != pid {
+	if ToString(ev.global["pid"].Get()) != pid {
 		t.Errorf(`ev.global["pid"] = %v, want %v`, ev.global["pid"], pid)
 	}
 }
@@ -21,7 +21,7 @@ func TestNewEvaler(t *testing.T) {
 func strs(ss ...string) []Value {
 	vs := make([]Value, len(ss))
 	for i, s := range ss {
-		vs[i] = str(s)
+		vs[i] = String(s)
 	}
 	return vs
 }
@@ -84,7 +84,7 @@ var evalTests = []struct {
 
 	// Status capture
 	{"put ?(true|false|false)",
-		[]Value{newTraceback(OK, NewFailure("1"), NewFailure("1"))}, nomore},
+		[]Value{newMultiExitus(OK, NewFailure("1"), NewFailure("1"))}, nomore},
 
 	// Variable and compounding
 	{"set x = 'SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",

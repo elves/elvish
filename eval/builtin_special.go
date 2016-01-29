@@ -237,7 +237,7 @@ func compileFn(cp *compiler, fn *parse.Form) exitusOp {
 	op := cp.lambda(pn)
 
 	return func(ec *evalCtx) Exitus {
-		closure := op(ec)[0].(*closure)
+		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
 		ec.local[varName] = newInternalVariable(closure)
 		return OK

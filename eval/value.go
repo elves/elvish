@@ -20,50 +20,65 @@ type Value interface {
 	Repr() string
 }
 
-type booler interface {
+// Booler represents a Value with a custom semantics of truthness. If a Value
+// does not satisfy this interface, it is automatically true.
+type Booler interface {
 	Bool() bool
 }
 
-type stringer interface {
+// Stringer represents a Value with a custom string representation. If a Value
+// does not satisfy this interface, its Repr method is used.
+type Stringer interface {
 	String() string
 }
 
-type indexer interface {
+// Indexer represents a Value that may be indexed.
+type Indexer interface {
 	Index(idx string) (Value, error)
 }
 
+// Caller represents a Value that may be called.
+type Caller interface {
+	Call(ec *evalCtx, args []Value) Exitus
+}
+
+// Type is the type of a value.
 type Type int
 
 const (
-	invalidType Type = iota
-	stringType
-	exitusType
-	boolType
-	listType
-	mapType
-	callableType
-	ratType
+	TInvalid Type = iota
+	TString
+	TExitus
+	TBool
+	TList
+	TMap
+	TFn
+	TRat
 )
 
-type str string
+// Error definitions.
+var (
+	needIntIndex    = errors.New("need integer index")
+	indexOutOfRange = errors.New("index out of range")
+	errOnlyStrOrRat = errors.New("only str or rat may be converted to rat")
+)
 
-func (s str) Type() Type {
-	return stringType
+// String is just a string.
+type String string
+
+func (s String) Type() Type {
+	return TString
 }
 
-func (s str) Repr() string {
+func (s String) Repr() string {
 	return parse.Quote(string(s))
 }
 
-func (s str) String() string {
+func (s String) String() string {
 	return string(s)
 }
 
-var (
-	needIntIndex = errors.New("need integer index")
-)
-
-func (s str) Index(idx string) (Value, error) {
+func (s String) Index(idx string) (Value, error) {
 	i, err := strconv.Atoi(idx)
 	if err != nil {
 		return nil, err
@@ -73,36 +88,39 @@ func (s str) Index(idx string) (Value, error) {
 	if err != nil {
 		return nil, err
 	}
-	return str(string(r)), nil
+	return String(string(r)), nil
 }
 
-type boolean bool
+// Bool represents truthness.
+type Bool bool
 
-func (b boolean) Type() Type {
-	return boolType
+func (b Bool) Type() Type {
+	return TBool
 }
 
-func (b boolean) Repr() string {
+func (b Bool) Repr() string {
 	if b {
 		return "$true"
 	}
 	return "$false"
 }
 
-func (b boolean) String() string {
+func (b Bool) String() string {
 	if b {
 		return "true"
 	}
 	return "false"
 }
 
-func (b boolean) Bool() bool {
+func (b Bool) Bool() bool {
 	return bool(b)
 }
 
-type traceback struct {
-	// TODO(xiaq): Add context information
-	causes []Exitus
+// Exitus is the exitus status of forms.
+type Exitus struct {
+	Sort      exitusSort
+	Failure   string
+	Traceback *multiExitus
 }
 
 type exitusSort byte
@@ -110,7 +128,7 @@ type exitusSort byte
 const (
 	Ok exitusSort = iota
 	Failure
-	Traceback
+	MultiExitus
 
 	// Control flow sorts
 	Return
@@ -123,10 +141,8 @@ var flowExitusNames = map[exitusSort]string{
 	Return: "return", Break: "break", Continue: "continue",
 }
 
-type Exitus struct {
-	Sort      exitusSort
-	Failure   string
-	Traceback *traceback
+type multiExitus struct {
+	exs []Exitus
 }
 
 var (
@@ -134,8 +150,8 @@ var (
 	GenericFailure = Exitus{Failure, "generic failure", nil}
 )
 
-func newTraceback(es ...Exitus) Exitus {
-	return Exitus{Traceback, "", &traceback{es}}
+func newMultiExitus(es ...Exitus) Exitus {
+	return Exitus{MultiExitus, "", &multiExitus{es}}
 }
 
 func NewFailure(s string) Exitus {
@@ -147,7 +163,7 @@ func newFlowExitus(s exitusSort) Exitus {
 }
 
 func (e Exitus) Type() Type {
-	return exitusType
+	return TExitus
 }
 
 func (e Exitus) Repr() string {
@@ -156,10 +172,10 @@ func (e Exitus) Repr() string {
 		return "$ok"
 	case Failure:
 		return "(failure " + parse.Quote(e.Failure) + ")"
-	case Traceback:
+	case MultiExitus:
 		b := new(bytes.Buffer)
 		b.WriteString("(traceback")
-		for _, c := range e.Traceback.causes {
+		for _, c := range e.Traceback.exs {
 			b.WriteString(" ")
 			b.WriteString(c.Repr())
 		}
@@ -176,10 +192,10 @@ func (e Exitus) String() string {
 		return "ok"
 	case Failure:
 		return "failure: " + e.Failure
-	case Traceback:
+	case MultiExitus:
 		b := new(bytes.Buffer)
 		b.WriteString("traceback: (")
-		for i, c := range e.Traceback.causes {
+		for i, c := range e.Traceback.exs {
 			if i > 0 {
 				b.WriteString(" | ")
 			}
@@ -205,25 +221,25 @@ func allok(es []Exitus) bool {
 	return true
 }
 
-// list is a list of Value's.
-type list []Value
+// List is a list of Value's.
+type List []Value
 
-func newList() *list {
-	l := list([]Value{})
+func NewList(vs ...Value) *List {
+	l := List(vs)
 	return &l
 }
 
-func (l *list) Type() Type {
-	return listType
+func (l *List) Type() Type {
+	return TList
 }
 
-func (l *list) appendStrings(ss []string) {
+func (l *List) appendStrings(ss []string) {
 	for _, s := range ss {
-		*l = append(*l, str(s))
+		*l = append(*l, String(s))
 	}
 }
 
-func (l *list) Repr() string {
+func (l *List) Repr() string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
 	for i, v := range *l {
@@ -236,9 +252,7 @@ func (l *list) Repr() string {
 	return buf.String()
 }
 
-var indexOutOfRange = errors.New("index out of range")
-
-func (l *list) Index(idx string) (Value, error) {
+func (l *List) Index(idx string) (Value, error) {
 	i, err := strconv.Atoi(idx)
 	if err != nil {
 		return nil, err
@@ -252,19 +266,19 @@ func (l *list) Index(idx string) (Value, error) {
 	return (*l)[i], nil
 }
 
-// map_ is a map from string to Value.
+// Map is a map from string to Value.
 // TODO(xiaq): support Value keys.
-type map_ map[string]Value
+type Map map[string]Value
 
-func newMap() map_ {
-	return map_(make(map[string]Value))
+func NewMap() Map {
+	return Map(make(map[string]Value))
 }
 
-func (m map_) Type() Type {
-	return mapType
+func (m Map) Type() Type {
+	return TMap
 }
 
-func (m map_) Repr() string {
+func (m Map) Repr() string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
 	for k, v := range m {
@@ -280,7 +294,7 @@ func (m map_) Repr() string {
 	return buf.String()
 }
 
-func (m map_) Index(idx string) (Value, error) {
+func (m Map) Index(idx string) (Value, error) {
 	v, ok := m[idx]
 	if !ok {
 		return nil, errors.New("no such key: " + idx)
@@ -288,86 +302,79 @@ func (m map_) Index(idx string) (Value, error) {
 	return v, nil
 }
 
-// Callable represents Value's that may be called.
-type callable interface {
-	Value
-	Call(ec *evalCtx, args []Value) Exitus
-}
-
-// closure is a closure.
-type closure struct {
+// Closure is a closure.
+type Closure struct {
 	ArgNames []string
 	Op       exitusOp
 	Captured map[string]Variable
 }
 
-func (c *closure) Type() Type {
-	return callableType
+func (c *Closure) Type() Type {
+	return TFn
 }
 
-func newClosure(a []string, op exitusOp, e map[string]Variable) *closure {
-	return &closure{a, op, e}
+func newClosure(a []string, op exitusOp, e map[string]Variable) *Closure {
+	return &Closure{a, op, e}
 }
 
-func (c *closure) Repr() string {
+func (c *Closure) Repr() string {
 	return fmt.Sprintf("<Closure%v>", *c)
 }
 
-type builtinFn struct {
+// BuiltinFn is a builtin function.
+type BuiltinFn struct {
 	Name string
 	Impl func(*evalCtx, []Value) Exitus
 }
 
-func (b *builtinFn) Type() Type {
-	return callableType
+func (b *BuiltinFn) Type() Type {
+	return TFn
 }
 
-func (b *builtinFn) Repr() string {
+func (b *BuiltinFn) Repr() string {
 	return "$" + FnPrefix + b.Name
 }
 
-type externalCmd struct {
+// ExternalCmd is an external command.
+type ExternalCmd struct {
 	Name string
 }
 
-func (e externalCmd) Type() Type {
-	return callableType
+func (e ExternalCmd) Type() Type {
+	return TFn
 }
 
-func (e externalCmd) Repr() string {
+func (e ExternalCmd) Repr() string {
 	return "<external " + e.Name + " >"
 }
 
-type rat struct {
+// Rat is a rational number
+type Rat struct {
 	b *big.Rat
 }
 
-func newRat() rat {
-	return rat{&big.Rat{}}
+func (r Rat) Type() Type {
+	return TRat
 }
 
-func (r rat) Type() Type {
-	return ratType
-}
-
-func (r rat) Repr() string {
+func (r Rat) Repr() string {
 	return "(rat " + r.String() + ")"
 }
 
-func (r rat) String() string {
+func (r Rat) String() string {
 	if r.b.IsInt() {
 		return r.b.Num().String()
 	}
 	return r.b.String()
 }
 
-func evalSubscript(ec *evalCtx, l, r Value, lp, rp int) Value {
-	left, ok := l.(indexer)
+func evalIndex(ec *evalCtx, l, r Value, lp, rp int) Value {
+	left, ok := l.(Indexer)
 	if !ok {
 		ec.errorf(lp, "%s value cannot be indexed", l.Type())
 	}
 
-	right, ok := r.(str)
+	right, ok := r.(String)
 	if !ok {
 		ec.errorf(rp, "%s invalid cannot be used as index", r.Type())
 	}
@@ -379,31 +386,31 @@ func evalSubscript(ec *evalCtx, l, r Value, lp, rp int) Value {
 	return v
 }
 
-// fromJSONInterface converts a interface{} that results from json.Unmarshal to
+// FromJSONInterface converts a interface{} that results from json.Unmarshal to
 // a Value.
-func fromJSONInterface(v interface{}) Value {
+func FromJSONInterface(v interface{}) Value {
 	if v == nil {
 		// TODO Use a more appropriate type
-		return str("")
+		return String("")
 	}
 	switch v.(type) {
 	case bool:
-		return boolean(v.(bool))
+		return Bool(v.(bool))
 	case float64, string:
 		// TODO Use a numeric type for float64
-		return str(fmt.Sprint(v))
+		return String(fmt.Sprint(v))
 	case []interface{}:
 		a := v.([]interface{})
-		vs := list(make([]Value, len(a)))
+		vs := List(make([]Value, len(a)))
 		for i, v := range a {
-			vs[i] = fromJSONInterface(v)
+			vs[i] = FromJSONInterface(v)
 		}
 		return &vs
 	case map[string]interface{}:
 		m := v.(map[string]interface{})
-		m_ := newMap()
+		m_ := NewMap()
 		for k, v := range m {
-			m_[k] = fromJSONInterface(v)
+			m_[k] = FromJSONInterface(v)
 		}
 		return m_
 	default:
@@ -412,25 +419,26 @@ func fromJSONInterface(v interface{}) Value {
 	}
 }
 
-func valueEq(a, b Value) bool {
+// Eq compares two Value's.
+func Eq(a, b Value) bool {
 	// BUG(xiaq): valueEq uses reflect.DeepEqual to check the equality of two
 	// values, may can become wrong when values get more complex.
 	return reflect.DeepEqual(a, b)
 }
 
-// toString converts a Value to String. When the Value type implements
+// ToString converts a Value to String. When the Value type implements
 // String(), it is used. Otherwise Repr() is used.
-func toString(v Value) string {
-	if s, ok := v.(stringer); ok {
+func ToString(v Value) string {
+	if s, ok := v.(Stringer); ok {
 		return s.String()
 	}
 	return v.Repr()
 }
 
-// toBool converts a Value to bool. When the Value type implements Bool(), it
+// ToBool converts a Value to bool. When the Value type implements Bool(), it
 // is used. Otherwise it is considered true.
-func toBool(v Value) bool {
-	if b, ok := v.(booler); ok {
+func ToBool(v Value) bool {
+	if b, ok := v.(Booler); ok {
 		return b.Bool()
 	}
 	return true
@@ -438,29 +446,27 @@ func toBool(v Value) bool {
 
 func allTrue(vs []Value) bool {
 	for _, v := range vs {
-		if !toBool(v) {
+		if !ToBool(v) {
 			return false
 		}
 	}
 	return true
 }
 
-var errOnlyStrOrRat = errors.New("only str or rat may be converted to rat")
-
-// toRat converts a Value to rat. A str can be converted to a rat if it can be
+// ToRat converts a Value to rat. A str can be converted to a rat if it can be
 // parsed. A rat is returned as-is. Other types of values cannot be converted.
-func toRat(v Value) (rat, error) {
+func ToRat(v Value) (Rat, error) {
 	switch v := v.(type) {
-	case rat:
+	case Rat:
 		return v, nil
-	case str:
+	case String:
 		r := big.Rat{}
 		_, err := fmt.Sscanln(string(v), &r)
 		if err != nil {
-			return rat{}, fmt.Errorf("%s cannot be parsed as rat", v.Repr())
+			return Rat{}, fmt.Errorf("%s cannot be parsed as rat", v.Repr())
 		}
-		return rat{&r}, nil
+		return Rat{&r}, nil
 	default:
-		return rat{}, errOnlyStrOrRat
+		return Rat{}, errOnlyStrOrRat
 	}
 }
