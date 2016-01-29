@@ -15,12 +15,12 @@ const (
 )
 
 var (
-	arityMismatch = newFailure("arity mismatch")
-	cdNoArg       = newFailure("implicit cd accepts no arguments")
-	evalFailure   = newFailure("generic eval failure")
+	arityMismatch = NewFailure("arity mismatch")
+	cdNoArg       = NewFailure("implicit cd accepts no arguments")
+	evalFailure   = NewFailure("generic eval failure")
 )
 
-func (ec *evalCtx) exec(op exitusOp) exitus {
+func (ec *evalCtx) exec(op exitusOp) Exitus {
 	ex := op(ec)
 	ec.closePorts()
 	return ex
@@ -47,12 +47,12 @@ func (ec *evalCtx) resolveNonSpecial(cmd Value) callable {
 }
 
 // Call calls a builtin function.
-func (b *builtinFn) Call(ec *evalCtx, args []Value) exitus {
+func (b *builtinFn) Call(ec *evalCtx, args []Value) Exitus {
 	return b.Impl(ec, args)
 }
 
 // Call calls a closure.
-func (c *closure) Call(ec *evalCtx, args []Value) exitus {
+func (c *closure) Call(ec *evalCtx, args []Value) Exitus {
 	// TODO Support optional/rest argument
 	if len(args) != len(c.ArgNames) {
 		return arityMismatch
@@ -86,38 +86,38 @@ func (c *closure) Call(ec *evalCtx, args []Value) exitus {
 }
 
 // waitStatusToExitus converts syscall.WaitStatus to an exitus.
-func waitStatusToExitus(ws syscall.WaitStatus) exitus {
+func waitStatusToExitus(ws syscall.WaitStatus) Exitus {
 	switch {
 	case ws.Exited():
 		es := ws.ExitStatus()
 		if es == 0 {
-			return ok
+			return OK
 		}
-		return newFailure(fmt.Sprint(es))
+		return NewFailure(fmt.Sprint(es))
 	case ws.Signaled():
 		msg := fmt.Sprintf("signaled %v", ws.Signal())
 		if ws.CoreDump() {
 			msg += " (core dumped)"
 		}
-		return newFailure(msg)
+		return NewFailure(msg)
 	case ws.Stopped():
 		msg := fmt.Sprintf("stopped %v", ws.StopSignal())
 		trap := ws.TrapCause()
 		if trap != -1 {
 			msg += fmt.Sprintf(" (trapped %v)", trap)
 		}
-		return newFailure(msg)
+		return NewFailure(msg)
 	/*
 		case ws.Continued():
 			return newUnexitedStateUpdate("continued")
 	*/
 	default:
-		return newFailure(fmt.Sprint("unknown WaitStatus", ws))
+		return NewFailure(fmt.Sprint("unknown WaitStatus", ws))
 	}
 }
 
 // Call calls an external command.
-func (e externalCmd) Call(ec *evalCtx, argVals []Value) exitus {
+func (e externalCmd) Call(ec *evalCtx, argVals []Value) Exitus {
 	if DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {
@@ -147,41 +147,41 @@ func (e externalCmd) Call(ec *evalCtx, argVals []Value) exitus {
 
 	path, err := ec.Search(e.Name)
 	if err != nil {
-		return newFailure("search: " + err.Error())
+		return NewFailure("search: " + err.Error())
 	}
 
 	args[0] = path
 	pid, err := syscall.ForkExec(path, args, &attr)
 	if err != nil {
-		return newFailure("forkExec: " + err.Error())
+		return NewFailure("forkExec: " + err.Error())
 	}
 
 	var ws syscall.WaitStatus
 	_, err = syscall.Wait4(pid, &ws, 0, nil)
 	if err != nil {
-		return newFailure(fmt.Sprintf("wait:", err.Error()))
+		return NewFailure(fmt.Sprintf("wait:", err.Error()))
 	} else {
 		return waitStatusToExitus(ws)
 	}
 }
 
-func (t *list) Call(ec *evalCtx, argVals []Value) exitus {
+func (t *list) Call(ec *evalCtx, argVals []Value) Exitus {
 	var v Value = t
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.
 		v = evalSubscript(ec, v, idx, 0, 0)
 	}
 	ec.ports[1].ch <- v
-	return ok
+	return OK
 }
 
 // XXX duplicate
-func (t map_) Call(ec *evalCtx, argVals []Value) exitus {
+func (t map_) Call(ec *evalCtx, argVals []Value) Exitus {
 	var v Value = t
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.
 		v = evalSubscript(ec, v, idx, 0, 0)
 	}
 	ec.ports[1].ch <- v
-	return ok
+	return OK
 }

@@ -63,13 +63,13 @@ func init() {
 }
 
 var (
-	argsError  = newFailure("args error")
-	inputError = newFailure("input error")
+	argsError  = NewFailure("args error")
+	inputError = NewFailure("input error")
 )
 
 var (
 	evalCtxType = reflect.TypeOf((*evalCtx)(nil))
-	exitusType_ = reflect.TypeOf(exitus{})
+	exitusType_ = reflect.TypeOf(Exitus{})
 	valueType   = reflect.TypeOf((*Value)(nil)).Elem()
 )
 
@@ -77,7 +77,7 @@ var (
 // generates argument checking and conversion code according to the signature
 // of the inner function. The inner function must accept evalCtx* as the first
 // argument and return an exitus.
-func wrapFn(inner interface{}) func(*evalCtx, []Value) exitus {
+func wrapFn(inner interface{}) func(*evalCtx, []Value) Exitus {
 	type_ := reflect.TypeOf(inner)
 	if type_.In(0) != evalCtxType || type_.Out(0) != exitusType_ {
 		panic("bad func")
@@ -100,7 +100,7 @@ func wrapFn(inner interface{}) func(*evalCtx, []Value) exitus {
 		}
 	}
 
-	return func(ec *evalCtx, args []Value) exitus {
+	return func(ec *evalCtx, args []Value) Exitus {
 		if len(args) < requiredArgs || (!isVariadic && len(args) > requiredArgs) {
 			return argsError
 		}
@@ -119,7 +119,7 @@ func wrapFn(inner interface{}) func(*evalCtx, []Value) exitus {
 				return argsError
 			}
 		}
-		return reflect.ValueOf(inner).Call(callArgs)[0].Interface().(exitus)
+		return reflect.ValueOf(inner).Call(callArgs)[0].Interface().(Exitus)
 	}
 }
 
@@ -154,55 +154,55 @@ func convertArgs(args []Value, callArgs []reflect.Value, callType func(int) refl
 	return true
 }
 
-func nop(ec *evalCtx, args []Value) exitus {
-	return ok
+func nop(ec *evalCtx, args []Value) Exitus {
+	return OK
 }
 
-func put(ec *evalCtx, args []Value) exitus {
+func put(ec *evalCtx, args []Value) Exitus {
 	out := ec.ports[1].ch
 	for _, a := range args {
 		out <- a
 	}
-	return ok
+	return OK
 }
 
-func putAll(ec *evalCtx, lists ...*list) exitus {
+func putAll(ec *evalCtx, lists ...*list) Exitus {
 	out := ec.ports[1].ch
 	for _, list := range lists {
 		for _, x := range *list {
 			out <- x
 		}
 	}
-	return ok
+	return OK
 }
 
-func typeof(ec *evalCtx, args []Value) exitus {
+func typeof(ec *evalCtx, args []Value) Exitus {
 	out := ec.ports[1].ch
 	for _, a := range args {
 		out <- str(a.Type().String())
 	}
-	return ok
+	return OK
 }
 
-func failure(ec *evalCtx, arg Value) exitus {
+func failure(ec *evalCtx, arg Value) Exitus {
 	out := ec.ports[1].ch
-	out <- newFailure(toString(arg))
-	return ok
+	out <- NewFailure(toString(arg))
+	return OK
 }
 
-func returnFn(ec *evalCtx) exitus {
+func returnFn(ec *evalCtx) Exitus {
 	return newFlowExitus(Return)
 }
 
-func breakFn(ec *evalCtx) exitus {
+func breakFn(ec *evalCtx) Exitus {
 	return newFlowExitus(Break)
 }
 
-func continueFn(ec *evalCtx) exitus {
+func continueFn(ec *evalCtx) Exitus {
 	return newFlowExitus(Continue)
 }
 
-func print(ec *evalCtx, args ...string) exitus {
+func print(ec *evalCtx, args ...string) Exitus {
 	out := ec.ports[1].f
 	for i, arg := range args {
 		if i > 0 {
@@ -210,26 +210,26 @@ func print(ec *evalCtx, args ...string) exitus {
 		}
 		out.WriteString(arg)
 	}
-	return ok
+	return OK
 }
 
-func println(ec *evalCtx, args ...string) exitus {
+func println(ec *evalCtx, args ...string) Exitus {
 	print(ec, args...)
 	ec.ports[1].f.WriteString("\n")
-	return ok
+	return OK
 }
 
-func intoLines(ec *evalCtx) exitus {
+func intoLines(ec *evalCtx) Exitus {
 	in := ec.ports[0].ch
 	out := ec.ports[1].f
 
 	for v := range in {
 		fmt.Fprintln(out, toString(v))
 	}
-	return ok
+	return OK
 }
 
-func fromLines(ec *evalCtx) exitus {
+func fromLines(ec *evalCtx) Exitus {
 	in := ec.ports[0].f
 	out := ec.ports[1].ch
 
@@ -237,26 +237,26 @@ func fromLines(ec *evalCtx) exitus {
 	for {
 		line, err := bufferedIn.ReadString('\n')
 		if err == io.EOF {
-			return ok
+			return OK
 		} else if err != nil {
-			return newFailure(err.Error())
+			return NewFailure(err.Error())
 		}
 		out <- str(line[:len(line)-1])
 	}
 }
 
-func ratFn(ec *evalCtx, arg Value) exitus {
+func ratFn(ec *evalCtx, arg Value) Exitus {
 	out := ec.ports[1].ch
 	r, err := toRat(arg)
 	if err != nil {
-		return newFailure(err.Error())
+		return NewFailure(err.Error())
 	}
 	out <- r
-	return ok
+	return OK
 }
 
 // unpack takes any number of tables and output their list elements.
-func unpack(ec *evalCtx) exitus {
+func unpack(ec *evalCtx) Exitus {
 	in := ec.ports[0].ch
 	out := ec.ports[1].ch
 
@@ -270,11 +270,11 @@ func unpack(ec *evalCtx) exitus {
 		}
 	}
 
-	return ok
+	return OK
 }
 
 // fromJSON parses a stream of JSON data into Value's.
-func fromJSON(ec *evalCtx) exitus {
+func fromJSON(ec *evalCtx) Exitus {
 	in := ec.ports[0].f
 	out := ec.ports[1].ch
 
@@ -284,16 +284,16 @@ func fromJSON(ec *evalCtx) exitus {
 		err := dec.Decode(&v)
 		if err != nil {
 			if err == io.EOF {
-				return ok
+				return OK
 			}
-			return newFailure(err.Error())
+			return NewFailure(err.Error())
 		}
 		out <- fromJSONInterface(v)
 	}
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ec *evalCtx, f *closure) exitus {
+func each(ec *evalCtx, f *closure) Exitus {
 	in := ec.ports[0].ch
 in:
 	for v := range in {
@@ -311,17 +311,17 @@ in:
 			return ex
 		}
 	}
-	return ok
+	return OK
 }
 
-func cd(ec *evalCtx, args []Value) exitus {
+func cd(ec *evalCtx, args []Value) Exitus {
 	var dir string
 	if len(args) == 0 {
 		user, err := user.Current()
 		if err == nil {
 			dir = user.HomeDir
 		} else {
-			return newFailure("cannot get current user: " + err.Error())
+			return NewFailure("cannot get current user: " + err.Error())
 		}
 	} else if len(args) == 1 {
 		dir = toString(args[0])
@@ -332,10 +332,10 @@ func cd(ec *evalCtx, args []Value) exitus {
 	return cdInner(dir, ec)
 }
 
-func cdInner(dir string, ec *evalCtx) exitus {
+func cdInner(dir string, ec *evalCtx) Exitus {
 	err := os.Chdir(dir)
 	if err != nil {
-		return newFailure(err.Error())
+		return NewFailure(err.Error())
 	}
 	if ec.store != nil {
 		pwd, err := os.Getwd()
@@ -344,18 +344,18 @@ func cdInner(dir string, ec *evalCtx) exitus {
 			ec.store.AddDir(pwd)
 		}
 	}
-	return ok
+	return OK
 }
 
-var storeNotConnected = newFailure("store not connected")
+var storeNotConnected = NewFailure("store not connected")
 
-func visistedDirs(ec *evalCtx) exitus {
+func visistedDirs(ec *evalCtx) Exitus {
 	if ec.store == nil {
 		return storeNotConnected
 	}
 	dirs, err := ec.store.ListDirs()
 	if err != nil {
-		return newFailure("store error: " + err.Error())
+		return NewFailure("store error: " + err.Error())
 	}
 	out := ec.ports[1].ch
 	for _, dir := range dirs {
@@ -364,18 +364,18 @@ func visistedDirs(ec *evalCtx) exitus {
 		m["score"] = str(fmt.Sprint(dir.Score))
 		out <- m
 	}
-	return ok
+	return OK
 }
 
-var noMatchingDir = newFailure("no matching directory")
+var noMatchingDir = NewFailure("no matching directory")
 
-func jumpDir(ec *evalCtx, arg string) exitus {
+func jumpDir(ec *evalCtx, arg string) Exitus {
 	if ec.store == nil {
 		return storeNotConnected
 	}
 	dirs, err := ec.store.FindDirs(arg)
 	if err != nil {
-		return newFailure("store error: " + err.Error())
+		return NewFailure("store error: " + err.Error())
 	}
 	if len(dirs) == 0 {
 		return noMatchingDir
@@ -384,15 +384,15 @@ func jumpDir(ec *evalCtx, arg string) exitus {
 	err = os.Chdir(dir)
 	// TODO(xiaq): Remove directories that no longer exist
 	if err != nil {
-		return newFailure(err.Error())
+		return NewFailure(err.Error())
 	}
 	ec.store.AddDir(dir)
-	return ok
+	return OK
 }
 
-func source(ec *evalCtx, fname string) exitus {
+func source(ec *evalCtx, fname string) Exitus {
 	ec.Source(fname)
-	return ok
+	return OK
 }
 
 func toFloat(arg Value) (float64, error) {
@@ -407,45 +407,45 @@ func toFloat(arg Value) (float64, error) {
 	return num, nil
 }
 
-func plus(ec *evalCtx, nums ...float64) exitus {
+func plus(ec *evalCtx, nums ...float64) Exitus {
 	out := ec.ports[1].ch
 	sum := 0.0
 	for _, f := range nums {
 		sum += f
 	}
 	out <- str(fmt.Sprintf("%g", sum))
-	return ok
+	return OK
 }
 
-func minus(ec *evalCtx, sum float64, nums ...float64) exitus {
+func minus(ec *evalCtx, sum float64, nums ...float64) Exitus {
 	out := ec.ports[1].ch
 	for _, f := range nums {
 		sum -= f
 	}
 	out <- str(fmt.Sprintf("%g", sum))
-	return ok
+	return OK
 }
 
-func times(ec *evalCtx, nums ...float64) exitus {
+func times(ec *evalCtx, nums ...float64) Exitus {
 	out := ec.ports[1].ch
 	prod := 1.0
 	for _, f := range nums {
 		prod *= f
 	}
 	out <- str(fmt.Sprintf("%g", prod))
-	return ok
+	return OK
 }
 
-func divide(ec *evalCtx, prod float64, nums ...float64) exitus {
+func divide(ec *evalCtx, prod float64, nums ...float64) Exitus {
 	out := ec.ports[1].ch
 	for _, f := range nums {
 		prod /= f
 	}
 	out <- str(fmt.Sprintf("%g", prod))
-	return ok
+	return OK
 }
 
-func eq(ec *evalCtx, args []Value) exitus {
+func eq(ec *evalCtx, args []Value) Exitus {
 	out := ec.ports[1].ch
 	if len(args) == 0 {
 		return argsError
@@ -453,14 +453,14 @@ func eq(ec *evalCtx, args []Value) exitus {
 	for i := 0; i+1 < len(args); i++ {
 		if !valueEq(args[i], args[i+1]) {
 			out <- boolean(false)
-			return ok
+			return OK
 		}
 	}
 	out <- boolean(true)
-	return ok
+	return OK
 }
 
-func _stack(ec *evalCtx) exitus {
+func _stack(ec *evalCtx) Exitus {
 	out := ec.ports[1].f
 
 	// XXX dup with main.go
@@ -470,5 +470,5 @@ func _stack(ec *evalCtx) exitus {
 	}
 	out.Write(buf)
 
-	return ok
+	return OK
 }

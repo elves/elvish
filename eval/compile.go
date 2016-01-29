@@ -19,8 +19,8 @@ type scope map[string]bool
 type (
 	op         func(*evalCtx)
 	valuesOp   func(*evalCtx) []Value
-	exitusChOp func(*evalCtx) <-chan exitus
-	exitusOp   func(*evalCtx) exitus
+	exitusChOp func(*evalCtx) <-chan Exitus
+	exitusOp   func(*evalCtx) Exitus
 )
 
 // compiler maintains the set of states needed when compiling a single source
@@ -53,29 +53,29 @@ func compile(name, source string, sc scope, n *parse.Chunk) (op exitusOp, err er
 func (cp *compiler) chunk(n *parse.Chunk) exitusOp {
 	ops := cp.pipelines(n.Pipelines)
 
-	return func(ec *evalCtx) exitus {
+	return func(ec *evalCtx) Exitus {
 		for _, op := range ops {
 			s := op(ec)
 			if !s.Bool() {
 				return s
 			}
 		}
-		return ok
+		return OK
 	}
 }
 
 const pipelineChanBufferSize = 32
 
-var noExitus = newFailure("no exitus")
+var noExitus = NewFailure("no exitus")
 
 func (cp *compiler) pipeline(n *parse.Pipeline) exitusOp {
 	ops := cp.forms(n.Forms)
 	p := n.Begin()
 
-	return func(ec *evalCtx) exitus {
+	return func(ec *evalCtx) Exitus {
 		var nextIn *port
 
-		exituses := make([]exitus, len(ops))
+		exituses := make([]Exitus, len(ops))
 		finished := make(chan bool, len(ops))
 
 		// For each form, create a dedicated evalCtx and run asynchronously
@@ -112,7 +112,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) exitusOp {
 		if len(exituses) == 1 {
 			return exituses[0]
 		} else if allok(exituses) {
-			return ok
+			return OK
 		}
 		return newTraceback(exituses...)
 	}
@@ -139,7 +139,7 @@ func (cp *compiler) form(n *parse.Form) exitusOp {
 	p := n.Begin()
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
-	return func(ec *evalCtx) exitus {
+	return func(ec *evalCtx) Exitus {
 		// head
 		headValues := headOp(ec)
 		headMust := ec.must(headValues, "the head of command", p)

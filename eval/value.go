@@ -102,7 +102,7 @@ func (b boolean) Bool() bool {
 
 type traceback struct {
 	// TODO(xiaq): Add context information
-	causes []exitus
+	causes []Exitus
 }
 
 type exitusSort byte
@@ -123,34 +123,34 @@ var flowExitusNames = map[exitusSort]string{
 	Return: "return", Break: "break", Continue: "continue",
 }
 
-type exitus struct {
+type Exitus struct {
 	Sort      exitusSort
 	Failure   string
 	Traceback *traceback
 }
 
 var (
-	ok       = exitus{Ok, "", nil}
-	gfailure = exitus{Failure, "generic failure", nil}
+	OK             = Exitus{Ok, "", nil}
+	GenericFailure = Exitus{Failure, "generic failure", nil}
 )
 
-func newTraceback(es ...exitus) exitus {
-	return exitus{Traceback, "", &traceback{es}}
+func newTraceback(es ...Exitus) Exitus {
+	return Exitus{Traceback, "", &traceback{es}}
 }
 
-func newFailure(s string) exitus {
-	return exitus{Failure, s, nil}
+func NewFailure(s string) Exitus {
+	return Exitus{Failure, s, nil}
 }
 
-func newFlowExitus(s exitusSort) exitus {
-	return exitus{s, "", nil}
+func newFlowExitus(s exitusSort) Exitus {
+	return Exitus{s, "", nil}
 }
 
-func (e exitus) Type() Type {
+func (e Exitus) Type() Type {
 	return exitusType
 }
 
-func (e exitus) Repr() string {
+func (e Exitus) Repr() string {
 	switch e.Sort {
 	case Ok:
 		return "$ok"
@@ -170,7 +170,7 @@ func (e exitus) Repr() string {
 	}
 }
 
-func (e exitus) String() string {
+func (e Exitus) String() string {
 	switch e.Sort {
 	case Ok:
 		return "ok"
@@ -192,11 +192,11 @@ func (e exitus) String() string {
 	}
 }
 
-func (e exitus) Bool() bool {
+func (e Exitus) Bool() bool {
 	return e.Sort == Ok
 }
 
-func allok(es []exitus) bool {
+func allok(es []Exitus) bool {
 	for _, e := range es {
 		if e.Sort != Ok {
 			return false
@@ -291,7 +291,7 @@ func (m map_) Index(idx string) (Value, error) {
 // Callable represents Value's that may be called.
 type callable interface {
 	Value
-	Call(ec *evalCtx, args []Value) exitus
+	Call(ec *evalCtx, args []Value) Exitus
 }
 
 // closure is a closure.
@@ -315,7 +315,7 @@ func (c *closure) Repr() string {
 
 type builtinFn struct {
 	Name string
-	Impl func(*evalCtx, []Value) exitus
+	Impl func(*evalCtx, []Value) Exitus
 }
 
 func (b *builtinFn) Type() Type {
@@ -408,7 +408,7 @@ func fromJSONInterface(v interface{}) Value {
 		return m_
 	default:
 		// TODO Find a better way to report error
-		return newFailure(fmt.Sprintf("unexpected json type: %T", v))
+		return NewFailure(fmt.Sprintf("unexpected json type: %T", v))
 	}
 }
 
