@@ -11,16 +11,17 @@ progress; things will change without warning.
 
 Syntax highlighting (also showcasing right-hand-side prompt):
 
-![syntax highlighting](./screenshots/syntax.png)
+![syntax
+highlighting](https://raw.githubusercontent.com/elves/images/master/syntax.png)
 
 Tab completion for files:
 
-![tab completion](./screenshots/completion.png)
+![tab completion](https://raw.githubusercontent.com/elves/images/master/completion.png)
 
 Navigation mode (triggered with ^N, inspired by
 [ranger](http://ranger.nongnu.org/)):
 
-![navigation mode](./screenshots/navigation.png)
+![navigation mode](https://raw.githubusercontent.com/elves/images/master/navigation.png)
 
 
 Planned features:
@@ -163,14 +164,13 @@ Always run unit tests before committing. `make` will take care of this.
 ### Generated files
 
 Some files are generated from other files. They should be commmited into the
-repository for this package to be go-getable. Run `make pre-commit` to
-re-generate them in case you modified the source. Read the Makefile for
-details.
+repository for this package to be go-getable. Run `go generate ./...` to
+regenerate them in case you modified the source.
 
 ### Formatting the Code
 
 Always format the code with `goimports` before committing. Run
-`go get code.google.com/p/go.tools/cmd/goimports` to install `goimports`, and
+`go get golang.org/x/tools/cmd/goimports` to install `goimports`, and
 `goimports -w .` to format all golang sources.
 
 To automate this you can set up a `goimports` filter for Git by putting this
@@ -180,12 +180,12 @@ in `~/.gitconfig`:
         clean = goimports
         smudge = cat
 
-`.gitattributes` in this repository refers to this filter. Read more about Git
+Git will then always run `goimports` for you before comitting, since
+`.gitattributes` in this repository refers to this filter. More about Git
 attributes and filters
 [here](https://www.kernel.org/pub/software/scm/git/docs/gitattributes.html).
 
 ### Licensing
 
 By contributing, you agree to license your code under the same license as
-existing source code of Elvish. See the [License](#license) section.
-
+existing source code of Elvish. See the LICENSE file.
