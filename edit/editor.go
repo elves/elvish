@@ -310,7 +310,7 @@ func setupTerminal(file *os.File) (*sys.Termios, error) {
 	return savedTermios, nil
 }
 
-// startsReadLine prepares the terminal for the editor.
+// startReadLine prepares the terminal for the editor.
 func (ed *Editor) startReadLine() error {
 	savedTermios, err := setupTerminal(ed.file)
 	if err != nil {
