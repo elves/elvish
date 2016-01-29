@@ -468,8 +468,7 @@ func ele(ec *evalCtx, name string, args ...Value) Exitus {
 	if ec.Editor == nil {
 		return noEditor
 	}
-	ec.Editor.Call(name, args)
-	return OK
+	return ec.Editor.Call(name, args)
 }
 
 func _stack(ec *evalCtx) Exitus {
