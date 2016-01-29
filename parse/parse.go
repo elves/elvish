@@ -75,21 +75,21 @@ var (
 	shouldBeCompound = newError("", "compound")
 )
 
-func (mpn *MapPair) parse(rd *reader) {
+func (mpn *MapPair) parse(rd *reader, cut runePred) {
 	parseSep(mpn, rd, '&')
 	parseSpaces(mpn, rd)
-	if !startsCompound(rd.peek()) {
+	if !startsCompound(rd.peek(), cut) {
 		rd.error = shouldBeCompound
 		return
 	}
-	mpn.setKey(parseCompound(rd, nil))
+	mpn.setKey(parseCompound(rd, cut))
 
 	parseSpaces(mpn, rd)
-	if !startsCompound(rd.peek()) {
+	if !startsCompound(rd.peek(), cut) {
 		rd.error = shouldBeCompound
 		return
 	}
-	mpn.setValue(parseCompound(rd, nil))
+	mpn.setValue(parseCompound(rd, cut))
 }
 
 type Primary struct {
@@ -394,26 +394,57 @@ func (pn *Primary) exitusCapture(rd *reader) {
 	addSep(pn, begin, rd)
 
 	pn.Type = ExitusCapture
-	if !startsChunk(rd.peek()) && rd.peek() != ')' {
+	if !startsChunk(rd.peek(), nil) && rd.peek() != ')' {
 		rd.error = shouldBeChunk
 		return
 	}
-	pn.setChunk(parseChunk(rd))
+	pn.setChunk(parseChunk(rd, nil))
 	if !parseSep(pn, rd, ')') {
 		rd.error = shouldBeRParen
 	}
 }
 
+var (
+	shouldBeBackquoteOrLParen = newError("", "'`'", "'('")
+	shouldBeBackquote         = newError("", "'`'")
+)
+
+func isBackquote(r rune) bool {
+	return r == '`'
+}
+
 func (pn *Primary) outputCapture(rd *reader) {
 	pn.Type = OutputCapture
-	parseSep(pn, rd, '(')
-	if !startsChunk(rd.peek()) && rd.peek() != ')' {
+
+	var closer rune
+	var shouldBeCloser error
+	var cut runePred
+
+	begin := rd.pos
+	switch rd.next() {
+	case '(':
+		closer = ')'
+		shouldBeCloser = shouldBeRParen
+	case '`':
+		closer = '`'
+		shouldBeCloser = shouldBeBackquote
+		cut = isBackquote
+	default:
+		rd.backup()
+		rd.error = shouldBeBackquoteOrLParen
+		return
+	}
+	addSep(pn, begin, rd)
+
+	if !startsChunk(rd.peek(), cut) && rd.peek() != closer {
 		rd.error = shouldBeChunk
 		return
 	}
-	pn.setChunk(parseChunk(rd))
-	if !parseSep(pn, rd, ')') {
-		rd.error = shouldBeRParen
+
+	pn.setChunk(parseChunk(rd, cut))
+
+	if !parseSep(pn, rd, closer) {
+		rd.error = shouldBeCloser
 	}
 }
 
@@ -446,11 +477,11 @@ func (pn *Primary) lbracket(rd *reader) {
 			return
 		}
 		pn.Type = Lambda
-		if !startsChunk(rd.peek()) && rd.peek() != '}' {
+		if !startsChunk(rd.peek(), nil) && rd.peek() != '}' {
 			rd.error = shouldBeChunk
 			return
 		}
-		pn.setChunk(parseChunk(rd))
+		pn.setChunk(parseChunk(rd, nil))
 		if !parseSep(pn, rd, '}') {
 			rd.error = shouldBeRBrace
 			return
@@ -470,7 +501,7 @@ func (pn *Primary) lbracket(rd *reader) {
 			// { MapPair { Space } } ']': Wind back
 			rd.pos = amp
 			for rd.peek() == '&' {
-				pn.addToMapPairs(parseMapPair(rd))
+				pn.addToMapPairs(parseMapPair(rd, nil))
 				parseSpaces(pn, rd)
 			}
 		}
@@ -511,14 +542,17 @@ func (pn *Primary) braced(rd *reader) {
 	}
 }
 
-func startsPrimary(r rune) bool {
+func startsPrimary(r rune, cut runePred) bool {
+	if cut.matches(r) {
+		return false
+	}
 	return r == '\'' || r == '"' || r == '$' || allowedInBareword(r) ||
-		r == '?' || r == '*' || r == '(' || r == '[' || r == '{'
+		r == '?' || r == '*' || r == '(' || r == '`' || r == '[' || r == '{'
 }
 
 func (pn *Primary) parse(rd *reader, cut runePred) {
 	r := rd.peek()
-	if !startsPrimary(r) {
+	if !startsPrimary(r, cut) {
 		rd.error = ShouldBePrimary
 		return
 	}
@@ -537,7 +571,7 @@ func (pn *Primary) parse(rd *reader, cut runePred) {
 		} else {
 			pn.wildcard(rd)
 		}
-	case '(':
+	case '(', '`':
 		pn.outputCapture(rd)
 	case '[':
 		pn.lbracket(rd)
@@ -555,8 +589,8 @@ type Indexed struct {
 	Indicies []*Array
 }
 
-func startsIndexed(r rune) bool {
-	return startsPrimary(r)
+func startsIndexed(r rune, cut runePred) bool {
+	return startsPrimary(r, cut)
 }
 
 var (
@@ -583,12 +617,12 @@ type Compound struct {
 	Indexeds []*Indexed
 }
 
-func startsCompound(r rune) bool {
-	return startsIndexed(r)
+func startsCompound(r rune, cut runePred) bool {
+	return startsIndexed(r, cut)
 }
 
 func (cn *Compound) parse(rd *reader, cut runePred) {
-	for startsIndexed(rd.peek()) && !cut.matches(rd.peek()) {
+	for startsIndexed(rd.peek(), cut) {
 		cn.addToIndexeds(parseIndexed(rd, cut))
 	}
 }
@@ -604,12 +638,12 @@ func isSpace(r rune) bool {
 }
 
 func startsArray(r rune) bool {
-	return isSpace(r) || startsIndexed(r)
+	return isSpace(r) || startsIndexed(r, nil)
 }
 
 func (sn *Array) parse(rd *reader) {
 	parseSpaces(sn, rd)
-	for startsCompound(rd.peek()) {
+	for startsCompound(rd.peek(), nil) {
 		sn.addToCompounds(parseCompound(rd, nil))
 		parseSpaces(sn, rd)
 	}
@@ -645,9 +679,9 @@ var (
 )
 
 // XXX(xiaq): The parsing of the Dest part is done in Form.parse.
-func (rn *Redir) parse(rd *reader) {
+func (rn *Redir) parse(rd *reader, cut runePred) {
 	begin := rd.pos
-	for isRedirSign(rd.peek()) {
+	for !cut.matches(rd.peek()) && isRedirSign(rd.peek()) {
 		rd.next()
 	}
 	sign := rd.src[begin:rd.pos]
@@ -667,10 +701,10 @@ func (rn *Redir) parse(rd *reader) {
 	}
 	addSep(rn, begin, rd)
 	parseSpaces(rn, rd)
-	if parseSep(rn, rd, '&') {
+	if !cut.matches('&') && parseSep(rn, rd, '&') {
 		rn.SourceIsFd = true
 	}
-	if !startsCompound(rd.peek()) {
+	if !startsCompound(rd.peek(), cut) {
 		if rn.SourceIsFd {
 			rd.error = shouldBeFd
 		} else {
@@ -678,7 +712,7 @@ func (rn *Redir) parse(rd *reader) {
 		}
 		return
 	}
-	rn.setSource(parseCompound(rd, nil))
+	rn.setSource(parseCompound(rd, cut))
 }
 
 // ExitusRedir = '?' '>' { Space } Compound
@@ -687,13 +721,13 @@ type ExitusRedir struct {
 	Dest *Compound
 }
 
-func (ern *ExitusRedir) parse(rd *reader) {
+func (ern *ExitusRedir) parse(rd *reader, cut runePred) {
 	begin := rd.pos
 	rd.next()
 	rd.next()
 	addSep(ern, begin, rd)
 	parseSpaces(ern, rd)
-	ern.setDest(parseCompound(rd, nil))
+	ern.setDest(parseCompound(rd, cut))
 }
 
 // Form = { Space } Compound { Space } { ( Compound | MapPair | Redir | ExitusRedir ) { Space } }
@@ -706,40 +740,43 @@ type Form struct {
 	ExitusRedir *ExitusRedir
 }
 
-func startsForm(r rune) bool {
-	return isSpace(r) || startsCompound(r)
+func startsForm(r rune, cut runePred) bool {
+	return isSpace(r) || startsCompound(r, cut)
 }
 
 var (
 	duplicateExitusRedir = newError("duplicate exitus redir")
 )
 
-func (fn *Form) parse(rd *reader) {
+func (fn *Form) parse(rd *reader, cut runePred) {
 	parseSpaces(fn, rd)
-	if !startsCompound(rd.peek()) {
+	if !startsCompound(rd.peek(), cut) {
 		rd.error = shouldBeCompound
 		return
 	}
-	fn.setHead(parseCompound(rd, nil))
+	fn.setHead(parseCompound(rd, cut))
 	parseSpaces(fn, rd)
+loop:
 	for {
 		r := rd.peek()
 		switch {
+		case cut.matches(r):
+			break loop
 		case r == '&':
-			fn.addToNamedArgs(parseMapPair(rd))
-		case startsCompound(r):
-			if rd.hasPrefix("?>") {
+			fn.addToNamedArgs(parseMapPair(rd, cut))
+		case startsCompound(r, cut):
+			if !cut.matches('>') && rd.hasPrefix("?>") {
 				if fn.ExitusRedir != nil {
 					rd.error = duplicateExitusRedir
 					return
 				}
-				fn.setExitusRedir(parseExitusRedir(rd))
+				fn.setExitusRedir(parseExitusRedir(rd, cut))
 				continue
 			}
-			cn := parseCompound(rd, nil)
-			if isRedirSign(rd.peek()) {
+			cn := parseCompound(rd, cut)
+			if !cut.matches(rd.peek()) && isRedirSign(rd.peek()) {
 				// Redir
-				rn := parseRedir(rd)
+				rn := parseRedir(rd, cut)
 				// XXX(xiaq): Redir.parse doesn't deal with Dest, so we patch
 				// it here.
 				rn.begin = cn.begin
@@ -755,7 +792,7 @@ func (fn *Form) parse(rd *reader) {
 				fn.addToArgs(cn)
 			}
 		case isRedirSign(r):
-			fn.addToRedirs(parseRedir(rd))
+			fn.addToRedirs(parseRedir(rd, cut))
 		default:
 			return
 		}
@@ -769,22 +806,22 @@ type Pipeline struct {
 	Forms []*Form
 }
 
-func startsPipeline(r rune) bool {
-	return startsForm(r)
+func startsPipeline(r rune, cut runePred) bool {
+	return startsForm(r, cut)
 }
 
 var (
 	shouldBeForm = newError("", "form")
 )
 
-func (pn *Pipeline) parse(rd *reader) {
-	pn.addToForms(parseForm(rd))
-	for parseSep(pn, rd, '|') {
-		if !startsForm(rd.peek()) {
+func (pn *Pipeline) parse(rd *reader, cut runePred) {
+	pn.addToForms(parseForm(rd, cut))
+	for !cut.matches('|') && parseSep(pn, rd, '|') {
+		if !startsForm(rd.peek(), cut) {
 			rd.error = shouldBeForm
 			return
 		}
-		pn.addToForms(parseForm(rd))
+		pn.addToForms(parseForm(rd, cut))
 	}
 }
 
@@ -798,14 +835,16 @@ func isPipelineSep(r rune) bool {
 	return r == '\n' || r == ';'
 }
 
-func startsChunk(r rune) bool {
-	return isPipelineSep(r) || startsPipeline(r)
+func startsChunk(r rune, cut runePred) bool {
+	return isPipelineSep(r) || startsPipeline(r, cut)
 }
 
-func (bn *Chunk) parseSeps(rd *reader) {
+func (bn *Chunk) parseSeps(rd *reader, cut runePred) {
 	for {
 		r := rd.peek()
-		if isPipelineSep(r) {
+		if cut.matches(r) {
+			break
+		} else if isPipelineSep(r) {
 			// parse as a Sep
 			parseSep(bn, rd, r)
 		} else if isSpace(r) {
@@ -827,17 +866,17 @@ func (bn *Chunk) parseSeps(rd *reader) {
 	}
 }
 
-func (bn *Chunk) parse(rd *reader) {
-	bn.parseSeps(rd)
-	for startsPipeline(rd.peek()) {
-		bn.addToPipelines(parsePipeline(rd))
-		bn.parseSeps(rd)
+func (bn *Chunk) parse(rd *reader, cut runePred) {
+	bn.parseSeps(rd, cut)
+	for startsPipeline(rd.peek(), cut) {
+		bn.addToPipelines(parsePipeline(rd, cut))
+		bn.parseSeps(rd, cut)
 	}
 }
 
 func Parse(name, src string) (*Chunk, error) {
 	rd := &reader{src, 0, 0, nil}
-	bn := parseChunk(rd)
+	bn := parseChunk(rd, nil)
 	if rd.error != nil {
 		return bn, errutil.NewContextualError(
 			name, "syntax error", src, rd.pos, rd.error.Error())

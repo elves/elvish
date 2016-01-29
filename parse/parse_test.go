@@ -145,6 +145,10 @@ var goodCases = []struct {
 		ast{"Compound/Indexed/Primary", fs{
 			"Type": OutputCapture, "Chunk": "b;c",
 		}})},
+	// Output capture with backquotes
+	{"a `` `b;c` `e>f`", a("``", "`b;c`", "`e>f`")},
+	// Backquotes may be nested with unclosed parens and braces
+	{"a `a (b `c`)` `d [`e`]`", a("`a (b `c`)`", "`d [`e`]`")},
 	// Exitus capture
 	{"a ?() ?(b;c)", a(
 		ast{"Compound/Indexed/Primary", fs{"Type": ExitusCapture}},

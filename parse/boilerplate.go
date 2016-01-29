@@ -10,9 +10,9 @@ func (n *MapPair) setValue(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseMapPair(rd *reader) *MapPair {
+func parseMapPair(rd *reader, cut runePred) *MapPair {
 	n := &MapPair{node: node{begin: rd.pos}}
-	n.parse(rd)
+	n.parse(rd, cut)
 	n.end = rd.pos
 	n.sourceText = rd.src[n.begin:n.end]
 	return n
@@ -100,9 +100,9 @@ func (n *Redir) setSource(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseRedir(rd *reader) *Redir {
+func parseRedir(rd *reader, cut runePred) *Redir {
 	n := &Redir{node: node{begin: rd.pos}}
-	n.parse(rd)
+	n.parse(rd, cut)
 	n.end = rd.pos
 	n.sourceText = rd.src[n.begin:n.end]
 	return n
@@ -113,9 +113,9 @@ func (n *ExitusRedir) setDest(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseExitusRedir(rd *reader) *ExitusRedir {
+func parseExitusRedir(rd *reader, cut runePred) *ExitusRedir {
 	n := &ExitusRedir{node: node{begin: rd.pos}}
-	n.parse(rd)
+	n.parse(rd, cut)
 	n.end = rd.pos
 	n.sourceText = rd.src[n.begin:n.end]
 	return n
@@ -146,9 +146,9 @@ func (n *Form) setExitusRedir(ch *ExitusRedir) {
 	addChild(n, ch)
 }
 
-func parseForm(rd *reader) *Form {
+func parseForm(rd *reader, cut runePred) *Form {
 	n := &Form{node: node{begin: rd.pos}}
-	n.parse(rd)
+	n.parse(rd, cut)
 	n.end = rd.pos
 	n.sourceText = rd.src[n.begin:n.end]
 	return n
@@ -159,9 +159,9 @@ func (n *Pipeline) addToForms(ch *Form) {
 	addChild(n, ch)
 }
 
-func parsePipeline(rd *reader) *Pipeline {
+func parsePipeline(rd *reader, cut runePred) *Pipeline {
 	n := &Pipeline{node: node{begin: rd.pos}}
-	n.parse(rd)
+	n.parse(rd, cut)
 	n.end = rd.pos
 	n.sourceText = rd.src[n.begin:n.end]
 	return n
@@ -172,9 +172,9 @@ func (n *Chunk) addToPipelines(ch *Pipeline) {
 	addChild(n, ch)
 }
 
-func parseChunk(rd *reader) *Chunk {
+func parseChunk(rd *reader, cut runePred) *Chunk {
 	n := &Chunk{node: node{begin: rd.pos}}
-	n.parse(rd)
+	n.parse(rd, cut)
 	n.end = rd.pos
 	n.sourceText = rd.src[n.begin:n.end]
 	return n
