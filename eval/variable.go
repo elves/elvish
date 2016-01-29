@@ -2,25 +2,25 @@ package eval
 
 import "os"
 
-// Variable is the internal representation of a variable.
+// Variable represents an elvish variable.
 type Variable interface {
 	Set(v Value)
 	Get() Value
 }
 
-type internalVariable struct {
+type ptrVariable struct {
 	valuePtr *Value
 }
 
-func newInternalVariable(v Value) Variable {
-	return internalVariable{&v}
+func newPtrVariable(v Value) Variable {
+	return ptrVariable{&v}
 }
 
-func (iv internalVariable) Set(val Value) {
+func (iv ptrVariable) Set(val Value) {
 	*iv.valuePtr = val
 }
 
-func (iv internalVariable) Get() Value {
+func (iv ptrVariable) Get() Value {
 	return *iv.valuePtr
 }
 

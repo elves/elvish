@@ -70,7 +70,7 @@ func (c *Closure) Call(ec *evalCtx, args []Value) Exitus {
 	// Make local namespace and pass arguments.
 	ec.local = make(map[string]Variable)
 	for i, name := range c.ArgNames {
-		ec.local[name] = newInternalVariable(args[i])
+		ec.local[name] = newPtrVariable(args[i])
 	}
 
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being

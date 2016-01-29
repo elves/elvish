@@ -57,14 +57,14 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 	paths := NewList()
 	paths.appendStrings(searchPaths)
 	global := ns{
-		"pid":   newInternalVariable(pid),
-		"ok":    newInternalVariable(OK),
-		"true":  newInternalVariable(Bool(true)),
-		"false": newInternalVariable(Bool(false)),
-		"paths": newInternalVariable(paths),
+		"pid":   newPtrVariable(pid),
+		"ok":    newPtrVariable(OK),
+		"true":  newPtrVariable(Bool(true)),
+		"false": newPtrVariable(Bool(false)),
+		"paths": newPtrVariable(paths),
 	}
 	for _, b := range builtinFns {
-		global[FnPrefix+b.Name] = newInternalVariable(b)
+		global[FnPrefix+b.Name] = newPtrVariable(b)
 	}
 
 	return &Evaler{global, map[string]ns{}, searchPaths, st, nil}

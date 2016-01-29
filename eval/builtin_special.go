@@ -71,7 +71,7 @@ func doSet(ec *evalCtx, names []string, values []Value) Exitus {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
 			// New variable
-			variable = newInternalVariable(values[i])
+			variable = newPtrVariable(values[i])
 			ec.local[name] = variable
 		} else {
 			variable.Set(values[i])
@@ -239,7 +239,7 @@ func compileFn(cp *compiler, fn *parse.Form) exitusOp {
 	return func(ec *evalCtx) Exitus {
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
-		ec.local[varName] = newInternalVariable(closure)
+		ec.local[varName] = newPtrVariable(closure)
 		return OK
 	}
 }
