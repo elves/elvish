@@ -28,6 +28,7 @@ const (
 type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
 	savedTermios          *sys.Termios
+	lastKey               Key
 	tokens                []Token
 	prompt, rprompt, line string
 	dot                   int
@@ -445,7 +446,8 @@ MainLoop:
 			if !bound {
 				name = keyBinding[DefaultBinding]
 			}
-			ret := leBuiltins[name](ed, k)
+			ed.lastKey = k
+			ret := leBuiltins[name](ed)
 			if ret == nil {
 				continue
 			}

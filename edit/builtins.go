@@ -27,7 +27,7 @@ type leReturn struct {
 	readLineReturn LineRead
 }
 
-type leBuiltin func(ed *Editor, k Key) *leReturn
+type leBuiltin func(ed *Editor) *leReturn
 
 var leBuiltins = map[string]leBuiltin{
 	// Command and insert mode
@@ -73,36 +73,37 @@ var leBuiltins = map[string]leBuiltin{
 	"default-history":     defaultHistory,
 }
 
-func startInsert(ed *Editor, k Key) *leReturn {
+func startInsert(ed *Editor) *leReturn {
 	ed.mode = modeInsert
 	return nil
 }
 
-func defaultCommand(ed *Editor, k Key) *leReturn {
+func defaultCommand(ed *Editor) *leReturn {
+	k := ed.lastKey
 	ed.pushTip(fmt.Sprintf("Unbound: %s", k))
 	return nil
 }
 
-func startCommand(ed *Editor, k Key) *leReturn {
+func startCommand(ed *Editor) *leReturn {
 	ed.mode = modeCommand
 	return nil
 }
 
-func killLineLeft(ed *Editor, k Key) *leReturn {
+func killLineLeft(ed *Editor) *leReturn {
 	sol := strutil.FindLastSOL(ed.line[:ed.dot])
 	ed.line = ed.line[:sol] + ed.line[ed.dot:]
 	ed.dot = sol
 	return nil
 }
 
-func killLineRight(ed *Editor, k Key) *leReturn {
+func killLineRight(ed *Editor) *leReturn {
 	eol := strutil.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
 	ed.line = ed.line[:ed.dot] + ed.line[eol:]
 	return nil
 }
 
 // NOTE(xiaq): A word is now defined as a series of non-whitespace chars.
-func killWordLeft(ed *Editor, k Key) *leReturn {
+func killWordLeft(ed *Editor) *leReturn {
 	if ed.dot == 0 {
 		return nil
 	}
@@ -114,7 +115,7 @@ func killWordLeft(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func killRuneLeft(ed *Editor, k Key) *leReturn {
+func killRuneLeft(ed *Editor) *leReturn {
 	if ed.dot > 0 {
 		_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
 		ed.line = ed.line[:ed.dot-w] + ed.line[ed.dot:]
@@ -125,7 +126,7 @@ func killRuneLeft(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func killRuneRight(ed *Editor, k Key) *leReturn {
+func killRuneRight(ed *Editor) *leReturn {
 	if ed.dot < len(ed.line) {
 		_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
 		ed.line = ed.line[:ed.dot] + ed.line[ed.dot+w:]
@@ -135,19 +136,19 @@ func killRuneRight(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func moveDotLeft(ed *Editor, k Key) *leReturn {
+func moveDotLeft(ed *Editor) *leReturn {
 	_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
 	ed.dot -= w
 	return nil
 }
 
-func moveDotRight(ed *Editor, k Key) *leReturn {
+func moveDotRight(ed *Editor) *leReturn {
 	_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
 	ed.dot += w
 	return nil
 }
 
-func moveDotUp(ed *Editor, k Key) *leReturn {
+func moveDotUp(ed *Editor) *leReturn {
 	sol := strutil.FindLastSOL(ed.line[:ed.dot])
 	if sol == 0 {
 		ed.flash()
@@ -160,7 +161,7 @@ func moveDotUp(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func moveDotDown(ed *Editor, k Key) *leReturn {
+func moveDotDown(ed *Editor) *leReturn {
 	eol := strutil.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
 	if eol == len(ed.line) {
 		ed.flash()
@@ -174,105 +175,107 @@ func moveDotDown(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func insertKey(ed *Editor, k Key) *leReturn {
+func insertKey(ed *Editor) *leReturn {
+	k := ed.lastKey
 	ed.line = ed.line[:ed.dot] + string(k.Rune) + ed.line[ed.dot:]
 	ed.dot += utf8.RuneLen(k.Rune)
 	return nil
 }
 
-func returnLine(ed *Editor, k Key) *leReturn {
+func returnLine(ed *Editor) *leReturn {
 	return &leReturn{action: exitReadLine, readLineReturn: LineRead{Line: ed.line}}
 }
 
-func returnEORight(ed *Editor, k Key) *leReturn {
+func returnEORight(ed *Editor) *leReturn {
 	if len(ed.line) == 0 {
 		return &leReturn{action: exitReadLine, readLineReturn: LineRead{EOF: true}}
 	}
 	return nil
 }
 
-func selectCandUp(ed *Editor, k Key) *leReturn {
+func selectCandUp(ed *Editor) *leReturn {
 	ed.completion.prev(false)
 	return nil
 }
 
-func selectCandDown(ed *Editor, k Key) *leReturn {
+func selectCandDown(ed *Editor) *leReturn {
 	ed.completion.next(false)
 	return nil
 }
 
-func selectCandLeft(ed *Editor, k Key) *leReturn {
+func selectCandLeft(ed *Editor) *leReturn {
 	if c := ed.completion.current - ed.completionLines; c >= 0 {
 		ed.completion.current = c
 	}
 	return nil
 }
 
-func selectCandRight(ed *Editor, k Key) *leReturn {
+func selectCandRight(ed *Editor) *leReturn {
 	if c := ed.completion.current + ed.completionLines; c < len(ed.completion.candidates) {
 		ed.completion.current = c
 	}
 	return nil
 }
 
-func cycleCandRight(ed *Editor, k Key) *leReturn {
+func cycleCandRight(ed *Editor) *leReturn {
 	ed.completion.next(true)
 	return nil
 }
 
-func cancelCompletion(ed *Editor, k Key) *leReturn {
+func cancelCompletion(ed *Editor) *leReturn {
 	ed.completion = nil
 	ed.mode = modeInsert
 	return nil
 }
 
-func defaultInsert(ed *Editor, k Key) *leReturn {
+func defaultInsert(ed *Editor) *leReturn {
+	k := ed.lastKey
 	if k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune) {
-		return insertKey(ed, k)
+		return insertKey(ed)
 	}
 	ed.pushTip(fmt.Sprintf("Unbound: %s", k))
 	return nil
 }
 
-func defaultCompletion(ed *Editor, k Key) *leReturn {
+func defaultCompletion(ed *Editor) *leReturn {
 	ed.acceptCompletion()
 	ed.mode = modeInsert
 	return &leReturn{action: reprocessKey}
 }
 
-func startNavigation(ed *Editor, k Key) *leReturn {
+func startNavigation(ed *Editor) *leReturn {
 	ed.mode = modeNavigation
 	ed.navigation = newNavigation()
 	return &leReturn{}
 }
 
-func selectNavUp(ed *Editor, k Key) *leReturn {
+func selectNavUp(ed *Editor) *leReturn {
 	ed.navigation.prev()
 	return &leReturn{}
 }
 
-func selectNavDown(ed *Editor, k Key) *leReturn {
+func selectNavDown(ed *Editor) *leReturn {
 	ed.navigation.next()
 	return &leReturn{}
 }
 
-func ascendNav(ed *Editor, k Key) *leReturn {
+func ascendNav(ed *Editor) *leReturn {
 	ed.navigation.ascend()
 	return &leReturn{}
 }
 
-func descendNav(ed *Editor, k Key) *leReturn {
+func descendNav(ed *Editor) *leReturn {
 	ed.navigation.descend()
 	return &leReturn{}
 }
 
-func defaultNavigation(ed *Editor, k Key) *leReturn {
+func defaultNavigation(ed *Editor) *leReturn {
 	ed.mode = modeInsert
 	ed.navigation = nil
 	return &leReturn{}
 }
 
-func startHistory(ed *Editor, k Key) *leReturn {
+func startHistory(ed *Editor) *leReturn {
 	ed.history.prefix = ed.line[:ed.dot]
 	ed.history.current = len(ed.histories)
 	if ed.prevHistory() {
@@ -283,17 +286,17 @@ func startHistory(ed *Editor, k Key) *leReturn {
 	return nil
 }
 
-func selectHistoryPrev(ed *Editor, k Key) *leReturn {
+func selectHistoryPrev(ed *Editor) *leReturn {
 	ed.prevHistory()
 	return nil
 }
 
-func selectHistoryNext(ed *Editor, k Key) *leReturn {
+func selectHistoryNext(ed *Editor) *leReturn {
 	ed.nextHistory()
 	return nil
 }
 
-func defaultHistory(ed *Editor, k Key) *leReturn {
+func defaultHistory(ed *Editor) *leReturn {
 	ed.acceptHistory()
 	ed.mode = modeInsert
 	return &leReturn{action: reprocessKey}

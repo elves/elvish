@@ -39,7 +39,7 @@ func (c *completion) next(cycle bool) {
 	}
 }
 
-func startCompletion(ed *Editor, k Key) *leReturn {
+func startCompletion(ed *Editor) *leReturn {
 	token := tokenAtDot(ed)
 	node := token.Node
 	if node == nil {
