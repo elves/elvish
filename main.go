@@ -13,9 +13,9 @@ import (
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/osutil"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
-	"github.com/elves/elvish/sysutil"
 )
 
 const (
@@ -90,7 +90,7 @@ func interact() {
 		name := fmt.Sprintf("<tty %d>", cmdNum)
 
 		prompt := func() string {
-			return sysutil.Getwd() + "> "
+			return osutil.Getwd() + "> "
 		}
 		rprompt := func() string {
 			return rpromptStr

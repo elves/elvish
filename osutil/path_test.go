@@ -1,4 +1,4 @@
-package sysutil
+package osutil
 
 import (
 	"io/ioutil"
