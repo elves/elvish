@@ -157,7 +157,7 @@ func NewEditor(file *os.File, sigs <-chan os.Signal, ev *eval.Evaler, st *store.
 		}
 	}
 
-	return &Editor{
+	ed := &Editor{
 		file:   file,
 		writer: newWriter(file),
 		reader: NewReader(file),
@@ -166,6 +166,8 @@ func NewEditor(file *os.File, sigs <-chan os.Signal, ev *eval.Evaler, st *store.
 		evaler: ev,
 		cmdSeq: seq,
 	}
+	ev.Editor = ed
+	return ed
 }
 
 func (ed *Editor) flash() {

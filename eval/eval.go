@@ -29,6 +29,7 @@ type Evaler struct {
 	mod         map[string]ns
 	searchPaths []string
 	store       *store.Store
+	Editor      Foreign
 }
 
 // evalCtx maintains an Evaler along with its runtime context. After creation
@@ -80,7 +81,7 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 		global[FnPrefix+b.Name] = newInternalVariable(b)
 	}
 
-	return &Evaler{global, map[string]ns{}, searchPaths, st}
+	return &Evaler{global, map[string]ns{}, searchPaths, st, nil}
 }
 
 func pprintExitus(e Exitus) {

@@ -6,6 +6,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/strutil"
 )
 
@@ -71,6 +72,26 @@ var leBuiltins = map[string]leBuiltin{
 	"select-history-prev": selectHistoryPrev,
 	"select-history-next": selectHistoryNext,
 	"default-history":     defaultHistory,
+}
+
+var (
+	takeNoArg     = eval.NewFailure("editor builtins take no arguments")
+	noSuchBuiltin = eval.NewFailure("no such editor builtin")
+)
+
+// Call satisfies the eval.Foreign interface.
+func (ed *Editor) Call(name string, args []eval.Value) eval.Exitus {
+	if len(args) > 0 {
+		return takeNoArg
+	}
+	f, ok := leBuiltins[name]
+	if !ok {
+		return noSuchBuiltin
+	}
+	// TODO return values of editor builtins are ignored; some commands
+	// won't work as expected when invoked through this interface.
+	f(ed)
+	return eval.OK
 }
 
 func startInsert(ed *Editor) *leReturn {

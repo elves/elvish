@@ -58,6 +58,8 @@ func init() {
 
 		&builtinFn{"=", eq},
 
+		&builtinFn{"ele", wrapFn(ele)},
+
 		&builtinFn{"-stack", wrapFn(_stack)},
 	}
 }
@@ -457,6 +459,16 @@ func eq(ec *evalCtx, args []Value) Exitus {
 		}
 	}
 	out <- boolean(true)
+	return OK
+}
+
+var noEditor = NewFailure("no line editor")
+
+func ele(ec *evalCtx, name string, args ...Value) Exitus {
+	if ec.Editor == nil {
+		return noEditor
+	}
+	ec.Editor.Call(name, args)
 	return OK
 }
 
