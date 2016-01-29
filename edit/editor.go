@@ -353,7 +353,7 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 	ed.reader.Stop()
 
 	// turn on autowrap
-	file.WriteString("\033[?7h")
+	ed.file.WriteString("\033[?7h")
 
 	// restore termios
 	err := ed.savedTermios.ApplyToFd(int(ed.file.Fd()))
