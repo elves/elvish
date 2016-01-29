@@ -27,6 +27,7 @@ const (
 
 type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
+	active                bool
 	savedTermios          *sys.Termios
 	tokens                []Token
 	prompt, rprompt, line string
@@ -384,13 +385,14 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 		*lr = LineRead{Err: fmt.Errorf("can't restore terminal attribute: %s", err)}
 	}
 	ed.savedTermios = nil
+	ed.editorState = editorState{}
 }
 
 // ReadLine reads a line interactively.
 // TODO(xiaq): ReadLine currently handles SIGINT and SIGWINCH and swallows all
 // other signals.
 func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
-	ed.editorState = editorState{}
+	ed.editorState = editorState{active: true}
 	go ed.updateIsExternal()
 
 	ed.writer.oldBuf.cells = nil
