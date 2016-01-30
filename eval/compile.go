@@ -17,10 +17,9 @@ import (
 type scope map[string]bool
 
 type (
-	op         func(*evalCtx)
-	valuesOp   func(*evalCtx) []Value
-	exitusChOp func(*evalCtx) <-chan Exitus
-	exitusOp   func(*evalCtx) Exitus
+	op       func(*evalCtx)
+	valuesOp func(*evalCtx) []Value
+	exitusOp func(*evalCtx) Exitus
 )
 
 // compiler maintains the set of states needed when compiling a single source
