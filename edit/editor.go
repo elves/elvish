@@ -199,60 +199,6 @@ func (ed *Editor) refresh() error {
 	return ed.writer.refresh(&ed.editorState)
 }
 
-// TODO Allow modifiable keybindings.
-var keyBindings = map[bufferMode]map[Key]string{
-	modeCommand: map[Key]string{
-		Key{'i', 0}:    "start-insert",
-		Key{'h', 0}:    "move-dot-left",
-		Key{'l', 0}:    "move-dot-right",
-		Key{'D', 0}:    "kill-line-right",
-		DefaultBinding: "default-command",
-	},
-	modeInsert: map[Key]string{
-		Key{'[', Ctrl}:    "start-command",
-		Key{'U', Ctrl}:    "kill-line-left",
-		Key{'K', Ctrl}:    "kill-line-right",
-		Key{'W', Ctrl}:    "kill-word-left",
-		Key{Backspace, 0}: "kill-rune-left",
-		// Some terminal send ^H on backspace
-		Key{'H', Ctrl}:  "kill-rune-left",
-		Key{Delete, 0}:  "kill-rune-right",
-		Key{Left, 0}:    "move-dot-left",
-		Key{Right, 0}:   "move-dot-right",
-		Key{Up, 0}:      "move-dot-up",
-		Key{Down, 0}:    "move-dot-down",
-		Key{Enter, Alt}: "insert-key",
-		Key{Enter, 0}:   "return-line",
-		Key{'D', Ctrl}:  "return-eof",
-		Key{Tab, 0}:     "start-completion",
-		Key{PageUp, 0}:  "start-history",
-		Key{'N', Ctrl}:  "start-navigation",
-		DefaultBinding:  "default-insert",
-	},
-	modeCompletion: map[Key]string{
-		Key{'[', Ctrl}: "cancel-completion",
-		Key{Up, 0}:     "select-cand-up",
-		Key{Down, 0}:   "select-cand-down",
-		Key{Left, 0}:   "select-cand-left",
-		Key{Right, 0}:  "select-cand-right",
-		// Key{Tab, 0}:    "cycle-cand-right",
-		DefaultBinding: "default-completion",
-	},
-	modeNavigation: map[Key]string{
-		Key{Up, 0}:     "select-nav-up",
-		Key{Down, 0}:   "select-nav-down",
-		Key{Left, 0}:   "ascend-nav",
-		Key{Right, 0}:  "descend-nav",
-		DefaultBinding: "default-navigation",
-	},
-	modeHistory: map[Key]string{
-		Key{'[', Ctrl}:   "start-insert",
-		Key{PageUp, 0}:   "select-history-prev",
-		Key{PageDown, 0}: "select-history-next",
-		DefaultBinding:   "default-history",
-	},
-}
-
 func init() {
 	for _, kb := range keyBindings {
 		for _, name := range kb {

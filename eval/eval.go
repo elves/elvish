@@ -29,7 +29,7 @@ type Evaler struct {
 	mod         map[string]ns
 	searchPaths []string
 	store       *store.Store
-	Editor      Foreign
+	Editor      Editor
 }
 
 // evalCtx maintains an Evaler along with its runtime context. After creation

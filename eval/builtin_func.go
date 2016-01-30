@@ -58,6 +58,7 @@ func init() {
 
 		&BuiltinFn{"=", eq},
 
+		&BuiltinFn{"bind", wrapFn(bind)},
 		&BuiltinFn{"le", wrapFn(le)},
 
 		&BuiltinFn{"-stack", wrapFn(_stack)},
@@ -463,6 +464,13 @@ func eq(ec *evalCtx, args []Value) Exitus {
 }
 
 var noEditor = NewFailure("no line editor")
+
+func bind(ec *evalCtx, key string, function string) Exitus {
+	if ec.Editor == nil {
+		return noEditor
+	}
+	return ec.Editor.Bind(key, String(function))
+}
 
 func le(ec *evalCtx, name string, args ...Value) Exitus {
 	if ec.Editor == nil {
