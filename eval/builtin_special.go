@@ -53,12 +53,12 @@ func compileSet(cp *compiler, fn *parse.Form) exitusOp {
 	valueOps := cp.compounds(values)
 	valuesOp := catOps(valueOps)
 
-	return func(ec *evalCtx) Exitus {
+	return func(ec *evalCtx) Error {
 		return doSet(ec, names, valuesOp(ec))
 	}
 }
 
-func doSet(ec *evalCtx, names []string, values []Value) Exitus {
+func doSet(ec *evalCtx, names []string, values []Value) Error {
 	// TODO Support assignment of mismatched arity in some restricted way -
 	// "optional" and "rest" arguments and the like
 	if len(names) != len(values) {
@@ -103,7 +103,7 @@ func compileDel(cp *compiler, fn *parse.Form) exitusOp {
 		}
 
 	}
-	return func(ec *evalCtx) Exitus {
+	return func(ec *evalCtx) Error {
 		for _, name := range names {
 			delete(ec.local, name)
 		}
@@ -203,7 +203,7 @@ func compileUse(cp *compiler, fn *parse.Form) exitusOp {
 
 // makeFnOp wraps an exitusOp such that a return is converted to an ok.
 func makeFnOp(op exitusOp) exitusOp {
-	return func(ec *evalCtx) Exitus {
+	return func(ec *evalCtx) Error {
 		ex := op(ec)
 		if ex.Sort == Return {
 			return OK
@@ -236,7 +236,7 @@ func compileFn(cp *compiler, fn *parse.Form) exitusOp {
 	cp.registerVariableSet(":" + varName)
 	op := cp.lambda(pn)
 
-	return func(ec *evalCtx) Exitus {
+	return func(ec *evalCtx) Error {
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
 		ec.local[varName] = newPtrVariable(closure)

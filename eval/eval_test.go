@@ -28,7 +28,7 @@ func strs(ss ...string) []Value {
 
 type more struct {
 	wantBytesOut []byte
-	wantExitus   Exitus
+	wantExit     Error
 	wantError    bool
 }
 
@@ -45,7 +45,7 @@ var evalTests = []struct {
 	// Outputs of pipelines in a chunk are concatenated
 	{"put x; put y; put z", strs("x", "y", "z"), nomore},
 	// A failed pipeline cause the whole chunk to fail
-	{"put a; false; put b", strs("a"), more{wantExitus: NewFailure("1")}},
+	{"put a; false; put b", strs("a"), more{wantExit: NewFailure("1")}},
 
 	// Pipelines
 	// Pure byte pipeline
@@ -84,7 +84,7 @@ var evalTests = []struct {
 
 	// Status capture
 	{"put ?(true|false|false)",
-		[]Value{newMultiExitus(OK, NewFailure("1"), NewFailure("1"))}, nomore},
+		[]Value{newMultiError(OK, NewFailure("1"), NewFailure("1"))}, nomore},
 
 	// Variable and compounding
 	{"set x = 'SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
@@ -142,7 +142,7 @@ func mustParse(t *testing.T, name, text string) *parse.Chunk {
 	return n
 }
 
-func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, Exitus, error) {
+func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, Error, error) {
 	name := "<eval test>"
 	ev := NewEvaler(nil)
 
@@ -165,8 +165,8 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	// Channel output
 	outs := []Value{}
 
-	// Exitus. Only the exitus of the last text is saved.
-	var ex Exitus
+	// Exit. Only the exit of the last text is saved.
+	var ex Error
 
 	for _, text := range texts {
 		n := mustParse(t, name, text)
@@ -215,10 +215,10 @@ func TestEval(t *testing.T) {
 		if tt.wantBytesOut != nil && !reflect.DeepEqual(tt.wantBytesOut, bytesOut) {
 			errorf("got bytesOut=%q, want %q", bytesOut, tt.wantBytesOut)
 		}
-		if tt.wantExitus != OK && !reflect.DeepEqual(tt.wantExitus, ex) {
-			errorf("got exitus=%v, want %v", ex, tt.wantExitus)
+		if tt.wantExit != OK && !reflect.DeepEqual(tt.wantExit, ex) {
+			errorf("got exitus=%v, want %v", ex, tt.wantExit)
 		}
-		if tt.wantExitus == OK && !ex.Bool() {
+		if tt.wantExit == OK && !ex.Bool() {
 			errorf("got exitus=%v, want all ok", ex)
 		}
 		if !reflect.DeepEqual(tt.wantOut, out) {

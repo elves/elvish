@@ -70,33 +70,33 @@ func NewEvaler(st *store.Store) *Evaler {
 	return &Evaler{global, map[string]ns{}, searchPaths, st, nil}
 }
 
-func pprintExitus(e Exitus) {
+func pprintError(e Error) {
 	switch e.Sort {
 	case Ok:
 		fmt.Print("\033[32mok\033[m")
 	case Failure:
 		fmt.Print("\033[31;1m" + e.Failure + "\033[m")
-	case MultiExitus:
+	case MultiError:
 		fmt.Print("(")
 		for i, c := range e.Traceback.exs {
 			if i > 0 {
 				fmt.Print(" | ")
 			}
-			pprintExitus(c)
+			pprintError(c)
 		}
 		fmt.Print(")")
 	default:
 		// Control flow sorts
-		fmt.Print("\033[33m" + flowExitusNames[e.Sort] + "\033[m")
+		fmt.Print("\033[33m" + flowNames[e.Sort] + "\033[m")
 	}
 }
 
-func PprintBadExitus(ex Exitus) {
+func PprintBadError(ex Error) {
 	if ex.Bool() {
 		return
 	}
 	fmt.Print("⤇ ")
-	pprintExitus(ex)
+	pprintError(ex)
 	fmt.Println()
 }
 
@@ -170,11 +170,11 @@ func makeScope(s ns) scope {
 
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) Eval(name, text string, n *parse.Chunk) (Exitus, error) {
+func (ev *Evaler) Eval(name, text string, n *parse.Chunk) (Error, error) {
 	return ev.evalWithOut(name, text, n, nil)
 }
 
-func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) (Exitus, error) {
+func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) (Error, error) {
 	op, err := compile(name, text, makeScope(ev.global), n)
 	if err != nil {
 		return GenericFailure, err
@@ -193,7 +193,7 @@ func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) (Exi
 }
 
 // eval evaluates an Op.
-func (ec *evalCtx) eval(op exitusOp) (ex Exitus, err error) {
+func (ec *evalCtx) eval(op exitusOp) (ex Error, err error) {
 	if op == nil {
 		return OK, nil
 	}
@@ -224,7 +224,7 @@ func (ec *evalCtx) mustSingleString(vs []Value, what string, p int) String {
 }
 
 // SourceText evaluates a chunk of elvish source.
-func (ev *Evaler) SourceText(name, src, dir string) (Exitus, error) {
+func (ev *Evaler) SourceText(name, src, dir string) (Error, error) {
 	n, err := parse.Parse(name, src)
 	if err != nil {
 		return GenericFailure, err
@@ -244,7 +244,7 @@ func readFileUTF8(fname string) (string, error) {
 }
 
 // Source evaluates the content of a file.
-func (ev *Evaler) Source(fname string) (Exitus, error) {
+func (ev *Evaler) Source(fname string) (Error, error) {
 	src, err := readFileUTF8(fname)
 	if err != nil {
 		return GenericFailure, err

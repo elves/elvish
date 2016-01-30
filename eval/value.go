@@ -39,7 +39,7 @@ type Indexer interface {
 
 // Caller represents a Value that may be called.
 type Caller interface {
-	Call(ec *evalCtx, args []Value) Exitus
+	Call(ec *evalCtx, args []Value) Error
 }
 
 // Type is the type of a value.
@@ -48,7 +48,7 @@ type Type int
 const (
 	TInvalid Type = iota
 	TString
-	TExitus
+	TError
 	TBool
 	TList
 	TMap
@@ -116,11 +116,11 @@ func (b Bool) Bool() bool {
 	return bool(b)
 }
 
-// Exitus is the exitus status of forms.
-type Exitus struct {
+// Error is the exitus status of forms.
+type Error struct {
 	Sort      exitusSort
 	Failure   string
-	Traceback *multiExitus
+	Traceback *multiError
 }
 
 type exitusSort byte
@@ -128,7 +128,7 @@ type exitusSort byte
 const (
 	Ok exitusSort = iota
 	Failure
-	MultiExitus
+	MultiError
 
 	// Control flow sorts
 	Return
@@ -137,42 +137,42 @@ const (
 	FlowSortLower = Return
 )
 
-var flowExitusNames = map[exitusSort]string{
+var flowNames = map[exitusSort]string{
 	Return: "return", Break: "break", Continue: "continue",
 }
 
-type multiExitus struct {
-	exs []Exitus
+type multiError struct {
+	exs []Error
 }
 
 var (
-	OK             = Exitus{Ok, "", nil}
-	GenericFailure = Exitus{Failure, "generic failure", nil}
+	OK             = Error{Ok, "", nil}
+	GenericFailure = Error{Failure, "generic failure", nil}
 )
 
-func newMultiExitus(es ...Exitus) Exitus {
-	return Exitus{MultiExitus, "", &multiExitus{es}}
+func newMultiError(es ...Error) Error {
+	return Error{MultiError, "", &multiError{es}}
 }
 
-func NewFailure(s string) Exitus {
-	return Exitus{Failure, s, nil}
+func NewFailure(s string) Error {
+	return Error{Failure, s, nil}
 }
 
-func newFlowExitus(s exitusSort) Exitus {
-	return Exitus{s, "", nil}
+func newFlow(s exitusSort) Error {
+	return Error{s, "", nil}
 }
 
-func (e Exitus) Type() Type {
-	return TExitus
+func (e Error) Type() Type {
+	return TError
 }
 
-func (e Exitus) Repr() string {
+func (e Error) Repr() string {
 	switch e.Sort {
 	case Ok:
 		return "$ok"
 	case Failure:
 		return "(failure " + parse.Quote(e.Failure) + ")"
-	case MultiExitus:
+	case MultiError:
 		b := new(bytes.Buffer)
 		b.WriteString("(traceback")
 		for _, c := range e.Traceback.exs {
@@ -182,17 +182,17 @@ func (e Exitus) Repr() string {
 		b.WriteString(")")
 		return b.String()
 	default:
-		return "?(" + flowExitusNames[e.Sort] + ")"
+		return "?(" + flowNames[e.Sort] + ")"
 	}
 }
 
-func (e Exitus) String() string {
+func (e Error) String() string {
 	switch e.Sort {
 	case Ok:
 		return "ok"
 	case Failure:
 		return "failure: " + e.Failure
-	case MultiExitus:
+	case MultiError:
 		b := new(bytes.Buffer)
 		b.WriteString("traceback: (")
 		for i, c := range e.Traceback.exs {
@@ -204,15 +204,15 @@ func (e Exitus) String() string {
 		b.WriteString(")")
 		return b.String()
 	default:
-		return flowExitusNames[e.Sort]
+		return flowNames[e.Sort]
 	}
 }
 
-func (e Exitus) Bool() bool {
+func (e Error) Bool() bool {
 	return e.Sort == Ok
 }
 
-func allok(es []Exitus) bool {
+func allok(es []Error) bool {
 	for _, e := range es {
 		if e.Sort != Ok {
 			return false
@@ -324,7 +324,7 @@ func (c *Closure) Repr() string {
 // BuiltinFn is a builtin function.
 type BuiltinFn struct {
 	Name string
-	Impl func(*evalCtx, []Value) Exitus
+	Impl func(*evalCtx, []Value) Error
 }
 
 func (b *BuiltinFn) Type() Type {

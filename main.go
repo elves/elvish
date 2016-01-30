@@ -63,7 +63,7 @@ func interact() {
 			printError(err)
 		}
 		if !os.IsNotExist(err) {
-			eval.PprintBadExitus(ex)
+			eval.PprintBadError(ex)
 		}
 	}
 
@@ -112,7 +112,7 @@ func interact() {
 		if err == nil {
 			ex, err := ev.Eval(name, lr.Line, n)
 			printError(err)
-			eval.PprintBadExitus(ex)
+			eval.PprintBadError(ex)
 		}
 	}
 }
@@ -121,7 +121,7 @@ func script(fname string) {
 	ev, _ := newEvalerAndStore()
 	ex, err := ev.Source(fname)
 	printError(err)
-	eval.PprintBadExitus(ex)
+	eval.PprintBadError(ex)
 	if err != nil || !ex.Bool() {
 		os.Exit(1)
 	}

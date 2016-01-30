@@ -19,7 +19,7 @@ type scope map[string]bool
 type (
 	op       func(*evalCtx)
 	valuesOp func(*evalCtx) []Value
-	exitusOp func(*evalCtx) Exitus
+	exitusOp func(*evalCtx) Error
 )
 
 // compiler maintains the set of states needed when compiling a single source
@@ -52,7 +52,7 @@ func compile(name, source string, sc scope, n *parse.Chunk) (op exitusOp, err er
 func (cp *compiler) chunk(n *parse.Chunk) exitusOp {
 	ops := cp.pipelines(n.Pipelines)
 
-	return func(ec *evalCtx) Exitus {
+	return func(ec *evalCtx) Error {
 		for _, op := range ops {
 			s := op(ec)
 			if !s.Bool() {
@@ -65,16 +65,14 @@ func (cp *compiler) chunk(n *parse.Chunk) exitusOp {
 
 const pipelineChanBufferSize = 32
 
-var noExitus = NewFailure("no exitus")
-
 func (cp *compiler) pipeline(n *parse.Pipeline) exitusOp {
 	ops := cp.forms(n.Forms)
 	p := n.Begin()
 
-	return func(ec *evalCtx) Exitus {
+	return func(ec *evalCtx) Error {
 		var nextIn *port
 
-		exituses := make([]Exitus, len(ops))
+		errors := make([]Error, len(ops))
 		finished := make(chan bool, len(ops))
 
 		// For each form, create a dedicated evalCtx and run asynchronously
@@ -98,9 +96,9 @@ func (cp *compiler) pipeline(n *parse.Pipeline) exitusOp {
 					f: reader, ch: ch, closeF: true, closeCh: false}
 			}
 			thisOp := op
-			thisExitus := &exituses[i]
+			thisError := &errors[i]
 			go func() {
-				*thisExitus = newEc.exec(thisOp)
+				*thisError = newEc.exec(thisOp)
 				finished <- true
 			}()
 		}
@@ -108,12 +106,12 @@ func (cp *compiler) pipeline(n *parse.Pipeline) exitusOp {
 		for i := 0; i < len(ops); i++ {
 			<-finished
 		}
-		if len(exituses) == 1 {
-			return exituses[0]
-		} else if allok(exituses) {
+		if len(errors) == 1 {
+			return errors[0]
+		} else if allok(errors) {
 			return OK
 		}
-		return newMultiExitus(exituses...)
+		return newMultiError(errors...)
 	}
 }
 
@@ -133,12 +131,12 @@ func (cp *compiler) form(n *parse.Form) exitusOp {
 	argOps := cp.compounds(n.Args)
 	// TODO: n.NamedArgs
 	redirOps := cp.redirs(n.Redirs)
-	// TODO: n.ExitusRedir
+	// TODO: n.ErrorRedir
 
 	p := n.Begin()
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
-	return func(ec *evalCtx) Exitus {
+	return func(ec *evalCtx) Error {
 		// head
 		headValues := headOp(ec)
 		headMust := ec.must(headValues, "the head of command", p)
@@ -412,7 +410,7 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 		}
 		return variable(qname, n.Begin())
 	// case parse.Wildcard:
-	case parse.ExitusCapture:
+	case parse.ErrorCapture:
 		op := cp.chunk(n.Chunk)
 		return func(ec *evalCtx) []Value {
 			return []Value{op(ec)}

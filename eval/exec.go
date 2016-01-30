@@ -20,7 +20,7 @@ var (
 	evalFailure   = NewFailure("generic eval failure")
 )
 
-func (ec *evalCtx) exec(op exitusOp) Exitus {
+func (ec *evalCtx) exec(op exitusOp) Error {
 	ex := op(ec)
 	ec.closePorts()
 	return ex
@@ -47,12 +47,12 @@ func (ec *evalCtx) resolveNonSpecial(cmd Value) Caller {
 }
 
 // Call calls a builtin function.
-func (b *BuiltinFn) Call(ec *evalCtx, args []Value) Exitus {
+func (b *BuiltinFn) Call(ec *evalCtx, args []Value) Error {
 	return b.Impl(ec, args)
 }
 
 // Call calls a closure.
-func (c *Closure) Call(ec *evalCtx, args []Value) Exitus {
+func (c *Closure) Call(ec *evalCtx, args []Value) Error {
 	// TODO Support optional/rest argument
 	if len(args) != len(c.ArgNames) {
 		return arityMismatch
@@ -85,8 +85,8 @@ func (c *Closure) Call(ec *evalCtx, args []Value) Exitus {
 	return ex
 }
 
-// waitStatusToExitus converts syscall.WaitStatus to an exitus.
-func waitStatusToExitus(ws syscall.WaitStatus) Exitus {
+// waitStatusToError converts syscall.WaitStatus to an Error.
+func waitStatusToError(ws syscall.WaitStatus) Error {
 	switch {
 	case ws.Exited():
 		es := ws.ExitStatus()
@@ -117,7 +117,7 @@ func waitStatusToExitus(ws syscall.WaitStatus) Exitus {
 }
 
 // Call calls an external command.
-func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) Exitus {
+func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) Error {
 	if DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {
@@ -161,11 +161,11 @@ func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) Exitus {
 	if err != nil {
 		return NewFailure(fmt.Sprintf("wait:", err.Error()))
 	} else {
-		return waitStatusToExitus(ws)
+		return waitStatusToError(ws)
 	}
 }
 
-func (t *List) Call(ec *evalCtx, argVals []Value) Exitus {
+func (t *List) Call(ec *evalCtx, argVals []Value) Error {
 	var v Value = t
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.
@@ -176,7 +176,7 @@ func (t *List) Call(ec *evalCtx, argVals []Value) Exitus {
 }
 
 // XXX duplicate
-func (t Map) Call(ec *evalCtx, argVals []Value) Exitus {
+func (t Map) Call(ec *evalCtx, argVals []Value) Error {
 	var v Value = t
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.

@@ -115,7 +115,7 @@ const (
 	DoubleQuoted
 	Variable
 	Wildcard
-	ExitusCapture
+	ErrorCapture
 	OutputCapture
 	List
 	Lambda
@@ -394,7 +394,7 @@ func (pn *Primary) exitusCapture(rd *reader) {
 	rd.next()
 	addSep(pn, begin, rd)
 
-	pn.Type = ExitusCapture
+	pn.Type = ErrorCapture
 	if !startsChunk(rd.peek(), nil) && rd.peek() != ')' {
 		rd.error = shouldBeChunk
 		return

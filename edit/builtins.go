@@ -78,7 +78,7 @@ var (
 )
 
 // Call satisfies the eval.Foreign interface.
-func (ed *Editor) Call(name string, args []eval.Value) eval.Exitus {
+func (ed *Editor) Call(name string, args []eval.Value) eval.Error {
 	if len(args) > 0 {
 		return takeNoArg
 	}

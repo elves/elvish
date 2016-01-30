@@ -151,9 +151,9 @@ var goodCases = []struct {
 	{"a `a (b `c`)` `d [`e`]`", a("`a (b `c`)`", "`d [`e`]`")},
 	// Exitus capture
 	{"a ?() ?(b;c)", a(
-		ast{"Compound/Indexed/Primary", fs{"Type": ExitusCapture}},
+		ast{"Compound/Indexed/Primary", fs{"Type": ErrorCapture}},
 		ast{"Compound/Indexed/Primary", fs{
-			"Type": ExitusCapture, "Chunk": "b;c",
+			"Type": ErrorCapture, "Chunk": "b;c",
 		}})},
 	// Braced
 	{"a {a,c-f}", a(

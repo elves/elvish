@@ -111,7 +111,7 @@ func parseKey(s string) (Key, error) {
 }
 
 // TODO Modify the binding table in ed instead of a global data structure.
-func (ed *Editor) Bind(key string, function eval.Value) eval.Exitus {
+func (ed *Editor) Bind(key string, function eval.Value) eval.Error {
 	k, err := parseKey(key)
 	if err != nil {
 		return eval.NewFailure(err.Error())
