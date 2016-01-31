@@ -5,10 +5,11 @@ package eval
 import (
 	"os"
 
+	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/parse"
 )
 
-type compileBuiltin func(*compiler, *parse.Form) exitusOp
+type compileBuiltin func(*compiler, *parse.Form) op
 
 var builtinSpecials map[string]compileBuiltin
 var BuiltinSpecialNames []string
@@ -27,7 +28,7 @@ func init() {
 }
 
 // SetForm = 'set' { StringPrimary } '=' { Compound }
-func compileSet(cp *compiler, fn *parse.Form) exitusOp {
+func compileSet(cp *compiler, fn *parse.Form) op {
 	var (
 		names  []string
 		values []*parse.Compound
@@ -53,16 +54,16 @@ func compileSet(cp *compiler, fn *parse.Form) exitusOp {
 	valueOps := cp.compounds(values)
 	valuesOp := catOps(valueOps)
 
-	return func(ec *evalCtx) Error {
-		return doSet(ec, names, valuesOp(ec))
+	return func(ec *evalCtx) {
+		doSet(ec, names, valuesOp(ec))
 	}
 }
 
-func doSet(ec *evalCtx, names []string, values []Value) Error {
+func doSet(ec *evalCtx, names []string, values []Value) {
 	// TODO Support assignment of mismatched arity in some restricted way -
 	// "optional" and "rest" arguments and the like
 	if len(names) != len(values) {
-		return arityMismatch
+		errutil.Throw(arityMismatch)
 	}
 
 	for i, qname := range names {
@@ -77,12 +78,10 @@ func doSet(ec *evalCtx, names []string, values []Value) Error {
 			variable.Set(values[i])
 		}
 	}
-
-	return OK
 }
 
 // DelForm = 'del' { VariablePrimary }
-func compileDel(cp *compiler, fn *parse.Form) exitusOp {
+func compileDel(cp *compiler, fn *parse.Form) op {
 	// Do conventional compiling of all compound expressions, including
 	// ensuring that variables can be resolved
 	var names, envNames []string
@@ -103,7 +102,7 @@ func compileDel(cp *compiler, fn *parse.Form) exitusOp {
 		}
 
 	}
-	return func(ec *evalCtx) Error {
+	return func(ec *evalCtx) {
 		for _, name := range names {
 			delete(ec.local, name)
 		}
@@ -112,7 +111,6 @@ func compileDel(cp *compiler, fn *parse.Form) exitusOp {
 			// nil.
 			os.Unsetenv(name)
 		}
-		return OK
 	}
 }
 
@@ -125,7 +123,7 @@ func stem(fname string) string {
 
 // UseForm = 'use' StringPrimary.modname Primary.fname
 //         = 'use' StringPrimary.fname
-func compileUse(cp *compiler, fn *parse.Form) exitusOp {
+func compileUse(cp *compiler, fn *parse.Form) op {
 	var fnameNode *parse.Compound
 	var fname, modname string
 
@@ -201,21 +199,20 @@ func compileUse(cp *compiler, fn *parse.Form) exitusOp {
 }
 */
 
-// makeFnOp wraps an exitusOp such that a return is converted to an ok.
-func makeFnOp(op exitusOp) exitusOp {
-	return func(ec *evalCtx) Error {
-		ex := op(ec)
-		if ex.inner == Return {
-			return OK
+// makeFnOp wraps an op such that a return is converted to an ok.
+func makeFnOp(op op) op {
+	return func(ec *evalCtx) {
+		ex := ec.peval(op)
+		if ex != Return {
+			errutil.Throw(ex)
 		}
-		return ex
 	}
 }
 
 // FnForm = 'fn' StringPrimary LambdaPrimary
 //
 // fn f []{foobar} is a shorthand for set '&'f = []{foobar}.
-func compileFn(cp *compiler, fn *parse.Form) exitusOp {
+func compileFn(cp *compiler, fn *parse.Form) op {
 	if len(fn.Args) == 0 {
 		cp.errorf(fn.End(), "should be followed by function name")
 	}
@@ -236,10 +233,9 @@ func compileFn(cp *compiler, fn *parse.Form) exitusOp {
 	cp.registerVariableSet(":" + varName)
 	op := cp.lambda(pn)
 
-	return func(ec *evalCtx) Error {
+	return func(ec *evalCtx) {
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
 		ec.local[varName] = newPtrVariable(closure)
-		return OK
 	}
 }

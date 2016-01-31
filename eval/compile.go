@@ -19,7 +19,7 @@ type scope map[string]bool
 type (
 	op       func(*evalCtx)
 	valuesOp func(*evalCtx) []Value
-	exitusOp func(*evalCtx) Error
+	// op func(*evalCtx) Error
 )
 
 // compiler maintains the set of states needed when compiling a single source
@@ -43,33 +43,29 @@ func (cp *compiler) errorf(p int, format string, args ...interface{}) {
 	errutil.Throw(errutil.NewContextualError(cp.name, "syntax error", cp.source, p, format, args...))
 }
 
-func compile(name, source string, sc scope, n *parse.Chunk) (op exitusOp, err error) {
+func compile(name, source string, sc scope, n *parse.Chunk) (op op, err error) {
 	cp := &compiler{name, source, []scope{sc}, scope{}, nil}
 	defer errutil.Catch(&err)
 	return cp.chunk(n), nil
 }
 
-func (cp *compiler) chunk(n *parse.Chunk) exitusOp {
+func (cp *compiler) chunk(n *parse.Chunk) op {
 	ops := cp.pipelines(n.Pipelines)
 
-	return func(ec *evalCtx) Error {
+	return func(ec *evalCtx) {
 		for _, op := range ops {
-			s := op(ec)
-			if !s.Bool() {
-				return s
-			}
+			op(ec)
 		}
-		return OK
 	}
 }
 
 const pipelineChanBufferSize = 32
 
-func (cp *compiler) pipeline(n *parse.Pipeline) exitusOp {
+func (cp *compiler) pipeline(n *parse.Pipeline) op {
 	ops := cp.forms(n.Forms)
 	p := n.Begin()
 
-	return func(ec *evalCtx) Error {
+	return func(ec *evalCtx) {
 		var nextIn *port
 
 		errors := make([]Error, len(ops))
@@ -98,7 +94,8 @@ func (cp *compiler) pipeline(n *parse.Pipeline) exitusOp {
 			thisOp := op
 			thisError := &errors[i]
 			go func() {
-				*thisError = newEc.exec(thisOp)
+				(*thisError).inner = newEc.peval(thisOp)
+				newEc.closePorts()
 				finished <- true
 			}()
 		}
@@ -106,16 +103,17 @@ func (cp *compiler) pipeline(n *parse.Pipeline) exitusOp {
 		for i := 0; i < len(ops); i++ {
 			<-finished
 		}
-		if len(errors) == 1 {
-			return errors[0]
-		} else if allok(errors) {
-			return OK
+		if !allok(errors) {
+			if len(errors) == 1 {
+				errutil.Throw(errors[0].inner)
+			} else {
+				errutil.Throw(multiError{errors})
+			}
 		}
-		return newMultiError(errors...)
 	}
 }
 
-func (cp *compiler) form(n *parse.Form) exitusOp {
+func (cp *compiler) form(n *parse.Form) op {
 	headStr, ok := oneString(n.Head)
 	if ok {
 		compileForm, ok := builtinSpecials[headStr]
@@ -136,7 +134,7 @@ func (cp *compiler) form(n *parse.Form) exitusOp {
 	p := n.Begin()
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
-	return func(ec *evalCtx) Error {
+	return func(ec *evalCtx) {
 		// head
 		headValues := headOp(ec)
 		headMust := ec.must(headValues, "the head of command", p)
@@ -158,7 +156,8 @@ func (cp *compiler) form(n *parse.Form) exitusOp {
 			redirOp(ec)
 		}
 
-		return ec.resolveNonSpecial(headValues[0]).Call(ec, args)
+		ex := ec.resolveNonSpecial(headValues[0]).Call(ec, args)
+		maybeThrow(ex)
 	}
 }
 
@@ -413,7 +412,7 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 	case parse.ErrorCapture:
 		op := cp.chunk(n.Chunk)
 		return func(ec *evalCtx) []Value {
-			return []Value{op(ec)}
+			return []Value{Error{ec.peval(op)}}
 		}
 	case parse.OutputCapture:
 		return cp.outputCapture(n)

@@ -1,9 +1,12 @@
 package eval
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"syscall"
+
+	"github.com/elves/elvish/errutil"
 )
 
 const (
@@ -13,15 +16,15 @@ const (
 )
 
 var (
-	arityMismatch = NewFailure("arity mismatch")
-	cdNoArg       = NewFailure("implicit cd accepts no arguments")
-	evalFailure   = NewFailure("generic eval failure")
+	arityMismatch = errors.New("arity mismatch")
+	cdNoArg       = errors.New("implicit cd accepts no arguments")
+	evalFailure   = errors.New("generic eval failure")
 )
 
-func (ec *evalCtx) exec(op exitusOp) Error {
-	ex := op(ec)
-	ec.closePorts()
-	return ex
+func maybeThrow(err Error) {
+	if err.inner != nil {
+		errutil.Throw(err.inner)
+	}
 }
 
 func (ec *evalCtx) resolveNonSpecial(cmd Value) Caller {
@@ -53,7 +56,7 @@ func (b *BuiltinFn) Call(ec *evalCtx, args []Value) Error {
 func (c *Closure) Call(ec *evalCtx, args []Value) Error {
 	// TODO Support optional/rest argument
 	if len(args) != len(c.ArgNames) {
-		return arityMismatch
+		return Error{arityMismatch}
 	}
 
 	// This evalCtx is dedicated to the current form, so we modify it in place.
@@ -76,7 +79,7 @@ func (c *Closure) Call(ec *evalCtx, args []Value) Error {
 
 	ex := ec.peval(c.Op)
 	ec.closePorts()
-	return ex
+	return Error{ex}
 	// return ec.peval(c.Op)
 }
 

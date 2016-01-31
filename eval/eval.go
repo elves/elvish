@@ -181,15 +181,16 @@ func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) erro
 		<-outdone
 	}
 
-	return ex.inner
+	return ex
 }
 
-// peval evaluates an exitusOp in a protected environment so that calls to
-// errorf are wrapped in an Error.
-func (ec *evalCtx) peval(op exitusOp) (ex Error) {
+// peval evaluates an op in a protected environment so that calls to errorf are
+// wrapped in an Error.
+func (ec *evalCtx) peval(op op) (ex error) {
 	// defer ec.closePorts()
-	defer errutil.Catch(&ex.inner)
-	return op(ec)
+	defer errutil.Catch(&ex)
+	op(ec)
+	return nil
 }
 
 // errorf stops the ec.eval immediately by panicking with a diagnostic message.

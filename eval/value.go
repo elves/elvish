@@ -316,7 +316,7 @@ func (m Map) Index(idx string) (Value, error) {
 // Closure is a closure.
 type Closure struct {
 	ArgNames []string
-	Op       exitusOp
+	Op       op
 	Captured map[string]Variable
 }
 
@@ -324,7 +324,7 @@ func (c *Closure) Type() Type {
 	return TFn
 }
 
-func newClosure(a []string, op exitusOp, e map[string]Variable) *Closure {
+func newClosure(a []string, op op, e map[string]Variable) *Closure {
 	return &Closure{a, op, e}
 }
 
