@@ -54,6 +54,10 @@ var goodCases = []struct {
 		"Head":        "a",
 		"ExitusRedir": ast{"ExitusRedir", fs{"Dest": "$e"}},
 	}}},
+	// Assignments:
+	{"k=v k[a][b]=v a", ast{"Chunk/Pipeline/Form", fs{
+		"Assignments": []string{"k=v", "k[a][b]=v"},
+		"Head":        "a"}}},
 
 	// Compound
 	{`a b"foo"$c'xyz'`, a(ast{"Compound", fs{

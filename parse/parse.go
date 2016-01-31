@@ -742,6 +742,7 @@ func (ern *ExitusRedir) parse(rd *reader, cut runePred) {
 // Form = { Space } Compound { Space } { ( Compound | MapPair | Redir | ExitusRedir ) { Space } }
 type Form struct {
 	node
+	Assignments []*Assignment
 	Head        *Compound
 	Args        []*Compound
 	NamedArgs   []*MapPair
@@ -757,10 +758,30 @@ var (
 	duplicateExitusRedir = newError("duplicate exitus redir")
 )
 
+// tryAssignment tries to parse an assignment. If suceeded, it adds the parsed
+// assignment to fn.Assignments and returns true. Otherwise it rewinds the
+// reader and returns false.
+func (fn *Form) tryAssignment(rd *reader, cut runePred) bool {
+	begin := rd.pos
+	an := parseAssignment(rd, cut)
+	if rd.error != nil {
+		rd.pos = begin
+		rd.error = nil
+		return false
+	}
+	fn.addToAssignments(an)
+	return true
+}
+
 func (fn *Form) parse(rd *reader, cut runePred) {
 	parseSpaces(fn, rd)
+	for fn.tryAssignment(rd, cut) {
+		parseSpaces(fn, rd)
+	}
 	if !startsCompound(rd.peek(), cut) {
-		rd.error = shouldBeCompound
+		if len(fn.Assignments) == 0 {
+			rd.error = shouldBeCompound
+		}
 		return
 	}
 	fn.setHead(parseCompound(rd, cut))
@@ -796,6 +817,27 @@ loop:
 		}
 		parseSpaces(fn, rd)
 	}
+}
+
+// Assignment = Primary '=' Compound
+type Assignment struct {
+	node
+	Dst *Indexed
+	Src *Compound
+}
+
+var shouldBeEqual = newError("", "=")
+
+func (an *Assignment) parse(rd *reader, cut runePred) {
+	cutWithEqual := runePred(func(r rune) bool {
+		return cut.matches(r) || r == '='
+	})
+	an.setDst(parseIndexed(rd, cutWithEqual))
+	if !parseSep(an, rd, '=') {
+		rd.error = shouldBeEqual
+		return
+	}
+	an.setSrc(parseCompound(rd, cut))
 }
 
 // Pipeline = Form { '|' Form }
@@ -837,7 +879,10 @@ func startsChunk(r rune, cut runePred) bool {
 	return isPipelineSep(r) || startsPipeline(r, cut)
 }
 
-func (bn *Chunk) parseSeps(rd *reader, cut runePred) {
+// parseSeps parses pipeline separators along with whitespaces. It returns the
+// number of pipeline separators parsed.
+func (bn *Chunk) parseSeps(rd *reader, cut runePred) int {
+	nseps := 0
 	for {
 		r := rd.peek()
 		if cut.matches(r) {
@@ -845,29 +890,34 @@ func (bn *Chunk) parseSeps(rd *reader, cut runePred) {
 		} else if isPipelineSep(r) {
 			// parse as a Sep
 			parseSep(bn, rd, r)
+			nseps += 1
 		} else if isSpace(r) {
 			// parse a run of spaces as a Sep
 			parseSpaces(bn, rd)
 		} else if r == '#' {
 			// parse a comment as a Sep
 			for {
-				r := rd.next()
+				r := rd.peek()
 				if r == EOF || r == '\n' {
 					break
 				}
+				rd.next()
 			}
-			addSep(bn, rd)
+			nseps += 1
 		} else {
 			break
 		}
 	}
+	return nseps
 }
 
 func (bn *Chunk) parse(rd *reader, cut runePred) {
 	bn.parseSeps(rd, cut)
 	for startsPipeline(rd.peek(), cut) {
 		bn.addToPipelines(parsePipeline(rd, cut))
-		bn.parseSeps(rd, cut)
+		if bn.parseSeps(rd, cut) == 0 {
+			break
+		}
 	}
 }
 

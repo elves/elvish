@@ -121,6 +121,11 @@ func parseExitusRedir(rd *reader, cut runePred) *ExitusRedir {
 	return n
 }
 
+func (n *Form) addToAssignments(ch *Assignment) {
+	n.Assignments = append(n.Assignments, ch)
+	addChild(n, ch)
+}
+
 func (n *Form) setHead(ch *Compound) {
 	n.Head = ch
 	addChild(n, ch)
@@ -148,6 +153,24 @@ func (n *Form) setExitusRedir(ch *ExitusRedir) {
 
 func parseForm(rd *reader, cut runePred) *Form {
 	n := &Form{node: node{begin: rd.pos}}
+	n.parse(rd, cut)
+	n.end = rd.pos
+	n.sourceText = rd.src[n.begin:n.end]
+	return n
+}
+
+func (n *Assignment) setDst(ch *Indexed) {
+	n.Dst = ch
+	addChild(n, ch)
+}
+
+func (n *Assignment) setSrc(ch *Compound) {
+	n.Src = ch
+	addChild(n, ch)
+}
+
+func parseAssignment(rd *reader, cut runePred) *Assignment {
+	n := &Assignment{node: node{begin: rd.pos}}
 	n.parse(rd, cut)
 	n.end = rd.pos
 	n.sourceText = rd.src[n.begin:n.end]
