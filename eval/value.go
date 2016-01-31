@@ -43,7 +43,7 @@ type Indexer interface {
 
 // Caller represents a Value that may be called.
 type Caller interface {
-	Call(ec *evalCtx, args []Value) Error
+	Call(ec *evalCtx, args []Value)
 }
 
 // Type is the type of a value.

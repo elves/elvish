@@ -23,8 +23,14 @@ var (
 
 func maybeThrow(err Error) {
 	if err.inner != nil {
-		errutil.Throw(err.inner)
+		throw(err.inner)
 	}
+}
+
+func (ec *evalCtx) pcall(f Caller, args []Value) (ex error) {
+	defer errutil.Catch(&ex)
+	f.Call(ec, args)
+	return nil
 }
 
 func (ec *evalCtx) resolveNonSpecial(cmd Value) Caller {
@@ -48,15 +54,15 @@ func (ec *evalCtx) resolveNonSpecial(cmd Value) Caller {
 }
 
 // Call calls a builtin function.
-func (b *BuiltinFn) Call(ec *evalCtx, args []Value) Error {
-	return b.Impl(ec, args)
+func (b *BuiltinFn) Call(ec *evalCtx, args []Value) {
+	maybeThrow(b.Impl(ec, args))
 }
 
 // Call calls a closure.
-func (c *Closure) Call(ec *evalCtx, args []Value) Error {
+func (c *Closure) Call(ec *evalCtx, args []Value) {
 	// TODO Support optional/rest argument
 	if len(args) != len(c.ArgNames) {
-		return Error{arityMismatch}
+		throw(arityMismatch)
 	}
 
 	// This evalCtx is dedicated to the current form, so we modify it in place.
@@ -77,10 +83,8 @@ func (c *Closure) Call(ec *evalCtx, args []Value) Error {
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.
 
-	ex := ec.peval(c.Op)
-	ec.closePorts()
-	return Error{ex}
-	// return ec.peval(c.Op)
+	defer ec.closePorts()
+	c.Op(ec)
 }
 
 // waitStatusToError converts syscall.WaitStatus to an Error.
@@ -115,12 +119,12 @@ func waitStatusToError(ws syscall.WaitStatus) Error {
 }
 
 // Call calls an external command.
-func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) Error {
+func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) {
 	if DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {
 			// implicit cd
-			return cdInner(e.Name, ec)
+			maybeThrow(cdInner(e.Name, ec))
 		}
 	}
 
@@ -145,41 +149,39 @@ func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) Error {
 
 	path, err := ec.Search(e.Name)
 	if err != nil {
-		return NewFailure("search: " + err.Error())
+		throw(errors.New("search: " + err.Error()))
 	}
 
 	args[0] = path
 	pid, err := syscall.ForkExec(path, args, &attr)
 	if err != nil {
-		return NewFailure("forkExec: " + err.Error())
+		throw(errors.New("forkExec: " + err.Error()))
 	}
 
 	var ws syscall.WaitStatus
 	_, err = syscall.Wait4(pid, &ws, 0, nil)
 	if err != nil {
-		return NewFailure(fmt.Sprintf("wait:", err.Error()))
+		throw(fmt.Errorf("wait:", err.Error()))
 	} else {
-		return waitStatusToError(ws)
+		maybeThrow(waitStatusToError(ws))
 	}
 }
 
-func (t *List) Call(ec *evalCtx, argVals []Value) Error {
+func (t *List) Call(ec *evalCtx, argVals []Value) {
 	var v Value = t
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.
 		v = evalIndex(ec, v, idx, 0, 0)
 	}
 	ec.ports[1].ch <- v
-	return OK
 }
 
 // XXX duplicate
-func (t Map) Call(ec *evalCtx, argVals []Value) Error {
+func (t Map) Call(ec *evalCtx, argVals []Value) {
 	var v Value = t
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.
 		v = evalIndex(ec, v, idx, 0, 0)
 	}
 	ec.ports[1].ch <- v
-	return OK
 }

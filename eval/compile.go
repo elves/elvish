@@ -40,7 +40,7 @@ func (cp *compiler) thisScope() scope {
 }
 
 func (cp *compiler) errorf(p int, format string, args ...interface{}) {
-	errutil.Throw(errutil.NewContextualError(cp.name, "syntax error", cp.source, p, format, args...))
+	throw(errutil.NewContextualError(cp.name, "syntax error", cp.source, p, format, args...))
 }
 
 func compile(name, source string, sc scope, n *parse.Chunk) (op op, err error) {
@@ -105,9 +105,9 @@ func (cp *compiler) pipeline(n *parse.Pipeline) op {
 		}
 		if !allok(errors) {
 			if len(errors) == 1 {
-				errutil.Throw(errors[0].inner)
+				throw(errors[0].inner)
 			} else {
-				errutil.Throw(multiError{errors})
+				throw(multiError{errors})
 			}
 		}
 	}
@@ -156,8 +156,7 @@ func (cp *compiler) form(n *parse.Form) op {
 			redirOp(ec)
 		}
 
-		ex := ec.resolveNonSpecial(headValues[0]).Call(ec, args)
-		maybeThrow(ex)
+		ec.resolveNonSpecial(headValues[0]).Call(ec, args)
 	}
 }
 

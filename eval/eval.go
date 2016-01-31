@@ -187,7 +187,6 @@ func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) erro
 // peval evaluates an op in a protected environment so that calls to errorf are
 // wrapped in an Error.
 func (ec *evalCtx) peval(op op) (ex error) {
-	// defer ec.closePorts()
 	defer errutil.Catch(&ex)
 	op(ec)
 	return nil
@@ -196,7 +195,7 @@ func (ec *evalCtx) peval(op op) (ex error) {
 // errorf stops the ec.eval immediately by panicking with a diagnostic message.
 // The panic is supposed to be caught by ec.eval.
 func (ec *evalCtx) errorf(p int, format string, args ...interface{}) {
-	errutil.Throw(errutil.NewContextualError(
+	throw(errutil.NewContextualError(
 		fmt.Sprintf("%s (%s)", ec.name, ec.context), "error",
 		ec.text, p, format, args...))
 }

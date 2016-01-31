@@ -301,16 +301,16 @@ func each(ec *evalCtx, f *Closure) Error {
 in:
 	for v := range in {
 		newec := ec.fork("closure of each")
-		ex := f.Call(newec, []Value{v})
+		ex := newec.pcall(f, []Value{v})
 		newec.closePorts()
 
-		switch ex.inner {
+		switch ex {
 		case nil, Continue:
 			// nop
 		case Break:
 			break in
 		default:
-			return ex
+			throw(ex)
 		}
 	}
 	return OK

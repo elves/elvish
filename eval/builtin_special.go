@@ -5,7 +5,6 @@ package eval
 import (
 	"os"
 
-	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/parse"
 )
 
@@ -63,7 +62,7 @@ func doSet(ec *evalCtx, names []string, values []Value) {
 	// TODO Support assignment of mismatched arity in some restricted way -
 	// "optional" and "rest" arguments and the like
 	if len(names) != len(values) {
-		errutil.Throw(arityMismatch)
+		throw(arityMismatch)
 	}
 
 	for i, qname := range names {
@@ -204,7 +203,8 @@ func makeFnOp(op op) op {
 	return func(ec *evalCtx) {
 		ex := ec.peval(op)
 		if ex != Return {
-			errutil.Throw(ex)
+			// rethrow
+			throw(ex)
 		}
 	}
 }
