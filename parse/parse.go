@@ -683,7 +683,13 @@ var (
 )
 
 // XXX(xiaq): The parsing of the Dest part is done in Form.parse.
-func (rn *Redir) parse(rd *reader, cut runePred) {
+func (rn *Redir) parse(rd *reader, cut runePred, dest *Compound) {
+	if dest != nil {
+		rn.Dest = dest
+		rn.begin = dest.begin
+		addChild(rn, dest)
+	}
+
 	begin := rd.pos
 	for !cut.matches(rd.peek()) && isRedirSign(rd.peek()) {
 		rd.next()
@@ -779,24 +785,12 @@ loop:
 			cn := parseCompound(rd, cut)
 			if !cut.matches(rd.peek()) && isRedirSign(rd.peek()) {
 				// Redir
-				rn := parseRedir(rd, cut)
-				// XXX(xiaq): Redir.parse doesn't deal with Dest, so we patch
-				// it here.
-				rn.begin = cn.begin
-				rn.Dest = cn
-				cn.parent = rn
-
-				children := rn.children
-				rn.children = make([]Node, len(children)+1)
-				copy(rn.children[1:], children)
-				rn.children[0] = cn
-
-				fn.addToRedirs(rn)
+				fn.addToRedirs(parseRedir(rd, cut, cn))
 			} else {
 				fn.addToArgs(cn)
 			}
 		case isRedirSign(r):
-			fn.addToRedirs(parseRedir(rd, cut))
+			fn.addToRedirs(parseRedir(rd, cut, nil))
 		default:
 			return
 		}

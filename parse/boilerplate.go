@@ -100,9 +100,9 @@ func (n *Redir) setSource(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseRedir(rd *reader, cut runePred) *Redir {
+func parseRedir(rd *reader, cut runePred, dest *Compound) *Redir {
 	n := &Redir{node: node{begin: rd.pos}}
-	n.parse(rd, cut)
+	n.parse(rd, cut, dest)
 	n.end = rd.pos
 	n.sourceText = rd.src[n.begin:n.end]
 	return n
