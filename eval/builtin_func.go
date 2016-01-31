@@ -39,7 +39,7 @@ func init() {
 
 		&BuiltinFn{"typeof", typeof},
 
-		&BuiltinFn{"failure", wrapFn(failure)},
+		&BuiltinFn{"fail", wrapFn(fail)},
 		&BuiltinFn{"return", wrapFn(returnFn)},
 		&BuiltinFn{"break", wrapFn(breakFn)},
 		&BuiltinFn{"continue", wrapFn(continueFn)},
@@ -186,9 +186,8 @@ func typeof(ec *evalCtx, args []Value) {
 	}
 }
 
-func failure(ec *evalCtx, arg Value) {
-	out := ec.ports[1].ch
-	out <- NewFailure(ToString(arg))
+func fail(ec *evalCtx, arg Value) {
+	throw(errors.New(ToString(arg)))
 }
 
 func returnFn(ec *evalCtx) {

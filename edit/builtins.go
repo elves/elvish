@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"unicode"
@@ -72,13 +73,13 @@ var builtins = map[string]builtin{
 }
 
 var (
-	takeNoArg     = eval.NewFailure("editor builtins take no arguments")
-	noSuchBuiltin = eval.NewFailure("no such editor builtin")
-	inactive      = eval.NewFailure("editor inactive")
+	takeNoArg     = errors.New("editor builtins take no arguments")
+	noSuchBuiltin = errors.New("no such editor builtin")
+	inactive      = errors.New("editor inactive")
 )
 
 // Call satisfies the eval.Foreign interface.
-func (ed *Editor) Call(name string, args []eval.Value) eval.Error {
+func (ed *Editor) Call(name string, args []eval.Value) error {
 	if len(args) > 0 {
 		return takeNoArg
 	}
@@ -90,7 +91,7 @@ func (ed *Editor) Call(name string, args []eval.Value) eval.Error {
 		return inactive
 	}
 	f(ed)
-	return eval.OK
+	return nil
 }
 
 func startInsert(ed *Editor) {

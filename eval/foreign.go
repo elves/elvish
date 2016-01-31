@@ -2,11 +2,11 @@ package eval
 
 // Foreign represents a foreign command provider.
 type Foreign interface {
-	Call(name string, args []Value) Error
+	Call(name string, args []Value) error
 }
 
 // Editor is the interface through which the Evaler calls the line editor.
 type Editor interface {
 	Foreign
-	Bind(key string, function Value) Error
+	Bind(key string, function Value) error
 }

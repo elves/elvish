@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -111,19 +112,19 @@ func parseKey(s string) (Key, error) {
 }
 
 // TODO Modify the binding table in ed instead of a global data structure.
-func (ed *Editor) Bind(key string, function eval.Value) eval.Error {
+func (ed *Editor) Bind(key string, function eval.Value) error {
 	k, err := parseKey(key)
 	if err != nil {
-		return eval.NewFailure(err.Error())
+		return err
 	}
 	// TODO support functions
 	s, ok := function.(eval.String)
 	if !ok {
-		return eval.NewFailure("function not string")
+		return errors.New("function not string")
 	}
 	// TODO support other modes
 
 	keyBindings[modeInsert][k] = string(s)
 
-	return eval.OK
+	return nil
 }

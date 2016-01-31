@@ -21,9 +21,9 @@ var (
 	evalFailure   = errors.New("generic eval failure")
 )
 
-func maybeThrow(err Error) {
-	if err.inner != nil {
-		throw(err.inner)
+func maybeThrow(err error) {
+	if err != nil {
+		throw(err)
 	}
 }
 
@@ -88,33 +88,33 @@ func (c *Closure) Call(ec *evalCtx, args []Value) {
 }
 
 // waitStatusToError converts syscall.WaitStatus to an Error.
-func waitStatusToError(ws syscall.WaitStatus) Error {
+func waitStatusToError(ws syscall.WaitStatus) error {
 	switch {
 	case ws.Exited():
 		es := ws.ExitStatus()
 		if es == 0 {
-			return OK
+			return nil
 		}
-		return NewFailure(fmt.Sprint(es))
+		return errors.New(fmt.Sprint(es))
 	case ws.Signaled():
 		msg := fmt.Sprintf("signaled %v", ws.Signal())
 		if ws.CoreDump() {
 			msg += " (core dumped)"
 		}
-		return NewFailure(msg)
+		return errors.New(msg)
 	case ws.Stopped():
 		msg := fmt.Sprintf("stopped %v", ws.StopSignal())
 		trap := ws.TrapCause()
 		if trap != -1 {
 			msg += fmt.Sprintf(" (trapped %v)", trap)
 		}
-		return NewFailure(msg)
+		return errors.New(msg)
 	/*
 		case ws.Continued():
 			return newUnexitedStateUpdate("continued")
 	*/
 	default:
-		return NewFailure(fmt.Sprint("unknown WaitStatus", ws))
+		return fmt.Errorf("unknown WaitStatus", ws)
 	}
 }
 

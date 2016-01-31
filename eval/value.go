@@ -218,10 +218,6 @@ func (f flow) Error() string {
 	return flowNames[f]
 }
 
-func newFlow(f flow) Error {
-	return Error{f}
-}
-
 func allok(es []Error) bool {
 	for _, e := range es {
 		if e.inner != nil {
@@ -425,8 +421,8 @@ func FromJSONInterface(v interface{}) Value {
 		}
 		return m_
 	default:
-		// TODO Find a better way to report error
-		return NewFailure(fmt.Sprintf("unexpected json type: %T", v))
+		throw(fmt.Errorf("unexpected json type: %T", v))
+		return nil // no reached
 	}
 }
 
