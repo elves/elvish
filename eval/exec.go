@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"syscall"
-
-	"github.com/elves/elvish/errutil"
 )
 
 const (
@@ -76,13 +74,10 @@ func (c *Closure) Call(ec *evalCtx, args []Value) Error {
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.
 
-	ex, err := ec.eval(c.Op)
-	if err != nil {
-		fmt.Print(err.(*errutil.ContextualError).Pprint())
-		return evalFailure
-	}
-
+	ex := ec.peval(c.Op)
+	ec.closePorts()
 	return ex
+	// return ec.peval(c.Op)
 }
 
 // waitStatusToError converts syscall.WaitStatus to an Error.

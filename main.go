@@ -42,12 +42,14 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 }
 
 func printError(err error) {
-	if err != nil {
-		if ce, ok := err.(*errutil.ContextualError); ok {
-			fmt.Fprint(os.Stderr, ce.Pprint())
-		} else {
-			fmt.Fprintln(os.Stderr, err.Error())
-		}
+	if err == nil {
+		return
+	}
+	if ce, ok := err.(*errutil.ContextualError); ok {
+		fmt.Fprint(os.Stderr, ce.Pprint())
+	} else {
+		eval.PprintError(err)
+		fmt.Println()
 	}
 }
 
@@ -58,12 +60,9 @@ func interact() {
 	printError(err)
 	if err == nil {
 		// XXX
-		ex, err := ev.Source(datadir + "/rc.elv")
+		err := ev.Source(datadir + "/rc.elv")
 		if err != nil && !os.IsNotExist(err) {
 			printError(err)
-		}
-		if !os.IsNotExist(err) {
-			eval.PprintBadError(ex)
 		}
 	}
 
@@ -110,19 +109,17 @@ func interact() {
 		printError(err)
 
 		if err == nil {
-			ex, err := ev.Eval(name, lr.Line, n)
+			err := ev.Eval(name, lr.Line, n)
 			printError(err)
-			eval.PprintBadError(ex)
 		}
 	}
 }
 
 func script(fname string) {
 	ev, _ := newEvalerAndStore()
-	ex, err := ev.Source(fname)
-	printError(err)
-	eval.PprintBadError(ex)
-	if err != nil || !ex.Bool() {
+	err := ev.Source(fname)
+	if err != nil {
+		printError(err)
 		os.Exit(1)
 	}
 }

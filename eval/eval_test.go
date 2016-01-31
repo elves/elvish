@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"os"
 	"reflect"
 	"strconv"
@@ -26,10 +27,11 @@ func strs(ss ...string) []Value {
 	return vs
 }
 
+var anyerror = errors.New("")
+
 type more struct {
 	wantBytesOut []byte
-	wantExit     Error
-	wantError    bool
+	wantError    error
 }
 
 var nomore more
@@ -45,7 +47,7 @@ var evalTests = []struct {
 	// Outputs of pipelines in a chunk are concatenated
 	{"put x; put y; put z", strs("x", "y", "z"), nomore},
 	// A failed pipeline cause the whole chunk to fail
-	{"put a; false; put b", strs("a"), more{wantExit: NewFailure("1")}},
+	{"put a; false; put b", strs("a"), more{wantError: errors.New("1")}},
 
 	// Pipelines
 	// Pure byte pipeline
@@ -142,7 +144,7 @@ func mustParse(t *testing.T, name, text string) *parse.Chunk {
 	return n
 }
 
-func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, Error, error) {
+func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, error) {
 	name := "<eval test>"
 	ev := NewEvaler(nil)
 
@@ -166,7 +168,7 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	outs := []Value{}
 
 	// Exit. Only the exit of the last text is saved.
-	var ex Error
+	var ex error
 
 	for _, text := range texts {
 		n := mustParse(t, name, text)
@@ -180,21 +182,19 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 			exhausted <- struct{}{}
 		}()
 
-		var err error
-		ex, err = ev.evalWithOut(name, text, n, &port{ch: out, closeCh: true, f: pw})
-		if err != nil {
-			return outs, outBytes, ex, err
-		}
+		ex = ev.evalWithOut(name, text, n, &port{ch: out, closeCh: true, f: pw})
 		<-exhausted
 	}
 	pw.Close()
 	<-bytesExhausted
-	return outs, outBytes, ex, nil
+	return outs, outBytes, ex
 }
 
 func TestEval(t *testing.T) {
 	for _, tt := range evalTests {
-		out, bytesOut, ex, err := evalAndCollect(t, []string{tt.text}, len(tt.wantOut))
+		// fmt.Printf("eval %q\n", tt.text)
+
+		out, bytesOut, err := evalAndCollect(t, []string{tt.text}, len(tt.wantOut))
 
 		good := true
 		errorf := func(format string, args ...interface{}) {
@@ -205,21 +205,11 @@ func TestEval(t *testing.T) {
 			t.Errorf(format, args...)
 		}
 
-		if tt.wantError != (err != nil) {
-			wantError := "nil"
-			if tt.wantError {
-				wantError = "non-nil"
-			}
-			errorf("got err=%v, want %s", err, wantError)
-		}
 		if tt.wantBytesOut != nil && !reflect.DeepEqual(tt.wantBytesOut, bytesOut) {
 			errorf("got bytesOut=%q, want %q", bytesOut, tt.wantBytesOut)
 		}
-		if tt.wantExit != OK && !reflect.DeepEqual(tt.wantExit, ex) {
-			errorf("got exitus=%v, want %v", ex, tt.wantExit)
-		}
-		if tt.wantExit == OK && !ex.Bool() {
-			errorf("got exitus=%v, want all ok", ex)
+		if !(tt.wantError == anyerror && err != nil) && !reflect.DeepEqual(tt.wantError, err) {
+			errorf("got err=%v, want %v", err, tt.wantError)
 		}
 		if !reflect.DeepEqual(tt.wantOut, out) {
 			errorf("got out=%v, want %v", out, tt.wantOut)
@@ -231,7 +221,7 @@ func TestEval(t *testing.T) {
 }
 
 func TestMultipleEval(t *testing.T) {
-	outs, _, _, err := evalAndCollect(t, []string{"set x = hello", "put $x"}, 1)
+	outs, _, err := evalAndCollect(t, []string{"set x = hello", "put $x"}, 1)
 	wanted := strs("hello")
 	if err != nil {
 		t.Errorf("eval %q => %v, want nil", err)
