@@ -113,6 +113,18 @@ func (cp *compiler) pipeline(n *parse.Pipeline) op {
 }
 
 func (cp *compiler) form(n *parse.Form) op {
+	if len(n.Assignments) > 0 {
+		if n.Head != nil {
+			cp.errorf(n.Begin(), "temporary assignments not yet supported")
+		}
+		ops := cp.assignments(n.Assignments)
+		return func(ec *evalCtx) {
+			for _, op := range ops {
+				op(ec)
+			}
+		}
+	}
+
 	headStr, ok := oneString(n.Head)
 	if ok {
 		compileForm, ok := builtinSpecials[headStr]
@@ -156,6 +168,41 @@ func (cp *compiler) form(n *parse.Form) op {
 		}
 
 		ec.resolveNonSpecial(headValues[0]).Call(ec, args)
+	}
+}
+
+func (cp *compiler) literal(n *parse.Primary, msg string) string {
+	switch n.Type {
+	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
+		return n.Value
+	default:
+		cp.errorf(n.Begin(), msg)
+		return "" // not reached
+	}
+}
+
+func (cp *compiler) assignment(n *parse.Assignment) op {
+	var varnames []string
+	if n.Dst.Head.Type == parse.Braced {
+		for _, cn := range n.Dst.Head.Braced {
+			varname, ok := oneString(cn)
+			if !ok {
+				cp.errorf(cn.Begin(), "must be a literal variable name")
+			}
+			cp.registerVariableSet(varname)
+			varnames = append(varnames, varname)
+		}
+	} else {
+		varname := cp.literal(n.Dst.Head, "must be a literal variable name or a braced list of those")
+		varnames = []string{varname}
+		// TODO indices
+		cp.registerVariableSet(varname)
+	}
+
+	valuesOp := cp.compound(n.Src)
+
+	return func(ec *evalCtx) {
+		doSet(ec, varnames, valuesOp(ec))
 	}
 }
 

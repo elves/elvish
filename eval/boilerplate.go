@@ -26,6 +26,14 @@ func (cp *compiler) forms(ns []*parse.Form) []op {
 	return ops
 }
 
+func (cp *compiler) assignments(ns []*parse.Assignment) []op {
+	ops := make([]op, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.assignment(n)
+	}
+	return ops
+}
+
 func (cp *compiler) redirs(ns []*parse.Redir) []op {
 	ops := make([]op, len(ns))
 	for i, n := range ns {

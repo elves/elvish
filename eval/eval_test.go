@@ -89,7 +89,7 @@ var evalTests = []struct {
 		[]Value{newMultiError(OK, NewFailure("1"), NewFailure("1"))}, nomore},
 
 	// Variable and compounding
-	{"set x = 'SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
+	{"x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
 		strs("WOW, SUCH SHELL, MUCH COOL"), nomore},
 
 	// Closure
@@ -97,20 +97,25 @@ var evalTests = []struct {
 	{"[]{ }", strs(), nomore},
 	{"[x]{put $x} foo", strs("foo"), nomore},
 	// Variable capture
-	{"set x = lorem; []{set x = ipsum}; put $x", strs("ipsum"), nomore},
-	{"set x = lorem; []{ put $x; set x = ipsum }; put $x",
+	{"x=lorem; []{x=ipsum}; put $x", strs("ipsum"), nomore},
+	{"x=lorem; []{ put $x; x=ipsum }; put $x",
 		strs("lorem", "ipsum"), nomore},
 	// Shadowing
-	{"set x = ipsum; []{ set local:x = lorem; put $x }; put $x",
+	{"x=ipsum; []{ local:x=lorem; put $x }; put $x",
 		strs("lorem", "ipsum"), nomore},
 	// Shadowing by argument
-	{"set x = ipsum; [x]{ put $x; set x = BAD } lorem; put $x",
+	{"x=ipsum; [x]{ put $x; x=BAD } lorem; put $x",
 		strs("lorem", "ipsum"), nomore},
 	// Closure captures new local variables every time
-	{`fn f []{ set x = 0; put []{set x = (+ $x 1)} []{put $x} }
-set inc1 put1 = (f); $put1; $inc1; $put1
-set inc2 put2 = (f); $put2; $inc2; $put2`,
+	{`fn f []{ x=0; put []{x=(+ $x 1)} []{put $x} }
+      {inc1,put1}=(f); $put1; $inc1; $put1
+	  {inc2,put2}=(f); $put2; $inc2; $put2`,
 		strs("0", "1", "0", "1"), nomore},
+
+	// XXX hanger
+	//{`fn f []{ x=0; put []{x=(+ $x 1)} []{put $x} }
+	//  {inc1,put1} = (f); put $put1; $put1`,
+	//	strs("0"), nomore},
 
 	// fn
 	{"fn f [x]{ put $x ipsum }; f lorem",
@@ -126,12 +131,12 @@ set inc2 put2 = (f); $put2; $inc2; $put2`,
 
 	// Namespaces
 	// Pseudo-namespaces local: and up:
-	{"set x = lorem; []{set local:x = ipsum; put $up:x $local:x}",
+	{"x=lorem; []{local:x=ipsum; put $up:x $local:x}",
 		strs("lorem", "ipsum"), nomore},
-	{"set x = lorem; []{set up:x = ipsum; put $x}; put $x",
+	{"x=lorem; []{up:x=ipsum; put $x}; put $x",
 		strs("ipsum", "ipsum"), nomore},
 	// Pseudo-namespace env:
-	{"set env:foo = lorem; put $env:foo", strs("lorem"), nomore},
+	{"env:foo=lorem; put $env:foo", strs("lorem"), nomore},
 	{"del env:foo; put $env:foo", strs(""), nomore},
 	// TODO: Test module namespace
 }
