@@ -71,23 +71,22 @@ func NewEvaler(st *store.Store) *Evaler {
 }
 
 func pprintError(e Error) {
-	switch e.Sort {
-	case Ok:
+	switch e := e.inner.(type) {
+	case nil:
 		fmt.Print("\033[32mok\033[m")
-	case Failure:
-		fmt.Print("\033[31;1m" + e.Failure + "\033[m")
-	case MultiError:
+	case multiError:
 		fmt.Print("(")
-		for i, c := range e.Traceback.exs {
+		for i, c := range e.errors {
 			if i > 0 {
 				fmt.Print(" | ")
 			}
 			pprintError(c)
 		}
 		fmt.Print(")")
+	case flow:
+		fmt.Print("\033[33m" + e.Error() + "\033[m")
 	default:
-		// Control flow sorts
-		fmt.Print("\033[33m" + flowNames[e.Sort] + "\033[m")
+		fmt.Print("\033[31;1m" + e.Error() + "\033[m")
 	}
 }
 

@@ -17,6 +17,10 @@ import (
 // Value is the runtime representation of an elvish value.
 type Value interface {
 	Type() Type
+	Reprer
+}
+
+type Reprer interface {
 	Repr() string
 }
 
@@ -116,50 +120,9 @@ func (b Bool) Bool() bool {
 	return bool(b)
 }
 
-// Error is the exitus status of forms.
+// Error represents runtime errors in elvish constructs.
 type Error struct {
-	Sort      exitusSort
-	Failure   string
-	Traceback *multiError
-}
-
-type exitusSort byte
-
-const (
-	Ok exitusSort = iota
-	Failure
-	MultiError
-
-	// Control flow sorts
-	Return
-	Break
-	Continue
-	FlowSortLower = Return
-)
-
-var flowNames = map[exitusSort]string{
-	Return: "return", Break: "break", Continue: "continue",
-}
-
-type multiError struct {
-	exs []Error
-}
-
-var (
-	OK             = Error{Ok, "", nil}
-	GenericFailure = Error{Failure, "generic failure", nil}
-)
-
-func newMultiError(es ...Error) Error {
-	return Error{MultiError, "", &multiError{es}}
-}
-
-func NewFailure(s string) Error {
-	return Error{Failure, s, nil}
-}
-
-func newFlow(s exitusSort) Error {
-	return Error{s, "", nil}
+	inner error
 }
 
 func (e Error) Type() Type {
@@ -167,54 +130,101 @@ func (e Error) Type() Type {
 }
 
 func (e Error) Repr() string {
-	switch e.Sort {
-	case Ok:
+	if e.inner == nil {
 		return "$ok"
-	case Failure:
-		return "(failure " + parse.Quote(e.Failure) + ")"
-	case MultiError:
-		b := new(bytes.Buffer)
-		b.WriteString("(traceback")
-		for _, c := range e.Traceback.exs {
-			b.WriteString(" ")
-			b.WriteString(c.Repr())
-		}
-		b.WriteString(")")
-		return b.String()
-	default:
-		return "?(" + flowNames[e.Sort] + ")"
 	}
+	if r, ok := e.inner.(Reprer); ok {
+		return r.Repr()
+	}
+	return "?(error " + parse.Quote(e.inner.Error()) + ")"
 }
 
 func (e Error) String() string {
-	switch e.Sort {
-	case Ok:
+	if e.inner == nil {
 		return "ok"
-	case Failure:
-		return "failure: " + e.Failure
-	case MultiError:
-		b := new(bytes.Buffer)
-		b.WriteString("traceback: (")
-		for i, c := range e.Traceback.exs {
-			if i > 0 {
-				b.WriteString(" | ")
-			}
-			b.WriteString(c.String())
-		}
-		b.WriteString(")")
-		return b.String()
-	default:
-		return flowNames[e.Sort]
 	}
+	return e.inner.Error()
 }
 
 func (e Error) Bool() bool {
-	return e.Sort == Ok
+	return e.inner == nil
+}
+
+// Common Error values.
+var (
+	OK             = Error{nil}
+	GenericFailure = Error{errors.New("generic failure")}
+)
+
+func NewFailure(text string) Error {
+	return Error{errors.New(text)}
+}
+
+// multiError is multiple errors packed into one. It is used for reporting
+// errors of pipelines, in which multiple forms may error.
+type multiError struct {
+	errors []Error
+}
+
+func (me multiError) Repr() string {
+	b := new(bytes.Buffer)
+	b.WriteString("(multi-error")
+	for _, e := range me.errors {
+		b.WriteString(" ")
+		b.WriteString(e.Repr())
+	}
+	b.WriteString(")")
+	return b.String()
+}
+
+func (me multiError) Error() string {
+	b := new(bytes.Buffer)
+	b.WriteString("(")
+	for i, e := range me.errors {
+		if i > 0 {
+			b.WriteString(" | ")
+		}
+		b.WriteString(e.inner.Error())
+	}
+	b.WriteString(")")
+	return b.String()
+}
+
+func newMultiError(es ...Error) Error {
+	return Error{multiError{es}}
+}
+
+// Flow is a special type of Error used for control flows.
+type flow uint
+
+const (
+	Return flow = iota
+	Break
+	Continue
+)
+
+var flowNames = [...]string{
+	"return", "break", "continue",
+}
+
+func (f flow) Repr() string {
+	return "?(" + f.Error() + ")"
+}
+
+func (f flow) Error() string {
+	if f >= flow(len(flowNames)) {
+		return fmt.Sprintf("!(BAD FLOW: %v)", f)
+	}
+	return flowNames[f]
+}
+
+func newFlow(f flow) Error {
+	return Error{f}
 }
 
 func allok(es []Error) bool {
 	for _, e := range es {
-		if e.Sort != Ok {
+		if e.inner != nil {
 			return false
 		}
 	}

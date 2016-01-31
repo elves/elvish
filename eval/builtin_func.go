@@ -304,13 +304,12 @@ in:
 		ex := f.Call(newec, []Value{v})
 		newec.closePorts()
 
-		switch ex.Sort {
-		case Ok, Continue:
+		switch ex.inner {
+		case nil, Continue:
 			// nop
 		case Break:
 			break in
 		default:
-			// TODO wrap it
 			return ex
 		}
 	}

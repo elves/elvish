@@ -205,7 +205,7 @@ func compileUse(cp *compiler, fn *parse.Form) exitusOp {
 func makeFnOp(op exitusOp) exitusOp {
 	return func(ec *evalCtx) Error {
 		ex := op(ec)
-		if ex.Sort == Return {
+		if ex.inner == Return {
 			return OK
 		}
 		return ex
