@@ -2,17 +2,17 @@ package edit
 
 // Styles for UI.
 var (
-	attrForPrompt            = ""
-	attrForRprompt           = "7"
-	attrForCompleted         = ";4"
-	attrForMode              = "1;3;35"
-	attrForTip               = ""
-	attrForCurrentCompletion = ";7"
-	attrForCompletedHistory  = "4"
-	attrForSelectedFile      = ";7"
+	styleForPrompt            = ""
+	styleForRPrompt           = "7"
+	styleForCompleted         = ";4"
+	styleForMode              = "1;3;35"
+	styleForTip               = ""
+	styleForCurrentCompletion = ";7"
+	styleForCompletedHistory  = "4"
+	styleForSelectedFile      = ";7"
 )
 
-var attrForType = map[TokenType]string{
+var styleForType = map[TokenType]string{
 	ParserError:  "31;3",
 	Bareword:     "",
 	SingleQuoted: "33",

@@ -14,13 +14,13 @@ var (
 
 type navColumn struct {
 	names    []string
-	attrs    []string
+	styles   []string
 	selected int
 	err      error
 }
 
-func newNavColumn(names, attrs []string) *navColumn {
-	nc := &navColumn{names, attrs, 0, nil}
+func newNavColumn(names, styles []string) *navColumn {
+	nc := &navColumn{names, styles, 0, nil}
 	nc.resetSelected()
 	return nc
 }
@@ -59,7 +59,7 @@ func newNavigation() *navigation {
 	return n
 }
 
-func readdirnames(dir string) (names, attrs []string, err error) {
+func readdirnames(dir string) (names, styles []string, err error) {
 	f, err := os.Open(dir)
 	if err != nil {
 		return nil, nil, err
@@ -69,11 +69,11 @@ func readdirnames(dir string) (names, attrs []string, err error) {
 		return nil, nil, err
 	}
 	sort.Strings(names)
-	attrs = make([]string, len(names))
+	styles = make([]string, len(names))
 	for i, name := range names {
-		attrs[i] = defaultLsColor.determineAttr(path.Join(dir, name))
+		styles[i] = defaultLsColor.getStyle(path.Join(dir, name))
 	}
-	return names, attrs, nil
+	return names, styles, nil
 }
 
 func (n *navigation) maintainSelected(name string) {
@@ -86,12 +86,12 @@ func (n *navigation) maintainSelected(name string) {
 
 func (n *navigation) refreshCurrent() {
 	selectedName := n.current.selectedName()
-	names, attrs, err := readdirnames(".")
+	names, styles, err := readdirnames(".")
 	if err != nil {
 		n.current = newErrNavColumn(err)
 		return
 	}
-	n.current = newNavColumn(names, attrs)
+	n.current = newNavColumn(names, styles)
 	if selectedName != "" {
 		// Maintain n.current.selected. The same file, if still present, is
 		// selected. Otherwise a file near it is selected.
@@ -110,12 +110,12 @@ func (n *navigation) refreshParent() {
 	if wd == "/" {
 		n.parent = newNavColumn(nil, nil)
 	} else {
-		names, attrs, err := readdirnames("..")
+		names, styles, err := readdirnames("..")
 		if err != nil {
 			n.parent = newErrNavColumn(err)
 			return
 		}
-		n.parent = newNavColumn(names, attrs)
+		n.parent = newNavColumn(names, styles)
 
 		cwd, err := os.Stat(".")
 		if err != nil {
@@ -142,12 +142,12 @@ func (n *navigation) refreshDirPreview() {
 			return
 		}
 		if fi.Mode().IsDir() {
-			names, attrs, err := readdirnames(name)
+			names, styles, err := readdirnames(name)
 			if err != nil {
 				n.dirPreview = newErrNavColumn(err)
 				return
 			}
-			n.dirPreview = newNavColumn(names, attrs)
+			n.dirPreview = newNavColumn(names, styles)
 		} else {
 			// TODO(xiaq): Support regular file preview in navigation mode
 			n.dirPreview = nil

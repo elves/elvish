@@ -36,8 +36,8 @@ func complVariable(n parse.Node, ed *Editor) []*candidate {
 	for variable := range ed.evaler.Global() {
 		if strings.HasPrefix(variable, head) {
 			cands = append(cands, &candidate{
-				source: styled{variable[len(head):], attrForType[Variable]},
-				menu:   styled{"$" + variable, attrForType[Variable]}})
+				source: styled{variable[len(head):], styleForType[Variable]},
+				menu:   styled{"$" + variable, styleForType[Variable]}})
 		}
 	}
 	return cands
@@ -119,8 +119,8 @@ func complArg(cn *parse.Compound, head string, ed *Editor) []*candidate {
 	return complArgInner(head, false, ed, false)
 }
 
-// TODO: all of fileNames, determineAttr and the final directory check do
-// stat on files.
+// TODO: all of fileNames, getStyle and the final directory check do stat on
+// files.
 func complArgInner(head string, indir bool, ed *Editor, formHead bool) []*candidate {
 	var dir, file, indirSlash string
 	if indir {
@@ -153,7 +153,7 @@ func complArgInner(head string, indir bool, ed *Editor, formHead bool) []*candid
 			}
 			cand := &candidate{
 				source: styled{indirSlash + s[len(file):], ""},
-				menu:   styled{s, defaultLsColor.determineAttr(full)},
+				menu:   styled{s, defaultLsColor.getStyle(full)},
 			}
 			cands = append(cands, cand)
 		}

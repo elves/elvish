@@ -23,7 +23,7 @@ const (
 type cell struct {
 	rune
 	width byte
-	attr  string
+	style string
 }
 
 // pos is the position within a buffer.
@@ -116,7 +116,7 @@ func (b *buffer) extendHorizontal(b2 *buffer, w, m int) {
 }
 
 // write appends a single rune to a buffer.
-func (b *buffer) write(r rune, attr string) {
+func (b *buffer) write(r rune, style string) {
 	if r == '\n' {
 		b.newline()
 		return
@@ -125,7 +125,7 @@ func (b *buffer) write(r rune, attr string) {
 		return
 	}
 	wd := WcWidth(r)
-	c := cell{r, byte(wd), attr}
+	c := cell{r, byte(wd), style}
 
 	if b.col+wd > b.width {
 		b.newline()
@@ -138,14 +138,14 @@ func (b *buffer) write(r rune, attr string) {
 	}
 }
 
-func (b *buffer) writes(s string, attr string) {
+func (b *buffer) writes(s string, style string) {
 	for _, r := range s {
-		b.write(r, attr)
+		b.write(r, style)
 	}
 }
 
-func (b *buffer) writePadding(w int, attr string) {
-	b.writes(strings.Repeat(" ", w), attr)
+func (b *buffer) writePadding(w int, style string) {
+	b.writes(strings.Repeat(" ", w), style)
 }
 
 func (b *buffer) line() int {
@@ -225,7 +225,7 @@ func (w *writer) commitBuffer(buf *buffer) error {
 	}
 	bytesBuf.WriteString("\r")
 
-	attr := ""
+	style := ""
 	for i, line := range buf.cells {
 		if i > 0 {
 			bytesBuf.WriteString("\n")
@@ -241,9 +241,9 @@ func (w *writer) commitBuffer(buf *buffer) error {
 		// Move to the first differing column and erase the rest of line
 		fmt.Fprintf(bytesBuf, "\033[%dG\033[K", j+1)
 		for _, c := range line[j:] {
-			if c.width > 0 && c.attr != attr {
-				fmt.Fprintf(bytesBuf, "\033[m\033[%sm", c.attr)
-				attr = c.attr
+			if c.width > 0 && c.style != style {
+				fmt.Fprintf(bytesBuf, "\033[m\033[%sm", c.style)
+				style = c.style
 			}
 			bytesBuf.WriteString(string(c.rune))
 		}
@@ -252,7 +252,7 @@ func (w *writer) commitBuffer(buf *buffer) error {
 	if len(w.oldBuf.cells) > len(buf.cells) || fullRefresh {
 		bytesBuf.WriteString("\n\033[J\033[A")
 	}
-	if attr != "" {
+	if style != "" {
 		bytesBuf.WriteString("\033[m")
 	}
 	cursor := buf.cursor()
@@ -311,17 +311,17 @@ func renderNavColumn(nc *navColumn, w, h int) *buffer {
 			b.newline()
 		}
 		text := nc.names[i]
-		attr := nc.attrs[i]
+		style := nc.styles[i]
 		if i == nc.selected {
-			attr += attrForSelectedFile
+			style += styleForSelectedFile
 		}
 		if w >= navigationListingMinWidthForPadding {
 			padding := navigationListingColPadding
-			b.writePadding(padding, attr)
-			b.writes(ForceWcWidth(text, w-2), attr)
-			b.writePadding(padding, attr)
+			b.writePadding(padding, style)
+			b.writes(ForceWcWidth(text, w-2), style)
+			b.writePadding(padding, style)
 		} else {
-			b.writes(ForceWcWidth(text, w), attr)
+			b.writes(ForceWcWidth(text, w), style)
 		}
 	}
 	return b
@@ -339,7 +339,7 @@ func (w *writer) refresh(es *editorState) error {
 
 	b.newlineWhenFull = true
 
-	b.writes(es.prompt, attrForPrompt)
+	b.writes(es.prompt, styleForPrompt)
 
 	if b.line() == 0 && b.col*2 < b.width {
 		b.indent = b.col
@@ -356,7 +356,7 @@ func (w *writer) refresh(es *editorState) error {
 			if hasComp {
 				// Put the current completion candidate.
 				candSource := comp.candidates[comp.current].source
-				b.writes(candSource.text, candSource.style+attrForCompleted)
+				b.writes(candSource.text, candSource.style+styleForCompleted)
 			}
 			b.dot = b.cursor()
 		}
@@ -365,7 +365,7 @@ func (w *writer) refresh(es *editorState) error {
 tokens:
 	for _, token := range es.tokens {
 		for _, r := range token.Text {
-			b.write(r, attrForType[token.Type]+token.MoreStyle)
+			b.write(r, styleForType[token.Type]+token.MoreStyle)
 			i += utf8.RuneLen(r)
 
 			nowAt(i)
@@ -379,7 +379,7 @@ tokens:
 		// Put the rest of current history, position the cursor at the
 		// end of the line, and finish writing
 		h := es.history
-		b.writes(h.line[len(h.prefix):], attrForCompletedHistory)
+		b.writes(h.line[len(h.prefix):], styleForCompletedHistory)
 		b.dot = b.cursor()
 	}
 
@@ -388,7 +388,7 @@ tokens:
 	if padding >= 1 {
 		b.newlineWhenFull = false
 		b.writePadding(padding, "")
-		b.writes(es.rprompt, attrForRprompt)
+		b.writes(es.rprompt, styleForRPrompt)
 	}
 
 	// bufMode
@@ -406,7 +406,7 @@ tokens:
 		case modeHistory:
 			text = fmt.Sprintf("HISTORY #%d", es.history.current)
 		}
-		b.writes(TrimWcWidth(" "+text+" ", width), attrForMode)
+		b.writes(TrimWcWidth(" "+text+" ", width), styleForMode)
 	}
 
 	// bufTips
@@ -414,7 +414,7 @@ tokens:
 	if len(es.tips) > 0 {
 		b := newBuffer(width)
 		bufTips = b
-		b.writes(TrimWcWidth(strings.Join(es.tips, ", "), width), attrForTip)
+		b.writes(TrimWcWidth(strings.Join(es.tips, ", "), width), styleForTip)
 	}
 
 	hListing := 0
@@ -475,12 +475,12 @@ tokens:
 					if k >= len(cands) {
 						continue
 					}
-					attr := cands[k].menu.style
+					style := cands[k].menu.style
 					if k == comp.current {
-						attr += attrForCurrentCompletion
+						style += styleForCurrentCompletion
 					}
 					text := cands[k].menu.text
-					b.writes(ForceWcWidth(text, colWidth), attr)
+					b.writes(ForceWcWidth(text, colWidth), style)
 					b.writePadding(margin, "")
 				}
 			}
