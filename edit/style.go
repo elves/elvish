@@ -21,24 +21,24 @@ var styleForType = map[TokenType]string{
 	Sep:          "",
 }
 
-var styleForSep = map[byte]string{
+var styleForSep = map[string]string{
 	// unknown : "31",
-	'#': "36",
+	"#": "36",
 
-	'>': "32",
-	'<': "32",
-	'?': "32", // applies to both ?( and ?>
-	// "?(": "34;1",
-	'|': "32",
+	">":  "32",
+	"<":  "32",
+	"?>": "32",
+	"|":  "32",
 
-	'(': "1",
-	')': "1",
-	'[': "1",
-	']': "1",
-	'{': "1",
-	'}': "1",
+	"?(": "1",
+	"(":  "1",
+	")":  "1",
+	"[":  "1",
+	"]":  "1",
+	"{":  "1",
+	"}":  "1",
 
-	'&': "1",
+	"&": "1",
 }
 
 // Styles for semantic coloring.

@@ -76,7 +76,7 @@ func produceTokens(n parse.Node, tokenCh chan<- Token) {
 			}
 		case *parse.Sep:
 			tokenType = Sep
-			moreStyle = styleForSep[n.SourceText()[0]]
+			moreStyle = styleForSep[n.SourceText()]
 		}
 		tokenCh <- Token{tokenType, n.SourceText(), n, moreStyle}
 	}
