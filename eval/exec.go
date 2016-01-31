@@ -55,7 +55,7 @@ func (ec *evalCtx) resolveNonSpecial(cmd Value) Caller {
 
 // Call calls a builtin function.
 func (b *BuiltinFn) Call(ec *evalCtx, args []Value) {
-	maybeThrow(b.Impl(ec, args))
+	b.Impl(ec, args)
 }
 
 // Call calls a closure.
@@ -124,7 +124,7 @@ func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {
 			// implicit cd
-			maybeThrow(cdInner(e.Name, ec))
+			cdInner(e.Name, ec)
 		}
 	}
 

@@ -335,7 +335,7 @@ func (c *Closure) Repr() string {
 // BuiltinFn is a builtin function.
 type BuiltinFn struct {
 	Name string
-	Impl func(*evalCtx, []Value) Error
+	Impl func(*evalCtx, []Value)
 }
 
 func (b *BuiltinFn) Type() Type {

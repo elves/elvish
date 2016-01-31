@@ -19,7 +19,6 @@ type scope map[string]bool
 type (
 	op       func(*evalCtx)
 	valuesOp func(*evalCtx) []Value
-	// op func(*evalCtx) Error
 )
 
 // compiler maintains the set of states needed when compiling a single source
