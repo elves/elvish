@@ -30,7 +30,14 @@ type Sep struct {
 	node
 }
 
-func addSep(n Node, begin int, rd *reader) {
+func addSep(n Node, rd *reader) {
+	var begin int
+	ch := n.Children()
+	if len(ch) > 0 {
+		begin = ch[len(ch)-1].End()
+	} else {
+		begin = n.Begin()
+	}
 	addChild(n, &Sep{node{nil, begin, rd.pos, rd.src[begin:rd.pos], nil}})
 }
 
@@ -41,10 +48,9 @@ func eatRun(rd *reader, r rune) {
 }
 
 func parseSep(n Node, rd *reader, sep rune) bool {
-	begin := rd.pos
 	if rd.peek() == sep {
 		rd.next()
-		addSep(n, begin, rd)
+		addSep(n, rd)
 		return true
 	}
 	return false
@@ -54,12 +60,11 @@ func parseRunAsSep(n Node, rd *reader, isSep func(rune) bool) {
 	if !isSep(rd.peek()) {
 		return
 	}
-	begin := rd.pos
 	rd.next()
 	for isSep(rd.peek()) {
 		rd.next()
 	}
-	addSep(n, begin, rd)
+	addSep(n, rd)
 }
 
 func parseSpaces(n Node, rd *reader) {
@@ -389,10 +394,9 @@ var (
 )
 
 func (pn *Primary) exitusCapture(rd *reader) {
-	begin := rd.pos
 	rd.next()
 	rd.next()
-	addSep(pn, begin, rd)
+	addSep(pn, rd)
 
 	pn.Type = ErrorCapture
 	if !startsChunk(rd.peek(), nil) && rd.peek() != ')' {
@@ -421,7 +425,6 @@ func (pn *Primary) outputCapture(rd *reader) {
 	var shouldBeCloser error
 	var cut runePred
 
-	begin := rd.pos
 	switch rd.next() {
 	case '(':
 		closer = ')'
@@ -435,7 +438,7 @@ func (pn *Primary) outputCapture(rd *reader) {
 		rd.error = shouldBeBackquoteOrLParen
 		return
 	}
-	addSep(pn, begin, rd)
+	addSep(pn, rd)
 
 	if !startsChunk(rd.peek(), cut) && rd.peek() != closer {
 		rd.error = shouldBeChunk
@@ -496,7 +499,7 @@ func (pn *Primary) lbracket(rd *reader) {
 		switch {
 		case isSpace(r), r == ']':
 			// '&' { Space } ']': '&' is a sep
-			addSep(pn, amp, rd)
+			addSep(pn, rd)
 			parseSpaces(pn, rd)
 		default:
 			// { MapPair { Space } } ']': Wind back
@@ -700,7 +703,7 @@ func (rn *Redir) parse(rd *reader, cut runePred) {
 		rd.error = badRedirSign
 		return
 	}
-	addSep(rn, begin, rd)
+	addSep(rn, rd)
 	parseSpaces(rn, rd)
 	if !cut.matches('&') && parseSep(rn, rd, '&') {
 		rn.SourceIsFd = true
@@ -723,10 +726,9 @@ type ExitusRedir struct {
 }
 
 func (ern *ExitusRedir) parse(rd *reader, cut runePred) {
-	begin := rd.pos
 	rd.next()
 	rd.next()
-	addSep(ern, begin, rd)
+	addSep(ern, rd)
 	parseSpaces(ern, rd)
 	ern.setDest(parseCompound(rd, cut))
 }
@@ -853,14 +855,13 @@ func (bn *Chunk) parseSeps(rd *reader, cut runePred) {
 			parseSpaces(bn, rd)
 		} else if r == '#' {
 			// parse a comment as a Sep
-			begin := rd.pos
 			for {
 				r := rd.next()
 				if r == EOF || r == '\n' {
 					break
 				}
 			}
-			addSep(bn, begin, rd)
+			addSep(bn, rd)
 		} else {
 			break
 		}
