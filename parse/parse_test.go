@@ -168,6 +168,15 @@ func checkParseTree(n Node) error {
 	if len(children) == 0 {
 		return nil
 	}
+
+	// check parent pointers
+	for i, ch := range children {
+		if ch.Parent() != n {
+			return fmt.Errorf("parent of child %d (%s) is wrong: %s", i, summary(ch), summary(n))
+		}
+	}
+
+	// check for possible gaps
 	if children[0].Begin() != n.Begin() {
 		return fmt.Errorf("gap between node and first child: %s", summary(n))
 	}
@@ -180,6 +189,8 @@ func checkParseTree(n Node) error {
 			return fmt.Errorf("gap beteen child %d and %d of: %s", i, i+1, summary(n))
 		}
 	}
+
+	// check children recursively
 	for _, ch := range n.Children() {
 		err := checkParseTree(ch)
 		if err != nil {

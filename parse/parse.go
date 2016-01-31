@@ -784,6 +784,7 @@ loop:
 				// it here.
 				rn.begin = cn.begin
 				rn.Dest = cn
+				cn.parent = rn
 
 				children := rn.children
 				rn.children = make([]Node, len(children)+1)
