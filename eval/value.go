@@ -232,27 +232,28 @@ func allok(es []Error) bool {
 }
 
 // List is a list of Value's.
-type List []Value
-
-func NewList(vs ...Value) *List {
-	l := List(vs)
-	return &l
+type List struct {
+	inner *[]Value
 }
 
-func (l *List) Type() Type {
+func NewList(vs ...Value) List {
+	return List{&vs}
+}
+
+func (l List) Type() Type {
 	return TList
 }
 
-func (l *List) appendStrings(ss []string) {
+func (l List) appendStrings(ss []string) {
 	for _, s := range ss {
-		*l = append(*l, String(s))
+		*l.inner = append(*l.inner, String(s))
 	}
 }
 
-func (l *List) Repr() string {
+func (l List) Repr() string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
-	for i, v := range *l {
+	for i, v := range *l.inner {
 		if i > 0 {
 			buf.WriteByte(' ')
 		}
@@ -262,18 +263,18 @@ func (l *List) Repr() string {
 	return buf.String()
 }
 
-func (l *List) Index(idx string) (Value, error) {
+func (l List) Index(idx string) (Value, error) {
 	i, err := strconv.Atoi(idx)
 	if err != nil {
 		return nil, err
 	}
 	if i < 0 {
-		i += len(*l)
+		i += len(*l.inner)
 	}
-	if i < 0 || i >= len(*l) {
+	if i < 0 || i >= len(*l.inner) {
 		return nil, indexOutOfRange
 	}
-	return (*l)[i], nil
+	return (*l.inner)[i], nil
 }
 
 // Map is a map from string to Value.
@@ -411,11 +412,11 @@ func FromJSONInterface(v interface{}) Value {
 		return String(fmt.Sprint(v))
 	case []interface{}:
 		a := v.([]interface{})
-		vs := List(make([]Value, len(a)))
+		vs := make([]Value, len(a))
 		for i, v := range a {
 			vs[i] = FromJSONInterface(v)
 		}
-		return &vs
+		return List{&vs}
 	case map[string]interface{}:
 		m := v.(map[string]interface{})
 		m_ := NewMap()

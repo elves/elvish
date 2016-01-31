@@ -420,8 +420,7 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 	case parse.List:
 		op := cp.array(n.List)
 		return func(ec *evalCtx) []Value {
-			list := List(op(ec))
-			return []Value{&list}
+			return []Value{NewList(op(ec)...)}
 		}
 	case parse.Lambda:
 		return cp.lambda(n)
