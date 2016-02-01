@@ -34,6 +34,14 @@ func (cp *compiler) assignments(ns []*parse.Assignment) []op {
 	return ops
 }
 
+func (cp *compiler) indexedVars(ns []*parse.Indexed, msg string) []variableOp {
+	ops := make([]variableOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.indexedVar(n, msg)
+	}
+	return ops
+}
+
 func (cp *compiler) redirs(ns []*parse.Redir) []op {
 	ops := make([]op, len(ns))
 	for i, n := range ns {

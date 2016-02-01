@@ -84,6 +84,12 @@ var evalTests = []struct {
 	{"x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
 		strs("WOW, SUCH SHELL, MUCH COOL"), nomore},
 
+	// List element assignment
+	{"li=[foo bar]; li[0]=233; put-all $li", strs("233", "bar"), nomore},
+	// Map element assignment
+	{"di=[&k v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
+		strs("lorem", "ipsum"), nomore},
+
 	// Closure
 	// Basics
 	{"[]{ }", strs(), nomore},
@@ -237,12 +243,13 @@ func TestEval(t *testing.T) {
 }
 
 func TestMultipleEval(t *testing.T) {
-	outs, _, err := evalAndCollect(t, []string{"set x = hello", "put $x"}, 1)
+	texts := []string{"x=hello", "put $x"}
+	outs, _, err := evalAndCollect(t, texts, 1)
 	wanted := strs("hello")
 	if err != nil {
-		t.Errorf("eval %q => %v, want nil", err)
+		t.Errorf("eval %s => %v, want nil", texts, err)
 	}
 	if !reflect.DeepEqual(outs, wanted) {
-		t.Errorf("eval %q outputs %v, want %v", outs, wanted)
+		t.Errorf("eval %s outputs %v, want %v", texts, outs, wanted)
 	}
 }

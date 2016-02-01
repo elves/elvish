@@ -17,8 +17,9 @@ import (
 type scope map[string]bool
 
 type (
-	op       func(*evalCtx)
-	valuesOp func(*evalCtx) []Value
+	op         func(*evalCtx)
+	valuesOp   func(*evalCtx) []Value
+	variableOp func(*evalCtx) Variable
 )
 
 // compiler maintains the set of states needed when compiling a single source
@@ -182,27 +183,81 @@ func (cp *compiler) literal(n *parse.Primary, msg string) string {
 }
 
 func (cp *compiler) assignment(n *parse.Assignment) op {
-	var varnames []string
+	var variableOps []variableOp
 	if n.Dst.Head.Type == parse.Braced {
-		for _, cn := range n.Dst.Head.Braced {
-			varname, ok := oneString(cn)
-			if !ok {
-				cp.errorf(cn.Begin(), "must be a literal variable name")
+		compounds := n.Dst.Head.Braced
+		indexeds := make([]*parse.Indexed, len(compounds))
+		for i, cn := range compounds {
+			if len(cn.Indexeds) != 1 {
+				cp.errorf(cn.Begin(), "must be a variable spec")
 			}
-			cp.registerVariableSet(varname)
-			varnames = append(varnames, varname)
+			indexeds[i] = cn.Indexeds[0]
 		}
+		variableOps = cp.indexedVars(indexeds, "must be a variable spc")
 	} else {
-		varname := cp.literal(n.Dst.Head, "must be a literal variable name or a braced list of those")
-		varnames = []string{varname}
-		// TODO indices
-		cp.registerVariableSet(varname)
+		variableOps = []variableOp{cp.indexedVar(n.Dst, "must be a variable spec or a braced list of those")}
 	}
 
 	valuesOp := cp.compound(n.Src)
 
 	return func(ec *evalCtx) {
-		doSet(ec, varnames, valuesOp(ec))
+		variables := make([]Variable, len(variableOps))
+		for i, variableOp := range variableOps {
+			variables[i] = variableOp(ec)
+		}
+		doSet(ec, variables, valuesOp(ec))
+	}
+}
+
+func (cp *compiler) indexedVar(n *parse.Indexed, msg string) variableOp {
+	// XXX will we be using indexedVar for purposes other than setting?
+	varname := cp.literal(n.Head, msg)
+	p := n.Begin()
+
+	if len(n.Indicies) == 0 {
+		cp.registerVariableSet(varname)
+
+		return func(ec *evalCtx) Variable {
+			ns, barename := splitQualifiedName(varname)
+			variable := ec.ResolveVar(ns, barename)
+			if variable == nil {
+				// New variable.
+				// XXX We depend on the fact that this variable will
+				// immeidately be set.
+				variable = newPtrVariable(nil)
+				ec.local[barename] = variable
+			}
+			return variable
+		}
+	} else {
+		cp.registerVariableGet(varname)
+		indexOps := cp.arrays(n.Indicies)
+		indexBegins := make([]int, len(n.Indicies))
+		indexEnds := make([]int, len(n.Indicies))
+		for i, in := range n.Indicies {
+			indexBegins[i] = in.Begin()
+			indexEnds[i] = in.End()
+		}
+
+		return func(ec *evalCtx) Variable {
+			variable := ec.ResolveVar(splitQualifiedName(varname))
+			if variable == nil {
+				ec.errorf(p, "variable $%s does not exisit, compiler bug", varname)
+			}
+			for i, op := range indexOps {
+				indexer, ok := variable.Get().(IndexVarer)
+				if !ok {
+					ec.errorf( /* from p to */ indexBegins[i], "cannot be indexed for setting (type %T)", variable.Get())
+				}
+				values := op(ec)
+				if len(values) != 1 {
+					ec.errorf(indexBegins[i], "index must eval to a single Value (got %v)", values)
+				}
+
+				variable = indexer.IndexVar(values[0])
+			}
+			return variable
+		}
 	}
 }
 

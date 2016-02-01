@@ -41,6 +41,10 @@ type Indexer interface {
 	Index(idx Value) Value
 }
 
+type IndexVarer interface {
+	IndexVar(idx Value) Variable
+}
+
 // Caller represents a Value that may be called.
 type Caller interface {
 	Call(ec *evalCtx, args []Value)
@@ -278,8 +282,11 @@ func (l List) Index(idx Value) Value {
 	return (*l.inner)[i]
 }
 
+func (l List) IndexVar(idx Value) Variable {
+	return listElem{l, intIndex(idx)}
+}
+
 // Map is a map from string to Value.
-// TODO(xiaq): support Value keys.
 type Map struct {
 	inner *map[Value]Value
 }
@@ -314,6 +321,10 @@ func (m Map) Index(idx Value) Value {
 		throw(errors.New("no such key: " + idx.Repr()))
 	}
 	return v
+}
+
+func (m Map) IndexVar(idx Value) Variable {
+	return mapElem{m, idx}
 }
 
 // Closure is a closure.
@@ -431,8 +442,6 @@ func FromJSONInterface(v interface{}) Value {
 
 // DeepEq compares two Value's deeply.
 func DeepEq(a, b Value) bool {
-	// BUG(xiaq): valueEq uses reflect.DeepEqual to check the equality of two
-	// values, may can become wrong when values get more complex.
 	return reflect.DeepEqual(a, b)
 }
 

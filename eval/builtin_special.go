@@ -16,7 +16,6 @@ var BuiltinSpecialNames []string
 func init() {
 	// Needed to avoid initialization loop
 	builtinSpecials = map[string]compileBuiltin{
-		"set": compileSet,
 		"del": compileDel,
 		"fn":  compileFn,
 		//"use": compileUse,
@@ -26,56 +25,16 @@ func init() {
 	}
 }
 
-// SetForm = 'set' { StringPrimary } '=' { Compound }
-func compileSet(cp *compiler, fn *parse.Form) op {
-	var (
-		names  []string
-		values []*parse.Compound
-	)
-
-	if len(fn.Args) == 0 {
-		cp.errorf(fn.Begin(), "empty set")
-	}
-	mustString(cp, fn.Args[0], "should be a literal variable name")
-
-	for i, cn := range fn.Args {
-		name := mustString(cp, cn, "should be a literal variable name or equal sign")
-		if name == "=" {
-			values = fn.Args[i+1:]
-			break
-		}
-		if !cp.registerVariableSet(name) {
-			cp.errorf(cn.Begin(), "variable $%s not found", name)
-		}
-		names = append(names, name)
-	}
-
-	valueOps := cp.compounds(values)
-	valuesOp := catOps(valueOps)
-
-	return func(ec *evalCtx) {
-		doSet(ec, names, valuesOp(ec))
-	}
-}
-
-func doSet(ec *evalCtx, names []string, values []Value) {
+func doSet(ec *evalCtx, variables []Variable, values []Value) {
 	// TODO Support assignment of mismatched arity in some restricted way -
 	// "optional" and "rest" arguments and the like
-	if len(names) != len(values) {
+	if len(variables) != len(values) {
 		throw(arityMismatch)
 	}
 
-	for i, qname := range names {
+	for i, variable := range variables {
 		// TODO Prevent overriding builtin variables e.g. $pid $env
-		ns, name := splitQualifiedName(qname)
-		variable := ec.ResolveVar(ns, name)
-		if variable == nil {
-			// New variable
-			variable = newPtrVariable(values[i])
-			ec.local[name] = variable
-		} else {
-			variable.Set(values[i])
-		}
+		variable.Set(values[i])
 	}
 }
 
