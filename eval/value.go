@@ -38,7 +38,7 @@ type Stringer interface {
 
 // Indexer represents a Value that may be indexed.
 type Indexer interface {
-	Index(idx string) (Value, error)
+	Index(idx string) Value
 }
 
 // Caller represents a Value that may be called.
@@ -82,17 +82,24 @@ func (s String) String() string {
 	return string(s)
 }
 
-func (s String) Index(idx string) (Value, error) {
+func (s String) Index(idx string) Value {
+	i := intIndex(idx)
+	r, err := strutil.NthRune(string(s), i)
+	maybeThrow(err)
+	return String(string(r))
+}
+
+func intIndex(idx string) int {
 	i, err := strconv.Atoi(idx)
 	if err != nil {
-		return nil, err
+		err := err.(*strconv.NumError)
+		if err.Err == strconv.ErrRange {
+			throw(indexOutOfRange)
+		} else {
+			throw(needIntIndex)
+		}
 	}
-
-	r, err := strutil.NthRune(string(s), i)
-	if err != nil {
-		return nil, err
-	}
-	return String(string(r)), nil
+	return i
 }
 
 // Bool represents truthness.
@@ -259,18 +266,16 @@ func (l List) Repr() string {
 	return buf.String()
 }
 
-func (l List) Index(idx string) (Value, error) {
-	i, err := strconv.Atoi(idx)
-	if err != nil {
-		return nil, err
-	}
+func (l List) Index(idx string) Value {
+	i := intIndex(idx)
+
 	if i < 0 {
 		i += len(*l.inner)
 	}
 	if i < 0 || i >= len(*l.inner) {
-		return nil, indexOutOfRange
+		throw(indexOutOfRange)
 	}
-	return (*l.inner)[i], nil
+	return (*l.inner)[i]
 }
 
 // Map is a map from string to Value.
@@ -301,12 +306,12 @@ func (m Map) Repr() string {
 	return buf.String()
 }
 
-func (m Map) Index(idx string) (Value, error) {
+func (m Map) Index(idx string) Value {
 	v, ok := m[idx]
 	if !ok {
-		return nil, errors.New("no such key: " + idx)
+		throw(errors.New("no such key: " + idx))
 	}
-	return v, nil
+	return v
 }
 
 // Closure is a closure.
@@ -386,11 +391,7 @@ func evalIndex(ec *evalCtx, l, r Value, lp, rp int) Value {
 		ec.errorf(rp, "%s invalid cannot be used as index", r.Type())
 	}
 
-	v, err := left.Index(string(right))
-	if err != nil {
-		ec.errorf(lp, "%v", err)
-	}
-	return v
+	return left.Index(string(right))
 }
 
 // FromJSONInterface converts a interface{} that results from json.Unmarshal to
