@@ -58,6 +58,7 @@ func init() {
 		&BuiltinFn{"/", wrapFn(divide)},
 
 		&BuiltinFn{"=", eq},
+		&BuiltinFn{"deepeq", deepeq},
 
 		&BuiltinFn{"bind", wrapFn(bind)},
 		&BuiltinFn{"le", wrapFn(le)},
@@ -348,10 +349,10 @@ func visistedDirs(ec *evalCtx) {
 	}
 	out := ec.ports[1].ch
 	for _, dir := range dirs {
-		m := NewMap()
-		m["path"] = String(dir.Path)
-		m["score"] = String(fmt.Sprint(dir.Score))
-		out <- m
+		out <- Map{&map[Value]Value{
+			String("path"):  String(dir.Path),
+			String("score"): String(fmt.Sprint(dir.Score)),
+		}}
 	}
 }
 
@@ -431,7 +432,21 @@ func eq(ec *evalCtx, args []Value) {
 		throw(argsError)
 	}
 	for i := 0; i+1 < len(args); i++ {
-		if !Eq(args[i], args[i+1]) {
+		if args[i] != args[i+1] {
+			out <- Bool(false)
+			return
+		}
+	}
+	out <- Bool(true)
+}
+
+func deepeq(ec *evalCtx, args []Value) {
+	out := ec.ports[1].ch
+	if len(args) == 0 {
+		throw(argsError)
+	}
+	for i := 0; i+1 < len(args); i++ {
+		if !DeepEq(args[i], args[i+1]) {
 			out <- Bool(false)
 			return
 		}

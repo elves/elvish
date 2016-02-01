@@ -19,14 +19,6 @@ func TestNewEvaler(t *testing.T) {
 	}
 }
 
-func strs(ss ...string) []Value {
-	vs := make([]Value, len(ss))
-	for i, s := range ss {
-		vs[i] = String(s)
-	}
-	return vs
-}
-
 var anyerror = errors.New("")
 
 type more struct {
@@ -139,6 +131,25 @@ var evalTests = []struct {
 	{"env:foo=lorem; put $env:foo", strs("lorem"), nomore},
 	{"del env:foo; put $env:foo", strs(""), nomore},
 	// TODO: Test module namespace
+
+	// Equality
+	{"= a a; = [] []; = [&] [&]", bools(true, false, false), nomore},
+}
+
+func strs(ss ...string) []Value {
+	vs := make([]Value, len(ss))
+	for i, s := range ss {
+		vs[i] = String(s)
+	}
+	return vs
+}
+
+func bools(bs ...bool) []Value {
+	vs := make([]Value, len(bs))
+	for i, b := range bs {
+		vs[i] = Bool(b)
+	}
+	return vs
 }
 
 func mustParse(t *testing.T, name, text string) *parse.Chunk {

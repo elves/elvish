@@ -38,7 +38,7 @@ type Stringer interface {
 
 // Indexer represents a Value that may be indexed.
 type Indexer interface {
-	Index(idx string) Value
+	Index(idx Value) Value
 }
 
 // Caller represents a Value that may be called.
@@ -82,15 +82,15 @@ func (s String) String() string {
 	return string(s)
 }
 
-func (s String) Index(idx string) Value {
+func (s String) Index(idx Value) Value {
 	i := intIndex(idx)
 	r, err := strutil.NthRune(string(s), i)
 	maybeThrow(err)
 	return String(string(r))
 }
 
-func intIndex(idx string) int {
-	i, err := strconv.Atoi(idx)
+func intIndex(idx Value) int {
+	i, err := strconv.Atoi(ToString(idx))
 	if err != nil {
 		err := err.(*strconv.NumError)
 		if err.Err == strconv.ErrRange {
@@ -266,7 +266,7 @@ func (l List) Repr() string {
 	return buf.String()
 }
 
-func (l List) Index(idx string) Value {
+func (l List) Index(idx Value) Value {
 	i := intIndex(idx)
 
 	if i < 0 {
@@ -280,10 +280,12 @@ func (l List) Index(idx string) Value {
 
 // Map is a map from string to Value.
 // TODO(xiaq): support Value keys.
-type Map map[string]Value
+type Map struct {
+	inner *map[Value]Value
+}
 
 func NewMap() Map {
-	return Map(make(map[string]Value))
+	return Map{&map[Value]Value{}}
 }
 
 func (m Map) Type() Type {
@@ -293,12 +295,12 @@ func (m Map) Type() Type {
 func (m Map) Repr() string {
 	buf := new(bytes.Buffer)
 	buf.WriteRune('[')
-	for k, v := range m {
+	for k, v := range *m.inner {
 		if buf.Len() > 1 {
 			buf.WriteByte(' ')
 		}
 		buf.WriteByte('&')
-		buf.WriteString(parse.Quote(k))
+		buf.WriteString(k.Repr())
 		buf.WriteByte(' ')
 		buf.WriteString(v.Repr())
 	}
@@ -306,10 +308,10 @@ func (m Map) Repr() string {
 	return buf.String()
 }
 
-func (m Map) Index(idx string) Value {
-	v, ok := m[idx]
+func (m Map) Index(idx Value) Value {
+	v, ok := (*m.inner)[idx]
 	if !ok {
-		throw(errors.New("no such key: " + idx))
+		throw(errors.New("no such key: " + idx.Repr()))
 	}
 	return v
 }
@@ -391,7 +393,7 @@ func evalIndex(ec *evalCtx, l, r Value, lp, rp int) Value {
 		ec.errorf(rp, "%s invalid cannot be used as index", r.Type())
 	}
 
-	return left.Index(string(right))
+	return left.Index(right)
 }
 
 // FromJSONInterface converts a interface{} that results from json.Unmarshal to
@@ -416,19 +418,19 @@ func FromJSONInterface(v interface{}) Value {
 		return List{&vs}
 	case map[string]interface{}:
 		m := v.(map[string]interface{})
-		m_ := NewMap()
+		m_ := make(map[Value]Value)
 		for k, v := range m {
-			m_[k] = FromJSONInterface(v)
+			m_[String(k)] = FromJSONInterface(v)
 		}
-		return m_
+		return Map{&m_}
 	default:
 		throw(fmt.Errorf("unexpected json type: %T", v))
 		return nil // not reached
 	}
 }
 
-// Eq compares two Value's.
-func Eq(a, b Value) bool {
+// DeepEq compares two Value's deeply.
+func DeepEq(a, b Value) bool {
 	// BUG(xiaq): valueEq uses reflect.DeepEqual to check the equality of two
 	// values, may can become wrong when values get more complex.
 	return reflect.DeepEqual(a, b)

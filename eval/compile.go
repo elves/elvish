@@ -585,7 +585,7 @@ func (cp *compiler) map_(n *parse.Primary) valuesOp {
 		poses[i] = n.MapPairs[i].Begin()
 	}
 	return func(ec *evalCtx) []Value {
-		m := NewMap()
+		m := make(map[Value]Value)
 		for i := 0; i < nn; i++ {
 			keys := keysOps[i](ec)
 			values := valuesOps[i](ec)
@@ -593,10 +593,10 @@ func (cp *compiler) map_(n *parse.Primary) valuesOp {
 				ec.errorf(poses[i], "%d keys but %d values", len(keys), len(values))
 			}
 			for j, key := range keys {
-				m[ToString(key)] = values[j]
+				m[key] = values[j]
 			}
 		}
-		return []Value{m}
+		return []Value{Map{&m}}
 	}
 }
 
