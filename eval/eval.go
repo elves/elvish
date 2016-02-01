@@ -167,19 +167,18 @@ func (ev *Evaler) Eval(name, text string, n *parse.Chunk) error {
 func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) error {
 	op, err := compile(name, text, makeScope(ev.global), n)
 	if err != nil {
+		out.close()
 		return err
 	}
 
 	ec, outdone := newTopEvalCtx(ev, name, text)
 	if out != nil {
-		outdone = nil
+		ec.ports[1].close()
 		ec.ports[1] = out
 	}
 	ex := ec.peval(op)
 	ec.closePorts()
-	if outdone != nil {
-		<-outdone
-	}
+	<-outdone
 
 	return ex
 }
