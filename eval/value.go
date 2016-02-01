@@ -355,7 +355,7 @@ func (e ExternalCmd) Repr() string {
 	return "<external " + e.Name + " >"
 }
 
-// Rat is a rational number
+// Rat is a rational number.
 type Rat struct {
 	b *big.Rat
 }
@@ -422,7 +422,7 @@ func FromJSONInterface(v interface{}) Value {
 		return m_
 	default:
 		throw(fmt.Errorf("unexpected json type: %T", v))
-		return nil // no reached
+		return nil // not reached
 	}
 }
 
