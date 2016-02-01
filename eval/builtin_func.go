@@ -171,7 +171,7 @@ func put(ec *evalCtx, args []Value) {
 	}
 }
 
-func putAll(ec *evalCtx, lists ...*List) {
+func putAll(ec *evalCtx, lists ...List) {
 	out := ec.ports[1].ch
 	for _, list := range lists {
 		for _, x := range *list.inner {
@@ -258,7 +258,7 @@ func unpack(ec *evalCtx) {
 	out := ec.ports[1].ch
 
 	for v := range in {
-		if list, ok := v.(*List); !ok {
+		if list, ok := v.(List); !ok {
 			throw(inputError)
 		} else {
 			for _, e := range *list.inner {
