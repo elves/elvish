@@ -52,13 +52,7 @@ func DontSearch(exe string) bool {
 
 // IsExecutable determines whether path refers to an executable file.
 func IsExecutable(path string) bool {
-	f, err := os.Open(path)
-	if err != nil {
-		return false
-	}
-	defer f.Close()
-
-	fi, err := f.Stat()
+	fi, err := os.Stat(path)
 	if err != nil {
 		return false
 	}
