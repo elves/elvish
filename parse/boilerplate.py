@@ -21,11 +21,11 @@ func (n *{parent}) addTo{field}(ch *{child}) {{
 def put_parse(out, typename, extraargs):
     extranames = ', '.join(a.split(' ')[0] for a in extraargs.split(', ')) if extraargs else ''
     print >>out, '''
-func parse{typename}(rd *reader{extraargs}) *{typename} {{
-    n := &{typename}{{node: node{{begin: rd.pos}}}}
-    n.parse(rd{extranames})
-    n.end = rd.pos
-    n.sourceText = rd.src[n.begin:n.end]
+func parse{typename}(ps *parser{extraargs}) *{typename} {{
+    n := &{typename}{{node: node{{begin: ps.pos}}}}
+    n.parse(ps{extranames})
+    n.end = ps.pos
+    n.sourceText = ps.src[n.begin:n.end]
     return n
 }}'''.format(typename=typename, extraargs=extraargs, extranames=extranames)
 
@@ -56,7 +56,7 @@ def main():
             in_type = m.group(1)
             continue
         m = re.match(
-            r'^func \(.* \*(.*)\) parse\(rd \*reader(.*?)\) {$', line)
+            r'^func \(.* \*(.*)\) parse\(ps \*parser(.*?)\) {$', line)
         if m:
             typename, extraargs = m.groups()
             put_parse(out, typename, extraargs)

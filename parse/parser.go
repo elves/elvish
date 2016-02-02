@@ -7,10 +7,10 @@ import (
 	"unicode/utf8"
 )
 
-// reader provides helpers for maintaining a current position within a string.
+// parser maintains some mutable states of parsing.
 //
 // NOTE: The str member is assumed to be valid UF-8.
-type reader struct {
+type parser struct {
 	src     string
 	pos     int
 	overEOF int
@@ -42,39 +42,39 @@ func newError(text string, shouldbe ...string) error {
 	return errors.New(buf.String())
 }
 
-func (rd *reader) peek() rune {
-	if rd.error != nil {
+func (ps *parser) peek() rune {
+	if ps.error != nil {
 		return ParseError
 	}
-	if rd.pos == len(rd.src) {
+	if ps.pos == len(ps.src) {
 		return EOF
 	}
-	r, _ := utf8.DecodeRuneInString(rd.src[rd.pos:])
+	r, _ := utf8.DecodeRuneInString(ps.src[ps.pos:])
 	return r
 }
 
-func (rd *reader) hasPrefix(prefix string) bool {
-	return strings.HasPrefix(rd.src[rd.pos:], prefix)
+func (ps *parser) hasPrefix(prefix string) bool {
+	return strings.HasPrefix(ps.src[ps.pos:], prefix)
 }
 
-func (rd *reader) next() rune {
-	if rd.error != nil {
+func (ps *parser) next() rune {
+	if ps.error != nil {
 		return ParseError
 	}
-	if rd.pos == len(rd.src) {
-		rd.overEOF += 1
+	if ps.pos == len(ps.src) {
+		ps.overEOF += 1
 		return EOF
 	}
-	r, s := utf8.DecodeRuneInString(rd.src[rd.pos:])
-	rd.pos += s
+	r, s := utf8.DecodeRuneInString(ps.src[ps.pos:])
+	ps.pos += s
 	return r
 }
 
-func (rd *reader) backup() {
-	if rd.overEOF > 0 {
-		rd.overEOF -= 1
+func (ps *parser) backup() {
+	if ps.overEOF > 0 {
+		ps.overEOF -= 1
 		return
 	}
-	_, s := utf8.DecodeLastRuneInString(rd.src[:rd.pos])
-	rd.pos -= s
+	_, s := utf8.DecodeLastRuneInString(ps.src[:ps.pos])
+	ps.pos -= s
 }
