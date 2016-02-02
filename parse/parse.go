@@ -518,7 +518,7 @@ func (pn *Primary) lbracket(rd *reader) {
 }
 
 func isBracedSep(r rune) bool {
-	return r == ',' || r == '-'
+	return r == ',' || r == '-' || isSpace(r)
 }
 
 var (
@@ -526,6 +526,7 @@ var (
 )
 
 // Braced = '{' Compound { (','|'-') Compounds } '}'
+// Comma = { Space } [ ',' ] { Space }
 func (pn *Primary) braced(rd *reader) {
 	pn.Type = Braced
 	parseSep(pn, rd, '{')
@@ -536,7 +537,10 @@ func (pn *Primary) braced(rd *reader) {
 			parseSep(pn, rd, '-')
 			pn.IsRange = append(pn.IsRange, true)
 		} else {
+			parseSpaces(pn, rd)
+			// optional, so ignore the return value
 			parseSep(pn, rd, ',')
+			parseSpaces(pn, rd)
 			pn.IsRange = append(pn.IsRange, false)
 		}
 		pn.addToBraced(parseCompound(rd, isBracedSep))
