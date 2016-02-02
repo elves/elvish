@@ -57,17 +57,15 @@ type Reader struct {
 	ar         *AsyncReader
 	ones       chan OneRead
 	ctrl       chan readerCtrl
-	ctrlAck    chan bool
 	currentSeq string
 }
 
 // NewReader creates a new Reader on the given terminal file.
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
-		ar:      NewAsyncReader(f),
-		ones:    make(chan OneRead, readerOutChanSize),
-		ctrl:    make(chan readerCtrl),
-		ctrlAck: make(chan bool),
+		ar:   NewAsyncReader(f),
+		ones: make(chan OneRead, readerOutChanSize),
+		ctrl: make(chan readerCtrl),
 	}
 	go rd.run()
 	return rd
@@ -80,7 +78,6 @@ func (rd *Reader) Chan() <-chan OneRead {
 
 func (rd *Reader) sendCtrl(c readerCtrl) {
 	rd.ctrl <- c
-	<-rd.ctrlAck
 }
 
 // Stop stops the reading process so that the file may be read by other
@@ -244,7 +241,6 @@ func (rd *Reader) stop() (quit bool) {
 	for {
 		select {
 		case ctrl := <-rd.ctrl:
-			rd.ctrlAck <- true
 			switch ctrl {
 			case readerQuit:
 				return true
@@ -266,7 +262,6 @@ func (rd *Reader) run() {
 			k, c, e := rd.readOne(r)
 			rd.ones <- OneRead{k, c, e}
 		case ctrl := <-rd.ctrl:
-			rd.ctrlAck <- true
 			switch ctrl {
 			case readerStop:
 				if rd.stop() {
