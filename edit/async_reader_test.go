@@ -6,13 +6,15 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/elves/elvish/sys"
 )
 
 // Pretty arbitrary numbers. May not reveal deadlocks on all machines.
 
 var (
-	NWrite    = 40960
-	Run       = 6400
+	NWrite    = 1024
+	Run       = 1024
 	Timeout   = 500 * time.Millisecond
 	MaxJitter = time.Millisecond
 )
@@ -39,8 +41,10 @@ func f(done chan struct{}) {
 
 func TestAsyncReaderDeadlock(t *testing.T) {
 	done := make(chan struct{})
+	isatty := sys.IsATTY(1)
+	rand.Seed(time.Now().UTC().UnixNano())
 	for i := 0; i < Run; i++ {
-		if i%100 == 0 {
+		if isatty {
 			fmt.Printf("\r%d/%d", i, Run)
 		}
 		go f(done)
@@ -49,7 +53,8 @@ func TestAsyncReaderDeadlock(t *testing.T) {
 			// no deadlock trigerred
 		case <-time.After(Timeout):
 			// deadlock
-			t.Fatalf("AsyncReader deadlock trigerred on run %d/%d", i, Run)
+			t.Errorf("%s", sys.DumpStack())
+			t.Fatalf("AsyncReader deadlock trigerred on run %d/%d, stack trace:\n%s", i, Run, sys.DumpStack())
 		}
 	}
 }
