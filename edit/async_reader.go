@@ -71,24 +71,18 @@ func (ar *AsyncReader) Start() {
 			ar.ackCtrl <- true
 			return
 		} else {
-		ReadRune:
-			for {
-				r, _, err := ar.bufrd.ReadRune()
-				switch err {
-				case nil:
-					// Deadlock when consumer goroutine is in .Quit!
-					ar.ch <- r
-				case io.EOF:
-					return
-				default:
-					// BUG(xiaq): AsyncReader relies on the undocumented fact
-					// that (*os.File).Read returns an *os.File.PathError
-					e := err.(*os.PathError).Err
-					if e == syscall.EWOULDBLOCK || e == syscall.EAGAIN {
-						break ReadRune
-					} else {
-						panic(err)
-					}
+			r, _, err := ar.bufrd.ReadRune()
+			switch err {
+			case nil:
+				ar.ch <- r
+			case io.EOF:
+				return
+			default:
+				// BUG(xiaq): AsyncReader relies on the undocumented fact
+				// that (*os.File).Read returns an *os.File.PathError
+				e := err.(*os.PathError).Err
+				if e != syscall.EWOULDBLOCK && e != syscall.EAGAIN {
+					panic(err)
 				}
 			}
 		}
@@ -99,6 +93,10 @@ func (ar *AsyncReader) Quit() {
 	_, err := ar.wCtrl.Write([]byte{'q'})
 	if err != nil {
 		panic(err)
+	}
+	select {
+	case <-ar.ch:
+	default:
 	}
 	<-ar.ackCtrl
 }
