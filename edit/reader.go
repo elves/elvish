@@ -220,8 +220,11 @@ func (rd *Reader) Start() {
 		select {
 		case r := <-runes:
 			k, c, e := rd.readOne(r)
-			// Deadlock when consumer goroutine is in .Quit!
-			rd.ones <- OneRead{k, c, e}
+			select {
+			case rd.ones <- OneRead{k, c, e}:
+			case <-rd.quit:
+				return
+			}
 		case <-rd.quit:
 			return
 		}
