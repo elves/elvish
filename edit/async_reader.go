@@ -13,12 +13,6 @@ const (
 	asyncReaderChanSize int = 128
 )
 
-const (
-	asyncReaderStop     byte = 's'
-	asyncReaderContinue      = 'c'
-	asyncReaderQuit          = 'q'
-)
-
 // AsyncReader delivers a Unix fd stream to a channel of runes.
 type AsyncReader struct {
 	rd           *os.File
@@ -41,7 +35,6 @@ func NewAsyncReader(rd *os.File) *AsyncReader {
 		panic(err)
 	}
 	ar.rCtrl, ar.wCtrl = r, w
-	go ar.run()
 	return ar
 }
 
@@ -49,16 +42,17 @@ func (ar *AsyncReader) Chan() <-chan rune {
 	return ar.ch
 }
 
-func (ar *AsyncReader) run() {
+func (ar *AsyncReader) Start() {
 	fd := int(ar.rd.Fd())
 	cfd := int(ar.rCtrl.Fd())
 	maxfd := max(fd, cfd)
 	fs := sys.NewFdSet()
 	var cBuf [1]byte
 
-	defer close(ar.ch)
-
-	sys.SetNonblock(fd, true)
+	if nonblock, _ := sys.GetNonblock(fd); !nonblock {
+		sys.SetNonblock(fd, true)
+		defer sys.SetNonblock(fd, false)
+	}
 
 	for {
 		fs.Set(fd, cfd)
@@ -74,38 +68,15 @@ func (ar *AsyncReader) run() {
 		if fs.IsSet(cfd) {
 			// Consume the written byte
 			ar.rCtrl.Read(cBuf[:])
-			switch cBuf[0] {
-			case asyncReaderQuit:
-				sys.SetNonblock(fd, false)
-				ar.ackCtrl <- true
-				return
-			case asyncReaderContinue:
-				ar.ackCtrl <- true
-			case asyncReaderStop:
-				sys.SetNonblock(fd, false)
-				ar.ackCtrl <- true
-			Stop:
-				for {
-					ar.rCtrl.Read(cBuf[:])
-					switch cBuf[0] {
-					case asyncReaderQuit:
-						ar.ackCtrl <- true
-						return
-					case asyncReaderContinue:
-						sys.SetNonblock(fd, true)
-						ar.ackCtrl <- true
-						break Stop
-					case asyncReaderStop:
-						ar.ackCtrl <- true
-					}
-				}
-			}
+			ar.ackCtrl <- true
+			return
 		} else {
 		ReadRune:
 			for {
 				r, _, err := ar.bufrd.ReadRune()
 				switch err {
 				case nil:
+					// Deadlock when consumer goroutine is in .Quit!
 					ar.ch <- r
 				case io.EOF:
 					return
@@ -124,22 +95,10 @@ func (ar *AsyncReader) run() {
 	}
 }
 
-func (ar *AsyncReader) ctrl(r byte) {
-	_, err := ar.wCtrl.Write([]byte{r})
+func (ar *AsyncReader) Quit() {
+	_, err := ar.wCtrl.Write([]byte{'q'})
 	if err != nil {
 		panic(err)
 	}
 	<-ar.ackCtrl
-}
-
-func (ar *AsyncReader) Stop() {
-	ar.ctrl(asyncReaderStop)
-}
-
-func (ar *AsyncReader) Continue() {
-	ar.ctrl(asyncReaderContinue)
-}
-
-func (ar *AsyncReader) Quit() {
-	ar.ctrl(asyncReaderQuit)
 }

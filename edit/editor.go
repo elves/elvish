@@ -184,8 +184,6 @@ func (ed *Editor) pushTip(more string) {
 }
 
 func (ed *Editor) refresh() error {
-	ed.reader.Stop()
-	defer ed.reader.Continue()
 	// Re-lex the line, unless we are in modeCompletion
 	if ed.mode != modeCompletion {
 		// XXX Ignore error
@@ -296,7 +294,8 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 	ed.refresh() // XXX(xiaq): Ignore possible error
 	ed.file.WriteString("\n")
 
-	ed.reader.Stop()
+	// ed.reader.Stop()
+	ed.reader.Quit()
 
 	// turn on autowrap
 	ed.file.WriteString("\033[?7h")
@@ -321,6 +320,7 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 
 	ed.writer.oldBuf.cells = nil
 	ones := ed.reader.Chan()
+	go ed.reader.Start()
 
 	err := ed.startReadLine()
 	if err != nil {

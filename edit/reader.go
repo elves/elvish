@@ -9,20 +9,6 @@ import (
 )
 
 const (
-	readerOutChanSize int = 16
-)
-
-// readerCtrl is used to control the internal reader goroutine.
-type readerCtrl byte
-
-// Possible values for readerCtrl.
-const (
-	readerStop readerCtrl = iota
-	readerContinue
-	readerQuit
-)
-
-const (
 	escTimeout = 10 * time.Millisecond
 	cprTimeout = 10 * time.Millisecond
 )
@@ -56,7 +42,7 @@ type OneRead struct {
 type Reader struct {
 	ar         *AsyncReader
 	ones       chan OneRead
-	ctrl       chan readerCtrl
+	quit       chan struct{}
 	currentSeq string
 }
 
@@ -64,10 +50,10 @@ type Reader struct {
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
 		ar:   NewAsyncReader(f),
-		ones: make(chan OneRead, readerOutChanSize),
-		ctrl: make(chan readerCtrl),
+		ones: make(chan OneRead),
+		quit: make(chan struct{}),
 	}
-	go rd.run()
+	// go rd.run()
 	return rd
 }
 
@@ -76,27 +62,10 @@ func (rd *Reader) Chan() <-chan OneRead {
 	return rd.ones
 }
 
-func (rd *Reader) sendCtrl(c readerCtrl) {
-	rd.ctrl <- c
-}
-
-// Stop stops the reading process so that the file may be read by other
-// readers.
-func (rd *Reader) Stop() {
-	rd.ar.Stop()
-	rd.sendCtrl(readerStop)
-}
-
-// Continue continues the reading process.
-func (rd *Reader) Continue() {
-	rd.ar.Continue()
-	rd.sendCtrl(readerContinue)
-}
-
 // Quit terminates the reading process.
 func (rd *Reader) Quit() {
 	rd.ar.Quit()
-	rd.sendCtrl(readerQuit)
+	rd.quit <- struct{}{}
 }
 
 func (rd *Reader) badEscSeq(msg string) {
@@ -237,39 +206,18 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 	return k, invalidPos, nil
 }
 
-func (rd *Reader) stop() (quit bool) {
-	for {
-		select {
-		case ctrl := <-rd.ctrl:
-			switch ctrl {
-			case readerQuit:
-				return true
-			case readerContinue:
-				return false
-			}
-		}
-	}
-}
-
-func (rd *Reader) run() {
-	defer close(rd.ones)
-
+func (rd *Reader) Start() {
 	runes := rd.ar.Chan()
+	go rd.ar.Start()
 
 	for {
 		select {
 		case r := <-runes:
 			k, c, e := rd.readOne(r)
+			// Deadlock when consumer goroutine is in .Quit!
 			rd.ones <- OneRead{k, c, e}
-		case ctrl := <-rd.ctrl:
-			switch ctrl {
-			case readerStop:
-				if rd.stop() {
-					return
-				}
-			case readerQuit:
-				return
-			}
+		case <-rd.quit:
+			return
 		}
 	}
 }
