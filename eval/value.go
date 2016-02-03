@@ -36,7 +36,7 @@ type Stringer interface {
 	String() string
 }
 
-// Indexer represents a Value that may be indexed.
+// Indexer represents a Value that may be indexing.
 type Indexer interface {
 	Index(idx Value) Value
 }
@@ -396,7 +396,7 @@ func (r Rat) String() string {
 func evalIndex(ec *evalCtx, l, r Value, lp, rp int) Value {
 	left, ok := l.(Indexer)
 	if !ok {
-		ec.errorf(lp, "%s value cannot be indexed", l.Type())
+		ec.errorf(lp, "%s value cannot be indexing", l.Type())
 	}
 
 	right, ok := r.(String)

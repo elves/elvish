@@ -186,16 +186,16 @@ func (cp *compiler) assignment(n *parse.Assignment) op {
 	var variableOps []variableOp
 	if n.Dst.Head.Type == parse.Braced {
 		compounds := n.Dst.Head.Braced
-		indexeds := make([]*parse.Indexed, len(compounds))
+		indexings := make([]*parse.Indexing, len(compounds))
 		for i, cn := range compounds {
-			if len(cn.Indexeds) != 1 {
+			if len(cn.Indexings) != 1 {
 				cp.errorf(cn.Begin(), "must be a variable spec")
 			}
-			indexeds[i] = cn.Indexeds[0]
+			indexings[i] = cn.Indexings[0]
 		}
-		variableOps = cp.indexedVars(indexeds, "must be a variable spc")
+		variableOps = cp.indexingVars(indexings, "must be a variable spc")
 	} else {
-		variableOps = []variableOp{cp.indexedVar(n.Dst, "must be a variable spec or a braced list of those")}
+		variableOps = []variableOp{cp.indexingVar(n.Dst, "must be a variable spec or a braced list of those")}
 	}
 
 	valuesOp := cp.compound(n.Src)
@@ -209,8 +209,8 @@ func (cp *compiler) assignment(n *parse.Assignment) op {
 	}
 }
 
-func (cp *compiler) indexedVar(n *parse.Indexed, msg string) variableOp {
-	// XXX will we be using indexedVar for purposes other than setting?
+func (cp *compiler) indexingVar(n *parse.Indexing, msg string) variableOp {
+	// XXX will we be using indexingVar for purposes other than setting?
 	varname := cp.literal(n.Head, msg)
 	p := n.Begin()
 
@@ -247,7 +247,7 @@ func (cp *compiler) indexedVar(n *parse.Indexed, msg string) variableOp {
 			for i, op := range indexOps {
 				indexer, ok := variable.Get().(IndexVarer)
 				if !ok {
-					ec.errorf( /* from p to */ indexBegins[i], "cannot be indexed for setting (type %T)", variable.Get())
+					ec.errorf( /* from p to */ indexBegins[i], "cannot be indexing for setting (type %T)", variable.Get())
 				}
 				values := op(ec)
 				if len(values) != 1 {
@@ -340,11 +340,11 @@ func (cp *compiler) redir(n *parse.Redir) op {
 }
 
 func (cp *compiler) compound(n *parse.Compound) valuesOp {
-	if len(n.Indexeds) == 1 {
-		return cp.indexed(n.Indexeds[0])
+	if len(n.Indexings) == 1 {
+		return cp.indexing(n.Indexings[0])
 	}
 
-	ops := cp.indexeds(n.Indexeds)
+	ops := cp.indexings(n.Indexings)
 
 	return func(ec *evalCtx) []Value {
 		// start with a single "", do Cartesian products one by one
@@ -392,7 +392,7 @@ func (cp *compiler) array(n *parse.Array) valuesOp {
 	return catOps(cp.compounds(n.Compounds))
 }
 
-func (cp *compiler) indexed(n *parse.Indexed) valuesOp {
+func (cp *compiler) indexing(n *parse.Indexing) valuesOp {
 	if len(n.Indicies) == 0 {
 		return cp.primary(n.Head)
 	}
@@ -406,7 +406,7 @@ func (cp *compiler) indexed(n *parse.Indexed) valuesOp {
 	}
 
 	return func(ec *evalCtx) []Value {
-		v := ec.must(headOp(ec), "the indexed value", p).mustOne()
+		v := ec.must(headOp(ec), "the indexing value", p).mustOne()
 		for i, indexOp := range indexOps {
 			index := ec.must(indexOp(ec), "the index", p).mustOne()
 			v = evalIndex(ec, v, index, p, indexPoses[i])

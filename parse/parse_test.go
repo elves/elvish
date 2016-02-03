@@ -61,56 +61,56 @@ var goodCases = []struct {
 
 	// Compound
 	{`a b"foo"$c'xyz'`, a(ast{"Compound", fs{
-		"Indexeds": []string{"b", `"foo"`, "$c", "'xyz'"}}})},
+		"Indexings": []string{"b", `"foo"`, "$c", "'xyz'"}}})},
 
-	// Indexed
-	{"a $b[c][d][e]", a(ast{"Compound/Indexed", fs{
+	// Indexing
+	{"a $b[c][d][e]", a(ast{"Compound/Indexing", fs{
 		"Head": "$b", "Indicies": []string{"c", "d", "e"},
 	}})},
 
 	// Primary
 	//
 	// Single quote
-	{"a 'b'", a(ast{"Compound/Indexed/Primary", fs{
+	{"a 'b'", a(ast{"Compound/Indexing/Primary", fs{
 		"text": "'b'", "Type": SingleQuoted,
 	}})},
 	// Double quote
-	{`a "b"`, a(ast{"Compound/Indexed/Primary", fs{
+	{`a "b"`, a(ast{"Compound/Indexing/Primary", fs{
 		"text": `"b"`, "Type": DoubleQuoted,
 	}})},
 	// List
 	{"a [] [ ] [1] [ 2] [3 ] [ 4 5 6 7 ]", a(
-		ast{"Compound/Indexed/Primary", fs{"Type": List}},
-		ast{"Compound/Indexed/Primary", fs{"Type": List}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{"Type": List}},
+		ast{"Compound/Indexing/Primary", fs{"Type": List}},
+		ast{"Compound/Indexing/Primary", fs{
 			"Type": List,
 			"List": ast{"Array", fs{"Compounds": []string{"1"}}}}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type": List,
 			"List": ast{"Array", fs{"Compounds": []string{"2"}}}}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type": List,
 			"List": ast{"Array", fs{"Compounds": []string{"3"}}}}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type": List,
 			"List": ast{"Array", fs{
 				"Compounds": []string{"4", "5", "6", "7"}}}}},
 	)},
 	// Map
 	{"a [&k v] [ &k v] [&k v ] [ &k v ] [&a b &c d &e f]", a(
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
 			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
 			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
 			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
 			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type": Map,
 			"MapPairs": []ast{
 				ast{"MapPair", fs{"Key": "a", "Value": "b"}},
@@ -120,24 +120,24 @@ var goodCases = []struct {
 	)},
 	// Empty map
 	{"a [&] [ &] [& ] [ & ]", a(
-		ast{"Compound/Indexed/Primary", fs{"Type": Map, "text": "[&]"}},
-		ast{"Compound/Indexed/Primary", fs{"Type": Map, "text": "[ &]"}},
-		ast{"Compound/Indexed/Primary", fs{"Type": Map, "text": "[& ]"}},
-		ast{"Compound/Indexed/Primary", fs{"Type": Map, "text": "[ & ]"}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Map, "text": "[&]"}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Map, "text": "[ &]"}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Map, "text": "[& ]"}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Map, "text": "[ & ]"}},
 	)},
 	// Lambda
 	{"a []{} [ ]{ } []{ echo 233 } [ $x $y ]{puts $x $y}", a(
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type": Lambda,
 		}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type": Lambda,
 		}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type":  Lambda,
 			"Chunk": " echo 233 ",
 		}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type":  Lambda,
 			"List":  "$x $y ",
 			"Chunk": "puts $x $y",
@@ -145,8 +145,8 @@ var goodCases = []struct {
 	)},
 	// Output capture
 	{"a () (b;c)", a(
-		ast{"Compound/Indexed/Primary", fs{"Type": OutputCapture}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{"Type": OutputCapture}},
+		ast{"Compound/Indexing/Primary", fs{
 			"Type": OutputCapture, "Chunk": "b;c",
 		}})},
 	// Output capture with backquotes
@@ -155,13 +155,13 @@ var goodCases = []struct {
 	{"a `a (b `c`)` `d [`e`]`", a("`a (b `c`)`", "`d [`e`]`")},
 	// Exitus capture
 	{"a ?() ?(b;c)", a(
-		ast{"Compound/Indexed/Primary", fs{"Type": ErrorCapture}},
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{"Type": ErrorCapture}},
+		ast{"Compound/Indexing/Primary", fs{
 			"Type": ErrorCapture, "Chunk": "b;c",
 		}})},
 	// Braced
 	{"a {a,c-f}", a(
-		ast{"Compound/Indexed/Primary", fs{
+		ast{"Compound/Indexing/Primary", fs{
 			"Type":    Braced,
 			"Braced":  []string{"a", "c", "f"},
 			"IsRange": []bool{false, true}}})},

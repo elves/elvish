@@ -590,14 +590,14 @@ func (pn *Primary) parse(ps *parser, cut runePred) {
 	}
 }
 
-// Indexed = Primary { '[' Array ']' }
-type Indexed struct {
+// Indexing = Primary { '[' Array ']' }
+type Indexing struct {
 	node
 	Head     *Primary
 	Indicies []*Array
 }
 
-func startsIndexed(r rune, cut runePred) bool {
+func startsIndexing(r rune, cut runePred) bool {
 	return startsPrimary(r, cut)
 }
 
@@ -605,7 +605,7 @@ var (
 	shouldBeArray = newError("", "spaced")
 )
 
-func (in *Indexed) parse(ps *parser, cut runePred) {
+func (in *Indexing) parse(ps *parser, cut runePred) {
 	in.setHead(parsePrimary(ps, cut))
 	for parseSep(in, ps, '[') {
 		if !startsArray(ps.peek()) {
@@ -619,19 +619,19 @@ func (in *Indexed) parse(ps *parser, cut runePred) {
 	}
 }
 
-// Compound = { Indexed }
+// Compound = { Indexing }
 type Compound struct {
 	node
-	Indexeds []*Indexed
+	Indexings []*Indexing
 }
 
 func startsCompound(r rune, cut runePred) bool {
-	return startsIndexed(r, cut)
+	return startsIndexing(r, cut)
 }
 
 func (cn *Compound) parse(ps *parser, cut runePred) {
-	for startsIndexed(ps.peek(), cut) {
-		cn.addToIndexeds(parseIndexed(ps, cut))
+	for startsIndexing(ps.peek(), cut) {
+		cn.addToIndexings(parseIndexing(ps, cut))
 	}
 }
 
@@ -646,7 +646,7 @@ func isSpace(r rune) bool {
 }
 
 func startsArray(r rune) bool {
-	return isSpace(r) || startsIndexed(r, nil)
+	return isSpace(r) || startsIndexing(r, nil)
 }
 
 func (sn *Array) parse(ps *parser) {
@@ -826,7 +826,7 @@ loop:
 // Assignment = Primary '=' Compound
 type Assignment struct {
 	node
-	Dst *Indexed
+	Dst *Indexing
 	Src *Compound
 }
 
@@ -836,7 +836,7 @@ func (an *Assignment) parse(ps *parser, cut runePred) {
 	cutWithEqual := runePred(func(r rune) bool {
 		return cut.matches(r) || r == '='
 	})
-	an.setDst(parseIndexed(ps, cutWithEqual))
+	an.setDst(parseIndexing(ps, cutWithEqual))
 	if !parseSep(an, ps, '=') {
 		ps.error = shouldBeEqual
 		return

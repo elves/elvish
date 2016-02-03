@@ -28,18 +28,18 @@ func formHead(n parse.Node) (parse.Node, string) {
 }
 
 func simpleCompound(pn *parse.Primary) (*parse.Compound, string) {
-	thisIndexed, ok := pn.Parent().(*parse.Indexed)
+	thisIndexing, ok := pn.Parent().(*parse.Indexing)
 	if !ok {
 		return nil, ""
 	}
 
-	thisCompound, ok := thisIndexed.Parent().(*parse.Compound)
+	thisCompound, ok := thisIndexing.Parent().(*parse.Compound)
 	if !ok {
 		return nil, ""
 	}
 
 	head := ""
-	for _, in := range thisCompound.Indexeds {
+	for _, in := range thisCompound.Indexings {
 		if len(in.Indicies) > 0 {
 			return nil, ""
 		}
@@ -50,7 +50,7 @@ func simpleCompound(pn *parse.Primary) (*parse.Compound, string) {
 			return nil, ""
 		}
 		head += in.Head.Value
-		if in == thisIndexed {
+		if in == thisIndexing {
 			break
 		}
 	}

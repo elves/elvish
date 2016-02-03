@@ -75,8 +75,8 @@ func (m *muster) mustOneNonNegativeInt() int {
 }
 
 func onePrimary(cn *parse.Compound) *parse.Primary {
-	if len(cn.Indexeds) == 1 && len(cn.Indexeds[0].Indicies) == 0 {
-		return cn.Indexeds[0].Head
+	if len(cn.Indexings) == 1 && len(cn.Indexings[0].Indicies) == 0 {
+		return cn.Indexings[0].Head
 	}
 	return nil
 }

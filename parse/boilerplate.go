@@ -46,26 +46,26 @@ func parsePrimary(ps *parser, cut runePred) *Primary {
 	return n
 }
 
-func (n *Indexed) setHead(ch *Primary) {
+func (n *Indexing) setHead(ch *Primary) {
 	n.Head = ch
 	addChild(n, ch)
 }
 
-func (n *Indexed) addToIndicies(ch *Array) {
+func (n *Indexing) addToIndicies(ch *Array) {
 	n.Indicies = append(n.Indicies, ch)
 	addChild(n, ch)
 }
 
-func parseIndexed(ps *parser, cut runePred) *Indexed {
-	n := &Indexed{node: node{begin: ps.pos}}
+func parseIndexing(ps *parser, cut runePred) *Indexing {
+	n := &Indexing{node: node{begin: ps.pos}}
 	n.parse(ps, cut)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
 }
 
-func (n *Compound) addToIndexeds(ch *Indexed) {
-	n.Indexeds = append(n.Indexeds, ch)
+func (n *Compound) addToIndexings(ch *Indexing) {
+	n.Indexings = append(n.Indexings, ch)
 	addChild(n, ch)
 }
 
@@ -159,7 +159,7 @@ func parseForm(ps *parser, cut runePred) *Form {
 	return n
 }
 
-func (n *Assignment) setDst(ch *Indexed) {
+func (n *Assignment) setDst(ch *Indexing) {
 	n.Dst = ch
 	addChild(n, ch)
 }

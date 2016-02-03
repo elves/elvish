@@ -34,10 +34,10 @@ func (cp *compiler) assignments(ns []*parse.Assignment) []op {
 	return ops
 }
 
-func (cp *compiler) indexedVars(ns []*parse.Indexed, msg string) []variableOp {
+func (cp *compiler) indexingVars(ns []*parse.Indexing, msg string) []variableOp {
 	ops := make([]variableOp, len(ns))
 	for i, n := range ns {
-		ops[i] = cp.indexedVar(n, msg)
+		ops[i] = cp.indexingVar(n, msg)
 	}
 	return ops
 }
@@ -66,10 +66,10 @@ func (cp *compiler) arrays(ns []*parse.Array) []valuesOp {
 	return ops
 }
 
-func (cp *compiler) indexeds(ns []*parse.Indexed) []valuesOp {
+func (cp *compiler) indexings(ns []*parse.Indexing) []valuesOp {
 	ops := make([]valuesOp, len(ns))
 	for i, n := range ns {
-		ops[i] = cp.indexed(n)
+		ops[i] = cp.indexing(n)
 	}
 	return ops
 }
