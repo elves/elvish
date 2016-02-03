@@ -2,10 +2,10 @@ package sys
 
 import "runtime"
 
-func DumpStack() {
+func DumpStack() string {
 	buf := make([]byte, 1024)
 	for runtime.Stack(buf, true) == cap(buf) {
 		buf = make([]byte, cap(buf)*2)
 	}
-	print(string(buf))
+	return string(buf)
 }

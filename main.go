@@ -132,7 +132,7 @@ var usage = `Usage:
 func rescue() {
 	r := recover()
 	if r != nil {
-		sys.DumpStack()
+		print(sys.DumpStack())
 		println("execing recovery shell /bin/sh")
 		syscall.Exec("/bin/sh", []string{}, os.Environ())
 	}

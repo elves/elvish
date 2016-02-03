@@ -353,7 +353,7 @@ MainLoop:
 				continue MainLoop
 			case syscall.SIGQUIT:
 				// Emulate default behavior
-				sys.DumpStack()
+				print(sys.DumpStack())
 				os.Exit(1)
 			default:
 				// Other signals: turn off signal catching, and resend
