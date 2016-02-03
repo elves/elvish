@@ -4,6 +4,7 @@ package edit
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
 	"syscall"
 
@@ -57,7 +58,7 @@ type Editor struct {
 	file      *os.File
 	writer    *writer
 	reader    *Reader
-	sigs      <-chan os.Signal
+	sigs      chan os.Signal
 	histories []string
 	store     *store.Store
 	evaler    *eval.Evaler
@@ -151,7 +152,7 @@ func (ed *Editor) nextHistory() bool {
 }
 
 // NewEditor creates an Editor.
-func NewEditor(file *os.File, sigs <-chan os.Signal, ev *eval.Evaler, st *store.Store) *Editor {
+func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.Store) *Editor {
 	seq := -1
 	if st != nil {
 		var err error
@@ -350,6 +351,22 @@ MainLoop:
 				goto MainLoop
 			case syscall.SIGWINCH:
 				continue MainLoop
+			case syscall.SIGQUIT:
+				// Emulate default behavior
+				sys.DumpStack()
+				os.Exit(1)
+			default:
+				// Other signals: turn off signal catching, and resend
+				signal.Stop(ed.sigs)
+				p, err := os.FindProcess(os.Getpid())
+				if err != nil {
+					panic(err)
+				}
+				err = p.Signal(sig)
+				if err != nil {
+					panic(err)
+				}
+				signal.Notify(ed.sigs)
 			}
 		case or := <-ones:
 			// Alert about error

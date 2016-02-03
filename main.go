@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"os/user"
-	"runtime"
 	"syscall"
 
 	"github.com/elves/elvish/edit"
@@ -16,6 +15,7 @@ import (
 	"github.com/elves/elvish/osutil"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/sys"
 )
 
 const (
@@ -132,11 +132,7 @@ var usage = `Usage:
 func rescue() {
 	r := recover()
 	if r != nil {
-		buf := make([]byte, 1024)
-		for runtime.Stack(buf, true) == cap(buf) {
-			buf = make([]byte, cap(buf)*2)
-		}
-		print(string(buf))
+		sys.DumpStack()
 		println("execing recovery shell /bin/sh")
 		syscall.Exec("/bin/sh", []string{}, os.Environ())
 	}
