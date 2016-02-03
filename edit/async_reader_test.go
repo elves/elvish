@@ -32,7 +32,7 @@ func f(done chan struct{}) {
 	fmt.Fprintf(w, "%*s", NWrite, "")
 	go func() {
 		jitter()
-		ar.Start()
+		ar.Run()
 	}()
 	jitter()
 	ar.Quit()

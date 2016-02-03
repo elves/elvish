@@ -42,7 +42,7 @@ func (ar *AsyncReader) Chan() <-chan rune {
 	return ar.ch
 }
 
-func (ar *AsyncReader) Start() {
+func (ar *AsyncReader) Run() {
 	fd := int(ar.rd.Fd())
 	cfd := int(ar.rCtrl.Fd())
 	maxfd := max(fd, cfd)

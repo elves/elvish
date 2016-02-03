@@ -321,7 +321,7 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 
 	ed.writer.oldBuf.cells = nil
 	ones := ed.reader.Chan()
-	go ed.reader.Start()
+	go ed.reader.Run()
 
 	err := ed.startReadLine()
 	if err != nil {

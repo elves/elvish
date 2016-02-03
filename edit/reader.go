@@ -16,6 +16,22 @@ const (
 // special rune value used internally to represent a timeout
 const runeTimeout rune = -1
 
+// Reader converts a stream of runes into a stream of Keys
+type Reader struct {
+	ar         *AsyncReader
+	ones       chan OneRead
+	quit       chan struct{}
+	currentSeq string
+}
+
+// OneRead is a single unit that is read, which is either a key, a CPR, or an
+// error.
+type OneRead struct {
+	Key Key
+	CPR pos
+	Err error
+}
+
 // BadEscSeq indicates that a bad escape sequence is read from the terminal.
 type BadEscSeq struct {
 	seq string
@@ -30,20 +46,8 @@ func (bes *BadEscSeq) Error() string {
 	return fmt.Sprintf("bad escape sequence %q: %s", bes.seq, bes.msg)
 }
 
-// OneRead is a single unit that is read, which is either a key, a CPR, or an
-// error.
-type OneRead struct {
-	Key Key
-	CPR pos
-	Err error
-}
-
-// Reader converts a stream of runes into a stream of Keys
-type Reader struct {
-	ar         *AsyncReader
-	ones       chan OneRead
-	quit       chan struct{}
-	currentSeq string
+func (rd *Reader) badEscSeq(msg string) {
+	errutil.Throw(newBadEscSeq(rd.currentSeq, msg))
 }
 
 // NewReader creates a new Reader on the given terminal file.
@@ -62,6 +66,25 @@ func (rd *Reader) Chan() <-chan OneRead {
 	return rd.ones
 }
 
+func (rd *Reader) Run() {
+	runes := rd.ar.Chan()
+	go rd.ar.Run()
+
+	for {
+		select {
+		case r := <-runes:
+			k, c, e := rd.readOne(r)
+			select {
+			case rd.ones <- OneRead{k, c, e}:
+			case <-rd.quit:
+				return
+			}
+		case <-rd.quit:
+			return
+		}
+	}
+}
+
 // Quit terminates the reading process.
 func (rd *Reader) Quit() {
 	rd.ar.Quit()
@@ -72,60 +95,6 @@ func (rd *Reader) Close() {
 	rd.ar.Close()
 	close(rd.ones)
 	close(rd.quit)
-}
-
-func (rd *Reader) badEscSeq(msg string) {
-	errutil.Throw(newBadEscSeq(rd.currentSeq, msg))
-}
-
-func (rd *Reader) readRune(d time.Duration) rune {
-	select {
-	case r := <-rd.ar.Chan():
-		rd.currentSeq += string(r)
-		return r
-	case <-After(d):
-		return runeTimeout
-	}
-}
-
-func (rd *Reader) readAssertedRune(r rune, d time.Duration) {
-	if rd.readRune(d) != r {
-		rd.badEscSeq("Expect " + string(r))
-	}
-}
-
-func xtermModify(k Key, mod int, seq string) (Key, error) {
-	switch mod {
-	case 0:
-		// do nothing
-	case 2:
-		k.Mod |= Shift
-	case 3:
-		k.Mod |= Alt
-	case 4:
-		k.Mod |= Shift | Alt
-	case 5:
-		k.Mod |= Ctrl
-	case 6:
-		k.Mod |= Shift | Ctrl
-	case 7:
-		k.Mod |= Alt | Ctrl
-	case 8:
-		k.Mod |= Shift | Alt | Ctrl
-	default:
-		return ZeroKey, newBadEscSeq(seq, "")
-	}
-	return k, nil
-}
-
-// G3 style function key sequences: ^[O followed by exactly one character.
-var g3Seq = map[rune]rune{
-	// F1-F4: xterm, libvte and tmux
-	'P': F1, 'Q': F2,
-	'R': F3, 'S': F4,
-
-	// Home and End: libvte
-	'H': Home, 'F': End,
 }
 
 func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
@@ -212,23 +181,24 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 	return k, invalidPos, nil
 }
 
-func (rd *Reader) Start() {
-	runes := rd.ar.Chan()
-	go rd.ar.Start()
-
-	for {
-		select {
-		case r := <-runes:
-			k, c, e := rd.readOne(r)
-			select {
-			case rd.ones <- OneRead{k, c, e}:
-			case <-rd.quit:
-				return
-			}
-		case <-rd.quit:
-			return
-		}
+func (rd *Reader) readRune(d time.Duration) rune {
+	select {
+	case r := <-rd.ar.Chan():
+		rd.currentSeq += string(r)
+		return r
+	case <-After(d):
+		return runeTimeout
 	}
+}
+
+// G3 style function key sequences: ^[O followed by exactly one character.
+var g3Seq = map[rune]rune{
+	// F1-F4: xterm, libvte and tmux
+	'P': F1, 'Q': F2,
+	'R': F3, 'S': F4,
+
+	// Home and End: libvte
+	'H': Home, 'F': End,
 }
 
 var keyByLast = map[rune]Key{
@@ -292,4 +262,28 @@ func parseCSI(nums []int, last rune, seq string) (Key, error) {
 	}
 
 	return ZeroKey, newBadEscSeq(seq, "")
+}
+
+func xtermModify(k Key, mod int, seq string) (Key, error) {
+	switch mod {
+	case 0:
+		// do nothing
+	case 2:
+		k.Mod |= Shift
+	case 3:
+		k.Mod |= Alt
+	case 4:
+		k.Mod |= Shift | Alt
+	case 5:
+		k.Mod |= Ctrl
+	case 6:
+		k.Mod |= Shift | Ctrl
+	case 7:
+		k.Mod |= Alt | Ctrl
+	case 8:
+		k.Mod |= Shift | Alt | Ctrl
+	default:
+		return ZeroKey, newBadEscSeq(seq, "")
+	}
+	return k, nil
 }
