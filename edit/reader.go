@@ -68,6 +68,12 @@ func (rd *Reader) Quit() {
 	rd.quit <- struct{}{}
 }
 
+func (rd *Reader) Close() {
+	rd.ar.Close()
+	close(rd.ones)
+	close(rd.quit)
+}
+
 func (rd *Reader) badEscSeq(msg string) {
 	errutil.Throw(newBadEscSeq(rd.currentSeq, msg))
 }

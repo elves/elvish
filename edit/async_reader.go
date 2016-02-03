@@ -102,3 +102,10 @@ func (ar *AsyncReader) Quit() {
 	}
 	<-ar.ackCtrl
 }
+
+func (ar *AsyncReader) Close() {
+	ar.rCtrl.Close()
+	ar.wCtrl.Close()
+	close(ar.ackCtrl)
+	close(ar.ch)
+}
