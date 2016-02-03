@@ -2,6 +2,7 @@ package edit
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -10,10 +11,15 @@ import (
 // Pretty arbitrary numbers. May not reveal deadlocks on all machines.
 
 var (
-	NWrite  = 40960
-	Run     = 6400
-	Timeout = 500 * time.Millisecond
+	NWrite    = 40960
+	Run       = 6400
+	Timeout   = 500 * time.Millisecond
+	MaxJitter = time.Millisecond
 )
+
+func jitter() {
+	time.Sleep(time.Duration(float64(MaxJitter) * rand.Float64()))
+}
 
 func f(done chan struct{}) {
 	r, w, _ := os.Pipe()
@@ -22,7 +28,11 @@ func f(done chan struct{}) {
 	ar := NewAsyncReader(r)
 	defer ar.Close()
 	fmt.Fprintf(w, "%*s", NWrite, "")
-	go ar.Start()
+	go func() {
+		jitter()
+		ar.Start()
+	}()
+	jitter()
 	ar.Quit()
 	done <- struct{}{}
 }
