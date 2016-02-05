@@ -154,7 +154,7 @@ func bools(bs ...bool) []Value {
 }
 
 func mustParse(t *testing.T, name, text string) *parse.Chunk {
-	n, err := parse.Parse("<eval_test>", text)
+	n, err := parse.Parse(text)
 	if err != nil {
 		t.Fatalf("Parser(%q) error: %s", text, err)
 	}

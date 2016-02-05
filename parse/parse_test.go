@@ -296,7 +296,7 @@ func checkAST(n Node, want ast) error {
 
 func TestParse(t *testing.T) {
 	for _, tc := range goodCases {
-		bn, err := Parse("test", tc.src)
+		bn, err := Parse(tc.src)
 		if err != nil {
 			t.Errorf("Parse(%q) returns error: %v", tc.src, err)
 		}
