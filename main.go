@@ -24,32 +24,31 @@ const (
 	outChanLeader = "▶ "
 )
 
-func newEvalerAndStore() (*eval.Evaler, *store.Store) {
-	dataDir, err := store.EnsureDataDir()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Warning: cannot create data dir ~/.elvish")
-	}
+var usage = `Usage:
+    elvish
+    elvish <script>
+`
 
-	var st *store.Store
-	if err == nil {
-		st, err = store.NewStore(dataDir)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Warning: cannot connect to store:", err)
-		}
-	}
+func main() {
+	defer rescue()
 
-	return eval.NewEvaler(st), st
+	switch len(os.Args) {
+	case 1:
+		interact()
+	case 2:
+		script(os.Args[1])
+	default:
+		fmt.Fprintf(os.Stderr, usage)
+		os.Exit(1)
+	}
 }
 
-func printError(err error) {
-	if err == nil {
-		return
-	}
-	if ce, ok := err.(*errutil.ContextualError); ok {
-		fmt.Fprint(os.Stderr, ce.Pprint())
-	} else {
-		eval.PprintError(err)
-		fmt.Println()
+func rescue() {
+	r := recover()
+	if r != nil {
+		print(sys.DumpStack())
+		println("execing recovery shell /bin/sh")
+		syscall.Exec("/bin/sh", []string{}, os.Environ())
 	}
 }
 
@@ -124,30 +123,31 @@ func script(fname string) {
 	}
 }
 
-var usage = `Usage:
-    elvish
-    elvish <script>
-`
-
-func rescue() {
-	r := recover()
-	if r != nil {
-		print(sys.DumpStack())
-		println("execing recovery shell /bin/sh")
-		syscall.Exec("/bin/sh", []string{}, os.Environ())
+func newEvalerAndStore() (*eval.Evaler, *store.Store) {
+	dataDir, err := store.EnsureDataDir()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Warning: cannot create data dir ~/.elvish")
 	}
+
+	var st *store.Store
+	if err == nil {
+		st, err = store.NewStore(dataDir)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Warning: cannot connect to store:", err)
+		}
+	}
+
+	return eval.NewEvaler(st), st
 }
 
-func main() {
-	defer rescue()
-
-	switch len(os.Args) {
-	case 1:
-		interact()
-	case 2:
-		script(os.Args[1])
-	default:
-		fmt.Fprintf(os.Stderr, usage)
-		os.Exit(1)
+func printError(err error) {
+	if err == nil {
+		return
+	}
+	if ce, ok := err.(*errutil.ContextualError); ok {
+		fmt.Fprint(os.Stderr, ce.Pprint())
+	} else {
+		eval.PprintError(err)
+		fmt.Println()
 	}
 }
