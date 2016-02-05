@@ -147,7 +147,9 @@ func (fn *Form) parse(ps *parser, cut runePred) {
 		parseSpaces(fn, ps)
 	}
 	if !startsCompound(ps.peek(), cut) {
-		if len(fn.Assignments) == 0 {
+		if len(fn.Assignments) > 0 {
+			return
+		} else {
 			ps.error(shouldBeCompound)
 		}
 	}
@@ -192,6 +194,10 @@ loop:
 // assignment to fn.Assignments and returns true. Otherwise it rewinds the
 // parser and returns false.
 func (fn *Form) tryAssignment(ps *parser, cut runePred) bool {
+	if !startsIndexing(ps.peek(), cut) || ps.peek() == '=' {
+		return false
+	}
+
 	begin := ps.pos
 	var ok bool
 	an := parseAssignment(ps, cut, &ok)
