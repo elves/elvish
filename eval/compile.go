@@ -600,10 +600,15 @@ func (cp *compiler) popScope() {
 
 func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 	// Collect argument names
-	argNames := make([]string, len(n.List.Compounds))
-	for i, arg := range n.List.Compounds {
-		name := mustString(cp, arg, "expect string")
-		argNames[i] = name
+	var argNames []string
+	if n.List != nil {
+		argNames = make([]string, len(n.List.Compounds))
+		for i, arg := range n.List.Compounds {
+			name := mustString(cp, arg, "expect string")
+			argNames[i] = name
+		}
+	} else {
+		argNames = []string{}
 	}
 
 	// XXX The fiddlings with cp.capture is likely wrong.

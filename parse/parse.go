@@ -475,21 +475,12 @@ func (pn *Primary) lbracket(ps *parser) {
 			ps.error = shouldBeRBracket
 			return
 		}
-		if !parseSep(pn, ps, '{') {
-			// List
+		if parseSep(pn, ps, '{') {
+			pn.lambda(ps)
+		} else {
 			pn.Type = List
-			return
 		}
-		pn.Type = Lambda
-		if !startsChunk(ps.peek(), nil) && ps.peek() != '}' {
-			ps.error = shouldBeChunk
-			return
-		}
-		pn.setChunk(parseChunk(ps, nil))
-		if !parseSep(pn, ps, '}') {
-			ps.error = shouldBeRBrace
-			return
-		}
+
 	case r == '&':
 		pn.Type = Map
 		// parseSep(pn, ps, '&')
@@ -527,9 +518,16 @@ var (
 
 // Braced = '{' Compound { (','|'-') Compounds } '}'
 // Comma = { Space } [ ',' ] { Space }
-func (pn *Primary) braced(ps *parser) {
-	pn.Type = Braced
+func (pn *Primary) lbrace(ps *parser) {
 	parseSep(pn, ps, '{')
+
+	if r := ps.peek(); r == ';' || r == '\n' || isSpace(r) {
+		pn.lambda(ps)
+		return
+	}
+
+	pn.Type = Braced
+
 	// XXX: we don't actually know what happens with an empty Compound.
 	pn.addToBraced(parseCompound(ps, isBracedSep))
 	for isBracedSep(ps.peek()) {
@@ -547,6 +545,19 @@ func (pn *Primary) braced(ps *parser) {
 	}
 	if !parseSep(pn, ps, '}') {
 		ps.error = shouldBeBraceSepOrRBracket
+	}
+}
+
+// lambda parses a lambda expression. The opening brace has been seen.
+func (pn *Primary) lambda(ps *parser) {
+	pn.Type = Lambda
+	if !startsChunk(ps.peek(), nil) && ps.peek() != '}' {
+		ps.error = shouldBeChunk
+		return
+	}
+	pn.setChunk(parseChunk(ps, nil))
+	if !parseSep(pn, ps, '}') {
+		ps.error = shouldBeRBrace
 	}
 }
 
@@ -584,7 +595,7 @@ func (pn *Primary) parse(ps *parser, cut runePred) {
 	case '[':
 		pn.lbracket(ps)
 	case '{':
-		pn.braced(ps)
+		pn.lbrace(ps)
 	default:
 		pn.bareword(ps, cut)
 	}

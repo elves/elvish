@@ -126,7 +126,7 @@ var goodCases = []struct {
 		ast{"Compound/Indexing/Primary", fs{"Type": Map, "text": "[ & ]"}},
 	)},
 	// Lambda
-	{"a []{} [ ]{ } []{ echo 233 } [ $x $y ]{puts $x $y}", a(
+	{"a []{} [ ]{ } []{ echo 233 } [ $x $y ]{puts $x $y} { put $1}", a(
 		ast{"Compound/Indexing/Primary", fs{
 			"Type": Lambda,
 		}},
@@ -141,6 +141,10 @@ var goodCases = []struct {
 			"Type":  Lambda,
 			"List":  "$x $y ",
 			"Chunk": "puts $x $y",
+		}},
+		ast{"Compound/Indexing/Primary", fs{
+			"Type":  Lambda,
+			"Chunk": " put $1",
 		}},
 	)},
 	// Output capture
