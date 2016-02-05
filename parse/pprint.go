@@ -13,11 +13,9 @@ const (
 	indentInc     = 2
 )
 
-func compactQuote(text string) string {
-	if len(text) > maxL+maxR+3 {
-		text = text[0:maxL] + "..." + text[len(text)-maxR:len(text)]
-	}
-	return strconv.Quote(text)
+// PprintAST pretty prints the AST part of a Node.
+func PprintAST(n Node, wr io.Writer) {
+	pprintAST(n, wr, 0, "")
 }
 
 type field struct {
@@ -28,8 +26,7 @@ type field struct {
 
 var zeroValue reflect.Value
 
-// pprint the AST
-func pprintASTRec(n Node, wr io.Writer, indent int, leading string) {
+func pprintAST(n Node, wr io.Writer, indent int, leading string) {
 	nodeType := reflect.TypeOf((*Node)(nil)).Elem()
 
 	var childFields, childrenFields, propertyFields []field
@@ -67,7 +64,7 @@ func pprintASTRec(n Node, wr io.Writer, indent int, leading string) {
 
 	// has only one child and no properties: coalesce
 	if len(propertyFields) == 0 && len(n.Children()) == 1 {
-		pprintASTRec(n.Children()[0], wr, indent, leading+nt.Name()+"/")
+		pprintAST(n.Children()[0], wr, indent, leading+nt.Name()+"/")
 		return
 	}
 	// print heading
@@ -92,7 +89,7 @@ func pprintASTRec(n Node, wr io.Writer, indent int, leading string) {
 	// print lone children recursively
 	for _, chf := range childFields {
 		// TODO the name is omitted
-		pprintASTRec(chf.value.(Node), wr, indent+indentInc, "")
+		pprintAST(chf.value.(Node), wr, indent+indentInc, "")
 	}
 	// print children list recursively
 	for _, chf := range childrenFields {
@@ -103,23 +100,17 @@ func pprintASTRec(n Node, wr io.Writer, indent int, leading string) {
 		// fmt.Fprintf(wr, "%*s.%s:\n", indent, "", chf.name)
 		for i := 0; i < children.Len(); i++ {
 			n := children.Index(i).Interface().(Node)
-			pprintASTRec(n, wr, indent+indentInc, "")
+			pprintAST(n, wr, indent+indentInc, "")
 		}
 	}
 }
 
-// pprint the AST
-func pprintAST(n Node, wr io.Writer) {
-	pprintASTRec(n, wr, 0, "")
+// PprintParseTree pretty prints the parse tree part of a Node.
+func PprintParseTree(n Node, wr io.Writer) {
+	pprintParseTree(n, wr, 0)
 }
 
-func summary(n Node) string {
-	return fmt.Sprintf("%s %s %d-%d", reflect.TypeOf(n).Elem().Name(),
-		compactQuote(n.SourceText()), n.Begin(), n.End())
-}
-
-// pprint the parse tree
-func pprintParseTreeRec(n Node, wr io.Writer, indent int) {
+func pprintParseTree(n Node, wr io.Writer, indent int) {
 	leading := ""
 	for len(n.Children()) == 1 {
 		leading += reflect.TypeOf(n).Elem().Name() + "/"
@@ -127,11 +118,18 @@ func pprintParseTreeRec(n Node, wr io.Writer, indent int) {
 	}
 	fmt.Fprintf(wr, "%*s%s%s\n", indent, "", leading, summary(n))
 	for _, ch := range n.Children() {
-		pprintParseTreeRec(ch, wr, indent+indentInc)
+		pprintParseTree(ch, wr, indent+indentInc)
 	}
 }
 
-// pprint the parse tree
-func pprintParseTree(n Node, wr io.Writer) {
-	pprintParseTreeRec(n, wr, 0)
+func summary(n Node) string {
+	return fmt.Sprintf("%s %s %d-%d", reflect.TypeOf(n).Elem().Name(),
+		compactQuote(n.SourceText()), n.Begin(), n.End())
+}
+
+func compactQuote(text string) string {
+	if len(text) > maxL+maxR+3 {
+		text = text[0:maxL] + "..." + text[len(text)-maxR:len(text)]
+	}
+	return strconv.Quote(text)
 }
