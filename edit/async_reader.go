@@ -18,16 +18,16 @@ type AsyncReader struct {
 	rd           *os.File
 	bufrd        *bufio.Reader
 	rCtrl, wCtrl *os.File
-	ackCtrl      chan bool // Used to synchronize receiving of ctrl message
+	ctrlCh       chan struct{}
 	ch           chan rune
 }
 
 func NewAsyncReader(rd *os.File) *AsyncReader {
 	ar := &AsyncReader{
-		rd:      rd,
-		bufrd:   bufio.NewReaderSize(rd, 0),
-		ackCtrl: make(chan bool),
-		ch:      make(chan rune, asyncReaderChanSize),
+		rd:     rd,
+		bufrd:  bufio.NewReaderSize(rd, 0),
+		ctrlCh: make(chan struct{}),
+		ch:     make(chan rune, asyncReaderChanSize),
 	}
 
 	r, w, err := os.Pipe()
@@ -68,21 +68,36 @@ func (ar *AsyncReader) Run() {
 		if fs.IsSet(cfd) {
 			// Consume the written byte
 			ar.rCtrl.Read(cBuf[:])
-			ar.ackCtrl <- true
+			<-ar.ctrlCh
 			return
 		} else {
-			r, _, err := ar.bufrd.ReadRune()
-			switch err {
-			case nil:
-				ar.ch <- r
-			case io.EOF:
-				return
-			default:
-				// BUG(xiaq): AsyncReader relies on the undocumented fact
-				// that (*os.File).Read returns an *os.File.PathError
-				e := err.(*os.PathError).Err
-				if e != syscall.EWOULDBLOCK && e != syscall.EAGAIN {
-					panic(err)
+		ReadRune:
+			for {
+				r, _, err := ar.bufrd.ReadRune()
+				switch err {
+				case nil:
+					// Logger.Printf("read rune: %q", r)
+					select {
+					case ar.ch <- r:
+					case <-ar.ctrlCh:
+						ar.rCtrl.Read(cBuf[:])
+						return
+					}
+				case io.EOF:
+					return
+				default:
+					// BUG(xiaq): AsyncReader relies on the undocumented fact
+					// that (*os.File).Read returns an *os.File.PathError
+					patherr, ok := err.(*os.PathError) //.Err
+					if !ok {
+						panic(err)
+					}
+					e := patherr.Err
+					if e == syscall.EWOULDBLOCK || e == syscall.EAGAIN {
+						break ReadRune
+					} else {
+						panic(err)
+					}
 				}
 			}
 		}
@@ -94,16 +109,12 @@ func (ar *AsyncReader) Quit() {
 	if err != nil {
 		panic(err)
 	}
-	select {
-	case <-ar.ch:
-	default:
-	}
-	<-ar.ackCtrl
+	ar.ctrlCh <- struct{}{}
 }
 
 func (ar *AsyncReader) Close() {
 	ar.rCtrl.Close()
 	ar.wCtrl.Close()
-	close(ar.ackCtrl)
+	close(ar.ctrlCh)
 	close(ar.ch)
 }
