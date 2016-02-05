@@ -58,3 +58,40 @@ func TestAsyncReaderDeadlock(t *testing.T) {
 		}
 	}
 }
+
+var ReadTimeout = time.Second
+
+func TestAsyncReader(t *testing.T) {
+	r, w, err := os.Pipe()
+	if err != nil {
+		panic(err)
+	}
+	defer r.Close()
+	defer w.Close()
+
+	ar := NewAsyncReader(r)
+	defer ar.Close()
+	go ar.Run()
+
+	go func() {
+		var i rune
+		for i = 0; i <= 1280; i += 10 {
+			w.WriteString(string(i))
+		}
+	}()
+
+	var i rune
+	timer := time.NewTimer(ReadTimeout)
+	for i = 0; i <= 1280; i += 10 {
+		select {
+		case r := <-ar.Chan():
+			if r != i {
+				t.Fatalf("expect %q, got %q\n", i, r)
+			}
+		case <-timer.C:
+			t.Fatalf("read timeout (i = %d)", i)
+		}
+		timer.Reset(ReadTimeout)
+	}
+	ar.Quit()
+}
