@@ -28,7 +28,7 @@ func parserError(text string) Token {
 
 func tokenize(src string) ([]Token, error) {
 	lastEnd := 0
-	n, err := parse.Parse("[interactive code]", src)
+	n, err := parse.Parse(src)
 	if n == nil {
 		return []Token{{ParserError, src, nil, ""}}, err
 	}

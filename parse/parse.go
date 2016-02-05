@@ -6,27 +6,26 @@ package parse
 
 import (
 	"bytes"
+	"errors"
 	"unicode"
-
-	"github.com/elves/elvish/errutil"
 )
 
-func Parse(name, src string) (*Chunk, error) {
+func Parse(src string) (*Chunk, error) {
 	ps := &parser{src, 0, 0, nil}
 	bn := parseChunk(ps, nil)
-	if ps.error != nil {
-		return bn, errutil.NewContextualError(
-			name, "syntax error", src, ps.pos, ps.error.Error())
-	}
 	if ps.pos != len(src) {
-		return bn, errutil.NewContextualError(
-			name, "syntax error", src, ps.pos, "unexpected rune")
+		ps.error(unexpectedRune)
 	}
-	return bn, nil
+	var err error
+	if ps.errors != nil {
+		err = ps.errors
+	}
+	return bn, err
 }
 
 // Errors.
 var (
+	unexpectedRune       = errors.New("unexpected rune")
 	shouldBeForm         = newError("", "form")
 	duplicateExitusRedir = newError("duplicate exitus redir")
 	shouldBeEqual        = newError("", "=")
@@ -120,7 +119,7 @@ func (pn *Pipeline) parse(ps *parser, cut runePred) {
 	pn.addToForms(parseForm(ps, cut))
 	for !cut.matches('|') && parseSep(pn, ps, '|') {
 		if !startsForm(ps.peek(), cut) {
-			ps.error = shouldBeForm
+			ps.error(shouldBeForm)
 			return
 		}
 		pn.addToForms(parseForm(ps, cut))
@@ -149,7 +148,7 @@ func (fn *Form) parse(ps *parser, cut runePred) {
 	}
 	if !startsCompound(ps.peek(), cut) {
 		if len(fn.Assignments) == 0 {
-			ps.error = shouldBeCompound
+			ps.error(shouldBeCompound)
 		}
 		return
 	}
@@ -166,10 +165,12 @@ loop:
 		case startsCompound(r, cut):
 			if !cut.matches('>') && ps.hasPrefix("?>") {
 				if fn.ExitusRedir != nil {
-					ps.error = duplicateExitusRedir
-					return
+					ps.error(duplicateExitusRedir)
+					// Parse the duplicate redir anyway.
+					addChild(fn, parseExitusRedir(ps, cut))
+				} else {
+					fn.setExitusRedir(parseExitusRedir(ps, cut))
 				}
-				fn.setExitusRedir(parseExitusRedir(ps, cut))
 				continue
 			}
 			cn := parseCompound(ps, cut)
@@ -193,10 +194,10 @@ loop:
 // parser and returns false.
 func (fn *Form) tryAssignment(ps *parser, cut runePred) bool {
 	begin := ps.pos
-	an := parseAssignment(ps, cut)
-	if ps.error != nil {
+	var ok bool
+	an := parseAssignment(ps, cut, &ok)
+	if !ok {
 		ps.pos = begin
-		ps.error = nil
 		return false
 	}
 	fn.addToAssignments(an)
@@ -214,16 +215,17 @@ type Assignment struct {
 	Src *Compound
 }
 
-func (an *Assignment) parse(ps *parser, cut runePred) {
+func (an *Assignment) parse(ps *parser, cut runePred, pok *bool) {
 	cutWithEqual := runePred(func(r rune) bool {
 		return cut.matches(r) || r == '='
 	})
 	an.setDst(parseIndexing(ps, cutWithEqual))
 	if !parseSep(an, ps, '=') {
-		ps.error = shouldBeEqual
+		*pok = false
 		return
 	}
 	an.setSrc(parseCompound(ps, cut))
+	*pok = true
 }
 
 // ExitusRedir = '?' '>' { Space } Compound
@@ -272,9 +274,7 @@ func (rn *Redir) parse(ps *parser, cut runePred, dest *Compound) {
 	case "<>":
 		rn.Mode = ReadWrite
 	default:
-		ps.pos = begin
-		ps.error = badRedirSign
-		return
+		ps.error(badRedirSign)
 	}
 	addSep(rn, ps)
 	parseSpaces(rn, ps)
@@ -283,9 +283,9 @@ func (rn *Redir) parse(ps *parser, cut runePred, dest *Compound) {
 	}
 	if !startsCompound(ps.peek(), cut) {
 		if rn.SourceIsFd {
-			ps.error = shouldBeFd
+			ps.error(shouldBeFd)
 		} else {
-			ps.error = shouldBeFilename
+			ps.error(shouldBeFilename)
 		}
 		return
 	}
@@ -333,11 +333,11 @@ func (in *Indexing) parse(ps *parser, cut runePred) {
 	in.setHead(parsePrimary(ps, cut))
 	for parseSep(in, ps, '[') {
 		if !startsArray(ps.peek()) {
-			ps.error = shouldBeArray
+			ps.error(shouldBeArray)
 		}
 		in.addToIndicies(parseArray(ps))
 		if !parseSep(in, ps, ']') {
-			ps.error = shouldBeRBracket
+			ps.error(shouldBeRBracket)
 			return
 		}
 	}
@@ -402,7 +402,7 @@ const (
 func (pn *Primary) parse(ps *parser, cut runePred) {
 	r := ps.peek()
 	if !startsPrimary(r, cut) {
-		ps.error = ShouldBePrimary
+		ps.error(ShouldBePrimary)
 		return
 	}
 	switch r {
@@ -439,7 +439,7 @@ func (pn *Primary) singleQuoted(ps *parser) {
 	for {
 		switch r := ps.next(); r {
 		case EOF:
-			ps.error = StringUnterminated
+			ps.error(StringUnterminated)
 			return
 		case '\'':
 			if ps.peek() == '\'' {
@@ -464,7 +464,7 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 	for {
 		switch r := ps.next(); r {
 		case EOF:
-			ps.error = StringUnterminated
+			ps.error(StringUnterminated)
 			return
 		case '"':
 			return
@@ -475,8 +475,8 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 				r := ps.next()
 				if r < 0x40 || r >= 0x60 {
 					ps.backup()
-					ps.error = InvalidEscapeControl
-					return
+					ps.error(InvalidEscapeControl)
+					ps.next()
 				}
 				buf.WriteByte(byte(r - 0x40))
 			case 'x', 'u', 'U':
@@ -494,8 +494,8 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 					d, ok := hexToDigit(ps.next())
 					if !ok {
 						ps.backup()
-						ps.error = InvalidEscapeHex
-						return
+						ps.error(InvalidEscapeHex)
+						break
 					}
 					rr = rr*16 + d
 				}
@@ -507,8 +507,8 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 					r := ps.next()
 					if r < '0' || r > '7' {
 						ps.backup()
-						ps.error = InvalidEscapeOct
-						return
+						ps.error(InvalidEscapeOct)
+						break
 					}
 					rr = rr*8 + (r - '0')
 				}
@@ -518,7 +518,8 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 					buf.WriteRune(rr)
 				} else {
 					ps.backup()
-					ps.error = InvalidEscape
+					ps.error(InvalidEscape)
+					ps.next()
 				}
 			}
 		default:
@@ -556,8 +557,8 @@ func (pn *Primary) variable(ps *parser, cut runePred) {
 	// The character of the variable name can be anything.
 	if r := ps.next(); cut.matches(r) {
 		ps.backup()
-		ps.error = shouldBeVariableName
-		return
+		ps.error(shouldBeVariableName)
+		ps.next()
 	}
 	for allowedInVariableName(ps.peek()) && !cut.matches(ps.peek()) {
 		ps.next()
@@ -595,12 +596,12 @@ func (pn *Primary) exitusCapture(ps *parser) {
 
 	pn.Type = ErrorCapture
 	if !startsChunk(ps.peek(), nil) && ps.peek() != ')' {
-		ps.error = shouldBeChunk
+		ps.error(shouldBeChunk)
 		return
 	}
 	pn.setChunk(parseChunk(ps, nil))
 	if !parseSep(pn, ps, ')') {
-		ps.error = shouldBeRParen
+		ps.error(shouldBeRParen)
 	}
 }
 
@@ -621,20 +622,21 @@ func (pn *Primary) outputCapture(ps *parser) {
 		cut = isBackquote
 	default:
 		ps.backup()
-		ps.error = shouldBeBackquoteOrLParen
+		ps.error(shouldBeBackquoteOrLParen)
+		ps.next()
 		return
 	}
 	addSep(pn, ps)
 
 	if !startsChunk(ps.peek(), cut) && ps.peek() != closer {
-		ps.error = shouldBeChunk
+		ps.error(shouldBeChunk)
 		return
 	}
 
 	pn.setChunk(parseChunk(ps, cut))
 
 	if !parseSep(pn, ps, closer) {
-		ps.error = shouldBeCloser
+		ps.error(shouldBeCloser)
 	}
 }
 
@@ -655,7 +657,7 @@ func (pn *Primary) lbracket(ps *parser) {
 	case r == ']' || startsArray(r):
 		pn.setList(parseArray(ps))
 		if !parseSep(pn, ps, ']') {
-			ps.error = shouldBeRBracket
+			ps.error(shouldBeRBracket)
 			return
 		}
 		if parseSep(pn, ps, '{') {
@@ -684,10 +686,10 @@ func (pn *Primary) lbracket(ps *parser) {
 			}
 		}
 		if !parseSep(pn, ps, ']') {
-			ps.error = shouldBeRBracket
+			ps.error(shouldBeRBracket)
 		}
 	default:
-		ps.error = shouldBeAmpersandOrArray
+		ps.error(shouldBeAmpersandOrArray)
 	}
 }
 
@@ -695,12 +697,12 @@ func (pn *Primary) lbracket(ps *parser) {
 func (pn *Primary) lambda(ps *parser) {
 	pn.Type = Lambda
 	if !startsChunk(ps.peek(), nil) && ps.peek() != '}' {
-		ps.error = shouldBeChunk
+		ps.error(shouldBeChunk)
 		return
 	}
 	pn.setChunk(parseChunk(ps, nil))
 	if !parseSep(pn, ps, '}') {
-		ps.error = shouldBeRBrace
+		ps.error(shouldBeRBrace)
 	}
 }
 
@@ -732,7 +734,7 @@ func (pn *Primary) lbrace(ps *parser) {
 		pn.addToBraced(parseCompound(ps, isBracedSep))
 	}
 	if !parseSep(pn, ps, '}') {
-		ps.error = shouldBeBraceSepOrRBracket
+		ps.error(shouldBeBraceSepOrRBracket)
 	}
 }
 
@@ -775,14 +777,14 @@ func (mpn *MapPair) parse(ps *parser, cut runePred) {
 	parseSep(mpn, ps, '&')
 	parseSpaces(mpn, ps)
 	if !startsCompound(ps.peek(), cut) {
-		ps.error = shouldBeCompound
+		ps.error(shouldBeCompound)
 		return
 	}
 	mpn.setKey(parseCompound(ps, cut))
 
 	parseSpaces(mpn, ps)
 	if !startsCompound(ps.peek(), cut) {
-		ps.error = shouldBeCompound
+		ps.error(shouldBeCompound)
 		return
 	}
 	mpn.setValue(parseCompound(ps, cut))

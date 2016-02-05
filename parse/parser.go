@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/elves/elvish/errutil"
 )
 
 // parser maintains some mutable states of parsing.
@@ -14,7 +16,7 @@ type parser struct {
 	src     string
 	pos     int
 	overEOF int
-	error   error
+	errors  *errutil.Errors
 }
 
 const (
@@ -43,9 +45,6 @@ func newError(text string, shouldbe ...string) error {
 }
 
 func (ps *parser) peek() rune {
-	if ps.error != nil {
-		return ParseError
-	}
 	if ps.pos == len(ps.src) {
 		return EOF
 	}
@@ -58,9 +57,6 @@ func (ps *parser) hasPrefix(prefix string) bool {
 }
 
 func (ps *parser) next() rune {
-	if ps.error != nil {
-		return ParseError
-	}
 	if ps.pos == len(ps.src) {
 		ps.overEOF += 1
 		return EOF
@@ -77,4 +73,11 @@ func (ps *parser) backup() {
 	}
 	_, s := utf8.DecodeLastRuneInString(ps.src[:ps.pos])
 	ps.pos -= s
+}
+
+func (ps *parser) error(e error) {
+	if ps.errors == nil {
+		ps.errors = &errutil.Errors{}
+	}
+	ps.errors.Append(&errutil.PosError{ps.pos, ps.pos, e})
 }

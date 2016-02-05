@@ -131,7 +131,7 @@ func interact() {
 			fmt.Println("My pid is", os.Getpid())
 		}
 
-		n, err := parse.Parse(name, lr.Line)
+		n, err := parse.Parse(lr.Line)
 		printError(err)
 
 		if err == nil {
@@ -171,9 +171,14 @@ func printError(err error) {
 	if err == nil {
 		return
 	}
-	if ce, ok := err.(*errutil.ContextualError); ok {
-		fmt.Fprint(os.Stderr, ce.Pprint())
-	} else {
+	switch err := err.(type) {
+	case *errutil.ContextualError:
+		fmt.Print(err.Pprint())
+	case *errutil.Errors:
+		for _, e := range err.Errors {
+			printError(e)
+		}
+	default:
 		eval.PprintError(err)
 		fmt.Println()
 	}

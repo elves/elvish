@@ -214,7 +214,7 @@ func (ec *evalCtx) mustSingleString(vs []Value, what string, p int) String {
 
 // SourceText evaluates a chunk of elvish source.
 func (ev *Evaler) SourceText(name, src, dir string) error {
-	n, err := parse.Parse(name, src)
+	n, err := parse.Parse(src)
 	if err != nil {
 		return err
 	}
