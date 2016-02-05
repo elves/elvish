@@ -129,9 +129,8 @@ pretty good.
 
 Go >= 1.4 is required. This repository is a go-getable package.
 
-Linux is fully supported. I also try to ensure that it compiles on FreeBSD,
-which means it will also likely compile on other BSDs and Mac OS X. Windows is
-*not* yet supported, but it might be in future.
+Linux and FreeBDS are fully supported. It is likely to work on other BSDs and
+Mac OS X. Windows is **not** supported yet.
 
 In case you are new to Go, you are advised to read [How To Write Go
 Code](http://golang.org/doc/code.html), but here is a quick snippet:
@@ -151,9 +150,6 @@ go get -u github.com/elves/elvish
 
 Remember to put the two `export`s above into your `bashrc` or `zshrc` (or
 whatever).
-
-Archlinux users can also try the AUR package
-[elvish-git](https://aur.archlinux.org/packages/elvish-git/).
 
 ## Notes for Contributors
 
@@ -188,4 +184,4 @@ attributes and filters
 ### Licensing
 
 By contributing, you agree to license your code under the same license as
-existing source code of Elvish. See the LICENSE file.
+existing source code of elvish. See the LICENSE file.
