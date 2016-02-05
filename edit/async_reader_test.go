@@ -13,23 +13,27 @@ import (
 // Pretty arbitrary numbers. May not reveal deadlocks on all machines.
 
 var (
-	NWrite    = 1024
-	Run       = 1024
-	Timeout   = 500 * time.Millisecond
-	MaxJitter = time.Millisecond
+	DeadlockNWrite    = 1024
+	DeadlockRun       = 64
+	DeadlockTimeout   = 500 * time.Millisecond
+	DeadlockMaxJitter = time.Millisecond
 )
 
 func jitter() {
-	time.Sleep(time.Duration(float64(MaxJitter) * rand.Float64()))
+	time.Sleep(time.Duration(float64(DeadlockMaxJitter) * rand.Float64()))
 }
 
 func f(done chan struct{}) {
-	r, w, _ := os.Pipe()
+	r, w, err := os.Pipe()
+	if err != nil {
+		panic(err)
+	}
 	defer r.Close()
 	defer w.Close()
+
 	ar := NewAsyncReader(r)
 	defer ar.Close()
-	fmt.Fprintf(w, "%*s", NWrite, "")
+	fmt.Fprintf(w, "%*s", DeadlockNWrite, "")
 	go func() {
 		jitter()
 		ar.Run()
@@ -43,19 +47,27 @@ func TestAsyncReaderDeadlock(t *testing.T) {
 	done := make(chan struct{})
 	isatty := sys.IsATTY(1)
 	rand.Seed(time.Now().UTC().UnixNano())
-	for i := 0; i < Run; i++ {
+
+	timer := time.NewTimer(DeadlockTimeout)
+	for i := 0; i < DeadlockRun; i++ {
 		if isatty {
-			fmt.Printf("\r%d/%d", i, Run)
+			fmt.Printf("\r%d/%d ", i+1, DeadlockRun)
 		}
+
 		go f(done)
+
 		select {
 		case <-done:
 			// no deadlock trigerred
-		case <-time.After(Timeout):
+		case <-timer.C:
 			// deadlock
 			t.Errorf("%s", sys.DumpStack())
-			t.Fatalf("AsyncReader deadlock trigerred on run %d/%d, stack trace:\n%s", i, Run, sys.DumpStack())
+			t.Fatalf("AsyncReader deadlock trigerred on run %d/%d, stack trace:\n%s", i, DeadlockRun, sys.DumpStack())
 		}
+		timer.Reset(DeadlockTimeout)
+	}
+	if isatty {
+		fmt.Print("\r       \r")
 	}
 }
 
