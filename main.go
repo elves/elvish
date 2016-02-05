@@ -3,7 +3,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"os/user"
@@ -24,22 +26,47 @@ const (
 	outChanLeader = "▶ "
 )
 
-var usage = `Usage:
-    elvish
-    elvish <script>
-`
+func usage() {
+	fmt.Println("usage: elvish [flags] [script]")
+	fmt.Println("flags:")
+	flag.PrintDefaults()
+}
+
+var (
+	debuglog = flag.String("debuglog", "", "a file to write debug log to")
+	help     = flag.Bool("help", false, "show usage help and quit")
+)
 
 func main() {
 	defer rescue()
 
-	switch len(os.Args) {
-	case 1:
+	flag.Usage = usage
+	flag.Parse()
+
+	if *help {
+		usage()
+		os.Exit(0)
+	}
+
+	if *debuglog != "" {
+		f, err := os.OpenFile(*debuglog, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		edit.Logger = log.New(f, "[edit] ", log.LstdFlags)
+	}
+
+	args := flag.Args()
+	switch len(args) {
+	case 0:
 		interact()
-	case 2:
-		script(os.Args[1])
+	case 1:
+		script(args[0])
 	default:
-		fmt.Fprintf(os.Stderr, usage)
-		os.Exit(1)
+		usage()
+		os.Exit(2)
 	}
 }
 

@@ -9,9 +9,12 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/logutil"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
 )
+
+var Logger = logutil.Sink
 
 const (
 	lackEOLRune = '\u23ce'
