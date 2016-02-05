@@ -26,12 +26,8 @@ func parserError(text string) Token {
 	return Token{ParserError, text, nil, ""}
 }
 
-func tokenize(src string) ([]Token, error) {
+func tokenize(src string, n parse.Node) []Token {
 	lastEnd := 0
-	n, err := parse.Parse(src)
-	if n == nil {
-		return []Token{{ParserError, src, nil, ""}}, err
-	}
 
 	tokenCh := make(chan Token, tokensBufferSize)
 	tokens := []Token{}
@@ -55,7 +51,7 @@ func tokenize(src string) ([]Token, error) {
 	if lastEnd != len(src) {
 		tokens = append(tokens, parserError(src[lastEnd:]))
 	}
-	return tokens, err
+	return tokens
 }
 
 func produceTokens(n parse.Node, tokenCh chan<- Token) {

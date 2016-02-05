@@ -9,7 +9,6 @@ type colorist func(parse.Node, *Editor) string
 
 var colorists = []colorist{
 	colorFormHead,
-	colorVariable,
 }
 
 func colorFormHead(n parse.Node, ed *Editor) string {
@@ -42,18 +41,4 @@ func init() {
 	for _, name := range eval.BuiltinSpecialNames {
 		isBuiltinSpecial[name] = true
 	}
-}
-
-func colorVariable(n parse.Node, ed *Editor) string {
-	pn, ok := n.(*parse.Primary)
-	if !ok {
-		return ""
-	}
-	if pn.Type != parse.Variable || len(pn.Value) == 0 {
-		return ""
-	}
-	if ed.evaler.Global()[pn.Value[1:]] != nil {
-		return ""
-	}
-	return styleForBadVariable
 }

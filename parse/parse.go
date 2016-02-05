@@ -150,7 +150,6 @@ func (fn *Form) parse(ps *parser, cut runePred) {
 		if len(fn.Assignments) == 0 {
 			ps.error(shouldBeCompound)
 		}
-		return
 	}
 	fn.setHead(parseCompound(ps, cut))
 	parseSpaces(fn, ps)
@@ -698,7 +697,6 @@ func (pn *Primary) lambda(ps *parser) {
 	pn.Type = Lambda
 	if !startsChunk(ps.peek(), nil) && ps.peek() != '}' {
 		ps.error(shouldBeChunk)
-		return
 	}
 	pn.setChunk(parseChunk(ps, nil))
 	if !parseSep(pn, ps, '}') {

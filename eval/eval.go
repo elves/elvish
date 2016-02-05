@@ -165,7 +165,7 @@ func (ev *Evaler) Eval(name, text string, n *parse.Chunk) error {
 }
 
 func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) error {
-	op, err := compile(name, text, makeScope(ev.global), n)
+	op, err := ev.Compile(name, text, n)
 	if err != nil {
 		out.close()
 		return err
@@ -181,6 +181,10 @@ func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) erro
 	<-outdone
 
 	return ex
+}
+
+func (ev *Evaler) Compile(name, text string, n *parse.Chunk) (op, error) {
+	return compile(name, text, makeScope(ev.global), n)
 }
 
 // peval evaluates an op in a protected environment so that calls to errorf are

@@ -8,8 +8,10 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/logutil"
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
 )
@@ -189,9 +191,28 @@ func (ed *Editor) pushTip(more string) {
 
 func (ed *Editor) refresh() error {
 	// Re-lex the line, unless we are in modeCompletion
+	name := "[interacitve]"
+	src := ed.line
 	if ed.mode != modeCompletion {
-		// XXX Ignore error
-		ed.tokens, _ = tokenize(ed.line)
+		n, _ /*err*/ := parse.Parse(src)
+		if n == nil {
+			ed.tokens = []Token{{ParserError, src, nil, ""}}
+		} else {
+			ed.tokens = tokenize(src, n)
+			_, err := ed.evaler.Compile(name, src, n)
+			if err != nil {
+				if err, ok := err.(*errutil.ContextualError); ok {
+					ed.pushTip("compiler error highlighted")
+					p := err.Pos()
+					for i, token := range ed.tokens {
+						if token.Node.Begin() <= p && p < token.Node.End() {
+							ed.tokens[i].MoreStyle += styleForCompilerError
+							break
+						}
+					}
+				}
+			}
+		}
 		for i, t := range ed.tokens {
 			for _, colorist := range colorists {
 				ed.tokens[i].MoreStyle += colorist(t.Node, ed)

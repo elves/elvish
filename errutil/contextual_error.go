@@ -15,6 +15,7 @@ import (
 type ContextualError struct {
 	srcname string
 	title   string
+	pos     int
 	line    string
 	lineno  int
 	colno   int
@@ -24,7 +25,11 @@ type ContextualError struct {
 // NewContextualError creates a new ContextualError.
 func NewContextualError(srcname, title, text string, pos int, format string, args ...interface{}) *ContextualError {
 	lineno, colno, line := strutil.FindContext(text, pos)
-	return &ContextualError{srcname, title, line, lineno, colno, fmt.Sprintf(format, args...)}
+	return &ContextualError{srcname, title, pos, line, lineno, colno, fmt.Sprintf(format, args...)}
+}
+
+func (e *ContextualError) Pos() int {
+	return e.pos
 }
 
 // Error implements the error interface. It returns a compact representation of

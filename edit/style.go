@@ -43,7 +43,8 @@ var styleForSep = map[string]string{
 
 // Styles for semantic coloring.
 var (
-	styleForGoodCommand = ";32"
-	styleForBadCommand  = ";31"
-	styleForBadVariable = ";31;3"
+	styleForGoodCommand   = ";32"
+	styleForBadCommand    = ";31"
+	styleForBadVariable   = ";31;3"
+	styleForCompilerError = ";31;3"
 )
