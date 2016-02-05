@@ -110,11 +110,6 @@ var evalTests = []struct {
 	  {inc2,put2}=(f); $put2; $inc2; $put2`,
 		strs("0", "1", "0", "1"), nomore},
 
-	// XXX hanger
-	//{`fn f []{ x=0; put []{x=(+ $x 1)} []{put $x} }
-	//  {inc1,put1} = (f); put $put1; $put1`,
-	//	strs("0"), nomore},
-
 	// fn
 	{"fn f [x]{ put $x ipsum }; f lorem",
 		strs("lorem", "ipsum"), nomore},
