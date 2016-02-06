@@ -5,9 +5,9 @@ func (n *Chunk) addToPipelines(ch *Pipeline) {
 	addChild(n, ch)
 }
 
-func parseChunk(ps *parser, cut runePred) *Chunk {
+func parseChunk(ps *parser) *Chunk {
 	n := &Chunk{node: node{begin: ps.pos}}
-	n.parse(ps, cut)
+	n.parse(ps)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
@@ -18,9 +18,9 @@ func (n *Pipeline) addToForms(ch *Form) {
 	addChild(n, ch)
 }
 
-func parsePipeline(ps *parser, cut runePred) *Pipeline {
+func parsePipeline(ps *parser) *Pipeline {
 	n := &Pipeline{node: node{begin: ps.pos}}
-	n.parse(ps, cut)
+	n.parse(ps)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
@@ -56,9 +56,9 @@ func (n *Form) setExitusRedir(ch *ExitusRedir) {
 	addChild(n, ch)
 }
 
-func parseForm(ps *parser, cut runePred) *Form {
+func parseForm(ps *parser) *Form {
 	n := &Form{node: node{begin: ps.pos}}
-	n.parse(ps, cut)
+	n.parse(ps)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
@@ -74,9 +74,9 @@ func (n *Assignment) setSrc(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseAssignment(ps *parser, cut runePred, pok *bool) *Assignment {
+func parseAssignment(ps *parser, pok *bool) *Assignment {
 	n := &Assignment{node: node{begin: ps.pos}}
-	n.parse(ps, cut, pok)
+	n.parse(ps, pok)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
@@ -87,9 +87,9 @@ func (n *ExitusRedir) setDest(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseExitusRedir(ps *parser, cut runePred) *ExitusRedir {
+func parseExitusRedir(ps *parser) *ExitusRedir {
 	n := &ExitusRedir{node: node{begin: ps.pos}}
-	n.parse(ps, cut)
+	n.parse(ps)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
@@ -105,9 +105,9 @@ func (n *Redir) setSource(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseRedir(ps *parser, cut runePred, dest *Compound) *Redir {
+func parseRedir(ps *parser, dest *Compound) *Redir {
 	n := &Redir{node: node{begin: ps.pos}}
-	n.parse(ps, cut, dest)
+	n.parse(ps, dest)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
@@ -118,9 +118,9 @@ func (n *Compound) addToIndexings(ch *Indexing) {
 	addChild(n, ch)
 }
 
-func parseCompound(ps *parser, cut runePred) *Compound {
+func parseCompound(ps *parser) *Compound {
 	n := &Compound{node: node{begin: ps.pos}}
-	n.parse(ps, cut)
+	n.parse(ps)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
@@ -136,9 +136,9 @@ func (n *Indexing) addToIndicies(ch *Array) {
 	addChild(n, ch)
 }
 
-func parseIndexing(ps *parser, cut runePred) *Indexing {
+func parseIndexing(ps *parser) *Indexing {
 	n := &Indexing{node: node{begin: ps.pos}}
-	n.parse(ps, cut)
+	n.parse(ps)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
@@ -177,9 +177,9 @@ func (n *Primary) addToBraced(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parsePrimary(ps *parser, cut runePred) *Primary {
+func parsePrimary(ps *parser) *Primary {
 	n := &Primary{node: node{begin: ps.pos}}
-	n.parse(ps, cut)
+	n.parse(ps)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
@@ -195,9 +195,9 @@ func (n *MapPair) setValue(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseMapPair(ps *parser, cut runePred) *MapPair {
+func parseMapPair(ps *parser) *MapPair {
 	n := &MapPair{node: node{begin: ps.pos}}
-	n.parse(ps, cut)
+	n.parse(ps)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n

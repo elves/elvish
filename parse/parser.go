@@ -16,16 +16,24 @@ type parser struct {
 	src     string
 	pos     int
 	overEOF int
+	cutsets []map[rune]int
 	errors  *errutil.Errors
 }
 
 const EOF rune = -1
+
+func (ps *parser) eof() bool {
+	return ps.peek() == EOF
+}
 
 func (ps *parser) peek() rune {
 	if ps.pos == len(ps.src) {
 		return EOF
 	}
 	r, _ := utf8.DecodeRuneInString(ps.src[ps.pos:])
+	if ps.currentCutset()[r] > 0 {
+		return EOF
+	}
 	return r
 }
 
@@ -39,6 +47,9 @@ func (ps *parser) next() rune {
 		return EOF
 	}
 	r, s := utf8.DecodeRuneInString(ps.src[ps.pos:])
+	if ps.currentCutset()[r] > 0 {
+		return EOF
+	}
 	ps.pos += s
 	return r
 }
@@ -58,6 +69,45 @@ func (ps *parser) error(e error) {
 	}
 	ps.errors.Append(&errutil.PosError{ps.pos, ps.pos, e})
 }
+
+func (ps *parser) pushCutset(rs ...rune) {
+	ps.cutsets = append(ps.cutsets, map[rune]int{})
+	ps.cut(rs...)
+}
+
+func (ps *parser) popCutset() {
+	n := len(ps.cutsets)
+	ps.cutsets[n-1] = nil
+	ps.cutsets = ps.cutsets[:n-1]
+}
+
+func (ps *parser) currentCutset() map[rune]int {
+	return ps.cutsets[len(ps.cutsets)-1]
+}
+
+func (ps *parser) cut(rs ...rune) {
+	cutset := ps.currentCutset()
+	for _, r := range rs {
+		cutset[r]++
+	}
+}
+
+func (ps *parser) uncut(rs ...rune) {
+	cutset := ps.currentCutset()
+	for _, r := range rs {
+		cutset[r]--
+	}
+}
+
+func (ps *parser) cuts(r rune) bool {
+	return ps.currentCutset()[r] > 0
+}
+
+/*
+func (ps *parser) cutsPeek() bool {
+	return ps.cuts(ps.peek())
+}
+*/
 
 func newError(text string, shouldbe ...string) error {
 	if len(shouldbe) == 0 {

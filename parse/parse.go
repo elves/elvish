@@ -11,8 +11,8 @@ import (
 )
 
 func Parse(src string) (*Chunk, error) {
-	ps := &parser{src, 0, 0, nil}
-	bn := parseChunk(ps, nil)
+	ps := &parser{src, 0, 0, []map[rune]int{{}}, nil}
+	bn := parseChunk(ps)
 	if ps.pos != len(src) {
 		ps.error(unexpectedRune)
 	}
@@ -59,11 +59,11 @@ type Chunk struct {
 	Pipelines []*Pipeline
 }
 
-func (bn *Chunk) parse(ps *parser, cut runePred) {
-	bn.parseSeps(ps, cut)
-	for startsPipeline(ps.peek(), cut) {
-		bn.addToPipelines(parsePipeline(ps, cut))
-		if bn.parseSeps(ps, cut) == 0 {
+func (bn *Chunk) parse(ps *parser) {
+	bn.parseSeps(ps)
+	for startsPipeline(ps.peek()) {
+		bn.addToPipelines(parsePipeline(ps))
+		if bn.parseSeps(ps) == 0 {
 			break
 		}
 	}
@@ -75,13 +75,11 @@ func isPipelineSep(r rune) bool {
 
 // parseSeps parses pipeline separators along with whitespaces. It returns the
 // number of pipeline separators parsed.
-func (bn *Chunk) parseSeps(ps *parser, cut runePred) int {
+func (bn *Chunk) parseSeps(ps *parser) int {
 	nseps := 0
 	for {
 		r := ps.peek()
-		if cut.matches(r) {
-			break
-		} else if isPipelineSep(r) {
+		if isPipelineSep(r) {
 			// parse as a Sep
 			parseSep(bn, ps, r)
 			nseps += 1
@@ -105,8 +103,8 @@ func (bn *Chunk) parseSeps(ps *parser, cut runePred) int {
 	return nseps
 }
 
-func startsChunk(r rune, cut runePred) bool {
-	return isPipelineSep(r) || startsPipeline(r, cut)
+func startsChunk(r rune) bool {
+	return isPipelineSep(r) || startsPipeline(r)
 }
 
 // Pipeline = Form { '|' Form }
@@ -115,19 +113,19 @@ type Pipeline struct {
 	Forms []*Form
 }
 
-func (pn *Pipeline) parse(ps *parser, cut runePred) {
-	pn.addToForms(parseForm(ps, cut))
-	for !cut.matches('|') && parseSep(pn, ps, '|') {
-		if !startsForm(ps.peek(), cut) {
+func (pn *Pipeline) parse(ps *parser) {
+	pn.addToForms(parseForm(ps))
+	for parseSep(pn, ps, '|') {
+		if !startsForm(ps.peek()) {
 			ps.error(shouldBeForm)
 			return
 		}
-		pn.addToForms(parseForm(ps, cut))
+		pn.addToForms(parseForm(ps))
 	}
 }
 
-func startsPipeline(r rune, cut runePred) bool {
-	return startsForm(r, cut)
+func startsPipeline(r rune) bool {
+	return startsForm(r)
 }
 
 // Form = { Space } Compound { Space } { ( Compound | MapPair | Redir | ExitusRedir ) { Space } }
@@ -141,48 +139,46 @@ type Form struct {
 	ExitusRedir *ExitusRedir
 }
 
-func (fn *Form) parse(ps *parser, cut runePred) {
+func (fn *Form) parse(ps *parser) {
 	parseSpaces(fn, ps)
-	for fn.tryAssignment(ps, cut) {
+	for fn.tryAssignment(ps) {
 		parseSpaces(fn, ps)
 	}
-	if !startsCompound(ps.peek(), cut) {
+	if !startsCompound(ps.peek()) {
 		if len(fn.Assignments) > 0 {
 			return
 		} else {
 			ps.error(shouldBeCompound)
 		}
 	}
-	fn.setHead(parseCompound(ps, cut))
+	fn.setHead(parseCompound(ps))
 	parseSpaces(fn, ps)
-loop:
+
 	for {
 		r := ps.peek()
 		switch {
-		case cut.matches(r):
-			break loop
 		case r == '&':
-			fn.addToNamedArgs(parseMapPair(ps, cut))
-		case startsCompound(r, cut):
-			if !cut.matches('>') && ps.hasPrefix("?>") {
+			fn.addToNamedArgs(parseMapPair(ps))
+		case startsCompound(r):
+			if !ps.cuts('>') && ps.hasPrefix("?>") {
 				if fn.ExitusRedir != nil {
 					ps.error(duplicateExitusRedir)
 					// Parse the duplicate redir anyway.
-					addChild(fn, parseExitusRedir(ps, cut))
+					addChild(fn, parseExitusRedir(ps))
 				} else {
-					fn.setExitusRedir(parseExitusRedir(ps, cut))
+					fn.setExitusRedir(parseExitusRedir(ps))
 				}
 				continue
 			}
-			cn := parseCompound(ps, cut)
-			if !cut.matches(ps.peek()) && isRedirSign(ps.peek()) {
+			cn := parseCompound(ps)
+			if isRedirSign(ps.peek()) {
 				// Redir
-				fn.addToRedirs(parseRedir(ps, cut, cn))
+				fn.addToRedirs(parseRedir(ps, cn))
 			} else {
 				fn.addToArgs(cn)
 			}
 		case isRedirSign(r):
-			fn.addToRedirs(parseRedir(ps, cut, nil))
+			fn.addToRedirs(parseRedir(ps, nil))
 		default:
 			return
 		}
@@ -193,14 +189,14 @@ loop:
 // tryAssignment tries to parse an assignment. If suceeded, it adds the parsed
 // assignment to fn.Assignments and returns true. Otherwise it rewinds the
 // parser and returns false.
-func (fn *Form) tryAssignment(ps *parser, cut runePred) bool {
-	if !startsIndexing(ps.peek(), cut) || ps.peek() == '=' {
+func (fn *Form) tryAssignment(ps *parser) bool {
+	if !startsIndexing(ps.peek()) || ps.peek() == '=' {
 		return false
 	}
 
 	begin := ps.pos
 	var ok bool
-	an := parseAssignment(ps, cut, &ok)
+	an := parseAssignment(ps, &ok)
 	if !ok {
 		ps.pos = begin
 		return false
@@ -209,8 +205,8 @@ func (fn *Form) tryAssignment(ps *parser, cut runePred) bool {
 	return true
 }
 
-func startsForm(r rune, cut runePred) bool {
-	return isSpace(r) || startsCompound(r, cut)
+func startsForm(r rune) bool {
+	return isSpace(r) || startsCompound(r)
 }
 
 // Assignment = Primary '=' Compound
@@ -220,16 +216,16 @@ type Assignment struct {
 	Src *Compound
 }
 
-func (an *Assignment) parse(ps *parser, cut runePred, pok *bool) {
-	cutWithEqual := runePred(func(r rune) bool {
-		return cut.matches(r) || r == '='
-	})
-	an.setDst(parseIndexing(ps, cutWithEqual))
+func (an *Assignment) parse(ps *parser, pok *bool) {
+	ps.cut('=')
+	an.setDst(parseIndexing(ps))
+	ps.uncut('=')
+
 	if !parseSep(an, ps, '=') {
 		*pok = false
 		return
 	}
-	an.setSrc(parseCompound(ps, cut))
+	an.setSrc(parseCompound(ps))
 	*pok = true
 }
 
@@ -239,12 +235,12 @@ type ExitusRedir struct {
 	Dest *Compound
 }
 
-func (ern *ExitusRedir) parse(ps *parser, cut runePred) {
+func (ern *ExitusRedir) parse(ps *parser) {
 	ps.next()
 	ps.next()
 	addSep(ern, ps)
 	parseSpaces(ern, ps)
-	ern.setDest(parseCompound(ps, cut))
+	ern.setDest(parseCompound(ps))
 }
 
 // Redir = { Compound } { '<'|'>'|'<>'|'>>' } { Space } ( '&'? Compound )
@@ -256,7 +252,7 @@ type Redir struct {
 	Source     *Compound
 }
 
-func (rn *Redir) parse(ps *parser, cut runePred, dest *Compound) {
+func (rn *Redir) parse(ps *parser, dest *Compound) {
 	// The parsing of the Dest part is done in Form.parse.
 	if dest != nil {
 		rn.Dest = dest
@@ -265,7 +261,7 @@ func (rn *Redir) parse(ps *parser, cut runePred, dest *Compound) {
 	}
 
 	begin := ps.pos
-	for !cut.matches(ps.peek()) && isRedirSign(ps.peek()) {
+	for isRedirSign(ps.peek()) {
 		ps.next()
 	}
 	sign := ps.src[begin:ps.pos]
@@ -283,10 +279,10 @@ func (rn *Redir) parse(ps *parser, cut runePred, dest *Compound) {
 	}
 	addSep(rn, ps)
 	parseSpaces(rn, ps)
-	if !cut.matches('&') && parseSep(rn, ps, '&') {
+	if parseSep(rn, ps, '&') {
 		rn.SourceIsFd = true
 	}
-	if !startsCompound(ps.peek(), cut) {
+	if !startsCompound(ps.peek()) {
 		if rn.SourceIsFd {
 			ps.error(shouldBeFd)
 		} else {
@@ -294,7 +290,7 @@ func (rn *Redir) parse(ps *parser, cut runePred, dest *Compound) {
 		}
 		return
 	}
-	rn.setSource(parseCompound(ps, cut))
+	rn.setSource(parseCompound(ps))
 }
 
 func isRedirSign(r rune) bool {
@@ -317,14 +313,14 @@ type Compound struct {
 	Indexings []*Indexing
 }
 
-func (cn *Compound) parse(ps *parser, cut runePred) {
-	for startsIndexing(ps.peek(), cut) {
-		cn.addToIndexings(parseIndexing(ps, cut))
+func (cn *Compound) parse(ps *parser) {
+	for startsIndexing(ps.peek()) {
+		cn.addToIndexings(parseIndexing(ps))
 	}
 }
 
-func startsCompound(r rune, cut runePred) bool {
-	return startsIndexing(r, cut)
+func startsCompound(r rune) bool {
+	return startsIndexing(r)
 }
 
 // Indexing = Primary { '[' Array ']' }
@@ -334,13 +330,17 @@ type Indexing struct {
 	Indicies []*Array
 }
 
-func (in *Indexing) parse(ps *parser, cut runePred) {
-	in.setHead(parsePrimary(ps, cut))
+func (in *Indexing) parse(ps *parser) {
+	in.setHead(parsePrimary(ps))
 	for parseSep(in, ps, '[') {
 		if !startsArray(ps.peek()) {
 			ps.error(shouldBeArray)
 		}
+
+		ps.pushCutset(']')
 		in.addToIndicies(parseArray(ps))
+		ps.popCutset()
+
 		if !parseSep(in, ps, ']') {
 			ps.error(shouldBeRBracket)
 			return
@@ -348,8 +348,8 @@ func (in *Indexing) parse(ps *parser, cut runePred) {
 	}
 }
 
-func startsIndexing(r rune, cut runePred) bool {
-	return startsPrimary(r, cut)
+func startsIndexing(r rune) bool {
+	return startsPrimary(r)
 }
 
 // Array = { Space } { Compound { Space } }
@@ -360,8 +360,8 @@ type Array struct {
 
 func (sn *Array) parse(ps *parser) {
 	parseSpaces(sn, ps)
-	for startsCompound(ps.peek(), nil) {
-		sn.addToCompounds(parseCompound(ps, nil))
+	for startsCompound(ps.peek()) {
+		sn.addToCompounds(parseCompound(ps))
 		parseSpaces(sn, ps)
 	}
 }
@@ -371,7 +371,7 @@ func isSpace(r rune) bool {
 }
 
 func startsArray(r rune) bool {
-	return isSpace(r) || startsIndexing(r, nil)
+	return isSpace(r) || startsIndexing(r)
 }
 
 type Primary struct {
@@ -404,9 +404,9 @@ const (
 	Braced
 )
 
-func (pn *Primary) parse(ps *parser, cut runePred) {
+func (pn *Primary) parse(ps *parser) {
 	r := ps.peek()
-	if !startsPrimary(r, cut) {
+	if !startsPrimary(r) {
 		ps.error(ShouldBePrimary)
 		return
 	}
@@ -416,7 +416,7 @@ func (pn *Primary) parse(ps *parser, cut runePred) {
 	case '"':
 		pn.doubleQuoted(ps)
 	case '$':
-		pn.variable(ps, cut)
+		pn.variable(ps)
 	case '*':
 		pn.wildcard(ps)
 	case '?':
@@ -432,7 +432,7 @@ func (pn *Primary) parse(ps *parser, cut runePred) {
 	case '{':
 		pn.lbrace(ps)
 	default:
-		pn.bareword(ps, cut)
+		pn.bareword(ps)
 	}
 }
 
@@ -555,17 +555,17 @@ func hexToDigit(r rune) (rune, bool) {
 	}
 }
 
-func (pn *Primary) variable(ps *parser, cut runePred) {
+func (pn *Primary) variable(ps *parser) {
 	pn.Type = Variable
 	defer func() { pn.Value = ps.src[pn.begin:ps.pos] }()
 	ps.next()
 	// The character of the variable name can be anything.
-	if r := ps.next(); cut.matches(r) {
+	if ps.next() == EOF {
 		ps.backup()
 		ps.error(shouldBeVariableName)
 		ps.next()
 	}
-	for allowedInVariableName(ps.peek()) && !cut.matches(ps.peek()) {
+	for allowedInVariableName(ps.peek()) {
 		ps.next()
 	}
 }
@@ -600,11 +600,15 @@ func (pn *Primary) exitusCapture(ps *parser) {
 	addSep(pn, ps)
 
 	pn.Type = ErrorCapture
-	if !startsChunk(ps.peek(), nil) && ps.peek() != ')' {
+	if !startsChunk(ps.peek()) && ps.peek() != ')' {
 		ps.error(shouldBeChunk)
 		return
 	}
-	pn.setChunk(parseChunk(ps, nil))
+
+	ps.pushCutset(')')
+	pn.setChunk(parseChunk(ps))
+	ps.popCutset()
+
 	if !parseSep(pn, ps, ')') {
 		ps.error(shouldBeRParen)
 	}
@@ -615,7 +619,6 @@ func (pn *Primary) outputCapture(ps *parser) {
 
 	var closer rune
 	var shouldBeCloser error
-	var cut runePred
 
 	switch ps.next() {
 	case '(':
@@ -624,7 +627,6 @@ func (pn *Primary) outputCapture(ps *parser) {
 	case '`':
 		closer = '`'
 		shouldBeCloser = shouldBeBackquote
-		cut = isBackquote
 	default:
 		ps.backup()
 		ps.error(shouldBeBackquoteOrLParen)
@@ -633,12 +635,9 @@ func (pn *Primary) outputCapture(ps *parser) {
 	}
 	addSep(pn, ps)
 
-	if !startsChunk(ps.peek(), cut) && ps.peek() != closer {
-		ps.error(shouldBeChunk)
-		return
-	}
-
-	pn.setChunk(parseChunk(ps, cut))
+	ps.pushCutset(closer)
+	pn.setChunk(parseChunk(ps))
+	ps.popCutset()
 
 	if !parseSep(pn, ps, closer) {
 		ps.error(shouldBeCloser)
@@ -657,10 +656,38 @@ func isBackquote(r rune) bool {
 func (pn *Primary) lbracket(ps *parser) {
 	parseSep(pn, ps, '[')
 	parseSpaces(pn, ps)
+
 	r := ps.peek()
+	ps.pushCutset(']')
+
 	switch {
-	case r == ']' || startsArray(r):
+	case r == '&':
+		pn.Type = Map
+		// parseSep(pn, ps, '&')
+		amp := ps.pos
+		ps.next()
+		r := ps.peek()
+		switch {
+		case isSpace(r), r == EOF:
+			// '&' { Space } ']': '&' is a sep
+			addSep(pn, ps)
+			parseSpaces(pn, ps)
+		default:
+			// { MapPair { Space } } ']': Wind back
+			ps.pos = amp
+			for ps.peek() == '&' {
+				pn.addToMapPairs(parseMapPair(ps))
+				parseSpaces(pn, ps)
+			}
+		}
+		ps.popCutset()
+		if !parseSep(pn, ps, ']') {
+			ps.error(shouldBeRBracket)
+		}
+	default:
 		pn.setList(parseArray(ps))
+		ps.popCutset()
+
 		if !parseSep(pn, ps, ']') {
 			ps.error(shouldBeRBracket)
 			return
@@ -670,41 +697,18 @@ func (pn *Primary) lbracket(ps *parser) {
 		} else {
 			pn.Type = List
 		}
-
-	case r == '&':
-		pn.Type = Map
-		// parseSep(pn, ps, '&')
-		amp := ps.pos
-		ps.next()
-		r := ps.peek()
-		switch {
-		case isSpace(r), r == ']':
-			// '&' { Space } ']': '&' is a sep
-			addSep(pn, ps)
-			parseSpaces(pn, ps)
-		default:
-			// { MapPair { Space } } ']': Wind back
-			ps.pos = amp
-			for ps.peek() == '&' {
-				pn.addToMapPairs(parseMapPair(ps, nil))
-				parseSpaces(pn, ps)
-			}
-		}
-		if !parseSep(pn, ps, ']') {
-			ps.error(shouldBeRBracket)
-		}
-	default:
-		ps.error(shouldBeAmpersandOrArray)
 	}
 }
 
 // lambda parses a lambda expression. The opening brace has been seen.
 func (pn *Primary) lambda(ps *parser) {
 	pn.Type = Lambda
-	if !startsChunk(ps.peek(), nil) && ps.peek() != '}' {
+	if !startsChunk(ps.peek()) && ps.peek() != '}' {
 		ps.error(shouldBeChunk)
 	}
-	pn.setChunk(parseChunk(ps, nil))
+	ps.pushCutset('}')
+	pn.setChunk(parseChunk(ps))
+	ps.popCutset()
 	if !parseSep(pn, ps, '}') {
 		ps.error(shouldBeRBrace)
 	}
@@ -723,7 +727,10 @@ func (pn *Primary) lbrace(ps *parser) {
 	pn.Type = Braced
 
 	// XXX: we don't actually know what happens with an empty Compound.
-	pn.addToBraced(parseCompound(ps, isBracedSep))
+	ps.pushCutset(',', '-', ' ', '\t')
+	pn.addToBraced(parseCompound(ps))
+	ps.popCutset()
+
 	for isBracedSep(ps.peek()) {
 		if ps.peek() == '-' {
 			parseSep(pn, ps, '-')
@@ -735,7 +742,9 @@ func (pn *Primary) lbrace(ps *parser) {
 			parseSpaces(pn, ps)
 			pn.IsRange = append(pn.IsRange, false)
 		}
-		pn.addToBraced(parseCompound(ps, isBracedSep))
+		ps.pushCutset(',', '-', ' ', '\t')
+		pn.addToBraced(parseCompound(ps))
+		ps.popCutset()
 	}
 	if !parseSep(pn, ps, '}') {
 		ps.error(shouldBeBraceSepOrRBracket)
@@ -746,10 +755,10 @@ func isBracedSep(r rune) bool {
 	return r == ',' || r == '-' || isSpace(r)
 }
 
-func (pn *Primary) bareword(ps *parser, cut runePred) {
+func (pn *Primary) bareword(ps *parser) {
 	pn.Type = Bareword
 	defer func() { pn.Value = ps.src[pn.begin:ps.pos] }()
-	for allowedInBareword(ps.peek()) && !cut.matches(ps.peek()) {
+	for allowedInBareword(ps.peek()) {
 		ps.next()
 	}
 }
@@ -763,10 +772,7 @@ func allowedInBareword(r rune) bool {
 		r == '.' || r == '/' || r == '=' || r == '@'
 }
 
-func startsPrimary(r rune, cut runePred) bool {
-	if cut.matches(r) {
-		return false
-	}
+func startsPrimary(r rune) bool {
 	return r == '\'' || r == '"' || r == '$' || allowedInBareword(r) ||
 		r == '?' || r == '*' || r == '(' || r == '`' || r == '[' || r == '{'
 }
@@ -777,21 +783,21 @@ type MapPair struct {
 	Key, Value *Compound
 }
 
-func (mpn *MapPair) parse(ps *parser, cut runePred) {
+func (mpn *MapPair) parse(ps *parser) {
 	parseSep(mpn, ps, '&')
 	parseSpaces(mpn, ps)
-	if !startsCompound(ps.peek(), cut) {
+	if !startsCompound(ps.peek()) {
 		ps.error(shouldBeCompound)
 		return
 	}
-	mpn.setKey(parseCompound(ps, cut))
+	mpn.setKey(parseCompound(ps))
 
 	parseSpaces(mpn, ps)
-	if !startsCompound(ps.peek(), cut) {
+	if !startsCompound(ps.peek()) {
 		ps.error(shouldBeCompound)
 		return
 	}
-	mpn.setValue(parseCompound(ps, cut))
+	mpn.setValue(parseCompound(ps))
 }
 
 // Sep is the catch-all node type for leaf nodes that lack internal structures
