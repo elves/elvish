@@ -19,30 +19,7 @@ type parser struct {
 	errors  *errutil.Errors
 }
 
-const (
-	EOF rune = -1 - iota
-	ParseError
-)
-
-func newError(text string, shouldbe ...string) error {
-	if len(shouldbe) == 0 {
-		return errors.New(text)
-	}
-	var buf bytes.Buffer
-	if len(text) > 0 {
-		buf.WriteString(text + ", ")
-	}
-	buf.WriteString("should be " + shouldbe[0])
-	for i, opt := range shouldbe[1:] {
-		if i == len(shouldbe)-2 {
-			buf.WriteString(" or ")
-		} else {
-			buf.WriteString(", ")
-		}
-		buf.WriteString(opt)
-	}
-	return errors.New(buf.String())
-}
+const EOF rune = -1
 
 func (ps *parser) peek() rune {
 	if ps.pos == len(ps.src) {
@@ -80,4 +57,24 @@ func (ps *parser) error(e error) {
 		ps.errors = &errutil.Errors{}
 	}
 	ps.errors.Append(&errutil.PosError{ps.pos, ps.pos, e})
+}
+
+func newError(text string, shouldbe ...string) error {
+	if len(shouldbe) == 0 {
+		return errors.New(text)
+	}
+	var buf bytes.Buffer
+	if len(text) > 0 {
+		buf.WriteString(text + ", ")
+	}
+	buf.WriteString("should be " + shouldbe[0])
+	for i, opt := range shouldbe[1:] {
+		if i == len(shouldbe)-2 {
+			buf.WriteString(" or ")
+		} else {
+			buf.WriteString(", ")
+		}
+		buf.WriteString(opt)
+	}
+	return errors.New(buf.String())
 }
