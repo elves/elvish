@@ -171,34 +171,58 @@ var goodCases = []struct {
 			"IsRange": []bool{false, true}}})},
 }
 
+func TestParse(t *testing.T) {
+	for _, tc := range goodCases {
+		bn, err := Parse(tc.src)
+		if err != nil {
+			t.Errorf("Parse(%q) returns error: %v", tc.src, err)
+		}
+		err = checkParseTree(bn)
+		if err != nil {
+			t.Errorf("Parse(%q) returns bad parse tree: %v", tc.src, err)
+			fmt.Fprintf(os.Stderr, "Parse tree of %q:\n", tc.src)
+			PprintParseTree(bn, os.Stderr)
+		}
+		err = checkAST(bn, tc.ast)
+		if err != nil {
+			t.Errorf("Parse(%q) returns bad AST: %v", tc.src, err)
+			fmt.Fprintf(os.Stderr, "AST of %q:\n", tc.src)
+			PprintAST(bn, os.Stderr)
+		}
+	}
+}
+
+// checkParseTree checks whether the parse tree part of a Node is well-formed.
 func checkParseTree(n Node) error {
 	children := n.Children()
 	if len(children) == 0 {
 		return nil
 	}
 
-	// check parent pointers
+	// Parent pointers of all children should point to me.
 	for i, ch := range children {
 		if ch.Parent() != n {
 			return fmt.Errorf("parent of child %d (%s) is wrong: %s", i, summary(ch), summary(n))
 		}
 	}
 
-	// check for possible gaps
+	// The Begin of the first child should be equal to mine.
 	if children[0].Begin() != n.Begin() {
 		return fmt.Errorf("gap between node and first child: %s", summary(n))
 	}
+	// The End of the last child should be equal to mine.
 	nch := len(children)
 	if children[nch-1].End() != n.End() {
 		return fmt.Errorf("gap between node and last child: %s", summary(n))
 	}
+	// Consecutive children have consecutive position ranges.
 	for i := 0; i < nch-1; i++ {
 		if children[i].End() != children[i+1].Begin() {
 			return fmt.Errorf("gap beteen child %d and %d of: %s", i, i+1, summary(n))
 		}
 	}
 
-	// check children recursively
+	// Check children recursively.
 	for _, ch := range n.Children() {
 		err := checkParseTree(ch)
 		if err != nil {
@@ -208,52 +232,7 @@ func checkParseTree(n Node) error {
 	return nil
 }
 
-func checkNode(got Node, want interface{}) error {
-	switch want := want.(type) {
-	case string:
-		text := got.SourceText()
-		if want != text {
-			return fmt.Errorf("want %q, got %q (%s)", want, text, summary(got))
-		}
-		return nil
-	case ast:
-		return checkAST(got, want)
-	default:
-		panic(fmt.Sprintf("bad want type %T (%s)", want, summary(got)))
-	}
-}
-
-var nodeType = reflect.TypeOf((*Node)(nil)).Elem()
-
-func checkAny(got interface{}, want interface{}, ctx string) error {
-	if got, ok := got.(Node); ok {
-		// A Node
-		return checkNode(got.(Node), want)
-	}
-	tgot := reflect.TypeOf(got)
-	if tgot.Kind() == reflect.Slice && tgot.Elem().Implements(nodeType) {
-		// A slice of Nodes
-		vgot := reflect.ValueOf(got)
-		vwant := reflect.ValueOf(want)
-		if vgot.Len() != vwant.Len() {
-			return fmt.Errorf("want %d, got %d (%s)", vwant.Len(), vgot.Len(), ctx)
-		}
-		for i := 0; i < vgot.Len(); i++ {
-			err := checkNode(vgot.Index(i).Interface().(Node),
-				vwant.Index(i).Interface())
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	if !reflect.DeepEqual(want, got) {
-		return fmt.Errorf("want %v, got %v (%s)", want, got, ctx)
-	}
-	return nil
-}
-
+// checkAST checks whether the AST part of a Node matches a specification.
 func checkAST(n Node, want ast) error {
 	// TODO: Check fields present in struct but not in ast
 	wantnames := strings.Split(want.name, "/")
@@ -294,24 +273,49 @@ func checkAST(n Node, want ast) error {
 	return nil
 }
 
-func TestParse(t *testing.T) {
-	for _, tc := range goodCases {
-		bn, err := Parse(tc.src)
-		if err != nil {
-			t.Errorf("Parse(%q) returns error: %v", tc.src, err)
+var nodeType = reflect.TypeOf((*Node)(nil)).Elem()
+
+func checkAny(got interface{}, want interface{}, ctx string) error {
+	if got, ok := got.(Node); ok {
+		// A Node
+		return checkNode(got.(Node), want)
+	}
+	tgot := reflect.TypeOf(got)
+	if tgot.Kind() == reflect.Slice && tgot.Elem().Implements(nodeType) {
+		// A slice of Nodes
+		vgot := reflect.ValueOf(got)
+		vwant := reflect.ValueOf(want)
+		if vgot.Len() != vwant.Len() {
+			return fmt.Errorf("want %d, got %d (%s)", vwant.Len(), vgot.Len(), ctx)
 		}
-		err = checkParseTree(bn)
-		if err != nil {
-			t.Errorf("Parse(%q) returns bad parse tree: %v", tc.src, err)
-			fmt.Fprintf(os.Stderr, "Parse tree of %q:\n", tc.src)
-			PprintParseTree(bn, os.Stderr)
+		for i := 0; i < vgot.Len(); i++ {
+			err := checkNode(vgot.Index(i).Interface().(Node),
+				vwant.Index(i).Interface())
+			if err != nil {
+				return err
+			}
 		}
-		err = checkAST(bn, tc.ast)
-		if err != nil {
-			t.Errorf("Parse(%q) returns bad AST: %v", tc.src, err)
-			fmt.Fprintf(os.Stderr, "AST of %q:\n", tc.src)
-			PprintAST(bn, os.Stderr)
+		return nil
+	}
+
+	if !reflect.DeepEqual(want, got) {
+		return fmt.Errorf("want %v, got %v (%s)", want, got, ctx)
+	}
+	return nil
+}
+
+func checkNode(got Node, want interface{}) error {
+	switch want := want.(type) {
+	case string:
+		text := got.SourceText()
+		if want != text {
+			return fmt.Errorf("want %q, got %q (%s)", want, text, summary(got))
 		}
+		return nil
+	case ast:
+		return checkAST(got, want)
+	default:
+		panic(fmt.Sprintf("bad want type %T (%s)", want, summary(got)))
 	}
 }
 
