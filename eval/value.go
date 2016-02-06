@@ -311,6 +311,9 @@ func (m Map) Repr() string {
 		buf.WriteByte(' ')
 		buf.WriteString(v.Repr())
 	}
+	if buf.Len() == 1 {
+		buf.WriteByte('&')
+	}
 	buf.WriteRune(']')
 	return buf.String()
 }
