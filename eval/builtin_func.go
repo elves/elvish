@@ -40,6 +40,7 @@ func init() {
 		&BuiltinFn{"typeof", typeof},
 
 		&BuiltinFn{"fail", wrapFn(fail)},
+		&BuiltinFn{"multi-error", wrapFn(multiErrorFn)},
 		&BuiltinFn{"return", wrapFn(returnFn)},
 		&BuiltinFn{"break", wrapFn(breakFn)},
 		&BuiltinFn{"continue", wrapFn(continueFn)},
@@ -189,6 +190,10 @@ func typeof(ec *evalCtx, args []Value) {
 
 func fail(ec *evalCtx, arg Value) {
 	throw(errors.New(ToString(arg)))
+}
+
+func multiErrorFn(ec *evalCtx, args ...Error) {
+	throw(multiError{args})
 }
 
 func returnFn(ec *evalCtx) {

@@ -179,7 +179,7 @@ type multiError struct {
 
 func (me multiError) Repr() string {
 	b := new(bytes.Buffer)
-	b.WriteString("(multi-error")
+	b.WriteString("?(multi-error")
 	for _, e := range me.errors {
 		b.WriteString(" ")
 		b.WriteString(e.Repr())
