@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/elves/elvish/errutil"
 )
 
 type fs map[string]interface{}
@@ -319,4 +321,26 @@ func checkNode(got Node, want interface{}) error {
 	}
 }
 
-// TODO: test error reporting
+var badCases = []struct {
+	src string
+	pos int // expected Begin position of first error
+}{
+	// Unopened parens.
+	{")", 0}, {"]", 0}, {"}", 0},
+	// Unclosed parens.
+	{"a (", 3}, {"a [", 3}, {"a {", 3},
+}
+
+func TestParseError(t *testing.T) {
+	for _, tc := range badCases {
+		_, err := Parse(tc.src)
+		if err == nil {
+			t.Errorf("Parse(%q) returns no error", tc.src)
+			continue
+		}
+		posErr0 := err.(*errutil.Errors).Errors[0].(*errutil.PosError)
+		if posErr0.Begin != tc.pos {
+			t.Errorf("Parse(%q) first error begins at %d, want %d. Errors are:%s\n", tc.src, posErr0.Begin, tc.pos, err)
+		}
+	}
+}
