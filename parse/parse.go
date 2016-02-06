@@ -600,10 +600,6 @@ func (pn *Primary) exitusCapture(ps *parser) {
 	addSep(pn, ps)
 
 	pn.Type = ErrorCapture
-	if !startsChunk(ps.peek()) && ps.peek() != ')' {
-		ps.error(shouldBeChunk)
-		return
-	}
 
 	ps.pushCutset()
 	pn.setChunk(parseChunk(ps))
@@ -707,9 +703,6 @@ func (pn *Primary) lbracket(ps *parser) {
 // lambda parses a lambda expression. The opening brace has been seen.
 func (pn *Primary) lambda(ps *parser) {
 	pn.Type = Lambda
-	if !startsChunk(ps.peek()) && ps.peek() != '}' {
-		ps.error(shouldBeChunk)
-	}
 	ps.pushCutset()
 	pn.setChunk(parseChunk(ps))
 	ps.popCutset()
@@ -870,7 +863,7 @@ func (rp runePred) matches(r rune) bool {
 func Quote(s string) string {
 	bare := true
 	for _, r := range s {
-		if !unicode.IsPrint(r) {
+		if !unicode.IsPrint(r) && r != '\n' {
 			return quoteDouble(s)
 		}
 		if !allowedInBareword(r) {
