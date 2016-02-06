@@ -672,7 +672,7 @@ func (pn *Primary) lbracket(ps *parser) {
 		ps.next()
 		r := ps.peek()
 		switch {
-		case isSpace(r), r == ']':
+		case isSpace(r), r == ']', r == EOF:
 			// '&' { Space } ']': '&' is a sep
 			addSep(pn, ps)
 			parseSpaces(pn, ps)
@@ -789,19 +789,18 @@ type MapPair struct {
 
 func (mpn *MapPair) parse(ps *parser) {
 	parseSep(mpn, ps, '&')
-	parseSpaces(mpn, ps)
-	if !startsCompound(ps.peek()) {
-		ps.error(shouldBeCompound)
-		return
-	}
-	mpn.setKey(parseCompound(ps))
 
 	parseSpaces(mpn, ps)
-	if !startsCompound(ps.peek()) {
+	mpn.setKey(parseCompound(ps))
+	if len(mpn.Key.Indexings) == 0 {
 		ps.error(shouldBeCompound)
-		return
 	}
+
+	parseSpaces(mpn, ps)
 	mpn.setValue(parseCompound(ps))
+	if len(mpn.Value.Indexings) == 0 {
+		ps.error(shouldBeCompound)
+	}
 }
 
 // Sep is the catch-all node type for leaf nodes that lack internal structures

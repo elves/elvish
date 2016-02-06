@@ -329,6 +329,8 @@ var badCases = []struct {
 	{")", 0}, {"]", 0}, {"}", 0},
 	// Unclosed parens.
 	{"a (", 3}, {"a [", 3}, {"a {", 3},
+	// Ampersand
+	{"a &", 3}, {"a [&", 4},
 }
 
 func TestParseError(t *testing.T) {
