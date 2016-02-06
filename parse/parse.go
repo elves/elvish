@@ -160,7 +160,7 @@ func (fn *Form) parse(ps *parser) {
 		case r == '&':
 			fn.addToNamedArgs(parseMapPair(ps))
 		case startsCompound(r):
-			if !ps.cuts('>') && ps.hasPrefix("?>") {
+			if ps.hasPrefix("?>") {
 				if fn.ExitusRedir != nil {
 					ps.error(duplicateExitusRedir)
 					// Parse the duplicate redir anyway.
@@ -337,7 +337,7 @@ func (in *Indexing) parse(ps *parser) {
 			ps.error(shouldBeArray)
 		}
 
-		ps.pushCutset(']')
+		ps.pushCutset()
 		in.addToIndicies(parseArray(ps))
 		ps.popCutset()
 
@@ -605,7 +605,7 @@ func (pn *Primary) exitusCapture(ps *parser) {
 		return
 	}
 
-	ps.pushCutset(')')
+	ps.pushCutset()
 	pn.setChunk(parseChunk(ps))
 	ps.popCutset()
 
@@ -635,7 +635,11 @@ func (pn *Primary) outputCapture(ps *parser) {
 	}
 	addSep(pn, ps)
 
-	ps.pushCutset(closer)
+	if closer == '`' {
+		ps.pushCutset(closer)
+	} else {
+		ps.pushCutset()
+	}
 	pn.setChunk(parseChunk(ps))
 	ps.popCutset()
 
@@ -658,7 +662,7 @@ func (pn *Primary) lbracket(ps *parser) {
 	parseSpaces(pn, ps)
 
 	r := ps.peek()
-	ps.pushCutset(']')
+	ps.pushCutset()
 
 	switch {
 	case r == '&':
@@ -668,7 +672,7 @@ func (pn *Primary) lbracket(ps *parser) {
 		ps.next()
 		r := ps.peek()
 		switch {
-		case isSpace(r), r == EOF:
+		case isSpace(r), r == ']':
 			// '&' { Space } ']': '&' is a sep
 			addSep(pn, ps)
 			parseSpaces(pn, ps)
@@ -706,7 +710,7 @@ func (pn *Primary) lambda(ps *parser) {
 	if !startsChunk(ps.peek()) && ps.peek() != '}' {
 		ps.error(shouldBeChunk)
 	}
-	ps.pushCutset('}')
+	ps.pushCutset()
 	pn.setChunk(parseChunk(ps))
 	ps.popCutset()
 	if !parseSep(pn, ps, '}') {
@@ -727,7 +731,7 @@ func (pn *Primary) lbrace(ps *parser) {
 	pn.Type = Braced
 
 	// XXX: we don't actually know what happens with an empty Compound.
-	ps.pushCutset(',', '-', ' ', '\t')
+	ps.pushCutset(',', '-')
 	pn.addToBraced(parseCompound(ps))
 	ps.popCutset()
 
@@ -742,7 +746,7 @@ func (pn *Primary) lbrace(ps *parser) {
 			parseSpaces(pn, ps)
 			pn.IsRange = append(pn.IsRange, false)
 		}
-		ps.pushCutset(',', '-', ' ', '\t')
+		ps.pushCutset(',', '-')
 		pn.addToBraced(parseCompound(ps))
 		ps.popCutset()
 	}

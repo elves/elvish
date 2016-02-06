@@ -99,16 +99,6 @@ func (ps *parser) uncut(rs ...rune) {
 	}
 }
 
-func (ps *parser) cuts(r rune) bool {
-	return ps.currentCutset()[r] > 0
-}
-
-/*
-func (ps *parser) cutsPeek() bool {
-	return ps.cuts(ps.peek())
-}
-*/
-
 func newError(text string, shouldbe ...string) error {
 	if len(shouldbe) == 0 {
 		return errors.New(text)
