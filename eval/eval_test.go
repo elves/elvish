@@ -52,11 +52,11 @@ var evalTests = []struct {
 	// Builtin functions
 	// Arithmetics
 	// TODO test more edge cases
-	{"* 353 661", strs("233333"), nomore},
 	{"+ 233100 233", strs("233333"), nomore},
 	{"- 233333 233100", strs("233"), nomore},
-	{"/ 233333 353", strs("661"), nomore},
-	{"/ 1 0", strs("+Inf"), nomore},
+	{"mul 353 661", strs("233333"), nomore},
+	{"div 233333 353", strs("661"), nomore},
+	{"div 1 0", strs("+Inf"), nomore},
 
 	// String literal
 	{`put 'such \"''literal'`, strs(`such \"'literal`), nomore},

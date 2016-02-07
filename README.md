@@ -52,7 +52,7 @@ Some things that the language is already capable of:
   ```
   ~> + 1 2
   ▶ 3
-  ~> * (+ 1 2) 3
+  ~> mul (+ 1 2) 3
   ▶ 9
   ```
 
@@ -87,13 +87,13 @@ Some things that the language is already capable of:
   ```
   ~> map [x]{+ 10 $x} [1 2 3]
   [11 12 13]
-  ~> map [x]{/ $x 2} (map [x]{+ 10 $x} [1 2 3])
+  ~> map [x]{div $x 2} (map [x]{+ 10 $x} [1 2 3])
   [5.5 6 6.5]
   ```
 
 * More natural concatenative style:
   ```
-  ~> put 1 2 3 | each [x]{+ 10 $x} | each [x]{/ $x 2}
+  ~> put 1 2 3 | each [x]{+ 10 $x} | each [x]{div $x 2}
   ▶ 5.5
   ▶ 6
   ▶ 6.5

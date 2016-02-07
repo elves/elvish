@@ -55,8 +55,8 @@ func init() {
 
 		&BuiltinFn{"+", wrapFn(plus)},
 		&BuiltinFn{"-", wrapFn(minus)},
-		&BuiltinFn{"*", wrapFn(times)},
-		&BuiltinFn{"/", wrapFn(divide)},
+		&BuiltinFn{"mul", wrapFn(times)},
+		&BuiltinFn{"div", wrapFn(divide)},
 
 		&BuiltinFn{"=", eq},
 		&BuiltinFn{"deepeq", deepeq},
