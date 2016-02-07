@@ -11,18 +11,25 @@ import (
 var (
 	mkdirs = []string{"a", "b", "c", "d1", "d1/e", "d1/e/f", "d1/e/f/g",
 		"d2", "d2/e", "d2/e/f", "d2/e/f/g"}
-	creates = []string{"a/X", "a/Y", "b/X", "c/Y", "dX", "d1/e/f/g/X", "d2/e/f/g/X"}
+	creates = []string{"a/X", "a/Y", "b/X", "c/Y", "dX", "lorem", "ipsum",
+		"d1/e/f/g/X", "d2/e/f/g/X"}
 )
 
 var globCases = []struct {
 	pattern string
 	want    []string
 }{
-	{"*", []string{"a", "b", "c", "d1", "d2", "dX"}},
+	{"*", []string{"a", "b", "c", "d1", "d2", "dX", "lorem", "ipsum"}},
+	{"*/", []string{"a/", "b/", "c/", "d1/", "d2/"}},
 	{"**", append(mkdirs, creates...)},
 	{"*/X", []string{"a/X", "b/X"}},
 	{"**X", []string{"a/X", "b/X", "dX", "d1/e/f/g/X", "d2/e/f/g/X"}},
 	{"*/*/*", []string{"d1/e/f", "d2/e/f"}},
+	{"l*m", []string{"lorem"}},
+	{"d*", []string{"d1", "d2", "dX"}},
+	{"d*/", []string{"d1/", "d2/"}},
+	{"d**", []string{"d1", "d1/e", "d1/e/f", "d1/e/f/g", "d1/e/f/g/X",
+		"d2", "d2/e", "d2/e/f", "d2/e/f/g", "d2/e/f/g/X", "dX"}},
 }
 
 func TestGlob(t *testing.T) {

@@ -175,6 +175,7 @@ segs:
 				}
 			}
 		}
+		return false
 	}
 	return name == ""
 }
