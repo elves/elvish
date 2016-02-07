@@ -41,6 +41,8 @@ var builtins = map[string]builtin{
 	"move-dot-right":      moveDotRight,
 	"move-dot-left-word":  moveDotLeftWord,
 	"move-dot-right-word": moveDotRightWord,
+	"move-dot-sol":        moveDotSOL,
+	"move-dot-eol":        moveDotEOL,
 	"move-dot-up":         moveDotUp,
 	"move-dot-down":       moveDotDown,
 	"insert-key":          insertKey,
@@ -193,6 +195,16 @@ func moveDotRightWord(ed *Editor) {
 
 func notSpace(r rune) bool {
 	return !unicode.IsSpace(r)
+}
+
+func moveDotSOL(ed *Editor) {
+	sol := strutil.FindLastSOL(ed.line[:ed.dot])
+	ed.dot = sol
+}
+
+func moveDotEOL(ed *Editor) {
+	eol := strutil.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
+	ed.dot = eol
 }
 
 func moveDotUp(ed *Editor) {

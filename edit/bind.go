@@ -29,6 +29,8 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{Right, 0}:    "move-dot-right",
 		Key{Left, Ctrl}:  "move-dot-left-word",
 		Key{Right, Ctrl}: "move-dot-right-word",
+		Key{Home, 0}:     "move-dot-sol",
+		Key{End, 0}:      "move-dot-eol",
 		Key{Up, Alt}:     "move-dot-up",
 		Key{Down, Alt}:   "move-dot-down",
 		Key{Enter, Alt}:  "insert-key",
