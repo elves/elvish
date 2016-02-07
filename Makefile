@@ -1,4 +1,4 @@
-PKGS := edit eval parse sys store errutil osutil strutil print
+PKGS := edit errutil eval logutil osutil parse print store strutil sys
 PKG_COVERS := $(addprefix cover/,$(PKGS))
 
 all: get test
