@@ -2,3 +2,4 @@ go:
     - 1.4
     - 1.5
 language: go
+script: make get test
