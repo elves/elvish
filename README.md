@@ -64,7 +64,7 @@ Some things that the language is already capable of:
 
 * Lists and maps:
   ```
-  ~> println list: [a list] map: [&key &value]
+  ~> println list: [a list] map: [&key value]
   list: [a list] map: [&key value]
   ~> println [a b c][0]
   a
@@ -74,13 +74,13 @@ Some things that the language is already capable of:
 
 * Variables:
   ```
-  ~> set v = [&foo bar]; put $v[foo]
+  ~> v=[&foo bar]; put $v[foo]
   ▶ bar
   ```
 
 * Defining functions:
   ```
-  ~> fn map [f xs]{ put [(put-all $xs | each $f)] }
+  ~> fn map [f xs]{ put [(put $@xs | each $f)] }
   ```
 
 * Lisp-like functional programming:
@@ -103,7 +103,7 @@ Some things that the language is already capable of:
   ```
   ~> put $env:HOME
   ▶ /home/xiaq
-  ~> set $env:PATH = $env:PATH":/bin"
+  ~> $env:PATH = $env:PATH":/bin"
   ```
 
 The language is not yet complete. Notably, control structures like `if` and
