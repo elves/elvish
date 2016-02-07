@@ -165,6 +165,7 @@ func moveDotUp(ed *Editor) {
 	sol := strutil.FindLastSOL(ed.line[:ed.dot])
 	if sol == 0 {
 		ed.flash()
+		return
 	}
 	prevEOL := sol - 1
 	prevSOL := strutil.FindLastSOL(ed.line[:prevEOL])
@@ -176,6 +177,7 @@ func moveDotDown(ed *Editor) {
 	eol := strutil.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
 	if eol == len(ed.line) {
 		ed.flash()
+		return
 	}
 	nextSOL := eol + 1
 	nextEOL := strutil.FindFirstEOL(ed.line[nextSOL:]) + nextSOL
