@@ -68,10 +68,11 @@ var builtins = map[string]builtin{
 	"default-navigation": defaultNavigation,
 
 	// History mode
-	"start-history":       startHistory,
-	"select-history-prev": selectHistoryPrev,
-	"select-history-next": selectHistoryNext,
-	"default-history":     defaultHistory,
+	"start-history":               startHistory,
+	"select-history-prev":         selectHistoryPrev,
+	"select-history-next":         selectHistoryNext,
+	"select-history-next-or-quit": selectHistoryNextOrQuit,
+	"default-history":             defaultHistory,
 }
 
 var (
@@ -285,6 +286,12 @@ func selectHistoryPrev(ed *Editor) {
 
 func selectHistoryNext(ed *Editor) {
 	ed.nextHistory()
+}
+
+func selectHistoryNextOrQuit(ed *Editor) {
+	if !ed.nextHistory() {
+		ed.mode = modeInsert
+	}
 }
 
 func defaultHistory(ed *Editor) {

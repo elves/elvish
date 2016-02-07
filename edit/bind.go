@@ -56,7 +56,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 	modeHistory: map[Key]string{
 		Key{'[', Ctrl}: "start-insert",
 		Key{Up, 0}:     "select-history-prev",
-		Key{Down, 0}:   "select-history-next",
+		Key{Down, 0}:   "select-history-next-or-quit",
 		DefaultBinding: "default-history",
 	},
 }
