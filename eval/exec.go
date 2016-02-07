@@ -125,6 +125,7 @@ func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) {
 		if err == nil && stat.IsDir() {
 			// implicit cd
 			cdInner(e.Name, ec)
+			return
 		}
 	}
 
