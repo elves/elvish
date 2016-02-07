@@ -503,7 +503,7 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return literalStr(n.Value)
 	case parse.Variable:
-		qname := n.Value[1:]
+		qname := n.Value
 		if !cp.registerVariableGet(qname) {
 			cp.errorf(n.Begin(), "variable %s not found", n.Value)
 		}

@@ -557,7 +557,7 @@ func hexToDigit(r rune) (rune, bool) {
 
 func (pn *Primary) variable(ps *parser) {
 	pn.Type = Variable
-	defer func() { pn.Value = ps.src[pn.begin:ps.pos] }()
+	defer func() { pn.Value = ps.src[pn.begin+1 : ps.pos] }()
 	ps.next()
 	// The character of the variable name can be anything.
 	if ps.next() == EOF {
