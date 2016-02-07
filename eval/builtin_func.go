@@ -61,6 +61,9 @@ func init() {
 		&BuiltinFn{"=", eq},
 		&BuiltinFn{"deepeq", deepeq},
 
+		&BuiltinFn{"take", wrapFn(take)},
+		&BuiltinFn{"drop", wrapFn(drop)},
+
 		&BuiltinFn{"bind", wrapFn(bind)},
 		&BuiltinFn{"le", wrapFn(le)},
 
@@ -132,7 +135,8 @@ func wrapFn(inner interface{}) func(*evalCtx, []Value) {
 }
 
 func supportedIn(t reflect.Type) bool {
-	return t.Kind() == reflect.String || t.Kind() == reflect.Float64 ||
+	return t.Kind() == reflect.String ||
+		t.Kind() == reflect.Int || t.Kind() == reflect.Float64 ||
 		t.Implements(valueType)
 }
 
@@ -142,6 +146,12 @@ func convertArgs(args []Value, callArgs []reflect.Value, callType func(int) refl
 		switch callType(i).Kind() {
 		case reflect.String:
 			callArg = ToString(arg)
+		case reflect.Int:
+			var err error
+			callArg, err = toInt(arg)
+			if err != nil {
+				return false
+			}
 		case reflect.Float64:
 			var err error
 			callArg, err = toFloat(arg)
@@ -397,6 +407,18 @@ func toFloat(arg Value) (float64, error) {
 	return num, nil
 }
 
+func toInt(arg Value) (int, error) {
+	arg, ok := arg.(String)
+	if !ok {
+		return 0, fmt.Errorf("must be string")
+	}
+	num, err := strconv.Atoi(string(arg.(String)))
+	if err != nil {
+		return 0, err
+	}
+	return num, nil
+}
+
 func plus(ec *evalCtx, nums ...float64) {
 	out := ec.ports[1].ch
 	sum := 0.0
@@ -457,6 +479,32 @@ func deepeq(ec *evalCtx, args []Value) {
 		}
 	}
 	out <- Bool(true)
+}
+
+func take(ec *evalCtx, n int) {
+	in := ec.ports[0].ch
+	out := ec.ports[1].ch
+
+	i := 0
+	for v := range in {
+		if i >= n {
+			break
+		}
+		i++
+		out <- v
+	}
+}
+
+func drop(ec *evalCtx, n int) {
+	in := ec.ports[0].ch
+	out := ec.ports[1].ch
+
+	for i := 0; i < n; i++ {
+		<-in
+	}
+	for v := range in {
+		out <- v
+	}
 }
 
 func bind(ec *evalCtx, key string, function string) {
