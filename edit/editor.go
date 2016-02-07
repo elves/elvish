@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/elves/elvish/errutil"
@@ -46,7 +47,10 @@ type editorState struct {
 	completionLines       int
 	navigation            *navigation
 	history               history
-	isExternal            map[string]bool
+	isExternal            struct {
+		sync.RWMutex
+		m map[string]bool
+	}
 	// Used for builtins.
 	lastKey    Key
 	nextAction action

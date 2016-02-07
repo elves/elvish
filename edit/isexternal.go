@@ -10,5 +10,7 @@ func (ed *Editor) updateIsExternal() {
 	for name := range names {
 		isExternal[name] = true
 	}
-	ed.isExternal = isExternal
+	ed.isExternal.Lock()
+	ed.isExternal.m = isExternal
+	ed.isExternal.Unlock()
 }

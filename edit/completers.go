@@ -98,9 +98,11 @@ func complFormHeadInner(head string, ed *Editor) []*candidate {
 			foundCommand(variable[len(eval.FnPrefix):])
 		}
 	}
-	for command := range ed.isExternal {
+	ed.isExternal.RLock()
+	for command := range ed.isExternal.m {
 		foundCommand(command)
 	}
+	ed.isExternal.RUnlock()
 	return cands
 }
 
