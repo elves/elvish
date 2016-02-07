@@ -282,7 +282,8 @@ func (rn *Redir) parse(ps *parser, dest *Compound) {
 	if parseSep(rn, ps, '&') {
 		rn.SourceIsFd = true
 	}
-	if !startsCompound(ps.peek()) {
+	rn.setSource(parseCompound(ps))
+	if len(rn.Source.Indexings) == 0 {
 		if rn.SourceIsFd {
 			ps.error(shouldBeFd)
 		} else {
@@ -290,7 +291,6 @@ func (rn *Redir) parse(ps *parser, dest *Compound) {
 		}
 		return
 	}
-	rn.setSource(parseCompound(ps))
 }
 
 func isRedirSign(r rune) bool {
