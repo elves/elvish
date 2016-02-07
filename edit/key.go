@@ -82,7 +82,8 @@ const (
 	Backspace = 0x7f
 )
 
-// Used as a key of keyBindings to indicate default binding
+// DefaultBinding is an special value of Key, used as a key of keyBindings to
+// indicate default binding.
 var DefaultBinding = Key{DefaultBindingRune, 0}
 
 var keyNames = map[rune]string{

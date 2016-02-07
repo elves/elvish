@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// ErrIndexOutOfRange is returned when out-of-range errors occur.
+var ErrIndexOutOfRange = errors.New("substring out of range")
+
 // FindContext takes a position in a text and finds its line number,
 // corresponding line and column numbers. Line and column numbers are counted
 // from 0. Used in diagnostic messages.
@@ -27,6 +30,8 @@ func FindContext(text string, pos int) (lineno, colno int, line string) {
 	return
 }
 
+// FindFirstEOL returns the index of the first '\n'. When there is no '\n', the
+// length of s is returned.
 func FindFirstEOL(s string) int {
 	eol := strings.IndexRune(s, '\n')
 	if eol == -1 {
@@ -35,13 +40,10 @@ func FindFirstEOL(s string) int {
 	return eol
 }
 
+// FindLastSOL returns an index just after the last '\n'.
 func FindLastSOL(s string) int {
 	return strings.LastIndex(s, "\n") + 1
 }
-
-var (
-	ErrIndexOutOfRange = errors.New("substring out of range")
-)
 
 // SubstringByRune returns the range of the i-th rune (inclusive) through the
 // j-th rune (exclusive) in s.

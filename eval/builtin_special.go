@@ -8,9 +8,12 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type compileBuiltin func(*compiler, *parse.Form) op
+type compileBuiltin func(*compiler, *parse.Form) Op
 
 var builtinSpecials map[string]compileBuiltin
+
+// BuiltinSpecialNames contains all names of builtin special forms. It is
+// useful for the syntax highlighter.
 var BuiltinSpecialNames []string
 
 func init() {
@@ -20,7 +23,7 @@ func init() {
 		"fn":  compileFn,
 		//"use": compileUse,
 	}
-	for k, _ := range builtinSpecials {
+	for k := range builtinSpecials {
 		BuiltinSpecialNames = append(BuiltinSpecialNames, k)
 	}
 }
@@ -29,7 +32,7 @@ func doSet(ec *evalCtx, variables []Variable, values []Value) {
 	// TODO Support assignment of mismatched arity in some restricted way -
 	// "optional" and "rest" arguments and the like
 	if len(variables) != len(values) {
-		throw(arityMismatch)
+		throw(ErrArityMismatch)
 	}
 
 	for i, variable := range variables {
@@ -39,7 +42,7 @@ func doSet(ec *evalCtx, variables []Variable, values []Value) {
 }
 
 // DelForm = 'del' { VariablePrimary }
-func compileDel(cp *compiler, fn *parse.Form) op {
+func compileDel(cp *compiler, fn *parse.Form) Op {
 	// Do conventional compiling of all compound expressions, including
 	// ensuring that variables can be resolved
 	var names, envNames []string
@@ -161,7 +164,7 @@ func compileUse(cp *compiler, fn *parse.Form) op {
 */
 
 // makeFnOp wraps an op such that a return is converted to an ok.
-func makeFnOp(op op) op {
+func makeFnOp(op Op) Op {
 	return func(ec *evalCtx) {
 		ex := ec.peval(op)
 		if ex != Return {
@@ -174,7 +177,7 @@ func makeFnOp(op op) op {
 // FnForm = 'fn' StringPrimary LambdaPrimary
 //
 // fn f []{foobar} is a shorthand for set '&'f = []{foobar}.
-func compileFn(cp *compiler, fn *parse.Form) op {
+func compileFn(cp *compiler, fn *parse.Form) Op {
 	if len(fn.Args) == 0 {
 		cp.errorf(fn.End(), "should be followed by function name")
 	}

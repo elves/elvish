@@ -1,5 +1,6 @@
 package parse
 
+// Node represents a parse tree as well as an AST.
 type Node interface {
 	n() *node
 	Parent() Node

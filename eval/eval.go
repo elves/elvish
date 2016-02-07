@@ -20,6 +20,8 @@ import (
 
 var Logger = logutil.Sink
 
+// FnPrefix is the prefix for the variable names of functions. Defining a
+// function "foo" is equivalent to setting a variable named FnPrefix + "foo".
 const FnPrefix = "&"
 
 // ns is a namespace.
@@ -73,6 +75,8 @@ func NewEvaler(st *store.Store) *Evaler {
 	return &Evaler{global, map[string]ns{}, searchPaths, st, nil}
 }
 
+// PprintError pretty prints an error. It understands specialized error types
+// defined in this package.
 func PprintError(e error) {
 	switch e := e.(type) {
 	case nil:
@@ -155,7 +159,7 @@ func (ec *evalCtx) growPorts(n int) {
 
 func makeScope(s ns) scope {
 	sc := scope{}
-	for name, _ := range s {
+	for name := range s {
 		sc[name] = true
 	}
 	return sc
@@ -186,13 +190,14 @@ func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) erro
 	return ex
 }
 
-func (ev *Evaler) Compile(name, text string, n *parse.Chunk) (op, error) {
+// Compile compiles elvish code in the global scope.
+func (ev *Evaler) Compile(name, text string, n *parse.Chunk) (Op, error) {
 	return compile(name, text, makeScope(ev.global), n)
 }
 
 // peval evaluates an op in a protected environment so that calls to errorf are
 // wrapped in an Error.
-func (ec *evalCtx) peval(op op) (ex error) {
+func (ec *evalCtx) peval(op Op) (ex error) {
 	defer errutil.Catch(&ex)
 	op(ec)
 	return nil
@@ -249,8 +254,8 @@ func (ev *Evaler) Source(fname string) error {
 }
 
 // Global returns the global namespace.
-func (ev *Evaler) Global() ns {
-	return ev.global
+func (ev *Evaler) Global() map[string]Variable {
+	return map[string]Variable(ev.global)
 }
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is

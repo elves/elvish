@@ -91,11 +91,11 @@ func startCompletionInner(ed *Editor, completePrefix bool) {
 	}
 }
 
-var BadToken = Token{}
+var badToken = Token{}
 
 func tokenAtDot(ed *Editor) Token {
 	if len(ed.tokens) == 0 || ed.dot > len(ed.line) {
-		return BadToken
+		return badToken
 	}
 	if ed.dot == len(ed.line) {
 		return ed.tokens[len(ed.tokens)-1]
@@ -105,7 +105,7 @@ func tokenAtDot(ed *Editor) Token {
 			return token
 		}
 	}
-	return BadToken
+	return badToken
 }
 
 func commonPrefix(s, t string) string {

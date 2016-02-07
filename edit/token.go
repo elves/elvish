@@ -2,6 +2,15 @@ package edit
 
 import "github.com/elves/elvish/parse"
 
+// Token is a leaf of the parse tree.
+type Token struct {
+	Type      TokenType
+	Text      string
+	Node      parse.Node
+	MoreStyle string
+}
+
+// TokenType classifies Token's.
 type TokenType int
 
 const (
@@ -14,13 +23,6 @@ const (
 	Tilde
 	Sep
 )
-
-type Token struct {
-	Type      TokenType
-	Text      string
-	Node      parse.Node
-	MoreStyle string
-}
 
 var tokensBufferSize = 16
 

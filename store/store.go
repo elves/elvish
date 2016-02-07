@@ -9,6 +9,7 @@ import (
 	_ "github.com/mattn/go-sqlite3" // enable the "sqlite3" SQL driver
 )
 
+// Store is the permanent storage backend for elvish.
 type Store struct {
 	db *sql.DB
 }

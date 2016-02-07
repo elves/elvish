@@ -16,9 +16,8 @@ const (
 )
 
 var (
-	arityMismatch = errors.New("arity mismatch")
-	cdNoArg       = errors.New("implicit cd accepts no arguments")
-	evalFailure   = errors.New("generic eval failure")
+	ErrArityMismatch = errors.New("arity mismatch")
+	ErrCdNoArg       = errors.New("implicit cd accepts no arguments")
 )
 
 func maybeThrow(err error) {
@@ -65,7 +64,7 @@ func (c *Closure) Call(ec *evalCtx, args []Value) {
 	// TODO Support optional/rest argument
 	// TODO Support keyword arguments
 	if !c.Variadic && len(args) != len(c.ArgNames) {
-		throw(arityMismatch)
+		throw(ErrArityMismatch)
 	}
 
 	// This evalCtx is dedicated to the current form, so we modify it in place.
@@ -169,7 +168,7 @@ func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) {
 	var ws syscall.WaitStatus
 	_, err = syscall.Wait4(pid, &ws, 0, nil)
 	if err != nil {
-		throw(fmt.Errorf("wait:", err.Error()))
+		throw(fmt.Errorf("wait: %s", err.Error()))
 	} else {
 		maybeThrow(waitStatusToError(ws))
 	}

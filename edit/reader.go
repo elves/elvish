@@ -61,11 +61,13 @@ func NewReader(f *os.File) *Reader {
 	return rd
 }
 
-// Chan returns the channel of OneRead of the Reader.
+// Chan returns the channel onto which the Reader writes OneRead's.
 func (rd *Reader) Chan() <-chan OneRead {
 	return rd.ones
 }
 
+// Run runs the Reader. It blocks until Quit is called and should be called in
+// a separate goroutine.
 func (rd *Reader) Run() {
 	runes := rd.ar.Chan()
 	go rd.ar.Run()
@@ -85,12 +87,14 @@ func (rd *Reader) Run() {
 	}
 }
 
-// Quit terminates the reading process.
+// Quit terminates the loop of Run.
 func (rd *Reader) Quit() {
 	rd.ar.Quit()
 	rd.quit <- struct{}{}
 }
 
+// Close releases files and channels associated with the Reader. It does not
+// close the file used to create it.
 func (rd *Reader) Close() {
 	rd.ar.Close()
 	close(rd.ones)

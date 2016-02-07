@@ -71,11 +71,11 @@ func init() {
 }
 
 var (
-	argsError         = errors.New("args error")
-	inputError        = errors.New("input error")
-	storeNotConnected = errors.New("store not connected")
-	noMatchingDir     = errors.New("no matching directory")
-	noEditor          = errors.New("no line editor")
+	ErrArgs              = errors.New("args error")
+	ErrInput             = errors.New("input error")
+	ErrStoreNotConnected = errors.New("store not connected")
+	ErrNoMatchingDir     = errors.New("no matching directory")
+	ErrNoEditor          = errors.New("no line editor")
 )
 
 var (
@@ -97,7 +97,7 @@ func wrapFn(inner interface{}) func(*evalCtx, []Value) {
 	isVariadic := type_.IsVariadic()
 	var variadicType reflect.Type
 	if isVariadic {
-		requiredArgs -= 1
+		requiredArgs--
 		variadicType = type_.In(type_.NumIn() - 1).Elem()
 		if !supportedIn(variadicType) {
 			panic("bad func argument")
@@ -112,7 +112,7 @@ func wrapFn(inner interface{}) func(*evalCtx, []Value) {
 
 	return func(ec *evalCtx, args []Value) {
 		if len(args) < requiredArgs || (!isVariadic && len(args) > requiredArgs) {
-			throw(argsError)
+			throw(ErrArgs)
 		}
 		callArgs := make([]reflect.Value, len(args)+1)
 		callArgs[0] = reflect.ValueOf(ec)
@@ -120,13 +120,13 @@ func wrapFn(inner interface{}) func(*evalCtx, []Value) {
 		ok := convertArgs(args[:requiredArgs], callArgs[1:],
 			func(i int) reflect.Type { return type_.In(i + 1) })
 		if !ok {
-			throw(argsError)
+			throw(ErrArgs)
 		}
 		if isVariadic {
 			ok := convertArgs(args[requiredArgs:], callArgs[1+requiredArgs:],
 				func(i int) reflect.Type { return variadicType })
 			if !ok {
-				throw(argsError)
+				throw(ErrArgs)
 			}
 		}
 		reflect.ValueOf(inner).Call(callArgs)
@@ -273,7 +273,7 @@ func unpack(ec *evalCtx) {
 
 	for v := range in {
 		if list, ok := v.(List); !ok {
-			throw(inputError)
+			throw(ErrInput)
 		} else {
 			for _, e := range *list.inner {
 				out <- e
@@ -328,7 +328,7 @@ func cd(ec *evalCtx, args []Value) {
 	} else if len(args) == 1 {
 		dir = ToString(args[0])
 	} else {
-		throw(argsError)
+		throw(ErrArgs)
 	}
 
 	cdInner(dir, ec)
@@ -350,7 +350,7 @@ func cdInner(dir string, ec *evalCtx) {
 
 func dirs(ec *evalCtx) {
 	if ec.store == nil {
-		throw(storeNotConnected)
+		throw(ErrStoreNotConnected)
 	}
 	dirs, err := ec.store.ListDirs()
 	if err != nil {
@@ -367,14 +367,14 @@ func dirs(ec *evalCtx) {
 
 func jump(ec *evalCtx, arg string) {
 	if ec.store == nil {
-		throw(storeNotConnected)
+		throw(ErrStoreNotConnected)
 	}
 	dirs, err := ec.store.FindDirs(arg)
 	if err != nil {
 		throw(errors.New("store error: " + err.Error()))
 	}
 	if len(dirs) == 0 {
-		throw(noMatchingDir)
+		throw(ErrNoMatchingDir)
 	}
 	dir := dirs[0].Path
 	err = os.Chdir(dir)
@@ -450,7 +450,7 @@ func divide(ec *evalCtx, prod float64, nums ...float64) {
 func eq(ec *evalCtx, args []Value) {
 	out := ec.ports[1].ch
 	if len(args) == 0 {
-		throw(argsError)
+		throw(ErrArgs)
 	}
 	for i := 0; i+1 < len(args); i++ {
 		if args[i] != args[i+1] {
@@ -464,7 +464,7 @@ func eq(ec *evalCtx, args []Value) {
 func deepeq(ec *evalCtx, args []Value) {
 	out := ec.ports[1].ch
 	if len(args) == 0 {
-		throw(argsError)
+		throw(ErrArgs)
 	}
 	for i := 0; i+1 < len(args); i++ {
 		if !DeepEq(args[i], args[i+1]) {
@@ -503,14 +503,14 @@ func drop(ec *evalCtx, n int) {
 
 func bind(ec *evalCtx, key string, function string) {
 	if ec.Editor == nil {
-		throw(noEditor)
+		throw(ErrNoEditor)
 	}
 	maybeThrow(ec.Editor.Bind(key, String(function)))
 }
 
 func le(ec *evalCtx, name string, args ...Value) {
 	if ec.Editor == nil {
-		throw(noEditor)
+		throw(ErrNoEditor)
 	}
 	maybeThrow(ec.Editor.Call(name, args))
 }

@@ -8,17 +8,22 @@ import (
 	"unicode/utf8"
 )
 
+// Pattern is a glob pattern.
 type Pattern struct {
 	Segments []Segment
 }
 
+// Segment is the constituent unit of a Pattern.
 type Segment struct {
+	// Type of the Segment.
 	Type    SegmentType
 	Literal string // Valid for Literal only.
 }
 
+// SegmentType is the type of a Segment.
 type SegmentType int
 
+// Values for SegmentType.
 const (
 	Literal SegmentType = iota
 	Star
@@ -27,10 +32,12 @@ const (
 	Slash
 )
 
+// Glob returns a list of file names satisfying the given pattern.
 func Glob(p string) []string {
 	return Parse(p).Glob()
 }
 
+// Glob returns a list of file names satisfying the Pattern.
 func (p Pattern) Glob() []string {
 	segs := p.Segments
 	dir := ""

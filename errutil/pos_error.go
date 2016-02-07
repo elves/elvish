@@ -2,6 +2,7 @@ package errutil
 
 import "fmt"
 
+// PosError is an error associated with a position range.
 type PosError struct {
 	Begin int
 	End   int

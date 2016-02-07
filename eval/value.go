@@ -15,38 +15,38 @@ import (
 	"github.com/elves/elvish/strutil"
 )
 
-// Value is the runtime representation of an elvish value.
+// Value is an elvish value.
 type Value interface {
 	Type() Type
 	Reprer
 }
 
+// Reprer is anything with a Repr method.
 type Reprer interface {
 	Repr() string
 }
 
-// Booler represents a Value with a custom semantics of truthness. If a Value
-// does not satisfy this interface, it is automatically true.
+// Booler is anything that can be converted to a bool.
 type Booler interface {
 	Bool() bool
 }
 
-// Stringer represents a Value with a custom string representation. If a Value
-// does not satisfy this interface, its Repr method is used.
+// Stringer is anything that can be converted to a string.
 type Stringer interface {
 	String() string
 }
 
-// Indexer represents a Value that may be indexing.
+// Indexer is anything that can be indexed by a Value and yields a Value.
 type Indexer interface {
 	Index(idx Value) Value
 }
 
+// IndexVarer is anything that can be indexed by a Value and yields a Variable.
 type IndexVarer interface {
 	IndexVar(idx Value) Variable
 }
 
-// Caller represents a Value that may be called.
+// Caller is anything may be called on an evalCtx with a list of Value's.
 type Caller interface {
 	Call(ec *evalCtx, args []Value)
 }
@@ -68,9 +68,9 @@ const (
 
 // Error definitions.
 var (
-	needIntIndex    = errors.New("need integer index")
-	indexOutOfRange = errors.New("index out of range")
-	errOnlyStrOrRat = errors.New("only str or rat may be converted to rat")
+	ErrNeedIntIndex    = errors.New("need integer index")
+	ErrIndexOutOfRange = errors.New("index out of range")
+	ErrOnlyStrOrRat    = errors.New("only str or rat may be converted to rat")
 )
 
 // String is just a string.
@@ -100,9 +100,9 @@ func intIndex(idx Value) int {
 	if err != nil {
 		err := err.(*strconv.NumError)
 		if err.Err == strconv.ErrRange {
-			throw(indexOutOfRange)
+			throw(ErrIndexOutOfRange)
 		} else {
-			throw(needIntIndex)
+			throw(ErrNeedIntIndex)
 		}
 	}
 	return i
@@ -169,10 +169,6 @@ var (
 	GenericFailure = Error{errors.New("generic failure")}
 )
 
-func NewFailure(text string) Error {
-	return Error{errors.New(text)}
-}
-
 // multiError is multiple errors packed into one. It is used for reporting
 // errors of pipelines, in which multiple forms may error.
 type multiError struct {
@@ -210,6 +206,7 @@ func newMultiError(es ...Error) Error {
 // Flow is a special type of Error used for control flows.
 type flow uint
 
+// Control flows.
 const (
 	Return flow = iota
 	Break
@@ -245,6 +242,7 @@ type List struct {
 	inner *[]Value
 }
 
+// NewList creates a new List.
 func NewList(vs ...Value) List {
 	return List{&vs}
 }
@@ -279,7 +277,7 @@ func (l List) Index(idx Value) Value {
 		i += len(*l.inner)
 	}
 	if i < 0 || i >= len(*l.inner) {
-		throw(indexOutOfRange)
+		throw(ErrIndexOutOfRange)
 	}
 	return (*l.inner)[i]
 }
@@ -293,6 +291,7 @@ type Map struct {
 	inner *map[Value]Value
 }
 
+// NewMap creates a new Map.
 func NewMap() Map {
 	return Map{&map[Value]Value{}}
 }
@@ -335,7 +334,7 @@ func (m Map) IndexVar(idx Value) Variable {
 // Closure is a closure.
 type Closure struct {
 	ArgNames []string
-	Op       op
+	Op       Op
 	Captured map[string]Variable
 	Variadic bool
 }
@@ -344,7 +343,7 @@ func (c *Closure) Type() Type {
 	return TFn
 }
 
-func newClosure(a []string, op op, e map[string]Variable, v bool) *Closure {
+func newClosure(a []string, op Op, e map[string]Variable, v bool) *Closure {
 	return &Closure{a, op, e, v}
 }
 
@@ -544,6 +543,6 @@ func ToRat(v Value) (Rat, error) {
 		}
 		return Rat{&r}, nil
 	default:
-		return Rat{}, errOnlyStrOrRat
+		return Rat{}, ErrOnlyStrOrRat
 	}
 }

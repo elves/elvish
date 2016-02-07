@@ -21,9 +21,12 @@ import (
 type scope map[string]bool
 
 type (
-	op         func(*evalCtx)
-	valuesOp   func(*evalCtx) []Value
-	variableOp func(*evalCtx) Variable
+	// Op is a compiled operation.
+	Op func(*evalCtx)
+	// ValuesOp is a compiled Value-generating operation.
+	ValuesOp func(*evalCtx) []Value
+	// VariableOp is a compiled Variable-generating operation.
+	VariableOp func(*evalCtx) Variable
 )
 
 // compiler maintains the set of states needed when compiling a single source
@@ -47,13 +50,13 @@ func (cp *compiler) errorf(p int, format string, args ...interface{}) {
 	throw(errutil.NewContextualError(cp.name, "syntax error", cp.source, p, format, args...))
 }
 
-func compile(name, source string, sc scope, n *parse.Chunk) (op op, err error) {
+func compile(name, source string, sc scope, n *parse.Chunk) (op Op, err error) {
 	cp := &compiler{name, source, []scope{sc}, scope{}, nil}
 	defer errutil.Catch(&err)
 	return cp.chunk(n), nil
 }
 
-func (cp *compiler) chunk(n *parse.Chunk) op {
+func (cp *compiler) chunk(n *parse.Chunk) Op {
 	ops := cp.pipelines(n.Pipelines)
 
 	return func(ec *evalCtx) {
@@ -65,7 +68,7 @@ func (cp *compiler) chunk(n *parse.Chunk) op {
 
 const pipelineChanBufferSize = 32
 
-func (cp *compiler) pipeline(n *parse.Pipeline) op {
+func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 	ops := cp.forms(n.Forms)
 	p := n.Begin()
 
@@ -117,7 +120,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) op {
 	}
 }
 
-func (cp *compiler) form(n *parse.Form) op {
+func (cp *compiler) form(n *parse.Form) Op {
 	if len(n.Assignments) > 0 {
 		if n.Head != nil {
 			cp.errorf(n.Begin(), "temporary assignments not yet supported")
@@ -136,10 +139,12 @@ func (cp *compiler) form(n *parse.Form) op {
 		if ok {
 			// special form
 			return compileForm(cp, n)
-		} else {
-			cp.registerVariableGet(FnPrefix + headStr)
-			// XXX Dynamic head names should always refer to external commands
 		}
+		// Ignore the output. If a matching function exists it will be
+		// captured and eventually the Evaler executes it. If not, nothing
+		// happens here and the Evaler executes an external command.
+		cp.registerVariableGet(FnPrefix + headStr)
+		// XXX Dynamic head names should always refer to external commands
 	}
 	headOp := cp.compound(n.Head)
 	argOps := cp.compounds(n.Args)
@@ -186,8 +191,8 @@ func (cp *compiler) literal(n *parse.Primary, msg string) string {
 	}
 }
 
-func (cp *compiler) assignment(n *parse.Assignment) op {
-	var variableOps []variableOp
+func (cp *compiler) assignment(n *parse.Assignment) Op {
+	var variableOps []VariableOp
 	if n.Dst.Head.Type == parse.Braced {
 		compounds := n.Dst.Head.Braced
 		indexings := make([]*parse.Indexing, len(compounds))
@@ -199,7 +204,7 @@ func (cp *compiler) assignment(n *parse.Assignment) op {
 		}
 		variableOps = cp.indexingVars(indexings, "must be a variable spc")
 	} else {
-		variableOps = []variableOp{cp.indexingVar(n.Dst, "must be a variable spec or a braced list of those")}
+		variableOps = []VariableOp{cp.indexingVar(n.Dst, "must be a variable spec or a braced list of those")}
 	}
 
 	valuesOp := cp.compound(n.Src)
@@ -213,7 +218,7 @@ func (cp *compiler) assignment(n *parse.Assignment) op {
 	}
 }
 
-func (cp *compiler) indexingVar(n *parse.Indexing, msg string) variableOp {
+func (cp *compiler) indexingVar(n *parse.Indexing, msg string) VariableOp {
 	// XXX will we be using indexingVar for purposes other than setting?
 	varname := cp.literal(n.Head, msg)
 	p := n.Begin()
@@ -237,40 +242,39 @@ func (cp *compiler) indexingVar(n *parse.Indexing, msg string) variableOp {
 			}
 			return variable
 		}
-	} else {
-		cp.registerVariableGet(varname)
-		indexOps := cp.arrays(n.Indicies)
-		indexBegins := make([]int, len(n.Indicies))
-		indexEnds := make([]int, len(n.Indicies))
-		for i, in := range n.Indicies {
-			indexBegins[i] = in.Begin()
-			indexEnds[i] = in.End()
-		}
+	}
+	cp.registerVariableGet(varname)
+	indexOps := cp.arrays(n.Indicies)
+	indexBegins := make([]int, len(n.Indicies))
+	indexEnds := make([]int, len(n.Indicies))
+	for i, in := range n.Indicies {
+		indexBegins[i] = in.Begin()
+		indexEnds[i] = in.End()
+	}
 
-		return func(ec *evalCtx) Variable {
-			splice, ns, name := parseVariable(varname)
-			if splice {
-				// XXX
-				ec.errorf(p, "not yet supported")
-			}
-			variable := ec.ResolveVar(ns, name)
-			if variable == nil {
-				ec.errorf(p, "variable $%s does not exisit, compiler bug", varname)
-			}
-			for i, op := range indexOps {
-				indexer, ok := variable.Get().(IndexVarer)
-				if !ok {
-					ec.errorf( /* from p to */ indexBegins[i], "cannot be indexing for setting (type %T)", variable.Get())
-				}
-				values := op(ec)
-				if len(values) != 1 {
-					ec.errorf(indexBegins[i], "index must eval to a single Value (got %v)", values)
-				}
-
-				variable = indexer.IndexVar(values[0])
-			}
-			return variable
+	return func(ec *evalCtx) Variable {
+		splice, ns, name := parseVariable(varname)
+		if splice {
+			// XXX
+			ec.errorf(p, "not yet supported")
 		}
+		variable := ec.ResolveVar(ns, name)
+		if variable == nil {
+			ec.errorf(p, "variable $%s does not exisit, compiler bug", varname)
+		}
+		for i, op := range indexOps {
+			indexer, ok := variable.Get().(IndexVarer)
+			if !ok {
+				ec.errorf( /* from p to */ indexBegins[i], "cannot be indexing for setting (type %T)", variable.Get())
+			}
+			values := op(ec)
+			if len(values) != 1 {
+				ec.errorf(indexBegins[i], "index must eval to a single Value (got %v)", values)
+			}
+
+			variable = indexer.IndexVar(values[0])
+		}
+		return variable
 	}
 }
 
@@ -293,8 +297,8 @@ func makeFlag(m parse.RedirMode) int {
 const defaultFileRedirPerm = 0644
 
 // redir compiles a Redir into a op.
-func (cp *compiler) redir(n *parse.Redir) op {
-	var dstOp valuesOp
+func (cp *compiler) redir(n *parse.Redir) Op {
+	var dstOp ValuesOp
 	if n.Dest != nil {
 		dstOp = cp.compound(n.Dest)
 	}
@@ -352,7 +356,7 @@ func (cp *compiler) redir(n *parse.Redir) op {
 	}
 }
 
-func (cp *compiler) compound(n *parse.Compound) valuesOp {
+func (cp *compiler) compound(n *parse.Compound) ValuesOp {
 	if len(n.Indexings) == 0 {
 		return literalStr("")
 	}
@@ -519,7 +523,7 @@ func doGlob(gp GlobPattern) []Value {
 	return vs
 }
 
-func catOps(ops []valuesOp) valuesOp {
+func catOps(ops []ValuesOp) ValuesOp {
 	return func(ec *evalCtx) []Value {
 		// Use number of compound expressions as an estimation of the number
 		// of values
@@ -532,11 +536,11 @@ func catOps(ops []valuesOp) valuesOp {
 	}
 }
 
-func (cp *compiler) array(n *parse.Array) valuesOp {
+func (cp *compiler) array(n *parse.Array) ValuesOp {
 	return catOps(cp.compounds(n.Compounds))
 }
 
-func (cp *compiler) indexing(n *parse.Indexing) valuesOp {
+func (cp *compiler) indexing(n *parse.Indexing) ValuesOp {
 	if len(n.Indicies) == 0 {
 		return cp.primary(n.Head)
 	}
@@ -559,17 +563,17 @@ func (cp *compiler) indexing(n *parse.Indexing) valuesOp {
 	}
 }
 
-func literalValues(v ...Value) valuesOp {
+func literalValues(v ...Value) ValuesOp {
 	return func(e *evalCtx) []Value {
 		return v
 	}
 }
 
-func literalStr(text string) valuesOp {
+func literalStr(text string) ValuesOp {
 	return literalValues(String(text))
 }
 
-func variable(qname string, p int) valuesOp {
+func variable(qname string, p int) ValuesOp {
 	splice, ns, name := parseVariable(qname)
 	return func(ec *evalCtx) []Value {
 		variable := ec.ResolveVar(ns, name)
@@ -650,7 +654,7 @@ func (cp *compiler) registerVariableSet(qname string) bool {
 	}
 }
 
-func (cp *compiler) primary(n *parse.Primary) valuesOp {
+func (cp *compiler) primary(n *parse.Primary) ValuesOp {
 	switch n.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return literalStr(n.Value)
@@ -695,7 +699,7 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 
 var outputCaptureBufferSize = 16
 
-func (cp *compiler) outputCapture(n *parse.Primary) valuesOp {
+func (cp *compiler) outputCapture(n *parse.Primary) ValuesOp {
 	op := cp.chunk(n.Chunk)
 	p := n.Chunk.Begin()
 	return func(ec *evalCtx) []Value {
@@ -755,7 +759,7 @@ func (cp *compiler) popScope() {
 	cp.scopes = cp.scopes[:len(cp.scopes)-1]
 }
 
-func (cp *compiler) lambda(n *parse.Primary) valuesOp {
+func (cp *compiler) lambda(n *parse.Primary) ValuesOp {
 	// Collect argument names
 	var argNames []string
 	var variadic bool
@@ -796,10 +800,10 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 	}
 }
 
-func (cp *compiler) map_(n *parse.Primary) valuesOp {
+func (cp *compiler) map_(n *parse.Primary) ValuesOp {
 	nn := len(n.MapPairs)
-	keysOps := make([]valuesOp, nn)
-	valuesOps := make([]valuesOp, nn)
+	keysOps := make([]ValuesOp, nn)
+	valuesOps := make([]ValuesOp, nn)
 	poses := make([]int, nn)
 	for i := 0; i < nn; i++ {
 		keysOps[i] = cp.compound(n.MapPairs[i].Key)
@@ -822,7 +826,7 @@ func (cp *compiler) map_(n *parse.Primary) valuesOp {
 	}
 }
 
-func (cp *compiler) braced(n *parse.Primary) valuesOp {
+func (cp *compiler) braced(n *parse.Primary) ValuesOp {
 	ops := cp.compounds(n.Braced)
 	// TODO: n.IsRange
 	// isRange := n.IsRange

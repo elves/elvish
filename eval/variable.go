@@ -44,7 +44,7 @@ func (le listElem) index() int {
 		idx += len(*le.parent.inner)
 	}
 	if idx < 0 || idx >= len(*le.parent.inner) {
-		throw(indexOutOfRange)
+		throw(ErrIndexOutOfRange)
 	}
 	return idx
 }

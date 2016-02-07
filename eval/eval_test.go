@@ -19,7 +19,7 @@ func TestNewEvaler(t *testing.T) {
 	}
 }
 
-var anyerror = errors.New("")
+var errAny = errors.New("")
 
 type more struct {
 	wantBytesOut []byte
@@ -78,7 +78,8 @@ var evalTests = []struct {
 
 	// Status capture
 	{"put ?(true|false|false)",
-		[]Value{newMultiError(OK, NewFailure("1"), NewFailure("1"))}, nomore},
+		[]Value{newMultiError(OK, Error{errors.New("1")},
+			Error{errors.New("1")})}, nomore},
 
 	// Variable and compounding
 	{"x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
@@ -227,7 +228,7 @@ func TestEval(t *testing.T) {
 		if tt.wantBytesOut != nil && !reflect.DeepEqual(tt.wantBytesOut, bytesOut) {
 			errorf("got bytesOut=%q, want %q", bytesOut, tt.wantBytesOut)
 		}
-		if !(tt.wantError == anyerror && err != nil) && !reflect.DeepEqual(tt.wantError, err) {
+		if !(tt.wantError == errAny && err != nil) && !reflect.DeepEqual(tt.wantError, err) {
 			errorf("got err=%v, want %v", err, tt.wantError)
 		}
 		if !reflect.DeepEqual(tt.wantOut, out) {

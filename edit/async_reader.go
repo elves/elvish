@@ -22,6 +22,7 @@ type AsyncReader struct {
 	ch           chan rune
 }
 
+// NewAsyncReader creates a new AsyncReader from a file.
 func NewAsyncReader(rd *os.File) *AsyncReader {
 	ar := &AsyncReader{
 		rd:     rd,
@@ -38,10 +39,13 @@ func NewAsyncReader(rd *os.File) *AsyncReader {
 	return ar
 }
 
+// Chan returns a channel onto which the AsyncReader writes the runes it reads.
 func (ar *AsyncReader) Chan() <-chan rune {
 	return ar.ch
 }
 
+// Run runs the AsyncReader. It blocks until Quit is called and should be
+// called in a separate goroutine.
 func (ar *AsyncReader) Run() {
 	fd := int(ar.rd.Fd())
 	cfd := int(ar.rCtrl.Fd())
@@ -70,40 +74,40 @@ func (ar *AsyncReader) Run() {
 			ar.rCtrl.Read(cBuf[:])
 			<-ar.ctrlCh
 			return
-		} else {
-		ReadRune:
-			for {
-				r, _, err := ar.bufrd.ReadRune()
-				switch err {
-				case nil:
-					// Logger.Printf("read rune: %q", r)
-					select {
-					case ar.ch <- r:
-					case <-ar.ctrlCh:
-						ar.rCtrl.Read(cBuf[:])
-						return
-					}
-				case io.EOF:
+		}
+	ReadRune:
+		for {
+			r, _, err := ar.bufrd.ReadRune()
+			switch err {
+			case nil:
+				// Logger.Printf("read rune: %q", r)
+				select {
+				case ar.ch <- r:
+				case <-ar.ctrlCh:
+					ar.rCtrl.Read(cBuf[:])
 					return
-				default:
-					// BUG(xiaq): AsyncReader relies on the undocumented fact
-					// that (*os.File).Read returns an *os.File.PathError
-					patherr, ok := err.(*os.PathError) //.Err
-					if !ok {
-						panic(err)
-					}
-					e := patherr.Err
-					if e == syscall.EWOULDBLOCK || e == syscall.EAGAIN {
-						break ReadRune
-					} else {
-						panic(err)
-					}
+				}
+			case io.EOF:
+				return
+			default:
+				// BUG(xiaq): AsyncReader relies on the undocumented fact
+				// that (*os.File).Read returns an *os.File.PathError
+				patherr, ok := err.(*os.PathError) //.Err
+				if !ok {
+					panic(err)
+				}
+				e := patherr.Err
+				if e == syscall.EWOULDBLOCK || e == syscall.EAGAIN {
+					break ReadRune
+				} else {
+					panic(err)
 				}
 			}
 		}
 	}
 }
 
+// Quit terminates the loop of Run.
 func (ar *AsyncReader) Quit() {
 	_, err := ar.wCtrl.Write([]byte{'q'})
 	if err != nil {
@@ -112,6 +116,8 @@ func (ar *AsyncReader) Quit() {
 	ar.ctrlCh <- struct{}{}
 }
 
+// Close releases files and channels associated with the AsyncReader. It does
+// not close the file used to create it.
 func (ar *AsyncReader) Close() {
 	ar.rCtrl.Close()
 	ar.wCtrl.Close()

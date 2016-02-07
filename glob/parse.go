@@ -5,6 +5,7 @@ import (
 	"unicode/utf8"
 )
 
+// Parse parses a pattern.
 func Parse(s string) Pattern {
 	segments := []Segment{}
 	add := func(seg Segment) {
@@ -16,7 +17,7 @@ rune:
 	for {
 		r := p.next()
 		switch r {
-		case EOF:
+		case eof:
 			break rune
 		case '?':
 			add(Segment{Question, ""})
@@ -41,11 +42,11 @@ rune:
 		literal:
 			for {
 				switch r {
-				case '?', '*', '/', EOF:
+				case '?', '*', '/', eof:
 					break literal
 				case '\\':
 					r = p.next()
-					if r == EOF {
+					if r == eof {
 						break literal
 					}
 					literal.WriteRune(r)
@@ -69,12 +70,12 @@ type parser struct {
 	overEOF int
 }
 
-const EOF rune = -1
+const eof rune = -1
 
 func (ps *parser) next() rune {
 	if ps.pos == len(ps.src) {
-		ps.overEOF += 1
-		return EOF
+		ps.overEOF++
+		return eof
 	}
 	r, s := utf8.DecodeRuneInString(ps.src[ps.pos:])
 	ps.pos += s
@@ -83,7 +84,7 @@ func (ps *parser) next() rune {
 
 func (ps *parser) backup() {
 	if ps.overEOF > 0 {
-		ps.overEOF -= 1
+		ps.overEOF--
 		return
 	}
 	_, s := utf8.DecodeLastRuneInString(ps.src[:ps.pos])

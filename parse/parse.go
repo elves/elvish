@@ -10,11 +10,12 @@ import (
 	"unicode"
 )
 
+// Parse parses elvish source.
 func Parse(src string) (*Chunk, error) {
 	ps := &parser{src, 0, 0, []map[rune]int{{}}, nil}
 	bn := parseChunk(ps)
 	if ps.pos != len(src) {
-		ps.error(unexpectedRune)
+		ps.error(errUnexpectedRune)
 	}
 	var err error
 	if ps.errors != nil {
@@ -25,32 +26,28 @@ func Parse(src string) (*Chunk, error) {
 
 // Errors.
 var (
-	unexpectedRune       = errors.New("unexpected rune")
-	shouldBeForm         = newError("", "form")
-	duplicateExitusRedir = newError("duplicate exitus redir")
-	shouldBeEqual        = newError("", "=")
-	badRedirSign         = newError("bad redir sign", "'<'", "'>'", "'>>'", "'<>'")
-	shouldBeFd           = newError("", "a composite term representing fd")
-	shouldBeFilename     = newError("", "a composite term representing filename")
-	shouldBeArray        = newError("", "spaced")
-	StringUnterminated   = newError("string not terminated")
-	InvalidEscape        = newError("invalid escape sequence")
-	InvalidEscapeOct     = newError("invalid escape sequence", "octal digit")
-	InvalidEscapeHex     = newError("invalid escape sequence", "hex digit")
-	InvalidEscapeControl = newError("invalid control sequence", "a rune between @ (0x40) and _(0x5F)")
-	ShouldBePrimary      = newError("",
+	errUnexpectedRune       = errors.New("unexpected rune")
+	errShouldBeForm         = newError("", "form")
+	errDuplicateExitusRedir = newError("duplicate exitus redir")
+	errBadRedirSign         = newError("bad redir sign", "'<'", "'>'", "'>>'", "'<>'")
+	errShouldBeFD           = newError("", "a composite term representing fd")
+	errShouldBeFilename     = newError("", "a composite term representing filename")
+	errShouldBeArray        = newError("", "spaced")
+	errStringUnterminated   = newError("string not terminated")
+	errInvalidEscape        = newError("invalid escape sequence")
+	errInvalidEscapeOct     = newError("invalid escape sequence", "octal digit")
+	errInvalidEscapeHex     = newError("invalid escape sequence", "hex digit")
+	errInvalidEscapeControl = newError("invalid control sequence", "a rune between @ (0x40) and _(0x5F)")
+	errShouldBePrimary      = newError("",
 		"single-quoted string", "double-quoted string", "bareword")
-	shouldBeVariableName       = newError("", "variable name")
-	shouldBeAmpersandOrArray   = newError("", "'&'", "spaced")
-	shouldBeRBracket           = newError("", "']'")
-	shouldBeRBrace             = newError("", "'}'")
-	shouldBeAmpersand          = newError("", "'&'")
-	shouldBeBraceSepOrRBracket = newError("", "'-'", "','", "'}'")
-	shouldBeChunk              = newError("", "chunk")
-	shouldBeRParen             = newError("", "')'")
-	shouldBeBackquoteOrLParen  = newError("", "'`'", "'('")
-	shouldBeBackquote          = newError("", "'`'")
-	shouldBeCompound           = newError("", "compound")
+	errShouldBeVariableName       = newError("", "variable name")
+	errShouldBeRBracket           = newError("", "']'")
+	errShouldBeRBrace             = newError("", "'}'")
+	errShouldBeBraceSepOrRBracket = newError("", "'-'", "','", "'}'")
+	errShouldBeRParen             = newError("", "')'")
+	errShouldBeBackquoteOrLParen  = newError("", "'`'", "'('")
+	errShouldBeBackquote          = newError("", "'`'")
+	errShouldBeCompound           = newError("", "compound")
 )
 
 // Chunk = { PipelineSep | Space } { Pipeline { PipelineSep | Space } }
@@ -82,7 +79,7 @@ func (bn *Chunk) parseSeps(ps *parser) int {
 		if isPipelineSep(r) {
 			// parse as a Sep
 			parseSep(bn, ps, r)
-			nseps += 1
+			nseps++
 		} else if isSpace(r) {
 			// parse a run of spaces as a Sep
 			parseSpaces(bn, ps)
@@ -90,12 +87,12 @@ func (bn *Chunk) parseSeps(ps *parser) int {
 			// parse a comment as a Sep
 			for {
 				r := ps.peek()
-				if r == EOF || r == '\n' {
+				if r == eof || r == '\n' {
 					break
 				}
 				ps.next()
 			}
-			nseps += 1
+			nseps++
 		} else {
 			break
 		}
@@ -117,7 +114,7 @@ func (pn *Pipeline) parse(ps *parser) {
 	pn.addToForms(parseForm(ps))
 	for parseSep(pn, ps, '|') {
 		if !startsForm(ps.peek()) {
-			ps.error(shouldBeForm)
+			ps.error(errShouldBeForm)
 			return
 		}
 		pn.addToForms(parseForm(ps))
@@ -147,9 +144,8 @@ func (fn *Form) parse(ps *parser) {
 	if !startsCompound(ps.peek()) {
 		if len(fn.Assignments) > 0 {
 			return
-		} else {
-			ps.error(shouldBeCompound)
 		}
+		ps.error(errShouldBeCompound)
 	}
 	fn.setHead(parseCompound(ps))
 	parseSpaces(fn, ps)
@@ -162,7 +158,7 @@ func (fn *Form) parse(ps *parser) {
 		case startsCompound(r):
 			if ps.hasPrefix("?>") {
 				if fn.ExitusRedir != nil {
-					ps.error(duplicateExitusRedir)
+					ps.error(errDuplicateExitusRedir)
 					// Parse the duplicate redir anyway.
 					addChild(fn, parseExitusRedir(ps))
 				} else {
@@ -275,7 +271,7 @@ func (rn *Redir) parse(ps *parser, dest *Compound) {
 	case "<>":
 		rn.Mode = ReadWrite
 	default:
-		ps.error(badRedirSign)
+		ps.error(errBadRedirSign)
 	}
 	addSep(rn, ps)
 	parseSpaces(rn, ps)
@@ -285,9 +281,9 @@ func (rn *Redir) parse(ps *parser, dest *Compound) {
 	rn.setSource(parseCompound(ps))
 	if len(rn.Source.Indexings) == 0 {
 		if rn.SourceIsFd {
-			ps.error(shouldBeFd)
+			ps.error(errShouldBeFD)
 		} else {
-			ps.error(shouldBeFilename)
+			ps.error(errShouldBeFilename)
 		}
 		return
 	}
@@ -297,8 +293,10 @@ func isRedirSign(r rune) bool {
 	return r == '<' || r == '>'
 }
 
+// RedirMode records the mode of an IO redirection.
 type RedirMode int
 
+// Possible values for RedirMode.
 const (
 	BadRedirMode RedirMode = iota
 	Read
@@ -349,7 +347,7 @@ func (in *Indexing) parse(ps *parser) {
 	in.setHead(parsePrimary(ps))
 	for parseSep(in, ps, '[') {
 		if !startsArray(ps.peek()) {
-			ps.error(shouldBeArray)
+			ps.error(errShouldBeArray)
 		}
 
 		ps.pushCutset()
@@ -357,7 +355,7 @@ func (in *Indexing) parse(ps *parser) {
 		ps.popCutset()
 
 		if !parseSep(in, ps, ']') {
-			ps.error(shouldBeRBracket)
+			ps.error(errShouldBeRBracket)
 			return
 		}
 	}
@@ -389,6 +387,7 @@ func startsArray(r rune) bool {
 	return isSpace(r) || startsIndexing(r)
 }
 
+// Primary is the smallest expression unit.
 type Primary struct {
 	node
 	Type PrimaryType
@@ -402,8 +401,10 @@ type Primary struct {
 	IsRange  []bool      // Valid for Braced
 }
 
+// PrimaryType is the type of a Primary.
 type PrimaryType int
 
+// Possible values for PrimaryType.
 const (
 	BadPrimary PrimaryType = iota
 	Bareword
@@ -423,7 +424,7 @@ const (
 func (pn *Primary) parse(ps *parser) {
 	r := ps.peek()
 	if !startsPrimary(r) {
-		ps.error(ShouldBePrimary)
+		ps.error(errShouldBePrimary)
 		return
 	}
 	switch r {
@@ -459,8 +460,8 @@ func (pn *Primary) singleQuoted(ps *parser) {
 	defer func() { pn.Value = buf.String() }()
 	for {
 		switch r := ps.next(); r {
-		case EOF:
-			ps.error(StringUnterminated)
+		case eof:
+			ps.error(errStringUnterminated)
 			return
 		case '\'':
 			if ps.peek() == '\'' {
@@ -484,8 +485,8 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 	defer func() { pn.Value = buf.String() }()
 	for {
 		switch r := ps.next(); r {
-		case EOF:
-			ps.error(StringUnterminated)
+		case eof:
+			ps.error(errStringUnterminated)
 			return
 		case '"':
 			return
@@ -496,7 +497,7 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 				r := ps.next()
 				if r < 0x40 || r >= 0x60 {
 					ps.backup()
-					ps.error(InvalidEscapeControl)
+					ps.error(errInvalidEscapeControl)
 					ps.next()
 				}
 				buf.WriteByte(byte(r - 0x40))
@@ -515,7 +516,7 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 					d, ok := hexToDigit(ps.next())
 					if !ok {
 						ps.backup()
-						ps.error(InvalidEscapeHex)
+						ps.error(errInvalidEscapeHex)
 						break
 					}
 					rr = rr*16 + d
@@ -528,7 +529,7 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 					r := ps.next()
 					if r < '0' || r > '7' {
 						ps.backup()
-						ps.error(InvalidEscapeOct)
+						ps.error(errInvalidEscapeOct)
 						break
 					}
 					rr = rr*8 + (r - '0')
@@ -539,7 +540,7 @@ func (pn *Primary) doubleQuoted(ps *parser) {
 					buf.WriteRune(rr)
 				} else {
 					ps.backup()
-					ps.error(InvalidEscape)
+					ps.error(errInvalidEscape)
 					ps.next()
 				}
 			}
@@ -576,9 +577,9 @@ func (pn *Primary) variable(ps *parser) {
 	defer func() { pn.Value = ps.src[pn.begin+1 : ps.pos] }()
 	ps.next()
 	// The character of the variable name can be anything.
-	if ps.next() == EOF {
+	if ps.next() == eof {
 		ps.backup()
-		ps.error(shouldBeVariableName)
+		ps.error(errShouldBeVariableName)
 		ps.next()
 	}
 	for allowedInVariableName(ps.peek()) {
@@ -622,7 +623,7 @@ func (pn *Primary) exitusCapture(ps *parser) {
 	ps.popCutset()
 
 	if !parseSep(pn, ps, ')') {
-		ps.error(shouldBeRParen)
+		ps.error(errShouldBeRParen)
 	}
 }
 
@@ -635,13 +636,13 @@ func (pn *Primary) outputCapture(ps *parser) {
 	switch ps.next() {
 	case '(':
 		closer = ')'
-		shouldBeCloser = shouldBeRParen
+		shouldBeCloser = errShouldBeRParen
 	case '`':
 		closer = '`'
-		shouldBeCloser = shouldBeBackquote
+		shouldBeCloser = errShouldBeBackquote
 	default:
 		ps.backup()
-		ps.error(shouldBeBackquoteOrLParen)
+		ps.error(errShouldBeBackquoteOrLParen)
 		ps.next()
 		return
 	}
@@ -684,7 +685,7 @@ func (pn *Primary) lbracket(ps *parser) {
 		ps.next()
 		r := ps.peek()
 		switch {
-		case isSpace(r), r == ']', r == EOF:
+		case isSpace(r), r == ']', r == eof:
 			// '&' { Space } ']': '&' is a sep
 			addSep(pn, ps)
 			parseSpaces(pn, ps)
@@ -698,14 +699,14 @@ func (pn *Primary) lbracket(ps *parser) {
 		}
 		ps.popCutset()
 		if !parseSep(pn, ps, ']') {
-			ps.error(shouldBeRBracket)
+			ps.error(errShouldBeRBracket)
 		}
 	default:
 		pn.setList(parseArray(ps))
 		ps.popCutset()
 
 		if !parseSep(pn, ps, ']') {
-			ps.error(shouldBeRBracket)
+			ps.error(errShouldBeRBracket)
 			return
 		}
 		if parseSep(pn, ps, '{') {
@@ -723,7 +724,7 @@ func (pn *Primary) lambda(ps *parser) {
 	pn.setChunk(parseChunk(ps))
 	ps.popCutset()
 	if !parseSep(pn, ps, '}') {
-		ps.error(shouldBeRBrace)
+		ps.error(errShouldBeRBrace)
 	}
 }
 
@@ -760,7 +761,7 @@ func (pn *Primary) lbrace(ps *parser) {
 		ps.popCutset()
 	}
 	if !parseSep(pn, ps, '}') {
-		ps.error(shouldBeBraceSepOrRBracket)
+		ps.error(errShouldBeBraceSepOrRBracket)
 	}
 }
 
@@ -802,13 +803,13 @@ func (mpn *MapPair) parse(ps *parser) {
 	parseSpaces(mpn, ps)
 	mpn.setKey(parseCompound(ps))
 	if len(mpn.Key.Indexings) == 0 {
-		ps.error(shouldBeCompound)
+		ps.error(errShouldBeCompound)
 	}
 
 	parseSpaces(mpn, ps)
 	mpn.setValue(parseCompound(ps))
 	if len(mpn.Value.Indexings) == 0 {
-		ps.error(shouldBeCompound)
+		ps.error(errShouldBeCompound)
 	}
 }
 

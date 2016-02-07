@@ -67,8 +67,8 @@ var keyBindings = map[bufferMode]map[Key]string{
 }
 
 var (
-	invaliKey       = eval.NewFailure("invalid key to bind to")
-	invalidFunction = eval.NewFailure("invalid function to bind")
+	errInvalidKey      = errors.New("invalid key to bind to")
+	errInvalidFunction = errors.New("invalid function to bind")
 )
 
 var modifier = map[string]Mod{
@@ -116,8 +116,9 @@ func parseKey(s string) (Key, error) {
 	return Key{}, fmt.Errorf("bad key: %q", s)
 }
 
-// TODO Modify the binding table in ed instead of a global data structure.
+// Bind binds a key to a editor builtin or shell function.
 func (ed *Editor) Bind(key string, function eval.Value) error {
+	// TODO Modify the binding table in ed instead of a global data structure.
 	k, err := parseKey(key)
 	if err != nil {
 		return err

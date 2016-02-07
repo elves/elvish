@@ -20,19 +20,19 @@ type parser struct {
 	errors  *errutil.Errors
 }
 
-const EOF rune = -1
+const eof rune = -1
 
 func (ps *parser) eof() bool {
-	return ps.peek() == EOF
+	return ps.peek() == eof
 }
 
 func (ps *parser) peek() rune {
 	if ps.pos == len(ps.src) {
-		return EOF
+		return eof
 	}
 	r, _ := utf8.DecodeRuneInString(ps.src[ps.pos:])
 	if ps.currentCutset()[r] > 0 {
-		return EOF
+		return eof
 	}
 	return r
 }
@@ -43,12 +43,12 @@ func (ps *parser) hasPrefix(prefix string) bool {
 
 func (ps *parser) next() rune {
 	if ps.pos == len(ps.src) {
-		ps.overEOF += 1
-		return EOF
+		ps.overEOF++
+		return eof
 	}
 	r, s := utf8.DecodeRuneInString(ps.src[ps.pos:])
 	if ps.currentCutset()[r] > 0 {
-		return EOF
+		return eof
 	}
 	ps.pos += s
 	return r
@@ -56,7 +56,7 @@ func (ps *parser) next() rune {
 
 func (ps *parser) backup() {
 	if ps.overEOF > 0 {
-		ps.overEOF -= 1
+		ps.overEOF--
 		return
 	}
 	_, s := utf8.DecodeLastRuneInString(ps.src[:ps.pos])

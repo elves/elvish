@@ -2,8 +2,8 @@ package eval
 
 import "github.com/elves/elvish/parse"
 
-func (cp *compiler) chunks(ns []*parse.Chunk) []op {
-	ops := make([]op, len(ns))
+func (cp *compiler) chunks(ns []*parse.Chunk) []Op {
+	ops := make([]Op, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.chunk(n)
 	}
@@ -17,8 +17,8 @@ func chunkBegins(ns []*parse.Chunk) []int {
 	return begins
 }
 
-func (cp *compiler) pipelines(ns []*parse.Pipeline) []op {
-	ops := make([]op, len(ns))
+func (cp *compiler) pipelines(ns []*parse.Pipeline) []Op {
+	ops := make([]Op, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.pipeline(n)
 	}
@@ -32,8 +32,8 @@ func pipelineBegins(ns []*parse.Pipeline) []int {
 	return begins
 }
 
-func (cp *compiler) forms(ns []*parse.Form) []op {
-	ops := make([]op, len(ns))
+func (cp *compiler) forms(ns []*parse.Form) []Op {
+	ops := make([]Op, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.form(n)
 	}
@@ -47,8 +47,8 @@ func formBegins(ns []*parse.Form) []int {
 	return begins
 }
 
-func (cp *compiler) assignments(ns []*parse.Assignment) []op {
-	ops := make([]op, len(ns))
+func (cp *compiler) assignments(ns []*parse.Assignment) []Op {
+	ops := make([]Op, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.assignment(n)
 	}
@@ -62,8 +62,8 @@ func assignmentBegins(ns []*parse.Assignment) []int {
 	return begins
 }
 
-func (cp *compiler) indexingVars(ns []*parse.Indexing, msg string) []variableOp {
-	ops := make([]variableOp, len(ns))
+func (cp *compiler) indexingVars(ns []*parse.Indexing, msg string) []VariableOp {
+	ops := make([]VariableOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.indexingVar(n, msg)
 	}
@@ -77,8 +77,8 @@ func indexingVarBegins(ns []*parse.Indexing) []int {
 	return begins
 }
 
-func (cp *compiler) redirs(ns []*parse.Redir) []op {
-	ops := make([]op, len(ns))
+func (cp *compiler) redirs(ns []*parse.Redir) []Op {
+	ops := make([]Op, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.redir(n)
 	}
@@ -92,8 +92,8 @@ func redirBegins(ns []*parse.Redir) []int {
 	return begins
 }
 
-func (cp *compiler) compounds(ns []*parse.Compound) []valuesOp {
-	ops := make([]valuesOp, len(ns))
+func (cp *compiler) compounds(ns []*parse.Compound) []ValuesOp {
+	ops := make([]ValuesOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.compound(n)
 	}
@@ -107,8 +107,8 @@ func compoundBegins(ns []*parse.Compound) []int {
 	return begins
 }
 
-func (cp *compiler) arrays(ns []*parse.Array) []valuesOp {
-	ops := make([]valuesOp, len(ns))
+func (cp *compiler) arrays(ns []*parse.Array) []ValuesOp {
+	ops := make([]ValuesOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.array(n)
 	}
@@ -122,8 +122,8 @@ func arrayBegins(ns []*parse.Array) []int {
 	return begins
 }
 
-func (cp *compiler) indexings(ns []*parse.Indexing) []valuesOp {
-	ops := make([]valuesOp, len(ns))
+func (cp *compiler) indexings(ns []*parse.Indexing) []ValuesOp {
+	ops := make([]ValuesOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.indexing(n)
 	}
@@ -137,8 +137,8 @@ func indexingBegins(ns []*parse.Indexing) []int {
 	return begins
 }
 
-func (cp *compiler) primarys(ns []*parse.Primary) []valuesOp {
-	ops := make([]valuesOp, len(ns))
+func (cp *compiler) primarys(ns []*parse.Primary) []ValuesOp {
+	ops := make([]ValuesOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.primary(n)
 	}
@@ -152,8 +152,8 @@ func primaryBegins(ns []*parse.Primary) []int {
 	return begins
 }
 
-func (cp *compiler) outputCaptures(ns []*parse.Primary) []valuesOp {
-	ops := make([]valuesOp, len(ns))
+func (cp *compiler) outputCaptures(ns []*parse.Primary) []ValuesOp {
+	ops := make([]ValuesOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.outputCapture(n)
 	}
@@ -167,8 +167,8 @@ func outputCaptureBegins(ns []*parse.Primary) []int {
 	return begins
 }
 
-func (cp *compiler) lambdas(ns []*parse.Primary) []valuesOp {
-	ops := make([]valuesOp, len(ns))
+func (cp *compiler) lambdas(ns []*parse.Primary) []ValuesOp {
+	ops := make([]ValuesOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.lambda(n)
 	}
@@ -182,8 +182,8 @@ func lambdaBegins(ns []*parse.Primary) []int {
 	return begins
 }
 
-func (cp *compiler) map_s(ns []*parse.Primary) []valuesOp {
-	ops := make([]valuesOp, len(ns))
+func (cp *compiler) map_s(ns []*parse.Primary) []ValuesOp {
+	ops := make([]ValuesOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.map_(n)
 	}
@@ -197,8 +197,8 @@ func map_Begins(ns []*parse.Primary) []int {
 	return begins
 }
 
-func (cp *compiler) braceds(ns []*parse.Primary) []valuesOp {
-	ops := make([]valuesOp, len(ns))
+func (cp *compiler) braceds(ns []*parse.Primary) []ValuesOp {
+	ops := make([]ValuesOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.braced(n)
 	}

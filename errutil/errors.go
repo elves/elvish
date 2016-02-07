@@ -2,6 +2,7 @@ package errutil
 
 import "bytes"
 
+// Errors pack multiple errors into one error.
 type Errors struct {
 	Errors []error
 }

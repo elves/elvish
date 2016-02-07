@@ -81,22 +81,22 @@ var builtins = map[string]builtin{
 }
 
 var (
-	takeNoArg     = errors.New("editor builtins take no arguments")
-	noSuchBuiltin = errors.New("no such editor builtin")
-	inactive      = errors.New("editor inactive")
+	ErrTakeNoArg      = errors.New("editor builtins take no arguments")
+	ErrNoSuchBuiltin  = errors.New("no such editor builtin")
+	ErrEditorInactive = errors.New("editor inactive")
 )
 
 // Call satisfies the eval.Foreign interface.
 func (ed *Editor) Call(name string, args []eval.Value) error {
 	if len(args) > 0 {
-		return takeNoArg
+		return ErrTakeNoArg
 	}
 	f, ok := builtins[name]
 	if !ok {
-		return noSuchBuiltin
+		return ErrNoSuchBuiltin
 	}
 	if !ed.active {
-		return inactive
+		return ErrEditorInactive
 	}
 	f(ed)
 	return nil
