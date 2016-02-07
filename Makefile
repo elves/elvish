@@ -1,4 +1,4 @@
-PKGS := edit errutil eval logutil osutil parse print store strutil sys
+PKGS := $(filter-out main,$(shell go list -f '{{.Name}}' ./...))
 PKG_COVERS := $(addprefix cover/,$(PKGS))
 
 all: get test
