@@ -1,4 +1,4 @@
-// Package glob implements
+// Package glob implements globbing for elvish.
 package glob
 
 import (
