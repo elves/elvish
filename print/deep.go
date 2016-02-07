@@ -1,4 +1,4 @@
-// package print provides a function for printing Go values recursively,
+// Package print provides a function for printing Go values recursively,
 // which can be useful for debugging.
 package print
 
