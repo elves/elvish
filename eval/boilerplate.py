@@ -11,7 +11,15 @@ func (cp *compiler) {name}s(ns []{intype}{extraargs}) []{outtype} {{
         ops[i] = cp.{name}(n{extranames})
     }}
     return ops
-}}'''.format(name=name, intype=intype, outtype=outtype, extraargs=extraargs,
+}}
+func {name}Begins(ns []{intype}) []int {{
+    begins := make([]int, len(ns))
+    for i, n := range ns {{
+        begins[i] = n.Begin()
+    }}
+    return begins
+}}
+'''.format(name=name, intype=intype, outtype=outtype, extraargs=extraargs,
              extranames=extranames)
 
 
