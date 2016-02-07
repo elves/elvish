@@ -1,7 +1,7 @@
 PKGS := $(filter-out main,$(shell go list -f '{{.Name}}' ./...))
 PKG_COVERS := $(addprefix cover/,$(PKGS))
 
-all: get test
+all: generate get test
 
 get:
 	go get .
