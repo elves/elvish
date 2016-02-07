@@ -33,6 +33,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{End, 0}:      "move-dot-eol",
 		Key{Up, Alt}:     "move-dot-up",
 		Key{Down, Alt}:   "move-dot-down",
+		Key{'.', Alt}:    "insert-last-word",
 		Key{Enter, Alt}:  "insert-key",
 		Key{Enter, 0}:    "return-line",
 		Key{'D', Ctrl}:   "return-eof",

@@ -45,6 +45,7 @@ var builtins = map[string]builtin{
 	"move-dot-eol":        moveDotEOL,
 	"move-dot-up":         moveDotUp,
 	"move-dot-down":       moveDotDown,
+	"insert-last-word":    insertLastWord,
 	"insert-key":          insertKey,
 	"return-line":         returnLine,
 	"return-eof":          returnEOF,
@@ -232,10 +233,23 @@ func moveDotDown(ed *Editor) {
 	ed.dot = nextSOL + len(TrimWcWidth(ed.line[nextSOL:nextEOL], width))
 }
 
+func insertLastWord(ed *Editor) {
+	// XXX Only visits last element in ed.history; doesn't cycle.
+	if len(ed.histories) == 0 {
+		return
+	}
+	ed.insertAtDot(lastWord(ed.histories[len(ed.histories)-1]))
+}
+
+func lastWord(s string) string {
+	s = strings.TrimRightFunc(s, unicode.IsSpace)
+	i := strings.LastIndexFunc(s, unicode.IsSpace) + 1
+	return s[i:]
+}
+
 func insertKey(ed *Editor) {
 	k := ed.lastKey
-	ed.line = ed.line[:ed.dot] + string(k.Rune) + ed.line[ed.dot:]
-	ed.dot += utf8.RuneLen(k.Rune)
+	ed.insertAtDot(string(k.Rune))
 }
 
 func returnLine(ed *Editor) {
