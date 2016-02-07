@@ -31,7 +31,7 @@ func complVariable(n parse.Node, ed *Editor) []*candidate {
 		return nil
 	}
 
-	head := primary.Value[1:]
+	head := primary.Value
 	cands := []*candidate{}
 	for variable := range ed.evaler.Global() {
 		if strings.HasPrefix(variable, head) {
