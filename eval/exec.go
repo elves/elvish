@@ -42,10 +42,12 @@ func (ec *evalCtx) resolveNonSpecial(cmd Value) Caller {
 	cmdStr := ToString(cmd)
 
 	// Defined callable
-	ns, name := splitQualifiedName(cmdStr)
-	if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
-		if clb, ok := v.Get().(Caller); ok {
-			return clb
+	splice, ns, name := parseVariable(cmdStr)
+	if !splice {
+		if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
+			if clb, ok := v.Get().(Caller); ok {
+				return clb
+			}
 		}
 	}
 

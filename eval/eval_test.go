@@ -83,6 +83,8 @@ var evalTests = []struct {
 	// Variable and compounding
 	{"x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
 		strs("WOW, SUCH SHELL, MUCH COOL"), nomore},
+	// Splicing
+	{"x=[elvish rules]; put $@x", strs("elvish", "rules"), nomore},
 
 	// List element assignment
 	{"li=[foo bar]; li[0]=233; put-all $li", strs("233", "bar"), nomore},

@@ -218,7 +218,11 @@ func (cp *compiler) indexingVar(n *parse.Indexing, msg string) variableOp {
 		cp.registerVariableSet(varname)
 
 		return func(ec *evalCtx) Variable {
-			ns, barename := splitQualifiedName(varname)
+			splice, ns, barename := parseVariable(varname)
+			if splice {
+				// XXX
+				ec.errorf(p, "not yet supported")
+			}
 			variable := ec.ResolveVar(ns, barename)
 			if variable == nil {
 				// New variable.
@@ -240,7 +244,12 @@ func (cp *compiler) indexingVar(n *parse.Indexing, msg string) variableOp {
 		}
 
 		return func(ec *evalCtx) Variable {
-			variable := ec.ResolveVar(splitQualifiedName(varname))
+			splice, ns, name := parseVariable(varname)
+			if splice {
+				// XXX
+				ec.errorf(p, "not yet supported")
+			}
+			variable := ec.ResolveVar(ns, name)
 			if variable == nil {
 				ec.errorf(p, "variable $%s does not exisit, compiler bug", varname)
 			}
@@ -426,18 +435,26 @@ func literalStr(text string) valuesOp {
 }
 
 func variable(qname string, p int) valuesOp {
-	ns, name := splitQualifiedName(qname)
+	splice, ns, name := parseVariable(qname)
 	return func(ec *evalCtx) []Value {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
 			ec.errorf(p, "variable $%s not found", qname)
 		}
-		return []Value{variable.Get()}
+		value := variable.Get()
+		if splice {
+			list, ok := value.(List)
+			if !ok {
+				ec.errorf(p, "variable $%s is not a list", qname)
+			}
+			return *list.inner
+		}
+		return []Value{value}
 	}
 }
 
 func (cp *compiler) registerVariableGet(qname string) bool {
-	ns, name := splitQualifiedName(qname)
+	_, ns, name := parseVariable(qname)
 	if ns != "" && ns != "local" && ns != "up" {
 		// Variable in another mod, do nothing
 		return true
@@ -462,7 +479,7 @@ func (cp *compiler) registerVariableGet(qname string) bool {
 }
 
 func (cp *compiler) registerVariableSet(qname string) bool {
-	ns, name := splitQualifiedName(qname)
+	_, ns, name := parseVariable(qname)
 	switch ns {
 	case "local":
 		cp.thisScope()[name] = true
@@ -672,13 +689,19 @@ func (cp *compiler) braced(n *parse.Primary) valuesOp {
 	return catOps(ops)
 }
 
-// splitQualifiedName splits a qualified variable name into two parts separated
-// by a colon, the namespace and the name proper. When there is no colon, the
-// namespace part is empty.
-func splitQualifiedName(qname string) (string, string) {
+// parseVariable parses a variable name.
+func parseVariable(qname string) (splice bool, ns string, name string) {
+	if strings.HasPrefix(qname, "@") {
+		splice = true
+		qname = qname[1:]
+		if qname == "" {
+			qname = "args"
+		}
+	}
+
 	i := strings.IndexRune(qname, ':')
 	if i == -1 {
-		return "", qname
+		return splice, "", qname
 	}
-	return qname[:i], qname[i+1:]
+	return splice, qname[:i], qname[i+1:]
 }

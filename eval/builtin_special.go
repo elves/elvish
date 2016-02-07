@@ -45,7 +45,10 @@ func compileDel(cp *compiler, fn *parse.Form) op {
 	var names, envNames []string
 	for _, cn := range fn.Args {
 		qname := mustString(cp, cn, "should be a literal variable name")
-		ns, name := splitQualifiedName(qname)
+		splice, ns, name := parseVariable(qname)
+		if splice {
+			cp.errorf(cn.Begin(), "removing spliced variable makes no sense")
+		}
 		switch ns {
 		case "", "local":
 			if !cp.thisScope()[name] {
