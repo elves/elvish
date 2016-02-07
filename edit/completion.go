@@ -1,6 +1,9 @@
 package edit
 
-import "fmt"
+import (
+	"fmt"
+	"unicode/utf8"
+)
 
 type styled struct {
 	text  string
@@ -40,6 +43,14 @@ func (c *completion) next(cycle bool) {
 }
 
 func startCompletion(ed *Editor) {
+	startCompletionInner(ed, false)
+}
+
+func completePrefixOrStartCompletion(ed *Editor) {
+	startCompletionInner(ed, true)
+}
+
+func startCompletionInner(ed *Editor, completePrefix bool) {
 	token := tokenAtDot(ed)
 	node := token.Node
 	if node == nil {
@@ -61,6 +72,20 @@ func startCompletion(ed *Editor) {
 	} else if len(c.candidates) == 0 {
 		ed.pushTip(fmt.Sprintf("no candidate for %s", c.completer))
 	} else {
+		if completePrefix {
+			// If there is a non-empty longest common prefix, insert it and
+			// don't start completion mode.
+			// As a special case, when there is exactly one candidate, it is
+			// immeidately accepted.
+			prefix := c.candidates[0].source.text
+			for _, cand := range c.candidates[1:] {
+				prefix = commonPrefix(prefix, cand.source.text)
+			}
+			if prefix != "" {
+				ed.insertAtDot(prefix)
+				return
+			}
+		}
 		ed.completion = c
 		ed.mode = modeCompletion
 	}
@@ -81,4 +106,17 @@ func tokenAtDot(ed *Editor) Token {
 		}
 	}
 	return BadToken
+}
+
+func commonPrefix(s, t string) string {
+	for i, r := range s {
+		if i >= len(t) {
+			return s[:i]
+		}
+		r2, _ := utf8.DecodeRuneInString(t[i:])
+		if r2 != r {
+			return s[:i]
+		}
+	}
+	return s
 }

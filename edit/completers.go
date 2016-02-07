@@ -77,7 +77,7 @@ func complFormHead(cn *parse.Compound, head string, ed *Editor) []*candidate {
 
 func complFormHeadInner(head string, ed *Editor) []*candidate {
 	if eval.DontSearch(head) {
-		return complArgInner(head, false, ed, true)
+		return complArgInner(head, ed, true)
 	}
 
 	cands := []*candidate{}
@@ -112,27 +112,21 @@ func complNewArg(n parse.Node, ed *Editor) []*candidate {
 	if _, ok := sn.Parent().(*parse.Form); !ok {
 		return nil
 	}
-	return complArgInner("", false, ed, false)
+	return complArgInner("", ed, false)
 }
 
 func complArg(cn *parse.Compound, head string, ed *Editor) []*candidate {
-	return complArgInner(head, false, ed, false)
+	return complArgInner(head, ed, false)
 }
 
-// TODO: all of fileNames, getStyle and the final directory check do stat on
-// files.
-func complArgInner(head string, indir bool, ed *Editor, formHead bool) []*candidate {
-	var dir, file, indirSlash string
-	if indir {
-		dir = head
-		indirSlash = "/"
-	} else {
-		dir, file = path.Split(head)
-		if dir == "" {
-			dir = "."
-		}
+// TODO: getStyle does redundant stats.
+func complArgInner(head string, ed *Editor, formHead bool) []*candidate {
+	dir, fileprefix := path.Split(head)
+	if dir == "" {
+		dir = "."
 	}
-	names, err := fileNames(dir)
+
+	infos, err := ioutil.ReadDir(dir)
 	cands := []*candidate{}
 
 	if err != nil {
@@ -140,54 +134,44 @@ func complArgInner(head string, indir bool, ed *Editor, formHead bool) []*candid
 		return cands
 	}
 
-	hasHead := false
 	// Make candidates out of elements that match the file component.
-	for s := range names {
-		if strings.HasPrefix(s, file) {
-			if s == file {
-				hasHead = true
-			}
-			full := head + indirSlash + s[len(file):]
-			if formHead && !isExecutableOrDir(full) {
-				continue
-			}
-			cand := &candidate{
-				source: styled{indirSlash + s[len(file):], ""},
-				menu:   styled{s, defaultLsColor.getStyle(full)},
-			}
-			cands = append(cands, cand)
+	for _, info := range infos {
+		name := info.Name()
+		// Irrevelant file.
+		if !strings.HasPrefix(name, fileprefix) {
+			continue
 		}
-	}
+		// Hide dot files unless file starts with a dot.
+		if !dotfile(fileprefix) && dotfile(name) {
+			continue
+		}
+		// Only accept searchable directories and executable files if
+		// completing head.
+		if formHead && !(info.IsDir() || (info.Mode()&0111) != 0) {
+			continue
+		}
 
-	if !indir && hasHead && len(cands) == 1 && isDir(head) {
-		// Completing an unambiguous directory name.
-		return complArgInner(head, true, ed, formHead)
+		// Full filename for .getStyle.
+		full := head + name[len(fileprefix):]
+
+		if info.IsDir() {
+			name += "/"
+		}
+
+		cands = append(cands, &candidate{
+			source: styled{name[len(fileprefix):], ""},
+			menu:   styled{name, defaultLsColor.getStyle(full)},
+		})
 	}
 
 	return cands
 }
 
+func dotfile(fname string) bool {
+	return strings.HasPrefix(fname, ".")
+}
+
 func isDir(fname string) bool {
 	stat, err := os.Stat(fname)
 	return err == nil && stat.IsDir()
-}
-
-func isExecutableOrDir(fname string) bool {
-	stat, err := os.Stat(fname)
-	return err == nil && (stat.Mode()&0111 != 0)
-}
-
-func fileNames(dir string) (<-chan string, error) {
-	infos, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-	names := make(chan string, 32)
-	go func() {
-		for _, info := range infos {
-			names <- info.Name()
-		}
-		close(names)
-	}()
-	return names, nil
 }

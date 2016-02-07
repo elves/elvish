@@ -32,7 +32,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{Enter, Alt}: "insert-key",
 		Key{Enter, 0}:   "return-line",
 		Key{'D', Ctrl}:  "return-eof",
-		Key{Tab, 0}:     "start-completion",
+		Key{Tab, 0}:     "complete-prefix-or-start-completion",
 		Key{Up, 0}:      "start-history",
 		Key{'N', Ctrl}:  "start-navigation",
 		DefaultBinding:  "default-insert",
@@ -43,7 +43,7 @@ var keyBindings = map[bufferMode]map[Key]string{
 		Key{Down, 0}:   "select-cand-down",
 		Key{Left, 0}:   "select-cand-left",
 		Key{Right, 0}:  "select-cand-right",
-		// Key{Tab, 0}:    "cycle-cand-right",
+		Key{Tab, 0}:    "cycle-cand-right",
 		DefaultBinding: "default-completion",
 	},
 	modeNavigation: map[Key]string{

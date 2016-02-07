@@ -48,6 +48,8 @@ var builtins = map[string]builtin{
 	"default-insert":  defaultInsert,
 
 	// Completion mode
+	"complete-prefix-or-start-completion": completePrefixOrStartCompletion,
+
 	"start-completion":   startCompletion,
 	"cancel-completion":  cancelCompletion,
 	"select-cand-up":     selectCandUp,

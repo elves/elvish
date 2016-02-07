@@ -237,13 +237,16 @@ func (ed *Editor) acceptCompletion() {
 	c := ed.completion
 	if 0 <= c.current && c.current < len(c.candidates) {
 		accepted := c.candidates[c.current].source.text
-		// Insert the accepted completion text at ed.dot and move ed.dot after
-		// the newly inserted text
-		ed.line = ed.line[:ed.dot] + accepted + ed.line[ed.dot:]
-		ed.dot += len(accepted)
+		ed.insertAtDot(accepted)
 	}
 	ed.completion = nil
 	ed.mode = modeInsert
+}
+
+// insertAtDot inserts text at the dot and moves the dot after it.
+func (ed *Editor) insertAtDot(text string) {
+	ed.line = ed.line[:ed.dot] + text + ed.line[ed.dot:]
+	ed.dot += len(text)
 }
 
 // acceptHistory accepts currently history.
