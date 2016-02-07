@@ -335,14 +335,15 @@ type Closure struct {
 	ArgNames []string
 	Op       op
 	Captured map[string]Variable
+	Variadic bool
 }
 
 func (c *Closure) Type() Type {
 	return TFn
 }
 
-func newClosure(a []string, op op, e map[string]Variable) *Closure {
-	return &Closure{a, op, e}
+func newClosure(a []string, op op, e map[string]Variable, v bool) *Closure {
+	return &Closure{a, op, e, v}
 }
 
 func (c *Closure) Repr() string {

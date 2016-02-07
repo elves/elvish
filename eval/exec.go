@@ -62,7 +62,7 @@ func (b *BuiltinFn) Call(ec *evalCtx, args []Value) {
 func (c *Closure) Call(ec *evalCtx, args []Value) {
 	// TODO Support optional/rest argument
 	// TODO Support keyword arguments
-	if len(args) != len(c.ArgNames) {
+	if !c.Variadic && len(args) != len(c.ArgNames) {
 		throw(arityMismatch)
 	}
 
@@ -77,8 +77,10 @@ func (c *Closure) Call(ec *evalCtx, args []Value) {
 	}
 	// Make local namespace and pass arguments.
 	ec.local = make(map[string]Variable)
-	for i, name := range c.ArgNames {
-		ec.local[name] = newPtrVariable(args[i])
+	if !c.Variadic {
+		for i, name := range c.ArgNames {
+			ec.local[name] = newPtrVariable(args[i])
+		}
 	}
 	ec.local["args"] = newPtrVariable(List{&args})
 	ec.local["kwargs"] = newPtrVariable(Map{&map[Value]Value{}})

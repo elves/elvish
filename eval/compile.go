@@ -600,10 +600,18 @@ func (cp *compiler) popScope() {
 
 func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 	// Collect argument names
-	argNames := make([]string, len(n.List.Compounds))
-	for i, arg := range n.List.Compounds {
-		name := mustString(cp, arg, "expect string")
-		argNames[i] = name
+	var argNames []string
+	var variadic bool
+	if n.List != nil {
+		// [argument list]{ chunk }
+		argNames = make([]string, len(n.List.Compounds))
+		for i, arg := range n.List.Compounds {
+			name := mustString(cp, arg, "expect string")
+			argNames[i] = name
+		}
+	} else {
+		// { chunk }
+		variadic = true
 	}
 
 	// XXX The fiddlings with cp.capture is likely wrong.
@@ -627,7 +635,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 		for name := range capture {
 			evCapture[name] = ec.ResolveVar("", name)
 		}
-		return []Value{newClosure(argNames, op, evCapture)}
+		return []Value{newClosure(argNames, op, evCapture, variadic)}
 	}
 }
 
