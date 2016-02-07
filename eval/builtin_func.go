@@ -48,8 +48,8 @@ func init() {
 		&BuiltinFn{"each", wrapFn(each)},
 
 		&BuiltinFn{"cd", cd},
-		&BuiltinFn{"visited-dirs", wrapFn(visistedDirs)},
-		&BuiltinFn{"jump-dir", wrapFn(jumpDir)},
+		&BuiltinFn{"dirs", wrapFn(dirs)},
+		&BuiltinFn{"jump", wrapFn(jump)},
 
 		&BuiltinFn{"source", wrapFn(source)},
 
@@ -344,7 +344,7 @@ func cdInner(dir string, ec *evalCtx) {
 	}
 }
 
-func visistedDirs(ec *evalCtx) {
+func dirs(ec *evalCtx) {
 	if ec.store == nil {
 		throw(storeNotConnected)
 	}
@@ -361,7 +361,7 @@ func visistedDirs(ec *evalCtx) {
 	}
 }
 
-func jumpDir(ec *evalCtx, arg string) {
+func jump(ec *evalCtx, arg string) {
 	if ec.store == nil {
 		throw(storeNotConnected)
 	}
