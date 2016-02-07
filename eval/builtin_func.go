@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/user"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -325,12 +324,7 @@ in:
 func cd(ec *evalCtx, args []Value) {
 	var dir string
 	if len(args) == 0 {
-		user, err := user.Current()
-		if err == nil {
-			dir = user.HomeDir
-		} else {
-			throw(errors.New("cannot get current user: " + err.Error()))
-		}
+		dir = mustGetHome("")
 	} else if len(args) == 1 {
 		dir = ToString(args[0])
 	} else {

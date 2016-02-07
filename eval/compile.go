@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/user"
+	"path"
 	"strings"
 
 	"github.com/elves/elvish/errutil"
@@ -349,39 +351,104 @@ func (cp *compiler) redir(n *parse.Redir) op {
 }
 
 func (cp *compiler) compound(n *parse.Compound) valuesOp {
-	if len(n.Indexings) == 1 {
-		return cp.indexing(n.Indexings[0])
+	if len(n.Indexings) == 0 {
+		return literalStr("")
 	}
 
-	ops := cp.indexings(n.Indexings)
+	tilde := false
+	indexings := n.Indexings
+	begins := indexingBegins(n.Indexings)[1:]
+
+	if n.Indexings[0].Head.Type == parse.Tilde {
+		// A lone ~.
+		if len(n.Indexings) == 1 {
+			return func(ec *evalCtx) []Value {
+				dir, err := getHome("")
+				if err != nil {
+					throw(err)
+				}
+				return []Value{String(dir)}
+			}
+		}
+		tilde = true
+		indexings = indexings[1:]
+		begins = begins[1:]
+	}
+
+	ops := cp.indexings(indexings)
 
 	return func(ec *evalCtx) []Value {
-		// start with a single "", do Cartesian products one by one
-		vs := []Value{String("")}
-		for _, op := range ops {
+		// Accumulator.
+		vs := ops[0](ec)
+
+		for k, op := range ops[1:] {
 			us := op(ec)
 			if len(us) == 1 {
-				// short path: reuse vs
+				// Short path: transform vs in place.
 				u := us[0]
 				for i := range vs {
-					vs[i] = cat(vs[i], u)
+					vs[i] = cat(vs[i], u, begins[k])
 				}
-			} else {
-				newvs := make([]Value, len(vs)*len(us))
-				for i, v := range vs {
-					for j, u := range us {
-						newvs[i*len(us)+j] = cat(v, u)
-					}
+				continue
+			}
+			newvs := make([]Value, len(vs)*len(us))
+			for i, v := range vs {
+				for j, u := range us {
+					newvs[i*len(us)+j] = cat(v, u, begins[k])
 				}
-				vs = newvs
+			}
+			vs = newvs
+		}
+		if tilde {
+			for i, v := range vs {
+				vs[i] = String(doTilde(ToString(v)))
 			}
 		}
 		return vs
 	}
 }
 
-func cat(lhs, rhs Value) Value {
+func cat(lhs, rhs Value, p int) Value {
 	return String(ToString(lhs) + ToString(rhs))
+}
+
+func doTilde(s string) string {
+	i := strings.Index(s, "/")
+	var uname, rest string
+	if i == -1 {
+		uname = s
+	} else {
+		uname = s[:i]
+		rest = s[i+1:]
+	}
+	dir, err := getHome(uname)
+	if err != nil {
+		throw(err)
+	}
+	return path.Join(dir, rest)
+	// return dir + "/" + rest
+}
+
+func mustGetHome(uname string) string {
+	dir, err := getHome(uname)
+	if err != nil {
+		throw(err)
+	}
+	return dir
+}
+
+func getHome(uname string) (string, error) {
+	var u *user.User
+	var err error
+	if uname == "" {
+		u, err = user.Current()
+	} else {
+		u, err = user.Lookup(uname)
+	}
+	if err != nil {
+		return "", fmt.Errorf("can't resolve ~%s: %s", uname, err.Error())
+	}
+	return u.HomeDir, nil
 }
 
 func catOps(ops []valuesOp) valuesOp {
@@ -525,7 +592,13 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 			cp.errorf(n.Begin(), "variable %s not found", n.Value)
 		}
 		return variable(qname, n.Begin())
-	// case parse.Wildcard:
+	case parse.Wildcard:
+		return func(ec *evalCtx) []Value {
+			return []Value{PathPattern(n.Value)}
+		}
+	case parse.Tilde:
+		cp.errorf(n.Begin(), "compiler bug: Tilde not handled in .compound")
+		return literalStr("~")
 	case parse.ErrorCapture:
 		op := cp.chunk(n.Chunk)
 		return func(ec *evalCtx) []Value {
@@ -548,8 +621,8 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 		// XXX: Primary types not yet implemented are just treated as
 		// barewords. Should report parser bug of bad PrimaryType after they
 		// have been implemented.
+		cp.errorf(n.Begin(), "bad PrimaryType; parser bug")
 		return literalStr(n.SourceText())
-		// panic("bad PrimaryType; parser bug")
 	}
 }
 

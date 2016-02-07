@@ -62,6 +62,7 @@ const (
 	TMap
 	TFn
 	TRat
+	TPathPattern
 )
 
 // Error definitions.
@@ -395,6 +396,18 @@ func (r Rat) String() string {
 		return r.b.Num().String()
 	}
 	return r.b.String()
+}
+
+// PathPattern is en ephemeral Value generated when evaluating tilde and
+// wildcards.
+type PathPattern string
+
+func (pp PathPattern) Type() Type {
+	return TPathPattern
+}
+
+func (pp PathPattern) Repr() string {
+	return "<PathPattern " + parse.Quote(string(pp)) + ">"
 }
 
 func evalIndex(ec *evalCtx, l, r Value, lp, rp int) Value {
