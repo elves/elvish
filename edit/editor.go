@@ -374,7 +374,10 @@ MainLoop:
 			switch sig {
 			case syscall.SIGINT:
 				// Start over
-				ed.editorState = editorState{savedTermios: ed.savedTermios}
+				ed.editorState = editorState{
+					savedTermios: ed.savedTermios,
+					isExternal:   ed.isExternal,
+				}
 				goto MainLoop
 			case syscall.SIGWINCH:
 				continue MainLoop
