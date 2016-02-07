@@ -171,6 +171,15 @@ var goodCases = []struct {
 			"Type":    Braced,
 			"Braced":  []string{"a", "c", "f"},
 			"IsRange": []bool{false, true}}})},
+	// Tilde
+	{"a ~xiaq/go", a(
+		ast{"Compound", fs{
+			"Indexings": []ast{
+				{"Indexing/Primary", fs{"Type": Tilde}},
+				{"Indexing/Primary", fs{"Type": Bareword, "Value": "xiaq/go"}},
+			},
+		}},
+	)},
 }
 
 func TestParse(t *testing.T) {

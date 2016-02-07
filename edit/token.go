@@ -10,6 +10,8 @@ const (
 	SingleQuoted
 	DoubleQuoted
 	Variable
+	Wildcard
+	Tilde
 	Sep
 )
 
@@ -69,6 +71,10 @@ func produceTokens(n parse.Node, tokenCh chan<- Token) {
 				tokenType = DoubleQuoted
 			case parse.Variable:
 				tokenType = Variable
+			case parse.Wildcard:
+				tokenType = Wildcard
+			case parse.Tilde:
+				tokenType = Tilde
 			}
 		case *parse.Sep:
 			tokenType = Sep

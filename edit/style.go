@@ -18,6 +18,8 @@ var styleForType = map[TokenType]string{
 	SingleQuoted: "33",
 	DoubleQuoted: "33",
 	Variable:     "35",
+	Wildcard:     "",
+	Tilde:        "",
 	Sep:          "",
 }
 

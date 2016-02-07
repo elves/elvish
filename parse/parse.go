@@ -314,8 +314,23 @@ type Compound struct {
 }
 
 func (cn *Compound) parse(ps *parser) {
+	cn.tilde(ps)
 	for startsIndexing(ps.peek()) {
 		cn.addToIndexings(parseIndexing(ps))
+	}
+}
+
+// tilde parses a tilde if there is one. It is implemented here instead of
+// within Primary since a tilde can only appear as the first part of a
+// Compound. Elsewhere tildes are barewords.
+func (cn *Compound) tilde(ps *parser) {
+	if ps.peek() == '~' {
+		ps.next()
+		base := node{nil, ps.pos - 1, ps.pos, "~", nil}
+		pn := &Primary{node: base, Type: Tilde, Value: "~"}
+		in := &Indexing{node: base}
+		in.setHead(pn)
+		cn.addToIndexings(in)
 	}
 }
 
@@ -378,7 +393,7 @@ type Primary struct {
 	node
 	Type PrimaryType
 	// The unquoted string value. Valid for Bareword, SingleQuoted,
-	// DoubleQuoted, Variable and Wildcard.
+	// DoubleQuoted, Variable, Wildcard and Tilde.
 	Value    string
 	List     *Array      // Valid for List and Lambda
 	Chunk    *Chunk      // Valid for OutputCapture, ExitusCapture and Lambda
@@ -396,6 +411,7 @@ const (
 	DoubleQuoted
 	Variable
 	Wildcard
+	Tilde
 	ErrorCapture
 	OutputCapture
 	List
@@ -762,11 +778,11 @@ func (pn *Primary) bareword(ps *parser) {
 
 // The following are allowed in barewords:
 // * Anything allowed in variable names
-// * The symbols "%+,./=@"
+// * The symbols "%+,./=@~"
 func allowedInBareword(r rune) bool {
 	return allowedInVariableName(r) ||
-		r == '%' || r == '+' || r == ',' ||
-		r == '.' || r == '/' || r == '=' || r == '@'
+		r == '%' || r == '+' || r == ',' || r == '.' ||
+		r == '/' || r == '=' || r == '@' || r == '~'
 }
 
 func startsPrimary(r rune) bool {
