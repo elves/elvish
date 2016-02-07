@@ -30,22 +30,24 @@ type builtin func(ed *Editor)
 
 var builtins = map[string]builtin{
 	// Command and insert mode
-	"start-insert":    startInsert,
-	"start-command":   startCommand,
-	"kill-line-left":  killLineLeft,
-	"kill-line-right": killLineRight,
-	"kill-word-left":  killWordLeft,
-	"kill-rune-left":  killRuneLeft,
-	"kill-rune-right": killRuneRight,
-	"move-dot-left":   moveDotLeft,
-	"move-dot-right":  moveDotRight,
-	"move-dot-up":     moveDotUp,
-	"move-dot-down":   moveDotDown,
-	"insert-key":      insertKey,
-	"return-line":     returnLine,
-	"return-eof":      returnEOF,
-	"default-command": defaultCommand,
-	"default-insert":  defaultInsert,
+	"start-insert":        startInsert,
+	"start-command":       startCommand,
+	"kill-line-left":      killLineLeft,
+	"kill-line-right":     killLineRight,
+	"kill-word-left":      killWordLeft,
+	"kill-rune-left":      killRuneLeft,
+	"kill-rune-right":     killRuneRight,
+	"move-dot-left":       moveDotLeft,
+	"move-dot-right":      moveDotRight,
+	"move-dot-left-word":  moveDotLeftWord,
+	"move-dot-right-word": moveDotRightWord,
+	"move-dot-up":         moveDotUp,
+	"move-dot-down":       moveDotDown,
+	"insert-key":          insertKey,
+	"return-line":         returnLine,
+	"return-eof":          returnEOF,
+	"default-command":     defaultCommand,
+	"default-insert":      defaultInsert,
 
 	// Completion mode
 	"complete-prefix-or-start-completion": completePrefixOrStartCompletion,
@@ -124,6 +126,7 @@ func killLineRight(ed *Editor) {
 // NOTE(xiaq): A word is now defined as a series of non-whitespace chars.
 func killWordLeft(ed *Editor) {
 	if ed.dot == 0 {
+		return
 	}
 	space := strings.LastIndexFunc(
 		strings.TrimRightFunc(ed.line[:ed.dot], unicode.IsSpace),
@@ -159,6 +162,37 @@ func moveDotLeft(ed *Editor) {
 func moveDotRight(ed *Editor) {
 	_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
 	ed.dot += w
+}
+
+func moveDotLeftWord(ed *Editor) {
+	if ed.dot == 0 {
+		return
+	}
+	space := strings.LastIndexFunc(
+		strings.TrimRightFunc(ed.line[:ed.dot], unicode.IsSpace),
+		unicode.IsSpace) + 1
+	ed.dot = space
+}
+
+func moveDotRightWord(ed *Editor) {
+	// Move to first space
+	p := strings.IndexFunc(ed.line[ed.dot:], unicode.IsSpace)
+	if p == -1 {
+		ed.dot = len(ed.line)
+		return
+	}
+	ed.dot += p
+	// Move to first nonspace
+	p = strings.IndexFunc(ed.line[ed.dot:], notSpace)
+	if p == -1 {
+		ed.dot = len(ed.line)
+		return
+	}
+	ed.dot += p
+}
+
+func notSpace(r rune) bool {
+	return !unicode.IsSpace(r)
 }
 
 func moveDotUp(ed *Editor) {
