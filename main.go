@@ -55,6 +55,7 @@ func main() {
 		}
 		defer f.Close()
 
+		eval.Logger = log.New(f, "[eval] ", log.LstdFlags)
 		edit.Logger = log.New(f, "[edit] ", log.LstdFlags)
 	}
 

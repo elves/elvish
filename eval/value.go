@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/strutil"
 )
@@ -62,7 +63,7 @@ const (
 	TMap
 	TFn
 	TRat
-	TPathPattern
+	TGlobPattern
 )
 
 // Error definitions.
@@ -398,16 +399,56 @@ func (r Rat) String() string {
 	return r.b.String()
 }
 
-// PathPattern is en ephemeral Value generated when evaluating tilde and
+// GlobPattern is en ephemeral Value generated when evaluating tilde and
 // wildcards.
-type PathPattern string
+type GlobPattern glob.Pattern
 
-func (pp PathPattern) Type() Type {
-	return TPathPattern
+func (gp GlobPattern) Type() Type {
+	return TGlobPattern
 }
 
-func (pp PathPattern) Repr() string {
-	return "<PathPattern " + parse.Quote(string(pp)) + ">"
+func (gp GlobPattern) Repr() string {
+	return fmt.Sprintf("<GlobPattern%v>", gp)
+}
+
+func (gp *GlobPattern) append(segs ...glob.Segment) {
+	gp.Segments = append(gp.Segments, segs...)
+}
+
+func wildcardToSegment(s string) glob.Segment {
+	switch s {
+	case "*":
+		return glob.Segment{glob.Star, ""}
+	case "**":
+		return glob.Segment{glob.StarStar, ""}
+	case "?":
+		return glob.Segment{glob.Question, ""}
+	default:
+		throw(fmt.Errorf("bad wildcard: %q", s))
+		panic("unreachable")
+	}
+}
+
+func stringToSegments(s string) []glob.Segment {
+	segs := []glob.Segment{}
+	for i := 0; i < len(s); {
+		j := i
+		for ; j < len(s) && s[j] != '/'; j++ {
+		}
+		if j > i {
+			segs = append(segs, glob.Segment{glob.Literal, s[i:j]})
+		}
+		if j < len(s) {
+			for ; j < len(s) && s[j] == '/'; j++ {
+			}
+			segs = append(segs,
+				glob.Segment{glob.Slash, ""})
+			i = j
+		} else {
+			break
+		}
+	}
+	return segs
 }
 
 func evalIndex(ec *evalCtx, l, r Value, lp, rp int) Value {

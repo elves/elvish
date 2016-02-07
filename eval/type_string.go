@@ -4,9 +4,9 @@ package eval
 
 import "fmt"
 
-const _Type_name = "TInvalidTStringTErrorTBoolTListTMapTFnTRat"
+const _Type_name = "TInvalidTStringTErrorTBoolTListTMapTFnTRatTGlobPattern"
 
-var _Type_index = [...]uint8{0, 8, 15, 21, 26, 31, 35, 38, 42}
+var _Type_index = [...]uint8{0, 8, 15, 21, 26, 31, 35, 38, 42, 54}
 
 func (i Type) String() string {
 	if i < 0 || i+1 >= Type(len(_Type_index)) {

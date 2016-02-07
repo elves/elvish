@@ -13,9 +13,12 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/errutil"
+	"github.com/elves/elvish/logutil"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 )
+
+var Logger = logutil.Sink
 
 const FnPrefix = "&"
 

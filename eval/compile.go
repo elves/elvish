@@ -4,6 +4,7 @@ package eval
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -13,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/errutil"
+	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
 )
 
@@ -363,11 +365,7 @@ func (cp *compiler) compound(n *parse.Compound) valuesOp {
 		// A lone ~.
 		if len(n.Indexings) == 1 {
 			return func(ec *evalCtx) []Value {
-				dir, err := getHome("")
-				if err != nil {
-					throw(err)
-				}
-				return []Value{String(dir)}
+				return []Value{String(mustGetHome(""))}
 			}
 		}
 		tilde = true
@@ -401,32 +399,93 @@ func (cp *compiler) compound(n *parse.Compound) valuesOp {
 		}
 		if tilde {
 			for i, v := range vs {
-				vs[i] = String(doTilde(ToString(v)))
+				vs[i] = doTilde(v)
+				// vs[i] = String(doTilde(ToString(v)))
 			}
+		}
+		hasGlob := false
+		for _, v := range vs {
+			if _, ok := v.(GlobPattern); ok {
+				hasGlob = true
+				break
+			}
+		}
+		if hasGlob {
+			newvs := make([]Value, 0, len(vs))
+			for _, v := range vs {
+				if gp, ok := v.(GlobPattern); ok {
+					// Logger.Printf("globbing %v", gp)
+					newvs = append(newvs, doGlob(gp)...)
+				} else {
+					newvs = append(newvs, v)
+				}
+			}
+			vs = newvs
 		}
 		return vs
 	}
 }
 
 func cat(lhs, rhs Value, p int) Value {
-	return String(ToString(lhs) + ToString(rhs))
+	switch lhs := lhs.(type) {
+	case String:
+		switch rhs := rhs.(type) {
+		case String:
+			return lhs + rhs
+		case GlobPattern:
+			// We know rhs contains exactly one segment.
+			return GlobPattern{[]glob.Segment{
+				{glob.Literal, string(lhs)}, rhs.Segments[0]}}
+		}
+	case GlobPattern:
+		// NOTE Modifies lhs in place.
+		switch rhs := rhs.(type) {
+		case String:
+			lhs.append(stringToSegments(string(rhs))...)
+			return lhs
+		case GlobPattern:
+			// We know rhs contains exactly one segment.
+			lhs.append(rhs.Segments[0])
+			return lhs
+		}
+	}
+	throw(fmt.Errorf("unsupported concat: %s and %s", lhs.Type(), rhs.Type()))
+	panic("unreachable")
 }
 
-func doTilde(s string) string {
-	i := strings.Index(s, "/")
-	var uname, rest string
-	if i == -1 {
-		uname = s
-	} else {
-		uname = s[:i]
-		rest = s[i+1:]
+func doTilde(v Value) Value {
+	switch v := v.(type) {
+	case String:
+		s := string(v)
+		i := strings.Index(s, "/")
+		var uname, rest string
+		if i == -1 {
+			uname = s
+		} else {
+			uname = s[:i]
+			rest = s[i+1:]
+		}
+		dir := mustGetHome(uname)
+		return String(path.Join(dir, rest))
+	case GlobPattern:
+		if len(v.Segments) == 0 || v.Segments[0].Type != glob.Literal {
+			throw(errors.New("cannot determine user name from glob pattern"))
+		}
+		s := v.Segments[0].Literal
+		// Find / in the first segment to determine the username.
+		i := strings.Index(s, "/")
+		if i == -1 {
+			throw(errors.New("cannot determine user name from glob pattern"))
+		}
+		uname := s[:i]
+		dir := mustGetHome(uname)
+		// Replace ~uname in first segment with the found path.
+		v.Segments[0].Literal = dir + s[i:]
+		return v
+	default:
+		throw(fmt.Errorf("tilde doesn't work on value of type %s", v.Type()))
+		panic("unreachable")
 	}
-	dir, err := getHome(uname)
-	if err != nil {
-		throw(err)
-	}
-	return path.Join(dir, rest)
-	// return dir + "/" + rest
 }
 
 func mustGetHome(uname string) string {
@@ -449,6 +508,15 @@ func getHome(uname string) (string, error) {
 		return "", fmt.Errorf("can't resolve ~%s: %s", uname, err.Error())
 	}
 	return u.HomeDir, nil
+}
+
+func doGlob(gp GlobPattern) []Value {
+	names := glob.Pattern(gp).Glob()
+	vs := make([]Value, len(names))
+	for i, name := range names {
+		vs[i] = String(name)
+	}
+	return vs
 }
 
 func catOps(ops []valuesOp) valuesOp {
@@ -593,8 +661,10 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 		}
 		return variable(qname, n.Begin())
 	case parse.Wildcard:
+		vs := []Value{GlobPattern{[]glob.Segment{
+			wildcardToSegment(n.SourceText())}}}
 		return func(ec *evalCtx) []Value {
-			return []Value{PathPattern(n.Value)}
+			return vs
 		}
 	case parse.Tilde:
 		cp.errorf(n.Begin(), "compiler bug: Tilde not handled in .compound")
