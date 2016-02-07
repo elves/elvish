@@ -608,6 +608,8 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOp {
 
 	// XXX The fiddlings with cp.capture is likely wrong.
 	thisScope := cp.pushScope()
+	thisScope["args"] = true
+	thisScope["kwargs"] = true
 	for _, argName := range argNames {
 		thisScope[argName] = true
 	}

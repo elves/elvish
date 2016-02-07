@@ -61,6 +61,7 @@ func (b *BuiltinFn) Call(ec *evalCtx, args []Value) {
 // Call calls a closure.
 func (c *Closure) Call(ec *evalCtx, args []Value) {
 	// TODO Support optional/rest argument
+	// TODO Support keyword arguments
 	if len(args) != len(c.ArgNames) {
 		throw(arityMismatch)
 	}
@@ -79,6 +80,8 @@ func (c *Closure) Call(ec *evalCtx, args []Value) {
 	for i, name := range c.ArgNames {
 		ec.local[name] = newPtrVariable(args[i])
 	}
+	ec.local["args"] = newPtrVariable(List{&args})
+	ec.local["kwargs"] = newPtrVariable(Map{&map[Value]Value{}})
 
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.
