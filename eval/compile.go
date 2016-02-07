@@ -618,9 +618,6 @@ func (cp *compiler) primary(n *parse.Primary) valuesOp {
 	case parse.Braced:
 		return cp.braced(n)
 	default:
-		// XXX: Primary types not yet implemented are just treated as
-		// barewords. Should report parser bug of bad PrimaryType after they
-		// have been implemented.
 		cp.errorf(n.Begin(), "bad PrimaryType; parser bug")
 		return literalStr(n.SourceText())
 	}
