@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 
 	"github.com/elves/elvish/errutil"
@@ -47,10 +46,7 @@ type editorState struct {
 	completionLines       int
 	navigation            *navigation
 	history               history
-	isExternal            struct {
-		sync.RWMutex
-		m map[string]bool
-	}
+	isExternal            map[string]bool
 	// Used for builtins.
 	lastKey    Key
 	nextAction action
@@ -350,7 +346,8 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 // other signals.
 func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 	ed.editorState = editorState{active: true}
-	go ed.updateIsExternal()
+	isExternalCh := make(chan map[string]bool, 1)
+	go getIsExternal(ed.evaler, isExternalCh)
 
 	ed.writer.oldBuf.cells = nil
 	ones := ed.reader.Chan()
@@ -375,6 +372,8 @@ MainLoop:
 		ed.tips = nil
 
 		select {
+		case m := <-isExternalCh:
+			ed.isExternal = m
 		case sig := <-ed.sigs:
 			// TODO(xiaq): Maybe support customizable handling of signals
 			switch sig {

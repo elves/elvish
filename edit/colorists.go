@@ -30,10 +30,8 @@ func goodFormHead(head string, ed *Editor) bool {
 		// XXX don't stat twice
 		return eval.IsExecutable(head) || isDir(head)
 	} else {
-		ed.isExternal.RLock()
-		defer ed.isExternal.RUnlock()
 		return ed.evaler.Global()[eval.FnPrefix+head] != nil ||
-			ed.isExternal.m[head]
+			ed.isExternal[head]
 	}
 }
 
