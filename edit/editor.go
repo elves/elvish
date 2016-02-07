@@ -278,10 +278,12 @@ func setupTerminal(file *os.File) (*sys.Termios, error) {
 		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
 	}
 
-	err = sys.FlushInput(fd)
-	if err != nil {
-		return nil, fmt.Errorf("can't flush input: %s", err)
-	}
+	/*
+		err = sys.FlushInput(fd)
+		if err != nil {
+			return nil, fmt.Errorf("can't flush input: %s", err)
+		}
+	*/
 
 	return savedTermios, nil
 }
