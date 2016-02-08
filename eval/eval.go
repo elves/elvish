@@ -101,16 +101,14 @@ const (
 	outChanLeader = "▶ "
 )
 
-// newTopEvalCtx creates a top-level evalCtx.
-func newTopEvalCtx(ev *Evaler, name, text string, ports []*port) *evalCtx {
+// NewTopEvalCtx creates a top-level evalCtx.
+func NewTopEvalCtx(ev *Evaler, name, text string, ports []*port) *evalCtx {
 	return &evalCtx{
 		ev,
 		name, text, "top",
 		ev.global, ns{},
 		ports,
 	}
-	//[]*port{{f: os.Stdin},
-	//	{f: os.Stdout, ch: ch, closeCh: true}, {f: os.Stderr}},
 }
 
 // fork returns a modified copy of ec. The ports are copied deeply, with
@@ -188,27 +186,6 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 	<-outDone
 	return err
 }
-
-/*
-func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) error {
-	op, err := ev.Compile(name, text, n)
-	if err != nil {
-		out.close()
-		return err
-	}
-
-	ec, outdone := newTopEvalCtx(ev, name, text)
-	if out != nil {
-		ec.ports[1].close()
-		ec.ports[1] = out
-	}
-	ex := ec.peval(op)
-	ec.closePorts()
-	<-outdone
-
-	return ex
-}
-*/
 
 // Compile compiles elvish code in the global scope.
 func (ev *Evaler) Compile(name, text string, n *parse.Chunk) (Op, error) {
