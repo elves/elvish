@@ -16,7 +16,7 @@ import (
 	"github.com/elves/elvish/sys"
 )
 
-var Logger = logutil.Sink
+var Logger = logutil.Discard
 
 const (
 	lackEOLRune = '\u23ce'
