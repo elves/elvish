@@ -71,6 +71,29 @@ var (
 	errInvalidFunction = errors.New("invalid function to bind")
 )
 
+// Bind binds a key to a editor builtin or shell function.
+func (ed *Editor) Bind(key string, function eval.Value) error {
+	// TODO Modify the binding table in ed instead of a global data structure.
+	k, err := parseKey(key)
+	if err != nil {
+		return err
+	}
+	// TODO support functions
+	s, ok := function.(eval.String)
+	if !ok {
+		return errors.New("function not string")
+	}
+	// TODO support other modes
+
+	if builtins[string(s)] == nil {
+		return fmt.Errorf("no builtin named %s", s.Repr())
+	}
+
+	keyBindings[modeInsert][k] = string(s)
+
+	return nil
+}
+
 var modifier = map[string]Mod{
 	"s": Shift, "shift": Shift,
 	"a": Alt, "alt": Alt,
@@ -115,27 +138,4 @@ func parseKey(s string) (Key, error) {
 	}
 
 	return Key{}, fmt.Errorf("bad key: %q", s)
-}
-
-// Bind binds a key to a editor builtin or shell function.
-func (ed *Editor) Bind(key string, function eval.Value) error {
-	// TODO Modify the binding table in ed instead of a global data structure.
-	k, err := parseKey(key)
-	if err != nil {
-		return err
-	}
-	// TODO support functions
-	s, ok := function.(eval.String)
-	if !ok {
-		return errors.New("function not string")
-	}
-	// TODO support other modes
-
-	if builtins[string(s)] == nil {
-		return fmt.Errorf("no builtin named %s", s.Repr())
-	}
-
-	keyBindings[modeInsert][k] = string(s)
-
-	return nil
 }
