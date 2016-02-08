@@ -437,9 +437,10 @@ func cat(lhs, rhs Value, p int) Value {
 		case String:
 			return lhs + rhs
 		case GlobPattern:
+			segs := stringToSegments(string(lhs))
 			// We know rhs contains exactly one segment.
-			return GlobPattern{[]glob.Segment{
-				{glob.Literal, string(lhs)}, rhs.Segments[0]}}
+			segs = append(segs, rhs.Segments[0])
+			return GlobPattern{segs}
 		}
 	case GlobPattern:
 		// NOTE Modifies lhs in place.

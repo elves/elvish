@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/elves/elvish/osutil"
 	"github.com/elves/elvish/parse"
 )
 
@@ -92,6 +93,9 @@ var evalTests = []struct {
 	// Map element assignment
 	{"di=[&k v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
 		strs("lorem", "ipsum"), nomore},
+
+	// Wildcard.
+	{"put /*", strs(osutil.RootNames()...), nomore},
 
 	// Closure
 	// Basics
