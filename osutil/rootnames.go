@@ -1,6 +1,9 @@
 package osutil
 
-import "os"
+import (
+	"os"
+	"sort"
+)
 
 // RootNames returns the result of /*.
 func RootNames() []string {
@@ -14,6 +17,7 @@ func RootNames() []string {
 	if err != nil {
 		panic(err)
 	}
+	sort.Strings(names)
 	for i, name := range names {
 		names[i] = "/" + name
 	}
