@@ -1,9 +1,12 @@
 package edit
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
+	"sync"
 
 	"github.com/elves/elvish/eval"
 )
@@ -71,6 +74,70 @@ var (
 	errInvalidFunction = errors.New("invalid function to bind")
 )
 
+// CallerFn adapts an eval.Caller to an editor function.
+type CallerFn struct {
+	eval.Caller
+}
+
+func (c CallerFn) Call(ed *Editor) {
+	// Input
+	devnull, err := os.Open("/dev/null")
+	if err != nil {
+		Logger.Println(err)
+		return
+	}
+	defer devnull.Close()
+	in := make(chan eval.Value)
+	close(in)
+
+	// Output
+	rout, out, err := os.Pipe()
+	if err != nil {
+		Logger.Println(err)
+		return
+	}
+	chanOut := make(chan eval.Value)
+
+	// Goroutines to collect output.
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		rd := bufio.NewReader(rout)
+		for {
+			line, err := rd.ReadString('\n')
+			Logger.Println("function writes bytes", line)
+			if err != nil {
+				break
+			}
+		}
+		rout.Close()
+		wg.Done()
+	}()
+	go func() {
+		for v := range chanOut {
+			Logger.Println("function writes Value", v.Repr())
+		}
+		wg.Done()
+	}()
+
+	ports := []*eval.Port{
+		{File: devnull, Chan: in},
+		{File: out, Chan: chanOut},
+		{File: out, Chan: chanOut},
+	}
+	// XXX There is no source to pass to NewTopEvalCtx.
+	ec := eval.NewTopEvalCtx(ed.evaler, "[editor]", "", ports)
+	ex := ec.PCall(c.Caller, []eval.Value{})
+	if ex != nil {
+		// XXX will disappear very quickly
+		ed.pushTip("function error: " + ex.Error())
+	}
+
+	out.Close()
+	close(chanOut)
+	wg.Wait()
+}
+
 // Bind binds a key to a editor builtin or shell function.
 func (ed *Editor) Bind(key string, function eval.Value) error {
 	// TODO Modify the binding table in ed instead of a global data structure.
@@ -78,19 +145,22 @@ func (ed *Editor) Bind(key string, function eval.Value) error {
 	if err != nil {
 		return err
 	}
-	// TODO support functions
-	s, ok := function.(eval.String)
-	if !ok {
-		return errors.New("function not string")
-	}
-	// TODO support other modes
 
-	builtin := builtins[string(s)]
-	if builtin == nil {
-		return fmt.Errorf("no builtin named %s", s.Repr())
+	var f fn
+	switch function := function.(type) {
+	case eval.String:
+		builtin, ok := builtins[string(function)]
+		if !ok {
+			return fmt.Errorf("no builtin named %s", function.Repr())
+		}
+		f = builtin
+	case eval.Caller:
+		f = CallerFn{function}
+	default:
+		return fmt.Errorf("bad function type %s", function.Type())
 	}
 
-	keyBindings[modeInsert][k] = builtin
+	keyBindings[modeInsert][k] = f
 
 	return nil
 }

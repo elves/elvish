@@ -501,11 +501,11 @@ func drop(ec *evalCtx, n int) {
 	}
 }
 
-func bind(ec *evalCtx, key string, function string) {
+func bind(ec *evalCtx, key string, function Value) {
 	if ec.Editor == nil {
 		throw(ErrNoEditor)
 	}
-	maybeThrow(ec.Editor.Bind(key, String(function)))
+	maybeThrow(ec.Editor.Bind(key, function))
 }
 
 func le(ec *evalCtx, name string, args ...Value) {
