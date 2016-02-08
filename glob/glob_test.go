@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+
+	"github.com/elves/elvish/osutil"
 )
 
 var (
@@ -31,7 +33,7 @@ var globCases = []struct {
 	{"d**", []string{"d1", "d1/e", "d1/e/f", "d1/e/f/g", "d1/e/f/g/X",
 		"d2", "d2/e", "d2/e/f", "d2/e/f/g", "d2/e/f/g/X", "dX"}},
 	// NOTE: If / changes during testing, this case will fail.
-	{"/*", rootNames()},
+	{"/*", osutil.RootNames()},
 }
 
 func TestGlob(t *testing.T) {
@@ -63,21 +65,4 @@ func TestGlob(t *testing.T) {
 			t.Errorf(`Glob(%q, "") => %v, want %v`, tc.pattern, names, tc.want)
 		}
 	}
-}
-
-func rootNames() []string {
-	f, err := os.Open("/")
-	if err != nil {
-		panic(err)
-	}
-
-	names, err := f.Readdirnames(-1)
-	f.Close()
-	if err != nil {
-		panic(err)
-	}
-	for i, name := range names {
-		names[i] = "/" + name
-	}
-	return names
 }
