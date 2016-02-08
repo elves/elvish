@@ -12,38 +12,52 @@ import (
 )
 
 var keyBindings = map[bufferMode]map[Key]fn{
-	modeCommand: map[Key]fn{
-		Key{'i', 0}:    builtin(startInsert),
-		Key{'h', 0}:    builtin(moveDotLeft),
-		Key{'l', 0}:    builtin(moveDotRight),
-		Key{'D', 0}:    builtin(killLineRight),
-		DefaultBinding: builtin(defaultCommand),
-	},
 	modeInsert: map[Key]fn{
-		Key{'[', Ctrl}:    builtin(startCommand),
+		DefaultBinding: builtin(defaultInsert),
+		// Moving.
+		Key{Left, 0}:     builtin(moveDotLeft),
+		Key{Right, 0}:    builtin(moveDotRight),
+		Key{Up, Alt}:     builtin(moveDotUp),
+		Key{Down, Alt}:   builtin(moveDotDown),
+		Key{Left, Ctrl}:  builtin(moveDotLeftWord),
+		Key{Right, Ctrl}: builtin(moveDotRightWord),
+		Key{Home, 0}:     builtin(moveDotSOL),
+		Key{End, 0}:      builtin(moveDotEOL),
+		// Killing.
 		Key{'U', Ctrl}:    builtin(killLineLeft),
 		Key{'K', Ctrl}:    builtin(killLineRight),
 		Key{'W', Ctrl}:    builtin(killWordLeft),
 		Key{Backspace, 0}: builtin(killRuneLeft),
 		// Some terminal send ^H on backspace
-		Key{'H', Ctrl}:   builtin(killRuneLeft),
-		Key{Delete, 0}:   builtin(killRuneRight),
-		Key{Left, 0}:     builtin(moveDotLeft),
-		Key{Right, 0}:    builtin(moveDotRight),
-		Key{Left, Ctrl}:  builtin(moveDotLeftWord),
-		Key{Right, Ctrl}: builtin(moveDotRightWord),
-		Key{Home, 0}:     builtin(moveDotSOL),
-		Key{End, 0}:      builtin(moveDotEOL),
-		Key{Up, Alt}:     builtin(moveDotUp),
-		Key{Down, Alt}:   builtin(moveDotDown),
-		Key{'.', Alt}:    builtin(insertLastWord),
-		Key{Enter, Alt}:  builtin(insertKey),
-		Key{Enter, 0}:    builtin(returnLine),
-		Key{'D', Ctrl}:   builtin(returnEOF),
-		Key{Tab, 0}:      builtin(completePrefixOrStartCompletion),
-		Key{Up, 0}:       builtin(startHistory),
-		Key{'N', Ctrl}:   builtin(startNavigation),
-		DefaultBinding:   builtin(defaultInsert),
+		Key{'H', Ctrl}: builtin(killRuneLeft),
+		Key{Delete, 0}: builtin(killRuneRight),
+		// Inserting.
+		Key{'.', Alt}:   builtin(insertLastWord),
+		Key{Enter, Alt}: builtin(insertKey),
+		// Controls.
+		Key{Enter, 0}:  builtin(returnLine),
+		Key{'D', Ctrl}: builtin(returnEOF),
+		Key{'[', Ctrl}: builtin(startCommand),
+		Key{Tab, 0}:    builtin(completePrefixOrStartCompletion),
+		Key{Up, 0}:     builtin(startHistory),
+		Key{'N', Ctrl}: builtin(startNavigation),
+	},
+	modeCommand: map[Key]fn{
+		DefaultBinding: builtin(defaultCommand),
+		// Moving.
+		Key{'h', 0}: builtin(moveDotLeft),
+		Key{'l', 0}: builtin(moveDotRight),
+		Key{'k', 0}: builtin(moveDotUp),
+		Key{'j', 0}: builtin(moveDotDown),
+		Key{'b', 0}: builtin(moveDotLeftWord),
+		Key{'w', 0}: builtin(moveDotRightWord),
+		Key{'0', 0}: builtin(moveDotSOL),
+		Key{'$', 0}: builtin(moveDotEOL),
+		// Killing.
+		Key{'x', 0}: builtin(killRuneRight),
+		Key{'D', 0}: builtin(killLineRight),
+		// Controls.
+		Key{'i', 0}: builtin(startInsert),
 	},
 	modeCompletion: map[Key]fn{
 		Key{'[', Ctrl}: builtin(cancelCompletion),
