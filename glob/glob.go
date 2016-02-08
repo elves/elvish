@@ -3,8 +3,6 @@ package glob
 
 import (
 	"io/ioutil"
-	"os"
-	"sort"
 	"unicode/utf8"
 )
 
@@ -127,20 +125,6 @@ func glob(segs []Segment, dir string, results chan<- string) {
 			results <- prefix + name
 		}
 	}
-}
-
-func filenames(dir string) ([]string, error) {
-	f, err := os.Open(dir)
-	if err != nil {
-		return nil, err
-	}
-	names, err := f.Readdirnames(-1)
-	f.Close()
-	if err != nil {
-		return nil, err
-	}
-	sort.Strings(names)
-	return names, nil
 }
 
 // match matches a name against segments. It treats StarStar segments as they
