@@ -76,7 +76,7 @@ var (
 // String is just a string.
 type String string
 
-func (s String) Type() Type {
+func (String) Type() Type {
 	return TString
 }
 
@@ -111,7 +111,7 @@ func intIndex(idx Value) int {
 // Bool represents truthness.
 type Bool bool
 
-func (b Bool) Type() Type {
+func (Bool) Type() Type {
 	return TBool
 }
 
@@ -138,7 +138,7 @@ type Error struct {
 	inner error
 }
 
-func (e Error) Type() Type {
+func (Error) Type() Type {
 	return TError
 }
 
@@ -247,7 +247,7 @@ func NewList(vs ...Value) List {
 	return List{&vs}
 }
 
-func (l List) Type() Type {
+func (List) Type() Type {
 	return TList
 }
 
@@ -296,7 +296,7 @@ func NewMap() Map {
 	return Map{&map[Value]Value{}}
 }
 
-func (m Map) Type() Type {
+func (Map) Type() Type {
 	return TMap
 }
 
@@ -339,7 +339,7 @@ type Closure struct {
 	Variadic bool
 }
 
-func (c *Closure) Type() Type {
+func (*Closure) Type() Type {
 	return TFn
 }
 
@@ -357,7 +357,7 @@ type BuiltinFn struct {
 	Impl func(*evalCtx, []Value)
 }
 
-func (b *BuiltinFn) Type() Type {
+func (*BuiltinFn) Type() Type {
 	return TFn
 }
 
@@ -370,7 +370,7 @@ type ExternalCmd struct {
 	Name string
 }
 
-func (e ExternalCmd) Type() Type {
+func (ExternalCmd) Type() Type {
 	return TFn
 }
 
@@ -383,7 +383,7 @@ type Rat struct {
 	b *big.Rat
 }
 
-func (r Rat) Type() Type {
+func (Rat) Type() Type {
 	return TRat
 }
 
@@ -402,7 +402,7 @@ func (r Rat) String() string {
 // wildcards.
 type GlobPattern glob.Pattern
 
-func (gp GlobPattern) Type() Type {
+func (GlobPattern) Type() Type {
 	return TGlobPattern
 }
 
