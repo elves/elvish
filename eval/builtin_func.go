@@ -307,8 +307,8 @@ func each(ec *evalCtx, f *Closure) {
 in:
 	for v := range in {
 		newec := ec.fork("closure of each")
-		ex := newec.pcall(f, []Value{v})
-		closePorts(newec.ports)
+		ex := newec.PCall(f, []Value{v})
+		ClosePorts(newec.ports)
 
 		switch ex {
 		case nil, Continue:

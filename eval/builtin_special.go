@@ -166,7 +166,7 @@ func compileUse(cp *compiler, fn *parse.Form) op {
 // makeFnOp wraps an op such that a return is converted to an ok.
 func makeFnOp(op Op) Op {
 	return func(ec *evalCtx) {
-		ex := ec.peval(op)
+		ex := ec.PEval(op)
 		if ex != Return {
 			// rethrow
 			throw(ex)

@@ -11,7 +11,7 @@ type Port struct {
 }
 
 // close closes a Port.
-func (p *Port) close() {
+func (p *Port) Close() {
 	if p == nil {
 		return
 	}
@@ -24,8 +24,8 @@ func (p *Port) close() {
 }
 
 // closePorts closes a list of Ports.
-func closePorts(ports []*Port) {
+func ClosePorts(ports []*Port) {
 	for _, port := range ports {
-		port.close()
+		port.Close()
 	}
 }

@@ -157,13 +157,13 @@ func makeScope(s ns) scope {
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
 func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*Port) error {
-	defer closePorts(ports)
+	defer ClosePorts(ports)
 	op, err := ev.Compile(name, text, n)
 	if err != nil {
 		return err
 	}
 	ec := NewTopEvalCtx(ev, name, text, ports)
-	return ec.peval(op)
+	return ec.PEval(op)
 }
 
 func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
@@ -192,9 +192,9 @@ func (ev *Evaler) Compile(name, text string, n *parse.Chunk) (Op, error) {
 	return compile(name, text, makeScope(ev.global), n)
 }
 
-// peval evaluates an op in a protected environment so that calls to errorf are
+// PEval evaluates an op in a protected environment so that calls to errorf are
 // wrapped in an Error.
-func (ec *evalCtx) peval(op Op) (ex error) {
+func (ec *evalCtx) PEval(op Op) (ex error) {
 	defer errutil.Catch(&ex)
 	op(ec)
 	return nil

@@ -101,8 +101,8 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 			thisOp := op
 			thisError := &errors[i]
 			go func() {
-				(*thisError).inner = newEc.peval(thisOp)
-				closePorts(newEc.ports)
+				(*thisError).inner = newEc.PEval(thisOp)
+				ClosePorts(newEc.ports)
 				finished <- true
 			}()
 		}
@@ -328,7 +328,7 @@ func (cp *compiler) redir(n *parse.Redir) Op {
 		}
 
 		ec.growPorts(dst + 1)
-		ec.ports[dst].close()
+		ec.ports[dst].Close()
 
 		srcMust := ec.must(srcOp(ec), "redirection source", pSrc)
 		src := string(srcMust.mustOneStr())
@@ -676,7 +676,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOp {
 	case parse.ErrorCapture:
 		op := cp.chunk(n.Chunk)
 		return func(ec *evalCtx) []Value {
-			return []Value{Error{ec.peval(op)}}
+			return []Value{Error{ec.PEval(op)}}
 		}
 	case parse.OutputCapture:
 		return cp.outputCapture(n)
@@ -738,7 +738,7 @@ func (cp *compiler) outputCapture(n *parse.Primary) ValuesOp {
 
 		// XXX The exitus is discarded.
 		op(newEc)
-		closePorts(newEc.ports)
+		ClosePorts(newEc.ports)
 
 		<-bytesCollected
 		close(ch)

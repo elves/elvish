@@ -26,7 +26,7 @@ func maybeThrow(err error) {
 	}
 }
 
-func (ec *evalCtx) pcall(f Caller, args []Value) (ex error) {
+func (ec *evalCtx) PCall(f Caller, args []Value) (ex error) {
 	defer errutil.Catch(&ex)
 	f.Call(ec, args)
 	return nil
@@ -89,7 +89,7 @@ func (c *Closure) Call(ec *evalCtx, args []Value) {
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.
 
-	closePorts(ec.ports)
+	ClosePorts(ec.ports)
 	c.Op(ec)
 }
 
