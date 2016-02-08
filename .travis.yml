@@ -3,3 +3,4 @@ go:
     - 1.5
 language: go
 script: make get test
+sudo: false
