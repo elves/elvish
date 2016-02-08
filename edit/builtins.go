@@ -26,7 +26,17 @@ const (
 	exitReadLine
 )
 
+// fn is any function operating on an Editor.
+type fn interface {
+	Call(ed *Editor)
+}
+
+// builtin is a trivial implementation of fn.
 type builtin func(ed *Editor)
+
+func (b builtin) Call(ed *Editor) {
+	b(ed)
+}
 
 var builtins = map[string]builtin{
 	// Command and insert mode

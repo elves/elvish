@@ -8,61 +8,61 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-var keyBindings = map[bufferMode]map[Key]string{
-	modeCommand: map[Key]string{
-		Key{'i', 0}:    "start-insert",
-		Key{'h', 0}:    "move-dot-left",
-		Key{'l', 0}:    "move-dot-right",
-		Key{'D', 0}:    "kill-line-right",
-		DefaultBinding: "default-command",
+var keyBindings = map[bufferMode]map[Key]fn{
+	modeCommand: map[Key]fn{
+		Key{'i', 0}:    builtin(startInsert),
+		Key{'h', 0}:    builtin(moveDotLeft),
+		Key{'l', 0}:    builtin(moveDotRight),
+		Key{'D', 0}:    builtin(killLineRight),
+		DefaultBinding: builtin(defaultCommand),
 	},
-	modeInsert: map[Key]string{
-		Key{'[', Ctrl}:    "start-command",
-		Key{'U', Ctrl}:    "kill-line-left",
-		Key{'K', Ctrl}:    "kill-line-right",
-		Key{'W', Ctrl}:    "kill-word-left",
-		Key{Backspace, 0}: "kill-rune-left",
+	modeInsert: map[Key]fn{
+		Key{'[', Ctrl}:    builtin(startCommand),
+		Key{'U', Ctrl}:    builtin(killLineLeft),
+		Key{'K', Ctrl}:    builtin(killLineRight),
+		Key{'W', Ctrl}:    builtin(killWordLeft),
+		Key{Backspace, 0}: builtin(killRuneLeft),
 		// Some terminal send ^H on backspace
-		Key{'H', Ctrl}:   "kill-rune-left",
-		Key{Delete, 0}:   "kill-rune-right",
-		Key{Left, 0}:     "move-dot-left",
-		Key{Right, 0}:    "move-dot-right",
-		Key{Left, Ctrl}:  "move-dot-left-word",
-		Key{Right, Ctrl}: "move-dot-right-word",
-		Key{Home, 0}:     "move-dot-sol",
-		Key{End, 0}:      "move-dot-eol",
-		Key{Up, Alt}:     "move-dot-up",
-		Key{Down, Alt}:   "move-dot-down",
-		Key{'.', Alt}:    "insert-last-word",
-		Key{Enter, Alt}:  "insert-key",
-		Key{Enter, 0}:    "return-line",
-		Key{'D', Ctrl}:   "return-eof",
-		Key{Tab, 0}:      "complete-prefix-or-start-completion",
-		Key{Up, 0}:       "start-history",
-		Key{'N', Ctrl}:   "start-navigation",
-		DefaultBinding:   "default-insert",
+		Key{'H', Ctrl}:   builtin(killRuneLeft),
+		Key{Delete, 0}:   builtin(killRuneRight),
+		Key{Left, 0}:     builtin(moveDotLeft),
+		Key{Right, 0}:    builtin(moveDotRight),
+		Key{Left, Ctrl}:  builtin(moveDotLeftWord),
+		Key{Right, Ctrl}: builtin(moveDotRightWord),
+		Key{Home, 0}:     builtin(moveDotSOL),
+		Key{End, 0}:      builtin(moveDotEOL),
+		Key{Up, Alt}:     builtin(moveDotUp),
+		Key{Down, Alt}:   builtin(moveDotDown),
+		Key{'.', Alt}:    builtin(insertLastWord),
+		Key{Enter, Alt}:  builtin(insertKey),
+		Key{Enter, 0}:    builtin(returnLine),
+		Key{'D', Ctrl}:   builtin(returnEOF),
+		Key{Tab, 0}:      builtin(completePrefixOrStartCompletion),
+		Key{Up, 0}:       builtin(startHistory),
+		Key{'N', Ctrl}:   builtin(startNavigation),
+		DefaultBinding:   builtin(defaultInsert),
 	},
-	modeCompletion: map[Key]string{
-		Key{'[', Ctrl}: "cancel-completion",
-		Key{Up, 0}:     "select-cand-up",
-		Key{Down, 0}:   "select-cand-down",
-		Key{Left, 0}:   "select-cand-left",
-		Key{Right, 0}:  "select-cand-right",
-		Key{Tab, 0}:    "cycle-cand-right",
-		DefaultBinding: "default-completion",
+	modeCompletion: map[Key]fn{
+		Key{'[', Ctrl}: builtin(cancelCompletion),
+		Key{Up, 0}:     builtin(selectCandUp),
+		Key{Down, 0}:   builtin(selectCandDown),
+		Key{Left, 0}:   builtin(selectCandLeft),
+		Key{Right, 0}:  builtin(selectCandRight),
+		Key{Tab, 0}:    builtin(cycleCandRight),
+		DefaultBinding: builtin(defaultCompletion),
 	},
-	modeNavigation: map[Key]string{
-		Key{Up, 0}:     "select-nav-up",
-		Key{Down, 0}:   "select-nav-down",
-		Key{Left, 0}:   "ascend-nav",
-		Key{Right, 0}:  "descend-nav",
-		DefaultBinding: "default-navigation",
+	modeNavigation: map[Key]fn{
+		Key{Up, 0}:     builtin(selectNavUp),
+		Key{Down, 0}:   builtin(selectNavDown),
+		Key{Left, 0}:   builtin(ascendNav),
+		Key{Right, 0}:  builtin(descendNav),
+		DefaultBinding: builtin(defaultNavigation),
 	},
-	modeHistory: map[Key]string{
-		Key{'[', Ctrl}: "start-insert",
-		Key{Up, 0}:     "select-history-prev",
-		Key{Down, 0}:   "select-history-next-or-quit",
-		DefaultBinding: "default-history",
+	modeHistory: map[Key]fn{
+		Key{'[', Ctrl}: builtin(startInsert),
+		Key{Up, 0}:     builtin(selectHistoryPrev),
+		Key{Down, 0}:   builtin(selectHistoryNextOrQuit),
+		DefaultBinding: builtin(defaultHistory),
 	},
 }
 
@@ -85,11 +85,12 @@ func (ed *Editor) Bind(key string, function eval.Value) error {
 	}
 	// TODO support other modes
 
-	if builtins[string(s)] == nil {
+	builtin := builtins[string(s)]
+	if builtin == nil {
 		return fmt.Errorf("no builtin named %s", s.Repr())
 	}
 
-	keyBindings[modeInsert][k] = string(s)
+	keyBindings[modeInsert][k] = builtin
 
 	return nil
 }

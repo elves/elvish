@@ -222,16 +222,6 @@ func (ed *Editor) refresh() error {
 	return ed.writer.refresh(&ed.editorState)
 }
 
-func init() {
-	for _, kb := range keyBindings {
-		for _, name := range kb {
-			if builtins[name] == nil {
-				panic("bad keyBindings table: no editor builtin named " + name)
-			}
-		}
-	}
-}
-
 // acceptCompletion accepts currently selected completion candidate.
 func (ed *Editor) acceptCompletion() {
 	c := ed.completion
@@ -424,13 +414,13 @@ MainLoop:
 				continue
 			}
 
-			name, bound := keyBinding[k]
+			fn, bound := keyBinding[k]
 			if !bound {
-				name = keyBinding[DefaultBinding]
+				fn = keyBinding[DefaultBinding]
 			}
 
 			ed.lastKey = k
-			builtins[name](ed)
+			fn.Call(ed)
 			act := ed.nextAction
 			ed.nextAction = action{}
 
