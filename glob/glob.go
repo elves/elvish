@@ -67,10 +67,15 @@ func glob(segs []Segment, dir string, results chan<- string) {
 		return
 	}
 
-	prefix := dir + "/"
+	var prefix string
 	if dir == "" {
 		prefix = ""
 		dir = "."
+	} else if dir == "/" {
+		prefix = "/"
+	} else {
+		// dir never has a trailing slash unless it is /.
+		prefix = dir + "/"
 	}
 
 	i := -1
