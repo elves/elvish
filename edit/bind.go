@@ -86,9 +86,10 @@ func parseKey(s string) (Key, error) {
 		if i == -1 {
 			break
 		}
-		mod, ok := modifier[s[:i]]
+		modname := strings.ToLower(s[:i])
+		mod, ok := modifier[modname]
 		if !ok {
-			return Key{}, fmt.Errorf("bad modifier: %q", mod)
+			return Key{}, fmt.Errorf("bad modifier: %q", modname)
 		}
 		k.Mod |= mod
 		s = s[i+1:]
@@ -129,6 +130,10 @@ func (ed *Editor) Bind(key string, function eval.Value) error {
 		return errors.New("function not string")
 	}
 	// TODO support other modes
+
+	if builtins[string(s)] == nil {
+		return fmt.Errorf("no builtin named %s", s.Repr())
+	}
 
 	keyBindings[modeInsert][k] = string(s)
 
