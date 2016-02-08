@@ -113,7 +113,7 @@ func interact() {
 
 	for {
 		cmdNum++
-		name := fmt.Sprintf("<tty %d>", cmdNum)
+		// name := fmt.Sprintf("<tty %d>", cmdNum)
 
 		prompt := func() string {
 			return osutil.Getwd() + "> "
@@ -136,7 +136,7 @@ func interact() {
 		printError(err)
 
 		if err == nil {
-			err := ev.Eval(name, lr.Line, n)
+			err := ev.EvalInteractive(lr.Line, n)
 			printError(err)
 		}
 	}

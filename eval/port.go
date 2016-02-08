@@ -12,6 +12,7 @@ type port struct {
 	closeCh bool
 }
 
+// close closes
 func (p *port) close() {
 	if p == nil {
 		return
@@ -24,10 +25,13 @@ func (p *port) close() {
 	}
 }
 
-// closePorts closes the suitable components of all ports in ec.ports that were
-// marked marked for closing.
-func (ec *evalCtx) closePorts() {
-	for _, port := range ec.ports {
+// closePorts closes a list of ports.
+func closePorts(ports []*port) {
+	for _, port := range ports {
 		port.close()
 	}
+}
+
+func (ec *evalCtx) closePorts() {
+	closePorts(ec.ports)
 }

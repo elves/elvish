@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"strconv"
 	"strings"
 	"syscall"
@@ -103,23 +102,15 @@ const (
 )
 
 // newTopEvalCtx creates a top-level evalCtx.
-func newTopEvalCtx(ev *Evaler, name, text string) (*evalCtx, chan bool) {
-	ch := make(chan Value, outChanSize)
-	done := make(chan bool, 1)
-	go func() {
-		for v := range ch {
-			fmt.Printf("%s%s\n", outChanLeader, v.Repr())
-		}
-		done <- true
-	}()
-
+func newTopEvalCtx(ev *Evaler, name, text string, ports []*port) *evalCtx {
 	return &evalCtx{
 		ev,
 		name, text, "top",
 		ev.global, ns{},
-		[]*port{{f: os.Stdin},
-			{f: os.Stdout, ch: ch, closeCh: true}, {f: os.Stderr}},
-	}, done
+		ports,
+	}
+	//[]*port{{f: os.Stdin},
+	//	{f: os.Stdout, ch: ch, closeCh: true}, {f: os.Stderr}},
 }
 
 // fork returns a modified copy of ec. The ports are copied deeply, with
@@ -167,10 +158,38 @@ func makeScope(s ns) scope {
 
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) Eval(name, text string, n *parse.Chunk) error {
-	return ev.evalWithOut(name, text, n, nil)
+func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*port) error {
+	defer closePorts(ports)
+	op, err := ev.Compile(name, text, n)
+	if err != nil {
+		return err
+	}
+	ec := newTopEvalCtx(ev, name, text, ports)
+	return ec.peval(op)
 }
 
+func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
+	outCh := make(chan Value, outChanSize)
+	outDone := make(chan struct{})
+	go func() {
+		for v := range outCh {
+			fmt.Printf("%s%s\n", outChanLeader, v.Repr())
+		}
+		close(outDone)
+	}()
+
+	ports := []*port{
+		{f: os.Stdin},
+		{f: os.Stdout, ch: outCh, closeCh: true},
+		{f: os.Stderr},
+	}
+
+	err := ev.Eval("[interactive]", text, n, ports)
+	<-outDone
+	return err
+}
+
+/*
 func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) error {
 	op, err := ev.Compile(name, text, n)
 	if err != nil {
@@ -189,6 +208,7 @@ func (ev *Evaler) evalWithOut(name, text string, n *parse.Chunk, out *port) erro
 
 	return ex
 }
+*/
 
 // Compile compiles elvish code in the global scope.
 func (ev *Evaler) Compile(name, text string, n *parse.Chunk) (Op, error) {
@@ -225,12 +245,12 @@ func (ec *evalCtx) mustSingleString(vs []Value, what string, p int) String {
 }
 
 // SourceText evaluates a chunk of elvish source.
-func (ev *Evaler) SourceText(name, src, dir string) error {
+func (ev *Evaler) SourceText(src string) error {
 	n, err := parse.Parse(src)
 	if err != nil {
 		return err
 	}
-	return ev.Eval(name, src, n)
+	return ev.EvalInteractive(src, n)
 }
 
 func readFileUTF8(fname string) (string, error) {
@@ -250,7 +270,7 @@ func (ev *Evaler) Source(fname string) error {
 	if err != nil {
 		return err
 	}
-	return ev.SourceText(fname, src, path.Dir(fname))
+	return ev.SourceText(src)
 }
 
 // Global returns the global namespace.

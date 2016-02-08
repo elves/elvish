@@ -171,7 +171,7 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	// Collect byte output
 	outBytes := []byte{}
 	pr, pw, _ := os.Pipe()
-	bytesExhausted := make(chan bool)
+	bytesDone := make(chan struct{})
 	go func() {
 		for {
 			var buf [64]byte
@@ -181,7 +181,7 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 				break
 			}
 		}
-		bytesExhausted <- true
+		close(bytesDone)
 	}()
 
 	// Channel output
@@ -193,20 +193,27 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	for _, text := range texts {
 		n := mustParse(t, name, text)
 
-		out := make(chan Value, chsize)
-		exhausted := make(chan struct{})
+		outCh := make(chan Value, chsize)
+		outDone := make(chan struct{})
 		go func() {
-			for v := range out {
+			for v := range outCh {
 				outs = append(outs, v)
 			}
-			exhausted <- struct{}{}
+			close(outDone)
 		}()
 
-		ex = ev.evalWithOut(name, text, n, &port{ch: out, closeCh: true, f: pw})
-		<-exhausted
+		ports := []*port{
+			{f: os.Stdin},
+			{f: pw, ch: outCh, closeCh: true},
+			{f: os.Stderr},
+		}
+
+		ex = ev.Eval(name, text, n, ports)
+		<-outDone
 	}
+
 	pw.Close()
-	<-bytesExhausted
+	<-bytesDone
 	return outs, outBytes, ex
 }
 
