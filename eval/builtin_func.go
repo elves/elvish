@@ -175,14 +175,14 @@ func nop(ec *evalCtx, args []Value) {
 }
 
 func put(ec *evalCtx, args []Value) {
-	out := ec.ports[1].ch
+	out := ec.ports[1].Chan
 	for _, a := range args {
 		out <- a
 	}
 }
 
 func putAll(ec *evalCtx, lists ...List) {
-	out := ec.ports[1].ch
+	out := ec.ports[1].Chan
 	for _, list := range lists {
 		for _, x := range *list.inner {
 			out <- x
@@ -191,7 +191,7 @@ func putAll(ec *evalCtx, lists ...List) {
 }
 
 func typeof(ec *evalCtx, args []Value) {
-	out := ec.ports[1].ch
+	out := ec.ports[1].Chan
 	for _, a := range args {
 		out <- String(a.Type().String())
 	}
@@ -218,7 +218,7 @@ func continueFn(ec *evalCtx) {
 }
 
 func print(ec *evalCtx, args ...string) {
-	out := ec.ports[1].f
+	out := ec.ports[1].File
 	for i, arg := range args {
 		if i > 0 {
 			out.WriteString(" ")
@@ -229,12 +229,12 @@ func print(ec *evalCtx, args ...string) {
 
 func println(ec *evalCtx, args ...string) {
 	print(ec, args...)
-	ec.ports[1].f.WriteString("\n")
+	ec.ports[1].File.WriteString("\n")
 }
 
 func intoLines(ec *evalCtx) {
-	in := ec.ports[0].ch
-	out := ec.ports[1].f
+	in := ec.ports[0].Chan
+	out := ec.ports[1].File
 
 	for v := range in {
 		fmt.Fprintln(out, ToString(v))
@@ -242,8 +242,8 @@ func intoLines(ec *evalCtx) {
 }
 
 func fromLines(ec *evalCtx) {
-	in := ec.ports[0].f
-	out := ec.ports[1].ch
+	in := ec.ports[0].File
+	out := ec.ports[1].Chan
 
 	bufferedIn := bufio.NewReader(in)
 	for {
@@ -258,7 +258,7 @@ func fromLines(ec *evalCtx) {
 }
 
 func ratFn(ec *evalCtx, arg Value) {
-	out := ec.ports[1].ch
+	out := ec.ports[1].Chan
 	r, err := ToRat(arg)
 	if err != nil {
 		throw(err)
@@ -268,8 +268,8 @@ func ratFn(ec *evalCtx, arg Value) {
 
 // unpack takes any number of tables and output their list elements.
 func unpack(ec *evalCtx) {
-	in := ec.ports[0].ch
-	out := ec.ports[1].ch
+	in := ec.ports[0].Chan
+	out := ec.ports[1].Chan
 
 	for v := range in {
 		if list, ok := v.(List); !ok {
@@ -284,8 +284,8 @@ func unpack(ec *evalCtx) {
 
 // fromJSON parses a stream of JSON data into Value's.
 func fromJSON(ec *evalCtx) {
-	in := ec.ports[0].f
-	out := ec.ports[1].ch
+	in := ec.ports[0].File
+	out := ec.ports[1].Chan
 
 	dec := json.NewDecoder(in)
 	var v interface{}
@@ -303,12 +303,12 @@ func fromJSON(ec *evalCtx) {
 
 // each takes a single closure and applies it to all input values.
 func each(ec *evalCtx, f *Closure) {
-	in := ec.ports[0].ch
+	in := ec.ports[0].Chan
 in:
 	for v := range in {
 		newec := ec.fork("closure of each")
 		ex := newec.pcall(f, []Value{v})
-		newec.closePorts()
+		closePorts(newec.ports)
 
 		switch ex {
 		case nil, Continue:
@@ -356,7 +356,7 @@ func dirs(ec *evalCtx) {
 	if err != nil {
 		throw(errors.New("store error: " + err.Error()))
 	}
-	out := ec.ports[1].ch
+	out := ec.ports[1].Chan
 	for _, dir := range dirs {
 		out <- Map{&map[Value]Value{
 			String("path"):  String(dir.Path),
@@ -414,7 +414,7 @@ func toInt(arg Value) (int, error) {
 }
 
 func plus(ec *evalCtx, nums ...float64) {
-	out := ec.ports[1].ch
+	out := ec.ports[1].Chan
 	sum := 0.0
 	for _, f := range nums {
 		sum += f
@@ -423,7 +423,7 @@ func plus(ec *evalCtx, nums ...float64) {
 }
 
 func minus(ec *evalCtx, sum float64, nums ...float64) {
-	out := ec.ports[1].ch
+	out := ec.ports[1].Chan
 	for _, f := range nums {
 		sum -= f
 	}
@@ -431,7 +431,7 @@ func minus(ec *evalCtx, sum float64, nums ...float64) {
 }
 
 func times(ec *evalCtx, nums ...float64) {
-	out := ec.ports[1].ch
+	out := ec.ports[1].Chan
 	prod := 1.0
 	for _, f := range nums {
 		prod *= f
@@ -440,7 +440,7 @@ func times(ec *evalCtx, nums ...float64) {
 }
 
 func divide(ec *evalCtx, prod float64, nums ...float64) {
-	out := ec.ports[1].ch
+	out := ec.ports[1].Chan
 	for _, f := range nums {
 		prod /= f
 	}
@@ -448,7 +448,7 @@ func divide(ec *evalCtx, prod float64, nums ...float64) {
 }
 
 func eq(ec *evalCtx, args []Value) {
-	out := ec.ports[1].ch
+	out := ec.ports[1].Chan
 	if len(args) == 0 {
 		throw(ErrArgs)
 	}
@@ -462,7 +462,7 @@ func eq(ec *evalCtx, args []Value) {
 }
 
 func deepeq(ec *evalCtx, args []Value) {
-	out := ec.ports[1].ch
+	out := ec.ports[1].Chan
 	if len(args) == 0 {
 		throw(ErrArgs)
 	}
@@ -476,8 +476,8 @@ func deepeq(ec *evalCtx, args []Value) {
 }
 
 func take(ec *evalCtx, n int) {
-	in := ec.ports[0].ch
-	out := ec.ports[1].ch
+	in := ec.ports[0].Chan
+	out := ec.ports[1].Chan
 
 	i := 0
 	for v := range in {
@@ -490,8 +490,8 @@ func take(ec *evalCtx, n int) {
 }
 
 func drop(ec *evalCtx, n int) {
-	in := ec.ports[0].ch
-	out := ec.ports[1].ch
+	in := ec.ports[0].Chan
+	out := ec.ports[1].Chan
 
 	for i := 0; i < n; i++ {
 		<-in
@@ -516,7 +516,7 @@ func le(ec *evalCtx, name string, args ...Value) {
 }
 
 func _stack(ec *evalCtx) {
-	out := ec.ports[1].f
+	out := ec.ports[1].File
 
 	// XXX dup with main.go
 	buf := make([]byte, 1024)

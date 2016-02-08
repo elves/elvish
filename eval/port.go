@@ -2,36 +2,30 @@ package eval
 
 import "os"
 
-// A port conveys data stream. When f is not nil, it may convey fdStream. When
-// ch is not nil, it may convey chanStream. When both are nil, it is always
-// closed and may not convey any stream.
-type port struct {
-	f       *os.File
-	ch      chan Value
-	closeF  bool
-	closeCh bool
+// Port conveys data stream. It always consists of a byte band and a channel band.
+type Port struct {
+	File      *os.File
+	Chan      chan Value
+	CloseFile bool
+	CloseChan bool
 }
 
-// close closes
-func (p *port) close() {
+// close closes a Port.
+func (p *Port) close() {
 	if p == nil {
 		return
 	}
-	if p.closeF {
-		p.f.Close()
+	if p.CloseFile {
+		p.File.Close()
 	}
-	if p.closeCh {
-		close(p.ch)
+	if p.CloseChan {
+		close(p.Chan)
 	}
 }
 
-// closePorts closes a list of ports.
-func closePorts(ports []*port) {
+// closePorts closes a list of Ports.
+func closePorts(ports []*Port) {
 	for _, port := range ports {
 		port.close()
 	}
-}
-
-func (ec *evalCtx) closePorts() {
-	closePorts(ec.ports)
 }

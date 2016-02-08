@@ -202,10 +202,10 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 			close(outDone)
 		}()
 
-		ports := []*port{
-			{f: os.Stdin},
-			{f: pw, ch: outCh, closeCh: true},
-			{f: os.Stderr},
+		ports := []*Port{
+			{File: os.Stdin},
+			{File: pw, Chan: outCh, CloseChan: true},
+			{File: os.Stderr},
 		}
 
 		ex = ev.Eval(name, text, n, ports)

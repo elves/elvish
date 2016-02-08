@@ -43,7 +43,7 @@ type evalCtx struct {
 	name, text, context string
 
 	local, up ns
-	ports     []*port
+	ports     []*Port
 }
 
 // NewEvaler creates a new Evaler.
@@ -102,7 +102,7 @@ const (
 )
 
 // NewTopEvalCtx creates a top-level evalCtx.
-func NewTopEvalCtx(ev *Evaler, name, text string, ports []*port) *evalCtx {
+func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *evalCtx {
 	return &evalCtx{
 		ev,
 		name, text, "top",
@@ -115,9 +115,9 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*port) *evalCtx {
 // shouldClose flags reset, and the context is changed to the given value.
 // Other fields are copied shallowly.
 func (ec *evalCtx) fork(newContext string) *evalCtx {
-	newPorts := make([]*port, len(ec.ports))
+	newPorts := make([]*Port, len(ec.ports))
 	for i, p := range ec.ports {
-		newPorts[i] = &port{p.f, p.ch, false, false}
+		newPorts[i] = &Port{p.File, p.Chan, false, false}
 	}
 	return &evalCtx{
 		ec.Evaler,
@@ -129,7 +129,7 @@ func (ec *evalCtx) fork(newContext string) *evalCtx {
 
 // port returns ec.ports[i] or nil if i is out of range. This makes it possible
 // to treat ec.ports as if it has an infinite tail of nil's.
-func (ec *evalCtx) port(i int) *port {
+func (ec *evalCtx) port(i int) *Port {
 	if i >= len(ec.ports) {
 		return nil
 	}
@@ -142,7 +142,7 @@ func (ec *evalCtx) growPorts(n int) {
 		return
 	}
 	ports := ec.ports
-	ec.ports = make([]*port, n)
+	ec.ports = make([]*Port, n)
 	copy(ec.ports, ports)
 }
 
@@ -156,13 +156,13 @@ func makeScope(s ns) scope {
 
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*port) error {
+func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*Port) error {
 	defer closePorts(ports)
 	op, err := ev.Compile(name, text, n)
 	if err != nil {
 		return err
 	}
-	ec := newTopEvalCtx(ev, name, text, ports)
+	ec := NewTopEvalCtx(ev, name, text, ports)
 	return ec.peval(op)
 }
 
@@ -176,10 +176,10 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 		close(outDone)
 	}()
 
-	ports := []*port{
-		{f: os.Stdin},
-		{f: os.Stdout, ch: outCh, closeCh: true},
-		{f: os.Stderr},
+	ports := []*Port{
+		{File: os.Stdin},
+		{File: os.Stdout, Chan: outCh, CloseChan: true},
+		{File: os.Stderr},
 	}
 
 	err := ev.Eval("[interactive]", text, n, ports)

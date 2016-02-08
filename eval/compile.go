@@ -73,7 +73,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 	p := n.Begin()
 
 	return func(ec *evalCtx) {
-		var nextIn *port
+		var nextIn *Port
 
 		errors := make([]Error, len(ops))
 		finished := make(chan bool, len(ops))
@@ -93,16 +93,16 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 					ec.errorf(p, "failed to create pipe: %s", e)
 				}
 				ch := make(chan Value, pipelineChanBufferSize)
-				newEc.ports[1] = &port{
-					f: writer, ch: ch, closeF: true, closeCh: true}
-				nextIn = &port{
-					f: reader, ch: ch, closeF: true, closeCh: false}
+				newEc.ports[1] = &Port{
+					File: writer, Chan: ch, CloseFile: true, CloseChan: true}
+				nextIn = &Port{
+					File: reader, Chan: ch, CloseFile: true, CloseChan: false}
 			}
 			thisOp := op
 			thisError := &errors[i]
 			go func() {
 				(*thisError).inner = newEc.peval(thisOp)
-				newEc.closePorts()
+				closePorts(newEc.ports)
 				finished <- true
 			}()
 		}
@@ -335,13 +335,13 @@ func (cp *compiler) redir(n *parse.Redir) Op {
 		if sourceIsFd {
 			if src == "-" {
 				// close
-				ec.ports[dst] = &port{}
+				ec.ports[dst] = &Port{}
 			} else {
 				fd := srcMust.zerothMustNonNegativeInt()
 				ec.ports[dst] = ec.ports[fd]
 				if ec.ports[dst] != nil {
-					ec.ports[dst].closeF = false
-					ec.ports[dst].closeCh = false
+					ec.ports[dst].CloseFile = false
+					ec.ports[dst].CloseChan = false
 				}
 			}
 		} else {
@@ -349,8 +349,8 @@ func (cp *compiler) redir(n *parse.Redir) Op {
 			if err != nil {
 				ec.errorf(p, "failed to open file %q: %s", src, err)
 			}
-			ec.ports[dst] = &port{
-				f: f, ch: make(chan Value), closeF: true, closeCh: true,
+			ec.ports[dst] = &Port{
+				File: f, Chan: make(chan Value), CloseFile: true, CloseChan: true,
 			}
 		}
 	}
@@ -714,7 +714,7 @@ func (cp *compiler) outputCapture(n *parse.Primary) ValuesOp {
 		ch := make(chan Value, outputCaptureBufferSize)
 		bytesCollected := make(chan bool)
 		chCollected := make(chan bool)
-		newEc.ports[1] = &port{ch: ch, f: pipeWrite, closeF: true}
+		newEc.ports[1] = &Port{Chan: ch, File: pipeWrite, CloseFile: true}
 		go func() {
 			for v := range ch {
 				vs = append(vs, v)
@@ -738,7 +738,7 @@ func (cp *compiler) outputCapture(n *parse.Primary) ValuesOp {
 
 		// XXX The exitus is discarded.
 		op(newEc)
-		newEc.closePorts()
+		closePorts(newEc.ports)
 
 		<-bytesCollected
 		close(ch)

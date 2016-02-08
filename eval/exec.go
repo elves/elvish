@@ -89,7 +89,7 @@ func (c *Closure) Call(ec *evalCtx, args []Value) {
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.
 
-	defer ec.closePorts()
+	closePorts(ec.ports)
 	c.Op(ec)
 }
 
@@ -137,10 +137,10 @@ func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) {
 
 	files := make([]uintptr, len(ec.ports))
 	for i, port := range ec.ports {
-		if port == nil || port.f == nil {
+		if port == nil || port.File == nil {
 			files[i] = fdNil
 		} else {
-			files[i] = port.f.Fd()
+			files[i] = port.File.Fd()
 		}
 	}
 
@@ -180,7 +180,7 @@ func (t *List) Call(ec *evalCtx, argVals []Value) {
 		// XXX the positions are obviously wrong.
 		v = evalIndex(ec, v, idx, 0, 0)
 	}
-	ec.ports[1].ch <- v
+	ec.ports[1].Chan <- v
 }
 
 // XXX duplicate
@@ -190,5 +190,5 @@ func (t Map) Call(ec *evalCtx, argVals []Value) {
 		// XXX the positions are obviously wrong.
 		v = evalIndex(ec, v, idx, 0, 0)
 	}
-	ec.ports[1].ch <- v
+	ec.ports[1].Chan <- v
 }
