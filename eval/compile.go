@@ -404,7 +404,7 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOp {
 		}
 		if tilde {
 			var newvs []Value
-			if len(ops) >= 1 {
+			if len(ops) > 1 {
 				// Modify vs in place if we know it is an intermediate result.
 				newvs = vs
 			} else {
