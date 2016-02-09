@@ -103,7 +103,7 @@ Some things that the language is already capable of:
   ```
   ~> put $env:HOME
   ▶ /home/xiaq
-  ~> $env:PATH = $env:PATH":/bin"
+  ~> env:PATH=$env:PATH":/bin"
   ```
 
 The language is not yet complete. Notably, control structures like `if` and
