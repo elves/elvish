@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"runtime"
 	"strconv"
+	"time"
 )
 
 var builtinFns []*BuiltinFn
@@ -66,6 +67,7 @@ func init() {
 		&BuiltinFn{"bind", wrapFn(bind)},
 		&BuiltinFn{"le", wrapFn(le)},
 
+		&BuiltinFn{"-sleep", wrapFn(_sleep)},
 		&BuiltinFn{"-stack", wrapFn(_stack)},
 	}
 }
@@ -513,6 +515,10 @@ func le(ec *evalCtx, name string, args ...Value) {
 		throw(ErrNoEditor)
 	}
 	maybeThrow(ec.Editor.Call(name, args))
+}
+
+func _sleep(ec *evalCtx, t float64) {
+	time.Sleep(time.Duration(t) * time.Second)
 }
 
 func _stack(ec *evalCtx) {
