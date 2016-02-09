@@ -19,6 +19,7 @@ func (p *Port) Close() {
 		p.File.Close()
 	}
 	if p.CloseChan {
+		// Logger.Printf("closing channel %v", p.Chan)
 		close(p.Chan)
 	}
 }
@@ -26,6 +27,7 @@ func (p *Port) Close() {
 // closePorts closes a list of Ports.
 func ClosePorts(ports []*Port) {
 	for _, port := range ports {
+		// Logger.Printf("closing port %d", i)
 		port.Close()
 	}
 }

@@ -102,6 +102,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 			thisError := &errors[i]
 			go func() {
 				(*thisError).inner = newEc.PEval(thisOp)
+				// Logger.Printf("closing ports of %s", newEc.context)
 				ClosePorts(newEc.ports)
 				finished <- true
 			}()
@@ -328,6 +329,7 @@ func (cp *compiler) redir(n *parse.Redir) Op {
 		}
 
 		ec.growPorts(dst + 1)
+		// Logger.Printf("closing old port %d of %s", dst, ec.context)
 		ec.ports[dst].Close()
 
 		srcMust := ec.must(srcOp(ec), "redirection source", pSrc)

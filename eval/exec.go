@@ -89,7 +89,6 @@ func (c *Closure) Call(ec *evalCtx, args []Value) {
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.
 
-	ClosePorts(ec.ports)
 	c.Op(ec)
 }
 
