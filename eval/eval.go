@@ -157,7 +157,6 @@ func makeScope(s ns) scope {
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
 func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*Port) error {
-	defer ClosePorts(ports)
 	op, err := ev.Compile(name, text, n)
 	if err != nil {
 		return err
@@ -178,11 +177,12 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 
 	ports := []*Port{
 		{File: os.Stdin},
-		{File: os.Stdout, Chan: outCh, CloseChan: true},
+		{File: os.Stdout, Chan: outCh},
 		{File: os.Stderr},
 	}
 
 	err := ev.Eval("[interactive]", text, n, ports)
+	close(outCh)
 	<-outDone
 	return err
 }
