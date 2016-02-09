@@ -1,6 +1,5 @@
 language: go
 go:
-    - 1.4
     - 1.5
 sudo: false
 os:
@@ -10,4 +9,4 @@ script:
     make travis
 addons:
     artifacts: true
-    s3_region: "eu-central-1"
+    s3_region: eu-central-1
