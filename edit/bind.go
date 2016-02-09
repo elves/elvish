@@ -11,8 +11,8 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-var keyBindings = map[bufferMode]map[Key]fn{
-	modeInsert: map[Key]fn{
+var keyBindings = map[bufferMode]map[Key]Caller{
+	modeInsert: map[Key]Caller{
 		DefaultBinding: builtin(defaultInsert),
 		// Moving.
 		Key{Left, 0}:     builtin(moveDotLeft),
@@ -42,7 +42,7 @@ var keyBindings = map[bufferMode]map[Key]fn{
 		Key{Up, 0}:     builtin(startHistory),
 		Key{'N', Ctrl}: builtin(startNavigation),
 	},
-	modeCommand: map[Key]fn{
+	modeCommand: map[Key]Caller{
 		DefaultBinding: builtin(defaultCommand),
 		// Moving.
 		Key{'h', 0}: builtin(moveDotLeft),
@@ -59,7 +59,7 @@ var keyBindings = map[bufferMode]map[Key]fn{
 		// Controls.
 		Key{'i', 0}: builtin(startInsert),
 	},
-	modeCompletion: map[Key]fn{
+	modeCompletion: map[Key]Caller{
 		Key{'[', Ctrl}: builtin(cancelCompletion),
 		Key{Up, 0}:     builtin(selectCandUp),
 		Key{Down, 0}:   builtin(selectCandDown),
@@ -68,14 +68,14 @@ var keyBindings = map[bufferMode]map[Key]fn{
 		Key{Tab, 0}:    builtin(cycleCandRight),
 		DefaultBinding: builtin(defaultCompletion),
 	},
-	modeNavigation: map[Key]fn{
+	modeNavigation: map[Key]Caller{
 		Key{Up, 0}:     builtin(selectNavUp),
 		Key{Down, 0}:   builtin(selectNavDown),
 		Key{Left, 0}:   builtin(ascendNav),
 		Key{Right, 0}:  builtin(descendNav),
 		DefaultBinding: builtin(defaultNavigation),
 	},
-	modeHistory: map[Key]fn{
+	modeHistory: map[Key]Caller{
 		Key{'[', Ctrl}: builtin(startInsert),
 		Key{Up, 0}:     builtin(selectHistoryPrev),
 		Key{Down, 0}:   builtin(selectHistoryNextOrQuit),
@@ -88,12 +88,12 @@ var (
 	errInvalidFunction = errors.New("invalid function to bind")
 )
 
-// CallerFn adapts an eval.Caller to an editor function.
-type CallerFn struct {
+// EvalCaller adapts an eval.Caller to a Caller.
+type EvalCaller struct {
 	eval.Caller
 }
 
-func (c CallerFn) Call(ed *Editor) {
+func (c EvalCaller) Call(ed *Editor) {
 	// Input
 	devnull, err := os.Open("/dev/null")
 	if err != nil {
@@ -160,7 +160,7 @@ func (ed *Editor) Bind(key string, function eval.Value) error {
 		return err
 	}
 
-	var f fn
+	var f Caller
 	switch function := function.(type) {
 	case eval.String:
 		builtin, ok := builtins[string(function)]
@@ -169,7 +169,7 @@ func (ed *Editor) Bind(key string, function eval.Value) error {
 		}
 		f = builtin
 	case eval.Caller:
-		f = CallerFn{function}
+		f = EvalCaller{function}
 	default:
 		return fmt.Errorf("bad function type %s", function.Type())
 	}

@@ -26,12 +26,12 @@ const (
 	exitReadLine
 )
 
-// fn is any function operating on an Editor.
-type fn interface {
+// Caller is any function operating on an Editor.
+type Caller interface {
 	Call(ed *Editor)
 }
 
-// builtin is a trivial implementation of fn.
+// builtin is a trivial implementation of Caller.
 type builtin func(ed *Editor)
 
 func (b builtin) Call(ed *Editor) {
