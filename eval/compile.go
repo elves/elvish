@@ -12,6 +12,7 @@ import (
 	"os/user"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/glob"
@@ -74,9 +75,10 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 
 	return func(ec *evalCtx) {
 		var nextIn *Port
+		var wg sync.WaitGroup
 
 		errors := make([]Error, len(ops))
-		finished := make(chan bool, len(ops))
+		wg.Add(len(ops))
 
 		// For each form, create a dedicated evalCtx and run asynchronously
 		for i, op := range ops {
@@ -104,13 +106,11 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 				(*thisError).inner = newEc.PEval(thisOp)
 				// Logger.Printf("closing ports of %s", newEc.context)
 				ClosePorts(newEc.ports)
-				finished <- true
+				wg.Done()
 			}()
 		}
 		// Wait for all forms to finish
-		for i := 0; i < len(ops); i++ {
-			<-finished
-		}
+		wg.Wait()
 		if !allok(errors) {
 			if len(errors) == 1 {
 				throw(errors[0].inner)
