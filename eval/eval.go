@@ -111,13 +111,12 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *evalCtx {
 	}
 }
 
-// fork returns a modified copy of ec. The ports are copied deeply, with
-// shouldClose flags reset, and the context is changed to the given value.
-// Other fields are copied shallowly.
+// fork returns a modified copy of ec. The ports are forked, and the context is
+// changed to the given value. Other fields are copied shallowly.
 func (ec *evalCtx) fork(newContext string) *evalCtx {
 	newPorts := make([]*Port, len(ec.ports))
 	for i, p := range ec.ports {
-		newPorts[i] = &Port{p.File, p.Chan, false, false}
+		newPorts[i] = p.Fork()
 	}
 	return &evalCtx{
 		ec.Evaler,

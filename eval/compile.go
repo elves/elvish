@@ -340,11 +340,7 @@ func (cp *compiler) redir(n *parse.Redir) Op {
 				ec.ports[dst] = &Port{}
 			} else {
 				fd := srcMust.zerothMustNonNegativeInt()
-				ec.ports[dst] = ec.ports[fd]
-				if ec.ports[dst] != nil {
-					ec.ports[dst].CloseFile = false
-					ec.ports[dst].CloseChan = false
-				}
+				ec.ports[dst] = ec.ports[fd].Fork()
 			}
 		} else {
 			f, err := os.OpenFile(src, flag, defaultFileRedirPerm)

@@ -10,7 +10,12 @@ type Port struct {
 	CloseChan bool
 }
 
-// close closes a Port.
+// Fork returns a copy of a Port with the Close* flags unset.
+func (p *Port) Fork() *Port {
+	return &Port{p.File, p.Chan, false, false}
+}
+
+// Close closes a Port.
 func (p *Port) Close() {
 	if p == nil {
 		return
