@@ -7,6 +7,10 @@ os:
     - osx
 script:
     make travis
-addons:
-    artifacts: true
-    s3_region: "eu-central-1"
+deploy:
+    provider: s3
+    access_key_id: $AWS_ACCESS_KEY # declared in Travis repo settings
+    secret_access_key: $AWS_SECRET_KEY
+    bucket: elvish
+    endpoint: elvish.s3.eu-central-1.amazonaws.com
+    region: eu-central-1
