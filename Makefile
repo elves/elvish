@@ -18,4 +18,8 @@ cover: $(PKG_COVERS)
 generate:
 	go generate ./...
 
-.PHONY: all get test cover generate
+# The target to run on Travis-CI.
+travis: test
+	go build -o elvish-$(TRAVIS_OS_NAME)
+
+.PHONY: all get test cover generate travis

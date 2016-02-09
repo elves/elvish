@@ -6,4 +6,8 @@ sudo: false
 os:
     - linux
     - osx
-script: make get test
+script:
+    make travis
+addons:
+    artifacts: true
+    s3_region: "eu-central-1"
