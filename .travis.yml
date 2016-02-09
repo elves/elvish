@@ -9,4 +9,4 @@ script:
     make travis
 addons:
     artifacts: true
-    s3_region: eu-central-1
+    s3_region: "eu-central-1"
