@@ -90,6 +90,12 @@ func rescue() {
 // TODO(xiaq): Currently only the editor deals with signals.
 func interact() {
 	ev, st := newEvalerAndStore()
+
+	sigch := make(chan os.Signal, sigchSize)
+	signal.Notify(sigch)
+
+	ed := edit.NewEditor(os.Stdin, sigch, ev, st)
+
 	datadir, err := store.EnsureDataDir()
 	printError(err)
 	if err == nil {
@@ -112,11 +118,6 @@ func interact() {
 		hostname = "???"
 	}
 	rpromptStr := username + "@" + hostname
-
-	sigch := make(chan os.Signal, sigchSize)
-	signal.Notify(sigch)
-
-	ed := edit.NewEditor(os.Stdin, sigch, ev, st)
 
 	for {
 		cmdNum++
