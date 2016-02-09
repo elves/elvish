@@ -63,6 +63,7 @@ func main() {
 		edit.Logger = log.New(f, "[edit] ", log.LstdFlags)
 	}
 
+	go dumpstackOnQuit()
 	go logSignals()
 
 	args := flag.Args()
@@ -111,8 +112,6 @@ func interact() {
 		hostname = "???"
 	}
 	rpromptStr := username + "@" + hostname
-
-	go dumpstackOnQuit()
 
 	sigch := make(chan os.Signal, sigchSize)
 	signal.Notify(sigch)
