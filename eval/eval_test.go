@@ -118,8 +118,8 @@ var evalTests = []struct {
 		strs("0", "1", "0", "1"), nomore},
 
 	// fn
-	{"fn f [x]{ put $x ipsum }; f lorem",
-		strs("lorem", "ipsum"), nomore},
+	{"fn f [x]{ put x=$x'.' }; f lorem; f ipsum",
+		strs("x=lorem.", "x=ipsum."), nomore},
 	/*
 		// if
 		{"if true; then put x", strs("x"), nomore},

@@ -381,29 +381,39 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOp {
 		// Accumulator.
 		vs := ops[0](ec)
 
+		// Logger.Printf("concatenating %v with %d more", vs, len(ops)-1)
+
 		for k, op := range ops[1:] {
 			us := op(ec)
-			if len(us) == 1 {
-				// Short path: transform vs in place.
-				u := us[0]
-				for i := range vs {
-					vs[i] = cat(vs[i], u, begins[k])
-				}
-				continue
+			var newvs []Value
+			if k > 0 && len(us) == 1 {
+				// Reuse vs only when it is an indermediate result (k > 0). If
+				// we omit this check we can modifying the underlying []Value of
+				// literals. (See issue #99).
+				newvs = vs
+			} else {
+				newvs = make([]Value, len(vs)*len(us))
 			}
-			newvs := make([]Value, len(vs)*len(us))
 			for i, v := range vs {
 				for j, u := range us {
 					newvs[i*len(us)+j] = cat(v, u, begins[k])
 				}
 			}
 			vs = newvs
+			// Logger.Printf("with %v => %v", us, vs)
 		}
 		if tilde {
-			for i, v := range vs {
-				vs[i] = doTilde(v)
-				// vs[i] = String(doTilde(ToString(v)))
+			var newvs []Value
+			if len(ops) >= 1 {
+				// Modify vs in place if we know it is an intermediate result.
+				newvs = vs
+			} else {
+				newvs = make([]Value, len(vs))
 			}
+			for i, v := range vs {
+				newvs[i] = doTilde(v)
+			}
+			vs = newvs
 		}
 		hasGlob := false
 		for _, v := range vs {
