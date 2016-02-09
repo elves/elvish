@@ -1,1 +1,1 @@
-FROM google/golang-runtime
+FROM golang:onbuild
