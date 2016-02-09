@@ -4,7 +4,6 @@ package edit
 import (
 	"fmt"
 	"os"
-	"os/signal"
 	"strings"
 	"syscall"
 
@@ -376,22 +375,10 @@ MainLoop:
 				goto MainLoop
 			case syscall.SIGWINCH:
 				continue MainLoop
-			case syscall.SIGQUIT:
-				// Emulate default behavior
-				print(sys.DumpStack())
-				os.Exit(1)
+			case syscall.SIGCHLD:
+				// ignore
 			default:
-				// Other signals: turn off signal catching, and resend
-				signal.Stop(ed.sigs)
-				p, err := os.FindProcess(os.Getpid())
-				if err != nil {
-					panic(err)
-				}
-				err = p.Signal(sig)
-				if err != nil {
-					panic(err)
-				}
-				signal.Notify(ed.sigs)
+				ed.pushTip(fmt.Sprintf("ignored signal %s", sig))
 			}
 		case or := <-ones:
 			// Alert about error

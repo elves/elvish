@@ -14,6 +14,7 @@ import (
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/logutil"
 	"github.com/elves/elvish/osutil"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
@@ -25,6 +26,8 @@ const (
 	outChanSize   = 32
 	outChanLeader = "▶ "
 )
+
+var Logger = logutil.Discard
 
 func usage() {
 	fmt.Println("usage: elvish [flags] [script]")
@@ -55,9 +58,12 @@ func main() {
 		}
 		defer f.Close()
 
+		Logger = log.New(f, "[main]", log.LstdFlags)
 		eval.Logger = log.New(f, "[eval] ", log.LstdFlags)
 		edit.Logger = log.New(f, "[edit] ", log.LstdFlags)
 	}
+
+	go logSignals()
 
 	args := flag.Args()
 	switch len(args) {
@@ -106,6 +112,8 @@ func interact() {
 	}
 	rpromptStr := username + "@" + hostname
 
+	go dumpstackOnQuit()
+
 	sigch := make(chan os.Signal, sigchSize)
 	signal.Notify(sigch)
 
@@ -139,6 +147,22 @@ func interact() {
 			err := ev.EvalInteractive(lr.Line, n)
 			printError(err)
 		}
+	}
+}
+
+func logSignals() {
+	sigs := make(chan os.Signal)
+	signal.Notify(sigs)
+	for sig := range sigs {
+		Logger.Println("signal", sig)
+	}
+}
+
+func dumpstackOnQuit() {
+	quitSigs := make(chan os.Signal)
+	signal.Notify(quitSigs, syscall.SIGQUIT)
+	for range quitSigs {
+		fmt.Print(sys.DumpStack())
 	}
 }
 
