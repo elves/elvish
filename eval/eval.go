@@ -165,6 +165,9 @@ func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*Port) error {
 }
 
 func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
+	inCh := make(chan Value)
+	close(inCh)
+
 	outCh := make(chan Value, outChanSize)
 	outDone := make(chan struct{})
 	go func() {
@@ -175,7 +178,7 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 	}()
 
 	ports := []*Port{
-		{File: os.Stdin},
+		{File: os.Stdin, Chan: inCh},
 		{File: os.Stdout, Chan: outCh},
 		{File: os.Stderr},
 	}
