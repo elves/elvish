@@ -32,26 +32,35 @@ func (ec *evalCtx) PCall(f Caller, args []Value) (ex error) {
 	return nil
 }
 
-func (ec *evalCtx) resolveNonSpecial(cmd Value) Caller {
-	// Closure
+func (ec *evalCtx) resolveCaller(cmd Value) Caller {
+	// Already a Caller
 	if cl, ok := cmd.(Caller); ok {
 		return cl
 	}
 
-	cmdStr := ToString(cmd)
-
-	// Defined callable
-	splice, ns, name := parseVariable(cmdStr)
-	if !splice {
-		if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
-			if clb, ok := v.Get().(Caller); ok {
-				return clb
+	// String
+	if s, ok := cmd.(String); ok {
+		// Try variable
+		splice, ns, name := parseVariable(string(s))
+		if !splice {
+			if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
+				if clb, ok := v.Get().(Caller); ok {
+					return clb
+				}
 			}
 		}
+
+		// External command
+		return ExternalCmd{string(s)}
 	}
 
-	// External command
-	return ExternalCmd{cmdStr}
+	// Indexer
+	if ix, ok := cmd.(Indexer); ok {
+		return IndexerCaller{ix}
+	}
+
+	ec.errorf(-1, "bad head type %s; compiler bug", cmd.Type())
+	return nil
 }
 
 // Call calls a builtin function.
@@ -173,18 +182,14 @@ func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) {
 	}
 }
 
-func (t *List) Call(ec *evalCtx, argVals []Value) {
-	var v Value = t
-	for _, idx := range argVals {
-		// XXX the positions are obviously wrong.
-		v = evalIndex(ec, v, idx, 0, 0)
-	}
-	ec.ports[1].Chan <- v
+// IndexerCaller is an adapter that makes it possible to use a Indexer as a
+// Caller.
+type IndexerCaller struct {
+	Indexer
 }
 
-// XXX duplicate
-func (t Map) Call(ec *evalCtx, argVals []Value) {
-	var v Value = t
+func (ic IndexerCaller) Call(ec *evalCtx, argVals []Value) {
+	var v Value = ic.Indexer
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.
 		v = evalIndex(ec, v, idx, 0, 0)

@@ -162,7 +162,7 @@ func (cp *compiler) form(n *parse.Form) Op {
 		headMust := ec.must(headValues, "the head of command", p)
 		headMust.mustLen(1)
 		switch headValues[0].(type) {
-		case String, Caller:
+		case String, Caller, Indexer:
 		default:
 			headMust.error("a string or callable", headValues[0].Type().String())
 		}
@@ -178,7 +178,7 @@ func (cp *compiler) form(n *parse.Form) Op {
 			redirOp(ec)
 		}
 
-		ec.resolveNonSpecial(headValues[0]).Call(ec, args)
+		ec.resolveCaller(headValues[0]).Call(ec, args)
 	}
 }
 

@@ -36,8 +36,9 @@ type Stringer interface {
 	String() string
 }
 
-// Indexer is anything that can be indexed by a Value and yields a Value.
+// Indexer is a Value that can be indexed by a Value and yields a Value.
 type Indexer interface {
+	Value
 	Index(idx Value) Value
 }
 
