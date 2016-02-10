@@ -37,7 +37,7 @@ var keyBindings = map[bufferMode]map[Key]Caller{
 		// Controls.
 		Key{Enter, 0}:  builtin(returnLine),
 		Key{'D', Ctrl}: builtin(returnEOF),
-		Key{'[', Ctrl}: builtin(startCommand),
+		// Key{'[', Ctrl}: builtin(startCommand),
 		Key{Tab, 0}:    builtin(completePrefixOrStartCompletion),
 		Key{Up, 0}:     builtin(startHistory),
 		Key{'N', Ctrl}: builtin(startNavigation),
