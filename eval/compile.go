@@ -164,7 +164,7 @@ func (cp *compiler) form(n *parse.Form) Op {
 		switch headValues[0].(type) {
 		case String, Caller:
 		default:
-			headMust.error("a string or closure", headValues[0].Type().String())
+			headMust.error("a string or callable", headValues[0].Type().String())
 		}
 
 		// args
