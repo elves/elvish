@@ -48,6 +48,7 @@ var (
 	errShouldBeBackquoteOrLParen  = newError("", "'`'", "'('")
 	errShouldBeBackquote          = newError("", "'`'")
 	errShouldBeCompound           = newError("", "compound")
+	errShouldBeEqual              = newError("", "'='")
 )
 
 // Chunk = { PipelineSep | Space } { Pipeline { PipelineSep | Space } }
@@ -190,11 +191,12 @@ func (fn *Form) tryAssignment(ps *parser) bool {
 		return false
 	}
 
-	begin := ps.pos
-	var ok bool
-	an := parseAssignment(ps, &ok)
-	if !ok {
-		ps.pos = begin
+	pos := ps.pos
+	errors := ps.errors
+	an := parseAssignment(ps)
+	if ps.errors != errors {
+		ps.errors = errors
+		ps.pos = pos
 		return false
 	}
 	fn.addToAssignments(an)
@@ -212,17 +214,15 @@ type Assignment struct {
 	Src *Compound
 }
 
-func (an *Assignment) parse(ps *parser, pok *bool) {
+func (an *Assignment) parse(ps *parser) {
 	ps.cut('=')
 	an.setDst(parseIndexing(ps))
 	ps.uncut('=')
 
 	if !parseSep(an, ps, '=') {
-		*pok = false
-		return
+		ps.error(errShouldBeEqual)
 	}
 	an.setSrc(parseCompound(ps))
-	*pok = true
 }
 
 // ExitusRedir = '?' '>' { Space } Compound
@@ -740,7 +740,8 @@ func (pn *Primary) lbrace(ps *parser) {
 
 	pn.Type = Braced
 
-	// XXX: we don't actually know what happens with an empty Compound.
+	// XXX: The compound can be empty, which allows us to parse {,foo}.
+	// Allowing compounds to be empty can be fragile in other cases.
 	ps.pushCutset(',', '-')
 	pn.addToBraced(parseCompound(ps))
 	ps.popCutset()

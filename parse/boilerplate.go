@@ -74,9 +74,9 @@ func (n *Assignment) setSrc(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseAssignment(ps *parser, pok *bool) *Assignment {
+func parseAssignment(ps *parser) *Assignment {
 	n := &Assignment{node: node{begin: ps.pos}}
-	n.parse(ps, pok)
+	n.parse(ps)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
