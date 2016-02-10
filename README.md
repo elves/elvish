@@ -110,22 +110,14 @@ The language is not yet complete. Notably, control structures like `if` and
 `while` are not yet implemented. The issues list contain some of things I'm
 currently working on.
 
-## Name
 
-In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the
-elves have a reputation of high quality.  These are usually called **elven**
-items, but I chose **elvish** for an obvious reason.
+## Getting elvish
 
-The adjective for elvish is also "elvish", not "elvishy" and definitely not
-"elvishish".
+### Prebuilt binaries
 
-It is not directly related to the fictional
-[elvish language](https://en.wikipedia.org/wiki/Elvish_language), but I
-believe there is not much room for confusion and the google-ability is still
-pretty good.
+Prebuilt binaries are available for 64-bit [linux](https://dl.elvish.io/elvish-linux) and [Mac OS X](https://dl.elvish.io/elvish-osx). They are always built using the latest commit that builds.
 
-
-## Building
+### Building It Yourself
 
 Go >= 1.4 is required. This repository is a go-getable package.
 
@@ -185,3 +177,18 @@ attributes and filters
 
 By contributing, you agree to license your code under the same license as
 existing source code of elvish. See the LICENSE file.
+
+
+## Name
+
+In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the
+elves have a reputation of high quality.  These are usually called **elven**
+items, but I chose **elvish** for an obvious reason.
+
+The adjective for elvish is also "elvish", not "elvishy" and definitely not
+"elvishish".
+
+It is not directly related to the fictional
+[elvish language](https://en.wikipedia.org/wiki/Elvish_language), but I
+believe there is not much room for confusion and the google-ability is still
+pretty good.
