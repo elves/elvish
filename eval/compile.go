@@ -9,13 +9,13 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/user"
 	"path"
 	"strings"
 	"sync"
 
 	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/glob"
+	"github.com/elves/elvish/osutil"
 	"github.com/elves/elvish/parse"
 )
 
@@ -502,25 +502,11 @@ func doTilde(v Value) Value {
 }
 
 func mustGetHome(uname string) string {
-	dir, err := getHome(uname)
+	dir, err := osutil.GetHome(uname)
 	if err != nil {
 		throw(err)
 	}
 	return dir
-}
-
-func getHome(uname string) (string, error) {
-	var u *user.User
-	var err error
-	if uname == "" {
-		u, err = user.Current()
-	} else {
-		u, err = user.Lookup(uname)
-	}
-	if err != nil {
-		return "", fmt.Errorf("can't resolve ~%s: %s", uname, err.Error())
-	}
-	return u.HomeDir, nil
 }
 
 func doGlob(gp GlobPattern) []Value {
