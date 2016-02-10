@@ -161,9 +161,8 @@ func logSignals() {
 func handleQuit() {
 	quitSigs := make(chan os.Signal)
 	signal.Notify(quitSigs, syscall.SIGQUIT)
-	for range quitSigs {
-		fmt.Print(sys.DumpStack())
-	}
+	<-quitSigs
+	fmt.Print(sys.DumpStack())
 	os.Exit(3)
 }
 
