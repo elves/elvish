@@ -156,6 +156,8 @@ func complArgInner(head string, ed *Editor, formHead bool) []*candidate {
 
 		if info.IsDir() {
 			name += "/"
+		} else {
+			name += " "
 		}
 
 		cands = append(cands, &candidate{
