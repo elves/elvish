@@ -115,7 +115,7 @@ currently working on.
 
 ### Prebuilt binaries
 
-Prebuilt binaries are available for 64-bit [linux](https://dl.elvish.io/elvish-linux) and [Mac OS X](https://dl.elvish.io/elvish-osx). They are always built using the latest commit that builds.
+Prebuilt binaries are available for 64-bit [Linux](https://dl.elvish.io/elvish-linux) and [Mac OS X](https://dl.elvish.io/elvish-osx). They are always built using the latest commit that builds.
 
 ### Building It Yourself
 
