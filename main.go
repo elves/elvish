@@ -63,7 +63,7 @@ func main() {
 		edit.Logger = log.New(f, "[edit] ", log.LstdFlags)
 	}
 
-	go dumpstackOnQuit()
+	go handleQuit()
 	go logSignals()
 
 	args := flag.Args()
@@ -158,12 +158,13 @@ func logSignals() {
 	}
 }
 
-func dumpstackOnQuit() {
+func handleQuit() {
 	quitSigs := make(chan os.Signal)
 	signal.Notify(quitSigs, syscall.SIGQUIT)
 	for range quitSigs {
 		fmt.Print(sys.DumpStack())
 	}
+	os.Exit(3)
 }
 
 func script(fname string) {
