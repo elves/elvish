@@ -3,8 +3,10 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -118,26 +120,41 @@ func interact() {
 		hostname = "???"
 	}
 	rpromptStr := username + "@" + hostname
+	prompt := func() string {
+		return osutil.Getwd() + "> "
+	}
+	rprompt := func() string {
+		return rpromptStr
+	}
+
+	readLine := func() edit.LineRead {
+		return ed.ReadLine(prompt, rprompt)
+	}
+
+	usingBasic := false
+
+	if !sys.IsATTY(0) {
+		readLine = basicReadLine
+		usingBasic = true
+	}
 
 	for {
 		cmdNum++
 		// name := fmt.Sprintf("<tty %d>", cmdNum)
 
-		prompt := func() string {
-			return osutil.Getwd() + "> "
-		}
-		rprompt := func() string {
-			return rpromptStr
-		}
-
-		lr := ed.ReadLine(prompt, rprompt)
+		lr := readLine()
 		// signal.Stop(sigch)
 
 		if lr.EOF {
 			break
 		} else if lr.Err != nil {
 			fmt.Println("Editor error:", lr.Err)
-			fmt.Println("My pid is", os.Getpid())
+			if !usingBasic {
+				fmt.Println("Falling back to basic line editor")
+				readLine = basicReadLine
+				usingBasic = true
+			}
+			continue
 		}
 
 		n, err := parse.Parse(lr.Line)
@@ -147,6 +164,18 @@ func interact() {
 			err := ev.EvalInteractive(lr.Line, n)
 			printError(err)
 		}
+	}
+}
+
+func basicReadLine() edit.LineRead {
+	stdin := bufio.NewReaderSize(os.Stdin, 0)
+	line, err := stdin.ReadString('\n')
+	if err == nil {
+		return edit.LineRead{Line: line}
+	} else if err == io.EOF {
+		return edit.LineRead{EOF: true}
+	} else {
+		return edit.LineRead{Err: err}
 	}
 }
 

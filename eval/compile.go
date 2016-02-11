@@ -164,7 +164,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 		signal.Stop(intCh)
 
 		// Make sure I am in foreground.
-		if PutInForeground {
+		if PutInForeground && sys.IsATTY(0) {
 			err := sys.Tcsetpgrp(0, syscall.Getpgrp())
 			if err != nil {
 				throw(err)
