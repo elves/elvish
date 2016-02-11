@@ -175,12 +175,12 @@ type writer struct {
 }
 
 func newWriter(f *os.File) *writer {
-	writer := &writer{file: f, oldBuf: newBuffer(0)}
+	writer := &writer{file: f, oldBuf: &buffer{}}
 	return writer
 }
 
 func (w *writer) resetOldBuf() {
-	w.oldBuf = newBuffer(0)
+	w.oldBuf = &buffer{}
 }
 
 // deltaPos calculates the escape sequence needed to move the cursor from one
@@ -229,6 +229,8 @@ func (w *writer) commitBuffer(buf *buffer) error {
 	}
 	bytesBuf.WriteString("\r")
 
+	// Logger.Printf("going to write %d lines, oldBuf had %d", len(buf.cells), len(w.oldBuf.cells))
+
 	style := ""
 	for i, line := range buf.cells {
 		if i > 0 {
@@ -261,6 +263,8 @@ func (w *writer) commitBuffer(buf *buffer) error {
 	}
 	cursor := buf.cursor()
 	bytesBuf.Write(deltaPos(cursor, buf.dot))
+
+	// Logger.Printf("going to write %q", bytesBuf.String())
 
 	_, err := w.file.Write(bytesBuf.Bytes())
 	if err != nil {
