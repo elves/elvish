@@ -29,3 +29,17 @@ func (es *Errors) Error() string {
 func (es *Errors) Append(e error) {
 	es.Errors = append(es.Errors, e)
 }
+
+func CatError(err error, more error) error {
+	if err == nil {
+		return more
+	}
+	if more == nil {
+		return err
+	}
+	if es, ok := err.(*Errors); ok {
+		es.Append(more)
+		return es
+	}
+	return &Errors{[]error{err, more}}
+}

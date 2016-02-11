@@ -298,11 +298,7 @@ func (ed *Editor) startReadLine() error {
 
 // finishReadLine puts the terminal in a state suitable for other programs to
 // use.
-func (ed *Editor) finishReadLine(lr *LineRead) {
-	if lr.EOF == false && lr.Err == nil && lr.Line != "" {
-		ed.appendHistory(lr.Line)
-	}
-
+func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.mode = modeInsert
 	ed.tips = nil
 	ed.completion = nil
@@ -310,7 +306,7 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 	ed.dot = len(ed.line)
 	// TODO Perhaps make it optional to NOT clear the rprompt
 	ed.rprompt = ""
-	ed.refresh() // XXX(xiaq): Ignore possible error
+	addError(ed.refresh())
 	ed.file.WriteString("\n")
 
 	// ed.reader.Stop()
@@ -323,8 +319,7 @@ func (ed *Editor) finishReadLine(lr *LineRead) {
 	err := ed.savedTermios.ApplyToFd(int(ed.file.Fd()))
 
 	if err != nil {
-		// BUG(xiaq): Error in Editor.finishReadLine may override earlier error
-		*lr = LineRead{Err: fmt.Errorf("can't restore terminal attribute: %s", err)}
+		addError(fmt.Errorf("can't restore terminal attribute: %s", err))
 	}
 	ed.savedTermios = nil
 	ed.editorState = editorState{}
@@ -346,7 +341,11 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 	if err != nil {
 		return LineRead{Err: err}
 	}
-	defer ed.finishReadLine(&lr)
+	defer ed.finishReadLine(func(err error) {
+		if err != nil {
+			lr.Err = errutil.CatError(lr.Err, err)
+		}
+	})
 
 MainLoop:
 	for {
@@ -421,7 +420,12 @@ MainLoop:
 				}
 				goto lookupKey
 			case exitReadLine:
-				return act.returnValue
+				lr = act.returnValue
+				if lr.EOF == false && lr.Err == nil && lr.Line != "" {
+					ed.appendHistory(lr.Line)
+				}
+
+				return lr
 			}
 		}
 	}
