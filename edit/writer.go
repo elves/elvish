@@ -473,7 +473,7 @@ tokens:
 				for j := 0; j < cols; j++ {
 					k := j*lines + i
 					if k >= len(cands) {
-						continue
+						break
 					}
 					style := cands[k].menu.style
 					if k == comp.current {
