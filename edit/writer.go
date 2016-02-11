@@ -179,6 +179,10 @@ func newWriter(f *os.File) *writer {
 	return writer
 }
 
+func (w *writer) resetOldBuf() {
+	w.oldBuf = newBuffer(0)
+}
+
 // deltaPos calculates the escape sequence needed to move the cursor from one
 // position to another.
 func deltaPos(from, to pos) []byte {

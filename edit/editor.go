@@ -333,7 +333,7 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 	isExternalCh := make(chan map[string]bool, 1)
 	go getIsExternal(ed.evaler, isExternalCh)
 
-	ed.writer.oldBuf.cells = nil
+	ed.writer.resetOldBuf()
 	ones := ed.reader.Chan()
 	go ed.reader.Run()
 
