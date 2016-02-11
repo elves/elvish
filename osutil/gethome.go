@@ -2,7 +2,9 @@ package osutil
 
 import (
 	"fmt"
+	"os"
 	"os/user"
+	"strings"
 )
 
 func GetHome(uname string) (string, error) {
@@ -14,7 +16,14 @@ func GetHome(uname string) (string, error) {
 		u, err = user.Lookup(uname)
 	}
 	if err != nil {
+		if uname == "" {
+			// Use $HOME as fallback
+			home := os.Getenv("HOME")
+			if home != "" {
+				return strings.TrimRight(home, "/"), nil
+			}
+		}
 		return "", fmt.Errorf("can't resolve ~%s: %s", uname, err.Error())
 	}
-	return u.HomeDir, nil
+	return strings.TrimRight(u.HomeDir, "/"), nil
 }

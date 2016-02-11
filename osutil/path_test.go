@@ -20,7 +20,11 @@ func TestGetwd(t *testing.T) {
 		os.Remove(dir)
 	}
 
-	os.Chdir(os.Getenv("HOME"))
+	home, err := GetHome("")
+	if err != nil {
+		panic(err)
+	}
+	os.Chdir(home)
 	if gotwd := Getwd(); gotwd != "~" {
 		t.Errorf("Getwd() -> %v, want ~", gotwd)
 	}

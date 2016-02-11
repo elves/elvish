@@ -12,10 +12,13 @@ func Getwd() string {
 	if err != nil {
 		return "?"
 	}
-	home := os.Getenv("HOME")
-	home = strings.TrimRight(home, "/")
-	if len(pwd) >= len(home) && pwd[:len(home)] == home {
-		return "~" + pwd[len(home):]
+	home, err := GetHome("")
+	if err == nil {
+		if pwd == home {
+			return "~"
+		} else if strings.HasPrefix(pwd, home+"/") {
+			return "~" + pwd[len(home):]
+		}
 	}
 	return pwd
 }
