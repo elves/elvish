@@ -11,7 +11,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"sync"
 
 	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/glob"
@@ -75,10 +74,8 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 
 	return func(ec *evalCtx) {
 		var nextIn *Port
-		var wg sync.WaitGroup
 
-		errors := make([]Error, len(ops))
-		wg.Add(len(ops))
+		errorChans := make([]chan Error, len(ops))
 
 		// For each form, create a dedicated evalCtx and run asynchronously
 		for i, op := range ops {
@@ -101,16 +98,20 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 					File: reader, Chan: ch, CloseFile: true, CloseChan: false}
 			}
 			thisOp := op
-			thisError := &errors[i]
+			errorChans[i] = make(chan Error)
+			thisErrorChan := errorChans[i]
 			go func() {
-				(*thisError).inner = newEc.PEval(thisOp)
+				err := newEc.PEval(thisOp)
 				// Logger.Printf("closing ports of %s", newEc.context)
 				ClosePorts(newEc.ports)
-				wg.Done()
+				thisErrorChan <- Error{err}
 			}()
 		}
-		// Wait for all forms to finish
-		wg.Wait()
+		// Wait for all forms to finish and collect error returns
+		errors := make([]Error, len(ops))
+		for i, errorChan := range errorChans {
+			errors[i] = <-errorChan
+		}
 		if !allok(errors) {
 			if len(errors) == 1 {
 				throw(errors[0].inner)
