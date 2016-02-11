@@ -23,14 +23,14 @@ var Logger = logutil.Discard
 // function "foo" is equivalent to setting a variable named FnPrefix + "foo".
 const FnPrefix = "&"
 
-// ns is a namespace.
-type ns map[string]Variable
+// Namespace is a map from name to variables.
+type Namespace map[string]Variable
 
 // Evaler is used to evaluate elvish sources. It maintains runtime context
 // shared among all evalCtx instances.
 type Evaler struct {
-	global      ns
-	mod         map[string]ns
+	global      Namespace
+	mod         map[string]Namespace
 	searchPaths []string
 	store       *store.Store
 	Editor      Editor
@@ -42,7 +42,7 @@ type evalCtx struct {
 	*Evaler
 	name, text, context string
 
-	local, up ns
+	local, up Namespace
 	ports     []*Port
 }
 
@@ -60,7 +60,7 @@ func NewEvaler(st *store.Store) *Evaler {
 	pid := String(strconv.Itoa(syscall.Getpid()))
 	paths := NewList()
 	paths.appendStrings(searchPaths)
-	global := ns{
+	global := Namespace{
 		"pid":   newPtrVariable(pid),
 		"ok":    newPtrVariable(OK),
 		"true":  newPtrVariable(Bool(true)),
@@ -71,7 +71,7 @@ func NewEvaler(st *store.Store) *Evaler {
 		global[FnPrefix+b.Name] = newPtrVariable(b)
 	}
 
-	return &Evaler{global, map[string]ns{}, searchPaths, st, nil}
+	return &Evaler{global, map[string]Namespace{}, searchPaths, st, nil}
 }
 
 // PprintError pretty prints an error. It understands specialized error types
@@ -106,7 +106,7 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *evalCtx {
 	return &evalCtx{
 		ev,
 		name, text, "top",
-		ev.global, ns{},
+		ev.global, Namespace{},
 		ports,
 	}
 }
@@ -145,7 +145,7 @@ func (ec *evalCtx) growPorts(n int) {
 	copy(ec.ports, ports)
 }
 
-func makeScope(s ns) scope {
+func makeScope(s Namespace) scope {
 	sc := scope{}
 	for name := range s {
 		sc[name] = true
