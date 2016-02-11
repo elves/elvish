@@ -222,6 +222,10 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	return outs, outBytes, ex
 }
 
+func init() {
+	PutInForeground = false
+}
+
 func TestEval(t *testing.T) {
 	for _, tt := range evalTests {
 		// fmt.Printf("eval %q\n", tt.text)

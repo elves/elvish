@@ -33,6 +33,10 @@ var (
 	ErrStillRunning = errors.New("still running")
 )
 
+// Whether elvish should attempt to put itself in foreground after each pipeline
+// execution.
+var PutInForeground = true
+
 type scope map[string]bool
 
 type (
@@ -160,9 +164,11 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 		signal.Stop(intCh)
 
 		// Make sure I am in foreground.
-		err := sys.Tcsetpgrp(0, syscall.Getpgrp())
-		if err != nil {
-			throw(err)
+		if PutInForeground {
+			err := sys.Tcsetpgrp(0, syscall.Getpgrp())
+			if err != nil {
+				throw(err)
+			}
 		}
 
 		if !allok(errors) {
