@@ -480,8 +480,10 @@ tokens:
 						style += styleForCurrentCompletion
 					}
 					text := cands[k].menu.text
+					if j > 0 {
+						b.writePadding(margin, "")
+					}
 					b.writes(ForceWcWidth(text, colWidth), style)
-					b.writePadding(margin, "")
 				}
 			}
 		}
