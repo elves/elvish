@@ -7,7 +7,7 @@ import (
 )
 
 type muster struct {
-	ec   *evalCtx
+	ec   *EvalCtx
 	what string
 	p    int
 	vs   []Value
@@ -17,7 +17,7 @@ func (m *muster) error(want, got string) {
 	m.ec.errorf(m.p, "%s must be %s; got %s", m.what, want, got)
 }
 
-func (ec *evalCtx) must(vs []Value, what string, pos int) *muster {
+func (ec *EvalCtx) must(vs []Value, what string, pos int) *muster {
 	return &muster{ec, what, pos, vs}
 }
 

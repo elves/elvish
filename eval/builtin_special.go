@@ -28,7 +28,7 @@ func init() {
 	}
 }
 
-func doSet(ec *evalCtx, variables []Variable, values []Value) {
+func doSet(ec *EvalCtx, variables []Variable, values []Value) {
 	// TODO Support assignment of mismatched arity in some restricted way -
 	// "optional" and "rest" arguments and the like
 	if len(variables) != len(values) {
@@ -66,7 +66,7 @@ func compileDel(cp *compiler, fn *parse.Form) Op {
 		}
 
 	}
-	return func(ec *evalCtx) {
+	return func(ec *EvalCtx) {
 		for _, name := range names {
 			delete(ec.local, name)
 		}
@@ -165,7 +165,7 @@ func compileUse(cp *compiler, fn *parse.Form) op {
 
 // makeFnOp wraps an op such that a return is converted to an ok.
 func makeFnOp(op Op) Op {
-	return func(ec *evalCtx) {
+	return func(ec *EvalCtx) {
 		ex := ec.PEval(op)
 		if ex != Return {
 			// rethrow
@@ -198,7 +198,7 @@ func compileFn(cp *compiler, fn *parse.Form) Op {
 	cp.registerVariableSet(":" + varName)
 	op := cp.lambda(pn)
 
-	return func(ec *evalCtx) {
+	return func(ec *EvalCtx) {
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
 		ec.local[varName] = newPtrVariable(closure)

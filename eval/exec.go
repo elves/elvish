@@ -26,13 +26,13 @@ func maybeThrow(err error) {
 	}
 }
 
-func (ec *evalCtx) PCall(f Caller, args []Value) (ex error) {
+func (ec *EvalCtx) PCall(f Caller, args []Value) (ex error) {
 	defer errutil.Catch(&ex)
 	f.Call(ec, args)
 	return nil
 }
 
-func (ec *evalCtx) resolveCaller(cmd Value) Caller {
+func (ec *EvalCtx) resolveCaller(cmd Value) Caller {
 	// Already a Caller
 	if cl, ok := cmd.(Caller); ok {
 		return cl
@@ -64,12 +64,12 @@ func (ec *evalCtx) resolveCaller(cmd Value) Caller {
 }
 
 // Call calls a builtin function.
-func (b *BuiltinFn) Call(ec *evalCtx, args []Value) {
+func (b *BuiltinFn) Call(ec *EvalCtx, args []Value) {
 	b.Impl(ec, args)
 }
 
 // Call calls a closure.
-func (c *Closure) Call(ec *evalCtx, args []Value) {
+func (c *Closure) Call(ec *EvalCtx, args []Value) {
 	// TODO Support optional/rest argument
 	// TODO Support keyword arguments
 	if !c.Variadic && len(args) != len(c.ArgNames) {
@@ -133,7 +133,7 @@ func waitStatusToError(ws syscall.WaitStatus) error {
 }
 
 // Call calls an external command.
-func (e ExternalCmd) Call(ec *evalCtx, argVals []Value) {
+func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value) {
 	if DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {
@@ -188,7 +188,7 @@ type IndexerCaller struct {
 	Indexer
 }
 
-func (ic IndexerCaller) Call(ec *evalCtx, argVals []Value) {
+func (ic IndexerCaller) Call(ec *EvalCtx, argVals []Value) {
 	var v Value = ic.Indexer
 	for _, idx := range argVals {
 		// XXX the positions are obviously wrong.

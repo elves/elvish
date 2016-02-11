@@ -81,7 +81,7 @@ var (
 )
 
 var (
-	evalCtxType = reflect.TypeOf((*evalCtx)(nil))
+	evalCtxType = reflect.TypeOf((*EvalCtx)(nil))
 	valueType   = reflect.TypeOf((*Value)(nil)).Elem()
 )
 
@@ -89,7 +89,7 @@ var (
 // generates argument checking and conversion code according to the signature
 // of the inner function. The inner function must accept evalCtx* as the first
 // argument and return an exitus.
-func wrapFn(inner interface{}) func(*evalCtx, []Value) {
+func wrapFn(inner interface{}) func(*EvalCtx, []Value) {
 	type_ := reflect.TypeOf(inner)
 	if type_.In(0) != evalCtxType {
 		panic("bad func")
@@ -112,7 +112,7 @@ func wrapFn(inner interface{}) func(*evalCtx, []Value) {
 		}
 	}
 
-	return func(ec *evalCtx, args []Value) {
+	return func(ec *EvalCtx, args []Value) {
 		if len(args) < requiredArgs || (!isVariadic && len(args) > requiredArgs) {
 			throw(ErrArgs)
 		}
@@ -173,17 +173,17 @@ func convertArgs(args []Value, callArgs []reflect.Value, callType func(int) refl
 	return true
 }
 
-func nop(ec *evalCtx, args []Value) {
+func nop(ec *EvalCtx, args []Value) {
 }
 
-func put(ec *evalCtx, args []Value) {
+func put(ec *EvalCtx, args []Value) {
 	out := ec.ports[1].Chan
 	for _, a := range args {
 		out <- a
 	}
 }
 
-func putAll(ec *evalCtx, lists ...List) {
+func putAll(ec *EvalCtx, lists ...List) {
 	out := ec.ports[1].Chan
 	for _, list := range lists {
 		for _, x := range *list.inner {
@@ -192,34 +192,34 @@ func putAll(ec *evalCtx, lists ...List) {
 	}
 }
 
-func typeof(ec *evalCtx, args []Value) {
+func typeof(ec *EvalCtx, args []Value) {
 	out := ec.ports[1].Chan
 	for _, a := range args {
 		out <- String(a.Type().String())
 	}
 }
 
-func fail(ec *evalCtx, arg Value) {
+func fail(ec *EvalCtx, arg Value) {
 	throw(errors.New(ToString(arg)))
 }
 
-func multiErrorFn(ec *evalCtx, args ...Error) {
+func multiErrorFn(ec *EvalCtx, args ...Error) {
 	throw(multiError{args})
 }
 
-func returnFn(ec *evalCtx) {
+func returnFn(ec *EvalCtx) {
 	throw(Return)
 }
 
-func breakFn(ec *evalCtx) {
+func breakFn(ec *EvalCtx) {
 	throw(Break)
 }
 
-func continueFn(ec *evalCtx) {
+func continueFn(ec *EvalCtx) {
 	throw(Continue)
 }
 
-func print(ec *evalCtx, args ...string) {
+func print(ec *EvalCtx, args ...string) {
 	out := ec.ports[1].File
 	for i, arg := range args {
 		if i > 0 {
@@ -229,12 +229,12 @@ func print(ec *evalCtx, args ...string) {
 	}
 }
 
-func println(ec *evalCtx, args ...string) {
+func println(ec *EvalCtx, args ...string) {
 	print(ec, args...)
 	ec.ports[1].File.WriteString("\n")
 }
 
-func intoLines(ec *evalCtx) {
+func intoLines(ec *EvalCtx) {
 	in := ec.ports[0].Chan
 	out := ec.ports[1].File
 
@@ -243,7 +243,7 @@ func intoLines(ec *evalCtx) {
 	}
 }
 
-func fromLines(ec *evalCtx) {
+func fromLines(ec *EvalCtx) {
 	in := ec.ports[0].File
 	out := ec.ports[1].Chan
 
@@ -259,7 +259,7 @@ func fromLines(ec *evalCtx) {
 	}
 }
 
-func ratFn(ec *evalCtx, arg Value) {
+func ratFn(ec *EvalCtx, arg Value) {
 	out := ec.ports[1].Chan
 	r, err := ToRat(arg)
 	if err != nil {
@@ -269,7 +269,7 @@ func ratFn(ec *evalCtx, arg Value) {
 }
 
 // unpack takes any number of tables and output their list elements.
-func unpack(ec *evalCtx) {
+func unpack(ec *EvalCtx) {
 	in := ec.ports[0].Chan
 	out := ec.ports[1].Chan
 
@@ -285,7 +285,7 @@ func unpack(ec *evalCtx) {
 }
 
 // fromJSON parses a stream of JSON data into Value's.
-func fromJSON(ec *evalCtx) {
+func fromJSON(ec *EvalCtx) {
 	in := ec.ports[0].File
 	out := ec.ports[1].Chan
 
@@ -304,7 +304,7 @@ func fromJSON(ec *evalCtx) {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ec *evalCtx, f *Closure) {
+func each(ec *EvalCtx, f *Closure) {
 	in := ec.ports[0].Chan
 in:
 	for v := range in {
@@ -323,7 +323,7 @@ in:
 	}
 }
 
-func cd(ec *evalCtx, args []Value) {
+func cd(ec *EvalCtx, args []Value) {
 	var dir string
 	if len(args) == 0 {
 		dir = mustGetHome("")
@@ -336,7 +336,7 @@ func cd(ec *evalCtx, args []Value) {
 	cdInner(dir, ec)
 }
 
-func cdInner(dir string, ec *evalCtx) {
+func cdInner(dir string, ec *EvalCtx) {
 	err := os.Chdir(dir)
 	if err != nil {
 		throw(err)
@@ -350,7 +350,7 @@ func cdInner(dir string, ec *evalCtx) {
 	}
 }
 
-func dirs(ec *evalCtx) {
+func dirs(ec *EvalCtx) {
 	if ec.store == nil {
 		throw(ErrStoreNotConnected)
 	}
@@ -367,7 +367,7 @@ func dirs(ec *evalCtx) {
 	}
 }
 
-func jump(ec *evalCtx, arg string) {
+func jump(ec *EvalCtx, arg string) {
 	if ec.store == nil {
 		throw(ErrStoreNotConnected)
 	}
@@ -387,7 +387,7 @@ func jump(ec *evalCtx, arg string) {
 	ec.store.AddDir(dir)
 }
 
-func source(ec *evalCtx, fname string) {
+func source(ec *EvalCtx, fname string) {
 	ec.Source(fname)
 }
 
@@ -415,7 +415,7 @@ func toInt(arg Value) (int, error) {
 	return num, nil
 }
 
-func plus(ec *evalCtx, nums ...float64) {
+func plus(ec *EvalCtx, nums ...float64) {
 	out := ec.ports[1].Chan
 	sum := 0.0
 	for _, f := range nums {
@@ -424,7 +424,7 @@ func plus(ec *evalCtx, nums ...float64) {
 	out <- String(fmt.Sprintf("%g", sum))
 }
 
-func minus(ec *evalCtx, sum float64, nums ...float64) {
+func minus(ec *EvalCtx, sum float64, nums ...float64) {
 	out := ec.ports[1].Chan
 	for _, f := range nums {
 		sum -= f
@@ -432,7 +432,7 @@ func minus(ec *evalCtx, sum float64, nums ...float64) {
 	out <- String(fmt.Sprintf("%g", sum))
 }
 
-func times(ec *evalCtx, nums ...float64) {
+func times(ec *EvalCtx, nums ...float64) {
 	out := ec.ports[1].Chan
 	prod := 1.0
 	for _, f := range nums {
@@ -441,7 +441,7 @@ func times(ec *evalCtx, nums ...float64) {
 	out <- String(fmt.Sprintf("%g", prod))
 }
 
-func divide(ec *evalCtx, prod float64, nums ...float64) {
+func divide(ec *EvalCtx, prod float64, nums ...float64) {
 	out := ec.ports[1].Chan
 	for _, f := range nums {
 		prod /= f
@@ -449,7 +449,7 @@ func divide(ec *evalCtx, prod float64, nums ...float64) {
 	out <- String(fmt.Sprintf("%g", prod))
 }
 
-func eq(ec *evalCtx, args []Value) {
+func eq(ec *EvalCtx, args []Value) {
 	out := ec.ports[1].Chan
 	if len(args) == 0 {
 		throw(ErrArgs)
@@ -463,7 +463,7 @@ func eq(ec *evalCtx, args []Value) {
 	out <- Bool(true)
 }
 
-func deepeq(ec *evalCtx, args []Value) {
+func deepeq(ec *EvalCtx, args []Value) {
 	out := ec.ports[1].Chan
 	if len(args) == 0 {
 		throw(ErrArgs)
@@ -477,7 +477,7 @@ func deepeq(ec *evalCtx, args []Value) {
 	out <- Bool(true)
 }
 
-func take(ec *evalCtx, n int) {
+func take(ec *EvalCtx, n int) {
 	in := ec.ports[0].Chan
 	out := ec.ports[1].Chan
 
@@ -491,7 +491,7 @@ func take(ec *evalCtx, n int) {
 	}
 }
 
-func drop(ec *evalCtx, n int) {
+func drop(ec *EvalCtx, n int) {
 	in := ec.ports[0].Chan
 	out := ec.ports[1].Chan
 
@@ -503,25 +503,25 @@ func drop(ec *evalCtx, n int) {
 	}
 }
 
-func bind(ec *evalCtx, key string, function Value) {
+func bind(ec *EvalCtx, key string, function Value) {
 	if ec.Editor == nil {
 		throw(ErrNoEditor)
 	}
 	maybeThrow(ec.Editor.Bind(key, function))
 }
 
-func le(ec *evalCtx, name string, args ...Value) {
+func le(ec *EvalCtx, name string, args ...Value) {
 	if ec.Editor == nil {
 		throw(ErrNoEditor)
 	}
 	maybeThrow(ec.Editor.Call(name, args))
 }
 
-func _sleep(ec *evalCtx, t float64) {
+func _sleep(ec *EvalCtx, t float64) {
 	time.Sleep(time.Duration(t) * time.Second)
 }
 
-func _stack(ec *evalCtx) {
+func _stack(ec *EvalCtx) {
 	out := ec.ports[1].File
 
 	// XXX dup with main.go

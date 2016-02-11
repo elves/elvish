@@ -49,7 +49,7 @@ type IndexVarer interface {
 
 // Caller is anything may be called on an evalCtx with a list of Value's.
 type Caller interface {
-	Call(ec *evalCtx, args []Value)
+	Call(ec *EvalCtx, args []Value)
 }
 
 // Type is the type of a value.
@@ -355,7 +355,7 @@ func (c *Closure) Repr() string {
 // BuiltinFn is a builtin function.
 type BuiltinFn struct {
 	Name string
-	Impl func(*evalCtx, []Value)
+	Impl func(*EvalCtx, []Value)
 }
 
 func (*BuiltinFn) Type() Type {
@@ -451,7 +451,7 @@ func stringToSegments(s string) []glob.Segment {
 	return segs
 }
 
-func evalIndex(ec *evalCtx, l, r Value, lp, rp int) Value {
+func evalIndex(ec *EvalCtx, l, r Value, lp, rp int) Value {
 	left, ok := l.(Indexer)
 	if !ok {
 		ec.errorf(lp, "%s value cannot be indexing", l.Type())

@@ -41,11 +41,11 @@ type scope map[string]bool
 
 type (
 	// Op is a compiled operation.
-	Op func(*evalCtx)
+	Op func(*EvalCtx)
 	// ValuesOp is a compiled Value-generating operation.
-	ValuesOp func(*evalCtx) []Value
+	ValuesOp func(*EvalCtx) []Value
 	// VariableOp is a compiled Variable-generating operation.
-	VariableOp func(*evalCtx) Variable
+	VariableOp func(*EvalCtx) Variable
 )
 
 // compiler maintains the set of states needed when compiling a single source
@@ -78,7 +78,7 @@ func compile(name, source string, sc scope, n *parse.Chunk) (op Op, err error) {
 func (cp *compiler) chunk(n *parse.Chunk) Op {
 	ops := cp.pipelines(n.Pipelines)
 
-	return func(ec *evalCtx) {
+	return func(ec *EvalCtx) {
 		for _, op := range ops {
 			op(ec)
 		}
@@ -91,7 +91,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 	ops := cp.forms(n.Forms)
 	p := n.Begin()
 
-	return func(ec *evalCtx) {
+	return func(ec *EvalCtx) {
 		var nextIn *Port
 
 		errorChans := make([]chan Error, len(ops))
@@ -187,7 +187,7 @@ func (cp *compiler) form(n *parse.Form) Op {
 			cp.errorf(n.Begin(), "temporary assignments not yet supported")
 		}
 		ops := cp.assignments(n.Assignments)
-		return func(ec *evalCtx) {
+		return func(ec *EvalCtx) {
 			for _, op := range ops {
 				op(ec)
 			}
@@ -216,7 +216,7 @@ func (cp *compiler) form(n *parse.Form) Op {
 	p := n.Begin()
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
-	return func(ec *evalCtx) {
+	return func(ec *EvalCtx) {
 		// head
 		headValues := headOp(ec)
 		headMust := ec.must(headValues, "the head of command", p)
@@ -270,7 +270,7 @@ func (cp *compiler) assignment(n *parse.Assignment) Op {
 
 	valuesOp := cp.compound(n.Src)
 
-	return func(ec *evalCtx) {
+	return func(ec *EvalCtx) {
 		variables := make([]Variable, len(variableOps))
 		for i, variableOp := range variableOps {
 			variables[i] = variableOp(ec)
@@ -287,7 +287,7 @@ func (cp *compiler) indexingVar(n *parse.Indexing, msg string) VariableOp {
 	if len(n.Indicies) == 0 {
 		cp.registerVariableSet(varname)
 
-		return func(ec *evalCtx) Variable {
+		return func(ec *EvalCtx) Variable {
 			splice, ns, barename := parseVariable(varname)
 			if splice {
 				// XXX
@@ -313,7 +313,7 @@ func (cp *compiler) indexingVar(n *parse.Indexing, msg string) VariableOp {
 		indexEnds[i] = in.End()
 	}
 
-	return func(ec *evalCtx) Variable {
+	return func(ec *EvalCtx) Variable {
 		splice, ns, name := parseVariable(varname)
 		if splice {
 			// XXX
@@ -370,7 +370,7 @@ func (cp *compiler) redir(n *parse.Redir) Op {
 	mode := n.Mode
 	flag := makeFlag(mode)
 
-	return func(ec *evalCtx) {
+	return func(ec *EvalCtx) {
 		var dst int
 		if dstOp == nil {
 			// use default dst fd
@@ -426,7 +426,7 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOp {
 	if n.Indexings[0].Head.Type == parse.Tilde {
 		// A lone ~.
 		if len(n.Indexings) == 1 {
-			return func(ec *evalCtx) []Value {
+			return func(ec *EvalCtx) []Value {
 				return []Value{String(mustGetHome(""))}
 			}
 		}
@@ -437,7 +437,7 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOp {
 
 	ops := cp.indexings(indexings)
 
-	return func(ec *evalCtx) []Value {
+	return func(ec *EvalCtx) []Value {
 		// Accumulator.
 		vs := ops[0](ec)
 
@@ -579,7 +579,7 @@ func doGlob(gp GlobPattern) []Value {
 }
 
 func catOps(ops []ValuesOp) ValuesOp {
-	return func(ec *evalCtx) []Value {
+	return func(ec *EvalCtx) []Value {
 		// Use number of compound expressions as an estimation of the number
 		// of values
 		vs := make([]Value, 0, len(ops))
@@ -608,7 +608,7 @@ func (cp *compiler) indexing(n *parse.Indexing) ValuesOp {
 		indexPoses[i] = index.Begin()
 	}
 
-	return func(ec *evalCtx) []Value {
+	return func(ec *EvalCtx) []Value {
 		v := ec.must(headOp(ec), "the indexing value", p).mustOne()
 		for i, indexOp := range indexOps {
 			index := ec.must(indexOp(ec), "the index", p).mustOne()
@@ -619,7 +619,7 @@ func (cp *compiler) indexing(n *parse.Indexing) ValuesOp {
 }
 
 func literalValues(v ...Value) ValuesOp {
-	return func(e *evalCtx) []Value {
+	return func(e *EvalCtx) []Value {
 		return v
 	}
 }
@@ -630,7 +630,7 @@ func literalStr(text string) ValuesOp {
 
 func variable(qname string, p int) ValuesOp {
 	splice, ns, name := parseVariable(qname)
-	return func(ec *evalCtx) []Value {
+	return func(ec *EvalCtx) []Value {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
 			ec.errorf(p, "variable $%s not found", qname)
@@ -722,7 +722,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOp {
 	case parse.Wildcard:
 		vs := []Value{GlobPattern{[]glob.Segment{
 			wildcardToSegment(n.SourceText())}}}
-		return func(ec *evalCtx) []Value {
+		return func(ec *EvalCtx) []Value {
 			return vs
 		}
 	case parse.Tilde:
@@ -730,14 +730,14 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOp {
 		return literalStr("~")
 	case parse.ErrorCapture:
 		op := cp.chunk(n.Chunk)
-		return func(ec *evalCtx) []Value {
+		return func(ec *EvalCtx) []Value {
 			return []Value{Error{ec.PEval(op)}}
 		}
 	case parse.OutputCapture:
 		return cp.outputCapture(n)
 	case parse.List:
 		op := cp.array(n.List)
-		return func(ec *evalCtx) []Value {
+		return func(ec *EvalCtx) []Value {
 			return []Value{NewList(op(ec)...)}
 		}
 	case parse.Lambda:
@@ -757,7 +757,7 @@ var outputCaptureBufferSize = 16
 func (cp *compiler) outputCapture(n *parse.Primary) ValuesOp {
 	op := cp.chunk(n.Chunk)
 	p := n.Chunk.Begin()
-	return func(ec *evalCtx) []Value {
+	return func(ec *EvalCtx) []Value {
 		vs := []Value{}
 		newEc := ec.fork(fmt.Sprintf("channel output capture %v", op))
 
@@ -846,7 +846,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOp {
 		cp.registerVariableGet(name)
 	}
 
-	return func(ec *evalCtx) []Value {
+	return func(ec *EvalCtx) []Value {
 		evCapture := make(map[string]Variable, len(capture))
 		for name := range capture {
 			evCapture[name] = ec.ResolveVar("", name)
@@ -865,7 +865,7 @@ func (cp *compiler) map_(n *parse.Primary) ValuesOp {
 		valuesOps[i] = cp.compound(n.MapPairs[i].Value)
 		poses[i] = n.MapPairs[i].Begin()
 	}
-	return func(ec *evalCtx) []Value {
+	return func(ec *EvalCtx) []Value {
 		m := make(map[Value]Value)
 		for i := 0; i < nn; i++ {
 			keys := keysOps[i](ec)

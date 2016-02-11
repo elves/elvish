@@ -36,9 +36,9 @@ type Evaler struct {
 	Editor      Editor
 }
 
-// evalCtx maintains an Evaler along with its runtime context. After creation
-// an evalCtx is not modified, and new instances are created when needed.
-type evalCtx struct {
+// EvalCtx maintains an Evaler along with its runtime context. After creation
+// an EvalCtx is not modified, and new instances are created when needed.
+type EvalCtx struct {
 	*Evaler
 	name, text, context string
 
@@ -74,6 +74,10 @@ func NewEvaler(st *store.Store) *Evaler {
 	return &Evaler{global, map[string]Namespace{}, searchPaths, st, nil}
 }
 
+func (e *Evaler) addModule(name string, ns Namespace) {
+	e.modules[name] = ns
+}
+
 // PprintError pretty prints an error. It understands specialized error types
 // defined in this package.
 func PprintError(e error) {
@@ -102,8 +106,8 @@ const (
 )
 
 // NewTopEvalCtx creates a top-level evalCtx.
-func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *evalCtx {
-	return &evalCtx{
+func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
+	return &EvalCtx{
 		ev,
 		name, text, "top",
 		ev.global, Namespace{},
@@ -113,12 +117,12 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *evalCtx {
 
 // fork returns a modified copy of ec. The ports are forked, and the context is
 // changed to the given value. Other fields are copied shallowly.
-func (ec *evalCtx) fork(newContext string) *evalCtx {
+func (ec *EvalCtx) fork(newContext string) *EvalCtx {
 	newPorts := make([]*Port, len(ec.ports))
 	for i, p := range ec.ports {
 		newPorts[i] = p.Fork()
 	}
-	return &evalCtx{
+	return &EvalCtx{
 		ec.Evaler,
 		ec.name, ec.text, newContext,
 		ec.local, ec.up,
@@ -128,7 +132,7 @@ func (ec *evalCtx) fork(newContext string) *evalCtx {
 
 // port returns ec.ports[i] or nil if i is out of range. This makes it possible
 // to treat ec.ports as if it has an infinite tail of nil's.
-func (ec *evalCtx) port(i int) *Port {
+func (ec *EvalCtx) port(i int) *Port {
 	if i >= len(ec.ports) {
 		return nil
 	}
@@ -136,7 +140,7 @@ func (ec *evalCtx) port(i int) *Port {
 }
 
 // growPorts makes the size of ec.ports at least n, adding nil's if necessary.
-func (ec *evalCtx) growPorts(n int) {
+func (ec *EvalCtx) growPorts(n int) {
 	if len(ec.ports) >= n {
 		return
 	}
@@ -196,7 +200,7 @@ func (ev *Evaler) Compile(name, text string, n *parse.Chunk) (Op, error) {
 
 // PEval evaluates an op in a protected environment so that calls to errorf are
 // wrapped in an Error.
-func (ec *evalCtx) PEval(op Op) (ex error) {
+func (ec *EvalCtx) PEval(op Op) (ex error) {
 	defer errutil.Catch(&ex)
 	op(ec)
 	return nil
@@ -204,7 +208,7 @@ func (ec *evalCtx) PEval(op Op) (ex error) {
 
 // errorf stops the ec.eval immediately by panicking with a diagnostic message.
 // The panic is supposed to be caught by ec.eval.
-func (ec *evalCtx) errorf(p int, format string, args ...interface{}) {
+func (ec *EvalCtx) errorf(p int, format string, args ...interface{}) {
 	throw(errutil.NewContextualError(
 		fmt.Sprintf("%s (%s)", ec.name, ec.context), "error",
 		ec.text, p, format, args...))
@@ -212,7 +216,7 @@ func (ec *evalCtx) errorf(p int, format string, args ...interface{}) {
 
 // mustSingleString returns a String if that is the only element of vs.
 // Otherwise it errors.
-func (ec *evalCtx) mustSingleString(vs []Value, what string, p int) String {
+func (ec *EvalCtx) mustSingleString(vs []Value, what string, p int) String {
 	if len(vs) != 1 {
 		ec.errorf(p, "Expect exactly one word for %s, got %d", what, len(vs))
 	}
@@ -259,7 +263,7 @@ func (ev *Evaler) Global() map[string]Variable {
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
-func (ec *evalCtx) ResolveVar(ns, name string) Variable {
+func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	if ns == "env" {
 		return newEnvVariable(name)
 	}
