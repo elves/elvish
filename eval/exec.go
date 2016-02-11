@@ -89,11 +89,11 @@ func (c *Closure) Call(ec *EvalCtx, args []Value) {
 	ec.local = make(map[string]Variable)
 	if !c.Variadic {
 		for i, name := range c.ArgNames {
-			ec.local[name] = newPtrVariable(args[i])
+			ec.local[name] = NewPtrVariable(args[i])
 		}
 	}
-	ec.local["args"] = newPtrVariable(List{&args})
-	ec.local["kwargs"] = newPtrVariable(Map{&map[Value]Value{}})
+	ec.local["args"] = NewPtrVariable(List{&args})
+	ec.local["kwargs"] = NewPtrVariable(Map{&map[Value]Value{}})
 
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.

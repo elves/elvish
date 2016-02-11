@@ -298,7 +298,7 @@ func (cp *compiler) indexingVar(n *parse.Indexing, msg string) VariableOp {
 				// New variable.
 				// XXX We depend on the fact that this variable will
 				// immeidately be set.
-				variable = newPtrVariable(nil)
+				variable = NewPtrVariable(nil)
 				ec.local[barename] = variable
 			}
 			return variable

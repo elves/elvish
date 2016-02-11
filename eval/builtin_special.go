@@ -201,6 +201,6 @@ func compileFn(cp *compiler, fn *parse.Form) Op {
 	return func(ec *EvalCtx) {
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
-		ec.local[varName] = newPtrVariable(closure)
+		ec.local[varName] = NewPtrVariable(closure)
 	}
 }

@@ -12,7 +12,7 @@ type ptrVariable struct {
 	valuePtr *Value
 }
 
-func newPtrVariable(v Value) Variable {
+func NewPtrVariable(v Value) Variable {
 	return ptrVariable{&v}
 }
 

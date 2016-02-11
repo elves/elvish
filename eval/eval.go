@@ -61,20 +61,20 @@ func NewEvaler(st *store.Store) *Evaler {
 	paths := NewList()
 	paths.appendStrings(searchPaths)
 	global := Namespace{
-		"pid":   newPtrVariable(pid),
-		"ok":    newPtrVariable(OK),
-		"true":  newPtrVariable(Bool(true)),
-		"false": newPtrVariable(Bool(false)),
-		"paths": newPtrVariable(paths),
+		"pid":   NewPtrVariable(pid),
+		"ok":    NewPtrVariable(OK),
+		"true":  NewPtrVariable(Bool(true)),
+		"false": NewPtrVariable(Bool(false)),
+		"paths": NewPtrVariable(paths),
 	}
 	for _, b := range builtinFns {
-		global[FnPrefix+b.Name] = newPtrVariable(b)
+		global[FnPrefix+b.Name] = NewPtrVariable(b)
 	}
 
 	return &Evaler{global, map[string]Namespace{}, searchPaths, st, nil}
 }
 
-func (e *Evaler) addModule(name string, ns Namespace) {
+func (e *Evaler) AddModule(name string, ns Namespace) {
 	e.modules[name] = ns
 }
 

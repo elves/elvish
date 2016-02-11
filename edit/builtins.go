@@ -1,13 +1,11 @@
 package edit
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/strutil"
 )
 
@@ -88,28 +86,6 @@ var builtins = map[string]builtin{
 	"select-history-next":         selectHistoryNext,
 	"select-history-next-or-quit": selectHistoryNextOrQuit,
 	"default-history":             defaultHistory,
-}
-
-var (
-	ErrTakeNoArg      = errors.New("editor builtins take no arguments")
-	ErrNoSuchBuiltin  = errors.New("no such editor builtin")
-	ErrEditorInactive = errors.New("editor inactive")
-)
-
-// Call satisfies the eval.Foreign interface.
-func (ed *Editor) Call(name string, args []eval.Value) error {
-	if len(args) > 0 {
-		return ErrTakeNoArg
-	}
-	f, ok := builtins[name]
-	if !ok {
-		return ErrNoSuchBuiltin
-	}
-	if !ed.active {
-		return ErrEditorInactive
-	}
-	f(ed)
-	return nil
 }
 
 func startInsert(ed *Editor) {

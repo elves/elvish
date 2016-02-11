@@ -65,7 +65,6 @@ func init() {
 		&BuiltinFn{"drop", wrapFn(drop)},
 
 		&BuiltinFn{"bind", wrapFn(bind)},
-		&BuiltinFn{"le", wrapFn(le)},
 
 		&BuiltinFn{"-sleep", wrapFn(_sleep)},
 		&BuiltinFn{"-stack", wrapFn(_stack)},
@@ -508,13 +507,6 @@ func bind(ec *EvalCtx, key string, function Value) {
 		throw(ErrNoEditor)
 	}
 	maybeThrow(ec.Editor.Bind(key, function))
-}
-
-func le(ec *EvalCtx, name string, args ...Value) {
-	if ec.Editor == nil {
-		throw(ErrNoEditor)
-	}
-	maybeThrow(ec.Editor.Call(name, args))
 }
 
 func _sleep(ec *EvalCtx, t float64) {
