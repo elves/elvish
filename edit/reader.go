@@ -13,8 +13,11 @@ const (
 	cprTimeout = 10 * time.Millisecond
 )
 
-// special rune value used internally to represent a timeout
-const runeTimeout rune = -1
+// Special rune values used internally.
+const (
+	runeTimeout rune = -1 - iota
+	runeReadError
+)
 
 // Reader converts a stream of runes into a stream of Keys
 type Reader struct {
@@ -22,6 +25,7 @@ type Reader struct {
 	ones       chan OneRead
 	quit       chan struct{}
 	currentSeq string
+	readError  error
 }
 
 // OneRead is a single unit that is read, which is either a key, a CPR, or an
@@ -121,6 +125,8 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 		r2 := rd.readRune(escTimeout)
 		if r2 == runeTimeout {
 			return Key{'[', Ctrl}, invalidPos, nil
+		} else if r2 == runeReadError {
+			return Key{'[', Ctrl}, invalidPos, rd.readError
 		}
 		switch r2 {
 		case '[':
@@ -134,6 +140,8 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 				// Timeout can only happen at first readRune.
 				if r == runeTimeout {
 					return Key{'[', Alt}, invalidPos, nil
+				} else if r == runeReadError {
+					return Key{'[', Alt}, invalidPos, rd.readError
 				}
 				seq += string(r)
 				// After first rune read we turn off the timeout
@@ -166,6 +174,8 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 			r = rd.readRune(escTimeout)
 			if r == runeTimeout {
 				return Key{r2, Alt}, invalidPos, nil
+			} else if r == runeReadError {
+				return Key{r2, Alt}, invalidPos, rd.readError
 			}
 			r, ok := g3Seq[r]
 			if ok {
@@ -190,6 +200,9 @@ func (rd *Reader) readRune(d time.Duration) rune {
 	case r := <-rd.ar.Chan():
 		rd.currentSeq += string(r)
 		return r
+	case err := <-rd.ar.ErrorChan():
+		rd.readError = err
+		return runeReadError
 	case <-After(d):
 		return runeTimeout
 	}

@@ -20,6 +20,7 @@ type AsyncReader struct {
 	rCtrl, wCtrl *os.File
 	ctrlCh       chan struct{}
 	ch           chan rune
+	errCh        chan error
 }
 
 // NewAsyncReader creates a new AsyncReader from a file.
@@ -44,6 +45,10 @@ func (ar *AsyncReader) Chan() <-chan rune {
 	return ar.ch
 }
 
+func (ar *AsyncReader) ErrorChan() <-chan error {
+	return ar.errCh
+}
+
 // Run runs the AsyncReader. It blocks until Quit is called and should be
 // called in a separate goroutine.
 func (ar *AsyncReader) Run() {
@@ -66,7 +71,8 @@ func (ar *AsyncReader) Run() {
 			case syscall.EINTR:
 				continue
 			default:
-				panic(err)
+				ar.errCh <- err
+				return
 			}
 		}
 		if fs.IsSet(cfd) {
@@ -94,13 +100,15 @@ func (ar *AsyncReader) Run() {
 				// that (*os.File).Read returns an *os.File.PathError
 				patherr, ok := err.(*os.PathError) //.Err
 				if !ok {
-					panic(err)
+					ar.errCh <- err
+					return
 				}
 				e := patherr.Err
 				if e == syscall.EWOULDBLOCK || e == syscall.EAGAIN {
 					break ReadRune
 				} else {
-					panic(err)
+					ar.errCh <- err
+					return
 				}
 			}
 		}
