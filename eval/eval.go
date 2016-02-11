@@ -30,7 +30,7 @@ type Namespace map[string]Variable
 // shared among all evalCtx instances.
 type Evaler struct {
 	global      Namespace
-	mod         map[string]Namespace
+	modules     map[string]Namespace
 	searchPaths []string
 	store       *store.Store
 	Editor      Editor
@@ -263,7 +263,7 @@ func (ec *evalCtx) ResolveVar(ns, name string) Variable {
 	if ns == "env" {
 		return newEnvVariable(name)
 	}
-	if mod, ok := ec.mod[ns]; ok {
+	if mod, ok := ec.modules[ns]; ok {
 		return mod[name]
 	}
 
