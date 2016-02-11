@@ -19,6 +19,7 @@ import (
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/osutil"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/sys"
 )
 
 const (
@@ -157,6 +158,12 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 		// Make sure the SIGINT listener exits.
 		close(cancel)
 		signal.Stop(intCh)
+
+		// Make sure I am in foreground.
+		err := sys.Tcsetpgrp(0, syscall.Getpgrp())
+		if err != nil {
+			throw(err)
+		}
 
 		if !allok(errors) {
 			if len(errors) == 1 {
