@@ -334,6 +334,8 @@ var badCases = []struct {
 	src string
 	pos int // expected Begin position of first error
 }{
+	// Empty form.
+	{"a|", 2},
 	// Unopened parens.
 	{")", 0}, {"]", 0}, {"}", 0},
 	// Unclosed parens.
