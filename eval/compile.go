@@ -9,13 +9,27 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"path"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/osutil"
 	"github.com/elves/elvish/parse"
+)
+
+const (
+	// InterruptDeadline is the amount of time elvish waits for foreground
+	// tasks to finish after receiving a SIGINT. If a task didn't actually exit
+	// in time, its exit status takes the special "still running" value.
+	InterruptDeadline = 50 * time.Millisecond
+)
+
+var (
+	ErrStillRunning = errors.New("still running")
 )
 
 type scope map[string]bool
@@ -107,11 +121,43 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 				thisErrorChan <- Error{err}
 			}()
 		}
-		// Wait for all forms to finish and collect error returns
+
+		intCh := make(chan os.Signal)
+		signal.Notify(intCh, syscall.SIGINT)
+		interrupted := make(chan struct{})
+		cancel := make(chan struct{}, 1)
+		go func() {
+			// When SIGINT is received, sleep for InterruptDeadline before the
+			// closing interrupted channel.
+			select {
+			case <-intCh:
+			case <-cancel:
+				return
+			}
+			select {
+			case <-time.After(InterruptDeadline):
+			case <-cancel:
+				return
+			}
+			close(interrupted)
+		}()
+
+		// Wait for all forms to finish and collect error returns, unless an
+		// interrupt was received and the form didn't quit within
+		// InterruptDeadline.
 		errors := make([]Error, len(ops))
 		for i, errorChan := range errorChans {
-			errors[i] = <-errorChan
+			select {
+			case errors[i] = <-errorChan:
+			case <-interrupted:
+				errors[i] = Error{ErrStillRunning}
+			}
 		}
+
+		// Make sure the SIGINT listener exits.
+		close(cancel)
+		signal.Stop(intCh)
+
 		if !allok(errors) {
 			if len(errors) == 1 {
 				throw(errors[0].inner)
