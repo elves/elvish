@@ -10,7 +10,7 @@ import (
 var ErrNoMatchingCmd = errors.New("no matching command line")
 
 func init() {
-	createTable["cmd"] = `create table if not exists cmd (content text)`
+	initTable["cmd"] = `create table if not exists cmd (content text)`
 }
 
 // NextCmdSeq returns the next sequence number of the command history.

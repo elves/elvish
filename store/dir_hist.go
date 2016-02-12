@@ -13,7 +13,7 @@ const (
 )
 
 func init() {
-	createTable["dir"] = `create table if not exists dir (path text unique primary key, score real default 0)`
+	initTable["dir"] = `create table if not exists dir (path text unique primary key, score real default 0)`
 }
 
 // AddDir adds a directory to the directory history.
