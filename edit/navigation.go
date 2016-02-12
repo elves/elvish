@@ -184,6 +184,9 @@ func (n *navigation) ascend() error {
 	}
 	n.refresh()
 	n.maintainSelected(name)
+	// XXX Refresh dir preview again. We should perhaps not have used refresh
+	// above.
+	n.refreshDirPreview()
 	return nil
 }
 
@@ -200,6 +203,7 @@ func (n *navigation) descend() error {
 	}
 	n.refresh()
 	n.current.resetSelected()
+	n.refreshDirPreview()
 	return nil
 }
 
