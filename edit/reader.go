@@ -7,12 +7,11 @@ import (
 )
 
 var (
-	// EscTimeout is the amount of time after which an \033 (\x1b) character is
-	// parsed as a standalone Esc key press instead of starting an escape
-	// sequence. Modern terminal emulators send escape sequences very fast, so
-	// 10ms is more than sufficient. SSH connections on a slow link can be
-	// problematic,
-	EscTimeout = 10 * time.Millisecond
+	// EscSequenceTimeout is the amount of time within which runes that make up
+	// an escape sequence are supposed to follow each other. Modern terminal
+	// emulators send escape sequences very fast, so 10ms is more than
+	// sufficient. SSH connections on a slow link might be problematic though.
+	EscSequenceTimeout = 10 * time.Millisecond
 )
 
 // Special rune values used in the return value of (*Reader).ReadRune.
@@ -127,17 +126,17 @@ func (rd *Reader) readOne(r rune) {
 	var err error
 	var currentSeq string
 
-	// readRune attempts to read a rune within the predefined timeout. It
-	// writes to the err and currentSeq variable in the outer scope.
+	// readRune attempts to read a rune within EscSequenceTimeout. It writes to
+	// the err and currentSeq variable in the outer scope.
 	readRune :=
-		func(d time.Duration) rune {
+		func() rune {
 			select {
 			case r := <-rd.ar.Chan():
 				currentSeq += string(r)
 				return r
 			case err = <-rd.ar.ErrorChan():
 				return runeReadError
-			case <-After(d):
+			case <-time.After(EscSequenceTimeout):
 				return runeTimeout
 			}
 		}
@@ -177,7 +176,7 @@ func (rd *Reader) readOne(r rune) {
 	case 0x1f:
 		k = Key{'/', Ctrl} // ^_
 	case 0x1b: // ^[ Escape
-		r2 := readRune(EscTimeout)
+		r2 := readRune()
 		if r2 == runeTimeout || r2 == runeReadError {
 			k = Key{'[', Ctrl}
 			break
@@ -188,19 +187,16 @@ func (rd *Reader) readOne(r rune) {
 			// Read numeric parameters (if any)
 			nums := make([]int, 0, 2)
 			seq := "\x1b["
-			timeout := EscTimeout
 			isMouse := false
 		CSISeq:
 			for {
-				r = readRune(timeout)
+				r = readRune()
 				// Timeout can only happen at first readRune.
 				if r == runeTimeout || r == runeReadError {
 					k = Key{'[', Alt}
 					return
 				}
 				seq += string(r)
-				// After first rune read we turn off the timeout
-				timeout = -1
 				switch {
 				case r == ';':
 					nums = append(nums, 0)
@@ -247,7 +243,7 @@ func (rd *Reader) readOne(r rune) {
 			}
 		case 'O':
 			// G3 style function key sequence: read one rune.
-			r = readRune(EscTimeout)
+			r = readRune()
 			if r == runeTimeout || r == runeReadError {
 				k = Key{r2, Alt}
 				return
