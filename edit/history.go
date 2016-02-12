@@ -4,13 +4,13 @@ import "strings"
 
 // Command history subsystem.
 
-type history struct {
+type historyState struct {
 	current int
 	prefix  string
 	line    string
 }
 
-func (h *history) jump(i int, line string) {
+func (h *historyState) jump(i int, line string) {
 	h.current = i
 	h.line = line
 }

@@ -46,7 +46,7 @@ type editorState struct {
 	completion            *completion
 	completionLines       int
 	navigation            *navigation
-	history               history
+	history               historyState
 	isExternal            map[string]bool
 	// Used for builtins.
 	lastKey    Key
