@@ -186,7 +186,7 @@ func (rd *Reader) readOne(r rune) {
 		case '[':
 			// CSI style function key sequence, looks like [\d;]*[^\d;]
 			// Read numeric parameters (if any)
-			nums := make([]int, 1, 2)
+			nums := make([]int, 0, 2)
 			seq := "\x1b["
 			timeout := EscTimeout
 			isMouse := false
@@ -207,6 +207,9 @@ func (rd *Reader) readOne(r rune) {
 				case r == '<':
 					isMouse = true
 				case '0' <= r && r <= '9':
+					if len(nums) == 0 {
+						nums = append(nums, 0)
+					}
 					cur := len(nums) - 1
 					nums[cur] = nums[cur]*10 + int(r-'0')
 				default:
