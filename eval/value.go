@@ -285,8 +285,8 @@ type Map struct {
 }
 
 // NewMap creates a new Map.
-func NewMap() Map {
-	return Map{&map[Value]Value{}}
+func NewMap(inner map[Value]Value) Map {
+	return Map{&inner}
 }
 
 func (Map) Kind() string {

@@ -86,6 +86,7 @@ var defaultBindings = map[bufferMode]map[Key]string{
 var keyBindings = map[bufferMode]map[Key]Caller{}
 
 var (
+	errKeyMustBeString = errors.New("key must be string")
 	errInvalidKey      = errors.New("invalid key to bind to")
 	errInvalidFunction = errors.New("invalid function to bind")
 )
@@ -156,33 +157,6 @@ func (c EvalCaller) Call(ed *Editor) {
 	out.Close()
 	close(chanOut)
 	wg.Wait()
-}
-
-// Bind binds a key to a editor builtin or shell function.
-func (ed *Editor) Bind(key string, function eval.Value) error {
-	// TODO Modify the binding table in ed instead of a global data structure.
-	k, err := parseKey(key)
-	if err != nil {
-		return err
-	}
-
-	var f Caller
-	switch function := function.(type) {
-	case eval.String:
-		builtin, ok := builtinMap[string(function)]
-		if !ok {
-			return fmt.Errorf("no builtin named %s", function.Repr())
-		}
-		f = builtin
-	case eval.Caller:
-		f = EvalCaller{function}
-	default:
-		return fmt.Errorf("bad function type %s", function.Kind())
-	}
-
-	keyBindings[modeInsert][k] = f
-
-	return nil
 }
 
 var modifier = map[string]Mod{

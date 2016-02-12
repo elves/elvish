@@ -1,5 +1,7 @@
 package edit
 
+import "fmt"
+
 // Mod represents a modifier key.
 type Mod byte
 
@@ -41,7 +43,12 @@ func (k Key) String() (s string) {
 			s += string(k.Rune)
 		}
 	} else {
-		s += functionKeyNames[-k.Rune]
+		i := int(-k.Rune)
+		if i >= len(functionKeyNames) {
+			s += fmt.Sprintf("(bad function key %d)", i)
+		} else {
+			s += functionKeyNames[-k.Rune]
+		}
 	}
 	return
 }
@@ -94,5 +101,5 @@ var functionKeyNames = [...]string{
 	"(Invalid)",
 	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
 	"Up", "Down", "Right", "Left",
-	"Home", "Insert", "Delete", "End", "PageUp", "PageDown",
+	"Home", "Insert", "Delete", "End", "PageUp", "PageDown", "default",
 }

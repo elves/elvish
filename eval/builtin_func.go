@@ -64,8 +64,6 @@ func init() {
 		&BuiltinFn{"take", wrapFn(take)},
 		&BuiltinFn{"drop", wrapFn(drop)},
 
-		&BuiltinFn{"bind", wrapFn(bind)},
-
 		&BuiltinFn{"-sleep", wrapFn(_sleep)},
 		&BuiltinFn{"-stack", wrapFn(_stack)},
 	}
@@ -76,7 +74,6 @@ var (
 	ErrInput             = errors.New("input error")
 	ErrStoreNotConnected = errors.New("store not connected")
 	ErrNoMatchingDir     = errors.New("no matching directory")
-	ErrNoEditor          = errors.New("no line editor")
 )
 
 var (
@@ -500,13 +497,6 @@ func drop(ec *EvalCtx, n int) {
 	for v := range in {
 		out <- v
 	}
-}
-
-func bind(ec *EvalCtx, key string, function Value) {
-	if ec.Editor == nil {
-		throw(ErrNoEditor)
-	}
-	maybeThrow(ec.Editor.Bind(key, function))
 }
 
 func _sleep(ec *EvalCtx, t float64) {

@@ -33,7 +33,6 @@ type Evaler struct {
 	modules     map[string]Namespace
 	searchPaths []string
 	store       *store.Store
-	Editor      Editor
 }
 
 // EvalCtx maintains an Evaler along with its runtime context. After creation
@@ -71,7 +70,7 @@ func NewEvaler(st *store.Store) *Evaler {
 		global[FnPrefix+b.Name] = NewPtrVariable(b)
 	}
 
-	return &Evaler{global, map[string]Namespace{}, searchPaths, st, nil}
+	return &Evaler{global, map[string]Namespace{}, searchPaths, st}
 }
 
 func (e *Evaler) AddModule(name string, ns Namespace) {

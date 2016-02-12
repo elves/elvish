@@ -176,7 +176,6 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		evaler: ev,
 		cmdSeq: seq,
 	}
-	ev.Editor = ed
 	ev.AddModule("le", makeModule(ed))
 	return ed
 }
