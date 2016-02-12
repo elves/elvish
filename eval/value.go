@@ -108,13 +108,6 @@ func (b Bool) Repr() string {
 	return "$false"
 }
 
-func (b Bool) String() string {
-	if b {
-		return "true"
-	}
-	return "false"
-}
-
 func (b Bool) Bool() bool {
 	return bool(b)
 }
@@ -136,13 +129,6 @@ func (e Error) Repr() string {
 		return r.Repr()
 	}
 	return "?(error " + parse.Quote(e.inner.Error()) + ")"
-}
-
-func (e Error) String() string {
-	if e.inner == nil {
-		return "ok"
-	}
-	return e.inner.Error()
 }
 
 func (e Error) Bool() bool {
