@@ -30,8 +30,8 @@ type EditBuiltin struct {
 	ed   *Editor
 }
 
-func (*EditBuiltin) Type() eval.Type {
-	return eval.TFn
+func (*EditBuiltin) Kind() string {
+	return "fn"
 }
 
 func (eb *EditBuiltin) Repr() string {

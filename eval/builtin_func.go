@@ -37,7 +37,7 @@ func init() {
 
 		&BuiltinFn{"from-json", wrapFn(fromJSON)},
 
-		&BuiltinFn{"typeof", typeof},
+		&BuiltinFn{"kind-of", kindOf},
 
 		&BuiltinFn{"fail", wrapFn(fail)},
 		&BuiltinFn{"multi-error", wrapFn(multiErrorFn)},
@@ -191,10 +191,10 @@ func putAll(ec *EvalCtx, lists ...List) {
 	}
 }
 
-func typeof(ec *EvalCtx, args []Value) {
+func kindOf(ec *EvalCtx, args []Value) {
 	out := ec.ports[1].Chan
 	for _, a := range args {
-		out <- String(a.Type().String())
+		out <- String(a.Kind())
 	}
 }
 

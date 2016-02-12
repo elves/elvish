@@ -171,7 +171,7 @@ func (ed *Editor) Bind(key string, function eval.Value) error {
 	case eval.Caller:
 		f = EvalCaller{function}
 	default:
-		return fmt.Errorf("bad function type %s", function.Type())
+		return fmt.Errorf("bad function type %s", function.Kind())
 	}
 
 	keyBindings[modeInsert][k] = f

@@ -59,7 +59,7 @@ func (ec *EvalCtx) resolveCaller(cmd Value) Caller {
 		return IndexerCaller{ix}
 	}
 
-	ec.errorf(-1, "bad head type %s; compiler bug", cmd.Type())
+	ec.errorf(-1, "bad head type %s; compiler bug", cmd.Kind())
 	return nil
 }
 

@@ -224,7 +224,7 @@ func (cp *compiler) form(n *parse.Form) Op {
 		switch headValues[0].(type) {
 		case String, Caller, Indexer:
 		default:
-			headMust.error("a string or callable", headValues[0].Type().String())
+			headMust.error("a string or callable", headValues[0].Kind())
 		}
 
 		// args
@@ -334,7 +334,7 @@ func (cp *compiler) indexingVar(n *parse.Indexing, msg string) VariableOp {
 		for i, op := range indexOps[:n-1] {
 			indexer, ok := value.(Indexer)
 			if !ok {
-				ec.errorf( /* from p to */ indexBegins[i], "cannot be indexed (value is %s, type %s)", value.Repr(), value.Type())
+				ec.errorf( /* from p to */ indexBegins[i], "cannot be indexed (value is %s, type %s)", value.Repr(), value.Kind())
 			}
 
 			indicies := op(ec)
@@ -347,7 +347,7 @@ func (cp *compiler) indexingVar(n *parse.Indexing, msg string) VariableOp {
 		// Now this must be an IndexSetter.
 		indexSetter, ok := value.(IndexSetter)
 		if !ok {
-			ec.errorf( /* from p to */ indexBegins[n-1], "cannot be indexed for setting (value is %s, type %s)", value.Repr(), value.Type())
+			ec.errorf( /* from p to */ indexBegins[n-1], "cannot be indexed for setting (value is %s, type %s)", value.Repr(), value.Kind())
 		}
 		// XXX Duplicate code.
 		indicies := indexOps[n-1](ec)
@@ -541,7 +541,7 @@ func cat(lhs, rhs Value, p int) Value {
 			return lhs
 		}
 	}
-	throw(fmt.Errorf("unsupported concat: %s and %s", lhs.Type(), rhs.Type()))
+	throw(fmt.Errorf("unsupported concat: %s and %s", lhs.Kind(), rhs.Kind()))
 	panic("unreachable")
 }
 
@@ -575,7 +575,7 @@ func doTilde(v Value) Value {
 		v.Segments[0].Literal = dir + s[i:]
 		return v
 	default:
-		throw(fmt.Errorf("tilde doesn't work on value of type %s", v.Type()))
+		throw(fmt.Errorf("tilde doesn't work on value of type %s", v.Kind()))
 		panic("unreachable")
 	}
 }

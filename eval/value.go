@@ -1,7 +1,5 @@
 package eval
 
-//go:generate stringer -type=Type
-
 import (
 	"bytes"
 	"errors"
@@ -17,7 +15,7 @@ import (
 
 // Value is an elvish value.
 type Value interface {
-	Type() Type
+	Kind() string
 	Reprer
 }
 
@@ -53,21 +51,6 @@ type Caller interface {
 	Call(ec *EvalCtx, args []Value)
 }
 
-// Type is the type of a value.
-type Type int
-
-const (
-	TInvalid Type = iota
-	TString
-	TError
-	TBool
-	TList
-	TMap
-	TFn
-	TRat
-	TGlobPattern
-)
-
 // Error definitions.
 var (
 	ErrNeedIntIndex    = errors.New("need integer index")
@@ -78,8 +61,8 @@ var (
 // String is just a string.
 type String string
 
-func (String) Type() Type {
-	return TString
+func (String) Kind() string {
+	return "string"
 }
 
 func (s String) Repr() string {
@@ -113,8 +96,8 @@ func intIndex(idx Value) int {
 // Bool represents truthness.
 type Bool bool
 
-func (Bool) Type() Type {
-	return TBool
+func (Bool) Kind() string {
+	return "bool"
 }
 
 func (b Bool) Repr() string {
@@ -140,8 +123,8 @@ type Error struct {
 	inner error
 }
 
-func (Error) Type() Type {
-	return TError
+func (Error) Kind() string {
+	return "error"
 }
 
 func (e Error) Repr() string {
@@ -249,8 +232,8 @@ func NewList(vs ...Value) List {
 	return List{&vs}
 }
 
-func (List) Type() Type {
-	return TList
+func (List) Kind() string {
+	return "list"
 }
 
 func (l List) appendStrings(ss []string) {
@@ -305,8 +288,8 @@ func NewMap() Map {
 	return Map{&map[Value]Value{}}
 }
 
-func (Map) Type() Type {
-	return TMap
+func (Map) Kind() string {
+	return "map"
 }
 
 func (m Map) Repr() string {
@@ -348,8 +331,8 @@ type Closure struct {
 	Variadic bool
 }
 
-func (*Closure) Type() Type {
-	return TFn
+func (*Closure) Kind() string {
+	return "fn"
 }
 
 func newClosure(a []string, op Op, e map[string]Variable, v bool) *Closure {
@@ -366,8 +349,8 @@ type BuiltinFn struct {
 	Impl func(*EvalCtx, []Value)
 }
 
-func (*BuiltinFn) Type() Type {
-	return TFn
+func (*BuiltinFn) Kind() string {
+	return "fn"
 }
 
 func (b *BuiltinFn) Repr() string {
@@ -379,8 +362,8 @@ type ExternalCmd struct {
 	Name string
 }
 
-func (ExternalCmd) Type() Type {
-	return TFn
+func (ExternalCmd) Type() string {
+	return "fn"
 }
 
 func (e ExternalCmd) Repr() string {
@@ -392,8 +375,8 @@ type Rat struct {
 	b *big.Rat
 }
 
-func (Rat) Type() Type {
-	return TRat
+func (Rat) Kind() string {
+	return "string"
 }
 
 func (r Rat) Repr() string {
@@ -411,8 +394,8 @@ func (r Rat) String() string {
 // wildcards.
 type GlobPattern glob.Pattern
 
-func (GlobPattern) Type() Type {
-	return TGlobPattern
+func (GlobPattern) Kind() string {
+	return "glob-pattern"
 }
 
 func (gp GlobPattern) Repr() string {
@@ -462,12 +445,12 @@ func stringToSegments(s string) []glob.Segment {
 func evalIndex(ec *EvalCtx, l, r Value, lp, rp int) Value {
 	left, ok := l.(Indexer)
 	if !ok {
-		ec.errorf(lp, "%s value cannot be indexing", l.Type())
+		ec.errorf(lp, "%s value cannot be indexing", l.Kind())
 	}
 
 	right, ok := r.(String)
 	if !ok {
-		ec.errorf(rp, "%s invalid cannot be used as index", r.Type())
+		ec.errorf(rp, "%s invalid cannot be used as index", r.Kind())
 	}
 
 	return left.Index(right)

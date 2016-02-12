@@ -37,7 +37,7 @@ func (m *muster) zerothMustStr() String {
 	s, ok := v.(String)
 	if !ok {
 		m.ec.errorf(m.p, "%s must be a string; got %s (type %s)",
-			m.what, v.Repr(), v.Type())
+			m.what, v.Repr(), v.Kind())
 	}
 	return s
 }
