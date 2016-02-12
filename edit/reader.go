@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"time"
-
-	"github.com/elves/elvish/errutil"
 )
 
 var (
@@ -27,19 +25,11 @@ const (
 
 // Reader converts a stream of runes into a stream of OneRead's.
 type Reader struct {
-	ar         *AsyncReader
-	ones       chan OneRead
-	quit       chan struct{}
-	currentSeq string
-	readError  error
-}
-
-// OneRead is a single unit that is read, which is either a key, a CPR, or an
-// error.
-type OneRead struct {
-	Key Key
-	CPR pos
-	Err error
+	ar      *AsyncReader
+	keyChan chan Key
+	cprChan chan pos
+	errChan chan error
+	quit    chan struct{}
 }
 
 // BadEscSeq indicates that a escape sequence has been read from the terminal,
@@ -57,40 +47,44 @@ func (bes *BadEscSeq) Error() string {
 	return fmt.Sprintf("bad escape sequence %q: %s", bes.seq, bes.msg)
 }
 
-func (rd *Reader) badEscSeq(msg string) {
-	errutil.Throw(newBadEscSeq(rd.currentSeq, msg))
-}
-
 // NewReader creates a new Reader on the given terminal file.
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
-		ar:   NewAsyncReader(f),
-		ones: make(chan OneRead),
-		quit: make(chan struct{}),
+		ar:      NewAsyncReader(f),
+		keyChan: make(chan Key),
+		cprChan: make(chan pos),
+		errChan: make(chan error),
 	}
 	return rd
 }
 
-// Chan returns the channel onto which the Reader writes OneRead's.
-func (rd *Reader) Chan() <-chan OneRead {
-	return rd.ones
+// KeyChan returns the channel onto which the Reader writes Keys it has read.
+func (rd *Reader) KeyChan() <-chan Key {
+	return rd.keyChan
+}
+
+// CPRChan returns the channel onto which the Reader writes CPRs it has read.
+func (rd *Reader) CPRChan() <-chan pos {
+	return rd.cprChan
+}
+
+// ErrorChan returns the channel onto which the Reader writes errors it came
+// across during the reading process.
+func (rd *Reader) ErrorChan() <-chan error {
+	return rd.errChan
 }
 
 // Run runs the Reader. It blocks until Quit is called and should be called in
 // a separate goroutine.
 func (rd *Reader) Run() {
 	runes := rd.ar.Chan()
+	rd.quit = make(chan struct{})
 	go rd.ar.Run()
 
 	for {
 		select {
 		case r := <-runes:
-			k, c, e := rd.readOne(r)
-			select {
-			case rd.ones <- OneRead{k, c, e}:
-			case <-rd.quit:
-				return
-			}
+			rd.readOne(r)
 		case <-rd.quit:
 			return
 		}
@@ -100,22 +94,56 @@ func (rd *Reader) Run() {
 // Quit terminates the loop of Run.
 func (rd *Reader) Quit() {
 	rd.ar.Quit()
-	rd.quit <- struct{}{}
-}
-
-// Close releases files and channels associated with the Reader. It does not
-// close the file used to create it.
-func (rd *Reader) Close() {
-	rd.ar.Close()
-	close(rd.ones)
 	close(rd.quit)
 }
 
-// readOne attempts to read one key or CPR, led by a rune already read.
-func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
-	defer errutil.Catch(&err)
+// Close releases files associated with the Reader. It does not close the file
+// used to create it.
+func (rd *Reader) Close() {
+	rd.ar.Close()
+}
 
-	rd.currentSeq = ""
+// readOne attempts to read one key or CPR, led by a rune already read.
+func (rd *Reader) readOne(r rune) {
+	var k Key
+	var cpr pos
+	var err error
+	var currentSeq string
+
+	// readRune attempts to read a rune within the predefined timeout. It
+	// writes to the err and currentSeq variable in the outer scope.
+	readRune :=
+		func(d time.Duration) rune {
+			select {
+			case r := <-rd.ar.Chan():
+				currentSeq += string(r)
+				return r
+			case err = <-rd.ar.ErrorChan():
+				return runeReadError
+			case <-After(d):
+				return runeTimeout
+			}
+		}
+
+	defer func() {
+		if k != (Key{}) {
+			select {
+			case rd.keyChan <- k:
+			case <-rd.quit:
+			}
+		} else if cpr != (pos{}) {
+			select {
+			case rd.cprChan <- cpr:
+			case <-rd.quit:
+			}
+		}
+		if err != nil {
+			select {
+			case rd.errChan <- err:
+			case <-rd.quit:
+			}
+		}
+	}()
 
 	switch r {
 	case Tab, Enter, Backspace:
@@ -127,13 +155,10 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 	case 0x1f:
 		k = Key{'/', Ctrl} // ^_
 	case 0x1b: // ^[ Escape
-		//rd.timed.Timeout = escTimeout
-		//defer func() { rd.timed.Timeout = -1 }()
-		r2 := rd.readRune(EscTimeout)
-		if r2 == runeTimeout {
-			return Key{'[', Ctrl}, invalidPos, nil
-		} else if r2 == runeReadError {
-			return Key{'[', Ctrl}, invalidPos, rd.readError
+		r2 := readRune(EscTimeout)
+		if r2 == runeTimeout || r2 == runeReadError {
+			k = Key{'[', Ctrl}
+			break
 		}
 		switch r2 {
 		case '[':
@@ -143,12 +168,11 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 			seq := "\x1b["
 			timeout := EscTimeout
 			for {
-				r = rd.readRune(timeout)
+				r = readRune(timeout)
 				// Timeout can only happen at first readRune.
-				if r == runeTimeout {
-					return Key{'[', Alt}, invalidPos, nil
-				} else if r == runeReadError {
-					return Key{'[', Alt}, invalidPos, rd.readError
+				if r == runeTimeout || r == runeReadError {
+					k = Key{'[', Alt}
+					return
 				}
 				seq += string(r)
 				// After first rune read we turn off the timeout
@@ -170,27 +194,30 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 			if r == 'R' {
 				// CPR
 				if len(nums) != 2 {
-					rd.badEscSeq("bad cpr")
+					err = newBadEscSeq(currentSeq, "bad CPR")
+					return
 				}
-				return ZeroKey, pos{nums[0], nums[1]}, nil
+				cpr = pos{nums[0], nums[1]}
+				return
 			}
-			k, err := parseCSI(nums, r, seq)
-			return k, invalidPos, err
+			k, err = parseCSI(nums, r, seq)
+			return
 		case 'O':
 			// G3 style function key sequence: read one rune.
-			r = rd.readRune(EscTimeout)
-			if r == runeTimeout {
-				return Key{r2, Alt}, invalidPos, nil
-			} else if r == runeReadError {
-				return Key{r2, Alt}, invalidPos, rd.readError
+			r = readRune(EscTimeout)
+			if r == runeTimeout || r == runeReadError {
+				k = Key{r2, Alt}
+				return
 			}
 			r, ok := g3Seq[r]
 			if ok {
-				return Key{r, 0}, invalidPos, nil
+				k = Key{r, 0}
+			} else {
+				err = newBadEscSeq(currentSeq, "")
 			}
-			rd.badEscSeq("")
+		default:
+			k = Key{r2, Alt}
 		}
-		return Key{r2, Alt}, invalidPos, nil
 	default:
 		// Sane Ctrl- sequences that agree with the keyboard...
 		if 0x1 <= r && r <= 0x1d {
@@ -198,20 +225,6 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 		} else {
 			k = Key{r, 0}
 		}
-	}
-	return k, invalidPos, nil
-}
-
-func (rd *Reader) readRune(d time.Duration) rune {
-	select {
-	case r := <-rd.ar.Chan():
-		rd.currentSeq += string(r)
-		return r
-	case err := <-rd.ar.ErrorChan():
-		rd.readError = err
-		return runeReadError
-	case <-After(d):
-		return runeTimeout
 	}
 }
 

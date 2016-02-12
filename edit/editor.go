@@ -250,7 +250,6 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 	go getIsExternal(ed.evaler, isExternalCh)
 
 	ed.writer.resetOldBuf()
-	ones := ed.reader.Chan()
 	go ed.reader.Run()
 
 	err := ed.startReadLine()
@@ -295,20 +294,11 @@ MainLoop:
 			default:
 				ed.pushTip(fmt.Sprintf("ignored signal %s", sig))
 			}
-		case or := <-ones:
-			// Alert about error
-			err := or.Err
-			if err != nil {
-				ed.pushTip(err.Error())
-				continue
-			}
-
-			// Ignore bogus CPR
-			if or.CPR != invalidPos {
-				continue
-			}
-
-			k := or.Key
+		case err := <-ed.reader.ErrorChan():
+			ed.pushTip(err.Error())
+		case <-ed.reader.CPRChan():
+			// Ignore CPR
+		case k := <-ed.reader.KeyChan():
 		lookupKey:
 			keyBinding, ok := keyBindings[ed.mode]
 			if !ok {
