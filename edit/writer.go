@@ -244,7 +244,7 @@ func (w *writer) commitBuffer(buf *buffer, fullRefresh bool) error {
 			}
 		}
 		// Move to the first differing column and erase the rest of line
-		fmt.Fprintf(bytesBuf, "\033[%dG\033[K", j+1)
+		fmt.Fprintf(bytesBuf, "\033[%dG\033[K", widthOfCells(line[:j])+1)
 		for _, c := range line[j:] {
 			if c.width > 0 && c.style != style {
 				fmt.Fprintf(bytesBuf, "\033[m\033[%sm", c.style)
@@ -272,6 +272,14 @@ func (w *writer) commitBuffer(buf *buffer, fullRefresh bool) error {
 
 	w.oldBuf = buf
 	return nil
+}
+
+func widthOfCells(cells []cell) int {
+	w := 0
+	for _, c := range cells {
+		w += int(c.width)
+	}
+	return w
 }
 
 func lines(bufs ...*buffer) (l int) {
