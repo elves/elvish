@@ -1,7 +1,8 @@
 # A novel Unix shell
 
 [![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
-[![Build Status](https://travis-ci.org/elves/elvish.svg?branch=master)](https://travis-ci.org/elves/elvish)
+[![Build Status on Travis](https://travis-ci.org/elves/elvish.svg?branch=master)](https://travis-ci.org/elves/elvish)
+[![Build Status on drone.io](https://drone.io/github.com/elves/elvish/status.png)](https://drone.io/github.com/elves/elvish/latest)
 
 This project aims to explore the potentials of the Unix shell. It is a work in
 progress; things will change without warning.
