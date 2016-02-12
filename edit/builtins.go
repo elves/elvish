@@ -70,7 +70,6 @@ var builtins = []Builtin{
 
 	// Completion mode
 	{"complete-prefix-or-start-completion", completePrefixOrStartCompletion},
-
 	{"start-completion", startCompletion},
 	{"cancel-completion", cancelCompletion},
 	{"select-cand-up", selectCandUp},
@@ -95,6 +94,9 @@ var builtins = []Builtin{
 	{"select-history-next", selectHistoryNext},
 	{"select-history-next-or-quit", selectHistoryNextOrQuit},
 	{"default-history", defaultHistory},
+
+	// Misc
+	{"redraw", redraw},
 }
 
 var builtinMap = map[string]Builtin{}
@@ -378,4 +380,8 @@ func defaultHistory(ed *Editor) {
 	ed.acceptHistory()
 	ed.mode = modeInsert
 	ed.nextAction = action{actionType: reprocessKey}
+}
+
+func redraw(ed *Editor) {
+	ed.refresh(true)
 }
