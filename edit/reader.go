@@ -25,11 +25,19 @@ const (
 
 // Reader converts a stream of runes into a stream of OneRead's.
 type Reader struct {
-	ar      *AsyncReader
-	keyChan chan Key
-	cprChan chan pos
-	errChan chan error
-	quit    chan struct{}
+	ar        *AsyncReader
+	keyChan   chan Key
+	cprChan   chan pos
+	mouseChan chan mouseEvent
+	errChan   chan error
+	quit      chan struct{}
+}
+
+type mouseEvent struct {
+	pos
+	down   bool
+	button int
+	mod    Mod
 }
 
 // BadEscSeq indicates that a escape sequence has been read from the terminal,
@@ -50,10 +58,12 @@ func (bes *BadEscSeq) Error() string {
 // NewReader creates a new Reader on the given terminal file.
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
-		ar:      NewAsyncReader(f),
-		keyChan: make(chan Key),
-		cprChan: make(chan pos),
-		errChan: make(chan error),
+		NewAsyncReader(f),
+		make(chan Key),
+		make(chan pos),
+		make(chan mouseEvent),
+		make(chan error),
+		nil,
 	}
 	return rd
 }
@@ -66,6 +76,12 @@ func (rd *Reader) KeyChan() <-chan Key {
 // CPRChan returns the channel onto which the Reader writes CPRs it has read.
 func (rd *Reader) CPRChan() <-chan pos {
 	return rd.cprChan
+}
+
+// MouseChan returns the channel onto which the Reader writes mouse events it
+// has read.
+func (rd *Reader) MouseChan() <-chan mouseEvent {
+	return rd.mouseChan
 }
 
 // ErrorChan returns the channel onto which the Reader writes errors it came
@@ -107,6 +123,7 @@ func (rd *Reader) Close() {
 func (rd *Reader) readOne(r rune) {
 	var k Key
 	var cpr pos
+	var mouse mouseEvent
 	var err error
 	var currentSeq string
 
@@ -134,6 +151,11 @@ func (rd *Reader) readOne(r rune) {
 		} else if cpr != (pos{}) {
 			select {
 			case rd.cprChan <- cpr:
+			case <-rd.quit:
+			}
+		} else if mouse != (mouseEvent{}) {
+			select {
+			case rd.mouseChan <- mouse:
 			case <-rd.quit:
 			}
 		}
@@ -164,9 +186,11 @@ func (rd *Reader) readOne(r rune) {
 		case '[':
 			// CSI style function key sequence, looks like [\d;]*[^\d;]
 			// Read numeric parameters (if any)
-			nums := make([]int, 0, 2)
+			nums := make([]int, 1, 2)
 			seq := "\x1b["
 			timeout := EscTimeout
+			isMouse := false
+		CSISeq:
 			for {
 				r = readRune(timeout)
 				// Timeout can only happen at first readRune.
@@ -177,18 +201,16 @@ func (rd *Reader) readOne(r rune) {
 				seq += string(r)
 				// After first rune read we turn off the timeout
 				timeout = -1
-				if r != ';' && (r < '0' || r > '9') {
-					break
-				}
-
-				if len(nums) == 0 {
+				switch {
+				case r == ';':
 					nums = append(nums, 0)
-				}
-				if r == ';' {
-					nums = append(nums, 0)
-				} else {
+				case r == '<':
+					isMouse = true
+				case '0' <= r && r <= '9':
 					cur := len(nums) - 1
 					nums[cur] = nums[cur]*10 + int(r-'0')
+				default:
+					break CSISeq
 				}
 			}
 			if r == 'R' {
@@ -198,10 +220,28 @@ func (rd *Reader) readOne(r rune) {
 					return
 				}
 				cpr = pos{nums[0], nums[1]}
-				return
+			} else if isMouse && (r == 'm' || r == 'M') {
+				if len(nums) != 3 {
+					err = newBadEscSeq(currentSeq, "bad mouse event")
+					return
+				}
+				down := r == 'M'
+				n0 := nums[0]
+				button := n0 & 3
+				mod := Mod(0)
+				if n0&4 != 0 {
+					mod |= Shift
+				}
+				if n0&8 != 0 {
+					mod |= Alt
+				}
+				if n0&16 != 0 {
+					mod |= Ctrl
+				}
+				mouse = mouseEvent{pos{nums[2], nums[1]}, down, button, mod}
+			} else {
+				k, err = parseCSI(nums, r, seq)
 			}
-			k, err = parseCSI(nums, r, seq)
-			return
 		case 'O':
 			// G3 style function key sequence: read one rune.
 			r = readRune(EscTimeout)
@@ -213,7 +253,7 @@ func (rd *Reader) readOne(r rune) {
 			if ok {
 				k = Key{r, 0}
 			} else {
-				err = newBadEscSeq(currentSeq, "")
+				err = newBadEscSeq(currentSeq, "bad G3")
 			}
 		default:
 			k = Key{r2, Alt}
@@ -285,7 +325,7 @@ func parseCSI(nums []int, last rune, seq string) (Key, error) {
 			// Modified: \e[1;5A (Ctrl-Up)
 			return xtermModify(k, nums[1], seq)
 		} else {
-			return ZeroKey, newBadEscSeq(seq, "")
+			return ZeroKey, newBadEscSeq(seq, "bad CSI")
 		}
 	}
 
@@ -308,7 +348,7 @@ func parseCSI(nums []int, last rune, seq string) (Key, error) {
 		}
 	}
 
-	return ZeroKey, newBadEscSeq(seq, "")
+	return ZeroKey, newBadEscSeq(seq, "bad CSI")
 }
 
 func xtermModify(k Key, mod int, seq string) (Key, error) {
@@ -330,7 +370,7 @@ func xtermModify(k Key, mod int, seq string) (Key, error) {
 	case 8:
 		k.Mod |= Shift | Alt | Ctrl
 	default:
-		return ZeroKey, newBadEscSeq(seq, "")
+		return ZeroKey, newBadEscSeq(seq, "bad mod")
 	}
 	return k, nil
 }

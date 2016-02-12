@@ -209,7 +209,12 @@ func (ed *Editor) startReadLine() error {
 	//
 	// After that, we turn off autowrap. The editor has its own wrapping
 	// mechanism.
-	fmt.Fprintf(ed.file, "\033[?7h%s%*s\r \r\033[?7l", lackEOL, width-WcWidth(lackEOLRune), "")
+	fmt.Fprintf(ed.file, "\033[?7h%s%*s\r \r"+
+		// Turn off autowrap
+		"\033[?7l"+
+		// Turn on SGR-style mouse tracking
+		"\033[?1000;1006h",
+		lackEOL, width-WcWidth(lackEOLRune), "")
 
 	return nil
 }
@@ -230,8 +235,8 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	// ed.reader.Stop()
 	ed.reader.Quit()
 
-	// turn on autowrap
-	ed.file.WriteString("\033[?7h")
+	// turn on autowrap and turn off mouse tracking
+	ed.file.WriteString("\033[?7h\033[?1000;1006l")
 
 	// restore termios
 	err := ed.savedTermios.ApplyToFd(int(ed.file.Fd()))
@@ -296,6 +301,8 @@ MainLoop:
 			}
 		case err := <-ed.reader.ErrorChan():
 			ed.pushTip(err.Error())
+		case mouse := <-ed.reader.MouseChan():
+			ed.pushTip(fmt.Sprint("mouse:", mouse))
 		case <-ed.reader.CPRChan():
 			// Ignore CPR
 		case k := <-ed.reader.KeyChan():
