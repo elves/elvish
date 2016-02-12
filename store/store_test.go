@@ -30,7 +30,7 @@ func TestNewStore(t *testing.T) {
 		t.Errorf("EnsureDataDir() -> (*, %v), want (*, <nil>)", err)
 	}
 
-	_, err = NewStore(dataDir)
+	_, err = NewStore(dataDir + "/db")
 	if err != nil {
 		t.Errorf("NewStore() -> (*, %v), want (*, <nil>)", err)
 	}

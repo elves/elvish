@@ -15,40 +15,41 @@ func init() {
 		if err != nil {
 			return err
 		}
-		return addLastAmongDup(db)
+		tx, err := db.Begin()
+		if err != nil {
+			return err
+		}
+		err = addLastAmongDup(tx)
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+		return err
 	}
 }
 
-func addLastAmongDup(db *sql.DB) error {
+func addLastAmongDup(tx *sql.Tx) error {
 	// Upgrade from early version where lastAmongDup is missing.
-	tx, err := db.Begin()
+	rows, err := tx.Query("pragma table_info(cmd)")
 	if err != nil {
-		return err
-	}
-	rows, err := db.Query("pragma table_info(cmd)")
-	if err != nil {
-		tx.Rollback()
 		return err
 	}
 	hasLastAmongDup, err := hasColumn(rows, "lastAmongDup")
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 	if !hasLastAmongDup {
-		_, err := db.Exec("alter table cmd add column lastAmongDup bool")
+		_, err := tx.Exec("alter table cmd add column lastAmongDup bool")
 		if err != nil {
-			tx.Rollback()
 			return err
 		}
-		_, err = db.Exec("update cmd set lastAmongDup = (rowid in (select max(rowid) from cmd group by content));")
+		_, err = tx.Exec("update cmd set lastAmongDup = (rowid in (select max(rowid) from cmd group by content));")
 		if err != nil {
-			tx.Rollback()
 			return err
 		}
 	}
-	tx.Commit()
-	return nil
+	return tx.Commit()
 }
 
 // NextCmdSeq returns the next sequence number of the command history.
