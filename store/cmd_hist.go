@@ -95,14 +95,14 @@ func convertCmd(row *sql.Row) (int, string, error) {
 
 // LastCmd finds the last command before the given sequence number (exclusive)
 // with the given prefix.
-func (s *Store) LastCmd(upto int, prefix string) (int, string, error) {
-	row := s.db.QueryRow(`select rowid, content from cmd where rowid < ? and substr(content, 1, ?) = ? order by rowid desc limit 1`, upto, len(prefix), prefix)
+func (s *Store) LastCmd(upto int, prefix string, uniq bool) (int, string, error) {
+	row := s.db.QueryRow(`select rowid, content from cmd where rowid < ? and substr(content, 1, ?) = ? and (? or lastAmongDup) order by rowid desc limit 1`, upto, len(prefix), prefix, !uniq)
 	return convertCmd(row)
 }
 
 // FirstCmd finds the first command after the given sequence number (inclusive)
 // with the given prefix.
-func (s *Store) FirstCmd(from int, prefix string) (int, string, error) {
-	row := s.db.QueryRow(`select rowid, content from cmd where rowid >= ? and substr(content, 1, ?) = ? order by rowid asc limit 1`, from, len(prefix), prefix)
+func (s *Store) FirstCmd(from int, prefix string, uniq bool) (int, string, error) {
+	row := s.db.QueryRow(`select rowid, content from cmd where rowid >= ? and substr(content, 1, ?) = ? and (? or lastAmongDup) order by rowid asc limit 1`, from, len(prefix), prefix, !uniq)
 	return convertCmd(row)
 }
