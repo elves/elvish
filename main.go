@@ -39,6 +39,7 @@ func usage() {
 
 var (
 	debuglog = flag.String("debuglog", "", "a file to write debug log to")
+	dbname   = flag.String("db", "", "path to the database")
 	help     = flag.Bool("help", false, "show usage help and quit")
 )
 
@@ -212,7 +213,11 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 
 	var st *store.Store
 	if err == nil {
-		st, err = store.NewStore(dataDir)
+		db := *dbname
+		if db == "" {
+			db = dataDir + "/db"
+		}
+		st, err = store.NewStore(db)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Warning: cannot connect to store:", err)
 		}
