@@ -48,6 +48,7 @@ type IndexSetter interface {
 
 // Caller is anything may be called on an evalCtx with a list of Value's.
 type Caller interface {
+	Value
 	Call(ec *EvalCtx, args []Value)
 }
 
@@ -375,7 +376,7 @@ type ExternalCmd struct {
 	Name string
 }
 
-func (ExternalCmd) Type() string {
+func (ExternalCmd) Kind() string {
 	return "fn"
 }
 
