@@ -11,77 +11,79 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-var keyBindings = map[bufferMode]map[Key]Caller{
-	modeInsert: map[Key]Caller{
-		DefaultBinding: builtin(defaultInsert),
+var defaultBindings = map[bufferMode]map[Key]string{
+	modeInsert: map[Key]string{
+		DefaultBinding: "default-insert",
 		// Moving.
-		Key{Left, 0}:     builtin(moveDotLeft),
-		Key{Right, 0}:    builtin(moveDotRight),
-		Key{Up, Alt}:     builtin(moveDotUp),
-		Key{Down, Alt}:   builtin(moveDotDown),
-		Key{Left, Ctrl}:  builtin(moveDotLeftWord),
-		Key{Right, Ctrl}: builtin(moveDotRightWord),
-		Key{Home, 0}:     builtin(moveDotSOL),
-		Key{End, 0}:      builtin(moveDotEOL),
+		Key{Left, 0}:     "move-dot-left",
+		Key{Right, 0}:    "move-dot-right",
+		Key{Up, Alt}:     "move-dot-up",
+		Key{Down, Alt}:   "move-dot-down",
+		Key{Left, Ctrl}:  "move-dot-left-word",
+		Key{Right, Ctrl}: "move-dot-right-word",
+		Key{Home, 0}:     "move-dot-sol",
+		Key{End, 0}:      "move-dot-eol",
 		// Killing.
-		Key{'U', Ctrl}:    builtin(killLineLeft),
-		Key{'K', Ctrl}:    builtin(killLineRight),
-		Key{'W', Ctrl}:    builtin(killWordLeft),
-		Key{Backspace, 0}: builtin(killRuneLeft),
+		Key{'U', Ctrl}:    "kill-line-left",
+		Key{'K', Ctrl}:    "kill-line-right",
+		Key{'W', Ctrl}:    "kill-word-left",
+		Key{Backspace, 0}: "kill-rune-left",
 		// Some terminal send ^H on backspace
-		Key{'H', Ctrl}: builtin(killRuneLeft),
-		Key{Delete, 0}: builtin(killRuneRight),
+		Key{'H', Ctrl}: "kill-rune-left",
+		Key{Delete, 0}: "kill-rune-right",
 		// Inserting.
-		Key{'.', Alt}:   builtin(insertLastWord),
-		Key{Enter, Alt}: builtin(insertKey),
+		Key{'.', Alt}:   "insert-last-word",
+		Key{Enter, Alt}: "insert-key",
 		// Controls.
-		Key{Enter, 0}:  builtin(returnLine),
-		Key{'D', Ctrl}: builtin(returnEOF),
-		// Key{'[', Ctrl}: builtin(startCommand),
-		Key{Tab, 0}:    builtin(completePrefixOrStartCompletion),
-		Key{Up, 0}:     builtin(startHistory),
-		Key{'N', Ctrl}: builtin(startNavigation),
+		Key{Enter, 0}:  "return-line",
+		Key{'D', Ctrl}: "return-eof",
+		// Key{'[', Ctrl}: "startCommand",
+		Key{Tab, 0}:    "complete-prefix-or-start-completion",
+		Key{Up, 0}:     "start-history",
+		Key{'N', Ctrl}: "start-navigation",
 	},
-	modeCommand: map[Key]Caller{
-		DefaultBinding: builtin(defaultCommand),
+	modeCommand: map[Key]string{
+		DefaultBinding: "default-command",
 		// Moving.
-		Key{'h', 0}: builtin(moveDotLeft),
-		Key{'l', 0}: builtin(moveDotRight),
-		Key{'k', 0}: builtin(moveDotUp),
-		Key{'j', 0}: builtin(moveDotDown),
-		Key{'b', 0}: builtin(moveDotLeftWord),
-		Key{'w', 0}: builtin(moveDotRightWord),
-		Key{'0', 0}: builtin(moveDotSOL),
-		Key{'$', 0}: builtin(moveDotEOL),
+		Key{'h', 0}: "move-dot-left",
+		Key{'l', 0}: "move-dot-right",
+		Key{'k', 0}: "move-dot-up",
+		Key{'j', 0}: "move-dot-down",
+		Key{'b', 0}: "move-dot-left-word",
+		Key{'w', 0}: "move-dot-right-word",
+		Key{'0', 0}: "move-dot-sol",
+		Key{'$', 0}: "move-dot-eol",
 		// Killing.
-		Key{'x', 0}: builtin(killRuneRight),
-		Key{'D', 0}: builtin(killLineRight),
+		Key{'x', 0}: "kill-rune-right",
+		Key{'D', 0}: "kill-line-right",
 		// Controls.
-		Key{'i', 0}: builtin(startInsert),
+		Key{'i', 0}: "start-insert",
 	},
-	modeCompletion: map[Key]Caller{
-		Key{'[', Ctrl}: builtin(cancelCompletion),
-		Key{Up, 0}:     builtin(selectCandUp),
-		Key{Down, 0}:   builtin(selectCandDown),
-		Key{Left, 0}:   builtin(selectCandLeft),
-		Key{Right, 0}:  builtin(selectCandRight),
-		Key{Tab, 0}:    builtin(cycleCandRight),
-		DefaultBinding: builtin(defaultCompletion),
+	modeCompletion: map[Key]string{
+		Key{'[', Ctrl}: "cancel-completion",
+		Key{Up, 0}:     "select-cand-up",
+		Key{Down, 0}:   "select-cand-down",
+		Key{Left, 0}:   "select-cand-left",
+		Key{Right, 0}:  "select-cand-right",
+		Key{Tab, 0}:    "cycle-cand-right",
+		DefaultBinding: "default-completion",
 	},
-	modeNavigation: map[Key]Caller{
-		Key{Up, 0}:     builtin(selectNavUp),
-		Key{Down, 0}:   builtin(selectNavDown),
-		Key{Left, 0}:   builtin(ascendNav),
-		Key{Right, 0}:  builtin(descendNav),
-		DefaultBinding: builtin(defaultNavigation),
+	modeNavigation: map[Key]string{
+		Key{Up, 0}:     "select-nav-up",
+		Key{Down, 0}:   "select-nav-down",
+		Key{Left, 0}:   "ascend-nav",
+		Key{Right, 0}:  "descend-nav",
+		DefaultBinding: "default-navigation",
 	},
-	modeHistory: map[Key]Caller{
-		Key{'[', Ctrl}: builtin(startInsert),
-		Key{Up, 0}:     builtin(selectHistoryPrev),
-		Key{Down, 0}:   builtin(selectHistoryNextOrQuit),
-		DefaultBinding: builtin(defaultHistory),
+	modeHistory: map[Key]string{
+		Key{'[', Ctrl}: "start-insert",
+		Key{Up, 0}:     "select-history-prev",
+		Key{Down, 0}:   "select-history-next-or-quit",
+		DefaultBinding: "default-history",
 	},
 }
+
+var keyBindings = map[bufferMode]map[Key]Caller{}
 
 var (
 	errInvalidKey      = errors.New("invalid key to bind to")
@@ -91,6 +93,10 @@ var (
 // EvalCaller adapts an eval.Caller to a Caller.
 type EvalCaller struct {
 	eval.Caller
+}
+
+func (c EvalCaller) Repr() string {
+	return c.Caller.Repr()
 }
 
 func (c EvalCaller) Call(ed *Editor) {
@@ -163,7 +169,7 @@ func (ed *Editor) Bind(key string, function eval.Value) error {
 	var f Caller
 	switch function := function.(type) {
 	case eval.String:
-		builtin, ok := builtins[string(function)]
+		builtin, ok := builtinMap[string(function)]
 		if !ok {
 			return fmt.Errorf("no builtin named %s", function.Repr())
 		}

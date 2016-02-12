@@ -17,17 +17,16 @@ var (
 func makeModule(ed *Editor) eval.Namespace {
 	ns := eval.Namespace{}
 	// Populate builtins.
-	for name, impl := range builtins {
-		ns[eval.FnPrefix+name] = eval.NewPtrVariable(&EditBuiltin{name, impl, ed})
+	for _, b := range builtins {
+		ns[eval.FnPrefix+b.name] = eval.NewPtrVariable(&EditBuiltin{b, ed})
 	}
 	return ns
 }
 
-// Builtin adapts a builtin to satisfy eval.Value and eval.Caller.
+// Builtin adapts a Builtin to satisfy eval.Value and eval.Caller.
 type EditBuiltin struct {
-	name string
-	impl builtin
-	ed   *Editor
+	b  Builtin
+	ed *Editor
 }
 
 func (*EditBuiltin) Kind() string {
@@ -35,7 +34,7 @@ func (*EditBuiltin) Kind() string {
 }
 
 func (eb *EditBuiltin) Repr() string {
-	return "<editor builtin " + eb.name + ">"
+	return "<editor builtin " + eb.b.name + ">"
 }
 
 func (eb *EditBuiltin) Call(ec *eval.EvalCtx, args []eval.Value) {
@@ -45,7 +44,7 @@ func (eb *EditBuiltin) Call(ec *eval.EvalCtx, args []eval.Value) {
 	if !eb.ed.active {
 		throw(ErrEditorInactive)
 	}
-	eb.impl(eb.ed)
+	eb.b.impl(eb.ed)
 }
 
 func throw(e error) {

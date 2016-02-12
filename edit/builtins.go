@@ -26,66 +26,93 @@ const (
 
 // Caller is any function operating on an Editor.
 type Caller interface {
+	Repr() string
 	Call(ed *Editor)
 }
 
-// builtin is a trivial implementation of Caller.
-type builtin func(ed *Editor)
-
-func (b builtin) Call(ed *Editor) {
-	b(ed)
+// Builtin is a trivial implementation of Caller.
+type Builtin struct {
+	name string
+	impl func(ed *Editor)
 }
 
-var builtins = map[string]builtin{
+func (b Builtin) Repr() string {
+	return b.name
+}
+
+func (b Builtin) Call(ed *Editor) {
+	b.impl(ed)
+}
+
+var builtins = []Builtin{
 	// Command and insert mode
-	"start-insert":        startInsert,
-	"start-command":       startCommand,
-	"kill-line-left":      killLineLeft,
-	"kill-line-right":     killLineRight,
-	"kill-word-left":      killWordLeft,
-	"kill-rune-left":      killRuneLeft,
-	"kill-rune-right":     killRuneRight,
-	"move-dot-left":       moveDotLeft,
-	"move-dot-right":      moveDotRight,
-	"move-dot-left-word":  moveDotLeftWord,
-	"move-dot-right-word": moveDotRightWord,
-	"move-dot-sol":        moveDotSOL,
-	"move-dot-eol":        moveDotEOL,
-	"move-dot-up":         moveDotUp,
-	"move-dot-down":       moveDotDown,
-	"insert-last-word":    insertLastWord,
-	"insert-key":          insertKey,
-	"return-line":         returnLine,
-	"return-eof":          returnEOF,
-	"default-command":     defaultCommand,
-	"default-insert":      defaultInsert,
+	{"start-insert", startInsert},
+	{"start-command", startCommand},
+	{"kill-line-left", killLineLeft},
+	{"kill-line-right", killLineRight},
+	{"kill-word-left", killWordLeft},
+	{"kill-rune-left", killRuneLeft},
+	{"kill-rune-right", killRuneRight},
+	{"move-dot-left", moveDotLeft},
+	{"move-dot-right", moveDotRight},
+	{"move-dot-left-word", moveDotLeftWord},
+	{"move-dot-right-word", moveDotRightWord},
+	{"move-dot-sol", moveDotSOL},
+	{"move-dot-eol", moveDotEOL},
+	{"move-dot-up", moveDotUp},
+	{"move-dot-down", moveDotDown},
+	{"insert-last-word", insertLastWord},
+	{"insert-key", insertKey},
+	{"return-line", returnLine},
+	{"return-eof", returnEOF},
+	{"default-command", defaultCommand},
+	{"default-insert", defaultInsert},
 
 	// Completion mode
-	"complete-prefix-or-start-completion": completePrefixOrStartCompletion,
+	{"complete-prefix-or-start-completion", completePrefixOrStartCompletion},
 
-	"start-completion":   startCompletion,
-	"cancel-completion":  cancelCompletion,
-	"select-cand-up":     selectCandUp,
-	"select-cand-down":   selectCandDown,
-	"select-cand-left":   selectCandLeft,
-	"select-cand-right":  selectCandRight,
-	"cycle-cand-right":   cycleCandRight,
-	"default-completion": defaultCompletion,
+	{"start-completion", startCompletion},
+	{"cancel-completion", cancelCompletion},
+	{"select-cand-up", selectCandUp},
+	{"select-cand-down", selectCandDown},
+	{"select-cand-left", selectCandLeft},
+	{"select-cand-right", selectCandRight},
+	{"cycle-cand-right", cycleCandRight},
+	{"default-completion", defaultCompletion},
 
 	// Navigation mode
-	"start-navigation":   startNavigation,
-	"select-nav-up":      selectNavUp,
-	"select-nav-down":    selectNavDown,
-	"ascend-nav":         ascendNav,
-	"descend-nav":        descendNav,
-	"default-navigation": defaultNavigation,
+	{"start-navigation", startNavigation},
+	{"select-nav-up", selectNavUp},
+	{"select-nav-down", selectNavDown},
+	{"ascend-nav", ascendNav},
+	{"descend-nav", descendNav},
+	{"default-navigation", defaultNavigation},
 
 	// History mode
-	"start-history":               startHistory,
-	"select-history-prev":         selectHistoryPrev,
-	"select-history-next":         selectHistoryNext,
-	"select-history-next-or-quit": selectHistoryNextOrQuit,
-	"default-history":             defaultHistory,
+	{"start-history", startHistory},
+	{"select-history-prev", selectHistoryPrev},
+	{"select-history-next", selectHistoryNext},
+	{"select-history-next-or-quit", selectHistoryNextOrQuit},
+	{"default-history", defaultHistory},
+}
+
+var builtinMap = map[string]Builtin{}
+
+func init() {
+	for _, b := range builtins {
+		builtinMap[b.name] = b
+	}
+	for mode, table := range defaultBindings {
+		keyBindings[mode] = map[Key]Caller{}
+		for key, name := range table {
+			caller, ok := builtinMap[name]
+			if !ok {
+				fmt.Println("bad name " + name)
+			} else {
+				keyBindings[mode][key] = caller
+			}
+		}
+	}
 }
 
 func startInsert(ed *Editor) {
