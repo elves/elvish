@@ -213,8 +213,7 @@ func compareRows(r1, r2 []cell) (bool, int) {
 // commitBuffer updates the terminal display to reflect current buffer.
 // TODO Instead of erasing w.oldBuf entirely and then draw buf, compute a
 // delta between w.oldBuf and buf
-func (w *writer) commitBuffer(buf *buffer) error {
-	var fullRefresh bool
+func (w *writer) commitBuffer(buf *buffer, fullRefresh bool) error {
 	if buf.width != w.oldBuf.width && w.oldBuf.cells != nil {
 		// Width change, force full refresh
 		w.oldBuf.cells = nil
@@ -238,7 +237,7 @@ func (w *writer) commitBuffer(buf *buffer) error {
 		}
 		var j int // First column where buf and oldBuf differ
 		// No need to update current line
-		if i < len(w.oldBuf.cells) {
+		if !fullRefresh && i < len(w.oldBuf.cells) {
 			var eq bool
 			if eq, j = compareRows(line, w.oldBuf.cells[i]); eq {
 				continue
@@ -337,7 +336,7 @@ func renderNavColumn(nc *navColumn, w, h int) *buffer {
 
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
-func (w *writer) refresh(es *editorState) error {
+func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 	height, width := sys.GetWinsize(int(w.file.Fd()))
 
 	var bufLine, bufMode, bufTips, bufListing, buf *buffer
@@ -535,5 +534,5 @@ tokens:
 	buf.extend(bufTips)
 	buf.extend(bufListing)
 
-	return w.commitBuffer(buf)
+	return w.commitBuffer(buf, fullRefresh)
 }

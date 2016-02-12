@@ -158,6 +158,8 @@ func (c EvalCaller) Call(ed *Editor) {
 	out.Close()
 	close(chanOut)
 	wg.Wait()
+
+	ed.refresh(true)
 }
 
 var modifier = map[string]Mod{

@@ -188,7 +188,7 @@ func (ed *Editor) pushTip(more string) {
 	ed.tips = append(ed.tips, more)
 }
 
-func (ed *Editor) refresh() error {
+func (ed *Editor) refresh(fullRefresh bool) error {
 	// Re-lex the line, unless we are in modeCompletion
 	name := "[interacitve]"
 	src := ed.line
@@ -218,7 +218,7 @@ func (ed *Editor) refresh() error {
 			}
 		}
 	}
-	return ed.writer.refresh(&ed.editorState)
+	return ed.writer.refresh(&ed.editorState, fullRefresh)
 }
 
 // acceptCompletion accepts currently selected completion candidate.
@@ -306,7 +306,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.dot = len(ed.line)
 	// TODO Perhaps make it optional to NOT clear the rprompt
 	ed.rprompt = ""
-	addError(ed.refresh())
+	addError(ed.refresh(false))
 	ed.file.WriteString("\n")
 
 	// ed.reader.Stop()
@@ -352,7 +352,7 @@ MainLoop:
 		ed.prompt = prompt()
 		ed.rprompt = rprompt()
 
-		err := ed.refresh()
+		err := ed.refresh(false)
 		if err != nil {
 			return LineRead{Err: err}
 		}
@@ -414,7 +414,7 @@ MainLoop:
 			case noAction:
 				continue
 			case reprocessKey:
-				err = ed.refresh()
+				err = ed.refresh(false)
 				if err != nil {
 					return LineRead{Err: err}
 				}
