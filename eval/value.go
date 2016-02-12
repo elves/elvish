@@ -293,22 +293,11 @@ func (Map) Kind() string {
 }
 
 func (m Map) Repr() string {
-	buf := new(bytes.Buffer)
-	buf.WriteRune('[')
+	var builder MapReprBuilder
 	for k, v := range *m.inner {
-		if buf.Len() > 1 {
-			buf.WriteByte(' ')
-		}
-		buf.WriteByte('&')
-		buf.WriteString(k.Repr())
-		buf.WriteByte(' ')
-		buf.WriteString(v.Repr())
+		builder.WritePair(k.Repr(), v.Repr())
 	}
-	if buf.Len() == 1 {
-		buf.WriteByte('&')
-	}
-	buf.WriteRune(']')
-	return buf.String()
+	return builder.String()
 }
 
 func (m Map) Index(idx Value) Value {
@@ -321,6 +310,30 @@ func (m Map) Index(idx Value) Value {
 
 func (m Map) IndexSet(idx Value, v Value) {
 	(*m.inner)[idx] = v
+}
+
+// MapReprBuilder helps building the Repr of a Map. It is also useful for
+// implementing other Map-like values. The zero value of a MapReprBuilder is
+// ready to use.
+type MapReprBuilder struct {
+	buf bytes.Buffer
+}
+
+func (b *MapReprBuilder) WritePair(k, v string) {
+	if b.buf.Len() == 0 {
+		b.buf.WriteByte('[')
+	} else {
+		b.buf.WriteByte(' ')
+	}
+	b.buf.WriteString("&" + k + " " + v)
+}
+
+func (b *MapReprBuilder) String() string {
+	if b.buf.Len() == 0 {
+		return "[&]"
+	}
+	b.buf.WriteByte(']')
+	return b.buf.String()
 }
 
 // Closure is a closure.
