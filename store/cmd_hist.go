@@ -10,7 +10,45 @@ import (
 var ErrNoMatchingCmd = errors.New("no matching command line")
 
 func init() {
-	initTable["cmd"] = `create table if not exists cmd (content text)`
+	initTable["cmd"] = func(db *sql.DB) error {
+		_, err := db.Exec(`create table if not exists cmd (content text, lastAmongDup bool)`)
+		if err != nil {
+			return err
+		}
+		return addLastAmongDup(db)
+	}
+}
+
+func addLastAmongDup(db *sql.DB) error {
+	// Upgrade from early version where lastAmongDup is missing.
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	rows, err := db.Query("pragma table_info(cmd)")
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	hasLastAmongDup, err := hasColumn(rows, "lastAmongDup")
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	if !hasLastAmongDup {
+		_, err := db.Exec("alter table cmd add column lastAmongDup bool")
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		_, err = db.Exec("update cmd set lastAmongDup = (rowid in (select max(rowid) from cmd group by content));")
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	tx.Commit()
+	return nil
 }
 
 // NextCmdSeq returns the next sequence number of the command history.
@@ -23,7 +61,11 @@ func (s *Store) NextCmdSeq() (int, error) {
 
 // AddCmd adds a new command to the command history.
 func (s *Store) AddCmd(cmd string) error {
-	_, err := s.db.Exec(`insert into cmd (content) values(?)`, cmd)
+	_, err := s.db.Exec(`update cmd set lastAmongDup = 0 where content = ?`, cmd)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec(`insert into cmd (content, lastAmongDup) values(?, 1)`, cmd)
 	return err
 }
 

@@ -14,7 +14,7 @@ type Store struct {
 	db *sql.DB
 }
 
-var initTable = map[string]string{}
+var initTable = map[string](func(*sql.DB) error){}
 
 // DefaultDB returns the default database for storage.
 func DefaultDB(dataDir string) (*sql.DB, error) {
@@ -37,10 +37,10 @@ func NewStore(dataDir string) (*Store, error) {
 func NewStoreDB(db *sql.DB) (*Store, error) {
 	st := &Store{db}
 
-	for t, q := range initTable {
-		_, err := db.Exec(q)
+	for name, fn := range initTable {
+		err := fn(db)
 		if err != nil {
-			return nil, fmt.Errorf("failed to initialize table %s: %v", t, q)
+			return nil, fmt.Errorf("failed to initialize table %s: %v", name, err)
 		}
 	}
 
