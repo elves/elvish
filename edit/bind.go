@@ -66,6 +66,7 @@ var defaultBindings = map[bufferMode]map[Key]string{
 		Key{Left, 0}:   "select-cand-left",
 		Key{Right, 0}:  "select-cand-right",
 		Key{Tab, 0}:    "cycle-cand-right",
+		Key{Enter, 0}:  "accept-completion",
 		DefaultBinding: "default-completion",
 	},
 	modeNavigation: map[Key]string{

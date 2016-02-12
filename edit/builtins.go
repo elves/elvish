@@ -78,6 +78,7 @@ var builtins = []Builtin{
 	{"select-cand-left", selectCandLeft},
 	{"select-cand-right", selectCandRight},
 	{"cycle-cand-right", cycleCandRight},
+	{"accept-completion", acceptCompletion},
 	{"default-completion", defaultCompletion},
 
 	// Navigation mode
@@ -313,9 +314,13 @@ func defaultInsert(ed *Editor) {
 	}
 }
 
-func defaultCompletion(ed *Editor) {
+func acceptCompletion(ed *Editor) {
 	ed.acceptCompletion()
 	ed.mode = modeInsert
+}
+
+func defaultCompletion(ed *Editor) {
+	acceptCompletion(ed)
 	ed.nextAction = action{actionType: reprocessKey}
 }
 
