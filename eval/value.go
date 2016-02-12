@@ -42,9 +42,10 @@ type Indexer interface {
 	Index(idx Value) Value
 }
 
-// IndexVarer is anything that can be indexed by a Value and yields a Variable.
-type IndexVarer interface {
-	IndexVar(idx Value) Variable
+// IndexSetter is a Value whose elements can be get as well as set.
+type IndexSetter interface {
+	Indexer
+	IndexSet(idx Value, v Value)
 }
 
 // Caller is anything may be called on an evalCtx with a list of Value's.
@@ -283,8 +284,15 @@ func (l List) Index(idx Value) Value {
 	return (*l.inner)[i]
 }
 
-func (l List) IndexVar(idx Value) Variable {
-	return listElem{l, intIndex(idx)}
+func (l List) IndexSet(idxv Value, v Value) {
+	idx := intIndex(idxv)
+	if idx < 0 {
+		idx += len(*l.inner)
+	}
+	if idx < 0 || idx >= len(*l.inner) {
+		throw(ErrIndexOutOfRange)
+	}
+	(*l.inner)[idx] = v
 }
 
 // Map is a map from string to Value.
@@ -328,8 +336,8 @@ func (m Map) Index(idx Value) Value {
 	return v
 }
 
-func (m Map) IndexVar(idx Value) Variable {
-	return mapElem{m, idx}
+func (m Map) IndexSet(idx Value, v Value) {
+	(*m.inner)[idx] = v
 }
 
 // Closure is a closure.

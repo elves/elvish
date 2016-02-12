@@ -323,19 +323,38 @@ func (cp *compiler) indexingVar(n *parse.Indexing, msg string) VariableOp {
 		if variable == nil {
 			ec.errorf(p, "variable $%s does not exisit, compiler bug", varname)
 		}
-		for i, op := range indexOps {
-			indexer, ok := variable.Get().(IndexVarer)
+		if len(indexOps) == 0 {
+			// Just a variable, return directly.
+			return variable
+		}
+
+		// Indexing. Do Index up to the last but one index.
+		value := variable.Get()
+		n := len(indexOps)
+		for i, op := range indexOps[:n-1] {
+			indexer, ok := value.(Indexer)
 			if !ok {
-				ec.errorf( /* from p to */ indexBegins[i], "cannot be indexing for setting (type %T)", variable.Get())
-			}
-			values := op(ec)
-			if len(values) != 1 {
-				ec.errorf(indexBegins[i], "index must eval to a single Value (got %v)", values)
+				ec.errorf( /* from p to */ indexBegins[i], "cannot be indexed (value is %s, type %s)", value.Repr(), value.Type())
 			}
 
-			variable = indexer.IndexVar(values[0])
+			indicies := op(ec)
+			if len(indicies) != 1 {
+				ec.errorf(indexBegins[i], "index must eval to a single Value (got %v)", indicies)
+			}
+
+			value = indexer.Index(indicies[0])
 		}
-		return variable
+		// Now this must be an IndexSetter.
+		indexSetter, ok := value.(IndexSetter)
+		if !ok {
+			ec.errorf( /* from p to */ indexBegins[n-1], "cannot be indexed for setting (value is %s, type %s)", value.Repr(), value.Type())
+		}
+		// XXX Duplicate code.
+		indicies := indexOps[n-1](ec)
+		if len(indicies) != 1 {
+			ec.errorf(indexBegins[n-1], "index must eval to a single Value (got %v)", indicies)
+		}
+		return elemVariable{indexSetter, indicies[0]}
 	}
 }
 
