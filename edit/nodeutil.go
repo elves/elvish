@@ -62,16 +62,20 @@ func simpleCompound(pn *parse.Primary) (*parse.Compound, string) {
 	}
 	if tilde {
 		i := strings.Index(head, "/")
+		var home string
+		var err error
 		if i == -1 {
-			return nil, ""
+			home, err = osutil.GetHome(head)
+			head = home
+		} else {
+			uname := head[:i]
+			home, err = osutil.GetHome(uname)
+			head = home + head[i:]
 		}
-		uname := head[:i]
-		home, err := osutil.GetHome(uname)
 		if err != nil {
 			// TODO report error
 			return nil, ""
 		}
-		head = home + head[i:]
 	}
 	return thisCompound, head
 }
