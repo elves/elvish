@@ -7,6 +7,8 @@ import (
 	"syscall"
 )
 
+// Color files based on their various features.
+//
 // This is a reverse-engineered implementation of the parsing and
 // interpretation of the LS_COLORS environmental variable used by GNU
 // coreutils.

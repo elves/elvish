@@ -12,7 +12,7 @@ var (
 	styleForSelectedFile      = ";7"
 )
 
-var styleForType = map[TokenType]string{
+var styleForType = map[TokenKind]string{
 	ParserError:  "31;3",
 	Bareword:     "",
 	SingleQuoted: "33",

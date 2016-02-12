@@ -11,37 +11,10 @@ import (
 
 // Line editor builtins.
 
-type action struct {
-	actionType
-	returnValue LineRead
-}
-
-type actionType int
-
-const (
-	noAction actionType = iota
-	reprocessKey
-	exitReadLine
-)
-
-// Caller is any function operating on an Editor.
-type Caller interface {
-	Repr() string
-	Call(ed *Editor)
-}
-
-// Builtin is a trivial implementation of Caller.
+// Builtin records an editor builtin.
 type Builtin struct {
 	name string
 	impl func(ed *Editor)
-}
-
-func (b Builtin) Repr() string {
-	return b.name
-}
-
-func (b Builtin) Call(ed *Editor) {
-	b.impl(ed)
 }
 
 var builtins = []Builtin{
@@ -116,6 +89,11 @@ func init() {
 			}
 		}
 	}
+}
+
+type action struct {
+	actionType
+	returnValue LineRead
 }
 
 func startInsert(ed *Editor) {

@@ -3,9 +3,7 @@ package edit
 import (
 	"bufio"
 	"errors"
-	"fmt"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/elves/elvish/eval"
@@ -13,7 +11,7 @@ import (
 
 var defaultBindings = map[bufferMode]map[Key]string{
 	modeInsert: map[Key]string{
-		DefaultBinding: "default-insert",
+		Default: "default-insert",
 		// Moving.
 		Key{Left, 0}:     "move-dot-left",
 		Key{Right, 0}:    "move-dot-right",
@@ -43,7 +41,7 @@ var defaultBindings = map[bufferMode]map[Key]string{
 		Key{'N', Ctrl}: "start-navigation",
 	},
 	modeCommand: map[Key]string{
-		DefaultBinding: "default-command",
+		Default: "default-command",
 		// Moving.
 		Key{'h', 0}: "move-dot-left",
 		Key{'l', 0}: "move-dot-right",
@@ -67,20 +65,20 @@ var defaultBindings = map[bufferMode]map[Key]string{
 		Key{Right, 0}:  "select-cand-right",
 		Key{Tab, 0}:    "cycle-cand-right",
 		Key{Enter, 0}:  "accept-completion",
-		DefaultBinding: "default-completion",
+		Default:        "default-completion",
 	},
 	modeNavigation: map[Key]string{
-		Key{Up, 0}:     "select-nav-up",
-		Key{Down, 0}:   "select-nav-down",
-		Key{Left, 0}:   "ascend-nav",
-		Key{Right, 0}:  "descend-nav",
-		DefaultBinding: "default-navigation",
+		Key{Up, 0}:    "select-nav-up",
+		Key{Down, 0}:  "select-nav-down",
+		Key{Left, 0}:  "ascend-nav",
+		Key{Right, 0}: "descend-nav",
+		Default:       "default-navigation",
 	},
 	modeHistory: map[Key]string{
 		Key{'[', Ctrl}: "start-insert",
 		Key{Up, 0}:     "select-history-prev",
 		Key{Down, 0}:   "select-history-next-or-quit",
-		DefaultBinding: "default-history",
+		Default:        "default-history",
 	},
 }
 
@@ -91,6 +89,21 @@ var (
 	errInvalidKey      = errors.New("invalid key to bind to")
 	errInvalidFunction = errors.New("invalid function to bind")
 )
+
+// Caller is a function operating on an Editor. It is either a Builtin or an
+// EvalCaller.
+type Caller interface {
+	Repr() string
+	Call(ed *Editor)
+}
+
+func (b Builtin) Repr() string {
+	return b.name
+}
+
+func (b Builtin) Call(ed *Editor) {
+	b.impl(ed)
+}
 
 // EvalCaller adapts an eval.Caller to a Caller.
 type EvalCaller struct {
@@ -160,50 +173,4 @@ func (c EvalCaller) Call(ed *Editor) {
 	wg.Wait()
 
 	ed.refresh(true)
-}
-
-var modifier = map[string]Mod{
-	"s": Shift, "shift": Shift,
-	"a": Alt, "alt": Alt,
-	"m": Alt, "meta": Alt,
-	"c": Ctrl, "ctrl": Ctrl,
-}
-
-func parseKey(s string) (Key, error) {
-	var k Key
-	// parse modifiers
-	for {
-		i := strings.IndexAny(s, "+-")
-		if i == -1 {
-			break
-		}
-		modname := strings.ToLower(s[:i])
-		mod, ok := modifier[modname]
-		if !ok {
-			return Key{}, fmt.Errorf("bad modifier: %q", modname)
-		}
-		k.Mod |= mod
-		s = s[i+1:]
-	}
-
-	if len(s) == 1 {
-		k.Rune = rune(s[0])
-		return k, nil
-	}
-
-	for r, name := range keyNames {
-		if s == name {
-			k.Rune = r
-			return k, nil
-		}
-	}
-
-	for i, name := range functionKeyNames[1:] {
-		if s == name {
-			k.Rune = rune(-i - 1)
-			return k, nil
-		}
-	}
-
-	return Key{}, fmt.Errorf("bad key: %q", s)
 }

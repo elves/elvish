@@ -45,6 +45,8 @@ func (ar *AsyncReader) Chan() <-chan rune {
 	return ar.ch
 }
 
+// ErrorChan returns a channel onto which the AsyncReader writes the errors it
+// encounters.
 func (ar *AsyncReader) ErrorChan() <-chan error {
 	return ar.errCh
 }

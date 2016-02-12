@@ -10,11 +10,13 @@ import (
 
 // Exposing editor functionalities as an elvish module.
 
+// Errors thrown to Evaler.
 var (
 	ErrTakeNoArg      = errors.New("editor builtins take no arguments")
 	ErrEditorInactive = errors.New("editor inactive")
 )
 
+// makeModule builds a module from an Editor.
 func makeModule(ed *Editor) eval.Namespace {
 	ns := eval.Namespace{}
 	// Populate builtins.
@@ -96,7 +98,7 @@ func keyIndex(idx eval.Value) Key {
 	return key
 }
 
-// Builtin adapts a Builtin to satisfy eval.Value and eval.Caller.
+// EditBuiltin adapts a Builtin to satisfy eval.Value and eval.Caller.
 type EditBuiltin struct {
 	b  Builtin
 	ed *Editor

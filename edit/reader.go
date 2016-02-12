@@ -8,18 +8,24 @@ import (
 	"github.com/elves/elvish/errutil"
 )
 
-const (
-	escTimeout = 10 * time.Millisecond
-	cprTimeout = 10 * time.Millisecond
+var (
+	// EscTimeout is the amount of time after which an \033 (\x1b) character is
+	// parsed as a standalone Esc key press instead of starting an escape
+	// sequence. Modern terminal emulators send escape sequences very fast, so
+	// 10ms is more than sufficient. SSH connections on a slow link can be
+	// problematic,
+	EscTimeout = 10 * time.Millisecond
 )
 
-// Special rune values used internally.
+// Special rune values used in the return value of (*Reader).ReadRune.
 const (
+	// No rune received before specified time.
 	runeTimeout rune = -1 - iota
+	// Error occured in AsyncReader. The error is left at the readError field.
 	runeReadError
 )
 
-// Reader converts a stream of runes into a stream of Keys
+// Reader converts a stream of runes into a stream of OneRead's.
 type Reader struct {
 	ar         *AsyncReader
 	ones       chan OneRead
@@ -36,7 +42,8 @@ type OneRead struct {
 	Err error
 }
 
-// BadEscSeq indicates that a bad escape sequence is read from the terminal.
+// BadEscSeq indicates that a escape sequence has been read from the terminal,
+// but it cannot be parsed.
 type BadEscSeq struct {
 	seq string
 	msg string
@@ -61,7 +68,6 @@ func NewReader(f *os.File) *Reader {
 		ones: make(chan OneRead),
 		quit: make(chan struct{}),
 	}
-	// go rd.run()
 	return rd
 }
 
@@ -105,6 +111,7 @@ func (rd *Reader) Close() {
 	close(rd.quit)
 }
 
+// readOne attempts to read one key or CPR, led by a rune already read.
 func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 	defer errutil.Catch(&err)
 
@@ -122,7 +129,7 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 	case 0x1b: // ^[ Escape
 		//rd.timed.Timeout = escTimeout
 		//defer func() { rd.timed.Timeout = -1 }()
-		r2 := rd.readRune(escTimeout)
+		r2 := rd.readRune(EscTimeout)
 		if r2 == runeTimeout {
 			return Key{'[', Ctrl}, invalidPos, nil
 		} else if r2 == runeReadError {
@@ -134,7 +141,7 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 			// Read numeric parameters (if any)
 			nums := make([]int, 0, 2)
 			seq := "\x1b["
-			timeout := escTimeout
+			timeout := EscTimeout
 			for {
 				r = rd.readRune(timeout)
 				// Timeout can only happen at first readRune.
@@ -171,7 +178,7 @@ func (rd *Reader) readOne(r rune) (k Key, cpr pos, err error) {
 			return k, invalidPos, err
 		case 'O':
 			// G3 style function key sequence: read one rune.
-			r = rd.readRune(escTimeout)
+			r = rd.readRune(EscTimeout)
 			if r == runeTimeout {
 				return Key{r2, Alt}, invalidPos, nil
 			} else if r == runeReadError {
@@ -208,7 +215,8 @@ func (rd *Reader) readRune(d time.Duration) rune {
 	}
 }
 
-// G3 style function key sequences: ^[O followed by exactly one character.
+// G3-style key sequences: \eO followed by exactly one character. For instance,
+// \eOP is F1.
 var g3Seq = map[rune]rune{
 	// F1-F4: xterm, libvte and tmux
 	'P': F1, 'Q': F2,
@@ -218,6 +226,12 @@ var g3Seq = map[rune]rune{
 	'H': Home, 'F': End,
 }
 
+// Tables for CSI-style key sequences, which are \e[ followed by a list of
+// semicolon-delimited numeric arguments, before being concluded by a
+// non-numeric, non-semicolon rune.
+
+// CSI-style key sequences that can be identified based on the ending rune. For
+// instance, \e[A is Up.
 var keyByLast = map[rune]Key{
 	'A': Key{Up, 0}, 'B': Key{Down, 0},
 	'C': Key{Right, 0}, 'D': Key{Left, 0},
@@ -225,17 +239,20 @@ var keyByLast = map[rune]Key{
 	'Z': Key{Tab, Shift},
 }
 
-// last == '~'
+// CSI-style key sequences ending with '~' and can be identified based on
+// the only number argument. For instance, \e[1~ is Home.
 var keyByNum0 = map[int]rune{
 	1: Home, 2: Insert, 3: Delete, 4: End, 5: PageUp, 6: PageDown,
 	11: F1, 12: F2, 13: F3, 14: F4,
 	15: F5, 17: F6, 18: F7, 19: F8, 20: F9, 21: F10, 23: F11, 24: F12,
 }
 
-// last == '~', num[0] == 27
+// CSI-style key sequences ending with '~', with 27 as the first numeric
+// argument. For instance, \e[27;9~ is Tab.
+//
 // The list is taken blindly from tmux source xterm-keys.c. I don't have a
-// keyboard that can generate such sequences, but assumably some PC keyboard
-// with a numpad can.
+// keyboard-terminal combination that generate such sequences, but assumably
+// some PC keyboard with a numpad can.
 var keyByNum2 = map[int]rune{
 	9: '\t', 13: '\r',
 	33: '!', 35: '#', 39: '\'', 40: '(', 41: ')', 43: '+', 44: ',', 45: '-',
@@ -245,7 +262,7 @@ var keyByNum2 = map[int]rune{
 	58: ':', 59: ';', 60: '<', 61: '=', 62: '>', 63: ';',
 }
 
-// Parse a CSI-style function key sequence.
+// parseCSI parses a CSI-style key sequence.
 func parseCSI(nums []int, last rune, seq string) (Key, error) {
 	if k, ok := keyByLast[last]; ok {
 		if len(nums) == 0 {

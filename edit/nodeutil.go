@@ -7,6 +7,8 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
+// Utilities for insepcting the AST. Used for completers and stylists.
+
 func isFormHead(compound *parse.Compound) bool {
 	if form, ok := compound.Parent().(*parse.Form); ok {
 		return form.Head == compound

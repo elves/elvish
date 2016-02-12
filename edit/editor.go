@@ -4,7 +4,6 @@ package edit
 import (
 	"fmt"
 	"os"
-	"strings"
 	"syscall"
 
 	"github.com/elves/elvish/errutil"
@@ -22,15 +21,18 @@ const (
 	lackEOL     = "\033[7m" + string(lackEOLRune) + "\033[m"
 )
 
-type bufferMode int
-
-const (
-	modeInsert bufferMode = iota
-	modeCommand
-	modeCompletion
-	modeNavigation
-	modeHistory
-)
+// Editor keeps the status of the line editor.
+type Editor struct {
+	file      *os.File
+	writer    *writer
+	reader    *Reader
+	sigs      chan os.Signal
+	histories []string
+	store     *store.Store
+	evaler    *eval.Evaler
+	cmdSeq    int
+	editorState
+}
 
 type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
@@ -51,24 +53,23 @@ type editorState struct {
 	nextAction action
 }
 
-type history struct {
-	current int
-	prefix  string
-	line    string
-}
+type bufferMode int
 
-// Editor keeps the status of the line editor.
-type Editor struct {
-	file      *os.File
-	writer    *writer
-	reader    *Reader
-	sigs      chan os.Signal
-	histories []string
-	store     *store.Store
-	evaler    *eval.Evaler
-	cmdSeq    int
-	editorState
-}
+const (
+	modeInsert bufferMode = iota
+	modeCommand
+	modeCompletion
+	modeNavigation
+	modeHistory
+)
+
+type actionType int
+
+const (
+	noAction actionType = iota
+	reprocessKey
+	exitReadLine
+)
 
 // LineRead is the result of ReadLine. Exactly one member is non-zero, making
 // it effectively a tagged union.
@@ -76,83 +77,6 @@ type LineRead struct {
 	Line string
 	EOF  bool
 	Err  error
-}
-
-func (h *history) jump(i int, line string) {
-	h.current = i
-	h.line = line
-}
-
-func (ed *Editor) appendHistory(line string) {
-	ed.histories = append(ed.histories, line)
-	if ed.store != nil {
-		ed.store.AddCmd(line)
-		// TODO(xiaq): Report possible error
-	}
-}
-
-func lastHistory(histories []string, upto int, prefix string) (int, string) {
-	for i := upto - 1; i >= 0; i-- {
-		if strings.HasPrefix(histories[i], prefix) {
-			return i, histories[i]
-		}
-	}
-	return -1, ""
-}
-
-func firstHistory(histories []string, from int, prefix string) (int, string) {
-	for i := from; i < len(histories); i++ {
-		if strings.HasPrefix(histories[i], prefix) {
-			return i, histories[i]
-		}
-	}
-	return -1, ""
-}
-
-func (ed *Editor) prevHistory() bool {
-	if ed.history.current > 0 {
-		// Session history
-		i, line := lastHistory(ed.histories, ed.history.current, ed.history.prefix)
-		if i >= 0 {
-			ed.history.jump(i, line)
-			return true
-		}
-	}
-
-	if ed.store != nil {
-		// Persistent history
-		upto := ed.cmdSeq + min(0, ed.history.current)
-		i, line, err := ed.store.LastCmd(upto, ed.history.prefix)
-		if err == nil {
-			ed.history.jump(i-ed.cmdSeq, line)
-			return true
-		}
-	}
-	// TODO(xiaq): Errors other than ErrNoMatchingCmd should be reported
-	return false
-}
-
-func (ed *Editor) nextHistory() bool {
-	if ed.store != nil {
-		// Persistent history
-		if ed.history.current < -1 {
-			from := ed.cmdSeq + ed.history.current + 1
-			i, line, err := ed.store.FirstCmd(from, ed.history.prefix)
-			if err == nil {
-				ed.history.jump(i-ed.cmdSeq, line)
-				return true
-			}
-			// TODO(xiaq): Errors other than ErrNoMatchingCmd should be reported
-		}
-	}
-
-	from := max(0, ed.history.current+1)
-	i, line := firstHistory(ed.histories, from, ed.history.prefix)
-	if i >= 0 {
-		ed.history.jump(i, line)
-		return true
-	}
-	return false
 }
 
 // NewEditor creates an Editor.
@@ -213,8 +137,8 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 			}
 		}
 		for i, t := range ed.tokens {
-			for _, colorist := range colorists {
-				ed.tokens[i].MoreStyle += colorist(t.Node, ed)
+			for _, stylist := range stylists {
+				ed.tokens[i].MoreStyle += stylist(t.Node, ed)
 			}
 		}
 	}
@@ -236,12 +160,6 @@ func (ed *Editor) acceptCompletion() {
 func (ed *Editor) insertAtDot(text string) {
 	ed.line = ed.line[:ed.dot] + text + ed.line[ed.dot:]
 	ed.dot += len(text)
-}
-
-// acceptHistory accepts currently history.
-func (ed *Editor) acceptHistory() {
-	ed.line = ed.history.line
-	ed.dot = len(ed.line)
 }
 
 func setupTerminal(file *os.File) (*sys.Termios, error) {
@@ -326,8 +244,6 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 }
 
 // ReadLine reads a line interactively.
-// TODO(xiaq): ReadLine currently handles SIGINT and SIGWINCH and swallows all
-// other signals.
 func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 	ed.editorState = editorState{active: true}
 	isExternalCh := make(chan map[string]bool, 1)
@@ -402,7 +318,7 @@ MainLoop:
 
 			fn, bound := keyBinding[k]
 			if !bound {
-				fn = keyBinding[DefaultBinding]
+				fn = keyBinding[Default]
 			}
 
 			ed.lastKey = k

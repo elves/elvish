@@ -5,9 +5,12 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type colorist func(parse.Node, *Editor) string
+// stylist takes a Node and Editor, and returns a style string. The Node is
+// always a leaf in the parsed AST.
+// NOTE: Not all stylings are now done with stylists.
+type stylist func(parse.Node, *Editor) string
 
-var colorists = []colorist{
+var stylists = []stylist{
 	colorFormHead,
 }
 

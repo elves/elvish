@@ -1,6 +1,24 @@
 package edit
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
+
+// Key represents a single keyboard input, typically assembled from a escape
+// sequence.
+type Key struct {
+	Rune rune
+	Mod  Mod
+}
+
+// Predefined special Key values.
+var (
+	// ZeroKey is the zero value of Key and is an invalid value.
+	ZeroKey = Key{}
+	// Default is used in the key binding table to indicate default binding.
+	Default = Key{DefaultBindingRune, 0}
+)
 
 // Mod represents a modifier key.
 type Mod byte
@@ -15,16 +33,6 @@ const (
 	Alt
 	Ctrl
 )
-
-// Key represents a single keyboard input, typically assembled from a escape
-// sequence.
-type Key struct {
-	Rune rune
-	Mod  Mod
-}
-
-// ZeroKey is the zero value of Key and is an invalid value.
-var ZeroKey = Key{}
 
 func (k Key) String() (s string) {
 	if k.Mod&Ctrl != 0 {
@@ -53,7 +61,62 @@ func (k Key) String() (s string) {
 	return
 }
 
-// Special negative runes to represent function keys.
+// modifierByName maps a name to an modifier. It is used for parsing keys where
+// the modifier string is first turned to lower case, so that all of C, c,
+// CTRL, Ctrl and ctrl can represent the Ctrl modifier.
+var modifierByName = map[string]Mod{
+	"s": Shift, "shift": Shift,
+	"a": Alt, "alt": Alt,
+	"m": Alt, "meta": Alt,
+	"c": Ctrl, "ctrl": Ctrl,
+}
+
+// parseKey parses a key. The syntax is:
+//
+// Key = { Mod ('+' | '-') } BareKey
+//
+// BareKey = FunctionKeyName | SingleRune
+func parseKey(s string) (Key, error) {
+	var k Key
+	// parse modifiers
+	for {
+		i := strings.IndexAny(s, "+-")
+		if i == -1 {
+			break
+		}
+		modname := strings.ToLower(s[:i])
+		mod, ok := modifierByName[modname]
+		if !ok {
+			return Key{}, fmt.Errorf("bad modifier: %q", modname)
+		}
+		k.Mod |= mod
+		s = s[i+1:]
+	}
+
+	if len(s) == 1 {
+		k.Rune = rune(s[0])
+		return k, nil
+	}
+
+	for r, name := range keyNames {
+		if s == name {
+			k.Rune = r
+			return k, nil
+		}
+	}
+
+	for i, name := range functionKeyNames[1:] {
+		if s == name {
+			k.Rune = rune(-i - 1)
+			return k, nil
+		}
+	}
+
+	return Key{}, fmt.Errorf("bad key: %q", s)
+}
+
+// Special negative runes to represent function keys, used in the Rune field of
+// the Key struct.
 const (
 	F1 rune = -iota - 1
 	F2
@@ -89,17 +152,13 @@ const (
 	Backspace = 0x7f
 )
 
-// DefaultBinding is an special value of Key, used as a key of keyBindings to
-// indicate default binding.
-var DefaultBinding = Key{DefaultBindingRune, 0}
-
-var keyNames = map[rune]string{
-	Tab: "Tab", Enter: "Enter", Backspace: "Backspace",
-}
-
 var functionKeyNames = [...]string{
 	"(Invalid)",
 	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
 	"Up", "Down", "Right", "Left",
 	"Home", "Insert", "Delete", "End", "PageUp", "PageDown", "default",
+}
+
+var keyNames = map[rune]string{
+	Tab: "Tab", Enter: "Enter", Backspace: "Backspace",
 }

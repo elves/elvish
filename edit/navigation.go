@@ -7,48 +7,18 @@ import (
 	"sort"
 )
 
+// Navigation subsystem.
+
+// TODO(xiaq): Support file preview in navigation mode
+
+// TODO(xiaq): Remember which file was selected in each directory.
+
 var (
 	errorEmptyCwd      = errors.New("current directory is empty")
 	errorNoCwdInParent = errors.New("could not find current directory in ..")
 )
 
-type navColumn struct {
-	names    []string
-	styles   []string
-	selected int
-	err      error
-}
-
-func newNavColumn(names, styles []string) *navColumn {
-	nc := &navColumn{names, styles, 0, nil}
-	nc.resetSelected()
-	return nc
-}
-
-func newErrNavColumn(err error) *navColumn {
-	return &navColumn{err: err}
-}
-
-func (nc *navColumn) selectedName() string {
-	if nc == nil || nc.selected == -1 {
-		return ""
-	}
-	return nc.names[nc.selected]
-}
-
-func (nc *navColumn) resetSelected() {
-	if nc == nil {
-		return
-	}
-	if len(nc.names) > 0 {
-		nc.selected = 0
-	} else {
-		nc.selected = -1
-	}
-}
-
-// TODO(xiaq): Handle pwd = / correctly in navigation mode
-// TODO(xiaq): Support file preview in navigation mode
+// navigation represents the current layout of the navigation mode.
 type navigation struct {
 	current, parent, dirPreview *navColumn
 }
@@ -57,23 +27,6 @@ func newNavigation() *navigation {
 	n := &navigation{}
 	n.refresh()
 	return n
-}
-
-func readdirnames(dir string) (names, styles []string, err error) {
-	f, err := os.Open(dir)
-	if err != nil {
-		return nil, nil, err
-	}
-	names, err = f.Readdirnames(0)
-	if err != nil {
-		return nil, nil, err
-	}
-	sort.Strings(names)
-	styles = make([]string, len(names))
-	for i, name := range names {
-		styles[i] = defaultLsColor.getStyle(path.Join(dir, name))
-	}
-	return names, styles, nil
 }
 
 func (n *navigation) maintainSelected(name string) {
@@ -221,4 +174,57 @@ func (n *navigation) next() {
 		n.current.selected++
 	}
 	n.refresh()
+}
+
+// navColumn is a column in the navigation layout.
+type navColumn struct {
+	names    []string
+	styles   []string
+	selected int
+	err      error
+}
+
+func newNavColumn(names, styles []string) *navColumn {
+	nc := &navColumn{names, styles, 0, nil}
+	nc.resetSelected()
+	return nc
+}
+
+func newErrNavColumn(err error) *navColumn {
+	return &navColumn{err: err}
+}
+
+func (nc *navColumn) selectedName() string {
+	if nc == nil || nc.selected == -1 {
+		return ""
+	}
+	return nc.names[nc.selected]
+}
+
+func (nc *navColumn) resetSelected() {
+	if nc == nil {
+		return
+	}
+	if len(nc.names) > 0 {
+		nc.selected = 0
+	} else {
+		nc.selected = -1
+	}
+}
+
+func readdirnames(dir string) (names, styles []string, err error) {
+	f, err := os.Open(dir)
+	if err != nil {
+		return nil, nil, err
+	}
+	names, err = f.Readdirnames(0)
+	if err != nil {
+		return nil, nil, err
+	}
+	sort.Strings(names)
+	styles = make([]string, len(names))
+	for i, name := range names {
+		styles[i] = defaultLsColor.getStyle(path.Join(dir, name))
+	}
+	return names, styles, nil
 }

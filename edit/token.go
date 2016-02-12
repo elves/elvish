@@ -2,19 +2,22 @@ package edit
 
 import "github.com/elves/elvish/parse"
 
+var tokensBufferSize = 16
+
 // Token is a leaf of the parse tree.
 type Token struct {
-	Type      TokenType
+	Type      TokenKind
 	Text      string
 	Node      parse.Node
 	MoreStyle string
 }
 
-// TokenType classifies Token's.
-type TokenType int
+// TokenKind classifies Token's.
+type TokenKind int
 
+// Values for TokenKind.
 const (
-	ParserError TokenType = iota
+	ParserError TokenKind = iota
 	Bareword
 	SingleQuoted
 	DoubleQuoted
@@ -24,12 +27,11 @@ const (
 	Sep
 )
 
-var tokensBufferSize = 16
-
 func parserError(text string) Token {
 	return Token{ParserError, text, nil, ""}
 }
 
+// tokenize returns all leaves in an AST.
 func tokenize(src string, n parse.Node) []Token {
 	lastEnd := 0
 
