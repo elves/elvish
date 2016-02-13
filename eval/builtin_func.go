@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"runtime"
 	"strconv"
+	"syscall"
 	"time"
 
 	"github.com/elves/elvish/logutil"
@@ -69,6 +70,7 @@ func init() {
 		&BuiltinFn{"-sleep", wrapFn(_sleep)},
 		&BuiltinFn{"-stack", wrapFn(_stack)},
 		&BuiltinFn{"-log", wrapFn(_log)},
+		&BuiltinFn{"-exec", wrapFn(_exec)},
 	}
 }
 
@@ -519,4 +521,15 @@ func _stack(ec *EvalCtx) {
 
 func _log(ec *EvalCtx, fname string) {
 	maybeThrow(logutil.SetOutputFile(fname))
+}
+
+func _exec(ec *EvalCtx, args ...string) {
+	if len(args) == 0 {
+		args = []string{"elvish"}
+	}
+	var err error
+	args[0], err = ec.Search(args[0])
+	maybeThrow(err)
+	err = syscall.Exec(args[0], args, os.Environ())
+	maybeThrow(err)
 }
