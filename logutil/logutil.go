@@ -35,6 +35,7 @@ func SetOutputFile(fname string) error {
 	if fname == "" {
 		logFile = nil
 		setOutput(ioutil.Discard)
+		return
 	}
 	var err error
 	logFile, err = os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
