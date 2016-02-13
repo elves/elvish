@@ -186,7 +186,6 @@ func (rd *Reader) readOne(r rune) {
 			// CSI style function key sequence, looks like [\d;]*[^\d;]
 			// Read numeric parameters (if any)
 			nums := make([]int, 0, 2)
-			seq := "\x1b["
 			isMouse := false
 		CSISeq:
 			for {
@@ -196,7 +195,6 @@ func (rd *Reader) readOne(r rune) {
 					k = Key{'[', Alt}
 					return
 				}
-				seq += string(r)
 				switch {
 				case r == ';':
 					nums = append(nums, 0)
@@ -239,7 +237,10 @@ func (rd *Reader) readOne(r rune) {
 				}
 				mouse = mouseEvent{pos{nums[2], nums[1]}, down, button, mod}
 			} else {
-				k, err = parseCSI(nums, r, seq)
+				k = parseCSI(nums, r, currentSeq)
+				if k == (Key{}) {
+					err = newBadEscSeq(currentSeq, "bad CSI")
+				}
 			}
 		case 'O':
 			// G3 style function key sequence: read one rune.
@@ -258,7 +259,7 @@ func (rd *Reader) readOne(r rune) {
 			k = Key{r2, Alt}
 		}
 	default:
-		// Sane Ctrl- sequences that agree with the keyboard...
+		// Regular Ctrl sequences.
 		if 0x1 <= r && r <= 0x1d {
 			k = Key{r + 0x40, Ctrl}
 		} else {
@@ -315,16 +316,16 @@ var keyByNum2 = map[int]rune{
 }
 
 // parseCSI parses a CSI-style key sequence.
-func parseCSI(nums []int, last rune, seq string) (Key, error) {
+func parseCSI(nums []int, last rune, seq string) Key {
 	if k, ok := keyByLast[last]; ok {
 		if len(nums) == 0 {
 			// Unmodified: \e[A (Up)
-			return k, nil
+			return k
 		} else if len(nums) == 2 && nums[0] == 1 {
 			// Modified: \e[1;5A (Ctrl-Up)
 			return xtermModify(k, nums[1], seq)
 		} else {
-			return ZeroKey, newBadEscSeq(seq, "bad CSI")
+			return Key{}
 		}
 	}
 
@@ -334,7 +335,7 @@ func parseCSI(nums []int, last rune, seq string) (Key, error) {
 				k := Key{r, 0}
 				if len(nums) == 1 {
 					// Unmodified: \e[5~ (PageUp)
-					return k, nil
+					return k
 				}
 				// Modified: \e[5;5~ (Ctrl-PageUp)
 				return xtermModify(k, nums[1], seq)
@@ -347,10 +348,10 @@ func parseCSI(nums []int, last rune, seq string) (Key, error) {
 		}
 	}
 
-	return ZeroKey, newBadEscSeq(seq, "bad CSI")
+	return Key{}
 }
 
-func xtermModify(k Key, mod int, seq string) (Key, error) {
+func xtermModify(k Key, mod int, seq string) Key {
 	switch mod {
 	case 0:
 		// do nothing
@@ -369,7 +370,7 @@ func xtermModify(k Key, mod int, seq string) (Key, error) {
 	case 8:
 		k.Mod |= Shift | Alt | Ctrl
 	default:
-		return ZeroKey, newBadEscSeq(seq, "bad mod")
+		return Key{}
 	}
-	return k, nil
+	return k
 }

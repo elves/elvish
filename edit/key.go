@@ -14,8 +14,6 @@ type Key struct {
 
 // Predefined special Key values.
 var (
-	// ZeroKey is the zero value of Key and is an invalid value.
-	ZeroKey = Key{}
 	// Default is used in the key binding table to indicate default binding.
 	Default = Key{DefaultBindingRune, 0}
 )
