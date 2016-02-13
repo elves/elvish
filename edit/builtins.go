@@ -228,11 +228,12 @@ func moveDotDown(ed *Editor) {
 }
 
 func insertLastWord(ed *Editor) {
-	// XXX Only visits last element in ed.history; doesn't cycle.
-	if len(ed.histories) == 0 {
-		return
+	_, lastLine, err := ed.store.LastCmd(-1, "", true)
+	if err == nil {
+		ed.insertAtDot(lastWord(lastLine))
+	} else {
+		ed.pushTip(err.Error())
 	}
-	ed.insertAtDot(lastWord(ed.histories[len(ed.histories)-1].content))
 }
 
 func lastWord(s string) string {
@@ -332,7 +333,7 @@ func defaultNavigation(ed *Editor) {
 
 func startHistory(ed *Editor) {
 	ed.history.prefix = ed.line[:ed.dot]
-	ed.history.current = len(ed.histories)
+	ed.history.current = -1
 	if ed.prevHistory() {
 		ed.mode = modeHistory
 	} else {

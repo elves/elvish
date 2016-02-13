@@ -23,14 +23,13 @@ const (
 
 // Editor keeps the status of the line editor.
 type Editor struct {
-	file      *os.File
-	writer    *writer
-	reader    *Reader
-	sigs      chan os.Signal
-	histories []historyItem
-	store     *store.Store
-	evaler    *eval.Evaler
-	cmdSeq    int
+	file   *os.File
+	writer *writer
+	reader *Reader
+	sigs   chan os.Signal
+	store  *store.Store
+	evaler *eval.Evaler
+	cmdSeq int
 	editorState
 }
 

@@ -86,7 +86,11 @@ func convertCmd(row *sql.Row) (int, string, error) {
 // LastCmd finds the last command before the given sequence number (exclusive)
 // with the given prefix.
 func (s *Store) LastCmd(upto int, prefix string, uniq bool) (int, string, error) {
-	row := s.db.QueryRow(`select rowid, content from cmd where rowid < ? and substr(content, 1, ?) = ? and (? or lastAmongDup) order by rowid desc limit 1`, upto, len(prefix), prefix, !uniq)
+	var upto64 int64 = int64(upto)
+	if upto < 0 {
+		upto64 = 0x7FFFFFFFFFFFFFFF
+	}
+	row := s.db.QueryRow(`select rowid, content from cmd where rowid < ? and substr(content, 1, ?) = ? and (? or lastAmongDup) order by rowid desc limit 1`, upto64, len(prefix), prefix, !uniq)
 	return convertCmd(row)
 }
 
