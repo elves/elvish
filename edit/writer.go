@@ -473,19 +473,21 @@ tokens:
 	hListing := 0
 	// Trim lines and determine the maximum height for bufListing
 	switch {
-	case height >= lines(bufLine, bufMode, bufTips):
+	case height >= lines(bufNoti, bufLine, bufMode, bufTips):
 		hListing = height - lines(bufLine, bufMode, bufTips)
-	case height >= lines(bufLine, bufTips):
-		bufMode, bufListing = nil, nil
-	case height >= lines(bufLine):
-		bufTips, bufMode, bufListing = nil, nil, nil
+	case height >= lines(butNoti, bufLine, bufTips):
+		bufMode = nil
+	case height >= lines(butNoti, bufLine):
+		bufTips, bufMode = nil, nil
+	case height >= lines(butLine):
+		bufNoti, bufTips, bufMode = nil, nil, nil
 	case height >= 1:
-		bufTips, bufMode, bufListing = nil, nil, nil
+		bufNoti, bufTips, bufMode = nil, nil, nil
 		dotLine := bufLine.dot.line
 		bufLine.trimToLines(dotLine+1-height, dotLine+1)
 	default:
 		// Broken terminal. Still try to render one line of bufLine.
-		bufTips, bufMode, bufListing = nil, nil, nil
+		bufNoti, bufTips, bufMode = nil, nil
 		dotLine := bufLine.dot.line
 		bufLine.trimToLines(dotLine, dotLine+1)
 	}
