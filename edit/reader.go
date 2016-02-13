@@ -39,21 +39,6 @@ type mouseEvent struct {
 	mod    Mod
 }
 
-// BadEscSeq indicates that a escape sequence has been read from the terminal,
-// but it cannot be parsed.
-type BadEscSeq struct {
-	seq string
-	msg string
-}
-
-func newBadEscSeq(seq string, msg string) *BadEscSeq {
-	return &BadEscSeq{seq, msg}
-}
-
-func (bes *BadEscSeq) Error() string {
-	return fmt.Sprintf("bad escape sequence %q: %s", bes.seq, bes.msg)
-}
-
 // NewReader creates a new Reader on the given terminal file.
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
@@ -125,6 +110,10 @@ func (rd *Reader) readOne(r rune) {
 	var mouse mouseEvent
 	var err error
 	var currentSeq string
+
+	badSeq := func(msg string) {
+		err = fmt.Errorf("%s: %q", msg, currentSeq)
+	}
 
 	// readRune attempts to read a rune within EscSequenceTimeout. It writes to
 	// the err and currentSeq variable in the outer scope.
@@ -213,13 +202,13 @@ func (rd *Reader) readOne(r rune) {
 			if r == 'R' {
 				// CPR
 				if len(nums) != 2 {
-					err = newBadEscSeq(currentSeq, "bad CPR")
+					badSeq("bad CPR")
 					return
 				}
 				cpr = pos{nums[0], nums[1]}
 			} else if isMouse && (r == 'm' || r == 'M') {
 				if len(nums) != 3 {
-					err = newBadEscSeq(currentSeq, "bad mouse event")
+					badSeq("bad mouse event")
 					return
 				}
 				down := r == 'M'
@@ -239,7 +228,7 @@ func (rd *Reader) readOne(r rune) {
 			} else {
 				k = parseCSI(nums, r, currentSeq)
 				if k == (Key{}) {
-					err = newBadEscSeq(currentSeq, "bad CSI")
+					badSeq("bad CSI")
 				}
 			}
 		case 'O':
@@ -253,7 +242,7 @@ func (rd *Reader) readOne(r rune) {
 			if ok {
 				k = Key{r, 0}
 			} else {
-				err = newBadEscSeq(currentSeq, "bad G3")
+				badSeq("bad G3")
 			}
 		default:
 			k = Key{r2, Alt}
