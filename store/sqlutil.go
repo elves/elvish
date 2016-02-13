@@ -16,6 +16,7 @@ func hasColumn(rows *sql.Rows, colname string) (bool, error) {
 			dests[i] = new(interface{})
 		}
 	}
+	defer rows.Close()
 	for rows.Next() {
 		rows.Scan(dests...)
 		if name == colname {
