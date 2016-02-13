@@ -14,7 +14,7 @@ import (
 	"github.com/elves/elvish/sys"
 )
 
-var Logger = logutil.Discard
+var Logger = logutil.GetLogger("edit")
 
 const (
 	lackEOLRune = '\u23ce'

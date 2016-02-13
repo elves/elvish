@@ -13,6 +13,8 @@ import (
 	"runtime"
 	"strconv"
 	"time"
+
+	"github.com/elves/elvish/logutil"
 )
 
 var builtinFns []*BuiltinFn
@@ -66,6 +68,7 @@ func init() {
 
 		&BuiltinFn{"-sleep", wrapFn(_sleep)},
 		&BuiltinFn{"-stack", wrapFn(_stack)},
+		&BuiltinFn{"-log", wrapFn(_log)},
 	}
 }
 
@@ -512,4 +515,8 @@ func _stack(ec *EvalCtx) {
 		buf = make([]byte, cap(buf)*2)
 	}
 	out.Write(buf)
+}
+
+func _log(ec *EvalCtx, fname string) {
+	maybeThrow(logutil.SetOutputFile(fname))
 }

@@ -17,7 +17,7 @@ import (
 	"github.com/elves/elvish/store"
 )
 
-var Logger = logutil.Discard
+var Logger = logutil.GetLogger("eval")
 
 // FnPrefix is the prefix for the variable names of functions. Defining a
 // function "foo" is equivalent to setting a variable named FnPrefix + "foo".

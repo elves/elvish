@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/signal"
 	"os/user"
@@ -29,7 +28,7 @@ const (
 	outChanLeader = "▶ "
 )
 
-var Logger = logutil.Discard
+var Logger = logutil.GetLogger("main")
 
 func usage() {
 	fmt.Println("usage: elvish [flags] [script]")
@@ -38,9 +37,9 @@ func usage() {
 }
 
 var (
-	debuglog = flag.String("debuglog", "", "a file to write debug log to")
-	dbname   = flag.String("db", "", "path to the database")
-	help     = flag.Bool("help", false, "show usage help and quit")
+	log    = flag.String("log", "", "a file to write debug log to")
+	dbname = flag.String("db", "", "path to the database")
+	help   = flag.Bool("help", false, "show usage help and quit")
 )
 
 func main() {
@@ -54,16 +53,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	if *debuglog != "" {
-		f, err := os.OpenFile(*debuglog, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if *log != "" {
+		err := logutil.SetOutputFile(*log)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
 		}
-		defer f.Close()
-
-		Logger = log.New(f, "[main]", log.LstdFlags)
-		eval.Logger = log.New(f, "[eval] ", log.LstdFlags)
-		edit.Logger = log.New(f, "[edit] ", log.LstdFlags)
 	}
 
 	go handleQuit()
