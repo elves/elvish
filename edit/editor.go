@@ -27,7 +27,7 @@ type Editor struct {
 	writer    *writer
 	reader    *Reader
 	sigs      chan os.Signal
-	histories []string
+	histories []historyItem
 	store     *store.Store
 	evaler    *eval.Evaler
 	cmdSeq    int

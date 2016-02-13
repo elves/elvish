@@ -4,6 +4,11 @@ import "strings"
 
 // Command history subsystem.
 
+type historyItem struct {
+	content       string
+	lastAmongDups bool
+}
+
 type historyState struct {
 	current int
 	prefix  string
@@ -16,26 +21,32 @@ func (h *historyState) jump(i int, line string) {
 }
 
 func (ed *Editor) appendHistory(line string) {
-	ed.histories = append(ed.histories, line)
+	for i := len(ed.histories) - 1; i >= 0; i-- {
+		if ed.histories[i].content == line {
+			ed.histories[i].lastAmongDups = false
+			break
+		}
+	}
+	ed.histories = append(ed.histories, historyItem{line, true})
 	if ed.store != nil {
 		ed.store.AddCmd(line)
 		// TODO(xiaq): Report possible error
 	}
 }
 
-func lastHistory(histories []string, upto int, prefix string) (int, string) {
+func lastHistory(histories []historyItem, upto int, prefix string) (int, string) {
 	for i := upto - 1; i >= 0; i-- {
-		if strings.HasPrefix(histories[i], prefix) {
-			return i, histories[i]
+		if strings.HasPrefix(histories[i].content, prefix) && histories[i].lastAmongDups {
+			return i, histories[i].content
 		}
 	}
 	return -1, ""
 }
 
-func firstHistory(histories []string, from int, prefix string) (int, string) {
+func firstHistory(histories []historyItem, from int, prefix string) (int, string) {
 	for i := from; i < len(histories); i++ {
-		if strings.HasPrefix(histories[i], prefix) {
-			return i, histories[i]
+		if strings.HasPrefix(histories[i].content, prefix) && histories[i].lastAmongDups {
+			return i, histories[i].content
 		}
 	}
 	return -1, ""

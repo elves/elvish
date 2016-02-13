@@ -232,7 +232,7 @@ func insertLastWord(ed *Editor) {
 	if len(ed.histories) == 0 {
 		return
 	}
-	ed.insertAtDot(lastWord(ed.histories[len(ed.histories)-1]))
+	ed.insertAtDot(lastWord(ed.histories[len(ed.histories)-1].content))
 }
 
 func lastWord(s string) string {
