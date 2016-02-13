@@ -167,8 +167,7 @@ func (b *buffer) trimToLines(low, high int) {
 	b.dot.line -= low
 }
 
-// writer is the part of an Editor responsible for keeping the status of and
-// updating the screen.
+// writer renders the editor UI.
 type writer struct {
 	file   *os.File
 	oldBuf *buffer
@@ -213,7 +212,7 @@ func compareRows(r1, r2 []cell) (bool, int) {
 // commitBuffer updates the terminal display to reflect current buffer.
 // TODO Instead of erasing w.oldBuf entirely and then draw buf, compute a
 // delta between w.oldBuf and buf
-func (w *writer) commitBuffer(buf *buffer, fullRefresh bool) error {
+func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 	if buf.width != w.oldBuf.width && w.oldBuf.cells != nil {
 		// Width change, force full refresh
 		w.oldBuf.cells = nil
@@ -228,9 +227,35 @@ func (w *writer) commitBuffer(buf *buffer, fullRefresh bool) error {
 	}
 	bytesBuf.WriteString("\r")
 
+	// style of last written cell.
+	style := ""
+
+	writeCells := func(cs []cell) {
+		for _, c := range cs {
+			if c.width > 0 && c.style != style {
+				fmt.Fprintf(bytesBuf, "\033[m\033[%sm", c.style)
+				style = c.style
+			}
+			bytesBuf.WriteString(string(c.rune))
+		}
+	}
+
+	if bufNoti != nil {
+		// Logger.Printf("going to write %d lines of notifications", len(bufNoti.cells))
+
+		// Write notifications
+		for _, line := range bufNoti.cells {
+			writeCells(line)
+			bytesBuf.WriteString("\033[K\n")
+		}
+		// XXX Hacky.
+		if len(w.oldBuf.cells) > 0 {
+			w.oldBuf.cells = w.oldBuf.cells[1:]
+		}
+	}
+
 	// Logger.Printf("going to write %d lines, oldBuf had %d", len(buf.cells), len(w.oldBuf.cells))
 
-	style := ""
 	for i, line := range buf.cells {
 		if i > 0 {
 			bytesBuf.WriteString("\n")
@@ -347,7 +372,20 @@ func renderNavColumn(nc *navColumn, w, h int) *buffer {
 func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 	height, width := sys.GetWinsize(int(w.file.Fd()))
 
-	var bufLine, bufMode, bufTips, bufListing, buf *buffer
+	var bufNoti, bufLine, bufMode, bufTips, bufListing, buf *buffer
+	// butNot
+	if len(es.notifications) > 0 {
+		b := newBuffer(width)
+		bufNoti = b
+		for i, not := range es.notifications {
+			if i > 0 {
+				bufNoti.newline()
+			}
+			bufNoti.writes(not, "")
+		}
+		es.notifications = nil
+	}
+
 	// bufLine
 	b := newBuffer(width)
 	bufLine = b
@@ -542,5 +580,5 @@ tokens:
 	buf.extend(bufTips)
 	buf.extend(bufListing)
 
-	return w.commitBuffer(buf, fullRefresh)
+	return w.commitBuffer(bufNoti, buf, fullRefresh)
 }

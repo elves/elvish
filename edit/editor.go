@@ -40,6 +40,7 @@ type editorState struct {
 	tokens                []Token
 	prompt, rprompt, line string
 	dot                   int
+	notifications         []string
 	tips                  []string
 	mode                  bufferMode
 	completion            *completion
@@ -109,6 +110,10 @@ func (ed *Editor) flash() {
 
 func (ed *Editor) pushTip(more string) {
 	ed.tips = append(ed.tips, more)
+}
+
+func (ed *Editor) notify(msg string) {
+	ed.notifications = append(ed.notifications, msg)
 }
 
 func (ed *Editor) refresh(fullRefresh bool) error {
@@ -299,9 +304,9 @@ MainLoop:
 				ed.pushTip(fmt.Sprintf("ignored signal %s", sig))
 			}
 		case err := <-ed.reader.ErrorChan():
-			ed.pushTip(err.Error())
+			ed.notify(err.Error())
 		case mouse := <-ed.reader.MouseChan():
-			ed.pushTip(fmt.Sprint("mouse:", mouse))
+			ed.notify(fmt.Sprint("mouse:", mouse))
 		case <-ed.reader.CPRChan():
 			// Ignore CPR
 		case k := <-ed.reader.KeyChan():
