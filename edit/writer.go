@@ -288,7 +288,7 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 	cursor := buf.cursor()
 	bytesBuf.Write(deltaPos(cursor, buf.dot))
 
-	// Logger.Printf("going to write %q", bytesBuf.String())
+	Logger.Printf("going to write %q", bytesBuf.String())
 
 	_, err := w.file.Write(bytesBuf.Bytes())
 	if err != nil {
