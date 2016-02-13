@@ -306,7 +306,7 @@ MainLoop:
 		case err := <-ed.reader.ErrorChan():
 			ed.notify("reader error: %s", err.Error())
 		case mouse := <-ed.reader.MouseChan():
-			ed.addTip("mouse: %#v", mouse)
+			ed.addTip("mouse: %+v", mouse)
 		case <-ed.reader.CPRChan():
 			// Ignore CPR
 		case k := <-ed.reader.KeyChan():
