@@ -97,9 +97,9 @@ func (s *Store) LastCmd(upto int, prefix string, uniq bool) (int, string, error)
 	return convertCmd(row)
 }
 
-// FirstCmd finds the first command after the given sequence number (inclusive)
+// FirstCmd finds the first command after the given sequence number (exclusive)
 // with the given prefix.
 func (s *Store) FirstCmd(from int, prefix string, uniq bool) (int, string, error) {
-	row := s.db.QueryRow(`select rowid, content from cmd where rowid >= ? and substr(content, 1, ?) = ? and (? or lastAmongDup) order by rowid asc limit 1`, from, len(prefix), prefix, !uniq)
+	row := s.db.QueryRow(`select rowid, content from cmd where rowid > ? and substr(content, 1, ?) = ? and (? or lastAmongDup) order by rowid asc limit 1`, from, len(prefix), prefix, !uniq)
 	return convertCmd(row)
 }
