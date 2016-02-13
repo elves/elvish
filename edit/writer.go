@@ -183,7 +183,8 @@ func (w *writer) resetOldBuf() {
 }
 
 // deltaPos calculates the escape sequence needed to move the cursor from one
-// position to another.
+// position to another. It use relative movements to move to the destination
+// line and absolute movement to move to the destination column.
 func deltaPos(from, to pos) []byte {
 	buf := new(bytes.Buffer)
 	if from.line < to.line {
@@ -268,19 +269,29 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 				continue
 			}
 		}
-		// Move to the first differing column and erase the rest of line
-		fmt.Fprintf(bytesBuf, "\033[%dG\033[K", widthOfCells(line[:j])+1)
+		// Move to the first differing column if necessary.
+		firstCol := widthOfCells(line[:j])
+		if firstCol != 0 {
+			fmt.Fprintf(bytesBuf, "\033[%dG", firstCol+1)
+		}
+		// Erase the rest of the line if necessary.
+		if i < len(w.oldBuf.cells) && j < len(w.oldBuf.cells[i]) {
+			bytesBuf.WriteString("\033[K")
+		}
 		for _, c := range line[j:] {
 			if c.width > 0 && c.style != style {
-				fmt.Fprintf(bytesBuf, "\033[m\033[%sm", c.style)
+				fmt.Fprintf(bytesBuf, "\033[;%sm", c.style)
 				style = c.style
 			}
 			bytesBuf.WriteString(string(c.rune))
 		}
 	}
-	// If the old buffer is higher, erase old content
 	if len(w.oldBuf.cells) > len(buf.cells) || fullRefresh {
-		bytesBuf.WriteString("\033[J")
+		// If the old buffer is higher, erase old content.
+		// Note that we cannot simply write \033[J, because if the cursor is
+		// just over the last column -- which is precisely the case if we have a
+		// rprompt, \033[J will also erase the last column.
+		bytesBuf.WriteString("\n\033[J\033[A")
 	}
 	if style != "" {
 		bytesBuf.WriteString("\033[m")
