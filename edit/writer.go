@@ -280,7 +280,7 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 	}
 	// If the old buffer is higher, erase old content
 	if len(w.oldBuf.cells) > len(buf.cells) || fullRefresh {
-		bytesBuf.WriteString("\n\033[J\033[A")
+		bytesBuf.WriteString("\033[J")
 	}
 	if style != "" {
 		bytesBuf.WriteString("\033[m")
