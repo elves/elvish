@@ -2,7 +2,6 @@
 
 [![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
 [![Build Status on Travis](https://travis-ci.org/elves/elvish.svg?branch=master)](https://travis-ci.org/elves/elvish)
-[![Build Status on drone.io](https://drone.io/github.com/elves/elvish/status.png)](https://drone.io/github.com/elves/elvish/latest)
 
 This project aims to explore the potentials of the Unix shell. It is a work in
 progress; things will change without warning.
@@ -120,7 +119,7 @@ Prebuilt binaries are available for 64-bit [Linux](https://dl.elvish.io/elvish-l
 
 ### Building It Yourself
 
-Go >= 1.4 is required. This repository is a go-getable package.
+Go >= 1.5 is required. This repository is a go-getable package.
 
 Linux and FreeBDS are fully supported. It is likely to work on other BSDs and
 Mac OS X. Windows is **not** supported yet.
