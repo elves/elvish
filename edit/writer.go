@@ -375,14 +375,8 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 	var bufNoti, bufLine, bufMode, bufTips, bufListing, buf *buffer
 	// butNot
 	if len(es.notifications) > 0 {
-		b := newBuffer(width)
-		bufNoti = b
-		for i, not := range es.notifications {
-			if i > 0 {
-				bufNoti.newline()
-			}
-			bufNoti.writes(not, "")
-		}
+		bufNoti = newBuffer(width)
+		bufNoti.writes(strings.Join(es.notifications, "\n"), "")
 		es.notifications = nil
 	}
 
@@ -465,22 +459,29 @@ tokens:
 	// bufTips
 	// TODO tips is assumed to contain no newlines.
 	if len(es.tips) > 0 {
-		b := newBuffer(width)
-		bufTips = b
-		b.writes(TrimWcWidth(strings.Join(es.tips, ", "), width), styleForTip)
+		bufTips = newBuffer(width)
+		bufTips.writes(strings.Join(es.tips, "\n"), styleForTip)
 	}
 
 	hListing := 0
 	// Trim lines and determine the maximum height for bufListing
+	// TODO come up with a UI to tell the user that something is not shown.
 	switch {
 	case height >= lines(bufNoti, bufLine, bufMode, bufTips):
 		hListing = height - lines(bufLine, bufMode, bufTips)
 	case height >= lines(bufNoti, bufLine, bufTips):
 		bufMode = nil
 	case height >= lines(bufNoti, bufLine):
-		bufTips, bufMode = nil, nil
+		bufMode = nil
+		if bufTips != nil {
+			bufTips.trimToLines(0, height-lines(bufNoti, bufLine))
+		}
 	case height >= lines(bufLine):
-		bufNoti, bufTips, bufMode = nil, nil, nil
+		bufTips, bufMode = nil, nil
+		if bufNoti != nil {
+			n := len(bufNoti.cells)
+			bufNoti.trimToLines(n-(height-lines(bufLine)), n)
+		}
 	case height >= 1:
 		bufNoti, bufTips, bufMode = nil, nil, nil
 		dotLine := bufLine.dot.line
