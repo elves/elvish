@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -130,7 +129,7 @@ func complArgInner(head string, ed *Editor, formHead bool) []*candidate {
 	cands := []*candidate{}
 
 	if err != nil {
-		ed.pushTip(fmt.Sprintf("cannot list directory %s: %v", dir, err))
+		ed.addTip("cannot list directory %s: %v", dir, err)
 		return cands
 	}
 

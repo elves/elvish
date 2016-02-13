@@ -1,9 +1,6 @@
 package edit
 
-import (
-	"fmt"
-	"unicode/utf8"
-)
+import "unicode/utf8"
 
 type styled struct {
 	text  string
@@ -68,9 +65,9 @@ func startCompletionInner(ed *Editor, completePrefix bool) {
 	}
 
 	if c.candidates == nil {
-		ed.pushTip("unsupported completion :(")
+		ed.addTip("unsupported completion :(")
 	} else if len(c.candidates) == 0 {
-		ed.pushTip(fmt.Sprintf("no candidate for %s", c.completer))
+		ed.addTip("no candidate for %s", c.completer)
 	} else {
 		if completePrefix {
 			// If there is a non-empty longest common prefix, insert it and

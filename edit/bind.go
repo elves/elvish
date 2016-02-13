@@ -164,8 +164,7 @@ func (c EvalCaller) Call(ed *Editor) {
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor]", "", ports)
 	ex := ec.PCall(c.Caller, []eval.Value{})
 	if ex != nil {
-		// XXX will disappear very quickly
-		ed.pushTip("function error: " + ex.Error())
+		ed.notify("function error: %s", ex.Error())
 	}
 
 	out.Close()

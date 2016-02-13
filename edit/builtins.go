@@ -102,7 +102,7 @@ func startInsert(ed *Editor) {
 
 func defaultCommand(ed *Editor) {
 	k := ed.lastKey
-	ed.pushTip(fmt.Sprintf("Unbound: %s", k))
+	ed.addTip("Unbound: %s", k)
 }
 
 func startCommand(ed *Editor) {
@@ -232,7 +232,7 @@ func insertLastWord(ed *Editor) {
 	if err == nil {
 		ed.insertAtDot(lastWord(lastLine))
 	} else {
-		ed.pushTip(err.Error())
+		ed.addTip("db error: %s", err.Error())
 	}
 }
 
@@ -291,7 +291,7 @@ func defaultInsert(ed *Editor) {
 	if k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune) {
 		insertKey(ed)
 	} else {
-		ed.pushTip(fmt.Sprintf("Unbound: %s", k))
+		ed.addTip("Unbound: %s", k)
 	}
 }
 
@@ -337,7 +337,7 @@ func startHistory(ed *Editor) {
 	if ed.prevHistory() {
 		ed.mode = modeHistory
 	} else {
-		ed.pushTip("no matching history item")
+		ed.addTip("no matching history item")
 	}
 }
 

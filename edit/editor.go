@@ -108,12 +108,12 @@ func (ed *Editor) flash() {
 	// TODO implement fish-like flash effect
 }
 
-func (ed *Editor) pushTip(more string) {
-	ed.tips = append(ed.tips, more)
+func (ed *Editor) addTip(format string, args ...interface{}) {
+	ed.tips = append(ed.tips, fmt.Sprintf(format, args))
 }
 
-func (ed *Editor) notify(msg string) {
-	ed.notifications = append(ed.notifications, msg)
+func (ed *Editor) notify(format string, args ...interface{}) {
+	ed.notifications = append(ed.notifications, fmt.Sprintf(format, args...))
 }
 
 func (ed *Editor) refresh(fullRefresh bool) error {
@@ -129,7 +129,7 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 			_, err := ed.evaler.Compile(name, src, n)
 			if err != nil {
 				if err, ok := err.(*errutil.ContextualError); ok {
-					ed.pushTip("compiler error highlighted")
+					ed.addTip("compiler error highlighted")
 					p := err.Pos()
 					for i, token := range ed.tokens {
 						if token.Node.Begin() <= p && p < token.Node.End() {
@@ -301,19 +301,19 @@ MainLoop:
 			case syscall.SIGCHLD:
 				// ignore
 			default:
-				ed.pushTip(fmt.Sprintf("ignored signal %s", sig))
+				ed.addTip("ignored signal %s", sig)
 			}
 		case err := <-ed.reader.ErrorChan():
-			ed.notify(err.Error())
+			ed.notify("reader error: %s", err.Error())
 		case mouse := <-ed.reader.MouseChan():
-			ed.pushTip(fmt.Sprint("mouse:", mouse))
+			ed.addTip("mouse: %#v", mouse)
 		case <-ed.reader.CPRChan():
 			// Ignore CPR
 		case k := <-ed.reader.KeyChan():
 		lookupKey:
 			keyBinding, ok := keyBindings[ed.mode]
 			if !ok {
-				ed.pushTip("No binding for current mode")
+				ed.addTip("No binding for current mode")
 				continue
 			}
 
