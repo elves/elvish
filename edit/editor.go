@@ -109,7 +109,7 @@ func (ed *Editor) flash() {
 }
 
 func (ed *Editor) addTip(format string, args ...interface{}) {
-	ed.tips = append(ed.tips, fmt.Sprintf(format, args))
+	ed.tips = append(ed.tips, fmt.Sprintf(format, args...))
 }
 
 func (ed *Editor) notify(format string, args ...interface{}) {
