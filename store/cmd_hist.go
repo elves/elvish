@@ -21,14 +21,17 @@ func init() {
 
 func addLastAmongDup(tx *sql.Tx) error {
 	// Upgrade from early version where lastAmongDup is missing.
-	rows, err := tx.Query("pragma table_info(cmd)")
+	rows, err := tx.Query("select * from cmd limit 1")
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
+
 	hasLastAmongDup, err := hasColumn(rows, "lastAmongDup")
 	if err != nil {
 		return err
 	}
+
 	if !hasLastAmongDup {
 		_, err := tx.Exec("alter table cmd add column lastAmongDup bool")
 		if err != nil {
@@ -39,7 +42,7 @@ func addLastAmongDup(tx *sql.Tx) error {
 			return err
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 // NextCmdSeq returns the next sequence number of the command history.
