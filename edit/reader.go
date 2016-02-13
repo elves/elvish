@@ -172,43 +172,57 @@ func (rd *Reader) readOne(r rune) {
 		}
 		switch r2 {
 		case '[':
-			// CSI style function key sequence, looks like [\d;]*[^\d;]
-			// Read numeric parameters (if any)
+			// CSI style function key sequence.
+			r = readRune()
+			if r == runeTimeout || r == runeReadError {
+				k = Key{'[', Alt}
+				return
+			}
+
 			nums := make([]int, 0, 2)
-			isMouse := false
+			var starter rune
+
+			// Read an optional starter.
+			switch r {
+			case 'M', '<':
+				starter = r
+				r = readRune()
+			}
 		CSISeq:
 			for {
-				r = readRune()
-				// Timeout can only happen at first readRune.
-				if r == runeTimeout || r == runeReadError {
-					k = Key{'[', Alt}
-					return
-				}
 				switch {
 				case r == ';':
 					nums = append(nums, 0)
-				case r == '<':
-					isMouse = true
 				case '0' <= r && r <= '9':
 					if len(nums) == 0 {
 						nums = append(nums, 0)
 					}
 					cur := len(nums) - 1
 					nums[cur] = nums[cur]*10 + int(r-'0')
-				default:
+				case r == runeTimeout:
+					// Incomplete CSI.
+					badSeq("Incomplete CSI")
+					return
+				case r == runeReadError:
+					// TODO Also complain about incomplte CSI.
+					return
+				default: // Treat as a terminator.
 					break CSISeq
 				}
+
+				r = readRune()
 			}
-			if r == 'R' {
-				// CPR
+			if starter == 0 && r == 'R' {
+				// Cursor position report.
 				if len(nums) != 2 {
 					badSeq("bad CPR")
 					return
 				}
 				cpr = pos{nums[0], nums[1]}
-			} else if isMouse && (r == 'm' || r == 'M') {
+			} else if starter == '<' && (r == 'm' || r == 'M') {
+				// SGR-style mouse event.
 				if len(nums) != 3 {
-					badSeq("bad mouse event")
+					badSeq("bad SGR mouse event")
 					return
 				}
 				down := r == 'M'
