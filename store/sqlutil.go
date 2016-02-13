@@ -7,19 +7,8 @@ func hasColumn(rows *sql.Rows, colname string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	dests := make([]interface{}, len(cols))
-	var name string
-	for i, col := range cols {
-		if col == "name" {
-			dests[i] = &name
-		} else {
-			dests[i] = new(interface{})
-		}
-	}
-	defer rows.Close()
-	for rows.Next() {
-		rows.Scan(dests...)
-		if name == colname {
+	for _, col := range cols {
+		if col == colname {
 			return true, nil
 		}
 	}
@@ -35,9 +24,9 @@ func transaction(db *sql.DB, f func(*sql.Tx) error) error {
 	}
 	err = f(tx)
 	if err != nil {
-		tx.Rollback()
+		return tx.Rollback()
 	} else {
-		tx.Commit()
+		return tx.Commit()
 	}
 	return err
 }
