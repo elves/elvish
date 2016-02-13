@@ -28,7 +28,7 @@ const (
 	outChanLeader = "▶ "
 )
 
-var Logger = logutil.GetLogger("main")
+var Logger = logutil.GetLogger("[main] ")
 
 func usage() {
 	fmt.Println("usage: elvish [flags] [script]")
