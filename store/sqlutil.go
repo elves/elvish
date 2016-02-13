@@ -25,3 +25,19 @@ func hasColumn(rows *sql.Rows, colname string) (bool, error) {
 	}
 	return false, rows.Err()
 }
+
+// transaction creates a Tx and calls f on it. It commits or rollbacks the
+// transaction depending on whether f suceeded.
+func transaction(db *sql.DB, f func(*sql.Tx) error) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	err = f(tx)
+	if err != nil {
+		tx.Rollback()
+	} else {
+		tx.Commit()
+	}
+	return err
+}

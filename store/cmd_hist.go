@@ -15,17 +15,7 @@ func init() {
 		if err != nil {
 			return err
 		}
-		tx, err := db.Begin()
-		if err != nil {
-			return err
-		}
-		err = addLastAmongDup(tx)
-		if err != nil {
-			tx.Rollback()
-		} else {
-			tx.Commit()
-		}
-		return err
+		return transaction(db, addLastAmongDup)
 	}
 }
 
