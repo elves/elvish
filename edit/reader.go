@@ -34,7 +34,8 @@ type Reader struct {
 
 type mouseEvent struct {
 	pos
-	down   bool
+	down bool
+	// Number of the button, 0-based. -1 for unknown.
 	button int
 	mod    Mod
 }
@@ -184,9 +185,36 @@ func (rd *Reader) readOne(r rune) {
 
 			// Read an optional starter.
 			switch r {
-			case 'M', '<':
+			case '<':
 				starter = r
 				r = readRune()
+			case 'M':
+				// Mouse event.
+				cb := readRune()
+				if cb == runeTimeout || cb == runeReadError {
+					badSeq("Incomplete mouse event")
+					return
+				}
+				cx := readRune()
+				if cx == runeTimeout || cx == runeReadError {
+					badSeq("Incomplete mouse event")
+					return
+				}
+				cy := readRune()
+				if cy == runeTimeout || cy == runeReadError {
+					badSeq("Incomplete mouse event")
+					return
+				}
+				down := true
+				button := int(cb & 3)
+				if button == 3 {
+					down = false
+					button = -1
+				}
+				mod := mouseModify(int(cb))
+				mouse = mouseEvent{
+					pos{int(cy) - 32, int(cx) - 32}, down, button, mod}
+				return
 			}
 		CSISeq:
 			for {
@@ -226,18 +254,8 @@ func (rd *Reader) readOne(r rune) {
 					return
 				}
 				down := r == 'M'
-				n0 := nums[0]
-				button := n0 & 3
-				mod := Mod(0)
-				if n0&4 != 0 {
-					mod |= Shift
-				}
-				if n0&8 != 0 {
-					mod |= Alt
-				}
-				if n0&16 != 0 {
-					mod |= Ctrl
-				}
+				button := nums[0] & 3
+				mod := mouseModify(nums[0])
 				mouse = mouseEvent{pos{nums[2], nums[1]}, down, button, mod}
 			} else {
 				k = parseCSI(nums, r, currentSeq)
@@ -376,4 +394,18 @@ func xtermModify(k Key, mod int, seq string) Key {
 		return Key{}
 	}
 	return k
+}
+
+func mouseModify(n int) Mod {
+	var mod Mod
+	if n&4 != 0 {
+		mod |= Shift
+	}
+	if n&8 != 0 {
+		mod |= Alt
+	}
+	if n&16 != 0 {
+		mod |= Ctrl
+	}
+	return mod
 }
