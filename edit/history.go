@@ -35,7 +35,7 @@ func (ed *Editor) prevHistory() bool {
 func (ed *Editor) nextHistory() bool {
 	if ed.store != nil {
 		// Persistent history
-		i, line, err := ed.store.FirstCmd(ed.history.current, ed.history.prefix, true)
+		i, line, err := ed.store.FirstCmd(ed.history.current+1, ed.history.prefix, true)
 		if err == nil {
 			ed.history.jump(i, line)
 			return true
