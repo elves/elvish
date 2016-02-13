@@ -109,7 +109,7 @@ func (rd *Reader) readOne(r rune) {
 	var cpr pos
 	var mouse mouseEvent
 	var err error
-	var currentSeq string
+	currentSeq := string(r)
 
 	badSeq := func(msg string) {
 		err = fmt.Errorf("%s: %q", msg, currentSeq)
