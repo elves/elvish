@@ -467,33 +467,13 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOp {
 
 		// Logger.Printf("concatenating %v with %d more", vs, len(ops)-1)
 
-		for k, op := range ops[1:] {
+		for _, op := range ops[1:] {
 			us := op(ec)
-			var newvs []Value
-			if k > 0 && len(us) == 1 {
-				// Reuse vs only when it is an indermediate result (k > 0). If
-				// we omit this check we can modifying the underlying []Value of
-				// literals. (See issue #99).
-				newvs = vs
-			} else {
-				newvs = make([]Value, len(vs)*len(us))
-			}
-			for i, v := range vs {
-				for j, u := range us {
-					newvs[i*len(us)+j] = cat(v, u, begins[k])
-				}
-			}
-			vs = newvs
+			vs = outerProduct(vs, us, cat)
 			// Logger.Printf("with %v => %v", us, vs)
 		}
 		if tilde {
-			var newvs []Value
-			if len(ops) > 1 {
-				// Modify vs in place if we know it is an intermediate result.
-				newvs = vs
-			} else {
-				newvs = make([]Value, len(vs))
-			}
+			newvs := make([]Value, len(vs))
 			for i, v := range vs {
 				newvs[i] = doTilde(v)
 			}
@@ -522,7 +502,7 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOp {
 	}
 }
 
-func cat(lhs, rhs Value, p int) Value {
+func cat(lhs, rhs Value) Value {
 	switch lhs := lhs.(type) {
 	case String:
 		switch rhs := rhs.(type) {
@@ -548,6 +528,17 @@ func cat(lhs, rhs Value, p int) Value {
 	}
 	throw(fmt.Errorf("unsupported concat: %s and %s", lhs.Kind(), rhs.Kind()))
 	panic("unreachable")
+}
+
+func outerProduct(vs []Value, us []Value, f func(Value, Value) Value) []Value {
+	ws := make([]Value, len(vs)*len(us))
+	nu := len(us)
+	for i, v := range vs {
+		for j, u := range us {
+			ws[i*nu+j] = f(v, u)
+		}
+	}
+	return ws
 }
 
 func doTilde(v Value) Value {
