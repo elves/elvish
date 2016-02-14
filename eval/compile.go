@@ -194,6 +194,11 @@ func (cp *compiler) form(n *parse.Form) Op {
 		}
 	}
 
+	if n.Control != nil {
+		cp.errorf(n.Control.Begin(), "control structure not yet implemented")
+		return func(ec *EvalCtx) {}
+	}
+
 	headStr, ok := oneString(n.Head)
 	if ok {
 		compileForm, ok := builtinSpecials[headStr]

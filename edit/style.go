@@ -41,6 +41,19 @@ var styleForSep = map[string]string{
 	"}":  "1",
 
 	"&": "1",
+
+	"if":    "33",
+	"then":  "33",
+	"elif":  "33",
+	"else":  "33",
+	"fi":    "33",
+	"while": "33",
+	"do":    "33",
+	"done":  "33",
+	"for":   "33",
+	"in":    "33",
+	"begin": "33",
+	"end":   "33",
 }
 
 // Styles for semantic coloring.

@@ -31,6 +31,14 @@ var goodCases = []struct {
 	// Lots of unnecessary whitespaces
 	{"  ;\n\n  ls \t ;\n", ast{"Chunk", fs{"Pipelines": []string{"ls \t "}}}},
 
+	// Control structures.
+	/*
+		{"if true; then echo then; else echo else; fi",
+			ast{"Chunk/Pipeline/Form", fs{
+				"Control": "233",
+			}}},
+	*/
+
 	// Form
 	{"ls x y", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "ls",

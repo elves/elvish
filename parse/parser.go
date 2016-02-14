@@ -13,11 +13,12 @@ import (
 //
 // NOTE: The str member is assumed to be valid UF-8.
 type parser struct {
-	src     string
-	pos     int
-	overEOF int
-	cutsets []map[rune]int
-	errors  *errutil.Errors
+	src      string
+	pos      int
+	overEOF  int
+	cutsets  []map[rune]int
+	controls int
+	errors   *errutil.Errors
 }
 
 const eof rune = -1
@@ -41,6 +42,26 @@ func (ps *parser) hasPrefix(prefix string) bool {
 	return strings.HasPrefix(ps.src[ps.pos:], prefix)
 }
 
+// findWord look aheads a series of runes in [a-z] followed by ' ', '\t' or
+// '\n'. If the lookahead fails, it returns an empty string. It is useful for
+// looking for command leaders.
+func (ps *parser) findPossibleLeader() string {
+	rest := ps.src[ps.pos:]
+	i := strings.IndexFunc(rest, func(r rune) bool {
+		return r < 'a' || r > 'z'
+	})
+	if i == -1 {
+		// The whole rest is just one possible leader.
+		return rest
+	}
+	switch rest[i] {
+	case ' ', '\t', '\n':
+		return rest[:i]
+	default:
+		return ""
+	}
+}
+
 func (ps *parser) next() rune {
 	if ps.pos == len(ps.src) {
 		ps.overEOF++
@@ -61,6 +82,14 @@ func (ps *parser) backup() {
 	}
 	_, s := utf8.DecodeLastRuneInString(ps.src[:ps.pos])
 	ps.pos -= s
+}
+
+func (ps *parser) advance(c int) {
+	ps.pos += c
+	if ps.pos > len(ps.src) {
+		ps.overEOF = ps.pos - len(ps.src)
+		ps.pos = len(ps.src)
+	}
 }
 
 func (ps *parser) error(e error) {

@@ -2,17 +2,18 @@
 package parse
 
 //go:generate ./boilerplate.py
-//go:generate stringer -type=PrimaryType,RedirMode -output=string.go
+//go:generate stringer -type=PrimaryType,RedirMode,ControlKinD -output=string.go
 
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"unicode"
 )
 
 // Parse parses elvish source.
 func Parse(src string) (*Chunk, error) {
-	ps := &parser{src, 0, 0, []map[rune]int{{}}, nil}
+	ps := &parser{src, 0, 0, []map[rune]int{{}}, 0, nil}
 	bn := parseChunk(ps)
 	if ps.pos != len(src) {
 		ps.error(errUnexpectedRune)
@@ -26,19 +27,27 @@ func Parse(src string) (*Chunk, error) {
 
 // Errors.
 var (
-	errUnexpectedRune       = errors.New("unexpected rune")
-	errShouldBeForm         = newError("", "form")
-	errDuplicateExitusRedir = newError("duplicate exitus redir")
-	errBadRedirSign         = newError("bad redir sign", "'<'", "'>'", "'>>'", "'<>'")
-	errShouldBeFD           = newError("", "a composite term representing fd")
-	errShouldBeFilename     = newError("", "a composite term representing filename")
-	errShouldBeArray        = newError("", "spaced")
-	errStringUnterminated   = newError("string not terminated")
-	errInvalidEscape        = newError("invalid escape sequence")
-	errInvalidEscapeOct     = newError("invalid escape sequence", "octal digit")
-	errInvalidEscapeHex     = newError("invalid escape sequence", "hex digit")
-	errInvalidEscapeControl = newError("invalid control sequence", "a rune between @ (0x40) and _(0x5F)")
-	errShouldBePrimary      = newError("",
+	errUnexpectedRune         = errors.New("unexpected rune")
+	errShouldBeForm           = newError("", "form")
+	errDuplicateExitusRedir   = newError("duplicate exitus redir")
+	errShouldBeThen           = newError("", "then")
+	errShouldBeElifOrElseOrFi = newError("", "elif", "else", "fi")
+	errShouldBeFi             = newError("", "fi")
+	errShouldBeDo             = newError("", "do")
+	errShouldBeDone           = newError("", "done")
+	errShouldBeIn             = newError("", "in")
+	errShouldBePipelineSep    = newError("", "';'", "newline")
+	errShouldBeEnd            = newError("", "end")
+	errBadRedirSign           = newError("bad redir sign", "'<'", "'>'", "'>>'", "'<>'")
+	errShouldBeFD             = newError("", "a composite term representing fd")
+	errShouldBeFilename       = newError("", "a composite term representing filename")
+	errShouldBeArray          = newError("", "spaced")
+	errStringUnterminated     = newError("string not terminated")
+	errInvalidEscape          = newError("invalid escape sequence")
+	errInvalidEscapeOct       = newError("invalid escape sequence", "octal digit")
+	errInvalidEscapeHex       = newError("invalid escape sequence", "hex digit")
+	errInvalidEscapeControl   = newError("invalid control sequence", "a rune between @ (0x40) and _(0x5F)")
+	errShouldBePrimary        = newError("",
 		"single-quoted string", "double-quoted string", "bareword")
 	errShouldBeVariableName       = newError("", "variable name")
 	errShouldBeRBracket           = newError("", "']'")
@@ -60,6 +69,18 @@ type Chunk struct {
 func (bn *Chunk) parse(ps *parser) {
 	bn.parseSeps(ps)
 	for startsPipeline(ps.peek()) {
+		leader, starter := findLeader(ps)
+		if leader != "" && !starter && ps.controls > 0 {
+			// We found a non-starting leader and there is a control block that
+			// has not been closed. Stop parsing this chunk. We don't check the
+			// validity of the leader; the checking is done where the control
+			// block is parsed (e.g. (*Form).parseIf).
+			break
+		}
+		// We have more chance to check for validity of the leader, but
+		// eventually it will be checked in (*Form).parse. So we don't check it
+		// here, for more uniform error reporting and recovery.
+
 		bn.addToPipelines(parsePipeline(ps))
 		if bn.parseSeps(ps) == 0 {
 			break
@@ -126,10 +147,27 @@ func startsPipeline(r rune) bool {
 	return startsForm(r)
 }
 
-// Form = { Space } { { Assignment } { Space } } Compound { Space } { ( Compound | MapPair | Redir | ExitusRedir ) { Space } }
+// findLeader look aheads a command leader. It returns the leader and whether
+// it starts a control block.
+func findLeader(ps *parser) (string, bool) {
+	switch leader := ps.findPossibleLeader(); leader {
+	case "if", "while", "for", "do", "begin":
+		// Starting leaders are always legal.
+		return leader, true
+	case "then", "elif", "else", "fi", "done", "end":
+		return leader, false
+	default:
+		// There is no leader.
+		return "", false
+	}
+}
+
+// Form = { Space } { { Assignment } { Space } }
+//        { Compound | Control } { Space } { ( Compound | MapPair | Redir | ExitusRedir ) { Space } }
 type Form struct {
 	node
 	Assignments []*Assignment
+	Control     *Control
 	Head        *Compound
 	Args        []*Compound
 	NamedArgs   []*MapPair
@@ -142,14 +180,24 @@ func (fn *Form) parse(ps *parser) {
 	for fn.tryAssignment(ps) {
 		parseSpaces(fn, ps)
 	}
-	if !startsCompound(ps.peek()) {
+	leader, starter := findLeader(ps)
+	if leader != "" {
+		// Parse Control.
+		if starter {
+			fn.setControl(parseControl(ps, leader))
+		} else {
+			ps.error(fmt.Errorf("bogus command leader %q ignored", leader))
+		}
+	} else if startsCompound(ps.peek()) {
+		// Parse Head.
+		fn.setHead(parseCompound(ps))
+		parseSpaces(fn, ps)
+	} else {
 		if len(fn.Assignments) > 0 {
 			return
 		}
 		ps.error(errShouldBeCompound)
 	}
-	fn.setHead(parseCompound(ps))
-	parseSpaces(fn, ps)
 
 	for {
 		r := ps.peek()
@@ -203,6 +251,9 @@ func (fn *Form) tryAssignment(ps *parser) bool {
 	return true
 }
 
+func (fn *Form) parseIf(ps *parser) {
+}
+
 func startsForm(r rune) bool {
 	return isSpace(r) || startsCompound(r)
 }
@@ -223,6 +274,128 @@ func (an *Assignment) parse(ps *parser) {
 		ps.error(errShouldBeEqual)
 	}
 	an.setSrc(parseCompound(ps))
+}
+
+// Control = IfControl | WhileControl | ForControl | BeginControl
+// IfControl = If Chunk Then Chunk { Elif Chunk Then Chunk } [ Else Chunk ] Fi
+// WhileControl = While Chunk Do Chunk [ Else Chunk ] Done
+// ForControl = For Primary In Array PipelineSep Do Chunk [ Else Chunk ] Done
+// BeginControl = Begin Chunk Done
+// If = "if" Space { Space }
+// (Similiar for Then, Elif, Else, Fi, While, Do, Done, For, Begin, End)
+type Control struct {
+	node
+	Kind           ControlKind
+	Condition      *Chunk   // Valid for IfControl and WhileControl.
+	Iterator       *Primary // Valid for ForControl.
+	Array          *Array   // Valid for ForControl.
+	Body           *Chunk   // Valid for all.
+	ElifConditions []*Chunk // Valid for IfControl.
+	ElifBodies     []*Chunk // Valid for IfControl.
+	ElseBody       *Chunk   // Valid for IfControl, WhileControl and ForControl.
+}
+
+// ControlKind identifies which control structure a Control represents.
+type ControlKind int
+
+// Possible values of ControlKind.
+const (
+	BadControl ControlKind = iota
+	IfControl
+	WhileControl
+	ForControl
+	BeginControl
+)
+
+func (ctrl *Control) parse(ps *parser, leader string) {
+	ps.advance(len(leader))
+	addSep(ctrl, ps)
+
+	ps.controls++
+	defer func() { ps.controls-- }()
+
+	consumeLeader := func() string {
+		leader, _ := findLeader(ps)
+		if len(leader) > 0 {
+			ps.advance(len(leader))
+			addSep(ctrl, ps)
+		}
+		return leader
+	}
+
+	doElseDone := func() {
+		if consumeLeader() != "do" {
+			ps.error(errShouldBeDo)
+		}
+		ctrl.setBody(parseChunk(ps))
+		if leader, _ := findLeader(ps); leader == "else" {
+			consumeLeader()
+			ctrl.setElseBody(parseChunk(ps))
+		}
+		if consumeLeader() != "done" {
+			ps.error(errShouldBeDone)
+		}
+	}
+
+	switch leader {
+	case "if":
+		ctrl.Kind = IfControl
+		ctrl.setCondition(parseChunk(ps))
+		if consumeLeader() != "then" {
+			ps.error(errShouldBeThen)
+		}
+		ctrl.setBody(parseChunk(ps))
+	Elifs:
+		for {
+			switch consumeLeader() {
+			case "fi":
+				break Elifs
+			case "elif":
+				ctrl.addToElifConditions(parseChunk(ps))
+				if consumeLeader() != "then" {
+					ps.error(errShouldBeThen)
+				}
+				ctrl.addToElifBodies(parseChunk(ps))
+			case "else":
+				ctrl.setElseBody(parseChunk(ps))
+				if consumeLeader() != "fi" {
+					ps.error(errShouldBeFi)
+				}
+				break Elifs
+			default:
+				ps.error(errShouldBeElifOrElseOrFi)
+				break Elifs
+			}
+		}
+	case "while":
+		ctrl.Kind = WhileControl
+		ctrl.setCondition(parseChunk(ps))
+		doElseDone()
+	case "for":
+		ctrl.Kind = ForControl
+		parseSpaces(ctrl, ps)
+		ctrl.setIterator(parsePrimary(ps))
+		parseSpaces(ctrl, ps)
+		if consumeLeader() != "in" {
+			ps.error(errShouldBeIn)
+		}
+		ctrl.setArray(parseArray(ps))
+		switch ps.peek() {
+		case '\n', ';':
+			ps.next()
+		default:
+			ps.error(errShouldBePipelineSep)
+		}
+		doElseDone()
+	case "begin":
+		ctrl.Kind = BeginControl
+		ctrl.setBody(parseChunk(ps))
+		if consumeLeader() != "end" {
+			ps.error(errShouldBeEnd)
+		}
+	default:
+		ps.error(fmt.Errorf("unknown leader %q; parser error", leader))
+	}
 }
 
 // ExitusRedir = '?' '>' { Space } Compound
