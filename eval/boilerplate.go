@@ -47,6 +47,21 @@ func formBegins(ns []*parse.Form) []int {
 	return begins
 }
 
+func (cp *compiler) controls(ns []*parse.Control) []Op {
+	ops := make([]Op, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.control(n)
+	}
+	return ops
+}
+func controlBegins(ns []*parse.Control) []int {
+	begins := make([]int, len(ns))
+	for i, n := range ns {
+		begins[i] = n.Begin()
+	}
+	return begins
+}
+
 func (cp *compiler) assignments(ns []*parse.Assignment) []Op {
 	ops := make([]Op, len(ns))
 	for i, n := range ns {
@@ -145,6 +160,21 @@ func (cp *compiler) primarys(ns []*parse.Primary) []ValuesOp {
 	return ops
 }
 func primaryBegins(ns []*parse.Primary) []int {
+	begins := make([]int, len(ns))
+	for i, n := range ns {
+		begins[i] = n.Begin()
+	}
+	return begins
+}
+
+func (cp *compiler) errorCaptures(ns []*parse.Chunk) []ValuesOp {
+	ops := make([]ValuesOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.errorCapture(n)
+	}
+	return ops
+}
+func errorCaptureBegins(ns []*parse.Chunk) []int {
 	begins := make([]int, len(ns))
 	for i, n := range ns {
 		begins[i] = n.Begin()

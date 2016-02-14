@@ -37,6 +37,8 @@ var (
 // execution.
 var PutInForeground = true
 
+var outputCaptureBufferSize = 16
+
 type scope map[string]bool
 
 type (
@@ -195,8 +197,7 @@ func (cp *compiler) form(n *parse.Form) Op {
 	}
 
 	if n.Control != nil {
-		cp.errorf(n.Control.Begin(), "control structure not yet implemented")
-		return func(ec *EvalCtx) {}
+		return cp.control(n.Control)
 	}
 
 	headStr, ok := oneString(n.Head)
@@ -244,6 +245,45 @@ func (cp *compiler) form(n *parse.Form) Op {
 		}
 
 		ec.resolveCaller(headValues[0]).Call(ec, args)
+	}
+}
+
+func (cp *compiler) control(n *parse.Control) Op {
+	switch n.Kind {
+	case parse.IfControl:
+		condOps := cp.errorCaptures(n.Conditions)
+		bodyOps := cp.chunks(n.Bodies)
+		var elseOp Op
+		if n.ElseBody != nil {
+			elseOp = cp.chunk(n.ElseBody)
+		}
+		return func(ec *EvalCtx) {
+			for i, condOp := range condOps {
+				if condOp(ec)[0].(Error).inner == nil {
+					bodyOps[i](ec)
+					return
+				}
+			}
+			if elseOp != nil {
+				elseOp(ec)
+			}
+		}
+	case parse.WhileControl:
+		condOp := cp.errorCapture(n.Condition)
+		bodyOp := cp.chunk(n.Body)
+		return func(ec *EvalCtx) {
+			for condOp(ec)[0].(Error).inner == nil {
+				bodyOp(ec)
+			}
+		}
+	case parse.ForControl:
+		cp.errorf(n.Begin(), "not yet implemented")
+		panic("unreachable")
+	case parse.BeginControl:
+		return cp.chunk(n.Body)
+	default:
+		cp.errorf(n.Begin(), "unknown ControlKind %s, compiler bug", n.Kind)
+		panic("unreachable")
 	}
 }
 
@@ -754,10 +794,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOp {
 		cp.errorf(n.Begin(), "compiler bug: Tilde not handled in .compound")
 		return literalStr("~")
 	case parse.ErrorCapture:
-		op := cp.chunk(n.Chunk)
-		return func(ec *EvalCtx) []Value {
-			return []Value{Error{ec.PEval(op)}}
-		}
+		return cp.errorCapture(n.Chunk)
 	case parse.OutputCapture:
 		return cp.outputCapture(n)
 	case parse.List:
@@ -777,7 +814,12 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOp {
 	}
 }
 
-var outputCaptureBufferSize = 16
+func (cp *compiler) errorCapture(n *parse.Chunk) ValuesOp {
+	op := cp.chunk(n)
+	return func(ec *EvalCtx) []Value {
+		return []Value{Error{ec.PEval(op)}}
+	}
+}
 
 func (cp *compiler) outputCapture(n *parse.Primary) ValuesOp {
 	op := cp.chunk(n.Chunk)

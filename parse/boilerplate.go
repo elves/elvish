@@ -107,13 +107,13 @@ func (n *Control) setBody(ch *Chunk) {
 	addChild(n, ch)
 }
 
-func (n *Control) addToElifConditions(ch *Chunk) {
-	n.ElifConditions = append(n.ElifConditions, ch)
+func (n *Control) addToConditions(ch *Chunk) {
+	n.Conditions = append(n.Conditions, ch)
 	addChild(n, ch)
 }
 
-func (n *Control) addToElifBodies(ch *Chunk) {
-	n.ElifBodies = append(n.ElifBodies, ch)
+func (n *Control) addToBodies(ch *Chunk) {
+	n.Bodies = append(n.Bodies, ch)
 	addChild(n, ch)
 }
 

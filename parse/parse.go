@@ -285,14 +285,14 @@ func (an *Assignment) parse(ps *parser) {
 // (Similiar for Then, Elif, Else, Fi, While, Do, Done, For, Begin, End)
 type Control struct {
 	node
-	Kind           ControlKind
-	Condition      *Chunk   // Valid for IfControl and WhileControl.
-	Iterator       *Primary // Valid for ForControl.
-	Array          *Array   // Valid for ForControl.
-	Body           *Chunk   // Valid for all.
-	ElifConditions []*Chunk // Valid for IfControl.
-	ElifBodies     []*Chunk // Valid for IfControl.
-	ElseBody       *Chunk   // Valid for IfControl, WhileControl and ForControl.
+	Kind       ControlKind
+	Condition  *Chunk   // Valid for WhileControl.
+	Iterator   *Primary // Valid for ForControl.
+	Array      *Array   // Valid for ForControl.
+	Body       *Chunk   // Valid for all except IfControl.
+	Conditions []*Chunk // Valid for IfControl.
+	Bodies     []*Chunk // Valid for IfControl.
+	ElseBody   *Chunk   // Valid for IfControl, WhileControl and ForControl.
 }
 
 // ControlKind identifies which control structure a Control represents.
@@ -340,22 +340,22 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 	switch leader {
 	case "if":
 		ctrl.Kind = IfControl
-		ctrl.setCondition(parseChunk(ps))
+		ctrl.addToConditions(parseChunk(ps))
 		if consumeLeader() != "then" {
 			ps.error(errShouldBeThen)
 		}
-		ctrl.setBody(parseChunk(ps))
+		ctrl.addToBodies(parseChunk(ps))
 	Elifs:
 		for {
 			switch consumeLeader() {
 			case "fi":
 				break Elifs
 			case "elif":
-				ctrl.addToElifConditions(parseChunk(ps))
+				ctrl.addToConditions(parseChunk(ps))
 				if consumeLeader() != "then" {
 					ps.error(errShouldBeThen)
 				}
-				ctrl.addToElifBodies(parseChunk(ps))
+				ctrl.addToBodies(parseChunk(ps))
 			case "else":
 				ctrl.setElseBody(parseChunk(ps))
 				if consumeLeader() != "fi" {
