@@ -47,6 +47,7 @@ type editorState struct {
 	completionLines       int
 	navigation            *navigation
 	history               historyState
+	historyListing        *historyListing
 	isExternal            map[string]bool
 	// Used for builtins.
 	lastKey    Key
@@ -61,6 +62,7 @@ const (
 	modeCompletion
 	modeNavigation
 	modeHistory
+	modeHistoryListing
 )
 
 type actionType int

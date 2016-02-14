@@ -103,3 +103,21 @@ func (s *Store) FirstCmd(from int, prefix string, uniq bool) (int, string, error
 	row := s.db.QueryRow(`select rowid, content from cmd where rowid >= ? and substr(content, 1, ?) = ? and (? or lastAmongDup) order by rowid asc limit 1`, from, len(prefix), prefix, !uniq)
 	return convertCmd(row)
 }
+
+func (s *Store) Cmds(from, upto int) ([]string, error) {
+	rows, err := s.db.Query(`select content from cmd where rowid >= ? and rowid < ?`, from, upto)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	entries := []string{}
+	for rows.Next() {
+		var cmd string
+		err = rows.Scan(&cmd)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, cmd)
+	}
+	return entries, nil
+}

@@ -39,6 +39,7 @@ var defaultBindings = map[bufferMode]map[Key]string{
 		Key{Tab, 0}:    "complete-prefix-or-start-completion",
 		Key{Up, 0}:     "start-history",
 		Key{'N', Ctrl}: "start-navigation",
+		Key{'H', Ctrl}: "start-history-listing",
 	},
 	modeCommand: map[Key]string{
 		Default: "default-command",
@@ -79,6 +80,9 @@ var defaultBindings = map[bufferMode]map[Key]string{
 		Key{Up, 0}:     "select-history-prev",
 		Key{Down, 0}:   "select-history-next-or-quit",
 		Default:        "default-history",
+	},
+	modeHistoryListing: map[Key]string{
+		Default: "default-history-listing",
 	},
 }
 

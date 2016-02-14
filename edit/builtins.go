@@ -68,6 +68,10 @@ var builtins = []Builtin{
 	{"select-history-next-or-quit", selectHistoryNextOrQuit},
 	{"default-history", defaultHistory},
 
+	// History listing mode
+	{"start-history-listing", startHistoryListing},
+	{"default-history-listing", defaultHistoryListing},
+
 	// Misc
 	{"redraw", redraw},
 }
@@ -358,6 +362,26 @@ func selectHistoryNextOrQuit(ed *Editor) {
 func defaultHistory(ed *Editor) {
 	ed.acceptHistory()
 	ed.mode = modeInsert
+	ed.nextAction = action{actionType: reprocessKey}
+}
+
+func startHistoryListing(ed *Editor) {
+	if ed.store == nil {
+		ed.notify("store not connected")
+		return
+	}
+	ed.mode = modeHistoryListing
+	hl, err := newHistoryListing(ed.store)
+	if err != nil {
+		ed.notify("%s", err)
+		return
+	}
+	ed.historyListing = hl
+}
+
+func defaultHistoryListing(ed *Editor) {
+	ed.mode = modeInsert
+	ed.historyListing = nil
 	ed.nextAction = action{actionType: reprocessKey}
 }
 

@@ -463,6 +463,8 @@ tokens:
 			text = "NAVIGATING"
 		case modeHistory:
 			text = fmt.Sprintf("HISTORY #%d", es.history.current)
+		case modeHistoryListing:
+			text = fmt.Sprintf("HISTORY LISTING")
 		}
 		b.writes(TrimWcWidth(" "+text+" ", width), styleForMode)
 	}
@@ -506,11 +508,11 @@ tokens:
 
 	// Render bufListing under the maximum height constraint
 	nav := es.navigation
-	if hListing > 0 && comp != nil || nav != nil {
+	hist := es.historyListing
+	if hListing > 0 {
 		b := newBuffer(width)
 		bufListing = b
-		// Completion listing
-		if comp != nil {
+		if comp != nil { // Completion listing
 			// Layout candidates in multiple columns
 			cands := comp.candidates
 
@@ -553,10 +555,7 @@ tokens:
 					b.writes(ForceWcWidth(text, colWidth), style)
 				}
 			}
-		}
-
-		// Navigation listing
-		if nav != nil {
+		} else if nav != nil { // Navigation listing
 			margin := navigationListingColMargin
 			var ratioParent, ratioCurrent, ratioPreview int
 			if nav.dirPreview != nil {
@@ -585,6 +584,13 @@ tokens:
 				bPreview := renderNavColumn(nav.dirPreview, wPreview, hListing)
 				b.extendHorizontal(bPreview, wParent+wCurrent+margin, margin)
 			}
+		} else if hist != nil {
+			n := len(hist.all)
+			for i := n - hListing; i < n; i++ {
+				b.writes("\n"+hist.all[i], "")
+			}
+			n = len(b.cells)
+			b.trimToLines(n-hListing, n)
 		}
 	}
 
