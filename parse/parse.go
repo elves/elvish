@@ -376,7 +376,10 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 		parseSpaces(ctrl, ps)
 		ctrl.setIterator(parsePrimary(ps))
 		parseSpaces(ctrl, ps)
-		if consumeLeader() != "in" {
+		if ps.findPossibleLeader() == "in" {
+			ps.advance(len("in"))
+			addSep(ctrl, ps)
+		} else {
 			ps.error(errShouldBeIn)
 		}
 		ctrl.setArray(parseArray(ps))

@@ -617,20 +617,30 @@ func (cp *compiler) indexing(n *parse.Indexing) ValuesOp {
 
 	headOp := cp.primary(n.Head)
 	indexOps := cp.arrays(n.Indicies)
-	p := n.Begin()
+	// p := n.Begin()
 	indexPoses := make([]int, len(n.Indicies))
 	for i, index := range n.Indicies {
 		indexPoses[i] = index.Begin()
 	}
 
 	return func(ec *EvalCtx) []Value {
-		v := ec.must(headOp(ec), "the indexing value", p).mustOne()
-		for i, indexOp := range indexOps {
-			index := ec.must(indexOp(ec), "the index", p).mustOne()
-			v = evalIndex(ec, v, index, p, indexPoses[i])
+		vs := headOp(ec)
+		for _, indexOp := range indexOps {
+			index := indexOp(ec)
+			vs = outerProduct(vs, index, func(l, r Value) Value {
+				return mustIndexer(l).Index(r)
+			})
 		}
-		return []Value{v}
+		return vs
 	}
+}
+
+func mustIndexer(v Value) Indexer {
+	indexer, ok := v.(Indexer)
+	if !ok {
+		throw(fmt.Errorf("%s value cannot be indexed", v.Kind()))
+	}
+	return indexer
 }
 
 func literalValues(v ...Value) ValuesOp {

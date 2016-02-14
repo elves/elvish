@@ -442,20 +442,6 @@ func stringToSegments(s string) []glob.Segment {
 	return segs
 }
 
-func evalIndex(ec *EvalCtx, l, r Value, lp, rp int) Value {
-	left, ok := l.(Indexer)
-	if !ok {
-		ec.errorf(lp, "%s value cannot be indexing", l.Kind())
-	}
-
-	right, ok := r.(String)
-	if !ok {
-		ec.errorf(rp, "%s invalid cannot be used as index", r.Kind())
-	}
-
-	return left.Index(right)
-}
-
 // FromJSONInterface converts a interface{} that results from json.Unmarshal to
 // a Value.
 func FromJSONInterface(v interface{}) Value {

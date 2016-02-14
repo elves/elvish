@@ -191,8 +191,7 @@ type IndexerCaller struct {
 func (ic IndexerCaller) Call(ec *EvalCtx, argVals []Value) {
 	var v Value = ic.Indexer
 	for _, idx := range argVals {
-		// XXX the positions are obviously wrong.
-		v = evalIndex(ec, v, idx, 0, 0)
+		v = mustIndexer(v).Index(idx)
 	}
 	ec.ports[1].Chan <- v
 }
