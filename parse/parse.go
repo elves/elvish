@@ -151,10 +151,10 @@ func startsPipeline(r rune) bool {
 // it starts a control block.
 func findLeader(ps *parser) (string, bool) {
 	switch leader := ps.findPossibleLeader(); leader {
-	case "if", "while", "for", "do", "begin":
+	case "if", "while", "for", "begin":
 		// Starting leaders are always legal.
 		return leader, true
-	case "then", "elif", "else", "fi", "done", "end":
+	case "then", "elif", "else", "fi", "do", "done", "end":
 		return leader, false
 	default:
 		// There is no leader.
@@ -324,6 +324,7 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 	}
 
 	doElseDone := func() {
+		parseSpaces(ctrl, ps)
 		if consumeLeader() != "do" {
 			ps.error(errShouldBeDo)
 		}
@@ -389,7 +390,6 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 		default:
 			ps.error(errShouldBePipelineSep)
 		}
-		parseSpaces(ctrl, ps)
 		doElseDone()
 	case "begin":
 		ctrl.Kind = BeginControl
@@ -398,7 +398,7 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 			ps.error(errShouldBeEnd)
 		}
 	default:
-		ps.error(fmt.Errorf("unknown leader %q; parser error", leader))
+		ps.error(fmt.Errorf("unknown leader %q; parser bug", leader))
 	}
 }
 

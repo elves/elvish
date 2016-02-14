@@ -278,7 +278,7 @@ func (cp *compiler) control(n *parse.Control) Op {
 					// do nothing
 				} else if ex == Break {
 					break
-				} else {
+				} else if ex != nil {
 					throw(ex)
 				}
 			}
@@ -297,7 +297,7 @@ func (cp *compiler) control(n *parse.Control) Op {
 					// do nothing
 				} else if ex == Break {
 					break
-				} else {
+				} else if ex != nil {
 					throw(ex)
 				}
 			}
