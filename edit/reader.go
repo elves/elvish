@@ -292,6 +292,8 @@ func (rd *Reader) readOne(r rune) {
 // G3-style key sequences: \eO followed by exactly one character. For instance,
 // \eOP is F1.
 var g3Seq = map[rune]rune{
+	'A': Up, 'B': Down, 'C': Right, 'D': Left,
+
 	// F1-F4: xterm, libvte and tmux
 	'P': F1, 'Q': F2,
 	'R': F3, 'S': F4,
