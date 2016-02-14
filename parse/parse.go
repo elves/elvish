@@ -389,6 +389,7 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 		default:
 			ps.error(errShouldBePipelineSep)
 		}
+		parseSpaces(ctrl, ps)
 		doElseDone()
 	case "begin":
 		ctrl.Kind = BeginControl
