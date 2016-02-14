@@ -273,7 +273,14 @@ func (cp *compiler) control(n *parse.Control) Op {
 		bodyOp := cp.chunk(n.Body)
 		return func(ec *EvalCtx) {
 			for condOp(ec)[0].(Error).inner == nil {
-				bodyOp(ec)
+				ex := ec.PEval(bodyOp)
+				if ex == Continue {
+					// do nothing
+				} else if ex == Break {
+					break
+				} else {
+					throw(ex)
+				}
 			}
 		}
 	case parse.ForControl:
@@ -285,7 +292,14 @@ func (cp *compiler) control(n *parse.Control) Op {
 			values := valuesOp(ec)
 			for _, v := range values {
 				doSet(ec, []Variable{iterator}, []Value{v})
-				bodyOp(ec)
+				ex := ec.PEval(bodyOp)
+				if ex == Continue {
+					// do nothing
+				} else if ex == Break {
+					break
+				} else {
+					throw(ex)
+				}
 			}
 		}
 	case parse.BeginControl:
