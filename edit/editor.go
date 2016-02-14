@@ -212,16 +212,16 @@ func (ed *Editor) startReadLine() error {
 	// line. We now rewind to the first column and erase anything there. The
 	// final effect is that a lackEOL gets written if and only if the cursor
 	// was not in the first column.
-	//
-	// After that, we turn off autowrap. The editor has its own wrapping
-	// mechanism.
-	fmt.Fprintf(ed.file, "\033[?7h%s%*s\r \r"+
-		// Turn off autowrap
-		"\033[?7l"+
-		// Turn on SGR-style mouse tracking
-		"\033[?1000;1006h",
-		lackEOL, width-WcWidth(lackEOLRune), "")
+	fmt.Fprintf(ed.file, "\033[?7h%s%*s\r \r", lackEOL, width-WcWidth(lackEOLRune), "")
 
+	// Turn off autowrap. The edito has its own wrapping mechanism. Doing
+	// wrapping manually means that when the actual width of some characters
+	// are greater than what our wcwidth implementation tells us, characters at
+	// the end of that line gets hidden -- compared to pushed to the next line,
+	// which is more disastrous.
+	ed.file.WriteString("\033[?7l")
+	// Turn on SGR-style mouse tracking.
+	ed.file.WriteString("\033[?1000;1006h")
 	return nil
 }
 
@@ -241,8 +241,10 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	// ed.reader.Stop()
 	ed.reader.Quit()
 
-	// turn on autowrap and turn off mouse tracking
-	ed.file.WriteString("\033[?7h\033[?1000;1006l")
+	// Turn on autowrap.
+	ed.file.WriteString("\033[?7h")
+	// Turn off mouse tracking.
+	ed.file.WriteString("\033[?1000;1006l")
 
 	// restore termios
 	err := ed.savedTermios.ApplyToFd(int(ed.file.Fd()))
