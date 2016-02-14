@@ -92,7 +92,7 @@ func (n *Control) setCondition(ch *Chunk) {
 	addChild(n, ch)
 }
 
-func (n *Control) setIterator(ch *Primary) {
+func (n *Control) setIterator(ch *Indexing) {
 	n.Iterator = ch
 	addChild(n, ch)
 }

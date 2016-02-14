@@ -286,13 +286,13 @@ func (an *Assignment) parse(ps *parser) {
 type Control struct {
 	node
 	Kind       ControlKind
-	Condition  *Chunk   // Valid for WhileControl.
-	Iterator   *Primary // Valid for ForControl.
-	Array      *Array   // Valid for ForControl.
-	Body       *Chunk   // Valid for all except IfControl.
-	Conditions []*Chunk // Valid for IfControl.
-	Bodies     []*Chunk // Valid for IfControl.
-	ElseBody   *Chunk   // Valid for IfControl, WhileControl and ForControl.
+	Condition  *Chunk    // Valid for WhileControl.
+	Iterator   *Indexing // Valid for ForControl.
+	Array      *Array    // Valid for ForControl.
+	Body       *Chunk    // Valid for all except IfControl.
+	Conditions []*Chunk  // Valid for IfControl.
+	Bodies     []*Chunk  // Valid for IfControl.
+	ElseBody   *Chunk    // Valid for IfControl, WhileControl and ForControl.
 }
 
 // ControlKind identifies which control structure a Control represents.
@@ -374,7 +374,7 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 	case "for":
 		ctrl.Kind = ForControl
 		parseSpaces(ctrl, ps)
-		ctrl.setIterator(parsePrimary(ps))
+		ctrl.setIterator(parseIndexing(ps))
 		parseSpaces(ctrl, ps)
 		if ps.findPossibleLeader() == "in" {
 			ps.advance(len("in"))

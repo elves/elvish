@@ -277,8 +277,17 @@ func (cp *compiler) control(n *parse.Control) Op {
 			}
 		}
 	case parse.ForControl:
-		cp.errorf(n.Begin(), "not yet implemented")
-		panic("unreachable")
+		iteratorOp := cp.singleVariable(n.Iterator, "must be a single variable")
+		valuesOp := cp.array(n.Array)
+		bodyOp := cp.chunk(n.Body)
+		return func(ec *EvalCtx) {
+			iterator := iteratorOp(ec)
+			values := valuesOp(ec)
+			for _, v := range values {
+				doSet(ec, []Variable{iterator}, []Value{v})
+				bodyOp(ec)
+			}
+		}
 	case parse.BeginControl:
 		return cp.chunk(n.Body)
 	default:
@@ -298,21 +307,7 @@ func (cp *compiler) literal(n *parse.Primary, msg string) string {
 }
 
 func (cp *compiler) assignment(n *parse.Assignment) Op {
-	var variableOps []VariableOp
-	if n.Dst.Head.Type == parse.Braced {
-		compounds := n.Dst.Head.Braced
-		indexings := make([]*parse.Indexing, len(compounds))
-		for i, cn := range compounds {
-			if len(cn.Indexings) != 1 {
-				cp.errorf(cn.Begin(), "must be a variable spec")
-			}
-			indexings[i] = cn.Indexings[0]
-		}
-		variableOps = cp.indexingVars(indexings, "must be a variable spc")
-	} else {
-		variableOps = []VariableOp{cp.indexingVar(n.Dst, "must be a variable spec or a braced list of those")}
-	}
-
+	variableOps := cp.multiVariable(n.Dst)
 	valuesOp := cp.compound(n.Src)
 
 	return func(ec *EvalCtx) {
@@ -324,8 +319,27 @@ func (cp *compiler) assignment(n *parse.Assignment) Op {
 	}
 }
 
-func (cp *compiler) indexingVar(n *parse.Indexing, msg string) VariableOp {
-	// XXX will we be using indexingVar for purposes other than setting?
+func (cp *compiler) multiVariable(n *parse.Indexing) []VariableOp {
+	var variableOps []VariableOp
+	if n.Head.Type == parse.Braced {
+		// XXX ignore n.Indicies.
+		compounds := n.Head.Braced
+		indexings := make([]*parse.Indexing, len(compounds))
+		for i, cn := range compounds {
+			if len(cn.Indexings) != 1 {
+				cp.errorf(cn.Begin(), "must be a variable spec")
+			}
+			indexings[i] = cn.Indexings[0]
+		}
+		variableOps = cp.singleVariables(indexings, "must be a variable spc")
+	} else {
+		variableOps = []VariableOp{cp.singleVariable(n, "must be a variable spec or a braced list of those")}
+	}
+	return variableOps
+}
+
+func (cp *compiler) singleVariable(n *parse.Indexing, msg string) VariableOp {
+	// XXX will we be using this for purposes other than setting?
 	varname := cp.literal(n.Head, msg)
 	p := n.Begin()
 

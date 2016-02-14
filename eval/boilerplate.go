@@ -77,14 +77,14 @@ func assignmentBegins(ns []*parse.Assignment) []int {
 	return begins
 }
 
-func (cp *compiler) indexingVars(ns []*parse.Indexing, msg string) []VariableOp {
+func (cp *compiler) singleVariables(ns []*parse.Indexing, msg string) []VariableOp {
 	ops := make([]VariableOp, len(ns))
 	for i, n := range ns {
-		ops[i] = cp.indexingVar(n, msg)
+		ops[i] = cp.singleVariable(n, msg)
 	}
 	return ops
 }
-func indexingVarBegins(ns []*parse.Indexing) []int {
+func singleVariableBegins(ns []*parse.Indexing) []int {
 	begins := make([]int, len(ns))
 	for i, n := range ns {
 		begins[i] = n.Begin()
