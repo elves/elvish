@@ -188,15 +188,14 @@ func (fn *Form) parse(ps *parser) {
 		} else {
 			ps.error(fmt.Errorf("bogus command leader %q ignored", leader))
 		}
-	} else if startsCompound(ps.peek()) {
-		// Parse Head.
-		fn.setHead(parseCompound(ps))
-		parseSpaces(fn, ps)
 	} else {
-		if len(fn.Assignments) > 0 {
+		// Parse head.
+		if len(fn.Assignments) > 0 && !startsCompound(ps.peek()) {
+			// Assignment-only form.
 			return
 		}
-		ps.error(errShouldBeCompound)
+		fn.setHead(parseCompound(ps))
+		parseSpaces(fn, ps)
 	}
 
 	for {
