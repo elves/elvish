@@ -197,7 +197,17 @@ func (cp *compiler) form(n *parse.Form) Op {
 	}
 
 	if n.Control != nil {
-		return cp.control(n.Control)
+		if len(n.Args) > 0 {
+			cp.errorf(n.Args[0].Begin(), "control structure takes no arguments")
+		}
+		redirOps := cp.redirs(n.Redirs)
+		controlOp := cp.control(n.Control)
+		return func(ec *EvalCtx) {
+			for _, redirOp := range redirOps {
+				redirOp(ec)
+			}
+			controlOp(ec)
+		}
 	}
 
 	headStr, ok := oneString(n.Head)
