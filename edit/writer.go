@@ -509,7 +509,7 @@ tokens:
 	// Render bufListing under the maximum height constraint
 	nav := es.navigation
 	hist := es.historyListing
-	if hListing > 0 {
+	if hListing > 0 && (comp != nil || nav != nil || hist != nil) {
 		b := newBuffer(width)
 		bufListing = b
 		if comp != nil { // Completion listing
@@ -593,6 +593,9 @@ tokens:
 			b.trimToLines(n-hListing, n)
 		}
 	}
+
+	Logger.Printf("bufLine %d, bufMode %d, bufTips %d, bufListing %d",
+		lines(bufLine), lines(bufMode), lines(bufTips), lines(bufListing))
 
 	// Combine buffers (reusing bufLine)
 	buf = bufLine
