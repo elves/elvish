@@ -221,7 +221,7 @@ func (ed *Editor) startReadLine() error {
 	// which is more disastrous.
 	ed.file.WriteString("\033[?7l")
 	// Turn on SGR-style mouse tracking.
-	ed.file.WriteString("\033[?1000;1006h")
+	//ed.file.WriteString("\033[?1000;1006h")
 	return nil
 }
 
@@ -244,7 +244,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	// Turn on autowrap.
 	ed.file.WriteString("\033[?7h")
 	// Turn off mouse tracking.
-	ed.file.WriteString("\033[?1000;1006l")
+	//ed.file.WriteString("\033[?1000;1006l")
 
 	// restore termios
 	err := ed.savedTermios.ApplyToFd(int(ed.file.Fd()))
