@@ -181,14 +181,14 @@ func (fn *Form) parse(ps *parser) {
 		parseSpaces(fn, ps)
 	}
 	leader, starter := findLeader(ps)
-	if leader != "" {
+	if leader != "" && starter {
 		// Parse Control.
-		if starter {
-			fn.setControl(parseControl(ps, leader))
-		} else {
+		fn.setControl(parseControl(ps, leader))
+		parseSpaces(fn, ps)
+	} else {
+		if leader != "" {
 			ps.error(fmt.Errorf("bogus command leader %q ignored", leader))
 		}
-	} else {
 		// Parse head.
 		if len(fn.Assignments) > 0 && !startsCompound(ps.peek()) {
 			// Assignment-only form.

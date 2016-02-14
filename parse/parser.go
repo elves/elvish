@@ -42,9 +42,9 @@ func (ps *parser) hasPrefix(prefix string) bool {
 	return strings.HasPrefix(ps.src[ps.pos:], prefix)
 }
 
-// findWord look aheads a series of runes in [a-z] followed by ' ', '\t' or
-// '\n'. If the lookahead fails, it returns an empty string. It is useful for
-// looking for command leaders.
+// findWord looks ahead for [a-z]* that is also a valid compound. If the
+// lookahead fails, it returns an empty string. It is useful for looking for
+// command leaders.
 func (ps *parser) findPossibleLeader() string {
 	rest := ps.src[ps.pos:]
 	i := strings.IndexFunc(rest, func(r rune) bool {
@@ -54,12 +54,11 @@ func (ps *parser) findPossibleLeader() string {
 		// The whole rest is just one possible leader.
 		return rest
 	}
-	switch rest[i] {
-	case ' ', '\t', '\n':
-		return rest[:i]
-	default:
+	r, _ := utf8.DecodeRuneInString(rest[i:])
+	if startsPrimary(r) {
 		return ""
 	}
+	return rest[:i]
 }
 
 func (ps *parser) next() rune {
