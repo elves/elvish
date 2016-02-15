@@ -1,6 +1,13 @@
 package eval
 
-import "os"
+import (
+	"errors"
+	"os"
+)
+
+var (
+	ErrRoVariable = errors.New("read-only; cannot be set")
+)
 
 // Variable represents an elvish variable.
 type Variable interface {
@@ -22,6 +29,22 @@ func (iv ptrVariable) Set(val Value) {
 
 func (iv ptrVariable) Get() Value {
 	return *iv.valuePtr
+}
+
+type roVariable struct {
+	value Value
+}
+
+func NewRoVariable(v Value) Variable {
+	return roVariable{v}
+}
+
+func (rv roVariable) Set(val Value) {
+	throw(ErrRoVariable)
+}
+
+func (rv roVariable) Get() Value {
+	return rv.value
 }
 
 // elemVariable is an element of a IndexSetter.
