@@ -411,7 +411,7 @@ func (cp *compiler) singleVariable(n *parse.Indexing, msg string) VariableOp {
 		value := variable.Get()
 		n := len(indexOps)
 		for _, op := range indexOps[:n-1] {
-			indexer := mustIndexer(value)
+			indexer := mustIndexer(value, ec)
 
 			indicies := op(ec)
 			values := indexer.Index(indicies)
@@ -700,7 +700,7 @@ func (cp *compiler) indexing(n *parse.Indexing) ValuesOp {
 			indicies := indexOp(ec)
 			newvs := make([]Value, 0, len(vs)*len(indicies))
 			for _, v := range vs {
-				newvs = append(newvs, mustIndexer(v).Index(indicies)...)
+				newvs = append(newvs, mustIndexer(v, ec).Index(indicies)...)
 			}
 			vs = newvs
 		}

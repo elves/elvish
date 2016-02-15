@@ -24,20 +24,27 @@ type IndexSetter interface {
 	IndexSet(idx Value, v Value)
 }
 
-func mustIndexer(v Value) Indexer {
-	indexer, ok := getIndexer(v)
+func mustIndexer(v Value, ec *EvalCtx) Indexer {
+	indexer, ok := getIndexer(v, ec)
 	if !ok {
 		throw(fmt.Errorf("a %s is not indexable", v.Kind()))
 	}
 	return indexer
 }
 
-func getIndexer(v Value) (Indexer, bool) {
+// getIndexer adapts a Value to an Indexer if there is an adapter. It adapts a
+// Caller if ec is not nil.
+func getIndexer(v Value, ec *EvalCtx) (Indexer, bool) {
 	if indexer, ok := v.(Indexer); ok {
 		return indexer, true
 	}
 	if indexOneer, ok := v.(IndexOneer); ok {
 		return IndexOneerIndexer{indexOneer}, true
+	}
+	if ec != nil {
+		if caller, ok := v.(Caller); ok {
+			return CallerIndexer{caller, ec}, true
+		}
 	}
 	return nil, false
 }
@@ -104,16 +111,14 @@ func intIndex(idx Value) int {
 	return i
 }
 
-/*
 // CallerIndexer adapts a Caller to an Indexer.
 type CallerIndexer struct {
 	Caller
 	ec *EvalCtx
 }
 
-func (ci CallerIndexer) Index(idx Value) Value {
+func (ci CallerIndexer) Index(idx []Value) []Value {
 	return captureOutput(ci.ec, func(ec *EvalCtx) {
-		ci.Caller.Call(ec, []Value{idx})
+		ci.Caller.Call(ec, idx)
 	})
 }
-*/

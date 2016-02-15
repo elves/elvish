@@ -27,19 +27,23 @@ type Caller interface {
 }
 
 func mustCaller(v Value) Caller {
-	caller, ok := getCaller(v)
+	caller, ok := getCaller(v, true)
 	if !ok {
 		throw(fmt.Errorf("a %s is not callable", v.Kind()))
 	}
 	return caller
 }
 
-func getCaller(v Value) (Caller, bool) {
+// getCaller adapts a Value to a Caller if there is an adapter. It adapts an
+// Indexer if adaptIndexer is true.
+func getCaller(v Value, adaptIndexer bool) (Caller, bool) {
 	if caller, ok := v.(Caller); ok {
 		return caller, true
 	}
-	if indexer, ok := getIndexer(v); ok {
-		return IndexerCaller{indexer}, true
+	if adaptIndexer {
+		if indexer, ok := getIndexer(v, nil); ok {
+			return IndexerCaller{indexer}, true
+		}
 	}
 	return nil, false
 }
