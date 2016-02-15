@@ -30,7 +30,7 @@ func getCaller(v Value) Caller {
 	if caller, ok := v.(Caller); ok {
 		return caller
 	}
-	if indexer, ok := v.(Indexer); ok {
+	if indexer, ok := getIndexer(v); ok {
 		return IndexerCaller{indexer}
 	}
 	throw(fmt.Errorf("a %s is not callable", v.Kind()))
@@ -189,10 +189,9 @@ type IndexerCaller struct {
 	Indexer
 }
 
-func (ic IndexerCaller) Call(ec *EvalCtx, argVals []Value) {
-	var v Value = ic.Indexer
-	for _, idx := range argVals {
-		v = mustIndexer(v).Index(idx)
+func (ic IndexerCaller) Call(ec *EvalCtx, args []Value) {
+	results := ic.Indexer.Index(args)
+	for _, v := range results {
+		ec.ports[1].Chan <- v
 	}
-	ec.ports[1].Chan <- v
 }

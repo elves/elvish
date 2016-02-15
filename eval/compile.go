@@ -410,15 +410,15 @@ func (cp *compiler) singleVariable(n *parse.Indexing, msg string) VariableOp {
 		// Indexing. Do Index up to the last but one index.
 		value := variable.Get()
 		n := len(indexOps)
-		for i, op := range indexOps[:n-1] {
+		for _, op := range indexOps[:n-1] {
 			indexer := mustIndexer(value)
 
 			indicies := op(ec)
-			if len(indicies) != 1 {
-				ec.errorf(indexBegins[i], "index must eval to a single Value (got %v)", indicies)
+			values := indexer.Index(indicies)
+			if len(values) != 1 {
+				throw(errors.New("multi indexing not implemented"))
 			}
-
-			value = indexer.Index(indicies[0])
+			value = values[0]
 		}
 		// Now this must be an IndexSetter.
 		indexSetter, ok := value.(IndexSetter)
@@ -697,21 +697,15 @@ func (cp *compiler) indexing(n *parse.Indexing) ValuesOp {
 	return func(ec *EvalCtx) []Value {
 		vs := headOp(ec)
 		for _, indexOp := range indexOps {
-			index := indexOp(ec)
-			vs = outerProduct(vs, index, func(l, r Value) Value {
-				return mustIndexer(l).Index(r)
-			})
+			indicies := indexOp(ec)
+			newvs := make([]Value, 0, len(vs)*len(indicies))
+			for _, v := range vs {
+				newvs = append(newvs, mustIndexer(v).Index(indicies)...)
+			}
+			vs = newvs
 		}
 		return vs
 	}
-}
-
-func mustIndexer(v Value) Indexer {
-	indexer, ok := v.(Indexer)
-	if !ok {
-		throw(fmt.Errorf("%s value cannot be indexed", v.Kind()))
-	}
-	return indexer
 }
 
 func literalValues(v ...Value) ValuesOp {

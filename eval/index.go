@@ -2,22 +2,61 @@ package eval
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 )
 
-// Indexer is a Value that can be indexed by a Value and yields a Value.
+// Indexer is a Value that can be indexed by Values and yields Values.
 type Indexer interface {
 	Value
-	Index(idx Value) Value
+	Index(idx []Value) []Value
+}
+
+// IndexOneer is a Value that can be indexed by one Value and yields one Value.
+type IndexOneer interface {
+	Value
+	IndexOne(idx Value) Value
 }
 
 // IndexSetter is a Value whose elements can be get as well as set.
 type IndexSetter interface {
-	Indexer
+	IndexOneer
 	IndexSet(idx Value, v Value)
 }
 
-func (l List) Index(idx Value) Value {
+func mustIndexer(v Value) Indexer {
+	indexer, ok := getIndexer(v)
+	if !ok {
+		throw(fmt.Errorf("a %s is not indexable", v.Kind()))
+	}
+	return indexer
+}
+
+func getIndexer(v Value) (Indexer, bool) {
+	if indexer, ok := v.(Indexer); ok {
+		return indexer, true
+	}
+	if indexOneer, ok := v.(IndexOneer); ok {
+		return IndexOneerIndexer{indexOneer}, true
+	}
+	return nil, false
+}
+
+// IndexOneerIndexer adapts an IndexOneer to an Indexer by calling all the
+// indicies on the IndexOner and collect the results.
+type IndexOneerIndexer struct {
+	IndexOneer
+}
+
+func (ioi IndexOneerIndexer) Index(vs []Value) []Value {
+	results := make([]Value, len(vs))
+	for i, v := range vs {
+		results[i] = ioi.IndexOneer.IndexOne(v)
+	}
+	return results
+}
+
+func (l List) IndexOne(idx Value) Value {
 	i := intIndex(idx)
 
 	if i < 0 {
@@ -40,7 +79,7 @@ func (l List) IndexSet(idxv Value, v Value) {
 	(*l.inner)[idx] = v
 }
 
-func (m Map) Index(idx Value) Value {
+func (m Map) IndexOne(idx Value) Value {
 	v, ok := (*m.inner)[idx]
 	if !ok {
 		throw(errors.New("no such key: " + idx.Repr()))

@@ -35,7 +35,7 @@ func (ev elemVariable) Set(val Value) {
 }
 
 func (ev elemVariable) Get() Value {
-	return ev.container.Index(ev.index)
+	return ev.container.IndexOne(ev.index)
 }
 
 type envVariable struct {
