@@ -10,7 +10,6 @@ import (
 
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/strutil"
 )
 
 // Value is an elvish value.
@@ -72,13 +71,6 @@ func (s String) Repr() string {
 
 func (s String) String() string {
 	return string(s)
-}
-
-func (s String) Index(idx Value) Value {
-	i := intIndex(idx)
-	r, err := strutil.NthRune(string(s), i)
-	maybeThrow(err)
-	return String(string(r))
 }
 
 func intIndex(idx Value) int {

@@ -237,10 +237,9 @@ func (cp *compiler) form(n *parse.Form) Op {
 		headValues := headOp(ec)
 		headMust := ec.must(headValues, "the head of command", p)
 		headMust.mustLen(1)
-		switch headValues[0].(type) {
-		case String, Caller, Indexer:
-		default:
-			headMust.error("a string or callable", headValues[0].Kind())
+		headCaller, ok := headValues[0].(Caller)
+		if !ok {
+			headMust.error("a callable", headValues[0].Kind())
 		}
 
 		// args
@@ -254,7 +253,7 @@ func (cp *compiler) form(n *parse.Form) Op {
 			redirOp(ec)
 		}
 
-		ec.resolveCaller(headValues[0]).Call(ec, args)
+		headCaller.Call(ec, args)
 	}
 }
 
@@ -415,10 +414,7 @@ func (cp *compiler) singleVariable(n *parse.Indexing, msg string) VariableOp {
 		value := variable.Get()
 		n := len(indexOps)
 		for i, op := range indexOps[:n-1] {
-			indexer, ok := value.(Indexer)
-			if !ok {
-				ec.errorf( /* from p to */ indexBegins[i], "cannot be indexed (value is %s, type %s)", value.Repr(), value.Kind())
-			}
+			indexer := mustIndexer(value)
 
 			indicies := op(ec)
 			if len(indicies) != 1 {

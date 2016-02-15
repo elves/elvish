@@ -32,37 +32,6 @@ func (ec *EvalCtx) PCall(f Caller, args []Value) (ex error) {
 	return nil
 }
 
-func (ec *EvalCtx) resolveCaller(cmd Value) Caller {
-	// Already a Caller
-	if cl, ok := cmd.(Caller); ok {
-		return cl
-	}
-
-	// String
-	if s, ok := cmd.(String); ok {
-		// Try variable
-		splice, ns, name := parseVariable(string(s))
-		if !splice {
-			if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
-				if clb, ok := v.Get().(Caller); ok {
-					return clb
-				}
-			}
-		}
-
-		// External command
-		return ExternalCmd{string(s)}
-	}
-
-	// Indexer
-	if ix, ok := cmd.(Indexer); ok {
-		return IndexerCaller{ix}
-	}
-
-	ec.errorf(-1, "bad head type %s; compiler bug", cmd.Kind())
-	return nil
-}
-
 // Call calls a builtin function.
 func (b *BuiltinFn) Call(ec *EvalCtx, args []Value) {
 	b.Impl(ec, args)
@@ -180,6 +149,27 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value) {
 	} else {
 		maybeThrow(waitStatusToError(ws))
 	}
+}
+
+// Call resolves a command name to either a Caller variable or external command
+// and calls it.
+func (s String) Call(ec *EvalCtx, args []Value) {
+	resolve(string(s), ec).Call(ec, args)
+}
+
+func resolve(s string, ec *EvalCtx) Caller {
+	// Try variable
+	splice, ns, name := parseVariable(string(s))
+	if !splice {
+		if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
+			if caller, ok := v.Get().(Caller); ok {
+				return caller
+			}
+		}
+	}
+
+	// External command
+	return ExternalCmd{string(s)}
 }
 
 // IndexerCaller is an adapter that makes it possible to use a Indexer as a
