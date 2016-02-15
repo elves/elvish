@@ -67,6 +67,7 @@ func init() {
 		&BuiltinFn{"take", wrapFn(take)},
 		&BuiltinFn{"drop", wrapFn(drop)},
 
+		&BuiltinFn{"len", wrapFn(lenFn)},
 		&BuiltinFn{"count", wrapFn(count)},
 
 		&BuiltinFn{"-sleep", wrapFn(_sleep)},
@@ -506,6 +507,23 @@ func drop(ec *EvalCtx, n int) {
 	for v := range in {
 		out <- v
 	}
+}
+
+func lenFn(ec *EvalCtx, v Value) {
+	var l int
+	switch v := v.(type) {
+	case String:
+		l = len(v)
+	case List:
+		l = len(*v.inner)
+	case Map:
+		l = len(*v.inner)
+	case *Struct:
+		l = len(v.FieldNames)
+	default:
+		throw(fmt.Errorf("cannot get length of a %s", v.Kind()))
+	}
+	ec.ports[1].Chan <- String(strconv.Itoa(l))
 }
 
 func count(ec *EvalCtx) {
