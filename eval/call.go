@@ -26,6 +26,17 @@ type Caller interface {
 	Call(ec *EvalCtx, args []Value)
 }
 
+func getCaller(v Value) Caller {
+	if caller, ok := v.(Caller); ok {
+		return caller
+	}
+	if indexer, ok := v.(Indexer); ok {
+		return IndexerCaller{indexer}
+	}
+	throw(fmt.Errorf("a %s is not callable", v.Kind()))
+	panic("unreachable")
+}
+
 func (ec *EvalCtx) PCall(f Caller, args []Value) (ex error) {
 	defer errutil.Catch(&ex)
 	f.Call(ec, args)

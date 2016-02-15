@@ -64,3 +64,17 @@ func intIndex(idx Value) int {
 	}
 	return i
 }
+
+/*
+// CallerIndexer adapts a Caller to an Indexer.
+type CallerIndexer struct {
+	Caller
+	ec *EvalCtx
+}
+
+func (ci CallerIndexer) Index(idx Value) Value {
+	return captureOutput(ci.ec, func(ec *EvalCtx) {
+		ci.Caller.Call(ec, []Value{idx})
+	})
+}
+*/
