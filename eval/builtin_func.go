@@ -67,6 +67,8 @@ func init() {
 		&BuiltinFn{"take", wrapFn(take)},
 		&BuiltinFn{"drop", wrapFn(drop)},
 
+		&BuiltinFn{"count", wrapFn(count)},
+
 		&BuiltinFn{"-sleep", wrapFn(_sleep)},
 		&BuiltinFn{"-stack", wrapFn(_stack)},
 		&BuiltinFn{"-log", wrapFn(_log)},
@@ -502,6 +504,17 @@ func drop(ec *EvalCtx, n int) {
 	for v := range in {
 		out <- v
 	}
+}
+
+func count(ec *EvalCtx) {
+	in := ec.ports[0].Chan
+	out := ec.ports[1].Chan
+
+	n := 0
+	for range in {
+		n++
+	}
+	out <- String(strconv.Itoa(n))
 }
 
 func _sleep(ec *EvalCtx, t float64) {
