@@ -46,3 +46,7 @@ func NewStoreDB(db *sql.DB) (*Store, error) {
 
 	return st, nil
 }
+
+func (s *Store) Close() error {
+	return s.db.Close()
+}

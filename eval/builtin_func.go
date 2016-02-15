@@ -530,6 +530,10 @@ func _exec(ec *EvalCtx, args ...string) {
 	var err error
 	args[0], err = ec.Search(args[0])
 	maybeThrow(err)
+	err = ec.store.Close()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
 	err = syscall.Exec(args[0], args, os.Environ())
 	maybeThrow(err)
 }
