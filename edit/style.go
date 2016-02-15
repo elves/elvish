@@ -4,11 +4,11 @@ package edit
 var (
 	styleForPrompt            = ""
 	styleForRPrompt           = "7"
-	styleForCompleted         = ";4"
+	styleForCompleted         = ";2"
 	styleForMode              = "1;3;35"
 	styleForTip               = ""
 	styleForCurrentCompletion = ";7"
-	styleForCompletedHistory  = "4"
+	styleForCompletedHistory  = "2"
 	styleForSelectedFile      = ";7"
 )
 
