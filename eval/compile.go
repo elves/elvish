@@ -237,7 +237,7 @@ func (cp *compiler) form(n *parse.Form) Op {
 		headValues := headOp(ec)
 		headMust := ec.must(headValues, "the head of command", p)
 		headMust.mustLen(1)
-		headCaller := getCaller(headValues[0])
+		headCaller := mustCaller(headValues[0])
 
 		// args
 		var args []Value
