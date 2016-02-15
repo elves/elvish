@@ -54,7 +54,7 @@ func (bt BindingTable) Repr() string {
 	return builder.String()
 }
 
-func (bt BindingTable) Index(idx eval.Value) eval.Value {
+func (bt BindingTable) IndexOne(idx eval.Value) eval.Value {
 	key := keyIndex(idx)
 	switch f := bt.inner[key].(type) {
 	case Builtin:
