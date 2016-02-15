@@ -353,6 +353,8 @@ func cdInner(dir string, ec *EvalCtx) {
 	}
 }
 
+var dirFieldNames = []string{"path", "score"}
+
 func dirs(ec *EvalCtx) {
 	if ec.store == nil {
 		throw(ErrStoreNotConnected)
@@ -363,9 +365,9 @@ func dirs(ec *EvalCtx) {
 	}
 	out := ec.ports[1].Chan
 	for _, dir := range dirs {
-		out <- Map{&map[Value]Value{
-			String("path"):  String(dir.Path),
-			String("score"): String(fmt.Sprint(dir.Score)),
+		out <- &Struct{dirFieldNames, []Variable{
+			NewRoVariable(String(dir.Path)),
+			NewRoVariable(String(fmt.Sprint(dir.Score))),
 		}}
 	}
 }
