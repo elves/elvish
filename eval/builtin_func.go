@@ -455,18 +455,17 @@ func divide(ec *EvalCtx, prod float64, nums ...float64) {
 	out <- String(fmt.Sprintf("%g", prod))
 }
 
+var ErrNotEqual = errors.New("not equal")
+
 func eq(ec *EvalCtx, args []Value) {
-	out := ec.ports[1].Chan
 	if len(args) == 0 {
 		throw(ErrArgs)
 	}
 	for i := 0; i+1 < len(args); i++ {
 		if args[i] != args[i+1] {
-			out <- Bool(false)
-			return
+			throw(ErrNotEqual)
 		}
 	}
-	out <- Bool(true)
 }
 
 func deepeq(ec *EvalCtx, args []Value) {
