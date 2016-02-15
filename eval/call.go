@@ -20,10 +20,10 @@ var (
 	ErrCdNoArg       = errors.New("implicit cd accepts no arguments")
 )
 
-func maybeThrow(err error) {
-	if err != nil {
-		throw(err)
-	}
+// Caller is anything may be called on an evalCtx with a list of Value's.
+type Caller interface {
+	Value
+	Call(ec *EvalCtx, args []Value)
 }
 
 func (ec *EvalCtx) PCall(f Caller, args []Value) (ex error) {
