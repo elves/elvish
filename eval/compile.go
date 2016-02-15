@@ -857,51 +857,54 @@ func (cp *compiler) errorCapture(n *parse.Chunk) ValuesOp {
 
 func (cp *compiler) outputCapture(n *parse.Primary) ValuesOp {
 	op := cp.chunk(n.Chunk)
-	p := n.Chunk.Begin()
+	// p := n.Chunk.Begin()
 	return func(ec *EvalCtx) []Value {
-		vs := []Value{}
-		newEc := ec.fork(fmt.Sprintf("channel output capture %v", op))
-
-		pipeRead, pipeWrite, err := os.Pipe()
-		if err != nil {
-			ec.errorf(p, "failed to create pipe: %v", err)
-		}
-		bufferedPipeRead := bufio.NewReader(pipeRead)
-		ch := make(chan Value, outputCaptureBufferSize)
-		bytesCollected := make(chan bool)
-		chCollected := make(chan bool)
-		newEc.ports[1] = &Port{Chan: ch, File: pipeWrite, CloseFile: true}
-		go func() {
-			for v := range ch {
-				vs = append(vs, v)
-			}
-			chCollected <- true
-		}()
-		go func() {
-			for {
-				line, err := bufferedPipeRead.ReadString('\n')
-				if err == io.EOF {
-					break
-				} else if err != nil {
-					// TODO report error
-					log.Println()
-					break
-				}
-				ch <- String(line[:len(line)-1])
-			}
-			bytesCollected <- true
-		}()
-
-		// XXX The exitus is discarded.
-		op(newEc)
-		ClosePorts(newEc.ports)
-
-		<-bytesCollected
-		close(ch)
-		<-chCollected
-
-		return vs
+		return captureOutput(ec, op)
 	}
+}
+
+func captureOutput(ec *EvalCtx, op Op) []Value {
+	vs := []Value{}
+	newEc := ec.fork(fmt.Sprintf("channel output capture %v", op))
+
+	pipeRead, pipeWrite, err := os.Pipe()
+	if err != nil {
+		throw(fmt.Errorf("failed to create pipe: %v", err))
+	}
+	bufferedPipeRead := bufio.NewReader(pipeRead)
+	ch := make(chan Value, outputCaptureBufferSize)
+	bytesCollected := make(chan bool)
+	chCollected := make(chan bool)
+	newEc.ports[1] = &Port{Chan: ch, File: pipeWrite, CloseFile: true}
+	go func() {
+		for v := range ch {
+			vs = append(vs, v)
+		}
+		chCollected <- true
+	}()
+	go func() {
+		for {
+			line, err := bufferedPipeRead.ReadString('\n')
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				// TODO report error
+				log.Println(err)
+				break
+			}
+			ch <- String(line[:len(line)-1])
+		}
+		bytesCollected <- true
+	}()
+
+	op(newEc)
+	ClosePorts(newEc.ports)
+
+	<-bytesCollected
+	close(ch)
+	<-chCollected
+
+	return vs
 }
 
 func (cp *compiler) pushScope() scope {
