@@ -168,14 +168,14 @@ func compileUse(cp *compiler, fn *parse.Form) Op {
 			// No filename; defaulting to $datadir/$modname.elv.
 			dataDir, err := store.DataDir()
 			maybeThrow(err)
-			filename = dataDir + modname + ".elv"
+			filename = dataDir + "/" + modname + ".elv"
 			if _, err := os.Stat(filename); os.IsNotExist(err) {
 				// File does not exist. Try loading from the table of builtin
 				// modules.
-				filename = "<builtin module>"
 				var ok bool
 				if source, ok = builtinModules[modname]; ok {
 					// Source is loaded. Do nothing more.
+					filename = "<builtin module>"
 				} else {
 					throw(fmt.Errorf("cannot load %s: %s does not exist", modname, filename))
 				}
