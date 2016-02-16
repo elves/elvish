@@ -141,7 +141,8 @@ var evalTests = []struct {
 	// TODO: Test module namespace
 
 	// Equality
-	{"= a a; = [] []; = [&] [&]", bools(true, false, false), nomore},
+	{"put ?(= a a) ?(= [] []) ?(= [&] [&])",
+		[]Value{Error{nil}, Error{ErrNotEqual}, Error{ErrNotEqual}}, nomore},
 }
 
 func strs(ss ...string) []Value {
