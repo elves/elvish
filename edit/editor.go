@@ -125,7 +125,11 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 	if ed.mode != modeCompletion {
 		n, err := parse.Parse(src)
 		if err != nil {
-			ed.addTip("parser error: %s", err)
+			// If all the errors happen at the end, it is liekly complaining about missing texts that will eventually be inserted. Don't show such errors.
+			// XXX We may need a more reliable criteria.
+			if !atEnd(err, len(src)) {
+				ed.addTip("parser error (%d): %s", err)
+			}
 		}
 		if n == nil {
 			ed.tokens = []Token{{ParserError, src, nil, ""}}
@@ -133,7 +137,9 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 			ed.tokens = tokenize(src, n)
 			_, err := ed.evaler.Compile(name, src, n)
 			if err != nil {
-				ed.addTip("compiler error: %s", err)
+				if !atEnd(err, len(src)) {
+					ed.addTip("compiler error: %s", err)
+				}
 				if err, ok := err.(*errutil.ContextualError); ok {
 					p := err.Pos()
 					for i, token := range ed.tokens {
@@ -152,6 +158,24 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 		}
 	}
 	return ed.writer.refresh(&ed.editorState, fullRefresh)
+}
+
+func atEnd(e error, n int) bool {
+	switch e := e.(type) {
+	case *errutil.ContextualError:
+		return e.Pos() == n
+	case *errutil.PosError:
+		return e.Begin == n
+	case *errutil.Errors:
+		for _, child := range e.Errors {
+			if !atEnd(child, n) {
+				return false
+			}
+		}
+		return true
+	default:
+		return false
+	}
 }
 
 // acceptCompletion accepts currently selected completion candidate.
