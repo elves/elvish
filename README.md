@@ -121,7 +121,7 @@ Prebuilt binaries are available for 64-bit [Linux](https://dl.elvish.io/elvish-l
 
 Go >= 1.5 is required. This repository is a go-getable package.
 
-Linux and FreeBDS are fully supported. It is likely to work on other BSDs and
+Linux and FreeBSD are fully supported. It is likely to work on other BSDs and
 Mac OS X. Windows is **not** supported yet.
 
 In case you are new to Go, you are advised to read [How To Write Go
