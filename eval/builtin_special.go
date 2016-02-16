@@ -199,8 +199,12 @@ func compileFn(cp *compiler, fn *parse.Form) Op {
 	op := cp.lambda(pn)
 
 	return func(ec *EvalCtx) {
+		// Initialize the function variable with the builtin nop
+		// function. This step allows the definition of recursive
+		// functions; the actual function will never be called.
+		ec.local[varName] = NewPtrVariable(&BuiltinFn{"<shouldn't be called>", nop})
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
-		ec.local[varName] = NewPtrVariable(closure)
+		ec.local[varName].Set(closure)
 	}
 }
