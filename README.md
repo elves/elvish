@@ -176,7 +176,6 @@ The adjective for elvish is also "elvish", not "elvishy" and definitely not "elv
 |eval|[![eval](https://gocover.io/_badge/github.com/elves/elvish/eval/)](https://gocover.io/github.com/elves/elvish/eval/)|
 |glob|[![glob](https://gocover.io/_badge/github.com/elves/elvish/glob/)](https://gocover.io/github.com/elves/elvish/glob/)|
 |parse|[![parse](https://gocover.io/_badge/github.com/elves/elvish/parse/)](https://gocover.io/github.com/elves/elvish/parse/)|
-|print|[![print](https://gocover.io/_badge/github.com/elves/elvish/print/)](https://gocover.io/github.com/elves/elvish/print/)|
 |store|[![store](https://gocover.io/_badge/github.com/elves/elvish/store/)](https://gocover.io/github.com/elves/elvish/store/)|
 |sys|[![sys](https://gocover.io/_badge/github.com/elves/elvish/sys/)](https://gocover.io/github.com/elves/elvish/sys/)|
 |util|[![util](https://gocover.io/_badge/github.com/elves/elvish/util/)](https://gocover.io/github.com/elves/elvish/util/)|
