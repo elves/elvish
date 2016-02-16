@@ -1,13 +1,9 @@
-// Package errutil provides an exception-like mechanism and the ContextualError
-// type.
-package errutil
+package util
 
 import (
 	"bytes"
 	"fmt"
 	"strings"
-
-	"github.com/elves/elvish/strutil"
 )
 
 // ContextualError is an error associated with a particular point in a source
@@ -24,7 +20,7 @@ type ContextualError struct {
 
 // NewContextualError creates a new ContextualError.
 func NewContextualError(srcname, title, text string, pos int, format string, args ...interface{}) *ContextualError {
-	lineno, colno, line := strutil.FindContext(text, pos)
+	lineno, colno, line := FindContext(text, pos)
 	return &ContextualError{srcname, title, pos, line, lineno, colno, fmt.Sprintf(format, args...)}
 }
 

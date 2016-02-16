@@ -1,4 +1,4 @@
-package errutil
+package util
 
 // type marker for exceptions
 type exception struct {

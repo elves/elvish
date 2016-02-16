@@ -3,8 +3,8 @@ package edit
 import (
 	"strings"
 
-	"github.com/elves/elvish/osutil"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 // Utilities for insepcting the AST. Used for completers and stylists.
@@ -68,7 +68,7 @@ func simpleCompound(pn *parse.Primary) (*parse.Compound, string) {
 			return nil, ""
 		}
 		uname := head[:i]
-		home, err := osutil.GetHome(uname)
+		home, err := util.GetHome(uname)
 		if err != nil {
 			// TODO report error
 			return nil, ""

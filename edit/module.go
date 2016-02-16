@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/util"
 )
 
 // Exposing editor functionalities as an elvish module.
@@ -127,5 +127,5 @@ func (eb *EditBuiltin) Call(ec *eval.EvalCtx, args []eval.Value) {
 }
 
 func throw(e error) {
-	errutil.Throw(e)
+	util.Throw(e)
 }

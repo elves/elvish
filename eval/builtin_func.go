@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/elves/elvish/logutil"
+	"github.com/elves/elvish/util"
 )
 
 var builtinFns []*BuiltinFn
@@ -552,7 +552,7 @@ func _stack(ec *EvalCtx) {
 }
 
 func _log(ec *EvalCtx, fname string) {
-	maybeThrow(logutil.SetOutputFile(fname))
+	maybeThrow(util.SetOutputFile(fname))
 }
 
 func _exec(ec *EvalCtx, args ...string) {

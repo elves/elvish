@@ -8,8 +8,8 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/elves/elvish/osutil"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 func TestNewEvaler(t *testing.T) {
@@ -95,7 +95,7 @@ var evalTests = []struct {
 		strs("lorem", "ipsum"), nomore},
 
 	// Wildcard.
-	{"put /*", strs(osutil.RootNames()...), nomore},
+	{"put /*", strs(util.RootNames()...), nomore},
 
 	// Closure
 	// Basics

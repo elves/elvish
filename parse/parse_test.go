@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/elves/elvish/errutil"
+	"github.com/elves/elvish/util"
 )
 
 type fs map[string]interface{}
@@ -359,7 +359,7 @@ func TestParseError(t *testing.T) {
 			t.Errorf("Parse(%q) returns no error", tc.src)
 			continue
 		}
-		posErr0 := err.(*errutil.Errors).Errors[0].(*errutil.PosError)
+		posErr0 := err.(*util.Errors).Errors[0].(*util.PosError)
 		if posErr0.Begin != tc.pos {
 			t.Errorf("Parse(%q) first error begins at %d, want %d. Errors are:%s\n", tc.src, posErr0.Begin, tc.pos, err)
 		}

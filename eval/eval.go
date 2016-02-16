@@ -11,13 +11,12 @@ import (
 	"syscall"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/errutil"
-	"github.com/elves/elvish/logutil"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/util"
 )
 
-var Logger = logutil.GetLogger("[eval] ")
+var Logger = util.GetLogger("[eval] ")
 
 // FnPrefix is the prefix for the variable names of functions. Defining a
 // function "foo" is equivalent to setting a variable named FnPrefix + "foo".
@@ -200,7 +199,7 @@ func (ev *Evaler) Compile(name, text string, n *parse.Chunk) (Op, error) {
 // PEval evaluates an op in a protected environment so that calls to errorf are
 // wrapped in an Error.
 func (ec *EvalCtx) PEval(op Op) (ex error) {
-	defer errutil.Catch(&ex)
+	defer util.Catch(&ex)
 	op(ec)
 	return nil
 }
@@ -208,7 +207,7 @@ func (ec *EvalCtx) PEval(op Op) (ex error) {
 // errorf stops the ec.eval immediately by panicking with a diagnostic message.
 // The panic is supposed to be caught by ec.eval.
 func (ec *EvalCtx) errorf(p int, format string, args ...interface{}) {
-	throw(errutil.NewContextualError(
+	throw(util.NewContextualError(
 		fmt.Sprintf("%s (%s)", ec.name, ec.context), "error",
 		ec.text, p, format, args...))
 }

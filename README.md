@@ -8,18 +8,15 @@ progress; things will change without warning.
 
 Test coverages of packages:
 
+main [![main](http://gocover.io/_badge/github.com/elves/elvish/main/)](https://gocover.io/github.com/elves/elvish/main/)
 edit [![edit](http://gocover.io/_badge/github.com/elves/elvish/edit/)](https://gocover.io/github.com/elves/elvish/edit/)
-errutil [![errutil](http://gocover.io/_badge/github.com/elves/elvish/errutil/)](https://gocover.io/github.com/elves/elvish/errutil/)
 eval [![eval](http://gocover.io/_badge/github.com/elves/elvish/eval/)](https://gocover.io/github.com/elves/elvish/eval/)
 glob [![glob](http://gocover.io/_badge/github.com/elves/elvish/glob/)](https://gocover.io/github.com/elves/elvish/glob/)
-logutil [![logutil](http://gocover.io/_badge/github.com/elves/elvish/logutil/)](https://gocover.io/github.com/elves/elvish/logutil/)
-osutil [![osutil](http://gocover.io/_badge/github.com/elves/elvish/osutil/)](https://gocover.io/github.com/elves/elvish/osutil/)
 parse [![parse](http://gocover.io/_badge/github.com/elves/elvish/parse/)](https://gocover.io/github.com/elves/elvish/parse/)
 print [![print](http://gocover.io/_badge/github.com/elves/elvish/print/)](https://gocover.io/github.com/elves/elvish/print/)
 store [![store](http://gocover.io/_badge/github.com/elves/elvish/store/)](https://gocover.io/github.com/elves/elvish/store/)
-strutil [![strutil](http://gocover.io/_badge/github.com/elves/elvish/strutil/)](https://gocover.io/github.com/elves/elvish/strutil/)
 sys [![sys](http://gocover.io/_badge/github.com/elves/elvish/sys/)](https://gocover.io/github.com/elves/elvish/sys/)
-
+util [![util](http://gocover.io/_badge/github.com/elves/elvish/util/)](https://gocover.io/github.com/elves/elvish/util/)
 
 ## The Interface
 

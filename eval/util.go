@@ -1,9 +1,9 @@
 package eval
 
-import "github.com/elves/elvish/errutil"
+import "github.com/elves/elvish/util"
 
 func throw(e error) {
-	errutil.Throw(e)
+	util.Throw(e)
 }
 
 func maybeThrow(err error) {

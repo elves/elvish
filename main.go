@@ -13,13 +13,11 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/edit"
-	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/logutil"
-	"github.com/elves/elvish/osutil"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
+	"github.com/elves/elvish/util"
 )
 
 const (
@@ -28,7 +26,7 @@ const (
 	outChanLeader = "▶ "
 )
 
-var Logger = logutil.GetLogger("[main] ")
+var Logger = util.GetLogger("[main] ")
 
 func usage() {
 	fmt.Println("usage: elvish [flags] [script]")
@@ -54,7 +52,7 @@ func main() {
 	}
 
 	if *log != "" {
-		err := logutil.SetOutputFile(*log)
+		err := util.SetOutputFile(*log)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -118,7 +116,7 @@ func interact() {
 	}
 	rpromptStr := username + "@" + hostname
 	prompt := func() string {
-		return osutil.Getwd() + "> "
+		return util.Getwd() + "> "
 	}
 	rprompt := func() string {
 		return rpromptStr
@@ -227,9 +225,9 @@ func printError(err error) {
 		return
 	}
 	switch err := err.(type) {
-	case *errutil.ContextualError:
+	case *util.ContextualError:
 		fmt.Print(err.Pprint())
-	case *errutil.Errors:
+	case *util.Errors:
 		for _, e := range err.Errors {
 			printError(e)
 		}

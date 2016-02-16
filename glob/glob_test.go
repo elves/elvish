@@ -7,7 +7,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/elves/elvish/osutil"
+	"github.com/elves/elvish/util"
 )
 
 var (
@@ -33,7 +33,7 @@ var globCases = []struct {
 	{"d**", []string{"d1", "d1/e", "d1/e/f", "d1/e/f/g", "d1/e/f/g/X",
 		"d2", "d2/e", "d2/e/f", "d2/e/f/g", "d2/e/f/g/X", "dX"}},
 	// NOTE: If / changes during testing, this case will fail.
-	{"/*", osutil.RootNames()},
+	{"/*", util.RootNames()},
 }
 
 func TestGlob(t *testing.T) {

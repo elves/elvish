@@ -15,11 +15,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/glob"
-	"github.com/elves/elvish/osutil"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
+	"github.com/elves/elvish/util"
 )
 
 const (
@@ -68,12 +67,12 @@ func (cp *compiler) thisScope() scope {
 }
 
 func (cp *compiler) errorf(p int, format string, args ...interface{}) {
-	throw(errutil.NewContextualError(cp.name, "syntax error", cp.source, p, format, args...))
+	throw(util.NewContextualError(cp.name, "syntax error", cp.source, p, format, args...))
 }
 
 func compile(name, source string, sc scope, n *parse.Chunk) (op Op, err error) {
 	cp := &compiler{name, source, []scope{sc}, scope{}, nil}
-	defer errutil.Catch(&err)
+	defer util.Catch(&err)
 	return cp.chunk(n), nil
 }
 
@@ -648,7 +647,7 @@ func doTilde(v Value) Value {
 }
 
 func mustGetHome(uname string) string {
-	dir, err := osutil.GetHome(uname)
+	dir, err := util.GetHome(uname)
 	if err != nil {
 		throw(err)
 	}

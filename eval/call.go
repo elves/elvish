@@ -6,7 +6,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/elves/elvish/errutil"
+	"github.com/elves/elvish/util"
 )
 
 const (
@@ -49,7 +49,7 @@ func getCaller(v Value, adaptIndexer bool) (Caller, bool) {
 }
 
 func (ec *EvalCtx) PCall(f Caller, args []Value) (ex error) {
-	defer errutil.Catch(&ex)
+	defer util.Catch(&ex)
 	f.Call(ec, args)
 	return nil
 }

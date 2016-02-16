@@ -6,7 +6,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/strutil"
+	"github.com/elves/elvish/util"
 )
 
 // Line editor builtins.
@@ -114,13 +114,13 @@ func startCommand(ed *Editor) {
 }
 
 func killLineLeft(ed *Editor) {
-	sol := strutil.FindLastSOL(ed.line[:ed.dot])
+	sol := util.FindLastSOL(ed.line[:ed.dot])
 	ed.line = ed.line[:sol] + ed.line[ed.dot:]
 	ed.dot = sol
 }
 
 func killLineRight(ed *Editor) {
-	eol := strutil.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
+	eol := util.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
 	ed.line = ed.line[:ed.dot] + ed.line[eol:]
 }
 
@@ -197,36 +197,36 @@ func notSpace(r rune) bool {
 }
 
 func moveDotSOL(ed *Editor) {
-	sol := strutil.FindLastSOL(ed.line[:ed.dot])
+	sol := util.FindLastSOL(ed.line[:ed.dot])
 	ed.dot = sol
 }
 
 func moveDotEOL(ed *Editor) {
-	eol := strutil.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
+	eol := util.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
 	ed.dot = eol
 }
 
 func moveDotUp(ed *Editor) {
-	sol := strutil.FindLastSOL(ed.line[:ed.dot])
+	sol := util.FindLastSOL(ed.line[:ed.dot])
 	if sol == 0 {
 		ed.flash()
 		return
 	}
 	prevEOL := sol - 1
-	prevSOL := strutil.FindLastSOL(ed.line[:prevEOL])
+	prevSOL := util.FindLastSOL(ed.line[:prevEOL])
 	width := WcWidths(ed.line[sol:ed.dot])
 	ed.dot = prevSOL + len(TrimWcWidth(ed.line[prevSOL:prevEOL], width))
 }
 
 func moveDotDown(ed *Editor) {
-	eol := strutil.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
+	eol := util.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
 	if eol == len(ed.line) {
 		ed.flash()
 		return
 	}
 	nextSOL := eol + 1
-	nextEOL := strutil.FindFirstEOL(ed.line[nextSOL:]) + nextSOL
-	sol := strutil.FindLastSOL(ed.line[:ed.dot])
+	nextEOL := util.FindFirstEOL(ed.line[nextSOL:]) + nextSOL
+	sol := util.FindLastSOL(ed.line[:ed.dot])
 	width := WcWidths(ed.line[sol:ed.dot])
 	ed.dot = nextSOL + len(TrimWcWidth(ed.line[nextSOL:nextEOL], width))
 }

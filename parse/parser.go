@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/errutil"
+	"github.com/elves/elvish/util"
 )
 
 // parser maintains some mutable states of parsing.
@@ -18,7 +18,7 @@ type parser struct {
 	overEOF  int
 	cutsets  []map[rune]int
 	controls int
-	errors   *errutil.Errors
+	errors   *util.Errors
 }
 
 const eof rune = -1
@@ -93,9 +93,9 @@ func (ps *parser) advance(c int) {
 
 func (ps *parser) error(e error) {
 	if ps.errors == nil {
-		ps.errors = &errutil.Errors{}
+		ps.errors = &util.Errors{}
 	}
-	ps.errors.Append(&errutil.PosError{ps.pos, ps.pos, e})
+	ps.errors.Append(&util.PosError{ps.pos, ps.pos, e})
 }
 
 func (ps *parser) pushCutset(rs ...rune) {

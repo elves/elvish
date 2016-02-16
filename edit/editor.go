@@ -6,15 +6,14 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/elves/elvish/errutil"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/logutil"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
+	"github.com/elves/elvish/util"
 )
 
-var Logger = logutil.GetLogger("[edit] ")
+var Logger = util.GetLogger("[edit] ")
 
 const (
 	lackEOLRune = '\u23ce'
@@ -140,7 +139,7 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 				if !atEnd(err, len(src)) {
 					ed.addTip("compiler error: %s", err)
 				}
-				if err, ok := err.(*errutil.ContextualError); ok {
+				if err, ok := err.(*util.ContextualError); ok {
 					p := err.Pos()
 					for i, token := range ed.tokens {
 						if token.Node.Begin() <= p && p < token.Node.End() {
@@ -162,11 +161,11 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 
 func atEnd(e error, n int) bool {
 	switch e := e.(type) {
-	case *errutil.ContextualError:
+	case *util.ContextualError:
 		return e.Pos() == n
-	case *errutil.PosError:
+	case *util.PosError:
 		return e.Begin == n
-	case *errutil.Errors:
+	case *util.Errors:
 		for _, child := range e.Errors {
 			if !atEnd(child, n) {
 				return false
@@ -298,7 +297,7 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 	}
 	defer ed.finishReadLine(func(err error) {
 		if err != nil {
-			lr.Err = errutil.CatError(lr.Err, err)
+			lr.Err = util.CatError(lr.Err, err)
 		}
 	})
 
