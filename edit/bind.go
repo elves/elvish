@@ -144,17 +144,17 @@ func (c EvalCaller) Call(ed *Editor) {
 		rd := bufio.NewReader(rout)
 		for {
 			line, err := rd.ReadString('\n')
-			Logger.Println("function writes bytes", line)
 			if err != nil {
 				break
 			}
+			ed.notify("[bound fn bytes] %s", line[:len(line)-1])
 		}
 		rout.Close()
 		wg.Done()
 	}()
 	go func() {
 		for v := range chanOut {
-			Logger.Println("function writes Value", v.Repr())
+			ed.notify("[bound fn value] %s", v.Repr())
 		}
 		wg.Done()
 	}()
