@@ -6,30 +6,19 @@
 This project aims to explore the potentials of the Unix shell. It is a work in
 progress; things will change without warning.
 
-Test coverages of packages:
-
-edit [![edit](http://gocover.io/_badge/github.com/elves/elvish/edit/)](https://gocover.io/github.com/elves/elvish/edit/)
-eval [![eval](http://gocover.io/_badge/github.com/elves/elvish/eval/)](https://gocover.io/github.com/elves/elvish/eval/)
-glob [![glob](http://gocover.io/_badge/github.com/elves/elvish/glob/)](https://gocover.io/github.com/elves/elvish/glob/)
-parse [![parse](http://gocover.io/_badge/github.com/elves/elvish/parse/)](https://gocover.io/github.com/elves/elvish/parse/)
-print [![print](http://gocover.io/_badge/github.com/elves/elvish/print/)](https://gocover.io/github.com/elves/elvish/print/)
-store [![store](http://gocover.io/_badge/github.com/elves/elvish/store/)](https://gocover.io/github.com/elves/elvish/store/)
-sys [![sys](http://gocover.io/_badge/github.com/elves/elvish/sys/)](https://gocover.io/github.com/elves/elvish/sys/)
-util [![util](http://gocover.io/_badge/github.com/elves/elvish/util/)](https://gocover.io/github.com/elves/elvish/util/)
+The [wiki](https://github.com/elves/elvish/wiki) has a random list of things you might want to know. The [issues list](https://github.com/elves/elvish/issues) contains many things I'm working on.
 
 ## The Interface
 
 Syntax highlighting (also showcasing right-hand-side prompt):
 
-![syntax
-highlighting](https://raw.githubusercontent.com/elves/images/master/syntax.png)
+![syntax highlighting](https://raw.githubusercontent.com/elves/images/master/syntax.png)
 
 Tab completion for files:
 
 ![tab completion](https://raw.githubusercontent.com/elves/images/master/completion.png)
 
-Navigation mode (triggered with ^N, inspired by
-[ranger](http://ranger.nongnu.org/)):
+Navigation mode (triggered with ^N, inspired by [ranger](http://ranger.nongnu.org/)):
 
 ![navigation mode](https://raw.githubusercontent.com/elves/images/master/navigation.png)
 
@@ -116,10 +105,6 @@ Some things that the language is already capable of:
   ~> env:PATH=$env:PATH":/bin"
   ```
 
-The language is not yet complete. Notably, control structures like `if` and
-`while` are not yet implemented. The issues list contain some of things I'm
-currently working on.
-
 
 ## Getting elvish
 
@@ -131,11 +116,9 @@ Prebuilt binaries are available for 64-bit [Linux](https://dl.elvish.io/elvish-l
 
 Go >= 1.5 is required. This repository is a go-getable package.
 
-Linux and FreeBSD are fully supported. It is likely to work on other BSDs and
-Mac OS X. Windows is **not** supported yet.
+Linux is fully supported. It is likely to work on BSDs and Mac OS X. Windows is **not** supported yet.
 
-In case you are new to Go, you are advised to read [How To Write Go
-Code](http://golang.org/doc/code.html), but here is a quick snippet:
+In case you are new to Go, you are advised to read [How To Write Go Code](http://golang.org/doc/code.html), but here is a quick snippet:
 
 ```
 export GOPATH=$HOME/go
@@ -150,8 +133,7 @@ To update and rebuild:
 go get -u github.com/elves/elvish
 ```
 
-Remember to put the two `export`s above into your `bashrc` or `zshrc` (or
-whatever).
+Remember to put the two `export`s above into your `bashrc` or `zshrc` (or whatever).
 
 ## Notes for Contributors
 
@@ -161,44 +143,40 @@ Always run unit tests before committing. `make` will take care of this.
 
 ### Generated files
 
-Some files are generated from other files. They should be commmited into the
-repository for this package to be go-getable. Run `go generate ./...` to
-regenerate them in case you modified the source.
+Some files are generated from other files. They should be commmited into the repository for this package to be go-getable. Run `go generate ./...` to regenerate them in case you modified the source.
 
 ### Formatting the Code
 
-Always format the code with `goimports` before committing. Run
-`go get golang.org/x/tools/cmd/goimports` to install `goimports`, and
-`goimports -w .` to format all golang sources.
+Always format the code with `goimports` before committing. Run `go get golang.org/x/tools/cmd/goimports` to install `goimports`, and `goimports -w .` to format all golang sources.
 
-To automate this you can set up a `goimports` filter for Git by putting this
-in `~/.gitconfig`:
+To automate this you can set up a `goimports` filter for Git by putting this in `~/.gitconfig`:
 
     [filter "goimports"]
         clean = goimports
         smudge = cat
 
-Git will then always run `goimports` for you before comitting, since
-`.gitattributes` in this repository refers to this filter. More about Git
-attributes and filters
-[here](https://www.kernel.org/pub/software/scm/git/docs/gitattributes.html).
+Git will then always run `goimports` for you before comitting, since `.gitattributes` in this repository refers to this filter. More about Git attributes and filters [here](https://www.kernel.org/pub/software/scm/git/docs/gitattributes.html).
 
 ### Licensing
 
-By contributing, you agree to license your code under the same license as
-existing source code of elvish. See the LICENSE file.
+By contributing, you agree to license your code under the same license as existing source code of elvish. See the LICENSE file.
 
 
 ## Name
 
-In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the
-elves have a reputation of high quality.  These are usually called **elven**
-items, but I chose **elvish** for an obvious reason.
+In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the elves have a reputation of high quality.  These are usually called **elven** items, but I chose **elvish** for an obvious reason.
 
-The adjective for elvish is also "elvish", not "elvishy" and definitely not
-"elvishish".
+The adjective for elvish is also "elvish", not "elvishy" and definitely not "elvishish".
 
-It is not directly related to the fictional
-[elvish language](https://en.wikipedia.org/wiki/Elvish_language), but I
-believe there is not much room for confusion and the google-ability is still
-pretty good.
+## Test coverages:
+
+|Package|Coverage|
+|-------|--------|
+|edit|[![edit](http://gocover.io/_badge/github.com/elves/elvish/edit/)](https://gocover.io/github.com/elves/elvish/edit/)|
+|eval|[![eval](http://gocover.io/_badge/github.com/elves/elvish/eval/)](https://gocover.io/github.com/elves/elvish/eval/)|
+|glob|[![glob](http://gocover.io/_badge/github.com/elves/elvish/glob/)](https://gocover.io/github.com/elves/elvish/glob/)|
+|parse|[![parse](http://gocover.io/_badge/github.com/elves/elvish/parse/)](https://gocover.io/github.com/elves/elvish/parse/)|
+|print|[![print](http://gocover.io/_badge/github.com/elves/elvish/print/)](https://gocover.io/github.com/elves/elvish/print/)|
+|store|[![store](http://gocover.io/_badge/github.com/elves/elvish/store/)](https://gocover.io/github.com/elves/elvish/store/)|
+|sys|[![sys](http://gocover.io/_badge/github.com/elves/elvish/sys/)](https://gocover.io/github.com/elves/elvish/sys/)|
+|util|[![util](http://gocover.io/_badge/github.com/elves/elvish/util/)](https://gocover.io/github.com/elves/elvish/util/)|
