@@ -127,7 +127,7 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 			// If all the errors happen at the end, it is liekly complaining about missing texts that will eventually be inserted. Don't show such errors.
 			// XXX We may need a more reliable criteria.
 			if !atEnd(err, len(src)) {
-				ed.addTip("parser error (%d): %s", err)
+				ed.addTip("parser error: %s", err)
 			}
 		}
 		if n == nil {
