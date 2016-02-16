@@ -131,7 +131,7 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 			_, err := ed.evaler.Compile(name, src, n)
 			if err != nil {
 				if err, ok := err.(*errutil.ContextualError); ok {
-					ed.addTip("compiler error highlighted")
+					ed.addTip("compiler error: %s", err)
 					p := err.Pos()
 					for i, token := range ed.tokens {
 						if token.Node.Begin() <= p && p < token.Node.End() {
