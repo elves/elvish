@@ -883,7 +883,6 @@ func (pn *Primary) lbracket(ps *parser) {
 
 		if !parseSep(pn, ps, ']') {
 			ps.error(errShouldBeRBracket)
-			return
 		}
 		if parseSep(pn, ps, '{') {
 			pn.lambda(ps)
