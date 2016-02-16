@@ -18,6 +18,15 @@ var parseCases = []struct {
 	{`/usr/a**b/c`, Pattern{[]Segment{
 		{Slash, ""}, {Literal, "usr"}, {Slash, ""}, {Literal, "a"},
 		{StarStar, ""}, {Literal, "b"}, {Slash, ""}, {Literal, "c"}}}},
+	{`??b`, Pattern{[]Segment{
+		{Question, ""}, {Question, ""}, {Literal, "b"}}}},
+	// Multiple slashes should be parsed as one.
+	{`//a//b`, Pattern{[]Segment{
+		{Slash, ""}, {Literal, "a"}, {Slash, ""}, {Literal, "b"}}}},
+	// Escaping.
+	{`\*\?b`, Pattern{[]Segment{
+		{Literal, "*?b"},
+	}}},
 }
 
 func TestParse(t *testing.T) {
