@@ -147,6 +147,7 @@ func (c EvalCaller) Call(ed *Editor) {
 			if err != nil {
 				break
 			}
+			// XXX notify is not concurrency-safe.
 			ed.notify("[bound fn bytes] %s", line[:len(line)-1])
 		}
 		rout.Close()
