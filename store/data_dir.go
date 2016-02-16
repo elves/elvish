@@ -15,10 +15,17 @@ var ErrEmptyHOME = errors.New("environment variable HOME is empty")
 // necessary. It returns the path to the data directory (never with a
 // trailing slash) and possible error.
 func EnsureDataDir() (string, error) {
+	ddir, err := DataDir()
+	if err != nil {
+		return "", err
+	}
+	return ddir, os.MkdirAll(ddir, 0700)
+}
+
+func DataDir() (string, error) {
 	home, err := util.GetHome("")
 	if err != nil {
 		return "", err
 	}
-	ddir := home + "/.elvish"
-	return ddir, os.MkdirAll(ddir, 0700)
+	return home + "/.elvish", nil
 }

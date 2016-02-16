@@ -1,11 +1,15 @@
 package eval
 
+//go:genearte ./builtin_modules.bash
+
 // Builtin special forms.
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/store"
 )
 
 type compileBuiltin func(*compiler, *parse.Form) Op
@@ -21,7 +25,7 @@ func init() {
 	builtinSpecials = map[string]compileBuiltin{
 		"del": compileDel,
 		"fn":  compileFn,
-		//"use": compileUse,
+		"use": compileUse,
 	}
 	for k := range builtinSpecials {
 		BuiltinSpecialNames = append(BuiltinSpecialNames, k)
@@ -78,91 +82,6 @@ func compileDel(cp *compiler, fn *parse.Form) Op {
 	}
 }
 
-/*
-func stem(fname string) string {
-	base := path.Base(fname)
-	ext := path.Ext(base)
-	return base[0 : len(base)-len(ext)]
-}
-
-// UseForm = 'use' StringPrimary.modname Primary.fname
-//         = 'use' StringPrimary.fname
-func compileUse(cp *compiler, fn *parse.Form) op {
-	var fnameNode *parse.Compound
-	var fname, modname string
-
-	switch len(fn.Args.Nodes) {
-	case 0:
-		cp.errorf(fn.Args.Pos, "expect module name or file name")
-	case 1, 2:
-		fnameNode = fn.Args.Nodes[0]
-		_, fname = ensureStringPrimary(cp, fnameNode, "expect string literal")
-		if len(fn.Args.Nodes) == 2 {
-			modnameNode := fn.Args.Nodes[1]
-			_, modname = ensureStringPrimary(
-				cp, modnameNode, "expect string literal")
-			if modname == "" {
-				cp.errorf(modnameNode.Pos, "module name is empty")
-			}
-		} else {
-			modname = stem(fname)
-			if modname == "" {
-				cp.errorf(fnameNode.Pos, "stem of file name is empty")
-			}
-		}
-	default:
-		cp.errorf(fn.Args.Nodes[2].Pos, "superfluous argument")
-	}
-	switch {
-	case strings.HasPrefix(fname, "/"):
-		// Absolute file name, do nothing
-	case strings.HasPrefix(fname, "./") || strings.HasPrefix(fname, "../"):
-		// File name relative to current source
-		fname = path.Clean(path.Join(cp.dir, fname))
-	default:
-		// File name relative to data dir
-		fname = path.Clean(path.Join(cp.dataDir, fname))
-	}
-	src, err := readFileUTF8(fname)
-	if err != nil {
-		cp.errorf(fnameNode.Pos, "cannot read module: %s", err.Error())
-	}
-
-	cn, err := parse.Parse(fname, src)
-	if err != nil {
-		// TODO(xiaq): Pretty print
-		cp.errorf(fnameNode.Pos, "cannot parse module: %s", err.Error())
-	}
-
-	newCc := &compiler{
-		cp.Compiler,
-		fname, src, path.Dir(fname),
-		[]staticNS{staticNS{}}, staticNS{},
-	}
-
-	op, err := newCc.compile(cn)
-	if err != nil {
-		// TODO(xiaq): Pretty print
-		cp.errorf(fnameNode.Pos, "cannot compile module: %s", err.Error())
-	}
-
-	cp.mod[modname] = newCc.scopes[0]
-
-	return func(ec *evalCtx) exitus {
-		// TODO(xiaq): Should handle failures when evaluting the module
-		newEc := &evalCtx{
-			ec.Evaler,
-			fname, src, "module " + modname,
-			ns{}, ns{},
-			ec.ports,
-		}
-		op.f(newEc)
-		ec.mod[modname] = newEc.local
-		return ok
-	}
-}
-*/
-
 // makeFnOp wraps an op such that a return is converted to an ok.
 func makeFnOp(op Op) Op {
 	return func(ec *EvalCtx) {
@@ -206,5 +125,83 @@ func compileFn(cp *compiler, fn *parse.Form) Op {
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
 		ec.local[varName].Set(closure)
+	}
+}
+
+// UseForm = 'use' StringPrimary [ Compound ]
+func compileUse(cp *compiler, fn *parse.Form) Op {
+	var modname string
+	var filenameOp ValuesOp
+	var filenameBegin int
+
+	switch len(fn.Args) {
+	case 0:
+		cp.errorf(fn.Head.End(), "should be module name")
+	case 2:
+		filenameOp = cp.compound(fn.Args[1])
+		filenameBegin = fn.Args[1].Begin()
+		fallthrough
+	case 1:
+		modname = mustString(cp, fn.Args[0], "should be a literal module name")
+	default:
+		cp.errorf(fn.Args[2].Begin(), "superfluous argument")
+	}
+
+	return func(ec *EvalCtx) {
+		if _, ok := ec.Evaler.modules[modname]; ok {
+			// Module already loaded.
+			return
+		}
+
+		// Load the source.
+		var filename, source string
+
+		if filenameOp != nil {
+			// Filename was specified; evaluate it.
+			values := filenameOp(ec)
+			valuesMust := &muster{ec, "module filename", filenameBegin, values}
+			filename = string(valuesMust.mustOneStr())
+			var err error
+			source, err = readFileUTF8(filename)
+			maybeThrow(err)
+		} else {
+			// No filename; defaulting to $datadir/$modname.elv.
+			dataDir, err := store.DataDir()
+			maybeThrow(err)
+			filename = dataDir + modname + ".elv"
+			if _, err := os.Stat(filename); os.IsNotExist(err) {
+				// File does not exist. Try loading from the table of builtin
+				// modules.
+				filename = "<builtin module>"
+				var ok bool
+				if source, ok = builtinModules[modname]; ok {
+					// Source is loaded. Do nothing more.
+				} else {
+					throw(fmt.Errorf("cannot load %s: %s does not exist", modname, filename))
+				}
+			} else {
+				// File exists. Load it.
+				source, err = readFileUTF8(filename)
+				maybeThrow(err)
+			}
+		}
+
+		// TODO(xiaq): Should handle failures when evaluting the module
+		newEc := &EvalCtx{
+			ec.Evaler,
+			filename, source, "module " + modname,
+			Namespace{}, Namespace{},
+			ec.ports,
+		}
+
+		n, err := parse.Parse(source)
+		maybeThrow(err)
+
+		op, err := newEc.Compile(filename, source, n)
+		maybeThrow(err)
+
+		op(newEc)
+
+		ec.Evaler.modules[modname] = newEc.local
 	}
 }
