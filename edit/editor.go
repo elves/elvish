@@ -123,15 +123,18 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 	name := "[interacitve]"
 	src := ed.line
 	if ed.mode != modeCompletion {
-		n, _ /*err*/ := parse.Parse(src)
+		n, err := parse.Parse(src)
+		if err != nil {
+			ed.addTip("parser error: %s", err)
+		}
 		if n == nil {
 			ed.tokens = []Token{{ParserError, src, nil, ""}}
 		} else {
 			ed.tokens = tokenize(src, n)
 			_, err := ed.evaler.Compile(name, src, n)
 			if err != nil {
+				ed.addTip("compiler error: %s", err)
 				if err, ok := err.(*errutil.ContextualError); ok {
-					ed.addTip("compiler error: %s", err)
 					p := err.Pos()
 					for i, token := range ed.tokens {
 						if token.Node.Begin() <= p && p < token.Node.End() {
