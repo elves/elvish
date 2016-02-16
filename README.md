@@ -8,7 +8,6 @@ progress; things will change without warning.
 
 Test coverages of packages:
 
-main [![main](http://gocover.io/_badge/github.com/elves/elvish/main/)](https://gocover.io/github.com/elves/elvish/main/)
 edit [![edit](http://gocover.io/_badge/github.com/elves/elvish/edit/)](https://gocover.io/github.com/elves/elvish/edit/)
 eval [![eval](http://gocover.io/_badge/github.com/elves/elvish/eval/)](https://gocover.io/github.com/elves/elvish/eval/)
 glob [![glob](http://gocover.io/_badge/github.com/elves/elvish/glob/)](https://gocover.io/github.com/elves/elvish/glob/)
