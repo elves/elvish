@@ -19,7 +19,7 @@ func GetHome(uname string) (string, error) {
 		}
 	}
 
-	// Look up the
+	// Look up the user.
 	var u *user.User
 	var err error
 	if uname == "" {
