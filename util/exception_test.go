@@ -43,4 +43,14 @@ func TestException(t *testing.T) {
 	if err != nil {
 		t.Errorf("Catch recovered panic not caused via Throw")
 	}
+
+	// Catch should do nothing when there is no panic
+	err = nil
+	f = func() {
+		defer Catch(&err)
+	}
+	f()
+	if err != nil {
+		t.Errorf("Catch recovered something when there is no panic")
+	}
 }
