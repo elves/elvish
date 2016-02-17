@@ -348,8 +348,10 @@ var badCases = []struct {
 	{")", 0}, {"]", 0}, {"}", 0},
 	// Unclosed parens.
 	{"a (", 3}, {"a [", 3}, {"a {", 3},
-	// Ampersand
+	// Bogus ampersand.
 	{"a &", 3}, {"a [&", 4},
+	// Bogus command leader.
+	{"else echo 233", 0},
 }
 
 func TestParseError(t *testing.T) {
