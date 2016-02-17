@@ -122,10 +122,6 @@ func (bn *Chunk) parseSeps(ps *parser) int {
 	return nseps
 }
 
-func startsChunk(r rune) bool {
-	return isPipelineSep(r) || startsPipeline(r)
-}
-
 // Pipeline = Form { '|' Form }
 type Pipeline struct {
 	node
@@ -248,9 +244,6 @@ func (fn *Form) tryAssignment(ps *parser) bool {
 	}
 	fn.addToAssignments(an)
 	return true
-}
-
-func (fn *Form) parseIf(ps *parser) {
 }
 
 func startsForm(r rune) bool {
