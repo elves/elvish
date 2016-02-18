@@ -20,6 +20,25 @@ import (
 
 var builtinFns []*BuiltinFn
 
+// BuiltinFn is a builtin function.
+type BuiltinFn struct {
+	Name string
+	Impl func(*EvalCtx, []Value)
+}
+
+func (*BuiltinFn) Kind() string {
+	return "fn"
+}
+
+func (b *BuiltinFn) Repr() string {
+	return "$" + FnPrefix + b.Name
+}
+
+// Call calls a builtin function.
+func (b *BuiltinFn) Call(ec *EvalCtx, args []Value) {
+	b.Impl(ec, args)
+}
+
 func init() {
 	// Needed to work around init loop.
 	builtinFns = []*BuiltinFn{

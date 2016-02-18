@@ -433,22 +433,6 @@ func (cp *compiler) singleVariable(n *parse.Indexing, msg string) VariableOp {
 	}
 }
 
-func makeFlag(m parse.RedirMode) int {
-	switch m {
-	case parse.Read:
-		return os.O_RDONLY
-	case parse.Write:
-		return os.O_WRONLY | os.O_CREATE
-	case parse.ReadWrite:
-		return os.O_RDWR | os.O_CREATE
-	case parse.Append:
-		return os.O_WRONLY | os.O_CREATE | os.O_APPEND
-	default:
-		// XXX should report parser bug
-		panic("bad RedirMode; parser bug")
-	}
-}
-
 const defaultFileRedirPerm = 0644
 
 // redir compiles a Redir into a op.
@@ -644,23 +628,6 @@ func doTilde(v Value) Value {
 		throw(fmt.Errorf("tilde doesn't work on value of type %s", v.Kind()))
 		panic("unreachable")
 	}
-}
-
-func mustGetHome(uname string) string {
-	dir, err := util.GetHome(uname)
-	if err != nil {
-		throw(err)
-	}
-	return dir
-}
-
-func doGlob(gp GlobPattern) []Value {
-	names := glob.Pattern(gp).Glob()
-	vs := make([]Value, len(names))
-	for i, name := range names {
-		vs[i] = String(name)
-	}
-	return vs
 }
 
 func catOps(ops []ValuesOp) ValuesOp {
@@ -980,21 +947,4 @@ func (cp *compiler) braced(n *parse.Primary) ValuesOp {
 	// TODO: n.IsRange
 	// isRange := n.IsRange
 	return catOps(ops)
-}
-
-// parseVariable parses a variable name.
-func parseVariable(qname string) (splice bool, ns string, name string) {
-	if strings.HasPrefix(qname, "@") {
-		splice = true
-		qname = qname[1:]
-		if qname == "" {
-			qname = "args"
-		}
-	}
-
-	i := strings.IndexRune(qname, ':')
-	if i == -1 {
-		return splice, "", qname
-	}
-	return splice, qname[:i], qname[i+1:]
 }

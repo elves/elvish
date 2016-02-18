@@ -78,28 +78,6 @@ func (e *Evaler) AddModule(name string, ns Namespace) {
 	e.modules[name] = ns
 }
 
-// PprintError pretty prints an error. It understands specialized error types
-// defined in this package.
-func PprintError(e error) {
-	switch e := e.(type) {
-	case nil:
-		fmt.Print("\033[32mok\033[m")
-	case multiError:
-		fmt.Print("(")
-		for i, c := range e.errors {
-			if i > 0 {
-				fmt.Print(" | ")
-			}
-			PprintError(c.inner)
-		}
-		fmt.Print(")")
-	case flow:
-		fmt.Print("\033[33m" + e.Error() + "\033[m")
-	default:
-		fmt.Print("\033[31;1m" + e.Error() + "\033[m")
-	}
-}
-
 const (
 	outChanSize   = 32
 	outChanLeader = "▶ "
@@ -206,25 +184,18 @@ func (ec *EvalCtx) PEval(op Op) (ex error) {
 	return nil
 }
 
+func (ec *EvalCtx) PCall(f Caller, args []Value) (ex error) {
+	defer util.Catch(&ex)
+	f.Call(ec, args)
+	return nil
+}
+
 // errorf stops the ec.eval immediately by panicking with a diagnostic message.
 // The panic is supposed to be caught by ec.eval.
 func (ec *EvalCtx) errorf(p int, format string, args ...interface{}) {
 	throw(util.NewContextualError(
 		fmt.Sprintf("%s (%s)", ec.name, ec.context), "error",
 		ec.text, p, format, args...))
-}
-
-// mustSingleString returns a String if that is the only element of vs.
-// Otherwise it errors.
-func (ec *EvalCtx) mustSingleString(vs []Value, what string, p int) String {
-	if len(vs) != 1 {
-		ec.errorf(p, "Expect exactly one word for %s, got %d", what, len(vs))
-	}
-	v, ok := vs[0].(String)
-	if !ok {
-		ec.errorf(p, "Expect string for %s, got %s", what, vs[0])
-	}
-	return v
 }
 
 // SourceText evaluates a chunk of elvish source.
