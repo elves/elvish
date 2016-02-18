@@ -212,7 +212,7 @@ func (b *ListReprBuilder) WriteElem(v string) {
 
 func (b *ListReprBuilder) String() string {
 	if b.buf.Len() == 0 {
-		return "["
+		return "[]"
 	}
 	b.buf.WriteByte(']')
 	return b.buf.String()
