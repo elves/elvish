@@ -54,22 +54,24 @@ func NewEvaler(st *store.Store) *Evaler {
 		searchPaths = []string{"/bin"}
 	}
 
+	ev := &Evaler{nil, map[string]Namespace{}, searchPaths, st}
+
 	// Construct initial global namespace
 	pid := String(strconv.Itoa(syscall.Getpid()))
 	paths := NewList()
 	paths.appendStrings(searchPaths)
-	global := Namespace{
-		"pid":   NewPtrVariable(pid),
-		"ok":    NewPtrVariable(OK),
-		"true":  NewPtrVariable(Bool(true)),
-		"false": NewPtrVariable(Bool(false)),
-		"paths": NewPtrVariable(paths),
+	ev.global = Namespace{
+		"pid":   NewRoVariable(pid),
+		"ok":    NewRoVariable(OK),
+		"true":  NewRoVariable(Bool(true)),
+		"false": NewRoVariable(Bool(false)),
+		"paths": NewRoVariable(PathList{&ev.searchPaths}),
 	}
 	for _, b := range builtinFns {
-		global[FnPrefix+b.Name] = NewPtrVariable(b)
+		ev.global[FnPrefix+b.Name] = NewRoVariable(b)
 	}
 
-	return &Evaler{global, map[string]Namespace{}, searchPaths, st}
+	return ev
 }
 
 func (e *Evaler) AddModule(name string, ns Namespace) {
@@ -263,7 +265,11 @@ func (ev *Evaler) Global() map[string]Variable {
 // returned.
 func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	if ns == "env" {
-		return newEnvVariable(name)
+		ev := envVariable{name}
+		if name == "PATH" {
+			return pathEnvVariable{ev, &ec.searchPaths}
+		}
+		return ev
 	}
 	if mod, ok := ec.modules[ns]; ok {
 		return mod[name]

@@ -190,16 +190,32 @@ func (l List) appendStrings(ss []string) {
 }
 
 func (l List) Repr() string {
-	buf := new(bytes.Buffer)
-	buf.WriteRune('[')
-	for i, v := range *l.inner {
-		if i > 0 {
-			buf.WriteByte(' ')
-		}
-		buf.WriteString(v.Repr())
+	var b ListReprBuilder
+	for _, v := range *l.inner {
+		b.WriteElem(v.Repr())
 	}
-	buf.WriteRune(']')
-	return buf.String()
+	return b.String()
+}
+
+type ListReprBuilder struct {
+	buf bytes.Buffer
+}
+
+func (b *ListReprBuilder) WriteElem(v string) {
+	if b.buf.Len() == 0 {
+		b.buf.WriteByte('[')
+	} else {
+		b.buf.WriteByte(' ')
+	}
+	b.buf.WriteString(v)
+}
+
+func (b *ListReprBuilder) String() string {
+	if b.buf.Len() == 0 {
+		return "["
+	}
+	b.buf.WriteByte(']')
+	return b.buf.String()
 }
 
 // Map is a map from string to Value.

@@ -3,6 +3,7 @@ package eval
 import (
 	"errors"
 	"os"
+	"strings"
 )
 
 var (
@@ -75,4 +76,16 @@ func (ev envVariable) Set(val Value) {
 
 func (ev envVariable) Get() Value {
 	return String(os.Getenv(ev.name))
+}
+
+type pathEnvVariable struct {
+	envVariable
+	ppaths *[]string
+}
+
+func (pev pathEnvVariable) Set(val Value) {
+	s := ToString(val)
+	os.Setenv(pev.name, s)
+	paths := strings.Split(s, ":")
+	*pev.ppaths = paths
 }
