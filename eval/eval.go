@@ -185,9 +185,7 @@ func (ec *EvalCtx) PCall(f Caller, args []Value) (ex error) {
 // errorf stops the ec.eval immediately by panicking with a diagnostic message.
 // The panic is supposed to be caught by ec.eval.
 func (ec *EvalCtx) errorf(p int, format string, args ...interface{}) {
-	throw(util.NewContextualError(
-		fmt.Sprintf("%s (%s)", ec.name, ec.context), "error",
-		ec.text, p, format, args...))
+	throw(&util.PosError{p, p, fmt.Errorf(format, args...)})
 }
 
 // SourceText evaluates a chunk of elvish source.

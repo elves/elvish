@@ -225,8 +225,6 @@ func printError(err error) {
 		return
 	}
 	switch err := err.(type) {
-	case *util.ContextualError:
-		fmt.Print(err.Pprint())
 	case *util.Errors:
 		for _, e := range err.Errors {
 			printError(e)

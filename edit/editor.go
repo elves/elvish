@@ -138,8 +138,8 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 				if tips && !atEnd(err, len(src)) {
 					ed.addTip("compiler error: %s", err)
 				}
-				if err, ok := err.(*util.ContextualError); ok {
-					p := err.Pos()
+				if err, ok := err.(*util.PosError); ok {
+					p := err.Begin
 					for i, token := range ed.tokens {
 						if token.Node.Begin() <= p && p < token.Node.End() {
 							ed.tokens[i].MoreStyle += styleForCompilerError
@@ -160,8 +160,6 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 
 func atEnd(e error, n int) bool {
 	switch e := e.(type) {
-	case *util.ContextualError:
-		return e.Pos() == n
 	case *util.PosError:
 		return e.Begin == n
 	case *util.Errors:
