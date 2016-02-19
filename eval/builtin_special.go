@@ -197,7 +197,8 @@ func compileUse(cp *compiler, fn *parse.Form) Op {
 		n, err := parse.Parse(source)
 		maybeThrow(err)
 
-		op, err := newEc.Compile(filename, source, n)
+		op, err := newEc.Compile(n)
+		// TODO the err originates in another source, should add appropriate information.
 		maybeThrow(err)
 
 		op(newEc)

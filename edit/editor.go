@@ -119,7 +119,6 @@ func (ed *Editor) notify(format string, args ...interface{}) {
 
 func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 	// Re-lex the line, unless we are in modeCompletion
-	name := "[interacitve]"
 	src := ed.line
 	if ed.mode != modeCompletion {
 		n, err := parse.Parse(src)
@@ -134,7 +133,7 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 			ed.tokens = []Token{{ParserError, src, nil, ""}}
 		} else {
 			ed.tokens = tokenize(src, n)
-			_, err := ed.evaler.Compile(name, src, n)
+			_, err := ed.evaler.Compile(n)
 			if err != nil {
 				if tips && !atEnd(err, len(src)) {
 					ed.addTip("compiler error: %s", err)

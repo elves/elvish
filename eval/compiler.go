@@ -3,6 +3,8 @@ package eval
 //go:generate ./boilerplate.py
 
 import (
+	"fmt"
+
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -20,24 +22,20 @@ type (
 // compiler maintains the set of states needed when compiling a single source
 // file.
 type compiler struct {
-	// Used in error messages.
-	name, source string
 	// Lexical scopes.
 	scopes []scope
 	// Variables captured from outer scopes.
 	capture scope
-	// Stored error.
-	error error
 }
 
-func compile(name, source string, sc scope, n *parse.Chunk) (op Op, err error) {
-	cp := &compiler{name, source, []scope{sc}, scope{}, nil}
+func compile(sc scope, n *parse.Chunk) (op Op, err error) {
+	cp := &compiler{[]scope{sc}, scope{}}
 	defer util.Catch(&err)
 	return cp.chunk(n), nil
 }
 
 func (cp *compiler) errorf(p int, format string, args ...interface{}) {
-	throw(util.NewContextualError(cp.name, "syntax error", cp.source, p, format, args...))
+	throw(&util.PosError{p, p, fmt.Errorf(format, args...)})
 }
 
 func (cp *compiler) thisScope() scope {
