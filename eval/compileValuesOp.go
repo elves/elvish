@@ -226,13 +226,14 @@ func variable(qname string, p int) ValuesOp {
 }
 
 func (cp *compiler) primary(n *parse.Primary) ValuesOp {
+	cp.compiling(n)
 	switch n.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return literalStr(n.Value)
 	case parse.Variable:
 		qname := n.Value
 		if !cp.registerVariableGet(qname) {
-			cp.errorf(n.Begin(), "variable $%s not found", n.Value)
+			cp.errorf("variable $%s not found", n.Value)
 		}
 		return variable(qname, n.Begin())
 	case parse.Wildcard:
@@ -242,7 +243,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOp {
 			return vs
 		}
 	case parse.Tilde:
-		cp.errorf(n.Begin(), "compiler bug: Tilde not handled in .compound")
+		cp.errorf("compiler bug: Tilde not handled in .compound")
 		return literalStr("~")
 	case parse.ErrorCapture:
 		return cp.errorCapture(n.Chunk)
@@ -260,7 +261,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOp {
 	case parse.Braced:
 		return cp.braced(n)
 	default:
-		cp.errorf(n.Begin(), "bad PrimaryType; parser bug")
+		cp.errorf("bad PrimaryType; parser bug")
 		return literalStr(n.SourceText())
 	}
 }

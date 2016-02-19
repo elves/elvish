@@ -51,22 +51,23 @@ func compileDel(cp *compiler, fn *parse.Form) Op {
 	// ensuring that variables can be resolved
 	var names, envNames []string
 	for _, cn := range fn.Args {
+		cp.compiling(cn)
 		qname := mustString(cp, cn, "should be a literal variable name")
 		splice, ns, name := parseVariable(qname)
 		if splice {
-			cp.errorf(cn.Begin(), "removing spliced variable makes no sense")
+			cp.errorf("removing spliced variable makes no sense")
 		}
 		switch ns {
 		case "", "local":
 			if !cp.thisScope()[name] {
-				cp.errorf(cn.Begin(), "variable $%s not found on current local scope", name)
+				cp.errorf("variable $%s not found on current local scope", name)
 			}
 			delete(cp.thisScope(), name)
 			names = append(names, name)
 		case "env":
 			envNames = append(envNames, name)
 		default:
-			cp.errorf(cn.Begin(), "can only delete a variable in local: or env:")
+			cp.errorf("can only delete a variable in local: or env:")
 		}
 
 	}
@@ -98,20 +99,23 @@ func makeFnOp(op Op) Op {
 // fn f []{foobar} is a shorthand for set '&'f = []{foobar}.
 func compileFn(cp *compiler, fn *parse.Form) Op {
 	if len(fn.Args) == 0 {
-		cp.errorf(fn.End(), "should be followed by function name")
+		end := fn.End()
+		cp.errorpf(end, end, "should be followed by function name")
 	}
 	fnName := mustString(cp, fn.Args[0], "must be a literal string")
 	varName := FnPrefix + fnName
 
 	if len(fn.Args) == 1 {
-		cp.errorf(fn.Args[0].End(), "should be followed by a lambda")
+		end := fn.Args[0].End()
+		cp.errorpf(end, end, "should be followed by a lambda")
 	}
 	pn := mustPrimary(cp, fn.Args[1], "should be a lambda")
 	if pn.Type != parse.Lambda {
-		cp.errorf(pn.Begin(), "should be a lambda")
+		cp.compiling(pn)
+		cp.errorf("should be a lambda")
 	}
 	if len(fn.Args) > 2 {
-		cp.errorf(fn.Args[2].Begin(), "superfluous argument")
+		cp.errorpf(fn.Args[2].Begin(), fn.Args[len(fn.Args)-1].End(), "superfluous argument(s)")
 	}
 
 	cp.registerVariableSet(":" + varName)
@@ -136,7 +140,8 @@ func compileUse(cp *compiler, fn *parse.Form) Op {
 
 	switch len(fn.Args) {
 	case 0:
-		cp.errorf(fn.Head.End(), "should be module name")
+		end := fn.Head.End()
+		cp.errorpf(end, end, "lack module name")
 	case 2:
 		filenameOp = cp.compound(fn.Args[1])
 		filenameBegin = fn.Args[1].Begin()
@@ -144,7 +149,7 @@ func compileUse(cp *compiler, fn *parse.Form) Op {
 	case 1:
 		modname = mustString(cp, fn.Args[0], "should be a literal module name")
 	default:
-		cp.errorf(fn.Args[2].Begin(), "superfluous argument")
+		cp.errorpf(fn.Args[2].Begin(), fn.Args[len(fn.Args)-1].End(), "superfluous argument(s)")
 	}
 
 	return func(ec *EvalCtx) {

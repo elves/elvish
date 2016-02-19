@@ -26,16 +26,26 @@ type compiler struct {
 	scopes []scope
 	// Variables captured from outer scopes.
 	capture scope
+	// Position of what is being compiled.
+	begin, end int
 }
 
 func compile(sc scope, n *parse.Chunk) (op Op, err error) {
-	cp := &compiler{[]scope{sc}, scope{}}
+	cp := &compiler{[]scope{sc}, scope{}, 0, 0}
 	defer util.Catch(&err)
 	return cp.chunk(n), nil
 }
 
-func (cp *compiler) errorf(p int, format string, args ...interface{}) {
-	throw(&util.PosError{p, p, fmt.Errorf(format, args...)})
+func (cp *compiler) compiling(n parse.Node) {
+	cp.begin, cp.end = n.Begin(), n.End()
+}
+
+func (cp *compiler) errorpf(begin, end int, format string, args ...interface{}) {
+	throw(&util.PosError{begin, end, fmt.Errorf(format, args...)})
+}
+
+func (cp *compiler) errorf(format string, args ...interface{}) {
+	cp.errorpf(cp.begin, cp.end, format, args...)
 }
 
 func (cp *compiler) thisScope() scope {

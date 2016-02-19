@@ -134,7 +134,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 func (cp *compiler) form(n *parse.Form) Op {
 	if len(n.Assignments) > 0 {
 		if n.Head != nil {
-			cp.errorf(n.Begin(), "temporary assignments not yet supported")
+			cp.errorpf(n.Assignments[0].Begin(), n.Assignments[len(n.Assignments)-1].End(), "temporary assignments not yet supported")
 		}
 		ops := cp.assignments(n.Assignments)
 		return func(ec *EvalCtx) {
@@ -146,7 +146,7 @@ func (cp *compiler) form(n *parse.Form) Op {
 
 	if n.Control != nil {
 		if len(n.Args) > 0 {
-			cp.errorf(n.Args[0].Begin(), "control structure takes no arguments")
+			cp.errorpf(n.Args[0].Begin(), n.Args[len(n.Args)-1].End(), "control structure takes no arguments")
 		}
 		redirOps := cp.redirs(n.Redirs)
 		controlOp := cp.control(n.Control)
@@ -259,7 +259,7 @@ func (cp *compiler) control(n *parse.Control) Op {
 	case parse.BeginControl:
 		return cp.chunk(n.Body)
 	default:
-		cp.errorf(n.Begin(), "unknown ControlKind %s, compiler bug", n.Kind)
+		cp.errorpf(n.Begin(), n.End(), "unknown ControlKind %s, compiler bug", n.Kind)
 		panic("unreachable")
 	}
 }
@@ -285,11 +285,12 @@ func (cp *compiler) multiVariable(n *parse.Indexing) []VariableOp {
 		indexings := make([]*parse.Indexing, len(compounds))
 		for i, cn := range compounds {
 			if len(cn.Indexings) != 1 {
-				cp.errorf(cn.Begin(), "must be a variable spec")
+				cp.compiling(cn)
+				cp.errorf("must be a variable spec")
 			}
 			indexings[i] = cn.Indexings[0]
 		}
-		variableOps = cp.singleVariables(indexings, "must be a variable spc")
+		variableOps = cp.singleVariables(indexings, "must be a variable spec")
 	} else {
 		variableOps = []VariableOp{cp.singleVariable(n, "must be a variable spec or a braced list of those")}
 	}
@@ -384,7 +385,8 @@ func (cp *compiler) literal(n *parse.Primary, msg string) string {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return n.Value
 	default:
-		cp.errorf(n.Begin(), msg)
+		cp.compiling(n)
+		cp.errorf(msg)
 		return "" // not reached
 	}
 }
