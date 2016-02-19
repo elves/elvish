@@ -12,8 +12,13 @@ import (
 
 // Value is an elvish value.
 type Value interface {
-	Kind() string
+	Kinder
 	Reprer
+}
+
+// Kinder is anything with kind string.
+type Kinder interface {
+	Kind() string
 }
 
 // Reprer is anything with a Repr method.
