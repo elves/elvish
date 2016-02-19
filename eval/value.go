@@ -23,7 +23,23 @@ type Kinder interface {
 
 // Reprer is anything with a Repr method.
 type Reprer interface {
-	Repr() string
+	// Repr returns a string that represents a Value. The string either be a
+	// literal of that Value that is preferably deep-equal to it (like `[a b c]`
+	// for a list), or a string enclosed in "<>" containing the kind and
+	// identity of the Value(like `<fn 0xdeadcafe>`).
+	//
+	// If indent is at least 0, it should be pretty-printed with the current
+	// indentation level of indent; the indent of the first line has already
+	// been written and shall not be written in Repr. The returned string
+	// should never contain a trailing newline.
+	Repr(indent int) string
+}
+
+func IncIndent(indent, inc int) int {
+	if indent < 0 {
+		return indent
+	}
+	return indent + inc
 }
 
 // Booler is anything that can be converted to a bool.
@@ -177,7 +193,7 @@ func (Bool) Kind() string {
 	return "bool"
 }
 
-func (b Bool) Repr() string {
+func (b Bool) Repr(int) string {
 	if b {
 		return "$true"
 	}
@@ -206,7 +222,7 @@ func (Rat) Kind() string {
 	return "string"
 }
 
-func (r Rat) Repr() string {
+func (r Rat) Repr(int) string {
 	return "(rat " + r.String() + ")"
 }
 
@@ -227,7 +243,7 @@ func ToRat(v Value) (Rat, error) {
 		r := big.Rat{}
 		_, err := fmt.Sscanln(string(v), &r)
 		if err != nil {
-			return Rat{}, fmt.Errorf("%s cannot be parsed as rat", v.Repr())
+			return Rat{}, fmt.Errorf("%s cannot be parsed as rat", v.Repr(-1))
 		}
 		return Rat{&r}, nil
 	default:

@@ -1,9 +1,6 @@
 package eval
 
-import (
-	"bytes"
-	"errors"
-)
+import "errors"
 
 // Map is a map from string to Value.
 type Map struct {
@@ -24,10 +21,12 @@ func (Map) Kind() string {
 	return "map"
 }
 
-func (m Map) Repr() string {
+func (m Map) Repr(indent int) string {
 	var builder MapReprBuilder
+	builder.Indent = indent
+	kvIndent := IncIndent(indent, 1)
 	for k, v := range *m.inner {
-		builder.WritePair(k.Repr(), v.Repr())
+		builder.WritePair(k.Repr(kvIndent), v.Repr(kvIndent))
 	}
 	return builder.String()
 }
@@ -39,7 +38,7 @@ func (m Map) Len() int {
 func (m Map) IndexOne(idx Value) Value {
 	v, ok := (*m.inner)[idx]
 	if !ok {
-		throw(errors.New("no such key: " + idx.Repr()))
+		throw(errors.New("no such key: " + idx.Repr(-1)))
 	}
 	return v
 }
@@ -52,22 +51,16 @@ func (m Map) IndexSet(idx Value, v Value) {
 // implementing other Map-like values. The zero value of a MapReprBuilder is
 // ready to use.
 type MapReprBuilder struct {
-	buf bytes.Buffer
+	ListReprBuilder
 }
 
 func (b *MapReprBuilder) WritePair(k, v string) {
-	if b.buf.Len() == 0 {
-		b.buf.WriteByte('[')
-	} else {
-		b.buf.WriteByte(' ')
-	}
-	b.buf.WriteString("&" + k + "=" + v)
+	b.WriteElem("&" + k + "=" + v)
 }
 
 func (b *MapReprBuilder) String() string {
 	if b.buf.Len() == 0 {
 		return "[&]"
 	}
-	b.buf.WriteByte(']')
-	return b.buf.String()
+	return b.ListReprBuilder.String()
 }

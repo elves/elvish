@@ -97,11 +97,11 @@ var (
 // Caller is a function operating on an Editor. It is either a Builtin or an
 // EvalCaller.
 type Caller interface {
-	Repr() string
+	eval.Reprer
 	Call(ed *Editor)
 }
 
-func (b Builtin) Repr() string {
+func (b Builtin) Repr(int) string {
 	return b.name
 }
 
@@ -114,8 +114,8 @@ type EvalCaller struct {
 	Caller eval.CallerValue
 }
 
-func (c EvalCaller) Repr() string {
-	return c.Caller.Repr()
+func (c EvalCaller) Repr(indent int) string {
+	return c.Caller.Repr(indent)
 }
 
 func (c EvalCaller) Call(ed *Editor) {
@@ -155,7 +155,7 @@ func (c EvalCaller) Call(ed *Editor) {
 	}()
 	go func() {
 		for v := range chanOut {
-			ed.notify("[bound fn value] %s", v.Repr())
+			ed.notify("[bound fn value] %s", v.Repr(-1))
 		}
 		wg.Done()
 	}()

@@ -22,7 +22,7 @@ func (ExternalCmd) Kind() string {
 	return "fn"
 }
 
-func (e ExternalCmd) Repr() string {
+func (e ExternalCmd) Repr(int) string {
 	return "<external " + e.Name + " >"
 }
 

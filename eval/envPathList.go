@@ -62,8 +62,9 @@ func (epl *EnvPathList) Kind() string {
 	return "list"
 }
 
-func (epl *EnvPathList) Repr() string {
+func (epl *EnvPathList) Repr(indent int) string {
 	var b ListReprBuilder
+	b.Indent = indent
 	for _, path := range epl.get() {
 		b.WriteElem(quote(path))
 	}

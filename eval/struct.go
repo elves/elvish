@@ -26,10 +26,12 @@ func (*Struct) Kind() string {
 	return "map"
 }
 
-func (s *Struct) Repr() string {
+func (s *Struct) Repr(indent int) string {
 	var builder MapReprBuilder
+	builder.Indent = indent
+	fieldIndent := IncIndent(indent, 1)
 	for i, name := range s.FieldNames {
-		builder.WritePair(parse.Quote(name), s.Fields[i].Get().Repr())
+		builder.WritePair(parse.Quote(name), s.Fields[i].Get().Repr(fieldIndent))
 	}
 	return builder.String()
 }
@@ -56,6 +58,6 @@ func (s *Struct) index(idx Value) Variable {
 			return s.Fields[i]
 		}
 	}
-	throw(fmt.Errorf("no such field: %s", index.Repr()))
+	throw(fmt.Errorf("no such field: %s", index.Repr(-1)))
 	panic("unreachable")
 }

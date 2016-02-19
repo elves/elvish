@@ -23,7 +23,7 @@ func newClosure(a []string, op Op, e map[string]Variable, v bool) *Closure {
 	return &Closure{a, op, e, v}
 }
 
-func (c *Closure) Repr() string {
+func (c *Closure) Repr(int) string {
 	return fmt.Sprintf("<Closure%v>", *c)
 }
 

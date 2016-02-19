@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"strconv"
+	"strings"
 )
 
 // Error definitions.
@@ -32,10 +33,12 @@ func (List) Kind() string {
 	return "list"
 }
 
-func (l List) Repr() string {
+func (l List) Repr(indent int) string {
 	var b ListReprBuilder
+	b.Indent = indent
+	elemIndent := IncIndent(indent, 1)
 	for _, v := range *l.inner {
-		b.WriteElem(v.Repr())
+		b.WriteElem(v.Repr(elemIndent))
 	}
 	return b.String()
 }
@@ -92,13 +95,21 @@ func intIndex(idx Value) int {
 
 // ListReprBuilder helps to build Repr of list-like Values.
 type ListReprBuilder struct {
-	buf bytes.Buffer
+	Indent int
+	buf    bytes.Buffer
 }
 
 func (b *ListReprBuilder) WriteElem(v string) {
 	if b.buf.Len() == 0 {
 		b.buf.WriteByte('[')
-	} else {
+	}
+	if b.Indent > 0 {
+		// Pretty printing.
+		//
+		// Add a newline and indent+1 spaces, so that the
+		// starting & lines up with the first pair.
+		b.buf.WriteString("\n" + strings.Repeat(" ", IncIndent(b.Indent, 1)))
+	} else if b.buf.Len() > 1 {
 		b.buf.WriteByte(' ')
 	}
 	b.buf.WriteString(v)

@@ -9,7 +9,7 @@ func (String) Kind() string {
 	return "string"
 }
 
-func (s String) Repr() string {
+func (s String) Repr(int) string {
 	return quote(string(s))
 }
 
@@ -43,12 +43,12 @@ func resolve(s string, ec *EvalCtx) Caller {
 }
 
 // ToString converts a Value to String. When the Value type implements
-// String(), it is used. Otherwise Repr() is used.
+// String(), it is used. Otherwise Repr(-1) is used.
 func ToString(v Value) string {
 	if s, ok := v.(Stringer); ok {
 		return s.String()
 	}
-	return v.Repr()
+	return v.Repr(-1)
 }
 
 func quote(s string) string {

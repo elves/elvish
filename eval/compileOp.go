@@ -361,7 +361,7 @@ func (cp *compiler) singleVariable(n *parse.Indexing, msg string) VariableOp {
 		// Now this must be an IndexSetter.
 		indexSetter, ok := value.(IndexSetter)
 		if !ok {
-			ec.errorf( /* from p to */ indexBegins[n-1], "cannot be indexed for setting (value is %s, type %s)", value.Repr(), value.Kind())
+			ec.errorf( /* from p to */ indexBegins[n-1], "cannot be indexed for setting (value is %s, type %s)", value.Repr(-1), value.Kind())
 		}
 		// XXX Duplicate code.
 		indicies := indexOps[n-1](ec)

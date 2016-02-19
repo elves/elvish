@@ -30,7 +30,7 @@ func (*BuiltinFn) Kind() string {
 	return "fn"
 }
 
-func (b *BuiltinFn) Repr() string {
+func (b *BuiltinFn) Repr(int) string {
 	return "$" + FnPrefix + b.Name
 }
 

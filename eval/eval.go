@@ -73,6 +73,7 @@ func (e *Evaler) AddModule(name string, ns Namespace) {
 const (
 	outChanSize   = 32
 	outChanLeader = "▶ "
+	initIndent    = 2
 )
 
 // NewTopEvalCtx creates a top-level evalCtx.
@@ -146,7 +147,7 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 	outDone := make(chan struct{})
 	go func() {
 		for v := range outCh {
-			fmt.Printf("%s%s\n", outChanLeader, v.Repr())
+			fmt.Printf("%s%s\n", outChanLeader, v.Repr(initIndent))
 		}
 		close(outDone)
 	}()

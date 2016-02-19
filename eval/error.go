@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/elves/elvish/parse"
 )
@@ -17,12 +18,12 @@ func (Error) Kind() string {
 	return "error"
 }
 
-func (e Error) Repr() string {
+func (e Error) Repr(indent int) string {
 	if e.inner == nil {
 		return "$ok"
 	}
 	if r, ok := e.inner.(Reprer); ok {
-		return r.Repr()
+		return r.Repr(indent)
 	}
 	return "?(error " + parse.Quote(e.inner.Error()) + ")"
 }
@@ -43,12 +44,18 @@ type multiError struct {
 	errors []Error
 }
 
-func (me multiError) Repr() string {
+func (me multiError) Repr(indent int) string {
+	// TODO Make a more generalized ListReprBuilder and use it here.
 	b := new(bytes.Buffer)
 	b.WriteString("?(multi-error")
+	elemIndent := IncIndent(indent, len("?(multi-error "))
 	for _, e := range me.errors {
-		b.WriteString(" ")
-		b.WriteString(e.Repr())
+		if indent > 0 {
+			b.WriteString("\n" + strings.Repeat(" ", elemIndent))
+		} else {
+			b.WriteString(" ")
+		}
+		b.WriteString(e.Repr(elemIndent))
 	}
 	b.WriteString(")")
 	return b.String()
@@ -85,7 +92,7 @@ var flowNames = [...]string{
 	"return", "break", "continue",
 }
 
-func (f flow) Repr() string {
+func (f flow) Repr(int) string {
 	return "?(" + f.Error() + ")"
 }
 

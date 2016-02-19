@@ -14,7 +14,7 @@ func (GlobPattern) Kind() string {
 	return "glob-pattern"
 }
 
-func (gp GlobPattern) Repr() string {
+func (gp GlobPattern) Repr(int) string {
 	return fmt.Sprintf("<GlobPattern%v>", gp)
 }
 

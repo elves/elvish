@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
 
@@ -50,10 +51,11 @@ func (BindingTable) Kind() string {
 	return "map"
 }
 
-func (bt BindingTable) Repr() string {
+func (bt BindingTable) Repr(indent int) string {
 	var builder eval.MapReprBuilder
+	builder.Indent = indent
 	for k, v := range bt.inner {
-		builder.WritePair(k.String(), v.Repr())
+		builder.WritePair(parse.Quote(k.String()), v.Repr(eval.IncIndent(indent, 1)))
 	}
 	return builder.String()
 }
@@ -78,7 +80,7 @@ func (bt BindingTable) IndexSet(idx, v eval.Value) {
 	case eval.String:
 		builtin, ok := builtinMap[string(v)]
 		if !ok {
-			throw(fmt.Errorf("no builtin named %s", v.Repr()))
+			throw(fmt.Errorf("no builtin named %s", v.Repr(-1)))
 		}
 		f = builtin
 	case eval.CallerValue:
@@ -112,7 +114,7 @@ func (*EditBuiltin) Kind() string {
 	return "fn"
 }
 
-func (eb *EditBuiltin) Repr() string {
+func (eb *EditBuiltin) Repr(int) string {
 	return "<editor builtin " + eb.b.name + ">"
 }
 
