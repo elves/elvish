@@ -26,18 +26,16 @@ func (List) Kind() string {
 	return "list"
 }
 
-func (l List) appendStrings(ss []string) {
-	for _, s := range ss {
-		*l.inner = append(*l.inner, String(s))
-	}
-}
-
 func (l List) Repr() string {
 	var b ListReprBuilder
 	for _, v := range *l.inner {
 		b.WriteElem(v.Repr())
 	}
 	return b.String()
+}
+
+func (l List) Len() int {
+	return len(*l.inner)
 }
 
 func (l List) IndexOne(idx Value) Value {

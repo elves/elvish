@@ -17,6 +17,10 @@ func (s String) String() string {
 	return string(s)
 }
 
+func (s String) Len() int {
+	return len(string(s))
+}
+
 // Call resolves a command name to either a Caller variable or external command
 // and calls it.
 func (s String) Call(ec *EvalCtx, args []Value) {

@@ -31,6 +31,11 @@ type Stringer interface {
 	String() string
 }
 
+// Lener is anything with a length.
+type Lener interface {
+	Len() int
+}
+
 // Caller is anything may be called on an evalCtx with a list of Value's.
 type Caller interface {
 	Value

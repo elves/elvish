@@ -528,20 +528,11 @@ func drop(ec *EvalCtx, n int) {
 }
 
 func lenFn(ec *EvalCtx, v Value) {
-	var l int
-	switch v := v.(type) {
-	case String:
-		l = len(v)
-	case List:
-		l = len(*v.inner)
-	case Map:
-		l = len(*v.inner)
-	case *Struct:
-		l = len(v.FieldNames)
-	default:
+	lener, ok := v.(Lener)
+	if !ok {
 		throw(fmt.Errorf("cannot get length of a %s", v.Kind()))
 	}
-	ec.ports[1].Chan <- String(strconv.Itoa(l))
+	ec.ports[1].Chan <- String(strconv.Itoa(lener.Len()))
 }
 
 func count(ec *EvalCtx) {

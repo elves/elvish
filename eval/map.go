@@ -27,6 +27,10 @@ func (m Map) Repr() string {
 	return builder.String()
 }
 
+func (m Map) Len() int {
+	return len(*m.inner)
+}
+
 func (m Map) IndexOne(idx Value) Value {
 	v, ok := (*m.inner)[idx]
 	if !ok {

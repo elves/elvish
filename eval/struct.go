@@ -29,6 +29,10 @@ func (s *Struct) Repr() string {
 	return builder.String()
 }
 
+func (s *Struct) Len() int {
+	return len(s.FieldNames)
+}
+
 func (s *Struct) IndexOne(idx Value) Value {
 	return s.index(idx).Get()
 }
