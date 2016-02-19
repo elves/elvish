@@ -17,6 +17,11 @@ type Struct struct {
 	Fields     []Variable
 }
 
+var (
+	_ Value   = (*Struct)(nil)
+	_ MapLike = (*Struct)(nil)
+)
+
 func (*Struct) Kind() string {
 	return "map"
 }

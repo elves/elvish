@@ -10,6 +10,11 @@ type Map struct {
 	inner *map[Value]Value
 }
 
+type MapLike interface {
+	Lener
+	IndexOneer
+}
+
 // NewMap creates a new Map.
 func NewMap(inner map[Value]Value) Map {
 	return Map{&inner}
