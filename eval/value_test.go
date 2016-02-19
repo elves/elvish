@@ -26,7 +26,7 @@ var reprTests = []struct {
 	{List{&[]Value{}}, "[]"},
 	{List{&[]Value{String("bash"), Bool(false)}}, "[bash $false]"},
 	{Map{&map[Value]Value{}}, "[&]"},
-	{Map{&map[Value]Value{Error{nil}: String("elvish")}}, "[&$ok elvish]"},
+	{Map{&map[Value]Value{Error{nil}: String("elvish")}}, "[&$ok=elvish]"},
 	// TODO: test maps of more elements
 }
 

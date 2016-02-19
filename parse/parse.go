@@ -969,16 +969,18 @@ type MapPair struct {
 func (mpn *MapPair) parse(ps *parser) {
 	parseSep(mpn, ps, '&')
 
-	parseSpaces(mpn, ps)
+	// Parse key part, cutting on '='.
+	ps.cut('=')
 	mpn.setKey(parseCompound(ps))
 	if len(mpn.Key.Indexings) == 0 {
 		ps.error(errShouldBeCompound)
 	}
+	ps.uncut('=')
 
-	parseSpaces(mpn, ps)
-	mpn.setValue(parseCompound(ps))
-	if len(mpn.Value.Indexings) == 0 {
-		ps.error(errShouldBeCompound)
+	if parseSep(mpn, ps, '=') {
+		// Parse value part.
+		mpn.setValue(parseCompound(ps))
+		// The value part can be empty.
 	}
 }
 

@@ -61,7 +61,7 @@ func (b *MapReprBuilder) WritePair(k, v string) {
 	} else {
 		b.buf.WriteByte(' ')
 	}
-	b.buf.WriteString("&" + k + " " + v)
+	b.buf.WriteString("&" + k + "=" + v)
 }
 
 func (b *MapReprBuilder) String() string {

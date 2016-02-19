@@ -917,18 +917,22 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOp {
 }
 
 func (cp *compiler) map_(n *parse.Primary) ValuesOp {
-	nn := len(n.MapPairs)
-	keysOps := make([]ValuesOp, nn)
-	valuesOps := make([]ValuesOp, nn)
-	poses := make([]int, nn)
-	for i := 0; i < nn; i++ {
-		keysOps[i] = cp.compound(n.MapPairs[i].Key)
-		valuesOps[i] = cp.compound(n.MapPairs[i].Value)
+	npairs := len(n.MapPairs)
+	keysOps := make([]ValuesOp, npairs)
+	valuesOps := make([]ValuesOp, npairs)
+	poses := make([]int, npairs)
+	for i, pair := range n.MapPairs {
+		keysOps[i] = cp.compound(pair.Key)
+		if pair.Value == nil {
+			valuesOps[i] = literalValues(Bool(true))
+		} else {
+			valuesOps[i] = cp.compound(n.MapPairs[i].Value)
+		}
 		poses[i] = n.MapPairs[i].Begin()
 	}
 	return func(ec *EvalCtx) []Value {
 		m := make(map[Value]Value)
-		for i := 0; i < nn; i++ {
+		for i := 0; i < npairs; i++ {
 			keys := keysOps[i](ec)
 			values := valuesOps[i](ec)
 			if len(keys) != len(values) {

@@ -69,10 +69,10 @@ var evalTests = []struct {
 		strs("fish1.0", "fish1.1", "elvish1.0", "elvish1.1"), nomore},
 
 	// List, map and indexing
-	{"println [a b c] [&key value] | from-lines",
-		strs("[a b c] [&key value]"), nomore},
+	{"println [a b c] [&key=value] | from-lines",
+		strs("[a b c] [&key=value]"), nomore},
 	{"put [a b c][2]", strs("c"), nomore},
-	{"put [&key value][key]", strs("value"), nomore},
+	{"put [&key=value][key]", strs("value"), nomore},
 
 	// Output capture
 	{"put (put lorem ipsum)", strs("lorem", "ipsum"), nomore},
@@ -91,7 +91,7 @@ var evalTests = []struct {
 	// List element assignment
 	{"li=[foo bar]; li[0]=233; put-all $li", strs("233", "bar"), nomore},
 	// Map element assignment
-	{"di=[&k v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
+	{"di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
 		strs("lorem", "ipsum"), nomore},
 
 	// Wildcard.

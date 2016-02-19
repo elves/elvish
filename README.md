@@ -63,17 +63,17 @@ Some things that the language is already capable of:
 
 * Lists and maps:
   ```
-  ~> println list: [a list] map: [&key value]
-  list: [a list] map: [&key value]
+  ~> println list: [a list] map: [&key=value]
+  list: [a list] map: [&key=value]
   ~> println [a b c][0]
   a
-  ~> println [&key value][key]
+  ~> println [&key=value][key]
   value
   ```
 
 * Variables:
   ```
-  ~> v=[&foo bar]; put $v[foo]
+  ~> v=[&foo=bar]; put $v[foo]
   ▶ bar
   ```
 
