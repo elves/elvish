@@ -365,10 +365,11 @@ func cdInner(dir string, ec *EvalCtx) {
 		throw(err)
 	}
 	if ec.store != nil {
+		// XXX Error ignored.
 		pwd, err := os.Getwd()
-		// BUG(xiaq): Possible error of os.Getwd after cd-ing is ignored.
 		if err == nil {
-			ec.store.AddDir(pwd)
+			// XXX Error ignored.
+			go ec.store.AddDir(pwd)
 		}
 	}
 }
