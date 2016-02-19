@@ -36,7 +36,7 @@ func complVariable(n parse.Node, ed *Editor) []*candidate {
 		if strings.HasPrefix(variable, head) {
 			cands = append(cands, &candidate{
 				source: styled{variable[len(head):], styleForType[Variable]},
-				menu:   styled{"$" + variable, styleForType[Variable]}})
+				menu:   styled{"$" + variable, ""}})
 		}
 	}
 	return cands
