@@ -232,7 +232,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOp {
 	case parse.Variable:
 		qname := n.Value
 		if !cp.registerVariableGet(qname) {
-			cp.errorf(n.Begin(), "variable %s not found", n.Value)
+			cp.errorf(n.Begin(), "variable $%s not found", n.Value)
 		}
 		return variable(qname, n.Begin())
 	case parse.Wildcard:
