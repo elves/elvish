@@ -182,9 +182,10 @@ type CallerIndexer struct {
 }
 
 func (ci CallerIndexer) Index(idx []Value) []Value {
-	return captureOutput(ci.ec, func(ec *EvalCtx) {
+	// XXX We don't have location information.
+	return captureOutput(ci.ec, Op{func(ec *EvalCtx) {
 		ci.Caller.Call(ec, idx)
-	})
+	}, -1, -1})
 }
 
 // Error definitions.

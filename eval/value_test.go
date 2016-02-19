@@ -20,7 +20,7 @@ var reprTests = []struct {
 	{Bool(false), "$false"},
 	{Error{nil}, "$ok"},
 	{Error{errors.New("foo bar")}, "?(error 'foo bar')"},
-	{Error{multiError{[]Error{{nil}, {errors.New("lorem")}}}},
+	{Error{MultiError{[]Error{{nil}, {errors.New("lorem")}}}},
 		"?(multi-error $ok ?(error lorem))"},
 	{Error{Return}, "?(return)"},
 	{List{&[]Value{}}, "[]"},

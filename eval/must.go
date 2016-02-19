@@ -1,29 +1,31 @@
 package eval
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/elves/elvish/parse"
 )
 
 type muster struct {
-	ec   *EvalCtx
-	what string
-	p    int
-	vs   []Value
+	ec         *EvalCtx
+	what       string
+	begin, end int
+	vs         []Value
 }
 
-func (m *muster) error(want, got string) {
-	m.ec.errorf(m.p, "%s must be %s; got %s", m.what, want, got)
+func (m *muster) error(want, gotfmt string, gotargs ...interface{}) {
+	m.ec.errorpf(m.begin, m.end, "%s must be %s; got "+gotfmt,
+		append([]interface{}{m.what, want}, gotargs...))
 }
 
-func (ec *EvalCtx) must(vs []Value, what string, pos int) *muster {
-	return &muster{ec, what, pos, vs}
+func (ec *EvalCtx) must(vs []Value, what string, begin, end int) *muster {
+	return &muster{ec, what, begin, end, vs}
 }
 
 func (m *muster) mustLen(l int) {
 	if len(m.vs) != l {
-		m.ec.errorf(m.p, "%s must be exactly %d value; got %d", m.what, l, len(m.vs))
+		m.error(fmt.Sprintf("%d values", l), "%d", len(m.vs))
 	}
 }
 
@@ -36,8 +38,7 @@ func (m *muster) zerothMustStr() String {
 	v := m.vs[0]
 	s, ok := v.(String)
 	if !ok {
-		m.ec.errorf(m.p, "%s must be a string; got %s (type %s)",
-			m.what, v.Repr(NoPretty), v.Kind())
+		m.error("a string", "%s (type %s)", v.Repr(NoPretty), v.Kind())
 	}
 	return s
 }
@@ -51,7 +52,7 @@ func (m *muster) zerothMustInt() int {
 	s := m.zerothMustStr()
 	i, err := strconv.Atoi(string(s))
 	if err != nil {
-		m.ec.errorf(m.p, "%s must be an integer; got %s", m.what, s)
+		m.error("an integer", "%s", s)
 	}
 	return i
 }
@@ -64,7 +65,7 @@ func (m *muster) mustOneInt() int {
 func (m *muster) zerothMustNonNegativeInt() int {
 	i := m.zerothMustInt()
 	if i < 0 {
-		m.ec.errorf(m.p, "%s must be non-negative; got %d", m.what, i)
+		m.error("non-negative", "%d", i)
 	}
 	return i
 }

@@ -11,7 +11,7 @@ import (
 
 // Error represents runtime errors in elvish constructs.
 type Error struct {
-	inner error
+	Inner error
 }
 
 func (Error) Kind() string {
@@ -19,17 +19,17 @@ func (Error) Kind() string {
 }
 
 func (e Error) Repr(indent int) string {
-	if e.inner == nil {
+	if e.Inner == nil {
 		return "$ok"
 	}
-	if r, ok := e.inner.(Reprer); ok {
+	if r, ok := e.Inner.(Reprer); ok {
 		return r.Repr(indent)
 	}
-	return "?(error " + parse.Quote(e.inner.Error()) + ")"
+	return "?(error " + parse.Quote(e.Inner.Error()) + ")"
 }
 
 func (e Error) Bool() bool {
-	return e.inner == nil
+	return e.Inner == nil
 }
 
 // Common Error values.
@@ -40,16 +40,16 @@ var (
 
 // multiError is multiple errors packed into one. It is used for reporting
 // errors of pipelines, in which multiple forms may error.
-type multiError struct {
-	errors []Error
+type MultiError struct {
+	Errors []Error
 }
 
-func (me multiError) Repr(indent int) string {
+func (me MultiError) Repr(indent int) string {
 	// TODO Make a more generalized ListReprBuilder and use it here.
 	b := new(bytes.Buffer)
 	b.WriteString("?(multi-error")
 	elemIndent := indent + len("?(multi-error ")
-	for _, e := range me.errors {
+	for _, e := range me.Errors {
 		if indent > 0 {
 			b.WriteString("\n" + strings.Repeat(" ", elemIndent))
 		} else {
@@ -61,21 +61,25 @@ func (me multiError) Repr(indent int) string {
 	return b.String()
 }
 
-func (me multiError) Error() string {
+func (me MultiError) Error() string {
 	b := new(bytes.Buffer)
 	b.WriteString("(")
-	for i, e := range me.errors {
+	for i, e := range me.Errors {
 		if i > 0 {
 			b.WriteString(" | ")
 		}
-		b.WriteString(e.inner.Error())
+		if e.Inner == nil {
+			b.WriteString("<nil>")
+		} else {
+			b.WriteString(e.Inner.Error())
+		}
 	}
 	b.WriteString(")")
 	return b.String()
 }
 
 func newMultiError(es ...Error) Error {
-	return Error{multiError{es}}
+	return Error{MultiError{es}}
 }
 
 // Flow is a special type of Error used for control flows.
@@ -105,7 +109,7 @@ func (f flow) Error() string {
 
 func allok(es []Error) bool {
 	for _, e := range es {
-		if e.inner != nil {
+		if e.Inner != nil {
 			return false
 		}
 	}
@@ -118,13 +122,13 @@ func PprintError(e error) {
 	switch e := e.(type) {
 	case nil:
 		fmt.Print("\033[32mok\033[m")
-	case multiError:
+	case MultiError:
 		fmt.Print("(")
-		for i, c := range e.errors {
+		for i, c := range e.Errors {
 			if i > 0 {
 				fmt.Print(" | ")
 			}
-			PprintError(c.inner)
+			PprintError(c.Inner)
 		}
 		fmt.Print(")")
 	case flow:

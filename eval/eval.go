@@ -40,6 +40,12 @@ type EvalCtx struct {
 
 	local, up Namespace
 	ports     []*Port
+
+	begin, end int
+}
+
+func (ec *EvalCtx) evaling(n parse.Node) {
+	ec.begin, ec.end = n.Begin(), n.End()
 }
 
 // NewEvaler creates a new Evaler.
@@ -82,7 +88,7 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
 		ev,
 		name, text, "top",
 		ev.global, Namespace{},
-		ports,
+		ports, 0, len(text),
 	}
 }
 
@@ -97,7 +103,7 @@ func (ec *EvalCtx) fork(newContext string) *EvalCtx {
 		ec.Evaler,
 		ec.name, ec.text, newContext,
 		ec.local, ec.up,
-		newPorts,
+		newPorts, ec.begin, ec.end,
 	}
 }
 
@@ -171,22 +177,47 @@ func (ev *Evaler) Compile(n *parse.Chunk) (Op, error) {
 
 // PEval evaluates an op in a protected environment so that calls to errorf are
 // wrapped in an Error.
-func (ec *EvalCtx) PEval(op Op) (ex error) {
-	defer util.Catch(&ex)
-	op(ec)
+func (ec *EvalCtx) PEval(op Op) (err error) {
+	// defer catch(&err, ec)
+	defer util.Catch(&err)
+	op.Exec(ec)
 	return nil
 }
 
-func (ec *EvalCtx) PCall(f Caller, args []Value) (ex error) {
-	defer util.Catch(&ex)
+func (ec *EvalCtx) PCall(f Caller, args []Value) (err error) {
+	// defer catch(&err, ec)
+	defer util.Catch(&err)
 	f.Call(ec, args)
 	return nil
 }
 
-// errorf stops the ec.eval immediately by panicking with a diagnostic message.
+func catch(perr *error, ec *EvalCtx) {
+	// NOTE: We have to duplicate instead of calling util.Catch here, since
+	// recover can only catch a panic when called directly from a deferred
+	// function.
+	r := recover()
+	if r == nil {
+		return
+	}
+	if exc, ok := r.(util.Exception); ok {
+		err := exc.Error
+		if _, ok := err.(*util.PosError); !ok {
+			err = &util.PosError{ec.begin, ec.end, err}
+		}
+		*perr = err
+	} else if r != nil {
+		panic(r)
+	}
+}
+
+// errorpf stops the ec.eval immediately by panicking with a diagnostic message.
 // The panic is supposed to be caught by ec.eval.
-func (ec *EvalCtx) errorf(p int, format string, args ...interface{}) {
-	throw(&util.PosError{p, p, fmt.Errorf(format, args...)})
+func (ec *EvalCtx) errorpf(begin, end int, format string, args ...interface{}) {
+	throw(&util.PosError{begin, end, fmt.Errorf(format, args...)})
+}
+
+func (ec *EvalCtx) errorf(format string, args ...interface{}) {
+	ec.errorpf(ec.begin, ec.end, format, args...)
 }
 
 // SourceText evaluates a chunk of elvish source.

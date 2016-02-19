@@ -14,14 +14,26 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-func (cp *compiler) compound(n *parse.Compound) ValuesOp {
+// ValuesOp is an operation on an EvalCtx that produce Value's.
+type ValuesOp struct {
+	Func       ValuesOpFunc
+	Begin, End int
+}
+
+func (op ValuesOp) Exec(ec *EvalCtx) []Value {
+	ec.begin, ec.end = op.Begin, op.End
+	return op.Func(ec)
+}
+
+type ValuesOpFunc func(*EvalCtx) []Value
+
+func (cp *compiler) compound(n *parse.Compound) ValuesOpFunc {
 	if len(n.Indexings) == 0 {
 		return literalStr("")
 	}
 
 	tilde := false
 	indexings := n.Indexings
-	begins := indexingBegins(n.Indexings)[1:]
 
 	if n.Indexings[0].Head.Type == parse.Tilde {
 		// A lone ~.
@@ -32,19 +44,18 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOp {
 		}
 		tilde = true
 		indexings = indexings[1:]
-		begins = begins[1:]
 	}
 
-	ops := cp.indexings(indexings)
+	ops := cp.indexingOps(indexings)
 
 	return func(ec *EvalCtx) []Value {
 		// Accumulator.
-		vs := ops[0](ec)
+		vs := ops[0].Exec(ec)
 
 		// Logger.Printf("concatenating %v with %d more", vs, len(ops)-1)
 
 		for _, op := range ops[1:] {
-			us := op(ec)
+			us := op.Exec(ec)
 			vs = outerProduct(vs, us, cat)
 			// Logger.Printf("with %v => %v", us, vs)
 		}
@@ -152,30 +163,30 @@ func doTilde(v Value) Value {
 	}
 }
 
-func (cp *compiler) array(n *parse.Array) ValuesOp {
-	return catValuesOps(cp.compounds(n.Compounds))
+func (cp *compiler) array(n *parse.Array) ValuesOpFunc {
+	return catValuesOps(cp.compoundOps(n.Compounds))
 }
 
-func catValuesOps(ops []ValuesOp) ValuesOp {
+func catValuesOps(ops []ValuesOp) ValuesOpFunc {
 	return func(ec *EvalCtx) []Value {
 		// Use number of compound expressions as an estimation of the number
 		// of values
 		vs := make([]Value, 0, len(ops))
 		for _, op := range ops {
-			us := op(ec)
+			us := op.Exec(ec)
 			vs = append(vs, us...)
 		}
 		return vs
 	}
 }
 
-func (cp *compiler) indexing(n *parse.Indexing) ValuesOp {
+func (cp *compiler) indexing(n *parse.Indexing) ValuesOpFunc {
 	if len(n.Indicies) == 0 {
 		return cp.primary(n.Head)
 	}
 
-	headOp := cp.primary(n.Head)
-	indexOps := cp.arrays(n.Indicies)
+	headOp := cp.primaryOp(n.Head)
+	indexOps := cp.arrayOps(n.Indicies)
 	// p := n.Begin()
 	indexPoses := make([]int, len(n.Indicies))
 	for i, index := range n.Indicies {
@@ -183,9 +194,9 @@ func (cp *compiler) indexing(n *parse.Indexing) ValuesOp {
 	}
 
 	return func(ec *EvalCtx) []Value {
-		vs := headOp(ec)
+		vs := headOp.Exec(ec)
 		for _, indexOp := range indexOps {
-			indicies := indexOp(ec)
+			indicies := indexOp.Exec(ec)
 			newvs := make([]Value, 0, len(vs)*len(indicies))
 			for _, v := range vs {
 				newvs = append(newvs, mustIndexer(v, ec).Index(indicies)...)
@@ -196,28 +207,28 @@ func (cp *compiler) indexing(n *parse.Indexing) ValuesOp {
 	}
 }
 
-func literalValues(v ...Value) ValuesOp {
+func literalValues(v ...Value) ValuesOpFunc {
 	return func(e *EvalCtx) []Value {
 		return v
 	}
 }
 
-func literalStr(text string) ValuesOp {
+func literalStr(text string) ValuesOpFunc {
 	return literalValues(String(text))
 }
 
-func variable(qname string, p int) ValuesOp {
+func variable(qname string, p int) ValuesOpFunc {
 	splice, ns, name := parseVariable(qname)
 	return func(ec *EvalCtx) []Value {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
-			ec.errorf(p, "variable $%s not found", qname)
+			ec.errorf("variable $%s not found", qname)
 		}
 		value := variable.Get()
 		if splice {
 			elemser, ok := value.(Elemser)
 			if !ok {
-				ec.errorf(p, "variable $%s (kind %s) cannot be spliced", qname, value.Kind())
+				ec.errorf("variable $%s (kind %s) cannot be spliced", qname, value.Kind())
 			}
 			return collectElems(elemser)
 		}
@@ -225,7 +236,7 @@ func variable(qname string, p int) ValuesOp {
 	}
 }
 
-func (cp *compiler) primary(n *parse.Primary) ValuesOp {
+func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 	cp.compiling(n)
 	switch n.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
@@ -250,9 +261,9 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOp {
 	case parse.OutputCapture:
 		return cp.outputCapture(n)
 	case parse.List:
-		op := cp.array(n.List)
+		op := cp.arrayOp(n.List)
 		return func(ec *EvalCtx) []Value {
-			return []Value{NewList(op(ec)...)}
+			return []Value{NewList(op.Exec(ec)...)}
 		}
 	case parse.Lambda:
 		return cp.lambda(n)
@@ -266,15 +277,15 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOp {
 	}
 }
 
-func (cp *compiler) errorCapture(n *parse.Chunk) ValuesOp {
-	op := cp.chunk(n)
+func (cp *compiler) errorCapture(n *parse.Chunk) ValuesOpFunc {
+	op := cp.chunkOp(n)
 	return func(ec *EvalCtx) []Value {
 		return []Value{Error{ec.PEval(op)}}
 	}
 }
 
-func (cp *compiler) outputCapture(n *parse.Primary) ValuesOp {
-	op := cp.chunk(n.Chunk)
+func (cp *compiler) outputCapture(n *parse.Primary) ValuesOpFunc {
+	op := cp.chunkOp(n.Chunk)
 	// p := n.Chunk.Begin()
 	return func(ec *EvalCtx) []Value {
 		return captureOutput(ec, op)
@@ -315,7 +326,7 @@ func captureOutput(ec *EvalCtx, op Op) []Value {
 		bytesCollected <- true
 	}()
 
-	op(newEc)
+	op.Exec(newEc)
 	ClosePorts(newEc.ports)
 
 	<-bytesCollected
@@ -325,7 +336,7 @@ func captureOutput(ec *EvalCtx, op Op) []Value {
 	return vs
 }
 
-func (cp *compiler) lambda(n *parse.Primary) ValuesOp {
+func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 	// Collect argument names
 	var argNames []string
 	var variadic bool
@@ -348,7 +359,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOp {
 	for _, argName := range argNames {
 		thisScope[argName] = true
 	}
-	op := cp.chunk(n.Chunk)
+	op := cp.chunkOp(n.Chunk)
 	capture := cp.capture
 	cp.capture = scope{}
 	cp.popScope()
@@ -366,27 +377,29 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOp {
 	}
 }
 
-func (cp *compiler) map_(n *parse.Primary) ValuesOp {
+func (cp *compiler) map_(n *parse.Primary) ValuesOpFunc {
 	npairs := len(n.MapPairs)
 	keysOps := make([]ValuesOp, npairs)
 	valuesOps := make([]ValuesOp, npairs)
-	poses := make([]int, npairs)
+	begins, ends := make([]int, npairs), make([]int, npairs)
 	for i, pair := range n.MapPairs {
-		keysOps[i] = cp.compound(pair.Key)
+		keysOps[i] = cp.compoundOp(pair.Key)
 		if pair.Value == nil {
-			valuesOps[i] = literalValues(Bool(true))
+			p := pair.End()
+			valuesOps[i] = ValuesOp{literalValues(Bool(true)), p, p}
 		} else {
-			valuesOps[i] = cp.compound(n.MapPairs[i].Value)
+			valuesOps[i] = cp.compoundOp(n.MapPairs[i].Value)
 		}
-		poses[i] = n.MapPairs[i].Begin()
+		begins[i], ends[i] = pair.Begin(), pair.End()
 	}
 	return func(ec *EvalCtx) []Value {
 		m := make(map[Value]Value)
 		for i := 0; i < npairs; i++ {
-			keys := keysOps[i](ec)
-			values := valuesOps[i](ec)
+			keys := keysOps[i].Exec(ec)
+			values := valuesOps[i].Exec(ec)
 			if len(keys) != len(values) {
-				ec.errorf(poses[i], "%d keys but %d values", len(keys), len(values))
+				ec.errorpf(begins[i], ends[i],
+					"%d keys but %d values", len(keys), len(values))
 			}
 			for j, key := range keys {
 				m[key] = values[j]
@@ -396,8 +409,8 @@ func (cp *compiler) map_(n *parse.Primary) ValuesOp {
 	}
 }
 
-func (cp *compiler) braced(n *parse.Primary) ValuesOp {
-	ops := cp.compounds(n.Braced)
+func (cp *compiler) braced(n *parse.Primary) ValuesOpFunc {
+	ops := cp.compoundOps(n.Braced)
 	// TODO: n.IsRange
 	// isRange := n.IsRange
 	return catValuesOps(ops)

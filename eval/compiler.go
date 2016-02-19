@@ -9,15 +9,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-type (
-	scope map[string]bool
-	// Op is a compiled operation.
-	Op func(*EvalCtx)
-	// ValuesOp is a compiled Value-generating operation.
-	ValuesOp func(*EvalCtx) []Value
-	// VariableOp is a compiled Variable-generating operation.
-	VariableOp func(*EvalCtx) Variable
-)
+type scope map[string]bool
 
 // compiler maintains the set of states needed when compiling a single source
 // file.
@@ -33,7 +25,7 @@ type compiler struct {
 func compile(sc scope, n *parse.Chunk) (op Op, err error) {
 	cp := &compiler{[]scope{sc}, scope{}, 0, 0}
 	defer util.Catch(&err)
-	return cp.chunk(n), nil
+	return cp.chunkOp(n), nil
 }
 
 func (cp *compiler) compiling(n parse.Node) {

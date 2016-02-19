@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/store"
 )
 
-type compileBuiltin func(*compiler, *parse.Form) Op
+type compileBuiltin func(*compiler, *parse.Form) OpFunc
 
 var builtinSpecials map[string]compileBuiltin
 
@@ -46,7 +46,7 @@ func doSet(ec *EvalCtx, variables []Variable, values []Value) {
 }
 
 // DelForm = 'del' { VariablePrimary }
-func compileDel(cp *compiler, fn *parse.Form) Op {
+func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 	// Do conventional compiling of all compound expressions, including
 	// ensuring that variables can be resolved
 	var names, envNames []string
@@ -85,19 +85,19 @@ func compileDel(cp *compiler, fn *parse.Form) Op {
 
 // makeFnOp wraps an op such that a return is converted to an ok.
 func makeFnOp(op Op) Op {
-	return func(ec *EvalCtx) {
-		ex := ec.PEval(op)
-		if ex != Return {
+	return Op{func(ec *EvalCtx) {
+		err := ec.PEval(op)
+		if err != nil && err != Return {
 			// rethrow
-			throw(ex)
+			throw(err)
 		}
-	}
+	}, op.Begin, op.End}
 }
 
 // FnForm = 'fn' StringPrimary LambdaPrimary
 //
 // fn f []{foobar} is a shorthand for set '&'f = []{foobar}.
-func compileFn(cp *compiler, fn *parse.Form) Op {
+func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 	if len(fn.Args) == 0 {
 		end := fn.End()
 		cp.errorpf(end, end, "should be followed by function name")
@@ -133,18 +133,19 @@ func compileFn(cp *compiler, fn *parse.Form) Op {
 }
 
 // UseForm = 'use' StringPrimary [ Compound ]
-func compileUse(cp *compiler, fn *parse.Form) Op {
+func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 	var modname string
 	var filenameOp ValuesOp
-	var filenameBegin int
+	var filenameBegin, filenameEnd int
 
 	switch len(fn.Args) {
 	case 0:
 		end := fn.Head.End()
 		cp.errorpf(end, end, "lack module name")
 	case 2:
-		filenameOp = cp.compound(fn.Args[1])
+		filenameOp = cp.compoundOp(fn.Args[1])
 		filenameBegin = fn.Args[1].Begin()
+		filenameEnd = fn.Args[1].End()
 		fallthrough
 	case 1:
 		modname = mustString(cp, fn.Args[0], "should be a literal module name")
@@ -161,10 +162,10 @@ func compileUse(cp *compiler, fn *parse.Form) Op {
 		// Load the source.
 		var filename, source string
 
-		if filenameOp != nil {
+		if filenameOp.Func != nil {
 			// Filename was specified; evaluate it.
-			values := filenameOp(ec)
-			valuesMust := &muster{ec, "module filename", filenameBegin, values}
+			values := filenameOp.Exec(ec)
+			valuesMust := &muster{ec, "module filename", filenameBegin, filenameEnd, values}
 			filename = string(valuesMust.mustOneStr())
 			var err error
 			source, err = readFileUTF8(filename)
@@ -196,7 +197,7 @@ func compileUse(cp *compiler, fn *parse.Form) Op {
 			ec.Evaler,
 			filename, source, "module " + modname,
 			Namespace{}, Namespace{},
-			ec.ports,
+			ec.ports, 0, len(source),
 		}
 
 		n, err := parse.Parse(source)
@@ -206,7 +207,7 @@ func compileUse(cp *compiler, fn *parse.Form) Op {
 		// TODO the err originates in another source, should add appropriate information.
 		maybeThrow(err)
 
-		op(newEc)
+		op.Exec(newEc)
 
 		ec.Evaler.modules[modname] = newEc.local
 	}

@@ -227,7 +227,7 @@ func fail(ec *EvalCtx, arg Value) {
 }
 
 func multiErrorFn(ec *EvalCtx, args ...Error) {
-	throw(multiError{args})
+	throw(MultiError{args})
 }
 
 func returnFn(ec *EvalCtx) {
@@ -331,6 +331,8 @@ func each(ec *EvalCtx, f *Closure) {
 	in := ec.ports[0].Chan
 in:
 	for v := range in {
+		// NOTE We don't have the position range of the closure in the source.
+		// Ideally, it should be kept in the Closure itself.
 		newec := ec.fork("closure of each")
 		ex := newec.PCall(f, []Value{v})
 		ClosePorts(newec.ports)

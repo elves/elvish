@@ -14,7 +14,7 @@ type PosError struct {
 }
 
 func (pe *PosError) Error() string {
-	return fmt.Sprintf("%d-%d: %s", pe.Begin, pe.End, pe.Err.Error())
+	return fmt.Sprintf("%d-%d: %s", pe.Begin, pe.End, pe.msg())
 }
 
 // Pprint pretty-prints a PosError with a header indicating the source and type
@@ -27,7 +27,7 @@ func (pe *PosError) Pprint(srcname, errtype, src string) string {
 	// Source and type of the error
 	fmt.Fprintf(buf, "\033[1m%s:%d:%d: \033[31m%s:", srcname, lineno+1, colno+1, errtype)
 	// Message
-	fmt.Fprintf(buf, "\033[m\033[1m%s\033[m\n", pe.Err.Error())
+	fmt.Fprintf(buf, "\033[m\033[1m%s\033[m\n", pe.msg())
 	// Affected line
 	// TODO Handle long lines
 	fmt.Fprintf(buf, "%s\n", line)
@@ -35,4 +35,12 @@ func (pe *PosError) Pprint(srcname, errtype, src string) string {
 	// TODO Handle multi-width characters
 	fmt.Fprintf(buf, "%s\033[32;1m^\033[m\n", strings.Repeat(" ", colno))
 	return buf.String()
+}
+
+func (pe *PosError) msg() string {
+	if pe.Err != nil {
+		return pe.Err.Error()
+	} else {
+		return "<nil>"
+	}
 }

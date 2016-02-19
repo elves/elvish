@@ -25,21 +25,33 @@ var (
 
 var ErrStillRunning = errors.New("still running")
 
-func (cp *compiler) chunk(n *parse.Chunk) Op {
-	ops := cp.pipelines(n.Pipelines)
+// Op is an operation on an EvalCtx.
+type Op struct {
+	Func       OpFunc
+	Begin, End int
+}
+
+type OpFunc func(*EvalCtx)
+
+func (op Op) Exec(ec *EvalCtx) {
+	ec.begin, ec.end = op.Begin, op.End
+	op.Func(ec)
+}
+
+func (cp *compiler) chunk(n *parse.Chunk) OpFunc {
+	ops := cp.pipelineOps(n.Pipelines)
 
 	return func(ec *EvalCtx) {
 		for _, op := range ops {
-			op(ec)
+			op.Exec(ec)
 		}
 	}
 }
 
 const pipelineChanBufferSize = 32
 
-func (cp *compiler) pipeline(n *parse.Pipeline) Op {
-	ops := cp.forms(n.Forms)
-	p := n.Begin()
+func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
+	ops := cp.formOps(n.Forms)
 
 	return func(ec *EvalCtx) {
 		var nextIn *Port
@@ -58,7 +70,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 				// os.Pipe sets O_CLOEXEC, which is what we want.
 				reader, writer, e := os.Pipe()
 				if e != nil {
-					ec.errorf(p, "failed to create pipe: %s", e)
+					ec.errorf("failed to create pipe: %s", e)
 				}
 				ch := make(chan Value, pipelineChanBufferSize)
 				newEc.ports[1] = &Port{
@@ -123,23 +135,23 @@ func (cp *compiler) pipeline(n *parse.Pipeline) Op {
 
 		if !allok(errors) {
 			if len(errors) == 1 {
-				throw(errors[0].inner)
+				throw(errors[0].Inner)
 			} else {
-				throw(multiError{errors})
+				throw(MultiError{errors})
 			}
 		}
 	}
 }
 
-func (cp *compiler) form(n *parse.Form) Op {
+func (cp *compiler) form(n *parse.Form) OpFunc {
 	if len(n.Assignments) > 0 {
 		if n.Head != nil {
 			cp.errorpf(n.Assignments[0].Begin(), n.Assignments[len(n.Assignments)-1].End(), "temporary assignments not yet supported")
 		}
-		ops := cp.assignments(n.Assignments)
+		ops := cp.assignmentOps(n.Assignments)
 		return func(ec *EvalCtx) {
 			for _, op := range ops {
-				op(ec)
+				op.Exec(ec)
 			}
 		}
 	}
@@ -148,13 +160,13 @@ func (cp *compiler) form(n *parse.Form) Op {
 		if len(n.Args) > 0 {
 			cp.errorpf(n.Args[0].Begin(), n.Args[len(n.Args)-1].End(), "control structure takes no arguments")
 		}
-		redirOps := cp.redirs(n.Redirs)
-		controlOp := cp.control(n.Control)
+		redirOps := cp.redirOps(n.Redirs)
+		controlOp := cp.controlOp(n.Control)
 		return func(ec *EvalCtx) {
 			for _, redirOp := range redirOps {
-				redirOp(ec)
+				redirOp.Exec(ec)
 			}
-			controlOp(ec)
+			controlOp.Exec(ec)
 		}
 	}
 
@@ -171,62 +183,63 @@ func (cp *compiler) form(n *parse.Form) Op {
 		cp.registerVariableGet(FnPrefix + headStr)
 		// XXX Dynamic head names should always refer to external commands
 	}
-	headOp := cp.compound(n.Head)
-	argOps := cp.compounds(n.Args)
+	headOp := cp.compoundOp(n.Head)
+	argOps := cp.compoundOps(n.Args)
 	// TODO: n.NamedArgs
-	redirOps := cp.redirs(n.Redirs)
+	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir
 
-	p := n.Begin()
+	begin, end := n.Begin(), n.End()
+	headBegin, headEnd := n.Head.Begin(), n.Head.End()
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
 	return func(ec *EvalCtx) {
 		// head
-		headValues := headOp(ec)
-		headMust := ec.must(headValues, "the head of command", p)
-		headMust.mustLen(1)
+		headValues := headOp.Exec(ec)
+		ec.must(headValues, "head of command", headBegin, headEnd).mustLen(1)
 		headCaller := mustCaller(headValues[0])
 
 		// args
 		var args []Value
 		for _, argOp := range argOps {
-			args = append(args, argOp(ec)...)
+			args = append(args, argOp.Exec(ec)...)
 		}
 
 		// redirs
 		for _, redirOp := range redirOps {
-			redirOp(ec)
+			redirOp.Exec(ec)
 		}
 
+		ec.begin, ec.end = begin, end
 		headCaller.Call(ec, args)
 	}
 }
 
-func (cp *compiler) control(n *parse.Control) Op {
+func (cp *compiler) control(n *parse.Control) OpFunc {
 	switch n.Kind {
 	case parse.IfControl:
-		condOps := cp.errorCaptures(n.Conditions)
-		bodyOps := cp.chunks(n.Bodies)
+		condOps := cp.errorCaptureOps(n.Conditions)
+		bodyOps := cp.chunkOps(n.Bodies)
 		var elseOp Op
 		if n.ElseBody != nil {
-			elseOp = cp.chunk(n.ElseBody)
+			elseOp = cp.chunkOp(n.ElseBody)
 		}
 		return func(ec *EvalCtx) {
 			for i, condOp := range condOps {
-				if condOp(ec)[0].(Error).inner == nil {
-					bodyOps[i](ec)
+				if condOp.Exec(ec)[0].(Error).Inner == nil {
+					bodyOps[i].Exec(ec)
 					return
 				}
 			}
-			if elseOp != nil {
-				elseOp(ec)
+			if elseOp.Func != nil {
+				elseOp.Exec(ec)
 			}
 		}
 	case parse.WhileControl:
-		condOp := cp.errorCapture(n.Condition)
-		bodyOp := cp.chunk(n.Body)
+		condOp := cp.errorCaptureOp(n.Condition)
+		bodyOp := cp.chunkOp(n.Body)
 		return func(ec *EvalCtx) {
-			for condOp(ec)[0].(Error).inner == nil {
+			for condOp.Exec(ec)[0].(Error).Inner == nil {
 				ex := ec.PEval(bodyOp)
 				if ex == Continue {
 					// do nothing
@@ -238,14 +251,14 @@ func (cp *compiler) control(n *parse.Control) Op {
 			}
 		}
 	case parse.ForControl:
-		iteratorOp := cp.singleVariable(n.Iterator, "must be a single variable")
-		valuesOp := cp.array(n.Array)
-		bodyOp := cp.chunk(n.Body)
+		iteratorOp := cp.singleVariableOp(n.Iterator, "must be a single variable")
+		valuesOp := cp.arrayOp(n.Array)
+		bodyOp := cp.chunkOp(n.Body)
 		return func(ec *EvalCtx) {
-			iterator := iteratorOp(ec)
-			values := valuesOp(ec)
+			iterator := iteratorOp.Exec(ec)
+			values := valuesOp.Exec(ec)
 			for _, v := range values {
-				doSet(ec, []Variable{iterator}, []Value{v})
+				doSet(ec, iterator, []Value{v})
 				ex := ec.PEval(bodyOp)
 				if ex == Continue {
 					// do nothing
@@ -264,119 +277,12 @@ func (cp *compiler) control(n *parse.Control) Op {
 	}
 }
 
-func (cp *compiler) assignment(n *parse.Assignment) Op {
-	variableOps := cp.multiVariable(n.Dst)
-	valuesOp := cp.compound(n.Src)
+func (cp *compiler) assignment(n *parse.Assignment) OpFunc {
+	variablesOp := cp.multiVariableOp(n.Dst)
+	valuesOp := cp.compoundOp(n.Src)
 
 	return func(ec *EvalCtx) {
-		variables := make([]Variable, len(variableOps))
-		for i, variableOp := range variableOps {
-			variables[i] = variableOp(ec)
-		}
-		doSet(ec, variables, valuesOp(ec))
-	}
-}
-
-func (cp *compiler) multiVariable(n *parse.Indexing) []VariableOp {
-	var variableOps []VariableOp
-	if n.Head.Type == parse.Braced {
-		// XXX ignore n.Indicies.
-		compounds := n.Head.Braced
-		indexings := make([]*parse.Indexing, len(compounds))
-		for i, cn := range compounds {
-			if len(cn.Indexings) != 1 {
-				cp.compiling(cn)
-				cp.errorf("must be a variable spec")
-			}
-			indexings[i] = cn.Indexings[0]
-		}
-		variableOps = cp.singleVariables(indexings, "must be a variable spec")
-	} else {
-		variableOps = []VariableOp{cp.singleVariable(n, "must be a variable spec or a braced list of those")}
-	}
-	return variableOps
-}
-
-func (cp *compiler) singleVariable(n *parse.Indexing, msg string) VariableOp {
-	// XXX will we be using this for purposes other than setting?
-	varname := cp.literal(n.Head, msg)
-	p := n.Begin()
-
-	if len(n.Indicies) == 0 {
-		cp.registerVariableSet(varname)
-
-		return func(ec *EvalCtx) Variable {
-			splice, ns, barename := parseVariable(varname)
-			if splice {
-				// XXX
-				ec.errorf(p, "not yet supported")
-			}
-			variable := ec.ResolveVar(ns, barename)
-			if variable == nil {
-				if ns == "" || ns == "local" {
-					// New variable.
-					// XXX We depend on the fact that this variable will
-					// immeidately be set.
-					variable = NewPtrVariable(nil)
-					ec.local[barename] = variable
-				} else if mod, ok := ec.modules[ns]; ok {
-					variable = NewPtrVariable(nil)
-					mod[barename] = variable
-				} else {
-					ec.errorf(p, "cannot set $%s", varname)
-				}
-			}
-			return variable
-		}
-	}
-	cp.registerVariableGet(varname)
-	indexOps := cp.arrays(n.Indicies)
-	indexBegins := make([]int, len(n.Indicies))
-	indexEnds := make([]int, len(n.Indicies))
-	for i, in := range n.Indicies {
-		indexBegins[i] = in.Begin()
-		indexEnds[i] = in.End()
-	}
-
-	return func(ec *EvalCtx) Variable {
-		splice, ns, name := parseVariable(varname)
-		if splice {
-			// XXX
-			ec.errorf(p, "not yet supported")
-		}
-		variable := ec.ResolveVar(ns, name)
-		if variable == nil {
-			ec.errorf(p, "variable $%s does not exisit, compiler bug", varname)
-		}
-		if len(indexOps) == 0 {
-			// Just a variable, return directly.
-			return variable
-		}
-
-		// Indexing. Do Index up to the last but one index.
-		value := variable.Get()
-		n := len(indexOps)
-		for _, op := range indexOps[:n-1] {
-			indexer := mustIndexer(value, ec)
-
-			indicies := op(ec)
-			values := indexer.Index(indicies)
-			if len(values) != 1 {
-				throw(errors.New("multi indexing not implemented"))
-			}
-			value = values[0]
-		}
-		// Now this must be an IndexSetter.
-		indexSetter, ok := value.(IndexSetter)
-		if !ok {
-			ec.errorf( /* from p to */ indexBegins[n-1], "cannot be indexed for setting (value is %s, type %s)", value.Repr(NoPretty), value.Kind())
-		}
-		// XXX Duplicate code.
-		indicies := indexOps[n-1](ec)
-		if len(indicies) != 1 {
-			ec.errorf(indexBegins[n-1], "index must eval to a single Value (got %v)", indicies)
-		}
-		return elemVariable{indexSetter, indicies[0]}
+		doSet(ec, variablesOp.Exec(ec), valuesOp.Exec(ec))
 	}
 }
 
@@ -394,21 +300,22 @@ func (cp *compiler) literal(n *parse.Primary, msg string) string {
 const defaultFileRedirPerm = 0644
 
 // redir compiles a Redir into a op.
-func (cp *compiler) redir(n *parse.Redir) Op {
+func (cp *compiler) redir(n *parse.Redir) OpFunc {
 	var dstOp ValuesOp
 	if n.Dest != nil {
-		dstOp = cp.compound(n.Dest)
+		dstOp = cp.compoundOp(n.Dest)
 	}
-	p := n.Begin()
-	srcOp := cp.compound(n.Source)
+	srcOp := cp.compoundOp(n.Source)
 	sourceIsFd := n.SourceIsFd
-	pSrc := n.Source.Begin()
 	mode := n.Mode
 	flag := makeFlag(mode)
 
+	dstBegin, dstEnd := n.Dest.Begin(), n.Dest.End()
+	srcBegin, srcEnd := n.Source.Begin(), n.Source.End()
+
 	return func(ec *EvalCtx) {
 		var dst int
-		if dstOp == nil {
+		if dstOp.Func == nil {
 			// use default dst fd
 			switch mode {
 			case parse.Read:
@@ -421,14 +328,14 @@ func (cp *compiler) redir(n *parse.Redir) Op {
 			}
 		} else {
 			// dst must be a valid fd
-			dst = ec.must(dstOp(ec), "FD", p).mustOneNonNegativeInt()
+			dst = ec.must(dstOp.Exec(ec), "FD", dstBegin, dstEnd).mustOneNonNegativeInt()
 		}
 
 		ec.growPorts(dst + 1)
 		// Logger.Printf("closing old port %d of %s", dst, ec.context)
 		ec.ports[dst].Close()
 
-		srcMust := ec.must(srcOp(ec), "redirection source", pSrc)
+		srcMust := ec.must(srcOp.Exec(ec), "redirection source", srcBegin, srcEnd)
 		src := string(srcMust.mustOneStr())
 		if sourceIsFd {
 			if src == "-" {
@@ -441,7 +348,7 @@ func (cp *compiler) redir(n *parse.Redir) Op {
 		} else {
 			f, err := os.OpenFile(src, flag, defaultFileRedirPerm)
 			if err != nil {
-				ec.errorf(p, "failed to open file %q: %s", src, err)
+				ec.errorf("failed to open file %q: %s", src, err)
 			}
 			ec.ports[dst] = &Port{
 				File: f, Chan: make(chan Value), CloseFile: true, CloseChan: true,

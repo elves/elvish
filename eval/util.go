@@ -14,7 +14,7 @@ func throw(e error) {
 
 func maybeThrow(err error) {
 	if err != nil {
-		throw(err)
+		util.Throw(err)
 	}
 }
 

@@ -57,5 +57,5 @@ func (c *Closure) Call(ec *EvalCtx, args []Value) {
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.
 
-	c.Op(ec)
+	c.Op.Exec(ec)
 }
