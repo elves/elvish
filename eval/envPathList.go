@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"strings"
+	"sync"
 )
 
 // Errors
@@ -21,6 +22,7 @@ var (
 // EnvPathList implements both Value and Variable interfaces. It also satisfied
 // ListLike.
 type EnvPathList struct {
+	sync.RWMutex
 	envName     string
 	cachedValue string
 	cachedPaths []string
@@ -61,24 +63,21 @@ func (epl *EnvPathList) Kind() string {
 }
 
 func (epl *EnvPathList) Repr() string {
-	epl.sync()
 	var b ListReprBuilder
-	for _, path := range epl.cachedPaths {
+	for _, path := range epl.get() {
 		b.WriteElem(quote(path))
 	}
 	return b.String()
 }
 
 func (epl *EnvPathList) Len() int {
-	epl.sync()
-	return len(epl.cachedPaths)
+	return len(epl.get())
 }
 
 func (epl *EnvPathList) Elems() <-chan Value {
 	ch := make(chan Value)
 	go func() {
-		epl.sync()
-		for _, p := range epl.cachedPaths {
+		for _, p := range epl.get() {
 			ch <- String(p)
 		}
 		close(ch)
@@ -87,39 +86,49 @@ func (epl *EnvPathList) Elems() <-chan Value {
 }
 
 func (epl *EnvPathList) IndexOne(idx Value) Value {
-	epl.sync()
-	i := intIndexWithin(idx, len(epl.cachedPaths))
-	return String(epl.cachedPaths[i])
+	paths := epl.get()
+	i := intIndexWithin(idx, len(paths))
+	return String(paths[i])
 }
 
 func (epl *EnvPathList) IndexSet(idx, v Value) {
-	epl.sync()
-	i := intIndexWithin(idx, len(epl.cachedPaths))
 	s, ok := v.(String)
 	if !ok {
 		throw(ErrPathMustBeString)
 	}
-	epl.cachedPaths[i] = string(s)
-	epl.set(epl.cachedPaths)
-}
 
-func (epl *EnvPathList) sync() {
-	value := os.Getenv(epl.envName)
-	if value == epl.cachedValue {
-		return
-	}
-	epl.cachedValue = value
-	epl.cachedPaths = strings.Split(value, ":")
+	paths := epl.get()
+	i := intIndexWithin(idx, len(paths))
+
+	epl.Lock()
+	defer epl.Unlock()
+	paths[i] = string(s)
+	epl.syncFromPaths()
 }
 
 func (epl *EnvPathList) get() []string {
-	epl.sync()
+	epl.RLock()
+	defer epl.RUnlock()
+
+	value := os.Getenv(epl.envName)
+	if value == epl.cachedValue {
+		return epl.cachedPaths
+	}
+	epl.cachedValue = value
+	epl.cachedPaths = strings.Split(value, ":")
 	return epl.cachedPaths
 }
 
 func (epl *EnvPathList) set(paths []string) {
+	epl.Lock()
+	defer epl.Unlock()
+
 	epl.cachedPaths = paths
-	epl.cachedValue = strings.Join(paths, ":")
+	epl.syncFromPaths()
+}
+
+func (epl *EnvPathList) syncFromPaths() {
+	epl.cachedValue = strings.Join(epl.cachedPaths, ":")
 	err := os.Setenv(epl.envName, epl.cachedValue)
 	maybeThrow(err)
 }
