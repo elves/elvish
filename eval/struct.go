@@ -29,9 +29,8 @@ func (*Struct) Kind() string {
 func (s *Struct) Repr(indent int) string {
 	var builder MapReprBuilder
 	builder.Indent = indent
-	fieldIndent := IncIndent(indent, 1)
 	for i, name := range s.FieldNames {
-		builder.WritePair(parse.Quote(name), s.Fields[i].Get().Repr(fieldIndent))
+		builder.WritePair(parse.Quote(name), s.Fields[i].Get().Repr(indent+1))
 	}
 	return builder.String()
 }
@@ -58,6 +57,6 @@ func (s *Struct) index(idx Value) Variable {
 			return s.Fields[i]
 		}
 	}
-	throw(fmt.Errorf("no such field: %s", index.Repr(-1)))
+	throw(fmt.Errorf("no such field: %s", index.Repr(NoPretty)))
 	panic("unreachable")
 }

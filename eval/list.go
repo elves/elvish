@@ -36,9 +36,8 @@ func (List) Kind() string {
 func (l List) Repr(indent int) string {
 	var b ListReprBuilder
 	b.Indent = indent
-	elemIndent := IncIndent(indent, 1)
 	for _, v := range *l.inner {
-		b.WriteElem(v.Repr(elemIndent))
+		b.WriteElem(v.Repr(indent + 1))
 	}
 	return b.String()
 }
@@ -103,12 +102,12 @@ func (b *ListReprBuilder) WriteElem(v string) {
 	if b.buf.Len() == 0 {
 		b.buf.WriteByte('[')
 	}
-	if b.Indent > 0 {
+	if b.Indent >= 0 {
 		// Pretty printing.
 		//
 		// Add a newline and indent+1 spaces, so that the
 		// starting & lines up with the first pair.
-		b.buf.WriteString("\n" + strings.Repeat(" ", IncIndent(b.Indent, 1)))
+		b.buf.WriteString("\n" + strings.Repeat(" ", b.Indent+1))
 	} else if b.buf.Len() > 1 {
 		b.buf.WriteByte(' ')
 	}

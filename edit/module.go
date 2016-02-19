@@ -80,7 +80,7 @@ func (bt BindingTable) IndexSet(idx, v eval.Value) {
 	case eval.String:
 		builtin, ok := builtinMap[string(v)]
 		if !ok {
-			throw(fmt.Errorf("no builtin named %s", v.Repr(-1)))
+			throw(fmt.Errorf("no builtin named %s", v.Repr(eval.NoPretty)))
 		}
 		f = builtin
 	case eval.CallerValue:

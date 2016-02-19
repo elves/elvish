@@ -24,9 +24,8 @@ func (Map) Kind() string {
 func (m Map) Repr(indent int) string {
 	var builder MapReprBuilder
 	builder.Indent = indent
-	kvIndent := IncIndent(indent, 1)
 	for k, v := range *m.inner {
-		builder.WritePair(k.Repr(kvIndent), v.Repr(kvIndent))
+		builder.WritePair(k.Repr(indent+1), v.Repr(indent+1))
 	}
 	return builder.String()
 }
@@ -38,7 +37,7 @@ func (m Map) Len() int {
 func (m Map) IndexOne(idx Value) Value {
 	v, ok := (*m.inner)[idx]
 	if !ok {
-		throw(errors.New("no such key: " + idx.Repr(-1)))
+		throw(errors.New("no such key: " + idx.Repr(NoPretty)))
 	}
 	return v
 }

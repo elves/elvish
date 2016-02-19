@@ -155,7 +155,7 @@ func (c EvalCaller) Call(ed *Editor) {
 	}()
 	go func() {
 		for v := range chanOut {
-			ed.notify("[bound fn value] %s", v.Repr(-1))
+			ed.notify("[bound fn value] %s", v.Repr(eval.NoPretty))
 		}
 		wg.Done()
 	}()

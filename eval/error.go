@@ -48,7 +48,7 @@ func (me multiError) Repr(indent int) string {
 	// TODO Make a more generalized ListReprBuilder and use it here.
 	b := new(bytes.Buffer)
 	b.WriteString("?(multi-error")
-	elemIndent := IncIndent(indent, len("?(multi-error "))
+	elemIndent := indent + len("?(multi-error ")
 	for _, e := range me.errors {
 		if indent > 0 {
 			b.WriteString("\n" + strings.Repeat(" ", elemIndent))

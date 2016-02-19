@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+
+	"github.com/elves/elvish/util"
 )
 
 // Definitions for Value interfaces, some simple Value types and some common
 // Value helpers.
+
+var (
+	NoPretty = util.MinInt
+)
 
 // Value is an elvish value.
 type Value interface {
@@ -243,7 +249,7 @@ func ToRat(v Value) (Rat, error) {
 		r := big.Rat{}
 		_, err := fmt.Sscanln(string(v), &r)
 		if err != nil {
-			return Rat{}, fmt.Errorf("%s cannot be parsed as rat", v.Repr(-1))
+			return Rat{}, fmt.Errorf("%s cannot be parsed as rat", v.Repr(NoPretty))
 		}
 		return Rat{&r}, nil
 	default:

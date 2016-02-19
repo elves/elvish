@@ -43,12 +43,12 @@ func resolve(s string, ec *EvalCtx) Caller {
 }
 
 // ToString converts a Value to String. When the Value type implements
-// String(), it is used. Otherwise Repr(-1) is used.
+// String(), it is used. Otherwise Repr(NoPretty) is used.
 func ToString(v Value) string {
 	if s, ok := v.(Stringer); ok {
 		return s.String()
 	}
-	return v.Repr(-1)
+	return v.Repr(NoPretty)
 }
 
 func quote(s string) string {

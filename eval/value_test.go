@@ -32,7 +32,7 @@ var reprTests = []struct {
 
 func TestRepr(t *testing.T) {
 	for _, test := range reprTests {
-		repr := test.v.Repr(-1)
+		repr := test.v.Repr(NoPretty)
 		if repr != test.want {
 			t.Errorf("Repr = %s, want %s", repr, test.want)
 		}
