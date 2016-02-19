@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/elves/elvish/eval"
@@ -31,14 +32,24 @@ func complVariable(n parse.Node, ed *Editor) []*candidate {
 	}
 
 	head := primary.Value
-	cands := []*candidate{}
-	for variable := range ed.evaler.Global() {
-		if strings.HasPrefix(variable, head) {
-			cands = append(cands, &candidate{
-				source: styled{variable[len(head):], styleForType[Variable]},
-				menu:   styled{"$" + variable, ""}})
+
+	// Collect matching variables.
+	var varnames []string
+	for varname := range ed.evaler.Global() {
+		if strings.HasPrefix(varname, head) {
+			varnames = append(varnames, varname)
 		}
 	}
+	sort.Strings(varnames)
+
+	// Build candidates.
+	cands := []*candidate{}
+	for _, varname := range varnames {
+		cands = append(cands, &candidate{
+			source: styled{varname[len(head):], styleForType[Variable]},
+			menu:   styled{"$" + varname, ""}})
+	}
+
 	return cands
 }
 
