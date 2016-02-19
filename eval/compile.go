@@ -693,11 +693,11 @@ func variable(qname string, p int) ValuesOp {
 		}
 		value := variable.Get()
 		if splice {
-			list, ok := value.(List)
+			elemser, ok := value.(Elemser)
 			if !ok {
-				ec.errorf(p, "variable $%s is not a list", qname)
+				ec.errorf(p, "variable $%s (kind %s) cannot be spliced", qname, value.Kind())
 			}
-			return *list.inner
+			return collectElems(elemser)
 		}
 		return []Value{value}
 	}

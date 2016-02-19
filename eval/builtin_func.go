@@ -291,18 +291,18 @@ func ratFn(ec *EvalCtx, arg Value) {
 	out <- r
 }
 
-// unpack takes any number of tables and output their list elements.
+// unpack takes Elemser's from the input and unpack them.
 func unpack(ec *EvalCtx) {
 	in := ec.ports[0].Chan
 	out := ec.ports[1].Chan
 
 	for v := range in {
-		if list, ok := v.(List); !ok {
+		elemser, ok := v.(Elemser)
+		if !ok {
 			throw(ErrInput)
-		} else {
-			for _, e := range *list.inner {
-				out <- e
-			}
+		}
+		for e := range elemser.Elems() {
+			out <- e
 		}
 	}
 }

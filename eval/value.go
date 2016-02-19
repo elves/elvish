@@ -36,6 +36,19 @@ type Lener interface {
 	Len() int
 }
 
+// Elemser is anything that can produce a series of Value elements.
+type Elemser interface {
+	Elems() <-chan Value
+}
+
+func collectElems(elemser Elemser) []Value {
+	var vs []Value
+	for v := range elemser.Elems() {
+		vs = append(vs, v)
+	}
+	return vs
+}
+
 // Caller is anything may be called on an evalCtx with a list of Value's.
 type Caller interface {
 	Value

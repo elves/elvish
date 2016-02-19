@@ -12,6 +12,13 @@ var (
 	ErrIndexOutOfRange = errors.New("index out of range")
 )
 
+type ListLike struct {
+	Value
+	Lener
+	Elemser
+	IndexOneer
+}
+
 // List is a list of Value's.
 type List struct {
 	inner *[]Value
@@ -36,6 +43,16 @@ func (l List) Repr() string {
 
 func (l List) Len() int {
 	return len(*l.inner)
+}
+
+func (l List) Elems() <-chan Value {
+	ch := make(chan Value)
+	go func() {
+		for _, v := range *l.inner {
+			ch <- v
+		}
+	}()
+	return ch
 }
 
 func (l List) IndexOne(idx Value) Value {

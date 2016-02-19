@@ -8,7 +8,7 @@ import (
 
 // Errors
 var (
-	ErrCanOnlyAssignList          = errors.New("can only assign list")
+	ErrCanOnlyAssignList          = errors.New("can only assign compatible values")
 	ErrPathMustBeString           = errors.New("path must be string")
 	ErrPathCannotContainColonZero = errors.New(`path cannot contain colon or \0`)
 )
@@ -30,13 +30,12 @@ func (epl *EnvPathList) Get() Value {
 }
 
 func (epl *EnvPathList) Set(v Value) {
-	// TODO: maybe support assigning list-like values.
-	l, ok := v.(List)
+	elemser, ok := v.(Elemser)
 	if !ok {
 		throw(ErrCanOnlyAssignList)
 	}
-	paths := make([]string, len(*l.inner))
-	for i, v := range *l.inner {
+	var paths []string
+	for v := range elemser.Elems() {
 		s, ok := v.(String)
 		if !ok {
 			throw(ErrPathMustBeString)
@@ -45,7 +44,7 @@ func (epl *EnvPathList) Set(v Value) {
 		if strings.ContainsAny(path, ":\x00") {
 			throw(ErrPathCannotContainColonZero)
 		}
-		paths[i] = string(s)
+		paths = append(paths, string(s))
 	}
 	epl.set(paths)
 }
