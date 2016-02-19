@@ -18,7 +18,7 @@ func (ev *Evaler) Search(exe string) (string, error) {
 		}
 		return "", fmt.Errorf("external command %s not executable", parse.Quote(exe))
 	}
-	for _, p := range ev.searchPaths {
+	for _, p := range ev.searchPaths() {
 		full := p + "/" + exe
 		if IsExecutable(full) {
 			return full, nil
@@ -30,7 +30,7 @@ func (ev *Evaler) Search(exe string) (string, error) {
 // AllExecutables writes the names of all executable files in the search path
 // to a channel.
 func (ev *Evaler) AllExecutables(names chan<- string) {
-	for _, dir := range ev.searchPaths {
+	for _, dir := range ev.searchPaths() {
 		// XXX Ignore error
 		infos, _ := ioutil.ReadDir(dir)
 		for _, info := range infos {

@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-	"strings"
 	"syscall"
 	"unicode/utf8"
 
@@ -28,10 +27,9 @@ type Namespace map[string]Variable
 // Evaler is used to evaluate elvish sources. It maintains runtime context
 // shared among all evalCtx instances.
 type Evaler struct {
-	global      Namespace
-	modules     map[string]Namespace
-	searchPaths []string
-	store       *store.Store
+	global  Namespace
+	modules map[string]Namespace
+	store   *store.Store
 }
 
 // EvalCtx maintains an Evaler along with its runtime context. After creation
@@ -46,32 +44,26 @@ type EvalCtx struct {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store) *Evaler {
-	// Construct searchPaths
-	var searchPaths []string
-	if path := os.Getenv("PATH"); path != "" {
-		searchPaths = strings.Split(path, ":")
-	} else {
-		searchPaths = []string{"/bin"}
-	}
-
-	ev := &Evaler{nil, map[string]Namespace{}, searchPaths, st}
+	ev := &Evaler{nil, map[string]Namespace{}, st}
 
 	// Construct initial global namespace
 	pid := String(strconv.Itoa(syscall.Getpid()))
-	paths := NewList()
-	paths.appendStrings(searchPaths)
 	ev.global = Namespace{
 		"pid":   NewRoVariable(pid),
 		"ok":    NewRoVariable(OK),
 		"true":  NewRoVariable(Bool(true)),
 		"false": NewRoVariable(Bool(false)),
-		"paths": NewRoVariable(PathList{&ev.searchPaths}),
+		"paths": &EnvPathList{envName: "PATH"},
 	}
 	for _, b := range builtinFns {
 		ev.global[FnPrefix+b.Name] = NewRoVariable(b)
 	}
 
 	return ev
+}
+
+func (e *Evaler) searchPaths() []string {
+	return e.global["paths"].(*EnvPathList).get()
 }
 
 func (e *Evaler) AddModule(name string, ns Namespace) {
@@ -237,9 +229,6 @@ func (ev *Evaler) Global() map[string]Variable {
 func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	if ns == "env" {
 		ev := envVariable{name}
-		if name == "PATH" {
-			return pathEnvVariable{ev, &ec.searchPaths}
-		}
 		return ev
 	}
 	if mod, ok := ec.modules[ns]; ok {

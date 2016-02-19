@@ -41,26 +41,25 @@ func (l List) Repr() string {
 }
 
 func (l List) IndexOne(idx Value) Value {
-	i := intIndex(idx)
-
-	if i < 0 {
-		i += len(*l.inner)
-	}
-	if i < 0 || i >= len(*l.inner) {
-		throw(ErrIndexOutOfRange)
-	}
+	i := intIndexWithin(idx, len(*l.inner))
 	return (*l.inner)[i]
 }
 
-func (l List) IndexSet(idxv Value, v Value) {
-	idx := intIndex(idxv)
-	if idx < 0 {
-		idx += len(*l.inner)
+func (l List) IndexSet(idx Value, v Value) {
+	i := intIndexWithin(idx, len(*l.inner))
+	(*l.inner)[i] = v
+}
+
+func intIndexWithin(idx Value, n int) int {
+	i := intIndex(idx)
+
+	if i < 0 {
+		i += n
 	}
-	if idx < 0 || idx >= len(*l.inner) {
+	if i < 0 || i >= n {
 		throw(ErrIndexOutOfRange)
 	}
-	(*l.inner)[idx] = v
+	return i
 }
 
 func intIndex(idx Value) int {

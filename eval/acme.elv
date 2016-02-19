@@ -1,3 +1,4 @@
 fn acme {
-    echo 'So this works.'
+    echo 'So this'
+    put works.
 }
