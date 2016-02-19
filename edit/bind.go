@@ -111,7 +111,7 @@ func (b Builtin) Call(ed *Editor) {
 
 // EvalCaller adapts an eval.Caller to a Caller.
 type EvalCaller struct {
-	eval.Caller
+	Caller eval.CallerValue
 }
 
 func (c EvalCaller) Repr() string {

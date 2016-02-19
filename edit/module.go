@@ -81,7 +81,7 @@ func (bt BindingTable) IndexSet(idx, v eval.Value) {
 			throw(fmt.Errorf("no builtin named %s", v.Repr()))
 		}
 		f = builtin
-	case eval.Caller:
+	case eval.CallerValue:
 		f = EvalCaller{v}
 	default:
 		throw(fmt.Errorf("bad function type %s", v.Kind()))

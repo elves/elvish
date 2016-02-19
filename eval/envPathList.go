@@ -18,12 +18,19 @@ var (
 // corresponding environment variable. Its elements cannot contain colons or
 // \0; attempting to put colon or \0 in its elements will result in an error.
 //
-// EnvPathList implements both Value and Variable interfaces.
+// EnvPathList implements both Value and Variable interfaces. It also satisfied
+// ListLike.
 type EnvPathList struct {
 	envName     string
 	cachedValue string
 	cachedPaths []string
 }
+
+var (
+	_ Variable = (*EnvPathList)(nil)
+	_ Value    = (*EnvPathList)(nil)
+	_ ListLike = (*EnvPathList)(nil)
+)
 
 func (epl *EnvPathList) Get() Value {
 	return epl
@@ -60,6 +67,23 @@ func (epl *EnvPathList) Repr() string {
 		b.WriteElem(quote(path))
 	}
 	return b.String()
+}
+
+func (epl *EnvPathList) Len() int {
+	epl.sync()
+	return len(epl.cachedPaths)
+}
+
+func (epl *EnvPathList) Elems() <-chan Value {
+	ch := make(chan Value)
+	go func() {
+		epl.sync()
+		for _, p := range epl.cachedPaths {
+			ch <- String(p)
+		}
+		close(ch)
+	}()
+	return ch
 }
 
 func (epl *EnvPathList) IndexOne(idx Value) Value {

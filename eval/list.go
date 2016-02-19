@@ -12,8 +12,7 @@ var (
 	ErrIndexOutOfRange = errors.New("index out of range")
 )
 
-type ListLike struct {
-	Value
+type ListLike interface {
 	Lener
 	Elemser
 	IndexOneer
@@ -51,6 +50,7 @@ func (l List) Elems() <-chan Value {
 		for _, v := range *l.inner {
 			ch <- v
 		}
+		close(ch)
 	}()
 	return ch
 }

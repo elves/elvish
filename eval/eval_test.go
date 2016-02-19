@@ -246,7 +246,7 @@ func TestEval(t *testing.T) {
 			errorf("got bytesOut=%q, want %q", bytesOut, tt.wantBytesOut)
 		}
 		if !(tt.wantError == errAny && err != nil) && !reflect.DeepEqual(tt.wantError, err) {
-			errorf("got err=%v, want %v", err, tt.wantError)
+			errorf("got err=%s, want %s", err, tt.wantError)
 		}
 		if !reflect.DeepEqual(tt.wantOut, out) {
 			errorf("got out=%v, want %v", out, tt.wantOut)

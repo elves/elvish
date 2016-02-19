@@ -51,8 +51,12 @@ func collectElems(elemser Elemser) []Value {
 
 // Caller is anything may be called on an evalCtx with a list of Value's.
 type Caller interface {
-	Value
 	Call(ec *EvalCtx, args []Value)
+}
+
+type CallerValue interface {
+	Value
+	Caller
 }
 
 func mustCaller(v Value) Caller {
@@ -89,15 +93,13 @@ func (ic IndexerCaller) Call(ec *EvalCtx, args []Value) {
 	}
 }
 
-// Indexer is a Value that can be indexed by Values and yields Values.
+// Indexer is anything that can be indexed by Values and yields Values.
 type Indexer interface {
-	Value
 	Index(idx []Value) []Value
 }
 
-// IndexOneer is a Value that can be indexed by one Value and yields one Value.
+// IndexOneer is anything that can be indexed by one Value and yields one Value.
 type IndexOneer interface {
-	Value
 	IndexOne(idx Value) Value
 }
 
