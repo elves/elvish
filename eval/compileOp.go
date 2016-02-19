@@ -312,11 +312,18 @@ func (cp *compiler) singleVariable(n *parse.Indexing, msg string) VariableOp {
 			}
 			variable := ec.ResolveVar(ns, barename)
 			if variable == nil {
-				// New variable.
-				// XXX We depend on the fact that this variable will
-				// immeidately be set.
-				variable = NewPtrVariable(nil)
-				ec.local[barename] = variable
+				if ns == "" || ns == "local" {
+					// New variable.
+					// XXX We depend on the fact that this variable will
+					// immeidately be set.
+					variable = NewPtrVariable(nil)
+					ec.local[barename] = variable
+				} else if mod, ok := ec.modules[ns]; ok {
+					variable = NewPtrVariable(nil)
+					mod[barename] = variable
+				} else {
+					ec.errorf(p, "cannot set $%s", varname)
+				}
 			}
 			return variable
 		}
