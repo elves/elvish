@@ -176,5 +176,5 @@ func (c EvalCaller) Call(ed *Editor) {
 	close(chanOut)
 	wg.Wait()
 
-	ed.refresh(true)
+	ed.refresh(true, true)
 }

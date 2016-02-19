@@ -386,5 +386,5 @@ func defaultHistoryListing(ed *Editor) {
 }
 
 func redraw(ed *Editor) {
-	ed.refresh(true)
+	ed.refresh(true, true)
 }

@@ -117,7 +117,7 @@ func (ed *Editor) notify(format string, args ...interface{}) {
 	ed.notifications = append(ed.notifications, fmt.Sprintf(format, args...))
 }
 
-func (ed *Editor) refresh(fullRefresh bool) error {
+func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 	// Re-lex the line, unless we are in modeCompletion
 	name := "[interacitve]"
 	src := ed.line
@@ -126,7 +126,7 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 		if err != nil {
 			// If all the errors happen at the end, it is liekly complaining about missing texts that will eventually be inserted. Don't show such errors.
 			// XXX We may need a more reliable criteria.
-			if !atEnd(err, len(src)) {
+			if tips && !atEnd(err, len(src)) {
 				ed.addTip("parser error: %s", err)
 			}
 		}
@@ -136,7 +136,7 @@ func (ed *Editor) refresh(fullRefresh bool) error {
 			ed.tokens = tokenize(src, n)
 			_, err := ed.evaler.Compile(name, src, n)
 			if err != nil {
-				if !atEnd(err, len(src)) {
+				if tips && !atEnd(err, len(src)) {
 					ed.addTip("compiler error: %s", err)
 				}
 				if err, ok := err.(*util.ContextualError); ok {
@@ -261,7 +261,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.dot = len(ed.line)
 	// TODO Perhaps make it optional to NOT clear the rprompt
 	ed.rprompt = ""
-	addError(ed.refresh(false))
+	addError(ed.refresh(false, false))
 	ed.file.WriteString("\n")
 
 	// ed.reader.Stop()
@@ -306,7 +306,7 @@ MainLoop:
 		ed.prompt = prompt()
 		ed.rprompt = rprompt()
 
-		err := ed.refresh(false)
+		err := ed.refresh(false, true)
 		if err != nil {
 			return LineRead{Err: err}
 		}
@@ -361,7 +361,7 @@ MainLoop:
 			case noAction:
 				continue
 			case reprocessKey:
-				err = ed.refresh(false)
+				err = ed.refresh(false, true)
 				if err != nil {
 					return LineRead{Err: err}
 				}
