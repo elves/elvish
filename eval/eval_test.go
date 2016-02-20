@@ -83,7 +83,7 @@ var evalTests = []struct {
 	// begin/end
 	{"begin; put lorem; put ipsum; end", strs("lorem", "ipsum"), nomore},
 	// Redirections.
-	{"f=`mktemp`; echo 233 > $f; cat < $f", strs(),
+	{"f=`mktemp elvXXXXXX`; echo 233 > $f; cat < $f; rm $f", strs(),
 		more{wantBytesOut: []byte("233\n")}},
 
 	// Compounding.
