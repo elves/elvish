@@ -187,11 +187,6 @@ func (cp *compiler) indexing(n *parse.Indexing) ValuesOpFunc {
 
 	headOp := cp.primaryOp(n.Head)
 	indexOps := cp.arrayOps(n.Indicies)
-	// p := n.Begin()
-	indexPoses := make([]int, len(n.Indicies))
-	for i, index := range n.Indicies {
-		indexPoses[i] = index.Begin()
-	}
 
 	return func(ec *EvalCtx) []Value {
 		vs := headOp.Exec(ec)
@@ -217,7 +212,7 @@ func literalStr(text string) ValuesOpFunc {
 	return literalValues(String(text))
 }
 
-func variable(qname string, p int) ValuesOpFunc {
+func variable(qname string) ValuesOpFunc {
 	splice, ns, name := parseVariable(qname)
 	return func(ec *EvalCtx) []Value {
 		variable := ec.ResolveVar(ns, name)
@@ -237,7 +232,6 @@ func variable(qname string, p int) ValuesOpFunc {
 }
 
 func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
-	cp.compiling(n)
 	switch n.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return literalStr(n.Value)
@@ -246,7 +240,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 		if !cp.registerVariableGet(qname) {
 			cp.errorf("variable $%s not found", n.Value)
 		}
-		return variable(qname, n.Begin())
+		return variable(qname)
 	case parse.Wildcard:
 		vs := []Value{GlobPattern{[]glob.Segment{
 			wildcardToSegment(n.SourceText())}}}
@@ -286,7 +280,6 @@ func (cp *compiler) errorCapture(n *parse.Chunk) ValuesOpFunc {
 
 func (cp *compiler) outputCapture(n *parse.Primary) ValuesOpFunc {
 	op := cp.chunkOp(n.Chunk)
-	// p := n.Chunk.Begin()
 	return func(ec *EvalCtx) []Value {
 		return captureOutput(ec, op)
 	}

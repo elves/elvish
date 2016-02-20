@@ -190,13 +190,12 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 	// TODO: n.ErrorRedir
 
 	begin, end := n.Begin(), n.End()
-	headBegin, headEnd := n.Head.Begin(), n.Head.End()
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
 	return func(ec *EvalCtx) {
 		// head
 		headValues := headOp.Exec(ec)
-		ec.must(headValues, "head of command", headBegin, headEnd).mustLen(1)
+		ec.must(headValues, "head of command", headOp.Begin, headOp.End).mustLen(1)
 		headCaller := mustCaller(headValues[0])
 
 		// args
@@ -310,9 +309,6 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 	mode := n.Mode
 	flag := makeFlag(mode)
 
-	dstBegin, dstEnd := n.Dest.Begin(), n.Dest.End()
-	srcBegin, srcEnd := n.Source.Begin(), n.Source.End()
-
 	return func(ec *EvalCtx) {
 		var dst int
 		if dstOp.Func == nil {
@@ -328,14 +324,14 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 			}
 		} else {
 			// dst must be a valid fd
-			dst = ec.must(dstOp.Exec(ec), "FD", dstBegin, dstEnd).mustOneNonNegativeInt()
+			dst = ec.must(dstOp.Exec(ec), "FD", dstOp.Begin, dstOp.End).mustOneNonNegativeInt()
 		}
 
 		ec.growPorts(dst + 1)
 		// Logger.Printf("closing old port %d of %s", dst, ec.context)
 		ec.ports[dst].Close()
 
-		srcMust := ec.must(srcOp.Exec(ec), "redirection source", srcBegin, srcEnd)
+		srcMust := ec.must(srcOp.Exec(ec), "redirection source", srcOp.Begin, srcOp.End)
 		src := string(srcMust.mustOneStr())
 		if sourceIsFd {
 			if src == "-" {
