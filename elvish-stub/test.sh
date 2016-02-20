@@ -4,25 +4,31 @@ fail() {
 	exit 1
 }
 
+lastLogIs() {
+    test "$(tail -n1 $log)" = "$*"
+}
+
 log=`mktemp elvishXXXXX`
 
 # Start elvish-stub.
 elvish-stub > $log &
 stub=$!
 
-sleep 0.1
-
 # Wait for startup message.
-test `tail -n1 $log` == ok || {
-	fail "no startup message or startup too slow"
-}
+for i in `seq 51`; do
+    test i == 51 && {
+        fail "elvish-stub didn't write startup message within 5 seconds"
+    }
+    lastLogIs ok && break
+    sleep 0.1
+done
 
 # Send a SIGINT.
 kill -2 $stub
 ps $stub >/dev/null || {
 	fail "stub killed by SIGTERM"
 }
-test `tail -n1 $log` == 2 || {
+lastLogIs 2 || {
 	fail "stub didn't record SIGTERM"
 }
 
