@@ -87,6 +87,7 @@ func rescue() {
 // TODO(xiaq): Currently only the editor deals with signals.
 func interact() {
 	ev, st := newEvalerAndStore()
+	defer closeStore(st)
 
 	sigch := make(chan os.Signal, sigchSize)
 	signal.Notify(sigch)
@@ -191,7 +192,8 @@ func handleQuit() {
 }
 
 func script(fname string) {
-	ev, _ := newEvalerAndStore()
+	ev, st := newEvalerAndStore()
+	defer closeStore(st)
 	err := ev.Source(fname)
 	if err != nil {
 		printError(err)
@@ -218,6 +220,13 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 	}
 
 	return eval.NewEvaler(st), st
+}
+
+func closeStore(st *store.Store) {
+	err := st.Close()
+	if err != nil {
+		fmt.Println("failed to close database:", err)
+	}
 }
 
 func printError(err error) {
