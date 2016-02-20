@@ -2,7 +2,6 @@ package eval
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -32,11 +31,8 @@ func (e Error) Bool() bool {
 	return e.Inner == nil
 }
 
-// Common Error values.
-var (
-	OK             = Error{nil}
-	GenericFailure = Error{errors.New("generic failure")}
-)
+// OK is an alias for the zero value of Error.
+var OK = Error{nil}
 
 // multiError is multiple errors packed into one. It is used for reporting
 // errors of pipelines, in which multiple forms may error.
