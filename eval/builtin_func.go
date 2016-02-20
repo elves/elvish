@@ -79,6 +79,8 @@ func init() {
 		&BuiltinFn{"-", wrapFn(minus)},
 		&BuiltinFn{"mul", wrapFn(times)},
 		&BuiltinFn{"div", wrapFn(divide)},
+		&BuiltinFn{"lt", wrapFn(lt)},
+		&BuiltinFn{"gt", wrapFn(gt)},
 
 		&BuiltinFn{"=", eq},
 		&BuiltinFn{"deepeq", deepeq},
@@ -480,6 +482,24 @@ func divide(ec *EvalCtx, prod float64, nums ...float64) {
 		prod /= f
 	}
 	out <- String(fmt.Sprintf("%g", prod))
+}
+
+var ErrFalse = errors.New("false")
+
+func lt(ec *EvalCtx, nums ...float64) {
+	for i := 0; i < len(nums)-1; i++ {
+		if !(nums[i] < nums[i+1]) {
+			throw(ErrFalse)
+		}
+	}
+}
+
+func gt(ec *EvalCtx, nums ...float64) {
+	for i := 0; i < len(nums)-1; i++ {
+		if !(nums[i] > nums[i+1]) {
+			throw(ErrFalse)
+		}
+	}
 }
 
 var ErrNotEqual = errors.New("not equal")
