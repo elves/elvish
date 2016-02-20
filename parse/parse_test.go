@@ -19,24 +19,29 @@ var goodCases = []struct {
 }{
 	// Chunk
 	// Smoke test.
-	{"a;b|c\n;d", ast{"Chunk", fs{"Pipelines": []string{"a", "b|c", "d"}}}},
-	// Empty chunk
+	{"a;b;c\n;d", ast{"Chunk", fs{"Pipelines": []string{"a", "b", "c", "d"}}}},
+	// Empty chunk should have Pipelines=nil.
 	{"", ast{"Chunk", fs{"Pipelines": nil}}},
-	// Lots of unnecessary whitespaces
+	// Superfluous newlines and semicolons should not result in empty
+	// pipelines.
 	{"  ;\n\n  ls \t ;\n", ast{"Chunk", fs{"Pipelines": []string{"ls \t "}}}},
 
-	// Control structures.
-	/*
-		{"if true; then echo then; else echo else; fi",
-			ast{"Chunk/Pipeline/Form", fs{
-				"Control": "233",
-			}}},
-	*/
+	// Pipeline
+	{"a|b|c|d", ast{
+		"Chunk/Pipeline", fs{"Forms": []string{"a", "b", "c", "d"}}}},
 
 	// Form
+	// Smoke test.
 	{"ls x y", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "ls",
 		"Args": []string{"x", "y"}}}},
+	// Assignments.
+	{"k=v k[a][b]=v", ast{"Chunk/Pipeline/Form", fs{
+		"Assignments": []string{"k=v", "k[a][b]=v"}}}},
+	// Temporary assignment.
+	{"k=v k[a][b]=v a", ast{"Chunk/Pipeline/Form", fs{
+		"Assignments": []string{"k=v", "k[a][b]=v"},
+		"Head":        "a"}}},
 	// Redirections
 	{"a>b", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
@@ -58,10 +63,56 @@ var goodCases = []struct {
 		"Head":        "a",
 		"ExitusRedir": ast{"ExitusRedir", fs{"Dest": "$e"}},
 	}}},
-	// Assignments:
-	{"k=v k[a][b]=v a", ast{"Chunk/Pipeline/Form", fs{
-		"Assignments": []string{"k=v", "k[a][b]=v"},
-		"Head":        "a"}}},
+	// TODO Names arguments.
+
+	// Control structures.
+	// if/then/fi.
+	{"if true; then echo then; fi",
+		ast{"Chunk/Pipeline/Form/Control", fs{
+			"Kind":       IfControl,
+			"Conditions": []string{" true; "},
+			"Bodies":     []string{" echo then; "},
+		}}},
+	// if/then/else/fi.
+	{"if true; then echo then; else echo else; fi",
+		ast{"Chunk/Pipeline/Form/Control", fs{
+			"Kind":       IfControl,
+			"Conditions": []string{" true; "},
+			"Bodies":     []string{" echo then; "},
+			"ElseBody":   " echo else; ",
+		}}},
+	// if/then/elif/then/else/fi.
+	{"if true; then echo then; elif true; then echo else if; else echo else; fi",
+		ast{"Chunk/Pipeline/Form/Control", fs{
+			"Kind":       IfControl,
+			"Conditions": []string{" true; ", " true; "},
+			"Bodies":     []string{" echo then; ", " echo else if; "},
+			"ElseBody":   " echo else; ",
+		}}},
+	// while/do/done
+	{"while true; do echo do; done",
+		ast{"Chunk/Pipeline/Form/Control", fs{
+			"Kind":      WhileControl,
+			"Condition": " true; ", "Body": " echo do; "}}},
+	// while/do/else/done
+	{"while true; do echo do; else echo else; done",
+		ast{"Chunk/Pipeline/Form/Control", fs{
+			"Kind":      WhileControl,
+			"Condition": " true; ",
+			"Body":      " echo do; ",
+			"ElseBody":  " echo else; ",
+		}}},
+	// for/do/done
+	{"for x in a b c; do echo do; done",
+		ast{"Chunk/Pipeline/Form/Control", fs{
+			"Kind":     ForControl,
+			"Iterator": "x",
+			"Array":    " a b c",
+			"Body":     " echo do; "}}},
+	// begin/end
+	{"begin echo begin; end",
+		ast{"Chunk/Pipeline/Form/Control", fs{
+			"Kind": BeginControl, "Body": " echo begin; "}}},
 
 	// Compound
 	{`a b"foo"$c'xyz'`, a(ast{"Compound", fs{
