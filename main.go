@@ -1,4 +1,4 @@
-// elvish is an experimental Unix shell. It tries to incorporate a powerful
+// Elvish is an experimental Unix shell. It tries to incorporate a powerful
 // programming language with an extensible, friendly user interface.
 package main
 
