@@ -44,8 +44,10 @@ var evalTests = []struct {
 
 	// Pipelines.
 	// Pure byte pipeline
-	{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`,
-		[]Value{}, more{wantBytesOut: []byte("A1bert\nBer1in\n")}},
+	/*
+		{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`,
+			[]Value{}, more{wantBytesOut: []byte("A1bert\nBer1in\n")}},
+	*/
 	// Pure channel pipeline
 	{`put 233 42 19 | each [x]{+ $x 10}`, strs("243", "52", "29"), nomore},
 	// TODO: Add a useful hybrid pipeline sample
@@ -59,18 +61,26 @@ var evalTests = []struct {
 	{"d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]",
 		strs("v", "u"), nomore},
 	// Control structures.
+	// if
 	{"if true; then put then; fi", strs("then"), nomore},
 	{"if false; then put then; else put else; fi", strs("else"), nomore},
 	{"if false; then put 1; elif false; then put 2; else put 3; fi",
 		strs("3"), nomore},
 	{"if false; then put 2; elif true; then put 2; else put 3; fi",
 		strs("2"), nomore},
+	// while
 	{"x=0; while lt $x 4; do put $x; x=(+ $x 1); done",
 		strs("0", "1", "2", "3"), nomore},
+	// for
 	{"for x in tempora mores; do put 'O '$x; done",
 		strs("O tempora", "O mores"), nomore},
+	// break
 	{"for x in a; do break; else put $x; done", strs(), nomore},
+	// else
 	{"for x in a; do put $x; else put $x; done", strs("a"), nomore},
+	// continue
+	{"for x in a b; do put $x; continue; put $x; done", strs("a", "b"), nomore},
+	// begin/end
 	{"begin; put lorem; put ipsum; end", strs("lorem", "ipsum"), nomore},
 	// Redirections.
 	{"f=`mktemp`; echo 233 > $f; cat < $f", strs(),
@@ -132,9 +142,10 @@ var evalTests = []struct {
 	  {inc2,put2}=(f); $put2; $inc2; $put2`,
 		strs("0", "1", "0", "1"), nomore},
 
-	// fn
+	// fn and return.
 	{"fn f [x]{ put x=$x'.' }; f lorem; f ipsum",
 		strs("x=lorem.", "x=ipsum."), nomore},
+	{"fn f []{ put a; return; put b }; f", strs("a"), nomore},
 
 	// Namespaces
 	// Pseudo-namespaces local: and up:
@@ -158,6 +169,19 @@ var evalTests = []struct {
 	// Equality
 	{"put ?(= a a) ?(= [] []) ?(= [&] [&])",
 		[]Value{Error{nil}, Error{ErrNotEqual}, Error{ErrNotEqual}}, nomore},
+	{"kind-of bare 'str' [] [&] []{ }",
+		strs("string", "string", "list", "map", "fn"), nomore},
+	{"put ?(fail failed)", []Value{Error{errors.New("failed")}}, nomore},
+	{`put "l\norem" ipsum | into-lines`, strs(),
+		more{wantBytesOut: []byte("l\norem\nipsum\n")}},
+	{`echo "1\n233" | from-lines`, strs("1", "233"), nomore},
+	{"put [a] [b c] | unpack", strs("a", "b", "c"), nomore},
+	{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`, []Value{
+		NewMap(map[Value]Value{
+			String("k"): String("v"),
+			String("a"): NewList(strs("1", "2")...)}),
+		String("foo"),
+	}, nomore},
 }
 
 func strs(ss ...string) []Value {
@@ -257,9 +281,10 @@ func TestEval(t *testing.T) {
 			t.Errorf(format, args...)
 		}
 
-		if tt.wantBytesOut != nil && !reflect.DeepEqual(tt.wantBytesOut, bytesOut) {
+		if string(bytesOut) != string(tt.wantBytesOut) {
 			errorf("got bytesOut=%q, want %q", bytesOut, tt.wantBytesOut)
 		}
+		// Check error. We accept errAny as a "wildcard" for all non-nil errors.
 		if !(tt.wantError == errAny && err != nil) && !reflect.DeepEqual(tt.wantError, err) {
 			errorf("got err=%v, want %v", err, tt.wantError)
 		}
