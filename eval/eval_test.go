@@ -56,6 +56,25 @@ var evalTests = []struct {
 	// Map element assignment
 	{"di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
 		strs("lorem", "ipsum"), nomore},
+	{"d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]",
+		strs("v", "u"), nomore},
+	// Control structures.
+	{"if true; then put then; fi", strs("then"), nomore},
+	{"if false; then put then; else put else; fi", strs("else"), nomore},
+	{"if false; then put 1; elif false; then put 2; else put 3; fi",
+		strs("3"), nomore},
+	{"if false; then put 2; elif true; then put 2; else put 3; fi",
+		strs("2"), nomore},
+	{"x=0; while lt $x 4; do put $x; x=(+ $x 1); done",
+		strs("0", "1", "2", "3"), nomore},
+	{"for x in tempora mores; do put 'O '$x; done",
+		strs("O tempora", "O mores"), nomore},
+	{"for x in a; do break; else put $x; done", strs(), nomore},
+	{"for x in a; do put $x; else put $x; done", strs("a"), nomore},
+	{"begin; put lorem; put ipsum; end", strs("lorem", "ipsum"), nomore},
+	// Redirections.
+	{"f=`mktemp`; echo 233 > $f; cat < $f", strs(),
+		more{wantBytesOut: []byte("233\n")}},
 
 	// Compounding.
 	{"put {fi,elvi}sh{1.0,1.1}",
@@ -88,6 +107,10 @@ var evalTests = []struct {
 
 	// Wildcard.
 	{"put /*", strs(util.RootNames()...), nomore},
+
+	// Tilde.
+	{"h=$env:HOME; env:HOME=/foo; put ~ ~/src; env:HOME=$h",
+		strs("/foo", "/foo/src"), nomore},
 
 	// Closure
 	// Basics
@@ -246,7 +269,7 @@ func TestEval(t *testing.T) {
 			errorf("got bytesOut=%q, want %q", bytesOut, tt.wantBytesOut)
 		}
 		if !(tt.wantError == errAny && err != nil) && !reflect.DeepEqual(tt.wantError, err) {
-			errorf("got err=%s, want %s", err, tt.wantError)
+			errorf("got err=%v, want %v", err, tt.wantError)
 		}
 		if !reflect.DeepEqual(tt.wantOut, out) {
 			errorf("got out=%v, want %v", out, tt.wantOut)
