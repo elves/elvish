@@ -370,8 +370,13 @@ func cdInner(dir string, ec *EvalCtx) {
 		// XXX Error ignored.
 		pwd, err := os.Getwd()
 		if err == nil {
-			// XXX Error ignored.
-			go ec.store.AddDir(pwd)
+			store := ec.store
+			go func() {
+				store.Waits.Add(1)
+				// XXX Error ignored.
+				store.AddDir(pwd)
+				store.Waits.Done()
+			}()
 		}
 	}
 }

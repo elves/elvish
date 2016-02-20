@@ -5,13 +5,15 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
+	"sync"
 
 	_ "github.com/elves/go-sqlite/sqlite3" // enable the "sqlite3" SQL driver
 )
 
 // Store is the permanent storage backend for elvish.
 type Store struct {
-	db *sql.DB
+	db    *sql.DB
+	Waits sync.WaitGroup
 }
 
 var initTable = map[string](func(*sql.DB) error){}
@@ -35,7 +37,7 @@ func NewStore(dbname string) (*Store, error) {
 // NewStoreDB creates a new Store with a custom database. The database must be
 // a SQLite database.
 func NewStoreDB(db *sql.DB) (*Store, error) {
-	st := &Store{db}
+	st := &Store{db, sync.WaitGroup{}}
 
 	for name, fn := range initTable {
 		err := fn(db)
@@ -51,5 +53,6 @@ func (s *Store) Close() error {
 	if s == nil || s.db == nil {
 		return nil
 	}
+	s.Waits.Wait()
 	return s.db.Close()
 }

@@ -16,8 +16,10 @@ func (h *historyState) jump(i int, line string) {
 func (ed *Editor) appendHistory(line string) {
 	if ed.store != nil {
 		go func() {
-			ed.store.AddCmd(line)
+			ed.store.Waits.Add(1)
 			// TODO(xiaq): Report possible error
+			ed.store.AddCmd(line)
+			ed.store.Waits.Done()
 		}()
 	}
 }
