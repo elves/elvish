@@ -34,7 +34,7 @@ var evalTests = []struct {
 	wantOut []Value
 	more
 }{
-	// Chunks
+	// Chunks.
 	// Empty chunk
 	{"", []Value{}, nomore},
 	// Outputs of pipelines in a chunk are concatenated
@@ -42,7 +42,7 @@ var evalTests = []struct {
 	// A failed pipeline cause the whole chunk to fail
 	{"put a; false; put b", strs("a"), more{wantError: errors.New("1")}},
 
-	// Pipelines
+	// Pipelines.
 	// Pure byte pipeline
 	{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`,
 		[]Value{}, more{wantBytesOut: []byte("A1bert\nBer1in\n")}},
@@ -50,21 +50,14 @@ var evalTests = []struct {
 	{`put 233 42 19 | each [x]{+ $x 10}`, strs("243", "52", "29"), nomore},
 	// TODO: Add a useful hybrid pipeline sample
 
-	// Builtin functions
-	// Arithmetics
-	// TODO test more edge cases
-	{"+ 233100 233", strs("233333"), nomore},
-	{"- 233333 233100", strs("233"), nomore},
-	{"mul 353 661", strs("233333"), nomore},
-	{"div 233333 353", strs("661"), nomore},
-	{"div 1 0", strs("+Inf"), nomore},
+	// Forms.
+	// List element assignment
+	{"li=[foo bar]; li[0]=233; put-all $li", strs("233", "bar"), nomore},
+	// Map element assignment
+	{"di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
+		strs("lorem", "ipsum"), nomore},
 
-	// String literal
-	{`put 'such \"''literal'`, strs(`such \"'literal`), nomore},
-	{`put "much \n\033[31;1m$cool\033[m"`,
-		strs("much \n\033[31;1m$cool\033[m"), nomore},
-
-	// Compounding
+	// Compounding.
 	{"put {fi,elvi}sh{1.0,1.1}",
 		strs("fish1.0", "fish1.1", "elvish1.0", "elvish1.1"), nomore},
 
@@ -73,6 +66,11 @@ var evalTests = []struct {
 		strs("[a b c] [&key=value]"), nomore},
 	{"put [a b c][2]", strs("c"), nomore},
 	{"put [&key=value][key]", strs("value"), nomore},
+
+	// String literal
+	{`put 'such \"''literal'`, strs(`such \"'literal`), nomore},
+	{`put "much \n\033[31;1m$cool\033[m"`,
+		strs("much \n\033[31;1m$cool\033[m"), nomore},
 
 	// Output capture
 	{"put (put lorem ipsum)", strs("lorem", "ipsum"), nomore},
@@ -87,12 +85,6 @@ var evalTests = []struct {
 		strs("WOW, SUCH SHELL, MUCH COOL"), nomore},
 	// Splicing
 	{"x=[elvish rules]; put $@x", strs("elvish", "rules"), nomore},
-
-	// List element assignment
-	{"li=[foo bar]; li[0]=233; put-all $li", strs("233", "bar"), nomore},
-	// Map element assignment
-	{"di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
-		strs("lorem", "ipsum"), nomore},
 
 	// Wildcard.
 	{"put /*", strs(util.RootNames()...), nomore},
@@ -140,6 +132,14 @@ var evalTests = []struct {
 	{"del env:foo; put $env:foo", strs(""), nomore},
 	// TODO: Test module namespace
 
+	// Builtin functions
+	// Arithmetics
+	// TODO test more edge cases
+	{"+ 233100 233", strs("233333"), nomore},
+	{"- 233333 233100", strs("233"), nomore},
+	{"mul 353 661", strs("233333"), nomore},
+	{"div 233333 353", strs("661"), nomore},
+	{"div 1 0", strs("+Inf"), nomore},
 	// Equality
 	{"put ?(= a a) ?(= [] []) ?(= [&] [&])",
 		[]Value{Error{nil}, Error{ErrNotEqual}, Error{ErrNotEqual}}, nomore},
