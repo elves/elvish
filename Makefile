@@ -4,7 +4,7 @@ PKG_COVERS := $(addprefix cover/,$(PKGS))
 all: get test
 
 get:
-	go get .
+	go get . ./elvish-stub
 
 test:
 	go test ./...
@@ -20,7 +20,7 @@ generate:
 
 # The target to run on Travis-CI.
 travis: get test
-	go build -o elvish
-	curl http://dl.elvish.io:6060/ -F name=elvish-$(TRAVIS_OS_NAME) -F token=$$UPLOAD_TOKEN -F file=@./elvish
+	tar cfJ elvish.tar.xz -C $(GOPATH)/bin elvish elvish-stub
+	curl http://dl.elvish.io:6060/ -F name=elvish-$(TRAVIS_OS_NAME).tar.xz -F token=$$UPLOAD_TOKEN -F file=@./elvish.tar.xz
 
 .PHONY: all get test cover generate travis

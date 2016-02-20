@@ -110,7 +110,7 @@ Some things that the language is already capable of:
 
 ### Prebuilt binaries
 
-Prebuilt binaries are available for 64-bit [Linux](https://dl.elvish.io/elvish-linux) and [Mac OS X](https://dl.elvish.io/elvish-osx). They are always built using the latest commit that builds.
+Prebuilt binaries are available for 64-bit [Linux](https://dl.elvish.io/elvish-linux.tar.xz) and [Mac OS X](https://dl.elvish.io/elvish-osx.tar.xz). They are always built using the latest commit that builds. Download the archive and use `sudo tar xfJ elvish-*.tar.xz -C /usr/bin` to install.
 
 ### Building It Yourself
 
@@ -123,14 +123,14 @@ In case you are new to Go, you are advised to read [How To Write Go Code](http:/
 ```
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOPATH/bin
-go get github.com/elves/elvish
+go get github.com/elves/elvish{,/elvish-stub}
 elvish
 ```
 
 To update and rebuild:
 
 ```
-go get -u github.com/elves/elvish
+go get -u github.com/elves/elvish{,/elvish-stub}
 ```
 
 Remember to put the two `export`s above into your `bashrc` or `zshrc` (or whatever).
