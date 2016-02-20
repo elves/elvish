@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/url"
 
-	_ "github.com/mxk/go-sqlite/sqlite3" // enable the "sqlite3" SQL driver
+	_ "github.com/elves/go-sqlite/sqlite3" // enable the "sqlite3" SQL driver
 )
 
 // Store is the permanent storage backend for elvish.
