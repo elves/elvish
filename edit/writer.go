@@ -228,6 +228,11 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 	}
 	bytesBuf.WriteString("\r")
 
+	if fullRefresh {
+		// Do an erase.
+		bytesBuf.WriteString("\033[J")
+	}
+
 	// style of last written cell.
 	style := ""
 
@@ -275,7 +280,7 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 			fmt.Fprintf(bytesBuf, "\033[%dG", firstCol+1)
 		}
 		// Erase the rest of the line if necessary.
-		if i < len(w.oldBuf.cells) && j < len(w.oldBuf.cells[i]) {
+		if !fullRefresh && i < len(w.oldBuf.cells) && j < len(w.oldBuf.cells[i]) {
 			bytesBuf.WriteString("\033[K")
 		}
 		for _, c := range line[j:] {
@@ -286,7 +291,7 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 			bytesBuf.WriteString(string(c.rune))
 		}
 	}
-	if len(w.oldBuf.cells) > len(buf.cells) || fullRefresh {
+	if len(w.oldBuf.cells) > len(buf.cells) && !fullRefresh {
 		// If the old buffer is higher, erase old content.
 		// Note that we cannot simply write \033[J, because if the cursor is
 		// just over the last column -- which is precisely the case if we have a
