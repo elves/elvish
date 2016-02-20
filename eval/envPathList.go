@@ -108,8 +108,8 @@ func (epl *EnvPathList) IndexSet(idx, v Value) {
 }
 
 func (epl *EnvPathList) get() []string {
-	epl.RLock()
-	defer epl.RUnlock()
+	epl.Lock()
+	defer epl.Unlock()
 
 	value := os.Getenv(epl.envName)
 	if value == epl.cachedValue {

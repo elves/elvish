@@ -44,10 +44,8 @@ var evalTests = []struct {
 
 	// Pipelines.
 	// Pure byte pipeline
-	/*
-		{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`,
-			[]Value{}, more{wantBytesOut: []byte("A1bert\nBer1in\n")}},
-	*/
+	{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`,
+		[]Value{}, more{wantBytesOut: []byte("A1bert\nBer1in\n")}},
 	// Pure channel pipeline
 	{`put 233 42 19 | each [x]{+ $x 10}`, strs("243", "52", "29"), nomore},
 	// TODO: Add a useful hybrid pipeline sample
