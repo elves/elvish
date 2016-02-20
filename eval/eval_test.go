@@ -135,14 +135,6 @@ var evalTests = []struct {
 	// fn
 	{"fn f [x]{ put x=$x'.' }; f lorem; f ipsum",
 		strs("x=lorem.", "x=ipsum."), nomore},
-	/*
-		// if
-		{"if true; then put x", strs("x"), nomore},
-		{"if true; false; then put x; else put y",
-			strs("y"), nomore},
-		{"if true; false; then put x; else if false; put y; else put z",
-			strs("z"), nomore},
-	*/
 
 	// Namespaces
 	// Pseudo-namespaces local: and up:
