@@ -327,7 +327,7 @@ func fromJSON(ec *EvalCtx) {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ec *EvalCtx, f *Closure) {
+func each(ec *EvalCtx, f CallerValue) {
 	in := ec.ports[0].Chan
 in:
 	for v := range in {
