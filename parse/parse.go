@@ -420,9 +420,8 @@ type Redir struct {
 func (rn *Redir) parse(ps *parser, dest *Compound) {
 	// The parsing of the Dest part is done in Form.parse.
 	if dest != nil {
-		rn.Dest = dest
+		rn.setDest(dest)
 		rn.begin = dest.begin
-		addChild(rn, dest)
 	}
 
 	begin := ps.pos
