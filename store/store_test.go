@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/mxk/go-sqlite/sqlite3" // enable the "sqlite3" SQL driver
 )
 
 var tStore *Store
