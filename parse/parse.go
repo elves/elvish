@@ -830,10 +830,6 @@ func (pn *Primary) outputCapture(ps *parser) {
 	}
 }
 
-func isBackquote(r rune) bool {
-	return r == '`'
-}
-
 // List   = '[' { Space } Array ']'
 // Lambda = List '{' Chunk '}'
 // Map    = '[' { Space } '&' { Space } ']'
