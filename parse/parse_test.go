@@ -48,9 +48,9 @@ var goodCases = []struct {
 		"Head": "a",
 		"Redirs": []ast{
 			ast{"Redir", fs{"Mode": Append, "Source": "b"}},
-			ast{"Redir", fs{"Mode": Write, "Source": "b"}},
-			ast{"Redir", fs{"Mode": Write, "SourceIsFd": true, "Source": "-"}},
-			ast{"Redir", fs{"Mode": Write, "SourceIsFd": true, "Source": "1"}},
+			ast{"Redir", fs{"Dest": "2", "Mode": Write, "Source": "b"}},
+			ast{"Redir", fs{"Dest": "3", "Mode": Write, "SourceIsFd": true, "Source": "-"}},
+			ast{"Redir", fs{"Dest": "4", "Mode": Write, "SourceIsFd": true, "Source": "1"}},
 		},
 	}}},
 	// Exitus redirection
@@ -76,16 +76,20 @@ var goodCases = []struct {
 	//
 	// Single quote
 	{"a 'b'", a(ast{"Compound/Indexing/Primary", fs{
-		"text": "'b'", "Type": SingleQuoted,
+		"Type": SingleQuoted, "Value": "b",
 	}})},
 	// Double quote
 	{`a "b"`, a(ast{"Compound/Indexing/Primary", fs{
-		"text": `"b"`, "Type": DoubleQuoted,
+		"Type": DoubleQuoted, "Value": "b",
 	}})},
 	// List
 	{"a [] [ ] [1] [ 2] [3 ] [ 4 5 6 7 ]", a(
-		ast{"Compound/Indexing/Primary", fs{"Type": List}},
-		ast{"Compound/Indexing/Primary", fs{"Type": List}},
+		ast{"Compound/Indexing/Primary", fs{
+			"Type": List,
+			"List": ""}},
+		ast{"Compound/Indexing/Primary", fs{
+			"Type": List,
+			"List": ""}},
 		ast{"Compound/Indexing/Primary", fs{
 			"Type": List,
 			"List": ast{"Array", fs{"Compounds": []string{"1"}}}}},
@@ -124,36 +128,33 @@ var goodCases = []struct {
 	)},
 	// Empty map
 	{"a [&] [ &] [& ] [ & ]", a(
-		ast{"Compound/Indexing/Primary", fs{"Type": Map, "text": "[&]"}},
-		ast{"Compound/Indexing/Primary", fs{"Type": Map, "text": "[ &]"}},
-		ast{"Compound/Indexing/Primary", fs{"Type": Map, "text": "[& ]"}},
-		ast{"Compound/Indexing/Primary", fs{"Type": Map, "text": "[ & ]"}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Map, "MapPairs": nil}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Map, "MapPairs": nil}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Map, "MapPairs": nil}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Map, "MapPairs": nil}},
 	)},
 	// Lambda
 	{"a []{} [ ]{ } []{ echo 233 } [ $x $y ]{puts $x $y} { put $1}", a(
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": Lambda,
+			"Type": Lambda, "List": "", "Chunk": "",
 		}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": Lambda,
+			"Type": Lambda, "List": "", "Chunk": " ",
 		}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type":  Lambda,
-			"Chunk": " echo 233 ",
+			"Type": Lambda, "List": "", "Chunk": " echo 233 ",
 		}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type":  Lambda,
-			"List":  "$x $y ",
-			"Chunk": "puts $x $y",
+			"Type": Lambda, "List": "$x $y ", "Chunk": "puts $x $y",
 		}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type":  Lambda,
-			"Chunk": " put $1",
+			"Type": Lambda, "List": nil, "Chunk": " put $1",
 		}},
 	)},
 	// Output capture
 	{"a () (b;c)", a(
-		ast{"Compound/Indexing/Primary", fs{"Type": OutputCapture}},
+		ast{"Compound/Indexing/Primary", fs{
+			"Type": OutputCapture, "Chunk": ""}},
 		ast{"Compound/Indexing/Primary", fs{
 			"Type": OutputCapture, "Chunk": "b;c",
 		}})},
@@ -163,7 +164,8 @@ var goodCases = []struct {
 	{"a `a (b `c`)` `d [`e`]`", a("`a (b `c`)`", "`d [`e`]`")},
 	// Exitus capture
 	{"a ?() ?(b;c)", a(
-		ast{"Compound/Indexing/Primary", fs{"Type": ErrorCapture}},
+		ast{"Compound/Indexing/Primary", fs{
+			"Type": ErrorCapture, "Chunk": ""}},
 		ast{"Compound/Indexing/Primary", fs{
 			"Type": ErrorCapture, "Chunk": "b;c",
 		}})},
@@ -177,7 +179,7 @@ var goodCases = []struct {
 	{"a ~xiaq/go", a(
 		ast{"Compound", fs{
 			"Indexings": []ast{
-				{"Indexing/Primary", fs{"Type": Tilde}},
+				{"Indexing/Primary", fs{"Type": Tilde, "Value": "~"}},
 				{"Indexing/Primary", fs{"Type": Bareword, "Value": "xiaq/go"}},
 			},
 		}},

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // AST checking utilities. Used in test cases.
@@ -18,14 +20,16 @@ import (
 // fields part specified the children of the Pipeline instead of the Chunk
 // (which has no additional interesting fields anyway). Multi-level coalescence
 // like "Chunk/Pipeline/Form" is also allowed.
+//
+// The dynamic type of the Node being checked is assumed to be a pointer to a
+// struct that embeds the "node" struct.
 type ast struct {
 	name   string
 	fields fs
 }
 
-// fs specifies fields of a Node to check. For each key/value pair in fs, the
-// value ("wanted value") checks a field in the Node ("found value") using the
-// following algorithm:
+// fs specifies fields of a Node to check. For the value of field $f in the
+// Node ("found value"), fs[$f] ("wanted value") is used to check against it.
 //
 // If the key is "text", the SourceText of the Node is checked. It doesn't
 // involve a found value.
@@ -62,25 +66,30 @@ func checkAST(n Node, want ast) error {
 		n = fields[0]
 	}
 
-	if want.fields == nil && len(n.Children()) != 0 {
-		return fmt.Errorf("want leaf, got inner node (%s)", summary(n))
-	}
-	nv := reflect.ValueOf(n).Elem()
+	ntype := reflect.TypeOf(n).Elem()
+	nvalue := reflect.ValueOf(n).Elem()
 
-	// TODO: Check fields present in n but not in want
-	for fieldname, wantfield := range want.fields {
-		if fieldname == "text" {
-			if n.SourceText() != wantfield.(string) {
-				return fmt.Errorf("want %q, got %q (%s)", wantfield, n.SourceText())
-			}
-		} else {
-			fv := nv.FieldByName(fieldname)
-			err := checkField(fv.Interface(), wantfield, summary(n))
+	for i := 0; i < ntype.NumField(); i++ {
+		fieldname := ntype.Field(i).Name
+		if !exported(fieldname) {
+			// Unexported field
+			continue
+		}
+		got := nvalue.Field(i).Interface()
+		want, ok := want.fields[fieldname]
+		if ok {
+			err := checkField(got, want, "field "+fieldname+" of: "+summary(n))
 			if err != nil {
 				return err
 			}
+		} else {
+			// Not specified. Check if got is a zero value of its type.
+			if !reflect.DeepEqual(got, reflect.Zero(reflect.TypeOf(got)).Interface()) {
+				return fmt.Errorf("want zero, got %v (field %s of: %s)", got, fieldname, summary(n))
+			}
 		}
 	}
+
 	return nil
 }
 
@@ -137,4 +146,9 @@ func checkNodeInField(got Node, want interface{}) error {
 	default:
 		panic(fmt.Sprintf("bad want type %T (%s)", want, summary(got)))
 	}
+}
+
+func exported(name string) bool {
+	r, _ := utf8.DecodeRuneInString(name)
+	return unicode.IsUpper(r)
 }
