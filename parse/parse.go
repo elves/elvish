@@ -2,7 +2,7 @@
 package parse
 
 //go:generate ./boilerplate.py
-//go:generate stringer -type=PrimaryType,RedirMode,ControlKinD -output=string.go
+//go:generate stringer -type=PrimaryType,RedirMode,ControlKind -output=string.go
 
 import (
 	"bytes"
