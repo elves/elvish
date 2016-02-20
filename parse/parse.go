@@ -999,12 +999,6 @@ func addSep(n Node, ps *parser) {
 	addChild(n, &Sep{node{nil, begin, ps.pos, ps.src[begin:ps.pos], nil}})
 }
 
-func eatRun(ps *parser, r rune) {
-	for ps.peek() == r {
-		ps.next()
-	}
-}
-
 func parseSep(n Node, ps *parser, sep rune) bool {
 	if ps.peek() == sep {
 		ps.next()
@@ -1014,19 +1008,16 @@ func parseSep(n Node, ps *parser, sep rune) bool {
 	return false
 }
 
-func parseRunAsSep(n Node, ps *parser, isSep func(rune) bool) {
-	if !isSep(ps.peek()) {
+func parseSpaces(n Node, ps *parser) {
+	// TODO parse comments here.
+	if !isSpace(ps.peek()) {
 		return
 	}
 	ps.next()
-	for isSep(ps.peek()) {
+	for isSpace(ps.peek()) {
 		ps.next()
 	}
 	addSep(n, ps)
-}
-
-func parseSpaces(n Node, ps *parser) {
-	parseRunAsSep(n, ps, isSpace)
 }
 
 // Helpers.
@@ -1036,16 +1027,13 @@ func addChild(p Node, ch Node) {
 	ch.n().parent = p
 }
 
-type runePred func(rune) bool
-
-func (rp runePred) matches(r rune) bool {
-	return rp != nil && rp(r)
-}
-
 // Quote returns a representation of s in elvish syntax. Bareword is tried
 // first, then single quoted string and finally double quoted string.
 func Quote(s string) string {
-	bare := true
+	if s == "" {
+		return `""`
+	}
+	bare := s[0] != '~'
 	for _, r := range s {
 		if !unicode.IsPrint(r) && r != '\n' {
 			return quoteDouble(s)
