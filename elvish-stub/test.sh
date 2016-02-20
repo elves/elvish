@@ -16,7 +16,7 @@ stub=$!
 
 # Wait for startup message.
 for i in `seq 51`; do
-    test i == 51 && {
+    test $i == 51 && {
         fail "elvish-stub didn't write startup message within 5 seconds"
     }
     lastLogIs ok && break
