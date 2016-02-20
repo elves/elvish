@@ -49,13 +49,15 @@ var goodCases = []struct {
 			ast{"Redir", fs{"Mode": Write, "Source": "b"}}},
 	}}},
 	// More redirections
-	{"a>>b 2>b 3>&- 4>&1", ast{"Chunk/Pipeline/Form", fs{
+	{"a>>b 2>b 3>&- 4>&1 5<c 6<>d", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
 		"Redirs": []ast{
 			ast{"Redir", fs{"Mode": Append, "Source": "b"}},
 			ast{"Redir", fs{"Dest": "2", "Mode": Write, "Source": "b"}},
 			ast{"Redir", fs{"Dest": "3", "Mode": Write, "SourceIsFd": true, "Source": "-"}},
 			ast{"Redir", fs{"Dest": "4", "Mode": Write, "SourceIsFd": true, "Source": "1"}},
+			ast{"Redir", fs{"Dest": "5", "Mode": Read, "Source": "c"}},
+			ast{"Redir", fs{"Dest": "6", "Mode": ReadWrite, "Source": "d"}},
 		},
 	}}},
 	// Exitus redirection
@@ -115,8 +117,8 @@ var goodCases = []struct {
 			"Kind": BeginControl, "Body": " echo begin; "}}},
 
 	// Compound
-	{`a b"foo"$c'xyz'`, a(ast{"Compound", fs{
-		"Indexings": []string{"b", `"foo"`, "$c", "'xyz'"}}})},
+	{`a b"foo"?$c*'xyz'`, a(ast{"Compound", fs{
+		"Indexings": []string{"b", `"foo"`, "?", "$c", "*", "'xyz'"}}})},
 
 	// Indexing
 	{"a $b[c][d][e]", a(ast{"Compound/Indexing", fs{
@@ -126,13 +128,25 @@ var goodCases = []struct {
 	// Primary
 	//
 	// Single quote
-	{"a 'b'", a(ast{"Compound/Indexing/Primary", fs{
-		"Type": SingleQuoted, "Value": "b",
+	{"a '''x''y'''", a(ast{"Compound/Indexing/Primary", fs{
+		"Type": SingleQuoted, "Value": "'x'y'",
 	}})},
 	// Double quote
-	{`a "b"`, a(ast{"Compound/Indexing/Primary", fs{
-		"Type": DoubleQuoted, "Value": "b",
-	}})},
+	{`a "b\^[\x1b\u548c\U0002CE23\123\n\t\\"`,
+		a(ast{"Compound/Indexing/Primary", fs{
+			"Type":  DoubleQuoted,
+			"Value": "b\x1b\x1b\u548c\U0002CE23\123\n\t\\",
+		}})},
+	// Wildcard
+	{"a * ?", a(
+		ast{"Compound/Indexing/Primary", fs{"Type": Wildcard, "Value": "*"}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Wildcard, "Value": "?"}},
+	)},
+	// Variable
+	{"a $x $&f", a(
+		ast{"Compound/Indexing/Primary", fs{"Type": Variable, "Value": "x"}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Variable, "Value": "&f"}},
+	)},
 	// List
 	{"a [] [ ] [1] [ 2] [3 ] [ 4 5 6 7 ]", a(
 		ast{"Compound/Indexing/Primary", fs{
