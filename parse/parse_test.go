@@ -3,20 +3,13 @@ package parse
 import (
 	"fmt"
 	"os"
-	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/elves/elvish/util"
 )
 
-type fs map[string]interface{}
-type ast struct {
-	name   string
-	fields fs
-}
-
 func a(c ...interface{}) ast {
+	// Shorthand used for checking Compound and levels beneath.
 	return ast{"Chunk/Pipeline/Form", fs{"Head": "a", "Args": c}}
 }
 
@@ -25,9 +18,10 @@ var goodCases = []struct {
 	ast ast
 }{
 	// Chunk
+	// Smoke test.
 	{"a;b|c\n;d", ast{"Chunk", fs{"Pipelines": []string{"a", "b|c", "d"}}}},
 	// Empty chunk
-	{"", ast{"Chunk", nil}},
+	{"", ast{"Chunk", fs{"Pipelines": nil}}},
 	// Lots of unnecessary whitespaces
 	{"  ;\n\n  ls \t ;\n", ast{"Chunk", fs{"Pipelines": []string{"ls \t "}}}},
 
@@ -249,93 +243,6 @@ func checkParseTree(n Node) error {
 		}
 	}
 	return nil
-}
-
-// checkAST checks whether the AST part of a Node matches a specification.
-func checkAST(n Node, want ast) error {
-	// TODO: Check fields present in struct but not in ast
-	wantnames := strings.Split(want.name, "/")
-	// Check coalesced levels
-	for i, wantname := range wantnames {
-		name := reflect.TypeOf(n).Elem().Name()
-		if wantname != name {
-			return fmt.Errorf("want %s, got %s (%s)", wantname, name, summary(n))
-		}
-		if i == len(wantnames)-1 {
-			break
-		}
-		fields := n.Children()
-		if len(fields) != 1 {
-			return fmt.Errorf("want exactly 1 child, got %d (%s)", len(fields), summary(n))
-		}
-		n = fields[0]
-	}
-
-	if want.fields == nil && len(n.Children()) != 0 {
-		return fmt.Errorf("want leaf, got inner node (%s)", summary(n))
-	}
-	nv := reflect.ValueOf(n).Elem()
-
-	for fieldname, wantfield := range want.fields {
-		if fieldname == "text" {
-			if n.SourceText() != wantfield.(string) {
-				return fmt.Errorf("want %q, got %q (%s)", wantfield, n.SourceText())
-			}
-		} else {
-			fv := nv.FieldByName(fieldname)
-			err := checkAny(fv.Interface(), wantfield, summary(n))
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-var nodeType = reflect.TypeOf((*Node)(nil)).Elem()
-
-func checkAny(got interface{}, want interface{}, ctx string) error {
-	if got, ok := got.(Node); ok {
-		// A Node
-		return checkNode(got.(Node), want)
-	}
-	tgot := reflect.TypeOf(got)
-	if tgot.Kind() == reflect.Slice && tgot.Elem().Implements(nodeType) {
-		// A slice of Nodes
-		vgot := reflect.ValueOf(got)
-		vwant := reflect.ValueOf(want)
-		if vgot.Len() != vwant.Len() {
-			return fmt.Errorf("want %d, got %d (%s)", vwant.Len(), vgot.Len(), ctx)
-		}
-		for i := 0; i < vgot.Len(); i++ {
-			err := checkNode(vgot.Index(i).Interface().(Node),
-				vwant.Index(i).Interface())
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	if !reflect.DeepEqual(want, got) {
-		return fmt.Errorf("want %v, got %v (%s)", want, got, ctx)
-	}
-	return nil
-}
-
-func checkNode(got Node, want interface{}) error {
-	switch want := want.(type) {
-	case string:
-		text := got.SourceText()
-		if want != text {
-			return fmt.Errorf("want %q, got %q (%s)", want, text, summary(got))
-		}
-		return nil
-	case ast:
-		return checkAST(got, want)
-	default:
-		panic(fmt.Sprintf("bad want type %T (%s)", want, summary(got)))
-	}
 }
 
 var badCases = []struct {
