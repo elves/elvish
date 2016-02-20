@@ -591,11 +591,26 @@ tokens:
 			}
 		} else if hist != nil {
 			n := len(hist.all)
-			for i := n - hListing; i < n; i++ {
+
+			i := 0
+			if n > hListing {
+				i = n - hListing
+			}
+
+			for ; i < n; i++ {
 				b.writes("\n"+hist.all[i], "")
 			}
+
 			n = len(b.cells)
-			b.trimToLines(n-hListing, n)
+
+			startIndex := 0
+			if n > hListing {
+				startIndex = n - hListing
+			}
+
+			if len(b.cells) > 0 {
+				b.trimToLines(startIndex, n)
+			}
 		}
 	}
 
