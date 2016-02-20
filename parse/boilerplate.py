@@ -1,5 +1,6 @@
 #!/usr/bin/python2.7
 import re
+import os
 
 
 def put_set(out, parent, field, child):
@@ -60,6 +61,8 @@ def main():
         if m:
             typename, extraargs = m.groups()
             put_parse(out, typename, extraargs)
+    out.close()
+    os.system('gofmt -w boilerplate.go')
 
 
 if __name__ == '__main__':
