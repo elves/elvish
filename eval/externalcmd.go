@@ -107,10 +107,6 @@ func waitStatusToError(ws syscall.WaitStatus) error {
 			msg += fmt.Sprintf(" (trapped %v)", trap)
 		}
 		return errors.New(msg)
-	/*
-		case ws.Continued():
-			return newUnexitedStateUpdate("continued")
-	*/
 	default:
 		return fmt.Errorf("unknown WaitStatus", ws)
 	}
