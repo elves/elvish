@@ -109,8 +109,15 @@ func (f flow) Error() string {
 // command was stopped rather than terminated, the Pid field contains the pid
 // of the process.
 type ExternalCmdExit struct {
-	WaitStatus syscall.WaitStatus
-	Pid        int
+	syscall.WaitStatus
+	Pid int
+}
+
+func NewExternalCmdExit(ws syscall.WaitStatus, pid int) error {
+	if ws.Exited() && ws.ExitStatus() == 0 {
+		return nil
+	}
+	return ExternalCmdExit{ws, pid}
 }
 
 func (exit ExternalCmdExit) Error() string {

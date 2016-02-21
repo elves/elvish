@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
 
@@ -91,6 +92,8 @@ func init() {
 		&BuiltinFn{"len", wrapFn(lenFn)},
 		&BuiltinFn{"count", wrapFn(count)},
 
+		&BuiltinFn{"fg", wrapFn(fg)},
+
 		&BuiltinFn{"-sleep", wrapFn(_sleep)},
 		&BuiltinFn{"-stack", wrapFn(_stack)},
 		&BuiltinFn{"-log", wrapFn(_log)},
@@ -103,6 +106,7 @@ var (
 	ErrInput             = errors.New("input error")
 	ErrStoreNotConnected = errors.New("store not connected")
 	ErrNoMatchingDir     = errors.New("no matching directory")
+	ErrNotInSameGroup    = errors.New("not in the same process group")
 )
 
 var (
@@ -572,6 +576,49 @@ func count(ec *EvalCtx) {
 		n++
 	}
 	out <- String(strconv.Itoa(n))
+}
+
+func fg(ec *EvalCtx, pids ...int) {
+	if len(pids) == 0 {
+		throw(ErrArgs)
+	}
+	var thepgid int
+	for i, pid := range pids {
+		pgid, err := syscall.Getpgid(pid)
+		maybeThrow(err)
+		if i == 0 {
+			thepgid = pgid
+		} else if pgid != thepgid {
+			throw(ErrNotInSameGroup)
+		}
+	}
+
+	err := sys.Tcsetpgrp(0, thepgid)
+	maybeThrow(err)
+
+	errors := make([]Error, len(pids))
+
+	for i, pid := range pids {
+		err := syscall.Kill(pid, syscall.SIGCONT)
+		if err != nil {
+			errors[i] = Error{err}
+		}
+	}
+
+	for i, pid := range pids {
+		if errors[i] != OK {
+			continue
+		}
+		var ws syscall.WaitStatus
+		_, err = syscall.Wait4(pid, &ws, syscall.WUNTRACED, nil)
+		if err != nil {
+			errors[i] = Error{err}
+		} else {
+			errors[i] = Error{NewExternalCmdExit(ws, pid)}
+		}
+	}
+
+	throwCompositeError(errors)
 }
 
 func _sleep(ec *EvalCtx, t float64) {

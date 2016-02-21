@@ -81,10 +81,6 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value) {
 	if err != nil {
 		throw(fmt.Errorf("wait: %s", err.Error()))
 	} else {
-		if ws.Exited() && ws.ExitStatus() == 0 {
-			// Do nothing
-		} else {
-			throw(ExternalCmdExit{ws, pid})
-		}
+		maybeThrow(NewExternalCmdExit(ws, pid))
 	}
 }

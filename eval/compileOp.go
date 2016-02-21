@@ -77,12 +77,16 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			errors[i] = <-errorChan
 		}
 
-		if !allok(errors) {
-			if len(errors) == 1 {
-				throw(errors[0].Inner)
-			} else {
-				throw(MultiError{errors})
-			}
+		throwCompositeError(errors)
+	}
+}
+
+func throwCompositeError(errors []Error) {
+	if !allok(errors) {
+		if len(errors) == 1 {
+			throw(errors[0].Inner)
+		} else {
+			throw(MultiError{errors})
 		}
 	}
 }
