@@ -3,6 +3,7 @@ package edit
 import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 // stylist takes a Node and Editor, and returns a style string. The Node is
@@ -29,9 +30,9 @@ func colorFormHead(n parse.Node, ed *Editor) string {
 func goodFormHead(head string, ed *Editor) bool {
 	if isBuiltinSpecial[head] {
 		return true
-	} else if eval.DontSearch(head) {
+	} else if util.DontSearch(head) {
 		// XXX don't stat twice
-		return eval.IsExecutable(head) || isDir(head)
+		return util.IsExecutable(head) || isDir(head)
 	} else {
 		return ed.evaler.Global()[eval.FnPrefix+head] != nil ||
 			ed.isExternal[head]

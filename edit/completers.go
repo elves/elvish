@@ -9,6 +9,7 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 // A completer takes the current node
@@ -86,7 +87,7 @@ func complFormHead(cn *parse.Compound, head string, ed *Editor) []*candidate {
 }
 
 func complFormHeadInner(head string, ed *Editor) []*candidate {
-	if eval.DontSearch(head) {
+	if util.DontSearch(head) {
 		return complArgInner(head, ed, true)
 	}
 

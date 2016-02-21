@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+
+	"github.com/elves/elvish/util"
 )
 
 // FdNil is a special impossible fd value used for "close fd" in
@@ -28,7 +30,7 @@ func (e ExternalCmd) Repr(int) string {
 
 // Call calls an external command.
 func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value) {
-	if DontSearch(e.Name) {
+	if util.DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {
 			// implicit cd
