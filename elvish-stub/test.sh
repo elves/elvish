@@ -1,4 +1,9 @@
 #!/bin/sh -x
+
+# This test is broken. I haven't yet found a way to start a background process
+# with a stdin that I can later write to. Presumably this can be doen with a
+# pipe, but there is no way to create pipes explicitly in sh(1).
+
 fail() {
 	echo "$*; log left in $dir"
 	exit 1
