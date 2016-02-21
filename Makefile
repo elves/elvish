@@ -4,7 +4,8 @@ PKG_COVERS := $(addprefix cover/,$(PKGS))
 all: get test
 
 get:
-	go get . ./elvish-stub
+	go get .
+	cc ./elvish-stub/main.c -o $(GOPATH)/bin/elvish-stub
 
 test:
 	go test ./...

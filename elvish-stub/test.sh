@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/sh -x
 fail() {
-	echo "$*; log left at $log"
+	echo "$*; log left in $dir"
 	exit 1
 }
 
@@ -9,15 +9,17 @@ waitlog() {
         test $i = 51 && {
             return 1
         }
-        test "$(tail -n1 $log)" = "$*" && break
+        test "$(tail -n1 log)" = "$*" && break
         sleep 0.1
     done
 }
 
-log=`mktemp elvishXXXXX`
+dir=`mktemp -d elvishXXXX`
+cd "$dir"
+mkfifo fifo
 
 # Start elvish-stub.
-elvish-stub > $log &
+elvish-stub > log < fifo &
 stub=$!
 
 # Wait for startup message.
@@ -35,4 +37,4 @@ done
 # Really kill stub.
 kill -9 $stub
 
-rm $log
+rmdir "$dir"
