@@ -3,7 +3,9 @@ package eval
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/elves/elvish/parse"
 )
@@ -101,6 +103,37 @@ func (f flow) Error() string {
 		return fmt.Sprintf("!(BAD FLOW: %v)", f)
 	}
 	return flowNames[f]
+}
+
+// ExternalCmdExit contains the exit status of external commands. If the
+// command was stopped rather than terminated, the Pid field contains the pid
+// of the process.
+type ExternalCmdExit struct {
+	WaitStatus syscall.WaitStatus
+	Pid        int
+}
+
+func (exit ExternalCmdExit) Error() string {
+	ws := exit.WaitStatus
+	switch {
+	case ws.Exited():
+		return strconv.Itoa(ws.ExitStatus())
+	case ws.Signaled():
+		msg := ws.Signal().String()
+		if ws.CoreDump() {
+			msg += " (core dumped)"
+		}
+		return msg
+	case ws.Stopped():
+		msg := fmt.Sprintf("%s (pid=%d)", ws.StopSignal(), exit.Pid)
+		trap := ws.TrapCause()
+		if trap != -1 {
+			msg += fmt.Sprintf(" (trapped %v)", trap)
+		}
+		return msg
+	default:
+		return fmt.Sprint("unknown WaitStatus", ws)
+	}
 }
 
 func allok(es []Error) bool {

@@ -81,33 +81,10 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value) {
 	if err != nil {
 		throw(fmt.Errorf("wait: %s", err.Error()))
 	} else {
-		maybeThrow(waitStatusToError(ws))
-	}
-}
-
-// waitStatusToError converts syscall.WaitStatus to an Error.
-func waitStatusToError(ws syscall.WaitStatus) error {
-	switch {
-	case ws.Exited():
-		es := ws.ExitStatus()
-		if es == 0 {
-			return nil
+		if ws.Exited() && ws.ExitStatus() == 0 {
+			// Do nothing
+		} else {
+			throw(ExternalCmdExit{ws, pid})
 		}
-		return errors.New(fmt.Sprint(es))
-	case ws.Signaled():
-		msg := fmt.Sprintf("signaled %v", ws.Signal())
-		if ws.CoreDump() {
-			msg += " (core dumped)"
-		}
-		return errors.New(msg)
-	case ws.Stopped():
-		msg := fmt.Sprintf("stopped %v", ws.StopSignal())
-		trap := ws.TrapCause()
-		if trap != -1 {
-			msg += fmt.Sprintf(" (trapped %v)", trap)
-		}
-		return errors.New(msg)
-	default:
-		return fmt.Errorf("unknown WaitStatus", ws)
 	}
 }
