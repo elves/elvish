@@ -59,6 +59,10 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value) {
 	}
 
 	sys := syscall.SysProcAttr{}
+	if ec.Stub != nil {
+		sys.Setpgid = true
+		sys.Pgid = ec.Stub.Process().Pid
+	}
 	attr := syscall.ProcAttr{Env: os.Environ(), Files: files[:], Sys: &sys}
 
 	path, err := ec.Search(e.Name)

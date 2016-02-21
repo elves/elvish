@@ -3,9 +3,11 @@
 package eval
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/signal"
 	"strconv"
 	"syscall"
 	"unicode/utf8"
@@ -13,6 +15,7 @@ import (
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/stub"
+	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
 
@@ -167,10 +170,45 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 		{File: os.Stderr},
 	}
 
+	signal.Ignore(syscall.SIGTTIN)
+	signal.Ignore(syscall.SIGTTOU)
+	// XXX Should use fd of /dev/terminal instead of 0.
+	if ev.Stub != nil && sys.IsATTY(0) {
+		ev.Stub.SetTitle(summarize(text))
+		err := sys.Tcsetpgrp(0, ev.Stub.Process().Pid)
+		if err != nil {
+			fmt.Println("failed to put stub in foreground:", err)
+		}
+	}
+
 	err := ev.Eval("[interactive]", text, n, ports)
 	close(outCh)
 	<-outDone
+
+	// XXX Should use fd of /dev/terminal instead of 0.
+	if sys.IsATTY(0) {
+		err := sys.Tcsetpgrp(0, syscall.Getpgrp())
+		if err != nil {
+			fmt.Println("failed to put myself in foreground:", err)
+		}
+	}
+
 	return err
+}
+
+func summarize(text string) string {
+	// TODO Make a proper summary.
+	if len(text) < 32 {
+		return text
+	}
+	var b bytes.Buffer
+	for i, r := range text {
+		if i+len(string(r)) >= 32 {
+			break
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }
 
 // Compile compiles elvish code in the global scope.

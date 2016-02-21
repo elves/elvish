@@ -45,8 +45,15 @@ func NewStub(stderr *os.File) (*Stub, error) {
 	}
 
 	// Spawn stub.
-	process, err := os.StartProcess(stubpath, []string{stubpath},
-		&os.ProcAttr{Env: stubEnv, Files: []*os.File{stdin, stdout, stderr}})
+	attr := os.ProcAttr{
+		Env:   stubEnv,
+		Files: []*os.File{stdin, stdout, stderr},
+		Sys: &syscall.SysProcAttr{
+			Setpgid: true,
+		},
+	}
+	process, err := os.StartProcess(stubpath, []string{stubpath}, &attr)
+
 	if err != nil {
 		return nil, fmt.Errorf("spawn: %v", err)
 	}
