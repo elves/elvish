@@ -77,7 +77,7 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value) {
 	}
 
 	var ws syscall.WaitStatus
-	_, err = syscall.Wait4(pid, &ws, 0, nil)
+	_, err = syscall.Wait4(pid, &ws, syscall.WUNTRACED, nil)
 	if err != nil {
 		throw(fmt.Errorf("wait: %s", err.Error()))
 	} else {
