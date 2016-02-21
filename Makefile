@@ -9,7 +9,7 @@ get:
 	go get .
 
 $(STUB): ./stubimpl/main.c
-	$(CC) $< -o $@
+	$(CC) ./stubimpl/main.c -o $@
 
 test: $(STUB)
 	go test ./...
