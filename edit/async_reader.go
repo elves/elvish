@@ -101,16 +101,15 @@ func (ar *AsyncReader) Run() {
 				// BUG(xiaq): AsyncReader relies on the undocumented fact
 				// that (*os.File).Read returns an *os.File.PathError
 				patherr, ok := err.(*os.PathError) //.Err
-				if !ok {
-					ar.errCh <- err
-					return
-				}
-				e := patherr.Err
-				if e == syscall.EWOULDBLOCK || e == syscall.EAGAIN {
+				if ok && patherr.Err == syscall.EWOULDBLOCK || patherr.Err == syscall.EAGAIN {
 					break ReadRune
 				} else {
-					ar.errCh <- err
-					return
+					select {
+					case ar.errCh <- err:
+					case <-ar.ctrlCh:
+						ar.rCtrl.Read(cBuf[:])
+						return
+					}
 				}
 			}
 		}
