@@ -117,7 +117,14 @@ func NewExternalCmdExit(ws syscall.WaitStatus, pid int) error {
 	if ws.Exited() && ws.ExitStatus() == 0 {
 		return nil
 	}
+	if !ws.Stopped() {
+		pid = 0
+	}
 	return ExternalCmdExit{ws, pid}
+}
+
+func FakeExternalCmdExit(exit int, sig syscall.Signal) ExternalCmdExit {
+	return ExternalCmdExit{syscall.WaitStatus(exit<<8 + int(sig)), 0}
 }
 
 func (exit ExternalCmdExit) Error() string {
