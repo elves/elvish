@@ -1,6 +1,6 @@
 package eval
 
-//go:genearte ./builtin_modules.bash
+//go:generate ./builtin_modules.bash
 
 // Builtin special forms.
 
