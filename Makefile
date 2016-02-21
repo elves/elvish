@@ -5,11 +5,11 @@ all: get test
 
 get:
 	go get .
-	cc ./elvish-stub/main.c -o $(GOPATH)/bin/elvish-stub
+	cc ./stubimpl/main.c -o $(GOPATH)/bin/elvish-stub
 
 test:
 	go test ./...
-	: ./elvish-stub/test.sh
+	: ./stubimpl/test.sh
 
 cover/%: %
 	mkdir -p cover
