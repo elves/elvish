@@ -306,6 +306,12 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 
 	Logger.Printf("going to write %q", bytesBuf.String())
 
+	fd := int(w.file.Fd())
+	if nonblock, _ := sys.GetNonblock(fd); nonblock {
+		sys.SetNonblock(fd, false)
+		defer sys.SetNonblock(fd, true)
+	}
+
 	_, err := w.file.Write(bytesBuf.Bytes())
 	if err != nil {
 		return err
