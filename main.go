@@ -39,6 +39,12 @@ func main() {
 
 	flag.Usage = usage
 	flag.Parse()
+	args := flag.Args()
+
+	if len(args) > 1 {
+		usage()
+		os.Exit(2)
+	}
 
 	if *help {
 		usage()
@@ -55,15 +61,18 @@ func main() {
 	go handleQuit()
 	go logSignals()
 
-	args := flag.Args()
-	switch len(args) {
-	case 0:
-		interact()
-	case 1:
-		script(args[0])
-	default:
-		usage()
-		os.Exit(2)
+	ev, st := newEvalerAndStore()
+	defer func() {
+		err := st.Close()
+		if err != nil {
+			fmt.Println("failed to close database:", err)
+		}
+	}()
+
+	if len(args) == 1 {
+		script(ev, args[0])
+	} else {
+		interact(ev, st)
 	}
 }
 
@@ -78,15 +87,21 @@ func rescue() {
 	}
 }
 
-func interact() {
-	ev, st := newEvalerAndStore()
-	defer closeStore(st)
+func script(ev *eval.Evaler, fname string) {
+	err := ev.Source(fname)
+	if err != nil {
+		printError(err)
+		os.Exit(1)
+	}
+}
 
+func interact(ev *eval.Evaler, st *store.Store) {
+	// Build Editor.
 	sigch := make(chan os.Signal)
 	signal.Notify(sigch)
-
 	ed := edit.NewEditor(os.Stdin, sigch, ev, st)
 
+	// Source rc.elv.
 	datadir, err := store.EnsureDataDir()
 	printError(err)
 	if err == nil {
@@ -97,8 +112,7 @@ func interact() {
 		}
 	}
 
-	cmdNum := 0
-
+	// Build prompt and rprompt.
 	username := "???"
 	user, err := user.Current()
 	if err == nil {
@@ -116,6 +130,7 @@ func interact() {
 		return rpromptStr
 	}
 
+	// Build readLine function.
 	readLine := func() edit.LineRead {
 		return ed.ReadLine(prompt, rprompt)
 	}
@@ -126,6 +141,8 @@ func interact() {
 		readLine = basicReadLine
 		usingBasic = true
 	}
+
+	cmdNum := 0
 
 	for {
 		cmdNum++
@@ -183,16 +200,6 @@ func handleQuit() {
 	os.Exit(3)
 }
 
-func script(fname string) {
-	ev, st := newEvalerAndStore()
-	defer closeStore(st)
-	err := ev.Source(fname)
-	if err != nil {
-		printError(err)
-		os.Exit(1)
-	}
-}
-
 func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 	dataDir, err := store.EnsureDataDir()
 	if err != nil {
@@ -212,13 +219,6 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 	}
 
 	return eval.NewEvaler(st), st
-}
-
-func closeStore(st *store.Store) {
-	err := st.Close()
-	if err != nil {
-		fmt.Println("failed to close database:", err)
-	}
 }
 
 func printError(err error) {
