@@ -1,28 +1,11 @@
 package eval
 
 import (
-	"errors"
 	"fmt"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	"github.com/elves/elvish/parse"
 )
-
-var (
-	// InterruptDeadline is the amount of time elvish waits for foreground
-	// tasks to finish after receiving a SIGINT. If a task didn't actually exit
-	// in time, its exit status takes the special "still running" value.
-	InterruptDeadline = 50 * time.Millisecond
-	// PutInForeground determines whether elvish should attempt to put itself in
-	// foreground after each pipeline execution.
-	PutInForeground         = true
-	outputCaptureBufferSize = 16
-)
-
-var ErrStillRunning = errors.New("still running")
 
 // Op is an operation on an EvalCtx.
 type Op struct {
@@ -88,41 +71,11 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			}()
 		}
 
-		intCh := make(chan os.Signal)
-		signal.Notify(intCh, syscall.SIGINT)
-		interrupted := make(chan struct{})
-		cancel := make(chan struct{}, 1)
-		go func() {
-			// When SIGINT is received, sleep for InterruptDeadline before the
-			// closing interrupted channel.
-			select {
-			case <-intCh:
-			case <-cancel:
-				return
-			}
-			select {
-			case <-time.After(InterruptDeadline):
-			case <-cancel:
-				return
-			}
-			close(interrupted)
-		}()
-
-		// Wait for all forms to finish and collect error returns, unless an
-		// interrupt was received and the form didn't quit within
-		// InterruptDeadline.
+		// Wait for all forms to finish and collect error returns.
 		errors := make([]Error, len(ops))
 		for i, errorChan := range errorChans {
-			select {
-			case errors[i] = <-errorChan:
-			case <-interrupted:
-				errors[i] = Error{ErrStillRunning}
-			}
+			errors[i] = <-errorChan
 		}
-
-		// Make sure the SIGINT listener exits.
-		close(cancel)
-		signal.Stop(intCh)
 
 		if !allok(errors) {
 			if len(errors) == 1 {

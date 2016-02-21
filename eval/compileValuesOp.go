@@ -14,6 +14,8 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
+var outputCaptureBufferSize = 16
+
 // ValuesOp is an operation on an EvalCtx that produce Value's.
 type ValuesOp struct {
 	Func       ValuesOpFunc
