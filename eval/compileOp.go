@@ -144,15 +144,19 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 }
 
 func (cp *compiler) form(n *parse.Form) OpFunc {
+	var assignmentOps []Op
 	if len(n.Assignments) > 0 {
-		if n.Head != nil {
-			cp.errorpf(n.Assignments[0].Begin(), n.Assignments[len(n.Assignments)-1].End(), "temporary assignments not yet supported")
-		}
-		ops := cp.assignmentOps(n.Assignments)
-		return func(ec *EvalCtx) {
-			for _, op := range ops {
-				op.Exec(ec)
+		assignmentOps = cp.assignmentOps(n.Assignments)
+		if n.Head == nil {
+			// Permanent assignment.
+			return func(ec *EvalCtx) {
+				for _, op := range assignmentOps {
+					op.Exec(ec)
+				}
 			}
+		} else {
+			// Temporary assignment.
+			cp.errorpf(n.Assignments[0].Begin(), n.Assignments[len(n.Assignments)-1].End(), "temporary assignments not yet supported")
 		}
 	}
 
