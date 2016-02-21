@@ -4,8 +4,14 @@ fail() {
 	exit 1
 }
 
-lastLogIs() {
-    test "$(tail -n1 $log)" = "$*"
+waitlog() {
+    for i in `seq 51`; do
+        test $i = 51 && {
+            return 1
+        }
+        test "$(tail -n1 $log)" = "$*" && break
+        sleep 0.1
+    done
 }
 
 log=`mktemp elvishXXXXX`
@@ -15,22 +21,16 @@ elvish-stub > $log &
 stub=$!
 
 # Wait for startup message.
-for i in `seq 51`; do
-    test $i == 51 && {
-        fail "elvish-stub didn't write startup message within 5 seconds"
-    }
-    lastLogIs ok && break
-    sleep 0.1
-done
+waitlog ok || fail "didn't write startup message"
 
-# Send a SIGINT.
-kill -2 $stub
-ps $stub >/dev/null || {
-	fail "stub killed by SIGTERM"
-}
-lastLogIs 2 || {
-	fail "stub didn't record SIGTERM"
-}
+# Send SIG{INT,TERM,TSTP}
+for sig in 2 15 20; do
+    kill -$sig $stub
+    ps $stub >/dev/null || {
+        fail "stub killed by signal #$sig"
+    }
+    waitlog $sig || fail "didn't record signal #$sig"
+done
 
 # Really kill stub.
 kill -9 $stub
