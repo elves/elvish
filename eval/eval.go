@@ -298,6 +298,10 @@ func (ev *Evaler) Global() map[string]Variable {
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
 func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
+	if ns != "" && ns != "env" && ns != "local" && ns != "up" {
+		use(ec, ns, nil)
+	}
+
 	if ns == "env" {
 		ev := envVariable{name}
 		return ev

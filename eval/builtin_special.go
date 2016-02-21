@@ -154,61 +154,69 @@ func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 	}
 
 	return func(ec *EvalCtx) {
-		if _, ok := ec.Evaler.modules[modname]; ok {
-			// Module already loaded.
-			return
-		}
-
-		// Load the source.
-		var filename, source string
-
 		if filenameOp.Func != nil {
-			// Filename was specified; evaluate it.
 			values := filenameOp.Exec(ec)
 			valuesMust := &muster{ec, "module filename", filenameBegin, filenameEnd, values}
-			filename = string(valuesMust.mustOneStr())
-			var err error
+			filename := string(valuesMust.mustOneStr())
+			use(ec, modname, &filename)
+		} else {
+			use(ec, modname, nil)
+		}
+	}
+}
+
+func use(ec *EvalCtx, modname string, pfilename *string) {
+	if _, ok := ec.Evaler.modules[modname]; ok {
+		// Module already loaded.
+		return
+	}
+
+	// Load the source.
+	var filename, source string
+
+	if pfilename != nil {
+		filename = *pfilename
+		var err error
+		source, err = readFileUTF8(filename)
+		maybeThrow(err)
+	} else {
+		// No filename; defaulting to $datadir/$modname.elv.
+		dataDir, err := store.DataDir()
+		maybeThrow(err)
+		filename = dataDir + "/" + modname + ".elv"
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			// File does not exist. Try loading from the table of builtin
+			// modules.
+			var ok bool
+			if source, ok = builtinModules[modname]; ok {
+				// Source is loaded. Do nothing more.
+				filename = "<builtin module>"
+			} else {
+				throw(fmt.Errorf("cannot load %s: %s does not exist", modname, filename))
+			}
+		} else {
+			// File exists. Load it.
 			source, err = readFileUTF8(filename)
 			maybeThrow(err)
-		} else {
-			// No filename; defaulting to $datadir/$modname.elv.
-			dataDir, err := store.DataDir()
-			maybeThrow(err)
-			filename = dataDir + "/" + modname + ".elv"
-			if _, err := os.Stat(filename); os.IsNotExist(err) {
-				// File does not exist. Try loading from the table of builtin
-				// modules.
-				var ok bool
-				if source, ok = builtinModules[modname]; ok {
-					// Source is loaded. Do nothing more.
-					filename = "<builtin module>"
-				} else {
-					throw(fmt.Errorf("cannot load %s: %s does not exist", modname, filename))
-				}
-			} else {
-				// File exists. Load it.
-				source, err = readFileUTF8(filename)
-				maybeThrow(err)
-			}
 		}
-
-		// TODO(xiaq): Should handle failures when evaluting the module
-		newEc := &EvalCtx{
-			ec.Evaler,
-			filename, source, "module " + modname,
-			Namespace{}, Namespace{},
-			ec.ports, 0, len(source),
-		}
-
-		n, err := parse.Parse(source)
-		maybeThrow(err)
-
-		op, err := newEc.Compile(n)
-		// TODO the err originates in another source, should add appropriate information.
-		maybeThrow(err)
-
-		op.Exec(newEc)
-
-		ec.Evaler.modules[modname] = newEc.local
 	}
+
+	// TODO(xiaq): Should handle failures when evaluting the module
+	newEc := &EvalCtx{
+		ec.Evaler,
+		filename, source, "module " + modname,
+		Namespace{}, Namespace{},
+		ec.ports, 0, len(source),
+	}
+
+	n, err := parse.Parse(source)
+	maybeThrow(err)
+
+	op, err := newEc.Compile(n)
+	// TODO the err originates in another source, should add appropriate information.
+	maybeThrow(err)
+
+	op.Exec(newEc)
+
+	ec.Evaler.modules[modname] = newEc.local
 }
