@@ -12,6 +12,7 @@ import (
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/stub"
 	"github.com/elves/elvish/util"
 )
 
@@ -30,6 +31,7 @@ type Evaler struct {
 	global  Namespace
 	modules map[string]Namespace
 	store   *store.Store
+	Stub    *stub.Stub
 }
 
 // EvalCtx maintains an Evaler along with its runtime context. After creation
@@ -50,7 +52,7 @@ func (ec *EvalCtx) evaling(n parse.Node) {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store) *Evaler {
-	ev := &Evaler{nil, map[string]Namespace{}, st}
+	ev := &Evaler{nil, map[string]Namespace{}, st, nil}
 
 	// Construct initial global namespace
 	pid := String(strconv.Itoa(syscall.Getpid()))

@@ -15,6 +15,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/stub"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -68,6 +69,13 @@ func Main() {
 			fmt.Println("failed to close database:", err)
 		}
 	}()
+
+	stub, err := stub.NewStub(os.Stderr)
+	if err != nil {
+		fmt.Println("failed to spawn stub:", err)
+	} else {
+		ev.Stub = stub
+	}
 
 	if len(args) == 1 {
 		script(ev, args[0])
@@ -158,6 +166,9 @@ func interact(ev *eval.Evaler, st *store.Store) {
 				fmt.Println("Falling back to basic line editor")
 				readLine = basicReadLine
 				usingBasic = true
+			} else {
+				fmt.Println("Don't know what to do, pid is", os.Getpid())
+				select {}
 			}
 			continue
 		}
