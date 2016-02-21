@@ -60,6 +60,7 @@ func NewEvaler(st *store.Store) *Evaler {
 		"true":  NewRoVariable(Bool(true)),
 		"false": NewRoVariable(Bool(false)),
 		"paths": &EnvPathList{envName: "PATH"},
+		"pwd":   PwdVariable{},
 	}
 	for _, b := range builtinFns {
 		ev.global[FnPrefix+b.Name] = NewRoVariable(b)
