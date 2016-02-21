@@ -67,7 +67,7 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value) {
 
 	path, err := ec.Search(e.Name)
 	if err != nil {
-		throw(errors.New("search: " + err.Error()))
+		throw(err)
 	}
 
 	args[0] = path
