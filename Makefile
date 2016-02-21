@@ -8,7 +8,7 @@ get:
 	cc ./stubimpl/main.c -o $(GOPATH)/bin/elvish-stub
 
 test:
-	go test -v ./...
+	go test ./...
 	: ./stubimpl/test.sh
 
 cover/%: %
