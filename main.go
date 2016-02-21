@@ -20,25 +20,19 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-const (
-	sigchSize     = 32
-	outChanSize   = 32
-	outChanLeader = "▶ "
-)
-
 var Logger = util.GetLogger("[main] ")
-
-func usage() {
-	fmt.Println("usage: elvish [flags] [script]")
-	fmt.Println("flags:")
-	flag.PrintDefaults()
-}
 
 var (
 	log    = flag.String("log", "", "a file to write debug log to")
 	dbname = flag.String("db", "", "path to the database")
 	help   = flag.Bool("help", false, "show usage help and quit")
 )
+
+func usage() {
+	fmt.Println("usage: elvish [flags] [script]")
+	fmt.Println("flags:")
+	flag.PrintDefaults()
+}
 
 func main() {
 	defer rescue()
@@ -84,12 +78,11 @@ func rescue() {
 	}
 }
 
-// TODO(xiaq): Currently only the editor deals with signals.
 func interact() {
 	ev, st := newEvalerAndStore()
 	defer closeStore(st)
 
-	sigch := make(chan os.Signal, sigchSize)
+	sigch := make(chan os.Signal)
 	signal.Notify(sigch)
 
 	ed := edit.NewEditor(os.Stdin, sigch, ev, st)
@@ -139,7 +132,6 @@ func interact() {
 		// name := fmt.Sprintf("<tty %d>", cmdNum)
 
 		lr := readLine()
-		// signal.Stop(sigch)
 
 		if lr.EOF {
 			break
