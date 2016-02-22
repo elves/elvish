@@ -299,35 +299,23 @@ func (ev *Evaler) Global() map[string]Variable {
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
 func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
-	if ns == "env" || ns == "external" || ns == "E" || ns == "e" {
+	switch ns {
+	case "local":
+		return ec.local[name]
+	case "up":
+		return ec.up[name]
+	case "":
+		if v, ok := ec.local[name]; ok {
+			return v
+		}
+		return ec.up[name]
+	case "env", "external", "e", "E":
 		if strings.HasPrefix(name, FnPrefix) {
 			return NewRoVariable(ExternalCmd{name[len(FnPrefix):]})
 		}
 		return envVariable{name}
-	}
-
-	if ns == "" || ns == "local" {
-		if v, ok := ec.local[name]; ok {
-			return v
-		}
-		if ns == "local" {
-			return nil
-		}
-	}
-
-	if ns == "" || ns == "up" {
-		if v, ok := ec.up[name]; ok {
-			return v
-		}
-		if ns == "up" {
-			return nil
-		}
-	}
-
-	// External module.
-	if ns != "" {
+	default:
 		use(ec, ns, nil)
 		return ec.modules[ns][name]
 	}
-	return nil
 }
