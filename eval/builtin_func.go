@@ -83,6 +83,8 @@ func init() {
 		&BuiltinFn{"lt", wrapFn(lt)},
 		&BuiltinFn{"gt", wrapFn(gt)},
 
+		&BuiltinFn{"base", wrapFn(base)},
+
 		&BuiltinFn{"=", eq},
 		&BuiltinFn{"deepeq", deepeq},
 
@@ -503,6 +505,20 @@ func gt(ec *EvalCtx, nums ...float64) {
 		if !(nums[i] > nums[i+1]) {
 			throw(ErrFalse)
 		}
+	}
+}
+
+var ErrBadBase = errors.New("bad base")
+
+func base(ec *EvalCtx, b int, nums ...int) {
+	if b < 2 || b > 36 {
+		throw(ErrBadBase)
+	}
+
+	out := ec.ports[1].Chan
+
+	for _, num := range nums {
+		out <- String(strconv.FormatInt(int64(num), b))
 	}
 }
 

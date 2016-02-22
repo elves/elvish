@@ -184,6 +184,7 @@ var evalTests = []struct {
 			String("a"): NewList(strs("1", "2")...)}),
 		String("foo"),
 	}, nomore},
+	{"base 16 42 233", strs("2a", "e9"), nomore},
 }
 
 func strs(ss ...string) []Value {
