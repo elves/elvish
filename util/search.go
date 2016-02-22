@@ -47,10 +47,7 @@ func AllExecutables(paths []string, names chan<- string) {
 // DontSearch determines whether the path to an external command should be
 // taken literally and not searched.
 func DontSearch(exe string) bool {
-	return exe == ".." ||
-		strings.HasPrefix(exe, "/") ||
-		strings.HasPrefix(exe, "./") ||
-		strings.HasPrefix(exe, "../")
+	return exe == ".." || strings.ContainsRune(exe, '/')
 }
 
 // IsExecutable determines whether path refers to an executable file.
