@@ -310,11 +310,17 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 		if v, ok := ec.local[name]; ok {
 			return v
 		}
+		if ns == "local" {
+			return nil
+		}
 	}
 
 	if ns == "" || ns == "up" {
 		if v, ok := ec.up[name]; ok {
 			return v
+		}
+		if ns == "up" {
+			return nil
 		}
 	}
 
