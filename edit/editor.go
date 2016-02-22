@@ -48,6 +48,7 @@ type editorState struct {
 	history               historyState
 	historyListing        *historyListing
 	isExternal            map[string]bool
+	parseErrorAtEnd       bool
 	// Used for builtins.
 	lastKey    Key
 	nextAction action
@@ -122,10 +123,11 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 	src := ed.line
 	if ed.mode != modeCompletion {
 		n, err := parse.Parse(src)
+		ed.parseErrorAtEnd = err != nil && atEnd(err, len(src))
 		if err != nil {
 			// If all the errors happen at the end, it is liekly complaining about missing texts that will eventually be inserted. Don't show such errors.
 			// XXX We may need a more reliable criteria.
-			if tips && !atEnd(err, len(src)) {
+			if tips && !ed.parseErrorAtEnd {
 				ed.addTip("parser error: %s", err)
 			}
 		}

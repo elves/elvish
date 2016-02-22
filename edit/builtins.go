@@ -37,6 +37,7 @@ var builtins = []Builtin{
 	{"insert-last-word", insertLastWord},
 	{"insert-key", insertKey},
 	{"return-line", returnLine},
+	{"smart-enter", smartEnter},
 	{"return-eof", returnEOF},
 	{"default-command", defaultCommand},
 	{"default-insert", defaultInsert},
@@ -253,6 +254,23 @@ func insertKey(ed *Editor) {
 
 func returnLine(ed *Editor) {
 	ed.nextAction = action{exitReadLine, LineRead{Line: ed.line}}
+}
+
+func smartEnter(ed *Editor) {
+	if ed.parseErrorAtEnd {
+		// There is a parsing error at the end. Insert a newline and copy
+		// indents from previous line.
+		indent := findLastIndent(ed.line[:ed.dot])
+		ed.insertAtDot("\n" + indent)
+	} else {
+		returnLine(ed)
+	}
+}
+
+func findLastIndent(s string) string {
+	line := s[util.FindLastSOL(s):]
+	trimmed := strings.TrimLeft(line, " \t")
+	return line[:len(line)-len(trimmed)]
 }
 
 func returnEOF(ed *Editor) {

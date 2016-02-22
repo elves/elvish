@@ -33,7 +33,7 @@ var defaultBindings = map[bufferMode]map[Key]string{
 		Key{'.', Alt}:   "insert-last-word",
 		Key{Enter, Alt}: "insert-key",
 		// Controls.
-		Key{Enter, 0}:  "return-line",
+		Key{Enter, 0}:  "smart-enter",
 		Key{'D', Ctrl}: "return-eof",
 		// Key{'[', Ctrl}: "startCommand",
 		Key{Tab, 0}:    "complete-prefix-or-start-completion",
