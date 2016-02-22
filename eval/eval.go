@@ -319,6 +319,9 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	}
 
 	// External module.
-	use(ec, ns, nil)
-	return ec.modules[ns][name]
+	if ns != "" {
+		use(ec, ns, nil)
+		return ec.modules[ns][name]
+	}
+	return nil
 }
