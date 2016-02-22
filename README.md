@@ -57,8 +57,8 @@ Some things that the language is already capable of:
 
 * Quoting:
   ```
-  ~> echo "|  C'est pas une pipe."
-  |  C'est pas une pipe.
+  ~> echo "|  Ceci n'est pas une pipe."
+  |  Ceci n'est pas une pipe.
   ```
 
 * Lists and maps:
