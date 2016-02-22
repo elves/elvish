@@ -4,9 +4,7 @@
 [![Build Status on Travis](https://travis-ci.org/elves/elvish.svg?branch=master)](https://travis-ci.org/elves/elvish)
 
 This project aims to explore the potentials of the Unix shell. It is a work in
-progress; things will change without warning.
-
-The [issues list](https://github.com/elves/elvish/issues) contains many things I'm working on.
+progress; things will change without warning. The [issues list](https://github.com/elves/elvish/issues) contains many things I'm working on.
 
 ## Screenshot
 
@@ -16,9 +14,7 @@ Elvish looks like this:
 
 ## Prebuilt binaries
 
-Up-to-date binaries for 64-bit [Linux](https://dl.elvish.io/elvish-linux.tar.gz) and [Mac OS X](https://dl.elvish.io/elvish-osx.tar.gz). Download the archive and install with `sudo tar vxfz elvish-*.tar.gz -C /usr/bin`.
-
-See also [Building Elvish](#building-elvish).
+Up-to-date binaries for 64-bit [Linux](https://dl.elvish.io/elvish-linux.tar.gz) and [Mac OS X](https://dl.elvish.io/elvish-osx.tar.gz). Install with `sudo tar vxfz elvish-*.tar.gz -C /usr/bin`. See also [Building Elvish](#building-elvish).
 
 ## Getting Started
 
@@ -31,6 +27,8 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 * Press Tab to start completion. Press Ctrl-N to start navigation mode. Likewise, pressing Escape gets you back to the default mode.
 
 * Define aliases like `fn ls { external:ls --color $@ }`
+
+* Elvish remembers which directories you have visisted. Use `dirs` to show the history. `jump x` jumps to the highest-scored directory containing `a`.
 
 * Lists look like `[a b c]`, and maps look like `[&key1=value1 &key2=value2]`. Unlike other shells, lists never expands to multiple words, unless you explicitly splice it by prefixing the variable name with `$@`:
   ```
@@ -54,11 +52,9 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   /opt/bin:/bin:/sbin:/usr/bin
   ```
 
-* You can manipulate the keybinding through the map `$le:binding`, which is indexed by the mode name and then by the key name.
+* You can manipulate the keybinding through the map `$le:binding`. For example, this binds Ctrl-L to clearing the terminal: `le:binding[insert][Ctrl-L]={ clear > /dev/tty }` The first indexed is the mode and the same is the key. (Yes, the braces enclose a lambda.)
 
-  For example, this binds Ctrl-L to clearing the terminal: `le:binding[insert][Ctrl-L]={ clear > /dev/tty }` (yes, the braces enclose a lambda).
-
-  Use `put $le:binding` to get a pretty-printed (albeit long) view of the current keybinding.
+  Use `put $le:binding` to get a nice (albeit long) view of the current keybinding.
 
 * Environment variables live in a separate `env:` namespace and must be explicitly qualified:
   ```
@@ -67,8 +63,6 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   ~> env:PATH=$env:PATH":/bin"
   ```
 
-* There is builtin directory history. Use `dirs` to show the history. `jump x` jumps to the highest-scored directory containing `a`.
-
 * There is no interpolation inside double quotes (yet). Use implicit string concatenation:
   ```
   ~> name=xiaq
@@ -76,15 +70,17 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   My name is xiaq.
   ```
 
-* A few arithmetic operations are builtin. However, you need to use prefix notation:
+* A few floating-point arithmetic operations are builtin. However, you need to use prefix notation:
   ```
   ~> + 1 2
   ▶ 3
-  ~> mul `+ 1 2` 3
-  ▶ 9
+  ~> div (mul 2 3) 4
+  ▶ 1.5
   ```
 
-* Functions are defined with `fn`. You can name arguments in the definition:
+  Unfortunately we cannot use `*` and `/` in the shell.
+
+* Functions are defined with `fn`. You can name arguments:
   ```
   ~> fn square [x]{
        mul $x $x
@@ -93,7 +89,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   ▶ 16
   ```
 
-* Output of some builtin commands start with a funny "▶". It is not part of the output itself, but shows that such commands output a stream of values instead of bytes. As such, their internal structures as well as boundaries between valued are preserved. This allows us to manipulate structured data in the shell.
+* Output of some builtin commands start with a funny "▶". It is not part of the output itself, but shows that such commands output a stream of values instead of bytes. As such, their internal structures as well as boundaries between valued are preserved. This allows us to manipulate structured data in the shell; more on this later.
 
 
 ## More Screenshots:
