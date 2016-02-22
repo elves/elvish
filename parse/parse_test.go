@@ -108,11 +108,11 @@ var goodCases = []struct {
 			"ElseBody":  " echo else; ",
 		}}},
 	// for/do/done
-	{"for x in a b c; do echo do; done",
+	{"for\nx\nin\na\nb c; do echo do; done",
 		ast{"Chunk/Pipeline/Form/Control", fs{
 			"Kind":     ForControl,
 			"Iterator": "x",
-			"Array":    " a b c",
+			"Array":    "\na\nb c",
 			"Body":     " echo do; "}}},
 	// begin/end
 	{"begin echo begin; end",
@@ -124,8 +124,8 @@ var goodCases = []struct {
 		"Indexings": []string{"b", `"foo"`, "?", "$c", "*", "'xyz'"}}})},
 
 	// Indexing
-	{"a $b[c][d][e]", a(ast{"Compound/Indexing", fs{
-		"Head": "$b", "Indicies": []string{"c", "d", "e"},
+	{"a $b[c][d][\ne\n]", a(ast{"Compound/Indexing", fs{
+		"Head": "$b", "Indicies": []string{"c", "d", "\ne\n"},
 	}})},
 
 	// Primary
@@ -151,7 +151,7 @@ var goodCases = []struct {
 		ast{"Compound/Indexing/Primary", fs{"Type": Variable, "Value": "&f"}},
 	)},
 	// List
-	{"a [] [ ] [1] [ 2] [3 ] [ 4 \n5\n 6 7 ]", a(
+	{"a [] [ ] [1] [ 2] [3 ] [\n 4 \n5\n 6 7 \n]", a(
 		ast{"Compound/Indexing/Primary", fs{
 			"Type": List,
 			"List": ""}},
@@ -244,11 +244,11 @@ var goodCases = []struct {
 			"Type": ErrorCapture, "Chunk": "b;c",
 		}})},
 	// Braced
-	{"a {a,c-f\ng}", a(
+	{"a {,a,c-f\ng\n}", a(
 		ast{"Compound/Indexing/Primary", fs{
 			"Type":    Braced,
-			"Braced":  []string{"a", "c", "f", "g"},
-			"IsRange": []bool{false, true, false}}})},
+			"Braced":  []string{"", "a", "c", "f", "g", ""},
+			"IsRange": []bool{false, false, true, false, false}}})},
 	// Tilde
 	{"a ~xiaq/go", a(
 		ast{"Compound", fs{

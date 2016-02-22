@@ -367,9 +367,9 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 		doElseDone()
 	case "for":
 		ctrl.Kind = ForControl
-		parseSpaces(ctrl, ps)
+		parseSpacesAndNewlines(ctrl, ps)
 		ctrl.setIterator(parseIndexing(ps))
-		parseSpaces(ctrl, ps)
+		parseSpacesAndNewlines(ctrl, ps)
 		if ps.findPossibleLeader() == "in" {
 			ps.advance(len("in"))
 			addSep(ctrl, ps)
@@ -553,7 +553,7 @@ func isSpace(r rune) bool {
 }
 
 func startsArray(r rune) bool {
-	return isSpace(r) || startsIndexing(r)
+	return isSpaceOrNewline(r) || startsIndexing(r)
 }
 
 // Primary is the smallest expression unit.
