@@ -8,7 +8,8 @@ import (
 
 // Pattern is a glob pattern.
 type Pattern struct {
-	Segments []Segment
+	Segments    []Segment
+	DirOverride string
 }
 
 // Segment is the constituent unit of a Pattern.
@@ -42,6 +43,10 @@ func (p Pattern) Glob() []string {
 	if len(segs) > 0 && segs[0].Type == Slash {
 		segs = segs[1:]
 		dir = "/"
+	}
+
+	if p.DirOverride != "" {
+		dir = p.DirOverride
 	}
 
 	results := []string{}

@@ -101,7 +101,7 @@ func cat(lhs, rhs Value) Value {
 			segs := stringToSegments(string(lhs))
 			// We know rhs contains exactly one segment.
 			segs = append(segs, rhs.Segments[0])
-			return GlobPattern{segs}
+			return GlobPattern{segs, ""}
 		}
 	case GlobPattern:
 		// NOTE Modifies lhs in place.
@@ -130,6 +130,11 @@ func outerProduct(vs []Value, us []Value, f func(Value, Value) Value) []Value {
 	return ws
 }
 
+var (
+	ErrBadGlobPattern          = errors.New("bad GlobPattern; elvish bug")
+	ErrCannotDetermineUsername = errors.New("cannot determine user name from glob pattern")
+)
+
 func doTilde(v Value) Value {
 	switch v := v.(type) {
 	case String:
@@ -145,19 +150,26 @@ func doTilde(v Value) Value {
 		dir := mustGetHome(uname)
 		return String(path.Join(dir, rest))
 	case GlobPattern:
-		if len(v.Segments) == 0 || v.Segments[0].Type != glob.Literal {
-			throw(errors.New("cannot determine user name from glob pattern"))
+		if len(v.Segments) == 0 {
+			throw(ErrBadGlobPattern)
 		}
-		s := v.Segments[0].Literal
-		// Find / in the first segment to determine the username.
-		i := strings.Index(s, "/")
-		if i == -1 {
-			throw(errors.New("cannot determine user name from glob pattern"))
+		switch v.Segments[0].Type {
+		case glob.Literal:
+			s := v.Segments[0].Literal
+			// Find / in the first segment to determine the username.
+			i := strings.Index(s, "/")
+			if i == -1 {
+				throw(ErrCannotDetermineUsername)
+			}
+			uname := s[:i]
+			dir := mustGetHome(uname)
+			// Replace ~uname in first segment with the found path.
+			v.Segments[0].Literal = dir + s[i:]
+		case glob.Slash:
+			v.DirOverride = mustGetHome("")
+		default:
+			throw(ErrCannotDetermineUsername)
 		}
-		uname := s[:i]
-		dir := mustGetHome(uname)
-		// Replace ~uname in first segment with the found path.
-		v.Segments[0].Literal = dir + s[i:]
 		return v
 	default:
 		throw(fmt.Errorf("tilde doesn't work on value of type %s", v.Kind()))
@@ -245,7 +257,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 		return variable(qname)
 	case parse.Wildcard:
 		vs := []Value{GlobPattern{[]glob.Segment{
-			wildcardToSegment(n.SourceText())}}}
+			wildcardToSegment(n.SourceText())}, ""}}
 		return func(ec *EvalCtx) []Value {
 			return vs
 		}

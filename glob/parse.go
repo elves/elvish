@@ -59,7 +59,7 @@ rune:
 			add(Segment{Literal, literal.String()})
 		}
 	}
-	return Pattern{segments}
+	return Pattern{segments, ""}
 }
 
 // XXX Contains duplicate code with parse/parser.go.
