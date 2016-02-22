@@ -80,6 +80,8 @@ func Main() {
 
 	if len(args) == 1 {
 		script(ev, args[0])
+	} else if !sys.IsATTY(0) {
+		script(ev, "/dev/stdin")
 	} else {
 		interact(ev, st)
 	}
@@ -145,12 +147,6 @@ func interact(ev *eval.Evaler, st *store.Store) {
 	}
 
 	usingBasic := false
-
-	if !sys.IsATTY(0) {
-		readLine = basicReadLine
-		usingBasic = true
-	}
-
 	cmdNum := 0
 
 	for {
