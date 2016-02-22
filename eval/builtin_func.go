@@ -109,6 +109,7 @@ var (
 	ErrStoreNotConnected = errors.New("store not connected")
 	ErrNoMatchingDir     = errors.New("no matching directory")
 	ErrNotInSameGroup    = errors.New("not in the same process group")
+	ErrInterrupted       = errors.New("interrupted")
 )
 
 var (
@@ -638,7 +639,12 @@ func fg(ec *EvalCtx, pids ...int) {
 }
 
 func _sleep(ec *EvalCtx, t float64) {
-	time.Sleep(time.Duration(t) * time.Second)
+	d := time.Duration(float64(time.Second) * t)
+	select {
+	case <-ec.intCh:
+		throw(ErrInterrupted)
+	case <-time.After(d):
+	}
 }
 
 func _stack(ec *EvalCtx) {

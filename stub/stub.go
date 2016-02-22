@@ -116,10 +116,10 @@ func relaySignals(reader io.Reader, sigch chan<- os.Signal) {
 		var signum int
 		_, err := fmt.Fscanf(reader, "%d", &signum)
 		if err != nil {
-			// XXX Swallow error.
-			return
+			sigch <- BadSignal{err}
+		} else {
+			sigch <- syscall.Signal(signum)
 		}
-		sigch <- syscall.Signal(signum)
 	}
 }
 

@@ -36,6 +36,7 @@ type Evaler struct {
 	modules map[string]Namespace
 	store   *store.Store
 	Stub    *stub.Stub
+	intCh   <-chan struct{}
 }
 
 // EvalCtx maintains an Evaler along with its runtime context. After creation
@@ -56,7 +57,7 @@ func (ec *EvalCtx) evaling(n parse.Node) {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store) *Evaler {
-	ev := &Evaler{nil, map[string]Namespace{}, st, nil}
+	ev := &Evaler{nil, map[string]Namespace{}, st, nil, nil}
 
 	// Construct initial global namespace
 	pid := String(strconv.Itoa(syscall.Getpid()))
@@ -180,6 +181,35 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 		if err != nil {
 			fmt.Println("failed to put stub in foreground:", err)
 		}
+
+		intCh := make(chan struct{})
+		cancelCh := make(chan struct{})
+	exhaustSigs:
+		for {
+			select {
+			case <-ev.Stub.Signals():
+			default:
+				break exhaustSigs
+			}
+		}
+		go func() {
+			sigch := ev.Stub.Signals()
+			for {
+				select {
+				case sig := <-sigch:
+					fmt.Println(sig)
+					if sig == syscall.SIGINT {
+						close(intCh)
+						return
+					}
+				case <-cancelCh:
+					return
+				}
+			}
+		}()
+		defer close(cancelCh)
+		ev.intCh = intCh
+		defer func() { ev.intCh = nil }()
 	}
 
 	err := ev.Eval("[interactive]", text, n, ports)
