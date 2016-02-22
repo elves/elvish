@@ -146,6 +146,7 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		return ed.ReadLine(prompt, rprompt)
 	}
 
+	cooldown := time.Second
 	usingBasic := false
 	cmdNum := 0
 
@@ -165,11 +166,17 @@ func interact(ev *eval.Evaler, st *store.Store) {
 				usingBasic = true
 			} else {
 				fmt.Println("Don't know what to do, pid is", os.Getpid())
-				fmt.Println("Restarting editor in 1s")
-				time.Sleep(time.Second)
+				fmt.Println("Restarting editor in", cooldown)
+				time.Sleep(cooldown)
+				if cooldown < time.Minute {
+					cooldown *= 2
+				}
 			}
 			continue
 		}
+
+		// No error; reset cooldown.
+		cooldown = time.Second
 
 		n, err := parse.Parse(lr.Line)
 		printError(err)
