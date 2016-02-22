@@ -299,7 +299,7 @@ func (ev *Evaler) Global() map[string]Variable {
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
 func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
-	if ns == "env" || ns == "external" || ns == "E" {
+	if ns == "env" || ns == "external" || ns == "E" || ns == "e" {
 		if strings.HasPrefix(name, FnPrefix) {
 			return NewRoVariable(ExternalCmd{name[len(FnPrefix):]})
 		}
