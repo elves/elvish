@@ -15,8 +15,8 @@ import (
 func TestNewEvaler(t *testing.T) {
 	ev := NewEvaler(nil)
 	pid := strconv.Itoa(syscall.Getpid())
-	if ToString(ev.global["pid"].Get()) != pid {
-		t.Errorf(`ev.global["pid"] = %v, want %v`, ev.global["pid"], pid)
+	if ToString(ev.builtin["pid"].Get()) != pid {
+		t.Errorf(`ev.builtin["pid"] = %v, want %v`, ev.builtin["pid"], pid)
 	}
 }
 

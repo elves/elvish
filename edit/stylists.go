@@ -34,8 +34,9 @@ func goodFormHead(head string, ed *Editor) bool {
 		// XXX don't stat twice
 		return util.IsExecutable(head) || isDir(head)
 	} else {
-		return ed.evaler.Global()[eval.FnPrefix+head] != nil ||
-			ed.isExternal[head]
+		return ed.isExternal[head] ||
+			ed.evaler.Builtin()[eval.FnPrefix+head] != nil ||
+			ed.evaler.Global()[eval.FnPrefix+head] != nil
 	}
 }
 

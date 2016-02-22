@@ -36,6 +36,11 @@ func complVariable(n parse.Node, ed *Editor) []*candidate {
 
 	// Collect matching variables.
 	var varnames []string
+	for varname := range ed.evaler.Builtin() {
+		if strings.HasPrefix(varname, head) {
+			varnames = append(varnames, varname)
+		}
+	}
 	for varname := range ed.evaler.Global() {
 		if strings.HasPrefix(varname, head) {
 			varnames = append(varnames, varname)
@@ -103,6 +108,11 @@ func complFormHeadInner(head string, ed *Editor) []*candidate {
 	}
 	for special := range isBuiltinSpecial {
 		foundCommand(special)
+	}
+	for variable := range ed.evaler.Builtin() {
+		if strings.HasPrefix(variable, eval.FnPrefix) {
+			foundCommand(variable[len(eval.FnPrefix):])
+		}
 	}
 	for variable := range ed.evaler.Global() {
 		if strings.HasPrefix(variable, eval.FnPrefix) {
