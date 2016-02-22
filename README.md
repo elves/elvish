@@ -6,113 +6,108 @@
 This project aims to explore the potentials of the Unix shell. It is a work in
 progress; things will change without warning.
 
-The [wiki](https://github.com/elves/elvish/wiki) has a random list of things you might want to know. The [issues list](https://github.com/elves/elvish/issues) contains many things I'm working on.
+The [issues list](https://github.com/elves/elvish/issues) contains many things I'm working on.
 
-## The Interface
+## Screenshot
 
-Syntax highlighting (also showcasing right-hand-side prompt):
+Elvish looks like this:
 
 ![syntax highlighting](https://raw.githubusercontent.com/elves/images/master/syntax.png)
 
-Tab completion for files:
+## Prebuilt binaries
 
-![tab completion](https://raw.githubusercontent.com/elves/images/master/completion.png)
+Up-to-date binaries for 64-bit [Linux](https://dl.elvish.io/elvish-linux.tar.gz) and [Mac OS X](https://dl.elvish.io/elvish-osx.tar.gz). Download the archive and install with `sudo tar vxfz elvish-*.tar.gz -C /usr/bin`.
 
-Navigation mode (triggered with ^N, inspired by [ranger](http://ranger.nongnu.org/)):
+See also [Building Elvish](#building-elvish).
 
-![navigation mode](https://raw.githubusercontent.com/elves/images/master/navigation.png)
+## Getting Started
 
+Put your startup script in `~/.elvish/rc.elv`.
 
-Planned features:
+Elvish mimics bash and zsh in a lot of places. The following shows some key differences and highlights, as well as some common tasks:
 
-* Auto-suggestion (like fish)
-* Programmable line editor
-* Directory jumping (#27)
-* A vi keybinding that makes sense
-* History listing (like
-  [ptpython](https://github.com/jonathanslenders/ptpython))
-* Intuitive multiline editing
+* Press Up to search through history. It uses what you have typed to do prefix match. To cancel, press Escape.
 
-## The Language
+* Press Tab to start completion. Press Ctrl-N to start navigation mode. Likewise, pressing Escape gets you back to the default mode.
 
-Some things that the language is already capable of:
+* Define aliases like `fn ls { external:ls --color $@ }`
 
-* External programs and pipelines: (`~>` is the prompt):
+* Lists look like `[a b c]`, and maps look like `[&key1=value1 &key2=value2]`. Unlike other shells, lists never expands to multiple words, unless you explicitly splice it by prefixing the variable name with `$@`:
   ```
-  ~> vim README.md
-  ...
-  ~> cat -v /dev/random
-  ...
-  ~> dmesg | grep -i acpi
-  ...
+  ~> li=[1 2 3]
+  ~> for x in $li; do echo $x; done
+  [1 2 3]
+  ~> for x in $@li; do echo $x; done
+  1
+  2
+  3
   ```
 
-* Arithmetics using the prefix notation:
+* You can manipulate search paths through the special list `$paths`:
   ```
-  ~> + 1 2
-  ▶ 3
-  ~> mul (+ 1 2) 3
-  ▶ 9
-  ```
-
-* Quoting:
-  ```
-  ~> echo "|  Ceci n'est pas une pipe."
-  |  Ceci n'est pas une pipe.
+  ~> echo $paths
+  [/bin /sbin]
+  ~> paths=[/opt/bin $@paths /usr/bin]
+  ~> echo $paths
+  [/opt/bin /bin /sbin /usr/bin]
+  ~> echo $env:PATH
+  /opt/bin:/bin:/sbin:/usr/bin
   ```
 
-* Lists and maps:
-  ```
-  ~> println list: [a list] map: [&key=value]
-  list: [a list] map: [&key=value]
-  ~> println [a b c][0]
-  a
-  ~> println [&key=value][key]
-  value
-  ```
+* You can manipulate the keybinding through the map `$le:binding`, which is indexed by the mode name and then by the key name.
 
-* Variables:
-  ```
-  ~> v=[&foo=bar]; put $v[foo]
-  ▶ bar
-  ```
+  For example, this binds Ctrl-L to clearing the terminal: `le:binding[insert][Ctrl-L]={ clear > /dev/tty }` (yes, the braces enclose a lambda).
 
-* Defining functions:
-  ```
-  ~> fn map [f xs]{ put [(put $@xs | each $f)] }
-  ```
+  Use `put $le:binding` to get a pretty-printed (albeit long) view of the current keybinding.
 
-* Lisp-like functional programming:
-  ```
-  ~> map [x]{+ 10 $x} [1 2 3]
-  [11 12 13]
-  ~> map [x]{div $x 2} (map [x]{+ 10 $x} [1 2 3])
-  [5.5 6 6.5]
-  ```
-
-* More natural concatenative style:
-  ```
-  ~> put 1 2 3 | each [x]{+ 10 $x} | each [x]{div $x 2}
-  ▶ 5.5
-  ▶ 6
-  ▶ 6.5
-  ```
-
-* A separate `env:` namespace for environmental variables:
+* Environment variables live in a separate `env:` namespace and must be explicitly qualified:
   ```
   ~> put $env:HOME
   ▶ /home/xiaq
   ~> env:PATH=$env:PATH":/bin"
   ```
 
+* There is builtin directory history. Use `dirs` to show the history. `jump x` jumps to the highest-scored directory containing `a`.
 
-## Getting elvish
+* There is no interpolation inside double quotes (yet). Use implicit string concatenation:
+  ```
+  ~> name=xiaq
+  ~> echo "My name is "$name"."
+  My name is xiaq.
+  ```
 
-### Prebuilt binaries
+* A few arithmetic operations are builtin. However, you need to use prefix notation:
+  ```
+  ~> + 1 2
+  ▶ 3
+  ~> mul `+ 1 2` 3
+  ▶ 9
+  ```
 
-Prebuilt binaries are available for 64-bit [Linux](https://dl.elvish.io/elvish-linux.tar.xz) and [Mac OS X](https://dl.elvish.io/elvish-osx.tar.xz). They are always built using the latest commit that builds. Download the archive and use `sudo tar xfJ elvish-*.tar.xz -C /usr/bin` to install.
+* Functions are defined with `fn`. You can name arguments in the definition:
+  ```
+  ~> fn square [x]{
+       mul $x $x
+     }
+  ~> square 4
+  ▶ 16
+  ```
 
-### Building It Yourself
+* Output of some builtin commands start with a funny "▶". It is not part of the output itself, but shows that such commands output a stream of values instead of bytes. As such, their internal structures as well as boundaries between valued are preserved. This allows us to manipulate structured data in the shell.
+
+
+## More Screenshots:
+
+Tab completion:
+
+![tab completion](https://raw.githubusercontent.com/elves/images/master/completion.png)
+
+Navigation mode:
+
+![navigation mode](https://raw.githubusercontent.com/elves/images/master/navigation.png)
+
+
+## Building Elvish
 
 Go >= 1.5 is required. Linux is fully supported. It is likely to work on BSDs and Mac OS X. Windows is **not** supported yet.
 
@@ -134,6 +129,7 @@ done
 ```
 
 [How To Write Go Code](http://golang.org/doc/code.html) explains how `$GOPATH` works.
+
 
 ## Name
 

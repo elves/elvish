@@ -30,7 +30,7 @@ generate:
 
 # The target to run on Travis-CI.
 travis: all
-	tar cfJ elvish.tar.xz -C $(GOPATH)/bin elvish elvish-stub
-	curl http://dl.elvish.io:6060/ -F name=elvish-$(if $(filter-out master,$(TRAVIS_BRANCH)),$(TRAVIS_BRANCH)-,)$(TRAVIS_OS_NAME).tar.xz -F token=$$UPLOAD_TOKEN -F file=@./elvish.tar.xz
+	tar cfz elvish.tar.gz -C $(GOPATH)/bin elvish elvish-stub
+	curl http://dl.elvish.io:6060/ -F name=elvish-$(if $(filter-out master,$(TRAVIS_BRANCH)),$(TRAVIS_BRANCH)-,)$(TRAVIS_OS_NAME).tar.gz -F token=$$UPLOAD_TOKEN -F file=@./elvish.tar.gz
 
 .PHONY: all get stub test cover generate travis
