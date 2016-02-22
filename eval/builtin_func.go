@@ -385,6 +385,7 @@ func cdInner(dir string, ec *EvalCtx) {
 				// XXX Error ignored.
 				store.AddDir(pwd)
 				store.Waits.Done()
+				Logger.Println("added dir to store:", pwd)
 			}()
 		}
 	}

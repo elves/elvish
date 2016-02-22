@@ -122,6 +122,9 @@ func relaySignals(reader io.Reader, sigch chan<- os.Signal) {
 		_, err := fmt.Fscanf(reader, "%d", &signum)
 		if err != nil {
 			sigch <- BadSignal{err}
+			if err == io.EOF {
+				break
+			}
 		} else {
 			sigch <- syscall.Signal(signum)
 		}

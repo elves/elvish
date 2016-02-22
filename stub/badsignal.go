@@ -5,7 +5,7 @@ type BadSignal struct {
 }
 
 func (bs BadSignal) String() string {
-	return "bad signal:" + bs.Error.Error()
+	return "bad signal: " + bs.Error.Error()
 }
 
 func (BadSignal) Signal() {}

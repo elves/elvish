@@ -20,6 +20,7 @@ func (ed *Editor) appendHistory(line string) {
 			// TODO(xiaq): Report possible error
 			ed.store.AddCmd(line)
 			ed.store.Waits.Done()
+			Logger.Println("added cmd to store:", line)
 		}()
 	}
 }
