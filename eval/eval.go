@@ -197,7 +197,7 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 			for {
 				select {
 				case sig := <-sigch:
-					fmt.Println(sig)
+					Logger.Println("from stub:", sig)
 					if sig == syscall.SIGINT {
 						close(intCh)
 						return
