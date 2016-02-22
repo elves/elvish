@@ -60,8 +60,8 @@ func Main() {
 		}
 	}
 
-	go handleHupAndQuit()
-	go logSignals()
+	handleHupAndQuit()
+	logSignals()
 
 	ev, st := newEvalerAndStore()
 	defer func() {
@@ -203,20 +203,24 @@ func basicReadLine() edit.LineRead {
 func logSignals() {
 	sigs := make(chan os.Signal)
 	signal.Notify(sigs)
-	for sig := range sigs {
-		Logger.Println("signal", sig)
-	}
+	go func() {
+		for sig := range sigs {
+			Logger.Println("signal", sig)
+		}
+	}()
 }
 
 func handleHupAndQuit() {
 	sigs := make(chan os.Signal)
 	signal.Notify(sigs, syscall.SIGHUP, syscall.SIGQUIT)
-	for sig := range sigs {
-		fmt.Print(sys.DumpStack())
-		if sig == syscall.SIGQUIT {
-			os.Exit(3)
+	go func() {
+		for sig := range sigs {
+			fmt.Print(sys.DumpStack())
+			if sig == syscall.SIGQUIT {
+				os.Exit(3)
+			}
 		}
-	}
+	}()
 }
 
 func newEvalerAndStore() (*eval.Evaler, *store.Store) {
