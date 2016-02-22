@@ -16,7 +16,7 @@ type muster struct {
 
 func (m *muster) error(want, gotfmt string, gotargs ...interface{}) {
 	m.ec.errorpf(m.begin, m.end, "%s must be %s; got "+gotfmt,
-		append([]interface{}{m.what, want}, gotargs...))
+		append([]interface{}{m.what, want}, gotargs...)...)
 }
 
 func (ec *EvalCtx) must(vs []Value, what string, begin, end int) *muster {
