@@ -131,6 +131,7 @@ type Pipeline struct {
 func (pn *Pipeline) parse(ps *parser) {
 	pn.addToForms(parseForm(ps))
 	for parseSep(pn, ps, '|') {
+		parseSpacesAndNewlines(pn, ps)
 		if !startsForm(ps.peek()) {
 			ps.error(errShouldBeForm)
 			return
@@ -533,17 +534,17 @@ func startsIndexing(r rune) bool {
 	return startsPrimary(r)
 }
 
-// Array = { Space } { Compound { Space } }
+// Array = { Space | '\n' } { Compound { Space | '\n' } }
 type Array struct {
 	node
 	Compounds []*Compound
 }
 
 func (sn *Array) parse(ps *parser) {
-	parseSpaces(sn, ps)
+	parseSpacesAndNewlines(sn, ps)
 	for startsCompound(ps.peek()) {
 		sn.addToCompounds(parseCompound(ps))
-		parseSpaces(sn, ps)
+		parseSpacesAndNewlines(sn, ps)
 	}
 }
 
@@ -891,8 +892,8 @@ func (pn *Primary) lambda(ps *parser) {
 	}
 }
 
-// Braced = '{' Compound { (','|'-') Compounds } '}'
-// Comma = { Space } [ ',' ] { Space }
+// Braced = '{' Compound { BracedSep Compounds } '}'
+// BracedSep = { Space | '\n' } [ ',' | '-' ] { Space | '\n' }
 func (pn *Primary) lbrace(ps *parser) {
 	parseSep(pn, ps, '{')
 
@@ -903,26 +904,29 @@ func (pn *Primary) lbrace(ps *parser) {
 
 	pn.Type = Braced
 
+	ps.pushCutset()
+	defer ps.popCutset()
+
 	// XXX: The compound can be empty, which allows us to parse {,foo}.
 	// Allowing compounds to be empty can be fragile in other cases.
-	ps.pushCutset(',', '-')
+	ps.cut(',', '-')
 	pn.addToBraced(parseCompound(ps))
-	ps.popCutset()
+	ps.uncut(',', '-')
 
 	for isBracedSep(ps.peek()) {
 		if ps.peek() == '-' {
 			parseSep(pn, ps, '-')
 			pn.IsRange = append(pn.IsRange, true)
 		} else {
-			parseSpaces(pn, ps)
+			parseSpacesAndNewlines(pn, ps)
 			// optional, so ignore the return value
 			parseSep(pn, ps, ',')
-			parseSpaces(pn, ps)
+			parseSpacesAndNewlines(pn, ps)
 			pn.IsRange = append(pn.IsRange, false)
 		}
-		ps.pushCutset(',', '-')
+		ps.cut(',', '-')
 		pn.addToBraced(parseCompound(ps))
-		ps.popCutset()
+		ps.uncut(',', '-')
 	}
 	if !parseSep(pn, ps, '}') {
 		ps.error(errShouldBeBraceSepOrRBracket)
@@ -930,7 +934,7 @@ func (pn *Primary) lbrace(ps *parser) {
 }
 
 func isBracedSep(r rune) bool {
-	return r == ',' || r == '-' || isSpace(r)
+	return r == ',' || r == '-' || isSpaceOrNewline(r)
 }
 
 func (pn *Primary) bareword(ps *parser) {
@@ -1008,7 +1012,6 @@ func parseSep(n Node, ps *parser, sep rune) bool {
 }
 
 func parseSpaces(n Node, ps *parser) {
-	// TODO parse comments here.
 	if !isSpace(ps.peek()) {
 		return
 	}
@@ -1017,6 +1020,22 @@ func parseSpaces(n Node, ps *parser) {
 		ps.next()
 	}
 	addSep(n, ps)
+}
+
+func parseSpacesAndNewlines(n Node, ps *parser) {
+	// TODO parse comments here.
+	if !isSpaceOrNewline(ps.peek()) {
+		return
+	}
+	ps.next()
+	for isSpaceOrNewline(ps.peek()) {
+		ps.next()
+	}
+	addSep(n, ps)
+}
+
+func isSpaceOrNewline(r rune) bool {
+	return isSpace(r) || r == '\n'
 }
 
 // Helpers.

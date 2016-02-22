@@ -29,6 +29,9 @@ var goodCases = []struct {
 	// Pipeline
 	{"a|b|c|d", ast{
 		"Chunk/Pipeline", fs{"Forms": []string{"a", "b", "c", "d"}}}},
+	// Newlines are allowed after pipes.
+	{"a| \n \n b", ast{
+		"Chunk/Pipeline", fs{"Forms": []string{"a", "b"}}}},
 
 	// Form
 	// Smoke test.
@@ -148,7 +151,7 @@ var goodCases = []struct {
 		ast{"Compound/Indexing/Primary", fs{"Type": Variable, "Value": "&f"}},
 	)},
 	// List
-	{"a [] [ ] [1] [ 2] [3 ] [ 4 5 6 7 ]", a(
+	{"a [] [ ] [1] [ 2] [3 ] [ 4 \n5\n 6 7 ]", a(
 		ast{"Compound/Indexing/Primary", fs{
 			"Type": List,
 			"List": ""}},
@@ -217,12 +220,18 @@ var goodCases = []struct {
 		}},
 	)},
 	// Output capture
-	{"a () (b;c)", a(
+	{"a () (b;c) (c\nd)", a(
 		ast{"Compound/Indexing/Primary", fs{
 			"Type": OutputCapture, "Chunk": ""}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": OutputCapture, "Chunk": "b;c",
-		}})},
+			"Type": OutputCapture, "Chunk": ast{
+				"Chunk", fs{"Pipelines": []string{"b", "c"}},
+			}}},
+		ast{"Compound/Indexing/Primary", fs{
+			"Type": OutputCapture, "Chunk": ast{
+				"Chunk", fs{"Pipelines": []string{"c", "d"}},
+			}}},
+	)},
 	// Output capture with backquotes
 	{"a `` `b;c` `e>f`", a("``", "`b;c`", "`e>f`")},
 	// Backquotes may be nested with unclosed parens and braces
@@ -235,11 +244,11 @@ var goodCases = []struct {
 			"Type": ErrorCapture, "Chunk": "b;c",
 		}})},
 	// Braced
-	{"a {a,c-f}", a(
+	{"a {a,c-f\ng}", a(
 		ast{"Compound/Indexing/Primary", fs{
 			"Type":    Braced,
-			"Braced":  []string{"a", "c", "f"},
-			"IsRange": []bool{false, true}}})},
+			"Braced":  []string{"a", "c", "f", "g"},
+			"IsRange": []bool{false, true, false}}})},
 	// Tilde
 	{"a ~xiaq/go", a(
 		ast{"Compound", fs{
