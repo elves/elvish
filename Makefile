@@ -3,17 +3,19 @@ PKG_COVERS := $(addprefix cover/,$(PKGS))
 
 STUB := $(GOPATH)/bin/elvish-stub
 
-all: get $(STUB) test
+all: get stub test
 
 get:
 	go get .
+
+stub: $(STUB)
 
 $(STUB): ./stubimpl/main.c
 	test -n $(GOPATH)
 	mkdir -p $(GOPATH)/bin
 	$(CC) ./stubimpl/main.c -o $@
 
-test: $(STUB)
+test: stub
 	go test ./...
 	: ./stubimpl/test.sh
 
@@ -31,4 +33,4 @@ travis: all
 	tar cfJ elvish.tar.xz -C $(GOPATH)/bin elvish elvish-stub
 	curl http://dl.elvish.io:6060/ -F name=elvish-$(if $(filter-out master,$(TRAVIS_BRANCH)),$(TRAVIS_BRANCH)-,)$(TRAVIS_OS_NAME).tar.xz -F token=$$UPLOAD_TOKEN -F file=@./elvish.tar.xz
 
-.PHONY: all get test cover generate travis
+.PHONY: all get stub test cover generate travis
