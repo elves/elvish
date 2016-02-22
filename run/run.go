@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"os/user"
 	"syscall"
+	"time"
 
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
@@ -59,7 +60,7 @@ func Main() {
 		}
 	}
 
-	go handleQuit()
+	go handleHupAndQuit()
 	go logSignals()
 
 	ev, st := newEvalerAndStore()
@@ -168,7 +169,8 @@ func interact(ev *eval.Evaler, st *store.Store) {
 				usingBasic = true
 			} else {
 				fmt.Println("Don't know what to do, pid is", os.Getpid())
-				select {}
+				fmt.Println("Restarting editor in 1s")
+				time.Sleep(time.Second)
 			}
 			continue
 		}
@@ -203,12 +205,15 @@ func logSignals() {
 	}
 }
 
-func handleQuit() {
-	quitSigs := make(chan os.Signal)
-	signal.Notify(quitSigs, syscall.SIGQUIT)
-	<-quitSigs
-	fmt.Print(sys.DumpStack())
-	os.Exit(3)
+func handleHupAndQuit() {
+	sigs := make(chan os.Signal)
+	signal.Notify(sigs, syscall.SIGHUP, syscall.SIGQUIT)
+	for sig := range sigs {
+		fmt.Print(sys.DumpStack())
+		if sig == syscall.SIGQUIT {
+			os.Exit(3)
+		}
+	}
 }
 
 func newEvalerAndStore() (*eval.Evaler, *store.Store) {
