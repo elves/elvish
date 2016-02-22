@@ -22,9 +22,7 @@ void handler(int signum) {
     must(write(1, p, s+4-p) != -1, "write signum");
 }
 
-enum { ARGV0BUF = 32 };
-
-char argv0buf[ARGV0BUF];
+enum { ARGV0MAX = 32 };
 
 int main(int argc, char **argv) {
     int i;
@@ -36,18 +34,28 @@ int main(int argc, char **argv) {
 
     must(write(1, "ok\n", 3) != -1, "write ok");
 
-    while (1) {
-        if (fgets(argv0buf, ARGV0BUF, stdin) == NULL) {
-            if (feof(stdin)) {
-                exit(0);
-            } else {
-                exit(10);
+    char op;
+    int len;
+    char *buf;
+    int scanned;
+    while ((scanned = scanf(" %c%d ", &op, &len)) == 2) {
+        printf("op=%d, len=%d\n", op, len);
+        buf = malloc(len+1);
+        fgets(buf, len+1, stdin);
+        printf("buf=%s\n", buf);
+        if (op == 'd') {
+            // Change directory.
+            chdir(buf);
+        } else if (op == 't') {
+            if (len > ARGV0MAX) {
+                buf[ARGV0MAX] = '\0';
             }
+            strcpy(argv[0], buf);
         }
-        int n = strlen(argv0buf);
-        if (n > 0 && argv0buf[n-1] == '\n') {
-            argv0buf[n-1] = '\0';
-        }
-        strcpy(argv[0], argv0buf);
+        free(buf);
     }
+    if (scanned != EOF) {
+        return 1;
+    }
+    return 0;
 }

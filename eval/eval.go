@@ -177,7 +177,12 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 	// XXX Should use fd of /dev/terminal instead of 0.
 	if ev.Stub != nil && sys.IsATTY(0) {
 		ev.Stub.SetTitle(summarize(text))
-		err := sys.Tcsetpgrp(0, ev.Stub.Process().Pid)
+		dir, err := os.Getwd()
+		if err != nil {
+			dir = "/"
+		}
+		ev.Stub.Chdir(dir)
+		err = sys.Tcsetpgrp(0, ev.Stub.Process().Pid)
 		if err != nil {
 			fmt.Println("failed to put stub in foreground:", err)
 		}
