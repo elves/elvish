@@ -9,6 +9,7 @@ get:
 	go get .
 
 $(STUB): ./stubimpl/main.c
+	mkdir -p $(GOPATH)/bin
 	$(CC) ./stubimpl/main.c -o $@
 
 test: $(STUB)
