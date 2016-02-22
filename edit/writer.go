@@ -18,6 +18,8 @@ const (
 	navigationListingMinWidthForPadding     = 5
 )
 
+var logWriterDetail = false
+
 // cell is an indivisible unit on the screen. It is not necessarily 1 column
 // wide.
 type cell struct {
@@ -247,7 +249,9 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 	}
 
 	if bufNoti != nil {
-		// Logger.Printf("going to write %d lines of notifications", len(bufNoti.cells))
+		if logWriterDetail {
+			Logger.Printf("going to write %d lines of notifications", len(bufNoti.cells))
+		}
 
 		// Write notifications
 		for _, line := range bufNoti.cells {
@@ -260,7 +264,9 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 		}
 	}
 
-	// Logger.Printf("going to write %d lines, oldBuf had %d", len(buf.cells), len(w.oldBuf.cells))
+	if logWriterDetail {
+		Logger.Printf("going to write %d lines, oldBuf had %d", len(buf.cells), len(w.oldBuf.cells))
+	}
 
 	for i, line := range buf.cells {
 		if i > 0 {
@@ -304,7 +310,9 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 	cursor := buf.cursor()
 	bytesBuf.Write(deltaPos(cursor, buf.dot))
 
-	Logger.Printf("going to write %q", bytesBuf.String())
+	if logWriterDetail {
+		Logger.Printf("going to write %q", bytesBuf.String())
+	}
 
 	fd := int(w.file.Fd())
 	if nonblock, _ := sys.GetNonblock(fd); nonblock {
@@ -620,8 +628,10 @@ tokens:
 		}
 	}
 
-	Logger.Printf("bufLine %d, bufMode %d, bufTips %d, bufListing %d",
-		lines(bufLine), lines(bufMode), lines(bufTips), lines(bufListing))
+	if logWriterDetail {
+		Logger.Printf("bufLine %d, bufMode %d, bufTips %d, bufListing %d",
+			lines(bufLine), lines(bufMode), lines(bufTips), lines(bufListing))
+	}
 
 	// Combine buffers (reusing bufLine)
 	buf = bufLine
