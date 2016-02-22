@@ -72,7 +72,13 @@ func NewEvaler(st *store.Store) *Evaler {
 		builtin[FnPrefix+b.Name] = NewRoVariable(b)
 	}
 
-	return &Evaler{builtin, Namespace{}, map[string]Namespace{}, st, nil, nil}
+	// XXX Temporary fix for compiler not knowing builtin namespace.
+	global := Namespace{}
+	for k, v := range builtin {
+		global[k] = v
+	}
+
+	return &Evaler{builtin, global, map[string]Namespace{}, st, nil, nil}
 }
 
 func (e *Evaler) searchPaths() []string {
