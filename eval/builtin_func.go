@@ -673,6 +673,9 @@ func _exec(ec *EvalCtx, args ...string) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
+	if ec.Stub != nil {
+		ec.Stub.Terminate()
+	}
 	err = syscall.Exec(args[0], args, os.Environ())
 	maybeThrow(err)
 }
