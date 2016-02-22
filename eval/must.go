@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/elves/elvish/parse"
@@ -25,7 +24,11 @@ func (ec *EvalCtx) must(vs []Value, what string, begin, end int) *muster {
 
 func (m *muster) mustLen(l int) {
 	if len(m.vs) != l {
-		m.error(fmt.Sprintf("%d values", l), "%d", len(m.vs))
+		if l == 1 {
+			m.error("1 value", "%d", len(m.vs))
+		} else {
+			m.error(strconv.Itoa(l)+" values", "%d", len(m.vs))
+		}
 	}
 }
 
