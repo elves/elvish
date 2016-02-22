@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"unicode/utf8"
 
@@ -298,30 +299,26 @@ func (ev *Evaler) Global() map[string]Variable {
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
 func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
-	if ns != "" && ns != "env" && ns != "local" && ns != "up" {
-		use(ec, ns, nil)
+	if ns == "env" || ns == "external" || ns == "E" {
+		if strings.HasPrefix(name, FnPrefix) {
+			return NewRoVariable(ExternalCmd{name[len(FnPrefix):]})
+		}
+		return envVariable{name}
 	}
 
-	if ns == "env" {
-		ev := envVariable{name}
-		return ev
-	}
-	if mod, ok := ec.modules[ns]; ok {
-		return mod[name]
-	}
-
-	may := func(n string) bool {
-		return ns == "" || ns == n
-	}
-	if may("local") {
+	if ns == "" || ns == "local" {
 		if v, ok := ec.local[name]; ok {
 			return v
 		}
 	}
-	if may("up") {
+
+	if ns == "" || ns == "up" {
 		if v, ok := ec.up[name]; ok {
 			return v
 		}
 	}
-	return nil
+
+	// External module.
+	use(ec, ns, nil)
+	return ec.modules[ns][name]
 }
