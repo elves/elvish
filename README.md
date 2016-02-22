@@ -114,26 +114,26 @@ Prebuilt binaries are available for 64-bit [Linux](https://dl.elvish.io/elvish-l
 
 ### Building It Yourself
 
-Go >= 1.5 is required. This repository is a go-getable package.
+Go >= 1.5 is required. Linux is fully supported. It is likely to work on BSDs and Mac OS X. Windows is **not** supported yet.
 
-Linux is fully supported. It is likely to work on BSDs and Mac OS X. Windows is **not** supported yet.
+The main binary can be installed using `go get github.com/elves/elvish`. There is also an auxiliary program called elvish-stub; install it with `make stub`. Elvish is funtional without the stub, but job control features depend on it.
 
-In case you are new to Go, you are advised to read [How To Write Go Code](http://golang.org/doc/code.html), but here is a quick snippet:
+If you are lazy and use `bash` for `zsh` now, here is something you can copy-paste into your terminal:
 
 ```
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOPATH/bin
-go get github.com/elves/elvish{,/elvish-stub}
-elvish
+mkdir -p $GOPATH
+
+go get github.com/elves/elvish
+make -C $GOPATH/src/github.com/elves/elvish stub
+
+for f in ~/.bashrc ~/.zshrc; do
+    echo -e 'export GOPATH=$HOME/go\nexport PATH=$PATH:$GOPATH/bin' >> $f
+done
 ```
 
-To update and rebuild:
-
-```
-go get -u github.com/elves/elvish{,/elvish-stub}
-```
-
-Remember to put the two `export`s above into your `bashrc` or `zshrc` (or whatever).
+[How To Write Go Code](http://golang.org/doc/code.html) explains how `$GOPATH` works.
 
 ## Name
 
