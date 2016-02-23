@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/elves/elvish/glob"
@@ -10,12 +11,45 @@ import (
 // wildcards.
 type GlobPattern glob.Pattern
 
+var (
+	_ Value   = GlobPattern{}
+	_ Indexer = GlobPattern{}
+)
+
+var (
+	ErrMustFollowWildcard   = errors.New("must follow wildcard")
+	ErrModifierMustBeString = errors.New("modifier must be string")
+)
+
 func (GlobPattern) Kind() string {
 	return "glob-pattern"
 }
 
 func (gp GlobPattern) Repr(int) string {
 	return fmt.Sprintf("<GlobPattern%v>", gp)
+}
+
+func (gp GlobPattern) Index(modifiers []Value) []Value {
+	for _, value := range modifiers {
+		modifier, ok := value.(String)
+		if !ok {
+			throw(ErrModifierMustBeString)
+		}
+		switch string(modifier) {
+		case "a", "all":
+			if len(gp.Segments) == 0 {
+				throw(ErrBadGlobPattern)
+			}
+			t := gp.Segments[len(gp.Segments)-1].Type
+			if t != glob.Question && t != glob.Star && t != glob.StarStar {
+				throw(ErrMustFollowWildcard)
+			}
+			gp.Segments[len(gp.Segments)-1].Data = "all"
+		default:
+			throw(fmt.Errorf("unknown modifier %s", modifier.Repr(-1)))
+		}
+	}
+	return []Value{gp}
 }
 
 func (gp *GlobPattern) append(segs ...glob.Segment) {

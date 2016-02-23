@@ -39,7 +39,7 @@ var globCases = []struct {
 	{"?", []string{"a", "b", "c"}},
 	{"??", []string{"d1", "d2", "dX"}},
 	// NOTE: If / changes during testing, this case will fail.
-	{"/*", util.RootNames()},
+	{"/*", util.RootStar()},
 
 	// TODO Test cases against dotfiles.
 }

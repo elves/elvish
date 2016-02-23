@@ -118,7 +118,7 @@ var evalTests = []struct {
 	{"x=[elvish rules]; put $@x", strs("elvish", "rules"), nomore},
 
 	// Wildcard.
-	{"put /*", strs(util.RootNames()...), nomore},
+	{"put /*", strs(util.RootStar()...), nomore},
 
 	// Tilde.
 	{"h=$env:HOME; env:HOME=/foo; put ~ ~/src; env:HOME=$h",

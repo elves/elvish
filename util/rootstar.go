@@ -6,7 +6,7 @@ import (
 )
 
 // RootNames returns the result of /*.
-func RootNames() []string {
+func RootStar() []string {
 	f, err := os.Open("/")
 	if err != nil {
 		panic(err)
@@ -17,9 +17,14 @@ func RootNames() []string {
 	if err != nil {
 		panic(err)
 	}
-	sort.Strings(names)
-	for i, name := range names {
-		names[i] = "/" + name
+
+	var newnames []string
+	for _, name := range names {
+		if name[0] != '/' {
+			newnames = append(newnames, "/"+name)
+		}
 	}
-	return names
+
+	sort.Strings(newnames)
+	return newnames
 }
