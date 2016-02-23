@@ -60,6 +60,7 @@ var builtins = []Builtin{
 	{"select-nav-down", selectNavDown},
 	{"ascend-nav", ascendNav},
 	{"descend-nav", descendNav},
+	{"trigger-nav-show-hidden", triggerNavShowHidden},
 	{"default-navigation", defaultNavigation},
 
 	// History mode
@@ -346,6 +347,11 @@ func ascendNav(ed *Editor) {
 
 func descendNav(ed *Editor) {
 	ed.navigation.descend()
+}
+
+func triggerNavShowHidden(ed *Editor) {
+	ed.navigation.showHidden = !ed.navigation.showHidden
+	ed.navigation.refresh()
 }
 
 func defaultNavigation(ed *Editor) {

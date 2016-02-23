@@ -20,7 +20,10 @@ var (
 
 // navigation represents the current layout of the navigation mode.
 type navigation struct {
-	current, parent, dirPreview *navColumn
+	current    *navColumn
+	parent     *navColumn
+	dirPreview *navColumn
+	showHidden bool
 }
 
 func newNavigation() *navigation {
@@ -39,7 +42,7 @@ func (n *navigation) maintainSelected(name string) {
 
 func (n *navigation) refreshCurrent() {
 	selectedName := n.current.selectedName()
-	names, styles, err := readdirnames(".")
+	names, styles, err := n.readdirnames(".")
 	if err != nil {
 		n.current = newErrNavColumn(err)
 		return
@@ -63,7 +66,7 @@ func (n *navigation) refreshParent() {
 	if wd == "/" {
 		n.parent = newNavColumn(nil, nil)
 	} else {
-		names, styles, err := readdirnames("..")
+		names, styles, err := n.readdirnames("..")
 		if err != nil {
 			n.parent = newErrNavColumn(err)
 			return
@@ -95,7 +98,7 @@ func (n *navigation) refreshDirPreview() {
 			return
 		}
 		if fi.Mode().IsDir() {
-			names, styles, err := readdirnames(name)
+			names, styles, err := n.readdirnames(name)
 			if err != nil {
 				n.dirPreview = newErrNavColumn(err)
 				return
@@ -212,16 +215,22 @@ func (nc *navColumn) resetSelected() {
 	}
 }
 
-func readdirnames(dir string) (names, styles []string, err error) {
+func (n *navigation) readdirnames(dir string) (names, styles []string, err error) {
 	f, err := os.Open(dir)
 	if err != nil {
 		return nil, nil, err
 	}
-	names, err = f.Readdirnames(0)
+	infos, err := f.Readdir(0)
 	if err != nil {
 		return nil, nil, err
 	}
+	for _, info := range infos {
+		if n.showHidden || info.Name()[0] != '.' {
+			names = append(names, info.Name())
+		}
+	}
 	sort.Strings(names)
+
 	styles = make([]string, len(names))
 	for i, name := range names {
 		styles[i] = defaultLsColor.getStyle(path.Join(dir, name))

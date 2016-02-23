@@ -69,11 +69,12 @@ var defaultBindings = map[bufferMode]map[Key]string{
 		Default:        "default-completion",
 	},
 	modeNavigation: map[Key]string{
-		Key{Up, 0}:    "select-nav-up",
-		Key{Down, 0}:  "select-nav-down",
-		Key{Left, 0}:  "ascend-nav",
-		Key{Right, 0}: "descend-nav",
-		Default:       "default-navigation",
+		Key{Up, 0}:     "select-nav-up",
+		Key{Down, 0}:   "select-nav-down",
+		Key{Left, 0}:   "ascend-nav",
+		Key{Right, 0}:  "descend-nav",
+		Key{'H', Ctrl}: "trigger-nav-show-hidden",
+		Default:        "default-navigation",
 	},
 	modeHistory: map[Key]string{
 		Key{'[', Ctrl}: "start-insert",
