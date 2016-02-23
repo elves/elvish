@@ -24,6 +24,15 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 * Define aliases like `fn ls { external:ls --color $@ }`
 
+* The left and right prompts and be customized by modifying `le:prompt` and `le:rprompt`. They can be assigned either to a function, in which their outputs are used, or a constant string. The following simulates the default prompts:
+
+  ```sh
+  # Changes during a session; use function
+  le:prompt={ echo `tilde-abbr $pwd`'> ' }
+  # Doesn't change during a session; use constant string
+  le:rprompt=`whoami`@`hostname`
+  ```
+
 * Press Up to search through history. It uses what you have typed to do prefix match. To cancel, press Escape.
 
 * Press Tab to start completion. Use arrow key and Tab to select the candidate;  press Enter, or just continue typing to accept. To cancel, press Enter.
