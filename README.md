@@ -28,10 +28,10 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 * Define aliases like `fn ls { external:ls --color $@ }`
 
-* Elvish remembers which directories you have visisted. Use `dirs` to show the history. `jump x` jumps to the highest-scored directory containing `a`.
+* Elvish remembers which directories you have visisted. Use `dirs` to show the history. `jump x` jumps to the highest-scored directory containing `x`.
 
 * Lists look like `[a b c]`, and maps look like `[&key1=value1 &key2=value2]`. Unlike other shells, lists never expands to multiple words, unless you explicitly splice it by prefixing the variable name with `$@`:
-  ```
+  ```sh
   ~> li=[1 2 3]
   ~> for x in $li; do echo $x; done
   [1 2 3]
@@ -42,7 +42,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   ```
 
 * You can manipulate search paths through the special list `$paths`:
-  ```
+  ```sh
   ~> echo $paths
   [/bin /sbin]
   ~> paths=[/opt/bin $@paths /usr/bin]
@@ -57,31 +57,34 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   Use `put $le:binding` to get a nice (albeit long) view of the current keybinding.
 
 * Environment variables live in a separate `env:` namespace and must be explicitly qualified:
-  ```
+  ```sh
   ~> put $env:HOME
   ▶ /home/xiaq
   ~> env:PATH=$env:PATH":/bin"
   ```
 
 * There is no interpolation inside double quotes (yet). Use implicit string concatenation:
-  ```
+  ```sh
   ~> name=xiaq
   ~> echo "My name is "$name"."
   My name is xiaq.
   ```
 
-* A few floating-point arithmetic operations are builtin. However, you need to use prefix notation:
-  ```
+* Elementary floating-point arithmetics as well as comparisons are builtin. Unfortunately, you have to use prefix notation:
+  ```sh
   ~> + 1 2
   ▶ 3
-  ~> div (mul 2 3) 4
+  ~> div `mul 2 3` 4 # div for /, mul for *
   ▶ 1.5
+  ~> div (mul 2 3) 4 # parentheses are equivalent to backquotes, but look nicer in arithmetics
+  ▶ 1.5
+  ~> gt 1 2 # gt for >
+  false
+  ~> lt 1 2 # lt for <; silence means "true"
   ```
-
-  Unfortunately we cannot use `*` and `/` in the shell.
 
 * Functions are defined with `fn`. You can name arguments:
-  ```
+  ```sh
   ~> fn square [x]{
        mul $x $x
      }
@@ -111,7 +114,7 @@ The main binary can be installed using `go get github.com/elves/elvish`. There i
 
 If you are lazy and use `bash` for `zsh` now, here is something you can copy-paste into your terminal:
 
-```
+```sh
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOPATH/bin
 mkdir -p $GOPATH
