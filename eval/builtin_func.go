@@ -96,6 +96,8 @@ func init() {
 
 		&BuiltinFn{"fg", wrapFn(fg)},
 
+		&BuiltinFn{"tilde-abbr", wrapFn(tildeAbbr)},
+
 		&BuiltinFn{"-sleep", wrapFn(_sleep)},
 		&BuiltinFn{"-stack", wrapFn(_stack)},
 		&BuiltinFn{"-log", wrapFn(_log)},
@@ -637,6 +639,11 @@ func fg(ec *EvalCtx, pids ...int) {
 	}
 
 	throwCompositeError(errors)
+}
+
+func tildeAbbr(ec *EvalCtx, path string) {
+	out := ec.ports[1].Chan
+	out <- String(util.TildeAbbr(path))
 }
 
 func _sleep(ec *EvalCtx, t float64) {
