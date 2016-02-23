@@ -29,7 +29,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   ```sh
   # Changes during a session; use function.
   # "tilde-abbr" abbreviates home directory to a tilde.
-  le:prompt={ echo `tilde-abbr $pwd`'> ' }
+  le:prompt={ put `tilde-abbr $pwd`'> ' }
   # Doesn't change during a session; use constant string.
   le:rprompt=`whoami`@`hostname`
   ```
