@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestRootNames(t *testing.T) {
+func TestRootStar(t *testing.T) {
 	// NOTE: will fail if there are newlines in /*.
 	want, err := exec.Command("ls", "/").Output()
 	mustOK(err)
@@ -23,6 +23,6 @@ func TestRootNames(t *testing.T) {
 	sort.Strings(names)
 
 	if !reflect.DeepEqual(names, wantNames) {
-		t.Errorf("RootNames() -> %s, want %s", names, wantNames)
+		t.Errorf("RootStar() -> %s, want %s", names, wantNames)
 	}
 }

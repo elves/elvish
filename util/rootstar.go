@@ -20,7 +20,7 @@ func RootStar() []string {
 
 	var newnames []string
 	for _, name := range names {
-		if name[0] != '/' {
+		if name[0] != '.' {
 			newnames = append(newnames, "/"+name)
 		}
 	}
