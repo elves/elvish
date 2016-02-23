@@ -12,6 +12,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
+var Logger = util.GetLogger("[stub] ")
 var stubname = "elvish-stub"
 
 type Stub struct {
@@ -130,6 +131,7 @@ func relaySignals(reader io.Reader, sigch chan<- os.Signal) {
 	for {
 		var signum int
 		_, err := fmt.Fscanf(reader, "%d", &signum)
+		Logger.Println("signal:", signum, err)
 		if err != nil {
 			sigch <- BadSignal{err}
 			if err == io.EOF {
@@ -144,6 +146,7 @@ func relaySignals(reader io.Reader, sigch chan<- os.Signal) {
 func wait(proc *os.Process, ch chan<- struct{}) {
 	for {
 		state, err := proc.Wait()
+		Logger.Println("wait:", state, err)
 		if err != nil || state.Exited() {
 			break
 		}
