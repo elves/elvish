@@ -29,7 +29,7 @@ func (p *Port) Close() {
 	}
 }
 
-// closePorts closes a list of Ports.
+// ClosePorts closes a list of Ports.
 func ClosePorts(ports []*Port) {
 	for _, port := range ports {
 		// Logger.Printf("closing port %d", i)

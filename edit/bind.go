@@ -120,23 +120,10 @@ func (c EvalCaller) Repr(indent int) string {
 }
 
 func (c EvalCaller) Call(ed *Editor) {
-	// Input
-	devnull, err := os.Open("/dev/null")
+	rout, chanOut, ports, err := makePorts()
 	if err != nil {
-		Logger.Println(err)
 		return
 	}
-	defer devnull.Close()
-	in := make(chan eval.Value)
-	close(in)
-
-	// Output
-	rout, out, err := os.Pipe()
-	if err != nil {
-		Logger.Println(err)
-		return
-	}
-	chanOut := make(chan eval.Value)
 
 	// Goroutines to collect output.
 	var wg sync.WaitGroup
@@ -161,11 +148,6 @@ func (c EvalCaller) Call(ed *Editor) {
 		wg.Done()
 	}()
 
-	ports := []*eval.Port{
-		{File: devnull, Chan: in},
-		{File: out, Chan: chanOut},
-		{File: out, Chan: chanOut},
-	}
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor]", "", ports)
 	ex := ec.PCall(c.Caller, []eval.Value{})
@@ -173,9 +155,45 @@ func (c EvalCaller) Call(ed *Editor) {
 		ed.notify("function error: %s", ex.Error())
 	}
 
-	out.Close()
-	close(chanOut)
+	eval.ClosePorts(ports)
 	wg.Wait()
-
 	ed.refresh(true, true)
+}
+
+// makePorts connects stdin to /dev/null and a closed channel, identifies
+// stdout and stderr and connects them to a pipe and channel. It returns the
+// other end of stdout and the resulting []*eval.Port. The caller is
+// responsible for closing the returned file and calling eval.ClosePorts on the
+// ports.
+func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
+	in, err := makeClosedStdin()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// Output
+	rout, out, err := os.Pipe()
+	if err != nil {
+		Logger.Println(err)
+		return nil, nil, nil, err
+	}
+	chanOut := make(chan eval.Value)
+
+	return rout, chanOut, []*eval.Port{
+		in,
+		{File: out, CloseFile: true, Chan: chanOut, CloseChan: true},
+		{File: out, Chan: chanOut},
+	}, nil
+}
+
+func makeClosedStdin() (*eval.Port, error) {
+	// Input
+	devnull, err := os.Open("/dev/null")
+	if err != nil {
+		Logger.Println(err)
+		return nil, err
+	}
+	in := make(chan eval.Value)
+	close(in)
+	return &eval.Port{File: devnull, CloseFile: true, Chan: in}, nil
 }

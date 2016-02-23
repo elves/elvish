@@ -273,6 +273,13 @@ func (ec *EvalCtx) PCall(f Caller, args []Value) (err error) {
 	return nil
 }
 
+func (ec *EvalCtx) PCaptureOutput(f Caller, args []Value) (vs []Value, err error) {
+	defer util.Catch(&err)
+	// XXX There is no source.
+	return captureOutput(ec, Op{
+		func(newec *EvalCtx) { f.Call(newec, args) }, -1, -1}), nil
+}
+
 func catch(perr *error, ec *EvalCtx) {
 	// NOTE: We have to duplicate instead of calling util.Catch here, since
 	// recover can only catch a panic when called directly from a deferred
