@@ -13,10 +13,12 @@ import (
 var (
 	mkdirs = []string{"a", "b", "c", "d1", "d1/e", "d1/e/f", "d1/e/f/g",
 		"d2", "d2/e", "d2/e/f", "d2/e/f/g"}
-	creates = []string{"a/X", "a/Y", "b/X", "c/Y",
+	mkdirDots = []string{".el"}
+	creates   = []string{"a/X", "a/Y", "b/X", "c/Y",
 		"dX", "dXY",
 		"lorem", "ipsum",
 		"d1/e/f/g/X", "d2/e/f/g/X"}
+	createDots = []string{".x", ".el/x"}
 )
 
 var globCases = []struct {
@@ -38,6 +40,8 @@ var globCases = []struct {
 	{"??", []string{"d1", "d2", "dX"}},
 	// NOTE: If / changes during testing, this case will fail.
 	{"/*", util.RootNames()},
+
+	// TODO Test cases against dotfiles.
 }
 
 func TestGlob(t *testing.T) {
@@ -48,13 +52,13 @@ func TestGlob(t *testing.T) {
 	defer os.RemoveAll(tmpdir)
 	os.Chdir(tmpdir)
 
-	for _, dir := range mkdirs {
+	for _, dir := range append(mkdirs, mkdirDots...) {
 		err := os.Mkdir(dir, 0755)
 		if err != nil {
 			panic(err)
 		}
 	}
-	for _, file := range creates {
+	for _, file := range append(creates, createDots...) {
 		f, err := os.Create(file)
 		if err != nil {
 			panic(err)

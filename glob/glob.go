@@ -15,8 +15,8 @@ type Pattern struct {
 // Segment is the constituent unit of a Pattern.
 type Segment struct {
 	// Type of the Segment.
-	Type    SegmentType
-	Literal string // Valid for Literal only.
+	Type SegmentType
+	Data string // For Literal, the literal string. For Question, Star and StarStar, nonempty if they should match all files.
 }
 
 // SegmentType is the type of a Segment.
@@ -25,10 +25,10 @@ type SegmentType int
 // Values for SegmentType.
 const (
 	Literal SegmentType = iota
-	Star
-	Question
-	StarStar
 	Slash
+	Question
+	Star
+	StarStar
 )
 
 // Glob returns a list of file names satisfying the given pattern.
@@ -135,6 +135,17 @@ func glob(segs []Segment, dir string, results chan<- string) {
 // match matches a name against segments. It treats StarStar segments as they
 // are Star segments. The segments may not contain Slash'es.
 func match(segs []Segment, name string) bool {
+	if len(segs) == 0 {
+		return name == ""
+	}
+	// Question, Star and StarAll only match leading dot when their Data field
+	// is nonempty.
+	if len(name) > 0 && name[0] == '.' && segs[0].Data == "" {
+		switch segs[0].Type {
+		case Question, Star, StarStar:
+			return false
+		}
+	}
 segs:
 	for len(segs) > 0 {
 		// Find a chunk. A chunk is a run of Literal and Question, with an
@@ -190,8 +201,8 @@ func matchChunk(chunk []Segment, name string) (bool, string) {
 		}
 		switch seg.Type {
 		case Literal:
-			n := len(seg.Literal)
-			if len(name) < n || name[:n] != seg.Literal {
+			n := len(seg.Data)
+			if len(name) < n || name[:n] != seg.Data {
 				return false, ""
 			}
 			name = name[n:]
