@@ -79,14 +79,15 @@ func (rd *Reader) ErrorChan() <-chan error {
 // a separate goroutine.
 func (rd *Reader) Run() {
 	runes := rd.ar.Chan()
-	rd.quit = make(chan struct{})
+	quit := make(chan struct{})
+	rd.quit = quit
 	go rd.ar.Run()
 
 	for {
 		select {
 		case r := <-runes:
 			rd.readOne(r)
-		case <-rd.quit:
+		case <-quit:
 			return
 		}
 	}
