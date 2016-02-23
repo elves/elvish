@@ -27,9 +27,10 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 * The left and right prompts and be customized by modifying `le:prompt` and `le:rprompt`. They can be assigned either to a function, in which their outputs are used, or a constant string. The following simulates the default prompts:
 
   ```sh
-  # Changes during a session; use function
+  # Changes during a session; use function.
+  # "tilde-abbr" abbreviates home directory to a tilde.
   le:prompt={ echo `tilde-abbr $pwd`'> ' }
-  # Doesn't change during a session; use constant string
+  # Doesn't change during a session; use constant string.
   le:rprompt=`whoami`@`hostname`
   ```
 
