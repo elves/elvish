@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"os/user"
 	"syscall"
 	"time"
 
@@ -127,27 +126,9 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		}
 	}
 
-	// Build prompt and rprompt.
-	username := "???"
-	user, err := user.Current()
-	if err == nil {
-		username = user.Username
-	}
-	hostname, err := os.Hostname()
-	if err != nil {
-		hostname = "???"
-	}
-	rpromptStr := username + "@" + hostname
-	prompt := func() string {
-		return util.Getwd() + "> "
-	}
-	rprompt := func() string {
-		return rpromptStr
-	}
-
 	// Build readLine function.
 	readLine := func() edit.LineRead {
-		return ed.ReadLine(prompt, rprompt)
+		return ed.ReadLine()
 	}
 
 	cooldown := time.Second

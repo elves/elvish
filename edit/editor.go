@@ -29,6 +29,8 @@ type Editor struct {
 	store  *store.Store
 	evaler *eval.Evaler
 	cmdSeq int
+	ps1    Prompt
+	rps1   Prompt
 	editorState
 }
 
@@ -93,6 +95,8 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		}
 	}
 
+	prompt, rprompt := defaultPrompts()
+
 	ed := &Editor{
 		file:   file,
 		writer: newWriter(file),
@@ -101,6 +105,8 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		store:  st,
 		evaler: ev,
 		cmdSeq: seq,
+		ps1:    prompt,
+		rps1:   rprompt,
 	}
 	ev.AddModule("le", makeModule(ed))
 	return ed
@@ -282,7 +288,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 }
 
 // ReadLine reads a line interactively.
-func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
+func (ed *Editor) ReadLine() (lr LineRead) {
 	ed.editorState = editorState{active: true}
 	isExternalCh := make(chan map[string]bool, 1)
 	go getIsExternal(ed.evaler, isExternalCh)
@@ -302,8 +308,8 @@ func (ed *Editor) ReadLine(prompt, rprompt func() string) (lr LineRead) {
 
 MainLoop:
 	for {
-		ed.prompt = prompt()
-		ed.rprompt = rprompt()
+		ed.prompt = ed.ps1.Call(ed)
+		ed.rprompt = ed.rps1.Call(ed)
 
 		err := ed.refresh(false, true)
 		if err != nil {
