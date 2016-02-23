@@ -76,6 +76,10 @@ func Main() {
 		fmt.Println("failed to spawn stub:", err)
 	} else {
 		ev.Stub = stub
+		go func() {
+			<-stub.State()
+			fmt.Println("stub has died")
+		}()
 	}
 
 	if len(args) == 1 {

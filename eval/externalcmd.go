@@ -59,7 +59,7 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value) {
 	}
 
 	sys := syscall.SysProcAttr{}
-	if ec.Stub != nil {
+	if ec.Stub != nil && ec.Stub.Alive() {
 		sys.Setpgid = true
 		sys.Pgid = ec.Stub.Process().Pid
 	}

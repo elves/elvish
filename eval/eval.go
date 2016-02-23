@@ -180,7 +180,7 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 	signal.Ignore(syscall.SIGTTIN)
 	signal.Ignore(syscall.SIGTTOU)
 	// XXX Should use fd of /dev/terminal instead of 0.
-	if ev.Stub != nil && sys.IsATTY(0) {
+	if ev.Stub != nil && ev.Stub.Alive() && sys.IsATTY(0) {
 		ev.Stub.SetTitle(summarize(text))
 		dir, err := os.Getwd()
 		if err != nil {

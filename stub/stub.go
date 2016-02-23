@@ -114,6 +114,16 @@ func (stub *Stub) State() <-chan struct{} {
 	return stub.statech
 }
 
+// Alive reports whether the stub is alive.
+func (stub *Stub) Alive() bool {
+	select {
+	case <-stub.statech:
+		return false
+	default:
+		return true
+	}
+}
+
 // relaySignals relays output of the stub to sigch, assuming that outputs
 // represent signal numbers.
 func relaySignals(reader io.Reader, sigch chan<- os.Signal) {
