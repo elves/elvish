@@ -22,11 +22,15 @@ Put your startup script in `~/.elvish/rc.elv`.
 
 Elvish mimics bash and zsh in a lot of places. The following shows some key differences and highlights, as well as some common tasks:
 
+* Define aliases like `fn ls { external:ls --color $@ }`
+
 * Press Up to search through history. It uses what you have typed to do prefix match. To cancel, press Escape.
 
-* Press Tab to start completion. Press Ctrl-N to start navigation mode. Likewise, pressing Escape gets you back to the default mode.
+* Press Tab to start completion. Use arrow key and Tab to select the candidate;  press Enter, or just continue typing to accept. To cancel, press Enter.
 
-* Define aliases like `fn ls { external:ls --color $@ }`
+* Press Ctrl-N to start navigation mode. Press Ctrl-H to show hidden files; press again to hide. Likewise, pressing Escape gets you back to the default (insert) mode.
+
+* Try typing `echo [` and press Enter. Elvish knows that the command is unfinished due to the unclosed `[` and inserts a newline instead of accepting the command. Moreover, common errors like syntax errors and missing variables are highlighted in real time.
 
 * Elvish remembers which directories you have visisted. Use `dirs` to show the history. `jump x` jumps to the highest-scored directory containing `x`.
 
