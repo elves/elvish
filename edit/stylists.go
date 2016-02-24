@@ -1,6 +1,8 @@
 package edit
 
 import (
+	"os"
+
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
@@ -46,4 +48,9 @@ func init() {
 	for _, name := range eval.BuiltinSpecialNames {
 		isBuiltinSpecial[name] = true
 	}
+}
+
+func isDir(fname string) bool {
+	stat, err := os.Stat(fname)
+	return err == nil && stat.IsDir()
 }

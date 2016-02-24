@@ -2,7 +2,6 @@ package edit
 
 import (
 	"io/ioutil"
-	"os"
 	"path"
 	"sort"
 	"strings"
@@ -12,7 +11,8 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// A completer takes the current node
+// A completer takes the current Node and an Editor and returns a list of
+// candidates. the Node is always a leaf in the parsed AST.
 type completer func(parse.Node, *Editor) []*candidate
 
 var completers = []struct {
@@ -192,9 +192,4 @@ func complArgInner(head string, ed *Editor, formHead bool) []*candidate {
 
 func dotfile(fname string) bool {
 	return strings.HasPrefix(fname, ".")
-}
-
-func isDir(fname string) bool {
-	stat, err := os.Stat(fname)
-	return err == nil && stat.IsDir()
 }
