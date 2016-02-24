@@ -118,6 +118,9 @@ func (b *ListReprBuilder) String() string {
 	if b.buf.Len() == 0 {
 		return "[]"
 	}
+	if b.Indent >= 0 {
+		b.buf.WriteString("\n" + strings.Repeat(" ", b.Indent))
+	}
 	b.buf.WriteByte(']')
 	return b.buf.String()
 }
