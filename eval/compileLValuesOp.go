@@ -7,19 +7,19 @@ import (
 )
 
 // VariablesOp is an operation on an EvalCtx that produce Variable's.
-type VariablesOp struct {
-	Func       VariablesOpFunc
+type LValuesOp struct {
+	Func       LValuesOpFunc
 	Begin, End int
 }
 
-type VariablesOpFunc func(*EvalCtx) []Variable
+type LValuesOpFunc func(*EvalCtx) []Variable
 
-func (op VariablesOp) Exec(ec *EvalCtx) []Variable {
+func (op LValuesOp) Exec(ec *EvalCtx) []Variable {
 	ec.begin, ec.end = op.Begin, op.End
 	return op.Func(ec)
 }
 
-func (cp *compiler) multiVariable(n *parse.Indexing) VariablesOpFunc {
+func (cp *compiler) multiVariable(n *parse.Indexing) LValuesOpFunc {
 	if n.Head.Type == parse.Braced {
 		// XXX ignore n.Indicies.
 		compounds := n.Head.Braced
@@ -43,8 +43,7 @@ func (cp *compiler) multiVariable(n *parse.Indexing) VariablesOpFunc {
 	return cp.singleVariable(n, "must be a variable spec or a braced list of those")
 }
 
-func (cp *compiler) singleVariable(n *parse.Indexing, msg string) VariablesOpFunc {
-	// XXX will we be using this for purposes other than setting?
+func (cp *compiler) singleVariable(n *parse.Indexing, msg string) LValuesOpFunc {
 	varname := cp.literal(n.Head, msg)
 
 	if len(n.Indicies) == 0 {

@@ -182,24 +182,24 @@ func (cp *compiler) bracedOps(ns []*parse.Primary) []ValuesOp {
 	return ops
 }
 
-func (cp *compiler) multiVariableOp(n *parse.Indexing) VariablesOp {
-	return VariablesOp{cp.multiVariable(n), n.Begin(), n.End()}
+func (cp *compiler) multiVariableOp(n *parse.Indexing) LValuesOp {
+	return LValuesOp{cp.multiVariable(n), n.Begin(), n.End()}
 }
 
-func (cp *compiler) multiVariableOps(ns []*parse.Indexing) []VariablesOp {
-	ops := make([]VariablesOp, len(ns))
+func (cp *compiler) multiVariableOps(ns []*parse.Indexing) []LValuesOp {
+	ops := make([]LValuesOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.multiVariableOp(n)
 	}
 	return ops
 }
 
-func (cp *compiler) singleVariableOp(n *parse.Indexing, msg string) VariablesOp {
-	return VariablesOp{cp.singleVariable(n, msg), n.Begin(), n.End()}
+func (cp *compiler) singleVariableOp(n *parse.Indexing, msg string) LValuesOp {
+	return LValuesOp{cp.singleVariable(n, msg), n.Begin(), n.End()}
 }
 
-func (cp *compiler) singleVariableOps(ns []*parse.Indexing, msg string) []VariablesOp {
-	ops := make([]VariablesOp, len(ns))
+func (cp *compiler) singleVariableOps(ns []*parse.Indexing, msg string) []LValuesOp {
+	ops := make([]LValuesOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.singleVariableOp(n, msg)
 	}
