@@ -349,6 +349,8 @@ func (ev *Evaler) Global() Namespace {
 	return map[string]Variable(ev.global)
 }
 
+var ErrStoreUnconnected = errors.New("store unconnected")
+
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
 func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
@@ -372,6 +374,11 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 			return NewRoVariable(ExternalCmd{name[len(FnPrefix):]})
 		}
 		return envVariable{name}
+	case "shared":
+		if ec.store == nil {
+			throw(ErrStoreUnconnected)
+		}
+		return sharedVariable{ec.store, name}
 	default:
 		use(ec, ns, nil)
 		return ec.modules[ns][name]

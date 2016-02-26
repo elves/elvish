@@ -1,0 +1,45 @@
+package store
+
+import "testing"
+
+func TestSharedVar(t *testing.T) {
+	varname := "foo"
+	value1 := "lorem ipsum"
+	value2 := "o mores, o tempora"
+
+	// Getting an nonexistent variable should return ErrNoVar.
+	_, err := tStore.GetSharedVar(varname)
+	if err != ErrNoVar {
+		t.Error("want ErrNoVar, got", err)
+	}
+
+	// Setting a variable for the first time creates it.
+	err = tStore.SetSharedVar(varname, value1)
+	if err != nil {
+		t.Error("want no error, got", err)
+	}
+	v, err := tStore.GetSharedVar(varname)
+	if v != value1 || err != nil {
+		t.Errorf("want %q and no error, got %q and %v", value1, v, err)
+	}
+
+	// Setting an existing variable updates its value.
+	err = tStore.SetSharedVar(varname, value2)
+	if err != nil {
+		t.Error("want no error, got", err)
+	}
+	v, err = tStore.GetSharedVar(varname)
+	if v != value2 || err != nil {
+		t.Errorf("want %q and no error, got %q and %v", value2, v, err)
+	}
+
+	// After deleting a variable, access to it cause ErrNoVar.
+	err = tStore.DelSharedVar(varname)
+	if err != nil {
+		t.Error("want no error, got", err)
+	}
+	_, err = tStore.GetSharedVar(varname)
+	if err != ErrNoVar {
+		t.Error("want ErrNoVar, got", err)
+	}
+}
