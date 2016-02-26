@@ -227,7 +227,7 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 	close(outCh)
 	<-outDone
 
-	// XXX Should use fd of /dev/terminal instead of 0.
+	// XXX Should use fd of /dev/tty instead of 0.
 	if sys.IsATTY(0) {
 		err := sys.Tcsetpgrp(0, syscall.Getpgrp())
 		if err != nil {
