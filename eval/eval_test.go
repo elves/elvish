@@ -150,10 +150,20 @@ var evalTests = []struct {
 	  {inc2,put2}=(f); $put2; $inc2; $put2`,
 		strs("0", "1", "0", "1"), nomore},
 
-	// fn and return.
+	// fn.
 	{"fn f [x]{ put x=$x'.' }; f lorem; f ipsum",
 		strs("x=lorem.", "x=ipsum."), nomore},
+	// return.
 	{"fn f []{ put a; return; put b }; f", strs("a"), nomore},
+
+	// rest args and $args.
+	{"[x @xs]{ put $x $xs $args } a b c",
+		[]Value{String("a"),
+			NewList(String("b"), String("c")),
+			NewList(String("a"), String("b"), String("c"))}, nomore},
+	// $args.
+	{"{ put $args } lorem ipsum",
+		[]Value{NewList(String("lorem"), String("ipsum"))}, nomore},
 
 	// Namespaces
 	// Pseudo-namespaces local: and up:

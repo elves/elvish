@@ -346,26 +346,44 @@ func captureOutput(ec *EvalCtx, op Op) []Value {
 func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 	// Collect argument names
 	var argNames []string
-	var variadic bool
-	if n.List != nil {
+	var restArg string
+	if n.List == nil {
+		// { chunk }
+		restArg = unnamedRestArg
+	} else {
 		// [argument list]{ chunk }
 		argNames = make([]string, len(n.List.Compounds))
 		for i, arg := range n.List.Compounds {
-			name := mustString(cp, arg, "expect string")
-			argNames[i] = name
+			qname := mustString(cp, arg, "expect string")
+			splice, ns, name := parseVariable(qname)
+			if ns != "" {
+				cp.errorpf(arg.Begin(), arg.End(), "must be unqualified")
+			}
+			if name == "" {
+				cp.errorpf(arg.Begin(), arg.End(), "argument name must not be empty")
+			}
+			if splice {
+				if i != len(n.List.Compounds)-1 {
+					cp.errorpf(arg.Begin(), arg.End(), "only the last argument may have @")
+				}
+				restArg = name
+				argNames = argNames[:i]
+			} else {
+				argNames[i] = name
+			}
 		}
-	} else {
-		// { chunk }
-		variadic = true
 	}
 
-	// XXX The fiddlings with cp.capture is likely wrong.
+	// XXX The fiddlings with cp.capture is error-prone.
 	thisScope := cp.pushScope()
-	thisScope["args"] = true
-	thisScope["kwargs"] = true
 	for _, argName := range argNames {
 		thisScope[argName] = true
 	}
+	if restArg != "" {
+		thisScope[restArg] = true
+	}
+	thisScope["args"] = true
+	thisScope["kwargs"] = true
 	op := cp.chunkOp(n.Chunk)
 	capture := cp.capture
 	cp.capture = scope{}
@@ -380,7 +398,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		for name := range capture {
 			evCapture[name] = ec.ResolveVar("", name)
 		}
-		return []Value{newClosure(argNames, op, evCapture, variadic)}
+		return []Value{newClosure(argNames, restArg, op, evCapture)}
 	}
 }
 
