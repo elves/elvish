@@ -51,7 +51,6 @@ var evalTests = []struct {
 	{`put 233 42 19 | each [x]{+ $x 10}`, strs("243", "52", "29"), nomore},
 	// TODO: Add a useful hybrid pipeline sample
 
-	// Forms.
 	// List element assignment
 	{"li=[foo bar]; li[0]=233; put-all $li", strs("233", "bar"), nomore},
 	// Map element assignment
@@ -59,6 +58,12 @@ var evalTests = []struct {
 		strs("lorem", "ipsum"), nomore},
 	{"d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]",
 		strs("v", "u"), nomore},
+	// Multi-assignments.
+	{"{a,b}=`put a b`; put $a $b", strs("a", "b"), nomore},
+	{"@a=`put a b`; put $@a", strs("a", "b"), nomore},
+	{"{a,@b}=`put a b c`; put $@b", strs("b", "c"), nomore},
+	// {"di=[&]; di[a b]=`put a b`; put $di[a] $di[b]", strs("a", "b"), nomore},
+
 	// Control structures.
 	// if
 	{"if true; then put then; fi", strs("then"), nomore},
@@ -81,6 +86,7 @@ var evalTests = []struct {
 	{"for x in a b; do put $x; continue; put $x; done", strs("a", "b"), nomore},
 	// begin/end
 	{"begin; put lorem; put ipsum; end", strs("lorem", "ipsum"), nomore},
+
 	// Redirections.
 	{"f=`mktemp elvXXXXXX`; echo 233 > $f; cat < $f; rm $f", strs(),
 		more{wantBytesOut: []byte("233\n")}},

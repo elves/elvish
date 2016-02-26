@@ -15,46 +15,91 @@ type LValuesOp struct {
 type LValuesOpFunc func(*EvalCtx) []Variable
 
 func (op LValuesOp) Exec(ec *EvalCtx) []Variable {
+	// Empty value is considered to generate no lvalues.
+	if op.Func == nil {
+		return []Variable{}
+	}
 	ec.begin, ec.end = op.Begin, op.End
 	return op.Func(ec)
 }
 
-func (cp *compiler) multiVariable(n *parse.Indexing) LValuesOpFunc {
+// lvaluesOp compiles lvalues, returning the fixed part and, optionally a rest
+// part.
+//
+// In the AST an lvalue is either an Indexing node where the head is a string
+// literal, or a braced list of such Indexing nodes. The last Indexing node may
+// be prefixed by @, in which case they become the rest part. For instance, in
+// {a[x],b,@c[z]}, "a[x],b" is the fixed part and "c[z]" is the rest part.
+func (cp *compiler) lvaluesOp(n *parse.Indexing) (LValuesOp, LValuesOp) {
 	if n.Head.Type == parse.Braced {
-		// XXX ignore n.Indicies.
-		compounds := n.Head.Braced
-		indexings := make([]*parse.Indexing, len(compounds))
-		for i, cn := range compounds {
+		// Braced list of variable specs, possibly with indicies. The braced list
+		if len(n.Indicies) > 0 {
+			cp.errorf("may not have indicies")
+		}
+
+		opFuncs := make([]LValuesOpFunc, len(n.Head.Braced))
+		var restNode *parse.Indexing
+		var restOpFunc LValuesOpFunc
+
+		// Compile each spec inside the brace.
+		lvalueNodes := n.Head.Braced
+		fixedEnd := 0
+		for i, cn := range lvalueNodes {
 			if len(cn.Indexings) != 1 {
-				cp.compiling(cn)
-				cp.errorf("must be a variable spec")
+				cp.errorpf(cn.Begin(), cn.End(), "must be an lvalue")
 			}
-			indexings[i] = cn.Indexings[0]
-		}
-		ops := cp.singleVariableOps(indexings, "must be a variable spec")
-		return func(ec *EvalCtx) []Variable {
-			var variables []Variable
-			for _, op := range ops {
-				variables = append(variables, op.Exec(ec)...)
+			var rest bool
+			rest, opFuncs[i] = cp.lvaluesOne(cn.Indexings[0], "must be an lvalue ")
+			// Only the last one may a rest part.
+			if rest {
+				if i == len(n.Head.Braced)-1 {
+					restNode = cn.Indexings[0]
+					restOpFunc = opFuncs[i]
+				} else {
+					cp.errorpf(cn.Begin(), cn.End(), "only the last lvalue may have @")
+				}
+			} else {
+				fixedEnd = cn.End()
 			}
-			return variables
 		}
+
+		var restOp LValuesOp
+		// If there is a rest part, make LValuesOp for it and remove it from opFuncs.
+		if restOpFunc != nil {
+			restOp = LValuesOp{restOpFunc, restNode.Begin(), restNode.End()}
+			opFuncs = opFuncs[:len(opFuncs)-1]
+		}
+
+		var op LValuesOp
+		// If there is still anything left in opFuncs, make LValuesOp for the fixed part.
+		if len(opFuncs) > 0 {
+			op = LValuesOp{func(ec *EvalCtx) []Variable {
+				var variables []Variable
+				for _, opFunc := range opFuncs {
+					variables = append(variables, opFunc(ec)...)
+				}
+				return variables
+			}, lvalueNodes[0].Begin(), fixedEnd}
+		}
+
+		return op, restOp
 	}
-	return cp.singleVariable(n, "must be a variable spec or a braced list of those")
+	rest, opFunc := cp.lvaluesOne(n, "must be an lvalue or a braced list of those")
+	op := LValuesOp{opFunc, n.Begin(), n.End()}
+	if rest {
+		return LValuesOp{}, op
+	} else {
+		return op, LValuesOp{}
+	}
 }
 
-func (cp *compiler) singleVariable(n *parse.Indexing, msg string) LValuesOpFunc {
+func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFunc) {
 	varname := cp.literal(n.Head, msg)
+	cp.registerVariableSet(varname)
+	splice, ns, barename := parseVariable(varname)
 
 	if len(n.Indicies) == 0 {
-		cp.registerVariableSet(varname)
-
-		return func(ec *EvalCtx) []Variable {
-			splice, ns, barename := parseVariable(varname)
-			if splice {
-				// XXX
-				ec.errorf("not yet supported")
-			}
+		return splice, func(ec *EvalCtx) []Variable {
 			variable := ec.ResolveVar(ns, barename)
 			if variable == nil {
 				if ns == "" || ns == "local" {
@@ -73,30 +118,14 @@ func (cp *compiler) singleVariable(n *parse.Indexing, msg string) LValuesOpFunc 
 			return []Variable{variable}
 		}
 	}
-	cp.registerVariableGet(varname)
-	indexOps := cp.arrayOps(n.Indicies)
 
 	p := n.Begin()
-	indexBegins := make([]int, len(n.Indicies))
-	indexEnds := make([]int, len(n.Indicies))
-	for i, in := range n.Indicies {
-		indexBegins[i] = in.Begin()
-		indexEnds[i] = in.End()
-	}
+	indexOps := cp.arrayOps(n.Indicies)
 
-	return func(ec *EvalCtx) []Variable {
-		splice, ns, name := parseVariable(varname)
-		if splice {
-			// XXX
-			ec.errorf("not yet supported")
-		}
-		variable := ec.ResolveVar(ns, name)
+	return splice, func(ec *EvalCtx) []Variable {
+		variable := ec.ResolveVar(ns, barename)
 		if variable == nil {
 			ec.errorf("variable $%s does not exisit, compiler bug", varname)
-		}
-		if len(indexOps) == 0 {
-			// Just a variable, return directly.
-			return []Variable{variable}
 		}
 
 		// Indexing. Do Index up to the last but one index.
@@ -119,12 +148,12 @@ func (cp *compiler) singleVariable(n *parse.Indexing, msg string) LValuesOpFunc 
 			// XXX the indicated end location will fall on or after the opening
 			// bracket of the last index, instead of exactly on the penultimate
 			// index.
-			ec.errorpf(p, indexBegins[n-1], "cannot be indexed for setting (value is %s, type %s)", value.Repr(NoPretty), value.Kind())
+			ec.errorpf(p, indexOps[n-1].Begin, "cannot be indexed for setting (value is %s, type %s)", value.Repr(NoPretty), value.Kind())
 		}
 		// XXX Duplicate code.
 		indicies := indexOps[n-1].Exec(ec)
 		if len(indicies) != 1 {
-			ec.errorpf(indexBegins[n-1], indexEnds[n-1], "index must eval to a single Value (got %v)", indicies)
+			ec.errorpf(indexOps[n-1].Begin, indexOps[n-1].End, "index must eval to a single Value (got %v)", indicies)
 		}
 		return []Variable{elemVariable{indexSetter, indicies[0]}}
 	}

@@ -202,14 +202,17 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			}
 		}
 	case parse.ForControl:
-		iteratorOp := cp.singleVariableOp(n.Iterator, "must be a single variable")
+		iteratorOp, restOp := cp.lvaluesOp(n.Iterator)
+		if restOp.Func != nil {
+			cp.errorpf(restOp.Begin, restOp.End, "may not use @rest in iterator")
+		}
 		valuesOp := cp.arrayOp(n.Array)
 		bodyOp := cp.chunkOp(n.Body)
 		return func(ec *EvalCtx) {
 			iterator := iteratorOp.Exec(ec)
 			values := valuesOp.Exec(ec)
 			for _, v := range values {
-				doSet(ec, iterator, []Value{v})
+				set(ec, iterator, nil, []Value{v})
 				ex := ec.PEval(bodyOp)
 				if ex == Continue {
 					// do nothing
@@ -229,11 +232,11 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 }
 
 func (cp *compiler) assignment(n *parse.Assignment) OpFunc {
-	variablesOp := cp.multiVariableOp(n.Dst)
+	variablesOp, restOp := cp.lvaluesOp(n.Dst)
 	valuesOp := cp.compoundOp(n.Src)
 
 	return func(ec *EvalCtx) {
-		doSet(ec, variablesOp.Exec(ec), valuesOp.Exec(ec))
+		set(ec, variablesOp.Exec(ec), restOp.Exec(ec), valuesOp.Exec(ec))
 	}
 }
 

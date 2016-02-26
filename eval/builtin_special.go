@@ -32,19 +32,6 @@ func init() {
 	}
 }
 
-func doSet(ec *EvalCtx, variables []Variable, values []Value) {
-	// TODO Support assignment of mismatched arity in some restricted way -
-	// "optional" and "rest" arguments and the like
-	if len(variables) != len(values) {
-		throw(ErrArityMismatch)
-	}
-
-	for i, variable := range variables {
-		// TODO Prevent overriding builtin variables e.g. $pid $env
-		variable.Set(values[i])
-	}
-}
-
 // DelForm = 'del' { VariablePrimary }
 func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 	// Do conventional compiling of all compound expressions, including

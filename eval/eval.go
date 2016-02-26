@@ -4,6 +4,7 @@ package eval
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -374,5 +375,30 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	default:
 		use(ec, ns, nil)
 		return ec.modules[ns][name]
+	}
+}
+
+var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
+
+func set(ec *EvalCtx, variables []Variable, rest []Variable, values []Value) {
+	if len(rest) > 1 {
+		throw(ErrMoreThanOneRest)
+	}
+	if len(rest) == 1 {
+		if len(variables) > len(values) {
+			throw(ErrArityMismatch)
+		}
+	} else {
+		if len(variables) != len(values) {
+			throw(ErrArityMismatch)
+		}
+	}
+
+	for i, variable := range variables {
+		variable.Set(values[i])
+	}
+
+	if len(rest) == 1 {
+		rest[0].Set(NewList(values[len(variables):]...))
 	}
 }
