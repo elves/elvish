@@ -16,7 +16,7 @@ const (
 )
 
 func init() {
-	initTable["initialize directory history table"] = func(db *sql.DB) error {
+	initDB["initialize directory history table"] = func(db *sql.DB) error {
 		_, err := db.Exec(`create table if not exists dir (path text unique primary key, score real default 0)`)
 		return err
 	}
@@ -80,7 +80,7 @@ func makeSubseqPattern(pattern string) string {
 	b.WriteRune('%')
 	for _, p := range pattern {
 		if p == '%' {
-			b.WriteRune('%')
+			b.WriteRune('\\')
 		}
 		b.WriteRune(p)
 		b.WriteRune('%')
