@@ -10,7 +10,7 @@ import (
 var ErrNoMatchingCmd = errors.New("no matching command line")
 
 func init() {
-	initTable["cmd"] = func(db *sql.DB) error {
+	initDB["initialize command history table"] = func(db *sql.DB) error {
 		_, err := db.Exec(`create table if not exists cmd (content text, lastAmongDup bool)`)
 		if err != nil {
 			return err

@@ -8,7 +8,7 @@ import (
 var ErrNoVar = errors.New("no such variable")
 
 func init() {
-	initTable["shared"] = func(db *sql.DB) error {
+	initDB["initialize shared variable table"] = func(db *sql.DB) error {
 		_, err := db.Exec(`create table if not exists shared_var (name text unique primary key, value text)`)
 		return err
 	}

@@ -16,7 +16,7 @@ const (
 )
 
 func init() {
-	initTable["dir"] = func(db *sql.DB) error {
+	initTable["initialize directory history table"] = func(db *sql.DB) error {
 		_, err := db.Exec(`create table if not exists dir (path text unique primary key, score real default 0)`)
 		return err
 	}

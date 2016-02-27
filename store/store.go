@@ -16,10 +16,10 @@ type Store struct {
 	Waits sync.WaitGroup
 }
 
-var initTable = map[string](func(*sql.DB) error){}
+var initDB = map[string](func(*sql.DB) error){}
 
 func init() {
-	initTable["(pragma)"] = func(db *sql.DB) error {
+	initDB["set pragma"] = func(db *sql.DB) error {
 		_, err := db.Exec(`pragma case_sensitive_like = true;`)
 		return err
 	}
@@ -46,10 +46,10 @@ func NewStore(dbname string) (*Store, error) {
 func NewStoreDB(db *sql.DB) (*Store, error) {
 	st := &Store{db, sync.WaitGroup{}}
 
-	for name, fn := range initTable {
+	for name, fn := range initDB {
 		err := fn(db)
 		if err != nil {
-			return nil, fmt.Errorf("failed to initialize table %s: %v", name, err)
+			return nil, fmt.Errorf("failed to %s: %v", name, err)
 		}
 	}
 
