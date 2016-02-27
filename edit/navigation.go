@@ -322,3 +322,27 @@ func (nav *navigation) List(width, maxHeight int) *buffer {
 
 	return b
 }
+
+func renderNavColumn(nc *navColumn, w, h int) *buffer {
+	b := newBuffer(w)
+	low, high := findWindow(len(nc.names), nc.selected, h)
+	for i := low; i < high; i++ {
+		if i > low {
+			b.newline()
+		}
+		text := nc.names[i]
+		style := nc.styles[i]
+		if i == nc.selected {
+			style += styleForSelected
+		}
+		if w >= navigationListingMinWidthForPadding {
+			padding := navigationListingColPadding
+			b.writePadding(padding, style)
+			b.writes(ForceWcWidth(text, w-2), style)
+			b.writePadding(padding, style)
+		} else {
+			b.writes(ForceWcWidth(text, w), style)
+		}
+	}
+	return b
+}

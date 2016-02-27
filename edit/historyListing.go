@@ -32,6 +32,14 @@ func startHistoryListing(ed *Editor) {
 	ed.mode = &ed.historyListing
 }
 
+func histlistPrev(ed *Editor) {
+	ed.historyListing.prev()
+}
+
+func histlistNext(ed *Editor) {
+	ed.historyListing.next()
+}
+
 func defaultHistoryListing(ed *Editor) {
 	ed.mode = &ed.insert
 	ed.nextAction = action{typ: reprocessKey}
@@ -44,38 +52,46 @@ func initHistoryListing(hl *historyListing, s *store.Store) error {
 	if err != nil {
 		return err
 	}
-	cmds, err := s.Cmds(seq-100, seq)
+	cmds, err := s.Cmds(0, seq)
 	if err != nil {
+		hl.all = nil
+		hl.current = -1
 		return err
 	}
 	hl.all = cmds
+	hl.current = len(hl.all) - 1
 	return nil
+}
+
+func (hist *historyListing) prev() {
+	if len(hist.all) > 0 && hist.current > 0 {
+		hist.current--
+	}
+}
+
+func (hist *historyListing) next() {
+	if len(hist.all) > 0 && hist.current < len(hist.all)-1 {
+		hist.current++
+	}
 }
 
 func (hist *historyListing) List(width, maxHeight int) *buffer {
 	b := newBuffer(width)
-
-	n := len(hist.all)
-
-	i := 0
-	if n > maxHeight {
-		i = n - maxHeight
+	if len(hist.all) == 0 {
+		b.writes("(no history)", "")
+		return b
 	}
 
-	for ; i < n; i++ {
-		b.writes("\n"+hist.all[i], "")
+	low, high := findWindow(len(hist.all), hist.current, maxHeight)
+	for i := low; i < high; i++ {
+		if i > low {
+			b.newline()
+		}
+		style := ""
+		if i == hist.current {
+			style = styleForSelected
+		}
+		b.writes(TrimWcWidth(hist.all[i], width), style)
 	}
-
-	n = len(b.cells)
-
-	startIndex := 0
-	if n > maxHeight {
-		startIndex = n - maxHeight
-	}
-
-	if len(b.cells) > 0 {
-		b.trimToLines(startIndex, n)
-	}
-
 	return b
 }

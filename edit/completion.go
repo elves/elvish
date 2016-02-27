@@ -215,7 +215,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 			}
 			style := cands[k].menu.style
 			if k == comp.current {
-				style += styleForCurrentCompletion
+				style += styleForSelected
 			}
 			text := cands[k].menu.text
 			if j > 0 {

@@ -2,16 +2,14 @@ package edit
 
 // Styles for UI.
 var (
-	styleForPrompt            = ""
-	styleForRPrompt           = "7"
-	styleForCompleted         = ";2"
-	styleForMode              = "1;3;35"
-	styleForTip               = ""
-	styleForCurrentCompletion = ";7"
-	styleForCompletedHistory  = "2"
-	styleForSelectedFile      = ";7"
-	styleForLocation          = "4"
-	styleForSelectedLocation  = ";7"
+	styleForPrompt           = ""
+	styleForRPrompt          = "7"
+	styleForCompleted        = ";2"
+	styleForMode             = "1;3;35"
+	styleForTip              = ""
+	styleForCompletedHistory = "2"
+	styleForFilter           = "4"
+	styleForSelected         = ";7"
 )
 
 var styleForType = map[TokenKind]string{

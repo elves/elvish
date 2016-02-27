@@ -24,7 +24,7 @@ func (l *location) ModeLine(width int) *buffer {
 	b := newBuffer(width)
 	b.writes(TrimWcWidth(" LOCATION ", width), styleForMode)
 	b.writes(" ", "")
-	b.writes(l.filter, styleForLocation)
+	b.writes(l.filter, styleForFilter)
 	return b
 }
 
@@ -126,7 +126,7 @@ func (loc *location) List(width, maxHeight int) *buffer {
 		text := fmt.Sprintf("%4.0f %s", loc.candidates[i].Score, parse.Quote(loc.candidates[i].Path))
 		style := ""
 		if i == loc.current {
-			style = styleForSelectedLocation
+			style = styleForSelected
 		}
 		b.writes(TrimWcWidth(text, width), style)
 	}

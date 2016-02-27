@@ -373,30 +373,6 @@ func trimToWindow(s []string, selected, max int) ([]string, int) {
 	return s[low:high], low
 }
 
-func renderNavColumn(nc *navColumn, w, h int) *buffer {
-	b := newBuffer(w)
-	low, high := findWindow(len(nc.names), nc.selected, h)
-	for i := low; i < high; i++ {
-		if i > low {
-			b.newline()
-		}
-		text := nc.names[i]
-		style := nc.styles[i]
-		if i == nc.selected {
-			style += styleForSelectedFile
-		}
-		if w >= navigationListingMinWidthForPadding {
-			padding := navigationListingColPadding
-			b.writePadding(padding, style)
-			b.writes(ForceWcWidth(text, w-2), style)
-			b.writePadding(padding, style)
-		} else {
-			b.writes(ForceWcWidth(text, w), style)
-		}
-	}
-	return b
-}
-
 func makeModeLine(text string, width int) *buffer {
 	b := newBuffer(width)
 	b.writes(TrimWcWidth(text, width), styleForMode)
