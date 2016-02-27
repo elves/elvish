@@ -175,6 +175,8 @@ func commonPrefix(s, t string) string {
 	return s
 }
 
+const completionListingColMargin = 2
+
 func (comp *completion) List(width, maxHeight int) *buffer {
 	b := newBuffer(width)
 	// Layout candidates in multiple columns

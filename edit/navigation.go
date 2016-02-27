@@ -287,6 +287,12 @@ func (n *navigation) readdirnames(dir string) (names, styles []string, err error
 	return names, styles, nil
 }
 
+const (
+	navigationListingColMargin          = 1
+	navigationListingColPadding         = 1
+	navigationListingMinWidthForPadding = 5
+)
+
 func (nav *navigation) List(width, maxHeight int) *buffer {
 	margin := navigationListingColMargin
 	var ratioParent, ratioCurrent, ratioPreview int

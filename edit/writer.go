@@ -11,13 +11,6 @@ import (
 	"github.com/elves/elvish/sys"
 )
 
-const (
-	completionListingColMargin          int = 2
-	navigationListingColMargin              = 1
-	navigationListingColPadding             = 1
-	navigationListingMinWidthForPadding     = 5
-)
-
 var logWriterDetail = false
 
 // cell is an indivisible unit on the screen. It is not necessarily 1 column
