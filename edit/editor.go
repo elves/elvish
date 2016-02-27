@@ -44,14 +44,16 @@ type editorState struct {
 	notifications         []string
 	tips                  []string
 	mode                  bufferMode
-	completion            *completion
-	completionLines       int
-	navigation            *navigation
-	history               historyState
-	historyListing        *historyListing
-	location              location
-	isExternal            map[string]bool
-	parseErrorAtEnd       bool
+
+	completion      completion
+	completionLines int
+	navigation      navigation
+	history         historyState
+	historyListing  historyListing
+	location        location
+
+	isExternal      map[string]bool
+	parseErrorAtEnd bool
 	// Used for builtins.
 	lastKey    Key
 	nextAction action
@@ -184,17 +186,6 @@ func atEnd(e error, n int) bool {
 	}
 }
 
-// acceptCompletion accepts currently selected completion candidate.
-func (ed *Editor) acceptCompletion() {
-	c := ed.completion
-	if 0 <= c.current && c.current < len(c.candidates) {
-		accepted := c.candidates[c.current].source.text
-		ed.insertAtDot(accepted)
-	}
-	ed.completion = nil
-	ed.mode = modeInsert
-}
-
 // insertAtDot inserts text at the dot and moves the dot after it.
 func (ed *Editor) insertAtDot(text string) {
 	ed.line = ed.line[:ed.dot] + text + ed.line[ed.dot:]
@@ -263,8 +254,6 @@ func (ed *Editor) startReadLine() error {
 func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.mode = modeInsert
 	ed.tips = nil
-	ed.completion = nil
-	ed.navigation = nil
 	ed.dot = len(ed.line)
 	// TODO Perhaps make it optional to NOT clear the rprompt
 	ed.rprompt = ""

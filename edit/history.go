@@ -2,6 +2,40 @@ package edit
 
 // Command history subsystem.
 
+// Interface.
+
+func startHistory(ed *Editor) {
+	ed.history.prefix = ed.line[:ed.dot]
+	ed.history.current = -1
+	if ed.prevHistory() {
+		ed.mode = modeHistory
+	} else {
+		ed.addTip("no matching history item")
+	}
+}
+
+func selectHistoryPrev(ed *Editor) {
+	ed.prevHistory()
+}
+
+func selectHistoryNext(ed *Editor) {
+	ed.nextHistory()
+}
+
+func selectHistoryNextOrQuit(ed *Editor) {
+	if !ed.nextHistory() {
+		ed.mode = modeInsert
+	}
+}
+
+func defaultHistory(ed *Editor) {
+	ed.acceptHistory()
+	ed.mode = modeInsert
+	ed.nextAction = action{actionType: reprocessKey}
+}
+
+// Implementation.
+
 type historyState struct {
 	current int
 	prefix  string

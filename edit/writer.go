@@ -426,8 +426,8 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 	// i keeps track of number of bytes written.
 	i := 0
 
-	comp := es.completion
-	hasComp := comp != nil && comp.current != -1
+	comp := &es.completion
+	hasComp := es.mode == modeCompletion && comp.current != -1
 
 	nowAt := func(i int) {
 		if es.dot == i {
@@ -533,8 +533,8 @@ tokens:
 	}
 
 	// Render bufListing under the maximum height constraint
-	nav := es.navigation
-	hist := es.historyListing
+	nav := &es.navigation
+	hist := &es.historyListing
 	if hListing > 0 {
 		b := newBuffer(width)
 		bufListing = b

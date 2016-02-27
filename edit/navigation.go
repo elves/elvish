@@ -9,8 +9,41 @@ import (
 
 // Navigation subsystem.
 
-// TODO(xiaq): Support file preview in navigation mode
+// Interface.
 
+func startNavigation(ed *Editor) {
+	ed.mode = modeNavigation
+	initNavigation(&ed.navigation)
+}
+
+func selectNavUp(ed *Editor) {
+	ed.navigation.prev()
+}
+
+func selectNavDown(ed *Editor) {
+	ed.navigation.next()
+}
+
+func ascendNav(ed *Editor) {
+	ed.navigation.ascend()
+}
+
+func descendNav(ed *Editor) {
+	ed.navigation.descend()
+}
+
+func triggerNavShowHidden(ed *Editor) {
+	ed.navigation.showHidden = !ed.navigation.showHidden
+	ed.navigation.refresh()
+}
+
+func defaultNavigation(ed *Editor) {
+	ed.mode = modeInsert
+	ed.nextAction = action{actionType: reprocessKey}
+}
+
+// Implementation.
+// TODO(xiaq): Support file preview in navigation mode
 // TODO(xiaq): Remember which file was selected in each directory.
 
 var (
@@ -26,10 +59,9 @@ type navigation struct {
 	showHidden bool
 }
 
-func newNavigation() *navigation {
-	n := &navigation{}
+func initNavigation(n *navigation) {
+	*n = navigation{}
 	n.refresh()
-	return n
 }
 
 func (n *navigation) maintainSelected(name string) {

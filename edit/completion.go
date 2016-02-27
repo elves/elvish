@@ -2,6 +2,64 @@ package edit
 
 import "unicode/utf8"
 
+// Completion subsystem.
+
+// Interface.
+
+func startCompletion(ed *Editor) {
+	startCompletionInner(ed, false)
+}
+
+func completePrefixOrStartCompletion(ed *Editor) {
+	startCompletionInner(ed, true)
+}
+
+func selectCandUp(ed *Editor) {
+	ed.completion.prev(false)
+}
+
+func selectCandDown(ed *Editor) {
+	ed.completion.next(false)
+}
+
+func selectCandLeft(ed *Editor) {
+	if c := ed.completion.current - ed.completionLines; c >= 0 {
+		ed.completion.current = c
+	}
+}
+
+func selectCandRight(ed *Editor) {
+	if c := ed.completion.current + ed.completionLines; c < len(ed.completion.candidates) {
+		ed.completion.current = c
+	}
+}
+
+func cycleCandRight(ed *Editor) {
+	ed.completion.next(true)
+}
+
+func cancelCompletion(ed *Editor) {
+	ed.completion = completion{}
+	ed.mode = modeInsert
+}
+
+// acceptCompletion accepts currently selected completion candidate.
+func acceptCompletion(ed *Editor) {
+	c := ed.completion
+	if 0 <= c.current && c.current < len(c.candidates) {
+		accepted := c.candidates[c.current].source.text
+		ed.insertAtDot(accepted)
+	}
+	ed.mode = modeInsert
+}
+
+func defaultCompletion(ed *Editor) {
+	acceptCompletion(ed)
+	ed.nextAction = action{actionType: reprocessKey}
+}
+
+// Implementation.
+
 type styled struct {
 	text  string
 	style string
@@ -37,14 +95,6 @@ func (c *completion) next(cycle bool) {
 			c.current--
 		}
 	}
-}
-
-func startCompletion(ed *Editor) {
-	startCompletionInner(ed, false)
-}
-
-func completePrefixOrStartCompletion(ed *Editor) {
-	startCompletionInner(ed, true)
 }
 
 func startCompletionInner(ed *Editor, completePrefix bool) {
@@ -83,7 +133,7 @@ func startCompletionInner(ed *Editor, completePrefix bool) {
 				return
 			}
 		}
-		ed.completion = c
+		ed.completion = *c
 		ed.mode = modeCompletion
 	}
 }
