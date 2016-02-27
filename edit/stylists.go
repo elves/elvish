@@ -37,7 +37,7 @@ func goodFormHead(head string, ed *Editor) bool {
 		return util.IsExecutable(head) || isDir(head)
 	} else {
 		return ed.isExternal[head] ||
-			ed.evaler.Builtin()[eval.FnPrefix+head] != nil ||
+			eval.Builtin()[eval.FnPrefix+head] != nil ||
 			ed.evaler.Global()[eval.FnPrefix+head] != nil
 	}
 }

@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 	"unicode/utf8"
@@ -33,7 +32,6 @@ type Namespace map[string]Variable
 // Evaler is used to evaluate elvish sources. It maintains runtime context
 // shared among all evalCtx instances.
 type Evaler struct {
-	builtin Namespace
 	global  Namespace
 	modules map[string]Namespace
 	store   *store.Store
@@ -59,31 +57,17 @@ func (ec *EvalCtx) evaling(n parse.Node) {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store) *Evaler {
-	// Construct initial global namespace
-	pid := String(strconv.Itoa(syscall.Getpid()))
-	builtin := Namespace{
-		"pid":   NewRoVariable(pid),
-		"ok":    NewRoVariable(OK),
-		"true":  NewRoVariable(Bool(true)),
-		"false": NewRoVariable(Bool(false)),
-		"paths": &EnvPathList{envName: "PATH"},
-		"pwd":   PwdVariable{},
-	}
-	for _, b := range builtinFns {
-		builtin[FnPrefix+b.Name] = NewRoVariable(b)
-	}
-
 	// XXX Temporary fix for compiler not knowing builtin namespace.
 	global := Namespace{}
-	for k, v := range builtin {
+	for k, v := range builtinNamespace {
 		global[k] = v
 	}
 
-	return &Evaler{builtin, global, map[string]Namespace{}, st, nil, nil}
+	return &Evaler{global, map[string]Namespace{}, st, nil, nil}
 }
 
 func (e *Evaler) searchPaths() []string {
-	return e.builtin["paths"].(*EnvPathList).get()
+	return builtinNamespace["paths"].(*EnvPathList).get()
 }
 
 func (e *Evaler) AddModule(name string, ns Namespace) {
@@ -340,8 +324,8 @@ func (ev *Evaler) Source(fname string) error {
 }
 
 // Builtin returns the builtin namespace.
-func (ev *Evaler) Builtin() Namespace {
-	return map[string]Variable(ev.builtin)
+func Builtin() Namespace {
+	return map[string]Variable(builtinNamespace)
 }
 
 // Global returns the global namespace.
@@ -360,7 +344,7 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	case "up":
 		return ec.up[name]
 	case "builtin":
-		return ec.builtin[name]
+		return builtinNamespace[name]
 	case "":
 		if v, ok := ec.local[name]; ok {
 			return v
@@ -368,7 +352,7 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 		if v, ok := ec.up[name]; ok {
 			return v
 		}
-		return ec.builtin[name]
+		return builtinNamespace[name]
 	case "env", "external", "e", "E":
 		if strings.HasPrefix(name, FnPrefix) {
 			return NewRoVariable(ExternalCmd{name[len(FnPrefix):]})

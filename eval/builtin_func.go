@@ -103,6 +103,9 @@ func init() {
 		&BuiltinFn{"-log", wrapFn(_log)},
 		&BuiltinFn{"-exec", wrapFn(_exec)},
 	}
+	for _, b := range builtinFns {
+		builtinNamespace[FnPrefix+b.Name] = NewRoVariable(b)
+	}
 }
 
 var (
