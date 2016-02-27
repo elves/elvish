@@ -5,6 +5,14 @@ import (
 	"unicode"
 )
 
+var QuotingStyles = []struct {
+	Type   PrimaryType
+	Quoter string
+}{
+	{SingleQuoted, "'"},
+	{DoubleQuoted, "\""},
+}
+
 // Quote returns a representation of s in elvish syntax. Bareword is tried
 // first, then single quoted string and finally double quoted string.
 func Quote(s string) string {

@@ -80,6 +80,8 @@ type styled struct {
 
 type candidate struct {
 	source, menu styled
+	// XXX only used in completers for compound.
+	sourceSuffix string
 }
 
 func (c *completion) prev(cycle bool) {

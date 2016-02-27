@@ -69,6 +69,7 @@ func complNewForm(n parse.Node, ed *Editor) []*candidate {
 	return nil
 }
 
+// XXX Semantics of candidate is pretty broken here.
 func makeCompoundCompleter(
 	f func(*parse.Compound, string, *Editor) []*candidate) completer {
 	return func(n parse.Node, ed *Editor) []*candidate {
@@ -80,7 +81,30 @@ func makeCompoundCompleter(
 		if cn == nil {
 			return nil
 		}
-		return f(cn, head, ed)
+		cands := f(cn, head, ed)
+		for _, cand := range cands {
+			// Deal with quoting by trying to continue the quoting of the last
+			// primary.
+			newSource, q := parse.QuoteAs(cand.source.text, pn.Type)
+			for _, quoting := range parse.QuotingStyles {
+				if pn.Type == quoting.Type &&
+					!strings.HasSuffix(pn.SourceText(), string(quoting.Quoter)) {
+					// The last primary has unclosed quoting.
+					if q == quoting.Type {
+						// The completed text was quoted using the same style;
+						// elide the leading quoter.
+						newSource = newSource[len(quoting.Quoter):]
+					} else {
+						// The completed text was quoted using a different
+						// style. Prepend a quoter to close the existing text.
+						newSource = quoting.Quoter + newSource
+					}
+				}
+			}
+
+			cand.source.text = newSource + cand.sourceSuffix
+		}
+		return cands
 	}
 }
 
@@ -175,15 +199,17 @@ func complArgInner(head string, ed *Editor, formHead bool) []*candidate {
 		// Full filename for .getStyle.
 		full := head + name[len(fileprefix):]
 
+		var suffix string
 		if info.IsDir() {
-			name += "/"
+			suffix = "/"
 		} else {
-			name += " "
+			suffix = " "
 		}
 
 		cands = append(cands, &candidate{
-			source: styled{name[len(fileprefix):], ""},
-			menu:   styled{name, defaultLsColor.getStyle(full)},
+			source:       styled{name[len(fileprefix):], ""},
+			menu:         styled{name, defaultLsColor.getStyle(full)},
+			sourceSuffix: suffix,
 		})
 	}
 
