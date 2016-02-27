@@ -102,6 +102,11 @@ func makeCompoundCompleter(
 				}
 			}
 
+			// Don't add bogus '' if the candidate has an empty source.
+			// XXX Might be wrong.
+			if newSource == "''" {
+				newSource = ""
+			}
 			cand.source.text = newSource + cand.sourceSuffix
 		}
 		return cands
