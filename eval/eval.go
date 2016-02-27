@@ -57,13 +57,7 @@ func (ec *EvalCtx) evaling(n parse.Node) {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store) *Evaler {
-	// XXX Temporary fix for compiler not knowing builtin namespace.
-	global := Namespace{}
-	for k, v := range builtinNamespace {
-		global[k] = v
-	}
-
-	return &Evaler{global, map[string]Namespace{}, st, nil, nil}
+	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil}
 }
 
 func (e *Evaler) searchPaths() []string {

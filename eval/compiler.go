@@ -70,10 +70,19 @@ func (cp *compiler) registerVariableGet(qname string) bool {
 		}
 	}
 	// Find in upper scopes
-	for i := len(cp.scopes) - 2; i >= 0; i-- {
-		if cp.scopes[i][name] {
-			// Existing name: record capture and return.
-			cp.capture[name] = true
+	if ns == "" || ns == "up" {
+		for i := len(cp.scopes) - 2; i >= 0; i-- {
+			if cp.scopes[i][name] {
+				// Existing name: record capture and return.
+				cp.capture[name] = true
+				return true
+			}
+		}
+	}
+	// Find in builtin scope
+	if ns == "" || ns == "builtin" {
+		_, ok := builtinNamespace[name]
+		if ok {
 			return true
 		}
 	}
@@ -94,6 +103,9 @@ func (cp *compiler) registerVariableSet(qname string) bool {
 				return true
 			}
 		}
+		return false
+	case "builtin":
+		cp.errorf("cannot set builtin variable")
 		return false
 	case "":
 		if cp.thisScope()[name] {
