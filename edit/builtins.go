@@ -394,13 +394,13 @@ func startHistoryListing(ed *Editor) {
 		ed.notify("store not connected")
 		return
 	}
-	ed.mode = modeHistoryListing
 	hl, err := newHistoryListing(ed.store)
 	if err != nil {
 		ed.notify("%s", err)
 		return
 	}
 	ed.historyListing = hl
+	ed.mode = modeHistoryListing
 }
 
 func defaultHistoryListing(ed *Editor) {
