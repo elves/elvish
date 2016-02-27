@@ -77,17 +77,13 @@ func acceptLocation(ed *Editor) {
 	ed.mode = &ed.insert
 }
 
-func cancelLocation(ed *Editor) {
-	ed.mode = &ed.insert
-}
-
 func locationDefault(ed *Editor) {
 	k := ed.lastKey
 	if likeChar(k) {
 		ed.location.filter += string(k.Rune)
 		ed.location.updateCandidates(ed)
 	} else {
-		cancelLocation(ed)
+		startInsert(ed)
 		ed.nextAction = action{typ: reprocessKey}
 	}
 }

@@ -58,10 +58,6 @@ func navInsertSelected(ed *Editor) {
 	ed.insertAtDot(parse.Quote(ed.navigation.current.selectedName()))
 }
 
-func quitNavigation(ed *Editor) {
-	ed.mode = &ed.insert
-}
-
 func defaultNavigation(ed *Editor) {
 	// Use key binding for insert mode without exiting navigation mode.
 	if f, ok := keyBindings[modeInsert][ed.lastKey]; ok {

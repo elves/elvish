@@ -38,7 +38,6 @@ var builtins = []Builtin{
 	// Completion mode
 	{"complete-prefix-or-start-completion", completePrefixOrStartCompletion},
 	{"start-completion", startCompletion},
-	{"cancel-completion", cancelCompletion},
 	{"select-cand-up", selectCandUp},
 	{"select-cand-down", selectCandDown},
 	{"select-cand-left", selectCandLeft},
@@ -55,7 +54,6 @@ var builtins = []Builtin{
 	{"descend-nav", descendNav},
 	{"trigger-nav-show-hidden", triggerNavShowHidden},
 	{"nav-insert-selected", navInsertSelected},
-	{"quit-navigation", quitNavigation},
 	{"default-navigation", defaultNavigation},
 
 	// History mode
@@ -78,7 +76,6 @@ var builtins = []Builtin{
 	{"location-next", locationNext},
 	{"location-backspace", locationBackspace},
 	{"accept-location", acceptLocation},
-	{"cancel-location", cancelLocation},
 	{"location-default", locationDefault},
 
 	// Misc

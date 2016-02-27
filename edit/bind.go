@@ -11,7 +11,6 @@ import (
 
 var defaultBindings = map[ModeType]map[Key]string{
 	modeInsert: map[Key]string{
-		Default: "default-insert",
 		// Moving.
 		Key{Left, 0}:     "move-dot-left",
 		Key{Right, 0}:    "move-dot-right",
@@ -41,9 +40,9 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{'N', Ctrl}: "start-navigation",
 		Key{'H', Ctrl}: "start-history-listing",
 		Key{'L', Ctrl}: "start-location",
+		Default:        "default-insert",
 	},
 	modeCommand: map[Key]string{
-		Default: "default-command",
 		// Moving.
 		Key{'h', 0}: "move-dot-left",
 		Key{'l', 0}: "move-dot-right",
@@ -58,15 +57,16 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{'D', 0}: "kill-line-right",
 		// Controls.
 		Key{'i', 0}: "start-insert",
+		Default:     "default-command",
 	},
 	modeCompletion: map[Key]string{
-		Key{'[', Ctrl}: "cancel-completion",
 		Key{Up, 0}:     "select-cand-up",
 		Key{Down, 0}:   "select-cand-down",
 		Key{Left, 0}:   "select-cand-left",
 		Key{Right, 0}:  "select-cand-right",
 		Key{Tab, 0}:    "cycle-cand-right",
 		Key{Enter, 0}:  "accept-completion",
+		Key{'[', Ctrl}: "start-insert",
 		Default:        "default-completion",
 	},
 	modeNavigation: map[Key]string{
@@ -76,20 +76,21 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{Right, 0}:  "descend-nav",
 		Key{Tab, 0}:    "nav-insert-selected",
 		Key{'H', Ctrl}: "trigger-nav-show-hidden",
-		Key{'[', Ctrl}: "quit-navigation",
+		Key{'[', Ctrl}: "start-insert",
 		Default:        "default-navigation",
 	},
 	modeHistory: map[Key]string{
-		Key{'[', Ctrl}: "start-insert",
 		Key{Up, 0}:     "select-history-prev",
 		Key{Down, 0}:   "select-history-next-or-quit",
+		Key{'[', Ctrl}: "start-insert",
 		Default:        "default-history",
 	},
 	modeHistoryListing: map[Key]string{
-		Key{Up, 0}:    "histlist-prev",
-		Key{Down, 0}:  "histlist-next",
-		Key{Enter, 0}: "histlist-append",
-		Default:       "default-history-listing",
+		Key{Up, 0}:     "histlist-prev",
+		Key{Down, 0}:   "histlist-next",
+		Key{Enter, 0}:  "histlist-append",
+		Key{'[', Ctrl}: "start-insert",
+		Default:        "default-history-listing",
 	},
 	modeLocation: map[Key]string{
 		Key{Up, 0}:        "location-prev",
@@ -97,7 +98,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{Tab, 0}:       "location-next",
 		Key{Backspace, 0}: "location-backspace",
 		Key{Enter, 0}:     "accept-location",
-		Key{'[', Ctrl}:    "cancel-location",
+		Key{'[', Ctrl}:    "start-insert",
 		Default:           "location-default",
 	},
 }

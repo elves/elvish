@@ -56,11 +56,6 @@ func cycleCandRight(ed *Editor) {
 	ed.completion.next(true)
 }
 
-func cancelCompletion(ed *Editor) {
-	ed.completion = completion{}
-	ed.mode = &ed.insert
-}
-
 // acceptCompletion accepts currently selected completion candidate.
 func acceptCompletion(ed *Editor) {
 	c := ed.completion
