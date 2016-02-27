@@ -18,11 +18,15 @@ Up-to-date binaries for 64-bit [Linux](https://dl.elvish.io/elvish-linux.tar.gz)
 
 ## Getting Started
 
-Put your startup script in `~/.elvish/rc.elv`.
-
 Elvish mimics bash and zsh in a lot of places. The following shows some key differences and highlights, as well as some common tasks:
 
-* Define aliases like `fn ls { external:ls --color $@ }`
+* Put your startup script in `~/.elvish/rc.elv`. There is no `alias` yet, but you can achieve the goal by defining a function:
+
+  ```sh
+  fn ls { external:ls --color $@ }
+  ```
+
+  The `external:` prefix ensures that the external command named `ls` will be called. Otherwise this definition will result in infinite recursion.
 
 * The left and right prompts and be customized by modifying `le:prompt` and `le:rprompt`. They can be assigned either to a function, in which their outputs are used, or a constant string. The following simulates the default prompts but uses fancy Unicode:
 
