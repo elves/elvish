@@ -297,12 +297,14 @@ func (ed *Editor) ReadLine() (lr LineRead) {
 		}
 	})
 
+	fullRefresh := false
 MainLoop:
 	for {
 		ed.prompt = ed.ps1.Call(ed)
 		ed.rprompt = ed.rps1.Call(ed)
 
-		err := ed.refresh(false, true)
+		err := ed.refresh(fullRefresh, true)
+		fullRefresh = false
 		if err != nil {
 			return LineRead{Err: err}
 		}
@@ -323,6 +325,7 @@ MainLoop:
 				}
 				goto MainLoop
 			case syscall.SIGWINCH:
+				fullRefresh = true
 				continue MainLoop
 			case syscall.SIGCHLD:
 				// ignore
