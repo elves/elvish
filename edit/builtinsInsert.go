@@ -188,11 +188,11 @@ func defaultInsert(ed *Editor) {
 	if k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune) {
 		insertKey(ed)
 	} else {
-		ed.addTip("Unbound: %s", k)
+		ed.notify("Unbound: %s", k)
 	}
 }
 
 func defaultCommand(ed *Editor) {
 	k := ed.lastKey
-	ed.addTip("Unbound: %s", k)
+	ed.notify("Unbound: %s", k)
 }
