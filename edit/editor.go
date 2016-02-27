@@ -62,22 +62,6 @@ type editorState struct {
 	nextAction action
 }
 
-type actionType int
-
-const (
-	noAction actionType = iota
-	reprocessKey
-	exitReadLine
-)
-
-// LineRead is the result of ReadLine. Exactly one member is non-zero, making
-// it effectively a tagged union.
-type LineRead struct {
-	Line string
-	EOF  bool
-	Err  error
-}
-
 // NewEditor creates an Editor.
 func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.Store) *Editor {
 	seq := -1
@@ -270,7 +254,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 }
 
 // ReadLine reads a line interactively.
-func (ed *Editor) ReadLine() (lr LineRead) {
+func (ed *Editor) ReadLine() (line string, err error) {
 	ed.editorState = editorState{active: true}
 	ed.mode = &ed.insert
 
@@ -280,13 +264,13 @@ func (ed *Editor) ReadLine() (lr LineRead) {
 	ed.writer.resetOldBuf()
 	go ed.reader.Run()
 
-	err := ed.startReadLine()
-	if err != nil {
-		return LineRead{Err: err}
+	e := ed.startReadLine()
+	if e != nil {
+		return "", e
 	}
-	defer ed.finishReadLine(func(err error) {
-		if err != nil {
-			lr.Err = util.CatError(lr.Err, err)
+	defer ed.finishReadLine(func(e error) {
+		if e != nil {
+			err = util.CatError(err, e)
 		}
 	})
 
@@ -299,7 +283,7 @@ MainLoop:
 		err := ed.refresh(fullRefresh, true)
 		fullRefresh = false
 		if err != nil {
-			return LineRead{Err: err}
+			return "", err
 		}
 
 		ed.tips = nil
@@ -349,22 +333,20 @@ MainLoop:
 			act := ed.nextAction
 			ed.nextAction = action{}
 
-			switch act.actionType {
+			switch act.typ {
 			case noAction:
 				continue
 			case reprocessKey:
 				err = ed.refresh(false, true)
 				if err != nil {
-					return LineRead{Err: err}
+					return "", err
 				}
 				goto lookupKey
 			case exitReadLine:
-				lr = act.returnValue
-				if lr.EOF == false && lr.Err == nil && lr.Line != "" {
-					ed.appendHistory(lr.Line)
+				if act.returnErr == nil && act.returnLine != "" {
+					ed.appendHistory(act.returnLine)
 				}
-
-				return lr
+				return act.returnLine, act.returnErr
 			}
 		}
 	}

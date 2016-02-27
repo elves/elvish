@@ -127,7 +127,7 @@ func interact(ev *eval.Evaler, st *store.Store) {
 	}
 
 	// Build readLine function.
-	readLine := func() edit.LineRead {
+	readLine := func() (string, error) {
 		return ed.ReadLine()
 	}
 
@@ -139,12 +139,12 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		cmdNum++
 		// name := fmt.Sprintf("<tty %d>", cmdNum)
 
-		lr := readLine()
+		line, err := readLine()
 
-		if lr.EOF {
+		if err == io.EOF {
 			break
-		} else if lr.Err != nil {
-			fmt.Println("Editor error:", lr.Err)
+		} else if err != nil {
+			fmt.Println("Editor error:", err)
 			if !usingBasic {
 				fmt.Println("Falling back to basic line editor")
 				readLine = basicReadLine
@@ -163,26 +163,19 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		n, err := parse.Parse(lr.Line)
+		n, err := parse.Parse(line)
 		printError(err)
 
 		if err == nil {
-			err := ev.EvalInteractive(lr.Line, n)
+			err := ev.EvalInteractive(line, n)
 			printError(err)
 		}
 	}
 }
 
-func basicReadLine() edit.LineRead {
+func basicReadLine() (string, error) {
 	stdin := bufio.NewReaderSize(os.Stdin, 0)
-	line, err := stdin.ReadString('\n')
-	if err == nil {
-		return edit.LineRead{Line: line}
-	} else if err == io.EOF {
-		return edit.LineRead{EOF: true}
-	} else {
-		return edit.LineRead{Err: err}
-	}
+	return stdin.ReadString('\n')
 }
 
 func logSignals() {

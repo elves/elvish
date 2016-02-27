@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"io"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -178,7 +179,7 @@ func insertKey(ed *Editor) {
 }
 
 func returnLine(ed *Editor) {
-	ed.nextAction = action{exitReadLine, LineRead{Line: ed.line}}
+	ed.nextAction = action{typ: exitReadLine, returnLine: ed.line}
 }
 
 func smartEnter(ed *Editor) {
@@ -200,7 +201,7 @@ func findLastIndent(s string) string {
 
 func returnEOF(ed *Editor) {
 	if len(ed.line) == 0 {
-		ed.nextAction = action{exitReadLine, LineRead{EOF: true}}
+		ed.nextAction = action{typ: exitReadLine, returnErr: io.EOF}
 	}
 }
 

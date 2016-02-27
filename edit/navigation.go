@@ -59,7 +59,7 @@ func navInsertSelected(ed *Editor) {
 }
 
 func quitNavigation(ed *Editor) {
-	startInsert(ed)
+	ed.mode = &ed.insert
 }
 
 func defaultNavigation(ed *Editor) {

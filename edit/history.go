@@ -40,14 +40,14 @@ func selectHistoryNext(ed *Editor) {
 
 func selectHistoryNextOrQuit(ed *Editor) {
 	if !ed.nextHistory() {
-		startInsert(ed)
+		ed.mode = &ed.insert
 	}
 }
 
 func defaultHistory(ed *Editor) {
 	ed.acceptHistory()
-	startInsert(ed)
-	ed.nextAction = action{actionType: reprocessKey}
+	ed.mode = &ed.insert
+	ed.nextAction = action{typ: reprocessKey}
 }
 
 // Implementation.

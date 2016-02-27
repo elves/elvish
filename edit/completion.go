@@ -57,7 +57,7 @@ func cycleCandRight(ed *Editor) {
 
 func cancelCompletion(ed *Editor) {
 	ed.completion = completion{}
-	startInsert(ed)
+	ed.mode = &ed.insert
 }
 
 // acceptCompletion accepts currently selected completion candidate.
@@ -67,12 +67,12 @@ func acceptCompletion(ed *Editor) {
 		accepted := c.candidates[c.current].source.text
 		ed.insertAtDot(accepted)
 	}
-	startInsert(ed)
+	ed.mode = &ed.insert
 }
 
 func defaultCompletion(ed *Editor) {
 	acceptCompletion(ed)
-	ed.nextAction = action{actionType: reprocessKey}
+	ed.nextAction = action{typ: reprocessKey}
 }
 
 // Implementation.

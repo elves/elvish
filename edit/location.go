@@ -81,11 +81,11 @@ func acceptLocation(ed *Editor) {
 			ed.notify("%v", err)
 		}
 	}
-	startInsert(ed)
+	ed.mode = &ed.insert
 }
 
 func cancelLocation(ed *Editor) {
-	startInsert(ed)
+	ed.mode = &ed.insert
 }
 
 func locationDefault(ed *Editor) {
@@ -95,6 +95,6 @@ func locationDefault(ed *Editor) {
 		ed.location.updateCandidates(ed)
 	} else {
 		cancelLocation(ed)
-		ed.nextAction = action{actionType: reprocessKey}
+		ed.nextAction = action{typ: reprocessKey}
 	}
 }

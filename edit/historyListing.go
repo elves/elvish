@@ -32,8 +32,8 @@ func startHistoryListing(ed *Editor) {
 }
 
 func defaultHistoryListing(ed *Editor) {
-	startInsert(ed)
-	ed.nextAction = action{actionType: reprocessKey}
+	ed.mode = &ed.insert
+	ed.nextAction = action{typ: reprocessKey}
 }
 
 // Implementation.
