@@ -14,10 +14,13 @@ type location struct {
 	current    int
 }
 
-func (l *location) updateCandidates(store *store.Store) error {
-	dirs, err := store.FindDirs(l.filter)
+func (l *location) updateCandidates(ed *Editor) bool {
+	dirs, err := ed.store.FindDirsSubseq(l.filter)
 	if err != nil {
-		return err
+		l.candidates = nil
+		l.current = -1
+		ed.notify("find directories: %v", err)
+		return false
 	}
 	l.candidates = dirs
 
@@ -26,13 +29,14 @@ func (l *location) updateCandidates(store *store.Store) error {
 	} else {
 		l.current = -1
 	}
-	return nil
+	return true
 }
 
 func startLocation(ed *Editor) {
 	ed.location = location{}
-	ed.location.updateCandidates(ed.store)
-	ed.mode = modeLocation
+	if ed.location.updateCandidates(ed) {
+		ed.mode = modeLocation
+	}
 }
 
 func locationPrev(ed *Editor) {
@@ -52,7 +56,7 @@ func locationBackspace(ed *Editor) {
 	_, size := utf8.DecodeLastRuneInString(loc.filter)
 	if size > 0 {
 		loc.filter = loc.filter[:len(loc.filter)-size]
-		loc.updateCandidates(ed.store)
+		loc.updateCandidates(ed)
 	}
 }
 
@@ -76,7 +80,7 @@ func locationDefault(ed *Editor) {
 	k := ed.lastKey
 	if k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune) {
 		ed.location.filter += string(k.Rune)
-		ed.location.updateCandidates(ed.store)
+		ed.location.updateCandidates(ed)
 	} else {
 		cancelLocation(ed)
 		ed.nextAction = action{actionType: reprocessKey}

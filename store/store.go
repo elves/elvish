@@ -18,6 +18,13 @@ type Store struct {
 
 var initTable = map[string](func(*sql.DB) error){}
 
+func init() {
+	initTable["(pragma)"] = func(db *sql.DB) error {
+		_, err := db.Exec(`pragma case_sensitive_like = true;`)
+		return err
+	}
+}
+
 // DefaultDB returns the default database for storage.
 func DefaultDB(dbname string) (*sql.DB, error) {
 	uri := "file:" + url.QueryEscape(dbname) +
