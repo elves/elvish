@@ -27,7 +27,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{'W', Ctrl}:    "kill-word-left",
 		Key{Backspace, 0}: "kill-rune-left",
 		// Some terminal send ^H on backspace
-		Key{'H', Ctrl}: "kill-rune-left",
+		// Key{'H', Ctrl}: "kill-rune-left",
 		Key{Delete, 0}: "kill-rune-right",
 		// Inserting.
 		Key{'.', Alt}:   "insert-last-word",
