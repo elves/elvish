@@ -38,11 +38,17 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 * Press Tab to start completion. Use arrow key and Tab to select the candidate;  press Enter, or just continue typing to accept. To cancel, press Enter.
 
+  ![tab completion](https://raw.githubusercontent.com/elves/images/master/completion.png)
+
 * Press Ctrl-N to start navigation mode. Press Ctrl-H to show hidden files; press again to hide. Likewise, pressing Escape gets you back to the default (insert) mode.
+
+  ![navigation mode](https://raw.githubusercontent.com/elves/images/master/navigation.png)
 
 * Try typing `echo [` and press Enter. Elvish knows that the command is unfinished due to the unclosed `[` and inserts a newline instead of accepting the command. Moreover, common errors like syntax errors and missing variables are highlighted in real time.
 
 * Elvish remembers which directories you have visisted. Press Ctrl-L to list visited directories, sorted by score. Type to filer, and use Up and Down to choose. Press Enter to cd into the chosen directory; press Escape to cancel.
+
+  ![location mode](https://raw.githubusercontent.com/elves/images/master/location.png)
 
   NOTE: Default key bindings as listed above are subject to change in the future; but the functionality will not go away.
 
@@ -109,21 +115,6 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   ```
 
 * Output of some builtin commands start with a funny "▶". It is not part of the output itself, but shows that such commands output a stream of values instead of bytes. As such, their internal structures as well as boundaries between valued are preserved. This allows us to manipulate structured data in the shell; more on this later.
-
-
-## More Screenshots:
-
-Tab completion:
-
-![tab completion](https://raw.githubusercontent.com/elves/images/master/completion.png)
-
-Navigation mode:
-
-![navigation mode](https://raw.githubusercontent.com/elves/images/master/navigation.png)
-
-Location mode:
-
-![location mode](https://raw.githubusercontent.com/elves/images/master/location.png)
 
 
 ## Building Elvish
