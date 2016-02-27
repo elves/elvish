@@ -7,7 +7,8 @@ import "github.com/elves/elvish/store"
 // Interface.
 
 type historyListing struct {
-	all []string
+	all     []string
+	current int
 }
 
 func (*historyListing) Mode() ModeType {

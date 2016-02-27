@@ -54,24 +54,15 @@ func startLocation(ed *Editor) {
 }
 
 func locationPrev(ed *Editor) {
-	if len(ed.location.candidates) > 0 && ed.location.current > 0 {
-		ed.location.current--
-	}
+	ed.location.prev()
 }
 
 func locationNext(ed *Editor) {
-	if len(ed.location.candidates) > 0 && ed.location.current < len(ed.location.candidates)-1 {
-		ed.location.current++
-	}
+	ed.location.next()
 }
 
 func locationBackspace(ed *Editor) {
-	loc := &ed.location
-	_, size := utf8.DecodeLastRuneInString(loc.filter)
-	if size > 0 {
-		loc.filter = loc.filter[:len(loc.filter)-size]
-		loc.updateCandidates(ed)
-	}
+	ed.location.backspace(ed)
 }
 
 func acceptLocation(ed *Editor) {
@@ -98,6 +89,26 @@ func locationDefault(ed *Editor) {
 	} else {
 		cancelLocation(ed)
 		ed.nextAction = action{typ: reprocessKey}
+	}
+}
+
+func (loc *location) prev() {
+	if len(loc.candidates) > 0 && loc.current > 0 {
+		loc.current--
+	}
+}
+
+func (loc *location) next() {
+	if len(loc.candidates) > 0 && loc.current < len(loc.candidates)-1 {
+		loc.current++
+	}
+}
+
+func (loc *location) backspace(ed *Editor) {
+	_, size := utf8.DecodeLastRuneInString(loc.filter)
+	if size > 0 {
+		loc.filter = loc.filter[:len(loc.filter)-size]
+		loc.updateCandidates(ed)
 	}
 }
 
