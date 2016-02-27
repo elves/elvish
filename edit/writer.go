@@ -404,7 +404,7 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 	height, width := sys.GetWinsize(int(w.file.Fd()))
 
 	var bufNoti, bufLine, bufMode, bufTips, bufListing, buf *buffer
-	// butNot
+	// butNoti
 	if len(es.notifications) > 0 {
 		bufNoti = newBuffer(width)
 		bufNoti.writes(strings.Join(es.notifications, "\n"), "")
