@@ -42,7 +42,9 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 * Try typing `echo [` and press Enter. Elvish knows that the command is unfinished due to the unclosed `[` and inserts a newline instead of accepting the command. Moreover, common errors like syntax errors and missing variables are highlighted in real time.
 
-* Elvish remembers which directories you have visisted. Use `dirs` to show the history. `jump x` jumps to the highest-scored directory containing `x`.
+* Elvish remembers which directories you have visisted. Press Ctrl-L to list visited directories, sorted by score. Type to filer, and use Up and Down to choose. Press Enter to cd into the chosen directory; press Escape to cancel.
+
+  NOTE: Default key bindings as listed above are subject to change in the future; but the functionality will not go away.
 
 * Lists look like `[a b c]`, and maps look like `[&key1=value1 &key2=value2]`. Unlike other shells, lists never expands to multiple words, unless you explicitly splice it by prefixing the variable name with `$@`:
   ```sh
@@ -118,6 +120,10 @@ Tab completion:
 Navigation mode:
 
 ![navigation mode](https://raw.githubusercontent.com/elves/images/master/navigation.png)
+
+Location mode:
+
+![location mode](https://raw.githubusercontent.com/elves/images/master/location.png)
 
 
 ## Building Elvish
