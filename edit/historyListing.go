@@ -7,8 +7,8 @@ import "github.com/elves/elvish/store"
 // Interface.
 
 type historyListing struct {
-	all     []string
-	current int
+	all      []string
+	selected int
 }
 
 func (*historyListing) Mode() ModeType {
@@ -41,8 +41,8 @@ func histlistNext(ed *Editor) {
 }
 
 func histlistAppend(ed *Editor) {
-	if ed.historyListing.current != -1 {
-		line := ed.historyListing.all[ed.historyListing.current]
+	if ed.historyListing.selected != -1 {
+		line := ed.historyListing.all[ed.historyListing.selected]
 		if len(ed.line) > 0 {
 			line = "\n" + line
 		}
@@ -65,23 +65,23 @@ func initHistoryListing(hl *historyListing, s *store.Store) error {
 	cmds, err := s.Cmds(0, seq)
 	if err != nil {
 		hl.all = nil
-		hl.current = -1
+		hl.selected = -1
 		return err
 	}
 	hl.all = cmds
-	hl.current = len(hl.all) - 1
+	hl.selected = len(hl.all) - 1
 	return nil
 }
 
 func (hist *historyListing) prev() {
-	if len(hist.all) > 0 && hist.current > 0 {
-		hist.current--
+	if len(hist.all) > 0 && hist.selected > 0 {
+		hist.selected--
 	}
 }
 
 func (hist *historyListing) next() {
-	if len(hist.all) > 0 && hist.current < len(hist.all)-1 {
-		hist.current++
+	if len(hist.all) > 0 && hist.selected < len(hist.all)-1 {
+		hist.selected++
 	}
 }
 
@@ -92,13 +92,13 @@ func (hist *historyListing) List(width, maxHeight int) *buffer {
 		return b
 	}
 
-	low, high := findWindow(len(hist.all), hist.current, maxHeight)
+	low, high := findWindow(len(hist.all), hist.selected, maxHeight)
 	for i := low; i < high; i++ {
 		if i > low {
 			b.newline()
 		}
 		style := ""
-		if i == hist.current {
+		if i == hist.selected {
 			style = styleForSelected
 		}
 		b.writes(TrimWcWidth(hist.all[i], width), style)

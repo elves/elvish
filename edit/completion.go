@@ -12,7 +12,7 @@ import (
 type completion struct {
 	completer  string
 	candidates []*candidate
-	current    int
+	selected   int
 	lines      int
 }
 
@@ -41,14 +41,14 @@ func selectCandDown(ed *Editor) {
 }
 
 func selectCandLeft(ed *Editor) {
-	if c := ed.completion.current - ed.completion.lines; c >= 0 {
-		ed.completion.current = c
+	if c := ed.completion.selected - ed.completion.lines; c >= 0 {
+		ed.completion.selected = c
 	}
 }
 
 func selectCandRight(ed *Editor) {
-	if c := ed.completion.current + ed.completion.lines; c < len(ed.completion.candidates) {
-		ed.completion.current = c
+	if c := ed.completion.selected + ed.completion.lines; c < len(ed.completion.candidates) {
+		ed.completion.selected = c
 	}
 }
 
@@ -59,8 +59,8 @@ func cycleCandRight(ed *Editor) {
 // acceptCompletion accepts currently selected completion candidate.
 func acceptCompletion(ed *Editor) {
 	c := ed.completion
-	if 0 <= c.current && c.current < len(c.candidates) {
-		accepted := c.candidates[c.current].source.text
+	if 0 <= c.selected && c.selected < len(c.candidates) {
+		accepted := c.candidates[c.selected].source.text
 		ed.insertAtDot(accepted)
 	}
 	ed.mode = &ed.insert
@@ -83,23 +83,23 @@ type candidate struct {
 }
 
 func (c *completion) prev(cycle bool) {
-	c.current--
-	if c.current == -1 {
+	c.selected--
+	if c.selected == -1 {
 		if cycle {
-			c.current = len(c.candidates) - 1
+			c.selected = len(c.candidates) - 1
 		} else {
-			c.current++
+			c.selected++
 		}
 	}
 }
 
 func (c *completion) next(cycle bool) {
-	c.current++
-	if c.current == len(c.candidates) {
+	c.selected++
+	if c.selected == len(c.candidates) {
 		if cycle {
-			c.current = 0
+			c.selected = 0
 		} else {
-			c.current--
+			c.selected--
 		}
 	}
 }
@@ -198,7 +198,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 	comp.lines = lines
 
 	// Determine the window to show.
-	low, high := findWindow(lines, comp.current%lines, maxHeight)
+	low, high := findWindow(lines, comp.selected%lines, maxHeight)
 	for i := low; i < high; i++ {
 		if i > low {
 			b.newline()
@@ -209,7 +209,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 				break
 			}
 			style := cands[k].menu.style
-			if k == comp.current {
+			if k == comp.selected {
 				style += styleForSelected
 			}
 			text := cands[k].menu.text

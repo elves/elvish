@@ -12,7 +12,7 @@ import (
 type location struct {
 	filter     string
 	candidates []store.Dir
-	current    int
+	selected   int
 }
 
 func (*location) Mode() ModeType {
@@ -32,16 +32,16 @@ func (l *location) updateCandidates(ed *Editor) bool {
 	dirs, err := ed.store.FindDirsSubseq(l.filter)
 	if err != nil {
 		l.candidates = nil
-		l.current = -1
+		l.selected = -1
 		ed.notify("find directories: %v", err)
 		return false
 	}
 	l.candidates = dirs
 
 	if len(l.candidates) > 0 {
-		l.current = 0
+		l.selected = 0
 	} else {
-		l.current = -1
+		l.selected = -1
 	}
 	return true
 }
@@ -69,7 +69,7 @@ func acceptLocation(ed *Editor) {
 	// XXX Maybe we want to use eval.cdInner and increase the score?
 	loc := &ed.location
 	if len(loc.candidates) > 0 {
-		err := os.Chdir(loc.candidates[loc.current].Path)
+		err := os.Chdir(loc.candidates[loc.selected].Path)
 		if err != nil {
 			ed.notify("%v", err)
 		}
@@ -89,14 +89,14 @@ func locationDefault(ed *Editor) {
 }
 
 func (loc *location) prev() {
-	if len(loc.candidates) > 0 && loc.current > 0 {
-		loc.current--
+	if len(loc.candidates) > 0 && loc.selected > 0 {
+		loc.selected--
 	}
 }
 
 func (loc *location) next() {
-	if len(loc.candidates) > 0 && loc.current < len(loc.candidates)-1 {
-		loc.current++
+	if len(loc.candidates) > 0 && loc.selected < len(loc.candidates)-1 {
+		loc.selected++
 	}
 }
 
@@ -114,14 +114,14 @@ func (loc *location) List(width, maxHeight int) *buffer {
 		b.writes("(no match)", "")
 		return b
 	}
-	low, high := findWindow(len(loc.candidates), loc.current, maxHeight)
+	low, high := findWindow(len(loc.candidates), loc.selected, maxHeight)
 	for i := low; i < high; i++ {
 		if i > low {
 			b.newline()
 		}
 		text := fmt.Sprintf("%4.0f %s", loc.candidates[i].Score, parse.Quote(loc.candidates[i].Path))
 		style := ""
-		if i == loc.current {
+		if i == loc.selected {
 			style = styleForSelected
 		}
 		b.writes(TrimWcWidth(text, width), style)

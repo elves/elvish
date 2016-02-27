@@ -408,13 +408,13 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 	i := 0
 
 	comp := &es.completion
-	hasComp := es.mode.Mode() == modeCompletion && comp.current != -1
+	hasComp := es.mode.Mode() == modeCompletion && comp.selected != -1
 
 	nowAt := func(i int) {
 		if es.dot == i {
 			if hasComp {
 				// Put the current completion candidate.
-				candSource := comp.candidates[comp.current].source
+				candSource := comp.candidates[comp.selected].source
 				b.writes(candSource.text, candSource.style+styleForCompleted)
 			}
 			b.dot = b.cursor()
