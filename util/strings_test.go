@@ -90,3 +90,25 @@ func TestEOLSOL(t *testing.T) {
 		}
 	}
 }
+
+var MatchSubseqTests = []struct {
+	s, p string
+	want bool
+}{
+	{"elvish", "e", true},
+	{"elvish", "elh", true},
+	{"elvish", "sh", true},
+	{"elves/elvish", "l/e", true},
+	{"elves/elvish", "e/e", true},
+	{"elvish", "le", false},
+	{"elvish", "evii", false},
+}
+
+func TestMatchSubseq(t *testing.T) {
+	for _, tc := range MatchSubseqTests {
+		b := MatchSubseq(tc.s, tc.p)
+		if b != tc.want {
+			t.Errorf("MatchSubseq(%q, %q) -> %v, want %v", tc.s, tc.p, b, tc.want)
+		}
+	}
+}

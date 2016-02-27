@@ -86,3 +86,15 @@ func NthRune(s string, n int) (rune, error) {
 	}
 	return 0, ErrIndexOutOfRange
 }
+
+// MatchSubseq returns whether pattern is a subsequence of s.
+func MatchSubseq(s, pattern string) bool {
+	for _, p := range pattern {
+		i := strings.IndexRune(s, p)
+		if i == -1 {
+			return false
+		}
+		s = s[i+len(string(p)):]
+	}
+	return true
+}
