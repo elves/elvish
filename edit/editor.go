@@ -50,14 +50,13 @@ type editorState struct {
 
 	mode Mode
 
-	insert          insert
-	command         command
-	completion      completion
-	completionLines int
-	navigation      navigation
-	history         historyState
-	historyListing  historyListing
-	location        location
+	insert         insert
+	command        command
+	completion     completion
+	navigation     navigation
+	history        historyState
+	historyListing historyListing
+	location       location
 
 	isExternal      map[string]bool
 	parseErrorAtEnd bool

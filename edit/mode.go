@@ -17,3 +17,8 @@ const (
 	modeHistoryListing
 	modeLocation
 )
+
+// Lister is a mode with a listing.
+type Lister interface {
+	List(width, maxHeight int) *buffer
+}

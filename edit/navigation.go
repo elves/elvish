@@ -290,3 +290,35 @@ func (n *navigation) readdirnames(dir string) (names, styles []string, err error
 	}
 	return names, styles, nil
 }
+
+func (nav *navigation) List(width, maxHeight int) *buffer {
+	margin := navigationListingColMargin
+	var ratioParent, ratioCurrent, ratioPreview int
+	if nav.dirPreview != nil {
+		ratioParent = 15
+		ratioCurrent = 40
+		ratioPreview = 45
+	} else {
+		ratioParent = 15
+		ratioCurrent = 75
+		// Leave some space at the right side
+	}
+
+	w := width - margin*2
+
+	wParent := w * ratioParent / 100
+	wCurrent := w * ratioCurrent / 100
+	wPreview := w * ratioPreview / 100
+
+	b := renderNavColumn(nav.parent, wParent, maxHeight)
+
+	bCurrent := renderNavColumn(nav.current, wCurrent, maxHeight)
+	b.extendHorizontal(bCurrent, wParent, margin)
+
+	if wPreview > 0 {
+		bPreview := renderNavColumn(nav.dirPreview, wPreview, maxHeight)
+		b.extendHorizontal(bPreview, wParent+wCurrent+margin, margin)
+	}
+
+	return b
+}

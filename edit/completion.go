@@ -13,6 +13,7 @@ type completion struct {
 	completer  string
 	candidates []*candidate
 	current    int
+	lines      int
 }
 
 func (*completion) Mode() ModeType {
@@ -40,13 +41,13 @@ func selectCandDown(ed *Editor) {
 }
 
 func selectCandLeft(ed *Editor) {
-	if c := ed.completion.current - ed.completionLines; c >= 0 {
+	if c := ed.completion.current - ed.completion.lines; c >= 0 {
 		ed.completion.current = c
 	}
 }
 
 func selectCandRight(ed *Editor) {
-	if c := ed.completion.current + ed.completionLines; c < len(ed.completion.candidates) {
+	if c := ed.completion.current + ed.completion.lines; c < len(ed.completion.candidates) {
 		ed.completion.current = c
 	}
 }
@@ -177,4 +178,51 @@ func commonPrefix(s, t string) string {
 		}
 	}
 	return s
+}
+
+func (comp *completion) List(width, maxHeight int) *buffer {
+	b := newBuffer(width)
+	// Layout candidates in multiple columns
+	cands := comp.candidates
+
+	// First decide the shape (# of rows and columns)
+	colWidth := 0
+	margin := completionListingColMargin
+	for _, cand := range cands {
+		width := WcWidths(cand.menu.text)
+		if colWidth < width {
+			colWidth = width
+		}
+	}
+
+	cols := (b.width + margin) / (colWidth + margin)
+	if cols == 0 {
+		cols = 1
+	}
+	lines := CeilDiv(len(cands), cols)
+	comp.lines = lines
+
+	// Determine the window to show.
+	low, high := findWindow(lines, comp.current%lines, maxHeight)
+	for i := low; i < high; i++ {
+		if i > low {
+			b.newline()
+		}
+		for j := 0; j < cols; j++ {
+			k := j*lines + i
+			if k >= len(cands) {
+				break
+			}
+			style := cands[k].menu.style
+			if k == comp.current {
+				style += styleForCurrentCompletion
+			}
+			text := cands[k].menu.text
+			if j > 0 {
+				b.writePadding(margin, "")
+			}
+			b.writes(ForceWcWidth(text, colWidth), style)
+		}
+	}
+	return b
 }

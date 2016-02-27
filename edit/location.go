@@ -1,9 +1,11 @@
 package edit
 
 import (
+	"fmt"
 	"os"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 )
 
@@ -97,4 +99,25 @@ func locationDefault(ed *Editor) {
 		cancelLocation(ed)
 		ed.nextAction = action{typ: reprocessKey}
 	}
+}
+
+func (loc *location) List(width, maxHeight int) *buffer {
+	b := newBuffer(width)
+	if len(loc.candidates) == 0 {
+		b.writes("(no match)", "")
+		return b
+	}
+	low, high := findWindow(len(loc.candidates), loc.current, maxHeight)
+	for i := low; i < high; i++ {
+		if i > low {
+			b.newline()
+		}
+		text := fmt.Sprintf("%4.0f %s", loc.candidates[i].Score, parse.Quote(loc.candidates[i].Path))
+		style := ""
+		if i == loc.current {
+			style = styleForSelectedLocation
+		}
+		b.writes(TrimWcWidth(text, width), style)
+	}
+	return b
 }

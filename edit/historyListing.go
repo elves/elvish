@@ -50,3 +50,31 @@ func initHistoryListing(hl *historyListing, s *store.Store) error {
 	hl.all = cmds
 	return nil
 }
+
+func (hist *historyListing) List(width, maxHeight int) *buffer {
+	b := newBuffer(width)
+
+	n := len(hist.all)
+
+	i := 0
+	if n > maxHeight {
+		i = n - maxHeight
+	}
+
+	for ; i < n; i++ {
+		b.writes("\n"+hist.all[i], "")
+	}
+
+	n = len(b.cells)
+
+	startIndex := 0
+	if n > maxHeight {
+		startIndex = n - maxHeight
+	}
+
+	if len(b.cells) > 0 {
+		b.trimToLines(startIndex, n)
+	}
+
+	return b
+}

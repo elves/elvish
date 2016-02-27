@@ -8,7 +8,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 )
 
@@ -515,127 +514,10 @@ tokens:
 		bufLine.trimToLines(dotLine, dotLine+1)
 	}
 
-	// Render bufListing under the maximum height constraint
-	nav := &es.navigation
-	hist := &es.historyListing
+	// bufListing.
 	if hListing > 0 {
-		b := newBuffer(width)
-		bufListing = b
-		switch es.mode.Mode() {
-		case modeCompletion:
-			// Layout candidates in multiple columns
-			cands := comp.candidates
-
-			// First decide the shape (# of rows and columns)
-			colWidth := 0
-			margin := completionListingColMargin
-			for _, cand := range cands {
-				width := WcWidths(cand.menu.text)
-				if colWidth < width {
-					colWidth = width
-				}
-			}
-
-			cols := (b.width + margin) / (colWidth + margin)
-			if cols == 0 {
-				cols = 1
-			}
-			lines := CeilDiv(len(cands), cols)
-			es.completionLines = lines
-
-			// Determine the window to show.
-			low, high := findWindow(lines, comp.current%lines, hListing)
-			for i := low; i < high; i++ {
-				if i > low {
-					b.newline()
-				}
-				for j := 0; j < cols; j++ {
-					k := j*lines + i
-					if k >= len(cands) {
-						break
-					}
-					style := cands[k].menu.style
-					if k == comp.current {
-						style += styleForCurrentCompletion
-					}
-					text := cands[k].menu.text
-					if j > 0 {
-						b.writePadding(margin, "")
-					}
-					b.writes(ForceWcWidth(text, colWidth), style)
-				}
-			}
-		case modeNavigation:
-			margin := navigationListingColMargin
-			var ratioParent, ratioCurrent, ratioPreview int
-			if nav.dirPreview != nil {
-				ratioParent = 15
-				ratioCurrent = 40
-				ratioPreview = 45
-			} else {
-				ratioParent = 15
-				ratioCurrent = 75
-				// Leave some space at the right side
-			}
-
-			w := width - margin*2
-
-			wParent := w * ratioParent / 100
-			wCurrent := w * ratioCurrent / 100
-			wPreview := w * ratioPreview / 100
-
-			b := renderNavColumn(nav.parent, wParent, hListing)
-			bufListing = b
-
-			bCurrent := renderNavColumn(nav.current, wCurrent, hListing)
-			b.extendHorizontal(bCurrent, wParent, margin)
-
-			if wPreview > 0 {
-				bPreview := renderNavColumn(nav.dirPreview, wPreview, hListing)
-				b.extendHorizontal(bPreview, wParent+wCurrent+margin, margin)
-			}
-		case modeHistoryListing:
-			n := len(hist.all)
-
-			i := 0
-			if n > hListing {
-				i = n - hListing
-			}
-
-			for ; i < n; i++ {
-				b.writes("\n"+hist.all[i], "")
-			}
-
-			n = len(b.cells)
-
-			startIndex := 0
-			if n > hListing {
-				startIndex = n - hListing
-			}
-
-			if len(b.cells) > 0 {
-				b.trimToLines(startIndex, n)
-			}
-		case modeLocation:
-			loc := &es.location
-			if len(loc.candidates) == 0 {
-				b.writes("(no match)", "")
-				break
-			}
-			low, high := findWindow(len(loc.candidates), loc.current, hListing)
-			for i := low; i < high; i++ {
-				if i > low {
-					b.newline()
-				}
-				text := fmt.Sprintf("%4.0f %s", loc.candidates[i].Score, parse.Quote(loc.candidates[i].Path))
-				style := ""
-				if i == loc.current {
-					style = styleForSelectedLocation
-				}
-				b.writes(TrimWcWidth(text, width), style)
-			}
-		default:
-			bufListing = nil
+		if lister, ok := es.mode.(Lister); ok {
+			bufListing = lister.List(width, hListing)
 		}
 	}
 
