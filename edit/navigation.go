@@ -13,9 +13,24 @@ import (
 
 // Interface.
 
+type navigation struct {
+	current    *navColumn
+	parent     *navColumn
+	dirPreview *navColumn
+	showHidden bool
+}
+
+func (*navigation) Mode() ModeType {
+	return modeNavigation
+}
+
+func (*navigation) ModeLine(width int) *buffer {
+	return makeModeLine(" NAVIGATING ", width)
+}
+
 func startNavigation(ed *Editor) {
-	ed.mode = modeNavigation
 	initNavigation(&ed.navigation)
+	ed.mode = &ed.navigation
 }
 
 func selectNavUp(ed *Editor) {
@@ -44,7 +59,7 @@ func navInsertSelected(ed *Editor) {
 }
 
 func quitNavigation(ed *Editor) {
-	ed.mode = modeInsert
+	startInsert(ed)
 }
 
 func defaultNavigation(ed *Editor) {
@@ -64,14 +79,6 @@ var (
 	errorEmptyCwd      = errors.New("current directory is empty")
 	errorNoCwdInParent = errors.New("could not find current directory in ..")
 )
-
-// navigation represents the current layout of the navigation mode.
-type navigation struct {
-	current    *navColumn
-	parent     *navColumn
-	dirPreview *navColumn
-	showHidden bool
-}
 
 func initNavigation(n *navigation) {
 	*n = navigation{}

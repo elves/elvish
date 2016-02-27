@@ -10,12 +10,33 @@ import (
 
 // Builtins related to insert and command mode.
 
+type insert struct{}
+
+func (*insert) Mode() ModeType {
+	return modeInsert
+}
+
+// Insert mode is the default mode and has an empty mode.
+func (*insert) ModeLine(int) *buffer {
+	return nil
+}
+
+type command struct{}
+
+func (*command) Mode() ModeType {
+	return modeCommand
+}
+
+func (*command) ModeLine(width int) *buffer {
+	return makeModeLine(" COMMAND ", width)
+}
+
 func startInsert(ed *Editor) {
-	ed.mode = modeInsert
+	ed.mode = &ed.insert
 }
 
 func startCommand(ed *Editor) {
-	ed.mode = modeCommand
+	ed.mode = &ed.command
 }
 
 func killLineLeft(ed *Editor) {

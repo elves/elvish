@@ -13,6 +13,19 @@ type location struct {
 	current    int
 }
 
+func (*location) Mode() ModeType {
+	return modeLocation
+}
+
+func (l *location) ModeLine(width int) *buffer {
+	// TODO keep it one line.
+	b := newBuffer(width)
+	b.writes(TrimWcWidth(" LOCATION ", width), styleForMode)
+	b.writes(" ", "")
+	b.writes(l.filter, styleForLocation)
+	return b
+}
+
 func (l *location) updateCandidates(ed *Editor) bool {
 	dirs, err := ed.store.FindDirsSubseq(l.filter)
 	if err != nil {
@@ -34,7 +47,7 @@ func (l *location) updateCandidates(ed *Editor) bool {
 func startLocation(ed *Editor) {
 	ed.location = location{}
 	if ed.location.updateCandidates(ed) {
-		ed.mode = modeLocation
+		ed.mode = &ed.location
 	}
 }
 
@@ -68,11 +81,11 @@ func acceptLocation(ed *Editor) {
 			ed.notify("%v", err)
 		}
 	}
-	ed.mode = modeInsert
+	startInsert(ed)
 }
 
 func cancelLocation(ed *Editor) {
-	ed.mode = modeInsert
+	startInsert(ed)
 }
 
 func locationDefault(ed *Editor) {

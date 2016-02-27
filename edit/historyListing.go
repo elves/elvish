@@ -6,6 +6,18 @@ import "github.com/elves/elvish/store"
 
 // Interface.
 
+type historyListing struct {
+	all []string
+}
+
+func (*historyListing) Mode() ModeType {
+	return modeHistoryListing
+}
+
+func (hl *historyListing) ModeLine(width int) *buffer {
+	return makeModeLine(" LISTING HISTORY ", width)
+}
+
 func startHistoryListing(ed *Editor) {
 	if ed.store == nil {
 		ed.notify("store not connected")
@@ -16,19 +28,15 @@ func startHistoryListing(ed *Editor) {
 		ed.notify("%s", err)
 		return
 	}
-	ed.mode = modeHistoryListing
+	ed.mode = &ed.historyListing
 }
 
 func defaultHistoryListing(ed *Editor) {
-	ed.mode = modeInsert
+	startInsert(ed)
 	ed.nextAction = action{actionType: reprocessKey}
 }
 
 // Implementation.
-
-type historyListing struct {
-	all []string
-}
 
 func initHistoryListing(hl *historyListing, s *store.Store) error {
 	seq, err := s.NextCmdSeq()

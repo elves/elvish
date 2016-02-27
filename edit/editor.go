@@ -43,8 +43,11 @@ type editorState struct {
 	dot                   int
 	notifications         []string
 	tips                  []string
-	mode                  bufferMode
 
+	mode Mode
+
+	insert          insert
+	command         command
 	completion      completion
 	completionLines int
 	navigation      navigation
@@ -58,18 +61,6 @@ type editorState struct {
 	lastKey    Key
 	nextAction action
 }
-
-type bufferMode int
-
-const (
-	modeInsert bufferMode = iota
-	modeCommand
-	modeCompletion
-	modeNavigation
-	modeHistory
-	modeHistoryListing
-	modeLocation
-)
 
 type actionType int
 
@@ -131,7 +122,7 @@ func (ed *Editor) notify(format string, args ...interface{}) {
 func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 	// Re-lex the line, unless we are in modeCompletion
 	src := ed.line
-	if ed.mode != modeCompletion {
+	if ed.mode.Mode() != modeCompletion {
 		n, err := parse.Parse(src)
 		ed.parseErrorAtEnd = err != nil && atEnd(err, len(src))
 		if err != nil {
@@ -252,7 +243,7 @@ func (ed *Editor) startReadLine() error {
 // finishReadLine puts the terminal in a state suitable for other programs to
 // use.
 func (ed *Editor) finishReadLine(addError func(error)) {
-	ed.mode = modeInsert
+	ed.mode = &ed.insert
 	ed.tips = nil
 	ed.dot = len(ed.line)
 	// TODO Perhaps make it optional to NOT clear the rprompt
@@ -281,6 +272,8 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 // ReadLine reads a line interactively.
 func (ed *Editor) ReadLine() (lr LineRead) {
 	ed.editorState = editorState{active: true}
+	ed.mode = &ed.insert
+
 	isExternalCh := make(chan map[string]bool, 1)
 	go getIsExternal(ed.evaler, isExternalCh)
 
@@ -340,7 +333,7 @@ MainLoop:
 			// Ignore CPR
 		case k := <-ed.reader.KeyChan():
 		lookupKey:
-			keyBinding, ok := keyBindings[ed.mode]
+			keyBinding, ok := keyBindings[ed.mode.Mode()]
 			if !ok {
 				ed.addTip("No binding for current mode")
 				continue

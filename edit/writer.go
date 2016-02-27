@@ -398,6 +398,12 @@ func renderNavColumn(nc *navColumn, w, h int) *buffer {
 	return b
 }
 
+func makeModeLine(text string, width int) *buffer {
+	b := newBuffer(width)
+	b.writes(TrimWcWidth(text, width), styleForMode)
+	return b
+}
+
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
 func (w *writer) refresh(es *editorState, fullRefresh bool) error {
@@ -427,7 +433,7 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 	i := 0
 
 	comp := &es.completion
-	hasComp := es.mode == modeCompletion && comp.current != -1
+	hasComp := es.mode.Mode() == modeCompletion && comp.current != -1
 
 	nowAt := func(i int) {
 		if es.dot == i {
@@ -447,13 +453,13 @@ tokens:
 			i += utf8.RuneLen(r)
 
 			nowAt(i)
-			if es.mode == modeHistory && i == len(es.history.prefix) {
+			if es.mode.Mode() == modeHistory && i == len(es.history.prefix) {
 				break tokens
 			}
 		}
 	}
 
-	if es.mode == modeHistory {
+	if es.mode.Mode() == modeHistory {
 		// Put the rest of current history, position the cursor at the
 		// end of the line, and finish writing
 		h := es.history
@@ -470,30 +476,7 @@ tokens:
 	}
 
 	// bufMode
-	if es.mode != modeInsert {
-		b := newBuffer(width)
-		bufMode = b
-		text := ""
-		switch es.mode {
-		case modeCommand:
-			text = "COMMAND"
-		case modeCompletion:
-			text = fmt.Sprintf("COMPLETING %s", comp.completer)
-		case modeNavigation:
-			text = "NAVIGATING"
-		case modeHistory:
-			text = fmt.Sprintf("HISTORY #%d", es.history.current)
-		case modeHistoryListing:
-			text = "HISTORY LISTING"
-		case modeLocation:
-			text = "LOCATION"
-		}
-		b.writes(TrimWcWidth(" "+text+" ", width), styleForMode)
-		if es.mode == modeLocation {
-			b.writes(" ", "")
-			b.writes(es.location.filter, styleForLocation)
-		}
-	}
+	bufMode = es.mode.ModeLine(width)
 
 	// bufTips
 	// TODO tips is assumed to contain no newlines.
@@ -538,7 +521,7 @@ tokens:
 	if hListing > 0 {
 		b := newBuffer(width)
 		bufListing = b
-		switch es.mode {
+		switch es.mode.Mode() {
 		case modeCompletion:
 			// Layout candidates in multiple columns
 			cands := comp.candidates

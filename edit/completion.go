@@ -1,10 +1,27 @@
 package edit
 
-import "unicode/utf8"
+import (
+	"fmt"
+	"unicode/utf8"
+)
 
 // Completion subsystem.
 
 // Interface.
+
+type completion struct {
+	completer  string
+	candidates []*candidate
+	current    int
+}
+
+func (*completion) Mode() ModeType {
+	return modeCompletion
+}
+
+func (c *completion) ModeLine(width int) *buffer {
+	return makeModeLine(fmt.Sprintf("COMPLETING %s", c.completer), width)
+}
 
 func startCompletion(ed *Editor) {
 	startCompletionInner(ed, false)
@@ -40,7 +57,7 @@ func cycleCandRight(ed *Editor) {
 
 func cancelCompletion(ed *Editor) {
 	ed.completion = completion{}
-	ed.mode = modeInsert
+	startInsert(ed)
 }
 
 // acceptCompletion accepts currently selected completion candidate.
@@ -50,7 +67,7 @@ func acceptCompletion(ed *Editor) {
 		accepted := c.candidates[c.current].source.text
 		ed.insertAtDot(accepted)
 	}
-	ed.mode = modeInsert
+	startInsert(ed)
 }
 
 func defaultCompletion(ed *Editor) {
@@ -67,12 +84,6 @@ type styled struct {
 
 type candidate struct {
 	source, menu styled
-}
-
-type completion struct {
-	completer  string
-	candidates []*candidate
-	current    int
 }
 
 func (c *completion) prev(cycle bool) {
@@ -134,7 +145,7 @@ func startCompletionInner(ed *Editor, completePrefix bool) {
 			}
 		}
 		ed.completion = *c
-		ed.mode = modeCompletion
+		ed.mode = &ed.completion
 	}
 }
 

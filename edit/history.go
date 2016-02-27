@@ -1,14 +1,30 @@
 package edit
 
+import "fmt"
+
 // Command history subsystem.
 
 // Interface.
+
+type historyState struct {
+	current int
+	prefix  string
+	line    string
+}
+
+func (historyState) Mode() ModeType {
+	return modeHistory
+}
+
+func (h *historyState) ModeLine(width int) *buffer {
+	return makeModeLine(fmt.Sprintf("HISTORY #%d", h.current), width)
+}
 
 func startHistory(ed *Editor) {
 	ed.history.prefix = ed.line[:ed.dot]
 	ed.history.current = -1
 	if ed.prevHistory() {
-		ed.mode = modeHistory
+		ed.mode = &ed.history
 	} else {
 		ed.addTip("no matching history item")
 	}
@@ -24,23 +40,17 @@ func selectHistoryNext(ed *Editor) {
 
 func selectHistoryNextOrQuit(ed *Editor) {
 	if !ed.nextHistory() {
-		ed.mode = modeInsert
+		startInsert(ed)
 	}
 }
 
 func defaultHistory(ed *Editor) {
 	ed.acceptHistory()
-	ed.mode = modeInsert
+	startInsert(ed)
 	ed.nextAction = action{actionType: reprocessKey}
 }
 
 // Implementation.
-
-type historyState struct {
-	current int
-	prefix  string
-	line    string
-}
 
 func (h *historyState) jump(i int, line string) {
 	h.current = i

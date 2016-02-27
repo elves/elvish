@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-var defaultBindings = map[bufferMode]map[Key]string{
+var defaultBindings = map[ModeType]map[Key]string{
 	modeInsert: map[Key]string{
 		Default: "default-insert",
 		// Moving.
@@ -99,7 +99,7 @@ var defaultBindings = map[bufferMode]map[Key]string{
 	},
 }
 
-var keyBindings = map[bufferMode]map[Key]Caller{}
+var keyBindings = map[ModeType]map[Key]Caller{}
 
 var (
 	errKeyMustBeString = errors.New("key must be string")
