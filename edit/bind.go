@@ -87,12 +87,13 @@ var defaultBindings = map[bufferMode]map[Key]string{
 		Default: "default-history-listing",
 	},
 	modeLocation: map[Key]string{
-		Key{Up, 0}:     "location-prev",
-		Key{Down, 0}:   "location-next",
-		Key{Tab, 0}:    "location-next",
-		Key{Enter, 0}:  "accept-location",
-		Key{'[', Ctrl}: "cancel-location",
-		Default:        "location-default",
+		Key{Up, 0}:        "location-prev",
+		Key{Down, 0}:      "location-next",
+		Key{Tab, 0}:       "location-next",
+		Key{Backspace, 0}: "location-backspace",
+		Key{Enter, 0}:     "accept-location",
+		Key{'[', Ctrl}:    "cancel-location",
+		Default:           "location-default",
 	},
 }
 

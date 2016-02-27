@@ -3,6 +3,7 @@ package edit
 import (
 	"os"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/store"
 )
@@ -43,6 +44,15 @@ func locationPrev(ed *Editor) {
 func locationNext(ed *Editor) {
 	if len(ed.location.candidates) > 0 && ed.location.current < len(ed.location.candidates)-1 {
 		ed.location.current++
+	}
+}
+
+func locationBackspace(ed *Editor) {
+	loc := &ed.location
+	_, size := utf8.DecodeLastRuneInString(loc.filter)
+	if size > 0 {
+		loc.filter = loc.filter[:len(loc.filter)-size]
+		loc.updateCandidates(ed.store)
 	}
 }
 

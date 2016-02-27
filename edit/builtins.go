@@ -78,6 +78,7 @@ var builtins = []Builtin{
 	{"start-location", startLocation},
 	{"location-prev", locationPrev},
 	{"location-next", locationNext},
+	{"location-backspace", locationBackspace},
 	{"accept-location", acceptLocation},
 	{"cancel-location", cancelLocation},
 	{"location-default", locationDefault},
