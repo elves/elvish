@@ -69,6 +69,7 @@ var builtins = []Builtin{
 	{"start-history-listing", startHistoryListing},
 	{"histlist-prev", histlistPrev},
 	{"histlist-next", histlistNext},
+	{"histlist-append", histlistAppend},
 	{"default-history-listing", defaultHistoryListing},
 
 	// Location mode

@@ -86,9 +86,10 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Default:        "default-history",
 	},
 	modeHistoryListing: map[Key]string{
-		Key{Up, 0}:   "histlist-prev",
-		Key{Down, 0}: "histlist-next",
-		Default:      "default-history-listing",
+		Key{Up, 0}:    "histlist-prev",
+		Key{Down, 0}:  "histlist-next",
+		Key{Enter, 0}: "histlist-append",
+		Default:       "default-history-listing",
 	},
 	modeLocation: map[Key]string{
 		Key{Up, 0}:        "location-prev",

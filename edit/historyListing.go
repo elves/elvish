@@ -40,6 +40,16 @@ func histlistNext(ed *Editor) {
 	ed.historyListing.next()
 }
 
+func histlistAppend(ed *Editor) {
+	if ed.historyListing.current != -1 {
+		line := ed.historyListing.all[ed.historyListing.current]
+		if len(ed.line) > 0 {
+			line = "\n" + line
+		}
+		ed.insertAtDot(line)
+	}
+}
+
 func defaultHistoryListing(ed *Editor) {
 	ed.mode = &ed.insert
 	ed.nextAction = action{typ: reprocessKey}
