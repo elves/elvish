@@ -38,6 +38,28 @@ func (s *Store) AddDir(d string) error {
 	return err
 }
 
+// ListDirs lists all directories in the directory history. The results are
+// ordered by scores in descending order.
+func (s *Store) ListDirs() ([]Dir, error) {
+	rows, err := s.db.Query(
+		"select path, score from dir order by score desc")
+	if err != nil {
+		return nil, err
+	}
+	return convertDirs(rows)
+}
+
+// FindDirs finds directories containing a given substring. The results are
+// ordered by scores in descending order.
+func (s *Store) FindDirs(p string) ([]Dir, error) {
+	rows, err := s.db.Query(
+		"select path, score from dir where instr(path, ?) > 0 order by score desc", p)
+	if err != nil {
+		return nil, err
+	}
+	return convertDirs(rows)
+}
+
 func convertDirs(rows *sql.Rows) ([]Dir, error) {
 	var (
 		dir  Dir
@@ -52,26 +74,4 @@ func convertDirs(rows *sql.Rows) ([]Dir, error) {
 		return nil, err
 	}
 	return dirs, nil
-}
-
-// FindDirs finds directories containing a given substring. The results are
-// ordered by scores in descending order.
-func (s *Store) FindDirs(p string) ([]Dir, error) {
-	rows, err := s.db.Query(
-		"select path, score from dir where instr(path, ?) > 0 order by score desc", p)
-	if err != nil {
-		return nil, err
-	}
-	return convertDirs(rows)
-}
-
-// ListDirs lists all directories in the directory history. The results are
-// ordered by scores in descending order.
-func (s *Store) ListDirs() ([]Dir, error) {
-	rows, err := s.db.Query(
-		"select path, score from dir order by score desc")
-	if err != nil {
-		return nil, err
-	}
-	return convertDirs(rows)
 }
