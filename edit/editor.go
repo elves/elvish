@@ -36,13 +36,17 @@ type Editor struct {
 
 type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
-	active                bool
-	savedTermios          *sys.Termios
-	tokens                []Token
-	prompt, rprompt, line string
-	dot                   int
-	notifications         []string
-	tips                  []string
+	active       bool
+	savedTermios *sys.Termios
+
+	notifications []string
+	tips          []string
+
+	tokens  []Token
+	prompt  string
+	rprompt string
+	line    string
+	dot     int
 
 	mode Mode
 
