@@ -40,6 +40,8 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 * Press Up to search through history. It uses what you have typed to do prefix match. To cancel, press Escape.
 
+  ![history](https://raw.githubusercontent.com/elves/images/master/history.png)
+
 * Press Tab to start completion. Use arrow key and Tab to select the candidate;  press Enter, or just continue typing to accept. To cancel, press Enter.
 
   ![tab completion](https://raw.githubusercontent.com/elves/images/master/completion.png)
