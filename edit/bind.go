@@ -74,7 +74,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{Down, 0}:   "select-nav-down",
 		Key{Left, 0}:   "ascend-nav",
 		Key{Right, 0}:  "descend-nav",
-		Key{Tab, 0}:    "nav-insert-selected",
+		Key{Enter, 0}:  "nav-insert-selected",
 		Key{'H', Ctrl}: "trigger-nav-show-hidden",
 		Key{'[', Ctrl}: "start-insert",
 		Default:        "default-navigation",
