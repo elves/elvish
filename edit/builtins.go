@@ -74,6 +74,14 @@ var builtins = []Builtin{
 	{"start-history-listing", startHistoryListing},
 	{"default-history-listing", defaultHistoryListing},
 
+	// Location mode
+	{"start-location", startLocation},
+	{"location-prev", locationPrev},
+	{"location-next", locationNext},
+	{"accept-location", acceptLocation},
+	{"cancel-location", cancelLocation},
+	{"location-default", locationDefault},
+
 	// Misc
 	{"redraw", redraw},
 }

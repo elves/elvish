@@ -8,6 +8,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 )
 
@@ -483,9 +484,15 @@ tokens:
 		case modeHistory:
 			text = fmt.Sprintf("HISTORY #%d", es.history.current)
 		case modeHistoryListing:
-			text = fmt.Sprintf("HISTORY LISTING")
+			text = "HISTORY LISTING"
+		case modeLocation:
+			text = "LOCATION"
 		}
 		b.writes(TrimWcWidth(" "+text+" ", width), styleForMode)
+		if es.mode == modeLocation {
+			b.writes(" ", "")
+			b.writes(es.location.filter, styleForLocation)
+		}
 	}
 
 	// bufTips
@@ -528,10 +535,11 @@ tokens:
 	// Render bufListing under the maximum height constraint
 	nav := es.navigation
 	hist := es.historyListing
-	if hListing > 0 && (comp != nil || nav != nil || hist != nil) {
+	if hListing > 0 {
 		b := newBuffer(width)
 		bufListing = b
-		if comp != nil { // Completion listing
+		switch es.mode {
+		case modeCompletion:
 			// Layout candidates in multiple columns
 			cands := comp.candidates
 
@@ -574,7 +582,7 @@ tokens:
 					b.writes(ForceWcWidth(text, colWidth), style)
 				}
 			}
-		} else if nav != nil { // Navigation listing
+		case modeNavigation:
 			margin := navigationListingColMargin
 			var ratioParent, ratioCurrent, ratioPreview int
 			if nav.dirPreview != nil {
@@ -603,7 +611,7 @@ tokens:
 				bPreview := renderNavColumn(nav.dirPreview, wPreview, hListing)
 				b.extendHorizontal(bPreview, wParent+wCurrent+margin, margin)
 			}
-		} else if hist != nil {
+		case modeHistoryListing:
 			n := len(hist.all)
 
 			i := 0
@@ -625,6 +633,26 @@ tokens:
 			if len(b.cells) > 0 {
 				b.trimToLines(startIndex, n)
 			}
+		case modeLocation:
+			loc := &es.location
+			if len(loc.candidates) == 0 {
+				b.writes("(no match)", "")
+				break
+			}
+			low, high := findWindow(len(loc.candidates), loc.current, hListing)
+			for i := low; i < high; i++ {
+				if i > low {
+					b.newline()
+				}
+				text := fmt.Sprintf("%4.0f %s", loc.candidates[i].Score, parse.Quote(loc.candidates[i].Path))
+				style := ""
+				if i == loc.current {
+					style = styleForSelectedLocation
+				}
+				b.writes(TrimWcWidth(text, width), style)
+			}
+		default:
+			bufListing = nil
 		}
 	}
 

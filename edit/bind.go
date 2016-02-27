@@ -40,6 +40,7 @@ var defaultBindings = map[bufferMode]map[Key]string{
 		Key{Up, 0}:     "start-history",
 		Key{'N', Ctrl}: "start-navigation",
 		Key{'H', Ctrl}: "start-history-listing",
+		Key{'L', Ctrl}: "start-location",
 	},
 	modeCommand: map[Key]string{
 		Default: "default-command",
@@ -84,6 +85,14 @@ var defaultBindings = map[bufferMode]map[Key]string{
 	},
 	modeHistoryListing: map[Key]string{
 		Default: "default-history-listing",
+	},
+	modeLocation: map[Key]string{
+		Key{Up, 0}:     "location-prev",
+		Key{Down, 0}:   "location-next",
+		Key{Tab, 0}:    "location-next",
+		Key{Enter, 0}:  "accept-location",
+		Key{'[', Ctrl}: "cancel-location",
+		Default:        "location-default",
 	},
 }
 

@@ -10,6 +10,8 @@ var (
 	styleForCurrentCompletion = ";7"
 	styleForCompletedHistory  = "2"
 	styleForSelectedFile      = ";7"
+	styleForLocation          = "4"
+	styleForSelectedLocation  = ";7"
 )
 
 var styleForType = map[TokenKind]string{

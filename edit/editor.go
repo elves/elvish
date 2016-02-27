@@ -49,6 +49,7 @@ type editorState struct {
 	navigation            *navigation
 	history               historyState
 	historyListing        *historyListing
+	location              location
 	isExternal            map[string]bool
 	parseErrorAtEnd       bool
 	// Used for builtins.
@@ -65,6 +66,7 @@ const (
 	modeNavigation
 	modeHistory
 	modeHistoryListing
+	modeLocation
 )
 
 type actionType int
