@@ -2,7 +2,6 @@ package edit
 
 import (
 	"os"
-	"unicode"
 	"unicode/utf8"
 
 	"github.com/elves/elvish/store"
@@ -78,7 +77,7 @@ func cancelLocation(ed *Editor) {
 
 func locationDefault(ed *Editor) {
 	k := ed.lastKey
-	if k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune) {
+	if likeChar(k) {
 		ed.location.filter += string(k.Rune)
 		ed.location.updateCandidates(ed)
 	} else {

@@ -185,7 +185,7 @@ func returnEOF(ed *Editor) {
 
 func defaultInsert(ed *Editor) {
 	k := ed.lastKey
-	if k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune) {
+	if likeChar(k) {
 		insertKey(ed)
 	} else {
 		ed.notify("Unbound: %s", k)
@@ -195,4 +195,10 @@ func defaultInsert(ed *Editor) {
 func defaultCommand(ed *Editor) {
 	k := ed.lastKey
 	ed.notify("Unbound: %s", k)
+}
+
+// likeChar returns if a key looks like a character meant to be input (as
+// opposed to a function key).
+func likeChar(k Key) bool {
+	return k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune)
 }
