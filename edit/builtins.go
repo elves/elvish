@@ -54,6 +54,8 @@ var builtins = []Builtin{
 	{"ascend-nav", ascendNav},
 	{"descend-nav", descendNav},
 	{"trigger-nav-show-hidden", triggerNavShowHidden},
+	{"nav-insert-selected", navInsertSelected},
+	{"quit-navigation", quitNavigation},
 	{"default-navigation", defaultNavigation},
 
 	// History mode

@@ -5,6 +5,8 @@ import (
 	"os"
 	"path"
 	"sort"
+
+	"github.com/elves/elvish/parse"
 )
 
 // Navigation subsystem.
@@ -37,9 +39,21 @@ func triggerNavShowHidden(ed *Editor) {
 	ed.navigation.refresh()
 }
 
-func defaultNavigation(ed *Editor) {
+func navInsertSelected(ed *Editor) {
+	ed.insertAtDot(parse.Quote(ed.navigation.current.selectedName()))
+}
+
+func quitNavigation(ed *Editor) {
 	ed.mode = modeInsert
-	ed.nextAction = action{actionType: reprocessKey}
+}
+
+func defaultNavigation(ed *Editor) {
+	// Use key binding for insert mode without exiting navigation mode.
+	if f, ok := keyBindings[modeInsert][ed.lastKey]; ok {
+		f.Call(ed)
+	} else {
+		keyBindings[modeInsert][Default].Call(ed)
+	}
 }
 
 // Implementation.
