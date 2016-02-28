@@ -13,6 +13,7 @@ import (
 
 type completion struct {
 	completer  string
+	begin, end int
 	candidates []*candidate
 	selected   int
 	lines      int
@@ -62,8 +63,7 @@ func cycleCandRight(ed *Editor) {
 func acceptCompletion(ed *Editor) {
 	c := ed.completion
 	if 0 <= c.selected && c.selected < len(c.candidates) {
-		accepted := c.candidates[c.selected].source.text
-		ed.insertAtDot(accepted)
+		ed.line, ed.dot = c.apply(ed.line, ed.dot)
 	}
 	ed.mode = &ed.insert
 }
@@ -84,6 +84,16 @@ type candidate struct {
 	source, menu styled
 	// XXX only used in completers for compound.
 	sourceSuffix string
+}
+
+func (comp *completion) selectedCandidate() *candidate {
+	return comp.candidates[comp.selected]
+}
+
+// apply returns the line and dot after applying a candidate.
+func (comp *completion) apply(line string, dot int) (string, int) {
+	return line[:comp.begin] + comp.selectedCandidate().source.text +
+		line[comp.end:], comp.end
 }
 
 func (c *completion) prev(cycle bool) {
@@ -108,7 +118,7 @@ func (c *completion) next(cycle bool) {
 	}
 }
 
-func startCompletionInner(ed *Editor, completePrefix bool) {
+func startCompletionInner(ed *Editor, acceptPrefix bool) {
 	token := tokenAtDot(ed)
 	node := token.Node
 	if node == nil {
@@ -117,10 +127,10 @@ func startCompletionInner(ed *Editor, completePrefix bool) {
 
 	c := &completion{}
 	for _, compl := range completers {
-		candidates := compl.completer(node, ed)
+		begin, end, candidates := compl.completer(node, ed)
 		if candidates != nil {
 			c.completer = compl.name
-			c.candidates = candidates
+			c.begin, c.end, c.candidates = begin, end, candidates
 			break
 		}
 	}
@@ -130,30 +140,37 @@ func startCompletionInner(ed *Editor, completePrefix bool) {
 	} else if len(c.candidates) == 0 {
 		ed.addTip("no candidate for %s", c.completer)
 	} else {
-		if completePrefix {
-			// If there is a non-empty longest common prefix, insert it and
-			// don't start completion mode.
-			// As a special case, when there is exactly one candidate, it is
-			// immeidately accepted.
-			prefix := c.candidates[0].source.text
-			for _, cand := range c.candidates[1:] {
-				prefix = commonPrefix(prefix, cand.source.text)
+		/*
+			if acceptPrefix {
+				// If there is a non-empty longest common prefix, insert it and
+				// don't start completion mode.
+				//
+				// As a special case, when there is exactly one candidate, it is
+				// immeidately accepted.
+				prefix := c.candidates[0].source.text
+				begin := c.candidates[0].begin
+				end := c.candidates[0].end
+				for _, cand := range c.candidates[1:] {
+					prefix = commonPrefix(prefix, cand.source.text)
+					if prefix == "" {
+						break
+					}
+				}
+				if prefix != "" {
+					ed.line = ed.line[:begin] + prefix + ed.line[:end]
+					ed.dot = end
+					return
+				}
 			}
-			if prefix != "" {
-				ed.insertAtDot(prefix)
-				return
-			}
-		}
+		*/
 		ed.completion = *c
 		ed.mode = &ed.completion
 	}
 }
 
-var badToken = Token{}
-
 func tokenAtDot(ed *Editor) Token {
 	if len(ed.tokens) == 0 || ed.dot > len(ed.line) {
-		return badToken
+		return Token{}
 	}
 	if ed.dot == len(ed.line) {
 		return ed.tokens[len(ed.tokens)-1]
@@ -163,9 +180,10 @@ func tokenAtDot(ed *Editor) Token {
 			return token
 		}
 	}
-	return badToken
+	return Token{}
 }
 
+// commonPrefix returns the longest common prefix of two strings.
 func commonPrefix(s, t string) string {
 	for i, r := range s {
 		if i >= len(t) {

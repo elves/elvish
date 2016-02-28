@@ -400,16 +400,13 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 	// i keeps track of number of bytes written.
 	i := 0
 
-	comp := &es.completion
-	hasComp := es.mode.Mode() == modeCompletion && comp.selected != -1
-
+	// nowAt is called at every rune boundary.
 	nowAt := func(i int) {
-		if es.dot == i {
-			if hasComp {
-				// Put the current completion candidate.
-				candSource := comp.candidates[comp.selected].source
-				b.writes(candSource.text, candSource.style+styleForCompleted)
-			}
+		if es.mode.Mode() == modeCompletion && i == es.completion.begin {
+			c := es.completion.selectedCandidate()
+			b.writes(c.source.text, c.source.style+styleForCompleted)
+		}
+		if i == es.dot {
 			b.dot = b.cursor()
 		}
 	}
@@ -417,7 +414,12 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 tokens:
 	for _, token := range es.tokens {
 		for _, r := range token.Text {
-			b.write(r, styleForType[token.Type]+token.MoreStyle)
+			if es.mode.Mode() == modeCompletion &&
+				es.completion.begin <= i && i <= es.completion.end {
+				// Do nothing. This part is replaced by the completion candidate.
+			} else {
+				b.write(r, styleForType[token.Type]+token.MoreStyle)
+			}
 			i += utf8.RuneLen(r)
 
 			nowAt(i)

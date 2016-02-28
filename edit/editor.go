@@ -116,7 +116,9 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 		n, err := parse.Parse(src)
 		ed.parseErrorAtEnd = err != nil && atEnd(err, len(src))
 		if err != nil {
-			// If all the errors happen at the end, it is liekly complaining about missing texts that will eventually be inserted. Don't show such errors.
+			// If all the errors happen at the end, it is liekly complaining
+			// about missing texts that will eventually be inserted. Don't show
+			// such errors.
 			// XXX We may need a more reliable criteria.
 			if tips && !ed.parseErrorAtEnd {
 				ed.addTip("parser error: %s", err)
@@ -142,6 +144,7 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 				}
 			}
 		}
+		// Apply each stylist on each token.
 		for i, t := range ed.tokens {
 			for _, stylist := range stylists {
 				ed.tokens[i].MoreStyle += stylist(t.Node, ed)

@@ -11,9 +11,11 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// A completer takes the current Node and an Editor and returns a list of
-// candidates. the Node is always a leaf in the parsed AST.
-type completer func(parse.Node, *Editor) []*candidate
+// A completer takes the current Node and an Editor and returns an interval and
+// a list of candidates, meaning that the text within the interval may be
+// replaced by any of the candidates. the Node is always a leaf in the parsed
+// AST.
+type completer func(parse.Node, *Editor) (int, int, []*candidate)
 
 var completers = []struct {
 	name string
@@ -26,10 +28,12 @@ var completers = []struct {
 	{"argument", makeCompoundCompleter(complArg)},
 }
 
-func complVariable(n parse.Node, ed *Editor) []*candidate {
+func complVariable(n parse.Node, ed *Editor) (begin, end int, cands []*candidate) {
+	begin, end = n.Begin(), n.End()
+
 	primary, ok := n.(*parse.Primary)
 	if !ok || primary.Type != parse.Variable {
-		return nil
+		return
 	}
 
 	head := primary.Value
@@ -49,67 +53,49 @@ func complVariable(n parse.Node, ed *Editor) []*candidate {
 	sort.Strings(varnames)
 
 	// Build candidates.
-	cands := []*candidate{}
 	for _, varname := range varnames {
 		cands = append(cands, &candidate{
-			source: styled{varname[len(head):], styleForType[Variable]},
+			source: styled{"$" + varname, styleForType[Variable]},
 			menu:   styled{"$" + varname, ""}})
 	}
-
-	return cands
+	return
 }
 
-func complNewForm(n parse.Node, ed *Editor) []*candidate {
+func complNewForm(n parse.Node, ed *Editor) (begin, end int, cands []*candidate) {
+	begin, end = n.Begin(), n.End()
 	if _, ok := n.(*parse.Chunk); ok {
-		return complFormHeadInner("", ed)
+		// Leaf is a chunk is a leaf. Must be empty chunk.
+		cands = complFormHeadInner("", ed)
+		return
 	}
 	if _, ok := n.Parent().(*parse.Chunk); ok {
-		return complFormHeadInner("", ed)
+		// Parent is a chunk. Must be an empty pipeline.
+		cands = complFormHeadInner("", ed)
+		return
 	}
-	return nil
+	return
 }
 
 // XXX Semantics of candidate is pretty broken here.
 func makeCompoundCompleter(
 	f func(*parse.Compound, string, *Editor) []*candidate) completer {
-	return func(n parse.Node, ed *Editor) []*candidate {
+	return func(n parse.Node, ed *Editor) (begin, end int, cands []*candidate) {
+		begin, end = n.Begin(), n.End()
+
 		pn, ok := n.(*parse.Primary)
 		if !ok {
-			return nil
+			return
 		}
 		cn, head := simpleCompound(pn)
 		if cn == nil {
-			return nil
+			return
 		}
-		cands := f(cn, head, ed)
+		cands = f(cn, head, ed)
 		for _, cand := range cands {
-			// Deal with quoting by trying to continue the quoting of the last
-			// primary.
-			newSource, q := parse.QuoteAs(cand.source.text, pn.Type)
-			for _, quoting := range parse.QuotingStyles {
-				if pn.Type == quoting.Type &&
-					!strings.HasSuffix(pn.SourceText(), string(quoting.Quoter)) {
-					// The last primary has unclosed quoting.
-					if q == quoting.Type {
-						// The completed text was quoted using the same style;
-						// elide the leading quoter.
-						newSource = newSource[len(quoting.Quoter):]
-					} else {
-						// The completed text was quoted using a different
-						// style. Prepend a quoter to close the existing text.
-						newSource = quoting.Quoter + newSource
-					}
-				}
-			}
-
-			// Don't add bogus '' or "".
-			// XXX Might be wrong.
-			if newSource == "''" || newSource == "\"\"" {
-				newSource = ""
-			}
-			cand.source.text = newSource + cand.sourceSuffix
+			quoted, _ := parse.QuoteAs(cand.source.text, pn.Type)
+			cand.source.text = quoted + cand.sourceSuffix
 		}
-		return cands
+		return
 	}
 }
 
@@ -130,7 +116,7 @@ func complFormHeadInner(head string, ed *Editor) []*candidate {
 	foundCommand := func(s string) {
 		if strings.HasPrefix(s, head) {
 			cands = append(cands, &candidate{
-				source: styled{s[len(head):], styleForGoodCommand},
+				source: styled{s, styleForGoodCommand},
 				menu:   styled{s, ""},
 			})
 		}
@@ -154,15 +140,17 @@ func complFormHeadInner(head string, ed *Editor) []*candidate {
 	return cands
 }
 
-func complNewArg(n parse.Node, ed *Editor) []*candidate {
+func complNewArg(n parse.Node, ed *Editor) (begin int, end int, cands []*candidate) {
+	begin, end = n.End(), n.End()
 	sn, ok := n.(*parse.Sep)
 	if !ok {
-		return nil
+		return
 	}
 	if _, ok := sn.Parent().(*parse.Form); !ok {
-		return nil
+		return
 	}
-	return complArgInner("", ed, false)
+	cands = complArgInner("", ed, false)
+	return
 }
 
 func complArg(cn *parse.Compound, head string, ed *Editor) []*candidate {
@@ -212,7 +200,7 @@ func complArgInner(head string, ed *Editor, formHead bool) []*candidate {
 		}
 
 		cands = append(cands, &candidate{
-			source:       styled{name[len(fileprefix):], ""},
+			source:       styled{name, ""},
 			menu:         styled{name, defaultLsColor.getStyle(full)},
 			sourceSuffix: suffix,
 		})
