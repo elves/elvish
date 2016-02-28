@@ -164,7 +164,7 @@ func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) 
 		return nil, fmt.Errorf("cannot list directory %s: %v", dir, err)
 	}
 
-	var cands []*candidate
+	cands := []*candidate{}
 	// Make candidates out of elements that match the file component.
 	for _, info := range infos {
 		name := info.Name()

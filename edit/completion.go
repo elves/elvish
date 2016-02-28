@@ -139,29 +139,25 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 	} else if len(c.candidates) == 0 {
 		ed.addTip("no candidate for %s", c.completer)
 	} else {
-		/*
-			if acceptPrefix {
-				// If there is a non-empty longest common prefix, insert it and
-				// don't start completion mode.
-				//
-				// As a special case, when there is exactly one candidate, it is
-				// immeidately accepted.
-				prefix := c.candidates[0].source.text
-				begin := c.candidates[0].begin
-				end := c.candidates[0].end
-				for _, cand := range c.candidates[1:] {
-					prefix = commonPrefix(prefix, cand.source.text)
-					if prefix == "" {
-						break
-					}
-				}
-				if prefix != "" {
-					ed.line = ed.line[:begin] + prefix + ed.line[:end]
-					ed.dot = end
-					return
+		if acceptPrefix {
+			// If there is a non-empty longest common prefix, insert it and
+			// don't start completion mode.
+			//
+			// As a special case, when there is exactly one candidate, it is
+			// immeidately accepted.
+			prefix := c.candidates[0].source.text
+			for _, cand := range c.candidates[1:] {
+				prefix = commonPrefix(prefix, cand.source.text)
+				if prefix == "" {
+					break
 				}
 			}
-		*/
+			if prefix != "" {
+				ed.line = ed.line[:c.begin] + prefix + ed.line[c.end:]
+				ed.dot = c.begin + len(prefix)
+				return
+			}
+		}
 		ed.completion = *c
 		ed.mode = &ed.completion
 	}
