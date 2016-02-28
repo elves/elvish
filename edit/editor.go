@@ -29,8 +29,11 @@ type Editor struct {
 	store  *store.Store
 	evaler *eval.Evaler
 	cmdSeq int
-	ps1    Prompt
-	rps1   Prompt
+
+	ps1        Prompt
+	rps1       Prompt
+	completers map[string]ArgCompleter
+
 	editorState
 }
 
@@ -309,6 +312,7 @@ MainLoop:
 					savedTermios: ed.savedTermios,
 					isExternal:   ed.isExternal,
 				}
+				ed.mode = &ed.insert
 				goto MainLoop
 			case syscall.SIGWINCH:
 				fullRefresh = true
