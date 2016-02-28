@@ -61,31 +61,40 @@ func complVariable(n parse.Node, ed *Editor) (begin, end int, cands []*candidate
 }
 
 func complFormHead(n parse.Node, ed *Editor) (int, int, []*candidate) {
+	begin, end, head, q := findFormHeadContext(n)
+	if begin == -1 {
+		return -1, -1, nil
+	}
+	cands, err := complFormHeadInner(head, ed)
+	if err != nil {
+		ed.notify("%v", err)
+	}
+	fixCandidates(cands, q)
+	return begin, end, cands
+}
+
+func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
 	_, isChunk := n.(*parse.Chunk)
 	_, isPipeline := n.(*parse.Pipeline)
 	if isChunk || isPipeline {
-		return n.Begin(), n.End(), complFormHeadInner("", ed, parse.Bareword)
+		return n.Begin(), n.End(), "", parse.Bareword
 	}
 
 	if primary, ok := n.(*parse.Primary); ok {
-		if compound, head := simpleCompound(primary); compound != nil {
+		if compound, head := primaryInSimpleCompound(primary); compound != nil {
 			if form, ok := compound.Parent().(*parse.Form); ok {
 				if form.Head == compound {
-					return compound.Begin(), compound.End(), complFormHeadInner(head, ed, primary.Type)
+					return compound.Begin(), compound.End(), head, primary.Type
 				}
 			}
 		}
 	}
-	return 0, 0, nil
+	return -1, -1, "", 0
 }
 
-func complFormHeadInner(head string, ed *Editor, q parse.PrimaryType) []*candidate {
+func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 	if util.DontSearch(head) {
-		cands, err := complFilenameInner(head, true)
-		if err != nil {
-			ed.notify("%v", err)
-		}
-		return fixCandidates(cands, q)
+		return complFilenameInner(head, true)
 	}
 
 	var commands []string
@@ -112,44 +121,60 @@ func complFormHeadInner(head string, ed *Editor, q parse.PrimaryType) []*candida
 	}
 	sort.Strings(commands)
 
-	var cands []*candidate
+	cands := []*candidate{}
 	for _, cmd := range commands {
-		quoted, _ := parse.QuoteAs(cmd, q)
 		cands = append(cands, &candidate{
-			source: styled{quoted, styleForGoodCommand},
+			source: styled{cmd, styleForGoodCommand},
 			menu:   styled{cmd, ""}})
 	}
-
-	return cands
+	return cands, nil
 }
 
 func complArg(n parse.Node, ed *Editor) (int, int, []*candidate) {
+	begin, end, current, q, form := findArgContext(n)
+	if begin == -1 {
+		return 0, 0, nil
+	}
+
+	// Find out head of the form and preceding arguments.
+	// If Form.Head is not a simple compound, head will be "", just what we want.
+	_, head := simpleCompound(form.Head, nil)
+	var args []string
+	for _, compound := range form.Args {
+		if compound.Begin() >= begin {
+			break
+		}
+		ok, arg := simpleCompound(compound, nil)
+		if ok {
+			// XXX Arguments that are not simple compounds are simply ignored.
+			args = append(args, arg)
+		}
+	}
+
+	cands, err := completeArg(&ArgContext{head, args, current, ed})
+	if err != nil {
+		ed.notify("%v", err)
+	}
+	fixCandidates(cands, q)
+	return begin, end, cands
+}
+
+func findArgContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Form) {
 	if sep, ok := n.(*parse.Sep); ok {
-		if _, ok := sep.Parent().(*parse.Form); ok {
-			// Sep in Form: new argument.
-			cands, err := complFilenameInner("", false)
-			if err != nil {
-				ed.notify("%v", err)
-			}
-			fixCandidates(cands, parse.Bareword)
-			return n.End(), n.End(), cands
+		if form, ok := sep.Parent().(*parse.Form); ok {
+			return n.End(), n.End(), "", parse.Bareword, form
 		}
 	}
 	if primary, ok := n.(*parse.Primary); ok {
-		if compound, head := simpleCompound(primary); compound != nil {
+		if compound, head := primaryInSimpleCompound(primary); compound != nil {
 			if form, ok := compound.Parent().(*parse.Form); ok {
 				if form.Head != compound {
-					cands, err := complFilenameInner(head, false)
-					if err != nil {
-						ed.notify("%v", err)
-					}
-					fixCandidates(cands, primary.Type)
-					return compound.Begin(), compound.End(), cands
+					return compound.Begin(), compound.End(), head, primary.Type, form
 				}
 			}
 		}
 	}
-	return 0, 0, nil
+	return -1, -1, "", 0, nil
 }
 
 // TODO: getStyle does redundant stats.

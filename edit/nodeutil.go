@@ -22,7 +22,7 @@ func formHead(n parse.Node) (parse.Node, string) {
 	}
 
 	if primary, ok := n.(*parse.Primary); ok {
-		if compound, head := simpleCompound(primary); compound != nil {
+		if compound, head := primaryInSimpleCompound(primary); compound != nil {
 			if form, ok := compound.Parent().(*parse.Form); ok {
 				if form.Head == compound {
 					return compound, head
@@ -34,22 +34,28 @@ func formHead(n parse.Node) (parse.Node, string) {
 	return nil, ""
 }
 
-func simpleCompound(pn *parse.Primary) (*parse.Compound, string) {
+func primaryInSimpleCompound(pn *parse.Primary) (*parse.Compound, string) {
 	thisIndexing, ok := pn.Parent().(*parse.Indexing)
 	if !ok {
 		return nil, ""
 	}
-
 	thisCompound, ok := thisIndexing.Parent().(*parse.Compound)
 	if !ok {
 		return nil, ""
 	}
+	ok, head := simpleCompound(thisCompound, thisIndexing)
+	if !ok {
+		return nil, ""
+	}
+	return thisCompound, head
+}
 
+func simpleCompound(cn *parse.Compound, upto *parse.Indexing) (bool, string) {
 	tilde := false
 	head := ""
-	for _, in := range thisCompound.Indexings {
+	for _, in := range cn.Indexings {
 		if len(in.Indicies) > 0 {
-			return nil, ""
+			return false, ""
 		}
 		switch in.Head.Type {
 		case parse.Tilde:
@@ -58,22 +64,22 @@ func simpleCompound(pn *parse.Primary) (*parse.Compound, string) {
 			head += in.Head.Value
 		}
 
-		if in == thisIndexing {
+		if in == upto {
 			break
 		}
 	}
 	if tilde {
 		i := strings.Index(head, "/")
 		if i == -1 {
-			return nil, ""
+			return false, ""
 		}
 		uname := head[:i]
 		home, err := util.GetHome(uname)
 		if err != nil {
 			// TODO report error
-			return nil, ""
+			return false, ""
 		}
 		head = home + head[i:]
 	}
-	return thisCompound, head
+	return true, head
 }
