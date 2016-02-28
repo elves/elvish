@@ -60,6 +60,7 @@ type editorState struct {
 
 	isExternal      map[string]bool
 	parseErrorAtEnd bool
+
 	// Used for builtins.
 	lastKey    Key
 	nextAction action
