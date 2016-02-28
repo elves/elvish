@@ -5,7 +5,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// Interface exposed to elvish script.
+// Interface between the editor and elvish script. Implements the le: module.
 
 // makeModule builds a module from an Editor.
 func makeModule(ed *Editor) eval.Namespace {
