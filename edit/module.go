@@ -73,7 +73,7 @@ func (bt BindingTable) IndexOne(idx eval.Value) eval.Value {
 	switch f := bt.inner[key].(type) {
 	case Builtin:
 		return eval.String(f.name)
-	case EvalCaller:
+	case CallerBoundFunc:
 		return f.Caller
 	}
 	throw(errors.New("bug"))
@@ -92,7 +92,7 @@ func (bt BindingTable) IndexSet(idx, v eval.Value) {
 		}
 		f = builtin
 	case eval.CallerValue:
-		f = EvalCaller{v}
+		f = CallerBoundFunc{v}
 	default:
 		throw(fmt.Errorf("bad function type %s", v.Kind()))
 	}
