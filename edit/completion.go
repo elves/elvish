@@ -152,7 +152,7 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 					break
 				}
 			}
-			if prefix != "" {
+			if prefix != "" && prefix != ed.line[c.begin:c.end] {
 				ed.line = ed.line[:c.begin] + prefix + ed.line[c.end:]
 				ed.dot = c.begin + len(prefix)
 				return
