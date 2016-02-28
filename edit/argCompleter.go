@@ -26,11 +26,12 @@ func (fac FuncArgCompleter) Complete(ctx *ArgContext) ([]*candidate, error) {
 // CompleterTable provides $le:completer. It implements eval.IndexSetter.
 type CompleterTable map[string]ArgCompleter
 
-func (ct) Kind() string {
+func (CompleterTable) Kind() string {
 	return "map"
 }
 
 func (ct CompleterTable) Repr(indent int) string {
+	return ""
 }
 
 var DefaultArgCompleter = ""
