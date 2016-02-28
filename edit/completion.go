@@ -82,7 +82,6 @@ type styled struct {
 
 type candidate struct {
 	source, menu styled
-	// XXX only used in completers for compound.
 	sourceSuffix string
 }
 
@@ -92,8 +91,8 @@ func (comp *completion) selectedCandidate() *candidate {
 
 // apply returns the line and dot after applying a candidate.
 func (comp *completion) apply(line string, dot int) (string, int) {
-	return line[:comp.begin] + comp.selectedCandidate().source.text +
-		line[comp.end:], comp.end
+	text := comp.selectedCandidate().source.text
+	return line[:comp.begin] + text + line[comp.end:], comp.begin + len(text)
 }
 
 func (c *completion) prev(cycle bool) {

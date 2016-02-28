@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"fmt"
 	"io/ioutil"
 	"path"
 	"sort"
@@ -22,10 +23,8 @@ var completers = []struct {
 	completer
 }{
 	{"variable", complVariable},
-	{"command name", complNewForm},
-	{"command name", makeCompoundCompleter(complFormHead)},
-	{"argument", complNewArg},
-	{"argument", makeCompoundCompleter(complArg)},
+	{"command name", complFormHead},
+	{"argument", complArg},
 }
 
 func complVariable(n parse.Node, ed *Editor) (begin, end int, cands []*candidate) {
@@ -61,117 +60,111 @@ func complVariable(n parse.Node, ed *Editor) (begin, end int, cands []*candidate
 	return
 }
 
-func complNewForm(n parse.Node, ed *Editor) (begin, end int, cands []*candidate) {
-	begin, end = n.Begin(), n.End()
-	if _, ok := n.(*parse.Chunk); ok {
-		// Leaf is a chunk is a leaf. Must be empty chunk.
-		cands = complFormHeadInner("", ed)
-		return
+func complFormHead(n parse.Node, ed *Editor) (int, int, []*candidate) {
+	_, isChunk := n.(*parse.Chunk)
+	_, isPipeline := n.(*parse.Pipeline)
+	if isChunk || isPipeline {
+		return n.Begin(), n.End(), complFormHeadInner("", ed, parse.Bareword)
 	}
-	if _, ok := n.Parent().(*parse.Chunk); ok {
-		// Parent is a chunk. Must be an empty pipeline.
-		cands = complFormHeadInner("", ed)
-		return
+
+	if primary, ok := n.(*parse.Primary); ok {
+		if compound, head := simpleCompound(primary); compound != nil {
+			if form, ok := compound.Parent().(*parse.Form); ok {
+				if form.Head == compound {
+					return compound.Begin(), compound.End(), complFormHeadInner(head, ed, primary.Type)
+				}
+			}
+		}
 	}
-	return
+	return 0, 0, nil
 }
 
-// XXX Semantics of candidate is pretty broken here.
-func makeCompoundCompleter(
-	f func(*parse.Compound, string, *Editor) []*candidate) completer {
-	return func(n parse.Node, ed *Editor) (begin, end int, cands []*candidate) {
-		begin, end = n.Begin(), n.End()
-
-		pn, ok := n.(*parse.Primary)
-		if !ok {
-			return
-		}
-		cn, head := simpleCompound(pn)
-		if cn == nil {
-			return
-		}
-		cands = f(cn, head, ed)
-		for _, cand := range cands {
-			quoted, _ := parse.QuoteAs(cand.source.text, pn.Type)
-			cand.source.text = quoted + cand.sourceSuffix
-		}
-		return
-	}
-}
-
-func complFormHead(cn *parse.Compound, head string, ed *Editor) []*candidate {
-	if isFormHead(cn) {
-		return complFormHeadInner(head, ed)
-	}
-	return nil
-}
-
-func complFormHeadInner(head string, ed *Editor) []*candidate {
+func complFormHeadInner(head string, ed *Editor, q parse.PrimaryType) []*candidate {
 	if util.DontSearch(head) {
-		return complArgInner(head, ed, true)
+		cands, err := complFilenameInner(head, true)
+		if err != nil {
+			ed.notify("%v", err)
+		}
+		return fixCandidates(cands, q)
 	}
 
-	cands := []*candidate{}
-
-	foundCommand := func(s string) {
+	var commands []string
+	got := func(s string) {
 		if strings.HasPrefix(s, head) {
-			cands = append(cands, &candidate{
-				source: styled{s, styleForGoodCommand},
-				menu:   styled{s, ""},
-			})
+			commands = append(commands, s)
 		}
 	}
 	for special := range isBuiltinSpecial {
-		foundCommand(special)
+		got(special)
 	}
 	for variable := range eval.Builtin() {
 		if strings.HasPrefix(variable, eval.FnPrefix) {
-			foundCommand(variable[len(eval.FnPrefix):])
+			got(variable[len(eval.FnPrefix):])
 		}
 	}
 	for variable := range ed.evaler.Global() {
 		if strings.HasPrefix(variable, eval.FnPrefix) {
-			foundCommand(variable[len(eval.FnPrefix):])
+			got(variable[len(eval.FnPrefix):])
 		}
 	}
 	for command := range ed.isExternal {
-		foundCommand(command)
+		got(command)
 	}
+	sort.Strings(commands)
+
+	var cands []*candidate
+	for _, cmd := range commands {
+		quoted, _ := parse.QuoteAs(cmd, q)
+		cands = append(cands, &candidate{
+			source: styled{quoted, styleForGoodCommand},
+			menu:   styled{cmd, ""}})
+	}
+
 	return cands
 }
 
-func complNewArg(n parse.Node, ed *Editor) (begin int, end int, cands []*candidate) {
-	begin, end = n.End(), n.End()
-	sn, ok := n.(*parse.Sep)
-	if !ok {
-		return
+func complArg(n parse.Node, ed *Editor) (int, int, []*candidate) {
+	if sep, ok := n.(*parse.Sep); ok {
+		if _, ok := sep.Parent().(*parse.Form); ok {
+			// Sep in Form: new argument.
+			cands, err := complFilenameInner("", false)
+			if err != nil {
+				ed.notify("%v", err)
+			}
+			fixCandidates(cands, parse.Bareword)
+			return n.End(), n.End(), cands
+		}
 	}
-	if _, ok := sn.Parent().(*parse.Form); !ok {
-		return
+	if primary, ok := n.(*parse.Primary); ok {
+		if compound, head := simpleCompound(primary); compound != nil {
+			if form, ok := compound.Parent().(*parse.Form); ok {
+				if form.Head != compound {
+					cands, err := complFilenameInner(head, false)
+					if err != nil {
+						ed.notify("%v", err)
+					}
+					fixCandidates(cands, primary.Type)
+					return compound.Begin(), compound.End(), cands
+				}
+			}
+		}
 	}
-	cands = complArgInner("", ed, false)
-	return
-}
-
-func complArg(cn *parse.Compound, head string, ed *Editor) []*candidate {
-	return complArgInner(head, ed, false)
+	return 0, 0, nil
 }
 
 // TODO: getStyle does redundant stats.
-func complArgInner(head string, ed *Editor, formHead bool) []*candidate {
+func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) {
 	dir, fileprefix := path.Split(head)
 	if dir == "" {
 		dir = "."
 	}
 
 	infos, err := ioutil.ReadDir(dir)
-	cands := []*candidate{}
-
 	if err != nil {
-		ed.addTip("cannot list directory %s: %v", dir, err)
-		return cands
+		return nil, fmt.Errorf("cannot list directory %s: %v", dir, err)
 	}
 
+	var cands []*candidate
 	// Make candidates out of elements that match the file component.
 	for _, info := range infos {
 		name := info.Name()
@@ -184,28 +177,33 @@ func complArgInner(head string, ed *Editor, formHead bool) []*candidate {
 			continue
 		}
 		// Only accept searchable directories and executable files if
-		// completing head.
-		if formHead && !(info.IsDir() || (info.Mode()&0111) != 0) {
+		// executableOnly is true.
+		if executableOnly && !(info.IsDir() || (info.Mode()&0111) != 0) {
 			continue
 		}
 
-		// Full filename for .getStyle.
+		// Full filename for source and getStyle.
 		full := head + name[len(fileprefix):]
 
-		var suffix string
+		suffix := " "
 		if info.IsDir() {
 			suffix = "/"
-		} else {
-			suffix = " "
 		}
 
 		cands = append(cands, &candidate{
-			source:       styled{name, ""},
-			menu:         styled{name, defaultLsColor.getStyle(full)},
-			sourceSuffix: suffix,
+			source: styled{full, ""}, sourceSuffix: suffix,
+			menu: styled{name, defaultLsColor.getStyle(full)},
 		})
 	}
 
+	return cands, nil
+}
+
+func fixCandidates(cands []*candidate, q parse.PrimaryType) []*candidate {
+	for _, cand := range cands {
+		quoted, _ := parse.QuoteAs(cand.source.text, q)
+		cand.source.text = quoted + cand.sourceSuffix
+	}
 	return cands
 }
 
