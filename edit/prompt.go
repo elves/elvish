@@ -12,7 +12,8 @@ import (
 
 var ErrPromptMustBeStringOrFunc = errors.New("prompt must be string or function")
 
-// PromptVariable implements $le:prompt and $le:rprompt.
+// PromptVariable is a prompt function variable. It may be set to a String, a
+// Caller, or a BuiltinPrompt. It provides $le:prompt and $le:rprompt.
 type PromptVariable struct {
 	Prompt *Prompt
 }

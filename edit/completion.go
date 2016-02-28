@@ -3,6 +3,8 @@ package edit
 import (
 	"fmt"
 	"unicode/utf8"
+
+	"github.com/elves/elvish/util"
 )
 
 // Completion subsystem.
@@ -198,7 +200,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 	if cols == 0 {
 		cols = 1
 	}
-	lines := CeilDiv(len(cands), cols)
+	lines := util.CeilDiv(len(cands), cols)
 	comp.lines = lines
 
 	// Determine the window to show.
