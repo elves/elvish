@@ -24,7 +24,7 @@ func init() {
 }
 
 // AddDir adds a directory to the directory history.
-func (s *Store) AddDir(d string) error {
+func (s *Store) AddDir(d string, incFactor float64) error {
 	return transaction(s.db, func(tx *sql.Tx) error {
 		// Insert when the path does not already exist
 		_, err := tx.Exec("insert or ignore into dir (path) values(?)", d)
@@ -39,7 +39,7 @@ func (s *Store) AddDir(d string) error {
 		}
 
 		// Increment score
-		_, err = tx.Exec("update dir set score = score + ? where path = ?", scoreIncrement, d)
+		_, err = tx.Exec("update dir set score = score + ? where path = ?", scoreIncrement*incFactor, d)
 		return err
 	})
 }

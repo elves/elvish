@@ -390,7 +390,7 @@ func cdInner(dir string, ec *EvalCtx) {
 			go func() {
 				store.Waits.Add(1)
 				// XXX Error ignored.
-				store.AddDir(pwd)
+				store.AddDir(pwd, 1)
 				store.Waits.Done()
 				Logger.Println("added dir to store:", pwd)
 			}()
@@ -434,7 +434,7 @@ func jump(ec *EvalCtx, arg string) {
 	if err != nil {
 		throw(err)
 	}
-	ec.store.AddDir(dir)
+	ec.store.AddDir(dir, 1)
 }
 
 func source(ec *EvalCtx, fname string) {

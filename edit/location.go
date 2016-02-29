@@ -70,8 +70,18 @@ func acceptLocation(ed *Editor) {
 	// XXX Maybe we want to use eval.cdInner and increase the score?
 	loc := &ed.location
 	if len(loc.candidates) > 0 {
-		err := os.Chdir(loc.candidates[loc.selected].Path)
-		if err != nil {
+		dir := loc.candidates[loc.selected].Path
+		err := os.Chdir(dir)
+		if err == nil {
+			store := ed.store
+			go func() {
+				store.Waits.Add(1)
+				// XXX Error ignored.
+				store.AddDir(dir, 0.5)
+				store.Waits.Done()
+				Logger.Println("added dir to store:", dir)
+			}()
+		} else {
 			ed.notify("%v", err)
 		}
 	}
