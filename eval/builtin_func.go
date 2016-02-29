@@ -73,6 +73,7 @@ func init() {
 
 		&BuiltinFn{"cd", cd},
 		&BuiltinFn{"dirs", wrapFn(dirs)},
+		&BuiltinFn{"history", wrapFn(history)},
 
 		&BuiltinFn{"source", wrapFn(source)},
 
@@ -413,6 +414,23 @@ func dirs(ec *EvalCtx) {
 			NewRoVariable(String(dir.Path)),
 			NewRoVariable(String(fmt.Sprint(dir.Score))),
 		}}
+	}
+}
+
+func history(ec *EvalCtx) {
+	if ec.store == nil {
+		throw(ErrStoreNotConnected)
+	}
+
+	store := ec.store
+	seq, err := store.NextCmdSeq()
+	maybeThrow(err)
+	cmds, err := store.Cmds(0, seq)
+	maybeThrow(err)
+
+	out := ec.ports[1].Chan
+	for _, cmd := range cmds {
+		out <- String(cmd)
 	}
 }
 
