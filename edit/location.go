@@ -25,6 +25,7 @@ func (l *location) ModeLine(width int) *buffer {
 	b.writes(TrimWcWidth(" LOCATION ", width), styleForMode)
 	b.writes(" ", "")
 	b.writes(l.filter, styleForFilter)
+	b.dot = b.cursor()
 	return b
 }
 

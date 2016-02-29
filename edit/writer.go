@@ -74,8 +74,12 @@ func (b *buffer) newline() {
 	}
 }
 
-func (b *buffer) extend(b2 *buffer) {
+func (b *buffer) extend(b2 *buffer, moveDot bool) {
 	if b2 != nil && b2.cells != nil {
+		if moveDot {
+			b.dot.line = b2.dot.line + len(b.cells)
+			b.dot.col = b2.dot.col
+		}
 		b.cells = append(b.cells, b2.cells...)
 		b.col = b2.col
 	}
@@ -499,9 +503,9 @@ tokens:
 
 	// Combine buffers (reusing bufLine)
 	buf = bufLine
-	buf.extend(bufMode)
-	buf.extend(bufTips)
-	buf.extend(bufListing)
+	buf.extend(bufMode, es.mode.Mode() == modeLocation)
+	buf.extend(bufTips, false)
+	buf.extend(bufListing, false)
 
 	return w.commitBuffer(bufNoti, buf, fullRefresh)
 }
