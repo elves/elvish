@@ -221,6 +221,9 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 
 	bytesBuf := new(bytes.Buffer)
 
+	// Hide cursor.
+	bytesBuf.WriteString("\033[?25l")
+
 	// Rewind cursor
 	if pLine := w.oldBuf.dot.line; pLine > 0 {
 		fmt.Fprintf(bytesBuf, "\033[%dA", pLine)
@@ -235,11 +238,17 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 	// style of last written cell.
 	style := ""
 
+	switchStyle := func(newstyle string) {
+		if newstyle != style {
+			fmt.Fprintf(bytesBuf, "\033[0;%sm", newstyle)
+			style = newstyle
+		}
+	}
+
 	writeCells := func(cs []cell) {
 		for _, c := range cs {
-			if c.width > 0 && c.style != style {
-				fmt.Fprintf(bytesBuf, "\033[m\033[%sm", c.style)
-				style = c.style
+			if c.width > 0 {
+				switchStyle(c.style)
 			}
 			bytesBuf.WriteString(string(c.rune))
 		}
@@ -253,6 +262,7 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 		// Write notifications
 		for _, line := range bufNoti.cells {
 			writeCells(line)
+			switchStyle("")
 			bytesBuf.WriteString("\033[K\n")
 		}
 		// XXX Hacky.
@@ -284,6 +294,7 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 		}
 		// Erase the rest of the line if necessary.
 		if !fullRefresh && i < len(w.oldBuf.cells) && j < len(w.oldBuf.cells[i]) {
+			switchStyle("")
 			bytesBuf.WriteString("\033[K")
 		}
 		for _, c := range line[j:] {
@@ -299,13 +310,15 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 		// Note that we cannot simply write \033[J, because if the cursor is
 		// just over the last column -- which is precisely the case if we have a
 		// rprompt, \033[J will also erase the last column.
+		switchStyle("")
 		bytesBuf.WriteString("\n\033[J\033[A")
 	}
-	if style != "" {
-		bytesBuf.WriteString("\033[m")
-	}
+	switchStyle("")
 	cursor := buf.cursor()
 	bytesBuf.Write(deltaPos(cursor, buf.dot))
+
+	// Show cursor.
+	bytesBuf.WriteString("\033[?25h")
 
 	if logWriterDetail {
 		Logger.Printf("going to write %q", bytesBuf.String())
@@ -380,6 +393,7 @@ func makeModeLine(text string, width int) *buffer {
 // the corresponding position will be calculated.
 func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 	height, width := sys.GetWinsize(int(w.file.Fd()))
+	mode := es.mode.Mode()
 
 	var bufNoti, bufLine, bufMode, bufTips, bufListing, buf *buffer
 	// butNoti
@@ -406,7 +420,7 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 
 	// nowAt is called at every rune boundary.
 	nowAt := func(i int) {
-		if es.mode.Mode() == modeCompletion && i == es.completion.begin {
+		if mode == modeCompletion && i == es.completion.begin {
 			c := es.completion.selectedCandidate()
 			b.writes(c.source.text, c.source.style+styleForCompleted)
 		}
@@ -418,7 +432,7 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 tokens:
 	for _, token := range es.tokens {
 		for _, r := range token.Text {
-			if es.mode.Mode() == modeCompletion &&
+			if mode == modeCompletion &&
 				es.completion.begin <= i && i <= es.completion.end {
 				// Do nothing. This part is replaced by the completion candidate.
 			} else {
@@ -427,13 +441,13 @@ tokens:
 			i += utf8.RuneLen(r)
 
 			nowAt(i)
-			if es.mode.Mode() == modeHistory && i == len(es.history.prefix) {
+			if mode == modeHistory && i == len(es.history.prefix) {
 				break tokens
 			}
 		}
 	}
 
-	if es.mode.Mode() == modeHistory {
+	if mode == modeHistory {
 		// Put the rest of current history, position the cursor at the
 		// end of the line, and finish writing
 		h := es.history
@@ -503,7 +517,7 @@ tokens:
 
 	// Combine buffers (reusing bufLine)
 	buf = bufLine
-	buf.extend(bufMode, es.mode.Mode() == modeLocation)
+	buf.extend(bufMode, mode == modeLocation)
 	buf.extend(bufTips, false)
 	buf.extend(bufListing, false)
 
