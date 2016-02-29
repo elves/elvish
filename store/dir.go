@@ -12,6 +12,7 @@ type Dir struct {
 }
 
 const (
+	scoreDecay     = 0.966 // roughly 0.5^(1/20)
 	scoreIncrement = 10
 )
 
@@ -24,21 +25,23 @@ func init() {
 
 // AddDir adds a directory to the directory history.
 func (s *Store) AddDir(d string) error {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Commit()
+	return transaction(s.db, func(tx *sql.Tx) error {
+		// Insert when the path does not already exist
+		_, err := tx.Exec("insert or ignore into dir (path) values(?)", d)
+		if err != nil {
+			return err
+		}
 
-	// Insert when the path does not already exist
-	_, err = tx.Exec("insert or ignore into dir (path) values(?)", d)
-	if err != nil {
-		return err
-	}
+		// Decay scores
+		_, err = tx.Exec("update dir set score = score * ?", scoreDecay)
+		if err != nil {
+			return err
+		}
 
-	// Increment score
-	_, err = tx.Exec("update dir set score = score + ? where path = ?", scoreIncrement, d)
-	return err
+		// Increment score
+		_, err = tx.Exec("update dir set score = score + ? where path = ?", scoreIncrement, d)
+		return err
+	})
 }
 
 // ListDirs lists all directories in the directory history. The results are
