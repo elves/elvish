@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"reflect"
 	"runtime"
@@ -80,6 +81,7 @@ func init() {
 		&BuiltinFn{"-", wrapFn(minus)},
 		&BuiltinFn{"mul", wrapFn(times)},
 		&BuiltinFn{"div", wrapFn(divide)},
+		&BuiltinFn{"pow", wrapFn(pow)},
 		&BuiltinFn{"lt", wrapFn(lt)},
 		&BuiltinFn{"gt", wrapFn(gt)},
 
@@ -495,6 +497,11 @@ func divide(ec *EvalCtx, prod float64, nums ...float64) {
 		prod /= f
 	}
 	out <- String(fmt.Sprintf("%g", prod))
+}
+
+func pow(ec *EvalCtx, b, p float64) {
+	out := ec.ports[1].Chan
+	out <- String(fmt.Sprintf("%g", math.Pow(b, p)))
 }
 
 var ErrFalse = errors.New("false")
