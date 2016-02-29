@@ -73,7 +73,6 @@ func init() {
 
 		&BuiltinFn{"cd", cd},
 		&BuiltinFn{"dirs", wrapFn(dirs)},
-		&BuiltinFn{"jump", wrapFn(jump)},
 
 		&BuiltinFn{"source", wrapFn(source)},
 
@@ -415,26 +414,6 @@ func dirs(ec *EvalCtx) {
 			NewRoVariable(String(fmt.Sprint(dir.Score))),
 		}}
 	}
-}
-
-func jump(ec *EvalCtx, arg string) {
-	if ec.store == nil {
-		throw(ErrStoreNotConnected)
-	}
-	dirs, err := ec.store.FindDirs(arg)
-	if err != nil {
-		throw(errors.New("store error: " + err.Error()))
-	}
-	if len(dirs) == 0 {
-		throw(ErrNoMatchingDir)
-	}
-	dir := dirs[0].Path
-	err = os.Chdir(dir)
-	// TODO(xiaq): Remove directories that no longer exist
-	if err != nil {
-		throw(err)
-	}
-	ec.store.AddDir(dir, 1)
 }
 
 func source(ec *EvalCtx, fname string) {
