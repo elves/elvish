@@ -55,11 +55,19 @@ func startLocation(ed *Editor) {
 }
 
 func locationPrev(ed *Editor) {
-	ed.location.prev()
+	ed.location.prev(false)
+}
+
+func locationCyclePrev(ed *Editor) {
+	ed.location.prev(true)
 }
 
 func locationNext(ed *Editor) {
-	ed.location.next()
+	ed.location.next(false)
+}
+
+func locationCycleNext(ed *Editor) {
+	ed.location.next(true)
 }
 
 func locationBackspace(ed *Editor) {
@@ -99,15 +107,25 @@ func locationDefault(ed *Editor) {
 	}
 }
 
-func (loc *location) prev() {
-	if len(loc.candidates) > 0 && loc.selected > 0 {
-		loc.selected--
+func (loc *location) prev(cycle bool) {
+	loc.selected--
+	if loc.selected == -1 {
+		if cycle {
+			loc.selected = len(loc.candidates) - 1
+		} else {
+			loc.selected++
+		}
 	}
 }
 
-func (loc *location) next() {
-	if len(loc.candidates) > 0 && loc.selected < len(loc.candidates)-1 {
-		loc.selected++
+func (loc *location) next(cycle bool) {
+	loc.selected++
+	if loc.selected == len(loc.candidates) {
+		if cycle {
+			loc.selected = 0
+		} else {
+			loc.selected--
+		}
 	}
 }
 
