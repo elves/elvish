@@ -98,9 +98,14 @@ func (cac CallerArgCompleter) Complete(words []string, ed *Editor) ([]*candidate
 	}
 	ports := []*eval.Port{in, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
 
+	wordValues := make([]eval.Value, len(words))
+	for i, word := range words {
+		wordValues[i] = eval.String(word)
+	}
+
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor completer]", "", ports)
-	values, err := ec.PCaptureOutput(cac.Caller, nil)
+	values, err := ec.PCaptureOutput(cac.Caller, wordValues)
 	if err != nil {
 		ed.notify("completer error: %v", err)
 		return nil, err
