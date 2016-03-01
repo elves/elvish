@@ -28,6 +28,7 @@ func makeModule(ed *Editor) eval.Namespace {
 	}
 
 	ns["binding"] = eval.NewRoVariable(binding)
+	ns["completer"] = eval.NewRoVariable(CompleterTable(argCompleter))
 
 	ns["prompt"] = PromptVariable{&ed.ps1}
 	ns["rprompt"] = PromptVariable{&ed.rps1}

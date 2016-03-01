@@ -1,5 +1,46 @@
 package edit
 
+import (
+	"errors"
+	"os"
+
+	"github.com/elves/elvish/eval"
+)
+
+// CompleterTable provides $le:completer. It implements eval.IndexSetter.
+type CompleterTable map[string]ArgCompleter
+
+var _ eval.IndexSetter = CompleterTable(nil)
+
+var (
+	ErrCompleterIndexMustBeString = errors.New("index of completer table must be string")
+	ErrCompleterValueMustBeFunc   = errors.New("value of completer table must be function")
+)
+
+func (CompleterTable) Kind() string {
+	return "map"
+}
+
+func (ct CompleterTable) Repr(indent int) string {
+	return "<repr not implemented yet>"
+}
+
+func (ct CompleterTable) IndexOne(idx eval.Value) eval.Value {
+	return eval.String("<get not implemented yet>")
+}
+
+func (ct CompleterTable) IndexSet(idx eval.Value, v eval.Value) {
+	head, ok := idx.(eval.String)
+	if !ok {
+		throw(ErrCompleterIndexMustBeString)
+	}
+	value, ok := v.(eval.Caller)
+	if !ok {
+		throw(ErrCompleterValueMustBeFunc)
+	}
+	ct[string(head)] = CallerArgCompleter{value}
+}
+
 // ArgCompleter is an argument completer. Its Complete method is called with all
 // words of the form. There are at least two words: the first one being the form
 // head and the last word being the current argument to complete. It should
@@ -14,17 +55,6 @@ type FuncArgCompleter struct {
 
 func (fac FuncArgCompleter) Complete(words []string, ed *Editor) ([]*candidate, error) {
 	return fac.impl(words, ed)
-}
-
-// CompleterTable provides $le:completer. It implements eval.IndexSetter.
-type CompleterTable map[string]ArgCompleter
-
-func (CompleterTable) Kind() string {
-	return "map"
-}
-
-func (ct CompleterTable) Repr(indent int) string {
-	return ""
 }
 
 var DefaultArgCompleter = ""
@@ -55,4 +85,33 @@ func complSudo(words []string, ed *Editor) ([]*candidate, error) {
 		return complFormHeadInner(words[1], ed)
 	}
 	return completeArg(words[1:], ed)
+}
+
+type CallerArgCompleter struct {
+	Caller eval.Caller
+}
+
+func (cac CallerArgCompleter) Complete(words []string, ed *Editor) ([]*candidate, error) {
+	in, err := makeClosedStdin()
+	if err != nil {
+		return nil, err
+	}
+	ports := []*eval.Port{in, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
+
+	// XXX There is no source to pass to NewTopEvalCtx.
+	ec := eval.NewTopEvalCtx(ed.evaler, "[editor completer]", "", ports)
+	values, err := ec.PCaptureOutput(cac.Caller, nil)
+	if err != nil {
+		ed.notify("completer error: %v", err)
+		return nil, err
+	}
+
+	cands := make([]*candidate, len(values))
+	for i, v := range values {
+		s := eval.ToString(v)
+		cands[i] = &candidate{
+			source: styled{s, ""},
+			menu:   styled{s, ""}}
+	}
+	return cands, nil
 }
