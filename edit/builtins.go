@@ -74,6 +74,8 @@ var builtins = []Builtin{
 	{"start-location", startLocation},
 	{"location-prev", locationPrev},
 	{"location-next", locationNext},
+	{"location-cycle-prev", locationCyclePrev},
+	{"location-cycle-next", locationCycleNext},
 	{"location-backspace", locationBackspace},
 	{"accept-location", acceptLocation},
 	{"location-default", locationDefault},
@@ -168,7 +170,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 	modeLocation: map[Key]string{
 		Key{Up, 0}:        "location-prev",
 		Key{Down, 0}:      "location-next",
-		Key{Tab, 0}:       "location-next",
+		Key{Tab, 0}:       "location-cycle-next",
 		Key{Backspace, 0}: "location-backspace",
 		Key{Enter, 0}:     "accept-location",
 		Key{'[', Ctrl}:    "start-insert",
