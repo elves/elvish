@@ -151,7 +151,12 @@ func complArg(n parse.Node, ed *Editor) (int, int, []*candidate) {
 		}
 	}
 
-	cands, err := completeArg(&ArgContext{head, args, current, ed})
+	words := make([]string, len(args)+2)
+	words[0] = head
+	words[len(words)-1] = current
+	copy(words[1:len(words)-1], args[:])
+
+	cands, err := completeArg(words, ed)
 	if err != nil {
 		ed.notify("%v", err)
 	}

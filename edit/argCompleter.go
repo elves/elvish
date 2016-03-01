@@ -1,26 +1,19 @@
 package edit
 
-// ArgCompleter is an argument completer. Its Complete method is called with
-// the head of the form, a list of preceding arguments and the (possibly empty)
-// current argument. It should return a list of candidates for the current
-// argument and errors.
+// ArgCompleter is an argument completer. Its Complete method is called with all
+// words of the form. There are at least two words: the first one being the form
+// head and the last word being the current argument to complete. It should
+// return a list of candidates for the current argument and errors.
 type ArgCompleter interface {
-	Complete(*ArgContext) ([]*candidate, error)
-}
-
-type ArgContext struct {
-	head    string
-	args    []string
-	current string
-	ed      *Editor
+	Complete([]string, *Editor) ([]*candidate, error)
 }
 
 type FuncArgCompleter struct {
-	impl func(*ArgContext) ([]*candidate, error)
+	impl func([]string, *Editor) ([]*candidate, error)
 }
 
-func (fac FuncArgCompleter) Complete(ctx *ArgContext) ([]*candidate, error) {
-	return fac.impl(ctx)
+func (fac FuncArgCompleter) Complete(words []string, ed *Editor) ([]*candidate, error) {
+	return fac.impl(words, ed)
 }
 
 // CompleterTable provides $le:completer. It implements eval.IndexSetter.
@@ -44,22 +37,22 @@ func init() {
 	}
 }
 
-func completeArg(ctx *ArgContext) ([]*candidate, error) {
-	Logger.Printf("completing argument: %q %q %q", ctx.head, ctx.args, ctx.current)
-	compl, ok := argCompleter[ctx.head]
+func completeArg(words []string, ed *Editor) ([]*candidate, error) {
+	Logger.Printf("completing argument: %q", words)
+	compl, ok := argCompleter[words[0]]
 	if !ok {
 		compl = argCompleter[DefaultArgCompleter]
 	}
-	return compl.Complete(ctx)
+	return compl.Complete(words, ed)
 }
 
-func complFilename(ctx *ArgContext) ([]*candidate, error) {
-	return complFilenameInner(ctx.current, false)
+func complFilename(words []string, ed *Editor) ([]*candidate, error) {
+	return complFilenameInner(words[len(words)-1], false)
 }
 
-func complSudo(ctx *ArgContext) ([]*candidate, error) {
-	if len(ctx.args) == 0 {
-		return complFormHeadInner(ctx.current, ctx.ed)
+func complSudo(words []string, ed *Editor) ([]*candidate, error) {
+	if len(words) == 2 {
+		return complFormHeadInner(words[1], ed)
 	}
-	return completeArg(&ArgContext{ctx.args[0], ctx.args[1:], ctx.current, ctx.ed})
+	return completeArg(words[1:], ed)
 }
