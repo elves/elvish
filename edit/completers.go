@@ -53,9 +53,7 @@ func complVariable(n parse.Node, ed *Editor) (begin, end int, cands []*candidate
 
 	// Build candidates.
 	for _, varname := range varnames {
-		cands = append(cands, &candidate{
-			source: styled{"$" + varname, styleForType[Variable]},
-			menu:   styled{"$" + varname, ""}})
+		cands = append(cands, &candidate{text: "$" + varname})
 	}
 	return
 }
@@ -123,9 +121,7 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 
 	cands := []*candidate{}
 	for _, cmd := range commands {
-		cands = append(cands, &candidate{
-			source: styled{cmd, styleForGoodCommand},
-			menu:   styled{cmd, ""}})
+		cands = append(cands, &candidate{text: cmd})
 	}
 	return cands, nil
 }
@@ -221,8 +217,8 @@ func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) 
 		}
 
 		cands = append(cands, &candidate{
-			source: styled{full, ""}, sourceSuffix: suffix,
-			menu: styled{name, defaultLsColor.getStyle(full)},
+			text: full, suffix: suffix,
+			display: styled{name, defaultLsColor.getStyle(full)},
 		})
 	}
 
@@ -231,8 +227,8 @@ func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) 
 
 func fixCandidates(cands []*candidate, q parse.PrimaryType) []*candidate {
 	for _, cand := range cands {
-		quoted, _ := parse.QuoteAs(cand.source.text, q)
-		cand.source.text = quoted + cand.sourceSuffix
+		quoted, _ := parse.QuoteAs(cand.text, q)
+		cand.text = quoted + cand.suffix
 	}
 	return cands
 }

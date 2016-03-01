@@ -114,9 +114,7 @@ func (cac CallerArgCompleter) Complete(words []string, ed *Editor) ([]*candidate
 	cands := make([]*candidate, len(values))
 	for i, v := range values {
 		s := eval.ToString(v)
-		cands[i] = &candidate{
-			source: styled{s, ""},
-			menu:   styled{s, ""}}
+		cands[i] = &candidate{text: s}
 	}
 	return cands, nil
 }

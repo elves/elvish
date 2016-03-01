@@ -81,8 +81,9 @@ type styled struct {
 }
 
 type candidate struct {
-	source, menu styled
-	sourceSuffix string
+	text    string
+	display styled
+	suffix  string
 }
 
 func (comp *completion) selectedCandidate() *candidate {
@@ -91,7 +92,7 @@ func (comp *completion) selectedCandidate() *candidate {
 
 // apply returns the line and dot after applying a candidate.
 func (comp *completion) apply(line string, dot int) (string, int) {
-	text := comp.selectedCandidate().source.text
+	text := comp.selectedCandidate().text
 	return line[:comp.begin] + text + line[comp.end:], comp.begin + len(text)
 }
 
@@ -145,9 +146,9 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 			//
 			// As a special case, when there is exactly one candidate, it is
 			// immeidately accepted.
-			prefix := c.candidates[0].source.text
+			prefix := c.candidates[0].text
 			for _, cand := range c.candidates[1:] {
-				prefix = commonPrefix(prefix, cand.source.text)
+				prefix = commonPrefix(prefix, cand.text)
 				if prefix == "" {
 					break
 				}
@@ -203,7 +204,11 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 	colWidth := 0
 	margin := completionListingColMargin
 	for _, cand := range cands {
-		width := WcWidths(cand.menu.text)
+		// XXX we also patch cand.display.text here.
+		if cand.display.text == "" {
+			cand.display.text = cand.text
+		}
+		width := WcWidths(cand.display.text)
 		if colWidth < width {
 			colWidth = width
 		}
@@ -227,11 +232,11 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 			if k >= len(cands) {
 				break
 			}
-			style := cands[k].menu.style
+			style := cands[k].display.style
 			if k == comp.selected {
 				style += styleForSelected
 			}
-			text := cands[k].menu.text
+			text := cands[k].display.text
 			if j > 0 {
 				b.writePadding(margin, "")
 			}

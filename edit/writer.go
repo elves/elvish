@@ -422,7 +422,7 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 	nowAt := func(i int) {
 		if mode == modeCompletion && i == es.completion.begin {
 			c := es.completion.selectedCandidate()
-			b.writes(c.source.text, c.source.style+styleForCompleted)
+			b.writes(c.text, styleForCompleted)
 		}
 		if i == es.dot {
 			b.dot = b.cursor()
