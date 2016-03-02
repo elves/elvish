@@ -158,23 +158,16 @@ func (rd *Reader) readOne(r rune) {
 	}()
 
 	switch r {
-	case Tab, Enter, Backspace:
-		k = Key{r, 0}
-	case 0x0:
-		k = Key{'`', Ctrl} // ^@
-	case 0x1d:
-		k = Key{'6', Ctrl} // ^^
-	case 0x1f:
-		k = Key{'/', Ctrl} // ^_
 	case 0x1b: // ^[ Escape
 		r2 := readRune()
 		if r2 == runeTimeout || r2 == runeReadError {
+			// Nothing follows. Taken as a lone Escape.
 			k = Key{'[', Ctrl}
 			break
 		}
 		switch r2 {
 		case '[':
-			// CSI style function key sequence.
+			// A '[' follows. CSI style function key sequence.
 			r = readRune()
 			if r == runeTimeout || r == runeReadError {
 				k = Key{'[', Alt}
@@ -265,10 +258,11 @@ func (rd *Reader) readOne(r rune) {
 				}
 			}
 		case 'O':
-			// G3 style function key sequence: read one rune.
+			// An 'O' follows. G3 style function key sequence: read one rune.
 			r = readRune()
 			if r == runeTimeout || r == runeReadError {
-				k = Key{r2, Alt}
+				// Nothing follows after 'O'. Taken as Alt-o.
+				k = Key{'o', Alt}
 				return
 			}
 			r, ok := g3Seq[r]
@@ -278,16 +272,35 @@ func (rd *Reader) readOne(r rune) {
 				badSeq("bad G3")
 			}
 		default:
-			k = Key{r2, Alt}
+			// Something other than '[' or 'O' follows. Taken as an
+			// Alt-modified key, possibly also modified by Ctrl.
+			k = ctrlModify(r2)
+			k.Mod |= Alt
 		}
+	case Tab, Enter, Backspace:
+		k = Key{r, 0}
+	default:
+		k = ctrlModify(r)
+	}
+}
+
+// ctrlModify determines whether a rune corresponds to a Ctrl-modified key and
+// returns the Key the rune represents.
+func ctrlModify(r rune) Key {
+	switch r {
+	case 0x0:
+		return Key{'`', Ctrl} // ^@
+	case 0x1e:
+		return Key{'6', Ctrl} // ^^
+	case 0x1f:
+		return Key{'/', Ctrl} // ^_
 	default:
 		// Regular Ctrl sequences.
 		if 0x1 <= r && r <= 0x1d {
-			k = Key{r + 0x40, Ctrl}
-		} else {
-			k = Key{r, 0}
+			return Key{r + 0x40, Ctrl}
 		}
 	}
+	return Key{r, 0}
 }
 
 // G3-style key sequences: \eO followed by exactly one character. For instance,
