@@ -9,7 +9,7 @@ var ErrArityMismatch = errors.New("arity mismatch")
 
 var unnamedRestArg = ":"
 
-// Closure is a closure.
+// Closure is a closure defined in elvish script.
 type Closure struct {
 	ArgNames []string
 	// The name for the rest argument. If empty, the function has fixed arity.

@@ -12,7 +12,7 @@ func makeModule(ed *Editor) eval.Namespace {
 	ns := eval.Namespace{}
 	// Populate builtins.
 	for _, b := range builtins {
-		ns[eval.FnPrefix+b.name] = eval.NewPtrVariable(&BuiltinCallerValue{b, ed})
+		ns[eval.FnPrefix+b.name] = eval.NewPtrVariable(&BuiltinAsFnValue{b, ed})
 	}
 	// Populate binding tables in the variable $binding.
 	// TODO Make binding specific to the Editor.

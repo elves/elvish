@@ -21,18 +21,18 @@ func (s String) Len() int {
 	return len(string(s))
 }
 
-// Call resolves a command name to either a Caller variable or external command
-// and calls it.
+// Call resolves a command name to either a Fn variable or external command and
+// calls it.
 func (s String) Call(ec *EvalCtx, args []Value) {
 	resolve(string(s), ec).Call(ec, args)
 }
 
-func resolve(s string, ec *EvalCtx) Caller {
+func resolve(s string, ec *EvalCtx) Fn {
 	// Try variable
 	splice, ns, name := parseVariable(string(s))
 	if !splice {
 		if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
-			if caller, ok := v.Get().(Caller); ok {
+			if caller, ok := v.Get().(Fn); ok {
 				return caller
 			}
 		}

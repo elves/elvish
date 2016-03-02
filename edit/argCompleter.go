@@ -34,11 +34,11 @@ func (ct CompleterTable) IndexSet(idx eval.Value, v eval.Value) {
 	if !ok {
 		throw(ErrCompleterIndexMustBeString)
 	}
-	value, ok := v.(eval.Caller)
+	value, ok := v.(eval.Fn)
 	if !ok {
 		throw(ErrCompleterValueMustBeFunc)
 	}
-	ct[string(head)] = CallerArgCompleter{value}
+	ct[string(head)] = FnAsArgCompleter{value}
 }
 
 // ArgCompleter is an argument completer. Its Complete method is called with all
@@ -87,11 +87,11 @@ func complSudo(words []string, ed *Editor) ([]*candidate, error) {
 	return completeArg(words[1:], ed)
 }
 
-type CallerArgCompleter struct {
-	Caller eval.Caller
+type FnAsArgCompleter struct {
+	Fn eval.Fn
 }
 
-func (cac CallerArgCompleter) Complete(words []string, ed *Editor) ([]*candidate, error) {
+func (fac FnAsArgCompleter) Complete(words []string, ed *Editor) ([]*candidate, error) {
 	in, err := makeClosedStdin()
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func (cac CallerArgCompleter) Complete(words []string, ed *Editor) ([]*candidate
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor completer]", "", ports)
-	values, err := ec.PCaptureOutput(cac.Caller, wordValues)
+	values, err := ec.PCaptureOutput(fac.Fn, wordValues)
 	if err != nil {
 		ed.notify("completer error: %v", err)
 		return nil, err

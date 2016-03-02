@@ -76,44 +76,44 @@ func collectElems(elemser Elemser) []Value {
 	return vs
 }
 
-// Caller is anything may be called on an evalCtx with a list of Value's.
-type Caller interface {
+// Fn is anything may be called on an evalCtx with a list of Value's.
+type Fn interface {
 	Call(ec *EvalCtx, args []Value)
 }
 
-type CallerValue interface {
+type FnValue interface {
 	Value
-	Caller
+	Fn
 }
 
-func mustCaller(v Value) Caller {
-	caller, ok := getCaller(v, true)
+func mustFn(v Value) Fn {
+	caller, ok := getFn(v, true)
 	if !ok {
 		throw(fmt.Errorf("a %s is not callable", v.Kind()))
 	}
 	return caller
 }
 
-// getCaller adapts a Value to a Caller if there is an adapter. It adapts an
-// Indexer if adaptIndexer is true.
-func getCaller(v Value, adaptIndexer bool) (Caller, bool) {
-	if caller, ok := v.(Caller); ok {
+// getFn adapts a Value to a Fn if there is an adapter. It adapts an Indexer if
+// adaptIndexer is true.
+func getFn(v Value, adaptIndexer bool) (Fn, bool) {
+	if caller, ok := v.(Fn); ok {
 		return caller, true
 	}
 	if adaptIndexer {
 		if indexer, ok := getIndexer(v, nil); ok {
-			return IndexerCaller{indexer}, true
+			return IndexerAsFn{indexer}, true
 		}
 	}
 	return nil, false
 }
 
-// IndexerCaller adapts an Indexer to a Caller.
-type IndexerCaller struct {
+// IndexerAsFn adapts an Indexer to a Fn.
+type IndexerAsFn struct {
 	Indexer
 }
 
-func (ic IndexerCaller) Call(ec *EvalCtx, args []Value) {
+func (ic IndexerAsFn) Call(ec *EvalCtx, args []Value) {
 	results := ic.Indexer.Index(args)
 	for _, v := range results {
 		ec.ports[1].Chan <- v
@@ -145,7 +145,7 @@ func mustIndexer(v Value, ec *EvalCtx) Indexer {
 }
 
 // getIndexer adapts a Value to an Indexer if there is an adapter. It adapts a
-// Caller if ec is not nil.
+// Fn if ec is not nil.
 func getIndexer(v Value, ec *EvalCtx) (Indexer, bool) {
 	if indexer, ok := v.(Indexer); ok {
 		return indexer, true
@@ -154,8 +154,8 @@ func getIndexer(v Value, ec *EvalCtx) (Indexer, bool) {
 		return IndexOneerIndexer{indexOneer}, true
 	}
 	if ec != nil {
-		if caller, ok := v.(Caller); ok {
-			return CallerIndexer{caller, ec}, true
+		if caller, ok := v.(Fn); ok {
+			return FnAsIndexer{caller, ec}, true
 		}
 	}
 	return nil, false
@@ -175,16 +175,16 @@ func (ioi IndexOneerIndexer) Index(vs []Value) []Value {
 	return results
 }
 
-// CallerIndexer adapts a Caller to an Indexer.
-type CallerIndexer struct {
-	Caller
+// FnAsIndexer adapts a Fn to an Indexer.
+type FnAsIndexer struct {
+	Fn
 	ec *EvalCtx
 }
 
-func (ci CallerIndexer) Index(idx []Value) []Value {
+func (ci FnAsIndexer) Index(idx []Value) []Value {
 	// XXX We don't have location information.
 	return captureOutput(ci.ec, Op{func(ec *EvalCtx) {
-		ci.Caller.Call(ec, idx)
+		ci.Fn.Call(ec, idx)
 	}, -1, -1})
 }
 

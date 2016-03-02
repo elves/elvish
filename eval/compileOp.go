@@ -148,7 +148,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		// head
 		headValues := headOp.Exec(ec)
 		ec.must(headValues, "head of command", headOp.Begin, headOp.End).mustLen(1)
-		headCaller := mustCaller(headValues[0])
+		headFn := mustFn(headValues[0])
 
 		// args
 		var args []Value
@@ -162,7 +162,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		}
 
 		ec.begin, ec.end = begin, end
-		headCaller.Call(ec, args)
+		headFn.Call(ec, args)
 	}
 }
 

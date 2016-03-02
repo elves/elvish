@@ -42,8 +42,8 @@ func (bt BindingTable) IndexOne(idx eval.Value) eval.Value {
 	switch f := bt.inner[key].(type) {
 	case Builtin:
 		return eval.String(f.name)
-	case CallerBoundFunc:
-		return f.Caller
+	case FnAsBoundFunc:
+		return f.Fn
 	}
 	throw(errors.New("bug"))
 	panic("unreachable")
@@ -60,8 +60,8 @@ func (bt BindingTable) IndexSet(idx, v eval.Value) {
 			throw(fmt.Errorf("no builtin named %s", v.Repr(eval.NoPretty)))
 		}
 		f = builtin
-	case eval.CallerValue:
-		f = CallerBoundFunc{v}
+	case eval.FnValue:
+		f = FnAsBoundFunc{v}
 	default:
 		throw(fmt.Errorf("bad function type %s", v.Kind()))
 	}
@@ -81,22 +81,22 @@ func keyIndex(idx eval.Value) Key {
 	return key
 }
 
-// BuiltinCallerValue adapts a Builtin to satisfy eval.Value and eval.Caller,
-// so that it can be called from elvish script.
-type BuiltinCallerValue struct {
+// BuiltinAsFnValue adapts a Builtin to satisfy eval.FnValue, so that it can be
+// called from elvish script.
+type BuiltinAsFnValue struct {
 	b  Builtin
 	ed *Editor
 }
 
-func (*BuiltinCallerValue) Kind() string {
+func (*BuiltinAsFnValue) Kind() string {
 	return "fn"
 }
 
-func (eb *BuiltinCallerValue) Repr(int) string {
+func (eb *BuiltinAsFnValue) Repr(int) string {
 	return "<editor builtin " + eb.b.name + ">"
 }
 
-func (eb *BuiltinCallerValue) Call(ec *eval.EvalCtx, args []eval.Value) {
+func (eb *BuiltinAsFnValue) Call(ec *eval.EvalCtx, args []eval.Value) {
 	if len(args) > 0 {
 		throw(ErrTakeNoArg)
 	}
@@ -107,7 +107,7 @@ func (eb *BuiltinCallerValue) Call(ec *eval.EvalCtx, args []eval.Value) {
 }
 
 // BoundFunc is a function bound to a key. It is either a Builtin or an
-// EvalCaller.
+// FnAsBoundFunc.
 type BoundFunc interface {
 	eval.Reprer
 	Call(ed *Editor)
@@ -121,17 +121,17 @@ func (b Builtin) Call(ed *Editor) {
 	b.impl(ed)
 }
 
-// CallerBoundFunc adapts eval.Caller to BoundFunc, so that functions in elvish
+// FnAsBoundFunc adapts eval.Fn to BoundFunc, so that functions in elvish
 // script can be bound to keys.
-type CallerBoundFunc struct {
-	Caller eval.CallerValue
+type FnAsBoundFunc struct {
+	Fn eval.FnValue
 }
 
-func (c CallerBoundFunc) Repr(indent int) string {
-	return c.Caller.Repr(indent)
+func (c FnAsBoundFunc) Repr(indent int) string {
+	return c.Fn.Repr(indent)
 }
 
-func (c CallerBoundFunc) Call(ed *Editor) {
+func (c FnAsBoundFunc) Call(ed *Editor) {
 	rout, chanOut, ports, err := makePorts()
 	if err != nil {
 		return
@@ -162,7 +162,7 @@ func (c CallerBoundFunc) Call(ed *Editor) {
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor]", "", ports)
-	ex := ec.PCall(c.Caller, []eval.Value{})
+	ex := ec.PCall(c.Fn, []eval.Value{})
 	if ex != nil {
 		ed.notify("function error: %s", ex.Error())
 	}

@@ -13,21 +13,21 @@ import (
 var ErrPromptMustBeStringOrFunc = errors.New("prompt must be string or function")
 
 // PromptVariable is a prompt function variable. It may be set to a String, a
-// Caller, or a BuiltinPrompt. It provides $le:prompt and $le:rprompt.
+// Fn, or a BuiltinPrompt. It provides $le:prompt and $le:rprompt.
 type PromptVariable struct {
 	Prompt *Prompt
 }
 
 func (pv PromptVariable) Get() eval.Value {
-	// XXX Should return a proper eval.Caller
+	// XXX Should return a proper eval.Fn
 	return eval.String("<prompt>")
 }
 
 func (pv PromptVariable) Set(v eval.Value) {
 	if s, ok := v.(eval.String); ok {
 		*pv.Prompt = BuiltinPrompt(func(*Editor) string { return string(s) })
-	} else if c, ok := v.(eval.Caller); ok {
-		*pv.Prompt = CallerPrompt{c}
+	} else if c, ok := v.(eval.Fn); ok {
+		*pv.Prompt = FnAsPrompt{c}
 	} else {
 		throw(ErrPromptMustBeStringOrFunc)
 	}
@@ -45,12 +45,12 @@ func (bp BuiltinPrompt) Call(ed *Editor) string {
 	return bp(ed)
 }
 
-// CallerPrompt adapts a eval.Caller to a Prompt.
-type CallerPrompt struct {
-	eval.Caller
+// FnAsPrompt adapts a eval.Fn to a Prompt.
+type FnAsPrompt struct {
+	eval.Fn
 }
 
-func (c CallerPrompt) Call(ed *Editor) string {
+func (c FnAsPrompt) Call(ed *Editor) string {
 	in, err := makeClosedStdin()
 	if err != nil {
 		return ""
@@ -59,7 +59,7 @@ func (c CallerPrompt) Call(ed *Editor) string {
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor prompt]", "", ports)
-	values, err := ec.PCaptureOutput(c.Caller, nil)
+	values, err := ec.PCaptureOutput(c.Fn, nil)
 	if err != nil {
 		ed.notify("prompt function error: %v", err)
 		return ""

@@ -245,14 +245,14 @@ func (ec *EvalCtx) PEval(op Op) (err error) {
 	return nil
 }
 
-func (ec *EvalCtx) PCall(f Caller, args []Value) (err error) {
+func (ec *EvalCtx) PCall(f Fn, args []Value) (err error) {
 	// defer catch(&err, ec)
 	defer util.Catch(&err)
 	f.Call(ec, args)
 	return nil
 }
 
-func (ec *EvalCtx) PCaptureOutput(f Caller, args []Value) (vs []Value, err error) {
+func (ec *EvalCtx) PCaptureOutput(f Fn, args []Value) (vs []Value, err error) {
 	defer util.Catch(&err)
 	// XXX There is no source.
 	return captureOutput(ec, Op{
