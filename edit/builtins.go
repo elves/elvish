@@ -67,6 +67,7 @@ var builtins = []Builtin{
 	{"start-history-listing", startHistoryListing},
 	{"histlist-prev", histlistPrev},
 	{"histlist-next", histlistNext},
+	{"histlist-backspace", histlistBackspace},
 	{"histlist-append", histlistAppend},
 	{"default-history-listing", defaultHistoryListing},
 
@@ -161,11 +162,12 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Default:        "default-history",
 	},
 	modeHistoryListing: map[Key]string{
-		Key{Up, 0}:     "histlist-prev",
-		Key{Down, 0}:   "histlist-next",
-		Key{Enter, 0}:  "histlist-append",
-		Key{'[', Ctrl}: "start-insert",
-		Default:        "default-history-listing",
+		Key{Up, 0}:        "histlist-prev",
+		Key{Down, 0}:      "histlist-next",
+		Key{Enter, 0}:     "histlist-append",
+		Key{Backspace, 0}: "histlist-backspace",
+		Key{'[', Ctrl}:    "start-insert",
+		Default:           "default-history-listing",
 	},
 	modeLocation: map[Key]string{
 		Key{Up, 0}:        "location-prev",

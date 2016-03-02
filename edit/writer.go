@@ -517,7 +517,7 @@ tokens:
 
 	// Combine buffers (reusing bufLine)
 	buf = bufLine
-	buf.extend(bufMode, mode == modeLocation)
+	buf.extend(bufMode, mode == modeLocation || mode == modeHistoryListing)
 	buf.extend(bufTips, false)
 	buf.extend(bufListing, false)
 
