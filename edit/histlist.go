@@ -11,21 +11,21 @@ import (
 
 // Interface.
 
-type historyListing struct {
+type histlist struct {
 	listing
 	all      []string
 	filtered []string
 }
 
-func (*historyListing) Mode() ModeType {
+func (*histlist) Mode() ModeType {
 	return modeHistoryListing
 }
 
-func (hl *historyListing) ModeLine(width int) *buffer {
+func (hl *histlist) ModeLine(width int) *buffer {
 	return hl.modeLine(fmt.Sprintf(" HISTORY #%d ", hl.selected), width)
 }
 
-func (hl *historyListing) update() {
+func (hl *histlist) update() {
 	hl.filtered = nil
 	for _, item := range hl.all {
 		if util.MatchSubseq(item, hl.filter) {
@@ -35,7 +35,7 @@ func (hl *historyListing) update() {
 	hl.selected = len(hl.filtered) - 1
 }
 
-func (hl *historyListing) backspace() {
+func (hl *histlist) backspace() {
 	if hl.listing.backspace() {
 		hl.update()
 	}
@@ -88,7 +88,7 @@ func defaultHistoryListing(ed *Editor) {
 
 // Implementation.
 
-func initHistoryListing(hl *historyListing, s *store.Store) error {
+func initHistoryListing(hl *histlist, s *store.Store) error {
 	seq, err := s.NextCmdSeq()
 	if err != nil {
 		return err
@@ -106,7 +106,7 @@ func initHistoryListing(hl *historyListing, s *store.Store) error {
 	return nil
 }
 
-func (hist *historyListing) List(width, maxHeight int) *buffer {
+func (hist *histlist) List(width, maxHeight int) *buffer {
 	get := func(i int) string {
 		return ForceWcWidth(hist.filtered[i], width)
 	}

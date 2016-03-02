@@ -58,7 +58,7 @@ type editorState struct {
 	completion     completion
 	navigation     navigation
 	history        historyState
-	historyListing historyListing
+	historyListing histlist
 	location       location
 
 	// A cache of external commands, used in stylist and completer of command
