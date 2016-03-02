@@ -67,7 +67,6 @@ func locationBackspace(ed *Editor) {
 }
 
 func acceptLocation(ed *Editor) {
-	// XXX Maybe we want to use eval.cdInner and increase the score?
 	loc := &ed.location
 	if len(loc.candidates) > 0 {
 		dir := loc.candidates[loc.selected].Path
