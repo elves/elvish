@@ -72,27 +72,27 @@ func startHistoryListing(ed *Editor) {
 		return
 	}
 
-	ed.historyListing = listing{modeHistoryListing, hl, 0, ""}
-	ed.historyListing.changeFilter("")
-	ed.mode = &ed.historyListing
+	ed.histlist = listing{modeHistoryListing, hl, 0, ""}
+	ed.histlist.changeFilter("")
+	ed.mode = &ed.histlist
 }
 
 func histlistPrev(ed *Editor) {
-	ed.historyListing.prev(false)
+	ed.histlist.prev(false)
 }
 
 func histlistNext(ed *Editor) {
-	ed.historyListing.next(false)
+	ed.histlist.next(false)
 }
 
 func histlistBackspace(ed *Editor) {
-	ed.historyListing.backspace()
+	ed.histlist.backspace()
 }
 
 func histlistAppend(ed *Editor) {
-	ed.historyListing.accept(ed)
+	ed.histlist.accept(ed)
 }
 
-func defaultHistoryListing(ed *Editor) {
-	ed.historyListing.defaultBinding(ed)
+func histlistDefault(ed *Editor) {
+	ed.histlist.defaultBinding(ed)
 }

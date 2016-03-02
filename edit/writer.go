@@ -441,7 +441,7 @@ tokens:
 			i += utf8.RuneLen(r)
 
 			nowAt(i)
-			if mode == modeHistory && i == len(es.history.prefix) {
+			if mode == modeHistory && i == len(es.hist.prefix) {
 				break tokens
 			}
 		}
@@ -450,7 +450,7 @@ tokens:
 	if mode == modeHistory {
 		// Put the rest of current history, position the cursor at the
 		// end of the line, and finish writing
-		h := es.history
+		h := es.hist
 		b.writes(h.line[len(h.prefix):], styleForCompletedHistory)
 		b.dot = b.cursor()
 	}

@@ -6,25 +6,25 @@ import "fmt"
 
 // Interface.
 
-type historyState struct {
+type hist struct {
 	current int
 	prefix  string
 	line    string
 }
 
-func (historyState) Mode() ModeType {
+func (hist) Mode() ModeType {
 	return modeHistory
 }
 
-func (h *historyState) ModeLine(width int) *buffer {
+func (h *hist) ModeLine(width int) *buffer {
 	return makeModeLine(fmt.Sprintf(" HISTORY #%d ", h.current), width)
 }
 
 func startHistory(ed *Editor) {
-	ed.history.prefix = ed.line[:ed.dot]
-	ed.history.current = -1
+	ed.hist.prefix = ed.line[:ed.dot]
+	ed.hist.current = -1
 	if ed.prevHistory() {
-		ed.mode = &ed.history
+		ed.mode = &ed.hist
 	} else {
 		ed.addTip("no matching history item")
 	}
@@ -52,7 +52,7 @@ func defaultHistory(ed *Editor) {
 
 // Implementation.
 
-func (h *historyState) jump(i int, line string) {
+func (h *hist) jump(i int, line string) {
 	h.current = i
 	h.line = line
 }
@@ -71,9 +71,9 @@ func (ed *Editor) appendHistory(line string) {
 
 func (ed *Editor) prevHistory() bool {
 	if ed.store != nil {
-		i, line, err := ed.store.LastCmd(ed.history.current, ed.history.prefix, true)
+		i, line, err := ed.store.LastCmd(ed.hist.current, ed.hist.prefix, true)
 		if err == nil {
-			ed.history.jump(i, line)
+			ed.hist.jump(i, line)
 			return true
 		}
 		// TODO(xiaq): Errors other than ErrNoMatchingCmd should be reported
@@ -84,9 +84,9 @@ func (ed *Editor) prevHistory() bool {
 func (ed *Editor) nextHistory() bool {
 	if ed.store != nil {
 		// Persistent history
-		i, line, err := ed.store.FirstCmd(ed.history.current+1, ed.history.prefix, true)
+		i, line, err := ed.store.FirstCmd(ed.hist.current+1, ed.hist.prefix, true)
 		if err == nil {
-			ed.history.jump(i, line)
+			ed.hist.jump(i, line)
 			return true
 		}
 		// TODO(xiaq): Errors other than ErrNoMatchingCmd should be reported
@@ -97,6 +97,6 @@ func (ed *Editor) nextHistory() bool {
 
 // acceptHistory accepts the currently selected history.
 func (ed *Editor) acceptHistory() {
-	ed.line = ed.history.line
+	ed.line = ed.hist.line
 	ed.dot = len(ed.line)
 }

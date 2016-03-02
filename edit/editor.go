@@ -53,13 +53,13 @@ type editorState struct {
 
 	mode Mode
 
-	insert         insert
-	command        command
-	completion     completion
-	navigation     navigation
-	history        historyState
-	historyListing listing
-	location       listing
+	insert     insert
+	command    command
+	completion completion
+	navigation navigation
+	hist       hist
+	histlist   listing
+	location   listing
 
 	// A cache of external commands, used in stylist and completer of command
 	// names.
