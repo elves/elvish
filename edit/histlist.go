@@ -7,7 +7,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// Command history listing subosytem.
+// Command history listing mode.
 
 // Interface.
 
