@@ -5,7 +5,7 @@ var (
 	styleForPrompt           = ""
 	styleForRPrompt          = "7"
 	styleForCompleted        = ";2"
-	styleForMode             = "1;3;35"
+	styleForMode             = "1;37;45"
 	styleForTip              = ""
 	styleForCompletedHistory = "2"
 	styleForFilter           = "4"

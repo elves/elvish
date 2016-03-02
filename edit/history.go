@@ -17,7 +17,7 @@ func (historyState) Mode() ModeType {
 }
 
 func (h *historyState) ModeLine(width int) *buffer {
-	return makeModeLine(fmt.Sprintf("HISTORY #%d", h.current), width)
+	return makeModeLine(fmt.Sprintf(" HISTORY #%d ", h.current), width)
 }
 
 func startHistory(ed *Editor) {

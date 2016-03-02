@@ -1,6 +1,10 @@
 package edit
 
-import "github.com/elves/elvish/store"
+import (
+	"fmt"
+
+	"github.com/elves/elvish/store"
+)
 
 // Command history listing subosytem.
 
@@ -16,7 +20,7 @@ func (*historyListing) Mode() ModeType {
 }
 
 func (hl *historyListing) ModeLine(width int) *buffer {
-	return makeModeLine(" LISTING HISTORY ", width)
+	return makeModeLine(fmt.Sprintf(" HISTORY #%d ", hl.selected), width)
 }
 
 func startHistoryListing(ed *Editor) {
@@ -101,7 +105,7 @@ func (hist *historyListing) List(width, maxHeight int) *buffer {
 		if i == hist.selected {
 			style = styleForSelected
 		}
-		b.writes(TrimWcWidth(hist.all[i], width), style)
+		b.writes(ForceWcWidth(hist.all[i], width), style)
 	}
 	return b
 }
