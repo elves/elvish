@@ -119,3 +119,29 @@ func (l *listing) defaultBinding(ed *Editor) {
 		ed.nextAction = action{typ: reprocessKey}
 	}
 }
+
+func addListingBuiltins(prefix string, l func(*Editor) *listing) {
+	add := func(name string, f func(*Editor)) {
+		builtins = append(builtins, Builtin{prefix + name, f})
+	}
+	add("prev", func(ed *Editor) { l(ed).prev(false) })
+	add("prev-cycle", func(ed *Editor) { l(ed).prev(true) })
+	add("next", func(ed *Editor) { l(ed).next(false) })
+	add("next-cycle", func(ed *Editor) { l(ed).next(true) })
+	add("backspace", func(ed *Editor) { l(ed).backspace() })
+	add("accept", func(ed *Editor) { l(ed).accept(ed) })
+	add("default", func(ed *Editor) { l(ed).defaultBinding(ed) })
+}
+
+func addListingDefaultBindings(prefix string, m ModeType) {
+	add := func(k Key, name string) {
+		defaultBindings[m][k] = prefix + name
+	}
+	add(Key{Up, 0}, "prev")
+	add(Key{Down, 0}, "next")
+	add(Key{Tab, 0}, "next-cycle")
+	add(Key{Backspace, 0}, "backspace")
+	add(Key{Enter, 0}, "accept")
+	add(Default, "default")
+	defaultBindings[m][Key{'[', Ctrl}] = "start-insert"
+}

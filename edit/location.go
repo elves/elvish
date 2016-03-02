@@ -8,6 +8,8 @@ import (
 	"github.com/elves/elvish/store"
 )
 
+// Location mode.
+
 type location struct {
 	store      *store.Store
 	candidates []store.Dir
@@ -59,8 +61,6 @@ func (loc *location) ModeTitle(i int) string {
 	return " LOCATION "
 }
 
-// Editor builtins.
-
 func startLocation(ed *Editor) {
 	if ed.store == nil {
 		ed.notify("%v", ErrStoreOffline)
@@ -71,32 +71,4 @@ func startLocation(ed *Editor) {
 	ed.location = listing{modeLocation, loc, 0, ""}
 	ed.location.changeFilter("")
 	ed.mode = &ed.location
-}
-
-func locationPrev(ed *Editor) {
-	ed.location.prev(false)
-}
-
-func locationCyclePrev(ed *Editor) {
-	ed.location.prev(true)
-}
-
-func locationNext(ed *Editor) {
-	ed.location.next(false)
-}
-
-func locationCycleNext(ed *Editor) {
-	ed.location.next(true)
-}
-
-func locationBackspace(ed *Editor) {
-	ed.location.backspace()
-}
-
-func acceptLocation(ed *Editor) {
-	ed.location.accept(ed)
-}
-
-func locationDefault(ed *Editor) {
-	ed.location.defaultBinding(ed)
 }

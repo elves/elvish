@@ -48,6 +48,18 @@ func (hl *histlist) ModeTitle(i int) string {
 	return fmt.Sprintf(" HISTORY #%d ", i)
 }
 
+func startHistoryListing(ed *Editor) {
+	hl, err := newHistlist(ed.store)
+	if err != nil {
+		ed.notify("%v", err)
+		return
+	}
+
+	ed.histlist = listing{modeHistoryListing, hl, 0, ""}
+	ed.histlist.changeFilter("")
+	ed.mode = &ed.histlist
+}
+
 func newHistlist(s *store.Store) (*histlist, error) {
 	if s == nil {
 		return nil, ErrStoreOffline
@@ -61,38 +73,4 @@ func newHistlist(s *store.Store) (*histlist, error) {
 		return nil, err
 	}
 	return &histlist{all, nil}, nil
-}
-
-// Editor builtins.
-
-func startHistoryListing(ed *Editor) {
-	hl, err := newHistlist(ed.store)
-	if err != nil {
-		ed.notify("%v", err)
-		return
-	}
-
-	ed.histlist = listing{modeHistoryListing, hl, 0, ""}
-	ed.histlist.changeFilter("")
-	ed.mode = &ed.histlist
-}
-
-func histlistPrev(ed *Editor) {
-	ed.histlist.prev(false)
-}
-
-func histlistNext(ed *Editor) {
-	ed.histlist.next(false)
-}
-
-func histlistBackspace(ed *Editor) {
-	ed.histlist.backspace()
-}
-
-func histlistAppend(ed *Editor) {
-	ed.histlist.accept(ed)
-}
-
-func histlistDefault(ed *Editor) {
-	ed.histlist.defaultBinding(ed)
 }

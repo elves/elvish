@@ -65,21 +65,9 @@ var builtins = []Builtin{
 
 	// History listing mode
 	{"start-history-listing", startHistoryListing},
-	{"histlist-prev", histlistPrev},
-	{"histlist-next", histlistNext},
-	{"histlist-backspace", histlistBackspace},
-	{"histlist-append", histlistAppend},
-	{"histlist-default", histlistDefault},
 
 	// Location mode
 	{"start-location", startLocation},
-	{"location-prev", locationPrev},
-	{"location-next", locationNext},
-	{"location-cycle-prev", locationCyclePrev},
-	{"location-cycle-next", locationCycleNext},
-	{"location-backspace", locationBackspace},
-	{"accept-location", acceptLocation},
-	{"location-default", locationDefault},
 
 	// Misc
 	{"redraw", redraw},
@@ -161,23 +149,8 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{'[', Ctrl}: "start-insert",
 		Default:        "default-history",
 	},
-	modeHistoryListing: map[Key]string{
-		Key{Up, 0}:        "histlist-prev",
-		Key{Down, 0}:      "histlist-next",
-		Key{Enter, 0}:     "histlist-append",
-		Key{Backspace, 0}: "histlist-backspace",
-		Key{'[', Ctrl}:    "start-insert",
-		Default:           "histlist-default",
-	},
-	modeLocation: map[Key]string{
-		Key{Up, 0}:        "location-prev",
-		Key{Down, 0}:      "location-next",
-		Key{Tab, 0}:       "location-cycle-next",
-		Key{Backspace, 0}: "location-backspace",
-		Key{Enter, 0}:     "accept-location",
-		Key{'[', Ctrl}:    "start-insert",
-		Default:           "location-default",
-	},
+	modeHistoryListing: map[Key]string{},
+	modeLocation:       map[Key]string{},
 }
 
 var (
@@ -186,6 +159,11 @@ var (
 )
 
 func init() {
+	addListingBuiltins("loc-", func(ed *Editor) *listing { return &ed.location })
+	addListingDefaultBindings("loc-", modeLocation)
+	addListingBuiltins("histlist-", func(ed *Editor) *listing { return &ed.histlist })
+	addListingDefaultBindings("histlist-", modeHistoryListing)
+
 	for _, b := range builtins {
 		builtinMap[b.name] = b
 	}
