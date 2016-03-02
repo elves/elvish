@@ -2,14 +2,29 @@ package edit
 
 import "unicode/utf8"
 
-// listing encapsulates functionalities common for listing modes.
+// listing implements a listing mode that supports the notion of selecting an
+// entry and filtering entries.
 type listing struct {
+	typ      ModeType
+	provider listingProvider
 	selected int
 	filter   string
-	onfilter func(string)
 }
 
-func (l *listing) modeLine(title string, width int) *buffer {
+type listingProvider interface {
+	Len() int
+	Show(i, w int) string
+	Filter(filter string) int
+	Accept(i int, ed *Editor)
+	ModeTitle(int) string
+}
+
+func (l *listing) Mode() ModeType {
+	return l.typ
+}
+
+func (l *listing) ModeLine(width int) *buffer {
+	title := l.provider.ModeTitle(l.selected)
 	// TODO keep it one line.
 	b := newBuffer(width)
 	b.writes(TrimWcWidth(title, width), styleForMode)
@@ -19,7 +34,8 @@ func (l *listing) modeLine(title string, width int) *buffer {
 	return b
 }
 
-func (l *listing) list(get func(int) string, n, width, maxHeight int) *buffer {
+func (l *listing) List(width, maxHeight int) *buffer {
+	n := l.provider.Len()
 	b := newBuffer(width)
 	if n == 0 {
 		b.writes(TrimWcWidth("(no result)", width), "")
@@ -34,16 +50,14 @@ func (l *listing) list(get func(int) string, n, width, maxHeight int) *buffer {
 		if i == l.selected {
 			style = styleForSelected
 		}
-		b.writes(TrimWcWidth(get(i), width), style)
+		b.writes(TrimWcWidth(l.provider.Show(i, width), width), style)
 	}
 	return b
 }
 
 func (l *listing) changeFilter(newfilter string) {
 	l.filter = newfilter
-	if l.onfilter != nil {
-		l.onfilter(newfilter)
-	}
+	l.selected = l.provider.Filter(newfilter)
 }
 
 func (l *listing) backspace() bool {
@@ -55,15 +69,8 @@ func (l *listing) backspace() bool {
 	return false
 }
 
-func (l *listing) handleFilterKey(k Key) bool {
-	if likeChar(k) {
-		l.changeFilter(l.filter + string(k.Rune))
-		return true
-	}
-	return false
-}
-
-func (l *listing) prev(cycle bool, n int) {
+func (l *listing) prev(cycle bool) {
+	n := l.provider.Len()
 	if n == 0 {
 		return
 	}
@@ -77,7 +84,8 @@ func (l *listing) prev(cycle bool, n int) {
 	}
 }
 
-func (l *listing) next(cycle bool, n int) {
+func (l *listing) next(cycle bool) {
+	n := l.provider.Len()
 	if n == 0 {
 		return
 	}
@@ -88,5 +96,26 @@ func (l *listing) next(cycle bool, n int) {
 		} else {
 			l.selected--
 		}
+	}
+}
+
+func (l *listing) accept(ed *Editor) {
+	if l.selected >= 0 {
+		l.provider.Accept(l.selected, ed)
+	}
+}
+
+func (l *listing) handleFilterKey(k Key) bool {
+	if likeChar(k) {
+		l.changeFilter(l.filter + string(k.Rune))
+		return true
+	}
+	return false
+}
+
+func (l *listing) defaultBinding(ed *Editor) {
+	if !l.handleFilterKey(ed.lastKey) {
+		startInsert(ed)
+		ed.nextAction = action{typ: reprocessKey}
 	}
 }

@@ -9,41 +9,68 @@ import (
 )
 
 type location struct {
-	listing
+	store      *store.Store
 	candidates []store.Dir
 }
 
-func (*location) Mode() ModeType {
-	return modeLocation
+func (loc *location) Len() int {
+	return len(loc.candidates)
 }
 
-func (l *location) ModeLine(width int) *buffer {
-	return l.modeLine(" LOCATION ", width)
+func (loc *location) Show(i, width int) string {
+	cand := loc.candidates[i]
+	return fmt.Sprintf("%4.0f %s", cand.Score, parse.Quote(cand.Path))
 }
 
-func (l *location) update(ed *Editor) bool {
-	dirs, err := ed.store.FindDirsSubseq(l.filter)
+func (loc *location) Filter(filter string) int {
+	dirs, err := loc.store.FindDirsSubseq(filter)
 	if err != nil {
-		l.candidates = nil
-		l.selected = -1
-		ed.notify("find directories: %v", err)
-		return false
+		loc.candidates = nil
+		// XXX Should report error
+		// ed.notify("find directories: %v", err)
+		return -1
 	}
-	l.candidates = dirs
-
-	if len(l.candidates) > 0 {
-		l.selected = 0
-	} else {
-		l.selected = -1
+	loc.candidates = dirs
+	if len(dirs) == 0 {
+		return -1
 	}
-	return true
+	return 0
 }
+
+func (loc *location) Accept(i int, ed *Editor) {
+	dir := loc.candidates[i].Path
+	err := os.Chdir(dir)
+	if err == nil {
+		store := ed.store
+		go func() {
+			store.Waits.Add(1)
+			// XXX Error ignored.
+			store.AddDir(dir, 0.5)
+			store.Waits.Done()
+			Logger.Println("added dir to store:", dir)
+		}()
+	} else {
+		ed.notify("%v", err)
+	}
+	ed.mode = &ed.insert
+}
+
+func (loc *location) ModeTitle(i int) string {
+	return " LOCATION "
+}
+
+// Editor builtins.
 
 func startLocation(ed *Editor) {
-	ed.location = location{}
-	if ed.location.update(ed) {
-		ed.mode = &ed.location
+	if ed.store == nil {
+		ed.notify("%v", ErrStoreOffline)
+		return
 	}
+	loc := &location{ed.store, nil}
+
+	ed.location = listing{modeLocation, loc, 0, ""}
+	ed.location.changeFilter("")
+	ed.mode = &ed.location
 }
 
 func locationPrev(ed *Editor) {
@@ -63,58 +90,13 @@ func locationCycleNext(ed *Editor) {
 }
 
 func locationBackspace(ed *Editor) {
-	ed.location.backspace(ed)
+	ed.location.backspace()
 }
 
 func acceptLocation(ed *Editor) {
-	loc := &ed.location
-	if len(loc.candidates) > 0 {
-		dir := loc.candidates[loc.selected].Path
-		err := os.Chdir(dir)
-		if err == nil {
-			store := ed.store
-			go func() {
-				store.Waits.Add(1)
-				// XXX Error ignored.
-				store.AddDir(dir, 0.5)
-				store.Waits.Done()
-				Logger.Println("added dir to store:", dir)
-			}()
-		} else {
-			ed.notify("%v", err)
-		}
-	}
-	ed.mode = &ed.insert
+	ed.location.accept(ed)
 }
 
 func locationDefault(ed *Editor) {
-	k := ed.lastKey
-	if ed.location.handleFilterKey(k) {
-		ed.location.update(ed)
-	} else {
-		startInsert(ed)
-		ed.nextAction = action{typ: reprocessKey}
-	}
-}
-
-func (loc *location) prev(cycle bool) {
-	loc.listing.prev(cycle, len(loc.candidates))
-}
-
-func (loc *location) next(cycle bool) {
-	loc.listing.next(cycle, len(loc.candidates))
-}
-
-func (loc *location) backspace(ed *Editor) {
-	if loc.listing.backspace() {
-		loc.update(ed)
-	}
-}
-
-func (loc *location) List(width, maxHeight int) *buffer {
-	get := func(i int) string {
-		cand := loc.candidates[i]
-		return fmt.Sprintf("%4.0f %s", cand.Score, parse.Quote(cand.Path))
-	}
-	return loc.listing.list(get, len(loc.candidates), width, maxHeight)
+	ed.location.defaultBinding(ed)
 }

@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/elves/elvish/store"
@@ -9,57 +10,79 @@ import (
 
 // Command history listing mode.
 
-// Interface.
+var ErrStoreOffline = errors.New("store offline")
 
 type histlist struct {
-	listing
 	all      []string
 	filtered []string
 }
 
-func (*histlist) Mode() ModeType {
-	return modeHistoryListing
+func (hl *histlist) Len() int {
+	return len(hl.filtered)
 }
 
-func (hl *histlist) ModeLine(width int) *buffer {
-	return hl.modeLine(fmt.Sprintf(" HISTORY #%d ", hl.selected), width)
+func (hl *histlist) Show(i, width int) string {
+	return ForceWcWidth(hl.filtered[i], width)
 }
 
-func (hl *histlist) update() {
+func (hl *histlist) Filter(filter string) int {
 	hl.filtered = nil
 	for _, item := range hl.all {
-		if util.MatchSubseq(item, hl.filter) {
+		if util.MatchSubseq(item, filter) {
 			hl.filtered = append(hl.filtered, item)
 		}
 	}
-	hl.selected = len(hl.filtered) - 1
+	// Select the last entry.
+	return len(hl.filtered) - 1
 }
 
-func (hl *histlist) backspace() {
-	if hl.listing.backspace() {
-		hl.update()
+func (hl *histlist) Accept(i int, ed *Editor) {
+	line := hl.all[i]
+	if len(ed.line) > 0 {
+		line = "\n" + line
 	}
+	ed.insertAtDot(line)
 }
+
+func (hl *histlist) ModeTitle(i int) string {
+	return fmt.Sprintf(" HISTORY #%d ", i)
+}
+
+func newHistlist(s *store.Store) (*histlist, error) {
+	if s == nil {
+		return nil, ErrStoreOffline
+	}
+	seq, err := s.NextCmdSeq()
+	if err != nil {
+		return nil, err
+	}
+	all, err := s.Cmds(0, seq)
+	if err != nil {
+		return nil, err
+	}
+	return &histlist{all, nil}, nil
+}
+
+// Editor builtins.
 
 func startHistoryListing(ed *Editor) {
-	if ed.store == nil {
-		ed.notify("store not connected")
-		return
-	}
-	err := initHistoryListing(&ed.historyListing, ed.store)
+	hl, err := newHistlist(ed.store)
 	if err != nil {
-		ed.notify("%s", err)
+		ed.notify("%v", err)
 		return
 	}
+
+	ed.historyListing = listing{modeHistoryListing, hl, 0, ""}
+	ed.historyListing.changeFilter("")
 	ed.mode = &ed.historyListing
 }
 
 func histlistPrev(ed *Editor) {
-	ed.historyListing.prev(false, len(ed.historyListing.all))
+	ed.historyListing.prev(false)
 }
 
 func histlistNext(ed *Editor) {
-	ed.historyListing.next(false, len(ed.historyListing.all))
+	ed.historyListing.next(false)
 }
 
 func histlistBackspace(ed *Editor) {
@@ -67,48 +90,9 @@ func histlistBackspace(ed *Editor) {
 }
 
 func histlistAppend(ed *Editor) {
-	if ed.historyListing.selected != -1 {
-		line := ed.historyListing.all[ed.historyListing.selected]
-		if len(ed.line) > 0 {
-			line = "\n" + line
-		}
-		ed.insertAtDot(line)
-	}
+	ed.historyListing.accept(ed)
 }
 
 func defaultHistoryListing(ed *Editor) {
-	k := ed.lastKey
-	if ed.historyListing.handleFilterKey(k) {
-		ed.historyListing.update()
-	} else {
-		startInsert(ed)
-		ed.nextAction = action{typ: reprocessKey}
-	}
-}
-
-// Implementation.
-
-func initHistoryListing(hl *histlist, s *store.Store) error {
-	seq, err := s.NextCmdSeq()
-	if err != nil {
-		return err
-	}
-	cmds, err := s.Cmds(0, seq)
-	if err != nil {
-		hl.all = nil
-		hl.selected = -1
-		return err
-	}
-	hl.all = cmds
-	hl.selected = len(hl.all) - 1
-	hl.filter = ""
-	hl.filtered = cmds
-	return nil
-}
-
-func (hist *histlist) List(width, maxHeight int) *buffer {
-	get := func(i int) string {
-		return ForceWcWidth(hist.filtered[i], width)
-	}
-	return hist.listing.list(get, len(hist.filtered), width, maxHeight)
+	ed.historyListing.defaultBinding(ed)
 }
