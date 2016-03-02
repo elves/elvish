@@ -3,16 +3,14 @@ package edit
 import (
 	"fmt"
 	"os"
-	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 )
 
 type location struct {
-	filter     string
+	listing
 	candidates []store.Dir
-	selected   int
 }
 
 func (*location) Mode() ModeType {
@@ -20,16 +18,10 @@ func (*location) Mode() ModeType {
 }
 
 func (l *location) ModeLine(width int) *buffer {
-	// TODO keep it one line.
-	b := newBuffer(width)
-	b.writes(TrimWcWidth(" LOCATION ", width), styleForMode)
-	b.writes(" ", "")
-	b.writes(l.filter, styleForFilter)
-	b.dot = b.cursor()
-	return b
+	return l.modeLine(" LOCATION ", width)
 }
 
-func (l *location) updateCandidates(ed *Editor) bool {
+func (l *location) update(ed *Editor) bool {
 	dirs, err := ed.store.FindDirsSubseq(l.filter)
 	if err != nil {
 		l.candidates = nil
@@ -49,7 +41,7 @@ func (l *location) updateCandidates(ed *Editor) bool {
 
 func startLocation(ed *Editor) {
 	ed.location = location{}
-	if ed.location.updateCandidates(ed) {
+	if ed.location.update(ed) {
 		ed.mode = &ed.location
 	}
 }
@@ -98,9 +90,8 @@ func acceptLocation(ed *Editor) {
 
 func locationDefault(ed *Editor) {
 	k := ed.lastKey
-	if likeChar(k) {
-		ed.location.filter += string(k.Rune)
-		ed.location.updateCandidates(ed)
+	if ed.location.handleFilterKey(k) {
+		ed.location.update(ed)
 	} else {
 		startInsert(ed)
 		ed.nextAction = action{typ: reprocessKey}
@@ -108,52 +99,23 @@ func locationDefault(ed *Editor) {
 }
 
 func (loc *location) prev(cycle bool) {
-	loc.selected--
-	if loc.selected == -1 {
-		if cycle {
-			loc.selected = len(loc.candidates) - 1
-		} else {
-			loc.selected++
-		}
-	}
+	loc.listing.prev(cycle, len(loc.candidates))
 }
 
 func (loc *location) next(cycle bool) {
-	loc.selected++
-	if loc.selected == len(loc.candidates) {
-		if cycle {
-			loc.selected = 0
-		} else {
-			loc.selected--
-		}
-	}
+	loc.listing.next(cycle, len(loc.candidates))
 }
 
 func (loc *location) backspace(ed *Editor) {
-	_, size := utf8.DecodeLastRuneInString(loc.filter)
-	if size > 0 {
-		loc.filter = loc.filter[:len(loc.filter)-size]
-		loc.updateCandidates(ed)
+	if loc.listing.backspace() {
+		loc.update(ed)
 	}
 }
 
 func (loc *location) List(width, maxHeight int) *buffer {
-	b := newBuffer(width)
-	if len(loc.candidates) == 0 {
-		b.writes("(no match)", "")
-		return b
+	get := func(i int) string {
+		cand := loc.candidates[i]
+		return fmt.Sprintf("%4.0f %s", cand.Score, parse.Quote(cand.Path))
 	}
-	low, high := findWindow(len(loc.candidates), loc.selected, maxHeight)
-	for i := low; i < high; i++ {
-		if i > low {
-			b.newline()
-		}
-		text := fmt.Sprintf("%4.0f %s", loc.candidates[i].Score, parse.Quote(loc.candidates[i].Path))
-		style := ""
-		if i == loc.selected {
-			style = styleForSelected
-		}
-		b.writes(TrimWcWidth(text, width), style)
-	}
-	return b
+	return loc.listing.list(get, len(loc.candidates), width, maxHeight)
 }

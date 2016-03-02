@@ -2,7 +2,6 @@ package edit
 
 import (
 	"fmt"
-	"unicode/utf8"
 
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/util"
@@ -13,10 +12,9 @@ import (
 // Interface.
 
 type historyListing struct {
-	filter   string
+	listing
 	all      []string
 	filtered []string
-	selected int
 }
 
 func (*historyListing) Mode() ModeType {
@@ -24,13 +22,7 @@ func (*historyListing) Mode() ModeType {
 }
 
 func (hl *historyListing) ModeLine(width int) *buffer {
-	// TODO keep it one line.
-	b := newBuffer(width)
-	b.writes(TrimWcWidth(fmt.Sprintf(" HISTORY #%d ", hl.selected), width), styleForMode)
-	b.writes(" ", "")
-	b.writes(hl.filter, styleForFilter)
-	b.dot = b.cursor()
-	return b
+	return hl.modeLine(fmt.Sprintf(" HISTORY #%d ", hl.selected), width)
 }
 
 func (hl *historyListing) update() {
@@ -44,9 +36,7 @@ func (hl *historyListing) update() {
 }
 
 func (hl *historyListing) backspace() {
-	_, size := utf8.DecodeLastRuneInString(hl.filter)
-	if size > 0 {
-		hl.filter = hl.filter[:len(hl.filter)-size]
+	if hl.listing.backspace() {
 		hl.update()
 	}
 }
@@ -65,11 +55,11 @@ func startHistoryListing(ed *Editor) {
 }
 
 func histlistPrev(ed *Editor) {
-	ed.historyListing.prev()
+	ed.historyListing.prev(false, len(ed.historyListing.all))
 }
 
 func histlistNext(ed *Editor) {
-	ed.historyListing.next()
+	ed.historyListing.next(false, len(ed.historyListing.all))
 }
 
 func histlistBackspace(ed *Editor) {
@@ -88,8 +78,7 @@ func histlistAppend(ed *Editor) {
 
 func defaultHistoryListing(ed *Editor) {
 	k := ed.lastKey
-	if likeChar(k) {
-		ed.historyListing.filter += string(k.Rune)
+	if ed.historyListing.handleFilterKey(k) {
 		ed.historyListing.update()
 	} else {
 		startInsert(ed)
@@ -117,35 +106,9 @@ func initHistoryListing(hl *historyListing, s *store.Store) error {
 	return nil
 }
 
-func (hist *historyListing) prev() {
-	if len(hist.all) > 0 && hist.selected > 0 {
-		hist.selected--
-	}
-}
-
-func (hist *historyListing) next() {
-	if len(hist.all) > 0 && hist.selected < len(hist.all)-1 {
-		hist.selected++
-	}
-}
-
 func (hist *historyListing) List(width, maxHeight int) *buffer {
-	b := newBuffer(width)
-	if len(hist.filtered) == 0 {
-		b.writes("(no history)", "")
-		return b
+	get := func(i int) string {
+		return ForceWcWidth(hist.filtered[i], width)
 	}
-
-	low, high := findWindow(len(hist.filtered), hist.selected, maxHeight)
-	for i := low; i < high; i++ {
-		if i > low {
-			b.newline()
-		}
-		style := ""
-		if i == hist.selected {
-			style = styleForSelected
-		}
-		b.writes(ForceWcWidth(hist.filtered[i], width), style)
-	}
-	return b
+	return hist.listing.list(get, len(hist.filtered), width, maxHeight)
 }
