@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -70,6 +71,7 @@ func init() {
 		&BuiltinFn{"continue", wrapFn(continueFn)},
 
 		&BuiltinFn{"each", wrapFn(each)},
+		&BuiltinFn{"each-line", wrapFn(eachLine)},
 
 		&BuiltinFn{"cd", cd},
 		&BuiltinFn{"dirs", wrapFn(dirs)},
@@ -351,6 +353,47 @@ in:
 		// Ideally, it should be kept in the Closure itself.
 		newec := ec.fork("closure of each")
 		ex := newec.PCall(f, []Value{v})
+		ClosePorts(newec.ports)
+
+		switch ex {
+		case nil, Continue:
+			// nop
+		case Break:
+			break in
+		default:
+			throw(ex)
+		}
+	}
+}
+
+// eachLine takes a single function. For each line in the input byte stream, it
+// calls the function with the complete line (without the trailing newline) and
+// fields of the line.
+func eachLine(ec *EvalCtx, f FnValue) {
+	in := bufio.NewReader(ec.ports[0].File)
+in:
+	for {
+		line, err := in.ReadString('\n')
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			throw(err)
+		}
+
+		line = line[:len(line)-1]
+		args := []Value{String(line)}
+		for {
+			i := strings.IndexAny(line, " \t")
+			if i == -1 {
+				args = append(args, String(line))
+				break
+			}
+			args = append(args, String(line[:i]))
+			line = strings.TrimLeft(line[i:], " \t")
+		}
+
+		newec := ec.fork("fn of each-line")
+		ex := newec.PCall(f, args)
 		ClosePorts(newec.ports)
 
 		switch ex {
