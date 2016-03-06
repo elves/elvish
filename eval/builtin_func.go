@@ -11,9 +11,9 @@ import (
 	"math"
 	"os"
 	"reflect"
+	"regexp"
 	"runtime"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -371,6 +371,9 @@ in:
 // delimiter, and calls the function with the complete line (without the
 // trailing newline) and the fields. The function may call break and continue.
 func eachLine(ec *EvalCtx, delim string, f FnValue) {
+	delimRe, err := regexp.Compile(delim)
+	maybeThrow(err)
+
 	in := bufio.NewReader(ec.ports[0].File)
 in:
 	for {
@@ -383,7 +386,7 @@ in:
 
 		line = line[:len(line)-1]
 		args := []Value{String(line)}
-		for _, field := range strings.Split(line, delim) {
+		for _, field := range delimRe.Split(line, -1) {
 			args = append(args, String(field))
 		}
 
