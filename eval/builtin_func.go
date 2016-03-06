@@ -366,10 +366,11 @@ in:
 	}
 }
 
-// eachLine takes a single function. For each line in the input byte stream, it
-// calls the function with the complete line (without the trailing newline) and
-// fields of the line.
-func eachLine(ec *EvalCtx, f FnValue) {
+// eachLine takes a delimiter string and a single function. For each line in the
+// input byte stream, it breaks the line into fields by splitting at the
+// delimiter, and calls the function with the complete line (without the
+// trailing newline) and the fields. The function may call break and continue.
+func eachLine(ec *EvalCtx, delim string, f FnValue) {
 	in := bufio.NewReader(ec.ports[0].File)
 in:
 	for {
@@ -382,14 +383,8 @@ in:
 
 		line = line[:len(line)-1]
 		args := []Value{String(line)}
-		for {
-			i := strings.IndexAny(line, " \t")
-			if i == -1 {
-				args = append(args, String(line))
-				break
-			}
-			args = append(args, String(line[:i]))
-			line = strings.TrimLeft(line[i:], " \t")
+		for _, field := range strings.Split(line, delim) {
+			args = append(args, String(field))
 		}
 
 		newec := ec.fork("fn of each-line")
