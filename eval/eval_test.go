@@ -203,8 +203,8 @@ var evalTests = []struct {
 	{"base 16 42 233", strs("2a", "e9"), nomore},
 
 	// eawk
-	{`println "a  b c\n1 2 3" | eawk { put $args[-1] }`,
-		strs("c", "3"), nomore},
+	{`println "  ax  by cz  \n11\t22 33" | eawk { put $args[-1] }`,
+		strs("cz", "33"), nomore},
 }
 
 func strs(ss ...string) []Value {

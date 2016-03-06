@@ -378,7 +378,7 @@ in:
 	}
 }
 
-var eawkWordSep = regexp.MustCompile("[ \t]*")
+var eawkWordSep = regexp.MustCompile("[ \t]+")
 
 // eawk takes a function. For each line in the input stream, it calls the
 // function with the line and the words in the line. The words are found by
