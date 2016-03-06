@@ -201,8 +201,8 @@ var evalTests = []struct {
 	}, nomore},
 	{"base 16 42 233", strs("2a", "e9"), nomore},
 
-	// each-line
-	{`println "a  b c\n1 2 3" | each-line ' *' { put $args[-1] }`,
+	// eawk
+	{`println "a  b c\n1 2 3" | eawk { put $args[-1] }`,
 		strs("c", "3"), nomore},
 }
 

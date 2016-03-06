@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -71,7 +72,7 @@ func init() {
 		&BuiltinFn{"continue", wrapFn(continueFn)},
 
 		&BuiltinFn{"each", wrapFn(each)},
-		&BuiltinFn{"each-line", wrapFn(eachLine)},
+		&BuiltinFn{"eawk", wrapFn(eawk)},
 
 		&BuiltinFn{"cd", cd},
 		&BuiltinFn{"dirs", wrapFn(dirs)},
@@ -366,14 +367,14 @@ in:
 	}
 }
 
-// eachLine takes a delimiter string and a single function. For each line in the
-// input byte stream, it breaks the line into fields by splitting at the
-// delimiter, and calls the function with the complete line (without the
-// trailing newline) and the fields. The function may call break and continue.
-func eachLine(ec *EvalCtx, delim string, f FnValue) {
-	delimRe, err := regexp.Compile(delim)
-	maybeThrow(err)
+var eawkWordSep = regexp.MustCompile("[ \t]*")
 
+// eawk takes a function. For each line in the input stream, it calls the
+// function with the line and the words in the line. The words are found by
+// stripping the line and splitting the line by whitespaces. The function may
+// call break and continue. Overall this provides a similar functionality to
+// awk, hence the name.
+func eawk(ec *EvalCtx, f FnValue) {
 	in := bufio.NewReader(ec.ports[0].File)
 in:
 	for {
@@ -386,11 +387,11 @@ in:
 
 		line = line[:len(line)-1]
 		args := []Value{String(line)}
-		for _, field := range delimRe.Split(line, -1) {
+		for _, field := range eawkWordSep.Split(strings.Trim(line, " \t"), -1) {
 			args = append(args, String(field))
 		}
 
-		newec := ec.fork("fn of each-line")
+		newec := ec.fork("fn of eawk")
 		ex := newec.PCall(f, args)
 		ClosePorts(newec.ports)
 
