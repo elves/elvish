@@ -262,12 +262,32 @@ type Assignment struct {
 func (an *Assignment) parse(ps *parser) {
 	ps.cut('=')
 	an.setDst(parseIndexing(ps))
+	head := an.Dst.Head
+	if !checkVariableInAssignment(head, ps) {
+		ps.errorp(head.Begin(), head.End(), errShouldBeVariableName)
+	}
 	ps.uncut('=')
 
 	if !parseSep(an, ps, '=') {
 		ps.error(errShouldBeEqual)
 	}
 	an.setSrc(parseCompound(ps))
+}
+
+func checkVariableInAssignment(p *Primary, ps *parser) bool {
+	if p.Type != Bareword && p.Type != SingleQuoted && p.Type != DoubleQuoted {
+		return false
+	}
+	if p.Value == "" {
+		return false
+	}
+	for _, r := range p.Value {
+		// XXX special case '&'.
+		if !allowedInVariableName(r) && r != '&' {
+			return false
+		}
+	}
+	return true
 }
 
 // Control = IfControl | WhileControl | ForControl | BeginControl
