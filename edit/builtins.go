@@ -107,7 +107,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{Up, 0}:     "start-history",
 		Key{'N', Ctrl}: "start-navigation",
 		Key{'H', Ctrl}: "start-history-listing",
-		Key{'1', Alt}:  "start-bang",
+		Key{',', Alt}:  "start-bang",
 		Key{'L', Ctrl}: "start-location",
 		Default:        "default-insert",
 	},

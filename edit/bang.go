@@ -28,7 +28,7 @@ func (b *bang) Show(i, width int) string {
 	entry := b.filtered[i]
 	head := fmt.Sprintf("%3d ", entry.i)
 	if entry.i == -1 {
-		head = "M-1 "
+		head = "M-, "
 	}
 	return ForceWcWidth(head+entry.s, width)
 }
@@ -83,7 +83,7 @@ func bangAltDefault(ed *Editor) {
 		if l.provider.Len() == 1 {
 			l.provider.Accept(l.selected, ed)
 		}
-	} else if ed.lastKey == (Key{'1', Alt}) {
+	} else if ed.lastKey == (Key{',', Alt}) {
 		l.provider.Accept(0, ed)
 	} else {
 		startInsert(ed)

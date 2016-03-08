@@ -58,7 +58,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
   NOTE: Default key bindings as listed above are subject to change in the future; but the functionality will not go away.
 
-* Elvish doesn't support history expansion like `!!`. Instead, it has a "bang mode", trigerred by Alt-1, that provides the same functionality. For example, if you typed a command but forgot to add `sudo`, you can then type `sudo ` and press Alt-1 twice to fix it:
+* Elvish doesn't support history expansion like `!!`. Instead, it has a "bang mode", trigerred by `Alt-,`, that provides the same functionality. For example, if you typed a command but forgot to add `sudo`, you can then type `sudo ` and press `Alt-,` twice to fix it:
 
   ![bang mode](https://raw.githubusercontent.com/elves/images/master/bang.png)
 
