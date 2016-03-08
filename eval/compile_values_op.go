@@ -269,10 +269,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 	case parse.OutputCapture:
 		return cp.outputCapture(n)
 	case parse.List:
-		op := cp.arrayOp(n.List)
-		return func(ec *EvalCtx) []Value {
-			return []Value{NewList(op.Exec(ec)...)}
-		}
+		return cp.list(n.List)
 	case parse.Lambda:
 		return cp.lambda(n)
 	case parse.Map:
@@ -282,6 +279,33 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 	default:
 		cp.errorf("bad PrimaryType; parser bug")
 		return literalStr(n.SourceText())
+	}
+}
+
+func (cp *compiler) list(n *parse.Array) ValuesOpFunc {
+	if len(n.Semicolons) == 0 {
+		op := cp.arrayOp(n)
+		return func(ec *EvalCtx) []Value {
+			return []Value{NewList(op.Exec(ec)...)}
+		}
+	} else {
+		ns := len(n.Semicolons)
+		rowOps := make([]ValuesOpFunc, ns+1)
+		f := func(k, i, j int) {
+			rowOps[k] = catValuesOps(cp.compoundOps(n.Compounds[i:j]))
+		}
+		f(0, 0, n.Semicolons[0])
+		for i := 1; i < ns; i++ {
+			f(i, n.Semicolons[i-1], n.Semicolons[i])
+		}
+		f(ns, n.Semicolons[ns-1], len(n.Compounds))
+		return func(ec *EvalCtx) []Value {
+			rows := make([]Value, ns+1)
+			for i := 0; i <= ns; i++ {
+				rows[i] = NewList(rowOps[i](ec)...)
+			}
+			return []Value{List{&rows}}
+		}
 	}
 }
 

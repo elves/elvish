@@ -98,6 +98,7 @@ var evalTests = []struct {
 	{"println [a b c] [&key=value] | from-lines",
 		strs("[a b c] [&key=value]"), nomore},
 	{"put [a b c][2]", strs("c"), nomore},
+	{"put [;a;b c][2][0]", strs("b"), nomore},
 	{"put [&key=value][key]", strs("value"), nomore},
 
 	// String literal
