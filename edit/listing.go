@@ -19,6 +19,12 @@ type listingProvider interface {
 	ModeTitle(int) string
 }
 
+func newListing(t ModeType, p listingProvider) listing {
+	l := listing{t, p, 0, ""}
+	l.changeFilter("")
+	return l
+}
+
 func (l *listing) Mode() ModeType {
 	return l.typ
 }

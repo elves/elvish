@@ -55,8 +55,7 @@ func startHistoryListing(ed *Editor) {
 		return
 	}
 
-	ed.histlist = listing{modeHistoryListing, hl, 0, ""}
-	ed.histlist.changeFilter("")
+	ed.histlist = newListing(modeHistoryListing, hl)
 	ed.mode = &ed.histlist
 }
 

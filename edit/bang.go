@@ -75,8 +75,7 @@ var wordSep = regexp.MustCompile("[ \t]+")
 func startBang(ed *Editor) {
 	_, line, err := ed.store.LastCmd(-1, "", true)
 	if err == nil {
-		ed.bang = listing{modeBang, newBang(line), 0, ""}
-		ed.bang.changeFilter("")
+		ed.bang = newListing(modeBang, newBang(line))
 		ed.mode = &ed.bang
 	} else {
 		ed.addTip("db error: %s", err.Error())

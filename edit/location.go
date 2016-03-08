@@ -68,7 +68,6 @@ func startLocation(ed *Editor) {
 	}
 	loc := &location{ed.store, nil}
 
-	ed.location = listing{modeLocation, loc, 0, ""}
-	ed.location.changeFilter("")
+	ed.location = newListing(modeLocation, loc)
 	ed.mode = &ed.location
 }
