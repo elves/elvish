@@ -91,7 +91,7 @@ func init() {
 
 		&BuiltinFn{"base", wrapFn(base)},
 
-		&BuiltinFn{"=", eq},
+		&BuiltinFn{"==", eq},
 		&BuiltinFn{"!=", wrapFn(noteq)},
 		&BuiltinFn{"deepeq", deepeq},
 
