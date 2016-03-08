@@ -965,11 +965,11 @@ func (pn *Primary) bareword(ps *parser) {
 
 // The following are allowed in barewords:
 // * Anything allowed in variable names
-// * The symbols "%+,./=@~"
+// * The symbols "%+,./=@~!"
 func allowedInBareword(r rune) bool {
 	return allowedInVariableName(r) ||
 		r == '%' || r == '+' || r == ',' || r == '.' ||
-		r == '/' || r == '=' || r == '@' || r == '~'
+		r == '/' || r == '=' || r == '@' || r == '~' || r == '!'
 }
 
 func startsPrimary(r rune) bool {

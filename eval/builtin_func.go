@@ -92,6 +92,7 @@ func init() {
 		&BuiltinFn{"base", wrapFn(base)},
 
 		&BuiltinFn{"=", eq},
+		&BuiltinFn{"!=", noteq},
 		&BuiltinFn{"deepeq", deepeq},
 
 		&BuiltinFn{"take", wrapFn(take)},
@@ -99,6 +100,7 @@ func init() {
 
 		&BuiltinFn{"len", wrapFn(lenFn)},
 		&BuiltinFn{"count", wrapFn(count)},
+		&BuiltinFn{"rest", wrapFn(rest)},
 
 		&BuiltinFn{"fg", wrapFn(fg)},
 
@@ -597,6 +599,19 @@ func eq(ec *EvalCtx, args []Value) {
 	}
 }
 
+var ErrEqual = errors.New("equal")
+
+func noteq(ec *EvalCtx, args []Value) {
+	if len(args) == 0 {
+		throw(ErrArgs)
+	}
+	for i := 0; i+1 < len(args); i++ {
+		if args[i] == args[i+1] {
+			throw(ErrEqual)
+		}
+	}
+}
+
 func deepeq(ec *EvalCtx, args []Value) {
 	out := ec.ports[1].Chan
 	if len(args) == 0 {
@@ -654,6 +669,12 @@ func count(ec *EvalCtx) {
 		n++
 	}
 	out <- String(strconv.Itoa(n))
+}
+
+func rest(ec *EvalCtx, li List) {
+	out := ec.ports[1].Chan
+	restli := (*li.inner)[1:]
+	out <- List{&restli}
 }
 
 func fg(ec *EvalCtx, pids ...int) {
