@@ -20,7 +20,7 @@ func (b *bang) Len() int {
 }
 
 func (b *bang) Show(i, width int) string {
-	head := fmt.Sprintf("%-3d ", i)
+	head := fmt.Sprintf("%3d ", i)
 	if i == 0 {
 		head = "A-1 "
 	}
