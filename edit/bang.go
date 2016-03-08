@@ -18,6 +18,7 @@ type bang struct {
 	line     string
 	words    []string
 	filtered []bangEntry
+	minus    bool
 }
 
 func (b *bang) Len() int {
@@ -26,26 +27,31 @@ func (b *bang) Len() int {
 
 func (b *bang) Show(i, width int) string {
 	entry := b.filtered[i]
-	head := fmt.Sprintf("%3d ", entry.i)
+	var head string
 	if entry.i == -1 {
 		head = "M-, "
+	} else if b.minus {
+		head = fmt.Sprintf("%3d ", entry.i-len(b.words))
+	} else {
+		head = fmt.Sprintf("%3d ", entry.i)
 	}
 	return ForceWcWidth(head+entry.s, width)
 }
 
 func (b *bang) Filter(filter string) int {
 	b.filtered = nil
-	if filter != "" {
-		if _, err := strconv.Atoi(filter); err != nil {
-			return -1
-		}
-	}
-	if filter == "" {
+	b.minus = len(filter) > 0 && filter[0] == '-'
+	if filter == "" || filter == "-" {
 		b.filtered = append(b.filtered, bangEntry{-1, b.line})
+	} else if _, err := strconv.Atoi(filter); err != nil {
+		return -1
 	}
 	// Quite inefficient way to filter by prefix of stringified index.
+	n := len(b.words)
 	for i, word := range b.words {
-		if strings.HasPrefix(strconv.Itoa(i), filter) {
+		if filter == "" ||
+			(!b.minus && strings.HasPrefix(strconv.Itoa(i), filter)) ||
+			(b.minus && strings.HasPrefix(strconv.Itoa(i-n), filter)) {
 			b.filtered = append(b.filtered, bangEntry{i, word})
 		}
 	}
@@ -92,5 +98,5 @@ func bangAltDefault(ed *Editor) {
 }
 
 func newBang(line string) *bang {
-	return &bang{line, wordSep.Split(strings.Trim(line, " \t"), -1), nil}
+	return &bang{line, wordSep.Split(strings.Trim(line, " \t"), -1), nil, false}
 }
