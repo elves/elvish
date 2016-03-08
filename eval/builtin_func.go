@@ -92,7 +92,7 @@ func init() {
 		&BuiltinFn{"base", wrapFn(base)},
 
 		&BuiltinFn{"=", eq},
-		&BuiltinFn{"!=", noteq},
+		&BuiltinFn{"!=", wrapFn(noteq)},
 		&BuiltinFn{"deepeq", deepeq},
 
 		&BuiltinFn{"take", wrapFn(take)},
@@ -601,14 +601,9 @@ func eq(ec *EvalCtx, args []Value) {
 
 var ErrEqual = errors.New("equal")
 
-func noteq(ec *EvalCtx, args []Value) {
-	if len(args) == 0 {
-		throw(ErrArgs)
-	}
-	for i := 0; i+1 < len(args); i++ {
-		if args[i] == args[i+1] {
-			throw(ErrEqual)
-		}
+func noteq(ec *EvalCtx, lhs, rhs Value) {
+	if lhs == rhs {
+		throw(ErrEqual)
 	}
 }
 
