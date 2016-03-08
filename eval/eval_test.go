@@ -185,7 +185,7 @@ var evalTests = []struct {
 	{"div 233333 353", strs("661"), nomore},
 	{"div 1 0", strs("+Inf"), nomore},
 	// Equality
-	{"put ?(= a a) ?(= [] []) ?(= [&] [&])",
+	{"put ?(== a a) ?(== [] []) ?(== [&] [&])",
 		[]Value{Error{nil}, Error{ErrNotEqual}, Error{ErrNotEqual}}, nomore},
 	{"kind-of bare 'str' [] [&] []{ }",
 		strs("string", "string", "list", "map", "fn"), nomore},

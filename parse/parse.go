@@ -275,6 +275,10 @@ func (an *Assignment) parse(ps *parser) {
 }
 
 func checkVariableInAssignment(p *Primary, ps *parser) bool {
+	if p.Type == Braced {
+		// XXX don't check further inside braced expression
+		return true
+	}
 	if p.Type != Bareword && p.Type != SingleQuoted && p.Type != DoubleQuoted {
 		return false
 	}
@@ -282,8 +286,8 @@ func checkVariableInAssignment(p *Primary, ps *parser) bool {
 		return false
 	}
 	for _, r := range p.Value {
-		// XXX special case '&'.
-		if !allowedInVariableName(r) && r != '&' {
+		// XXX special case '&' and '@'.
+		if !allowedInVariableName(r) && r != '&' && r != '@' {
 			return false
 		}
 	}
