@@ -77,7 +77,7 @@ func (l *listing) backspace() bool {
 	return false
 }
 
-func (l *listing) prev(cycle bool) {
+func (l *listing) up(cycle bool) {
 	n := l.provider.Len()
 	if n == 0 {
 		return
@@ -103,7 +103,7 @@ func (l *listing) pageUp() {
 	}
 }
 
-func (l *listing) next(cycle bool) {
+func (l *listing) down(cycle bool) {
 	n := l.provider.Len()
 	if n == 0 {
 		return
@@ -154,11 +154,11 @@ func addListingBuiltins(prefix string, l func(*Editor) *listing) {
 	add := func(name string, f func(*Editor)) {
 		builtins = append(builtins, Builtin{prefix + name, f})
 	}
-	add("prev", func(ed *Editor) { l(ed).prev(false) })
-	add("prev-cycle", func(ed *Editor) { l(ed).prev(true) })
+	add("up", func(ed *Editor) { l(ed).up(false) })
+	add("up-cycle", func(ed *Editor) { l(ed).up(true) })
 	add("page-up", func(ed *Editor) { l(ed).pageUp() })
-	add("next", func(ed *Editor) { l(ed).next(false) })
-	add("next-cycle", func(ed *Editor) { l(ed).next(true) })
+	add("down", func(ed *Editor) { l(ed).down(false) })
+	add("down-cycle", func(ed *Editor) { l(ed).down(true) })
 	add("page-down", func(ed *Editor) { l(ed).pageDown() })
 	add("backspace", func(ed *Editor) { l(ed).backspace() })
 	add("accept", func(ed *Editor) { l(ed).accept(ed) })
@@ -171,11 +171,11 @@ func addListingDefaultBindings(prefix string, m ModeType) {
 			defaultBindings[m][k] = prefix + name
 		}
 	}
-	add(Key{Up, 0}, "prev")
+	add(Key{Up, 0}, "up")
 	add(Key{PageUp, 0}, "page-up")
-	add(Key{Down, 0}, "next")
+	add(Key{Down, 0}, "down")
 	add(Key{PageDown, 0}, "page-down")
-	add(Key{Tab, 0}, "next-cycle")
+	add(Key{Tab, 0}, "down-cycle")
 	add(Key{Backspace, 0}, "backspace")
 	add(Key{Enter, 0}, "accept")
 	add(Default, "default")
