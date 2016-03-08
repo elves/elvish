@@ -135,7 +135,9 @@ func addListingBuiltins(prefix string, l func(*Editor) *listing) {
 
 func addListingDefaultBindings(prefix string, m ModeType) {
 	add := func(k Key, name string) {
-		defaultBindings[m][k] = prefix + name
+		if _, ok := defaultBindings[m][k]; !ok {
+			defaultBindings[m][k] = prefix + name
+		}
 	}
 	add(Key{Up, 0}, "prev")
 	add(Key{Down, 0}, "next")

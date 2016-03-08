@@ -66,6 +66,10 @@ var builtins = []Builtin{
 	// History listing mode
 	{"start-history-listing", startHistoryListing},
 
+	// Bang mode
+	{"start-bang", startBang},
+	{"bang-alt-default", bangAltDefault},
+
 	// Location mode
 	{"start-location", startLocation},
 
@@ -103,6 +107,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{Up, 0}:     "start-history",
 		Key{'N', Ctrl}: "start-navigation",
 		Key{'H', Ctrl}: "start-history-listing",
+		Key{'1', Alt}:  "start-bang",
 		Key{'L', Ctrl}: "start-location",
 		Default:        "default-insert",
 	},
@@ -150,7 +155,10 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Default:        "default-history",
 	},
 	modeHistoryListing: map[Key]string{},
-	modeLocation:       map[Key]string{},
+	modeBang: map[Key]string{
+		Default: "bang-alt-default",
+	},
+	modeLocation: map[Key]string{},
 }
 
 var (
@@ -163,6 +171,8 @@ func init() {
 	addListingDefaultBindings("loc-", modeLocation)
 	addListingBuiltins("histlist-", func(ed *Editor) *listing { return &ed.histlist })
 	addListingDefaultBindings("histlist-", modeHistoryListing)
+	addListingBuiltins("bang-", func(ed *Editor) *listing { return &ed.bang })
+	addListingDefaultBindings("bang-", modeBang)
 
 	for _, b := range builtins {
 		builtinMap[b.name] = b

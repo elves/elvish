@@ -59,6 +59,7 @@ type editorState struct {
 	navigation navigation
 	hist       hist
 	histlist   listing
+	bang       listing
 	location   listing
 
 	// A cache of external commands, used in stylist and completer of command

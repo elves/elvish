@@ -17,6 +17,7 @@ const (
 	modeNavigation
 	modeHistory
 	modeHistoryListing
+	modeBang
 	modeLocation
 )
 
