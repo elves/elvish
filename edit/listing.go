@@ -9,6 +9,7 @@ type listing struct {
 	provider listingProvider
 	selected int
 	filter   string
+	height   int
 }
 
 type listingProvider interface {
@@ -20,7 +21,7 @@ type listingProvider interface {
 }
 
 func newListing(t ModeType, p listingProvider) listing {
-	l := listing{t, p, 0, ""}
+	l := listing{t, p, 0, "", 0}
 	l.changeFilter("")
 	return l
 }
@@ -48,6 +49,7 @@ func (l *listing) List(width, maxHeight int) *buffer {
 		return b
 	}
 	low, high := findWindow(n, l.selected, maxHeight)
+	l.height = high - low
 	for i := low; i < high; i++ {
 		if i > low {
 			b.newline()
@@ -90,6 +92,17 @@ func (l *listing) prev(cycle bool) {
 	}
 }
 
+func (l *listing) pageUp() {
+	n := l.provider.Len()
+	if n == 0 {
+		return
+	}
+	l.selected -= l.height
+	if l.selected < 0 {
+		l.selected = 0
+	}
+}
+
 func (l *listing) next(cycle bool) {
 	n := l.provider.Len()
 	if n == 0 {
@@ -102,6 +115,17 @@ func (l *listing) next(cycle bool) {
 		} else {
 			l.selected--
 		}
+	}
+}
+
+func (l *listing) pageDown() {
+	n := l.provider.Len()
+	if n == 0 {
+		return
+	}
+	l.selected += l.height
+	if l.selected >= n {
+		l.selected = n - 1
 	}
 }
 
@@ -132,8 +156,10 @@ func addListingBuiltins(prefix string, l func(*Editor) *listing) {
 	}
 	add("prev", func(ed *Editor) { l(ed).prev(false) })
 	add("prev-cycle", func(ed *Editor) { l(ed).prev(true) })
+	add("page-up", func(ed *Editor) { l(ed).pageUp() })
 	add("next", func(ed *Editor) { l(ed).next(false) })
 	add("next-cycle", func(ed *Editor) { l(ed).next(true) })
+	add("page-down", func(ed *Editor) { l(ed).pageDown() })
 	add("backspace", func(ed *Editor) { l(ed).backspace() })
 	add("accept", func(ed *Editor) { l(ed).accept(ed) })
 	add("default", func(ed *Editor) { l(ed).defaultBinding(ed) })
@@ -146,7 +172,9 @@ func addListingDefaultBindings(prefix string, m ModeType) {
 		}
 	}
 	add(Key{Up, 0}, "prev")
+	add(Key{PageUp, 0}, "page-up")
 	add(Key{Down, 0}, "next")
+	add(Key{PageDown, 0}, "page-down")
 	add(Key{Tab, 0}, "next-cycle")
 	add(Key{Backspace, 0}, "backspace")
 	add(Key{Enter, 0}, "accept")
