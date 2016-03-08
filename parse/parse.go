@@ -58,6 +58,7 @@ var (
 	errShouldBeBackquote          = newError("", "'`'")
 	errShouldBeCompound           = newError("", "compound")
 	errShouldBeEqual              = newError("", "'='")
+	errArgListAllowNoSemicolon    = newError("argument list doesn't allow semicolons")
 )
 
 // Chunk = { PipelineSep | Space } { Pipeline { PipelineSep | Space } }
@@ -376,7 +377,7 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 		} else {
 			ps.error(errShouldBeIn)
 		}
-		ctrl.setArray(parseArray(ps))
+		ctrl.setArray(parseArray(ps, false))
 		switch ps.peek() {
 		case '\n', ';':
 			ps.next()
@@ -520,7 +521,7 @@ func (in *Indexing) parse(ps *parser) {
 		}
 
 		ps.pushCutset()
-		in.addToIndicies(parseArray(ps))
+		in.addToIndicies(parseArray(ps, false))
 		ps.popCutset()
 
 		if !parseSep(in, ps, ']') {
@@ -538,13 +539,27 @@ func startsIndexing(r rune) bool {
 type Array struct {
 	node
 	Compounds []*Compound
+	// When non-empty, records the occurences of semicolons by the indices of
+	// the compounds they appear before. For instance, [; ; a b; c d;] results
+	// in Semicolons={0 0 2 4}.
+	Semicolons []int
 }
 
-func (sn *Array) parse(ps *parser) {
-	parseSpacesAndNewlines(sn, ps)
+func (sn *Array) parse(ps *parser, allowSemicolon bool) {
+	parseSep := func() {
+		parseSpacesAndNewlines(sn, ps)
+		if allowSemicolon {
+			for parseSep(sn, ps, ';') {
+				sn.Semicolons = append(sn.Semicolons, len(sn.Compounds))
+			}
+			parseSpacesAndNewlines(sn, ps)
+		}
+	}
+
+	parseSep()
 	for startsCompound(ps.peek()) {
 		sn.addToCompounds(parseCompound(ps))
-		parseSpacesAndNewlines(sn, ps)
+		parseSep()
 	}
 }
 
@@ -867,13 +882,16 @@ func (pn *Primary) lbracket(ps *parser) {
 			ps.error(errShouldBeRBracket)
 		}
 	default:
-		pn.setList(parseArray(ps))
+		pn.setList(parseArray(ps, true))
 		ps.popCutset()
 
 		if !parseSep(pn, ps, ']') {
 			ps.error(errShouldBeRBracket)
 		}
 		if parseSep(pn, ps, '{') {
+			if len(pn.List.Semicolons) > 0 {
+				ps.errorp(pn.List.Begin(), pn.List.End(), errArgListAllowNoSemicolon)
+			}
 			pn.lambda(ps)
 		} else {
 			pn.Type = List

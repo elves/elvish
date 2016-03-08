@@ -197,9 +197,9 @@ func (n *Array) addToCompounds(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseArray(ps *parser) *Array {
+func parseArray(ps *parser, allowSemicolon bool) *Array {
 	n := &Array{node: node{begin: ps.pos}}
-	n.parse(ps)
+	n.parse(ps, allowSemicolon)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n

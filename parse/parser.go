@@ -91,11 +91,15 @@ func (ps *parser) advance(c int) {
 	}
 }
 
-func (ps *parser) error(e error) {
+func (ps *parser) errorp(begin, end int, e error) {
 	if ps.errors == nil {
 		ps.errors = &util.Errors{}
 	}
-	ps.errors.Append(&util.PosError{ps.pos, ps.pos, e})
+	ps.errors.Append(&util.PosError{begin, end, e})
+}
+
+func (ps *parser) error(e error) {
+	ps.errorp(ps.pos, ps.pos, e)
 }
 
 func (ps *parser) pushCutset(rs ...rune) {
