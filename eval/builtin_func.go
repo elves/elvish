@@ -51,6 +51,7 @@ func init() {
 
 		&BuiltinFn{"print", wrapFn(print)},
 		&BuiltinFn{"println", wrapFn(println)},
+		&BuiltinFn{"pprint", pprint},
 
 		&BuiltinFn{"into-lines", wrapFn(intoLines)},
 		&BuiltinFn{"from-lines", wrapFn(fromLines)},
@@ -274,6 +275,14 @@ func print(ec *EvalCtx, args ...string) {
 func println(ec *EvalCtx, args ...string) {
 	print(ec, args...)
 	ec.ports[1].File.WriteString("\n")
+}
+
+func pprint(ec *EvalCtx, args []Value) {
+	out := ec.ports[1].File
+	for _, arg := range args {
+		out.WriteString(arg.Repr(0))
+		out.WriteString("\n")
+	}
 }
 
 func intoLines(ec *EvalCtx) {

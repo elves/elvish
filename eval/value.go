@@ -12,7 +12,7 @@ import (
 // Definitions for Value interfaces, some simple Value types and some common
 // Value helpers.
 
-var (
+const (
 	NoPretty = util.MinInt
 )
 

@@ -71,7 +71,7 @@ func (e *Evaler) AddModule(name string, ns Namespace) {
 const (
 	outChanSize   = 32
 	outChanLeader = "▶ "
-	initIndent    = 2
+	initIndent    = NoPretty
 )
 
 // NewTopEvalCtx creates a top-level evalCtx.

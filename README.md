@@ -82,7 +82,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 * You can manipulate the keybinding through the map `$le:binding`. For example, this binds Ctrl-L to clearing the terminal: `le:binding[insert][Ctrl-L]={ clear > /dev/tty }`. The first index is the mode and the second is the key. (Yes, the braces enclose a lambda.)
 
-  Use `put $le:binding` to get a nice (albeit long) view of the current keybinding.
+  Use `pprint $le:binding` to get a nice (albeit long) view of the current keybinding.
 
 * Environment variables live in a separate `env:` namespace and must be explicitly qualified:
   ```sh

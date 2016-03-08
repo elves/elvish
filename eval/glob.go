@@ -46,7 +46,7 @@ func (gp GlobPattern) Index(modifiers []Value) []Value {
 			}
 			gp.Segments[len(gp.Segments)-1].Data = "all"
 		default:
-			throw(fmt.Errorf("unknown modifier %s", modifier.Repr(-1)))
+			throw(fmt.Errorf("unknown modifier %s", modifier.Repr(NoPretty)))
 		}
 	}
 	return []Value{gp}
