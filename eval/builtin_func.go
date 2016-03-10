@@ -92,6 +92,7 @@ func init() {
 
 		&BuiltinFn{"base", wrapFn(base)},
 
+		&BuiltinFn{"bool", wrapFn(boolFn)},
 		&BuiltinFn{"==", eq},
 		&BuiltinFn{"!=", wrapFn(noteq)},
 		&BuiltinFn{"deepeq", deepeq},
@@ -597,6 +598,11 @@ func base(ec *EvalCtx, b int, nums ...int) {
 	for _, num := range nums {
 		out <- String(strconv.FormatInt(int64(num), b))
 	}
+}
+
+func boolFn(ec *EvalCtx, v Value) {
+	out := ec.ports[1].Chan
+	out <- Bool(ToBool(v))
 }
 
 var ErrNotEqual = errors.New("not equal")
