@@ -277,8 +277,6 @@ func (rd *Reader) readOne(r rune) {
 			k = ctrlModify(r2)
 			k.Mod |= Alt
 		}
-	case Tab, Enter, Backspace:
-		k = Key{r, 0}
 	default:
 		k = ctrlModify(r)
 	}
@@ -294,6 +292,8 @@ func ctrlModify(r rune) Key {
 		return Key{'6', Ctrl} // ^^
 	case 0x1f:
 		return Key{'/', Ctrl} // ^_
+	case Tab, Enter, Backspace: // ^I ^J ^?
+		return Key{r, 0}
 	default:
 		// Regular Ctrl sequences.
 		if 0x1 <= r && r <= 0x1d {
