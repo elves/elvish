@@ -62,6 +62,7 @@ func init() {
 		&BuiltinFn{"put-all", wrapFn(putAll)},
 		&BuiltinFn{"unpack", wrapFn(unpack)},
 
+		&BuiltinFn{"to-json", wrapFn(toJSON)},
 		&BuiltinFn{"from-json", wrapFn(fromJSON)},
 
 		&BuiltinFn{"kind-of", kindOf},
@@ -334,6 +335,18 @@ func unpack(ec *EvalCtx) {
 		for e := range elemser.Elems() {
 			out <- e
 		}
+	}
+}
+
+// toJSON converts a stream of Value's to JSON data.
+func toJSON(ec *EvalCtx) {
+	in := ec.ports[0].Chan
+	out := ec.ports[1].File
+
+	enc := json.NewEncoder(out)
+	for v := range in {
+		err := enc.Encode(v)
+		maybeThrow(err)
 	}
 }
 

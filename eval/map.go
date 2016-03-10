@@ -1,6 +1,9 @@
 package eval
 
-import "errors"
+import (
+	"encoding/json"
+	"errors"
+)
 
 // Map is a map from string to Value.
 type Map struct {
@@ -19,6 +22,15 @@ func NewMap(inner map[Value]Value) Map {
 
 func (Map) Kind() string {
 	return "map"
+}
+
+func (m Map) MarshalJSON() ([]byte, error) {
+	// XXX Not the most efficient way.
+	mm := map[string]Value{}
+	for k, v := range *m.inner {
+		mm[ToString(k)] = v
+	}
+	return json.Marshal(mm)
 }
 
 func (m Map) Repr(indent int) string {

@@ -2,6 +2,7 @@ package eval
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -40,6 +41,10 @@ func (l List) Repr(indent int) string {
 		b.WriteElem(v.Repr(indent + 1))
 	}
 	return b.String()
+}
+
+func (l List) MarshalJSON() ([]byte, error) {
+	return json.Marshal(*l.inner)
 }
 
 func (l List) Len() int {
