@@ -60,7 +60,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   
   ![location mode, filtering](https://raw.githubusercontent.com/elves/images/master/location-filter.png)
 
-  The filtering algorithm takes your filter and adds `**` to both sides of each path component. So `g/ed` becomes pattern `**g**/**ed**`, so it matches /home/xiaq/**g**o/elves/elvish/**ed**it.
+  The filtering algorithm takes your filter and adds `**` to both sides of each path component. So `g/di` becomes pattern `**g**/**di**`, so it matches /home/xiaq/**g**o/elves/elvish/e**di**t.
 
 * **NOTE**: Default key bindings as listed above are subject to change in the future; but the functionality will not go away.
 
