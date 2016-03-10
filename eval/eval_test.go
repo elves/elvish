@@ -149,6 +149,10 @@ var evalTests = []struct {
       {inc1,put1}=(f); $put1; $inc1; $put1
 	  {inc2,put2}=(f); $put2; $inc2; $put2`,
 		strs("0", "1", "0", "1"), nomore},
+	// Positional variables.
+	{`{ put $1 } lorem ipsum`, strs("ipsum"), nomore},
+	// Positional variables in the up: namespace.
+	{`{ { put $up:0 } in } out`, strs("out"), nomore},
 
 	// fn.
 	{"fn f [x]{ put x=$x'.' }; f lorem; f ipsum",
