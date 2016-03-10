@@ -52,11 +52,13 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 * Try typing `echo [` and press Enter. Elvish knows that the command is unfinished due to the unclosed `[` and inserts a newline instead of accepting the command. Moreover, common errors like syntax errors and missing variables are highlighted in real time.
 
-* Elvish remembers which directories you have visisted. Press Ctrl-L to list visited directories, sorted by score. Type to filer, and use Up and Down to choose. Press Enter to cd into the chosen directory; press Escape to cancel.
+* Elvish remembers which directories you have visited. Press Ctrl-L to list visited directories, sorted by score. Type to filer, and use Up and Down to choose. Press Enter to cd into the chosen directory; press Escape to cancel.
 
   ![location mode](https://raw.githubusercontent.com/elves/images/master/location.png)
 
-  NOTE: Default key bindings as listed above are subject to change in the future; but the functionality will not go away.
+  The filtering algorithm takes your filter and adds `**` to both sides of each path component. So `g/ed` becomes pattern `**g**/**ed**`, so it matches /home/xiaq/**g**o/elves/elvish/**ed**it.
+
+* **NOTE**: Default key bindings as listed above are subject to change in the future; but the functionality will not go away.
 
 * Elvish doesn't support history expansion like `!!`. Instead, it has a "bang mode", trigerred by `Alt-,`, that provides the same functionality. For example, if you typed a command but forgot to add `sudo`, you can then type `sudo ` and press `Alt-,` twice to fix it:
 
