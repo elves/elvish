@@ -66,28 +66,38 @@ func (s *Store) FindDirs(p string) ([]Dir, error) {
 	return convertDirs(rows)
 }
 
-// FindDirs finds directories containing a given subsequence. The results are
+// FindDirsLoose finds directories matching a given pattern. The results are
 // ordered by scores in descending order.
-func (s *Store) FindDirsSubseq(p string) ([]Dir, error) {
+//
+// The pattern is first split on slashes, and have % attached to both sides of
+// the parts. For instance, a/b becomes %a%/%b%, so it matches /1a1/2b2 as well
+// as /home/xiaq/1a1/what/2b2.
+func (s *Store) FindDirsLoose(p string) ([]Dir, error) {
 	rows, err := s.db.Query(
 		`select path, score from dir where path like ? escape "\" order by score desc`,
-		makeSubseqPattern(p))
+		makeLoosePattern(p))
 	if err != nil {
 		return nil, err
 	}
 	return convertDirs(rows)
 }
 
-func makeSubseqPattern(pattern string) string {
+func makeLoosePattern(pattern string) string {
 	var b bytes.Buffer
 	b.WriteRune('%')
 	for _, p := range pattern {
-		if p == '%' {
-			b.WriteRune('\\')
+		switch p {
+		case '%':
+			b.WriteString("\\%")
+		case '\\':
+			b.WriteString("\\\\")
+		case '/':
+			b.WriteString("%/%")
+		default:
+			b.WriteRune(p)
 		}
-		b.WriteRune(p)
-		b.WriteRune('%')
 	}
+	b.WriteRune('%')
 	return b.String()
 }
 

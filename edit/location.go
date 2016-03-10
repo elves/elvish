@@ -25,7 +25,7 @@ func (loc *location) Show(i, width int) string {
 }
 
 func (loc *location) Filter(filter string) int {
-	dirs, err := loc.store.FindDirsSubseq(filter)
+	dirs, err := loc.store.FindDirsLoose(filter)
 	if err != nil {
 		loc.candidates = nil
 		// XXX Should report error
