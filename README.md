@@ -52,9 +52,13 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 * Try typing `echo [` and press Enter. Elvish knows that the command is unfinished due to the unclosed `[` and inserts a newline instead of accepting the command. Moreover, common errors like syntax errors and missing variables are highlighted in real time.
 
-* Elvish remembers which directories you have visited. Press Ctrl-L to list visited directories, sorted by score. Type to filer, and use Up and Down to choose. Press Enter to cd into the chosen directory; press Escape to cancel.
+* Elvish remembers which directories you have visited. Press Ctrl-L to list visited directories. Like in completion, use Up, Down and Tab to navigate and use Enter to accept (which `cd`s into the selected directory). Press Escape to cancel.
 
   ![location mode](https://raw.githubusercontent.com/elves/images/master/location.png)
+
+  Type to filter:
+  
+  ![location mode, filtering](https://raw.githubusercontent.com/elves/images/master/location-filter.png)
 
   The filtering algorithm takes your filter and adds `**` to both sides of each path component. So `g/ed` becomes pattern `**g**/**ed**`, so it matches /home/xiaq/**g**o/elves/elvish/**ed**it.
 
