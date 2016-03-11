@@ -10,6 +10,7 @@ var (
 	styleForCompletedHistory = "2"
 	styleForFilter           = "4"
 	styleForSelected         = ";7"
+	styleForScrollBar        = "35"
 )
 
 var styleForType = map[TokenKind]string{

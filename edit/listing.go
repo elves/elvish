@@ -81,8 +81,8 @@ func (l *listing) List(width, maxHeight int) *buffer {
 			if scrollLow <= i && i < scrollHigh {
 				bar = "▉"
 			}
-			b.writes(ForceWcWidth(l.provider.Show(i, width), width-1), style)
-			b.writes(bar, "")
+			b.writes(ForceWcWidth(l.provider.Show(i, width-1), width-1), style)
+			b.writes(bar, styleForScrollBar)
 		} else {
 			b.writes(TrimWcWidth(l.provider.Show(i, width), width), style)
 		}
