@@ -12,7 +12,7 @@ type Dir struct {
 }
 
 const (
-	scoreDecay     = 0.966 // roughly 0.5^(1/20)
+	scoreDecay     = 0.986 // roughly 0.5^(1/50)
 	scoreIncrement = 10
 )
 
