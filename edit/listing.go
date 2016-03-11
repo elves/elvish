@@ -58,6 +58,13 @@ func (l *listing) List(width, maxHeight int) *buffer {
 			return int(float64(i)/float64(n)*float64(l.height)+0.5) + low
 		}
 		scrollLow, scrollHigh = f(low), f(high)
+		if scrollLow == scrollHigh {
+			if scrollHigh == high {
+				scrollLow--
+			} else {
+				scrollHigh++
+			}
+		}
 		Logger.Printf("low = %d, high = %d, n = %d, scrollLow = %d, scrollHigh = %d", low, high, n, scrollLow, scrollHigh)
 	}
 
