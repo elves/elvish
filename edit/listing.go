@@ -50,6 +50,17 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	}
 	low, high := findWindow(n, l.selected, maxHeight)
 	l.height = high - low
+
+	var scrollLow, scrollHigh int
+	showScrollbar := low > 0 || high < n-1
+	if showScrollbar {
+		f := func(i int) int {
+			return int(float64(i)/float64(n)*float64(l.height)+0.5) + low
+		}
+		scrollLow, scrollHigh = f(low), f(high)
+		Logger.Printf("low = %d, high = %d, n = %d, scrollLow = %d, scrollHigh = %d", low, high, n, scrollLow, scrollHigh)
+	}
+
 	for i := low; i < high; i++ {
 		if i > low {
 			b.newline()
@@ -58,7 +69,16 @@ func (l *listing) List(width, maxHeight int) *buffer {
 		if i == l.selected {
 			style = styleForSelected
 		}
-		b.writes(TrimWcWidth(l.provider.Show(i, width), width), style)
+		if showScrollbar {
+			bar := "│"
+			if scrollLow <= i && i < scrollHigh {
+				bar = "▉"
+			}
+			b.writes(ForceWcWidth(l.provider.Show(i, width), width-1), style)
+			b.writes(bar, "")
+		} else {
+			b.writes(TrimWcWidth(l.provider.Show(i, width), width), style)
+		}
 	}
 	return b
 }
