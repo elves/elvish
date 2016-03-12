@@ -150,7 +150,7 @@ go get github.com/elves/elvish
 make -C $GOPATH/src/github.com/elves/elvish stub
 
 for f in ~/.bashrc ~/.zshrc; do
-    echo -e 'export GOPATH=$HOME/go\nexport PATH=$PATH:$GOPATH/bin' >> $f
+    printf 'export %s=%s\n' GOPATH '$HOME/go' PATH '$PATH:$GOPATH/bin' >> $f
 done
 ```
 
