@@ -297,13 +297,7 @@ func (w *writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 			switchStyle("")
 			bytesBuf.WriteString("\033[K")
 		}
-		for _, c := range line[j:] {
-			if c.width > 0 && c.style != style {
-				fmt.Fprintf(bytesBuf, "\033[;%sm", c.style)
-				style = c.style
-			}
-			bytesBuf.WriteString(string(c.rune))
-		}
+		writeCells(line[j:])
 	}
 	if len(w.oldBuf.cells) > len(buf.cells) && !fullRefresh {
 		// If the old buffer is higher, erase old content.
