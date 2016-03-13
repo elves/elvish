@@ -24,6 +24,22 @@ void handler(int signum) {
 
 enum { ARGV0MAX = 32 };
 
+void badmsg() {
+    must(write(1, "bad msg\n", 8), "write bad msg");
+}
+
+// read as much as possible, but no more than n.
+int readn(int fd, char *buf, int n) {
+    int nr, nrall;
+    nrall = 0;
+    while (n > 0 && (nr = read(fd, buf, n)) > 0) {
+        buf += nr;
+        nrall += nr;
+        n -= nr;
+    }
+    return nrall;
+}
+
 int main(int argc, char **argv) {
     int i;
     for (i = 1; i <= 64; i++) {
@@ -34,32 +50,39 @@ int main(int argc, char **argv) {
 
     must(write(1, "ok\n", 3) != -1, "write ok");
 
-    char op;
-    int len;
-    char *buf;
-    int scanned;
-    while ((scanned = scanf(" %c%d ", &op, &len)) == 2) {
-        // printf("op=%d, len=%d\n", op, len);
-        buf = malloc(len+1);
-        int nr = read(0, buf, len);
-        buf[nr] = '\0';
-        // printf("buf=%s\n", buf);
-        if (op == 'd') {
+    int nr;
+    char opbuf[6] = "12345";
+    while ((nr = readn(0, opbuf, 5)) == 5) {
+        char opcode = opbuf[0];
+        int len = atoi(opbuf+1);
+        char *buf = malloc(len+1);
+        buf[len] = '\0';
+        fprintf(stderr, "code = %c, len = %d\n", opcode, len);
+        if (readn(0, buf, len) < len) {
+            free(buf);
+            break;
+        }
+        fprintf(stderr, "data = %s\n", buf);
+        switch (opcode) {
+        case 'd':
             // Change directory.
             chdir(buf);
-        } else if (op == 't') {
+            break;
+        case 't':
             if (len > ARGV0MAX) {
                 buf[ARGV0MAX] = '\0';
             }
             strcpy(argv[0], buf);
+            break;
+        default:
+            badmsg();
         }
         free(buf);
     }
-    if (scanned != EOF) {
-        must(write(1, "bad msg\n", 8), "write bad msg");
-        while (getchar() != EOF)
-            ;
-        return 1;
+
+    if (nr != 0) {
+        badmsg();
     }
+
     return 0;
 }

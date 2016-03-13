@@ -98,11 +98,11 @@ func (stub *Stub) Terminate() {
 // SetTitle sets the title of the stub.
 func (stub *Stub) SetTitle(s string) {
 	s = strings.TrimSpace(s)
-	fmt.Fprintf(stub.write, "t %d %s\n", len(s), s)
+	fmt.Fprintf(stub.write, "t%04d%s", len(s), s)
 }
 
 func (stub *Stub) Chdir(dir string) {
-	fmt.Fprintf(stub.write, "d %d %s\n", len(dir), dir)
+	fmt.Fprintf(stub.write, "d%04d%s", len(dir), dir)
 }
 
 // Signals returns a channel into which signals sent to the stub are relayed.
