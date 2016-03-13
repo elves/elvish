@@ -89,6 +89,7 @@ func init() {
 		&BuiltinFn{"pow", wrapFn(pow)},
 		&BuiltinFn{"lt", wrapFn(lt)},
 		&BuiltinFn{"gt", wrapFn(gt)},
+		&BuiltinFn{"%", wrapFn(mod)},
 
 		&BuiltinFn{"base", wrapFn(base)},
 
@@ -584,6 +585,11 @@ func gt(ec *EvalCtx, nums ...float64) {
 			throw(ErrFalse)
 		}
 	}
+}
+
+func mod(ec *EvalCtx, a, b int) {
+	out := ec.ports[1].Chan
+	out <- String(strconv.Itoa(a % b))
 }
 
 var ErrBadBase = errors.New("bad base")
