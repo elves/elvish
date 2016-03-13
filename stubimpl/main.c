@@ -57,12 +57,12 @@ int main(int argc, char **argv) {
         int len = atoi(opbuf+1);
         char *buf = malloc(len+1);
         buf[len] = '\0';
-        fprintf(stderr, "code = %c, len = %d\n", opcode, len);
+        //fprintf(stderr, "code = %c, len = %d\n", opcode, len);
         if (readn(0, buf, len) < len) {
             free(buf);
             break;
         }
-        fprintf(stderr, "data = %s\n", buf);
+        //fprintf(stderr, "data = %s\n", buf);
         switch (opcode) {
         case 'd':
             // Change directory.
