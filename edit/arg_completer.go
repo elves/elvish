@@ -26,6 +26,14 @@ func (ct CompleterTable) Repr(indent int) string {
 }
 
 func (ct CompleterTable) IndexOne(idx eval.Value) eval.Value {
+	head, ok := idx.(eval.String)
+	if !ok {
+		throw(ErrCompleterIndexMustBeString)
+	}
+	v := ct[string(head)]
+	if fac, ok := v.(FnAsArgCompleter); ok {
+		return fac.Fn
+	}
 	return eval.String("<get not implemented yet>")
 }
 
@@ -34,7 +42,7 @@ func (ct CompleterTable) IndexSet(idx eval.Value, v eval.Value) {
 	if !ok {
 		throw(ErrCompleterIndexMustBeString)
 	}
-	value, ok := v.(eval.Fn)
+	value, ok := v.(eval.FnValue)
 	if !ok {
 		throw(ErrCompleterValueMustBeFunc)
 	}
@@ -88,7 +96,7 @@ func complSudo(words []string, ed *Editor) ([]*candidate, error) {
 }
 
 type FnAsArgCompleter struct {
-	Fn eval.Fn
+	Fn eval.FnValue
 }
 
 func (fac FnAsArgCompleter) Complete(words []string, ed *Editor) ([]*candidate, error) {
