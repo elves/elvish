@@ -39,10 +39,11 @@ int main(int argc, char **argv) {
     char *buf;
     int scanned;
     while ((scanned = scanf(" %c%d ", &op, &len)) == 2) {
-        printf("op=%d, len=%d\n", op, len);
+        // printf("op=%d, len=%d\n", op, len);
         buf = malloc(len+1);
-        fgets(buf, len+1, stdin);
-        printf("buf=%s\n", buf);
+        int nr = read(0, buf, len);
+        buf[nr] = '\0';
+        // printf("buf=%s\n", buf);
         if (op == 'd') {
             // Change directory.
             chdir(buf);
@@ -55,6 +56,9 @@ int main(int argc, char **argv) {
         free(buf);
     }
     if (scanned != EOF) {
+        must(write(1, "bad msg\n", 8), "write bad msg");
+        while (getchar() != EOF)
+            ;
         return 1;
     }
     return 0;

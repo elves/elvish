@@ -25,6 +25,16 @@ func TestStub(t *testing.T) {
 		t.Errorf("signal not relayed after 10ms")
 	}
 
+	// Setting title and dir of the stub shouldn't cause the stub to terminate,
+	// even if the payload is invalid or contains newlines.
+	stub.SetTitle("x\ny")
+	stub.Chdir("/xyz/haha")
+	select {
+	case <-stub.State():
+		t.Errorf("stub exited prematurely")
+	default:
+	}
+
 	// Calling Terminate should really terminate the process.
 	stub.Terminate()
 	select {
