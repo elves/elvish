@@ -1,6 +1,10 @@
 package edit
 
-import "github.com/elves/elvish/parse"
+import (
+	"strings"
+
+	"github.com/elves/elvish/parse"
+)
 
 var tokensBufferSize = 16
 
@@ -82,7 +86,14 @@ func produceTokens(n parse.Node, tokenCh chan<- Token) {
 			}
 		case *parse.Sep:
 			tokenType = Sep
-			moreStyle = styleForSep[n.SourceText()]
+			septext := n.SourceText()
+			if strings.HasPrefix(septext, "#") {
+				moreStyle = styleForSep["#"]
+			} else {
+				moreStyle = styleForSep[septext]
+			}
+		default:
+			Logger.Printf("bad leaf type %T", n)
 		}
 		tokenCh <- Token{tokenType, n.SourceText(), n, moreStyle}
 	}

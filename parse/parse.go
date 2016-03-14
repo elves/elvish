@@ -115,6 +115,7 @@ func (bn *Chunk) parseSeps(ps *parser) int {
 				}
 				ps.next()
 			}
+			addSep(bn, ps)
 			nseps++
 		} else {
 			break
