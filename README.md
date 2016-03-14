@@ -14,7 +14,19 @@ Elvish looks like this:
 
 ## Prebuilt binaries
 
-Up-to-date binaries for 64-bit [Linux](https://dl.elvish.io/elvish-linux.tar.gz) and [Mac OS X](https://dl.elvish.io/elvish-osx.tar.gz). Install with `sudo tar vxfz elvish-*.tar.gz -C /usr/bin`. See also [Building Elvish](#building-elvish).
+64-bit Linux, install with:
+
+```sh
+curl -s https://dl.elvish.io/elvish-linux.tar.gz | sudo tar vxz -C /usr/bin
+```
+
+64-bit Mac OS X, install with:
+
+```sh
+curl -s https://dl.elvish.io/elvish-osx.tar.gz | sudo tar vxz -C /usr/bin
+```
+
+See also [Building Elvish](#building-elvish).
 
 ## Getting Started
 
