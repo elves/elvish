@@ -3,6 +3,7 @@ package edit
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/util"
@@ -22,7 +23,11 @@ func (hl *histlist) Len() int {
 }
 
 func (hl *histlist) Show(i, width int) string {
-	return ForceWcWidth(hl.filtered[i], width)
+	entry := hl.filtered[i]
+	if i := strings.IndexRune(entry, '\n'); i != -1 {
+		entry = entry[:i] + "…"
+	}
+	return ForceWcWidth(entry, width)
 }
 
 func (hl *histlist) Filter(filter string) int {
