@@ -32,6 +32,7 @@ var builtins = []Builtin{
 	{"return-line", returnLine},
 	{"smart-enter", smartEnter},
 	{"return-eof", returnEOF},
+	{"toggle-quote-paste", toggleQuotePaste},
 	{"default-command", defaultCommand},
 	{"default-insert", defaultInsert},
 
@@ -102,6 +103,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		// Controls.
 		Key{Enter, 0}:  "smart-enter",
 		Key{'D', Ctrl}: "return-eof",
+		Key{F2, 0}:     "toggle-quote-paste",
 		// Key{'[', Ctrl}: "startCommand",
 		Key{Tab, 0}:    "complete-prefix-or-start-completion",
 		Key{Up, 0}:     "start-history",

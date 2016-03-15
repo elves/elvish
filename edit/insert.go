@@ -11,14 +11,19 @@ import (
 
 // Builtins related to insert and command mode.
 
-type insert struct{}
+type insert struct {
+	quotePaste bool
+}
 
 func (*insert) Mode() ModeType {
 	return modeInsert
 }
 
 // Insert mode is the default mode and has an empty mode.
-func (*insert) ModeLine(int) *buffer {
+func (ins *insert) ModeLine(width int) *buffer {
+	if ins.quotePaste {
+		return makeModeLine(" INSERT (quote paste) ", width)
+	}
 	return nil
 }
 
@@ -203,6 +208,10 @@ func returnEOF(ed *Editor) {
 	if len(ed.line) == 0 {
 		ed.nextAction = action{typ: exitReadLine, returnErr: io.EOF}
 	}
+}
+
+func toggleQuotePaste(ed *Editor) {
+	ed.insert.quotePaste = !ed.insert.quotePaste
 }
 
 func defaultInsert(ed *Editor) {

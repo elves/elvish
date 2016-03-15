@@ -22,13 +22,14 @@ const (
 	runeReadError
 )
 
-// Reader converts a stream of runes into a stream of OneRead's.
+// Reader converts a stream of events on separate channels.
 type Reader struct {
 	ar        *AsyncReader
 	keyChan   chan Key
 	cprChan   chan pos
 	mouseChan chan mouseEvent
 	errChan   chan error
+	pasteChan chan bool
 	quit      chan struct{}
 }
 
@@ -48,6 +49,7 @@ func NewReader(f *os.File) *Reader {
 		make(chan pos),
 		make(chan mouseEvent),
 		make(chan error),
+		make(chan bool),
 		nil,
 	}
 	return rd
@@ -67,6 +69,10 @@ func (rd *Reader) CPRChan() <-chan pos {
 // has read.
 func (rd *Reader) MouseChan() <-chan mouseEvent {
 	return rd.mouseChan
+}
+
+func (rd *Reader) PasteChan() <-chan bool {
+	return rd.pasteChan
 }
 
 // ErrorChan returns the channel onto which the Reader writes errors it came
@@ -111,6 +117,7 @@ func (rd *Reader) readOne(r rune) {
 	var cpr pos
 	var mouse mouseEvent
 	var err error
+	var paste *bool
 	currentSeq := string(r)
 
 	badSeq := func(msg string) {
@@ -146,6 +153,11 @@ func (rd *Reader) readOne(r rune) {
 		} else if mouse != (mouseEvent{}) {
 			select {
 			case rd.mouseChan <- mouse:
+			case <-rd.quit:
+			}
+		} else if paste != nil {
+			select {
+			case rd.pasteChan <- *paste:
 			case <-rd.quit:
 			}
 		}
@@ -251,6 +263,9 @@ func (rd *Reader) readOne(r rune) {
 				button := nums[0] & 3
 				mod := mouseModify(nums[0])
 				mouse = mouseEvent{pos{nums[2], nums[1]}, down, button, mod}
+			} else if r == '~' && len(nums) == 1 && nums[0] == 200 || nums[0] == 201 {
+				b := nums[0] == 200
+				paste = &b
 			} else {
 				k = parseCSI(nums, r, currentSeq)
 				if k == (Key{}) {

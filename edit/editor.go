@@ -2,9 +2,11 @@
 package edit
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
@@ -234,6 +236,10 @@ func (ed *Editor) startReadLine() error {
 	ed.file.WriteString("\033[?7l")
 	// Turn on SGR-style mouse tracking.
 	//ed.file.WriteString("\033[?1000;1006h")
+
+	// Enable bracketed paste.
+	ed.file.WriteString("\033[?2004h")
+
 	return nil
 }
 
@@ -255,6 +261,9 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.file.WriteString("\033[?7h")
 	// Turn off mouse tracking.
 	//ed.file.WriteString("\033[?1000;1006l")
+
+	// Disable bracketed paste.
+	ed.file.WriteString("\033[?2004l")
 
 	// restore termios
 	err := ed.savedTermios.ApplyToFd(int(ed.file.Fd()))
@@ -329,6 +338,39 @@ MainLoop:
 			ed.addTip("mouse: %+v", mouse)
 		case <-ed.reader.CPRChan():
 			// Ignore CPR
+		case b := <-ed.reader.PasteChan():
+			if !b {
+				continue
+			}
+			var buf bytes.Buffer
+			timer := time.NewTimer(EscSequenceTimeout)
+		paste:
+			for {
+				// XXX Should also select on other chans. However those chans
+				// will be unified (agina) into one later so we don't do
+				// busywork here.
+				select {
+				case k := <-ed.reader.KeyChan():
+					if k.Mod != 0 {
+						ed.notify("function key within paste")
+						break paste
+					}
+					buf.WriteRune(k.Rune)
+					timer.Reset(EscSequenceTimeout)
+				case b := <-ed.reader.PasteChan():
+					if !b {
+						break paste
+					}
+				case <-timer.C:
+					ed.notify("bracketed paste timeout")
+					break paste
+				}
+			}
+			topaste := buf.String()
+			if ed.insert.quotePaste {
+				topaste = parse.Quote(topaste)
+			}
+			ed.insertAtDot(topaste)
 		case k := <-ed.reader.KeyChan():
 		lookupKey:
 			keyBinding, ok := keyBindings[ed.mode.Mode()]
