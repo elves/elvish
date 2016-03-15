@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/store"
-	"github.com/elves/elvish/util"
 )
 
 // Command history listing mode.
@@ -33,7 +32,7 @@ func (hl *histlist) Show(i, width int) string {
 func (hl *histlist) Filter(filter string) int {
 	hl.filtered = nil
 	for _, item := range hl.all {
-		if util.MatchSubseq(item, filter) {
+		if strings.Contains(item, filter) {
 			hl.filtered = append(hl.filtered, item)
 		}
 	}
