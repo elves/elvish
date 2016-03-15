@@ -41,7 +41,7 @@ func (hl *histlist) Filter(filter string) int {
 }
 
 func (hl *histlist) Accept(i int, ed *Editor) {
-	line := hl.all[i]
+	line := hl.filtered[i]
 	if len(ed.line) > 0 {
 		line = "\n" + line
 	}
