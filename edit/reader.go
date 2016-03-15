@@ -263,7 +263,7 @@ func (rd *Reader) readOne(r rune) {
 				button := nums[0] & 3
 				mod := mouseModify(nums[0])
 				mouse = mouseEvent{pos{nums[2], nums[1]}, down, button, mod}
-			} else if r == '~' && len(nums) == 1 && nums[0] == 200 || nums[0] == 201 {
+			} else if r == '~' && len(nums) == 1 && (nums[0] == 200 || nums[0] == 201) {
 				b := nums[0] == 200
 				paste = &b
 			} else {
