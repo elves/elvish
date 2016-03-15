@@ -55,7 +55,7 @@ func triggerNavShowHidden(ed *Editor) {
 }
 
 func navInsertSelected(ed *Editor) {
-	ed.insertAtDot(parse.Quote(ed.navigation.current.selectedName()))
+	ed.insertAtDot(parse.Quote(ed.navigation.current.selectedName()) + " ")
 }
 
 func defaultNavigation(ed *Editor) {
