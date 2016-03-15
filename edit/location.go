@@ -47,7 +47,7 @@ func (loc *location) Accept(i int, ed *Editor) {
 		go func() {
 			store.Waits.Add(1)
 			// XXX Error ignored.
-			store.AddDir(dir, 0.5)
+			store.AddDir(dir, 1)
 			store.Waits.Done()
 			Logger.Println("added dir to store:", dir)
 		}()
