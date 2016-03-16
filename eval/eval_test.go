@@ -95,7 +95,7 @@ var evalTests = []struct {
 		strs("fish1.0", "fish1.1", "elvish1.0", "elvish1.1"), nomore},
 
 	// List, map and indexing
-	{"println [a b c] [&key=value] | from-lines",
+	{"println [a b c] [&key=value] | merge-to-chan",
 		strs("[a b c] [&key=value]"), nomore},
 	{"put [a b c][2]", strs("c"), nomore},
 	{"put [;a;b c][2][0]", strs("b"), nomore},
@@ -196,7 +196,7 @@ var evalTests = []struct {
 	{"put ?(fail failed)", []Value{Error{errors.New("failed")}}, nomore},
 	{`put "l\norem" ipsum | into-lines`, strs(),
 		more{wantBytesOut: []byte("l\norem\nipsum\n")}},
-	{`echo "1\n233" | from-lines`, strs("1", "233"), nomore},
+	{`echo "1\n233" | merge-to-chan`, strs("1", "233"), nomore},
 	{"put [a] [b c] | unpack", strs("a", "b", "c"), nomore},
 	{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`, []Value{
 		NewMap(map[Value]Value{

@@ -3,9 +3,11 @@
 package eval
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -407,4 +409,36 @@ func set(ec *EvalCtx, variables []Variable, rest []Variable, values []Value) {
 	if len(rest) == 1 {
 		rest[0].Set(NewList(values[len(variables):]...))
 	}
+}
+
+// Inputs returns a channel that mingles input from the byte pipe as well as the
+// channel pipe of port 0. The caller must read all values from the channel, or
+// there will be lingering goroutines and loss of data.
+func (ec *EvalCtx) Inputs() <-chan Value {
+	vs := make(chan Value)
+	go func() {
+		f := bufio.NewReader(ec.ports[0].File)
+		done := make(chan struct{})
+		go func() {
+			for {
+				line, err := f.ReadString('\n')
+				if line != "" {
+					vs <- String(strings.TrimSuffix(line, "\n"))
+				}
+				if err != nil {
+					if err != io.EOF {
+						Logger.Println("error on pipe:", err)
+					}
+					break
+				}
+			}
+			close(done)
+		}()
+		for v := range ec.ports[0].Chan {
+			vs <- v
+		}
+		<-done
+		close(vs)
+	}()
+	return vs
 }

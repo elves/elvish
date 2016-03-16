@@ -3,7 +3,6 @@ package eval
 // Builtin functions.
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -54,10 +53,10 @@ func init() {
 		&BuiltinFn{"pprint", pprint},
 
 		&BuiltinFn{"into-lines", wrapFn(intoLines)},
-		&BuiltinFn{"from-lines", wrapFn(fromLines)},
 
 		&BuiltinFn{"rat", wrapFn(ratFn)},
 
+		&BuiltinFn{"merge-to-chan", wrapFn(mergeToChan)},
 		&BuiltinFn{"put", put},
 		&BuiltinFn{"put-all", wrapFn(putAll)},
 		&BuiltinFn{"unpack", wrapFn(unpack)},
@@ -100,7 +99,6 @@ func init() {
 		&BuiltinFn{"deepeq", deepeq},
 
 		&BuiltinFn{"take", wrapFn(take)},
-		&BuiltinFn{"drop", wrapFn(drop)},
 
 		&BuiltinFn{"len", wrapFn(lenFn)},
 		&BuiltinFn{"count", wrapFn(count)},
@@ -225,6 +223,13 @@ func convertArgs(args []Value, callArgs []reflect.Value, callType func(int) refl
 func nop(ec *EvalCtx, args []Value) {
 }
 
+func mergeToChan(ec *EvalCtx) {
+	out := ec.ports[1].Chan
+	for v := range ec.Inputs() {
+		out <- v
+	}
+}
+
 func put(ec *EvalCtx, args []Value) {
 	out := ec.ports[1].Chan
 	for _, a := range args {
@@ -292,27 +297,10 @@ func pprint(ec *EvalCtx, args []Value) {
 }
 
 func intoLines(ec *EvalCtx) {
-	in := ec.ports[0].Chan
 	out := ec.ports[1].File
 
-	for v := range in {
+	for v := range ec.Inputs() {
 		fmt.Fprintln(out, ToString(v))
-	}
-}
-
-func fromLines(ec *EvalCtx) {
-	in := ec.ports[0].File
-	out := ec.ports[1].Chan
-
-	bufferedIn := bufio.NewReader(in)
-	for {
-		line, err := bufferedIn.ReadString('\n')
-		if err == io.EOF {
-			return
-		} else if err != nil {
-			throw(err)
-		}
-		out <- String(line[:len(line)-1])
 	}
 }
 
@@ -374,9 +362,8 @@ func fromJSON(ec *EvalCtx) {
 
 // each takes a single closure and applies it to all input values.
 func each(ec *EvalCtx, f FnValue) {
-	in := ec.ports[0].Chan
 in:
-	for v := range in {
+	for v := range ec.Inputs() {
 		// NOTE We don't have the position range of the closure in the source.
 		// Ideally, it should be kept in the Closure itself.
 		newec := ec.fork("closure of each")
@@ -402,19 +389,13 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // call break and continue. Overall this provides a similar functionality to
 // awk, hence the name.
 func eawk(ec *EvalCtx, f FnValue) {
-	in := bufio.NewReader(ec.ports[0].File)
-in:
-	for {
-		line, err := in.ReadString('\n')
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			throw(err)
+	for v := range ec.Inputs() {
+		line, ok := v.(String)
+		if !ok {
+			throw(ErrInput)
 		}
-
-		line = line[:len(line)-1]
-		args := []Value{String(line)}
-		for _, field := range eawkWordSep.Split(strings.Trim(line, " \t"), -1) {
+		args := []Value{line}
+		for _, field := range eawkWordSep.Split(strings.Trim(string(line), " \t"), -1) {
 			args = append(args, String(field))
 		}
 
@@ -426,7 +407,7 @@ in:
 		case nil, Continue:
 			// nop
 		case Break:
-			break in
+			return
 		default:
 			throw(ex)
 		}
@@ -655,27 +636,14 @@ func deepeq(ec *EvalCtx, args []Value) {
 }
 
 func take(ec *EvalCtx, n int) {
-	in := ec.ports[0].Chan
 	out := ec.ports[1].Chan
 
 	i := 0
-	for v := range in {
+	for v := range ec.Inputs() {
 		if i >= n {
 			break
 		}
 		i++
-		out <- v
-	}
-}
-
-func drop(ec *EvalCtx, n int) {
-	in := ec.ports[0].Chan
-	out := ec.ports[1].Chan
-
-	for i := 0; i < n; i++ {
-		<-in
-	}
-	for v := range in {
 		out <- v
 	}
 }
@@ -689,11 +657,10 @@ func lenFn(ec *EvalCtx, v Value) {
 }
 
 func count(ec *EvalCtx) {
-	in := ec.ports[0].Chan
 	out := ec.ports[1].Chan
 
 	n := 0
-	for range in {
+	for range ec.Inputs() {
 		n++
 	}
 	out <- String(strconv.Itoa(n))
