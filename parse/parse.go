@@ -52,7 +52,7 @@ var (
 	errShouldBeVariableName       = newError("", "variable name")
 	errShouldBeRBracket           = newError("", "']'")
 	errShouldBeRBrace             = newError("", "'}'")
-	errShouldBeBraceSepOrRBracket = newError("", "'-'", "','", "'}'")
+	errShouldBeBraceSepOrRBracket = newError("", "','", "'}'")
 	errShouldBeRParen             = newError("", "')'")
 	errShouldBeBackquoteOrLParen  = newError("", "'`'", "'('")
 	errShouldBeBackquote          = newError("", "'`'")
@@ -936,7 +936,7 @@ func (pn *Primary) lambda(ps *parser) {
 }
 
 // Braced = '{' Compound { BracedSep Compounds } '}'
-// BracedSep = { Space | '\n' } [ ',' | '-' ] { Space | '\n' }
+// BracedSep = { Space | '\n' } [ ',' ] { Space | '\n' }
 func (pn *Primary) lbrace(ps *parser) {
 	parseSep(pn, ps, '{')
 
@@ -952,24 +952,19 @@ func (pn *Primary) lbrace(ps *parser) {
 
 	// XXX: The compound can be empty, which allows us to parse {,foo}.
 	// Allowing compounds to be empty can be fragile in other cases.
-	ps.cut(',', '-')
+	ps.cut(',')
 	pn.addToBraced(parseCompound(ps))
-	ps.uncut(',', '-')
+	ps.uncut(',')
 
 	for isBracedSep(ps.peek()) {
-		if ps.peek() == '-' {
-			parseSep(pn, ps, '-')
-			pn.IsRange = append(pn.IsRange, true)
-		} else {
-			parseSpacesAndNewlines(pn, ps)
-			// optional, so ignore the return value
-			parseSep(pn, ps, ',')
-			parseSpacesAndNewlines(pn, ps)
-			pn.IsRange = append(pn.IsRange, false)
-		}
-		ps.cut(',', '-')
+		parseSpacesAndNewlines(pn, ps)
+		// optional, so ignore the return value
+		parseSep(pn, ps, ',')
+		parseSpacesAndNewlines(pn, ps)
+
+		ps.cut(',')
 		pn.addToBraced(parseCompound(ps))
-		ps.uncut(',', '-')
+		ps.uncut(',')
 	}
 	if !parseSep(pn, ps, '}') {
 		ps.error(errShouldBeBraceSepOrRBracket)
@@ -977,7 +972,7 @@ func (pn *Primary) lbrace(ps *parser) {
 }
 
 func isBracedSep(r rune) bool {
-	return r == ',' || r == '-' || isSpaceOrNewline(r)
+	return r == ',' || isSpaceOrNewline(r)
 }
 
 func (pn *Primary) bareword(ps *parser) {

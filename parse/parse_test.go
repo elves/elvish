@@ -244,11 +244,10 @@ var goodCases = []struct {
 			"Type": ErrorCapture, "Chunk": "b;c",
 		}})},
 	// Braced
-	{"a {,a,c-f\ng\n}", a(
+	{"a {,a,c\ng\n}", a(
 		ast{"Compound/Indexing/Primary", fs{
-			"Type":    Braced,
-			"Braced":  []string{"", "a", "c", "f", "g", ""},
-			"IsRange": []bool{false, false, true, false, false}}})},
+			"Type":   Braced,
+			"Braced": []string{"", "a", "c", "g", ""}}})},
 	// Tilde
 	{"a ~xiaq/go", a(
 		ast{"Compound", fs{
