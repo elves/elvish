@@ -325,7 +325,7 @@ func (cp *compiler) outputCapture(n *parse.Primary) ValuesOpFunc {
 
 func captureOutput(ec *EvalCtx, op Op) []Value {
 	vs := []Value{}
-	newEc := ec.fork(fmt.Sprintf("channel output capture %v", op))
+	newEc := ec.fork(fmt.Sprintf("output capture %v", op))
 
 	pipeRead, pipeWrite, err := os.Pipe()
 	if err != nil {

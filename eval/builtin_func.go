@@ -367,6 +367,7 @@ in:
 		// NOTE We don't have the position range of the closure in the source.
 		// Ideally, it should be kept in the Closure itself.
 		newec := ec.fork("closure of each")
+		// TODO: Close port 0 of newec.
 		ex := newec.PCall(f, []Value{v})
 		ClosePorts(newec.ports)
 
@@ -400,6 +401,7 @@ func eawk(ec *EvalCtx, f FnValue) {
 		}
 
 		newec := ec.fork("fn of eawk")
+		// TODO: Close port 0 of newec.
 		ex := newec.PCall(f, args)
 		ClosePorts(newec.ports)
 
