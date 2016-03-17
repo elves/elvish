@@ -119,6 +119,9 @@ func init() {
 	for _, b := range builtinFns {
 		builtinNamespace[FnPrefix+b.Name] = NewRoVariable(b)
 	}
+
+	// For rand and randint.
+	rand.Seed(time.Now().UTC().UnixNano())
 }
 
 var (
