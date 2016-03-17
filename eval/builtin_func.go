@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"math/rand"
 	"os"
 	"reflect"
 	"regexp"
@@ -89,6 +90,8 @@ func init() {
 		&BuiltinFn{"lt", wrapFn(lt)},
 		&BuiltinFn{"gt", wrapFn(gt)},
 		&BuiltinFn{"%", wrapFn(mod)},
+		&BuiltinFn{"rand", wrapFn(randFn)},
+		&BuiltinFn{"randint", wrapFn(randint)},
 
 		&BuiltinFn{"ord", wrapFn(ord)},
 		&BuiltinFn{"base", wrapFn(base)},
@@ -574,6 +577,17 @@ func gt(ec *EvalCtx, nums ...float64) {
 func mod(ec *EvalCtx, a, b int) {
 	out := ec.ports[1].Chan
 	out <- String(strconv.Itoa(a % b))
+}
+
+func randFn(ec *EvalCtx) {
+	out := ec.ports[1].Chan
+	out <- String(fmt.Sprint(rand.Float64()))
+}
+
+func randint(ec *EvalCtx, low, high int) {
+	out := ec.ports[1].Chan
+	i := low + rand.Intn(high-low)
+	out <- String(strconv.Itoa(i))
 }
 
 func ord(ec *EvalCtx, s string) {
