@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"runtime/pprof"
 	"syscall"
 	"time"
 
@@ -23,9 +24,10 @@ import (
 var Logger = util.GetLogger("[main] ")
 
 var (
-	log    = flag.String("log", "", "a file to write debug log to")
-	dbname = flag.String("db", "", "path to the database")
-	help   = flag.Bool("help", false, "show usage help and quit")
+	log        = flag.String("log", "", "a file to write debug log to")
+	dbname     = flag.String("db", "", "path to the database")
+	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+	help       = flag.Bool("help", false, "show usage help and quit")
 )
 
 func usage() {
@@ -57,6 +59,14 @@ func Main() {
 		if err != nil {
 			fmt.Println(err)
 		}
+	}
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			Logger.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
 	}
 
 	handleHupAndQuit()
