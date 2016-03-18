@@ -7,7 +7,7 @@ import (
 
 var ErrArityMismatch = errors.New("arity mismatch")
 
-var unnamedRestArg = ":"
+var unnamedRestArg = "@"
 
 // Closure is a closure defined in elvish script.
 type Closure struct {
@@ -29,7 +29,7 @@ func newClosure(a []string, r string, op Op, e map[string]Variable) *Closure {
 }
 
 func (c *Closure) Repr(int) string {
-	return fmt.Sprintf("<Closure%v>", *c)
+	return fmt.Sprintf("<closure%v>", *c)
 }
 
 // Call calls a closure.
