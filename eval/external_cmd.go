@@ -78,7 +78,10 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value) {
 		go func() {
 			for {
 				select {
-				case <-ch:
+				case v := <-ch:
+					if v == nil {
+						return
+					}
 				case <-stopDiscard:
 					return
 				}
