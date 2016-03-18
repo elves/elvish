@@ -111,6 +111,9 @@ func init() {
 
 		&BuiltinFn{"tilde-abbr", wrapFn(tildeAbbr)},
 
+		&BuiltinFn{"fopen", wrapFn(fopen)},
+		&BuiltinFn{"fclose", wrapFn(fclose)},
+
 		&BuiltinFn{"-sleep", wrapFn(_sleep)},
 		&BuiltinFn{"-stack", wrapFn(_stack)},
 		&BuiltinFn{"-log", wrapFn(_log)},
@@ -737,6 +740,18 @@ func fg(ec *EvalCtx, pids ...int) {
 func tildeAbbr(ec *EvalCtx, path string) {
 	out := ec.ports[1].Chan
 	out <- String(util.TildeAbbr(path))
+}
+
+func fopen(ec *EvalCtx, name string) {
+	// TODO support opening files for writing etc as well.
+	out := ec.ports[1].Chan
+	f, err := os.Open(name)
+	maybeThrow(err)
+	out <- File{f}
+}
+
+func fclose(ec *EvalCtx, f File) {
+	maybeThrow(f.inner.Close())
 }
 
 func _sleep(ec *EvalCtx, t float64) {
