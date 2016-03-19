@@ -108,7 +108,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{Tab, 0}:    "complete-prefix-or-start-completion",
 		Key{Up, 0}:     "start-history",
 		Key{'N', Ctrl}: "start-navigation",
-		Key{'H', Ctrl}: "start-history-listing",
+		Key{'R', Ctrl}: "start-history-listing",
 		Key{',', Alt}:  "start-bang",
 		Key{'L', Ctrl}: "start-location",
 		Default:        "default-insert",
