@@ -57,9 +57,7 @@ func init() {
 
 		&BuiltinFn{"rat", wrapFn(ratFn)},
 
-		&BuiltinFn{"merge-to-chan", wrapFn(mergeToChan)},
 		&BuiltinFn{"put", put},
-		&BuiltinFn{"put-all", wrapFn(putAll)},
 		&BuiltinFn{"unpack", wrapFn(unpack)},
 
 		&BuiltinFn{"to-json", wrapFn(toJSON)},
@@ -252,26 +250,10 @@ func convertArg(arg Value, wantType reflect.Type) (reflect.Value, error) {
 func nop(ec *EvalCtx, args []Value) {
 }
 
-func mergeToChan(ec *EvalCtx) {
-	out := ec.ports[1].Chan
-	for v := range ec.Inputs() {
-		out <- v
-	}
-}
-
 func put(ec *EvalCtx, args []Value) {
 	out := ec.ports[1].Chan
 	for _, a := range args {
 		out <- a
-	}
-}
-
-func putAll(ec *EvalCtx, lists ...List) {
-	out := ec.ports[1].Chan
-	for _, list := range lists {
-		for _, x := range *list.inner {
-			out <- x
-		}
 	}
 }
 
