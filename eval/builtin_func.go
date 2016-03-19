@@ -146,87 +146,86 @@ var (
 // of the inner function. The inner function must accept evalCtx* as the first
 // argument and return an exitus.
 func wrapFn(inner interface{}) func(*EvalCtx, []Value) {
-	type_ := reflect.TypeOf(inner)
-	if type_.In(0) != evalCtxType {
-		panic("bad func")
+	funcType := reflect.TypeOf(inner)
+	if funcType.In(0) != evalCtxType {
+		panic("bad func to wrap, first argument not *EvalCtx")
 	}
 
-	requiredArgs := type_.NumIn() - 1
-	isVariadic := type_.IsVariadic()
+	fixedArgs := funcType.NumIn() - 1
+	isVariadic := funcType.IsVariadic()
 	var variadicType reflect.Type
 	if isVariadic {
-		requiredArgs--
-		variadicType = type_.In(type_.NumIn() - 1).Elem()
-		if !supportedIn(variadicType) {
-			panic("bad func argument")
+		fixedArgs--
+		variadicType = funcType.In(funcType.NumIn() - 1).Elem()
+		if !supportedArgType(variadicType) {
+			panic(fmt.Sprintf("bad func to wrap, variadic argument type %s unsupported", variadicType))
 		}
 	}
 
-	for i := 0; i < requiredArgs; i++ {
-		if !supportedIn(type_.In(i + 1)) {
-			panic("bad func argument")
+	for i := 0; i < fixedArgs; i++ {
+		if !supportedArgType(funcType.In(i + 1)) {
+			panic(fmt.Sprintf("bad func to wrap, argument type %s unsupported", funcType.In(i+1)))
 		}
 	}
 
 	return func(ec *EvalCtx, args []Value) {
-		if len(args) < requiredArgs || (!isVariadic && len(args) > requiredArgs) {
-			throw(ErrArgs)
+		if variadic {
+			if len(args) < fixedArgs {
+				throw(fmt.Errorf("arity mismatch: want at least %d arguments, got %d", fixedArgs, len(args)))
+			}
+		} else if len(args) != fixedArgs {
+			throw(fmt.Errorf("arity mismatch: want %d arguments, got %d", fixedArgs, len(args)))
 		}
-		callArgs := make([]reflect.Value, len(args)+1)
-		callArgs[0] = reflect.ValueOf(ec)
+		if len(args) < fixedArgs || (!isVariadic && len(args) > fixedArgs) {
+		}
+		convertedArgs := make([]reflect.Value, len(args)+1)
+		convertedArgs[0] = reflect.ValueOf(ec)
 
-		ok := convertArgs(args[:requiredArgs], callArgs[1:],
-			func(i int) reflect.Type { return type_.In(i + 1) })
-		if !ok {
-			throw(ErrArgs)
-		}
-		if isVariadic {
-			ok := convertArgs(args[requiredArgs:], callArgs[1+requiredArgs:],
-				func(i int) reflect.Type { return variadicType })
-			if !ok {
-				throw(ErrArgs)
+		var err error
+		for i, arg := range args[:fixedArgs] {
+			convertedArgs[1+i], err = convertArg(arg, funcType.In(i+1))
+			if err != nil {
+				throw(errors.New("bad argument: " + err.Error()))
 			}
 		}
-		reflect.ValueOf(inner).Call(callArgs)
+
+		if isVariadic {
+			for i, arg := range args[fixedArgs:] {
+				convertedArgs[1+fixedArgs+i], err = convertArg(arg, variadicType)
+				if err != nil {
+					throw(errors.New("bad argument: " + err.Error()))
+				}
+			}
+		}
+		reflect.ValueOf(inner).Call(convertedArgs)
 	}
 }
 
-func supportedIn(t reflect.Type) bool {
+func supportedArgType(t reflect.Type) bool {
 	return t.Kind() == reflect.String ||
 		t.Kind() == reflect.Int || t.Kind() == reflect.Float64 ||
 		t.Implements(valueType)
 }
 
-func convertArgs(args []Value, callArgs []reflect.Value, callType func(int) reflect.Type) bool {
-	for i, arg := range args {
-		var callArg interface{}
-		switch callType(i).Kind() {
-		case reflect.String:
-			callArg = ToString(arg)
-		case reflect.Int:
-			var err error
-			callArg, err = toInt(arg)
-			if err != nil {
-				return false
-			}
-		case reflect.Float64:
-			var err error
-			callArg, err = toFloat(arg)
-			if err != nil {
-				return false
-				// return err
-			}
-		default:
-			if reflect.TypeOf(arg).ConvertibleTo(callType(i)) {
-				callArg = arg
-			} else {
-				return false
-				// return argsError
-			}
+func convertArg(arg Value, wantType reflect.Type) (reflect.Value, error) {
+	var converted interface{}
+	var err error
+
+	switch wantType.Kind() {
+	case reflect.String:
+		converted = ToString(arg)
+	case reflect.Int:
+		converted, err = toInt(arg)
+	case reflect.Float64:
+		converted, err = toFloat(arg)
+	default:
+		if reflect.TypeOf(arg).ConvertibleTo(wantType) {
+			converted = arg
+		} else {
+			err = fmt.Errorf("need %s", wantType.Name())
 		}
-		callArgs[i] = reflect.ValueOf(callArg)
 	}
-	return true
+	return reflect.ValueOf(converted), err
 }
 
 func nop(ec *EvalCtx, args []Value) {
