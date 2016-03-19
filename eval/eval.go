@@ -55,8 +55,8 @@ type EvalCtx struct {
 	begin, end int
 }
 
-func (ec *EvalCtx) evaling(n parse.Node) {
-	ec.begin, ec.end = n.Begin(), n.End()
+func (ec *EvalCtx) evaling(begin, end int) {
+	ec.begin, ec.end = begin, end
 }
 
 // NewEvaler creates a new Evaler.
