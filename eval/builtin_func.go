@@ -176,8 +176,6 @@ func wrapFn(inner interface{}) func(*EvalCtx, []Value) {
 		} else if len(args) != fixedArgs {
 			throw(fmt.Errorf("arity mismatch: want %d arguments, got %d", fixedArgs, len(args)))
 		}
-		if len(args) < fixedArgs || (!isVariadic && len(args) > fixedArgs) {
-		}
 		convertedArgs := make([]reflect.Value, len(args)+1)
 		convertedArgs[0] = reflect.ValueOf(ec)
 
