@@ -137,8 +137,9 @@ var (
 )
 
 var (
-	evalCtxType = reflect.TypeOf((*EvalCtx)(nil))
-	valueType   = reflect.TypeOf((*Value)(nil)).Elem()
+	evalCtxType       = reflect.TypeOf((*EvalCtx)(nil))
+	valueType         = reflect.TypeOf((*Value)(nil)).Elem()
+	valueRecvChanType = reflect.TypeOf((<-chan Value)(nil))
 )
 
 // wrapFn wraps an inner function into one suitable as a builtin function. It
@@ -153,6 +154,7 @@ func wrapFn(inner interface{}) func(*EvalCtx, []Value) {
 
 	fixedArgs := funcType.NumIn() - 1
 	isVariadic := funcType.IsVariadic()
+	hasOptionalInputList := false
 	var variadicType reflect.Type
 	if isVariadic {
 		fixedArgs--
@@ -160,6 +162,9 @@ func wrapFn(inner interface{}) func(*EvalCtx, []Value) {
 		if !supportedArgType(variadicType) {
 			panic(fmt.Sprintf("bad func to wrap, variadic argument type %s unsupported", variadicType))
 		}
+	} else if funcType.In(funcType.NumIn()-1) == valueRecvChanType {
+		fixedArgs--
+		hasOptionalInputList = true
 	}
 
 	for i := 0; i < fixedArgs; i++ {
@@ -172,6 +177,10 @@ func wrapFn(inner interface{}) func(*EvalCtx, []Value) {
 		if isVariadic {
 			if len(args) < fixedArgs {
 				throw(fmt.Errorf("arity mismatch: want at least %d arguments, got %d", fixedArgs, len(args)))
+			}
+		} else if hasOptionalInputList {
+			if len(args) < fixedArgs || len(args) > fixedArgs+1 {
+				throw(fmt.Errorf("arity mismatch: want %d or %d arguments, got %d", fixedArgs, fixedArgs+1, len(args)))
 			}
 		} else if len(args) != fixedArgs {
 			throw(fmt.Errorf("arity mismatch: want %d arguments, got %d", fixedArgs, len(args)))
@@ -194,6 +203,20 @@ func wrapFn(inner interface{}) func(*EvalCtx, []Value) {
 					throw(errors.New("bad argument: " + err.Error()))
 				}
 			}
+		} else if hasOptionalInputList {
+			var ch <-chan Value
+			if len(args) == fixedArgs {
+				// No Elemser specified in arguments. Use input.
+				convertedArgs = append(convertedArgs, reflect.Value{})
+				ch = ec.Inputs()
+			} else {
+				elemser, ok := args[fixedArgs].(Elemser)
+				if !ok {
+					throw(errors.New("bad argument: need Elemser, got " + args[fixedArgs].Kind()))
+				}
+				ch = elemser.Elems()
+			}
+			convertedArgs[1+fixedArgs] = reflect.ValueOf(ch)
 		}
 		reflect.ValueOf(inner).Call(convertedArgs)
 	}
@@ -302,10 +325,10 @@ func pprint(ec *EvalCtx, args []Value) {
 	}
 }
 
-func intoLines(ec *EvalCtx) {
+func intoLines(ec *EvalCtx, inputs <-chan Value) {
 	out := ec.ports[1].File
 
-	for v := range ec.Inputs() {
+	for v := range inputs {
 		fmt.Fprintln(out, ToString(v))
 	}
 }
@@ -320,11 +343,10 @@ func ratFn(ec *EvalCtx, arg Value) {
 }
 
 // unpack takes Elemser's from the input and unpack them.
-func unpack(ec *EvalCtx) {
-	in := ec.ports[0].Chan
+func unpack(ec *EvalCtx, inputs <-chan Value) {
 	out := ec.ports[1].Chan
 
-	for v := range in {
+	for v := range inputs {
 		elemser, ok := v.(Elemser)
 		if !ok {
 			throw(ErrInput)
@@ -336,12 +358,11 @@ func unpack(ec *EvalCtx) {
 }
 
 // toJSON converts a stream of Value's to JSON data.
-func toJSON(ec *EvalCtx) {
-	in := ec.ports[0].Chan
+func toJSON(ec *EvalCtx, inputs <-chan Value) {
 	out := ec.ports[1].File
 
 	enc := json.NewEncoder(out)
-	for v := range in {
+	for v := range inputs {
 		err := enc.Encode(v)
 		maybeThrow(err)
 	}
@@ -367,9 +388,9 @@ func fromJSON(ec *EvalCtx) {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ec *EvalCtx, f FnValue) {
+func each(ec *EvalCtx, f FnValue, inputs <-chan Value) {
 in:
-	for v := range ec.Inputs() {
+	for v := range inputs {
 		// NOTE We don't have the position range of the closure in the source.
 		// Ideally, it should be kept in the Closure itself.
 		newec := ec.fork("closure of each")
@@ -395,8 +416,8 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // stripping the line and splitting the line by whitespaces. The function may
 // call break and continue. Overall this provides a similar functionality to
 // awk, hence the name.
-func eawk(ec *EvalCtx, f FnValue) {
-	for v := range ec.Inputs() {
+func eawk(ec *EvalCtx, f FnValue, inputs <-chan Value) {
+	for v := range inputs {
 		line, ok := v.(String)
 		if !ok {
 			throw(ErrInput)
@@ -654,11 +675,11 @@ func deepeq(ec *EvalCtx, args []Value) {
 	out <- Bool(true)
 }
 
-func take(ec *EvalCtx, n int) {
+func take(ec *EvalCtx, n int, inputs <-chan Value) {
 	out := ec.ports[1].Chan
 
 	i := 0
-	for v := range ec.Inputs() {
+	for v := range inputs {
 		if i >= n {
 			break
 		}
@@ -675,11 +696,11 @@ func lenFn(ec *EvalCtx, v Value) {
 	ec.ports[1].Chan <- String(strconv.Itoa(lener.Len()))
 }
 
-func count(ec *EvalCtx) {
+func count(ec *EvalCtx, inputs <-chan Value) {
 	out := ec.ports[1].Chan
 
 	n := 0
-	for range ec.Inputs() {
+	for range inputs {
 		n++
 	}
 	out <- String(strconv.Itoa(n))

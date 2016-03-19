@@ -209,6 +209,9 @@ var evalTests = []struct {
 	// eawk
 	{`println "  ax  by cz  \n11\t22 33" | eawk { put $args[-1] }`,
 		strs("cz", "33"), nomore},
+	// Some builtins also take input from argument.
+	{`each { put $0 } [x y z]`, strs("x", "y", "z"), nomore},
+	{`count [1 2 3]`, strs("3"), nomore},
 }
 
 func strs(ss ...string) []Value {
