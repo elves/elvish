@@ -101,8 +101,7 @@ func init() {
 
 		&BuiltinFn{"take", wrapFn(take)},
 
-		&BuiltinFn{"len", wrapFn(lenFn)},
-		&BuiltinFn{"count", wrapFn(count)},
+		&BuiltinFn{"count", count},
 		&BuiltinFn{"rest", wrapFn(rest)},
 
 		&BuiltinFn{"fg", wrapFn(fg)},
@@ -670,22 +669,30 @@ func take(ec *EvalCtx, n int, inputs <-chan Value) {
 	}
 }
 
-func lenFn(ec *EvalCtx, v Value) {
-	lener, ok := v.(Lener)
-	if !ok {
-		throw(fmt.Errorf("cannot get length of a %s", v.Kind()))
+func count(ec *EvalCtx, args []Value) {
+	var n int
+	switch len(args) {
+	case 0:
+		// Count inputs.
+		for range ec.Inputs() {
+			n++
+		}
+	case 1:
+		// Get length of argument.
+		v := args[0]
+		if lener, ok := v.(Lener); ok {
+			n = lener.Len()
+		} else if elemser, ok := v.(Elemser); ok {
+			for range elemser.Elems() {
+				n++
+			}
+		} else {
+			throw(fmt.Errorf("cannot get length of a %s", v.Kind()))
+		}
+	default:
+		throw(errors.New("want 0 or 1 argument"))
 	}
-	ec.ports[1].Chan <- String(strconv.Itoa(lener.Len()))
-}
-
-func count(ec *EvalCtx, inputs <-chan Value) {
-	out := ec.ports[1].Chan
-
-	n := 0
-	for range inputs {
-		n++
-	}
-	out <- String(strconv.Itoa(n))
+	ec.ports[1].Chan <- String(strconv.Itoa(n))
 }
 
 func rest(ec *EvalCtx, li List) {
