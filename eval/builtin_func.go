@@ -169,7 +169,7 @@ func wrapFn(inner interface{}) func(*EvalCtx, []Value) {
 	}
 
 	return func(ec *EvalCtx, args []Value) {
-		if variadic {
+		if isVariadic {
 			if len(args) < fixedArgs {
 				throw(fmt.Errorf("arity mismatch: want at least %d arguments, got %d", fixedArgs, len(args)))
 			}
