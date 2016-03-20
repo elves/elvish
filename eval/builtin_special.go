@@ -40,7 +40,7 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 	for _, cn := range fn.Args {
 		cp.compiling(cn)
 		qname := mustString(cp, cn, "should be a literal variable name")
-		splice, ns, name := parseVariable(qname)
+		splice, ns, name := ParseVariable(qname)
 		if splice {
 			cp.errorf("removing spliced variable makes no sense")
 		}

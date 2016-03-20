@@ -31,8 +31,8 @@ func mustGetHome(uname string) string {
 	return dir
 }
 
-// parseVariable parses a variable name.
-func parseVariable(qname string) (splice bool, ns string, name string) {
+// ParseVariable parses a variable name.
+func ParseVariable(qname string) (splice bool, ns string, name string) {
 	if strings.HasPrefix(qname, "@") {
 		splice = true
 		qname = qname[1:]

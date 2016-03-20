@@ -57,7 +57,7 @@ func (cp *compiler) popScope() {
 }
 
 func (cp *compiler) registerVariableGet(qname string) bool {
-	_, ns, name := parseVariable(qname)
+	_, ns, name := ParseVariable(qname)
 	if ns != "" && ns != "local" && ns != "up" {
 		// Variable in another mod, do nothing
 		return true
@@ -91,7 +91,7 @@ func (cp *compiler) registerVariableGet(qname string) bool {
 }
 
 func (cp *compiler) registerVariableSet(qname string) bool {
-	_, ns, name := parseVariable(qname)
+	_, ns, name := ParseVariable(qname)
 	switch ns {
 	case "local":
 		cp.thisScope()[name] = true

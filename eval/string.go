@@ -29,7 +29,7 @@ func (s String) Call(ec *EvalCtx, args []Value) {
 
 func resolve(s string, ec *EvalCtx) Fn {
 	// Try variable
-	splice, ns, name := parseVariable(string(s))
+	splice, ns, name := ParseVariable(string(s))
 	if !splice {
 		if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
 			if caller, ok := v.Get().(Fn); ok {
