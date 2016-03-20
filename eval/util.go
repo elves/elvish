@@ -48,7 +48,7 @@ func makeFlag(m parse.RedirMode) int {
 	case parse.Read:
 		return os.O_RDONLY
 	case parse.Write:
-		return os.O_WRONLY | os.O_CREATE
+		return os.O_WRONLY | os.O_CREATE | os.O_TRUNC
 	case parse.ReadWrite:
 		return os.O_RDWR | os.O_CREATE
 	case parse.Append:
