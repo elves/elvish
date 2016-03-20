@@ -108,7 +108,7 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 					// immeidately be set.
 					variable = NewPtrVariable(nil)
 					ec.local[barename] = variable
-				} else if mod, ok := ec.modules[ns]; ok {
+				} else if mod, ok := ec.Modules[ns]; ok {
 					variable = NewPtrVariable(nil)
 					mod[barename] = variable
 				} else {

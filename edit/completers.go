@@ -37,28 +37,39 @@ func complVariable(n parse.Node, ed *Editor) (int, int, []*candidate) {
 		return -1, -1, nil
 	}
 
-	head := primary.Value
+	splice, ns, head := eval.ParseVariable(primary.Value)
 
 	// Collect matching variables.
 	var varnames []string
-	for varname := range eval.Builtin() {
+	iterateVariables(ed.evaler, ns, func(varname string) {
 		if strings.HasPrefix(varname, head) {
 			varnames = append(varnames, varname)
 		}
-	}
-	for varname := range ed.evaler.Global() {
-		if strings.HasPrefix(varname, head) {
-			varnames = append(varnames, varname)
-		}
-	}
+	})
 	sort.Strings(varnames)
 
 	cands := make([]*candidate, len(varnames))
 	// Build candidates.
-	for _, varname := range varnames {
-		cands = append(cands, &candidate{text: "$" + varname})
+	for i, varname := range varnames {
+		cands[i] = &candidate{text: "$" + eval.MakeVariableName(splice, ns, varname)}
 	}
 	return begin, end, cands
+}
+
+func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
+	if ns == "" {
+		for varname := range eval.Builtin() {
+			f(varname)
+		}
+		for varname := range ev.Global {
+			f(varname)
+		}
+		// TODO Include local names as well.
+	} else {
+		for varname := range ev.Modules[ns] {
+			f(varname)
+		}
+	}
 }
 
 func complFormHead(n parse.Node, ed *Editor) (int, int, []*candidate) {
@@ -107,16 +118,12 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 	for special := range isBuiltinSpecial {
 		got(special)
 	}
-	for variable := range eval.Builtin() {
-		if strings.HasPrefix(variable, eval.FnPrefix) {
-			got(variable[len(eval.FnPrefix):])
+	splice, ns, _ := eval.ParseVariable(head)
+	iterateVariables(ed.evaler, ns, func(varname string) {
+		if strings.HasPrefix(varname, eval.FnPrefix) {
+			got(eval.MakeVariableName(splice, ns, varname[len(eval.FnPrefix):]))
 		}
-	}
-	for variable := range ed.evaler.Global() {
-		if strings.HasPrefix(variable, eval.FnPrefix) {
-			got(variable[len(eval.FnPrefix):])
-		}
-	}
+	})
 	for command := range ed.isExternal {
 		got(command)
 	}
@@ -310,6 +317,7 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 	g := getopt.Getopt{opts, getopt.GNUGetoptLong}
 	_, _, ctx := g.Parse(elems)
 	out := ec.OutputChan()
+	_ = variadic // XXX
 	switch ctx.Type {
 	case getopt.NewOptionOrArgument, getopt.Argument:
 	case getopt.NewOption:

@@ -48,6 +48,17 @@ func ParseVariable(qname string) (splice bool, ns string, name string) {
 	return splice, qname[:i], qname[i+1:]
 }
 
+func MakeVariableName(splice bool, ns string, name string) string {
+	prefix := ""
+	if splice {
+		prefix = "@"
+	}
+	if ns != "" {
+		prefix += ns + ":"
+	}
+	return prefix + name
+}
+
 func makeFlag(m parse.RedirMode) int {
 	switch m {
 	case parse.Read:

@@ -153,7 +153,7 @@ func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 }
 
 func use(ec *EvalCtx, modname string, pfilename *string) {
-	if _, ok := ec.Evaler.modules[modname]; ok {
+	if _, ok := ec.Evaler.Modules[modname]; ok {
 		// Module already loaded.
 		return
 	}
@@ -206,5 +206,5 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 
 	op.Exec(newEc)
 
-	ec.Evaler.modules[modname] = newEc.local
+	ec.Evaler.Modules[modname] = newEc.local
 }

@@ -35,8 +35,8 @@ type Namespace map[string]Variable
 // Evaler is used to evaluate elvish sources. It maintains runtime context
 // shared among all evalCtx instances.
 type Evaler struct {
-	global  Namespace
-	modules map[string]Namespace
+	Global  Namespace
+	Modules map[string]Namespace
 	store   *store.Store
 	Stub    *stub.Stub
 	intCh   <-chan struct{}
@@ -69,7 +69,7 @@ func (e *Evaler) searchPaths() []string {
 }
 
 func (e *Evaler) AddModule(name string, ns Namespace) {
-	e.modules[name] = ns
+	e.Modules[name] = ns
 }
 
 const (
@@ -83,7 +83,7 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
 	return &EvalCtx{
 		ev,
 		name, text, "top",
-		ev.global, Namespace{},
+		ev.Global, Namespace{},
 		ports, nil, 0, len(text),
 	}
 }
@@ -237,7 +237,7 @@ func summarize(text string) string {
 
 // Compile compiles elvish code in the global scope.
 func (ev *Evaler) Compile(n *parse.Chunk) (Op, error) {
-	return compile(makeScope(ev.global), n)
+	return compile(makeScope(ev.Global), n)
 }
 
 // PEval evaluates an op in a protected environment so that calls to errorf are
@@ -326,11 +326,6 @@ func Builtin() Namespace {
 	return map[string]Variable(builtinNamespace)
 }
 
-// Global returns the global namespace.
-func (ev *Evaler) Global() Namespace {
-	return map[string]Variable(ev.global)
-}
-
 var ErrStoreUnconnected = errors.New("store unconnected")
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
@@ -363,7 +358,7 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 		return sharedVariable{ec.store, name}
 	default:
 		use(ec, ns, nil)
-		return ec.modules[ns][name]
+		return ec.Modules[ns][name]
 	}
 }
 
