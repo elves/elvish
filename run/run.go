@@ -6,11 +6,13 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"runtime/pprof"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
@@ -112,11 +114,37 @@ func rescue() {
 }
 
 func script(ev *eval.Evaler, fname string) {
-	err := ev.Source(fname)
-	if err != nil {
-		printError(err)
+	if source(ev, fname, false) != nil {
 		os.Exit(1)
 	}
+}
+
+func source(ev *eval.Evaler, fname string, notexistok bool) error {
+	src, err := readFileUTF8(fname)
+	if err != nil {
+		if notexistok && os.IsNotExist(err) {
+			return nil
+		}
+		fmt.Fprintln(os.Stderr, err)
+		return err
+	}
+
+	err = ev.SourceText(src)
+	if err != nil {
+		printError(err, fname, "error", src)
+	}
+	return err
+}
+
+func readFileUTF8(fname string) (string, error) {
+	bytes, err := ioutil.ReadFile(fname)
+	if err != nil {
+		return "", err
+	}
+	if !utf8.Valid(bytes) {
+		return "", fmt.Errorf("%s: source is not valid UTF-8", fname)
+	}
+	return string(bytes), nil
 }
 
 func interact(ev *eval.Evaler, st *store.Store) {
@@ -127,13 +155,10 @@ func interact(ev *eval.Evaler, st *store.Store) {
 
 	// Source rc.elv.
 	datadir, err := store.EnsureDataDir()
-	printError(err)
-	if err == nil {
-		// XXX
-		err := ev.Source(datadir + "/rc.elv")
-		if err != nil && !os.IsNotExist(err) {
-			printError(err)
-		}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	} else {
+		source(ev, datadir+"/rc.elv", true)
 	}
 
 	// Build readLine function.
@@ -174,11 +199,11 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		cooldown = time.Second
 
 		n, err := parse.Parse(line)
-		printError(err)
+		printError(err, "<interact>", "parse error", line)
 
 		if err == nil {
 			err := ev.EvalInteractive(line, n)
-			printError(err)
+			printError(err, "<interact>", "eval error", line)
 		}
 	}
 }
@@ -232,17 +257,18 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 	return eval.NewEvaler(st), st
 }
 
-func printError(err error) {
+func printError(err error, srcname, errtype, src string) {
 	if err == nil {
 		return
 	}
 	switch err := err.(type) {
 	case *util.Errors:
 		for _, e := range err.Errors {
-			printError(e)
+			printError(e, srcname, errtype, src)
 		}
+	case *util.PosError:
+		fmt.Fprintln(os.Stderr, err.Pprint(srcname, errtype, src))
 	default:
-		eval.PprintError(err)
-		fmt.Println()
+		fmt.Fprintln(os.Stderr, err)
 	}
 }
