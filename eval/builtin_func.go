@@ -49,72 +49,72 @@ func init() {
 		&BuiltinFn{":", nop},
 		&BuiltinFn{"true", nop},
 
-		&BuiltinFn{"print", wrapFn(print)},
-		&BuiltinFn{"println", wrapFn(println)},
+		&BuiltinFn{"print", WrapFn(print)},
+		&BuiltinFn{"println", WrapFn(println)},
 		&BuiltinFn{"pprint", pprint},
 
-		&BuiltinFn{"into-lines", wrapFn(intoLines)},
+		&BuiltinFn{"into-lines", WrapFn(intoLines)},
 
-		&BuiltinFn{"rat", wrapFn(ratFn)},
+		&BuiltinFn{"rat", WrapFn(ratFn)},
 
 		&BuiltinFn{"put", put},
-		&BuiltinFn{"unpack", wrapFn(unpack)},
+		&BuiltinFn{"unpack", WrapFn(unpack)},
 
-		&BuiltinFn{"to-json", wrapFn(toJSON)},
-		&BuiltinFn{"from-json", wrapFn(fromJSON)},
+		&BuiltinFn{"to-json", WrapFn(toJSON)},
+		&BuiltinFn{"from-json", WrapFn(fromJSON)},
 
 		&BuiltinFn{"kind-of", kindOf},
 
-		&BuiltinFn{"fail", wrapFn(fail)},
-		&BuiltinFn{"multi-error", wrapFn(multiErrorFn)},
-		&BuiltinFn{"return", wrapFn(returnFn)},
-		&BuiltinFn{"break", wrapFn(breakFn)},
-		&BuiltinFn{"continue", wrapFn(continueFn)},
+		&BuiltinFn{"fail", WrapFn(fail)},
+		&BuiltinFn{"multi-error", WrapFn(multiErrorFn)},
+		&BuiltinFn{"return", WrapFn(returnFn)},
+		&BuiltinFn{"break", WrapFn(breakFn)},
+		&BuiltinFn{"continue", WrapFn(continueFn)},
 
-		&BuiltinFn{"each", wrapFn(each)},
-		&BuiltinFn{"eawk", wrapFn(eawk)},
+		&BuiltinFn{"each", WrapFn(each)},
+		&BuiltinFn{"eawk", WrapFn(eawk)},
 
 		&BuiltinFn{"cd", cd},
-		&BuiltinFn{"dirs", wrapFn(dirs)},
-		&BuiltinFn{"history", wrapFn(history)},
+		&BuiltinFn{"dirs", WrapFn(dirs)},
+		&BuiltinFn{"history", WrapFn(history)},
 
-		&BuiltinFn{"source", wrapFn(source)},
+		&BuiltinFn{"source", WrapFn(source)},
 
-		&BuiltinFn{"+", wrapFn(plus)},
-		&BuiltinFn{"-", wrapFn(minus)},
-		&BuiltinFn{"mul", wrapFn(times)},
-		&BuiltinFn{"div", wrapFn(divide)},
-		&BuiltinFn{"pow", wrapFn(pow)},
-		&BuiltinFn{"lt", wrapFn(lt)},
-		&BuiltinFn{"gt", wrapFn(gt)},
-		&BuiltinFn{"%", wrapFn(mod)},
-		&BuiltinFn{"rand", wrapFn(randFn)},
-		&BuiltinFn{"randint", wrapFn(randint)},
+		&BuiltinFn{"+", WrapFn(plus)},
+		&BuiltinFn{"-", WrapFn(minus)},
+		&BuiltinFn{"mul", WrapFn(times)},
+		&BuiltinFn{"div", WrapFn(divide)},
+		&BuiltinFn{"pow", WrapFn(pow)},
+		&BuiltinFn{"lt", WrapFn(lt)},
+		&BuiltinFn{"gt", WrapFn(gt)},
+		&BuiltinFn{"%", WrapFn(mod)},
+		&BuiltinFn{"rand", WrapFn(randFn)},
+		&BuiltinFn{"randint", WrapFn(randint)},
 
-		&BuiltinFn{"ord", wrapFn(ord)},
-		&BuiltinFn{"base", wrapFn(base)},
+		&BuiltinFn{"ord", WrapFn(ord)},
+		&BuiltinFn{"base", WrapFn(base)},
 
-		&BuiltinFn{"bool", wrapFn(boolFn)},
+		&BuiltinFn{"bool", WrapFn(boolFn)},
 		&BuiltinFn{"==", eq},
-		&BuiltinFn{"!=", wrapFn(noteq)},
+		&BuiltinFn{"!=", WrapFn(noteq)},
 		&BuiltinFn{"deepeq", deepeq},
 
-		&BuiltinFn{"take", wrapFn(take)},
+		&BuiltinFn{"take", WrapFn(take)},
 
 		&BuiltinFn{"count", count},
-		&BuiltinFn{"rest", wrapFn(rest)},
+		&BuiltinFn{"rest", WrapFn(rest)},
 
-		&BuiltinFn{"fg", wrapFn(fg)},
+		&BuiltinFn{"fg", WrapFn(fg)},
 
-		&BuiltinFn{"tilde-abbr", wrapFn(tildeAbbr)},
+		&BuiltinFn{"tilde-abbr", WrapFn(tildeAbbr)},
 
-		&BuiltinFn{"fopen", wrapFn(fopen)},
-		&BuiltinFn{"fclose", wrapFn(fclose)},
+		&BuiltinFn{"fopen", WrapFn(fopen)},
+		&BuiltinFn{"fclose", WrapFn(fclose)},
 
-		&BuiltinFn{"-sleep", wrapFn(_sleep)},
-		&BuiltinFn{"-stack", wrapFn(_stack)},
-		&BuiltinFn{"-log", wrapFn(_log)},
-		&BuiltinFn{"-exec", wrapFn(_exec)},
+		&BuiltinFn{"-sleep", WrapFn(_sleep)},
+		&BuiltinFn{"-stack", WrapFn(_stack)},
+		&BuiltinFn{"-log", WrapFn(_log)},
+		&BuiltinFn{"-exec", WrapFn(_exec)},
 	}
 	for _, b := range builtinFns {
 		builtinNamespace[FnPrefix+b.Name] = NewRoVariable(b)
@@ -139,11 +139,11 @@ var (
 	valueRecvChanType = reflect.TypeOf((<-chan Value)(nil))
 )
 
-// wrapFn wraps an inner function into one suitable as a builtin function. It
+// WrapFn wraps an inner function into one suitable as a builtin function. It
 // generates argument checking and conversion code according to the signature
 // of the inner function. The inner function must accept evalCtx* as the first
 // argument and return an exitus.
-func wrapFn(inner interface{}) func(*EvalCtx, []Value) {
+func WrapFn(inner interface{}) func(*EvalCtx, []Value) {
 	funcType := reflect.TypeOf(inner)
 	if funcType.In(0) != evalCtxType {
 		panic("bad func to wrap, first argument not *EvalCtx")
