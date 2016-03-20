@@ -68,6 +68,11 @@ type Iterator interface {
 	Iterate(func(Value) bool)
 }
 
+type IteratorValue interface {
+	Iterator
+	Value
+}
+
 func collectFromIterator(it Iterator) []Value {
 	var vs []Value
 	if lener, ok := it.(Lener); ok {

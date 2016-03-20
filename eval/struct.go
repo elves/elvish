@@ -43,6 +43,19 @@ func (s *Struct) IndexOne(idx Value) Value {
 	return s.index(idx).Get()
 }
 
+func (s *Struct) HasKey(k Value) bool {
+	index, ok := k.(String)
+	if !ok {
+		return false
+	}
+	for _, name := range s.FieldNames {
+		if string(index) == name {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *Struct) IndexSet(idx Value, v Value) {
 	s.index(idx).Set(v)
 }

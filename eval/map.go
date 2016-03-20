@@ -10,10 +10,17 @@ type Map struct {
 	inner *map[Value]Value
 }
 
+type HasKeyer interface {
+	HasKey(k Value) bool
+}
+
 type MapLike interface {
 	Lener
 	IndexOneer
+	HasKeyer
 }
+
+var _ MapLike = Map{}
 
 // NewMap creates a new Map.
 func NewMap(inner map[Value]Value) Map {
@@ -52,6 +59,11 @@ func (m Map) IndexOne(idx Value) Value {
 		throw(errors.New("no such key: " + idx.Repr(NoPretty)))
 	}
 	return v
+}
+
+func (m Map) HasKey(k Value) bool {
+	_, ok := (*m.inner)[k]
+	return ok
 }
 
 func (m Map) IndexSet(idx Value, v Value) {
