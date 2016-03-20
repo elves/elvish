@@ -207,11 +207,19 @@ func wrapFn(inner interface{}) func(*EvalCtx, []Value) {
 				convertedArgs = append(convertedArgs, reflect.Value{})
 				ch = ec.Inputs()
 			} else {
-				elemser, ok := args[fixedArgs].(Elemser)
+				iterator, ok := args[fixedArgs].(Iterator)
 				if !ok {
-					throw(errors.New("bad argument: need Elemser, got " + args[fixedArgs].Kind()))
+					throw(errors.New("bad argument: need iterator, got " + args[fixedArgs].Kind()))
 				}
-				ch = elemser.Elems()
+				itch := make(chan Value)
+				go func() {
+					iterator.Iterate(func(v Value) bool {
+						itch <- v
+						return true
+					})
+					close(itch)
+				}()
+				ch = itch
 			}
 			convertedArgs[1+fixedArgs] = reflect.ValueOf(ch)
 		}
@@ -328,13 +336,14 @@ func unpack(ec *EvalCtx, inputs <-chan Value) {
 	out := ec.ports[1].Chan
 
 	for v := range inputs {
-		elemser, ok := v.(Elemser)
+		iterator, ok := v.(Iterator)
 		if !ok {
-			throw(ErrInput)
+			throwf("unpack wants iterator in input, got %s", v.Kind())
 		}
-		for e := range elemser.Elems() {
-			out <- e
-		}
+		iterator.Iterate(func(v Value) bool {
+			out <- v
+			return true
+		})
 	}
 }
 
@@ -682,10 +691,11 @@ func count(ec *EvalCtx, args []Value) {
 		v := args[0]
 		if lener, ok := v.(Lener); ok {
 			n = lener.Len()
-		} else if elemser, ok := v.(Elemser); ok {
-			for range elemser.Elems() {
+		} else if iterator, ok := v.(Iterator); ok {
+			iterator.Iterate(func(Value) bool {
 				n++
-			}
+				return true
+			})
 		} else {
 			throw(fmt.Errorf("cannot get length of a %s", v.Kind()))
 		}

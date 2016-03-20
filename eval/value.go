@@ -63,16 +63,20 @@ type Lener interface {
 	Len() int
 }
 
-// Elemser is anything that can produce a series of Value elements.
-type Elemser interface {
-	Elems() <-chan Value
+// Iterator is anything that can be iterated.
+type Iterator interface {
+	Iterate(func(Value) bool)
 }
 
-func collectElems(elemser Elemser) []Value {
+func collectFromIterator(it Iterator) []Value {
 	var vs []Value
-	for v := range elemser.Elems() {
-		vs = append(vs, v)
+	if lener, ok := it.(Lener); ok {
+		vs = make([]Value, 0, lener.Len())
 	}
+	it.Iterate(func(v Value) bool {
+		vs = append(vs, v)
+		return true
+	})
 	return vs
 }
 

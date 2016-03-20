@@ -235,11 +235,11 @@ func variable(qname string) ValuesOpFunc {
 		}
 		value := variable.Get()
 		if splice {
-			elemser, ok := value.(Elemser)
+			iterator, ok := value.(Iterator)
 			if !ok {
 				ec.errorf("variable $%s (kind %s) cannot be spliced", qname, value.Kind())
 			}
-			return collectElems(elemser)
+			return collectFromIterator(iterator)
 		}
 		return []Value{value}
 	}

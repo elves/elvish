@@ -16,7 +16,7 @@ var (
 
 type ListLike interface {
 	Lener
-	Elemser
+	Iterator
 	IndexOneer
 }
 
@@ -24,6 +24,8 @@ type ListLike interface {
 type List struct {
 	inner *[]Value
 }
+
+var _ ListLike = List{}
 
 // NewList creates a new List.
 func NewList(vs ...Value) List {
@@ -51,15 +53,12 @@ func (l List) Len() int {
 	return len(*l.inner)
 }
 
-func (l List) Elems() <-chan Value {
-	ch := make(chan Value)
-	go func() {
-		for _, v := range *l.inner {
-			ch <- v
+func (l List) Iterate(f func(Value) bool) {
+	for _, v := range *l.inner {
+		if !f(v) {
+			break
 		}
-		close(ch)
-	}()
-	return ch
+	}
 }
 
 func (l List) IndexOne(idx Value) Value {

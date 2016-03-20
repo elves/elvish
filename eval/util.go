@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -10,6 +11,10 @@ import (
 
 func throw(e error) {
 	util.Throw(e)
+}
+
+func throwf(format string, args ...interface{}) {
+	util.Throw(fmt.Errorf(format, args...))
 }
 
 func maybeThrow(err error) {

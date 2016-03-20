@@ -39,12 +39,12 @@ func (epl *EnvPathList) Get() Value {
 }
 
 func (epl *EnvPathList) Set(v Value) {
-	elemser, ok := v.(Elemser)
+	iterator, ok := v.(Iterator)
 	if !ok {
 		throw(ErrCanOnlyAssignList)
 	}
 	var paths []string
-	for v := range elemser.Elems() {
+	iterator.Iterate(func(v Value) bool {
 		s, ok := v.(String)
 		if !ok {
 			throw(ErrPathMustBeString)
@@ -54,7 +54,8 @@ func (epl *EnvPathList) Set(v Value) {
 			throw(ErrPathCannotContainColonZero)
 		}
 		paths = append(paths, string(s))
-	}
+		return true
+	})
 	epl.set(paths)
 }
 
@@ -75,12 +76,17 @@ func (epl *EnvPathList) Len() int {
 	return len(epl.get())
 }
 
+func (epl *EnvPathList) Iterate(f func(Value) bool) {
+	for _, p := range epl.get() {
+		if !f(String(p)) {
+			break
+		}
+	}
+}
+
 func (epl *EnvPathList) Elems() <-chan Value {
 	ch := make(chan Value)
 	go func() {
-		for _, p := range epl.get() {
-			ch <- String(p)
-		}
 		close(ch)
 	}()
 	return ch
