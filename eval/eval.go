@@ -442,3 +442,8 @@ func (ec *EvalCtx) Inputs() <-chan Value {
 	}()
 	return vs
 }
+
+// OutputChan returns a channel onto which output can be written.
+func (ec *EvalCtx) OutputChan() chan<- Value {
+	return ec.ports[1].Chan
+}

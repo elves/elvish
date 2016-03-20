@@ -6,10 +6,12 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
+	"github.com/elves/getopt"
 )
 
 // A completer takes the current Node and an Editor and returns an interval and
@@ -235,4 +237,115 @@ func fixCandidates(cands []*candidate, q parse.PrimaryType) []*candidate {
 
 func dotfile(fname string) bool {
 	return strings.HasPrefix(fname, ".")
+}
+
+func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.IteratorValue, argsv eval.IteratorValue) {
+	var (
+		elems    []string
+		opts     []*getopt.Option
+		args     []eval.FnValue
+		variadic bool
+	)
+	// Convert arguments.
+	elemsv.Iterate(func(v eval.Value) bool {
+		elem, ok := v.(eval.String)
+		if !ok {
+			throwf("arg should be string, got %s", v.Kind())
+		}
+		elems = append(elems, string(elem))
+		return true
+	})
+	optsv.Iterate(func(v eval.Value) bool {
+		m, ok := v.(eval.MapLike)
+		if !ok {
+			throwf("opt should be map-like, got %s", v.Kind())
+		}
+		opt := &getopt.Option{}
+		vshort := maybeIndex(m, eval.String("short"))
+		if vshort != nil {
+			sv, ok := vshort.(eval.String)
+			if !ok {
+				throwf("short option should be string, got %s", vshort.Kind())
+			}
+			s := string(sv)
+			r, size := utf8.DecodeRuneInString(s)
+			if r == utf8.RuneError || size != len(s) {
+				throwf("short option should be exactly one rune, got %v", parse.Quote(s))
+			}
+			opt.Short = r
+		}
+		vlong := maybeIndex(m, eval.String("long"))
+		if vlong != nil {
+			s, ok := vlong.(eval.String)
+			if !ok {
+				throwf("long option should be string, got %s", vlong.Kind())
+			}
+			opt.Long = string(s)
+		}
+		if vshort == nil && vlong == nil {
+			throwf("opt should have at least one of short and long as keys")
+		}
+		// TODO support &desc
+		opts = append(opts, opt)
+		return true
+	})
+	argsv.Iterate(func(v eval.Value) bool {
+		sv, ok := v.(eval.String)
+		if ok {
+			if string(sv) == "..." {
+				variadic = true
+				return true
+			}
+			throwf("string except for ... not allowed as argument handler, got %s", parse.Quote(string(sv)))
+		}
+		arg, ok := v.(eval.FnValue)
+		if !ok {
+			throwf("argument handler should be fn, got %s", v.Kind())
+		}
+		args = append(args, arg)
+		return true
+	})
+	// TODO Configurable config
+	g := getopt.Getopt{opts, getopt.GNUGetoptLong}
+	_, _, ctx := g.Parse(elems)
+	out := ec.OutputChan()
+	switch ctx.Type {
+	case getopt.NewOptionOrArgument, getopt.Argument:
+	case getopt.NewOption:
+		for _, opt := range opts {
+			if opt.Short != 0 {
+				out <- eval.String("-" + string(opt.Short))
+			}
+			if opt.Long != "" {
+				out <- eval.String("--" + opt.Long)
+			}
+		}
+	case getopt.NewLongOption:
+		for _, opt := range opts {
+			if opt.Long != "" {
+				out <- eval.String("--" + opt.Long)
+			}
+		}
+	case getopt.LongOption:
+		for _, opt := range opts {
+			if strings.HasPrefix(opt.Long, ctx.Text) {
+				out <- eval.String("--" + opt.Long)
+			}
+		}
+	case getopt.ChainShortOption:
+		for _, opt := range opts {
+			if opt.Short != 0 {
+				// XXX loses chained options
+				out <- eval.String("-" + string(opt.Short))
+			}
+		}
+	case getopt.OptionArgument:
+	}
+}
+
+func maybeIndex(m eval.MapLike, k eval.Value) eval.Value {
+	if !m.HasKey(k) {
+		return nil
+	}
+	return m.IndexOne(k)
 }

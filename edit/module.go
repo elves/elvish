@@ -1,6 +1,8 @@
 package edit
 
 import (
+	"fmt"
+
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
@@ -29,6 +31,9 @@ func makeModule(ed *Editor) eval.Namespace {
 
 	ns["binding"] = eval.NewRoVariable(binding)
 	ns["completer"] = eval.NewRoVariable(CompleterTable(argCompleter))
+	ns[eval.FnPrefix+"complete-getopt"] = eval.NewRoVariable(
+		// XXX Repr is "&le:complete-getopt" instead of "le:&complete-getopt"
+		&eval.BuiltinFn{"le:complete-getopt", eval.WrapFn(complGetopt)})
 
 	ns["prompt"] = PromptVariable{&ed.ps1}
 	ns["rprompt"] = PromptVariable{&ed.rps1}
@@ -38,4 +43,14 @@ func makeModule(ed *Editor) eval.Namespace {
 
 func throw(e error) {
 	util.Throw(e)
+}
+
+func maybeThrow(e error) {
+	if e != nil {
+		util.Throw(e)
+	}
+}
+
+func throwf(format string, args ...interface{}) {
+	util.Throw(fmt.Errorf(format, args...))
 }
