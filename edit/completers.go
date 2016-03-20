@@ -14,10 +14,10 @@ import (
 	"github.com/elves/getopt"
 )
 
-// A completer takes the current Node and an Editor and returns an interval and
-// a list of candidates, meaning that the text within the interval may be
-// replaced by any of the candidates. the Node is always a leaf in the parsed
-// AST.
+// completer takes the current Node (always a leaf in the AST) and an Editor,
+// and should returns an interval and a list of candidates, meaning that the
+// text within the interval may be replaced by any of the candidates. If the
+// completer is not applicable, it should return an invalid interval [-1, end).
 type completer func(parse.Node, *Editor) (int, int, []*candidate)
 
 var completers = []struct {
@@ -29,12 +29,12 @@ var completers = []struct {
 	{"argument", complArg},
 }
 
-func complVariable(n parse.Node, ed *Editor) (begin, end int, cands []*candidate) {
-	begin, end = n.Begin(), n.End()
+func complVariable(n parse.Node, ed *Editor) (int, int, []*candidate) {
+	begin, end := n.Begin(), n.End()
 
 	primary, ok := n.(*parse.Primary)
 	if !ok || primary.Type != parse.Variable {
-		return
+		return -1, -1, nil
 	}
 
 	head := primary.Value
@@ -53,11 +53,12 @@ func complVariable(n parse.Node, ed *Editor) (begin, end int, cands []*candidate
 	}
 	sort.Strings(varnames)
 
+	cands := make([]*candidate, len(varnames))
 	// Build candidates.
 	for _, varname := range varnames {
 		cands = append(cands, &candidate{text: "$" + varname})
 	}
-	return
+	return begin, end, cands
 }
 
 func complFormHead(n parse.Node, ed *Editor) (int, int, []*candidate) {
@@ -131,7 +132,7 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 func complArg(n parse.Node, ed *Editor) (int, int, []*candidate) {
 	begin, end, current, q, form := findArgContext(n)
 	if begin == -1 {
-		return 0, 0, nil
+		return -1, -1, nil
 	}
 
 	// Find out head of the form and preceding arguments.

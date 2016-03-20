@@ -125,17 +125,17 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 		return
 	}
 
-	c := &completion{}
+	c := &completion{begin: -1}
 	for _, compl := range completers {
 		begin, end, candidates := compl.completer(node, ed)
-		if candidates != nil {
+		if begin >= 0 {
 			c.completer = compl.name
 			c.begin, c.end, c.candidates = begin, end, candidates
 			break
 		}
 	}
 
-	if c.candidates == nil {
+	if c.begin < 0 {
 		ed.addTip("unsupported completion :(")
 	} else if len(c.candidates) == 0 {
 		ed.addTip("no candidate for %s", c.completer)
