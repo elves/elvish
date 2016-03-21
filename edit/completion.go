@@ -2,6 +2,7 @@ package edit
 
 import (
 	"fmt"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/elves/elvish/util"
@@ -14,6 +15,10 @@ import (
 type completion struct {
 	completer  string
 	begin, end int
+	all        []*candidate
+
+	filtering  bool
+	filter     string
 	candidates []*candidate
 	selected   int
 	lines      int
@@ -25,7 +30,15 @@ func (*completion) Mode() ModeType {
 }
 
 func (c *completion) ModeLine(width int) *buffer {
-	return makeModeLine(fmt.Sprintf("COMPLETING %s", c.completer), width)
+	title := fmt.Sprintf("COMPLETING %s", c.completer)
+	// XXX Copied from listing.ModeLine.
+	// TODO keep it one line.
+	b := newBuffer(width)
+	b.writes(TrimWcWidth(title, width), styleForMode)
+	b.writes(" ", "")
+	b.writes(c.filter, styleForFilter)
+	b.dot = b.cursor()
+	return b
 }
 
 func startCompl(ed *Editor) {
@@ -78,8 +91,29 @@ func complAccept(ed *Editor) {
 }
 
 func complDefault(ed *Editor) {
-	complAccept(ed)
-	ed.nextAction = action{typ: reprocessKey}
+	k := ed.lastKey
+	c := &ed.completion
+	if c.filtering && likeChar(k) {
+		c.changeFilter(c.filter + string(k.Rune))
+	} else if c.filtering && k == (Key{Backspace, 0}) {
+		_, size := utf8.DecodeLastRuneInString(c.filter)
+		if size > 0 {
+			c.changeFilter(c.filter[:len(c.filter)-size])
+		}
+	} else {
+		complAccept(ed)
+		ed.nextAction = action{typ: reprocessKey}
+	}
+}
+
+func complTriggerFilter(ed *Editor) {
+	c := &ed.completion
+	if c.filtering {
+		c.filtering = false
+		c.changeFilter("")
+	} else {
+		c.filtering = true
+	}
 }
 
 // Implementation.
@@ -164,7 +198,8 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 		begin, end, candidates := compl.completer(node, ed)
 		if begin >= 0 {
 			c.completer = compl.name
-			c.begin, c.end, c.candidates = begin, end, candidates
+			c.begin, c.end, c.all = begin, end, candidates
+			c.candidates = c.all
 			break
 		}
 	}
@@ -301,4 +336,18 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		}
 	}
 	return b
+}
+
+func (c *completion) changeFilter(f string) {
+	c.filter = f
+	if f == "" {
+		c.candidates = c.all
+		return
+	}
+	c.candidates = nil
+	for _, cand := range c.all {
+		if strings.Contains(cand.display.text, f) {
+			c.candidates = append(c.candidates, cand)
+		}
+	}
 }

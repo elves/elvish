@@ -380,6 +380,7 @@ func trimToWindow(s []string, selected, max int) ([]string, int) {
 func makeModeLine(text string, width int) *buffer {
 	b := newBuffer(width)
 	b.writes(TrimWcWidth(text, width), styleForMode)
+	b.dot = b.cursor()
 	return b
 }
 
@@ -511,7 +512,8 @@ tokens:
 
 	// Combine buffers (reusing bufLine)
 	buf = bufLine
-	buf.extend(bufMode, mode == modeLocation || mode == modeHistoryListing)
+	buf.extend(bufMode, mode == modeLocation || mode == modeHistoryListing ||
+		(mode == modeCompletion && es.completion.filtering))
 	buf.extend(bufTips, false)
 	buf.extend(bufListing, false)
 

@@ -48,6 +48,7 @@ var builtins = []Builtin{
 	{"compl-left", complLeft},
 	{"compl-right", complRight},
 	{"compl-accept", complAccept},
+	{"compl-trigger-filter", complTriggerFilter},
 	{"compl-default", complDefault},
 
 	// Navigation mode
@@ -142,6 +143,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{Left, 0}:     "compl-left",
 		Key{Right, 0}:    "compl-right",
 		Key{Enter, 0}:    "compl-accept",
+		Key{'F', Ctrl}:   "compl-trigger-filter",
 		Key{'[', Ctrl}:   "start-insert",
 		Default:          "compl-default",
 	},
