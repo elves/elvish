@@ -17,6 +17,7 @@ var builtins = []Builtin{
 	{"kill-line-left", killLineLeft},
 	{"kill-line-right", killLineRight},
 	{"kill-word-left", killWordLeft},
+	{"kill-small-word-left", killSmallWordLeft},
 	{"kill-rune-left", killRuneLeft},
 	{"kill-rune-right", killRuneRight},
 	{"move-dot-left", moveDotLeft},

@@ -56,7 +56,10 @@ func killLineRight(ed *Editor) {
 	ed.line = ed.line[:ed.dot] + ed.line[eol:]
 }
 
-// NOTE(xiaq): A word is now defined as a series of non-whitespace chars.
+// NOTE(xiaq): A word is a run of non-space runes. When killing a word,
+// trimming spaces are removed as well. Examples:
+// "abc  xyz" -> "abc  ", "abc xyz " -> "abc  ".
+
 func killWordLeft(ed *Editor) {
 	if ed.dot == 0 {
 		return
@@ -66,6 +69,30 @@ func killWordLeft(ed *Editor) {
 		unicode.IsSpace) + 1
 	ed.line = ed.line[:space] + ed.line[ed.dot:]
 	ed.dot = space
+}
+
+// NOTE(xiaq): A small word is either a run of alphanumeric (Unicode category L
+// or N) runes or a run of non-alphanumeric runes. This is consistent with vi's
+// definition of word, except that "_" is not considered alphanumeric. When
+// killing a small word, trimming spaces are removed as well. Examples:
+// "abc/~" -> "abc", "~/abc" -> "~/", "abc* " -> "abc"
+
+func killSmallWordLeft(ed *Editor) {
+	left := strings.TrimRightFunc(ed.line[:ed.dot], unicode.IsSpace)
+	// The case of left == "" is handled as well.
+	r, _ := utf8.DecodeLastRuneInString(left)
+	if isAlnum(r) {
+		left = strings.TrimRightFunc(left, isAlnum)
+	} else {
+		left = strings.TrimRightFunc(
+			left, func(r rune) bool { return !isAlnum(r) })
+	}
+	ed.line = left + ed.line[ed.dot:]
+	ed.dot = len(left)
+}
+
+func isAlnum(r rune) bool {
+	return unicode.IsLetter(r) || unicode.IsNumber(r)
 }
 
 func killRuneLeft(ed *Editor) {
