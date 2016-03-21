@@ -17,6 +17,7 @@ type completion struct {
 	candidates []*candidate
 	selected   int
 	lines      int
+	height     int
 }
 
 func (*completion) Mode() ModeType {
@@ -41,6 +42,14 @@ func complUp(ed *Editor) {
 
 func complDown(ed *Editor) {
 	ed.completion.next(false)
+}
+
+func complPageUp(ed *Editor) {
+	ed.completion.pageUp()
+}
+
+func complPageDown(ed *Editor) {
+	ed.completion.pageDown()
 }
 
 func complLeft(ed *Editor) {
@@ -116,6 +125,31 @@ func (c *completion) next(cycle bool) {
 			c.selected--
 		}
 	}
+}
+
+func (c *completion) pageUp() {
+	line, col := c.currentCoord()
+	line -= c.height
+	if line < 0 {
+		line = 0
+	}
+	c.selected = line + col*c.lines
+}
+
+func (c *completion) pageDown() {
+	line, col := c.currentCoord()
+	line += c.height
+	if line >= c.lines {
+		line = c.lines - 1
+	}
+	c.selected = line + col*c.lines
+	if c.selected >= len(c.candidates) {
+		c.selected = len(c.candidates) - 1
+	}
+}
+
+func (c *completion) currentCoord() (int, int) {
+	return c.selected % c.lines, c.selected / c.lines
 }
 
 func startCompletionInner(ed *Editor, acceptPrefix bool) {
@@ -232,6 +266,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 
 	// Determine the window to show.
 	low, high := findWindow(lines, comp.selected%lines, maxHeight)
+	comp.height = high - low
 	var scrollLow, scrollHigh int
 	if showScrollbar {
 		scrollLow, scrollHigh = findScrollInterval(lines, low, high)
