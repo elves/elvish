@@ -134,9 +134,9 @@ var (
 )
 
 var (
-	evalCtxType       = reflect.TypeOf((*EvalCtx)(nil))
-	valueType         = reflect.TypeOf((*Value)(nil)).Elem()
-	valueRecvChanType = reflect.TypeOf((<-chan Value)(nil))
+	evalCtxType = reflect.TypeOf((*EvalCtx)(nil))
+	valueType   = reflect.TypeOf((*Value)(nil)).Elem()
+	iterateType = reflect.TypeOf((func(func(Value)))(nil))
 )
 
 // WrapFn wraps an inner function into one suitable as a builtin function. It
@@ -151,7 +151,7 @@ func WrapFn(inner interface{}) func(*EvalCtx, []Value) {
 
 	fixedArgs := funcType.NumIn() - 1
 	isVariadic := funcType.IsVariadic()
-	hasOptionalInputList := false
+	hasOptionalIterate := false
 	var variadicType reflect.Type
 	if isVariadic {
 		fixedArgs--
@@ -159,9 +159,9 @@ func WrapFn(inner interface{}) func(*EvalCtx, []Value) {
 		if !supportedArgType(variadicType) {
 			panic(fmt.Sprintf("bad func to wrap, variadic argument type %s unsupported", variadicType))
 		}
-	} else if funcType.In(funcType.NumIn()-1) == valueRecvChanType {
+	} else if funcType.In(funcType.NumIn()-1) == iterateType {
 		fixedArgs--
-		hasOptionalInputList = true
+		hasOptionalIterate = true
 	}
 
 	for i := 0; i < fixedArgs; i++ {
@@ -175,7 +175,7 @@ func WrapFn(inner interface{}) func(*EvalCtx, []Value) {
 			if len(args) < fixedArgs {
 				throw(fmt.Errorf("arity mismatch: want at least %d arguments, got %d", fixedArgs, len(args)))
 			}
-		} else if hasOptionalInputList {
+		} else if hasOptionalIterate {
 			if len(args) < fixedArgs || len(args) > fixedArgs+1 {
 				throw(fmt.Errorf("arity mismatch: want %d or %d arguments, got %d", fixedArgs, fixedArgs+1, len(args)))
 			}
@@ -200,28 +200,28 @@ func WrapFn(inner interface{}) func(*EvalCtx, []Value) {
 					throw(errors.New("bad argument: " + err.Error()))
 				}
 			}
-		} else if hasOptionalInputList {
-			var ch <-chan Value
+		} else if hasOptionalIterate {
+			var iterate func(func(Value))
 			if len(args) == fixedArgs {
 				// No Elemser specified in arguments. Use input.
+				// Since convertedArgs was created according to the size of the
+				// actual argument list, we now an empty element to make room
+				// for this additional iterator argument.
 				convertedArgs = append(convertedArgs, reflect.Value{})
-				ch = ec.Inputs()
+				iterate = ec.IterateInputs
 			} else {
 				iterator, ok := args[fixedArgs].(Iterator)
 				if !ok {
 					throw(errors.New("bad argument: need iterator, got " + args[fixedArgs].Kind()))
 				}
-				itch := make(chan Value)
-				go func() {
+				iterate = func(f func(Value)) {
 					iterator.Iterate(func(v Value) bool {
-						itch <- v
+						f(v)
 						return true
 					})
-					close(itch)
-				}()
-				ch = itch
+				}
 			}
-			convertedArgs[1+fixedArgs] = reflect.ValueOf(ch)
+			convertedArgs[1+fixedArgs] = reflect.ValueOf(iterate)
 		}
 		reflect.ValueOf(inner).Call(convertedArgs)
 	}
@@ -314,12 +314,12 @@ func pprint(ec *EvalCtx, args []Value) {
 	}
 }
 
-func intoLines(ec *EvalCtx, inputs <-chan Value) {
+func intoLines(ec *EvalCtx, iterate func(func(Value))) {
 	out := ec.ports[1].File
 
-	for v := range inputs {
+	iterate(func(v Value) {
 		fmt.Fprintln(out, ToString(v))
-	}
+	})
 }
 
 func ratFn(ec *EvalCtx, arg Value) {
@@ -332,10 +332,10 @@ func ratFn(ec *EvalCtx, arg Value) {
 }
 
 // unpack takes Elemser's from the input and unpack them.
-func unpack(ec *EvalCtx, inputs <-chan Value) {
+func unpack(ec *EvalCtx, iterate func(func(Value))) {
 	out := ec.ports[1].Chan
 
-	for v := range inputs {
+	iterate(func(v Value) {
 		iterator, ok := v.(Iterator)
 		if !ok {
 			throwf("unpack wants iterator in input, got %s", v.Kind())
@@ -344,18 +344,18 @@ func unpack(ec *EvalCtx, inputs <-chan Value) {
 			out <- v
 			return true
 		})
-	}
+	})
 }
 
 // toJSON converts a stream of Value's to JSON data.
-func toJSON(ec *EvalCtx, inputs <-chan Value) {
+func toJSON(ec *EvalCtx, iterate func(func(Value))) {
 	out := ec.ports[1].File
 
 	enc := json.NewEncoder(out)
-	for v := range inputs {
+	iterate(func(v Value) {
 		err := enc.Encode(v)
 		maybeThrow(err)
-	}
+	})
 }
 
 // fromJSON parses a stream of JSON data into Value's.
@@ -378,9 +378,12 @@ func fromJSON(ec *EvalCtx) {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ec *EvalCtx, f FnValue, inputs <-chan Value) {
-in:
-	for v := range inputs {
+func each(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
+	broken := false
+	iterate(func(v Value) {
+		if broken {
+			return
+		}
 		// NOTE We don't have the position range of the closure in the source.
 		// Ideally, it should be kept in the Closure itself.
 		newec := ec.fork("closure of each")
@@ -392,11 +395,11 @@ in:
 		case nil, Continue:
 			// nop
 		case Break:
-			break in
+			broken = true
 		default:
 			throw(ex)
 		}
-	}
+	})
 }
 
 var eawkWordSep = regexp.MustCompile("[ \t]+")
@@ -406,8 +409,12 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // stripping the line and splitting the line by whitespaces. The function may
 // call break and continue. Overall this provides a similar functionality to
 // awk, hence the name.
-func eawk(ec *EvalCtx, f FnValue, inputs <-chan Value) {
-	for v := range inputs {
+func eawk(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
+	broken := false
+	iterate(func(v Value) {
+		if broken {
+			return
+		}
 		line, ok := v.(String)
 		if !ok {
 			throw(ErrInput)
@@ -426,11 +433,11 @@ func eawk(ec *EvalCtx, f FnValue, inputs <-chan Value) {
 		case nil, Continue:
 			// nop
 		case Break:
-			return
+			broken = true
 		default:
 			throw(ex)
 		}
-	}
+	})
 }
 
 func cd(ec *EvalCtx, args []Value) {
@@ -665,17 +672,16 @@ func deepeq(ec *EvalCtx, args []Value) {
 	out <- Bool(true)
 }
 
-func take(ec *EvalCtx, n int, inputs <-chan Value) {
+func take(ec *EvalCtx, n int, iterate func(func(Value))) {
 	out := ec.ports[1].Chan
 
 	i := 0
-	for v := range inputs {
-		if i >= n {
-			break
+	iterate(func(v Value) {
+		if i < n {
+			out <- v
 		}
 		i++
-		out <- v
-	}
+	})
 }
 
 func count(ec *EvalCtx, args []Value) {
@@ -683,9 +689,9 @@ func count(ec *EvalCtx, args []Value) {
 	switch len(args) {
 	case 0:
 		// Count inputs.
-		for range ec.Inputs() {
+		ec.IterateInputs(func(Value) {
 			n++
-		}
+		})
 	case 1:
 		// Get length of argument.
 		v := args[0]

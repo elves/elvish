@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"unicode/utf8"
 
@@ -406,36 +407,35 @@ func set(ec *EvalCtx, variables []Variable, rest []Variable, values []Value) {
 	}
 }
 
-// Inputs returns a channel that mingles input from the byte pipe as well as the
-// channel pipe of port 0. The caller must read all values from the channel, or
-// there will be lingering goroutines and loss of data.
-func (ec *EvalCtx) Inputs() <-chan Value {
-	vs := make(chan Value)
+// IterateInput calls the passed function for each input element.
+func (ec *EvalCtx) IterateInputs(f func(Value)) {
+	var m sync.Mutex
+
+	done := make(chan struct{})
 	go func() {
-		f := bufio.NewReader(ec.ports[0].File)
-		done := make(chan struct{})
-		go func() {
-			for {
-				line, err := f.ReadString('\n')
-				if line != "" {
-					vs <- String(strings.TrimSuffix(line, "\n"))
-				}
-				if err != nil {
-					if err != io.EOF {
-						Logger.Println("error on pipe:", err)
-					}
-					break
-				}
+		filein := bufio.NewReader(ec.ports[0].File)
+		for {
+			line, err := filein.ReadString('\n')
+			if line != "" {
+				m.Lock()
+				f(String(strings.TrimSuffix(line, "\n")))
+				m.Unlock()
 			}
-			close(done)
-		}()
-		for v := range ec.ports[0].Chan {
-			vs <- v
+			if err != nil {
+				if err != io.EOF {
+					Logger.Println("error on pipe:", err)
+				}
+				break
+			}
 		}
-		<-done
-		close(vs)
+		close(done)
 	}()
-	return vs
+	for v := range ec.ports[0].Chan {
+		m.Lock()
+		f(v)
+		m.Unlock()
+	}
+	<-done
 }
 
 // OutputChan returns a channel onto which output can be written.
