@@ -28,28 +28,28 @@ func (*navigation) ModeLine(width int) *buffer {
 	return makeModeLine(" NAVIGATING ", width)
 }
 
-func startNavigation(ed *Editor) {
+func startNav(ed *Editor) {
 	initNavigation(&ed.navigation)
 	ed.mode = &ed.navigation
 }
 
-func selectNavUp(ed *Editor) {
+func navUp(ed *Editor) {
 	ed.navigation.prev()
 }
 
-func selectNavDown(ed *Editor) {
+func navDown(ed *Editor) {
 	ed.navigation.next()
 }
 
-func ascendNav(ed *Editor) {
+func navLeft(ed *Editor) {
 	ed.navigation.ascend()
 }
 
-func descendNav(ed *Editor) {
+func navRight(ed *Editor) {
 	ed.navigation.descend()
 }
 
-func triggerNavShowHidden(ed *Editor) {
+func navTriggerShowHidden(ed *Editor) {
 	ed.navigation.showHidden = !ed.navigation.showHidden
 	ed.navigation.refresh()
 }
@@ -58,7 +58,7 @@ func navInsertSelected(ed *Editor) {
 	ed.insertAtDot(parse.Quote(ed.navigation.current.selectedName()) + " ")
 }
 
-func defaultNavigation(ed *Editor) {
+func navigationDefault(ed *Editor) {
 	// Use key binding for insert mode without exiting navigation mode.
 	if f, ok := keyBindings[modeInsert][ed.lastKey]; ok {
 		f.Call(ed)

@@ -30,21 +30,21 @@ func startHistory(ed *Editor) {
 	}
 }
 
-func selectHistoryPrev(ed *Editor) {
+func historyUp(ed *Editor) {
 	ed.prevHistory()
 }
 
-func selectHistoryNext(ed *Editor) {
+func historyDown(ed *Editor) {
 	ed.nextHistory()
 }
 
-func selectHistoryNextOrQuit(ed *Editor) {
+func historyDownOrQuit(ed *Editor) {
 	if !ed.nextHistory() {
 		ed.mode = &ed.insert
 	}
 }
 
-func defaultHistory(ed *Editor) {
+func historyDefault(ed *Editor) {
 	ed.acceptHistory()
 	ed.mode = &ed.insert
 	ed.nextAction = action{typ: reprocessKey}

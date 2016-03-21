@@ -52,7 +52,7 @@ func (hl *histlist) ModeTitle(i int) string {
 	return fmt.Sprintf(" HISTORY #%d ", i)
 }
 
-func startHistoryListing(ed *Editor) {
+func startHistlist(ed *Editor) {
 	hl, err := newHistlist(ed.store)
 	if err != nil {
 		ed.notify("%v", err)

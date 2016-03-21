@@ -27,40 +27,40 @@ func (c *completion) ModeLine(width int) *buffer {
 	return makeModeLine(fmt.Sprintf("COMPLETING %s", c.completer), width)
 }
 
-func startCompletion(ed *Editor) {
+func startCompl(ed *Editor) {
 	startCompletionInner(ed, false)
 }
 
-func completePrefixOrStartCompletion(ed *Editor) {
+func complPrefixOrStartCompl(ed *Editor) {
 	startCompletionInner(ed, true)
 }
 
-func selectCandUp(ed *Editor) {
+func complUp(ed *Editor) {
 	ed.completion.prev(false)
 }
 
-func selectCandDown(ed *Editor) {
+func complDown(ed *Editor) {
 	ed.completion.next(false)
 }
 
-func selectCandLeft(ed *Editor) {
+func complLeft(ed *Editor) {
 	if c := ed.completion.selected - ed.completion.lines; c >= 0 {
 		ed.completion.selected = c
 	}
 }
 
-func selectCandRight(ed *Editor) {
+func complRight(ed *Editor) {
 	if c := ed.completion.selected + ed.completion.lines; c < len(ed.completion.candidates) {
 		ed.completion.selected = c
 	}
 }
 
-func cycleCandRight(ed *Editor) {
+func complDownCycle(ed *Editor) {
 	ed.completion.next(true)
 }
 
 // acceptCompletion accepts currently selected completion candidate.
-func acceptCompletion(ed *Editor) {
+func complAccept(ed *Editor) {
 	c := ed.completion
 	if 0 <= c.selected && c.selected < len(c.candidates) {
 		ed.line, ed.dot = c.apply(ed.line, ed.dot)
@@ -68,8 +68,8 @@ func acceptCompletion(ed *Editor) {
 	ed.mode = &ed.insert
 }
 
-func defaultCompletion(ed *Editor) {
-	acceptCompletion(ed)
+func complDefault(ed *Editor) {
+	complAccept(ed)
 	ed.nextAction = action{typ: reprocessKey}
 }
 
