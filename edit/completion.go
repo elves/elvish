@@ -313,7 +313,11 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		for j := 0; j < cols; j++ {
 			k := j*lines + i
 			if k >= len(cands) {
-				break
+				if j > 0 {
+					b.writePadding(margin, "")
+				}
+				b.writePadding(colWidth, "")
+				continue
 			}
 			style := cands[k].display.style
 			if k == comp.selected {
