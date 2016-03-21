@@ -214,15 +214,28 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		}
 	}
 
-	cols := (b.width + margin) / (colWidth + margin)
-	if cols == 0 {
-		cols = 1
+	findShape := func(width int) (int, int, int) {
+		cols := (width + margin) / (colWidth + margin)
+		if cols == 0 {
+			cols = 1
+		}
+		lines := util.CeilDiv(len(cands), cols)
+		return cols, lines, width - colWidth*cols - margin*(cols-1)
 	}
-	lines := util.CeilDiv(len(cands), cols)
+	cols, lines, rightspare := findShape(width)
+	showScrollbar := lines > maxHeight && width > 1
+	if showScrollbar && rightspare == 0 {
+		cols, lines, rightspare = findShape(width - 1)
+		rightspare++
+	}
 	comp.lines = lines
 
 	// Determine the window to show.
 	low, high := findWindow(lines, comp.selected%lines, maxHeight)
+	var scrollLow, scrollHigh int
+	if showScrollbar {
+		scrollLow, scrollHigh = findScrollInterval(lines, low, high)
+	}
 	for i := low; i < high; i++ {
 		if i > low {
 			b.newline()
@@ -241,6 +254,15 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 				b.writePadding(margin, "")
 			}
 			b.writes(ForceWcWidth(text, colWidth), style)
+		}
+
+		if showScrollbar {
+			bar := "│"
+			if scrollLow <= i && i < scrollHigh {
+				bar = "▉"
+			}
+			b.writePadding(rightspare-1, "")
+			b.writes(bar, styleForScrollBar)
 		}
 	}
 	return b

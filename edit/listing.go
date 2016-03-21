@@ -54,17 +54,7 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	var scrollLow, scrollHigh int
 	showScrollbar := low > 0 || high < n-1
 	if showScrollbar {
-		f := func(i int) int {
-			return int(float64(i)/float64(n)*float64(l.height)+0.5) + low
-		}
-		scrollLow, scrollHigh = f(low), f(high)
-		if scrollLow == scrollHigh {
-			if scrollHigh == high {
-				scrollLow--
-			} else {
-				scrollHigh++
-			}
-		}
+		scrollLow, scrollHigh = findScrollInterval(n, low, high)
 		Logger.Printf("low = %d, high = %d, n = %d, scrollLow = %d, scrollHigh = %d", low, high, n, scrollLow, scrollHigh)
 	}
 
@@ -88,6 +78,21 @@ func (l *listing) List(width, maxHeight int) *buffer {
 		}
 	}
 	return b
+}
+
+func findScrollInterval(n, low, high int) (int, int) {
+	f := func(i int) int {
+		return int(float64(i)/float64(n)*float64(high-low)+0.5) + low
+	}
+	scrollLow, scrollHigh := f(low), f(high)
+	if scrollLow == scrollHigh {
+		if scrollHigh == high {
+			scrollLow--
+		} else {
+			scrollHigh++
+		}
+	}
+	return scrollLow, scrollHigh
 }
 
 func (l *listing) changeFilter(newfilter string) {
