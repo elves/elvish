@@ -105,7 +105,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{'D', Ctrl}: "return-eof",
 		Key{F2, 0}:     "toggle-quote-paste",
 		// Key{'[', Ctrl}: "startCommand",
-		Key{Tab, 0}:    "complete-prefix-or-start-compl",
+		Key{Tab, 0}:    "compl-prefix-or-start-compl",
 		Key{Up, 0}:     "start-history",
 		Key{'N', Ctrl}: "start-nav",
 		Key{'R', Ctrl}: "start-histlist",
