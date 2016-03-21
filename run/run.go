@@ -267,8 +267,15 @@ func printError(err error, srcname, errtype, src string) {
 			printError(e, srcname, errtype, src)
 		}
 	case *util.PosError:
-		fmt.Fprintln(os.Stderr, err.Pprint(srcname, errtype, src))
+		printErrorString(err.Pprint(srcname, errtype, src))
 	default:
-		fmt.Fprintln(os.Stderr, err)
+		printErrorString(err.Error())
 	}
+}
+
+func printErrorString(s string) {
+	if sys.IsATTY(2) {
+		s = "\033[1;31m" + s + "\033[m"
+	}
+	fmt.Fprintln(os.Stderr, s)
 }
