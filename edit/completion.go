@@ -130,6 +130,9 @@ type candidate struct {
 }
 
 func (comp *completion) selectedCandidate() *candidate {
+	if comp.selected == -1 {
+		return &candidate{}
+	}
 	return comp.candidates[comp.selected]
 }
 
@@ -269,6 +272,11 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 	// Layout candidates in multiple columns
 	cands := comp.candidates
 
+	if len(cands) == 0 {
+		b.writes(TrimWcWidth("(no result)", width), "")
+		return b
+	}
+
 	// First decide the shape (# of rows and columns)
 	colWidth := 0
 	margin := completionListingColMargin
@@ -353,5 +361,10 @@ func (c *completion) changeFilter(f string) {
 		if strings.Contains(cand.display.text, f) {
 			c.candidates = append(c.candidates, cand)
 		}
+	}
+	if len(c.candidates) > 0 {
+		c.selected = 0
+	} else {
+		c.selected = -1
 	}
 }
