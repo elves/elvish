@@ -68,6 +68,17 @@ func killWordLeft(ed *Editor) {
 	ed.dot = space
 }
 
+func killSmallWordLeft(ed *Editor) {
+	if ed.dot == 0 {
+		return
+	}
+	split := strings.LastIndexFunc(
+		strings.TrimRightFunc(ed.line[:ed.dot], isSplit),
+		isSplit) + 1
+	ed.line = ed.line[:split] + ed.line[ed.dot:]
+	ed.dot = split
+}
+
 func killRuneLeft(ed *Editor) {
 	if ed.dot > 0 {
 		_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
@@ -126,6 +137,17 @@ func moveDotRightWord(ed *Editor) {
 
 func notSpace(r rune) bool {
 	return !unicode.IsSpace(r)
+}
+
+func isSplit(r rune) bool {
+	if unicode.IsSpace(r) {
+		return true
+	}
+	switch r {
+	case '-', '_', '/', '—', '[', ']', '{', '}', '(', ')':
+		return true
+	}
+	return false
 }
 
 func moveDotSOL(ed *Editor) {
