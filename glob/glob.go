@@ -3,6 +3,7 @@ package glob
 
 import (
 	"io/ioutil"
+	"os"
 	"unicode/utf8"
 )
 
@@ -63,6 +64,36 @@ func (p Pattern) Glob() []string {
 }
 
 func glob(segs []Segment, dir string, results chan<- string) {
+	// Consume the non-wildcard prefix. This is required so that "." and "..",
+	// which doesn't appear in the result of ReadDir, can appear as standalone
+	// path components in the pattern.
+	for len(segs) > 0 && segs[0].Type == Literal {
+		var path string
+		if dir == "" {
+			path = segs[0].Data
+		} else {
+			path = dir + "/" + segs[0].Data
+		}
+		if len(segs) == 1 {
+			// A lone literal. Generate it if the named file exists, and return.
+			if _, err := os.Stat(path); err == nil {
+				results <- path
+			}
+			return
+		} else if segs[1].Type == Slash {
+			// A lone literal followed by a slash. Change the directory if it
+			// exists, otherwise return.
+			if info, err := os.Stat(path); err == nil && info.IsDir() {
+				dir = path
+			} else {
+				return
+			}
+			segs = segs[2:]
+		} else {
+			break
+		}
+	}
+
 	// Empty segment, resulting from a trailing slash. Generate the starting
 	// directory.
 	if len(segs) == 0 {

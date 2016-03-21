@@ -26,6 +26,11 @@ var globCases = []struct {
 	want    []string
 }{
 	{"*", []string{"a", "b", "c", "d1", "d2", "dX", "dXY", "lorem", "ipsum"}},
+	{".", []string{"."}},
+	{"./*", []string{"./a", "./b", "./c", "./d1", "./d2", "./dX", "./dXY", "./lorem", "./ipsum"}},
+	{"..", []string{".."}},
+	{"a/..", []string{"a/.."}},
+	{"a/../*", []string{"a/../a", "a/../b", "a/../c", "a/../d1", "a/../d2", "a/../dX", "a/../dXY", "a/../lorem", "a/../ipsum"}},
 	{"*/", []string{"a/", "b/", "c/", "d1/", "d2/"}},
 	{"**", append(mkdirs, creates...)},
 	{"*/X", []string{"a/X", "b/X"}},
