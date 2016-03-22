@@ -176,11 +176,11 @@ var (
 )
 
 func init() {
-	addListingBuiltins("loc-", func(ed *Editor) *listing { return &ed.location })
+	addListingBuiltins("loc-", func(ed *Editor) *listing { return &ed.location.listing })
 	addListingDefaultBindings("loc-", modeLocation)
-	addListingBuiltins("histlist-", func(ed *Editor) *listing { return &ed.histlist })
+	addListingBuiltins("histlist-", func(ed *Editor) *listing { return &ed.histlist.listing })
 	addListingDefaultBindings("histlist-", modeHistoryListing)
-	addListingBuiltins("bang-", func(ed *Editor) *listing { return &ed.bang })
+	addListingBuiltins("bang-", func(ed *Editor) *listing { return &ed.bang.listing })
 	addListingDefaultBindings("bang-", modeBang)
 
 	for _, b := range builtins {

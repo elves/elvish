@@ -15,6 +15,7 @@ type bangEntry struct {
 }
 
 type bang struct {
+	listing
 	line     string
 	words    []string
 	filtered []bangEntry
@@ -75,21 +76,21 @@ var wordSep = regexp.MustCompile("[ \t]+")
 func startBang(ed *Editor) {
 	_, line, err := ed.store.LastCmd(-1, "", true)
 	if err == nil {
-		ed.bang = newListing(modeBang, newBang(line))
-		ed.mode = &ed.bang
+		ed.bang = newBang(line)
+		ed.mode = ed.bang
 	} else {
 		ed.addTip("db error: %s", err.Error())
 	}
 }
 
 func bangAltDefault(ed *Editor) {
-	l := &ed.bang
+	l := ed.bang
 	if l.handleFilterKey(ed.lastKey) {
-		if l.provider.Len() == 1 {
-			l.provider.Accept(l.selected, ed)
+		if l.Len() == 1 {
+			l.Accept(l.selected, ed)
 		}
 	} else if ed.lastKey == (Key{',', Alt}) {
-		l.provider.Accept(0, ed)
+		l.Accept(0, ed)
 	} else {
 		startInsert(ed)
 		ed.nextAction = action{typ: reprocessKey}
@@ -97,5 +98,7 @@ func bangAltDefault(ed *Editor) {
 }
 
 func newBang(line string) *bang {
-	return &bang{line, wordSep.Split(strings.Trim(line, " \t"), -1), nil, false}
+	b := &bang{listing{}, line, wordSep.Split(strings.Trim(line, " \t"), -1), nil, false}
+	b.listing = newListing(modeBang, b)
+	return b
 }

@@ -11,6 +11,7 @@ import (
 // Location mode.
 
 type location struct {
+	listing
 	store      *store.Store
 	candidates []store.Dir
 }
@@ -66,8 +67,9 @@ func startLocation(ed *Editor) {
 		ed.notify("%v", ErrStoreOffline)
 		return
 	}
-	loc := &location{ed.store, nil}
+	loc := &location{store: ed.store}
+	loc.listing = newListing(modeLocation, loc)
 
-	ed.location = newListing(modeLocation, loc)
-	ed.mode = &ed.location
+	ed.location = loc
+	ed.mode = ed.location
 }

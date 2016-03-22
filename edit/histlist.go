@@ -13,6 +13,7 @@ import (
 var ErrStoreOffline = errors.New("store offline")
 
 type histlist struct {
+	listing
 	all      []string
 	filtered []string
 }
@@ -59,8 +60,9 @@ func startHistlist(ed *Editor) {
 		return
 	}
 
-	ed.histlist = newListing(modeHistoryListing, hl)
-	ed.mode = &ed.histlist
+	ed.histlist = hl
+	// ed.histlist = newListing(modeHistoryListing, hl)
+	ed.mode = ed.histlist
 }
 
 func newHistlist(s *store.Store) (*histlist, error) {
@@ -75,5 +77,7 @@ func newHistlist(s *store.Store) (*histlist, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &histlist{all, nil}, nil
+	hl := &histlist{all: all}
+	hl.listing = newListing(modeHistoryListing, hl)
+	return hl, nil
 }
