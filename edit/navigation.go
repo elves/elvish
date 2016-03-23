@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"path"
-	"sort"
 
 	"github.com/elves/elvish/parse"
 )
@@ -82,28 +81,27 @@ func initNavigation(n *navigation) {
 }
 
 func (n *navigation) maintainSelected(name string) {
-	i := sort.SearchStrings(n.current.names, name)
-	if i == len(n.current.names) {
-		i--
+	n.current.selected = -1
+	for i, s := range n.current.all {
+		if s.text > name {
+			break
+		}
+		n.current.selected = i
 	}
-	n.current.selected = i
 }
 
 func (n *navigation) refreshCurrent() {
 	selectedName := n.current.selectedName()
-	names, styles, err := n.readdirnames(".")
+	all, err := n.loaddir(".")
 	if err != nil {
 		n.current = newErrNavColumn(err)
 		return
 	}
-	n.current = newNavColumn(names, styles)
-	if selectedName != "" {
-		// Maintain n.current.selected. The same file, if still present, is
-		// selected. Otherwise a file near it is selected.
-		// XXX(xiaq): This would break when we support alternative
-		// ordering.
-		n.maintainSelected(selectedName)
-	}
+	// Try to select the old selected file.
+	// XXX(xiaq): This would break when we support alternative ordering.
+	n.current = newNavColumn(all, func(i int) bool {
+		return i == 0 || all[i].text <= selectedName
+	})
 }
 
 func (n *navigation) refreshParent() {
@@ -115,26 +113,20 @@ func (n *navigation) refreshParent() {
 	if wd == "/" {
 		n.parent = newNavColumn(nil, nil)
 	} else {
-		names, styles, err := n.readdirnames("..")
+		all, err := n.loaddir("..")
 		if err != nil {
 			n.parent = newErrNavColumn(err)
 			return
 		}
-		n.parent = newNavColumn(names, styles)
-
 		cwd, err := os.Stat(".")
 		if err != nil {
 			n.parent = newErrNavColumn(err)
 			return
 		}
-		n.parent.selected = -1
-		for i, name := range n.parent.names {
-			d, _ := os.Lstat("../" + name)
-			if os.SameFile(d, cwd) {
-				n.parent.selected = i
-				break
-			}
-		}
+		n.parent = newNavColumn(all, func(i int) bool {
+			d, _ := os.Lstat("../" + all[i].text)
+			return os.SameFile(d, cwd)
+		})
 	}
 }
 
@@ -147,12 +139,12 @@ func (n *navigation) refreshDirPreview() {
 			return
 		}
 		if fi.Mode().IsDir() {
-			names, styles, err := n.readdirnames(name)
+			all, err := n.loaddir(name)
 			if err != nil {
 				n.dirPreview = newErrNavColumn(err)
 				return
 			}
-			n.dirPreview = newNavColumn(names, styles)
+			n.dirPreview = newNavColumn(all, func(int) bool { return false })
 		} else {
 			// TODO(xiaq): Support regular file preview in navigation mode
 			n.dirPreview = nil
@@ -182,7 +174,7 @@ func (n *navigation) ascend() error {
 		return nil
 	}
 
-	name := n.parent.names[n.parent.selected]
+	name := n.parent.selectedName()
 	err = os.Chdir("..")
 	if err != nil {
 		return err
@@ -201,13 +193,13 @@ func (n *navigation) descend() error {
 	if n.current.selected == -1 {
 		return errorEmptyCwd
 	}
-	name := n.current.names[n.current.selected]
+	name := n.current.selectedName()
 	err := os.Chdir(name)
 	if err != nil {
 		return err
 	}
+	n.current.selected = -1
 	n.refresh()
-	n.current.resetSelected()
 	n.refreshDirPreview()
 	return nil
 }
@@ -222,7 +214,7 @@ func (n *navigation) prev() {
 
 // next selects the next file.
 func (n *navigation) next() {
-	if n.current.selected != -1 && n.current.selected < len(n.current.names)-1 {
+	if n.current.selected != -1 && n.current.selected < len(n.current.all)-1 {
 		n.current.selected++
 	}
 	n.refresh()
@@ -230,15 +222,19 @@ func (n *navigation) next() {
 
 // navColumn is a column in the navigation layout.
 type navColumn struct {
-	names    []string
-	styles   []string
+	all      []styled
 	selected int
 	err      error
 }
 
-func newNavColumn(names, styles []string) *navColumn {
-	nc := &navColumn{names, styles, 0, nil}
-	nc.resetSelected()
+func newNavColumn(all []styled, sel func(int) bool) *navColumn {
+	nc := &navColumn{all, 0, nil}
+	nc.selected = -1
+	for i := range all {
+		if sel(i) {
+			nc.selected = i
+		}
+	}
 	return nc
 }
 
@@ -250,41 +246,28 @@ func (nc *navColumn) selectedName() string {
 	if nc == nil || nc.selected == -1 {
 		return ""
 	}
-	return nc.names[nc.selected]
+	return nc.all[nc.selected].text
 }
 
-func (nc *navColumn) resetSelected() {
-	if nc == nil {
-		return
-	}
-	if len(nc.names) > 0 {
-		nc.selected = 0
-	} else {
-		nc.selected = -1
-	}
-}
-
-func (n *navigation) readdirnames(dir string) (names, styles []string, err error) {
+func (n *navigation) loaddir(dir string) ([]styled, error) {
 	f, err := os.Open(dir)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	infos, err := f.Readdir(0)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
+	var all []styled
 	for _, info := range infos {
 		if n.showHidden || info.Name()[0] != '.' {
-			names = append(names, info.Name())
+			name := info.Name()
+			all = append(all, styled{name, defaultLsColor.getStyle(path.Join(dir, name))})
 		}
 	}
-	sort.Strings(names)
+	sortStyleds(all)
 
-	styles = make([]string, len(names))
-	for i, name := range names {
-		styles[i] = defaultLsColor.getStyle(path.Join(dir, name))
-	}
-	return names, styles, nil
+	return all, nil
 }
 
 const (
@@ -327,13 +310,13 @@ func (nav *navigation) List(width, maxHeight int) *buffer {
 
 func renderNavColumn(nc *navColumn, w, h int) *buffer {
 	b := newBuffer(w)
-	low, high := findWindow(len(nc.names), nc.selected, h)
+	low, high := findWindow(len(nc.all), nc.selected, h)
 	for i := low; i < high; i++ {
 		if i > low {
 			b.newline()
 		}
-		text := nc.names[i]
-		style := nc.styles[i]
+		text := nc.all[i].text
+		style := nc.all[i].style
 		if i == nc.selected {
 			style += styleForSelected
 		}

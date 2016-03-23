@@ -116,13 +116,6 @@ func complTriggerFilter(ed *Editor) {
 	}
 }
 
-// Implementation.
-
-type styled struct {
-	text  string
-	style string
-}
-
 type candidate struct {
 	text    string
 	display styled
