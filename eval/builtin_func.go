@@ -110,6 +110,9 @@ func init() {
 
 		&BuiltinFn{"fopen", WrapFn(fopen)},
 		&BuiltinFn{"fclose", WrapFn(fclose)},
+		&BuiltinFn{"pipe", WrapFn(pipe)},
+		&BuiltinFn{"prclose", WrapFn(prclose)},
+		&BuiltinFn{"pwclose", WrapFn(pwclose)},
 
 		&BuiltinFn{"-sleep", WrapFn(_sleep)},
 		&BuiltinFn{"-stack", WrapFn(_stack)},
@@ -773,9 +776,16 @@ func fopen(ec *EvalCtx, name string) {
 	out <- File{f}
 }
 
-func fclose(ec *EvalCtx, f File) {
-	maybeThrow(f.inner.Close())
+func pipe(ec *EvalCtx) {
+	r, w, err := os.Pipe()
+	out := ec.ports[1].Chan
+	maybeThrow(err)
+	out <- Pipe{r, w}
 }
+
+func fclose(ec *EvalCtx, f File)  { maybeThrow(f.inner.Close()) }
+func prclose(ec *EvalCtx, p Pipe) { maybeThrow(p.r.Close()) }
+func pwclose(ec *EvalCtx, p Pipe) { maybeThrow(p.w.Close()) }
 
 func _sleep(ec *EvalCtx, t float64) {
 	d := time.Duration(float64(time.Second) * t)

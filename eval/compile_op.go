@@ -312,6 +312,20 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 					File: src.inner, Chan: make(chan Value),
 					CloseFile: false, CloseChan: true,
 				}
+			case Pipe:
+				var f *os.File
+				switch mode {
+				case parse.Read:
+					f = src.r
+				case parse.Write:
+					f = src.w
+				default:
+					cp.errorf("can only use < or > with pipes")
+				}
+				ec.ports[dst] = &Port{
+					File: f, Chan: make(chan Value),
+					CloseFile: false, CloseChan: true,
+				}
 			default:
 				srcMust.error("string or file", "%s", src.Kind())
 			}

@@ -91,7 +91,10 @@ var evalTests = []struct {
 		more{wantBytesOut: []byte("233\n")}},
 	// Redirections from File object.
 	{`fname=(mktemp elvXXXXXX); echo haha > $fname;
-	f=(fopen $fname); cat <$f; fclose $f`, strs(),
+	f=(fopen $fname); cat <$f; fclose $f; rm $fname`, strs(),
+		more{wantBytesOut: []byte("haha\n")}},
+	// Redirections from Pipe object.
+	{`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`, strs(),
 		more{wantBytesOut: []byte("haha\n")}},
 
 	// Compounding.
