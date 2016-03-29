@@ -44,6 +44,15 @@ func historyDownOrQuit(ed *Editor) {
 	}
 }
 
+func historySwitchToHistlist(ed *Editor) {
+	startHistlist(ed)
+	if ed.mode == ed.histlist {
+		ed.line = ""
+		ed.dot = 0
+		ed.histlist.changeFilter(ed.hist.prefix)
+	}
+}
+
 func historyDefault(ed *Editor) {
 	ed.acceptHistory()
 	ed.mode = &ed.insert

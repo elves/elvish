@@ -66,6 +66,7 @@ var builtins = []Builtin{
 	{"history-up", historyUp},
 	{"history-down", historyDown},
 	{"history-down-or-quit", historyDownOrQuit},
+	{"history-switch-to-histlist", historySwitchToHistlist},
 	{"history-default", historyDefault},
 
 	// History listing mode
@@ -161,6 +162,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{Up, 0}:     "history-up",
 		Key{Down, 0}:   "history-down-or-quit",
 		Key{'[', Ctrl}: "start-insert",
+		Key{'R', Ctrl}: "history-switch-to-histlist",
 		Default:        "history-default",
 	},
 	modeHistoryListing: map[Key]string{},
