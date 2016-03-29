@@ -287,8 +287,8 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 		ec.ports[dst].Close()
 
 		srcMust := ec.must(srcOp.Exec(ec), "redirection source", srcOp.Begin, srcOp.End)
-		src := string(srcMust.mustOneStr())
 		if sourceIsFd {
+			src := string(srcMust.mustOneStr())
 			if src == "-" {
 				// close
 				ec.ports[dst] = &Port{}
@@ -297,12 +297,23 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 				ec.ports[dst] = ec.ports[fd].Fork()
 			}
 		} else {
-			f, err := os.OpenFile(src, flag, defaultFileRedirPerm)
-			if err != nil {
-				ec.errorf("failed to open file %q: %s", src, err)
-			}
-			ec.ports[dst] = &Port{
-				File: f, Chan: make(chan Value), CloseFile: true, CloseChan: true,
+			switch src := srcMust.mustOne().(type) {
+			case String:
+				f, err := os.OpenFile(string(src), flag, defaultFileRedirPerm)
+				if err != nil {
+					ec.errorf("failed to open file %s: %s", src.Repr(NoPretty), err)
+				}
+				ec.ports[dst] = &Port{
+					File: f, Chan: make(chan Value),
+					CloseFile: true, CloseChan: true,
+				}
+			case File:
+				ec.ports[dst] = &Port{
+					File: src.inner, Chan: make(chan Value),
+					CloseFile: false, CloseChan: true,
+				}
+			default:
+				srcMust.error("string or file", "%s", src.Kind())
 			}
 		}
 	}

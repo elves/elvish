@@ -89,6 +89,10 @@ var evalTests = []struct {
 	// Redirections.
 	{"f=`mktemp elvXXXXXX`; echo 233 > $f; cat < $f; rm $f", strs(),
 		more{wantBytesOut: []byte("233\n")}},
+	// Redirections from File object.
+	{`fname=(mktemp elvXXXXXX); echo haha > $fname;
+	f=(fopen $fname); cat <$f; fclose $f`, strs(),
+		more{wantBytesOut: []byte("haha\n")}},
 
 	// Compounding.
 	{"put {fi,elvi}sh{1.0,1.1}",
