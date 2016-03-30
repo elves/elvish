@@ -320,9 +320,11 @@ func (ev *Evaler) Source(fname string) error {
 
 // Builtin returns the builtin namespace.
 func Builtin() Namespace {
-	return map[string]Variable(builtinNamespace)
+	return builtinNamespace
 }
 
+// ErrStoreUnconnected is thrown by ResolveVar when a shared: variable needs to
+// be resolved but the store is not connected.
 var ErrStoreUnconnected = errors.New("store unconnected")
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
@@ -363,16 +365,16 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 func (ec *EvalCtx) getLocal(name string) Variable {
 	i, err := strconv.Atoi(name)
 	if err == nil {
-		Logger.Println("positional variable", i)
-		Logger.Printf("EvalCtx=%p, args=%v", ec, ec.positionals)
+		// Logger.Println("positional variable", i)
+		// Logger.Printf("EvalCtx=%p, args=%v", ec, ec.positionals)
 		if i < 0 {
 			i += len(ec.positionals)
 		}
 		if i < 0 || i >= len(ec.positionals) {
-			Logger.Print("out of range")
+			// Logger.Print("out of range")
 			return nil
 		}
-		Logger.Print("found")
+		// Logger.Print("found")
 		return NewRoVariable(ec.positionals[i])
 	}
 	return ec.local[name]

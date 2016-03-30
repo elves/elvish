@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ErrRoVariable = errors.New("read-only; cannot be set")
+	ErrRoCannotBeSet = errors.New("read-only; cannot be set")
 )
 
 // Variable represents an elvish variable.
@@ -41,7 +41,7 @@ func NewRoVariable(v Value) Variable {
 }
 
 func (rv roVariable) Set(val Value) {
-	throw(ErrRoVariable)
+	throw(ErrRoCannotBeSet)
 }
 
 func (rv roVariable) Get() Value {
