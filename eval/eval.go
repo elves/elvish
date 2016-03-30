@@ -69,10 +69,6 @@ func (e *Evaler) searchPaths() []string {
 	return builtinNamespace["paths"].(*EnvPathList).get()
 }
 
-func (e *Evaler) AddModule(name string, ns Namespace) {
-	e.Modules[name] = ns
-}
-
 const (
 	outChanSize   = 32
 	outChanLeader = "▶ "

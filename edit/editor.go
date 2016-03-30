@@ -99,7 +99,7 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		ps1:    prompt,
 		rps1:   rprompt,
 	}
-	ev.AddModule("le", makeModule(ed))
+	ev.Modules["le"] = makeModule(ed)
 	return ed
 }
 
