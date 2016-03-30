@@ -25,7 +25,7 @@ func (pe *PosError) Pprint(srcname, errtype, src string) string {
 
 	buf := new(bytes.Buffer)
 	// Source and type of the error
-	fmt.Fprintf(buf, "\033[1m%s:%d:%d: \033[31m%s:", srcname, lineno+1, colno+1, errtype)
+	fmt.Fprintf(buf, "\033[1m%s:%d:%d: \033[31m%s: ", srcname, lineno+1, colno+1, errtype)
 	// Message
 	fmt.Fprintf(buf, "\033[m\033[1m%s\033[m\n", pe.msg())
 	// Affected line
