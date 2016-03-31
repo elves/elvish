@@ -298,11 +298,11 @@ func (nav *navigation) List(width, maxHeight int) *buffer {
 	b := renderNavColumn(nav.parent, wParent, maxHeight)
 
 	bCurrent := renderNavColumn(nav.current, wCurrent, maxHeight)
-	b.extendHorizontal(bCurrent, wParent, margin)
+	b.extendHorizontal(bCurrent, wParent+margin)
 
 	if wPreview > 0 {
 		bPreview := renderNavColumn(nav.dirPreview, wPreview, maxHeight)
-		b.extendHorizontal(bPreview, wParent+wCurrent+margin, margin)
+		b.extendHorizontal(bPreview, wParent+wCurrent+2*margin)
 	}
 
 	return b

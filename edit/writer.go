@@ -94,22 +94,19 @@ func makeSpacing(n int) []cell {
 	return s
 }
 
-// extendHorizontal extends b horizontally, appending each line in b2 to b,
-// preceeded by m margin. If b2 has more lines than b, the last len(b2) -
-// len(b) lines are first filled with paddings of width w.
-func (b *buffer) extendHorizontal(b2 *buffer, w, m int) {
+// extendHorizontal extends b horizontally. It pads each line in b to be at
+// least of width w and appends the corresponding line in b2 to it, making new
+// lines in b when b2 has more lines than b.
+func (b *buffer) extendHorizontal(b2 *buffer, w int) {
 	i := 0
-	margin := makeSpacing(m)
 	for ; i < len(b.cells) && i < len(b2.cells); i++ {
 		if w0 := lineWidth(b.cells[i]); w0 < w {
 			b.cells[i] = append(b.cells[i], makeSpacing(w-w0)...)
 		}
-		b.cells[i] = append(append(b.cells[i], margin...), b2.cells[i]...)
+		b.cells[i] = append(b.cells[i], b2.cells[i]...)
 	}
-	padding := makeSpacing(w + m)
 	for ; i < len(b2.cells); i++ {
-		row := make([]cell, 0, w+m+len(b2.cells[i]))
-		row = append(append(row, padding...), b2.cells[i]...)
+		row := append(makeSpacing(w), b2.cells[i]...)
 		b.cells = append(b.cells, row)
 	}
 }
