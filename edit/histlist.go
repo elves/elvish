@@ -24,10 +24,7 @@ func (hl *histlist) Len() int {
 
 func (hl *histlist) Show(i, width int) string {
 	entry := hl.filtered[i]
-	if i := strings.IndexRune(entry, '\n'); i != -1 {
-		entry = entry[:i] + "…"
-	}
-	return ForceWcWidth(entry, width)
+	return TrimEachLineWcWidth(entry, width)
 }
 
 func (hl *histlist) Filter(filter string) int {

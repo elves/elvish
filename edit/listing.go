@@ -1,6 +1,10 @@
 package edit
 
-import "unicode/utf8"
+import (
+	"container/list"
+	"strings"
+	"unicode/utf8"
+)
 
 // listing implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
@@ -9,7 +13,7 @@ type listing struct {
 	provider listingProvider
 	selected int
 	filter   string
-	height   int
+	pagesize int
 }
 
 type listingProvider interface {
@@ -48,15 +52,58 @@ func (l *listing) List(width, maxHeight int) *buffer {
 		b.writes(TrimWcWidth("(no result)", width), "")
 		return b
 	}
-	low, high := findWindow(n, l.selected, maxHeight)
-	l.height = high - low
+
+	// Collect the entries to show. We start from the selected entry and extend
+	// in both directions alternatingly. The entries are collected in a list.
+	low := l.selected
+	high := low
+	height := 0
+	var entries list.List
+	getEntry := func(i int) (string, int) {
+		s := l.provider.Show(i, width)
+		return s, strings.Count(s, "\n") + 1
+	}
+	// We start by extending high, so that the first entry to include is
+	// l.selected.
+	extendLow := false
+	for height < maxHeight && !(low == 0 && high == n) {
+		if (extendLow && low > 0) || high == n {
+			low--
+
+			s, h := getEntry(low)
+			height += h
+			if height > maxHeight {
+				// Elide leading lines.
+				lines := strings.Split(s, "\n")
+				s = strings.Join(lines[height-maxHeight:], "\n")
+				height = maxHeight
+			}
+			entries.PushFront(s)
+		} else {
+			s, h := getEntry(high)
+			height += h
+			if height > maxHeight {
+				// Elide trailing lines.
+				lines := strings.Split(s, "\n")
+				s = strings.Join(lines[:len(lines)-(height-maxHeight)], "\n")
+				height = maxHeight
+			}
+			entries.PushBack(s)
+
+			high++
+		}
+		extendLow = !extendLow
+	}
+
+	l.pagesize = high - low
 
 	var scrollbar *buffer
 	if low > 0 || high < n-1 {
-		scrollbar = renderScrollbar(n, low, high)
+		scrollbar = renderScrollbar(n, low, high, height)
 		width--
 	}
 
+	p := entries.Front()
 	for i := low; i < high; i++ {
 		if i > low {
 			b.newline()
@@ -65,7 +112,8 @@ func (l *listing) List(width, maxHeight int) *buffer {
 		if i == l.selected {
 			style = styleForSelected
 		}
-		b.writes(TrimWcWidth(l.provider.Show(i, width), width), style)
+		b.writes(p.Value.(string), style)
+		p = p.Next()
 	}
 	if scrollbar != nil {
 		b.extendHorizontal(scrollbar, width)
@@ -73,12 +121,12 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	return b
 }
 
-func renderScrollbar(n, low, high int) *buffer {
-	slow, shigh := findScrollInterval(n, low, high)
+func renderScrollbar(n, low, high, height int) *buffer {
+	slow, shigh := findScrollInterval(n, low, high, height)
 	// Logger.Printf("low = %d, high = %d, n = %d, slow = %d, shigh = %d", low, high, n, slow, shigh)
 	b := newBuffer(1)
-	for i := low; i < high; i++ {
-		if i > low {
+	for i := 0; i < height; i++ {
+		if i > 0 {
 			b.newline()
 		}
 		if slow <= i && i < shigh {
@@ -90,9 +138,9 @@ func renderScrollbar(n, low, high int) *buffer {
 	return b
 }
 
-func findScrollInterval(n, low, high int) (int, int) {
+func findScrollInterval(n, low, high, height int) (int, int) {
 	f := func(i int) int {
-		return int(float64(i)/float64(n)*float64(high-low)+0.5) + low
+		return int(float64(i)/float64(n)*float64(height) + 0.5)
 	}
 	scrollLow, scrollHigh := f(low), f(high)
 	if scrollLow == scrollHigh {
@@ -139,7 +187,7 @@ func (l *listing) pageUp() {
 	if n == 0 {
 		return
 	}
-	l.selected -= l.height
+	l.selected -= l.pagesize
 	if l.selected < 0 {
 		l.selected = 0
 	}
@@ -165,7 +213,7 @@ func (l *listing) pageDown() {
 	if n == 0 {
 		return
 	}
-	l.selected += l.height
+	l.selected += l.pagesize
 	if l.selected >= n {
 		l.selected = n - 1
 	}

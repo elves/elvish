@@ -304,7 +304,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 	comp.height = high - low
 	var scrollbar *buffer
 	if showScrollbar {
-		scrollbar = renderScrollbar(lines, low, high)
+		scrollbar = renderScrollbar(lines, low, high, high-low)
 	}
 	for i := low; i < high; i++ {
 		if i > low {

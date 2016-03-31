@@ -128,3 +128,11 @@ func ForceWcWidth(s string, width int) string {
 	}
 	return s + strings.Repeat(" ", width-w)
 }
+
+func TrimEachLineWcWidth(s string, width int) string {
+	lines := strings.Split(s, "\n")
+	for i := range lines {
+		lines[i] = TrimWcWidth(lines[i], width)
+	}
+	return strings.Join(lines, "\n")
+}
