@@ -149,22 +149,38 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 	// be safely modified.
 	return func(ec *EvalCtx) {
 		// Temporary assignment.
-		var saveVars []Variable
-		var saveVals []Value
 		if len(saveVarsOps) > 0 {
 			// There is a temporary assignment.
 			// Save variables.
+			var saveVars []Variable
+			var saveVals []Value
 			for _, op := range saveVarsOps {
 				saveVars = append(saveVars, op.Exec(ec)...)
 			}
 			for _, v := range saveVars {
-				saveVals = append(saveVals, v.Get())
-				Logger.Printf("saved %s = %s", v, v.Get())
+				val := v.Get()
+				saveVals = append(saveVals, val)
+				Logger.Printf("saved %s = %s", v, val)
 			}
 			// Do assignment.
 			for _, op := range assignmentOps {
 				op.Exec(ec)
 			}
+			// Defer variable restoration. Will be executed even if an error
+			// occurs when evaling other part of the form.
+			defer func() {
+				for i, v := range saveVars {
+					val := saveVals[i]
+					if val == nil {
+						// XXX Old value is nonexistent. We should delete the
+						// variable. However, since the compiler now doesn't delete
+						// it, we don't delete it in the evaler either.
+						val = String("")
+					}
+					v.Set(val)
+					Logger.Printf("restored %s = %s", v, val)
+				}
+			}()
 		}
 
 		// head
@@ -185,20 +201,6 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 
 		ec.begin, ec.end = begin, end
 		headFn.Call(ec, args)
-
-		if len(saveVars) > 0 {
-			// Restore variables.
-			for i, v := range saveVars {
-				val := saveVals[i]
-				if val == nil {
-					// XXX Old value is nonexistent. We should delete the
-					// variable. However, since the compiler now doesn't delete
-					// it, we don't delete it in the evaler either.
-					val = String("")
-				}
-				v.Set(val)
-			}
-		}
 	}
 }
 
