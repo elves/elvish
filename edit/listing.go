@@ -51,11 +51,10 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	low, high := findWindow(n, l.selected, maxHeight)
 	l.height = high - low
 
-	var scrollLow, scrollHigh int
-	showScrollbar := low > 0 || high < n-1
-	if showScrollbar {
-		scrollLow, scrollHigh = findScrollInterval(n, low, high)
-		Logger.Printf("low = %d, high = %d, n = %d, scrollLow = %d, scrollHigh = %d", low, high, n, scrollLow, scrollHigh)
+	var scrollbar *buffer
+	if low > 0 || high < n-1 {
+		scrollbar = renderScrollbar(n, low, high)
+		width--
 	}
 
 	for i := low; i < high; i++ {
@@ -66,15 +65,26 @@ func (l *listing) List(width, maxHeight int) *buffer {
 		if i == l.selected {
 			style = styleForSelected
 		}
-		if showScrollbar {
-			bar := "│"
-			if scrollLow <= i && i < scrollHigh {
-				bar = "▉"
-			}
-			b.writes(ForceWcWidth(l.provider.Show(i, width-1), width-1), style)
-			b.writes(bar, styleForScrollBar)
+		b.writes(TrimWcWidth(l.provider.Show(i, width), width), style)
+	}
+	if scrollbar != nil {
+		b.extendHorizontal(scrollbar, width)
+	}
+	return b
+}
+
+func renderScrollbar(n, low, high int) *buffer {
+	slow, shigh := findScrollInterval(n, low, high)
+	// Logger.Printf("low = %d, high = %d, n = %d, slow = %d, shigh = %d", low, high, n, slow, shigh)
+	b := newBuffer(1)
+	for i := low; i < high; i++ {
+		if i > low {
+			b.newline()
+		}
+		if slow <= i && i < shigh {
+			b.write('▉', styleForScrollBar)
 		} else {
-			b.writes(TrimWcWidth(l.provider.Show(i, width), width), style)
+			b.write('│', styleForScrollBar)
 		}
 	}
 	return b

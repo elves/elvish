@@ -296,16 +296,15 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 	showScrollbar := lines > maxHeight && width > 1
 	if showScrollbar && rightspare == 0 {
 		cols, lines, rightspare = findShape(width - 1)
-		rightspare++
 	}
 	comp.lines = lines
 
 	// Determine the window to show.
 	low, high := findWindow(lines, comp.selected%lines, maxHeight)
 	comp.height = high - low
-	var scrollLow, scrollHigh int
+	var scrollbar *buffer
 	if showScrollbar {
-		scrollLow, scrollHigh = findScrollInterval(lines, low, high)
+		scrollbar = renderScrollbar(lines, low, high)
 	}
 	for i := low; i < high; i++ {
 		if i > low {
@@ -330,15 +329,9 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 			}
 			b.writes(ForceWcWidth(text, colWidth), style)
 		}
-
-		if showScrollbar {
-			bar := "│"
-			if scrollLow <= i && i < scrollHigh {
-				bar = "▉"
-			}
-			b.writePadding(rightspare-1, "")
-			b.writes(bar, styleForScrollBar)
-		}
+	}
+	if showScrollbar {
+		b.extendHorizontal(scrollbar, width-1)
 	}
 	return b
 }
