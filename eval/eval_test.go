@@ -62,6 +62,9 @@ var evalTests = []struct {
 	{"@a=`put a b`; put $@a", strs("a", "b"), nomore},
 	{"{a,@b}=`put a b c`; put $@b", strs("b", "c"), nomore},
 	// {"di=[&]; di[a b]=`put a b`; put $di[a] $di[b]", strs("a", "b"), nomore},
+	// Temporary assignment.
+	{"a=alice b=bob; {a,@b}=(put amy ben) put $a $@b; put $a $b",
+		strs("amy", "ben", "alice", "bob"), nomore},
 
 	// Control structures.
 	// if

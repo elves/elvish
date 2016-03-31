@@ -92,6 +92,7 @@ func throwCompositeError(errors []Error) {
 }
 
 func (cp *compiler) form(n *parse.Form) OpFunc {
+	var saveVarsOps []LValuesOp
 	var assignmentOps []Op
 	if len(n.Assignments) > 0 {
 		assignmentOps = cp.assignmentOps(n.Assignments)
@@ -103,8 +104,10 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 				}
 			}
 		} else {
-			// Temporary assignment.
-			cp.errorpf(n.Assignments[0].Begin(), n.Assignments[len(n.Assignments)-1].End(), "temporary assignments not yet supported")
+			for _, a := range n.Assignments {
+				v, r := cp.lvaluesOp(a.Dst)
+				saveVarsOps = append(saveVarsOps, v, r)
+			}
 		}
 	}
 
@@ -145,6 +148,25 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
 	return func(ec *EvalCtx) {
+		// Temporary assignment.
+		var saveVars []Variable
+		var saveVals []Value
+		if len(saveVarsOps) > 0 {
+			// There is a temporary assignment.
+			// Save variables.
+			for _, op := range saveVarsOps {
+				saveVars = append(saveVars, op.Exec(ec)...)
+			}
+			for _, v := range saveVars {
+				saveVals = append(saveVals, v.Get())
+				Logger.Printf("saved %s = %s", v, v.Get())
+			}
+			// Do assignment.
+			for _, op := range assignmentOps {
+				op.Exec(ec)
+			}
+		}
+
 		// head
 		headValues := headOp.Exec(ec)
 		ec.must(headValues, "head of command", headOp.Begin, headOp.End).mustLen(1)
@@ -163,6 +185,20 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 
 		ec.begin, ec.end = begin, end
 		headFn.Call(ec, args)
+
+		if len(saveVars) > 0 {
+			// Restore variables.
+			for i, v := range saveVars {
+				val := saveVals[i]
+				if val == nil {
+					// XXX Old value is nonexistent. We should delete the
+					// variable. However, since the compiler now doesn't delete
+					// it, we don't delete it in the evaler either.
+					val = String("")
+				}
+				v.Set(val)
+			}
+		}
 	}
 }
 
