@@ -114,12 +114,12 @@ func init() {
 		&BuiltinFn{"prclose", WrapFn(prclose)},
 		&BuiltinFn{"pwclose", WrapFn(pwclose)},
 
+		&BuiltinFn{"sleep", WrapFn(sleep)},
+		&BuiltinFn{"exec", WrapFn(exec)},
 		&BuiltinFn{"exit", WrapFn(exit)},
 
-		&BuiltinFn{"-sleep", WrapFn(_sleep)},
 		&BuiltinFn{"-stack", WrapFn(_stack)},
 		&BuiltinFn{"-log", WrapFn(_log)},
-		&BuiltinFn{"-exec", WrapFn(_exec)},
 	}
 	for _, b := range builtinFns {
 		builtinNamespace[FnPrefix+b.Name] = NewRoVariable(b)
@@ -789,7 +789,7 @@ func fclose(ec *EvalCtx, f File)  { maybeThrow(f.inner.Close()) }
 func prclose(ec *EvalCtx, p Pipe) { maybeThrow(p.r.Close()) }
 func pwclose(ec *EvalCtx, p Pipe) { maybeThrow(p.w.Close()) }
 
-func _sleep(ec *EvalCtx, t float64) {
+func sleep(ec *EvalCtx, t float64) {
 	d := time.Duration(float64(time.Second) * t)
 	select {
 	case <-ec.intCh:
@@ -813,7 +813,7 @@ func _log(ec *EvalCtx, fname string) {
 	maybeThrow(util.SetOutputFile(fname))
 }
 
-func _exec(ec *EvalCtx, args ...string) {
+func exec(ec *EvalCtx, args ...string) {
 	if len(args) == 0 {
 		args = []string{"elvish"}
 	}
