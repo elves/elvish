@@ -114,6 +114,8 @@ func init() {
 		&BuiltinFn{"prclose", WrapFn(prclose)},
 		&BuiltinFn{"pwclose", WrapFn(pwclose)},
 
+		&BuiltinFn{"exit", WrapFn(exit)},
+
 		&BuiltinFn{"-sleep", WrapFn(_sleep)},
 		&BuiltinFn{"-stack", WrapFn(_stack)},
 		&BuiltinFn{"-log", WrapFn(_log)},
@@ -818,13 +820,34 @@ func _exec(ec *EvalCtx, args ...string) {
 	var err error
 	args[0], err = ec.Search(args[0])
 	maybeThrow(err)
-	err = ec.store.Close()
+
+	preExit(ec)
+
+	err = syscall.Exec(args[0], args, os.Environ())
+	maybeThrow(err)
+}
+
+func exit(ec *EvalCtx, args ...int) {
+	doexit := func(i int) {
+		preExit(ec)
+		os.Exit(i)
+	}
+	switch len(args) {
+	case 0:
+		doexit(0)
+	case 1:
+		doexit(args[0])
+	default:
+		throw(ErrArgs)
+	}
+}
+
+func preExit(ec *EvalCtx) {
+	err := ec.store.Close()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
 	if ec.Stub != nil {
 		ec.Stub.Terminate()
 	}
-	err = syscall.Exec(args[0], args, os.Environ())
-	maybeThrow(err)
 }
