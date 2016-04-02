@@ -22,9 +22,9 @@ func (hl *histlist) Len() int {
 	return len(hl.filtered)
 }
 
-func (hl *histlist) Show(i, width int) string {
+func (hl *histlist) Show(i, width int) styled {
 	entry := hl.filtered[i]
-	return TrimEachLineWcWidth(entry, width)
+	return unstyled(TrimEachLineWcWidth(entry, width))
 }
 
 func (hl *histlist) Filter(filter string) int {

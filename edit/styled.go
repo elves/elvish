@@ -8,6 +8,10 @@ type styled struct {
 	style string
 }
 
+func unstyled(s string) styled {
+	return styled{s, ""}
+}
+
 type styleds []styled
 
 func (s styleds) Len() int           { return len(s) }

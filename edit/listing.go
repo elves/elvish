@@ -18,7 +18,7 @@ type listing struct {
 
 type listingProvider interface {
 	Len() int
-	Show(i, w int) string
+	Show(i, w int) styled
 	Filter(filter string) int
 	Accept(i int, ed *Editor)
 	ModeTitle(int) string
@@ -56,12 +56,15 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	// Collect the entries to show. We start from the selected entry and extend
 	// in both directions alternatingly. The entries are collected in a list.
 	low := l.selected
+	if low == -1 {
+		low = 0
+	}
 	high := low
 	height := 0
 	var entries list.List
-	getEntry := func(i int) (string, int) {
+	getEntry := func(i int) (styled, int) {
 		s := l.provider.Show(i, width)
-		return s, strings.Count(s, "\n") + 1
+		return s, strings.Count(s.text, "\n") + 1
 	}
 	// We start by extending high, so that the first entry to include is
 	// l.selected.
@@ -74,8 +77,8 @@ func (l *listing) List(width, maxHeight int) *buffer {
 			height += h
 			if height > maxHeight {
 				// Elide leading lines.
-				lines := strings.Split(s, "\n")
-				s = strings.Join(lines[height-maxHeight:], "\n")
+				lines := strings.Split(s.text, "\n")
+				s.text = strings.Join(lines[height-maxHeight:], "\n")
 				height = maxHeight
 			}
 			entries.PushFront(s)
@@ -84,8 +87,8 @@ func (l *listing) List(width, maxHeight int) *buffer {
 			height += h
 			if height > maxHeight {
 				// Elide trailing lines.
-				lines := strings.Split(s, "\n")
-				s = strings.Join(lines[:len(lines)-(height-maxHeight)], "\n")
+				lines := strings.Split(s.text, "\n")
+				s.text = strings.Join(lines[:len(lines)-(height-maxHeight)], "\n")
 				height = maxHeight
 			}
 			entries.PushBack(s)
@@ -108,11 +111,11 @@ func (l *listing) List(width, maxHeight int) *buffer {
 		if i > low {
 			b.newline()
 		}
-		style := ""
+		s := p.Value.(styled)
 		if i == l.selected {
-			style = styleForSelected
+			s.style += styleForSelected
 		}
-		b.writes(p.Value.(string), style)
+		b.writes(s.text, s.style)
 		p = p.Next()
 	}
 	if scrollbar != nil {

@@ -26,7 +26,7 @@ func (b *bang) Len() int {
 	return len(b.filtered)
 }
 
-func (b *bang) Show(i, width int) string {
+func (b *bang) Show(i, width int) styled {
 	entry := b.filtered[i]
 	var head string
 	if entry.i == -1 {
@@ -36,7 +36,7 @@ func (b *bang) Show(i, width int) string {
 	} else {
 		head = fmt.Sprintf("%3d ", entry.i)
 	}
-	return ForceWcWidth(head+entry.s, width)
+	return unstyled(ForceWcWidth(head+entry.s, width))
 }
 
 func (b *bang) Filter(filter string) int {

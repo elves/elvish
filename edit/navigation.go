@@ -220,35 +220,6 @@ func (n *navigation) next() {
 	n.refresh()
 }
 
-// navColumn is a column in the navigation layout.
-type navColumn struct {
-	all      []styled
-	selected int
-	err      error
-}
-
-func newNavColumn(all []styled, sel func(int) bool) *navColumn {
-	nc := &navColumn{all, 0, nil}
-	nc.selected = -1
-	for i := range all {
-		if sel(i) {
-			nc.selected = i
-		}
-	}
-	return nc
-}
-
-func newErrNavColumn(err error) *navColumn {
-	return &navColumn{err: err}
-}
-
-func (nc *navColumn) selectedName() string {
-	if nc == nil || nc.selected == -1 {
-		return ""
-	}
-	return nc.all[nc.selected].text
-}
-
 func (n *navigation) loaddir(dir string) ([]styled, error) {
 	f, err := os.Open(dir)
 	if err != nil {
@@ -272,7 +243,6 @@ func (n *navigation) loaddir(dir string) ([]styled, error) {
 
 const (
 	navigationListingColMargin          = 1
-	navigationListingColPadding         = 1
 	navigationListingMinWidthForPadding = 5
 )
 
@@ -308,26 +278,63 @@ func (nav *navigation) List(width, maxHeight int) *buffer {
 	return b
 }
 
-func renderNavColumn(nc *navColumn, w, h int) *buffer {
-	b := newBuffer(w)
-	low, high := findWindow(len(nc.all), nc.selected, h)
-	for i := low; i < high; i++ {
-		if i > low {
-			b.newline()
-		}
-		text := nc.all[i].text
-		style := nc.all[i].style
-		if i == nc.selected {
-			style += styleForSelected
-		}
-		if w >= navigationListingMinWidthForPadding {
-			padding := navigationListingColPadding
-			b.writePadding(padding, style)
-			b.writes(ForceWcWidth(text, w-2), style)
-			b.writePadding(padding, style)
-		} else {
-			b.writes(ForceWcWidth(text, w), style)
+// navColumn is a column in the navigation layout.
+type navColumn struct {
+	listing
+	all []styled
+	// selected int
+	err error
+}
+
+func newNavColumn(all []styled, sel func(int) bool) *navColumn {
+	nc := &navColumn{listing{}, all, nil}
+	nc.provider = nc
+	nc.selected = -1
+	for i := range all {
+		if sel(i) {
+			nc.selected = i
 		}
 	}
-	return b
+	return nc
+}
+
+func newErrNavColumn(err error) *navColumn {
+	return &navColumn{err: err}
+}
+
+func (nc *navColumn) Len() int {
+	return len(nc.all)
+}
+
+func (nc *navColumn) Show(i, w int) styled {
+	s := nc.all[i]
+	if w >= navigationListingMinWidthForPadding {
+		return styled{" " + ForceWcWidth(s.text, w-2), s.style}
+	}
+	return styled{ForceWcWidth(s.text, w), s.style}
+}
+
+func (nc *navColumn) Filter(filter string) int {
+	// TODO
+	return 0
+}
+
+func (nc *navColumn) Accept(i int, ed *Editor) {
+	// TODO
+}
+
+func (nc *navColumn) ModeTitle(i int) string {
+	// Not used
+	return ""
+}
+
+func (nc *navColumn) selectedName() string {
+	if nc == nil || nc.selected == -1 {
+		return ""
+	}
+	return nc.all[nc.selected].text
+}
+
+func renderNavColumn(nc *navColumn, w, h int) *buffer {
+	return nc.List(w, h)
 }

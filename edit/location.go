@@ -20,9 +20,9 @@ func (loc *location) Len() int {
 	return len(loc.candidates)
 }
 
-func (loc *location) Show(i, width int) string {
+func (loc *location) Show(i, width int) styled {
 	cand := loc.candidates[i]
-	return TrimWcWidth(fmt.Sprintf("%4.0f %s", cand.Score, parse.Quote(cand.Path)), width)
+	return unstyled(TrimWcWidth(fmt.Sprintf("%4.0f %s", cand.Score, parse.Quote(cand.Path)), width))
 }
 
 func (loc *location) Filter(filter string) int {
