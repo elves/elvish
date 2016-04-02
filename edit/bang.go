@@ -68,7 +68,7 @@ func (b *bang) Accept(i int, ed *Editor) {
 }
 
 func (b *bang) ModeTitle(i int) string {
-	return " BANG "
+	return " LASTCMD "
 }
 
 var wordSep = regexp.MustCompile("[ \t]+")
