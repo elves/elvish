@@ -23,8 +23,12 @@ func (*navigation) Mode() ModeType {
 	return modeNavigation
 }
 
-func (*navigation) ModeLine(width int) *buffer {
-	return makeModeLine(" NAVIGATING ", width)
+func (n *navigation) ModeLine(width int) *buffer {
+	s := " NAVIGATING "
+	if n.showHidden {
+		s += "(show hidden) "
+	}
+	return makeModeLine(s, width)
 }
 
 func startNav(ed *Editor) {
