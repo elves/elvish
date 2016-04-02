@@ -24,6 +24,10 @@ type listingProvider interface {
 	ModeTitle(int) string
 }
 
+type Placeholderer interface {
+	Placeholder() string
+}
+
 func newListing(t ModeType, p listingProvider) listing {
 	l := listing{t, p, 0, "", 0}
 	l.changeFilter("")
@@ -49,7 +53,13 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	n := l.provider.Len()
 	b := newBuffer(width)
 	if n == 0 {
-		b.writes(TrimWcWidth("(no result)", width), "")
+		var ph string
+		if pher, ok := l.provider.(Placeholderer); ok {
+			ph = pher.Placeholder()
+		} else {
+			ph = "(no result)"
+		}
+		b.writes(TrimWcWidth(ph, width), "")
 		return b
 	}
 

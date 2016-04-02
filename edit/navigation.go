@@ -291,7 +291,7 @@ type navColumn struct {
 }
 
 func newNavColumn(all []styled, sel func(int) bool) *navColumn {
-	nc := &navColumn{listing{}, all, nil}
+	nc := &navColumn{all: all}
 	nc.provider = nc
 	nc.selected = -1
 	for i := range all {
@@ -303,7 +303,16 @@ func newNavColumn(all []styled, sel func(int) bool) *navColumn {
 }
 
 func newErrNavColumn(err error) *navColumn {
-	return &navColumn{err: err}
+	nc := &navColumn{err: err}
+	nc.provider = nc
+	return nc
+}
+
+func (nc *navColumn) Placeholder() string {
+	if nc.err != nil {
+		return nc.err.Error()
+	}
+	return ""
 }
 
 func (nc *navColumn) Len() int {
