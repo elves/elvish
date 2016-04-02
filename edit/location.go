@@ -22,7 +22,7 @@ func (loc *location) Len() int {
 
 func (loc *location) Show(i, width int) string {
 	cand := loc.candidates[i]
-	return fmt.Sprintf("%4.0f %s", cand.Score, parse.Quote(cand.Path))
+	return TrimWcWidth(fmt.Sprintf("%4.0f %s", cand.Score, parse.Quote(cand.Path)), width)
 }
 
 func (loc *location) Filter(filter string) int {
