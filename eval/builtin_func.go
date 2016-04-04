@@ -3,6 +3,7 @@ package eval
 // Builtin functions.
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -59,6 +60,9 @@ func init() {
 
 		&BuiltinFn{"put", put},
 		&BuiltinFn{"unpack", WrapFn(unpack)},
+
+		&BuiltinFn{"++", WrapFn(join)},
+		&BuiltinFn{"//", WrapFn(split)},
 
 		&BuiltinFn{"to-json", WrapFn(toJSON)},
 		&BuiltinFn{"from-json", WrapFn(fromJSON)},
@@ -139,9 +143,10 @@ var (
 )
 
 var (
-	evalCtxType = reflect.TypeOf((*EvalCtx)(nil))
-	valueType   = reflect.TypeOf((*Value)(nil)).Elem()
-	iterateType = reflect.TypeOf((func(func(Value)))(nil))
+	evalCtxType     = reflect.TypeOf((*EvalCtx)(nil))
+	valueType       = reflect.TypeOf((*Value)(nil)).Elem()
+	iterateType     = reflect.TypeOf((func(func(Value)))(nil))
+	stringValueType = reflect.TypeOf(String(""))
 )
 
 // WrapFn wraps an inner function into one suitable as a builtin function. It
@@ -244,7 +249,11 @@ func convertArg(arg Value, wantType reflect.Type) (reflect.Value, error) {
 
 	switch wantType.Kind() {
 	case reflect.String:
-		converted = ToString(arg)
+		if wantType == stringValueType {
+			converted = String(ToString(arg))
+		} else {
+			converted = ToString(arg)
+		}
 	case reflect.Int:
 		converted, err = toInt(arg)
 	case reflect.Float64:
@@ -350,6 +359,33 @@ func unpack(ec *EvalCtx, iterate func(func(Value))) {
 			return true
 		})
 	})
+}
+
+// join joins all input strings with a delimiter.
+func join(ec *EvalCtx, sep String, iterate func(func(Value))) {
+	var buf bytes.Buffer
+	iterate(func(v Value) {
+		if s, ok := v.(String); ok {
+			if buf.Len() > 0 {
+				buf.WriteString(string(sep))
+			}
+			buf.WriteString(string(s))
+		} else {
+			throwf("join wants string input, got %s", v.Kind())
+		}
+	})
+	out := ec.ports[1].Chan
+	out <- String(buf.String())
+}
+
+// split splits an argument strings by a delimiter and writes all pieces.
+// TODO: make sep an option. (`split $s &sep=:` instead of `split $s :`)
+func split(ec *EvalCtx, s, sep String) {
+	out := ec.ports[1].Chan
+	parts := strings.Split(string(s), string(sep))
+	for _, p := range parts {
+		out <- String(p)
+	}
 }
 
 // toJSON converts a stream of Value's to JSON data.
