@@ -46,7 +46,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
   ![history](https://raw.githubusercontent.com/elves/images/master/history.png)
 
-* Press Tab to start completion. Use arrow key and Tab to select the candidate;  press Enter, or just continue typing to accept. To cancel, press Enter.
+* Press Tab to start completion. Use arrow key and Tab to select the candidate;  press Enter, or just continue typing to accept. To cancel, press Escape.
 
   ![tab completion](https://raw.githubusercontent.com/elves/images/master/completion.png)
 
