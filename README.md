@@ -50,7 +50,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
   ![tab completion](https://raw.githubusercontent.com/elves/images/master/completion.png)
 
-* Press Ctrl-N to start navigation mode. Press Ctrl-H to show hidden files; press again to hide. Likewise, pressing Escape gets you back to the default (insert) mode.
+* Press Ctrl-N to start navigation mode. Press Ctrl-H to show hidden files; press again to hide. Press tab to append selected filename to your command. Likewise, pressing Escape gets you back to the default (insert) mode.
 
   ![navigation mode](https://raw.githubusercontent.com/elves/images/master/navigation.png)
 
