@@ -6,6 +6,7 @@ import (
 	"os"
 	"syscall"
 
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
 
@@ -25,7 +26,7 @@ func (ExternalCmd) Kind() string {
 }
 
 func (e ExternalCmd) Repr(int) string {
-	return "<external " + e.Name + " >"
+	return "<external " + parse.Quote(e.Name) + ">"
 }
 
 // Call calls an external command.

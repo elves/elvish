@@ -36,7 +36,7 @@ func (*BuiltinFn) Kind() string {
 }
 
 func (b *BuiltinFn) Repr(int) string {
-	return "$" + FnPrefix + b.Name
+	return "<builtin " + b.Name + ">"
 }
 
 // Call calls a builtin function.
@@ -102,6 +102,8 @@ func init() {
 		&BuiltinFn{"==", eq},
 		&BuiltinFn{"!=", WrapFn(noteq)},
 		&BuiltinFn{"deepeq", deepeq},
+
+		&BuiltinFn{"resolve", WrapFn(resolveFn)},
 
 		&BuiltinFn{"take", WrapFn(take)},
 
@@ -711,6 +713,11 @@ func deepeq(ec *EvalCtx, args []Value) {
 		}
 	}
 	out <- Bool(true)
+}
+
+func resolveFn(ec *EvalCtx, cmd String) {
+	out := ec.ports[1].Chan
+	out <- resolve(string(cmd), ec)
 }
 
 func take(ec *EvalCtx, n int, iterate func(func(Value))) {
