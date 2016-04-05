@@ -799,13 +799,13 @@ func (pn *Primary) variable(ps *parser) {
 // The following are allowed in variable names:
 // * Anything beyond ASCII that is printable
 // * Letters and numbers
-// * The symbols "-_:"
+// * The symbols "-_:&"
 func allowedInVariableName(r rune) bool {
 	return (r >= 0x80 && unicode.IsPrint(r)) ||
 		('0' <= r && r <= '9') ||
 		('a' <= r && r <= 'z') ||
 		('A' <= r && r <= 'Z') ||
-		r == '-' || r == '_' || r == ':'
+		r == '-' || r == '_' || r == ':' || r == '&'
 }
 
 func (pn *Primary) wildcard(ps *parser) {
@@ -984,10 +984,10 @@ func (pn *Primary) bareword(ps *parser) {
 }
 
 // The following are allowed in barewords:
-// * Anything allowed in variable names
+// * Anything allowed in variable names, except &
 // * The symbols "%+,./=@~!"
 func allowedInBareword(r rune) bool {
-	return allowedInVariableName(r) ||
+	return (r != '&' && allowedInVariableName(r)) ||
 		r == '%' || r == '+' || r == ',' || r == '.' ||
 		r == '/' || r == '=' || r == '@' || r == '~' || r == '!'
 }
