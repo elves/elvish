@@ -44,6 +44,14 @@ func navDown(ed *Editor) {
 	ed.navigation.next()
 }
 
+func navPageUp(ed *Editor) {
+	ed.navigation.current.pageUp()
+}
+
+func navPageDown(ed *Editor) {
+	ed.navigation.current.pageDown()
+}
+
 func navLeft(ed *Editor) {
 	ed.navigation.ascend()
 }
