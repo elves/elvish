@@ -63,6 +63,8 @@ func init() {
 
 		&BuiltinFn{"++", WrapFn(join)},
 		&BuiltinFn{"//", WrapFn(split)},
+		&BuiltinFn{"has-prefix", WrapFn(hasPrefix)},
+		&BuiltinFn{"has-suffix", WrapFn(hasSuffix)},
 
 		&BuiltinFn{"to-json", WrapFn(toJSON)},
 		&BuiltinFn{"from-json", WrapFn(fromJSON)},
@@ -387,6 +389,18 @@ func split(ec *EvalCtx, s, sep String) {
 	parts := strings.Split(string(s), string(sep))
 	for _, p := range parts {
 		out <- String(p)
+	}
+}
+
+func hasPrefix(ec *EvalCtx, s, prefix String) {
+	if !strings.HasPrefix(string(s), string(prefix)) {
+		throw(ErrFalse)
+	}
+}
+
+func hasSuffix(ec *EvalCtx, s, suffix String) {
+	if !strings.HasSuffix(string(s), string(suffix)) {
+		throw(ErrFalse)
 	}
 }
 
