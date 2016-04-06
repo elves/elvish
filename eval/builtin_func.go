@@ -61,8 +61,8 @@ func init() {
 		&BuiltinFn{"put", put},
 		&BuiltinFn{"unpack", WrapFn(unpack)},
 
-		&BuiltinFn{"++", WrapFn(join)},
-		&BuiltinFn{"//", WrapFn(split)},
+		&BuiltinFn{"joins", WrapFn(joins)},
+		&BuiltinFn{"splits", WrapFn(splits)},
 		&BuiltinFn{"has-prefix", WrapFn(hasPrefix)},
 		&BuiltinFn{"has-suffix", WrapFn(hasSuffix)},
 
@@ -365,8 +365,8 @@ func unpack(ec *EvalCtx, iterate func(func(Value))) {
 	})
 }
 
-// join joins all input strings with a delimiter.
-func join(ec *EvalCtx, sep String, iterate func(func(Value))) {
+// joins joins all input strings with a delimiter.
+func joins(ec *EvalCtx, sep String, iterate func(func(Value))) {
 	var buf bytes.Buffer
 	iterate(func(v Value) {
 		if s, ok := v.(String); ok {
@@ -382,9 +382,9 @@ func join(ec *EvalCtx, sep String, iterate func(func(Value))) {
 	out <- String(buf.String())
 }
 
-// split splits an argument strings by a delimiter and writes all pieces.
+// splits splits an argument strings by a delimiter and writes all pieces.
 // TODO: make sep an option. (`split $s &sep=:` instead of `split $s :`)
-func split(ec *EvalCtx, s, sep String) {
+func splits(ec *EvalCtx, s, sep String) {
 	out := ec.ports[1].Chan
 	parts := strings.Split(string(s), string(sep))
 	for _, p := range parts {
