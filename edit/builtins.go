@@ -34,6 +34,7 @@ var builtins = []Builtin{
 	{"smart-enter", smartEnter},
 	{"return-eof", returnEOF},
 	{"toggle-quote-paste", toggleQuotePaste},
+	{"end-of-history", endOfHistory},
 	{"default-command", defaultCommand},
 	{"insert-default", defaultInsert},
 
@@ -114,6 +115,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		// Key{'[', Ctrl}: "startCommand",
 		Key{Tab, 0}:    "compl-prefix-or-start-compl",
 		Key{Up, 0}:     "start-history",
+		Key{Down, 0}:   "end-of-history",
 		Key{'N', Ctrl}: "start-nav",
 		Key{'R', Ctrl}: "start-histlist",
 		Key{',', Alt}:  "start-bang",
@@ -221,4 +223,8 @@ const (
 
 func redraw(ed *Editor) {
 	ed.refresh(true, true)
+}
+
+func endOfHistory(ed *Editor) {
+	ed.notify("End of history")
 }
