@@ -35,9 +35,8 @@ func QuoteAs(s string, q PrimaryType) (string, PrimaryType) {
 	// Keep track of whether it is a valid bareword.
 	bare := s[0] != '~'
 	for _, r := range s {
-		if !unicode.IsPrint(r) && r != '\n' {
-			// Contains unprintable character that is not a newline. Force
-			// double quote.
+		if !unicode.IsPrint(r) {
+			// Contains unprintable character; force double quote.
 			return quoteDouble(s), DoubleQuoted
 		}
 		if !allowedInBareword(r) {
@@ -82,9 +81,10 @@ func quoteDouble(s string) string {
 	var buf bytes.Buffer
 	buf.WriteByte('"')
 	for _, r := range s {
-		if r == '\\' || r == '"' {
+		if e, ok := doubleUnescape[r]; ok {
+			// Takes care of " and \ as well.
 			buf.WriteByte('\\')
-			buf.WriteRune(r)
+			buf.WriteRune(e)
 		} else if !unicode.IsPrint(r) {
 			buf.WriteByte('\\')
 			if r <= 0xff {

@@ -768,6 +768,14 @@ var doubleEscape = map[rune]rune{
 	'e': '\033',
 }
 
+var doubleUnescape = map[rune]rune{}
+
+func init() {
+	for k, v := range doubleEscape {
+		doubleUnescape[v] = k
+	}
+}
+
 func hexToDigit(r rune) (rune, bool) {
 	switch {
 	case '0' <= r && r <= '9':
