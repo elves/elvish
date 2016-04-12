@@ -30,6 +30,7 @@ var (
 	dbname     = flag.String("db", "", "path to the database")
 	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	help       = flag.Bool("help", false, "show usage help and quit")
+	cmd        = flag.Bool("c", false, "take first argument as a command to execute")
 )
 
 func usage() {
@@ -94,7 +95,11 @@ func Main() {
 	}
 
 	if len(args) == 1 {
-		script(ev, args[0])
+		if *cmd {
+			ev.SourceText(args[0])
+		} else {
+			script(ev, args[0])
+		}
 	} else if !sys.IsATTY(0) {
 		script(ev, "/dev/stdin")
 	} else {
