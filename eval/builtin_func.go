@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"math/rand"
 	"os"
@@ -54,6 +55,7 @@ func init() {
 		&BuiltinFn{"println", WrapFn(println)},
 		&BuiltinFn{"pprint", pprint},
 
+		&BuiltinFn{"slurp", WrapFn(slurp)},
 		&BuiltinFn{"into-lines", WrapFn(intoLines)},
 
 		&BuiltinFn{"rat", WrapFn(ratFn)},
@@ -330,6 +332,15 @@ func pprint(ec *EvalCtx, args []Value) {
 		out.WriteString(arg.Repr(0))
 		out.WriteString("\n")
 	}
+}
+
+func slurp(ec *EvalCtx) {
+	in := ec.ports[0].File
+	out := ec.ports[1].Chan
+
+	all, err := ioutil.ReadAll(in)
+	maybeThrow(err)
+	out <- String(string(all))
 }
 
 func intoLines(ec *EvalCtx, iterate func(func(Value))) {
