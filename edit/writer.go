@@ -510,7 +510,8 @@ tokens:
 	// Combine buffers (reusing bufLine)
 	buf = bufLine
 	buf.extend(bufMode, mode == modeLocation || mode == modeHistoryListing ||
-		(mode == modeCompletion && es.completion.filtering))
+		(mode == modeCompletion && es.completion.filtering) ||
+		(mode == modeNavigation && es.navigation.filtering))
 	buf.extend(bufTips, false)
 	buf.extend(bufListing, false)
 

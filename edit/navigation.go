@@ -4,6 +4,8 @@ import (
 	"errors"
 	"os"
 	"path"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
 )
@@ -17,6 +19,8 @@ type navigation struct {
 	parent     *navColumn
 	dirPreview *navColumn
 	showHidden bool
+	filtering  bool
+	filter     string
 }
 
 func (*navigation) Mode() ModeType {
@@ -28,7 +32,12 @@ func (n *navigation) ModeLine(width int) *buffer {
 	if n.showHidden {
 		s += "(show hidden) "
 	}
-	return makeModeLine(s, width)
+	b := newBuffer(width)
+	b.writes(TrimWcWidth(s, width), styleForMode)
+	b.writes(" ", "")
+	b.writes(n.filter, styleForFilter)
+	b.dot = b.cursor()
+	return b
 }
 
 func startNav(ed *Editor) {
@@ -65,13 +74,28 @@ func navTriggerShowHidden(ed *Editor) {
 	ed.navigation.refresh()
 }
 
+func navTriggerFilter(ed *Editor) {
+	ed.navigation.filtering = !ed.navigation.filtering
+}
+
 func navInsertSelected(ed *Editor) {
 	ed.insertAtDot(parse.Quote(ed.navigation.current.selectedName()) + " ")
 }
 
 func navigationDefault(ed *Editor) {
-	// Use key binding for insert mode without exiting navigation mode.
-	if f, ok := keyBindings[modeInsert][ed.lastKey]; ok {
+	// Use key binding for insert mode without exiting nigation mode.
+	k := ed.lastKey
+	n := &ed.navigation
+	if n.filtering && likeChar(k) {
+		n.filter += k.String()
+		n.refreshCurrent()
+	} else if n.filtering && k == (Key{Backspace, 0}) {
+		_, size := utf8.DecodeLastRuneInString(n.filter)
+		if size > 0 {
+			n.filter = n.filter[:len(n.filter)-size]
+			n.refreshCurrent()
+		}
+	} else if f, ok := keyBindings[modeInsert][k]; ok {
 		f.Call(ed)
 	} else {
 		keyBindings[modeInsert][Default].Call(ed)
@@ -93,8 +117,8 @@ func initNavigation(n *navigation) {
 }
 
 func (n *navigation) maintainSelected(name string) {
-	n.current.selected = -1
-	for i, s := range n.current.all {
+	n.current.selected = 0
+	for i, s := range n.current.candidates {
 		if s.text > name {
 			break
 		}
@@ -114,6 +138,8 @@ func (n *navigation) refreshCurrent() {
 	n.current = newNavColumn(all, func(i int) bool {
 		return i == 0 || all[i].text <= selectedName
 	})
+	n.current.changeFilter(n.filter)
+	n.maintainSelected(selectedName)
 }
 
 func (n *navigation) refreshParent() {
@@ -191,6 +217,7 @@ func (n *navigation) ascend() error {
 	if err != nil {
 		return err
 	}
+	n.filter = ""
 	n.refresh()
 	n.maintainSelected(name)
 	// XXX Refresh dir preview again. We should perhaps not have used refresh
@@ -210,6 +237,7 @@ func (n *navigation) descend() error {
 	if err != nil {
 		return err
 	}
+	n.filter = ""
 	n.current.selected = -1
 	n.refresh()
 	n.refreshDirPreview()
@@ -226,7 +254,7 @@ func (n *navigation) prev() {
 
 // next selects the next file.
 func (n *navigation) next() {
-	if n.current.selected != -1 && n.current.selected < len(n.current.all)-1 {
+	if n.current.selected != -1 && n.current.selected < len(n.current.candidates)-1 {
 		n.current.selected++
 	}
 	n.refresh()
@@ -293,13 +321,14 @@ func (nav *navigation) List(width, maxHeight int) *buffer {
 // navColumn is a column in the navigation layout.
 type navColumn struct {
 	listing
-	all []styled
+	all        []styled
+	candidates []styled
 	// selected int
 	err error
 }
 
 func newNavColumn(all []styled, sel func(int) bool) *navColumn {
-	nc := &navColumn{all: all}
+	nc := &navColumn{all: all, candidates: all}
 	nc.provider = nc
 	nc.selected = -1
 	for i := range all {
@@ -324,11 +353,11 @@ func (nc *navColumn) Placeholder() string {
 }
 
 func (nc *navColumn) Len() int {
-	return len(nc.all)
+	return len(nc.candidates)
 }
 
 func (nc *navColumn) Show(i, w int) styled {
-	s := nc.all[i]
+	s := nc.candidates[i]
 	if w >= navigationListingMinWidthForPadding {
 		return styled{" " + ForceWcWidth(s.text, w-2), s.style}
 	}
@@ -336,7 +365,12 @@ func (nc *navColumn) Show(i, w int) styled {
 }
 
 func (nc *navColumn) Filter(filter string) int {
-	// TODO
+	nc.candidates = nc.candidates[:0]
+	for _, s := range nc.all {
+		if strings.Contains(s.text, filter) {
+			nc.candidates = append(nc.candidates, s)
+		}
+	}
 	return 0
 }
 
@@ -350,10 +384,10 @@ func (nc *navColumn) ModeTitle(i int) string {
 }
 
 func (nc *navColumn) selectedName() string {
-	if nc == nil || nc.selected == -1 {
+	if nc == nil || nc.selected == -1 || nc.selected >= len(nc.candidates) {
 		return ""
 	}
-	return nc.all[nc.selected].text
+	return nc.candidates[nc.selected].text
 }
 
 func renderNavColumn(nc *navColumn, w, h int) *buffer {

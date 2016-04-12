@@ -61,6 +61,7 @@ var builtins = []Builtin{
 	{"nav-left", navLeft},
 	{"nav-right", navRight},
 	{"nav-trigger-shown-hidden", navTriggerShowHidden},
+	{"nav-trigger-filter", navTriggerFilter},
 	{"nav-insert-selected", navInsertSelected},
 	{"navigation-default", navigationDefault},
 
@@ -161,6 +162,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{Right, 0}:    "nav-right",
 		Key{Tab, 0}:      "nav-insert-selected",
 		Key{'H', Ctrl}:   "nav-trigger-shown-hidden",
+		Key{'F', Ctrl}:   "nav-trigger-filter",
 		Key{'[', Ctrl}:   "start-insert",
 		Default:          "navigation-default",
 	},
