@@ -217,6 +217,7 @@ func (n *navigation) ascend() error {
 	if err != nil {
 		return err
 	}
+	n.filter = ""
 	n.refresh()
 	n.maintainSelected(name)
 	// XXX Refresh dir preview again. We should perhaps not have used refresh
@@ -236,6 +237,7 @@ func (n *navigation) descend() error {
 	if err != nil {
 		return err
 	}
+	n.filter = ""
 	n.current.selected = -1
 	n.refresh()
 	n.refreshDirPreview()
