@@ -226,7 +226,7 @@ func (n *navigation) prev() {
 
 // next selects the next file.
 func (n *navigation) next() {
-	if n.current.selected != -1 && n.current.selected < len(n.current.all)-1 {
+	if n.current.selected != -1 && n.current.selected < len(n.current.candidates)-1 {
 		n.current.selected++
 	}
 	n.refresh()
