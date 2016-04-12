@@ -4,8 +4,8 @@ import (
 	"errors"
 	"os"
 	"path"
-	"unicode/utf8"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
 )
@@ -319,7 +319,7 @@ func (nav *navigation) List(width, maxHeight int) *buffer {
 // navColumn is a column in the navigation layout.
 type navColumn struct {
 	listing
-	all []styled
+	all        []styled
 	candidates []styled
 	// selected int
 	err error
