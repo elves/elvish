@@ -13,7 +13,7 @@ var reprTests = []struct {
 	want string
 }{
 	{String("233"), "233"},
-	{String("a\nb"), "'a\nb'"},
+	{String("a\nb"), `"a\nb"`},
 	{String("foo bar"), "'foo bar'"},
 	{String("a\x00b"), `"a\x00b"`},
 	{Bool(true), "$true"},
