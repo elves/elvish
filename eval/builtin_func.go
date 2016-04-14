@@ -674,6 +674,9 @@ func randFn(ec *EvalCtx) {
 }
 
 func randint(ec *EvalCtx, low, high int) {
+	if low >= high {
+		throw(ErrArgs)
+	}
 	out := ec.ports[1].Chan
 	i := low + rand.Intn(high-low)
 	out <- String(strconv.Itoa(i))
