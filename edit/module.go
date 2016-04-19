@@ -38,6 +38,8 @@ func makeModule(ed *Editor) eval.Namespace {
 	ns["prompt"] = PromptVariable{&ed.ps1}
 	ns["rprompt"] = PromptVariable{&ed.rps1}
 
+	ns["abbr"] = eval.NewRoVariable(eval.MapStringString(ed.abbreviations))
+
 	return ns
 }
 

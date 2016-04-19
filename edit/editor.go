@@ -32,9 +32,10 @@ type Editor struct {
 	evaler *eval.Evaler
 	cmdSeq int
 
-	ps1        Prompt
-	rps1       Prompt
-	completers map[string]ArgCompleter
+	ps1           Prompt
+	rps1          Prompt
+	completers    map[string]ArgCompleter
+	abbreviations map[string]string
 
 	editorState
 }
@@ -98,6 +99,8 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		cmdSeq: seq,
 		ps1:    prompt,
 		rps1:   rprompt,
+
+		abbreviations: make(map[string]string),
 	}
 	ev.Modules["le"] = makeModule(ed)
 	return ed
@@ -384,8 +387,14 @@ MainLoop:
 				fn = keyBinding[Default]
 			}
 
+			ed.insert.insertedLiteral = false
 			ed.lastKey = k
 			fn.Call(ed)
+			if ed.insert.insertedLiteral {
+				ed.insert.literalInserts++
+			} else {
+				ed.insert.literalInserts = 0
+			}
 			act := ed.nextAction
 			ed.nextAction = action{}
 

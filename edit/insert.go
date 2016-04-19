@@ -13,6 +13,11 @@ import (
 
 type insert struct {
 	quotePaste bool
+	// The number of consecutive key inserts. Used for abbreviation expansion.
+	literalInserts int
+	// Indicates whether a key was inserted (via insert-default). A hack for
+	// maintaining the inserts field.
+	insertedLiteral bool
 }
 
 func (*insert) Mode() ModeType {
@@ -245,6 +250,17 @@ func defaultInsert(ed *Editor) {
 	k := ed.lastKey
 	if likeChar(k) {
 		insertKey(ed)
+		// Match abbreviations.
+		literals := ed.line[ed.dot-ed.insert.literalInserts-1 : ed.dot]
+		for abbr, full := range ed.abbreviations {
+			if strings.HasSuffix(literals, abbr) {
+				ed.line = ed.line[:ed.dot-len(abbr)] + full + ed.line[ed.dot:]
+				ed.dot += len(full) - len(abbr)
+				return
+			}
+		}
+		// No match.
+		ed.insert.insertedLiteral = true
 	} else {
 		ed.notify("Unbound: %s", k)
 	}
