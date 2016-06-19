@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 	"unicode/utf8"
-
-	"github.com/elves/elvish/util"
 )
 
 // Completion subsystem.
@@ -21,7 +19,7 @@ type completion struct {
 	filter     string
 	candidates []*candidate
 	selected   int
-	lines      int
+	firstShown int
 	height     int
 }
 
@@ -57,22 +55,14 @@ func complDown(ed *Editor) {
 	ed.completion.next(false)
 }
 
-func complPageUp(ed *Editor) {
-	ed.completion.pageUp()
-}
-
-func complPageDown(ed *Editor) {
-	ed.completion.pageDown()
-}
-
 func complLeft(ed *Editor) {
-	if c := ed.completion.selected - ed.completion.lines; c >= 0 {
+	if c := ed.completion.selected - ed.completion.height; c >= 0 {
 		ed.completion.selected = c
 	}
 }
 
 func complRight(ed *Editor) {
-	if c := ed.completion.selected + ed.completion.lines; c < len(ed.completion.candidates) {
+	if c := ed.completion.selected + ed.completion.height; c < len(ed.completion.candidates) {
 		ed.completion.selected = c
 	}
 }
@@ -157,31 +147,6 @@ func (c *completion) next(cycle bool) {
 	}
 }
 
-func (c *completion) pageUp() {
-	line, col := c.currentCoord()
-	line -= c.height
-	if line < 0 {
-		line = 0
-	}
-	c.selected = line + col*c.lines
-}
-
-func (c *completion) pageDown() {
-	line, col := c.currentCoord()
-	line += c.height
-	if line >= c.lines {
-		line = c.lines - 1
-	}
-	c.selected = line + col*c.lines
-	if c.selected >= len(c.candidates) {
-		c.selected = len(c.candidates) - 1
-	}
-}
-
-func (c *completion) currentCoord() (int, int) {
-	return c.selected % c.lines, c.selected / c.lines
-}
-
 func startCompletionInner(ed *Editor, acceptPrefix bool) {
 	token := tokenAtDot(ed)
 	node := token.Node
@@ -224,6 +189,12 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 				return
 			}
 		}
+		// Fix .display.text
+		for _, cand := range c.candidates {
+			if cand.display.text == "" {
+				cand.display.text = cand.text
+			}
+		}
 		ed.completion = *c
 		ed.mode = &ed.completion
 	}
@@ -260,78 +231,102 @@ func commonPrefix(s, t string) string {
 
 const completionListingColMargin = 2
 
+// maxWidth finds the maximum wcwidth of display texts of candidates [lo, hi).
+// hi may be larger than the number of candidates, in which case it is truncated
+// to the number of candidates.
+func (comp *completion) maxWidth(lo, hi int) int {
+	if hi > len(comp.candidates) {
+		hi = len(comp.candidates)
+	}
+	width := 0
+	for i := lo; i < hi; i++ {
+		w := WcWidths(comp.candidates[i].display.text)
+		if width < w {
+			width = w
+		}
+	}
+	return width
+}
+
 func (comp *completion) List(width, maxHeight int) *buffer {
 	b := newBuffer(width)
-	// Layout candidates in multiple columns
 	cands := comp.candidates
-
 	if len(cands) == 0 {
 		b.writes(TrimWcWidth("(no result)", width), "")
 		return b
 	}
 
-	// First decide the shape (# of rows and columns)
-	colWidth := 0
-	margin := completionListingColMargin
-	for _, cand := range cands {
-		// XXX we also patch cand.display.text here.
-		if cand.display.text == "" {
-			cand.display.text = cand.text
+	comp.height = min(maxHeight, len(cands))
+
+	// Determine the first column to show. We start with the column in which the
+	// selected one is found, moving to the left until either the width is
+	// exhausted, or the old value of firstShown has been hit.
+	first := comp.selected / maxHeight * maxHeight
+	w := comp.maxWidth(first, first+maxHeight)
+	for ; first > comp.firstShown; first -= maxHeight {
+		dw := comp.maxWidth(first-maxHeight, first) + completionListingColMargin
+		if w+dw > width-2 {
+			break
 		}
-		width := WcWidths(cand.display.text)
-		if colWidth < width {
-			colWidth = width
-		}
+		w += dw
+	}
+	comp.firstShown = first
+
+	if first > 0 {
+		// Draw a left arrow
+		b.extendHorizontal(makeArrowColumn(maxHeight, "<"), 0)
 	}
 
-	findShape := func(width int) (int, int, int) {
-		cols := (width + margin) / (colWidth + margin)
-		if cols == 0 {
-			cols = 1
+	var i, j int
+	remainedWidth := width - 2
+	margin := 0
+	// Show the results in columns, until width is exceeded.
+	for i = first; i < len(cands); i += maxHeight {
+		if i > first {
+			margin = completionListingColMargin
 		}
-		lines := util.CeilDiv(len(cands), cols)
-		return cols, lines, width - colWidth*cols - margin*(cols-1)
-	}
-	cols, lines, rightspare := findShape(width)
-	showScrollbar := lines > maxHeight && width > 1
-	if showScrollbar && rightspare == 0 {
-		cols, lines, rightspare = findShape(width - 1)
-	}
-	comp.lines = lines
+		// Determine the width of the column (without the margin)
+		colWidth := comp.maxWidth(i, min(i+maxHeight, len(cands)))
+		if colWidth > remainedWidth-margin {
+			colWidth = remainedWidth - margin
+		}
 
-	// Determine the window to show.
-	low, high := findWindow(lines, comp.selected%lines, maxHeight)
-	comp.height = high - low
-	var scrollbar *buffer
-	if showScrollbar {
-		scrollbar = renderScrollbar(lines, low, high, high-low)
-	}
-	for i := low; i < high; i++ {
-		if i > low {
-			b.newline()
-		}
-		for j := 0; j < cols; j++ {
-			k := j*lines + i
-			if k >= len(cands) {
-				if j > 0 {
-					b.writePadding(margin, "")
-				}
-				b.writePadding(colWidth, "")
-				continue
+		col := newBuffer(margin + colWidth)
+		for j = i; j < i+maxHeight && j < len(cands); j++ {
+			if j > i {
+				col.newline()
 			}
-			style := cands[k].display.style
-			if k == comp.selected {
+			col.writePadding(margin, "")
+			style := cands[j].display.style
+			if j == comp.selected {
 				style += styleForSelected
 			}
-			text := cands[k].display.text
-			if j > 0 {
-				b.writePadding(margin, "")
-			}
-			b.writes(ForceWcWidth(text, colWidth), style)
+			col.writes(ForceWcWidth(cands[j].display.text, colWidth), style)
+		}
+
+		b.extendHorizontal(col, 1)
+		remainedWidth -= colWidth + margin
+		if remainedWidth <= completionListingColMargin {
+			break
 		}
 	}
-	if showScrollbar {
-		b.extendHorizontal(scrollbar, width-1)
+	if j < len(cands) {
+		b.extendHorizontal(makeArrowColumn(maxHeight, ">"), 1)
+	}
+	return b
+}
+
+func makeArrowColumn(height int, s string) *buffer {
+	b := newBuffer(1)
+	for i := 0; i < height; i++ {
+		if i > 0 {
+			b.newline()
+		}
+		if i == height/2 {
+			b.writes(s, "")
+		} else {
+			b.writes(" ", "")
+		}
 	}
 	return b
 }
