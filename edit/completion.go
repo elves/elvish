@@ -256,16 +256,21 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		b.writes(TrimWcWidth("(no result)", width), "")
 		return b
 	}
+	if maxHeight <= 1 || width <= 2 {
+		b.writes(TrimWcWidth("(terminal too small)", width), "")
+		return b
+	}
+	height := maxHeight - 1
 
-	comp.height = min(maxHeight, len(cands))
+	comp.height = min(height, len(cands))
 
 	// Determine the first column to show. We start with the column in which the
 	// selected one is found, moving to the left until either the width is
 	// exhausted, or the old value of firstShown has been hit.
-	first := comp.selected / maxHeight * maxHeight
-	w := comp.maxWidth(first, first+maxHeight)
-	for ; first > comp.firstShown; first -= maxHeight {
-		dw := comp.maxWidth(first-maxHeight, first) + completionListingColMargin
+	first := comp.selected / height * height
+	w := comp.maxWidth(first, first+height)
+	for ; first > comp.firstShown; first -= height {
+		dw := comp.maxWidth(first-height, first) + completionListingColMargin
 		if w+dw > width-2 {
 			break
 		}
@@ -275,25 +280,25 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 
 	if first > 0 {
 		// Draw a left arrow
-		b.extendHorizontal(makeArrowColumn(maxHeight, "<", 0), 0)
+		b.extendHorizontal(makeArrowColumn(height, "<", 0), 0)
 	}
 
 	var i, j int
 	remainedWidth := width - 2
 	margin := 0
 	// Show the results in columns, until width is exceeded.
-	for i = first; i < len(cands); i += maxHeight {
+	for i = first; i < len(cands); i += height {
 		if i > first {
 			margin = completionListingColMargin
 		}
 		// Determine the width of the column (without the margin)
-		colWidth := comp.maxWidth(i, min(i+maxHeight, len(cands)))
+		colWidth := comp.maxWidth(i, min(i+height, len(cands)))
 		if colWidth > remainedWidth-margin {
 			colWidth = remainedWidth - margin
 		}
 
 		col := newBuffer(margin + colWidth)
-		for j = i; j < i+maxHeight && j < len(cands); j++ {
+		for j = i; j < i+height && j < len(cands); j++ {
 			if j > i {
 				col.newline()
 			}
@@ -311,8 +316,11 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 			break
 		}
 	}
+	if first > 0 || j < len(cands) {
+		b.extend(renderHorizontalScrollbar(len(cands), first, j, width-2, 1), false)
+	}
 	if j < len(cands) {
-		b.extendHorizontal(makeArrowColumn(maxHeight, ">", remainedWidth), 1)
+		b.extendHorizontal(makeArrowColumn(height, ">", remainedWidth), 1)
 	}
 	return b
 }
