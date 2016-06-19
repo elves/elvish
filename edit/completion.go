@@ -32,6 +32,7 @@ func (c *completion) ModeLine(width int) *buffer {
 	// XXX Copied from listing.ModeLine.
 	// TODO keep it one line.
 	b := newBuffer(width)
+	b.writes(" ", "")
 	b.writes(TrimWcWidth(title, width), styleForMode)
 	b.writes(" ", "")
 	b.writes(c.filter, styleForFilter)
@@ -274,7 +275,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 
 	if first > 0 {
 		// Draw a left arrow
-		b.extendHorizontal(makeArrowColumn(maxHeight, "<"), 0)
+		b.extendHorizontal(makeArrowColumn(maxHeight, "<", 0), 0)
 	}
 
 	var i, j int
@@ -311,21 +312,24 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		}
 	}
 	if j < len(cands) {
-		b.extendHorizontal(makeArrowColumn(maxHeight, ">"), 1)
+		b.extendHorizontal(makeArrowColumn(maxHeight, ">", remainedWidth), 1)
 	}
 	return b
 }
 
-func makeArrowColumn(height int, s string) *buffer {
-	b := newBuffer(1)
+func makeArrowColumn(height int, s string, padding int) *buffer {
+	b := newBuffer(1 + padding)
 	for i := 0; i < height; i++ {
 		if i > 0 {
 			b.newline()
 		}
+		if padding > 0 {
+			b.writePadding(padding, "")
+		}
 		if i == height/2 {
-			b.writes(s, "")
+			b.writes(s, styleForSideArrow)
 		} else {
-			b.writes(" ", "")
+			b.writes(" ", styleForSideArrow)
 		}
 	}
 	return b

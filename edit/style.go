@@ -11,6 +11,7 @@ var (
 	styleForFilter           = "4"
 	styleForSelected         = ";7"
 	styleForScrollBar        = "35"
+	styleForSideArrow        = "7"
 )
 
 var styleForType = map[TokenKind]string{
