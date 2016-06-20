@@ -91,7 +91,7 @@ func init() {
 		&BuiltinFn{"+", WrapFn(plus)},
 		&BuiltinFn{"-", WrapFn(minus)},
 		&BuiltinFn{"mul", WrapFn(times)},
-		&BuiltinFn{"div", WrapFn(divide)},
+		&BuiltinFn{"/", slash},
 		&BuiltinFn{"pow", WrapFn(pow)},
 		&BuiltinFn{"lt", WrapFn(lt)},
 		&BuiltinFn{"gt", WrapFn(gt)},
@@ -631,6 +631,18 @@ func times(ec *EvalCtx, nums ...float64) {
 	}
 	out <- String(fmt.Sprintf("%g", prod))
 }
+
+func slash(ec *EvalCtx, args []Value) {
+	if len(args) == 0 {
+		// cd /
+		cdInner("/", ec)
+		return
+	}
+	// Division
+	wrappedDivide(ec, args)
+}
+
+var wrappedDivide = WrapFn(divide)
 
 func divide(ec *EvalCtx, prod float64, nums ...float64) {
 	out := ec.ports[1].Chan
