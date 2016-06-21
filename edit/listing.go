@@ -134,10 +134,8 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	return b
 }
 
-func renderHorizontalScrollbar(n, low, high, width, padding int) *buffer {
+func writeHorizontalScrollbar(b *buffer, n, low, high, width int) {
 	slow, shigh := findScrollInterval(n, low, high, width)
-	b := newBuffer(width + padding)
-	b.writePadding(padding, "")
 	for i := 0; i < width; i++ {
 		if slow <= i && i < shigh {
 			b.write('▉', styleForScrollBar)
@@ -145,7 +143,6 @@ func renderHorizontalScrollbar(n, low, high, width, padding int) *buffer {
 			b.write('─', styleForScrollBar)
 		}
 	}
-	return b
 }
 
 func renderScrollbar(n, low, high, height int) *buffer {

@@ -500,6 +500,14 @@ tokens:
 		if lister, ok := es.mode.(Lister); ok {
 			bufListing = lister.List(width, hListing)
 		}
+		// XXX When in completion mode, we re-render the mode line, since the
+		// scrollbar in the mode line depends on completion.lastShown which is
+		// only known after the listing has been rendered. Since rendering the
+		// scrollbar never adds additional lines to bufMode, we may do this
+		// without recalculating the layout.
+		if mode == modeCompletion {
+			bufMode = es.mode.ModeLine(width)
+		}
 	}
 
 	if logWriterDetail {

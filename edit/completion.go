@@ -20,6 +20,7 @@ type completion struct {
 	candidates []*candidate
 	selected   int
 	firstShown int
+	lastShown  int
 	height     int
 }
 
@@ -28,15 +29,26 @@ func (*completion) Mode() ModeType {
 }
 
 func (c *completion) ModeLine(width int) *buffer {
-	title := fmt.Sprintf("COMPLETING %s", c.completer)
-	// XXX Copied from listing.ModeLine.
-	// TODO keep it one line.
 	b := newBuffer(width)
 	b.writes(" ", "")
+	// Write title
+	title := fmt.Sprintf("COMPLETING %s", c.completer)
 	b.writes(TrimWcWidth(title, width), styleForMode)
-	b.writes(" ", "")
-	b.writes(c.filter, styleForFilter)
-	b.dot = b.cursor()
+	// Write filter
+	if c.filtering {
+		b.writes(" ", "")
+		b.writes(c.filter, styleForFilter)
+		b.dot = b.cursor()
+	}
+	// Write horizontal scrollbar, using the remaining space
+	if c.firstShown > 0 || c.lastShown < len(c.candidates)-1 {
+		scrollbarWidth := width - 1 - lineWidth(b.cells[len(b.cells)-1])
+		if scrollbarWidth >= 3 {
+			b.writes(" ", "")
+			writeHorizontalScrollbar(b, len(c.candidates), c.firstShown, c.lastShown, scrollbarWidth)
+		}
+	}
+
 	return b
 }
 
@@ -278,11 +290,6 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 	}
 	comp.firstShown = first
 
-	if first > 0 {
-		// Draw a left arrow
-		b.extendHorizontal(makeArrowColumn(height, "<", 0), 0)
-	}
-
 	var i, j int
 	remainedWidth := width - 2
 	margin := 0
@@ -316,30 +323,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 			break
 		}
 	}
-	if first > 0 || j < len(cands) {
-		b.extend(renderHorizontalScrollbar(len(cands), first, j, width-2, 1), false)
-	}
-	if j < len(cands) {
-		b.extendHorizontal(makeArrowColumn(height, ">", remainedWidth), 1)
-	}
-	return b
-}
-
-func makeArrowColumn(height int, s string, padding int) *buffer {
-	b := newBuffer(1 + padding)
-	for i := 0; i < height; i++ {
-		if i > 0 {
-			b.newline()
-		}
-		if padding > 0 {
-			b.writePadding(padding, "")
-		}
-		if i == height/2 {
-			b.writes(s, styleForSideArrow)
-		} else {
-			b.writes(" ", styleForSideArrow)
-		}
-	}
+	comp.lastShown = j - 1
 	return b
 }
 
