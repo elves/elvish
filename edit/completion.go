@@ -42,7 +42,7 @@ func (c *completion) ModeLine(width int) *buffer {
 	}
 	// Write horizontal scrollbar, using the remaining space
 	if c.firstShown > 0 || c.lastShown < len(c.candidates)-1 {
-		scrollbarWidth := width - 1 - lineWidth(b.cells[len(b.cells)-1])
+		scrollbarWidth := width - lineWidth(b.cells[len(b.cells)-1]) - 2
 		if scrollbarWidth >= 3 {
 			b.writes(" ", "")
 			writeHorizontalScrollbar(b, len(c.candidates), c.firstShown, c.lastShown, scrollbarWidth)
