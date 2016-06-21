@@ -189,11 +189,15 @@ func (fn *Form) parse(ps *parser) {
 			ps.error(fmt.Errorf("bogus command leader %q ignored", leader))
 		}
 		// Parse head.
-		if len(fn.Assignments) > 0 && !startsCompound(ps.peek()) {
-			// Assignment-only form.
-			return
+		if !startsCompound(ps.peek(), true) {
+			if len(fn.Assignments) > 0 {
+				// Assignment-only form.
+				return
+			}
+			// Bad form.
+			ps.error(fmt.Errorf("bad rune at form head: %q", ps.peek()))
 		}
-		fn.setHead(parseCompound(ps))
+		fn.setHead(parseCompound(ps, true))
 		parseSpaces(fn, ps)
 	}
 
@@ -202,7 +206,7 @@ func (fn *Form) parse(ps *parser) {
 		switch {
 		case r == '&':
 			fn.addToNamedArgs(parseMapPair(ps))
-		case startsCompound(r):
+		case startsCompound(r, false):
 			if ps.hasPrefix("?>") {
 				if fn.ExitusRedir != nil {
 					ps.error(errDuplicateExitusRedir)
@@ -213,7 +217,7 @@ func (fn *Form) parse(ps *parser) {
 				}
 				continue
 			}
-			cn := parseCompound(ps)
+			cn := parseCompound(ps, false)
 			if isRedirSign(ps.peek()) {
 				// Redir
 				fn.addToRedirs(parseRedir(ps, cn))
@@ -233,7 +237,7 @@ func (fn *Form) parse(ps *parser) {
 // assignment to fn.Assignments and returns true. Otherwise it rewinds the
 // parser and returns false.
 func (fn *Form) tryAssignment(ps *parser) bool {
-	if !startsIndexing(ps.peek()) || ps.peek() == '=' {
+	if !startsIndexing(ps.peek(), false) || ps.peek() == '=' {
 		return false
 	}
 
@@ -250,7 +254,7 @@ func (fn *Form) tryAssignment(ps *parser) bool {
 }
 
 func startsForm(r rune) bool {
-	return isSpace(r) || startsCompound(r)
+	return isSpace(r) || startsCompound(r, true)
 }
 
 // Assignment = Primary '=' Compound
@@ -262,7 +266,7 @@ type Assignment struct {
 
 func (an *Assignment) parse(ps *parser) {
 	ps.cut('=')
-	an.setDst(parseIndexing(ps))
+	an.setDst(parseIndexing(ps, false))
 	head := an.Dst.Head
 	if !checkVariableInAssignment(head, ps) {
 		ps.errorp(head.Begin(), head.End(), errShouldBeVariableName)
@@ -272,7 +276,7 @@ func (an *Assignment) parse(ps *parser) {
 	if !parseSep(an, ps, '=') {
 		ps.error(errShouldBeEqual)
 	}
-	an.setSrc(parseCompound(ps))
+	an.setSrc(parseCompound(ps, false))
 }
 
 func checkVariableInAssignment(p *Primary, ps *parser) bool {
@@ -394,7 +398,7 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 	case "for":
 		ctrl.Kind = ForControl
 		parseSpacesAndNewlines(ctrl, ps)
-		ctrl.setIterator(parseIndexing(ps))
+		ctrl.setIterator(parseIndexing(ps, false))
 		parseSpacesAndNewlines(ctrl, ps)
 		if ps.findPossibleLeader() == "in" {
 			ps.advance(len("in"))
@@ -432,7 +436,7 @@ func (ern *ExitusRedir) parse(ps *parser) {
 	ps.next()
 	addSep(ern, ps)
 	parseSpaces(ern, ps)
-	ern.setDest(parseCompound(ps))
+	ern.setDest(parseCompound(ps, false))
 }
 
 // Redir = { Compound } { '<'|'>'|'<>'|'>>' } { Space } ( '&'? Compound )
@@ -473,7 +477,7 @@ func (rn *Redir) parse(ps *parser, dest *Compound) {
 	if parseSep(rn, ps, '&') {
 		rn.SourceIsFd = true
 	}
-	rn.setSource(parseCompound(ps))
+	rn.setSource(parseCompound(ps, false))
 	if len(rn.Source.Indexings) == 0 {
 		if rn.SourceIsFd {
 			ps.error(errShouldBeFD)
@@ -506,10 +510,10 @@ type Compound struct {
 	Indexings []*Indexing
 }
 
-func (cn *Compound) parse(ps *parser) {
+func (cn *Compound) parse(ps *parser, head bool) {
 	cn.tilde(ps)
-	for startsIndexing(ps.peek()) {
-		cn.addToIndexings(parseIndexing(ps))
+	for startsIndexing(ps.peek(), head) {
+		cn.addToIndexings(parseIndexing(ps, head))
 	}
 }
 
@@ -527,8 +531,8 @@ func (cn *Compound) tilde(ps *parser) {
 	}
 }
 
-func startsCompound(r rune) bool {
-	return startsIndexing(r)
+func startsCompound(r rune, head bool) bool {
+	return startsIndexing(r, head)
 }
 
 // Indexing = Primary { '[' Array ']' }
@@ -538,8 +542,8 @@ type Indexing struct {
 	Indicies []*Array
 }
 
-func (in *Indexing) parse(ps *parser) {
-	in.setHead(parsePrimary(ps))
+func (in *Indexing) parse(ps *parser, head bool) {
+	in.setHead(parsePrimary(ps, head))
 	for parseSep(in, ps, '[') {
 		if !startsArray(ps.peek()) {
 			ps.error(errShouldBeArray)
@@ -556,8 +560,8 @@ func (in *Indexing) parse(ps *parser) {
 	}
 }
 
-func startsIndexing(r rune) bool {
-	return startsPrimary(r)
+func startsIndexing(r rune, head bool) bool {
+	return startsPrimary(r, head)
 }
 
 // Array = { Space | '\n' } { Compound { Space | '\n' } }
@@ -582,8 +586,8 @@ func (sn *Array) parse(ps *parser, allowSemicolon bool) {
 	}
 
 	parseSep()
-	for startsCompound(ps.peek()) {
-		sn.addToCompounds(parseCompound(ps))
+	for startsCompound(ps.peek(), false) {
+		sn.addToCompounds(parseCompound(ps, false))
 		parseSep()
 	}
 }
@@ -593,7 +597,7 @@ func isSpace(r rune) bool {
 }
 
 func startsArray(r rune) bool {
-	return isSpaceOrNewline(r) || startsIndexing(r)
+	return isSpaceOrNewline(r) || startsIndexing(r, false)
 }
 
 // Primary is the smallest expression unit.
@@ -630,12 +634,20 @@ const (
 	Braced
 )
 
-func (pn *Primary) parse(ps *parser) {
+func (pn *Primary) parse(ps *parser, head bool) {
 	r := ps.peek()
-	if !startsPrimary(r) {
+	if !startsPrimary(r, head) {
 		ps.error(errShouldBePrimary)
 		return
 	}
+
+	// Try bareword early, since it has precedence over wildcard on *
+	// when head is true.
+	if allowedInBareword(r, head) {
+		pn.bareword(ps, head)
+		return
+	}
+
 	switch r {
 	case '\'':
 		pn.singleQuoted(ps)
@@ -658,7 +670,8 @@ func (pn *Primary) parse(ps *parser) {
 	case '{':
 		pn.lbrace(ps)
 	default:
-		pn.bareword(ps)
+		// Parse an empty bareword.
+		pn.Type = Bareword
 	}
 }
 
@@ -961,7 +974,7 @@ func (pn *Primary) lbrace(ps *parser) {
 	// XXX: The compound can be empty, which allows us to parse {,foo}.
 	// Allowing compounds to be empty can be fragile in other cases.
 	ps.cut(',')
-	pn.addToBraced(parseCompound(ps))
+	pn.addToBraced(parseCompound(ps, false))
 	ps.uncut(',')
 
 	for isBracedSep(ps.peek()) {
@@ -971,7 +984,7 @@ func (pn *Primary) lbrace(ps *parser) {
 		parseSpacesAndNewlines(pn, ps)
 
 		ps.cut(',')
-		pn.addToBraced(parseCompound(ps))
+		pn.addToBraced(parseCompound(ps, false))
 		ps.uncut(',')
 	}
 	if !parseSep(pn, ps, '}') {
@@ -983,10 +996,10 @@ func isBracedSep(r rune) bool {
 	return r == ',' || isSpaceOrNewline(r)
 }
 
-func (pn *Primary) bareword(ps *parser) {
+func (pn *Primary) bareword(ps *parser, head bool) {
 	pn.Type = Bareword
 	defer func() { pn.Value = ps.src[pn.begin:ps.pos] }()
-	for allowedInBareword(ps.peek()) {
+	for allowedInBareword(ps.peek(), head) {
 		ps.next()
 	}
 }
@@ -994,14 +1007,16 @@ func (pn *Primary) bareword(ps *parser) {
 // The following are allowed in barewords:
 // * Anything allowed in variable names, except &
 // * The symbols "%+,./=@~!"
-func allowedInBareword(r rune) bool {
+// * The symbols "<>*^", if the bareword is in head
+func allowedInBareword(r rune, head bool) bool {
 	return (r != '&' && allowedInVariableName(r)) ||
 		r == '%' || r == '+' || r == ',' || r == '.' ||
-		r == '/' || r == '=' || r == '@' || r == '~' || r == '!'
+		r == '/' || r == '=' || r == '@' || r == '~' || r == '!' ||
+		(head && (r == '<' || r == '>' || r == '*' || r == '^'))
 }
 
-func startsPrimary(r rune) bool {
-	return r == '\'' || r == '"' || r == '$' || allowedInBareword(r) ||
+func startsPrimary(r rune, head bool) bool {
+	return r == '\'' || r == '"' || r == '$' || allowedInBareword(r, head) ||
 		r == '?' || r == '*' || r == '(' || r == '`' || r == '[' || r == '{'
 }
 
@@ -1016,7 +1031,7 @@ func (mpn *MapPair) parse(ps *parser) {
 
 	// Parse key part, cutting on '='.
 	ps.cut('=')
-	mpn.setKey(parseCompound(ps))
+	mpn.setKey(parseCompound(ps, false))
 	if len(mpn.Key.Indexings) == 0 {
 		ps.error(errShouldBeCompound)
 	}
@@ -1024,7 +1039,7 @@ func (mpn *MapPair) parse(ps *parser) {
 
 	if parseSep(mpn, ps, '=') {
 		// Parse value part.
-		mpn.setValue(parseCompound(ps))
+		mpn.setValue(parseCompound(ps, false))
 		// The value part can be empty.
 	}
 }

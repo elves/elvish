@@ -39,7 +39,7 @@ func QuoteAs(s string, q PrimaryType) (string, PrimaryType) {
 			// Contains unprintable character; force double quote.
 			return quoteDouble(s), DoubleQuoted
 		}
-		if !allowedInBareword(r) {
+		if !allowedInBareword(r, false) {
 			bare = false
 		}
 	}

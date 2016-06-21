@@ -55,7 +55,7 @@ func (ps *parser) findPossibleLeader() string {
 		return rest
 	}
 	r, _ := utf8.DecodeRuneInString(rest[i:])
-	if startsPrimary(r) {
+	if startsPrimary(r, false) {
 		return ""
 	}
 	return rest[:i]

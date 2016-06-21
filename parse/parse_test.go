@@ -46,13 +46,13 @@ var goodCases = []struct {
 		"Assignments": []string{"k=v", "k[a][b]=v"},
 		"Head":        "a"}}},
 	// Redirections
-	{"a>b", ast{"Chunk/Pipeline/Form", fs{
+	{"a >b", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
 		"Redirs": []ast{
 			ast{"Redir", fs{"Mode": Write, "Source": "b"}}},
 	}}},
 	// More redirections
-	{"a>>b 2>b 3>&- 4>&1 5<c 6<>d", ast{"Chunk/Pipeline/Form", fs{
+	{"a >>b 2>b 3>&- 4>&1 5<c 6<>d", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
 		"Redirs": []ast{
 			ast{"Redir", fs{"Mode": Append, "Source": "b"}},

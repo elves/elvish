@@ -75,7 +75,7 @@ var evalTests = []struct {
 	{"if false; then put 2; elif true; then put 2; else put 3; fi",
 		strs("2"), nomore},
 	// while
-	{"x=0; while lt $x 4; do put $x; x=(+ $x 1); done",
+	{"x=0; while < $x 4; do put $x; x=(+ $x 1); done",
 		strs("0", "1", "2", "3"), nomore},
 	// for
 	{"for x in tempora mores; do put 'O '$x; done",
@@ -195,9 +195,9 @@ var evalTests = []struct {
 	// TODO test more edge cases
 	{"+ 233100 233", strs("233333"), nomore},
 	{"- 233333 233100", strs("233"), nomore},
-	{"mul 353 661", strs("233333"), nomore},
-	{"div 233333 353", strs("661"), nomore},
-	{"div 1 0", strs("+Inf"), nomore},
+	{"* 353 661", strs("233333"), nomore},
+	{"/ 233333 353", strs("661"), nomore},
+	{"/ 1 0", strs("+Inf"), nomore},
 	// Equality
 	{"put ?(== a a) ?(== [] []) ?(== [&] [&])",
 		[]Value{Error{nil}, Error{ErrNotEqual}, Error{ErrNotEqual}}, nomore},
