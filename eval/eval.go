@@ -240,21 +240,19 @@ func (ev *Evaler) Compile(n *parse.Chunk) (Op, error) {
 // PEval evaluates an op in a protected environment so that calls to errorf are
 // wrapped in an Error.
 func (ec *EvalCtx) PEval(op Op) (err error) {
-	// defer catch(&err, ec)
-	defer util.Catch(&err)
+	defer catch(&err, ec)
 	op.Exec(ec)
 	return nil
 }
 
 func (ec *EvalCtx) PCall(f Fn, args []Value) (err error) {
-	// defer catch(&err, ec)
-	defer util.Catch(&err)
+	defer catch(&err, ec)
 	f.Call(ec, args)
 	return nil
 }
 
 func (ec *EvalCtx) PCaptureOutput(f Fn, args []Value) (vs []Value, err error) {
-	defer util.Catch(&err)
+	defer catch(&err, ec)
 	// XXX There is no source.
 	return captureOutput(ec, Op{
 		func(newec *EvalCtx) { f.Call(newec, args) }, -1, -1}), nil
@@ -271,7 +269,9 @@ func catch(perr *error, ec *EvalCtx) {
 	if exc, ok := r.(util.Exception); ok {
 		err := exc.Error
 		if _, ok := err.(*util.PosError); !ok {
-			err = &util.PosError{ec.begin, ec.end, err}
+			if _, ok := err.(flow); !ok {
+				err = &util.PosError{ec.begin, ec.end, err}
+			}
 		}
 		*perr = err
 	} else if r != nil {
@@ -381,29 +381,6 @@ func (ec *EvalCtx) getLocal(name string) Variable {
 }
 
 var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
-
-func set(ec *EvalCtx, variables []Variable, rest []Variable, values []Value) {
-	if len(rest) > 1 {
-		throw(ErrMoreThanOneRest)
-	}
-	if len(rest) == 1 {
-		if len(variables) > len(values) {
-			throw(ErrArityMismatch)
-		}
-	} else {
-		if len(variables) != len(values) {
-			throw(ErrArityMismatch)
-		}
-	}
-
-	for i, variable := range variables {
-		variable.Set(values[i])
-	}
-
-	if len(rest) == 1 {
-		rest[0].Set(NewList(values[len(variables):]...))
-	}
-}
 
 // IterateInput calls the passed function for each input element.
 func (ec *EvalCtx) IterateInputs(f func(Value)) {

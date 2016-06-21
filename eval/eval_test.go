@@ -40,7 +40,7 @@ var evalTests = []struct {
 	{"put x; put y; put z", strs("x", "y", "z"), nomore},
 	// A failed pipeline cause the whole chunk to fail
 	{"put a; false; put b", strs("a"), more{
-		wantError: FakeExternalCmdExit(1, 0)}},
+		wantError: &util.PosError{7, 12, FakeExternalCmdExit(1, 0)}}},
 
 	// Pipelines.
 	// Pure byte pipeline
@@ -121,11 +121,11 @@ var evalTests = []struct {
 
 	// Status capture
 	{"put ?(true|false|false)",
-		[]Value{newMultiError(
+		[]Value{Error{&util.PosError{6, 22, MultiError{[]Error{
 			OK,
-			Error{FakeExternalCmdExit(1, 0)},
-			Error{FakeExternalCmdExit(1, 0)},
-		)}, nomore},
+			Error{&util.PosError{11, 16, FakeExternalCmdExit(1, 0)}},
+			Error{&util.PosError{17, 22, FakeExternalCmdExit(1, 0)}},
+		}}}}}, nomore},
 
 	// Variable and compounding
 	{"x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
@@ -200,10 +200,16 @@ var evalTests = []struct {
 	{"/ 1 0", strs("+Inf"), nomore},
 	// Equality
 	{"put ?(== a a) ?(== [] []) ?(== [&] [&])",
-		[]Value{Error{nil}, Error{ErrNotEqual}, Error{ErrNotEqual}}, nomore},
+		[]Value{
+			Error{nil},
+			Error{&util.PosError{16, 24, ErrNotEqual}},
+			Error{&util.PosError{28, 38, ErrNotEqual}},
+		}, nomore},
 	{"kind-of bare 'str' [] [&] []{ }",
 		strs("string", "string", "list", "map", "fn"), nomore},
-	{"put ?(fail failed)", []Value{Error{errors.New("failed")}}, nomore},
+	{"put ?(fail failed)", []Value{
+		Error{&util.PosError{6, 17, errors.New("failed")}},
+	}, nomore},
 	{`put "l\norem" ipsum | into-lines`, strs(),
 		more{wantBytesOut: []byte("l\norem\nipsum\n")}},
 	{`echo "1\n233" | each put`, strs("1", "233"), nomore},

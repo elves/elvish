@@ -247,10 +247,15 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 		valuesOp := cp.arrayOp(n.Array)
 		bodyOp := cp.chunkOp(n.Body)
 		return func(ec *EvalCtx) {
-			iterator := iteratorOp.Exec(ec)
+			iterators := iteratorOp.Exec(ec)
+			if len(iterators) != 1 {
+				throw(ErrArityMismatch)
+			}
+			iterator := iterators[0]
+
 			values := valuesOp.Exec(ec)
 			for _, v := range values {
-				set(ec, iterator, nil, []Value{v})
+				iterator.Set(v)
 				ex := ec.PEval(bodyOp)
 				if ex == Continue {
 					// do nothing
@@ -274,7 +279,47 @@ func (cp *compiler) assignment(n *parse.Assignment) OpFunc {
 	valuesOp := cp.compoundOp(n.Src)
 
 	return func(ec *EvalCtx) {
-		set(ec, variablesOp.Exec(ec), restOp.Exec(ec), valuesOp.Exec(ec))
+		variables := variablesOp.Exec(ec)
+		rest := restOp.Exec(ec)
+
+		// If any LHS ends up being nil, assign an empty string to all of them.
+		//
+		// This is to fix #176, which only happens in the top level of REPL; in
+		// other cases, a failure in the evaluation of the RHS causes this
+		// level to fail, making the variables unaccessible.
+		defer fixNilVariables(variables)
+		defer fixNilVariables(rest)
+
+		values := valuesOp.Exec(ec)
+
+		if len(rest) > 1 {
+			throw(ErrMoreThanOneRest)
+		}
+		if len(rest) == 1 {
+			if len(variables) > len(values) {
+				throw(ErrArityMismatch)
+			}
+		} else {
+			if len(variables) != len(values) {
+				throw(ErrArityMismatch)
+			}
+		}
+
+		for i, variable := range variables {
+			variable.Set(values[i])
+		}
+
+		if len(rest) == 1 {
+			rest[0].Set(NewList(values[len(variables):]...))
+		}
+	}
+}
+
+func fixNilVariables(vs []Variable) {
+	for _, v := range vs {
+		if v.Get() == nil {
+			v.Set(String(""))
+		}
 	}
 }
 
