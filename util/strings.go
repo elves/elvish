@@ -12,20 +12,21 @@ var ErrIndexOutOfRange = errors.New("substring out of range")
 // corresponding line and column numbers. Line and column numbers are counted
 // from 0. Used in diagnostic messages.
 func FindContext(text string, pos int) (lineno, colno int, line string) {
-	var p int
-	for _, r := range text {
-		if p == pos {
+	var i, linestart int
+	var r rune
+	for i, r = range text {
+		if i == pos {
 			break
 		}
 		if r == '\n' {
 			lineno++
+			linestart = i + 1
 			colno = 0
 		} else {
 			colno++
 		}
-		p++
 	}
-	line = strings.SplitN(text[p-colno:], "\n", 2)[0]
+	line = strings.SplitN(text[linestart:], "\n", 2)[0]
 	return
 }
 
