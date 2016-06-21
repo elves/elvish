@@ -94,7 +94,9 @@ func init() {
 		&BuiltinFn{"/", slash},
 		&BuiltinFn{"^", WrapFn(pow)},
 		&BuiltinFn{"<", WrapFn(lt)},
+		&BuiltinFn{"<=", WrapFn(le)},
 		&BuiltinFn{">", WrapFn(gt)},
+		&BuiltinFn{">=", WrapFn(ge)},
 		&BuiltinFn{"%", WrapFn(mod)},
 		&BuiltinFn{"rand", WrapFn(randFn)},
 		&BuiltinFn{"randint", WrapFn(randint)},
@@ -667,9 +669,25 @@ func lt(ec *EvalCtx, nums ...float64) {
 	}
 }
 
+func le(ec *EvalCtx, nums ...float64) {
+	for i := 0; i < len(nums)-1; i++ {
+		if !(nums[i] <= nums[i+1]) {
+			throw(ErrFalse)
+		}
+	}
+}
+
 func gt(ec *EvalCtx, nums ...float64) {
 	for i := 0; i < len(nums)-1; i++ {
 		if !(nums[i] > nums[i+1]) {
+			throw(ErrFalse)
+		}
+	}
+}
+
+func ge(ec *EvalCtx, nums ...float64) {
+	for i := 0; i < len(nums)-1; i++ {
+		if !(nums[i] >= nums[i+1]) {
 			throw(ErrFalse)
 		}
 	}
