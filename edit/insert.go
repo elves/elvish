@@ -196,6 +196,10 @@ func moveDotDown(ed *Editor) {
 }
 
 func insertLastWord(ed *Editor) {
+	if ed.store == nil {
+		ed.addTip("store offline")
+		return
+	}
 	_, lastLine, err := ed.store.LastCmd(-1, "", true)
 	if err == nil {
 		ed.insertAtDot(lastWord(lastLine))
