@@ -140,7 +140,7 @@ func writeHorizontalScrollbar(b *buffer, n, low, high, width int) {
 		if slow <= i && i < shigh {
 			b.write('▉', styleForScrollBar)
 		} else {
-			b.write('─', styleForScrollBar)
+			b.write('━', styleForScrollBar)
 		}
 	}
 }
