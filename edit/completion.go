@@ -261,18 +261,17 @@ func (comp *completion) maxWidth(lo, hi int) int {
 	return width
 }
 
-func (comp *completion) List(width, maxHeight int) *buffer {
+func (comp *completion) List(width, height int) *buffer {
 	b := newBuffer(width)
 	cands := comp.candidates
 	if len(cands) == 0 {
 		b.writes(TrimWcWidth("(no result)", width), "")
 		return b
 	}
-	if maxHeight <= 1 || width <= 2 {
+	if height <= 1 || width <= 2 {
 		b.writes(TrimWcWidth("(terminal too small)", width), "")
 		return b
 	}
-	height := maxHeight - 1
 
 	comp.height = min(height, len(cands))
 
