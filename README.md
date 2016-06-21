@@ -116,19 +116,19 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   ```sh
   ~> + 1 2
   ▶ 3
-  ~> div `mul 2 3` 4 # div for /, mul for *
+  ~> / `* 2 3` 4
   ▶ 1.5
-  ~> div (mul 2 3) 4 # parentheses are equivalent to backquotes, but look nicer in arithmetics
+  ~> / (* 2 3) 4 # parentheses are equivalent to backquotes, but look nicer in arithmetics
   ▶ 1.5
-  ~> gt 1 2 # gt for >
+  ~> > 1 2 # ">" may be used as a command name
   false
-  ~> lt 1 2 # lt for <; silence means "true"
+  ~> < 1 2 # "<" may also be used as a command name; silence means "true"
   ```
 
 * Functions are defined with `fn`. You can name arguments:
   ```sh
   ~> fn square [x]{
-       mul $x $x
+       * $x $x
      }
   ~> square 4
   ▶ 16
