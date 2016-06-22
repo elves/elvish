@@ -3,6 +3,7 @@ package edit
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"sort"
 	"strings"
@@ -224,6 +225,12 @@ func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) 
 		suffix := " "
 		if info.IsDir() {
 			suffix = "/"
+		} else if info.Mode()&os.ModeSymlink != 0 {
+			stat, err := os.Stat(full)
+			if err == nil && stat.IsDir() {
+				// Symlink to directory.
+				suffix = "/"
+			}
 		}
 
 		cands = append(cands, &candidate{
