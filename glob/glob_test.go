@@ -71,7 +71,11 @@ func TestGlob(t *testing.T) {
 		f.Close()
 	}
 	for _, tc := range globCases {
-		names := Glob(tc.pattern)
+		names := []string{}
+		Glob(tc.pattern, func(name string) bool {
+			names = append(names, name)
+			return true
+		})
 		sort.Strings(names)
 		sort.Strings(tc.want)
 		if !reflect.DeepEqual(names, tc.want) {

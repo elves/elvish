@@ -33,12 +33,12 @@ const (
 )
 
 // Glob returns a list of file names satisfying the given pattern.
-func Glob(p string) []string {
-	return Parse(p).Glob()
+func Glob(p string, cb func(string) bool) bool {
+	return Parse(p).Glob(cb)
 }
 
 // Glob returns a list of file names satisfying the Pattern.
-func (p Pattern) Glob() []string {
+func (p Pattern) Glob(cb func(string) bool) bool {
 	segs := p.Segments
 	dir := ""
 	if len(segs) > 0 && segs[0].Type == Slash {
@@ -50,20 +50,10 @@ func (p Pattern) Glob() []string {
 		dir = p.DirOverride
 	}
 
-	results := []string{}
-	ch := make(chan string)
-	go func() {
-		glob(segs, dir, ch)
-		close(ch)
-	}()
-
-	for s := range ch {
-		results = append(results, s)
-	}
-	return results
+	return glob(segs, dir, cb)
 }
 
-func glob(segs []Segment, dir string, results chan<- string) {
+func glob(segs []Segment, dir string, cb func(string) bool) bool {
 	// Consume the non-wildcard prefix. This is required so that "." and "..",
 	// which doesn't appear in the result of ReadDir, can appear as standalone
 	// path components in the pattern.
@@ -77,16 +67,16 @@ func glob(segs []Segment, dir string, results chan<- string) {
 		if len(segs) == 1 {
 			// A lone literal. Generate it if the named file exists, and return.
 			if _, err := os.Stat(path); err == nil {
-				results <- path
+				return cb(path)
 			}
-			return
+			return true
 		} else if segs[1].Type == Slash {
 			// A lone literal followed by a slash. Change the directory if it
 			// exists, otherwise return.
 			if info, err := os.Stat(path); err == nil && info.IsDir() {
 				dir = path
 			} else {
-				return
+				return true
 			}
 			segs = segs[2:]
 		} else {
@@ -97,8 +87,7 @@ func glob(segs []Segment, dir string, results chan<- string) {
 	// Empty segment, resulting from a trailing slash. Generate the starting
 	// directory.
 	if len(segs) == 0 {
-		results <- dir + "/"
-		return
+		return cb(dir + "/")
 	}
 
 	var prefix string
@@ -125,7 +114,7 @@ func glob(segs []Segment, dir string, results chan<- string) {
 	infos, err := ioutil.ReadDir(dir)
 	if err != nil {
 		// XXX Silently drop the error
-		return
+		return true
 	}
 
 	// Enumerate the position of the first slash.
@@ -143,13 +132,15 @@ func glob(segs []Segment, dir string, results chan<- string) {
 		for _, info := range infos {
 			name := info.Name()
 			if match(first, name) && info.IsDir() {
-				glob(rest, prefix+name, results)
+				if !glob(rest, prefix+name, cb) {
+					return false
+				}
 			}
 		}
 
 		if slash {
 			// First slash cannot appear later than a slash in the pattern.
-			return
+			return true
 		}
 		nexti()
 	}
@@ -158,9 +149,12 @@ func glob(segs []Segment, dir string, results chan<- string) {
 	for _, info := range infos {
 		name := info.Name()
 		if match(segs, name) {
-			results <- prefix + name
+			if !cb(prefix + name) {
+				return false
+			}
 		}
 	}
+	return true
 }
 
 // match matches a name against segments. It treats StarStar segments as they
