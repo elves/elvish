@@ -311,7 +311,7 @@ func (comp *completion) List(width, height int) *buffer {
 			col.writePadding(margin, "")
 			style := cands[j].display.style
 			if j == comp.selected {
-				style += styleForSelected
+				style = joinStyle(style, styleForSelected)
 			}
 			col.writes(ForceWcWidth(cands[j].display.text, colWidth), style)
 		}

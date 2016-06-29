@@ -31,6 +31,10 @@ const (
 	Sep
 )
 
+func (t *Token) addStyle(st string) {
+	t.MoreStyle = joinStyle(t.MoreStyle, st)
+}
+
 func parserError(text string) Token {
 	return Token{ParserError, text, nil, ""}
 }

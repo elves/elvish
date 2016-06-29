@@ -146,7 +146,7 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 					p := err.Begin
 					for i, token := range ed.tokens {
 						if token.Node.Begin() <= p && p < token.Node.End() {
-							ed.tokens[i].MoreStyle += styleForCompilerError
+							ed.tokens[i].addStyle(styleForCompilerError)
 							break
 						}
 					}
@@ -156,7 +156,7 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 		// Apply each stylist on each token.
 		for i, t := range ed.tokens {
 			for _, stylist := range stylists {
-				ed.tokens[i].MoreStyle += stylist(t.Node, ed)
+				ed.tokens[i].addStyle(stylist(t.Node, ed))
 			}
 		}
 	}

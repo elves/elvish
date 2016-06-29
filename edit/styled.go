@@ -12,6 +12,10 @@ func unstyled(s string) styled {
 	return styled{s, ""}
 }
 
+func (s *styled) addStyle(st string) {
+	s.style = joinStyle(s.style, st)
+}
+
 type styleds []styled
 
 func (s styleds) Len() int           { return len(s) }

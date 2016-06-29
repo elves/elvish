@@ -4,12 +4,12 @@ package edit
 var (
 	styleForPrompt           = ""
 	styleForRPrompt          = "7"
-	styleForCompleted        = ";2"
+	styleForCompleted        = "2"
 	styleForMode             = "1;37;45"
 	styleForTip              = ""
 	styleForCompletedHistory = "2"
 	styleForFilter           = "4"
-	styleForSelected         = ";7"
+	styleForSelected         = "7"
 	styleForScrollBar        = "35"
 	styleForSideArrow        = "7"
 )
@@ -61,8 +61,15 @@ var styleForSep = map[string]string{
 
 // Styles for semantic coloring.
 var (
-	styleForGoodCommand   = ";32"
-	styleForBadCommand    = ";31"
-	styleForBadVariable   = ";31;3"
-	styleForCompilerError = ";31;3"
+	styleForGoodCommand   = "32"
+	styleForBadCommand    = "31"
+	styleForBadVariable   = "31;3"
+	styleForCompilerError = "31;3"
 )
+
+func joinStyle(s, t string) string {
+	if s != "" && t != "" {
+		return s + ";" + t
+	}
+	return s + t
+}

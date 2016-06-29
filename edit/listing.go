@@ -123,7 +123,7 @@ func (l *listing) List(width, maxHeight int) *buffer {
 		}
 		s := p.Value.(styled)
 		if i == l.selected {
-			s.style += styleForSelected
+			s.addStyle(styleForSelected)
 		}
 		b.writes(s.text, s.style)
 		p = p.Next()
