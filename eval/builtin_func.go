@@ -126,7 +126,7 @@ func init() {
 		&BuiltinFn{"prclose", WrapFn(prclose)},
 		&BuiltinFn{"pwclose", WrapFn(pwclose)},
 
-		&BuiltinFn{"sleep", WrapFn(sleep)},
+		&BuiltinFn{"esleep", WrapFn(sleep)},
 		&BuiltinFn{"exec", WrapFn(exec)},
 		&BuiltinFn{"exit", WrapFn(exit)},
 
