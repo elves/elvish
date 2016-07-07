@@ -39,8 +39,8 @@ var evalTests = []struct {
 	// Outputs of pipelines in a chunk are concatenated
 	{"put x; put y; put z", strs("x", "y", "z"), nomore},
 	// A failed pipeline cause the whole chunk to fail
-	{"put a; false; put b", strs("a"), more{
-		wantError: &util.PosError{7, 12, FakeExternalCmdExit(1, 0)}}},
+	{"put a; e:false; put b", strs("a"), more{
+		wantError: &util.PosError{7, 14, FakeExternalCmdExit(1, 0)}}},
 
 	// Pipelines.
 	// Pure byte pipeline
@@ -120,11 +120,11 @@ var evalTests = []struct {
 	{"put (put lorem ipsum)", strs("lorem", "ipsum"), nomore},
 
 	// Status capture
-	{"put ?(true|false|false)",
-		[]Value{Error{&util.PosError{6, 22, MultiError{[]Error{
+	{"put ?(true|e:false|e:false)",
+		[]Value{Error{&util.PosError{6, 26, MultiError{[]Error{
 			OK,
-			Error{&util.PosError{11, 16, FakeExternalCmdExit(1, 0)}},
-			Error{&util.PosError{17, 22, FakeExternalCmdExit(1, 0)}},
+			Error{&util.PosError{11, 18, FakeExternalCmdExit(1, 0)}},
+			Error{&util.PosError{19, 26, FakeExternalCmdExit(1, 0)}},
 		}}}}}, nomore},
 
 	// Variable and compounding

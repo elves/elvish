@@ -52,8 +52,13 @@ type EvalCtx struct {
 	local, up   Namespace
 	ports       []*Port
 	positionals []Value
+	predReturn  bool
 
 	begin, end int
+}
+
+func (ec *EvalCtx) falsify() {
+	ec.predReturn = false
 }
 
 func (ec *EvalCtx) evaling(begin, end int) {
@@ -81,7 +86,8 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
 		ev,
 		name, text, "top",
 		ev.Global, Namespace{},
-		ports, nil, 0, len(text),
+		ports, nil, true,
+		0, len(text),
 	}
 }
 
@@ -96,7 +102,8 @@ func (ec *EvalCtx) fork(newContext string) *EvalCtx {
 		ec.Evaler,
 		ec.name, ec.text, newContext,
 		ec.local, ec.up,
-		newPorts, ec.positionals, ec.begin, ec.end,
+		newPorts, ec.positionals, true,
+		ec.begin, ec.end,
 	}
 }
 

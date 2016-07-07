@@ -193,7 +193,7 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		ec.Evaler,
 		filename, source, "module " + modname,
 		Namespace{}, Namespace{},
-		ec.ports, nil,
+		ec.ports, nil, true,
 		0, len(source),
 	}
 

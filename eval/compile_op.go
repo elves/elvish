@@ -39,6 +39,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 		var nextIn *Port
 
 		errorChans := make([]chan Error, len(ops))
+		predReturnChans := make([]chan bool, len(ops))
 
 		// For each form, create a dedicated evalCtx and run asynchronously
 		for i, op := range ops {
@@ -62,12 +63,15 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			}
 			thisOp := op
 			errorChans[i] = make(chan Error)
+			predReturnChans[i] = make(chan bool)
 			thisErrorChan := errorChans[i]
+			thisPredReturnChan := predReturnChans[i]
 			go func() {
 				err := newEc.PEval(thisOp)
 				// Logger.Printf("closing ports of %s", newEc.context)
 				ClosePorts(newEc.ports)
 				thisErrorChan <- Error{err}
+				thisPredReturnChan <- newEc.predReturn
 			}()
 		}
 
@@ -75,6 +79,14 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 		errors := make([]Error, len(ops))
 		for i, errorChan := range errorChans {
 			errors[i] = <-errorChan
+		}
+
+		// Evaluate predReturn as the conjunction of all predReturn's.
+		ec.predReturn = true
+		for _, predReturnChan := range predReturnChans {
+			if !<-predReturnChan {
+				ec.predReturn = false
+			}
 		}
 
 		throwCompositeError(errors)
@@ -207,7 +219,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 func (cp *compiler) control(n *parse.Control) OpFunc {
 	switch n.Kind {
 	case parse.IfControl:
-		condOps := cp.errorCaptureOps(n.Conditions)
+		condOps := cp.chunkOps(n.Conditions)
 		bodyOps := cp.chunkOps(n.Bodies)
 		var elseOp Op
 		if n.ElseBody != nil {
@@ -215,7 +227,8 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 		}
 		return func(ec *EvalCtx) {
 			for i, condOp := range condOps {
-				if condOp.Exec(ec)[0].(Error).Inner == nil {
+				condOp.Exec(ec)
+				if ec.predReturn {
 					bodyOps[i].Exec(ec)
 					return
 				}
@@ -224,11 +237,47 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 				elseOp.Exec(ec)
 			}
 		}
+	case parse.TryControl:
+		bodyOp := cp.errorCaptureOp(n.Body)
+		var exceptOp, elseOp ValuesOp
+		var finallyOp Op
+		if n.ExceptBody != nil {
+			exceptOp = cp.errorCaptureOp(n.ExceptBody)
+		}
+		if n.ElseBody != nil {
+			elseOp = cp.errorCaptureOp(n.ElseBody)
+		}
+		if n.FinallyBody != nil {
+			finallyOp = cp.chunkOp(n.FinallyBody)
+		}
+		return func(ec *EvalCtx) {
+			e := bodyOp.Exec(ec)[0].(Error).Inner
+			if e != nil {
+				if exceptOp.Func != nil {
+					e = exceptOp.Exec(ec)[0].(Error).Inner
+				}
+			} else {
+				if elseOp.Func != nil {
+					e = elseOp.Exec(ec)[0].(Error).Inner
+				}
+			}
+			if finallyOp.Func != nil {
+				finallyOp.Exec(ec)
+			}
+			if e != nil {
+				throw(e)
+			}
+		}
 	case parse.WhileControl:
-		condOp := cp.errorCaptureOp(n.Condition)
+		condOp := cp.chunkOp(n.Condition)
 		bodyOp := cp.chunkOp(n.Body)
 		return func(ec *EvalCtx) {
-			for condOp.Exec(ec)[0].(Error).Inner == nil {
+			for {
+				condOp.Exec(ec)
+				if !ec.predReturn {
+					break
+				}
+				//for condOp.Exec(ec)[0].(Error).Inner == nil {
 				ex := ec.PEval(bodyOp)
 				if ex == Continue {
 					// do nothing

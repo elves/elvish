@@ -122,6 +122,21 @@ func (n *Control) setElseBody(ch *Chunk) {
 	addChild(n, ch)
 }
 
+func (n *Control) setExceptBody(ch *Chunk) {
+	n.ExceptBody = ch
+	addChild(n, ch)
+}
+
+func (n *Control) setExceptVar(ch *Indexing) {
+	n.ExceptVar = ch
+	addChild(n, ch)
+}
+
+func (n *Control) setFinallyBody(ch *Chunk) {
+	n.FinallyBody = ch
+	addChild(n, ch)
+}
+
 func parseControl(ps *parser, leader string) *Control {
 	n := &Control{node: node{begin: ps.pos}}
 	n.parse(ps, leader)

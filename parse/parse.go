@@ -33,6 +33,7 @@ var (
 	errShouldBeThen           = newError("", "then")
 	errShouldBeElifOrElseOrFi = newError("", "elif", "else", "fi")
 	errShouldBeFi             = newError("", "fi")
+	errShouldBeTried          = newError("", "tried")
 	errShouldBeDo             = newError("", "do")
 	errShouldBeDone           = newError("", "done")
 	errShouldBeIn             = newError("", "in")
@@ -150,15 +151,20 @@ func startsPipeline(r rune) bool {
 // it starts a control block.
 func findLeader(ps *parser) (string, bool) {
 	switch leader := ps.findPossibleLeader(); leader {
-	case "if", "while", "for", "begin":
+	case "if", "while", "for", "try", "begin":
 		// Starting leaders are always legal.
 		return leader, true
-	case "then", "elif", "else", "fi", "do", "done", "end":
+	case "then", "elif", "else", "fi", "do", "done", "except", "finally", "tried", "end":
 		return leader, false
 	default:
 		// There is no leader.
 		return "", false
 	}
+}
+
+func hasLeader(ps *parser, l string) bool {
+	s, _ := findLeader(ps)
+	return s == l
 }
 
 // Form = { Space } { { Assignment } { Space } }
@@ -308,14 +314,17 @@ func checkVariableInAssignment(p *Primary, ps *parser) bool {
 // (Similiar for Then, Elif, Else, Fi, While, Do, Done, For, Begin, End)
 type Control struct {
 	node
-	Kind       ControlKind
-	Condition  *Chunk    // Valid for WhileControl.
-	Iterator   *Indexing // Valid for ForControl.
-	Array      *Array    // Valid for ForControl.
-	Body       *Chunk    // Valid for all except IfControl.
-	Conditions []*Chunk  // Valid for IfControl.
-	Bodies     []*Chunk  // Valid for IfControl.
-	ElseBody   *Chunk    // Valid for IfControl, WhileControl and ForControl.
+	Kind        ControlKind
+	Condition   *Chunk    // Valid for WhileControl.
+	Iterator    *Indexing // Valid for ForControl.
+	Array       *Array    // Valid for ForControl.
+	Body        *Chunk    // Valid for all except IfControl.
+	Conditions  []*Chunk  // Valid for IfControl.
+	Bodies      []*Chunk  // Valid for IfControl.
+	ElseBody    *Chunk    // Valid for IfControl, WhileControl and ForControl.
+	ExceptBody  *Chunk    // Valid for TryControl.
+	ExceptVar   *Indexing // Valid for TryControl.
+	FinallyBody *Chunk    // Valid for TryControl.
 }
 
 // ControlKind identifies which control structure a Control represents.
@@ -327,6 +336,7 @@ const (
 	IfControl
 	WhileControl
 	ForControl
+	TryControl
 	BeginControl
 )
 
@@ -352,7 +362,7 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 			ps.error(errShouldBeDo)
 		}
 		ctrl.setBody(parseChunk(ps))
-		if leader, _ := findLeader(ps); leader == "else" {
+		if hasLeader(ps, "else") {
 			consumeLeader()
 			ctrl.setElseBody(parseChunk(ps))
 		}
@@ -410,10 +420,41 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 		switch ps.peek() {
 		case '\n', ';':
 			ps.next()
+			addSep(ctrl, ps)
 		default:
 			ps.error(errShouldBePipelineSep)
 		}
 		doElseDone()
+	case "try":
+		ctrl.Kind = TryControl
+		ctrl.setBody(parseChunk(ps))
+		if hasLeader(ps, "except") {
+			consumeLeader()
+			parseSpaces(ctrl, ps)
+			if startsIndexing(ps.peek(), false) {
+				ctrl.setExceptVar(parseIndexing(ps, false))
+				parseSpaces(ctrl, ps)
+			}
+			switch ps.peek() {
+			case '\n', ';':
+				ps.next()
+				addSep(ctrl, ps)
+			default:
+				ps.error(errShouldBePipelineSep)
+			}
+			ctrl.setExceptBody(parseChunk(ps))
+		}
+		if hasLeader(ps, "else") {
+			consumeLeader()
+			ctrl.setElseBody(parseChunk(ps))
+		}
+		if hasLeader(ps, "finally") {
+			consumeLeader()
+			ctrl.setFinallyBody(parseChunk(ps))
+		}
+		if consumeLeader() != "tried" {
+			ps.error(errShouldBeTried)
+		}
 	case "begin":
 		ctrl.Kind = BeginControl
 		ctrl.setBody(parseChunk(ps))

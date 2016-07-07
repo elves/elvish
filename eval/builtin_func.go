@@ -50,6 +50,7 @@ func init() {
 	builtinFns = []*BuiltinFn{
 		&BuiltinFn{":", nop},
 		&BuiltinFn{"true", nop},
+		&BuiltinFn{"false", falseFn},
 
 		&BuiltinFn{"print", WrapFn(print)},
 		&BuiltinFn{"println", WrapFn(println)},
@@ -279,6 +280,10 @@ func convertArg(arg Value, wantType reflect.Type) (reflect.Value, error) {
 func nop(ec *EvalCtx, args []Value) {
 }
 
+func falseFn(ec *EvalCtx, args []Value) {
+	ec.falsify()
+}
+
 func put(ec *EvalCtx, args []Value) {
 	out := ec.ports[1].Chan
 	for _, a := range args {
@@ -407,13 +412,13 @@ func splits(ec *EvalCtx, s, sep String) {
 
 func hasPrefix(ec *EvalCtx, s, prefix String) {
 	if !strings.HasPrefix(string(s), string(prefix)) {
-		throw(ErrFalse)
+		ec.falsify()
 	}
 }
 
 func hasSuffix(ec *EvalCtx, s, suffix String) {
 	if !strings.HasSuffix(string(s), string(suffix)) {
-		throw(ErrFalse)
+		ec.falsify()
 	}
 }
 
@@ -659,12 +664,10 @@ func pow(ec *EvalCtx, b, p float64) {
 	out <- String(fmt.Sprintf("%g", math.Pow(b, p)))
 }
 
-var ErrFalse = errors.New("false")
-
 func lt(ec *EvalCtx, nums ...float64) {
 	for i := 0; i < len(nums)-1; i++ {
 		if !(nums[i] < nums[i+1]) {
-			throw(ErrFalse)
+			ec.falsify()
 		}
 	}
 }
@@ -672,7 +675,7 @@ func lt(ec *EvalCtx, nums ...float64) {
 func le(ec *EvalCtx, nums ...float64) {
 	for i := 0; i < len(nums)-1; i++ {
 		if !(nums[i] <= nums[i+1]) {
-			throw(ErrFalse)
+			ec.falsify()
 		}
 	}
 }
@@ -680,7 +683,7 @@ func le(ec *EvalCtx, nums ...float64) {
 func gt(ec *EvalCtx, nums ...float64) {
 	for i := 0; i < len(nums)-1; i++ {
 		if !(nums[i] > nums[i+1]) {
-			throw(ErrFalse)
+			ec.falsify()
 		}
 	}
 }
@@ -688,7 +691,7 @@ func gt(ec *EvalCtx, nums ...float64) {
 func ge(ec *EvalCtx, nums ...float64) {
 	for i := 0; i < len(nums)-1; i++ {
 		if !(nums[i] >= nums[i+1]) {
-			throw(ErrFalse)
+			ec.falsify()
 		}
 	}
 }

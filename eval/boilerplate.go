@@ -122,6 +122,18 @@ func (cp *compiler) primaryOps(ns []*parse.Primary) []ValuesOp {
 	return ops
 }
 
+func (cp *compiler) listOp(n *parse.Array) ValuesOp {
+	return ValuesOp{cp.list(n), n.Begin(), n.End()}
+}
+
+func (cp *compiler) listOps(ns []*parse.Array) []ValuesOp {
+	ops := make([]ValuesOp, len(ns))
+	for i, n := range ns {
+		ops[i] = cp.listOp(n)
+	}
+	return ops
+}
+
 func (cp *compiler) errorCaptureOp(n *parse.Chunk) ValuesOp {
 	return ValuesOp{cp.errorCapture(n), n.Begin(), n.End()}
 }
