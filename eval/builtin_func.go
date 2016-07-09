@@ -741,39 +741,35 @@ func boolFn(ec *EvalCtx, v Value) {
 	out <- Bool(ToBool(v))
 }
 
-var ErrNotEqual = errors.New("not equal")
-
 func eq(ec *EvalCtx, args []Value) {
 	if len(args) == 0 {
-		throw(ErrArgs)
+		ec.falsify()
+		return
 	}
 	for i := 0; i+1 < len(args); i++ {
 		if args[i] != args[i+1] {
-			throw(ErrNotEqual)
+			ec.falsify()
+			return
 		}
 	}
 }
 
-var ErrEqual = errors.New("equal")
-
 func noteq(ec *EvalCtx, lhs, rhs Value) {
 	if lhs == rhs {
-		throw(ErrEqual)
+		ec.falsify()
 	}
 }
 
 func deepeq(ec *EvalCtx, args []Value) {
-	out := ec.ports[1].Chan
 	if len(args) == 0 {
 		throw(ErrArgs)
 	}
 	for i := 0; i+1 < len(args); i++ {
 		if !DeepEq(args[i], args[i+1]) {
-			out <- Bool(false)
+			ec.falsify()
 			return
 		}
 	}
-	out <- Bool(true)
 }
 
 func resolveFn(ec *EvalCtx, cmd String) {
