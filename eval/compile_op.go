@@ -241,7 +241,15 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 		bodyOp := cp.errorCaptureOp(n.Body)
 		var exceptOp, elseOp ValuesOp
 		var finallyOp Op
+		var exceptVarOp LValuesOp
 		if n.ExceptBody != nil {
+			if n.ExceptVar != nil {
+				var restOp LValuesOp
+				exceptVarOp, restOp = cp.lvaluesOp(n.ExceptVar)
+				if restOp.Func != nil {
+					cp.errorpf(restOp.Begin, restOp.End, "may not use @rest in except variable")
+				}
+			}
 			exceptOp = cp.errorCaptureOp(n.ExceptBody)
 		}
 		if n.ElseBody != nil {
@@ -254,6 +262,13 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			e := bodyOp.Exec(ec)[0].(Error).Inner
 			if e != nil {
 				if exceptOp.Func != nil {
+					if exceptVarOp.Func != nil {
+						exceptVars := exceptVarOp.Exec(ec)
+						if len(exceptVars) != 1 {
+							throw(ErrArityMismatch)
+						}
+						exceptVars[0].Set(Error{e})
+					}
 					e = exceptOp.Exec(ec)[0].(Error).Inner
 				}
 			} else {
