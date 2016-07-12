@@ -10,7 +10,8 @@ import (
 
 // Error definitions.
 var (
-	ErrNeedIntIndex    = errors.New("need integer index")
+	// ErrNeedIntIndex    = errors.New("need integer index")
+	ErrBadIndex        = errors.New("bad index")
 	ErrIndexOutOfRange = errors.New("index out of range")
 )
 
@@ -62,38 +63,58 @@ func (l List) Iterate(f func(Value) bool) {
 }
 
 func (l List) IndexOne(idx Value) Value {
-	i := intIndexWithin(idx, len(*l.inner))
+	slice, i, j := parseAndFixListIndex(ToString(idx), len(*l.inner))
+	if slice {
+		copied := append([]Value{}, (*l.inner)[i:j]...)
+		return List{&copied}
+	}
 	return (*l.inner)[i]
 }
 
 func (l List) IndexSet(idx Value, v Value) {
-	i := intIndexWithin(idx, len(*l.inner))
+	slice, i, _ := parseAndFixListIndex(ToString(idx), len(*l.inner))
+	if slice {
+		throw(errors.New("slice set unimplemented"))
+	}
 	(*l.inner)[i] = v
 }
 
-func intIndexWithin(idx Value, n int) int {
-	i := intIndex(idx)
-
+func parseAndFixListIndex(s string, n int) (bool, int, int) {
+	slice, i, j := parseListIndex(s)
 	if i < 0 {
 		i += n
 	}
-	if i < 0 || i >= n {
+	if j < 0 {
+		j += n
+	}
+	if i < 0 || i >= n || (slice && (j < 0 || j > n)) {
 		throw(ErrIndexOutOfRange)
 	}
-	return i
+	return slice, i, j
 }
 
-func intIndex(idx Value) int {
-	i, err := strconv.Atoi(ToString(idx))
-	if err != nil {
-		err := err.(*strconv.NumError)
-		if err.Err == strconv.ErrRange {
-			throw(ErrIndexOutOfRange)
-		} else {
-			throw(ErrNeedIntIndex)
+// ListIndex = Number |
+//             Number ':' Number
+func parseListIndex(s string) (slice bool, i int, j int) {
+	atoi := func(a string) int {
+		i, err := strconv.Atoi(a)
+		if err != nil {
+			if err.(*strconv.NumError).Err == strconv.ErrRange {
+				throw(ErrIndexOutOfRange)
+			} else {
+				throw(ErrBadIndex)
+			}
 		}
+		return i
 	}
-	return i
+
+	colon := strings.IndexRune(s, ':')
+	if colon == -1 {
+		// A single number
+		return false, atoi(s), 0
+	}
+	// Two numbers
+	return true, atoi(s[:colon]), atoi(s[colon+1:])
 }
 
 // ListReprBuilder helps to build Repr of list-like Values.
