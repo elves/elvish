@@ -128,7 +128,8 @@ func (bn *Chunk) parseSeps(ps *parser) int {
 // Pipeline = Form { '|' Form }
 type Pipeline struct {
 	node
-	Forms []*Form
+	Forms      []*Form
+	Background bool
 }
 
 func (pn *Pipeline) parse(ps *parser) {
@@ -140,6 +141,12 @@ func (pn *Pipeline) parse(ps *parser) {
 			return
 		}
 		pn.addToForms(parseForm(ps))
+	}
+	parseSpaces(pn, ps)
+	if ps.peek() == '&' {
+		ps.next()
+		addSep(pn, ps)
+		pn.Background = true
 	}
 }
 
@@ -211,6 +218,13 @@ func (fn *Form) parse(ps *parser) {
 		r := ps.peek()
 		switch {
 		case r == '&':
+			ps.next()
+			hasMapPair := startsCompound(ps.peek(), false)
+			ps.backup()
+			if !hasMapPair {
+				// background indicator
+				return
+			}
 			fn.addToNamedArgs(parseMapPair(ps))
 		case startsCompound(r, false):
 			if ps.hasPrefix("?>") {
