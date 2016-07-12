@@ -62,8 +62,9 @@ func pprintAST(n Node, wr io.Writer, indent int, leading string) {
 			field{f.Name, f.Tag, fv.Interface()})
 	}
 
-	// has only one child and no properties: coalesce
-	if len(propertyFields) == 0 && len(n.Children()) == 1 {
+	// has only one child and nothing more : coalesce
+	if len(n.Children()) == 1 &&
+		n.Children()[0].SourceText() == n.SourceText() {
 		pprintAST(n.Children()[0], wr, indent, leading+nt.Name()+"/")
 		return
 	}

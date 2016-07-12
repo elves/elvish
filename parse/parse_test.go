@@ -331,7 +331,7 @@ var badCases = []struct {
 	// Unclosed parens.
 	{"a (", 3}, {"a [", 3}, {"a {", 3},
 	// Bogus ampersand.
-	{"a &", 3}, {"a [&", 4},
+	{"a & &", 4}, {"a [&", 4},
 	// Bogus command leader.
 	{"else echo 233", 0},
 }

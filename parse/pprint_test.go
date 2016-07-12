@@ -17,12 +17,10 @@ var pprintCases = []struct {
     Compound
       Indexing
         Primary Type=Variable Value="x" IsRange=[]
-        Array Semicolons=[]
-          Compound/Indexing/Primary Type=Bareword Value="0" IsRange=[]
+        Array/Compound/Indexing/Primary Type=Bareword Value="0" IsRange=[]
       Indexing
         Primary Type=Variable Value="y" IsRange=[]
-        Array Semicolons=[]
-          Compound/Indexing/Primary Type=Bareword Value="1" IsRange=[]
+        Array/Compound/Indexing/Primary Type=Bareword Value="1" IsRange=[]
   Pipeline/Form/Compound/Indexing/Primary Type=Bareword Value="echo" IsRange=[]
 `,
 		`Chunk "ls $x[0]$y[1];echo" 0-18

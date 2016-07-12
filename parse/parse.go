@@ -147,6 +147,7 @@ func (pn *Pipeline) parse(ps *parser) {
 		ps.next()
 		addSep(pn, ps)
 		pn.Background = true
+		parseSpaces(pn, ps)
 	}
 }
 

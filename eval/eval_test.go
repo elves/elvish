@@ -201,9 +201,7 @@ var evalTests = []struct {
 	// Equality
 	{"put ?(== a a) ?(== [] []) ?(== [&] [&])",
 		[]Value{
-			Error{nil},
-			Error{&util.PosError{16, 24, ErrNotEqual}},
-			Error{&util.PosError{28, 38, ErrNotEqual}},
+			Bool(true), Bool(false), Bool(false),
 		}, nomore},
 	{"kind-of bare 'str' [] [&] []{ }",
 		strs("string", "string", "list", "map", "fn"), nomore},
