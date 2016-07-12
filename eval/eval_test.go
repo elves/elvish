@@ -119,13 +119,9 @@ var evalTests = []struct {
 	// Output capture
 	{"put (put lorem ipsum)", strs("lorem", "ipsum"), nomore},
 
-	// Status capture
-	{"put ?(true|e:false|e:false)",
-		[]Value{Error{&util.PosError{6, 26, MultiError{[]Error{
-			OK,
-			Error{&util.PosError{11, 18, FakeExternalCmdExit(1, 0)}},
-			Error{&util.PosError{19, 26, FakeExternalCmdExit(1, 0)}},
-		}}}}}, nomore},
+	// Boolean capture
+	{"put ?(true) ?(false)",
+		[]Value{Bool(true), Bool(false)}, nomore},
 
 	// Variable and compounding
 	{"x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
@@ -205,9 +201,11 @@ var evalTests = []struct {
 		}, nomore},
 	{"kind-of bare 'str' [] [&] []{ }",
 		strs("string", "string", "list", "map", "fn"), nomore},
-	{"put ?(fail failed)", []Value{
-		Error{&util.PosError{6, 17, errors.New("failed")}},
-	}, nomore},
+	/*
+		{"put ?(fail failed)", []Value{
+			Error{&util.PosError{6, 17, errors.New("failed")}},
+		}, nomore},
+	*/
 	{`put "l\norem" ipsum | into-lines`, strs(),
 		more{wantBytesOut: []byte("l\norem\nipsum\n")}},
 	{`echo "1\n233" | each put`, strs("1", "233"), nomore},

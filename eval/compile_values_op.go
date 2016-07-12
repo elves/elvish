@@ -312,7 +312,8 @@ func (cp *compiler) list(n *parse.Array) ValuesOpFunc {
 func (cp *compiler) errorCapture(n *parse.Chunk) ValuesOpFunc {
 	op := cp.chunkOp(n)
 	return func(ec *EvalCtx) []Value {
-		return []Value{Error{ec.PEval(op)}}
+		op.Exec(ec)
+		return []Value{Bool(ec.predReturn)}
 	}
 }
 
