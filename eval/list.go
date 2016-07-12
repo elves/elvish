@@ -80,7 +80,7 @@ func (l List) IndexSet(idx Value, v Value) {
 }
 
 func parseAndFixListIndex(s string, n int) (bool, int, int) {
-	slice, i, j := parseListIndex(s)
+	slice, i, j := parseListIndex(s, n)
 	if i < 0 {
 		i += n
 	}
@@ -95,7 +95,7 @@ func parseAndFixListIndex(s string, n int) (bool, int, int) {
 
 // ListIndex = Number |
 //             Number ':' Number
-func parseListIndex(s string) (slice bool, i int, j int) {
+func parseListIndex(s string, n int) (slice bool, i int, j int) {
 	atoi := func(a string) int {
 		i, err := strconv.Atoi(a)
 		if err != nil {
@@ -113,8 +113,18 @@ func parseListIndex(s string) (slice bool, i int, j int) {
 		// A single number
 		return false, atoi(s), 0
 	}
+	if s[:colon] == "" {
+		i = 0
+	} else {
+		i = atoi(s[:colon])
+	}
+	if s[colon+1:] == "" {
+		j = n
+	} else {
+		j = atoi(s[colon+1:])
+	}
 	// Two numbers
-	return true, atoi(s[:colon]), atoi(s[colon+1:])
+	return true, i, j
 }
 
 // ListReprBuilder helps to build Repr of list-like Values.
