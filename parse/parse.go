@@ -1062,12 +1062,15 @@ func (pn *Primary) bareword(ps *parser, head bool) {
 
 // The following are allowed in barewords:
 // * Anything allowed in variable names, except &
-// * The symbols "%+,./=@~!"
+// * The symbols "%+,./=@~!\"
 // * The symbols "<>*^", if the bareword is in head
+//
+// The seemingly weird inclusion of \ is for easier path manipulation in
+// Windows.
 func allowedInBareword(r rune, head bool) bool {
 	return (r != '&' && allowedInVariableName(r)) ||
 		r == '%' || r == '+' || r == ',' || r == '.' ||
-		r == '/' || r == '=' || r == '@' || r == '~' || r == '!' ||
+		r == '/' || r == '=' || r == '@' || r == '~' || r == '!' || r == '\\' ||
 		(head && (r == '<' || r == '>' || r == '*' || r == '^'))
 }
 
