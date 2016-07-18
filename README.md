@@ -143,7 +143,7 @@ Go >= 1.5 is required. Linux is fully supported. It is likely to work on BSDs an
 
 The main binary can be installed using `go get github.com/elves/elvish`. There is also an auxiliary program called elvish-stub; install it with `make stub`. Elvish is funtional without the stub, but job control features depend on it.
 
-If you are lazy and use `bash` for `zsh` now, here is something you can copy-paste into your terminal:
+If you are lazy and use `bash` or `zsh` now, here is something you can copy-paste into your terminal:
 
 ```sh
 export GOPATH=$HOME/go
