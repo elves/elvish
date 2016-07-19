@@ -68,11 +68,11 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 * **NOTE**: Default key bindings as listed above are subject to change in the future; but the functionality will not go away.
 
-* Elvish doesn't support history expansion like `!!`. Instead, it has a "bang mode", trigerred by `Alt-,`, that provides the same functionality. For example, if you typed a command but forgot to add `sudo`, you can then type `sudo ` and press `Alt-,` twice to fix it:
+* Elvish doesn't support history expansion like `!!`. Instead, it has a "bang mode", triggered by `Alt-,`, that provides the same functionality. For example, if you typed a command but forgot to add `sudo`, you can then type `sudo ` and press `Alt-,` twice to fix it:
 
   ![bang mode](https://raw.githubusercontent.com/elves/images/master/bang.png)
 
-* Lists look like `[a b c]`, and maps look like `[&key1=value1 &key2=value2]`. Unlike other shells, lists never expands to multiple words, unless you explicitly splice it by prefixing the variable name with `$@`:
+* Lists look like `[a b c]`, and maps look like `[&key1=value1 &key2=value2]`. Unlike other shells, a list never expands to multiple words, unless you explicitly splice it by prefixing the variable name with `$@`:
   ```sh
   ~> li=[1 2 3]
   ~> for x in $li; do echo $x; done
@@ -134,14 +134,14 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   ▶ 16
   ```
 
-* Output of some builtin commands start with a funny "▶". It is not part of the output itself, but shows that such commands output a stream of values instead of bytes. As such, their internal structures as well as boundaries between valued are preserved. This allows us to manipulate structured data in the shell; more on this later.
+* Output of some builtin commands start with a funny "▶". It is not part of the output itself, but shows that such commands output a stream of values instead of bytes. As such, their internal structures as well as boundaries between values are preserved. This allows us to manipulate structured data in the shell; more on this later.
 
 
 ## Building Elvish
 
 Go >= 1.5 is required. Linux is fully supported. It is likely to work on BSDs and Mac OS X. Windows is **not** supported yet.
 
-The main binary can be installed using `go get github.com/elves/elvish`. There is also an auxiliary program called elvish-stub; install it with `make stub`. Elvish is funtional without the stub, but job control features depend on it.
+The main binary can be installed using `go get github.com/elves/elvish`. There is also an auxiliary program called elvish-stub; install it with `make stub`. Elvish is functional without the stub, but job control features depend on it.
 
 If you are lazy and use `bash` or `zsh` now, here is something you can copy-paste into your terminal:
 
