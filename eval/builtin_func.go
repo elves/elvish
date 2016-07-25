@@ -858,7 +858,8 @@ func fg(ec *EvalCtx, pids ...int) {
 		if err != nil {
 			errors[i] = Error{err}
 		} else {
-			errors[i] = Error{NewExternalCmdExit(ws, pid)}
+			// TODO find command name
+			errors[i] = Error{NewExternalCmdExit(fmt.Sprintf("(pid %d)", pid), ws, pid)}
 		}
 	}
 

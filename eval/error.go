@@ -110,43 +110,45 @@ func (f flow) Error() string {
 // of the process.
 type ExternalCmdExit struct {
 	syscall.WaitStatus
-	Pid int
+	CmdName string
+	Pid     int
 }
 
-func NewExternalCmdExit(ws syscall.WaitStatus, pid int) error {
+func NewExternalCmdExit(name string, ws syscall.WaitStatus, pid int) error {
 	if ws.Exited() && ws.ExitStatus() == 0 {
 		return nil
 	}
 	if !ws.Stopped() {
 		pid = 0
 	}
-	return ExternalCmdExit{ws, pid}
+	return ExternalCmdExit{ws, name, pid}
 }
 
-func FakeExternalCmdExit(exit int, sig syscall.Signal) ExternalCmdExit {
-	return ExternalCmdExit{syscall.WaitStatus(exit<<8 + int(sig)), 0}
+func FakeExternalCmdExit(name string, exit int, sig syscall.Signal) ExternalCmdExit {
+	return ExternalCmdExit{syscall.WaitStatus(exit<<8 + int(sig)), name, 0}
 }
 
 func (exit ExternalCmdExit) Error() string {
 	ws := exit.WaitStatus
+	quotedName := parse.Quote(exit.CmdName)
 	switch {
 	case ws.Exited():
-		return strconv.Itoa(ws.ExitStatus())
+		return quotedName + " exited with " + strconv.Itoa(ws.ExitStatus())
 	case ws.Signaled():
-		msg := ws.Signal().String()
+		msg := quotedName + " killed by signal " + ws.Signal().String()
 		if ws.CoreDump() {
 			msg += " (core dumped)"
 		}
 		return msg
 	case ws.Stopped():
-		msg := fmt.Sprintf("%s (pid=%d)", ws.StopSignal(), exit.Pid)
+		msg := quotedName + " stopped by signal " + fmt.Sprintf("%s (pid=%d)", ws.StopSignal(), exit.Pid)
 		trap := ws.TrapCause()
 		if trap != -1 {
 			msg += fmt.Sprintf(" (trapped %v)", trap)
 		}
 		return msg
 	default:
-		return fmt.Sprint("unknown WaitStatus", ws)
+		return fmt.Sprint(quotedName, " has unknown WaitStatus ", ws)
 	}
 }
 
