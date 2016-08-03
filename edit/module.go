@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/elves/elvish/eval"
@@ -37,6 +38,7 @@ func makeModule(ed *Editor) eval.Namespace {
 
 	ns["prompt"] = PromptVariable{&ed.ps1}
 	ns["rprompt"] = PromptVariable{&ed.rps1}
+	ns["rprompt-persistent"] = BoolExposer{&ed.rpromptPersistent}
 
 	ns["abbr"] = eval.NewRoVariable(eval.MapStringString(ed.abbreviations))
 
@@ -55,4 +57,23 @@ func maybeThrow(e error) {
 
 func throwf(format string, args ...interface{}) {
 	util.Throw(fmt.Errorf(format, args...))
+}
+
+// BoolExposer implements eval.Variable and exposes a bool to elvishscript.
+type BoolExposer struct {
+	valuePtr *bool
+}
+
+var errMustBeBool = errors.New("must be bool")
+
+func (be BoolExposer) Set(v eval.Value) {
+	if b, ok := v.(eval.Bool); ok {
+		*be.valuePtr = bool(b)
+	} else {
+		throw(errMustBeBool)
+	}
+}
+
+func (be BoolExposer) Get() eval.Value {
+	return eval.Bool(*be.valuePtr)
 }

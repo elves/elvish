@@ -37,6 +37,8 @@ type Editor struct {
 	completers    map[string]ArgCompleter
 	abbreviations map[string]string
 
+	rpromptPersistent bool
+
 	editorState
 }
 
@@ -252,8 +254,9 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.mode = &ed.insert
 	ed.tips = nil
 	ed.dot = len(ed.line)
-	// TODO Perhaps make it optional to NOT clear the rprompt
-	ed.rprompt = ""
+	if !ed.rpromptPersistent {
+		ed.rprompt = ""
+	}
 	addError(ed.refresh(false, false))
 	ed.file.WriteString("\n")
 
