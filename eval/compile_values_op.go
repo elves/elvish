@@ -264,8 +264,8 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 	case parse.Tilde:
 		cp.errorf("compiler bug: Tilde not handled in .compound")
 		return literalStr("~")
-	case parse.ErrorCapture:
-		return cp.errorCapture(n.Chunk)
+	case parse.PredCapture:
+		return cp.predCapture(n.Chunk)
 	case parse.OutputCapture:
 		return cp.outputCapture(n)
 	case parse.List:
@@ -309,11 +309,18 @@ func (cp *compiler) list(n *parse.Array) ValuesOpFunc {
 	}
 }
 
-func (cp *compiler) errorCapture(n *parse.Chunk) ValuesOpFunc {
+func (cp *compiler) predCapture(n *parse.Chunk) ValuesOpFunc {
 	op := cp.chunkOp(n)
 	return func(ec *EvalCtx) []Value {
 		op.Exec(ec)
 		return []Value{Bool(ec.predReturn)}
+	}
+}
+
+func (cp *compiler) errorCapture(n *parse.Chunk) ValuesOpFunc {
+	op := cp.chunkOp(n)
+	return func(ec *EvalCtx) []Value {
+		return []Value{Error{ec.PEval(op)}}
 	}
 }
 

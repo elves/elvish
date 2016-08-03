@@ -74,6 +74,9 @@ var evalTests = []struct {
 		strs("3"), nomore},
 	{"if false; then put 2; elif true; then put 2; else put 3; fi",
 		strs("2"), nomore},
+	// try
+	{"try true; except; put bad; else; put good; tried", strs("good"), nomore},
+	{"try e:false; except; put bad; else; put good; tried", strs("bad"), nomore},
 	// while
 	{"x=0; while < $x 4; do put $x; x=(+ $x 1); done",
 		strs("0", "1", "2", "3"), nomore},

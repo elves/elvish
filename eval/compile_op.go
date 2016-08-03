@@ -238,6 +238,7 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			}
 		}
 	case parse.TryControl:
+		Logger.Println("compiling a try control")
 		bodyOp := cp.errorCaptureOp(n.Body)
 		var exceptOp, elseOp ValuesOp
 		var finallyOp Op
@@ -260,6 +261,7 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 		}
 		return func(ec *EvalCtx) {
 			e := bodyOp.Exec(ec)[0].(Error).Inner
+			Logger.Println("e is now", e)
 			if e != nil {
 				if exceptOp.Func != nil {
 					if exceptVarOp.Func != nil {
@@ -270,10 +272,12 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 						exceptVars[0].Set(Error{e})
 					}
 					e = exceptOp.Exec(ec)[0].(Error).Inner
+					Logger.Println("e is now", e)
 				}
 			} else {
 				if elseOp.Func != nil {
 					e = elseOp.Exec(ec)[0].(Error).Inner
+					Logger.Println("e is now", e)
 				}
 			}
 			if finallyOp.Func != nil {
