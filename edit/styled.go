@@ -25,6 +25,10 @@ func (s *styled) Kind() string {
 	return "styled"
 }
 
+func (s *styled) String() string {
+	return "\033[" + s.style + "m" + s.text + "\033[m"
+}
+
 func (s *styled) Repr(indent int) string {
 	return "(le:styled " + parse.Quote(s.text) + " " + parse.Quote(s.style) + ")"
 }
