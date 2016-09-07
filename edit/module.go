@@ -44,6 +44,8 @@ func makeModule(ed *Editor) eval.Namespace {
 
 	ns["before-readline"] = ed.beforeReadLine
 
+	ns[eval.FnPrefix+"styled"] = eval.NewRoVariable(&eval.BuiltinFn{"le:styled", eval.WrapFn(styledBuiltin)})
+
 	return ns
 }
 

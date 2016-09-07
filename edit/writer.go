@@ -140,6 +140,16 @@ func (b *buffer) writes(s string, style string) {
 	}
 }
 
+func (b *buffer) writeStyled(s *styled) {
+	b.writes(s.text, s.style)
+}
+
+func (b *buffer) writeStyleds(ss []*styled) {
+	for _, s := range ss {
+		b.writeStyled(s)
+	}
+}
+
 func (b *buffer) writePadding(w int, style string) {
 	b.writes(strings.Repeat(" ", w), style)
 }
@@ -401,7 +411,7 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 
 	b.newlineWhenFull = true
 
-	b.writes(es.prompt, styleForPrompt)
+	b.writeStyleds(es.prompt)
 
 	if b.line() == 0 && b.col*2 < b.width {
 		b.indent = b.col
@@ -448,11 +458,14 @@ tokens:
 	}
 
 	// Write rprompt
-	padding := b.width - b.col - WcWidths(es.rprompt)
+	padding := b.width - b.col
+	for _, s := range es.rprompt {
+		padding -= WcWidths(s.text)
+	}
 	if padding >= 1 {
 		b.newlineWhenFull = false
 		b.writePadding(padding, "")
-		b.writes(es.rprompt, styleForRPrompt)
+		b.writeStyleds(es.rprompt)
 	}
 
 	// bufMode

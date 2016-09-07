@@ -2,8 +2,8 @@ package edit
 
 // Styles for UI.
 var (
-	styleForPrompt           = ""
-	styleForRPrompt          = "7"
+	//styleForPrompt           = ""
+	//styleForRPrompt          = "7"
 	styleForCompleted        = "2"
 	styleForMode             = "1;37;45"
 	styleForTip              = ""

@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"bytes"
 	"errors"
 	"os"
 	"os/user"
@@ -10,7 +9,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var ErrPromptMustBeStringOrFunc = errors.New("prompt must be string or function")
+var ErrPromptMustBeStringStyledOrFunc = errors.New("prompt must be string, styled or function")
 
 // PromptVariable is a prompt function variable. It may be set to a String, a
 // Fn, or a BuiltinPrompt. It provides $le:prompt and $le:rprompt.
@@ -25,23 +24,29 @@ func (pv PromptVariable) Get() eval.Value {
 
 func (pv PromptVariable) Set(v eval.Value) {
 	if s, ok := v.(eval.String); ok {
-		*pv.Prompt = BuiltinPrompt(func(*Editor) string { return string(s) })
+		*pv.Prompt = BuiltinPrompt(func(*Editor) []*styled {
+			return []*styled{&styled{string(s), ""}}
+		})
+	} else if s, ok := v.(*styled); ok {
+		*pv.Prompt = BuiltinPrompt(func(*Editor) []*styled {
+			return []*styled{s}
+		})
 	} else if c, ok := v.(eval.Fn); ok {
 		*pv.Prompt = FnAsPrompt{c}
 	} else {
-		throw(ErrPromptMustBeStringOrFunc)
+		throw(ErrPromptMustBeStringStyledOrFunc)
 	}
 }
 
 // Prompt is the interface of prompt functions.
 type Prompt interface {
-	Call(*Editor) string
+	Call(*Editor) []*styled
 }
 
 // BuiltinPrompt is a trivial implementation of Prompt.
-type BuiltinPrompt func(*Editor) string
+type BuiltinPrompt func(*Editor) []*styled
 
-func (bp BuiltinPrompt) Call(ed *Editor) string {
+func (bp BuiltinPrompt) Call(ed *Editor) []*styled {
 	return bp(ed)
 }
 
@@ -50,10 +55,10 @@ type FnAsPrompt struct {
 	eval.Fn
 }
 
-func (c FnAsPrompt) Call(ed *Editor) string {
+func (c FnAsPrompt) Call(ed *Editor) []*styled {
 	in, err := makeClosedStdin()
 	if err != nil {
-		return ""
+		return nil
 	}
 	ports := []*eval.Port{in, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
 
@@ -62,13 +67,18 @@ func (c FnAsPrompt) Call(ed *Editor) string {
 	values, err := ec.PCaptureOutput(c.Fn, nil)
 	if err != nil {
 		ed.notify("prompt function error: %v", err)
-		return ""
+		return nil
 	}
-	var b bytes.Buffer
+
+	var ss []*styled
 	for _, v := range values {
-		b.WriteString(eval.ToString(v))
+		if s, ok := v.(*styled); ok {
+			ss = append(ss, s)
+		} else {
+			ss = append(ss, &styled{eval.ToString(v), ""})
+		}
 	}
-	return b.String()
+	return ss
 }
 
 func defaultPrompts() (Prompt, Prompt) {
@@ -83,11 +93,11 @@ func defaultPrompts() (Prompt, Prompt) {
 		hostname = "???"
 	}
 	rpromptStr := username + "@" + hostname
-	prompt := func(*Editor) string {
-		return util.Getwd() + "> "
+	prompt := func(*Editor) []*styled {
+		return []*styled{&styled{util.Getwd() + "> ", ""}}
 	}
-	rprompt := func(*Editor) string {
-		return rpromptStr
+	rprompt := func(*Editor) []*styled {
+		return []*styled{&styled{rpromptStr, "7"}}
 	}
 	return BuiltinPrompt(prompt), BuiltinPrompt(rprompt)
 }

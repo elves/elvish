@@ -52,8 +52,8 @@ type editorState struct {
 	tips          []string
 
 	tokens  []Token
-	prompt  string
-	rprompt string
+	prompt  []*styled
+	rprompt []*styled
 	line    string
 	dot     int
 
@@ -258,7 +258,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.tips = nil
 	ed.dot = len(ed.line)
 	if !ed.rpromptPersistent {
-		ed.rprompt = ""
+		ed.rprompt = nil
 	}
 	addError(ed.refresh(false, false))
 	ed.file.WriteString("\n")

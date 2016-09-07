@@ -1,6 +1,11 @@
 package edit
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse"
+)
 
 // styled is a piece of text with style.
 type styled struct {
@@ -15,6 +20,21 @@ func unstyled(s string) styled {
 func (s *styled) addStyle(st string) {
 	s.style = joinStyle(s.style, st)
 }
+
+func (s *styled) Kind() string {
+	return "styled"
+}
+
+func (s *styled) Repr(indent int) string {
+	return "(le:styled " + parse.Quote(s.text) + " " + parse.Quote(s.style) + ")"
+}
+
+func styledBuiltin(ec *eval.EvalCtx, text, style string) {
+	out := ec.OutputChan()
+	out <- &styled{text, style}
+}
+
+// Boilerplates for sorting.
 
 type styleds []styled
 
