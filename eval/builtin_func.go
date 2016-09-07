@@ -82,6 +82,7 @@ func init() {
 
 		&BuiltinFn{"each", WrapFn(each)},
 		&BuiltinFn{"eawk", WrapFn(eawk)},
+		&BuiltinFn{"constantly", constantly},
 
 		&BuiltinFn{"cd", cd},
 		&BuiltinFn{"dirs", WrapFn(dirs)},
@@ -513,6 +514,23 @@ func eawk(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 			throw(ex)
 		}
 	})
+}
+
+func constantly(ec *EvalCtx, args []Value) {
+	out := ec.ports[1].Chan
+	// XXX Repr of this fn is not right
+	out <- &BuiltinFn{
+		"created by constantly",
+		func(ec *EvalCtx, a []Value) {
+			if len(a) != 0 {
+				throw(ErrArgs)
+			}
+			out := ec.ports[1].Chan
+			for _, v := range args {
+				out <- v
+			}
+		},
+	}
 }
 
 func cd(ec *EvalCtx, args []Value) {
