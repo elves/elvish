@@ -42,6 +42,8 @@ func makeModule(ed *Editor) eval.Namespace {
 
 	ns["abbr"] = eval.NewRoVariable(eval.MapStringString(ed.abbreviations))
 
+	ns["before-readline"] = ed.beforeReadLine
+
 	return ns
 }
 

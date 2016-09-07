@@ -1,11 +1,9 @@
 package edit
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"os"
-	"sync"
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
@@ -132,44 +130,7 @@ func (c FnAsBoundFunc) Repr(indent int) string {
 }
 
 func (c FnAsBoundFunc) Call(ed *Editor) {
-	rout, chanOut, ports, err := makePorts()
-	if err != nil {
-		return
-	}
-
-	// Goroutines to collect output.
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		rd := bufio.NewReader(rout)
-		for {
-			line, err := rd.ReadString('\n')
-			if err != nil {
-				break
-			}
-			// XXX notify is not concurrency-safe.
-			ed.notify("[bound fn bytes] %s", line[:len(line)-1])
-		}
-		rout.Close()
-		wg.Done()
-	}()
-	go func() {
-		for v := range chanOut {
-			ed.notify("[bound fn value] %s", v.Repr(eval.NoPretty))
-		}
-		wg.Done()
-	}()
-
-	// XXX There is no source to pass to NewTopEvalCtx.
-	ec := eval.NewTopEvalCtx(ed.evaler, "[editor]", "", ports)
-	ex := ec.PCall(c.Fn, []eval.Value{})
-	if ex != nil {
-		ed.notify("function error: %s", ex.Error())
-	}
-
-	eval.ClosePorts(ports)
-	wg.Wait()
-	ed.refresh(true, true)
+	ed.CallFn(c.Fn)
 }
 
 // makePorts connects stdin to /dev/null and a closed channel, identifies

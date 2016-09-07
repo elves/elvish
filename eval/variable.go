@@ -17,14 +17,24 @@ type Variable interface {
 }
 
 type ptrVariable struct {
-	valuePtr *Value
+	valuePtr  *Value
+	validator func(Value) error
 }
 
 func NewPtrVariable(v Value) Variable {
-	return ptrVariable{&v}
+	return NewPtrVariableWithValidator(v, nil)
+}
+
+func NewPtrVariableWithValidator(v Value, vld func(Value) error) Variable {
+	return ptrVariable{&v, vld}
 }
 
 func (iv ptrVariable) Set(val Value) {
+	if iv.validator != nil {
+		if err := iv.validator(val); err != nil {
+			throw(errors.New("invalid value: " + err.Error()))
+		}
+	}
 	*iv.valuePtr = val
 }
 

@@ -38,6 +38,7 @@ type Editor struct {
 	abbreviations map[string]string
 
 	rpromptPersistent bool
+	beforeReadLine    eval.Variable
 
 	editorState
 }
@@ -103,6 +104,8 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		rps1:   rprompt,
 
 		abbreviations: make(map[string]string),
+		beforeReadLine: eval.NewPtrVariableWithValidator(
+			eval.NewList(), eval.IsListOfFnValue),
 	}
 	ev.Modules["le"] = makeModule(ed)
 	return ed
@@ -303,6 +306,13 @@ func (ed *Editor) ReadLine() (line string, err error) {
 	})
 
 	fullRefresh := false
+
+	beforeReadLines := ed.beforeReadLine.Get().(eval.ListLike)
+	beforeReadLines.Iterate(func(f eval.Value) bool {
+		ed.CallFn(f.(eval.FnValue))
+		return true
+	})
+
 MainLoop:
 	for {
 		ed.prompt = ed.ps1.Call(ed)
