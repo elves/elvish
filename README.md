@@ -32,14 +32,13 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
   The `external:` prefix ensures that the external command named `ls` will be called. Otherwise this definition will result in infinite recursion.
 
-* The left and right prompts and be customized by modifying `le:prompt` and `le:rprompt`. They can be assigned either to a function, in which their outputs are used, or a constant string. The following simulates the default prompts but uses fancy Unicode:
+* The left and right prompts and be customized by assigning functions to `le:prompt` and `le:rprompt`. Their outputs are concatenated (with no spaces in between) before being used as the respective prompts. The following simulates the default prompts but uses fancy Unicode:
 
   ```sh
-  # Changes during a session; use function.
   # "tilde-abbr" abbreviates home directory to a tilde.
-  le:prompt={ put `tilde-abbr $pwd`'❱ ' }
-  # Doesn't change during a session; use constant string.
-  le:rprompt=`whoami`✸`hostname`
+  le:prompt={ tilde-abbr $pwd; put '❱ ' }
+  # "constantly" returns a function that always writes the same value(s) to output.
+  le:rprompt=(constantly `whoami`✸`hostname`)
   ```
 
 * Press Up to search through history. It uses what you have typed to do prefix match. To cancel, press Escape.

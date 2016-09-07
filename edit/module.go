@@ -36,8 +36,8 @@ func makeModule(ed *Editor) eval.Namespace {
 		// XXX Repr is "&le:complete-getopt" instead of "le:&complete-getopt"
 		&eval.BuiltinFn{"le:complete-getopt", eval.WrapFn(complGetopt)})
 
-	ns["prompt"] = PromptVariable{&ed.ps1}
-	ns["rprompt"] = PromptVariable{&ed.rps1}
+	ns["prompt"] = ed.ps1
+	ns["rprompt"] = ed.rps1
 	ns["rprompt-persistent"] = BoolExposer{&ed.rpromptPersistent}
 
 	ns["abbr"] = eval.NewRoVariable(eval.MapStringString(ed.abbreviations))

@@ -9,53 +9,44 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var ErrPromptMustBeStringStyledOrFunc = errors.New("prompt must be string, styled or function")
+var ErrMustBeFn = errors.New("must be function")
 
-// PromptVariable is a prompt function variable. It may be set to a String, a
-// Fn, or a BuiltinPrompt. It provides $le:prompt and $le:rprompt.
-type PromptVariable struct {
-	Prompt *Prompt
-}
-
-func (pv PromptVariable) Get() eval.Value {
-	// XXX Should return a proper eval.Fn
-	return eval.String("<prompt>")
-}
-
-func (pv PromptVariable) Set(v eval.Value) {
-	if s, ok := v.(eval.String); ok {
-		*pv.Prompt = BuiltinPrompt(func(*Editor) []*styled {
-			return []*styled{&styled{string(s), ""}}
-		})
-	} else if s, ok := v.(*styled); ok {
-		*pv.Prompt = BuiltinPrompt(func(*Editor) []*styled {
-			return []*styled{s}
-		})
-	} else if c, ok := v.(eval.Fn); ok {
-		*pv.Prompt = FnAsPrompt{c}
-	} else {
-		throw(ErrPromptMustBeStringStyledOrFunc)
+// MustBeFn validates whether a Value is an Fn.
+func MustBeFn(v eval.Value) error {
+	if _, ok := v.(eval.Fn); !ok {
+		return ErrMustBeFn
 	}
+	return nil
 }
 
-// Prompt is the interface of prompt functions.
-type Prompt interface {
-	Call(*Editor) []*styled
+func defaultPrompts() (eval.FnValue, eval.FnValue) {
+	// Make default prompts.
+	prompt := func(ec *eval.EvalCtx, args []eval.Value) {
+		out := ec.OutputChan()
+		out <- &styled{util.Getwd() + "> ", ""}
+	}
+
+	username := "???"
+	user, err := user.Current()
+	if err == nil {
+		username = user.Username
+	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "???"
+	}
+	rpromptStr := username + "@" + hostname
+	rprompt := func(ec *eval.EvalCtx, args []eval.Value) {
+		out := ec.OutputChan()
+		out <- &styled{rpromptStr, "7"}
+	}
+
+	return &eval.BuiltinFn{"default prompt", prompt}, &eval.BuiltinFn{"default rprompt", rprompt}
 }
 
-// BuiltinPrompt is a trivial implementation of Prompt.
-type BuiltinPrompt func(*Editor) []*styled
-
-func (bp BuiltinPrompt) Call(ed *Editor) []*styled {
-	return bp(ed)
-}
-
-// FnAsPrompt adapts a eval.Fn to a Prompt.
-type FnAsPrompt struct {
-	eval.Fn
-}
-
-func (c FnAsPrompt) Call(ed *Editor) []*styled {
+// callFnAsPrompt calls a Fn with closed input, captures its output and convert
+// the output to a slice of *styled's.
+func callFnForPrompt(ed *Editor, fn eval.Fn) []*styled {
 	in, err := makeClosedStdin()
 	if err != nil {
 		return nil
@@ -64,7 +55,7 @@ func (c FnAsPrompt) Call(ed *Editor) []*styled {
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor prompt]", "", ports)
-	values, err := ec.PCaptureOutput(c.Fn, nil)
+	values, err := ec.PCaptureOutput(fn, nil)
 	if err != nil {
 		ed.notify("prompt function error: %v", err)
 		return nil
@@ -79,25 +70,4 @@ func (c FnAsPrompt) Call(ed *Editor) []*styled {
 		}
 	}
 	return ss
-}
-
-func defaultPrompts() (Prompt, Prompt) {
-	// Make default prompts.
-	username := "???"
-	user, err := user.Current()
-	if err == nil {
-		username = user.Username
-	}
-	hostname, err := os.Hostname()
-	if err != nil {
-		hostname = "???"
-	}
-	rpromptStr := username + "@" + hostname
-	prompt := func(*Editor) []*styled {
-		return []*styled{&styled{util.Getwd() + "> ", ""}}
-	}
-	rprompt := func(*Editor) []*styled {
-		return []*styled{&styled{rpromptStr, "7"}}
-	}
-	return BuiltinPrompt(prompt), BuiltinPrompt(rprompt)
 }

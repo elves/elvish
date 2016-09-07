@@ -32,8 +32,8 @@ type Editor struct {
 	evaler *eval.Evaler
 	cmdSeq int
 
-	ps1           Prompt
-	rps1          Prompt
+	ps1           eval.Variable
+	rps1          eval.Variable
 	completers    map[string]ArgCompleter
 	abbreviations map[string]string
 
@@ -100,8 +100,8 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		store:  st,
 		evaler: ev,
 		cmdSeq: seq,
-		ps1:    prompt,
-		rps1:   rprompt,
+		ps1:    eval.NewPtrVariableWithValidator(prompt, MustBeFn),
+		rps1:   eval.NewPtrVariableWithValidator(rprompt, MustBeFn),
 
 		abbreviations: make(map[string]string),
 		beforeReadLine: eval.NewPtrVariableWithValidator(
@@ -315,8 +315,8 @@ func (ed *Editor) ReadLine() (line string, err error) {
 
 MainLoop:
 	for {
-		ed.prompt = ed.ps1.Call(ed)
-		ed.rprompt = ed.rps1.Call(ed)
+		ed.prompt = callFnForPrompt(ed, ed.ps1.Get().(eval.Fn))
+		ed.rprompt = callFnForPrompt(ed, ed.rps1.Get().(eval.Fn))
 
 		err := ed.refresh(fullRefresh, true)
 		fullRefresh = false
