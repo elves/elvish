@@ -237,7 +237,8 @@ func variable(qname string) ValuesOpFunc {
 		if splice {
 			iterator, ok := value.(Iterator)
 			if !ok {
-				ec.errorf("variable $%s (kind %s) cannot be spliced", qname, value.Kind())
+				// Use qname[1:] to skip the leading "@"
+				ec.errorf("variable $%s (kind %s) cannot be spliced", qname[1:], value.Kind())
 			}
 			return collectFromIterator(iterator)
 		}
