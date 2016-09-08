@@ -94,7 +94,7 @@ func (epl *EnvPathList) Elems() <-chan Value {
 
 func (epl *EnvPathList) IndexOne(idx Value) Value {
 	paths := epl.get()
-	slice, i, j := parseAndFixListIndex(ToString(idx), len(paths))
+	slice, i, j := ParseAndFixListIndex(ToString(idx), len(paths))
 	if slice {
 		sliced := paths[i:j]
 		values := make([]Value, len(sliced))
@@ -113,7 +113,7 @@ func (epl *EnvPathList) IndexSet(idx, v Value) {
 	}
 
 	paths := epl.get()
-	slice, i, _ := parseAndFixListIndex(ToString(idx), len(paths))
+	slice, i, _ := ParseAndFixListIndex(ToString(idx), len(paths))
 	if slice {
 		throw(errors.New("slice set unimplemented"))
 	}

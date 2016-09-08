@@ -63,7 +63,7 @@ func (l List) Iterate(f func(Value) bool) {
 }
 
 func (l List) IndexOne(idx Value) Value {
-	slice, i, j := parseAndFixListIndex(ToString(idx), len(*l.inner))
+	slice, i, j := ParseAndFixListIndex(ToString(idx), len(*l.inner))
 	if slice {
 		copied := append([]Value{}, (*l.inner)[i:j]...)
 		return List{&copied}
@@ -72,14 +72,17 @@ func (l List) IndexOne(idx Value) Value {
 }
 
 func (l List) IndexSet(idx Value, v Value) {
-	slice, i, _ := parseAndFixListIndex(ToString(idx), len(*l.inner))
+	slice, i, _ := ParseAndFixListIndex(ToString(idx), len(*l.inner))
 	if slice {
 		throw(errors.New("slice set unimplemented"))
 	}
 	(*l.inner)[i] = v
 }
 
-func parseAndFixListIndex(s string, n int) (bool, int, int) {
+// ParseAndFixListIndex parses a list index and returns whether the index is a
+// slice and "real" (-1 becomes n-1) indicies. It throws errors when the index
+// is invalid or out of range.
+func ParseAndFixListIndex(s string, n int) (bool, int, int) {
 	slice, i, j := parseListIndex(s, n)
 	if i < 0 {
 		i += n
