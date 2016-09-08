@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"sync"
 	"syscall"
 	"time"
 
@@ -39,6 +40,8 @@ type Editor struct {
 
 	rpromptPersistent bool
 	beforeReadLine    eval.Variable
+
+	historyMutex sync.RWMutex
 
 	editorState
 }

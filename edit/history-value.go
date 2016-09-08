@@ -1,12 +1,15 @@
 package edit
 
 import (
+	"sync"
+
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/store"
 )
 
 type History struct {
-	st *store.Store
+	mutex *sync.RWMutex
+	st    *store.Store
 }
 
 var _ eval.ListLike = History{}
@@ -20,12 +23,18 @@ func (hv History) Repr(int) string {
 }
 
 func (hv History) Len() int {
+	hv.mutex.RLock()
+	defer hv.mutex.RUnlock()
+
 	nextseq, err := hv.st.NextCmdSeq()
 	maybeThrow(err)
 	return nextseq - 1
 }
 
 func (hv History) Iterate(f func(eval.Value) bool) {
+	hv.mutex.RLock()
+	defer hv.mutex.RUnlock()
+
 	n := hv.Len()
 	for i := 1; i <= n; i++ {
 		s, err := hv.st.Cmd(i)
@@ -37,6 +46,9 @@ func (hv History) Iterate(f func(eval.Value) bool) {
 }
 
 func (hv History) IndexOne(idx eval.Value) eval.Value {
+	hv.mutex.RLock()
+	defer hv.mutex.RUnlock()
+
 	slice, i, j := eval.ParseAndFixListIndex(eval.ToString(idx), hv.Len())
 	if slice {
 		ss := make([]eval.Value, j-i)

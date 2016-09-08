@@ -40,7 +40,7 @@ func makeModule(ed *Editor) eval.Namespace {
 	ns["rprompt"] = ed.rps1
 	ns["rprompt-persistent"] = BoolExposer{&ed.rpromptPersistent}
 	ns["current-command"] = StringExposer{&ed.line}
-	ns["history"] = eval.NewRoVariable(History{ed.store})
+	ns["history"] = eval.NewRoVariable(History{&ed.historyMutex, ed.store})
 
 	ns["abbr"] = eval.NewRoVariable(eval.MapStringString(ed.abbreviations))
 
