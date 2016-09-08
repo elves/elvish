@@ -39,6 +39,7 @@ func makeModule(ed *Editor) eval.Namespace {
 	ns["prompt"] = ed.ps1
 	ns["rprompt"] = ed.rps1
 	ns["rprompt-persistent"] = BoolExposer{&ed.rpromptPersistent}
+	ns["current-command"] = StringExposer{&ed.line}
 
 	ns["abbr"] = eval.NewRoVariable(eval.MapStringString(ed.abbreviations))
 
@@ -80,4 +81,24 @@ func (be BoolExposer) Set(v eval.Value) {
 
 func (be BoolExposer) Get() eval.Value {
 	return eval.Bool(*be.valuePtr)
+}
+
+// StringExposer implements eval.Variable and exposes a string to elvishscript.
+
+type StringExposer struct {
+	valuePtr *string
+}
+
+var errMustBeString = errors.New("must be string")
+
+func (se StringExposer) Set(v eval.Value) {
+	if s, ok := v.(eval.String); ok {
+		*se.valuePtr = string(s)
+	} else {
+		throw(errMustBeString)
+	}
+}
+
+func (se StringExposer) Get() eval.Value {
+	return eval.String(*se.valuePtr)
 }
