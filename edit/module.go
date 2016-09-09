@@ -35,6 +35,8 @@ func makeModule(ed *Editor) eval.Namespace {
 	ns[eval.FnPrefix+"complete-getopt"] = eval.NewRoVariable(
 		// XXX Repr is "&le:complete-getopt" instead of "le:&complete-getopt"
 		&eval.BuiltinFn{"le:complete-getopt", eval.WrapFn(complGetopt)})
+	ns[eval.FnPrefix+"complete-files"] = eval.NewRoVariable(
+		&eval.BuiltinFn{"le:complete-filename", eval.WrapFn(complFilenameFn)})
 
 	ns["prompt"] = ed.ps1
 	ns["rprompt"] = ed.rps1

@@ -88,6 +88,16 @@ func complFilename(words []string, ed *Editor) ([]*candidate, error) {
 	return complFilenameInner(words[len(words)-1], false)
 }
 
+func complFilenameFn(ec *eval.EvalCtx, word string) {
+	cands, err := complFilenameInner(word, false)
+	maybeThrow(err)
+	out := ec.OutputChan()
+	for _, cand := range cands {
+		// TODO Preserve other parts of the candidate.
+		out <- eval.String(cand.text)
+	}
+}
+
 func complSudo(words []string, ed *Editor) ([]*candidate, error) {
 	if len(words) == 2 {
 		return complFormHeadInner(words[1], ed)
