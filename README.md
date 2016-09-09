@@ -27,10 +27,10 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 * Put your startup script in `~/.elvish/rc.elv`. There is no `alias` yet, but you can achieve the goal by defining a function:
 
   ```sh
-  fn ls { external:ls --color $@ }
+  fn ls { e:ls --color $@ }
   ```
 
-  The `external:` prefix ensures that the external command named `ls` will be called. Otherwise this definition will result in infinite recursion.
+  The `e:` prefix (for "external") ensures that the external command named `ls` will be called. Otherwise this definition will result in infinite recursion.
 
 * The left and right prompts and be customized by assigning functions to `le:prompt` and `le:rprompt`. Their outputs are concatenated (with no spaces in between) before being used as the respective prompts. The following simulates the default prompts but uses fancy Unicode:
 
@@ -89,7 +89,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   ~> paths=[/opt/bin $@paths /usr/bin]
   ~> echo $paths
   [/opt/bin /bin /sbin /usr/bin]
-  ~> echo $env:PATH
+  ~> echo $e:PATH
   /opt/bin:/bin:/sbin:/usr/bin
   ```
 
@@ -97,12 +97,14 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
   Use `pprint $le:binding` to get a nice (albeit long) view of the current keybinding.
 
-* Environment variables live in a separate `env:` namespace and must be explicitly qualified:
+* Environment variables live in a separate `E:` (for "environment") namespace and must be explicitly qualified:
   ```sh
-  ~> put $env:HOME
+  ~> put $E:HOME
   ▶ /home/xiaq
-  ~> env:PATH=$env:PATH":/bin"
+  ~> E:PATH=$E:PATH":/bin"
   ```
+
+  NOTE: The `E:` and `e:` namespaces are actually the same namespace. However, since command names are typically in lower case while environment variables are typically in upper case, `e:` fits external commands better and `E:` fits environment variables better.
 
 * There is no interpolation inside double quotes (yet). Use implicit string concatenation:
   ```sh

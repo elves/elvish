@@ -362,7 +362,7 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 			return v
 		}
 		return builtinNamespace[name]
-	case "env", "external", "e", "E":
+	case "e", "E":
 		if strings.HasPrefix(name, FnPrefix) {
 			return NewRoVariable(ExternalCmd{name[len(FnPrefix):]})
 		}
