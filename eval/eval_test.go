@@ -136,7 +136,7 @@ var evalTests = []struct {
 	{"put /*", strs(util.RootStar()...), nomore},
 
 	// Tilde.
-	{"h=$env:HOME; env:HOME=/foo; put ~ ~/src; env:HOME=$h",
+	{"h=$E:HOME; E:HOME=/foo; put ~ ~/src; E:HOME=$h",
 		strs("/foo", "/foo/src"), nomore},
 
 	// Closure
@@ -184,9 +184,9 @@ var evalTests = []struct {
 		strs("lorem", "ipsum"), nomore},
 	{"x=lorem; []{up:x=ipsum; put $x}; put $x",
 		strs("ipsum", "ipsum"), nomore},
-	// Pseudo-namespace env:
-	{"env:foo=lorem; put $env:foo", strs("lorem"), nomore},
-	{"del env:foo; put $env:foo", strs(""), nomore},
+	// Pseudo-namespace E:
+	{"E:FOO=lorem; put $E:FOO", strs("lorem"), nomore},
+	{"del E:FOO; put $E:FOO", strs(""), nomore},
 	// TODO: Test module namespace
 
 	// Builtin functions

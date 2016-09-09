@@ -51,10 +51,10 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 			}
 			delete(cp.thisScope(), name)
 			names = append(names, name)
-		case "env":
+		case "e", "E":
 			envNames = append(envNames, name)
 		default:
-			cp.errorf("can only delete a variable in local: or env:")
+			cp.errorf("can only delete a variable in local: or E:")
 		}
 
 	}
