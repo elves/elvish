@@ -41,6 +41,8 @@ func goodFormHead(head string, ed *Editor) bool {
 			return ed.isExternal[head] ||
 				eval.Builtin()[eval.FnPrefix+head] != nil ||
 				ed.evaler.Global[eval.FnPrefix+head] != nil
+		} else if ns == "e" || ns == "E" {
+			return ed.isExternal[head]
 		} else {
 			return ed.evaler.Modules[ns] != nil &&
 				ed.evaler.Modules[ns][eval.FnPrefix+head] != nil

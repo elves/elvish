@@ -127,6 +127,8 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 	})
 	for command := range ed.isExternal {
 		got(command)
+		got("e:" + command)
+		got("E:" + command)
 	}
 	sort.Strings(commands)
 
