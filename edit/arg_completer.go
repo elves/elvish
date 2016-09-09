@@ -110,23 +110,26 @@ type FnAsArgCompleter struct {
 }
 
 func (fac FnAsArgCompleter) Complete(words []string, ed *Editor) ([]*candidate, error) {
+	return callFnForCandidates(fac.Fn, ed.evaler, words)
+}
+
+func callFnForCandidates(fn eval.FnValue, ev *eval.Evaler, args []string) ([]*candidate, error) {
 	in, err := makeClosedStdin()
 	if err != nil {
 		return nil, err
 	}
 	ports := []*eval.Port{in, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
 
-	wordValues := make([]eval.Value, len(words))
-	for i, word := range words {
-		wordValues[i] = eval.String(word)
+	argValues := make([]eval.Value, len(args))
+	for i, arg := range args {
+		argValues[i] = eval.String(arg)
 	}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
-	ec := eval.NewTopEvalCtx(ed.evaler, "[editor completer]", "", ports)
-	values, err := ec.PCaptureOutput(fac.Fn, wordValues)
+	ec := eval.NewTopEvalCtx(ev, "[editor completer]", "", ports)
+	values, err := ec.PCaptureOutput(fn, argValues)
 	if err != nil {
-		ed.notify("completer error: %v", err)
-		return nil, err
+		return nil, errors.New("completer error: " + err.Error())
 	}
 
 	cands := make([]*candidate, len(values))

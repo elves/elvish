@@ -324,11 +324,26 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 	})
 	// TODO Configurable config
 	g := getopt.Getopt{opts, getopt.GNUGetoptLong}
-	_, _, ctx := g.Parse(elems)
+	_, parsedArgs, ctx := g.Parse(elems)
 	out := ec.OutputChan()
 	_ = variadic // XXX
 	switch ctx.Type {
 	case getopt.NewOptionOrArgument, getopt.Argument:
+		// Find argument completer
+		var argCompl eval.FnValue
+		if len(parsedArgs) < len(args) {
+			argCompl = args[len(parsedArgs)]
+		} else if variadic {
+			argCompl = args[len(args)-1]
+		}
+		if argCompl != nil {
+			cands, err := callFnForCandidates(argCompl, ec.Evaler, []string{ctx.Text})
+			maybeThrow(err)
+			for _, cand := range cands {
+				out <- eval.String(cand.text)
+			}
+		}
+		// TODO Notify that there is no suitable argument completer
 	case getopt.NewOption:
 		for _, opt := range opts {
 			if opt.Short != 0 {
