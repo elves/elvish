@@ -284,34 +284,34 @@ func (n *navigation) loaddir(dir string) ([]styled, error) {
 const (
 	navigationListingColMargin          = 1
 	navigationListingMinWidthForPadding = 5
+
+	parentColumnWeight  = 3.0
+	currentColumnWeight = 8.0
+	previewColumnWeight = 9.0
+	columnWeightsSum    = parentColumnWeight + currentColumnWeight + previewColumnWeight
 )
 
 func (nav *navigation) List(width, maxHeight int) *buffer {
 	margin := navigationListingColMargin
-	var ratioParent, ratioCurrent, ratioPreview int
-	if nav.dirPreview != nil {
-		ratioParent = 15
-		ratioCurrent = 40
-		ratioPreview = 45
-	} else {
-		ratioParent = 15
-		ratioCurrent = 75
-		// Leave some space at the right side
-	}
 
 	w := width - margin*2
+	ws := distributeWidths(w,
+		[]float64{
+			parentColumnWeight, currentColumnWeight, previewColumnWeight},
+		[]int{
+			nav.parent.FullWidth(maxHeight),
+			nav.current.FullWidth(maxHeight),
+			nav.dirPreview.FullWidth(maxHeight),
+		})
+	wParent, wCurrent, wPreview := ws[0], ws[1], ws[2]
 
-	wParent := w * ratioParent / 100
-	wCurrent := w * ratioCurrent / 100
-	wPreview := w * ratioPreview / 100
+	b := nav.parent.List(wParent, maxHeight)
 
-	b := renderNavColumn(nav.parent, wParent, maxHeight)
-
-	bCurrent := renderNavColumn(nav.current, wCurrent, maxHeight)
+	bCurrent := nav.current.List(wCurrent, maxHeight)
 	b.extendHorizontal(bCurrent, wParent+margin)
 
 	if wPreview > 0 {
-		bPreview := renderNavColumn(nav.dirPreview, wPreview, maxHeight)
+		bPreview := nav.dirPreview.List(wPreview, maxHeight)
 		b.extendHorizontal(bPreview, wParent+wCurrent+2*margin)
 	}
 
@@ -374,6 +374,23 @@ func (nc *navColumn) Filter(filter string) int {
 	return 0
 }
 
+func (nc *navColumn) FullWidth(h int) int {
+	if nc == nil {
+		return 0
+	}
+	maxw := 0
+	for _, s := range nc.candidates {
+		maxw = max(maxw, WcWidths(s.text))
+	}
+	if maxw >= navigationListingMinWidthForPadding {
+		maxw += 2
+	}
+	if len(nc.candidates) > h {
+		maxw++
+	}
+	return maxw
+}
+
 func (nc *navColumn) Accept(i int, ed *Editor) {
 	// TODO
 }
@@ -388,8 +405,4 @@ func (nc *navColumn) selectedName() string {
 		return ""
 	}
 	return nc.candidates[nc.selected].text
-}
-
-func renderNavColumn(nc *navColumn, w, h int) *buffer {
-	return nc.List(w, h)
 }
