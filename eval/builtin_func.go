@@ -642,8 +642,13 @@ func plus(ec *EvalCtx, nums ...float64) {
 
 func minus(ec *EvalCtx, sum float64, nums ...float64) {
 	out := ec.ports[1].Chan
-	for _, f := range nums {
-		sum -= f
+	if len(nums) == 0 {
+		// Unary -
+		sum = -sum
+	} else {
+		for _, f := range nums {
+			sum -= f
+		}
 	}
 	out <- String(fmt.Sprintf("%g", sum))
 }
