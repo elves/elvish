@@ -8,25 +8,49 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// stylist takes a Node and Editor, and returns a style string. The Node is
-// always a leaf in the parsed AST.
-// NOTE: Not all stylings are now done with stylists.
-type stylist func(parse.Node, *Editor) string
-
-var stylists = []stylist{
-	colorFormHead,
+type Stylist struct {
+	tokens []Token
+	editor *Editor
 }
 
-func colorFormHead(n parse.Node, ed *Editor) string {
-	// BUG doesn't work when the form head is compound
-	n, head := formHead(n)
-	if n == nil {
-		return ""
+func (s *Stylist) applyToTokens(style string, begin, end int) {
+	for len(s.tokens) > 0 && s.tokens[0].Node.Begin() < begin {
+		// Skip tokens that precede the range
+		s.tokens = s.tokens[1:]
 	}
-	if goodFormHead(head, ed) {
-		return styleForGoodCommand
+	for len(s.tokens) > 0 && s.tokens[0].Node.End() <= end {
+		s.tokens[0].addStyle(style)
+		s.tokens = s.tokens[1:]
 	}
-	return styleForBadCommand
+}
+
+func (s *Stylist) chunk(n *parse.Chunk) {
+	for _, p := range n.Pipelines {
+		s.pipeline(p)
+	}
+}
+
+func (s *Stylist) pipeline(n *parse.Pipeline) {
+	for _, f := range n.Forms {
+		s.form(f)
+	}
+}
+
+func (s *Stylist) form(n *parse.Form) {
+	if n.Head != nil {
+		s.formHead(n.Head)
+	}
+}
+
+func (s *Stylist) formHead(n *parse.Compound) {
+	simple, head := simpleCompound(n, nil)
+	if simple {
+		st := styleForBadCommand
+		if goodFormHead(head, s.editor) {
+			st = styleForGoodCommand
+		}
+		s.applyToTokens(st, n.Begin(), n.End())
+	}
 }
 
 func goodFormHead(head string, ed *Editor) bool {

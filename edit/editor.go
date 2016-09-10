@@ -161,12 +161,8 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 				}
 			}
 		}
-		// Apply each stylist on each token.
-		for i, t := range ed.tokens {
-			for _, stylist := range stylists {
-				ed.tokens[i].addStyle(stylist(t.Node, ed))
-			}
-		}
+		stylist := &Stylist{ed.tokens, ed}
+		stylist.chunk(n)
 	}
 	return ed.writer.refresh(&ed.editorState, fullRefresh)
 }
