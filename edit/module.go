@@ -58,6 +58,9 @@ func makeModule(ed *Editor) eval.Namespace {
 	)
 	ns["selected-file"] = eval.MakeRoVariableFromCallback(
 		func() eval.Value {
+			if !ed.active {
+				throw(ErrEditorInactive)
+			}
 			if ed.mode.Mode() != modeNavigation {
 				throw(errNotNav)
 			}
