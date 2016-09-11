@@ -1,5 +1,7 @@
 package edit
 
+//go:generate stringer -type=TokenKind
+
 import (
 	"strings"
 
