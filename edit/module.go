@@ -10,6 +10,8 @@ import (
 
 // Interface between the editor and elvish script. Implements the le: module.
 
+var errNotNav = errors.New("not in navigation mode")
+
 // makeModule builds a module from an Editor.
 func makeModule(ed *Editor) eval.Namespace {
 	ns := eval.Namespace{}
@@ -53,6 +55,14 @@ func makeModule(ed *Editor) eval.Namespace {
 			}
 		},
 		func() eval.Value { return eval.String(ed.line) },
+	)
+	ns["selected-file"] = eval.MakeRoVariableFromCallback(
+		func() eval.Value {
+			if ed.mode.Mode() != modeNavigation {
+				throw(errNotNav)
+			}
+			return eval.String(ed.navigation.current.selectedName())
+		},
 	)
 
 	ns["abbr"] = eval.NewRoVariable(eval.MapStringString(ed.abbreviations))
