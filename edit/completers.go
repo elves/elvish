@@ -120,11 +120,13 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 		got(special)
 	}
 	splice, ns, _ := eval.ParseVariable(head)
-	iterateVariables(ed.evaler, ns, func(varname string) {
-		if strings.HasPrefix(varname, eval.FnPrefix) {
-			got(eval.MakeVariableName(splice, ns, varname[len(eval.FnPrefix):]))
-		}
-	})
+	if !splice {
+		iterateVariables(ed.evaler, ns, func(varname string) {
+			if strings.HasPrefix(varname, eval.FnPrefix) {
+				got(eval.MakeVariableName(false, ns, varname[len(eval.FnPrefix):]))
+			}
+		})
+	}
 	for command := range ed.isExternal {
 		got(command)
 		if strings.HasPrefix(head, "e:") {

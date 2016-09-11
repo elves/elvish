@@ -59,17 +59,24 @@ func goodFormHead(head string, ed *Editor) bool {
 		// XXX don't stat twice
 		return util.IsExecutable(head) || isDir(head)
 	} else {
-		_, ns, head := eval.ParseVariable(head)
-		if ns == "" {
-			return ed.isExternal[head] ||
-				eval.Builtin()[eval.FnPrefix+head] != nil ||
-				ed.evaler.Global[eval.FnPrefix+head] != nil
-		} else if ns == "e" || ns == "E" {
-			return ed.isExternal[head]
-		} else {
-			return ed.evaler.Modules[ns] != nil &&
-				ed.evaler.Modules[ns][eval.FnPrefix+head] != nil
+		splice, ns, name := eval.ParseVariable(head)
+		if !splice {
+			switch ns {
+			case "":
+				if eval.Builtin()[eval.FnPrefix+name] != nil || ed.evaler.Global[eval.FnPrefix+name] != nil {
+					return true
+				}
+			case "e":
+				if ed.isExternal[name] {
+					return true
+				}
+			default:
+				if ed.evaler.Modules[ns] != nil && ed.evaler.Modules[ns][eval.FnPrefix+head] != nil {
+					return true
+				}
+			}
 		}
+		return ed.isExternal[head]
 	}
 }
 
