@@ -47,6 +47,9 @@ func makeModule(ed *Editor) eval.Namespace {
 
 	ns["current-command"] = eval.MakeVariableFromCallback(
 		func(v eval.Value) {
+			if !ed.active {
+				throw(ErrEditorInactive)
+			}
 			if s, ok := v.(eval.String); ok {
 				ed.line = string(s)
 				ed.dot = len(ed.line)
