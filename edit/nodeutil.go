@@ -62,6 +62,8 @@ func simpleCompound(cn *parse.Compound, upto *parse.Indexing) (bool, string) {
 			tilde = true
 		case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 			head += in.Head.Value
+		default:
+			return false, ""
 		}
 
 		if in == upto {
