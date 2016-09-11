@@ -127,8 +127,12 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 	})
 	for command := range ed.isExternal {
 		got(command)
-		got("e:" + command)
-		got("E:" + command)
+		if strings.HasPrefix(head, "e:") {
+			got("e:" + command)
+		}
+		if strings.HasPrefix(head, "E:") {
+			got("E:" + command)
+		}
 	}
 	sort.Strings(commands)
 
