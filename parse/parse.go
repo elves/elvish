@@ -278,7 +278,7 @@ func startsForm(r rune) bool {
 	return isSpace(r) || startsCompound(r, true)
 }
 
-// Assignment = Primary '=' Compound
+// Assignment = Indexing '=' Compound
 type Assignment struct {
 	node
 	Dst *Indexing
