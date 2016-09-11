@@ -53,7 +53,7 @@ func (hl *histlist) ModeTitle(i int) string {
 func startHistlist(ed *Editor) {
 	hl, err := newHistlist(ed.store)
 	if err != nil {
-		ed.notify("%v", err)
+		ed.Notify("%v", err)
 		return
 	}
 

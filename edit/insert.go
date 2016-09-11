@@ -266,13 +266,13 @@ func defaultInsert(ed *Editor) {
 		// No match.
 		ed.insert.insertedLiteral = true
 	} else {
-		ed.notify("Unbound: %s", k)
+		ed.Notify("Unbound: %s", k)
 	}
 }
 
 func defaultCommand(ed *Editor) {
 	k := ed.lastKey
-	ed.notify("Unbound: %s", k)
+	ed.Notify("Unbound: %s", k)
 }
 
 // likeChar returns if a key looks like a character meant to be input (as

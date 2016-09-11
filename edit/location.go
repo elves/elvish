@@ -53,7 +53,7 @@ func (loc *location) Accept(i int, ed *Editor) {
 			Logger.Println("added dir to store:", dir)
 		}()
 	} else {
-		ed.notify("%v", err)
+		ed.Notify("%v", err)
 	}
 	ed.mode = &ed.insert
 }
@@ -64,7 +64,7 @@ func (loc *location) ModeTitle(i int) string {
 
 func startLocation(ed *Editor) {
 	if ed.store == nil {
-		ed.notify("%v", ErrStoreOffline)
+		ed.Notify("%v", ErrStoreOffline)
 		return
 	}
 	loc := &location{store: ed.store}

@@ -7,5 +7,5 @@ import "sync"
 type Editor interface {
 	Active() bool
 	ActiveMutex() *sync.Mutex
-	Notify(string)
+	Notify(string, ...interface{})
 }

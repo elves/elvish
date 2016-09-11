@@ -127,10 +127,6 @@ func (ed *Editor) ActiveMutex() *sync.Mutex {
 	return &ed.activeMutex
 }
 
-func (ed *Editor) Notify(s string) {
-	ed.notify(s)
-}
-
 func (ed *Editor) flash() {
 	// TODO implement fish-like flash effect
 }
@@ -139,7 +135,7 @@ func (ed *Editor) addTip(format string, args ...interface{}) {
 	ed.tips = append(ed.tips, fmt.Sprintf(format, args...))
 }
 
-func (ed *Editor) notify(format string, args ...interface{}) {
+func (ed *Editor) Notify(format string, args ...interface{}) {
 	ed.notificationMutex.Lock()
 	defer ed.notificationMutex.Unlock()
 	ed.notifications = append(ed.notifications, fmt.Sprintf(format, args...))
@@ -374,7 +370,7 @@ MainLoop:
 				ed.addTip("ignored signal %s", sig)
 			}
 		case err := <-ed.reader.ErrorChan():
-			ed.notify("reader error: %s", err.Error())
+			ed.Notify("reader error: %s", err.Error())
 		case mouse := <-ed.reader.MouseChan():
 			ed.addTip("mouse: %+v", mouse)
 		case <-ed.reader.CPRChan():
@@ -393,7 +389,7 @@ MainLoop:
 				select {
 				case k := <-ed.reader.KeyChan():
 					if k.Mod != 0 {
-						ed.notify("function key within paste")
+						ed.Notify("function key within paste")
 						break paste
 					}
 					buf.WriteRune(k.Rune)
@@ -403,7 +399,7 @@ MainLoop:
 						break paste
 					}
 				case <-timer.C:
-					ed.notify("bracketed paste timeout")
+					ed.Notify("bracketed paste timeout")
 					break paste
 				}
 			}

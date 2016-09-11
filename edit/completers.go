@@ -80,7 +80,7 @@ func complFormHead(n parse.Node, ed *Editor) (int, int, []*candidate) {
 	}
 	cands, err := complFormHeadInner(head, ed)
 	if err != nil {
-		ed.notify("%v", err)
+		ed.Notify("%v", err)
 	}
 	fixCandidates(cands, q)
 	return begin, end, cands
@@ -175,7 +175,7 @@ func complArg(n parse.Node, ed *Editor) (int, int, []*candidate) {
 
 	cands, err := completeArg(words, ed)
 	if err != nil {
-		ed.notify("%v", err)
+		ed.Notify("%v", err)
 	}
 	fixCandidates(cands, q)
 	return begin, end, cands

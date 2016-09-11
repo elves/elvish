@@ -26,14 +26,14 @@ func (ed *Editor) CallFn(fn eval.FnValue, args ...eval.Value) {
 			if err != nil {
 				break
 			}
-			ed.notify("[bytes output] %s", line[:len(line)-1])
+			ed.Notify("[bytes output] %s", line[:len(line)-1])
 		}
 		rout.Close()
 		wg.Done()
 	}()
 	go func() {
 		for v := range chanOut {
-			ed.notify("[value output] %s", v.Repr(eval.NoPretty))
+			ed.Notify("[value output] %s", v.Repr(eval.NoPretty))
 		}
 		wg.Done()
 	}()
@@ -42,7 +42,7 @@ func (ed *Editor) CallFn(fn eval.FnValue, args ...eval.Value) {
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor]", "", ports)
 	ex := ec.PCall(fn, args)
 	if ex != nil {
-		ed.notify("function error: %s", ex.Error())
+		ed.Notify("function error: %s", ex.Error())
 	}
 
 	eval.ClosePorts(ports)

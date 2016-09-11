@@ -57,7 +57,7 @@ func callFnForPrompt(ed *Editor, fn eval.Fn) []*styled {
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor prompt]", "", ports)
 	values, err := ec.PCaptureOutput(fn, nil)
 	if err != nil {
-		ed.notify("prompt function error: %v", err)
+		ed.Notify("prompt function error: %v", err)
 		return nil
 	}
 
