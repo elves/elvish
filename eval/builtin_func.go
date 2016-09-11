@@ -12,6 +12,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"runtime"
@@ -87,6 +88,13 @@ func init() {
 		&BuiltinFn{"cd", cd},
 		&BuiltinFn{"dirs", WrapFn(dirs)},
 		&BuiltinFn{"history", WrapFn(history)},
+
+		&BuiltinFn{"path-abs", wrapStringToStringError(filepath.Abs)},
+		&BuiltinFn{"path-base", wrapStringToString(filepath.Base)},
+		&BuiltinFn{"path-clean", wrapStringToString(filepath.Clean)},
+		&BuiltinFn{"path-dir", wrapStringToString(filepath.Dir)},
+		&BuiltinFn{"path-ext", wrapStringToString(filepath.Ext)},
+		&BuiltinFn{"eval-symlinks", wrapStringToStringError(filepath.EvalSymlinks)},
 
 		&BuiltinFn{"source", WrapFn(source)},
 
@@ -276,6 +284,35 @@ func convertArg(arg Value, wantType reflect.Type) (reflect.Value, error) {
 		}
 	}
 	return reflect.ValueOf(converted), err
+}
+
+func wrapStringToString(f func(string) string) func(*EvalCtx, []Value) {
+	return func(ec *EvalCtx, args []Value) {
+		s := mustGetOneString(args)
+		ec.ports[1].Chan <- String(f(s))
+	}
+}
+
+func wrapStringToStringError(f func(string) (string, error)) func(*EvalCtx, []Value) {
+	return func(ec *EvalCtx, args []Value) {
+		s := mustGetOneString(args)
+		result, err := f(s)
+		maybeThrow(err)
+		ec.ports[1].Chan <- String(result)
+	}
+}
+
+var errMustBeOneString = errors.New("must be one string argument")
+
+func mustGetOneString(args []Value) string {
+	if len(args) != 1 {
+		throw(errMustBeOneString)
+	}
+	s, ok := args[0].(String)
+	if !ok {
+		throw(errMustBeOneString)
+	}
+	return string(s)
 }
 
 func nop(ec *EvalCtx, args []Value) {
@@ -601,6 +638,13 @@ func history(ec *EvalCtx) {
 	for _, cmd := range cmds {
 		out <- String(cmd)
 	}
+}
+
+func pathAbs(ec *EvalCtx, fname string) {
+	out := ec.ports[1].Chan
+	absname, err := filepath.Abs(fname)
+	maybeThrow(err)
+	out <- String(absname)
 }
 
 func source(ec *EvalCtx, fname string) {
