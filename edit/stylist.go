@@ -43,12 +43,18 @@ func (s *Stylist) form(n *parse.Form) {
 }
 
 func (s *Stylist) formHead(n *parse.Compound) {
-	simple, head := simpleCompound(n, nil)
+	simple, head, err := simpleCompound(n, nil)
+	st := ""
 	if simple {
-		st := styleForBadCommand
 		if goodFormHead(head, s.editor) {
 			st = styleForGoodCommand
+		} else {
+			st = styleForBadCommand
 		}
+	} else if err != nil {
+		st = styleForBadCommand
+	}
+	if st != "" {
 		s.applyToTokens(st, n.Begin(), n.End())
 	}
 }

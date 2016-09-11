@@ -147,13 +147,13 @@ func complArg(n parse.Node, ed *Editor) (int, int, []*candidate) {
 
 	// Find out head of the form and preceding arguments.
 	// If Form.Head is not a simple compound, head will be "", just what we want.
-	_, head := simpleCompound(form.Head, nil)
+	_, head, _ := simpleCompound(form.Head, nil)
 	var args []string
 	for _, compound := range form.Args {
 		if compound.Begin() >= begin {
 			break
 		}
-		ok, arg := simpleCompound(compound, nil)
+		ok, arg, _ := simpleCompound(compound, nil)
 		if ok {
 			// XXX Arguments that are not simple compounds are simply ignored.
 			args = append(args, arg)

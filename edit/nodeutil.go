@@ -43,19 +43,19 @@ func primaryInSimpleCompound(pn *parse.Primary) (*parse.Compound, string) {
 	if !ok {
 		return nil, ""
 	}
-	ok, head := simpleCompound(thisCompound, thisIndexing)
+	ok, head, _ := simpleCompound(thisCompound, thisIndexing)
 	if !ok {
 		return nil, ""
 	}
 	return thisCompound, head
 }
 
-func simpleCompound(cn *parse.Compound, upto *parse.Indexing) (bool, string) {
+func simpleCompound(cn *parse.Compound, upto *parse.Indexing) (bool, string, error) {
 	tilde := false
 	head := ""
 	for _, in := range cn.Indexings {
 		if len(in.Indicies) > 0 {
-			return false, ""
+			return false, "", nil
 		}
 		switch in.Head.Type {
 		case parse.Tilde:
@@ -63,7 +63,7 @@ func simpleCompound(cn *parse.Compound, upto *parse.Indexing) (bool, string) {
 		case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 			head += in.Head.Value
 		default:
-			return false, ""
+			return false, "", nil
 		}
 
 		if in == upto {
@@ -73,15 +73,14 @@ func simpleCompound(cn *parse.Compound, upto *parse.Indexing) (bool, string) {
 	if tilde {
 		i := strings.Index(head, "/")
 		if i == -1 {
-			return false, ""
+			i = len(head)
 		}
 		uname := head[:i]
 		home, err := util.GetHome(uname)
 		if err != nil {
-			// TODO report error
-			return false, ""
+			return false, "", err
 		}
 		head = home + head[i:]
 	}
-	return true, head
+	return true, head, nil
 }
