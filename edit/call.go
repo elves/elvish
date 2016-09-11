@@ -26,7 +26,6 @@ func (ed *Editor) CallFn(fn eval.FnValue, args ...eval.Value) {
 			if err != nil {
 				break
 			}
-			// XXX notify is not concurrency-safe.
 			ed.notify("[bytes output] %s", line[:len(line)-1])
 		}
 		rout.Close()

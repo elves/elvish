@@ -53,6 +53,8 @@ type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
 	savedTermios *sys.Termios
 
+	notificationMutex sync.Mutex
+
 	notifications []string
 	tips          []string
 
@@ -138,6 +140,8 @@ func (ed *Editor) addTip(format string, args ...interface{}) {
 }
 
 func (ed *Editor) notify(format string, args ...interface{}) {
+	ed.notificationMutex.Lock()
+	defer ed.notificationMutex.Unlock()
 	ed.notifications = append(ed.notifications, fmt.Sprintf(format, args...))
 }
 
