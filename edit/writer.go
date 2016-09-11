@@ -438,7 +438,7 @@ tokens:
 				es.completion.begin <= i && i <= es.completion.end {
 				// Do nothing. This part is replaced by the completion candidate.
 			} else {
-				b.write(r, styleForType[token.Type]+token.MoreStyle)
+				b.write(r, joinStyle(styleForType[token.Type], token.MoreStyle))
 			}
 			i += utf8.RuneLen(r)
 
