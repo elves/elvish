@@ -38,7 +38,8 @@ type Namespace map[string]Variable
 type Evaler struct {
 	Global  Namespace
 	Modules map[string]Namespace
-	store   *store.Store
+	Store   *store.Store
+	Editor  Editor
 	Stub    *stub.Stub
 	intCh   <-chan struct{}
 }
@@ -67,13 +68,7 @@ func (ec *EvalCtx) evaling(begin, end int) {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store) *Evaler {
-	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil}
-}
-
-func (e *Evaler) hasEditor() bool {
-	// XXX Should guard against user supplying a "le.elv"
-	_, ok := e.Modules["le"]
-	return ok
+	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil, nil}
 }
 
 func (e *Evaler) searchPaths() []string {
@@ -374,10 +369,10 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 		}
 		return envVariable{name}
 	case "shared":
-		if ec.store == nil {
+		if ec.Store == nil {
 			throw(ErrStoreUnconnected)
 		}
-		return sharedVariable{ec.store, name}
+		return sharedVariable{ec.Store, name}
 	default:
 		use(ec, ns, nil)
 		return ec.Modules[ns][name]

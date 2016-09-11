@@ -43,12 +43,14 @@ type Editor struct {
 
 	historyMutex sync.RWMutex
 
+	active      bool
+	activeMutex *sync.Mutex
+
 	editorState
 }
 
 type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
-	active       bool
 	savedTermios *sys.Termios
 
 	notifications []string
@@ -110,8 +112,21 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		beforeReadLine: eval.NewPtrVariableWithValidator(
 			eval.NewList(), eval.IsListOfFnValue),
 	}
+	ev.Editor = ed
 	ev.Modules["le"] = makeModule(ed)
 	return ed
+}
+
+func (ed *Editor) Active() bool {
+	return ed.active
+}
+
+func (ed *Editor) ActiveMutex() *sync.Mutex {
+	return ed.activeMutex
+}
+
+func (ed *Editor) Notify(s string) {
+	ed.notify(s)
 }
 
 func (ed *Editor) flash() {
@@ -220,6 +235,10 @@ func setupTerminal(file *os.File) (*sys.Termios, error) {
 
 // startReadLine prepares the terminal for the editor.
 func (ed *Editor) startReadLine() error {
+	ed.activeMutex.Lock()
+	defer ed.activeMutex.Unlock()
+	ed.active = true
+
 	savedTermios, err := setupTerminal(ed.file)
 	if err != nil {
 		return err
@@ -253,6 +272,10 @@ func (ed *Editor) startReadLine() error {
 // finishReadLine puts the terminal in a state suitable for other programs to
 // use.
 func (ed *Editor) finishReadLine(addError func(error)) {
+	ed.activeMutex.Lock()
+	defer ed.activeMutex.Unlock()
+	ed.active = false
+
 	ed.mode = &ed.insert
 	ed.tips = nil
 	ed.dot = len(ed.line)
@@ -285,15 +308,6 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 
 // ReadLine reads a line interactively.
 func (ed *Editor) ReadLine() (line string, err error) {
-	ed.editorState = editorState{active: true}
-	ed.mode = &ed.insert
-
-	isExternalCh := make(chan map[string]bool, 1)
-	go getIsExternal(ed.evaler, isExternalCh)
-
-	ed.writer.resetOldBuf()
-	go ed.reader.Run()
-
 	e := ed.startReadLine()
 	if e != nil {
 		return "", e
@@ -303,6 +317,14 @@ func (ed *Editor) ReadLine() (line string, err error) {
 			err = util.CatError(err, e)
 		}
 	})
+
+	ed.mode = &ed.insert
+
+	isExternalCh := make(chan map[string]bool, 1)
+	go getIsExternal(ed.evaler, isExternalCh)
+
+	ed.writer.resetOldBuf()
+	go ed.reader.Run()
 
 	fullRefresh := false
 

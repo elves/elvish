@@ -588,11 +588,11 @@ func cdInner(dir string, ec *EvalCtx) {
 	if err != nil {
 		throw(err)
 	}
-	if ec.store != nil {
+	if ec.Store != nil {
 		// XXX Error ignored.
 		pwd, err := os.Getwd()
 		if err == nil {
-			store := ec.store
+			store := ec.Store
 			go func() {
 				store.Waits.Add(1)
 				// XXX Error ignored.
@@ -607,10 +607,10 @@ func cdInner(dir string, ec *EvalCtx) {
 var dirFieldNames = []string{"path", "score"}
 
 func dirs(ec *EvalCtx) {
-	if ec.store == nil {
+	if ec.Store == nil {
 		throw(ErrStoreNotConnected)
 	}
-	dirs, err := ec.store.ListDirs()
+	dirs, err := ec.Store.ListDirs()
 	if err != nil {
 		throw(errors.New("store error: " + err.Error()))
 	}
@@ -624,11 +624,11 @@ func dirs(ec *EvalCtx) {
 }
 
 func history(ec *EvalCtx) {
-	if ec.store == nil {
+	if ec.Store == nil {
 		throw(ErrStoreNotConnected)
 	}
 
-	store := ec.store
+	store := ec.Store
 	seq, err := store.NextCmdSeq()
 	maybeThrow(err)
 	cmds, err := store.Cmds(0, seq)
@@ -1011,7 +1011,7 @@ func exit(ec *EvalCtx, args ...int) {
 }
 
 func preExit(ec *EvalCtx) {
-	err := ec.store.Close()
+	err := ec.Store.Close()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
