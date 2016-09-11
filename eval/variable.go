@@ -58,6 +58,40 @@ func (rv roVariable) Get() Value {
 	return rv.value
 }
 
+type cbVariable struct {
+	set func(Value)
+	get func() Value
+}
+
+// MakeVariableFromCallback makes a variable from a set callback and a get
+// callback.
+func MakeVariableFromCallback(set func(Value), get func() Value) Variable {
+	return &cbVariable{set, get}
+}
+
+func (cv *cbVariable) Set(val Value) {
+	cv.set(val)
+}
+
+func (cv *cbVariable) Get() Value {
+	return cv.get()
+}
+
+type roCbVariable func() Value
+
+// MakeRoVariableFromCallback makes a read-only variable from a get callback.
+func MakeRoVariableFromCallback(get func() Value) Variable {
+	return roCbVariable(get)
+}
+
+func (cv roCbVariable) Set(Value) {
+	throw(ErrRoCannotBeSet)
+}
+
+func (cv roCbVariable) Get() Value {
+	return cv()
+}
+
 // elemVariable is an element of a IndexSetter.
 type elemVariable struct {
 	container IndexSetter

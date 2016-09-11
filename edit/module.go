@@ -41,8 +41,19 @@ func makeModule(ed *Editor) eval.Namespace {
 	ns["prompt"] = ed.ps1
 	ns["rprompt"] = ed.rps1
 	ns["rprompt-persistent"] = BoolExposer{&ed.rpromptPersistent}
-	ns["current-command"] = LineExposer{ed}
 	ns["history"] = eval.NewRoVariable(History{&ed.historyMutex, ed.store})
+
+	ns["current-command"] = eval.MakeVariableFromCallback(
+		func(v eval.Value) {
+			if s, ok := v.(eval.String); ok {
+				ed.line = string(s)
+				ed.dot = len(ed.line)
+			} else {
+				throw(errMustBeString)
+			}
+		},
+		func() eval.Value { return eval.String(ed.line) },
+	)
 
 	ns["abbr"] = eval.NewRoVariable(eval.MapStringString(ed.abbreviations))
 
@@ -104,23 +115,4 @@ func (se StringExposer) Set(v eval.Value) {
 
 func (se StringExposer) Get() eval.Value {
 	return eval.String(*se.valuePtr)
-}
-
-// LineExposer exposes ed.line to elvishscript.
-
-type LineExposer struct {
-	ed *Editor
-}
-
-func (l LineExposer) Set(v eval.Value) {
-	if s, ok := v.(eval.String); ok {
-		l.ed.line = string(s)
-		l.ed.dot = len(l.ed.line)
-	} else {
-		throw(errMustBeString)
-	}
-}
-
-func (l LineExposer) Get() eval.Value {
-	return eval.String(l.ed.line)
 }
