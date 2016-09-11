@@ -124,6 +124,8 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 		iterateVariables(ed.evaler, ns, func(varname string) {
 			if strings.HasPrefix(varname, eval.FnPrefix) {
 				got(eval.MakeVariableName(false, ns, varname[len(eval.FnPrefix):]))
+			} else {
+				got(eval.MakeVariableName(false, ns, varname) + "=")
 			}
 		})
 	}

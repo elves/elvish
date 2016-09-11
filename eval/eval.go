@@ -70,6 +70,12 @@ func NewEvaler(st *store.Store) *Evaler {
 	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil}
 }
 
+func (e *Evaler) hasEditor() bool {
+	// XXX Should guard against user supplying a "le.elv"
+	_, ok := e.Modules["le"]
+	return ok
+}
+
 func (e *Evaler) searchPaths() []string {
 	return builtinNamespace["paths"].(*EnvPathList).get()
 }
