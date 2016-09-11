@@ -162,7 +162,7 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 			}
 		}
 		stylist := &Stylist{ed.tokens, ed}
-		stylist.chunk(n)
+		stylist.style(n)
 	}
 	return ed.writer.refresh(&ed.editorState, fullRefresh)
 }

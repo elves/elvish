@@ -24,21 +24,14 @@ func (s *Stylist) applyToTokens(style string, begin, end int) {
 	}
 }
 
-func (s *Stylist) chunk(n *parse.Chunk) {
-	for _, p := range n.Pipelines {
-		s.pipeline(p)
+func (s *Stylist) style(n parse.Node) {
+	if fn, ok := n.(*parse.Form); ok {
+		if fn.Head != nil {
+			s.formHead(fn.Head)
+		}
 	}
-}
-
-func (s *Stylist) pipeline(n *parse.Pipeline) {
-	for _, f := range n.Forms {
-		s.form(f)
-	}
-}
-
-func (s *Stylist) form(n *parse.Form) {
-	if n.Head != nil {
-		s.formHead(n.Head)
+	for _, child := range n.Children() {
+		s.style(child)
 	}
 }
 
