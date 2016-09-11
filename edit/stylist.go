@@ -26,6 +26,12 @@ func (s *Stylist) applyToTokens(style string, begin, end int) {
 
 func (s *Stylist) style(n parse.Node) {
 	if fn, ok := n.(*parse.Form); ok {
+		for _, an := range fn.Assignments {
+			if an.Dst != nil && an.Dst.Head != nil {
+				v := an.Dst.Head
+				s.applyToTokens(styleForType[Variable], v.Begin(), v.End())
+			}
+		}
 		if fn.Head != nil {
 			s.formHead(fn.Head)
 		}
