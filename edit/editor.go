@@ -44,7 +44,7 @@ type Editor struct {
 	historyMutex sync.RWMutex
 
 	active      bool
-	activeMutex *sync.Mutex
+	activeMutex sync.Mutex
 
 	editorState
 }
@@ -122,7 +122,7 @@ func (ed *Editor) Active() bool {
 }
 
 func (ed *Editor) ActiveMutex() *sync.Mutex {
-	return ed.activeMutex
+	return &ed.activeMutex
 }
 
 func (ed *Editor) Notify(s string) {
