@@ -48,7 +48,7 @@ func (b *BuiltinFn) Call(ec *EvalCtx, args []Value) {
 func init() {
 	// Needed to work around init loop.
 	builtinFns = []*BuiltinFn{
-		&BuiltinFn{"nop", nop},
+		&BuiltinFn{":", nop},
 		&BuiltinFn{"true", nop},
 		&BuiltinFn{"false", falseFn},
 
