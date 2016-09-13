@@ -7,22 +7,38 @@ import (
 	"time"
 )
 
+func testSignal(t *testing.T, stub *Stub, sig syscall.Signal) {
+	stub.Process().Signal(sig)
+	select {
+	case gotsig := <-stub.Signals():
+		if gotsig != sig {
+			t.Errorf("got %v, want %v", gotsig, sig)
+		}
+	case <-time.After(time.Millisecond * 10):
+		t.Errorf("signal not relayed after 10ms")
+	}
+}
+
 func TestStub(t *testing.T) {
 	stub, err := NewStub(os.Stderr)
 	if err != nil {
 		t.Skip(err)
 	}
-	proc := stub.Process()
 
-	// Signals should be relayed.
-	proc.Signal(syscall.SIGINT)
+	// Non-INT signals should be relayed onto Signals, but not IntSignals.
+	testSignal(t, stub, syscall.SIGUSR1)
 	select {
-	case sig := <-stub.Signals():
-		if sig != syscall.SIGINT {
-			t.Errorf("got %v, want SIGINT", sig)
-		}
-	case <-time.After(time.Millisecond * 10):
-		t.Errorf("signal not relayed after 10ms")
+	case <-stub.IntSignals():
+		t.Errorf("SIGUSR1 relayed onto IntSignals")
+	case <-time.After(time.Millisecond):
+	}
+
+	// INT signals should be relayed onto both Signals and IntSignals.
+	testSignal(t, stub, syscall.SIGINT)
+	select {
+	case <-stub.IntSignals():
+	case <-time.After(10 * time.Millisecond):
+		t.Errorf("SIGINT not relayed onto IntSignals within 10ms")
 	}
 
 	// Setting title and dir of the stub shouldn't cause the stub to terminate,
