@@ -161,6 +161,12 @@ done
 
 [How To Write Go Code](http://golang.org/doc/code.html) explains how `$GOPATH` works.
 
+For macOS users, you can build elvish via [homebrew](http://brew.sh):
+
+```sh
+brew install --HEAD elvish
+```
+
 
 ## Name
 
