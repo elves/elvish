@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/stub"
 )
 
 // Op is an operation on an EvalCtx.
@@ -36,6 +37,24 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 	ops := cp.formOps(n.Forms)
 
 	return func(ec *EvalCtx) {
+		bg := n.Background
+		if bg {
+			ec = ec.fork("background job " + n.SourceText())
+
+			// Set up a new stub.
+			st, err := stub.NewStub(os.Stderr)
+			if err != nil {
+				ec.errorf("failed to spawn stub: %v", err)
+			}
+			st.SetTitle(n.SourceText())
+			ec.Stub = st
+
+			if ec.Editor != nil {
+				// TODO: Redirect output in interactive mode so that the line
+				// editor does not get messed up.
+			}
+		}
+
 		var nextIn *Port
 
 		errorChans := make([]chan Error, len(ops))
@@ -75,21 +94,66 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			}()
 		}
 
-		// Wait for all forms to finish and collect error returns.
-		errors := make([]Error, len(ops))
-		for i, errorChan := range errorChans {
-			errors[i] = <-errorChan
-		}
-
-		// Evaluate predReturn as the conjunction of all predReturn's.
-		ec.predReturn = true
-		for _, predReturnChan := range predReturnChans {
-			if !<-predReturnChan {
-				ec.predReturn = false
+		collectErrorsAndPredReturns := func() ([]Error, bool) {
+			// Wait for all forms to finish and collect error returns.
+			errors := make([]Error, len(ops))
+			for i, errorChan := range errorChans {
+				errors[i] = <-errorChan
 			}
+
+			// Evaluate predReturn as the conjunction of all predReturn's.
+			predReturn := true
+			for _, predReturnChan := range predReturnChans {
+				if !<-predReturnChan {
+					predReturn = false
+				}
+			}
+
+			return errors, predReturn
 		}
 
-		throwCompositeError(errors)
+		if bg {
+			// Background job, wait for form termination asynchronously.
+			go func() {
+				errors, predReturn := collectErrorsAndPredReturns()
+				ec.Stub.Terminate()
+				msg := "job " + n.SourceText() + " finished"
+				if !allok(errors) {
+					msg += ", errors = " + makeCompositeError(errors).Error()
+				}
+				if !predReturn {
+					msg += ", pred = false"
+				}
+				if ec.Editor != nil {
+					m := ec.Editor.ActiveMutex()
+					m.Lock()
+					defer m.Unlock()
+
+					if ec.Editor.Active() {
+						ec.Editor.Notify("%s", msg)
+					} else {
+						ec.ports[2].File.WriteString(msg)
+					}
+				} else {
+					ec.ports[2].File.WriteString(msg)
+				}
+			}()
+		} else {
+			errors, predReturn := collectErrorsAndPredReturns()
+			maybeThrow(makeCompositeError(errors))
+			ec.predReturn = predReturn
+		}
+	}
+}
+
+func makeCompositeError(errors []Error) error {
+	if allok(errors) {
+		return nil
+	}
+	if len(errors) == 1 {
+		return errors[0].Inner
+	} else {
+		return MultiError{errors}
 	}
 }
 
