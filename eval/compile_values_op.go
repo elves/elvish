@@ -80,7 +80,7 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOpFunc {
 			for _, v := range vs {
 				if gp, ok := v.(GlobPattern); ok {
 					// Logger.Printf("globbing %v", gp)
-					newvs = append(newvs, doGlob(gp, ec.intCh)...)
+					newvs = append(newvs, doGlob(gp, ec.IntSignals())...)
 				} else {
 					newvs = append(newvs, v)
 				}

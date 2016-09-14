@@ -41,7 +41,6 @@ type Evaler struct {
 	Store   *store.Store
 	Editor  Editor
 	Stub    *stub.Stub
-	intCh   <-chan struct{}
 }
 
 // EvalCtx maintains an Evaler along with its runtime context. After creation
@@ -68,7 +67,7 @@ func (ec *EvalCtx) evaling(begin, end int) {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store) *Evaler {
-	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil, nil}
+	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil}
 }
 
 func (e *Evaler) searchPaths() []string {
@@ -146,6 +145,13 @@ func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*Port) error {
 	return ec.PEval(op)
 }
 
+func (ev *Evaler) IntSignals() <-chan struct{} {
+	if ev.Stub != nil {
+		return ev.Stub.IntSignals()
+	}
+	return nil
+}
+
 func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 	inCh := make(chan Value)
 	close(inCh)
@@ -180,34 +186,16 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 			fmt.Println("failed to put stub in foreground:", err)
 		}
 
-		intCh := make(chan struct{})
-		cancelCh := make(chan struct{})
+		// Exhaust signal channels.
 	exhaustSigs:
 		for {
 			select {
 			case <-ev.Stub.Signals():
+			case <-ev.Stub.IntSignals():
 			default:
 				break exhaustSigs
 			}
 		}
-		go func() {
-			sigch := ev.Stub.Signals()
-			for {
-				select {
-				case sig := <-sigch:
-					Logger.Println("from stub:", sig)
-					if sig == syscall.SIGINT {
-						close(intCh)
-						return
-					}
-				case <-cancelCh:
-					return
-				}
-			}
-		}()
-		defer close(cancelCh)
-		ev.intCh = intCh
-		defer func() { ev.intCh = nil }()
 	}
 
 	err := ev.Eval("[interactive]", text, n, ports)
@@ -278,7 +266,7 @@ func catch(perr *error, ec *EvalCtx) {
 		// amount of time do this. The code below ensures that ErrInterrupted
 		// is always raised when there is an interrupt.
 		select {
-		case <-ec.intCh:
+		case <-ec.IntSignals():
 			*perr = &util.PosError{ec.begin, ec.end, ErrInterrupted}
 		default:
 		}
