@@ -134,8 +134,14 @@ func callFnForCandidates(fn eval.FnValue, ev *eval.Evaler, args []string) ([]*ca
 
 	cands := make([]*candidate, len(values))
 	for i, v := range values {
-		s := eval.ToString(v)
-		cands[i] = &candidate{text: s}
+		switch v := v.(type) {
+		case eval.String:
+			cands[i] = &candidate{text: string(v)}
+		case *candidate:
+			cands[i] = v
+		default:
+			return nil, errors.New("completer must output string or candidate")
+		}
 	}
 	return cands, nil
 }

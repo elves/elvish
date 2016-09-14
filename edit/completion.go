@@ -119,12 +119,6 @@ func complTriggerFilter(ed *Editor) {
 	}
 }
 
-type candidate struct {
-	text    string
-	display styled
-	suffix  string
-}
-
 func (comp *completion) selectedCandidate() *candidate {
 	if comp.selected == -1 {
 		return &candidate{}

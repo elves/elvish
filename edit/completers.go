@@ -344,10 +344,18 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 	out := ec.OutputChan()
 
 	putShortOpt := func(opt *getopt.Option) {
-		out <- eval.String("-" + string(opt.Short))
+		c := &candidate{text: "-" + string(opt.Short)}
+		if d, ok := desc[opt]; ok {
+			c.display.text = c.text + " (" + d + ")"
+		}
+		out <- c
 	}
 	putLongOpt := func(opt *getopt.Option) {
-		out <- eval.String("--" + string(opt.Long))
+		c := &candidate{text: "--" + string(opt.Long)}
+		if d, ok := desc[opt]; ok {
+			c.display.text = c.text + " (" + d + ")"
+		}
+		out <- c
 	}
 
 	switch ctx.Type {
@@ -363,7 +371,7 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 			cands, err := callFnForCandidates(argCompl, ec.Evaler, []string{ctx.Text})
 			maybeThrow(err)
 			for _, cand := range cands {
-				out <- eval.String(cand.text)
+				out <- cand
 			}
 		}
 		// TODO Notify that there is no suitable argument completer
