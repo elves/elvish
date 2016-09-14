@@ -31,14 +31,19 @@ func mustGetHome(uname string) string {
 	return dir
 }
 
-// ParseVariable parses a variable name.
+// ParseAndFixVariable parses a variable name. It "fixes" $@ to $@args.
+func ParseAndFixVariable(qname string) (splice bool, ns string, name string) {
+	splice, ns, name = ParseVariable(qname)
+	if splice && ns == "" && name == "" {
+		name = "args"
+	}
+	return splice, ns, name
+}
+
 func ParseVariable(qname string) (splice bool, ns string, name string) {
 	if strings.HasPrefix(qname, "@") {
 		splice = true
 		qname = qname[1:]
-		if qname == "" {
-			qname = "args"
-		}
 	}
 
 	i := strings.IndexRune(qname, ':')

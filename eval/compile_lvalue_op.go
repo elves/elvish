@@ -96,7 +96,7 @@ func (cp *compiler) lvaluesOp(n *parse.Indexing) (LValuesOp, LValuesOp) {
 func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFunc) {
 	varname := cp.literal(n.Head, msg)
 	cp.registerVariableSet(varname)
-	splice, ns, barename := ParseVariable(varname)
+	splice, ns, barename := ParseAndFixVariable(varname)
 
 	if len(n.Indicies) == 0 {
 		return splice, func(ec *EvalCtx) []Variable {

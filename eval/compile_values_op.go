@@ -227,7 +227,7 @@ func literalStr(text string) ValuesOpFunc {
 }
 
 func variable(qname string) ValuesOpFunc {
-	splice, ns, name := ParseVariable(qname)
+	splice, ns, name := ParseAndFixVariable(qname)
 	return func(ec *EvalCtx) []Value {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
@@ -388,7 +388,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		argNames = make([]string, len(n.List.Compounds))
 		for i, arg := range n.List.Compounds {
 			qname := mustString(cp, arg, "expect string")
-			splice, ns, name := ParseVariable(qname)
+			splice, ns, name := ParseAndFixVariable(qname)
 			if ns != "" {
 				cp.errorpf(arg.Begin(), arg.End(), "must be unqualified")
 			}
