@@ -31,7 +31,7 @@ def main():
 import "github.com/elves/elvish/parse"'''
     for fname in 'compile_op.go', 'compile_values_op.go':
         for line in file(fname):
-            m = re.match(r'^func \(cp \*compiler\) (\w+)\(\w+ ([^,]+)(.*)\) (\w*OpFunc) {$', line)
+            m = re.match(r'^func \(cp \*compiler\) (\w+)\(\w+ ([^,\[\]]+)(.*)\) (\w*OpFunc) {$', line)
             if m:
                 put_compile_s(out, *m.groups())
     out.close()

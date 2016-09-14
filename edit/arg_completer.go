@@ -127,7 +127,7 @@ func callFnForCandidates(fn eval.FnValue, ev *eval.Evaler, args []string) ([]*ca
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ev, "[editor completer]", "", ports)
-	values, err := ec.PCaptureOutput(fn, argValues)
+	values, err := ec.PCaptureOutput(fn, argValues, eval.NoOpts)
 	if err != nil {
 		return nil, errors.New("completer error: " + err.Error())
 	}

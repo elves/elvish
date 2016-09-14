@@ -55,7 +55,7 @@ func callFnForPrompt(ed *Editor, fn eval.Fn) []*styled {
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor prompt]", "", ports)
-	values, err := ec.PCaptureOutput(fn, nil)
+	values, err := ec.PCaptureOutput(fn, nil, eval.NoOpts)
 	if err != nil {
 		ed.Notify("prompt function error: %v", err)
 		return nil

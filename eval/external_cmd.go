@@ -14,7 +14,10 @@ import (
 // syscall.ProcAttr.Files.
 const fdNil uintptr = ^uintptr(0)
 
-var ErrCdNoArg = errors.New("implicit cd accepts no arguments")
+var (
+	ErrExternalCmdOpts = errors.New("external commands don't accept elvish options")
+	ErrCdNoArg         = errors.New("implicit cd accepts no arguments")
+)
 
 // ExternalCmd is an external command.
 type ExternalCmd struct {
@@ -30,7 +33,10 @@ func (e ExternalCmd) Repr(int) string {
 }
 
 // Call calls an external command.
-func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value) {
+func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value, opts map[string]Value) {
+	if len(opts) > 0 {
+		throw(ErrExternalCmdOpts)
+	}
 	if util.DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {

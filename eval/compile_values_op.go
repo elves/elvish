@@ -436,17 +436,21 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 }
 
 func (cp *compiler) map_(n *parse.Primary) ValuesOpFunc {
-	npairs := len(n.MapPairs)
+	return cp.mapPairs(n.MapPairs)
+}
+
+func (cp *compiler) mapPairs(pairs []*parse.MapPair) ValuesOpFunc {
+	npairs := len(pairs)
 	keysOps := make([]ValuesOp, npairs)
 	valuesOps := make([]ValuesOp, npairs)
 	begins, ends := make([]int, npairs), make([]int, npairs)
-	for i, pair := range n.MapPairs {
+	for i, pair := range pairs {
 		keysOps[i] = cp.compoundOp(pair.Key)
 		if pair.Value == nil {
 			p := pair.End()
 			valuesOps[i] = ValuesOp{literalValues(Bool(true)), p, p}
 		} else {
-			valuesOps[i] = cp.compoundOp(n.MapPairs[i].Value)
+			valuesOps[i] = cp.compoundOp(pairs[i].Value)
 		}
 		begins[i], ends[i] = pair.Begin(), pair.End()
 	}

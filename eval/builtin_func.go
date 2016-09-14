@@ -33,6 +33,8 @@ type BuiltinFn struct {
 	Impl func(*EvalCtx, []Value)
 }
 
+var _ FnValue = &BuiltinFn{}
+
 func (*BuiltinFn) Kind() string {
 	return "fn"
 }
@@ -42,7 +44,7 @@ func (b *BuiltinFn) Repr(int) string {
 }
 
 // Call calls a builtin function.
-func (b *BuiltinFn) Call(ec *EvalCtx, args []Value) {
+func (b *BuiltinFn) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 	b.Impl(ec, args)
 }
 
@@ -501,7 +503,7 @@ func each(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 		// Ideally, it should be kept in the Closure itself.
 		newec := ec.fork("closure of each")
 		// TODO: Close port 0 of newec.
-		ex := newec.PCall(f, []Value{v})
+		ex := newec.PCall(f, []Value{v}, NoOpts)
 		ClosePorts(newec.ports)
 
 		switch ex {
@@ -539,7 +541,7 @@ func eawk(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 
 		newec := ec.fork("fn of eawk")
 		// TODO: Close port 0 of newec.
-		ex := newec.PCall(f, args)
+		ex := newec.PCall(f, args, NoOpts)
 		ClosePorts(newec.ports)
 
 		switch ex {

@@ -216,7 +216,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 	}
 	headOp := cp.compoundOp(n.Head)
 	argOps := cp.compoundOps(n.Args)
-	// TODO: n.NamedArgs
+	optsOp := cp.mapPairs(n.Opts)
 	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir
 
@@ -270,13 +270,25 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			args = append(args, argOp.Exec(ec)...)
 		}
 
+		// opts
+		// XXX This conversion should be avoided.
+		opts := optsOp(ec)[0].(Map)
+		convertedOpts := make(map[string]Value)
+		for k, v := range *opts.inner {
+			if ks, ok := k.(String); ok {
+				convertedOpts[string(ks)] = v
+			} else {
+				throwf("Option key must be string, got %s", k.Kind())
+			}
+		}
+
 		// redirs
 		for _, redirOp := range redirOps {
 			redirOp.Exec(ec)
 		}
 
 		ec.begin, ec.end = begin, end
-		headFn.Call(ec, args)
+		headFn.Call(ec, args, convertedOpts)
 	}
 }
 

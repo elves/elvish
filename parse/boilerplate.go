@@ -46,8 +46,8 @@ func (n *Form) addToArgs(ch *Compound) {
 	addChild(n, ch)
 }
 
-func (n *Form) addToNamedArgs(ch *MapPair) {
-	n.NamedArgs = append(n.NamedArgs, ch)
+func (n *Form) addToOpts(ch *MapPair) {
+	n.Opts = append(n.Opts, ch)
 	addChild(n, ch)
 }
 

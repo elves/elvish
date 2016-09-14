@@ -85,9 +85,11 @@ func collectFromIterator(it Iterator) []Value {
 	return vs
 }
 
+var NoOpts = map[string]Value{}
+
 // Fn is anything may be called on an evalCtx with a list of Value's.
 type Fn interface {
-	Call(ec *EvalCtx, args []Value)
+	Call(ec *EvalCtx, args []Value, opts map[string]Value)
 }
 
 type FnValue interface {
@@ -122,7 +124,12 @@ type IndexerAsFn struct {
 	Indexer
 }
 
-func (ic IndexerAsFn) Call(ec *EvalCtx, args []Value) {
+var ErrIndexerOpts = errors.New("option not accepted")
+
+func (ic IndexerAsFn) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
+	if len(opts) > 0 {
+		throw(ErrIndexerOpts)
+	}
 	results := ic.Indexer.Index(args)
 	for _, v := range results {
 		ec.ports[1].Chan <- v
@@ -193,7 +200,7 @@ type FnAsIndexer struct {
 func (ci FnAsIndexer) Index(idx []Value) []Value {
 	// XXX We don't have location information.
 	return captureOutput(ci.ec, Op{func(ec *EvalCtx) {
-		ci.Fn.Call(ec, idx)
+		ci.Fn.Call(ec, idx, NoOpts)
 	}, -1, -1})
 }
 

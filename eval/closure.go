@@ -20,6 +20,8 @@ type Closure struct {
 	Captured map[string]Variable
 }
 
+var _ FnValue = &Closure{}
+
 func (*Closure) Kind() string {
 	return "fn"
 }
@@ -33,7 +35,7 @@ func (c *Closure) Repr(int) string {
 }
 
 // Call calls a closure.
-func (c *Closure) Call(ec *EvalCtx, args []Value) {
+func (c *Closure) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 	// TODO Support keyword arguments
 	if c.RestArg != "" {
 		if len(c.ArgNames) > len(args) {

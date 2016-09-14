@@ -40,7 +40,7 @@ func (ed *Editor) CallFn(fn eval.FnValue, args ...eval.Value) {
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor]", "", ports)
-	ex := ec.PCall(fn, args)
+	ex := ec.PCall(fn, args, eval.NoOpts)
 	if ex != nil {
 		ed.Notify("function error: %s", ex.Error())
 	}

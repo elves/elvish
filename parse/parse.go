@@ -183,7 +183,7 @@ type Form struct {
 	Control     *Control
 	Head        *Compound
 	Args        []*Compound
-	NamedArgs   []*MapPair
+	Opts        []*MapPair
 	Redirs      []*Redir
 	ExitusRedir *ExitusRedir
 }
@@ -226,7 +226,7 @@ func (fn *Form) parse(ps *parser) {
 				// background indicator
 				return
 			}
-			fn.addToNamedArgs(parseMapPair(ps))
+			fn.addToOpts(parseMapPair(ps))
 		case startsCompound(r, false):
 			if ps.hasPrefix("?>") {
 				if fn.ExitusRedir != nil {
