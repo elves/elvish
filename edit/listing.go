@@ -138,9 +138,9 @@ func writeHorizontalScrollbar(b *buffer, n, low, high, width int) {
 	slow, shigh := findScrollInterval(n, low, high, width)
 	for i := 0; i < width; i++ {
 		if slow <= i && i < shigh {
-			b.write('▉', styleForScrollBar)
+			b.write(' ', styleForScrollBarThumb)
 		} else {
-			b.write('━', styleForScrollBar)
+			b.write('━', styleForScrollBarArea)
 		}
 	}
 }
@@ -154,9 +154,9 @@ func renderScrollbar(n, low, high, height int) *buffer {
 			b.newline()
 		}
 		if slow <= i && i < shigh {
-			b.write('▉', styleForScrollBar)
+			b.write(' ', styleForScrollBarThumb)
 		} else {
-			b.write('│', styleForScrollBar)
+			b.write('│', styleForScrollBarArea)
 		}
 	}
 	return b

@@ -10,7 +10,8 @@ var (
 	styleForCompletedHistory = "2"
 	styleForFilter           = "4"
 	styleForSelected         = "7"
-	styleForScrollBar        = "35"
+	styleForScrollBarArea    = "35"
+	styleForScrollBarThumb   = "35;7"
 	styleForSideArrow        = "7"
 )
 
