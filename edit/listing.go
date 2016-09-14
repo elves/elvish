@@ -111,7 +111,7 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	l.pagesize = high - low
 
 	var scrollbar *buffer
-	if low > 0 || high < n-1 {
+	if low > 0 || high < n {
 		scrollbar = renderScrollbar(n, low, high, height)
 		width--
 	}
