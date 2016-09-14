@@ -416,7 +416,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		thisScope[restArg] = true
 	}
 	thisScope["args"] = true
-	thisScope["kwargs"] = true
+	thisScope["opts"] = true
 	op := cp.chunkOp(n.Chunk)
 	capture := cp.capture
 	cp.capture = scope{}

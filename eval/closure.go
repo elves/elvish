@@ -64,10 +64,15 @@ func (c *Closure) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 	if c.RestArg != "" && c.RestArg != unnamedRestArg {
 		ec.local[c.RestArg] = NewPtrVariable(NewList(args[len(c.ArgNames):]...))
 	}
-	Logger.Printf("EvalCtx=%p, args=%v", ec, args)
+	Logger.Printf("EvalCtx=%p, args=%v, opts=%v", ec, args, opts)
 	ec.positionals = args
 	ec.local["args"] = NewPtrVariable(List{&args})
-	ec.local["kwargs"] = NewPtrVariable(Map{&map[Value]Value{}})
+	// XXX This conversion was done by the other direction.
+	convertedOpts := make(map[Value]Value)
+	for k, v := range opts {
+		convertedOpts[String(k)] = v
+	}
+	ec.local["opts"] = NewPtrVariable(Map{&convertedOpts})
 
 	// TODO(xiaq): Also change ec.name and ec.text since the closure being
 	// called can come from another source.
