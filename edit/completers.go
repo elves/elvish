@@ -271,6 +271,7 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 		args     []eval.FnValue
 		variadic bool
 	)
+	desc := make(map[*getopt.Option]string)
 	// Convert arguments.
 	elemsv.Iterate(func(v eval.Value) bool {
 		elem, ok := v.(eval.String)
@@ -310,7 +311,14 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 		if vshort == nil && vlong == nil {
 			throwf("opt should have at least one of short and long as keys")
 		}
-		// TODO support &desc
+		vdesc := maybeIndex(m, eval.String("desc"))
+		if vdesc != nil {
+			s, ok := vdesc.(eval.String)
+			if !ok {
+				throwf("description must be string, got %s", vdesc.Kind())
+			}
+			desc[opt] = string(s)
+		}
 		opts = append(opts, opt)
 		return true
 	})
@@ -334,7 +342,14 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 	g := getopt.Getopt{opts, getopt.GNUGetoptLong}
 	_, parsedArgs, ctx := g.Parse(elems)
 	out := ec.OutputChan()
-	_ = variadic // XXX
+
+	putShortOpt := func(opt *getopt.Option) {
+		out <- eval.String("-" + string(opt.Short))
+	}
+	putLongOpt := func(opt *getopt.Option) {
+		out <- eval.String("--" + string(opt.Long))
+	}
+
 	switch ctx.Type {
 	case getopt.NewOptionOrArgument, getopt.Argument:
 		// Find argument completer
@@ -355,29 +370,29 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 	case getopt.NewOption:
 		for _, opt := range opts {
 			if opt.Short != 0 {
-				out <- eval.String("-" + string(opt.Short))
+				putShortOpt(opt)
 			}
 			if opt.Long != "" {
-				out <- eval.String("--" + opt.Long)
+				putLongOpt(opt)
 			}
 		}
 	case getopt.NewLongOption:
 		for _, opt := range opts {
 			if opt.Long != "" {
-				out <- eval.String("--" + opt.Long)
+				putLongOpt(opt)
 			}
 		}
 	case getopt.LongOption:
 		for _, opt := range opts {
 			if strings.HasPrefix(opt.Long, ctx.Text) {
-				out <- eval.String("--" + opt.Long)
+				putLongOpt(opt)
 			}
 		}
 	case getopt.ChainShortOption:
 		for _, opt := range opts {
 			if opt.Short != 0 {
 				// XXX loses chained options
-				out <- eval.String("-" + string(opt.Short))
+				putShortOpt(opt)
 			}
 		}
 	case getopt.OptionArgument:
