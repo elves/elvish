@@ -205,20 +205,6 @@ func init() {
 	}
 }
 
-type action struct {
-	typ        actionType
-	returnLine string
-	returnErr  error
-}
-
-type actionType int
-
-const (
-	noAction actionType = iota
-	reprocessKey
-	exitReadLine
-)
-
 func redraw(ed *Editor) {
 	ed.refresh(true, true)
 }

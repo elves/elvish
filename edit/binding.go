@@ -3,7 +3,6 @@ package edit
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
@@ -36,7 +35,7 @@ func (bt BindingTable) Repr(indent int) string {
 }
 
 func (bt BindingTable) IndexOne(idx eval.Value) eval.Value {
-	key := keyIndex(idx)
+	key := ToKey(idx)
 	switch f := bt.inner[key].(type) {
 	case Builtin:
 		return eval.String(f.name)
@@ -48,7 +47,7 @@ func (bt BindingTable) IndexOne(idx eval.Value) eval.Value {
 }
 
 func (bt BindingTable) IndexSet(idx, v eval.Value) {
-	key := keyIndex(idx)
+	key := ToKey(idx)
 
 	var f BoundFunc
 	switch v := v.(type) {
@@ -65,18 +64,6 @@ func (bt BindingTable) IndexSet(idx, v eval.Value) {
 	}
 
 	bt.inner[key] = f
-}
-
-func keyIndex(idx eval.Value) Key {
-	skey, ok := idx.(eval.String)
-	if !ok {
-		throw(ErrKeyMustBeString)
-	}
-	key, err := parseKey(string(skey))
-	if err != nil {
-		throw(err)
-	}
-	return key
 }
 
 // BuiltinAsFnValue adapts a Builtin to satisfy eval.FnValue, so that it can be
@@ -134,42 +121,4 @@ func (c FnAsBoundFunc) Repr(indent int) string {
 
 func (c FnAsBoundFunc) Call(ed *Editor) {
 	ed.CallFn(c.Fn)
-}
-
-// makePorts connects stdin to /dev/null and a closed channel, identifies
-// stdout and stderr and connects them to a pipe and channel. It returns the
-// other end of stdout and the resulting []*eval.Port. The caller is
-// responsible for closing the returned file and calling eval.ClosePorts on the
-// ports.
-func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
-	in, err := makeClosedStdin()
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	// Output
-	rout, out, err := os.Pipe()
-	if err != nil {
-		Logger.Println(err)
-		return nil, nil, nil, err
-	}
-	chanOut := make(chan eval.Value)
-
-	return rout, chanOut, []*eval.Port{
-		in,
-		{File: out, CloseFile: true, Chan: chanOut, CloseChan: true},
-		{File: out, Chan: chanOut},
-	}, nil
-}
-
-func makeClosedStdin() (*eval.Port, error) {
-	// Input
-	devnull, err := os.Open("/dev/null")
-	if err != nil {
-		Logger.Println(err)
-		return nil, err
-	}
-	in := make(chan eval.Value)
-	close(in)
-	return &eval.Port{File: devnull, CloseFile: true, Chan: in}, nil
 }

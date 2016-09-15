@@ -1,8 +1,11 @@
 package edit
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
+
+	"github.com/elves/elvish/eval"
 )
 
 // Key represents a single keyboard input, typically assembled from a escape
@@ -12,11 +15,8 @@ type Key struct {
 	Mod  Mod
 }
 
-// Predefined special Key values.
-var (
-	// Default is used in the key binding table to indicate default binding.
-	Default = Key{DefaultBindingRune, 0}
-)
+// Default is used in the key binding table to indicate default binding.
+var Default = Key{DefaultBindingRune, 0}
 
 // Mod represents a modifier key.
 type Mod byte
@@ -32,31 +32,83 @@ const (
 	Ctrl
 )
 
-func (k Key) String() (s string) {
+// Special negative runes to represent function keys, used in the Rune field of
+// the Key struct.
+const (
+	F1 rune = -iota - 1
+	F2
+	F3
+	F4
+	F5
+	F6
+	F7
+	F8
+	F9
+	F10
+	F11
+	F12
+
+	Up
+	Down
+	Right
+	Left
+
+	Home
+	Insert
+	Delete
+	End
+	PageUp
+	PageDown
+
+	DefaultBindingRune // A special value to represent default binding.
+
+	// Some function key names are just aliases for their ASCII representation
+
+	Tab       = '\t'
+	Enter     = '\n'
+	Backspace = 0x7f
+)
+
+// functionKey stores the names of function keys, where the name of a function
+// key k is stored at index -k. For instance, functionKeyNames[-F1] = "F1".
+var functionKeyNames = [...]string{
+	"(Invalid)",
+	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+	"Up", "Down", "Right", "Left",
+	"Home", "Insert", "Delete", "End", "PageUp", "PageDown", "default",
+}
+
+// keyNames stores the name of function keys with a positive rune.
+var keyNames = map[rune]string{
+	Tab: "Tab", Enter: "Enter", Backspace: "Backspace",
+}
+
+func (k Key) String() string {
+	var b bytes.Buffer
 	if k.Mod&Ctrl != 0 {
-		s += "Ctrl-"
+		b.WriteString("Ctrl-")
 	}
 	if k.Mod&Alt != 0 {
-		s += "Alt-"
+		b.WriteString("Alt-")
 	}
 	if k.Mod&Shift != 0 {
-		s += "Shift-"
+		b.WriteString("Shift-")
 	}
 	if k.Rune > 0 {
 		if name, ok := keyNames[k.Rune]; ok {
-			s += name
+			b.WriteString(name)
 		} else {
-			s += string(k.Rune)
+			b.WriteRune(k.Rune)
 		}
 	} else {
 		i := int(-k.Rune)
 		if i >= len(functionKeyNames) {
-			s += fmt.Sprintf("(bad function key %d)", i)
+			fmt.Fprintf(&b, "(bad function key %d)", i)
 		} else {
-			s += functionKeyNames[-k.Rune]
+			b.WriteString(functionKeyNames[-k.Rune])
 		}
 	}
-	return
+	return b.String()
 }
 
 // modifierByName maps a name to an modifier. It is used for parsing keys where
@@ -113,50 +165,16 @@ func parseKey(s string) (Key, error) {
 	return Key{}, fmt.Errorf("bad key: %q", s)
 }
 
-// Special negative runes to represent function keys, used in the Rune field of
-// the Key struct.
-const (
-	F1 rune = -iota - 1
-	F2
-	F3
-	F4
-	F5
-	F6
-	F7
-	F8
-	F9
-	F10
-	F11
-	F12
-
-	Up
-	Down
-	Right
-	Left
-
-	Home
-	Insert
-	Delete
-	End
-	PageUp
-	PageDown
-
-	DefaultBindingRune // A special value used in DefaultBinding
-
-	// Some function key names are just aliases for their ASCII representation
-
-	Tab       = '\t'
-	Enter     = '\n'
-	Backspace = 0x7f
-)
-
-var functionKeyNames = [...]string{
-	"(Invalid)",
-	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
-	"Up", "Down", "Right", "Left",
-	"Home", "Insert", "Delete", "End", "PageUp", "PageDown", "default",
-}
-
-var keyNames = map[rune]string{
-	Tab: "Tab", Enter: "Enter", Backspace: "Backspace",
+// ToKey converts an elvish String to a Key. If the passed Value is not a
+// String, it throws an error.
+func ToKey(idx eval.Value) Key {
+	skey, ok := idx.(eval.String)
+	if !ok {
+		throw(ErrKeyMustBeString)
+	}
+	key, err := parseKey(string(skey))
+	if err != nil {
+		throw(err)
+	}
+	return key
 }
