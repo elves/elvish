@@ -297,7 +297,7 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 			{File: os.Stderr},
 		}
 
-		ex = ev.Eval(name, text, n, ports)
+		_, ex = ev.Eval(name, text, n, ports)
 		close(outCh)
 		<-outDone
 	}
