@@ -140,7 +140,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 ## Building Elvish
 
-Go >= 1.5 is required. Linux is fully supported. It is likely to work on BSDs and Mac OS X. Windows is **not** supported yet.
+Go >= 1.6 is required. Linux is fully supported. It is likely to work on BSDs and Mac OS X. Windows is **not** supported yet.
 
 The main binary can be installed using `go get github.com/elves/elvish`. There is also an auxiliary program called elvish-stub; install it with `make stub`. Elvish is functional without the stub, but job control features depend on it.
 
