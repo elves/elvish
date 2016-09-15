@@ -46,11 +46,3 @@ func (os *OptSet) MustPick(opts map[string]Value) []Value {
 	maybeThrow(err)
 	return vs
 }
-
-var ErrOpts = errors.New("no option accepted")
-
-func TakeNoOpt(opts map[string]Value) {
-	if len(opts) > 0 {
-		throw(ErrOpts)
-	}
-}

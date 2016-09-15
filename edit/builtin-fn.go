@@ -26,9 +26,7 @@ func (bf *BuiltinFn) Repr(int) string {
 
 func (bf *BuiltinFn) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	eval.TakeNoOpt(opts)
-	if len(args) > 0 {
-		throw(ErrTakeNoArg)
-	}
+	eval.TakeNoArg(args)
 	ed, ok := ec.Editor.(*Editor)
 	if !ok || !ed.active {
 		throw(ErrEditorInactive)

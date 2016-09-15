@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -77,5 +78,22 @@ func makeFlag(m parse.RedirMode) int {
 	default:
 		// XXX should report parser bug
 		panic("bad RedirMode; parser bug")
+	}
+}
+
+var (
+	ErrNoArgAccepted = errors.New("no argument accepted")
+	ErrNoOptAccepted = errors.New("no option accepted")
+)
+
+func TakeNoArg(args []Value) {
+	if len(args) > 0 {
+		throw(ErrNoArgAccepted)
+	}
+}
+
+func TakeNoOpt(opts map[string]Value) {
+	if len(opts) > 0 {
+		throw(ErrNoOptAccepted)
 	}
 }
