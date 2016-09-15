@@ -24,6 +24,7 @@ var errAny = errors.New("")
 type more struct {
 	wantBytesOut []byte
 	wantError    error
+	wantFalse    bool
 }
 
 var nomore more
@@ -91,6 +92,10 @@ var evalTests = []struct {
 	{"for x in a b; do put $x; continue; put $x; done", strs("a", "b"), nomore},
 	// begin/end
 	{"begin; put lorem; put ipsum; end", strs("lorem", "ipsum"), nomore},
+
+	// Predicates.
+	{"false", strs(), more{wantFalse: true}},
+	{"true | false | true", strs(), more{wantFalse: true}},
 
 	// Redirections.
 	{"f=`mktemp elvXXXXXX`; echo 233 > $f; cat < $f; rm $f", strs(),
@@ -253,7 +258,7 @@ func mustParse(t *testing.T, name, text string) *parse.Chunk {
 	return n
 }
 
-func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, error) {
+func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, bool, error) {
 	name := "<eval test>"
 	ev := NewEvaler(nil)
 
@@ -276,7 +281,8 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	// Channel output
 	outs := []Value{}
 
-	// Exit. Only the exit of the last text is saved.
+	// Boolean return and error. Only those of the last text is saved.
+	var ret bool
 	var ex error
 
 	for _, text := range texts {
@@ -297,21 +303,21 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 			{File: os.Stderr},
 		}
 
-		_, ex = ev.Eval(name, text, n, ports)
+		ret, ex = ev.Eval(name, text, n, ports)
 		close(outCh)
 		<-outDone
 	}
 
 	pw.Close()
 	<-bytesDone
-	return outs, outBytes, ex
+	return outs, outBytes, ret, ex
 }
 
 func TestEval(t *testing.T) {
 	for _, tt := range evalTests {
 		// fmt.Printf("eval %q\n", tt.text)
 
-		out, bytesOut, err := evalAndCollect(t, []string{tt.text}, len(tt.wantOut))
+		out, bytesOut, ret, err := evalAndCollect(t, []string{tt.text}, len(tt.wantOut))
 
 		good := true
 		errorf := func(format string, args ...interface{}) {
@@ -322,15 +328,18 @@ func TestEval(t *testing.T) {
 			t.Errorf(format, args...)
 		}
 
+		if !reflect.DeepEqual(tt.wantOut, out) {
+			errorf("got out=%v, want %v", out, tt.wantOut)
+		}
 		if string(bytesOut) != string(tt.wantBytesOut) {
 			errorf("got bytesOut=%q, want %q", bytesOut, tt.wantBytesOut)
+		}
+		if ret != !tt.wantFalse {
+			errorf("got ret=%v, want %v", ret, !tt.wantFalse)
 		}
 		// Check error. We accept errAny as a "wildcard" for all non-nil errors.
 		if !(tt.wantError == errAny && err != nil) && !reflect.DeepEqual(tt.wantError, err) {
 			errorf("got err=%v, want %v", err, tt.wantError)
-		}
-		if !reflect.DeepEqual(tt.wantOut, out) {
-			errorf("got out=%v, want %v", out, tt.wantOut)
 		}
 		if !good {
 			t.Errorf("--------------")
@@ -340,7 +349,7 @@ func TestEval(t *testing.T) {
 
 func TestMultipleEval(t *testing.T) {
 	texts := []string{"x=hello", "put $x"}
-	outs, _, err := evalAndCollect(t, texts, 1)
+	outs, _, _, err := evalAndCollect(t, texts, 1)
 	wanted := strs("hello")
 	if err != nil {
 		t.Errorf("eval %s => %v, want nil", texts, err)

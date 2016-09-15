@@ -287,6 +287,9 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			redirOp.Exec(ec)
 		}
 
+		// In case some arguments returned false.
+		ec.predReturn = true
+
 		ec.begin, ec.end = begin, end
 		headFn.Call(ec, args, convertedOpts)
 	}
@@ -312,6 +315,7 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			if elseOp.Func != nil {
 				elseOp.Exec(ec)
 			}
+			ec.predReturn = true
 		}
 	case parse.TryControl:
 		Logger.Println("compiling a try control")
@@ -362,6 +366,7 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			if e != nil {
 				throw(e)
 			}
+			ec.predReturn = true
 		}
 	case parse.WhileControl:
 		condOp := cp.chunkOp(n.Condition)
@@ -382,6 +387,7 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 					throw(ex)
 				}
 			}
+			ec.predReturn = true
 		}
 	case parse.ForControl:
 		iteratorOp, restOp := cp.lvaluesOp(n.Iterator)
@@ -409,6 +415,7 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 					throw(ex)
 				}
 			}
+			ec.predReturn = true
 		}
 	case parse.BeginControl:
 		return cp.chunk(n.Body)
