@@ -56,8 +56,8 @@ func init() {
 		&BuiltinFn{"true", nop},
 		&BuiltinFn{"false", falseFn},
 
-		&BuiltinFn{"print", WrapFn(print)},
-		&BuiltinFn{"println", WrapFn(println)},
+		&BuiltinFn{"print", WrapFn(print, OptSpec{"sep", String(" ")})},
+		&BuiltinFn{"println", WrapFn(println, OptSpec{"sep", String(" ")})},
 		&BuiltinFn{"pprint", pprint},
 
 		&BuiltinFn{"slurp", WrapFn(slurp)},
@@ -380,18 +380,19 @@ func continueFn(ec *EvalCtx) {
 	throw(Continue)
 }
 
-func print(ec *EvalCtx, args ...string) {
+func print(ec *EvalCtx, sepv String, args ...string) {
 	out := ec.ports[1].File
+	sep := string(sepv)
 	for i, arg := range args {
 		if i > 0 {
-			out.WriteString(" ")
+			out.WriteString(sep)
 		}
 		out.WriteString(arg)
 	}
 }
 
-func println(ec *EvalCtx, args ...string) {
-	print(ec, args...)
+func println(ec *EvalCtx, sep String, args ...string) {
+	print(ec, sep, args...)
 	ec.ports[1].File.WriteString("\n")
 }
 
