@@ -122,7 +122,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   ~> / (* 2 3) 4 # parentheses are equivalent to backquotes, but look nicer in arithmetics
   ▶ 1.5
   ~> > 1 2 # ">" may be used as a command name
-  false
+  ✗
   ~> < 1 2 # "<" may also be used as a command name; silence means "true"
   ```
 

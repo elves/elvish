@@ -75,9 +75,10 @@ func (e *Evaler) searchPaths() []string {
 }
 
 const (
-	outChanSize   = 32
-	outChanLeader = "▶ "
-	initIndent    = NoPretty
+	outChanSize    = 32
+	outChanLeader  = "▶ "
+	falseIndicator = "✗"
+	initIndent     = NoPretty
 )
 
 // NewTopEvalCtx creates a top-level evalCtx.
@@ -136,13 +137,14 @@ func makeScope(s Namespace) scope {
 
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*Port) error {
+func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*Port) (bool, error) {
 	op, err := ev.Compile(n)
 	if err != nil {
-		return err
+		return false, err
 	}
 	ec := NewTopEvalCtx(ev, name, text, ports)
-	return ec.PEval(op)
+	err = ec.PEval(op)
+	return ec.predReturn, err
 }
 
 func (ev *Evaler) IntSignals() <-chan struct{} {
@@ -198,9 +200,12 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 		}
 	}
 
-	err := ev.Eval("[interactive]", text, n, ports)
+	ret, err := ev.Eval("[interactive]", text, n, ports)
 	close(outCh)
 	<-outDone
+	if !ret {
+		fmt.Println(falseIndicator)
+	}
 
 	// XXX Should use fd of /dev/tty instead of 0.
 	if sys.IsATTY(0) {
