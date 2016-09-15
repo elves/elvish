@@ -21,7 +21,7 @@ func MustBeFn(v eval.Value) error {
 
 func defaultPrompts() (eval.FnValue, eval.FnValue) {
 	// Make default prompts.
-	prompt := func(ec *eval.EvalCtx, args []eval.Value) {
+	prompt := func(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 		out := ec.OutputChan()
 		out <- &styled{util.Getwd() + "> ", ""}
 	}
@@ -36,7 +36,7 @@ func defaultPrompts() (eval.FnValue, eval.FnValue) {
 		hostname = "???"
 	}
 	rpromptStr := username + "@" + hostname
-	rprompt := func(ec *eval.EvalCtx, args []eval.Value) {
+	rprompt := func(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 		out := ec.OutputChan()
 		out <- &styled{rpromptStr, "7"}
 	}

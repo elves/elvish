@@ -86,6 +86,8 @@ type BuiltinAsFnValue struct {
 	ed *Editor
 }
 
+var _ eval.FnValue = &BuiltinAsFnValue{}
+
 func (*BuiltinAsFnValue) Kind() string {
 	return "fn"
 }
@@ -94,7 +96,8 @@ func (eb *BuiltinAsFnValue) Repr(int) string {
 	return "<editor builtin " + eb.b.name + ">"
 }
 
-func (eb *BuiltinAsFnValue) Call(ec *eval.EvalCtx, args []eval.Value) {
+func (eb *BuiltinAsFnValue) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+	eval.TakeNoOpt(opts)
 	if len(args) > 0 {
 		throw(ErrTakeNoArg)
 	}

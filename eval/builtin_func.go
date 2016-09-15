@@ -30,7 +30,7 @@ var builtinFns []*BuiltinFn
 // BuiltinFn is a builtin function.
 type BuiltinFn struct {
 	Name string
-	Impl func(*EvalCtx, []Value)
+	Impl func(*EvalCtx, []Value, map[string]Value)
 }
 
 var _ FnValue = &BuiltinFn{}
@@ -45,7 +45,7 @@ func (b *BuiltinFn) Repr(int) string {
 
 // Call calls a builtin function.
 func (b *BuiltinFn) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
-	b.Impl(ec, args)
+	b.Impl(ec, args, opts)
 }
 
 func init() {
@@ -173,7 +173,7 @@ var (
 // generates argument checking and conversion code according to the signature
 // of the inner function. The inner function must accept evalCtx* as the first
 // argument and return an exitus.
-func WrapFn(inner interface{}) func(*EvalCtx, []Value) {
+func WrapFn(inner interface{}, optSpecs ...OptSpec) func(*EvalCtx, []Value, map[string]Value) {
 	funcType := reflect.TypeOf(inner)
 	if funcType.In(0) != evalCtxType {
 		panic("bad func to wrap, first argument not *EvalCtx")
@@ -200,7 +200,11 @@ func WrapFn(inner interface{}) func(*EvalCtx, []Value) {
 		}
 	}
 
-	return func(ec *EvalCtx, args []Value) {
+	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
+		if len(opts) > 0 {
+			throw(ErrOpts)
+		}
+		// Check arity.
 		if isVariadic {
 			if len(args) < fixedArgs {
 				throw(fmt.Errorf("arity mismatch: want at least %d arguments, got %d", fixedArgs, len(args)))
@@ -288,15 +292,17 @@ func convertArg(arg Value, wantType reflect.Type) (reflect.Value, error) {
 	return reflect.ValueOf(converted), err
 }
 
-func wrapStringToString(f func(string) string) func(*EvalCtx, []Value) {
-	return func(ec *EvalCtx, args []Value) {
+func wrapStringToString(f func(string) string) func(*EvalCtx, []Value, map[string]Value) {
+	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
+		TakeNoOpt(opts)
 		s := mustGetOneString(args)
 		ec.ports[1].Chan <- String(f(s))
 	}
 }
 
-func wrapStringToStringError(f func(string) (string, error)) func(*EvalCtx, []Value) {
-	return func(ec *EvalCtx, args []Value) {
+func wrapStringToStringError(f func(string) (string, error)) func(*EvalCtx, []Value, map[string]Value) {
+	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
+		TakeNoOpt(opts)
 		s := mustGetOneString(args)
 		result, err := f(s)
 		maybeThrow(err)
@@ -317,21 +323,23 @@ func mustGetOneString(args []Value) string {
 	return string(s)
 }
 
-func nop(ec *EvalCtx, args []Value) {
+func nop(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
-func falseFn(ec *EvalCtx, args []Value) {
+func falseFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ec.falsify()
 }
 
-func put(ec *EvalCtx, args []Value) {
+func put(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
 	out := ec.ports[1].Chan
 	for _, a := range args {
 		out <- a
 	}
 }
 
-func kindOf(ec *EvalCtx, args []Value) {
+func kindOf(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
 	out := ec.ports[1].Chan
 	for _, a := range args {
 		out <- String(a.Kind())
@@ -373,7 +381,8 @@ func println(ec *EvalCtx, args ...string) {
 	ec.ports[1].File.WriteString("\n")
 }
 
-func pprint(ec *EvalCtx, args []Value) {
+func pprint(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
 	out := ec.ports[1].File
 	for _, arg := range args {
 		out.WriteString(arg.Repr(0))
@@ -555,12 +564,15 @@ func eawk(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 	})
 }
 
-func constantly(ec *EvalCtx, args []Value) {
+func constantly(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+
 	out := ec.ports[1].Chan
 	// XXX Repr of this fn is not right
 	out <- &BuiltinFn{
 		"created by constantly",
-		func(ec *EvalCtx, a []Value) {
+		func(ec *EvalCtx, a []Value, o map[string]Value) {
+			TakeNoOpt(o)
 			if len(a) != 0 {
 				throw(ErrArgs)
 			}
@@ -572,7 +584,9 @@ func constantly(ec *EvalCtx, args []Value) {
 	}
 }
 
-func cd(ec *EvalCtx, args []Value) {
+func cd(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+
 	var dir string
 	if len(args) == 0 {
 		dir = mustGetHome("")
@@ -708,14 +722,15 @@ func times(ec *EvalCtx, nums ...float64) {
 	out <- String(fmt.Sprintf("%g", prod))
 }
 
-func slash(ec *EvalCtx, args []Value) {
+func slash(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
 	if len(args) == 0 {
 		// cd /
 		cdInner("/", ec)
 		return
 	}
 	// Division
-	wrappedDivide(ec, args)
+	wrappedDivide(ec, args, opts)
 }
 
 var wrappedDivide = WrapFn(divide)
@@ -810,7 +825,8 @@ func boolFn(ec *EvalCtx, v Value) {
 	out <- Bool(ToBool(v))
 }
 
-func eq(ec *EvalCtx, args []Value) {
+func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
 	if len(args) == 0 {
 		ec.falsify()
 		return
@@ -829,7 +845,8 @@ func noteq(ec *EvalCtx, lhs, rhs Value) {
 	}
 }
 
-func deepeq(ec *EvalCtx, args []Value) {
+func deepeq(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
 	if len(args) == 0 {
 		throw(ErrArgs)
 	}
@@ -858,7 +875,9 @@ func take(ec *EvalCtx, n int, iterate func(func(Value))) {
 	})
 }
 
-func count(ec *EvalCtx, args []Value) {
+func count(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+
 	var n int
 	switch len(args) {
 	case 0:
