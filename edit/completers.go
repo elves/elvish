@@ -10,9 +10,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/getopt"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
-	"github.com/elves/getopt"
 )
 
 // completer takes the current Node (always a leaf in the AST) and an Editor,
