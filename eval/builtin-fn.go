@@ -842,8 +842,7 @@ func boolFn(ec *EvalCtx, v Value) {
 func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 	if len(args) == 0 {
-		ec.falsify()
-		return
+		throw(ErrArgs)
 	}
 	for i := 0; i+1 < len(args); i++ {
 		if args[i] != args[i+1] {
