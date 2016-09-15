@@ -21,6 +21,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -68,7 +69,7 @@ func init() {
 		&BuiltinFn{"unpack", WrapFn(unpack)},
 
 		&BuiltinFn{"joins", WrapFn(joins)},
-		&BuiltinFn{"splits", WrapFn(splits)},
+		&BuiltinFn{"splits", WrapFn(splits, OptSpec{"sep", String("")})},
 		&BuiltinFn{"has-prefix", WrapFn(hasPrefix)},
 		&BuiltinFn{"has-suffix", WrapFn(hasSuffix)},
 
@@ -170,83 +171,96 @@ var (
 )
 
 // WrapFn wraps an inner function into one suitable as a builtin function. It
-// generates argument checking and conversion code according to the signature
-// of the inner function. The inner function must accept evalCtx* as the first
-// argument and return an exitus.
+// generates argument checking and conversion code according to the signature of
+// the inner function and option specifications. The inner function must accept
+// EvalCtx* as the first argument, followed by options, followed by arguments.
 func WrapFn(inner interface{}, optSpecs ...OptSpec) func(*EvalCtx, []Value, map[string]Value) {
 	funcType := reflect.TypeOf(inner)
 	if funcType.In(0) != evalCtxType {
 		panic("bad func to wrap, first argument not *EvalCtx")
 	}
 
-	fixedArgs := funcType.NumIn() - 1
+	nopts := len(optSpecs)
+	optsTo := nopts + 1
+	optSet := NewOptSet(optSpecs...)
+	// Range occupied by fixed arguments in the argument list to inner.
+	fixedArgsFrom, fixedArgsTo := optsTo, funcType.NumIn()
 	isVariadic := funcType.IsVariadic()
 	hasOptionalIterate := false
 	var variadicType reflect.Type
 	if isVariadic {
-		fixedArgs--
+		fixedArgsTo--
 		variadicType = funcType.In(funcType.NumIn() - 1).Elem()
 		if !supportedArgType(variadicType) {
 			panic(fmt.Sprintf("bad func to wrap, variadic argument type %s unsupported", variadicType))
 		}
 	} else if funcType.In(funcType.NumIn()-1) == iterateType {
-		fixedArgs--
+		fixedArgsTo--
 		hasOptionalIterate = true
 	}
 
-	for i := 0; i < fixedArgs; i++ {
-		if !supportedArgType(funcType.In(i + 1)) {
-			panic(fmt.Sprintf("bad func to wrap, argument type %s unsupported", funcType.In(i+1)))
+	for i := 1; i < fixedArgsTo; i++ {
+		if !supportedArgType(funcType.In(i)) {
+			panic(fmt.Sprintf("bad func to wrap, argument type %s unsupported", funcType.In(i)))
 		}
 	}
 
+	nFixedArgs := fixedArgsTo - fixedArgsFrom
+
 	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
-		if len(opts) > 0 {
-			throw(ErrOpts)
-		}
-		// Check arity.
+		// Check arity of arguments.
 		if isVariadic {
-			if len(args) < fixedArgs {
-				throw(fmt.Errorf("arity mismatch: want at least %d arguments, got %d", fixedArgs, len(args)))
+			if len(args) < nFixedArgs {
+				throw(fmt.Errorf("arity mismatch: want %d or more arguments, got %d", nFixedArgs, len(args)))
 			}
 		} else if hasOptionalIterate {
-			if len(args) < fixedArgs || len(args) > fixedArgs+1 {
-				throw(fmt.Errorf("arity mismatch: want %d or %d arguments, got %d", fixedArgs, fixedArgs+1, len(args)))
+			if len(args) < nFixedArgs || len(args) > nFixedArgs+1 {
+				throw(fmt.Errorf("arity mismatch: want %d or %d arguments, got %d", nFixedArgs, nFixedArgs+1, len(args)))
 			}
-		} else if len(args) != fixedArgs {
-			throw(fmt.Errorf("arity mismatch: want %d arguments, got %d", fixedArgs, len(args)))
+		} else if len(args) != nFixedArgs {
+			throw(fmt.Errorf("arity mismatch: want %d arguments, got %d", nFixedArgs, len(args)))
 		}
-		convertedArgs := make([]reflect.Value, len(args)+1)
+		convertedArgs := make([]reflect.Value, 1+nopts+len(args))
 		convertedArgs[0] = reflect.ValueOf(ec)
 
+		// Convert and fill options.
 		var err error
-		for i, arg := range args[:fixedArgs] {
-			convertedArgs[1+i], err = convertArg(arg, funcType.In(i+1))
+		optValues := optSet.MustPick(opts)
+		for i, v := range optValues {
+			convertedArgs[1+i], err = convertArg(v, funcType.In(1+i))
+			if err != nil {
+				throw(errors.New("bad option " + parse.Quote(optSet.optSpecs[i].Name) + ": " + err.Error()))
+			}
+		}
+
+		// Convert and fill fixed arguments.
+		for i, arg := range args[:nFixedArgs] {
+			convertedArgs[fixedArgsFrom+i], err = convertArg(arg, funcType.In(fixedArgsFrom+i))
 			if err != nil {
 				throw(errors.New("bad argument: " + err.Error()))
 			}
 		}
 
 		if isVariadic {
-			for i, arg := range args[fixedArgs:] {
-				convertedArgs[1+fixedArgs+i], err = convertArg(arg, variadicType)
+			for i, arg := range args[nFixedArgs:] {
+				convertedArgs[fixedArgsTo+i], err = convertArg(arg, variadicType)
 				if err != nil {
 					throw(errors.New("bad argument: " + err.Error()))
 				}
 			}
 		} else if hasOptionalIterate {
 			var iterate func(func(Value))
-			if len(args) == fixedArgs {
-				// No Elemser specified in arguments. Use input.
+			if len(args) == nFixedArgs {
+				// No Iterator specified in arguments. Use input.
 				// Since convertedArgs was created according to the size of the
 				// actual argument list, we now an empty element to make room
 				// for this additional iterator argument.
 				convertedArgs = append(convertedArgs, reflect.Value{})
 				iterate = ec.IterateInputs
 			} else {
-				iterator, ok := args[fixedArgs].(Iterator)
+				iterator, ok := args[nFixedArgs].(Iterator)
 				if !ok {
-					throw(errors.New("bad argument: need iterator, got " + args[fixedArgs].Kind()))
+					throw(errors.New("bad argument: need iterator, got " + args[nFixedArgs].Kind()))
 				}
 				iterate = func(f func(Value)) {
 					iterator.Iterate(func(v Value) bool {
@@ -255,7 +269,7 @@ func WrapFn(inner interface{}, optSpecs ...OptSpec) func(*EvalCtx, []Value, map[
 					})
 				}
 			}
-			convertedArgs[1+fixedArgs] = reflect.ValueOf(iterate)
+			convertedArgs[fixedArgsTo] = reflect.ValueOf(iterate)
 		}
 		reflect.ValueOf(inner).Call(convertedArgs)
 	}
@@ -450,8 +464,7 @@ func joins(ec *EvalCtx, sep String, iterate func(func(Value))) {
 }
 
 // splits splits an argument strings by a delimiter and writes all pieces.
-// TODO: make sep an option. (`split $s &sep=:` instead of `split $s :`)
-func splits(ec *EvalCtx, s, sep String) {
+func splits(ec *EvalCtx, sep, s String) {
 	out := ec.ports[1].Chan
 	parts := strings.Split(string(s), string(sep))
 	for _, p := range parts {
