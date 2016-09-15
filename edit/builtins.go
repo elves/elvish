@@ -1,16 +1,42 @@
 package edit
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/elves/elvish/eval"
+)
 
 // Line editor builtins.
 
-// Builtin records an editor builtin.
-type Builtin struct {
+// BuiltinFn records an editor builtin.
+type BuiltinFn struct {
 	name string
 	impl func(ed *Editor)
 }
 
-var builtins = []Builtin{
+var _ eval.FnValue = &BuiltinFn{}
+
+func (*BuiltinFn) Kind() string {
+	return "fn"
+}
+
+func (bf *BuiltinFn) Repr(int) string {
+	return "$le:&" + bf.name
+}
+
+func (bf *BuiltinFn) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+	eval.TakeNoOpt(opts)
+	if len(args) > 0 {
+		throw(ErrTakeNoArg)
+	}
+	ed, ok := ec.Editor.(*Editor)
+	if !ok || !ed.active {
+		throw(ErrEditorInactive)
+	}
+	bf.impl(ed)
+}
+
+var builtins = []*BuiltinFn{
 	// Command and insert mode
 	{"start-insert", startInsert},
 	{"start-command", startCommand},
@@ -177,8 +203,8 @@ var defaultBindings = map[ModeType]map[Key]string{
 }
 
 var (
-	builtinMap  = map[string]Builtin{}
-	keyBindings = map[ModeType]map[Key]BoundFunc{}
+	builtinMap  = map[string]*BuiltinFn{}
+	keyBindings = map[ModeType]map[Key]eval.FnValue{}
 )
 
 func init() {
@@ -193,13 +219,13 @@ func init() {
 		builtinMap[b.name] = b
 	}
 	for mode, table := range defaultBindings {
-		keyBindings[mode] = map[Key]BoundFunc{}
+		keyBindings[mode] = map[Key]eval.FnValue{}
 		for key, name := range table {
-			caller, ok := builtinMap[name]
+			fn, ok := builtinMap[name]
 			if !ok {
 				fmt.Println("bad name " + name)
 			} else {
-				keyBindings[mode][key] = caller
+				keyBindings[mode][key] = fn
 			}
 		}
 	}

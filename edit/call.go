@@ -12,6 +12,12 @@ import (
 // notifications. It is the preferred way to call a Fn while the editor is
 // active.
 func (ed *Editor) CallFn(fn eval.FnValue, args ...eval.Value) {
+	if b, ok := fn.(*BuiltinFn); ok {
+		// Builtin function: quick path.
+		b.impl(ed)
+		return
+	}
+
 	rout, chanOut, ports, err := makePorts()
 	if err != nil {
 		return

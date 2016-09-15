@@ -423,7 +423,7 @@ MainLoop:
 
 			ed.insert.insertedLiteral = false
 			ed.lastKey = k
-			fn.Call(ed)
+			ed.CallFn(fn)
 			if ed.insert.insertedLiteral {
 				ed.insert.literalInserts++
 			} else {

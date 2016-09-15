@@ -266,7 +266,7 @@ func (l *listing) defaultBinding(ed *Editor) {
 
 func addListingBuiltins(prefix string, l func(*Editor) *listing) {
 	add := func(name string, f func(*Editor)) {
-		builtins = append(builtins, Builtin{prefix + name, f})
+		builtins = append(builtins, &BuiltinFn{prefix + name, f})
 	}
 	add("up", func(ed *Editor) { l(ed).up(false) })
 	add("up-cycle", func(ed *Editor) { l(ed).up(true) })

@@ -96,9 +96,9 @@ func navigationDefault(ed *Editor) {
 			n.refreshCurrent()
 		}
 	} else if f, ok := keyBindings[modeInsert][k]; ok {
-		f.Call(ed)
+		ed.CallFn(f)
 	} else {
-		keyBindings[modeInsert][Default].Call(ed)
+		ed.CallFn(keyBindings[modeInsert][Default])
 	}
 }
 
