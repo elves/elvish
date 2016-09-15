@@ -89,7 +89,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   ~> paths=[/opt/bin $@paths /usr/bin]
   ~> echo $paths
   [/opt/bin /bin /sbin /usr/bin]
-  ~> echo $e:PATH
+  ~> echo $E:PATH
   /opt/bin:/bin:/sbin:/usr/bin
   ```
 
