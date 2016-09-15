@@ -286,38 +286,36 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 		if !ok {
 			throwf("opt should be map-like, got %s", v.Kind())
 		}
-		opt := &getopt.Option{}
-		vshort := maybeIndex(m, eval.String("short"))
-		if vshort != nil {
-			sv, ok := vshort.(eval.String)
-			if !ok {
-				throwf("short option should be string, got %s", vshort.Kind())
+		get := func(ks string) (string, bool) {
+			kv := eval.String(ks)
+			if !m.HasKey(kv) {
+				return "", false
 			}
-			s := string(sv)
+			vv := m.IndexOne(kv)
+			if vs, ok := vv.(eval.String); ok {
+				return string(vs), true
+			} else {
+				throwf("%s should be string, got %s", ks, vs.Kind())
+				panic("unreachable")
+			}
+		}
+
+		opt := &getopt.Option{}
+		if s, ok := get("short"); ok {
 			r, size := utf8.DecodeRuneInString(s)
 			if r == utf8.RuneError || size != len(s) {
 				throwf("short option should be exactly one rune, got %v", parse.Quote(s))
 			}
 			opt.Short = r
 		}
-		vlong := maybeIndex(m, eval.String("long"))
-		if vlong != nil {
-			s, ok := vlong.(eval.String)
-			if !ok {
-				throwf("long option should be string, got %s", vlong.Kind())
-			}
-			opt.Long = string(s)
+		if s, ok := get("long"); ok {
+			opt.Long = s
 		}
-		if vshort == nil && vlong == nil {
-			throwf("opt should have at least one of short and long as keys")
+		if opt.Short == 0 && opt.Long == "" {
+			throwf("opt should have at least one of short and long forms")
 		}
-		vdesc := maybeIndex(m, eval.String("desc"))
-		if vdesc != nil {
-			s, ok := vdesc.(eval.String)
-			if !ok {
-				throwf("description must be string, got %s", vdesc.Kind())
-			}
-			desc[opt] = string(s)
+		if s, ok := get("desc"); ok {
+			desc[opt] = s
 		}
 		opts = append(opts, opt)
 		return true
@@ -405,11 +403,4 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 		}
 	case getopt.OptionArgument:
 	}
-}
-
-func maybeIndex(m eval.MapLike, k eval.Value) eval.Value {
-	if !m.HasKey(k) {
-		return nil
-	}
-	return m.IndexOne(k)
 }
