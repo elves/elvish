@@ -55,10 +55,12 @@ func navDown(ed *Editor) {
 
 func navPageUp(ed *Editor) {
 	ed.navigation.current.pageUp()
+	ed.navigation.refresh()
 }
 
 func navPageDown(ed *Editor) {
 	ed.navigation.current.pageDown()
+	ed.navigation.refresh()
 }
 
 func navLeft(ed *Editor) {
