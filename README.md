@@ -80,6 +80,9 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   1
   2
   3
+  ~> map=[&k1=v1 &k2=v2]
+  ~> echo $map[k1]
+  v1
   ```
 
 * You can manipulate search paths through the special list `$paths`:
