@@ -314,8 +314,9 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			}
 			if elseOp.Func != nil {
 				elseOp.Exec(ec)
+			} else {
+				ec.verdict = true
 			}
-			ec.verdict = true
 		}
 	case parse.TryControl:
 		Logger.Println("compiling a try control")
