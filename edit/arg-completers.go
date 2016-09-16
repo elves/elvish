@@ -2,7 +2,6 @@ package edit
 
 import (
 	"errors"
-	"os"
 
 	"github.com/elves/elvish/eval"
 )
@@ -111,37 +110,4 @@ type FnAsArgCompleter struct {
 
 func (fac FnAsArgCompleter) Complete(words []string, ed *Editor) ([]*candidate, error) {
 	return callFnForCandidates(fac.Fn, ed.evaler, words)
-}
-
-func callFnForCandidates(fn eval.FnValue, ev *eval.Evaler, args []string) ([]*candidate, error) {
-	in, err := makeClosedStdin()
-	if err != nil {
-		return nil, err
-	}
-	ports := []*eval.Port{in, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
-
-	argValues := make([]eval.Value, len(args))
-	for i, arg := range args {
-		argValues[i] = eval.String(arg)
-	}
-
-	// XXX There is no source to pass to NewTopEvalCtx.
-	ec := eval.NewTopEvalCtx(ev, "[editor completer]", "", ports)
-	values, err := ec.PCaptureOutput(fn, argValues, eval.NoOpts)
-	if err != nil {
-		return nil, errors.New("completer error: " + err.Error())
-	}
-
-	cands := make([]*candidate, len(values))
-	for i, v := range values {
-		switch v := v.(type) {
-		case eval.String:
-			cands[i] = &candidate{text: string(v)}
-		case *candidate:
-			cands[i] = v
-		default:
-			return nil, errors.New("completer must output string or candidate")
-		}
-	}
-	return cands, nil
 }
