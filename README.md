@@ -6,6 +6,8 @@
 This project aims to explore the potentials of the Unix shell. It is a work in
 progress; things will change without warning. The [issues list](https://github.com/elves/elvish/issues) contains many things I'm working on.
 
+Discuss elvish by joining #elvish on freenode, the [Gitter room](https://gitter.im/elves/elvish-public) or the [international user group on Telegram](https://telegram.me/elvish). Thanks to [fishroom](https://github.com/tuna/fishroom), the IRC channel, Gitter room and Telegram group are interconnected. Chinese speakers are also welcome in #elvish-zh on freenode, or the [Chinese user group on Telegram](https://telegram.me/elvishzh)!
+
 ## Screenshot
 
 Elvish looks like this:
