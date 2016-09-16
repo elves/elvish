@@ -145,6 +145,25 @@ func parseKey(s string) (Key, error) {
 
 	if len(s) == 1 {
 		k.Rune = rune(s[0])
+		// XXX The following assumptions about keys with Ctrl are not checked
+		// with all terminals.
+		if k.Mod&Ctrl != 0 {
+			// Keys with Ctrl as one of the modifiers and a single ASCII letter
+			// as the base rune do not distinguish between cases. So we
+			// normalize the base rune to upper case.
+			if 'a' <= k.Rune && k.Rune <= 'z' {
+				k.Rune += 'A' - 'a'
+			}
+			// Tab is equivalent to Ctrl-I and Ctrl-J is equivalent to Enter.
+			// Normalize Ctrl-I to Tab and Ctrl-J to Enter.
+			if k.Rune == 'I' {
+				k.Mod &= ^Ctrl
+				k.Rune = Tab
+			} else if k.Rune == 'J' {
+				k.Mod &= ^Ctrl
+				k.Rune = Enter
+			}
+		}
 		return k, nil
 	}
 
