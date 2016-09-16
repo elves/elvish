@@ -97,6 +97,8 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
   Use `pprint $le:binding` to get a nice (albeit long) view of the current keybinding.
 
+  **NOTE**: Bindings for letters modified by Alt are case-sensitive. For instance, `Alt-a` means pressing `Alt` and `A`, while `Alt-A` means pressing `Alt`, `Shift` and `A`.
+
 * Environment variables live in a separate `E:` (for "environment") namespace and must be explicitly qualified:
   ```sh
   ~> put $E:HOME
