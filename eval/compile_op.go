@@ -58,7 +58,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 		var nextIn *Port
 
 		errorChans := make([]chan Error, len(ops))
-		predReturnChans := make([]chan bool, len(ops))
+		verdictChans := make([]chan bool, len(ops))
 
 		// For each form, create a dedicated evalCtx and run asynchronously
 		for i, op := range ops {
@@ -82,46 +82,46 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			}
 			thisOp := op
 			errorChans[i] = make(chan Error)
-			predReturnChans[i] = make(chan bool)
+			verdictChans[i] = make(chan bool)
 			thisErrorChan := errorChans[i]
-			thisPredReturnChan := predReturnChans[i]
+			thisVerdictChan := verdictChans[i]
 			go func() {
 				err := newEc.PEval(thisOp)
 				// Logger.Printf("closing ports of %s", newEc.context)
 				ClosePorts(newEc.ports)
 				thisErrorChan <- Error{err}
-				thisPredReturnChan <- newEc.predReturn
+				thisVerdictChan <- newEc.verdict
 			}()
 		}
 
-		collectErrorsAndPredReturns := func() ([]Error, bool) {
+		collectErrorsAndVerdicts := func() ([]Error, bool) {
 			// Wait for all forms to finish and collect error returns.
 			errors := make([]Error, len(ops))
 			for i, errorChan := range errorChans {
 				errors[i] = <-errorChan
 			}
 
-			// Evaluate predReturn as the conjunction of all predReturn's.
-			predReturn := true
-			for _, predReturnChan := range predReturnChans {
-				if !<-predReturnChan {
-					predReturn = false
+			// Evaluate verdict as the conjunction of all verdict's.
+			verdict := true
+			for _, verdictChan := range verdictChans {
+				if !<-verdictChan {
+					verdict = false
 				}
 			}
 
-			return errors, predReturn
+			return errors, verdict
 		}
 
 		if bg {
 			// Background job, wait for form termination asynchronously.
 			go func() {
-				errors, predReturn := collectErrorsAndPredReturns()
+				errors, verdict := collectErrorsAndVerdicts()
 				ec.Stub.Terminate()
 				msg := "job " + n.SourceText() + " finished"
 				if !allok(errors) {
 					msg += ", errors = " + makeCompositeError(errors).Error()
 				}
-				if !predReturn {
+				if !verdict {
 					msg += ", pred = false"
 				}
 				if ec.Editor != nil {
@@ -139,9 +139,9 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 				}
 			}()
 		} else {
-			errors, predReturn := collectErrorsAndPredReturns()
+			errors, verdict := collectErrorsAndVerdicts()
 			maybeThrow(makeCompositeError(errors))
-			ec.predReturn = predReturn
+			ec.verdict = verdict
 		}
 	}
 }
@@ -288,7 +288,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		}
 
 		// In case some arguments returned false.
-		ec.predReturn = true
+		ec.verdict = true
 
 		ec.begin, ec.end = begin, end
 		headFn.Call(ec, args, convertedOpts)
@@ -307,7 +307,7 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 		return func(ec *EvalCtx) {
 			for i, condOp := range condOps {
 				condOp.Exec(ec)
-				if ec.predReturn {
+				if ec.verdict {
 					bodyOps[i].Exec(ec)
 					return
 				}
@@ -315,7 +315,7 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			if elseOp.Func != nil {
 				elseOp.Exec(ec)
 			}
-			ec.predReturn = true
+			ec.verdict = true
 		}
 	case parse.TryControl:
 		Logger.Println("compiling a try control")
@@ -373,7 +373,7 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 		return func(ec *EvalCtx) {
 			for {
 				condOp.Exec(ec)
-				if !ec.predReturn {
+				if !ec.verdict {
 					break
 				}
 				//for condOp.Exec(ec)[0].(Error).Inner == nil {
@@ -386,7 +386,7 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 					throw(ex)
 				}
 			}
-			ec.predReturn = true
+			ec.verdict = true
 		}
 	case parse.ForControl:
 		iteratorOp, restOp := cp.lvaluesOp(n.Iterator)

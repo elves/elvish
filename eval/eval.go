@@ -52,13 +52,13 @@ type EvalCtx struct {
 	local, up   Namespace
 	ports       []*Port
 	positionals []Value
-	predReturn  bool
+	verdict     bool
 
 	begin, end int
 }
 
 func (ec *EvalCtx) falsify() {
-	ec.predReturn = false
+	ec.verdict = false
 }
 
 func (ec *EvalCtx) evaling(begin, end int) {
@@ -144,7 +144,7 @@ func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*Port) (bool, 
 	}
 	ec := NewTopEvalCtx(ev, name, text, ports)
 	err = ec.PEval(op)
-	return ec.predReturn, err
+	return ec.verdict, err
 }
 
 func (ev *Evaler) IntSignals() <-chan struct{} {

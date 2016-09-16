@@ -314,7 +314,7 @@ func (cp *compiler) predCapture(n *parse.Chunk) ValuesOpFunc {
 	op := cp.chunkOp(n)
 	return func(ec *EvalCtx) []Value {
 		op.Exec(ec)
-		return []Value{Bool(ec.predReturn)}
+		return []Value{Bool(ec.verdict)}
 	}
 }
 
