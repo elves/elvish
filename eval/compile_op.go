@@ -366,7 +366,6 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			if e != nil {
 				throw(e)
 			}
-			ec.predReturn = true
 		}
 	case parse.WhileControl:
 		condOp := cp.chunkOp(n.Condition)
@@ -415,7 +414,6 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 					throw(ex)
 				}
 			}
-			ec.predReturn = true
 		}
 	case parse.BeginControl:
 		return cp.chunk(n.Body)
