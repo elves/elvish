@@ -173,7 +173,7 @@ var goodCases = []struct {
 				"Compounds": []string{"4", "5", "6", "7"}}}}},
 	)},
 	// Map
-	{"a [&k=v] [ &k=v] [&k=v ] [ &k=v ] [&a=b &c=d &e=f]", a(
+	{"a [&k=v] [ &k=v] [&k=v ] [ &k=v ] [\n&a=b &c=d \n &e=f\n\n]", a(
 		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
 			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},

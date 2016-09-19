@@ -954,7 +954,7 @@ func (pn *Primary) outputCapture(ps *parser) {
 
 func (pn *Primary) lbracket(ps *parser) {
 	parseSep(pn, ps, '[')
-	parseSpaces(pn, ps)
+	parseSpacesAndNewlines(pn, ps)
 
 	r := ps.peek()
 	ps.pushCutset()
@@ -976,7 +976,7 @@ func (pn *Primary) lbracket(ps *parser) {
 			ps.pos = amp
 			for ps.peek() == '&' {
 				pn.addToMapPairs(parseMapPair(ps))
-				parseSpaces(pn, ps)
+				parseSpacesAndNewlines(pn, ps)
 			}
 		}
 		ps.popCutset()
