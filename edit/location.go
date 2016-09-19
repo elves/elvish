@@ -1,8 +1,11 @@
 package edit
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
@@ -12,36 +15,57 @@ import (
 
 type location struct {
 	listing
-	store      *store.Store
-	candidates []store.Dir
+	all      []store.Dir
+	filtered []store.Dir
 }
 
 func (loc *location) Len() int {
-	return len(loc.candidates)
+	return len(loc.filtered)
 }
 
 func (loc *location) Show(i, width int) styled {
-	cand := loc.candidates[i]
+	cand := loc.filtered[i]
 	return unstyled(TrimWcWidth(fmt.Sprintf("%4.0f %s", cand.Score, parse.Quote(cand.Path)), width))
 }
 
 func (loc *location) Filter(filter string) int {
-	dirs, err := loc.store.FindDirsLoose(filter)
-	if err != nil {
-		loc.candidates = nil
-		// XXX Should report error
-		// ed.notify("find directories: %v", err)
-		return -1
+	loc.filtered = nil
+	pattern := makeLocationFilterPattern(filter)
+	for _, item := range loc.all {
+		if pattern.MatchString(item.Path) {
+			loc.filtered = append(loc.filtered, item)
+		}
 	}
-	loc.candidates = dirs
-	if len(dirs) == 0 {
+
+	if len(loc.filtered) == 0 {
 		return -1
 	}
 	return 0
 }
 
+var emptyRegexp = regexp.MustCompile("")
+
+func makeLocationFilterPattern(s string) *regexp.Regexp {
+	var b bytes.Buffer
+	b.WriteString(".*")
+	segs := strings.Split(s, "/")
+	for i, seg := range segs {
+		if i > 0 {
+			b.WriteString(".*/.*")
+		}
+		b.WriteString(regexp.QuoteMeta(seg))
+	}
+	b.WriteString(".*")
+	p, err := regexp.Compile(b.String())
+	if err != nil {
+		Logger.Printf("failed to compile regexp %q: %v", b.String(), err)
+		return emptyRegexp
+	}
+	return p
+}
+
 func (loc *location) Accept(i int, ed *Editor) {
-	dir := loc.candidates[i].Path
+	dir := loc.filtered[i].Path
 	err := os.Chdir(dir)
 	if err == nil {
 		store := ed.store
@@ -63,13 +87,26 @@ func (loc *location) ModeTitle(i int) string {
 }
 
 func startLocation(ed *Editor) {
-	if ed.store == nil {
-		ed.Notify("%v", ErrStoreOffline)
+	loc, err := newLocation(ed.store)
+	if err != nil {
+		ed.Notify("%v", err)
 		return
 	}
-	loc := &location{store: ed.store}
-	loc.listing = newListing(modeLocation, loc)
 
 	ed.location = loc
 	ed.mode = ed.location
+}
+
+func newLocation(s *store.Store) (*location, error) {
+	if s == nil {
+		return nil, ErrStoreOffline
+	}
+	all, err := s.ListDirs()
+	if err != nil {
+		return nil, err
+	}
+
+	loc := &location{all: all}
+	loc.listing = newListing(modeLocation, loc)
+	return loc, nil
 }

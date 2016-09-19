@@ -1,9 +1,6 @@
 package store
 
-import (
-	"bytes"
-	"database/sql"
-)
+import "database/sql"
 
 // Dir is an entry in the directory history.
 type Dir struct {
@@ -53,52 +50,6 @@ func (s *Store) ListDirs() ([]Dir, error) {
 		return nil, err
 	}
 	return convertDirs(rows)
-}
-
-// FindDirs finds directories containing a given substring. The results are
-// ordered by scores in descending order.
-func (s *Store) FindDirs(p string) ([]Dir, error) {
-	rows, err := s.db.Query(
-		"select path, score from dir where instr(path, ?) > 0 order by score desc", p)
-	if err != nil {
-		return nil, err
-	}
-	return convertDirs(rows)
-}
-
-// FindDirsLoose finds directories matching a given pattern. The results are
-// ordered by scores in descending order.
-//
-// The pattern is first split on slashes, and have % attached to both sides of
-// the parts. For instance, a/b becomes %a%/%b%, so it matches /1a1/2b2 as well
-// as /home/xiaq/1a1/what/2b2.
-func (s *Store) FindDirsLoose(p string) ([]Dir, error) {
-	rows, err := s.db.Query(
-		`select path, score from dir where path like ? escape "\" order by score desc`,
-		makeLoosePattern(p))
-	if err != nil {
-		return nil, err
-	}
-	return convertDirs(rows)
-}
-
-func makeLoosePattern(pattern string) string {
-	var b bytes.Buffer
-	b.WriteRune('%')
-	for _, p := range pattern {
-		switch p {
-		case '%':
-			b.WriteString("\\%")
-		case '\\':
-			b.WriteString("\\\\")
-		case '/':
-			b.WriteString("%/%")
-		default:
-			b.WriteRune(p)
-		}
-	}
-	b.WriteRune('%')
-	return b.String()
 }
 
 func convertDirs(rows *sql.Rows) ([]Dir, error) {
