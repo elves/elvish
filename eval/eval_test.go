@@ -113,7 +113,7 @@ var evalTests = []struct {
 		strs("fish1.0", "fish1.1", "elvish1.0", "elvish1.1"), nomore},
 
 	// List, map and indexing
-	{"println [a b c] [&key=value] | each put",
+	{"echo [a b c] [&key=value] | each put",
 		strs("[a b c] [&key=value]"), nomore},
 	{"put [a b c][2]", strs("c"), nomore},
 	{"put [;a;b c][2][0]", strs("b"), nomore},
@@ -227,7 +227,7 @@ var evalTests = []struct {
 	{"base 16 42 233", strs("2a", "e9"), nomore},
 
 	// eawk
-	{`println "  ax  by cz  \n11\t22 33" | eawk { put $args[-1] }`,
+	{`echo "  ax  by cz  \n11\t22 33" | eawk { put $args[-1] }`,
 		strs("cz", "33"), nomore},
 	// Some builtins also take input from argument.
 	{`each { put $0 } [x y z]`, strs("x", "y", "z"), nomore},

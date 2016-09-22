@@ -57,7 +57,7 @@ func init() {
 		&BuiltinFn{"false", falseFn},
 
 		&BuiltinFn{"print", WrapFn(print, OptSpec{"sep", String(" ")})},
-		&BuiltinFn{"println", WrapFn(println, OptSpec{"sep", String(" ")})},
+		&BuiltinFn{"echo", WrapFn(echo, OptSpec{"sep", String(" ")})},
 		&BuiltinFn{"pprint", pprint},
 
 		&BuiltinFn{"slurp", WrapFn(slurp)},
@@ -391,7 +391,7 @@ func print(ec *EvalCtx, sepv String, args ...string) {
 	}
 }
 
-func println(ec *EvalCtx, sep String, args ...string) {
+func echo(ec *EvalCtx, sep String, args ...string) {
 	print(ec, sep, args...)
 	ec.ports[1].File.WriteString("\n")
 }
