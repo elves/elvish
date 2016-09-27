@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/elves/elvish/util"
 )
 
 // Completion subsystem.
@@ -255,32 +257,46 @@ func (comp *completion) maxWidth(lo, hi int) int {
 	return width
 }
 
-func (comp *completion) List(width, height int) *buffer {
+func (comp *completion) List(width, maxHeight int) *buffer {
 	b := newBuffer(width)
 	cands := comp.candidates
 	if len(cands) == 0 {
 		b.writes(TrimWcWidth("(no result)", width), "")
 		return b
 	}
-	if height <= 1 || width <= 2 {
+	if maxHeight <= 1 || width <= 2 {
 		b.writes(TrimWcWidth("(terminal too small)", width), "")
 		return b
 	}
 
-	comp.height = min(height, len(cands))
-
-	// Determine the first column to show. We start with the column in which the
-	// selected one is found, moving to the left until either the width is
-	// exhausted, or the old value of firstShown has been hit.
-	first := comp.selected / height * height
-	w := comp.maxWidth(first, first+height)
-	for ; first > comp.firstShown; first -= height {
-		dw := comp.maxWidth(first-height, first) + completionListingColMargin
-		if w+dw > width-2 {
-			break
+	// Determine comp.height and comp.firstShown.
+	// First determine whether all candidates can be fit in the screen,
+	// assuming that they are all of maximum width. If that is the case, we use
+	// the computed height as the height for the listing, and the first
+	// candidate to show is 0. Otherwise, we use min(height, len(cands)) as the
+	// height and find the first candidate to show.
+	perLine := (width + completionListingColMargin) / comp.maxWidth(0, len(cands))
+	heightBound := util.CeilDiv(len(cands), perLine)
+	first := 0
+	height := 0
+	if heightBound < maxHeight {
+		height = heightBound
+	} else {
+		height = min(maxHeight, len(cands))
+		// Determine the first column to show. We start with the column in which the
+		// selected one is found, moving to the left until either the width is
+		// exhausted, or the old value of firstShown has been hit.
+		first = comp.selected / height * height
+		w := comp.maxWidth(first, first+height)
+		for ; first > comp.firstShown; first -= height {
+			dw := comp.maxWidth(first-height, first) + completionListingColMargin
+			if w+dw > width-2 {
+				break
+			}
+			w += dw
 		}
-		w += dw
 	}
+	comp.height = height
 	comp.firstShown = first
 
 	var i, j int
