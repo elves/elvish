@@ -7,16 +7,19 @@ import (
 	"net/url"
 	"sync"
 
+	"github.com/elves/elvish/util"
+
 	_ "github.com/mattn/go-sqlite3" // enable the "sqlite3" SQL driver
 )
+
+var Logger = util.GetLogger("[store] ")
+var initDB = map[string](func(*sql.DB) error){}
 
 // Store is the permanent storage backend for elvish.
 type Store struct {
 	db    *sql.DB
 	Waits sync.WaitGroup
 }
-
-var initDB = map[string](func(*sql.DB) error){}
 
 // DefaultDB returns the default database for storage.
 func DefaultDB(dbname string) (*sql.DB, error) {
@@ -37,12 +40,18 @@ func NewStore(dbname string) (*Store, error) {
 // NewStoreDB creates a new Store with a custom database. The database must be
 // a SQLite database.
 func NewStoreDB(db *sql.DB) (*Store, error) {
+	Logger.Println("initializing store")
+	defer Logger.Println("initialized store")
 	st := &Store{db, sync.WaitGroup{}}
 
-	for name, fn := range initDB {
-		err := fn(db)
-		if err != nil {
-			return nil, fmt.Errorf("failed to %s: %v", name, err)
+	if SchemaUpToDate(db) {
+		Logger.Println("DB schema up to date")
+	} else {
+		for name, fn := range initDB {
+			err := fn(db)
+			if err != nil {
+				return nil, fmt.Errorf("failed to %s: %v", name, err)
+			}
 		}
 	}
 
