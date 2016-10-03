@@ -314,16 +314,21 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		}
 
 		col := newBuffer(margin + colWidth)
-		for j = i; j < i+height && j < len(cands); j++ {
+		for j = i; j < i+height; j++ {
 			if j > i {
 				col.newline()
 			}
-			col.writePadding(margin, "")
-			style := cands[j].display.style
-			if j == comp.selected {
-				style = joinStyle(style, styleForSelected)
+			col.writePadding(margin, styleForCompletion)
+			if j >= len(cands) {
+				// Write padding to make the listing a rectangle.
+				col.writePadding(colWidth, styleForCompletion)
+			} else {
+				style := joinStyle(styleForCompletion, cands[j].display.style)
+				if j == comp.selected {
+					style = joinStyle(style, styleForSelectedCompletion)
+				}
+				col.writes(ForceWcWidth(cands[j].display.text, colWidth), style)
 			}
-			col.writes(ForceWcWidth(cands[j].display.text, colWidth), style)
 		}
 
 		b.extendHorizontal(col, 1)
@@ -331,6 +336,19 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		if remainedWidth <= completionListingColMargin {
 			break
 		}
+	}
+	if remainedWidth > 0 {
+		// Write a margin if possible.
+		m := min(remainedWidth, completionListingColMargin)
+		col := newBuffer(m)
+		for i := 0; i < height; i++ {
+			if i > 0 {
+				col.newline()
+			}
+			col.writePadding(m, styleForCompletion)
+		}
+		b.extendHorizontal(col, 0)
+		remainedWidth -= m
 	}
 	comp.lastShown = j - 1
 	return b

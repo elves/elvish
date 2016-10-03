@@ -13,6 +13,11 @@ var (
 	styleForScrollBarArea    = "35"
 	styleForScrollBarThumb   = "35;7"
 	styleForSideArrow        = "7"
+
+	// Use black text on white for completion listing.
+	styleForCompletion = "30;47"
+	// Use white text on black for selected completion.
+	styleForSelectedCompletion = "7"
 )
 
 var styleForType = map[TokenKind]string{
