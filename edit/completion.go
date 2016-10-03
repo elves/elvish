@@ -30,6 +30,10 @@ func (*completion) Mode() ModeType {
 	return modeCompletion
 }
 
+func (c *completion) needScrollbar() bool {
+	return c.firstShown > 0 || c.lastShown < len(c.candidates)-1
+}
+
 func (c *completion) ModeLine(width int) *buffer {
 	b := newBuffer(width)
 	b.writes(" ", "")
@@ -43,7 +47,7 @@ func (c *completion) ModeLine(width int) *buffer {
 		b.dot = b.cursor()
 	}
 	// Write horizontal scrollbar, using the remaining space
-	if c.firstShown > 0 || c.lastShown < len(c.candidates)-1 {
+	if c.needScrollbar() {
 		scrollbarWidth := width - lineWidth(b.cells[len(b.cells)-1]) - 2
 		if scrollbarWidth >= 3 {
 			b.writes(" ", "")
@@ -294,7 +298,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		// selected one is found, moving to the left until either the width is
 		// exhausted, or the old value of firstShown has been hit.
 		first = comp.selected / height * height
-		w := comp.maxWidth(first, first+height)
+		w := comp.maxWidth(first, first+height) + completionColMarginTotal
 		for ; first > comp.firstShown; first -= height {
 			dw := comp.maxWidth(first-height, first) + completionColMarginTotal
 			if w+dw > width {
@@ -345,6 +349,18 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		}
 	}
 	comp.lastShown = j - 1
+	// When the listing is incomplete, always use up the entire width.
+	if remainedWidth > 0 && comp.needScrollbar() {
+		col := newBuffer(remainedWidth)
+		for i := 0; i < height; i++ {
+			if i > 0 {
+				col.newline()
+			}
+			col.writePadding(remainedWidth, styleForCompletion)
+		}
+		b.extendHorizontal(col, 0)
+		remainedWidth = 0
+	}
 	return b
 }
 
