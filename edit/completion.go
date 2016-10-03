@@ -238,7 +238,11 @@ func commonPrefix(s, t string) string {
 	return s
 }
 
-const completionListingColMargin = 2
+const (
+	completionColMarginLeft  = 1
+	completionColMarginRight = 1
+	completionColMarginTotal = completionColMarginLeft + completionColMarginRight
+)
 
 // maxWidth finds the maximum wcwidth of display texts of candidates [lo, hi).
 // hi may be larger than the number of candidates, in which case it is truncated
@@ -269,13 +273,16 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		return b
 	}
 
+	// Reserve the leftmost row and the rightmost row as margins.
+	width -= 2
+
 	// Determine comp.height and comp.firstShown.
 	// First determine whether all candidates can be fit in the screen,
 	// assuming that they are all of maximum width. If that is the case, we use
 	// the computed height as the height for the listing, and the first
 	// candidate to show is 0. Otherwise, we use min(height, len(cands)) as the
 	// height and find the first candidate to show.
-	perLine := (width + completionListingColMargin) / comp.maxWidth(0, len(cands))
+	perLine := width / (comp.maxWidth(0, len(cands)) + completionColMarginTotal)
 	heightBound := util.CeilDiv(len(cands), perLine)
 	first := 0
 	height := 0
@@ -289,8 +296,8 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		first = comp.selected / height * height
 		w := comp.maxWidth(first, first+height)
 		for ; first > comp.firstShown; first -= height {
-			dw := comp.maxWidth(first-height, first) + completionListingColMargin
-			if w+dw > width-2 {
+			dw := comp.maxWidth(first-height, first) + completionColMarginTotal
+			if w+dw > width {
 				break
 			}
 			w += dw
@@ -300,55 +307,42 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 	comp.firstShown = first
 
 	var i, j int
-	remainedWidth := width - 2
-	margin := 0
+	remainedWidth := width
 	// Show the results in columns, until width is exceeded.
 	for i = first; i < len(cands); i += height {
-		if i > first {
-			margin = completionListingColMargin
-		}
 		// Determine the width of the column (without the margin)
 		colWidth := comp.maxWidth(i, min(i+height, len(cands)))
-		if colWidth > remainedWidth-margin {
-			colWidth = remainedWidth - margin
+		totalColWidth := colWidth + completionColMarginTotal
+		if totalColWidth > remainedWidth {
+			totalColWidth = remainedWidth
+			colWidth = totalColWidth - completionColMarginTotal
 		}
 
-		col := newBuffer(margin + colWidth)
+		col := newBuffer(totalColWidth)
 		for j = i; j < i+height; j++ {
 			if j > i {
 				col.newline()
 			}
-			col.writePadding(margin, styleForCompletion)
 			if j >= len(cands) {
 				// Write padding to make the listing a rectangle.
-				col.writePadding(colWidth, styleForCompletion)
+				col.writePadding(totalColWidth, styleForCompletion)
 			} else {
+				col.writePadding(completionColMarginLeft, styleForCompletion)
 				style := joinStyle(styleForCompletion, cands[j].display.style)
 				if j == comp.selected {
 					style = joinStyle(style, styleForSelectedCompletion)
 				}
 				col.writes(ForceWcWidth(cands[j].display.text, colWidth), style)
+				col.writePadding(completionColMarginRight, styleForCompletion)
 			}
 		}
 
+		// Set w=1 for the leftmost margin.
 		b.extendHorizontal(col, 1)
-		remainedWidth -= colWidth + margin
-		if remainedWidth <= completionListingColMargin {
+		remainedWidth -= totalColWidth
+		if remainedWidth <= completionColMarginTotal {
 			break
 		}
-	}
-	if remainedWidth > 0 {
-		// Write a margin if possible.
-		m := min(remainedWidth, completionListingColMargin)
-		col := newBuffer(m)
-		for i := 0; i < height; i++ {
-			if i > 0 {
-				col.newline()
-			}
-			col.writePadding(m, styleForCompletion)
-		}
-		b.extendHorizontal(col, 0)
-		remainedWidth -= m
 	}
 	comp.lastShown = j - 1
 	return b
