@@ -55,12 +55,14 @@ func (s *Store) NextCmdSeq() (int, error) {
 
 // AddCmd adds a new command to the command history.
 func (s *Store) AddCmd(cmd string) error {
-	_, err := s.db.Exec(`update cmd set lastAmongDup = 0 where content = ?`, cmd)
-	if err != nil {
+	return transaction(s.db, func(tx *sql.Tx) error {
+		_, err := tx.Exec(`update cmd set lastAmongDup = 0 where content = ?`, cmd)
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(`insert into cmd (content, lastAmongDup) values(?, 1)`, cmd)
 		return err
-	}
-	_, err = s.db.Exec(`insert into cmd (content, lastAmongDup) values(?, 1)`, cmd)
-	return err
+	})
 }
 
 // Cmd queries the command history item with the specified sequence number.

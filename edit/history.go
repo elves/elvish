@@ -72,10 +72,14 @@ func (ed *Editor) appendHistory(line string) {
 		go func() {
 			ed.store.Waits.Add(1)
 			// TODO(xiaq): Report possible error
-			ed.store.AddCmd(line)
+			err := ed.store.AddCmd(line)
 			ed.store.Waits.Done()
 			ed.historyMutex.Unlock()
-			Logger.Println("added cmd to store:", line)
+			if err != nil {
+				Logger.Println("failed to add cmd to store:", err)
+			} else {
+				Logger.Println("added cmd to store:", line)
+			}
 		}()
 	}
 }
