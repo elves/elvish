@@ -91,11 +91,13 @@ func navigationDefault(ed *Editor) {
 	if n.filtering && likeChar(k) {
 		n.filter += k.String()
 		n.refreshCurrent()
+		n.refreshDirPreview()
 	} else if n.filtering && k == (Key{Backspace, 0}) {
 		_, size := utf8.DecodeLastRuneInString(n.filter)
 		if size > 0 {
 			n.filter = n.filter[:len(n.filter)-size]
 			n.refreshCurrent()
+			n.refreshDirPreview()
 		}
 	} else if f, ok := keyBindings[modeInsert][k]; ok {
 		ed.CallFn(f)
