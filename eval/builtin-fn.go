@@ -127,6 +127,7 @@ func init() {
 		&BuiltinFn{"take", WrapFn(take)},
 
 		&BuiltinFn{"count", count},
+		&BuiltinFn{"wcswidth", WrapFn(wcswidth)},
 		&BuiltinFn{"rest", WrapFn(rest)},
 
 		&BuiltinFn{"fg", WrapFn(fg)},
@@ -915,6 +916,11 @@ func count(ec *EvalCtx, args []Value, opts map[string]Value) {
 		throw(errors.New("want 0 or 1 argument"))
 	}
 	ec.ports[1].Chan <- String(strconv.Itoa(n))
+}
+
+func wcswidth(ec *EvalCtx, s String) {
+	out := ec.ports[1].Chan
+	out <- String(strconv.Itoa(util.Wcswidth(string(s))))
 }
 
 func rest(ec *EvalCtx, li List) {
