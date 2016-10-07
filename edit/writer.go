@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/sys"
+	"github.com/elves/elvish/util"
 )
 
 var logWriterDetail = false
@@ -120,7 +121,7 @@ func (b *buffer) write(r rune, style string) {
 		// BUG(xiaq): buffer.write drops unprintable runes silently
 		return
 	}
-	wd := WcWidth(r)
+	wd := util.Wcwidth(r)
 	c := cell{r, byte(wd), style}
 
 	if b.col+wd > b.width {
@@ -386,7 +387,7 @@ func trimToWindow(s []string, selected, max int) ([]string, int) {
 
 func makeModeLine(text string, width int) *buffer {
 	b := newBuffer(width)
-	b.writes(TrimWcWidth(text, width), styleForMode)
+	b.writes(util.TrimWcwidth(text, width), styleForMode)
 	b.dot = b.cursor()
 	return b
 }
@@ -460,7 +461,7 @@ tokens:
 	// Write rprompt
 	padding := b.width - b.col
 	for _, s := range es.rprompt {
-		padding -= WcWidths(s.text)
+		padding -= util.Wcswidth(s.text)
 	}
 	if padding >= 1 {
 		b.newlineWhenFull = false

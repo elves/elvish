@@ -39,7 +39,7 @@ func (c *completion) ModeLine(width int) *buffer {
 	b.writes(" ", "")
 	// Write title
 	title := fmt.Sprintf("COMPLETING %s", c.completer)
-	b.writes(TrimWcWidth(title, width), styleForMode)
+	b.writes(util.TrimWcwidth(title, width), styleForMode)
 	// Write filter
 	if c.filtering {
 		b.writes(" ", "")
@@ -257,7 +257,7 @@ func (comp *completion) maxWidth(lo, hi int) int {
 	}
 	width := 0
 	for i := lo; i < hi; i++ {
-		w := WcWidths(comp.candidates[i].display.text)
+		w := util.Wcswidth(comp.candidates[i].display.text)
 		if width < w {
 			width = w
 		}
@@ -269,11 +269,11 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 	b := newBuffer(width)
 	cands := comp.candidates
 	if len(cands) == 0 {
-		b.writes(TrimWcWidth("(no result)", width), "")
+		b.writes(util.TrimWcwidth("(no result)", width), "")
 		return b
 	}
 	if maxHeight <= 1 || width <= 2 {
-		b.writes(TrimWcWidth("(terminal too small)", width), "")
+		b.writes(util.TrimWcwidth("(terminal too small)", width), "")
 		return b
 	}
 
@@ -336,7 +336,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 				if j == comp.selected {
 					style = joinStyle(style, styleForSelectedCompletion)
 				}
-				col.writes(ForceWcWidth(cands[j].display.text, colWidth), style)
+				col.writes(util.ForceWcwidth(cands[j].display.text, colWidth), style)
 				col.writePadding(completionColMarginRight, styleForCompletion)
 			}
 		}

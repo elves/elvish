@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/elves/elvish/util"
 )
 
 // Bang mode.
@@ -36,7 +38,7 @@ func (b *bang) Show(i, width int) styled {
 	} else {
 		head = fmt.Sprintf("%3d ", entry.i)
 	}
-	return unstyled(ForceWcWidth(head+entry.s, width))
+	return unstyled(util.ForceWcwidth(head+entry.s, width))
 }
 
 func (b *bang) Filter(filter string) int {

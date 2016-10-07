@@ -1,4 +1,4 @@
-package edit
+package util
 
 import (
 	"sort"
@@ -63,8 +63,8 @@ func isCombining(r rune) bool {
 	return i < n && r >= combining[i][0]
 }
 
-// WcWidth returns the width of a rune when displayed on the terminal.
-func WcWidth(r rune) int {
+// Wcwidth returns the width of a rune when displayed on the terminal.
+func Wcwidth(r rune) int {
 	switch {
 	case r == 0:
 		return 0
@@ -92,20 +92,20 @@ func WcWidth(r rune) int {
 	return 1
 }
 
-// WcWidths returns the width of a string when displayed on the terminal,
+// Wcswidth returns the width of a string when displayed on the terminal,
 // assuming no soft line breaks.
-func WcWidths(s string) (w int) {
+func Wcswidth(s string) (w int) {
 	for _, r := range s {
-		w += WcWidth(r)
+		w += Wcwidth(r)
 	}
 	return
 }
 
-// TrimWcWidth trims the string s so that it has a width of at most wmax.
-func TrimWcWidth(s string, wmax int) string {
+// TrimWcwidth trims the string s so that it has a width of at most wmax.
+func TrimWcwidth(s string, wmax int) string {
 	w := 0
 	for i, r := range s {
-		w += WcWidth(r)
+		w += Wcwidth(r)
 		if w > wmax {
 			return s[:i]
 		}
@@ -113,12 +113,12 @@ func TrimWcWidth(s string, wmax int) string {
 	return s
 }
 
-// ForceWcWidth forces the string s to the given display width by trimming and
+// ForceWcwidth forces the string s to the given display width by trimming and
 // padding.
-func ForceWcWidth(s string, width int) string {
+func ForceWcwidth(s string, width int) string {
 	w := 0
 	for i, r := range s {
-		w0 := WcWidth(r)
+		w0 := Wcwidth(r)
 		w += w0
 		if w > width {
 			w -= w0
@@ -129,10 +129,10 @@ func ForceWcWidth(s string, width int) string {
 	return s + strings.Repeat(" ", width-w)
 }
 
-func TrimEachLineWcWidth(s string, width int) string {
+func TrimEachLineWcwidth(s string, width int) string {
 	lines := strings.Split(s, "\n")
 	for i := range lines {
-		lines[i] = TrimWcWidth(lines[i], width)
+		lines[i] = TrimWcwidth(lines[i], width)
 	}
 	return strings.Join(lines, "\n")
 }

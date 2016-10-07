@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 // Navigation subsystem.
@@ -33,7 +34,7 @@ func (n *navigation) ModeLine(width int) *buffer {
 		s += "(show hidden) "
 	}
 	b := newBuffer(width)
-	b.writes(TrimWcWidth(s, width), styleForMode)
+	b.writes(util.TrimWcwidth(s, width), styleForMode)
 	b.writes(" ", "")
 	b.writes(n.filter, styleForFilter)
 	b.dot = b.cursor()
@@ -363,9 +364,9 @@ func (nc *navColumn) Len() int {
 func (nc *navColumn) Show(i, w int) styled {
 	s := nc.candidates[i]
 	if w >= navigationListingMinWidthForPadding {
-		return styled{" " + ForceWcWidth(s.text, w-2), s.style}
+		return styled{" " + util.ForceWcwidth(s.text, w-2), s.style}
 	}
-	return styled{ForceWcWidth(s.text, w), s.style}
+	return styled{util.ForceWcwidth(s.text, w), s.style}
 }
 
 func (nc *navColumn) Filter(filter string) int {
@@ -384,7 +385,7 @@ func (nc *navColumn) FullWidth(h int) int {
 	}
 	maxw := 0
 	for _, s := range nc.candidates {
-		maxw = max(maxw, WcWidths(s.text))
+		maxw = max(maxw, util.Wcswidth(s.text))
 	}
 	if maxw >= navigationListingMinWidthForPadding {
 		maxw += 2

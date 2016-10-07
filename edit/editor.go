@@ -252,7 +252,7 @@ func (ed *Editor) startReadLine() error {
 	// line. We now rewind to the first column and erase anything there. The
 	// final effect is that a lackEOL gets written if and only if the cursor
 	// was not in the first column.
-	fmt.Fprintf(ed.file, "\033[?7h%s%*s\r \r", lackEOL, width-WcWidth(lackEOLRune), "")
+	fmt.Fprintf(ed.file, "\033[?7h%s%*s\r \r", lackEOL, width-util.Wcwidth(lackEOLRune), "")
 
 	// Turn off autowrap. The edito has its own wrapping mechanism. Doing
 	// wrapping manually means that when the actual width of some characters

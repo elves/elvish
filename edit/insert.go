@@ -178,8 +178,8 @@ func moveDotUp(ed *Editor) {
 	}
 	prevEOL := sol - 1
 	prevSOL := util.FindLastSOL(ed.line[:prevEOL])
-	width := WcWidths(ed.line[sol:ed.dot])
-	ed.dot = prevSOL + len(TrimWcWidth(ed.line[prevSOL:prevEOL], width))
+	width := util.Wcswidth(ed.line[sol:ed.dot])
+	ed.dot = prevSOL + len(util.TrimWcwidth(ed.line[prevSOL:prevEOL], width))
 }
 
 func moveDotDown(ed *Editor) {
@@ -191,8 +191,8 @@ func moveDotDown(ed *Editor) {
 	nextSOL := eol + 1
 	nextEOL := util.FindFirstEOL(ed.line[nextSOL:]) + nextSOL
 	sol := util.FindLastSOL(ed.line[:ed.dot])
-	width := WcWidths(ed.line[sol:ed.dot])
-	ed.dot = nextSOL + len(TrimWcWidth(ed.line[nextSOL:nextEOL], width))
+	width := util.Wcswidth(ed.line[sol:ed.dot])
+	ed.dot = nextSOL + len(util.TrimWcwidth(ed.line[nextSOL:nextEOL], width))
 }
 
 func insertLastWord(ed *Editor) {

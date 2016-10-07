@@ -4,6 +4,8 @@ import (
 	"container/list"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/elves/elvish/util"
 )
 
 // listing implements a listing mode that supports the notion of selecting an
@@ -42,7 +44,7 @@ func (l *listing) ModeLine(width int) *buffer {
 	title := l.provider.ModeTitle(l.selected)
 	// TODO keep it one line.
 	b := newBuffer(width)
-	b.writes(TrimWcWidth(title, width), styleForMode)
+	b.writes(util.TrimWcwidth(title, width), styleForMode)
 	b.writes(" ", "")
 	b.writes(l.filter, styleForFilter)
 	b.dot = b.cursor()
@@ -59,7 +61,7 @@ func (l *listing) List(width, maxHeight int) *buffer {
 		} else {
 			ph = "(no result)"
 		}
-		b.writes(TrimWcWidth(ph, width), "")
+		b.writes(util.TrimWcwidth(ph, width), "")
 		return b
 	}
 

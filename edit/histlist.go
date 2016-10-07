@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/util"
 )
 
 // Command history listing mode.
@@ -24,7 +25,7 @@ func (hl *histlist) Len() int {
 
 func (hl *histlist) Show(i, width int) styled {
 	entry := hl.filtered[i]
-	return unstyled(TrimEachLineWcWidth(entry, width))
+	return unstyled(util.TrimEachLineWcwidth(entry, width))
 }
 
 func (hl *histlist) Filter(filter string) int {
