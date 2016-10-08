@@ -20,6 +20,8 @@ Elvish looks like this:
 
 64-bit Mac OS X: `curl -s https://dl.elvish.io/elvish-osx.tar.gz | sudo tar vxz -C /usr/bin`
 
+Try `cn.dl.elvish.io` if you are in China and the download is too slow. (In the future `dl.elvish.io` will resolve to a Chinese IP for users from China, but that hasn't happended yet.)
+
 See also [Building Elvish](#building-elvish).
 
 ## Getting Started
