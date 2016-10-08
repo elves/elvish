@@ -296,10 +296,6 @@ func (ec *EvalCtx) errorpf(begin, end int, format string, args ...interface{}) {
 	throw(&util.PosError{begin, end, fmt.Errorf(format, args...)})
 }
 
-func (ec *EvalCtx) errorf(format string, args ...interface{}) {
-	ec.errorpf(ec.begin, ec.end, format, args...)
-}
-
 // SourceText evaluates a chunk of elvish source.
 func (ev *Evaler) SourceText(src string) error {
 	n, err := parse.Parse(src)

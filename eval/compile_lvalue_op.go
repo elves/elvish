@@ -112,7 +112,7 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 					variable = NewPtrVariable(nil)
 					mod[barename] = variable
 				} else {
-					ec.errorf("cannot set $%s", varname)
+					throwf("cannot set $%s", varname)
 				}
 			}
 			return []Variable{variable}
@@ -125,7 +125,7 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 	return splice, func(ec *EvalCtx) []Variable {
 		variable := ec.ResolveVar(ns, barename)
 		if variable == nil {
-			ec.errorf("variable $%s does not exisit, compiler bug", varname)
+			throwf("variable $%s does not exisit, compiler bug", varname)
 		}
 
 		// Indexing. Do Index up to the last but one index.

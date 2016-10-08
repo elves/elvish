@@ -231,14 +231,14 @@ func variable(qname string) ValuesOpFunc {
 	return func(ec *EvalCtx) []Value {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
-			ec.errorf("variable $%s not found", qname)
+			throwf("variable $%s not found", qname)
 		}
 		value := variable.Get()
 		if splice {
 			iterator, ok := value.(Iterator)
 			if !ok {
 				// Use qname[1:] to skip the leading "@"
-				ec.errorf("variable $%s (kind %s) cannot be spliced", qname[1:], value.Kind())
+				throwf("variable $%s (kind %s) cannot be spliced", qname[1:], value.Kind())
 			}
 			return collectFromIterator(iterator)
 		}

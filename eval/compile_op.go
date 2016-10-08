@@ -44,7 +44,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			// Set up a new stub.
 			st, err := stub.NewStub(os.Stderr)
 			if err != nil {
-				ec.errorf("failed to spawn stub: %v", err)
+				throwf("failed to spawn stub: %v", err)
 			}
 			st.SetTitle(n.SourceText())
 			ec.Stub = st
@@ -72,7 +72,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 				// os.Pipe sets O_CLOEXEC, which is what we want.
 				reader, writer, e := os.Pipe()
 				if e != nil {
-					ec.errorf("failed to create pipe: %s", e)
+					throwf("failed to create pipe: %s", e)
 				}
 				ch := make(chan Value, pipelineChanBufferSize)
 				newEc.ports[1] = &Port{
@@ -534,7 +534,7 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 			case String:
 				f, err := os.OpenFile(string(src), flag, defaultFileRedirPerm)
 				if err != nil {
-					ec.errorf("failed to open file %s: %s", src.Repr(NoPretty), err)
+					throwf("failed to open file %s: %s", src.Repr(NoPretty), err)
 				}
 				ec.ports[dst] = &Port{
 					File: f, Chan: make(chan Value),
