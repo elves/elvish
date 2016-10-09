@@ -18,7 +18,7 @@ func (s *Stylist) applyToTokens(style string, begin, end int) {
 		// Skip tokens that precede the range
 		s.tokens = s.tokens[1:]
 	}
-	for len(s.tokens) > 0 && s.tokens[0].Node.End() <= end {
+	for len(s.tokens) > 0 && s.tokens[0].Node != nil && s.tokens[0].Node.End() <= end {
 		s.tokens[0].addStyle(style)
 		s.tokens = s.tokens[1:]
 	}
