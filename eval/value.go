@@ -98,7 +98,7 @@ type FnValue interface {
 }
 
 func mustFn(v Value) Fn {
-	caller, ok := getFn(v, true)
+	caller, ok := getFn(v)
 	if !ok {
 		throw(fmt.Errorf("a %s is not callable", v.Kind()))
 	}
@@ -107,14 +107,12 @@ func mustFn(v Value) Fn {
 
 // getFn adapts a Value to a Fn if there is an adapter. It adapts an Indexer if
 // adaptIndexer is true.
-func getFn(v Value, adaptIndexer bool) (Fn, bool) {
+func getFn(v Value) (Fn, bool) {
 	if caller, ok := v.(Fn); ok {
 		return caller, true
 	}
-	if adaptIndexer {
-		if indexer, ok := getIndexer(v, nil); ok {
-			return IndexerAsFn{indexer}, true
-		}
+	if indexer, ok := getIndexer(v, nil); ok {
+		return IndexerAsFn{indexer}, true
 	}
 	return nil, false
 }
@@ -169,11 +167,6 @@ func getIndexer(v Value, ec *EvalCtx) (Indexer, bool) {
 	if indexOneer, ok := v.(IndexOneer); ok {
 		return IndexOneerIndexer{indexOneer}, true
 	}
-	if ec != nil {
-		if caller, ok := v.(Fn); ok {
-			return FnAsIndexer{caller, ec}, true
-		}
-	}
 	return nil, false
 }
 
@@ -189,19 +182,6 @@ func (ioi IndexOneerIndexer) Index(vs []Value) []Value {
 		results[i] = ioi.IndexOneer.IndexOne(v)
 	}
 	return results
-}
-
-// FnAsIndexer adapts a Fn to an Indexer.
-type FnAsIndexer struct {
-	Fn
-	ec *EvalCtx
-}
-
-func (ci FnAsIndexer) Index(idx []Value) []Value {
-	// XXX We don't have location information.
-	return captureOutput(ci.ec, Op{func(ec *EvalCtx) {
-		ci.Fn.Call(ec, idx, NoOpts)
-	}, -1, -1})
 }
 
 // Error definitions.
