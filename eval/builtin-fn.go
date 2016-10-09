@@ -103,12 +103,18 @@ func init() {
 		&BuiltinFn{"*", WrapFn(times)},
 		&BuiltinFn{"/", slash},
 		&BuiltinFn{"^", WrapFn(pow)},
-		&BuiltinFn{"<", WrapFn(ltNum)},
-		&BuiltinFn{"<=", WrapFn(leNum)},
-		&BuiltinFn{"==", WrapFn(eqNum)},
-		&BuiltinFn{"!=", WrapFn(neNum)},
-		&BuiltinFn{">", WrapFn(gtNum)},
-		&BuiltinFn{">=", WrapFn(geNum)},
+		&BuiltinFn{"<",
+			wrapNumCompare(func(a, b float64) bool { return a < b })},
+		&BuiltinFn{"<=",
+			wrapNumCompare(func(a, b float64) bool { return a <= b })},
+		&BuiltinFn{"==",
+			wrapNumCompare(func(a, b float64) bool { return a == b })},
+		&BuiltinFn{"!=",
+			wrapNumCompare(func(a, b float64) bool { return a != b })},
+		&BuiltinFn{">",
+			wrapNumCompare(func(a, b float64) bool { return a > b })},
+		&BuiltinFn{">=",
+			wrapNumCompare(func(a, b float64) bool { return a >= b })},
 		&BuiltinFn{"%", WrapFn(mod)},
 		&BuiltinFn{"rand", WrapFn(randFn)},
 		&BuiltinFn{"randint", WrapFn(randint)},
@@ -318,6 +324,27 @@ func wrapStringToStringError(f func(string) (string, error)) func(*EvalCtx, []Va
 		result, err := f(s)
 		maybeThrow(err)
 		ec.ports[1].Chan <- String(result)
+	}
+}
+
+func wrapNumCompare(cmp func(a, b float64) bool) func(*EvalCtx, []Value, map[string]Value) {
+	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
+		TakeNoOpt(opts)
+		if len(args) < 2 {
+			throw(ErrArgs)
+		}
+		floats := make([]float64, len(args))
+		for i, a := range args {
+			f, err := toFloat(a)
+			maybeThrow(err)
+			floats[i] = f
+		}
+		for i := 0; i < len(floats)-1; i++ {
+			if !cmp(floats[i], floats[i+1]) {
+				ec.falsify()
+				return
+			}
+		}
 	}
 }
 
@@ -753,56 +780,6 @@ func divide(ec *EvalCtx, prod float64, nums ...float64) {
 func pow(ec *EvalCtx, b, p float64) {
 	out := ec.ports[1].Chan
 	out <- String(fmt.Sprintf("%g", math.Pow(b, p)))
-}
-
-func ltNum(ec *EvalCtx, nums ...float64) {
-	for i := 0; i < len(nums)-1; i++ {
-		if !(nums[i] < nums[i+1]) {
-			ec.falsify()
-		}
-	}
-}
-
-func leNum(ec *EvalCtx, nums ...float64) {
-	for i := 0; i < len(nums)-1; i++ {
-		if !(nums[i] <= nums[i+1]) {
-			ec.falsify()
-		}
-	}
-}
-
-func eqNum(ec *EvalCtx, nums ...float64) {
-	for i := 0; i < len(nums)-1; i++ {
-		if nums[i] != nums[i+1] {
-			ec.falsify()
-			return
-		}
-	}
-}
-
-func neNum(ec *EvalCtx, nums ...float64) {
-	for i := 0; i < len(nums)-1; i++ {
-		if nums[i] == nums[i+1] {
-			ec.falsify()
-			return
-		}
-	}
-}
-
-func gtNum(ec *EvalCtx, nums ...float64) {
-	for i := 0; i < len(nums)-1; i++ {
-		if !(nums[i] > nums[i+1]) {
-			ec.falsify()
-		}
-	}
-}
-
-func geNum(ec *EvalCtx, nums ...float64) {
-	for i := 0; i < len(nums)-1; i++ {
-		if !(nums[i] >= nums[i+1]) {
-			ec.falsify()
-		}
-	}
 }
 
 func mod(ec *EvalCtx, a, b int) {
