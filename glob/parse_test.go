@@ -33,7 +33,7 @@ func TestParse(t *testing.T) {
 	for _, tc := range parseCases {
 		p := Parse(tc.src)
 		if !reflect.DeepEqual(p.Segments, tc.want) {
-			t.Errorf("Parse(%q) => %v, want %v", p, tc.want)
+			t.Errorf("Parse(%q) => %v, want %v", tc.src, p, tc.want)
 		}
 	}
 }
