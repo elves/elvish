@@ -69,6 +69,18 @@ func init() {
 		&BuiltinFn{"splits", WrapFn(splits, OptSpec{"sep", String("")})},
 		&BuiltinFn{"has-prefix", WrapFn(hasPrefix)},
 		&BuiltinFn{"has-suffix", WrapFn(hasSuffix)},
+		&BuiltinFn{"<s",
+			wrapStrCompare(func(a, b string) bool { return a < b })},
+		&BuiltinFn{"<=s",
+			wrapStrCompare(func(a, b string) bool { return a <= b })},
+		&BuiltinFn{"==s",
+			wrapStrCompare(func(a, b string) bool { return a == b })},
+		&BuiltinFn{"!=s",
+			wrapStrCompare(func(a, b string) bool { return a != b })},
+		&BuiltinFn{">s",
+			wrapStrCompare(func(a, b string) bool { return a > b })},
+		&BuiltinFn{">=s",
+			wrapStrCompare(func(a, b string) bool { return a >= b })},
 
 		&BuiltinFn{"to-json", WrapFn(toJSON)},
 		&BuiltinFn{"from-json", WrapFn(fromJSON)},
@@ -324,6 +336,26 @@ func wrapStringToStringError(f func(string) (string, error)) func(*EvalCtx, []Va
 		result, err := f(s)
 		maybeThrow(err)
 		ec.ports[1].Chan <- String(result)
+	}
+}
+
+func wrapStrCompare(cmp func(a, b string) bool) func(*EvalCtx, []Value, map[string]Value) {
+	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
+		TakeNoOpt(opts)
+		if len(args) < 2 {
+			throw(ErrArgs)
+		}
+		for _, a := range args {
+			if _, ok := a.(String); !ok {
+				throw(ErrArgs)
+			}
+		}
+		for i := 0; i < len(args)-1; i++ {
+			if !cmp(string(args[i].(String)), string(args[i+1].(String))) {
+				ec.falsify()
+				return
+			}
+		}
 	}
 }
 
