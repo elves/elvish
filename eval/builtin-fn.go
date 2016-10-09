@@ -411,6 +411,11 @@ func slurp(ec *EvalCtx) {
 	out := ec.ports[1].Chan
 
 	all, err := ioutil.ReadAll(in)
+	if err != nil {
+		b, err := sys.GetNonblock(0)
+		fmt.Println("stdin is nonblock:", b, err)
+		fmt.Println("stdin is stdin:", in == os.Stdin)
+	}
 	maybeThrow(err)
 	out <- String(string(all))
 }
@@ -842,7 +847,7 @@ func boolFn(ec *EvalCtx, v Value) {
 
 func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
-	if len(args) == 0 {
+	if len(args) <= 1 {
 		throw(ErrArgs)
 	}
 	for i := 0; i+1 < len(args); i++ {
