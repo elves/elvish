@@ -363,8 +363,11 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 		}
 		return sharedVariable{ec.Store, name}
 	default:
-		use(ec, ns, nil)
-		return ec.Modules[ns][name]
+		if ns, ok := ec.Modules[ns]; ok {
+			return ns[name]
+		} else {
+			return nil
+		}
 	}
 }
 
