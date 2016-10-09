@@ -28,5 +28,4 @@ func transaction(db *sql.DB, f func(*sql.Tx) error) error {
 	} else {
 		return tx.Commit()
 	}
-	return err
 }
