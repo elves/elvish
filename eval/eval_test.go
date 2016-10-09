@@ -203,9 +203,9 @@ var evalTests = []struct {
 	{"/ 233333 353", strs("661"), nomore},
 	{"/ 1 0", strs("+Inf"), nomore},
 	// Equality
-	{"put ?(== a a) ?(== [] []) ?(== [&] [&])",
+	{"put ?(== 1.0 1) ?(deepeq [] []) ?(deepeq [&] [&])",
 		[]Value{
-			Bool(true), Bool(false), Bool(false),
+			Bool(true), Bool(true), Bool(true),
 		}, nomore},
 	{"kind-of bare 'str' [] [&] []{ }",
 		strs("string", "string", "list", "map", "fn"), nomore},

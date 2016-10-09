@@ -103,10 +103,12 @@ func init() {
 		&BuiltinFn{"*", WrapFn(times)},
 		&BuiltinFn{"/", slash},
 		&BuiltinFn{"^", WrapFn(pow)},
-		&BuiltinFn{"<", WrapFn(lt)},
-		&BuiltinFn{"<=", WrapFn(le)},
-		&BuiltinFn{">", WrapFn(gt)},
-		&BuiltinFn{">=", WrapFn(ge)},
+		&BuiltinFn{"<", WrapFn(ltNum)},
+		&BuiltinFn{"<=", WrapFn(leNum)},
+		&BuiltinFn{"==", WrapFn(eqNum)},
+		&BuiltinFn{"!=", WrapFn(neNum)},
+		&BuiltinFn{">", WrapFn(gtNum)},
+		&BuiltinFn{">=", WrapFn(geNum)},
 		&BuiltinFn{"%", WrapFn(mod)},
 		&BuiltinFn{"rand", WrapFn(randFn)},
 		&BuiltinFn{"randint", WrapFn(randint)},
@@ -115,8 +117,6 @@ func init() {
 		&BuiltinFn{"base", WrapFn(base)},
 
 		&BuiltinFn{"bool", WrapFn(boolFn)},
-		&BuiltinFn{"==", eq},
-		&BuiltinFn{"!=", WrapFn(noteq)},
 		&BuiltinFn{"deepeq", deepeq},
 
 		&BuiltinFn{"resolve", WrapFn(resolveFn)},
@@ -755,7 +755,7 @@ func pow(ec *EvalCtx, b, p float64) {
 	out <- String(fmt.Sprintf("%g", math.Pow(b, p)))
 }
 
-func lt(ec *EvalCtx, nums ...float64) {
+func ltNum(ec *EvalCtx, nums ...float64) {
 	for i := 0; i < len(nums)-1; i++ {
 		if !(nums[i] < nums[i+1]) {
 			ec.falsify()
@@ -763,7 +763,7 @@ func lt(ec *EvalCtx, nums ...float64) {
 	}
 }
 
-func le(ec *EvalCtx, nums ...float64) {
+func leNum(ec *EvalCtx, nums ...float64) {
 	for i := 0; i < len(nums)-1; i++ {
 		if !(nums[i] <= nums[i+1]) {
 			ec.falsify()
@@ -771,7 +771,25 @@ func le(ec *EvalCtx, nums ...float64) {
 	}
 }
 
-func gt(ec *EvalCtx, nums ...float64) {
+func eqNum(ec *EvalCtx, nums ...float64) {
+	for i := 0; i < len(nums)-1; i++ {
+		if nums[i] != nums[i+1] {
+			ec.falsify()
+			return
+		}
+	}
+}
+
+func neNum(ec *EvalCtx, nums ...float64) {
+	for i := 0; i < len(nums)-1; i++ {
+		if nums[i] == nums[i+1] {
+			ec.falsify()
+			return
+		}
+	}
+}
+
+func gtNum(ec *EvalCtx, nums ...float64) {
 	for i := 0; i < len(nums)-1; i++ {
 		if !(nums[i] > nums[i+1]) {
 			ec.falsify()
@@ -779,7 +797,7 @@ func gt(ec *EvalCtx, nums ...float64) {
 	}
 }
 
-func ge(ec *EvalCtx, nums ...float64) {
+func geNum(ec *EvalCtx, nums ...float64) {
 	for i := 0; i < len(nums)-1; i++ {
 		if !(nums[i] >= nums[i+1]) {
 			ec.falsify()
@@ -830,25 +848,6 @@ func base(ec *EvalCtx, b int, nums ...int) {
 func boolFn(ec *EvalCtx, v Value) {
 	out := ec.ports[1].Chan
 	out <- Bool(ToBool(v))
-}
-
-func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoOpt(opts)
-	if len(args) <= 1 {
-		throw(ErrArgs)
-	}
-	for i := 0; i+1 < len(args); i++ {
-		if args[i] != args[i+1] {
-			ec.falsify()
-			return
-		}
-	}
-}
-
-func noteq(ec *EvalCtx, lhs, rhs Value) {
-	if lhs == rhs {
-		ec.falsify()
-	}
 }
 
 func deepeq(ec *EvalCtx, args []Value, opts map[string]Value) {
