@@ -394,17 +394,16 @@ var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
 
 // IterateInput calls the passed function for each input element.
 func (ec *EvalCtx) IterateInputs(f func(Value)) {
-	var m sync.Mutex
+	var w sync.WaitGroup
+	inputs := make(chan Value)
 
-	done := make(chan struct{})
+	w.Add(2)
 	go func() {
 		filein := bufio.NewReader(ec.ports[0].File)
 		for {
 			line, err := filein.ReadString('\n')
 			if line != "" {
-				m.Lock()
-				f(String(strings.TrimSuffix(line, "\n")))
-				m.Unlock()
+				inputs <- String(strings.TrimSuffix(line, "\n"))
 			}
 			if err != nil {
 				if err != io.EOF {
@@ -413,14 +412,22 @@ func (ec *EvalCtx) IterateInputs(f func(Value)) {
 				break
 			}
 		}
-		close(done)
+		w.Done()
 	}()
-	for v := range ec.ports[0].Chan {
-		m.Lock()
+	go func() {
+		for v := range ec.ports[0].Chan {
+			inputs <- v
+		}
+		w.Done()
+	}()
+	go func() {
+		w.Wait()
+		close(inputs)
+	}()
+
+	for v := range inputs {
 		f(v)
-		m.Unlock()
 	}
-	<-done
 }
 
 // OutputChan returns a channel onto which output can be written.
