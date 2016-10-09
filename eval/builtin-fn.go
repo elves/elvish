@@ -52,7 +52,6 @@ func (b *BuiltinFn) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 func init() {
 	// Needed to work around init loop.
 	builtinFns = []*BuiltinFn{
-		&BuiltinFn{":", nop},
 		&BuiltinFn{"true", nop},
 		&BuiltinFn{"false", falseFn},
 
@@ -62,8 +61,6 @@ func init() {
 
 		&BuiltinFn{"slurp", WrapFn(slurp)},
 		&BuiltinFn{"into-lines", WrapFn(intoLines)},
-
-		&BuiltinFn{"rat", WrapFn(ratFn)},
 
 		&BuiltinFn{"put", put},
 		&BuiltinFn{"unpack", WrapFn(unpack)},
@@ -128,7 +125,6 @@ func init() {
 
 		&BuiltinFn{"count", count},
 		&BuiltinFn{"wcswidth", WrapFn(wcswidth)},
-		&BuiltinFn{"rest", WrapFn(rest)},
 
 		&BuiltinFn{"fg", WrapFn(fg)},
 
@@ -426,15 +422,6 @@ func intoLines(ec *EvalCtx, iterate func(func(Value))) {
 	iterate(func(v Value) {
 		fmt.Fprintln(out, ToString(v))
 	})
-}
-
-func ratFn(ec *EvalCtx, arg Value) {
-	out := ec.ports[1].Chan
-	r, err := ToRat(arg)
-	if err != nil {
-		throw(err)
-	}
-	out <- r
 }
 
 // unpack takes Elemser's from the input and unpack them.
@@ -926,12 +913,6 @@ func count(ec *EvalCtx, args []Value, opts map[string]Value) {
 func wcswidth(ec *EvalCtx, s String) {
 	out := ec.ports[1].Chan
 	out <- String(strconv.Itoa(util.Wcswidth(string(s))))
-}
-
-func rest(ec *EvalCtx, li List) {
-	out := ec.ports[1].Chan
-	restli := (*li.inner)[1:]
-	out <- List{&restli}
 }
 
 func fg(ec *EvalCtx, pids ...int) {
