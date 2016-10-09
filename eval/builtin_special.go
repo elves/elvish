@@ -188,23 +188,32 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		}
 	}
 
+	n, err := parse.Parse(source)
+	maybeThrow(err)
+
+	// Make an empty namespace.
+	local := Namespace{}
+
 	// TODO(xiaq): Should handle failures when evaluting the module
 	newEc := &EvalCtx{
 		ec.Evaler,
 		filename, source, "module " + modname,
-		Namespace{}, Namespace{},
+		local, Namespace{},
 		ec.ports, nil, true,
 		0, len(source),
 	}
-
-	n, err := parse.Parse(source)
-	maybeThrow(err)
 
 	op, err := newEc.Compile(n)
 	// TODO the err originates in another source, should add appropriate information.
 	maybeThrow(err)
 
-	op.Exec(newEc)
-
-	ec.Evaler.Modules[modname] = newEc.local
+	// Load the namespace before executing. This avoids mutual and self use's to
+	// result in an infinite recursion.
+	ec.Evaler.Modules[modname] = local
+	err = newEc.PEval(op)
+	if err != nil {
+		// Unload the namespace.
+		delete(ec.Modules, modname)
+		throw(err)
+	}
 }
