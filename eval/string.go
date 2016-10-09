@@ -1,9 +1,18 @@
 package eval
 
-import "github.com/elves/elvish/parse"
+import (
+	"unicode/utf8"
+
+	"github.com/elves/elvish/parse"
+)
 
 // String is just a string.
 type String string
+
+var (
+	_ Value    = String("")
+	_ ListLike = String("")
+)
 
 func (String) Kind() string {
 	return "string"
@@ -19,6 +28,30 @@ func (s String) String() string {
 
 func (s String) Len() int {
 	return len(string(s))
+}
+
+func (s String) IndexOne(idx Value) Value {
+	slice, i, j := ParseAndFixListIndex(ToString(idx), len(s))
+	var r rune
+	if r, _ = utf8.DecodeRuneInString(string(s[i:])); r == utf8.RuneError {
+		throw(ErrBadIndex)
+	}
+	if slice {
+		if r, _ := utf8.DecodeLastRuneInString(string(s[:j])); r == utf8.RuneError {
+			throw(ErrBadIndex)
+		}
+		return String(s[i:j])
+	}
+	return String(r)
+}
+
+func (s String) Iterate(f func(v Value) bool) {
+	for _, r := range s {
+		b := f(String(string(r)))
+		if !b {
+			break
+		}
+	}
 }
 
 // Call resolves a command name to either a Fn variable or external command and
