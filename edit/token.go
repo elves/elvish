@@ -71,6 +71,11 @@ func tokenize(src string, n parse.Node) []Token {
 }
 
 func produceTokens(n parse.Node, tokenCh chan<- Token) {
+	if n.Begin() == n.End() {
+		// Ignore empty node. This happens e.g. with an empty source code, where
+		// the parsed node is an empty Chunk.
+		return
+	}
 	if len(n.Children()) == 0 {
 		tokenType := ParserError
 		moreStyle := ""
