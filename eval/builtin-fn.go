@@ -594,7 +594,7 @@ func each(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 	})
 }
 
-// each takes a single closure and applies it to all input values in parallel.
+// peach takes a single closure and applies it to all input values in parallel.
 func peach(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 	var w sync.WaitGroup
 
