@@ -275,10 +275,11 @@ func (n *navigation) loaddir(dir string) ([]styled, error) {
 		return nil, err
 	}
 	var all []styled
+	lsColor := getLsColor()
 	for _, info := range infos {
 		if n.showHidden || info.Name()[0] != '.' {
 			name := info.Name()
-			all = append(all, styled{name, defaultLsColor.getStyle(path.Join(dir, name))})
+			all = append(all, styled{name, lsColor.getStyle(path.Join(dir, name))})
 		}
 	}
 	sortStyleds(all)

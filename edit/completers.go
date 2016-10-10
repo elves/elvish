@@ -210,6 +210,7 @@ func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) 
 	}
 
 	cands := []*candidate{}
+	lsColor := getLsColor()
 	// Make candidates out of elements that match the file component.
 	for _, info := range infos {
 		name := info.Name()
@@ -243,7 +244,7 @@ func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) 
 
 		cands = append(cands, &candidate{
 			text: full, suffix: suffix,
-			display: styled{name, defaultLsColor.getStyle(full)},
+			display: styled{name, lsColor.getStyle(full)},
 		})
 	}
 
