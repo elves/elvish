@@ -4,6 +4,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 	"syscall"
 )
 
@@ -78,8 +79,26 @@ func getLsColorString() string {
 	return lsColorString
 }
 
+var (
+	lastLsColor       *lsColor
+	lastLsColorString string
+	lastLsColorMutex  sync.Mutex
+)
+
+func init() {
+	lastLsColor = parseLsColor(defaultLsColorString)
+}
+
 func getLsColor() *lsColor {
-	return parseLsColor(getLsColorString())
+	lastLsColorMutex.Lock()
+	defer lastLsColorMutex.Unlock()
+
+	s := getLsColorString()
+	if lastLsColorString != s {
+		lastLsColorString = s
+		lastLsColor = parseLsColor(s)
+	}
+	return lastLsColor
 }
 
 // parseLsColor parses a string in the LS_COLORS format into lsColor. Erroneous
