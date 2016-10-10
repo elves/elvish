@@ -59,9 +59,12 @@ func glob(segs []Segment, dir string, cb func(string) bool) bool {
 	// path components in the pattern.
 	for len(segs) > 0 && segs[0].Type == Literal {
 		var path string
-		if dir == "" {
+		switch dir {
+		case "":
 			path = segs[0].Data
-		} else {
+		case "/":
+			path = "/" + segs[0].Data
+		default:
 			path = dir + "/" + segs[0].Data
 		}
 		if len(segs) == 1 {
