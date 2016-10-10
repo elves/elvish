@@ -47,7 +47,7 @@ func ParseVariable(qname string) (splice bool, ns string, name string) {
 		qname = qname[1:]
 	}
 
-	i := strings.IndexRune(qname, ':')
+	i := strings.LastIndexByte(qname, ':')
 	if i == -1 {
 		return splice, "", qname
 	}

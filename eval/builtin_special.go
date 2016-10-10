@@ -7,6 +7,7 @@ package eval
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
@@ -170,7 +171,7 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		// No filename; defaulting to $datadir/$modname.elv.
 		dataDir, err := store.DataDir()
 		maybeThrow(err)
-		filename = dataDir + "/" + modname + ".elv"
+		filename = dataDir + "/" + strings.Replace(modname, ":", "/", -1) + ".elv"
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			// File does not exist. Try loading from the table of builtin
 			// modules.
