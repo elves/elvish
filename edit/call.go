@@ -9,23 +9,6 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-var (
-	DevNull         *os.File
-	ClosedChan      chan eval.Value
-	NullClosedInput *eval.Port
-)
-
-func init() {
-	var err error
-	DevNull, err = os.Open("/dev/null")
-	if err != nil {
-		os.Stderr.WriteString("cannot open /dev/null, shell might not function normally")
-	}
-	ClosedChan = make(chan eval.Value)
-	close(ClosedChan)
-	NullClosedInput = &eval.Port{File: DevNull, Chan: ClosedChan}
-}
-
 // CallFn calls an Fn, displaying its outputs and possible errors as editor
 // notifications. It is the preferred way to call a Fn while the editor is
 // active.
@@ -90,7 +73,7 @@ func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
 	chanOut := make(chan eval.Value)
 
 	return rout, chanOut, []*eval.Port{
-		NullClosedInput,
+		eval.NullClosedInput,
 		{File: out, CloseFile: true, Chan: chanOut, CloseChan: true},
 		{File: out, Chan: chanOut},
 	}, nil
@@ -99,7 +82,7 @@ func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
 // callFnAsPrompt calls a Fn with closed input, captures its output and convert
 // the output to a slice of *styled's.
 func callFnForPrompt(ed *Editor, fn eval.Fn) []*styled {
-	ports := []*eval.Port{NullClosedInput, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
+	ports := []*eval.Port{eval.NullClosedInput, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor prompt]", "", ports)
@@ -121,7 +104,7 @@ func callFnForPrompt(ed *Editor, fn eval.Fn) []*styled {
 }
 
 func callFnForCandidates(fn eval.FnValue, ev *eval.Evaler, args []string) ([]*candidate, error) {
-	ports := []*eval.Port{NullClosedInput, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
+	ports := []*eval.Port{eval.NullClosedInput, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
 
 	argValues := make([]eval.Value, len(args))
 	for i, arg := range args {

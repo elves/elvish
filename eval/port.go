@@ -36,3 +36,20 @@ func ClosePorts(ports []*Port) {
 		port.Close()
 	}
 }
+
+var (
+	DevNull         *os.File
+	ClosedChan      chan Value
+	NullClosedInput *Port
+)
+
+func init() {
+	var err error
+	DevNull, err = os.Open("/dev/null")
+	if err != nil {
+		os.Stderr.WriteString("cannot open /dev/null, shell might not function normally")
+	}
+	ClosedChan = make(chan Value)
+	close(ClosedChan)
+	NullClosedInput = &Port{File: DevNull, Chan: ClosedChan}
+}
