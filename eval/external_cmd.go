@@ -77,25 +77,6 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value, opts map[string]Value) {
 		throw(err)
 	}
 
-	// XXX Discard all channel inputs, so that writes from the previous form in
-	// the pipeline don't block.
-	stopDiscard := make(chan struct{})
-	if ec.ports[0].Chan != nil {
-		ch := ec.ports[0].Chan
-		go func() {
-			for {
-				select {
-				case v := <-ch:
-					if v == nil {
-						return
-					}
-				case <-stopDiscard:
-					return
-				}
-			}
-		}()
-	}
-
 	args[0] = path
 	pid, err := syscall.ForkExec(path, args, &attr)
 	if err != nil {
@@ -104,7 +85,6 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value, opts map[string]Value) {
 
 	var ws syscall.WaitStatus
 	_, err = syscall.Wait4(pid, &ws, syscall.WUNTRACED, nil)
-	close(stopDiscard)
 
 	if err != nil {
 		throw(fmt.Errorf("wait: %s", err.Error()))
