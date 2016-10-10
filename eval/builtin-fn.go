@@ -94,6 +94,7 @@ func init() {
 		&BuiltinFn{"continue", WrapFn(continueFn)},
 
 		&BuiltinFn{"each", WrapFn(each)},
+		&BuiltinFn{"peach", WrapFn(peach)},
 		&BuiltinFn{"eawk", WrapFn(eawk)},
 		&BuiltinFn{"constantly", constantly},
 
@@ -590,6 +591,35 @@ func each(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 			throw(ex)
 		}
 	})
+}
+
+// each takes a single closure and applies it to all input values in parallel.
+func peach(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
+	broken := false
+	var err error
+	iterate(func(v Value) {
+		if broken || err != nil {
+			return
+		}
+		go func() {
+			// NOTE We don't have the position range of the closure in the source.
+			// Ideally, it should be kept in the Closure itself.
+			newec := ec.fork("closure of each")
+			// TODO: Close port 0 of newec.
+			ex := newec.PCall(f, []Value{v}, NoOpts)
+			ClosePorts(newec.ports)
+
+			switch ex {
+			case nil, Continue:
+				// nop
+			case Break:
+				broken = true
+			default:
+				err = ex
+			}
+		}()
+	})
+	maybeThrow(err)
 }
 
 var eawkWordSep = regexp.MustCompile("[ \t]+")
