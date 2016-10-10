@@ -18,6 +18,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -595,12 +596,15 @@ func each(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 
 // each takes a single closure and applies it to all input values in parallel.
 func peach(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
+	var w sync.WaitGroup
+
 	broken := false
 	var err error
 	iterate(func(v Value) {
 		if broken || err != nil {
 			return
 		}
+		w.Add(1)
 		go func() {
 			// NOTE We don't have the position range of the closure in the source.
 			// Ideally, it should be kept in the Closure itself.
@@ -617,8 +621,10 @@ func peach(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 			default:
 				err = ex
 			}
+			w.Done()
 		}()
 	})
+	w.Wait()
 	maybeThrow(err)
 }
 
