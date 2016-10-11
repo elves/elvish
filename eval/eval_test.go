@@ -202,8 +202,8 @@ var evalTests = []struct {
 	{"* 353 661", strs("233333"), nomore},
 	{"/ 233333 353", strs("661"), nomore},
 	{"/ 1 0", strs("+Inf"), nomore},
-	// Equality
-	{"put ?(== 1.0 1) ?(==s 1.0 1) ?(eq 1 1) ?(eq [] []) ?(deepeq [] []) ?(deepeq [&] [&])",
+	// Equality test builtins.
+	{`put ?(== 1.0 1) ?(==s 1.0 1) ?(is 1 1) ?(is [] []) ?(eq [] []) ?(eq [&] [&])`,
 		[]Value{
 			Bool(true), Bool(false), Bool(true), Bool(false), Bool(true), Bool(true),
 		}, nomore},
