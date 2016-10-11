@@ -898,7 +898,7 @@ func boolFn(ec *EvalCtx, v Value) {
 
 func is(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
-	if len(args) <= 1 {
+	if len(args) < 2 {
 		throw(ErrArgs)
 	}
 	for i := 0; i+1 < len(args); i++ {
@@ -911,7 +911,7 @@ func is(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
-	if len(args) == 0 {
+	if len(args) < 2 {
 		throw(ErrArgs)
 	}
 	for i := 0; i+1 < len(args); i++ {
