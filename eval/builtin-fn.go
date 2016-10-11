@@ -136,6 +136,8 @@ func init() {
 		&BuiltinFn{"ord", WrapFn(ord)},
 		&BuiltinFn{"base", WrapFn(base)},
 
+		&BuiltinFn{"range", rangeFn},
+
 		&BuiltinFn{"bool", WrapFn(boolFn)},
 		&BuiltinFn{"is", is},
 		&BuiltinFn{"eq", eq},
@@ -888,6 +890,31 @@ func base(ec *EvalCtx, b int, nums ...int) {
 
 	for _, num := range nums {
 		out <- String(strconv.FormatInt(int64(num), b))
+	}
+}
+
+func rangeFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+
+	var lower, upper int
+	var err error
+
+	switch len(args) {
+	case 1:
+		upper, err = toInt(args[0])
+		maybeThrow(err)
+	case 2:
+		lower, err = toInt(args[0])
+		maybeThrow(err)
+		upper, err = toInt(args[1])
+		maybeThrow(err)
+	default:
+		throw(ErrArgs)
+	}
+
+	out := ec.ports[1].Chan
+	for i := lower; i < upper; i++ {
+		out <- String(strconv.Itoa(i))
 	}
 }
 
