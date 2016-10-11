@@ -30,8 +30,6 @@ func (te *Traceback) Pprint(w io.Writer, sourceIndent string) {
 	lineBefore := lastLine(before)
 	// Find on which line the culprit begins.
 	beginLine := strings.Count(before, "\n") + 1
-	// Find on which column the culprit begins.
-	beginCol := countRunes(lineBefore) + 1
 
 	// If the culprit ends with a newline, stripe it. Otherwise stick the part
 	// of "after" that is on the same line of the last line of the culprit.
@@ -44,25 +42,18 @@ func (te *Traceback) Pprint(w io.Writer, sourceIndent string) {
 
 	// Find on which line and column the culprit ends.
 	endLine := beginLine + strings.Count(culprit, "\n")
-	var endCol int
-	if endLine == beginLine {
-		endCol = beginCol + countRunes(culprit) - 1
-	} else {
-		endCol = countRunes(lastLine(culprit))
-	}
 
 	if beginLine == endLine {
-		if endCol <= beginCol {
-			fmt.Fprintf(w, "%s, line %d, col %d:\n", te.Name, beginLine, beginCol)
-		} else {
-			fmt.Fprintf(w, "%s, line %d, col %d-%d:\n", te.Name, beginLine, beginCol, endCol)
-		}
+		fmt.Fprintf(w, "%s, line %d:\n", te.Name, beginLine)
 	} else {
-		fmt.Fprintf(w, "%s, line %d col %d - line %d col %d:\n", te.Name, beginLine, beginCol, endLine, endCol)
+		fmt.Fprintf(w, "%s, line %d-%d:\n", te.Name, beginLine, endLine)
 	}
 
 	fmt.Fprintf(w, "%s%s", sourceIndent, lineBefore)
 
+	if culprit == "" {
+		culprit = "^"
+	}
 	for i, line := range strings.Split(culprit, "\n") {
 		if i > 0 {
 			fmt.Fprintf(w, "\n%s", sourceIndent)
