@@ -85,6 +85,11 @@ func navInsertSelected(ed *Editor) {
 	ed.insertAtDot(parse.Quote(ed.navigation.current.selectedName()) + " ")
 }
 
+func navInsertSelectedAndQuit(ed *Editor) {
+	ed.insertAtDot(parse.Quote(ed.navigation.current.selectedName()) + " ")
+	ed.mode = &ed.insert
+}
+
 func navigationDefault(ed *Editor) {
 	// Use key binding for insert mode without exiting nigation mode.
 	k := ed.lastKey

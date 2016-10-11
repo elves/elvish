@@ -85,6 +85,7 @@ var builtins = []*BuiltinFn{
 	{"nav-trigger-shown-hidden", navTriggerShowHidden},
 	{"nav-trigger-filter", navTriggerFilter},
 	{"nav-insert-selected", navInsertSelected},
+	{"nav-insert-selected-and-quit", navInsertSelectedAndQuit},
 	{"navigation-default", navigationDefault},
 
 	// History mode
@@ -181,6 +182,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{Left, 0}:     "nav-left",
 		Key{Right, 0}:    "nav-right",
 		Key{Tab, 0}:      "nav-insert-selected",
+		Key{Enter, 0}:    "nav-insert-selected-and-quit",
 		Key{'H', Ctrl}:   "nav-trigger-shown-hidden",
 		Key{'F', Ctrl}:   "nav-trigger-filter",
 		Key{'[', Ctrl}:   "start-insert",
