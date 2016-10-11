@@ -40,8 +40,7 @@ var evalTests = []struct {
 	// Outputs of pipelines in a chunk are concatenated
 	{"put x; put y; put z", strs("x", "y", "z"), nomore},
 	// A failed pipeline cause the whole chunk to fail
-	{"put a; e:false; put b", strs("a"), more{
-		wantError: &util.PosError{7, 14, FakeExternalCmdExit("false", 1, 0)}}},
+	{"put a; e:false; put b", strs("a"), more{wantError: errAny}},
 
 	// Pipelines.
 	// Pure byte pipeline
