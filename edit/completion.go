@@ -286,7 +286,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 	// the computed height as the height for the listing, and the first
 	// candidate to show is 0. Otherwise, we use min(height, len(cands)) as the
 	// height and find the first candidate to show.
-	perLine := width / (comp.maxWidth(0, len(cands)) + completionColMarginTotal)
+	perLine := max(1, width/(comp.maxWidth(0, len(cands))+completionColMarginTotal))
 	heightBound := util.CeilDiv(len(cands), perLine)
 	first := 0
 	height := 0
