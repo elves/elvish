@@ -137,8 +137,8 @@ func init() {
 		&BuiltinFn{"base", WrapFn(base)},
 
 		&BuiltinFn{"bool", WrapFn(boolFn)},
+		&BuiltinFn{"is", is},
 		&BuiltinFn{"eq", eq},
-		&BuiltinFn{"deepeq", deepeq},
 
 		&BuiltinFn{"resolve", WrapFn(resolveFn)},
 
@@ -896,7 +896,7 @@ func boolFn(ec *EvalCtx, v Value) {
 	out <- Bool(ToBool(v))
 }
 
-func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
+func is(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 	if len(args) <= 1 {
 		throw(ErrArgs)
@@ -909,7 +909,7 @@ func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func deepeq(ec *EvalCtx, args []Value, opts map[string]Value) {
+func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 	if len(args) == 0 {
 		throw(ErrArgs)
