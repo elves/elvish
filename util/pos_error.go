@@ -22,7 +22,7 @@ func (pe *PosError) Pprint(srcname, errtype, src string) string {
 	// Error message
 	fmt.Fprintf(buf, "%s: \033[31;1m%s\033[m\n", errtype, pe.msg())
 	// Position
-	te := TracebackEntry{srcname, src, pe.Begin, pe.End}
+	te := Traceback{srcname, src, pe.Begin, pe.End, nil}
 	te.Pprint(buf, "  ")
 
 	return buf.String()

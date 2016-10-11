@@ -6,16 +6,17 @@ import (
 	"strings"
 )
 
-type TracebackEntry struct {
+type Traceback struct {
 	Name   string
 	Source string
 	Begin  int
 	End    int
+	Next   *Traceback
 }
 
 var CulpritStyle = "1;4"
 
-func (te *TracebackEntry) Pprint(w io.Writer, sourceIndent string) {
+func (te *Traceback) Pprint(w io.Writer, sourceIndent string) {
 	if te.Begin == -1 {
 		fmt.Fprintf(w, "%s, unknown position", te.Name)
 		return

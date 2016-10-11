@@ -293,10 +293,10 @@ func catch(perr *error, ec *EvalCtx) {
 func (ec *EvalCtx) makeTracebackError(e error) *util.TracebackError {
 	return &util.TracebackError{
 		Cause: e,
-		Traceback: []*util.TracebackEntry{{
+		Traceback: &util.Traceback{
 			Name: ec.name, Source: ec.text,
-			Begin: ec.begin, End: ec.end,
-		}},
+			Begin: ec.begin, End: ec.end, Next: nil,
+		},
 	}
 }
 
