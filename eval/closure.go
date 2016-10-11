@@ -15,19 +15,17 @@ type Closure struct {
 	// The name for the rest argument. If empty, the function has fixed arity.
 	// If equal to unnamedRestArg, the rest argument is unnamed but can be
 	// accessed via $args.
-	RestArg  string
-	Op       Op
-	Captured map[string]Variable
+	RestArg    string
+	Op         Op
+	Captured   map[string]Variable
+	SourceName string
+	Source     string
 }
 
 var _ FnValue = &Closure{}
 
 func (*Closure) Kind() string {
 	return "fn"
-}
-
-func newClosure(a []string, r string, op Op, e map[string]Variable) *Closure {
-	return &Closure{a, r, op, e}
 }
 
 func (c *Closure) Repr(int) string {
@@ -74,8 +72,6 @@ func (c *Closure) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 	ec.local["opts"] = NewPtrVariable(Map{&convertedOpts})
 
-	// TODO(xiaq): Also change ec.name and ec.text since the closure being
-	// called can come from another source.
-
+	ec.name, ec.text = c.SourceName, c.Source
 	c.Op.Exec(ec)
 }

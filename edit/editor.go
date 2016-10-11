@@ -160,7 +160,7 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 			ed.tokens = []Token{{ParserError, src, nil, ""}}
 		} else {
 			ed.tokens = tokenize(src, n)
-			_, err := ed.evaler.Compile(n)
+			_, err := ed.evaler.Compile(n, "[interactive]", src)
 			if err != nil {
 				if tips && !atEnd(err, len(src)) {
 					ed.addTip("compiler error: %s", err)

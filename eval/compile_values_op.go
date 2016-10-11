@@ -426,12 +426,14 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		cp.registerVariableGet(name)
 	}
 
+	name, text := cp.name, cp.text
+
 	return func(ec *EvalCtx) []Value {
 		evCapture := make(map[string]Variable, len(capture))
 		for name := range capture {
 			evCapture[name] = ec.ResolveVar("", name)
 		}
-		return []Value{newClosure(argNames, restArg, op, evCapture)}
+		return []Value{&Closure{argNames, restArg, op, evCapture, name, text}}
 	}
 }
 

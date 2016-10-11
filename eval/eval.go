@@ -138,7 +138,7 @@ func makeScope(s Namespace) scope {
 // Eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
 func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*Port) (bool, error) {
-	op, err := ev.Compile(n)
+	op, err := ev.Compile(n, name, text)
 	if err != nil {
 		return false, err
 	}
@@ -234,8 +234,8 @@ func summarize(text string) string {
 }
 
 // Compile compiles elvish code in the global scope.
-func (ev *Evaler) Compile(n *parse.Chunk) (Op, error) {
-	return compile(makeScope(ev.Global), n)
+func (ev *Evaler) Compile(n *parse.Chunk, name, text string) (Op, error) {
+	return compile(makeScope(ev.Global), n, name, text)
 }
 
 // PEval evaluates an op in a protected environment so that calls to errorf are

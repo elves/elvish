@@ -21,10 +21,12 @@ type compiler struct {
 	capture scope
 	// Position of what is being compiled.
 	begin, end int
+	// Information about the source.
+	name, text string
 }
 
-func compile(sc scope, n *parse.Chunk) (op Op, err error) {
-	cp := &compiler{[]scope{sc}, scope{}, 0, 0}
+func compile(sc scope, n *parse.Chunk, name, text string) (op Op, err error) {
+	cp := &compiler{[]scope{sc}, scope{}, 0, 0, name, text}
 	defer util.Catch(&err)
 	return cp.chunkOp(n), nil
 }

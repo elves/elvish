@@ -204,7 +204,7 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		0, len(source),
 	}
 
-	op, err := newEc.Compile(n)
+	op, err := newEc.Compile(n, filename, source)
 	// TODO the err originates in another source, should add appropriate information.
 	maybeThrow(err)
 
