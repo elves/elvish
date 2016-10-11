@@ -29,7 +29,7 @@ func (*Closure) Kind() string {
 }
 
 func (c *Closure) Repr(int) string {
-	return fmt.Sprintf("<closure%v>", *c)
+	return fmt.Sprintf("<closure %p>", c)
 }
 
 // Call calls a closure.
