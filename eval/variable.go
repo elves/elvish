@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	ErrRoCannotBeSet = errors.New("read-only; cannot be set")
+	ErrRoCannotBeSet = errors.New("read-only variable; cannot be set")
 )
 
 // Variable represents an elvish variable.
