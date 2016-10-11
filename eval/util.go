@@ -41,17 +41,29 @@ func ParseAndFixVariable(qname string) (splice bool, ns string, name string) {
 	return splice, ns, name
 }
 
-func ParseVariable(qname string) (splice bool, ns string, name string) {
-	if strings.HasPrefix(qname, "@") {
-		splice = true
-		qname = qname[1:]
+func ParseVariable(text string) (splice bool, ns string, name string) {
+	splicePart, qname := ParseVariableSplice(text)
+	nsPart, name := ParseVariableQName(qname)
+	ns = nsPart
+	if len(ns) > 0 {
+		ns = ns[:len(ns)-1]
 	}
+	return splicePart != "", ns, name
+}
 
+func ParseVariableSplice(text string) (splice, qname string) {
+	if strings.HasPrefix(text, "@") {
+		return "@", text[1:]
+	}
+	return "", text
+}
+
+func ParseVariableQName(qname string) (ns, name string) {
 	i := strings.LastIndexByte(qname, ':')
 	if i == -1 {
-		return splice, "", qname
+		return "", qname
 	}
-	return splice, qname[:i], qname[i+1:]
+	return qname[:i+1], qname[i+1:]
 }
 
 func MakeVariableName(splice bool, ns string, name string) string {

@@ -36,23 +36,40 @@ func complVariable(n parse.Node, ed *Editor) (int, int, []*candidate) {
 		return -1, -1, nil
 	}
 
-	splice, ns, head := eval.ParseVariable(primary.Value)
+	// XXX Repeats eval.ParseVariable.
+	splice, qname := eval.ParseVariableSplice(primary.Value)
+	nsPart, nameHead := eval.ParseVariableQName(qname)
+	ns := nsPart
+	if len(ns) > 0 {
+		ns = ns[:len(ns)-1]
+	}
 
 	// Collect matching variables.
 	var varnames []string
 	iterateVariables(ed.evaler, ns, func(varname string) {
-		if strings.HasPrefix(varname, head) {
-			varnames = append(varnames, varname)
+		if strings.HasPrefix(varname, nameHead) {
+			varnames = append(varnames, nsPart+varname)
 		}
 	})
+	// Collect namespace prefixes.
+	// TODO Support non-module namespaces.
+	for ns := range ed.evaler.Modules {
+		if hasProperPrefix(ns+":", qname) {
+			varnames = append(varnames, ns+":")
+		}
+	}
 	sort.Strings(varnames)
 
 	cands := make([]*candidate, len(varnames))
 	// Build candidates.
 	for i, varname := range varnames {
-		cands[i] = &candidate{text: "$" + eval.MakeVariableName(splice, ns, varname)}
+		cands[i] = &candidate{text: "$" + splice + varname}
 	}
 	return begin, end, cands
+}
+
+func hasProperPrefix(s, p string) bool {
+	return len(s) > len(p) && strings.HasPrefix(s, p)
 }
 
 func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
@@ -65,6 +82,7 @@ func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
 		}
 		// TODO Include local names as well.
 	} else {
+		// TODO Support non-module namespaces.
 		for varname := range ev.Modules[ns] {
 			f(varname)
 		}
@@ -134,6 +152,12 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 		}
 		if strings.HasPrefix(head, "E:") {
 			got("E:" + command)
+		}
+	}
+	// TODO Support non-module namespaces.
+	for ns := range ed.evaler.Modules {
+		if head != ns+":" {
+			got(ns + ":")
 		}
 	}
 	sort.Strings(commands)
