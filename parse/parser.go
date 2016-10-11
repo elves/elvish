@@ -99,7 +99,11 @@ func (ps *parser) errorp(begin, end int, e error) {
 }
 
 func (ps *parser) error(e error) {
-	ps.errorp(ps.pos, ps.pos, e)
+	end := ps.pos
+	if end < len(ps.src) {
+		end++
+	}
+	ps.errorp(ps.pos, end, e)
 }
 
 func (ps *parser) pushCutset(rs ...rune) {

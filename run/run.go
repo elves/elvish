@@ -136,7 +136,7 @@ func source(ev *eval.Evaler, fname string, notexistok bool) error {
 
 	err = ev.SourceText(src)
 	if err != nil {
-		printError(err, fname, "error", src)
+		printError(err, fname, "Error", src)
 	}
 	return err
 }
@@ -204,11 +204,11 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		cooldown = time.Second
 
 		n, err := parse.Parse(line)
-		printError(err, "<interact>", "parse error", line)
+		printError(err, "<interact>", "Parse error", line)
 
 		if err == nil {
 			err := ev.EvalInteractive(line, n)
-			printError(err, "<interact>", "eval error", line)
+			printError(err, "<interact>", "Exception", line)
 		}
 	}
 }
@@ -272,7 +272,7 @@ func printError(err error, srcname, errtype, src string) {
 			printError(e, srcname, errtype, src)
 		}
 	case *util.PosError:
-		printErrorString(err.Pprint(srcname, errtype, src))
+		fmt.Fprintln(os.Stderr, err.Pprint(srcname, errtype, src))
 	default:
 		printErrorString(err.Error())
 	}
