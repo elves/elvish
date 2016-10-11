@@ -55,6 +55,7 @@ type EvalCtx struct {
 	verdict     bool
 
 	begin, end int
+	traceback  *util.Traceback
 }
 
 func (ec *EvalCtx) falsify() {
@@ -88,7 +89,7 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
 		name, text, "top",
 		ev.Global, Namespace{},
 		ports, nil, true,
-		0, len(text),
+		0, len(text), nil,
 	}
 }
 
@@ -104,7 +105,7 @@ func (ec *EvalCtx) fork(newContext string) *EvalCtx {
 		ec.name, ec.text, newContext,
 		ec.local, ec.up,
 		newPorts, ec.positionals, true,
-		ec.begin, ec.end,
+		ec.begin, ec.end, ec.traceback,
 	}
 }
 
@@ -291,12 +292,13 @@ func catch(perr *error, ec *EvalCtx) {
 }
 
 func (ec *EvalCtx) makeTracebackError(e error) *util.TracebackError {
-	return &util.TracebackError{
-		Cause: e,
-		Traceback: &util.Traceback{
-			Name: ec.name, Source: ec.text,
-			Begin: ec.begin, End: ec.end, Next: nil,
-		},
+	return &util.TracebackError{Cause: e, Traceback: ec.addTraceback()}
+}
+
+func (ec *EvalCtx) addTraceback() *util.Traceback {
+	return &util.Traceback{
+		Name: ec.name, Source: ec.text,
+		Begin: ec.begin, End: ec.end, Next: ec.traceback,
 	}
 }
 

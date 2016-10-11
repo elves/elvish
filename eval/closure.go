@@ -72,6 +72,8 @@ func (c *Closure) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 	ec.local["opts"] = NewPtrVariable(Map{&convertedOpts})
 
+	ec.traceback = ec.addTraceback()
+
 	ec.name, ec.text = c.SourceName, c.Source
 	c.Op.Exec(ec)
 }
