@@ -272,21 +272,31 @@ func catch(perr *error, ec *EvalCtx) {
 		// is always raised when there is an interrupt.
 		select {
 		case <-ec.IntSignals():
-			*perr = &util.PosError{ec.begin, ec.end, ErrInterrupted}
+			*perr = ec.makeTracebackError(ErrInterrupted)
 		default:
 		}
 		return
 	}
 	if exc, ok := r.(util.Exception); ok {
 		err := exc.Error
-		if _, ok := err.(*util.PosError); !ok {
+		if _, ok := err.(*util.TracebackError); !ok {
 			if _, ok := err.(flow); !ok {
-				err = &util.PosError{ec.begin, ec.end, err}
+				err = ec.makeTracebackError(err)
 			}
 		}
 		*perr = err
 	} else if r != nil {
 		panic(r)
+	}
+}
+
+func (ec *EvalCtx) makeTracebackError(e error) *util.TracebackError {
+	return &util.TracebackError{
+		Cause: e,
+		Traceback: []*util.TracebackEntry{{
+			Name: ec.name, Source: ec.text,
+			Begin: ec.begin, End: ec.end,
+		}},
 	}
 }
 

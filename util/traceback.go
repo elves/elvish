@@ -20,7 +20,7 @@ func (te *TracebackEntry) Pprint(w io.Writer, sourceIndent string) {
 		fmt.Fprintf(w, "%s, unknown position", te.Name)
 		return
 	} else if te.Begin < 0 || te.End > len(te.Source) || te.Begin > te.End {
-		fmt.Fprintf(w, "%s, invalid position", te.Name)
+		fmt.Fprintf(w, "%s, invalid position %d-%d", te.Name, te.Begin, te.End)
 		return
 	}
 

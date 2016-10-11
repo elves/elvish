@@ -204,11 +204,11 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		cooldown = time.Second
 
 		n, err := parse.Parse(line)
-		printError(err, "<interact>", "Parse error", line)
+		printError(err, "[interactive]", "Parse error", line)
 
 		if err == nil {
 			err := ev.EvalInteractive(line, n)
-			printError(err, "<interact>", "Exception", line)
+			printError(err, "[interactive]", "Exception", line)
 		}
 	}
 }
@@ -273,6 +273,8 @@ func printError(err error, srcname, errtype, src string) {
 		}
 	case *util.PosError:
 		fmt.Fprintln(os.Stderr, err.Pprint(srcname, errtype, src))
+	case *util.TracebackError:
+		fmt.Fprintln(os.Stderr, err.Pprint())
 	default:
 		printErrorString(err.Error())
 	}
