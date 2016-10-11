@@ -137,6 +137,7 @@ func init() {
 		&BuiltinFn{"base", WrapFn(base)},
 
 		&BuiltinFn{"bool", WrapFn(boolFn)},
+		&BuiltinFn{"eq", eq},
 		&BuiltinFn{"deepeq", deepeq},
 
 		&BuiltinFn{"resolve", WrapFn(resolveFn)},
@@ -893,6 +894,19 @@ func base(ec *EvalCtx, b int, nums ...int) {
 func boolFn(ec *EvalCtx, v Value) {
 	out := ec.ports[1].Chan
 	out <- Bool(ToBool(v))
+}
+
+func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+	if len(args) <= 1 {
+		throw(ErrArgs)
+	}
+	for i := 0; i+1 < len(args); i++ {
+		if args[i] != args[i+1] {
+			ec.falsify()
+			return
+		}
+	}
 }
 
 func deepeq(ec *EvalCtx, args []Value, opts map[string]Value) {
