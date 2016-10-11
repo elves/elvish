@@ -17,13 +17,13 @@ type completion struct {
 	begin, end int
 	all        []*candidate
 
-	filtering  bool
-	filter     string
-	candidates []*candidate
-	selected   int
-	firstShown int
-	lastShown  int
-	height     int
+	filtering       bool
+	filter          string
+	candidates      []*candidate
+	selected        int
+	firstShown      int
+	lastShownInFull int
+	height          int
 }
 
 func (*completion) Mode() ModeType {
@@ -31,7 +31,7 @@ func (*completion) Mode() ModeType {
 }
 
 func (c *completion) needScrollbar() bool {
-	return c.firstShown > 0 || c.lastShown < len(c.candidates)-1
+	return c.firstShown > 0 || c.lastShownInFull < len(c.candidates)-1
 }
 
 func (c *completion) ModeLine(width int) *buffer {
@@ -51,7 +51,7 @@ func (c *completion) ModeLine(width int) *buffer {
 		scrollbarWidth := width - lineWidth(b.cells[len(b.cells)-1]) - 2
 		if scrollbarWidth >= 3 {
 			b.writes(" ", "")
-			writeHorizontalScrollbar(b, len(c.candidates), c.firstShown, c.lastShown, scrollbarWidth)
+			writeHorizontalScrollbar(b, len(c.candidates), c.firstShown, c.lastShownInFull+1, scrollbarWidth)
 		}
 	}
 
@@ -312,6 +312,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 
 	var i, j int
 	remainedWidth := width
+	trimmed := false
 	// Show the results in columns, until width is exceeded.
 	for i = first; i < len(cands); i += height {
 		// Determine the width of the column (without the margin)
@@ -320,6 +321,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		if totalColWidth > remainedWidth {
 			totalColWidth = remainedWidth
 			colWidth = totalColWidth - completionColMarginTotal
+			trimmed = true
 		}
 
 		col := newBuffer(totalColWidth)
@@ -338,6 +340,9 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 				}
 				col.writes(util.ForceWcwidth(cands[j].display.text, colWidth), style)
 				col.writePadding(completionColMarginRight, styleForCompletion)
+				if !trimmed {
+					comp.lastShownInFull = j
+				}
 			}
 		}
 
@@ -348,7 +353,6 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 			break
 		}
 	}
-	comp.lastShown = j - 1
 	// When the listing is incomplete, always use up the entire width.
 	if remainedWidth > 0 && comp.needScrollbar() {
 		col := newBuffer(remainedWidth)
