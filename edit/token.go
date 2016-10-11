@@ -37,8 +37,8 @@ func (t *Token) addStyle(st string) {
 	t.MoreStyle = joinStyle(t.MoreStyle, st)
 }
 
-func parserError(text string) Token {
-	return Token{ParserError, text, nil, ""}
+func parserError(src string, begin, end int) Token {
+	return Token{ParserError, src[begin:end], parse.NewSep(src, begin, end), ""}
 }
 
 // tokenize returns all leaves in an AST.
@@ -53,7 +53,7 @@ func tokenize(src string, n parse.Node) []Token {
 		for token := range tokenCh {
 			begin := token.Node.Begin()
 			if begin > lastEnd {
-				tokens = append(tokens, parserError(src[lastEnd:begin]))
+				tokens = append(tokens, parserError(src, lastEnd, begin))
 			}
 			tokens = append(tokens, token)
 			lastEnd = token.Node.End()
@@ -65,7 +65,7 @@ func tokenize(src string, n parse.Node) []Token {
 
 	<-tokensDone
 	if lastEnd != len(src) {
-		tokens = append(tokens, parserError(src[lastEnd:]))
+		tokens = append(tokens, parserError(src, lastEnd, len(src)))
 	}
 	return tokens
 }

@@ -2,6 +2,7 @@ package edit
 
 import (
 	"os"
+	"sort"
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
@@ -9,19 +10,35 @@ import (
 )
 
 type Stylist struct {
-	tokens []Token
-	editor *Editor
+	tokens   []Token
+	editor   *Editor
+	commands styleCommands
 }
 
-func (s *Stylist) applyToTokens(style string, begin, end int) {
-	for len(s.tokens) > 0 && s.tokens[0].Node.Begin() < begin {
-		// Skip tokens that precede the range
-		s.tokens = s.tokens[1:]
+func (s *Stylist) do(n parse.Node) {
+	s.style(n)
+	s.apply()
+}
+
+func (s *Stylist) apply() {
+	sort.Sort(s.commands)
+	tokens, commands := s.tokens, s.commands
+
+	for len(tokens) > 0 && len(commands) > 0 {
+		cmd := commands[0]
+		for len(tokens) > 0 && tokens[0].Node.Begin() < cmd.begin {
+			tokens = tokens[1:]
+		}
+		for len(tokens) > 0 && tokens[0].Node.End() <= cmd.end {
+			tokens[0].addStyle(cmd.style)
+			tokens = tokens[1:]
+		}
+		commands = commands[1:]
 	}
-	for len(s.tokens) > 0 && s.tokens[0].Node != nil && s.tokens[0].Node.End() <= end {
-		s.tokens[0].addStyle(style)
-		s.tokens = s.tokens[1:]
-	}
+}
+
+func (s *Stylist) add(style string, begin, end int) {
+	s.commands = append(s.commands, &styleCommand{style, begin, end})
 }
 
 func (s *Stylist) style(n parse.Node) {
@@ -29,11 +46,25 @@ func (s *Stylist) style(n parse.Node) {
 		for _, an := range fn.Assignments {
 			if an.Dst != nil && an.Dst.Head != nil {
 				v := an.Dst.Head
-				s.applyToTokens(styleForType[Variable], v.Begin(), v.End())
+				s.add(styleForType[Variable], v.Begin(), v.End())
 			}
 		}
 		if fn.Head != nil {
 			s.formHead(fn.Head)
+		}
+	}
+	if cn, ok := n.(*parse.Control); ok {
+		switch cn.Kind {
+		case parse.ForControl:
+			if cn.Iterator != nil {
+				v := cn.Iterator.Head
+				s.add(styleForType[Variable], v.Begin(), v.End())
+			}
+		case parse.TryControl:
+			if cn.ExceptVar != nil {
+				v := cn.ExceptVar.Head
+				s.add(styleForType[Variable], v.Begin(), v.End())
+			}
 		}
 	}
 	for _, child := range n.Children() {
@@ -54,7 +85,7 @@ func (s *Stylist) formHead(n *parse.Compound) {
 		st = styleForBadCommand
 	}
 	if st != "" {
-		s.applyToTokens(st, n.Begin(), n.End())
+		s.add(st, n.Begin(), n.End())
 	}
 }
 
@@ -98,3 +129,15 @@ func isDir(fname string) bool {
 	stat, err := os.Stat(fname)
 	return err == nil && stat.IsDir()
 }
+
+type styleCommand struct {
+	style string
+	begin int
+	end   int
+}
+
+type styleCommands []*styleCommand
+
+func (sc styleCommands) Len() int           { return len(sc) }
+func (sc styleCommands) Swap(i, j int)      { sc[i], sc[j] = sc[j], sc[i] }
+func (sc styleCommands) Less(i, j int) bool { return sc[i].begin < sc[j].begin }

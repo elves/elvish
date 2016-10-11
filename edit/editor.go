@@ -157,7 +157,7 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 			}
 		}
 		if n == nil {
-			ed.tokens = []Token{{ParserError, src, nil, ""}}
+			ed.tokens = []Token{parserError(src, 0, len(src))}
 		} else {
 			ed.tokens = tokenize(src, n)
 			_, err := ed.evaler.Compile(n, "[interactive]", src)
@@ -176,8 +176,8 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 				}
 			}
 		}
-		stylist := &Stylist{ed.tokens, ed}
-		stylist.style(n)
+		stylist := &Stylist{ed.tokens, ed, nil}
+		stylist.do(n)
 	}
 	return ed.writer.refresh(&ed.editorState, fullRefresh)
 }

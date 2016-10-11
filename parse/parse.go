@@ -1111,6 +1111,10 @@ type Sep struct {
 	node
 }
 
+func NewSep(src string, begin, end int) *Sep {
+	return &Sep{node{nil, begin, end, src[begin:end], nil}}
+}
+
 func addSep(n Node, ps *parser) {
 	var begin int
 	ch := n.Children()
@@ -1119,7 +1123,7 @@ func addSep(n Node, ps *parser) {
 	} else {
 		begin = n.Begin()
 	}
-	addChild(n, &Sep{node{nil, begin, ps.pos, ps.src[begin:ps.pos], nil}})
+	addChild(n, NewSep(ps.src, begin, ps.pos))
 }
 
 func parseSep(n Node, ps *parser, sep rune) bool {
