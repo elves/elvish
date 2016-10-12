@@ -41,6 +41,7 @@ type Evaler struct {
 	Store   *store.Store
 	Editor  Editor
 	Stub    *stub.Stub
+	intCh   chan struct{}
 }
 
 // EvalCtx maintains an Evaler along with its runtime context. After creation
@@ -68,7 +69,7 @@ func (ec *EvalCtx) evaling(begin, end int) {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store) *Evaler {
-	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil}
+	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil, nil}
 }
 
 func (e *Evaler) searchPaths() []string {
@@ -148,11 +149,8 @@ func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*Port) (bool, 
 	return ec.verdict, err
 }
 
-func (ev *Evaler) IntSignals() <-chan struct{} {
-	if ev.Stub != nil {
-		return ev.Stub.IntSignals()
-	}
-	return nil
+func (ec *EvalCtx) Interrupts() <-chan struct{} {
+	return ec.intCh
 }
 
 func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
@@ -176,6 +174,8 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 
 	signal.Ignore(syscall.SIGTTIN)
 	signal.Ignore(syscall.SIGTTOU)
+	stopSigGoroutine := make(chan struct{})
+	sigGoRoutineDone := make(chan struct{})
 	// XXX Should use fd of /dev/terminal instead of 0.
 	if ev.Stub != nil && ev.Stub.Alive() && sys.IsATTY(0) {
 		ev.Stub.SetTitle(summarize(text))
@@ -189,21 +189,35 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 			fmt.Println("failed to put stub in foreground:", err)
 		}
 
-		// Exhaust signal channels.
-	exhaustSigs:
-		for {
-			select {
-			case <-ev.Stub.Signals():
-			case <-ev.Stub.IntSignals():
-			default:
-				break exhaustSigs
+		ev.intCh = make(chan struct{})
+		go func() {
+			closedIntCh := false
+		loop:
+			for {
+				select {
+				case sig := <-ev.Stub.Signals():
+					switch sig {
+					case syscall.SIGINT, syscall.SIGQUIT:
+						if !closedIntCh {
+							close(ev.intCh)
+							closedIntCh = true
+						}
+					}
+				case <-stopSigGoroutine:
+					break loop
+				}
 			}
-		}
+			ev.intCh = nil
+			close(sigGoRoutineDone)
+		}()
 	}
 
 	ret, err := ev.Eval("[interactive]", text, n, ports)
 	close(outCh)
 	<-outDone
+	close(stopSigGoroutine)
+	<-sigGoRoutineDone
+
 	if !ret {
 		fmt.Println(falseIndicator)
 	}
@@ -272,7 +286,7 @@ func catch(perr *error, ec *EvalCtx) {
 		// amount of time do this. The code below ensures that ErrInterrupted
 		// is always raised when there is an interrupt.
 		select {
-		case <-ec.IntSignals():
+		case <-ec.Interrupts():
 			*perr = ec.makeTracebackError(ErrInterrupted)
 		default:
 		}

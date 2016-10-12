@@ -22,7 +22,6 @@ type Stub struct {
 	// read is the other end of stdout of the stub.
 	read    *os.File
 	sigch   chan os.Signal
-	intch   chan struct{}
 	statech chan struct{}
 }
 
@@ -68,12 +67,11 @@ func NewStub(stderr *os.File) (*Stub, error) {
 
 	// Spawn signal relayer and waiter.
 	sigch := make(chan os.Signal)
-	intch := make(chan struct{})
 	statech := make(chan struct{})
-	go relaySignals(read, sigch, intch)
+	go relaySignals(read, sigch)
 	go wait(process, statech)
 
-	return &Stub{process, write, read, sigch, intch, statech}, nil
+	return &Stub{process, write, read, sigch, statech}, nil
 }
 
 func searchStub() (string, error) {
@@ -112,11 +110,6 @@ func (stub *Stub) Signals() <-chan os.Signal {
 	return stub.sigch
 }
 
-// IntSignals returns a channel into which interrupt signals are relayed.
-func (stub *Stub) IntSignals() <-chan struct{} {
-	return stub.intch
-}
-
 // State returns a channel that is closed when the stub exits.
 func (stub *Stub) State() <-chan struct{} {
 	return stub.statech
@@ -133,8 +126,8 @@ func (stub *Stub) Alive() bool {
 }
 
 // relaySignals relays output of the stub to sigch, assuming that outputs
-// represent signal numbers. Interrupt signals are also relayed to intch.
-func relaySignals(reader io.Reader, sigch chan<- os.Signal, intch chan<- struct{}) {
+// represent signal numbers.
+func relaySignals(reader io.Reader, sigch chan<- os.Signal) {
 	for {
 		var signum int
 		_, err := fmt.Fscanf(reader, "%d", &signum)
@@ -147,9 +140,6 @@ func relaySignals(reader io.Reader, sigch chan<- os.Signal, intch chan<- struct{
 		} else {
 			sig := syscall.Signal(signum)
 			sigch <- sig
-			if sig == syscall.SIGINT {
-				intch <- struct{}{}
-			}
 		}
 	}
 }

@@ -1076,7 +1076,7 @@ func pwclose(ec *EvalCtx, p Pipe) { maybeThrow(p.w.Close()) }
 func sleep(ec *EvalCtx, t float64) {
 	d := time.Duration(float64(time.Second) * t)
 	select {
-	case <-ec.IntSignals():
+	case <-ec.Interrupts():
 		throw(ErrInterrupted)
 	case <-time.After(d):
 	}

@@ -27,19 +27,7 @@ func TestStub(t *testing.T) {
 
 	// Non-INT signals should be relayed onto Signals, but not IntSignals.
 	testSignal(t, stub, syscall.SIGUSR1)
-	select {
-	case <-stub.IntSignals():
-		t.Errorf("SIGUSR1 relayed onto IntSignals")
-	case <-time.After(time.Millisecond):
-	}
-
-	// INT signals should be relayed onto both Signals and IntSignals.
 	testSignal(t, stub, syscall.SIGINT)
-	select {
-	case <-stub.IntSignals():
-	case <-time.After(10 * time.Millisecond):
-		t.Errorf("SIGINT not relayed onto IntSignals within 10ms")
-	}
 
 	// Setting title and dir of the stub shouldn't cause the stub to terminate,
 	// even if the payload is invalid or contains newlines.
