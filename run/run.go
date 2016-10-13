@@ -150,7 +150,7 @@ func evalText(ev *eval.Evaler, name, src string) bool {
 		printError(err, "Compile error")
 		return false
 	}
-	err = ev.Eval(name, src, op)
+	err = ev.Eval(op, name, src)
 	if err != nil {
 		printError(err, "Exception")
 		return false

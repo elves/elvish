@@ -45,7 +45,7 @@ var pprintCases = []struct {
 
 func TestPprint(t *testing.T) {
 	for _, tc := range pprintCases {
-		n, err := Parse(tc.src)
+		n, err := Parse("[test]", tc.src)
 		if err != nil {
 			t.Error(err)
 		}

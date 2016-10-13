@@ -139,7 +139,7 @@ func makeScope(s Namespace) scope {
 
 // eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) eval(name, text string, op Op, ports []*Port) (bool, error) {
+func (ev *Evaler) eval(op Op, ports []*Port, name, text string) (bool, error) {
 	ec := NewTopEvalCtx(ev, name, text, ports)
 	err := ec.PEval(op)
 	return ec.verdict, err
@@ -151,7 +151,7 @@ func (ec *EvalCtx) Interrupts() <-chan struct{} {
 
 // Eval sets up the Evaler and evaluates a chunk. The supplied name and text are
 // used in diagnostic messages.
-func (ev *Evaler) Eval(name, text string, op Op) error {
+func (ev *Evaler) Eval(op Op, name, text string) error {
 	inCh := make(chan Value)
 	close(inCh)
 
@@ -212,7 +212,7 @@ func (ev *Evaler) Eval(name, text string, op Op) error {
 		close(sigGoRoutineDone)
 	}
 
-	ret, err := ev.eval(name, text, op, ports)
+	ret, err := ev.eval(op, ports, name, text)
 	close(outCh)
 	<-outDone
 	close(stopSigGoroutine)
@@ -323,7 +323,7 @@ func (ev *Evaler) SourceText(name, src string) error {
 	if err != nil {
 		return err
 	}
-	return ev.Eval(name, src, op)
+	return ev.Eval(op, name, src)
 }
 
 func readFileUTF8(fname string) (string, error) {

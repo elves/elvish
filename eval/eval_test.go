@@ -293,12 +293,16 @@ func bools(bs ...bool) []Value {
 	return vs
 }
 
-func mustParse(t *testing.T, name, text string) *parse.Chunk {
-	n, err := parse.Parse(text)
+func mustParseAndCompile(t *testing.T, ev *Evaler, name, text string) Op {
+	n, err := parse.Parse(name, text)
 	if err != nil {
-		t.Fatalf("Parser(%q) error: %s", text, err)
+		t.Fatalf("Parse(%q) error: %s", text, err)
 	}
-	return n
+	op, err := ev.Compile(n, name, text)
+	if err != nil {
+		t.Fatalf("Compile(Parse(%q)) error: %s", text, err)
+	}
+	return op
 }
 
 func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, bool, error) {
@@ -329,7 +333,7 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	var ex error
 
 	for _, text := range texts {
-		n := mustParse(t, name, text)
+		op := mustParseAndCompile(t, ev, name, text)
 
 		outCh := make(chan Value, chsize)
 		outDone := make(chan struct{})
@@ -346,7 +350,7 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 			{File: os.Stderr},
 		}
 
-		ret, ex = ev.eval(name, text, n, ports)
+		ret, ex = ev.eval(op, ports, name, text)
 		close(outCh)
 		<-outDone
 	}
