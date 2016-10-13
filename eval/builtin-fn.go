@@ -772,13 +772,17 @@ func source(ec *EvalCtx, fname string) {
 }
 
 func toFloat(arg Value) (float64, error) {
-	arg, ok := arg.(String)
-	if !ok {
+	if _, ok := arg.(String); !ok {
 		return 0, fmt.Errorf("must be string")
 	}
-	num, err := strconv.ParseFloat(string(arg.(String)), 64)
+	s := string(arg.(String))
+	num, err := strconv.ParseFloat(s, 64)
 	if err != nil {
-		return 0, err
+		num, err2 := strconv.ParseInt(s, 0, 64)
+		if err2 != nil {
+			return 0, err
+		}
+		return float64(num), nil
 	}
 	return num, nil
 }
