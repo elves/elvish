@@ -63,10 +63,6 @@ func (ec *EvalCtx) falsify() {
 	ec.verdict = false
 }
 
-func (ec *EvalCtx) evaling(begin, end int) {
-	ec.begin, ec.end = begin, end
-}
-
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store) *Evaler {
 	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil, nil}
