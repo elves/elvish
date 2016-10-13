@@ -204,10 +204,18 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		cooldown = time.Second
 
 		n, err := parse.Parse(line)
-		printError(err, "[interactive]", "Parse error", line)
+		if err != nil {
+			printError(err, "[interactive]", "Parse error", line)
+			continue
+		}
 
-		if err == nil {
-			err := ev.Eval("[interactive]", line, n)
+		op, err := ev.Compile(n, "[interactive]", line)
+		if err != nil {
+			printError(err, "[interactive]", "Compile error", line)
+			continue
+		}
+		err = ev.Eval("[interactive]", line, op)
+		if err != nil {
 			printError(err, "[interactive]", "Exception", line)
 		}
 	}
