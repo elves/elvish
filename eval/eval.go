@@ -153,9 +153,9 @@ func (ec *EvalCtx) Interrupts() <-chan struct{} {
 	return ec.intCh
 }
 
-// Eval sets up the Evaler and evaluates a chunk. The supplied text is used in
-// diagnostic messages.
-func (ev *Evaler) Eval(text string, n *parse.Chunk) error {
+// Eval sets up the Evaler and evaluates a chunk. The supplied name and text are
+// used in diagnostic messages.
+func (ev *Evaler) Eval(name, text string, n *parse.Chunk) error {
 	inCh := make(chan Value)
 	close(inCh)
 
@@ -216,7 +216,7 @@ func (ev *Evaler) Eval(text string, n *parse.Chunk) error {
 		close(sigGoRoutineDone)
 	}
 
-	ret, err := ev.eval("[interactive]", text, n, ports)
+	ret, err := ev.eval(name, text, n, ports)
 	close(outCh)
 	<-outDone
 	close(stopSigGoroutine)
@@ -317,12 +317,12 @@ func (ec *EvalCtx) errorpf(begin, end int, format string, args ...interface{}) {
 }
 
 // SourceText evaluates a chunk of elvish source.
-func (ev *Evaler) SourceText(src string) error {
+func (ev *Evaler) SourceText(name, src string) error {
 	n, err := parse.Parse(src)
 	if err != nil {
 		return err
 	}
-	return ev.Eval(src, n)
+	return ev.Eval(name, src, n)
 }
 
 func readFileUTF8(fname string) (string, error) {
@@ -342,7 +342,7 @@ func (ev *Evaler) Source(fname string) error {
 	if err != nil {
 		return err
 	}
-	return ev.SourceText(src)
+	return ev.SourceText(fname, src)
 }
 
 // Builtin returns the builtin namespace.

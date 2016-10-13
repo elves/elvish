@@ -96,7 +96,7 @@ func Main() {
 
 	if len(args) == 1 {
 		if *cmd {
-			ev.SourceText(args[0])
+			ev.SourceText("code from -c", args[0])
 		} else {
 			script(ev, args[0])
 		}
@@ -134,7 +134,7 @@ func source(ev *eval.Evaler, fname string, notexistok bool) error {
 		return err
 	}
 
-	err = ev.SourceText(src)
+	err = ev.SourceText(fname, src)
 	if err != nil {
 		printError(err, fname, "Error", src)
 	}
@@ -207,7 +207,7 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		printError(err, "[interactive]", "Parse error", line)
 
 		if err == nil {
-			err := ev.Eval(line, n)
+			err := ev.Eval("[interactive]", line, n)
 			printError(err, "[interactive]", "Exception", line)
 		}
 	}
