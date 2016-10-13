@@ -32,6 +32,9 @@ var goodCases = []struct {
 	// Newlines are allowed after pipes.
 	{"a| \n \n b", ast{
 		"Chunk/Pipeline", fs{"Forms": []string{"a", "b"}}}},
+	// Comments.
+	{"a#haha\nb#lala", ast{
+		"Chunk", fs{"Pipelines": []string{"a", "b"}}}},
 
 	// Form
 	// Smoke test.
@@ -39,8 +42,8 @@ var goodCases = []struct {
 		"Head": "ls",
 		"Args": []string{"x", "y"}}}},
 	// Assignments.
-	{"k=v k[a][b]=v", ast{"Chunk/Pipeline/Form", fs{
-		"Assignments": []string{"k=v", "k[a][b]=v"}}}},
+	{"k=v k[a][b]=v {a,b[1]}=(ha)", ast{"Chunk/Pipeline/Form", fs{
+		"Assignments": []string{"k=v", "k[a][b]=v", "{a,b[1]}=(ha)"}}}},
 	// Temporary assignment.
 	{"k=v k[a][b]=v a", ast{"Chunk/Pipeline/Form", fs{
 		"Assignments": []string{"k=v", "k[a][b]=v"},
@@ -68,7 +71,12 @@ var goodCases = []struct {
 		"Head":        "a",
 		"ExitusRedir": ast{"ExitusRedir", fs{"Dest": "$e"}},
 	}}},
-	// TODO Names arguments.
+	// Options (structure of MapPair tested below with map)
+	{"a &a=1 x &b=2", ast{"Chunk/Pipeline/Form", fs{
+		"Head": "a",
+		"Args": []string{"x"},
+		"Opts": []string{"&a=1", "&b=2"},
+	}}},
 
 	// Control structures.
 	// if/then/fi.
@@ -106,6 +114,16 @@ var goodCases = []struct {
 			"Condition": " true; ",
 			"Body":      " echo do; ",
 			"ElseBody":  " echo else; ",
+		}}},
+	// try/except/else/finally/tried
+	{"try fail 2; except e; bad; else good; finally over; tried",
+		ast{"Chunk/Pipeline/Form/Control", fs{
+			"Kind":        TryControl,
+			"Body":        " fail 2; ",
+			"ExceptVar":   "e",
+			"ExceptBody":  " bad; ",
+			"ElseBody":    " good; ",
+			"FinallyBody": " over; ",
 		}}},
 	// for/do/done
 	{"for\nx\nin\na\nb c; do echo do; done",
@@ -171,6 +189,14 @@ var goodCases = []struct {
 			"Type": List,
 			"List": ast{"Array", fs{
 				"Compounds": []string{"4", "5", "6", "7"}}}}},
+	)},
+	// Semicolons in lists
+	{"a [a b;c;d;]", a(
+		ast{"Compound/Indexing/Primary", fs{
+			"Type": List,
+			"List": ast{"Array", fs{
+				"Compounds":  []string{"a", "b", "c", "d"},
+				"Semicolons": []int{2, 3, 4}}}}},
 	)},
 	// Map
 	{"a [&k=v] [ &k=v] [&k=v ] [ &k=v ] [\n&a=b &c=d \n &e=f\n\n]", a(
