@@ -211,6 +211,8 @@ var evalTests = []struct {
 	{`pprint [foo bar]`, noout, more{wantBytesOut: []byte("[\n foo\n bar\n]\n")}},
 
 	{`print "a\nb" | slurp`, strs("a\nb"), nomore},
+	{`print "a\nb" | from-lines`, strs("a", "b"), nomore},
+	{`print "a\nb\n" | from-lines`, strs("a", "b"), nomore},
 	{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`, []Value{
 		NewMap(map[Value]Value{
 			String("k"): String("v"),

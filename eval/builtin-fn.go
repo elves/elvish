@@ -71,6 +71,7 @@ func init() {
 
 		// Bytes to value
 		&BuiltinFn{"slurp", WrapFn(slurp)},
+		&BuiltinFn{"from-lines", WrapFn(fromLines)},
 		&BuiltinFn{"from-json", WrapFn(fromJSON)},
 
 		// Value to bytes
@@ -501,6 +502,13 @@ func slurp(ec *EvalCtx) {
 	}
 	maybeThrow(err)
 	out <- String(string(all))
+}
+
+func fromLines(ec *EvalCtx) {
+	in := ec.ports[0].File
+	out := ec.ports[1].Chan
+
+	linesToChan(in, out)
 }
 
 func toLines(ec *EvalCtx, iterate func(func(Value))) {

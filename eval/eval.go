@@ -415,19 +415,7 @@ func (ec *EvalCtx) IterateInputs(f func(Value)) {
 
 	w.Add(2)
 	go func() {
-		filein := bufio.NewReader(ec.ports[0].File)
-		for {
-			line, err := filein.ReadString('\n')
-			if line != "" {
-				inputs <- String(strings.TrimSuffix(line, "\n"))
-			}
-			if err != nil {
-				if err != io.EOF {
-					Logger.Println("error on pipe:", err)
-				}
-				break
-			}
-		}
+		linesToChan(ec.ports[0].File, inputs)
 		w.Done()
 	}()
 	go func() {
@@ -443,6 +431,22 @@ func (ec *EvalCtx) IterateInputs(f func(Value)) {
 
 	for v := range inputs {
 		f(v)
+	}
+}
+
+func linesToChan(r io.Reader, ch chan<- Value) {
+	filein := bufio.NewReader(r)
+	for {
+		line, err := filein.ReadString('\n')
+		if line != "" {
+			ch <- String(strings.TrimSuffix(line, "\n"))
+		}
+		if err != nil {
+			if err != io.EOF {
+				Logger.Println("error on reading:", err)
+			}
+			break
+		}
 	}
 }
 
