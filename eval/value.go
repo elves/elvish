@@ -98,40 +98,11 @@ type FnValue interface {
 }
 
 func mustFn(v Value) Fn {
-	caller, ok := getFn(v)
+	fn, ok := v.(Fn)
 	if !ok {
 		throw(fmt.Errorf("a %s is not callable", v.Kind()))
 	}
-	return caller
-}
-
-// getFn adapts a Value to a Fn if there is an adapter. It adapts an Indexer if
-// adaptIndexer is true.
-func getFn(v Value) (Fn, bool) {
-	if caller, ok := v.(Fn); ok {
-		return caller, true
-	}
-	if indexer, ok := getIndexer(v, nil); ok {
-		return IndexerAsFn{indexer}, true
-	}
-	return nil, false
-}
-
-// IndexerAsFn adapts an Indexer to a Fn.
-type IndexerAsFn struct {
-	Indexer
-}
-
-var ErrIndexerOpts = errors.New("option not accepted")
-
-func (ic IndexerAsFn) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
-	if len(opts) > 0 {
-		throw(ErrIndexerOpts)
-	}
-	results := ic.Indexer.Index(args)
-	for _, v := range results {
-		ec.ports[1].Chan <- v
-	}
+	return fn
 }
 
 // Indexer is anything that can be indexed by Values and yields Values.
