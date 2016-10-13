@@ -218,7 +218,7 @@ var evalTests = []struct {
 		String("foo"),
 	}, nomore},
 
-	{`put "l\norem" ipsum | into-lines`, noout,
+	{`put "l\norem" ipsum | to-lines`, noout,
 		more{wantBytesOut: []byte("l\norem\nipsum\n")}},
 	{`put [&k=v &a=[1 2]] foo | to-json`, noout,
 		more{wantBytesOut: []byte(`{"a":["1","2"],"k":"v"}
