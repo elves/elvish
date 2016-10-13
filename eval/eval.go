@@ -45,10 +45,10 @@ type Evaler struct {
 }
 
 // EvalCtx maintains an Evaler along with its runtime context. After creation
-// an EvalCtx is not modified, and new instances are created when needed.
+// an EvalCtx is seldom modified, and new instances are created when needed.
 type EvalCtx struct {
 	*Evaler
-	name, text, context string
+	name, srcName, src string
 
 	local, up   Namespace
 	ports       []*Port
@@ -86,24 +86,24 @@ const (
 // NewTopEvalCtx creates a top-level evalCtx.
 func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
 	return &EvalCtx{
-		ev,
-		name, text, "top",
+		ev, "top",
+		name, text,
 		ev.Global, Namespace{},
 		ports, nil, true,
 		0, len(text), nil,
 	}
 }
 
-// fork returns a modified copy of ec. The ports are forked, and the context is
+// fork returns a modified copy of ec. The ports are forked, and the name is
 // changed to the given value. Other fields are copied shallowly.
-func (ec *EvalCtx) fork(newContext string) *EvalCtx {
+func (ec *EvalCtx) fork(name string) *EvalCtx {
 	newPorts := make([]*Port, len(ec.ports))
 	for i, p := range ec.ports {
 		newPorts[i] = p.Fork()
 	}
 	return &EvalCtx{
-		ec.Evaler,
-		ec.name, ec.text, newContext,
+		ec.Evaler, name,
+		ec.srcName, ec.src,
 		ec.local, ec.up,
 		newPorts, ec.positionals, true,
 		ec.begin, ec.end, ec.traceback,
@@ -305,7 +305,7 @@ func (ec *EvalCtx) makeTracebackError(e error) *util.TracebackError {
 
 func (ec *EvalCtx) addTraceback() *util.Traceback {
 	return &util.Traceback{
-		Name: ec.name, Source: ec.text,
+		Name: ec.srcName, Source: ec.src,
 		Begin: ec.begin, End: ec.end, Next: ec.traceback,
 	}
 }

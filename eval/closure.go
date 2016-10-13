@@ -74,6 +74,6 @@ func (c *Closure) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 	ec.traceback = ec.addTraceback()
 
-	ec.name, ec.text = c.SourceName, c.Source
+	ec.srcName, ec.src = c.SourceName, c.Source
 	c.Op.Exec(ec)
 }

@@ -197,8 +197,8 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 
 	// TODO(xiaq): Should handle failures when evaluting the module
 	newEc := &EvalCtx{
-		ec.Evaler,
-		filename, source, "module " + modname,
+		ec.Evaler, "module " + modname,
+		filename, source,
 		local, Namespace{},
 		ec.ports, nil, true,
 		0, len(source), ec.addTraceback(),
