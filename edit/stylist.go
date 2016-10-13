@@ -96,8 +96,8 @@ func goodFormHead(head string, ed *Editor) bool {
 		// XXX don't stat twice
 		return util.IsExecutable(head) || isDir(head)
 	} else {
-		splice, ns, name := eval.ParseVariable(head)
-		if !splice {
+		explode, ns, name := eval.ParseVariable(head)
+		if !explode {
 			switch ns {
 			case "":
 				if eval.Builtin()[eval.FnPrefix+name] != nil || ed.evaler.Global[eval.FnPrefix+name] != nil {

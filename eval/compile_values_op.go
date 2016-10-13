@@ -227,18 +227,18 @@ func literalStr(text string) ValuesOpFunc {
 }
 
 func variable(qname string) ValuesOpFunc {
-	splice, ns, name := ParseAndFixVariable(qname)
+	explode, ns, name := ParseAndFixVariable(qname)
 	return func(ec *EvalCtx) []Value {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
 			throwf("variable $%s not found", qname)
 		}
 		value := variable.Get()
-		if splice {
+		if explode {
 			iterator, ok := value.(Iterator)
 			if !ok {
 				// Use qname[1:] to skip the leading "@"
-				throwf("variable $%s (kind %s) cannot be spliced", qname[1:], value.Kind())
+				throwf("variable $%s (kind %s) cannot be exploded", qname[1:], value.Kind())
 			}
 			return collectFromIterator(iterator)
 		}
@@ -388,14 +388,14 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		argNames = make([]string, len(n.List.Compounds))
 		for i, arg := range n.List.Compounds {
 			qname := mustString(cp, arg, "expect string")
-			splice, ns, name := ParseAndFixVariable(qname)
+			explode, ns, name := ParseAndFixVariable(qname)
 			if ns != "" {
 				cp.errorpf(arg.Begin(), arg.End(), "must be unqualified")
 			}
 			if name == "" {
 				cp.errorpf(arg.Begin(), arg.End(), "argument name must not be empty")
 			}
-			if splice {
+			if explode {
 				if i != len(n.List.Compounds)-1 {
 					cp.errorpf(arg.Begin(), arg.End(), "only the last argument may have @")
 				}

@@ -62,8 +62,8 @@ func (s String) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 func resolve(s string, ec *EvalCtx) FnValue {
 	// Try variable
-	splice, ns, name := ParseAndFixVariable(string(s))
-	if !splice {
+	explode, ns, name := ParseAndFixVariable(string(s))
+	if !explode {
 		if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
 			if caller, ok := v.Get().(FnValue); ok {
 				return caller

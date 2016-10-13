@@ -33,25 +33,25 @@ func mustGetHome(uname string) string {
 }
 
 // ParseAndFixVariable parses a variable name. It "fixes" $@ to $@args.
-func ParseAndFixVariable(qname string) (splice bool, ns string, name string) {
-	splice, ns, name = ParseVariable(qname)
-	if splice && ns == "" && name == "" {
+func ParseAndFixVariable(qname string) (explode bool, ns string, name string) {
+	explode, ns, name = ParseVariable(qname)
+	if explode && ns == "" && name == "" {
 		name = "args"
 	}
-	return splice, ns, name
+	return explode, ns, name
 }
 
-func ParseVariable(text string) (splice bool, ns string, name string) {
-	splicePart, qname := ParseVariableSplice(text)
+func ParseVariable(text string) (explode bool, ns string, name string) {
+	explodePart, qname := ParseVariableSplice(text)
 	nsPart, name := ParseVariableQName(qname)
 	ns = nsPart
 	if len(ns) > 0 {
 		ns = ns[:len(ns)-1]
 	}
-	return splicePart != "", ns, name
+	return explodePart != "", ns, name
 }
 
-func ParseVariableSplice(text string) (splice, qname string) {
+func ParseVariableSplice(text string) (explode, qname string) {
 	if strings.HasPrefix(text, "@") {
 		return "@", text[1:]
 	}
@@ -66,9 +66,9 @@ func ParseVariableQName(qname string) (ns, name string) {
 	return qname[:i+1], qname[i+1:]
 }
 
-func MakeVariableName(splice bool, ns string, name string) string {
+func MakeVariableName(explode bool, ns string, name string) string {
 	prefix := ""
-	if splice {
+	if explode {
 		prefix = "@"
 	}
 	if ns != "" {

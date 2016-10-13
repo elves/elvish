@@ -37,7 +37,7 @@ func complVariable(n parse.Node, ed *Editor) (int, int, []*candidate) {
 	}
 
 	// XXX Repeats eval.ParseVariable.
-	splice, qname := eval.ParseVariableSplice(primary.Value)
+	explode, qname := eval.ParseVariableSplice(primary.Value)
 	nsPart, nameHead := eval.ParseVariableQName(qname)
 	ns := nsPart
 	if len(ns) > 0 {
@@ -63,7 +63,7 @@ func complVariable(n parse.Node, ed *Editor) (int, int, []*candidate) {
 	cands := make([]*candidate, len(varnames))
 	// Build candidates.
 	for i, varname := range varnames {
-		cands[i] = &candidate{text: "$" + splice + varname}
+		cands[i] = &candidate{text: "$" + explode + varname}
 	}
 	return begin, end, cands
 }
@@ -135,8 +135,8 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 	for special := range isBuiltinSpecial {
 		got(special)
 	}
-	splice, ns, _ := eval.ParseVariable(head)
-	if !splice {
+	explode, ns, _ := eval.ParseVariable(head)
+	if !explode {
 		iterateVariables(ed.evaler, ns, func(varname string) {
 			if strings.HasPrefix(varname, eval.FnPrefix) {
 				got(eval.MakeVariableName(false, ns, varname[len(eval.FnPrefix):]))

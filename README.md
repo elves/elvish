@@ -75,7 +75,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
   ![bang mode](https://raw.githubusercontent.com/elves/images/master/bang.png)
 
-* Lists look like `[a b c]`, and maps look like `[&key1=value1 &key2=value2]`. Unlike other shells, a list never expands to multiple words, unless you explicitly splice it by prefixing the variable name with `$@`:
+* Lists look like `[a b c]`, and maps look like `[&key1=value1 &key2=value2]`. Unlike other shells, a list never expands to multiple words, unless you explicitly explode it by prefixing the variable name with `@`:
   ```sh
   ~> li=[1 2 3]
   ~> for x in $li; do echo $x; done
