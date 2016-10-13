@@ -73,7 +73,7 @@ func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
 	chanOut := make(chan eval.Value)
 
 	return rout, chanOut, []*eval.Port{
-		eval.NullClosedInput,
+		eval.DevNullClosedChan,
 		{File: out, CloseFile: true, Chan: chanOut, CloseChan: true},
 		{File: out, Chan: chanOut},
 	}, nil
@@ -82,7 +82,7 @@ func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
 // callFnAsPrompt calls a Fn with closed input, captures its output and convert
 // the output to a slice of *styled's.
 func callFnForPrompt(ed *Editor, fn eval.Fn) []*styled {
-	ports := []*eval.Port{eval.NullClosedInput, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
+	ports := []*eval.Port{eval.DevNullClosedChan, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor prompt]", "", ports)
@@ -104,7 +104,7 @@ func callFnForPrompt(ed *Editor, fn eval.Fn) []*styled {
 }
 
 func callFnForCandidates(fn eval.FnValue, ev *eval.Evaler, args []string) ([]*candidate, error) {
-	ports := []*eval.Port{eval.NullClosedInput, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
+	ports := []*eval.Port{eval.DevNullClosedChan, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
 
 	argValues := make([]eval.Value, len(args))
 	for i, arg := range args {

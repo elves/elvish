@@ -606,7 +606,7 @@ func each(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 		// NOTE We don't have the position range of the closure in the source.
 		// Ideally, it should be kept in the Closure itself.
 		newec := ec.fork("closure of each")
-		newec.ports[0] = NullClosedInput
+		newec.ports[0] = DevNullClosedChan
 		ex := newec.PCall(f, []Value{v}, NoOpts)
 		ClosePorts(newec.ports)
 
@@ -636,7 +636,7 @@ func peach(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 			// NOTE We don't have the position range of the closure in the source.
 			// Ideally, it should be kept in the Closure itself.
 			newec := ec.fork("closure of each")
-			newec.ports[0] = NullClosedInput
+			newec.ports[0] = DevNullClosedChan
 			ex := newec.PCall(f, []Value{v}, NoOpts)
 			ClosePorts(newec.ports)
 

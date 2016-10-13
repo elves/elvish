@@ -345,9 +345,9 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 		}()
 
 		ports := []*Port{
-			{File: os.Stdin},
+			{File: os.Stdin, Chan: ClosedChan},
 			{File: pw, Chan: outCh},
-			{File: os.Stderr},
+			{File: os.Stderr, Chan: BlackholeChan},
 		}
 
 		ret, ex = ev.eval(op, ports, name, text)

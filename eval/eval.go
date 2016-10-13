@@ -167,7 +167,7 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 	ports := []*Port{
 		{File: os.Stdin, Chan: inCh},
 		{File: os.Stdout, Chan: outCh},
-		{File: os.Stderr},
+		{File: os.Stderr, Chan: BlackholeChan},
 	}
 
 	signal.Ignore(syscall.SIGTTIN)

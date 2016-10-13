@@ -537,13 +537,13 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 					throwf("failed to open file %s: %s", src.Repr(NoPretty), err)
 				}
 				ec.ports[dst] = &Port{
-					File: f, Chan: make(chan Value),
-					CloseFile: true, CloseChan: true,
+					File: f, Chan: BlackholeChan,
+					CloseFile: true,
 				}
 			case File:
 				ec.ports[dst] = &Port{
-					File: src.inner, Chan: make(chan Value),
-					CloseFile: false, CloseChan: true,
+					File: src.inner, Chan: BlackholeChan,
+					CloseFile: false,
 				}
 			case Pipe:
 				var f *os.File
@@ -556,8 +556,8 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 					cp.errorf("can only use < or > with pipes")
 				}
 				ec.ports[dst] = &Port{
-					File: f, Chan: make(chan Value),
-					CloseFile: false, CloseChan: true,
+					File: f, Chan: BlackholeChan,
+					CloseFile: false,
 				}
 			default:
 				srcMust.error("string or file", "%s", src.Kind())

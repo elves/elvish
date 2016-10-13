@@ -38,18 +38,29 @@ func ClosePorts(ports []*Port) {
 }
 
 var (
-	DevNull         *os.File
-	ClosedChan      chan Value
-	NullClosedInput *Port
+	// ClosedChan is a closed channel, suitable for use as placeholder channel input.
+	ClosedChan = make(chan Value)
+	// BlackholeChan is channel writes onto which disappear, suitable for use as
+	// placeholder channel output.
+	BlackholeChan = make(chan Value)
+	// DevNull is /dev/null.
+	DevNull *os.File
+	// DevNullClosedInput is a port made up from DevNull and ClosedChan,
+	// suitable as placeholder input port.
+	DevNullClosedChan *Port
 )
 
 func init() {
+	close(ClosedChan)
+	go func() {
+		for range BlackholeChan {
+		}
+	}()
+
 	var err error
 	DevNull, err = os.Open("/dev/null")
 	if err != nil {
 		os.Stderr.WriteString("cannot open /dev/null, shell might not function normally")
 	}
-	ClosedChan = make(chan Value)
-	close(ClosedChan)
-	NullClosedInput = &Port{File: DevNull, Chan: ClosedChan}
+	DevNullClosedChan = &Port{File: DevNull, Chan: ClosedChan}
 }
