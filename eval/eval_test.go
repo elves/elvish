@@ -270,7 +270,7 @@ var evalTests = []struct {
 
 	{`ord a`, strs("0x61"), nomore},
 	{`base 16 42 233`, strs("2a", "e9"), nomore},
-	{`wcswidth 你好`, strs("2"), nomore},
+	{`wcswidth 你好`, strs("4"), nomore},
 }
 
 func strs(ss ...string) []Value {
