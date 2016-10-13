@@ -1,13 +1,17 @@
 PKGS := $(shell go list ./... | grep -v /vendor/)
 PKG_COVERS := $(shell go list ./... | grep -v /vendor/ | grep "^github.com/elves/elvish/" | sed "s|^github.com/elves/elvish/|cover/|")
+COVER_MODE := count
 
 FIRST_GOPATH=$(shell go env GOPATH | cut -d: -f1)
 STUB := $(FIRST_GOPATH)/bin/elvish-stub
 
-all: get stub test
+default: get stub test
 
 get:
 	go get .
+
+generate:
+	go generate ./...
 
 stub: $(STUB)
 
@@ -22,17 +26,24 @@ test: stub
 
 cover/%: %
 	mkdir -p cover
-	go test -coverprofile=$@ ./$<
+	go test -coverprofile=$@ -covermode=$(COVER_MODE) ./$<
 
-cover: $(PKG_COVERS)
-	echo $(PKG_COVERS)
+cover/all: $(PKG_COVERS)
+	echo mode: $(COVER_MODE) > $@
+	for f in $(PKG_COVERS); do test -f $$f && sed 1d $$f >> $@; done
 
-generate:
-	go generate ./...
+goveralls: cover/all
+	go get -u github.com/mattn/goveralls
+	$(FIRST_GOPATH)/bin/goveralls -coverprofile=cover/all -service=travis-ci
 
-# The target to run on Travis-CI.
-travis: all
+upload: get stub
 	tar cfz elvish.tar.gz -C $(FIRST_GOPATH)/bin elvish elvish-stub
-	test "$(TRAVIS_GO_VERSION)" = 1.7 -a "$(TRAVIS_PULL_REQUEST)" = false && test -n "$(TRAVIS_TAG)" -o "$(TRAVIS_BRANCH)" = master && curl http://ul.elvish.io:6060/ -F name=elvish-$(TRAVIS_OS_NAME).tar.gz -F token=$$UPLOAD_TOKEN -F file=@./elvish.tar.gz || echo "not uploading"
+	test "$(TRAVIS_GO_VERSION)" = 1.7 -a "$(TRAVIS_PULL_REQUEST)" = false && \
+		test -n "$(TRAVIS_TAG)" -o "$(TRAVIS_BRANCH)" = master && \
+		curl http://ul.elvish.io:6060/ -F name=elvish-$(TRAVIS_OS_NAME).tar.gz \
+			-F token=$$UPLOAD_TOKEN -F file=@./elvish.tar.gz\
+		|| echo "not uploading"
 
-.PHONY: all get stub test cover generate travis
+travis: test goveralls upload
+
+.PHONY: default get generate stub test goveralls upload travis
