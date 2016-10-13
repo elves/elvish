@@ -53,23 +53,37 @@ func (b *BuiltinFn) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 func init() {
 	// Needed to work around init loop.
 	builtinFns = []*BuiltinFn{
+		// Fundamental predicates
 		&BuiltinFn{"true", nop},
 		&BuiltinFn{"false", falseFn},
 
+		// Introspection
+		&BuiltinFn{"kind-of", kindOf},
+
+		// Value output
+		&BuiltinFn{"put", put},
+		&BuiltinFn{"unpack", WrapFn(unpack)},
+
+		// Bytes output
 		&BuiltinFn{"print", WrapFn(print, OptSpec{"sep", String(" ")})},
 		&BuiltinFn{"echo", WrapFn(echo, OptSpec{"sep", String(" ")})},
 		&BuiltinFn{"pprint", pprint},
 
+		// Bytes to value
 		&BuiltinFn{"slurp", WrapFn(slurp)},
+		&BuiltinFn{"from-json", WrapFn(fromJSON)},
+
+		// Value to bytes
 		&BuiltinFn{"into-lines", WrapFn(intoLines)},
+		&BuiltinFn{"to-json", WrapFn(toJSON)},
 
-		&BuiltinFn{"put", put},
-		&BuiltinFn{"unpack", WrapFn(unpack)},
-
+		// String
 		&BuiltinFn{"joins", WrapFn(joins)},
 		&BuiltinFn{"splits", WrapFn(splits, OptSpec{"sep", String("")})},
 		&BuiltinFn{"has-prefix", WrapFn(hasPrefix)},
 		&BuiltinFn{"has-suffix", WrapFn(hasSuffix)},
+
+		// String comparison
 		&BuiltinFn{"<s",
 			wrapStrCompare(func(a, b string) bool { return a < b })},
 		&BuiltinFn{"<=s",
@@ -83,40 +97,55 @@ func init() {
 		&BuiltinFn{">=s",
 			wrapStrCompare(func(a, b string) bool { return a >= b })},
 
-		&BuiltinFn{"to-json", WrapFn(toJSON)},
-		&BuiltinFn{"from-json", WrapFn(fromJSON)},
-
-		&BuiltinFn{"kind-of", kindOf},
-
+		// Exception and control
 		&BuiltinFn{"fail", WrapFn(fail)},
 		&BuiltinFn{"multi-error", WrapFn(multiErrorFn)},
 		&BuiltinFn{"return", WrapFn(returnFn)},
 		&BuiltinFn{"break", WrapFn(breakFn)},
 		&BuiltinFn{"continue", WrapFn(continueFn)},
 
+		// Functional primitives
+		&BuiltinFn{"constantly", constantly},
 		&BuiltinFn{"each", WrapFn(each)},
 		&BuiltinFn{"peach", WrapFn(peach)},
-		&BuiltinFn{"eawk", WrapFn(eawk)},
-		&BuiltinFn{"constantly", constantly},
 
+		// Sequence primitives
+		&BuiltinFn{"take", WrapFn(take)},
+		&BuiltinFn{"range", rangeFn},
+		&BuiltinFn{"count", count},
+
+		// eawk
+		&BuiltinFn{"eawk", WrapFn(eawk)},
+
+		// Directory
 		&BuiltinFn{"cd", cd},
 		&BuiltinFn{"dirs", WrapFn(dirs)},
 		&BuiltinFn{"history", WrapFn(history)},
 
+		// Path
 		&BuiltinFn{"path-abs", wrapStringToStringError(filepath.Abs)},
 		&BuiltinFn{"path-base", wrapStringToString(filepath.Base)},
 		&BuiltinFn{"path-clean", wrapStringToString(filepath.Clean)},
 		&BuiltinFn{"path-dir", wrapStringToString(filepath.Dir)},
 		&BuiltinFn{"path-ext", wrapStringToString(filepath.Ext)},
 		&BuiltinFn{"eval-symlinks", wrapStringToStringError(filepath.EvalSymlinks)},
+		&BuiltinFn{"tilde-abbr", WrapFn(tildeAbbr)},
 
 		&BuiltinFn{"source", WrapFn(source)},
 
+		// Arithmetics
 		&BuiltinFn{"+", WrapFn(plus)},
 		&BuiltinFn{"-", WrapFn(minus)},
 		&BuiltinFn{"*", WrapFn(times)},
 		&BuiltinFn{"/", slash},
 		&BuiltinFn{"^", WrapFn(pow)},
+		&BuiltinFn{"%", WrapFn(mod)},
+
+		// Random
+		&BuiltinFn{"rand", WrapFn(randFn)},
+		&BuiltinFn{"randint", WrapFn(randint)},
+
+		// Numerical comparison
 		&BuiltinFn{"<",
 			wrapNumCompare(func(a, b float64) bool { return a < b })},
 		&BuiltinFn{"<=",
@@ -129,30 +158,22 @@ func init() {
 			wrapNumCompare(func(a, b float64) bool { return a > b })},
 		&BuiltinFn{">=",
 			wrapNumCompare(func(a, b float64) bool { return a >= b })},
-		&BuiltinFn{"%", WrapFn(mod)},
-		&BuiltinFn{"rand", WrapFn(randFn)},
-		&BuiltinFn{"randint", WrapFn(randint)},
 
-		&BuiltinFn{"ord", WrapFn(ord)},
-		&BuiltinFn{"base", WrapFn(base)},
-
-		&BuiltinFn{"range", rangeFn},
-
-		&BuiltinFn{"bool", WrapFn(boolFn)},
+		// Generic identity and equality
 		&BuiltinFn{"is", is},
 		&BuiltinFn{"eq", eq},
 
-		&BuiltinFn{"resolve", WrapFn(resolveFn)},
-
-		&BuiltinFn{"take", WrapFn(take)},
-
-		&BuiltinFn{"count", count},
+		// String operations
+		&BuiltinFn{"ord", WrapFn(ord)},
+		&BuiltinFn{"base", WrapFn(base)},
 		&BuiltinFn{"wcswidth", WrapFn(wcswidth)},
 
-		&BuiltinFn{"fg", WrapFn(fg)},
+		&BuiltinFn{"resolve", WrapFn(resolveFn)},
 
-		&BuiltinFn{"tilde-abbr", WrapFn(tildeAbbr)},
+		// bool
+		&BuiltinFn{"bool", WrapFn(boolFn)},
 
+		// File and pipe
 		&BuiltinFn{"fopen", WrapFn(fopen)},
 		&BuiltinFn{"fclose", WrapFn(fclose)},
 		&BuiltinFn{"pipe", WrapFn(pipe)},
@@ -160,6 +181,9 @@ func init() {
 		&BuiltinFn{"pwclose", WrapFn(pwclose)},
 
 		&BuiltinFn{"esleep", WrapFn(sleep)},
+
+		&BuiltinFn{"fg", WrapFn(fg)},
+
 		&BuiltinFn{"exec", WrapFn(exec)},
 		&BuiltinFn{"exit", WrapFn(exit)},
 

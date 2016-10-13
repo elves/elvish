@@ -27,6 +27,7 @@ type more struct {
 	wantFalse    bool
 }
 
+var noout = []Value{}
 var nomore more
 
 var evalTests = []struct {
@@ -84,7 +85,7 @@ var evalTests = []struct {
 	{"for x in tempora mores; do put 'O '$x; done",
 		strs("O tempora", "O mores"), nomore},
 	// break
-	{"for x in a; do break; else put $x; done", strs(), nomore},
+	{"for x in a; do break; else put $x; done", noout, nomore},
 	// else
 	{"for x in a; do put $x; else put $x; done", strs("a"), nomore},
 	// continue
@@ -93,18 +94,18 @@ var evalTests = []struct {
 	{"begin; put lorem; put ipsum; end", strs("lorem", "ipsum"), nomore},
 
 	// Predicates.
-	{"false", strs(), more{wantFalse: true}},
-	{"true | false | true", strs(), more{wantFalse: true}},
+	{"false", noout, more{wantFalse: true}},
+	{"true | false | true", noout, more{wantFalse: true}},
 
 	// Redirections.
-	{"f=`mktemp elvXXXXXX`; echo 233 > $f; cat < $f; rm $f", strs(),
+	{"f=`mktemp elvXXXXXX`; echo 233 > $f; cat < $f; rm $f", noout,
 		more{wantBytesOut: []byte("233\n")}},
 	// Redirections from File object.
 	{`fname=(mktemp elvXXXXXX); echo haha > $fname;
-	f=(fopen $fname); cat <$f; fclose $f; rm $fname`, strs(),
+	f=(fopen $fname); cat <$f; fclose $f; rm $fname`, noout,
 		more{wantBytesOut: []byte("haha\n")}},
 	// Redirections from Pipe object.
-	{`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`, strs(),
+	{`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`, noout,
 		more{wantBytesOut: []byte("haha\n")}},
 
 	// Compounding.
@@ -145,7 +146,7 @@ var evalTests = []struct {
 
 	// Closure
 	// Basics
-	{"[]{ }", strs(), nomore},
+	{"[]{ }", noout, nomore},
 	{"[x]{put $x} foo", strs("foo"), nomore},
 	// Variable capture
 	{"x=lorem; []{x=ipsum}; put $x", strs("ipsum"), nomore},
@@ -194,43 +195,82 @@ var evalTests = []struct {
 	// TODO: Test module namespace
 
 	// Builtin functions
-	// Arithmetics
-	// TODO test more edge cases
-	{"+ 233100 233", strs("233333"), nomore},
-	{"- 233333 233100", strs("233"), nomore},
-	{"* 353 661", strs("233333"), nomore},
-	{"/ 233333 353", strs("661"), nomore},
-	{"/ 1 0", strs("+Inf"), nomore},
-	// Equality test builtins.
-	{`put ?(== 1.0 1) ?(==s 1.0 1) ?(is 1 1) ?(is [] []) ?(eq [] []) ?(eq [&] [&])`,
-		[]Value{
-			Bool(true), Bool(false), Bool(true), Bool(false), Bool(true), Bool(true),
-		}, nomore},
+	// -----------------
+
+	{`true`, noout, nomore},
+	{`false`, noout, more{wantFalse: true}},
+
 	{"kind-of bare 'str' [] [&] []{ }",
 		strs("string", "string", "list", "map", "fn"), nomore},
-	/*
-		{"put ?(fail failed)", []Value{
-			Error{&util.PosError{6, 17, errors.New("failed")}},
-		}, nomore},
-	*/
-	{`put "l\norem" ipsum | into-lines`, strs(),
-		more{wantBytesOut: []byte("l\norem\nipsum\n")}},
-	{`echo "1\n233" | each put`, strs("1", "233"), nomore},
-	{"unpack [a b c]", strs("a", "b", "c"), nomore},
+
+	{`put foo bar`, strs("foo", "bar"), nomore},
+	{`unpack [foo bar]`, strs("foo", "bar"), nomore},
+
+	{`print [foo bar]`, noout, more{wantBytesOut: []byte("[foo bar]")}},
+	{`echo [foo bar]`, noout, more{wantBytesOut: []byte("[foo bar]\n")}},
+	{`pprint [foo bar]`, noout, more{wantBytesOut: []byte("[\n foo\n bar\n]\n")}},
+
+	{`print "a\nb" | slurp`, strs("a\nb"), nomore},
 	{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`, []Value{
 		NewMap(map[Value]Value{
 			String("k"): String("v"),
 			String("a"): NewList(strs("1", "2")...)}),
 		String("foo"),
 	}, nomore},
-	{"base 16 42 233", strs("2a", "e9"), nomore},
 
-	// eawk
+	{`put "l\norem" ipsum | into-lines`, noout,
+		more{wantBytesOut: []byte("l\norem\nipsum\n")}},
+	{`put [&k=v &a=[1 2]] foo | to-json`, noout,
+		more{wantBytesOut: []byte(`{"a":["1","2"],"k":"v"}
+"foo"
+`)}},
+
+	{`joins : [/usr /bin /tmp]`, strs("/usr:/bin:/tmp"), nomore},
+	{`splits &sep=: /usr:/bin:/tmp`, strs("/usr", "/bin", "/tmp"), nomore},
+
+	{`==s haha haha`, noout, nomore},
+	{`==s 10 10.0`, noout, more{wantFalse: true}},
+	{`<s a b`, noout, nomore},
+	{`<s 2 10`, noout, more{wantFalse: true}},
+
+	{`fail haha`, noout, more{wantError: errAny}},
+	{`return`, noout, more{wantError: Return}},
+
+	{`f=(constantly foo); $f; $f`, strs("foo", "foo"), nomore},
+	{`put 1 233 | each put`, strs("1", "233"), nomore},
+	{`echo "1\n233" | each put`, strs("1", "233"), nomore},
+	{`each put [1 233]`, strs("1", "233"), nomore},
+	// TODO: test peach
+
+	{`range 100 | take 2`, strs("0", "1"), nomore},
+	{`range 100 | count`, strs("100"), nomore},
+	{`count [(range 100)]`, strs("100"), nomore},
+
 	{`echo "  ax  by cz  \n11\t22 33" | eawk { put $args[-1] }`,
 		strs("cz", "33"), nomore},
-	// Some builtins also take input from argument.
-	{`each { put $0 } [x y z]`, strs("x", "y", "z"), nomore},
-	{`count [1 2 3]`, strs("3"), nomore},
+
+	{`path-base a/b/c.png`, strs("c.png"), nomore},
+
+	// TODO test more edge cases
+	{"+ 233100 233", strs("233333"), nomore},
+	{"- 233333 233100", strs("233"), nomore},
+	{"* 353 661", strs("233333"), nomore},
+	{"/ 233333 353", strs("661"), nomore},
+	{"/ 1 0", strs("+Inf"), nomore},
+	{"^ 16 2", strs("256"), nomore},
+	{"% 23 7", strs("2"), nomore},
+
+	{`== 1 1.0`, noout, nomore},
+	{`== a a`, noout, more{wantError: errAny}},
+
+	{`is 1 1`, noout, nomore},
+	{`is [] []`, noout, more{wantFalse: true}},
+	{`eq 1 1`, noout, nomore},
+	{`eq [] []`, noout, nomore},
+
+	{`ord a`, strs("0x61"), nomore},
+	{`base 16 42 233`, strs("2a", "e9"), nomore},
+	{`wcswidth 你好`, strs("2"), nomore},
 }
 
 func strs(ss ...string) []Value {
