@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"unicode"
 	"unicode/utf8"
 
 	"github.com/elves/elvish/sys"
@@ -117,8 +116,8 @@ func (b *buffer) write(r rune, style string) {
 	if r == '\n' {
 		b.newline()
 		return
-	} else if !unicode.IsPrint(r) {
-		// BUG(xiaq): buffer.write drops unprintable runes silently
+	} else if r < 0x20 || r == 0x7f {
+		// BUG(xiaq): buffer.write drops ASCII control characters silently
 		return
 	}
 	wd := util.Wcwidth(r)
