@@ -2,6 +2,7 @@
 
 [![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
 [![Build Status on Travis](https://travis-ci.org/elves/elvish.svg?branch=master)](https://travis-ci.org/elves/elvish)
+[![Coverage Status](https://coveralls.io/repos/github/elves/elvish/badge.svg?branch=master)](https://coveralls.io/github/elves/elvish?branch=master)
 
 This project aims to explore the potentials of the Unix shell. It is a work in
 progress; things will change without warning. The [issues list](https://github.com/elves/elvish/issues) contains many things I'm working on.
