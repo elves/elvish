@@ -12,8 +12,8 @@ import (
 )
 
 // Parse parses elvish source.
-func Parse(src string) (*Chunk, error) {
-	ps := &parser{src, 0, 0, []map[rune]int{{}}, 0, nil}
+func Parse(srcname, src string) (*Chunk, error) {
+	ps := &parser{srcname, src, 0, 0, []map[rune]int{{}}, 0, nil}
 	bn := parseChunk(ps)
 	if ps.pos != len(src) {
 		ps.error(errUnexpectedRune)

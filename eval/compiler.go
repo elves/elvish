@@ -36,7 +36,7 @@ func (cp *compiler) compiling(n parse.Node) {
 }
 
 func (cp *compiler) errorpf(begin, end int, format string, args ...interface{}) {
-	throw(&util.PosError{begin, end, fmt.Errorf(format, args...)})
+	throw(&util.PosError{fmt.Errorf(format, args...), "Compile error", util.Traceback{cp.name, cp.text, begin, end, nil}})
 }
 
 func (cp *compiler) errorf(format string, args ...interface{}) {

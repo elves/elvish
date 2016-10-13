@@ -189,7 +189,7 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		}
 	}
 
-	n, err := parse.Parse(source)
+	n, err := parse.Parse(filename, source)
 	maybeThrow(err)
 
 	// Make an empty namespace.

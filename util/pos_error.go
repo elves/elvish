@@ -7,23 +7,22 @@ import (
 
 // PosError is an error associated with a position range.
 type PosError struct {
-	Begin int
-	End   int
-	Err   error
+	Err  error
+	Type string
+	Traceback
 }
 
 func (pe *PosError) Error() string {
-	return fmt.Sprintf("%d-%d: %s", pe.Begin, pe.End, pe.msg())
+	return fmt.Sprintf("%d-%d: %s", pe.Traceback.Begin, pe.Traceback.End, pe.msg())
 }
 
 // Pprint pretty-prints a PosError.
-func (pe *PosError) Pprint(srcname, errtype, src string) string {
+func (pe *PosError) Pprint() string {
 	buf := new(bytes.Buffer)
 	// Error message
-	fmt.Fprintf(buf, "%s: \033[31;1m%s\033[m\n", errtype, pe.msg())
+	fmt.Fprintf(buf, "%s: \033[31;1m%s\033[m\n", pe.Type, pe.msg())
 	// Position
-	te := Traceback{srcname, src, pe.Begin, pe.End, nil}
-	te.Pprint(buf, "  ")
+	pe.Traceback.Pprint(buf, "  ")
 
 	return buf.String()
 }

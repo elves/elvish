@@ -139,20 +139,20 @@ func source(ev *eval.Evaler, fname string, notexistok bool) bool {
 
 // evalText is like eval.Evaler.SourceText except that it reports errors.
 func evalText(ev *eval.Evaler, name, src string) bool {
-	n, err := parse.Parse(src)
+	n, err := parse.Parse(name, src)
 	if err != nil {
-		printError(err, name, "Parse error", src)
+		printError(err, "Parse error")
 		return false
 	}
 
 	op, err := ev.Compile(n, name, src)
 	if err != nil {
-		printError(err, name, "Compile error", src)
+		printError(err, "Compile error")
 		return false
 	}
 	err = ev.Eval(name, src, op)
 	if err != nil {
-		printError(err, name, "Exception", src)
+		printError(err, "Exception")
 		return false
 	}
 	return true
@@ -273,17 +273,17 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 	return eval.NewEvaler(st), st
 }
 
-func printError(err error, srcname, errtype, src string) {
+func printError(err error, errtype string) {
 	if err == nil {
 		return
 	}
 	switch err := err.(type) {
 	case *util.Errors:
 		for _, e := range err.Errors {
-			printError(e, srcname, errtype, src)
+			printError(e, errtype)
 		}
 	case *util.PosError:
-		fmt.Fprintln(os.Stderr, err.Pprint(srcname, errtype, src))
+		fmt.Fprintln(os.Stderr, err.Pprint())
 	case *util.TracebackError:
 		fmt.Fprintln(os.Stderr, err.Pprint())
 	default:

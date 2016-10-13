@@ -145,7 +145,7 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 	// Re-lex the line, unless we are in modeCompletion
 	src := ed.line
 	if ed.mode.Mode() != modeCompletion {
-		n, err := parse.Parse(src)
+		n, err := parse.Parse("[interactive]", src)
 		ed.parseErrorAtEnd = err != nil && atEnd(err, len(src))
 		if err != nil {
 			// If all the errors happen at the end, it is liekly complaining

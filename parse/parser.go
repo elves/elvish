@@ -13,6 +13,7 @@ import (
 //
 // NOTE: The str member is assumed to be valid UF-8.
 type parser struct {
+	srcName  string
 	src      string
 	pos      int
 	overEOF  int
@@ -95,7 +96,7 @@ func (ps *parser) errorp(begin, end int, e error) {
 	if ps.errors == nil {
 		ps.errors = &util.Errors{}
 	}
-	ps.errors.Append(&util.PosError{begin, end, e})
+	ps.errors.Append(&util.PosError{e, "Parse error", util.Traceback{ps.srcName, ps.src, begin, end, nil}})
 }
 
 func (ps *parser) error(e error) {

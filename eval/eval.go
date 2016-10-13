@@ -309,12 +309,13 @@ func (ec *EvalCtx) addTraceback() *util.Traceback {
 // errorpf stops the ec.eval immediately by panicking with a diagnostic message.
 // The panic is supposed to be caught by ec.eval.
 func (ec *EvalCtx) errorpf(begin, end int, format string, args ...interface{}) {
-	throw(&util.PosError{begin, end, fmt.Errorf(format, args...)})
+	ec.begin, ec.end = begin, end
+	throwf(format, args...)
 }
 
 // SourceText evaluates a chunk of elvish source.
 func (ev *Evaler) SourceText(name, src string) error {
-	n, err := parse.Parse(src)
+	n, err := parse.Parse(name, src)
 	if err != nil {
 		return err
 	}
