@@ -280,16 +280,6 @@ func catch(perr *error, ec *EvalCtx) {
 	// function.
 	r := recover()
 	if r == nil {
-		// Ideally, all evaluation methods should keep an eye on ec.intCh and
-		// raise ErrInterrupted as soon as possible. However, this is quite
-		// tedious and only evaluation methods that may take an indefinite
-		// amount of time do this. The code below ensures that ErrInterrupted
-		// is always raised when there is an interrupt.
-		select {
-		case <-ec.Interrupts():
-			*perr = ec.makeTracebackError(ErrInterrupted)
-		default:
-		}
 		return
 	}
 	if exc, ok := r.(util.Exception); ok {
