@@ -25,7 +25,11 @@ type Store struct {
 func DefaultDB(dbname string) (*sql.DB, error) {
 	uri := "file:" + url.QueryEscape(dbname) +
 		"?mode=rwc&cache=shared&vfs=unix-dotfile"
-	return sql.Open("sqlite3", uri)
+	db, err := sql.Open("sqlite3", uri)
+	if err == nil {
+		db.SetMaxOpenConns(1)
+	}
+	return db, err
 }
 
 // NewStore creates a new Store with the default database.
