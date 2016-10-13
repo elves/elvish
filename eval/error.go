@@ -76,10 +76,6 @@ func (me MultiError) Error() string {
 	return b.String()
 }
 
-func newMultiError(es ...Error) Error {
-	return Error{MultiError{es}}
-}
-
 // Flow is a special type of Error used for control flows.
 type flow uint
 

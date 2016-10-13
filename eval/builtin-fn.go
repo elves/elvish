@@ -768,13 +768,6 @@ func dirs(ec *EvalCtx) {
 	}
 }
 
-func pathAbs(ec *EvalCtx, fname string) {
-	out := ec.ports[1].Chan
-	absname, err := filepath.Abs(fname)
-	maybeThrow(err)
-	out <- String(absname)
-}
-
 func source(ec *EvalCtx, fname string) {
 	ec.Source(fname)
 }

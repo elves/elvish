@@ -299,7 +299,6 @@ const (
 	parentColumnWeight  = 3.0
 	currentColumnWeight = 8.0
 	previewColumnWeight = 9.0
-	columnWeightsSum    = parentColumnWeight + currentColumnWeight + previewColumnWeight
 )
 
 func (nav *navigation) List(width, maxHeight int) *buffer {

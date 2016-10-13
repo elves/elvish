@@ -110,10 +110,6 @@ type envVariable struct {
 	name string
 }
 
-func newEnvVariable(name string) envVariable {
-	return envVariable{name}
-}
-
 func (ev envVariable) Set(val Value) {
 	os.Setenv(ev.name, ToString(val))
 }
