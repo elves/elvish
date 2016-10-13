@@ -43,8 +43,16 @@ var globCases = []struct {
 		"d2", "d2/e", "d2/e/f", "d2/e/f/g", "d2/e/f/g/X", "dX", "dXY"}},
 	{"?", []string{"a", "b", "c"}},
 	{"??", []string{"d1", "d2", "dX"}},
-	// NOTE: If / changes during testing, this case will fail.
+
+	// Nonexistent paths.
+	{"xxxx", []string{}},
+	{"xxxx/*", []string{}},
+	{"a/*/", []string{}},
+
+	// Absolute paths.
+	// NOTE: If / or /usr changes during testing, this case will fail.
 	{"/*", util.FullNames("/")},
+	{"/usr/*", util.FullNames("/usr/")},
 
 	// TODO Test cases against dotfiles.
 }

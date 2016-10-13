@@ -27,6 +27,9 @@ var parseCases = []struct {
 	{`\*\?b`, []Segment{
 		{Literal, "*?b"},
 	}},
+	{`abc\`, []Segment{
+		{Literal, "abc"},
+	}},
 }
 
 func TestParse(t *testing.T) {
