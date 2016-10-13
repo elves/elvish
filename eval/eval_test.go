@@ -219,6 +219,7 @@ var evalTests = []struct {
 			String("a"): NewList(strs("1", "2")...)}),
 		String("foo"),
 	}, nomore},
+	{`echo 'invalid' | from-json`, noout, more{wantError: errAny}},
 
 	{`put "l\norem" ipsum | to-lines`, noout,
 		more{wantBytesOut: []byte("l\norem\nipsum\n")}},
@@ -229,6 +230,9 @@ var evalTests = []struct {
 
 	{`joins : [/usr /bin /tmp]`, strs("/usr:/bin:/tmp"), nomore},
 	{`splits &sep=: /usr:/bin:/tmp`, strs("/usr", "/bin", "/tmp"), nomore},
+	{`has-prefix golang go`, noout, nomore},
+	{`has-prefix golang x`, noout, more{wantFalse: true}},
+	{`has-suffix golang x`, noout, more{wantFalse: true}},
 
 	{`==s haha haha`, noout, nomore},
 	{`==s 10 10.0`, noout, more{wantFalse: true}},
@@ -239,11 +243,17 @@ var evalTests = []struct {
 	{`return`, noout, more{wantError: Return}},
 
 	{`f=(constantly foo); $f; $f`, strs("foo", "foo"), nomore},
+	{`(constantly foo) bad`, noout, more{wantError: errAny}},
 	{`put 1 233 | each put`, strs("1", "233"), nomore},
 	{`echo "1\n233" | each put`, strs("1", "233"), nomore},
 	{`each put [1 233]`, strs("1", "233"), nomore},
+	{`range 10 | each { if == $0 4; then break; fi; put $0 }`, strs("0", "1", "2", "3"), nomore},
+	{`range 10 | each { if == $0 4; then fail haha; fi; put $0 }`, strs("0", "1", "2", "3"), more{wantError: errAny}},
 	// TODO: test peach
 
+	{`range 3`, strs("0", "1", "2"), nomore},
+	{`range 1 3`, strs("1", "2"), nomore},
+	{`range 0 10 3`, strs("0", "3", "6", "9"), nomore},
 	{`range 100 | take 2`, strs("0", "1"), nomore},
 	{`range 100 | count`, strs("100"), nomore},
 	{`count [(range 100)]`, strs("100"), nomore},
@@ -256,6 +266,7 @@ var evalTests = []struct {
 	// TODO test more edge cases
 	{"+ 233100 233", strs("233333"), nomore},
 	{"- 233333 233100", strs("233"), nomore},
+	{"- 233", strs("-233"), nomore},
 	{"* 353 661", strs("233333"), nomore},
 	{"/ 233333 353", strs("661"), nomore},
 	{"/ 1 0", strs("+Inf"), nomore},
