@@ -210,6 +210,8 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 			ev.intCh = nil
 			close(sigGoRoutineDone)
 		}()
+	} else {
+		close(sigGoRoutineDone)
 	}
 
 	ret, err := ev.Eval("[interactive]", text, n, ports)
