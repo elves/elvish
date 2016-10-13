@@ -34,13 +34,15 @@ cover/all: $(PKG_COVERS)
 
 goveralls: cover/all
 	go get -u github.com/mattn/goveralls
-	$(FIRST_GOPATH)/bin/goveralls -coverprofile=cover/all -service=travis-ci
+	test "$(TRAVIS_GO_VERSION)" = 1.7 -a "$(TRAVIS_OS_NAME)" = linux \
+		&& $(FIRST_GOPATH)/bin/goveralls -coverprofile=cover/all -service=travis-ci \
+		|| echo "not sending coverage"
 
 upload: get stub
 	tar cfz elvish.tar.gz -C $(FIRST_GOPATH)/bin elvish elvish-stub
-	test "$(TRAVIS_GO_VERSION)" = 1.7 -a "$(TRAVIS_PULL_REQUEST)" = false && \
-		test -n "$(TRAVIS_TAG)" -o "$(TRAVIS_BRANCH)" = master && \
-		curl http://ul.elvish.io:6060/ -F name=elvish-$(TRAVIS_OS_NAME).tar.gz \
+	test "$(TRAVIS_GO_VERSION)" = 1.7 -a "$(TRAVIS_PULL_REQUEST)" = false \
+		&& test -n "$(TRAVIS_TAG)" -o "$(TRAVIS_BRANCH)" = master \
+		&& curl http://ul.elvish.io:6060/ -F name=elvish-$(TRAVIS_OS_NAME).tar.gz \
 			-F token=$$UPLOAD_TOKEN -F file=@./elvish.tar.gz\
 		|| echo "not uploading"
 
