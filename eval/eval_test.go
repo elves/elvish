@@ -216,7 +216,7 @@ var evalTests = []struct {
 	{`put "l\norem" ipsum | into-lines`, strs(),
 		more{wantBytesOut: []byte("l\norem\nipsum\n")}},
 	{`echo "1\n233" | each put`, strs("1", "233"), nomore},
-	{"put [a] [b c] | unpack", strs("a", "b", "c"), nomore},
+	{"unpack [a b c]", strs("a", "b", "c"), nomore},
 	{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`, []Value{
 		NewMap(map[Value]Value{
 			String("k"): String("v"),
