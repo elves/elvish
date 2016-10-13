@@ -137,9 +137,9 @@ func makeScope(s Namespace) scope {
 	return sc
 }
 
-// Eval evaluates a chunk node n. The supplied name and text are used in
+// eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) Eval(name, text string, n *parse.Chunk, ports []*Port) (bool, error) {
+func (ev *Evaler) eval(name, text string, n *parse.Chunk, ports []*Port) (bool, error) {
 	op, err := ev.Compile(n, name, text)
 	if err != nil {
 		return false, err
@@ -153,7 +153,9 @@ func (ec *EvalCtx) Interrupts() <-chan struct{} {
 	return ec.intCh
 }
 
-func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
+// Eval sets up the Evaler and evaluates a chunk. The supplied text is used in
+// diagnostic messages.
+func (ev *Evaler) Eval(text string, n *parse.Chunk) error {
 	inCh := make(chan Value)
 	close(inCh)
 
@@ -214,7 +216,7 @@ func (ev *Evaler) EvalInteractive(text string, n *parse.Chunk) error {
 		close(sigGoRoutineDone)
 	}
 
-	ret, err := ev.Eval("[interactive]", text, n, ports)
+	ret, err := ev.eval("[interactive]", text, n, ports)
 	close(outCh)
 	<-outDone
 	close(stopSigGoroutine)
@@ -320,7 +322,7 @@ func (ev *Evaler) SourceText(src string) error {
 	if err != nil {
 		return err
 	}
-	return ev.EvalInteractive(src, n)
+	return ev.Eval(src, n)
 }
 
 func readFileUTF8(fname string) (string, error) {

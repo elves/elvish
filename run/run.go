@@ -207,7 +207,7 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		printError(err, "[interactive]", "Parse error", line)
 
 		if err == nil {
-			err := ev.EvalInteractive(line, n)
+			err := ev.Eval(line, n)
 			printError(err, "[interactive]", "Exception", line)
 		}
 	}
