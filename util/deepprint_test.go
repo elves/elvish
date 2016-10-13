@@ -33,7 +33,7 @@ var deepPrintTests = []struct {
 }{
 	{1, "1"},
 	{"foobar", `"foobar"`},
-	{map[string]int{"foobar": 42}, `map[string]int{"foobar": 42}`},
+	{map[string]int{"foo": 42, "bar": 233}, `map[string]int{"foo": 42, "bar": 233}`},
 	{[]int{42, 44}, `[]int{42, 44}`},
 	{[]int(nil), `nil`},
 	{(*int)(nil), `nil`},
