@@ -36,13 +36,10 @@ func (hv History) Iterate(f func(eval.Value) bool) {
 	defer hv.mutex.RUnlock()
 
 	n := hv.Len()
-	for i := 1; i <= n; i++ {
-		s, err := hv.st.Cmd(i)
-		maybeThrow(err)
-		if !f(eval.String(s)) {
-			return
-		}
-	}
+	err := hv.st.IterateCmds(1, n+1, func(cmd string) bool {
+		return f(eval.String(cmd))
+	})
+	maybeThrow(err)
 }
 
 func (hv History) IndexOne(idx eval.Value) eval.Value {
@@ -51,13 +48,13 @@ func (hv History) IndexOne(idx eval.Value) eval.Value {
 
 	slice, i, j := eval.ParseAndFixListIndex(eval.ToString(idx), hv.Len())
 	if slice {
-		ss := make([]eval.Value, j-i)
-		for k := i + 1; k < j+1; k++ {
-			s, err := hv.st.Cmd(k)
-			maybeThrow(err)
-			ss[k-(i+1)] = eval.String(s)
+		cmds, err := hv.st.Cmds(i+1, j+1)
+		maybeThrow(err)
+		vs := make([]eval.Value, len(cmds))
+		for i := range cmds {
+			vs[i] = eval.String(cmds[i])
 		}
-		return eval.NewList(ss...)
+		return eval.NewList(vs...)
 	}
 	s, err := hv.st.Cmd(i + 1)
 	maybeThrow(err)

@@ -106,6 +106,25 @@ func (s *Store) FirstCmd(from int, prefix string, uniq bool) (int, string, error
 	return convertCmd(row)
 }
 
+func (s *Store) IterateCmds(from, upto int, f func(string) bool) error {
+	rows, err := s.db.Query(`select content from cmd where rowid >= ? and rowid < ?`, from, upto)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var cmd string
+		err = rows.Scan(&cmd)
+		if err != nil {
+			break
+		}
+		if !f(cmd) {
+			break
+		}
+	}
+	return err
+}
+
 func (s *Store) Cmds(from, upto int) ([]string, error) {
 	rows, err := s.db.Query(`select content from cmd where rowid >= ? and rowid < ?`, from, upto)
 	if err != nil {
