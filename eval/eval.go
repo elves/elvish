@@ -408,7 +408,7 @@ func (ec *EvalCtx) getLocal(name string) Variable {
 
 var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
 
-// IterateInput calls the passed function for each input element.
+// IterateInputs calls the passed function for each input element.
 func (ec *EvalCtx) IterateInputs(f func(Value)) {
 	var w sync.WaitGroup
 	inputs := make(chan Value)
