@@ -488,19 +488,12 @@ func intoLines(ec *EvalCtx, iterate func(func(Value))) {
 	})
 }
 
-// unpack takes Elemser's from the input and unpack them.
-func unpack(ec *EvalCtx, iterate func(func(Value))) {
+// unpack puts each element of the argument.
+func unpack(ec *EvalCtx, v IteratorValue) {
 	out := ec.ports[1].Chan
-
-	iterate(func(v Value) {
-		iterator, ok := v.(Iterator)
-		if !ok {
-			throwf("unpack wants iterator in input, got %s", v.Kind())
-		}
-		iterator.Iterate(func(v Value) bool {
-			out <- v
-			return true
-		})
+	v.Iterate(func(e Value) bool {
+		out <- e
+		return true
 	})
 }
 
