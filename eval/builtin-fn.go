@@ -792,11 +792,11 @@ func toInt(arg Value) (int, error) {
 	if !ok {
 		return 0, fmt.Errorf("must be string")
 	}
-	num, err := strconv.Atoi(string(arg.(String)))
+	num, err := strconv.ParseInt(string(arg.(String)), 0, 0)
 	if err != nil {
 		return 0, err
 	}
-	return num, nil
+	return int(num), nil
 }
 
 func plus(ec *EvalCtx, nums ...float64) {
