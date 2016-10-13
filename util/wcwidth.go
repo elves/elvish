@@ -87,7 +87,6 @@ func Wcwidth(r rune) int {
 			(r >= 0xffe0 && r <= 0xffe6) || /* Fullwidth Forms */
 			(r >= 0x20000 && r <= 0x2fffd) || /* CJK Extensions */
 			(r >= 0x30000 && r <= 0x3fffd) || /* Reserved for historical Chinese scripts */
-			(r >= 0x25a0 && r <= 0x27bf) || // Geometric Shapes, Miscellaneous Symbols, Dingbats
 			(r >= 0x1f300 && r <= 0x1f6ff)) { // Miscellaneous Symbols and Pictographs ... Geometric Shapes Extended
 		return 2
 	}
