@@ -261,7 +261,9 @@ var evalTests = []struct {
 	{"% 23 7", strs("2"), nomore},
 
 	{`== 1 1.0`, noout, nomore},
+	{`== 10 0xa`, noout, nomore},
 	{`== a a`, noout, more{wantError: errAny}},
+	{`> 0x10 1`, noout, nomore},
 
 	{`is 1 1`, noout, nomore},
 	{`is [] []`, noout, more{wantFalse: true}},
