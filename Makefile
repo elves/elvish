@@ -46,6 +46,6 @@ upload: get stub
 			-F token=$$UPLOAD_TOKEN -F file=@./elvish.tar.gz\
 		|| echo "not uploading"
 
-travis: test goveralls upload
+travis: goveralls upload
 
 .PHONY: default get generate stub test goveralls upload travis
