@@ -353,6 +353,8 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 
 	pw.Close()
 	<-bytesDone
+	pr.Close()
+
 	return outs, outBytes, ret, ex
 }
 

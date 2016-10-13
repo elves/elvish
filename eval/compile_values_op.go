@@ -370,6 +370,8 @@ func captureOutput(ec *EvalCtx, op Op) []Value {
 	ClosePorts(newEc.ports)
 
 	<-bytesCollected
+	pipeRead.Close()
+
 	close(ch)
 	<-chCollected
 
