@@ -336,7 +336,7 @@ type Control struct {
 	Body        *Chunk    // Valid for all except IfControl.
 	Conditions  []*Chunk  // Valid for IfControl.
 	Bodies      []*Chunk  // Valid for IfControl.
-	ElseBody    *Chunk    // Valid for IfControl, WhileControl and ForControl.
+	ElseBody    *Chunk    // Valid for IfControl, WhileControl, ForControl and TryControl.
 	ExceptBody  *Chunk    // Valid for TryControl.
 	ExceptVar   *Indexing // Valid for TryControl.
 	FinallyBody *Chunk    // Valid for TryControl.
