@@ -85,7 +85,10 @@ func collectFromIterator(it Iterator) []Value {
 	return vs
 }
 
-var NoOpts = map[string]Value{}
+var (
+	NoArgs = []Value{}
+	NoOpts = map[string]Value{}
+)
 
 // Fn is anything may be called on an evalCtx with a list of Value's.
 type Fn interface {

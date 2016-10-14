@@ -191,6 +191,7 @@ func init() {
 
 		&BuiltinFn{"-stack", WrapFn(_stack)},
 		&BuiltinFn{"-log", WrapFn(_log)},
+		&BuiltinFn{"-time", WrapFn(_time)},
 	}
 	for _, b := range builtinFns {
 		builtinNamespace[FnPrefix+b.Name] = NewRoVariable(b)
@@ -1123,6 +1124,15 @@ func _stack(ec *EvalCtx) {
 
 func _log(ec *EvalCtx, fname string) {
 	maybeThrow(util.SetOutputFile(fname))
+}
+
+func _time(ec *EvalCtx, f FnValue) {
+	t0 := time.Now()
+	f.Call(ec, NoArgs, NoOpts)
+	t1 := time.Now()
+
+	dt := t1.Sub(t0)
+	fmt.Fprintln(ec.ports[1].File, dt)
 }
 
 func exec(ec *EvalCtx, args ...string) {
