@@ -167,7 +167,7 @@ func init() {
 		// String operations
 		&BuiltinFn{"ord", WrapFn(ord)},
 		&BuiltinFn{"base", WrapFn(base)},
-		&BuiltinFn{"override-wcwidth", WrapFn(overrideWcwidth)},
+		&BuiltinFn{"-override-wcwidth", WrapFn(overrideWcwidth)},
 		&BuiltinFn{"wcswidth", WrapFn(wcswidth)},
 
 		&BuiltinFn{"resolve", WrapFn(resolveFn)},
