@@ -21,6 +21,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
@@ -166,6 +167,7 @@ func init() {
 		// String operations
 		&BuiltinFn{"ord", WrapFn(ord)},
 		&BuiltinFn{"base", WrapFn(base)},
+		&BuiltinFn{"override-wcwidth", WrapFn(overrideWcwidth)},
 		&BuiltinFn{"wcswidth", WrapFn(wcswidth)},
 
 		&BuiltinFn{"resolve", WrapFn(resolveFn)},
@@ -800,6 +802,22 @@ func toInt(arg Value) (int, error) {
 	return int(num), nil
 }
 
+func toRune(arg Value) (rune, error) {
+	ss, ok := arg.(String)
+	if !ok {
+		return -1, fmt.Errorf("must be string")
+	}
+	s := string(ss)
+	r, size := utf8.DecodeRuneInString(s)
+	if r == utf8.RuneError {
+		return -1, fmt.Errorf("string is not valid UTF-8")
+	}
+	if size != len(s) {
+		return -1, fmt.Errorf("string has multiple runes")
+	}
+	return r, nil
+}
+
 func plus(ec *EvalCtx, nums ...float64) {
 	out := ec.ports[1].Chan
 	sum := 0.0
@@ -1002,6 +1020,12 @@ func count(ec *EvalCtx, args []Value, opts map[string]Value) {
 		throw(errors.New("want 0 or 1 argument"))
 	}
 	ec.ports[1].Chan <- String(strconv.Itoa(n))
+}
+
+func overrideWcwidth(ec *EvalCtx, s String, w int) {
+	r, err := toRune(s)
+	maybeThrow(err)
+	util.OverrideWcwidth(r, w)
 }
 
 func wcswidth(ec *EvalCtx, s String) {
