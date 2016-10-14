@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+var wcwidthOverride = map[rune]int{}
+
 // Taken from http://www.cl.cam.ac.uk/~mgk25/ucs/wcwidth.c (public domain)
 var combining = [][2]rune{
 	{0x0300, 0x036F}, {0x0483, 0x0486}, {0x0488, 0x0489},
@@ -65,12 +67,12 @@ func isCombining(r rune) bool {
 
 // Wcwidth returns the width of a rune when displayed on the terminal.
 func Wcwidth(r rune) int {
-	switch {
-	case r == 0:
-		return 0
-	case r < 32 || (0x7f <= r && r < 0xa0): // Control character
-		return -1
-	case isCombining(r):
+	if w, ok := wcwidthOverride[r]; ok {
+		return w
+	}
+	if r == 0 ||
+		r < 32 || (0x7f <= r && r < 0xa0) || // Control character
+		isCombining(r) {
 		return 0
 	}
 
@@ -91,6 +93,20 @@ func Wcwidth(r rune) int {
 		return 2
 	}
 	return 1
+}
+
+// OverrideWcwidth overrides the wcwidth of a rune to be a specific non-negative
+// value. OverrideWcwidth panics if w < 0.
+func OverrideWcwidth(r rune, w int) {
+	if w < 0 {
+		panic("negative width")
+	}
+	wcwidthOverride[r] = w
+}
+
+// UnoverrideWcwidth removes the override of a rune.
+func UnoverrideWcwidth(r rune) {
+	delete(wcwidthOverride, r)
 }
 
 // Wcswidth returns the width of a string when displayed on the terminal,

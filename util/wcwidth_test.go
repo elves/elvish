@@ -23,3 +23,18 @@ func TestWcwidth(t *testing.T) {
 		}
 	}
 }
+
+func TestOverrideWcwidth(t *testing.T) {
+	r := '❱'
+	oldw := Wcwidth(r)
+	w := oldw + 1
+
+	OverrideWcwidth(r, w)
+	if Wcwidth(r) != w {
+		t.Errorf("Wcwidth(%q) != %d after OverrideWcwidth", r, w)
+	}
+	UnoverrideWcwidth(r)
+	if Wcwidth(r) != oldw {
+		t.Errorf("Wcwidth(%q) != %d after UnoverrideWcwidth", r, oldw)
+	}
+}
