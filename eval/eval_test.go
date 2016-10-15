@@ -95,7 +95,8 @@ var evalTests = []struct {
 
 	// Predicates.
 	{"false", noout, more{wantFalse: true}},
-	{"true | false | true", noout, more{wantFalse: true}},
+	{"true | false", noout, more{wantFalse: true}},
+	{"true | false | true", noout, nomore},
 
 	// Redirections.
 	{"f=`mktemp elvXXXXXX`; echo 233 > $f; cat < $f; rm $f", noout,

@@ -58,7 +58,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 		var nextIn *Port
 
 		errorChans := make([]chan Error, len(ops))
-		verdictChans := make([]chan bool, len(ops))
+		var verdict bool
 
 		// For each form, create a dedicated evalCtx and run asynchronously
 		for i, op := range ops {
@@ -82,15 +82,16 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			}
 			thisOp := op
 			errorChans[i] = make(chan Error)
-			verdictChans[i] = make(chan bool)
 			thisErrorChan := errorChans[i]
-			thisVerdictChan := verdictChans[i]
+			isLast := i == len(ops)-1
 			go func() {
 				err := newEc.PEval(thisOp)
 				// Logger.Printf("closing ports of %s", newEc.context)
 				ClosePorts(newEc.ports)
+				if isLast {
+					verdict = newEc.verdict
+				}
 				thisErrorChan <- Error{err}
-				thisVerdictChan <- newEc.verdict
 			}()
 		}
 
@@ -99,14 +100,6 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			errors := make([]Error, len(ops))
 			for i, errorChan := range errorChans {
 				errors[i] = <-errorChan
-			}
-
-			// Evaluate verdict as the conjunction of all verdict's.
-			verdict := true
-			for _, verdictChan := range verdictChans {
-				if !<-verdictChan {
-					verdict = false
-				}
 			}
 
 			return errors, verdict
