@@ -34,9 +34,7 @@ cover/all: $(PKG_COVERS)
 
 goveralls: cover/all
 	go get -u github.com/mattn/goveralls
-	test "$(TRAVIS_GO_VERSION)" = 1.7 -a "$(TRAVIS_OS_NAME)" = linux \
-		&& $(FIRST_GOPATH)/bin/goveralls -coverprofile=cover/all -service=travis-ci \
-		|| echo "not sending coverage"
+	$(FIRST_GOPATH)/bin/goveralls -coverprofile=cover/all -service=travis-ci \
 
 upload: get stub
 	tar cfz elvish.tar.gz -C $(FIRST_GOPATH)/bin elvish elvish-stub
