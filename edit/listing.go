@@ -66,44 +66,56 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	}
 
 	// Collect the entries to show. We start from the selected entry and extend
-	// in both directions alternatingly. The entries are collected in a list.
+	// in both directions alternatingly. The entries are split into lines and
+	// then collected in a list.
 	low := l.selected
 	if low == -1 {
 		low = 0
 	}
 	high := low
 	height := 0
-	var entries list.List
-	getEntry := func(i int) (styled, int) {
+	var lines list.List
+	getEntry := func(i int) []styled {
 		s := l.provider.Show(i, width)
-		return s, strings.Count(s.text, "\n") + 1
+		lines := strings.Split(s.text, "\n")
+		style := s.style
+		if i == l.selected {
+			style = joinStyle(style, styleForSelected)
+		}
+		styleds := make([]styled, len(lines))
+		for i, line := range lines {
+			styleds[i] = styled{line, style}
+		}
+		return styleds
 	}
 	// We start by extending high, so that the first entry to include is
 	// l.selected.
 	extendLow := false
+	lastShownIncomplete := false
 	for height < maxHeight && !(low == 0 && high == n) {
+		var i int
 		if (extendLow && low > 0) || high == n {
 			low--
 
-			s, h := getEntry(low)
-			height += h
-			if height > maxHeight {
-				// Elide leading lines.
-				lines := strings.Split(s.text, "\n")
-				s.text = strings.Join(lines[height-maxHeight:], "\n")
-				height = maxHeight
+			entry := getEntry(low)
+			// Prepend at most the last (height - maxHeight) lines.
+			for i = len(entry) - 1; i >= 0 && height < maxHeight; i-- {
+				lines.PushFront(entry[i])
+				height++
 			}
-			entries.PushFront(s)
+			if i >= 0 {
+				lastShownIncomplete = true
+			}
 		} else {
-			s, h := getEntry(high)
-			height += h
-			if height > maxHeight {
-				// Elide trailing lines.
-				lines := strings.Split(s.text, "\n")
-				s.text = strings.Join(lines[:len(lines)-(height-maxHeight)], "\n")
-				height = maxHeight
+			entry := getEntry(high)
+			// Append at most the first (height - maxHeight) lines.
+			for i = 0; i < len(entry) && height < maxHeight; i++ {
+				lines.PushBack(entry[i])
+				height++
 			}
-			entries.PushBack(s)
+			if i < len(entry) {
+				lastShownIncomplete = true
+			}
 
 			high++
 		}
@@ -113,23 +125,19 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	l.pagesize = high - low
 
 	var scrollbar *buffer
-	if low > 0 || high < n {
+	if low > 0 || high < n || lastShownIncomplete {
 		scrollbar = renderScrollbar(n, low, high, height)
 		width--
 	}
 
-	p := entries.Front()
-	for i := low; i < high; i++ {
-		if i > low {
+	for p := lines.Front(); p != nil; p = p.Next() {
+		s := p.Value.(styled)
+		if p != lines.Front() {
 			b.newline()
 		}
-		s := p.Value.(styled)
-		if i == l.selected {
-			s.addStyle(styleForSelected)
-		}
 		b.writes(s.text, s.style)
-		p = p.Next()
 	}
+
 	if scrollbar != nil {
 		b.extendHorizontal(scrollbar, width)
 	}
