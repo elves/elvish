@@ -3,6 +3,7 @@ package eval
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/stub"
@@ -55,10 +56,14 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			}
 		}
 
-		var nextIn *Port
+		nforms := len(ops)
 
-		errorChans := make([]chan Error, len(ops))
+		var wg sync.WaitGroup
+		wg.Add(nforms)
+		errors := make([]Error, nforms)
 		var verdict bool
+
+		var nextIn *Port
 
 		// For each form, create a dedicated evalCtx and run asynchronously
 		for i, op := range ops {
@@ -66,7 +71,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			if i > 0 {
 				newEc.ports[0] = nextIn
 			}
-			if i < len(ops)-1 {
+			if i < nforms-1 {
 				// Each internal port pair consists of a (byte) pipe pair and a
 				// channel.
 				// os.Pipe sets O_CLOEXEC, which is what we want.
@@ -81,9 +86,8 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 					File: reader, Chan: ch, CloseFile: true, CloseChan: false}
 			}
 			thisOp := op
-			errorChans[i] = make(chan Error)
-			thisErrorChan := errorChans[i]
-			isLast := i == len(ops)-1
+			thisError := &errors[i]
+			isLast := i == nforms-1
 			go func() {
 				err := newEc.PEval(thisOp)
 				// Logger.Printf("closing ports of %s", newEc.context)
@@ -91,24 +95,15 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 				if isLast {
 					verdict = newEc.verdict
 				}
-				thisErrorChan <- Error{err}
+				*thisError = Error{err}
+				wg.Done()
 			}()
-		}
-
-		collectErrorsAndVerdicts := func() ([]Error, bool) {
-			// Wait for all forms to finish and collect error returns.
-			errors := make([]Error, len(ops))
-			for i, errorChan := range errorChans {
-				errors[i] = <-errorChan
-			}
-
-			return errors, verdict
 		}
 
 		if bg {
 			// Background job, wait for form termination asynchronously.
 			go func() {
-				errors, verdict := collectErrorsAndVerdicts()
+				wg.Wait()
 				ec.Stub.Terminate()
 				msg := "job " + n.SourceText() + " finished"
 				if !allok(errors) {
@@ -132,7 +127,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 				}
 			}()
 		} else {
-			errors, verdict := collectErrorsAndVerdicts()
+			wg.Wait()
 			maybeThrow(makeCompositeError(errors))
 			ec.verdict = verdict
 		}
