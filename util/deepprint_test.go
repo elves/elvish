@@ -33,7 +33,6 @@ var deepPrintTests = []struct {
 }{
 	{1, "1"},
 	{"foobar", `"foobar"`},
-	{map[string]int{"foo": 42, "bar": 233}, `map[string]int{"foo": 42, "bar": 233}`},
 	{[]int{42, 44}, `[]int{42, 44}`},
 	{[]int(nil), `nil`},
 	{(*int)(nil), `nil`},
@@ -45,7 +44,15 @@ var deepPrintTests = []struct {
 func TestDeepPrint(t *testing.T) {
 	for _, tt := range deepPrintTests {
 		if out := DeepPrint(tt.in); out != tt.wanted {
-			t.Errorf("Deep(%v) => %#q, want %#q", tt.in, out, tt.wanted)
+			t.Errorf("DeepPrint(%v) => %#q, want %#q", tt.in, out, tt.wanted)
 		}
+	}
+	// Test map.
+	in := map[string]int{"foo": 42, "bar": 233}
+	out := DeepPrint(in)
+	wanted1 := `map[string]int{"foo": 42, "bar": 233}`
+	wanted2 := `map[string]int{"bar": 233, "foo": 42}`
+	if out != wanted1 && out != wanted2 {
+		t.Errorf("DeepPrint(%v) => %#q, want %#q or %#q", in, out, wanted1, wanted2)
 	}
 }
