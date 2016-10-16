@@ -57,7 +57,7 @@ func TestCmd(t *testing.T) {
 			f = tStore.FirstCmd
 			fname = "tStore.FirstCmd"
 		}
-		seq, cmd, err := f(tt.seq, tt.prefix, true)
+		seq, cmd, err := f(tt.seq, tt.prefix)
 		if seq != tt.wantedSeq || cmd != tt.wantedCmd || err != tt.wantedErr {
 			t.Errorf("%s(%v, %v) => (%v, %v, %v), want (%v, %v, %v)",
 				fname, tt.seq, tt.prefix,

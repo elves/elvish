@@ -86,7 +86,7 @@ func (ed *Editor) appendHistory(line string) {
 
 func (ed *Editor) prevHistory() bool {
 	if ed.store != nil {
-		i, line, err := ed.store.LastCmd(ed.hist.current, ed.hist.prefix, true)
+		i, line, err := ed.store.LastCmd(ed.hist.current, ed.hist.prefix)
 		if err == nil {
 			ed.hist.jump(i, line)
 			return true
@@ -99,7 +99,7 @@ func (ed *Editor) prevHistory() bool {
 func (ed *Editor) nextHistory() bool {
 	if ed.store != nil {
 		// Persistent history
-		i, line, err := ed.store.FirstCmd(ed.hist.current+1, ed.hist.prefix, true)
+		i, line, err := ed.store.FirstCmd(ed.hist.current+1, ed.hist.prefix)
 		if err == nil {
 			ed.hist.jump(i, line)
 			return true

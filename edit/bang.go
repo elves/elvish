@@ -76,7 +76,7 @@ func (b *bang) ModeTitle(i int) string {
 var wordSep = regexp.MustCompile("[ \t]+")
 
 func startBang(ed *Editor) {
-	_, line, err := ed.store.LastCmd(-1, "", true)
+	_, line, err := ed.store.LastCmd(-1, "")
 	if err == nil {
 		ed.bang = newBang(line)
 		ed.mode = ed.bang
