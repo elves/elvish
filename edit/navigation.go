@@ -2,7 +2,6 @@ package edit
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -355,23 +354,22 @@ func newErrNavColumn(err error) *navColumn {
 	return nc
 }
 
-const BigFileThreshold = 1024 * 1024
+const FileBufferSize = 64 * 1024
 
 var (
 	ErrNotRegular   = errors.New("no preview for non-regular file")
-	ErrTooBig       = errors.New("no preview for big file")
 	ErrNotValidUTF8 = errors.New("no preview for non-utf8 file")
 )
 
 func newFilePreviewNavColumn(fname string) *navColumn {
 	// XXX This implementation is a bit hacky, since listing is not really
-	// intended for listing file content. Among other shortcomings, it always
-	// reads the entire file.
+	// intended for listing file content.
 	var err error
 	file, err := os.Open(fname)
 	if err != nil {
 		return newErrNavColumn(err)
 	}
+
 	info, err := file.Stat()
 	if err != nil {
 		return newErrNavColumn(err)
@@ -379,17 +377,19 @@ func newFilePreviewNavColumn(fname string) *navColumn {
 	if (info.Mode() & (os.ModeDevice | os.ModeNamedPipe | os.ModeSocket | os.ModeCharDevice)) != 0 {
 		return newErrNavColumn(ErrNotRegular)
 	}
-	if info.Size() > BigFileThreshold {
-		return newErrNavColumn(ErrTooBig)
-	}
-	bs, err := ioutil.ReadAll(file)
+
+	// BUG when the file is bigger than the buffer, the scrollbar is wrong.
+	buf := make([]byte, FileBufferSize)
+	nr, err := file.Read(buf[:])
 	if err != nil {
 		return newErrNavColumn(err)
 	}
-	content := string(bs)
+
+	content := string(buf[:nr])
 	if !utf8.ValidString(content) {
 		return newErrNavColumn(ErrNotValidUTF8)
 	}
+
 	lines := strings.Split(content, "\n")
 	styleds := make([]styled, len(lines))
 	for i, line := range lines {
