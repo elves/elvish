@@ -68,7 +68,11 @@ func (hl *histlist) ModeTitle(i int) string {
 	if hl.dedup {
 		dedup = " (dedup)"
 	}
-	return fmt.Sprintf(" HISTORY #%d%s ", hl.index[i], dedup)
+	idx := ""
+	if i >= 0 {
+		idx = fmt.Sprintf(" #%d", hl.index[i])
+	}
+	return fmt.Sprintf(" HISTORY%s%s ", idx, dedup)
 }
 
 func startHistlist(ed *Editor) {
