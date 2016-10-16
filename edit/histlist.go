@@ -15,32 +15,48 @@ var ErrStoreOffline = errors.New("store offline")
 
 type histlist struct {
 	listing
-	all      []string
-	filtered []string
+	all   []string
+	dedup bool
+	last  map[string]int
+	shown []string
+	index []int
+}
+
+func (hl *histlist) updateShown() {
+	hl.shown = nil
+	hl.index = nil
+	dedup := hl.dedup
+	filter := hl.filter
+	for i, entry := range hl.all {
+		if (!dedup || hl.last[entry] == i) && strings.Contains(entry, filter) {
+			hl.index = append(hl.index, i)
+			hl.shown = append(hl.shown, entry)
+		}
+	}
+	hl.selected = len(hl.shown) - 1
+}
+
+func (hl *histlist) toggleDedup() {
+	hl.dedup = !hl.dedup
+	hl.updateShown()
 }
 
 func (hl *histlist) Len() int {
-	return len(hl.filtered)
+	return len(hl.shown)
 }
 
 func (hl *histlist) Show(i, width int) styled {
-	entry := hl.filtered[i]
+	entry := hl.shown[i]
 	return unstyled(util.TrimEachLineWcwidth(entry, width))
 }
 
 func (hl *histlist) Filter(filter string) int {
-	hl.filtered = nil
-	for _, item := range hl.all {
-		if strings.Contains(item, filter) {
-			hl.filtered = append(hl.filtered, item)
-		}
-	}
-	// Select the last entry.
-	return len(hl.filtered) - 1
+	hl.updateShown()
+	return len(hl.shown) - 1
 }
 
 func (hl *histlist) Accept(i int, ed *Editor) {
-	line := hl.filtered[i]
+	line := hl.shown[i]
 	if len(ed.line) > 0 {
 		line = "\n" + line
 	}
@@ -48,7 +64,11 @@ func (hl *histlist) Accept(i int, ed *Editor) {
 }
 
 func (hl *histlist) ModeTitle(i int) string {
-	return fmt.Sprintf(" HISTORY #%d ", i)
+	dedup := ""
+	if hl.dedup {
+		dedup = " (dedup)"
+	}
+	return fmt.Sprintf(" HISTORY #%d%s ", hl.index[i], dedup)
 }
 
 func startHistlist(ed *Editor) {
@@ -75,7 +95,17 @@ func newHistlist(s *store.Store) (*histlist, error) {
 	if err != nil {
 		return nil, err
 	}
-	hl := &histlist{all: all}
+	last := make(map[string]int)
+	for i, entry := range all {
+		last[entry] = i
+	}
+	hl := &histlist{all: all, last: last}
 	hl.listing = newListing(modeHistoryListing, hl)
 	return hl, nil
+}
+
+func histlistToggleDedup(ed *Editor) {
+	if ed.histlist != nil {
+		ed.histlist.toggleDedup()
+	}
 }

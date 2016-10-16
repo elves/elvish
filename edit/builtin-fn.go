@@ -98,6 +98,7 @@ var builtins = []*BuiltinFn{
 
 	// History listing mode
 	{"start-histlist", startHistlist},
+	{"histlist-toggle-dedup", histlistToggleDedup},
 
 	// Bang mode
 	{"start-bang", startBang},
@@ -195,7 +196,9 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{'R', Ctrl}: "history-switch-to-histlist",
 		Default:        "history-default",
 	},
-	modeHistoryListing: map[Key]string{},
+	modeHistoryListing: map[Key]string{
+		Key{'D', Ctrl}: "histlist-toggle-dedup",
+	},
 	modeBang: map[Key]string{
 		Default: "bang-alt-default",
 	},
