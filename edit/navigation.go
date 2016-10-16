@@ -431,6 +431,9 @@ func (nc *navColumn) FullWidth(h int) int {
 	if nc == nil {
 		return 0
 	}
+	if nc.err != nil {
+		return util.Wcswidth(nc.err.Error())
+	}
 	maxw := 0
 	for _, s := range nc.candidates {
 		maxw = max(maxw, util.Wcswidth(s.text))
