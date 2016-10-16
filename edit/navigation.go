@@ -355,7 +355,13 @@ func newErrNavColumn(err error) *navColumn {
 	return nc
 }
 
-var ErrNotValidUTF8 = errors.New("not utf8")
+const BigFileThreshold = 1024 * 1024
+
+var (
+	ErrNotRegular   = errors.New("no preview for non-regular file")
+	ErrTooBig       = errors.New("no preview for big file")
+	ErrNotValidUTF8 = errors.New("no preview for non-utf8 file")
+)
 
 func newFilePreviewNavColumn(fname string) *navColumn {
 	// XXX This implementation is a bit hacky, since listing is not really
@@ -365,6 +371,16 @@ func newFilePreviewNavColumn(fname string) *navColumn {
 	file, err := os.Open(fname)
 	if err != nil {
 		return newErrNavColumn(err)
+	}
+	info, err := file.Stat()
+	if err != nil {
+		return newErrNavColumn(err)
+	}
+	if (info.Mode() & (os.ModeDevice | os.ModeNamedPipe | os.ModeSocket | os.ModeCharDevice)) != 0 {
+		return newErrNavColumn(ErrNotRegular)
+	}
+	if info.Size() > BigFileThreshold {
+		return newErrNavColumn(ErrTooBig)
 	}
 	bs, err := ioutil.ReadAll(file)
 	if err != nil {
@@ -377,7 +393,7 @@ func newFilePreviewNavColumn(fname string) *navColumn {
 	lines := strings.Split(content, "\n")
 	styleds := make([]styled, len(lines))
 	for i, line := range lines {
-		styleds[i] = styled{line, ""}
+		styleds[i] = styled{strings.Replace(line, "\t", "    ", -1), ""}
 	}
 	return newNavColumn(styleds, func(int) bool { return false })
 }
