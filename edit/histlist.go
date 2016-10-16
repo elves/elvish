@@ -1,8 +1,10 @@
 package edit
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/elves/elvish/store"
@@ -15,11 +17,12 @@ var ErrStoreOffline = errors.New("store offline")
 
 type histlist struct {
 	listing
-	all   []string
-	dedup bool
-	last  map[string]int
-	shown []string
-	index []int
+	all        []string
+	dedup      bool
+	last       map[string]int
+	shown      []string
+	index      []int
+	indexWidth int
 }
 
 func (hl *histlist) updateShown() {
@@ -47,7 +50,20 @@ func (hl *histlist) Len() int {
 
 func (hl *histlist) Show(i, width int) styled {
 	entry := hl.shown[i]
-	return unstyled(util.TrimEachLineWcwidth(entry, width))
+	lines := strings.Split(entry, "\n")
+
+	var b bytes.Buffer
+
+	first := fmt.Sprintf("%*d %s", hl.indexWidth, hl.index[i], lines[0])
+	b.WriteString(util.ForceWcwidth(first, width))
+
+	indent := strings.Repeat(" ", hl.indexWidth+1)
+	for _, line := range lines[1:] {
+		b.WriteByte('\n')
+		b.WriteString(util.ForceWcwidth(indent+line, width))
+	}
+
+	return unstyled(b.String())
 }
 
 func (hl *histlist) Filter(filter string) int {
@@ -64,15 +80,10 @@ func (hl *histlist) Accept(i int, ed *Editor) {
 }
 
 func (hl *histlist) ModeTitle(i int) string {
-	dedup := ""
 	if hl.dedup {
-		dedup = " (dedup)"
+		return " HISTORY (dedup on) "
 	}
-	idx := ""
-	if i >= 0 {
-		idx = fmt.Sprintf(" #%d", hl.index[i])
-	}
-	return fmt.Sprintf(" HISTORY%s%s ", idx, dedup)
+	return " HISTORY "
 }
 
 func startHistlist(ed *Editor) {
@@ -103,7 +114,7 @@ func newHistlist(s *store.Store) (*histlist, error) {
 	for i, entry := range all {
 		last[entry] = i
 	}
-	hl := &histlist{all: all, last: last}
+	hl := &histlist{all: all, last: last, indexWidth: len(strconv.Itoa(len(all) - 1))}
 	hl.listing = newListing(modeHistoryListing, hl)
 	return hl, nil
 }
