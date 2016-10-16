@@ -2,6 +2,7 @@ package edit
 
 import (
 	"errors"
+	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -18,7 +19,7 @@ import (
 type navigation struct {
 	current    *navColumn
 	parent     *navColumn
-	dirPreview *navColumn
+	preview    *navColumn
 	showHidden bool
 	filtering  bool
 	filter     string
@@ -183,22 +184,21 @@ func (n *navigation) refreshDirPreview() {
 		name := n.current.selectedName()
 		fi, err := os.Stat(name)
 		if err != nil {
-			n.dirPreview = newErrNavColumn(err)
+			n.preview = newErrNavColumn(err)
 			return
 		}
 		if fi.Mode().IsDir() {
 			all, err := n.loaddir(name)
 			if err != nil {
-				n.dirPreview = newErrNavColumn(err)
+				n.preview = newErrNavColumn(err)
 				return
 			}
-			n.dirPreview = newNavColumn(all, func(int) bool { return false })
+			n.preview = newNavColumn(all, func(int) bool { return false })
 		} else {
-			// TODO(xiaq): Support regular file preview in navigation mode
-			n.dirPreview = nil
+			n.preview = newFilePreviewNavColumn(name)
 		}
 	} else {
-		n.dirPreview = nil
+		n.preview = nil
 	}
 }
 
@@ -311,7 +311,7 @@ func (nav *navigation) List(width, maxHeight int) *buffer {
 		[]int{
 			nav.parent.FullWidth(maxHeight),
 			nav.current.FullWidth(maxHeight),
-			nav.dirPreview.FullWidth(maxHeight),
+			nav.preview.FullWidth(maxHeight),
 		})
 	wParent, wCurrent, wPreview := ws[0], ws[1], ws[2]
 
@@ -321,7 +321,7 @@ func (nav *navigation) List(width, maxHeight int) *buffer {
 	b.extendHorizontal(bCurrent, wParent+margin)
 
 	if wPreview > 0 {
-		bPreview := nav.dirPreview.List(wPreview, maxHeight)
+		bPreview := nav.preview.List(wPreview, maxHeight)
 		b.extendHorizontal(bPreview, wParent+wCurrent+2*margin)
 	}
 
@@ -353,6 +353,33 @@ func newErrNavColumn(err error) *navColumn {
 	nc := &navColumn{err: err}
 	nc.provider = nc
 	return nc
+}
+
+var ErrNotValidUTF8 = errors.New("not utf8")
+
+func newFilePreviewNavColumn(fname string) *navColumn {
+	// XXX This implementation is a bit hacky, since listing is not really
+	// intended for listing file content. Among other shortcomings, it always
+	// reads the entire file.
+	var err error
+	file, err := os.Open(fname)
+	if err != nil {
+		return newErrNavColumn(err)
+	}
+	bs, err := ioutil.ReadAll(file)
+	if err != nil {
+		return newErrNavColumn(err)
+	}
+	content := string(bs)
+	if !utf8.ValidString(content) {
+		return newErrNavColumn(ErrNotValidUTF8)
+	}
+	lines := strings.Split(content, "\n")
+	styleds := make([]styled, len(lines))
+	for i, line := range lines {
+		styleds[i] = styled{line, ""}
+	}
+	return newNavColumn(styleds, func(int) bool { return false })
 }
 
 func (nc *navColumn) Placeholder() string {
