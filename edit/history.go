@@ -1,6 +1,10 @@
 package edit
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/elves/elvish/store"
+)
 
 // Command history subsystem.
 
@@ -10,6 +14,8 @@ type hist struct {
 	current int
 	prefix  string
 	line    string
+	// Maps content to the index of the last appearance. Used for deduplication.
+	last map[string]int
 }
 
 func (hist) Mode() ModeType {
@@ -23,6 +29,7 @@ func (h *hist) ModeLine(width int) *buffer {
 func startHistory(ed *Editor) {
 	ed.hist.prefix = ed.line[:ed.dot]
 	ed.hist.current = -1
+	ed.hist.last = make(map[string]int)
 	if ed.prevHistory() {
 		ed.mode = &ed.hist
 	} else {
@@ -85,29 +92,52 @@ func (ed *Editor) appendHistory(line string) {
 }
 
 func (ed *Editor) prevHistory() bool {
-	if ed.store != nil {
-		i, line, err := ed.store.LastCmd(ed.hist.current, ed.hist.prefix)
-		if err == nil {
-			ed.hist.jump(i, line)
-			return true
-		}
-		// TODO(xiaq): Errors other than ErrNoMatchingCmd should be reported
+	if ed.store == nil {
+		return false
 	}
-	return false
+	i := ed.hist.current
+	var line string
+	for {
+		var err error
+		i, line, err = ed.store.LastCmd(i, ed.hist.prefix)
+		if err != nil {
+			if err != store.ErrNoMatchingCmd {
+				Logger.Println("LastCmd error:", err)
+			}
+			return false
+		}
+		if j, ok := ed.hist.last[line]; !ok || j == i {
+			// Found the last among duplications
+			ed.hist.last[line] = i
+			break
+		}
+	}
+	ed.hist.jump(i, line)
+	return true
 }
 
 func (ed *Editor) nextHistory() bool {
-	if ed.store != nil {
-		// Persistent history
-		i, line, err := ed.store.FirstCmd(ed.hist.current+1, ed.hist.prefix)
-		if err == nil {
-			ed.hist.jump(i, line)
-			return true
+	if ed.store == nil {
+		return false
+	}
+	i := ed.hist.current + 1
+	var line string
+	for {
+		var err error
+		i, line, err = ed.store.FirstCmd(i+1, ed.hist.prefix)
+		if err != nil {
+			if err != store.ErrNoMatchingCmd {
+				Logger.Println("LastCmd error:", err)
+			}
+			return false
 		}
-		// TODO(xiaq): Errors other than ErrNoMatchingCmd should be reported
+		if ed.hist.last[line] == i {
+			break
+		}
 	}
 
-	return false
+	ed.hist.jump(i, line)
+	return true
 }
 
 // acceptHistory accepts the currently selected history.
