@@ -182,4 +182,6 @@ brew install --HEAD elvish
 
 In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the elves have a reputation of high quality.  These are usually called **elven** items, but I chose **elvish** for an obvious reason.
 
-The adjective for elvish is also "elvish", not "elvishy" and definitely not "elvishish".
+* The adjective for elvish is also "elvish", not "elvishy" and definitely not "elvishish".
+
+* Capitalize "elvish" as if it is an ordinary noun, i.e. only when it starts a sentence or is part of a heading.
