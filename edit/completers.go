@@ -73,7 +73,8 @@ func hasProperPrefix(s, p string) bool {
 }
 
 func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
-	if ns == "" {
+	switch ns {
+	case "":
 		for varname := range eval.Builtin() {
 			f(varname)
 		}
@@ -81,7 +82,11 @@ func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
 			f(varname)
 		}
 		// TODO Include local names as well.
-	} else {
+	case "e", "E":
+		for _, s := range os.Environ() {
+			f(s[:strings.IndexByte(s, '=')])
+		}
+	default:
 		// TODO Support non-module namespaces.
 		for varname := range ev.Modules[ns] {
 			f(varname)
