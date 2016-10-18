@@ -369,10 +369,11 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 			return v
 		}
 		return builtinNamespace[name]
-	case "e", "E":
+	case "e":
 		if strings.HasPrefix(name, FnPrefix) {
 			return NewRoVariable(ExternalCmd{name[len(FnPrefix):]})
 		}
+	case "E":
 		return envVariable{name}
 	case "shared":
 		if ec.Store == nil {
@@ -382,10 +383,9 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	default:
 		if ns, ok := ec.Modules[ns]; ok {
 			return ns[name]
-		} else {
-			return nil
 		}
 	}
+	return nil
 }
 
 // getLocal finds the named local variable.

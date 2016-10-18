@@ -82,7 +82,7 @@ func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
 			f(varname)
 		}
 		// TODO Include local names as well.
-	case "e", "E":
+	case "E":
 		for _, s := range os.Environ() {
 			f(s[:strings.IndexByte(s, '=')])
 		}
@@ -154,9 +154,6 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 		got(command)
 		if strings.HasPrefix(head, "e:") {
 			got("e:" + command)
-		}
-		if strings.HasPrefix(head, "E:") {
-			got("E:" + command)
 		}
 	}
 	// TODO Support non-module namespaces.

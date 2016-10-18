@@ -114,8 +114,6 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
   ~> E:PATH=$E:PATH":/bin"
   ```
 
-  NOTE: The `E:` and `e:` namespaces are actually the same namespace. However, since command names are typically in lower case while environment variables are typically in upper case, `e:` fits external commands better and `E:` fits environment variables better.
-
 * There is no interpolation inside double quotes (yet). Use implicit string concatenation:
   ```sh
   ~> name=xiaq
