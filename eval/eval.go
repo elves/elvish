@@ -264,10 +264,9 @@ func (ec *EvalCtx) PCall(f Fn, args []Value, opts map[string]Value) (err error) 
 }
 
 func (ec *EvalCtx) PCaptureOutput(f Fn, args []Value, opts map[string]Value) (vs []Value, err error) {
-	defer catch(&err, ec)
 	// XXX There is no source.
-	return captureOutput(ec, Op{
-		func(newec *EvalCtx) { f.Call(newec, args, opts) }, -1, -1}), nil
+	return pcaptureOutput(ec, Op{
+		func(newec *EvalCtx) { f.Call(newec, args, opts) }, -1, -1})
 }
 
 func catch(perr *error, ec *EvalCtx) {

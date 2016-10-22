@@ -333,6 +333,12 @@ func (cp *compiler) outputCapture(n *parse.Primary) ValuesOpFunc {
 }
 
 func captureOutput(ec *EvalCtx, op Op) []Value {
+	vs, err := pcaptureOutput(ec, op)
+	maybeThrow(err)
+	return vs
+}
+
+func pcaptureOutput(ec *EvalCtx, op Op) ([]Value, error) {
 	vs := []Value{}
 	newEc := ec.fork(fmt.Sprintf("output capture %v", op))
 
@@ -366,7 +372,7 @@ func captureOutput(ec *EvalCtx, op Op) []Value {
 		bytesCollected <- true
 	}()
 
-	op.Exec(newEc)
+	err = newEc.PEval(op)
 	ClosePorts(newEc.ports)
 
 	<-bytesCollected
@@ -375,7 +381,7 @@ func captureOutput(ec *EvalCtx, op Op) []Value {
 	close(ch)
 	<-chCollected
 
-	return vs
+	return vs, err
 }
 
 func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
