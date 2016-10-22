@@ -120,7 +120,7 @@ func (ed *Editor) nextHistory() bool {
 	if ed.store == nil {
 		return false
 	}
-	i := ed.hist.current + 1
+	i := ed.hist.current
 	var line string
 	for {
 		var err error
