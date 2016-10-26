@@ -31,7 +31,7 @@ upload: get
 	tar cfz elvish.tar.gz -C $(FIRST_GOPATH)/bin elvish
 	test "$(TRAVIS_GO_VERSION)" = 1.7 -a "$(TRAVIS_PULL_REQUEST)" = false \
 		&& test -n "$(TRAVIS_TAG)" -o "$(TRAVIS_BRANCH)" = master \
-		&& curl http://ul.elvish.io:6060/ -F name=elvish-$(TRAVIS_OS_NAME).tar.gz \
+		&& curl http://ul.elvish.io:6060/ -F name=elvish-$(if $(TRAVIS_TAG),$(TRAVIS_TAG)-,)$(TRAVIS_OS_NAME).tar.gz \
 			-F token=$$UPLOAD_TOKEN -F file=@./elvish.tar.gz\
 		|| echo "not uploading"
 
