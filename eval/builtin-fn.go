@@ -1169,7 +1169,4 @@ func preExit(ec *EvalCtx) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
-	if ec.Stub != nil {
-		ec.Stub.Terminate()
-	}
 }

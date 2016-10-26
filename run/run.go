@@ -18,7 +18,6 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
-	"github.com/elves/elvish/stub"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -82,17 +81,6 @@ func Main() {
 			fmt.Println("failed to close database:", err)
 		}
 	}()
-
-	stub, err := stub.NewStub(os.Stderr)
-	if err != nil {
-		fmt.Println("failed to spawn stub:", err)
-	} else {
-		ev.Stub = stub
-		go func() {
-			<-stub.State()
-			fmt.Println("stub has died")
-		}()
-	}
 
 	if len(args) == 1 {
 		if *cmd {

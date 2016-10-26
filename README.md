@@ -150,7 +150,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 Go >= 1.6 is required. Linux is fully supported. It is likely to work on BSDs and Mac OS X. Windows is **not** supported yet.
 
-The main binary can be installed using `go get github.com/elves/elvish`. There is also an auxiliary program called elvish-stub; install it with `make stub`. Elvish is functional without the stub, but job control features depend on it.
+Elvish is a go-gettable package, and can be installed using `go get github.com/elves/elvish`.
 
 If you are lazy and use `bash` or `zsh` now, here is something you can copy-paste into your terminal:
 
@@ -160,7 +160,6 @@ export PATH=$PATH:$GOPATH/bin
 mkdir -p $GOPATH
 
 go get github.com/elves/elvish
-make -C $GOPATH/src/github.com/elves/elvish stub
 
 for f in ~/.bashrc ~/.zshrc; do
     printf 'export %s=%s\n' GOPATH '$HOME/go' PATH '$PATH:$GOPATH/bin' >> $f

@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/stub"
 )
 
 // Op is an operation on an EvalCtx.
@@ -41,14 +40,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 		bg := n.Background
 		if bg {
 			ec = ec.fork("background job " + n.SourceText())
-
-			// Set up a new stub.
-			st, err := stub.NewStub(os.Stderr)
-			if err != nil {
-				throwf("failed to spawn stub: %v", err)
-			}
-			st.SetTitle(n.SourceText())
-			ec.Stub = st
+			ec.intCh = nil
 
 			if ec.Editor != nil {
 				// TODO: Redirect output in interactive mode so that the line
@@ -104,7 +96,6 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			// Background job, wait for form termination asynchronously.
 			go func() {
 				wg.Wait()
-				ec.Stub.Terminate()
 				msg := "job " + n.SourceText() + " finished"
 				if !allok(errors) {
 					msg += ", errors = " + makeCompositeError(errors).Error()

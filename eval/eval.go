@@ -19,7 +19,6 @@ import (
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
-	"github.com/elves/elvish/stub"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -40,7 +39,6 @@ type Evaler struct {
 	Modules map[string]Namespace
 	Store   *store.Store
 	Editor  Editor
-	Stub    *stub.Stub
 	intCh   chan struct{}
 }
 
@@ -65,7 +63,7 @@ func (ec *EvalCtx) falsify() {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler(st *store.Store) *Evaler {
-	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil, nil}
+	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil}
 }
 
 func (e *Evaler) searchPaths() []string {
@@ -166,47 +164,32 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 		{File: os.Stderr, Chan: BlackholeChan},
 	}
 
-	signal.Ignore(syscall.SIGTTIN)
-	signal.Ignore(syscall.SIGTTOU)
+	// signal.Ignore(syscall.SIGTTIN)
+	// signal.Ignore(syscall.SIGTTOU)
 	stopSigGoroutine := make(chan struct{})
 	sigGoRoutineDone := make(chan struct{})
-	// XXX Should use fd of /dev/terminal instead of 0.
-	if ev.Stub != nil && ev.Stub.Alive() && sys.IsATTY(0) {
-		ev.Stub.SetTitle(summarize(text))
-		dir, err := os.Getwd()
-		if err != nil {
-			dir = "/"
-		}
-		ev.Stub.Chdir(dir)
-		err = sys.Tcsetpgrp(0, ev.Stub.Process().Pid)
-		if err != nil {
-			fmt.Println("failed to put stub in foreground:", err)
-		}
-
-		ev.intCh = make(chan struct{})
-		go func() {
-			closedIntCh := false
-		loop:
-			for {
-				select {
-				case sig := <-ev.Stub.Signals():
-					switch sig {
-					case syscall.SIGINT, syscall.SIGQUIT:
-						if !closedIntCh {
-							close(ev.intCh)
-							closedIntCh = true
-						}
-					}
-				case <-stopSigGoroutine:
-					break loop
+	// Set up intCh.
+	ev.intCh = make(chan struct{})
+	sigCh := make(chan os.Signal)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGQUIT)
+	go func() {
+		closedIntCh := false
+	loop:
+		for {
+			select {
+			case <-sigCh:
+				if !closedIntCh {
+					close(ev.intCh)
+					closedIntCh = true
 				}
+			case <-stopSigGoroutine:
+				break loop
 			}
-			ev.intCh = nil
-			close(sigGoRoutineDone)
-		}()
-	} else {
+		}
+		ev.intCh = nil
+		signal.Stop(sigCh)
 		close(sigGoRoutineDone)
-	}
+	}()
 
 	ret, err := ev.eval(op, ports, name, text)
 	close(outCh)
@@ -218,7 +201,8 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 		fmt.Println(falseIndicator)
 	}
 
-	// XXX Should use fd of /dev/tty instead of 0.
+	// Put myself in foreground, in case some command has put me in background.
+	// XXX Should probably use fd of /dev/tty instead of 0.
 	if sys.IsATTY(0) {
 		err := sys.Tcsetpgrp(0, syscall.Getpgrp())
 		if err != nil {

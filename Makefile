@@ -3,9 +3,8 @@ PKG_COVERS := $(shell go list ./... | grep -v /vendor/ | grep "^github.com/elves
 COVER_MODE := count
 
 FIRST_GOPATH=$(shell go env GOPATH | cut -d: -f1)
-STUB := $(FIRST_GOPATH)/bin/elvish-stub
 
-default: get stub test
+default: get test
 
 get:
 	go get .
@@ -13,16 +12,8 @@ get:
 generate:
 	go generate ./...
 
-stub: $(STUB)
-
-$(STUB): ./stubimpl/main.c
-	test -n $(FIRST_GOPATH)
-	mkdir -p $(FIRST_GOPATH)/bin
-	$(CC) ./stubimpl/main.c -o $@
-
-test: stub
+test:
 	go test $(PKGS)
-	: ./stubimpl/test.sh
 
 cover/%: %
 	mkdir -p cover
@@ -36,8 +27,8 @@ goveralls: cover/all
 	go get -u github.com/mattn/goveralls
 	$(FIRST_GOPATH)/bin/goveralls -coverprofile=cover/all -service=travis-ci \
 
-upload: get stub
-	tar cfz elvish.tar.gz -C $(FIRST_GOPATH)/bin elvish elvish-stub
+upload: get
+	tar cfz elvish.tar.gz -C $(FIRST_GOPATH)/bin elvish
 	test "$(TRAVIS_GO_VERSION)" = 1.7 -a "$(TRAVIS_PULL_REQUEST)" = false \
 		&& test -n "$(TRAVIS_TAG)" -o "$(TRAVIS_BRANCH)" = master \
 		&& curl http://ul.elvish.io:6060/ -F name=elvish-$(TRAVIS_OS_NAME).tar.gz \
@@ -46,4 +37,4 @@ upload: get stub
 
 travis: goveralls upload
 
-.PHONY: default get generate stub test goveralls upload travis
+.PHONY: default get generate test goveralls upload travis
