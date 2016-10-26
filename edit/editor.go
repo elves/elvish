@@ -40,6 +40,7 @@ type Editor struct {
 
 	rpromptPersistent bool
 	beforeReadLine    eval.Variable
+	afterReadLine     eval.Variable
 
 	historyMutex sync.RWMutex
 
@@ -112,6 +113,8 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 
 		abbreviations: make(map[string]string),
 		beforeReadLine: eval.NewPtrVariableWithValidator(
+			eval.NewList(), eval.IsListOfFnValue),
+		afterReadLine: eval.NewPtrVariableWithValidator(
 			eval.NewList(), eval.IsListOfFnValue),
 	}
 	ev.Editor = ed
@@ -303,7 +306,24 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 		addError(fmt.Errorf("can't restore terminal attribute: %s", err))
 	}
 	ed.savedTermios = nil
+	line := ed.line
 	ed.editorState = editorState{}
+
+	afterReadLine := ed.afterReadLine.Get().(eval.ListLike)
+	if afterReadLine.Len() > 0 {
+		opfunc := func(ec *eval.EvalCtx) {
+			afterReadLine.Iterate(func(v eval.Value) bool {
+				fn := v.(eval.FnValue)
+				ex := ec.PCall(fn, []eval.Value{eval.String(line)}, eval.NoOpts)
+				// TODO Pretty print.
+				if ex != nil {
+					fmt.Fprintln(os.Stderr, "function error: %s", ex.Error())
+				}
+				return true
+			})
+		}
+		ed.evaler.Eval(eval.Op{opfunc, -1, -1}, "[after-readline]", "no source")
+	}
 }
 
 // ReadLine reads a line interactively.
