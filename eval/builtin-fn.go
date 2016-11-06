@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"math"
 	"math/rand"
+	"net"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -192,6 +193,8 @@ func init() {
 		&BuiltinFn{"-stack", WrapFn(_stack)},
 		&BuiltinFn{"-log", WrapFn(_log)},
 		&BuiltinFn{"-time", WrapFn(_time)},
+
+		&BuiltinFn{"-ifaddrs", WrapFn(_ifaddrs)},
 	}
 	for _, b := range builtinFns {
 		builtinNamespace[FnPrefix+b.Name] = NewRoVariable(b)
@@ -1133,6 +1136,16 @@ func _time(ec *EvalCtx, f FnValue) {
 
 	dt := t1.Sub(t0)
 	fmt.Fprintln(ec.ports[1].File, dt)
+}
+
+func _ifaddrs(ec *EvalCtx) {
+	out := ec.ports[1].Chan
+
+	addrs, err := net.InterfaceAddrs()
+	maybeThrow(err)
+	for _, addr := range addrs {
+		out <- String(addr.String())
+	}
 }
 
 func exec(ec *EvalCtx, args ...string) {
