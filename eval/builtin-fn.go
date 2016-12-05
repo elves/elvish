@@ -172,6 +172,8 @@ func init() {
 		&BuiltinFn{"wcswidth", WrapFn(wcswidth)},
 
 		&BuiltinFn{"resolve", WrapFn(resolveFn)},
+		&BuiltinFn{"has-external", WrapFn(hasExternal)},
+		&BuiltinFn{"search-external", WrapFn(searchExternal)},
 
 		// bool
 		&BuiltinFn{"bool", WrapFn(boolFn)},
@@ -983,6 +985,21 @@ func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 func resolveFn(ec *EvalCtx, cmd String) {
 	out := ec.ports[1].Chan
 	out <- resolve(string(cmd), ec)
+}
+
+func hasExternal(ec *EvalCtx, cmd string) {
+	_, err := ec.Search(cmd)
+	if err != nil {
+		ec.falsify()
+	}
+}
+
+func searchExternal(ec *EvalCtx, cmd string) {
+	path, err := ec.Search(cmd)
+	maybeThrow(err)
+
+	out := ec.ports[1].Chan
+	out <- String(path)
 }
 
 func take(ec *EvalCtx, n int, iterate func(func(Value))) {
