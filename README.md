@@ -177,6 +177,8 @@ brew install --HEAD elvish
 
 ## Name
 
-In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the elves have a reputation of high quality.  These are usually called **elven** items, but I chose **elvish** because it ends with "sh". It also rhymes with fish, a shell that I once contributed to.
+In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the elves have a reputation of high quality.  These are usually called *elven* items, but I chose "elvish" because it ends with "sh". It also rhymes with fish, a shell that I once contributed to.
 
 When using the word elvish, i.e. not referring specifically to the command but the shell in general, capitalize it as if it is an ordinary noun. For instance, "Elvish is a good shell.", "What a good shell is elvish!"
+
+Whoever practices the elvish way by either contributing to it or simply using it is called an **elf**, just like the name of the GitHub organization has led you to believe. The official adjective for elvish (as in "Pythonic" for Python, "Rubyesque" for Ruby) is "elven" -- this word possesses the rare virtue of being short. However, for purpose of rhythm or comical effects, "elvish-ish" may also be used, provided that it does not appear twice in a single passage.
