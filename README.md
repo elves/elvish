@@ -26,6 +26,16 @@ Try `cn.dl.elvish.io` if you are in China and the download is too slow. (In the 
 
 See also [Building Elvish](#building-elvish).
 
+### RPM package
+
+RPM Package for Fedora is available in [FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository). You can install it by add FZUG repo first:
+
+    dnf config-manager --add-repo=http://repo.fdzh.org/FZUG/FZUG.repo
+
+Then install elvish
+
+    dnf install elvish
+
 ## Getting Started
 
 Elvish mimics bash and zsh in a lot of places. The following shows some key differences and highlights, as well as some common tasks:
