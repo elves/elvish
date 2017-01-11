@@ -34,9 +34,9 @@ func (n *navigation) ModeLine(width int) *buffer {
 		s += "(show hidden) "
 	}
 	b := newBuffer(width)
-	b.writes(util.TrimWcwidth(s, width), styleForMode)
+	b.writes(util.TrimWcwidth(s, width), styleForMode.String())
 	b.writes(" ", "")
-	b.writes(n.filter, styleForFilter)
+	b.writes(n.filter, styleForFilter.String())
 	b.dot = b.cursor()
 	return b
 }
@@ -283,7 +283,7 @@ func (n *navigation) loaddir(dir string) ([]styled, error) {
 	for _, info := range infos {
 		if n.showHidden || info.Name()[0] != '.' {
 			name := info.Name()
-			all = append(all, styled{name, lsColor.getStyle(path.Join(dir, name))})
+			all = append(all, styled{name, stylesFromString(lsColor.getStyle(path.Join(dir, name)))})
 		}
 	}
 	sortStyleds(all)
@@ -393,7 +393,7 @@ func newFilePreviewNavColumn(fname string) *navColumn {
 	lines := strings.Split(content, "\n")
 	styleds := make([]styled, len(lines))
 	for i, line := range lines {
-		styleds[i] = styled{strings.Replace(line, "\t", "    ", -1), ""}
+		styleds[i] = styled{strings.Replace(line, "\t", "    ", -1), styles{}}
 	}
 	return newNavColumn(styleds, func(int) bool { return false })
 }
@@ -412,9 +412,9 @@ func (nc *navColumn) Len() int {
 func (nc *navColumn) Show(i, w int) styled {
 	s := nc.candidates[i]
 	if w >= navigationListingMinWidthForPadding {
-		return styled{" " + util.ForceWcwidth(s.text, w-2), s.style}
+		return styled{" " + util.ForceWcwidth(s.text, w-2), s.styles}
 	}
-	return styled{util.ForceWcwidth(s.text, w), s.style}
+	return styled{util.ForceWcwidth(s.text, w), s.styles}
 }
 
 func (nc *navColumn) Filter(filter string) int {

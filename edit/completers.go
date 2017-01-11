@@ -270,7 +270,7 @@ func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) 
 
 		cands = append(cands, &candidate{
 			text: full, suffix: suffix,
-			display: styled{name, lsColor.getStyle(full)},
+			display: styled{name, stylesFromString(lsColor.getStyle(full))},
 		})
 	}
 

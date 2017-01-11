@@ -44,9 +44,9 @@ func (l *listing) ModeLine(width int) *buffer {
 	title := l.provider.ModeTitle(l.selected)
 	// TODO keep it one line.
 	b := newBuffer(width)
-	b.writes(util.TrimWcwidth(title, width), styleForMode)
+	b.writes(util.TrimWcwidth(title, width), styleForMode.String())
 	b.writes(" ", "")
-	b.writes(l.filter, styleForFilter)
+	b.writes(l.filter, styleForFilter.String())
 	b.dot = b.cursor()
 	return b
 }
@@ -78,13 +78,13 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	getEntry := func(i int) []styled {
 		s := l.provider.Show(i, width)
 		lines := strings.Split(s.text, "\n")
-		style := s.style
+		st := s.styles
 		if i == l.selected {
-			style = joinStyle(style, styleForSelected)
+			st = append(st, styleForSelected.String())
 		}
 		styleds := make([]styled, len(lines))
 		for i, line := range lines {
-			styleds[i] = styled{line, style}
+			styleds[i] = styled{line, st}
 		}
 		return styleds
 	}
@@ -135,7 +135,7 @@ func (l *listing) List(width, maxHeight int) *buffer {
 		if p != lines.Front() {
 			b.newline()
 		}
-		b.writes(s.text, s.style)
+		b.writes(s.text, s.styles.String())
 	}
 
 	if scrollbar != nil {
@@ -148,9 +148,9 @@ func writeHorizontalScrollbar(b *buffer, n, low, high, width int) {
 	slow, shigh := findScrollInterval(n, low, high, width)
 	for i := 0; i < width; i++ {
 		if slow <= i && i < shigh {
-			b.write(' ', styleForScrollBarThumb)
+			b.write(' ', styleForScrollBarThumb.String())
 		} else {
-			b.write('━', styleForScrollBarArea)
+			b.write('━', styleForScrollBarArea.String())
 		}
 	}
 }
@@ -164,9 +164,9 @@ func renderScrollbar(n, low, high, height int) *buffer {
 			b.newline()
 		}
 		if slow <= i && i < shigh {
-			b.write(' ', styleForScrollBarThumb)
+			b.write(' ', styleForScrollBarThumb.String())
 		} else {
-			b.write('│', styleForScrollBarArea)
+			b.write('│', styleForScrollBarArea.String())
 		}
 	}
 	return b

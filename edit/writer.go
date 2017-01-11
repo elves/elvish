@@ -197,7 +197,7 @@ func trimToWindow(s []string, selected, max int) ([]string, int) {
 
 func makeModeLine(text string, width int) *buffer {
 	b := newBuffer(width)
-	b.writes(util.TrimWcwidth(text, width), styleForMode)
+	b.writes(util.TrimWcwidth(text, width), styleForMode.String())
 	b.dot = b.cursor()
 	return b
 }
@@ -235,7 +235,7 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 	nowAt := func(i int) {
 		if mode == modeCompletion && i == es.completion.begin {
 			c := es.completion.selectedCandidate()
-			b.writes(c.text, styleForCompleted)
+			b.writes(c.text, styleForCompleted.String())
 		}
 		if i == es.dot {
 			b.dot = b.cursor()
@@ -249,7 +249,7 @@ tokens:
 				es.completion.begin <= i && i <= es.completion.end {
 				// Do nothing. This part is replaced by the completion candidate.
 			} else {
-				b.write(r, joinStyle(styleForType[token.Type], token.MoreStyle))
+				b.write(r, joinStyles(styleForType[token.Type], token.MoreStyle).String())
 			}
 			i += utf8.RuneLen(r)
 
@@ -264,7 +264,7 @@ tokens:
 		// Put the rest of current history, position the cursor at the
 		// end of the line, and finish writing
 		h := es.hist
-		b.writes(h.line[len(h.prefix):], styleForCompletedHistory)
+		b.writes(h.line[len(h.prefix):], styleForCompletedHistory.String())
 		b.dot = b.cursor()
 	}
 
@@ -286,7 +286,7 @@ tokens:
 	// TODO tips is assumed to contain no newlines.
 	if len(es.tips) > 0 {
 		bufTips = newBuffer(width)
-		bufTips.writes(strings.Join(es.tips, "\n"), styleForTip)
+		bufTips.writes(strings.Join(es.tips, "\n"), styleForTip.String())
 	}
 
 	hListing := 0

@@ -15,7 +15,7 @@ type Token struct {
 	Type      TokenKind
 	Text      string
 	Node      parse.Node
-	MoreStyle string
+	MoreStyle styles
 }
 
 // TokenKind classifies Token's.
@@ -33,12 +33,8 @@ const (
 	Sep
 )
 
-func (t *Token) addStyle(st string) {
-	t.MoreStyle = joinStyle(t.MoreStyle, st)
-}
-
 func parserError(src string, begin, end int) Token {
-	return Token{ParserError, src[begin:end], parse.NewSep(src, begin, end), ""}
+	return Token{ParserError, src[begin:end], parse.NewSep(src, begin, end), styles{}}
 }
 
 // tokenize returns all leaves in an AST.
@@ -78,7 +74,7 @@ func produceTokens(n parse.Node, tokenCh chan<- Token) {
 	}
 	if len(n.Children()) == 0 {
 		tokenType := ParserError
-		moreStyle := ""
+		moreStyle := styles{}
 		switch n := n.(type) {
 		case *parse.Primary:
 			switch n.Type {
@@ -99,9 +95,9 @@ func produceTokens(n parse.Node, tokenCh chan<- Token) {
 			tokenType = Sep
 			septext := n.SourceText()
 			if strings.HasPrefix(septext, "#") {
-				moreStyle = styleForSep["#"]
+				moreStyle = append(moreStyle, styleForSep["#"])
 			} else {
-				moreStyle = styleForSep[septext]
+				moreStyle = append(moreStyle, styleForSep[septext])
 			}
 		default:
 			Logger.Printf("bad leaf type %T", n)
