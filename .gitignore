@@ -21,6 +21,10 @@ _testmain.go
 
 *.exe
 
+# Backup files
+*~
+
 # Project specific
 /t/ # Small applications for manual testing go inside this directory
 /cover/
+elvish
