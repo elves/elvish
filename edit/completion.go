@@ -39,11 +39,11 @@ func (c *completion) ModeLine(width int) *buffer {
 	b.writes(" ", "")
 	// Write title
 	title := fmt.Sprintf("COMPLETING %s", c.completer)
-	b.writes(util.TrimWcwidth(title, width), styleForMode)
+	b.writes(util.TrimWcwidth(title, width), styleForMode.String())
 	// Write filter
 	if c.filtering {
 		b.writes(" ", "")
-		b.writes(c.filter, styleForFilter)
+		b.writes(c.filter, styleForFilter.String())
 		b.dot = b.cursor()
 	}
 	// Write horizontal scrollbar, using the remaining space
@@ -331,15 +331,15 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 			}
 			if j >= len(cands) {
 				// Write padding to make the listing a rectangle.
-				col.writePadding(totalColWidth, styleForCompletion)
+				col.writePadding(totalColWidth, styleForCompletion.String())
 			} else {
-				col.writePadding(completionColMarginLeft, styleForCompletion)
-				style := joinStyle(styleForCompletion, cands[j].display.style)
+				col.writePadding(completionColMarginLeft, styleForCompletion.String())
+				s := joinStyles(styleForCompletion, cands[j].display.styles)
 				if j == comp.selected {
-					style = joinStyle(style, styleForSelectedCompletion)
+					s = append(s, styleForSelectedCompletion)
 				}
-				col.writes(util.ForceWcwidth(cands[j].display.text, colWidth), style)
-				col.writePadding(completionColMarginRight, styleForCompletion)
+				col.writes(util.ForceWcwidth(cands[j].display.text, colWidth), s.String())
+				col.writePadding(completionColMarginRight, styleForCompletion.String())
 				if !trimmed {
 					comp.lastShownInFull = j
 				}
@@ -360,7 +360,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 			if i > 0 {
 				col.newline()
 			}
-			col.writePadding(remainedWidth, styleForCompletion)
+			col.writePadding(remainedWidth, styleForCompletion.String())
 		}
 		b.extendHorizontal(col, 0)
 		remainedWidth = 0

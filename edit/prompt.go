@@ -23,7 +23,7 @@ func defaultPrompts() (eval.FnValue, eval.FnValue) {
 	// Make default prompts.
 	prompt := func(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 		out := ec.OutputChan()
-		out <- &styled{util.Getwd() + "> ", ""}
+		out <- &styled{util.Getwd() + "> ", styles{}}
 	}
 
 	username := "???"
@@ -38,7 +38,7 @@ func defaultPrompts() (eval.FnValue, eval.FnValue) {
 	rpromptStr := username + "@" + hostname
 	rprompt := func(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 		out := ec.OutputChan()
-		out <- &styled{rpromptStr, "7"}
+		out <- &styled{rpromptStr, styles{"7"}}
 	}
 
 	return &eval.BuiltinFn{"default prompt", prompt}, &eval.BuiltinFn{"default rprompt", rprompt}

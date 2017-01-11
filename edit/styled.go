@@ -9,16 +9,16 @@ import (
 
 // styled is a piece of text with style.
 type styled struct {
-	text  string
-	style string
+	text   string
+	styles styles
 }
 
 func unstyled(s string) styled {
-	return styled{s, ""}
+	return styled{s, styles{}}
 }
 
 func (s *styled) addStyle(st string) {
-	s.style = joinStyle(s.style, st)
+	s.styles = append(s.styles, st)
 }
 
 func (s *styled) Kind() string {
@@ -26,16 +26,16 @@ func (s *styled) Kind() string {
 }
 
 func (s *styled) String() string {
-	return "\033[" + s.style + "m" + s.text + "\033[m"
+	return "\033[" + s.styles.String() + "m" + s.text + "\033[m"
 }
 
 func (s *styled) Repr(indent int) string {
-	return "(le:styled " + parse.Quote(s.text) + " " + parse.Quote(s.style) + ")"
+	return "(le:styled " + parse.Quote(s.text) + " " + parse.Quote(s.styles.String()) + ")"
 }
 
 func styledBuiltin(ec *eval.EvalCtx, text, style string) {
 	out := ec.OutputChan()
-	out <- &styled{text, style}
+	out <- &styled{text, stylesFromString(style)}
 }
 
 // Boilerplates for sorting.

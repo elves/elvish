@@ -30,7 +30,7 @@ func (s *Stylist) apply() {
 			tokens = tokens[1:]
 		}
 		for len(tokens) > 0 && tokens[0].Node.End() <= cmd.end {
-			tokens[0].addStyle(cmd.style)
+			tokens[0].MoreStyle = append(tokens[0].MoreStyle, cmd.style)
 			tokens = tokens[1:]
 		}
 		commands = commands[1:]
@@ -46,7 +46,7 @@ func (s *Stylist) style(n parse.Node) {
 		for _, an := range fn.Assignments {
 			if an.Dst != nil && an.Dst.Head != nil {
 				v := an.Dst.Head
-				s.add(styleForType[Variable], v.Begin(), v.End())
+				s.add(styleForType[Variable].String(), v.Begin(), v.End())
 			}
 		}
 		if fn.Head != nil {
@@ -58,12 +58,12 @@ func (s *Stylist) style(n parse.Node) {
 		case parse.ForControl:
 			if cn.Iterator != nil {
 				v := cn.Iterator.Head
-				s.add(styleForType[Variable], v.Begin(), v.End())
+				s.add(styleForType[Variable].String(), v.Begin(), v.End())
 			}
 		case parse.TryControl:
 			if cn.ExceptVar != nil {
 				v := cn.ExceptVar.Head
-				s.add(styleForType[Variable], v.Begin(), v.End())
+				s.add(styleForType[Variable].String(), v.Begin(), v.End())
 			}
 		}
 	}
@@ -74,7 +74,7 @@ func (s *Stylist) style(n parse.Node) {
 
 func (s *Stylist) formHead(n *parse.Compound) {
 	simple, head, err := simpleCompound(n, nil)
-	st := ""
+	st := styles{}
 	if simple {
 		if goodFormHead(head, s.editor) {
 			st = styleForGoodCommand
@@ -84,8 +84,8 @@ func (s *Stylist) formHead(n *parse.Compound) {
 	} else if err != nil {
 		st = styleForBadCommand
 	}
-	if st != "" {
-		s.add(st, n.Begin(), n.End())
+	if len(st) > 0 {
+		s.add(st.String(), n.Begin(), n.End())
 	}
 }
 
