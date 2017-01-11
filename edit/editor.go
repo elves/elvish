@@ -172,7 +172,7 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 					p := err.Begin
 					for i, token := range ed.tokens {
 						if token.Node.Begin() <= p && p < token.Node.End() {
-							ed.tokens[i].addStyle(styleForCompilerError)
+							ed.tokens[i].MoreStyle = joinStyles(ed.tokens[i].MoreStyle, styleForCompilerError)
 							break
 						}
 					}

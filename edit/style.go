@@ -1,89 +1,169 @@
 package edit
 
+import "strings"
+
 // Styles for UI.
 var (
 	//styleForPrompt           = ""
-	//styleForRPrompt          = "7"
-	styleForCompleted        = "2"
-	styleForMode             = "1;37;45"
-	styleForTip              = ""
-	styleForCompletedHistory = "2"
-	styleForFilter           = "4"
-	styleForSelected         = "7"
-	styleForScrollBarArea    = "35"
-	styleForScrollBarThumb   = "35;7"
-	styleForSideArrow        = "7"
+	//styleForRPrompt          = "inverse"
+	styleForCompleted        = styles{"dim"}
+	styleForMode             = styles{"bold", "lightgray", "magenta"}
+	styleForTip              = styles{}
+	styleForCompletedHistory = styles{"dim"}
+	styleForFilter           = styles{"underlined"}
+	styleForSelected         = styles{"inverse"}
+	styleForScrollBarArea    = styles{"magenta"}
+	styleForScrollBarThumb   = styles{"magenta", "inverse"}
+	styleForSideArrow        = styles{"inverse"}
 
 	// Use black text on white for completion listing.
-	styleForCompletion = "30;47"
+	styleForCompletion = styles{"black", "bg_white"}
 	// Use white text on black for selected completion.
-	styleForSelectedCompletion = "7"
+	styleForSelectedCompletion = "inverse"
 )
 
-var styleForType = map[TokenKind]string{
-	ParserError:  "31;3",
-	Bareword:     "",
-	SingleQuoted: "33",
-	DoubleQuoted: "33",
-	Variable:     "35",
-	Wildcard:     "",
-	Tilde:        "",
-	Sep:          "",
+var styleForType = map[TokenKind]styles{
+	ParserError:  styles{"red", "italic"},
+	Bareword:     styles{},
+	SingleQuoted: styles{"red"},
+	DoubleQuoted: styles{"red"},
+	Variable:     styles{"magenta"},
+	Wildcard:     styles{},
+	Tilde:        styles{},
+	Sep:          styles{},
 }
 
 var styleForSep = map[string]string{
-	// unknown : "31",
-	"#": "36",
+	// unknown : "red",
+	"#": "cyan",
 
-	">":  "32",
-	">>": "32",
-	"<":  "32",
-	"?>": "32",
-	"|":  "32",
+	">":  "green",
+	">>": "green",
+	"<":  "green",
+	"?>": "green",
+	"|":  "green",
 
-	"?(": "1",
-	"(":  "1",
-	")":  "1",
-	"[":  "1",
-	"]":  "1",
-	"{":  "1",
-	"}":  "1",
+	"?(": "bold",
+	"(":  "bold",
+	")":  "bold",
+	"[":  "bold",
+	"]":  "bold",
+	"{":  "bold",
+	"}":  "bold",
 
-	"&": "1",
+	"&": "bold",
 
-	"if":   "33",
-	"then": "33",
-	"elif": "33",
-	"else": "33",
-	"fi":   "33",
+	"if":   "yellow",
+	"then": "yellow",
+	"elif": "yellow",
+	"else": "yellow",
+	"fi":   "yellow",
 
-	"while": "33",
-	"do":    "33",
-	"done":  "33",
+	"while": "yellow",
+	"do":    "yellow",
+	"done":  "yellow",
 
-	"for": "33",
-	"in":  "33",
+	"for": "yellow",
+	"in":  "yellow",
 
-	"try":     "33",
-	"except":  "33",
-	"finally": "33",
-	"tried":   "33",
+	"try":     "yellow",
+	"except":  "yellow",
+	"finally": "yellow",
+	"tried":   "yellow",
 
-	"begin": "33",
-	"end":   "33",
+	"begin": "yellow",
+	"end":   "yellow",
+}
+
+var styleTranslationTable = map[string]string{
+	"bold":       "1",
+	"dim":        "2",
+	"italic":     "3",
+	"underlined": "4",
+	"blink":      "5",
+	"inverse":    "7",
+
+	"black":        "30",
+	"red":          "31",
+	"green":        "32",
+	"yellow":       "33",
+	"blue":         "34",
+	"magenta":      "35",
+	"cyan":         "36",
+	"lightgray":    "37",
+	"gray":         "90",
+	"lightred":     "91",
+	"lightgreen":   "92",
+	"lightyellow":  "93",
+	"lightblue":    "94",
+	"lightmagenta": "95",
+	"lightcyan":    "96",
+	"white":        "97",
+
+	"bg_default":      "49",
+	"bg_black":        "40",
+	"bg_red":          "41",
+	"bg_green":        "42",
+	"bg_yellow":       "43",
+	"bg_blue":         "44",
+	"bg_magenta":      "45",
+	"bg_cyan":         "46",
+	"bg_lightgray":    "47",
+	"bg_gray":         "100",
+	"bg_lightred":     "101",
+	"bg_lightgreen":   "102",
+	"bg_lightyellow":  "103",
+	"bg_lightblue":    "104",
+	"bg_lightmagenta": "105",
+	"bg_lightcyan":    "106",
+	"bg_white":        "107",
 }
 
 // Styles for semantic coloring.
 var (
-	styleForGoodCommand   = "32"
-	styleForBadCommand    = "31"
-	styleForBadVariable   = "31;3"
-	styleForCompilerError = "31;3"
+	styleForGoodCommand   = styles{"green"}
+	styleForBadCommand    = styles{"red"}
+	styleForBadVariable   = styles{"red", "italic"}
+	styleForCompilerError = styles{"red", "italic"}
 )
 
-func joinStyle(s, t string) string {
-	if s != "" && t != "" {
-		return s + ";" + t
+type styles []string
+
+func joinStyles(so styles, st ...styles) styles {
+	for _, v := range st {
+		so = append(so, v...)
 	}
-	return s + t
+
+	return so
+}
+
+func styleTranslated(s string) string {
+	v, ok := styleTranslationTable[s]
+	if ok {
+		return v
+	}
+	return s
+}
+
+func stylesFromString(s string) styles {
+	var st styles
+	for _, v := range strings.Split(s, ";") {
+		st = append(st, v)
+	}
+
+	return st
+}
+
+func (s styles) String() string {
+	var o string
+	for i, v := range s {
+		if len(v) > 0 {
+			if i > 0 {
+				o += ";"
+			}
+			o += styleTranslated(v)
+		}
+	}
+
+	return o
 }

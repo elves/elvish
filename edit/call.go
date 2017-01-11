@@ -97,7 +97,7 @@ func callFnForPrompt(ed *Editor, fn eval.Fn) []*styled {
 		if s, ok := v.(*styled); ok {
 			ss = append(ss, s)
 		} else {
-			ss = append(ss, &styled{eval.ToString(v), ""})
+			ss = append(ss, &styled{eval.ToString(v), styles{}})
 		}
 	}
 	return ss

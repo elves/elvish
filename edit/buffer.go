@@ -134,7 +134,7 @@ func (b *buffer) writes(s string, style string) {
 }
 
 func (b *buffer) writeStyled(s *styled) {
-	b.writes(s.text, s.style)
+	b.writes(s.text, s.styles.String())
 }
 
 func (b *buffer) writeStyleds(ss []*styled) {
