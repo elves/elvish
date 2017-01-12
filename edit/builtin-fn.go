@@ -182,7 +182,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Key{PageDown, 0}: "nav-page-down",
 		Key{Left, 0}:     "nav-left",
 		Key{Right, 0}:    "nav-right",
-		Key{Tab, 0}:      "nav-insert-selected",
+		Key{Enter, Alt}:  "nav-insert-selected",
 		Key{Enter, 0}:    "nav-insert-selected-and-quit",
 		Key{'H', Ctrl}:   "nav-trigger-shown-hidden",
 		Key{'F', Ctrl}:   "nav-trigger-filter",
