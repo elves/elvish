@@ -286,6 +286,7 @@ func addListingBuiltins(prefix string, l func(*Editor) *listing) {
 	add("page-down", func(ed *Editor) { l(ed).pageDown() })
 	add("backspace", func(ed *Editor) { l(ed).backspace() })
 	add("accept", func(ed *Editor) { l(ed).accept(ed) })
+	add("accept-close", func(ed *Editor) { l(ed).accept(ed); startInsert(ed) })
 	add("default", func(ed *Editor) { l(ed).defaultBinding(ed) })
 }
 
@@ -301,7 +302,8 @@ func addListingDefaultBindings(prefix string, m ModeType) {
 	add(Key{PageDown, 0}, "page-down")
 	add(Key{Tab, 0}, "down-cycle")
 	add(Key{Backspace, 0}, "backspace")
-	add(Key{Enter, 0}, "accept")
+	add(Key{Enter, 0}, "accept-close")
+	add(Key{Enter, Alt}, "accept")
 	add(Default, "default")
 	defaultBindings[m][Key{'[', Ctrl}] = "start-insert"
 }
