@@ -41,6 +41,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 		if bg {
 			ec = ec.fork("background job " + n.SourceText())
 			ec.intCh = nil
+			ec.background = true
 
 			if ec.Editor != nil {
 				// TODO: Redirect output in interactive mode so that the line

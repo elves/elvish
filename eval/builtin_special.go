@@ -201,7 +201,7 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		filename, source,
 		local, Namespace{},
 		ec.ports, nil, true,
-		0, len(source), ec.addTraceback(),
+		0, len(source), ec.addTraceback(), false,
 	}
 
 	op, err := newEc.Compile(n, filename, source)
