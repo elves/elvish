@@ -17,9 +17,9 @@ var (
 	styleForSideArrow        = styles{"inverse"}
 
 	// Use black text on white for completion listing.
-	styleForCompletion = styles{"black", "bg_white"}
+	styleForCompletion = styles{}
 	// Use white text on black for selected completion.
-	styleForSelectedCompletion = "inverse"
+	styleForSelectedCompletion = styles{"black", "bg_white", "bold"}
 )
 
 var styleForType = map[TokenKind]styles{
