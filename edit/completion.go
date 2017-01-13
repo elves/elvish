@@ -336,7 +336,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 				col.writePadding(completionColMarginLeft, styleForCompletion.String())
 				s := joinStyles(styleForCompletion, cands[j].display.styles)
 				if j == comp.selected {
-					s = append(s, styleForSelectedCompletion)
+					s = append(s, styleForSelectedCompletion.String())
 				}
 				col.writes(util.ForceWcwidth(cands[j].display.text, colWidth), s.String())
 				col.writePadding(completionColMarginRight, styleForCompletion.String())
