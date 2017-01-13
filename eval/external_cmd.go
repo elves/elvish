@@ -65,7 +65,7 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value, opts map[string]Value) {
 		args[i+1] = ToString(a)
 	}
 
-	sys := syscall.SysProcAttr{}
+	sys := syscall.SysProcAttr{Setpgid: ec.background}
 	attr := syscall.ProcAttr{Env: os.Environ(), Files: files[:], Sys: &sys}
 
 	path, err := ec.Search(e.Name)
