@@ -17,12 +17,13 @@ var ErrStoreOffline = errors.New("store offline")
 
 type histlist struct {
 	listing
-	all        []string
-	dedup      bool
-	last       map[string]int
-	shown      []string
-	index      []int
-	indexWidth int
+	all             []string
+	dedup           bool
+	caseInsensitive bool
+	last            map[string]int
+	shown           []string
+	index           []int
+	indexWidth      int
 }
 
 func (hl *histlist) updateShown() {
@@ -30,8 +31,15 @@ func (hl *histlist) updateShown() {
 	hl.index = nil
 	dedup := hl.dedup
 	filter := hl.filter
+	if hl.caseInsensitive {
+		filter = strings.ToLower(filter)
+	}
 	for i, entry := range hl.all {
-		if (!dedup || hl.last[entry] == i) && strings.Contains(entry, filter) {
+		fentry := entry
+		if hl.caseInsensitive {
+			fentry = strings.ToLower(entry)
+		}
+		if (!dedup || hl.last[entry] == i) && strings.Contains(fentry, filter) {
 			hl.index = append(hl.index, i)
 			hl.shown = append(hl.shown, entry)
 		}
@@ -41,6 +49,11 @@ func (hl *histlist) updateShown() {
 
 func (hl *histlist) toggleDedup() {
 	hl.dedup = !hl.dedup
+	hl.updateShown()
+}
+
+func (hl *histlist) toggleCaseSensitivity() {
+	hl.caseInsensitive = !hl.caseInsensitive
 	hl.updateShown()
 }
 
@@ -80,10 +93,14 @@ func (hl *histlist) Accept(i int, ed *Editor) {
 }
 
 func (hl *histlist) ModeTitle(i int) string {
+	s := " HISTORY "
 	if hl.dedup {
-		return " HISTORY (dedup on) "
+		s += "(dedup on) "
 	}
-	return " HISTORY "
+	if hl.caseInsensitive {
+		s += "(case-insensitive) "
+	}
+	return s
 }
 
 func startHistlist(ed *Editor) {
@@ -122,5 +139,11 @@ func newHistlist(s *store.Store) (*histlist, error) {
 func histlistToggleDedup(ed *Editor) {
 	if ed.histlist != nil {
 		ed.histlist.toggleDedup()
+	}
+}
+
+func histlistToggleCaseSensitivity(ed *Editor) {
+	if ed.histlist != nil {
+		ed.histlist.toggleCaseSensitivity()
 	}
 }
