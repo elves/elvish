@@ -239,5 +239,5 @@ func redraw(ed *Editor) {
 }
 
 func endOfHistory(ed *Editor) {
-	ed.Notify("End of history")
+	ed.NotifyOnce("End of history")
 }
