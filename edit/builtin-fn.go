@@ -99,6 +99,7 @@ var builtins = []*BuiltinFn{
 	// History listing mode
 	{"start-histlist", startHistlist},
 	{"histlist-toggle-dedup", histlistToggleDedup},
+	{"histlist-toggle-case-sensitivity", histlistToggleCaseSensitivity},
 
 	// Bang mode
 	{"start-bang", startBang},
@@ -197,6 +198,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Default:        "history-default",
 	},
 	modeHistoryListing: map[Key]string{
+		Key{'G', Ctrl}: "histlist-toggle-case-sensitivity",
 		Key{'D', Ctrl}: "histlist-toggle-dedup",
 	},
 	modeBang: map[Key]string{
