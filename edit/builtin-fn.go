@@ -198,7 +198,7 @@ var defaultBindings = map[ModeType]map[Key]string{
 		Default:        "history-default",
 	},
 	modeHistoryListing: map[Key]string{
-		Key{'F', Ctrl}: "histlist-toggle-case-sensitivity",
+		Key{'G', Ctrl}: "histlist-toggle-case-sensitivity",
 		Key{'D', Ctrl}: "histlist-toggle-dedup",
 	},
 	modeBang: map[Key]string{
