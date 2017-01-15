@@ -7,19 +7,19 @@ var (
 	//styleForPrompt           = ""
 	//styleForRPrompt          = "inverse"
 	styleForCompleted        = styles{"dim"}
+	styleForCompletedHistory = styles{"dim"}
 	styleForMode             = styles{"bold", "lightgray", "magenta"}
 	styleForTip              = styles{}
-	styleForCompletedHistory = styles{"dim"}
 	styleForFilter           = styles{"underlined"}
 	styleForSelected         = styles{"inverse"}
 	styleForScrollBarArea    = styles{"magenta"}
 	styleForScrollBarThumb   = styles{"magenta", "inverse"}
 	styleForSideArrow        = styles{"inverse"}
 
-	// Use black text on white for completion listing.
-	styleForCompletion = styles{"black", "bg_white"}
-	// Use white text on black for selected completion.
-	styleForSelectedCompletion = "inverse"
+	// Use default style for completion listing
+	styleForCompletion = styles{}
+	// Use inverse style for selected completion entry
+	styleForSelectedCompletion = styles{"inverse"}
 )
 
 var styleForType = map[TokenKind]styles{
