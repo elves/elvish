@@ -16,10 +16,10 @@ var (
 	styleForScrollBarThumb   = styles{"magenta", "inverse"}
 	styleForSideArrow        = styles{"inverse"}
 
-	// Use white text on black background for completion listing.
-	styleForCompletion = styles{"white", "bg-black"}
-	// Use black text on white background for selected completion.
-	styleForSelectedCompletion = styles{"black", "bg-white"}
+	// Use default style for completion listing
+	styleForCompletion = styles{}
+	// Use inverse style for selected completion entry
+	styleForSelectedCompletion = styles{"inverse"}
 )
 
 var styleForType = map[TokenKind]styles{
