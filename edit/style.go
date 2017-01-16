@@ -8,7 +8,7 @@ var (
 	//styleForRPrompt          = "inverse"
 	styleForCompleted        = styles{"dim"}
 	styleForCompletedHistory = styles{"dim"}
-	styleForMode             = styles{"bold", "lightgray", "magenta"}
+	styleForMode             = styles{"bold", "lightgray", "bg-magenta"}
 	styleForTip              = styles{}
 	styleForFilter           = styles{"underlined"}
 	styleForSelected         = styles{"inverse"}
