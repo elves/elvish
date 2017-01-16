@@ -167,7 +167,18 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 	}
 
 	// signal.Ignore(syscall.SIGTTIN)
-	// signal.Ignore(syscall.SIGTTOU)
+
+	// Ignore TTOU.
+	// When a subprocess in its own process group puts itself in the foreground,
+	// the elvish will be in the background. In that case, elvish will move
+	// itself back to the foreground by calling tcsetpgrp. However, whenever a
+	// background process calls tcsetpgrp (or otherwise attempts to modify the
+	// terminal configuration), TTOU will be sent, whose default handler is to
+	// stop the process. When the process lives in an orphaned process group
+	// (most likely for elvish), the call will outright fail. Therefore, for
+	// elvish to be able to move itself back to the foreground, we need to
+	// ignore TTOU.
+	signal.Ignore(syscall.SIGTTOU)
 	stopSigGoroutine := make(chan struct{})
 	sigGoRoutineDone := make(chan struct{})
 	// Set up intCh.
@@ -211,6 +222,9 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 			fmt.Println("failed to put myself in foreground:", err)
 		}
 	}
+
+	// Un-ignore TTOU.
+	signal.Ignore(syscall.SIGTTOU)
 
 	return err
 }
