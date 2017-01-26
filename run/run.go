@@ -71,7 +71,7 @@ func Main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	handleHupAndQuit()
+	handleUsr1AndQuit()
 	logSignals()
 
 	ev, st := newEvalerAndStore()
@@ -227,9 +227,9 @@ func logSignals() {
 	}()
 }
 
-func handleHupAndQuit() {
+func handleUsr1AndQuit() {
 	sigs := make(chan os.Signal)
-	signal.Notify(sigs, syscall.SIGHUP, syscall.SIGQUIT)
+	signal.Notify(sigs, syscall.SIGUSR1, syscall.SIGQUIT)
 	go func() {
 		for sig := range sigs {
 			fmt.Print(sys.DumpStack())
