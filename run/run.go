@@ -164,11 +164,8 @@ func interact(ev *eval.Evaler, st *store.Store) {
 	ed := edit.NewEditor(os.Stdin, sigch, ev, st)
 
 	// Source rc.elv.
-	datadir, err := store.EnsureDataDir()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	} else {
-		source(ev, datadir+"/rc.elv", true)
+	if ev.DataDir != "" {
+		source(ev, ev.DataDir+"/rc.elv", true)
 	}
 
 	// Build readLine function.
@@ -258,7 +255,7 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 		}
 	}
 
-	return eval.NewEvaler(st), st
+	return eval.NewEvaler(st, dataDir), st
 }
 
 func printError(err error, errtype string) {

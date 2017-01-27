@@ -39,6 +39,7 @@ type Evaler struct {
 	Modules map[string]Namespace
 	Store   *store.Store
 	Editor  Editor
+	DataDir string
 	intCh   chan struct{}
 }
 
@@ -64,8 +65,8 @@ func (ec *EvalCtx) falsify() {
 }
 
 // NewEvaler creates a new Evaler.
-func NewEvaler(st *store.Store) *Evaler {
-	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, nil}
+func NewEvaler(st *store.Store, dataDir string) *Evaler {
+	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, dataDir, nil}
 }
 
 func (e *Evaler) searchPaths() []string {

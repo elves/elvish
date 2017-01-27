@@ -5,15 +5,17 @@ package eval
 // Builtin special forms.
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/store"
 )
 
 type compileBuiltin func(*compiler, *parse.Form) OpFunc
+
+var ErrNoDataDir = errors.New("There is no data directory")
 
 var builtinSpecials map[string]compileBuiltin
 
@@ -169,9 +171,10 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		maybeThrow(err)
 	} else {
 		// No filename; defaulting to $datadir/$modname.elv.
-		dataDir, err := store.DataDir()
-		maybeThrow(err)
-		filename = dataDir + "/" + strings.Replace(modname, ":", "/", -1) + ".elv"
+		if ec.DataDir == "" {
+			throw(ErrNoDataDir)
+		}
+		filename = ec.DataDir + "/" + strings.Replace(modname, ":", "/", -1) + ".elv"
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			// File does not exist. Try loading from the table of builtin
 			// modules.
