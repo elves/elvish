@@ -55,7 +55,7 @@ type EvalCtx struct {
 	verdict     bool
 
 	begin, end int
-	traceback  *util.Traceback
+	traceback  *util.SourceContext
 
 	background bool
 }
@@ -280,9 +280,9 @@ func catch(perr *error, ec *EvalCtx) {
 	}
 	if exc, ok := r.(util.Exception); ok {
 		err := exc.Error
-		if _, ok := err.(*util.TracebackError); !ok {
+		if _, ok := err.(*Exception); !ok {
 			if _, ok := err.(flow); !ok {
-				err = ec.makeTracebackError(err)
+				err = ec.makeException(err)
 			}
 		}
 		*perr = err
@@ -291,12 +291,13 @@ func catch(perr *error, ec *EvalCtx) {
 	}
 }
 
-func (ec *EvalCtx) makeTracebackError(e error) *util.TracebackError {
-	return &util.TracebackError{Cause: e, Traceback: ec.addTraceback()}
+// makeException turns an error into an Exception by adding traceback.
+func (ec *EvalCtx) makeException(e error) *Exception {
+	return &Exception{e, ec.addTraceback()}
 }
 
-func (ec *EvalCtx) addTraceback() *util.Traceback {
-	return &util.Traceback{
+func (ec *EvalCtx) addTraceback() *util.SourceContext {
+	return &util.SourceContext{
 		Name: ec.srcName, Source: ec.src,
 		Begin: ec.begin, End: ec.end, Next: ec.traceback,
 	}

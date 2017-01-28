@@ -13,14 +13,14 @@ import (
 
 // Parse parses elvish source.
 func Parse(srcname, src string) (*Chunk, error) {
-	ps := &parser{srcname, src, 0, 0, []map[rune]int{{}}, 0, nil}
+	ps := &parser{srcname, src, 0, 0, []map[rune]int{{}}, 0, ParseError{}}
 	bn := parseChunk(ps)
 	if ps.pos != len(src) {
 		ps.error(errUnexpectedRune)
 	}
 	var err error
-	if ps.errors != nil {
-		err = ps.errors
+	if len(ps.errors.Entries) > 0 {
+		err = &ps.errors
 	}
 	return bn, err
 }
@@ -263,10 +263,11 @@ func (fn *Form) tryAssignment(ps *parser) bool {
 	}
 
 	pos := ps.pos
-	errors := ps.errors
+	errorEntries := ps.errors.Entries
 	an := parseAssignment(ps)
-	if ps.errors != errors {
-		ps.errors = errors
+	// If errors were added, revert
+	if len(ps.errors.Entries) > len(errorEntries) {
+		ps.errors.Entries = errorEntries
 		ps.pos = pos
 		return false
 	}

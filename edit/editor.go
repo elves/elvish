@@ -168,14 +168,16 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 				if tips && !atEnd(err, len(src)) {
 					ed.addTip("compiler error: %s", err)
 				}
-				if err, ok := err.(*util.PosError); ok {
-					p := err.Begin
+				if err, ok := err.(*eval.CompilationError); ok {
+					p := err.Context.Begin
 					for i, token := range ed.tokens {
 						if token.Node.Begin() <= p && p < token.Node.End() {
 							ed.tokens[i].MoreStyle = joinStyles(ed.tokens[i].MoreStyle, styleForCompilerError)
 							break
 						}
 					}
+				} else {
+					Logger.Printf("Compile returned error of type %T", err)
 				}
 			}
 		}
@@ -187,16 +189,17 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 
 func atEnd(e error, n int) bool {
 	switch e := e.(type) {
-	case *util.PosError:
-		return e.Begin == n
-	case *util.Errors:
-		for _, child := range e.Errors {
-			if !atEnd(child, n) {
+	case *eval.CompilationError:
+		return e.Context.Begin == n
+	case *parse.ParseError:
+		for _, entry := range e.Entries {
+			if entry.Context.Begin != n {
 				return false
 			}
 		}
 		return true
 	default:
+		Logger.Printf("atEnd called with error type %T", e)
 		return false
 	}
 }

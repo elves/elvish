@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-
-	"github.com/elves/elvish/util"
 )
 
 func a(c ...interface{}) ast {
@@ -369,9 +367,9 @@ func TestParseError(t *testing.T) {
 			t.Errorf("Parse(%q) returns no error", tc.src)
 			continue
 		}
-		posErr0 := err.(*util.Errors).Errors[0].(*util.PosError)
-		if posErr0.Begin != tc.pos {
-			t.Errorf("Parse(%q) first error begins at %d, want %d. Errors are:%s\n", tc.src, posErr0.Begin, tc.pos, err)
+		posErr0 := err.(*ParseError).Entries[0]
+		if posErr0.Context.Begin != tc.pos {
+			t.Errorf("Parse(%q) first error begins at %d, want %d. Errors are:%s\n", tc.src, posErr0.Context.Begin, tc.pos, err)
 		}
 	}
 }

@@ -19,7 +19,7 @@ type parser struct {
 	overEOF  int
 	cutsets  []map[rune]int
 	controls int
-	errors   *util.Errors
+	errors   ParseError
 }
 
 const eof rune = -1
@@ -93,10 +93,7 @@ func (ps *parser) advance(c int) {
 }
 
 func (ps *parser) errorp(begin, end int, e error) {
-	if ps.errors == nil {
-		ps.errors = &util.Errors{}
-	}
-	ps.errors.Append(&util.PosError{e, "Parse error", util.Traceback{ps.srcName, ps.src, begin, end, nil}})
+	ps.errors.Add(e.Error(), util.SourceContext{ps.srcName, ps.src, begin, end, nil})
 }
 
 func (ps *parser) error(e error) {

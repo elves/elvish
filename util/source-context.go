@@ -6,26 +6,26 @@ import (
 	"strings"
 )
 
-type Traceback struct {
+type SourceContext struct {
 	Name   string
 	Source string
 	Begin  int
 	End    int
-	Next   *Traceback
+	Next   *SourceContext
 }
 
 var CulpritStyle = "1;4"
 
-func (te *Traceback) Pprint(w io.Writer, sourceIndent string) {
-	if te.Begin == -1 {
-		fmt.Fprintf(w, "%s, unknown position", te.Name)
+func (sc *SourceContext) Pprint(w io.Writer, sourceIndent string) {
+	if sc.Begin == -1 {
+		fmt.Fprintf(w, "%s, unknown position", sc.Name)
 		return
-	} else if te.Begin < 0 || te.End > len(te.Source) || te.Begin > te.End {
-		fmt.Fprintf(w, "%s, invalid position %d-%d", te.Name, te.Begin, te.End)
+	} else if sc.Begin < 0 || sc.End > len(sc.Source) || sc.Begin > sc.End {
+		fmt.Fprintf(w, "%s, invalid position %d-%d", sc.Name, sc.Begin, sc.End)
 		return
 	}
 
-	before, culprit, after := bca(te.Source, te.Begin, te.End)
+	before, culprit, after := bca(sc.Source, sc.Begin, sc.End)
 	// Find the part of "before" that is on the same line as the culprit.
 	lineBefore := lastLine(before)
 	// Find on which line the culprit begins.
@@ -44,9 +44,9 @@ func (te *Traceback) Pprint(w io.Writer, sourceIndent string) {
 	endLine := beginLine + strings.Count(culprit, "\n")
 
 	if beginLine == endLine {
-		fmt.Fprintf(w, "%s, line %d:\n", te.Name, beginLine)
+		fmt.Fprintf(w, "%s, line %d:\n", sc.Name, beginLine)
 	} else {
-		fmt.Fprintf(w, "%s, line %d-%d:\n", te.Name, beginLine, endLine)
+		fmt.Fprintf(w, "%s, line %d-%d:\n", sc.Name, beginLine, endLine)
 	}
 
 	fmt.Fprintf(w, "%s%s", sourceIndent, lineBefore)

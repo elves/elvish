@@ -129,18 +129,18 @@ func source(ev *eval.Evaler, fname string, notexistok bool) bool {
 func sourceText(ev *eval.Evaler, name, src string) bool {
 	n, err := parse.Parse(name, src)
 	if err != nil {
-		printError(err, "Parse error")
+		printError(err)
 		return false
 	}
 
 	op, err := ev.Compile(n, name, src)
 	if err != nil {
-		printError(err, "Compile error")
+		printError(err)
 		return false
 	}
 	err = ev.Eval(op, name, src)
 	if err != nil {
-		printError(err, "Exception")
+		printError(err)
 		return false
 	}
 	return true
@@ -258,27 +258,15 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 	return eval.NewEvaler(st, dataDir), st
 }
 
-func printError(err error, errtype string) {
-	if err == nil {
-		return
-	}
-	switch err := err.(type) {
-	case *util.Errors:
-		for _, e := range err.Errors {
-			printError(e, errtype)
-		}
-	case *util.PosError:
-		fmt.Fprintln(os.Stderr, err.Pprint())
-	case *util.TracebackError:
-		fmt.Fprintln(os.Stderr, err.Pprint())
-	default:
-		printErrorString(errtype, err.Error())
-	}
+type Pprinter interface {
+	Pprint() string
 }
 
-func printErrorString(errtype, s string) {
-	if sys.IsATTY(2) {
-		s = "\033[1;31m" + s + "\033[m"
+func printError(err error) {
+	switch err := err.(type) {
+	case Pprinter:
+		fmt.Fprintln(os.Stderr, err.Pprint())
+	default:
+		fmt.Fprintf(os.Stderr, "\033[31;1m%s\033[m", err.Error())
 	}
-	fmt.Fprintln(os.Stderr, errtype+": "+s)
 }
