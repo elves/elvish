@@ -84,7 +84,7 @@ func Main() {
 
 	if len(args) == 1 {
 		if *cmd {
-			evalText(ev, "code from -c", args[0])
+			sourceText(ev, "code from -c", args[0])
 		} else {
 			script(ev, args[0])
 		}
@@ -122,11 +122,11 @@ func source(ev *eval.Evaler, fname string, notexistok bool) bool {
 		return false
 	}
 
-	return evalText(ev, fname, src)
+	return sourceText(ev, fname, src)
 }
 
-// evalText is like eval.Evaler.SourceText except that it reports errors.
-func evalText(ev *eval.Evaler, name, src string) bool {
+// sourceText is like eval.Evaler.SourceText except that it reports errors.
+func sourceText(ev *eval.Evaler, name, src string) bool {
 	n, err := parse.Parse(name, src)
 	if err != nil {
 		printError(err, "Parse error")
@@ -205,7 +205,7 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		evalText(ev, "[interactive]", line)
+		sourceText(ev, "[interactive]", line)
 	}
 }
 
