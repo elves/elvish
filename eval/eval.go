@@ -278,7 +278,7 @@ func catch(perr *error, ec *EvalCtx) {
 	if r == nil {
 		return
 	}
-	if exc, ok := r.(util.Exception); ok {
+	if exc, ok := r.(util.Thrown); ok {
 		err := exc.Error
 		if _, ok := err.(*Exception); !ok {
 			if _, ok := err.(flow); !ok {

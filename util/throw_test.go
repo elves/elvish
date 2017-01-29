@@ -13,7 +13,7 @@ func recoverPanic(f func()) (recovered interface{}) {
 	return nil
 }
 
-func TestException(t *testing.T) {
+func TestThrowAndCatch(t *testing.T) {
 	tothrow := errors.New("an error to throw")
 	// Throw should cause a panic
 	f := func() {
