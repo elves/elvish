@@ -56,9 +56,9 @@ func (pe *ParseError) Pprint(indent string) string {
 		buf.WriteString(indent + "  ")
 		e.Context.Pprint(buf, indent+"    ")
 	default:
-		fmt.Fprint(buf, "Multiple parse errors:\n")
+		fmt.Fprint(buf, "Multiple parse errors:")
 		for _, e := range pe.Entries {
-			buf.WriteString(indent + "  ")
+			buf.WriteString("\n" + indent + "  ")
 			fmt.Fprintf(buf, "\033[31;1m%s\033[m\n", e.Message)
 			buf.WriteString(indent + "    ")
 			e.Context.Pprint(buf, indent+"      ")
