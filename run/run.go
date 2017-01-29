@@ -16,7 +16,6 @@ import (
 
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
@@ -84,7 +83,7 @@ func Main() {
 
 	if len(args) == 1 {
 		if *cmd {
-			sourceText(ev, "code from -c", args[0])
+			sourceTextAndPrintError(ev, "code from -c", args[0])
 		} else {
 			script(ev, args[0])
 		}
@@ -122,25 +121,20 @@ func source(ev *eval.Evaler, fname string, notexistok bool) bool {
 		return false
 	}
 
-	return sourceText(ev, fname, src)
+	return sourceTextAndPrintError(ev, fname, src)
 }
 
-// sourceText is like eval.Evaler.SourceText except that it reports errors.
-func sourceText(ev *eval.Evaler, name, src string) bool {
-	n, err := parse.Parse(name, src)
+// sourceTextAndPrintError sources text, prints error if there is any, and
+// returns whether there was no error.
+func sourceTextAndPrintError(ev *eval.Evaler, name, src string) bool {
+	err := ev.SourceText(name, src)
 	if err != nil {
-		printError(err)
-		return false
-	}
-
-	op, err := ev.Compile(n, name, src)
-	if err != nil {
-		printError(err)
-		return false
-	}
-	err = ev.Eval(op, name, src)
-	if err != nil {
-		printError(err)
+		switch err := err.(type) {
+		case util.Pprinter:
+			fmt.Fprintln(os.Stderr, err.Pprint(""))
+		default:
+			fmt.Fprintf(os.Stderr, "\033[31;1m%s\033[m", err.Error())
+		}
 		return false
 	}
 	return true
@@ -205,7 +199,7 @@ func interact(ev *eval.Evaler, st *store.Store) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		sourceText(ev, "[interactive]", line)
+		sourceTextAndPrintError(ev, "[interactive]", line)
 	}
 }
 
@@ -256,13 +250,4 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 	}
 
 	return eval.NewEvaler(st, dataDir), st
-}
-
-func printError(err error) {
-	switch err := err.(type) {
-	case util.Pprinter:
-		fmt.Fprintln(os.Stderr, err.Pprint(""))
-	default:
-		fmt.Fprintf(os.Stderr, "\033[31;1m%s\033[m", err.Error())
-	}
 }
