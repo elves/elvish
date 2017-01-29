@@ -245,7 +245,8 @@ func summarize(text string) string {
 	return b.String()
 }
 
-// Compile compiles elvish code in the global scope.
+// Compile compiles elvish code in the global scope. If the error is not nil, it
+// always has type CompilationError.
 func (ev *Evaler) Compile(n *parse.Chunk, name, text string) (Op, error) {
 	return compile(makeScope(ev.Global), n, name, text)
 }

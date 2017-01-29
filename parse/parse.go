@@ -11,7 +11,8 @@ import (
 	"unicode"
 )
 
-// Parse parses elvish source.
+// Parse parses elvish source. If the error is not nil, it always has type
+// ParseError.
 func Parse(srcname, src string) (*Chunk, error) {
 	ps := &parser{srcname, src, 0, 0, []map[rune]int{{}}, 0, ParseError{}}
 	bn := parseChunk(ps)
