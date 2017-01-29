@@ -261,7 +261,7 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 func printError(err error) {
 	switch err := err.(type) {
 	case util.Pprinter:
-		fmt.Fprintln(os.Stderr, err.Pprint())
+		fmt.Fprintln(os.Stderr, err.Pprint(""))
 	default:
 		fmt.Fprintf(os.Stderr, "\033[31;1m%s\033[m", err.Error())
 	}

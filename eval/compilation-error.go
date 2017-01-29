@@ -18,12 +18,12 @@ func (ce *CompilationError) Error() string {
 		ce.Context.Begin, ce.Context.End, ce.Context.Name, ce.Message)
 }
 
-func (ce *CompilationError) Pprint() string {
+func (ce *CompilationError) Pprint(indent string) string {
 	buf := new(bytes.Buffer)
 
 	fmt.Fprintf(buf, "Compilation error: \033[31;1m%s\033[m\n", ce.Message)
-	fmt.Fprint(buf, "  ")
-	ce.Context.Pprint(buf, "    ")
+	fmt.Fprint(buf, indent+"  ")
+	ce.Context.Pprint(buf, indent+"    ")
 
 	return buf.String()
 }

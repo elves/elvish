@@ -44,7 +44,7 @@ func (pe *ParseError) Error() string {
 	}
 }
 
-func (pe *ParseError) Pprint() string {
+func (pe *ParseError) Pprint(indent string) string {
 	buf := new(bytes.Buffer)
 
 	switch len(pe.Entries) {
@@ -52,13 +52,16 @@ func (pe *ParseError) Pprint() string {
 		return "no parse error"
 	case 1:
 		e := pe.Entries[0]
-		fmt.Fprintf(buf, "Parse error: \033[31;1m%s\033[m\n  ", e.Message)
-		e.Context.Pprint(buf, "    ")
+		fmt.Fprintf(buf, "Parse error: \033[31;1m%s\033[m\n", e.Message)
+		buf.WriteString(indent + "  ")
+		e.Context.Pprint(buf, indent+"    ")
 	default:
 		fmt.Fprint(buf, "Multiple parse errors:\n")
 		for _, e := range pe.Entries {
-			fmt.Fprintf(buf, "  \033[31;1m%s\033[m\n    ", e.Message)
-			e.Context.Pprint(buf, "      ")
+			buf.WriteString(indent + "  ")
+			fmt.Fprintf(buf, "\033[31;1m%s\033[m\n", e.Message)
+			buf.WriteString(indent + "    ")
+			e.Context.Pprint(buf, indent+"      ")
 		}
 	}
 

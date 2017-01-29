@@ -1,5 +1,5 @@
 package util
 
 type Pprinter interface {
-	Pprint() string
+	Pprint(indent string) string
 }

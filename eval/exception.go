@@ -27,12 +27,12 @@ func (exc *Exception) Error() string {
 	return exc.Cause.Error()
 }
 
-func (exc *Exception) Pprint() string {
+func (exc *Exception) Pprint(indent string) string {
 	buf := new(bytes.Buffer)
 	// Error message
 	var msg string
 	if pprinter, ok := exc.Cause.(util.Pprinter); ok {
-		msg = pprinter.Pprint()
+		msg = pprinter.Pprint(indent)
 	} else {
 		msg = "\033[31;1m" + exc.Cause.Error() + "\033[m"
 	}
@@ -40,8 +40,8 @@ func (exc *Exception) Pprint() string {
 	buf.WriteString("Traceback:")
 
 	for tb := exc.Traceback; tb != nil; tb = tb.Next {
-		buf.WriteString("\n  ")
-		tb.Pprint(buf, "    ")
+		buf.WriteString("\n" + indent + "  ")
+		tb.Pprint(buf, indent+"    ")
 	}
 
 	return buf.String()
@@ -159,7 +159,7 @@ func (f Flow) Error() string {
 	return flowNames[f]
 }
 
-func (f Flow) Pprint() string {
+func (f Flow) Pprint(string) string {
 	return "\033[33;1m" + f.Error() + "\033[m"
 }
 
