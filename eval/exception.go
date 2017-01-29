@@ -37,11 +37,18 @@ func (exc *Exception) Pprint(indent string) string {
 		msg = "\033[31;1m" + exc.Cause.Error() + "\033[m"
 	}
 	fmt.Fprintf(buf, "Exception: %s\n", msg)
-	buf.WriteString("Traceback:")
+	buf.WriteString(indent + "Traceback:")
 
 	for tb := exc.Traceback; tb != nil; tb = tb.Next {
 		buf.WriteString("\n" + indent + "  ")
 		tb.Pprint(buf, indent+"    ")
+	}
+
+	if pipeExcs, ok := exc.Cause.(PipelineError); ok {
+		buf.WriteString("\n" + indent + "Caused by:")
+		for _, e := range pipeExcs.Errors {
+			buf.WriteString("\n" + indent + "  " + e.Pprint(indent+"  "))
+		}
 	}
 
 	return buf.String()
