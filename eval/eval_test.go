@@ -398,9 +398,17 @@ func TestEval(t *testing.T) {
 		if ret != !tt.wantFalse {
 			errorf("got ret=%v, want %v", ret, !tt.wantFalse)
 		}
-		// Check error. We accept errAny as a "wildcard" for all non-nil errors.
-		if !(tt.wantError == errAny && err != nil) && !reflect.DeepEqual(tt.wantError, err) {
-			errorf("got err=%v, want %v", err, tt.wantError)
+		// Check exception cause. We accept errAny as a "wildcard" for all non-nil
+		// errors.
+		if err == nil {
+			if tt.wantError != nil {
+				errorf("got err=nil, want %v", tt.wantError)
+			}
+		} else {
+			exc := err.(*Exception)
+			if !(tt.wantError == errAny || reflect.DeepEqual(tt.wantError, exc.Cause)) {
+				errorf("got err=%v, want %v", err, tt.wantError)
+			}
 		}
 		if !good {
 			t.Errorf("--------------")

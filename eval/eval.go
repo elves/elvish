@@ -282,9 +282,7 @@ func catch(perr *error, ec *EvalCtx) {
 	if exc, ok := r.(util.Thrown); ok {
 		err := exc.Error
 		if _, ok := err.(*Exception); !ok {
-			if _, ok := err.(flow); !ok {
-				err = ec.makeException(err)
-			}
+			err = ec.makeException(err)
 		}
 		*perr = err
 	} else if r != nil {

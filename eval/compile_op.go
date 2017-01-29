@@ -53,7 +53,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 
 		var wg sync.WaitGroup
 		wg.Add(nforms)
-		errors := make([]Error, nforms)
+		errors := make([]*Exception, nforms)
 		var verdict bool
 
 		var nextIn *Port
@@ -88,7 +88,9 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 				if isLast {
 					verdict = newEc.verdict
 				}
-				*thisError = Error{err}
+				if err != nil {
+					*thisError = err.(*Exception)
+				}
 				wg.Done()
 			}()
 		}
@@ -126,25 +128,19 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 	}
 }
 
-func makeCompositeError(errors []Error) error {
+func makeCompositeError(errors []*Exception) error {
 	if allok(errors) {
 		return nil
 	}
 	if len(errors) == 1 {
-		return errors[0].Inner
+		return errors[0]
 	} else {
-		return MultiError{errors}
+		return PipelineError{errors}
 	}
 }
 
-func throwCompositeError(errors []Error) {
-	if !allok(errors) {
-		if len(errors) == 1 {
-			throw(errors[0].Inner)
-		} else {
-			throw(MultiError{errors})
-		}
-	}
+func throwCompositeError(errors []*Exception) {
+	maybeThrow(makeCompositeError(errors))
 }
 
 func (cp *compiler) form(n *parse.Form) OpFunc {
@@ -321,23 +317,23 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			finallyOp = cp.chunkOp(n.FinallyBody)
 		}
 		return func(ec *EvalCtx) {
-			e := bodyOp.Exec(ec)[0].(Error).Inner
+			e := bodyOp.Exec(ec)[0].(*Exception)
 			Logger.Println("e is now", e)
-			if e != nil {
+			if e.Cause != nil {
 				if exceptOp.Func != nil {
 					if exceptVarOp.Func != nil {
 						exceptVars := exceptVarOp.Exec(ec)
 						if len(exceptVars) != 1 {
 							throw(ErrArityMismatch)
 						}
-						exceptVars[0].Set(Error{e})
+						exceptVars[0].Set(e)
 					}
-					e = exceptOp.Exec(ec)[0].(Error).Inner
+					e = exceptOp.Exec(ec)[0].(*Exception)
 					Logger.Println("e is now", e)
 				}
 			} else {
 				if elseOp.Func != nil {
-					e = elseOp.Exec(ec)[0].(Error).Inner
+					e = elseOp.Exec(ec)[0].(*Exception)
 					Logger.Println("e is now", e)
 				}
 			}
@@ -358,13 +354,16 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 					break
 				}
 				//for condOp.Exec(ec)[0].(Error).Inner == nil {
-				ex := ec.PEval(bodyOp)
-				if ex == Continue {
-					// do nothing
-				} else if ex == Break {
-					break
-				} else if ex != nil {
-					throw(ex)
+				e := ec.PEval(bodyOp)
+				if e != nil {
+					exc := e.(*Exception)
+					if exc.Cause == Continue {
+						// do nothing
+					} else if exc.Cause == Break {
+						break
+					} else {
+						throw(exc)
+					}
 				}
 			}
 			ec.verdict = true
@@ -386,13 +385,16 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			values := valuesOp.Exec(ec)
 			for _, v := range values {
 				iterator.Set(v)
-				ex := ec.PEval(bodyOp)
-				if ex == Continue {
-					// do nothing
-				} else if ex == Break {
-					break
-				} else if ex != nil {
-					throw(ex)
+				e := ec.PEval(bodyOp)
+				if e != nil {
+					exc := e.(*Exception)
+					if exc.Cause == Continue {
+						// do nothing
+					} else if exc.Cause == Break {
+						break
+					} else {
+						throw(exc)
+					}
 				}
 			}
 		}

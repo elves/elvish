@@ -321,7 +321,12 @@ func (cp *compiler) predCapture(n *parse.Chunk) ValuesOpFunc {
 func (cp *compiler) errorCapture(n *parse.Chunk) ValuesOpFunc {
 	op := cp.chunkOp(n)
 	return func(ec *EvalCtx) []Value {
-		return []Value{Error{ec.PEval(op)}}
+		exc := ec.PEval(op)
+		if exc == nil {
+			return []Value{OK}
+		} else {
+			return []Value{exc.(*Exception)}
+		}
 	}
 }
 

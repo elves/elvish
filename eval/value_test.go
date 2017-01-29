@@ -18,15 +18,16 @@ var reprTests = []struct {
 	{String("a\x00b"), `"a\x00b"`},
 	{Bool(true), "$true"},
 	{Bool(false), "$false"},
-	{Error{nil}, "$ok"},
-	{Error{errors.New("foo bar")}, "?(error 'foo bar')"},
-	{Error{MultiError{[]Error{{nil}, {errors.New("lorem")}}}},
+	{&Exception{nil, nil}, "$ok"},
+	{&Exception{errors.New("foo bar"), nil}, "?(error 'foo bar')"},
+	{&Exception{
+		PipelineError{[]*Exception{{nil, nil}, {errors.New("lorem"), nil}}}, nil},
 		"?(multi-error $ok ?(error lorem))"},
-	{Error{Return}, "?(return)"},
+	{&Exception{Return, nil}, "?(return)"},
 	{List{&[]Value{}}, "[]"},
 	{List{&[]Value{String("bash"), Bool(false)}}, "[bash $false]"},
 	{Map{&map[Value]Value{}}, "[&]"},
-	{Map{&map[Value]Value{Error{nil}: String("elvish")}}, "[&$ok=elvish]"},
+	{Map{&map[Value]Value{&Exception{nil, nil}: String("elvish")}}, "[&$ok=elvish]"},
 	// TODO: test maps of more elements
 }
 

@@ -258,13 +258,9 @@ func newEvalerAndStore() (*eval.Evaler, *store.Store) {
 	return eval.NewEvaler(st, dataDir), st
 }
 
-type Pprinter interface {
-	Pprint() string
-}
-
 func printError(err error) {
 	switch err := err.(type) {
-	case Pprinter:
+	case util.Pprinter:
 		fmt.Fprintln(os.Stderr, err.Pprint())
 	default:
 		fmt.Fprintf(os.Stderr, "\033[31;1m%s\033[m", err.Error())

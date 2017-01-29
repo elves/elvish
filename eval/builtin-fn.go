@@ -457,8 +457,8 @@ func fail(ec *EvalCtx, arg Value) {
 	throw(errors.New(ToString(arg)))
 }
 
-func multiErrorFn(ec *EvalCtx, args ...Error) {
-	throw(MultiError{args})
+func multiErrorFn(ec *EvalCtx, args ...*Exception) {
+	throw(PipelineError{args})
 }
 
 func returnFn(ec *EvalCtx) {
@@ -618,13 +618,15 @@ func each(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 		ex := newec.PCall(f, []Value{v}, NoOpts)
 		ClosePorts(newec.ports)
 
-		switch ex {
-		case nil, Continue:
-			// nop
-		case Break:
-			broken = true
-		default:
-			throw(ex)
+		if ex != nil {
+			switch ex.(*Exception).Cause {
+			case nil, Continue:
+				// nop
+			case Break:
+				broken = true
+			default:
+				throw(ex)
+			}
 		}
 	})
 }
@@ -648,13 +650,15 @@ func peach(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 			ex := newec.PCall(f, []Value{v}, NoOpts)
 			ClosePorts(newec.ports)
 
-			switch ex {
-			case nil, Continue:
-				// nop
-			case Break:
-				broken = true
-			default:
-				err = ex
+			if ex != nil {
+				switch ex.(*Exception).Cause {
+				case nil, Continue:
+					// nop
+				case Break:
+					broken = true
+				default:
+					err = ex
+				}
 			}
 			w.Done()
 		}()
@@ -690,13 +694,15 @@ func eawk(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 		ex := newec.PCall(f, args, NoOpts)
 		ClosePorts(newec.ports)
 
-		switch ex {
-		case nil, Continue:
-			// nop
-		case Break:
-			broken = true
-		default:
-			throw(ex)
+		if ex != nil {
+			switch ex.(*Exception).Cause {
+			case nil, Continue:
+				// nop
+			case Break:
+				broken = true
+			default:
+				throw(ex)
+			}
 		}
 	})
 }
@@ -1072,26 +1078,26 @@ func fg(ec *EvalCtx, pids ...int) {
 	err := sys.Tcsetpgrp(0, thepgid)
 	maybeThrow(err)
 
-	errors := make([]Error, len(pids))
+	errors := make([]*Exception, len(pids))
 
 	for i, pid := range pids {
 		err := syscall.Kill(pid, syscall.SIGCONT)
 		if err != nil {
-			errors[i] = Error{err}
+			errors[i] = &Exception{err, nil}
 		}
 	}
 
 	for i, pid := range pids {
-		if errors[i] != OK {
+		if errors[i] != nil {
 			continue
 		}
 		var ws syscall.WaitStatus
 		_, err = syscall.Wait4(pid, &ws, syscall.WUNTRACED, nil)
 		if err != nil {
-			errors[i] = Error{err}
+			errors[i] = &Exception{err, nil}
 		} else {
 			// TODO find command name
-			errors[i] = Error{NewExternalCmdExit(fmt.Sprintf("(pid %d)", pid), ws, pid)}
+			errors[i] = &Exception{NewExternalCmdExit(fmt.Sprintf("(pid %d)", pid), ws, pid), nil}
 		}
 	}
 

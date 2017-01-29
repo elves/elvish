@@ -77,7 +77,7 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 func makeFnOp(op Op) Op {
 	return Op{func(ec *EvalCtx) {
 		err := ec.PEval(op)
-		if err != nil && err != Return {
+		if err != nil && err.(*Exception).Cause != Return {
 			// rethrow
 			throw(err)
 		}
