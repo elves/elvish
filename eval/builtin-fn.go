@@ -1101,7 +1101,7 @@ func fg(ec *EvalCtx, pids ...int) {
 		}
 	}
 
-	throwCompositeError(errors)
+	maybeThrow(ComposeExceptionsFromPipeline(errors))
 }
 
 func tildeAbbr(ec *EvalCtx, path string) {

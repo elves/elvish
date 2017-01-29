@@ -100,8 +100,9 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			go func() {
 				wg.Wait()
 				msg := "job " + n.SourceText() + " finished"
-				if !allok(errors) {
-					msg += ", errors = " + makeCompositeError(errors).Error()
+				err := ComposeExceptionsFromPipeline(errors)
+				if err != nil {
+					msg += ", errors = " + err.Error()
 				}
 				if !verdict {
 					msg += ", pred = false"
@@ -122,25 +123,10 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			}()
 		} else {
 			wg.Wait()
-			maybeThrow(makeCompositeError(errors))
+			maybeThrow(ComposeExceptionsFromPipeline(errors))
 			ec.verdict = verdict
 		}
 	}
-}
-
-func makeCompositeError(errors []*Exception) error {
-	if allok(errors) {
-		return nil
-	}
-	if len(errors) == 1 {
-		return errors[0]
-	} else {
-		return PipelineError{errors}
-	}
-}
-
-func throwCompositeError(errors []*Exception) {
-	maybeThrow(makeCompositeError(errors))
 }
 
 func (cp *compiler) form(n *parse.Form) OpFunc {

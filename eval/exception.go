@@ -105,6 +105,35 @@ func (pe PipelineError) Error() string {
 	return b.String()
 }
 
+// ComposeExceptionsFromPipeline takes a slice of Exception pointers and
+// composes a suitable error. If all elements of the slice are either nil or OK,
+// a nil is returned. If there is exactly non-nil non-OK Exception, it is
+// returned. Otherwise, a PipelineError built from the slice is returned, with
+// nil items turned into OK's for easier access from elvishscript.
+func ComposeExceptionsFromPipeline(excs []*Exception) error {
+	newexcs := make([]*Exception, len(excs))
+	notOK, lastNotOK := 0, 0
+	for i, e := range excs {
+		if e == nil {
+			newexcs[i] = OK
+		} else {
+			newexcs[i] = e
+			if e.Cause != nil {
+				notOK++
+				lastNotOK = i
+			}
+		}
+	}
+	switch notOK {
+	case 0:
+		return nil
+	case 1:
+		return newexcs[lastNotOK]
+	default:
+		return PipelineError{newexcs}
+	}
+}
+
 // Flow is a special type of error used for control flows.
 type Flow uint
 
@@ -179,13 +208,4 @@ func (exit ExternalCmdExit) Error() string {
 	default:
 		return fmt.Sprint(quotedName, " has unknown WaitStatus ", ws)
 	}
-}
-
-func allok(es []*Exception) bool {
-	for _, e := range es {
-		if e != nil && e.Cause != nil {
-			return false
-		}
-	}
-	return true
 }
