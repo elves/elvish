@@ -170,11 +170,11 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		source, err = readFileUTF8(filename)
 		maybeThrow(err)
 	} else {
-		// No filename; defaulting to $datadir/$modname.elv.
+		// No filename; defaulting to $datadir/lib/$modname.elv.
 		if ec.DataDir == "" {
 			throw(ErrNoDataDir)
 		}
-		filename = ec.DataDir + "/" + strings.Replace(modname, ":", "/", -1) + ".elv"
+		filename = ec.DataDir + "/lib/" + strings.Replace(modname, ":", "/", -1) + ".elv"
 		if _, err := os.Stat(filename); os.IsNotExist(err) {
 			// File does not exist. Try loading from the table of builtin
 			// modules.
