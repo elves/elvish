@@ -25,8 +25,8 @@ var (
 var styleForType = map[TokenKind]styles{
 	ParserError:  styles{"red", "italic"},
 	Bareword:     styles{},
-	SingleQuoted: styles{"red"},
-	DoubleQuoted: styles{"red"},
+	SingleQuoted: styles{"yellow"},
+	DoubleQuoted: styles{"yellow"},
 	Variable:     styles{"magenta"},
 	Wildcard:     styles{},
 	Tilde:        styles{},
