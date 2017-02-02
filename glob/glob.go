@@ -7,31 +7,6 @@ import (
 	"unicode/utf8"
 )
 
-// Pattern is a glob pattern.
-type Pattern struct {
-	Segments    []Segment
-	DirOverride string
-}
-
-// Segment is the constituent unit of a Pattern.
-type Segment struct {
-	// Type of the Segment.
-	Type SegmentType
-	Data string // For Literal, the literal string. For Question, Star and StarStar, nonempty if they should match all files.
-}
-
-// SegmentType is the type of a Segment.
-type SegmentType int
-
-// Values for SegmentType.
-const (
-	Literal SegmentType = iota
-	Slash
-	Question
-	Star
-	StarStar
-)
-
 // Glob returns a list of file names satisfying the given pattern.
 func Glob(p string, cb func(string) bool) bool {
 	return Parse(p).Glob(cb)
@@ -41,7 +16,7 @@ func Glob(p string, cb func(string) bool) bool {
 func (p Pattern) Glob(cb func(string) bool) bool {
 	segs := p.Segments
 	dir := ""
-	if len(segs) > 0 && segs[0].Type == Slash {
+	if len(segs) > 0 && IsSlash(segs[0]) {
 		segs = segs[1:]
 		dir = "/"
 	}
@@ -57,15 +32,16 @@ func glob(segs []Segment, dir string, cb func(string) bool) bool {
 	// Consume the non-wildcard prefix. This is required so that "." and "..",
 	// which doesn't appear in the result of ReadDir, can appear as standalone
 	// path components in the pattern.
-	for len(segs) > 0 && segs[0].Type == Literal {
+	for len(segs) > 0 && IsLiteral(segs[0]) {
+		seg0 := segs[0].(Literal).Data
 		var path string
 		switch dir {
 		case "":
-			path = segs[0].Data
+			path = seg0
 		case "/":
-			path = "/" + segs[0].Data
+			path = "/" + seg0
 		default:
-			path = dir + "/" + segs[0].Data
+			path = dir + "/" + seg0
 		}
 		if len(segs) == 1 {
 			// A lone literal. Generate it if the named file exists, and return.
@@ -73,7 +49,7 @@ func glob(segs []Segment, dir string, cb func(string) bool) bool {
 				return cb(path)
 			}
 			return true
-		} else if segs[1].Type == Slash {
+		} else if IsSlash(segs[1]) {
 			// A lone literal followed by a slash. Change the directory if it
 			// exists, otherwise return.
 			if info, err := os.Stat(path); err == nil && info.IsDir() {
@@ -107,7 +83,7 @@ func glob(segs []Segment, dir string, cb func(string) bool) bool {
 	i := -1
 	nexti := func() {
 		for i++; i < len(segs); i++ {
-			if segs[i].Type == Slash || segs[i].Type == StarStar {
+			if IsSlash(segs[i]) || IsWild1(segs[i], StarStar) {
 				break
 			}
 		}
@@ -122,7 +98,7 @@ func glob(segs []Segment, dir string, cb func(string) bool) bool {
 
 	// Enumerate the position of the first slash.
 	for i < len(segs) {
-		slash := segs[i].Type == Slash
+		slash := IsSlash(segs[i])
 		var first, rest []Segment
 		if slash {
 			// segs = x/y. Match dir with x, recurse on y.
@@ -168,9 +144,9 @@ func match(segs []Segment, name string) bool {
 	}
 	// Question, Star and StarAll only match leading dot when their Data field
 	// is nonempty.
-	if len(name) > 0 && name[0] == '.' && segs[0].Data == "" {
-		switch segs[0].Type {
-		case Question, Star, StarStar:
+	if len(name) > 0 && name[0] == '.' && IsWild(segs[0]) {
+		seg := segs[0].(Wild)
+		if !seg.All {
 			return false
 		}
 	}
@@ -180,13 +156,13 @@ segs:
 		// optional leading Star.
 		var i int
 		for i = 1; i < len(segs); i++ {
-			if segs[i].Type == Star || segs[i].Type == StarStar {
+			if IsWild2(segs[i], Star, StarStar) {
 				break
 			}
 		}
 
 		chunk := segs[:i]
-		star := chunk[0].Type == Star || chunk[0].Type == StarStar
+		star := IsWild2(chunk[0], Star, StarStar)
 		if star {
 			chunk = chunk[1:]
 		}
@@ -227,16 +203,18 @@ func matchChunk(chunk []Segment, name string) (bool, string) {
 		if name == "" {
 			return false, ""
 		}
-		switch seg.Type {
+		switch seg := seg.(type) {
 		case Literal:
 			n := len(seg.Data)
 			if len(name) < n || name[:n] != seg.Data {
 				return false, ""
 			}
 			name = name[n:]
-		case Question:
-			_, n := utf8.DecodeRuneInString(name)
-			name = name[n:]
+		case Wild:
+			if seg.Type == Question {
+				_, n := utf8.DecodeRuneInString(name)
+				name = name[n:]
+			}
 		}
 	}
 	return true, name

@@ -153,9 +153,9 @@ func doTilde(v Value) Value {
 		if len(v.Segments) == 0 {
 			throw(ErrBadGlobPattern)
 		}
-		switch v.Segments[0].Type {
+		switch seg := v.Segments[0].(type) {
 		case glob.Literal:
-			s := v.Segments[0].Data
+			s := seg.Data
 			// Find / in the first segment to determine the username.
 			i := strings.Index(s, "/")
 			if i == -1 {
@@ -164,7 +164,7 @@ func doTilde(v Value) Value {
 			uname := s[:i]
 			dir := mustGetHome(uname)
 			// Replace ~uname in first segment with the found path.
-			v.Segments[0].Data = dir + s[i:]
+			v.Segments[0] = glob.Literal{dir + s[i:]}
 		case glob.Slash:
 			v.DirOverride = mustGetHome("")
 		default:

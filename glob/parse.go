@@ -20,7 +20,7 @@ rune:
 		case eof:
 			break rune
 		case '?':
-			add(Segment{Question, ""})
+			add(Wild{Question, false})
 		case '*':
 			n := 1
 			for p.next() == '*' {
@@ -28,15 +28,15 @@ rune:
 			}
 			p.backup()
 			if n == 1 {
-				add(Segment{Star, ""})
+				add(Wild{Star, false})
 			} else {
-				add(Segment{StarStar, ""})
+				add(Wild{StarStar, false})
 			}
 		case '/':
 			for p.next() == '/' {
 			}
 			p.backup()
-			add(Segment{Slash, ""})
+			add(Slash{})
 		default:
 			var literal bytes.Buffer
 		literal:
@@ -56,7 +56,7 @@ rune:
 				r = p.next()
 			}
 			p.backup()
-			add(Segment{Literal, literal.String()})
+			add(Literal{literal.String()})
 		}
 	}
 	return Pattern{segments, ""}

@@ -40,11 +40,12 @@ func (gp GlobPattern) Index(modifiers []Value) []Value {
 			if len(gp.Segments) == 0 {
 				throw(ErrBadGlobPattern)
 			}
-			t := gp.Segments[len(gp.Segments)-1].Type
-			if t != glob.Question && t != glob.Star && t != glob.StarStar {
+			if !glob.IsWild(gp.Segments[len(gp.Segments)-1]) {
 				throw(ErrMustFollowWildcard)
 			}
-			gp.Segments[len(gp.Segments)-1].Data = "all"
+			gp.Segments[len(gp.Segments)-1] = glob.Wild{
+				gp.Segments[len(gp.Segments)-1].(glob.Wild).Type, true,
+			}
 		default:
 			throw(fmt.Errorf("unknown modifier %s", modifier.Repr(NoPretty)))
 		}
@@ -59,11 +60,11 @@ func (gp *GlobPattern) append(segs ...glob.Segment) {
 func wildcardToSegment(s string) glob.Segment {
 	switch s {
 	case "*":
-		return glob.Segment{glob.Star, ""}
+		return glob.Wild{glob.Star, false}
 	case "**":
-		return glob.Segment{glob.StarStar, ""}
+		return glob.Wild{glob.StarStar, false}
 	case "?":
-		return glob.Segment{glob.Question, ""}
+		return glob.Wild{glob.Question, false}
 	default:
 		throw(fmt.Errorf("bad wildcard: %q", s))
 		panic("unreachable")
@@ -77,13 +78,12 @@ func stringToSegments(s string) []glob.Segment {
 		for ; j < len(s) && s[j] != '/'; j++ {
 		}
 		if j > i {
-			segs = append(segs, glob.Segment{glob.Literal, s[i:j]})
+			segs = append(segs, glob.Literal{s[i:j]})
 		}
 		if j < len(s) {
 			for ; j < len(s) && s[j] == '/'; j++ {
 			}
-			segs = append(segs,
-				glob.Segment{glob.Slash, ""})
+			segs = append(segs, glob.Slash{})
 			i = j
 		} else {
 			break
