@@ -50,7 +50,7 @@ func (gp GlobPattern) Index(modifiers []Value) []Value {
 			throw(ErrModifierMustBeString)
 		}
 		switch string(modifier) {
-		case "include-hidden":
+		case "match-hidden":
 			if len(gp.Segments) == 0 {
 				throw(ErrBadGlobPattern)
 			}

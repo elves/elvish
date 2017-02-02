@@ -142,11 +142,11 @@ func match(segs []Segment, name string) bool {
 	if len(segs) == 0 {
 		return name == ""
 	}
-	// Question, Star and StarAll only match leading dot when their Data field
-	// is nonempty.
+	// If the name start with "." and the first segment is a Wild, only match
+	// when MatchHidden is true.
 	if len(name) > 0 && name[0] == '.' && IsWild(segs[0]) {
 		seg := segs[0].(Wild)
-		if !seg.All {
+		if !seg.MatchHidden {
 			return false
 		}
 	}

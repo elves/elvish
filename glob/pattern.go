@@ -17,8 +17,8 @@ type Literal struct {
 }
 
 type Wild struct {
-	Type WildType
-	All  bool
+	Type        WildType
+	MatchHidden bool
 }
 
 // WildType is the type of a Wild.
