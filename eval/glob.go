@@ -93,7 +93,7 @@ func stringToSegments(s string) []glob.Segment {
 }
 
 func doGlob(gp GlobPattern, abort <-chan struct{}) []Value {
-	vs := make([]Value)
+	vs := make([]Value, 0)
 	if !glob.Pattern(gp).Glob(func(name string) bool {
 		select {
 		case <-abort:
