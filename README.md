@@ -18,9 +18,9 @@ Elvish looks like this:
 
 ## Prebuilt binaries
 
-64-bit Linux: `curl -s https://dl.elvish.io/elvish-linux.tar.gz | sudo tar vxz -C /usr/bin`
+64-bit Linux: `curl -s https://dl.elvish.io/elvish-linux.tar.gz | sudo tar vxz -C /usr/local/bin`
 
-64-bit Mac OS X: `curl -s https://dl.elvish.io/elvish-osx.tar.gz | sudo tar vxz -C /usr/bin`
+64-bit Mac OS X: `curl -s https://dl.elvish.io/elvish-osx.tar.gz | sudo tar vxz -C /usr/local/bin`
 
 Try `cn.dl.elvish.io` if you are in China and the download is too slow. (In the future `dl.elvish.io` will resolve to a Chinese IP for users from China, but that hasn't happended yet.)
 
