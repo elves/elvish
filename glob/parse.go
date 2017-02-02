@@ -20,7 +20,7 @@ rune:
 		case eof:
 			break rune
 		case '?':
-			add(Wild{Question, false})
+			add(Wild{Question, false, nil})
 		case '*':
 			n := 1
 			for p.next() == '*' {
@@ -28,9 +28,9 @@ rune:
 			}
 			p.backup()
 			if n == 1 {
-				add(Wild{Star, false})
+				add(Wild{Star, false, nil})
 			} else {
-				add(Wild{StarStar, false})
+				add(Wild{StarStar, false, nil})
 			}
 		case '/':
 			for p.next() == '/' {

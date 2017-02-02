@@ -3,8 +3,11 @@ package eval
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"unicode"
 
 	"github.com/elves/elvish/glob"
+	"github.com/elves/elvish/parse"
 )
 
 // GlobPattern is en ephemeral Value generated when evaluating tilde and
@@ -35,6 +38,22 @@ var (
 	ErrWildcardNoMatch      = errors.New("wildcard has no match")
 )
 
+var runeMatchers = map[string]func(rune) bool{
+	"control": unicode.IsControl,
+	"digit":   unicode.IsDigit,
+	"graphic": unicode.IsGraphic,
+	"letter":  unicode.IsLetter,
+	"lower":   unicode.IsDigit,
+	"mark":    unicode.IsMark,
+	"number":  unicode.IsNumber,
+	"print":   unicode.IsPrint,
+	"punct":   unicode.IsPunct,
+	"space":   unicode.IsSpace,
+	"symbol":  unicode.IsSymbol,
+	"title":   unicode.IsTitle,
+	"upper":   unicode.IsUpper,
+}
+
 func (GlobPattern) Kind() string {
 	return "glob-pattern"
 }
@@ -45,28 +64,71 @@ func (gp GlobPattern) Repr(int) string {
 
 func (gp GlobPattern) Index(modifiers []Value) []Value {
 	for _, value := range modifiers {
-		modifier, ok := value.(String)
+		modifierv, ok := value.(String)
 		if !ok {
 			throw(ErrModifierMustBeString)
 		}
-		switch string(modifier) {
-		case "match-hidden":
-			if len(gp.Segments) == 0 {
-				throw(ErrBadGlobPattern)
-			}
-			if !glob.IsWild(gp.Segments[len(gp.Segments)-1]) {
-				throw(ErrMustFollowWildcard)
-			}
-			gp.Segments[len(gp.Segments)-1] = glob.Wild{
-				gp.Segments[len(gp.Segments)-1].(glob.Wild).Type, true,
-			}
-		case "nomatch-ok":
+		modifier := string(modifierv)
+		switch {
+		case modifier == "nomatch-ok":
 			gp.Flags |= NoMatchOK
+		case modifier == "match-hidden":
+			lastSeg := gp.mustGetLastWildSeg()
+			gp.Segments[len(gp.Segments)-1] = glob.Wild{
+				lastSeg.Type, true, lastSeg.Matchers,
+			}
 		default:
-			throw(fmt.Errorf("unknown modifier %s", modifier.Repr(NoPretty)))
+			if matcher, ok := runeMatchers[modifier]; ok {
+				gp.addMatcher(matcher)
+			} else if strings.HasPrefix(modifier, "set:") {
+				set := modifier[len("set:"):]
+				gp.addMatcher(func(r rune) bool {
+					return strings.ContainsRune(set, r)
+				})
+			} else if strings.HasPrefix(modifier, "range:") {
+				rangeExpr := modifier[len("range:"):]
+				badRangeExpr := fmt.Errorf("bad range modifier: %s", parse.Quote(rangeExpr))
+				runes := []rune(rangeExpr)
+				if len(runes) != 3 {
+					throw(badRangeExpr)
+				}
+				from, sep, to := runes[0], runes[1], runes[2]
+				switch sep {
+				case '-':
+					gp.addMatcher(func(r rune) bool {
+						return from <= r && r <= to
+					})
+				case '~':
+					gp.addMatcher(func(r rune) bool {
+						return from <= r && r < to
+					})
+				default:
+					throw(badRangeExpr)
+				}
+			} else {
+				throw(fmt.Errorf("unknown modifier %s", modifierv.Repr(NoPretty)))
+			}
 		}
 	}
 	return []Value{gp}
+}
+
+func (gp *GlobPattern) mustGetLastWildSeg() glob.Wild {
+	if len(gp.Segments) == 0 {
+		throw(ErrBadGlobPattern)
+	}
+	if !glob.IsWild(gp.Segments[len(gp.Segments)-1]) {
+		throw(ErrMustFollowWildcard)
+	}
+	return gp.Segments[len(gp.Segments)-1].(glob.Wild)
+}
+
+func (gp *GlobPattern) addMatcher(matcher func(rune) bool) {
+	lastSeg := gp.mustGetLastWildSeg()
+	gp.Segments[len(gp.Segments)-1] = glob.Wild{
+		lastSeg.Type, lastSeg.MatchHidden,
+		append(lastSeg.Matchers, matcher),
+	}
 }
 
 func (gp *GlobPattern) append(segs ...glob.Segment) {
@@ -76,11 +138,11 @@ func (gp *GlobPattern) append(segs ...glob.Segment) {
 func wildcardToSegment(s string) glob.Segment {
 	switch s {
 	case "*":
-		return glob.Wild{glob.Star, false}
+		return glob.Wild{glob.Star, false, nil}
 	case "**":
-		return glob.Wild{glob.StarStar, false}
+		return glob.Wild{glob.StarStar, false, nil}
 	case "?":
-		return glob.Wild{glob.Question, false}
+		return glob.Wild{glob.Question, false, nil}
 	default:
 		throw(fmt.Errorf("bad wildcard: %q", s))
 		panic("unreachable")

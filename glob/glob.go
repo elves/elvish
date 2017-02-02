@@ -162,8 +162,10 @@ segs:
 		}
 
 		chunk := segs[:i]
-		star := IsWild2(chunk[0], Star, StarStar)
-		if star {
+		startsWithStar := IsWild2(chunk[0], Star, StarStar)
+		var startingStar Wild
+		if startsWithStar {
+			startingStar = chunk[0].(Wild)
 			chunk = chunk[1:]
 		}
 		segs = segs[i:]
@@ -179,12 +181,16 @@ segs:
 			continue
 		}
 
-		if star {
+		if startsWithStar {
 			// NOTE An optimization is to make the upper bound not len(names),
 			// but rather len(names) - LB(# bytes segs can match)
-			for i := 1; i <= len(name); i++ {
-				// Match after skipping i bytes.
-				ok, rest := matchChunk(chunk, name[i:])
+			for i, r := range name {
+				j := i + len(string(r))
+				// Match name[:j] with the starting *, and the rest with chunk.
+				if !startingStar.Match(r) {
+					break
+				}
+				ok, rest := matchChunk(chunk, name[j:])
 				if ok && (rest == "" || len(segs) > 0) {
 					name = rest
 					continue segs
@@ -212,9 +218,16 @@ func matchChunk(chunk []Segment, name string) (bool, string) {
 			name = name[n:]
 		case Wild:
 			if seg.Type == Question {
-				_, n := utf8.DecodeRuneInString(name)
+				r, n := utf8.DecodeRuneInString(name)
+				if !seg.Match(r) {
+					return false, ""
+				}
 				name = name[n:]
+			} else {
+				panic("chunk has non-question wild segment")
 			}
+		default:
+			panic("chunk has non-literal non-wild segment")
 		}
 	}
 	return true, name

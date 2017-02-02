@@ -19,6 +19,7 @@ type Literal struct {
 type Wild struct {
 	Type        WildType
 	MatchHidden bool
+	Matchers    []func(rune) bool
 }
 
 // WildType is the type of a Wild.
@@ -30,6 +31,18 @@ const (
 	Star
 	StarStar
 )
+
+func (w Wild) Match(r rune) bool {
+	if len(w.Matchers) == 0 {
+		return true
+	}
+	for _, m := range w.Matchers {
+		if m(r) {
+			return true
+		}
+	}
+	return false
+}
 
 func (Literal) isSegment() {}
 func (Slash) isSegment()   {}
