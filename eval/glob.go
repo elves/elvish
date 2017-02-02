@@ -9,7 +9,20 @@ import (
 
 // GlobPattern is en ephemeral Value generated when evaluating tilde and
 // wildcards.
-type GlobPattern glob.Pattern
+type GlobPattern struct {
+	glob.Pattern
+	Flags GlobFlag
+}
+
+type GlobFlag uint
+
+const (
+	NoMatchOK GlobFlag = 1 << iota
+)
+
+func (f GlobFlag) Has(g GlobFlag) bool {
+	return (f & g) == g
+}
 
 var (
 	_ Value   = GlobPattern{}
@@ -19,6 +32,7 @@ var (
 var (
 	ErrMustFollowWildcard   = errors.New("must follow wildcard")
 	ErrModifierMustBeString = errors.New("modifier must be string")
+	ErrWildcardNoMatch      = errors.New("wildcard has no match")
 )
 
 func (GlobPattern) Kind() string {
@@ -46,6 +60,8 @@ func (gp GlobPattern) Index(modifiers []Value) []Value {
 			gp.Segments[len(gp.Segments)-1] = glob.Wild{
 				gp.Segments[len(gp.Segments)-1].(glob.Wild).Type, true,
 			}
+		case "nomatch-ok":
+			gp.Flags |= NoMatchOK
 		default:
 			throw(fmt.Errorf("unknown modifier %s", modifier.Repr(NoPretty)))
 		}
@@ -94,7 +110,7 @@ func stringToSegments(s string) []glob.Segment {
 
 func doGlob(gp GlobPattern, abort <-chan struct{}) []Value {
 	vs := make([]Value, 0)
-	if !glob.Pattern(gp).Glob(func(name string) bool {
+	if !gp.Glob(func(name string) bool {
 		select {
 		case <-abort:
 			Logger.Println("glob aborted")
@@ -105,6 +121,9 @@ func doGlob(gp GlobPattern, abort <-chan struct{}) []Value {
 		return true
 	}) {
 		throw(ErrInterrupted)
+	}
+	if len(vs) == 0 && !gp.Flags.Has(NoMatchOK) {
+		throw(ErrWildcardNoMatch)
 	}
 	return vs
 }

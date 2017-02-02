@@ -101,7 +101,7 @@ func cat(lhs, rhs Value) Value {
 			segs := stringToSegments(string(lhs))
 			// We know rhs contains exactly one segment.
 			segs = append(segs, rhs.Segments[0])
-			return GlobPattern{segs, ""}
+			return GlobPattern{glob.Pattern{segs, ""}, rhs.Flags}
 		}
 	case GlobPattern:
 		// NOTE Modifies lhs in place.
@@ -112,6 +112,7 @@ func cat(lhs, rhs Value) Value {
 		case GlobPattern:
 			// We know rhs contains exactly one segment.
 			lhs.append(rhs.Segments[0])
+			lhs.Flags |= rhs.Flags
 			return lhs
 		}
 	}
@@ -257,8 +258,9 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 		}
 		return variable(qname)
 	case parse.Wildcard:
-		vs := []Value{GlobPattern{[]glob.Segment{
-			wildcardToSegment(n.SourceText())}, ""}}
+		vs := []Value{GlobPattern{
+			glob.Pattern{[]glob.Segment{wildcardToSegment(n.SourceText())}, ""},
+			0}}
 		return func(ec *EvalCtx) []Value {
 			return vs
 		}
