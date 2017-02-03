@@ -30,6 +30,7 @@ func Parse(srcname, src string) (*Chunk, error) {
 var (
 	errUnexpectedRune         = errors.New("unexpected rune")
 	errShouldBeForm           = newError("", "form")
+	errBadLHS                 = errors.New("bad assignment LHS")
 	errDuplicateExitusRedir   = newError("duplicate exitus redir")
 	errShouldBeThen           = newError("", "then")
 	errShouldBeElifOrElseOrFi = newError("", "elif", "else", "fi")
@@ -183,6 +184,8 @@ type Form struct {
 	Assignments []*Assignment
 	Control     *Control
 	Head        *Compound
+	// Left-hand-sides for the spacey assignment. Right-hand-sides are in Args.
+	Vars        []*Compound
 	Args        []*Compound
 	Opts        []*MapPair
 	Redirs      []*Redir
@@ -243,6 +246,24 @@ func (fn *Form) parse(ps *parser) {
 			if isRedirSign(ps.peek()) {
 				// Redir
 				fn.addToRedirs(parseRedir(ps, cn))
+			} else if cn.sourceText == "=" {
+				// Spacey assignment.
+				// Turn the equal sign into a Sep.
+				addChild(fn, NewSep(ps.src, cn.begin, cn.end))
+				// Turn the head and preceding arguments into LHSs.
+				addLHS := func(cn *Compound) {
+					if len(cn.Indexings) == 1 && checkVariableInAssignment(cn.Indexings[0].Head, ps) {
+						fn.Vars = append(fn.Vars, cn)
+					} else {
+						ps.errorp(cn.begin, cn.end, errBadLHS)
+					}
+				}
+				addLHS(fn.Head)
+				fn.Head = nil
+				for _, cn := range fn.Args {
+					addLHS(cn)
+				}
+				fn.Args = nil
 			} else {
 				fn.addToArgs(cn)
 			}

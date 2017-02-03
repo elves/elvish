@@ -36,53 +36,7 @@ func (cp *compiler) lvaluesOp(n *parse.Indexing) (LValuesOp, LValuesOp) {
 		if len(n.Indicies) > 0 {
 			cp.errorf("may not have indicies")
 		}
-
-		opFuncs := make([]LValuesOpFunc, len(n.Head.Braced))
-		var restNode *parse.Indexing
-		var restOpFunc LValuesOpFunc
-
-		// Compile each spec inside the brace.
-		lvalueNodes := n.Head.Braced
-		fixedEnd := 0
-		for i, cn := range lvalueNodes {
-			if len(cn.Indexings) != 1 {
-				cp.errorpf(cn.Begin(), cn.End(), "must be an lvalue")
-			}
-			var rest bool
-			rest, opFuncs[i] = cp.lvaluesOne(cn.Indexings[0], "must be an lvalue ")
-			// Only the last one may a rest part.
-			if rest {
-				if i == len(n.Head.Braced)-1 {
-					restNode = cn.Indexings[0]
-					restOpFunc = opFuncs[i]
-				} else {
-					cp.errorpf(cn.Begin(), cn.End(), "only the last lvalue may have @")
-				}
-			} else {
-				fixedEnd = cn.End()
-			}
-		}
-
-		var restOp LValuesOp
-		// If there is a rest part, make LValuesOp for it and remove it from opFuncs.
-		if restOpFunc != nil {
-			restOp = LValuesOp{restOpFunc, restNode.Begin(), restNode.End()}
-			opFuncs = opFuncs[:len(opFuncs)-1]
-		}
-
-		var op LValuesOp
-		// If there is still anything left in opFuncs, make LValuesOp for the fixed part.
-		if len(opFuncs) > 0 {
-			op = LValuesOp{func(ec *EvalCtx) []Variable {
-				var variables []Variable
-				for _, opFunc := range opFuncs {
-					variables = append(variables, opFunc(ec)...)
-				}
-				return variables
-			}, lvalueNodes[0].Begin(), fixedEnd}
-		}
-
-		return op, restOp
+		return cp.lvaluesMulti(n.Head.Braced)
 	}
 	rest, opFunc := cp.lvaluesOne(n, "must be an lvalue or a braced list of those")
 	op := LValuesOp{opFunc, n.Begin(), n.End()}
@@ -91,6 +45,54 @@ func (cp *compiler) lvaluesOp(n *parse.Indexing) (LValuesOp, LValuesOp) {
 	} else {
 		return op, LValuesOp{}
 	}
+}
+
+func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp) {
+	opFuncs := make([]LValuesOpFunc, len(nodes))
+	var restNode *parse.Indexing
+	var restOpFunc LValuesOpFunc
+
+	// Compile each spec inside the brace.
+	fixedEnd := 0
+	for i, cn := range nodes {
+		if len(cn.Indexings) != 1 {
+			cp.errorpf(cn.Begin(), cn.End(), "must be an lvalue")
+		}
+		var rest bool
+		rest, opFuncs[i] = cp.lvaluesOne(cn.Indexings[0], "must be an lvalue ")
+		// Only the last one may a rest part.
+		if rest {
+			if i == len(nodes)-1 {
+				restNode = cn.Indexings[0]
+				restOpFunc = opFuncs[i]
+			} else {
+				cp.errorpf(cn.Begin(), cn.End(), "only the last lvalue may have @")
+			}
+		} else {
+			fixedEnd = cn.End()
+		}
+	}
+
+	var restOp LValuesOp
+	// If there is a rest part, make LValuesOp for it and remove it from opFuncs.
+	if restOpFunc != nil {
+		restOp = LValuesOp{restOpFunc, restNode.Begin(), restNode.End()}
+		opFuncs = opFuncs[:len(opFuncs)-1]
+	}
+
+	var op LValuesOp
+	// If there is still anything left in opFuncs, make LValuesOp for the fixed part.
+	if len(opFuncs) > 0 {
+		op = LValuesOp{func(ec *EvalCtx) []Variable {
+			var variables []Variable
+			for _, opFunc := range opFuncs {
+				variables = append(variables, opFunc(ec)...)
+			}
+			return variables
+		}, nodes[0].Begin(), fixedEnd}
+	}
+
+	return op, restOp
 }
 
 func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFunc) {

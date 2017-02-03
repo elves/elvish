@@ -66,6 +66,10 @@ var evalTests = []struct {
 	// Temporary assignment.
 	{"a=alice b=bob; {a,@b}=(put amy ben) put $a $@b; put $a $b",
 		strs("amy", "ben", "alice", "bob"), nomore},
+	// Spacey assignment.
+	{"a @b = 2 3 foo; put $a $b[1]", strs("2", "foo"), nomore},
+	// Spacey assignment with temporary assignment
+	{"x = 1; x=2 y = (+ 1 $x); put $x $y", strs("1", "3"), nomore},
 
 	// Control structures.
 	// if

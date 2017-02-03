@@ -41,6 +41,11 @@ func (n *Form) setHead(ch *Compound) {
 	addChild(n, ch)
 }
 
+func (n *Form) addToVars(ch *Compound) {
+	n.Vars = append(n.Vars, ch)
+	addChild(n, ch)
+}
+
 func (n *Form) addToArgs(ch *Compound) {
 	n.Args = append(n.Args, ch)
 	addChild(n, ch)

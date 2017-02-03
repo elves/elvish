@@ -49,6 +49,12 @@ func (s *Stylist) style(n parse.Node) {
 				s.add(styleForType[Variable].String(), v.Begin(), v.End())
 			}
 		}
+		for _, cn := range fn.Vars {
+			if len(cn.Indexings) > 0 && cn.Indexings[0].Head != nil {
+				v := cn.Indexings[0].Head
+				s.add(styleForType[Variable].String(), v.Begin(), v.End())
+			}
+		}
 		if fn.Head != nil {
 			s.formHead(fn.Head)
 		}

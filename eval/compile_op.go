@@ -134,7 +134,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 	var assignmentOps []Op
 	if len(n.Assignments) > 0 {
 		assignmentOps = cp.assignmentOps(n.Assignments)
-		if n.Head == nil {
+		if n.Head == nil && n.Vars == nil {
 			// Permanent assignment.
 			return func(ec *EvalCtx) {
 				for _, op := range assignmentOps {
@@ -146,6 +146,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 				v, r := cp.lvaluesOp(a.Dst)
 				saveVarsOps = append(saveVarsOps, v, r)
 			}
+			Logger.Println("temporary assignment of", len(n.Assignments), "pairs")
 		}
 	}
 
@@ -163,21 +164,50 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		}
 	}
 
-	headStr, ok := oneString(n.Head)
-	if ok {
-		compileForm, ok := builtinSpecials[headStr]
+	if n.Head != nil {
+		headStr, ok := oneString(n.Head)
 		if ok {
-			// special form
-			return compileForm(cp, n)
+			compileForm, ok := builtinSpecials[headStr]
+			if ok {
+				// special form
+				return compileForm(cp, n)
+			}
+			// Ignore the output. If a matching function exists it will be
+			// captured and eventually the Evaler executes it. If not, nothing
+			// happens here and the Evaler executes an external command.
+			cp.registerVariableGet(FnPrefix + headStr)
+			// XXX Dynamic head names should always refer to external commands
 		}
-		// Ignore the output. If a matching function exists it will be
-		// captured and eventually the Evaler executes it. If not, nothing
-		// happens here and the Evaler executes an external command.
-		cp.registerVariableGet(FnPrefix + headStr)
-		// XXX Dynamic head names should always refer to external commands
 	}
-	headOp := cp.compoundOp(n.Head)
+
 	argOps := cp.compoundOps(n.Args)
+
+	var headOp ValuesOp
+	var spaceyAssignOp Op
+	if n.Head != nil {
+		headOp = cp.compoundOp(n.Head)
+	} else {
+		varsOp, restOp := cp.lvaluesMulti(n.Vars)
+		argsOp := ValuesOp{
+			func(ec *EvalCtx) []Value {
+				var vs []Value
+				for _, op := range argOps {
+					vs = append(vs, op.Exec(ec)...)
+				}
+				return vs
+			},
+			-1, -1,
+		}
+		if len(argOps) > 0 {
+			argsOp.Begin = argOps[0].Begin
+			argsOp.End = argOps[len(argOps)-1].End
+		}
+		spaceyAssignOp = Op{
+			makeAssignmentOpFunc(varsOp, restOp, argsOp),
+			n.Vars[0].Begin(), argsOp.End,
+		}
+	}
+
 	optsOp := cp.mapPairs(n.Opts)
 	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir
@@ -221,15 +251,18 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			}()
 		}
 
-		// head
-		headValues := headOp.Exec(ec)
-		ec.must(headValues, "head of command", headOp.Begin, headOp.End).mustLen(1)
-		headFn := mustFn(headValues[0])
-
-		// args
+		var headFn Fn
 		var args []Value
-		for _, argOp := range argOps {
-			args = append(args, argOp.Exec(ec)...)
+		if headOp.Func != nil {
+			// head
+			headValues := headOp.Exec(ec)
+			ec.must(headValues, "head of command", headOp.Begin, headOp.End).mustLen(1)
+			headFn = mustFn(headValues[0])
+
+			// args
+			for _, argOp := range argOps {
+				args = append(args, argOp.Exec(ec)...)
+			}
 		}
 
 		// opts
@@ -253,7 +286,12 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		ec.verdict = true
 
 		ec.begin, ec.end = begin, end
-		headFn.Call(ec, args, convertedOpts)
+
+		if headFn != nil {
+			headFn.Call(ec, args, convertedOpts)
+		} else {
+			spaceyAssignOp.Exec(ec)
+		}
 	}
 }
 
@@ -395,7 +433,10 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 func (cp *compiler) assignment(n *parse.Assignment) OpFunc {
 	variablesOp, restOp := cp.lvaluesOp(n.Dst)
 	valuesOp := cp.compoundOp(n.Src)
+	return makeAssignmentOpFunc(variablesOp, restOp, valuesOp)
+}
 
+func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFunc {
 	return func(ec *EvalCtx) {
 		variables := variablesOp.Exec(ec)
 		rest := restOp.Exec(ec)

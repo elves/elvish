@@ -46,6 +46,11 @@ var goodCases = []struct {
 	{"k=v k[a][b]=v a", ast{"Chunk/Pipeline/Form", fs{
 		"Assignments": []string{"k=v", "k[a][b]=v"},
 		"Head":        "a"}}},
+	// Spacey assignment.
+	{"k=v a b = c d", ast{"Chunk/Pipeline/Form", fs{
+		"Assignments": []string{"k=v"},
+		"Vars":        []string{"a", "b"},
+		"Args":        []string{"c", "d"}}}},
 	// Redirections
 	{"a >b", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
