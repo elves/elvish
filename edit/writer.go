@@ -269,14 +269,16 @@ tokens:
 	}
 
 	// Write rprompt
-	padding := b.width - b.col
-	for _, s := range es.rprompt {
-		padding -= util.Wcswidth(s.text)
-	}
-	if padding >= 1 {
-		b.newlineWhenFull = false
-		b.writePadding(padding, "")
-		b.writeStyleds(es.rprompt)
+	if len(es.rprompt) > 0 {
+		padding := b.width - b.col
+		for _, s := range es.rprompt {
+			padding -= util.Wcswidth(s.text)
+		}
+		if padding >= 1 {
+			b.newlineWhenFull = false
+			b.writePadding(padding, "")
+			b.writeStyleds(es.rprompt)
+		}
 	}
 
 	// bufMode
