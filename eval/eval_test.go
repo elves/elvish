@@ -140,9 +140,9 @@ var evalTests = []struct {
 
 	// Wildcard.
 	{"put /*", strs(util.FullNames("/")...), nomore},
-	// XXX assumes there is no /nonexistent*
-	{"put /nonexistent*", noout, more{wantError: ErrWildcardNoMatch}},
-	{"put /nonexistent*[nomatch-ok]", noout, nomore},
+	// XXX assumes there is no /a/b/nonexistent*
+	{"put /a/b/nonexistent*", noout, more{wantError: ErrWildcardNoMatch}},
+	{"put /a/b/nonexistent*[nomatch-ok]", noout, nomore},
 
 	// Tilde.
 	{"h=$E:HOME; E:HOME=/foo; put ~ ~/src; E:HOME=$h",
