@@ -36,9 +36,8 @@ func (c *completion) needScrollbar() bool {
 
 func (c *completion) ModeLine(width int) *buffer {
 	b := newBuffer(width)
-	b.writes(" ", "")
 	// Write title
-	title := fmt.Sprintf("COMPLETING %s", c.completer)
+	title := fmt.Sprintf(" COMPLETING %s ", c.completer)
 	b.writes(util.TrimWcwidth(title, width), styleForMode.String())
 	// Write filter
 	if c.filtering {
@@ -277,8 +276,8 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 		return b
 	}
 
-	// Reserve the leftmost row and the rightmost row as margins.
-	width -= 2
+	// Reserve the the rightmost row as margins.
+	width -= 1
 
 	// Determine comp.height and comp.firstShown.
 	// First determine whether all candidates can be fit in the screen,
@@ -346,8 +345,7 @@ func (comp *completion) List(width, maxHeight int) *buffer {
 			}
 		}
 
-		// Set w=1 for the leftmost margin.
-		b.extendHorizontal(col, 1)
+		b.extendHorizontal(col, 0)
 		remainedWidth -= totalColWidth
 		if remainedWidth <= completionColMarginTotal {
 			break
