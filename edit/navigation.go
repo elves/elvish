@@ -28,17 +28,12 @@ func (*navigation) Mode() ModeType {
 	return modeNavigation
 }
 
-func (n *navigation) ModeLine(width int) *buffer {
-	s := " NAVIGATING "
+func (n *navigation) ModeLine() renderer {
+	title := " NAVIGATING "
 	if n.showHidden {
-		s += "(show hidden) "
+		title += "(show hidden) "
 	}
-	b := newBuffer(width)
-	b.writes(util.TrimWcwidth(s, width), styleForMode.String())
-	b.writes(" ", "")
-	b.writes(n.filter, styleForFilter.String())
-	b.dot = b.cursor()
-	return b
+	return modeLine{title, n.filter}
 }
 
 func startNav(ed *Editor) {

@@ -34,27 +34,13 @@ func (c *completion) needScrollbar() bool {
 	return c.firstShown > 0 || c.lastShownInFull < len(c.candidates)-1
 }
 
-func (c *completion) ModeLine(width int) *buffer {
-	b := newBuffer(width)
-	// Write title
-	title := fmt.Sprintf(" COMPLETING %s ", c.completer)
-	b.writes(util.TrimWcwidth(title, width), styleForMode.String())
-	// Write filter
-	if c.filtering {
-		b.writes(" ", "")
-		b.writes(c.filter, styleForFilter.String())
-		b.dot = b.cursor()
+func (c *completion) ModeLine() renderer {
+	ml := modeLine{fmt.Sprintf(" COMPLETING %s ", c.completer), c.filter}
+	if !c.needScrollbar() {
+		return ml
 	}
-	// Write horizontal scrollbar, using the remaining space
-	if c.needScrollbar() {
-		scrollbarWidth := width - lineWidth(b.cells[len(b.cells)-1]) - 2
-		if scrollbarWidth >= 3 {
-			b.writes(" ", "")
-			writeHorizontalScrollbar(b, len(c.candidates), c.firstShown, c.lastShownInFull+1, scrollbarWidth)
-		}
-	}
-
-	return b
+	return modeLineWithScrollBar{ml,
+		len(c.candidates), c.firstShown, c.lastShownInFull + 1}
 }
 
 func startCompl(ed *Editor) {

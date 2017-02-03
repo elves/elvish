@@ -3,9 +3,7 @@ package edit
 // Mode is an editor mode.
 type Mode interface {
 	Mode() ModeType
-	// ModeLine renders a mode line under the given width constraint. It
-	// returns a rendered buffer.
-	ModeLine(width int) *buffer
+	ModeLine() renderer
 }
 
 type ModeType int

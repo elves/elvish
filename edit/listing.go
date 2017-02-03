@@ -40,15 +40,8 @@ func (l *listing) Mode() ModeType {
 	return l.typ
 }
 
-func (l *listing) ModeLine(width int) *buffer {
-	title := l.provider.ModeTitle(l.selected)
-	// TODO keep it one line.
-	b := newBuffer(width)
-	b.writes(util.TrimWcwidth(title, width), styleForMode.String())
-	b.writes(" ", "")
-	b.writes(l.filter, styleForFilter.String())
-	b.dot = b.cursor()
-	return b
+func (l *listing) ModeLine() renderer {
+	return modeLine{l.provider.ModeTitle(l.selected), l.filter}
 }
 
 func (l *listing) List(width, maxHeight int) *buffer {

@@ -195,13 +195,6 @@ func trimToWindow(s []string, selected, max int) ([]string, int) {
 	return s[low:high], low
 }
 
-func makeModeLine(text string, width int) *buffer {
-	b := newBuffer(width)
-	b.writes(util.TrimWcwidth(text, width), styleForMode.String())
-	b.dot = b.cursor()
-	return b
-}
-
 // refresh redraws the line editor. The dot is passed as an index into text;
 // the corresponding position will be calculated.
 func (w *writer) refresh(es *editorState, fullRefresh bool) error {
@@ -282,7 +275,7 @@ tokens:
 	}
 
 	// bufMode
-	bufMode = es.mode.ModeLine(width)
+	bufMode = render(es.mode.ModeLine(), width)
 
 	// bufTips
 	// TODO tips is assumed to contain no newlines.
@@ -332,7 +325,7 @@ tokens:
 		// scrollbar never adds additional lines to bufMode, we may do this
 		// without recalculating the layout.
 		if mode == modeCompletion {
-			bufMode = es.mode.ModeLine(width)
+			bufMode = render(es.mode.ModeLine(), width)
 		}
 	}
 
