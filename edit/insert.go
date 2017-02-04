@@ -27,7 +27,7 @@ func (*insert) Mode() ModeType {
 // Insert mode is the default mode and has an empty mode.
 func (ins *insert) ModeLine() renderer {
 	if ins.quotePaste {
-		return modeLine{" INSERT (quote paste) ", ""}
+		return modeLineRenderer{" INSERT (quote paste) ", ""}
 	}
 	return nil
 }
@@ -39,7 +39,7 @@ func (*command) Mode() ModeType {
 }
 
 func (*command) ModeLine() renderer {
-	return modeLine{" COMMAND ", ""}
+	return modeLineRenderer{" COMMAND ", ""}
 }
 
 func startInsert(ed *Editor) {

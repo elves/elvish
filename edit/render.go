@@ -19,25 +19,25 @@ func render(r renderer, width int) *buffer {
 	return b
 }
 
-type modeLine struct {
+type modeLineRenderer struct {
 	title  string
 	filter string
 }
 
-func (ml modeLine) render(b *buffer) {
+func (ml modeLineRenderer) render(b *buffer) {
 	b.writes(ml.title, styleForMode.String())
 	b.writes(" ", "")
 	b.writes(ml.filter, styleForFilter.String())
 	b.dot = b.cursor()
 }
 
-type modeLineWithScrollBar struct {
-	modeLine
+type modeLineWithScrollBarRenderer struct {
+	modeLineRenderer
 	n, low, high int
 }
 
-func (ml modeLineWithScrollBar) render(b *buffer) {
-	ml.modeLine.render(b)
+func (ml modeLineWithScrollBarRenderer) render(b *buffer) {
+	ml.modeLineRenderer.render(b)
 
 	scrollbarWidth := b.width - lineWidth(b.cells[len(b.cells)-1]) - 2
 	if scrollbarWidth >= 3 {
@@ -67,12 +67,12 @@ func (ls listingRenderer) render(b *buffer) {
 	}
 }
 
-type listingRendererWithScrollBar struct {
+type listingWithScrollBarRenderer struct {
 	listingRenderer
 	n, low, high, height int
 }
 
-func (ls listingRendererWithScrollBar) render(b *buffer) {
+func (ls listingWithScrollBarRenderer) render(b *buffer) {
 	b1 := render(ls.listingRenderer, b.width-1)
 	b.extendHorizontal(b1, 0)
 

@@ -35,11 +35,11 @@ func (c *completion) needScrollbar() bool {
 }
 
 func (c *completion) ModeLine() renderer {
-	ml := modeLine{fmt.Sprintf(" COMPLETING %s ", c.completer), c.filter}
+	ml := modeLineRenderer{fmt.Sprintf(" COMPLETING %s ", c.completer), c.filter}
 	if !c.needScrollbar() {
 		return ml
 	}
-	return modeLineWithScrollBar{ml,
+	return modeLineWithScrollBarRenderer{ml,
 		len(c.candidates), c.firstShown, c.lastShownInFull + 1}
 }
 

@@ -23,7 +23,7 @@ func (hist) Mode() ModeType {
 }
 
 func (h *hist) ModeLine() renderer {
-	return modeLine{fmt.Sprintf(" HISTORY #%d ", h.current), ""}
+	return modeLineRenderer{fmt.Sprintf(" HISTORY #%d ", h.current), ""}
 }
 
 func startHistory(ed *Editor) {

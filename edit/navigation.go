@@ -33,7 +33,7 @@ func (n *navigation) ModeLine() renderer {
 	if n.showHidden {
 		title += "(show hidden) "
 	}
-	return modeLine{title, n.filter}
+	return modeLineRenderer{title, n.filter}
 }
 
 func startNav(ed *Editor) {

@@ -39,7 +39,7 @@ func (l *listing) Mode() ModeType {
 }
 
 func (l *listing) ModeLine() renderer {
-	return modeLine{l.provider.ModeTitle(l.selected), l.filter}
+	return modeLineRenderer{l.provider.ModeTitle(l.selected), l.filter}
 }
 
 func (l *listing) List(maxHeight int) renderer {
@@ -116,7 +116,7 @@ func (l *listing) List(maxHeight int) renderer {
 	ls := listingRenderer{lines}
 	if low > 0 || high < n || lastShownIncomplete {
 		// Need scrollbar
-		return listingRendererWithScrollBar{ls, n, low, high, height}
+		return listingWithScrollBarRenderer{ls, n, low, high, height}
 	}
 	return ls
 }
