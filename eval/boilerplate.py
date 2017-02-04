@@ -10,6 +10,7 @@ def put_compile_s(out, name, intype, extraargs, outtype):
     extranames = ', '.join(a.split(' ')[0] for a in extraargs.split(', ')) if extraargs else ''
     print >>out, '''
 func (cp *compiler) {name}Op(n {intype}{extraargs}) {outtype} {{
+	cp.compiling(n)
 	return {outtype}{{cp.{name}(n{extranames}), n.Begin(), n.End()}}
 }}
 
@@ -29,7 +30,7 @@ def main():
     print >>out, '''package eval
 
 import "github.com/elves/elvish/parse"'''
-    for fname in 'compile_op.go', 'compile_values_op.go':
+    for fname in 'compile-op.go', 'compile-value.go':
         for line in file(fname):
             m = re.match(r'^func \(cp \*compiler\) (\w+)\(\w+ ([^,\[\]]+)(.*)\) (\w*OpFunc) {$', line)
             if m:

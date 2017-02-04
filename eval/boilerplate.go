@@ -3,6 +3,7 @@ package eval
 import "github.com/elves/elvish/parse"
 
 func (cp *compiler) chunkOp(n *parse.Chunk) Op {
+	cp.compiling(n)
 	return Op{cp.chunk(n), n.Begin(), n.End()}
 }
 
@@ -15,6 +16,7 @@ func (cp *compiler) chunkOps(ns []*parse.Chunk) []Op {
 }
 
 func (cp *compiler) pipelineOp(n *parse.Pipeline) Op {
+	cp.compiling(n)
 	return Op{cp.pipeline(n), n.Begin(), n.End()}
 }
 
@@ -27,6 +29,7 @@ func (cp *compiler) pipelineOps(ns []*parse.Pipeline) []Op {
 }
 
 func (cp *compiler) formOp(n *parse.Form) Op {
+	cp.compiling(n)
 	return Op{cp.form(n), n.Begin(), n.End()}
 }
 
@@ -39,6 +42,7 @@ func (cp *compiler) formOps(ns []*parse.Form) []Op {
 }
 
 func (cp *compiler) controlOp(n *parse.Control) Op {
+	cp.compiling(n)
 	return Op{cp.control(n), n.Begin(), n.End()}
 }
 
@@ -51,6 +55,7 @@ func (cp *compiler) controlOps(ns []*parse.Control) []Op {
 }
 
 func (cp *compiler) assignmentOp(n *parse.Assignment) Op {
+	cp.compiling(n)
 	return Op{cp.assignment(n), n.Begin(), n.End()}
 }
 
@@ -63,6 +68,7 @@ func (cp *compiler) assignmentOps(ns []*parse.Assignment) []Op {
 }
 
 func (cp *compiler) redirOp(n *parse.Redir) Op {
+	cp.compiling(n)
 	return Op{cp.redir(n), n.Begin(), n.End()}
 }
 
@@ -75,6 +81,7 @@ func (cp *compiler) redirOps(ns []*parse.Redir) []Op {
 }
 
 func (cp *compiler) compoundOp(n *parse.Compound) ValuesOp {
+	cp.compiling(n)
 	return ValuesOp{cp.compound(n), n.Begin(), n.End()}
 }
 
@@ -87,6 +94,7 @@ func (cp *compiler) compoundOps(ns []*parse.Compound) []ValuesOp {
 }
 
 func (cp *compiler) arrayOp(n *parse.Array) ValuesOp {
+	cp.compiling(n)
 	return ValuesOp{cp.array(n), n.Begin(), n.End()}
 }
 
@@ -99,6 +107,7 @@ func (cp *compiler) arrayOps(ns []*parse.Array) []ValuesOp {
 }
 
 func (cp *compiler) indexingOp(n *parse.Indexing) ValuesOp {
+	cp.compiling(n)
 	return ValuesOp{cp.indexing(n), n.Begin(), n.End()}
 }
 
@@ -111,6 +120,7 @@ func (cp *compiler) indexingOps(ns []*parse.Indexing) []ValuesOp {
 }
 
 func (cp *compiler) primaryOp(n *parse.Primary) ValuesOp {
+	cp.compiling(n)
 	return ValuesOp{cp.primary(n), n.Begin(), n.End()}
 }
 
@@ -123,6 +133,7 @@ func (cp *compiler) primaryOps(ns []*parse.Primary) []ValuesOp {
 }
 
 func (cp *compiler) listOp(n *parse.Array) ValuesOp {
+	cp.compiling(n)
 	return ValuesOp{cp.list(n), n.Begin(), n.End()}
 }
 
@@ -135,6 +146,7 @@ func (cp *compiler) listOps(ns []*parse.Array) []ValuesOp {
 }
 
 func (cp *compiler) predCaptureOp(n *parse.Chunk) ValuesOp {
+	cp.compiling(n)
 	return ValuesOp{cp.predCapture(n), n.Begin(), n.End()}
 }
 
@@ -147,6 +159,7 @@ func (cp *compiler) predCaptureOps(ns []*parse.Chunk) []ValuesOp {
 }
 
 func (cp *compiler) errorCaptureOp(n *parse.Chunk) ValuesOp {
+	cp.compiling(n)
 	return ValuesOp{cp.errorCapture(n), n.Begin(), n.End()}
 }
 
@@ -159,6 +172,7 @@ func (cp *compiler) errorCaptureOps(ns []*parse.Chunk) []ValuesOp {
 }
 
 func (cp *compiler) outputCaptureOp(n *parse.Primary) ValuesOp {
+	cp.compiling(n)
 	return ValuesOp{cp.outputCapture(n), n.Begin(), n.End()}
 }
 
@@ -171,6 +185,7 @@ func (cp *compiler) outputCaptureOps(ns []*parse.Primary) []ValuesOp {
 }
 
 func (cp *compiler) lambdaOp(n *parse.Primary) ValuesOp {
+	cp.compiling(n)
 	return ValuesOp{cp.lambda(n), n.Begin(), n.End()}
 }
 
@@ -183,6 +198,7 @@ func (cp *compiler) lambdaOps(ns []*parse.Primary) []ValuesOp {
 }
 
 func (cp *compiler) map_Op(n *parse.Primary) ValuesOp {
+	cp.compiling(n)
 	return ValuesOp{cp.map_(n), n.Begin(), n.End()}
 }
 
@@ -195,6 +211,7 @@ func (cp *compiler) map_Ops(ns []*parse.Primary) []ValuesOp {
 }
 
 func (cp *compiler) bracedOp(n *parse.Primary) ValuesOp {
+	cp.compiling(n)
 	return ValuesOp{cp.braced(n), n.Begin(), n.End()}
 }
 

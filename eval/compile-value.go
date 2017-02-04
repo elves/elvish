@@ -248,7 +248,6 @@ func variable(qname string) ValuesOpFunc {
 }
 
 func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
-	cp.compiling(n)
 	switch n.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return literalStr(n.Value)
