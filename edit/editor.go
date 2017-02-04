@@ -144,43 +144,39 @@ func (ed *Editor) Notify(format string, args ...interface{}) {
 	ed.notifications = append(ed.notifications, fmt.Sprintf(format, args...))
 }
 
-func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
+func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 	// Re-lex the line, unless we are in modeCompletion
 	src := ed.line
 	if ed.mode.Mode() != modeCompletion {
 		n, err := parse.Parse("[interactive]", src)
+
 		ed.parseErrorAtEnd = err != nil && atEnd(err, len(src))
+		// If all parse errors are at the end, it is likely caused by incomplete
+		// input. In that case, do not complain about parse errors.
+		// TODO(xiaq): Find a more reliable way to determine incomplete input.
+		// Ideally the parser should report it.
+		if err != nil && addErrorsToTips && !ed.parseErrorAtEnd {
+			ed.addTip("parser error: %s", err)
+		}
+		ed.tokens = tokenizeNode(src, n)
+
+		_, err = ed.evaler.Compile(n, "[interactive]", src)
 		if err != nil {
-			// If all the errors happen at the end, it is liekly complaining
-			// about missing texts that will eventually be inserted. Don't show
-			// such errors.
-			// XXX We may need a more reliable criteria.
-			if tips && !ed.parseErrorAtEnd {
-				ed.addTip("parser error: %s", err)
+			if addErrorsToTips && !atEnd(err, len(src)) {
+				ed.addTip("compiler error: %s", err)
 			}
-		}
-		if n == nil {
-			ed.tokens = []Token{parserError(src, 0, len(src))}
-		} else {
-			ed.tokens = tokenizeNode(src, n)
-			_, err := ed.evaler.Compile(n, "[interactive]", src)
-			if err != nil {
-				if tips && !atEnd(err, len(src)) {
-					ed.addTip("compiler error: %s", err)
-				}
-				if err, ok := err.(*eval.CompilationError); ok {
-					p := err.Context.Begin
-					for i, token := range ed.tokens {
-						if token.Node.Begin() <= p && p < token.Node.End() {
-							ed.tokens[i].MoreStyle = joinStyles(ed.tokens[i].MoreStyle, styleForCompilerError)
-							break
-						}
-					}
-				} else {
-					Logger.Printf("Compile returned error of type %T", err)
+			// Highlight errors in the input buffer.
+			// TODO(xiaq): There might be multiple tokens involved in the
+			// compiler error; they should all be highlighted as erroneous.
+			p := err.(*eval.CompilationError).Context.Begin
+			for i, token := range ed.tokens {
+				if token.Node.Begin() <= p && p < token.Node.End() {
+					ed.tokens[i].MoreStyle = joinStyles(ed.tokens[i].MoreStyle, styleForCompilerError)
+					break
 				}
 			}
 		}
+
 		stylist := &Stylist{ed.tokens, ed, nil}
 		stylist.do(n)
 	}
@@ -252,19 +248,38 @@ func (ed *Editor) startReadLine() error {
 	ed.savedTermios = savedTermios
 
 	_, width := sys.GetWinsize(int(ed.file.Fd()))
-	// Turn on autowrap, write lackEOL along with enough padding to fill the
-	// whole screen. If the cursor was in the first column, we end up in the
-	// same line (just off the line boundary); otherwise we are now in the next
-	// line. We now rewind to the first column and erase anything there. The
-	// final effect is that a lackEOL gets written if and only if the cursor
-	// was not in the first column.
+	/*
+		Write a lackEOLRune if the cursor is not in the leftmost column. This is
+		done as follows:
+
+		1. Turn on autowrap;
+
+		2. Write lackEOL along with enough padding, so that the total width is
+		   equal to the width of the screen.
+
+		   If the cursor was in the first column, we are still in the same line,
+		   just off the line boundary. Otherwise, we are now in the next line.
+
+		3. Rewind to the first column, write one space and rewind again. If the
+		   cursor was in the first column to start with, we have just erased the
+		   LackEOL character. Otherwise, we are now in the next line and this is
+		   a no-op. The LackEOL character remains.
+	*/
 	fmt.Fprintf(ed.file, "\033[?7h%s%*s\r \r", lackEOL, width-util.Wcwidth(lackEOLRune), "")
 
-	// Turn off autowrap. The edito has its own wrapping mechanism. Doing
-	// wrapping manually means that when the actual width of some characters
-	// are greater than what our wcwidth implementation tells us, characters at
-	// the end of that line gets hidden -- compared to pushed to the next line,
-	// which is more disastrous.
+	/*
+		Turn off autowrap.
+
+		The terminals sometimes has different opinions about how wide some
+		characters are (notably emojis and some dingbats) with elvish. When that
+		happens, elvish becomes wrong about where the cursor is when it writes
+		its output, and the effect can be disastrous.
+
+		If we turn off autowrap, the terminal won't insert any newlines behind
+		the scene, so elvish is always right about which line the cursor is.
+		With a bit more caution, this can restrict the consequence of the
+		mismatch within one line.
+	*/
 	ed.file.WriteString("\033[?7l")
 	// Turn on SGR-style mouse tracking.
 	//ed.file.WriteString("\033[?1000;1006h")
@@ -282,6 +297,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	defer ed.activeMutex.Unlock()
 	ed.active = false
 
+	// Refresh the terminal for the last time in a clean-ish state.
 	ed.mode = &ed.insert
 	ed.tips = nil
 	ed.dot = len(ed.line)
@@ -290,8 +306,8 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	}
 	addError(ed.refresh(false, false))
 	ed.file.WriteString("\n")
+	ed.writer.resetOldBuf()
 
-	// ed.reader.Stop()
 	ed.reader.Quit()
 
 	// Turn on autowrap.
@@ -302,16 +318,18 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	// Disable bracketed paste.
 	ed.file.WriteString("\033[?2004l")
 
-	// restore termios
+	// Restore termios.
 	err := ed.savedTermios.ApplyToFd(int(ed.file.Fd()))
-
 	if err != nil {
 		addError(fmt.Errorf("can't restore terminal attribute: %s", err))
 	}
-	ed.savedTermios = nil
+
+	// Save the line before resetting all of editorState.
 	line := ed.line
+
 	ed.editorState = editorState{}
 
+	// Call after-readline functions.
 	afterReadLine := ed.afterReadLine.Get().(eval.ListLike)
 	if afterReadLine.Len() > 0 {
 		opfunc := func(ec *eval.EvalCtx) {
@@ -343,10 +361,11 @@ func (ed *Editor) ReadLine() (line string, err error) {
 
 	ed.mode = &ed.insert
 
+	// Find external commands asynchronously, so that slow I/O won't block the
+	// editor.
 	isExternalCh := make(chan map[string]bool, 1)
 	go getIsExternal(ed.evaler, isExternalCh)
 
-	ed.writer.resetOldBuf()
 	go ed.reader.Run()
 
 	fullRefresh := false
@@ -383,7 +402,7 @@ MainLoop:
 					isExternal:   ed.isExternal,
 				}
 				ed.mode = &ed.insert
-				goto MainLoop
+				continue MainLoop
 			case syscall.SIGWINCH:
 				fullRefresh = true
 				continue MainLoop

@@ -2,7 +2,6 @@ package edit
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -20,6 +19,16 @@ type bang struct {
 	words    []string
 	filtered []bangEntry
 	minus    bool
+}
+
+func newBang(line string) *bang {
+	b := &bang{listing{}, line, wordify(line), nil, false}
+	b.listing = newListing(modeBang, b)
+	return b
+}
+
+func (b *bang) ModeTitle(int) string {
+	return " LASTCMD "
 }
 
 func (b *bang) Len() int {
@@ -67,12 +76,6 @@ func (b *bang) Accept(i int, ed *Editor) {
 	startInsert(ed)
 }
 
-func (b *bang) ModeTitle(i int) string {
-	return " LASTCMD "
-}
-
-var wordSep = regexp.MustCompile("[ \t]+")
-
 func startBang(ed *Editor) {
 	_, line, err := ed.store.LastCmd(-1, "")
 	if err == nil {
@@ -95,10 +98,4 @@ func bangAltDefault(ed *Editor) {
 		startInsert(ed)
 		ed.nextAction = action{typ: reprocessKey}
 	}
-}
-
-func newBang(line string) *bang {
-	b := &bang{listing{}, line, wordify(line), nil, false}
-	b.listing = newListing(modeBang, b)
-	return b
 }
