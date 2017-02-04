@@ -1,7 +1,5 @@
 package eval
 
-//go:generate ./builtin_modules.bash
-
 // Builtin special forms.
 
 import (

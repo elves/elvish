@@ -1,6 +1,6 @@
 #!/bin/bash
 
-out=./builtin_modules.go
+out=./builtin-modules.go
 
 {
 	echo "package eval"

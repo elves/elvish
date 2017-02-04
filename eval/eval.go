@@ -2,6 +2,8 @@
 // shell.
 package eval
 
+//go:generate ./builtin-modules.bash
+
 import (
 	"bufio"
 	"bytes"
