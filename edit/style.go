@@ -22,7 +22,7 @@ var (
 )
 
 var styleForType = map[TokenKind]styles{
-	ParserError:  styles{"red", "italic"},
+	ParserError:  styles{"bg-red"},
 	Bareword:     styles{},
 	SingleQuoted: styles{"yellow"},
 	DoubleQuoted: styles{"yellow"},
@@ -122,8 +122,8 @@ var styleTranslationTable = map[string]string{
 var (
 	styleForGoodCommand   = styles{"green"}
 	styleForBadCommand    = styles{"red"}
-	styleForBadVariable   = styles{"red", "italic"}
-	styleForCompilerError = styles{"red", "italic"}
+	styleForBadVariable   = styles{"bg-red"}
+	styleForCompilerError = styles{"bg-red"}
 )
 
 type styles []string
