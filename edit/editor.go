@@ -156,14 +156,14 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 		// TODO(xiaq): Find a more reliable way to determine incomplete input.
 		// Ideally the parser should report it.
 		if err != nil && addErrorsToTips && !ed.parseErrorAtEnd {
-			ed.addTip("parser error: %s", err)
+			ed.addTip("%s", err)
 		}
 		ed.tokens = tokenizeNode(src, n)
 
 		_, err = ed.evaler.Compile(n, "[interactive]", src)
 		if err != nil {
 			if addErrorsToTips && !atEnd(err, len(src)) {
-				ed.addTip("compiler error: %s", err)
+				ed.addTip("%s", err)
 			}
 			// Highlight errors in the input buffer.
 			// TODO(xiaq): There might be multiple tokens involved in the
