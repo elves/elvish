@@ -162,7 +162,7 @@ func (ed *Editor) refresh(fullRefresh bool, tips bool) error {
 		if n == nil {
 			ed.tokens = []Token{parserError(src, 0, len(src))}
 		} else {
-			ed.tokens = tokenize(src, n)
+			ed.tokens = tokenizeNode(src, n)
 			_, err := ed.evaler.Compile(n, "[interactive]", src)
 			if err != nil {
 				if tips && !atEnd(err, len(src)) {

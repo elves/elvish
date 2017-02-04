@@ -106,7 +106,7 @@ func (bn *Chunk) parseSeps(ps *parser) int {
 			// parse as a Sep
 			parseSep(bn, ps, r)
 			nseps++
-		} else if isSpace(r) {
+		} else if IsSpace(r) {
 			// parse a run of spaces as a Sep
 			parseSpaces(bn, ps)
 		} else if r == '#' {
@@ -298,7 +298,7 @@ func (fn *Form) tryAssignment(ps *parser) bool {
 }
 
 func startsForm(r rune) bool {
-	return isSpace(r) || startsCompound(r, true)
+	return IsSpace(r) || startsCompound(r, true)
 }
 
 // Assignment = Indexing '=' Compound
@@ -671,12 +671,12 @@ func (sn *Array) parse(ps *parser, allowSemicolon bool) {
 	}
 }
 
-func isSpace(r rune) bool {
+func IsSpace(r rune) bool {
 	return r == ' ' || r == '\t'
 }
 
 func startsArray(r rune) bool {
-	return isSpaceOrNewline(r) || startsIndexing(r, false)
+	return IsSpaceOrNewline(r) || startsIndexing(r, false)
 }
 
 // Primary is the smallest expression unit.
@@ -990,7 +990,7 @@ func (pn *Primary) lbracket(ps *parser) {
 		ps.next()
 		r := ps.peek()
 		switch {
-		case isSpace(r), r == ']', r == eof:
+		case IsSpace(r), r == ']', r == eof:
 			// '&' { Space } ']': '&' is a sep
 			addSep(pn, ps)
 			parseSpaces(pn, ps)
@@ -1040,7 +1040,7 @@ func (pn *Primary) lambda(ps *parser) {
 func (pn *Primary) lbrace(ps *parser) {
 	parseSep(pn, ps, '{')
 
-	if r := ps.peek(); r == ';' || r == '\n' || isSpace(r) {
+	if r := ps.peek(); r == ';' || r == '\n' || IsSpace(r) {
 		pn.lambda(ps)
 		return
 	}
@@ -1072,7 +1072,7 @@ func (pn *Primary) lbrace(ps *parser) {
 }
 
 func isBracedSep(r rune) bool {
-	return r == ',' || isSpaceOrNewline(r)
+	return r == ',' || IsSpaceOrNewline(r)
 }
 
 func (pn *Primary) bareword(ps *parser, head bool) {
@@ -1159,11 +1159,11 @@ func parseSep(n Node, ps *parser, sep rune) bool {
 }
 
 func parseSpaces(n Node, ps *parser) {
-	if !isSpace(ps.peek()) {
+	if !IsSpace(ps.peek()) {
 		return
 	}
 	ps.next()
-	for isSpace(ps.peek()) {
+	for IsSpace(ps.peek()) {
 		ps.next()
 	}
 	addSep(n, ps)
@@ -1171,18 +1171,18 @@ func parseSpaces(n Node, ps *parser) {
 
 func parseSpacesAndNewlines(n Node, ps *parser) {
 	// TODO parse comments here.
-	if !isSpaceOrNewline(ps.peek()) {
+	if !IsSpaceOrNewline(ps.peek()) {
 		return
 	}
 	ps.next()
-	for isSpaceOrNewline(ps.peek()) {
+	for IsSpaceOrNewline(ps.peek()) {
 		ps.next()
 	}
 	addSep(n, ps)
 }
 
-func isSpaceOrNewline(r rune) bool {
-	return isSpace(r) || r == '\n'
+func IsSpaceOrNewline(r rune) bool {
+	return IsSpace(r) || r == '\n'
 }
 
 func addChild(p Node, ch Node) {

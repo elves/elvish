@@ -98,7 +98,7 @@ func bangAltDefault(ed *Editor) {
 }
 
 func newBang(line string) *bang {
-	b := &bang{listing{}, line, wordSep.Split(strings.Trim(line, " \t"), -1), nil, false}
+	b := &bang{listing{}, line, wordify(line), nil, false}
 	b.listing = newListing(modeBang, b)
 	return b
 }

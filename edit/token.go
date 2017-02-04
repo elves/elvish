@@ -37,8 +37,28 @@ func parserError(src string, begin, end int) Token {
 	return Token{ParserError, src[begin:end], parse.NewSep(src, begin, end), styles{}}
 }
 
-// tokenize returns all leaves in an AST.
-func tokenize(src string, n parse.Node) []Token {
+// tokenize tokenizes elvishscript source.
+func tokenize(src string) []Token {
+	node, _ := parse.Parse("[tokenize]", src)
+	return tokenizeNode(src, node)
+}
+
+// wordify breaks elvishscript source into words by breaking it into tokens, and
+// pick out the texts of non-space non-newline tokens.
+func wordify(src string) []string {
+	tokens := tokenize(src)
+	var words []string
+	for _, token := range tokens {
+		text := token.Text
+		if strings.TrimFunc(text, parse.IsSpaceOrNewline) != "" {
+			words = append(words, text)
+		}
+	}
+	return words
+}
+
+// tokenizeNode returns all leaves in an AST.
+func tokenizeNode(src string, n parse.Node) []Token {
 	lastEnd := 0
 
 	tokenCh := make(chan Token, tokensBufferSize)

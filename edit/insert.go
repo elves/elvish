@@ -209,9 +209,11 @@ func insertLastWord(ed *Editor) {
 }
 
 func lastWord(s string) string {
-	s = strings.TrimRightFunc(s, unicode.IsSpace)
-	i := strings.LastIndexFunc(s, unicode.IsSpace) + 1
-	return s[i:]
+	words := wordify(s)
+	if len(words) == 0 {
+		return ""
+	}
+	return words[len(words)-1]
 }
 
 func insertKey(ed *Editor) {
