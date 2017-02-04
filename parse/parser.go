@@ -24,10 +24,6 @@ type parser struct {
 
 const eof rune = -1
 
-func (ps *parser) eof() bool {
-	return ps.peek() == eof
-}
-
 func (ps *parser) peek() rune {
 	if ps.pos == len(ps.src) {
 		return eof

@@ -14,7 +14,6 @@ var (
 	styleForSelected         = styles{"inverse"}
 	styleForScrollBarArea    = styles{"magenta"}
 	styleForScrollBarThumb   = styles{"magenta", "inverse"}
-	styleForSideArrow        = styles{"inverse"}
 
 	// Use default style for completion listing
 	styleForCompletion = styles{}

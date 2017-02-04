@@ -17,10 +17,6 @@ func unstyled(s string) styled {
 	return styled{s, styles{}}
 }
 
-func (s *styled) addStyle(st string) {
-	s.styles = append(s.styles, st)
-}
-
 func (s *styled) Kind() string {
 	return "styled"
 }
