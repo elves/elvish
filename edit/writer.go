@@ -316,8 +316,8 @@ tokens:
 
 	// bufListing.
 	if hListing > 0 {
-		if lister, ok := es.mode.(OldLister); ok {
-			bufListing = lister.List(width, hListing)
+		if lister, ok := es.mode.(ListRenderer); ok {
+			bufListing = lister.ListRender(width, hListing)
 		} else if lister, ok := es.mode.(Lister); ok {
 			bufListing = render(lister.List(hListing), width)
 		}

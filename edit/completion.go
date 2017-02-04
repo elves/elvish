@@ -250,7 +250,7 @@ func (comp *completion) maxWidth(lo, hi int) int {
 	return width
 }
 
-func (comp *completion) List(width, maxHeight int) *buffer {
+func (comp *completion) ListRender(width, maxHeight int) *buffer {
 	b := newBuffer(width)
 	cands := comp.candidates
 	if len(cands) == 0 {
