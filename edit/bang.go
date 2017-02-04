@@ -71,6 +71,8 @@ func (b *bang) Filter(filter string) int {
 	return 0
 }
 
+// Editor interface.
+
 func (b *bang) Accept(i int, ed *Editor) {
 	ed.insertAtDot(b.filtered[i].s)
 	startInsert(ed)
@@ -78,12 +80,12 @@ func (b *bang) Accept(i int, ed *Editor) {
 
 func startBang(ed *Editor) {
 	_, line, err := ed.store.LastCmd(-1, "")
-	if err == nil {
-		ed.bang = newBang(line)
-		ed.mode = ed.bang
-	} else {
-		ed.addTip("db error: %s", err.Error())
+	if err != nil {
+		ed.Notify("db error: %s", err.Error())
+		return
 	}
+	ed.bang = newBang(line)
+	ed.mode = ed.bang
 }
 
 func bangAltDefault(ed *Editor) {

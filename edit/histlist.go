@@ -25,35 +25,36 @@ type histlist struct {
 	indexWidth      int
 }
 
-func (hl *histlist) updateShown() {
-	hl.shown = nil
-	hl.index = nil
-	dedup := hl.dedup
-	filter := hl.filter
+func newHistlist(s *store.Store) (*histlist, error) {
+	if s == nil {
+		return nil, ErrStoreOffline
+	}
+	seq, err := s.NextCmdSeq()
+	if err != nil {
+		return nil, err
+	}
+	all, err := s.Cmds(0, seq)
+	if err != nil {
+		return nil, err
+	}
+	last := make(map[string]int)
+	for i, entry := range all {
+		last[entry] = i
+	}
+	hl := &histlist{all: all, last: last, indexWidth: len(strconv.Itoa(len(all) - 1))}
+	hl.listing = newListing(modeHistoryListing, hl)
+	return hl, nil
+}
+
+func (hl *histlist) ModeTitle(i int) string {
+	s := " HISTORY "
+	if hl.dedup {
+		s += "(dedup on) "
+	}
 	if hl.caseInsensitive {
-		filter = strings.ToLower(filter)
+		s += "(case-insensitive) "
 	}
-	for i, entry := range hl.all {
-		fentry := entry
-		if hl.caseInsensitive {
-			fentry = strings.ToLower(entry)
-		}
-		if (!dedup || hl.last[entry] == i) && strings.Contains(fentry, filter) {
-			hl.index = append(hl.index, i)
-			hl.shown = append(hl.shown, entry)
-		}
-	}
-	hl.selected = len(hl.shown) - 1
-}
-
-func (hl *histlist) toggleDedup() {
-	hl.dedup = !hl.dedup
-	hl.updateShown()
-}
-
-func (hl *histlist) toggleCaseSensitivity() {
-	hl.caseInsensitive = !hl.caseInsensitive
-	hl.updateShown()
+	return s
 }
 
 func (hl *histlist) Len() int {
@@ -83,23 +84,45 @@ func (hl *histlist) Filter(filter string) int {
 	return len(hl.shown) - 1
 }
 
+func (hl *histlist) toggleDedup() {
+	hl.dedup = !hl.dedup
+	hl.updateShown()
+}
+
+func (hl *histlist) toggleCaseSensitivity() {
+	hl.caseInsensitive = !hl.caseInsensitive
+	hl.updateShown()
+}
+
+func (hl *histlist) updateShown() {
+	hl.shown = nil
+	hl.index = nil
+	dedup := hl.dedup
+	filter := hl.filter
+	if hl.caseInsensitive {
+		filter = strings.ToLower(filter)
+	}
+	for i, entry := range hl.all {
+		fentry := entry
+		if hl.caseInsensitive {
+			fentry = strings.ToLower(entry)
+		}
+		if (!dedup || hl.last[entry] == i) && strings.Contains(fentry, filter) {
+			hl.index = append(hl.index, i)
+			hl.shown = append(hl.shown, entry)
+		}
+	}
+	hl.selected = len(hl.shown) - 1
+}
+
+// Editor interface.
+
 func (hl *histlist) Accept(i int, ed *Editor) {
 	line := hl.shown[i]
 	if len(ed.line) > 0 {
 		line = "\n" + line
 	}
 	ed.insertAtDot(line)
-}
-
-func (hl *histlist) ModeTitle(i int) string {
-	s := " HISTORY "
-	if hl.dedup {
-		s += "(dedup on) "
-	}
-	if hl.caseInsensitive {
-		s += "(case-insensitive) "
-	}
-	return s
 }
 
 func startHistlist(ed *Editor) {
@@ -110,29 +133,7 @@ func startHistlist(ed *Editor) {
 	}
 
 	ed.histlist = hl
-	// ed.histlist = newListing(modeHistoryListing, hl)
 	ed.mode = ed.histlist
-}
-
-func newHistlist(s *store.Store) (*histlist, error) {
-	if s == nil {
-		return nil, ErrStoreOffline
-	}
-	seq, err := s.NextCmdSeq()
-	if err != nil {
-		return nil, err
-	}
-	all, err := s.Cmds(0, seq)
-	if err != nil {
-		return nil, err
-	}
-	last := make(map[string]int)
-	for i, entry := range all {
-		last[entry] = i
-	}
-	hl := &histlist{all: all, last: last, indexWidth: len(strconv.Itoa(len(all) - 1))}
-	hl.listing = newListing(modeHistoryListing, hl)
-	return hl, nil
 }
 
 func histlistToggleDedup(ed *Editor) {

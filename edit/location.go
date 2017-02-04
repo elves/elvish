@@ -19,6 +19,24 @@ type location struct {
 	filtered []store.Dir
 }
 
+func newLocation(s *store.Store) (*location, error) {
+	if s == nil {
+		return nil, ErrStoreOffline
+	}
+	all, err := s.ListDirs()
+	if err != nil {
+		return nil, err
+	}
+
+	loc := &location{all: all}
+	loc.listing = newListing(modeLocation, loc)
+	return loc, nil
+}
+
+func (loc *location) ModeTitle(i int) string {
+	return " LOCATION "
+}
+
 func (loc *location) Len() int {
 	return len(loc.filtered)
 }
@@ -64,6 +82,8 @@ func makeLocationFilterPattern(s string) *regexp.Regexp {
 	return p
 }
 
+// Editor interface.
+
 func (loc *location) Accept(i int, ed *Editor) {
 	dir := loc.filtered[i].Path
 	err := os.Chdir(dir)
@@ -82,10 +102,6 @@ func (loc *location) Accept(i int, ed *Editor) {
 	ed.mode = &ed.insert
 }
 
-func (loc *location) ModeTitle(i int) string {
-	return " LOCATION "
-}
-
 func startLocation(ed *Editor) {
 	loc, err := newLocation(ed.store)
 	if err != nil {
@@ -95,18 +111,4 @@ func startLocation(ed *Editor) {
 
 	ed.location = loc
 	ed.mode = ed.location
-}
-
-func newLocation(s *store.Store) (*location, error) {
-	if s == nil {
-		return nil, ErrStoreOffline
-	}
-	all, err := s.ListDirs()
-	if err != nil {
-		return nil, err
-	}
-
-	loc := &location{all: all}
-	loc.listing = newListing(modeLocation, loc)
-	return loc, nil
 }
