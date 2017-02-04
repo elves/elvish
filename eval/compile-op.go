@@ -115,10 +115,10 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 					if ec.Editor.Active() {
 						ec.Editor.Notify("%s", msg)
 					} else {
-						ec.ports[2].File.WriteString(msg)
+						ec.ports[2].File.WriteString(msg + "\n")
 					}
 				} else {
-					ec.ports[2].File.WriteString(msg)
+					ec.ports[2].File.WriteString(msg + "\n")
 				}
 			}()
 		} else {
