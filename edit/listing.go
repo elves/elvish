@@ -4,8 +4,6 @@ import (
 	"container/list"
 	"strings"
 	"unicode/utf8"
-
-	"github.com/elves/elvish/util"
 )
 
 // listing implements a listing mode that supports the notion of selecting an
@@ -20,7 +18,7 @@ type listing struct {
 
 type listingProvider interface {
 	Len() int
-	Show(i, w int) styled
+	Show(i int) styled
 	Filter(filter string) int
 	Accept(i int, ed *Editor)
 	ModeTitle(int) string
@@ -44,9 +42,8 @@ func (l *listing) ModeLine() renderer {
 	return modeLine{l.provider.ModeTitle(l.selected), l.filter}
 }
 
-func (l *listing) List(width, maxHeight int) *buffer {
+func (l *listing) List(maxHeight int) renderer {
 	n := l.provider.Len()
-	b := newBuffer(width)
 	if n == 0 {
 		var ph string
 		if pher, ok := l.provider.(Placeholderer); ok {
@@ -54,8 +51,7 @@ func (l *listing) List(width, maxHeight int) *buffer {
 		} else {
 			ph = "(no result)"
 		}
-		b.writes(util.TrimWcwidth(ph, width), "")
-		return b
+		return placeholderRenderer(ph)
 	}
 
 	// Collect the entries to show. We start from the selected entry and extend
@@ -69,7 +65,7 @@ func (l *listing) List(width, maxHeight int) *buffer {
 	height := 0
 	var lines list.List
 	getEntry := func(i int) []styled {
-		s := l.provider.Show(i, width)
+		s := l.provider.Show(i)
 		lines := strings.Split(s.text, "\n")
 		st := s.styles
 		if i == l.selected {
@@ -117,24 +113,12 @@ func (l *listing) List(width, maxHeight int) *buffer {
 
 	l.pagesize = high - low
 
-	var scrollbar *buffer
+	ls := listingRenderer{lines}
 	if low > 0 || high < n || lastShownIncomplete {
-		scrollbar = renderScrollbar(n, low, high, height)
-		width--
+		// Need scrollbar
+		return listingRendererWithScrollBar{ls, n, low, high, height}
 	}
-
-	for p := lines.Front(); p != nil; p = p.Next() {
-		s := p.Value.(styled)
-		if p != lines.Front() {
-			b.newline()
-		}
-		b.writes(s.text, s.styles.String())
-	}
-
-	if scrollbar != nil {
-		b.extendHorizontal(scrollbar, width)
-	}
-	return b
+	return ls
 }
 
 func writeHorizontalScrollbar(b *buffer, n, low, high, width int) {

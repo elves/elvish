@@ -287,39 +287,23 @@ func (n *navigation) loaddir(dir string) ([]styled, error) {
 }
 
 const (
-	navigationListingColMargin          = 1
-	navigationListingMinWidthForPadding = 5
+	navigationListingColMargin = 1
 
 	parentColumnWeight  = 3.0
 	currentColumnWeight = 8.0
 	previewColumnWeight = 9.0
 )
 
-func (nav *navigation) List(width, maxHeight int) *buffer {
-	margin := navigationListingColMargin
-
-	w := width - margin*2
-	ws := distributeWidths(w,
-		[]float64{
-			parentColumnWeight, currentColumnWeight, previewColumnWeight},
-		[]int{
-			nav.parent.FullWidth(maxHeight),
-			nav.current.FullWidth(maxHeight),
-			nav.preview.FullWidth(maxHeight),
-		})
-	wParent, wCurrent, wPreview := ws[0], ws[1], ws[2]
-
-	b := nav.parent.List(wParent, maxHeight)
-
-	bCurrent := nav.current.List(wCurrent, maxHeight)
-	b.extendHorizontal(bCurrent, wParent+margin)
-
-	if wPreview > 0 {
-		bPreview := nav.preview.List(wPreview, maxHeight)
-		b.extendHorizontal(bPreview, wParent+wCurrent+2*margin)
-	}
-
-	return b
+func (nav *navigation) List(maxHeight int) renderer {
+	return makeNavRenderer(
+		maxHeight,
+		nav.parent.FullWidth(maxHeight),
+		nav.current.FullWidth(maxHeight),
+		nav.preview.FullWidth(maxHeight),
+		nav.parent.List(maxHeight),
+		nav.current.List(maxHeight),
+		nav.preview.List(maxHeight),
+	)
 }
 
 // navColumn is a column in the navigation layout.
@@ -404,12 +388,10 @@ func (nc *navColumn) Len() int {
 	return len(nc.candidates)
 }
 
-func (nc *navColumn) Show(i, w int) styled {
-	s := nc.candidates[i]
-	if w >= navigationListingMinWidthForPadding {
-		return styled{" " + util.ForceWcwidth(s.text, w-2), s.styles}
-	}
-	return styled{util.ForceWcwidth(s.text, w), s.styles}
+func (nc *navColumn) Show(i int) styled {
+	cand := nc.candidates[i]
+	return styled{" " + cand.text + " ", cand.styles}
+	// return nc.candidates[i]
 }
 
 func (nc *navColumn) Filter(filter string) int {
@@ -431,10 +413,7 @@ func (nc *navColumn) FullWidth(h int) int {
 	}
 	maxw := 0
 	for _, s := range nc.candidates {
-		maxw = max(maxw, util.Wcswidth(s.text))
-	}
-	if maxw >= navigationListingMinWidthForPadding {
-		maxw += 2
+		maxw = max(maxw, util.Wcswidth(s.text)+2)
 	}
 	if len(nc.candidates) > h {
 		maxw++

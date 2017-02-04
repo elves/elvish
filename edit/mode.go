@@ -19,9 +19,14 @@ const (
 	modeLocation
 )
 
-// Lister is a mode with a listing.
-type Lister interface {
+// OldLister is a mode with a listing.
+type OldLister interface {
 	// List renders the listing under the given constraint of width and maximum
 	// height. It returns a rendered buffer.
 	List(width, maxHeight int) *buffer
+}
+
+// Lister is a mode with a listing.
+type Lister interface {
+	List(maxHeight int) renderer
 }

@@ -316,8 +316,10 @@ tokens:
 
 	// bufListing.
 	if hListing > 0 {
-		if lister, ok := es.mode.(Lister); ok {
+		if lister, ok := es.mode.(OldLister); ok {
 			bufListing = lister.List(width, hListing)
+		} else if lister, ok := es.mode.(Lister); ok {
+			bufListing = render(lister.List(hListing), width)
 		}
 		// XXX When in completion mode, we re-render the mode line, since the
 		// scrollbar in the mode line depends on completion.lastShown which is

@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/store"
-	"github.com/elves/elvish/util"
 )
 
 // Command history listing mode.
@@ -61,19 +60,19 @@ func (hl *histlist) Len() int {
 	return len(hl.shown)
 }
 
-func (hl *histlist) Show(i, width int) styled {
+func (hl *histlist) Show(i int) styled {
 	entry := hl.shown[i]
 	lines := strings.Split(entry, "\n")
 
 	var b bytes.Buffer
 
 	first := fmt.Sprintf("%*d %s", hl.indexWidth, hl.index[i], lines[0])
-	b.WriteString(util.ForceWcwidth(first, width))
+	b.WriteString(first)
 
 	indent := strings.Repeat(" ", hl.indexWidth+1)
 	for _, line := range lines[1:] {
 		b.WriteByte('\n')
-		b.WriteString(util.ForceWcwidth(indent+line, width))
+		b.WriteString(indent + line)
 	}
 
 	return unstyled(b.String())

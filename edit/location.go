@@ -9,7 +9,6 @@ import (
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
-	"github.com/elves/elvish/util"
 )
 
 // Location mode.
@@ -24,9 +23,9 @@ func (loc *location) Len() int {
 	return len(loc.filtered)
 }
 
-func (loc *location) Show(i, width int) styled {
+func (loc *location) Show(i int) styled {
 	cand := loc.filtered[i]
-	return unstyled(util.TrimWcwidth(fmt.Sprintf("%4.0f %s", cand.Score, parse.Quote(cand.Path)), width))
+	return unstyled(fmt.Sprintf("%4.0f %s", cand.Score, parse.Quote(cand.Path)))
 }
 
 func (loc *location) Filter(filter string) int {
