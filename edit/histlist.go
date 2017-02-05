@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/elves/elvish/store"
 )
 
 // Command history listing mode.
@@ -25,25 +23,15 @@ type histlist struct {
 	indexWidth      int
 }
 
-func newHistlist(s *store.Store) (*histlist, error) {
-	if s == nil {
-		return nil, ErrStoreOffline
-	}
-	seq, err := s.NextCmdSeq()
-	if err != nil {
-		return nil, err
-	}
-	all, err := s.Cmds(0, seq)
-	if err != nil {
-		return nil, err
-	}
+func newHistlist(cmds []string) *histlist {
 	last := make(map[string]int)
-	for i, entry := range all {
+	for i, entry := range cmds {
 		last[entry] = i
 	}
-	hl := &histlist{all: all, last: last, indexWidth: len(strconv.Itoa(len(all) - 1))}
+	hl := &histlist{
+		all: cmds, last: last, indexWidth: len(strconv.Itoa(len(cmds) - 1))}
 	hl.listing = newListing(modeHistoryListing, hl)
-	return hl, nil
+	return hl
 }
 
 func (hl *histlist) ModeTitle(i int) string {
@@ -126,14 +114,25 @@ func (hl *histlist) Accept(i int, ed *Editor) {
 }
 
 func startHistlist(ed *Editor) {
-	hl, err := newHistlist(ed.store)
+	cmds, err := getCmds(ed)
 	if err != nil {
 		ed.Notify("%v", err)
 		return
 	}
 
-	ed.histlist = hl
+	ed.histlist = newHistlist(cmds)
 	ed.mode = ed.histlist
+}
+
+func getCmds(ed *Editor) ([]string, error) {
+	if ed.store == nil {
+		return nil, ErrStoreOffline
+	}
+	seq, err := ed.store.NextCmdSeq()
+	if err != nil {
+		return nil, err
+	}
+	return ed.store.Cmds(0, seq)
 }
 
 func histlistToggleDedup(ed *Editor) {
