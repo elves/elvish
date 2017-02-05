@@ -19,18 +19,10 @@ type location struct {
 	filtered []store.Dir
 }
 
-func newLocation(s *store.Store) (*location, error) {
-	if s == nil {
-		return nil, ErrStoreOffline
-	}
-	all, err := s.ListDirs()
-	if err != nil {
-		return nil, err
-	}
-
-	loc := &location{all: all}
+func newLocation(dirs []store.Dir) *location {
+	loc := &location{all: dirs}
 	loc.listing = newListing(modeLocation, loc)
-	return loc, nil
+	return loc
 }
 
 func (loc *location) ModeTitle(i int) string {
@@ -103,12 +95,16 @@ func (loc *location) Accept(i int, ed *Editor) {
 }
 
 func startLocation(ed *Editor) {
-	loc, err := newLocation(ed.store)
+	if ed.store == nil {
+		ed.Notify("%v", ErrStoreOffline)
+		return
+	}
+	dirs, err := ed.store.ListDirs()
 	if err != nil {
-		ed.Notify("%v", err)
+		ed.Notify("store error: %v", err)
 		return
 	}
 
-	ed.location = loc
+	ed.location = newLocation(dirs)
 	ed.mode = ed.location
 }
