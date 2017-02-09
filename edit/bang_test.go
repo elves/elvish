@@ -7,18 +7,18 @@ var (
 	theBang = newBang(theLine)
 
 	bangFilterTests = []listingFilterTestCases{
-		{"", []styled{
-			unstyled("M-, " + theLine),
-			unstyled("  0 qw"),
-			unstyled("  1 search"),
-			unstyled("  2 'foo bar ~y'")}},
-		{"1", []styled{unstyled("  1 search")}},
-		{"-", []styled{
-			unstyled("M-, " + theLine),
-			unstyled(" -3 qw"),
-			unstyled(" -2 search"),
-			unstyled(" -1 'foo bar ~y'")}},
-		{"-1", []styled{unstyled(" -1 'foo bar ~y'")}},
+		{"", []shown{
+			{"M-,", unstyled(theLine)},
+			{"0", unstyled("qw")},
+			{"1", unstyled("search")},
+			{"2", unstyled("'foo bar ~y'")}}},
+		{"1", []shown{{"1", unstyled("search")}}},
+		{"-", []shown{
+			{"M-,", unstyled(theLine)},
+			{"-3", unstyled("qw")},
+			{"-2", unstyled("search")},
+			{"-1", unstyled("'foo bar ~y'")}}},
+		{"-1", []shown{{"-1", unstyled("'foo bar ~y'")}}},
 	}
 )
 

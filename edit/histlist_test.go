@@ -6,14 +6,14 @@ var (
 	theHistList = newHistlist([]string{"ls", "echo lalala", "ls"})
 
 	histlistFilterTests = []listingFilterTestCases{
-		{"", []styled{
-			unstyled("0 ls"),
-			unstyled("1 echo lalala"),
-			unstyled("2 ls")}},
-		{"l", []styled{
-			unstyled("0 ls"),
-			unstyled("1 echo lalala"),
-			unstyled("2 ls")}},
+		{"", []shown{
+			{"0", unstyled("ls")},
+			{"1", unstyled("echo lalala")},
+			{"2", unstyled("ls")}}},
+		{"l", []shown{
+			{"0", unstyled("ls")},
+			{"1", unstyled("echo lalala")},
+			{"2", unstyled("ls")}}},
 		// {"ch", []styled{unstyled("1 echo lalala")}},
 	}
 )

@@ -14,18 +14,18 @@ var (
 	})
 
 	locationFilterTests = []listingFilterTestCases{
-		{"", []styled{
-			unstyled(" 300 /src/github.com/elves/elvish"),
-			unstyled(" 233 /src/home/xyz"),
-			unstyled("   6 /usr/elves/elvish")}},
-		{"/s", []styled{
-			unstyled(" 300 /src/github.com/elves/elvish"),
-			unstyled(" 233 /src/home/xyz"),
-			unstyled("   6 /usr/elves/elvish")}},
-		{"/e/e", []styled{
-			unstyled(" 300 /src/github.com/elves/elvish"),
-			unstyled("   6 /usr/elves/elvish")}},
-		{"x", []styled{unstyled(" 233 /src/home/xyz")}},
+		{"", []shown{
+			{"300", unstyled("/src/github.com/elves/elvish")},
+			{"233", unstyled("/src/home/xyz")},
+			{"6", unstyled("/usr/elves/elvish")}}},
+		{"/s", []shown{
+			{"300", unstyled("/src/github.com/elves/elvish")},
+			{"233", unstyled("/src/home/xyz")},
+			{"6", unstyled("/usr/elves/elvish")}}},
+		{"/e/e", []shown{
+			{"300", unstyled("/src/github.com/elves/elvish")},
+			{"6", unstyled("/usr/elves/elvish")}}},
+		{"x", []shown{{"233", unstyled("/src/home/xyz")}}},
 	}
 )
 

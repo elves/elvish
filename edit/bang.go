@@ -35,17 +35,17 @@ func (b *bang) Len() int {
 	return len(b.filtered)
 }
 
-func (b *bang) Show(i int) styled {
+func (b *bang) Show(i int) (string, styled) {
 	entry := b.filtered[i]
 	var head string
 	if entry.i == -1 {
-		head = "M-, "
+		head = "M-,"
 	} else if b.minus {
-		head = fmt.Sprintf("%3d ", entry.i-len(b.words))
+		head = fmt.Sprintf("%d", entry.i-len(b.words))
 	} else {
-		head = fmt.Sprintf("%3d ", entry.i)
+		head = fmt.Sprintf("%d", entry.i)
 	}
-	return unstyled(head + entry.s)
+	return head, unstyled(entry.s)
 }
 
 func (b *bang) Filter(filter string) int {

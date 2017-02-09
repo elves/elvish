@@ -33,9 +33,9 @@ func (loc *location) Len() int {
 	return len(loc.filtered)
 }
 
-func (loc *location) Show(i int) styled {
+func (loc *location) Show(i int) (string, styled) {
 	cand := loc.filtered[i]
-	return unstyled(fmt.Sprintf("%4.0f %s", cand.Score, parse.Quote(cand.Path)))
+	return fmt.Sprintf("%.0f", cand.Score), unstyled(parse.Quote(cand.Path))
 }
 
 func (loc *location) Filter(filter string) int {

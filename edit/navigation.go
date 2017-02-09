@@ -388,10 +388,9 @@ func (nc *navColumn) Len() int {
 	return len(nc.candidates)
 }
 
-func (nc *navColumn) Show(i int) styled {
+func (nc *navColumn) Show(i int) (string, styled) {
 	cand := nc.candidates[i]
-	return styled{" " + cand.text + " ", cand.styles}
-	// return nc.candidates[i]
+	return "", styled{" " + cand.text + " ", cand.styles}
 }
 
 func (nc *navColumn) Filter(filter string) int {

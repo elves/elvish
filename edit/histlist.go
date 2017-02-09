@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"strconv"
@@ -49,22 +48,8 @@ func (hl *histlist) Len() int {
 	return len(hl.shown)
 }
 
-func (hl *histlist) Show(i int) styled {
-	entry := hl.shown[i]
-	lines := strings.Split(entry, "\n")
-
-	var b bytes.Buffer
-
-	first := fmt.Sprintf("%*d %s", hl.indexWidth, hl.index[i], lines[0])
-	b.WriteString(first)
-
-	indent := strings.Repeat(" ", hl.indexWidth+1)
-	for _, line := range lines[1:] {
-		b.WriteByte('\n')
-		b.WriteString(indent + line)
-	}
-
-	return unstyled(b.String())
+func (hl *histlist) Show(i int) (string, styled) {
+	return fmt.Sprintf("%d", hl.index[i]), unstyled(hl.shown[i])
 }
 
 func (hl *histlist) Filter(filter string) int {

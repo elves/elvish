@@ -2,23 +2,27 @@ package edit
 
 import (
 	"container/list"
+	"fmt"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/elves/elvish/util"
 )
 
 // listing implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type listing struct {
-	typ      ModeType
-	provider listingProvider
-	selected int
-	filter   string
-	pagesize int
+	typ         ModeType
+	provider    listingProvider
+	selected    int
+	filter      string
+	pagesize    int
+	headerWidth int
 }
 
 type listingProvider interface {
 	Len() int
-	Show(i int) styled
+	Show(i int) (string, styled)
 	Filter(filter string) int
 	Accept(i int, ed *Editor)
 	ModeTitle(int) string
@@ -29,8 +33,15 @@ type Placeholderer interface {
 }
 
 func newListing(t ModeType, p listingProvider) listing {
-	l := listing{t, p, 0, "", 0}
+	l := listing{t, p, 0, "", 0, 0}
 	l.changeFilter("")
+	for i := 0; i < p.Len(); i++ {
+		header, _ := p.Show(i)
+		width := util.Wcswidth(header)
+		if l.headerWidth < width {
+			l.headerWidth = width
+		}
+	}
 	return l
 }
 
@@ -65,15 +76,22 @@ func (l *listing) List(maxHeight int) renderer {
 	height := 0
 	var lines list.List
 	getEntry := func(i int) []styled {
-		s := l.provider.Show(i)
-		lines := strings.Split(s.text, "\n")
-		st := s.styles
+		header, content := l.provider.Show(i)
+		lines := strings.Split(content.text, "\n")
+		styles := content.styles
 		if i == l.selected {
-			st = append(st, styleForSelected.String())
+			styles = append(styles, styleForSelected...)
 		}
 		styleds := make([]styled, len(lines))
 		for i, line := range lines {
-			styleds[i] = styled{line, st}
+			if l.headerWidth > 0 {
+				if i == 0 {
+					line = fmt.Sprintf("%*s %s", l.headerWidth, header, line)
+				} else {
+					line = fmt.Sprintf("%*s %s", l.headerWidth, "", line)
+				}
+			}
+			styleds[i] = styled{line, styles}
 		}
 		return styleds
 	}

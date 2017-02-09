@@ -5,9 +5,14 @@ import (
 	"testing"
 )
 
+type shown struct {
+	header  string
+	content styled
+}
+
 type listingFilterTestCases struct {
 	filter     string
-	wantShowns []styled
+	wantShowns []shown
 }
 
 func testListingFilter(t *testing.T, name string, ls listingProvider, testcases []listingFilterTestCases) {
@@ -20,10 +25,10 @@ func testListingFilter(t *testing.T, name string, ls listingProvider, testcases 
 				name, l, len(testcase.wantShowns), testcase.filter)
 		}
 		for i, want := range testcase.wantShowns {
-			shown := ls.Show(i)
-			if !reflect.DeepEqual(shown, want) {
-				t.Errorf("%s.Show(%d) => %v, want %v (filter was %q)",
-					name, i, shown, want, testcase.filter)
+			header, content := ls.Show(i)
+			if header != want.header || !reflect.DeepEqual(content, want.content) {
+				t.Errorf("%s.Show(%d) => (%v, %v), want (%v, %v) (filter was %q)",
+					name, i, header, content, want.header, want.content, testcase.filter)
 			}
 		}
 	}
