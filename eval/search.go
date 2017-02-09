@@ -17,8 +17,8 @@ func (ev *Evaler) Search(exe string) (string, error) {
 	return path, nil
 }
 
-// AllExecutables writes the names of all executable files in the search path
-// to a channel.
-func (ev *Evaler) AllExecutables(names chan<- string) {
-	util.AllExecutables(ev.searchPaths(), names)
+// EachExternal calls f for each name that can resolve to an external
+// command.
+func (ev *Evaler) EachExternal(f func(string)) {
+	util.EachExecutable(ev.searchPaths(), f)
 }

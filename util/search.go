@@ -30,15 +30,14 @@ func Search(paths []string, exe string) (string, error) {
 	return "", ErrNotFound
 }
 
-// AllExecutables writes the names of all executable files in the search path
-// to a channel.
-func AllExecutables(paths []string, names chan<- string) {
+// EachExecutable calls f for each executable file in paths.
+func EachExecutable(paths []string, f func(string)) {
 	for _, dir := range paths {
 		// XXX Ignore error
 		infos, _ := ioutil.ReadDir(dir)
 		for _, info := range infos {
 			if !info.IsDir() && (info.Mode()&0111 != 0) {
-				names <- info.Name()
+				f(info.Name())
 			}
 		}
 	}
