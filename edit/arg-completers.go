@@ -9,6 +9,7 @@ import (
 var (
 	ErrCompleterMustBeFn        = errors.New("completer must be fn")
 	ErrCompleterArgMustBeString = errors.New("arguments to arg completers must be string")
+	ErrTooFewArguments          = errors.New("too few arguments")
 )
 
 var (
@@ -77,10 +78,16 @@ func (bac *builtinArgCompleter) Call(ec *eval.EvalCtx, args []eval.Value, opts m
 }
 
 func complFilename(words []string, ev *eval.Evaler) ([]*candidate, error) {
+	if len(words) < 1 {
+		return nil, ErrTooFewArguments
+	}
 	return complFilenameInner(words[len(words)-1], false)
 }
 
 func complSudo(words []string, ev *eval.Evaler) ([]*candidate, error) {
+	if len(words) < 2 {
+		return nil, ErrTooFewArguments
+	}
 	if len(words) == 2 {
 		return complFormHeadInner(words[1], ev)
 	}
