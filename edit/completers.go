@@ -75,7 +75,7 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	cands := make([]*candidate, len(varnames))
 	// Build candidates.
 	for i, varname := range varnames {
-		cands[i] = &candidate{text: "$" + explode + varname}
+		cands[i] = newPlainCandidate("$" + explode + varname)
 	}
 	return &compl{begin, end, cands}, nil
 }
@@ -178,7 +178,7 @@ func complFormHeadInner(head string, ev *eval.Evaler) ([]*candidate, error) {
 
 	cands := []*candidate{}
 	for _, cmd := range commands {
-		cands = append(cands, &candidate{text: cmd})
+		cands = append(cands, newPlainCandidate(cmd))
 	}
 	return cands, nil
 }

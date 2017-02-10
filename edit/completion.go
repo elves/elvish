@@ -189,12 +189,6 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 				return
 			}
 		}
-		// Fix .display.text
-		for _, cand := range c.candidates {
-			if cand.display.text == "" {
-				cand.display.text = cand.text
-			}
-		}
 		ed.completion = *c
 		ed.mode = &ed.completion
 	}

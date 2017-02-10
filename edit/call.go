@@ -130,7 +130,7 @@ func callArgCompleter(fn eval.FnValue, ev *eval.Evaler, words []string) ([]*cand
 	for i, v := range values {
 		switch v := v.(type) {
 		case eval.String:
-			cands[i] = &candidate{text: string(v)}
+			cands[i] = newPlainCandidate(string(v))
 		case *candidate:
 			cands[i] = v
 		default:

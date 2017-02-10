@@ -15,6 +15,10 @@ type candidate struct {
 
 var _ eval.Value = &candidate{}
 
+func newPlainCandidate(s string) *candidate {
+	return &candidate{s, unstyled(s), ""}
+}
+
 func (c *candidate) Kind() string {
 	return "map"
 }
