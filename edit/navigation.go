@@ -36,6 +36,10 @@ func (n *navigation) ModeLine() renderer {
 	return modeLineRenderer{title, n.filter}
 }
 
+func (n *navigation) CursorOnModeLine() bool {
+	return n.filtering
+}
+
 func startNav(ed *Editor) {
 	initNavigation(&ed.navigation)
 	ed.mode = &ed.navigation

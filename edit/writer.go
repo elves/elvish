@@ -338,9 +338,11 @@ tokens:
 
 	// Combine buffers (reusing bufLine)
 	buf = bufLine
-	buf.extend(bufMode, mode == modeLocation || mode == modeHistoryListing ||
-		(mode == modeCompletion && es.completion.filtering) ||
-		(mode == modeNavigation && es.navigation.filtering))
+	cursorOnModeLine := false
+	if coml, ok := es.mode.(CursorOnModeLiner); ok {
+		cursorOnModeLine = coml.CursorOnModeLine()
+	}
+	buf.extend(bufMode, cursorOnModeLine)
 	buf.extend(bufTips, false)
 	buf.extend(bufListing, false)
 

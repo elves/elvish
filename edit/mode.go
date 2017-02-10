@@ -6,6 +6,10 @@ type Mode interface {
 	ModeLine() renderer
 }
 
+type CursorOnModeLiner interface {
+	CursorOnModeLine() bool
+}
+
 type ModeType int
 
 const (

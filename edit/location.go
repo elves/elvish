@@ -29,6 +29,10 @@ func (loc *location) ModeTitle(i int) string {
 	return " LOCATION "
 }
 
+func (*location) CursorOnModeLine() bool {
+	return true
+}
+
 func (loc *location) Len() int {
 	return len(loc.filtered)
 }

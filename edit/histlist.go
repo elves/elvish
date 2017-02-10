@@ -44,6 +44,10 @@ func (hl *histlist) ModeTitle(i int) string {
 	return s
 }
 
+func (*histlist) CursorOnModeLine() bool {
+	return true
+}
+
 func (hl *histlist) Len() int {
 	return len(hl.shown)
 }

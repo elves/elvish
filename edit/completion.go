@@ -43,6 +43,10 @@ func (c *completion) ModeLine() renderer {
 		len(c.candidates), c.firstShown, c.lastShownInFull + 1}
 }
 
+func (c *completion) CursorOnModeLine() bool {
+	return c.filtering
+}
+
 func startCompl(ed *Editor) {
 	startCompletionInner(ed, false)
 }
