@@ -115,7 +115,7 @@ func complFormHead(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	fixCandidates(cands, q)
+	quoteCandidates(cands, q)
 	return &compl{begin, end, cands}, nil
 }
 
@@ -215,7 +215,7 @@ func complArg(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	fixCandidates(cands, q)
+	quoteCandidates(cands, q)
 	return &compl{begin, end, cands}, nil
 }
 
@@ -291,7 +291,7 @@ func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) 
 	return cands, nil
 }
 
-func fixCandidates(cands []*candidate, q parse.PrimaryType) []*candidate {
+func quoteCandidates(cands []*candidate, q parse.PrimaryType) []*candidate {
 	for _, cand := range cands {
 		quoted, _ := parse.QuoteAs(cand.text, q)
 		cand.text = quoted + cand.suffix
