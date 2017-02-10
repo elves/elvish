@@ -114,10 +114,8 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 
 		rpromptPersistent: eval.NewPtrVariableWithValidator(eval.Bool(false), eval.ShouldBeBool),
 
-		beforeReadLine: eval.NewPtrVariableWithValidator(
-			eval.NewList(), eval.ShouldBeListOfFn),
-		afterReadLine: eval.NewPtrVariableWithValidator(
-			eval.NewList(), eval.ShouldBeListOfFn),
+		beforeReadLine: eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
+		afterReadLine:  eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
 	}
 	ev.Editor = ed
 	ev.Modules["le"] = makeModule(ed)
@@ -331,22 +329,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 
 	ed.editorState = editorState{}
 
-	// Call after-readline functions.
-	afterReadLine := ed.afterReadLine.Get().(eval.ListLike)
-	if afterReadLine.Len() > 0 {
-		opfunc := func(ec *eval.EvalCtx) {
-			afterReadLine.Iterate(func(v eval.Value) bool {
-				fn := v.(eval.FnValue)
-				ex := ec.PCall(fn, []eval.Value{eval.String(line)}, eval.NoOpts)
-				// TODO Pretty print.
-				if ex != nil {
-					fmt.Fprintln(os.Stderr, "function error: %s", ex.Error())
-				}
-				return true
-			})
-		}
-		ed.evaler.Eval(eval.Op{opfunc, -1, -1}, "[after-readline]", "no source")
-	}
+	callHooks(ed.evaler, ed.afterReadLine.Get().(eval.List), eval.String(line))
 }
 
 // ReadLine reads a line interactively.
@@ -372,11 +355,7 @@ func (ed *Editor) ReadLine() (line string, err error) {
 
 	fullRefresh := false
 
-	beforeReadLines := ed.beforeReadLine.Get().(eval.ListLike)
-	beforeReadLines.Iterate(func(f eval.Value) bool {
-		ed.CallFn(f.(eval.FnValue))
-		return true
-	})
+	callHooks(ed.evaler, ed.beforeReadLine.Get().(eval.List))
 
 MainLoop:
 	for {
@@ -493,6 +472,29 @@ MainLoop:
 			}
 		}
 	}
+}
+
+func callHooks(ev *eval.Evaler, li eval.List, args ...eval.Value) {
+	if li.Len() == 0 {
+		return
+	}
+
+	opfunc := func(ec *eval.EvalCtx) {
+		li.Iterate(func(v eval.Value) bool {
+			fn, ok := v.(eval.FnValue)
+			if !ok {
+				fmt.Fprintf(os.Stderr, "not a function: %s\n", v.Repr(eval.NoPretty))
+				return true
+			}
+			err := ec.PCall(fn, args, eval.NoOpts)
+			if err != nil {
+				// TODO Print stack trace.
+				fmt.Fprintf(os.Stderr, "function error: %s\n", err.Error())
+			}
+			return true
+		})
+	}
+	ev.Eval(eval.Op{opfunc, -1, -1}, "[hooks]", "no source")
 }
 
 // getIsExternal finds a set of all external commands and puts it on the result

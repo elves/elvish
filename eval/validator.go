@@ -3,26 +3,14 @@ package eval
 import "errors"
 
 var (
-	errShouldBeListOfFn = errors.New("must be a list of fn")
-	errShouldBeFn       = errors.New("should be function")
-	errShouldBeBool     = errors.New("should be bool")
+	errShouldBeList = errors.New("should be list")
+	errShouldBeFn   = errors.New("should be function")
+	errShouldBeBool = errors.New("should be bool")
 )
 
-func ShouldBeListOfFn(v Value) error {
-	li, ok := v.(ListLike)
-	if !ok {
-		return errShouldBeListOfFn
-	}
-	listok := true
-	li.Iterate(func(v Value) bool {
-		if _, ok := v.(FnValue); !ok {
-			listok = false
-			return false
-		}
-		return true
-	})
-	if !listok {
-		return errShouldBeListOfFn
+func ShouldBeList(v Value) error {
+	if _, ok := v.(List); !ok {
+		return errShouldBeList
 	}
 	return nil
 }
