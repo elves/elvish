@@ -153,13 +153,15 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 	}
 
 	c := &completion{begin: -1}
-	for _, compl := range completers {
-		begin, end, candidates := compl.completer(node, ed)
-		if begin >= 0 {
-			c.completer = compl.name
-			c.begin, c.end, c.all = begin, end, candidates
+	for _, item := range completers {
+		compl, err := item.completer(node, ed.evaler)
+		if compl != nil {
+			c.completer = item.name
+			c.begin, c.end, c.all = compl.begin, compl.end, compl.cands
 			c.candidates = c.all
 			break
+		} else if err != nil && err != errCompletionUnapplicable {
+			ed.Notify("%v", err)
 		}
 	}
 

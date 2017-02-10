@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,12 +14,23 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// completer takes the current Node (always a leaf in the AST) and an Editor,
-// and should returns an interval and a list of candidates, meaning that the
-// text within the interval may be replaced by any of the candidates. If the
-// completer is not applicable, it should return an invalid interval [-1, end).
-type completer func(parse.Node, *Editor) (int, int, []*candidate)
+// completer takes the current Node (always a leaf in the AST) and an Editor and
+// returns a compl. If the completer does not apply to the type of the current
+// Node, it should return an error of ErrCompletionUnapplicable.
+type completer func(parse.Node, *eval.Evaler) (*compl, error)
 
+// compl is the result of a completer, meaning that any of the candidates can
+// replace the text in the interval [begin, end).
+type compl struct {
+	begin int
+	end   int
+	cands []*candidate
+}
+
+var errCompletionUnapplicable = errors.New("completion unapplicable")
+
+// completers is the list of all completers.
+// TODO(xiaq): Make this list programmable.
 var completers = []struct {
 	name string
 	completer
@@ -28,12 +40,12 @@ var completers = []struct {
 	{"argument", complArg},
 }
 
-func complVariable(n parse.Node, ed *Editor) (int, int, []*candidate) {
+func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	begin, end := n.Begin(), n.End()
 
 	primary, ok := n.(*parse.Primary)
 	if !ok || primary.Type != parse.Variable {
-		return -1, -1, nil
+		return nil, errCompletionUnapplicable
 	}
 
 	// XXX Repeats eval.ParseVariable.
@@ -46,14 +58,14 @@ func complVariable(n parse.Node, ed *Editor) (int, int, []*candidate) {
 
 	// Collect matching variables.
 	var varnames []string
-	iterateVariables(ed.evaler, ns, func(varname string) {
+	iterateVariables(ev, ns, func(varname string) {
 		if strings.HasPrefix(varname, nameHead) {
 			varnames = append(varnames, nsPart+varname)
 		}
 	})
 	// Collect namespace prefixes.
 	// TODO Support non-module namespaces.
-	for ns := range ed.evaler.Modules {
+	for ns := range ev.Modules {
 		if hasProperPrefix(ns+":", qname) {
 			varnames = append(varnames, ns+":")
 		}
@@ -65,7 +77,7 @@ func complVariable(n parse.Node, ed *Editor) (int, int, []*candidate) {
 	for i, varname := range varnames {
 		cands[i] = &candidate{text: "$" + explode + varname}
 	}
-	return begin, end, cands
+	return &compl{begin, end, cands}, nil
 }
 
 func hasProperPrefix(s, p string) bool {
@@ -94,17 +106,17 @@ func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
 	}
 }
 
-func complFormHead(n parse.Node, ed *Editor) (int, int, []*candidate) {
+func complFormHead(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	begin, end, head, q := findFormHeadContext(n)
 	if begin == -1 {
-		return -1, -1, nil
+		return nil, errCompletionUnapplicable
 	}
-	cands, err := complFormHeadInner(head, ed)
+	cands, err := complFormHeadInner(head, ev)
 	if err != nil {
-		ed.Notify("%v", err)
+		return nil, err
 	}
 	fixCandidates(cands, q)
-	return begin, end, cands
+	return &compl{begin, end, cands}, nil
 }
 
 func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
@@ -126,7 +138,7 @@ func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
 	return -1, -1, "", 0
 }
 
-func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
+func complFormHeadInner(head string, ev *eval.Evaler) ([]*candidate, error) {
 	if util.DontSearch(head) {
 		return complFilenameInner(head, true)
 	}
@@ -142,7 +154,7 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 	}
 	explode, ns, _ := eval.ParseVariable(head)
 	if !explode {
-		iterateVariables(ed.evaler, ns, func(varname string) {
+		iterateVariables(ev, ns, func(varname string) {
 			if strings.HasPrefix(varname, eval.FnPrefix) {
 				got(eval.MakeVariableName(false, ns, varname[len(eval.FnPrefix):]))
 			} else {
@@ -150,14 +162,14 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 			}
 		})
 	}
-	ed.evaler.EachExternal(func(command string) {
+	ev.EachExternal(func(command string) {
 		got(command)
 		if strings.HasPrefix(head, "e:") {
 			got("e:" + command)
 		}
 	})
 	// TODO Support non-module namespaces.
-	for ns := range ed.evaler.Modules {
+	for ns := range ev.Modules {
 		if head != ns+":" {
 			got(ns + ":")
 		}
@@ -171,10 +183,12 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 	return cands, nil
 }
 
-func complArg(n parse.Node, ed *Editor) (int, int, []*candidate) {
+// complArg completes arguments. It identifies the context and then delegates
+// the actual completion work to a suitable completer.
+func complArg(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	begin, end, current, q, form := findArgContext(n)
 	if begin == -1 {
-		return -1, -1, nil
+		return nil, errCompletionUnapplicable
 	}
 
 	// Find out head of the form and preceding arguments.
@@ -197,12 +211,12 @@ func complArg(n parse.Node, ed *Editor) (int, int, []*candidate) {
 	words[len(words)-1] = current
 	copy(words[1:len(words)-1], args[:])
 
-	cands, err := completeArg(words, ed)
+	cands, err := completeArg(words, ev)
 	if err != nil {
-		ed.Notify("%v", err)
+		return nil, err
 	}
 	fixCandidates(cands, q)
-	return begin, end, cands
+	return &compl{begin, end, cands}, nil
 }
 
 func findArgContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Form) {

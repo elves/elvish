@@ -53,15 +53,15 @@ func (ct CompleterTable) IndexSet(idx eval.Value, v eval.Value) {
 // head and the last word being the current argument to complete. It should
 // return a list of candidates for the current argument and errors.
 type ArgCompleter interface {
-	Complete([]string, *Editor) ([]*candidate, error)
+	Complete([]string, *eval.Evaler) ([]*candidate, error)
 }
 
 type FuncArgCompleter struct {
-	impl func([]string, *Editor) ([]*candidate, error)
+	impl func([]string, *eval.Evaler) ([]*candidate, error)
 }
 
-func (fac FuncArgCompleter) Complete(words []string, ed *Editor) ([]*candidate, error) {
-	return fac.impl(words, ed)
+func (fac FuncArgCompleter) Complete(words []string, ev *eval.Evaler) ([]*candidate, error) {
+	return fac.impl(words, ev)
 }
 
 var DefaultArgCompleter = ""
@@ -74,16 +74,16 @@ func init() {
 	}
 }
 
-func completeArg(words []string, ed *Editor) ([]*candidate, error) {
+func completeArg(words []string, ev *eval.Evaler) ([]*candidate, error) {
 	Logger.Printf("completing argument: %q", words)
 	compl, ok := argCompleter[words[0]]
 	if !ok {
 		compl = argCompleter[DefaultArgCompleter]
 	}
-	return compl.Complete(words, ed)
+	return compl.Complete(words, ev)
 }
 
-func complFilename(words []string, ed *Editor) ([]*candidate, error) {
+func complFilename(words []string, ev *eval.Evaler) ([]*candidate, error) {
 	return complFilenameInner(words[len(words)-1], false)
 }
 
@@ -97,17 +97,17 @@ func complFilenameFn(ec *eval.EvalCtx, word string) {
 	}
 }
 
-func complSudo(words []string, ed *Editor) ([]*candidate, error) {
+func complSudo(words []string, ev *eval.Evaler) ([]*candidate, error) {
 	if len(words) == 2 {
-		return complFormHeadInner(words[1], ed)
+		return complFormHeadInner(words[1], ev)
 	}
-	return completeArg(words[1:], ed)
+	return completeArg(words[1:], ev)
 }
 
 type FnAsArgCompleter struct {
 	Fn eval.FnValue
 }
 
-func (fac FnAsArgCompleter) Complete(words []string, ed *Editor) ([]*candidate, error) {
-	return callFnForCandidates(fac.Fn, ed.evaler, words)
+func (fac FnAsArgCompleter) Complete(words []string, ev *eval.Evaler) ([]*candidate, error) {
+	return callFnForCandidates(fac.Fn, ev, words)
 }
