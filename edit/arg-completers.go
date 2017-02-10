@@ -13,8 +13,8 @@ var (
 
 var (
 	argCompletersData = map[string]*builtinArgCompleter{
-		"":     {"compl-filename", complFilename},
-		"sudo": {"compl-sudo", complSudo},
+		"":     {"complete-filename", complFilename},
+		"sudo": {"complete-sudo", complSudo},
 	}
 	argCompleter eval.Variable
 )
