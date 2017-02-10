@@ -150,12 +150,12 @@ func complFormHeadInner(head string, ed *Editor) ([]*candidate, error) {
 			}
 		})
 	}
-	for command := range ed.isExternal {
+	ed.evaler.EachExternal(func(command string) {
 		got(command)
 		if strings.HasPrefix(head, "e:") {
 			got("e:" + command)
 		}
-	}
+	})
 	// TODO Support non-module namespaces.
 	for ns := range ed.evaler.Modules {
 		if head != ns+":" {
