@@ -42,7 +42,7 @@ func makeModule(ed *Editor) eval.Namespace {
 
 	ns["prompt"] = ed.prompt
 	ns["rprompt"] = ed.rprompt
-	ns["rprompt-persistent"] = BoolExposer{&ed.rpromptPersistent}
+	ns["rprompt-persistent"] = ed.rpromptPersistent
 	ns["history"] = eval.NewRoVariable(History{&ed.historyMutex, ed.store})
 
 	ns["current-command"] = eval.MakeVariableFromCallback(
@@ -95,27 +95,7 @@ func throwf(format string, args ...interface{}) {
 	util.Throw(fmt.Errorf(format, args...))
 }
 
-// BoolExposer implements eval.Variable and exposes a bool to elvishscript.
-type BoolExposer struct {
-	valuePtr *bool
-}
-
-var errMustBeBool = errors.New("must be bool")
-
-func (be BoolExposer) Set(v eval.Value) {
-	if b, ok := v.(eval.Bool); ok {
-		*be.valuePtr = bool(b)
-	} else {
-		throw(errMustBeBool)
-	}
-}
-
-func (be BoolExposer) Get() eval.Value {
-	return eval.Bool(*be.valuePtr)
-}
-
 // StringExposer implements eval.Variable and exposes a string to elvishscript.
-
 type StringExposer struct {
 	valuePtr *string
 }
