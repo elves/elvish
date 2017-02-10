@@ -36,12 +36,14 @@ func makeModule(ed *Editor) eval.Namespace {
 	}
 
 	ns["binding"] = eval.NewRoVariable(binding)
-	ns["completer"] = eval.NewRoVariable(CompleterTable(argCompleter))
+
+	ns["completer"] = argCompleter
 	ns[eval.FnPrefix+"complete-getopt"] = eval.NewRoVariable(
 		// XXX Repr is "&le:complete-getopt" instead of "le:&complete-getopt"
 		&eval.BuiltinFn{"le:complete-getopt", eval.WrapFn(complGetopt)})
-	ns[eval.FnPrefix+"complete-files"] = eval.NewRoVariable(
-		&eval.BuiltinFn{"le:complete-filename", eval.WrapFn(complFilenameFn)})
+	for _, bac := range argCompletersData {
+		ns[eval.FnPrefix+bac.name] = eval.NewRoVariable(bac)
+	}
 
 	ns["prompt"] = ed.prompt
 	ns["rprompt"] = ed.rprompt

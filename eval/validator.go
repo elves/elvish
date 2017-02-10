@@ -4,6 +4,7 @@ import "errors"
 
 var (
 	errShouldBeList = errors.New("should be list")
+	errShouldBeMap  = errors.New("should be map")
 	errShouldBeFn   = errors.New("should be function")
 	errShouldBeBool = errors.New("should be bool")
 )
@@ -11,6 +12,13 @@ var (
 func ShouldBeList(v Value) error {
 	if _, ok := v.(List); !ok {
 		return errShouldBeList
+	}
+	return nil
+}
+
+func ShouldBeMap(v Value) error {
+	if _, ok := v.(Map); !ok {
+		return errShouldBeMap
 	}
 	return nil
 }

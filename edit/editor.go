@@ -35,7 +35,6 @@ type Editor struct {
 
 	prompt        eval.Variable
 	rprompt       eval.Variable
-	completers    map[string]ArgCompleter
 	abbreviations map[string]string
 
 	rpromptPersistent eval.Variable

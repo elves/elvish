@@ -106,17 +106,22 @@ func callPrompt(ed *Editor, fn eval.Fn) []*styled {
 // callArgCompleter calls a Fn, assuming that it is an arg completer. It calls
 // the Fn with specified arguments and closed input, and converts its output to
 // candidate objects.
-func callArgCompleter(fn eval.FnValue, ev *eval.Evaler, args []string) ([]*candidate, error) {
+func callArgCompleter(fn eval.FnValue, ev *eval.Evaler, words []string) ([]*candidate, error) {
+	// Quick path for builtin arg completers.
+	if builtin, ok := fn.(*builtinArgCompleter); ok {
+		return builtin.impl(words, ev)
+	}
+
 	ports := []*eval.Port{eval.DevNullClosedChan, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
 
-	argValues := make([]eval.Value, len(args))
-	for i, arg := range args {
-		argValues[i] = eval.String(arg)
+	args := make([]eval.Value, len(words))
+	for i, word := range words {
+		args[i] = eval.String(word)
 	}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ev, "[editor completer]", "", ports)
-	values, err := ec.PCaptureOutput(fn, argValues, eval.NoOpts)
+	values, err := ec.PCaptureOutput(fn, args, eval.NoOpts)
 	if err != nil {
 		return nil, errors.New("completer error: " + err.Error())
 	}

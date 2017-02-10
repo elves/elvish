@@ -6,95 +6,78 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-// CompleterTable provides $le:completer. It implements eval.IndexSetter.
-type CompleterTable map[string]ArgCompleter
-
-var _ eval.IndexSetter = CompleterTable(nil)
-
 var (
-	ErrCompleterIndexMustBeString = errors.New("index of completer table must be string")
-	ErrCompleterValueMustBeFunc   = errors.New("value of completer table must be function")
+	ErrCompleterMustBeFn        = errors.New("completer must be fn")
+	ErrCompleterArgMustBeString = errors.New("arguments to arg completers must be string")
 )
 
-func (CompleterTable) Kind() string {
-	return "map"
-}
-
-func (ct CompleterTable) Repr(indent int) string {
-	return "<repr not implemented yet>"
-}
-
-func (ct CompleterTable) IndexOne(idx eval.Value) eval.Value {
-	head, ok := idx.(eval.String)
-	if !ok {
-		throw(ErrCompleterIndexMustBeString)
+var (
+	argCompletersData = map[string]*builtinArgCompleter{
+		"":     {"compl-filename", complFilename},
+		"sudo": {"compl-sudo", complSudo},
 	}
-	v := ct[string(head)]
-	if fac, ok := v.(FnAsArgCompleter); ok {
-		return fac.Fn
-	}
-	return eval.String("<get not implemented yet>")
-}
-
-func (ct CompleterTable) IndexSet(idx eval.Value, v eval.Value) {
-	head, ok := idx.(eval.String)
-	if !ok {
-		throw(ErrCompleterIndexMustBeString)
-	}
-	value, ok := v.(eval.FnValue)
-	if !ok {
-		throw(ErrCompleterValueMustBeFunc)
-	}
-	ct[string(head)] = FnAsArgCompleter{value}
-}
-
-// ArgCompleter is an argument completer. Its Complete method is called with all
-// words of the form. There are at least two words: the first one being the form
-// head and the last word being the current argument to complete. It should
-// return a list of candidates for the current argument and errors.
-type ArgCompleter interface {
-	Complete([]string, *eval.Evaler) ([]*candidate, error)
-}
-
-type FuncArgCompleter struct {
-	impl func([]string, *eval.Evaler) ([]*candidate, error)
-}
-
-func (fac FuncArgCompleter) Complete(words []string, ev *eval.Evaler) ([]*candidate, error) {
-	return fac.impl(words, ev)
-}
-
-var DefaultArgCompleter = ""
-var argCompleter map[string]ArgCompleter
+	argCompleter eval.Variable
+)
 
 func init() {
-	argCompleter = map[string]ArgCompleter{
-		DefaultArgCompleter: FuncArgCompleter{complFilename},
-		"sudo":              FuncArgCompleter{complSudo},
+	m := map[eval.Value]eval.Value{}
+	for k, v := range argCompletersData {
+		m[eval.String(k)] = v
 	}
+	argCompleter = eval.NewPtrVariableWithValidator(eval.NewMap(m), eval.ShouldBeMap)
 }
 
 func completeArg(words []string, ev *eval.Evaler) ([]*candidate, error) {
 	Logger.Printf("completing argument: %q", words)
-	compl, ok := argCompleter[words[0]]
-	if !ok {
-		compl = argCompleter[DefaultArgCompleter]
+	m := argCompleter.Get().(eval.Map)
+	var v eval.Value
+	if m.HasKey(eval.String(words[0])) {
+		v = m.IndexOne(eval.String(words[0]))
+	} else {
+		v = m.IndexOne(eval.String(""))
 	}
-	return compl.Complete(words, ev)
+	fn, ok := v.(eval.FnValue)
+	if !ok {
+		return nil, ErrCompleterMustBeFn
+	}
+	return callArgCompleter(fn, ev, words)
+}
+
+type builtinArgCompleter struct {
+	name string
+	impl func([]string, *eval.Evaler) ([]*candidate, error)
+}
+
+var _ eval.FnValue = &builtinArgCompleter{}
+
+func (bac *builtinArgCompleter) Kind() string {
+	return "fn"
+}
+
+func (bac *builtinArgCompleter) Repr(int) string {
+	return "$le:&" + bac.name
+}
+
+func (bac *builtinArgCompleter) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+	eval.TakeNoOpt(opts)
+	words := make([]string, len(args))
+	for i, arg := range args {
+		s, ok := arg.(eval.String)
+		if !ok {
+			throw(ErrCompleterArgMustBeString)
+		}
+		words[i] = string(s)
+	}
+	cands, err := bac.impl(words, ec.Evaler)
+	maybeThrow(err)
+	out := ec.OutputChan()
+	for _, cand := range cands {
+		out <- cand
+	}
 }
 
 func complFilename(words []string, ev *eval.Evaler) ([]*candidate, error) {
 	return complFilenameInner(words[len(words)-1], false)
-}
-
-func complFilenameFn(ec *eval.EvalCtx, word string) {
-	cands, err := complFilenameInner(word, false)
-	maybeThrow(err)
-	out := ec.OutputChan()
-	for _, cand := range cands {
-		// TODO Preserve other parts of the candidate.
-		out <- eval.String(cand.text)
-	}
 }
 
 func complSudo(words []string, ev *eval.Evaler) ([]*candidate, error) {
@@ -102,12 +85,4 @@ func complSudo(words []string, ev *eval.Evaler) ([]*candidate, error) {
 		return complFormHeadInner(words[1], ev)
 	}
 	return completeArg(words[1:], ev)
-}
-
-type FnAsArgCompleter struct {
-	Fn eval.FnValue
-}
-
-func (fac FnAsArgCompleter) Complete(words []string, ev *eval.Evaler) ([]*candidate, error) {
-	return callArgCompleter(fac.Fn, ev, words)
 }
