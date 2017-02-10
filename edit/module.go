@@ -10,7 +10,10 @@ import (
 
 // Interface between the editor and elvish script. Implements the le: module.
 
-var errNotNav = errors.New("not in navigation mode")
+var (
+	errNotNav       = errors.New("not in navigation mode")
+	errMustBeString = errors.New("must be string")
+)
 
 // makeModule builds a module from an Editor.
 func makeModule(ed *Editor) eval.Namespace {
@@ -93,23 +96,4 @@ func maybeThrow(e error) {
 
 func throwf(format string, args ...interface{}) {
 	util.Throw(fmt.Errorf(format, args...))
-}
-
-// StringExposer implements eval.Variable and exposes a string to elvishscript.
-type StringExposer struct {
-	valuePtr *string
-}
-
-var errMustBeString = errors.New("must be string")
-
-func (se StringExposer) Set(v eval.Value) {
-	if s, ok := v.(eval.String); ok {
-		*se.valuePtr = string(s)
-	} else {
-		throw(errMustBeString)
-	}
-}
-
-func (se StringExposer) Get() eval.Value {
-	return eval.String(*se.valuePtr)
 }
