@@ -1,23 +1,12 @@
 package edit
 
 import (
-	"errors"
 	"os"
 	"os/user"
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
-
-var ErrMustBeFn = errors.New("must be function")
-
-// MustBeFn validates whether a Value is an Fn.
-func MustBeFn(v eval.Value) error {
-	if _, ok := v.(eval.Fn); !ok {
-		return ErrMustBeFn
-	}
-	return nil
-}
 
 func defaultPrompts() (eval.FnValue, eval.FnValue) {
 	// Make default prompts.

@@ -107,10 +107,11 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		store:   st,
 		evaler:  ev,
 		cmdSeq:  seq,
-		prompt:  eval.NewPtrVariableWithValidator(prompt, MustBeFn),
-		rprompt: eval.NewPtrVariableWithValidator(rprompt, MustBeFn),
+		prompt:  eval.NewPtrVariableWithValidator(prompt, eval.ShouldBeFn),
+		rprompt: eval.NewPtrVariableWithValidator(rprompt, eval.ShouldBeFn),
 
 		abbreviations: make(map[string]string),
+
 		beforeReadLine: eval.NewPtrVariableWithValidator(
 			eval.NewList(), eval.IsListOfFnValue),
 		afterReadLine: eval.NewPtrVariableWithValidator(

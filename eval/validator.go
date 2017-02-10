@@ -2,7 +2,10 @@ package eval
 
 import "errors"
 
-var mustBeListOfFnValue = errors.New("must be a list of fn")
+var (
+	mustBeListOfFnValue = errors.New("must be a list of fn")
+	errShouldBeFn       = errors.New("should be function")
+)
 
 func IsListOfFnValue(v Value) error {
 	li, ok := v.(ListLike)
@@ -19,6 +22,13 @@ func IsListOfFnValue(v Value) error {
 	})
 	if !listok {
 		return mustBeListOfFnValue
+	}
+	return nil
+}
+
+func ShouldBeFn(v Value) error {
+	if _, ok := v.(Fn); !ok {
+		return errShouldBeFn
 	}
 	return nil
 }
