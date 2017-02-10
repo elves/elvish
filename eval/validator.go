@@ -3,15 +3,15 @@ package eval
 import "errors"
 
 var (
-	mustBeListOfFnValue = errors.New("must be a list of fn")
+	errShouldBeListOfFn = errors.New("must be a list of fn")
 	errShouldBeFn       = errors.New("should be function")
 	errShouldBeBool     = errors.New("should be bool")
 )
 
-func IsListOfFnValue(v Value) error {
+func ShouldBeListOfFn(v Value) error {
 	li, ok := v.(ListLike)
 	if !ok {
-		return mustBeListOfFnValue
+		return errShouldBeListOfFn
 	}
 	listok := true
 	li.Iterate(func(v Value) bool {
@@ -22,7 +22,7 @@ func IsListOfFnValue(v Value) error {
 		return true
 	})
 	if !listok {
-		return mustBeListOfFnValue
+		return errShouldBeListOfFn
 	}
 	return nil
 }

@@ -115,9 +115,9 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		rpromptPersistent: eval.NewPtrVariableWithValidator(eval.Bool(false), eval.ShouldBeBool),
 
 		beforeReadLine: eval.NewPtrVariableWithValidator(
-			eval.NewList(), eval.IsListOfFnValue),
+			eval.NewList(), eval.ShouldBeListOfFn),
 		afterReadLine: eval.NewPtrVariableWithValidator(
-			eval.NewList(), eval.IsListOfFnValue),
+			eval.NewList(), eval.ShouldBeListOfFn),
 	}
 	ev.Editor = ed
 	ev.Modules["le"] = makeModule(ed)
