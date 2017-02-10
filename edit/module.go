@@ -40,8 +40,8 @@ func makeModule(ed *Editor) eval.Namespace {
 	ns[eval.FnPrefix+"complete-files"] = eval.NewRoVariable(
 		&eval.BuiltinFn{"le:complete-filename", eval.WrapFn(complFilenameFn)})
 
-	ns["prompt"] = ed.ps1
-	ns["rprompt"] = ed.rps1
+	ns["prompt"] = ed.prompt
+	ns["rprompt"] = ed.rprompt
 	ns["rprompt-persistent"] = BoolExposer{&ed.rpromptPersistent}
 	ns["history"] = eval.NewRoVariable(History{&ed.historyMutex, ed.store})
 

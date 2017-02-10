@@ -111,7 +111,7 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 			argCompl = args[len(args)-1]
 		}
 		if argCompl != nil {
-			cands, err := callFnForCandidates(argCompl, ec.Evaler, []string{ctx.Text})
+			cands, err := callArgCompleter(argCompl, ec.Evaler, []string{ctx.Text})
 			maybeThrow(err)
 			for _, cand := range cands {
 				out <- cand

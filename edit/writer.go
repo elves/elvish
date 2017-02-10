@@ -215,7 +215,7 @@ func (w *writer) refresh(es *editorState, fullRefresh bool) error {
 
 	b.newlineWhenFull = true
 
-	b.writeStyleds(es.prompt)
+	b.writeStyleds(es.promptContent)
 
 	if b.line() == 0 && b.col*2 < b.width {
 		b.indent = b.col
@@ -262,15 +262,15 @@ tokens:
 	}
 
 	// Write rprompt
-	if len(es.rprompt) > 0 {
+	if len(es.rpromptContent) > 0 {
 		padding := b.width - b.col
-		for _, s := range es.rprompt {
+		for _, s := range es.rpromptContent {
 			padding -= util.Wcswidth(s.text)
 		}
 		if padding >= 1 {
 			b.newlineWhenFull = false
 			b.writePadding(padding, "")
-			b.writeStyleds(es.rprompt)
+			b.writeStyleds(es.rpromptContent)
 		}
 	}
 

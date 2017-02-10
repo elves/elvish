@@ -79,9 +79,9 @@ func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
 	}, nil
 }
 
-// callFnAsPrompt calls a Fn with closed input, captures its output and convert
-// the output to a slice of *styled's.
-func callFnForPrompt(ed *Editor, fn eval.Fn) []*styled {
+// callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
+// arguments and closed input, and converts its outputs to styled objects.
+func callPrompt(ed *Editor, fn eval.Fn) []*styled {
 	ports := []*eval.Port{eval.DevNullClosedChan, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
@@ -103,7 +103,10 @@ func callFnForPrompt(ed *Editor, fn eval.Fn) []*styled {
 	return ss
 }
 
-func callFnForCandidates(fn eval.FnValue, ev *eval.Evaler, args []string) ([]*candidate, error) {
+// callArgCompleter calls a Fn, assuming that it is an arg completer. It calls
+// the Fn with specified arguments and closed input, and converts its output to
+// candidate objects.
+func callArgCompleter(fn eval.FnValue, ev *eval.Evaler, args []string) ([]*candidate, error) {
 	ports := []*eval.Port{eval.DevNullClosedChan, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
 
 	argValues := make([]eval.Value, len(args))

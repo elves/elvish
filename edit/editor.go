@@ -33,8 +33,8 @@ type Editor struct {
 	evaler *eval.Evaler
 	cmdSeq int
 
-	ps1           eval.Variable
-	rps1          eval.Variable
+	prompt        eval.Variable
+	rprompt       eval.Variable
 	completers    map[string]ArgCompleter
 	abbreviations map[string]string
 
@@ -59,11 +59,11 @@ type editorState struct {
 	notifications []string
 	tips          []string
 
-	tokens  []Token
-	prompt  []*styled
-	rprompt []*styled
-	line    string
-	dot     int
+	tokens         []Token
+	promptContent  []*styled
+	rpromptContent []*styled
+	line           string
+	dot            int
 
 	mode Mode
 
@@ -76,8 +76,7 @@ type editorState struct {
 	bang       *bang
 	location   *location
 
-	// A cache of external commands, used in stylist and completer of command
-	// names.
+	// A cache of external commands, used in stylist.
 	isExternal      map[string]bool
 	parseErrorAtEnd bool
 
@@ -101,15 +100,15 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 	prompt, rprompt := defaultPrompts()
 
 	ed := &Editor{
-		file:   file,
-		writer: newWriter(file),
-		reader: NewReader(file),
-		sigs:   sigs,
-		store:  st,
-		evaler: ev,
-		cmdSeq: seq,
-		ps1:    eval.NewPtrVariableWithValidator(prompt, MustBeFn),
-		rps1:   eval.NewPtrVariableWithValidator(rprompt, MustBeFn),
+		file:    file,
+		writer:  newWriter(file),
+		reader:  NewReader(file),
+		sigs:    sigs,
+		store:   st,
+		evaler:  ev,
+		cmdSeq:  seq,
+		prompt:  eval.NewPtrVariableWithValidator(prompt, MustBeFn),
+		rprompt: eval.NewPtrVariableWithValidator(rprompt, MustBeFn),
 
 		abbreviations: make(map[string]string),
 		beforeReadLine: eval.NewPtrVariableWithValidator(
@@ -302,7 +301,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.tips = nil
 	ed.dot = len(ed.line)
 	if !ed.rpromptPersistent {
-		ed.rprompt = nil
+		ed.rpromptContent = nil
 	}
 	addError(ed.refresh(false, false))
 	ed.file.WriteString("\n")
@@ -378,8 +377,8 @@ func (ed *Editor) ReadLine() (line string, err error) {
 
 MainLoop:
 	for {
-		ed.prompt = callFnForPrompt(ed, ed.ps1.Get().(eval.Fn))
-		ed.rprompt = callFnForPrompt(ed, ed.rps1.Get().(eval.Fn))
+		ed.promptContent = callPrompt(ed, ed.prompt.Get().(eval.Fn))
+		ed.rpromptContent = callPrompt(ed, ed.rprompt.Get().(eval.Fn))
 
 		err := ed.refresh(fullRefresh, true)
 		fullRefresh = false

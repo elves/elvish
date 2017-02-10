@@ -109,5 +109,5 @@ type FnAsArgCompleter struct {
 }
 
 func (fac FnAsArgCompleter) Complete(words []string, ev *eval.Evaler) ([]*candidate, error) {
-	return callFnForCandidates(fac.Fn, ev, words)
+	return callArgCompleter(fac.Fn, ev, words)
 }
