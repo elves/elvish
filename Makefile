@@ -16,7 +16,7 @@ test:
 	go test $(PKGS)
 
 cover/%: %
-	mkdir -p cover
+	mkdir -p `dirname $@`
 	go test -coverprofile=$@ -covermode=$(COVER_MODE) ./$<
 
 cover/all: $(PKG_COVERS)
