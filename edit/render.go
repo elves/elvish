@@ -261,6 +261,8 @@ tokens:
 			lines(bufLine), lines(bufMode), lines(bufTips), lines(bufListing))
 	}
 
+	// XXX
+	buf.cells = nil
 	// Combine buffers (reusing bufLine)
 	buf.extend(bufLine, true)
 	cursorOnModeLine := false
