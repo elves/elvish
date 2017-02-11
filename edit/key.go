@@ -2,11 +2,14 @@ package edit
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/elves/elvish/eval"
 )
+
+var ErrKeyMustBeString = errors.New("key must be string")
 
 // Key represents a single keyboard input, typically assembled from a escape
 // sequence.

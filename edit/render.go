@@ -2,6 +2,8 @@ package edit
 
 import (
 	"container/list"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/util"
 )
@@ -110,4 +112,164 @@ func (nr *navRenderer) render(b *buffer) {
 		bPreview := render(nr.preview, wPreview)
 		b.extendHorizontal(bPreview, wParent+wCurrent+2*margin)
 	}
+}
+
+// editorRenderer renders the entire editor.
+type editorRenderer struct {
+	*editorState
+	height  int
+	bufNoti *buffer
+}
+
+func (er *editorRenderer) render(buf *buffer) {
+	height, width, es := er.height, buf.width, er.editorState
+
+	mode := es.mode.Mode()
+
+	var bufNoti, bufLine, bufMode, bufTips, bufListing *buffer
+	// butNoti
+	if len(es.notifications) > 0 {
+		bufNoti = newBuffer(width)
+		bufNoti.writes(strings.Join(es.notifications, "\n"), "")
+		es.notifications = nil
+	}
+
+	// bufLine
+	b := newBuffer(width)
+	bufLine = b
+
+	b.newlineWhenFull = true
+
+	b.writeStyleds(es.promptContent)
+
+	if b.line() == 0 && b.col*2 < b.width {
+		b.indent = b.col
+	}
+
+	// i keeps track of number of bytes written.
+	i := 0
+
+	// nowAt is called at every rune boundary.
+	nowAt := func(i int) {
+		if mode == modeCompletion && i == es.completion.begin {
+			c := es.completion.selectedCandidate()
+			b.writes(c.text, styleForCompleted.String())
+		}
+		if i == es.dot {
+			b.dot = b.cursor()
+		}
+	}
+	nowAt(0)
+tokens:
+	for _, token := range es.tokens {
+		for _, r := range token.Text {
+			if mode == modeCompletion &&
+				es.completion.begin <= i && i <= es.completion.end {
+				// Do nothing. This part is replaced by the completion candidate.
+			} else {
+				b.write(r, joinStyles(styleForType[token.Type], token.MoreStyle).String())
+			}
+			i += utf8.RuneLen(r)
+
+			nowAt(i)
+			if mode == modeHistory && i == len(es.hist.prefix) {
+				break tokens
+			}
+		}
+	}
+
+	if mode == modeHistory {
+		// Put the rest of current history, position the cursor at the
+		// end of the line, and finish writing
+		h := es.hist
+		b.writes(h.line[len(h.prefix):], styleForCompletedHistory.String())
+		b.dot = b.cursor()
+	}
+
+	// Write rprompt
+	if len(es.rpromptContent) > 0 {
+		padding := b.width - b.col
+		for _, s := range es.rpromptContent {
+			padding -= util.Wcswidth(s.text)
+		}
+		if padding >= 1 {
+			b.newlineWhenFull = false
+			b.writePadding(padding, "")
+			b.writeStyleds(es.rpromptContent)
+		}
+	}
+
+	// bufMode
+	bufMode = render(es.mode.ModeLine(), width)
+
+	// bufTips
+	// TODO tips is assumed to contain no newlines.
+	if len(es.tips) > 0 {
+		bufTips = newBuffer(width)
+		bufTips.writes(strings.Join(es.tips, "\n"), styleForTip.String())
+	}
+
+	hListing := 0
+	// Trim lines and determine the maximum height for bufListing
+	// TODO come up with a UI to tell the user that something is not shown.
+	switch {
+	case height >= lines(bufNoti, bufLine, bufMode, bufTips):
+		hListing = height - lines(bufLine, bufMode, bufTips)
+	case height >= lines(bufNoti, bufLine, bufTips):
+		bufMode = nil
+	case height >= lines(bufNoti, bufLine):
+		bufMode = nil
+		if bufTips != nil {
+			bufTips.trimToLines(0, height-lines(bufNoti, bufLine))
+		}
+	case height >= lines(bufLine):
+		bufTips, bufMode = nil, nil
+		if bufNoti != nil {
+			n := len(bufNoti.cells)
+			bufNoti.trimToLines(n-(height-lines(bufLine)), n)
+		}
+	case height >= 1:
+		bufNoti, bufTips, bufMode = nil, nil, nil
+		dotLine := bufLine.dot.line
+		bufLine.trimToLines(dotLine+1-height, dotLine+1)
+	default:
+		// Broken terminal. Still try to render one line of bufLine.
+		bufNoti, bufTips, bufMode = nil, nil, nil
+		dotLine := bufLine.dot.line
+		bufLine.trimToLines(dotLine, dotLine+1)
+	}
+
+	// bufListing.
+	if hListing > 0 {
+		if lister, ok := es.mode.(ListRenderer); ok {
+			bufListing = lister.ListRender(width, hListing)
+		} else if lister, ok := es.mode.(Lister); ok {
+			bufListing = render(lister.List(hListing), width)
+		}
+		// XXX When in completion mode, we re-render the mode line, since the
+		// scrollbar in the mode line depends on completion.lastShown which is
+		// only known after the listing has been rendered. Since rendering the
+		// scrollbar never adds additional lines to bufMode, we may do this
+		// without recalculating the layout.
+		if mode == modeCompletion {
+			bufMode = render(es.mode.ModeLine(), width)
+		}
+	}
+
+	if logWriterDetail {
+		Logger.Printf("bufLine %d, bufMode %d, bufTips %d, bufListing %d",
+			lines(bufLine), lines(bufMode), lines(bufTips), lines(bufListing))
+	}
+
+	// Combine buffers (reusing bufLine)
+	buf.extend(bufLine, true)
+	cursorOnModeLine := false
+	if coml, ok := es.mode.(CursorOnModeLiner); ok {
+		cursorOnModeLine = coml.CursorOnModeLine()
+	}
+	buf.extend(bufMode, cursorOnModeLine)
+	buf.extend(bufTips, false)
+	buf.extend(bufListing, false)
+
+	er.bufNoti = bufNoti
 }

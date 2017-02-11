@@ -26,7 +26,7 @@ const (
 // Editor keeps the status of the line editor.
 type Editor struct {
 	file   *os.File
-	writer *writer
+	writer *Writer
 	reader *Reader
 	sigs   chan os.Signal
 	store  *store.Store

@@ -1,12 +1,15 @@
 package edit
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/elves/elvish/eval"
 )
 
 // Line editor builtins.
+
+var ErrEditorInactive = errors.New("editor inactive")
 
 // BuiltinFn records an editor builtin.
 type BuiltinFn struct {

@@ -1,17 +1,8 @@
 package edit
 
 import (
-	"errors"
-
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
-)
-
-// Errors thrown to Evaler.
-var (
-	ErrTakeNoArg       = errors.New("editor builtins take no arguments")
-	ErrEditorInactive  = errors.New("editor inactive")
-	ErrKeyMustBeString = errors.New("key must be string")
 )
 
 // BindingTable adapts a binding table to eval.IndexSetter, so that it can be

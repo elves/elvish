@@ -22,6 +22,7 @@ func makeModule(ed *Editor) eval.Namespace {
 	for _, b := range builtins {
 		ns[eval.FnPrefix+b.name] = eval.NewPtrVariable(b)
 	}
+
 	// Populate binding tables in the variable $binding.
 	// TODO Make binding specific to the Editor.
 	binding := &eval.Struct{
@@ -34,7 +35,6 @@ func makeModule(ed *Editor) eval.Namespace {
 			eval.NewRoVariable(BindingTable{keyBindings[modeHistory]}),
 		},
 	}
-
 	ns["binding"] = eval.NewRoVariable(binding)
 
 	ns["completer"] = argCompleter
