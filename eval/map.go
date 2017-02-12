@@ -3,6 +3,7 @@ package eval
 import (
 	"encoding/json"
 	"errors"
+	"strings"
 )
 
 // Map is a map from string to Value.
@@ -44,7 +45,7 @@ func (m Map) Repr(indent int) string {
 	var builder MapReprBuilder
 	builder.Indent = indent
 	for k, v := range *m.inner {
-		builder.WritePair(k.Repr(indent+1), v.Repr(indent+1))
+		builder.WritePair(k.Repr(indent+1), indent+2, v.Repr(indent+2))
 	}
 	return builder.String()
 }
@@ -77,8 +78,12 @@ type MapReprBuilder struct {
 	ListReprBuilder
 }
 
-func (b *MapReprBuilder) WritePair(k, v string) {
-	b.WriteElem("&" + k + "=" + v)
+func (b *MapReprBuilder) WritePair(k string, indent int, v string) {
+	if indent > 0 {
+		b.WriteElem("&" + k + "=\n" + strings.Repeat(" ", indent) + v)
+	} else {
+		b.WriteElem("&" + k + "=" + v)
+	}
 }
 
 func (b *MapReprBuilder) String() string {

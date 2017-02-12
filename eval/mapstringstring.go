@@ -26,7 +26,7 @@ func (m MapStringString) Repr(indent int) string {
 	var builder MapReprBuilder
 	builder.Indent = indent
 	for k, v := range m {
-		builder.WritePair(parse.Quote(k), parse.Quote(v))
+		builder.WritePair(parse.Quote(k), indent+2, parse.Quote(v))
 	}
 	return builder.String()
 }

@@ -30,7 +30,7 @@ func (s *Struct) Repr(indent int) string {
 	var builder MapReprBuilder
 	builder.Indent = indent
 	for i, name := range s.FieldNames {
-		builder.WritePair(parse.Quote(name), s.Fields[i].Get().Repr(indent+1))
+		builder.WritePair(parse.Quote(name), indent+2, s.Fields[i].Get().Repr(indent+2))
 	}
 	return builder.String()
 }

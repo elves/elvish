@@ -202,7 +202,13 @@ var goodCases = []struct {
 				"Semicolons": []int{2, 3, 4}}}}},
 	)},
 	// Map
-	{"a [&k=v] [ &k=v] [&k=v ] [ &k=v ] [\n&a=b &c=d \n &e=f\n\n]", a(
+	{"a [&k=v] [ &k=v] [&k=v ] [ &k=v ] [ &k= v] [&k= \n v] [\n&a=b &c=d \n &e=f\n\n]", a(
+		ast{"Compound/Indexing/Primary", fs{
+			"Type":     Map,
+			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
+		ast{"Compound/Indexing/Primary", fs{
+			"Type":     Map,
+			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
 		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
 			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},

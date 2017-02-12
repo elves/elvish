@@ -1120,6 +1120,7 @@ func (mpn *MapPair) parse(ps *parser) {
 	ps.uncut('=')
 
 	if parseSep(mpn, ps, '=') {
+		parseSpacesAndNewlines(mpn, ps)
 		// Parse value part.
 		mpn.setValue(parseCompound(ps, false))
 		// The value part can be empty.
