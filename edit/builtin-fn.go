@@ -245,5 +245,5 @@ func redraw(ed *Editor) {
 }
 
 func endOfHistory(ed *Editor) {
-	ed.Notify("uitypes.End of history")
+	ed.Notify("End of history")
 }
