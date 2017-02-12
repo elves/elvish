@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/edit/uitypes"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -97,7 +98,7 @@ func navigationDefault(ed *Editor) {
 		n.filter += k.String()
 		n.refreshCurrent()
 		n.refreshDirPreview()
-	} else if n.filtering && k == (Key{Backspace, 0}) {
+	} else if n.filtering && k == (uitypes.Key{uitypes.Backspace, 0}) {
 		_, size := utf8.DecodeLastRuneInString(n.filter)
 		if size > 0 {
 			n.filter = n.filter[:len(n.filter)-size]
@@ -107,7 +108,7 @@ func navigationDefault(ed *Editor) {
 	} else if f, ok := keyBindings[modeInsert][k]; ok {
 		ed.CallFn(f)
 	} else {
-		ed.CallFn(keyBindings[modeInsert][Default])
+		ed.CallFn(keyBindings[modeInsert][uitypes.Default])
 	}
 }
 

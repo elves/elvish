@@ -6,6 +6,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/edit/uitypes"
 	"github.com/elves/elvish/util"
 )
 
@@ -24,7 +25,7 @@ func (*insert) Mode() ModeType {
 	return modeInsert
 }
 
-// Insert mode is the default mode and has an empty mode.
+// uitypes.Insert mode is the default mode and has an empty mode.
 func (ins *insert) ModeLine() renderer {
 	if ins.quotePaste {
 		return modeLineRenderer{" INSERT (quote paste) ", ""}
@@ -227,7 +228,7 @@ func returnLine(ed *Editor) {
 
 func smartEnter(ed *Editor) {
 	if ed.parseErrorAtEnd {
-		// There is a parsing error at the end. Insert a newline and copy
+		// There is a parsing error at the end. uitypes.Insert a newline and copy
 		// indents from previous line.
 		indent := findLastIndent(ed.line[:ed.dot])
 		ed.insertAtDot("\n" + indent)
@@ -279,6 +280,6 @@ func defaultCommand(ed *Editor) {
 
 // likeChar returns if a key looks like a character meant to be input (as
 // opposed to a function key).
-func likeChar(k Key) bool {
+func likeChar(k uitypes.Key) bool {
 	return k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune)
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/elves/elvish/edit/uitypes"
 )
 
 // Bang mode.
@@ -94,7 +96,7 @@ func bangAltDefault(ed *Editor) {
 		if l.Len() == 1 {
 			l.Accept(l.selected, ed)
 		}
-	} else if ed.lastKey == (Key{',', Alt}) {
+	} else if ed.lastKey == (uitypes.Key{',', uitypes.Alt}) {
 		l.Accept(0, ed)
 	} else {
 		startInsert(ed)

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/elves/elvish/edit/uitypes"
 	"github.com/elves/elvish/eval"
 )
 
@@ -115,104 +116,104 @@ var builtins = []*BuiltinFn{
 	{"redraw", redraw},
 }
 
-var defaultBindings = map[ModeType]map[Key]string{
-	modeInsert: map[Key]string{
+var defaultBindings = map[ModeType]map[uitypes.Key]string{
+	modeInsert: map[uitypes.Key]string{
 		// Moving.
-		Key{Left, 0}:     "move-dot-left",
-		Key{Right, 0}:    "move-dot-right",
-		Key{Up, Alt}:     "move-dot-up",
-		Key{Down, Alt}:   "move-dot-down",
-		Key{Left, Ctrl}:  "move-dot-left-word",
-		Key{Right, Ctrl}: "move-dot-right-word",
-		Key{Home, 0}:     "move-dot-sol",
-		Key{End, 0}:      "move-dot-eol",
+		uitypes.Key{uitypes.Left, 0}:             "move-dot-left",
+		uitypes.Key{uitypes.Right, 0}:            "move-dot-right",
+		uitypes.Key{uitypes.Up, uitypes.Alt}:     "move-dot-up",
+		uitypes.Key{uitypes.Down, uitypes.Alt}:   "move-dot-down",
+		uitypes.Key{uitypes.Left, uitypes.Ctrl}:  "move-dot-left-word",
+		uitypes.Key{uitypes.Right, uitypes.Ctrl}: "move-dot-right-word",
+		uitypes.Key{uitypes.Home, 0}:             "move-dot-sol",
+		uitypes.Key{uitypes.End, 0}:              "move-dot-eol",
 		// Killing.
-		Key{'U', Ctrl}:    "kill-line-left",
-		Key{'K', Ctrl}:    "kill-line-right",
-		Key{'W', Ctrl}:    "kill-word-left",
-		Key{Backspace, 0}: "kill-rune-left",
+		uitypes.Key{'U', uitypes.Ctrl}:    "kill-line-left",
+		uitypes.Key{'K', uitypes.Ctrl}:    "kill-line-right",
+		uitypes.Key{'W', uitypes.Ctrl}:    "kill-word-left",
+		uitypes.Key{uitypes.Backspace, 0}: "kill-rune-left",
 		// Some terminal send ^H on backspace
-		// Key{'H', Ctrl}: "kill-rune-left",
-		Key{Delete, 0}: "kill-rune-right",
+		// uitypes.Key{'H', uitypes.Ctrl}: "kill-rune-left",
+		uitypes.Key{uitypes.Delete, 0}: "kill-rune-right",
 		// Inserting.
-		Key{'.', Alt}:   "insert-last-word",
-		Key{Enter, Alt}: "insert-key",
+		uitypes.Key{'.', uitypes.Alt}:           "insert-last-word",
+		uitypes.Key{uitypes.Enter, uitypes.Alt}: "insert-key",
 		// Controls.
-		Key{Enter, 0}:  "smart-enter",
-		Key{'D', Ctrl}: "return-eof",
-		Key{F2, 0}:     "toggle-quote-paste",
-		// Key{'[', Ctrl}: "startCommand",
-		Key{Tab, 0}:    "compl-prefix-or-start-compl",
-		Key{Up, 0}:     "start-history",
-		Key{Down, 0}:   "end-of-history",
-		Key{'N', Ctrl}: "start-nav",
-		Key{'R', Ctrl}: "start-histlist",
-		Key{',', Alt}:  "start-bang",
-		Key{'L', Ctrl}: "start-location",
-		Default:        "insert-default",
+		uitypes.Key{uitypes.Enter, 0}:  "smart-enter",
+		uitypes.Key{'D', uitypes.Ctrl}: "return-eof",
+		uitypes.Key{uitypes.F2, 0}:     "toggle-quote-paste",
+		// uitypes.Key{'[', uitypes.Ctrl}: "startCommand",
+		uitypes.Key{uitypes.Tab, 0}:    "compl-prefix-or-start-compl",
+		uitypes.Key{uitypes.Up, 0}:     "start-history",
+		uitypes.Key{uitypes.Down, 0}:   "end-of-history",
+		uitypes.Key{'N', uitypes.Ctrl}: "start-nav",
+		uitypes.Key{'R', uitypes.Ctrl}: "start-histlist",
+		uitypes.Key{',', uitypes.Alt}:  "start-bang",
+		uitypes.Key{'L', uitypes.Ctrl}: "start-location",
+		uitypes.Default:                "insert-default",
 	},
-	modeCommand: map[Key]string{
+	modeCommand: map[uitypes.Key]string{
 		// Moving.
-		Key{'h', 0}: "move-dot-left",
-		Key{'l', 0}: "move-dot-right",
-		Key{'k', 0}: "move-dot-up",
-		Key{'j', 0}: "move-dot-down",
-		Key{'b', 0}: "move-dot-left-word",
-		Key{'w', 0}: "move-dot-right-word",
-		Key{'0', 0}: "move-dot-sol",
-		Key{'$', 0}: "move-dot-eol",
+		uitypes.Key{'h', 0}: "move-dot-left",
+		uitypes.Key{'l', 0}: "move-dot-right",
+		uitypes.Key{'k', 0}: "move-dot-up",
+		uitypes.Key{'j', 0}: "move-dot-down",
+		uitypes.Key{'b', 0}: "move-dot-left-word",
+		uitypes.Key{'w', 0}: "move-dot-right-word",
+		uitypes.Key{'0', 0}: "move-dot-sol",
+		uitypes.Key{'$', 0}: "move-dot-eol",
 		// Killing.
-		Key{'x', 0}: "kill-rune-right",
-		Key{'D', 0}: "kill-line-right",
+		uitypes.Key{'x', 0}: "kill-rune-right",
+		uitypes.Key{'D', 0}: "kill-line-right",
 		// Controls.
-		Key{'i', 0}: "start-insert",
-		Default:     "default-command",
+		uitypes.Key{'i', 0}: "start-insert",
+		uitypes.Default:     "default-command",
 	},
-	modeCompletion: map[Key]string{
-		Key{Up, 0}:     "compl-up",
-		Key{Down, 0}:   "compl-down",
-		Key{Tab, 0}:    "compl-down-cycle",
-		Key{Left, 0}:   "compl-left",
-		Key{Right, 0}:  "compl-right",
-		Key{Enter, 0}:  "compl-accept",
-		Key{'F', Ctrl}: "compl-trigger-filter",
-		Key{'[', Ctrl}: "start-insert",
-		Default:        "compl-default",
+	modeCompletion: map[uitypes.Key]string{
+		uitypes.Key{uitypes.Up, 0}:     "compl-up",
+		uitypes.Key{uitypes.Down, 0}:   "compl-down",
+		uitypes.Key{uitypes.Tab, 0}:    "compl-down-cycle",
+		uitypes.Key{uitypes.Left, 0}:   "compl-left",
+		uitypes.Key{uitypes.Right, 0}:  "compl-right",
+		uitypes.Key{uitypes.Enter, 0}:  "compl-accept",
+		uitypes.Key{'F', uitypes.Ctrl}: "compl-trigger-filter",
+		uitypes.Key{'[', uitypes.Ctrl}: "start-insert",
+		uitypes.Default:                "compl-default",
 	},
-	modeNavigation: map[Key]string{
-		Key{Up, 0}:       "nav-up",
-		Key{Down, 0}:     "nav-down",
-		Key{PageUp, 0}:   "nav-page-up",
-		Key{PageDown, 0}: "nav-page-down",
-		Key{Left, 0}:     "nav-left",
-		Key{Right, 0}:    "nav-right",
-		Key{Enter, Alt}:  "nav-insert-selected",
-		Key{Enter, 0}:    "nav-insert-selected-and-quit",
-		Key{'H', Ctrl}:   "nav-trigger-shown-hidden",
-		Key{'F', Ctrl}:   "nav-trigger-filter",
-		Key{'[', Ctrl}:   "start-insert",
-		Default:          "navigation-default",
+	modeNavigation: map[uitypes.Key]string{
+		uitypes.Key{uitypes.Up, 0}:              "nav-up",
+		uitypes.Key{uitypes.Down, 0}:            "nav-down",
+		uitypes.Key{uitypes.PageUp, 0}:          "nav-page-up",
+		uitypes.Key{uitypes.PageDown, 0}:        "nav-page-down",
+		uitypes.Key{uitypes.Left, 0}:            "nav-left",
+		uitypes.Key{uitypes.Right, 0}:           "nav-right",
+		uitypes.Key{uitypes.Enter, uitypes.Alt}: "nav-insert-selected",
+		uitypes.Key{uitypes.Enter, 0}:           "nav-insert-selected-and-quit",
+		uitypes.Key{'H', uitypes.Ctrl}:          "nav-trigger-shown-hidden",
+		uitypes.Key{'F', uitypes.Ctrl}:          "nav-trigger-filter",
+		uitypes.Key{'[', uitypes.Ctrl}:          "start-insert",
+		uitypes.Default:                         "navigation-default",
 	},
-	modeHistory: map[Key]string{
-		Key{Up, 0}:     "history-up",
-		Key{Down, 0}:   "history-down-or-quit",
-		Key{'[', Ctrl}: "start-insert",
-		Key{'R', Ctrl}: "history-switch-to-histlist",
-		Default:        "history-default",
+	modeHistory: map[uitypes.Key]string{
+		uitypes.Key{uitypes.Up, 0}:     "history-up",
+		uitypes.Key{uitypes.Down, 0}:   "history-down-or-quit",
+		uitypes.Key{'[', uitypes.Ctrl}: "start-insert",
+		uitypes.Key{'R', uitypes.Ctrl}: "history-switch-to-histlist",
+		uitypes.Default:                "history-default",
 	},
-	modeHistoryListing: map[Key]string{
-		Key{'G', Ctrl}: "histlist-toggle-case-sensitivity",
-		Key{'D', Ctrl}: "histlist-toggle-dedup",
+	modeHistoryListing: map[uitypes.Key]string{
+		uitypes.Key{'G', uitypes.Ctrl}: "histlist-toggle-case-sensitivity",
+		uitypes.Key{'D', uitypes.Ctrl}: "histlist-toggle-dedup",
 	},
-	modeBang: map[Key]string{
-		Default: "bang-alt-default",
+	modeBang: map[uitypes.Key]string{
+		uitypes.Default: "bang-alt-default",
 	},
-	modeLocation: map[Key]string{},
+	modeLocation: map[uitypes.Key]string{},
 }
 
 var (
 	builtinMap  = map[string]*BuiltinFn{}
-	keyBindings = map[ModeType]map[Key]eval.FnValue{}
+	keyBindings = map[ModeType]map[uitypes.Key]eval.FnValue{}
 )
 
 func init() {
@@ -227,7 +228,7 @@ func init() {
 		builtinMap[b.name] = b
 	}
 	for mode, table := range defaultBindings {
-		keyBindings[mode] = map[Key]eval.FnValue{}
+		keyBindings[mode] = map[uitypes.Key]eval.FnValue{}
 		for key, name := range table {
 			fn, ok := builtinMap[name]
 			if !ok {
@@ -244,5 +245,5 @@ func redraw(ed *Editor) {
 }
 
 func endOfHistory(ed *Editor) {
-	ed.Notify("End of history")
+	ed.Notify("uitypes.End of history")
 }

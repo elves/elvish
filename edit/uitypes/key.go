@@ -1,4 +1,4 @@
-package edit
+package uitypes
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/util"
 )
 
 var ErrKeyMustBeString = errors.New("key must be string")
@@ -192,11 +193,11 @@ func parseKey(s string) (Key, error) {
 func ToKey(idx eval.Value) Key {
 	skey, ok := idx.(eval.String)
 	if !ok {
-		throw(ErrKeyMustBeString)
+		util.Throw(ErrKeyMustBeString)
 	}
 	key, err := parseKey(string(skey))
 	if err != nil {
-		throw(err)
+		util.Throw(err)
 	}
 	return key
 }

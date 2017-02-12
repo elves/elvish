@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"github.com/elves/elvish/edit/uitypes"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
@@ -8,7 +9,7 @@ import (
 // BindingTable adapts a binding table to eval.IndexSetter, so that it can be
 // manipulated in elvish script.
 type BindingTable struct {
-	inner map[Key]eval.FnValue
+	inner map[uitypes.Key]eval.FnValue
 }
 
 func (BindingTable) Kind() string {
@@ -25,11 +26,11 @@ func (bt BindingTable) Repr(indent int) string {
 }
 
 func (bt BindingTable) IndexOne(idx eval.Value) eval.Value {
-	return bt.inner[ToKey(idx)]
+	return bt.inner[uitypes.ToKey(idx)]
 }
 
 func (bt BindingTable) IndexSet(idx, v eval.Value) {
-	key := ToKey(idx)
+	key := uitypes.ToKey(idx)
 	f, ok := v.(eval.FnValue)
 	if !ok {
 		throwf("want function, got %s", v.Kind())

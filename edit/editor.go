@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/elves/elvish/edit/uitypes"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
@@ -81,7 +82,7 @@ type editorState struct {
 	parseErrorAtEnd bool
 
 	// Used for builtins.
-	lastKey    Key
+	lastKey    uitypes.Key
 	nextAction action
 }
 
@@ -442,7 +443,7 @@ MainLoop:
 
 			fn, bound := keyBinding[k]
 			if !bound {
-				fn = keyBinding[Default]
+				fn = keyBinding[uitypes.Default]
 			}
 
 			ed.insert.insertedLiteral = false

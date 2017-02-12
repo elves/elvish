@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/edit/uitypes"
 	"github.com/elves/elvish/util"
 )
 
@@ -93,7 +94,7 @@ func complDefault(ed *Editor) {
 	c := &ed.completion
 	if c.filtering && likeChar(k) {
 		c.changeFilter(c.filter + string(k.Rune))
-	} else if c.filtering && k == (Key{Backspace, 0}) {
+	} else if c.filtering && k == (uitypes.Key{uitypes.Backspace, 0}) {
 		_, size := utf8.DecodeLastRuneInString(c.filter)
 		if size > 0 {
 			c.changeFilter(c.filter[:len(c.filter)-size])

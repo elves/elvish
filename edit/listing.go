@@ -6,6 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/edit/uitypes"
 	"github.com/elves/elvish/util"
 )
 
@@ -254,7 +255,7 @@ func (l *listing) accept(ed *Editor) {
 	}
 }
 
-func (l *listing) handleFilterKey(k Key) bool {
+func (l *listing) handleFilterKey(k uitypes.Key) bool {
 	if likeChar(k) {
 		l.changeFilter(l.filter + string(k.Rune))
 		return true
@@ -286,19 +287,19 @@ func addListingBuiltins(prefix string, l func(*Editor) *listing) {
 }
 
 func addListingDefaultBindings(prefix string, m ModeType) {
-	add := func(k Key, name string) {
+	add := func(k uitypes.Key, name string) {
 		if _, ok := defaultBindings[m][k]; !ok {
 			defaultBindings[m][k] = prefix + name
 		}
 	}
-	add(Key{Up, 0}, "up")
-	add(Key{PageUp, 0}, "page-up")
-	add(Key{Down, 0}, "down")
-	add(Key{PageDown, 0}, "page-down")
-	add(Key{Tab, 0}, "down-cycle")
-	add(Key{Backspace, 0}, "backspace")
-	add(Key{Enter, 0}, "accept-close")
-	add(Key{Enter, Alt}, "accept")
-	add(Default, "default")
-	defaultBindings[m][Key{'[', Ctrl}] = "start-insert"
+	add(uitypes.Key{uitypes.Up, 0}, "up")
+	add(uitypes.Key{uitypes.PageUp, 0}, "page-up")
+	add(uitypes.Key{uitypes.Down, 0}, "down")
+	add(uitypes.Key{uitypes.PageDown, 0}, "page-down")
+	add(uitypes.Key{uitypes.Tab, 0}, "down-cycle")
+	add(uitypes.Key{uitypes.Backspace, 0}, "backspace")
+	add(uitypes.Key{uitypes.Enter, 0}, "accept-close")
+	add(uitypes.Key{uitypes.Enter, uitypes.Alt}, "accept")
+	add(uitypes.Default, "default")
+	defaultBindings[m][uitypes.Key{'[', uitypes.Ctrl}] = "start-insert"
 }
