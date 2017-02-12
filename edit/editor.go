@@ -61,6 +61,7 @@ type editorState struct {
 	tips          []string
 
 	lexedLine      string
+	chunk          *parse.Chunk
 	tokens         []Token
 	promptContent  []*styled
 	rpromptContent []*styled
@@ -152,6 +153,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 	if ed.lexedLine != src {
 		ed.lexedLine = src
 		n, err := parse.Parse("[interactive]", src)
+		ed.chunk = n
 
 		ed.parseErrorAtEnd = err != nil && atEnd(err, len(src))
 		// If all parse errors are at the end, it is likely caused by incomplete
