@@ -190,13 +190,16 @@ tokens:
 
 			nowAt(i)
 			if clr.hasHist && i == clr.histBegin {
-				// Put the rest of current history, position the cursor at the
-				// end of the line, and finish writing
-				b.writes(clr.histText, styleForCompletedHistory.String())
-				b.dot = b.cursor()
 				break tokens
 			}
 		}
+	}
+
+	if clr.hasHist {
+		// Put the rest of current history and position the cursor at the
+		// end of the line.
+		b.writes(clr.histText, styleForCompletedHistory.String())
+		b.dot = b.cursor()
 	}
 
 	// Write rprompt
