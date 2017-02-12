@@ -28,7 +28,7 @@ func (w *Writer) resetOldBuf() {
 // deltaPos calculates the escape sequence needed to move the cursor from one
 // position to another. It use relative movements to move to the destination
 // line and absolute movement to move to the destination column.
-func deltaPos(from, to pos) []byte {
+func deltaPos(from, to Pos) []byte {
 	buf := new(bytes.Buffer)
 	if from.line < to.line {
 		// move down

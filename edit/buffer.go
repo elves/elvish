@@ -14,12 +14,12 @@ type cell struct {
 	style string
 }
 
-// pos is the position within a buffer.
-type pos struct {
+// Pos is the position within a buffer.
+type Pos struct {
 	line, col int
 }
 
-var invalidPos = pos{-1, -1}
+var invalidPos = Pos{-1, -1}
 
 func lineWidth(cs []cell) int {
 	w := 0
@@ -48,7 +48,7 @@ type buffer struct {
 	width, col, indent int
 	newlineWhenFull    bool
 	cells              [][]cell // cells reflect len(cells) lines on the terminal.
-	dot                pos      // dot is what the user perceives as the cursor.
+	dot                Pos      // dot is what the user perceives as the cursor.
 }
 
 func newBuffer(width int) *buffer {
@@ -151,8 +151,8 @@ func (b *buffer) line() int {
 	return len(b.cells) - 1
 }
 
-func (b *buffer) cursor() pos {
-	return pos{len(b.cells) - 1, b.col}
+func (b *buffer) cursor() Pos {
+	return Pos{len(b.cells) - 1, b.col}
 }
 
 func (b *buffer) trimToLines(low, high int) {

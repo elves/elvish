@@ -1,11 +1,10 @@
-package edit
+package tty
 
 import (
 	"fmt"
 	"os"
 	"time"
 
-	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/uitypes"
 )
 
@@ -27,30 +26,30 @@ const (
 
 // Reader converts a stream of events on separate channels.
 type Reader struct {
-	ar        *tty.AsyncReader
+	ar        *AsyncReader
 	keyChan   chan uitypes.Key
-	cprChan   chan pos
-	mouseChan chan mouseEvent
+	cprChan   chan Pos
+	mouseChan chan MouseEvent
 	errChan   chan error
 	pasteChan chan bool
 	quit      chan struct{}
 }
 
-type mouseEvent struct {
-	pos
-	down bool
-	// Number of the button, 0-based. -1 for unknown.
-	button int
-	mod    uitypes.Mod
+type MouseEvent struct {
+	Pos
+	Down bool
+	// Number of the Button, 0-based. -1 for unknown.
+	Button int
+	Mod    uitypes.Mod
 }
 
 // NewReader creates a new Reader on the given terminal file.
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
-		tty.NewAsyncReader(f),
+		NewAsyncReader(f),
 		make(chan uitypes.Key),
-		make(chan pos),
-		make(chan mouseEvent),
+		make(chan Pos),
+		make(chan MouseEvent),
 		make(chan error),
 		make(chan bool),
 		nil,
@@ -64,13 +63,13 @@ func (rd *Reader) KeyChan() <-chan uitypes.Key {
 }
 
 // CPRChan returns the channel onto which the Reader writes CPRs it has read.
-func (rd *Reader) CPRChan() <-chan pos {
+func (rd *Reader) CPRChan() <-chan Pos {
 	return rd.cprChan
 }
 
 // MouseChan returns the channel onto which the Reader writes mouse events it
 // has read.
-func (rd *Reader) MouseChan() <-chan mouseEvent {
+func (rd *Reader) MouseChan() <-chan MouseEvent {
 	return rd.mouseChan
 }
 
@@ -117,8 +116,8 @@ func (rd *Reader) Close() {
 // readOne attempts to read one key or CPR, led by a rune already read.
 func (rd *Reader) readOne(r rune) {
 	var k uitypes.Key
-	var cpr pos
-	var mouse mouseEvent
+	var cpr Pos
+	var mouse MouseEvent
 	var err error
 	var paste *bool
 	currentSeq := string(r)
@@ -148,12 +147,12 @@ func (rd *Reader) readOne(r rune) {
 			case rd.keyChan <- k:
 			case <-rd.quit:
 			}
-		} else if cpr != (pos{}) {
+		} else if cpr != (Pos{}) {
 			select {
 			case rd.cprChan <- cpr:
 			case <-rd.quit:
 			}
-		} else if mouse != (mouseEvent{}) {
+		} else if mouse != (MouseEvent{}) {
 			select {
 			case rd.mouseChan <- mouse:
 			case <-rd.quit:
@@ -221,8 +220,8 @@ func (rd *Reader) readOne(r rune) {
 					button = -1
 				}
 				mod := mouseModify(int(cb))
-				mouse = mouseEvent{
-					pos{int(cy) - 32, int(cx) - 32}, down, button, mod}
+				mouse = MouseEvent{
+					Pos{int(cy) - 32, int(cx) - 32}, down, button, mod}
 				return
 			}
 		CSISeq:
@@ -255,7 +254,7 @@ func (rd *Reader) readOne(r rune) {
 					badSeq("bad CPR")
 					return
 				}
-				cpr = pos{nums[0], nums[1]}
+				cpr = Pos{nums[0], nums[1]}
 			} else if starter == '<' && (r == 'm' || r == 'M') {
 				// SGR-style mouse event.
 				if len(nums) != 3 {
@@ -265,7 +264,7 @@ func (rd *Reader) readOne(r rune) {
 				down := r == 'M'
 				button := nums[0] & 3
 				mod := mouseModify(nums[0])
-				mouse = mouseEvent{pos{nums[2], nums[1]}, down, button, mod}
+				mouse = MouseEvent{Pos{nums[2], nums[1]}, down, button, mod}
 			} else if r == '~' && len(nums) == 1 && (nums[0] == 200 || nums[0] == 201) {
 				b := nums[0] == 200
 				paste = &b

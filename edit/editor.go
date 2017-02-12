@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/uitypes"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
@@ -28,7 +29,7 @@ const (
 type Editor struct {
 	file   *os.File
 	writer *Writer
-	reader *Reader
+	reader *tty.Reader
 	sigs   chan os.Signal
 	store  *store.Store
 	evaler *eval.Evaler
@@ -103,7 +104,7 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 	ed := &Editor{
 		file:    file,
 		writer:  newWriter(file),
-		reader:  NewReader(file),
+		reader:  tty.NewReader(file),
 		sigs:    sigs,
 		store:   st,
 		evaler:  ev,
@@ -405,7 +406,7 @@ MainLoop:
 				continue
 			}
 			var buf bytes.Buffer
-			timer := time.NewTimer(EscSequenceTimeout)
+			timer := time.NewTimer(tty.EscSequenceTimeout)
 		paste:
 			for {
 				// XXX Should also select on other chans. However those chans
@@ -418,7 +419,7 @@ MainLoop:
 						break paste
 					}
 					buf.WriteRune(k.Rune)
-					timer.Reset(EscSequenceTimeout)
+					timer.Reset(tty.EscSequenceTimeout)
 				case b := <-ed.reader.PasteChan():
 					if !b {
 						break paste
