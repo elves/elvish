@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"github.com/elves/elvish/edit/tty"
 )
 
 var (
@@ -24,7 +26,7 @@ const (
 
 // Reader converts a stream of events on separate channels.
 type Reader struct {
-	ar        *AsyncReader
+	ar        *tty.AsyncReader
 	keyChan   chan Key
 	cprChan   chan pos
 	mouseChan chan mouseEvent
@@ -44,7 +46,7 @@ type mouseEvent struct {
 // NewReader creates a new Reader on the given terminal file.
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
-		NewAsyncReader(f),
+		tty.NewAsyncReader(f),
 		make(chan Key),
 		make(chan pos),
 		make(chan mouseEvent),

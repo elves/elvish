@@ -1,4 +1,4 @@
-package edit
+package tty
 
 import (
 	"bufio"
@@ -132,4 +132,11 @@ func (ar *AsyncReader) Close() {
 	ar.wCtrl.Close()
 	close(ar.ctrlCh)
 	close(ar.ch)
+}
+
+func max(a, b int) int {
+	if a >= b {
+		return a
+	}
+	return b
 }
