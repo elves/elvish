@@ -41,13 +41,6 @@ type Reprer interface {
 	Repr(indent int) string
 }
 
-func IncIndent(indent, inc int) int {
-	if indent < 0 {
-		return indent
-	}
-	return indent + inc
-}
-
 // Booler is anything that can be converted to a bool.
 type Booler interface {
 	Bool() bool

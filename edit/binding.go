@@ -20,7 +20,7 @@ func (bt BindingTable) Repr(indent int) string {
 	var builder eval.MapReprBuilder
 	builder.Indent = indent
 	for k, v := range bt.inner {
-		builder.WritePair(parse.Quote(k.String()), indent+2, v.Repr(eval.IncIndent(indent, 2)))
+		builder.WritePair(parse.Quote(k.String()), indent+2, v.Repr(indent+2))
 	}
 	return builder.String()
 }
