@@ -114,6 +114,105 @@ func (nr *navRenderer) render(b *buffer) {
 	}
 }
 
+// linesRenderer renders lines with a uniform style.
+type linesRenderer struct {
+	lines []string
+	style string
+}
+
+func (nr linesRenderer) render(b *buffer) {
+	b.writes(strings.Join(nr.lines, "\n"), "")
+}
+
+// cmdlineRenderer renders the command line, including the prompt, the user's
+// input and the rprompt.
+type cmdlineRenderer struct {
+	prompt  []*styled
+	tokens  []Token
+	dot     int
+	rprompt []*styled
+
+	hasComp   bool
+	compBegin int
+	compEnd   int
+	compText  string
+
+	hasHist   bool
+	histBegin int
+	histText  string
+}
+
+func newCmdlineRenderer(p []*styled, t []Token, d int, rp []*styled) *cmdlineRenderer {
+	return &cmdlineRenderer{prompt: p, tokens: t, dot: d, rprompt: rp}
+}
+
+func (clr *cmdlineRenderer) setComp(b, e int, t string) {
+	clr.hasComp = true
+	clr.compBegin, clr.compEnd, clr.compText = b, e, t
+}
+
+func (clr *cmdlineRenderer) setHist(b int, t string) {
+	clr.hasHist = true
+	clr.histBegin, clr.histText = b, t
+}
+
+func (clr *cmdlineRenderer) render(b *buffer) {
+	b.newlineWhenFull = true
+
+	b.writeStyleds(clr.prompt)
+
+	if b.line() == 0 && b.col*2 < b.width {
+		b.indent = b.col
+	}
+
+	// i keeps track of number of bytes written.
+	i := 0
+
+	// nowAt is called at every rune boundary.
+	nowAt := func(i int) {
+		if clr.hasComp && i == clr.compBegin {
+			b.writes(clr.compText, styleForCompleted.String())
+		}
+		if i == clr.dot {
+			b.dot = b.cursor()
+		}
+	}
+	nowAt(0)
+tokens:
+	for _, token := range clr.tokens {
+		for _, r := range token.Text {
+			if clr.hasComp && clr.compBegin <= i && i < clr.compEnd {
+				// Do nothing. This part is replaced by the completion candidate.
+			} else {
+				b.write(r, joinStyles(styleForType[token.Type], token.MoreStyle).String())
+			}
+			i += utf8.RuneLen(r)
+
+			nowAt(i)
+			if clr.hasHist && i == clr.histBegin {
+				// Put the rest of current history, position the cursor at the
+				// end of the line, and finish writing
+				b.writes(clr.histText, styleForCompletedHistory.String())
+				b.dot = b.cursor()
+				break tokens
+			}
+		}
+	}
+
+	// Write rprompt
+	if len(clr.rprompt) > 0 {
+		padding := b.width - b.col
+		for _, s := range clr.rprompt {
+			padding -= util.Wcswidth(s.text)
+		}
+		if padding >= 1 {
+			b.newlineWhenFull = false
+			b.writePadding(padding, "")
+			b.writeStyleds(clr.rprompt)
+		}
+	}
+}
+
 // editorRenderer renders the entire editor.
 type editorRenderer struct {
 	*editorState
@@ -129,75 +228,21 @@ func (er *editorRenderer) render(buf *buffer) {
 	var bufNoti, bufLine, bufMode, bufTips, bufListing *buffer
 	// butNoti
 	if len(es.notifications) > 0 {
-		bufNoti = newBuffer(width)
-		bufNoti.writes(strings.Join(es.notifications, "\n"), "")
+		bufNoti = render(linesRenderer{es.notifications, ""}, width)
 		es.notifications = nil
 	}
 
 	// bufLine
-	b := newBuffer(width)
-	bufLine = b
-
-	b.newlineWhenFull = true
-
-	b.writeStyleds(es.promptContent)
-
-	if b.line() == 0 && b.col*2 < b.width {
-		b.indent = b.col
+	clr := newCmdlineRenderer(es.promptContent, es.tokens, es.dot, es.rpromptContent)
+	switch mode {
+	case modeCompletion:
+		c := es.completion
+		clr.setComp(c.begin, c.end, c.selectedCandidate().text)
+	case modeHistory:
+		begin := len(es.hist.prefix)
+		clr.setHist(begin, es.hist.line[begin:])
 	}
-
-	// i keeps track of number of bytes written.
-	i := 0
-
-	// nowAt is called at every rune boundary.
-	nowAt := func(i int) {
-		if mode == modeCompletion && i == es.completion.begin {
-			c := es.completion.selectedCandidate()
-			b.writes(c.text, styleForCompleted.String())
-		}
-		if i == es.dot {
-			b.dot = b.cursor()
-		}
-	}
-	nowAt(0)
-tokens:
-	for _, token := range es.tokens {
-		for _, r := range token.Text {
-			if mode == modeCompletion &&
-				es.completion.begin <= i && i <= es.completion.end {
-				// Do nothing. This part is replaced by the completion candidate.
-			} else {
-				b.write(r, joinStyles(styleForType[token.Type], token.MoreStyle).String())
-			}
-			i += utf8.RuneLen(r)
-
-			nowAt(i)
-			if mode == modeHistory && i == len(es.hist.prefix) {
-				break tokens
-			}
-		}
-	}
-
-	if mode == modeHistory {
-		// Put the rest of current history, position the cursor at the
-		// end of the line, and finish writing
-		h := es.hist
-		b.writes(h.line[len(h.prefix):], styleForCompletedHistory.String())
-		b.dot = b.cursor()
-	}
-
-	// Write rprompt
-	if len(es.rpromptContent) > 0 {
-		padding := b.width - b.col
-		for _, s := range es.rpromptContent {
-			padding -= util.Wcswidth(s.text)
-		}
-		if padding >= 1 {
-			b.newlineWhenFull = false
-			b.writePadding(padding, "")
-			b.writeStyleds(es.rpromptContent)
-		}
-	}
+	bufLine = render(clr, width)
 
 	// bufMode
 	bufMode = render(es.mode.ModeLine(), width)
@@ -205,8 +250,7 @@ tokens:
 	// bufTips
 	// TODO tips is assumed to contain no newlines.
 	if len(es.tips) > 0 {
-		bufTips = newBuffer(width)
-		bufTips.writes(strings.Join(es.tips, "\n"), styleForTip.String())
+		bufTips = render(linesRenderer{es.tips, styleForTip.String()}, width)
 	}
 
 	hListing := 0
