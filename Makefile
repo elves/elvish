@@ -1,5 +1,5 @@
 PKGS := $(shell go list ./... | grep -v /vendor/)
-PKG_COVERS := $(shell go list ./... | grep -v /vendor/ | grep "^github.com/elves/elvish/" | sed "s|^github.com/elves/elvish/|cover/|")
+PKG_COVERS := $(shell go list ./... | grep -v /vendor/ | grep "^github.com/elves/elvish/" | sed "s|^github.com/elves/elvish/|cover/|" | sed "s/$$/.cover/")
 COVER_MODE := count
 
 FIRST_GOPATH=$(shell go env GOPATH | cut -d: -f1)
@@ -15,8 +15,8 @@ generate:
 test:
 	go test $(PKGS)
 
-cover/%: %
-	mkdir -p `dirname $@`
+cover/%.cover: %
+	mkdir -p $(dir $@)
 	go test -coverprofile=$@ -covermode=$(COVER_MODE) ./$<
 
 cover/all: $(PKG_COVERS)
