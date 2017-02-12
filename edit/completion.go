@@ -6,7 +6,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/uitypes"
-	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
 
@@ -197,22 +196,6 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 		ed.completion = *c
 		ed.mode = &ed.completion
 	}
-}
-
-// leafNodeAtDot finds the leaf node at a specific position. It returns nil if
-// position is out of bound.
-func findLeafNode(n parse.Node, p int) parse.Node {
-descend:
-	for len(n.Children()) > 0 {
-		for _, ch := range n.Children() {
-			if ch.Begin() <= p && p <= ch.End() {
-				n = ch
-				continue descend
-			}
-		}
-		return nil
-	}
-	return n
 }
 
 // commonPrefix returns the longest common prefix of two strings.

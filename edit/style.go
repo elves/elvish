@@ -1,6 +1,10 @@
 package edit
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/elves/elvish/parse"
+)
 
 // Styles for UI.
 var (
@@ -21,21 +25,31 @@ var (
 	styleForSelectedCompletion = styles{"inverse"}
 )
 
-var styleForType = map[TokenKind]styles{
-	ParserError:  styles{"white", "bg-red"},
-	Bareword:     styles{},
-	SingleQuoted: styles{"yellow"},
-	DoubleQuoted: styles{"yellow"},
-	Variable:     styles{"magenta"},
-	Wildcard:     styles{},
-	Tilde:        styles{},
-	Sep:          styles{},
+// Semantically applied styles.
+var (
+	styleForGoodCommand   = styles{"green"}
+	styleForBadCommand    = styles{"red"}
+	styleForGoodVariable  = styles{"magenta"}
+	styleForBadVariable   = styles{"white", "bg-red"}
+	styleForCompilerError = styles{"white", "bg-red"}
+)
+
+// Lexically applied styles.
+
+// Styles for Primary nodes.
+var styleForPrimary = map[parse.PrimaryType]styles{
+	parse.Bareword:     styles{},
+	parse.SingleQuoted: styles{"yellow"},
+	parse.DoubleQuoted: styles{"yellow"},
+	parse.Variable:     styleForGoodVariable,
+	parse.Wildcard:     styles{},
+	parse.Tilde:        styles{},
 }
 
-var styleForSep = map[string]string{
-	// unknown : "red",
-	"#": "cyan",
+var styleForComment = styles{"cyan"}
 
+// Styles for Sep nodes.
+var styleForSep = map[string]string{
 	">":  "green",
 	">>": "green",
 	"<":  "green",
@@ -117,14 +131,6 @@ var styleTranslationTable = map[string]string{
 	"bg-lightcyan":    "106",
 	"bg-white":        "107",
 }
-
-// Styles for semantic coloring.
-var (
-	styleForGoodCommand   = styles{"green"}
-	styleForBadCommand    = styles{"red"}
-	styleForBadVariable   = styles{"white", "bg-red"}
-	styleForCompilerError = styles{"white", "bg-red"}
-)
 
 type styles []string
 

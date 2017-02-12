@@ -60,12 +60,12 @@ type editorState struct {
 	notifications []string
 	tips          []string
 
-	lexedLine      string
+	line           string
+	lexedLine      *string
 	chunk          *parse.Chunk
-	tokens         []Token
+	styling        *styling
 	promptContent  []*styled
 	rpromptContent []*styled
-	line           string
 	dot            int
 
 	mode Mode
@@ -150,8 +150,8 @@ func (ed *Editor) Notify(format string, args ...interface{}) {
 func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 	src := ed.line
 	// Re-lex the line if needed
-	if ed.lexedLine != src {
-		ed.lexedLine = src
+	if ed.lexedLine == nil || *ed.lexedLine != src {
+		ed.lexedLine = &src
 		n, err := parse.Parse("[interactive]", src)
 		ed.chunk = n
 
@@ -163,7 +163,9 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 		if err != nil && addErrorsToTips && !ed.parseErrorAtEnd {
 			ed.addTip("%s", err)
 		}
-		ed.tokens = tokenizeNode(src, n)
+
+		ed.styling = &styling{}
+		stylize(n, ed)
 
 		_, err = ed.evaler.Compile(n, "[interactive]", src)
 		if err != nil {
@@ -174,16 +176,9 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 			// TODO(xiaq): There might be multiple tokens involved in the
 			// compiler error; they should all be highlighted as erroneous.
 			p := err.(*eval.CompilationError).Context.Begin
-			for i, token := range ed.tokens {
-				if token.Node.Begin() <= p && p < token.Node.End() {
-					ed.tokens[i].MoreStyle = joinStyles(ed.tokens[i].MoreStyle, styleForCompilerError)
-					break
-				}
-			}
+			badn := findLeafNode(n, p)
+			ed.styling.add(badn.Begin(), badn.End(), styleForCompilerError.String())
 		}
-
-		stylist := &Stylist{ed.tokens, ed, nil}
-		stylist.do(n)
 	}
 	return ed.writer.refresh(&ed.editorState, fullRefresh)
 }

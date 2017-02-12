@@ -128,7 +128,8 @@ func (nr linesRenderer) render(b *buffer) {
 // input and the rprompt.
 type cmdlineRenderer struct {
 	prompt  []*styled
-	tokens  []Token
+	line    string
+	styling *styling
 	dot     int
 	rprompt []*styled
 
@@ -142,8 +143,8 @@ type cmdlineRenderer struct {
 	histText  string
 }
 
-func newCmdlineRenderer(p []*styled, t []Token, d int, rp []*styled) *cmdlineRenderer {
-	return &cmdlineRenderer{prompt: p, tokens: t, dot: d, rprompt: rp}
+func newCmdlineRenderer(p []*styled, l string, s *styling, d int, rp []*styled) *cmdlineRenderer {
+	return &cmdlineRenderer{prompt: p, line: l, styling: s, dot: d, rprompt: rp}
 }
 
 func (clr *cmdlineRenderer) setComp(b, e int, t string) {
@@ -168,8 +169,11 @@ func (clr *cmdlineRenderer) render(b *buffer) {
 	// i keeps track of number of bytes written.
 	i := 0
 
+	applier := clr.styling.apply()
+
 	// nowAt is called at every rune boundary.
 	nowAt := func(i int) {
+		applier.at(i)
 		if clr.hasComp && i == clr.compBegin {
 			b.writes(clr.compText, styleForCompleted.String())
 		}
@@ -178,20 +182,18 @@ func (clr *cmdlineRenderer) render(b *buffer) {
 		}
 	}
 	nowAt(0)
-tokens:
-	for _, token := range clr.tokens {
-		for _, r := range token.Text {
-			if clr.hasComp && clr.compBegin <= i && i < clr.compEnd {
-				// Do nothing. This part is replaced by the completion candidate.
-			} else {
-				b.write(r, joinStyles(styleForType[token.Type], token.MoreStyle).String())
-			}
-			i += utf8.RuneLen(r)
 
-			nowAt(i)
-			if clr.hasHist && i == clr.histBegin {
-				break tokens
-			}
+	for _, r := range clr.line {
+		if clr.hasComp && clr.compBegin <= i && i < clr.compEnd {
+			// Do nothing. This part is replaced by the completion candidate.
+		} else {
+			b.write(r, applier.get())
+		}
+		i += utf8.RuneLen(r)
+
+		nowAt(i)
+		if clr.hasHist && i == clr.histBegin {
+			break
 		}
 	}
 
@@ -236,7 +238,7 @@ func (er *editorRenderer) render(buf *buffer) {
 	}
 
 	// bufLine
-	clr := newCmdlineRenderer(es.promptContent, es.tokens, es.dot, es.rpromptContent)
+	clr := newCmdlineRenderer(es.promptContent, es.line, es.styling, es.dot, es.rpromptContent)
 	switch mode {
 	case modeCompletion:
 		c := es.completion

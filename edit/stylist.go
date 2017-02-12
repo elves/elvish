@@ -2,7 +2,7 @@ package edit
 
 import (
 	"os"
-	"sort"
+	"strings"
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
@@ -10,71 +10,61 @@ import (
 )
 
 type Stylist struct {
-	tokens   []Token
-	editor   *Editor
-	commands styleCommands
+	editor *Editor
 }
 
-func (s *Stylist) do(n parse.Node) {
-	s.style(n)
-	s.apply()
-}
-
-func (s *Stylist) apply() {
-	sort.Sort(s.commands)
-	tokens, commands := s.tokens, s.commands
-
-	for len(tokens) > 0 && len(commands) > 0 {
-		cmd := commands[0]
-		for len(tokens) > 0 && tokens[0].Node.Begin() < cmd.begin {
-			tokens = tokens[1:]
-		}
-		for len(tokens) > 0 && tokens[0].Node.End() <= cmd.end {
-			tokens[0].MoreStyle = append(tokens[0].MoreStyle, cmd.style)
-			tokens = tokens[1:]
-		}
-		commands = commands[1:]
-	}
+func stylize(n parse.Node, ed *Editor) {
+	s := &Stylist{ed}
+	s.stylize(n)
 }
 
 func (s *Stylist) add(style string, begin, end int) {
-	s.commands = append(s.commands, &styleCommand{style, begin, end})
+	s.editor.styling.add(begin, end, style)
 }
 
-func (s *Stylist) style(n parse.Node) {
-	if fn, ok := n.(*parse.Form); ok {
-		for _, an := range fn.Assignments {
+func (s *Stylist) stylize(n parse.Node) {
+	switch n := n.(type) {
+	case *parse.Form:
+		for _, an := range n.Assignments {
 			if an.Dst != nil && an.Dst.Head != nil {
 				v := an.Dst.Head
-				s.add(styleForType[Variable].String(), v.Begin(), v.End())
+				s.add(styleForGoodVariable.String(), v.Begin(), v.End())
 			}
 		}
-		for _, cn := range fn.Vars {
+		for _, cn := range n.Vars {
 			if len(cn.Indexings) > 0 && cn.Indexings[0].Head != nil {
 				v := cn.Indexings[0].Head
-				s.add(styleForType[Variable].String(), v.Begin(), v.End())
+				s.add(styleForGoodVariable.String(), v.Begin(), v.End())
 			}
 		}
-		if fn.Head != nil {
-			s.formHead(fn.Head)
+		if n.Head != nil {
+			s.formHead(n.Head)
 		}
-	}
-	if cn, ok := n.(*parse.Control); ok {
-		switch cn.Kind {
+	case *parse.Control:
+		switch n.Kind {
 		case parse.ForControl:
-			if cn.Iterator != nil {
-				v := cn.Iterator.Head
-				s.add(styleForType[Variable].String(), v.Begin(), v.End())
+			if n.Iterator != nil {
+				v := n.Iterator.Head
+				s.add(styleForGoodVariable.String(), v.Begin(), v.End())
 			}
 		case parse.TryControl:
-			if cn.ExceptVar != nil {
-				v := cn.ExceptVar.Head
-				s.add(styleForType[Variable].String(), v.Begin(), v.End())
+			if n.ExceptVar != nil {
+				v := n.ExceptVar.Head
+				s.add(styleForGoodVariable.String(), v.Begin(), v.End())
 			}
+		}
+	case *parse.Primary:
+		s.add(styleForPrimary[n.Type].String(), n.Begin(), n.End())
+	case *parse.Sep:
+		septext := n.SourceText()
+		if strings.HasPrefix(septext, "#") {
+			s.add(styleForComment.String(), n.Begin(), n.End())
+		} else {
+			s.add(styleForSep[septext], n.Begin(), n.End())
 		}
 	}
 	for _, child := range n.Children() {
-		s.style(child)
+		s.stylize(child)
 	}
 }
 
@@ -135,15 +125,3 @@ func isDir(fname string) bool {
 	stat, err := os.Stat(fname)
 	return err == nil && stat.IsDir()
 }
-
-type styleCommand struct {
-	style string
-	begin int
-	end   int
-}
-
-type styleCommands []*styleCommand
-
-func (sc styleCommands) Len() int           { return len(sc) }
-func (sc styleCommands) Swap(i, j int)      { sc[i], sc[j] = sc[j], sc[i] }
-func (sc styleCommands) Less(i, j int) bool { return sc[i].begin < sc[j].begin }
