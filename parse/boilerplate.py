@@ -31,6 +31,17 @@ func parse{typename}(ps *parser{extraargs}) *{typename} {{
 }}'''.format(typename=typename, extraargs=extraargs, extranames=extranames)
 
 
+def put_get(out, typename):
+    print >>out, '''
+func Get{typename}(n Node) *{typename} {{
+    if nn, ok := n.(*{typename}); ok {{
+        return nn
+    }}
+    return nil
+}}
+'''.format(typename=typename)
+
+
 def main():
     types = []
     in_type = ''
@@ -55,6 +66,7 @@ def main():
         m = re.match(r'^type (.*) struct', line)
         if m:
             in_type = m.group(1)
+            put_get(out, in_type)
             continue
         m = re.match(
             r'^func \(.* \*(.*)\) parse\(ps \*parser(.*?)\) {$', line)

@@ -1,5 +1,12 @@
 package parse
 
+func GetChunk(n Node) *Chunk {
+	if nn, ok := n.(*Chunk); ok {
+		return nn
+	}
+	return nil
+}
+
 func (n *Chunk) addToPipelines(ch *Pipeline) {
 	n.Pipelines = append(n.Pipelines, ch)
 	addChild(n, ch)
@@ -13,6 +20,13 @@ func parseChunk(ps *parser) *Chunk {
 	return n
 }
 
+func GetPipeline(n Node) *Pipeline {
+	if nn, ok := n.(*Pipeline); ok {
+		return nn
+	}
+	return nil
+}
+
 func (n *Pipeline) addToForms(ch *Form) {
 	n.Forms = append(n.Forms, ch)
 	addChild(n, ch)
@@ -24,6 +38,13 @@ func parsePipeline(ps *parser) *Pipeline {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func GetForm(n Node) *Form {
+	if nn, ok := n.(*Form); ok {
+		return nn
+	}
+	return nil
 }
 
 func (n *Form) addToAssignments(ch *Assignment) {
@@ -74,6 +95,13 @@ func parseForm(ps *parser) *Form {
 	return n
 }
 
+func GetAssignment(n Node) *Assignment {
+	if nn, ok := n.(*Assignment); ok {
+		return nn
+	}
+	return nil
+}
+
 func (n *Assignment) setDst(ch *Indexing) {
 	n.Dst = ch
 	addChild(n, ch)
@@ -90,6 +118,13 @@ func parseAssignment(ps *parser) *Assignment {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func GetControl(n Node) *Control {
+	if nn, ok := n.(*Control); ok {
+		return nn
+	}
+	return nil
 }
 
 func (n *Control) setCondition(ch *Chunk) {
@@ -150,6 +185,13 @@ func parseControl(ps *parser, leader string) *Control {
 	return n
 }
 
+func GetExitusRedir(n Node) *ExitusRedir {
+	if nn, ok := n.(*ExitusRedir); ok {
+		return nn
+	}
+	return nil
+}
+
 func (n *ExitusRedir) setDest(ch *Compound) {
 	n.Dest = ch
 	addChild(n, ch)
@@ -161,6 +203,13 @@ func parseExitusRedir(ps *parser) *ExitusRedir {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func GetRedir(n Node) *Redir {
+	if nn, ok := n.(*Redir); ok {
+		return nn
+	}
+	return nil
 }
 
 func (n *Redir) setDest(ch *Compound) {
@@ -181,6 +230,13 @@ func parseRedir(ps *parser, dest *Compound) *Redir {
 	return n
 }
 
+func GetCompound(n Node) *Compound {
+	if nn, ok := n.(*Compound); ok {
+		return nn
+	}
+	return nil
+}
+
 func (n *Compound) addToIndexings(ch *Indexing) {
 	n.Indexings = append(n.Indexings, ch)
 	addChild(n, ch)
@@ -192,6 +248,13 @@ func parseCompound(ps *parser, head bool) *Compound {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func GetIndexing(n Node) *Indexing {
+	if nn, ok := n.(*Indexing); ok {
+		return nn
+	}
+	return nil
 }
 
 func (n *Indexing) setHead(ch *Primary) {
@@ -212,6 +275,13 @@ func parseIndexing(ps *parser, head bool) *Indexing {
 	return n
 }
 
+func GetArray(n Node) *Array {
+	if nn, ok := n.(*Array); ok {
+		return nn
+	}
+	return nil
+}
+
 func (n *Array) addToCompounds(ch *Compound) {
 	n.Compounds = append(n.Compounds, ch)
 	addChild(n, ch)
@@ -223,6 +293,13 @@ func parseArray(ps *parser, allowSemicolon bool) *Array {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func GetPrimary(n Node) *Primary {
+	if nn, ok := n.(*Primary); ok {
+		return nn
+	}
+	return nil
 }
 
 func (n *Primary) setList(ch *Array) {
@@ -253,6 +330,13 @@ func parsePrimary(ps *parser, head bool) *Primary {
 	return n
 }
 
+func GetMapPair(n Node) *MapPair {
+	if nn, ok := n.(*MapPair); ok {
+		return nn
+	}
+	return nil
+}
+
 func (n *MapPair) setKey(ch *Compound) {
 	n.Key = ch
 	addChild(n, ch)
@@ -269,4 +353,11 @@ func parseMapPair(ps *parser) *MapPair {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func GetSep(n Node) *Sep {
+	if nn, ok := n.(*Sep); ok {
+		return nn
+	}
+	return nil
 }
