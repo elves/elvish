@@ -1,5 +1,10 @@
 package parse
 
+func IsChunk(n Node) bool {
+	_, ok := n.(*Chunk)
+	return ok
+}
+
 func GetChunk(n Node) *Chunk {
 	if nn, ok := n.(*Chunk); ok {
 		return nn
@@ -20,6 +25,11 @@ func parseChunk(ps *parser) *Chunk {
 	return n
 }
 
+func IsPipeline(n Node) bool {
+	_, ok := n.(*Pipeline)
+	return ok
+}
+
 func GetPipeline(n Node) *Pipeline {
 	if nn, ok := n.(*Pipeline); ok {
 		return nn
@@ -38,6 +48,11 @@ func parsePipeline(ps *parser) *Pipeline {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func IsForm(n Node) bool {
+	_, ok := n.(*Form)
+	return ok
 }
 
 func GetForm(n Node) *Form {
@@ -95,6 +110,11 @@ func parseForm(ps *parser) *Form {
 	return n
 }
 
+func IsAssignment(n Node) bool {
+	_, ok := n.(*Assignment)
+	return ok
+}
+
 func GetAssignment(n Node) *Assignment {
 	if nn, ok := n.(*Assignment); ok {
 		return nn
@@ -118,6 +138,11 @@ func parseAssignment(ps *parser) *Assignment {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func IsControl(n Node) bool {
+	_, ok := n.(*Control)
+	return ok
 }
 
 func GetControl(n Node) *Control {
@@ -185,6 +210,11 @@ func parseControl(ps *parser, leader string) *Control {
 	return n
 }
 
+func IsExitusRedir(n Node) bool {
+	_, ok := n.(*ExitusRedir)
+	return ok
+}
+
 func GetExitusRedir(n Node) *ExitusRedir {
 	if nn, ok := n.(*ExitusRedir); ok {
 		return nn
@@ -203,6 +233,11 @@ func parseExitusRedir(ps *parser) *ExitusRedir {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func IsRedir(n Node) bool {
+	_, ok := n.(*Redir)
+	return ok
 }
 
 func GetRedir(n Node) *Redir {
@@ -230,6 +265,11 @@ func parseRedir(ps *parser, dest *Compound) *Redir {
 	return n
 }
 
+func IsCompound(n Node) bool {
+	_, ok := n.(*Compound)
+	return ok
+}
+
 func GetCompound(n Node) *Compound {
 	if nn, ok := n.(*Compound); ok {
 		return nn
@@ -248,6 +288,11 @@ func parseCompound(ps *parser, head bool) *Compound {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func IsIndexing(n Node) bool {
+	_, ok := n.(*Indexing)
+	return ok
 }
 
 func GetIndexing(n Node) *Indexing {
@@ -275,6 +320,11 @@ func parseIndexing(ps *parser, head bool) *Indexing {
 	return n
 }
 
+func IsArray(n Node) bool {
+	_, ok := n.(*Array)
+	return ok
+}
+
 func GetArray(n Node) *Array {
 	if nn, ok := n.(*Array); ok {
 		return nn
@@ -293,6 +343,11 @@ func parseArray(ps *parser, allowSemicolon bool) *Array {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func IsPrimary(n Node) bool {
+	_, ok := n.(*Primary)
+	return ok
 }
 
 func GetPrimary(n Node) *Primary {
@@ -330,6 +385,11 @@ func parsePrimary(ps *parser, head bool) *Primary {
 	return n
 }
 
+func IsMapPair(n Node) bool {
+	_, ok := n.(*MapPair)
+	return ok
+}
+
 func GetMapPair(n Node) *MapPair {
 	if nn, ok := n.(*MapPair); ok {
 		return nn
@@ -353,6 +413,11 @@ func parseMapPair(ps *parser) *MapPair {
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
+}
+
+func IsSep(n Node) bool {
+	_, ok := n.(*Sep)
+	return ok
 }
 
 func GetSep(n Node) *Sep {

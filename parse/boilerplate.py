@@ -4,6 +4,8 @@ Generate helper functions for node types.
 
 For every node type T, it generates the following:
 
+* A IsT func that determines whether a Node is actually of type *T.
+
 * A GetT func that takes Node and returns *T. It examines whether the Node is
   actually of type *T, and if it is, returns it; otherwise it returns nil.
 
@@ -27,6 +29,11 @@ type X struct {
 }
 
 The following boilerplate is generated:
+
+func IsX(n Node) bool {
+    _, ok := n.(*X)
+    return ok
+}
 
 func GetX(n Node) *X {
     if nn, ok := n.(*X); ok {
@@ -57,6 +64,26 @@ import re
 import os
 
 
+def put_is(out, typename):
+    print >>out, '''
+func Is{typename}(n Node) bool {{
+    _, ok := n.(*{typename})
+    return ok
+}}
+'''.format(typename=typename)
+
+
+def put_get(out, typename):
+    print >>out, '''
+func Get{typename}(n Node) *{typename} {{
+    if nn, ok := n.(*{typename}); ok {{
+        return nn
+    }}
+    return nil
+}}
+'''.format(typename=typename)
+
+
 def put_set(out, parent, field, child):
     print >>out, '''
 func (n *{parent}) set{field}(ch *{child}) {{
@@ -85,17 +112,6 @@ func parse{typename}(ps *parser{extraargs}) *{typename} {{
 }}'''.format(typename=typename, extraargs=extraargs, extranames=extranames)
 
 
-def put_get(out, typename):
-    print >>out, '''
-func Get{typename}(n Node) *{typename} {{
-    if nn, ok := n.(*{typename}); ok {{
-        return nn
-    }}
-    return nil
-}}
-'''.format(typename=typename)
-
-
 def main():
     types = []
     in_type = ''
@@ -120,6 +136,7 @@ def main():
         m = re.match(r'^type (.*) struct', line)
         if m:
             in_type = m.group(1)
+            put_is(out, in_type)
             put_get(out, in_type)
             continue
         m = re.match(
