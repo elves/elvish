@@ -22,9 +22,9 @@ type completer func(parse.Node, *eval.Evaler) (*compl, error)
 // compl is the result of a completer, meaning that any of the candidates can
 // replace the text in the interval [begin, end).
 type compl struct {
-	begin int
-	end   int
-	cands []*candidate
+	begin      int
+	end        int
+	candidates []*candidate
 }
 
 var (

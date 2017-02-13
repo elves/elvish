@@ -16,11 +16,11 @@ import (
 type completion struct {
 	completer  string
 	begin, end int
-	all        []*candidate
+	candidates []*candidate
 
 	filtering       bool
 	filter          string
-	candidates      []*candidate
+	filtered        []*candidate
 	selected        int
 	firstShown      int
 	lastShownInFull int
@@ -32,7 +32,7 @@ func (*completion) Mode() ModeType {
 }
 
 func (c *completion) needScrollbar() bool {
-	return c.firstShown > 0 || c.lastShownInFull < len(c.candidates)-1
+	return c.firstShown > 0 || c.lastShownInFull < len(c.filtered)-1
 }
 
 func (c *completion) ModeLine() renderer {
@@ -41,7 +41,7 @@ func (c *completion) ModeLine() renderer {
 		return ml
 	}
 	return modeLineWithScrollBarRenderer{ml,
-		len(c.candidates), c.firstShown, c.lastShownInFull + 1}
+		len(c.filtered), c.firstShown, c.lastShownInFull + 1}
 }
 
 func (c *completion) CursorOnModeLine() bool {
@@ -71,7 +71,7 @@ func complLeft(ed *Editor) {
 }
 
 func complRight(ed *Editor) {
-	if c := ed.completion.selected + ed.completion.height; c < len(ed.completion.candidates) {
+	if c := ed.completion.selected + ed.completion.height; c < len(ed.completion.filtered) {
 		ed.completion.selected = c
 	}
 }
@@ -83,7 +83,7 @@ func complDownCycle(ed *Editor) {
 // acceptCompletion accepts currently selected completion candidate.
 func complAccept(ed *Editor) {
 	c := ed.completion
-	if 0 <= c.selected && c.selected < len(c.candidates) {
+	if 0 <= c.selected && c.selected < len(c.filtered) {
 		ed.line, ed.dot = c.apply(ed.line, ed.dot)
 	}
 	ed.mode = &ed.insert
@@ -119,7 +119,7 @@ func (comp *completion) selectedCandidate() *candidate {
 	if comp.selected == -1 {
 		return &candidate{}
 	}
-	return comp.candidates[comp.selected]
+	return comp.filtered[comp.selected]
 }
 
 // apply returns the line and dot after applying a candidate.
@@ -132,7 +132,7 @@ func (c *completion) prev(cycle bool) {
 	c.selected--
 	if c.selected == -1 {
 		if cycle {
-			c.selected = len(c.candidates) - 1
+			c.selected = len(c.filtered) - 1
 		} else {
 			c.selected++
 		}
@@ -141,7 +141,7 @@ func (c *completion) prev(cycle bool) {
 
 func (c *completion) next(cycle bool) {
 	c.selected++
-	if c.selected == len(c.candidates) {
+	if c.selected == len(c.filtered) {
 		if cycle {
 			c.selected = 0
 		} else {
@@ -162,8 +162,8 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 		compl, err := item.completer(node, ed.evaler)
 		if compl != nil {
 			c.completer = item.name
-			c.begin, c.end, c.all = compl.begin, compl.end, compl.cands
-			c.candidates = c.all
+			c.begin, c.end, c.candidates = compl.begin, compl.end, compl.candidates
+			c.filtered = c.candidates
 			break
 		} else if err != nil && err != errCompletionUnapplicable {
 			ed.addTip("%v", err)
@@ -180,7 +180,7 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 		for n := node; n != nil; n = n.Parent() {
 			Logger.Printf("%T (%d-%d)", n, n.Begin(), n.End())
 		}
-	} else if len(c.candidates) == 0 {
+	} else if len(c.filtered) == 0 {
 		ed.addTip("no candidate for %s", c.completer)
 	} else {
 		if acceptPrefix {
@@ -189,8 +189,8 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 			//
 			// As a special case, when there is exactly one candidate, it is
 			// immeidately accepted.
-			prefix := c.candidates[0].text
-			for _, cand := range c.candidates[1:] {
+			prefix := c.filtered[0].text
+			for _, cand := range c.filtered[1:] {
 				prefix = commonPrefix(prefix, cand.text)
 				if prefix == "" {
 					break
@@ -231,12 +231,12 @@ const (
 // hi may be larger than the number of candidates, in which case it is truncated
 // to the number of candidates.
 func (comp *completion) maxWidth(lo, hi int) int {
-	if hi > len(comp.candidates) {
-		hi = len(comp.candidates)
+	if hi > len(comp.filtered) {
+		hi = len(comp.filtered)
 	}
 	width := 0
 	for i := lo; i < hi; i++ {
-		w := util.Wcswidth(comp.candidates[i].display.text)
+		w := util.Wcswidth(comp.filtered[i].display.text)
 		if width < w {
 			width = w
 		}
@@ -246,7 +246,7 @@ func (comp *completion) maxWidth(lo, hi int) int {
 
 func (comp *completion) ListRender(width, maxHeight int) *buffer {
 	b := newBuffer(width)
-	cands := comp.candidates
+	cands := comp.filtered
 	if len(cands) == 0 {
 		b.writes(util.TrimWcwidth("(no result)", width), "")
 		return b
@@ -349,16 +349,16 @@ func (comp *completion) ListRender(width, maxHeight int) *buffer {
 func (c *completion) changeFilter(f string) {
 	c.filter = f
 	if f == "" {
-		c.candidates = c.all
+		c.filtered = c.candidates
 		return
 	}
-	c.candidates = nil
-	for _, cand := range c.all {
+	c.filtered = nil
+	for _, cand := range c.candidates {
 		if strings.Contains(cand.display.text, f) {
-			c.candidates = append(c.candidates, cand)
+			c.filtered = append(c.filtered, cand)
 		}
 	}
-	if len(c.candidates) > 0 {
+	if len(c.filtered) > 0 {
 		c.selected = 0
 	} else {
 		c.selected = -1
