@@ -1,4 +1,58 @@
 #!/usr/bin/python2.7
+"""
+Generate helper functions for node types.
+
+For every node type T, it generates the following:
+
+* A GetT func that takes Node and returns *T. It examines whether the Node is
+  actually of type *T, and if it is, returns it; otherwise it returns nil.
+
+* For each field F of type *[]U, it generates a addToF method that appends a
+  node to this field and adds it to the children list.
+
+* For each field F of type *U where U is not a slice, it generates a setF
+  method that sets this field and adds it to the children list.
+
+* If the type has a parse method that takes a *paser, it genertes a parseT
+  func that takes a *parser and returns *T. The func creates a new instance of
+  *T, sets its begin field, calls its parse method, and set its end and
+  sourceText fields.
+
+For example, for the following type:
+
+type X struct {
+    node
+    F *Y
+    G *[]Z
+}
+
+The following boilerplate is generated:
+
+func GetX(n Node) *X {
+    if nn, ok := n.(*X); ok {
+        return nn
+    }
+    return nil
+}
+
+func (n *X) setF(ch *Y) {
+    n.F = ch
+    addChild(n, ch)
+}
+
+func (n *X) addToG(ch *Z) {
+    n.G = append(n.G, ch)
+    addChild(n, ch)
+}
+
+func parseX(ps *parser) *X {
+    n := &X{node: node{begin: ps.pos}}
+    n.parse(ps)
+    n.end = ps.pos
+    n.sourceText = ps.src[n.begin:n.end]
+    return n
+}
+"""
 import re
 import os
 
