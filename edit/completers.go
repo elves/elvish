@@ -27,7 +27,11 @@ type compl struct {
 	cands []*candidate
 }
 
-var errCompletionUnapplicable = errors.New("completion unapplicable")
+var (
+	errCompletionUnapplicable = errors.New("completion unapplicable")
+	errCannotEvalIndexee      = errors.New("cannot evaluate indexee")
+	errCannotIterateKey       = errors.New("indexee dos not support iterating keys")
+)
 
 // completers is the list of all completers.
 // TODO(xiaq): Make this list programmable.
@@ -36,6 +40,7 @@ var completers = []struct {
 	completer
 }{
 	{"variable", complVariable},
+	{"index", complIndex},
 	{"command name", complFormHead},
 	{"redir", complRedir},
 	{"argument", complArg},
@@ -103,6 +108,94 @@ func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
 			f(varname)
 		}
 	}
+}
+
+func complIndex(n parse.Node, ev *eval.Evaler) (*compl, error) {
+	begin, end, current, q, indexee := findIndexContext(n)
+
+	if begin == -1 {
+		return nil, errCompletionUnapplicable
+	}
+
+	indexeeValue := purelyEvalPrimary(indexee, ev)
+	if indexeeValue == nil {
+		return nil, errCannotEvalIndexee
+	}
+	m, ok := indexeeValue.(eval.IterateKeyer)
+	if !ok {
+		return nil, errCannotIterateKey
+	}
+
+	keys := complIndexInner(m, current)
+
+	cands := make([]*candidate, len(keys))
+	for i, key := range keys {
+		quoted, _ := parse.QuoteAs(key, q)
+		cands[i] = &candidate{text: quoted, display: unstyled(key)}
+	}
+
+	return &compl{begin, end, cands}, nil
+}
+
+// Find context information for complIndex. It returns the begin and end for
+// compl, the current text of this index and its type, and the indexee node.
+//
+// Right now we only support cases where there is only one level of indexing,
+// e.g. $a[<Tab> is supported but $a[x][<Tab> is not.
+func findIndexContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Primary) {
+	if parse.IsSep(n) {
+		if parse.IsIndexing(n.Parent()) {
+			// We are just after an opening bracket.
+			indexing := parse.GetIndexing(n.Parent())
+			if len(indexing.Indicies) == 1 {
+				return n.End(), n.End(), "", parse.Bareword, indexing.Head
+			}
+		}
+		if parse.IsArray(n.Parent()) {
+			array := n.Parent()
+			if parse.IsIndexing(array.Parent()) {
+				// We are after an existing index and spaces.
+				indexing := parse.GetIndexing(array.Parent())
+				if len(indexing.Indicies) == 1 {
+					return n.End(), n.End(), "", parse.Bareword, indexing.Head
+				}
+			}
+		}
+	}
+
+	if parse.IsPrimary(n) {
+		primary := parse.GetPrimary(n)
+		compound, current := primaryInSimpleCompound(primary)
+		if compound != nil {
+			if parse.IsArray(compound.Parent()) {
+				array := compound.Parent()
+				if parse.IsIndexing(array.Parent()) {
+					// We are just after an incomplete index.
+					indexing := parse.GetIndexing(array.Parent())
+					if len(indexing.Indicies) == 1 {
+						return compound.Begin(), compound.End(), current, primary.Type, indexing.Head
+					}
+				}
+			}
+		}
+	}
+
+	return -1, -1, "", 0, nil
+}
+
+func complIndexInner(m eval.IterateKeyer, current string) []string {
+	keys := make([]string, 0)
+	m.IterateKey(func(v eval.Value) bool {
+		if keyv, ok := v.(eval.String); ok {
+			key := string(keyv)
+			if strings.HasPrefix(key, current) {
+				keys = append(keys, key)
+			}
+		}
+		return true
+	})
+	sort.Strings(keys)
+	return keys
 }
 
 func complFormHead(n parse.Node, ev *eval.Evaler) (*compl, error) {

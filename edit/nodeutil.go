@@ -3,6 +3,7 @@ package edit
 import (
 	"strings"
 
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -58,6 +59,26 @@ func simpleCompound(cn *parse.Compound, upto *parse.Indexing) (bool, string, err
 		head = home + head[i:]
 	}
 	return true, head, nil
+}
+
+// purelyEvalPrimary evaluates a primary node without causing any side effects.
+// If this cannot be done, it returns nil.
+//
+// Currently, only string literals and variables with no @ can be evaluated.
+func purelyEvalPrimary(pn *parse.Primary, ev *eval.Evaler) eval.Value {
+	switch pn.Type {
+	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
+		return eval.String(pn.Value)
+	case parse.Variable:
+		explode, ns, name := eval.ParseVariable(pn.Value)
+		if explode {
+			return nil
+		}
+		ec := eval.NewTopEvalCtx(ev, "[pure eval]", "", nil)
+		variable := ec.ResolveVar(ns, name)
+		return variable.Get()
+	}
+	return nil
 }
 
 // leafNodeAtDot finds the leaf node at a specific position. It returns nil if
