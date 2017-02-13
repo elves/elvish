@@ -41,8 +41,6 @@ var completers = []struct {
 }
 
 func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
-	begin, end := n.Begin(), n.End()
-
 	primary, ok := n.(*parse.Primary)
 	if !ok || primary.Type != parse.Variable {
 		return nil, errCompletionUnapplicable
@@ -77,7 +75,7 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	for i, varname := range varnames {
 		cands[i] = newPlainCandidate("$" + explode + varname)
 	}
-	return &compl{begin, end, cands}, nil
+	return &compl{n.Begin(), n.End(), cands}, nil
 }
 
 func hasProperPrefix(s, p string) bool {
