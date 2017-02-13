@@ -165,7 +165,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 		}
 
 		ed.styling = &styling{}
-		stylize(n, ed)
+		highlight(n, ed)
 
 		_, err = ed.evaler.Compile(n, "[interactive]", src)
 		if err != nil {

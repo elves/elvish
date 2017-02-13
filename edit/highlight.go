@@ -9,32 +9,32 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-type Stylist struct {
-	editor *Editor
+type Highlighter struct {
+	goodFormHead func(string) bool
+	addStyling   func(begin, end int, style string)
 }
 
-func stylize(n parse.Node, ed *Editor) {
-	s := &Stylist{ed}
-	s.stylize(n)
+func highlight(n parse.Node, ed *Editor) {
+	s := &Highlighter{
+		func(s string) bool { return goodFormHead(s, ed) },
+		ed.styling.add,
+	}
+	s.highlight(n)
 }
 
-func (s *Stylist) add(style string, begin, end int) {
-	s.editor.styling.add(begin, end, style)
-}
-
-func (s *Stylist) stylize(n parse.Node) {
+func (s *Highlighter) highlight(n parse.Node) {
 	switch n := n.(type) {
 	case *parse.Form:
 		for _, an := range n.Assignments {
 			if an.Dst != nil && an.Dst.Head != nil {
 				v := an.Dst.Head
-				s.add(styleForGoodVariable.String(), v.Begin(), v.End())
+				s.addStyling(v.Begin(), v.End(), styleForGoodVariable.String())
 			}
 		}
 		for _, cn := range n.Vars {
 			if len(cn.Indexings) > 0 && cn.Indexings[0].Head != nil {
 				v := cn.Indexings[0].Head
-				s.add(styleForGoodVariable.String(), v.Begin(), v.End())
+				s.addStyling(v.Begin(), v.End(), styleForGoodVariable.String())
 			}
 		}
 		if n.Head != nil {
@@ -45,34 +45,34 @@ func (s *Stylist) stylize(n parse.Node) {
 		case parse.ForControl:
 			if n.Iterator != nil {
 				v := n.Iterator.Head
-				s.add(styleForGoodVariable.String(), v.Begin(), v.End())
+				s.addStyling(v.Begin(), v.End(), styleForGoodVariable.String())
 			}
 		case parse.TryControl:
 			if n.ExceptVar != nil {
 				v := n.ExceptVar.Head
-				s.add(styleForGoodVariable.String(), v.Begin(), v.End())
+				s.addStyling(v.Begin(), v.End(), styleForGoodVariable.String())
 			}
 		}
 	case *parse.Primary:
-		s.add(styleForPrimary[n.Type].String(), n.Begin(), n.End())
+		s.addStyling(n.Begin(), n.End(), styleForPrimary[n.Type].String())
 	case *parse.Sep:
 		septext := n.SourceText()
 		if strings.HasPrefix(septext, "#") {
-			s.add(styleForComment.String(), n.Begin(), n.End())
+			s.addStyling(n.Begin(), n.End(), styleForComment.String())
 		} else {
-			s.add(styleForSep[septext], n.Begin(), n.End())
+			s.addStyling(n.Begin(), n.End(), styleForSep[septext])
 		}
 	}
 	for _, child := range n.Children() {
-		s.stylize(child)
+		s.highlight(child)
 	}
 }
 
-func (s *Stylist) formHead(n *parse.Compound) {
+func (s *Highlighter) formHead(n *parse.Compound) {
 	simple, head, err := simpleCompound(n, nil)
 	st := styles{}
 	if simple {
-		if goodFormHead(head, s.editor) {
+		if s.goodFormHead(head) {
 			st = styleForGoodCommand
 		} else {
 			st = styleForBadCommand
@@ -81,7 +81,7 @@ func (s *Stylist) formHead(n *parse.Compound) {
 		st = styleForBadCommand
 	}
 	if len(st) > 0 {
-		s.add(st.String(), n.Begin(), n.End())
+		s.addStyling(n.Begin(), n.End(), st.String())
 	}
 }
 
