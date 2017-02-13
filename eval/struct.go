@@ -43,6 +43,15 @@ func (s *Struct) IndexOne(idx Value) Value {
 	return s.index(idx).Get()
 }
 
+func (s *Struct) IterateKey(f func(Value) bool) {
+	for field := range s.FieldNames {
+		cont := f(String(field))
+		if !cont {
+			break
+		}
+	}
+}
+
 func (s *Struct) HasKey(k Value) bool {
 	index, ok := k.(String)
 	if !ok {

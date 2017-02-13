@@ -47,6 +47,15 @@ func (m MapStringString) IndexOne(idx Value) Value {
 	return String(v)
 }
 
+func (m MapStringString) IterateKey(f func(Value) bool) {
+	for k := range m {
+		cont := f(String(k))
+		if !cont {
+			break
+		}
+	}
+}
+
 func (m MapStringString) HasKey(idx Value) bool {
 	if i, ok := idx.(String); ok {
 		if _, ok := m[string(i)]; ok {

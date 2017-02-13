@@ -78,6 +78,11 @@ func collectFromIterator(it Iterator) []Value {
 	return vs
 }
 
+// IterateKeyer is anything with keys that can be iterated.
+type IterateKeyer interface {
+	IterateKey(func(Value) bool)
+}
+
 var (
 	NoArgs = []Value{}
 	NoOpts = map[string]Value{}

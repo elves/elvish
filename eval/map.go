@@ -19,6 +19,7 @@ type MapLike interface {
 	Lener
 	IndexOneer
 	HasKeyer
+	IterateKeyer
 }
 
 var _ MapLike = Map{}
@@ -60,6 +61,15 @@ func (m Map) IndexOne(idx Value) Value {
 		throw(errors.New("no such key: " + idx.Repr(NoPretty)))
 	}
 	return v
+}
+
+func (m Map) IterateKey(f func(Value) bool) {
+	for k := range *m.inner {
+		cont := f(k)
+		if !cont {
+			break
+		}
+	}
 }
 
 func (m Map) HasKey(k Value) bool {
