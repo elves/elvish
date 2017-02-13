@@ -143,7 +143,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			}
 		} else {
 			for _, a := range n.Assignments {
-				v, r := cp.lvaluesOp(a.Dst)
+				v, r := cp.lvaluesOp(a.Left)
 				saveVarsOps = append(saveVarsOps, v, r)
 			}
 			Logger.Println("temporary assignment of", len(n.Assignments), "pairs")
@@ -431,8 +431,8 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 }
 
 func (cp *compiler) assignment(n *parse.Assignment) OpFunc {
-	variablesOp, restOp := cp.lvaluesOp(n.Dst)
-	valuesOp := cp.compoundOp(n.Src)
+	variablesOp, restOp := cp.lvaluesOp(n.Left)
+	valuesOp := cp.compoundOp(n.Right)
 	return makeAssignmentOpFunc(variablesOp, restOp, valuesOp)
 }
 
@@ -498,11 +498,11 @@ const defaultFileRedirPerm = 0644
 // redir compiles a Redir into a op.
 func (cp *compiler) redir(n *parse.Redir) OpFunc {
 	var dstOp ValuesOp
-	if n.Dest != nil {
-		dstOp = cp.compoundOp(n.Dest)
+	if n.Left != nil {
+		dstOp = cp.compoundOp(n.Left)
 	}
-	srcOp := cp.compoundOp(n.Source)
-	sourceIsFd := n.SourceIsFd
+	srcOp := cp.compoundOp(n.Right)
+	sourceIsFd := n.RightIsFd
 	mode := n.Mode
 	flag := makeFlag(mode)
 

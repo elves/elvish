@@ -55,18 +55,18 @@ var goodCases = []struct {
 	{"a >b", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
 		"Redirs": []ast{
-			ast{"Redir", fs{"Mode": Write, "Source": "b"}}},
+			ast{"Redir", fs{"Mode": Write, "Right": "b"}}},
 	}}},
 	// More redirections
 	{"a >>b 2>b 3>&- 4>&1 5<c 6<>d", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
 		"Redirs": []ast{
-			ast{"Redir", fs{"Mode": Append, "Source": "b"}},
-			ast{"Redir", fs{"Dest": "2", "Mode": Write, "Source": "b"}},
-			ast{"Redir", fs{"Dest": "3", "Mode": Write, "SourceIsFd": true, "Source": "-"}},
-			ast{"Redir", fs{"Dest": "4", "Mode": Write, "SourceIsFd": true, "Source": "1"}},
-			ast{"Redir", fs{"Dest": "5", "Mode": Read, "Source": "c"}},
-			ast{"Redir", fs{"Dest": "6", "Mode": ReadWrite, "Source": "d"}},
+			ast{"Redir", fs{"Mode": Append, "Right": "b"}},
+			ast{"Redir", fs{"Left": "2", "Mode": Write, "Right": "b"}},
+			ast{"Redir", fs{"Left": "3", "Mode": Write, "RightIsFd": true, "Right": "-"}},
+			ast{"Redir", fs{"Left": "4", "Mode": Write, "RightIsFd": true, "Right": "1"}},
+			ast{"Redir", fs{"Left": "5", "Mode": Read, "Right": "c"}},
+			ast{"Redir", fs{"Left": "6", "Mode": ReadWrite, "Right": "d"}},
 		},
 	}}},
 	// Exitus redirection

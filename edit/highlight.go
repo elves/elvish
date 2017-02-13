@@ -26,8 +26,8 @@ func (s *Highlighter) highlight(n parse.Node) {
 	switch n := n.(type) {
 	case *parse.Form:
 		for _, an := range n.Assignments {
-			if an.Dst != nil && an.Dst.Head != nil {
-				v := an.Dst.Head
+			if an.Left != nil && an.Left.Head != nil {
+				v := an.Left.Head
 				s.addStyling(v.Begin(), v.End(), styleForGoodVariable.String())
 			}
 		}

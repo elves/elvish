@@ -122,13 +122,13 @@ func GetAssignment(n Node) *Assignment {
 	return nil
 }
 
-func (n *Assignment) setDst(ch *Indexing) {
-	n.Dst = ch
+func (n *Assignment) setLeft(ch *Indexing) {
+	n.Left = ch
 	addChild(n, ch)
 }
 
-func (n *Assignment) setSrc(ch *Compound) {
-	n.Src = ch
+func (n *Assignment) setRight(ch *Compound) {
+	n.Right = ch
 	addChild(n, ch)
 }
 
@@ -247,13 +247,13 @@ func GetRedir(n Node) *Redir {
 	return nil
 }
 
-func (n *Redir) setDest(ch *Compound) {
-	n.Dest = ch
+func (n *Redir) setLeft(ch *Compound) {
+	n.Left = ch
 	addChild(n, ch)
 }
 
-func (n *Redir) setSource(ch *Compound) {
-	n.Source = ch
+func (n *Redir) setRight(ch *Compound) {
+	n.Right = ch
 	addChild(n, ch)
 }
 

@@ -304,14 +304,14 @@ func startsForm(r rune) bool {
 // Assignment = Indexing '=' Compound
 type Assignment struct {
 	node
-	Dst *Indexing
-	Src *Compound
+	Left  *Indexing
+	Right *Compound
 }
 
 func (an *Assignment) parse(ps *parser) {
 	ps.cut('=')
-	an.setDst(parseIndexing(ps, false))
-	head := an.Dst.Head
+	an.setLeft(parseIndexing(ps, false))
+	head := an.Left.Head
 	if !checkVariableInAssignment(head, ps) {
 		ps.errorp(head.Begin(), head.End(), errShouldBeVariableName)
 	}
@@ -320,7 +320,7 @@ func (an *Assignment) parse(ps *parser) {
 	if !parseSep(an, ps, '=') {
 		ps.error(errShouldBeEqual)
 	}
-	an.setSrc(parseCompound(ps, false))
+	an.setRight(parseCompound(ps, false))
 }
 
 func checkVariableInAssignment(p *Primary, ps *parser) bool {
@@ -521,16 +521,16 @@ func (ern *ExitusRedir) parse(ps *parser) {
 // Redir = { Compound } { '<'|'>'|'<>'|'>>' } { Space } ( '&'? Compound )
 type Redir struct {
 	node
-	Dest       *Compound
-	Mode       RedirMode
-	SourceIsFd bool
-	Source     *Compound
+	Left      *Compound
+	Mode      RedirMode
+	RightIsFd bool
+	Right     *Compound
 }
 
 func (rn *Redir) parse(ps *parser, dest *Compound) {
-	// The parsing of the Dest part is done in Form.parse.
+	// The parsing of the Left part is done in Form.parse.
 	if dest != nil {
-		rn.setDest(dest)
+		rn.setLeft(dest)
 		rn.begin = dest.begin
 	}
 
@@ -554,11 +554,11 @@ func (rn *Redir) parse(ps *parser, dest *Compound) {
 	addSep(rn, ps)
 	parseSpaces(rn, ps)
 	if parseSep(rn, ps, '&') {
-		rn.SourceIsFd = true
+		rn.RightIsFd = true
 	}
-	rn.setSource(parseCompound(ps, false))
-	if len(rn.Source.Indexings) == 0 {
-		if rn.SourceIsFd {
+	rn.setRight(parseCompound(ps, false))
+	if len(rn.Right.Indexings) == 0 {
+		if rn.RightIsFd {
 			ps.error(errShouldBeFD)
 		} else {
 			ps.error(errShouldBeFilename)
