@@ -37,6 +37,7 @@ var completers = []struct {
 }{
 	{"variable", complVariable},
 	{"command name", complFormHead},
+	{"redir", complRedir},
 	{"argument", complArg},
 }
 
@@ -189,6 +190,36 @@ func complFormHeadInner(head string, ev *eval.Evaler) ([]*candidate, error) {
 		cands = append(cands, newPlainCandidate(cmd))
 	}
 	return cands, nil
+}
+
+// complRedir completes redirection RHS.
+func complRedir(n parse.Node, ev *eval.Evaler) (*compl, error) {
+	begin, end, current, q := findRedirContext(n)
+	if begin == -1 {
+		return nil, errCompletionUnapplicable
+	}
+	cands, err := complFilenameInner(current, false)
+	if err != nil {
+		return nil, err
+	}
+	quoteCandidates(cands, q)
+	return &compl{begin, end, cands}, nil
+}
+
+func findRedirContext(n parse.Node) (int, int, string, parse.PrimaryType) {
+	if parse.IsSep(n) {
+		if parse.IsRedir(n.Parent()) {
+			return n.End(), n.End(), "", parse.Bareword
+		}
+	}
+	if primary, ok := n.(*parse.Primary); ok {
+		if compound, head := primaryInSimpleCompound(primary); compound != nil {
+			if parse.IsRedir(compound.Parent()) {
+				return compound.Begin(), compound.End(), head, primary.Type
+			}
+		}
+	}
+	return -1, -1, "", 0
 }
 
 // complArg completes arguments. It identifies the context and then delegates
