@@ -44,7 +44,7 @@ func (s *Struct) IndexOne(idx Value) Value {
 }
 
 func (s *Struct) IterateKey(f func(Value) bool) {
-	for field := range s.FieldNames {
+	for _, field := range s.FieldNames {
 		cont := f(String(field))
 		if !cont {
 			break
