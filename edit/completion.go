@@ -171,6 +171,10 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 
 	if c.begin < 0 {
 		ed.addTip("unsupported completion :(")
+		Logger.Println("path to current leaf, leaf first")
+		for n := node; n != nil; n = n.Parent() {
+			Logger.Printf("%T (%d-%d)", n, n.Begin(), n.End())
+		}
 	} else if len(c.candidates) == 0 {
 		ed.addTip("no candidate for %s", c.completer)
 	} else {
