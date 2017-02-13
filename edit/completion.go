@@ -14,9 +14,8 @@ import (
 // Interface.
 
 type completion struct {
-	completer  string
-	begin, end int
-	candidates []*candidate
+	compl
+	completer string
 
 	filtering       bool
 	filter          string
@@ -156,13 +155,13 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 		return
 	}
 
-	c := &completion{begin: -1}
+	c := &completion{}
 	shownError := false
 	for _, item := range completers {
 		compl, err := item.completer(node, ed.evaler)
 		if compl != nil {
 			c.completer = item.name
-			c.begin, c.end, c.candidates = compl.begin, compl.end, compl.candidates
+			c.compl = *compl
 			c.filtered = c.candidates
 			break
 		} else if err != nil && err != errCompletionUnapplicable {
@@ -172,7 +171,7 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 		}
 	}
 
-	if c.begin < 0 {
+	if c.completer == "" {
 		if !shownError {
 			ed.addTip("unsupported completion :(")
 		}
