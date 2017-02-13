@@ -118,10 +118,23 @@ func complFormHead(n parse.Node, ev *eval.Evaler) (*compl, error) {
 }
 
 func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
+	// Determine if we are starting a new command. There are 3 cases:
+	// 1. The whole chunk is empty (nothing entered at all): the leaf is a
+	//    Chunk.
+	// 2. Just after a newline or semicolon: the leaf is a Sep and its parent is
+	//    a Chunk.
+	// 3. Just after a pipe: the leaf is a Sep and its parent is a Pipeline.
 	_, isChunk := n.(*parse.Chunk)
-	_, isPipeline := n.(*parse.Pipeline)
-	if isChunk || isPipeline {
-		return n.Begin(), n.End(), "", parse.Bareword
+	if isChunk {
+		return n.End(), n.End(), "", parse.Bareword
+	}
+	if sep, ok := n.(*parse.Sep); ok {
+		parent := sep.Parent()
+		_, isChunk := parent.(*parse.Chunk)
+		_, isPipeline := parent.(*parse.Pipeline)
+		if isChunk || isPipeline {
+			return n.End(), n.End(), "", parse.Bareword
+		}
 	}
 
 	if primary, ok := n.(*parse.Primary); ok {
