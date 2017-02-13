@@ -10,19 +10,19 @@ import (
 // Utilities for insepcting the AST. Used for completers and stylists.
 
 func primaryInSimpleCompound(pn *parse.Primary) (*parse.Compound, string) {
-	thisIndexing, ok := pn.Parent().(*parse.Indexing)
+	indexing := parse.GetIndexing(pn.Parent())
+	if indexing == nil {
+		return nil, ""
+	}
+	compound := parse.GetCompound(indexing.Parent())
+	if compound == nil {
+		return nil, ""
+	}
+	ok, head, _ := simpleCompound(compound, indexing)
 	if !ok {
 		return nil, ""
 	}
-	thisCompound, ok := thisIndexing.Parent().(*parse.Compound)
-	if !ok {
-		return nil, ""
-	}
-	ok, head, _ := simpleCompound(thisCompound, thisIndexing)
-	if !ok {
-		return nil, ""
-	}
-	return thisCompound, head
+	return compound, head
 }
 
 func simpleCompound(cn *parse.Compound, upto *parse.Indexing) (bool, string, error) {

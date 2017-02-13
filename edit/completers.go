@@ -41,8 +41,8 @@ var completers = []struct {
 }
 
 func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
-	primary, ok := n.(*parse.Primary)
-	if !ok || primary.Type != parse.Variable {
+	primary := parse.GetPrimary(n)
+	if primary == nil || primary.Type != parse.Variable {
 		return nil, errCompletionUnapplicable
 	}
 
@@ -124,15 +124,12 @@ func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
 	// 2. Just after a newline or semicolon: the leaf is a Sep and its parent is
 	//    a Chunk.
 	// 3. Just after a pipe: the leaf is a Sep and its parent is a Pipeline.
-	_, isChunk := n.(*parse.Chunk)
-	if isChunk {
+	if parse.IsChunk(n) {
 		return n.End(), n.End(), "", parse.Bareword
 	}
-	if sep, ok := n.(*parse.Sep); ok {
-		parent := sep.Parent()
-		_, isChunk := parent.(*parse.Chunk)
-		_, isPipeline := parent.(*parse.Pipeline)
-		if isChunk || isPipeline {
+	if parse.IsSep(n) {
+		parent := n.Parent()
+		if parse.IsChunk(parent) || parse.IsPipeline(parent) {
 			return n.End(), n.End(), "", parse.Bareword
 		}
 	}
