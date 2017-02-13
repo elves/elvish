@@ -157,6 +157,7 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 	}
 
 	c := &completion{begin: -1}
+	shownError := false
 	for _, item := range completers {
 		compl, err := item.completer(node, ed.evaler)
 		if compl != nil {
@@ -165,12 +166,16 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 			c.candidates = c.all
 			break
 		} else if err != nil && err != errCompletionUnapplicable {
-			ed.Notify("%v", err)
+			ed.addTip("%v", err)
+			shownError = true
+			break
 		}
 	}
 
 	if c.begin < 0 {
-		ed.addTip("unsupported completion :(")
+		if !shownError {
+			ed.addTip("unsupported completion :(")
+		}
 		Logger.Println("path to current leaf, leaf first")
 		for n := node; n != nil; n = n.Parent() {
 			Logger.Printf("%T (%d-%d)", n, n.Begin(), n.End())
