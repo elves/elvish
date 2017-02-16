@@ -15,6 +15,7 @@ import (
 type GlobPattern struct {
 	glob.Pattern
 	Flags GlobFlag
+	Buts  []string
 }
 
 type GlobFlag uint
@@ -72,6 +73,8 @@ func (gp GlobPattern) Index(modifiers []Value) []Value {
 		switch {
 		case modifier == "nomatch-ok":
 			gp.Flags |= NoMatchOK
+		case strings.HasPrefix(modifier, "but:"):
+			gp.Buts = append(gp.Buts, modifier[len("but:"):])
 		case modifier == "match-hidden":
 			lastSeg := gp.mustGetLastWildSeg()
 			gp.Segments[len(gp.Segments)-1] = glob.Wild{
@@ -171,6 +174,11 @@ func stringToSegments(s string) []glob.Segment {
 }
 
 func doGlob(gp GlobPattern, abort <-chan struct{}) []Value {
+	but := make(map[string]struct{})
+	for _, s := range gp.Buts {
+		but[s] = struct{}{}
+	}
+
 	vs := make([]Value, 0)
 	if !gp.Glob(func(name string) bool {
 		select {
@@ -179,7 +187,9 @@ func doGlob(gp GlobPattern, abort <-chan struct{}) []Value {
 			return false
 		default:
 		}
-		vs = append(vs, String(name))
+		if _, b := but[name]; !b {
+			vs = append(vs, String(name))
+		}
 		return true
 	}) {
 		throw(ErrInterrupted)
