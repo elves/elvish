@@ -126,10 +126,8 @@ var evalTests = []struct {
 	// Output capture
 	{"put (put lorem ipsum)", strs("lorem", "ipsum"), nomore},
 
-	/*
-		// Boolean capture
-		{"put (true) (false)", bools(true, false), nomore},
-	*/
+	// Exception capture
+	{"bool ?(nop); bool ?(e:false)", bools(true, false), nomore},
 
 	// Variable and compounding
 	{"x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
