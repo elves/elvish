@@ -353,16 +353,16 @@ func checkVariableInAssignment(p *Primary, ps *parser) bool {
 type Control struct {
 	node
 	Kind        ControlKind
-	Condition   *Chunk    // Valid for WhileControl.
-	Iterator    *Indexing // Valid for ForControl.
-	Array       *Array    // Valid for ForControl.
-	Body        *Chunk    // Valid for all except IfControl.
-	Conditions  []*Chunk  // Valid for IfControl.
-	Bodies      []*Chunk  // Valid for IfControl.
-	ElseBody    *Chunk    // Valid for IfControl, WhileControl, ForControl and TryControl.
-	ExceptBody  *Chunk    // Valid for TryControl.
-	ExceptVar   *Indexing // Valid for TryControl.
-	FinallyBody *Chunk    // Valid for TryControl.
+	Condition   *Compound   // Valid for WhileControl.
+	Iterator    *Indexing   // Valid for ForControl.
+	Array       *Array      // Valid for ForControl.
+	Body        *Chunk      // Valid for all except IfControl.
+	Conditions  []*Compound // Valid for IfControl.
+	Bodies      []*Chunk    // Valid for IfControl.
+	ElseBody    *Chunk      // Valid for IfControl, WhileControl, ForControl and TryControl.
+	ExceptBody  *Chunk      // Valid for TryControl.
+	ExceptVar   *Indexing   // Valid for TryControl.
+	FinallyBody *Chunk      // Valid for TryControl.
 }
 
 // ControlKind identifies which control structure a Control represents.
@@ -409,13 +409,27 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 		}
 	}
 
-	switch leader {
-	case "if":
-		ctrl.Kind = IfControl
-		ctrl.addToConditions(parseChunk(ps))
+	condition := func() {
+		parseSpaces(ctrl, ps)
+		ctrl.addToConditions(parseCompound(ps, false))
+		parseSpacesAndNewlines(ctrl, ps)
+		switch ps.peek() {
+		case '\n', ';':
+			ps.next()
+			addSep(ctrl, ps)
+		default:
+			ps.error(errShouldBePipelineSep)
+		}
+		parseSpaces(ctrl, ps)
 		if consumeLeader() != "then" {
 			ps.error(errShouldBeThen)
 		}
+	}
+
+	switch leader {
+	case "if":
+		ctrl.Kind = IfControl
+		condition()
 		ctrl.addToBodies(parseChunk(ps))
 	Elifs:
 		for {
@@ -423,10 +437,7 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 			case "fi":
 				break Elifs
 			case "elif":
-				ctrl.addToConditions(parseChunk(ps))
-				if consumeLeader() != "then" {
-					ps.error(errShouldBeThen)
-				}
+				condition()
 				ctrl.addToBodies(parseChunk(ps))
 			case "else":
 				ctrl.setElseBody(parseChunk(ps))
@@ -441,7 +452,16 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 		}
 	case "while":
 		ctrl.Kind = WhileControl
-		ctrl.setCondition(parseChunk(ps))
+		parseSpaces(ctrl, ps)
+		ctrl.setCondition(parseCompound(ps, false))
+		parseSpacesAndNewlines(ctrl, ps)
+		switch ps.peek() {
+		case '\n', ';':
+			ps.next()
+			addSep(ctrl, ps)
+		default:
+			ps.error(errShouldBePipelineSep)
+		}
 		doElseDone()
 	case "for":
 		ctrl.Kind = ForControl

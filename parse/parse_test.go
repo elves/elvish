@@ -83,38 +83,38 @@ var goodCases = []struct {
 
 	// Control structures.
 	// if/then/fi.
-	{"if true; then echo then; fi",
+	{"if (true); then echo then; fi",
 		ast{"Chunk/Pipeline/Form/Control", fs{
 			"Kind":       IfControl,
-			"Conditions": []string{" true; "},
+			"Conditions": []string{"(true)"},
 			"Bodies":     []string{" echo then; "},
 		}}},
 	// if/then/else/fi.
-	{"if true; then echo then; else echo else; fi",
+	{"if (true); then echo then; else echo else; fi",
 		ast{"Chunk/Pipeline/Form/Control", fs{
 			"Kind":       IfControl,
-			"Conditions": []string{" true; "},
+			"Conditions": []string{"(true)"},
 			"Bodies":     []string{" echo then; "},
 			"ElseBody":   " echo else; ",
 		}}},
 	// if/then/elif/then/else/fi.
-	{"if true; then echo then; elif true; then echo else if; else echo else; fi",
+	{"if t; then echo then; elif t; then echo else if; else echo else; fi",
 		ast{"Chunk/Pipeline/Form/Control", fs{
 			"Kind":       IfControl,
-			"Conditions": []string{" true; ", " true; "},
+			"Conditions": []string{"t", "t"},
 			"Bodies":     []string{" echo then; ", " echo else if; "},
 			"ElseBody":   " echo else; ",
 		}}},
 	// while/do/done
-	{"while true; do echo do; done",
+	{"while t; do echo do; done",
 		ast{"Chunk/Pipeline/Form/Control", fs{
 			"Kind":      WhileControl,
-			"Condition": " true; ", "Body": " echo do; "}}},
+			"Condition": "t", "Body": " echo do; "}}},
 	// while/do/else/done
-	{"while true; do echo do; else echo else; done",
+	{"while t; do echo do; else echo else; done",
 		ast{"Chunk/Pipeline/Form/Control", fs{
 			"Kind":      WhileControl,
-			"Condition": " true; ",
+			"Condition": "t",
 			"Body":      " echo do; ",
 			"ElseBody":  " echo else; ",
 		}}},

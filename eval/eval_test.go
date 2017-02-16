@@ -74,16 +74,16 @@ var evalTests = []struct {
 	// Control structures.
 	// if
 	{"if true; then put then; fi", strs("then"), nomore},
-	{"if false; then put then; else put else; fi", strs("else"), nomore},
-	{"if false; then put 1; elif false; then put 2; else put 3; fi",
+	{"if $false; then put then; else put else; fi", strs("else"), nomore},
+	{"if $false; then put 1; elif $false; then put 2; else put 3; fi",
 		strs("3"), nomore},
-	{"if false; then put 2; elif true; then put 2; else put 3; fi",
+	{"if $false; then put 2; elif true; then put 2; else put 3; fi",
 		strs("2"), nomore},
 	// try
 	{"try true; except; put bad; else; put good; tried", strs("good"), nomore},
 	{"try e:false; except; put bad; else; put good; tried", strs("bad"), nomore},
 	// while
-	{"x=0; while < $x 4; do put $x; x=(+ $x 1); done",
+	{"x=0; while ?(< $x 4); do put $x; x=(+ $x 1); done",
 		strs("0", "1", "2", "3"), nomore},
 	// for
 	{"for x in tempora mores; do put 'O '$x; done",
@@ -255,8 +255,8 @@ var evalTests = []struct {
 	{`put 1 233 | each put`, strs("1", "233"), nomore},
 	{`echo "1\n233" | each put`, strs("1", "233"), nomore},
 	{`each put [1 233]`, strs("1", "233"), nomore},
-	{`range 10 | each { if == $0 4; then break; fi; put $0 }`, strs("0", "1", "2", "3"), nomore},
-	{`range 10 | each { if == $0 4; then fail haha; fi; put $0 }`, strs("0", "1", "2", "3"), more{wantError: errAny}},
+	{`range 10 | each { if ?(== $0 4); then break; fi; put $0 }`, strs("0", "1", "2", "3"), nomore},
+	{`range 10 | each { if ?(== $0 4); then fail haha; fi; put $0 }`, strs("0", "1", "2", "3"), more{wantError: errAny}},
 	// TODO: test peach
 
 	{`range 3`, strs("0", "1", "2"), nomore},

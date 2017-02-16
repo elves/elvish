@@ -298,7 +298,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 func (cp *compiler) control(n *parse.Control) OpFunc {
 	switch n.Kind {
 	case parse.IfControl:
-		condOps := cp.chunkOps(n.Conditions)
+		condOps := cp.compoundOps(n.Conditions)
 		bodyOps := cp.chunkOps(n.Bodies)
 		var elseOp Op
 		if n.ElseBody != nil {
@@ -306,8 +306,7 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 		}
 		return func(ec *EvalCtx) {
 			for i, condOp := range condOps {
-				condOp.Exec(ec)
-				if ec.verdict {
+				if allTrue(condOp.Exec(ec)) {
 					bodyOps[i].Exec(ec)
 					return
 				}
@@ -369,12 +368,11 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			}
 		}
 	case parse.WhileControl:
-		condOp := cp.chunkOp(n.Condition)
+		condOp := cp.compoundOp(n.Condition)
 		bodyOp := cp.chunkOp(n.Body)
 		return func(ec *EvalCtx) {
 			for {
-				condOp.Exec(ec)
-				if !ec.verdict {
+				if !allTrue(condOp.Exec(ec)) {
 					break
 				}
 				//for condOp.Exec(ec)[0].(Error).Inner == nil {
@@ -428,6 +426,15 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 		cp.errorpf(n.Begin(), n.End(), "unknown ControlKind %s, compiler bug", n.Kind)
 		panic("unreachable")
 	}
+}
+
+func allTrue(vs []Value) bool {
+	for _, v := range vs {
+		if !ToBool(v) {
+			return false
+		}
+	}
+	return true
 }
 
 func (cp *compiler) assignment(n *parse.Assignment) OpFunc {
