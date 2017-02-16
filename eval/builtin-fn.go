@@ -55,8 +55,9 @@ func (b *BuiltinFn) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 func init() {
 	// Needed to work around init loop.
 	builtinFns = []*BuiltinFn{
-		// Fundamental predicates
-		&BuiltinFn{"true", nop},
+		// Trivial predicates
+		&BuiltinFn{"nop", nop},
+		&BuiltinFn{"true", trueFn},
 		&BuiltinFn{"false", falseFn},
 
 		// Introspection
@@ -387,12 +388,14 @@ func wrapStrCompare(cmp func(a, b string) bool) func(*EvalCtx, []Value, map[stri
 				throw(ErrArgs)
 			}
 		}
+		result := true
 		for i := 0; i < len(args)-1; i++ {
 			if !cmp(string(args[i].(String)), string(args[i+1].(String))) {
-				ec.falsify()
-				return
+				result = false
+				break
 			}
 		}
+		ec.OutputChan() <- Bool(result)
 	}
 }
 
@@ -408,12 +411,14 @@ func wrapNumCompare(cmp func(a, b float64) bool) func(*EvalCtx, []Value, map[str
 			maybeThrow(err)
 			floats[i] = f
 		}
+		result := true
 		for i := 0; i < len(floats)-1; i++ {
 			if !cmp(floats[i], floats[i+1]) {
-				ec.falsify()
-				return
+				result = false
+				break
 			}
 		}
+		ec.OutputChan() <- Bool(result)
 	}
 }
 
@@ -433,8 +438,12 @@ func mustGetOneString(args []Value) string {
 func nop(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
+func trueFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	ec.OutputChan() <- Bool(true)
+}
+
 func falseFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	ec.falsify()
+	ec.OutputChan() <- Bool(false)
 }
 
 func put(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -563,15 +572,11 @@ func splits(ec *EvalCtx, sep, s String) {
 }
 
 func hasPrefix(ec *EvalCtx, s, prefix String) {
-	if !strings.HasPrefix(string(s), string(prefix)) {
-		ec.falsify()
-	}
+	ec.OutputChan() <- Bool(strings.HasPrefix(string(s), string(prefix)))
 }
 
 func hasSuffix(ec *EvalCtx, s, suffix String) {
-	if !strings.HasSuffix(string(s), string(suffix)) {
-		ec.falsify()
-	}
+	ec.OutputChan() <- Bool(strings.HasSuffix(string(s), string(suffix)))
 }
 
 // toJSON converts a stream of Value's to JSON data.
@@ -967,12 +972,14 @@ func is(ec *EvalCtx, args []Value, opts map[string]Value) {
 	if len(args) < 2 {
 		throw(ErrArgs)
 	}
+	result := true
 	for i := 0; i+1 < len(args); i++ {
 		if args[i] != args[i+1] {
-			ec.falsify()
-			return
+			result = false
+			break
 		}
 	}
+	ec.OutputChan() <- Bool(result)
 }
 
 func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -980,12 +987,14 @@ func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	if len(args) < 2 {
 		throw(ErrArgs)
 	}
+	result := true
 	for i := 0; i+1 < len(args); i++ {
 		if !DeepEq(args[i], args[i+1]) {
-			ec.falsify()
-			return
+			result = false
+			break
 		}
 	}
+	ec.OutputChan() <- Bool(result)
 }
 
 func resolveFn(ec *EvalCtx, cmd String) {
@@ -995,9 +1004,7 @@ func resolveFn(ec *EvalCtx, cmd String) {
 
 func hasExternal(ec *EvalCtx, cmd string) {
 	_, err := ec.Search(cmd)
-	if err != nil {
-		ec.falsify()
-	}
+	ec.OutputChan() <- Bool(err == nil)
 }
 
 func searchExternal(ec *EvalCtx, cmd string) {

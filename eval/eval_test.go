@@ -24,7 +24,6 @@ var errAny = errors.New("")
 type more struct {
 	wantBytesOut []byte
 	wantError    error
-	wantFalse    bool
 }
 
 var noout = []Value{}
@@ -80,10 +79,10 @@ var evalTests = []struct {
 	{"if $false; then put 2; elif true; then put 2; else put 3; fi",
 		strs("2"), nomore},
 	// try
-	{"try true; except; put bad; else; put good; tried", strs("good"), nomore},
+	{"try nop; except; put bad; else; put good; tried", strs("good"), nomore},
 	{"try e:false; except; put bad; else; put good; tried", strs("bad"), nomore},
 	// while
-	{"x=0; while ?(< $x 4); do put $x; x=(+ $x 1); done",
+	{"x=0; while (< $x 4); do put $x; x=(+ $x 1); done",
 		strs("0", "1", "2", "3"), nomore},
 	// for
 	{"for x in tempora mores; do put 'O '$x; done",
@@ -97,17 +96,12 @@ var evalTests = []struct {
 	// begin/end
 	{"begin; put lorem; put ipsum; end", strs("lorem", "ipsum"), nomore},
 
-	// Predicates.
-	{"false", noout, more{wantFalse: true}},
-	{"true | false", noout, more{wantFalse: true}},
-	{"true | false | true", noout, nomore},
-
 	// Redirections.
 	{"f=`mktemp elvXXXXXX`; echo 233 > $f; cat < $f; rm $f", noout,
 		more{wantBytesOut: []byte("233\n")}},
 	// Redirections from File object.
 	{`fname=(mktemp elvXXXXXX); echo haha > $fname;
-	f=(fopen $fname); cat <$f; fclose $f; rm $fname`, noout,
+			f=(fopen $fname); cat <$f; fclose $f; rm $fname`, noout,
 		more{wantBytesOut: []byte("haha\n")}},
 	// Redirections from Pipe object.
 	{`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`, noout,
@@ -132,9 +126,10 @@ var evalTests = []struct {
 	// Output capture
 	{"put (put lorem ipsum)", strs("lorem", "ipsum"), nomore},
 
-	// Boolean capture
-	{"put ?(true) ?(false)",
-		[]Value{Bool(true), Bool(false)}, nomore},
+	/*
+		// Boolean capture
+		{"put (true) (false)", bools(true, false), nomore},
+	*/
 
 	// Variable and compounding
 	{"x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
@@ -168,8 +163,8 @@ var evalTests = []struct {
 		strs("lorem", "ipsum"), nomore},
 	// Closure captures new local variables every time
 	{`fn f []{ x=0; put []{x=(+ $x 1)} []{put $x} }
-      {inc1,put1}=(f); $put1; $inc1; $put1
-	  {inc2,put2}=(f); $put2; $inc2; $put2`,
+		      {inc1,put1}=(f); $put1; $inc1; $put1
+			  {inc2,put2}=(f); $put2; $inc2; $put2`,
 		strs("0", "1", "0", "1"), nomore},
 	// Positional variables.
 	{`{ put $1 } lorem ipsum`, strs("ipsum"), nomore},
@@ -205,8 +200,8 @@ var evalTests = []struct {
 	// Builtin functions
 	// -----------------
 
-	{`true`, noout, nomore},
-	{`false`, noout, more{wantFalse: true}},
+	{`true`, bools(true), nomore},
+	{`false`, bools(false), nomore},
 
 	{"kind-of bare 'str' [] [&] []{ }",
 		strs("string", "string", "list", "map", "fn"), nomore},
@@ -238,14 +233,14 @@ var evalTests = []struct {
 
 	{`joins : [/usr /bin /tmp]`, strs("/usr:/bin:/tmp"), nomore},
 	{`splits &sep=: /usr:/bin:/tmp`, strs("/usr", "/bin", "/tmp"), nomore},
-	{`has-prefix golang go`, noout, nomore},
-	{`has-prefix golang x`, noout, more{wantFalse: true}},
-	{`has-suffix golang x`, noout, more{wantFalse: true}},
+	{`has-prefix golang go`, bools(true), nomore},
+	{`has-prefix golang x`, bools(false), nomore},
+	{`has-suffix golang x`, bools(false), nomore},
 
-	{`==s haha haha`, noout, nomore},
-	{`==s 10 10.0`, noout, more{wantFalse: true}},
-	{`<s a b`, noout, nomore},
-	{`<s 2 10`, noout, more{wantFalse: true}},
+	{`==s haha haha`, bools(true), nomore},
+	{`==s 10 10.0`, bools(false), nomore},
+	{`<s a b`, bools(true), nomore},
+	{`<s 2 10`, bools(false), nomore},
 
 	{`fail haha`, noout, more{wantError: errAny}},
 	{`return`, noout, more{wantError: Return}},
@@ -255,8 +250,8 @@ var evalTests = []struct {
 	{`put 1 233 | each put`, strs("1", "233"), nomore},
 	{`echo "1\n233" | each put`, strs("1", "233"), nomore},
 	{`each put [1 233]`, strs("1", "233"), nomore},
-	{`range 10 | each { if ?(== $0 4); then break; fi; put $0 }`, strs("0", "1", "2", "3"), nomore},
-	{`range 10 | each { if ?(== $0 4); then fail haha; fi; put $0 }`, strs("0", "1", "2", "3"), more{wantError: errAny}},
+	{`range 10 | each { if (== $0 4); then break; fi; put $0 }`, strs("0", "1", "2", "3"), nomore},
+	{`range 10 | each { if (== $0 4); then fail haha; fi; put $0 }`, strs("0", "1", "2", "3"), more{wantError: errAny}},
 	// TODO: test peach
 
 	{`range 3`, strs("0", "1", "2"), nomore},
@@ -281,15 +276,15 @@ var evalTests = []struct {
 	{"^ 16 2", strs("256"), nomore},
 	{"% 23 7", strs("2"), nomore},
 
-	{`== 1 1.0`, noout, nomore},
-	{`== 10 0xa`, noout, nomore},
+	{`== 1 1.0`, bools(true), nomore},
+	{`== 10 0xa`, bools(true), nomore},
 	{`== a a`, noout, more{wantError: errAny}},
-	{`> 0x10 1`, noout, nomore},
+	{`> 0x10 1`, bools(true), nomore},
 
-	{`is 1 1`, noout, nomore},
-	{`is [] []`, noout, more{wantFalse: true}},
-	{`eq 1 1`, noout, nomore},
-	{`eq [] []`, noout, nomore},
+	{`is 1 1`, bools(true), nomore},
+	{`is [] []`, bools(false), nomore},
+	{`eq 1 1`, bools(true), nomore},
+	{`eq [] []`, bools(true), nomore},
 
 	{`ord a`, strs("0x61"), nomore},
 	{`base 16 42 233`, strs("2a", "e9"), nomore},
@@ -324,7 +319,7 @@ func mustParseAndCompile(t *testing.T, ev *Evaler, name, text string) Op {
 	return op
 }
 
-func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, bool, error) {
+func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, error) {
 	name := "<eval test>"
 	ev := NewEvaler(nil, "")
 
@@ -347,8 +342,7 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	// Channel output
 	outs := []Value{}
 
-	// Boolean return and error. Only those of the last text is saved.
-	var ret bool
+	// Eval error. Only that of the last text is saved.
 	var ex error
 
 	for _, text := range texts {
@@ -369,7 +363,7 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 			{File: os.Stderr, Chan: BlackholeChan},
 		}
 
-		ret, ex = ev.eval(op, ports, name, text)
+		ex = ev.eval(op, ports, name, text)
 		close(outCh)
 		<-outDone
 	}
@@ -378,14 +372,14 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	<-bytesDone
 	pr.Close()
 
-	return outs, outBytes, ret, ex
+	return outs, outBytes, ex
 }
 
 func TestEval(t *testing.T) {
 	for _, tt := range evalTests {
 		// fmt.Printf("eval %q\n", tt.text)
 
-		out, bytesOut, ret, err := evalAndCollect(t, []string{tt.text}, len(tt.wantOut))
+		out, bytesOut, err := evalAndCollect(t, []string{tt.text}, len(tt.wantOut))
 
 		good := true
 		errorf := func(format string, args ...interface{}) {
@@ -401,9 +395,6 @@ func TestEval(t *testing.T) {
 		}
 		if string(bytesOut) != string(tt.wantBytesOut) {
 			errorf("got bytesOut=%q, want %q", bytesOut, tt.wantBytesOut)
-		}
-		if ret != !tt.wantFalse {
-			errorf("got ret=%v, want %v", ret, !tt.wantFalse)
 		}
 		// Check exception cause. We accept errAny as a "wildcard" for all non-nil
 		// errors.
@@ -425,7 +416,7 @@ func TestEval(t *testing.T) {
 
 func TestMultipleEval(t *testing.T) {
 	texts := []string{"x=hello", "put $x"}
-	outs, _, _, err := evalAndCollect(t, texts, 1)
+	outs, _, err := evalAndCollect(t, texts, 1)
 	wanted := strs("hello")
 	if err != nil {
 		t.Errorf("eval %s => %v, want nil", texts, err)

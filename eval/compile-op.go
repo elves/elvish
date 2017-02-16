@@ -54,7 +54,6 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 		var wg sync.WaitGroup
 		wg.Add(nforms)
 		errors := make([]*Exception, nforms)
-		var verdict bool
 
 		var nextIn *Port
 
@@ -80,14 +79,10 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 			}
 			thisOp := op
 			thisError := &errors[i]
-			isLast := i == nforms-1
 			go func() {
 				err := newEc.PEval(thisOp)
 				// Logger.Printf("closing ports of %s", newEc.context)
 				ClosePorts(newEc.ports)
-				if isLast {
-					verdict = newEc.verdict
-				}
 				if err != nil {
 					*thisError = err.(*Exception)
 				}
@@ -103,9 +98,6 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 				err := ComposeExceptionsFromPipeline(errors)
 				if err != nil {
 					msg += ", errors = " + err.Error()
-				}
-				if !verdict {
-					msg += ", pred = false"
 				}
 				if ec.Editor != nil {
 					m := ec.Editor.ActiveMutex()
@@ -124,7 +116,6 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 		} else {
 			wg.Wait()
 			maybeThrow(ComposeExceptionsFromPipeline(errors))
-			ec.verdict = verdict
 		}
 	}
 }
@@ -282,9 +273,6 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			redirOp.Exec(ec)
 		}
 
-		// In case some arguments returned false.
-		ec.verdict = true
-
 		ec.begin, ec.end = begin, end
 
 		if headFn != nil {
@@ -313,8 +301,6 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 			}
 			if elseOp.Func != nil {
 				elseOp.Exec(ec)
-			} else {
-				ec.verdict = true
 			}
 		}
 	case parse.TryControl:
@@ -388,7 +374,6 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 					}
 				}
 			}
-			ec.verdict = true
 		}
 	case parse.ForControl:
 		iteratorOp, restOp := cp.lvaluesOp(n.Iterator)

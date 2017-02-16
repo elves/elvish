@@ -54,16 +54,11 @@ type EvalCtx struct {
 	local, up   Namespace
 	ports       []*Port
 	positionals []Value
-	verdict     bool
 
 	begin, end int
 	traceback  *util.SourceContext
 
 	background bool
-}
-
-func (ec *EvalCtx) falsify() {
-	ec.verdict = false
 }
 
 // NewEvaler creates a new Evaler.
@@ -88,7 +83,7 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
 		ev, "top",
 		name, text,
 		ev.Global, Namespace{},
-		ports, nil, true,
+		ports, nil,
 		0, len(text), nil, false,
 	}
 }
@@ -104,7 +99,7 @@ func (ec *EvalCtx) fork(name string) *EvalCtx {
 		ec.Evaler, name,
 		ec.srcName, ec.src,
 		ec.local, ec.up,
-		newPorts, ec.positionals, true,
+		newPorts, ec.positionals,
 		ec.begin, ec.end, ec.traceback, ec.background,
 	}
 }
@@ -138,10 +133,9 @@ func makeScope(s Namespace) scope {
 
 // eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) eval(op Op, ports []*Port, name, text string) (bool, error) {
+func (ev *Evaler) eval(op Op, ports []*Port, name, text string) error {
 	ec := NewTopEvalCtx(ev, name, text, ports)
-	err := ec.PEval(op)
-	return ec.verdict, err
+	return ec.PEval(op)
 }
 
 func (ec *EvalCtx) Interrupts() <-chan struct{} {
@@ -207,15 +201,11 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 		close(sigGoRoutineDone)
 	}()
 
-	ret, err := ev.eval(op, ports, name, text)
+	err := ev.eval(op, ports, name, text)
 	close(outCh)
 	<-outDone
 	close(stopSigGoroutine)
 	<-sigGoRoutineDone
-
-	if !ret {
-		fmt.Println(falseIndicator)
-	}
 
 	// Put myself in foreground, in case some command has put me in background.
 	// XXX Should probably use fd of /dev/tty instead of 0.
