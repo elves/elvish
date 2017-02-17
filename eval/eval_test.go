@@ -93,8 +93,6 @@ var evalTests = []struct {
 	{"for x [a] { put $x } else { put $x }", strs("a"), nomore},
 	// continue
 	{"for x [a b] { put $x; continue; put $x; }", strs("a", "b"), nomore},
-	// begin/end
-	{"begin; put lorem; put ipsum; end", strs("lorem", "ipsum"), nomore},
 
 	// Redirections.
 	{"f=`mktemp elvXXXXXX`; echo 233 > $f; cat < $f; rm $f", noout,

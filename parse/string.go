@@ -26,9 +26,9 @@ func (i RedirMode) String() string {
 	return _RedirMode_name[_RedirMode_index[i]:_RedirMode_index[i+1]]
 }
 
-const _ControlKind_name = "BadControlIfControlTryControlBeginControl"
+const _ControlKind_name = "BadControlIfControlTryControl"
 
-var _ControlKind_index = [...]uint8{0, 10, 19, 29, 41}
+var _ControlKind_index = [...]uint8{0, 10, 19, 29}
 
 func (i ControlKind) String() string {
 	if i < 0 || i >= ControlKind(len(_ControlKind_index)-1) {

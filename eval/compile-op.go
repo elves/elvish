@@ -353,8 +353,6 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 				throw(e)
 			}
 		}
-	case parse.BeginControl:
-		return cp.chunk(n.Body)
 	default:
 		cp.errorpf(n.Begin(), n.End(), "unknown ControlKind %s, compiler bug", n.Kind)
 		panic("unreachable")

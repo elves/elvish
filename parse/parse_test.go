@@ -115,10 +115,6 @@ var goodCases = []struct {
 			"ElseBody":    " good; ",
 			"FinallyBody": " over; ",
 		}}},
-	// begin/end
-	{"begin echo begin; end",
-		ast{"Chunk/Pipeline/Form/Control", fs{
-			"Kind": BeginControl, "Body": " echo begin; "}}},
 
 	// Compound
 	{`a b"foo"?$c*'xyz'`, a(ast{"Compound", fs{

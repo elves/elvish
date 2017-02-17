@@ -161,7 +161,7 @@ func startsPipeline(r rune) bool {
 // it starts a control block.
 func findLeader(ps *parser) (string, bool) {
 	switch leader := ps.findPossibleLeader(); leader {
-	case "if", "try", "begin":
+	case "if", "try":
 		// Starting leaders are always legal.
 		return leader, true
 	case "then", "elif", "else", "fi", "do", "done", "except", "finally", "tried", "end":
@@ -343,9 +343,8 @@ func checkVariableInAssignment(p *Primary, ps *parser) bool {
 	return true
 }
 
-// Control = IfControl | BeginControl
+// Control = IfControl
 // IfControl = If Chunk Then Chunk { Elif Chunk Then Chunk } [ Else Chunk ] Fi
-// BeginControl = Begin Chunk Done
 // If = "if" Space { Space }
 // (Similiar for Then, Elif, Else, Fi, While, Do, Done, For, Begin, End)
 type Control struct {
@@ -368,7 +367,6 @@ const (
 	BadControl ControlKind = iota
 	IfControl
 	TryControl
-	BeginControl
 )
 
 func (ctrl *Control) parse(ps *parser, leader string) {
@@ -457,12 +455,6 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 		}
 		if consumeLeader() != "tried" {
 			ps.error(errShouldBeTried)
-		}
-	case "begin":
-		ctrl.Kind = BeginControl
-		ctrl.setBody(parseChunk(ps))
-		if consumeLeader() != "end" {
-			ps.error(errShouldBeEnd)
 		}
 	default:
 		ps.error(fmt.Errorf("unknown leader %q; parser bug", leader))
