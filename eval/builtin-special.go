@@ -24,10 +24,11 @@ var BuiltinSpecialNames []string
 func init() {
 	// Needed to avoid initialization loop
 	builtinSpecials = map[string]compileBuiltin{
-		"del": compileDel,
-		"fn":  compileFn,
-		"use": compileUse,
-		"for": compileFor,
+		"del":   compileDel,
+		"fn":    compileFn,
+		"use":   compileUse,
+		"for":   compileFor,
+		"while": compileWhile,
 	}
 	for k := range builtinSpecials {
 		BuiltinSpecialNames = append(BuiltinSpecialNames, k)
@@ -218,6 +219,45 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		// Unload the namespace.
 		delete(ec.Modules, modname)
 		throw(err)
+	}
+}
+
+func compileWhile(cp *compiler, fn *parse.Form) OpFunc {
+	args := cp.walkArgs(fn)
+	condNode := args.next()
+	bodyNode := args.next()
+	args.mustEnd()
+
+	condOp := cp.compoundOp(condNode)
+	bodyOp := cp.compoundOp(bodyNode)
+
+	return func(ec *EvalCtx) {
+		bodies := bodyOp.Exec(ec)
+		if len(bodies) != 1 {
+			ec.errorpf(bodyOp.Begin, bodyOp.End, "should be one fn")
+		}
+		body, ok := bodies[0].(Fn)
+		if !ok {
+			ec.errorpf(bodyOp.Begin, bodyOp.End, "should be one fn")
+		}
+
+		for {
+			cond := condOp.Exec(ec)
+			if !allTrue(cond) {
+				break
+			}
+			err := ec.PCall(body, NoArgs, NoOpts)
+			if err != nil {
+				exc := err.(*Exception)
+				if exc.Cause == Continue {
+					// do nothing
+				} else if exc.Cause == Break {
+					continue
+				} else {
+					throw(err)
+				}
+			}
+		}
 	}
 }
 

@@ -161,7 +161,7 @@ func startsPipeline(r rune) bool {
 // it starts a control block.
 func findLeader(ps *parser) (string, bool) {
 	switch leader := ps.findPossibleLeader(); leader {
-	case "if", "while", "try", "begin":
+	case "if", "try", "begin":
 		// Starting leaders are always legal.
 		return leader, true
 	case "then", "elif", "else", "fi", "do", "done", "except", "finally", "tried", "end":
@@ -343,20 +343,18 @@ func checkVariableInAssignment(p *Primary, ps *parser) bool {
 	return true
 }
 
-// Control = IfControl | WhileControl | BeginControl
+// Control = IfControl | BeginControl
 // IfControl = If Chunk Then Chunk { Elif Chunk Then Chunk } [ Else Chunk ] Fi
-// WhileControl = While Chunk Do Chunk [ Else Chunk ] Done
 // BeginControl = Begin Chunk Done
 // If = "if" Space { Space }
 // (Similiar for Then, Elif, Else, Fi, While, Do, Done, For, Begin, End)
 type Control struct {
 	node
 	Kind        ControlKind
-	Condition   *Compound   // Valid for WhileControl.
 	Body        *Chunk      // Valid for all except IfControl.
 	Conditions  []*Compound // Valid for IfControl.
 	Bodies      []*Chunk    // Valid for IfControl.
-	ElseBody    *Chunk      // Valid for IfControl, WhileControl, ForControl and TryControl.
+	ElseBody    *Chunk      // Valid for IfControl, and TryControl.
 	ExceptBody  *Chunk      // Valid for TryControl.
 	ExceptVar   *Indexing   // Valid for TryControl.
 	FinallyBody *Chunk      // Valid for TryControl.
@@ -369,7 +367,6 @@ type ControlKind int
 const (
 	BadControl ControlKind = iota
 	IfControl
-	WhileControl
 	TryControl
 	BeginControl
 )
@@ -388,21 +385,6 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 			addSep(ctrl, ps)
 		}
 		return leader
-	}
-
-	doElseDone := func() {
-		parseSpaces(ctrl, ps)
-		if consumeLeader() != "do" {
-			ps.error(errShouldBeDo)
-		}
-		ctrl.setBody(parseChunk(ps))
-		if hasLeader(ps, "else") {
-			consumeLeader()
-			ctrl.setElseBody(parseChunk(ps))
-		}
-		if consumeLeader() != "done" {
-			ps.error(errShouldBeDone)
-		}
 	}
 
 	condition := func() {
@@ -446,19 +428,6 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 				break Elifs
 			}
 		}
-	case "while":
-		ctrl.Kind = WhileControl
-		parseSpaces(ctrl, ps)
-		ctrl.setCondition(parseCompound(ps, false))
-		parseSpacesAndNewlines(ctrl, ps)
-		switch ps.peek() {
-		case '\n', ';':
-			ps.next()
-			addSep(ctrl, ps)
-		default:
-			ps.error(errShouldBePipelineSep)
-		}
-		doElseDone()
 	case "try":
 		ctrl.Kind = TryControl
 		ctrl.setBody(parseChunk(ps))

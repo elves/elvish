@@ -105,19 +105,6 @@ var goodCases = []struct {
 			"Bodies":     []string{" echo then; ", " echo else if; "},
 			"ElseBody":   " echo else; ",
 		}}},
-	// while/do/done
-	{"while t; do echo do; done",
-		ast{"Chunk/Pipeline/Form/Control", fs{
-			"Kind":      WhileControl,
-			"Condition": "t", "Body": " echo do; "}}},
-	// while/do/else/done
-	{"while t; do echo do; else echo else; done",
-		ast{"Chunk/Pipeline/Form/Control", fs{
-			"Kind":      WhileControl,
-			"Condition": "t",
-			"Body":      " echo do; ",
-			"ElseBody":  " echo else; ",
-		}}},
 	// try/except/else/finally/tried
 	{"try fail 2; except e; bad; else good; finally over; tried",
 		ast{"Chunk/Pipeline/Form/Control", fs{

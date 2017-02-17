@@ -353,28 +353,6 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 				throw(e)
 			}
 		}
-	case parse.WhileControl:
-		condOp := cp.compoundOp(n.Condition)
-		bodyOp := cp.chunkOp(n.Body)
-		return func(ec *EvalCtx) {
-			for {
-				if !allTrue(condOp.Exec(ec)) {
-					break
-				}
-				//for condOp.Exec(ec)[0].(Error).Inner == nil {
-				e := ec.PEval(bodyOp)
-				if e != nil {
-					exc := e.(*Exception)
-					if exc.Cause == Continue {
-						// do nothing
-					} else if exc.Cause == Break {
-						break
-					} else {
-						throw(exc)
-					}
-				}
-			}
-		}
 	case parse.BeginControl:
 		return cp.chunk(n.Body)
 	default:

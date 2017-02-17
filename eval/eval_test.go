@@ -82,7 +82,7 @@ var evalTests = []struct {
 	{"try nop; except; put bad; else; put good; tried", strs("good"), nomore},
 	{"try e:false; except; put bad; else; put good; tried", strs("bad"), nomore},
 	// while
-	{"x=0; while (< $x 4); do put $x; x=(+ $x 1); done",
+	{"x=0; while (< $x 4) { put $x; x=(+ $x 1) }",
 		strs("0", "1", "2", "3"), nomore},
 	// for
 	{"for x [tempora mores] { put 'O '$x }",

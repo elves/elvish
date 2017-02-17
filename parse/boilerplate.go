@@ -152,11 +152,6 @@ func GetControl(n Node) *Control {
 	return nil
 }
 
-func (n *Control) setCondition(ch *Compound) {
-	n.Condition = ch
-	addChild(n, ch)
-}
-
 func (n *Control) setBody(ch *Chunk) {
 	n.Body = ch
 	addChild(n, ch)
