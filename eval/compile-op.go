@@ -375,36 +375,6 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 				}
 			}
 		}
-	case parse.ForControl:
-		iteratorOp, restOp := cp.lvaluesOp(n.Iterator)
-		if restOp.Func != nil {
-			cp.errorpf(restOp.Begin, restOp.End, "may not use @rest in iterator")
-		}
-		valuesOp := cp.arrayOp(n.Array)
-		bodyOp := cp.chunkOp(n.Body)
-		return func(ec *EvalCtx) {
-			iterators := iteratorOp.Exec(ec)
-			if len(iterators) != 1 {
-				throw(ErrArityMismatch)
-			}
-			iterator := iterators[0]
-
-			values := valuesOp.Exec(ec)
-			for _, v := range values {
-				iterator.Set(v)
-				e := ec.PEval(bodyOp)
-				if e != nil {
-					exc := e.(*Exception)
-					if exc.Cause == Continue {
-						// do nothing
-					} else if exc.Cause == Break {
-						break
-					} else {
-						throw(exc)
-					}
-				}
-			}
-		}
 	case parse.BeginControl:
 		return cp.chunk(n.Body)
 	default:

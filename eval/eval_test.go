@@ -85,14 +85,14 @@ var evalTests = []struct {
 	{"x=0; while (< $x 4); do put $x; x=(+ $x 1); done",
 		strs("0", "1", "2", "3"), nomore},
 	// for
-	{"for x in tempora mores; do put 'O '$x; done",
+	{"for x [tempora mores] { put 'O '$x }",
 		strs("O tempora", "O mores"), nomore},
 	// break
-	{"for x in a; do break; else put $x; done", noout, nomore},
+	{"for x [a] { break } else { put $x }", noout, nomore},
 	// else
-	{"for x in a; do put $x; else put $x; done", strs("a"), nomore},
+	{"for x [a] { put $x } else { put $x }", strs("a"), nomore},
 	// continue
-	{"for x in a b; do put $x; continue; put $x; done", strs("a", "b"), nomore},
+	{"for x [a b] { put $x; continue; put $x; }", strs("a", "b"), nomore},
 	// begin/end
 	{"begin; put lorem; put ipsum; end", strs("lorem", "ipsum"), nomore},
 

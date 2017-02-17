@@ -128,13 +128,6 @@ var goodCases = []struct {
 			"ElseBody":    " good; ",
 			"FinallyBody": " over; ",
 		}}},
-	// for/do/done
-	{"for\nx\nin\na\nb c; do echo do; done",
-		ast{"Chunk/Pipeline/Form/Control", fs{
-			"Kind":     ForControl,
-			"Iterator": "x",
-			"Array":    "\na\nb c",
-			"Body":     " echo do; "}}},
 	// begin/end
 	{"begin echo begin; end",
 		ast{"Chunk/Pipeline/Form/Control", fs{

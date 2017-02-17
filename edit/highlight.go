@@ -40,13 +40,14 @@ func (s *Highlighter) highlight(n parse.Node) {
 		if n.Head != nil {
 			s.formHead(n.Head)
 		}
-	case *parse.Control:
-		switch n.Kind {
-		case parse.ForControl:
-			if n.Iterator != nil {
-				v := n.Iterator.Head
+		if n.Head != nil && n.Head.SourceText() == "for" {
+			if len(n.Args) >= 1 && len(n.Args[0].Indexings) > 0 {
+				v := n.Args[0].Indexings[0].Head
 				s.addStyling(v.Begin(), v.End(), styleForGoodVariable.String())
 			}
+		}
+	case *parse.Control:
+		switch n.Kind {
 		case parse.TryControl:
 			if n.ExceptVar != nil {
 				v := n.ExceptVar.Head

@@ -161,7 +161,7 @@ func startsPipeline(r rune) bool {
 // it starts a control block.
 func findLeader(ps *parser) (string, bool) {
 	switch leader := ps.findPossibleLeader(); leader {
-	case "if", "while", "for", "try", "begin":
+	case "if", "while", "try", "begin":
 		// Starting leaders are always legal.
 		return leader, true
 	case "then", "elif", "else", "fi", "do", "done", "except", "finally", "tried", "end":
@@ -343,10 +343,9 @@ func checkVariableInAssignment(p *Primary, ps *parser) bool {
 	return true
 }
 
-// Control = IfControl | WhileControl | ForControl | BeginControl
+// Control = IfControl | WhileControl | BeginControl
 // IfControl = If Chunk Then Chunk { Elif Chunk Then Chunk } [ Else Chunk ] Fi
 // WhileControl = While Chunk Do Chunk [ Else Chunk ] Done
-// ForControl = For Primary In Array PipelineSep Do Chunk [ Else Chunk ] Done
 // BeginControl = Begin Chunk Done
 // If = "if" Space { Space }
 // (Similiar for Then, Elif, Else, Fi, While, Do, Done, For, Begin, End)
@@ -354,8 +353,6 @@ type Control struct {
 	node
 	Kind        ControlKind
 	Condition   *Compound   // Valid for WhileControl.
-	Iterator    *Indexing   // Valid for ForControl.
-	Array       *Array      // Valid for ForControl.
 	Body        *Chunk      // Valid for all except IfControl.
 	Conditions  []*Compound // Valid for IfControl.
 	Bodies      []*Chunk    // Valid for IfControl.
@@ -373,7 +370,6 @@ const (
 	BadControl ControlKind = iota
 	IfControl
 	WhileControl
-	ForControl
 	TryControl
 	BeginControl
 )
@@ -455,26 +451,6 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 		parseSpaces(ctrl, ps)
 		ctrl.setCondition(parseCompound(ps, false))
 		parseSpacesAndNewlines(ctrl, ps)
-		switch ps.peek() {
-		case '\n', ';':
-			ps.next()
-			addSep(ctrl, ps)
-		default:
-			ps.error(errShouldBePipelineSep)
-		}
-		doElseDone()
-	case "for":
-		ctrl.Kind = ForControl
-		parseSpacesAndNewlines(ctrl, ps)
-		ctrl.setIterator(parseIndexing(ps, false))
-		parseSpacesAndNewlines(ctrl, ps)
-		if ps.findPossibleLeader() == "in" {
-			ps.advance(len("in"))
-			addSep(ctrl, ps)
-		} else {
-			ps.error(errShouldBeIn)
-		}
-		ctrl.setArray(parseArray(ps, false))
 		switch ps.peek() {
 		case '\n', ';':
 			ps.next()

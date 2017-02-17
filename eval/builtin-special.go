@@ -27,6 +27,7 @@ func init() {
 		"del": compileDel,
 		"fn":  compileFn,
 		"use": compileUse,
+		"for": compileFor,
 	}
 	for k := range builtinSpecials {
 		BuiltinSpecialNames = append(BuiltinSpecialNames, k)
@@ -217,5 +218,87 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		// Unload the namespace.
 		delete(ec.Modules, modname)
 		throw(err)
+	}
+}
+
+func compileFor(cp *compiler, fn *parse.Form) OpFunc {
+	args := cp.walkArgs(fn)
+	varNode := args.next()
+	iterNode := args.next()
+	bodyNode := args.next()
+	elseNode := args.nextLedBy("else")
+	args.mustEnd()
+
+	varOp, restOp := cp.lvaluesOp(varNode.Indexings[0])
+	if restOp.Func != nil {
+		cp.errorpf(restOp.Begin, restOp.End, "rest not allowed")
+	}
+
+	iterOp := cp.compoundOp(iterNode)
+	bodyOp := cp.compoundOp(bodyNode)
+	var elseOp ValuesOp
+	if elseNode != nil {
+		elseOp = cp.compoundOp(elseNode)
+	}
+
+	return func(ec *EvalCtx) {
+		variables := varOp.Exec(ec)
+		if len(variables) != 1 {
+			ec.errorpf(varOp.Begin, varOp.End, "only one variable allowed")
+		}
+		variable := variables[0]
+
+		iterables := iterOp.Exec(ec)
+		if len(iterables) != 1 {
+			ec.errorpf(iterOp.Begin, iterOp.End, "should be one iterable")
+		}
+		iterable, ok := iterables[0].(Iterator)
+		if !ok {
+			ec.errorpf(iterOp.Begin, iterOp.End, "should be one iterable")
+		}
+
+		bodies := bodyOp.Exec(ec)
+		if len(bodies) != 1 {
+			ec.errorpf(bodyOp.Begin, bodyOp.End, "should be one fn")
+		}
+		body, ok := bodies[0].(Fn)
+		if !ok {
+			ec.errorpf(bodyOp.Begin, bodyOp.End, "should be one fn")
+		}
+
+		var elseBody Fn
+		if elseOp.Func != nil {
+			elseBodies := elseOp.Exec(ec)
+			if len(elseBodies) != 1 {
+				ec.errorpf(elseOp.Begin, elseOp.End, "should be one fn")
+			}
+			var ok bool
+			elseBody, ok = elseBodies[0].(Fn)
+			if !ok {
+				ec.errorpf(elseOp.Begin, elseOp.End, "should be one fn")
+			}
+		}
+
+		iterated := false
+		iterable.Iterate(func(v Value) bool {
+			iterated = true
+			variable.Set(v)
+			err := ec.PCall(body, NoArgs, NoOpts)
+			if err != nil {
+				exc := err.(*Exception)
+				if exc.Cause == Continue {
+					// do nothing
+				} else if exc.Cause == Break {
+					return false
+				} else {
+					throw(err)
+				}
+			}
+			return true
+		})
+
+		if !iterated && elseBody != nil {
+			elseBody.Call(ec, NoArgs, NoOpts)
+		}
 	}
 }
