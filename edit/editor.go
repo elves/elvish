@@ -168,8 +168,8 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 		highlight(n, ed)
 
 		_, err = ed.evaler.Compile(n, "[interactive]", src)
-		if err != nil {
-			if addErrorsToTips && !atEnd(err, len(src)) {
+		if err != nil && !atEnd(err, len(src)) {
+			if addErrorsToTips {
 				ed.addTip("%s", err)
 			}
 			// Highlight errors in the input buffer.
