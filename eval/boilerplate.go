@@ -132,28 +132,15 @@ func (cp *compiler) listOps(ns []*parse.Array) []ValuesOp {
 	return ops
 }
 
-func (cp *compiler) predCaptureOp(n *parse.Chunk) ValuesOp {
+func (cp *compiler) exceptionCaptureOp(n *parse.Chunk) ValuesOp {
 	cp.compiling(n)
-	return ValuesOp{cp.predCapture(n), n.Begin(), n.End()}
+	return ValuesOp{cp.exceptionCapture(n), n.Begin(), n.End()}
 }
 
-func (cp *compiler) predCaptureOps(ns []*parse.Chunk) []ValuesOp {
+func (cp *compiler) exceptionCaptureOps(ns []*parse.Chunk) []ValuesOp {
 	ops := make([]ValuesOp, len(ns))
 	for i, n := range ns {
-		ops[i] = cp.predCaptureOp(n)
-	}
-	return ops
-}
-
-func (cp *compiler) errorCaptureOp(n *parse.Chunk) ValuesOp {
-	cp.compiling(n)
-	return ValuesOp{cp.errorCapture(n), n.Begin(), n.End()}
-}
-
-func (cp *compiler) errorCaptureOps(ns []*parse.Chunk) []ValuesOp {
-	ops := make([]ValuesOp, len(ns))
-	for i, n := range ns {
-		ops[i] = cp.errorCaptureOp(n)
+		ops[i] = cp.exceptionCaptureOp(n)
 	}
 	return ops
 }

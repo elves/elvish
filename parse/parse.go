@@ -502,7 +502,7 @@ const (
 	Variable
 	Wildcard
 	Tilde
-	PredCapture
+	ExceptionCapture
 	OutputCapture
 	List
 	Lambda
@@ -722,7 +722,7 @@ func (pn *Primary) exitusCapture(ps *parser) {
 	ps.next()
 	addSep(pn, ps)
 
-	pn.Type = PredCapture
+	pn.Type = ExceptionCapture
 
 	ps.pushCutset()
 	pn.setChunk(parseChunk(ps))

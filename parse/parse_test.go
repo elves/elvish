@@ -215,9 +215,9 @@ var goodCases = []struct {
 	// Exitus capture
 	{"a ?() ?(b;c)", a(
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": PredCapture, "Chunk": ""}},
+			"Type": ExceptionCapture, "Chunk": ""}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": PredCapture, "Chunk": "b;c",
+			"Type": ExceptionCapture, "Chunk": "b;c",
 		}})},
 	// Braced
 	{"a {,a,c\ng\n}", a(
