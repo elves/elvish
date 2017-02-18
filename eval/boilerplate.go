@@ -41,19 +41,6 @@ func (cp *compiler) formOps(ns []*parse.Form) []Op {
 	return ops
 }
 
-func (cp *compiler) controlOp(n *parse.Control) Op {
-	cp.compiling(n)
-	return Op{cp.control(n), n.Begin(), n.End()}
-}
-
-func (cp *compiler) controlOps(ns []*parse.Control) []Op {
-	ops := make([]Op, len(ns))
-	for i, n := range ns {
-		ops[i] = cp.controlOp(n)
-	}
-	return ops
-}
-
 func (cp *compiler) assignmentOp(n *parse.Assignment) Op {
 	cp.compiling(n)
 	return Op{cp.assignment(n), n.Begin(), n.End()}

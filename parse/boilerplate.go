@@ -67,11 +67,6 @@ func (n *Form) addToAssignments(ch *Assignment) {
 	addChild(n, ch)
 }
 
-func (n *Form) setControl(ch *Control) {
-	n.Control = ch
-	addChild(n, ch)
-}
-
 func (n *Form) setHead(ch *Compound) {
 	n.Head = ch
 	addChild(n, ch)
@@ -135,46 +130,6 @@ func (n *Assignment) setRight(ch *Compound) {
 func parseAssignment(ps *parser) *Assignment {
 	n := &Assignment{node: node{begin: ps.pos}}
 	n.parse(ps)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
-}
-
-func IsControl(n Node) bool {
-	_, ok := n.(*Control)
-	return ok
-}
-
-func GetControl(n Node) *Control {
-	if nn, ok := n.(*Control); ok {
-		return nn
-	}
-	return nil
-}
-
-func (n *Control) setBody(ch *Chunk) {
-	n.Body = ch
-	addChild(n, ch)
-}
-
-func (n *Control) addToConditions(ch *Compound) {
-	n.Conditions = append(n.Conditions, ch)
-	addChild(n, ch)
-}
-
-func (n *Control) addToBodies(ch *Chunk) {
-	n.Bodies = append(n.Bodies, ch)
-	addChild(n, ch)
-}
-
-func (n *Control) setElseBody(ch *Chunk) {
-	n.ElseBody = ch
-	addChild(n, ch)
-}
-
-func parseControl(ps *parser, leader string) *Control {
-	n := &Control{node: node{begin: ps.pos}}
-	n.parse(ps, leader)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n

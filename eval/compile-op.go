@@ -141,20 +141,6 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		}
 	}
 
-	if n.Control != nil {
-		if len(n.Args) > 0 {
-			cp.errorpf(n.Args[0].Begin(), n.Args[len(n.Args)-1].End(), "control structure takes no arguments")
-		}
-		redirOps := cp.redirOps(n.Redirs)
-		controlOp := cp.controlOp(n.Control)
-		return func(ec *EvalCtx) {
-			for _, redirOp := range redirOps {
-				redirOp.Exec(ec)
-			}
-			controlOp.Exec(ec)
-		}
-	}
-
 	if n.Head != nil {
 		headStr, ok := oneString(n.Head)
 		if ok {
@@ -280,32 +266,6 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		} else {
 			spaceyAssignOp.Exec(ec)
 		}
-	}
-}
-
-func (cp *compiler) control(n *parse.Control) OpFunc {
-	switch n.Kind {
-	case parse.IfControl:
-		condOps := cp.compoundOps(n.Conditions)
-		bodyOps := cp.chunkOps(n.Bodies)
-		var elseOp Op
-		if n.ElseBody != nil {
-			elseOp = cp.chunkOp(n.ElseBody)
-		}
-		return func(ec *EvalCtx) {
-			for i, condOp := range condOps {
-				if allTrue(condOp.Exec(ec)) {
-					bodyOps[i].Exec(ec)
-					return
-				}
-			}
-			if elseOp.Func != nil {
-				elseOp.Exec(ec)
-			}
-		}
-	default:
-		cp.errorpf(n.Begin(), n.End(), "unknown ControlKind %s, compiler bug", n.Kind)
-		panic("unreachable")
 	}
 }
 

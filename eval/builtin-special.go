@@ -27,8 +27,9 @@ func init() {
 		"del":   compileDel,
 		"fn":    compileFn,
 		"use":   compileUse,
-		"for":   compileFor,
+		"if":    compileIf,
 		"while": compileWhile,
+		"for":   compileFor,
 		"try":   compileTry,
 	}
 	for k := range builtinSpecials {
@@ -220,6 +221,44 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		// Unload the namespace.
 		delete(ec.Modules, modname)
 		throw(err)
+	}
+}
+
+func compileIf(cp *compiler, fn *parse.Form) OpFunc {
+	args := cp.walkArgs(fn)
+	var condNodes, bodyNodes []*parse.Compound
+	for {
+		condNodes = append(condNodes, args.next())
+		bodyNodes = append(bodyNodes, args.next())
+		if !args.nextIs("elif") {
+			break
+		}
+	}
+	elseNode := args.nextLedBy("else")
+	args.mustEnd()
+
+	condOps := cp.compoundOps(condNodes)
+	bodyOps := cp.compoundOps(bodyNodes)
+	var elseOp ValuesOp
+	if elseNode != nil {
+		elseOp = cp.compoundOp(elseNode)
+	}
+
+	return func(ec *EvalCtx) {
+		bodies := make([]Fn, len(bodyOps))
+		for i, bodyOp := range bodyOps {
+			bodies[i] = bodyOp.execMustOneFn(ec)
+		}
+		else_ := elseOp.execMustOneFn(ec)
+		for i, condOp := range condOps {
+			if allTrue(condOp.Exec(ec)) {
+				bodies[i].Call(ec, NoArgs, NoOpts)
+				return
+			}
+		}
+		if elseOp.Func != nil {
+			else_.Call(ec, NoArgs, NoOpts)
+		}
 	}
 }
 

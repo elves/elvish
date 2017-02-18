@@ -2,7 +2,7 @@
 package parse
 
 //go:generate ./boilerplate.py
-//go:generate stringer -type=PrimaryType,RedirMode,ControlKind -output=string.go
+//go:generate stringer -type=PrimaryType,RedirMode -output=string.go
 
 import (
 	"bytes"
@@ -73,18 +73,6 @@ type Chunk struct {
 func (bn *Chunk) parse(ps *parser) {
 	bn.parseSeps(ps)
 	for startsPipeline(ps.peek()) {
-		leader, starter := findLeader(ps)
-		if leader != "" && !starter && ps.controls > 0 {
-			// We found a non-starting leader and there is a control block that
-			// has not been closed. Stop parsing this chunk. We don't check the
-			// validity of the leader; the checking is done where the control
-			// block is parsed (e.g. (*Form).parseIf).
-			break
-		}
-		// We have more chance to check for validity of the leader, but
-		// eventually it will be checked in (*Form).parse. So we don't check it
-		// here, for more uniform error reporting and recovery.
-
 		bn.addToPipelines(parsePipeline(ps))
 		if bn.parseSeps(ps) == 0 {
 			break
@@ -157,32 +145,11 @@ func startsPipeline(r rune) bool {
 	return startsForm(r)
 }
 
-// findLeader look aheads a command leader. It returns the leader and whether
-// it starts a control block.
-func findLeader(ps *parser) (string, bool) {
-	switch leader := ps.findPossibleLeader(); leader {
-	case "if":
-		// Starting leaders are always legal.
-		return leader, true
-	case "then", "elif", "else", "fi":
-		return leader, false
-	default:
-		// There is no leader.
-		return "", false
-	}
-}
-
-func hasLeader(ps *parser, l string) bool {
-	s, _ := findLeader(ps)
-	return s == l
-}
-
 // Form = { Space } { { Assignment } { Space } }
-//        { Compound | Control } { Space } { ( Compound | MapPair | Redir | ExitusRedir ) { Space } }
+//        { Compound } { Space } { ( Compound | MapPair | Redir | ExitusRedir ) { Space } }
 type Form struct {
 	node
 	Assignments []*Assignment
-	Control     *Control
 	Head        *Compound
 	// Left-hand-sides for the spacey assignment. Right-hand-sides are in Args.
 	Vars        []*Compound
@@ -197,27 +164,18 @@ func (fn *Form) parse(ps *parser) {
 	for fn.tryAssignment(ps) {
 		parseSpaces(fn, ps)
 	}
-	leader, starter := findLeader(ps)
-	if leader != "" && starter {
-		// Parse Control.
-		fn.setControl(parseControl(ps, leader))
-		parseSpaces(fn, ps)
-	} else {
-		if leader != "" {
-			ps.error(fmt.Errorf("bogus command leader %q ignored", leader))
+
+	// Parse head.
+	if !startsCompound(ps.peek(), true) {
+		if len(fn.Assignments) > 0 {
+			// Assignment-only form.
+			return
 		}
-		// Parse head.
-		if !startsCompound(ps.peek(), true) {
-			if len(fn.Assignments) > 0 {
-				// Assignment-only form.
-				return
-			}
-			// Bad form.
-			ps.error(fmt.Errorf("bad rune at form head: %q", ps.peek()))
-		}
-		fn.setHead(parseCompound(ps, true))
-		parseSpaces(fn, ps)
+		// Bad form.
+		ps.error(fmt.Errorf("bad rune at form head: %q", ps.peek()))
 	}
+	fn.setHead(parseCompound(ps, true))
+	parseSpaces(fn, ps)
 
 	for {
 		r := ps.peek()
@@ -341,90 +299,6 @@ func checkVariableInAssignment(p *Primary, ps *parser) bool {
 		}
 	}
 	return true
-}
-
-// Control = IfControl
-// IfControl = If Chunk Then Chunk { Elif Chunk Then Chunk } [ Else Chunk ] Fi
-// If = "if" Space { Space }
-// (Similiar for Then, Elif, Else, Fi, While, Do, Done, For, Begin, End)
-type Control struct {
-	node
-	Kind       ControlKind
-	Body       *Chunk      // Valid for all except IfControl.
-	Conditions []*Compound // Valid for IfControl.
-	Bodies     []*Chunk    // Valid for IfControl.
-	ElseBody   *Chunk      // Valid for IfControl.
-}
-
-// ControlKind identifies which control structure a Control represents.
-type ControlKind int
-
-// Possible values of ControlKind.
-const (
-	BadControl ControlKind = iota
-	IfControl
-)
-
-func (ctrl *Control) parse(ps *parser, leader string) {
-	ps.advance(len(leader))
-	addSep(ctrl, ps)
-
-	ps.controls++
-	defer func() { ps.controls-- }()
-
-	consumeLeader := func() string {
-		leader, _ := findLeader(ps)
-		if len(leader) > 0 {
-			ps.advance(len(leader))
-			addSep(ctrl, ps)
-		}
-		return leader
-	}
-
-	condition := func() {
-		parseSpaces(ctrl, ps)
-		ctrl.addToConditions(parseCompound(ps, false))
-		parseSpacesAndNewlines(ctrl, ps)
-		switch ps.peek() {
-		case '\n', ';':
-			ps.next()
-			addSep(ctrl, ps)
-		default:
-			ps.error(errShouldBePipelineSep)
-		}
-		parseSpaces(ctrl, ps)
-		if consumeLeader() != "then" {
-			ps.error(errShouldBeThen)
-		}
-	}
-
-	switch leader {
-	case "if":
-		ctrl.Kind = IfControl
-		condition()
-		ctrl.addToBodies(parseChunk(ps))
-	Elifs:
-		for {
-			switch consumeLeader() {
-			case "fi":
-				break Elifs
-			case "elif":
-				condition()
-				ctrl.addToBodies(parseChunk(ps))
-			case "else":
-				ctrl.setElseBody(parseChunk(ps))
-				if consumeLeader() != "fi" {
-					ps.error(errShouldBeFi)
-				}
-				break Elifs
-			default:
-				ps.error(errShouldBeElifOrElseOrFi)
-				break Elifs
-			}
-		}
-	default:
-		ps.error(fmt.Errorf("unknown leader %q; parser bug", leader))
-	}
 }
 
 // ExitusRedir = '?' '>' { Space } Compound

@@ -81,31 +81,6 @@ var goodCases = []struct {
 		"Opts": []string{"&a=1", "&b=2"},
 	}}},
 
-	// Control structures.
-	// if/then/fi.
-	{"if (true); then echo then; fi",
-		ast{"Chunk/Pipeline/Form/Control", fs{
-			"Kind":       IfControl,
-			"Conditions": []string{"(true)"},
-			"Bodies":     []string{" echo then; "},
-		}}},
-	// if/then/else/fi.
-	{"if (true); then echo then; else echo else; fi",
-		ast{"Chunk/Pipeline/Form/Control", fs{
-			"Kind":       IfControl,
-			"Conditions": []string{"(true)"},
-			"Bodies":     []string{" echo then; "},
-			"ElseBody":   " echo else; ",
-		}}},
-	// if/then/elif/then/else/fi.
-	{"if t; then echo then; elif t; then echo else if; else echo else; fi",
-		ast{"Chunk/Pipeline/Form/Control", fs{
-			"Kind":       IfControl,
-			"Conditions": []string{"t", "t"},
-			"Bodies":     []string{" echo then; ", " echo else if; "},
-			"ElseBody":   " echo else; ",
-		}}},
-
 	// Compound
 	{`a b"foo"?$c*'xyz'`, a(ast{"Compound", fs{
 		"Indexings": []string{"b", `"foo"`, "?", "$c", "*", "'xyz'"}}})},
@@ -333,8 +308,6 @@ var badCases = []struct {
 	{"a (", 3}, {"a [", 3}, {"a {", 3},
 	// Bogus ampersand.
 	{"a & &", 4}, {"a [&", 4},
-	// Bogus command leader.
-	{"else echo 233", 0},
 }
 
 func TestParseError(t *testing.T) {
