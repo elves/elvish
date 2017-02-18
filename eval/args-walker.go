@@ -43,12 +43,21 @@ func (aw *argsWalker) nextMustBeOneOf(valids ...string) {
 	aw.cp.errorpf(n.Begin(), n.End(), "should be one of %s", strings.Join(valids, ","))
 }
 
-func (aw *argsWalker) nextLedBy(leader string) *parse.Compound {
-	if !aw.more() || aw.form.Args[aw.idx].SourceText() != leader {
-		return nil
+// nextIs returns whether the next argument's source matches the given text. It
+// also consumes the argument if it is.
+func (aw *argsWalker) nextIs(text string) bool {
+	if aw.more() && aw.form.Args[aw.idx].SourceText() == text {
+		aw.idx++
+		return true
 	}
-	aw.next()
-	return aw.next()
+	return false
+}
+
+func (aw *argsWalker) nextLedBy(leader string) *parse.Compound {
+	if aw.nextIs(leader) {
+		return aw.next()
+	}
+	return nil
 }
 
 func (aw *argsWalker) mustEnd() {

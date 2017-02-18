@@ -161,10 +161,10 @@ func startsPipeline(r rune) bool {
 // it starts a control block.
 func findLeader(ps *parser) (string, bool) {
 	switch leader := ps.findPossibleLeader(); leader {
-	case "if", "try":
+	case "if":
 		// Starting leaders are always legal.
 		return leader, true
-	case "then", "elif", "else", "fi", "do", "done", "except", "finally", "tried", "end":
+	case "then", "elif", "else", "fi":
 		return leader, false
 	default:
 		// There is no leader.
@@ -349,14 +349,11 @@ func checkVariableInAssignment(p *Primary, ps *parser) bool {
 // (Similiar for Then, Elif, Else, Fi, While, Do, Done, For, Begin, End)
 type Control struct {
 	node
-	Kind        ControlKind
-	Body        *Chunk      // Valid for all except IfControl.
-	Conditions  []*Compound // Valid for IfControl.
-	Bodies      []*Chunk    // Valid for IfControl.
-	ElseBody    *Chunk      // Valid for IfControl, and TryControl.
-	ExceptBody  *Chunk      // Valid for TryControl.
-	ExceptVar   *Indexing   // Valid for TryControl.
-	FinallyBody *Chunk      // Valid for TryControl.
+	Kind       ControlKind
+	Body       *Chunk      // Valid for all except IfControl.
+	Conditions []*Compound // Valid for IfControl.
+	Bodies     []*Chunk    // Valid for IfControl.
+	ElseBody   *Chunk      // Valid for IfControl.
 }
 
 // ControlKind identifies which control structure a Control represents.
@@ -366,7 +363,6 @@ type ControlKind int
 const (
 	BadControl ControlKind = iota
 	IfControl
-	TryControl
 )
 
 func (ctrl *Control) parse(ps *parser, leader string) {
@@ -425,36 +421,6 @@ func (ctrl *Control) parse(ps *parser, leader string) {
 				ps.error(errShouldBeElifOrElseOrFi)
 				break Elifs
 			}
-		}
-	case "try":
-		ctrl.Kind = TryControl
-		ctrl.setBody(parseChunk(ps))
-		if hasLeader(ps, "except") {
-			consumeLeader()
-			parseSpaces(ctrl, ps)
-			if startsIndexing(ps.peek(), false) {
-				ctrl.setExceptVar(parseIndexing(ps, false))
-				parseSpaces(ctrl, ps)
-			}
-			switch ps.peek() {
-			case '\n', ';':
-				ps.next()
-				addSep(ctrl, ps)
-			default:
-				ps.error(errShouldBePipelineSep)
-			}
-			ctrl.setExceptBody(parseChunk(ps))
-		}
-		if hasLeader(ps, "else") {
-			consumeLeader()
-			ctrl.setElseBody(parseChunk(ps))
-		}
-		if hasLeader(ps, "finally") {
-			consumeLeader()
-			ctrl.setFinallyBody(parseChunk(ps))
-		}
-		if consumeLeader() != "tried" {
-			ps.error(errShouldBeTried)
 		}
 	default:
 		ps.error(fmt.Errorf("unknown leader %q; parser bug", leader))

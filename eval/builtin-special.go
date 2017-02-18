@@ -29,6 +29,7 @@ func init() {
 		"use":   compileUse,
 		"for":   compileFor,
 		"while": compileWhile,
+		"try":   compileTry,
 	}
 	for k := range builtinSpecials {
 		BuiltinSpecialNames = append(BuiltinSpecialNames, k)
@@ -317,6 +318,74 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 	}
 }
 
+func compileTry(cp *compiler, fn *parse.Form) OpFunc {
+	Logger.Println("compiling try")
+	args := cp.walkArgs(fn)
+	bodyNode := args.next()
+	Logger.Printf("body is %q", bodyNode.SourceText())
+	var exceptVarNode *parse.Indexing
+	var exceptNode *parse.Compound
+	if args.nextIs("except") {
+		Logger.Println("except-ing")
+		n := args.next()
+		if len(n.Indexings) != 1 {
+			cp.errorpf(n.Begin(), n.End(), "should be one variable")
+		}
+		exceptVarNode = n.Indexings[0]
+		exceptNode = args.next()
+		Logger.Printf("except-var = %q, except = %q", exceptVarNode.SourceText(), exceptNode.SourceText())
+	}
+	elseNode := args.nextLedBy("else")
+	finallyNode := args.nextLedBy("finally")
+	args.mustEnd()
+
+	var exceptVarOp LValuesOp
+	var bodyOp, exceptOp, elseOp, finallyOp ValuesOp
+	bodyOp = cp.compoundOp(bodyNode)
+	if exceptVarNode != nil {
+		var restOp LValuesOp
+		exceptVarOp, restOp = cp.lvaluesOp(exceptVarNode)
+		if restOp.Func != nil {
+			cp.errorpf(restOp.Begin, restOp.End, "may not use @rest in except variable")
+		}
+		exceptOp = cp.compoundOp(exceptNode)
+	}
+	if elseNode != nil {
+		elseOp = cp.compoundOp(elseNode)
+	}
+	if finallyNode != nil {
+		finallyOp = cp.compoundOp(finallyNode)
+	}
+
+	return func(ec *EvalCtx) {
+		body := bodyOp.execMustOneFn(ec)
+		exceptVar := exceptVarOp.execMustOne(ec)
+		except := exceptOp.execMustOneFn(ec)
+		else_ := elseOp.execMustOneFn(ec)
+		finally := finallyOp.execMustOneFn(ec)
+
+		err := ec.PCall(body, NoArgs, NoOpts)
+		if err != nil {
+			if except != nil {
+				exceptVar.Set(err.(*Exception))
+				err = ec.PCall(except, NoArgs, NoOpts)
+			}
+		} else {
+			if else_ != nil {
+				err = ec.PCall(else_, NoArgs, NoOpts)
+			}
+		}
+		if finally != nil {
+			finally.Call(ec, NoArgs, NoOpts)
+		}
+		if err != nil {
+			throw(err)
+		}
+	}
+}
+
+// execMustOneFn executes the ValuesOp and raises an exception if it does not
+// evaluate to exactly one Fn. If the given ValuesOp is empty, it returns nil.
 func (op ValuesOp) execMustOneFn(ec *EvalCtx) Fn {
 	if op.Func == nil {
 		return nil
@@ -331,4 +400,18 @@ func (op ValuesOp) execMustOneFn(ec *EvalCtx) Fn {
 		ec.errorpf(op.Begin, op.End, "should be one fn")
 	}
 	return fn
+}
+
+// execMustOne executes the LValuesOp and raises an exception if it does not
+// evaluate to exactly one Variable. If the given LValuesOp is empty, it returns
+// nil.
+func (op LValuesOp) execMustOne(ec *EvalCtx) Variable {
+	if op.Func == nil {
+		return nil
+	}
+	variables := op.Exec(ec)
+	if len(variables) != 1 {
+		ec.errorpf(op.Begin, op.End, "should be one variable")
+	}
+	return variables[0]
 }

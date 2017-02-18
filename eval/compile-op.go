@@ -303,56 +303,6 @@ func (cp *compiler) control(n *parse.Control) OpFunc {
 				elseOp.Exec(ec)
 			}
 		}
-	case parse.TryControl:
-		Logger.Println("compiling a try control")
-		bodyOp := cp.errorCaptureOp(n.Body)
-		var exceptOp, elseOp ValuesOp
-		var finallyOp Op
-		var exceptVarOp LValuesOp
-		if n.ExceptBody != nil {
-			if n.ExceptVar != nil {
-				var restOp LValuesOp
-				exceptVarOp, restOp = cp.lvaluesOp(n.ExceptVar)
-				if restOp.Func != nil {
-					cp.errorpf(restOp.Begin, restOp.End, "may not use @rest in except variable")
-				}
-			}
-			exceptOp = cp.errorCaptureOp(n.ExceptBody)
-		}
-		if n.ElseBody != nil {
-			elseOp = cp.errorCaptureOp(n.ElseBody)
-		}
-		if n.FinallyBody != nil {
-			finallyOp = cp.chunkOp(n.FinallyBody)
-		}
-		return func(ec *EvalCtx) {
-			e := bodyOp.Exec(ec)[0].(*Exception)
-			Logger.Println("e is now", e)
-			if e.Cause != nil {
-				if exceptOp.Func != nil {
-					if exceptVarOp.Func != nil {
-						exceptVars := exceptVarOp.Exec(ec)
-						if len(exceptVars) != 1 {
-							throw(ErrArityMismatch)
-						}
-						exceptVars[0].Set(e)
-					}
-					e = exceptOp.Exec(ec)[0].(*Exception)
-					Logger.Println("e is now", e)
-				}
-			} else {
-				if elseOp.Func != nil {
-					e = elseOp.Exec(ec)[0].(*Exception)
-					Logger.Println("e is now", e)
-				}
-			}
-			if finallyOp.Func != nil {
-				finallyOp.Exec(ec)
-			}
-			if e != nil {
-				throw(e)
-			}
-		}
 	default:
 		cp.errorpf(n.Begin(), n.End(), "unknown ControlKind %s, compiler bug", n.Kind)
 		panic("unreachable")

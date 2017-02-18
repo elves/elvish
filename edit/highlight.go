@@ -40,18 +40,41 @@ func (s *Highlighter) highlight(n parse.Node) {
 		if n.Head != nil {
 			s.formHead(n.Head)
 		}
-		if n.Head != nil && n.Head.SourceText() == "for" {
-			if len(n.Args) >= 1 && len(n.Args[0].Indexings) > 0 {
-				v := n.Args[0].Indexings[0].Head
-				s.addStyling(v.Begin(), v.End(), styleForGoodVariable.String())
-			}
-		}
-	case *parse.Control:
-		switch n.Kind {
-		case parse.TryControl:
-			if n.ExceptVar != nil {
-				v := n.ExceptVar.Head
-				s.addStyling(v.Begin(), v.End(), styleForGoodVariable.String())
+		if n.Head != nil {
+			// Special forms
+			switch n.Head.SourceText() {
+			case "for":
+				if len(n.Args) >= 1 && len(n.Args[0].Indexings) > 0 {
+					v := n.Args[0].Indexings[0].Head
+					s.addStyling(v.Begin(), v.End(), styleForGoodVariable.String())
+				}
+				if len(n.Args) >= 4 && n.Args[3].SourceText() == "else" {
+					a := n.Args[3]
+					s.addStyling(a.Begin(), a.End(), styleForSep["else"])
+				}
+			case "try":
+				i := 1
+				highlightKeyword := func(name string) bool {
+					if i >= len(n.Args) {
+						return false
+					}
+					a := n.Args[i]
+					if a.SourceText() == name {
+						s.addStyling(a.Begin(), a.End(), styleForSep[name])
+					}
+					return true
+				}
+				if highlightKeyword("except") {
+					if i+1 < len(n.Args) && len(n.Args[i+1].Indexings) > 0 {
+						v := n.Args[i+1].Indexings[0]
+						s.addStyling(v.Begin(), v.End(), styleForGoodVariable.String())
+					}
+					i += 3
+				}
+				if highlightKeyword("else") {
+					i += 2
+				}
+				highlightKeyword("finally")
 			}
 		}
 	case *parse.Primary:

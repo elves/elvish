@@ -105,16 +105,6 @@ var goodCases = []struct {
 			"Bodies":     []string{" echo then; ", " echo else if; "},
 			"ElseBody":   " echo else; ",
 		}}},
-	// try/except/else/finally/tried
-	{"try fail 2; except e; bad; else good; finally over; tried",
-		ast{"Chunk/Pipeline/Form/Control", fs{
-			"Kind":        TryControl,
-			"Body":        " fail 2; ",
-			"ExceptVar":   "e",
-			"ExceptBody":  " bad; ",
-			"ElseBody":    " good; ",
-			"FinallyBody": " over; ",
-		}}},
 
 	// Compound
 	{`a b"foo"?$c*'xyz'`, a(ast{"Compound", fs{
