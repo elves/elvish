@@ -232,14 +232,7 @@ func compileWhile(cp *compiler, fn *parse.Form) OpFunc {
 	bodyOp := cp.compoundOp(bodyNode)
 
 	return func(ec *EvalCtx) {
-		bodies := bodyOp.Exec(ec)
-		if len(bodies) != 1 {
-			ec.errorpf(bodyOp.Begin, bodyOp.End, "should be one fn")
-		}
-		body, ok := bodies[0].(Fn)
-		if !ok {
-			ec.errorpf(bodyOp.Begin, bodyOp.End, "should be one fn")
-		}
+		body := bodyOp.execMustOneFn(ec)
 
 		for {
 			cond := condOp.Exec(ec)
@@ -297,27 +290,8 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 			ec.errorpf(iterOp.Begin, iterOp.End, "should be one iterable")
 		}
 
-		bodies := bodyOp.Exec(ec)
-		if len(bodies) != 1 {
-			ec.errorpf(bodyOp.Begin, bodyOp.End, "should be one fn")
-		}
-		body, ok := bodies[0].(Fn)
-		if !ok {
-			ec.errorpf(bodyOp.Begin, bodyOp.End, "should be one fn")
-		}
-
-		var elseBody Fn
-		if elseOp.Func != nil {
-			elseBodies := elseOp.Exec(ec)
-			if len(elseBodies) != 1 {
-				ec.errorpf(elseOp.Begin, elseOp.End, "should be one fn")
-			}
-			var ok bool
-			elseBody, ok = elseBodies[0].(Fn)
-			if !ok {
-				ec.errorpf(elseOp.Begin, elseOp.End, "should be one fn")
-			}
-		}
+		body := bodyOp.execMustOneFn(ec)
+		elseBody := elseOp.execMustOneFn(ec)
 
 		iterated := false
 		iterable.Iterate(func(v Value) bool {
@@ -341,4 +315,20 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 			elseBody.Call(ec, NoArgs, NoOpts)
 		}
 	}
+}
+
+func (op ValuesOp) execMustOneFn(ec *EvalCtx) Fn {
+	if op.Func == nil {
+		return nil
+	}
+
+	values := op.Exec(ec)
+	if len(values) != 1 {
+		ec.errorpf(op.Begin, op.End, "should be one fn")
+	}
+	fn, ok := values[0].(Fn)
+	if !ok {
+		ec.errorpf(op.Begin, op.End, "should be one fn")
+	}
+	return fn
 }
