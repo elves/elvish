@@ -90,28 +90,14 @@ func makeFnOp(op Op) Op {
 //
 // fn f []{foobar} is a shorthand for set '&'f = []{foobar}.
 func compileFn(cp *compiler, fn *parse.Form) OpFunc {
-	if len(fn.Args) == 0 {
-		end := fn.End()
-		cp.errorpf(end, end, "should be followed by function name")
-	}
-	fnName := mustString(cp, fn.Args[0], "must be a literal string")
-	varName := FnPrefix + fnName
-
-	if len(fn.Args) == 1 {
-		end := fn.Args[0].End()
-		cp.errorpf(end, end, "should be followed by a lambda")
-	}
-	pn := mustPrimary(cp, fn.Args[1], "should be a lambda")
-	if pn.Type != parse.Lambda {
-		cp.compiling(pn)
-		cp.errorf("should be a lambda")
-	}
-	if len(fn.Args) > 2 {
-		cp.errorpf(fn.Args[2].Begin(), fn.Args[len(fn.Args)-1].End(), "superfluous argument(s)")
-	}
+	args := cp.walkArgs(fn)
+	nameNode := args.next()
+	varName := FnPrefix + mustString(cp, nameNode, "must be a literal string")
+	bodyNode := args.nextMustLambda()
+	args.mustEnd()
 
 	cp.registerVariableSet(":" + varName)
-	op := cp.lambda(pn)
+	op := cp.lambda(bodyNode)
 
 	return func(ec *EvalCtx) {
 		// Initialize the function variable with the builtin nop
