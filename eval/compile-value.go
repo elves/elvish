@@ -237,12 +237,12 @@ func variable(qname string) ValuesOpFunc {
 		}
 		value := variable.Get()
 		if explode {
-			iterator, ok := value.(Iterator)
+			iterator, ok := value.(Iterable)
 			if !ok {
 				// Use qname[1:] to skip the leading "@"
 				throwf("variable $%s (kind %s) cannot be exploded", qname[1:], value.Kind())
 			}
-			return collectFromIterator(iterator)
+			return collectFromIterable(iterator)
 		}
 		return []Value{value}
 	}

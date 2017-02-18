@@ -22,7 +22,7 @@ type Closure struct {
 	Source     string
 }
 
-var _ FnValue = &Closure{}
+var _ CallableValue = &Closure{}
 
 func (*Closure) Kind() string {
 	return "fn"

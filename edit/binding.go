@@ -9,7 +9,7 @@ import (
 // BindingTable adapts a binding table to eval.IndexSetter, so that it can be
 // manipulated in elvish script.
 type BindingTable struct {
-	inner map[uitypes.Key]eval.FnValue
+	inner map[uitypes.Key]eval.CallableValue
 }
 
 func (BindingTable) Kind() string {
@@ -31,7 +31,7 @@ func (bt BindingTable) IndexOne(idx eval.Value) eval.Value {
 
 func (bt BindingTable) IndexSet(idx, v eval.Value) {
 	key := uitypes.ToKey(idx)
-	f, ok := v.(eval.FnValue)
+	f, ok := v.(eval.CallableValue)
 	if !ok {
 		throwf("want function, got %s", v.Kind())
 	}

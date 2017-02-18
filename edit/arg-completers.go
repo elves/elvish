@@ -37,7 +37,7 @@ func completeArg(words []string, ev *eval.Evaler) ([]*candidate, error) {
 	} else {
 		v = m.IndexOne(eval.String(""))
 	}
-	fn, ok := v.(eval.FnValue)
+	fn, ok := v.(eval.CallableValue)
 	if !ok {
 		return nil, ErrCompleterMustBeFn
 	}
@@ -49,7 +49,7 @@ type builtinArgCompleter struct {
 	impl func([]string, *eval.Evaler) ([]*candidate, error)
 }
 
-var _ eval.FnValue = &builtinArgCompleter{}
+var _ eval.CallableValue = &builtinArgCompleter{}
 
 func (bac *builtinArgCompleter) Kind() string {
 	return "fn"

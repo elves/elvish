@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func defaultPrompts() (eval.FnValue, eval.FnValue) {
+func defaultPrompts() (eval.CallableValue, eval.CallableValue) {
 	// Make default prompts.
 	prompt := func(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 		out := ec.OutputChan()

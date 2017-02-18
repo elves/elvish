@@ -60,12 +60,12 @@ func (s String) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 	resolve(string(s), ec).Call(ec, args, opts)
 }
 
-func resolve(s string, ec *EvalCtx) FnValue {
+func resolve(s string, ec *EvalCtx) CallableValue {
 	// Try variable
 	explode, ns, name := ParseAndFixVariable(string(s))
 	if !explode {
 		if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
-			if caller, ok := v.Get().(FnValue); ok {
+			if caller, ok := v.Get().(CallableValue); ok {
 				return caller
 			}
 		}

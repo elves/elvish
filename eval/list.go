@@ -17,7 +17,7 @@ var (
 
 type ListLike interface {
 	Lener
-	Iterator
+	Iterable
 	IndexOneer
 }
 

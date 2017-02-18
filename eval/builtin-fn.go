@@ -37,7 +37,7 @@ type BuiltinFn struct {
 	Impl func(*EvalCtx, []Value, map[string]Value)
 }
 
-var _ FnValue = &BuiltinFn{}
+var _ CallableValue = &BuiltinFn{}
 
 func (*BuiltinFn) Kind() string {
 	return "fn"
@@ -311,7 +311,7 @@ func WrapFn(inner interface{}, optSpecs ...OptSpec) func(*EvalCtx, []Value, map[
 				convertedArgs = append(convertedArgs, reflect.Value{})
 				iterate = ec.IterateInputs
 			} else {
-				iterator, ok := args[nFixedArgs].(Iterator)
+				iterator, ok := args[nFixedArgs].(Iterable)
 				if !ok {
 					throw(errors.New("bad argument: need iterator, got " + args[nFixedArgs].Kind()))
 				}
@@ -537,7 +537,7 @@ func toLines(ec *EvalCtx, iterate func(func(Value))) {
 }
 
 // unpack puts each element of the argument.
-func unpack(ec *EvalCtx, v IteratorValue) {
+func unpack(ec *EvalCtx, v IterableValue) {
 	out := ec.ports[1].Chan
 	v.Iterate(func(e Value) bool {
 		out <- e
@@ -610,7 +610,7 @@ func fromJSON(ec *EvalCtx) {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
+func each(ec *EvalCtx, f CallableValue, iterate func(func(Value))) {
 	broken := false
 	iterate(func(v Value) {
 		if broken {
@@ -637,7 +637,7 @@ func each(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
 }
 
 // peach takes a single closure and applies it to all input values in parallel.
-func peach(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
+func peach(ec *EvalCtx, f CallableValue, iterate func(func(Value))) {
 	var w sync.WaitGroup
 
 	broken := false
@@ -679,7 +679,7 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // stripping the line and splitting the line by whitespaces. The function may
 // call break and continue. Overall this provides a similar functionality to
 // awk, hence the name.
-func eawk(ec *EvalCtx, f FnValue, iterate func(func(Value))) {
+func eawk(ec *EvalCtx, f CallableValue, iterate func(func(Value))) {
 	broken := false
 	iterate(func(v Value) {
 		if broken {
@@ -1042,7 +1042,7 @@ func count(ec *EvalCtx, args []Value, opts map[string]Value) {
 		v := args[0]
 		if lener, ok := v.(Lener); ok {
 			n = lener.Len()
-		} else if iterator, ok := v.(Iterator); ok {
+		} else if iterator, ok := v.(Iterable); ok {
 			iterator.Iterate(func(Value) bool {
 				n++
 				return true
@@ -1159,7 +1159,7 @@ func _log(ec *EvalCtx, fname string) {
 	maybeThrow(util.SetOutputFile(fname))
 }
 
-func _time(ec *EvalCtx, f FnValue) {
+func _time(ec *EvalCtx, f CallableValue) {
 	t0 := time.Now()
 	f.Call(ec, NoArgs, NoOpts)
 	t1 := time.Now()

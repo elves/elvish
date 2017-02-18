@@ -12,7 +12,7 @@ import (
 // CallFn calls an Fn, displaying its outputs and possible errors as editor
 // notifications. It is the preferred way to call a Fn while the editor is
 // active.
-func (ed *Editor) CallFn(fn eval.FnValue, args ...eval.Value) {
+func (ed *Editor) CallFn(fn eval.CallableValue, args ...eval.Value) {
 	if b, ok := fn.(*BuiltinFn); ok {
 		// Builtin function: quick path.
 		b.impl(ed)
@@ -81,7 +81,7 @@ func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
 
 // callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
 // arguments and closed input, and converts its outputs to styled objects.
-func callPrompt(ed *Editor, fn eval.Fn) []*styled {
+func callPrompt(ed *Editor, fn eval.Callable) []*styled {
 	ports := []*eval.Port{eval.DevNullClosedChan, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
@@ -106,7 +106,7 @@ func callPrompt(ed *Editor, fn eval.Fn) []*styled {
 // callArgCompleter calls a Fn, assuming that it is an arg completer. It calls
 // the Fn with specified arguments and closed input, and converts its output to
 // candidate objects.
-func callArgCompleter(fn eval.FnValue, ev *eval.Evaler, words []string) ([]*candidate, error) {
+func callArgCompleter(fn eval.CallableValue, ev *eval.Evaler, words []string) ([]*candidate, error) {
 	// Quick path for builtin arg completers.
 	if builtin, ok := fn.(*builtinArgCompleter); ok {
 		return builtin.impl(words, ev)

@@ -24,7 +24,7 @@ func ShouldBeMap(v Value) error {
 }
 
 func ShouldBeFn(v Value) error {
-	if _, ok := v.(Fn); !ok {
+	if _, ok := v.(Callable); !ok {
 		return errShouldBeFn
 	}
 	return nil

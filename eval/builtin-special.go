@@ -245,7 +245,7 @@ func compileIf(cp *compiler, fn *parse.Form) OpFunc {
 	}
 
 	return func(ec *EvalCtx) {
-		bodies := make([]Fn, len(bodyOps))
+		bodies := make([]Callable, len(bodyOps))
 		for i, bodyOp := range bodyOps {
 			bodies[i] = bodyOp.execMustOneFn(ec)
 		}
@@ -325,7 +325,7 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 		if len(iterables) != 1 {
 			ec.errorpf(iterOp.Begin, iterOp.End, "should be one iterable")
 		}
-		iterable, ok := iterables[0].(Iterator)
+		iterable, ok := iterables[0].(Iterable)
 		if !ok {
 			ec.errorpf(iterOp.Begin, iterOp.End, "should be one iterable")
 		}
@@ -425,7 +425,7 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 
 // execMustOneFn executes the ValuesOp and raises an exception if it does not
 // evaluate to exactly one Fn. If the given ValuesOp is empty, it returns nil.
-func (op ValuesOp) execMustOneFn(ec *EvalCtx) Fn {
+func (op ValuesOp) execMustOneFn(ec *EvalCtx) Callable {
 	if op.Func == nil {
 		return nil
 	}
@@ -434,7 +434,7 @@ func (op ValuesOp) execMustOneFn(ec *EvalCtx) Fn {
 	if len(values) != 1 {
 		ec.errorpf(op.Begin, op.End, "should be one fn")
 	}
-	fn, ok := values[0].(Fn)
+	fn, ok := values[0].(Callable)
 	if !ok {
 		ec.errorpf(op.Begin, op.End, "should be one fn")
 	}

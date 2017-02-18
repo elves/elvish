@@ -228,7 +228,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			}()
 		}
 
-		var headFn Fn
+		var headFn Callable
 		var args []Value
 		if headOp.Func != nil {
 			// head

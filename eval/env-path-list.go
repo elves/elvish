@@ -39,7 +39,7 @@ func (epl *EnvPathList) Get() Value {
 }
 
 func (epl *EnvPathList) Set(v Value) {
-	iterator, ok := v.(Iterator)
+	iterator, ok := v.(Iterable)
 	if !ok {
 		throw(ErrCanOnlyAssignList)
 	}

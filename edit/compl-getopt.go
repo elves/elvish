@@ -9,11 +9,11 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.IteratorValue, argsv eval.IteratorValue) {
+func complGetopt(ec *eval.EvalCtx, elemsv eval.IterableValue, optsv eval.IterableValue, argsv eval.IterableValue) {
 	var (
 		elems    []string
 		opts     []*getopt.Option
-		args     []eval.FnValue
+		args     []eval.CallableValue
 		variadic bool
 	)
 	desc := make(map[*getopt.Option]string)
@@ -74,7 +74,7 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 			}
 			throwf("string except for ... not allowed as argument handler, got %s", parse.Quote(string(sv)))
 		}
-		arg, ok := v.(eval.FnValue)
+		arg, ok := v.(eval.CallableValue)
 		if !ok {
 			throwf("argument handler should be fn, got %s", v.Kind())
 		}
@@ -104,7 +104,7 @@ func complGetopt(ec *eval.EvalCtx, elemsv eval.IteratorValue, optsv eval.Iterato
 	switch ctx.Type {
 	case getopt.NewOptionOrArgument, getopt.Argument:
 		// Find argument completer
-		var argCompl eval.FnValue
+		var argCompl eval.CallableValue
 		if len(parsedArgs) < len(args) {
 			argCompl = args[len(parsedArgs)]
 		} else if variadic {

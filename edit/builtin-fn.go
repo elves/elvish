@@ -18,7 +18,7 @@ type BuiltinFn struct {
 	impl func(ed *Editor)
 }
 
-var _ eval.FnValue = &BuiltinFn{}
+var _ eval.CallableValue = &BuiltinFn{}
 
 func (*BuiltinFn) Kind() string {
 	return "fn"
@@ -213,7 +213,7 @@ var defaultBindings = map[ModeType]map[uitypes.Key]string{
 
 var (
 	builtinMap  = map[string]*BuiltinFn{}
-	keyBindings = map[ModeType]map[uitypes.Key]eval.FnValue{}
+	keyBindings = map[ModeType]map[uitypes.Key]eval.CallableValue{}
 )
 
 func init() {
@@ -228,7 +228,7 @@ func init() {
 		builtinMap[b.name] = b
 	}
 	for mode, table := range defaultBindings {
-		keyBindings[mode] = map[uitypes.Key]eval.FnValue{}
+		keyBindings[mode] = map[uitypes.Key]eval.CallableValue{}
 		for key, name := range table {
 			fn, ok := builtinMap[name]
 			if !ok {

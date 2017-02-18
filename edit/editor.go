@@ -359,8 +359,8 @@ func (ed *Editor) ReadLine() (line string, err error) {
 
 MainLoop:
 	for {
-		ed.promptContent = callPrompt(ed, ed.prompt.Get().(eval.Fn))
-		ed.rpromptContent = callPrompt(ed, ed.rprompt.Get().(eval.Fn))
+		ed.promptContent = callPrompt(ed, ed.prompt.Get().(eval.Callable))
+		ed.rpromptContent = callPrompt(ed, ed.rprompt.Get().(eval.Callable))
 
 		err := ed.refresh(fullRefresh, true)
 		fullRefresh = false
@@ -481,7 +481,7 @@ func callHooks(ev *eval.Evaler, li eval.List, args ...eval.Value) {
 
 	opfunc := func(ec *eval.EvalCtx) {
 		li.Iterate(func(v eval.Value) bool {
-			fn, ok := v.(eval.FnValue)
+			fn, ok := v.(eval.CallableValue)
 			if !ok {
 				fmt.Fprintf(os.Stderr, "not a function: %s\n", v.Repr(eval.NoPretty))
 				return true

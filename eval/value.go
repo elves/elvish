@@ -56,17 +56,17 @@ type Lener interface {
 	Len() int
 }
 
-// Iterator is anything that can be iterated.
-type Iterator interface {
+// Iterable is anything that can be iterated.
+type Iterable interface {
 	Iterate(func(Value) bool)
 }
 
-type IteratorValue interface {
-	Iterator
+type IterableValue interface {
+	Iterable
 	Value
 }
 
-func collectFromIterator(it Iterator) []Value {
+func collectFromIterable(it Iterable) []Value {
 	var vs []Value
 	if lener, ok := it.(Lener); ok {
 		vs = make([]Value, 0, lener.Len())
@@ -88,18 +88,18 @@ var (
 	NoOpts = map[string]Value{}
 )
 
-// Fn is anything may be called on an evalCtx with a list of Value's.
-type Fn interface {
+// Callable is anything may be called on an evalCtx with a list of Value's.
+type Callable interface {
 	Call(ec *EvalCtx, args []Value, opts map[string]Value)
 }
 
-type FnValue interface {
+type CallableValue interface {
 	Value
-	Fn
+	Callable
 }
 
-func mustFn(v Value) Fn {
-	fn, ok := v.(Fn)
+func mustFn(v Value) Callable {
+	fn, ok := v.(Callable)
 	if !ok {
 		throw(fmt.Errorf("a %s is not callable", v.Kind()))
 	}
