@@ -16,12 +16,17 @@ func (aw *argsWalker) more() bool {
 	return aw.idx < len(aw.form.Args)
 }
 
-func (aw *argsWalker) next() *parse.Compound {
+func (aw *argsWalker) peek() *parse.Compound {
 	if !aw.more() {
 		aw.cp.errorpf(aw.form.End(), aw.form.End(), "need more arguments")
 	}
+	return aw.form.Args[aw.idx]
+}
+
+func (aw *argsWalker) next() *parse.Compound {
+	n := aw.peek()
 	aw.idx++
-	return aw.form.Args[aw.idx-1]
+	return n
 }
 
 // nextIs returns whether the next argument's source matches the given text. It
@@ -34,9 +39,26 @@ func (aw *argsWalker) nextIs(text string) bool {
 	return false
 }
 
-func (aw *argsWalker) nextLedBy(leader string) *parse.Compound {
+// nextMustLambda fetches the next argument, raising an error if it is not a
+// lambda.
+func (aw *argsWalker) nextMustLambda() *parse.Primary {
+	n := aw.next()
+	if len(n.Indexings) != 1 {
+		aw.cp.errorpf(n.Begin(), n.End(), "must be lambda")
+	}
+	if len(n.Indexings[0].Indicies) != 0 {
+		aw.cp.errorpf(n.Begin(), n.End(), "must be lambda")
+	}
+	pn := n.Indexings[0].Head
+	if pn.Type != parse.Lambda {
+		aw.cp.errorpf(n.Begin(), n.End(), "must be lambda")
+	}
+	return pn
+}
+
+func (aw *argsWalker) nextMustLambdaIfAfter(leader string) *parse.Primary {
 	if aw.nextIs(leader) {
-		return aw.next()
+		return aw.nextMustLambda()
 	}
 	return nil
 }

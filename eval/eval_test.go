@@ -79,7 +79,7 @@ var evalTests = []struct {
 	{"if $false { put 2 } elif true { put 2 } else { put 3 }",
 		strs("2"), nomore},
 	// try
-	{"try { nop } except - { put bad } else { put good }", strs("good"), nomore},
+	{"try { nop } except { put bad } else { put good }", strs("good"), nomore},
 	{"try { e:false } except - { put bad } else { put good }", strs("bad"), nomore},
 	// while
 	{"x=0; while (< $x 4) { put $x; x=(+ $x 1) }",

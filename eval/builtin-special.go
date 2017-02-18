@@ -226,30 +226,31 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 
 func compileIf(cp *compiler, fn *parse.Form) OpFunc {
 	args := cp.walkArgs(fn)
-	var condNodes, bodyNodes []*parse.Compound
+	var condNodes []*parse.Compound
+	var bodyNodes []*parse.Primary
 	for {
 		condNodes = append(condNodes, args.next())
-		bodyNodes = append(bodyNodes, args.next())
+		bodyNodes = append(bodyNodes, args.nextMustLambda())
 		if !args.nextIs("elif") {
 			break
 		}
 	}
-	elseNode := args.nextLedBy("else")
+	elseNode := args.nextMustLambdaIfAfter("else")
 	args.mustEnd()
 
 	condOps := cp.compoundOps(condNodes)
-	bodyOps := cp.compoundOps(bodyNodes)
+	bodyOps := cp.primaryOps(bodyNodes)
 	var elseOp ValuesOp
 	if elseNode != nil {
-		elseOp = cp.compoundOp(elseNode)
+		elseOp = cp.primaryOp(elseNode)
 	}
 
 	return func(ec *EvalCtx) {
 		bodies := make([]Callable, len(bodyOps))
 		for i, bodyOp := range bodyOps {
-			bodies[i] = bodyOp.execMustOneFn(ec)
+			bodies[i] = bodyOp.execlambdaOp(ec)
 		}
-		else_ := elseOp.execMustOneFn(ec)
+		else_ := elseOp.execlambdaOp(ec)
 		for i, condOp := range condOps {
 			if allTrue(condOp.Exec(ec)) {
 				bodies[i].Call(ec, NoArgs, NoOpts)
@@ -265,14 +266,14 @@ func compileIf(cp *compiler, fn *parse.Form) OpFunc {
 func compileWhile(cp *compiler, fn *parse.Form) OpFunc {
 	args := cp.walkArgs(fn)
 	condNode := args.next()
-	bodyNode := args.next()
+	bodyNode := args.nextMustLambda()
 	args.mustEnd()
 
 	condOp := cp.compoundOp(condNode)
-	bodyOp := cp.compoundOp(bodyNode)
+	bodyOp := cp.primaryOp(bodyNode)
 
 	return func(ec *EvalCtx) {
-		body := bodyOp.execMustOneFn(ec)
+		body := bodyOp.execlambdaOp(ec)
 
 		for {
 			cond := condOp.Exec(ec)
@@ -298,8 +299,8 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 	args := cp.walkArgs(fn)
 	varNode := args.next()
 	iterNode := args.next()
-	bodyNode := args.next()
-	elseNode := args.nextLedBy("else")
+	bodyNode := args.nextMustLambda()
+	elseNode := args.nextMustLambdaIfAfter("else")
 	args.mustEnd()
 
 	varOp, restOp := cp.lvaluesOp(varNode.Indexings[0])
@@ -308,10 +309,10 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 	}
 
 	iterOp := cp.compoundOp(iterNode)
-	bodyOp := cp.compoundOp(bodyNode)
+	bodyOp := cp.primaryOp(bodyNode)
 	var elseOp ValuesOp
 	if elseNode != nil {
-		elseOp = cp.compoundOp(elseNode)
+		elseOp = cp.primaryOp(elseNode)
 	}
 
 	return func(ec *EvalCtx) {
@@ -330,8 +331,8 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 			ec.errorpf(iterOp.Begin, iterOp.End, "should be one iterable")
 		}
 
-		body := bodyOp.execMustOneFn(ec)
-		elseBody := elseOp.execMustOneFn(ec)
+		body := bodyOp.execlambdaOp(ec)
+		elseBody := elseOp.execlambdaOp(ec)
 
 		iterated := false
 		iterable.Iterate(func(v Value) bool {
@@ -360,48 +361,48 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 	Logger.Println("compiling try")
 	args := cp.walkArgs(fn)
-	bodyNode := args.next()
+	bodyNode := args.nextMustLambda()
 	Logger.Printf("body is %q", bodyNode.SourceText())
 	var exceptVarNode *parse.Indexing
-	var exceptNode *parse.Compound
+	var exceptNode *parse.Primary
 	if args.nextIs("except") {
 		Logger.Println("except-ing")
-		n := args.next()
-		if len(n.Indexings) != 1 {
-			cp.errorpf(n.Begin(), n.End(), "should be one variable")
+		n := args.peek()
+		// Is this a variable?
+		if len(n.Indexings) == 1 && n.Indexings[0].Head.Type == parse.Bareword {
+			exceptVarNode = n.Indexings[0]
+			args.next()
 		}
-		exceptVarNode = n.Indexings[0]
-		exceptNode = args.next()
-		Logger.Printf("except-var = %q, except = %q", exceptVarNode.SourceText(), exceptNode.SourceText())
+		exceptNode = args.nextMustLambda()
 	}
-	elseNode := args.nextLedBy("else")
-	finallyNode := args.nextLedBy("finally")
+	elseNode := args.nextMustLambdaIfAfter("else")
+	finallyNode := args.nextMustLambdaIfAfter("finally")
 	args.mustEnd()
 
 	var exceptVarOp LValuesOp
 	var bodyOp, exceptOp, elseOp, finallyOp ValuesOp
-	bodyOp = cp.compoundOp(bodyNode)
+	bodyOp = cp.primaryOp(bodyNode)
 	if exceptVarNode != nil {
 		var restOp LValuesOp
 		exceptVarOp, restOp = cp.lvaluesOp(exceptVarNode)
 		if restOp.Func != nil {
 			cp.errorpf(restOp.Begin, restOp.End, "may not use @rest in except variable")
 		}
-		exceptOp = cp.compoundOp(exceptNode)
+		exceptOp = cp.primaryOp(exceptNode)
 	}
 	if elseNode != nil {
-		elseOp = cp.compoundOp(elseNode)
+		elseOp = cp.primaryOp(elseNode)
 	}
 	if finallyNode != nil {
-		finallyOp = cp.compoundOp(finallyNode)
+		finallyOp = cp.primaryOp(finallyNode)
 	}
 
 	return func(ec *EvalCtx) {
-		body := bodyOp.execMustOneFn(ec)
+		body := bodyOp.execlambdaOp(ec)
 		exceptVar := exceptVarOp.execMustOne(ec)
-		except := exceptOp.execMustOneFn(ec)
-		else_ := elseOp.execMustOneFn(ec)
-		finally := finallyOp.execMustOneFn(ec)
+		except := exceptOp.execlambdaOp(ec)
+		else_ := elseOp.execlambdaOp(ec)
+		finally := finallyOp.execlambdaOp(ec)
 
 		err := ec.PCall(body, NoArgs, NoOpts)
 		if err != nil {
@@ -423,22 +424,14 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 	}
 }
 
-// execMustOneFn executes the ValuesOp and raises an exception if it does not
-// evaluate to exactly one Fn. If the given ValuesOp is empty, it returns nil.
-func (op ValuesOp) execMustOneFn(ec *EvalCtx) Callable {
+// execLambdaOp executes a ValuesOp that is known to yield a lambda and returns
+// the lambda. If the ValuesOp is empty, it returns a nil.
+func (op ValuesOp) execlambdaOp(ec *EvalCtx) Callable {
 	if op.Func == nil {
 		return nil
 	}
 
-	values := op.Exec(ec)
-	if len(values) != 1 {
-		ec.errorpf(op.Begin, op.End, "should be one fn")
-	}
-	fn, ok := values[0].(Callable)
-	if !ok {
-		ec.errorpf(op.Begin, op.End, "should be one fn")
-	}
-	return fn
+	return op.Exec(ec)[0].(Callable)
 }
 
 // execMustOne executes the LValuesOp and raises an exception if it does not
