@@ -1,10 +1,6 @@
 package eval
 
-import (
-	"strings"
-
-	"github.com/elves/elvish/parse"
-)
+import "github.com/elves/elvish/parse"
 
 type argsWalker struct {
 	cp   *compiler
@@ -26,21 +22,6 @@ func (aw *argsWalker) next() *parse.Compound {
 	}
 	aw.idx++
 	return aw.form.Args[aw.idx-1]
-}
-
-func (aw *argsWalker) nextMustBeOneOf(valids ...string) {
-	n := aw.next()
-	text := n.SourceText()
-	for _, valid := range valids {
-		if text == valid {
-			return
-		}
-	}
-
-	if len(valids) == 1 {
-		aw.cp.errorpf(n.Begin(), n.End(), "should be %s", valids[0])
-	}
-	aw.cp.errorpf(n.Begin(), n.End(), "should be one of %s", strings.Join(valids, ","))
 }
 
 // nextIs returns whether the next argument's source matches the given text. It
