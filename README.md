@@ -42,9 +42,9 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
   ```sh
   # "tilde-abbr" abbreviates home directory to a tilde.
-  le:prompt={ tilde-abbr $pwd; put '❱ ' }
+  le:prompt = { tilde-abbr $pwd; put '❱ ' }
   # "constantly" returns a function that always writes the same value(s) to output.
-  le:rprompt=(constantly `whoami`✸`hostname`)
+  le:rprompt = (constantly `whoami`✸`hostname`)
   ```
 
 * Press Up to search through history. It uses what you have typed to do prefix match. To cancel, press Escape.
@@ -79,23 +79,30 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
 * Lists look like `[a b c]`, and maps look like `[&key1=value1 &key2=value2]`. Unlike other shells, a list never expands to multiple words, unless you explicitly explode it by prefixing the variable name with `@`:
   ```sh
-  ~> li=[1 2 3]
-  ~> for x in $li; do echo $x; done
-  [1 2 3]
-  ~> for x in $@li; do echo $x; done
-  1
-  2
-  3
-  ~> map=[&k1=v1 &k2=v2]
+  ~> li = [1 2 3]
+  ~> put $li
+  ▶ [1 2 3]
+  ~> put $@li
+  ▶ 1
+  ▶ 2
+  ▶ 3
+  ~> map = [&k1=v1 &k2=v2]
   ~> echo $map[k1]
   v1
   ```
 
-* You can manipulate search paths through the special list `$paths`:
+* Environment variables live in a separate `E:` (for "environment") namespace and must be explicitly qualified:
+  ```sh
+  ~> put $E:HOME
+  ▶ /home/xiaq
+  ~> E:PATH=$E:PATH":/bin"
+  ```
+
+* You can manipulate search paths through the special list `$paths`, which is synced with `$E:PATH`:
   ```sh
   ~> echo $paths
   [/bin /sbin]
-  ~> paths=[/opt/bin $@paths /usr/bin]
+  ~> paths = [/opt/bin $@paths /usr/bin]
   ~> echo $paths
   [/opt/bin /bin /sbin /usr/bin]
   ~> echo $E:PATH
@@ -108,16 +115,9 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
   **NOTE**: Bindings for letters modified by Alt are case-sensitive. For instance, `Alt-a` means pressing `Alt` and `A`, while `Alt-A` means pressing `Alt`, `Shift` and `A`.
 
-* Environment variables live in a separate `E:` (for "environment") namespace and must be explicitly qualified:
-  ```sh
-  ~> put $E:HOME
-  ▶ /home/xiaq
-  ~> E:PATH=$E:PATH":/bin"
-  ```
-
 * There is no interpolation inside double quotes (yet). Use implicit string concatenation:
   ```sh
-  ~> name=xiaq
+  ~> name = xiaq
   ~> echo "My name is "$name"."
   My name is xiaq.
   ```
