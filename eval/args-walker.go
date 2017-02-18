@@ -44,13 +44,10 @@ func (aw *argsWalker) nextMustBeOneOf(valids ...string) {
 }
 
 func (aw *argsWalker) nextLedBy(leader string) *parse.Compound {
-	if !aw.more() {
+	if !aw.more() || aw.form.Args[aw.idx].SourceText() != leader {
 		return nil
 	}
-	n := aw.next()
-	if n.SourceText() != leader {
-		aw.cp.errorpf(n.Begin(), n.End(), "should be %s", leader)
-	}
+	aw.next()
 	return aw.next()
 }
 
