@@ -39,6 +39,7 @@ type Editor struct {
 	rprompt       eval.Variable
 	abbreviations map[string]string
 
+	locationHidden    eval.Variable
 	rpromptPersistent eval.Variable
 	beforeReadLine    eval.Variable
 	afterReadLine     eval.Variable
@@ -115,6 +116,7 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 
 		abbreviations: make(map[string]string),
 
+		locationHidden:    eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
 		rpromptPersistent: eval.NewPtrVariableWithValidator(eval.Bool(false), eval.ShouldBeBool),
 
 		beforeReadLine: eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),

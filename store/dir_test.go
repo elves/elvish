@@ -6,7 +6,8 @@ import (
 )
 
 var (
-	dirsToAdd  = []string{"/usr", "/usr/bin", "/usr"}
+	dirsToAdd  = []string{"/usr/local", "/usr", "/usr/bin", "/usr"}
+	black      = map[string]struct{}{"/usr/local": {}}
 	wantedDirs = []Dir{
 		Dir{"/usr", scoreIncrement*scoreDecay*scoreDecay + scoreIncrement},
 		Dir{"/usr/bin", scoreIncrement * scoreDecay}}
@@ -20,7 +21,7 @@ func TestDir(t *testing.T) {
 		}
 	}
 
-	dirs, err := tStore.ListDirs()
+	dirs, err := tStore.ListDirs(black)
 	if err != nil || !reflect.DeepEqual(dirs, wantedDirs) {
 		t.Errorf(`tStore.ListDirs() => (%v, %v), want (%v, <nil>)`,
 			dirs, err, wantedDirs)

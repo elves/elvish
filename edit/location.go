@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 )
@@ -103,7 +104,8 @@ func startLocation(ed *Editor) {
 		ed.Notify("%v", ErrStoreOffline)
 		return
 	}
-	dirs, err := ed.store.ListDirs()
+	black := convertBlacklist(ed.locationHidden.Get().(eval.List))
+	dirs, err := ed.store.ListDirs(black)
 	if err != nil {
 		ed.Notify("store error: %v", err)
 		return
@@ -111,4 +113,16 @@ func startLocation(ed *Editor) {
 
 	ed.location = newLocation(dirs)
 	ed.mode = ed.location
+}
+
+func convertBlacklist(li eval.List) map[string]struct{} {
+	black := make(map[string]struct{})
+	// XXX(xiaq): silently drops non-string items.
+	li.Iterate(func(v eval.Value) bool {
+		if s, ok := v.(eval.String); ok {
+			black[string(s)] = struct{}{}
+		}
+		return true
+	})
+	return black
 }

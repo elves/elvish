@@ -25,6 +25,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -774,7 +775,7 @@ func dirs(ec *EvalCtx) {
 	if ec.Store == nil {
 		throw(ErrStoreNotConnected)
 	}
-	dirs, err := ec.Store.ListDirs()
+	dirs, err := ec.Store.ListDirs(store.NoBlacklist)
 	if err != nil {
 		throw(errors.New("store error: " + err.Error()))
 	}

@@ -78,6 +78,8 @@ func makeModule(ed *Editor) eval.Namespace {
 
 	ns["abbr"] = eval.NewRoVariable(eval.MapStringString(ed.abbreviations))
 
+	ns["loc-hidden"] = ed.locationHidden
+
 	ns["before-readline"] = ed.beforeReadLine
 	ns["after-readline"] = ed.afterReadLine
 

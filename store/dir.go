@@ -13,6 +13,8 @@ const (
 	scoreIncrement = 10
 )
 
+var NoBlacklist = map[string]struct{}{}
+
 func init() {
 	initDB["initialize directory history table"] = func(db *sql.DB) error {
 		_, err := db.Exec(`create table if not exists dir (path text unique primary key, score real default 0)`)
@@ -41,18 +43,18 @@ func (s *Store) AddDir(d string, incFactor float64) error {
 	})
 }
 
-// ListDirs lists all directories in the directory history. The results are
-// ordered by scores in descending order.
-func (s *Store) ListDirs() ([]Dir, error) {
+// ListDirs lists all directories in the directory history whose names are not
+// in the blacklist. The results are ordered by scores in descending order.
+func (s *Store) ListDirs(blacklist map[string]struct{}) ([]Dir, error) {
 	rows, err := s.db.Query(
 		"select path, score from dir order by score desc")
 	if err != nil {
 		return nil, err
 	}
-	return convertDirs(rows)
+	return convertDirs(rows, blacklist)
 }
 
-func convertDirs(rows *sql.Rows) ([]Dir, error) {
+func convertDirs(rows *sql.Rows, blacklist map[string]struct{}) ([]Dir, error) {
 	var (
 		dir  Dir
 		dirs []Dir
@@ -60,7 +62,9 @@ func convertDirs(rows *sql.Rows) ([]Dir, error) {
 
 	for rows.Next() {
 		rows.Scan(&dir.Path, &dir.Score)
-		dirs = append(dirs, dir)
+		if _, black := blacklist[dir.Path]; !black {
+			dirs = append(dirs, dir)
+		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
