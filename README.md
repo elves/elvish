@@ -28,6 +28,8 @@ See also [Building Elvish](#building-elvish).
 
 ## Getting Started
 
+**Note**: Elvish is constantly tested under Terminal.app, libvte-based terminals and tmux. Some function keys might not work in other terminals like xterm (#328).
+
 Elvish mimics bash and zsh in a lot of places. The following shows some key differences and highlights, as well as some common tasks:
 
 * Put your startup script in `~/.elvish/rc.elv`. There is no `alias` yet, but you can achieve the goal by defining a function:
