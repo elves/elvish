@@ -10,12 +10,14 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/util"
 )
 
 // Location mode.
 
 type location struct {
 	listing
+	home     string
 	all      []store.Dir
 	filtered []store.Dir
 }
@@ -23,6 +25,10 @@ type location struct {
 func newLocation(dirs []store.Dir) *location {
 	loc := &location{all: dirs}
 	loc.listing = newListing(modeLocation, loc)
+	home, err := util.GetHome("")
+	if err == nil {
+		loc.home = home
+	}
 	return loc
 }
 
@@ -39,13 +45,21 @@ func (loc *location) Len() int {
 }
 
 func (loc *location) Show(i int) (string, styled) {
-	cand := loc.filtered[i]
-	return fmt.Sprintf("%.0f", cand.Score), unstyled(parse.Quote(cand.Path))
+	header := fmt.Sprintf("%.0f", loc.filtered[i].Score)
+	path := loc.filtered[i].Path
+	if path == loc.home {
+		path = "~"
+	} else if strings.HasPrefix(path, loc.home+"/") {
+		path = "~/" + parse.Quote(path[len(loc.home)+1:])
+	} else {
+		path = parse.Quote(path)
+	}
+	return header, unstyled(path)
 }
 
 func (loc *location) Filter(filter string) int {
 	loc.filtered = nil
-	pattern := makeLocationFilterPattern(filter)
+	pattern := makeLocationFilterPattern(filter, loc.home)
 	for _, item := range loc.all {
 		if pattern.MatchString(item.Path) {
 			loc.filtered = append(loc.filtered, item)
@@ -60,7 +74,13 @@ func (loc *location) Filter(filter string) int {
 
 var emptyRegexp = regexp.MustCompile("")
 
-func makeLocationFilterPattern(s string) *regexp.Regexp {
+func makeLocationFilterPattern(s, home string) *regexp.Regexp {
+	// First expand tilde.
+	if s == "~" {
+		s = home
+	} else if len(s) >= 2 && s[:2] == "~/" {
+		s = home + "/" + s[2:]
+	}
 	var b bytes.Buffer
 	b.WriteString(".*")
 	segs := strings.Split(s, "/")
