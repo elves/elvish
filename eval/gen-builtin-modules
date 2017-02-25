@@ -1,16 +1,16 @@
-#!/bin/bash
+#!/usr/bin/env elvish
 
-out=./builtin-modules.go
+out = ./builtin-modules.go
 
 {
 	echo "package eval"
 	echo "var builtinModules = map[string]string{"
 
-	for f in *.elv; do
-		echo -n "\"${f%.elv}\": \`"
+	for f [*.elv] {
+		print '"'$f[:-4]'": `'
 		cat $f | sed 's/`/``/g'
 		echo '`,'
-	done
+    }
 
 	echo "}"
 } > $out

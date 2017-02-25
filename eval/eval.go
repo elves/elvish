@@ -2,7 +2,7 @@
 // shell.
 package eval
 
-//go:generate ./builtin-modules.bash
+//go:generate ./gen-builtin-modules
 
 import (
 	"bufio"
