@@ -1,15 +1,13 @@
-// Package run is the entry point of elvish.
-package run
+// Package shell is the entry point of elvish.
+package shell
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/signal"
-	"runtime/pprof"
 	"syscall"
 	"time"
 	"unicode/utf8"
@@ -21,59 +19,26 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var Logger = util.GetLogger("[main] ")
+var Logger = util.GetLogger("[shell] ")
 
-var (
-	log        = flag.String("log", "", "a file to write debug log to")
-	dbname     = flag.String("db", "", "path to the database")
-	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-	help       = flag.Bool("help", false, "show usage help and quit")
-	cmd        = flag.Bool("c", false, "take first argument as a command to execute")
-)
+// Shell keeps flags to the shell.
+type Shell struct {
+	dbname string
+	cmd    bool
+}
 
-func usage() {
-	fmt.Println("usage: elvish [flags] [script]")
-	fmt.Println("flags:")
-	flag.PrintDefaults()
+func NewShell(dbname string, cmd bool) *Shell {
+	return &Shell{dbname, cmd}
 }
 
 // Main is the entry point of elvish.
-func Main() {
+func (sh *Shell) Main(arg *string) int {
 	defer rescue()
-
-	flag.Usage = usage
-	flag.Parse()
-	args := flag.Args()
-
-	if len(args) > 1 {
-		usage()
-		os.Exit(2)
-	}
-
-	if *help {
-		usage()
-		os.Exit(0)
-	}
-
-	if *log != "" {
-		err := util.SetOutputFile(*log)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			Logger.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
 
 	handleUsr1AndQuit()
 	logSignals()
 
-	ev, st := newEvalerAndStore()
+	ev, st := newEvalerAndStore(sh.dbname)
 	defer func() {
 		err := st.Close()
 		if err != nil {
@@ -81,17 +46,19 @@ func Main() {
 		}
 	}()
 
-	if len(args) == 1 {
-		if *cmd {
-			sourceTextAndPrintError(ev, "code from -c", args[0])
+	if arg != nil {
+		if sh.cmd {
+			sourceTextAndPrintError(ev, "code from -c", *arg)
 		} else {
-			script(ev, args[0])
+			script(ev, *arg)
 		}
 	} else if !sys.IsATTY(0) {
 		script(ev, "/dev/stdin")
 	} else {
 		interact(ev, st)
 	}
+
+	return 0
 }
 
 func rescue() {
@@ -231,15 +198,13 @@ func handleUsr1AndQuit() {
 	}()
 }
 
-func newEvalerAndStore() (*eval.Evaler, *store.Store) {
+func newEvalerAndStore(db string) (*eval.Evaler, *store.Store) {
 	dataDir, err := store.EnsureDataDir()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Warning: cannot create data dir ~/.elvish")
-	}
 
 	var st *store.Store
-	if err == nil {
-		db := *dbname
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Warning: cannot create data dir ~/.elvish")
+	} else {
 		if db == "" {
 			db = dataDir + "/db"
 		}
