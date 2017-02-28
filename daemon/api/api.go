@@ -1,13 +1,19 @@
 package api
 
-type Ping struct{}
+type GetPid struct{}
+
+type AddDir struct {
+	Dir       string
+	IncFactor float64
+}
 
 type ListDirs struct {
 	Blacklist map[string]struct{}
 }
 
 type Request struct {
-	Ping     *Ping
+	GetPid   *GetPid
+	AddDir   *AddDir
 	ListDirs *ListDirs
 }
 

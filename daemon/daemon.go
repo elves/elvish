@@ -4,13 +4,17 @@ package daemon
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/util"
 )
+
+var Logger = util.GetLogger("[daemon] ")
 
 type Daemon struct {
 	sockpath string
@@ -22,38 +26,59 @@ func New(sockpath, dbpath string) *Daemon {
 }
 
 func (d *Daemon) Main() int {
+	Logger.Println("pid is", syscall.Getpid())
+
 	st, err := store.NewStore(d.dbpath)
 	if err != nil {
-		log.Print(err)
+		Logger.Print(err)
 		return 2
 	}
 
 	listener, err := net.Listen("unix", d.sockpath)
 	if err != nil {
-		log.Println("listen:", err)
+		Logger.Println("listen:", err)
 		return 2
 	}
 	defer os.Remove(d.sockpath)
 
+	cancel := make(chan struct{})
+	sigterm := make(chan os.Signal)
+	signal.Notify(sigterm, syscall.SIGTERM)
+	go func() {
+		<-sigterm
+		close(cancel)
+		listener.Close()
+	}()
+
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Println("accept:", err)
-			return 2
+			select {
+			case <-cancel:
+				return 0
+			default:
+				Logger.Println("accept:", err)
+				return 2
+			}
 		}
-		go handle(conn, st)
+		go handle(conn, st, cancel)
 	}
 }
 
-func handle(c net.Conn, st *store.Store) {
+func handle(c net.Conn, st *store.Store, cancel <-chan struct{}) {
 	defer c.Close()
+	go func() {
+		<-cancel
+		c.Close()
+	}()
+
 	decoder := json.NewDecoder(c)
 	encoder := json.NewEncoder(c)
 
 	send := func(v interface{}) {
 		err := encoder.Encode(v)
 		if err != nil {
-			log.Println("send:", err)
+			Logger.Println("send:", err)
 		}
 	}
 	sendOKHeader := func(n int) {
@@ -74,12 +99,20 @@ func handle(c net.Conn, st *store.Store) {
 			return
 		}
 		switch {
-		case req.Ping != nil:
-			sendOKHeader(0)
+		case req.GetPid != nil:
+			sendOKHeader(1)
+			send(syscall.Getpid())
+		case req.AddDir != nil:
+			err := st.AddDir(req.AddDir.Dir, req.AddDir.IncFactor)
+			if err != nil {
+				sendErrorHeader("AddDir: " + err.Error())
+			} else {
+				sendOKHeader(0)
+			}
 		case req.ListDirs != nil:
 			dirs, err := st.ListDirs(req.ListDirs.Blacklist)
 			if err != nil {
-				sendErrorHeader("listdir: " + err.Error())
+				sendErrorHeader("ListDirs: " + err.Error())
 				continue
 			}
 			sendOKHeader(len(dirs))

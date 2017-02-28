@@ -116,13 +116,13 @@ func doDaemon() int {
 		absify("-bin", binpath)
 		absify("-db", dbpath)
 		absify("-sock", sockpath)
+		absify("-log", logpath)
 		if errored {
 			return 2
 		}
 
 		syscall.Umask(0077)
 		return forkDaemon(
-			*forked, *binpath, *dbpath, *sockpath,
 			&syscall.ProcAttr{
 				// cd to /
 				Dir: "/",
@@ -134,12 +134,10 @@ func doDaemon() int {
 			})
 	case 1:
 		return forkDaemon(
-			*forked, *binpath, *dbpath, *sockpath,
 			&syscall.ProcAttr{
 				Files: []uintptr{closeFd, closeFd, 2},
 			})
 	case 2:
-		fmt.Fprintln(os.Stderr, "daemon pid is", syscall.Getpid())
 		d := daemon.New(*sockpath, *dbpath)
 		return d.Main()
 	default:
@@ -147,14 +145,15 @@ func doDaemon() int {
 	}
 }
 
-func forkDaemon(forked int, binpath, dbpath, sockpath string, attr *syscall.ProcAttr) int {
-	_, err := syscall.ForkExec(binpath, []string{
-		binpath,
+func forkDaemon(attr *syscall.ProcAttr) int {
+	_, err := syscall.ForkExec(*binpath, []string{
+		*binpath,
 		"-daemon",
-		"-forked", strconv.Itoa(forked + 1),
-		"-bin", binpath,
-		"-db", dbpath,
-		"-sock", sockpath,
+		"-forked", strconv.Itoa(*forked + 1),
+		"-bin", *binpath,
+		"-db", *dbpath,
+		"-sock", *sockpath,
+		"-log", *logpath,
 	}, attr)
 	if err != nil {
 		log.Println("fork/exec:", err)
