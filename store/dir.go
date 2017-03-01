@@ -43,9 +43,9 @@ func (s *Store) AddDir(d string, incFactor float64) error {
 	})
 }
 
-// ListDirs lists all directories in the directory history whose names are not
+// GetDirs lists all directories in the directory history whose names are not
 // in the blacklist. The results are ordered by scores in descending order.
-func (s *Store) ListDirs(blacklist map[string]struct{}) ([]Dir, error) {
+func (s *Store) GetDirs(blacklist map[string]struct{}) ([]Dir, error) {
 	rows, err := s.db.Query(
 		"select path, score from dir order by score desc")
 	if err != nil {

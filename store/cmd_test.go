@@ -50,10 +50,10 @@ func TestCmd(t *testing.T) {
 		}
 	}
 	for _, tt := range searches {
-		f := tStore.LastCmd
+		f := tStore.GetLastCmd
 		fname := "tStore.LastCmd"
 		if tt.first {
-			f = tStore.FirstCmd
+			f = tStore.GetFirstCmd
 			fname = "tStore.FirstCmd"
 		}
 		cmd, err := f(tt.seq, tt.prefix)

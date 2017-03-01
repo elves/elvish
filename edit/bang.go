@@ -81,7 +81,7 @@ func (b *bang) Accept(i int, ed *Editor) {
 }
 
 func startBang(ed *Editor) {
-	cmd, err := ed.store.LastCmd(-1, "")
+	cmd, err := ed.store.GetLastCmd(-1, "")
 	if err != nil {
 		ed.Notify("db error: %s", err.Error())
 		return

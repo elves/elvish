@@ -110,7 +110,7 @@ func handle(c net.Conn, st *store.Store, cancel <-chan struct{}) {
 				sendOKHeader(0)
 			}
 		case req.ListDirs != nil:
-			dirs, err := st.ListDirs(req.ListDirs.Blacklist)
+			dirs, err := st.GetDirs(req.ListDirs.Blacklist)
 			if err != nil {
 				sendErrorHeader("ListDirs: " + err.Error())
 				continue

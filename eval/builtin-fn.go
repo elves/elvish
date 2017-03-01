@@ -775,7 +775,7 @@ func dirs(ec *EvalCtx) {
 	if ec.Store == nil {
 		throw(ErrStoreNotConnected)
 	}
-	dirs, err := ec.Store.ListDirs(store.NoBlacklist)
+	dirs, err := ec.Store.GetDirs(store.NoBlacklist)
 	if err != nil {
 		throw(errors.New("store error: " + err.Error()))
 	}

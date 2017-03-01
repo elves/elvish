@@ -125,7 +125,7 @@ func startLocation(ed *Editor) {
 		return
 	}
 	black := convertBlacklist(ed.locationHidden.Get().(eval.List))
-	dirs, err := ed.store.ListDirs(black)
+	dirs, err := ed.store.GetDirs(black)
 	if err != nil {
 		ed.Notify("store error: %v", err)
 		return

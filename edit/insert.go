@@ -201,7 +201,7 @@ func insertLastWord(ed *Editor) {
 		ed.addTip("store offline")
 		return
 	}
-	cmd, err := ed.store.LastCmd(-1, "")
+	cmd, err := ed.store.GetLastCmd(-1, "")
 	if err == nil {
 		ed.insertAtDot(lastWord(cmd.Text))
 	} else {

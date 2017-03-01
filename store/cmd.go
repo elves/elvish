@@ -71,21 +71,21 @@ func (s *Store) GetCmds(from, upto int) ([]string, error) {
 	return cmds, err
 }
 
-// LastCmd finds the last command before the given sequence number (exclusive)
+// GetFirstCmd finds the first command after the given sequence number (inclusive)
 // with the given prefix.
-func (s *Store) LastCmd(upto int, prefix string) (Cmd, error) {
+func (s *Store) GetFirstCmd(from int, prefix string) (Cmd, error) {
+	row := s.db.QueryRow(`SELECT rowid, content FROM cmd WHERE rowid >= ? AND substr(content, 1, ?) = ? ORDER BY rowid asc LIMIT 1`, from, len(prefix), prefix)
+	return convertCmd(row)
+}
+
+// GetLastCmd finds the last command before the given sequence number (exclusive)
+// with the given prefix.
+func (s *Store) GetLastCmd(upto int, prefix string) (Cmd, error) {
 	var upto64 int64 = int64(upto)
 	if upto < 0 {
 		upto64 = 0x7FFFFFFFFFFFFFFF
 	}
 	row := s.db.QueryRow(`SELECT rowid, content FROM cmd WHERE rowid < ? AND substr(content, 1, ?) = ? ORDER BY rowid DESC LIMIT 1`, upto64, len(prefix), prefix)
-	return convertCmd(row)
-}
-
-// FirstCmd finds the first command after the given sequence number (inclusive)
-// with the given prefix.
-func (s *Store) FirstCmd(from int, prefix string) (Cmd, error) {
-	row := s.db.QueryRow(`SELECT rowid, content FROM cmd WHERE rowid >= ? AND substr(content, 1, ?) = ? ORDER BY rowid asc LIMIT 1`, from, len(prefix), prefix)
 	return convertCmd(row)
 }
 
