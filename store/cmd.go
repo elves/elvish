@@ -91,19 +91,10 @@ func (s *Store) IterateCmds(from, upto int, f func(string) bool) error {
 }
 
 func (s *Store) Cmds(from, upto int) ([]string, error) {
-	rows, err := s.db.Query(`SELECT content FROM cmd WHERE rowid >= ? AND rowid < ?`, from, upto)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	entries := []string{}
-	for rows.Next() {
-		var cmd string
-		err = rows.Scan(&cmd)
-		if err != nil {
-			return nil, err
-		}
-		entries = append(entries, cmd)
-	}
-	return entries, nil
+	var cmds []string
+	err := s.IterateCmds(from, upto, func(cmd string) bool {
+		cmds = append(cmds, cmd)
+		return true
+	})
+	return cmds, err
 }
