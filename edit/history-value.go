@@ -48,7 +48,7 @@ func (hv History) IndexOne(idx eval.Value) eval.Value {
 
 	slice, i, j := eval.ParseAndFixListIndex(eval.ToString(idx), hv.Len())
 	if slice {
-		cmds, err := hv.st.Cmds(i+1, j+1)
+		cmds, err := hv.st.GetCmds(i+1, j+1)
 		maybeThrow(err)
 		vs := make([]eval.Value, len(cmds))
 		for i := range cmds {
@@ -56,7 +56,7 @@ func (hv History) IndexOne(idx eval.Value) eval.Value {
 		}
 		return eval.NewList(vs...)
 	}
-	s, err := hv.st.Cmd(i + 1)
+	s, err := hv.st.GetCmd(i + 1)
 	maybeThrow(err)
 	return eval.String(s)
 }

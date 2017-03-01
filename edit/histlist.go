@@ -121,7 +121,7 @@ func getCmds(ed *Editor) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return ed.store.Cmds(0, seq)
+	return ed.store.GetCmds(0, seq)
 }
 
 func histlistToggleDedup(ed *Editor) {

@@ -44,7 +44,7 @@ func TestCmd(t *testing.T) {
 	}
 	for i, wantedCmd := range cmds {
 		seq := i + startSeq
-		cmd, err := tStore.Cmd(seq)
+		cmd, err := tStore.GetCmd(seq)
 		if cmd != wantedCmd || err != nil {
 			t.Errorf("tStore.Cmd(%v) => (%v, %v), want (%v, nil)",
 				seq, cmd, err, wantedCmd)
