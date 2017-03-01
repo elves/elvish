@@ -102,6 +102,50 @@ func handle(c net.Conn, st *store.Store, cancel <-chan struct{}) {
 		case req.GetPid != nil:
 			sendOKHeader(1)
 			send(syscall.Getpid())
+		case req.NextCmdSeq != nil:
+			seq, err := st.NextCmdSeq()
+			if err != nil {
+				sendErrorHeader("NextCmdSeq: " + err.Error())
+			} else {
+				sendOKHeader(1)
+				send(seq)
+			}
+		case req.AddCmd != nil:
+			err := st.AddCmd(req.AddCmd.Text)
+			if err != nil {
+				sendErrorHeader("AddCmd: " + err.Error())
+			} else {
+				sendOKHeader(0)
+			}
+		case req.GetCmds != nil:
+			// TODO: stream from store
+			cmds, err := st.GetCmds(req.GetCmds.From, req.GetCmds.Upto)
+			if err != nil {
+				sendErrorHeader("GetCmds: " + err.Error())
+			} else {
+				sendOKHeader(len(cmds))
+				for _, cmd := range cmds {
+					send(cmd)
+				}
+			}
+		case req.GetFirstCmd != nil:
+			r := req.GetFirstCmd
+			cmd, err := st.GetFirstCmd(r.From, r.Prefix)
+			if err != nil {
+				sendErrorHeader("GetFirstCmd: " + err.Error())
+			} else {
+				sendOKHeader(1)
+				send(cmd)
+			}
+		case req.GetLastCmd != nil:
+			r := req.GetLastCmd
+			cmd, err := st.GetLastCmd(r.Upto, r.Prefix)
+			if err != nil {
+				sendErrorHeader("GetLastCmd: " + err.Error())
+			} else {
+				sendOKHeader(1)
+				send(cmd)
+			}
 		case req.AddDir != nil:
 			err := st.AddDir(req.AddDir.Dir, req.AddDir.IncFactor)
 			if err != nil {
@@ -109,17 +153,39 @@ func handle(c net.Conn, st *store.Store, cancel <-chan struct{}) {
 			} else {
 				sendOKHeader(0)
 			}
-		case req.ListDirs != nil:
-			dirs, err := st.GetDirs(req.ListDirs.Blacklist)
+		case req.GetDirs != nil:
+			dirs, err := st.GetDirs(req.GetDirs.Blacklist)
 			if err != nil {
 				sendErrorHeader("ListDirs: " + err.Error())
-				continue
+			} else {
+				sendOKHeader(len(dirs))
+				for _, dir := range dirs {
+					send(dir)
+				}
 			}
-			sendOKHeader(len(dirs))
-			for _, dir := range dirs {
-				send(dir)
+		case req.GetSharedVar != nil:
+			value, err := st.GetSharedVar(req.GetSharedVar.Name)
+			if err != nil {
+				sendErrorHeader("GetSharedVar: " + err.Error())
+			} else {
+				sendOKHeader(1)
+				send(value)
 			}
-		// case req.Quit:
+		case req.SetSharedVar != nil:
+			r := req.SetSharedVar
+			err := st.SetSharedVar(r.Name, r.Value)
+			if err != nil {
+				sendErrorHeader("SetSharedVar: " + err.Error())
+			} else {
+				sendOKHeader(0)
+			}
+		case req.DelSharedVar != nil:
+			err := st.DelSharedVar(req.DelSharedVar.Name)
+			if err != nil {
+				sendErrorHeader("DelSharedVar: " + err.Error())
+			} else {
+				sendOKHeader(0)
+			}
 		default:
 			sendErrorHeader("bad request")
 		}
