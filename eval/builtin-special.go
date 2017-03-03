@@ -27,6 +27,8 @@ func init() {
 		"del":   compileDel,
 		"fn":    compileFn,
 		"use":   compileUse,
+		"and":   compileAnd,
+		"or":    compileOr,
 		"if":    compileIf,
 		"while": compileWhile,
 		"for":   compileFor,
@@ -207,6 +209,42 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		// Unload the namespace.
 		delete(ec.Modules, modname)
 		throw(err)
+	}
+}
+
+// compileAnd compiles the "and" special form.
+// The and special form evaluates arguments until a false-ish values is found
+// and outputs it; the remaining arguments are not evaluated. If there are no
+// false-ish values, the last value is output. If there are no arguments, it
+// outputs $true, as if there is a hidden $true before actual arguments.
+func compileAnd(cp *compiler, fn *parse.Form) OpFunc {
+	return compileAndOr(cp, fn, true, false)
+}
+
+// compileOr compiles the "or" special form.
+// The or special form evaluates arguments until a true-ish values is found and
+// outputs it; the remaining arguments are not evaluated. If there are no
+// true-ish values, the last value is output. If there are no arguments, it
+// outputs $false, as if there is a hidden $false before actual arguments.
+func compileOr(cp *compiler, fn *parse.Form) OpFunc {
+	return compileAndOr(cp, fn, false, true)
+}
+
+func compileAndOr(cp *compiler, fn *parse.Form, init, stopAt bool) OpFunc {
+	argOps := cp.compoundOps(fn.Args)
+	return func(ec *EvalCtx) {
+		var lastValue Value = Bool(init)
+		for _, op := range argOps {
+			values := op.Exec(ec)
+			for _, value := range values {
+				if ToBool(value) == stopAt {
+					ec.OutputChan() <- value
+					return
+				}
+				lastValue = value
+			}
+		}
+		ec.OutputChan() <- lastValue
 	}
 }
 
