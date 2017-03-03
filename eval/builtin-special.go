@@ -169,7 +169,7 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 			// File does not exist. Try loading from the table of builtin
 			// modules.
 			var ok bool
-			if source, ok = builtinModules[modname]; ok {
+			if source, ok = embeddedModules[modname]; ok {
 				// Source is loaded. Do nothing more.
 				filename = "<builtin module>"
 			} else {
