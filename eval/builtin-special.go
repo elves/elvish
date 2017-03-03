@@ -412,6 +412,8 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 		if restOp.Func != nil {
 			cp.errorpf(restOp.Begin, restOp.End, "may not use @rest in except variable")
 		}
+	}
+	if exceptNode != nil {
 		exceptOp = cp.primaryOp(exceptNode)
 	}
 	if elseNode != nil {
@@ -431,7 +433,9 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 		err := ec.PCall(body, NoArgs, NoOpts)
 		if err != nil {
 			if except != nil {
-				exceptVar.Set(err.(*Exception))
+				if exceptVar != nil {
+					exceptVar.Set(err.(*Exception))
+				}
 				err = ec.PCall(except, NoArgs, NoOpts)
 			}
 		} else {
