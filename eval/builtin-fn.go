@@ -58,8 +58,6 @@ func init() {
 	builtinFns = []*BuiltinFn{
 		// Trivial predicates
 		&BuiltinFn{"nop", nop},
-		&BuiltinFn{"true", trueFn},
-		&BuiltinFn{"false", falseFn},
 
 		// Introspection
 		&BuiltinFn{"kind-of", kindOf},
@@ -179,6 +177,9 @@ func init() {
 
 		// bool
 		&BuiltinFn{"bool", WrapFn(boolFn)},
+		&BuiltinFn{"not", WrapFn(not)},
+		&BuiltinFn{"true", trueFn},
+		&BuiltinFn{"false", falseFn},
 
 		// File and pipe
 		&BuiltinFn{"fopen", WrapFn(fopen)},
@@ -437,14 +438,6 @@ func mustGetOneString(args []Value) string {
 }
 
 func nop(ec *EvalCtx, args []Value, opts map[string]Value) {
-}
-
-func trueFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	ec.OutputChan() <- Bool(true)
-}
-
-func falseFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	ec.OutputChan() <- Bool(false)
 }
 
 func put(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -964,8 +957,19 @@ func rangeFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
 func boolFn(ec *EvalCtx, v Value) {
-	out := ec.ports[1].Chan
-	out <- Bool(ToBool(v))
+	ec.OutputChan() <- Bool(ToBool(v))
+}
+
+func not(ec *EvalCtx, v Value) {
+	ec.OutputChan() <- Bool(!ToBool(v))
+}
+
+func trueFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	ec.OutputChan() <- Bool(true)
+}
+
+func falseFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	ec.OutputChan() <- Bool(false)
 }
 
 func is(ec *EvalCtx, args []Value, opts map[string]Value) {
