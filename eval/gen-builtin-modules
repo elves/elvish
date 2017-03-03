@@ -7,7 +7,7 @@ out = ./builtin-modules.go
 	echo "var builtinModules = map[string]string{"
 
 	for f [*.elv] {
-		print '"'$f[:-4]'": `'
+		print '"elves:'$f[:-4]'": `'
 		cat $f | sed 's/`/``/g'
 		echo '`,'
     }
