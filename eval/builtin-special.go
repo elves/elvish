@@ -276,13 +276,13 @@ func compileIf(cp *compiler, fn *parse.Form) OpFunc {
 		}
 		else_ := elseOp.execlambdaOp(ec)
 		for i, condOp := range condOps {
-			if allTrue(condOp.Exec(ec)) {
-				bodies[i].Call(ec, NoArgs, NoOpts)
+			if allTrue(condOp.Exec(ec.fork("if cond"))) {
+				bodies[i].Call(ec.fork("if body"), NoArgs, NoOpts)
 				return
 			}
 		}
 		if elseOp.Func != nil {
-			else_.Call(ec, NoArgs, NoOpts)
+			else_.Call(ec.fork("if else"), NoArgs, NoOpts)
 		}
 	}
 }
@@ -300,11 +300,11 @@ func compileWhile(cp *compiler, fn *parse.Form) OpFunc {
 		body := bodyOp.execlambdaOp(ec)
 
 		for {
-			cond := condOp.Exec(ec)
+			cond := condOp.Exec(ec.fork("while cond"))
 			if !allTrue(cond) {
 				break
 			}
-			err := ec.PCall(body, NoArgs, NoOpts)
+			err := ec.fork("while").PCall(body, NoArgs, NoOpts)
 			if err != nil {
 				exc := err.(*Exception)
 				if exc.Cause == Continue {
@@ -362,7 +362,7 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 		iterable.Iterate(func(v Value) bool {
 			iterated = true
 			variable.Set(v)
-			err := ec.PCall(body, NoArgs, NoOpts)
+			err := ec.fork("for").PCall(body, NoArgs, NoOpts)
 			if err != nil {
 				exc := err.(*Exception)
 				if exc.Cause == Continue {
@@ -377,7 +377,7 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 		})
 
 		if !iterated && elseBody != nil {
-			elseBody.Call(ec, NoArgs, NoOpts)
+			elseBody.Call(ec.fork("for else"), NoArgs, NoOpts)
 		}
 	}
 }
@@ -430,21 +430,21 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 		else_ := elseOp.execlambdaOp(ec)
 		finally := finallyOp.execlambdaOp(ec)
 
-		err := ec.PCall(body, NoArgs, NoOpts)
+		err := ec.fork("try body").PCall(body, NoArgs, NoOpts)
 		if err != nil {
 			if except != nil {
 				if exceptVar != nil {
 					exceptVar.Set(err.(*Exception))
 				}
-				err = ec.PCall(except, NoArgs, NoOpts)
+				err = ec.fork("try except").PCall(except, NoArgs, NoOpts)
 			}
 		} else {
 			if else_ != nil {
-				err = ec.PCall(else_, NoArgs, NoOpts)
+				err = ec.fork("try else").PCall(else_, NoArgs, NoOpts)
 			}
 		}
 		if finally != nil {
-			finally.Call(ec, NoArgs, NoOpts)
+			finally.Call(ec.fork("try finally"), NoArgs, NoOpts)
 		}
 		if err != nil {
 			throw(err)
