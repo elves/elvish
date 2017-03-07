@@ -73,6 +73,7 @@ func init() {
 		&BuiltinFn{"print", print},
 		&BuiltinFn{"echo", echo},
 		&BuiltinFn{"pprint", pprint},
+		&BuiltinFn{"repr", repr},
 
 		// Bytes to value
 		&BuiltinFn{"slurp", slurp},
@@ -488,6 +489,18 @@ func pprint(ec *EvalCtx, args []Value, opts map[string]Value) {
 		out.WriteString(arg.Repr(0))
 		out.WriteString("\n")
 	}
+}
+
+func repr(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+	out := ec.ports[1].File
+	for i, arg := range args {
+		if i > 0 {
+			out.WriteString(" ")
+		}
+		out.WriteString(arg.Repr(NoPretty))
+	}
+	out.WriteString("\n")
 }
 
 func slurp(ec *EvalCtx, args []Value, opts map[string]Value) {
