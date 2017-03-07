@@ -19,10 +19,10 @@ var reprTests = []struct {
 	{Bool(true), "$true"},
 	{Bool(false), "$false"},
 	{&Exception{nil, nil}, "$ok"},
-	{&Exception{errors.New("foo bar"), nil}, "?(error 'foo bar')"},
+	{&Exception{errors.New("foo bar"), nil}, "?(fail 'foo bar')"},
 	{&Exception{
 		PipelineError{[]*Exception{{nil, nil}, {errors.New("lorem"), nil}}}, nil},
-		"?(multi-error $ok ?(error lorem))"},
+		"?(multi-error $ok ?(fail lorem))"},
 	{&Exception{Return, nil}, "?(return)"},
 	{List{&[]Value{}}, "[]"},
 	{List{&[]Value{String("bash"), Bool(false)}}, "[bash $false]"},

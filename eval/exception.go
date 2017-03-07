@@ -65,7 +65,7 @@ func (exc *Exception) Repr(indent int) string {
 	if r, ok := exc.Cause.(Reprer); ok {
 		return r.Repr(indent)
 	}
-	return "?(error " + parse.Quote(exc.Cause.Error()) + ")"
+	return "?(fail " + parse.Quote(exc.Cause.Error()) + ")"
 }
 
 func (exc *Exception) Bool() bool {
