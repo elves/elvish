@@ -1,11 +1,21 @@
 package edit
 
-func insertRaw(ed *Editor) {
+// Raw insert mode is a special mode, in that it does not use the normal key
+// binding. Rather, insertRaw is called directly from the main loop in
+// Editor.ReadLine.
+
+type rawInsert struct {
+}
+
+func startInsertRaw(ed *Editor) {
 	ed.reader.SetRaw(true)
 	ed.mode = rawInsert{}
 }
 
-type rawInsert struct {
+func insertRaw(ed *Editor, r rune) {
+	ed.insertAtDot(string(r))
+	ed.reader.SetRaw(false)
+	ed.mode = &ed.insert
 }
 
 func (ri rawInsert) Mode() ModeType {

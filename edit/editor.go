@@ -434,9 +434,7 @@ MainLoop:
 			}
 			ed.insertAtDot(topaste)
 		case r := <-ed.reader.RawRuneChan():
-			ed.insertAtDot(string(r))
-			ed.reader.SetRaw(false)
-			ed.mode = &ed.insert
+			insertRaw(ed, r)
 		case k := <-ed.reader.KeyChan():
 		lookupKey:
 			keyBinding, ok := keyBindings[ed.mode.Mode()]

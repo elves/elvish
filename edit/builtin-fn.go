@@ -63,7 +63,7 @@ var builtins = []*BuiltinFn{
 	{"return-eof", returnEOF},
 	{"toggle-quote-paste", toggleQuotePaste},
 	{"end-of-history", endOfHistory},
-	{"insert-raw", insertRaw},
+	{"insert-raw", startInsertRaw},
 	{"default-command", defaultCommand},
 	{"insert-default", defaultInsert},
 
