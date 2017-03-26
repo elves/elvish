@@ -1,12 +1,4 @@
-package eval
-
-var embeddedModules = map[string]string{
-	"embedded:acme": `fn acme {
-    echo 'So this'
-    put works.
-}
-`,
-	"embedded:readline-binding": `fn bind-mode [m k f]{
+fn bind-mode [m k f]{
     le:binding[$m][$k] = $f
 }
 
@@ -15,7 +7,7 @@ fn bind [k f]{
 }
 
 bind Ctrl-A { le:move-dot-sol }
-bind Ctrl-B { le:move-bot-left }
+bind Ctrl-B { le:move-dot-left }
 bind Ctrl-D {
     if (> (count $le:current-command) 0) {
         le:kill-rune-right
@@ -56,5 +48,3 @@ bind-mode history Ctrl-B { le:history-left }
 bind-mode history Ctrl-F { le:history-right }
 bind-mode history Ctrl-N { le:history-down }
 bind-mode history Ctrl-P { le:history-up }
-`,
-}
