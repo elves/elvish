@@ -82,7 +82,7 @@ func (w *Writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 			if c.width > 0 {
 				switchStyle(c.style)
 			}
-			bytesBuf.WriteString(string(c.rune))
+			bytesBuf.WriteString(c.string)
 		}
 	}
 

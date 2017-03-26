@@ -433,6 +433,10 @@ MainLoop:
 				topaste = parse.Quote(topaste)
 			}
 			ed.insertAtDot(topaste)
+		case r := <-ed.reader.RawRuneChan():
+			ed.insertAtDot(string(r))
+			ed.reader.SetRaw(false)
+			ed.mode = &ed.insert
 		case k := <-ed.reader.KeyChan():
 		lookupKey:
 			keyBinding, ok := keyBindings[ed.mode.Mode()]

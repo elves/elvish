@@ -26,13 +26,16 @@ const (
 
 // Reader converts a stream of events on separate channels.
 type Reader struct {
-	ar        *AsyncReader
-	keyChan   chan uitypes.Key
-	cprChan   chan Pos
-	mouseChan chan MouseEvent
-	errChan   chan error
-	pasteChan chan bool
-	quit      chan struct{}
+	ar  *AsyncReader
+	raw bool
+
+	rawRuneChan chan rune
+	keyChan     chan uitypes.Key
+	cprChan     chan Pos
+	mouseChan   chan MouseEvent
+	errChan     chan error
+	pasteChan   chan bool
+	quit        chan struct{}
 }
 
 type MouseEvent struct {
@@ -47,6 +50,8 @@ type MouseEvent struct {
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
 		NewAsyncReader(f),
+		false,
+		make(chan rune),
 		make(chan uitypes.Key),
 		make(chan Pos),
 		make(chan MouseEvent),
@@ -55,6 +60,18 @@ func NewReader(f *os.File) *Reader {
 		nil,
 	}
 	return rd
+}
+
+// SetRaw turns the raw option on or off. If the reader is in the middle of
+// reading one event, it takes effect after this event is fully read.
+func (rd *Reader) SetRaw(raw bool) {
+	rd.raw = raw
+}
+
+// RawRuneChan returns the channel onto which the Reader writes runes it has
+// read in raw mode.
+func (rd *Reader) RawRuneChan() <-chan rune {
+	return rd.rawRuneChan
 }
 
 // KeyChan returns the channel onto which the Reader writes Keys it has read.
@@ -94,7 +111,11 @@ func (rd *Reader) Run() {
 	for {
 		select {
 		case r := <-runes:
-			rd.readOne(r)
+			if rd.raw {
+				rd.rawRuneChan <- r
+			} else {
+				rd.readOne(r)
+			}
 		case <-quit:
 			return
 		}

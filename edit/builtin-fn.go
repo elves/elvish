@@ -63,6 +63,7 @@ var builtins = []*BuiltinFn{
 	{"return-eof", returnEOF},
 	{"toggle-quote-paste", toggleQuotePaste},
 	{"end-of-history", endOfHistory},
+	{"insert-raw", insertRaw},
 	{"default-command", defaultCommand},
 	{"insert-default", defaultInsert},
 
@@ -150,6 +151,7 @@ var defaultBindings = map[ModeType]map[uitypes.Key]string{
 		uitypes.Key{'R', uitypes.Ctrl}: "start-histlist",
 		uitypes.Key{',', uitypes.Alt}:  "start-bang",
 		uitypes.Key{'L', uitypes.Ctrl}: "start-location",
+		uitypes.Key{'V', uitypes.Ctrl}: "insert-raw",
 		uitypes.Default:                "insert-default",
 	},
 	modeCommand: map[uitypes.Key]string{

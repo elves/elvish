@@ -14,6 +14,7 @@ type ModeType int
 
 const (
 	modeInsert ModeType = iota
+	modeRawInsert
 	modeCommand
 	modeCompletion
 	modeNavigation

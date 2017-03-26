@@ -9,7 +9,7 @@ import (
 // cell is an indivisible unit on the screen. It is not necessarily 1 column
 // wide.
 type cell struct {
-	rune
+	string
 	width byte
 	style string
 }
@@ -32,7 +32,7 @@ func lineWidth(cs []cell) int {
 func makeSpacing(n int) []cell {
 	s := make([]cell, n)
 	for i := 0; i < n; i++ {
-		s[i].rune = ' '
+		s[i].string = " "
 		s[i].width = 1
 	}
 	return s
@@ -71,7 +71,7 @@ func (b *buffer) newline() {
 
 	if b.indent > 0 {
 		for i := 0; i < b.indent; i++ {
-			b.appendCell(cell{rune: ' ', width: 1})
+			b.appendCell(cell{string: " ", width: 1})
 		}
 	}
 }
@@ -109,12 +109,18 @@ func (b *buffer) write(r rune, style string) {
 	if r == '\n' {
 		b.newline()
 		return
-	} else if r < 0x20 || r == 0x7f {
-		// BUG(xiaq): buffer.write drops ASCII control characters silently
-		return
 	}
 	wd := util.Wcwidth(r)
-	c := cell{r, byte(wd), style}
+	c := cell{string(r), byte(wd), style}
+	if r < 0x20 || r == 0x7f {
+		wd = 2
+		if style != "" {
+			style = style + ";" + styleForControlChar.String()
+		} else {
+			style = styleForControlChar.String()
+		}
+		c = cell{"^" + string(r^0x40), 2, style}
+	}
 
 	if b.col+wd > b.width {
 		b.newline()
