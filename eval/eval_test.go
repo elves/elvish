@@ -248,6 +248,7 @@ var evalTests = []struct {
 	{`each put [1 233]`, strs("1", "233"), nomore},
 	{`range 10 | each { if (== $0 4) { break }; put $0 }`, strs("0", "1", "2", "3"), nomore},
 	{`range 10 | each { if (== $0 4) { fail haha }; put $0 }`, strs("0", "1", "2", "3"), more{wantError: errAny}},
+	{`repeat 4 foo`, strs("foo", "foo", "foo", "foo"), nomore},
 	// TODO: test peach
 
 	{`range 3`, strs("0", "1", "2"), nomore},

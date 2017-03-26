@@ -109,8 +109,11 @@ func init() {
 
 		// Functional primitives
 		&BuiltinFn{"constantly", constantly},
+
+		// Iterations.
 		&BuiltinFn{"each", WrapFn(each)},
 		&BuiltinFn{"peach", WrapFn(peach)},
+		&BuiltinFn{"repeat", WrapFn(repeat)},
 
 		// Sequence primitives
 		&BuiltinFn{"take", WrapFn(take)},
@@ -664,6 +667,13 @@ func peach(ec *EvalCtx, f CallableValue, iterate func(func(Value))) {
 	})
 	w.Wait()
 	maybeThrow(err)
+}
+
+func repeat(ec *EvalCtx, n int, v Value) {
+	out := ec.OutputChan()
+	for i := 0; i < n; i++ {
+		out <- v
+	}
 }
 
 var eawkWordSep = regexp.MustCompile("[ \t]+")
