@@ -7,7 +7,7 @@ out = ./embedded-modules.go
 	echo "var embeddedModules = map[string]string{"
 
 	for f [*.elv] {
-		print '"elves:'$f[:-4]'": `'
+		print '"embedded:'$f[:-4]'": `'
 		cat $f | sed 's/`/``/g'
 		echo '`,'
     }
