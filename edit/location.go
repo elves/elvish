@@ -17,18 +17,14 @@ import (
 
 type location struct {
 	listing
-	home     string
+	home     string // The home directory; leave empty if unknown.
 	all      []store.Dir
 	filtered []store.Dir
 }
 
-func newLocation(dirs []store.Dir) *location {
-	loc := &location{all: dirs}
+func newLocation(dirs []store.Dir, home string) *location {
+	loc := &location{all: dirs, home: home}
 	loc.listing = newListing(modeLocation, loc)
-	home, err := util.GetHome("")
-	if err == nil {
-		loc.home = home
-	}
 	return loc
 }
 
@@ -46,22 +42,14 @@ func (loc *location) Len() int {
 
 func (loc *location) Show(i int) (string, styled) {
 	header := fmt.Sprintf("%.0f", loc.filtered[i].Score)
-	path := loc.filtered[i].Path
-	if path == loc.home {
-		path = "~"
-	} else if strings.HasPrefix(path, loc.home+"/") {
-		path = "~/" + parse.Quote(path[len(loc.home)+1:])
-	} else {
-		path = parse.Quote(path)
-	}
-	return header, unstyled(path)
+	return header, unstyled(showPath(loc.filtered[i].Path, loc.home))
 }
 
 func (loc *location) Filter(filter string) int {
 	loc.filtered = nil
-	pattern := makeLocationFilterPattern(filter, loc.home)
+	pattern := makeLocationFilterPattern(filter)
 	for _, item := range loc.all {
-		if pattern.MatchString(item.Path) {
+		if pattern.MatchString(showPath(item.Path, loc.home)) {
 			loc.filtered = append(loc.filtered, item)
 		}
 	}
@@ -72,15 +60,19 @@ func (loc *location) Filter(filter string) int {
 	return 0
 }
 
+func showPath(path, home string) string {
+	if home != "" && path == home {
+		return "~"
+	} else if home != "" && strings.HasPrefix(path, home+"/") {
+		return "~/" + parse.Quote(path[len(home)+1:])
+	} else {
+		return parse.Quote(path)
+	}
+}
+
 var emptyRegexp = regexp.MustCompile("")
 
-func makeLocationFilterPattern(s, home string) *regexp.Regexp {
-	// First expand tilde.
-	if s == "~" {
-		s = home
-	} else if len(s) >= 2 && s[:2] == "~/" {
-		s = home + "/" + s[2:]
-	}
+func makeLocationFilterPattern(s string) *regexp.Regexp {
 	var b bytes.Buffer
 	b.WriteString(".*")
 	segs := strings.Split(s, "/")
@@ -131,7 +123,10 @@ func startLocation(ed *Editor) {
 		return
 	}
 
-	ed.location = newLocation(dirs)
+	// Drop the error. When there is an error, home is "", which is used to
+	// signify "no home known" in location.
+	home, _ := util.GetHome("")
+	ed.location = newLocation(dirs, home)
 	ed.mode = ed.location
 }
 
