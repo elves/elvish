@@ -86,6 +86,9 @@ func init() {
 		&BuiltinFn{"has-prefix", WrapFn(hasPrefix)},
 		&BuiltinFn{"has-suffix", WrapFn(hasSuffix)},
 
+		// Regular expression
+		&BuiltinFn{"-match", WrapFn(match)},
+
 		// String comparison
 		&BuiltinFn{"<s",
 			wrapStrCompare(func(a, b string) bool { return a < b })},
@@ -574,6 +577,12 @@ func hasPrefix(ec *EvalCtx, s, prefix String) {
 
 func hasSuffix(ec *EvalCtx, s, suffix String) {
 	ec.OutputChan() <- Bool(strings.HasSuffix(string(s), string(suffix)))
+}
+
+func match(ec *EvalCtx, p, s String) {
+	matched, err := regexp.MatchString(string(p), string(s))
+	maybeThrow(err)
+	ec.OutputChan() <- Bool(matched)
 }
 
 // toJSON converts a stream of Value's to JSON data.
