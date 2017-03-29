@@ -23,6 +23,7 @@ type navigation struct {
 	showHidden bool
 	filtering  bool
 	filter     string
+	chdir      func(string) error
 }
 
 func (*navigation) Mode() ModeType {
@@ -42,7 +43,7 @@ func (n *navigation) CursorOnModeLine() bool {
 }
 
 func startNav(ed *Editor) {
-	initNavigation(&ed.navigation)
+	initNavigation(&ed.navigation, ed)
 	ed.mode = &ed.navigation
 }
 
@@ -121,8 +122,8 @@ var (
 	errorNoCwdInParent = errors.New("could not find current directory in ..")
 )
 
-func initNavigation(n *navigation) {
-	*n = navigation{}
+func initNavigation(n *navigation, ed *Editor) {
+	*n = navigation{chdir: ed.chdir}
 	n.refresh()
 }
 
@@ -242,7 +243,7 @@ func (n *navigation) descend() error {
 		return errorEmptyCwd
 	}
 	name := n.current.selectedName()
-	err := os.Chdir(name)
+	err := n.chdir(name)
 	if err != nil {
 		return err
 	}

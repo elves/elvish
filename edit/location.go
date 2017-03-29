@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -91,11 +92,12 @@ func makeLocationFilterPattern(s string) *regexp.Regexp {
 	return p
 }
 
-// Editor interface.
-
-func (loc *location) Accept(i int, ed *Editor) {
-	dir := loc.filtered[i].Path
-	err := os.Chdir(dir)
+func (ed *Editor) chdir(dir string) error {
+	dir, err := filepath.Abs(dir)
+	if err != nil {
+		return err
+	}
+	err = os.Chdir(dir)
 	if err == nil {
 		store := ed.store
 		go func() {
@@ -105,7 +107,15 @@ func (loc *location) Accept(i int, ed *Editor) {
 			store.Waits.Done()
 			Logger.Println("added dir to store:", dir)
 		}()
-	} else {
+	}
+	return err
+}
+
+// Editor interface.
+
+func (loc *location) Accept(i int, ed *Editor) {
+	err := ed.chdir(loc.filtered[i].Path)
+	if err != nil {
 		ed.Notify("%v", err)
 	}
 	ed.mode = &ed.insert
