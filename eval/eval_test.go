@@ -203,7 +203,7 @@ var evalTests = []struct {
 		strs("string", "string", "list", "map", "fn"), nomore},
 
 	{`put foo bar`, strs("foo", "bar"), nomore},
-	{`unpack [foo bar]`, strs("foo", "bar"), nomore},
+	{`explode [foo bar]`, strs("foo", "bar"), nomore},
 
 	{`print [foo bar]`, noout, more{wantBytesOut: []byte("[foo bar]")}},
 	{`echo [foo bar]`, noout, more{wantBytesOut: []byte("[foo bar]\n")}},
