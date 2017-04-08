@@ -64,7 +64,7 @@ func init() {
 
 		// Value output
 		&BuiltinFn{"put", put},
-		&BuiltinFn{"unpack", WrapFn(unpack)},
+		&BuiltinFn{"explode", WrapFn(explode)},
 
 		// Bytes output
 		&BuiltinFn{"print", WrapFn(print, OptSpec{"sep", String(" ")})},
@@ -536,8 +536,8 @@ func toLines(ec *EvalCtx, iterate func(func(Value))) {
 	})
 }
 
-// unpack puts each element of the argument.
-func unpack(ec *EvalCtx, v IterableValue) {
+// explode puts each element of the argument.
+func explode(ec *EvalCtx, v IterableValue) {
 	out := ec.ports[1].Chan
 	v.Iterate(func(e Value) bool {
 		out <- e
