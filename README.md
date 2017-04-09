@@ -8,7 +8,7 @@
 This project aims to explore the potentials of the Unix shell. It is a work in
 progress; things will change without warning. The [issues list](https://github.com/elves/elvish/issues) contains many things I'm working on.
 
-Discuss elvish by joining #elvish on freenode, the [Gitter room](https://gitter.im/elves/elvish-public) or the [international user group on Telegram](https://telegram.me/elvish). Thanks to [fishroom](https://github.com/tuna/fishroom), the IRC channel, Gitter room and Telegram group are interconnected. Chinese speakers are also welcome in #elvish-zh on freenode, or the [Chinese user group on Telegram](https://telegram.me/elvishzh)!
+Discuss Elvish by joining #elvish on freenode, the [Gitter room](https://gitter.im/elves/elvish-public) or the [international user group on Telegram](https://telegram.me/elvish). Thanks to [fishroom](https://github.com/tuna/fishroom), the IRC channel, Gitter room and Telegram group are interconnected. Chinese speakers are also welcome in #elvish-zh on freenode, or the [Chinese user group on Telegram](https://telegram.me/elvishzh)!
 
 ## Screenshot
 
@@ -171,7 +171,7 @@ done
 
 [How To Write Go Code](http://golang.org/doc/code.html) explains how `$GOPATH` works.
 
-For macOS users, you can build elvish via [homebrew](http://brew.sh):
+For macOS users, you can build Elvish via [homebrew](http://brew.sh):
 
 ```sh
 brew install --HEAD elvish
@@ -180,8 +180,8 @@ brew install --HEAD elvish
 
 ## Name
 
-In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the elves have a reputation of high quality.  These are usually called *elven* items, but I chose "elvish" because it ends with "sh". It also rhymes with fish, a shell that I once contributed to.
+In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the elves have a reputation of high quality.  These are usually called *elven* items, but I chose "elvish" because it ends with "sh". It also rhymes with [fish](https://fishshell.com), one of shells that influenced the philosophy of Elvish.
 
-When using the word elvish, i.e. not referring specifically to the command but the shell in general, capitalize it as if it is an ordinary noun. For instance, "Elvish is a good shell.", "What a good shell is elvish!"
+The word "Elvish" should be capitalized like a proper noun. However, when referring to the `elvish` command, use it in lower case with fixed-width font.
 
-Whoever practices the elvish way by either contributing to it or simply using it is called an **elf**, just like the name of the GitHub organization has led you to believe. The official adjective for elvish (as in "Pythonic" for Python, "Rubyesque" for Ruby) is "elven" -- this word possesses the rare virtue of being short. However, for purpose of rhythm or comical effects, "elvish-ish" may also be used, provided that it does not appear twice in a single passage.
+Whoever practices the elvish way by either contributing to it or simply using it is called an **elf**. (You might have guessed this from the name of the GitHub organization.) The official adjective for elvish (as in "Pythonic" for Python, "Rubyesque" for Ruby) is "elven".
