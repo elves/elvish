@@ -64,17 +64,17 @@ func init() {
 
 		// Value output
 		&BuiltinFn{"put", put},
-		&BuiltinFn{"explode", WrapFn(explode)},
+		&BuiltinFn{"explode", explode},
 
 		// Bytes output
-		&BuiltinFn{"print", WrapFn(print, OptSpec{"sep", String(" ")})},
-		&BuiltinFn{"echo", WrapFn(echo, OptSpec{"sep", String(" ")})},
+		&BuiltinFn{"print", print},
+		&BuiltinFn{"echo", echo},
 		&BuiltinFn{"pprint", pprint},
 
 		// Bytes to value
-		&BuiltinFn{"slurp", WrapFn(slurp)},
-		&BuiltinFn{"from-lines", WrapFn(fromLines)},
-		&BuiltinFn{"from-json", WrapFn(fromJSON)},
+		&BuiltinFn{"slurp", slurp},
+		&BuiltinFn{"from-lines", fromLines},
+		&BuiltinFn{"from-json", fromJSON},
 
 		// Value to bytes
 		&BuiltinFn{"to-lines", WrapFn(toLines)},
@@ -82,7 +82,7 @@ func init() {
 
 		// String
 		&BuiltinFn{"joins", WrapFn(joins)},
-		&BuiltinFn{"splits", WrapFn(splits, OptSpec{"sep", String("")})},
+		&BuiltinFn{"splits", splits},
 		&BuiltinFn{"has-prefix", WrapFn(hasPrefix)},
 		&BuiltinFn{"has-suffix", WrapFn(hasSuffix)},
 
@@ -443,6 +443,59 @@ func mustGetOneString(args []Value) string {
 	return string(s)
 }
 
+// ScanArgs scans arguments into pointers to supported argument types. If the
+// arguments cannot be scanned, an error is thrown.
+func ScanArgs(s []Value, args ...interface{}) {
+	if len(s) != len(args) {
+		throwf("arity mistmatch: want %d arguments, got %d", len(args), len(s))
+	}
+	for i, value := range s {
+		scanArg(value, args[i])
+	}
+}
+
+func ScanOpts(m map[string]Value, opts ...Opt) {
+	scanned := make(map[string]bool)
+	for _, opt := range opts {
+		a := opt.Ptr
+		value, ok := m[opt.Name]
+		if !ok {
+			value = opt.Default
+		}
+		scanArg(value, a)
+		scanned[opt.Name] = true
+	}
+	for key := range m {
+		if !scanned[key] {
+			throwf("unknown option %s", parse.Quote(key))
+		}
+	}
+}
+
+func scanArg(value Value, a interface{}) {
+	ptr := reflect.ValueOf(a)
+	if ptr.Kind() != reflect.Ptr {
+		throwf("internal bug: %T to ScanArgs, need pointer", a)
+	}
+	v := reflect.Indirect(ptr)
+	switch v.Kind() {
+	case reflect.Int:
+		i, err := toInt(value)
+		maybeThrow(err)
+		v.Set(reflect.ValueOf(i))
+	case reflect.Float64:
+		f, err := toFloat(value)
+		maybeThrow(err)
+		v.Set(reflect.ValueOf(f))
+	default:
+		if reflect.TypeOf(value).ConvertibleTo(v.Type()) {
+			v.Set(reflect.ValueOf(value))
+		} else {
+			throwf("need %s", v.Type().Name())
+		}
+	}
+}
+
 func nop(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
@@ -482,19 +535,22 @@ func continueFn(ec *EvalCtx) {
 	throw(Continue)
 }
 
-func print(ec *EvalCtx, sepv String, args ...string) {
+func print(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var sepv String
+	ScanOpts(opts, Opt{"sep", &sepv, String(" ")})
+
 	out := ec.ports[1].File
 	sep := string(sepv)
 	for i, arg := range args {
 		if i > 0 {
 			out.WriteString(sep)
 		}
-		out.WriteString(arg)
+		out.WriteString(ToString(arg))
 	}
 }
 
-func echo(ec *EvalCtx, sep String, args ...string) {
-	print(ec, sep, args...)
+func echo(ec *EvalCtx, args []Value, opts map[string]Value) {
+	print(ec, args, opts)
 	ec.ports[1].File.WriteString("\n")
 }
 
@@ -507,7 +563,10 @@ func pprint(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func slurp(ec *EvalCtx) {
+func slurp(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
 	in := ec.ports[0].File
 	out := ec.ports[1].Chan
 
@@ -521,7 +580,10 @@ func slurp(ec *EvalCtx) {
 	out <- String(string(all))
 }
 
-func fromLines(ec *EvalCtx) {
+func fromLines(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
 	in := ec.ports[0].File
 	out := ec.ports[1].Chan
 
@@ -537,7 +599,11 @@ func toLines(ec *EvalCtx, iterate func(func(Value))) {
 }
 
 // explode puts each element of the argument.
-func explode(ec *EvalCtx, v IterableValue) {
+func explode(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var v IterableValue
+	ScanArgs(args, &v)
+	TakeNoOpt(opts)
+
 	out := ec.ports[1].Chan
 	v.Iterate(func(e Value) bool {
 		out <- e
@@ -563,7 +629,11 @@ func joins(ec *EvalCtx, sep String, iterate func(func(Value))) {
 }
 
 // splits splits an argument strings by a delimiter and writes all pieces.
-func splits(ec *EvalCtx, sep, s String) {
+func splits(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var s, sep String
+	ScanArgs(args, &s)
+	ScanOpts(opts, Opt{"sep", &sep, String("")})
+
 	out := ec.ports[1].Chan
 	parts := strings.Split(string(s), string(sep))
 	for _, p := range parts {
@@ -597,7 +667,10 @@ func toJSON(ec *EvalCtx, iterate func(func(Value))) {
 }
 
 // fromJSON parses a stream of JSON data into Value's.
-func fromJSON(ec *EvalCtx) {
+func fromJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
 	in := ec.ports[0].File
 	out := ec.ports[1].Chan
 

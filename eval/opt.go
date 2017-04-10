@@ -46,3 +46,9 @@ func (os *OptSet) MustPick(opts map[string]Value) []Value {
 	maybeThrow(err)
 	return vs
 }
+
+type Opt struct {
+	Name    string
+	Ptr     interface{}
+	Default Value
+}
