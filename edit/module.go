@@ -40,7 +40,7 @@ func makeModule(ed *Editor) eval.Namespace {
 	ns["completer"] = argCompleter
 	ns[eval.FnPrefix+"complete-getopt"] = eval.NewRoVariable(
 		// XXX Repr is "&le:complete-getopt" instead of "le:&complete-getopt"
-		&eval.BuiltinFn{"le:complete-getopt", eval.WrapFn(complGetopt)})
+		&eval.BuiltinFn{"le:complete-getopt", complGetopt})
 	for _, bac := range argCompletersData {
 		ns[eval.FnPrefix+bac.name] = eval.NewRoVariable(bac)
 	}
@@ -83,7 +83,7 @@ func makeModule(ed *Editor) eval.Namespace {
 	ns["before-readline"] = ed.beforeReadLine
 	ns["after-readline"] = ed.afterReadLine
 
-	ns[eval.FnPrefix+"styled"] = eval.NewRoVariable(&eval.BuiltinFn{"le:styled", eval.WrapFn(styledBuiltin)})
+	ns[eval.FnPrefix+"styled"] = eval.NewRoVariable(&eval.BuiltinFn{"le:styled", styledBuiltin})
 
 	return ns
 }

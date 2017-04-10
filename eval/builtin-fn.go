@@ -231,142 +231,6 @@ var (
 	stringValueType = reflect.TypeOf(String(""))
 )
 
-// WrapFn wraps an inner function into one suitable as a builtin function. It
-// generates argument checking and conversion code according to the signature of
-// the inner function and option specifications. The inner function must accept
-// EvalCtx* as the first argument, followed by options, followed by arguments.
-func WrapFn(inner interface{}, optSpecs ...OptSpec) func(*EvalCtx, []Value, map[string]Value) {
-	funcType := reflect.TypeOf(inner)
-	if funcType.In(0) != evalCtxType {
-		panic("bad func to wrap, first argument not *EvalCtx")
-	}
-
-	nopts := len(optSpecs)
-	optsTo := nopts + 1
-	optSet := NewOptSet(optSpecs...)
-	// Range occupied by fixed arguments in the argument list to inner.
-	fixedArgsFrom, fixedArgsTo := optsTo, funcType.NumIn()
-	isVariadic := funcType.IsVariadic()
-	hasOptionalIterate := false
-	var variadicType reflect.Type
-	if isVariadic {
-		fixedArgsTo--
-		variadicType = funcType.In(funcType.NumIn() - 1).Elem()
-		if !supportedArgType(variadicType) {
-			panic(fmt.Sprintf("bad func to wrap, variadic argument type %s unsupported", variadicType))
-		}
-	} else if funcType.In(funcType.NumIn()-1) == iterateType {
-		fixedArgsTo--
-		hasOptionalIterate = true
-	}
-
-	for i := 1; i < fixedArgsTo; i++ {
-		if !supportedArgType(funcType.In(i)) {
-			panic(fmt.Sprintf("bad func to wrap, argument type %s unsupported", funcType.In(i)))
-		}
-	}
-
-	nFixedArgs := fixedArgsTo - fixedArgsFrom
-
-	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
-		// Check arity of arguments.
-		if isVariadic {
-			if len(args) < nFixedArgs {
-				throw(fmt.Errorf("arity mismatch: want %d or more arguments, got %d", nFixedArgs, len(args)))
-			}
-		} else if hasOptionalIterate {
-			if len(args) < nFixedArgs || len(args) > nFixedArgs+1 {
-				throw(fmt.Errorf("arity mismatch: want %d or %d arguments, got %d", nFixedArgs, nFixedArgs+1, len(args)))
-			}
-		} else if len(args) != nFixedArgs {
-			throw(fmt.Errorf("arity mismatch: want %d arguments, got %d", nFixedArgs, len(args)))
-		}
-		convertedArgs := make([]reflect.Value, 1+nopts+len(args))
-		convertedArgs[0] = reflect.ValueOf(ec)
-
-		// Convert and fill options.
-		var err error
-		optValues := optSet.MustPick(opts)
-		for i, v := range optValues {
-			convertedArgs[1+i], err = convertArg(v, funcType.In(1+i))
-			if err != nil {
-				throw(errors.New("bad option " + parse.Quote(optSet.optSpecs[i].Name) + ": " + err.Error()))
-			}
-		}
-
-		// Convert and fill fixed arguments.
-		for i, arg := range args[:nFixedArgs] {
-			convertedArgs[fixedArgsFrom+i], err = convertArg(arg, funcType.In(fixedArgsFrom+i))
-			if err != nil {
-				throw(errors.New("bad argument: " + err.Error()))
-			}
-		}
-
-		if isVariadic {
-			for i, arg := range args[nFixedArgs:] {
-				convertedArgs[fixedArgsTo+i], err = convertArg(arg, variadicType)
-				if err != nil {
-					throw(errors.New("bad argument: " + err.Error()))
-				}
-			}
-		} else if hasOptionalIterate {
-			var iterate func(func(Value))
-			if len(args) == nFixedArgs {
-				// No Iterator specified in arguments. Use input.
-				// Since convertedArgs was created according to the size of the
-				// actual argument list, we now an empty element to make room
-				// for this additional iterator argument.
-				convertedArgs = append(convertedArgs, reflect.Value{})
-				iterate = ec.IterateInputs
-			} else {
-				iterator, ok := args[nFixedArgs].(Iterable)
-				if !ok {
-					throw(errors.New("bad argument: need iterator, got " + args[nFixedArgs].Kind()))
-				}
-				iterate = func(f func(Value)) {
-					iterator.Iterate(func(v Value) bool {
-						f(v)
-						return true
-					})
-				}
-			}
-			convertedArgs[fixedArgsTo] = reflect.ValueOf(iterate)
-		}
-		reflect.ValueOf(inner).Call(convertedArgs)
-	}
-}
-
-func supportedArgType(t reflect.Type) bool {
-	return t.Kind() == reflect.String ||
-		t.Kind() == reflect.Int || t.Kind() == reflect.Float64 ||
-		t.Implements(valueType)
-}
-
-func convertArg(arg Value, wantType reflect.Type) (reflect.Value, error) {
-	var converted interface{}
-	var err error
-
-	switch wantType.Kind() {
-	case reflect.String:
-		if wantType == stringValueType {
-			converted = String(ToString(arg))
-		} else {
-			converted = ToString(arg)
-		}
-	case reflect.Int:
-		converted, err = toInt(arg)
-	case reflect.Float64:
-		converted, err = toFloat(arg)
-	default:
-		if reflect.TypeOf(arg).ConvertibleTo(wantType) {
-			converted = arg
-		} else {
-			err = fmt.Errorf("need %s", wantType.Name())
-		}
-	}
-	return reflect.ValueOf(converted), err
-}
-
 func wrapStringToString(f func(string) string) func(*EvalCtx, []Value, map[string]Value) {
 	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
@@ -502,6 +366,12 @@ func ScanArgsAndOptionalIterate(ec *EvalCtx, s []Value, args ...interface{}) fun
 	}
 }
 
+type Opt struct {
+	Name    string
+	Ptr     interface{}
+	Default Value
+}
+
 func ScanOpts(m map[string]Value, opts ...Opt) {
 	scanned := make(map[string]bool)
 	for _, opt := range opts {
@@ -537,7 +407,7 @@ func scanArg(value Value, a interface{}) {
 		v.Set(reflect.ValueOf(f))
 	default:
 		if reflect.TypeOf(value).ConvertibleTo(v.Type()) {
-			v.Set(reflect.ValueOf(value))
+			v.Set(reflect.ValueOf(value).Convert(v.Type()))
 		} else {
 			throwf("need %T argument, got %s", v.Interface(), value.Kind())
 		}
@@ -1088,12 +958,17 @@ func slash(ec *EvalCtx, args []Value, opts map[string]Value) {
 		return
 	}
 	// Division
-	wrappedDivide(ec, args, opts)
+	divide(ec, args, opts)
 }
 
-var wrappedDivide = WrapFn(divide)
+func divide(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var (
+		prod float64
+		nums []float64
+	)
+	ScanArgsVariadic(args, &prod, &nums)
+	TakeNoOpt(opts)
 
-func divide(ec *EvalCtx, prod float64, nums ...float64) {
 	out := ec.ports[1].Chan
 	for _, f := range nums {
 		prod /= f

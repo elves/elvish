@@ -29,7 +29,12 @@ func (s *styled) Repr(indent int) string {
 	return "(le:styled " + parse.Quote(s.text) + " " + parse.Quote(s.styles.String()) + ")"
 }
 
-func styledBuiltin(ec *eval.EvalCtx, text, style string) {
+func styledBuiltin(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+	var textv, stylev eval.String
+	eval.ScanArgs(args, &textv, &stylev)
+	text, style := string(textv), string(stylev)
+	eval.TakeNoOpt(opts)
+
 	out := ec.OutputChan()
 	out <- &styled{text, stylesFromString(style)}
 }
