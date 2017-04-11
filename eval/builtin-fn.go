@@ -230,13 +230,6 @@ var (
 	ErrInterrupted       = errors.New("interrupted")
 )
 
-var (
-	evalCtxType     = reflect.TypeOf((*EvalCtx)(nil))
-	valueType       = reflect.TypeOf((*Value)(nil)).Elem()
-	iterateType     = reflect.TypeOf((func(func(Value)))(nil))
-	stringValueType = reflect.TypeOf(String(""))
-)
-
 func wrapStringToString(f func(string) string) func(*EvalCtx, []Value, map[string]Value) {
 	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
