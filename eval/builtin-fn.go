@@ -56,15 +56,18 @@ func (b *BuiltinFn) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 func init() {
 	// Needed to work around init loop.
 	builtinFns = []*BuiltinFn{
-		// Trivial predicates
+		// Trivial builtin
 		&BuiltinFn{"nop", nop},
 
 		// Introspection
 		&BuiltinFn{"kind-of", kindOf},
 
+		// Generic identity and equality
+		&BuiltinFn{"is", is},
+		&BuiltinFn{"eq", eq},
+
 		// Value output
 		&BuiltinFn{"put", put},
-		&BuiltinFn{"explode", explode},
 
 		// Bytes output
 		&BuiltinFn{"print", print},
@@ -80,9 +83,41 @@ func init() {
 		&BuiltinFn{"to-lines", toLines},
 		&BuiltinFn{"to-json", toJSON},
 
+		// Exception and control
+		&BuiltinFn{"fail", fail},
+		&BuiltinFn{"multi-error", multiErrorFn},
+		&BuiltinFn{"return", returnFn},
+		&BuiltinFn{"break", breakFn},
+		&BuiltinFn{"continue", continueFn},
+
+		// Misc functional
+		&BuiltinFn{"constantly", constantly},
+
+		// Misc shell basic
+		&BuiltinFn{"source", source},
+
+		// Iterations.
+		&BuiltinFn{"each", each},
+		&BuiltinFn{"peach", peach},
+		&BuiltinFn{"repeat", repeat},
+
+		// Sequence primitives
+		&BuiltinFn{"explode", explode},
+		&BuiltinFn{"take", take},
+		&BuiltinFn{"range", rangeFn},
+		&BuiltinFn{"count", count},
+
 		// String
 		&BuiltinFn{"joins", joins},
 		&BuiltinFn{"splits", splits},
+
+		// String operations
+		&BuiltinFn{"ord", ord},
+		&BuiltinFn{"base", base},
+		&BuiltinFn{"wcswidth", wcswidth},
+		&BuiltinFn{"-override-wcwidth", overrideWcwidth},
+
+		// String predicates
 		&BuiltinFn{"has-prefix", hasPrefix},
 		&BuiltinFn{"has-suffix", hasSuffix},
 
@@ -103,26 +138,6 @@ func init() {
 		&BuiltinFn{">=s",
 			wrapStrCompare(func(a, b string) bool { return a >= b })},
 
-		// Exception and control
-		&BuiltinFn{"fail", fail},
-		&BuiltinFn{"multi-error", multiErrorFn},
-		&BuiltinFn{"return", returnFn},
-		&BuiltinFn{"break", breakFn},
-		&BuiltinFn{"continue", continueFn},
-
-		// Functional primitives
-		&BuiltinFn{"constantly", constantly},
-
-		// Iterations.
-		&BuiltinFn{"each", each},
-		&BuiltinFn{"peach", peach},
-		&BuiltinFn{"repeat", repeat},
-
-		// Sequence primitives
-		&BuiltinFn{"take", take},
-		&BuiltinFn{"range", rangeFn},
-		&BuiltinFn{"count", count},
-
 		// eawk
 		&BuiltinFn{"eawk", eawk},
 
@@ -139,7 +154,11 @@ func init() {
 		&BuiltinFn{"eval-symlinks", wrapStringToStringError(filepath.EvalSymlinks)},
 		&BuiltinFn{"tilde-abbr", tildeAbbr},
 
-		&BuiltinFn{"source", source},
+		// Boolean operations
+		&BuiltinFn{"bool", boolFn},
+		&BuiltinFn{"not", not},
+		&BuiltinFn{"true", trueFn},
+		&BuiltinFn{"false", falseFn},
 
 		// Arithmetics
 		&BuiltinFn{"+", plus},
@@ -167,25 +186,10 @@ func init() {
 		&BuiltinFn{">=",
 			wrapNumCompare(func(a, b float64) bool { return a >= b })},
 
-		// Generic identity and equality
-		&BuiltinFn{"is", is},
-		&BuiltinFn{"eq", eq},
-
-		// String operations
-		&BuiltinFn{"ord", ord},
-		&BuiltinFn{"base", base},
-		&BuiltinFn{"-override-wcwidth", overrideWcwidth},
-		&BuiltinFn{"wcswidth", wcswidth},
-
+		// Command resolution
 		&BuiltinFn{"resolve", resolveFn},
 		&BuiltinFn{"has-external", hasExternal},
 		&BuiltinFn{"search-external", searchExternal},
-
-		// bool
-		&BuiltinFn{"bool", boolFn},
-		&BuiltinFn{"not", not},
-		&BuiltinFn{"true", trueFn},
-		&BuiltinFn{"false", falseFn},
 
 		// File and pipe
 		&BuiltinFn{"fopen", fopen},
@@ -194,16 +198,18 @@ func init() {
 		&BuiltinFn{"prclose", prclose},
 		&BuiltinFn{"pwclose", pwclose},
 
-		&BuiltinFn{"esleep", sleep},
-
+		// Process control
 		&BuiltinFn{"fg", fg},
-
 		&BuiltinFn{"exec", exec},
 		&BuiltinFn{"exit", exit},
 
+		// Time
+		&BuiltinFn{"esleep", sleep},
+		&BuiltinFn{"-time", _time},
+
+		// Debugging
 		&BuiltinFn{"-stack", _stack},
 		&BuiltinFn{"-log", _log},
-		&BuiltinFn{"-time", _time},
 
 		&BuiltinFn{"-ifaddrs", _ifaddrs},
 	}
@@ -417,14 +423,6 @@ func scanArg(value Value, a interface{}) {
 func nop(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
-func put(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoOpt(opts)
-	out := ec.ports[1].Chan
-	for _, a := range args {
-		out <- a
-	}
-}
-
 func kindOf(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].Chan
@@ -433,41 +431,42 @@ func kindOf(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func fail(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var msg String
-	ScanArgs(args, &msg)
+func is(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
-
-	throw(errors.New(string(msg)))
+	if len(args) < 2 {
+		throw(ErrArgs)
+	}
+	result := true
+	for i := 0; i+1 < len(args); i++ {
+		if args[i] != args[i+1] {
+			result = false
+			break
+		}
+	}
+	ec.OutputChan() <- Bool(result)
 }
 
-func multiErrorFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var excs []*Exception
-	ScanArgsVariadic(args, &excs)
+func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
-
-	throw(PipelineError{excs})
+	if len(args) < 2 {
+		throw(ErrArgs)
+	}
+	result := true
+	for i := 0; i+1 < len(args); i++ {
+		if !DeepEq(args[i], args[i+1]) {
+			result = false
+			break
+		}
+	}
+	ec.OutputChan() <- Bool(result)
 }
 
-func returnFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoArg(args)
+func put(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
-
-	throw(Return)
-}
-
-func breakFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	throw(Break)
-}
-
-func continueFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	throw(Continue)
+	out := ec.ports[1].Chan
+	for _, a := range args {
+		out <- a
+	}
 }
 
 func print(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -525,105 +524,6 @@ func fromLines(ec *EvalCtx, args []Value, opts map[string]Value) {
 	linesToChan(in, out)
 }
 
-func toLines(ec *EvalCtx, args []Value, opts map[string]Value) {
-	iterate := ScanArgsAndOptionalIterate(ec, args)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].File
-
-	iterate(func(v Value) {
-		fmt.Fprintln(out, ToString(v))
-	})
-}
-
-// explode puts each element of the argument.
-func explode(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var v IterableValue
-	ScanArgs(args, &v)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
-	v.Iterate(func(e Value) bool {
-		out <- e
-		return true
-	})
-}
-
-// joins joins all input strings with a delimiter.
-func joins(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var sepv String
-	iterate := ScanArgsAndOptionalIterate(ec, args, &sepv)
-	sep := string(sepv)
-	TakeNoOpt(opts)
-
-	var buf bytes.Buffer
-	iterate(func(v Value) {
-		if s, ok := v.(String); ok {
-			if buf.Len() > 0 {
-				buf.WriteString(sep)
-			}
-			buf.WriteString(string(s))
-		} else {
-			throwf("join wants string input, got %s", v.Kind())
-		}
-	})
-	out := ec.ports[1].Chan
-	out <- String(buf.String())
-}
-
-// splits splits an argument strings by a delimiter and writes all pieces.
-func splits(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var s, sep String
-	ScanArgs(args, &s)
-	ScanOpts(opts, Opt{"sep", &sep, String("")})
-
-	out := ec.ports[1].Chan
-	parts := strings.Split(string(s), string(sep))
-	for _, p := range parts {
-		out <- String(p)
-	}
-}
-
-func hasPrefix(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var s, prefix String
-	ScanArgs(args, &s, &prefix)
-	TakeNoOpt(opts)
-
-	ec.OutputChan() <- Bool(strings.HasPrefix(string(s), string(prefix)))
-}
-
-func hasSuffix(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var s, suffix String
-	ScanArgs(args, &s, &suffix)
-	TakeNoOpt(opts)
-
-	ec.OutputChan() <- Bool(strings.HasSuffix(string(s), string(suffix)))
-}
-
-func match(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var p, s String
-	ScanArgs(args, &p, &s)
-	TakeNoOpt(opts)
-
-	matched, err := regexp.MatchString(string(p), string(s))
-	maybeThrow(err)
-	ec.OutputChan() <- Bool(matched)
-}
-
-// toJSON converts a stream of Value's to JSON data.
-func toJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
-	iterate := ScanArgsAndOptionalIterate(ec, args)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].File
-
-	enc := json.NewEncoder(out)
-	iterate(func(v Value) {
-		err := enc.Encode(v)
-		maybeThrow(err)
-	})
-}
-
 // fromJSON parses a stream of JSON data into Value's.
 func fromJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
@@ -644,6 +544,96 @@ func fromJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
 		}
 		out <- FromJSONInterface(v)
 	}
+}
+
+func toLines(ec *EvalCtx, args []Value, opts map[string]Value) {
+	iterate := ScanArgsAndOptionalIterate(ec, args)
+	TakeNoOpt(opts)
+
+	out := ec.ports[1].File
+
+	iterate(func(v Value) {
+		fmt.Fprintln(out, ToString(v))
+	})
+}
+
+// toJSON converts a stream of Value's to JSON data.
+func toJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
+	iterate := ScanArgsAndOptionalIterate(ec, args)
+	TakeNoOpt(opts)
+
+	out := ec.ports[1].File
+
+	enc := json.NewEncoder(out)
+	iterate(func(v Value) {
+		err := enc.Encode(v)
+		maybeThrow(err)
+	})
+}
+
+func fail(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var msg String
+	ScanArgs(args, &msg)
+	TakeNoOpt(opts)
+
+	throw(errors.New(string(msg)))
+}
+
+func multiErrorFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var excs []*Exception
+	ScanArgsVariadic(args, &excs)
+	TakeNoOpt(opts)
+
+	throw(PipelineError{excs})
+}
+
+func returnFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
+	throw(Return)
+}
+
+func breakFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
+	throw(Break)
+}
+
+func continueFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
+	throw(Continue)
+}
+
+func constantly(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+
+	out := ec.ports[1].Chan
+	// XXX Repr of this fn is not right
+	out <- &BuiltinFn{
+		"created by constantly",
+		func(ec *EvalCtx, a []Value, o map[string]Value) {
+			TakeNoOpt(o)
+			if len(a) != 0 {
+				throw(ErrArgs)
+			}
+			out := ec.ports[1].Chan
+			for _, v := range args {
+				out <- v
+			}
+		},
+	}
+}
+
+func source(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var fname String
+	ScanArgs(args, &fname)
+	ScanOpts(opts)
+
+	ec.Source(string(fname))
 }
 
 // each takes a single closure and applies it to all input values.
@@ -730,6 +720,208 @@ func repeat(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
+// explode puts each element of the argument.
+func explode(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var v IterableValue
+	ScanArgs(args, &v)
+	TakeNoOpt(opts)
+
+	out := ec.ports[1].Chan
+	v.Iterate(func(e Value) bool {
+		out <- e
+		return true
+	})
+}
+
+func take(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var n int
+	iterate := ScanArgsAndOptionalIterate(ec, args, &n)
+	TakeNoOpt(opts)
+
+	out := ec.ports[1].Chan
+	i := 0
+	iterate(func(v Value) {
+		if i < n {
+			out <- v
+		}
+		i++
+	})
+}
+
+func rangeFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+
+	var lower, upper int
+	step := 1
+	var err error
+
+	switch len(args) {
+	case 1:
+		upper, err = toInt(args[0])
+		maybeThrow(err)
+	case 2, 3:
+		lower, err = toInt(args[0])
+		maybeThrow(err)
+		upper, err = toInt(args[1])
+		maybeThrow(err)
+		if len(args) == 3 {
+			step, err = toInt(args[2])
+			maybeThrow(err)
+		}
+	default:
+		throw(ErrArgs)
+	}
+
+	out := ec.ports[1].Chan
+	for i := lower; i < upper; i += step {
+		out <- String(strconv.Itoa(i))
+	}
+}
+
+func count(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+
+	var n int
+	switch len(args) {
+	case 0:
+		// Count inputs.
+		ec.IterateInputs(func(Value) {
+			n++
+		})
+	case 1:
+		// Get length of argument.
+		v := args[0]
+		if lener, ok := v.(Lener); ok {
+			n = lener.Len()
+		} else if iterator, ok := v.(Iterable); ok {
+			iterator.Iterate(func(Value) bool {
+				n++
+				return true
+			})
+		} else {
+			throw(fmt.Errorf("cannot get length of a %s", v.Kind()))
+		}
+	default:
+		throw(errors.New("want 0 or 1 argument"))
+	}
+	ec.ports[1].Chan <- String(strconv.Itoa(n))
+}
+
+// joins joins all input strings with a delimiter.
+func joins(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var sepv String
+	iterate := ScanArgsAndOptionalIterate(ec, args, &sepv)
+	sep := string(sepv)
+	TakeNoOpt(opts)
+
+	var buf bytes.Buffer
+	iterate(func(v Value) {
+		if s, ok := v.(String); ok {
+			if buf.Len() > 0 {
+				buf.WriteString(sep)
+			}
+			buf.WriteString(string(s))
+		} else {
+			throwf("join wants string input, got %s", v.Kind())
+		}
+	})
+	out := ec.ports[1].Chan
+	out <- String(buf.String())
+}
+
+// splits splits an argument strings by a delimiter and writes all pieces.
+func splits(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var s, sep String
+	ScanArgs(args, &s)
+	ScanOpts(opts, Opt{"sep", &sep, String("")})
+
+	out := ec.ports[1].Chan
+	parts := strings.Split(string(s), string(sep))
+	for _, p := range parts {
+		out <- String(p)
+	}
+}
+
+func ord(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var s String
+	ScanArgs(args, &s)
+	TakeNoOpt(opts)
+
+	out := ec.ports[1].Chan
+	for _, r := range s {
+		out <- String(fmt.Sprintf("0x%x", r))
+	}
+}
+
+var ErrBadBase = errors.New("bad base")
+
+func base(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var (
+		b    int
+		nums []int
+	)
+	ScanArgsVariadic(args, &b, &nums)
+	TakeNoOpt(opts)
+
+	if b < 2 || b > 36 {
+		throw(ErrBadBase)
+	}
+
+	out := ec.ports[1].Chan
+
+	for _, num := range nums {
+		out <- String(strconv.FormatInt(int64(num), b))
+	}
+}
+
+func wcswidth(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var s String
+	ScanArgs(args, &s)
+	TakeNoOpt(opts)
+
+	out := ec.ports[1].Chan
+	out <- String(strconv.Itoa(util.Wcswidth(string(s))))
+}
+
+func overrideWcwidth(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var (
+		s String
+		w int
+	)
+	ScanArgs(args, &s, &w)
+	TakeNoOpt(opts)
+
+	r, err := toRune(s)
+	maybeThrow(err)
+	util.OverrideWcwidth(r, w)
+}
+
+func hasPrefix(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var s, prefix String
+	ScanArgs(args, &s, &prefix)
+	TakeNoOpt(opts)
+
+	ec.OutputChan() <- Bool(strings.HasPrefix(string(s), string(prefix)))
+}
+
+func hasSuffix(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var s, suffix String
+	ScanArgs(args, &s, &suffix)
+	TakeNoOpt(opts)
+
+	ec.OutputChan() <- Bool(strings.HasSuffix(string(s), string(suffix)))
+}
+
+func match(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var p, s String
+	ScanArgs(args, &p, &s)
+	TakeNoOpt(opts)
+
+	matched, err := regexp.MatchString(string(p), string(s))
+	maybeThrow(err)
+	ec.OutputChan() <- Bool(matched)
+}
+
 var eawkWordSep = regexp.MustCompile("[ \t]+")
 
 // eawk takes a function. For each line in the input stream, it calls the
@@ -772,26 +964,6 @@ func eawk(ec *EvalCtx, args []Value, opts map[string]Value) {
 			}
 		}
 	})
-}
-
-func constantly(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
-	// XXX Repr of this fn is not right
-	out <- &BuiltinFn{
-		"created by constantly",
-		func(ec *EvalCtx, a []Value, o map[string]Value) {
-			TakeNoOpt(o)
-			if len(a) != 0 {
-				throw(ErrArgs)
-			}
-			out := ec.ports[1].Chan
-			for _, v := range args {
-				out <- v
-			}
-		},
-	}
 }
 
 func cd(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -852,56 +1024,38 @@ func dirs(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func source(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var fname String
-	ScanArgs(args, &fname)
-	ScanOpts(opts)
+func tildeAbbr(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var pathv String
+	ScanArgs(args, &pathv)
+	path := string(pathv)
+	TakeNoOpt(opts)
 
-	ec.Source(string(fname))
+	out := ec.ports[1].Chan
+	out <- String(util.TildeAbbr(path))
 }
 
-func toFloat(arg Value) (float64, error) {
-	if _, ok := arg.(String); !ok {
-		return 0, fmt.Errorf("must be string")
-	}
-	s := string(arg.(String))
-	num, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		num, err2 := strconv.ParseInt(s, 0, 64)
-		if err2 != nil {
-			return 0, err
-		}
-		return float64(num), nil
-	}
-	return num, nil
+func boolFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var v Value
+	ScanArgs(args, &v)
+	TakeNoOpt(opts)
+
+	ec.OutputChan() <- Bool(ToBool(v))
 }
 
-func toInt(arg Value) (int, error) {
-	arg, ok := arg.(String)
-	if !ok {
-		return 0, fmt.Errorf("must be string")
-	}
-	num, err := strconv.ParseInt(string(arg.(String)), 0, 0)
-	if err != nil {
-		return 0, err
-	}
-	return int(num), nil
+func not(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var v Value
+	ScanArgs(args, &v)
+	TakeNoOpt(opts)
+
+	ec.OutputChan() <- Bool(!ToBool(v))
 }
 
-func toRune(arg Value) (rune, error) {
-	ss, ok := arg.(String)
-	if !ok {
-		return -1, fmt.Errorf("must be string")
-	}
-	s := string(ss)
-	r, size := utf8.DecodeRuneInString(s)
-	if r == utf8.RuneError {
-		return -1, fmt.Errorf("string is not valid UTF-8")
-	}
-	if size != len(s) {
-		return -1, fmt.Errorf("string has multiple runes")
-	}
-	return r, nil
+func trueFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	ec.OutputChan() <- Bool(true)
+}
+
+func falseFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	ec.OutputChan() <- Bool(false)
 }
 
 func plus(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -1015,122 +1169,6 @@ func randint(ec *EvalCtx, args []Value, opts map[string]Value) {
 	out <- String(strconv.Itoa(i))
 }
 
-func ord(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var s String
-	ScanArgs(args, &s)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
-	for _, r := range s {
-		out <- String(fmt.Sprintf("0x%x", r))
-	}
-}
-
-var ErrBadBase = errors.New("bad base")
-
-func base(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var (
-		b    int
-		nums []int
-	)
-	ScanArgsVariadic(args, &b, &nums)
-	TakeNoOpt(opts)
-
-	if b < 2 || b > 36 {
-		throw(ErrBadBase)
-	}
-
-	out := ec.ports[1].Chan
-
-	for _, num := range nums {
-		out <- String(strconv.FormatInt(int64(num), b))
-	}
-}
-
-func rangeFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoOpt(opts)
-
-	var lower, upper int
-	step := 1
-	var err error
-
-	switch len(args) {
-	case 1:
-		upper, err = toInt(args[0])
-		maybeThrow(err)
-	case 2, 3:
-		lower, err = toInt(args[0])
-		maybeThrow(err)
-		upper, err = toInt(args[1])
-		maybeThrow(err)
-		if len(args) == 3 {
-			step, err = toInt(args[2])
-			maybeThrow(err)
-		}
-	default:
-		throw(ErrArgs)
-	}
-
-	out := ec.ports[1].Chan
-	for i := lower; i < upper; i += step {
-		out <- String(strconv.Itoa(i))
-	}
-}
-
-func boolFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var v Value
-	ScanArgs(args, &v)
-	TakeNoOpt(opts)
-
-	ec.OutputChan() <- Bool(ToBool(v))
-}
-
-func not(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var v Value
-	ScanArgs(args, &v)
-	TakeNoOpt(opts)
-
-	ec.OutputChan() <- Bool(!ToBool(v))
-}
-
-func trueFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	ec.OutputChan() <- Bool(true)
-}
-
-func falseFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	ec.OutputChan() <- Bool(false)
-}
-
-func is(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoOpt(opts)
-	if len(args) < 2 {
-		throw(ErrArgs)
-	}
-	result := true
-	for i := 0; i+1 < len(args); i++ {
-		if args[i] != args[i+1] {
-			result = false
-			break
-		}
-	}
-	ec.OutputChan() <- Bool(result)
-}
-
-func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoOpt(opts)
-	if len(args) < 2 {
-		throw(ErrArgs)
-	}
-	result := true
-	for i := 0; i+1 < len(args); i++ {
-		if !DeepEq(args[i], args[i+1]) {
-			result = false
-			break
-		}
-	}
-	ec.OutputChan() <- Bool(result)
-}
-
 func resolveFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	var cmd String
 	ScanArgs(args, &cmd)
@@ -1161,70 +1199,51 @@ func searchExternal(ec *EvalCtx, args []Value, opts map[string]Value) {
 	out <- String(path)
 }
 
-func take(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var n int
-	iterate := ScanArgsAndOptionalIterate(ec, args, &n)
+func fopen(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var namev String
+	ScanArgs(args, &namev)
+	name := string(namev)
 	TakeNoOpt(opts)
 
+	// TODO support opening files for writing etc as well.
 	out := ec.ports[1].Chan
-	i := 0
-	iterate(func(v Value) {
-		if i < n {
-			out <- v
-		}
-		i++
-	})
-}
-
-func count(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoOpt(opts)
-
-	var n int
-	switch len(args) {
-	case 0:
-		// Count inputs.
-		ec.IterateInputs(func(Value) {
-			n++
-		})
-	case 1:
-		// Get length of argument.
-		v := args[0]
-		if lener, ok := v.(Lener); ok {
-			n = lener.Len()
-		} else if iterator, ok := v.(Iterable); ok {
-			iterator.Iterate(func(Value) bool {
-				n++
-				return true
-			})
-		} else {
-			throw(fmt.Errorf("cannot get length of a %s", v.Kind()))
-		}
-	default:
-		throw(errors.New("want 0 or 1 argument"))
-	}
-	ec.ports[1].Chan <- String(strconv.Itoa(n))
-}
-
-func overrideWcwidth(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var (
-		s String
-		w int
-	)
-	ScanArgs(args, &s, &w)
-	TakeNoOpt(opts)
-
-	r, err := toRune(s)
+	f, err := os.Open(name)
 	maybeThrow(err)
-	util.OverrideWcwidth(r, w)
+	out <- File{f}
 }
 
-func wcswidth(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var s String
-	ScanArgs(args, &s)
+func fclose(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var f File
+	ScanArgs(args, &f)
 	TakeNoOpt(opts)
 
+	maybeThrow(f.inner.Close())
+}
+
+func pipe(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
+	r, w, err := os.Pipe()
 	out := ec.ports[1].Chan
-	out <- String(strconv.Itoa(util.Wcswidth(string(s))))
+	maybeThrow(err)
+	out <- Pipe{r, w}
+}
+
+func prclose(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var p Pipe
+	ScanArgs(args, &p)
+	TakeNoOpt(opts)
+
+	maybeThrow(p.r.Close())
+}
+
+func pwclose(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var p Pipe
+	ScanArgs(args, &p)
+	TakeNoOpt(opts)
+
+	maybeThrow(p.w.Close())
 }
 
 func fg(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -1275,124 +1294,6 @@ func fg(ec *EvalCtx, args []Value, opts map[string]Value) {
 	maybeThrow(ComposeExceptionsFromPipeline(errors))
 }
 
-func tildeAbbr(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var pathv String
-	ScanArgs(args, &pathv)
-	path := string(pathv)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
-	out <- String(util.TildeAbbr(path))
-}
-
-func fopen(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var namev String
-	ScanArgs(args, &namev)
-	name := string(namev)
-	TakeNoOpt(opts)
-
-	// TODO support opening files for writing etc as well.
-	out := ec.ports[1].Chan
-	f, err := os.Open(name)
-	maybeThrow(err)
-	out <- File{f}
-}
-
-func fclose(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var f File
-	ScanArgs(args, &f)
-	TakeNoOpt(opts)
-
-	maybeThrow(f.inner.Close())
-}
-
-func pipe(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	r, w, err := os.Pipe()
-	out := ec.ports[1].Chan
-	maybeThrow(err)
-	out <- Pipe{r, w}
-}
-
-func prclose(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var p Pipe
-	ScanArgs(args, &p)
-	TakeNoOpt(opts)
-
-	maybeThrow(p.r.Close())
-}
-
-func pwclose(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var p Pipe
-	ScanArgs(args, &p)
-	TakeNoOpt(opts)
-
-	maybeThrow(p.w.Close())
-}
-
-func sleep(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var t float64
-	ScanArgs(args, &t)
-	TakeNoOpt(opts)
-
-	d := time.Duration(float64(time.Second) * t)
-	select {
-	case <-ec.Interrupts():
-		throw(ErrInterrupted)
-	case <-time.After(d):
-	}
-}
-
-func _stack(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].File
-	// XXX dup with main.go
-	buf := make([]byte, 1024)
-	for runtime.Stack(buf, true) == cap(buf) {
-		buf = make([]byte, cap(buf)*2)
-	}
-	out.Write(buf)
-}
-
-func _log(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var fnamev String
-	ScanArgs(args, &fnamev)
-	fname := string(fnamev)
-	TakeNoOpt(opts)
-
-	maybeThrow(util.SetOutputFile(fname))
-}
-
-func _time(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var f CallableValue
-	ScanArgs(args, &f)
-	TakeNoOpt(opts)
-
-	t0 := time.Now()
-	f.Call(ec, NoArgs, NoOpts)
-	t1 := time.Now()
-
-	dt := t1.Sub(t0)
-	fmt.Fprintln(ec.ports[1].File, dt)
-}
-
-func _ifaddrs(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
-
-	addrs, err := net.InterfaceAddrs()
-	maybeThrow(err)
-	for _, addr := range addrs {
-		out <- String(addr.String())
-	}
-}
-
 func exec(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
@@ -1433,6 +1334,111 @@ func exit(ec *EvalCtx, args []Value, opts map[string]Value) {
 	default:
 		throw(ErrArgs)
 	}
+}
+
+func sleep(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var t float64
+	ScanArgs(args, &t)
+	TakeNoOpt(opts)
+
+	d := time.Duration(float64(time.Second) * t)
+	select {
+	case <-ec.Interrupts():
+		throw(ErrInterrupted)
+	case <-time.After(d):
+	}
+}
+
+func _time(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var f CallableValue
+	ScanArgs(args, &f)
+	TakeNoOpt(opts)
+
+	t0 := time.Now()
+	f.Call(ec, NoArgs, NoOpts)
+	t1 := time.Now()
+
+	dt := t1.Sub(t0)
+	fmt.Fprintln(ec.ports[1].File, dt)
+}
+
+func _stack(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
+	out := ec.ports[1].File
+	// XXX dup with main.go
+	buf := make([]byte, 1024)
+	for runtime.Stack(buf, true) == cap(buf) {
+		buf = make([]byte, cap(buf)*2)
+	}
+	out.Write(buf)
+}
+
+func _log(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var fnamev String
+	ScanArgs(args, &fnamev)
+	fname := string(fnamev)
+	TakeNoOpt(opts)
+
+	maybeThrow(util.SetOutputFile(fname))
+}
+
+func _ifaddrs(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
+	out := ec.ports[1].Chan
+
+	addrs, err := net.InterfaceAddrs()
+	maybeThrow(err)
+	for _, addr := range addrs {
+		out <- String(addr.String())
+	}
+}
+
+func toFloat(arg Value) (float64, error) {
+	if _, ok := arg.(String); !ok {
+		return 0, fmt.Errorf("must be string")
+	}
+	s := string(arg.(String))
+	num, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		num, err2 := strconv.ParseInt(s, 0, 64)
+		if err2 != nil {
+			return 0, err
+		}
+		return float64(num), nil
+	}
+	return num, nil
+}
+
+func toInt(arg Value) (int, error) {
+	arg, ok := arg.(String)
+	if !ok {
+		return 0, fmt.Errorf("must be string")
+	}
+	num, err := strconv.ParseInt(string(arg.(String)), 0, 0)
+	if err != nil {
+		return 0, err
+	}
+	return int(num), nil
+}
+
+func toRune(arg Value) (rune, error) {
+	ss, ok := arg.(String)
+	if !ok {
+		return -1, fmt.Errorf("must be string")
+	}
+	s := string(ss)
+	r, size := utf8.DecodeRuneInString(s)
+	if r == utf8.RuneError {
+		return -1, fmt.Errorf("string is not valid UTF-8")
+	}
+	if size != len(s) {
+		return -1, fmt.Errorf("string has multiple runes")
+	}
+	return r, nil
 }
 
 func preExit(ec *EvalCtx) {
