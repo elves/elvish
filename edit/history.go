@@ -27,6 +27,7 @@ func (h *hist) ModeLine() renderer {
 }
 
 func startHistory(ed *Editor) {
+	ed.ClearLastNotification()
 	ed.hist.prefix = ed.line[:ed.dot]
 	ed.hist.current = -1
 	ed.hist.last = make(map[string]int)

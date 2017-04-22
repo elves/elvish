@@ -58,8 +58,9 @@ type editorState struct {
 
 	notificationMutex sync.Mutex
 
-	notifications []string
-	tips          []string
+	lastNotification string
+	notifications    []string
+	tips             []string
 
 	line           string
 	lexedLine      *string
@@ -146,7 +147,30 @@ func (ed *Editor) addTip(format string, args ...interface{}) {
 func (ed *Editor) Notify(format string, args ...interface{}) {
 	ed.notificationMutex.Lock()
 	defer ed.notificationMutex.Unlock()
-	ed.notifications = append(ed.notifications, fmt.Sprintf(format, args...))
+
+	s := fmt.Sprintf(format, args...)
+	ed.notifications = append(ed.notifications, s)
+	ed.lastNotification = s
+}
+
+// ClearLastNotification resets the last notification cache
+func (ed *Editor) ClearLastNotification() {
+	ed.notificationMutex.Lock()
+	defer ed.notificationMutex.Unlock()
+
+	ed.lastNotification = ""
+}
+
+// NotifyOnce will only call Notify if the notification isn't a dupe of the previous one
+func (ed *Editor) NotifyOnce(format string, args ...interface{}) {
+	ed.notificationMutex.Lock()
+	s := ed.lastNotification
+	// need to unlock before calling Notify
+	ed.notificationMutex.Unlock()
+
+	if s != fmt.Sprintf(format, args...) {
+		ed.Notify(format, args...)
+	}
 }
 
 func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
