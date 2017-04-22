@@ -46,6 +46,7 @@ var builtins = []*BuiltinFn{
 	{"kill-line-right", killLineRight},
 	{"kill-word-left", killWordLeft},
 	{"kill-small-word-left", killSmallWordLeft},
+	{"kill-dir-left", killDirLeft},
 	{"kill-rune-left", killRuneLeft},
 	{"kill-rune-right", killRuneRight},
 	{"move-dot-left", moveDotLeft},
@@ -131,7 +132,7 @@ var defaultBindings = map[ModeType]map[uitypes.Key]string{
 		// Killing.
 		uitypes.Key{'U', uitypes.Ctrl}:    "kill-line-left",
 		uitypes.Key{'K', uitypes.Ctrl}:    "kill-line-right",
-		uitypes.Key{'W', uitypes.Ctrl}:    "kill-word-left",
+		uitypes.Key{'W', uitypes.Ctrl}:    "kill-dir-left",
 		uitypes.Key{uitypes.Backspace, 0}: "kill-rune-left",
 		// Some terminal send ^H on backspace
 		// uitypes.Key{'H', uitypes.Ctrl}: "kill-rune-left",

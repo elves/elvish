@@ -101,6 +101,18 @@ func isAlnum(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsNumber(r)
 }
 
+func killDirLeft(ed *Editor) {
+	left := strings.TrimRightFunc(ed.line[:ed.dot], isSep)
+	left = strings.TrimRightFunc(
+		left, func(r rune) bool { return !isSep(r) })
+	ed.line = left + ed.line[ed.dot:]
+	ed.dot = len(left)
+}
+
+func isSep(r rune) bool {
+	return unicode.IsSpace(r) || r == '/'
+}
+
 func killRuneLeft(ed *Editor) {
 	if ed.dot > 0 {
 		_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
