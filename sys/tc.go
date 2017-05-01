@@ -1,36 +1,25 @@
 package sys
 
-/*
-#include <unistd.h>
-#include <errno.h>
-
-pid_t get(int fd) {
-	return tcgetpgrp(fd);
-}
-
-int set(int fd, pid_t pid) {
-	return tcsetpgrp(fd, pid);
-}
-
-int e() {
-	return errno;
-}
-*/
-import "C"
-import "syscall"
+import (
+	"syscall"
+	"unsafe"
+)
 
 func Tcgetpgrp(fd int) (int, error) {
-	i := C.get(C.int(fd))
-	if i == -1 {
-		return -1, syscall.Errno(C.e())
+	var pid int
+	_, _, errno := syscall.RawSyscall(syscall.SYS_IOCTL, uintptr(fd),
+		uintptr(syscall.TIOCGPGRP), uintptr(unsafe.Pointer(&pid)))
+	if errno == 0 {
+		return pid, nil
 	}
-	return int(i), nil
+	return -1, errno
 }
 
 func Tcsetpgrp(fd int, pid int) error {
-	i := C.set(C.int(fd), C.pid_t(pid))
-	if i != 0 {
-		return syscall.Errno(C.e())
+	_, _, errno := syscall.RawSyscall(syscall.SYS_IOCTL, uintptr(fd),
+		uintptr(syscall.TIOCSPGRP), uintptr(unsafe.Pointer(&pid)))
+	if errno == 0 {
+		return nil
 	}
-	return nil
+	return errno
 }
