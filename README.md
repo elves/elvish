@@ -40,7 +40,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
   The `e:` prefix (for "external") ensures that the external command named `ls` will be called. Otherwise this definition will result in infinite recursion.
 
-* The left and right prompts and be customized by assigning functions to `le:prompt` and `le:rprompt`. Their outputs are concatenated (with no spaces in between) before being used as the respective prompts. The following simulates the default prompts but uses fancy Unicode:
+* The left and right prompts can be customized by assigning functions to `le:prompt` and `le:rprompt`. Their outputs are concatenated (with no spaces in between) before being used as the respective prompts. The following simulates the default prompts but uses fancy Unicode:
 
   ```sh
   # "tilde-abbr" abbreviates home directory to a tilde.
