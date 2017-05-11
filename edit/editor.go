@@ -27,7 +27,8 @@ const (
 
 // Editor keeps the status of the line editor.
 type Editor struct {
-	file   *os.File
+	in     *os.File
+	out    *os.File
 	writer *Writer
 	reader *tty.Reader
 	sigs   chan os.Signal
@@ -90,7 +91,7 @@ type editorState struct {
 }
 
 // NewEditor creates an Editor.
-func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.Store) *Editor {
+func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.Store) *Editor {
 	seq := -1
 	if st != nil {
 		var err error
@@ -104,9 +105,10 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 	prompt, rprompt := defaultPrompts()
 
 	ed := &Editor{
-		file:    file,
-		writer:  newWriter(file),
-		reader:  tty.NewReader(file),
+		in:      in,
+		out:     out,
+		writer:  newWriter(out),
+		reader:  tty.NewReader(in),
 		sigs:    sigs,
 		store:   st,
 		evaler:  ev,
@@ -243,13 +245,13 @@ func (ed *Editor) startReadLine() error {
 	defer ed.activeMutex.Unlock()
 	ed.active = true
 
-	savedTermios, err := setupTerminal(ed.file)
+	savedTermios, err := setupTerminal(ed.in)
 	if err != nil {
 		return err
 	}
 	ed.savedTermios = savedTermios
 
-	_, width := sys.GetWinsize(int(ed.file.Fd()))
+	_, width := sys.GetWinsize(int(ed.in.Fd()))
 	/*
 		Write a lackEOLRune if the cursor is not in the leftmost column. This is
 		done as follows:
@@ -267,7 +269,7 @@ func (ed *Editor) startReadLine() error {
 		   LackEOL character. Otherwise, we are now in the next line and this is
 		   a no-op. The LackEOL character remains.
 	*/
-	fmt.Fprintf(ed.file, "\033[?7h%s%*s\r \r", lackEOL, width-util.Wcwidth(lackEOLRune), "")
+	fmt.Fprintf(ed.out, "\033[?7h%s%*s\r \r", lackEOL, width-util.Wcwidth(lackEOLRune), "")
 
 	/*
 		Turn off autowrap.
@@ -282,12 +284,12 @@ func (ed *Editor) startReadLine() error {
 		With a bit more caution, this can restrict the consequence of the
 		mismatch within one line.
 	*/
-	ed.file.WriteString("\033[?7l")
+	ed.out.WriteString("\033[?7l")
 	// Turn on SGR-style mouse tracking.
-	//ed.file.WriteString("\033[?1000;1006h")
+	//ed.out.WriteString("\033[?1000;1006h")
 
 	// Enable bracketed paste.
-	ed.file.WriteString("\033[?2004h")
+	ed.out.WriteString("\033[?2004h")
 
 	return nil
 }
@@ -307,21 +309,21 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 		ed.rpromptContent = nil
 	}
 	addError(ed.refresh(false, false))
-	ed.file.WriteString("\n")
+	ed.out.WriteString("\n")
 	ed.writer.resetOldBuf()
 
 	ed.reader.Quit()
 
 	// Turn on autowrap.
-	ed.file.WriteString("\033[?7h")
+	ed.out.WriteString("\033[?7h")
 	// Turn off mouse tracking.
-	//ed.file.WriteString("\033[?1000;1006l")
+	//ed.out.WriteString("\033[?1000;1006l")
 
 	// Disable bracketed paste.
-	ed.file.WriteString("\033[?2004l")
+	ed.out.WriteString("\033[?2004l")
 
 	// Restore termios.
-	err := ed.savedTermios.ApplyToFd(int(ed.file.Fd()))
+	err := ed.savedTermios.ApplyToFd(int(ed.in.Fd()))
 	if err != nil {
 		addError(fmt.Errorf("can't restore terminal attribute: %s", err))
 	}

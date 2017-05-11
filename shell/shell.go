@@ -122,7 +122,7 @@ func interact(ev *eval.Evaler, st *store.Store) {
 	// Build Editor.
 	sigch := make(chan os.Signal)
 	signal.Notify(sigch)
-	ed := edit.NewEditor(os.Stdin, sigch, ev, st)
+	ed := edit.NewEditor(os.Stdin, os.Stderr, sigch, ev, st)
 
 	// Source rc.elv.
 	if ev.DataDir != "" {
