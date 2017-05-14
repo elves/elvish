@@ -26,6 +26,22 @@ Try `cn.dl.elvish.io` if you are in China and the download is too slow. (In the 
 
 See also [Building Elvish](#building-elvish).
 
+### RPM package
+
+RPM Package for Fedora is available in [FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository).
+
+First add the FZUG repo:
+
+```
+dnf config-manager --add-repo=http://repo.fdzh.org/FZUG/FZUG.repo
+```
+
+Then install Elvish:
+
+```
+dnf install elvish
+```
+
 ## Getting Started
 
 **Note**: Elvish is constantly tested under Terminal.app, libvte-based terminals and tmux. Some function keys might not work in other terminals like xterm (#328).
