@@ -55,13 +55,7 @@ func (term *Termios) SetVMin(v uint8) {
 	term.Cc[unix.VMIN] = v
 }
 
-func setFlag(flag *uint32, mask uint32, v bool) {
-	if v {
-		*flag |= mask
-	} else {
-		*flag &= ^mask
-	}
-}
+
 
 // SetICanon sets the canonical flag.
 func (term *Termios) SetICanon(v bool) {

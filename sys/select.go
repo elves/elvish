@@ -6,13 +6,6 @@ import (
 
 type FdSet syscall.FdSet
 
-const NFDBits = 64
-
-func index(fd int) (idx uint, bit int64) {
-	u := uint(fd)
-	return u / NFDBits, 1 << (u % NFDBits)
-}
-
 func (fs *FdSet) s() *syscall.FdSet {
 	return (*syscall.FdSet)(fs)
 }

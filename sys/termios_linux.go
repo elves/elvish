@@ -1,3 +1,5 @@
+// +build linux
+
 // Copyright 2015 go-termios Author. All Rights Reserved.
 // https://github.com/go-termios/termios
 // Author: John Lenton <chipaca@github.com>
@@ -188,4 +190,12 @@ func Drain(fd uintptr) error {
 //   TCION   Transmit a START character (the XON).
 func Flow(fd uintptr, action int) error {
 	return ioctlu(fd, unix.TCXONC, uintptr(action))
+}
+
+func setFlag(flag *uint32, mask uint32, v bool) {
+	if v {
+		*flag |= mask
+	} else {
+		*flag &= ^mask
+	}
 }

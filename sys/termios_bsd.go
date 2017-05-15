@@ -1,3 +1,5 @@
+// +build darwin dragonfly freebsd netbsd openbsd
+
 // Copyright 2015 go-termios Author. All Rights Reserved.
 // https://github.com/go-termios/termios
 // Author: John Lenton <chipaca@github.com>
@@ -51,8 +53,8 @@ func (tio *Termios) GetSpeed() (in int, out int) {
 
 // SetSpeed sets the baud rate.
 func (tio *Termios) SetSpeed(in int, out int) error {
-	tio.Ispeed = uint32(in)
-	tio.Ospeed = uint32(out)
+	tio.Ispeed = uint64(in)
+	tio.Ospeed = uint64(out)
 
 	return nil
 }
@@ -104,7 +106,7 @@ func Flow(fd uintptr, action int) error {
 		return ErrInvalidAction
 	}
 
-	tio, err := GetAttr(fd)
+	tio, err := NewTermiosFromFd(int(fd))
 	if err != nil {
 		return err
 	}
@@ -112,13 +114,21 @@ func Flow(fd uintptr, action int) error {
 	return err
 }
 
-func (q Queue) bits() uintptr {
-	switch q {
-	case InputQueue:
-		return FREAD
-	case OutputQueue:
-		return FWRITE
-	default:
-		return 0
+//func (q Queue) bits() uintptr {
+//	switch q {
+//	case InputQueue:
+//		return FREAD
+//	case OutputQueue:
+//		return FWRITE
+//	default:
+//		return 0
+//	}
+//}
+
+func setFlag(flag *uint64, mask uint64, v bool) {
+	if v {
+		*flag |= mask
+	} else {
+		*flag &= ^mask
 	}
 }
