@@ -19,7 +19,7 @@ var (
 func makeModule(ed *Editor) eval.Namespace {
 	ns := eval.Namespace{}
 	// Populate builtins.
-	for _, b := range builtins {
+	for _, b := range builtinMap {
 		ns[eval.FnPrefix+b.name] = eval.NewPtrVariable(b)
 	}
 

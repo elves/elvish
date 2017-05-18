@@ -38,83 +38,83 @@ func (bf *BuiltinFn) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]e
 	bf.impl(ed)
 }
 
-var builtins = []*BuiltinFn{
+var builtinImpls = map[string]func(*Editor){
 	// Command and insert mode
-	{"start-insert", startInsert},
-	{"start-command", startCommand},
-	{"kill-line-left", killLineLeft},
-	{"kill-line-right", killLineRight},
-	{"kill-word-left", killWordLeft},
-	{"kill-small-word-left", killSmallWordLeft},
-	{"kill-rune-left", killRuneLeft},
-	{"kill-rune-right", killRuneRight},
-	{"move-dot-left", moveDotLeft},
-	{"move-dot-right", moveDotRight},
-	{"move-dot-left-word", moveDotLeftWord},
-	{"move-dot-right-word", moveDotRightWord},
-	{"move-dot-sol", moveDotSOL},
-	{"move-dot-eol", moveDotEOL},
-	{"move-dot-up", moveDotUp},
-	{"move-dot-down", moveDotDown},
-	{"insert-last-word", insertLastWord},
-	{"insert-key", insertKey},
-	{"return-line", returnLine},
-	{"smart-enter", smartEnter},
-	{"return-eof", returnEOF},
-	{"toggle-quote-paste", toggleQuotePaste},
-	{"end-of-history", endOfHistory},
-	{"insert-raw", startInsertRaw},
-	{"default-command", defaultCommand},
-	{"insert-default", defaultInsert},
+	"start-insert":         startInsert,
+	"start-command":        startCommand,
+	"kill-line-left":       killLineLeft,
+	"kill-line-right":      killLineRight,
+	"kill-word-left":       killWordLeft,
+	"kill-small-word-left": killSmallWordLeft,
+	"kill-rune-left":       killRuneLeft,
+	"kill-rune-right":      killRuneRight,
+	"move-dot-left":        moveDotLeft,
+	"move-dot-right":       moveDotRight,
+	"move-dot-left-word":   moveDotLeftWord,
+	"move-dot-right-word":  moveDotRightWord,
+	"move-dot-sol":         moveDotSOL,
+	"move-dot-eol":         moveDotEOL,
+	"move-dot-up":          moveDotUp,
+	"move-dot-down":        moveDotDown,
+	"insert-last-word":     insertLastWord,
+	"insert-key":           insertKey,
+	"return-line":          returnLine,
+	"smart-enter":          smartEnter,
+	"return-eof":           returnEOF,
+	"toggle-quote-paste":   toggleQuotePaste,
+	"end-of-history":       endOfHistory,
+	"insert-raw":           startInsertRaw,
+	"default-command":      defaultCommand,
+	"insert-default":       defaultInsert,
 
 	// Completion mode
-	{"compl-prefix-or-start-compl", complPrefixOrStartCompl},
-	{"start-compl", startCompl},
-	{"compl-up", complUp},
-	{"compl-down", complDown},
-	{"compl-down-cycle", complDownCycle},
-	{"compl-left", complLeft},
-	{"compl-right", complRight},
-	{"compl-accept", complAccept},
-	{"compl-trigger-filter", complTriggerFilter},
-	{"compl-default", complDefault},
+	"compl-prefix-or-start-compl": complPrefixOrStartCompl,
+	"start-compl":                 startCompl,
+	"compl-up":                    complUp,
+	"compl-down":                  complDown,
+	"compl-down-cycle":            complDownCycle,
+	"compl-left":                  complLeft,
+	"compl-right":                 complRight,
+	"compl-accept":                complAccept,
+	"compl-trigger-filter":        complTriggerFilter,
+	"compl-default":               complDefault,
 
 	// Navigation mode
-	{"start-nav", startNav},
-	{"nav-up", navUp},
-	{"nav-down", navDown},
-	{"nav-page-up", navPageUp},
-	{"nav-page-down", navPageDown},
-	{"nav-left", navLeft},
-	{"nav-right", navRight},
-	{"nav-trigger-shown-hidden", navTriggerShowHidden},
-	{"nav-trigger-filter", navTriggerFilter},
-	{"nav-insert-selected", navInsertSelected},
-	{"nav-insert-selected-and-quit", navInsertSelectedAndQuit},
-	{"navigation-default", navigationDefault},
+	"start-nav":                    startNav,
+	"nav-up":                       navUp,
+	"nav-down":                     navDown,
+	"nav-page-up":                  navPageUp,
+	"nav-page-down":                navPageDown,
+	"nav-left":                     navLeft,
+	"nav-right":                    navRight,
+	"nav-trigger-shown-hidden":     navTriggerShowHidden,
+	"nav-trigger-filter":           navTriggerFilter,
+	"nav-insert-selected":          navInsertSelected,
+	"nav-insert-selected-and-quit": navInsertSelectedAndQuit,
+	"navigation-default":           navigationDefault,
 
 	// History mode
-	{"start-history", startHistory},
-	{"history-up", historyUp},
-	{"history-down", historyDown},
-	{"history-down-or-quit", historyDownOrQuit},
-	{"history-switch-to-histlist", historySwitchToHistlist},
-	{"history-default", historyDefault},
+	"start-history":              startHistory,
+	"history-up":                 historyUp,
+	"history-down":               historyDown,
+	"history-down-or-quit":       historyDownOrQuit,
+	"history-switch-to-histlist": historySwitchToHistlist,
+	"history-default":            historyDefault,
 
 	// History listing mode
-	{"start-histlist", startHistlist},
-	{"histlist-toggle-dedup", histlistToggleDedup},
-	{"histlist-toggle-case-sensitivity", histlistToggleCaseSensitivity},
+	"start-histlist":                   startHistlist,
+	"histlist-toggle-dedup":            histlistToggleDedup,
+	"histlist-toggle-case-sensitivity": histlistToggleCaseSensitivity,
 
 	// Bang mode
-	{"start-bang", startBang},
-	{"bang-alt-default", bangAltDefault},
+	"start-bang":       startBang,
+	"bang-alt-default": bangAltDefault,
 
 	// Location mode
-	{"start-location", startLocation},
+	"start-location": startLocation,
 
 	// Misc
-	{"redraw", redraw},
+	"redraw": redraw,
 }
 
 var defaultBindings = map[ModeType]map[uitypes.Key]string{
@@ -214,9 +214,17 @@ var defaultBindings = map[ModeType]map[uitypes.Key]string{
 }
 
 var (
-	builtinMap  = map[string]*BuiltinFn{}
+	builtinMap  = buildBuiltinFnMap(builtinImpls)
 	keyBindings = map[ModeType]map[uitypes.Key]eval.CallableValue{}
 )
+
+func buildBuiltinFnMap(implMap map[string]func(*Editor)) map[string]*BuiltinFn {
+	m := make(map[string]*BuiltinFn)
+	for name, impl := range implMap {
+		m[name] = &BuiltinFn{name, impl}
+	}
+	return m
+}
 
 func init() {
 	addListingBuiltins("loc-", func(ed *Editor) *listing { return &ed.location.listing })
@@ -226,9 +234,6 @@ func init() {
 	addListingBuiltins("bang-", func(ed *Editor) *listing { return &ed.bang.listing })
 	addListingDefaultBindings("bang-", modeBang)
 
-	for _, b := range builtins {
-		builtinMap[b.name] = b
-	}
 	for mode, table := range defaultBindings {
 		keyBindings[mode] = map[uitypes.Key]eval.CallableValue{}
 		for key, name := range table {
