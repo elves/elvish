@@ -35,14 +35,17 @@ type Editor struct {
 	evaler *eval.Evaler
 	cmdSeq int
 
-	prompt        eval.Variable
-	rprompt       eval.Variable
+	prompt            eval.Variable
+	rprompt           eval.Variable
+	rpromptPersistent eval.Variable
+
 	abbreviations map[string]string
 
-	locationHidden    eval.Variable
-	rpromptPersistent eval.Variable
-	beforeReadLine    eval.Variable
-	afterReadLine     eval.Variable
+	locationHidden eval.Variable
+	locationPinned eval.Variable
+
+	beforeReadLine eval.Variable
+	afterReadLine  eval.Variable
 
 	historyMutex sync.RWMutex
 
@@ -104,20 +107,22 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 	prompt, rprompt := defaultPrompts()
 
 	ed := &Editor{
-		file:    file,
-		writer:  newWriter(file),
-		reader:  tty.NewReader(file),
-		sigs:    sigs,
-		store:   st,
-		evaler:  ev,
-		cmdSeq:  seq,
-		prompt:  eval.NewPtrVariableWithValidator(prompt, eval.ShouldBeFn),
-		rprompt: eval.NewPtrVariableWithValidator(rprompt, eval.ShouldBeFn),
+		file:   file,
+		writer: newWriter(file),
+		reader: tty.NewReader(file),
+		sigs:   sigs,
+		store:  st,
+		evaler: ev,
+		cmdSeq: seq,
+
+		prompt:            eval.NewPtrVariableWithValidator(prompt, eval.ShouldBeFn),
+		rprompt:           eval.NewPtrVariableWithValidator(rprompt, eval.ShouldBeFn),
+		rpromptPersistent: eval.NewPtrVariableWithValidator(eval.Bool(false), eval.ShouldBeBool),
 
 		abbreviations: make(map[string]string),
 
-		locationHidden:    eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
-		rpromptPersistent: eval.NewPtrVariableWithValidator(eval.Bool(false), eval.ShouldBeBool),
+		locationHidden: eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
+		locationPinned: eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
 
 		beforeReadLine: eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
 		afterReadLine:  eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),

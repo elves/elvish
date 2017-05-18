@@ -8,6 +8,7 @@ import (
 
 var (
 	theLocation = newLocation([]store.Dir{
+		{"/pinned", PinnedScore},
 		{"/src/github.com/elves/elvish", 300},
 		{"/src/home/xyz", 233},
 		{"/home/dir", 100},
@@ -17,6 +18,7 @@ var (
 
 	locationFilterTests = []listingFilterTestCases{
 		{"", []shown{
+			{"*", unstyled("/pinned")},
 			{"300", unstyled("/src/github.com/elves/elvish")},
 			{"233", unstyled("/src/home/xyz")},
 			{"100", unstyled("~/dir")},       // home is abbreviated

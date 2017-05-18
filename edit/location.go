@@ -3,6 +3,7 @@ package edit
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -15,6 +16,10 @@ import (
 )
 
 // Location mode.
+
+// PinnedScore is a special value of Score in store.Dir to represent that the
+// directory is pinned.
+var PinnedScore = math.Inf(1)
 
 type location struct {
 	listing
@@ -42,7 +47,13 @@ func (loc *location) Len() int {
 }
 
 func (loc *location) Show(i int) (string, styled) {
-	header := fmt.Sprintf("%.0f", loc.filtered[i].Score)
+	var header string
+	score := loc.filtered[i].Score
+	if score == PinnedScore {
+		header = "*"
+	} else {
+		header = fmt.Sprintf("%.0f", score)
+	}
 	return header, unstyled(showPath(loc.filtered[i].Path, loc.home))
 }
 
@@ -126,12 +137,27 @@ func startLocation(ed *Editor) {
 		ed.Notify("%v", ErrStoreOffline)
 		return
 	}
-	black := convertBlacklist(ed.locationHidden.Get().(eval.List))
+	black := convertListToSet(ed.locationHidden.Get().(eval.List))
 	dirs, err := ed.store.GetDirs(black)
 	if err != nil {
 		ed.Notify("store error: %v", err)
 		return
 	}
+
+	pinnedValue := ed.locationPinned.Get().(eval.List)
+	pinned := convertListToDirs(pinnedValue)
+	pinnedSet := convertListToSet(pinnedValue)
+
+	// TODO(xiaq): Optimize this by changing GetDirs to a callback API, and
+	// build dirs by first putting pinned directories and then appending those
+	// from store.
+	for _, d := range dirs {
+		_, inPinned := pinnedSet[d.Path]
+		if !inPinned {
+			pinned = append(pinned, d)
+		}
+	}
+	dirs = pinned
 
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
@@ -140,14 +166,28 @@ func startLocation(ed *Editor) {
 	ed.mode = ed.location
 }
 
-func convertBlacklist(li eval.List) map[string]struct{} {
-	black := make(map[string]struct{})
+// convertListToDirs converts a list of strings to []store.Dir. It uses the
+// special score of PinnedScore to signify that the directory is pinned.
+func convertListToDirs(li eval.List) []store.Dir {
+	pinned := make([]store.Dir, 0, li.Len())
 	// XXX(xiaq): silently drops non-string items.
 	li.Iterate(func(v eval.Value) bool {
 		if s, ok := v.(eval.String); ok {
-			black[string(s)] = struct{}{}
+			pinned = append(pinned, store.Dir{string(s), PinnedScore})
 		}
 		return true
 	})
-	return black
+	return pinned
+}
+
+func convertListToSet(li eval.List) map[string]struct{} {
+	set := make(map[string]struct{})
+	// XXX(xiaq): silently drops non-string items.
+	li.Iterate(func(v eval.Value) bool {
+		if s, ok := v.(eval.String); ok {
+			set[string(s)] = struct{}{}
+		}
+		return true
+	})
+	return set
 }
