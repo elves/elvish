@@ -40,8 +40,6 @@ func (bf *BuiltinFn) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]e
 
 var builtinImpls = map[string]func(*Editor){
 	// Command and insert mode
-	"start-insert":         startInsert,
-	"start-command":        startCommand,
 	"kill-line-left":       killLineLeft,
 	"kill-line-right":      killLineRight,
 	"kill-word-left":       killWordLeft,
@@ -64,169 +62,45 @@ var builtinImpls = map[string]func(*Editor){
 	"toggle-quote-paste":   toggleQuotePaste,
 	"end-of-history":       endOfHistory,
 	"insert-raw":           startInsertRaw,
-	"default-command":      defaultCommand,
-	"insert-default":       defaultInsert,
-
-	// Completion mode
-	"compl-prefix-or-start-compl": complPrefixOrStartCompl,
-	"start-compl":                 startCompl,
-	"compl-up":                    complUp,
-	"compl-down":                  complDown,
-	"compl-down-cycle":            complDownCycle,
-	"compl-left":                  complLeft,
-	"compl-right":                 complRight,
-	"compl-accept":                complAccept,
-	"compl-trigger-filter":        complTriggerFilter,
-	"compl-default":               complDefault,
-
-	// Navigation mode
-	"start-nav":                    startNav,
-	"nav-up":                       navUp,
-	"nav-down":                     navDown,
-	"nav-page-up":                  navPageUp,
-	"nav-page-down":                navPageDown,
-	"nav-left":                     navLeft,
-	"nav-right":                    navRight,
-	"nav-trigger-shown-hidden":     navTriggerShowHidden,
-	"nav-trigger-filter":           navTriggerFilter,
-	"nav-insert-selected":          navInsertSelected,
-	"nav-insert-selected-and-quit": navInsertSelectedAndQuit,
-	"navigation-default":           navigationDefault,
-
-	// History mode
-	"start-history":              startHistory,
-	"history-up":                 historyUp,
-	"history-down":               historyDown,
-	"history-down-or-quit":       historyDownOrQuit,
-	"history-switch-to-histlist": historySwitchToHistlist,
-	"history-default":            historyDefault,
-
-	// History listing mode
-	"start-histlist":                   startHistlist,
-	"histlist-toggle-dedup":            histlistToggleDedup,
-	"histlist-toggle-case-sensitivity": histlistToggleCaseSensitivity,
-
-	// Bang mode
-	"start-bang":       startBang,
-	"bang-alt-default": bangAltDefault,
-
-	// Location mode
-	"start-location": startLocation,
 
 	// Misc
 	"redraw": redraw,
 }
 
 var defaultBindings = map[ModeType]map[uitypes.Key]string{
-	modeInsert: map[uitypes.Key]string{
-		// Moving.
-		uitypes.Key{uitypes.Left, 0}:             "move-dot-left",
-		uitypes.Key{uitypes.Right, 0}:            "move-dot-right",
-		uitypes.Key{uitypes.Up, uitypes.Alt}:     "move-dot-up",
-		uitypes.Key{uitypes.Down, uitypes.Alt}:   "move-dot-down",
-		uitypes.Key{uitypes.Left, uitypes.Ctrl}:  "move-dot-left-word",
-		uitypes.Key{uitypes.Right, uitypes.Ctrl}: "move-dot-right-word",
-		uitypes.Key{uitypes.Home, 0}:             "move-dot-sol",
-		uitypes.Key{uitypes.End, 0}:              "move-dot-eol",
-		// Killing.
-		uitypes.Key{'U', uitypes.Ctrl}:    "kill-line-left",
-		uitypes.Key{'K', uitypes.Ctrl}:    "kill-line-right",
-		uitypes.Key{'W', uitypes.Ctrl}:    "kill-word-left",
-		uitypes.Key{uitypes.Backspace, 0}: "kill-rune-left",
-		// Some terminal send ^H on backspace
-		// uitypes.Key{'H', uitypes.Ctrl}: "kill-rune-left",
-		uitypes.Key{uitypes.Delete, 0}: "kill-rune-right",
-		// Inserting.
-		uitypes.Key{'.', uitypes.Alt}:           "insert-last-word",
-		uitypes.Key{uitypes.Enter, uitypes.Alt}: "insert-key",
-		// Controls.
-		uitypes.Key{uitypes.Enter, 0}:  "smart-enter",
-		uitypes.Key{'D', uitypes.Ctrl}: "return-eof",
-		uitypes.Key{uitypes.F2, 0}:     "toggle-quote-paste",
-		// uitypes.Key{'[', uitypes.Ctrl}: "startCommand",
-		uitypes.Key{uitypes.Tab, 0}:    "compl-prefix-or-start-compl",
-		uitypes.Key{uitypes.Up, 0}:     "start-history",
-		uitypes.Key{uitypes.Down, 0}:   "end-of-history",
-		uitypes.Key{'N', uitypes.Ctrl}: "start-nav",
-		uitypes.Key{'R', uitypes.Ctrl}: "start-histlist",
-		uitypes.Key{',', uitypes.Alt}:  "start-bang",
-		uitypes.Key{'L', uitypes.Ctrl}: "start-location",
-		uitypes.Key{'V', uitypes.Ctrl}: "insert-raw",
-		uitypes.Default:                "insert-default",
-	},
-	modeCommand: map[uitypes.Key]string{
-		// Moving.
-		uitypes.Key{'h', 0}: "move-dot-left",
-		uitypes.Key{'l', 0}: "move-dot-right",
-		uitypes.Key{'k', 0}: "move-dot-up",
-		uitypes.Key{'j', 0}: "move-dot-down",
-		uitypes.Key{'b', 0}: "move-dot-left-word",
-		uitypes.Key{'w', 0}: "move-dot-right-word",
-		uitypes.Key{'0', 0}: "move-dot-sol",
-		uitypes.Key{'$', 0}: "move-dot-eol",
-		// Killing.
-		uitypes.Key{'x', 0}: "kill-rune-right",
-		uitypes.Key{'D', 0}: "kill-line-right",
-		// Controls.
-		uitypes.Key{'i', 0}: "start-insert",
-		uitypes.Default:     "default-command",
-	},
-	modeCompletion: map[uitypes.Key]string{
-		uitypes.Key{uitypes.Up, 0}:     "compl-up",
-		uitypes.Key{uitypes.Down, 0}:   "compl-down",
-		uitypes.Key{uitypes.Tab, 0}:    "compl-down-cycle",
-		uitypes.Key{uitypes.Left, 0}:   "compl-left",
-		uitypes.Key{uitypes.Right, 0}:  "compl-right",
-		uitypes.Key{uitypes.Enter, 0}:  "compl-accept",
-		uitypes.Key{'F', uitypes.Ctrl}: "compl-trigger-filter",
-		uitypes.Key{'[', uitypes.Ctrl}: "start-insert",
-		uitypes.Default:                "compl-default",
-	},
-	modeNavigation: map[uitypes.Key]string{
-		uitypes.Key{uitypes.Up, 0}:              "nav-up",
-		uitypes.Key{uitypes.Down, 0}:            "nav-down",
-		uitypes.Key{uitypes.PageUp, 0}:          "nav-page-up",
-		uitypes.Key{uitypes.PageDown, 0}:        "nav-page-down",
-		uitypes.Key{uitypes.Left, 0}:            "nav-left",
-		uitypes.Key{uitypes.Right, 0}:           "nav-right",
-		uitypes.Key{uitypes.Enter, uitypes.Alt}: "nav-insert-selected",
-		uitypes.Key{uitypes.Enter, 0}:           "nav-insert-selected-and-quit",
-		uitypes.Key{'H', uitypes.Ctrl}:          "nav-trigger-shown-hidden",
-		uitypes.Key{'F', uitypes.Ctrl}:          "nav-trigger-filter",
-		uitypes.Key{'[', uitypes.Ctrl}:          "start-insert",
-		uitypes.Default:                         "navigation-default",
-	},
-	modeHistory: map[uitypes.Key]string{
-		uitypes.Key{uitypes.Up, 0}:     "history-up",
-		uitypes.Key{uitypes.Down, 0}:   "history-down-or-quit",
-		uitypes.Key{'[', uitypes.Ctrl}: "start-insert",
-		uitypes.Key{'R', uitypes.Ctrl}: "history-switch-to-histlist",
-		uitypes.Default:                "history-default",
-	},
-	modeHistoryListing: map[uitypes.Key]string{
-		uitypes.Key{'G', uitypes.Ctrl}: "histlist-toggle-case-sensitivity",
-		uitypes.Key{'D', uitypes.Ctrl}: "histlist-toggle-dedup",
-	},
-	modeBang: map[uitypes.Key]string{
-		uitypes.Default: "bang-alt-default",
-	},
-	modeLocation: map[uitypes.Key]string{},
+	modeInsert:         insertKeyBindings,
+	modeCommand:        commandKeyBindings,
+	modeCompletion:     complKeyBindings,
+	modeNavigation:     navKeyBindings,
+	modeHistory:        historyKeyBindings,
+	modeHistoryListing: histlistKeyBindings,
+	modeBang:           bangKeyBindings,
+	modeLocation:       locKeyBindings,
 }
 
 var (
-	builtinMap  = buildBuiltinFnMap(builtinImpls)
+	builtinMap  = map[string]*BuiltinFn{}
 	keyBindings = map[ModeType]map[uitypes.Key]eval.CallableValue{}
 )
 
-func buildBuiltinFnMap(implMap map[string]func(*Editor)) map[string]*BuiltinFn {
-	m := make(map[string]*BuiltinFn)
+func addBuiltinFns(prefix string, implMap map[string]func(*Editor)) {
 	for name, impl := range implMap {
-		m[name] = &BuiltinFn{name, impl}
+		fullName := prefix + name
+		builtinMap[fullName] = &BuiltinFn{fullName, impl}
 	}
-	return m
 }
 
 func init() {
+	addBuiltinFns("", builtinImpls)
+	addBuiltinFns("insert-", insertBuiltinImpls)
+	addBuiltinFns("command-", commandBuiltinImpls)
+	addBuiltinFns("nav-", navBuiltinImpls)
+	addBuiltinFns("loc-", locBuiltinImpls)
+	addBuiltinFns("bang-", bangBuiltinImpls)
+	addBuiltinFns("compl-", complBuiltinImpls)
+	addBuiltinFns("history-", historyBuiltinImpls)
+	addBuiltinFns("histlist-", histlistBuiltinImpls)
+
 	addListingBuiltins("loc-", func(ed *Editor) *listing { return &ed.location.listing })
 	addListingDefaultBindings("loc-", modeLocation)
 	addListingBuiltins("histlist-", func(ed *Editor) *listing { return &ed.histlist.listing })

@@ -265,7 +265,7 @@ func (l *listing) handleFilterKey(k uitypes.Key) bool {
 
 func (l *listing) defaultBinding(ed *Editor) {
 	if !l.handleFilterKey(ed.lastKey) {
-		startInsert(ed)
+		insertStart(ed)
 		ed.nextAction = action{typ: reprocessKey}
 	}
 }
@@ -283,7 +283,7 @@ func addListingBuiltins(prefix string, l func(*Editor) *listing) {
 	add("page-down", func(ed *Editor) { l(ed).pageDown() })
 	add("backspace", func(ed *Editor) { l(ed).backspace() })
 	add("accept", func(ed *Editor) { l(ed).accept(ed) })
-	add("accept-close", func(ed *Editor) { l(ed).accept(ed); startInsert(ed) })
+	add("accept-close", func(ed *Editor) { l(ed).accept(ed); insertStart(ed) })
 	add("default", func(ed *Editor) { l(ed).defaultBinding(ed) })
 }
 
@@ -302,5 +302,5 @@ func addListingDefaultBindings(prefix string, m ModeType) {
 	add(uitypes.Key{uitypes.Enter, 0}, "accept-close")
 	add(uitypes.Key{uitypes.Enter, uitypes.Alt}, "accept")
 	add(uitypes.Default, "default")
-	defaultBindings[m][uitypes.Key{'[', uitypes.Ctrl}] = "start-insert"
+	defaultBindings[m][uitypes.Key{'[', uitypes.Ctrl}] = "insert-start"
 }

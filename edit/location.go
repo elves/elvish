@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/elves/elvish/edit/uitypes"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
@@ -16,6 +17,13 @@ import (
 )
 
 // Location mode.
+
+var (
+	locBuiltinImpls = map[string]func(*Editor){
+		"start": locStart,
+	}
+	locKeyBindings = map[uitypes.Key]string{}
+)
 
 // PinnedScore is a special value of Score in store.Dir to represent that the
 // directory is pinned.
@@ -132,7 +140,7 @@ func (loc *location) Accept(i int, ed *Editor) {
 	ed.mode = &ed.insert
 }
 
-func startLocation(ed *Editor) {
+func locStart(ed *Editor) {
 	if ed.store == nil {
 		ed.Notify("%v", ErrStoreOffline)
 		return

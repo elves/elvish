@@ -16,6 +16,37 @@ import (
 
 // Interface.
 
+var (
+	navBuiltinImpls = map[string]func(*Editor){
+		"start":                    navStart,
+		"up":                       navUp,
+		"down":                     navDown,
+		"page-up":                  navPageUp,
+		"page-down":                navPageDown,
+		"left":                     navLeft,
+		"right":                    navRight,
+		"trigger-shown-hidden":     navTriggerShowHidden,
+		"trigger-filter":           navTriggerFilter,
+		"insert-selected":          navInsertSelected,
+		"insert-selected-and-quit": navInsertSelectedAndQuit,
+		"default":                  navDefault,
+	}
+	navKeyBindings = map[uitypes.Key]string{
+		uitypes.Key{uitypes.Up, 0}:              "nav-up",
+		uitypes.Key{uitypes.Down, 0}:            "nav-down",
+		uitypes.Key{uitypes.PageUp, 0}:          "nav-page-up",
+		uitypes.Key{uitypes.PageDown, 0}:        "nav-page-down",
+		uitypes.Key{uitypes.Left, 0}:            "nav-left",
+		uitypes.Key{uitypes.Right, 0}:           "nav-right",
+		uitypes.Key{uitypes.Enter, uitypes.Alt}: "nav-insert-selected",
+		uitypes.Key{uitypes.Enter, 0}:           "nav-insert-selected-and-quit",
+		uitypes.Key{'H', uitypes.Ctrl}:          "nav-trigger-shown-hidden",
+		uitypes.Key{'F', uitypes.Ctrl}:          "nav-trigger-filter",
+		uitypes.Key{'[', uitypes.Ctrl}:          "insert-start",
+		uitypes.Default:                         "nav-default",
+	}
+)
+
 type navigation struct {
 	current    *navColumn
 	parent     *navColumn
@@ -42,7 +73,7 @@ func (n *navigation) CursorOnModeLine() bool {
 	return n.filtering
 }
 
-func startNav(ed *Editor) {
+func navStart(ed *Editor) {
 	initNavigation(&ed.navigation, ed)
 	ed.mode = &ed.navigation
 }
@@ -91,7 +122,7 @@ func navInsertSelectedAndQuit(ed *Editor) {
 	ed.mode = &ed.insert
 }
 
-func navigationDefault(ed *Editor) {
+func navDefault(ed *Editor) {
 	// Use key binding for insert mode without exiting nigation mode.
 	k := ed.lastKey
 	n := &ed.navigation

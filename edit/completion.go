@@ -13,6 +13,32 @@ import (
 
 // Interface.
 
+var (
+	complBuiltinImpls = map[string]func(*Editor){
+		"smart-start":    complSmartStart,
+		"start":          complStart,
+		"up":             complUp,
+		"down":           complDown,
+		"down-cycle":     complDownCycle,
+		"left":           complLeft,
+		"right":          complRight,
+		"accept":         complAccept,
+		"trigger-filter": complTriggerFilter,
+		"default":        complDefault,
+	}
+	complKeyBindings = map[uitypes.Key]string{
+		uitypes.Key{uitypes.Up, 0}:     "compl-up",
+		uitypes.Key{uitypes.Down, 0}:   "compl-down",
+		uitypes.Key{uitypes.Tab, 0}:    "compl-down-cycle",
+		uitypes.Key{uitypes.Left, 0}:   "compl-left",
+		uitypes.Key{uitypes.Right, 0}:  "compl-right",
+		uitypes.Key{uitypes.Enter, 0}:  "compl-accept",
+		uitypes.Key{'F', uitypes.Ctrl}: "compl-trigger-filter",
+		uitypes.Key{'[', uitypes.Ctrl}: "insert-start",
+		uitypes.Default:                "compl-default",
+	}
+)
+
 type completion struct {
 	compl
 	completer string
@@ -47,11 +73,11 @@ func (c *completion) CursorOnModeLine() bool {
 	return c.filtering
 }
 
-func startCompl(ed *Editor) {
+func complStart(ed *Editor) {
 	startCompletionInner(ed, false)
 }
 
-func complPrefixOrStartCompl(ed *Editor) {
+func complSmartStart(ed *Editor) {
 	startCompletionInner(ed, true)
 }
 

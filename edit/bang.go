@@ -10,6 +10,16 @@ import (
 
 // Bang mode.
 
+var (
+	bangBuiltinImpls = map[string]func(*Editor){
+		"start":       bangStart,
+		"alt-default": bangAltDefault,
+	}
+	bangKeyBindings = map[uitypes.Key]string{
+		uitypes.Default: "bang-alt-default",
+	}
+)
+
 type bangEntry struct {
 	i int
 	s string
@@ -77,10 +87,10 @@ func (b *bang) Filter(filter string) int {
 
 func (b *bang) Accept(i int, ed *Editor) {
 	ed.insertAtDot(b.filtered[i].s)
-	startInsert(ed)
+	insertStart(ed)
 }
 
-func startBang(ed *Editor) {
+func bangStart(ed *Editor) {
 	cmd, err := ed.store.GetLastCmd(-1, "")
 	if err != nil {
 		ed.Notify("db error: %s", err.Error())
@@ -99,7 +109,7 @@ func bangAltDefault(ed *Editor) {
 	} else if ed.lastKey == (uitypes.Key{',', uitypes.Alt}) {
 		l.Accept(0, ed)
 	} else {
-		startInsert(ed)
+		insertStart(ed)
 		ed.nextAction = action{typ: reprocessKey}
 	}
 }

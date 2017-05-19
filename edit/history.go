@@ -3,12 +3,31 @@ package edit
 import (
 	"fmt"
 
+	"github.com/elves/elvish/edit/uitypes"
 	"github.com/elves/elvish/store"
 )
 
 // Command history subsystem.
 
 // Interface.
+
+var (
+	historyBuiltinImpls = map[string]func(*Editor){
+		"start":              historyStart,
+		"up":                 historyUp,
+		"down":               historyDown,
+		"down-or-quit":       historyDownOrQuit,
+		"switch-to-histlist": historySwitchToHistlist,
+		"default":            historyDefault,
+	}
+	historyKeyBindings = map[uitypes.Key]string{
+		uitypes.Key{uitypes.Up, 0}:     "history-up",
+		uitypes.Key{uitypes.Down, 0}:   "history-down-or-quit",
+		uitypes.Key{'[', uitypes.Ctrl}: "insert-start",
+		uitypes.Key{'R', uitypes.Ctrl}: "history-switch-to-histlist",
+		uitypes.Default:                "history-default",
+	}
+)
 
 type hist struct {
 	current int
@@ -26,7 +45,7 @@ func (h *hist) ModeLine() renderer {
 	return modeLineRenderer{fmt.Sprintf(" HISTORY #%d ", h.current), ""}
 }
 
-func startHistory(ed *Editor) {
+func historyStart(ed *Editor) {
 	ed.hist.prefix = ed.line[:ed.dot]
 	ed.hist.current = -1
 	ed.hist.last = make(map[string]int)
@@ -52,7 +71,7 @@ func historyDownOrQuit(ed *Editor) {
 }
 
 func historySwitchToHistlist(ed *Editor) {
-	startHistlist(ed)
+	histlistStart(ed)
 	if ed.mode == ed.histlist {
 		ed.line = ""
 		ed.dot = 0

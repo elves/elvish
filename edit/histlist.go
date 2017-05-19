@@ -5,9 +5,23 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/elves/elvish/edit/uitypes"
 )
 
 // Command history listing mode.
+
+var (
+	histlistBuiltinImpls = map[string]func(*Editor){
+		"start":                   histlistStart,
+		"toggle-dedup":            histlistToggleDedup,
+		"toggle-case-sensitivity": histlistToggleCaseSensitivity,
+	}
+	histlistKeyBindings = map[uitypes.Key]string{
+		uitypes.Key{'G', uitypes.Ctrl}: "histlist-toggle-case-sensitivity",
+		uitypes.Key{'D', uitypes.Ctrl}: "histlist-toggle-dedup",
+	}
+)
 
 var ErrStoreOffline = errors.New("store offline")
 
@@ -102,7 +116,7 @@ func (hl *histlist) Accept(i int, ed *Editor) {
 	ed.insertAtDot(line)
 }
 
-func startHistlist(ed *Editor) {
+func histlistStart(ed *Editor) {
 	cmds, err := getCmds(ed)
 	if err != nil {
 		ed.Notify("%v", err)

@@ -12,6 +12,70 @@ import (
 
 // Builtins related to insert and command mode.
 
+var (
+	insertBuiltinImpls = map[string]func(*Editor){
+		"start":   insertStart,
+		"default": insertDefault,
+	}
+	commandBuiltinImpls = map[string]func(*Editor){
+		"start":   commandStart,
+		"default": commandDefault,
+	}
+	insertKeyBindings = map[uitypes.Key]string{
+		// Moving.
+		uitypes.Key{uitypes.Left, 0}:             "move-dot-left",
+		uitypes.Key{uitypes.Right, 0}:            "move-dot-right",
+		uitypes.Key{uitypes.Up, uitypes.Alt}:     "move-dot-up",
+		uitypes.Key{uitypes.Down, uitypes.Alt}:   "move-dot-down",
+		uitypes.Key{uitypes.Left, uitypes.Ctrl}:  "move-dot-left-word",
+		uitypes.Key{uitypes.Right, uitypes.Ctrl}: "move-dot-right-word",
+		uitypes.Key{uitypes.Home, 0}:             "move-dot-sol",
+		uitypes.Key{uitypes.End, 0}:              "move-dot-eol",
+		// Killing.
+		uitypes.Key{'U', uitypes.Ctrl}:    "kill-line-left",
+		uitypes.Key{'K', uitypes.Ctrl}:    "kill-line-right",
+		uitypes.Key{'W', uitypes.Ctrl}:    "kill-word-left",
+		uitypes.Key{uitypes.Backspace, 0}: "kill-rune-left",
+		// Some terminal send ^H on backspace
+		// uitypes.Key{'H', uitypes.Ctrl}: "kill-rune-left",
+		uitypes.Key{uitypes.Delete, 0}: "kill-rune-right",
+		// Inserting.
+		uitypes.Key{'.', uitypes.Alt}:           "insert-last-word",
+		uitypes.Key{uitypes.Enter, uitypes.Alt}: "insert-key",
+		// Controls.
+		uitypes.Key{uitypes.Enter, 0}:  "smart-enter",
+		uitypes.Key{'D', uitypes.Ctrl}: "return-eof",
+		uitypes.Key{uitypes.F2, 0}:     "toggle-quote-paste",
+		// uitypes.Key{'[', uitypes.Ctrl}: "command-start",
+		uitypes.Key{uitypes.Tab, 0}:    "compl-smart-start",
+		uitypes.Key{uitypes.Up, 0}:     "history-start",
+		uitypes.Key{uitypes.Down, 0}:   "end-of-history",
+		uitypes.Key{'N', uitypes.Ctrl}: "nav-start",
+		uitypes.Key{'R', uitypes.Ctrl}: "histlist-start",
+		uitypes.Key{',', uitypes.Alt}:  "bang-start",
+		uitypes.Key{'L', uitypes.Ctrl}: "loc-start",
+		uitypes.Key{'V', uitypes.Ctrl}: "insert-raw",
+		uitypes.Default:                "insert-default",
+	}
+	commandKeyBindings = map[uitypes.Key]string{
+		// Moving.
+		uitypes.Key{'h', 0}: "move-dot-left",
+		uitypes.Key{'l', 0}: "move-dot-right",
+		uitypes.Key{'k', 0}: "move-dot-up",
+		uitypes.Key{'j', 0}: "move-dot-down",
+		uitypes.Key{'b', 0}: "move-dot-left-word",
+		uitypes.Key{'w', 0}: "move-dot-right-word",
+		uitypes.Key{'0', 0}: "move-dot-sol",
+		uitypes.Key{'$', 0}: "move-dot-eol",
+		// Killing.
+		uitypes.Key{'x', 0}: "kill-rune-right",
+		uitypes.Key{'D', 0}: "kill-line-right",
+		// Controls.
+		uitypes.Key{'i', 0}: "insert-start",
+		uitypes.Default:     "command-default",
+	}
+)
+
 type insert struct {
 	quotePaste bool
 	// The number of consecutive key inserts. Used for abbreviation expansion.
@@ -43,11 +107,11 @@ func (*command) ModeLine() renderer {
 	return modeLineRenderer{" COMMAND ", ""}
 }
 
-func startInsert(ed *Editor) {
+func insertStart(ed *Editor) {
 	ed.mode = &ed.insert
 }
 
-func startCommand(ed *Editor) {
+func commandStart(ed *Editor) {
 	ed.mode = &ed.command
 }
 
@@ -253,7 +317,7 @@ func toggleQuotePaste(ed *Editor) {
 	ed.insert.quotePaste = !ed.insert.quotePaste
 }
 
-func defaultInsert(ed *Editor) {
+func insertDefault(ed *Editor) {
 	k := ed.lastKey
 	if likeChar(k) {
 		insertKey(ed)
@@ -273,7 +337,7 @@ func defaultInsert(ed *Editor) {
 	}
 }
 
-func defaultCommand(ed *Editor) {
+func commandDefault(ed *Editor) {
 	k := ed.lastKey
 	ed.Notify("Unbound: %s", k)
 }
