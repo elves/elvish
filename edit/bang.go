@@ -10,15 +10,16 @@ import (
 
 // Bang mode.
 
-var (
-	bangBuiltinImpls = map[string]func(*Editor){
-		"start":       bangStart,
-		"alt-default": bangAltDefault,
-	}
-	bangKeyBindings = map[uitypes.Key]string{
-		uitypes.Default: "bang-alt-default",
-	}
-)
+var _ = registerListingBuiltins("bang", map[string]func(*Editor){
+	"start":       bangStart,
+	"alt-default": bangAltDefault,
+}, func(ed *Editor) *listing { return &ed.bang.listing })
+
+func init() {
+	registerListingBindings(modeBang, "bang", map[uitypes.Key]string{
+		uitypes.Default: "alt-default",
+	})
+}
 
 type bangEntry struct {
 	i int

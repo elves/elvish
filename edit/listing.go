@@ -270,37 +270,35 @@ func (l *listing) defaultBinding(ed *Editor) {
 	}
 }
 
-func addListingBuiltins(prefix string, l func(*Editor) *listing) {
-	add := func(name string, f func(*Editor)) {
-		fullName := prefix + name
-		builtinMap[fullName] = &BuiltinFn{fullName, f}
-	}
-	add("up", func(ed *Editor) { l(ed).up(false) })
-	add("up-cycle", func(ed *Editor) { l(ed).up(true) })
-	add("page-up", func(ed *Editor) { l(ed).pageUp() })
-	add("down", func(ed *Editor) { l(ed).down(false) })
-	add("down-cycle", func(ed *Editor) { l(ed).down(true) })
-	add("page-down", func(ed *Editor) { l(ed).pageDown() })
-	add("backspace", func(ed *Editor) { l(ed).backspace() })
-	add("accept", func(ed *Editor) { l(ed).accept(ed) })
-	add("accept-close", func(ed *Editor) { l(ed).accept(ed); insertStart(ed) })
-	add("default", func(ed *Editor) { l(ed).defaultBinding(ed) })
+func registerListingBuiltins(
+	module string,
+	impls map[string]func(*Editor), l func(*Editor) *listing) struct{} {
+
+	impls["up"] = func(ed *Editor) { l(ed).up(false) }
+	impls["up-cycle"] = func(ed *Editor) { l(ed).up(true) }
+	impls["page-up"] = func(ed *Editor) { l(ed).pageUp() }
+	impls["down"] = func(ed *Editor) { l(ed).down(false) }
+	impls["down-cycle"] = func(ed *Editor) { l(ed).down(true) }
+	impls["page-down"] = func(ed *Editor) { l(ed).pageDown() }
+	impls["backspace"] = func(ed *Editor) { l(ed).backspace() }
+	impls["accept"] = func(ed *Editor) { l(ed).accept(ed) }
+	impls["accept-close"] = func(ed *Editor) { l(ed).accept(ed); insertStart(ed) }
+	impls["default"] = func(ed *Editor) { l(ed).defaultBinding(ed) }
+	return registerBuiltins(module, impls)
 }
 
-func addListingDefaultBindings(prefix string, m ModeType) {
-	add := func(k uitypes.Key, name string) {
-		if _, ok := defaultBindings[m][k]; !ok {
-			defaultBindings[m][k] = prefix + name
-		}
-	}
-	add(uitypes.Key{uitypes.Up, 0}, "up")
-	add(uitypes.Key{uitypes.PageUp, 0}, "page-up")
-	add(uitypes.Key{uitypes.Down, 0}, "down")
-	add(uitypes.Key{uitypes.PageDown, 0}, "page-down")
-	add(uitypes.Key{uitypes.Tab, 0}, "down-cycle")
-	add(uitypes.Key{uitypes.Backspace, 0}, "backspace")
-	add(uitypes.Key{uitypes.Enter, 0}, "accept-close")
-	add(uitypes.Key{uitypes.Enter, uitypes.Alt}, "accept")
-	add(uitypes.Default, "default")
-	defaultBindings[m][uitypes.Key{'[', uitypes.Ctrl}] = "insert-start"
+func registerListingBindings(
+	mt ModeType, defaultMod string, m map[uitypes.Key]string) struct{} {
+
+	m[uitypes.Key{uitypes.Up, 0}] = "up"
+	m[uitypes.Key{uitypes.PageUp, 0}] = "page-up"
+	m[uitypes.Key{uitypes.Down, 0}] = "down"
+	m[uitypes.Key{uitypes.PageDown, 0}] = "page-down"
+	m[uitypes.Key{uitypes.Tab, 0}] = "down-cycle"
+	m[uitypes.Key{uitypes.Backspace, 0}] = "backspace"
+	m[uitypes.Key{uitypes.Enter, 0}] = "accept-close"
+	m[uitypes.Key{uitypes.Enter, uitypes.Alt}] = "accept"
+	m[uitypes.Default] = "default"
+	m[uitypes.Key{'[', uitypes.Ctrl}] = "insert:start"
+	return registerBindings(mt, defaultMod, m)
 }

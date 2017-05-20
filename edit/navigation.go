@@ -16,36 +16,37 @@ import (
 
 // Interface.
 
-var (
-	navBuiltinImpls = map[string]func(*Editor){
-		"start":                    navStart,
-		"up":                       navUp,
-		"down":                     navDown,
-		"page-up":                  navPageUp,
-		"page-down":                navPageDown,
-		"left":                     navLeft,
-		"right":                    navRight,
-		"trigger-shown-hidden":     navTriggerShowHidden,
-		"trigger-filter":           navTriggerFilter,
-		"insert-selected":          navInsertSelected,
-		"insert-selected-and-quit": navInsertSelectedAndQuit,
-		"default":                  navDefault,
-	}
-	navKeyBindings = map[uitypes.Key]string{
-		uitypes.Key{uitypes.Up, 0}:              "nav-up",
-		uitypes.Key{uitypes.Down, 0}:            "nav-down",
-		uitypes.Key{uitypes.PageUp, 0}:          "nav-page-up",
-		uitypes.Key{uitypes.PageDown, 0}:        "nav-page-down",
-		uitypes.Key{uitypes.Left, 0}:            "nav-left",
-		uitypes.Key{uitypes.Right, 0}:           "nav-right",
-		uitypes.Key{uitypes.Enter, uitypes.Alt}: "nav-insert-selected",
-		uitypes.Key{uitypes.Enter, 0}:           "nav-insert-selected-and-quit",
-		uitypes.Key{'H', uitypes.Ctrl}:          "nav-trigger-shown-hidden",
-		uitypes.Key{'F', uitypes.Ctrl}:          "nav-trigger-filter",
-		uitypes.Key{'[', uitypes.Ctrl}:          "insert-start",
-		uitypes.Default:                         "nav-default",
-	}
-)
+var _ = registerBuiltins("nav", map[string]func(*Editor){
+	"start":                    navStart,
+	"up":                       navUp,
+	"down":                     navDown,
+	"page-up":                  navPageUp,
+	"page-down":                navPageDown,
+	"left":                     navLeft,
+	"right":                    navRight,
+	"trigger-shown-hidden":     navTriggerShowHidden,
+	"trigger-filter":           navTriggerFilter,
+	"insert-selected":          navInsertSelected,
+	"insert-selected-and-quit": navInsertSelectedAndQuit,
+	"default":                  navDefault,
+})
+
+func init() {
+	registerBindings(modeNavigation, "nav", map[uitypes.Key]string{
+		uitypes.Key{uitypes.Up, 0}:              "up",
+		uitypes.Key{uitypes.Down, 0}:            "down",
+		uitypes.Key{uitypes.PageUp, 0}:          "page-up",
+		uitypes.Key{uitypes.PageDown, 0}:        "page-down",
+		uitypes.Key{uitypes.Left, 0}:            "left",
+		uitypes.Key{uitypes.Right, 0}:           "right",
+		uitypes.Key{uitypes.Enter, uitypes.Alt}: "insert-selected",
+		uitypes.Key{uitypes.Enter, 0}:           "insert-selected-and-quit",
+		uitypes.Key{'H', uitypes.Ctrl}:          "trigger-shown-hidden",
+		uitypes.Key{'F', uitypes.Ctrl}:          "trigger-filter",
+		uitypes.Key{'[', uitypes.Ctrl}:          "insert:start",
+		uitypes.Default:                         "default",
+	})
+}
 
 type navigation struct {
 	current    *navColumn

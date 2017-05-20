@@ -11,17 +11,19 @@ import (
 
 // Command history listing mode.
 
-var (
-	histlistBuiltinImpls = map[string]func(*Editor){
-		"start":                   histlistStart,
-		"toggle-dedup":            histlistToggleDedup,
-		"toggle-case-sensitivity": histlistToggleCaseSensitivity,
-	}
-	histlistKeyBindings = map[uitypes.Key]string{
-		uitypes.Key{'G', uitypes.Ctrl}: "histlist-toggle-case-sensitivity",
-		uitypes.Key{'D', uitypes.Ctrl}: "histlist-toggle-dedup",
-	}
-)
+var _ = registerListingBuiltins("histlist", map[string]func(*Editor){
+	"start":                   histlistStart,
+	"toggle-dedup":            histlistToggleDedup,
+	"toggle-case-sensitivity": histlistToggleCaseSensitivity,
+}, func(ed *Editor) *listing { return &ed.histlist.listing })
+
+func init() {
+	registerListingBindings(modeHistoryListing, "histlist",
+		map[uitypes.Key]string{
+			uitypes.Key{'G', uitypes.Ctrl}: "toggle-case-sensitivity",
+			uitypes.Key{'D', uitypes.Ctrl}: "toggle-dedup",
+		})
+}
 
 var ErrStoreOffline = errors.New("store offline")
 

@@ -128,7 +128,9 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		afterReadLine:  eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
 	}
 	ev.Editor = ed
-	ev.Modules["le"] = makeModule(ed)
+
+	installModules(ev.Modules, ed)
+
 	return ed
 }
 
@@ -450,6 +452,7 @@ MainLoop:
 
 			fn, bound := keyBinding[k]
 			if !bound {
+				// TODO(xiaq) don't assume Default always exists
 				fn = keyBinding[uitypes.Default]
 			}
 

@@ -18,12 +18,13 @@ import (
 
 // Location mode.
 
-var (
-	locBuiltinImpls = map[string]func(*Editor){
-		"start": locStart,
-	}
-	locKeyBindings = map[uitypes.Key]string{}
-)
+var _ = registerListingBuiltins("loc", map[string]func(*Editor){
+	"start": locStart,
+}, func(ed *Editor) *listing { return &ed.location.listing })
+
+func init() {
+	registerListingBindings(modeLocation, "loc", map[uitypes.Key]string{})
+}
 
 // PinnedScore is a special value of Score in store.Dir to represent that the
 // directory is pinned.

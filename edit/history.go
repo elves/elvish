@@ -11,23 +11,24 @@ import (
 
 // Interface.
 
-var (
-	historyBuiltinImpls = map[string]func(*Editor){
-		"start":              historyStart,
-		"up":                 historyUp,
-		"down":               historyDown,
-		"down-or-quit":       historyDownOrQuit,
-		"switch-to-histlist": historySwitchToHistlist,
-		"default":            historyDefault,
-	}
-	historyKeyBindings = map[uitypes.Key]string{
-		uitypes.Key{uitypes.Up, 0}:     "history-up",
-		uitypes.Key{uitypes.Down, 0}:   "history-down-or-quit",
-		uitypes.Key{'[', uitypes.Ctrl}: "insert-start",
-		uitypes.Key{'R', uitypes.Ctrl}: "history-switch-to-histlist",
-		uitypes.Default:                "history-default",
-	}
-)
+var _ = registerBuiltins("history", map[string]func(*Editor){
+	"start":              historyStart,
+	"up":                 historyUp,
+	"down":               historyDown,
+	"down-or-quit":       historyDownOrQuit,
+	"switch-to-histlist": historySwitchToHistlist,
+	"default":            historyDefault,
+})
+
+func init() {
+	registerBindings(modeHistory, "history", map[uitypes.Key]string{
+		uitypes.Key{uitypes.Up, 0}:     "up",
+		uitypes.Key{uitypes.Down, 0}:   "down-or-quit",
+		uitypes.Key{'[', uitypes.Ctrl}: "insert:start",
+		uitypes.Key{'R', uitypes.Ctrl}: "switch-to-histlist",
+		uitypes.Default:                "default",
+	})
+}
 
 type hist struct {
 	current int

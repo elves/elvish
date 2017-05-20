@@ -2,24 +2,24 @@ package edit
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/util"
 )
 
-// Interface between the editor and elvish script. Implements the le: module.
+// API for accessing the line editor from elvishscript, implemented as multiple
+// modules.
 
 var (
 	errNotNav       = errors.New("not in navigation mode")
 	errMustBeString = errors.New("must be string")
 )
 
-// makeModule builds a module from an Editor.
-func makeModule(ed *Editor) eval.Namespace {
+// installModules installs le: and le:* modules.
+func installModules(modules map[string]eval.Namespace, ed *Editor) {
+	// Construct the le: module.
 	ns := eval.Namespace{}
 	// Populate builtins.
-	for _, b := range builtinMap {
+	for _, b := range builtinMaps[""] {
 		ns[eval.FnPrefix+b.name] = eval.NewPtrVariable(b)
 	}
 
@@ -39,8 +39,7 @@ func makeModule(ed *Editor) eval.Namespace {
 
 	ns["completer"] = argCompleter
 	ns[eval.FnPrefix+"complete-getopt"] = eval.NewRoVariable(
-		// XXX Repr is "&le:complete-getopt" instead of "le:&complete-getopt"
-		&eval.BuiltinFn{"le:complete-getopt", complGetopt})
+		&eval.BuiltinFn{"le:&complete-getopt", complGetopt})
 	for _, bac := range argCompletersData {
 		ns[eval.FnPrefix+bac.name] = eval.NewRoVariable(bac)
 	}
@@ -84,21 +83,14 @@ func makeModule(ed *Editor) eval.Namespace {
 	ns["before-readline"] = ed.beforeReadLine
 	ns["after-readline"] = ed.afterReadLine
 
-	ns[eval.FnPrefix+"styled"] = eval.NewRoVariable(&eval.BuiltinFn{"le:styled", styledBuiltin})
+	ns[eval.FnPrefix+"styled"] = eval.NewRoVariable(&eval.BuiltinFn{"le:&styled", styledBuiltin})
 
-	return ns
-}
+	modules["le"] = ns
 
-func throw(e error) {
-	util.Throw(e)
-}
-
-func maybeThrow(e error) {
-	if e != nil {
-		util.Throw(e)
+	// Install other modules.
+	for module, builtins := range builtinMaps {
+		if module != "" {
+			modules["le:"+module] = makeNamespaceFromBuiltins(builtins)
+		}
 	}
-}
-
-func throwf(format string, args ...interface{}) {
-	util.Throw(fmt.Errorf(format, args...))
 }

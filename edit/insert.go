@@ -13,15 +13,48 @@ import (
 // Builtins related to insert and command mode.
 
 var (
-	insertBuiltinImpls = map[string]func(*Editor){
+	_ = registerBuiltins("", map[string]func(*Editor){
+		"kill-line-left":       killLineLeft,
+		"kill-line-right":      killLineRight,
+		"kill-word-left":       killWordLeft,
+		"kill-small-word-left": killSmallWordLeft,
+		"kill-rune-left":       killRuneLeft,
+		"kill-rune-right":      killRuneRight,
+
+		"move-dot-left":       moveDotLeft,
+		"move-dot-right":      moveDotRight,
+		"move-dot-left-word":  moveDotLeftWord,
+		"move-dot-right-word": moveDotRightWord,
+		"move-dot-sol":        moveDotSOL,
+		"move-dot-eol":        moveDotEOL,
+		"move-dot-up":         moveDotUp,
+		"move-dot-down":       moveDotDown,
+
+		"insert-last-word": insertLastWord,
+		"insert-key":       insertKey,
+
+		"return-line": returnLine,
+		"smart-enter": smartEnter,
+		"return-eof":  returnEOF,
+
+		"toggle-quote-paste": toggleQuotePaste,
+		"insert-raw":         startInsertRaw,
+
+		"end-of-history": endOfHistory,
+		"redraw":         redraw,
+	})
+	_ = registerBuiltins("insert", map[string]func(*Editor){
 		"start":   insertStart,
 		"default": insertDefault,
-	}
-	commandBuiltinImpls = map[string]func(*Editor){
+	})
+	_ = registerBuiltins("command", map[string]func(*Editor){
 		"start":   commandStart,
 		"default": commandDefault,
-	}
-	insertKeyBindings = map[uitypes.Key]string{
+	})
+)
+
+func init() {
+	registerBindings(modeInsert, "", map[uitypes.Key]string{
 		// Moving.
 		uitypes.Key{uitypes.Left, 0}:             "move-dot-left",
 		uitypes.Key{uitypes.Right, 0}:            "move-dot-right",
@@ -46,18 +79,21 @@ var (
 		uitypes.Key{uitypes.Enter, 0}:  "smart-enter",
 		uitypes.Key{'D', uitypes.Ctrl}: "return-eof",
 		uitypes.Key{uitypes.F2, 0}:     "toggle-quote-paste",
+
+		// Other modes.
 		// uitypes.Key{'[', uitypes.Ctrl}: "command-start",
-		uitypes.Key{uitypes.Tab, 0}:    "compl-smart-start",
-		uitypes.Key{uitypes.Up, 0}:     "history-start",
+		uitypes.Key{uitypes.Tab, 0}:    "compl:smart-start",
+		uitypes.Key{uitypes.Up, 0}:     "history:start",
 		uitypes.Key{uitypes.Down, 0}:   "end-of-history",
-		uitypes.Key{'N', uitypes.Ctrl}: "nav-start",
-		uitypes.Key{'R', uitypes.Ctrl}: "histlist-start",
-		uitypes.Key{',', uitypes.Alt}:  "bang-start",
-		uitypes.Key{'L', uitypes.Ctrl}: "loc-start",
+		uitypes.Key{'N', uitypes.Ctrl}: "nav:start",
+		uitypes.Key{'R', uitypes.Ctrl}: "histlist:start",
+		uitypes.Key{',', uitypes.Alt}:  "bang:start",
+		uitypes.Key{'L', uitypes.Ctrl}: "loc:start",
 		uitypes.Key{'V', uitypes.Ctrl}: "insert-raw",
-		uitypes.Default:                "insert-default",
-	}
-	commandKeyBindings = map[uitypes.Key]string{
+
+		uitypes.Default: "insert:default",
+	})
+	registerBindings(modeCommand, "", map[uitypes.Key]string{
 		// Moving.
 		uitypes.Key{'h', 0}: "move-dot-left",
 		uitypes.Key{'l', 0}: "move-dot-right",
@@ -71,10 +107,10 @@ var (
 		uitypes.Key{'x', 0}: "kill-rune-right",
 		uitypes.Key{'D', 0}: "kill-line-right",
 		// Controls.
-		uitypes.Key{'i', 0}: "insert-start",
-		uitypes.Default:     "command-default",
-	}
-)
+		uitypes.Key{'i', 0}: "insert:start",
+		uitypes.Default:     "command:default",
+	})
+}
 
 type insert struct {
 	quotePaste bool
@@ -317,6 +353,14 @@ func toggleQuotePaste(ed *Editor) {
 	ed.insert.quotePaste = !ed.insert.quotePaste
 }
 
+func endOfHistory(ed *Editor) {
+	ed.Notify("End of history")
+}
+
+func redraw(ed *Editor) {
+	ed.refresh(true, true)
+}
+
 func insertDefault(ed *Editor) {
 	k := ed.lastKey
 	if likeChar(k) {
@@ -337,13 +381,13 @@ func insertDefault(ed *Editor) {
 	}
 }
 
-func commandDefault(ed *Editor) {
-	k := ed.lastKey
-	ed.Notify("Unbound: %s", k)
-}
-
 // likeChar returns if a key looks like a character meant to be input (as
 // opposed to a function key).
 func likeChar(k uitypes.Key) bool {
 	return k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune)
+}
+
+func commandDefault(ed *Editor) {
+	k := ed.lastKey
+	ed.Notify("Unbound: %s", k)
 }
