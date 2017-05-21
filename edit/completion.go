@@ -28,15 +28,15 @@ var _ = registerBuiltins("compl", map[string]func(*Editor){
 
 func init() {
 	registerBindings(modeCompletion, "compl", map[uitypes.Key]string{
-		uitypes.Key{uitypes.Up, 0}:     "up",
-		uitypes.Key{uitypes.Down, 0}:   "down",
-		uitypes.Key{uitypes.Tab, 0}:    "down-cycle",
-		uitypes.Key{uitypes.Left, 0}:   "left",
-		uitypes.Key{uitypes.Right, 0}:  "right",
-		uitypes.Key{uitypes.Enter, 0}:  "accept",
-		uitypes.Key{'F', uitypes.Ctrl}: "trigger-filter",
-		uitypes.Key{'[', uitypes.Ctrl}: "insert:start",
-		uitypes.Default:                "default",
+		{uitypes.Up, 0}:     "up",
+		{uitypes.Down, 0}:   "down",
+		{uitypes.Tab, 0}:    "down-cycle",
+		{uitypes.Left, 0}:   "left",
+		{uitypes.Right, 0}:  "right",
+		{uitypes.Enter, 0}:  "accept",
+		{'F', uitypes.Ctrl}: "trigger-filter",
+		{'[', uitypes.Ctrl}: "insert:start",
+		uitypes.Default:     "default",
 	})
 }
 

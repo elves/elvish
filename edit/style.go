@@ -40,12 +40,12 @@ var (
 
 // Styles for Primary nodes.
 var styleForPrimary = map[parse.PrimaryType]styles{
-	parse.Bareword:     styles{},
-	parse.SingleQuoted: styles{"yellow"},
-	parse.DoubleQuoted: styles{"yellow"},
+	parse.Bareword:     {},
+	parse.SingleQuoted: {"yellow"},
+	parse.DoubleQuoted: {"yellow"},
 	parse.Variable:     styleForGoodVariable,
-	parse.Wildcard:     styles{},
-	parse.Tilde:        styles{},
+	parse.Wildcard:     {},
+	parse.Tilde:        {},
 }
 
 var styleForComment = styles{"cyan"}

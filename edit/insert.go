@@ -56,59 +56,59 @@ var (
 func init() {
 	registerBindings(modeInsert, "", map[uitypes.Key]string{
 		// Moving.
-		uitypes.Key{uitypes.Left, 0}:             "move-dot-left",
-		uitypes.Key{uitypes.Right, 0}:            "move-dot-right",
-		uitypes.Key{uitypes.Up, uitypes.Alt}:     "move-dot-up",
-		uitypes.Key{uitypes.Down, uitypes.Alt}:   "move-dot-down",
-		uitypes.Key{uitypes.Left, uitypes.Ctrl}:  "move-dot-left-word",
-		uitypes.Key{uitypes.Right, uitypes.Ctrl}: "move-dot-right-word",
-		uitypes.Key{uitypes.Home, 0}:             "move-dot-sol",
-		uitypes.Key{uitypes.End, 0}:              "move-dot-eol",
+		{uitypes.Left, 0}:             "move-dot-left",
+		{uitypes.Right, 0}:            "move-dot-right",
+		{uitypes.Up, uitypes.Alt}:     "move-dot-up",
+		{uitypes.Down, uitypes.Alt}:   "move-dot-down",
+		{uitypes.Left, uitypes.Ctrl}:  "move-dot-left-word",
+		{uitypes.Right, uitypes.Ctrl}: "move-dot-right-word",
+		{uitypes.Home, 0}:             "move-dot-sol",
+		{uitypes.End, 0}:              "move-dot-eol",
 		// Killing.
-		uitypes.Key{'U', uitypes.Ctrl}:    "kill-line-left",
-		uitypes.Key{'K', uitypes.Ctrl}:    "kill-line-right",
-		uitypes.Key{'W', uitypes.Ctrl}:    "kill-word-left",
-		uitypes.Key{uitypes.Backspace, 0}: "kill-rune-left",
+		{'U', uitypes.Ctrl}:    "kill-line-left",
+		{'K', uitypes.Ctrl}:    "kill-line-right",
+		{'W', uitypes.Ctrl}:    "kill-word-left",
+		{uitypes.Backspace, 0}: "kill-rune-left",
 		// Some terminal send ^H on backspace
 		// uitypes.Key{'H', uitypes.Ctrl}: "kill-rune-left",
-		uitypes.Key{uitypes.Delete, 0}: "kill-rune-right",
+		{uitypes.Delete, 0}: "kill-rune-right",
 		// Inserting.
-		uitypes.Key{'.', uitypes.Alt}:           "insert-last-word",
-		uitypes.Key{uitypes.Enter, uitypes.Alt}: "insert-key",
+		{'.', uitypes.Alt}:           "insert-last-word",
+		{uitypes.Enter, uitypes.Alt}: "insert-key",
 		// Controls.
-		uitypes.Key{uitypes.Enter, 0}:  "smart-enter",
-		uitypes.Key{'D', uitypes.Ctrl}: "return-eof",
-		uitypes.Key{uitypes.F2, 0}:     "toggle-quote-paste",
+		{uitypes.Enter, 0}:  "smart-enter",
+		{'D', uitypes.Ctrl}: "return-eof",
+		{uitypes.F2, 0}:     "toggle-quote-paste",
 
 		// Other modes.
 		// uitypes.Key{'[', uitypes.Ctrl}: "command-start",
-		uitypes.Key{uitypes.Tab, 0}:    "compl:smart-start",
-		uitypes.Key{uitypes.Up, 0}:     "history:start",
-		uitypes.Key{uitypes.Down, 0}:   "end-of-history",
-		uitypes.Key{'N', uitypes.Ctrl}: "nav:start",
-		uitypes.Key{'R', uitypes.Ctrl}: "histlist:start",
-		uitypes.Key{',', uitypes.Alt}:  "bang:start",
-		uitypes.Key{'L', uitypes.Ctrl}: "loc:start",
-		uitypes.Key{'V', uitypes.Ctrl}: "insert-raw",
+		{uitypes.Tab, 0}:    "compl:smart-start",
+		{uitypes.Up, 0}:     "history:start",
+		{uitypes.Down, 0}:   "end-of-history",
+		{'N', uitypes.Ctrl}: "nav:start",
+		{'R', uitypes.Ctrl}: "histlist:start",
+		{',', uitypes.Alt}:  "bang:start",
+		{'L', uitypes.Ctrl}: "loc:start",
+		{'V', uitypes.Ctrl}: "insert-raw",
 
 		uitypes.Default: "insert:default",
 	})
 	registerBindings(modeCommand, "", map[uitypes.Key]string{
 		// Moving.
-		uitypes.Key{'h', 0}: "move-dot-left",
-		uitypes.Key{'l', 0}: "move-dot-right",
-		uitypes.Key{'k', 0}: "move-dot-up",
-		uitypes.Key{'j', 0}: "move-dot-down",
-		uitypes.Key{'b', 0}: "move-dot-left-word",
-		uitypes.Key{'w', 0}: "move-dot-right-word",
-		uitypes.Key{'0', 0}: "move-dot-sol",
-		uitypes.Key{'$', 0}: "move-dot-eol",
+		{'h', 0}: "move-dot-left",
+		{'l', 0}: "move-dot-right",
+		{'k', 0}: "move-dot-up",
+		{'j', 0}: "move-dot-down",
+		{'b', 0}: "move-dot-left-word",
+		{'w', 0}: "move-dot-right-word",
+		{'0', 0}: "move-dot-sol",
+		{'$', 0}: "move-dot-eol",
 		// Killing.
-		uitypes.Key{'x', 0}: "kill-rune-right",
-		uitypes.Key{'D', 0}: "kill-line-right",
+		{'x', 0}: "kill-rune-right",
+		{'D', 0}: "kill-line-right",
 		// Controls.
-		uitypes.Key{'i', 0}: "insert:start",
-		uitypes.Default:     "command:default",
+		{'i', 0}:        "insert:start",
+		uitypes.Default: "command:default",
 	})
 }
 

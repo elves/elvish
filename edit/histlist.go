@@ -20,8 +20,8 @@ var _ = registerListingBuiltins("histlist", map[string]func(*Editor){
 func init() {
 	registerListingBindings(modeHistoryListing, "histlist",
 		map[uitypes.Key]string{
-			uitypes.Key{'G', uitypes.Ctrl}: "toggle-case-sensitivity",
-			uitypes.Key{'D', uitypes.Ctrl}: "toggle-dedup",
+			{'G', uitypes.Ctrl}: "toggle-case-sensitivity",
+			{'D', uitypes.Ctrl}: "toggle-dedup",
 		})
 }
 

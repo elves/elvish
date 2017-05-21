@@ -6,9 +6,9 @@ import (
 )
 
 var options = []*Option{
-	&Option{'a', "all", NoArgument},
-	&Option{'o', "option", RequiredArgument},
-	&Option{'n', "number", OptionalArgument},
+	{'a', "all", NoArgument},
+	{'o', "option", RequiredArgument},
+	{'n', "number", OptionalArgument},
 }
 
 var cases = []struct {
@@ -20,50 +20,50 @@ var cases = []struct {
 }{
 	// NoArgument, short option.
 	{0, []string{"-a", ""},
-		[]*ParsedOption{&ParsedOption{options[0], false, ""}},
+		[]*ParsedOption{{options[0], false, ""}},
 		nil, &Context{Type: NewOptionOrArgument}},
 	// NoArgument, long option.
 	{0, []string{"--all", ""},
-		[]*ParsedOption{&ParsedOption{options[0], true, ""}},
+		[]*ParsedOption{{options[0], true, ""}},
 		nil, &Context{Type: NewOptionOrArgument}},
 
 	// RequiredArgument, argument following the option directly
 	{0, []string{"-oname=elvish", ""},
-		[]*ParsedOption{&ParsedOption{options[1], false, "name=elvish"}},
+		[]*ParsedOption{{options[1], false, "name=elvish"}},
 		nil, &Context{Type: NewOptionOrArgument}},
 	// RequiredArgument, argument in next element
 	{0, []string{"-o", "name=elvish", ""},
-		[]*ParsedOption{&ParsedOption{options[1], false, "name=elvish"}},
+		[]*ParsedOption{{options[1], false, "name=elvish"}},
 		nil, &Context{Type: NewOptionOrArgument}},
 	// RequiredArgument, long option, argument following the option directly
 	{0, []string{"--option=name=elvish", ""},
-		[]*ParsedOption{&ParsedOption{options[1], true, "name=elvish"}},
+		[]*ParsedOption{{options[1], true, "name=elvish"}},
 		nil, &Context{Type: NewOptionOrArgument}},
 	// RequiredArgument, long option, argument in next element
 	{0, []string{"--option", "name=elvish", ""},
-		[]*ParsedOption{&ParsedOption{options[1], true, "name=elvish"}},
+		[]*ParsedOption{{options[1], true, "name=elvish"}},
 		nil, &Context{Type: NewOptionOrArgument}},
 
 	// OptionalArgument, with argument
 	{0, []string{"-n1", ""},
-		[]*ParsedOption{&ParsedOption{options[2], false, "1"}},
+		[]*ParsedOption{{options[2], false, "1"}},
 		nil, &Context{Type: NewOptionOrArgument}},
 	// OptionalArgument, without argument
 	{0, []string{"-n", ""},
-		[]*ParsedOption{&ParsedOption{options[2], false, ""}},
+		[]*ParsedOption{{options[2], false, ""}},
 		nil, &Context{Type: NewOptionOrArgument}},
 
 	// DoubleDashTerminatesOptions
 	{DoubleDashTerminatesOptions, []string{"-a", "--", "-o", ""},
-		[]*ParsedOption{&ParsedOption{options[0], false, ""}},
+		[]*ParsedOption{{options[0], false, ""}},
 		[]string{"-o"}, &Context{Type: Argument}},
 	// FirstArgTerminatesOptions
 	{FirstArgTerminatesOptions, []string{"-a", "x", "-o", ""},
-		[]*ParsedOption{&ParsedOption{options[0], false, ""}},
+		[]*ParsedOption{{options[0], false, ""}},
 		[]string{"x", "-o"}, &Context{Type: Argument}},
 	// LongOnly
 	{LongOnly, []string{"-all", ""},
-		[]*ParsedOption{&ParsedOption{options[0], true, ""}},
+		[]*ParsedOption{{options[0], true, ""}},
 		nil, &Context{Type: NewOptionOrArgument}},
 
 	// NewOption
@@ -78,7 +78,7 @@ var cases = []struct {
 		&Context{Type: LongOption, Text: "all"}},
 	// ChainShortOption
 	{0, []string{"-a"},
-		[]*ParsedOption{&ParsedOption{options[0], false, ""}}, nil,
+		[]*ParsedOption{{options[0], false, ""}}, nil,
 		&Context{Type: ChainShortOption}},
 	// OptionArgument, short option, same element
 	{0, []string{"-o"}, nil, nil,
@@ -116,33 +116,33 @@ var cases = []struct {
 				&Option{'x', "", OptionalArgument}, false, ""}}},
 	// Unknown short option, separate element
 	{0, []string{"-x", ""},
-		[]*ParsedOption{&ParsedOption{
+		[]*ParsedOption{{
 			&Option{'x', "", OptionalArgument}, false, ""}},
 		nil,
 		&Context{Type: NewOptionOrArgument}},
 
 	// Unknown long option
 	{0, []string{"--unknown", ""},
-		[]*ParsedOption{&ParsedOption{
+		[]*ParsedOption{{
 			&Option{0, "unknown", OptionalArgument}, true, ""}},
 		nil,
 		&Context{Type: NewOptionOrArgument}},
 	// Unknown long option, with argument
 	{0, []string{"--unknown=value", ""},
-		[]*ParsedOption{&ParsedOption{
+		[]*ParsedOption{{
 			&Option{0, "unknown", OptionalArgument}, true, "value"}},
 		nil,
 		&Context{Type: NewOptionOrArgument}},
 
 	// Unknown long option, LongOnly
 	{LongOnly, []string{"-unknown", ""},
-		[]*ParsedOption{&ParsedOption{
+		[]*ParsedOption{{
 			&Option{0, "unknown", OptionalArgument}, true, ""}},
 		nil,
 		&Context{Type: NewOptionOrArgument}},
 	// Unknown long option, with argument
 	{LongOnly, []string{"-unknown=value", ""},
-		[]*ParsedOption{&ParsedOption{
+		[]*ParsedOption{{
 			&Option{0, "unknown", OptionalArgument}, true, "value"}},
 		nil,
 		&Context{Type: NewOptionOrArgument}},

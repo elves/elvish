@@ -55,18 +55,18 @@ var goodCases = []struct {
 	{"a >b", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
 		"Redirs": []ast{
-			ast{"Redir", fs{"Mode": Write, "Right": "b"}}},
+			{"Redir", fs{"Mode": Write, "Right": "b"}}},
 	}}},
 	// More redirections
 	{"a >>b 2>b 3>&- 4>&1 5<c 6<>d", ast{"Chunk/Pipeline/Form", fs{
 		"Head": "a",
 		"Redirs": []ast{
-			ast{"Redir", fs{"Mode": Append, "Right": "b"}},
-			ast{"Redir", fs{"Left": "2", "Mode": Write, "Right": "b"}},
-			ast{"Redir", fs{"Left": "3", "Mode": Write, "RightIsFd": true, "Right": "-"}},
-			ast{"Redir", fs{"Left": "4", "Mode": Write, "RightIsFd": true, "Right": "1"}},
-			ast{"Redir", fs{"Left": "5", "Mode": Read, "Right": "c"}},
-			ast{"Redir", fs{"Left": "6", "Mode": ReadWrite, "Right": "d"}},
+			{"Redir", fs{"Mode": Append, "Right": "b"}},
+			{"Redir", fs{"Left": "2", "Mode": Write, "Right": "b"}},
+			{"Redir", fs{"Left": "3", "Mode": Write, "RightIsFd": true, "Right": "-"}},
+			{"Redir", fs{"Left": "4", "Mode": Write, "RightIsFd": true, "Right": "1"}},
+			{"Redir", fs{"Left": "5", "Mode": Read, "Right": "c"}},
+			{"Redir", fs{"Left": "6", "Mode": ReadWrite, "Right": "d"}},
 		},
 	}}},
 	// Exitus redirection
@@ -146,28 +146,28 @@ var goodCases = []struct {
 	{"a [&k=v] [ &k=v] [&k=v ] [ &k=v ] [ &k= v] [&k= \n v] [\n&a=b &c=d \n &e=f\n\n]", a(
 		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
-			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
+			"MapPairs": []ast{{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
 		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
-			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
+			"MapPairs": []ast{{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
 		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
-			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
+			"MapPairs": []ast{{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
 		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
-			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
+			"MapPairs": []ast{{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
 		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
-			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
+			"MapPairs": []ast{{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
 		ast{"Compound/Indexing/Primary", fs{
 			"Type":     Map,
-			"MapPairs": []ast{ast{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
+			"MapPairs": []ast{{"MapPair", fs{"Key": "k", "Value": "v"}}}}},
 		ast{"Compound/Indexing/Primary", fs{
 			"Type": Map,
 			"MapPairs": []ast{
-				ast{"MapPair", fs{"Key": "a", "Value": "b"}},
-				ast{"MapPair", fs{"Key": "c", "Value": "d"}},
-				ast{"MapPair", fs{"Key": "e", "Value": "f"}},
+				{"MapPair", fs{"Key": "a", "Value": "b"}},
+				{"MapPair", fs{"Key": "c", "Value": "d"}},
+				{"MapPair", fs{"Key": "e", "Value": "f"}},
 			}}},
 	)},
 	// Empty map

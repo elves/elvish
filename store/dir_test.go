@@ -9,8 +9,8 @@ var (
 	dirsToAdd  = []string{"/usr/local", "/usr", "/usr/bin", "/usr"}
 	black      = map[string]struct{}{"/usr/local": {}}
 	wantedDirs = []Dir{
-		Dir{"/usr", scoreIncrement*scoreDecay*scoreDecay + scoreIncrement},
-		Dir{"/usr/bin", scoreIncrement * scoreDecay}}
+		{"/usr", scoreIncrement*scoreDecay*scoreDecay + scoreIncrement},
+		{"/usr/bin", scoreIncrement * scoreDecay}}
 )
 
 func TestDir(t *testing.T) {

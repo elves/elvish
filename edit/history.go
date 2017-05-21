@@ -22,11 +22,11 @@ var _ = registerBuiltins("history", map[string]func(*Editor){
 
 func init() {
 	registerBindings(modeHistory, "history", map[uitypes.Key]string{
-		uitypes.Key{uitypes.Up, 0}:     "up",
-		uitypes.Key{uitypes.Down, 0}:   "down-or-quit",
-		uitypes.Key{'[', uitypes.Ctrl}: "insert:start",
-		uitypes.Key{'R', uitypes.Ctrl}: "switch-to-histlist",
-		uitypes.Default:                "default",
+		{uitypes.Up, 0}:     "up",
+		{uitypes.Down, 0}:   "down-or-quit",
+		{'[', uitypes.Ctrl}: "insert:start",
+		{'R', uitypes.Ctrl}: "switch-to-histlist",
+		uitypes.Default:     "default",
 	})
 }
 

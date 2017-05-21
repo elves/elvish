@@ -34,18 +34,18 @@ var _ = registerBuiltins("nav", map[string]func(*Editor){
 
 func init() {
 	registerBindings(modeNavigation, "nav", map[uitypes.Key]string{
-		uitypes.Key{uitypes.Up, 0}:              "up",
-		uitypes.Key{uitypes.Down, 0}:            "down",
-		uitypes.Key{uitypes.PageUp, 0}:          "page-up",
-		uitypes.Key{uitypes.PageDown, 0}:        "page-down",
-		uitypes.Key{uitypes.Left, 0}:            "left",
-		uitypes.Key{uitypes.Right, 0}:           "right",
-		uitypes.Key{uitypes.Enter, uitypes.Alt}: "insert-selected",
-		uitypes.Key{uitypes.Enter, 0}:           "insert-selected-and-quit",
-		uitypes.Key{'H', uitypes.Ctrl}:          "trigger-shown-hidden",
-		uitypes.Key{'F', uitypes.Ctrl}:          "trigger-filter",
-		uitypes.Key{'[', uitypes.Ctrl}:          "insert:start",
-		uitypes.Default:                         "default",
+		{uitypes.Up, 0}:              "up",
+		{uitypes.Down, 0}:            "down",
+		{uitypes.PageUp, 0}:          "page-up",
+		{uitypes.PageDown, 0}:        "page-down",
+		{uitypes.Left, 0}:            "left",
+		{uitypes.Right, 0}:           "right",
+		{uitypes.Enter, uitypes.Alt}: "insert-selected",
+		{uitypes.Enter, 0}:           "insert-selected-and-quit",
+		{'H', uitypes.Ctrl}:          "trigger-shown-hidden",
+		{'F', uitypes.Ctrl}:          "trigger-filter",
+		{'[', uitypes.Ctrl}:          "insert:start",
+		uitypes.Default:              "default",
 	})
 }
 

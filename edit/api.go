@@ -198,7 +198,7 @@ func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
 // callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
 // arguments and closed input, and converts its outputs to styled objects.
 func callPrompt(ed *Editor, fn eval.Callable) []*styled {
-	ports := []*eval.Port{eval.DevNullClosedChan, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
+	ports := []*eval.Port{eval.DevNullClosedChan, {File: os.Stdout}, {File: os.Stderr}}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor prompt]", "", ports)
@@ -228,7 +228,7 @@ func callArgCompleter(fn eval.CallableValue, ev *eval.Evaler, words []string) ([
 		return builtin.impl(words, ev)
 	}
 
-	ports := []*eval.Port{eval.DevNullClosedChan, &eval.Port{File: os.Stdout}, &eval.Port{File: os.Stderr}}
+	ports := []*eval.Port{eval.DevNullClosedChan, {File: os.Stdout}, {File: os.Stderr}}
 
 	args := make([]eval.Value, len(words))
 	for i, word := range words {

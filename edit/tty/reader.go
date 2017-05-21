@@ -361,10 +361,10 @@ var g3Seq = map[rune]rune{
 // CSI-style key sequences that can be identified based on the ending rune. For
 // instance, \e[A is uitypes.Up.
 var keyByLast = map[rune]uitypes.Key{
-	'A': uitypes.Key{uitypes.Up, 0}, 'B': uitypes.Key{uitypes.Down, 0},
-	'C': uitypes.Key{uitypes.Right, 0}, 'D': uitypes.Key{uitypes.Left, 0},
-	'H': uitypes.Key{uitypes.Home, 0}, 'F': uitypes.Key{uitypes.End, 0},
-	'Z': uitypes.Key{uitypes.Tab, uitypes.Shift},
+	'A': {uitypes.Up, 0}, 'B': {uitypes.Down, 0},
+	'C': {uitypes.Right, 0}, 'D': {uitypes.Left, 0},
+	'H': {uitypes.Home, 0}, 'F': {uitypes.End, 0},
+	'Z': {uitypes.Tab, uitypes.Shift},
 }
 
 // CSI-style key sequences ending with '~' and can be identified based on the
