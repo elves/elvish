@@ -50,12 +50,8 @@ func (bf *BuiltinFn) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]e
 
 // installModules installs le: and le:* modules.
 func installModules(modules map[string]eval.Namespace, ed *Editor) {
-	// Construct the le: module.
-	ns := eval.Namespace{}
-	// Populate builtins.
-	for _, b := range builtinMaps[""] {
-		ns[eval.FnPrefix+b.name] = eval.NewPtrVariable(b)
-	}
+	// Construct the le: module, starting with builtins.
+	ns := makeNamespaceFromBuiltins(builtinMaps[""])
 
 	// Populate binding tables in the variable $binding.
 	// TODO Make binding specific to the Editor.
