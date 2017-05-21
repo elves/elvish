@@ -15,6 +15,7 @@ import (
 var (
 	errNotNav         = errors.New("not in navigation mode")
 	errMustBeString   = errors.New("must be string")
+	errEditorInvalid  = errors.New("internal error: editor not set up")
 	errEditorInactive = errors.New("editor inactive")
 )
 
@@ -38,7 +39,10 @@ func (bf *BuiltinFn) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]e
 	eval.TakeNoOpt(opts)
 	eval.TakeNoArg(args)
 	ed, ok := ec.Editor.(*Editor)
-	if !ok || !ed.active {
+	if !ok {
+		throw(errEditorInvalid)
+	}
+	if !ed.active {
 		throw(errEditorInactive)
 	}
 	bf.impl(ed)
