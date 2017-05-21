@@ -29,13 +29,16 @@ type Reader struct {
 	ar  *AsyncReader
 	raw bool
 
-	rawRuneChan chan rune
-	keyChan     chan uitypes.Key
-	cprChan     chan Pos
-	mouseChan   chan MouseEvent
-	errChan     chan error
-	pasteChan   chan bool
-	quit        chan struct{}
+	unitChan chan ReadUnit
+	/*
+		rawRuneChan chan rune
+		keyChan     chan uitypes.Key
+		cprChan     chan Pos
+		mouseChan   chan MouseEvent
+		pasteChan   chan bool
+	*/
+	errChan chan error
+	quit    chan struct{}
 }
 
 type MouseEvent struct {
@@ -51,12 +54,15 @@ func NewReader(f *os.File) *Reader {
 	rd := &Reader{
 		NewAsyncReader(f),
 		false,
-		make(chan rune),
-		make(chan uitypes.Key),
-		make(chan Pos),
-		make(chan MouseEvent),
+		make(chan ReadUnit),
+		/*
+			make(chan rune),
+			make(chan uitypes.Key),
+			make(chan Pos),
+			make(chan MouseEvent),
+			make(chan bool),
+		*/
 		make(chan error),
-		make(chan bool),
 		nil,
 	}
 	return rd
@@ -68,30 +74,9 @@ func (rd *Reader) SetRaw(raw bool) {
 	rd.raw = raw
 }
 
-// RawRuneChan returns the channel onto which the Reader writes runes it has
-// read in raw mode.
-func (rd *Reader) RawRuneChan() <-chan rune {
-	return rd.rawRuneChan
-}
-
-// KeyChan returns the channel onto which the Reader writes Keys it has read.
-func (rd *Reader) KeyChan() <-chan uitypes.Key {
-	return rd.keyChan
-}
-
-// CPRChan returns the channel onto which the Reader writes CPRs it has read.
-func (rd *Reader) CPRChan() <-chan Pos {
-	return rd.cprChan
-}
-
-// MouseChan returns the channel onto which the Reader writes mouse events it
-// has read.
-func (rd *Reader) MouseChan() <-chan MouseEvent {
-	return rd.mouseChan
-}
-
-func (rd *Reader) PasteChan() <-chan bool {
-	return rd.pasteChan
+// UnitChan returns the channel onto which the Reader writes what it has read.
+func (rd *Reader) UnitChan() <-chan ReadUnit {
+	return rd.unitChan
 }
 
 // ErrorChan returns the channel onto which the Reader writes errors it came
@@ -112,7 +97,7 @@ func (rd *Reader) Run() {
 		select {
 		case r := <-runes:
 			if rd.raw {
-				rd.rawRuneChan <- r
+				rd.unitChan <- RawRune(r)
 			} else {
 				rd.readOne(r)
 			}
@@ -136,11 +121,8 @@ func (rd *Reader) Close() {
 
 // readOne attempts to read one key or CPR, led by a rune already read.
 func (rd *Reader) readOne(r rune) {
-	var k uitypes.Key
-	var cpr Pos
-	var mouse MouseEvent
+	var unit ReadUnit
 	var err error
-	var paste *bool
 	currentSeq := string(r)
 
 	badSeq := func(msg string) {
@@ -163,24 +145,9 @@ func (rd *Reader) readOne(r rune) {
 		}
 
 	defer func() {
-		if k != (uitypes.Key{}) {
+		if unit != nil {
 			select {
-			case rd.keyChan <- k:
-			case <-rd.quit:
-			}
-		} else if cpr != (Pos{}) {
-			select {
-			case rd.cprChan <- cpr:
-			case <-rd.quit:
-			}
-		} else if mouse != (MouseEvent{}) {
-			select {
-			case rd.mouseChan <- mouse:
-			case <-rd.quit:
-			}
-		} else if paste != nil {
-			select {
-			case rd.pasteChan <- *paste:
+			case rd.unitChan <- unit:
 			case <-rd.quit:
 			}
 		}
@@ -197,7 +164,7 @@ func (rd *Reader) readOne(r rune) {
 		r2 := readRune()
 		if r2 == runeTimeout || r2 == runeReadError {
 			// Nothing follows. Taken as a lone Escape.
-			k = uitypes.Key{'[', uitypes.Ctrl}
+			unit = Key{'[', uitypes.Ctrl}
 			break
 		}
 		switch r2 {
@@ -205,7 +172,7 @@ func (rd *Reader) readOne(r rune) {
 			// A '[' follows. CSI style function key sequence.
 			r = readRune()
 			if r == runeTimeout || r == runeReadError {
-				k = uitypes.Key{'[', uitypes.Alt}
+				unit = Key{'[', uitypes.Alt}
 				return
 			}
 
@@ -241,7 +208,7 @@ func (rd *Reader) readOne(r rune) {
 					button = -1
 				}
 				mod := mouseModify(int(cb))
-				mouse = MouseEvent{
+				unit = MouseEvent{
 					Pos{int(cy) - 32, int(cx) - 32}, down, button, mod}
 				return
 			}
@@ -275,7 +242,7 @@ func (rd *Reader) readOne(r rune) {
 					badSeq("bad CPR")
 					return
 				}
-				cpr = Pos{nums[0], nums[1]}
+				unit = CursorPosition{nums[0], nums[1]}
 			} else if starter == '<' && (r == 'm' || r == 'M') {
 				// SGR-style mouse event.
 				if len(nums) != 3 {
@@ -285,14 +252,16 @@ func (rd *Reader) readOne(r rune) {
 				down := r == 'M'
 				button := nums[0] & 3
 				mod := mouseModify(nums[0])
-				mouse = MouseEvent{Pos{nums[2], nums[1]}, down, button, mod}
+				unit = MouseEvent{Pos{nums[2], nums[1]}, down, button, mod}
 			} else if r == '~' && len(nums) == 1 && (nums[0] == 200 || nums[0] == 201) {
 				b := nums[0] == 200
-				paste = &b
+				unit = PasteSetting(b)
 			} else {
-				k = parseCSI(nums, r, currentSeq)
+				k := parseCSI(nums, r, currentSeq)
 				if k == (uitypes.Key{}) {
 					badSeq("bad CSI")
+				} else {
+					unit = Key(k)
 				}
 			}
 		case 'O':
@@ -300,23 +269,25 @@ func (rd *Reader) readOne(r rune) {
 			r = readRune()
 			if r == runeTimeout || r == runeReadError {
 				// Nothing follows after 'O'. Taken as uitypes.Alt-o.
-				k = uitypes.Key{'o', uitypes.Alt}
+				unit = Key{'o', uitypes.Alt}
 				return
 			}
 			r, ok := g3Seq[r]
 			if ok {
-				k = uitypes.Key{r, 0}
+				unit = Key{r, 0}
 			} else {
 				badSeq("bad G3")
 			}
 		default:
 			// Something other than '[' or 'O' follows. Taken as an
 			// uitypes.Alt-modified key, possibly also modified by uitypes.Ctrl.
-			k = ctrlModify(r2)
+			k := ctrlModify(r2)
 			k.Mod |= uitypes.Alt
+			unit = Key(k)
 		}
 	default:
-		k = ctrlModify(r)
+		k := ctrlModify(r)
+		unit = Key(k)
 	}
 }
 

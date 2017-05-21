@@ -405,84 +405,93 @@ MainLoop:
 			}
 		case err := <-ed.reader.ErrorChan():
 			ed.Notify("reader error: %s", err.Error())
-		case mouse := <-ed.reader.MouseChan():
-			ed.addTip("mouse: %+v", mouse)
-		case <-ed.reader.CPRChan():
-			// Ignore CPR
-		case b := <-ed.reader.PasteChan():
-			if !b {
-				continue
-			}
-			var buf bytes.Buffer
-			timer := time.NewTimer(tty.EscSequenceTimeout)
-		paste:
-			for {
-				// XXX Should also select on other chans. However those chans
-				// will be unified (again) into one later so we don't do
-				// busywork here.
-				select {
-				case k := <-ed.reader.KeyChan():
-					if k.Mod != 0 {
-						ed.Notify("function key within paste")
+		case unit := <-ed.reader.UnitChan():
+			switch unit := unit.(type) {
+			case tty.MouseEvent:
+				ed.addTip("mouse: %+v", unit)
+			case tty.CursorPosition:
+				// Ignore CPR
+			case tty.PasteSetting:
+				if !unit {
+					continue
+				}
+				var buf bytes.Buffer
+				timer := time.NewTimer(tty.EscSequenceTimeout)
+			paste:
+				for {
+					// XXX Should also select on other chans. However those chans
+					// will be unified (again) into one later so we don't do
+					// busywork here.
+					select {
+					case unit := <-ed.reader.UnitChan():
+						switch unit := unit.(type) {
+						case tty.Key:
+							k := uitypes.Key(unit)
+							if k.Mod != 0 {
+								ed.Notify("function key within paste, aborting")
+								break paste
+							}
+							buf.WriteRune(k.Rune)
+							timer.Reset(tty.EscSequenceTimeout)
+						case tty.PasteSetting:
+							if !unit {
+								break paste
+							}
+						default: // Ignore other things.
+						}
+					case <-timer.C:
+						ed.Notify("bracketed paste timeout")
 						break paste
 					}
-					buf.WriteRune(k.Rune)
-					timer.Reset(tty.EscSequenceTimeout)
-				case b := <-ed.reader.PasteChan():
-					if !b {
-						break paste
+				}
+				topaste := buf.String()
+				if ed.insert.quotePaste {
+					topaste = parse.Quote(topaste)
+				}
+				ed.insertAtDot(topaste)
+			case tty.RawRune:
+				insertRaw(ed, rune(unit))
+			case tty.Key:
+				k := uitypes.Key(unit)
+			lookupKey:
+				keyBinding, ok := keyBindings[ed.mode.Mode()]
+				if !ok {
+					ed.addTip("No binding for current mode")
+					continue
+				}
+
+				fn, bound := keyBinding[k]
+				if !bound {
+					// TODO(xiaq) don't assume Default always exists
+					fn = keyBinding[uitypes.Default]
+				}
+
+				ed.insert.insertedLiteral = false
+				ed.lastKey = k
+				ed.CallFn(fn)
+				if ed.insert.insertedLiteral {
+					ed.insert.literalInserts++
+				} else {
+					ed.insert.literalInserts = 0
+				}
+				act := ed.nextAction
+				ed.nextAction = action{}
+
+				switch act.typ {
+				case noAction:
+					continue
+				case reprocessKey:
+					err := ed.refresh(false, true)
+					if err != nil {
+						return "", err
 					}
-				case <-timer.C:
-					ed.Notify("bracketed paste timeout")
-					break paste
+					goto lookupKey
+				case exitReadLine:
+					if act.returnErr == nil && act.returnLine != "" {
+						ed.appendHistory(act.returnLine)
+					}
+					return act.returnLine, act.returnErr
 				}
-			}
-			topaste := buf.String()
-			if ed.insert.quotePaste {
-				topaste = parse.Quote(topaste)
-			}
-			ed.insertAtDot(topaste)
-		case r := <-ed.reader.RawRuneChan():
-			insertRaw(ed, r)
-		case k := <-ed.reader.KeyChan():
-		lookupKey:
-			keyBinding, ok := keyBindings[ed.mode.Mode()]
-			if !ok {
-				ed.addTip("No binding for current mode")
-				continue
-			}
-
-			fn, bound := keyBinding[k]
-			if !bound {
-				// TODO(xiaq) don't assume Default always exists
-				fn = keyBinding[uitypes.Default]
-			}
-
-			ed.insert.insertedLiteral = false
-			ed.lastKey = k
-			ed.CallFn(fn)
-			if ed.insert.insertedLiteral {
-				ed.insert.literalInserts++
-			} else {
-				ed.insert.literalInserts = 0
-			}
-			act := ed.nextAction
-			ed.nextAction = action{}
-
-			switch act.typ {
-			case noAction:
-				continue
-			case reprocessKey:
-				err = ed.refresh(false, true)
-				if err != nil {
-					return "", err
-				}
-				goto lookupKey
-			case exitReadLine:
-				if act.returnErr == nil && act.returnLine != "" {
-					ed.appendHistory(act.returnLine)
-				}
-				return act.returnLine, act.returnErr
 			}
 		}
 	}

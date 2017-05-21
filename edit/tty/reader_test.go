@@ -39,51 +39,51 @@ func TestMain(m *testing.M) {
 
 var keyTests = []struct {
 	input string
-	want  uitypes.Key
+	want  ReadUnit
 }{
 	// Simple graphical key.
-	{"x", uitypes.Key{'x', 0}},
-	{"X", uitypes.Key{'X', 0}},
-	{" ", uitypes.Key{' ', 0}},
+	{"x", Key{'x', 0}},
+	{"X", Key{'X', 0}},
+	{" ", Key{' ', 0}},
 
 	// Ctrl key.
-	{"\001", uitypes.Key{'A', uitypes.Ctrl}},
-	{"\033", uitypes.Key{'[', uitypes.Ctrl}},
+	{"\001", Key{'A', uitypes.Ctrl}},
+	{"\033", Key{'[', uitypes.Ctrl}},
 
 	// Ctrl-ish keys, but not thought as Ctrl keys by our reader.
-	{"\n", uitypes.Key{'\n', 0}},
-	{"\t", uitypes.Key{'\t', 0}},
-	{"\x7f", uitypes.Key{'\x7f', 0}}, // backspace
+	{"\n", Key{'\n', 0}},
+	{"\t", Key{'\t', 0}},
+	{"\x7f", Key{'\x7f', 0}}, // backspace
 
 	// Alt plus simple graphical key.
-	{"\033a", uitypes.Key{'a', uitypes.Alt}},
-	{"\033[", uitypes.Key{'[', uitypes.Alt}},
+	{"\033a", Key{'a', uitypes.Alt}},
+	{"\033[", Key{'[', uitypes.Alt}},
 
 	// G3-style key.
-	{"\033OA", uitypes.Key{uitypes.Up, 0}},
-	{"\033OH", uitypes.Key{uitypes.Home, 0}},
+	{"\033OA", Key{uitypes.Up, 0}},
+	{"\033OH", Key{uitypes.Home, 0}},
 
 	// CSI-sequence key identified by the ending rune.
-	{"\033[A", uitypes.Key{uitypes.Up, 0}},
-	{"\033[H", uitypes.Key{uitypes.Home, 0}},
+	{"\033[A", Key{uitypes.Up, 0}},
+	{"\033[H", Key{uitypes.Home, 0}},
 	// Test for all possible modifier
-	{"\033[1;2A", uitypes.Key{uitypes.Up, uitypes.Shift}},
+	{"\033[1;2A", Key{uitypes.Up, uitypes.Shift}},
 
 	// CSI-sequence key with one argument, always ending in '~'.
-	{"\033[1~", uitypes.Key{uitypes.Home, 0}},
-	{"\033[11~", uitypes.Key{uitypes.F1, 0}},
+	{"\033[1~", Key{uitypes.Home, 0}},
+	{"\033[11~", Key{uitypes.F1, 0}},
 
 	// CSI-sequence key with three arguments and ending in '~'. The first
 	// argument is always 27, the second identifies the modifier and the last
 	// identifies the key.
-	{"\033[27;4;63~", uitypes.Key{';', uitypes.Shift | uitypes.Alt}},
+	{"\033[27;4;63~", Key{';', uitypes.Shift | uitypes.Alt}},
 }
 
 func TestKey(t *testing.T) {
 	for _, test := range keyTests {
 		writer.WriteString(test.input)
 		select {
-		case k := <-reader.KeyChan():
+		case k := <-reader.UnitChan():
 			if k != test.want {
 				t.Errorf("Reader reads key %v, want %v", k, test.want)
 			}
