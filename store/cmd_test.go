@@ -58,7 +58,7 @@ func TestCmd(t *testing.T) {
 		}
 		cmd, err := f(tt.seq, tt.prefix)
 		if cmd != tt.wantedCmd || err != tt.wantedErr {
-			t.Errorf("%s(%v, %v) => (%v, %v, %v), want (%v, %v, %v)",
+			t.Errorf("%s(%v, %v) => (%v, %v), want (%v, %v)",
 				fname, tt.seq, tt.prefix,
 				cmd, err, tt.wantedCmd, tt.wantedErr)
 		}

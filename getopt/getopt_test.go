@@ -154,7 +154,7 @@ func TestGetopt(t *testing.T) {
 		opts, args, ctx := g.Parse(tc.elems)
 		shouldEqual := func(name string, got, want interface{}) {
 			if !reflect.DeepEqual(got, want) {
-				t.Errorf("Parse(%#v) (config = %s)\ngot %s = %v, want %v",
+				t.Errorf("Parse(%#v) (config = %v)\ngot %s = %v, want %v",
 					tc.elems, tc.config, name, got, want)
 			}
 		}
