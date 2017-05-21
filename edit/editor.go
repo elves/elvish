@@ -215,6 +215,8 @@ func (ed *Editor) insertAtDot(text string) {
 	ed.dot += len(text)
 }
 
+const flushInputDuringSetup = false
+
 func setupTerminal(file *os.File) (*sys.Termios, error) {
 	fd := int(file.Fd())
 	term, err := sys.NewTermiosFromFd(fd)
@@ -234,12 +236,12 @@ func setupTerminal(file *os.File) (*sys.Termios, error) {
 		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
 	}
 
-	/*
+	if flushInputDuringSetup {
 		err = sys.FlushInput(fd)
 		if err != nil {
 			return nil, fmt.Errorf("can't flush input: %s", err)
 		}
-	*/
+	}
 
 	return savedTermios, nil
 }
