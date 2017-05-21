@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -307,19 +308,20 @@ func (n *navigation) loaddir(dir string) ([]styled, error) {
 	if err != nil {
 		return nil, err
 	}
-	infos, err := f.Readdir(0)
+	names, err := f.Readdirnames(-1)
 	if err != nil {
 		return nil, err
 	}
+	sort.Strings(names)
+
 	var all []styled
 	lsColor := getLsColor()
-	for _, info := range infos {
-		if n.showHidden || info.Name()[0] != '.' {
-			name := info.Name()
-			all = append(all, styled{name, stylesFromString(lsColor.getStyle(path.Join(dir, name)))})
+	for _, name := range names {
+		if n.showHidden || name[0] != '.' {
+			all = append(all, styled{name,
+				stylesFromString(lsColor.getStyle(path.Join(dir, name)))})
 		}
 	}
-	sortStyleds(all)
 
 	return all, nil
 }
