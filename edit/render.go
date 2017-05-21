@@ -41,7 +41,7 @@ type modeLineWithScrollBarRenderer struct {
 func (ml modeLineWithScrollBarRenderer) render(b *buffer) {
 	ml.modeLineRenderer.render(b)
 
-	scrollbarWidth := b.width - lineWidth(b.cells[len(b.cells)-1]) - 2
+	scrollbarWidth := b.width - cellsWidth(b.lines[len(b.lines)-1]) - 2
 	if scrollbarWidth >= 3 {
 		b.writes(" ", "")
 		writeHorizontalScrollbar(b, ml.n, ml.low, ml.high, scrollbarWidth)
@@ -158,11 +158,12 @@ func (clr *cmdlineRenderer) setHist(b int, t string) {
 }
 
 func (clr *cmdlineRenderer) render(b *buffer) {
-	b.newlineWhenFull = true
+	b.eagerWrap = true
 
 	b.writeStyleds(clr.prompt)
 
-	if b.line() == 0 && b.col*2 < b.width {
+	// If the prompt takes less than half of a line, set the indent.
+	if len(b.lines) == 1 && b.col*2 < b.width {
 		b.indent = b.col
 	}
 
@@ -211,7 +212,7 @@ func (clr *cmdlineRenderer) render(b *buffer) {
 			padding -= util.Wcswidth(s.text)
 		}
 		if padding >= 1 {
-			b.newlineWhenFull = false
+			b.eagerWrap = false
 			b.writePadding(padding, "")
 			b.writeStyleds(clr.rprompt)
 		}
@@ -274,7 +275,7 @@ func (er *editorRenderer) render(buf *buffer) {
 	case height >= lines(bufLine):
 		bufTips, bufMode = nil, nil
 		if bufNoti != nil {
-			n := len(bufNoti.cells)
+			n := len(bufNoti.lines)
 			bufNoti.trimToLines(n-(height-lines(bufLine)), n)
 		}
 	case height >= 1:
@@ -311,7 +312,7 @@ func (er *editorRenderer) render(buf *buffer) {
 	}
 
 	// XXX
-	buf.cells = nil
+	buf.lines = nil
 	// Combine buffers (reusing bufLine)
 	buf.extend(bufLine, true)
 	cursorOnModeLine := false
