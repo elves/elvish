@@ -70,15 +70,37 @@ type buffer struct {
 	dot   Pos // dot is what the user perceives as the cursor.
 }
 
+// newBuffer builds a new buffer, with one empty line.
 func newBuffer(width int) *buffer {
 	return &buffer{width: width, lines: [][]cell{make([]cell, 0, width)}}
+}
+
+func (b *buffer) setIndent(indent int) *buffer {
+	b.indent = indent
+	return b
+}
+
+func (b *buffer) setEagerWrap(v bool) *buffer {
+	b.eagerWrap = v
+	return b
+}
+
+func (b *buffer) setLines(lines ...[]cell) *buffer {
+	b.lines = lines
+	b.col = cellsWidth(lines[len(lines)-1])
+	return b
+}
+
+func (b *buffer) setDot(dot Pos) *buffer {
+	b.dot = dot
+	return b
 }
 
 func (b *buffer) cursor() Pos {
 	return Pos{len(b.lines) - 1, b.col}
 }
 
-func lines(bufs ...*buffer) (l int) {
+func buffersHeight(bufs ...*buffer) (l int) {
 	for _, buf := range bufs {
 		if buf != nil {
 			l += len(buf.lines)
@@ -112,7 +134,9 @@ func (b *buffer) newline() {
 	}
 }
 
-// write appends a single rune to a buffer.
+// write appends a single rune to a buffer, wrapping the line when needed. If
+// the rune is a control character, it will be written using the caret notation
+// (like ^X) and gets the additional style of styleForControlChar.
 func (b *buffer) write(r rune, style string) {
 	if r == '\n' {
 		b.newline()
@@ -141,26 +165,26 @@ func (b *buffer) write(r rune, style string) {
 	}
 }
 
-func (b *buffer) writes(s string, style string) {
-	for _, r := range s {
+// writes appends every rune of a string to a buffer, all with the same style.
+func (b *buffer) writes(text, style string) {
+	for _, r := range text {
 		b.write(r, style)
 	}
 }
 
-func (b *buffer) writeStyled(s *styled) {
-	b.writes(s.text, s.styles.String())
-}
-
-func (b *buffer) writeStyleds(ss []*styled) {
-	for _, s := range ss {
-		b.writeStyled(s)
-	}
-}
-
+// writePadding writes w spaces.
 func (b *buffer) writePadding(w int, style string) {
 	b.writes(strings.Repeat(" ", w), style)
 }
 
+// writeStyleds writes a slice of styled structs.
+func (b *buffer) writeStyleds(ss []*styled) {
+	for _, s := range ss {
+		b.writes(s.text, s.styles.String())
+	}
+}
+
+// trimToLines trims a buffer to the lines [low, high).
 func (b *buffer) trimToLines(low, high int) {
 	for i := 0; i < low; i++ {
 		b.lines[i] = nil
@@ -170,6 +194,9 @@ func (b *buffer) trimToLines(low, high int) {
 	}
 	b.lines = b.lines[low:high]
 	b.dot.line -= low
+	if b.dot.line < 0 {
+		b.dot.line = 0
+	}
 }
 
 func (b *buffer) extend(b2 *buffer, moveDot bool) {
@@ -183,10 +210,12 @@ func (b *buffer) extend(b2 *buffer, moveDot bool) {
 	}
 }
 
-// extendHorizontal extends b horizontally. It pads each line in b to be at
-// least of width w and appends the corresponding line in b2 to it, making new
-// lines in b when b2 has more lines than b.
-func (b *buffer) extendHorizontal(b2 *buffer, w int) {
+// extendRight extends b to the right. It pads each line in b to be at least of
+// width w and appends the corresponding line in b2 to it, making new lines in b
+// when b2 has more lines than b.
+// BUG(xiaq): after calling extendRight, the widths of some lines can exceed
+// b.width.
+func (b *buffer) extendRight(b2 *buffer, w int) {
 	i := 0
 	for ; i < len(b.lines) && i < len(b2.lines); i++ {
 		if w0 := cellsWidth(b.lines[i]); w0 < w {
@@ -198,4 +227,5 @@ func (b *buffer) extendHorizontal(b2 *buffer, w int) {
 		row := append(makeSpacing(w), b2.lines[i]...)
 		b.lines = append(b.lines, row)
 	}
+	b.col = cellsWidth(b.lines[len(b.lines)-1])
 }

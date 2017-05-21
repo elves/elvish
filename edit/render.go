@@ -28,7 +28,7 @@ type modeLineRenderer struct {
 
 func (ml modeLineRenderer) render(b *buffer) {
 	b.writes(ml.title, styleForMode.String())
-	b.writes(" ", "")
+	b.writePadding(1, "")
 	b.writes(ml.filter, styleForFilter.String())
 	b.dot = b.cursor()
 }
@@ -43,7 +43,7 @@ func (ml modeLineWithScrollBarRenderer) render(b *buffer) {
 
 	scrollbarWidth := b.width - cellsWidth(b.lines[len(b.lines)-1]) - 2
 	if scrollbarWidth >= 3 {
-		b.writes(" ", "")
+		b.writePadding(1, "")
 		writeHorizontalScrollbar(b, ml.n, ml.low, ml.high, scrollbarWidth)
 	}
 }
@@ -76,10 +76,10 @@ type listingWithScrollBarRenderer struct {
 
 func (ls listingWithScrollBarRenderer) render(b *buffer) {
 	b1 := render(ls.listingRenderer, b.width-1)
-	b.extendHorizontal(b1, 0)
+	b.extendRight(b1, 0)
 
 	scrollbar := renderScrollbar(ls.n, ls.low, ls.high, ls.height)
-	b.extendHorizontal(scrollbar, b.width-1)
+	b.extendRight(scrollbar, b.width-1)
 }
 
 type navRenderer struct {
@@ -103,14 +103,14 @@ func (nr *navRenderer) render(b *buffer) {
 	wParent, wCurrent, wPreview := ws[0], ws[1], ws[2]
 
 	bParent := render(nr.parent, wParent)
-	b.extendHorizontal(bParent, 0)
+	b.extendRight(bParent, 0)
 
 	bCurrent := render(nr.current, wCurrent)
-	b.extendHorizontal(bCurrent, wParent+margin)
+	b.extendRight(bCurrent, wParent+margin)
 
 	if wPreview > 0 {
 		bPreview := render(nr.preview, wPreview)
-		b.extendHorizontal(bPreview, wParent+wCurrent+2*margin)
+		b.extendRight(bPreview, wParent+wCurrent+2*margin)
 	}
 }
 
@@ -263,20 +263,20 @@ func (er *editorRenderer) render(buf *buffer) {
 	// Trim lines and determine the maximum height for bufListing
 	// TODO come up with a UI to tell the user that something is not shown.
 	switch {
-	case height >= lines(bufNoti, bufLine, bufMode, bufTips):
-		hListing = height - lines(bufLine, bufMode, bufTips)
-	case height >= lines(bufNoti, bufLine, bufTips):
+	case height >= buffersHeight(bufNoti, bufLine, bufMode, bufTips):
+		hListing = height - buffersHeight(bufLine, bufMode, bufTips)
+	case height >= buffersHeight(bufNoti, bufLine, bufTips):
 		bufMode = nil
-	case height >= lines(bufNoti, bufLine):
+	case height >= buffersHeight(bufNoti, bufLine):
 		bufMode = nil
 		if bufTips != nil {
-			bufTips.trimToLines(0, height-lines(bufNoti, bufLine))
+			bufTips.trimToLines(0, height-buffersHeight(bufNoti, bufLine))
 		}
-	case height >= lines(bufLine):
+	case height >= buffersHeight(bufLine):
 		bufTips, bufMode = nil, nil
 		if bufNoti != nil {
 			n := len(bufNoti.lines)
-			bufNoti.trimToLines(n-(height-lines(bufLine)), n)
+			bufNoti.trimToLines(n-(height-buffersHeight(bufLine)), n)
 		}
 	case height >= 1:
 		bufNoti, bufTips, bufMode = nil, nil, nil
@@ -308,7 +308,7 @@ func (er *editorRenderer) render(buf *buffer) {
 
 	if logWriterDetail {
 		Logger.Printf("bufLine %d, bufMode %d, bufTips %d, bufListing %d",
-			lines(bufLine), lines(bufMode), lines(bufTips), lines(bufListing))
+			buffersHeight(bufLine), buffersHeight(bufMode), buffersHeight(bufTips), buffersHeight(bufListing))
 	}
 
 	// XXX

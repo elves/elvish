@@ -351,7 +351,7 @@ func (comp *completion) ListRender(width, maxHeight int) *buffer {
 			}
 		}
 
-		b.extendHorizontal(col, 0)
+		b.extendRight(col, 0)
 		remainedWidth -= totalColWidth
 		if remainedWidth <= completionColMarginTotal {
 			break
@@ -366,7 +366,7 @@ func (comp *completion) ListRender(width, maxHeight int) *buffer {
 			}
 			col.writePadding(remainedWidth, styleForCompletion.String())
 		}
-		b.extendHorizontal(col, 0)
+		b.extendRight(col, 0)
 		remainedWidth = 0
 	}
 	return b
