@@ -367,8 +367,10 @@ var keyByLast = map[rune]uitypes.Key{
 	'Z': uitypes.Key{uitypes.Tab, uitypes.Shift},
 }
 
-// CSI-style key sequences ending with '~' and can be identified based on
-// the only number argument. For instance, \e[1~ is uitypes.Home.
+// CSI-style key sequences ending with '~' and can be identified based on the
+// only number argument. For instance, \e[~ is uitypes.Home. When they are
+// modified, they take two arguments, first being 1 and second identifying the
+// modifier (see xtermModify). For instance, \e[1;4~ is Shift-Alt-Home.
 var keyByNum0 = map[int]rune{
 	1: uitypes.Home, 2: uitypes.Insert, 3: uitypes.Delete, 4: uitypes.End,
 	5: uitypes.PageUp, 6: uitypes.PageDown,
