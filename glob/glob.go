@@ -202,7 +202,7 @@ segs:
 	return name == ""
 }
 
-// matchChunk returns whether a chunk matches a prefix of name. If suceeded, it
+// matchChunk returns whether a chunk matches a prefix of name. If succeeded, it
 // also returns the remaining part of name.
 func matchChunk(chunk []Segment, name string) (bool, string) {
 	for _, seg := range chunk {

@@ -20,7 +20,7 @@ var (
 const (
 	// No rune received before specified time.
 	runeTimeout rune = -1 - iota
-	// Error occured in AsyncReader. The error is left at the readError field.
+	// Error occurred in AsyncReader. The error is left at the readError field.
 	runeReadError
 )
 

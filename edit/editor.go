@@ -418,7 +418,7 @@ MainLoop:
 		paste:
 			for {
 				// XXX Should also select on other chans. However those chans
-				// will be unified (agina) into one later so we don't do
+				// will be unified (again) into one later so we don't do
 				// busywork here.
 				select {
 				case k := <-ed.reader.KeyChan():

@@ -282,7 +282,7 @@ func checkParseTree(n Node) error {
 	// Consecutive children have consecutive position ranges.
 	for i := 0; i < nch-1; i++ {
 		if children[i].End() != children[i+1].Begin() {
-			return fmt.Errorf("gap beteen child %d and %d of: %s", i, i+1, summary(n))
+			return fmt.Errorf("gap between child %d and %d of: %s", i, i+1, summary(n))
 		}
 	}
 
