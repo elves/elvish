@@ -88,7 +88,7 @@ func (w *Writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 
 	if bufNoti != nil {
 		if logWriterDetail {
-			Logger.Printf("going to write %d lines of notifications", len(bufNoti.lines))
+			logger.Printf("going to write %d lines of notifications", len(bufNoti.lines))
 		}
 
 		// Write notifications
@@ -104,7 +104,7 @@ func (w *Writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 	}
 
 	if logWriterDetail {
-		Logger.Printf("going to write %d lines, oldBuf had %d", len(buf.lines), len(w.oldBuf.lines))
+		logger.Printf("going to write %d lines, oldBuf had %d", len(buf.lines), len(w.oldBuf.lines))
 	}
 
 	for i, line := range buf.lines {
@@ -147,7 +147,7 @@ func (w *Writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 	bytesBuf.WriteString("\033[?25h")
 
 	if logWriterDetail {
-		Logger.Printf("going to write %q", bytesBuf.String())
+		logger.Printf("going to write %q", bytesBuf.String())
 	}
 
 	fd := int(w.file.Fd())

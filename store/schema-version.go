@@ -2,6 +2,8 @@ package store
 
 import "database/sql"
 
+// SchemaVersion is the current schema version. It should be bumped every time a
+// backwards-incompatible change has been made to the schema.
 const SchemaVersion = 1
 
 func init() {
@@ -11,6 +13,8 @@ func init() {
 	}
 }
 
+// SchemaUpToDate returns whether the database has the current or newer version
+// of the schema.
 func SchemaUpToDate(db *sql.DB) bool {
 	var v int
 	row := db.QueryRow(`SELECT version FROM schema_version`)

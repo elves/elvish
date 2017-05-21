@@ -96,16 +96,16 @@ func (h *hist) jump(i int, line string) {
 func (ed *Editor) appendHistory(line string) {
 	if ed.store != nil {
 		ed.historyMutex.Lock()
+		ed.store.Waits.Add(1)
 		go func() {
-			ed.store.Waits.Add(1)
 			// TODO(xiaq): Report possible error
 			err := ed.store.AddCmd(line)
 			ed.store.Waits.Done()
 			ed.historyMutex.Unlock()
 			if err != nil {
-				Logger.Println("failed to add cmd to store:", err)
+				logger.Println("failed to add cmd to store:", err)
 			} else {
-				Logger.Println("added cmd to store:", line)
+				logger.Println("added cmd to store:", line)
 			}
 		}()
 	}
@@ -122,7 +122,7 @@ func (ed *Editor) prevHistory() bool {
 		i, line = cmd.Seq, cmd.Text
 		if err != nil {
 			if err != store.ErrNoMatchingCmd {
-				Logger.Println("LastCmd error:", err)
+				logger.Println("LastCmd error:", err)
 			}
 			return false
 		}
@@ -147,7 +147,7 @@ func (ed *Editor) nextHistory() bool {
 		i, line = cmd.Seq, cmd.Text
 		if err != nil {
 			if err != store.ErrNoMatchingCmd {
-				Logger.Println("LastCmd error:", err)
+				logger.Println("LastCmd error:", err)
 			}
 			return false
 		}

@@ -18,7 +18,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var Logger = util.GetLogger("[edit] ")
+var logger = util.GetLogger("[edit] ")
 
 const (
 	lackEOLRune = '\u23ce'
@@ -196,7 +196,7 @@ func atEnd(e error, n int) bool {
 	switch e := e.(type) {
 	case *eval.CompilationError:
 		return e.Context.Begin == n
-	case *parse.ParseError:
+	case *parse.Error:
 		for _, entry := range e.Entries {
 			if entry.Context.Begin != n {
 				return false
@@ -204,7 +204,7 @@ func atEnd(e error, n int) bool {
 		}
 		return true
 	default:
-		Logger.Printf("atEnd called with error type %T", e)
+		logger.Printf("atEnd called with error type %T", e)
 		return false
 	}
 }

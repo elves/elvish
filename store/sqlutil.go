@@ -25,7 +25,6 @@ func transaction(db *sql.DB, f func(*sql.Tx) error) error {
 	err = f(tx)
 	if err != nil {
 		return tx.Rollback()
-	} else {
-		return tx.Commit()
 	}
+	return tx.Commit()
 }

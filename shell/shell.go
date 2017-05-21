@@ -19,7 +19,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var Logger = util.GetLogger("[shell] ")
+var logger = util.GetLogger("[shell] ")
 
 // Shell keeps flags to the shell.
 type Shell struct {
@@ -180,7 +180,7 @@ func logSignals() {
 	signal.Notify(sigs)
 	go func() {
 		for sig := range sigs {
-			Logger.Println("signal", sig)
+			logger.Println("signal", sig)
 		}
 	}()
 }

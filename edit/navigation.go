@@ -152,7 +152,7 @@ func navDefault(ed *Editor) {
 
 var (
 	errorEmptyCwd      = errors.New("current directory is empty")
-	errorNoCwdInParent = errors.New("could not find current directory in ..")
+	errorNoCwdInParent = errors.New("could not find current directory in parent")
 )
 
 func initNavigation(n *navigation, ed *Editor) {
@@ -334,15 +334,15 @@ const (
 	previewColumnWeight = 9.0
 )
 
-func (nav *navigation) List(maxHeight int) renderer {
+func (n *navigation) List(maxHeight int) renderer {
 	return makeNavRenderer(
 		maxHeight,
-		nav.parent.FullWidth(maxHeight),
-		nav.current.FullWidth(maxHeight),
-		nav.preview.FullWidth(maxHeight),
-		nav.parent.List(maxHeight),
-		nav.current.List(maxHeight),
-		nav.preview.List(maxHeight),
+		n.parent.FullWidth(maxHeight),
+		n.current.FullWidth(maxHeight),
+		n.preview.FullWidth(maxHeight),
+		n.parent.List(maxHeight),
+		n.current.List(maxHeight),
+		n.preview.List(maxHeight),
 	)
 }
 

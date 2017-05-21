@@ -318,8 +318,8 @@ func ScanArgs(s []Value, args ...interface{}) {
 	}
 }
 
-// ScanArgs is like ScanArgs, but the last element of args should be a pointer
-// to a slice, and the rest of arguments will be scanned into it.
+// ScanArgsVariadic is like ScanArgs, but the last element of args should be a
+// pointer to a slice, and the rest of arguments will be scanned into it.
 func ScanArgsVariadic(s []Value, args ...interface{}) {
 	if len(s) < len(args)-1 {
 		throwf("arity mistmatch: want at least %d arguments, got %d", len(args)-1, len(s))
@@ -997,12 +997,12 @@ func cdInner(dir string, ec *EvalCtx) {
 		pwd, err := os.Getwd()
 		if err == nil {
 			store := ec.Store
+			store.Waits.Add(1)
 			go func() {
-				store.Waits.Add(1)
 				// XXX Error ignored.
 				store.AddDir(pwd, 1)
 				store.Waits.Done()
-				Logger.Println("added dir to store:", pwd)
+				logger.Println("added dir to store:", pwd)
 			}()
 		}
 	}

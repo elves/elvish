@@ -29,7 +29,7 @@ func init() {
 }
 
 func completeArg(words []string, ev *eval.Evaler) ([]*candidate, error) {
-	Logger.Printf("completing argument: %q", words)
+	logger.Printf("completing argument: %q", words)
 	m := argCompleter.Get().(eval.Map)
 	var v eval.Value
 	if m.HasKey(eval.String(words[0])) {

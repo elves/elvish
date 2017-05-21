@@ -183,7 +183,7 @@ func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
 	// Output
 	rout, out, err := os.Pipe()
 	if err != nil {
-		Logger.Println(err)
+		logger.Println(err)
 		return nil, nil, nil, err
 	}
 	chanOut := make(chan eval.Value)

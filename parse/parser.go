@@ -19,7 +19,7 @@ type parser struct {
 	overEOF  int
 	cutsets  []map[rune]int
 	controls int
-	errors   ParseError
+	errors   Error
 }
 
 const eof rune = -1

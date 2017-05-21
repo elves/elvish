@@ -14,7 +14,7 @@ import (
 // Parse parses elvish source. If the error is not nil, it always has type
 // ParseError.
 func Parse(srcname, src string) (*Chunk, error) {
-	ps := &parser{srcname, src, 0, 0, []map[rune]int{{}}, 0, ParseError{}}
+	ps := &parser{srcname, src, 0, 0, []map[rune]int{{}}, 0, Error{}}
 	bn := parseChunk(ps)
 	if ps.pos != len(src) {
 		ps.error(errUnexpectedRune)

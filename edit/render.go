@@ -307,7 +307,7 @@ func (er *editorRenderer) render(buf *buffer) {
 	}
 
 	if logWriterDetail {
-		Logger.Printf("bufLine %d, bufMode %d, bufTips %d, bufListing %d",
+		logger.Printf("bufLine %d, bufMode %d, bufTips %d, bufListing %d",
 			buffersHeight(bufLine), buffersHeight(bufMode), buffersHeight(bufTips), buffersHeight(bufListing))
 	}
 

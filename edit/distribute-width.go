@@ -41,6 +41,6 @@ func distributeWidths(w int, weights []float64, actual []int) []int {
 			break
 		}
 	}
-	Logger.Printf("distribute(%d, %v, %v) -> %v", w, weights, actual, widths)
+	logger.Printf("distribute(%d, %v, %v) -> %v", w, weights, actual, widths)
 	return widths
 }

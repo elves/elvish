@@ -106,7 +106,7 @@ func makeLocationFilterPattern(s string) *regexp.Regexp {
 	b.WriteString(".*")
 	p, err := regexp.Compile(b.String())
 	if err != nil {
-		Logger.Printf("failed to compile regexp %q: %v", b.String(), err)
+		logger.Printf("failed to compile regexp %q: %v", b.String(), err)
 		return emptyRegexp
 	}
 	return p
@@ -120,12 +120,12 @@ func (ed *Editor) chdir(dir string) error {
 	err = os.Chdir(dir)
 	if err == nil {
 		store := ed.store
+		store.Waits.Add(1)
 		go func() {
-			store.Waits.Add(1)
 			// XXX Error ignored.
 			store.AddDir(dir, 1)
 			store.Waits.Done()
-			Logger.Println("added dir to store:", dir)
+			logger.Println("added dir to store:", dir)
 		}()
 	}
 	return err
