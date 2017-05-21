@@ -1,6 +1,6 @@
 package tty
 
-import "github.com/elves/elvish/edit/uitypes"
+import "github.com/elves/elvish/edit/ui"
 
 // ReadUnit represents one "thing" that the Reader has read. It is one of the
 // following: RawRune (when the reader is in the raw mode), Key, CursorPosition,
@@ -10,7 +10,7 @@ type ReadUnit interface {
 }
 
 type RawRune rune
-type Key uitypes.Key
+type Key ui.Key
 type CursorPosition Pos
 type PasteSetting bool
 

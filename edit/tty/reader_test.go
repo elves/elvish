@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 )
 
 // timeout is the longest time the tests wait between writing something on
@@ -47,8 +47,8 @@ var keyTests = []struct {
 	{" ", Key{' ', 0}},
 
 	// Ctrl key.
-	{"\001", Key{'A', uitypes.Ctrl}},
-	{"\033", Key{'[', uitypes.Ctrl}},
+	{"\001", Key{'A', ui.Ctrl}},
+	{"\033", Key{'[', ui.Ctrl}},
 
 	// Ctrl-ish keys, but not thought as Ctrl keys by our reader.
 	{"\n", Key{'\n', 0}},
@@ -56,27 +56,27 @@ var keyTests = []struct {
 	{"\x7f", Key{'\x7f', 0}}, // backspace
 
 	// Alt plus simple graphical key.
-	{"\033a", Key{'a', uitypes.Alt}},
-	{"\033[", Key{'[', uitypes.Alt}},
+	{"\033a", Key{'a', ui.Alt}},
+	{"\033[", Key{'[', ui.Alt}},
 
 	// G3-style key.
-	{"\033OA", Key{uitypes.Up, 0}},
-	{"\033OH", Key{uitypes.Home, 0}},
+	{"\033OA", Key{ui.Up, 0}},
+	{"\033OH", Key{ui.Home, 0}},
 
 	// CSI-sequence key identified by the ending rune.
-	{"\033[A", Key{uitypes.Up, 0}},
-	{"\033[H", Key{uitypes.Home, 0}},
+	{"\033[A", Key{ui.Up, 0}},
+	{"\033[H", Key{ui.Home, 0}},
 	// Test for all possible modifier
-	{"\033[1;2A", Key{uitypes.Up, uitypes.Shift}},
+	{"\033[1;2A", Key{ui.Up, ui.Shift}},
 
 	// CSI-sequence key with one argument, always ending in '~'.
-	{"\033[1~", Key{uitypes.Home, 0}},
-	{"\033[11~", Key{uitypes.F1, 0}},
+	{"\033[1~", Key{ui.Home, 0}},
+	{"\033[11~", Key{ui.F1, 0}},
 
 	// CSI-sequence key with three arguments and ending in '~'. The first
 	// argument is always 27, the second identifies the modifier and the last
 	// identifies the key.
-	{"\033[27;4;63~", Key{';', uitypes.Shift | uitypes.Alt}},
+	{"\033[27;4;63~", Key{';', ui.Shift | ui.Alt}},
 }
 
 func TestKey(t *testing.T) {

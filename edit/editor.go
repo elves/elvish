@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/elves/elvish/edit/tty"
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
@@ -88,7 +88,7 @@ type editorState struct {
 	parseErrorAtEnd bool
 
 	// Used for builtins.
-	lastKey    uitypes.Key
+	lastKey    ui.Key
 	nextAction action
 }
 
@@ -426,7 +426,7 @@ MainLoop:
 					case unit := <-ed.reader.UnitChan():
 						switch unit := unit.(type) {
 						case tty.Key:
-							k := uitypes.Key(unit)
+							k := ui.Key(unit)
 							if k.Mod != 0 {
 								ed.Notify("function key within paste, aborting")
 								break paste
@@ -452,7 +452,7 @@ MainLoop:
 			case tty.RawRune:
 				insertRaw(ed, rune(unit))
 			case tty.Key:
-				k := uitypes.Key(unit)
+				k := ui.Key(unit)
 			lookupKey:
 				keyBinding, ok := keyBindings[ed.mode.Mode()]
 				if !ok {
@@ -463,7 +463,7 @@ MainLoop:
 				fn, bound := keyBinding[k]
 				if !bound {
 					// TODO(xiaq) don't assume Default always exists
-					fn = keyBinding[uitypes.Default]
+					fn = keyBinding[ui.Default]
 				}
 
 				ed.insert.insertedLiteral = false

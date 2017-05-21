@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
@@ -23,7 +23,7 @@ var _ = registerListingBuiltins("loc", map[string]func(*Editor){
 }, func(ed *Editor) *listing { return &ed.location.listing })
 
 func init() {
-	registerListingBindings(modeLocation, "loc", map[uitypes.Key]string{})
+	registerListingBindings(modeLocation, "loc", map[ui.Key]string{})
 }
 
 // PinnedScore is a special value of Score in store.Dir to represent that the

@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 )
 
@@ -15,7 +15,7 @@ import (
 
 var (
 	builtinMaps = map[string]map[string]*BuiltinFn{}
-	keyBindings = map[ModeType]map[uitypes.Key]eval.CallableValue{}
+	keyBindings = map[ModeType]map[ui.Key]eval.CallableValue{}
 )
 
 // registerBuiltins makes a map of builtins from a map of implementations.
@@ -49,9 +49,9 @@ func makeNamespaceFromBuiltins(builtins map[string]*BuiltinFn) eval.Namespace {
 // assumes the passed module name.
 func registerBindings(
 	mt ModeType, defaultMod string,
-	bindingData map[uitypes.Key]string) struct{} {
+	bindingData map[ui.Key]string) struct{} {
 
-	bindings := map[uitypes.Key]eval.CallableValue{}
+	bindings := map[ui.Key]eval.CallableValue{}
 	for key, fullName := range bindingData {
 		// break fullName into mod and name.
 		var mod, name string

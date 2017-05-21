@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 )
 
 // Bang mode.
@@ -16,8 +16,8 @@ var _ = registerListingBuiltins("bang", map[string]func(*Editor){
 }, func(ed *Editor) *listing { return &ed.bang.listing })
 
 func init() {
-	registerListingBindings(modeBang, "bang", map[uitypes.Key]string{
-		uitypes.Default: "alt-default",
+	registerListingBindings(modeBang, "bang", map[ui.Key]string{
+		ui.Default: "alt-default",
 	})
 }
 
@@ -107,7 +107,7 @@ func bangAltDefault(ed *Editor) {
 		if l.Len() == 1 {
 			l.Accept(l.selected, ed)
 		}
-	} else if ed.lastKey == (uitypes.Key{',', uitypes.Alt}) {
+	} else if ed.lastKey == (ui.Key{',', ui.Alt}) {
 		l.Accept(0, ed)
 	} else {
 		insertStart(ed)

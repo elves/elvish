@@ -6,7 +6,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -54,46 +54,46 @@ var (
 )
 
 func init() {
-	registerBindings(modeInsert, "", map[uitypes.Key]string{
+	registerBindings(modeInsert, "", map[ui.Key]string{
 		// Moving.
-		{uitypes.Left, 0}:             "move-dot-left",
-		{uitypes.Right, 0}:            "move-dot-right",
-		{uitypes.Up, uitypes.Alt}:     "move-dot-up",
-		{uitypes.Down, uitypes.Alt}:   "move-dot-down",
-		{uitypes.Left, uitypes.Ctrl}:  "move-dot-left-word",
-		{uitypes.Right, uitypes.Ctrl}: "move-dot-right-word",
-		{uitypes.Home, 0}:             "move-dot-sol",
-		{uitypes.End, 0}:              "move-dot-eol",
+		{ui.Left, 0}:        "move-dot-left",
+		{ui.Right, 0}:       "move-dot-right",
+		{ui.Up, ui.Alt}:     "move-dot-up",
+		{ui.Down, ui.Alt}:   "move-dot-down",
+		{ui.Left, ui.Ctrl}:  "move-dot-left-word",
+		{ui.Right, ui.Ctrl}: "move-dot-right-word",
+		{ui.Home, 0}:        "move-dot-sol",
+		{ui.End, 0}:         "move-dot-eol",
 		// Killing.
-		{'U', uitypes.Ctrl}:    "kill-line-left",
-		{'K', uitypes.Ctrl}:    "kill-line-right",
-		{'W', uitypes.Ctrl}:    "kill-word-left",
-		{uitypes.Backspace, 0}: "kill-rune-left",
+		{'U', ui.Ctrl}:    "kill-line-left",
+		{'K', ui.Ctrl}:    "kill-line-right",
+		{'W', ui.Ctrl}:    "kill-word-left",
+		{ui.Backspace, 0}: "kill-rune-left",
 		// Some terminal send ^H on backspace
-		// uitypes.Key{'H', uitypes.Ctrl}: "kill-rune-left",
-		{uitypes.Delete, 0}: "kill-rune-right",
+		// ui.Key{'H', ui.Ctrl}: "kill-rune-left",
+		{ui.Delete, 0}: "kill-rune-right",
 		// Inserting.
-		{'.', uitypes.Alt}:           "insert-last-word",
-		{uitypes.Enter, uitypes.Alt}: "insert-key",
+		{'.', ui.Alt}:      "insert-last-word",
+		{ui.Enter, ui.Alt}: "insert-key",
 		// Controls.
-		{uitypes.Enter, 0}:  "smart-enter",
-		{'D', uitypes.Ctrl}: "return-eof",
-		{uitypes.F2, 0}:     "toggle-quote-paste",
+		{ui.Enter, 0}:  "smart-enter",
+		{'D', ui.Ctrl}: "return-eof",
+		{ui.F2, 0}:     "toggle-quote-paste",
 
 		// Other modes.
-		// uitypes.Key{'[', uitypes.Ctrl}: "command-start",
-		{uitypes.Tab, 0}:    "compl:smart-start",
-		{uitypes.Up, 0}:     "history:start",
-		{uitypes.Down, 0}:   "end-of-history",
-		{'N', uitypes.Ctrl}: "nav:start",
-		{'R', uitypes.Ctrl}: "histlist:start",
-		{',', uitypes.Alt}:  "bang:start",
-		{'L', uitypes.Ctrl}: "loc:start",
-		{'V', uitypes.Ctrl}: "insert-raw",
+		// ui.Key{'[', ui.Ctrl}: "command-start",
+		{ui.Tab, 0}:    "compl:smart-start",
+		{ui.Up, 0}:     "history:start",
+		{ui.Down, 0}:   "end-of-history",
+		{'N', ui.Ctrl}: "nav:start",
+		{'R', ui.Ctrl}: "histlist:start",
+		{',', ui.Alt}:  "bang:start",
+		{'L', ui.Ctrl}: "loc:start",
+		{'V', ui.Ctrl}: "insert-raw",
 
-		uitypes.Default: "insert:default",
+		ui.Default: "insert:default",
 	})
-	registerBindings(modeCommand, "", map[uitypes.Key]string{
+	registerBindings(modeCommand, "", map[ui.Key]string{
 		// Moving.
 		{'h', 0}: "move-dot-left",
 		{'l', 0}: "move-dot-right",
@@ -107,8 +107,8 @@ func init() {
 		{'x', 0}: "kill-rune-right",
 		{'D', 0}: "kill-line-right",
 		// Controls.
-		{'i', 0}:        "insert:start",
-		uitypes.Default: "command:default",
+		{'i', 0}:   "insert:start",
+		ui.Default: "command:default",
 	})
 }
 
@@ -125,7 +125,7 @@ func (*insert) Mode() ModeType {
 	return modeInsert
 }
 
-// uitypes.Insert mode is the default mode and has an empty mode.
+// ui.Insert mode is the default mode and has an empty mode.
 func (ins *insert) ModeLine() renderer {
 	if ins.quotePaste {
 		return modeLineRenderer{" INSERT (quote paste) ", ""}
@@ -328,7 +328,7 @@ func returnLine(ed *Editor) {
 
 func smartEnter(ed *Editor) {
 	if ed.parseErrorAtEnd {
-		// There is a parsing error at the end. uitypes.Insert a newline and copy
+		// There is a parsing error at the end. ui.Insert a newline and copy
 		// indents from previous line.
 		indent := findLastIndent(ed.line[:ed.dot])
 		ed.insertAtDot("\n" + indent)
@@ -383,7 +383,7 @@ func insertDefault(ed *Editor) {
 
 // likeChar returns if a key looks like a character meant to be input (as
 // opposed to a function key).
-func likeChar(k uitypes.Key) bool {
+func likeChar(k ui.Key) bool {
 	return k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune)
 }
 

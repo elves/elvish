@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 )
 
 // Command history listing mode.
@@ -19,9 +19,9 @@ var _ = registerListingBuiltins("histlist", map[string]func(*Editor){
 
 func init() {
 	registerListingBindings(modeHistoryListing, "histlist",
-		map[uitypes.Key]string{
-			{'G', uitypes.Ctrl}: "toggle-case-sensitivity",
-			{'D', uitypes.Ctrl}: "toggle-dedup",
+		map[ui.Key]string{
+			{'G', ui.Ctrl}: "toggle-case-sensitivity",
+			{'D', ui.Ctrl}: "toggle-dedup",
 		})
 }
 

@@ -3,7 +3,7 @@ package edit
 import (
 	"fmt"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/store"
 )
 
@@ -21,12 +21,12 @@ var _ = registerBuiltins("history", map[string]func(*Editor){
 })
 
 func init() {
-	registerBindings(modeHistory, "history", map[uitypes.Key]string{
-		{uitypes.Up, 0}:     "up",
-		{uitypes.Down, 0}:   "down-or-quit",
-		{'[', uitypes.Ctrl}: "insert:start",
-		{'R', uitypes.Ctrl}: "switch-to-histlist",
-		uitypes.Default:     "default",
+	registerBindings(modeHistory, "history", map[ui.Key]string{
+		{ui.Up, 0}:     "up",
+		{ui.Down, 0}:   "down-or-quit",
+		{'[', ui.Ctrl}: "insert:start",
+		{'R', ui.Ctrl}: "switch-to-histlist",
+		ui.Default:     "default",
 	})
 }
 

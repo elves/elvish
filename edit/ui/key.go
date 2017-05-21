@@ -1,4 +1,4 @@
-package uitypes
+package ui
 
 import (
 	"bytes"

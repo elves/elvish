@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -27,16 +27,16 @@ var _ = registerBuiltins("compl", map[string]func(*Editor){
 })
 
 func init() {
-	registerBindings(modeCompletion, "compl", map[uitypes.Key]string{
-		{uitypes.Up, 0}:     "up",
-		{uitypes.Down, 0}:   "down",
-		{uitypes.Tab, 0}:    "down-cycle",
-		{uitypes.Left, 0}:   "left",
-		{uitypes.Right, 0}:  "right",
-		{uitypes.Enter, 0}:  "accept",
-		{'F', uitypes.Ctrl}: "trigger-filter",
-		{'[', uitypes.Ctrl}: "insert:start",
-		uitypes.Default:     "default",
+	registerBindings(modeCompletion, "compl", map[ui.Key]string{
+		{ui.Up, 0}:     "up",
+		{ui.Down, 0}:   "down",
+		{ui.Tab, 0}:    "down-cycle",
+		{ui.Left, 0}:   "left",
+		{ui.Right, 0}:  "right",
+		{ui.Enter, 0}:  "accept",
+		{'F', ui.Ctrl}: "trigger-filter",
+		{'[', ui.Ctrl}: "insert:start",
+		ui.Default:     "default",
 	})
 }
 
@@ -120,7 +120,7 @@ func complDefault(ed *Editor) {
 	c := &ed.completion
 	if c.filtering && likeChar(k) {
 		c.changeFilter(c.filter + string(k.Rune))
-	} else if c.filtering && k == (uitypes.Key{uitypes.Backspace, 0}) {
+	} else if c.filtering && k == (ui.Key{ui.Backspace, 0}) {
 		_, size := utf8.DecodeLastRuneInString(c.filter)
 		if size > 0 {
 			c.changeFilter(c.filter[:len(c.filter)-size])

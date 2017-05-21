@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -255,7 +255,7 @@ func (l *listing) accept(ed *Editor) {
 	}
 }
 
-func (l *listing) handleFilterKey(k uitypes.Key) bool {
+func (l *listing) handleFilterKey(k ui.Key) bool {
 	if likeChar(k) {
 		l.changeFilter(l.filter + string(k.Rune))
 		return true
@@ -288,17 +288,17 @@ func registerListingBuiltins(
 }
 
 func registerListingBindings(
-	mt ModeType, defaultMod string, m map[uitypes.Key]string) struct{} {
+	mt ModeType, defaultMod string, m map[ui.Key]string) struct{} {
 
-	m[uitypes.Key{uitypes.Up, 0}] = "up"
-	m[uitypes.Key{uitypes.PageUp, 0}] = "page-up"
-	m[uitypes.Key{uitypes.Down, 0}] = "down"
-	m[uitypes.Key{uitypes.PageDown, 0}] = "page-down"
-	m[uitypes.Key{uitypes.Tab, 0}] = "down-cycle"
-	m[uitypes.Key{uitypes.Backspace, 0}] = "backspace"
-	m[uitypes.Key{uitypes.Enter, 0}] = "accept-close"
-	m[uitypes.Key{uitypes.Enter, uitypes.Alt}] = "accept"
-	m[uitypes.Default] = "default"
-	m[uitypes.Key{'[', uitypes.Ctrl}] = "insert:start"
+	m[ui.Key{ui.Up, 0}] = "up"
+	m[ui.Key{ui.PageUp, 0}] = "page-up"
+	m[ui.Key{ui.Down, 0}] = "down"
+	m[ui.Key{ui.PageDown, 0}] = "page-down"
+	m[ui.Key{ui.Tab, 0}] = "down-cycle"
+	m[ui.Key{ui.Backspace, 0}] = "backspace"
+	m[ui.Key{ui.Enter, 0}] = "accept-close"
+	m[ui.Key{ui.Enter, ui.Alt}] = "accept"
+	m[ui.Default] = "default"
+	m[ui.Key{'[', ui.Ctrl}] = "insert:start"
 	return registerBindings(mt, defaultMod, m)
 }

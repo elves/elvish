@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -33,19 +33,19 @@ var _ = registerBuiltins("nav", map[string]func(*Editor){
 })
 
 func init() {
-	registerBindings(modeNavigation, "nav", map[uitypes.Key]string{
-		{uitypes.Up, 0}:              "up",
-		{uitypes.Down, 0}:            "down",
-		{uitypes.PageUp, 0}:          "page-up",
-		{uitypes.PageDown, 0}:        "page-down",
-		{uitypes.Left, 0}:            "left",
-		{uitypes.Right, 0}:           "right",
-		{uitypes.Enter, uitypes.Alt}: "insert-selected",
-		{uitypes.Enter, 0}:           "insert-selected-and-quit",
-		{'H', uitypes.Ctrl}:          "trigger-shown-hidden",
-		{'F', uitypes.Ctrl}:          "trigger-filter",
-		{'[', uitypes.Ctrl}:          "insert:start",
-		uitypes.Default:              "default",
+	registerBindings(modeNavigation, "nav", map[ui.Key]string{
+		{ui.Up, 0}:         "up",
+		{ui.Down, 0}:       "down",
+		{ui.PageUp, 0}:     "page-up",
+		{ui.PageDown, 0}:   "page-down",
+		{ui.Left, 0}:       "left",
+		{ui.Right, 0}:      "right",
+		{ui.Enter, ui.Alt}: "insert-selected",
+		{ui.Enter, 0}:      "insert-selected-and-quit",
+		{'H', ui.Ctrl}:     "trigger-shown-hidden",
+		{'F', ui.Ctrl}:     "trigger-filter",
+		{'[', ui.Ctrl}:     "insert:start",
+		ui.Default:         "default",
 	})
 }
 
@@ -132,7 +132,7 @@ func navDefault(ed *Editor) {
 		n.filter += k.String()
 		n.refreshCurrent()
 		n.refreshDirPreview()
-	} else if n.filtering && k == (uitypes.Key{uitypes.Backspace, 0}) {
+	} else if n.filtering && k == (ui.Key{ui.Backspace, 0}) {
 		_, size := utf8.DecodeLastRuneInString(n.filter)
 		if size > 0 {
 			n.filter = n.filter[:len(n.filter)-size]
@@ -142,7 +142,7 @@ func navDefault(ed *Editor) {
 	} else if f, ok := keyBindings[modeInsert][k]; ok {
 		ed.CallFn(f)
 	} else {
-		ed.CallFn(keyBindings[modeInsert][uitypes.Default])
+		ed.CallFn(keyBindings[modeInsert][ui.Default])
 	}
 }
 
