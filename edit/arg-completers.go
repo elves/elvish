@@ -6,6 +6,8 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
+// The $le:completer map, and its default values.
+
 var (
 	ErrCompleterMustBeFn        = errors.New("completer must be fn")
 	ErrCompleterArgMustBeString = errors.New("arguments to arg completers must be string")

@@ -7,6 +7,9 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
+// The $le:{before,after}-readline lists that contain hooks. We might have more
+// hooks in future.
+
 var _ = registerVariable("before-readline", makeListVariable)
 
 func (ed *Editor) beforeReadLine() eval.List {
