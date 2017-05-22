@@ -67,17 +67,17 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	}
 	ns["binding"] = eval.NewRoVariable(binding)
 
-	ns["completer"] = ed.argCompleter
-
 	ns[eval.FnPrefix+"complete-getopt"] = eval.NewRoVariable(
 		&eval.BuiltinFn{"le:&complete-getopt", complGetopt})
 	for _, bac := range argCompletersData {
 		ns[eval.FnPrefix+bac.name] = eval.NewRoVariable(bac)
 	}
 
-	ns["prompt"] = ed.prompt
-	ns["rprompt"] = ed.rprompt
-	ns["rprompt-persistent"] = ed.rpromptPersistent
+	// Pour variables into the le: namespace.
+	for name, variable := range ed.variables {
+		ns[name] = variable
+	}
+
 	ns["history"] = eval.NewRoVariable(History{&ed.historyMutex, ed.store})
 
 	ns["current-command"] = eval.MakeVariableFromCallback(
@@ -107,12 +107,6 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	)
 
 	ns["abbr"] = eval.NewRoVariable(eval.MapStringString(ed.abbreviations))
-
-	ns["loc-pinned"] = ed.locationPinned
-	ns["loc-hidden"] = ed.locationHidden
-
-	ns["before-readline"] = ed.beforeReadLine
-	ns["after-readline"] = ed.afterReadLine
 
 	ns[eval.FnPrefix+"styled"] = eval.NewRoVariable(&eval.BuiltinFn{"le:&styled", styledBuiltin})
 

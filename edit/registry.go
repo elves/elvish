@@ -9,19 +9,15 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-// This file contains two "registries", data structure that are written during
-// program initialization by implementations of different modes and later used
-// when initializing the Editor.
+// This file contains several "registries", data structure that are written
+// during program initialization and later used when initializing the Editor.
 
-var (
-	builtinMaps = map[string]map[string]*BuiltinFn{}
-	keyBindings = map[ModeType]map[ui.Key]eval.CallableValue{}
-)
+var builtinMaps = map[string]map[string]*BuiltinFn{}
 
-// registerBuiltins makes a map of builtins from a map of implementations.
-// It also records the made map in builtinMaps for use in makeBindings. It
-// should be called for global variable initialization to make sure every map is
-// registered before makeBindings is ever called.
+// registerBuiltins registers builtins under a subnamespace of le:, to be used
+// during the initialization of the Editor. It should be called for global
+// variable initializations to make sure every subnamespace is registered before
+// makeBindings is ever called.
 func registerBuiltins(module string, impls map[string]func(*Editor)) struct{} {
 	builtinMaps[module] = make(map[string]*BuiltinFn)
 	for name, impl := range impls {
@@ -44,9 +40,12 @@ func makeNamespaceFromBuiltins(builtins map[string]*BuiltinFn) eval.Namespace {
 	return ns
 }
 
-// registerBindings makes a map from Key to CallableValue from a map from Key to
-// string, resolving the builtins using builtinMaps. For unqualified names, it
-// assumes the passed module name.
+var keyBindings = map[ModeType]map[ui.Key]eval.CallableValue{}
+
+// registerBindings registers default bindings for a mode to initialize the
+// global keyBindings map. Builtin names are resolved in the defaultMod
+// subnamespace using information from builtinMaps. It should be called in init
+// functions.
 func registerBindings(
 	mt ModeType, defaultMod string,
 	bindingData map[ui.Key]string) struct{} {
@@ -73,4 +72,22 @@ func registerBindings(
 	}
 	keyBindings[mt] = bindings
 	return struct{}{}
+}
+
+var variableMakers = map[string]func() eval.Variable{}
+
+// registerVariables registers a variable, its name and a func used to derive
+// its value, later to be used during Editor initialization to populate
+// Editor.variables as well as the le: namespace.
+func registerVariable(name string, maker func() eval.Variable) struct{} {
+	variableMakers[name] = maker
+	return struct{}{}
+}
+
+func makeVariables() map[string]eval.Variable {
+	m := make(map[string]eval.Variable, len(variableMakers))
+	for name, maker := range variableMakers {
+		m[name] = maker()
+	}
+	return m
 }

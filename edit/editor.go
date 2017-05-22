@@ -35,19 +35,9 @@ type Editor struct {
 	evaler *eval.Evaler
 	cmdSeq int
 
-	prompt            eval.Variable
-	rprompt           eval.Variable
-	rpromptPersistent eval.Variable
+	variables map[string]eval.Variable
 
 	abbreviations map[string]string
-
-	locationHidden eval.Variable
-	locationPinned eval.Variable
-
-	beforeReadLine eval.Variable
-	afterReadLine  eval.Variable
-
-	argCompleter eval.Variable
 
 	historyMutex sync.RWMutex
 
@@ -106,8 +96,6 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		}
 	}
 
-	prompt, rprompt := defaultPrompts()
-
 	ed := &Editor{
 		file:   file,
 		writer: newWriter(file),
@@ -117,20 +105,9 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		evaler: ev,
 		cmdSeq: seq,
 
-		prompt:            eval.NewPtrVariableWithValidator(prompt, eval.ShouldBeFn),
-		rprompt:           eval.NewPtrVariableWithValidator(rprompt, eval.ShouldBeFn),
-		rpromptPersistent: eval.NewPtrVariableWithValidator(eval.Bool(false), eval.ShouldBeBool),
+		variables: makeVariables(),
 
 		abbreviations: make(map[string]string),
-
-		locationHidden: eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
-		locationPinned: eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
-
-		beforeReadLine: eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
-		afterReadLine:  eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
-
-		argCompleter: eval.NewPtrVariableWithValidator(
-			makeCompleterMap(), eval.ShouldBeMap),
 	}
 	ev.Editor = ed
 
@@ -317,7 +294,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.mode = &ed.insert
 	ed.tips = nil
 	ed.dot = len(ed.line)
-	if !ed.rpromptPersistent.Get().(eval.Bool).Bool() {
+	if !ed.rpromptPersistent() {
 		ed.rpromptContent = nil
 	}
 	addError(ed.refresh(false, false))
@@ -345,7 +322,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 
 	ed.editorState = editorState{}
 
-	callHooks(ed.evaler, ed.afterReadLine.Get().(eval.List), eval.String(line))
+	callHooks(ed.evaler, ed.afterReadLine(), eval.String(line))
 }
 
 // ReadLine reads a line interactively.
@@ -371,12 +348,12 @@ func (ed *Editor) ReadLine() (line string, err error) {
 
 	fullRefresh := false
 
-	callHooks(ed.evaler, ed.beforeReadLine.Get().(eval.List))
+	callHooks(ed.evaler, ed.beforeReadLine())
 
 MainLoop:
 	for {
-		ed.promptContent = callPrompt(ed, ed.prompt.Get().(eval.Callable))
-		ed.rpromptContent = callPrompt(ed, ed.rprompt.Get().(eval.Callable))
+		ed.promptContent = callPrompt(ed, ed.prompt())
+		ed.rpromptContent = callPrompt(ed, ed.rprompt())
 
 		err := ed.refresh(fullRefresh, true)
 		fullRefresh = false
@@ -500,29 +477,6 @@ MainLoop:
 			}
 		}
 	}
-}
-
-func callHooks(ev *eval.Evaler, li eval.List, args ...eval.Value) {
-	if li.Len() == 0 {
-		return
-	}
-
-	opfunc := func(ec *eval.EvalCtx) {
-		li.Iterate(func(v eval.Value) bool {
-			fn, ok := v.(eval.CallableValue)
-			if !ok {
-				fmt.Fprintf(os.Stderr, "not a function: %s\n", v.Repr(eval.NoPretty))
-				return true
-			}
-			err := ec.PCall(fn, args, eval.NoOpts)
-			if err != nil {
-				// TODO Print stack trace.
-				fmt.Fprintf(os.Stderr, "function error: %s\n", err.Error())
-			}
-			return true
-		})
-	}
-	ev.Eval(eval.Op{opfunc, -1, -1}, "[hooks]", "no source")
 }
 
 // getIsExternal finds a set of all external commands and puts it on the result

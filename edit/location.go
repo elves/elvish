@@ -146,14 +146,14 @@ func locStart(ed *Editor) {
 		ed.Notify("%v", ErrStoreOffline)
 		return
 	}
-	black := convertListToSet(ed.locationHidden.Get().(eval.List))
+	black := convertListToSet(ed.locHidden())
 	dirs, err := ed.store.GetDirs(black)
 	if err != nil {
 		ed.Notify("store error: %v", err)
 		return
 	}
 
-	pinnedValue := ed.locationPinned.Get().(eval.List)
+	pinnedValue := ed.locPinned()
 	pinned := convertListToDirs(pinnedValue)
 	pinnedSet := convertListToSet(pinnedValue)
 
@@ -199,4 +199,22 @@ func convertListToSet(li eval.List) map[string]struct{} {
 		return true
 	})
 	return set
+}
+
+// Variables.
+
+var _ = registerVariable("loc-hidden", func() eval.Variable {
+	return eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList)
+})
+
+func (ed *Editor) locHidden() eval.List {
+	return ed.variables["loc-hidden"].Get().(eval.List)
+}
+
+var _ = registerVariable("loc-pinned", func() eval.Variable {
+	return eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList)
+})
+
+func (ed *Editor) locPinned() eval.List {
+	return ed.variables["loc-pinned"].Get().(eval.List)
 }
