@@ -10,15 +10,18 @@ import (
 	"unsafe"
 )
 
-// GetWinsize queries the size of the terminal referenced by the given file
-// descriptor.
-//
+// winSize mirrors struct winsize in the C header.
+// The following declaration matches struct winsize in the headers of
+// Linux and FreeBSD.
 type winSize struct {
 	row    uint16
 	col    uint16
 	Xpixel uint16
 	Ypixel uint16
 }
+
+// GetWinsize queries the size of the terminal referenced by
+// the given file descriptor.
 
 func GetWinsize(fd int) (row, col int) {
 	ws := winSize{}
