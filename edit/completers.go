@@ -288,12 +288,18 @@ func complFormHeadInner(head string, ev *eval.Evaler) ([]rawCandidate, error) {
 			got(ns + ":")
 		}
 	}
-	sort.Slice(commands, func(i, j int) bool {
-		return commands[i].(plainCandidate) < commands[j].(plainCandidate)
-	})
+	sort.Sort(plainCandidates(commands))
 
 	return commands, nil
 }
+
+type plainCandidates []rawCandidate
+
+func (pc plainCandidates) Len() int { return len(pc) }
+func (pc plainCandidates) Less(i, j int) bool {
+	return pc[i].(plainCandidate) < pc[j].(plainCandidate)
+}
+func (pc plainCandidates) Swap(i, j int) { pc[i], pc[j] = pc[j], pc[i] }
 
 // complRedir completes redirection RHS.
 func complRedir(n parse.Node, ev *eval.Evaler) (*compl, error) {
