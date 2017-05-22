@@ -25,7 +25,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var Logger = util.GetLogger("[eval] ")
+var logger = util.GetLogger("[eval] ")
 
 // FnPrefix is the prefix for the variable names of functions. Defining a
 // function "foo" is equivalent to setting a variable named FnPrefix + "foo".
@@ -66,7 +66,7 @@ func NewEvaler(st *store.Store, dataDir string) *Evaler {
 	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, dataDir, nil}
 }
 
-func (e *Evaler) searchPaths() []string {
+func (ev *Evaler) searchPaths() []string {
 	return builtinNamespace["paths"].(*EnvPathList).get()
 }
 
@@ -436,7 +436,7 @@ func linesToChan(r io.Reader, ch chan<- Value) {
 		}
 		if err != nil {
 			if err != io.EOF {
-				Logger.Println("error on reading:", err)
+				logger.Println("error on reading:", err)
 			}
 			break
 		}

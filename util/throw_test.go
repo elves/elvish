@@ -39,7 +39,7 @@ func TestThrowAndCatch(t *testing.T) {
 		defer Catch(&err)
 		panic(errors.New("233"))
 	}
-	recoverPanic(f)
+	_ = recoverPanic(f)
 	if err != nil {
 		t.Errorf("Catch recovered panic not caused via Throw")
 	}
@@ -52,5 +52,39 @@ func TestThrowAndCatch(t *testing.T) {
 	f()
 	if err != nil {
 		t.Errorf("Catch recovered something when there is no panic")
+	}
+}
+
+func TestPCallThrowsDoesntThrow(t *testing.T) {
+	errToThrow := errors.New("error to throw")
+
+	// PCall catches throws
+	if PCall(func() { Throw(errToThrow) }) != errToThrow {
+		t.Errorf("PCall does not catch throws")
+	}
+	// PCall returns nil when nothing has been thrown
+	if PCall(func() {}) != nil {
+		t.Errorf("PCall returns non-nil when nothing has been thrown")
+	}
+	// PCall returns nil when nil has been thrown
+	if PCall(func() { Throw(nil) }) != nil {
+		t.Errorf("PCall returns non-nil when nil has been thrown")
+	}
+
+	if Throws(func() { Throw(errToThrow) }, errToThrow) != true {
+		t.Errorf("Throws returns false when function throws wanted error")
+	}
+	if Throws(func() { Throw(errToThrow) }, errors.New("")) != false {
+		t.Errorf("Throws returns true when function throws unwanted error")
+	}
+	if Throws(func() {}, errToThrow) != false {
+		t.Errorf("Throws returns true when function does not throw")
+	}
+
+	if DoesntThrow(func() { Throw(errToThrow) }) != false {
+		t.Errorf("DoesntThrow returns true when function throws")
+	}
+	if DoesntThrow(func() {}) != true {
+		t.Errorf("DoesntThrow returns false when function doesn't throw")
 	}
 }

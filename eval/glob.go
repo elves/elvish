@@ -183,7 +183,7 @@ func doGlob(gp GlobPattern, abort <-chan struct{}) []Value {
 	if !gp.Glob(func(name string) bool {
 		select {
 		case <-abort:
-			Logger.Println("glob aborted")
+			logger.Println("glob aborted")
 			return false
 		default:
 		}

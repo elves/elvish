@@ -5,13 +5,40 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/util"
 )
 
 // Completion subsystem.
 
 // Interface.
+
+var _ = registerBuiltins("compl", map[string]func(*Editor){
+	"smart-start":    complSmartStart,
+	"start":          complStart,
+	"up":             complUp,
+	"down":           complDown,
+	"down-cycle":     complDownCycle,
+	"left":           complLeft,
+	"right":          complRight,
+	"accept":         complAccept,
+	"trigger-filter": complTriggerFilter,
+	"default":        complDefault,
+})
+
+func init() {
+	registerBindings(modeCompletion, "compl", map[ui.Key]string{
+		{ui.Up, 0}:     "up",
+		{ui.Down, 0}:   "down",
+		{ui.Tab, 0}:    "down-cycle",
+		{ui.Left, 0}:   "left",
+		{ui.Right, 0}:  "right",
+		{ui.Enter, 0}:  "accept",
+		{'F', ui.Ctrl}: "trigger-filter",
+		{'[', ui.Ctrl}: "insert:start",
+		ui.Default:     "default",
+	})
+}
 
 type completion struct {
 	compl
@@ -47,11 +74,11 @@ func (c *completion) CursorOnModeLine() bool {
 	return c.filtering
 }
 
-func startCompl(ed *Editor) {
+func complStart(ed *Editor) {
 	startCompletionInner(ed, false)
 }
 
-func complPrefixOrStartCompl(ed *Editor) {
+func complSmartStart(ed *Editor) {
 	startCompletionInner(ed, true)
 }
 
@@ -93,7 +120,7 @@ func complDefault(ed *Editor) {
 	c := &ed.completion
 	if c.filtering && likeChar(k) {
 		c.changeFilter(c.filter + string(k.Rune))
-	} else if c.filtering && k == (uitypes.Key{uitypes.Backspace, 0}) {
+	} else if c.filtering && k == (ui.Key{ui.Backspace, 0}) {
 		_, size := utf8.DecodeLastRuneInString(c.filter)
 		if size > 0 {
 			c.changeFilter(c.filter[:len(c.filter)-size])
@@ -114,17 +141,17 @@ func complTriggerFilter(ed *Editor) {
 	}
 }
 
-func (comp *completion) selectedCandidate() *candidate {
-	if comp.selected == -1 {
+func (c *completion) selectedCandidate() *candidate {
+	if c.selected == -1 {
 		return &candidate{}
 	}
-	return comp.filtered[comp.selected]
+	return c.filtered[c.selected]
 }
 
 // apply returns the line and dot after applying a candidate.
-func (comp *completion) apply(line string, dot int) (string, int) {
-	text := comp.selectedCandidate().text
-	return line[:comp.begin] + text + line[comp.end:], comp.begin + len(text)
+func (c *completion) apply(line string, dot int) (string, int) {
+	text := c.selectedCandidate().text
+	return line[:c.begin] + text + line[c.end:], c.begin + len(text)
 }
 
 func (c *completion) prev(cycle bool) {
@@ -175,9 +202,9 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 		if !shownError {
 			ed.addTip("unsupported completion :(")
 		}
-		Logger.Println("path to current leaf, leaf first")
+		logger.Println("path to current leaf, leaf first")
 		for n := node; n != nil; n = n.Parent() {
-			Logger.Printf("%T (%d-%d)", n, n.Begin(), n.End())
+			logger.Printf("%T (%d-%d)", n, n.Begin(), n.End())
 		}
 	} else if len(c.filtered) == 0 {
 		ed.addTip("no candidate for %s", c.completer)
@@ -229,13 +256,13 @@ const (
 // maxWidth finds the maximum wcwidth of display texts of candidates [lo, hi).
 // hi may be larger than the number of candidates, in which case it is truncated
 // to the number of candidates.
-func (comp *completion) maxWidth(lo, hi int) int {
-	if hi > len(comp.filtered) {
-		hi = len(comp.filtered)
+func (c *completion) maxWidth(lo, hi int) int {
+	if hi > len(c.filtered) {
+		hi = len(c.filtered)
 	}
 	width := 0
 	for i := lo; i < hi; i++ {
-		w := util.Wcswidth(comp.filtered[i].display.text)
+		w := util.Wcswidth(c.filtered[i].display.text)
 		if width < w {
 			width = w
 		}
@@ -243,9 +270,9 @@ func (comp *completion) maxWidth(lo, hi int) int {
 	return width
 }
 
-func (comp *completion) ListRender(width, maxHeight int) *buffer {
+func (c *completion) ListRender(width, maxHeight int) *buffer {
 	b := newBuffer(width)
-	cands := comp.filtered
+	cands := c.filtered
 	if len(cands) == 0 {
 		b.writes(util.TrimWcwidth("(no result)", width), "")
 		return b
@@ -256,7 +283,7 @@ func (comp *completion) ListRender(width, maxHeight int) *buffer {
 	}
 
 	// Reserve the the rightmost row as margins.
-	width -= 1
+	width--
 
 	// Determine comp.height and comp.firstShown.
 	// First determine whether all candidates can be fit in the screen,
@@ -264,7 +291,7 @@ func (comp *completion) ListRender(width, maxHeight int) *buffer {
 	// the computed height as the height for the listing, and the first
 	// candidate to show is 0. Otherwise, we use min(height, len(cands)) as the
 	// height and find the first candidate to show.
-	perLine := max(1, width/(comp.maxWidth(0, len(cands))+completionColMarginTotal))
+	perLine := max(1, width/(c.maxWidth(0, len(cands))+completionColMarginTotal))
 	heightBound := util.CeilDiv(len(cands), perLine)
 	first := 0
 	height := 0
@@ -275,18 +302,18 @@ func (comp *completion) ListRender(width, maxHeight int) *buffer {
 		// Determine the first column to show. We start with the column in which the
 		// selected one is found, moving to the left until either the width is
 		// exhausted, or the old value of firstShown has been hit.
-		first = comp.selected / height * height
-		w := comp.maxWidth(first, first+height) + completionColMarginTotal
-		for ; first > comp.firstShown; first -= height {
-			dw := comp.maxWidth(first-height, first) + completionColMarginTotal
+		first = c.selected / height * height
+		w := c.maxWidth(first, first+height) + completionColMarginTotal
+		for ; first > c.firstShown; first -= height {
+			dw := c.maxWidth(first-height, first) + completionColMarginTotal
 			if w+dw > width {
 				break
 			}
 			w += dw
 		}
 	}
-	comp.height = height
-	comp.firstShown = first
+	c.height = height
+	c.firstShown = first
 
 	var i, j int
 	remainedWidth := width
@@ -294,7 +321,7 @@ func (comp *completion) ListRender(width, maxHeight int) *buffer {
 	// Show the results in columns, until width is exceeded.
 	for i = first; i < len(cands); i += height {
 		// Determine the width of the column (without the margin)
-		colWidth := comp.maxWidth(i, min(i+height, len(cands)))
+		colWidth := c.maxWidth(i, min(i+height, len(cands)))
 		totalColWidth := colWidth + completionColMarginTotal
 		if totalColWidth > remainedWidth {
 			totalColWidth = remainedWidth
@@ -313,25 +340,25 @@ func (comp *completion) ListRender(width, maxHeight int) *buffer {
 			} else {
 				col.writePadding(completionColMarginLeft, styleForCompletion.String())
 				s := joinStyles(styleForCompletion, cands[j].display.styles)
-				if j == comp.selected {
+				if j == c.selected {
 					s = append(s, styleForSelectedCompletion.String())
 				}
 				col.writes(util.ForceWcwidth(cands[j].display.text, colWidth), s.String())
 				col.writePadding(completionColMarginRight, styleForCompletion.String())
 				if !trimmed {
-					comp.lastShownInFull = j
+					c.lastShownInFull = j
 				}
 			}
 		}
 
-		b.extendHorizontal(col, 0)
+		b.extendRight(col, 0)
 		remainedWidth -= totalColWidth
 		if remainedWidth <= completionColMarginTotal {
 			break
 		}
 	}
 	// When the listing is incomplete, always use up the entire width.
-	if remainedWidth > 0 && comp.needScrollbar() {
+	if remainedWidth > 0 && c.needScrollbar() {
 		col := newBuffer(remainedWidth)
 		for i := 0; i < height; i++ {
 			if i > 0 {
@@ -339,7 +366,7 @@ func (comp *completion) ListRender(width, maxHeight int) *buffer {
 			}
 			col.writePadding(remainedWidth, styleForCompletion.String())
 		}
-		b.extendHorizontal(col, 0)
+		b.extendRight(col, 0)
 		remainedWidth = 0
 	}
 	return b

@@ -292,24 +292,23 @@ func (cp *compiler) list(n *parse.Array) ValuesOpFunc {
 		return func(ec *EvalCtx) []Value {
 			return []Value{NewList(op.Exec(ec)...)}
 		}
-	} else {
-		ns := len(n.Semicolons)
-		rowOps := make([]ValuesOpFunc, ns+1)
-		f := func(k, i, j int) {
-			rowOps[k] = catValuesOps(cp.compoundOps(n.Compounds[i:j]))
+	}
+	ns := len(n.Semicolons)
+	rowOps := make([]ValuesOpFunc, ns+1)
+	f := func(k, i, j int) {
+		rowOps[k] = catValuesOps(cp.compoundOps(n.Compounds[i:j]))
+	}
+	f(0, 0, n.Semicolons[0])
+	for i := 1; i < ns; i++ {
+		f(i, n.Semicolons[i-1], n.Semicolons[i])
+	}
+	f(ns, n.Semicolons[ns-1], len(n.Compounds))
+	return func(ec *EvalCtx) []Value {
+		rows := make([]Value, ns+1)
+		for i := 0; i <= ns; i++ {
+			rows[i] = NewList(rowOps[i](ec)...)
 		}
-		f(0, 0, n.Semicolons[0])
-		for i := 1; i < ns; i++ {
-			f(i, n.Semicolons[i-1], n.Semicolons[i])
-		}
-		f(ns, n.Semicolons[ns-1], len(n.Compounds))
-		return func(ec *EvalCtx) []Value {
-			rows := make([]Value, ns+1)
-			for i := 0; i <= ns; i++ {
-				rows[i] = NewList(rowOps[i](ec)...)
-			}
-			return []Value{List{&rows}}
-		}
+		return []Value{List{&rows}}
 	}
 }
 
@@ -319,9 +318,8 @@ func (cp *compiler) exceptionCapture(n *parse.Chunk) ValuesOpFunc {
 		err := ec.PEval(op)
 		if err == nil {
 			return []Value{OK}
-		} else {
-			return []Value{err.(*Exception)}
 		}
+		return []Value{err.(*Exception)}
 	}
 }
 

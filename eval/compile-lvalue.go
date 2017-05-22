@@ -42,9 +42,8 @@ func (cp *compiler) lvaluesOp(n *parse.Indexing) (LValuesOp, LValuesOp) {
 	op := LValuesOp{opFunc, n.Begin(), n.End()}
 	if rest {
 		return LValuesOp{}, op
-	} else {
-		return op, LValuesOp{}
 	}
+	return op, LValuesOp{}
 }
 
 func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp) {

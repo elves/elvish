@@ -6,11 +6,111 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/util"
 )
 
 // Builtins related to insert and command mode.
+
+var (
+	_ = registerBuiltins("", map[string]func(*Editor){
+		"kill-line-left":       killLineLeft,
+		"kill-line-right":      killLineRight,
+		"kill-word-left":       killWordLeft,
+		"kill-small-word-left": killSmallWordLeft,
+		"kill-rune-left":       killRuneLeft,
+		"kill-rune-right":      killRuneRight,
+
+		"move-dot-left":       moveDotLeft,
+		"move-dot-right":      moveDotRight,
+		"move-dot-left-word":  moveDotLeftWord,
+		"move-dot-right-word": moveDotRightWord,
+		"move-dot-sol":        moveDotSOL,
+		"move-dot-eol":        moveDotEOL,
+		"move-dot-up":         moveDotUp,
+		"move-dot-down":       moveDotDown,
+
+		"insert-last-word": insertLastWord,
+		"insert-key":       insertKey,
+
+		"return-line": returnLine,
+		"smart-enter": smartEnter,
+		"return-eof":  returnEOF,
+
+		"toggle-quote-paste": toggleQuotePaste,
+		"insert-raw":         startInsertRaw,
+
+		"end-of-history": endOfHistory,
+		"redraw":         redraw,
+	})
+	_ = registerBuiltins("insert", map[string]func(*Editor){
+		"start":   insertStart,
+		"default": insertDefault,
+	})
+	_ = registerBuiltins("command", map[string]func(*Editor){
+		"start":   commandStart,
+		"default": commandDefault,
+	})
+)
+
+func init() {
+	registerBindings(modeInsert, "", map[ui.Key]string{
+		// Moving.
+		{ui.Left, 0}:        "move-dot-left",
+		{ui.Right, 0}:       "move-dot-right",
+		{ui.Up, ui.Alt}:     "move-dot-up",
+		{ui.Down, ui.Alt}:   "move-dot-down",
+		{ui.Left, ui.Ctrl}:  "move-dot-left-word",
+		{ui.Right, ui.Ctrl}: "move-dot-right-word",
+		{ui.Home, 0}:        "move-dot-sol",
+		{ui.End, 0}:         "move-dot-eol",
+		// Killing.
+		{'U', ui.Ctrl}:    "kill-line-left",
+		{'K', ui.Ctrl}:    "kill-line-right",
+		{'W', ui.Ctrl}:    "kill-word-left",
+		{ui.Backspace, 0}: "kill-rune-left",
+		// Some terminal send ^H on backspace
+		// ui.Key{'H', ui.Ctrl}: "kill-rune-left",
+		{ui.Delete, 0}: "kill-rune-right",
+		// Inserting.
+		{'.', ui.Alt}:      "insert-last-word",
+		{ui.Enter, ui.Alt}: "insert-key",
+		// Controls.
+		{ui.Enter, 0}:  "smart-enter",
+		{'D', ui.Ctrl}: "return-eof",
+		{ui.F2, 0}:     "toggle-quote-paste",
+
+		// Other modes.
+		// ui.Key{'[', ui.Ctrl}: "command-start",
+		{ui.Tab, 0}:    "compl:smart-start",
+		{ui.Up, 0}:     "history:start",
+		{ui.Down, 0}:   "end-of-history",
+		{'N', ui.Ctrl}: "nav:start",
+		{'R', ui.Ctrl}: "histlist:start",
+		{',', ui.Alt}:  "bang:start",
+		{'L', ui.Ctrl}: "loc:start",
+		{'V', ui.Ctrl}: "insert-raw",
+
+		ui.Default: "insert:default",
+	})
+	registerBindings(modeCommand, "", map[ui.Key]string{
+		// Moving.
+		{'h', 0}: "move-dot-left",
+		{'l', 0}: "move-dot-right",
+		{'k', 0}: "move-dot-up",
+		{'j', 0}: "move-dot-down",
+		{'b', 0}: "move-dot-left-word",
+		{'w', 0}: "move-dot-right-word",
+		{'0', 0}: "move-dot-sol",
+		{'$', 0}: "move-dot-eol",
+		// Killing.
+		{'x', 0}: "kill-rune-right",
+		{'D', 0}: "kill-line-right",
+		// Controls.
+		{'i', 0}:   "insert:start",
+		ui.Default: "command:default",
+	})
+}
 
 type insert struct {
 	quotePaste bool
@@ -25,7 +125,7 @@ func (*insert) Mode() ModeType {
 	return modeInsert
 }
 
-// uitypes.Insert mode is the default mode and has an empty mode.
+// ui.Insert mode is the default mode and has an empty mode.
 func (ins *insert) ModeLine() renderer {
 	if ins.quotePaste {
 		return modeLineRenderer{" INSERT (quote paste) ", ""}
@@ -43,11 +143,11 @@ func (*command) ModeLine() renderer {
 	return modeLineRenderer{" COMMAND ", ""}
 }
 
-func startInsert(ed *Editor) {
+func insertStart(ed *Editor) {
 	ed.mode = &ed.insert
 }
 
-func startCommand(ed *Editor) {
+func commandStart(ed *Editor) {
 	ed.mode = &ed.command
 }
 
@@ -228,7 +328,7 @@ func returnLine(ed *Editor) {
 
 func smartEnter(ed *Editor) {
 	if ed.parseErrorAtEnd {
-		// There is a parsing error at the end. uitypes.Insert a newline and copy
+		// There is a parsing error at the end. ui.Insert a newline and copy
 		// indents from previous line.
 		indent := findLastIndent(ed.line[:ed.dot])
 		ed.insertAtDot("\n" + indent)
@@ -253,33 +353,46 @@ func toggleQuotePaste(ed *Editor) {
 	ed.insert.quotePaste = !ed.insert.quotePaste
 }
 
-func defaultInsert(ed *Editor) {
+func endOfHistory(ed *Editor) {
+	ed.Notify("End of history")
+}
+
+func redraw(ed *Editor) {
+	ed.refresh(true, true)
+}
+
+func insertDefault(ed *Editor) {
 	k := ed.lastKey
 	if likeChar(k) {
 		insertKey(ed)
 		// Match abbreviations.
+		expanded := false
 		literals := ed.line[ed.dot-ed.insert.literalInserts-1 : ed.dot]
-		for abbr, full := range ed.abbreviations {
+		ed.abbrIterate(func(abbr, full string) bool {
 			if strings.HasSuffix(literals, abbr) {
 				ed.line = ed.line[:ed.dot-len(abbr)] + full + ed.line[ed.dot:]
 				ed.dot += len(full) - len(abbr)
-				return
+				expanded = true
+				return false
 			}
-		}
+			return true
+		})
 		// No match.
-		ed.insert.insertedLiteral = true
+		if !expanded {
+			ed.insert.insertedLiteral = true
+		}
 	} else {
 		ed.Notify("Unbound: %s", k)
 	}
 }
 
-func defaultCommand(ed *Editor) {
-	k := ed.lastKey
-	ed.Notify("Unbound: %s", k)
-}
-
 // likeChar returns if a key looks like a character meant to be input (as
 // opposed to a function key).
-func likeChar(k uitypes.Key) bool {
+func likeChar(k ui.Key) bool {
 	return k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune)
+}
+
+func commandDefault(ed *Editor) {
+	k := ed.lastKey
+	ed.Notify("Unbound: %s", k)
 }

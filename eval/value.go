@@ -248,11 +248,11 @@ func FromJSONInterface(v interface{}) Value {
 		return List{&vs}
 	case map[string]interface{}:
 		m := v.(map[string]interface{})
-		m_ := make(map[Value]Value)
+		mv := make(map[Value]Value)
 		for k, v := range m {
-			m_[String(k)] = FromJSONInterface(v)
+			mv[String(k)] = FromJSONInterface(v)
 		}
-		return Map{&m_}
+		return Map{&mv}
 	default:
 		throw(fmt.Errorf("unexpected json type: %T", v))
 		return nil // not reached

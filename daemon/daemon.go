@@ -1,4 +1,5 @@
-// Package elvishd implements a daemon for mediating access to the storage backend of elvish.
+// Package daemon implements a daemon for mediating access to the storage
+// backend of elvish.
 package daemon
 
 import (
@@ -14,29 +15,33 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var Logger = util.GetLogger("[daemon] ")
+var logger = util.GetLogger("[daemon] ")
 
+// Daemon is a daemon.
 type Daemon struct {
 	sockpath string
 	dbpath   string
 }
 
+// New creates a new daemon.
 func New(sockpath, dbpath string) *Daemon {
 	return &Daemon{sockpath, dbpath}
 }
 
+// Main runs the daemon. It does not take care of forking and stuff; it assumes
+// that it is already running in the correct process.
 func (d *Daemon) Main() int {
-	Logger.Println("pid is", syscall.Getpid())
+	logger.Println("pid is", syscall.Getpid())
 
 	st, err := store.NewStore(d.dbpath)
 	if err != nil {
-		Logger.Print(err)
+		logger.Print(err)
 		return 2
 	}
 
 	listener, err := net.Listen("unix", d.sockpath)
 	if err != nil {
-		Logger.Println("listen:", err)
+		logger.Println("listen:", err)
 		return 2
 	}
 	defer os.Remove(d.sockpath)
@@ -57,7 +62,7 @@ func (d *Daemon) Main() int {
 			case <-cancel:
 				return 0
 			default:
-				Logger.Println("accept:", err)
+				logger.Println("accept:", err)
 				return 2
 			}
 		}
@@ -78,7 +83,7 @@ func handle(c net.Conn, st *store.Store, cancel <-chan struct{}) {
 	send := func(v interface{}) {
 		err := encoder.Encode(v)
 		if err != nil {
-			Logger.Println("send:", err)
+			logger.Println("send:", err)
 		}
 	}
 	sendOKHeader := func(n int) {

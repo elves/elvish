@@ -132,13 +132,12 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 					op.Exec(ec)
 				}
 			}
-		} else {
-			for _, a := range n.Assignments {
-				v, r := cp.lvaluesOp(a.Left)
-				saveVarsOps = append(saveVarsOps, v, r)
-			}
-			Logger.Println("temporary assignment of", len(n.Assignments), "pairs")
 		}
+		for _, a := range n.Assignments {
+			v, r := cp.lvaluesOp(a.Left)
+			saveVarsOps = append(saveVarsOps, v, r)
+		}
+		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
 	}
 
 	if n.Head != nil {
@@ -205,7 +204,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			for _, v := range saveVars {
 				val := v.Get()
 				saveVals = append(saveVals, val)
-				Logger.Printf("saved %s = %s", v, val)
+				logger.Printf("saved %s = %s", v, val)
 			}
 			// Do assignment.
 			for _, op := range assignmentOps {
@@ -223,7 +222,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 						val = String("")
 					}
 					v.Set(val)
-					Logger.Printf("restored %s = %s", v, val)
+					logger.Printf("restored %s = %s", v, val)
 				}
 			}()
 		}

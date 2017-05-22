@@ -13,8 +13,6 @@ const (
 	scoreIncrement = 10
 )
 
-var NoBlacklist = map[string]struct{}{}
-
 func init() {
 	initDB["initialize directory history table"] = func(db *sql.DB) error {
 		_, err := db.Exec(`create table if not exists dir (path text unique primary key, score real default 0)`)
@@ -42,6 +40,9 @@ func (s *Store) AddDir(d string, incFactor float64) error {
 		return err
 	})
 }
+
+// NoBlacklist is an empty blacklist, to be used in GetDirs.
+var NoBlacklist = map[string]struct{}{}
 
 // GetDirs lists all directories in the directory history whose names are not
 // in the blacklist. The results are ordered by scores in descending order.

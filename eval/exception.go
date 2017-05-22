@@ -19,7 +19,7 @@ type Exception struct {
 	Traceback *util.SourceContext
 }
 
-// OK is a pointer to the zero value of Exception, representing the absense of
+// OK is a pointer to the zero value of Exception, representing the absence of
 // exception.
 var OK = &Exception{}
 

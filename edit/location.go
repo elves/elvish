@@ -3,11 +3,13 @@ package edit
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
@@ -15,6 +17,18 @@ import (
 )
 
 // Location mode.
+
+var _ = registerListingBuiltins("loc", map[string]func(*Editor){
+	"start": locStart,
+}, func(ed *Editor) *listing { return &ed.location.listing })
+
+func init() {
+	registerListingBindings(modeLocation, "loc", map[ui.Key]string{})
+}
+
+// PinnedScore is a special value of Score in store.Dir to represent that the
+// directory is pinned.
+var PinnedScore = math.Inf(1)
 
 type location struct {
 	listing
@@ -42,7 +56,13 @@ func (loc *location) Len() int {
 }
 
 func (loc *location) Show(i int) (string, styled) {
-	header := fmt.Sprintf("%.0f", loc.filtered[i].Score)
+	var header string
+	score := loc.filtered[i].Score
+	if score == PinnedScore {
+		header = "*"
+	} else {
+		header = fmt.Sprintf("%.0f", score)
+	}
 	return header, unstyled(showPath(loc.filtered[i].Path, loc.home))
 }
 
@@ -86,7 +106,7 @@ func makeLocationFilterPattern(s string) *regexp.Regexp {
 	b.WriteString(".*")
 	p, err := regexp.Compile(b.String())
 	if err != nil {
-		Logger.Printf("failed to compile regexp %q: %v", b.String(), err)
+		logger.Printf("failed to compile regexp %q: %v", b.String(), err)
 		return emptyRegexp
 	}
 	return p
@@ -100,12 +120,12 @@ func (ed *Editor) chdir(dir string) error {
 	err = os.Chdir(dir)
 	if err == nil {
 		store := ed.store
+		store.Waits.Add(1)
 		go func() {
-			store.Waits.Add(1)
 			// XXX Error ignored.
 			store.AddDir(dir, 1)
 			store.Waits.Done()
-			Logger.Println("added dir to store:", dir)
+			logger.Println("added dir to store:", dir)
 		}()
 	}
 	return err
@@ -121,17 +141,32 @@ func (loc *location) Accept(i int, ed *Editor) {
 	ed.mode = &ed.insert
 }
 
-func startLocation(ed *Editor) {
+func locStart(ed *Editor) {
 	if ed.store == nil {
 		ed.Notify("%v", ErrStoreOffline)
 		return
 	}
-	black := convertBlacklist(ed.locationHidden.Get().(eval.List))
+	black := convertListToSet(ed.locHidden())
 	dirs, err := ed.store.GetDirs(black)
 	if err != nil {
 		ed.Notify("store error: %v", err)
 		return
 	}
+
+	pinnedValue := ed.locPinned()
+	pinned := convertListToDirs(pinnedValue)
+	pinnedSet := convertListToSet(pinnedValue)
+
+	// TODO(xiaq): Optimize this by changing GetDirs to a callback API, and
+	// build dirs by first putting pinned directories and then appending those
+	// from store.
+	for _, d := range dirs {
+		_, inPinned := pinnedSet[d.Path]
+		if !inPinned {
+			pinned = append(pinned, d)
+		}
+	}
+	dirs = pinned
 
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
@@ -140,14 +175,46 @@ func startLocation(ed *Editor) {
 	ed.mode = ed.location
 }
 
-func convertBlacklist(li eval.List) map[string]struct{} {
-	black := make(map[string]struct{})
+// convertListToDirs converts a list of strings to []store.Dir. It uses the
+// special score of PinnedScore to signify that the directory is pinned.
+func convertListToDirs(li eval.List) []store.Dir {
+	pinned := make([]store.Dir, 0, li.Len())
 	// XXX(xiaq): silently drops non-string items.
 	li.Iterate(func(v eval.Value) bool {
 		if s, ok := v.(eval.String); ok {
-			black[string(s)] = struct{}{}
+			pinned = append(pinned, store.Dir{string(s), PinnedScore})
 		}
 		return true
 	})
-	return black
+	return pinned
+}
+
+func convertListToSet(li eval.List) map[string]struct{} {
+	set := make(map[string]struct{})
+	// XXX(xiaq): silently drops non-string items.
+	li.Iterate(func(v eval.Value) bool {
+		if s, ok := v.(eval.String); ok {
+			set[string(s)] = struct{}{}
+		}
+		return true
+	})
+	return set
+}
+
+// Variables.
+
+var _ = registerVariable("loc-hidden", func() eval.Variable {
+	return eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList)
+})
+
+func (ed *Editor) locHidden() eval.List {
+	return ed.variables["loc-hidden"].Get().(eval.List)
+}
+
+var _ = registerVariable("loc-pinned", func() eval.Variable {
+	return eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList)
+})
+
+func (ed *Editor) locPinned() eval.List {
+	return ed.variables["loc-pinned"].Get().(eval.List)
 }

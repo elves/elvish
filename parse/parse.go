@@ -14,7 +14,7 @@ import (
 // Parse parses elvish source. If the error is not nil, it always has type
 // ParseError.
 func Parse(srcname, src string) (*Chunk, error) {
-	ps := &parser{srcname, src, 0, 0, []map[rune]int{{}}, 0, ParseError{}}
+	ps := &parser{srcname, src, 0, 0, []map[rune]int{{}}, 0, Error{}}
 	bn := parseChunk(ps)
 	if ps.pos != len(src) {
 		ps.error(errUnexpectedRune)
@@ -234,7 +234,7 @@ func (fn *Form) parse(ps *parser) {
 	}
 }
 
-// tryAssignment tries to parse an assignment. If suceeded, it adds the parsed
+// tryAssignment tries to parse an assignment. If succeeded, it adds the parsed
 // assignment to fn.Assignments and returns true. Otherwise it rewinds the
 // parser and returns false.
 func (fn *Form) tryAssignment(ps *parser) bool {
@@ -444,7 +444,7 @@ func startsIndexing(r rune, head bool) bool {
 type Array struct {
 	node
 	Compounds []*Compound
-	// When non-empty, records the occurences of semicolons by the indices of
+	// When non-empty, records the occurrences of semicolons by the indices of
 	// the compounds they appear before. For instance, [; ; a b; c d;] results
 	// in Semicolons={0 0 2 4}.
 	Semicolons []int

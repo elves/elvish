@@ -57,161 +57,162 @@ func init() {
 	// Needed to work around init loop.
 	builtinFns = []*BuiltinFn{
 		// Trivial builtin
-		&BuiltinFn{"nop", nop},
+		{"nop", nop},
 
 		// Introspection
-		&BuiltinFn{"kind-of", kindOf},
+		{"kind-of", kindOf},
 
 		// Generic identity and equality
-		&BuiltinFn{"is", is},
-		&BuiltinFn{"eq", eq},
+		{"is", is},
+		{"eq", eq},
 
 		// Value output
-		&BuiltinFn{"put", put},
+		{"put", put},
 
 		// Bytes output
-		&BuiltinFn{"print", print},
-		&BuiltinFn{"echo", echo},
-		&BuiltinFn{"pprint", pprint},
+		{"print", print},
+		{"echo", echo},
+		{"pprint", pprint},
+		{"repr", repr},
 
 		// Bytes to value
-		&BuiltinFn{"slurp", slurp},
-		&BuiltinFn{"from-lines", fromLines},
-		&BuiltinFn{"from-json", fromJSON},
+		{"slurp", slurp},
+		{"from-lines", fromLines},
+		{"from-json", fromJSON},
 
 		// Value to bytes
-		&BuiltinFn{"to-lines", toLines},
-		&BuiltinFn{"to-json", toJSON},
+		{"to-lines", toLines},
+		{"to-json", toJSON},
 
 		// Exception and control
-		&BuiltinFn{"fail", fail},
-		&BuiltinFn{"multi-error", multiErrorFn},
-		&BuiltinFn{"return", returnFn},
-		&BuiltinFn{"break", breakFn},
-		&BuiltinFn{"continue", continueFn},
+		{"fail", fail},
+		{"multi-error", multiErrorFn},
+		{"return", returnFn},
+		{"break", breakFn},
+		{"continue", continueFn},
 
 		// Misc functional
-		&BuiltinFn{"constantly", constantly},
+		{"constantly", constantly},
 
 		// Misc shell basic
-		&BuiltinFn{"source", source},
+		{"source", source},
 
 		// Iterations.
-		&BuiltinFn{"each", each},
-		&BuiltinFn{"peach", peach},
-		&BuiltinFn{"repeat", repeat},
+		{"each", each},
+		{"peach", peach},
+		{"repeat", repeat},
 
 		// Sequence primitives
-		&BuiltinFn{"explode", explode},
-		&BuiltinFn{"take", take},
-		&BuiltinFn{"range", rangeFn},
-		&BuiltinFn{"count", count},
+		{"explode", explode},
+		{"take", take},
+		{"range", rangeFn},
+		{"count", count},
 
 		// String
-		&BuiltinFn{"joins", joins},
-		&BuiltinFn{"splits", splits},
+		{"joins", joins},
+		{"splits", splits},
 
 		// String operations
-		&BuiltinFn{"ord", ord},
-		&BuiltinFn{"base", base},
-		&BuiltinFn{"wcswidth", wcswidth},
-		&BuiltinFn{"-override-wcwidth", overrideWcwidth},
+		{"ord", ord},
+		{"base", base},
+		{"wcswidth", wcswidth},
+		{"-override-wcwidth", overrideWcwidth},
 
 		// String predicates
-		&BuiltinFn{"has-prefix", hasPrefix},
-		&BuiltinFn{"has-suffix", hasSuffix},
+		{"has-prefix", hasPrefix},
+		{"has-suffix", hasSuffix},
 
 		// Regular expression
-		&BuiltinFn{"-match", match},
+		{"-match", match},
 
 		// String comparison
-		&BuiltinFn{"<s",
+		{"<s",
 			wrapStrCompare(func(a, b string) bool { return a < b })},
-		&BuiltinFn{"<=s",
+		{"<=s",
 			wrapStrCompare(func(a, b string) bool { return a <= b })},
-		&BuiltinFn{"==s",
+		{"==s",
 			wrapStrCompare(func(a, b string) bool { return a == b })},
-		&BuiltinFn{"!=s",
+		{"!=s",
 			wrapStrCompare(func(a, b string) bool { return a != b })},
-		&BuiltinFn{">s",
+		{">s",
 			wrapStrCompare(func(a, b string) bool { return a > b })},
-		&BuiltinFn{">=s",
+		{">=s",
 			wrapStrCompare(func(a, b string) bool { return a >= b })},
 
 		// eawk
-		&BuiltinFn{"eawk", eawk},
+		{"eawk", eawk},
 
 		// Directory
-		&BuiltinFn{"cd", cd},
-		&BuiltinFn{"dirs", dirs},
+		{"cd", cd},
+		{"dirs", dirs},
 
 		// Path
-		&BuiltinFn{"path-abs", wrapStringToStringError(filepath.Abs)},
-		&BuiltinFn{"path-base", wrapStringToString(filepath.Base)},
-		&BuiltinFn{"path-clean", wrapStringToString(filepath.Clean)},
-		&BuiltinFn{"path-dir", wrapStringToString(filepath.Dir)},
-		&BuiltinFn{"path-ext", wrapStringToString(filepath.Ext)},
-		&BuiltinFn{"eval-symlinks", wrapStringToStringError(filepath.EvalSymlinks)},
-		&BuiltinFn{"tilde-abbr", tildeAbbr},
+		{"path-abs", wrapStringToStringError(filepath.Abs)},
+		{"path-base", wrapStringToString(filepath.Base)},
+		{"path-clean", wrapStringToString(filepath.Clean)},
+		{"path-dir", wrapStringToString(filepath.Dir)},
+		{"path-ext", wrapStringToString(filepath.Ext)},
+		{"eval-symlinks", wrapStringToStringError(filepath.EvalSymlinks)},
+		{"tilde-abbr", tildeAbbr},
 
 		// Boolean operations
-		&BuiltinFn{"bool", boolFn},
-		&BuiltinFn{"not", not},
-		&BuiltinFn{"true", trueFn},
-		&BuiltinFn{"false", falseFn},
+		{"bool", boolFn},
+		{"not", not},
+		{"true", trueFn},
+		{"false", falseFn},
 
 		// Arithmetics
-		&BuiltinFn{"+", plus},
-		&BuiltinFn{"-", minus},
-		&BuiltinFn{"*", times},
-		&BuiltinFn{"/", slash},
-		&BuiltinFn{"^", pow},
-		&BuiltinFn{"%", mod},
+		{"+", plus},
+		{"-", minus},
+		{"*", times},
+		{"/", slash},
+		{"^", pow},
+		{"%", mod},
 
 		// Random
-		&BuiltinFn{"rand", randFn},
-		&BuiltinFn{"randint", randint},
+		{"rand", randFn},
+		{"randint", randint},
 
 		// Numerical comparison
-		&BuiltinFn{"<",
+		{"<",
 			wrapNumCompare(func(a, b float64) bool { return a < b })},
-		&BuiltinFn{"<=",
+		{"<=",
 			wrapNumCompare(func(a, b float64) bool { return a <= b })},
-		&BuiltinFn{"==",
+		{"==",
 			wrapNumCompare(func(a, b float64) bool { return a == b })},
-		&BuiltinFn{"!=",
+		{"!=",
 			wrapNumCompare(func(a, b float64) bool { return a != b })},
-		&BuiltinFn{">",
+		{">",
 			wrapNumCompare(func(a, b float64) bool { return a > b })},
-		&BuiltinFn{">=",
+		{">=",
 			wrapNumCompare(func(a, b float64) bool { return a >= b })},
 
 		// Command resolution
-		&BuiltinFn{"resolve", resolveFn},
-		&BuiltinFn{"has-external", hasExternal},
-		&BuiltinFn{"search-external", searchExternal},
+		{"resolve", resolveFn},
+		{"has-external", hasExternal},
+		{"search-external", searchExternal},
 
 		// File and pipe
-		&BuiltinFn{"fopen", fopen},
-		&BuiltinFn{"fclose", fclose},
-		&BuiltinFn{"pipe", pipe},
-		&BuiltinFn{"prclose", prclose},
-		&BuiltinFn{"pwclose", pwclose},
+		{"fopen", fopen},
+		{"fclose", fclose},
+		{"pipe", pipe},
+		{"prclose", prclose},
+		{"pwclose", pwclose},
 
 		// Process control
-		&BuiltinFn{"fg", fg},
-		&BuiltinFn{"exec", exec},
-		&BuiltinFn{"exit", exit},
+		{"fg", fg},
+		{"exec", exec},
+		{"exit", exit},
 
 		// Time
-		&BuiltinFn{"esleep", sleep},
-		&BuiltinFn{"-time", _time},
+		{"esleep", sleep},
+		{"-time", _time},
 
 		// Debugging
-		&BuiltinFn{"-stack", _stack},
-		&BuiltinFn{"-log", _log},
+		{"-stack", _stack},
+		{"-log", _log},
 
-		&BuiltinFn{"-ifaddrs", _ifaddrs},
+		{"-ifaddrs", _ifaddrs},
 	}
 	for _, b := range builtinFns {
 		builtinNamespace[FnPrefix+b.Name] = NewRoVariable(b)
@@ -317,8 +318,8 @@ func ScanArgs(s []Value, args ...interface{}) {
 	}
 }
 
-// ScanArgs is like ScanArgs, but the last element of args should be a pointer
-// to a slice, and the rest of arguments will be scanned into it.
+// ScanArgsVariadic is like ScanArgs, but the last element of args should be a
+// pointer to a slice, and the rest of arguments will be scanned into it.
 func ScanArgsVariadic(s []Value, args ...interface{}) {
 	if len(s) < len(args)-1 {
 		throwf("arity mistmatch: want at least %d arguments, got %d", len(args)-1, len(s))
@@ -488,6 +489,18 @@ func pprint(ec *EvalCtx, args []Value, opts map[string]Value) {
 		out.WriteString(arg.Repr(0))
 		out.WriteString("\n")
 	}
+}
+
+func repr(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+	out := ec.ports[1].File
+	for i, arg := range args {
+		if i > 0 {
+			out.WriteString(" ")
+		}
+		out.WriteString(arg.Repr(NoPretty))
+	}
+	out.WriteString("\n")
 }
 
 func slurp(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -984,12 +997,12 @@ func cdInner(dir string, ec *EvalCtx) {
 		pwd, err := os.Getwd()
 		if err == nil {
 			store := ec.Store
+			store.Waits.Add(1)
 			go func() {
-				store.Waits.Add(1)
 				// XXX Error ignored.
 				store.AddDir(pwd, 1)
 				store.Waits.Done()
-				Logger.Println("added dir to store:", pwd)
+				logger.Println("added dir to store:", pwd)
 			}()
 		}
 	}

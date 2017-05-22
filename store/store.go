@@ -12,12 +12,18 @@ import (
 	_ "github.com/mattn/go-sqlite3" // enable the "sqlite3" SQL driver
 )
 
-var Logger = util.GetLogger("[store] ")
+var logger = util.GetLogger("[store] ")
 var initDB = map[string](func(*sql.DB) error){}
 
-// Store is the permanent storage backend for elvish.
+// Store is the permanent storage backend for elvish. It is not thread-safe. In
+// particular, the store may be closed while another goroutine is still
+// accessing the store. To prevent bad things from happening, every time the
+// main goroutine spawns a new goroutine to operate on the store, it should call
+// Waits.Add(1) in the main goroutine before spawning another goroutine, and
+// call Waits.Done() in the spawned goroutine after the operation is finished.
 type Store struct {
-	db    *sql.DB
+	db *sql.DB
+	// Waits is used for registering outstanding operations on the store.
 	Waits sync.WaitGroup
 }
 
@@ -44,12 +50,12 @@ func NewStore(dbname string) (*Store, error) {
 // NewStoreDB creates a new Store with a custom database. The database must be
 // a SQLite database.
 func NewStoreDB(db *sql.DB) (*Store, error) {
-	Logger.Println("initializing store")
-	defer Logger.Println("initialized store")
+	logger.Println("initializing store")
+	defer logger.Println("initialized store")
 	st := &Store{db, sync.WaitGroup{}}
 
 	if SchemaUpToDate(db) {
-		Logger.Println("DB schema up to date")
+		logger.Println("DB schema up to date")
 	} else {
 		for name, fn := range initDB {
 			err := fn(db)
@@ -62,6 +68,8 @@ func NewStoreDB(db *sql.DB) (*Store, error) {
 	return st, nil
 }
 
+// Close waits for all outstanding operations to finish, and closes the
+// database.
 func (s *Store) Close() error {
 	if s == nil || s.db == nil {
 		return nil

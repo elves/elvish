@@ -1,8 +1,6 @@
 package edit
 
 import (
-	"sort"
-
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
@@ -37,16 +35,4 @@ func styledBuiltin(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Val
 
 	out := ec.OutputChan()
 	out <- &styled{text, stylesFromString(style)}
-}
-
-// Boilerplates for sorting.
-
-type styleds []styled
-
-func (s styleds) Len() int           { return len(s) }
-func (s styleds) Less(i, j int) bool { return s[i].text < s[j].text }
-func (s styleds) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-
-func sortStyleds(s []styled) {
-	sort.Sort(styleds(s))
 }

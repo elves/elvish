@@ -28,28 +28,28 @@ func (s *styling) apply() *stylingApplier {
 
 type stylingApplier struct {
 	*styling
-	occurance map[string]int
-	ibegin    int
-	iend      int
-	result    string
+	occurrence map[string]int
+	ibegin     int
+	iend       int
+	result     string
 }
 
 func (a *stylingApplier) at(i int) {
 	changed := false
 	for a.iend < len(a.ends) && a.ends[a.iend].pos == i {
-		a.occurance[a.ends[a.iend].style]--
+		a.occurrence[a.ends[a.iend].style]--
 		a.iend++
 		changed = true
 	}
 	for a.ibegin < len(a.begins) && a.begins[a.ibegin].pos == i {
-		a.occurance[a.begins[a.ibegin].style]++
+		a.occurrence[a.begins[a.ibegin].style]++
 		a.ibegin++
 		changed = true
 	}
 
 	if changed {
 		b := new(bytes.Buffer)
-		for style, occ := range a.occurance {
+		for style, occ := range a.occurrence {
 			if occ == 0 {
 				continue
 			}

@@ -383,14 +383,14 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 }
 
 func compileTry(cp *compiler, fn *parse.Form) OpFunc {
-	Logger.Println("compiling try")
+	logger.Println("compiling try")
 	args := cp.walkArgs(fn)
 	bodyNode := args.nextMustLambda()
-	Logger.Printf("body is %q", bodyNode.SourceText())
+	logger.Printf("body is %q", bodyNode.SourceText())
 	var exceptVarNode *parse.Indexing
 	var exceptNode *parse.Primary
 	if args.nextIs("except") {
-		Logger.Println("except-ing")
+		logger.Println("except-ing")
 		n := args.peek()
 		// Is this a variable?
 		if len(n.Indexings) == 1 && n.Indexings[0].Head.Type == parse.Bareword {

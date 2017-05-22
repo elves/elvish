@@ -130,7 +130,7 @@ func summary(n Node) string {
 
 func compactQuote(text string) string {
 	if len(text) > maxL+maxR+3 {
-		text = text[0:maxL] + "..." + text[len(text)-maxR:len(text)]
+		text = text[0:maxL] + "..." + text[len(text)-maxR:]
 	}
 	return strconv.Quote(text)
 }

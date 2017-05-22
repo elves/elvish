@@ -3,6 +3,7 @@
 [![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
 [![Build Status on Travis](https://travis-ci.org/elves/elvish.svg?branch=master)](https://travis-ci.org/elves/elvish)
 [![Coverage Status](https://coveralls.io/repos/github/elves/elvish/badge.svg?branch=master)](https://coveralls.io/github/elves/elvish?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 
 This project aims to explore the potentials of the Unix shell. It is a work in
@@ -26,6 +27,22 @@ Try `cn.dl.elvish.io` if you are in China and the download is too slow. (In the 
 
 See also [Building Elvish](#building-elvish).
 
+### RPM package
+
+RPM Package for Fedora is available in [FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository).
+
+First add the FZUG repo:
+
+```
+dnf config-manager --add-repo=http://repo.fdzh.org/FZUG/FZUG.repo
+```
+
+Then install Elvish:
+
+```
+dnf install elvish
+```
+
 ## Getting Started
 
 **Note**: Elvish is constantly tested under Terminal.app, libvte-based terminals and tmux. Some function keys might not work in other terminals like xterm (#328).
@@ -40,7 +57,7 @@ Elvish mimics bash and zsh in a lot of places. The following shows some key diff
 
   The `e:` prefix (for "external") ensures that the external command named `ls` will be called. Otherwise this definition will result in infinite recursion.
 
-* The left and right prompts and be customized by assigning functions to `le:prompt` and `le:rprompt`. Their outputs are concatenated (with no spaces in between) before being used as the respective prompts. The following simulates the default prompts but uses fancy Unicode:
+* The left and right prompts can be customized by assigning functions to `le:prompt` and `le:rprompt`. Their outputs are concatenated (with no spaces in between) before being used as the respective prompts. The following simulates the default prompts but uses fancy Unicode:
 
   ```sh
   # "tilde-abbr" abbreviates home directory to a tilde.

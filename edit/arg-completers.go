@@ -17,20 +17,26 @@ var (
 		"":     {"complete-filename", complFilename},
 		"sudo": {"complete-sudo", complSudo},
 	}
-	argCompleter eval.Variable
 )
 
-func init() {
+var _ = registerVariable("completer", argCompleterVariable)
+
+func argCompleterVariable() eval.Variable {
 	m := map[eval.Value]eval.Value{}
 	for k, v := range argCompletersData {
 		m[eval.String(k)] = v
 	}
-	argCompleter = eval.NewPtrVariableWithValidator(eval.NewMap(m), eval.ShouldBeMap)
+	return eval.NewPtrVariableWithValidator(eval.NewMap(m), eval.ShouldBeMap)
+}
+
+func (ed *Editor) argCompleter() eval.Map {
+	return ed.variables["completer"].Get().(eval.Map)
 }
 
 func completeArg(words []string, ev *eval.Evaler) ([]*candidate, error) {
-	Logger.Printf("completing argument: %q", words)
-	m := argCompleter.Get().(eval.Map)
+	logger.Printf("completing argument: %q", words)
+	// XXX(xiaq): not the best way to get argCompleter.
+	m := ev.Editor.(*Editor).argCompleter()
 	var v eval.Value
 	if m.HasKey(eval.String(words[0])) {
 		v = m.IndexOne(eval.String(words[0]))

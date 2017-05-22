@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -255,7 +255,7 @@ func (l *listing) accept(ed *Editor) {
 	}
 }
 
-func (l *listing) handleFilterKey(k uitypes.Key) bool {
+func (l *listing) handleFilterKey(k ui.Key) bool {
 	if likeChar(k) {
 		l.changeFilter(l.filter + string(k.Rune))
 		return true
@@ -265,41 +265,40 @@ func (l *listing) handleFilterKey(k uitypes.Key) bool {
 
 func (l *listing) defaultBinding(ed *Editor) {
 	if !l.handleFilterKey(ed.lastKey) {
-		startInsert(ed)
+		insertStart(ed)
 		ed.nextAction = action{typ: reprocessKey}
 	}
 }
 
-func addListingBuiltins(prefix string, l func(*Editor) *listing) {
-	add := func(name string, f func(*Editor)) {
-		builtins = append(builtins, &BuiltinFn{prefix + name, f})
-	}
-	add("up", func(ed *Editor) { l(ed).up(false) })
-	add("up-cycle", func(ed *Editor) { l(ed).up(true) })
-	add("page-up", func(ed *Editor) { l(ed).pageUp() })
-	add("down", func(ed *Editor) { l(ed).down(false) })
-	add("down-cycle", func(ed *Editor) { l(ed).down(true) })
-	add("page-down", func(ed *Editor) { l(ed).pageDown() })
-	add("backspace", func(ed *Editor) { l(ed).backspace() })
-	add("accept", func(ed *Editor) { l(ed).accept(ed) })
-	add("accept-close", func(ed *Editor) { l(ed).accept(ed); startInsert(ed) })
-	add("default", func(ed *Editor) { l(ed).defaultBinding(ed) })
+func registerListingBuiltins(
+	module string,
+	impls map[string]func(*Editor), l func(*Editor) *listing) struct{} {
+
+	impls["up"] = func(ed *Editor) { l(ed).up(false) }
+	impls["up-cycle"] = func(ed *Editor) { l(ed).up(true) }
+	impls["page-up"] = func(ed *Editor) { l(ed).pageUp() }
+	impls["down"] = func(ed *Editor) { l(ed).down(false) }
+	impls["down-cycle"] = func(ed *Editor) { l(ed).down(true) }
+	impls["page-down"] = func(ed *Editor) { l(ed).pageDown() }
+	impls["backspace"] = func(ed *Editor) { l(ed).backspace() }
+	impls["accept"] = func(ed *Editor) { l(ed).accept(ed) }
+	impls["accept-close"] = func(ed *Editor) { l(ed).accept(ed); insertStart(ed) }
+	impls["default"] = func(ed *Editor) { l(ed).defaultBinding(ed) }
+	return registerBuiltins(module, impls)
 }
 
-func addListingDefaultBindings(prefix string, m ModeType) {
-	add := func(k uitypes.Key, name string) {
-		if _, ok := defaultBindings[m][k]; !ok {
-			defaultBindings[m][k] = prefix + name
-		}
-	}
-	add(uitypes.Key{uitypes.Up, 0}, "up")
-	add(uitypes.Key{uitypes.PageUp, 0}, "page-up")
-	add(uitypes.Key{uitypes.Down, 0}, "down")
-	add(uitypes.Key{uitypes.PageDown, 0}, "page-down")
-	add(uitypes.Key{uitypes.Tab, 0}, "down-cycle")
-	add(uitypes.Key{uitypes.Backspace, 0}, "backspace")
-	add(uitypes.Key{uitypes.Enter, 0}, "accept-close")
-	add(uitypes.Key{uitypes.Enter, uitypes.Alt}, "accept")
-	add(uitypes.Default, "default")
-	defaultBindings[m][uitypes.Key{'[', uitypes.Ctrl}] = "start-insert"
+func registerListingBindings(
+	mt ModeType, defaultMod string, m map[ui.Key]string) struct{} {
+
+	m[ui.Key{ui.Up, 0}] = "up"
+	m[ui.Key{ui.PageUp, 0}] = "page-up"
+	m[ui.Key{ui.Down, 0}] = "down"
+	m[ui.Key{ui.PageDown, 0}] = "page-down"
+	m[ui.Key{ui.Tab, 0}] = "down-cycle"
+	m[ui.Key{ui.Backspace, 0}] = "backspace"
+	m[ui.Key{ui.Enter, 0}] = "accept-close"
+	m[ui.Key{ui.Enter, ui.Alt}] = "accept"
+	m[ui.Default] = "default"
+	m[ui.Key{'[', ui.Ctrl}] = "insert:start"
+	return registerBindings(mt, defaultMod, m)
 }

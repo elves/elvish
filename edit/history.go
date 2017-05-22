@@ -3,12 +3,32 @@ package edit
 import (
 	"fmt"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/store"
 )
 
 // Command history subsystem.
 
 // Interface.
+
+var _ = registerBuiltins("history", map[string]func(*Editor){
+	"start":              historyStart,
+	"up":                 historyUp,
+	"down":               historyDown,
+	"down-or-quit":       historyDownOrQuit,
+	"switch-to-histlist": historySwitchToHistlist,
+	"default":            historyDefault,
+})
+
+func init() {
+	registerBindings(modeHistory, "history", map[ui.Key]string{
+		{ui.Up, 0}:     "up",
+		{ui.Down, 0}:   "down-or-quit",
+		{'[', ui.Ctrl}: "insert:start",
+		{'R', ui.Ctrl}: "switch-to-histlist",
+		ui.Default:     "default",
+	})
+}
 
 type hist struct {
 	current int
@@ -26,7 +46,7 @@ func (h *hist) ModeLine() renderer {
 	return modeLineRenderer{fmt.Sprintf(" HISTORY #%d ", h.current), ""}
 }
 
-func startHistory(ed *Editor) {
+func historyStart(ed *Editor) {
 	ed.hist.prefix = ed.line[:ed.dot]
 	ed.hist.current = -1
 	ed.hist.last = make(map[string]int)
@@ -52,7 +72,7 @@ func historyDownOrQuit(ed *Editor) {
 }
 
 func historySwitchToHistlist(ed *Editor) {
-	startHistlist(ed)
+	histlistStart(ed)
 	if ed.mode == ed.histlist {
 		ed.line = ""
 		ed.dot = 0
@@ -76,16 +96,16 @@ func (h *hist) jump(i int, line string) {
 func (ed *Editor) appendHistory(line string) {
 	if ed.store != nil {
 		ed.historyMutex.Lock()
+		ed.store.Waits.Add(1)
 		go func() {
-			ed.store.Waits.Add(1)
 			// TODO(xiaq): Report possible error
 			err := ed.store.AddCmd(line)
 			ed.store.Waits.Done()
 			ed.historyMutex.Unlock()
 			if err != nil {
-				Logger.Println("failed to add cmd to store:", err)
+				logger.Println("failed to add cmd to store:", err)
 			} else {
-				Logger.Println("added cmd to store:", line)
+				logger.Println("added cmd to store:", line)
 			}
 		}()
 	}
@@ -102,7 +122,7 @@ func (ed *Editor) prevHistory() bool {
 		i, line = cmd.Seq, cmd.Text
 		if err != nil {
 			if err != store.ErrNoMatchingCmd {
-				Logger.Println("LastCmd error:", err)
+				logger.Println("LastCmd error:", err)
 			}
 			return false
 		}
@@ -127,7 +147,7 @@ func (ed *Editor) nextHistory() bool {
 		i, line = cmd.Seq, cmd.Text
 		if err != nil {
 			if err != store.ErrNoMatchingCmd {
-				Logger.Println("LastCmd error:", err)
+				logger.Println("LastCmd error:", err)
 			}
 			return false
 		}

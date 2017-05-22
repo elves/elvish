@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 const (
 	// No rune received before specified time.
 	runeTimeout rune = -1 - iota
-	// Error occured in AsyncReader. The error is left at the readError field.
+	// Error occurred in AsyncReader. The error is left at the readError field.
 	runeReadError
 )
 
@@ -29,13 +29,16 @@ type Reader struct {
 	ar  *AsyncReader
 	raw bool
 
-	rawRuneChan chan rune
-	keyChan     chan uitypes.Key
-	cprChan     chan Pos
-	mouseChan   chan MouseEvent
-	errChan     chan error
-	pasteChan   chan bool
-	quit        chan struct{}
+	unitChan chan ReadUnit
+	/*
+		rawRuneChan chan rune
+		keyChan     chan ui.Key
+		cprChan     chan Pos
+		mouseChan   chan MouseEvent
+		pasteChan   chan bool
+	*/
+	errChan chan error
+	quit    chan struct{}
 }
 
 type MouseEvent struct {
@@ -43,7 +46,7 @@ type MouseEvent struct {
 	Down bool
 	// Number of the Button, 0-based. -1 for unknown.
 	Button int
-	Mod    uitypes.Mod
+	Mod    ui.Mod
 }
 
 // NewReader creates a new Reader on the given terminal file.
@@ -51,12 +54,15 @@ func NewReader(f *os.File) *Reader {
 	rd := &Reader{
 		NewAsyncReader(f),
 		false,
-		make(chan rune),
-		make(chan uitypes.Key),
-		make(chan Pos),
-		make(chan MouseEvent),
+		make(chan ReadUnit),
+		/*
+			make(chan rune),
+			make(chan ui.Key),
+			make(chan Pos),
+			make(chan MouseEvent),
+			make(chan bool),
+		*/
 		make(chan error),
-		make(chan bool),
 		nil,
 	}
 	return rd
@@ -68,30 +74,9 @@ func (rd *Reader) SetRaw(raw bool) {
 	rd.raw = raw
 }
 
-// RawRuneChan returns the channel onto which the Reader writes runes it has
-// read in raw mode.
-func (rd *Reader) RawRuneChan() <-chan rune {
-	return rd.rawRuneChan
-}
-
-// KeyChan returns the channel onto which the Reader writes Keys it has read.
-func (rd *Reader) KeyChan() <-chan uitypes.Key {
-	return rd.keyChan
-}
-
-// CPRChan returns the channel onto which the Reader writes CPRs it has read.
-func (rd *Reader) CPRChan() <-chan Pos {
-	return rd.cprChan
-}
-
-// MouseChan returns the channel onto which the Reader writes mouse events it
-// has read.
-func (rd *Reader) MouseChan() <-chan MouseEvent {
-	return rd.mouseChan
-}
-
-func (rd *Reader) PasteChan() <-chan bool {
-	return rd.pasteChan
+// UnitChan returns the channel onto which the Reader writes what it has read.
+func (rd *Reader) UnitChan() <-chan ReadUnit {
+	return rd.unitChan
 }
 
 // ErrorChan returns the channel onto which the Reader writes errors it came
@@ -112,7 +97,7 @@ func (rd *Reader) Run() {
 		select {
 		case r := <-runes:
 			if rd.raw {
-				rd.rawRuneChan <- r
+				rd.unitChan <- RawRune(r)
 			} else {
 				rd.readOne(r)
 			}
@@ -136,11 +121,8 @@ func (rd *Reader) Close() {
 
 // readOne attempts to read one key or CPR, led by a rune already read.
 func (rd *Reader) readOne(r rune) {
-	var k uitypes.Key
-	var cpr Pos
-	var mouse MouseEvent
+	var unit ReadUnit
 	var err error
-	var paste *bool
 	currentSeq := string(r)
 
 	badSeq := func(msg string) {
@@ -163,24 +145,9 @@ func (rd *Reader) readOne(r rune) {
 		}
 
 	defer func() {
-		if k != (uitypes.Key{}) {
+		if unit != nil {
 			select {
-			case rd.keyChan <- k:
-			case <-rd.quit:
-			}
-		} else if cpr != (Pos{}) {
-			select {
-			case rd.cprChan <- cpr:
-			case <-rd.quit:
-			}
-		} else if mouse != (MouseEvent{}) {
-			select {
-			case rd.mouseChan <- mouse:
-			case <-rd.quit:
-			}
-		} else if paste != nil {
-			select {
-			case rd.pasteChan <- *paste:
+			case rd.unitChan <- unit:
 			case <-rd.quit:
 			}
 		}
@@ -197,7 +164,7 @@ func (rd *Reader) readOne(r rune) {
 		r2 := readRune()
 		if r2 == runeTimeout || r2 == runeReadError {
 			// Nothing follows. Taken as a lone Escape.
-			k = uitypes.Key{'[', uitypes.Ctrl}
+			unit = Key{'[', ui.Ctrl}
 			break
 		}
 		switch r2 {
@@ -205,7 +172,7 @@ func (rd *Reader) readOne(r rune) {
 			// A '[' follows. CSI style function key sequence.
 			r = readRune()
 			if r == runeTimeout || r == runeReadError {
-				k = uitypes.Key{'[', uitypes.Alt}
+				unit = Key{'[', ui.Alt}
 				return
 			}
 
@@ -241,7 +208,7 @@ func (rd *Reader) readOne(r rune) {
 					button = -1
 				}
 				mod := mouseModify(int(cb))
-				mouse = MouseEvent{
+				unit = MouseEvent{
 					Pos{int(cy) - 32, int(cx) - 32}, down, button, mod}
 				return
 			}
@@ -275,7 +242,7 @@ func (rd *Reader) readOne(r rune) {
 					badSeq("bad CPR")
 					return
 				}
-				cpr = Pos{nums[0], nums[1]}
+				unit = CursorPosition{nums[0], nums[1]}
 			} else if starter == '<' && (r == 'm' || r == 'M') {
 				// SGR-style mouse event.
 				if len(nums) != 3 {
@@ -285,73 +252,77 @@ func (rd *Reader) readOne(r rune) {
 				down := r == 'M'
 				button := nums[0] & 3
 				mod := mouseModify(nums[0])
-				mouse = MouseEvent{Pos{nums[2], nums[1]}, down, button, mod}
+				unit = MouseEvent{Pos{nums[2], nums[1]}, down, button, mod}
 			} else if r == '~' && len(nums) == 1 && (nums[0] == 200 || nums[0] == 201) {
 				b := nums[0] == 200
-				paste = &b
+				unit = PasteSetting(b)
 			} else {
-				k = parseCSI(nums, r, currentSeq)
-				if k == (uitypes.Key{}) {
+				k := parseCSI(nums, r, currentSeq)
+				if k == (ui.Key{}) {
 					badSeq("bad CSI")
+				} else {
+					unit = Key(k)
 				}
 			}
 		case 'O':
 			// An 'O' follows. G3 style function key sequence: read one rune.
 			r = readRune()
 			if r == runeTimeout || r == runeReadError {
-				// Nothing follows after 'O'. Taken as uitypes.Alt-o.
-				k = uitypes.Key{'o', uitypes.Alt}
+				// Nothing follows after 'O'. Taken as ui.Alt-o.
+				unit = Key{'o', ui.Alt}
 				return
 			}
 			r, ok := g3Seq[r]
 			if ok {
-				k = uitypes.Key{r, 0}
+				unit = Key{r, 0}
 			} else {
 				badSeq("bad G3")
 			}
 		default:
 			// Something other than '[' or 'O' follows. Taken as an
-			// uitypes.Alt-modified key, possibly also modified by uitypes.Ctrl.
-			k = ctrlModify(r2)
-			k.Mod |= uitypes.Alt
+			// ui.Alt-modified key, possibly also modified by ui.Ctrl.
+			k := ctrlModify(r2)
+			k.Mod |= ui.Alt
+			unit = Key(k)
 		}
 	default:
-		k = ctrlModify(r)
+		k := ctrlModify(r)
+		unit = Key(k)
 	}
 }
 
-// ctrlModify determines whether a rune corresponds to a uitypes.Ctrl-modified key and
-// returns the uitypes.Key the rune represents.
-func ctrlModify(r rune) uitypes.Key {
+// ctrlModify determines whether a rune corresponds to a ui.Ctrl-modified key and
+// returns the ui.Key the rune represents.
+func ctrlModify(r rune) ui.Key {
 	switch r {
 	case 0x0:
-		return uitypes.Key{'`', uitypes.Ctrl} // ^@
+		return ui.Key{'`', ui.Ctrl} // ^@
 	case 0x1e:
-		return uitypes.Key{'6', uitypes.Ctrl} // ^^
+		return ui.Key{'6', ui.Ctrl} // ^^
 	case 0x1f:
-		return uitypes.Key{'/', uitypes.Ctrl} // ^_
-	case uitypes.Tab, uitypes.Enter, uitypes.Backspace: // ^I ^J ^?
-		return uitypes.Key{r, 0}
+		return ui.Key{'/', ui.Ctrl} // ^_
+	case ui.Tab, ui.Enter, ui.Backspace: // ^I ^J ^?
+		return ui.Key{r, 0}
 	default:
-		// Regular uitypes.Ctrl sequences.
+		// Regular ui.Ctrl sequences.
 		if 0x1 <= r && r <= 0x1d {
-			return uitypes.Key{r + 0x40, uitypes.Ctrl}
+			return ui.Key{r + 0x40, ui.Ctrl}
 		}
 	}
-	return uitypes.Key{r, 0}
+	return ui.Key{r, 0}
 }
 
 // G3-style key sequences: \eO followed by exactly one character. For instance,
-// \eOP is uitypes.F1.
+// \eOP is ui.F1.
 var g3Seq = map[rune]rune{
-	'A': uitypes.Up, 'B': uitypes.Down, 'C': uitypes.Right, 'D': uitypes.Left,
+	'A': ui.Up, 'B': ui.Down, 'C': ui.Right, 'D': ui.Left,
 
-	// uitypes.F1-uitypes.F4: xterm, libvte and tmux
-	'P': uitypes.F1, 'Q': uitypes.F2,
-	'R': uitypes.F3, 'S': uitypes.F4,
+	// ui.F1-ui.F4: xterm, libvte and tmux
+	'P': ui.F1, 'Q': ui.F2,
+	'R': ui.F3, 'S': ui.F4,
 
-	// uitypes.Home and uitypes.End: libvte
-	'H': uitypes.Home, 'F': uitypes.End,
+	// ui.Home and ui.End: libvte
+	'H': ui.Home, 'F': ui.End,
 }
 
 // Tables for CSI-style key sequences, which are \e[ followed by a list of
@@ -359,26 +330,28 @@ var g3Seq = map[rune]rune{
 // non-numeric, non-semicolon rune.
 
 // CSI-style key sequences that can be identified based on the ending rune. For
-// instance, \e[A is uitypes.Up.
-var keyByLast = map[rune]uitypes.Key{
-	'A': uitypes.Key{uitypes.Up, 0}, 'B': uitypes.Key{uitypes.Down, 0},
-	'C': uitypes.Key{uitypes.Right, 0}, 'D': uitypes.Key{uitypes.Left, 0},
-	'H': uitypes.Key{uitypes.Home, 0}, 'F': uitypes.Key{uitypes.End, 0},
-	'Z': uitypes.Key{uitypes.Tab, uitypes.Shift},
+// instance, \e[A is ui.Up.
+var keyByLast = map[rune]ui.Key{
+	'A': {ui.Up, 0}, 'B': {ui.Down, 0},
+	'C': {ui.Right, 0}, 'D': {ui.Left, 0},
+	'H': {ui.Home, 0}, 'F': {ui.End, 0},
+	'Z': {ui.Tab, ui.Shift},
 }
 
-// CSI-style key sequences ending with '~' and can be identified based on
-// the only number argument. For instance, \e[1~ is uitypes.Home.
+// CSI-style key sequences ending with '~' and can be identified based on the
+// only number argument. For instance, \e[~ is ui.Home. When they are
+// modified, they take two arguments, first being 1 and second identifying the
+// modifier (see xtermModify). For instance, \e[1;4~ is Shift-Alt-Home.
 var keyByNum0 = map[int]rune{
-	1: uitypes.Home, 2: uitypes.Insert, 3: uitypes.Delete, 4: uitypes.End,
-	5: uitypes.PageUp, 6: uitypes.PageDown,
-	11: uitypes.F1, 12: uitypes.F2, 13: uitypes.F3, 14: uitypes.F4,
-	15: uitypes.F5, 17: uitypes.F6, 18: uitypes.F7, 19: uitypes.F8,
-	20: uitypes.F9, 21: uitypes.F10, 23: uitypes.F11, 24: uitypes.F12,
+	1: ui.Home, 2: ui.Insert, 3: ui.Delete, 4: ui.End,
+	5: ui.PageUp, 6: ui.PageDown,
+	11: ui.F1, 12: ui.F2, 13: ui.F3, 14: ui.F4,
+	15: ui.F5, 17: ui.F6, 18: ui.F7, 19: ui.F8,
+	20: ui.F9, 21: ui.F10, 23: ui.F11, 24: ui.F12,
 }
 
 // CSI-style key sequences ending with '~', with 27 as the first numeric
-// argument. For instance, \e[27;9~ is uitypes.Tab.
+// argument. For instance, \e[27;9~ is ui.Tab.
 //
 // The list is taken blindly from tmux source xterm-keys.c. I don't have a
 // keyboard-terminal combination that generate such sequences, but assumably
@@ -393,75 +366,75 @@ var keyByNum2 = map[int]rune{
 }
 
 // parseCSI parses a CSI-style key sequence.
-func parseCSI(nums []int, last rune, seq string) uitypes.Key {
+func parseCSI(nums []int, last rune, seq string) ui.Key {
 	if k, ok := keyByLast[last]; ok {
 		if len(nums) == 0 {
-			// Unmodified: \e[A (uitypes.Up)
+			// Unmodified: \e[A (ui.Up)
 			return k
 		} else if len(nums) == 2 && nums[0] == 1 {
-			// Modified: \e[1;5A (uitypes.Ctrl-uitypes.Up)
+			// Modified: \e[1;5A (ui.Ctrl-ui.Up)
 			return xtermModify(k, nums[1], seq)
 		} else {
-			return uitypes.Key{}
+			return ui.Key{}
 		}
 	}
 
 	if last == '~' {
 		if len(nums) == 1 || len(nums) == 2 {
 			if r, ok := keyByNum0[nums[0]]; ok {
-				k := uitypes.Key{r, 0}
+				k := ui.Key{r, 0}
 				if len(nums) == 1 {
-					// Unmodified: \e[5~ (uitypes.PageUp)
+					// Unmodified: \e[5~ (ui.PageUp)
 					return k
 				}
-				// Modified: \e[5;5~ (uitypes.Ctrl-uitypes.PageUp)
+				// Modified: \e[5;5~ (ui.Ctrl-ui.PageUp)
 				return xtermModify(k, nums[1], seq)
 			}
 		} else if len(nums) == 3 && nums[0] == 27 {
 			if r, ok := keyByNum2[nums[2]]; ok {
-				k := uitypes.Key{r, 0}
+				k := ui.Key{r, 0}
 				return xtermModify(k, nums[1], seq)
 			}
 		}
 	}
 
-	return uitypes.Key{}
+	return ui.Key{}
 }
 
-func xtermModify(k uitypes.Key, mod int, seq string) uitypes.Key {
+func xtermModify(k ui.Key, mod int, seq string) ui.Key {
 	switch mod {
 	case 0:
 		// do nothing
 	case 2:
-		k.Mod |= uitypes.Shift
+		k.Mod |= ui.Shift
 	case 3:
-		k.Mod |= uitypes.Alt
+		k.Mod |= ui.Alt
 	case 4:
-		k.Mod |= uitypes.Shift | uitypes.Alt
+		k.Mod |= ui.Shift | ui.Alt
 	case 5:
-		k.Mod |= uitypes.Ctrl
+		k.Mod |= ui.Ctrl
 	case 6:
-		k.Mod |= uitypes.Shift | uitypes.Ctrl
+		k.Mod |= ui.Shift | ui.Ctrl
 	case 7:
-		k.Mod |= uitypes.Alt | uitypes.Ctrl
+		k.Mod |= ui.Alt | ui.Ctrl
 	case 8:
-		k.Mod |= uitypes.Shift | uitypes.Alt | uitypes.Ctrl
+		k.Mod |= ui.Shift | ui.Alt | ui.Ctrl
 	default:
-		return uitypes.Key{}
+		return ui.Key{}
 	}
 	return k
 }
 
-func mouseModify(n int) uitypes.Mod {
-	var mod uitypes.Mod
+func mouseModify(n int) ui.Mod {
+	var mod ui.Mod
 	if n&4 != 0 {
-		mod |= uitypes.Shift
+		mod |= ui.Shift
 	}
 	if n&8 != 0 {
-		mod |= uitypes.Alt
+		mod |= ui.Alt
 	}
 	if n&16 != 0 {
-		mod |= uitypes.Ctrl
+		mod |= ui.Ctrl
 	}
 	return mod
 }

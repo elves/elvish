@@ -28,7 +28,7 @@ type modeLineRenderer struct {
 
 func (ml modeLineRenderer) render(b *buffer) {
 	b.writes(ml.title, styleForMode.String())
-	b.writes(" ", "")
+	b.writePadding(1, "")
 	b.writes(ml.filter, styleForFilter.String())
 	b.dot = b.cursor()
 }
@@ -41,9 +41,9 @@ type modeLineWithScrollBarRenderer struct {
 func (ml modeLineWithScrollBarRenderer) render(b *buffer) {
 	ml.modeLineRenderer.render(b)
 
-	scrollbarWidth := b.width - lineWidth(b.cells[len(b.cells)-1]) - 2
+	scrollbarWidth := b.width - cellsWidth(b.lines[len(b.lines)-1]) - 2
 	if scrollbarWidth >= 3 {
-		b.writes(" ", "")
+		b.writePadding(1, "")
 		writeHorizontalScrollbar(b, ml.n, ml.low, ml.high, scrollbarWidth)
 	}
 }
@@ -76,10 +76,10 @@ type listingWithScrollBarRenderer struct {
 
 func (ls listingWithScrollBarRenderer) render(b *buffer) {
 	b1 := render(ls.listingRenderer, b.width-1)
-	b.extendHorizontal(b1, 0)
+	b.extendRight(b1, 0)
 
 	scrollbar := renderScrollbar(ls.n, ls.low, ls.high, ls.height)
-	b.extendHorizontal(scrollbar, b.width-1)
+	b.extendRight(scrollbar, b.width-1)
 }
 
 type navRenderer struct {
@@ -103,14 +103,14 @@ func (nr *navRenderer) render(b *buffer) {
 	wParent, wCurrent, wPreview := ws[0], ws[1], ws[2]
 
 	bParent := render(nr.parent, wParent)
-	b.extendHorizontal(bParent, 0)
+	b.extendRight(bParent, 0)
 
 	bCurrent := render(nr.current, wCurrent)
-	b.extendHorizontal(bCurrent, wParent+margin)
+	b.extendRight(bCurrent, wParent+margin)
 
 	if wPreview > 0 {
 		bPreview := render(nr.preview, wPreview)
-		b.extendHorizontal(bPreview, wParent+wCurrent+2*margin)
+		b.extendRight(bPreview, wParent+wCurrent+2*margin)
 	}
 }
 
@@ -158,11 +158,12 @@ func (clr *cmdlineRenderer) setHist(b int, t string) {
 }
 
 func (clr *cmdlineRenderer) render(b *buffer) {
-	b.newlineWhenFull = true
+	b.eagerWrap = true
 
 	b.writeStyleds(clr.prompt)
 
-	if b.line() == 0 && b.col*2 < b.width {
+	// If the prompt takes less than half of a line, set the indent.
+	if len(b.lines) == 1 && b.col*2 < b.width {
 		b.indent = b.col
 	}
 
@@ -211,7 +212,7 @@ func (clr *cmdlineRenderer) render(b *buffer) {
 			padding -= util.Wcswidth(s.text)
 		}
 		if padding >= 1 {
-			b.newlineWhenFull = false
+			b.eagerWrap = false
 			b.writePadding(padding, "")
 			b.writeStyleds(clr.rprompt)
 		}
@@ -262,20 +263,20 @@ func (er *editorRenderer) render(buf *buffer) {
 	// Trim lines and determine the maximum height for bufListing
 	// TODO come up with a UI to tell the user that something is not shown.
 	switch {
-	case height >= lines(bufNoti, bufLine, bufMode, bufTips):
-		hListing = height - lines(bufLine, bufMode, bufTips)
-	case height >= lines(bufNoti, bufLine, bufTips):
+	case height >= buffersHeight(bufNoti, bufLine, bufMode, bufTips):
+		hListing = height - buffersHeight(bufLine, bufMode, bufTips)
+	case height >= buffersHeight(bufNoti, bufLine, bufTips):
 		bufMode = nil
-	case height >= lines(bufNoti, bufLine):
+	case height >= buffersHeight(bufNoti, bufLine):
 		bufMode = nil
 		if bufTips != nil {
-			bufTips.trimToLines(0, height-lines(bufNoti, bufLine))
+			bufTips.trimToLines(0, height-buffersHeight(bufNoti, bufLine))
 		}
-	case height >= lines(bufLine):
+	case height >= buffersHeight(bufLine):
 		bufTips, bufMode = nil, nil
 		if bufNoti != nil {
-			n := len(bufNoti.cells)
-			bufNoti.trimToLines(n-(height-lines(bufLine)), n)
+			n := len(bufNoti.lines)
+			bufNoti.trimToLines(n-(height-buffersHeight(bufLine)), n)
 		}
 	case height >= 1:
 		bufNoti, bufTips, bufMode = nil, nil, nil
@@ -306,12 +307,12 @@ func (er *editorRenderer) render(buf *buffer) {
 	}
 
 	if logWriterDetail {
-		Logger.Printf("bufLine %d, bufMode %d, bufTips %d, bufListing %d",
-			lines(bufLine), lines(bufMode), lines(bufTips), lines(bufListing))
+		logger.Printf("bufLine %d, bufMode %d, bufTips %d, bufListing %d",
+			buffersHeight(bufLine), buffersHeight(bufMode), buffersHeight(bufTips), buffersHeight(bufListing))
 	}
 
 	// XXX
-	buf.cells = nil
+	buf.lines = nil
 	// Combine buffers (reusing bufLine)
 	buf.extend(bufLine, true)
 	cursorOnModeLine := false

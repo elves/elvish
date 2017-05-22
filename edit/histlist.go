@@ -5,9 +5,25 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/elves/elvish/edit/ui"
 )
 
 // Command history listing mode.
+
+var _ = registerListingBuiltins("histlist", map[string]func(*Editor){
+	"start":                   histlistStart,
+	"toggle-dedup":            histlistToggleDedup,
+	"toggle-case-sensitivity": histlistToggleCaseSensitivity,
+}, func(ed *Editor) *listing { return &ed.histlist.listing })
+
+func init() {
+	registerListingBindings(modeHistoryListing, "histlist",
+		map[ui.Key]string{
+			{'G', ui.Ctrl}: "toggle-case-sensitivity",
+			{'D', ui.Ctrl}: "toggle-dedup",
+		})
+}
 
 var ErrStoreOffline = errors.New("store offline")
 
@@ -102,7 +118,7 @@ func (hl *histlist) Accept(i int, ed *Editor) {
 	ed.insertAtDot(line)
 }
 
-func startHistlist(ed *Editor) {
+func histlistStart(ed *Editor) {
 	cmds, err := getCmds(ed)
 	if err != nil {
 		ed.Notify("%v", err)

@@ -4,10 +4,11 @@ import (
 	"errors"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -15,6 +16,38 @@ import (
 // Navigation subsystem.
 
 // Interface.
+
+var _ = registerBuiltins("nav", map[string]func(*Editor){
+	"start":                    navStart,
+	"up":                       navUp,
+	"down":                     navDown,
+	"page-up":                  navPageUp,
+	"page-down":                navPageDown,
+	"left":                     navLeft,
+	"right":                    navRight,
+	"trigger-shown-hidden":     navTriggerShowHidden,
+	"trigger-filter":           navTriggerFilter,
+	"insert-selected":          navInsertSelected,
+	"insert-selected-and-quit": navInsertSelectedAndQuit,
+	"default":                  navDefault,
+})
+
+func init() {
+	registerBindings(modeNavigation, "nav", map[ui.Key]string{
+		{ui.Up, 0}:         "up",
+		{ui.Down, 0}:       "down",
+		{ui.PageUp, 0}:     "page-up",
+		{ui.PageDown, 0}:   "page-down",
+		{ui.Left, 0}:       "left",
+		{ui.Right, 0}:      "right",
+		{ui.Enter, ui.Alt}: "insert-selected",
+		{ui.Enter, 0}:      "insert-selected-and-quit",
+		{'H', ui.Ctrl}:     "trigger-shown-hidden",
+		{'F', ui.Ctrl}:     "trigger-filter",
+		{'[', ui.Ctrl}:     "insert:start",
+		ui.Default:         "default",
+	})
+}
 
 type navigation struct {
 	current    *navColumn
@@ -42,7 +75,7 @@ func (n *navigation) CursorOnModeLine() bool {
 	return n.filtering
 }
 
-func startNav(ed *Editor) {
+func navStart(ed *Editor) {
 	initNavigation(&ed.navigation, ed)
 	ed.mode = &ed.navigation
 }
@@ -91,7 +124,7 @@ func navInsertSelectedAndQuit(ed *Editor) {
 	ed.mode = &ed.insert
 }
 
-func navigationDefault(ed *Editor) {
+func navDefault(ed *Editor) {
 	// Use key binding for insert mode without exiting nigation mode.
 	k := ed.lastKey
 	n := &ed.navigation
@@ -99,7 +132,7 @@ func navigationDefault(ed *Editor) {
 		n.filter += k.String()
 		n.refreshCurrent()
 		n.refreshDirPreview()
-	} else if n.filtering && k == (uitypes.Key{uitypes.Backspace, 0}) {
+	} else if n.filtering && k == (ui.Key{ui.Backspace, 0}) {
 		_, size := utf8.DecodeLastRuneInString(n.filter)
 		if size > 0 {
 			n.filter = n.filter[:len(n.filter)-size]
@@ -109,7 +142,7 @@ func navigationDefault(ed *Editor) {
 	} else if f, ok := keyBindings[modeInsert][k]; ok {
 		ed.CallFn(f)
 	} else {
-		ed.CallFn(keyBindings[modeInsert][uitypes.Default])
+		ed.CallFn(keyBindings[modeInsert][ui.Default])
 	}
 }
 
@@ -119,7 +152,7 @@ func navigationDefault(ed *Editor) {
 
 var (
 	errorEmptyCwd      = errors.New("current directory is empty")
-	errorNoCwdInParent = errors.New("could not find current directory in ..")
+	errorNoCwdInParent = errors.New("could not find current directory in parent")
 )
 
 func initNavigation(n *navigation, ed *Editor) {
@@ -275,19 +308,20 @@ func (n *navigation) loaddir(dir string) ([]styled, error) {
 	if err != nil {
 		return nil, err
 	}
-	infos, err := f.Readdir(0)
+	names, err := f.Readdirnames(-1)
 	if err != nil {
 		return nil, err
 	}
+	sort.Strings(names)
+
 	var all []styled
 	lsColor := getLsColor()
-	for _, info := range infos {
-		if n.showHidden || info.Name()[0] != '.' {
-			name := info.Name()
-			all = append(all, styled{name, stylesFromString(lsColor.getStyle(path.Join(dir, name)))})
+	for _, name := range names {
+		if n.showHidden || name[0] != '.' {
+			all = append(all, styled{name,
+				stylesFromString(lsColor.getStyle(path.Join(dir, name)))})
 		}
 	}
-	sortStyleds(all)
 
 	return all, nil
 }
@@ -300,15 +334,15 @@ const (
 	previewColumnWeight = 9.0
 )
 
-func (nav *navigation) List(maxHeight int) renderer {
+func (n *navigation) List(maxHeight int) renderer {
 	return makeNavRenderer(
 		maxHeight,
-		nav.parent.FullWidth(maxHeight),
-		nav.current.FullWidth(maxHeight),
-		nav.preview.FullWidth(maxHeight),
-		nav.parent.List(maxHeight),
-		nav.current.List(maxHeight),
-		nav.preview.List(maxHeight),
+		n.parent.FullWidth(maxHeight),
+		n.current.FullWidth(maxHeight),
+		n.preview.FullWidth(maxHeight),
+		n.parent.List(maxHeight),
+		n.current.List(maxHeight),
+		n.preview.List(maxHeight),
 	)
 }
 

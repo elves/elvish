@@ -9,6 +9,7 @@ import (
 // completes with no result.
 var ErrNoMatchingCmd = errors.New("no matching command line")
 
+// Cmd is an entry in the command history.
 type Cmd struct {
 	Seq  int
 	Text string
@@ -43,6 +44,8 @@ func (s *Store) GetCmd(seq int) (string, error) {
 	return cmd, err
 }
 
+// IterateCmds iterates all the commands in the specified range, and calls the
+// callback with the content of each command sequentially.
 func (s *Store) IterateCmds(from, upto int, f func(string) bool) error {
 	rows, err := s.db.Query(`SELECT content FROM cmd WHERE rowid >= ? AND rowid < ?`, from, upto)
 	if err != nil {
@@ -62,6 +65,7 @@ func (s *Store) IterateCmds(from, upto int, f func(string) bool) error {
 	return err
 }
 
+// GetCmds returns the contents of all commands within the specified range.
 func (s *Store) GetCmds(from, upto int) ([]string, error) {
 	var cmds []string
 	err := s.IterateCmds(from, upto, func(cmd string) bool {
@@ -81,7 +85,7 @@ func (s *Store) GetFirstCmd(from int, prefix string) (Cmd, error) {
 // GetLastCmd finds the last command before the given sequence number (exclusive)
 // with the given prefix.
 func (s *Store) GetLastCmd(upto int, prefix string) (Cmd, error) {
-	var upto64 int64 = int64(upto)
+	var upto64 = int64(upto)
 	if upto < 0 {
 		upto64 = 0x7FFFFFFFFFFFFFFF
 	}

@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/elves/elvish/edit/tty"
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
@@ -18,7 +18,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var Logger = util.GetLogger("[edit] ")
+var logger = util.GetLogger("[edit] ")
 
 const (
 	lackEOLRune = '\u23ce'
@@ -36,19 +36,11 @@ type Editor struct {
 	evaler *eval.Evaler
 	cmdSeq int
 
-	prompt        eval.Variable
-	rprompt       eval.Variable
-	abbreviations map[string]string
+	variables map[string]eval.Variable
 
-	locationHidden    eval.Variable
-	rpromptPersistent eval.Variable
-	beforeReadLine    eval.Variable
-	afterReadLine     eval.Variable
-
+	active       bool
+	activeMutex  sync.Mutex
 	historyMutex sync.RWMutex
-
-	active      bool
-	activeMutex sync.Mutex
 
 	editorState
 }
@@ -86,7 +78,7 @@ type editorState struct {
 	parseErrorAtEnd bool
 
 	// Used for builtins.
-	lastKey    uitypes.Key
+	lastKey    ui.Key
 	nextAction action
 }
 
@@ -102,30 +94,22 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, 
 		}
 	}
 
-	prompt, rprompt := defaultPrompts()
-
 	ed := &Editor{
-		in:      in,
-		out:     out,
-		writer:  newWriter(out),
-		reader:  tty.NewReader(in),
-		sigs:    sigs,
-		store:   st,
-		evaler:  ev,
-		cmdSeq:  seq,
-		prompt:  eval.NewPtrVariableWithValidator(prompt, eval.ShouldBeFn),
-		rprompt: eval.NewPtrVariableWithValidator(rprompt, eval.ShouldBeFn),
+		in:     in,
+		out:    out,
+		writer: newWriter(out),
+		reader: tty.NewReader(in),
+		sigs:   sigs,
+		store:  st,
+		evaler: ev,
+		cmdSeq: seq,
 
-		abbreviations: make(map[string]string),
-
-		locationHidden:    eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
-		rpromptPersistent: eval.NewPtrVariableWithValidator(eval.Bool(false), eval.ShouldBeBool),
-
-		beforeReadLine: eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
-		afterReadLine:  eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
+		variables: makeVariables(),
 	}
 	ev.Editor = ed
-	ev.Modules["le"] = makeModule(ed)
+
+	installModules(ev.Modules, ed)
+
 	return ed
 }
 
@@ -191,7 +175,7 @@ func atEnd(e error, n int) bool {
 	switch e := e.(type) {
 	case *eval.CompilationError:
 		return e.Context.Begin == n
-	case *parse.ParseError:
+	case *parse.Error:
 		for _, entry := range e.Entries {
 			if entry.Context.Begin != n {
 				return false
@@ -199,7 +183,7 @@ func atEnd(e error, n int) bool {
 		}
 		return true
 	default:
-		Logger.Printf("atEnd called with error type %T", e)
+		logger.Printf("atEnd called with error type %T", e)
 		return false
 	}
 }
@@ -209,6 +193,8 @@ func (ed *Editor) insertAtDot(text string) {
 	ed.line = ed.line[:ed.dot] + text + ed.line[ed.dot:]
 	ed.dot += len(text)
 }
+
+const flushInputDuringSetup = false
 
 func setupTerminal(file *os.File) (*sys.Termios, error) {
 	fd := int(file.Fd())
@@ -229,12 +215,12 @@ func setupTerminal(file *os.File) (*sys.Termios, error) {
 		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
 	}
 
-	/*
+	if flushInputDuringSetup {
 		err = sys.FlushInput(fd)
 		if err != nil {
 			return nil, fmt.Errorf("can't flush input: %s", err)
 		}
-	*/
+	}
 
 	return savedTermios, nil
 }
@@ -305,7 +291,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.mode = &ed.insert
 	ed.tips = nil
 	ed.dot = len(ed.line)
-	if !ed.rpromptPersistent.Get().(eval.Bool).Bool() {
+	if !ed.rpromptPersistent() {
 		ed.rpromptContent = nil
 	}
 	addError(ed.refresh(false, false))
@@ -333,7 +319,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 
 	ed.editorState = editorState{}
 
-	callHooks(ed.evaler, ed.afterReadLine.Get().(eval.List), eval.String(line))
+	callHooks(ed.evaler, ed.afterReadLine(), eval.String(line))
 }
 
 // ReadLine reads a line interactively.
@@ -359,12 +345,12 @@ func (ed *Editor) ReadLine() (line string, err error) {
 
 	fullRefresh := false
 
-	callHooks(ed.evaler, ed.beforeReadLine.Get().(eval.List))
+	callHooks(ed.evaler, ed.beforeReadLine())
 
 MainLoop:
 	for {
-		ed.promptContent = callPrompt(ed, ed.prompt.Get().(eval.Callable))
-		ed.rpromptContent = callPrompt(ed, ed.rprompt.Get().(eval.Callable))
+		ed.promptContent = callPrompt(ed, ed.prompt())
+		ed.rpromptContent = callPrompt(ed, ed.rprompt())
 
 		err := ed.refresh(fullRefresh, true)
 		fullRefresh = false
@@ -398,109 +384,96 @@ MainLoop:
 			}
 		case err := <-ed.reader.ErrorChan():
 			ed.Notify("reader error: %s", err.Error())
-		case mouse := <-ed.reader.MouseChan():
-			ed.addTip("mouse: %+v", mouse)
-		case <-ed.reader.CPRChan():
-			// Ignore CPR
-		case b := <-ed.reader.PasteChan():
-			if !b {
-				continue
-			}
-			var buf bytes.Buffer
-			timer := time.NewTimer(tty.EscSequenceTimeout)
-		paste:
-			for {
-				// XXX Should also select on other chans. However those chans
-				// will be unified (agina) into one later so we don't do
-				// busywork here.
-				select {
-				case k := <-ed.reader.KeyChan():
-					if k.Mod != 0 {
-						ed.Notify("function key within paste")
+		case unit := <-ed.reader.UnitChan():
+			switch unit := unit.(type) {
+			case tty.MouseEvent:
+				ed.addTip("mouse: %+v", unit)
+			case tty.CursorPosition:
+				// Ignore CPR
+			case tty.PasteSetting:
+				if !unit {
+					continue
+				}
+				var buf bytes.Buffer
+				timer := time.NewTimer(tty.EscSequenceTimeout)
+			paste:
+				for {
+					// XXX Should also select on other chans. However those chans
+					// will be unified (again) into one later so we don't do
+					// busywork here.
+					select {
+					case unit := <-ed.reader.UnitChan():
+						switch unit := unit.(type) {
+						case tty.Key:
+							k := ui.Key(unit)
+							if k.Mod != 0 {
+								ed.Notify("function key within paste, aborting")
+								break paste
+							}
+							buf.WriteRune(k.Rune)
+							timer.Reset(tty.EscSequenceTimeout)
+						case tty.PasteSetting:
+							if !unit {
+								break paste
+							}
+						default: // Ignore other things.
+						}
+					case <-timer.C:
+						ed.Notify("bracketed paste timeout")
 						break paste
 					}
-					buf.WriteRune(k.Rune)
-					timer.Reset(tty.EscSequenceTimeout)
-				case b := <-ed.reader.PasteChan():
-					if !b {
-						break paste
+				}
+				topaste := buf.String()
+				if ed.insert.quotePaste {
+					topaste = parse.Quote(topaste)
+				}
+				ed.insertAtDot(topaste)
+			case tty.RawRune:
+				insertRaw(ed, rune(unit))
+			case tty.Key:
+				k := ui.Key(unit)
+			lookupKey:
+				keyBinding, ok := keyBindings[ed.mode.Mode()]
+				if !ok {
+					ed.addTip("No binding for current mode")
+					continue
+				}
+
+				fn, bound := keyBinding[k]
+				if !bound {
+					// TODO(xiaq) don't assume Default always exists
+					fn = keyBinding[ui.Default]
+				}
+
+				ed.insert.insertedLiteral = false
+				ed.lastKey = k
+				ed.CallFn(fn)
+				if ed.insert.insertedLiteral {
+					ed.insert.literalInserts++
+				} else {
+					ed.insert.literalInserts = 0
+				}
+				act := ed.nextAction
+				ed.nextAction = action{}
+
+				switch act.typ {
+				case noAction:
+					continue
+				case reprocessKey:
+					err := ed.refresh(false, true)
+					if err != nil {
+						return "", err
 					}
-				case <-timer.C:
-					ed.Notify("bracketed paste timeout")
-					break paste
+					goto lookupKey
+				case exitReadLine:
+					if act.returnErr == nil && act.returnLine != "" {
+						ed.appendHistory(act.returnLine)
+					}
+					return act.returnLine, act.returnErr
 				}
-			}
-			topaste := buf.String()
-			if ed.insert.quotePaste {
-				topaste = parse.Quote(topaste)
-			}
-			ed.insertAtDot(topaste)
-		case r := <-ed.reader.RawRuneChan():
-			insertRaw(ed, r)
-		case k := <-ed.reader.KeyChan():
-		lookupKey:
-			keyBinding, ok := keyBindings[ed.mode.Mode()]
-			if !ok {
-				ed.addTip("No binding for current mode")
-				continue
-			}
-
-			fn, bound := keyBinding[k]
-			if !bound {
-				fn = keyBinding[uitypes.Default]
-			}
-
-			ed.insert.insertedLiteral = false
-			ed.lastKey = k
-			ed.CallFn(fn)
-			if ed.insert.insertedLiteral {
-				ed.insert.literalInserts++
-			} else {
-				ed.insert.literalInserts = 0
-			}
-			act := ed.nextAction
-			ed.nextAction = action{}
-
-			switch act.typ {
-			case noAction:
-				continue
-			case reprocessKey:
-				err = ed.refresh(false, true)
-				if err != nil {
-					return "", err
-				}
-				goto lookupKey
-			case exitReadLine:
-				if act.returnErr == nil && act.returnLine != "" {
-					ed.appendHistory(act.returnLine)
-				}
-				return act.returnLine, act.returnErr
 			}
 		}
 	}
-}
-
-func callHooks(ev *eval.Evaler, li eval.List, args ...eval.Value) {
-	if li.Len() == 0 {
-		return
-	}
-
-	opfunc := func(ec *eval.EvalCtx) {
-		li.Iterate(func(v eval.Value) bool {
-			fn, ok := v.(eval.CallableValue)
-			if !ok {
-				fmt.Fprintf(os.Stderr, "not a function: %s\n", v.Repr(eval.NoPretty))
-				return true
-			}
-			err := ec.PCall(fn, args, eval.NoOpts)
-			if err != nil {
-				// TODO Print stack trace.
-				fmt.Fprintf(os.Stderr, "function error: %s\n", err.Error())
-			}
-			return true
-		})
-	}
-	ev.Eval(eval.Op{opfunc, -1, -1}, "[hooks]", "no source")
 }
 
 // getIsExternal finds a set of all external commands and puts it on the result

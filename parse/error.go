@@ -7,22 +7,22 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// ParseErrorEntry represents one parse error.
-type ParseErrorEntry struct {
+// ErrorEntry represents one parse error.
+type ErrorEntry struct {
 	Message string
 	Context util.SourceContext
 }
 
-// ParseError stores multiple ParseErrorEntry's and can pretty print them.
-type ParseError struct {
-	Entries []*ParseErrorEntry
+// Error stores multiple ErrorEntry's and can pretty print them.
+type Error struct {
+	Entries []*ErrorEntry
 }
 
-func (pe *ParseError) Add(msg string, ctx util.SourceContext) {
-	pe.Entries = append(pe.Entries, &ParseErrorEntry{msg, ctx})
+func (pe *Error) Add(msg string, ctx util.SourceContext) {
+	pe.Entries = append(pe.Entries, &ErrorEntry{msg, ctx})
 }
 
-func (pe *ParseError) Error() string {
+func (pe *Error) Error() string {
 	switch len(pe.Entries) {
 	case 0:
 		return "no parse error"
@@ -44,7 +44,7 @@ func (pe *ParseError) Error() string {
 	}
 }
 
-func (pe *ParseError) Pprint(indent string) string {
+func (pe *Error) Pprint(indent string) string {
 	buf := new(bytes.Buffer)
 
 	switch len(pe.Entries) {

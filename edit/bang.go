@@ -5,10 +5,21 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/edit/uitypes"
+	"github.com/elves/elvish/edit/ui"
 )
 
 // Bang mode.
+
+var _ = registerListingBuiltins("bang", map[string]func(*Editor){
+	"start":       bangStart,
+	"alt-default": bangAltDefault,
+}, func(ed *Editor) *listing { return &ed.bang.listing })
+
+func init() {
+	registerListingBindings(modeBang, "bang", map[ui.Key]string{
+		ui.Default: "alt-default",
+	})
+}
 
 type bangEntry struct {
 	i int
@@ -77,10 +88,10 @@ func (b *bang) Filter(filter string) int {
 
 func (b *bang) Accept(i int, ed *Editor) {
 	ed.insertAtDot(b.filtered[i].s)
-	startInsert(ed)
+	insertStart(ed)
 }
 
-func startBang(ed *Editor) {
+func bangStart(ed *Editor) {
 	cmd, err := ed.store.GetLastCmd(-1, "")
 	if err != nil {
 		ed.Notify("db error: %s", err.Error())
@@ -96,10 +107,10 @@ func bangAltDefault(ed *Editor) {
 		if l.Len() == 1 {
 			l.Accept(l.selected, ed)
 		}
-	} else if ed.lastKey == (uitypes.Key{',', uitypes.Alt}) {
+	} else if ed.lastKey == (ui.Key{',', ui.Alt}) {
 		l.Accept(0, ed)
 	} else {
-		startInsert(ed)
+		insertStart(ed)
 		ed.nextAction = action{typ: reprocessKey}
 	}
 }

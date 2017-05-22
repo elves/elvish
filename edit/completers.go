@@ -386,7 +386,7 @@ func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) 
 	// Make candidates out of elements that match the file component.
 	for _, info := range infos {
 		name := info.Name()
-		// Irrevelant file.
+		// Irrelevant file.
 		if !strings.HasPrefix(name, fileprefix) {
 			continue
 		}
