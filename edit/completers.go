@@ -17,7 +17,7 @@ import (
 var (
 	errCompletionUnapplicable = errors.New("completion unapplicable")
 	errCannotEvalIndexee      = errors.New("cannot evaluate indexee")
-	errCannotIterateKey       = errors.New("indexee dos not support iterating keys")
+	errCannotIterateKey       = errors.New("indexee does not support iterating keys")
 )
 
 // completer takes the current Node (always a leaf in the AST) and an Editor and
