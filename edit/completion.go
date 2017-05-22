@@ -182,32 +182,18 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 		return
 	}
 
-	c := &completion{}
-	shownError := false
-	for _, item := range completers {
-		compl, err := item.completer(node, ed.evaler)
-		if compl != nil {
-			c.completer = item.name
-			c.compl = *compl
-			c.filtered = c.candidates
-			break
-		} else if err != nil && err != errCompletionUnapplicable {
-			ed.addTip("%v", err)
-			shownError = true
-			break
-		}
-	}
+	completer, compl, err := complete(node, ed.evaler)
 
-	if c.completer == "" {
-		if !shownError {
-			ed.addTip("unsupported completion :(")
-		}
+	if err != nil {
+		ed.addTip("%v", err)
+	} else if completer == "" {
+		ed.addTip("unsupported completion :(")
 		logger.Println("path to current leaf, leaf first")
 		for n := node; n != nil; n = n.Parent() {
 			logger.Printf("%T (%d-%d)", n, n.Begin(), n.End())
 		}
-	} else if len(c.filtered) == 0 {
-		ed.addTip("no candidate for %s", c.completer)
+	} else if len(compl.candidates) == 0 {
+		ed.addTip("no candidate for %s", completer)
 	} else {
 		if acceptPrefix {
 			// If there is a non-empty longest common prefix, insert it and
@@ -215,20 +201,24 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 			//
 			// As a special case, when there is exactly one candidate, it is
 			// immeidately accepted.
-			prefix := c.filtered[0].text
-			for _, cand := range c.filtered[1:] {
+			prefix := compl.candidates[0].text
+			for _, cand := range compl.candidates[1:] {
 				prefix = commonPrefix(prefix, cand.text)
 				if prefix == "" {
 					break
 				}
 			}
-			if prefix != "" && prefix != ed.line[c.begin:c.end] {
-				ed.line = ed.line[:c.begin] + prefix + ed.line[c.end:]
-				ed.dot = c.begin + len(prefix)
+			if prefix != "" && prefix != ed.line[compl.begin:compl.end] {
+				ed.line = ed.line[:compl.begin] + prefix + ed.line[compl.end:]
+				ed.dot = compl.begin + len(prefix)
 				return
 			}
 		}
-		ed.completion = *c
+		ed.completion = completion{
+			completer: completer,
+			compl:     *compl,
+			filtered:  compl.candidates,
+		}
 		ed.mode = &ed.completion
 	}
 }

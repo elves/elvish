@@ -14,6 +14,12 @@ import (
 	"github.com/elves/elvish/util"
 )
 
+var (
+	errCompletionUnapplicable = errors.New("completion unapplicable")
+	errCannotEvalIndexee      = errors.New("cannot evaluate indexee")
+	errCannotIterateKey       = errors.New("indexee dos not support iterating keys")
+)
+
 // completer takes the current Node (always a leaf in the AST) and an Editor and
 // returns a compl. If the completer does not apply to the type of the current
 // Node, it should return an error of ErrCompletionUnapplicable.
@@ -27,12 +33,6 @@ type compl struct {
 	candidates []*candidate
 }
 
-var (
-	errCompletionUnapplicable = errors.New("completion unapplicable")
-	errCannotEvalIndexee      = errors.New("cannot evaluate indexee")
-	errCannotIterateKey       = errors.New("indexee dos not support iterating keys")
-)
-
 // completers is the list of all completers.
 // TODO(xiaq): Make this list programmable.
 var completers = []struct {
@@ -44,6 +44,21 @@ var completers = []struct {
 	{"command name", complFormHead},
 	{"redir", complRedir},
 	{"argument", complArg},
+}
+
+// complete takes a Node and Evaler and tries all completers. It returns the
+// name of the completer, and the result and error it gave. If no completer is
+// available, it returns an empty completer name.
+func complete(n parse.Node, ev *eval.Evaler) (string, *compl, error) {
+	for _, item := range completers {
+		compl, err := item.completer(n, ev)
+		if compl != nil {
+			return item.name, compl, nil
+		} else if err != nil && err != errCompletionUnapplicable {
+			return item.name, nil, err
+		}
+	}
+	return "", nil, nil
 }
 
 func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
