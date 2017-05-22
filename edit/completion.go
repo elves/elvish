@@ -150,7 +150,7 @@ func (c *completion) selectedCandidate() *candidate {
 
 // apply returns the line and dot after applying a candidate.
 func (c *completion) apply(line string, dot int) (string, int) {
-	text := c.selectedCandidate().text
+	text := c.selectedCandidate().code
 	return line[:c.begin] + text + line[c.end:], c.begin + len(text)
 }
 
@@ -201,9 +201,9 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 			//
 			// As a special case, when there is exactly one candidate, it is
 			// immeidately accepted.
-			prefix := compl.candidates[0].text
+			prefix := compl.candidates[0].code
 			for _, cand := range compl.candidates[1:] {
-				prefix = commonPrefix(prefix, cand.text)
+				prefix = commonPrefix(prefix, cand.code)
 				if prefix == "" {
 					break
 				}
@@ -252,7 +252,7 @@ func (c *completion) maxWidth(lo, hi int) int {
 	}
 	width := 0
 	for i := lo; i < hi; i++ {
-		w := util.Wcswidth(c.filtered[i].display.text)
+		w := util.Wcswidth(c.filtered[i].menu.text)
 		if width < w {
 			width = w
 		}
@@ -329,11 +329,11 @@ func (c *completion) ListRender(width, maxHeight int) *buffer {
 				col.writePadding(totalColWidth, styleForCompletion.String())
 			} else {
 				col.writePadding(completionColMarginLeft, styleForCompletion.String())
-				s := joinStyles(styleForCompletion, cands[j].display.styles)
+				s := joinStyles(styleForCompletion, cands[j].menu.styles)
 				if j == c.selected {
 					s = append(s, styleForSelectedCompletion.String())
 				}
-				col.writes(util.ForceWcwidth(cands[j].display.text, colWidth), s.String())
+				col.writes(util.ForceWcwidth(cands[j].menu.text, colWidth), s.String())
 				col.writePadding(completionColMarginRight, styleForCompletion.String())
 				if !trimmed {
 					c.lastShownInFull = j
@@ -370,7 +370,7 @@ func (c *completion) changeFilter(f string) {
 	}
 	c.filtered = nil
 	for _, cand := range c.candidates {
-		if strings.Contains(cand.display.text, f) {
+		if strings.Contains(cand.menu.text, f) {
 			c.filtered = append(c.filtered, cand)
 		}
 	}

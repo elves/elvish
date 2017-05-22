@@ -243,7 +243,7 @@ func (er *editorRenderer) render(buf *buffer) {
 	switch mode {
 	case modeCompletion:
 		c := es.completion
-		clr.setComp(c.begin, c.end, c.selectedCandidate().text)
+		clr.setComp(c.begin, c.end, c.selectedCandidate().code)
 	case modeHistory:
 		begin := len(es.hist.prefix)
 		clr.setHist(begin, es.hist.line[begin:])

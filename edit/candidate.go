@@ -6,8 +6,8 @@ import (
 )
 
 type candidate struct {
-	text    string
-	display styled
+	code string // This is what will be substitued on the command line.
+	menu styled // This is what is displayed in the completion menu.
 }
 
 // rawCandidate is what can be converted to a candidate.
@@ -24,7 +24,7 @@ func (p plainCandidate) Repr(l int) string { return eval.String(p).Repr(l) }
 func (p plainCandidate) cook(q parse.PrimaryType) *candidate {
 	s := string(p)
 	quoted, _ := parse.QuoteAs(s, q)
-	return &candidate{text: quoted, display: unstyled(s)}
+	return &candidate{code: quoted, menu: unstyled(s)}
 }
 
 type complexCandidate struct {
@@ -40,8 +40,8 @@ func (c *complexCandidate) Repr(int) string { return "<complex candidate>" }
 func (c *complexCandidate) cook(q parse.PrimaryType) *candidate {
 	quoted, _ := parse.QuoteAs(c.text, q)
 	return &candidate{
-		text:    quoted + c.codeSuffix,
-		display: styled{c.text + c.displaySuffix, c.style},
+		code: quoted + c.codeSuffix,
+		menu: styled{c.text + c.displaySuffix, c.style},
 	}
 }
 

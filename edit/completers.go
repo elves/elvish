@@ -95,7 +95,7 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	// Build candidates.
 	for i, varname := range varnames {
 		text := "$" + explode + varname
-		cands[i] = &candidate{text: text, display: unstyled(text)}
+		cands[i] = &candidate{code: text, menu: unstyled(text)}
 	}
 	return &compl{n.Begin(), n.End(), cands}, nil
 }
@@ -147,7 +147,7 @@ func complIndex(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	cands := make([]*candidate, len(keys))
 	for i, key := range keys {
 		quoted, _ := parse.QuoteAs(key, q)
-		cands[i] = &candidate{text: quoted, display: unstyled(key)}
+		cands[i] = &candidate{code: quoted, menu: unstyled(key)}
 	}
 
 	return &compl{begin, end, cands}, nil
