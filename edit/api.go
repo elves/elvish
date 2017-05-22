@@ -67,7 +67,8 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	}
 	ns["binding"] = eval.NewRoVariable(binding)
 
-	ns["completer"] = argCompleter
+	ns["completer"] = ed.argCompleter
+
 	ns[eval.FnPrefix+"complete-getopt"] = eval.NewRoVariable(
 		&eval.BuiltinFn{"le:&complete-getopt", complGetopt})
 	for _, bac := range argCompletersData {

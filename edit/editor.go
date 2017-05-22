@@ -47,6 +47,8 @@ type Editor struct {
 	beforeReadLine eval.Variable
 	afterReadLine  eval.Variable
 
+	argCompleter eval.Variable
+
 	historyMutex sync.RWMutex
 
 	active      bool
@@ -126,6 +128,9 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 
 		beforeReadLine: eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
 		afterReadLine:  eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList),
+
+		argCompleter: eval.NewPtrVariableWithValidator(
+			makeCompleterMap(), eval.ShouldBeMap),
 	}
 	ev.Editor = ed
 
