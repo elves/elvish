@@ -388,13 +388,14 @@ func complFilenameInner(head string, executableOnly bool) (
 	[]rawCandidate, error) {
 
 	dir, fileprefix := path.Split(head)
-	if dir == "" {
-		dir = "."
+	dirToRead := dir
+	if dirToRead == "" {
+		dirToRead = "."
 	}
 
-	infos, err := ioutil.ReadDir(dir)
+	infos, err := ioutil.ReadDir(dirToRead)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list directory %s: %v", dir, err)
+		return nil, fmt.Errorf("cannot list directory %s: %v", dirToRead, err)
 	}
 
 	cands := []rawCandidate{}
@@ -413,7 +414,7 @@ func complFilenameInner(head string, executableOnly bool) (
 		}
 
 		// Full filename for source and getStyle.
-		full := head + name[len(fileprefix):]
+		full := dir + name
 
 		suffix := " "
 		if info.IsDir() {
