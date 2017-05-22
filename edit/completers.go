@@ -61,6 +61,7 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *compl, error) {
 	return "", nil, nil
 }
 
+// TODO(xiaq): Rewrite this to use cookCandidates
 func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	primary := parse.GetPrimary(n)
 	if primary == nil || primary.Type != parse.Variable {
@@ -97,6 +98,7 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 		text := "$" + explode + varname
 		cands[i] = &candidate{code: text, menu: unstyled(text)}
 	}
+
 	return &compl{n.Begin(), n.End(), cands}, nil
 }
 
@@ -203,10 +205,7 @@ func complIndexInner(m eval.IterateKeyer, current string) []string {
 	keys := make([]string, 0)
 	m.IterateKey(func(v eval.Value) bool {
 		if keyv, ok := v.(eval.String); ok {
-			key := string(keyv)
-			if strings.HasPrefix(key, current) {
-				keys = append(keys, key)
-			}
+			keys = append(keys, string(keyv))
 		}
 		return true
 	})
@@ -223,7 +222,7 @@ func complFormHead(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &compl{begin, end, cookCandidates(cands, q)}, nil
+	return &compl{begin, end, cookCandidates(cands, head, q)}, nil
 }
 
 func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
@@ -262,9 +261,7 @@ func complFormHeadInner(head string, ev *eval.Evaler) ([]rawCandidate, error) {
 
 	var commands []rawCandidate
 	got := func(s string) {
-		if strings.HasPrefix(s, head) {
-			commands = append(commands, plainCandidate(s))
-		}
+		commands = append(commands, plainCandidate(s))
 	}
 	for special := range isBuiltinSpecial {
 		got(special)
@@ -308,7 +305,7 @@ func complRedir(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &compl{begin, end, cookCandidates(cands, q)}, nil
+	return &compl{begin, end, cookCandidates(cands, current, q)}, nil
 }
 
 func findRedirContext(n parse.Node) (int, int, string, parse.PrimaryType) {
@@ -359,7 +356,7 @@ func complArg(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &compl{begin, end, cookCandidates(cands, q)}, nil
+	return &compl{begin, end, cookCandidates(cands, head, q)}, nil
 }
 
 func findArgContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Form) {
@@ -399,10 +396,6 @@ func complFilenameInner(head string, executableOnly bool) (
 	// Make candidates out of elements that match the file component.
 	for _, info := range infos {
 		name := info.Name()
-		// Irrelevant file.
-		if !strings.HasPrefix(name, fileprefix) {
-			continue
-		}
 		// Hide dot files unless file starts with a dot.
 		if !dotfile(fileprefix) && dotfile(name) {
 			continue
@@ -428,7 +421,7 @@ func complFilenameInner(head string, executableOnly bool) (
 		}
 
 		cands = append(cands, &complexCandidate{
-			text: full, codeSuffix: suffix,
+			stem: full, codeSuffix: suffix,
 			style: stylesFromString(lsColor.getStyle(full)),
 		})
 	}
