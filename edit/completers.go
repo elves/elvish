@@ -362,7 +362,7 @@ func complArg(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &compl{begin, end, cookCandidates(cands, head, q)}, nil
+	return &compl{begin, end, cookCandidates(cands, current, q)}, nil
 }
 
 func findArgContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Form) {
