@@ -366,16 +366,21 @@ func insertDefault(ed *Editor) {
 	if likeChar(k) {
 		insertKey(ed)
 		// Match abbreviations.
+		expanded := false
 		literals := ed.line[ed.dot-ed.insert.literalInserts-1 : ed.dot]
-		for abbr, full := range ed.abbreviations {
+		ed.abbrIterate(func(abbr, full string) bool {
 			if strings.HasSuffix(literals, abbr) {
 				ed.line = ed.line[:ed.dot-len(abbr)] + full + ed.line[ed.dot:]
 				ed.dot += len(full) - len(abbr)
-				return
+				expanded = true
+				return false
 			}
-		}
+			return true
+		})
 		// No match.
-		ed.insert.insertedLiteral = true
+		if !expanded {
+			ed.insert.insertedLiteral = true
+		}
 	} else {
 		ed.Notify("Unbound: %s", k)
 	}

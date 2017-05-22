@@ -106,8 +106,6 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 		},
 	)
 
-	ns["abbr"] = eval.NewRoVariable(eval.MapStringString(ed.abbreviations))
-
 	ns[eval.FnPrefix+"styled"] = eval.NewRoVariable(&eval.BuiltinFn{"le:&styled", styledBuiltin})
 
 	modules["le"] = ns

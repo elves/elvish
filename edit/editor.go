@@ -37,12 +37,9 @@ type Editor struct {
 
 	variables map[string]eval.Variable
 
-	abbreviations map[string]string
-
+	active       bool
+	activeMutex  sync.Mutex
 	historyMutex sync.RWMutex
-
-	active      bool
-	activeMutex sync.Mutex
 
 	editorState
 }
@@ -106,8 +103,6 @@ func NewEditor(file *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.St
 		cmdSeq: seq,
 
 		variables: makeVariables(),
-
-		abbreviations: make(map[string]string),
 	}
 	ev.Editor = ed
 
