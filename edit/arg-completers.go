@@ -35,7 +35,7 @@ func (ed *Editor) argCompleter() eval.Map {
 	return ed.variables["completer"].Get().(eval.Map)
 }
 
-func completeArg(words []string, ev *eval.Evaler) ([]*candidate, error) {
+func completeArg(words []string, ev *eval.Evaler) ([]rawCandidate, error) {
 	logger.Printf("completing argument: %q", words)
 	// XXX(xiaq): not the best way to get argCompleter.
 	m := ev.Editor.(*Editor).argCompleter()
@@ -54,7 +54,7 @@ func completeArg(words []string, ev *eval.Evaler) ([]*candidate, error) {
 
 type builtinArgCompleter struct {
 	name string
-	impl func([]string, *eval.Evaler) ([]*candidate, error)
+	impl func([]string, *eval.Evaler) ([]rawCandidate, error)
 }
 
 var _ eval.CallableValue = &builtinArgCompleter{}
@@ -85,14 +85,14 @@ func (bac *builtinArgCompleter) Call(ec *eval.EvalCtx, args []eval.Value, opts m
 	}
 }
 
-func complFilename(words []string, ev *eval.Evaler) ([]*candidate, error) {
+func complFilename(words []string, ev *eval.Evaler) ([]rawCandidate, error) {
 	if len(words) < 1 {
 		return nil, ErrTooFewArguments
 	}
 	return complFilenameInner(words[len(words)-1], false)
 }
 
-func complSudo(words []string, ev *eval.Evaler) ([]*candidate, error) {
+func complSudo(words []string, ev *eval.Evaler) ([]rawCandidate, error) {
 	if len(words) < 2 {
 		return nil, ErrTooFewArguments
 	}

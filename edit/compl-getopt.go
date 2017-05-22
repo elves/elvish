@@ -91,16 +91,16 @@ func complGetopt(ec *eval.EvalCtx, a []eval.Value, o map[string]eval.Value) {
 	out := ec.OutputChan()
 
 	putShortOpt := func(opt *getopt.Option) {
-		c := &candidate{text: "-" + string(opt.Short)}
+		c := &complexCandidate{text: "-" + string(opt.Short)}
 		if d, ok := desc[opt]; ok {
-			c.display.text = c.text + " (" + d + ")"
+			c.displaySuffix = " (" + d + ")"
 		}
 		out <- c
 	}
 	putLongOpt := func(opt *getopt.Option) {
-		c := &candidate{text: "--" + string(opt.Long)}
+		c := &complexCandidate{text: "--" + string(opt.Long)}
 		if d, ok := desc[opt]; ok {
-			c.display.text = c.text + " (" + d + ")"
+			c.displaySuffix = " (" + d + ")"
 		}
 		out <- c
 	}

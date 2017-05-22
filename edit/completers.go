@@ -94,7 +94,8 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	cands := make([]*candidate, len(varnames))
 	// Build candidates.
 	for i, varname := range varnames {
-		cands[i] = newPlainCandidate("$" + explode + varname)
+		text := "$" + explode + varname
+		cands[i] = &candidate{text: text, display: unstyled(text)}
 	}
 	return &compl{n.Begin(), n.End(), cands}, nil
 }
@@ -222,8 +223,7 @@ func complFormHead(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	quoteCandidates(cands, q)
-	return &compl{begin, end, cands}, nil
+	return &compl{begin, end, cookCandidates(cands, q)}, nil
 }
 
 func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
@@ -255,15 +255,15 @@ func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
 	return -1, -1, "", 0
 }
 
-func complFormHeadInner(head string, ev *eval.Evaler) ([]*candidate, error) {
+func complFormHeadInner(head string, ev *eval.Evaler) ([]rawCandidate, error) {
 	if util.DontSearch(head) {
 		return complFilenameInner(head, true)
 	}
 
-	var commands []string
+	var commands []rawCandidate
 	got := func(s string) {
 		if strings.HasPrefix(s, head) {
-			commands = append(commands, s)
+			commands = append(commands, plainCandidate(s))
 		}
 	}
 	for special := range isBuiltinSpecial {
@@ -291,13 +291,11 @@ func complFormHeadInner(head string, ev *eval.Evaler) ([]*candidate, error) {
 			got(ns + ":")
 		}
 	}
-	sort.Strings(commands)
+	sort.Slice(commands, func(i, j int) bool {
+		return commands[i].(plainCandidate) < commands[j].(plainCandidate)
+	})
 
-	cands := []*candidate{}
-	for _, cmd := range commands {
-		cands = append(cands, newPlainCandidate(cmd))
-	}
-	return cands, nil
+	return commands, nil
 }
 
 // complRedir completes redirection RHS.
@@ -310,8 +308,7 @@ func complRedir(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	quoteCandidates(cands, q)
-	return &compl{begin, end, cands}, nil
+	return &compl{begin, end, cookCandidates(cands, q)}, nil
 }
 
 func findRedirContext(n parse.Node) (int, int, string, parse.PrimaryType) {
@@ -362,8 +359,7 @@ func complArg(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	quoteCandidates(cands, q)
-	return &compl{begin, end, cands}, nil
+	return &compl{begin, end, cookCandidates(cands, q)}, nil
 }
 
 func findArgContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Form) {
@@ -385,7 +381,9 @@ func findArgContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.F
 }
 
 // TODO: getStyle does redundant stats.
-func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) {
+func complFilenameInner(head string, executableOnly bool) (
+	[]rawCandidate, error) {
+
 	dir, fileprefix := path.Split(head)
 	if dir == "" {
 		dir = "."
@@ -396,7 +394,7 @@ func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) 
 		return nil, fmt.Errorf("cannot list directory %s: %v", dir, err)
 	}
 
-	cands := []*candidate{}
+	cands := []rawCandidate{}
 	lsColor := getLsColor()
 	// Make candidates out of elements that match the file component.
 	for _, info := range infos {
@@ -429,21 +427,13 @@ func complFilenameInner(head string, executableOnly bool) ([]*candidate, error) 
 			}
 		}
 
-		cands = append(cands, &candidate{
-			text: full, suffix: suffix,
-			display: styled{name, stylesFromString(lsColor.getStyle(full))},
+		cands = append(cands, &complexCandidate{
+			text: full, codeSuffix: suffix,
+			style: stylesFromString(lsColor.getStyle(full)),
 		})
 	}
 
 	return cands, nil
-}
-
-func quoteCandidates(cands []*candidate, q parse.PrimaryType) []*candidate {
-	for _, cand := range cands {
-		quoted, _ := parse.QuoteAs(cand.text, q)
-		cand.text = quoted + cand.suffix
-	}
-	return cands
 }
 
 func dotfile(fname string) bool {

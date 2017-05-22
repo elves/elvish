@@ -215,13 +215,16 @@ func callPrompt(ed *Editor, fn eval.Callable) []*styled {
 // callArgCompleter calls a Fn, assuming that it is an arg completer. It calls
 // the Fn with specified arguments and closed input, and converts its output to
 // candidate objects.
-func callArgCompleter(fn eval.CallableValue, ev *eval.Evaler, words []string) ([]*candidate, error) {
+func callArgCompleter(fn eval.CallableValue,
+	ev *eval.Evaler, words []string) ([]rawCandidate, error) {
+
 	// Quick path for builtin arg completers.
 	if builtin, ok := fn.(*builtinArgCompleter); ok {
 		return builtin.impl(words, ev)
 	}
 
-	ports := []*eval.Port{eval.DevNullClosedChan, {File: os.Stdout}, {File: os.Stderr}}
+	ports := []*eval.Port{
+		eval.DevNullClosedChan, {File: os.Stdout}, {File: os.Stderr}}
 
 	args := make([]eval.Value, len(words))
 	for i, word := range words {
@@ -235,13 +238,13 @@ func callArgCompleter(fn eval.CallableValue, ev *eval.Evaler, words []string) ([
 		return nil, errors.New("completer error: " + err.Error())
 	}
 
-	cands := make([]*candidate, len(values))
+	cands := make([]rawCandidate, len(values))
 	for i, v := range values {
 		switch v := v.(type) {
-		case eval.String:
-			cands[i] = newPlainCandidate(string(v))
-		case *candidate:
+		case rawCandidate:
 			cands[i] = v
+		case eval.String:
+			cands[i] = plainCandidate(v)
 		default:
 			return nil, errors.New("completer must output string or candidate")
 		}
