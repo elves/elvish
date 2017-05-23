@@ -10,8 +10,8 @@ import (
 var (
 	//styleForPrompt           = ""
 	//styleForRPrompt          = "inverse"
-	styleForCompleted        = styles{"dim"}
-	styleForCompletedHistory = styles{"dim"}
+	styleForCompleted        = styles{"underlined"}
+	styleForCompletedHistory = styles{"underlined"}
 	styleForMode             = styles{"bold", "lightgray", "bg-magenta"}
 	styleForTip              = styles{}
 	styleForFilter           = styles{"underlined"}
