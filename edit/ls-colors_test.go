@@ -1,9 +1,10 @@
 package edit
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/elves/elvish/util"
 )
 
 func create(fname string, perm os.FileMode) {
@@ -15,17 +16,6 @@ func create(fname string, perm os.FileMode) {
 }
 
 func TestDetermineFeature(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "ls_color_test")
-	if err != nil {
-		panic(err)
-	}
-	defer os.RemoveAll(tmpdir)
-	pwd, err := os.Getwd()
-	if err != nil {
-		defer os.Chdir(pwd)
-	}
-	os.Chdir(tmpdir)
-
 	test := func(fname string, mh bool, wantedFeature fileFeature) {
 		feature, err := determineFeature(fname, mh)
 		if err != nil {
@@ -38,39 +28,42 @@ func TestDetermineFeature(t *testing.T) {
 		}
 	}
 
-	create("a", 0600)
-	// Regular file.
-	test("a", true, featureRegular)
+	util.InTempDir(func(string) {
 
-	// Symlink.
-	os.Symlink("a", "symlink")
-	test("symlink", true, featureSymlink)
+		create("a", 0600)
+		// Regular file.
+		test("a", true, featureRegular)
 
-	// Broken symlink.
-	os.Symlink("aaaa", "bad-symlink")
-	test("bad-symlink", true, featureOrphanedSymlink)
+		// Symlink.
+		os.Symlink("a", "symlink")
+		test("symlink", true, featureSymlink)
 
-	// Multiple hard links.
-	os.Link("a", "a2")
-	test("a", true, featureMultiHardLink)
+		// Broken symlink.
+		os.Symlink("aaaa", "bad-symlink")
+		test("bad-symlink", true, featureOrphanedSymlink)
 
-	// Don't test for multiple hard links.
-	test("a", false, featureRegular)
+		// Multiple hard links.
+		os.Link("a", "a2")
+		test("a", true, featureMultiHardLink)
 
-	// Setuid and Setgid.
-	// XXX(xiaq): Fails.
-	/*
-		create("su", os.ModeSetuid)
-		test("su", true, featureSetuid)
-		create("sg", os.ModeSetgid)
-		test("sg", true, featureSetgid)
-	*/
+		// Don't test for multiple hard links.
+		test("a", false, featureRegular)
 
-	// Executable.
-	create("xu", 0100)
-	create("xg", 0010)
-	create("xo", 0001)
-	test("xu", true, featureExecutable)
-	test("xg", true, featureExecutable)
-	test("xo", true, featureExecutable)
+		// Setuid and Setgid.
+		// XXX(xiaq): Fails.
+		/*
+			create("su", os.ModeSetuid)
+			test("su", true, featureSetuid)
+			create("sg", os.ModeSetgid)
+			test("sg", true, featureSetgid)
+		*/
+
+		// Executable.
+		create("xu", 0100)
+		create("xg", 0010)
+		create("xo", 0001)
+		test("xu", true, featureExecutable)
+		test("xg", true, featureExecutable)
+		test("xo", true, featureExecutable)
+	})
 }

@@ -1,7 +1,6 @@
 package glob
 
 import (
-	"io/ioutil"
 	"os"
 	"reflect"
 	"sort"
@@ -58,40 +57,31 @@ var globCases = []struct {
 }
 
 func TestGlob(t *testing.T) {
-	tmpdir, err := ioutil.TempDir("", "glob-test")
-	if err != nil {
-		panic(err)
-	}
-	defer os.RemoveAll(tmpdir)
-	pwd, err := os.Getwd()
-	if err != nil {
-		defer os.Chdir(pwd)
-	}
-	os.Chdir(tmpdir)
-
-	for _, dir := range append(mkdirs, mkdirDots...) {
-		err := os.Mkdir(dir, 0755)
-		if err != nil {
-			panic(err)
+	util.InTempDir(func(string) {
+		for _, dir := range append(mkdirs, mkdirDots...) {
+			err := os.Mkdir(dir, 0755)
+			if err != nil {
+				panic(err)
+			}
 		}
-	}
-	for _, file := range append(creates, createDots...) {
-		f, err := os.Create(file)
-		if err != nil {
-			panic(err)
+		for _, file := range append(creates, createDots...) {
+			f, err := os.Create(file)
+			if err != nil {
+				panic(err)
+			}
+			f.Close()
 		}
-		f.Close()
-	}
-	for _, tc := range globCases {
-		names := []string{}
-		Glob(tc.pattern, func(name string) bool {
-			names = append(names, name)
-			return true
-		})
-		sort.Strings(names)
-		sort.Strings(tc.want)
-		if !reflect.DeepEqual(names, tc.want) {
-			t.Errorf(`Glob(%q, "") => %v, want %v`, tc.pattern, names, tc.want)
+		for _, tc := range globCases {
+			names := []string{}
+			Glob(tc.pattern, func(name string) bool {
+				names = append(names, name)
+				return true
+			})
+			sort.Strings(names)
+			sort.Strings(tc.want)
+			if !reflect.DeepEqual(names, tc.want) {
+				t.Errorf(`Glob(%q, "") => %v, want %v`, tc.pattern, names, tc.want)
+			}
 		}
-	}
+	})
 }
