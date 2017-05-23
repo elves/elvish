@@ -1,36 +1,8 @@
 package sys
 
-/*
-#include <sys/select.h>
-
-void fdclr(int fd, fd_set *set) {
-	FD_CLR(fd, set);
-}
-
-int fdisset(int fd, fd_set *set) {
-	return FD_ISSET(fd, set);
-}
-
-void fdset(int fd, fd_set *set) {
-	FD_SET(fd, set);
-}
-
-void fdzero(fd_set *set) {
-	FD_ZERO(set);
-}
-*/
-import "C"
-
-import (
-	"syscall"
-	"unsafe"
-)
+import "syscall"
 
 type FdSet syscall.FdSet
-
-func (fs *FdSet) c() *C.fd_set {
-	return (*C.fd_set)(unsafe.Pointer(fs))
-}
 
 func (fs *FdSet) s() *syscall.FdSet {
 	return (*syscall.FdSet)(fs)
@@ -44,20 +16,23 @@ func NewFdSet(fds ...int) *FdSet {
 
 func (fs *FdSet) Clear(fds ...int) {
 	for _, fd := range fds {
-		C.fdclr(C.int(fd), fs.c())
+		idx, bit := index(fd)
+		fs.Bits[idx] &= ^bit
 	}
 }
 
 func (fs *FdSet) IsSet(fd int) bool {
-	return C.fdisset(C.int(fd), fs.c()) != 0
+	idx, bit := index(fd)
+	return fs.Bits[idx]&bit != 0
 }
 
 func (fs *FdSet) Set(fds ...int) {
 	for _, fd := range fds {
-		C.fdset(C.int(fd), fs.c())
+		idx, bit := index(fd)
+		fs.Bits[idx] |= bit
 	}
 }
 
 func (fs *FdSet) Zero() {
-	C.fdzero(fs.c())
+	*fs = FdSet{}
 }
