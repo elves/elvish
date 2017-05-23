@@ -15,11 +15,3 @@ const (
 	setAttrFlushIOCTL = unix.TCSETSF
 	flushIOCTL        = unix.TCFLSH
 )
-
-func setFlag(flag *uint32, mask uint32, v bool) {
-	if v {
-		*flag |= mask
-	} else {
-		*flag &= ^mask
-	}
-}

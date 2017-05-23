@@ -5,8 +5,9 @@
 package sys
 
 import (
-	"golang.org/x/sys/unix"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 // Termios represents terminal attributes.
@@ -54,8 +55,6 @@ func (term *Termios) SetVTime(v uint8) {
 func (term *Termios) SetVMin(v uint8) {
 	term.Cc[unix.VMIN] = v
 }
-
-
 
 // SetICanon sets the canonical flag.
 func (term *Termios) SetICanon(v bool) {

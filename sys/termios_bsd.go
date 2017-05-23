@@ -15,11 +15,3 @@ const (
 	setAttrFlushIOCTL = unix.TIOCSETAF
 	flushIOCTL        = unix.TIOCFLUSH
 )
-
-func setFlag(flag *uint64, mask uint64, v bool) {
-	if v {
-		*flag |= mask
-	} else {
-		*flag &= ^mask
-	}
-}

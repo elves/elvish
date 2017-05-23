@@ -1,9 +1,7 @@
 // +build darwin 386,freebsd arm,freebsd 386,linux arm,linux netbsd openbsd
 
-// Differnt architectures lead to different bits of uint
-// and different types of FdSet.Bits[].
-// Hence, NFDBits and types of func index's return values
-// have to be specified from case to case.
+// The type of FdSet.Bits is different on different platforms.
+// This file is for those where FdSet.Bits is []int32.
 
 package sys
 
