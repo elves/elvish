@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"container/list"
 	"strings"
 	"unicode/utf8"
 
@@ -55,14 +54,12 @@ func (lp placeholderRenderer) render(b *buffer) {
 }
 
 type listingRenderer struct {
-	// A List of styled items.
-	list.List
+	lines []styled
 }
 
 func (ls listingRenderer) render(b *buffer) {
-	for p := ls.Front(); p != nil; p = p.Next() {
-		line := p.Value.(styled)
-		if p != ls.Front() {
+	for i, line := range ls.lines {
+		if i > 0 {
 			b.newline()
 		}
 		b.writes(util.ForceWcwidth(line.text, b.width), line.styles.String())

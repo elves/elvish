@@ -75,7 +75,7 @@ func (l *listing) List(maxHeight int) renderer {
 	}
 	high := low
 	height := 0
-	var lines list.List
+	var listOfLines list.List
 	getEntry := func(i int) []styled {
 		header, content := l.provider.Show(i)
 		lines := strings.Split(content.text, "\n")
@@ -108,7 +108,7 @@ func (l *listing) List(maxHeight int) renderer {
 			entry := getEntry(low)
 			// Prepend at most the last (height - maxHeight) lines.
 			for i = len(entry) - 1; i >= 0 && height < maxHeight; i-- {
-				lines.PushFront(entry[i])
+				listOfLines.PushFront(entry[i])
 				height++
 			}
 			if i >= 0 {
@@ -118,7 +118,7 @@ func (l *listing) List(maxHeight int) renderer {
 			entry := getEntry(high)
 			// Append at most the first (height - maxHeight) lines.
 			for i = 0; i < len(entry) && height < maxHeight; i++ {
-				lines.PushBack(entry[i])
+				listOfLines.PushBack(entry[i])
 				height++
 			}
 			if i < len(entry) {
@@ -131,6 +131,12 @@ func (l *listing) List(maxHeight int) renderer {
 	}
 
 	l.pagesize = high - low
+
+	// Convert the List to a slice.
+	lines := make([]styled, 0, listOfLines.Len())
+	for p := listOfLines.Front(); p != nil; p = p.Next() {
+		lines = append(lines, p.Value.(styled))
+	}
 
 	ls := listingRenderer{lines}
 	if low > 0 || high < n || lastShownIncomplete {
