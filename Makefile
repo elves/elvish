@@ -35,7 +35,8 @@ cover/all: $(PKG_COVERS)
 goveralls: cover/all
 	test "$(TRAVIS_PULL_REQUEST)" = false \
 		&& go get -u github.com/mattn/goveralls \
-		&& $(FIRST_GOPATH)/bin/goveralls -coverprofile=cover/all -service=travis-ci
+		&& $(FIRST_GOPATH)/bin/goveralls -coverprofile=cover/all -service=travis-ci \
+		|| echo "not sending to coveralls"
 
 upload: get
 	tar cfz elvish.tar.gz -C $(FIRST_GOPATH)/bin elvish
