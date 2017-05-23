@@ -1,8 +1,6 @@
 package sys
 
-import (
-	"syscall"
-)
+import "syscall"
 
 type FdSet syscall.FdSet
 
