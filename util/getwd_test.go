@@ -2,6 +2,7 @@ package util
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"testing"
@@ -36,6 +37,7 @@ func TestGetwd(t *testing.T) {
 		// TODO(xiaq): Check the behavior on other BSDs and relax this condition
 		// if possible.
 		if runtime.GOOS == "linux" {
+			mustOK(os.Remove(path.Join(tmpdir, "a")))
 			if gotwd := Getwd(); gotwd != "?" {
 				t.Errorf("Getwd() -> %v, want ?", gotwd)
 			}
