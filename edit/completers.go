@@ -144,15 +144,9 @@ func complIndex(n parse.Node, ev *eval.Evaler) (*compl, error) {
 		return nil, errCannotIterateKey
 	}
 
-	keys := complIndexInner(m, current)
+	cands := complIndexInner(m)
 
-	cands := make([]*candidate, len(keys))
-	for i, key := range keys {
-		quoted, _ := parse.QuoteAs(key, q)
-		cands[i] = &candidate{code: quoted, menu: unstyled(key)}
-	}
-
-	return &compl{begin, end, cands}, nil
+	return &compl{begin, end, cookCandidates(cands, current, q)}, nil
 }
 
 // Find context information for complIndex. It returns the begin and end for
@@ -201,15 +195,15 @@ func findIndexContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse
 	return -1, -1, "", 0, nil
 }
 
-func complIndexInner(m eval.IterateKeyer, current string) []string {
-	keys := make([]string, 0)
+func complIndexInner(m eval.IterateKeyer) []rawCandidate {
+	var keys []rawCandidate
 	m.IterateKey(func(v eval.Value) bool {
 		if keyv, ok := v.(eval.String); ok {
-			keys = append(keys, string(keyv))
+			keys = append(keys, plainCandidate(keyv))
 		}
 		return true
 	})
-	sort.Strings(keys)
+	sort.Sort(plainCandidates(keys))
 	return keys
 }
 
