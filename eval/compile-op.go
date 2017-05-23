@@ -180,7 +180,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		}
 		spaceyAssignOp = Op{
 			makeAssignmentOpFunc(varsOp, restOp, argsOp),
-			n.Vars[0].Begin(), argsOp.End,
+			n.Begin(), argsOp.End,
 		}
 	}
 
