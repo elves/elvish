@@ -20,6 +20,10 @@ func TestDetermineFeature(t *testing.T) {
 		panic(err)
 	}
 	defer os.RemoveAll(tmpdir)
+	pwd, err := os.Getwd()
+	if err != nil {
+		defer os.Chdir(pwd)
+	}
 	os.Chdir(tmpdir)
 
 	test := func(fname string, mh bool, wantedFeature fileFeature) {

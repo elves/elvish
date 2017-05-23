@@ -8,16 +8,23 @@ import (
 )
 
 func TestGetwd(t *testing.T) {
-	tmpdir, error := ioutil.TempDir("", "elvishtest.")
-	if error != nil {
-		t.Errorf("Got error when creating temp dir: %v", error)
-	} else {
-		os.Chdir(tmpdir)
-		// On some systems /tmp is a symlink.
-		tmpdir, error = filepath.EvalSymlinks(tmpdir)
-		if gotwd := Getwd(); gotwd != tmpdir || error != nil {
-			t.Errorf("Getwd() -> %v, want %v", gotwd, tmpdir)
-		}
+	tmpdir, err := ioutil.TempDir("", "elvishtest.")
+	if err != nil {
+		panic(err)
+	}
+	pwd, err := os.Getwd()
+	if err != nil {
+		os.Chdir(pwd)
+	}
+	os.Chdir(tmpdir)
+
+	// On some systems /tmp is a symlink.
+	tmpdir, err = filepath.EvalSymlinks(tmpdir)
+	if err != nil {
+		panic(err)
+	}
+	if gotwd := Getwd(); gotwd != tmpdir {
+		t.Errorf("Getwd() -> %v, want %v", gotwd, tmpdir)
 	}
 
 	// Override $HOME to trick GetHome.
