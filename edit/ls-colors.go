@@ -1,6 +1,6 @@
 package edit
 
-//go:generate stringer -type=fileFeature -output=ls-color_string.go
+//go:generate stringer -type=fileFeature -output=ls-colors_string.go
 
 import (
 	"os"
