@@ -397,8 +397,9 @@ func complFilenameInner(head string, executableOnly bool) (
 	// Make candidates out of elements that match the file component.
 	for _, info := range infos {
 		name := info.Name()
-		// Hide dot files unless file starts with a dot.
-		if !dotfile(fileprefix) && dotfile(name) {
+		// Show dot files iff file part of pattern starts with dot, and vice
+		// versa.
+		if dotfile(fileprefix) != dotfile(name) {
 			continue
 		}
 		// Only accept searchable directories and executable files if
