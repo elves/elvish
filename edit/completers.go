@@ -68,9 +68,13 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 		return nil, errCompletionUnapplicable
 	}
 
+	// The starting position of "what we are completing". First move past "$".
+	begin := n.Begin() + 1
+
 	// XXX Repeats eval.ParseVariable.
 	explode, qname := eval.ParseVariableSplice(primary.Value)
 	nsPart, nameHead := eval.ParseVariableQName(qname)
+	begin += len(explode) + len(nsPart) // Move past "@" and "ns:".
 	ns := nsPart
 	if len(ns) > 0 {
 		ns = ns[:len(ns)-1]
@@ -80,14 +84,17 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	var varnames []string
 	iterateVariables(ev, ns, func(varname string) {
 		if strings.HasPrefix(varname, nameHead) {
-			varnames = append(varnames, nsPart+varname)
+			varnames = append(varnames, varname)
 		}
 	})
 	// Collect namespace prefixes.
 	// TODO Support non-module namespaces.
-	for ns := range ev.Modules {
-		if hasProperPrefix(ns+":", qname) {
-			varnames = append(varnames, ns+":")
+	// XXX Using varnames for names of modules and pretending that they are
+	// nested under the current namespace is hacky.
+	for mod := range ev.Modules {
+		modNsPart := mod + ":"
+		if hasProperPrefix(modNsPart, nsPart) {
+			varnames = append(varnames, modNsPart[len(nsPart):])
 		}
 	}
 	sort.Strings(varnames)
@@ -95,11 +102,10 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	cands := make([]*candidate, len(varnames))
 	// Build candidates.
 	for i, varname := range varnames {
-		text := "$" + explode + varname
-		cands[i] = &candidate{code: text, menu: unstyled(text)}
+		cands[i] = &candidate{code: varname, menu: unstyled(varname)}
 	}
 
-	return &compl{n.Begin(), n.End(), cands}, nil
+	return &compl{begin, n.End(), cands}, nil
 }
 
 func hasProperPrefix(s, p string) bool {
