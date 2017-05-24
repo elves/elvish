@@ -14,8 +14,8 @@ fn bind [k f]{
     bind-mode insert $k $f
 }
 
-bind Ctrl-A { le:move-dot-sol }
-bind Ctrl-B { le:move-bot-left }
+bind Ctrl-A $le:&move-dot-sol
+bind Ctrl-B $le:&move-dot-left
 bind Ctrl-D {
     if (> (count $le:current-command) 0) {
         le:kill-rune-right
@@ -23,38 +23,36 @@ bind Ctrl-D {
         le:return-eof
     }
 }
-bind Ctrl-E { le:move-dot-eol }
-bind Ctrl-F { le:move-dot-right }
-bind Ctrl-H { le:kill-rune-left }
+bind Ctrl-E $le:&move-dot-eol
+bind Ctrl-F $le:&move-dot-right
+bind Ctrl-H $le:&kill-rune-left
 bind Ctrl-L { clear > /dev/tty }
-bind Ctrl-N { le:end-of-history }
+bind Ctrl-N $le:&end-of-history
 # TODO: ^O
-bind Ctrl-P { le:start-history }
+bind Ctrl-P $le:history:&start
 # TODO: ^S ^T ^X family ^Y ^_
-bind Alt-b { le:move-dot-left-word }
+bind Alt-b  $le:&move-dot-left-word
 # TODO Alt-c Alt-d
-bind Alt-f { le:move-dot-right-word }
+bind Alt-f  $le:&move-dot-right-word
 # TODO Alt-l Alt-r Alt-u
 
 # Ctrl-N and Ctrl-L occupied by readline binding, bind to Alt- instead.
-bind Alt-N { le:start-nav }
-bind Alt-L { le:start-location }
+bind Alt-n $le:nav:&start
+bind Alt-l $le:loc:&start
 
-bind-mode completion Ctrl-B { le:compl-left }
-bind-mode completion Ctrl-F { le:compl-right }
-bind-mode completion Ctrl-N { le:compl-down }
-bind-mode completion Ctrl-P { le:compl-up }
-bind-mode completion Alt-F { le:compl-trigger-filter }
+bind-mode completion Ctrl-B $le:compl:&left
+bind-mode completion Ctrl-F $le:compl:&right
+bind-mode completion Ctrl-N $le:compl:&down
+bind-mode completion Ctrl-P $le:compl:&up
+bind-mode completion Alt-f  $le:compl:&trigger-filter
 
-bind-mode navigation Ctrl-B { le:nav-left }
-bind-mode navigation Ctrl-F { le:nav-right }
-bind-mode navigation Ctrl-N { le:nav-down }
-bind-mode navigation Ctrl-P { le:nav-up }
-bind-mode navigation Alt-F { le:nav-trigger-filter }
+bind-mode navigation Ctrl-B $le:nav:&left
+bind-mode navigation Ctrl-F $le:nav:&right
+bind-mode navigation Ctrl-N $le:nav:&down
+bind-mode navigation Ctrl-P $le:nav:&up
+bind-mode navigation Alt-f  $le:nav:&trigger-filter
 
-bind-mode history Ctrl-B { le:history-left }
-bind-mode history Ctrl-F { le:history-right }
-bind-mode history Ctrl-N { le:history-down }
-bind-mode history Ctrl-P { le:history-up }
+bind-mode history Ctrl-N $le:history:&down
+bind-mode history Ctrl-P $le:history:&up
 `,
 }
