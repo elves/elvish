@@ -1,8 +1,6 @@
 package edit
 
 import (
-	"strings"
-
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
@@ -52,12 +50,12 @@ func (c *complexCandidate) cook(q parse.PrimaryType) *candidate {
 	}
 }
 
-func cookCandidates(raws []rawCandidate,
-	pattern string, q parse.PrimaryType) []*candidate {
+func cookCandidates(raws []rawCandidate, pattern string,
+	match func(string, string) bool, q parse.PrimaryType) []*candidate {
 
 	var cooked []*candidate
 	for _, raw := range raws {
-		if strings.HasPrefix(raw.text(), pattern) {
+		if match(raw.text(), pattern) {
 			cooked = append(cooked, raw.cook(q))
 		}
 	}

@@ -98,9 +98,12 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	sort.Strings(entries)
 
 	var cands []*candidate
+	// XXX(xiaq): Fragile. Perhaps the signature of this function should be
+	// changed.
+	match := ev.Editor.(*Editor).matcher()
 	// Build candidates.
 	for _, varname := range entries {
-		if strings.HasPrefix(varname, nameHead) {
+		if match(varname, nameHead) {
 			cand := &candidate{code: varname, menu: unstyled(varname)}
 			cands = append(cands, cand)
 		}
@@ -152,8 +155,8 @@ func complIndex(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	}
 
 	cands := complIndexInner(m)
-
-	return &compl{begin, end, cookCandidates(cands, current, q)}, nil
+	match := ev.Editor.(*Editor).matcher()
+	return &compl{begin, end, cookCandidates(cands, current, match, q)}, nil
 }
 
 // Find context information for complIndex. It returns the begin and end for
@@ -223,7 +226,9 @@ func complFormHead(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &compl{begin, end, cookCandidates(cands, head, q)}, nil
+
+	match := ev.Editor.(*Editor).matcher()
+	return &compl{begin, end, cookCandidates(cands, head, match, q)}, nil
 }
 
 func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
@@ -312,7 +317,8 @@ func complRedir(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &compl{begin, end, cookCandidates(cands, current, q)}, nil
+	match := ev.Editor.(*Editor).matcher()
+	return &compl{begin, end, cookCandidates(cands, current, match, q)}, nil
 }
 
 func findRedirContext(n parse.Node) (int, int, string, parse.PrimaryType) {
@@ -363,7 +369,8 @@ func complArg(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &compl{begin, end, cookCandidates(cands, current, q)}, nil
+	match := ev.Editor.(*Editor).matcher()
+	return &compl{begin, end, cookCandidates(cands, current, match, q)}, nil
 }
 
 func findArgContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Form) {
