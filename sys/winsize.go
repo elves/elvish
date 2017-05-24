@@ -29,5 +29,16 @@ func GetWinsize(fd int) (row, col int) {
 		fmt.Printf("error in winSize: %v", err)
 		return -1, -1
 	}
+
+	// Pick up a reasonable value for row and col
+	// if they equal zero in special case,
+	// e.g. serial console
+	if ws.col == 0 {
+		ws.col = 80
+	}
+	if ws.row == 0 {
+		ws.row = 24
+	}
+
 	return int(ws.row), int(ws.col)
 }
