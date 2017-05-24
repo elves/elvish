@@ -81,28 +81,29 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	}
 
 	// Collect matching variables.
-	var varnames []string
+	var entries []string
 	iterateVariables(ev, ns, func(varname string) {
-		if strings.HasPrefix(varname, nameHead) {
-			varnames = append(varnames, varname)
-		}
+		entries = append(entries, varname)
 	})
 	// Collect namespace prefixes.
 	// TODO Support non-module namespaces.
-	// XXX Using varnames for names of modules and pretending that they are
-	// nested under the current namespace is hacky.
 	for mod := range ev.Modules {
 		modNsPart := mod + ":"
+		// This is to match namespaces that are "nested" under the current
+		// namespace.
 		if hasProperPrefix(modNsPart, nsPart) {
-			varnames = append(varnames, modNsPart[len(nsPart):])
+			entries = append(entries, modNsPart[len(nsPart):])
 		}
 	}
-	sort.Strings(varnames)
+	sort.Strings(entries)
 
-	cands := make([]*candidate, len(varnames))
+	var cands []*candidate
 	// Build candidates.
-	for i, varname := range varnames {
-		cands[i] = &candidate{code: varname, menu: unstyled(varname)}
+	for _, varname := range entries {
+		if strings.HasPrefix(varname, nameHead) {
+			cand := &candidate{code: varname, menu: unstyled(varname)}
+			cands = append(cands, cand)
+		}
 	}
 
 	return &compl{begin, n.End(), cands}, nil
