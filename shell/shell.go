@@ -1,4 +1,4 @@
-// Package shell is the entry point of elvish.
+// Package shell is the entry point for the terminal interface of Elvish.
 package shell
 
 import (
@@ -23,39 +23,37 @@ var logger = util.GetLogger("[shell] ")
 
 // Shell keeps flags to the shell.
 type Shell struct {
-	dbname string
-	cmd    bool
+	ev  *eval.Evaler
+	st  *store.Store
+	cmd bool
 }
 
-func NewShell(dbname string, cmd bool) *Shell {
-	return &Shell{dbname, cmd}
+func NewShell(ev *eval.Evaler, st *store.Store, cmd bool) *Shell {
+	return &Shell{ev, st, cmd}
 }
 
-// Main is the entry point of elvish.
-func (sh *Shell) Main(arg *string) int {
+// Run runs Elvish using the default terminal interface. It blocks until Elvish
+// quites, and returns the exit code.
+func (sh *Shell) Run(args []string) int {
 	defer rescue()
 
 	handleUsr1AndQuit()
 	logSignals()
 
-	ev, st := newEvalerAndStore(sh.dbname)
-	defer func() {
-		err := st.Close()
-		if err != nil {
-			fmt.Println("failed to close database:", err)
+	if len(args) > 0 {
+		if len(args) > 1 {
+			fmt.Fprintln(os.Stderr, "passing argument is not yet supported.")
 		}
-	}()
-
-	if arg != nil {
+		arg := args[0]
 		if sh.cmd {
-			sourceTextAndPrintError(ev, "code from -c", *arg)
+			sourceTextAndPrintError(sh.ev, "code from -c", arg)
 		} else {
-			script(ev, *arg)
+			script(sh.ev, arg)
 		}
 	} else if !sys.IsATTY(0) {
-		script(ev, "/dev/stdin")
+		script(sh.ev, "/dev/stdin")
 	} else {
-		interact(ev, st)
+		interact(sh.ev, sh.st)
 	}
 
 	return 0
@@ -196,23 +194,4 @@ func handleUsr1AndQuit() {
 			}
 		}
 	}()
-}
-
-func newEvalerAndStore(db string) (*eval.Evaler, *store.Store) {
-	dataDir, err := store.EnsureDataDir()
-
-	var st *store.Store
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Warning: cannot create data dir ~/.elvish")
-	} else {
-		if db == "" {
-			db = dataDir + "/db"
-		}
-		st, err = store.NewStore(db)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Warning: cannot connect to store:", err)
-		}
-	}
-
-	return eval.NewEvaler(st, dataDir), st
 }

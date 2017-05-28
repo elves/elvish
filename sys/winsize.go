@@ -6,8 +6,9 @@ package sys
 
 import (
 	"fmt"
-	"golang.org/x/sys/unix"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 // winSize mirrors struct winsize in the C header.

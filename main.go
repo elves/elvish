@@ -2,6 +2,10 @@
 // programming language with an extensible, friendly user interface.
 package main
 
+// This package sets up the basic environment and calls the appropriate
+// "subprogram", one of the daemon, the terminal interface, or the web
+// interface.
+
 import (
 	"flag"
 	"fmt"
@@ -13,7 +17,9 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/daemon"
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/shell"
+	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/util"
 )
 
@@ -22,14 +28,17 @@ const closeFd = ^uintptr(0)
 
 var (
 	// Flags handled in this package, or common to shell and daemon.
-	help       = flag.Bool("help", false, "show usage help and quit")
+	help = flag.Bool("help", false, "show usage help and quit")
+
 	logpath    = flag.String("log", "", "a file to write debug log to")
 	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 	dbpath     = flag.String("db", "", "path to the database")
-	isdaemon   = flag.Bool("daemon", false, "run daemon instead of shell")
 	sockpath   = flag.String("sock", "", "path to the daemon socket")
 
-	// Flags for shell.
+	isdaemon = flag.Bool("daemon", false, "run daemon instead of shell")
+	isweb    = flag.Bool("web", false, "run backend of web interface")
+
+	// Flags for shell and web.
 	cmd = flag.Bool("c", false, "take first argument as a command to execute")
 
 	// Flags for daemon.
@@ -44,25 +53,24 @@ func usage() {
 }
 
 func main() {
+	// This is needed for defers to be honored.
+	ret := 0
+	defer os.Exit(ret)
+
 	flag.Usage = usage
 	flag.Parse()
 	args := flag.Args()
 
 	if *help {
 		usage()
-		os.Exit(0)
+		return
 	}
 
-	// The daemon takes no argument, while the shell takes at most one.
-	switch {
-	case *isdaemon && len(args) == 0:
-		// good
-	case !*isdaemon && len(args) <= 1:
-		// good
-	default:
-		// bad
+	// The daemon takes no argument.
+	if *isdaemon && len(args) > 0 {
 		usage()
-		os.Exit(2)
+		ret = 2
+		return
 	}
 
 	if *logpath != "" {
@@ -82,17 +90,45 @@ func main() {
 	}
 
 	if *isdaemon {
-		os.Exit(doDaemon())
+		ret = doDaemon()
 	} else {
-		sh := shell.NewShell(*dbpath, *cmd)
+		// Set up Evaler and Store. This is needed for both the terminal and web
+		// interfaces.
+		ev, st := newEvalerAndStore(*dbpath)
+		defer func() {
+			err := st.Close()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "failed to close database:", err)
+			}
+		}()
 
-		var arg *string
-		if len(args) == 1 {
-			arg = &args[0]
+		if *isweb {
+			fmt.Fprintln(os.Stderr, "web interface not yet implemented.")
+			ret = 2
+		} else {
+			sh := shell.NewShell(ev, st, *cmd)
+			ret = sh.Run(args)
 		}
-
-		os.Exit(sh.Main(arg))
 	}
+}
+
+func newEvalerAndStore(db string) (*eval.Evaler, *store.Store) {
+	dataDir, err := store.EnsureDataDir()
+
+	var st *store.Store
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Warning: cannot create data dir ~/.elvish")
+	} else {
+		if db == "" {
+			db = dataDir + "/db"
+		}
+		st, err = store.NewStore(db)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Warning: cannot connect to store:", err)
+		}
+	}
+
+	return eval.NewEvaler(st, dataDir), st
 }
 
 func doDaemon() int {
