@@ -43,6 +43,7 @@ func (sh *Shell) Run(args []string) int {
 	if len(args) > 0 {
 		if len(args) > 1 {
 			fmt.Fprintln(os.Stderr, "passing argument is not yet supported.")
+			return 2
 		}
 		arg := args[0]
 		if sh.cmd {

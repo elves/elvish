@@ -21,10 +21,15 @@ import (
 	"github.com/elves/elvish/shell"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/util"
+	"github.com/elves/elvish/web"
 )
 
 // closeFd is used in syscall.ProcAttr.Files to signify closing a fd.
 const closeFd = ^uintptr(0)
+
+// defaultPort is the default port on which the web interface runs. The number
+// is chosen because it resembles "elvi".
+const defaultWebPort = 3171
 
 var (
 	// Flags handled in this package, or common to shell and daemon.
@@ -37,6 +42,7 @@ var (
 
 	isdaemon = flag.Bool("daemon", false, "run daemon instead of shell")
 	isweb    = flag.Bool("web", false, "run backend of web interface")
+	webport  = flag.Int("port", defaultWebPort, "the port of the web backend")
 
 	// Flags for shell and web.
 	cmd = flag.Bool("c", false, "take first argument as a command to execute")
@@ -103,8 +109,13 @@ func main() {
 		}()
 
 		if *isweb {
-			fmt.Fprintln(os.Stderr, "web interface not yet implemented.")
-			ret = 2
+			if *cmd {
+				fmt.Fprintln(os.Stderr, "-c -web not yet supported")
+				ret = 2
+				return
+			}
+			w := web.NewWeb(ev, st, *webport)
+			ret = w.Run(args)
 		} else {
 			sh := shell.NewShell(ev, st, *cmd)
 			ret = sh.Run(args)

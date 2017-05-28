@@ -1,0 +1,12 @@
+#!/usr/bin/env elvish
+
+out = ./embedded-html.go
+
+{
+	echo "package web"
+	print "const mainPageHTML = `"
+	cat main.html | sed 's/`/`+"`"+`/g'
+	echo "`"
+} > $out
+
+gofmt -w $out
