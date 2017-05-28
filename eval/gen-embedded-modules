@@ -8,7 +8,7 @@ out = ./embedded-modules.go
 
 	for f [*.elv] {
 		print '"embedded:'$f[:-4]'": `'
-		cat $f | sed 's/`/``/g'
+		cat $f | sed 's/`/`+"`"+`/g'
 		echo '`,'
     }
 
