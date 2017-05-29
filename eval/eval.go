@@ -217,7 +217,7 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 	}
 
 	// Un-ignore TTOU.
-	signal.Ignore(syscall.SIGTTOU)
+	signal.Reset(syscall.SIGTTOU)
 
 	return err
 }
