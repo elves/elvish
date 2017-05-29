@@ -142,8 +142,8 @@ func (ec *EvalCtx) Interrupts() <-chan struct{} {
 	return ec.intCh
 }
 
-// Eval sets up the Evaler and evaluates a chunk. The supplied name and text are
-// used in diagnostic messages.
+// Eval sets up the Evaler with standard ports and evaluates an Op. The supplied
+// name and text are used in diagnostic messages.
 func (ev *Evaler) Eval(op Op, name, text string) error {
 	inCh := make(chan Value)
 	close(inCh)
@@ -152,9 +152,13 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 	outDone := make(chan struct{})
 	go func() {
 		for v := range outCh {
-			fmt.Printf("%s%s\n", outChanLeader, v.Repr(initIndent))
+			fmt.Println(outChanLeader + v.Repr(initIndent))
 		}
 		close(outDone)
+	}()
+	defer func() {
+		close(outCh)
+		<-outDone
 	}()
 
 	ports := []*Port{
@@ -163,6 +167,12 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 		{File: os.Stderr, Chan: BlackholeChan},
 	}
 
+	return ev.EvalWithPorts(ports, op, name, text)
+}
+
+// EvalWithFiles sets up the Evaler with the given ports and evaluates an Op.
+// The supplied name and text are used in diagnostic messages.
+func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, name, text string) error {
 	// signal.Ignore(syscall.SIGTTIN)
 
 	// Ignore TTOU.
@@ -202,8 +212,7 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 	}()
 
 	err := ev.eval(op, ports, name, text)
-	close(outCh)
-	<-outDone
+
 	close(stopSigGoroutine)
 	<-sigGoRoutineDone
 
