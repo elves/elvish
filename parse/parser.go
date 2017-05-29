@@ -13,13 +13,12 @@ import (
 //
 // NOTE: The str member is assumed to be valid UF-8.
 type parser struct {
-	srcName  string
-	src      string
-	pos      int
-	overEOF  int
-	cutsets  []map[rune]int
-	controls int
-	errors   Error
+	srcName string
+	src     string
+	pos     int
+	overEOF int
+	cutsets []map[rune]int
+	errors  Error
 }
 
 const eof rune = -1

@@ -17,7 +17,7 @@ func (n *Chunk) addToPipelines(ch *Pipeline) {
 	addChild(n, ch)
 }
 
-func parseChunk(ps *parser) *Chunk {
+func ParseChunk(ps *parser) *Chunk {
 	n := &Chunk{node: node{begin: ps.pos}}
 	n.parse(ps)
 	n.end = ps.pos
@@ -42,7 +42,7 @@ func (n *Pipeline) addToForms(ch *Form) {
 	addChild(n, ch)
 }
 
-func parsePipeline(ps *parser) *Pipeline {
+func ParsePipeline(ps *parser) *Pipeline {
 	n := &Pipeline{node: node{begin: ps.pos}}
 	n.parse(ps)
 	n.end = ps.pos
@@ -97,7 +97,7 @@ func (n *Form) setExitusRedir(ch *ExitusRedir) {
 	addChild(n, ch)
 }
 
-func parseForm(ps *parser) *Form {
+func ParseForm(ps *parser) *Form {
 	n := &Form{node: node{begin: ps.pos}}
 	n.parse(ps)
 	n.end = ps.pos
@@ -127,7 +127,7 @@ func (n *Assignment) setRight(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseAssignment(ps *parser) *Assignment {
+func ParseAssignment(ps *parser) *Assignment {
 	n := &Assignment{node: node{begin: ps.pos}}
 	n.parse(ps)
 	n.end = ps.pos
@@ -152,7 +152,7 @@ func (n *ExitusRedir) setDest(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseExitusRedir(ps *parser) *ExitusRedir {
+func ParseExitusRedir(ps *parser) *ExitusRedir {
 	n := &ExitusRedir{node: node{begin: ps.pos}}
 	n.parse(ps)
 	n.end = ps.pos
@@ -182,7 +182,7 @@ func (n *Redir) setRight(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseRedir(ps *parser, dest *Compound) *Redir {
+func ParseRedir(ps *parser, dest *Compound) *Redir {
 	n := &Redir{node: node{begin: ps.pos}}
 	n.parse(ps, dest)
 	n.end = ps.pos
@@ -207,7 +207,7 @@ func (n *Compound) addToIndexings(ch *Indexing) {
 	addChild(n, ch)
 }
 
-func parseCompound(ps *parser, head bool) *Compound {
+func ParseCompound(ps *parser, head bool) *Compound {
 	n := &Compound{node: node{begin: ps.pos}}
 	n.parse(ps, head)
 	n.end = ps.pos
@@ -237,7 +237,7 @@ func (n *Indexing) addToIndicies(ch *Array) {
 	addChild(n, ch)
 }
 
-func parseIndexing(ps *parser, head bool) *Indexing {
+func ParseIndexing(ps *parser, head bool) *Indexing {
 	n := &Indexing{node: node{begin: ps.pos}}
 	n.parse(ps, head)
 	n.end = ps.pos
@@ -262,7 +262,7 @@ func (n *Array) addToCompounds(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseArray(ps *parser, allowSemicolon bool) *Array {
+func ParseArray(ps *parser, allowSemicolon bool) *Array {
 	n := &Array{node: node{begin: ps.pos}}
 	n.parse(ps, allowSemicolon)
 	n.end = ps.pos
@@ -302,7 +302,7 @@ func (n *Primary) addToBraced(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parsePrimary(ps *parser, head bool) *Primary {
+func ParsePrimary(ps *parser, head bool) *Primary {
 	n := &Primary{node: node{begin: ps.pos}}
 	n.parse(ps, head)
 	n.end = ps.pos
@@ -332,7 +332,7 @@ func (n *MapPair) setValue(ch *Compound) {
 	addChild(n, ch)
 }
 
-func parseMapPair(ps *parser) *MapPair {
+func ParseMapPair(ps *parser) *MapPair {
 	n := &MapPair{node: node{begin: ps.pos}}
 	n.parse(ps)
 	n.end = ps.pos

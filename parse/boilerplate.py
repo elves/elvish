@@ -52,7 +52,7 @@ func (n *X) addToG(ch *Z) {
     addChild(n, ch)
 }
 
-func parseX(ps *parser) *X {
+func ParseX(ps *parser) *X {
     n := &X{node: node{begin: ps.pos}}
     n.parse(ps)
     n.end = ps.pos
@@ -103,7 +103,7 @@ func (n *{parent}) addTo{field}(ch *{child}) {{
 def put_parse(out, typename, extraargs):
     extranames = ', '.join(a.split(' ')[0] for a in extraargs.split(', ')) if extraargs else ''
     print >>out, '''
-func parse{typename}(ps *parser{extraargs}) *{typename} {{
+func Parse{typename}(ps *parser{extraargs}) *{typename} {{
     n := &{typename}{{node: node{{begin: ps.pos}}}}
     n.parse(ps{extranames})
     n.end = ps.pos

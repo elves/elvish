@@ -11,19 +11,28 @@ import (
 	"unicode"
 )
 
-// Parse parses elvish source. If the error is not nil, it always has type
+// Parse parses Elvish source. If the error is not nil, it always has type
 // ParseError.
 func Parse(srcname, src string) (*Chunk, error) {
-	ps := &parser{srcname, src, 0, 0, []map[rune]int{{}}, 0, Error{}}
-	bn := parseChunk(ps)
+	ps := NewParser(srcname, src)
+	n := ParseChunk(ps)
+	return n, GetError(ps, src, n)
+}
+
+// NewParser creates a new parser from a piece of source text and its name.
+func NewParser(srcname, src string) *parser {
+	return &parser{srcname, src, 0, 0, []map[rune]int{{}}, Error{}}
+}
+
+// GetError gets the parsing error after calling one of the parse* functions.
+func GetError(ps *parser, src string, n Node) error {
 	if ps.pos != len(src) {
 		ps.error(errUnexpectedRune)
 	}
-	var err error
 	if len(ps.errors.Entries) > 0 {
-		err = &ps.errors
+		return &ps.errors
 	}
-	return bn, err
+	return nil
 }
 
 // Errors.
@@ -73,7 +82,7 @@ type Chunk struct {
 func (bn *Chunk) parse(ps *parser) {
 	bn.parseSeps(ps)
 	for startsPipeline(ps.peek()) {
-		bn.addToPipelines(parsePipeline(ps))
+		bn.addToPipelines(ParsePipeline(ps))
 		if bn.parseSeps(ps) == 0 {
 			break
 		}
@@ -123,14 +132,14 @@ type Pipeline struct {
 }
 
 func (pn *Pipeline) parse(ps *parser) {
-	pn.addToForms(parseForm(ps))
+	pn.addToForms(ParseForm(ps))
 	for parseSep(pn, ps, '|') {
 		parseSpacesAndNewlines(pn, ps)
 		if !startsForm(ps.peek()) {
 			ps.error(errShouldBeForm)
 			return
 		}
-		pn.addToForms(parseForm(ps))
+		pn.addToForms(ParseForm(ps))
 	}
 	parseSpaces(pn, ps)
 	if ps.peek() == '&' {
@@ -174,7 +183,7 @@ func (fn *Form) parse(ps *parser) {
 		// Bad form.
 		ps.error(fmt.Errorf("bad rune at form head: %q", ps.peek()))
 	}
-	fn.setHead(parseCompound(ps, true))
+	fn.setHead(ParseCompound(ps, true))
 	parseSpaces(fn, ps)
 
 	for {
@@ -188,22 +197,22 @@ func (fn *Form) parse(ps *parser) {
 				// background indicator
 				return
 			}
-			fn.addToOpts(parseMapPair(ps))
+			fn.addToOpts(ParseMapPair(ps))
 		case startsCompound(r, false):
 			if ps.hasPrefix("?>") {
 				if fn.ExitusRedir != nil {
 					ps.error(errDuplicateExitusRedir)
 					// Parse the duplicate redir anyway.
-					addChild(fn, parseExitusRedir(ps))
+					addChild(fn, ParseExitusRedir(ps))
 				} else {
-					fn.setExitusRedir(parseExitusRedir(ps))
+					fn.setExitusRedir(ParseExitusRedir(ps))
 				}
 				continue
 			}
-			cn := parseCompound(ps, false)
+			cn := ParseCompound(ps, false)
 			if isRedirSign(ps.peek()) {
 				// Redir
-				fn.addToRedirs(parseRedir(ps, cn))
+				fn.addToRedirs(ParseRedir(ps, cn))
 			} else if cn.sourceText == "=" {
 				// Spacey assignment.
 				// Turn the equal sign into a Sep.
@@ -226,7 +235,7 @@ func (fn *Form) parse(ps *parser) {
 				fn.addToArgs(cn)
 			}
 		case isRedirSign(r):
-			fn.addToRedirs(parseRedir(ps, nil))
+			fn.addToRedirs(ParseRedir(ps, nil))
 		default:
 			return
 		}
@@ -244,7 +253,7 @@ func (fn *Form) tryAssignment(ps *parser) bool {
 
 	pos := ps.pos
 	errorEntries := ps.errors.Entries
-	an := parseAssignment(ps)
+	an := ParseAssignment(ps)
 	// If errors were added, revert
 	if len(ps.errors.Entries) > len(errorEntries) {
 		ps.errors.Entries = errorEntries
@@ -268,7 +277,7 @@ type Assignment struct {
 
 func (an *Assignment) parse(ps *parser) {
 	ps.cut('=')
-	an.setLeft(parseIndexing(ps, false))
+	an.setLeft(ParseIndexing(ps, false))
 	head := an.Left.Head
 	if !checkVariableInAssignment(head, ps) {
 		ps.errorp(head.Begin(), head.End(), errShouldBeVariableName)
@@ -278,7 +287,7 @@ func (an *Assignment) parse(ps *parser) {
 	if !parseSep(an, ps, '=') {
 		ps.error(errShouldBeEqual)
 	}
-	an.setRight(parseCompound(ps, false))
+	an.setRight(ParseCompound(ps, false))
 }
 
 func checkVariableInAssignment(p *Primary, ps *parser) bool {
@@ -312,7 +321,7 @@ func (ern *ExitusRedir) parse(ps *parser) {
 	ps.next()
 	addSep(ern, ps)
 	parseSpaces(ern, ps)
-	ern.setDest(parseCompound(ps, false))
+	ern.setDest(ParseCompound(ps, false))
 }
 
 // Redir = { Compound } { '<'|'>'|'<>'|'>>' } { Space } ( '&'? Compound )
@@ -353,7 +362,7 @@ func (rn *Redir) parse(ps *parser, dest *Compound) {
 	if parseSep(rn, ps, '&') {
 		rn.RightIsFd = true
 	}
-	rn.setRight(parseCompound(ps, false))
+	rn.setRight(ParseCompound(ps, false))
 	if len(rn.Right.Indexings) == 0 {
 		if rn.RightIsFd {
 			ps.error(errShouldBeFD)
@@ -389,7 +398,7 @@ type Compound struct {
 func (cn *Compound) parse(ps *parser, head bool) {
 	cn.tilde(ps)
 	for startsIndexing(ps.peek(), head) {
-		cn.addToIndexings(parseIndexing(ps, head))
+		cn.addToIndexings(ParseIndexing(ps, head))
 	}
 }
 
@@ -419,14 +428,14 @@ type Indexing struct {
 }
 
 func (in *Indexing) parse(ps *parser, head bool) {
-	in.setHead(parsePrimary(ps, head))
+	in.setHead(ParsePrimary(ps, head))
 	for parseSep(in, ps, '[') {
 		if !startsArray(ps.peek()) {
 			ps.error(errShouldBeArray)
 		}
 
 		ps.pushCutset()
-		in.addToIndicies(parseArray(ps, false))
+		in.addToIndicies(ParseArray(ps, false))
 		ps.popCutset()
 
 		if !parseSep(in, ps, ']') {
@@ -463,7 +472,7 @@ func (sn *Array) parse(ps *parser, allowSemicolon bool) {
 
 	parseSep()
 	for startsCompound(ps.peek(), false) {
-		sn.addToCompounds(parseCompound(ps, false))
+		sn.addToCompounds(ParseCompound(ps, false))
 		parseSep()
 	}
 }
@@ -725,7 +734,7 @@ func (pn *Primary) exitusCapture(ps *parser) {
 	pn.Type = ExceptionCapture
 
 	ps.pushCutset()
-	pn.setChunk(parseChunk(ps))
+	pn.setChunk(ParseChunk(ps))
 	ps.popCutset()
 
 	if !parseSep(pn, ps, ')') {
@@ -759,7 +768,7 @@ func (pn *Primary) outputCapture(ps *parser) {
 	} else {
 		ps.pushCutset()
 	}
-	pn.setChunk(parseChunk(ps))
+	pn.setChunk(ParseChunk(ps))
 	ps.popCutset()
 
 	if !parseSep(pn, ps, closer) {
@@ -795,7 +804,7 @@ func (pn *Primary) lbracket(ps *parser) {
 			// { MapPair { Space } } ']': Wind back
 			ps.pos = amp
 			for ps.peek() == '&' {
-				pn.addToMapPairs(parseMapPair(ps))
+				pn.addToMapPairs(ParseMapPair(ps))
 				parseSpacesAndNewlines(pn, ps)
 			}
 		}
@@ -804,7 +813,7 @@ func (pn *Primary) lbracket(ps *parser) {
 			ps.error(errShouldBeRBracket)
 		}
 	default:
-		pn.setList(parseArray(ps, true))
+		pn.setList(ParseArray(ps, true))
 		ps.popCutset()
 
 		if !parseSep(pn, ps, ']') {
@@ -825,7 +834,7 @@ func (pn *Primary) lbracket(ps *parser) {
 func (pn *Primary) lambda(ps *parser) {
 	pn.Type = Lambda
 	ps.pushCutset()
-	pn.setChunk(parseChunk(ps))
+	pn.setChunk(ParseChunk(ps))
 	ps.popCutset()
 	if !parseSep(pn, ps, '}') {
 		ps.error(errShouldBeRBrace)
@@ -850,7 +859,7 @@ func (pn *Primary) lbrace(ps *parser) {
 	// XXX: The compound can be empty, which allows us to parse {,foo}.
 	// Allowing compounds to be empty can be fragile in other cases.
 	ps.cut(',')
-	pn.addToBraced(parseCompound(ps, false))
+	pn.addToBraced(ParseCompound(ps, false))
 	ps.uncut(',')
 
 	for isBracedSep(ps.peek()) {
@@ -860,7 +869,7 @@ func (pn *Primary) lbrace(ps *parser) {
 		parseSpacesAndNewlines(pn, ps)
 
 		ps.cut(',')
-		pn.addToBraced(parseCompound(ps, false))
+		pn.addToBraced(ParseCompound(ps, false))
 		ps.uncut(',')
 	}
 	if !parseSep(pn, ps, '}') {
@@ -910,7 +919,7 @@ func (mpn *MapPair) parse(ps *parser) {
 
 	// Parse key part, cutting on '='.
 	ps.cut('=')
-	mpn.setKey(parseCompound(ps, false))
+	mpn.setKey(ParseCompound(ps, false))
 	if len(mpn.Key.Indexings) == 0 {
 		ps.error(errShouldBeCompound)
 	}
@@ -919,7 +928,7 @@ func (mpn *MapPair) parse(ps *parser) {
 	if parseSep(mpn, ps, '=') {
 		parseSpacesAndNewlines(mpn, ps)
 		// Parse value part.
-		mpn.setValue(parseCompound(ps, false))
+		mpn.setValue(ParseCompound(ps, false))
 		// The value part can be empty.
 	}
 }
