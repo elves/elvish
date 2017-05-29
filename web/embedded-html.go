@@ -13,7 +13,7 @@ const mainPageHTML = `<html>
 	</div>
 
 	<style>
-		#code, #output, #error {
+		#code, #progress, #output, #error {
 			font-family: monospace;
 			font-size: 11pt;
 		}
@@ -36,7 +36,7 @@ const mainPageHTML = `<html>
 
 			$progress.innerText = 'executing...';
 			req.onloadend = function() {
-				$progress.innerText = '';
+				$progress.innerText = 'executed ' + code;
 			};
 			req.onload = function() {
 				$output.innerText = req.responseText;
@@ -46,8 +46,8 @@ const mainPageHTML = `<html>
 				$output.innerText = '';
 				$error.innerText = req.responseText || 'unknown error';
 			};
-			req.open('POST', '/execute?query=' + encodeURIComponent(code));
-			req.send();
+			req.open('POST', '/execute');
+			req.send(code);
 		});
 	</script>
 
