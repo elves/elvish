@@ -21,7 +21,7 @@ cover/%.cover: %
 
 cover/all: $(PKG_COVERS)
 	echo mode: $(COVER_MODE) > $@
-	for f in $(PKG_COVERS); do test -f $$f && sed 1d $$f >> $@; done
+	for f in $(PKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
 # We would love to test for coverage in pull requests, but it's now
 # bettered turned off for two reasons:
