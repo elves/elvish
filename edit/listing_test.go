@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"strconv"
 	"testing"
+
+	"github.com/elves/elvish/edit/ui"
 )
 
 type provider struct {
@@ -17,8 +19,8 @@ func (p provider) Filter(string) int        { return 0 }
 func (p provider) Accept(i int, ed *Editor) { p.accepted = i }
 func (p provider) ModeTitle(i int) string   { return fmt.Sprintf("test %d", i) }
 
-func (p provider) Show(i int) (string, styled) {
-	return strconv.Itoa(i), unstyled(p.elems[i])
+func (p provider) Show(i int) (string, ui.Styled) {
+	return strconv.Itoa(i), ui.Unstyled(p.elems[i])
 }
 
 var (
@@ -40,18 +42,18 @@ func TestListing(t *testing.T) {
 	// Selecting the first element and rendering with height=2. We expect to see
 	// the first 2 elements, with the first being shown as selected.
 	testListingList(t, 0, 2, listingWithScrollBarRenderer{
-		listingRenderer: listingRenderer{[]styled{
-			styled{"0 foo", styleForSelected},
-			styled{"1 bar", styles{}},
+		listingRenderer: listingRenderer{[]ui.Styled{
+			ui.Styled{"0 foo", styleForSelected},
+			ui.Styled{"1 bar", ui.Styles{}},
 		}},
 		n: 5, low: 0, high: 2, height: 2,
 	})
 	// Selecting the last element and rendering with height=2. We expect to see
 	// the last 2 elements, with the last being shown as selected.
 	testListingList(t, 4, 2, listingWithScrollBarRenderer{
-		listingRenderer: listingRenderer{[]styled{
-			styled{"3 lorem", styles{}},
-			styled{"4 ipsum", styleForSelected},
+		listingRenderer: listingRenderer{[]ui.Styled{
+			ui.Styled{"3 lorem", ui.Styles{}},
+			ui.Styled{"4 ipsum", styleForSelected},
 		}},
 		n: 5, low: 3, high: 5, height: 2,
 	})
@@ -59,10 +61,10 @@ func TestListing(t *testing.T) {
 	// see the middle element and two elements around it, with the middle being
 	// shown as selected.
 	testListingList(t, 2, 3, listingWithScrollBarRenderer{
-		listingRenderer: listingRenderer{[]styled{
-			styled{"1 bar", styles{}},
-			styled{"2 foobar", styleForSelected},
-			styled{"3 lorem", styles{}},
+		listingRenderer: listingRenderer{[]ui.Styled{
+			ui.Styled{"1 bar", ui.Styles{}},
+			ui.Styled{"2 foobar", styleForSelected},
+			ui.Styled{"3 lorem", ui.Styles{}},
 		}},
 		n: 5, low: 1, high: 4, height: 3,
 	})

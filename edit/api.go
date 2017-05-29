@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 )
 
@@ -106,7 +107,7 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 		},
 	)
 
-	ns[eval.FnPrefix+"styled"] = eval.NewRoVariable(&eval.BuiltinFn{"le:&styled", styledBuiltin})
+	ns[eval.FnPrefix+"styled"] = eval.NewRoVariable(&eval.BuiltinFn{"le:&styled", styled})
 
 	modules["le"] = ns
 
@@ -190,7 +191,7 @@ func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
 
 // callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
 // arguments and closed input, and converts its outputs to styled objects.
-func callPrompt(ed *Editor, fn eval.Callable) []*styled {
+func callPrompt(ed *Editor, fn eval.Callable) []*ui.Styled {
 	ports := []*eval.Port{eval.DevNullClosedChan, {File: os.Stdout}, {File: os.Stderr}}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
@@ -201,12 +202,12 @@ func callPrompt(ed *Editor, fn eval.Callable) []*styled {
 		return nil
 	}
 
-	var ss []*styled
+	var ss []*ui.Styled
 	for _, v := range values {
-		if s, ok := v.(*styled); ok {
+		if s, ok := v.(*ui.Styled); ok {
 			ss = append(ss, s)
 		} else {
-			ss = append(ss, &styled{eval.ToString(v), styles{}})
+			ss = append(ss, &ui.Styled{eval.ToString(v), ui.Styles{}})
 		}
 	}
 	return ss

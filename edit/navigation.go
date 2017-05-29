@@ -163,7 +163,7 @@ func initNavigation(n *navigation, ed *Editor) {
 func (n *navigation) maintainSelected(name string) {
 	n.current.selected = 0
 	for i, s := range n.current.candidates {
-		if s.text > name {
+		if s.Text > name {
 			break
 		}
 		n.current.selected = i
@@ -180,7 +180,7 @@ func (n *navigation) refreshCurrent() {
 	// Try to select the old selected file.
 	// XXX(xiaq): This would break when we support alternative ordering.
 	n.current = newNavColumn(all, func(i int) bool {
-		return i == 0 || all[i].text <= selectedName
+		return i == 0 || all[i].Text <= selectedName
 	})
 	n.current.changeFilter(n.filter)
 	n.maintainSelected(selectedName)
@@ -206,7 +206,7 @@ func (n *navigation) refreshParent() {
 			return
 		}
 		n.parent = newNavColumn(all, func(i int) bool {
-			d, _ := os.Lstat("../" + all[i].text)
+			d, _ := os.Lstat("../" + all[i].Text)
 			return os.SameFile(d, cwd)
 		})
 	}
@@ -303,7 +303,7 @@ func (n *navigation) next() {
 	n.refresh()
 }
 
-func (n *navigation) loaddir(dir string) ([]styled, error) {
+func (n *navigation) loaddir(dir string) ([]ui.Styled, error) {
 	f, err := os.Open(dir)
 	if err != nil {
 		return nil, err
@@ -314,12 +314,12 @@ func (n *navigation) loaddir(dir string) ([]styled, error) {
 	}
 	sort.Strings(names)
 
-	var all []styled
+	var all []ui.Styled
 	lsColor := getLsColor()
 	for _, name := range names {
 		if n.showHidden || name[0] != '.' {
-			all = append(all, styled{name,
-				stylesFromString(lsColor.getStyle(path.Join(dir, name)))})
+			all = append(all, ui.Styled{name,
+				ui.StylesFromString(lsColor.getStyle(path.Join(dir, name)))})
 		}
 	}
 
@@ -349,13 +349,13 @@ func (n *navigation) List(maxHeight int) renderer {
 // navColumn is a column in the navigation layout.
 type navColumn struct {
 	listing
-	all        []styled
-	candidates []styled
+	all        []ui.Styled
+	candidates []ui.Styled
 	// selected int
 	err error
 }
 
-func newNavColumn(all []styled, sel func(int) bool) *navColumn {
+func newNavColumn(all []ui.Styled, sel func(int) bool) *navColumn {
 	nc := &navColumn{all: all, candidates: all}
 	nc.provider = nc
 	nc.selected = -1
@@ -410,9 +410,9 @@ func newFilePreviewNavColumn(fname string) *navColumn {
 	}
 
 	lines := strings.Split(content, "\n")
-	styleds := make([]styled, len(lines))
+	styleds := make([]ui.Styled, len(lines))
 	for i, line := range lines {
-		styleds[i] = styled{strings.Replace(line, "\t", "    ", -1), styles{}}
+		styleds[i] = ui.Styled{strings.Replace(line, "\t", "    ", -1), ui.Styles{}}
 	}
 	return newNavColumn(styleds, func(int) bool { return false })
 }
@@ -428,15 +428,15 @@ func (nc *navColumn) Len() int {
 	return len(nc.candidates)
 }
 
-func (nc *navColumn) Show(i int) (string, styled) {
+func (nc *navColumn) Show(i int) (string, ui.Styled) {
 	cand := nc.candidates[i]
-	return "", styled{" " + cand.text + " ", cand.styles}
+	return "", ui.Styled{" " + cand.Text + " ", cand.Styles}
 }
 
 func (nc *navColumn) Filter(filter string) int {
 	nc.candidates = nc.candidates[:0]
 	for _, s := range nc.all {
-		if strings.Contains(s.text, filter) {
+		if strings.Contains(s.Text, filter) {
 			nc.candidates = append(nc.candidates, s)
 		}
 	}
@@ -452,7 +452,7 @@ func (nc *navColumn) FullWidth(h int) int {
 	}
 	maxw := 0
 	for _, s := range nc.candidates {
-		maxw = max(maxw, util.Wcswidth(s.text)+2)
+		maxw = max(maxw, util.Wcswidth(s.Text)+2)
 	}
 	if len(nc.candidates) > h {
 		maxw++
@@ -473,5 +473,5 @@ func (nc *navColumn) selectedName() string {
 	if nc == nil || nc.selected == -1 || nc.selected >= len(nc.candidates) {
 		return ""
 	}
-	return nc.candidates[nc.selected].text
+	return nc.candidates[nc.selected].Text
 }

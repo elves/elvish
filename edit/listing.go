@@ -23,7 +23,7 @@ type listing struct {
 
 type listingProvider interface {
 	Len() int
-	Show(i int) (string, styled)
+	Show(i int) (string, ui.Styled)
 	Filter(filter string) int
 	Accept(i int, ed *Editor)
 	ModeTitle(int) string
@@ -76,14 +76,14 @@ func (l *listing) List(maxHeight int) renderer {
 	high := low
 	height := 0
 	var listOfLines list.List
-	getEntry := func(i int) []styled {
+	getEntry := func(i int) []ui.Styled {
 		header, content := l.provider.Show(i)
-		lines := strings.Split(content.text, "\n")
-		styles := content.styles
+		lines := strings.Split(content.Text, "\n")
+		styles := content.Styles
 		if i == l.selected {
 			styles = append(styles, styleForSelected...)
 		}
-		styleds := make([]styled, len(lines))
+		styleds := make([]ui.Styled, len(lines))
 		for i, line := range lines {
 			if l.headerWidth > 0 {
 				if i == 0 {
@@ -92,7 +92,7 @@ func (l *listing) List(maxHeight int) renderer {
 					line = fmt.Sprintf("%*s %s", l.headerWidth, "", line)
 				}
 			}
-			styleds[i] = styled{line, styles}
+			styleds[i] = ui.Styled{line, styles}
 		}
 		return styleds
 	}
@@ -133,9 +133,9 @@ func (l *listing) List(maxHeight int) renderer {
 	l.pagesize = high - low
 
 	// Convert the List to a slice.
-	lines := make([]styled, 0, listOfLines.Len())
+	lines := make([]ui.Styled, 0, listOfLines.Len())
 	for p := listOfLines.Front(); p != nil; p = p.Next() {
-		lines = append(lines, p.Value.(styled))
+		lines = append(lines, p.Value.(ui.Styled))
 	}
 
 	ls := listingRenderer{lines}

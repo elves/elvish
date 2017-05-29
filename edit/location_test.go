@@ -3,6 +3,7 @@ package edit
 import (
 	"testing"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/store"
 )
 
@@ -18,29 +19,29 @@ var (
 
 	locationFilterTests = []listingFilterTestCases{
 		{"", []shown{
-			{"*", unstyled("/pinned")},
-			{"300", unstyled("/src/github.com/elves/elvish")},
-			{"233", unstyled("/src/home/xyz")},
-			{"100", unstyled("~/dir")},       // home is abbreviated
-			{"77", unstyled(`"/foo/\nbar"`)}, // special char is quoted
-			{"6", unstyled("/usr/elves/elvish")}}},
+			{"*", ui.Unstyled("/pinned")},
+			{"300", ui.Unstyled("/src/github.com/elves/elvish")},
+			{"233", ui.Unstyled("/src/home/xyz")},
+			{"100", ui.Unstyled("~/dir")},       // home is abbreviated
+			{"77", ui.Unstyled(`"/foo/\nbar"`)}, // special char is quoted
+			{"6", ui.Unstyled("/usr/elves/elvish")}}},
 		{"/s", []shown{
-			{"300", unstyled("/src/github.com/elves/elvish")},
-			{"233", unstyled("/src/home/xyz")},
-			{"6", unstyled("/usr/elves/elvish")}}},
+			{"300", ui.Unstyled("/src/github.com/elves/elvish")},
+			{"233", ui.Unstyled("/src/home/xyz")},
+			{"6", ui.Unstyled("/usr/elves/elvish")}}},
 		{"/e/e", []shown{
-			{"300", unstyled("/src/github.com/elves/elvish")},
-			{"6", unstyled("/usr/elves/elvish")}}},
-		{"x", []shown{{"233", unstyled("/src/home/xyz")}}},
+			{"300", ui.Unstyled("/src/github.com/elves/elvish")},
+			{"6", ui.Unstyled("/usr/elves/elvish")}}},
+		{"x", []shown{{"233", ui.Unstyled("/src/home/xyz")}}},
 		// Matchers operate on the displayed text, not the actual path.
 		// 1. Home directory is abbreviated to ~, and is matched by ~, but not by
 		//    the actual path.
-		{"~", []shown{{"100", unstyled("~/dir")}}},
-		{"home", []shown{{"233", unstyled("/src/home/xyz")}}},
+		{"~", []shown{{"100", ui.Unstyled("~/dir")}}},
+		{"home", []shown{{"233", ui.Unstyled("/src/home/xyz")}}},
 		// 2. Special characters are quoted, and are matched by the quoted form,
 		//    not by the actual form.
 		{"\n", []shown{}},
-		{"\\n", []shown{{"77", unstyled(`"/foo/\nbar"`)}}},
+		{"\\n", []shown{{"77", ui.Unstyled(`"/foo/\nbar"`)}}},
 	}
 )
 

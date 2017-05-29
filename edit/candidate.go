@@ -1,13 +1,14 @@
 package edit
 
 import (
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
 
 type candidate struct {
-	code string // This is what will be substitued on the command line.
-	menu styled // This is what is displayed in the completion menu.
+	code string    // This is what will be substitued on the command line.
+	menu ui.Styled // This is what is displayed in the completion menu.
 }
 
 // rawCandidate is what can be converted to a candidate.
@@ -27,14 +28,14 @@ func (p plainCandidate) text() string { return string(p) }
 func (p plainCandidate) cook(q parse.PrimaryType) *candidate {
 	s := string(p)
 	quoted, _ := parse.QuoteAs(s, q)
-	return &candidate{code: quoted, menu: unstyled(s)}
+	return &candidate{code: quoted, menu: ui.Unstyled(s)}
 }
 
 type complexCandidate struct {
-	stem          string // Used in the code and the menu.
-	codeSuffix    string // Appended to the code.
-	displaySuffix string // Appended to the display.
-	style         styles // Used in the menu.
+	stem          string    // Used in the code and the menu.
+	codeSuffix    string    // Appended to the code.
+	displaySuffix string    // Appended to the display.
+	style         ui.Styles // Used in the menu.
 }
 
 func (c *complexCandidate) Kind() string    { return "map" }
@@ -46,7 +47,7 @@ func (c *complexCandidate) cook(q parse.PrimaryType) *candidate {
 	quoted, _ := parse.QuoteAs(c.stem, q)
 	return &candidate{
 		code: quoted + c.codeSuffix,
-		menu: styled{c.stem + c.displaySuffix, c.style},
+		menu: ui.Styled{c.stem + c.displaySuffix, c.style},
 	}
 }
 

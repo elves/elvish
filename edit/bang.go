@@ -48,7 +48,7 @@ func (b *bang) Len() int {
 	return len(b.filtered)
 }
 
-func (b *bang) Show(i int) (string, styled) {
+func (b *bang) Show(i int) (string, ui.Styled) {
 	entry := b.filtered[i]
 	var head string
 	if entry.i == -1 {
@@ -58,7 +58,7 @@ func (b *bang) Show(i int) (string, styled) {
 	} else {
 		head = fmt.Sprintf("%d", entry.i)
 	}
-	return head, unstyled(entry.s)
+	return head, ui.Unstyled(entry.s)
 }
 
 func (b *bang) Filter(filter string) int {

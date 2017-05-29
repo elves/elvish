@@ -58,8 +58,8 @@ type editorState struct {
 	lexedLine      *string
 	chunk          *parse.Chunk
 	styling        *styling
-	promptContent  []*styled
-	rpromptContent []*styled
+	promptContent  []*ui.Styled
+	rpromptContent []*ui.Styled
 	dot            int
 
 	mode Mode
@@ -153,7 +153,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 		}
 
 		ed.styling = &styling{}
-		highlight(n, ed)
+		doHighlight(n, ed)
 
 		_, err = ed.evaler.Compile(n, "[interactive]", src)
 		if err != nil && !atEnd(err, len(src)) {

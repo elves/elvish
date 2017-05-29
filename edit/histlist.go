@@ -68,8 +68,8 @@ func (hl *histlist) Len() int {
 	return len(hl.shown)
 }
 
-func (hl *histlist) Show(i int) (string, styled) {
-	return fmt.Sprintf("%d", hl.index[i]), unstyled(hl.shown[i])
+func (hl *histlist) Show(i int) (string, ui.Styled) {
+	return fmt.Sprintf("%d", hl.index[i]), ui.Unstyled(hl.shown[i])
 }
 
 func (hl *histlist) Filter(filter string) int {

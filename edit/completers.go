@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
@@ -104,7 +105,7 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	// Build candidates.
 	for _, varname := range entries {
 		if match(varname, nameHead) {
-			cand := &candidate{code: varname, menu: unstyled(varname)}
+			cand := &candidate{code: varname, menu: ui.Unstyled(varname)}
 			cands = append(cands, cand)
 		}
 	}
@@ -269,7 +270,7 @@ func complFormHeadInner(head string, ev *eval.Evaler) ([]rawCandidate, error) {
 	got := func(s string) {
 		commands = append(commands, plainCandidate(s))
 	}
-	for special := range isBuiltinSpecial {
+	for special := range eval.IsBuiltinSpecial {
 		got(special)
 	}
 	explode, ns, _ := eval.ParseVariable(head)
@@ -438,7 +439,7 @@ func complFilenameInner(head string, executableOnly bool) (
 
 		cands = append(cands, &complexCandidate{
 			stem: full, codeSuffix: suffix,
-			style: stylesFromString(lsColor.getStyle(full)),
+			style: ui.StylesFromString(lsColor.getStyle(full)),
 		})
 	}
 

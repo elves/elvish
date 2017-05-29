@@ -3,11 +3,13 @@ package edit
 import (
 	"reflect"
 	"testing"
+
+	"github.com/elves/elvish/edit/ui"
 )
 
 type shown struct {
 	header  string
-	content styled
+	content ui.Styled
 }
 
 type listingFilterTestCases struct {

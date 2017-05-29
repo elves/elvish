@@ -252,7 +252,7 @@ func (c *completion) maxWidth(lo, hi int) int {
 	}
 	width := 0
 	for i := lo; i < hi; i++ {
-		w := util.Wcswidth(c.filtered[i].menu.text)
+		w := util.Wcswidth(c.filtered[i].menu.Text)
 		if width < w {
 			width = w
 		}
@@ -329,11 +329,11 @@ func (c *completion) ListRender(width, maxHeight int) *buffer {
 				col.writePadding(totalColWidth, styleForCompletion.String())
 			} else {
 				col.writePadding(completionColMarginLeft, styleForCompletion.String())
-				s := joinStyles(styleForCompletion, cands[j].menu.styles)
+				s := ui.JoinStyles(styleForCompletion, cands[j].menu.Styles)
 				if j == c.selected {
 					s = append(s, styleForSelectedCompletion.String())
 				}
-				col.writes(util.ForceWcwidth(cands[j].menu.text, colWidth), s.String())
+				col.writes(util.ForceWcwidth(cands[j].menu.Text, colWidth), s.String())
 				col.writePadding(completionColMarginRight, styleForCompletion.String())
 				if !trimmed {
 					c.lastShownInFull = j
@@ -370,7 +370,7 @@ func (c *completion) changeFilter(f string) {
 	}
 	c.filtered = nil
 	for _, cand := range c.candidates {
-		if strings.Contains(cand.menu.text, f) {
+		if strings.Contains(cand.menu.Text, f) {
 			c.filtered = append(c.filtered, cand)
 		}
 	}

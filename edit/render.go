@@ -4,6 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -54,7 +55,7 @@ func (lp placeholderRenderer) render(b *buffer) {
 }
 
 type listingRenderer struct {
-	lines []styled
+	lines []ui.Styled
 }
 
 func (ls listingRenderer) render(b *buffer) {
@@ -62,7 +63,7 @@ func (ls listingRenderer) render(b *buffer) {
 		if i > 0 {
 			b.newline()
 		}
-		b.writes(util.ForceWcwidth(line.text, b.width), line.styles.String())
+		b.writes(util.ForceWcwidth(line.Text, b.width), line.Styles.String())
 	}
 }
 
@@ -124,11 +125,11 @@ func (nr linesRenderer) render(b *buffer) {
 // cmdlineRenderer renders the command line, including the prompt, the user's
 // input and the rprompt.
 type cmdlineRenderer struct {
-	prompt  []*styled
+	prompt  []*ui.Styled
 	line    string
 	styling *styling
 	dot     int
-	rprompt []*styled
+	rprompt []*ui.Styled
 
 	hasComp   bool
 	compBegin int
@@ -140,7 +141,7 @@ type cmdlineRenderer struct {
 	histText  string
 }
 
-func newCmdlineRenderer(p []*styled, l string, s *styling, d int, rp []*styled) *cmdlineRenderer {
+func newCmdlineRenderer(p []*ui.Styled, l string, s *styling, d int, rp []*ui.Styled) *cmdlineRenderer {
 	return &cmdlineRenderer{prompt: p, line: l, styling: s, dot: d, rprompt: rp}
 }
 
@@ -206,7 +207,7 @@ func (clr *cmdlineRenderer) render(b *buffer) {
 	if len(clr.rprompt) > 0 {
 		padding := b.width - b.col
 		for _, s := range clr.rprompt {
-			padding -= util.Wcswidth(s.text)
+			padding -= util.Wcswidth(s.Text)
 		}
 		if padding >= 1 {
 			b.eagerWrap = false

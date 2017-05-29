@@ -3,6 +3,7 @@ package edit
 import (
 	"strings"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/util"
 )
 
@@ -178,9 +179,9 @@ func (b *buffer) writePadding(w int, style string) {
 }
 
 // writeStyleds writes a slice of styled structs.
-func (b *buffer) writeStyleds(ss []*styled) {
+func (b *buffer) writeStyleds(ss []*ui.Styled) {
 	for _, s := range ss {
-		b.writes(s.text, s.styles.String())
+		b.writes(s.Text, s.Styles.String())
 	}
 }
 

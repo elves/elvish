@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/user"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
@@ -15,7 +16,7 @@ func promptVariable() eval.Variable {
 		args []eval.Value, opts map[string]eval.Value) {
 
 		out := ec.OutputChan()
-		out <- &styled{util.Getwd() + "> ", styles{}}
+		out <- &ui.Styled{util.Getwd() + "> ", ui.Styles{}}
 	}
 	return eval.NewPtrVariableWithValidator(
 		&eval.BuiltinFn{"default prompt", prompt}, eval.ShouldBeFn)
@@ -42,7 +43,7 @@ func rpromptVariable() eval.Variable {
 		args []eval.Value, opts map[string]eval.Value) {
 
 		out := ec.OutputChan()
-		out <- &styled{rpromptStr, styles{"7"}}
+		out <- &ui.Styled{rpromptStr, ui.Styles{"7"}}
 	}
 
 	return eval.NewPtrVariableWithValidator(

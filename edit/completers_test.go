@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
@@ -25,9 +26,9 @@ func TestComplIndexInner(t *testing.T) {
 }
 
 var (
-	fileStyle = stylesFromString("1")
-	exeStyle  = stylesFromString("2")
-	dirStyle  = stylesFromString("4")
+	fileStyle = ui.StylesFromString("1")
+	exeStyle  = ui.StylesFromString("2")
+	dirStyle  = ui.StylesFromString("4")
 )
 
 var complFilenameInnerTests = []struct {

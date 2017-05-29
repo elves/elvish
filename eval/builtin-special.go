@@ -17,9 +17,9 @@ var ErrNoDataDir = errors.New("There is no data directory")
 
 var builtinSpecials map[string]compileBuiltin
 
-// BuiltinSpecialNames contains all names of builtin special forms. It is
-// useful for the syntax highlighter.
-var BuiltinSpecialNames []string
+// IsBuiltinSpecial is the set of all names of builtin special forms. It is
+// intended for external consumption, e.g. the syntax highlighter.
+var IsBuiltinSpecial = map[string]bool{}
 
 func init() {
 	// Needed to avoid initialization loop
@@ -34,8 +34,8 @@ func init() {
 		"for":   compileFor,
 		"try":   compileTry,
 	}
-	for k := range builtinSpecials {
-		BuiltinSpecialNames = append(BuiltinSpecialNames, k)
+	for name := range builtinSpecials {
+		IsBuiltinSpecial[name] = true
 	}
 }
 

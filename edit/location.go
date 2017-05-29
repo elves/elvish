@@ -55,7 +55,7 @@ func (loc *location) Len() int {
 	return len(loc.filtered)
 }
 
-func (loc *location) Show(i int) (string, styled) {
+func (loc *location) Show(i int) (string, ui.Styled) {
 	var header string
 	score := loc.filtered[i].Score
 	if score == PinnedScore {
@@ -63,7 +63,7 @@ func (loc *location) Show(i int) (string, styled) {
 	} else {
 		header = fmt.Sprintf("%.0f", score)
 	}
-	return header, unstyled(showPath(loc.filtered[i].Path, loc.home))
+	return header, ui.Unstyled(showPath(loc.filtered[i].Path, loc.home))
 }
 
 func (loc *location) Filter(filter string) int {

@@ -3,6 +3,8 @@ package edit
 import (
 	"bytes"
 	"sort"
+
+	"github.com/elves/elvish/edit/ui"
 )
 
 // Preparing and applying styling.
@@ -56,7 +58,7 @@ func (a *stylingApplier) at(i int) {
 			if b.Len() > 0 {
 				b.WriteString(";")
 			}
-			b.WriteString(styleTranslated(style))
+			b.WriteString(ui.TranslateStyle(style))
 		}
 		a.result = b.String()
 	}
