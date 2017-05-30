@@ -16,23 +16,8 @@ import (
 func Parse(srcname, src string) (*Chunk, error) {
 	ps := NewParser(srcname, src)
 	n := ParseChunk(ps)
-	return n, GetError(ps, src, n)
-}
-
-// NewParser creates a new parser from a piece of source text and its name.
-func NewParser(srcname, src string) *parser {
-	return &parser{srcname, src, 0, 0, []map[rune]int{{}}, Error{}}
-}
-
-// GetError gets the parsing error after calling one of the parse* functions.
-func GetError(ps *parser, src string, n Node) error {
-	if ps.pos != len(src) {
-		ps.error(errUnexpectedRune)
-	}
-	if len(ps.errors.Entries) > 0 {
-		return &ps.errors
-	}
-	return nil
+	ps.Done()
+	return n, ps.Errors()
 }
 
 // Errors.

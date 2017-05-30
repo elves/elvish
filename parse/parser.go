@@ -21,6 +21,27 @@ type parser struct {
 	errors  Error
 }
 
+// NewParser creates a new parser from a piece of source text and its name.
+func NewParser(srcname, src string) *parser {
+	return &parser{srcname, src, 0, 0, []map[rune]int{{}}, Error{}}
+}
+
+// Done tells the parser that parsing has completed.
+func (ps *parser) Done() {
+	if ps.pos != len(ps.src) {
+		ps.error(errUnexpectedRune)
+	}
+}
+
+// Errors gets the parsing errors after calling one of the parse* functions. If
+// the return value is not nil, it is always of type Error.
+func (ps *parser) Errors() error {
+	if len(ps.errors.Entries) > 0 {
+		return &ps.errors
+	}
+	return nil
+}
+
 const eof rune = -1
 
 func (ps *parser) peek() rune {
