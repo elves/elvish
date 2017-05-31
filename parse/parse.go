@@ -64,7 +64,7 @@ type Chunk struct {
 	Pipelines []*Pipeline
 }
 
-func (bn *Chunk) parse(ps *parser) {
+func (bn *Chunk) parse(ps *Parser) {
 	bn.parseSeps(ps)
 	for startsPipeline(ps.peek()) {
 		bn.addToPipelines(ParsePipeline(ps))
@@ -80,7 +80,7 @@ func isPipelineSep(r rune) bool {
 
 // parseSeps parses pipeline separators along with whitespaces. It returns the
 // number of pipeline separators parsed.
-func (bn *Chunk) parseSeps(ps *parser) int {
+func (bn *Chunk) parseSeps(ps *Parser) int {
 	nseps := 0
 	for {
 		r := ps.peek()
@@ -116,7 +116,7 @@ type Pipeline struct {
 	Background bool
 }
 
-func (pn *Pipeline) parse(ps *parser) {
+func (pn *Pipeline) parse(ps *Parser) {
 	pn.addToForms(ParseForm(ps))
 	for parseSep(pn, ps, '|') {
 		parseSpacesAndNewlines(pn, ps)
@@ -153,7 +153,7 @@ type Form struct {
 	ExitusRedir *ExitusRedir
 }
 
-func (fn *Form) parse(ps *parser) {
+func (fn *Form) parse(ps *Parser) {
 	parseSpaces(fn, ps)
 	for fn.tryAssignment(ps) {
 		parseSpaces(fn, ps)
@@ -231,7 +231,7 @@ func (fn *Form) parse(ps *parser) {
 // tryAssignment tries to parse an assignment. If succeeded, it adds the parsed
 // assignment to fn.Assignments and returns true. Otherwise it rewinds the
 // parser and returns false.
-func (fn *Form) tryAssignment(ps *parser) bool {
+func (fn *Form) tryAssignment(ps *Parser) bool {
 	if !startsIndexing(ps.peek(), false) || ps.peek() == '=' {
 		return false
 	}
@@ -260,7 +260,7 @@ type Assignment struct {
 	Right *Compound
 }
 
-func (an *Assignment) parse(ps *parser) {
+func (an *Assignment) parse(ps *Parser) {
 	ps.cut('=')
 	an.setLeft(ParseIndexing(ps, false))
 	head := an.Left.Head
@@ -275,7 +275,7 @@ func (an *Assignment) parse(ps *parser) {
 	an.setRight(ParseCompound(ps, false))
 }
 
-func checkVariableInAssignment(p *Primary, ps *parser) bool {
+func checkVariableInAssignment(p *Primary, ps *Parser) bool {
 	if p.Type == Braced {
 		// XXX don't check further inside braced expression
 		return true
@@ -301,7 +301,7 @@ type ExitusRedir struct {
 	Dest *Compound
 }
 
-func (ern *ExitusRedir) parse(ps *parser) {
+func (ern *ExitusRedir) parse(ps *Parser) {
 	ps.next()
 	ps.next()
 	addSep(ern, ps)
@@ -318,7 +318,7 @@ type Redir struct {
 	Right     *Compound
 }
 
-func (rn *Redir) parse(ps *parser, dest *Compound) {
+func (rn *Redir) parse(ps *Parser, dest *Compound) {
 	// The parsing of the Left part is done in Form.parse.
 	if dest != nil {
 		rn.setLeft(dest)
@@ -380,7 +380,7 @@ type Compound struct {
 	Indexings []*Indexing
 }
 
-func (cn *Compound) parse(ps *parser, head bool) {
+func (cn *Compound) parse(ps *Parser, head bool) {
 	cn.tilde(ps)
 	for startsIndexing(ps.peek(), head) {
 		cn.addToIndexings(ParseIndexing(ps, head))
@@ -390,7 +390,7 @@ func (cn *Compound) parse(ps *parser, head bool) {
 // tilde parses a tilde if there is one. It is implemented here instead of
 // within Primary since a tilde can only appear as the first part of a
 // Compound. Elsewhere tildes are barewords.
-func (cn *Compound) tilde(ps *parser) {
+func (cn *Compound) tilde(ps *Parser) {
 	if ps.peek() == '~' {
 		ps.next()
 		base := node{nil, ps.pos - 1, ps.pos, "~", nil}
@@ -412,7 +412,7 @@ type Indexing struct {
 	Indicies []*Array
 }
 
-func (in *Indexing) parse(ps *parser, head bool) {
+func (in *Indexing) parse(ps *Parser, head bool) {
 	in.setHead(ParsePrimary(ps, head))
 	for parseSep(in, ps, '[') {
 		if !startsArray(ps.peek()) {
@@ -444,7 +444,7 @@ type Array struct {
 	Semicolons []int
 }
 
-func (sn *Array) parse(ps *parser, allowSemicolon bool) {
+func (sn *Array) parse(ps *Parser, allowSemicolon bool) {
 	parseSep := func() {
 		parseSpacesAndNewlines(sn, ps)
 		if allowSemicolon {
@@ -504,7 +504,7 @@ const (
 	Braced
 )
 
-func (pn *Primary) parse(ps *parser, head bool) {
+func (pn *Primary) parse(ps *Parser, head bool) {
 	r := ps.peek()
 	if !startsPrimary(r, head) {
 		ps.error(errShouldBePrimary)
@@ -545,7 +545,7 @@ func (pn *Primary) parse(ps *parser, head bool) {
 	}
 }
 
-func (pn *Primary) singleQuoted(ps *parser) {
+func (pn *Primary) singleQuoted(ps *Parser) {
 	pn.Type = SingleQuoted
 	ps.next()
 	var buf bytes.Buffer
@@ -570,7 +570,7 @@ func (pn *Primary) singleQuoted(ps *parser) {
 	}
 }
 
-func (pn *Primary) doubleQuoted(ps *parser) {
+func (pn *Primary) doubleQuoted(ps *Parser) {
 	pn.Type = DoubleQuoted
 	ps.next()
 	var buf bytes.Buffer
@@ -672,7 +672,7 @@ func hexToDigit(r rune) (rune, bool) {
 	}
 }
 
-func (pn *Primary) variable(ps *parser) {
+func (pn *Primary) variable(ps *Parser) {
 	pn.Type = Variable
 	defer func() { pn.Value = ps.src[pn.begin+1 : ps.pos] }()
 	ps.next()
@@ -699,7 +699,7 @@ func allowedInVariableName(r rune) bool {
 		r == '-' || r == '_' || r == ':' || r == '&'
 }
 
-func (pn *Primary) wildcard(ps *parser) {
+func (pn *Primary) wildcard(ps *Parser) {
 	pn.Type = Wildcard
 	for isWildcard(ps.peek()) {
 		ps.next()
@@ -711,7 +711,7 @@ func isWildcard(r rune) bool {
 	return r == '*' || r == '?'
 }
 
-func (pn *Primary) exitusCapture(ps *parser) {
+func (pn *Primary) exitusCapture(ps *Parser) {
 	ps.next()
 	ps.next()
 	addSep(pn, ps)
@@ -727,7 +727,7 @@ func (pn *Primary) exitusCapture(ps *parser) {
 	}
 }
 
-func (pn *Primary) outputCapture(ps *parser) {
+func (pn *Primary) outputCapture(ps *Parser) {
 	pn.Type = OutputCapture
 
 	var closer rune
@@ -766,7 +766,7 @@ func (pn *Primary) outputCapture(ps *parser) {
 // Map    = '[' { Space } '&' { Space } ']'
 //        = '[' { Space } { MapPair { Space } } ']'
 
-func (pn *Primary) lbracket(ps *parser) {
+func (pn *Primary) lbracket(ps *Parser) {
 	parseSep(pn, ps, '[')
 	parseSpacesAndNewlines(pn, ps)
 
@@ -816,7 +816,7 @@ func (pn *Primary) lbracket(ps *parser) {
 }
 
 // lambda parses a lambda expression. The opening brace has been seen.
-func (pn *Primary) lambda(ps *parser) {
+func (pn *Primary) lambda(ps *Parser) {
 	pn.Type = Lambda
 	ps.pushCutset()
 	pn.setChunk(ParseChunk(ps))
@@ -828,7 +828,7 @@ func (pn *Primary) lambda(ps *parser) {
 
 // Braced = '{' Compound { BracedSep Compounds } '}'
 // BracedSep = { Space | '\n' } [ ',' ] { Space | '\n' }
-func (pn *Primary) lbrace(ps *parser) {
+func (pn *Primary) lbrace(ps *Parser) {
 	parseSep(pn, ps, '{')
 
 	if r := ps.peek(); r == ';' || r == '\n' || IsSpace(r) {
@@ -866,7 +866,7 @@ func isBracedSep(r rune) bool {
 	return r == ',' || IsSpaceOrNewline(r)
 }
 
-func (pn *Primary) bareword(ps *parser, head bool) {
+func (pn *Primary) bareword(ps *Parser, head bool) {
 	pn.Type = Bareword
 	defer func() { pn.Value = ps.src[pn.begin:ps.pos] }()
 	for allowedInBareword(ps.peek(), head) {
@@ -899,7 +899,7 @@ type MapPair struct {
 	Key, Value *Compound
 }
 
-func (mpn *MapPair) parse(ps *parser) {
+func (mpn *MapPair) parse(ps *Parser) {
 	parseSep(mpn, ps, '&')
 
 	// Parse key part, cutting on '='.
@@ -930,7 +930,7 @@ func NewSep(src string, begin, end int) *Sep {
 	return &Sep{node{nil, begin, end, src[begin:end], nil}}
 }
 
-func addSep(n Node, ps *parser) {
+func addSep(n Node, ps *Parser) {
 	var begin int
 	ch := n.Children()
 	if len(ch) > 0 {
@@ -941,7 +941,7 @@ func addSep(n Node, ps *parser) {
 	addChild(n, NewSep(ps.src, begin, ps.pos))
 }
 
-func parseSep(n Node, ps *parser, sep rune) bool {
+func parseSep(n Node, ps *Parser, sep rune) bool {
 	if ps.peek() == sep {
 		ps.next()
 		addSep(n, ps)
@@ -950,7 +950,7 @@ func parseSep(n Node, ps *parser, sep rune) bool {
 	return false
 }
 
-func parseSpaces(n Node, ps *parser) {
+func parseSpaces(n Node, ps *Parser) {
 	if !IsSpace(ps.peek()) {
 		return
 	}
@@ -961,7 +961,7 @@ func parseSpaces(n Node, ps *parser) {
 	addSep(n, ps)
 }
 
-func parseSpacesAndNewlines(n Node, ps *parser) {
+func parseSpacesAndNewlines(n Node, ps *Parser) {
 	// TODO parse comments here.
 	if !IsSpaceOrNewline(ps.peek()) {
 		return

@@ -9,10 +9,10 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// parser maintains some mutable states of parsing.
+// Parser maintains some mutable states of parsing.
 //
 // NOTE: The str member is assumed to be valid UF-8.
-type parser struct {
+type Parser struct {
 	srcName string
 	src     string
 	pos     int
@@ -22,12 +22,12 @@ type parser struct {
 }
 
 // NewParser creates a new parser from a piece of source text and its name.
-func NewParser(srcname, src string) *parser {
-	return &parser{srcname, src, 0, 0, []map[rune]int{{}}, Error{}}
+func NewParser(srcname, src string) *Parser {
+	return &Parser{srcname, src, 0, 0, []map[rune]int{{}}, Error{}}
 }
 
 // Done tells the parser that parsing has completed.
-func (ps *parser) Done() {
+func (ps *Parser) Done() {
 	if ps.pos != len(ps.src) {
 		ps.error(errUnexpectedRune)
 	}
@@ -35,16 +35,21 @@ func (ps *parser) Done() {
 
 // Errors gets the parsing errors after calling one of the parse* functions. If
 // the return value is not nil, it is always of type Error.
-func (ps *parser) Errors() error {
+func (ps *Parser) Errors() error {
 	if len(ps.errors.Entries) > 0 {
 		return &ps.errors
 	}
 	return nil
 }
 
+// Source returns the source code that is being parsed.
+func (ps *Parser) Source() string {
+	return ps.src
+}
+
 const eof rune = -1
 
-func (ps *parser) peek() rune {
+func (ps *Parser) peek() rune {
 	if ps.pos == len(ps.src) {
 		return eof
 	}
@@ -55,14 +60,14 @@ func (ps *parser) peek() rune {
 	return r
 }
 
-func (ps *parser) hasPrefix(prefix string) bool {
+func (ps *Parser) hasPrefix(prefix string) bool {
 	return strings.HasPrefix(ps.src[ps.pos:], prefix)
 }
 
 // findWord looks ahead for [a-z]* that is also a valid compound. If the
 // lookahead fails, it returns an empty string. It is useful for looking for
 // command leaders.
-func (ps *parser) findPossibleLeader() string {
+func (ps *Parser) findPossibleLeader() string {
 	rest := ps.src[ps.pos:]
 	i := strings.IndexFunc(rest, func(r rune) bool {
 		return r < 'a' || r > 'z'
@@ -78,7 +83,7 @@ func (ps *parser) findPossibleLeader() string {
 	return rest[:i]
 }
 
-func (ps *parser) next() rune {
+func (ps *Parser) next() rune {
 	if ps.pos == len(ps.src) {
 		ps.overEOF++
 		return eof
@@ -91,7 +96,7 @@ func (ps *parser) next() rune {
 	return r
 }
 
-func (ps *parser) backup() {
+func (ps *Parser) backup() {
 	if ps.overEOF > 0 {
 		ps.overEOF--
 		return
@@ -100,7 +105,7 @@ func (ps *parser) backup() {
 	ps.pos -= s
 }
 
-func (ps *parser) advance(c int) {
+func (ps *Parser) advance(c int) {
 	ps.pos += c
 	if ps.pos > len(ps.src) {
 		ps.overEOF = ps.pos - len(ps.src)
@@ -108,11 +113,11 @@ func (ps *parser) advance(c int) {
 	}
 }
 
-func (ps *parser) errorp(begin, end int, e error) {
+func (ps *Parser) errorp(begin, end int, e error) {
 	ps.errors.Add(e.Error(), util.SourceContext{ps.srcName, ps.src, begin, end, nil})
 }
 
-func (ps *parser) error(e error) {
+func (ps *Parser) error(e error) {
 	end := ps.pos
 	if end < len(ps.src) {
 		end++
@@ -120,29 +125,29 @@ func (ps *parser) error(e error) {
 	ps.errorp(ps.pos, end, e)
 }
 
-func (ps *parser) pushCutset(rs ...rune) {
+func (ps *Parser) pushCutset(rs ...rune) {
 	ps.cutsets = append(ps.cutsets, map[rune]int{})
 	ps.cut(rs...)
 }
 
-func (ps *parser) popCutset() {
+func (ps *Parser) popCutset() {
 	n := len(ps.cutsets)
 	ps.cutsets[n-1] = nil
 	ps.cutsets = ps.cutsets[:n-1]
 }
 
-func (ps *parser) currentCutset() map[rune]int {
+func (ps *Parser) currentCutset() map[rune]int {
 	return ps.cutsets[len(ps.cutsets)-1]
 }
 
-func (ps *parser) cut(rs ...rune) {
+func (ps *Parser) cut(rs ...rune) {
 	cutset := ps.currentCutset()
 	for _, r := range rs {
 		cutset[r]++
 	}
 }
 
-func (ps *parser) uncut(rs ...rune) {
+func (ps *Parser) uncut(rs ...rune) {
 	cutset := ps.currentCutset()
 	for _, r := range rs {
 		cutset[r]--

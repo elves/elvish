@@ -16,7 +16,7 @@ For every node type T, it generates the following:
   method that sets this field and adds it to the children list.
 
 * If the type has a parse method that takes a *paser, it genertes a parseT
-  func that takes a *parser and returns *T. The func creates a new instance of
+  func that takes a *Parser and returns *T. The func creates a new instance of
   *T, sets its begin field, calls its parse method, and set its end and
   sourceText fields.
 
@@ -52,7 +52,7 @@ func (n *X) addToG(ch *Z) {
     addChild(n, ch)
 }
 
-func ParseX(ps *parser) *X {
+func ParseX(ps *Parser) *X {
     n := &X{node: node{begin: ps.pos}}
     n.parse(ps)
     n.end = ps.pos
@@ -103,7 +103,7 @@ func (n *{parent}) addTo{field}(ch *{child}) {{
 def put_parse(out, typename, extraargs):
     extranames = ', '.join(a.split(' ')[0] for a in extraargs.split(', ')) if extraargs else ''
     print >>out, '''
-func Parse{typename}(ps *parser{extraargs}) *{typename} {{
+func Parse{typename}(ps *Parser{extraargs}) *{typename} {{
     n := &{typename}{{node: node{{begin: ps.pos}}}}
     n.parse(ps{extranames})
     n.end = ps.pos
@@ -140,7 +140,7 @@ def main():
             put_get(out, in_type)
             continue
         m = re.match(
-            r'^func \(.* \*(.*)\) parse\(ps \*parser(.*?)\) {$', line)
+            r'^func \(.* \*(.*)\) parse\(ps \*Parser(.*?)\) {$', line)
         if m:
             typename, extraargs = m.groups()
             put_parse(out, typename, extraargs)
