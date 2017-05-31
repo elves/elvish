@@ -105,9 +105,13 @@ func (s *Highlighter) primary(n *parse.Primary) {
 
 func (s *Highlighter) sep(n *parse.Sep) {
 	septext := n.SourceText()
-	if strings.HasPrefix(septext, "#") {
+	switch {
+	case strings.TrimSpace(septext) == "":
+		// Don't do anything. Whitespaces don't get any styling.
+	case strings.HasPrefix(septext, "#"):
+		// Comment.
 		s.AddStyling(n.Begin(), n.End(), styleForComment.String())
-	} else {
+	default:
 		s.AddStyling(n.Begin(), n.End(), styleForSep[septext])
 	}
 }

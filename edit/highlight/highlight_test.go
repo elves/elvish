@@ -19,9 +19,27 @@ type highlightTest struct {
 	wantStylings []styling
 }
 
-// In the test cases against Highlighter.form, commands that start with x are
-// bad, everything else is good.
+// In the test cases, commands that start with x are bad, everything else is
+// good.
 func goodFormHead(head string) bool { return !strings.HasPrefix(head, "x") }
+
+// This just tests the Highlight method itself, its dependencies are tested
+// below.
+var highlightTests = []highlightTest{
+	//01234
+	{"x 'y'", []styling{
+		{0, 1, styleForBadCommand.String()},
+		{0, 1, styleForPrimary[parse.Bareword].String()},
+		{2, 5, styleForPrimary[parse.SingleQuoted].String()},
+	}},
+}
+
+func TestHighlight(t *testing.T) {
+	test(t, "form", highlightTests,
+		func(hl *Highlighter, ps *parse.Parser) {
+			hl.Highlight(parse.ParseChunk(ps))
+		})
+}
 
 var highlightFormTests = []highlightTest{
 	// Temporary assignments.
@@ -81,10 +99,10 @@ var highlightFormTests = []highlightTest{
 }
 
 func TestHighlightForm(t *testing.T) {
-	testWithGoodFormHead(t, "form", highlightFormTests,
+	test(t, "form", highlightFormTests,
 		func(hl *Highlighter, ps *parse.Parser) {
 			hl.form(parse.ParseForm(ps))
-		}, goodFormHead)
+		})
 }
 
 var highlightPrimaryTests = []highlightTest{
@@ -116,12 +134,6 @@ func TestHighlightSep(t *testing.T) {
 
 func test(t *testing.T, what string,
 	tests []highlightTest, f func(*Highlighter, *parse.Parser)) {
-
-	testWithGoodFormHead(t, what, tests, f, nil)
-}
-
-func testWithGoodFormHead(t *testing.T, what string, tests []highlightTest,
-	f func(*Highlighter, *parse.Parser), goodFormHead func(string) bool) {
 
 	for _, test := range tests {
 		var stylings []styling
