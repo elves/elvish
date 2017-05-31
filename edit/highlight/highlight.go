@@ -60,9 +60,10 @@ func (s *Highlighter) form(n *parse.Form) {
 					return false
 				}
 				a := n.Args[i]
-				if a.SourceText() == name {
-					s.AddStyling(a.Begin(), a.End(), styleForSep[name])
+				if a.SourceText() != name {
+					return false
 				}
+				s.AddStyling(a.Begin(), a.End(), styleForSep[name])
 				return true
 			}
 			if highlightKeyword("except") {
@@ -77,6 +78,7 @@ func (s *Highlighter) form(n *parse.Form) {
 			}
 			highlightKeyword("finally")
 		}
+		// TODO(xiaq): Handle other special forms.
 	}
 }
 
