@@ -20,6 +20,14 @@ type ptrVariable struct {
 	validator func(Value) error
 }
 
+type invalidValueError struct {
+	inner error
+}
+
+func (err invalidValueError) Error() string {
+	return "invalid value: " + err.inner.Error()
+}
+
 func NewPtrVariable(v Value) Variable {
 	return NewPtrVariableWithValidator(v, nil)
 }
@@ -31,7 +39,7 @@ func NewPtrVariableWithValidator(v Value, vld func(Value) error) Variable {
 func (iv ptrVariable) Set(val Value) {
 	if iv.validator != nil {
 		if err := iv.validator(val); err != nil {
-			throw(errors.New("invalid value: " + err.Error()))
+			throw(invalidValueError{err})
 		}
 	}
 	*iv.valuePtr = val
