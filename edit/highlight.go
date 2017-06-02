@@ -10,11 +10,11 @@ import (
 )
 
 func doHighlight(n parse.Node, ed *Editor) {
-	s := &highlight.Highlighter{
+	s := &highlight.Emitter{
 		func(s string) bool { return goodFormHead(s, ed) },
 		ed.styling.add,
 	}
-	s.Highlight(n)
+	s.EmitAll(n)
 }
 
 func goodFormHead(head string, ed *Editor) bool {

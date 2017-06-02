@@ -14,7 +14,7 @@ type styling struct {
 	style string
 }
 
-type highlightTest struct {
+type emitTests struct {
 	source       string
 	wantStylings []styling
 }
@@ -25,7 +25,7 @@ func goodFormHead(head string) bool { return !strings.HasPrefix(head, "x") }
 
 // This just tests the Highlight method itself, its dependencies are tested
 // below.
-var highlightTests = []highlightTest{
+var emitAllTests = []emitTests{
 	//01234
 	{"x 'y'", []styling{
 		{0, 1, styleForBadCommand.String()},
@@ -34,14 +34,14 @@ var highlightTests = []highlightTest{
 	}},
 }
 
-func TestHighlight(t *testing.T) {
-	test(t, "form", highlightTests,
-		func(hl *Highlighter, ps *parse.Parser) {
-			hl.Highlight(parse.ParseChunk(ps))
+func TestEmitAll(t *testing.T) {
+	test(t, "form", emitAllTests,
+		func(e *Emitter, ps *parse.Parser) {
+			e.EmitAll(parse.ParseChunk(ps))
 		})
 }
 
-var highlightFormTests = []highlightTest{
+var formTests = []emitTests{
 	// Temporary assignments.
 	{"a=1 b=2", []styling{
 		{0, 1, styleForGoodVariable.String()},
@@ -98,51 +98,51 @@ var highlightFormTests = []highlightTest{
 	}},
 }
 
-func TestHighlightForm(t *testing.T) {
-	test(t, "form", highlightFormTests,
-		func(hl *Highlighter, ps *parse.Parser) {
-			hl.form(parse.ParseForm(ps))
+func TestForm(t *testing.T) {
+	test(t, "form", formTests,
+		func(e *Emitter, ps *parse.Parser) {
+			e.form(parse.ParseForm(ps))
 		})
 }
 
-var highlightPrimaryTests = []highlightTest{
+var primaryTests = []emitTests{
 	{"what", []styling{{0, 4, styleForPrimary[parse.Bareword].String()}}},
 	{"$var", []styling{{0, 4, styleForPrimary[parse.Variable].String()}}},
 	{"'a'", []styling{{0, 3, styleForPrimary[parse.SingleQuoted].String()}}},
 	{`"x"`, []styling{{0, 3, styleForPrimary[parse.DoubleQuoted].String()}}},
 }
 
-func TestHighlightPrimary(t *testing.T) {
-	test(t, "primary", highlightPrimaryTests,
-		func(hl *Highlighter, ps *parse.Parser) {
-			hl.primary(parse.ParsePrimary(ps, false))
+func TestPrimary(t *testing.T) {
+	test(t, "primary", primaryTests,
+		func(e *Emitter, ps *parse.Parser) {
+			e.primary(parse.ParsePrimary(ps, false))
 		})
 }
 
-var highlightSepTests = []highlightTest{
+var sepTests = []emitTests{
 	{">", []styling{{0, 1, styleForSep[">"]}}},
 	{"# comment", []styling{{0, 9, styleForComment.String()}}},
 }
 
-func TestHighlightSep(t *testing.T) {
-	test(t, "sep", highlightSepTests,
-		func(hl *Highlighter, ps *parse.Parser) {
+func TestSep(t *testing.T) {
+	test(t, "sep", sepTests,
+		func(e *Emitter, ps *parse.Parser) {
 			src := ps.Source()
-			hl.sep(parse.NewSep(src, 0, len(src)))
+			e.sep(parse.NewSep(src, 0, len(src)))
 		})
 }
 
 func test(t *testing.T, what string,
-	tests []highlightTest, f func(*Highlighter, *parse.Parser)) {
+	tests []emitTests, f func(*Emitter, *parse.Parser)) {
 
 	for _, test := range tests {
 		var stylings []styling
-		hl := &Highlighter{goodFormHead, func(b, e int, s string) {
+		e := &Emitter{goodFormHead, func(b, e int, s string) {
 			stylings = append(stylings, styling{b, e, s})
 		}}
 		ps := parse.NewParser("<test>", test.source)
 
-		f(hl, ps)
+		f(e, ps)
 
 		if !reflect.DeepEqual(stylings, test.wantStylings) {
 			t.Errorf("%s %q gets stylings %v, want %v", what, test.source,
