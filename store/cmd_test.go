@@ -5,21 +5,22 @@ import "testing"
 var (
 	cmds     = []string{"echo foo", "put bar", "put lorem", "echo bar"}
 	searches = []struct {
-		first     bool
+		next      bool
 		seq       int
 		prefix    string
-		wantedCmd Cmd
+		wantedSeq int
+		wantedCmd string
 		wantedErr error
 	}{
-		{false, 5, "echo", Cmd{4, "echo bar"}, nil},
-		{false, 5, "put", Cmd{3, "put lorem"}, nil},
-		{false, 4, "echo", Cmd{1, "echo foo"}, nil},
-		{false, 3, "f", Cmd{0, ""}, ErrNoMatchingCmd},
+		{false, 5, "echo", 4, "echo bar", nil},
+		{false, 5, "put", 3, "put lorem", nil},
+		{false, 4, "echo", 1, "echo foo", nil},
+		{false, 3, "f", 0, "", ErrNoMatchingCmd},
 
-		{true, 1, "echo", Cmd{1, "echo foo"}, nil},
-		{true, 1, "put", Cmd{2, "put bar"}, nil},
-		{true, 2, "echo", Cmd{4, "echo bar"}, nil},
-		{true, 4, "put", Cmd{0, ""}, ErrNoMatchingCmd},
+		{true, 1, "echo", 1, "echo foo", nil},
+		{true, 1, "put", 2, "put bar", nil},
+		{true, 2, "echo", 4, "echo bar", nil},
+		{true, 4, "put", 0, "", ErrNoMatchingCmd},
 	}
 )
 
@@ -43,24 +44,25 @@ func TestCmd(t *testing.T) {
 	}
 	for i, wantedCmd := range cmds {
 		seq := i + startSeq
-		cmd, err := tStore.GetCmd(seq)
+		cmd, err := tStore.Cmd(seq)
 		if cmd != wantedCmd || err != nil {
 			t.Errorf("tStore.Cmd(%v) => (%v, %v), want (%v, nil)",
 				seq, cmd, err, wantedCmd)
 		}
 	}
 	for _, tt := range searches {
-		f := tStore.GetLastCmd
-		fname := "tStore.LastCmd"
-		if tt.first {
-			f = tStore.GetFirstCmd
-			fname = "tStore.FirstCmd"
+		f := tStore.PrevCmd
+		funcname := "tStore.PrevCmd"
+		if tt.next {
+			f = tStore.NextCmd
+			funcname = "tStore.NextCmd"
 		}
-		cmd, err := f(tt.seq, tt.prefix)
-		if cmd != tt.wantedCmd || err != tt.wantedErr {
+		seq, cmd, err := f(tt.seq, tt.prefix)
+		if seq != tt.wantedSeq || cmd != tt.wantedCmd || err != tt.wantedErr {
 			t.Errorf("%s(%v, %v) => (%v, %v), want (%v, %v)",
-				fname, tt.seq, tt.prefix,
-				cmd, err, tt.wantedCmd, tt.wantedErr)
+				funcname, tt.seq, tt.prefix,
+				seq, cmd, err,
+				tt.wantedSeq, tt.wantedCmd, tt.wantedErr)
 		}
 	}
 }

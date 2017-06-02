@@ -92,12 +92,12 @@ func (b *bang) Accept(i int, ed *Editor) {
 }
 
 func bangStart(ed *Editor) {
-	cmd, err := ed.store.GetLastCmd(-1, "")
+	_, cmd, err := ed.store.PrevCmd(-1, "")
 	if err != nil {
 		ed.Notify("db error: %s", err.Error())
 		return
 	}
-	ed.bang = newBang(cmd.Text)
+	ed.bang = newBang(cmd)
 	ed.mode = ed.bang
 }
 

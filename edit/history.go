@@ -118,8 +118,8 @@ func (ed *Editor) prevHistory() bool {
 	i := ed.hist.current
 	var line string
 	for {
-		cmd, err := ed.store.GetLastCmd(i, ed.hist.prefix)
-		i, line = cmd.Seq, cmd.Text
+		var err error
+		i, line, err = ed.store.PrevCmd(i, ed.hist.prefix)
 		if err != nil {
 			if err != store.ErrNoMatchingCmd {
 				logger.Println("LastCmd error:", err)
@@ -143,8 +143,8 @@ func (ed *Editor) nextHistory() bool {
 	i := ed.hist.current
 	var line string
 	for {
-		cmd, err := ed.store.GetFirstCmd(i+1, ed.hist.prefix)
-		i, line = cmd.Seq, cmd.Text
+		var err error
+		i, line, err = ed.store.NextCmd(i+1, ed.hist.prefix)
 		if err != nil {
 			if err != store.ErrNoMatchingCmd {
 				logger.Println("LastCmd error:", err)

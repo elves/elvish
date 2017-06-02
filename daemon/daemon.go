@@ -124,7 +124,7 @@ func handle(c net.Conn, st *store.Store, cancel <-chan struct{}) {
 			}
 		case req.GetCmds != nil:
 			// TODO: stream from store
-			cmds, err := st.GetCmds(req.GetCmds.From, req.GetCmds.Upto)
+			cmds, err := st.Cmds(req.GetCmds.From, req.GetCmds.Upto)
 			if err != nil {
 				sendErrorHeader("GetCmds: " + err.Error())
 			} else {
@@ -132,24 +132,6 @@ func handle(c net.Conn, st *store.Store, cancel <-chan struct{}) {
 				for _, cmd := range cmds {
 					send(cmd)
 				}
-			}
-		case req.GetFirstCmd != nil:
-			r := req.GetFirstCmd
-			cmd, err := st.GetFirstCmd(r.From, r.Prefix)
-			if err != nil {
-				sendErrorHeader("GetFirstCmd: " + err.Error())
-			} else {
-				sendOKHeader(1)
-				send(cmd)
-			}
-		case req.GetLastCmd != nil:
-			r := req.GetLastCmd
-			cmd, err := st.GetLastCmd(r.Upto, r.Prefix)
-			if err != nil {
-				sendErrorHeader("GetLastCmd: " + err.Error())
-			} else {
-				sendOKHeader(1)
-				send(cmd)
 			}
 		case req.AddDir != nil:
 			err := st.AddDir(req.AddDir.Dir, req.AddDir.IncFactor)

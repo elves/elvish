@@ -9,12 +9,6 @@ import (
 // completes with no result.
 var ErrNoMatchingCmd = errors.New("no matching command line")
 
-// Cmd is an entry in the command history.
-type Cmd struct {
-	Seq  int
-	Text string
-}
-
 func init() {
 	initDB["initialize command history table"] = func(db *sql.DB) error {
 		_, err := db.Exec(`CREATE TABLE IF NOT EXISTS cmd (content text)`)
@@ -36,8 +30,8 @@ func (s *Store) AddCmd(cmd string) error {
 	return err
 }
 
-// GetCmd queries the command history item with the specified sequence number.
-func (s *Store) GetCmd(seq int) (string, error) {
+// Cmd queries the command history item with the specified sequence number.
+func (s *Store) Cmd(seq int) (string, error) {
 	row := s.db.QueryRow(`SELECT content FROM cmd WHERE rowid = ?`, seq)
 	var cmd string
 	err := row.Scan(&cmd)
@@ -65,8 +59,8 @@ func (s *Store) IterateCmds(from, upto int, f func(string) bool) error {
 	return err
 }
 
-// GetCmds returns the contents of all commands within the specified range.
-func (s *Store) GetCmds(from, upto int) ([]string, error) {
+// Cmds returns the contents of all commands within the specified range.
+func (s *Store) Cmds(from, upto int) ([]string, error) {
 	var cmds []string
 	err := s.IterateCmds(from, upto, func(cmd string) bool {
 		cmds = append(cmds, cmd)
@@ -75,16 +69,16 @@ func (s *Store) GetCmds(from, upto int) ([]string, error) {
 	return cmds, err
 }
 
-// GetFirstCmd finds the first command after the given sequence number (inclusive)
+// NextCmd finds the first command after the given sequence number (inclusive)
 // with the given prefix.
-func (s *Store) GetFirstCmd(from int, prefix string) (Cmd, error) {
+func (s *Store) NextCmd(from int, prefix string) (int, string, error) {
 	row := s.db.QueryRow(`SELECT rowid, content FROM cmd WHERE rowid >= ? AND substr(content, 1, ?) = ? ORDER BY rowid asc LIMIT 1`, from, len(prefix), prefix)
 	return convertCmd(row)
 }
 
-// GetLastCmd finds the last command before the given sequence number (exclusive)
+// PrevCmd finds the last command before the given sequence number (exclusive)
 // with the given prefix.
-func (s *Store) GetLastCmd(upto int, prefix string) (Cmd, error) {
+func (s *Store) PrevCmd(upto int, prefix string) (int, string, error) {
 	var upto64 = int64(upto)
 	if upto < 0 {
 		upto64 = 0x7FFFFFFFFFFFFFFF
@@ -93,11 +87,10 @@ func (s *Store) GetLastCmd(upto int, prefix string) (Cmd, error) {
 	return convertCmd(row)
 }
 
-func convertCmd(row *sql.Row) (Cmd, error) {
-	var cmd Cmd
-	err := row.Scan(&cmd.Seq, &cmd.Text)
+func convertCmd(row *sql.Row) (seq int, cmd string, err error) {
+	err = row.Scan(&seq, &cmd)
 	if err == sql.ErrNoRows {
 		err = ErrNoMatchingCmd
 	}
-	return cmd, err
+	return
 }
