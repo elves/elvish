@@ -243,8 +243,8 @@ func (er *editorRenderer) render(buf *buffer) {
 		c := es.completion
 		clr.setComp(c.begin, c.end, c.selectedCandidate().code)
 	case modeHistory:
-		begin := len(es.hist.prefix)
-		clr.setHist(begin, es.hist.line[begin:])
+		begin := len(es.hist.Prefix())
+		clr.setHist(begin, es.hist.CurrentCmd()[begin:])
 	}
 	bufLine = render(clr, width)
 

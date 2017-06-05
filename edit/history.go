@@ -3,8 +3,8 @@ package edit
 import (
 	"fmt"
 
+	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/store"
 )
 
 // Command history subsystem.
@@ -31,11 +31,7 @@ func init() {
 }
 
 type hist struct {
-	current int
-	prefix  string
-	line    string
-	// Maps content to the index of the last appearance. Used for deduplication.
-	last map[string]int
+	*history.Walker
 }
 
 func (hist) Mode() ModeType {
@@ -43,13 +39,13 @@ func (hist) Mode() ModeType {
 }
 
 func (h *hist) ModeLine() renderer {
-	return modeLineRenderer{fmt.Sprintf(" HISTORY #%d ", h.current), ""}
+	return modeLineRenderer{fmt.Sprintf(" HISTORY #%d ", h.CurrentSeq()), ""}
 }
 
 func historyStart(ed *Editor) {
-	ed.hist.prefix = ed.line[:ed.dot]
-	ed.hist.current = -1
-	ed.hist.last = make(map[string]int)
+	prefix := ed.line[:ed.dot]
+	walker := history.NewWalker(ed.store, prefix)
+	ed.hist = hist{walker}
 	if ed.prevHistory() {
 		ed.mode = &ed.hist
 	} else {
@@ -76,7 +72,7 @@ func historySwitchToHistlist(ed *Editor) {
 	if ed.mode == ed.histlist {
 		ed.line = ""
 		ed.dot = 0
-		ed.histlist.changeFilter(ed.hist.prefix)
+		ed.histlist.changeFilter(ed.hist.Prefix())
 	}
 }
 
@@ -87,11 +83,6 @@ func historyDefault(ed *Editor) {
 }
 
 // Implementation.
-
-func (h *hist) jump(i int, line string) {
-	h.current = i
-	h.line = line
-}
 
 func (ed *Editor) appendHistory(line string) {
 	if ed.store != nil {
@@ -112,56 +103,17 @@ func (ed *Editor) appendHistory(line string) {
 }
 
 func (ed *Editor) prevHistory() bool {
-	if ed.store == nil {
-		return false
-	}
-	i := ed.hist.current
-	var line string
-	for {
-		var err error
-		i, line, err = ed.store.PrevCmd(i, ed.hist.prefix)
-		if err != nil {
-			if err != store.ErrNoMatchingCmd {
-				logger.Println("LastCmd error:", err)
-			}
-			return false
-		}
-		if j, ok := ed.hist.last[line]; !ok || j == i {
-			// Found the last among duplications
-			ed.hist.last[line] = i
-			break
-		}
-	}
-	ed.hist.jump(i, line)
-	return true
+	_, _, err := ed.hist.Prev()
+	return err == nil
 }
 
 func (ed *Editor) nextHistory() bool {
-	if ed.store == nil {
-		return false
-	}
-	i := ed.hist.current
-	var line string
-	for {
-		var err error
-		i, line, err = ed.store.NextCmd(i+1, ed.hist.prefix)
-		if err != nil {
-			if err != store.ErrNoMatchingCmd {
-				logger.Println("LastCmd error:", err)
-			}
-			return false
-		}
-		if ed.hist.last[line] == i {
-			break
-		}
-	}
-
-	ed.hist.jump(i, line)
-	return true
+	_, _, err := ed.hist.Next()
+	return err == nil
 }
 
 // acceptHistory accepts the currently selected history.
 func (ed *Editor) acceptHistory() {
-	ed.line = ed.hist.line
+	ed.line = ed.hist.CurrentCmd()
 	ed.dot = len(ed.line)
 }
