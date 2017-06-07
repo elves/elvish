@@ -7,7 +7,7 @@ import (
 // Store is the interface of the storage backend.
 type Store interface {
 	NextCmdSeq() (int, error)
-	AddCmd(cmd string) error
+	AddCmd(cmd string) (int, error)
 	Cmds(from, upto int) ([]string, error)
 	PrevCmd(upto int, prefix string) (int, string, error)
 }
@@ -30,12 +30,12 @@ func (s *mockStore) NextCmdSeq() (int, error) {
 	return len(s.cmds), s.error()
 }
 
-func (s *mockStore) AddCmd(cmd string) error {
+func (s *mockStore) AddCmd(cmd string) (int, error) {
 	if s.oneOffError != nil {
-		return s.error()
+		return -1, s.error()
 	}
 	s.cmds = append(s.cmds, cmd)
-	return nil
+	return len(s.cmds) - 1, nil
 }
 
 func (s *mockStore) Cmds(from, upto int) ([]string, error) {

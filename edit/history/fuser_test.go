@@ -14,7 +14,7 @@ func TestNewFuser(t *testing.T) {
 	}
 }
 
-var fuserStore = &mockStore{cmds: []string{"ls -x"}}
+var fuserStore = &mockStore{cmds: []string{"store 1"}}
 
 func TestFuser(t *testing.T) {
 	f, err := NewFuser(fuserStore)
@@ -35,29 +35,24 @@ func TestFuser(t *testing.T) {
 	}
 
 	// AddCmd should add command to both storage and session
-	f.AddCmd("echo -n")
-	if !reflect.DeepEqual(fuserStore.cmds, []string{"ls -x", "echo -n"}) {
+	f.AddCmd("session 1")
+	if !reflect.DeepEqual(fuserStore.cmds, []string{"store 1", "session 1"}) {
 		t.Errorf("AddCmd doesn't add command to backend storage")
 	}
-	if !reflect.DeepEqual(f.cmds, []string{"echo -n"}) {
+	if !reflect.DeepEqual(f.SessionCmds(), []string{"session 1"}) {
 		t.Errorf("AddCmd doesn't add command to session history")
-	}
-
-	// SessionCmds should return commands added in this session
-	cmds := f.SessionCmds()
-	if !reflect.DeepEqual(cmds, []string{"echo -n"}) {
-		t.Errorf("SessionCmds doesn't return session commands")
 	}
 
 	// AllCmds should return all commands from the storage when the Fuser was
 	// created followed by session commands
-	fuserStore.AddCmd("blah blah")
-	fuserStore.AddCmd("lorem ipsum")
-	cmds, err = f.AllCmds()
+	fuserStore.AddCmd("other session 1")
+	fuserStore.AddCmd("other session 2")
+	f.AddCmd("session 2")
+	cmds, err := f.AllCmds()
 	if err != nil {
 		t.Errorf("AllCmds returns error")
 	}
-	if !reflect.DeepEqual(cmds, []string{"ls -x", "echo -n"}) {
+	if !reflect.DeepEqual(cmds, []string{"store 1", "session 1", "session 2"}) {
 		t.Errorf("AllCmds doesn't return all commands")
 	}
 
@@ -71,7 +66,8 @@ func TestFuser(t *testing.T) {
 
 	// Walker should return a walker that walks through all commands
 	w := f.Walker("")
-	wantCmd(t, w.Prev, 9999, "echo -n")
-	wantCmd(t, w.Prev, 0, "ls -x")
+	wantCmd(t, w.Prev, 4, "session 2")
+	wantCmd(t, w.Prev, 1, "session 1")
+	wantCmd(t, w.Prev, 0, "store 1")
 	wantErr(t, w.Prev, ErrEndOfHistory)
 }

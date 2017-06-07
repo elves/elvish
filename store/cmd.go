@@ -25,9 +25,13 @@ func (s *Store) NextCmdSeq() (int, error) {
 }
 
 // AddCmd adds a new command to the command history.
-func (s *Store) AddCmd(cmd string) error {
-	_, err := s.db.Exec(`INSERT INTO cmd (content) VALUES(?)`, cmd)
-	return err
+func (s *Store) AddCmd(cmd string) (int, error) {
+	r, err := s.db.Exec(`INSERT INTO cmd (content) VALUES(?)`, cmd)
+	if err != nil {
+		return -1, err
+	}
+	i, err := r.LastInsertId()
+	return int(i), err
 }
 
 // Cmd queries the command history item with the specified sequence number.

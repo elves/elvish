@@ -20,12 +20,12 @@ func NewFuser(store Store) (*Fuser, error) {
 }
 
 func (f *Fuser) AddCmd(cmd string) error {
-	err := f.store.AddCmd(cmd)
+	seq, err := f.store.AddCmd(cmd)
 	if err != nil {
 		return err
 	}
 	f.cmds = append(f.cmds, cmd)
-	f.seqs = append(f.seqs, 9999)
+	f.seqs = append(f.seqs, seq)
 	return nil
 }
 

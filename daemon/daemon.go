@@ -116,7 +116,7 @@ func handle(c net.Conn, st *store.Store, cancel <-chan struct{}) {
 				send(seq)
 			}
 		case req.AddCmd != nil:
-			err := st.AddCmd(req.AddCmd.Text)
+			_, err := st.AddCmd(req.AddCmd.Text)
 			if err != nil {
 				sendErrorHeader("AddCmd: " + err.Error())
 			} else {

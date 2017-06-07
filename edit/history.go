@@ -90,7 +90,7 @@ func (ed *Editor) appendHistory(line string) {
 		ed.store.Waits.Add(1)
 		go func() {
 			// TODO(xiaq): Report possible error
-			err := ed.store.AddCmd(line)
+			_, err := ed.store.AddCmd(line)
 			ed.store.Waits.Done()
 			ed.historyMutex.Unlock()
 			if err != nil {
