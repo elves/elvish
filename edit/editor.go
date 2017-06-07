@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -34,12 +35,13 @@ type Editor struct {
 	sigs   chan os.Signal
 	store  *store.Store
 	evaler *eval.Evaler
-	cmdSeq int
 
 	variables map[string]eval.Variable
 
-	active       bool
-	activeMutex  sync.Mutex
+	active      bool
+	activeMutex sync.Mutex
+
+	historyFuser *history.Fuser
 	historyMutex sync.RWMutex
 
 	editorState
@@ -84,16 +86,6 @@ type editorState struct {
 
 // NewEditor creates an Editor.
 func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.Store) *Editor {
-	seq := -1
-	if st != nil {
-		var err error
-		seq, err = st.NextCmdSeq()
-		if err != nil {
-			// TODO(xiaq): Also report the error
-			seq = -1
-		}
-	}
-
 	ed := &Editor{
 		in:     in,
 		out:    out,
@@ -102,9 +94,16 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, 
 		sigs:   sigs,
 		store:  st,
 		evaler: ev,
-		cmdSeq: seq,
 
 		variables: makeVariables(),
+	}
+	if st != nil {
+		f, err := history.NewFuser(st)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to initialize command history. Disabled.")
+		} else {
+			ed.historyFuser = f
+		}
 	}
 	ev.Editor = ed
 
