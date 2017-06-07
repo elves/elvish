@@ -58,7 +58,8 @@ func TestWalker(t *testing.T) {
 	wantErr(t, w.Prev, ErrEndOfHistory)
 
 	// Walker with session history.
-	w = NewWalker(walkerStore, -1, []string{"ls -l", "ls -v"}, []int{7, 10}, "ls")
+	w = NewWalker(walkerStore, -1,
+		[]string{"ls -l", "ls -v", "echo haha"}, []int{7, 10, 12}, "ls")
 	wantCmd(t, w.Prev, 10, "ls -v")
 
 	wantCmd(t, w.Prev, 7, "ls -l")

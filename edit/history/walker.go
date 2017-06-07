@@ -2,6 +2,7 @@ package history
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/elves/elvish/store"
 )
@@ -68,7 +69,7 @@ func (w *Walker) Prev() (int, string, error) {
 	for i := w.sessionIdx; i >= 0; i-- {
 		seq := w.sessionSeqs[i]
 		cmd := w.sessionCmds[i]
-		if !w.inStack[cmd] {
+		if strings.HasPrefix(cmd, w.prefix) && !w.inStack[cmd] {
 			w.push(cmd, seq)
 			w.sessionIdx = i - 1
 			return seq, cmd, nil
