@@ -81,6 +81,8 @@ const mainPageHTML = `<html>
       $div.className = className;
       $div.innerText = innerText;
       $scrollback.insertBefore($div, $progress);
+
+      window.scrollTo(0, document.body.scrollHeight);
     }
 
   </script>
