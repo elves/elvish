@@ -28,7 +28,7 @@ type ExecuteResponse struct {
 	OutBytes  string
 	OutValues []eval.Value
 	ErrBytes  string
-	Err       error
+	Err       string
 }
 
 func NewWeb(ev *eval.Evaler, st *store.Store, port int) *Web {
@@ -67,8 +67,12 @@ func (web *Web) handleExecute(w http.ResponseWriter, r *http.Request) {
 	text := string(bytes)
 
 	outBytes, outValues, errBytes, err := evalAndCollect(web.ev, "<web>", text)
+	errText := ""
+	if err != nil {
+		errText = err.Error()
+	}
 	responseBody, err := json.Marshal(
-		&ExecuteResponse{string(outBytes), outValues, string(errBytes), err})
+		&ExecuteResponse{string(outBytes), outValues, string(errBytes), errText})
 	if err != nil {
 		log.Println("cannot marshal response body:", err)
 	}
