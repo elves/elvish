@@ -30,10 +30,12 @@ func TestCmd(t *testing.T) {
 		t.Errorf("tStore.NextCmdSeq() => (%v, %v), want (1, nil)",
 			startSeq, err)
 	}
-	for _, cmd := range cmds {
-		err := tStore.AddCmd(cmd)
-		if err != nil {
-			t.Errorf("tStore.AddCmd(%v) => %v, want nil", cmd, err)
+	for i, cmd := range cmds {
+		wantSeq := startSeq + i
+		seq, err := tStore.AddCmd(cmd)
+		if seq != wantSeq || err != nil {
+			t.Errorf("tStore.AddCmd(%v) => (%v, %v), want (%v, nil)",
+				cmd, seq, err, wantSeq)
 		}
 	}
 	endSeq, err := tStore.NextCmdSeq()
