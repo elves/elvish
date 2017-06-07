@@ -44,7 +44,7 @@ func (h *hist) ModeLine() renderer {
 
 func historyStart(ed *Editor) {
 	prefix := ed.line[:ed.dot]
-	walker := history.NewWalker(ed.store, prefix)
+	walker := history.NewWalker(ed.store, -1, nil, nil, prefix)
 	ed.hist = hist{walker}
 	if ed.prevHistory() {
 		ed.mode = &ed.hist

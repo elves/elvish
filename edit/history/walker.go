@@ -11,17 +11,27 @@ var ErrEndOfHistory = errors.New("end of history")
 // Walker is used for walking through history entries with a given (possibly
 // empty) prefix, skipping duplicates entries.
 type Walker struct {
-	store  Store
-	prefix string
+	store       Store
+	storeUpper  int
+	sessionCmds []string
+	sessionSeqs []int
+	prefix      string
 
-	top     int // an index into the stack, the next element to return in Prev.
+	// The next element to fetch from the session history. If equal to -1, the
+	// next element comes from the storage backend.
+	sessionIdx int
+	// Index of the next element in the stack that Prev will return on next
+	// call. If equal to len(stack), the next element needs to be fetched,
+	// either from the session history or the storage backend.
+	top     int
 	stack   []string
 	seq     []int
 	inStack map[string]bool
 }
 
-func NewWalker(store Store, prefix string) *Walker {
-	return &Walker{store, prefix, 0, nil, nil, map[string]bool{}}
+func NewWalker(store Store, upper int, cmds []string, seqs []int, prefix string) *Walker {
+	return &Walker{store, upper, cmds, seqs, prefix,
+		len(cmds) - 1, 0, nil, nil, map[string]bool{}}
 }
 
 // Prefix returns the prefix of the commands that the walker walks through.
@@ -47,12 +57,28 @@ func (w *Walker) CurrentCmd() string {
 
 // Prev walks to the previous matching history entry, skipping all duplicates.
 func (w *Walker) Prev() (int, string, error) {
+	// Entry comes from the stack.
 	if w.top < len(w.stack) {
+		i := w.top
 		w.top++
-		return w.seq[w.top-1], w.stack[w.top-1], nil
+		return w.seq[i], w.stack[i], nil
 	}
-	seq := -1
-	if len(w.seq) > 0 {
+
+	// Find the entry in the session part.
+	for i := w.sessionIdx; i >= 0; i-- {
+		seq := w.sessionSeqs[i]
+		cmd := w.sessionCmds[i]
+		if !w.inStack[cmd] {
+			w.push(cmd, seq)
+			w.sessionIdx = i - 1
+			return seq, cmd, nil
+		}
+	}
+	// Not found in the session part.
+	w.sessionIdx = -1
+
+	seq := w.storeUpper
+	if len(w.seq) > 0 && seq > w.seq[len(w.seq)-1] {
 		seq = w.seq[len(w.seq)-1]
 	}
 	for {
@@ -68,13 +94,17 @@ func (w *Walker) Prev() (int, string, error) {
 			return -1, "", err
 		}
 		if !w.inStack[cmd] {
-			w.inStack[cmd] = true
-			w.stack = append(w.stack, cmd)
-			w.seq = append(w.seq, seq)
-			w.top++
+			w.push(cmd, seq)
 			return seq, cmd, nil
 		}
 	}
+}
+
+func (w *Walker) push(cmd string, seq int) {
+	w.inStack[cmd] = true
+	w.stack = append(w.stack, cmd)
+	w.seq = append(w.seq, seq)
+	w.top++
 }
 
 // Next reverses Prev.
