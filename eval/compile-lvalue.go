@@ -6,14 +6,16 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-// VariablesOp is an operation on an EvalCtx that produce Variable's.
+// LValuesOp is an operation on an EvalCtx that produce Variable's.
 type LValuesOp struct {
 	Func       LValuesOpFunc
 	Begin, End int
 }
 
+// LValuesOpFunc is the body of an LValuesOp.
 type LValuesOpFunc func(*EvalCtx) []Variable
 
+// Exec executes an LValuesOp, producing Variable's.
 func (op LValuesOp) Exec(ec *EvalCtx) []Variable {
 	// Empty value is considered to generate no lvalues.
 	if op.Func == nil {

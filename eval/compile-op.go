@@ -14,8 +14,10 @@ type Op struct {
 	Begin, End int
 }
 
+// OpFunc is the body of an Op.
 type OpFunc func(*EvalCtx)
 
+// Exec executes an Op.
 func (op Op) Exec(ec *EvalCtx) {
 	ec.begin, ec.end = op.Begin, op.End
 	op.Func(ec)

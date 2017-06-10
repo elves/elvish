@@ -40,10 +40,12 @@ type BuiltinFn struct {
 
 var _ CallableValue = &BuiltinFn{}
 
+// Kind returns "fn".
 func (*BuiltinFn) Kind() string {
 	return "fn"
 }
 
+// Repr returns an opaque representation "<builtin xxx>".
 func (b *BuiltinFn) Repr(int) string {
 	return "<builtin " + b.Name + ">"
 }
@@ -222,6 +224,7 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
+// Errors thrown by builtins.
 var (
 	ErrArgs              = errors.New("args error")
 	ErrInput             = errors.New("input error")
@@ -366,12 +369,14 @@ func ScanArgsAndOptionalIterate(ec *EvalCtx, s []Value, args ...interface{}) fun
 	}
 }
 
+// Opt is a data structure for an option that is intended to be used in ScanOpts.
 type Opt struct {
 	Name    string
 	Ptr     interface{}
 	Default Value
 }
 
+// ScanOpts scans options from a map.
 func ScanOpts(m map[string]Value, opts ...Opt) {
 	scanned := make(map[string]bool)
 	for _, opt := range opts {
@@ -859,6 +864,8 @@ func ord(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
+// ErrBadBase is thrown by the "base" builtin if the base is smaller than 2 or
+// greater than 36.
 var ErrBadBase = errors.New("bad base")
 
 func base(ec *EvalCtx, args []Value, opts map[string]Value) {

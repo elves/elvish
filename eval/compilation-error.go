@@ -18,6 +18,7 @@ func (ce *CompilationError) Error() string {
 		ce.Context.Begin, ce.Context.End, ce.Context.Name, ce.Message)
 }
 
+// Pprint pretty-prints a compilation error.
 func (ce *CompilationError) Pprint(indent string) string {
 	buf := new(bytes.Buffer)
 

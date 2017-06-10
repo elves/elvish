@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+// ErrArityMismatch is thrown by a closure when the number of arguments the user
+// supplies does not match with what is required.
 var ErrArityMismatch = errors.New("arity mismatch")
 
 var unnamedRestArg = "@"
@@ -24,10 +26,12 @@ type Closure struct {
 
 var _ CallableValue = &Closure{}
 
+// Kind returns "fn".
 func (*Closure) Kind() string {
 	return "fn"
 }
 
+// Repr returns an opaque representation "<closure 0x23333333>".
 func (c *Closure) Repr(int) string {
 	return fmt.Sprintf("<closure %p>", c)
 }

@@ -9,9 +9,17 @@ import (
 // The $le:completer map, and its default values.
 
 var (
-	ErrCompleterMustBeFn        = errors.New("completer must be fn")
+	// ErrCompleterMustBeFn is thrown if the user has put a non-function entry
+	// in $le:completer, and that entry needs to be used for completion.
+	// TODO(xiaq): Detect the type violation when the user modifies
+	// $le:completer.
+	ErrCompleterMustBeFn = errors.New("completer must be fn")
+	// ErrCompleterArgMustBeString is thrown when a builtin argument completer
+	// is called with non-string arguments.
 	ErrCompleterArgMustBeString = errors.New("arguments to arg completers must be string")
-	ErrTooFewArguments          = errors.New("too few arguments")
+	// ErrTooFewArguments is thrown when a builtin argument completer is called
+	// with too few arguments.
+	ErrTooFewArguments = errors.New("too few arguments")
 )
 
 var (

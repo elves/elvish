@@ -25,6 +25,8 @@ func init() {
 		})
 }
 
+// ErrStoreOffline is thrown when an operation requires the storage backend, but
+// it is offline.
 var ErrStoreOffline = errors.New("store offline")
 
 type histlist struct {

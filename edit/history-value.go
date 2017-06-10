@@ -7,6 +7,7 @@ import (
 	"github.com/elves/elvish/store"
 )
 
+// History implements the $le:history variable. It is list-like.
 type History struct {
 	mutex *sync.RWMutex
 	st    *store.Store

@@ -22,12 +22,14 @@ type ValuesOp struct {
 	Begin, End int
 }
 
+// ValuesOpFunc is the body of ValuesOp.
+type ValuesOpFunc func(*EvalCtx) []Value
+
+// Exec executes a ValuesOp and produces Value's.
 func (op ValuesOp) Exec(ec *EvalCtx) []Value {
 	ec.begin, ec.end = op.Begin, op.End
 	return op.Func(ec)
 }
-
-type ValuesOpFunc func(*EvalCtx) []Value
 
 func (cp *compiler) compound(n *parse.Compound) ValuesOpFunc {
 	if len(n.Indexings) == 0 {
@@ -132,6 +134,7 @@ func outerProduct(vs []Value, us []Value, f func(Value, Value) Value) []Value {
 	return ws
 }
 
+// Errors thrown when globbing.
 var (
 	ErrBadGlobPattern          = errors.New("bad GlobPattern; elvish bug")
 	ErrCannotDetermineUsername = errors.New("cannot determine user name from glob pattern")

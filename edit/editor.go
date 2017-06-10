@@ -112,10 +112,13 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, 
 	return ed
 }
 
+// Active returns the activeness of the Editor.
 func (ed *Editor) Active() bool {
 	return ed.active
 }
 
+// ActiveMutex returns a mutex that must be used when changing the activeness of
+// the Editor.
 func (ed *Editor) ActiveMutex() *sync.Mutex {
 	return &ed.activeMutex
 }
@@ -128,6 +131,7 @@ func (ed *Editor) addTip(format string, args ...interface{}) {
 	ed.tips = append(ed.tips, fmt.Sprintf(format, args...))
 }
 
+// Notify adds one notification entry. It is concurrency-safe.
 func (ed *Editor) Notify(format string, args ...interface{}) {
 	ed.notificationMutex.Lock()
 	defer ed.notificationMutex.Unlock()

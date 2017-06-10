@@ -28,14 +28,17 @@ type BuiltinFn struct {
 
 var _ eval.CallableValue = &BuiltinFn{}
 
+// Kind returns "fn".
 func (*BuiltinFn) Kind() string {
 	return "fn"
 }
 
+// Repr returns the representation of a builtin function as a variable name.
 func (bf *BuiltinFn) Repr(int) string {
 	return "$" + bf.name
 }
 
+// Call calls a builtin function.
 func (bf *BuiltinFn) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	eval.TakeNoOpt(opts)
 	eval.TakeNoArg(args)

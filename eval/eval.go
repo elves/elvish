@@ -170,7 +170,7 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 	return ev.EvalWithPorts(ports, op, name, text)
 }
 
-// EvalWithFiles sets up the Evaler with the given ports and evaluates an Op.
+// EvalWithPorts sets up the Evaler with the given ports and evaluates an Op.
 // The supplied name and text are used in diagnostic messages.
 func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, name, text string) error {
 	// signal.Ignore(syscall.SIGTTIN)

@@ -373,8 +373,10 @@ func newErrNavColumn(err error) *navColumn {
 	return nc
 }
 
-const FileBufferSize = 64 * 1024
+// PreviewBytes is the maximum number of bytes to preview a file.
+const PreviewBytes = 64 * 1024
 
+// Errors displayed in the preview area.
 var (
 	ErrNotRegular   = errors.New("no preview for non-regular file")
 	ErrNotValidUTF8 = errors.New("no preview for non-utf8 file")
@@ -398,7 +400,7 @@ func newFilePreviewNavColumn(fname string) *navColumn {
 	}
 
 	// BUG when the file is bigger than the buffer, the scrollbar is wrong.
-	buf := make([]byte, FileBufferSize)
+	buf := make([]byte, PreviewBytes)
 	nr, err := file.Read(buf[:])
 	if err != nil {
 		return newErrNavColumn(err)

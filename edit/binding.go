@@ -12,10 +12,13 @@ type BindingTable struct {
 	inner map[ui.Key]eval.CallableValue
 }
 
+// Kind returns "map".
 func (BindingTable) Kind() string {
 	return "map"
 }
 
+// Repr returns the representation of the binding table as if it were an
+// ordinary map.
 func (bt BindingTable) Repr(indent int) string {
 	var builder eval.MapReprBuilder
 	builder.Indent = indent
@@ -25,10 +28,15 @@ func (bt BindingTable) Repr(indent int) string {
 	return builder.String()
 }
 
+// IndexOne returns the value with the specified map key. The map key is first
+// converted into an internal Key struct.
 func (bt BindingTable) IndexOne(idx eval.Value) eval.Value {
 	return bt.inner[ui.ToKey(idx)]
 }
 
+// IndexSet sets the value with the specified map key. The map key is first
+// converted into an internal Key struct. The set value must be a callable one,
+// otherwise an error is thrown.
 func (bt BindingTable) IndexSet(idx, v eval.Value) {
 	key := ui.ToKey(idx)
 	f, ok := v.(eval.CallableValue)

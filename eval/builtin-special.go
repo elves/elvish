@@ -13,6 +13,8 @@ import (
 
 type compileBuiltin func(*compiler, *parse.Form) OpFunc
 
+// ErrNoDataDir is thrown by the "use" special form when there is no data
+// directory.
 var ErrNoDataDir = errors.New("There is no data directory")
 
 var builtinSpecials map[string]compileBuiltin

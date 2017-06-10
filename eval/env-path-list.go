@@ -34,10 +34,12 @@ var (
 	_ ListLike = (*EnvPathList)(nil)
 )
 
+// Get returns a Value for an EnvPathList.
 func (epl *EnvPathList) Get() Value {
 	return epl
 }
 
+// Set sets an EnvPathList. The underlying environment variable is set.
 func (epl *EnvPathList) Set(v Value) {
 	iterator, ok := v.(Iterable)
 	if !ok {
@@ -59,10 +61,13 @@ func (epl *EnvPathList) Set(v Value) {
 	epl.set(paths)
 }
 
+// Kind returns "list".
 func (epl *EnvPathList) Kind() string {
 	return "list"
 }
 
+// Repr returns the representation of an EnvPathList, as if it were an ordinary
+// list.
 func (epl *EnvPathList) Repr(indent int) string {
 	var b ListReprBuilder
 	b.Indent = indent
@@ -72,10 +77,12 @@ func (epl *EnvPathList) Repr(indent int) string {
 	return b.String()
 }
 
+// Len returns the length of an EnvPathList.
 func (epl *EnvPathList) Len() int {
 	return len(epl.get())
 }
 
+// Iterate iterates an EnvPathList.
 func (epl *EnvPathList) Iterate(f func(Value) bool) {
 	for _, p := range epl.get() {
 		if !f(String(p)) {
@@ -84,14 +91,7 @@ func (epl *EnvPathList) Iterate(f func(Value) bool) {
 	}
 }
 
-func (epl *EnvPathList) Elems() <-chan Value {
-	ch := make(chan Value)
-	go func() {
-		close(ch)
-	}()
-	return ch
-}
-
+// IndexOne returns the result of one indexing operation.
 func (epl *EnvPathList) IndexOne(idx Value) Value {
 	paths := epl.get()
 	slice, i, j := ParseAndFixListIndex(ToString(idx), len(paths))
@@ -106,6 +106,7 @@ func (epl *EnvPathList) IndexOne(idx Value) Value {
 	return String(paths[i])
 }
 
+// IndexSet sets one value in an EnvPathList.
 func (epl *EnvPathList) IndexSet(idx, v Value) {
 	s, ok := v.(String)
 	if !ok {
