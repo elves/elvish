@@ -30,6 +30,7 @@ type Vector struct {
 	tail   []interface{}
 }
 
+// Empty is an empty Vector.
 var Empty = &Vector{}
 
 // Count returns the number of elements in a Vector.
