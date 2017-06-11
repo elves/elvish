@@ -20,8 +20,10 @@ func (n node) clone() node {
 	return m
 }
 
-// Vector implements a persistent vector. The empty value is a valid empty
-// vector.
+// Vector implements a persistent vector, a container for arbitrary interface{}
+// values. It is immutable, and supports O(1) operations to create modified
+// versions of the vector that shares the underlying data structure. The empty
+// value is a valid empty vector.
 type Vector struct {
 	count int
 	// height of the tree structure, defined to be 0 when root is a leaf.
@@ -38,20 +40,22 @@ func (v *Vector) Count() int {
 	return v.count
 }
 
-// tailoff returns the number of elements not stored in tail.
-func (v *Vector) tailoff() int {
+// treeSize returns the number of elements stored in the tree (as opposed to the
+// tail).
+func (v *Vector) treeSize() int {
 	if v.count < tailMaxLen {
 		return 0
 	}
 	return ((v.count - 1) >> bitChunk) << bitChunk
 }
 
-// sliceFor returns the slice where the i-th element is stored.
+// sliceFor returns the slice where the i-th element is stored. It returns nil
+// if the index is out of bound.
 func (v *Vector) sliceFor(i int) []interface{} {
 	if i < 0 || i >= v.count {
 		return nil
 	}
-	if i >= v.tailoff() {
+	if i >= v.treeSize() {
 		return v.tail
 	}
 	n := v.root
@@ -66,15 +70,17 @@ func (v *Vector) Nth(i int) interface{} {
 	return v.sliceFor(i)[i&chunkMask]
 }
 
-// AssocN returns a new Vector with the i-th element replaced by val.
+// AssocN returns an almost identical Vector, with the i-th element replaced by
+// val. If the index is smaller than 0 or greater than the number of elements in
+// the vector, it returns nil.
 func (v *Vector) AssocN(i int, val interface{}) *Vector {
 	if i < 0 || i > v.count {
 		return nil
 	} else if i == v.count {
 		return v.Cons(val)
 	}
-	if i >= v.tailoff() {
-		newTail := make([]interface{}, len(v.tail))
+	if i >= v.treeSize() {
+		newTail := append([]interface{}(nil), v.tail...)
 		copy(newTail, v.tail)
 		newTail[i&chunkMask] = val
 		return &Vector{v.count, v.height, v.root, newTail}
@@ -82,7 +88,8 @@ func (v *Vector) AssocN(i int, val interface{}) *Vector {
 	return &Vector{v.count, v.height, doAssoc(v.height, v.root, i, val), v.tail}
 }
 
-// doAssoc returns a new tree with the i-th element replaced by val.
+// doAssoc returns an almost identical tree, with the i-th element replaced by
+// val.
 func doAssoc(height uint, n node, i int, val interface{}) node {
 	m := n.clone()
 	if height == 0 {
@@ -94,10 +101,10 @@ func doAssoc(height uint, n node, i int, val interface{}) node {
 	return m
 }
 
-// Cons returns a new Vector with val appended to the end.
+// Cons returns an almost identical Vector, with val appended to the end.
 func (v *Vector) Cons(val interface{}) *Vector {
 	// Room in tail?
-	if v.count-v.tailoff() < tailMaxLen {
+	if v.count-v.treeSize() < tailMaxLen {
 		newTail := make([]interface{}, len(v.tail)+1)
 		copy(newTail, v.tail)
 		newTail[len(v.tail)] = val
@@ -153,7 +160,7 @@ func (v *Vector) Pop() *Vector {
 	case 1:
 		return Empty
 	}
-	if v.count-v.tailoff() > 1 {
+	if v.count-v.treeSize() > 1 {
 		newTail := make([]interface{}, len(v.tail)-1)
 		copy(newTail, v.tail)
 		return &Vector{v.count - 1, v.height, v.root, newTail}
