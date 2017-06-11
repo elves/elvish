@@ -2,8 +2,8 @@
 package vector
 
 const (
-	bitChunk   = 5
-	nodeSize   = 1 << bitChunk
+	chunkBits  = 5
+	nodeSize   = 1 << chunkBits
 	tailMaxLen = nodeSize
 	chunkMask  = nodeSize - 1
 )
@@ -69,7 +69,7 @@ func (v *vector) treeSize() int {
 	if v.count < tailMaxLen {
 		return 0
 	}
-	return ((v.count - 1) >> bitChunk) << bitChunk
+	return ((v.count - 1) >> chunkBits) << chunkBits
 }
 
 // sliceFor returns the slice where the i-th element is stored. It returns nil
@@ -82,7 +82,7 @@ func (v *vector) sliceFor(i int) []interface{} {
 		return v.tail
 	}
 	n := v.root
-	for shift := v.height * bitChunk; shift > 0; shift -= bitChunk {
+	for shift := v.height * chunkBits; shift > 0; shift -= chunkBits {
 		n = n[(i>>shift)&chunkMask].(node)
 	}
 	return n
@@ -114,7 +114,7 @@ func doAssoc(height uint, n node, i int, val interface{}) node {
 	if height == 0 {
 		m[i&chunkMask] = val
 	} else {
-		sub := (i >> (height * bitChunk)) & chunkMask
+		sub := (i >> (height * chunkBits)) & chunkMask
 		m[sub] = doAssoc(height-1, m[sub].(node), i, val)
 	}
 	return m
@@ -133,7 +133,7 @@ func (v *vector) Cons(val interface{}) Vector {
 	newHeight := v.height
 	var newRoot node
 	// Overflow root?
-	if (v.count >> bitChunk) > (1 << (v.height * bitChunk)) {
+	if (v.count >> chunkBits) > (1 << (v.height * chunkBits)) {
 		newRoot = newNode()
 		newRoot[0] = v.root
 		newRoot[1] = newPath(v.height, tailNode)
@@ -149,7 +149,7 @@ func (v *vector) pushTail(height uint, n node, tail node) node {
 	if height == 0 {
 		return tail
 	}
-	idx := ((v.count - 1) >> (height * bitChunk)) & chunkMask
+	idx := ((v.count - 1) >> (height * chunkBits)) & chunkMask
 	m := n.clone()
 	child := n[idx]
 	if child == nil {
@@ -194,7 +194,7 @@ func (v *vector) Pop() Vector {
 
 // popTail returns a new tree with the last leaf removed.
 func (v *vector) popTail(level uint, n node) node {
-	idx := ((v.count - 2) >> (level * bitChunk)) & chunkMask
+	idx := ((v.count - 2) >> (level * chunkBits)) & chunkMask
 	if level > 1 {
 		newChild := v.popTail(level-1, n[idx].(node))
 		if newChild == nil && idx == 0 {
