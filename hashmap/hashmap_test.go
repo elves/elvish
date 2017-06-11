@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"strconv"
 	"testing"
+	"time"
 )
 
 // testKey is an implementation of the Key interface for testing.
@@ -53,8 +54,10 @@ func init() {
 	for i := 0; i < NCollision; i++ {
 		add(testKey(uint64(i+1)<<32), "collision "+hex(uint64(i)))
 	}
+	rand.Seed(time.Now().UTC().UnixNano())
 	for i := 0; i < NRandom; i++ {
-		k := rand.Uint64()
+		// Avoid rand.Uint64 for compatibility with pre 1.8 Go
+		k := uint64(rand.Int63())>>31 | uint64(rand.Int63())<<32
 		add(testKey(k), "random "+hex(k))
 	}
 }
