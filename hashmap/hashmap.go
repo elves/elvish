@@ -1,3 +1,4 @@
+// Package hashmap implements persistent hashmap.
 package hashmap
 
 const (
@@ -7,8 +8,8 @@ const (
 )
 
 // HashMap is a persistent associative data structure mapping keys to values. It
-// is immutable, and supports O(1) operations to create modified version of the
-// hashmap that shares the underlying data structure, making it suitable for
+// is immutable, and supports near-O(1) operations to create modified version of
+// the hashmap that shares the underlying data structure, making it suitable for
 // concurrent access.
 type HashMap interface {
 	// Len returns the length of the hashmap.

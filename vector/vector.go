@@ -11,7 +11,7 @@ const (
 // Vector is a persistent sequential container for arbitrary values. It supports
 // O(1) lookup by index, modification by index, and insertion and removal
 // operations at the end. Being a persistent variant of the data structure, it
-// is immutable, and provides operations to create modified versions of the
+// is immutable, and provides O(1) operations to create modified versions of the
 // vector that shares the underlying data structure, making it suitable for
 // concurrent access. The empty value is a valid empty vector.
 type Vector interface {

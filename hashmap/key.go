@@ -15,6 +15,7 @@ type UInt64 uint64
 var _ Key = UInt64(0)
 
 // Hash returns the hash code of an Int64.
+//
 // TODO(xiaq): Use an actual hashing algorithm.
 func (i UInt64) Hash() uint32 {
 	return uint32((i >> 32) ^ (i & 0xffffffff))
@@ -32,6 +33,7 @@ type String string
 var _ Key = String("")
 
 // Hash returns the hash code of a String.
+//
 // TODO(xiaq): Use an actual hashing algorithm.
 func (s String) Hash() uint32 {
 	return uint32(len(s))
