@@ -53,8 +53,15 @@ func main() {
 	for rows.Next() {
 		var id int
 		var name string
-		rows.Scan(&id, &name)
+		err = rows.Scan(&id, &name)
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Println(id, name)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	stmt, err = db.Prepare("select name from foo where id = ?")
@@ -87,7 +94,14 @@ func main() {
 	for rows.Next() {
 		var id int
 		var name string
-		rows.Scan(&id, &name)
+		err = rows.Scan(&id, &name)
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Println(id, name)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
 	}
 }

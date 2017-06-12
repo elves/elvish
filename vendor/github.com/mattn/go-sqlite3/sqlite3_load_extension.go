@@ -7,7 +7,11 @@
 package sqlite3
 
 /*
+#ifndef USE_LIBSQLITE3
 #include <sqlite3-binding.h>
+#else
+#include <sqlite3.h>
+#endif
 #include <stdlib.h>
 */
 import "C"
@@ -35,5 +39,30 @@ func (c *SQLiteConn) loadExtensions(extensions []string) error {
 	if rv != C.SQLITE_OK {
 		return errors.New(C.GoString(C.sqlite3_errmsg(c.db)))
 	}
+	return nil
+}
+
+// LoadExtension load the sqlite3 extension.
+func (c *SQLiteConn) LoadExtension(lib string, entry string) error {
+	rv := C.sqlite3_enable_load_extension(c.db, 1)
+	if rv != C.SQLITE_OK {
+		return errors.New(C.GoString(C.sqlite3_errmsg(c.db)))
+	}
+
+	clib := C.CString(lib)
+	defer C.free(unsafe.Pointer(clib))
+	centry := C.CString(entry)
+	defer C.free(unsafe.Pointer(centry))
+
+	rv = C.sqlite3_load_extension(c.db, clib, centry, nil)
+	if rv != C.SQLITE_OK {
+		return errors.New(C.GoString(C.sqlite3_errmsg(c.db)))
+	}
+
+	rv = C.sqlite3_enable_load_extension(c.db, 0)
+	if rv != C.SQLITE_OK {
+		return errors.New(C.GoString(C.sqlite3_errmsg(c.db)))
+	}
+
 	return nil
 }
