@@ -94,9 +94,6 @@ func (n *arrayNode) assoc(shift, hash uint32, k Key, v interface{}) (bool, node)
 		return true, n.withNewChild(idx, newChild, 1)
 	}
 	added, newChild := child.assoc(shift+chunkBits, hash, k, v)
-	if newChild == child {
-		return false, n
-	}
 	return added, n.withNewChild(idx, newChild, 0)
 }
 
@@ -264,9 +261,6 @@ func (n *bitmapNode) assoc(shift, hash uint32, k Key, v interface{}) (bool, node
 		// Non-leaf child
 		child := entry.value.(node)
 		added, newChild := child.assoc(shift+chunkBits, hash, k, v)
-		if newChild == child {
-			return false, n
-		}
 		return added, n.withReplacedEntry(idx, mapEntry{nil, newChild})
 	}
 	// Leaf

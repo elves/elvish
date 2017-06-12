@@ -23,15 +23,17 @@ func (x testKey) Equal(other interface{}) bool {
 	return ok && x == y
 }
 
-type anotherTestKey struct{}
+type anotherTestKey uint32
 
-func (anotherTestKey) Hash() uint32           { return 0 }
+func (x anotherTestKey) Hash() uint32         { return uint32(x) }
 func (anotherTestKey) Equal(interface{}) bool { return false }
 
 const (
 	NSequential = 0x1000
 	NCollision  = 0x100
 	NRandom     = 0x4000
+
+	NIneffectiveWithout = 0x200
 )
 
 type refEntry struct {
@@ -88,20 +90,30 @@ func TestHashMap(t *testing.T) {
 	}
 	// Get.
 	testMapContent(t, m, ref)
-	in, got := m.Get(anotherTestKey{})
+	in, got := m.Get(anotherTestKey(0))
 	if in {
 		t.Errorf("m.Get <bad key> returns entry %v", got)
 	}
 	// Without.
-	for _, e := range refEntries {
-		delete(ref, e.k)
-		m = m.Without(e.k)
+	// Ineffective ones.
+	for i := 0; i < NIneffectiveWithout; i++ {
+		k := anotherTestKey(uint32(rand.Int31())>>15 | uint32(rand.Int31())<<16)
+		m = m.Without(k)
+		if m.Len() != len(ref) {
+			t.Errorf("m.Without removes item when it shouldn't")
+		}
+	}
+	// Effective ones.
+	for i := len(refEntries) - 1; i >= 0; i-- {
+		k := refEntries[i].k
+		delete(ref, k)
+		m = m.Without(k)
 		if m.Len() != len(ref) {
 			t.Errorf("m.Len() = %d after removing, should be %v", m.Len(), len(ref))
 		}
-		in, _ := m.Get(e.k)
+		in, _ := m.Get(k)
 		if in {
-			t.Errorf("m.Get(%v) still returns item after removal", e.k)
+			t.Errorf("m.Get(%v) still returns item after removal", k)
 		}
 		// Checking all elements is expensive. Only do this 1% of the time.
 		if rand.Float64() < 0.01 {
