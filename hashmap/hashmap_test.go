@@ -32,6 +32,14 @@ const (
 	NSequential = 0x1000
 	NCollision  = 0x100
 	NRandom     = 0x4000
+	NReplace    = 0x200
+
+	SmallRandomPass      = 0x100
+	NSmallRandom         = 0x400
+	SmallRandomHighBound = 0x50
+	SmallRandomLowBound  = 0x200
+
+	NArrayNode = 0x100
 
 	NIneffectiveWithout = 0x200
 )
@@ -41,15 +49,16 @@ type refEntry struct {
 	v string
 }
 
-var refEntries = []refEntry{
-	{0x100000001, "x1"},
-	{0x200000001, "y1"},
+func hex(i uint64) string {
+	return "0x" + strconv.FormatUint(i, 16)
 }
 
-func init() {
+func TestHashMap(t *testing.T) {
+	var refEntries []refEntry
 	add := func(k testKey, v string) {
 		refEntries = append(refEntries, refEntry{k, v})
 	}
+
 	for i := 0; i < NSequential; i++ {
 		add(testKey(i), hex(uint64(i)))
 	}
@@ -62,31 +71,45 @@ func init() {
 		k := uint64(rand.Int63())>>31 | uint64(rand.Int63())<<32
 		add(testKey(k), "random "+hex(k))
 	}
+	for i := 0; i < NReplace; i++ {
+		k := uint64(rand.Int31n(NSequential))
+		add(testKey(k), "replace "+hex(k))
+	}
+
+	testHashMapWithRefEntries(t, refEntries)
 }
 
-func hex(i uint64) string {
-	return "0x" + strconv.FormatUint(i, 16)
+func TestHashMapSmallRandom(t *testing.T) {
+	for p := 0; p < SmallRandomPass; p++ {
+		var refEntries []refEntry
+		add := func(k testKey, v string) {
+			refEntries = append(refEntries, refEntry{k, v})
+		}
+
+		for i := 0; i < NSmallRandom; i++ {
+			k := uint64(uint64(rand.Int31n(SmallRandomHighBound))<<32 |
+				uint64(rand.Int31n(SmallRandomLowBound)))
+			add(testKey(k), "random "+hex(k))
+		}
+
+		testHashMapWithRefEntries(t, refEntries)
+	}
 }
 
-func TestHashMap(t *testing.T) {
+func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 	m := Empty
 	// Len of Empty should be 0.
 	if m.Len() != 0 {
 		t.Errorf("m.Len = %d, want %d", m.Len(), 0)
 	}
-	// Assoc and Len.
-	size := 0
-	for _, e := range refEntries {
-		m = m.Assoc(e.k, e.v)
-		size++
-		if m.Len() != size {
-			t.Errorf("m.Len = %d, want %d", m.Len(), size)
-		}
-	}
-	// Build a reference map.
+	// Assoc and Len, test by building a map simutaneously.
 	ref := make(map[testKey]string, len(refEntries))
 	for _, e := range refEntries {
 		ref[e.k] = e.v
+		m = m.Assoc(e.k, e.v)
+		if m.Len() != len(ref) {
+			t.Errorf("m.Len = %d, want %d", m.Len(), len(ref))
+		}
 	}
 	// Get.
 	testMapContent(t, m, ref)

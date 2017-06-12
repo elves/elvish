@@ -107,7 +107,7 @@ func (n *arrayNode) without(shift, hash uint32, k Key) (bool, node) {
 	if newChild == child {
 		return false, n
 	}
-	if newChild == nil {
+	if newChild == emptyBitmapNode {
 		if n.nChildren <= nodeCap/4 {
 			// less than 1/4 full; shrink
 			return true, n.pack(int(idx))
