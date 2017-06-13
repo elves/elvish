@@ -17,7 +17,8 @@ const (
 type Vector interface {
 	// Len returns the length of the vector.
 	Len() int
-	// Nth returns the i-th element of the vector.
+	// Nth returns the i-th element of the vector. It returns nil if the index
+	// is smaller than 0 or greater than or equal to the length of the vector.
 	Nth(i int) interface{}
 	// AssocN returns an almost identical Vector, with the i-th element
 	// replaced. If the index is smaller than 0 or greater than the length of
@@ -27,7 +28,8 @@ type Vector interface {
 	// Cons returns an almost identical Vector, with an additional element
 	// appended to the end.
 	Cons(val interface{}) Vector
-	// Pop returns an almost identical Vector, with the last element removed.
+	// Pop returns an almost identical Vector, with the last element removed. It
+	// returns nil if the vector is already empty.
 	Pop() Vector
 	// SubVector returns a subvector containing the elements from i up to but
 	// not including j.
@@ -84,12 +86,9 @@ func (v *vector) treeSize() int {
 	return ((v.count - 1) >> chunkBits) << chunkBits
 }
 
-// sliceFor returns the slice where the i-th element is stored. It returns nil
-// if the index is out of bound.
+// sliceFor returns the slice where the i-th element is stored. The index must
+// be in bound.
 func (v *vector) sliceFor(i int) []interface{} {
-	if i < 0 || i >= v.count {
-		return nil
-	}
 	if i >= v.treeSize() {
 		return v.tail
 	}
@@ -101,6 +100,9 @@ func (v *vector) sliceFor(i int) []interface{} {
 }
 
 func (v *vector) Nth(i int) interface{} {
+	if i < 0 || i >= v.count {
+		return nil
+	}
 	return v.sliceFor(i)[i&chunkMask]
 }
 
@@ -231,6 +233,9 @@ func (v *vector) popTail(level uint, n node) node {
 }
 
 func (v *vector) SubVector(begin, end int) Vector {
+	if begin < 0 || begin > end || end > v.count {
+		return nil
+	}
 	return &subVector{v, begin, end}
 }
 
@@ -245,11 +250,14 @@ func (s *subVector) Len() int {
 }
 
 func (s *subVector) Nth(i int) interface{} {
+	if i < 0 || s.begin+i >= s.end {
+		return nil
+	}
 	return s.v.Nth(s.begin + i)
 }
 
 func (s *subVector) AssocN(i int, val interface{}) Vector {
-	if s.begin+i > s.end {
+	if i < 0 || s.begin+i > s.end {
 		return nil
 	} else if s.begin+i == s.end {
 		return s.Cons(val)

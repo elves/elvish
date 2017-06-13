@@ -18,7 +18,7 @@ func TestVector(t *testing.T) {
 	)
 
 	v := testCons(t, n)
-	testNth(t, v)
+	testNth(t, v, 0, n)
 	testAssocN(t, v, subst)
 	testIterator(t, v.Iterator(), 0, n)
 	testPop(t, v)
@@ -43,13 +43,18 @@ func testCons(t *testing.T, n int) Vector {
 	return v
 }
 
-// testNth tests Nth, assuming that the vector contains 0...n-1.
-func testNth(t *testing.T, v Vector) {
+// testNth tests Nth, assuming that the vector contains begin...int-1.
+func testNth(t *testing.T, v Vector, begin, end int) {
 	n := v.Len()
 	for i := 0; i < n; i++ {
 		elem := v.Nth(i)
-		if num, ok := elem.(int); !ok || num != i {
+		if elem != i {
 			t.Errorf("v.Nth(%v) == %v, want %v", i, elem, i)
+		}
+	}
+	for _, i := range []int{-2, -1, n, n + 1, n * 2} {
+		if elem := v.Nth(i); elem != nil {
+			t.Errorf("v.Nth(%d) == %v, want nil", i, elem)
 		}
 	}
 }
@@ -72,18 +77,28 @@ func testIterator(t *testing.T, it Iterator, begin, end int) {
 // testAssocN tests AssocN by replacing each element.
 func testAssocN(t *testing.T, v Vector, subst interface{}) {
 	n := v.Len()
-	for i := 0; i < n; i++ {
+	for i := 0; i <= n; i++ {
 		oldv := v
 		v = v.AssocN(i, subst)
 
-		elem := oldv.Nth(i)
-		if num, ok := elem.(int); !ok || num != i {
-			t.Errorf("oldv.Nth(%v) == %v, want %v", i, elem, i)
+		if i < n {
+			elem := oldv.Nth(i)
+			if elem != i {
+				t.Errorf("oldv.Nth(%v) == %v, want %v", i, elem, i)
+			}
 		}
 
-		elem = v.Nth(i)
-		if str, ok := elem.(string); !ok || str != subst {
+		elem := v.Nth(i)
+		if elem != subst {
 			t.Errorf("v.Nth(%v) == %v, want %v", i, elem, subst)
+		}
+	}
+
+	n++
+	for _, i := range []int{-1, n + 1, n + 2, n * 2} {
+		newv := v.AssocN(i, subst)
+		if newv != nil {
+			t.Errorf("v.AssocN(%d) = %v, want nil", i, newv)
 		}
 	}
 }
@@ -102,6 +117,10 @@ func testPop(t *testing.T, v Vector) {
 			t.Errorf("oldv.Count() == %v, want %v", count, n-i-1)
 		}
 	}
+	newv := v.Pop()
+	if newv != nil {
+		t.Errorf("v.Pop() = %v, want nil", newv)
+	}
 }
 
 func TestSubVector(t *testing.T) {
@@ -109,7 +128,14 @@ func TestSubVector(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		v = v.Cons(i)
 	}
-	sv := v.SubVector(1, 4)
+
+	sv := v.SubVector(0, 4)
+	testNth(t, sv, 0, 4)
+	testAssocN(t, sv, "233")
+	testIterator(t, sv.Iterator(), 0, 4)
+	testPop(t, sv)
+
+	sv = v.SubVector(1, 4)
 	if !checkVector(sv, 1, 2, 3) {
 		t.Errorf("v[0:4] is not expected")
 	}
@@ -125,8 +151,32 @@ func TestSubVector(t *testing.T) {
 	if !checkVector(sv.SubVector(1, 2), 2) {
 		t.Errorf("v[0:4][1:2] is not expected")
 	}
-
 	testIterator(t, sv.Iterator(), 1, 4)
+
+	if !checkVector(v.SubVector(1, 1)) {
+		t.Errorf("v[1:1] is not expected")
+	}
+	// Begin is allowed to be equal to n if end is also n
+	if !checkVector(v.SubVector(10, 10)) {
+		t.Errorf("v[10:10] is not expected")
+	}
+
+	bad := v.SubVector(-1, 0)
+	if bad != nil {
+		t.Errorf("v.SubVector(-1, 0) = %v, want nil", bad)
+	}
+	bad = v.SubVector(5, 100)
+	if bad != nil {
+		t.Errorf("v.SubVector(5, 100) = %v, want nil", bad)
+	}
+	bad = v.SubVector(-1, 100)
+	if bad != nil {
+		t.Errorf("v.SubVector(-1, 100) = %v, want nil", bad)
+	}
+	bad = v.SubVector(4, 2)
+	if bad != nil {
+		t.Errorf("v.SubVector(4, 2) = %v, want nil", bad)
+	}
 }
 
 func checkVector(v Vector, values ...interface{}) bool {
