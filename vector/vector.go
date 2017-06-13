@@ -32,6 +32,18 @@ type Vector interface {
 	// SubVector returns a subvector containing the elements from i up to but
 	// not including j.
 	SubVector(i, j int) Vector
+	// Iterator returns an iterator over the vector. It can be used like this:
+	Iterator() Iterator
+}
+
+// Iterator is an iterator over vector elements.
+type Iterator interface {
+	// Elem returns the element at the current position.
+	Elem() interface{}
+	// HasElem returns whether the iterator is pointing to an element.
+	HasElem() bool
+	// Next moves the iterator to the next position.
+	Next()
 }
 
 type vector struct {
@@ -262,4 +274,82 @@ func (s *subVector) Pop() Vector {
 
 func (s *subVector) SubVector(i, j int) Vector {
 	return s.v.SubVector(s.begin+i, s.begin+j)
+}
+
+func (s *subVector) Iterator() Iterator {
+	return newIteratorWithRange(s.v, s.begin, s.end)
+}
+
+func (v *vector) Iterator() Iterator {
+	return newIterator(v)
+}
+
+type iterator struct {
+	v        *vector
+	treeSize int
+	index    int
+	end      int
+	path     []pathEntry
+}
+
+type pathEntry struct {
+	node  node
+	index int
+}
+
+func (e pathEntry) current() interface{} {
+	return e.node[e.index]
+}
+
+func newIterator(v *vector) *iterator {
+	return newIteratorWithRange(v, 0, v.Len())
+}
+
+func newIteratorWithRange(v *vector, begin, end int) *iterator {
+	it := &iterator{v, v.treeSize(), begin, end, nil}
+	// Find the node for begin, remembering all nodes along the path.
+	n := v.root
+	for shift := v.height * chunkBits; shift > 0; shift -= chunkBits {
+		idx := (begin >> shift) & chunkMask
+		it.path = append(it.path, pathEntry{n, idx})
+		n = n[idx].(node)
+	}
+	it.path = append(it.path, pathEntry{n, begin & chunkMask})
+	return it
+}
+
+func (it *iterator) Elem() interface{} {
+	if it.index >= it.treeSize {
+		return it.v.tail[it.index-it.treeSize]
+	}
+	return it.path[len(it.path)-1].current()
+}
+
+func (it *iterator) HasElem() bool {
+	return it.index < it.end
+}
+
+func (it *iterator) Next() {
+	if it.index+1 >= it.treeSize {
+		// Next element is in tail. Just increment the index.
+		it.index++
+		return
+	}
+	// Find the deepest level that can be advanced.
+	var i int
+	for i = len(it.path) - 1; i >= 0; i-- {
+		e := it.path[i]
+		if e.index+1 < len(e.node) && e.node[e.index+1] != nil {
+			break
+		}
+	}
+	if i == -1 {
+		panic("cannot advance; vector iterator bug")
+	}
+	// Advance on this node, and re-populate all deeper levels.
+	it.path[i].index++
+	for i++; i < len(it.path); i++ {
+		it.path[i] = pathEntry{it.path[i-1].current().(node), 0}
+	}
+	it.index++
 }

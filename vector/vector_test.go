@@ -17,6 +17,17 @@ func TestVector(t *testing.T) {
 		n     = N4
 	)
 
+	v := testCons(t, n)
+	testNth(t, v)
+	testAssocN(t, v, subst)
+	testIterator(t, v.Iterator(), 0, n)
+	testPop(t, v)
+}
+
+// testCons creates a vector containing 0...n-1 with Cons, and ensures that the
+// length of the old and new vectors are expected after each Cons. It returns
+// the created vector.
+func testCons(t *testing.T, n int) Vector {
 	v := Empty
 	for i := 0; i < n; i++ {
 		oldv := v
@@ -29,14 +40,38 @@ func TestVector(t *testing.T) {
 			t.Errorf("v.Count() == %v, want %v", count, i+1)
 		}
 	}
+	return v
+}
 
+// testNth tests Nth, assuming that the vector contains 0...n-1.
+func testNth(t *testing.T, v Vector) {
+	n := v.Len()
 	for i := 0; i < n; i++ {
 		elem := v.Nth(i)
 		if num, ok := elem.(int); !ok || num != i {
 			t.Errorf("v.Nth(%v) == %v, want %v", i, elem, i)
 		}
 	}
+}
 
+// testIterator tests the iterator, assuming that the result is begin...end-1.
+func testIterator(t *testing.T, it Iterator, begin, end int) {
+	i := begin
+	for ; it.HasElem(); it.Next() {
+		elem := it.Elem()
+		if elem != i {
+			t.Errorf("iterator produce %v, want %v", elem, i)
+		}
+		i++
+	}
+	if i != end {
+		t.Errorf("iterator produces up to %v, want %v", i, end)
+	}
+}
+
+// testAssocN tests AssocN by replacing each element.
+func testAssocN(t *testing.T, v Vector, subst interface{}) {
+	n := v.Len()
 	for i := 0; i < n; i++ {
 		oldv := v
 		v = v.AssocN(i, subst)
@@ -51,7 +86,11 @@ func TestVector(t *testing.T) {
 			t.Errorf("v.Nth(%v) == %v, want %v", i, elem, subst)
 		}
 	}
+}
 
+// testPop tests Pop by removing each element.
+func testPop(t *testing.T, v Vector) {
+	n := v.Len()
 	for i := 0; i < n; i++ {
 		oldv := v
 		v = v.Pop()
@@ -70,22 +109,24 @@ func TestSubVector(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		v = v.Cons(i)
 	}
-	sv := v.SubVector(0, 4)
-	if !checkVector(sv, 0, 1, 2, 3) {
+	sv := v.SubVector(1, 4)
+	if !checkVector(sv, 1, 2, 3) {
 		t.Errorf("v[0:4] is not expected")
 	}
-	if !checkVector(sv.AssocN(1, "233"), 0, "233", 2, 3) {
+	if !checkVector(sv.AssocN(1, "233"), 1, "233", 3) {
 		t.Errorf("v[0:4].AssocN is not expected")
 	}
-	if !checkVector(sv.Cons("233"), 0, 1, 2, 3, "233") {
+	if !checkVector(sv.Cons("233"), 1, 2, 3, "233") {
 		t.Errorf("v[0:4].Cons is not expected")
 	}
-	if !checkVector(sv.Pop(), 0, 1, 2) {
+	if !checkVector(sv.Pop(), 1, 2) {
 		t.Errorf("v[0:4].Pop is not expected")
 	}
-	if !checkVector(sv.SubVector(1, 3), 1, 2) {
+	if !checkVector(sv.SubVector(1, 2), 2) {
 		t.Errorf("v[0:4][1:2] is not expected")
 	}
+
+	testIterator(t, sv.Iterator(), 1, 4)
 }
 
 func checkVector(v Vector, values ...interface{}) bool {
