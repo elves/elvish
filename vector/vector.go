@@ -34,11 +34,16 @@ type Vector interface {
 	// SubVector returns a subvector containing the elements from i up to but
 	// not including j.
 	SubVector(i, j int) Vector
-	// Iterator returns an iterator over the vector. It can be used like this:
+	// Iterator returns an iterator over the vector.
 	Iterator() Iterator
 }
 
-// Iterator is an iterator over vector elements.
+// Iterator is an iterator over vector elements. It can be used like this:
+//
+//     for it := v.Iterator(); it.HasElem(); it.Next() {
+//         elem := it.Elem()
+//         // do something with elem...
+//     }
 type Iterator interface {
 	// Elem returns the element at the current position.
 	Elem() interface{}
