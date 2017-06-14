@@ -102,6 +102,7 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 	if m.Len() != 0 {
 		t.Errorf("m.Len = %d, want %d", m.Len(), 0)
 	}
+
 	// Assoc and Len, test by building a map simutaneously.
 	ref := make(map[testKey]string, len(refEntries))
 	for _, e := range refEntries {
@@ -111,12 +112,16 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 			t.Errorf("m.Len = %d, want %d", m.Len(), len(ref))
 		}
 	}
+
 	// Get.
 	testMapContent(t, m, ref)
 	in, got := m.Get(anotherTestKey(0))
 	if in {
 		t.Errorf("m.Get <bad key> returns entry %v", got)
 	}
+	// Iterator.
+	testIterator(t, m, ref)
+
 	// Without.
 	// Ineffective ones.
 	for i := 0; i < NIneffectiveWithout; i++ {
@@ -126,6 +131,7 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 			t.Errorf("m.Without removes item when it shouldn't")
 		}
 	}
+
 	// Effective ones.
 	for i := len(refEntries) - 1; i >= 0; i-- {
 		k := refEntries[i].k
@@ -154,5 +160,22 @@ func testMapContent(t *testing.T, m HashMap, ref map[testKey]string) {
 		if got != v {
 			t.Errorf("m.Get(0x%x) = %v, want %v", k, got, v)
 		}
+	}
+}
+
+func testIterator(t *testing.T, m HashMap, ref map[testKey]string) {
+	ref2 := map[Key]interface{}{}
+	for k, v := range ref {
+		ref2[k] = v
+	}
+	for it := m.Iterator(); it.HasElem(); it.Next() {
+		k, v := it.Elem()
+		if ref2[k] != v {
+			t.Errorf("iterator yields unexpected pair %v, %v", k, v)
+		}
+		delete(ref2, k)
+	}
+	if len(ref2) != 0 {
+		t.Errorf("iterating was not exhaustive")
 	}
 }

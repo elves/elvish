@@ -23,6 +23,23 @@ type HashMap interface {
 	// Without returns an almost identical hashmap, with the given key
 	// associated with no value.
 	Without(k Key) HashMap
+	// Iterator returns an iterator over the map.
+	Iterator() Iterator
+}
+
+// Iterator is an iterator over map elements. It can be used like this:
+//
+//     for it := m.Iterator(); it.HasElem(); it.Next() {
+//         key, value := it.Elem()
+//         // do something with elem...
+//     }
+type Iterator interface {
+	// Elem returns the current key-value pair.
+	Elem() (Key, interface{})
+	// HasElem returns whether the iterator is pointing to an element.
+	HasElem() bool
+	// Next moves the iterator to the next position.
+	Next()
 }
 
 // Empty is an empty hashmap.
@@ -59,6 +76,10 @@ func (m *hashMap) Without(k Key) HashMap {
 	return &hashMap{newCount, newRoot}
 }
 
+func (m *hashMap) Iterator() Iterator {
+	return m.root.iterator()
+}
+
 // node is an interface for all nodes in the hash map tree.
 type node interface {
 	// assoc adds a new pair of key and value. It returns whether the key did
@@ -71,6 +92,8 @@ type node interface {
 	// find finds the value for a key. It returns whether such a pair exists,
 	// and the found value.
 	find(shift, hash uint32, k Key) (bool, interface{})
+	// iterator returns an iterator.
+	iterator() Iterator
 }
 
 // arrayNode stores all of its children in an array. The array is always at
@@ -139,6 +162,44 @@ func (n *arrayNode) find(shift, hash uint32, k Key) (bool, interface{}) {
 		return false, nil
 	}
 	return child.find(shift+chunkBits, hash, k)
+}
+
+func (n *arrayNode) iterator() Iterator {
+	it := &arrayNodeIterator{n, 0, nil}
+	it.fixCurrent()
+	return it
+}
+
+type arrayNodeIterator struct {
+	n       *arrayNode
+	index   int
+	current Iterator
+}
+
+func (it *arrayNodeIterator) fixCurrent() {
+	for ; it.index < nodeCap && it.n.children[it.index] == nil; it.index++ {
+	}
+	if it.index < nodeCap {
+		it.current = it.n.children[it.index].iterator()
+	} else {
+		it.current = nil
+	}
+}
+
+func (it *arrayNodeIterator) Elem() (Key, interface{}) {
+	return it.current.Elem()
+}
+
+func (it *arrayNodeIterator) HasElem() bool {
+	return it.current != nil
+}
+
+func (it *arrayNodeIterator) Next() {
+	it.current.Next()
+	if !it.current.HasElem() {
+		it.index++
+		it.fixCurrent()
+	}
 }
 
 var emptyBitmapNode = &bitmapNode{}
@@ -319,6 +380,53 @@ func (n *bitmapNode) find(shift, hash uint32, k Key) (bool, interface{}) {
 	return false, nil
 }
 
+func (n *bitmapNode) iterator() Iterator {
+	it := &bitmapNodeIterator{n, 0, nil}
+	it.fixCurrent()
+	return it
+}
+
+type bitmapNodeIterator struct {
+	n       *bitmapNode
+	index   int
+	current Iterator
+}
+
+func (it *bitmapNodeIterator) fixCurrent() {
+	if it.index < len(it.n.entries) {
+		entry := it.n.entries[it.index]
+		if entry.key == nil {
+			it.current = entry.value.(node).iterator()
+		} else {
+			it.current = nil
+		}
+	} else {
+		it.current = nil
+	}
+}
+
+func (it *bitmapNodeIterator) Elem() (Key, interface{}) {
+	if it.current != nil {
+		return it.current.Elem()
+	}
+	entry := it.n.entries[it.index]
+	return entry.key, entry.value
+}
+
+func (it *bitmapNodeIterator) HasElem() bool {
+	return it.index < len(it.n.entries)
+}
+
+func (it *bitmapNodeIterator) Next() {
+	if it.current != nil {
+		it.current.Next()
+	}
+	if it.current == nil || !it.current.HasElem() {
+		it.index++
+		it.fixCurrent()
+	}
+}
+
 type collisionNode struct {
 	hash    uint32
 	entries []mapEntry
@@ -367,4 +475,26 @@ func (n *collisionNode) findIndex(k Key) int {
 		}
 	}
 	return -1
+}
+
+func (n *collisionNode) iterator() Iterator {
+	return &collisionNodeIterator{n, 0}
+}
+
+type collisionNodeIterator struct {
+	n     *collisionNode
+	index int
+}
+
+func (it *collisionNodeIterator) Elem() (Key, interface{}) {
+	entry := it.n.entries[it.index]
+	return entry.key, entry.value
+}
+
+func (it *collisionNodeIterator) HasElem() bool {
+	return it.index < len(it.n.entries)
+}
+
+func (it *collisionNodeIterator) Next() {
+	it.index++
 }
