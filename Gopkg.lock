@@ -15,9 +15,15 @@
 
 [[projects]]
   name = "github.com/mattn/go-sqlite3"
-  packages = [".","sqlite3_test"]
+  packages = ["."]
   revision = "ca5e3819723d8eeaf170ad510e7da1d6d2e94a08"
   version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/xiaq/persistent"
+  packages = ["vector"]
+  revision = "06adb7b7bfda3d72748014cca677223091779411"
 
 [[projects]]
   branch = "master"
@@ -34,6 +40,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d8d25985e4eb46a69fe559da6da1f6088eaa4e194e60afdcccd0415e81e82de4"
+  inputs-digest = "9e65cb2e0a3498e95abcc9d7146399bb8ca87856f7f87fbf4d2257f2c4ff38e0"
   solver-name = "gps-cdcl"
   solver-version = 1

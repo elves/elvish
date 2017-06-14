@@ -245,7 +245,7 @@ func FromJSONInterface(v interface{}) Value {
 		for i, v := range a {
 			vs[i] = FromJSONInterface(v)
 		}
-		return List{&vs}
+		return NewList(vs...)
 	case map[string]interface{}:
 		m := v.(map[string]interface{})
 		mv := make(map[Value]Value)

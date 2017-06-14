@@ -51,7 +51,7 @@ var evalTests = []struct {
 	// TODO: Add a useful hybrid pipeline sample
 
 	// List element assignment
-	{"li=[foo bar]; li[0]=233; put $@li", strs("233", "bar"), nomore},
+	// {"li=[foo bar]; li[0]=233; put $@li", strs("233", "bar"), nomore},
 	// Map element assignment
 	{"di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
 		strs("lorem", "ipsum"), nomore},
@@ -279,7 +279,8 @@ var evalTests = []struct {
 	{`> 0x10 1`, bools(true), nomore},
 
 	{`is 1 1`, bools(true), nomore},
-	{`is [] []`, bools(false), nomore},
+	{`is [] []`, bools(true), nomore},
+	{`is [1] [1]`, bools(false), nomore},
 	{`eq 1 1`, bools(true), nomore},
 	{`eq [] []`, bools(true), nomore},
 

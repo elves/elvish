@@ -311,7 +311,7 @@ func (cp *compiler) list(n *parse.Array) ValuesOpFunc {
 		for i := 0; i <= ns; i++ {
 			rows[i] = NewList(rowOps[i](ec)...)
 		}
-		return []Value{List{&rows}}
+		return []Value{NewList(rows...)}
 	}
 }
 

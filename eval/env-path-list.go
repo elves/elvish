@@ -101,7 +101,7 @@ func (epl *EnvPathList) IndexOne(idx Value) Value {
 		for i, p := range sliced {
 			values[i] = String(p)
 		}
-		return List{&values}
+		return NewList(values...)
 	}
 	return String(paths[i])
 }

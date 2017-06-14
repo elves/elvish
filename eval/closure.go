@@ -68,7 +68,7 @@ func (c *Closure) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 	// Logger.Printf("EvalCtx=%p, args=%v, opts=%v", ec, args, opts)
 	ec.positionals = args
-	ec.local["args"] = NewPtrVariable(List{&args})
+	ec.local["args"] = NewPtrVariable(NewList(args...))
 	// XXX This conversion was done by the other direction.
 	convertedOpts := make(map[Value]Value)
 	for k, v := range opts {

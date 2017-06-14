@@ -24,8 +24,8 @@ var reprTests = []struct {
 		PipelineError{[]*Exception{{nil, nil}, {errors.New("lorem"), nil}}}, nil},
 		"?(multi-error $ok ?(fail lorem))"},
 	{&Exception{Return, nil}, "?(return)"},
-	{List{&[]Value{}}, "[]"},
-	{List{&[]Value{String("bash"), Bool(false)}}, "[bash $false]"},
+	{NewList(), "[]"},
+	{NewList(String("bash"), Bool(false)), "[bash $false]"},
 	{Map{&map[Value]Value{}}, "[&]"},
 	{Map{&map[Value]Value{&Exception{nil, nil}: String("elvish")}}, "[&$ok=elvish]"},
 	// TODO: test maps of more elements

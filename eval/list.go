@@ -6,6 +6,8 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+
+	"github.com/xiaq/persistent/vector"
 )
 
 // Error definitions.
@@ -23,14 +25,18 @@ type ListLike interface {
 
 // List is a list of Value's.
 type List struct {
-	inner *[]Value
+	inner vector.Vector
 }
 
 var _ ListLike = List{}
 
 // NewList creates a new List.
 func NewList(vs ...Value) List {
-	return List{&vs}
+	vec := vector.Empty
+	for _, v := range vs {
+		vec = vec.Cons(v)
+	}
+	return List{vec}
 }
 
 func (List) Kind() string {
@@ -40,22 +46,40 @@ func (List) Kind() string {
 func (l List) Repr(indent int) string {
 	var b ListReprBuilder
 	b.Indent = indent
-	for _, v := range *l.inner {
+	for it := l.inner.Iterator(); it.HasElem(); it.Next() {
+		v := it.Elem().(Value)
 		b.WriteElem(v.Repr(indent + 1))
 	}
 	return b.String()
 }
 
 func (l List) MarshalJSON() ([]byte, error) {
-	return json.Marshal(*l.inner)
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	buf.WriteByte('[')
+	first := true
+	for it := l.inner.Iterator(); it.HasElem(); it.Next() {
+		if first {
+			first = false
+		} else {
+			buf.WriteByte(',')
+		}
+		err := encoder.Encode(it.Elem())
+		if err != nil {
+			return nil, err
+		}
+	}
+	buf.WriteByte(']')
+	return buf.Bytes(), nil
 }
 
 func (l List) Len() int {
-	return len(*l.inner)
+	return l.inner.Len()
 }
 
 func (l List) Iterate(f func(Value) bool) {
-	for _, v := range *l.inner {
+	for it := l.inner.Iterator(); it.HasElem(); it.Next() {
+		v := it.Elem().(Value)
 		if !f(v) {
 			break
 		}
@@ -63,20 +87,11 @@ func (l List) Iterate(f func(Value) bool) {
 }
 
 func (l List) IndexOne(idx Value) Value {
-	slice, i, j := ParseAndFixListIndex(ToString(idx), len(*l.inner))
+	slice, i, j := ParseAndFixListIndex(ToString(idx), l.Len())
 	if slice {
-		copied := append([]Value{}, (*l.inner)[i:j]...)
-		return List{&copied}
+		return List{l.inner.SubVector(i, j)}
 	}
-	return (*l.inner)[i]
-}
-
-func (l List) IndexSet(idx Value, v Value) {
-	slice, i, _ := ParseAndFixListIndex(ToString(idx), len(*l.inner))
-	if slice {
-		throw(errors.New("slice set unimplemented"))
-	}
-	(*l.inner)[i] = v
+	return l.inner.Nth(i).(Value)
 }
 
 // ParseAndFixListIndex parses a list index and returns whether the index is a
