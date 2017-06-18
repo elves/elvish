@@ -44,5 +44,5 @@ bind-mode navigation Ctrl-N $le:nav:&down
 bind-mode navigation Ctrl-P $le:nav:&up
 bind-mode navigation Alt-f  $le:nav:&trigger-filter
 
-bind-mode history Ctrl-N $le:history:&down
+bind-mode history Ctrl-N $le:history:&down-or-quit
 bind-mode history Ctrl-P $le:history:&up
