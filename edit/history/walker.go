@@ -42,7 +42,7 @@ func (w *Walker) Prefix() string {
 
 // CurrentSeq returns the sequence number of the current entry.
 func (w *Walker) CurrentSeq() int {
-	if len(w.seq) > 0 && w.top <= len(w.seq) {
+	if len(w.seq) > 0 && w.top <= len(w.seq) && w.top > 0 {
 		return w.seq[w.top-1]
 	}
 	return -1
@@ -50,7 +50,7 @@ func (w *Walker) CurrentSeq() int {
 
 // CurrentSeq returns the content of the current entry.
 func (w *Walker) CurrentCmd() string {
-	if len(w.stack) > 0 && w.top <= len(w.stack) {
+	if len(w.stack) > 0 && w.top <= len(w.stack) && w.top > 0 {
 		return w.stack[w.top-1]
 	}
 	return ""
