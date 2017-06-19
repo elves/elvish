@@ -47,6 +47,9 @@ func (exc *Exception) Pprint(indent string) string {
 	if pipeExcs, ok := exc.Cause.(PipelineError); ok {
 		buf.WriteString("\n" + indent + "Caused by:")
 		for _, e := range pipeExcs.Errors {
+			if e == OK {
+				continue
+			}
 			buf.WriteString("\n" + indent + "  " + e.Pprint(indent+"  "))
 		}
 	}
