@@ -7,6 +7,7 @@ import (
 	"github.com/elves/elvish/store"
 )
 
+// Service provides the daemon RPC service.
 type Service struct {
 	store *store.Store
 }

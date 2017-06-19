@@ -230,14 +230,12 @@ func doDaemon() int {
 				Files: []uintptr{closeFd, closeFd, 2},
 			})
 	case 2:
-		d := daemon.New(*sockpath, *dbpath)
-		return d.Main()
+		daemon.Serve(*sockpath, *dbpath)
+		panic("unreachable")
 	default:
 		return 2
 	}
 }
-
-var errCannotDetermineBinPath = errors.New("cannot determine path of elvish binary")
 
 // startDaemon starts a daemon in the background. It is supposed to be called
 // from a client.
@@ -248,7 +246,6 @@ func startDaemon(logpath string) error {
 			*binpath = os.Args[0]
 		} else {
 			// Find elvish in PATH
-			return errCannotDetermineBinPath
 			paths := strings.Split(os.Getenv("PATH"), ":")
 			bin, err := util.Search(paths, "elvish")
 			if err != nil {

@@ -1,5 +1,6 @@
-// Package daemon implements a daemon for mediating access to the storage
-// backend of elvish.
+// Package daemon implements the daemon service for mediating access to the
+// storage backend. It does not take care daemonization; for that part, see
+// daemon/exec.
 package daemon
 
 import (
@@ -16,35 +17,23 @@ import (
 
 var logger = util.GetLogger("[daemon] ")
 
-// Daemon is a daemon.
-type Daemon struct {
-	sockpath string
-	dbpath   string
-}
-
-// New creates a new daemon.
-func New(sockpath, dbpath string) *Daemon {
-	return &Daemon{sockpath, dbpath}
-}
-
-// Main runs the daemon. It does not take care of forking and stuff; it assumes
-// that it is already running in the correct process.
-func (d *Daemon) Main() int {
+// Serve runs the daemon service. It does not return.
+func Serve(sockpath, dbpath string) {
 	logger.Println("pid is", syscall.Getpid())
 
-	st, err := store.NewStore(d.dbpath)
+	st, err := store.NewStore(dbpath)
 	if err != nil {
 		logger.Printf("failed to create storage: %v", err)
 		logger.Println("aborting")
-		return 2
+		os.Exit(2)
 	}
 
-	logger.Println("going to listen", d.sockpath)
-	listener, err := net.Listen("unix", d.sockpath)
+	logger.Println("going to listen", sockpath)
+	listener, err := net.Listen("unix", sockpath)
 	if err != nil {
-		logger.Printf("failed to listen on %s: %v", d.sockpath, err)
+		logger.Printf("failed to listen on %s: %v", sockpath, err)
 		logger.Println("aborting")
-		return 2
+		os.Exit(2)
 	}
 
 	quitSignals := make(chan os.Signal)
@@ -52,9 +41,9 @@ func (d *Daemon) Main() int {
 	go func() {
 		sig := <-quitSignals
 		logger.Printf("received signal %s, shutting down", sig)
-		err := os.Remove(d.sockpath)
+		err := os.Remove(sockpath)
 		if err != nil {
-			logger.Println("failed to remove socket %s: %v", d.sockpath, err)
+			logger.Println("failed to remove socket %s: %v", sockpath, err)
 		}
 		logger.Println("exiting")
 		os.Exit(0)
@@ -65,5 +54,5 @@ func (d *Daemon) Main() int {
 
 	logger.Println("starting to serve RPC calls")
 	rpc.Accept(listener)
-	return 0
+	os.Exit(0)
 }
