@@ -105,7 +105,7 @@ func ParseAndFixListIndex(s string, n int) (bool, int, int) {
 	if j < 0 {
 		j += n
 	}
-	if i < 0 || i >= n || (slice && (j < 0 || j > n)) {
+	if i < 0 || i >= n || (slice && (j < 0 || j > n || i > j)) {
 		throw(ErrIndexOutOfRange)
 	}
 	return slice, i, j
