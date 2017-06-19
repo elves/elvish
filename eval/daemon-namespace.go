@@ -5,12 +5,11 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/daemon/api"
-	"github.com/elves/elvish/daemon/client"
 )
 
 var ErrDaemonOffline = errors.New("daemon is offline")
 
-func makeDaemonNamespace(daemon *client.Client) Namespace {
+func makeDaemonNamespace(daemon *api.Client) Namespace {
 	// Obtain process ID
 	daemonPid := func() Value {
 		req := &api.PidRequest{}

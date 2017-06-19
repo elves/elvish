@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
@@ -34,6 +35,7 @@ type Editor struct {
 	reader *tty.Reader
 	sigs   chan os.Signal
 	store  *store.Store
+	daemon *api.Client
 	evaler *eval.Evaler
 
 	variables map[string]eval.Variable
@@ -85,7 +87,7 @@ type editorState struct {
 }
 
 // NewEditor creates an Editor.
-func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.Store) *Editor {
+func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.Store, daemon *api.Client) *Editor {
 	ed := &Editor{
 		in:     in,
 		out:    out,
@@ -93,6 +95,7 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, 
 		reader: tty.NewReader(in),
 		sigs:   sigs,
 		store:  st,
+		daemon: daemon,
 		evaler: ev,
 
 		variables: makeVariables(),

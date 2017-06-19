@@ -17,10 +17,24 @@ type VersionResponse struct {
 	Version int
 }
 
+func (c *Client) Version() (int, error) {
+	req := &VersionRequest{}
+	res := &VersionResponse{}
+	err := c.CallDaemon("Version", req, res)
+	return res.Version, err
+}
+
 type PidRequest struct{}
 
 type PidResponse struct {
 	Pid int
+}
+
+func (c *Client) Pid() (int, error) {
+	req := &PidRequest{}
+	res := &PidResponse{}
+	err := c.CallDaemon("Pid", req, res)
+	return res.Pid, err
 }
 
 // Cmd requests.
@@ -31,12 +45,26 @@ type NextCmdSeqResponse struct {
 	Seq int
 }
 
+func (c *Client) NextCmdSeq() (int, error) {
+	req := &NextCmdRequest{}
+	res := &NextCmdSeqResponse{}
+	err := c.CallDaemon("NextCmdSeq", req, res)
+	return res.Seq, err
+}
+
 type AddCmdRequest struct {
 	Text string
 }
 
 type AddCmdResponse struct {
 	Seq int
+}
+
+func (c *Client) AddCmd(text string) (int, error) {
+	req := &AddCmdRequest{text}
+	res := &AddCmdResponse{}
+	err := c.CallDaemon("AddCmd", req, res)
+	return res.Seq, err
 }
 
 type CmdRequest struct {
@@ -47,6 +75,13 @@ type CmdResponse struct {
 	Text string
 }
 
+func (c *Client) Cmd(seq int) (string, error) {
+	req := &CmdRequest{seq}
+	res := &CmdResponse{}
+	err := c.CallDaemon("Cmd", req, res)
+	return res.Text, err
+}
+
 type CmdsRequest struct {
 	From int
 	Upto int
@@ -54,6 +89,13 @@ type CmdsRequest struct {
 
 type CmdsResponse struct {
 	Cmds []string
+}
+
+func (c *Client) Cmds(from, upto int) ([]string, error) {
+	req := &CmdsRequest{from, upto}
+	res := &CmdsResponse{}
+	err := c.CallDaemon("Cmds", req, res)
+	return res.Cmds, err
 }
 
 type NextCmdRequest struct {
@@ -66,6 +108,13 @@ type NextCmdResponse struct {
 	Text string
 }
 
+func (c *Client) NextCmd(from int, prefix string) (int, string, error) {
+	req := &NextCmdRequest{from, prefix}
+	res := &NextCmdResponse{}
+	err := c.CallDaemon("NextCmd", req, res)
+	return res.Seq, res.Text, err
+}
+
 type PrevCmdRequest struct {
 	Upto   int
 	Prefix string
@@ -74,6 +123,13 @@ type PrevCmdRequest struct {
 type PrevCmdResponse struct {
 	Seq  int
 	Text string
+}
+
+func (c *Client) PrevCmd(upto int, prefix string) (int, string, error) {
+	req := &PrevCmdRequest{upto, prefix}
+	res := &PrevCmdResponse{}
+	err := c.CallDaemon("PrevCmd", req, res)
+	return res.Seq, res.Text, err
 }
 
 /*
@@ -101,22 +157,5 @@ type SetSharedVar struct {
 
 type DelSharedVar struct {
 	Name string
-}
-
-type Request struct {
-	GetPid *GetPid
-
-	NextCmdSeq  *NextCmdSeq
-	AddCmd      *AddCmd
-	GetCmds     *GetCmds
-	GetFirstCmd *GetFirstCmd
-	GetLastCmd  *GetLastCmd
-
-	AddDir  *AddDir
-	GetDirs *GetDirs
-
-	GetSharedVar *GetSharedVar
-	SetSharedVar *SetSharedVar
-	DelSharedVar *DelSharedVar
 }
 */

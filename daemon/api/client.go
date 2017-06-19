@@ -1,10 +1,8 @@
-package client
+package api
 
 import (
 	"errors"
 	"net/rpc"
-
-	"github.com/elves/elvish/daemon/api"
 )
 
 var ErrDaemonOffline = errors.New("daemon offline")
@@ -14,7 +12,7 @@ type Client struct {
 	rpcClient *rpc.Client
 }
 
-func New(sockPath string) *Client {
+func NewClient(sockPath string) *Client {
 	return &Client{sockPath, nil}
 }
 
@@ -23,7 +21,7 @@ func (c *Client) CallDaemon(f string, req, res interface{}) error {
 	if err != nil {
 		return err
 	}
-	err = c.rpcClient.Call(api.ServiceName+"."+f, req, res)
+	err = c.rpcClient.Call(ServiceName+"."+f, req, res)
 	if err == rpc.ErrShutdown {
 		// Clear rpcClient so as to reconnect next time
 		c.rpcClient = nil

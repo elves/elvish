@@ -17,7 +17,6 @@ import (
 
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/daemon/api"
-	"github.com/elves/elvish/daemon/client"
 	"github.com/elves/elvish/daemon/service"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/shell"
@@ -140,13 +139,13 @@ func main() {
 			w := web.NewWeb(ev, st, *webport)
 			ret = w.Run(args)
 		} else {
-			sh := shell.NewShell(ev, st, *cmd)
+			sh := shell.NewShell(ev, st, cl, *cmd)
 			ret = sh.Run(args)
 		}
 	}
 }
 
-func initRuntime() (*eval.Evaler, *store.Store, *client.Client) {
+func initRuntime() (*eval.Evaler, *store.Store, *api.Client) {
 	var dataDir string
 	var err error
 	if *dbpath == "" || *sockpath == "" {
@@ -179,31 +178,27 @@ func initRuntime() (*eval.Evaler, *store.Store, *client.Client) {
 		SockPath:      *sockpath,
 		LogPathPrefix: dataDir + "/daemon.log.",
 	}
-	var cl *client.Client
+	var cl *api.Client
 	if *sockpath != "" && *dbpath != "" {
-		cl = client.New(*sockpath)
+		cl = api.NewClient(*sockpath)
 		_, statErr := os.Stat(*sockpath)
 		killed := false
 		if statErr == nil {
 			// Kill the daemon if it is outdated.
-			req := &api.VersionRequest{}
-			res := &api.VersionResponse{}
-			err := cl.CallDaemon("Version", req, res)
+			version, err := cl.Version()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: socket exists but not responding version RPC:", err)
 				goto spawnDaemonEnd
 			}
-			logger.Printf("daemon serving version %d, want version %d", res.Version, api.Version)
-			if res.Version < api.Version {
-				req := &api.PidRequest{}
-				res := &api.PidResponse{}
-				err := cl.CallDaemon("Pid", req, res)
+			logger.Printf("daemon serving version %d, want version %d", version, api.Version)
+			if version < api.Version {
+				pid, err := cl.Pid()
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "warning: socket exists but not responding pid RPC:", err)
 					goto spawnDaemonEnd
 				}
-				logger.Printf("killing outdated daemon with pid %d", res.Pid)
-				err = syscall.Kill(res.Pid, syscall.SIGTERM)
+				logger.Printf("killing outdated daemon with pid %d", pid)
+				err = syscall.Kill(pid, syscall.SIGTERM)
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "warning: failed to kill outdated daemon process:", err)
 					goto spawnDaemonEnd

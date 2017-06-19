@@ -12,6 +12,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/store"
@@ -23,13 +24,14 @@ var logger = util.GetLogger("[shell] ")
 
 // Shell keeps flags to the shell.
 type Shell struct {
-	ev  *eval.Evaler
-	st  *store.Store
-	cmd bool
+	ev     *eval.Evaler
+	st     *store.Store
+	daemon *api.Client
+	cmd    bool
 }
 
-func NewShell(ev *eval.Evaler, st *store.Store, cmd bool) *Shell {
-	return &Shell{ev, st, cmd}
+func NewShell(ev *eval.Evaler, st *store.Store, daemon *api.Client, cmd bool) *Shell {
+	return &Shell{ev, st, daemon, cmd}
 }
 
 // Run runs Elvish using the default terminal interface. It blocks until Elvish
@@ -54,7 +56,7 @@ func (sh *Shell) Run(args []string) int {
 	} else if !sys.IsATTY(0) {
 		script(sh.ev, "/dev/stdin")
 	} else {
-		interact(sh.ev, sh.st)
+		interact(sh.ev, sh.st, sh.daemon)
 	}
 
 	return 0
@@ -117,11 +119,11 @@ func readFileUTF8(fname string) (string, error) {
 	return string(bytes), nil
 }
 
-func interact(ev *eval.Evaler, st *store.Store) {
+func interact(ev *eval.Evaler, st *store.Store, daemon *api.Client) {
 	// Build Editor.
 	sigch := make(chan os.Signal)
 	signal.Notify(sigch)
-	ed := edit.NewEditor(os.Stdin, os.Stderr, sigch, ev, st)
+	ed := edit.NewEditor(os.Stdin, os.Stderr, sigch, ev, st, daemon)
 
 	// Source rc.elv.
 	if ev.DataDir != "" {
