@@ -89,6 +89,7 @@ func (w *Walker) Prev() (int, string, error) {
 		)
 		seq, cmd, err = w.store.PrevCmd(seq, w.prefix)
 		if err != nil {
+			// XXX(xiaq): This is broken when using RPC.
 			if err == store.ErrNoMatchingCmd {
 				err = ErrEndOfHistory
 			}

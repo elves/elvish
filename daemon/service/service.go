@@ -106,3 +106,9 @@ func (s *Service) PrevCmd(req *api.PrevCmdRequest, res *api.PrevCmdResponse) err
 	res.Seq, res.Text = seq, text
 	return err
 }
+
+func (s *Service) Dirs(req *api.DirsRequest, res *api.DirsResponse) error {
+	dirs, err := s.store.GetDirs(req.Blacklist)
+	res.Dirs = dirs
+	return err
+}

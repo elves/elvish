@@ -147,7 +147,7 @@ func locStart(ed *Editor) {
 		return
 	}
 	black := convertListToSet(ed.locHidden())
-	dirs, err := ed.store.GetDirs(black)
+	dirs, err := ed.daemon.Dirs(black)
 	if err != nil {
 		ed.Notify("store error: %v", err)
 		return

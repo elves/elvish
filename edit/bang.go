@@ -92,7 +92,7 @@ func (b *bang) Accept(i int, ed *Editor) {
 }
 
 func bangStart(ed *Editor) {
-	_, cmd, err := ed.store.PrevCmd(-1, "")
+	_, cmd, err := ed.daemon.PrevCmd(-1, "")
 	if err != nil {
 		ed.Notify("db error: %s", err.Error())
 		return

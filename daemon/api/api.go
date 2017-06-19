@@ -1,6 +1,8 @@
 // Package API provides the API to the daemon RPC service.
 package api
 
+import "github.com/elves/elvish/store"
+
 const (
 	// ServiceName is the name of the RPC service exposed by the daemon.
 	ServiceName = "Daemon"
@@ -132,7 +134,6 @@ func (c *Client) PrevCmd(upto int, prefix string) (int, string, error) {
 	return res.Seq, res.Text, err
 }
 
-/*
 // Dir requests.
 
 type AddDir struct {
@@ -140,10 +141,22 @@ type AddDir struct {
 	IncFactor float64
 }
 
-type GetDirs struct {
+type DirsRequest struct {
 	Blacklist map[string]struct{}
 }
 
+type DirsResponse struct {
+	Dirs []store.Dir
+}
+
+func (c *Client) Dirs(blacklist map[string]struct{}) ([]store.Dir, error) {
+	req := &DirsRequest{blacklist}
+	res := &DirsResponse{}
+	err := c.CallDaemon("Dirs", req, res)
+	return res.Dirs, err
+}
+
+/*
 // SharedVar requests.
 
 type GetSharedVar struct {
