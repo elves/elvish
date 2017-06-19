@@ -17,11 +17,11 @@ import (
 
 // Daemon keeps configurations for the daemon process.
 type Daemon struct {
-	Forked   int
-	BinPath  string
-	DbPath   string
-	SockPath string
-	LogPath  string
+	Forked        int
+	BinPath       string
+	DbPath        string
+	SockPath      string
+	LogPathPrefix string
 }
 
 // closeFd is used in syscall.ProcAttr.Files to signify closing a fd.
@@ -49,7 +49,7 @@ func (d *Daemon) Main(serve func(string, string)) int {
 		absify("-bin", &d.BinPath)
 		absify("-db", &d.DbPath)
 		absify("-sock", &d.SockPath)
-		absify("-log", &d.LogPath)
+		absify("-logprefix", &d.LogPathPrefix)
 		if errored {
 			return 2
 		}
@@ -80,7 +80,7 @@ func (d *Daemon) Main(serve func(string, string)) int {
 
 // Spawn spawns a daemon in the background. It is supposed to be called from a
 // client.
-func (d *Daemon) Spawn(logPath string) error {
+func (d *Daemon) Spawn() error {
 	binPath := d.BinPath
 	// Determine binPath.
 	if binPath == "" {
@@ -96,19 +96,19 @@ func (d *Daemon) Spawn(logPath string) error {
 			binPath = result
 		}
 	}
-	return forkExec(nil, 0, binPath, d.DbPath, d.SockPath, logPath)
+	return forkExec(nil, 0, binPath, d.DbPath, d.SockPath, d.LogPathPrefix)
 }
 
 // pseudoFork forks a daemon. It is supposed to be called from the daemon.
 func (d *Daemon) pseudoFork(attr *syscall.ProcAttr) int {
-	err := forkExec(attr, d.Forked+1, d.BinPath, d.DbPath, d.SockPath, d.LogPath)
+	err := forkExec(attr, d.Forked+1, d.BinPath, d.DbPath, d.SockPath, d.LogPathPrefix)
 	if err != nil {
 		return 2
 	}
 	return 0
 }
 
-func forkExec(attr *syscall.ProcAttr, forkLevel int, binPath, dbPath, sockPath, logPath string) error {
+func forkExec(attr *syscall.ProcAttr, forkLevel int, binPath, dbPath, sockPath, logPathPrefix string) error {
 	_, err := syscall.ForkExec(binPath, []string{
 		binPath,
 		"-daemon",
@@ -116,7 +116,7 @@ func forkExec(attr *syscall.ProcAttr, forkLevel int, binPath, dbPath, sockPath, 
 		"-bin", binPath,
 		"-db", dbPath,
 		"-sock", sockPath,
-		"-log", logPath,
+		"-logprefix", logPathPrefix,
 	}, attr)
 	return err
 }

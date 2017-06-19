@@ -13,6 +13,8 @@ import (
 	"net/rpc"
 	"os"
 	"runtime/pprof"
+	"strconv"
+	"syscall"
 
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/daemon/service"
@@ -46,8 +48,9 @@ var (
 	cmd = flag.Bool("c", false, "take first argument as a command to execute")
 
 	// Flags for daemon.
-	forked  = flag.Int("forked", 0, "how many times the daemon has forked")
-	binpath = flag.String("bin", "", "path to the elvish binary")
+	forked        = flag.Int("forked", 0, "how many times the daemon has forked")
+	binpath       = flag.String("bin", "", "path to the elvish binary")
+	logpathprefix = flag.String("logprefix", "", "the prefix for the daemon log file")
 )
 
 func usage() {
@@ -77,10 +80,21 @@ func main() {
 	}
 
 	// Flags common to all sub-programs: log and CPU profile.
-	if *logpath != "" {
+	if *isdaemon {
+		if *forked == 2 && *logpathprefix != "" {
+			// Honor logpathprefix.
+			pid := syscall.Getpid()
+			err := util.SetOutputFile(*logpathprefix + strconv.Itoa(pid))
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+		} else {
+			util.SetOutputFile("/dev/stderr")
+		}
+	} else if *logpath != "" {
 		err := util.SetOutputFile(*logpath)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintln(os.Stderr, err)
 		}
 	}
 	if *cpuprofile != "" {
@@ -95,11 +109,11 @@ func main() {
 	// Pick a sub-program to run.
 	if *isdaemon {
 		d := daemon.Daemon{
-			Forked:   *forked,
-			BinPath:  *binpath,
-			DbPath:   *dbpath,
-			SockPath: *sockpath,
-			LogPath:  *logpath,
+			Forked:        *forked,
+			BinPath:       *binpath,
+			DbPath:        *dbpath,
+			SockPath:      *sockpath,
+			LogPathPrefix: *logpathprefix,
 		}
 		ret = d.Main(service.Serve)
 	} else {
@@ -159,16 +173,16 @@ func initRuntime() (*eval.Evaler, *store.Store, *rpc.Client) {
 
 	var client *rpc.Client
 	toSpawn := &daemon.Daemon{
-		Forked:   *forked,
-		BinPath:  *binpath,
-		DbPath:   *dbpath,
-		SockPath: *sockpath,
-		LogPath:  dataDir + "/daemon.log",
+		Forked:        *forked,
+		BinPath:       *binpath,
+		DbPath:        *dbpath,
+		SockPath:      *sockpath,
+		LogPathPrefix: dataDir + "/daemon.log.",
 	}
 	if *sockpath != "" && *dbpath != "" {
 		if _, err := os.Stat(*sockpath); os.IsNotExist(err) {
 			logger.Println("socket does not exists, starting daemon")
-			err := toSpawn.Spawn(toSpawn.LogPath)
+			err := toSpawn.Spawn()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: cannot start daemon:", err)
 			}

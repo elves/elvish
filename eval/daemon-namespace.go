@@ -33,5 +33,5 @@ func makeDaemonNamespace(daemon *rpc.Client) Namespace {
 func daemonSpawn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
-	ec.ToSpawn.Spawn(ec.ToSpawn.LogPath)
+	ec.ToSpawn.Spawn()
 }
