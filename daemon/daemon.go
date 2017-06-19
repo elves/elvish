@@ -1,58 +1,122 @@
-// Package daemon implements the daemon service for mediating access to the
-// storage backend. It does not take care daemonization; for that part, see
-// daemon/exec.
+// Package exec provides the entry point of the daemon sub-program and helpers
+// to spawn a daemon process.
 package daemon
 
 import (
-	"net"
-	"net/rpc"
+	"errors"
+	"log"
 	"os"
-	"os/signal"
+	"path"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 
-	"github.com/elves/elvish/daemon/api"
-	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/util"
 )
 
-var logger = util.GetLogger("[daemon] ")
+// Daemon keeps configurations for the daemon process.
+type Daemon struct {
+	Forked   int
+	BinPath  string
+	DbPath   string
+	SockPath string
+	LogPath  string
+}
 
-// Serve runs the daemon service. It does not return.
-func Serve(sockpath, dbpath string) {
-	logger.Println("pid is", syscall.Getpid())
+// closeFd is used in syscall.ProcAttr.Files to signify closing a fd.
+const closeFd = ^uintptr(0)
 
-	st, err := store.NewStore(dbpath)
-	if err != nil {
-		logger.Printf("failed to create storage: %v", err)
-		logger.Println("aborting")
-		os.Exit(2)
-	}
-
-	logger.Println("going to listen", sockpath)
-	listener, err := net.Listen("unix", sockpath)
-	if err != nil {
-		logger.Printf("failed to listen on %s: %v", sockpath, err)
-		logger.Println("aborting")
-		os.Exit(2)
-	}
-
-	quitSignals := make(chan os.Signal)
-	signal.Notify(quitSignals, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		sig := <-quitSignals
-		logger.Printf("received signal %s, shutting down", sig)
-		err := os.Remove(sockpath)
-		if err != nil {
-			logger.Println("failed to remove socket %s: %v", sockpath, err)
+// Main is the entry point of the daemon sub-program.
+func (d *Daemon) Main(serve func(string, string)) int {
+	switch d.Forked {
+	case 0:
+		errored := false
+		absify := func(f string, s *string) {
+			if *s == "" {
+				log.Println("flag", f, "is required for daemon")
+				errored = true
+				return
+			}
+			p, err := filepath.Abs(*s)
+			if err != nil {
+				log.Println("abs:", err)
+				errored = true
+			} else {
+				*s = p
+			}
 		}
-		logger.Println("exiting")
-		os.Exit(0)
-	}()
+		absify("-bin", &d.BinPath)
+		absify("-db", &d.DbPath)
+		absify("-sock", &d.SockPath)
+		absify("-log", &d.LogPath)
+		if errored {
+			return 2
+		}
 
-	service := &Service{st}
-	rpc.RegisterName(api.ServiceName, service)
+		syscall.Umask(0077)
+		return d.pseudoFork(
+			&syscall.ProcAttr{
+				// cd to /
+				Dir: "/",
+				// empty environment
+				Env: nil,
+				// inherit stderr only for logging
+				Files: []uintptr{closeFd, closeFd, 2},
+				Sys:   &syscall.SysProcAttr{Setsid: true},
+			})
+	case 1:
+		return d.pseudoFork(
+			&syscall.ProcAttr{
+				Files: []uintptr{closeFd, closeFd, 2},
+			})
+	case 2:
+		serve(d.SockPath, d.DbPath)
+		panic("unreachable")
+	default:
+		return 2
+	}
+}
 
-	logger.Println("starting to serve RPC calls")
-	rpc.Accept(listener)
-	os.Exit(0)
+// Spawn spawns a daemon in the background. It is supposed to be called from a
+// client.
+func (d *Daemon) Spawn(logpath string) error {
+	// Determine binpath.
+	if d.BinPath == "" {
+		if len(os.Args) > 0 && path.IsAbs(os.Args[0]) {
+			d.BinPath = os.Args[0]
+		} else {
+			// Find elvish in PATH
+			paths := strings.Split(os.Getenv("PATH"), ":")
+			binpath, err := util.Search(paths, "elvish")
+			if err != nil {
+				return errors.New("cannot find elvish: " + err.Error())
+			}
+			d.BinPath = binpath
+		}
+	}
+	d.LogPath = logpath
+	return d.forkExec(nil, 0)
+}
+
+// pseudoFork forks a daemon. It is supposed to be called from the daemon.
+func (d *Daemon) pseudoFork(attr *syscall.ProcAttr) int {
+	err := d.forkExec(attr, d.Forked+1)
+	if err != nil {
+		return 2
+	}
+	return 0
+}
+
+func (d *Daemon) forkExec(attr *syscall.ProcAttr, forklevel int) error {
+	_, err := syscall.ForkExec(d.BinPath, []string{
+		d.BinPath,
+		"-daemon",
+		"-forked", strconv.Itoa(forklevel),
+		"-bin", d.BinPath,
+		"-db", d.DbPath,
+		"-sock", d.SockPath,
+		"-log", d.LogPath,
+	}, attr)
+	return err
 }
