@@ -101,7 +101,7 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, 
 		variables: makeVariables(),
 	}
 	if st != nil {
-		f, err := history.NewFuser(st)
+		f, err := history.NewFuser(daemon)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Failed to initialize command history. Disabled.")
 		} else {
