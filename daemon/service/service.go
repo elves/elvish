@@ -61,6 +61,11 @@ type Service struct {
 	store *store.Store
 }
 
+func (s *Service) Version(req *api.VersionRequest, res *api.VersionResponse) error {
+	res.Version = api.Version
+	return nil
+}
+
 func (s *Service) Pid(req *api.PidRequest, res *api.PidResponse) error {
 	res.Pid = syscall.Getpid()
 	return nil

@@ -1,10 +1,21 @@
 // Package API provides the API to the daemon RPC service.
 package api
 
-// ServiceName is the name of the RPC service exposed by the daemon.
-const ServiceName = "Daemon"
+const (
+	// ServiceName is the name of the RPC service exposed by the daemon.
+	ServiceName = "Daemon"
+
+	// Version is the API version. It should be bumped any time the API changes.
+	Version = -99
+)
 
 // Basic requests.
+
+type VersionRequest struct{}
+
+type VersionResponse struct {
+	Version int
+}
 
 type PidRequest struct{}
 

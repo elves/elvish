@@ -14,11 +14,11 @@ type Client struct {
 	rpcClient *rpc.Client
 }
 
-func NewClient(sockPath string) *Client {
+func New(sockPath string) *Client {
 	return &Client{sockPath, nil}
 }
 
-func (c *Client) Call(f string, req, res interface{}) error {
+func (c *Client) CallDaemon(f string, req, res interface{}) error {
 	err := c.connect()
 	if err != nil {
 		return err

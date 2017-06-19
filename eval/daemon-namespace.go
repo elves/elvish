@@ -15,7 +15,7 @@ func makeDaemonNamespace(daemon *client.Client) Namespace {
 	daemonPid := func() Value {
 		req := &api.PidRequest{}
 		res := &api.PidResponse{}
-		err := daemon.Call("Pid", req, res)
+		err := daemon.CallDaemon("Pid", req, res)
 		maybeThrow(err)
 		return String(strconv.Itoa(res.Pid))
 	}

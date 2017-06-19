@@ -16,6 +16,7 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/daemon"
+	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/daemon/client"
 	"github.com/elves/elvish/daemon/service"
 	"github.com/elves/elvish/eval"
@@ -178,16 +179,50 @@ func initRuntime() (*eval.Evaler, *store.Store, *client.Client) {
 		SockPath:      *sockpath,
 		LogPathPrefix: dataDir + "/daemon.log.",
 	}
+	var cl *client.Client
 	if *sockpath != "" && *dbpath != "" {
-		if _, err := os.Stat(*sockpath); os.IsNotExist(err) {
+		cl = client.New(*sockpath)
+		_, statErr := os.Stat(*sockpath)
+		killed := false
+		if statErr == nil {
+			// Kill the daemon if it is outdated.
+			req := &api.VersionRequest{}
+			res := &api.VersionResponse{}
+			err := cl.CallDaemon("Version", req, res)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "warning: socket exists but not responding version RPC:", err)
+				goto spawnDaemonEnd
+			}
+			logger.Printf("daemon serving version %d, want version %d", res.Version, api.Version)
+			if res.Version < api.Version {
+				req := &api.PidRequest{}
+				res := &api.PidResponse{}
+				err := cl.CallDaemon("Pid", req, res)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "warning: socket exists but not responding pid RPC:", err)
+					goto spawnDaemonEnd
+				}
+				logger.Printf("killing outdated daemon with pid %d", res.Pid)
+				err = syscall.Kill(res.Pid, syscall.SIGTERM)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "warning: failed to kill outdated daemon process:", err)
+					goto spawnDaemonEnd
+				}
+				fmt.Fprintln(os.Stderr, "killed outdated daemon")
+				killed = true
+			}
+		}
+		if os.IsNotExist(statErr) || killed {
 			logger.Println("socket does not exists, starting daemon")
 			err := toSpawn.Spawn()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: cannot start daemon:", err)
+			} else {
+				fmt.Fprintln(os.Stderr, "started daemon")
 			}
 		}
 	}
+spawnDaemonEnd:
 
-	cl := client.NewClient(*sockpath)
 	return eval.NewEvaler(st, cl, toSpawn, dataDir), st, cl
 }
