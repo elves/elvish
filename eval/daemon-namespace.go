@@ -9,12 +9,15 @@ import (
 
 func makeDaemonNamespace(daemon *rpc.Client) Namespace {
 	// Obtain process ID
-	req := &api.PidRequest{}
-	res := &api.PidResponse{}
-	daemon.Call(api.ServiceName+".Pid", req, res)
-	pid := res.Pid
+	daemonPid := func() Value {
+		req := &api.PidRequest{}
+		res := &api.PidResponse{}
+		err := daemon.Call(api.ServiceName+".Pid", req, res)
+		maybeThrow(err)
+		return String(strconv.Itoa(res.Pid))
+	}
 
 	return Namespace{
-		"pid": NewRoVariable(String(strconv.Itoa(pid))),
+		"pid": MakeRoVariableFromCallback(daemonPid),
 	}
 }
