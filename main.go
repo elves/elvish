@@ -7,16 +7,21 @@ package main
 // interface.
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
+	"net/rpc"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime/pprof"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/elves/elvish/daemon"
+	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/shell"
 	"github.com/elves/elvish/store"
@@ -30,6 +35,8 @@ const closeFd = ^uintptr(0)
 // defaultPort is the default port on which the web interface runs. The number
 // is chosen because it resembles "elvi".
 const defaultWebPort = 3171
+
+var logger = util.GetLogger("[main] ")
 
 var (
 	// Flags handled in this package, or common to shell and daemon.
@@ -63,29 +70,28 @@ func main() {
 	ret := 0
 	defer os.Exit(ret)
 
+	// Parse and check flags.
 	flag.Usage = usage
 	flag.Parse()
 	args := flag.Args()
-
 	if *help {
 		usage()
 		return
 	}
-
-	// The daemon takes no argument.
 	if *isdaemon && len(args) > 0 {
+		// The daemon takes no argument.
 		usage()
 		ret = 2
 		return
 	}
 
+	// Flags common to all sub-programs: log and CPU profile.
 	if *logpath != "" {
 		err := util.SetOutputFile(*logpath)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
-
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
@@ -95,16 +101,28 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	// Pick a sub-program to run.
 	if *isdaemon {
 		ret = doDaemon()
 	} else {
-		// Set up Evaler and Store. This is needed for both the terminal and web
-		// interfaces.
-		ev, st := newEvalerAndStore(*dbpath)
+		// Shell or web. Set up common runtime components.
+		ev, st, client := initRuntime()
+		if client != nil {
+			req := &api.PidRequest{}
+			res := &api.PidResponse{}
+			go func() {
+				client.Call(api.ServiceName+".Pid", req, res)
+				logger.Println("daemon pid is", res.Pid)
+			}()
+		}
 		defer func() {
 			err := st.Close()
 			if err != nil {
-				fmt.Fprintln(os.Stderr, "failed to close database:", err)
+				fmt.Fprintln(os.Stderr, "warning: failed to close database:", err)
+			}
+			err = client.Close()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "warning: failed to close connection to daemon:", err)
 			}
 		}()
 
@@ -123,23 +141,50 @@ func main() {
 	}
 }
 
-func newEvalerAndStore(db string) (*eval.Evaler, *store.Store) {
-	dataDir, err := store.EnsureDataDir()
-
-	var st *store.Store
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "Warning: cannot create data dir ~/.elvish")
-	} else {
-		if db == "" {
-			db = dataDir + "/db"
-		}
-		st, err = store.NewStore(db)
+func initRuntime() (*eval.Evaler, *store.Store, *rpc.Client) {
+	var dataDir string
+	var err error
+	if *dbpath == "" || *sockpath == "" {
+		// Determine default paths for database and socket.
+		dataDir, err = store.EnsureDataDir()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Warning: cannot connect to store:", err)
+			fmt.Fprintln(os.Stderr, "warning: cannot create data dir ~/.elvish")
+		} else {
+			if *dbpath == "" {
+				*dbpath = dataDir + "/db"
+			}
+			if *sockpath == "" {
+				*sockpath = dataDir + "/sock"
+			}
 		}
 	}
 
-	return eval.NewEvaler(st, dataDir), st
+	var st *store.Store
+	if *dbpath != "" {
+		st, err = store.NewStore(*dbpath)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "warning: cannot connect to store:", err)
+		}
+	}
+
+	var client *rpc.Client
+	if *sockpath != "" && *dbpath != "" {
+		if _, err := os.Stat(*sockpath); os.IsNotExist(err) {
+			logger.Println("socket does not exists, starting daemon")
+			err := startDaemon(dataDir + "/daemon.log")
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "warning: cannot start daemon:", err)
+			}
+			goto endCreateClient
+		}
+		client, err = rpc.Dial("unix", *sockpath)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "warning: cannot connect to daemon:", err)
+		}
+	}
+endCreateClient:
+
+	return eval.NewEvaler(st, dataDir), st, client
 }
 
 func doDaemon() int {
@@ -192,19 +237,47 @@ func doDaemon() int {
 	}
 }
 
+var errCannotDetermineBinPath = errors.New("cannot determine path of elvish binary")
+
+// startDaemon starts a daemon in the background. It is supposed to be called
+// from a client.
+func startDaemon(logpath string) error {
+	// Determine binpath.
+	if *binpath == "" {
+		if len(os.Args) > 0 && path.IsAbs(os.Args[0]) {
+			*binpath = os.Args[0]
+		} else {
+			// Find elvish in PATH
+			return errCannotDetermineBinPath
+			paths := strings.Split(os.Getenv("PATH"), ":")
+			bin, err := util.Search(paths, "elvish")
+			if err != nil {
+				return errors.New("cannot find elvish: " + err.Error())
+			}
+			*binpath = bin
+		}
+	}
+	return runDaemon(nil, 0, logpath)
+}
+
+// forkDaemon forks a daemon. It is supposed to be called from the daemon.
 func forkDaemon(attr *syscall.ProcAttr) int {
-	_, err := syscall.ForkExec(*binpath, []string{
-		*binpath,
-		"-daemon",
-		"-forked", strconv.Itoa(*forked + 1),
-		"-bin", *binpath,
-		"-db", *dbpath,
-		"-sock", *sockpath,
-		"-log", *logpath,
-	}, attr)
+	err := runDaemon(attr, *forked+1, *logpath)
 	if err != nil {
-		log.Println("fork/exec:", err)
 		return 2
 	}
 	return 0
+}
+
+func runDaemon(attr *syscall.ProcAttr, forklevel int, logpath string) error {
+	_, err := syscall.ForkExec(*binpath, []string{
+		*binpath,
+		"-daemon",
+		"-forked", strconv.Itoa(forklevel),
+		"-bin", *binpath,
+		"-db", *dbpath,
+		"-sock", *sockpath,
+		"-log", logpath,
+	}, attr)
+	return err
 }

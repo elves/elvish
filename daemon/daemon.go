@@ -3,9 +3,8 @@
 package daemon
 
 import (
-	"encoding/json"
-	"io"
 	"net"
+	"net/rpc"
 	"os"
 	"os/signal"
 	"syscall"
@@ -35,146 +34,36 @@ func (d *Daemon) Main() int {
 
 	st, err := store.NewStore(d.dbpath)
 	if err != nil {
-		logger.Print(err)
+		logger.Printf("failed to create storage: %v", err)
+		logger.Println("aborting")
 		return 2
 	}
 
+	logger.Println("going to listen", d.sockpath)
 	listener, err := net.Listen("unix", d.sockpath)
 	if err != nil {
-		logger.Println("listen:", err)
+		logger.Printf("failed to listen on %s: %v", d.sockpath, err)
+		logger.Println("aborting")
 		return 2
 	}
-	defer os.Remove(d.sockpath)
 
-	cancel := make(chan struct{})
-	sigterm := make(chan os.Signal)
-	signal.Notify(sigterm, syscall.SIGTERM)
+	quitSignals := make(chan os.Signal)
+	signal.Notify(quitSignals, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
-		<-sigterm
-		close(cancel)
-		listener.Close()
+		sig := <-quitSignals
+		logger.Printf("received signal %s, shutting down", sig)
+		err := os.Remove(d.sockpath)
+		if err != nil {
+			logger.Println("failed to remove socket %s: %v", d.sockpath, err)
+		}
+		logger.Println("exiting")
+		os.Exit(0)
 	}()
 
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			select {
-			case <-cancel:
-				return 0
-			default:
-				logger.Println("accept:", err)
-				return 2
-			}
-		}
-		go handle(conn, st, cancel)
-	}
-}
+	service := &Service{st}
+	rpc.RegisterName(api.ServiceName, service)
 
-func handle(c net.Conn, st *store.Store, cancel <-chan struct{}) {
-	defer c.Close()
-	go func() {
-		<-cancel
-		c.Close()
-	}()
-
-	decoder := json.NewDecoder(c)
-	encoder := json.NewEncoder(c)
-
-	send := func(v interface{}) {
-		err := encoder.Encode(v)
-		if err != nil {
-			logger.Println("send:", err)
-		}
-	}
-	sendOKHeader := func(n int) {
-		send(&api.ResponseHeader{Sending: &n})
-	}
-	sendErrorHeader := func(e string) {
-		send(&api.ResponseHeader{Error: &e})
-	}
-
-	for {
-		var req api.Request
-		err := decoder.Decode(&req)
-		if err == io.EOF {
-			return
-		}
-		if err != nil {
-			sendErrorHeader("decode: " + err.Error())
-			return
-		}
-		switch {
-		case req.GetPid != nil:
-			sendOKHeader(1)
-			send(syscall.Getpid())
-		case req.NextCmdSeq != nil:
-			seq, err := st.NextCmdSeq()
-			if err != nil {
-				sendErrorHeader("NextCmdSeq: " + err.Error())
-			} else {
-				sendOKHeader(1)
-				send(seq)
-			}
-		case req.AddCmd != nil:
-			_, err := st.AddCmd(req.AddCmd.Text)
-			if err != nil {
-				sendErrorHeader("AddCmd: " + err.Error())
-			} else {
-				sendOKHeader(0)
-			}
-		case req.GetCmds != nil:
-			// TODO: stream from store
-			cmds, err := st.Cmds(req.GetCmds.From, req.GetCmds.Upto)
-			if err != nil {
-				sendErrorHeader("GetCmds: " + err.Error())
-			} else {
-				sendOKHeader(len(cmds))
-				for _, cmd := range cmds {
-					send(cmd)
-				}
-			}
-		case req.AddDir != nil:
-			err := st.AddDir(req.AddDir.Dir, req.AddDir.IncFactor)
-			if err != nil {
-				sendErrorHeader("AddDir: " + err.Error())
-			} else {
-				sendOKHeader(0)
-			}
-		case req.GetDirs != nil:
-			dirs, err := st.GetDirs(req.GetDirs.Blacklist)
-			if err != nil {
-				sendErrorHeader("ListDirs: " + err.Error())
-			} else {
-				sendOKHeader(len(dirs))
-				for _, dir := range dirs {
-					send(dir)
-				}
-			}
-		case req.GetSharedVar != nil:
-			value, err := st.GetSharedVar(req.GetSharedVar.Name)
-			if err != nil {
-				sendErrorHeader("GetSharedVar: " + err.Error())
-			} else {
-				sendOKHeader(1)
-				send(value)
-			}
-		case req.SetSharedVar != nil:
-			r := req.SetSharedVar
-			err := st.SetSharedVar(r.Name, r.Value)
-			if err != nil {
-				sendErrorHeader("SetSharedVar: " + err.Error())
-			} else {
-				sendOKHeader(0)
-			}
-		case req.DelSharedVar != nil:
-			err := st.DelSharedVar(req.DelSharedVar.Name)
-			if err != nil {
-				sendErrorHeader("DelSharedVar: " + err.Error())
-			} else {
-				sendOKHeader(0)
-			}
-		default:
-			sendErrorHeader("bad request")
-		}
-	}
+	logger.Println("starting to serve RPC calls")
+	rpc.Accept(listener)
+	return 0
 }
