@@ -1,6 +1,20 @@
 package eval
 
-// Builtin special forms.
+// Builtin special forms. Special forms behave mostly like ordinary commands -
+// they are valid commands syntactically, and can take part in pipelines - but
+// they have special rules for the evaluation of their arguments and can affect
+// the compilation phase (whereas ordinary commands can only affect the
+// evaluation phase).
+//
+// For instance, the "and" special form evaluates its arguments from left to
+// right, and stops as soon as one booleanly false value is obtained: the
+// command "and $false (fail haha)" does not produce an exception.
+//
+// As another instance, the "del" special form removes a variable, affecting the
+// compiler.
+//
+// Flow control structures are also implemented as special forms in elvish, with
+// closures functioning as code blocks.
 
 import (
 	"errors"
