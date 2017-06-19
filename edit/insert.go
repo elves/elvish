@@ -297,8 +297,8 @@ func moveDotDown(ed *Editor) {
 }
 
 func insertLastWord(ed *Editor) {
-	if ed.store == nil {
-		ed.addTip("store offline")
+	if ed.daemon == nil {
+		ed.addTip("daemon offline")
 		return
 	}
 	_, cmd, err := ed.daemon.PrevCmd(-1, "")

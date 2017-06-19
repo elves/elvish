@@ -107,6 +107,10 @@ func (s *Service) PrevCmd(req *api.PrevCmdRequest, res *api.PrevCmdResponse) err
 	return err
 }
 
+func (s *Service) AddDir(req *api.AddDirRequest, res *api.AddDirResponse) error {
+	return s.store.AddDir(req.Dir, req.IncFactor)
+}
+
 func (s *Service) Dirs(req *api.DirsRequest, res *api.DirsResponse) error {
 	dirs, err := s.store.GetDirs(req.Blacklist)
 	res.Dirs = dirs

@@ -8,7 +8,7 @@ const (
 	ServiceName = "Daemon"
 
 	// Version is the API version. It should be bumped any time the API changes.
-	Version = -99
+	Version = -98
 )
 
 // Basic requests.
@@ -136,9 +136,18 @@ func (c *Client) PrevCmd(upto int, prefix string) (int, string, error) {
 
 // Dir requests.
 
-type AddDir struct {
+type AddDirRequest struct {
 	Dir       string
 	IncFactor float64
+}
+
+type AddDirResponse struct{}
+
+func (c *Client) AddDir(dir string, incFactor float64) error {
+	req := &AddDirRequest{dir, incFactor}
+	res := &AddDirResponse{}
+	err := c.CallDaemon("AddDir", req, res)
+	return err
 }
 
 type DirsRequest struct {

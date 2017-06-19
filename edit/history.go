@@ -85,13 +85,13 @@ func historyDefault(ed *Editor) {
 // Implementation.
 
 func (ed *Editor) appendHistory(line string) {
-	if ed.store != nil {
+	if ed.daemon != nil {
 		ed.historyMutex.Lock()
-		ed.store.Waits().Add(1)
+		ed.daemon.Waits().Add(1)
 		go func() {
 			// TODO(xiaq): Report possible error
 			err := ed.historyFuser.AddCmd(line)
-			ed.store.Waits().Done()
+			ed.daemon.Waits().Done()
 			ed.historyMutex.Unlock()
 			if err != nil {
 				logger.Println("failed to add cmd to store:", err)

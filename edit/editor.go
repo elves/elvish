@@ -15,7 +15,6 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -34,7 +33,6 @@ type Editor struct {
 	writer *Writer
 	reader *tty.Reader
 	sigs   chan os.Signal
-	store  *store.Store
 	daemon *api.Client
 	evaler *eval.Evaler
 
@@ -87,20 +85,19 @@ type editorState struct {
 }
 
 // NewEditor creates an Editor.
-func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, st *store.Store, daemon *api.Client) *Editor {
+func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, daemon *api.Client) *Editor {
 	ed := &Editor{
 		in:     in,
 		out:    out,
 		writer: newWriter(out),
 		reader: tty.NewReader(in),
 		sigs:   sigs,
-		store:  st,
 		daemon: daemon,
 		evaler: ev,
 
 		variables: makeVariables(),
 	}
-	if st != nil {
+	if daemon != nil {
 		f, err := history.NewFuser(daemon)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Failed to initialize command history. Disabled.")

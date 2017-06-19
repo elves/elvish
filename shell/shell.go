@@ -56,7 +56,7 @@ func (sh *Shell) Run(args []string) int {
 	} else if !sys.IsATTY(0) {
 		script(sh.ev, "/dev/stdin")
 	} else {
-		interact(sh.ev, sh.st, sh.daemon)
+		interact(sh.ev, sh.daemon)
 	}
 
 	return 0
@@ -119,11 +119,11 @@ func readFileUTF8(fname string) (string, error) {
 	return string(bytes), nil
 }
 
-func interact(ev *eval.Evaler, st *store.Store, daemon *api.Client) {
+func interact(ev *eval.Evaler, daemon *api.Client) {
 	// Build Editor.
 	sigch := make(chan os.Signal)
 	signal.Notify(sigch)
-	ed := edit.NewEditor(os.Stdin, os.Stderr, sigch, ev, st, daemon)
+	ed := edit.NewEditor(os.Stdin, os.Stderr, sigch, ev, daemon)
 
 	// Source rc.elv.
 	if ev.DataDir != "" {

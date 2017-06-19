@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"net/rpc"
+	"sync"
 )
 
 var ErrDaemonOffline = errors.New("daemon offline")
@@ -10,10 +11,15 @@ var ErrDaemonOffline = errors.New("daemon offline")
 type Client struct {
 	sockPath  string
 	rpcClient *rpc.Client
+	waits     sync.WaitGroup
 }
 
 func NewClient(sockPath string) *Client {
-	return &Client{sockPath, nil}
+	return &Client{sockPath, nil, sync.WaitGroup{}}
+}
+
+func (c *Client) Waits() *sync.WaitGroup {
+	return &c.waits
 }
 
 func (c *Client) CallDaemon(f string, req, res interface{}) error {
@@ -30,6 +36,7 @@ func (c *Client) CallDaemon(f string, req, res interface{}) error {
 }
 
 func (c *Client) Close() error {
+	c.waits.Wait()
 	return c.rpcClient.Close()
 }
 

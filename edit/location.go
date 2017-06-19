@@ -119,7 +119,7 @@ func (ed *Editor) chdir(dir string) error {
 	}
 	err = os.Chdir(dir)
 	if err == nil {
-		store := ed.store
+		store := ed.daemon
 		store.Waits().Add(1)
 		go func() {
 			// XXX Error ignored.
@@ -142,7 +142,7 @@ func (loc *location) Accept(i int, ed *Editor) {
 }
 
 func locStart(ed *Editor) {
-	if ed.store == nil {
+	if ed.daemon == nil {
 		ed.Notify("%v", ErrStoreOffline)
 		return
 	}

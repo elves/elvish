@@ -132,7 +132,7 @@ func histlistStart(ed *Editor) {
 }
 
 func getCmds(ed *Editor) ([]string, error) {
-	if ed.store == nil {
+	if ed.daemon == nil {
 		return nil, ErrStoreOffline
 	}
 	return ed.historyFuser.AllCmds()
