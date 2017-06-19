@@ -80,43 +80,43 @@ func (d *Daemon) Main(serve func(string, string)) int {
 
 // Spawn spawns a daemon in the background. It is supposed to be called from a
 // client.
-func (d *Daemon) Spawn(logpath string) error {
-	// Determine binpath.
-	if d.BinPath == "" {
+func (d *Daemon) Spawn(logPath string) error {
+	binPath := d.BinPath
+	// Determine binPath.
+	if binPath == "" {
 		if len(os.Args) > 0 && path.IsAbs(os.Args[0]) {
-			d.BinPath = os.Args[0]
+			binPath = os.Args[0]
 		} else {
 			// Find elvish in PATH
 			paths := strings.Split(os.Getenv("PATH"), ":")
-			binpath, err := util.Search(paths, "elvish")
+			result, err := util.Search(paths, "elvish")
 			if err != nil {
 				return errors.New("cannot find elvish: " + err.Error())
 			}
-			d.BinPath = binpath
+			binPath = result
 		}
 	}
-	d.LogPath = logpath
-	return d.forkExec(nil, 0)
+	return forkExec(nil, 0, binPath, d.DbPath, d.SockPath, logPath)
 }
 
 // pseudoFork forks a daemon. It is supposed to be called from the daemon.
 func (d *Daemon) pseudoFork(attr *syscall.ProcAttr) int {
-	err := d.forkExec(attr, d.Forked+1)
+	err := forkExec(attr, d.Forked+1, d.BinPath, d.DbPath, d.SockPath, d.LogPath)
 	if err != nil {
 		return 2
 	}
 	return 0
 }
 
-func (d *Daemon) forkExec(attr *syscall.ProcAttr, forklevel int) error {
-	_, err := syscall.ForkExec(d.BinPath, []string{
-		d.BinPath,
+func forkExec(attr *syscall.ProcAttr, forkLevel int, binPath, dbPath, sockPath, logPath string) error {
+	_, err := syscall.ForkExec(binPath, []string{
+		binPath,
 		"-daemon",
-		"-forked", strconv.Itoa(forklevel),
-		"-bin", d.BinPath,
-		"-db", d.DbPath,
-		"-sock", d.SockPath,
-		"-log", d.LogPath,
+		"-forked", strconv.Itoa(forkLevel),
+		"-bin", binPath,
+		"-db", dbPath,
+		"-sock", sockPath,
+		"-log", logPath,
 	}, attr)
 	return err
 }

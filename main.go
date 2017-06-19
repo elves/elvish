@@ -158,17 +158,17 @@ func initRuntime() (*eval.Evaler, *store.Store, *rpc.Client) {
 	}
 
 	var client *rpc.Client
+	toSpawn := &daemon.Daemon{
+		Forked:   *forked,
+		BinPath:  *binpath,
+		DbPath:   *dbpath,
+		SockPath: *sockpath,
+		LogPath:  dataDir + "/daemon.log",
+	}
 	if *sockpath != "" && *dbpath != "" {
 		if _, err := os.Stat(*sockpath); os.IsNotExist(err) {
 			logger.Println("socket does not exists, starting daemon")
-			d := daemon.Daemon{
-				Forked:   *forked,
-				BinPath:  *binpath,
-				DbPath:   *dbpath,
-				SockPath: *sockpath,
-				LogPath:  *logpath,
-			}
-			err := d.Spawn(dataDir + "/daemon.log")
+			err := toSpawn.Spawn(toSpawn.LogPath)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: cannot start daemon:", err)
 			}
@@ -181,5 +181,5 @@ func initRuntime() (*eval.Evaler, *store.Store, *rpc.Client) {
 	}
 endCreateClient:
 
-	return eval.NewEvaler(st, client, dataDir), st, client
+	return eval.NewEvaler(st, client, toSpawn, dataDir), st, client
 }

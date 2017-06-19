@@ -20,6 +20,7 @@ import (
 	"syscall"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
@@ -42,6 +43,7 @@ type Evaler struct {
 	Modules map[string]Namespace
 	Store   *store.Store
 	Daemon  *rpc.Client
+	ToSpawn *daemon.Daemon
 	Editor  Editor
 	DataDir string
 	intCh   chan struct{}
@@ -64,13 +66,13 @@ type EvalCtx struct {
 }
 
 // NewEvaler creates a new Evaler.
-func NewEvaler(st *store.Store, daemon *rpc.Client, dataDir string) *Evaler {
+func NewEvaler(st *store.Store, daemon *rpc.Client, toSpawn *daemon.Daemon, dataDir string) *Evaler {
 	// TODO(xiaq): Create daemon namespace asynchronously.
 	modules := map[string]Namespace{
 		"daemon": makeDaemonNamespace(daemon),
 	}
 
-	return &Evaler{Namespace{}, modules, st, daemon, nil, dataDir, nil}
+	return &Evaler{Namespace{}, modules, st, daemon, toSpawn, nil, dataDir, nil}
 }
 
 func (ev *Evaler) searchPaths() []string {

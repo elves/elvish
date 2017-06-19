@@ -25,5 +25,13 @@ func makeDaemonNamespace(daemon *rpc.Client) Namespace {
 
 	return Namespace{
 		"pid": MakeRoVariableFromCallback(daemonPid),
+
+		FnPrefix + "spawn": NewRoVariable(&BuiltinFn{"daemon:spawn", daemonSpawn}),
 	}
+}
+
+func daemonSpawn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+	ec.ToSpawn.Spawn(ec.ToSpawn.LogPath)
 }
