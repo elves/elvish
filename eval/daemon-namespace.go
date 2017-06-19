@@ -2,23 +2,20 @@ package eval
 
 import (
 	"errors"
-	"net/rpc"
 	"strconv"
 
 	"github.com/elves/elvish/daemon/api"
+	"github.com/elves/elvish/daemon/client"
 )
 
 var ErrDaemonOffline = errors.New("daemon is offline")
 
-func makeDaemonNamespace(daemon *rpc.Client) Namespace {
+func makeDaemonNamespace(daemon *client.Client) Namespace {
 	// Obtain process ID
 	daemonPid := func() Value {
-		if daemon == nil {
-			throw(ErrDaemonOffline)
-		}
 		req := &api.PidRequest{}
 		res := &api.PidResponse{}
-		err := daemon.Call(api.ServiceName+".Pid", req, res)
+		err := daemon.Call("Pid", req, res)
 		maybeThrow(err)
 		return String(strconv.Itoa(res.Pid))
 	}

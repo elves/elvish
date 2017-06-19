@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/rpc"
 	"os"
 	"os/signal"
 	"strconv"
@@ -21,6 +20,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/daemon"
+	"github.com/elves/elvish/daemon/client"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
@@ -42,7 +42,7 @@ type Evaler struct {
 	Global  Namespace
 	Modules map[string]Namespace
 	Store   *store.Store
-	Daemon  *rpc.Client
+	Daemon  *client.Client
 	ToSpawn *daemon.Daemon
 	Editor  Editor
 	DataDir string
@@ -66,7 +66,7 @@ type EvalCtx struct {
 }
 
 // NewEvaler creates a new Evaler.
-func NewEvaler(st *store.Store, daemon *rpc.Client, toSpawn *daemon.Daemon, dataDir string) *Evaler {
+func NewEvaler(st *store.Store, daemon *client.Client, toSpawn *daemon.Daemon, dataDir string) *Evaler {
 	// TODO(xiaq): Create daemon namespace asynchronously.
 	modules := map[string]Namespace{
 		"daemon": makeDaemonNamespace(daemon),

@@ -10,13 +10,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/rpc"
 	"os"
 	"runtime/pprof"
 	"strconv"
 	"syscall"
 
 	"github.com/elves/elvish/daemon"
+	"github.com/elves/elvish/daemon/client"
 	"github.com/elves/elvish/daemon/service"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/shell"
@@ -118,13 +118,13 @@ func main() {
 		ret = d.Main(service.Serve)
 	} else {
 		// Shell or web. Set up common runtime components.
-		ev, st, client := initRuntime()
+		ev, st, cl := initRuntime()
 		defer func() {
 			err := st.Close()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: failed to close database:", err)
 			}
-			err = client.Close()
+			err = cl.Close()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: failed to close connection to daemon:", err)
 			}
@@ -145,7 +145,7 @@ func main() {
 	}
 }
 
-func initRuntime() (*eval.Evaler, *store.Store, *rpc.Client) {
+func initRuntime() (*eval.Evaler, *store.Store, *client.Client) {
 	var dataDir string
 	var err error
 	if *dbpath == "" || *sockpath == "" {
@@ -171,7 +171,6 @@ func initRuntime() (*eval.Evaler, *store.Store, *rpc.Client) {
 		}
 	}
 
-	var client *rpc.Client
 	toSpawn := &daemon.Daemon{
 		Forked:        *forked,
 		BinPath:       *binpath,
@@ -186,14 +185,9 @@ func initRuntime() (*eval.Evaler, *store.Store, *rpc.Client) {
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: cannot start daemon:", err)
 			}
-			goto endCreateClient
-		}
-		client, err = rpc.Dial("unix", *sockpath)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "warning: cannot connect to daemon:", err)
 		}
 	}
-endCreateClient:
 
-	return eval.NewEvaler(st, client, toSpawn, dataDir), st, client
+	cl := client.NewClient(*sockpath)
+	return eval.NewEvaler(st, cl, toSpawn, dataDir), st, cl
 }
