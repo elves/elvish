@@ -120,11 +120,11 @@ func (ed *Editor) chdir(dir string) error {
 	err = os.Chdir(dir)
 	if err == nil {
 		store := ed.store
-		store.Waits.Add(1)
+		store.Waits().Add(1)
 		go func() {
 			// XXX Error ignored.
 			store.AddDir(dir, 1)
-			store.Waits.Done()
+			store.Waits().Done()
 			logger.Println("added dir to store:", dir)
 		}()
 	}

@@ -24,7 +24,7 @@ var initDB = map[string](func(*sql.DB) error){}
 type Store struct {
 	db *sql.DB
 	// Waits is used for registering outstanding operations on the store.
-	Waits sync.WaitGroup
+	waits sync.WaitGroup
 }
 
 // DefaultDB returns the default database for storage.
@@ -68,12 +68,18 @@ func NewStoreDB(db *sql.DB) (*Store, error) {
 	return st, nil
 }
 
+// Waits returns a WaitGroup used to register outstanding storage requests when
+// making calls asynchronously.
+func (s *Store) Waits() *sync.WaitGroup {
+	return &s.waits
+}
+
 // Close waits for all outstanding operations to finish, and closes the
 // database.
 func (s *Store) Close() error {
 	if s == nil || s.db == nil {
 		return nil
 	}
-	s.Waits.Wait()
+	s.waits.Wait()
 	return s.db.Close()
 }

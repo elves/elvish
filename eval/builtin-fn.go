@@ -1004,11 +1004,11 @@ func cdInner(dir string, ec *EvalCtx) {
 		pwd, err := os.Getwd()
 		if err == nil {
 			store := ec.Store
-			store.Waits.Add(1)
+			store.Waits().Add(1)
 			go func() {
 				// XXX Error ignored.
 				store.AddDir(pwd, 1)
-				store.Waits.Done()
+				store.Waits().Done()
 				logger.Println("added dir to store:", pwd)
 			}()
 		}
