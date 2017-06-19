@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/rpc"
 	"os"
 	"os/signal"
 	"strconv"
@@ -40,6 +41,7 @@ type Evaler struct {
 	Global  Namespace
 	Modules map[string]Namespace
 	Store   *store.Store
+	Daemon  *rpc.Client
 	Editor  Editor
 	DataDir string
 	intCh   chan struct{}
@@ -62,8 +64,13 @@ type EvalCtx struct {
 }
 
 // NewEvaler creates a new Evaler.
-func NewEvaler(st *store.Store, dataDir string) *Evaler {
-	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, dataDir, nil}
+func NewEvaler(st *store.Store, daemon *rpc.Client, dataDir string) *Evaler {
+	// TODO(xiaq): Create daemon namespace asynchronously.
+	modules := map[string]Namespace{
+		"daemon": makeDaemonNamespace(daemon),
+	}
+
+	return &Evaler{Namespace{}, modules, st, daemon, nil, dataDir, nil}
 }
 
 func (ev *Evaler) searchPaths() []string {

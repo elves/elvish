@@ -184,7 +184,7 @@ func initRuntime() (*eval.Evaler, *store.Store, *rpc.Client) {
 	}
 endCreateClient:
 
-	return eval.NewEvaler(st, dataDir), st, client
+	return eval.NewEvaler(st, client, dataDir), st, client
 }
 
 func doDaemon() int {
