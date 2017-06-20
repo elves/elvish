@@ -82,7 +82,7 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 		ns[name] = variable
 	}
 
-	ns["history"] = eval.NewRoVariable(History{&ed.historyMutex, ed.store})
+	ns["history"] = eval.NewRoVariable(History{&ed.historyMutex, ed.daemon})
 
 	ns["current-command"] = eval.MakeVariableFromCallback(
 		func(v eval.Value) {

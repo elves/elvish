@@ -19,8 +19,9 @@ import (
 	"syscall"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/daemon"
+	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -39,7 +40,8 @@ type Namespace map[string]Variable
 type Evaler struct {
 	Global  Namespace
 	Modules map[string]Namespace
-	Store   *store.Store
+	Daemon  *api.Client
+	ToSpawn *daemon.Daemon
 	Editor  Editor
 	DataDir string
 	intCh   chan struct{}
@@ -62,8 +64,13 @@ type EvalCtx struct {
 }
 
 // NewEvaler creates a new Evaler.
-func NewEvaler(st *store.Store, dataDir string) *Evaler {
-	return &Evaler{Namespace{}, map[string]Namespace{}, st, nil, dataDir, nil}
+func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon, dataDir string) *Evaler {
+	// TODO(xiaq): Create daemon namespace asynchronously.
+	modules := map[string]Namespace{
+		"daemon": makeDaemonNamespace(daemon),
+	}
+
+	return &Evaler{Namespace{}, modules, daemon, toSpawn, nil, dataDir, nil}
 }
 
 func (ev *Evaler) searchPaths() []string {
@@ -377,10 +384,10 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	case "E":
 		return envVariable{name}
 	case "shared":
-		if ec.Store == nil {
+		if ec.Daemon == nil {
 			throw(ErrStoreUnconnected)
 		}
-		return sharedVariable{ec.Store, name}
+		return sharedVariable{ec.Daemon, name}
 	default:
 		if ns, ok := ec.Modules[ns]; ok {
 			return ns[name]

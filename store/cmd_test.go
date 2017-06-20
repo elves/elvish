@@ -1,6 +1,10 @@
 package store
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/elves/elvish/store/storedefs"
+)
 
 var (
 	cmds     = []string{"echo foo", "put bar", "put lorem", "echo bar"}
@@ -15,12 +19,12 @@ var (
 		{false, 5, "echo", 4, "echo bar", nil},
 		{false, 5, "put", 3, "put lorem", nil},
 		{false, 4, "echo", 1, "echo foo", nil},
-		{false, 3, "f", 0, "", ErrNoMatchingCmd},
+		{false, 3, "f", 0, "", storedefs.ErrNoMatchingCmd},
 
 		{true, 1, "echo", 1, "echo foo", nil},
 		{true, 1, "put", 2, "put bar", nil},
 		{true, 2, "echo", 4, "echo bar", nil},
-		{true, 4, "put", 0, "", ErrNoMatchingCmd},
+		{true, 4, "put", 0, "", storedefs.ErrNoMatchingCmd},
 	}
 )
 

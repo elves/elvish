@@ -3,14 +3,14 @@ package edit
 import (
 	"sync"
 
+	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/store"
 )
 
 // History implements the $le:history variable. It is list-like.
 type History struct {
 	mutex *sync.RWMutex
-	st    *store.Store
+	st    *api.Client
 }
 
 var _ eval.ListLike = History{}
@@ -37,10 +37,14 @@ func (hv History) Iterate(f func(eval.Value) bool) {
 	defer hv.mutex.RUnlock()
 
 	n := hv.Len()
-	err := hv.st.IterateCmds(1, n+1, func(cmd string) bool {
-		return f(eval.String(cmd))
-	})
+	cmds, err := hv.st.Cmds(1, n+1)
 	maybeThrow(err)
+
+	for _, cmd := range cmds {
+		if !f(eval.String(cmd)) {
+			break
+		}
+	}
 }
 
 func (hv History) IndexOne(idx eval.Value) eval.Value {

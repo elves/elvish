@@ -1,180 +1,122 @@
-// Package daemon implements a daemon for mediating access to the storage
-// backend of elvish.
+// Package exec provides the entry point of the daemon sub-program and helpers
+// to spawn a daemon process.
 package daemon
 
 import (
-	"encoding/json"
-	"io"
-	"net"
+	"errors"
+	"log"
 	"os"
-	"os/signal"
+	"path"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 
-	"github.com/elves/elvish/daemon/api"
-	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/util"
 )
 
-var logger = util.GetLogger("[daemon] ")
-
-// Daemon is a daemon.
+// Daemon keeps configurations for the daemon process.
 type Daemon struct {
-	sockpath string
-	dbpath   string
+	Forked        int
+	BinPath       string
+	DbPath        string
+	SockPath      string
+	LogPathPrefix string
 }
 
-// New creates a new daemon.
-func New(sockpath, dbpath string) *Daemon {
-	return &Daemon{sockpath, dbpath}
-}
+// closeFd is used in syscall.ProcAttr.Files to signify closing a fd.
+const closeFd = ^uintptr(0)
 
-// Main runs the daemon. It does not take care of forking and stuff; it assumes
-// that it is already running in the correct process.
-func (d *Daemon) Main() int {
-	logger.Println("pid is", syscall.Getpid())
+// Main is the entry point of the daemon sub-program.
+func (d *Daemon) Main(serve func(string, string)) int {
+	switch d.Forked {
+	case 0:
+		errored := false
+		absify := func(f string, s *string) {
+			if *s == "" {
+				log.Println("flag", f, "is required for daemon")
+				errored = true
+				return
+			}
+			p, err := filepath.Abs(*s)
+			if err != nil {
+				log.Println("abs:", err)
+				errored = true
+			} else {
+				*s = p
+			}
+		}
+		absify("-bin", &d.BinPath)
+		absify("-db", &d.DbPath)
+		absify("-sock", &d.SockPath)
+		absify("-logprefix", &d.LogPathPrefix)
+		if errored {
+			return 2
+		}
 
-	st, err := store.NewStore(d.dbpath)
-	if err != nil {
-		logger.Print(err)
+		syscall.Umask(0077)
+		return d.pseudoFork(
+			&syscall.ProcAttr{
+				// cd to /
+				Dir: "/",
+				// empty environment
+				Env: nil,
+				// inherit stderr only for logging
+				Files: []uintptr{closeFd, closeFd, 2},
+				Sys:   &syscall.SysProcAttr{Setsid: true},
+			})
+	case 1:
+		return d.pseudoFork(
+			&syscall.ProcAttr{
+				Files: []uintptr{closeFd, closeFd, 2},
+			})
+	case 2:
+		serve(d.SockPath, d.DbPath)
+		return 0
+	default:
 		return 2
 	}
-
-	listener, err := net.Listen("unix", d.sockpath)
-	if err != nil {
-		logger.Println("listen:", err)
-		return 2
-	}
-	defer os.Remove(d.sockpath)
-
-	cancel := make(chan struct{})
-	sigterm := make(chan os.Signal)
-	signal.Notify(sigterm, syscall.SIGTERM)
-	go func() {
-		<-sigterm
-		close(cancel)
-		listener.Close()
-	}()
-
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			select {
-			case <-cancel:
-				return 0
-			default:
-				logger.Println("accept:", err)
-				return 2
-			}
-		}
-		go handle(conn, st, cancel)
-	}
 }
 
-func handle(c net.Conn, st *store.Store, cancel <-chan struct{}) {
-	defer c.Close()
-	go func() {
-		<-cancel
-		c.Close()
-	}()
+// Spawn spawns a daemon in the background. It is supposed to be called from a
+// client.
+func (d *Daemon) Spawn() error {
+	binPath := d.BinPath
+	// Determine binPath.
+	if binPath == "" {
+		if len(os.Args) > 0 && path.IsAbs(os.Args[0]) {
+			binPath = os.Args[0]
+		} else {
+			// Find elvish in PATH
+			paths := strings.Split(os.Getenv("PATH"), ":")
+			result, err := util.Search(paths, "elvish")
+			if err != nil {
+				return errors.New("cannot find elvish: " + err.Error())
+			}
+			binPath = result
+		}
+	}
+	return forkExec(nil, 0, binPath, d.DbPath, d.SockPath, d.LogPathPrefix)
+}
 
-	decoder := json.NewDecoder(c)
-	encoder := json.NewEncoder(c)
+// pseudoFork forks a daemon. It is supposed to be called from the daemon.
+func (d *Daemon) pseudoFork(attr *syscall.ProcAttr) int {
+	err := forkExec(attr, d.Forked+1, d.BinPath, d.DbPath, d.SockPath, d.LogPathPrefix)
+	if err != nil {
+		return 2
+	}
+	return 0
+}
 
-	send := func(v interface{}) {
-		err := encoder.Encode(v)
-		if err != nil {
-			logger.Println("send:", err)
-		}
-	}
-	sendOKHeader := func(n int) {
-		send(&api.ResponseHeader{Sending: &n})
-	}
-	sendErrorHeader := func(e string) {
-		send(&api.ResponseHeader{Error: &e})
-	}
-
-	for {
-		var req api.Request
-		err := decoder.Decode(&req)
-		if err == io.EOF {
-			return
-		}
-		if err != nil {
-			sendErrorHeader("decode: " + err.Error())
-			return
-		}
-		switch {
-		case req.GetPid != nil:
-			sendOKHeader(1)
-			send(syscall.Getpid())
-		case req.NextCmdSeq != nil:
-			seq, err := st.NextCmdSeq()
-			if err != nil {
-				sendErrorHeader("NextCmdSeq: " + err.Error())
-			} else {
-				sendOKHeader(1)
-				send(seq)
-			}
-		case req.AddCmd != nil:
-			_, err := st.AddCmd(req.AddCmd.Text)
-			if err != nil {
-				sendErrorHeader("AddCmd: " + err.Error())
-			} else {
-				sendOKHeader(0)
-			}
-		case req.GetCmds != nil:
-			// TODO: stream from store
-			cmds, err := st.Cmds(req.GetCmds.From, req.GetCmds.Upto)
-			if err != nil {
-				sendErrorHeader("GetCmds: " + err.Error())
-			} else {
-				sendOKHeader(len(cmds))
-				for _, cmd := range cmds {
-					send(cmd)
-				}
-			}
-		case req.AddDir != nil:
-			err := st.AddDir(req.AddDir.Dir, req.AddDir.IncFactor)
-			if err != nil {
-				sendErrorHeader("AddDir: " + err.Error())
-			} else {
-				sendOKHeader(0)
-			}
-		case req.GetDirs != nil:
-			dirs, err := st.GetDirs(req.GetDirs.Blacklist)
-			if err != nil {
-				sendErrorHeader("ListDirs: " + err.Error())
-			} else {
-				sendOKHeader(len(dirs))
-				for _, dir := range dirs {
-					send(dir)
-				}
-			}
-		case req.GetSharedVar != nil:
-			value, err := st.GetSharedVar(req.GetSharedVar.Name)
-			if err != nil {
-				sendErrorHeader("GetSharedVar: " + err.Error())
-			} else {
-				sendOKHeader(1)
-				send(value)
-			}
-		case req.SetSharedVar != nil:
-			r := req.SetSharedVar
-			err := st.SetSharedVar(r.Name, r.Value)
-			if err != nil {
-				sendErrorHeader("SetSharedVar: " + err.Error())
-			} else {
-				sendOKHeader(0)
-			}
-		case req.DelSharedVar != nil:
-			err := st.DelSharedVar(req.DelSharedVar.Name)
-			if err != nil {
-				sendErrorHeader("DelSharedVar: " + err.Error())
-			} else {
-				sendOKHeader(0)
-			}
-		default:
-			sendErrorHeader("bad request")
-		}
-	}
+func forkExec(attr *syscall.ProcAttr, forkLevel int, binPath, dbPath, sockPath, logPathPrefix string) error {
+	_, err := syscall.ForkExec(binPath, []string{
+		binPath,
+		"-daemon",
+		"-forked", strconv.Itoa(forkLevel),
+		"-bin", binPath,
+		"-db", dbPath,
+		"-sock", sockPath,
+		"-logprefix", logPathPrefix,
+	}, attr)
+	return err
 }

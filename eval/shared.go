@@ -1,9 +1,9 @@
 package eval
 
-import "github.com/elves/elvish/store"
+import "github.com/elves/elvish/daemon/api"
 
 type sharedVariable struct {
-	store *store.Store
+	store *api.Client
 	name  string
 }
 
@@ -13,7 +13,7 @@ func (sv sharedVariable) Set(val Value) {
 }
 
 func (sv sharedVariable) Get() Value {
-	value, err := sv.store.GetSharedVar(sv.name)
+	value, err := sv.store.SharedVar(sv.name)
 	maybeThrow(err)
 	return String(value)
 }

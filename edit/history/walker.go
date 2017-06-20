@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/store/storedefs"
 )
 
 var ErrEndOfHistory = errors.New("end of history")
@@ -89,7 +89,7 @@ func (w *Walker) Prev() (int, string, error) {
 		)
 		seq, cmd, err = w.store.PrevCmd(seq, w.prefix)
 		if err != nil {
-			if err == store.ErrNoMatchingCmd {
+			if err.Error() == storedefs.ErrNoMatchingCmd.Error() {
 				err = ErrEndOfHistory
 			}
 			return -1, "", err

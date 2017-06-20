@@ -7,29 +7,32 @@ package main
 // interface.
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
+	"path"
 	"runtime/pprof"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/elves/elvish/daemon"
+	"github.com/elves/elvish/daemon/api"
+	"github.com/elves/elvish/daemon/service"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/shell"
-	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
 	"github.com/elves/elvish/web"
 )
 
-// closeFd is used in syscall.ProcAttr.Files to signify closing a fd.
-const closeFd = ^uintptr(0)
-
 // defaultPort is the default port on which the web interface runs. The number
 // is chosen because it resembles "elvi".
 const defaultWebPort = 3171
+
+var logger = util.GetLogger("[main] ")
 
 var (
 	// Flags handled in this package, or common to shell and daemon.
@@ -48,8 +51,9 @@ var (
 	cmd = flag.Bool("c", false, "take first argument as a command to execute")
 
 	// Flags for daemon.
-	forked  = flag.Int("forked", 0, "how many times the daemon has forked")
-	binpath = flag.String("bin", "", "path to the elvish binary")
+	forked        = flag.Int("forked", 0, "how many times the daemon has forked")
+	binpath       = flag.String("bin", "", "path to the elvish binary")
+	logpathprefix = flag.String("logprefix", "", "the prefix for the daemon log file")
 )
 
 func usage() {
@@ -63,29 +67,39 @@ func main() {
 	ret := 0
 	defer os.Exit(ret)
 
+	// Parse and check flags.
 	flag.Usage = usage
 	flag.Parse()
 	args := flag.Args()
-
 	if *help {
 		usage()
 		return
 	}
-
-	// The daemon takes no argument.
 	if *isdaemon && len(args) > 0 {
+		// The daemon takes no argument.
 		usage()
 		ret = 2
 		return
 	}
 
-	if *logpath != "" {
+	// Flags common to all sub-programs: log and CPU profile.
+	if *isdaemon {
+		if *forked == 2 && *logpathprefix != "" {
+			// Honor logpathprefix.
+			pid := syscall.Getpid()
+			err := util.SetOutputFile(*logpathprefix + strconv.Itoa(pid))
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+		} else {
+			util.SetOutputFile("/dev/stderr")
+		}
+	} else if *logpath != "" {
 		err := util.SetOutputFile(*logpath)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Fprintln(os.Stderr, err)
 		}
 	}
-
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
@@ -95,16 +109,23 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
+	// Pick a sub-program to run.
 	if *isdaemon {
-		ret = doDaemon()
+		d := daemon.Daemon{
+			Forked:        *forked,
+			BinPath:       *binpath,
+			DbPath:        *dbpath,
+			SockPath:      *sockpath,
+			LogPathPrefix: *logpathprefix,
+		}
+		ret = d.Main(service.Serve)
 	} else {
-		// Set up Evaler and Store. This is needed for both the terminal and web
-		// interfaces.
-		ev, st := newEvalerAndStore(*dbpath)
+		// Shell or web. Set up common runtime components.
+		ev, cl := initRuntime()
 		defer func() {
-			err := st.Close()
+			err := cl.Close()
 			if err != nil {
-				fmt.Fprintln(os.Stderr, "failed to close database:", err)
+				fmt.Fprintln(os.Stderr, "warning: failed to close connection to daemon:", err)
 			}
 		}()
 
@@ -114,97 +135,135 @@ func main() {
 				ret = 2
 				return
 			}
-			w := web.NewWeb(ev, st, *webport)
+			w := web.NewWeb(ev, *webport)
 			ret = w.Run(args)
 		} else {
-			sh := shell.NewShell(ev, st, *cmd)
+			sh := shell.NewShell(ev, cl, *cmd)
 			ret = sh.Run(args)
 		}
 	}
 }
 
-func newEvalerAndStore(db string) (*eval.Evaler, *store.Store) {
-	dataDir, err := store.EnsureDataDir()
+const (
+	daemonWaitOneLoop = 10 * time.Millisecond
+	daemonWaitLoops   = 100
+	daemonWaitTotal   = daemonWaitOneLoop * daemonWaitLoops
+)
 
-	var st *store.Store
+func initRuntime() (*eval.Evaler, *api.Client) {
+	var dataDir string
+	var err error
+
+	// Determine data directory.
+	dataDir, err = storedefs.EnsureDataDir()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Warning: cannot create data dir ~/.elvish")
+		fmt.Fprintln(os.Stderr, "warning: cannot create data directory ~/.elvish")
 	} else {
-		if db == "" {
-			db = dataDir + "/db"
-		}
-		st, err = store.NewStore(db)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Warning: cannot connect to store:", err)
+		if *dbpath == "" {
+			*dbpath = dataDir + "/db"
 		}
 	}
 
-	return eval.NewEvaler(st, dataDir), st
-}
-
-func doDaemon() int {
-	switch *forked {
-	case 0:
-		errored := false
-		absify := func(f string, s *string) {
-			if *s == "" {
-				log.Println("flag", f, "is required for daemon")
-				errored = true
-				return
-			}
-			p, err := filepath.Abs(*s)
-			if err != nil {
-				log.Println("abs:", err)
-				errored = true
-			} else {
-				*s = p
-			}
-		}
-		absify("-bin", binpath)
-		absify("-db", dbpath)
-		absify("-sock", sockpath)
-		absify("-log", logpath)
-		if errored {
-			return 2
-		}
-
-		syscall.Umask(0077)
-		return forkDaemon(
-			&syscall.ProcAttr{
-				// cd to /
-				Dir: "/",
-				// empty environment
-				Env: nil,
-				// inherit stderr only for logging
-				Files: []uintptr{closeFd, closeFd, 2},
-				Sys:   &syscall.SysProcAttr{Setsid: true},
-			})
-	case 1:
-		return forkDaemon(
-			&syscall.ProcAttr{
-				Files: []uintptr{closeFd, closeFd, 2},
-			})
-	case 2:
-		d := daemon.New(*sockpath, *dbpath)
-		return d.Main()
-	default:
-		return 2
-	}
-}
-
-func forkDaemon(attr *syscall.ProcAttr) int {
-	_, err := syscall.ForkExec(*binpath, []string{
-		*binpath,
-		"-daemon",
-		"-forked", strconv.Itoa(*forked + 1),
-		"-bin", *binpath,
-		"-db", *dbpath,
-		"-sock", *sockpath,
-		"-log", *logpath,
-	}, attr)
+	// Determine runtime directory.
+	runDir, err := getSecureRunDir()
 	if err != nil {
-		log.Println("fork/exec:", err)
-		return 2
+		fmt.Fprintln(os.Stderr, "cannot get runtime dir /tmp/elvish-$uid, falling back to data dir ~/.elvish:", err)
+		runDir = dataDir
 	}
-	return 0
+	if *sockpath == "" {
+		*sockpath = runDir + "/sock"
+	}
+
+	toSpawn := &daemon.Daemon{
+		Forked:        *forked,
+		BinPath:       *binpath,
+		DbPath:        *dbpath,
+		SockPath:      *sockpath,
+		LogPathPrefix: runDir + "/daemon.log.",
+	}
+	var cl *api.Client
+	if *sockpath != "" && *dbpath != "" {
+		cl = api.NewClient(*sockpath)
+		_, statErr := os.Stat(*sockpath)
+		killed := false
+		if statErr == nil {
+			// Kill the daemon if it is outdated.
+			version, err := cl.Version()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "warning: socket exists but not responding version RPC:", err)
+				goto spawnDaemonEnd
+			}
+			logger.Printf("daemon serving version %d, want version %d", version, api.Version)
+			if version < api.Version {
+				pid, err := cl.Pid()
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "warning: socket exists but not responding pid RPC:", err)
+					goto spawnDaemonEnd
+				}
+				logger.Printf("killing outdated daemon with pid %d", pid)
+				err = syscall.Kill(pid, syscall.SIGTERM)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "warning: failed to kill outdated daemon process:", err)
+					goto spawnDaemonEnd
+				}
+				logger.Println("killed outdated daemon")
+				killed = true
+			}
+		}
+		if os.IsNotExist(statErr) || killed {
+			logger.Println("socket does not exists, starting daemon")
+			err := toSpawn.Spawn()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "warning: cannot start daemon:", err)
+			} else {
+				logger.Println("started daemon")
+			}
+			for i := 0; i < daemonWaitLoops; i++ {
+				_, err := cl.Version()
+				if err == nil {
+					logger.Println("daemon online")
+					goto spawnDaemonEnd
+				} else if i == daemonWaitLoops-1 {
+					fmt.Fprintf(os.Stderr, "cannot connect to daemon after %v: %v\n", daemonWaitTotal, err)
+					cl = nil
+					goto spawnDaemonEnd
+				}
+				time.Sleep(daemonWaitOneLoop)
+			}
+		}
+	}
+spawnDaemonEnd:
+
+	return eval.NewEvaler(cl, toSpawn, dataDir), cl
+}
+
+var (
+	ErrBadOwner      = errors.New("bad owner")
+	ErrBadPermission = errors.New("bad permission")
+)
+
+// getSecureRunDir stats /tmp/elvish-$uid, creating it if it doesn't yet exist,
+// and return the directory name if it has the correct owner and permission.
+func getSecureRunDir() (string, error) {
+	uid := syscall.Getuid()
+
+	runDir := path.Join(os.TempDir(), fmt.Sprintf("elvish-%d", uid))
+	err := os.MkdirAll(runDir, 0700)
+	if err != nil {
+		return "", fmt.Errorf("mkdir: %v", err)
+	}
+
+	var stat syscall.Stat_t
+	err = syscall.Stat(runDir, &stat)
+	if err != nil {
+		return "", fmt.Errorf("stat: %v", err)
+	}
+
+	if int(stat.Uid) != uid {
+		return "", ErrBadOwner
+	}
+	if stat.Mode&077 != 0 {
+		return "", ErrBadPermission
+	}
+	return runDir, err
 }

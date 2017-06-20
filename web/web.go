@@ -15,12 +15,10 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/store"
 )
 
 type Web struct {
 	ev   *eval.Evaler
-	st   *store.Store
 	port int
 }
 
@@ -31,8 +29,8 @@ type ExecuteResponse struct {
 	Err       string
 }
 
-func NewWeb(ev *eval.Evaler, st *store.Store, port int) *Web {
-	return &Web{ev, st, port}
+func NewWeb(ev *eval.Evaler, port int) *Web {
+	return &Web{ev, port}
 }
 
 func (web *Web) Run(args []string) int {

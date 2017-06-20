@@ -1,12 +1,10 @@
 package store
 
-import "database/sql"
+import (
+	"database/sql"
 
-// Dir is an entry in the directory history.
-type Dir struct {
-	Path  string
-	Score float64
-}
+	"github.com/elves/elvish/store/storedefs"
+)
 
 const (
 	scoreDecay     = 0.986 // roughly 0.5^(1/50)
@@ -41,12 +39,9 @@ func (s *Store) AddDir(d string, incFactor float64) error {
 	})
 }
 
-// NoBlacklist is an empty blacklist, to be used in GetDirs.
-var NoBlacklist = map[string]struct{}{}
-
 // GetDirs lists all directories in the directory history whose names are not
 // in the blacklist. The results are ordered by scores in descending order.
-func (s *Store) GetDirs(blacklist map[string]struct{}) ([]Dir, error) {
+func (s *Store) GetDirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	rows, err := s.db.Query(
 		"select path, score from dir order by score desc")
 	if err != nil {
@@ -55,10 +50,10 @@ func (s *Store) GetDirs(blacklist map[string]struct{}) ([]Dir, error) {
 	return convertDirs(rows, blacklist)
 }
 
-func convertDirs(rows *sql.Rows, blacklist map[string]struct{}) ([]Dir, error) {
+func convertDirs(rows *sql.Rows, blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	var (
-		dir  Dir
-		dirs []Dir
+		dir  storedefs.Dir
+		dirs []storedefs.Dir
 	)
 
 	for rows.Next() {

@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
 )
 
@@ -26,18 +26,18 @@ func init() {
 	registerListingBindings(modeLocation, "loc", map[ui.Key]string{})
 }
 
-// PinnedScore is a special value of Score in store.Dir to represent that the
+// PinnedScore is a special value of Score in storedefs.Dir to represent that the
 // directory is pinned.
 var PinnedScore = math.Inf(1)
 
 type location struct {
 	listing
 	home     string // The home directory; leave empty if unknown.
-	all      []store.Dir
-	filtered []store.Dir
+	all      []storedefs.Dir
+	filtered []storedefs.Dir
 }
 
-func newLocation(dirs []store.Dir, home string) *location {
+func newLocation(dirs []storedefs.Dir, home string) *location {
 	loc := &location{all: dirs, home: home}
 	loc.listing = newListing(modeLocation, loc)
 	return loc
@@ -119,12 +119,12 @@ func (ed *Editor) chdir(dir string) error {
 	}
 	err = os.Chdir(dir)
 	if err == nil {
-		store := ed.store
-		store.Waits.Add(1)
+		store := ed.daemon
+		store.Waits().Add(1)
 		go func() {
 			// XXX Error ignored.
 			store.AddDir(dir, 1)
-			store.Waits.Done()
+			store.Waits().Done()
 			logger.Println("added dir to store:", dir)
 		}()
 	}
@@ -142,12 +142,12 @@ func (loc *location) Accept(i int, ed *Editor) {
 }
 
 func locStart(ed *Editor) {
-	if ed.store == nil {
+	if ed.daemon == nil {
 		ed.Notify("%v", ErrStoreOffline)
 		return
 	}
 	black := convertListToSet(ed.locHidden())
-	dirs, err := ed.store.GetDirs(black)
+	dirs, err := ed.daemon.Dirs(black)
 	if err != nil {
 		ed.Notify("store error: %v", err)
 		return
@@ -175,14 +175,14 @@ func locStart(ed *Editor) {
 	ed.mode = ed.location
 }
 
-// convertListToDirs converts a list of strings to []store.Dir. It uses the
+// convertListToDirs converts a list of strings to []storedefs.Dir. It uses the
 // special score of PinnedScore to signify that the directory is pinned.
-func convertListToDirs(li eval.List) []store.Dir {
-	pinned := make([]store.Dir, 0, li.Len())
+func convertListToDirs(li eval.List) []storedefs.Dir {
+	pinned := make([]storedefs.Dir, 0, li.Len())
 	// XXX(xiaq): silently drops non-string items.
 	li.Iterate(func(v eval.Value) bool {
 		if s, ok := v.(eval.String); ok {
-			pinned = append(pinned, store.Dir{string(s), PinnedScore})
+			pinned = append(pinned, storedefs.Dir{string(s), PinnedScore})
 		}
 		return true
 	})

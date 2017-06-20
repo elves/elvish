@@ -2,12 +2,9 @@ package store
 
 import (
 	"database/sql"
-	"errors"
-)
 
-// ErrNoMatchingCmd is the error returned when a LastCmd or FirstCmd query
-// completes with no result.
-var ErrNoMatchingCmd = errors.New("no matching command line")
+	"github.com/elves/elvish/store/storedefs"
+)
 
 func init() {
 	initDB["initialize command history table"] = func(db *sql.DB) error {
@@ -94,7 +91,7 @@ func (s *Store) PrevCmd(upto int, prefix string) (int, string, error) {
 func convertCmd(row *sql.Row) (seq int, cmd string, err error) {
 	err = row.Scan(&seq, &cmd)
 	if err == sql.ErrNoRows {
-		err = ErrNoMatchingCmd
+		err = storedefs.ErrNoMatchingCmd
 	}
 	return
 }
