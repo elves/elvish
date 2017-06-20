@@ -118,13 +118,9 @@ func main() {
 		ret = d.Main(service.Serve)
 	} else {
 		// Shell or web. Set up common runtime components.
-		ev, st, cl := initRuntime()
+		ev, cl := initRuntime()
 		defer func() {
-			err := st.Close()
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "warning: failed to close database:", err)
-			}
-			err = cl.Close()
+			err := cl.Close()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: failed to close connection to daemon:", err)
 			}
@@ -136,16 +132,16 @@ func main() {
 				ret = 2
 				return
 			}
-			w := web.NewWeb(ev, st, *webport)
+			w := web.NewWeb(ev, *webport)
 			ret = w.Run(args)
 		} else {
-			sh := shell.NewShell(ev, st, cl, *cmd)
+			sh := shell.NewShell(ev, cl, *cmd)
 			ret = sh.Run(args)
 		}
 	}
 }
 
-func initRuntime() (*eval.Evaler, *store.Store, *api.Client) {
+func initRuntime() (*eval.Evaler, *api.Client) {
 	var dataDir string
 	var err error
 	if *dbpath == "" || *sockpath == "" {
@@ -160,14 +156,6 @@ func initRuntime() (*eval.Evaler, *store.Store, *api.Client) {
 			if *sockpath == "" {
 				*sockpath = dataDir + "/sock"
 			}
-		}
-	}
-
-	var st *store.Store
-	if *dbpath != "" {
-		st, err = store.NewStore(*dbpath)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "warning: cannot connect to store:", err)
 		}
 	}
 
@@ -219,5 +207,5 @@ func initRuntime() (*eval.Evaler, *store.Store, *api.Client) {
 	}
 spawnDaemonEnd:
 
-	return eval.NewEvaler(st, cl, toSpawn, dataDir), st, cl
+	return eval.NewEvaler(cl, toSpawn, dataDir), cl
 }

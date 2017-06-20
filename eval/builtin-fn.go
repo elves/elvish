@@ -999,11 +999,11 @@ func cdInner(dir string, ec *EvalCtx) {
 	if err != nil {
 		throw(err)
 	}
-	if ec.Store != nil {
+	if ec.Daemon != nil {
 		// XXX Error ignored.
 		pwd, err := os.Getwd()
 		if err == nil {
-			store := ec.Store
+			store := ec.Daemon
 			store.Waits().Add(1)
 			go func() {
 				// XXX Error ignored.
@@ -1021,10 +1021,10 @@ func dirs(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
-	if ec.Store == nil {
+	if ec.Daemon == nil {
 		throw(ErrStoreNotConnected)
 	}
-	dirs, err := ec.Store.GetDirs(store.NoBlacklist)
+	dirs, err := ec.Daemon.Dirs(store.NoBlacklist)
 	if err != nil {
 		throw(errors.New("store error: " + err.Error()))
 	}
@@ -1455,7 +1455,7 @@ func toRune(arg Value) (rune, error) {
 }
 
 func preExit(ec *EvalCtx) {
-	err := ec.Store.Close()
+	err := ec.Daemon.Close()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}

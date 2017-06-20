@@ -8,7 +8,7 @@ const (
 	ServiceName = "Daemon"
 
 	// Version is the API version. It should be bumped any time the API changes.
-	Version = -98
+	Version = -97
 )
 
 // Basic requests.
@@ -165,19 +165,44 @@ func (c *Client) Dirs(blacklist map[string]struct{}) ([]store.Dir, error) {
 	return res.Dirs, err
 }
 
-/*
 // SharedVar requests.
 
-type GetSharedVar struct {
+type SharedVarRequest struct {
 	Name string
 }
 
-type SetSharedVar struct {
+type SharedVarResponse struct {
+	Value string
+}
+
+func (c *Client) SharedVar(name string) (string, error) {
+	req := &SharedVarRequest{name}
+	res := &SharedVarResponse{}
+	err := c.CallDaemon("SharedVar", req, res)
+	return res.Value, err
+}
+
+type SetSharedVarRequest struct {
 	Name  string
 	Value string
 }
 
-type DelSharedVar struct {
+type SetSharedVarResponse struct{}
+
+func (c *Client) SetSharedVar(name, value string) error {
+	req := &SetSharedVarRequest{name, value}
+	res := &SetSharedVarResponse{}
+	return c.CallDaemon("SetSharedVar", req, res)
+}
+
+type DelSharedVarRequest struct {
 	Name string
 }
-*/
+
+type DelSharedVarResponse struct{}
+
+func (c *Client) DelSharedVar(name string) error {
+	req := &DelSharedVarRequest{}
+	res := &DelSharedVarResponse{}
+	return c.CallDaemon("DelSharedVar", req, res)
+}

@@ -15,7 +15,6 @@ import (
 	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/store"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -25,13 +24,12 @@ var logger = util.GetLogger("[shell] ")
 // Shell keeps flags to the shell.
 type Shell struct {
 	ev     *eval.Evaler
-	st     *store.Store
 	daemon *api.Client
 	cmd    bool
 }
 
-func NewShell(ev *eval.Evaler, st *store.Store, daemon *api.Client, cmd bool) *Shell {
-	return &Shell{ev, st, daemon, cmd}
+func NewShell(ev *eval.Evaler, daemon *api.Client, cmd bool) *Shell {
+	return &Shell{ev, daemon, cmd}
 }
 
 // Run runs Elvish using the default terminal interface. It blocks until Elvish
