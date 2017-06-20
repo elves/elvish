@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"fmt"
 	"testing"
+
+	"github.com/elves/elvish/store/storedefs"
 )
 
 var tStore *Store
@@ -23,7 +25,7 @@ func init() {
 
 func TestNewStore(t *testing.T) {
 	// XXX(xiaq): Also tests EnsureDataDir
-	dataDir, err := EnsureDataDir()
+	dataDir, err := storedefs.EnsureDataDir()
 	if err != nil {
 		t.Errorf("EnsureDataDir() -> (*, %v), want (*, <nil>)", err)
 	}

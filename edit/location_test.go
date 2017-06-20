@@ -4,11 +4,11 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/store/storedefs"
 )
 
 var (
-	theLocation = newLocation([]store.Dir{
+	theLocation = newLocation([]storedefs.Dir{
 		{"/pinned", PinnedScore},
 		{"/src/github.com/elves/elvish", 300},
 		{"/src/home/xyz", 233},

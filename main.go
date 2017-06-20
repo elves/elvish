@@ -20,7 +20,7 @@ import (
 	"github.com/elves/elvish/daemon/service"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/shell"
-	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
 	"github.com/elves/elvish/web"
 )
@@ -146,7 +146,7 @@ func initRuntime() (*eval.Evaler, *api.Client) {
 	var err error
 	if *dbpath == "" || *sockpath == "" {
 		// Determine default paths for database and socket.
-		dataDir, err = store.EnsureDataDir()
+		dataDir, err = storedefs.EnsureDataDir()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "warning: cannot create data dir ~/.elvish")
 		} else {

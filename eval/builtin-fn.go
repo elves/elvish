@@ -25,7 +25,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -1024,7 +1024,7 @@ func dirs(ec *EvalCtx, args []Value, opts map[string]Value) {
 	if ec.Daemon == nil {
 		throw(ErrStoreNotConnected)
 	}
-	dirs, err := ec.Daemon.Dirs(store.NoBlacklist)
+	dirs, err := ec.Daemon.Dirs(storedefs.NoBlacklist)
 	if err != nil {
 		throw(errors.New("store error: " + err.Error()))
 	}

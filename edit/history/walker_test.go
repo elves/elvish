@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/store/storedefs"
 )
 
 func TestWalker(t *testing.T) {
@@ -80,9 +80,9 @@ func TestWalker(t *testing.T) {
 	walkerStore.oneOffError = mockError
 	wantErr(t, w.Prev, mockError)
 
-	// store.ErrNoMatchingCmd is turned into ErrEndOfHistory.
+	// storedefs.ErrNoMatchingCmd is turned into ErrEndOfHistory.
 	w = NewWalker(walkerStore, -1, nil, nil, "")
-	walkerStore.oneOffError = store.ErrNoMatchingCmd
+	walkerStore.oneOffError = storedefs.ErrNoMatchingCmd
 	wantErr(t, w.Prev, ErrEndOfHistory)
 }
 

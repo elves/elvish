@@ -1,7 +1,7 @@
 // Package API provides the API to the daemon RPC service.
 package api
 
-import "github.com/elves/elvish/store"
+import "github.com/elves/elvish/store/storedefs"
 
 const (
 	// ServiceName is the name of the RPC service exposed by the daemon.
@@ -155,10 +155,10 @@ type DirsRequest struct {
 }
 
 type DirsResponse struct {
-	Dirs []store.Dir
+	Dirs []storedefs.Dir
 }
 
-func (c *Client) Dirs(blacklist map[string]struct{}) ([]store.Dir, error) {
+func (c *Client) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	req := &DirsRequest{blacklist}
 	res := &DirsResponse{}
 	err := c.CallDaemon("Dirs", req, res)
