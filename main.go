@@ -16,6 +16,7 @@ import (
 	"runtime/pprof"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/daemon/api"
@@ -143,6 +144,12 @@ func main() {
 	}
 }
 
+const (
+	daemonWaitOneLoop = 10 * time.Millisecond
+	daemonWaitLoops   = 100
+	daemonWaitTotal   = daemonWaitOneLoop * daemonWaitLoops
+)
+
 func initRuntime() (*eval.Evaler, *api.Client) {
 	var dataDir string
 	var err error
@@ -199,7 +206,7 @@ func initRuntime() (*eval.Evaler, *api.Client) {
 					fmt.Fprintln(os.Stderr, "warning: failed to kill outdated daemon process:", err)
 					goto spawnDaemonEnd
 				}
-				fmt.Fprintln(os.Stderr, "killed outdated daemon")
+				logger.Println("killed outdated daemon")
 				killed = true
 			}
 		}
@@ -209,7 +216,19 @@ func initRuntime() (*eval.Evaler, *api.Client) {
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: cannot start daemon:", err)
 			} else {
-				fmt.Fprintln(os.Stderr, "started daemon")
+				logger.Println("started daemon")
+			}
+			for i := 0; i < daemonWaitLoops; i++ {
+				_, err := cl.Version()
+				if err == nil {
+					logger.Println("daemon online")
+					goto spawnDaemonEnd
+				} else if i == daemonWaitLoops-1 {
+					fmt.Fprintf(os.Stderr, "cannot connect to daemon after %v: %v\n", daemonWaitTotal, err)
+					cl = nil
+					goto spawnDaemonEnd
+				}
+				time.Sleep(daemonWaitOneLoop)
 			}
 		}
 	}

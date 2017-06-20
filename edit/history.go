@@ -43,6 +43,10 @@ func (h *hist) ModeLine() renderer {
 }
 
 func historyStart(ed *Editor) {
+	if ed.historyFuser == nil {
+		ed.Notify("history offline")
+		return
+	}
 	prefix := ed.line[:ed.dot]
 	walker := ed.historyFuser.Walker(prefix)
 	ed.hist = hist{walker}
@@ -85,7 +89,7 @@ func historyDefault(ed *Editor) {
 // Implementation.
 
 func (ed *Editor) appendHistory(line string) {
-	if ed.daemon != nil {
+	if ed.daemon != nil && ed.historyFuser != nil {
 		ed.historyMutex.Lock()
 		ed.daemon.Waits().Add(1)
 		go func() {

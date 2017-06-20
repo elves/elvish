@@ -39,13 +39,20 @@ func Serve(sockpath, dbpath string) {
 	signal.Notify(quitSignals, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		sig := <-quitSignals
-		logger.Printf("received signal %s, shutting down", sig)
+		logger.Printf("received signal %s", sig)
 		err := os.Remove(sockpath)
 		if err != nil {
-			logger.Println("failed to remove socket %s: %v", sockpath, err)
+			logger.Printf("failed to remove socket %s: %v", sockpath, err)
 		}
-		logger.Println("exiting")
-		os.Exit(0)
+		err = st.Close()
+		if err != nil {
+			logger.Printf("failed to close storage: %v", err)
+		}
+		err = listener.Close()
+		if err != nil {
+			logger.Printf("failed to close listener: %v", err)
+		}
+		logger.Println("listener closed, waiting to exit")
 	}()
 
 	service := &Service{st}
@@ -53,7 +60,8 @@ func Serve(sockpath, dbpath string) {
 
 	logger.Println("starting to serve RPC calls")
 	rpc.Accept(listener)
-	os.Exit(0)
+
+	logger.Println("exiting")
 }
 
 // Service provides the daemon RPC service.

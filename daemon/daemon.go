@@ -72,7 +72,7 @@ func (d *Daemon) Main(serve func(string, string)) int {
 			})
 	case 2:
 		serve(d.SockPath, d.DbPath)
-		panic("unreachable")
+		return 0
 	default:
 		return 2
 	}
