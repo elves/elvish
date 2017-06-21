@@ -211,6 +211,7 @@ func init() {
 		{"-time", _time},
 
 		// Debugging
+		{"-gc", _gc},
 		{"-stack", _stack},
 		{"-log", _log},
 
@@ -1373,6 +1374,13 @@ func _time(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 	dt := t1.Sub(t0)
 	fmt.Fprintln(ec.ports[1].File, dt)
+}
+
+func _gc(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
+	runtime.GC()
 }
 
 func _stack(ec *EvalCtx, args []Value, opts map[string]Value) {
