@@ -18,6 +18,10 @@ func NewClient(sockPath string) *Client {
 	return &Client{sockPath, nil, sync.WaitGroup{}}
 }
 
+func (c *Client) SockPath() string {
+	return c.sockPath
+}
+
 func (c *Client) Waits() *sync.WaitGroup {
 	return &c.waits
 }

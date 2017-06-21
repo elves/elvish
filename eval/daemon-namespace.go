@@ -20,7 +20,8 @@ func makeDaemonNamespace(daemon *api.Client) Namespace {
 	}
 
 	return Namespace{
-		"pid": MakeRoVariableFromCallback(daemonPid),
+		"pid":  MakeRoVariableFromCallback(daemonPid),
+		"sock": NewRoVariable(String(daemon.SockPath())),
 
 		FnPrefix + "spawn": NewRoVariable(&BuiltinFn{"daemon:spawn", daemonSpawn}),
 	}
