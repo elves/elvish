@@ -46,3 +46,12 @@ bind-mode navigation Alt-f  $le:nav:&trigger-filter
 
 bind-mode history Ctrl-N $le:history:&down-or-quit
 bind-mode history Ctrl-P $le:history:&up
+bind-mode history Ctrl-G $le:insert:&start
+
+bind-mode histlist Ctrl-N $le:histlist:&down
+bind-mode histlist Ctrl-P $le:histlist:&up
+bind-mode histlist Ctrl-G $le:insert:&start
+bind-mode histlist Alt-g $le:histlist:&toggle-case-sensitivity
+bind-mode histlist Alt-d $le:histlist:&toggle-dedup
+bind-mode histlist Ctrl-V $le:histlist:&page-down
+bind-mode histlist Alt-v $le:histlist:&page-up
