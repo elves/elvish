@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -319,7 +320,7 @@ func mustParseAndCompile(t *testing.T, ev *Evaler, name, text string) Op {
 
 func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, error) {
 	name := "<eval test>"
-	ev := NewEvaler(nil, nil, "")
+	ev := NewEvaler(&api.NewClient("/invalid"), nil, "")
 
 	// Collect byte output
 	outBytes := []byte{}
