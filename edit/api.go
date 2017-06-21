@@ -74,6 +74,8 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 
 	ns[eval.FnPrefix+"complete-getopt"] = eval.NewRoVariable(
 		&eval.BuiltinFn{"le:&complete-getopt", complGetopt})
+	ns[eval.FnPrefix+"complex-candidate"] = eval.NewRoVariable(
+		&eval.BuiltinFn{"le:&complex-candidate", outputComplexCandidate})
 	for _, bac := range argCompletersData {
 		ns[eval.FnPrefix+bac.name] = eval.NewRoVariable(bac)
 	}
@@ -255,4 +257,24 @@ func callArgCompleter(fn eval.CallableValue,
 		}
 	}
 	return cands, nil
+}
+
+// outputComplexCandidate composes a complexCandidate from its args.
+func outputComplexCandidate(ec *eval.EvalCtx, a []eval.Value, o map[string]eval.Value) {
+	var style string
+
+	c := &complexCandidate{}
+
+	eval.ScanArgs(a, &c.stem)
+	eval.ScanOpts(o,
+		eval.Opt{"code-suffix", &c.codeSuffix, eval.String("")},
+		eval.Opt{"display-suffix", &c.displaySuffix, eval.String("")},
+		eval.Opt{"style", &style, eval.String("")},
+	)
+	if style != "" {
+		c.style = ui.StylesFromString(style)
+	}
+
+	out := ec.OutputChan()
+	out <- c
 }
