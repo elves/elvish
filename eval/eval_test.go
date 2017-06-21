@@ -320,7 +320,7 @@ func mustParseAndCompile(t *testing.T, ev *Evaler, name, text string) Op {
 
 func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, error) {
 	name := "<eval test>"
-	ev := NewEvaler(&api.NewClient("/invalid"), nil, "")
+	ev := NewEvaler(api.NewClient("/invalid"), nil, "")
 
 	// Collect byte output
 	outBytes := []byte{}
