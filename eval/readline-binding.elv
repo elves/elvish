@@ -55,3 +55,15 @@ bind-mode histlist Alt-g $le:histlist:&toggle-case-sensitivity
 bind-mode histlist Alt-d $le:histlist:&toggle-dedup
 bind-mode histlist Ctrl-V $le:histlist:&page-down
 bind-mode histlist Alt-v $le:histlist:&page-up
+
+bind-mode loc Ctrl-N $le:loc:&down
+bind-mode loc Ctrl-P $le:loc:&up
+bind-mode loc Ctrl-V $le:loc:&page-down
+bind-mode loc Alt-v $le:loc:&page-up
+bind-mode loc Ctrl-G $le:insert:&start
+
+bind-mode bang Ctrl-N $le:bang:&down
+bind-mode bang Ctrl-P $le:bang:&up
+bind-mode bang Ctrl-V $le:bang:&page-down
+bind-mode bang Alt-v $le:bang:&page-up
+bind-mode bang Ctrl-G $le:insert:&start
