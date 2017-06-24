@@ -197,9 +197,6 @@ var evalTests = []struct {
 	// Builtin functions
 	// -----------------
 
-	{`true`, bools(true), nomore},
-	{`false`, bools(false), nomore},
-
 	{"kind-of bare 'str' [] [&] []{ }",
 		strs("string", "string", "list", "map", "fn"), nomore},
 

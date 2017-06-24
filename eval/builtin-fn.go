@@ -160,8 +160,6 @@ func init() {
 		// Boolean operations
 		{"bool", boolFn},
 		{"not", not},
-		{"true", trueFn},
-		{"false", falseFn},
 
 		// Arithmetics
 		{"+", plus},
@@ -1062,14 +1060,6 @@ func not(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	ec.OutputChan() <- Bool(!ToBool(v))
-}
-
-func trueFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	ec.OutputChan() <- Bool(true)
-}
-
-func falseFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	ec.OutputChan() <- Bool(false)
 }
 
 func plus(ec *EvalCtx, args []Value, opts map[string]Value) {
