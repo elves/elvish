@@ -15,6 +15,8 @@ type scope map[string]bool
 // compiler maintains the set of states needed when compiling a single source
 // file.
 type compiler struct {
+	// Builtin scope.
+	builtin scope
 	// Lexical scopes.
 	scopes []scope
 	// Variables captured from outer scopes.
@@ -25,8 +27,8 @@ type compiler struct {
 	name, text string
 }
 
-func compile(sc scope, n *parse.Chunk, name, text string) (op Op, err error) {
-	cp := &compiler{[]scope{sc}, scope{}, 0, 0, name, text}
+func compile(b, g scope, n *parse.Chunk, name, text string) (op Op, err error) {
+	cp := &compiler{b, []scope{g}, scope{}, 0, 0, name, text}
 	defer util.Catch(&err)
 	return cp.chunkOp(n), nil
 }
@@ -85,7 +87,7 @@ func (cp *compiler) registerVariableGet(qname string) bool {
 	}
 	// Find in builtin scope
 	if ns == "" || ns == "builtin" {
-		_, ok := builtinNamespace[name]
+		_, ok := cp.builtin[name]
 		if ok {
 			return true
 		}

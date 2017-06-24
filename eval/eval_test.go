@@ -13,10 +13,11 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func TestBuiltinNamespace(t *testing.T) {
+func TestBuiltinPid(t *testing.T) {
 	pid := strconv.Itoa(syscall.Getpid())
-	if ToString(builtinNamespace["pid"].Get()) != pid {
-		t.Errorf(`ev.builtin["pid"] = %v, want %v`, builtinNamespace["pid"], pid)
+	builtinPid := ToString(makeBuiltinNamespace(nil)["pid"].Get())
+	if builtinPid != pid {
+		t.Errorf(`ev.builtin["pid"] = %v, want %v`, builtinPid, pid)
 	}
 }
 

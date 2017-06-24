@@ -24,11 +24,12 @@ func goodFormHead(head string, ed *Editor) bool {
 		// XXX don't stat twice
 		return util.IsExecutable(head) || isDir(head)
 	} else {
+		ev := ed.evaler
 		explode, ns, name := eval.ParseVariable(head)
 		if !explode {
 			switch ns {
 			case "":
-				if eval.Builtin()[eval.FnPrefix+name] != nil || ed.evaler.Global[eval.FnPrefix+name] != nil {
+				if ev.Builtin[eval.FnPrefix+name] != nil || ev.Global[eval.FnPrefix+name] != nil {
 					return true
 				}
 			case "e":
@@ -36,7 +37,7 @@ func goodFormHead(head string, ed *Editor) bool {
 					return true
 				}
 			default:
-				if ed.evaler.Modules[ns] != nil && ed.evaler.Modules[ns][eval.FnPrefix+name] != nil {
+				if ev.Modules[ns] != nil && ev.Modules[ns][eval.FnPrefix+name] != nil {
 					return true
 				}
 			}

@@ -1,10 +1,16 @@
 package eval
 
-import "os"
+import (
+	"os"
+
+	"github.com/elves/elvish/daemon/api"
+)
 
 // PwdVariable is a variable whose value always reflects the current working
 // directory. Setting it changes the current working directory.
-type PwdVariable struct{}
+type PwdVariable struct {
+	daemon *api.Client
+}
 
 var _ Variable = PwdVariable{}
 
@@ -14,12 +20,11 @@ func (PwdVariable) Get() Value {
 	return String(pwd)
 }
 
-// TODO(xiaq): Setting $pwd should also record the new directory in the history.
-func (PwdVariable) Set(v Value) {
+func (pwd PwdVariable) Set(v Value) {
 	path, ok := v.(String)
 	if !ok {
 		throw(ErrPathMustBeString)
 	}
-	err := Chdir(string(path), nil)
+	err := Chdir(string(path), pwd.daemon)
 	maybeThrow(err)
 }
