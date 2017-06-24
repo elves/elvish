@@ -14,11 +14,12 @@ func (PwdVariable) Get() Value {
 	return String(pwd)
 }
 
+// TODO(xiaq): Setting $pwd should also record the new directory in the history.
 func (PwdVariable) Set(v Value) {
 	path, ok := v.(String)
 	if !ok {
 		throw(ErrPathMustBeString)
 	}
-	err := os.Chdir(string(path))
+	err := Chdir(string(path), nil)
 	maybeThrow(err)
 }

@@ -994,24 +994,7 @@ func cd(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
 func cdInner(dir string, ec *EvalCtx) {
-	err := os.Chdir(dir)
-	if err != nil {
-		throw(err)
-	}
-	if ec.Daemon != nil {
-		// XXX Error ignored.
-		pwd, err := os.Getwd()
-		if err == nil {
-			store := ec.Daemon
-			store.Waits().Add(1)
-			go func() {
-				// XXX Error ignored.
-				store.AddDir(pwd, 1)
-				store.Waits().Done()
-				logger.Println("added dir to store:", pwd)
-			}()
-		}
-	}
+	maybeThrow(Chdir(dir, ec.Daemon))
 }
 
 var dirFieldNames = []string{"path", "score"}
