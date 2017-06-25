@@ -52,7 +52,7 @@ func (b *lastcmd) Show(i int) (string, ui.Styled) {
 	entry := b.filtered[i]
 	var head string
 	if entry.i == -1 {
-		head = "M-,"
+		head = "M-1"
 	} else if b.minus {
 		head = fmt.Sprintf("%d", entry.i-len(b.words))
 	} else {
@@ -92,6 +92,7 @@ func (b *lastcmd) Accept(i int, ed *Editor) {
 }
 
 func lastcmdStart(ed *Editor) {
+	logger.Println("lastcmd-alt-start")
 	_, cmd, err := ed.daemon.PrevCmd(-1, "")
 	if err != nil {
 		ed.Notify("db error: %s", err.Error())
@@ -103,12 +104,15 @@ func lastcmdStart(ed *Editor) {
 
 func lastcmdAltDefault(ed *Editor) {
 	l := ed.lastcmd
-	if l.handleFilterKey(ed.lastKey) {
+	logger.Println("lastcmd-alt-default")
+	if ed.lastKey == (ui.Key{'1', ui.Alt}) {
+		l.Accept(0, ed)
+		logger.Println("accepting")
+	} else if l.handleFilterKey(ed.lastKey) {
 		if l.Len() == 1 {
 			l.Accept(l.selected, ed)
+			logger.Println("accepting")
 		}
-	} else if ed.lastKey == (ui.Key{',', ui.Alt}) {
-		l.Accept(0, ed)
 	} else {
 		insertStart(ed)
 		ed.nextAction = action{typ: reprocessKey}
