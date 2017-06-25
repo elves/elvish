@@ -12,7 +12,7 @@ import (
 func doHighlight(n parse.Node, ed *Editor) {
 	s := &highlight.Emitter{
 		func(s string) bool { return goodFormHead(s, ed) },
-		ed.styling.add,
+		ed.styling.Add,
 	}
 	s.EmitAll(n)
 }

@@ -1,4 +1,4 @@
-package edit
+package highlight
 
 import (
 	"bytes"
@@ -9,12 +9,12 @@ import (
 
 // Preparing and applying styling.
 
-type styling struct {
+type Styling struct {
 	begins []stylingEvent
 	ends   []stylingEvent
 }
 
-func (s *styling) add(begin, end int, style string) {
+func (s *Styling) Add(begin, end int, style string) {
 	if style == "" {
 		return
 	}
@@ -22,21 +22,21 @@ func (s *styling) add(begin, end int, style string) {
 	s.ends = append(s.ends, stylingEvent{end, style})
 }
 
-func (s *styling) apply() *stylingApplier {
+func (s *Styling) Apply() *StylingApplier {
 	sort.Sort(stylingEvents(s.begins))
 	sort.Sort(stylingEvents(s.ends))
-	return &stylingApplier{s, make(map[string]int), 0, 0, ""}
+	return &StylingApplier{s, make(map[string]int), 0, 0, ""}
 }
 
-type stylingApplier struct {
-	*styling
+type StylingApplier struct {
+	*Styling
 	occurrence map[string]int
 	ibegin     int
 	iend       int
 	result     string
 }
 
-func (a *stylingApplier) at(i int) {
+func (a *StylingApplier) At(i int) {
 	changed := false
 	for a.iend < len(a.ends) && a.ends[a.iend].pos == i {
 		a.occurrence[a.ends[a.iend].style]--
@@ -64,7 +64,7 @@ func (a *stylingApplier) at(i int) {
 	}
 }
 
-func (a *stylingApplier) get() string {
+func (a *StylingApplier) Get() string {
 	return a.result
 }
 

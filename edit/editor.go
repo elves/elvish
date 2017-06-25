@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/elves/elvish/daemon/api"
+	"github.com/elves/elvish/edit/highlight"
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
@@ -59,7 +60,7 @@ type editorState struct {
 	line           string
 	lexedLine      *string
 	chunk          *parse.Chunk
-	styling        *styling
+	styling        *highlight.Styling
 	promptContent  []*ui.Styled
 	rpromptContent []*ui.Styled
 	dot            int
@@ -155,7 +156,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 			ed.addTip("%s", err)
 		}
 
-		ed.styling = &styling{}
+		ed.styling = &highlight.Styling{}
 		doHighlight(n, ed)
 
 		_, err = ed.evaler.Compile(n, "[interactive]", src)
@@ -168,7 +169,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 			// compiler error; they should all be highlighted as erroneous.
 			p := err.(*eval.CompilationError).Context.Begin
 			badn := findLeafNode(n, p)
-			ed.styling.add(badn.Begin(), badn.End(), styleForCompilerError.String())
+			ed.styling.Add(badn.Begin(), badn.End(), styleForCompilerError.String())
 		}
 	}
 	return ed.writer.refresh(&ed.editorState, fullRefresh)

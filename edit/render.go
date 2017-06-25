@@ -4,6 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/edit/highlight"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/util"
 )
@@ -127,7 +128,7 @@ func (nr linesRenderer) render(b *buffer) {
 type cmdlineRenderer struct {
 	prompt  []*ui.Styled
 	line    string
-	styling *styling
+	styling *highlight.Styling
 	dot     int
 	rprompt []*ui.Styled
 
@@ -141,7 +142,7 @@ type cmdlineRenderer struct {
 	histText  string
 }
 
-func newCmdlineRenderer(p []*ui.Styled, l string, s *styling, d int, rp []*ui.Styled) *cmdlineRenderer {
+func newCmdlineRenderer(p []*ui.Styled, l string, s *highlight.Styling, d int, rp []*ui.Styled) *cmdlineRenderer {
 	return &cmdlineRenderer{prompt: p, line: l, styling: s, dot: d, rprompt: rp}
 }
 
@@ -168,11 +169,11 @@ func (clr *cmdlineRenderer) render(b *buffer) {
 	// i keeps track of number of bytes written.
 	i := 0
 
-	applier := clr.styling.apply()
+	applier := clr.styling.Apply()
 
 	// nowAt is called at every rune boundary.
 	nowAt := func(i int) {
-		applier.at(i)
+		applier.At(i)
 		if clr.hasComp && i == clr.compBegin {
 			b.writes(clr.compText, styleForCompleted.String())
 		}
@@ -186,7 +187,7 @@ func (clr *cmdlineRenderer) render(b *buffer) {
 		if clr.hasComp && clr.compBegin <= i && i < clr.compEnd {
 			// Do nothing. This part is replaced by the completion candidate.
 		} else {
-			b.write(r, applier.get())
+			b.write(r, applier.Get())
 		}
 		i += utf8.RuneLen(r)
 
