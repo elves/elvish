@@ -87,7 +87,7 @@ func init() {
 		{ui.Down, 0}:   "end-of-history",
 		{'N', ui.Ctrl}: "nav:start",
 		{'R', ui.Ctrl}: "histlist:start",
-		{',', ui.Alt}:  "bang:start",
+		{',', ui.Alt}:  "lastcmd:start",
 		{'L', ui.Ctrl}: "loc:start",
 		{'V', ui.Ctrl}: "insert-raw",
 

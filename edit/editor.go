@@ -72,7 +72,7 @@ type editorState struct {
 	navigation navigation
 	hist       hist
 	histlist   *histlist
-	bang       *bang
+	lastcmd    *lastcmd
 	location   *location
 
 	// A cache of external commands, used in stylist.

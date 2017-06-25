@@ -70,10 +70,10 @@ bind-mode loc Ctrl-V $le:loc:&page-down
 bind-mode loc Alt-v $le:loc:&page-up
 bind-mode loc Ctrl-G $le:insert:&start
 
-bind-mode bang Ctrl-N $le:bang:&down
-bind-mode bang Ctrl-P $le:bang:&up
-bind-mode bang Ctrl-V $le:bang:&page-down
-bind-mode bang Alt-v $le:bang:&page-up
-bind-mode bang Ctrl-G $le:insert:&start
+bind-mode lastcmd Ctrl-N $le:lastcmd:&down
+bind-mode lastcmd Ctrl-P $le:lastcmd:&up
+bind-mode lastcmd Ctrl-V $le:lastcmd:&page-down
+bind-mode lastcmd Alt-v $le:lastcmd:&page-up
+bind-mode lastcmd Ctrl-G $le:insert:&start
 `,
 }

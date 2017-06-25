@@ -8,47 +8,47 @@ import (
 	"github.com/elves/elvish/edit/ui"
 )
 
-// Bang mode.
+// LastCmd mode.
 
-var _ = registerListingBuiltins("bang", map[string]func(*Editor){
-	"start":       bangStart,
-	"alt-default": bangAltDefault,
-}, func(ed *Editor) *listing { return &ed.bang.listing })
+var _ = registerListingBuiltins("lastcmd", map[string]func(*Editor){
+	"start":       lastcmdStart,
+	"alt-default": lastcmdAltDefault,
+}, func(ed *Editor) *listing { return &ed.lastcmd.listing })
 
 func init() {
-	registerListingBindings(modeBang, "bang", map[ui.Key]string{
+	registerListingBindings(modeLastCmd, "lastcmd", map[ui.Key]string{
 		ui.Default: "alt-default",
 	})
 }
 
-type bangEntry struct {
+type lastcmdEntry struct {
 	i int
 	s string
 }
 
-type bang struct {
+type lastcmd struct {
 	listing
 	line     string
 	words    []string
-	filtered []bangEntry
+	filtered []lastcmdEntry
 	minus    bool
 }
 
-func newBang(line string) *bang {
-	b := &bang{listing{}, line, wordify(line), nil, false}
-	b.listing = newListing(modeBang, b)
+func newLastCmd(line string) *lastcmd {
+	b := &lastcmd{listing{}, line, wordify(line), nil, false}
+	b.listing = newListing(modeLastCmd, b)
 	return b
 }
 
-func (b *bang) ModeTitle(int) string {
+func (b *lastcmd) ModeTitle(int) string {
 	return " LASTCMD "
 }
 
-func (b *bang) Len() int {
+func (b *lastcmd) Len() int {
 	return len(b.filtered)
 }
 
-func (b *bang) Show(i int) (string, ui.Styled) {
+func (b *lastcmd) Show(i int) (string, ui.Styled) {
 	entry := b.filtered[i]
 	var head string
 	if entry.i == -1 {
@@ -61,11 +61,11 @@ func (b *bang) Show(i int) (string, ui.Styled) {
 	return head, ui.Unstyled(entry.s)
 }
 
-func (b *bang) Filter(filter string) int {
+func (b *lastcmd) Filter(filter string) int {
 	b.filtered = nil
 	b.minus = len(filter) > 0 && filter[0] == '-'
 	if filter == "" || filter == "-" {
-		b.filtered = append(b.filtered, bangEntry{-1, b.line})
+		b.filtered = append(b.filtered, lastcmdEntry{-1, b.line})
 	} else if _, err := strconv.Atoi(filter); err != nil {
 		return -1
 	}
@@ -75,7 +75,7 @@ func (b *bang) Filter(filter string) int {
 		if filter == "" ||
 			(!b.minus && strings.HasPrefix(strconv.Itoa(i), filter)) ||
 			(b.minus && strings.HasPrefix(strconv.Itoa(i-n), filter)) {
-			b.filtered = append(b.filtered, bangEntry{i, word})
+			b.filtered = append(b.filtered, lastcmdEntry{i, word})
 		}
 	}
 	if len(b.filtered) == 0 {
@@ -86,23 +86,23 @@ func (b *bang) Filter(filter string) int {
 
 // Editor interface.
 
-func (b *bang) Accept(i int, ed *Editor) {
+func (b *lastcmd) Accept(i int, ed *Editor) {
 	ed.insertAtDot(b.filtered[i].s)
 	insertStart(ed)
 }
 
-func bangStart(ed *Editor) {
+func lastcmdStart(ed *Editor) {
 	_, cmd, err := ed.daemon.PrevCmd(-1, "")
 	if err != nil {
 		ed.Notify("db error: %s", err.Error())
 		return
 	}
-	ed.bang = newBang(cmd)
-	ed.mode = ed.bang
+	ed.lastcmd = newLastCmd(cmd)
+	ed.mode = ed.lastcmd
 }
 
-func bangAltDefault(ed *Editor) {
-	l := ed.bang
+func lastcmdAltDefault(ed *Editor) {
+	l := ed.lastcmd
 	if l.handleFilterKey(ed.lastKey) {
 		if l.Len() == 1 {
 			l.Accept(l.selected, ed)

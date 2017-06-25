@@ -20,7 +20,7 @@ const (
 	modeNavigation
 	modeHistory
 	modeHistoryListing
-	modeBang
+	modeLastCmd
 	modeLocation
 )
 

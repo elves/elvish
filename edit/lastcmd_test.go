@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	theLine = "qw search 'foo bar ~y'"
-	theBang = newBang(theLine)
+	theLine    = "qw search 'foo bar ~y'"
+	theLastCmd = newLastCmd(theLine)
 
-	bangFilterTests = []listingFilterTestCases{
+	lastcmdFilterTests = []listingFilterTestCases{
 		{"", []shown{
 			{"M-,", ui.Unstyled(theLine)},
 			{"0", ui.Unstyled("qw")},
@@ -26,6 +26,6 @@ var (
 	}
 )
 
-func TestBang(t *testing.T) {
-	testListingFilter(t, "theBang", theBang, bangFilterTests)
+func TestLastCmd(t *testing.T) {
+	testListingFilter(t, "theLastCmd", theLastCmd, lastcmdFilterTests)
 }
