@@ -293,18 +293,26 @@ func registerListingBuiltins(
 	return registerBuiltins(module, impls)
 }
 
+var defaultListingBindings = map[ui.Key]string{
+	ui.Key{ui.Up, 0}:         "up",
+	ui.Key{ui.PageUp, 0}:     "page-up",
+	ui.Key{ui.Down, 0}:       "down",
+	ui.Key{ui.PageDown, 0}:   "page-down",
+	ui.Key{ui.Tab, 0}:        "down-cycle",
+	ui.Key{ui.Backspace, 0}:  "backspace",
+	ui.Key{ui.Enter, 0}:      "accept-close",
+	ui.Key{ui.Enter, ui.Alt}: "accept",
+	ui.Default:               "default",
+	ui.Key{'[', ui.Ctrl}:     "insert:start",
+}
+
 func registerListingBindings(
 	mt ModeType, defaultMod string, m map[ui.Key]string) struct{} {
 
-	m[ui.Key{ui.Up, 0}] = "up"
-	m[ui.Key{ui.PageUp, 0}] = "page-up"
-	m[ui.Key{ui.Down, 0}] = "down"
-	m[ui.Key{ui.PageDown, 0}] = "page-down"
-	m[ui.Key{ui.Tab, 0}] = "down-cycle"
-	m[ui.Key{ui.Backspace, 0}] = "backspace"
-	m[ui.Key{ui.Enter, 0}] = "accept-close"
-	m[ui.Key{ui.Enter, ui.Alt}] = "accept"
-	m[ui.Default] = "default"
-	m[ui.Key{'[', ui.Ctrl}] = "insert:start"
+	for k, defaultBinding := range defaultListingBindings {
+		if _, alreadyBound := m[k]; !alreadyBound {
+			m[k] = defaultBinding
+		}
+	}
 	return registerBindings(mt, defaultMod, m)
 }
