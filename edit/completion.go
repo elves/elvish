@@ -17,6 +17,7 @@ var _ = registerBuiltins("compl", map[string]func(*Editor){
 	"smart-start":    complSmartStart,
 	"start":          complStart,
 	"up":             complUp,
+	"up-cycle":       complUpCycle,
 	"down":           complDown,
 	"down-cycle":     complDownCycle,
 	"left":           complLeft,
@@ -28,15 +29,16 @@ var _ = registerBuiltins("compl", map[string]func(*Editor){
 
 func init() {
 	registerBindings(modeCompletion, "compl", map[ui.Key]string{
-		{ui.Up, 0}:     "up",
-		{ui.Down, 0}:   "down",
-		{ui.Tab, 0}:    "down-cycle",
-		{ui.Left, 0}:   "left",
-		{ui.Right, 0}:  "right",
-		{ui.Enter, 0}:  "accept",
-		{'F', ui.Ctrl}: "trigger-filter",
-		{'[', ui.Ctrl}: "insert:start",
-		ui.Default:     "default",
+		{ui.Up, 0}:         "up",
+		{ui.Down, 0}:       "down",
+		{ui.Tab, 0}:        "down-cycle",
+		{ui.Tab, ui.Shift}: "up-cycle",
+		{ui.Left, 0}:       "left",
+		{ui.Right, 0}:      "right",
+		{ui.Enter, 0}:      "accept",
+		{'F', ui.Ctrl}:     "trigger-filter",
+		{'[', ui.Ctrl}:     "insert:start",
+		ui.Default:         "default",
 	})
 }
 
@@ -100,6 +102,10 @@ func complRight(ed *Editor) {
 	if c := ed.completion.selected + ed.completion.height; c < len(ed.completion.filtered) {
 		ed.completion.selected = c
 	}
+}
+
+func complUpCycle(ed *Editor) {
+	ed.completion.prev(true)
 }
 
 func complDownCycle(ed *Editor) {

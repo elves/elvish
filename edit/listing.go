@@ -299,6 +299,7 @@ var defaultListingBindings = map[ui.Key]string{
 	ui.Key{ui.Down, 0}:       "down",
 	ui.Key{ui.PageDown, 0}:   "page-down",
 	ui.Key{ui.Tab, 0}:        "down-cycle",
+	ui.Key{ui.Tab, ui.Shift}: "up-cycle",
 	ui.Key{ui.Backspace, 0}:  "backspace",
 	ui.Key{ui.Enter, 0}:      "accept-close",
 	ui.Key{ui.Enter, ui.Alt}: "accept",
