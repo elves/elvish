@@ -75,21 +75,13 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	}
 	ns["binding"] = eval.NewRoVariable(binding)
 
-	ns[eval.FnPrefix+"complete-getopt"] = eval.NewRoVariable(
-		&eval.BuiltinFn{"le:&complete-getopt", complGetopt})
-	ns[eval.FnPrefix+"complex-candidate"] = eval.NewRoVariable(
-		&eval.BuiltinFn{"le:&complex-candidate", outputComplexCandidate})
-	for _, bac := range argCompletersData {
-		ns[eval.FnPrefix+bac.name] = eval.NewRoVariable(bac)
-	}
-
-	// Pour variables into the le: namespace.
+	// Editor configurations.
 	for name, variable := range ed.variables {
 		ns[name] = variable
 	}
 
+	// Internal states.
 	ns["history"] = eval.NewRoVariable(History{&ed.historyMutex, ed.daemon})
-
 	ns["current-command"] = eval.MakeVariableFromCallback(
 		func(v eval.Value) {
 			if !ed.active {
@@ -116,10 +108,19 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 		},
 	)
 
+	// Completers.
+	ns[eval.FnPrefix+"complete-getopt"] = eval.NewRoVariable(
+		&eval.BuiltinFn{"le:&complete-getopt", complGetopt})
+	ns[eval.FnPrefix+"complex-candidate"] = eval.NewRoVariable(
+		&eval.BuiltinFn{"le:&complex-candidate", outputComplexCandidate})
+	for _, bac := range argCompletersData {
+		ns[eval.FnPrefix+bac.name] = eval.NewRoVariable(bac)
+	}
+
+	// Utility functions.
 	ns[eval.FnPrefix+"styled"] = eval.NewRoVariable(&eval.BuiltinFn{"le:&styled", styled})
 
 	modules["le"] = ns
-
 	// Install other modules.
 	for module, builtins := range builtinMaps {
 		if module != "" {
