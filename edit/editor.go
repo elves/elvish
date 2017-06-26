@@ -167,9 +167,13 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 			// Highlight errors in the input buffer.
 			// TODO(xiaq): There might be multiple tokens involved in the
 			// compiler error; they should all be highlighted as erroneous.
-			p := err.(*eval.CompilationError).Context.Begin
-			badn := findLeafNode(n, p)
-			ed.styling.Add(badn.Begin(), badn.End(), styleForCompilerError.String())
+			if _, ok := err.(*eval.CompilationError); !ok {
+				ed.addTip("(internal error) bad compilation error type: %T", err)
+			} else {
+				p := err.(*eval.CompilationError).Context.Begin
+				badn := findLeafNode(n, p)
+				ed.styling.Add(badn.Begin(), badn.End(), styleForCompilerError.String())
+			}
 		}
 	}
 	return ed.writer.refresh(&ed.editorState, fullRefresh)

@@ -138,17 +138,16 @@ func (gp *GlobPattern) append(segs ...glob.Segment) {
 	gp.Segments = append(gp.Segments, segs...)
 }
 
-func wildcardToSegment(s string) glob.Segment {
+func wildcardToSegment(s string) (glob.Segment, error) {
 	switch s {
 	case "*":
-		return glob.Wild{glob.Star, false, nil}
+		return glob.Wild{glob.Star, false, nil}, nil
 	case "**":
-		return glob.Wild{glob.StarStar, false, nil}
+		return glob.Wild{glob.StarStar, false, nil}, nil
 	case "?":
-		return glob.Wild{glob.Question, false, nil}
+		return glob.Wild{glob.Question, false, nil}, nil
 	default:
-		throw(fmt.Errorf("bad wildcard: %q", s))
-		panic("unreachable")
+		return nil, fmt.Errorf("bad wildcard: %q", s)
 	}
 }
 
