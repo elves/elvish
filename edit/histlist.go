@@ -15,7 +15,7 @@ var _ = registerListingBuiltins("histlist", map[string]func(*Editor){
 	"start":                   histlistStart,
 	"toggle-dedup":            histlistToggleDedup,
 	"toggle-case-sensitivity": histlistToggleCaseSensitivity,
-}, func(ed *Editor) *listing { return &ed.histlist.listing })
+})
 
 func init() {
 	registerListingBindings(modeHistoryListing, "histlist",
@@ -30,7 +30,7 @@ func init() {
 var ErrStoreOffline = errors.New("store offline")
 
 type histlist struct {
-	listing
+	*listing
 	all             []string
 	dedup           bool
 	caseInsensitive bool
@@ -40,15 +40,18 @@ type histlist struct {
 	indexWidth      int
 }
 
-func newHistlist(cmds []string) *histlist {
+func newHistlist(cmds []string) *listing {
 	last := make(map[string]int)
 	for i, entry := range cmds {
 		last[entry] = i
 	}
 	hl := &histlist{
-		all: cmds, last: last, indexWidth: len(strconv.Itoa(len(cmds) - 1))}
-	hl.listing = newListing(modeHistoryListing, hl)
-	return hl
+		// This has to be here for the initializatio to work :(
+		listing: &listing{},
+		all:     cmds, last: last, indexWidth: len(strconv.Itoa(len(cmds) - 1))}
+	l := newListing(modeHistoryListing, hl)
+	hl.listing = &l
+	return &l
 }
 
 func (hl *histlist) ModeTitle(i int) string {
@@ -127,8 +130,7 @@ func histlistStart(ed *Editor) {
 		return
 	}
 
-	ed.histlist = newHistlist(cmds)
-	ed.mode = ed.histlist
+	ed.mode = newHistlist(cmds)
 }
 
 func getCmds(ed *Editor) ([]string, error) {
@@ -139,13 +141,22 @@ func getCmds(ed *Editor) ([]string, error) {
 }
 
 func histlistToggleDedup(ed *Editor) {
-	if ed.histlist != nil {
-		ed.histlist.toggleDedup()
+	if hl := getHistlist(ed); hl != nil {
+		hl.toggleDedup()
 	}
 }
 
 func histlistToggleCaseSensitivity(ed *Editor) {
-	if ed.histlist != nil {
-		ed.histlist.toggleCaseSensitivity()
+	if hl := getHistlist(ed); hl != nil {
+		hl.toggleCaseSensitivity()
 	}
+}
+
+func getHistlist(ed *Editor) *histlist {
+	if l, ok := ed.mode.(*listing); ok {
+		if hl, ok := l.provider.(*histlist); ok {
+			return hl
+		}
+	}
+	return nil
 }

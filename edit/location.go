@@ -20,7 +20,7 @@ import (
 
 var _ = registerListingBuiltins("loc", map[string]func(*Editor){
 	"start": locStart,
-}, func(ed *Editor) *listing { return &ed.location.listing })
+})
 
 func init() {
 	registerListingBindings(modeLocation, "loc", map[ui.Key]string{})
@@ -31,16 +31,14 @@ func init() {
 var PinnedScore = math.Inf(1)
 
 type location struct {
-	listing
 	home     string // The home directory; leave empty if unknown.
 	all      []storedefs.Dir
 	filtered []storedefs.Dir
 }
 
-func newLocation(dirs []storedefs.Dir, home string) *location {
-	loc := &location{all: dirs, home: home}
-	loc.listing = newListing(modeLocation, loc)
-	return loc
+func newLocation(dirs []storedefs.Dir, home string) *listing {
+	l := newListing(modeLocation, &location{all: dirs, home: home})
+	return &l
 }
 
 func (loc *location) ModeTitle(i int) string {
@@ -171,8 +169,7 @@ func locStart(ed *Editor) {
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
 	home, _ := util.GetHome("")
-	ed.location = newLocation(dirs, home)
-	ed.mode = ed.location
+	ed.mode = newLocation(dirs, home)
 }
 
 // convertListToDirs converts a list of strings to []storedefs.Dir. It uses the

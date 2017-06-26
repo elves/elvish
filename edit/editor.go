@@ -72,9 +72,6 @@ type editorState struct {
 	completion completion
 	navigation navigation
 	hist       hist
-	histlist   *histlist
-	lastcmd    *lastcmd
-	location   *location
 
 	// A cache of external commands, used in stylist.
 	isExternal      map[string]bool

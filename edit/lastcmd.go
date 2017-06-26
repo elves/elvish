@@ -13,7 +13,7 @@ import (
 var _ = registerListingBuiltins("lastcmd", map[string]func(*Editor){
 	"start":       lastcmdStart,
 	"alt-default": lastcmdAltDefault,
-}, func(ed *Editor) *listing { return &ed.lastcmd.listing })
+})
 
 func init() {
 	registerListingBindings(modeLastCmd, "lastcmd", map[ui.Key]string{
@@ -27,17 +27,16 @@ type lastcmdEntry struct {
 }
 
 type lastcmd struct {
-	listing
 	line     string
 	words    []string
 	filtered []lastcmdEntry
 	minus    bool
 }
 
-func newLastCmd(line string) *lastcmd {
-	b := &lastcmd{listing{}, line, wordify(line), nil, false}
-	b.listing = newListing(modeLastCmd, b)
-	return b
+func newLastCmd(line string) *listing {
+	b := &lastcmd{line, wordify(line), nil, false}
+	l := newListing(modeLastCmd, b)
+	return &l
 }
 
 func (b *lastcmd) ModeTitle(int) string {
@@ -98,23 +97,34 @@ func lastcmdStart(ed *Editor) {
 		ed.Notify("db error: %s", err.Error())
 		return
 	}
-	ed.lastcmd = newLastCmd(cmd)
-	ed.mode = ed.lastcmd
+	ed.mode = newLastCmd(cmd)
 }
 
 func lastcmdAltDefault(ed *Editor) {
-	l := ed.lastcmd
+	l, lc := getLastcmd(ed)
+	if l == nil {
+		return
+	}
 	logger.Println("lastcmd-alt-default")
 	if ed.lastKey == (ui.Key{'1', ui.Alt}) {
-		l.Accept(0, ed)
+		lc.Accept(0, ed)
 		logger.Println("accepting")
 	} else if l.handleFilterKey(ed.lastKey) {
-		if l.Len() == 1 {
-			l.Accept(l.selected, ed)
+		if lc.Len() == 1 {
+			lc.Accept(l.selected, ed)
 			logger.Println("accepting")
 		}
 	} else {
 		insertStart(ed)
 		ed.nextAction = action{typ: reprocessKey}
 	}
+}
+
+func getLastcmd(ed *Editor) (*listing, *lastcmd) {
+	if l, ok := ed.mode.(*listing); ok {
+		if lc, ok := l.provider.(*lastcmd); ok {
+			return l, lc
+		}
+	}
+	return nil, nil
 }

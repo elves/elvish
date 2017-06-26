@@ -2,6 +2,7 @@ package edit
 
 import (
 	"container/list"
+	"errors"
 	"fmt"
 	"strings"
 	"unicode/utf8"
@@ -52,6 +53,13 @@ func (l *listing) Mode() ModeType {
 
 func (l *listing) ModeLine() renderer {
 	return modeLineRenderer{l.provider.ModeTitle(l.selected), l.filter}
+}
+
+func (l *listing) CursorOnModeLine() bool {
+	if c, ok := l.provider.(CursorOnModeLiner); ok {
+		return c.CursorOnModeLine()
+	}
+	return false
 }
 
 func (l *listing) List(maxHeight int) renderer {
@@ -277,20 +285,30 @@ func (l *listing) defaultBinding(ed *Editor) {
 }
 
 func registerListingBuiltins(
-	module string,
-	impls map[string]func(*Editor), l func(*Editor) *listing) struct{} {
+	module string, impls map[string]func(*Editor)) struct{} {
 
-	impls["up"] = func(ed *Editor) { l(ed).up(false) }
-	impls["up-cycle"] = func(ed *Editor) { l(ed).up(true) }
-	impls["page-up"] = func(ed *Editor) { l(ed).pageUp() }
-	impls["down"] = func(ed *Editor) { l(ed).down(false) }
-	impls["down-cycle"] = func(ed *Editor) { l(ed).down(true) }
-	impls["page-down"] = func(ed *Editor) { l(ed).pageDown() }
-	impls["backspace"] = func(ed *Editor) { l(ed).backspace() }
-	impls["accept"] = func(ed *Editor) { l(ed).accept(ed) }
-	impls["accept-close"] = func(ed *Editor) { l(ed).accept(ed); insertStart(ed) }
-	impls["default"] = func(ed *Editor) { l(ed).defaultBinding(ed) }
+	impls["up"] = func(ed *Editor) { getListing(ed).up(false) }
+	impls["up-cycle"] = func(ed *Editor) { getListing(ed).up(true) }
+	impls["page-up"] = func(ed *Editor) { getListing(ed).pageUp() }
+	impls["down"] = func(ed *Editor) { getListing(ed).down(false) }
+	impls["down-cycle"] = func(ed *Editor) { getListing(ed).down(true) }
+	impls["page-down"] = func(ed *Editor) { getListing(ed).pageDown() }
+	impls["backspace"] = func(ed *Editor) { getListing(ed).backspace() }
+	impls["accept"] = func(ed *Editor) { getListing(ed).accept(ed) }
+	impls["accept-close"] = func(ed *Editor) { getListing(ed).accept(ed); insertStart(ed) }
+	impls["default"] = func(ed *Editor) { getListing(ed).defaultBinding(ed) }
 	return registerBuiltins(module, impls)
+}
+
+var errNotListing = errors.New("not in a listing mode")
+
+func getListing(ed *Editor) *listing {
+	if l, ok := ed.mode.(*listing); ok {
+		return l
+	} else {
+		throw(errNotListing)
+		panic("unreachable")
+	}
 }
 
 var defaultListingBindings = map[ui.Key]string{

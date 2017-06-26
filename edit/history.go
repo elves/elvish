@@ -73,10 +73,10 @@ func historyDownOrQuit(ed *Editor) {
 
 func historySwitchToHistlist(ed *Editor) {
 	histlistStart(ed)
-	if ed.mode == ed.histlist {
+	if hl := getHistlist(ed); hl != nil {
 		ed.line = ""
 		ed.dot = 0
-		ed.histlist.changeFilter(ed.hist.Prefix())
+		hl.changeFilter(ed.hist.Prefix())
 	}
 }
 
