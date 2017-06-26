@@ -262,9 +262,12 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 		}
 		return variable(qname)
 	case parse.Wildcard:
-		vs := []Value{GlobPattern{
-			glob.Pattern{[]glob.Segment{wildcardToSegment(n.SourceText())}, ""},
-			0, nil}}
+		seg, err := wildcardToSegment(n.SourceText())
+		if err != nil {
+			cp.errorf("%s", err)
+		}
+		vs := []Value{
+			GlobPattern{glob.Pattern{[]glob.Segment{seg}, ""}, 0, nil}}
 		return func(ec *EvalCtx) []Value {
 			return vs
 		}
