@@ -19,7 +19,9 @@ var builtinMaps = map[string]map[string]*BuiltinFn{}
 // variable initializations to make sure every subnamespace is registered before
 // makeBindings is ever called.
 func registerBuiltins(module string, impls map[string]func(*Editor)) struct{} {
-	builtinMaps[module] = make(map[string]*BuiltinFn)
+	if _, ok := builtinMaps[module]; !ok {
+		builtinMaps[module] = make(map[string]*BuiltinFn)
+	}
 	for name, impl := range impls {
 		var fullName string
 		if module == "" {
@@ -50,7 +52,9 @@ func registerBindings(
 	mt ModeType, defaultMod string,
 	bindingData map[ui.Key]string) struct{} {
 
-	bindings := map[ui.Key]eval.CallableValue{}
+	if _, ok := keyBindings[mt]; !ok {
+		keyBindings[mt] = map[ui.Key]eval.CallableValue{}
+	}
 	for key, fullName := range bindingData {
 		// break fullName into mod and name.
 		var mod, name string
@@ -62,7 +66,7 @@ func registerBindings(
 		}
 		if m, ok := builtinMaps[mod]; ok {
 			if builtin, ok := m[name]; ok {
-				bindings[key] = builtin
+				keyBindings[mt][key] = builtin
 			} else {
 				fmt.Fprintln(os.Stderr, "Internal warning: no such builtin", name, "in mod", mod)
 			}
@@ -70,7 +74,6 @@ func registerBindings(
 			fmt.Fprintln(os.Stderr, "Internal warning: no such mod:", mod)
 		}
 	}
-	keyBindings[mt] = bindings
 	return struct{}{}
 }
 
