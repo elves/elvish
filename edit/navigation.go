@@ -146,7 +146,6 @@ func navDefault(ed *Editor) {
 }
 
 // Implementation.
-// TODO(xiaq): Support file preview in navigation mode
 // TODO(xiaq): Remember which file was selected in each directory.
 
 var (

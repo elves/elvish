@@ -49,8 +49,7 @@ var keyBindings = map[string]map[ui.Key]eval.CallableValue{}
 // subnamespace using information from builtinMaps. It should be called in init
 // functions.
 func registerBindings(
-	mt string, defaultMod string,
-	bindingData map[ui.Key]string) struct{} {
+	mt string, defaultMod string, bindingData map[ui.Key]string) struct{} {
 
 	if _, ok := keyBindings[mt]; !ok {
 		keyBindings[mt] = map[ui.Key]eval.CallableValue{}
