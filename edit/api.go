@@ -121,7 +121,9 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	}
 
 	// Utility functions.
-	ns[eval.FnPrefix+"styled"] = eval.NewRoVariable(&eval.BuiltinFn{"le:&styled", styled})
+	eval.AddBuiltinFns(ns,
+		&eval.BuiltinFn{"le:styled", styled},
+	)
 
 	modules["le"] = ns
 	// Install other modules.
