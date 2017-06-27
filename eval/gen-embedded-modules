@@ -1,6 +1,6 @@
 #!/usr/bin/env elvish
 
-out = ./embedded-modules.go
+out = ./embedded_modules.go
 
 {
 	echo "package eval"
