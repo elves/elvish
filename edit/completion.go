@@ -6,6 +6,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
 
@@ -55,8 +56,8 @@ type completion struct {
 	height          int
 }
 
-func (*completion) Mode() ModeType {
-	return modeCompletion
+func (*completion) Binding(k ui.Key) eval.CallableValue {
+	return getBinding(modeCompletion, k)
 }
 
 func (c *completion) needScrollbar() bool {

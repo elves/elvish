@@ -1,27 +1,30 @@
 package edit
 
+import (
+	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
+)
+
 // Mode is an editor mode.
 type Mode interface {
-	Mode() ModeType
 	ModeLine() renderer
+	Binding(ui.Key) eval.CallableValue
 }
 
 type CursorOnModeLiner interface {
 	CursorOnModeLine() bool
 }
 
-type ModeType int
-
 const (
-	modeInsert ModeType = iota
-	modeRawInsert
-	modeCommand
-	modeCompletion
-	modeNavigation
-	modeHistory
-	modeHistoryListing
-	modeLastCmd
-	modeLocation
+	modeInsert         = "insert"
+	modeRawInsert      = "raw-insert"
+	modeCommand        = "command"
+	modeCompletion     = "completion"
+	modeNavigation     = "navigation"
+	modeHistory        = "history"
+	modeHistoryListing = "histlist"
+	modeLastCmd        = "lastcmd"
+	modeLocation       = "loc"
 )
 
 // ListRenderer is a mode with a listing.

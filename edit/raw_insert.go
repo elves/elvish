@@ -1,5 +1,10 @@
 package edit
 
+import (
+	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
+)
+
 // Raw insert mode is a special mode, in that it does not use the normal key
 // binding. Rather, insertRaw is called directly from the main loop in
 // Editor.ReadLine.
@@ -18,8 +23,9 @@ func insertRaw(ed *Editor, r rune) {
 	ed.mode = &ed.insert
 }
 
-func (ri rawInsert) Mode() ModeType {
-	return modeRawInsert
+func (rawInsert) Binding(k ui.Key) eval.CallableValue {
+	// The raw insert mode does not handle keys.
+	return nil
 }
 
 func (ri rawInsert) ModeLine() renderer {

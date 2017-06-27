@@ -8,13 +8,14 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
 
 // listing implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type listing struct {
-	typ         ModeType
+	name        string
 	provider    listingProvider
 	selected    int
 	filter      string
@@ -34,7 +35,7 @@ type Placeholderer interface {
 	Placeholder() string
 }
 
-func newListing(t ModeType, p listingProvider) listing {
+func newListing(t string, p listingProvider) listing {
 	l := listing{t, p, 0, "", 0, 0}
 	l.changeFilter("")
 	for i := 0; i < p.Len(); i++ {
@@ -47,8 +48,8 @@ func newListing(t ModeType, p listingProvider) listing {
 	return l
 }
 
-func (l *listing) Mode() ModeType {
-	return l.typ
+func (l *listing) Binding(k ui.Key) eval.CallableValue {
+	return getBinding(l.name, k)
 }
 
 func (l *listing) ModeLine() renderer {
@@ -326,7 +327,7 @@ var defaultListingBindings = map[ui.Key]string{
 }
 
 func registerListingBindings(
-	mt ModeType, defaultMod string, m map[ui.Key]string) struct{} {
+	mt string, defaultMod string, m map[ui.Key]string) struct{} {
 
 	for k, defaultBinding := range defaultListingBindings {
 		if _, alreadyBound := m[k]; !alreadyBound {

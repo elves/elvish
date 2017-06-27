@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
 
@@ -121,10 +122,6 @@ type insert struct {
 	insertedLiteral bool
 }
 
-func (*insert) Mode() ModeType {
-	return modeInsert
-}
-
 // ui.Insert mode is the default mode and has an empty mode.
 func (ins *insert) ModeLine() renderer {
 	if ins.quotePaste {
@@ -133,14 +130,18 @@ func (ins *insert) ModeLine() renderer {
 	return nil
 }
 
-type command struct{}
-
-func (*command) Mode() ModeType {
-	return modeCommand
+func (*insert) Binding(k ui.Key) eval.CallableValue {
+	return getBinding(modeInsert, k)
 }
+
+type command struct{}
 
 func (*command) ModeLine() renderer {
 	return modeLineRenderer{" COMMAND ", ""}
+}
+
+func (*command) Binding(k ui.Key) eval.CallableValue {
+	return getBinding(modeCommand, k)
 }
 
 func insertStart(ed *Editor) {

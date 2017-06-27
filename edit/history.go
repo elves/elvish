@@ -5,6 +5,7 @@ import (
 
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
 )
 
 // Command history subsystem.
@@ -34,8 +35,8 @@ type hist struct {
 	*history.Walker
 }
 
-func (hist) Mode() ModeType {
-	return modeHistory
+func (*hist) Binding(k ui.Key) eval.CallableValue {
+	return getBinding(modeHistory, k)
 }
 
 func (h *hist) ModeLine() renderer {

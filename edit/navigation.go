@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -59,8 +60,8 @@ type navigation struct {
 	chdir      func(string) error
 }
 
-func (*navigation) Mode() ModeType {
-	return modeNavigation
+func (*navigation) Binding(k ui.Key) eval.CallableValue {
+	return getBinding(modeNavigation, k)
 }
 
 func (n *navigation) ModeLine() renderer {
@@ -139,10 +140,8 @@ func navDefault(ed *Editor) {
 			n.refreshCurrent()
 			n.refreshDirPreview()
 		}
-	} else if f, ok := keyBindings[modeInsert][k]; ok {
-		ed.CallFn(f)
 	} else {
-		ed.CallFn(keyBindings[modeInsert][ui.Default])
+		ed.CallFn(getBinding(modeInsert, k))
 	}
 }
 

@@ -228,8 +228,6 @@ type editorRenderer struct {
 func (er *editorRenderer) render(buf *buffer) {
 	height, width, es := er.height, buf.width, er.editorState
 
-	mode := es.mode.Mode()
-
 	var bufNoti, bufLine, bufMode, bufTips, bufListing *buffer
 	// butNoti
 	if len(es.notifications) > 0 {
@@ -239,11 +237,13 @@ func (er *editorRenderer) render(buf *buffer) {
 
 	// bufLine
 	clr := newCmdlineRenderer(es.promptContent, es.line, es.styling, es.dot, es.rpromptContent)
-	switch mode {
-	case modeCompletion:
+	// TODO(xiaq): Instead of doing a type switch, expose an API for modes to
+	// modify the text (and mark their part as modified).
+	switch es.mode.(type) {
+	case *completion:
 		c := es.completion
 		clr.setComp(c.begin, c.end, c.selectedCandidate().code)
-	case modeHistory:
+	case *hist:
 		begin := len(es.hist.Prefix())
 		clr.setHist(begin, es.hist.CurrentCmd()[begin:])
 	}
@@ -300,7 +300,7 @@ func (er *editorRenderer) render(buf *buffer) {
 		// only known after the listing has been rendered. Since rendering the
 		// scrollbar never adds additional lines to bufMode, we may do this
 		// without recalculating the layout.
-		if mode == modeCompletion {
+		if _, ok := es.mode.(*completion); ok {
 			bufMode = render(es.mode.ModeLine(), width)
 		}
 	}

@@ -164,13 +164,9 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 			// Highlight errors in the input buffer.
 			// TODO(xiaq): There might be multiple tokens involved in the
 			// compiler error; they should all be highlighted as erroneous.
-			if _, ok := err.(*eval.CompilationError); !ok {
-				ed.addTip("(internal error) bad compilation error type: %T", err)
-			} else {
-				p := err.(*eval.CompilationError).Context.Begin
-				badn := findLeafNode(n, p)
-				ed.styling.Add(badn.Begin(), badn.End(), styleForCompilerError.String())
-			}
+			p := err.(*eval.CompilationError).Context.Begin
+			badn := findLeafNode(n, p)
+			ed.styling.Add(badn.Begin(), badn.End(), styleForCompilerError.String())
 		}
 	}
 	return ed.writer.refresh(&ed.editorState, fullRefresh)
@@ -438,16 +434,9 @@ MainLoop:
 			case tty.Key:
 				k := ui.Key(unit)
 			lookupKey:
-				keyBinding, ok := keyBindings[ed.mode.Mode()]
-				if !ok {
-					ed.addTip("No binding for current mode")
-					continue
-				}
-
-				fn, bound := keyBinding[k]
-				if !bound {
-					// TODO(xiaq) don't assume Default always exists
-					fn = keyBinding[ui.Default]
+				fn := ed.mode.Binding(k)
+				if fn == nil {
+					ed.addTip("Unbound and no default binding: %s", k)
 				}
 
 				ed.insert.insertedLiteral = false

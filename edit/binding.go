@@ -6,6 +6,18 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
+func getBinding(mode string, k ui.Key) eval.CallableValue {
+	bindings := keyBindings[mode]
+	if bindings == nil {
+		return nil
+	}
+	v, ok := bindings[k]
+	if ok {
+		return v
+	}
+	return bindings[ui.Default]
+}
+
 // BindingTable adapts a binding table to eval.IndexSetter, so that it can be
 // manipulated in elvish script.
 type BindingTable struct {

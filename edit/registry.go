@@ -42,14 +42,14 @@ func makeNamespaceFromBuiltins(builtins map[string]*BuiltinFn) eval.Namespace {
 	return ns
 }
 
-var keyBindings = map[ModeType]map[ui.Key]eval.CallableValue{}
+var keyBindings = map[string]map[ui.Key]eval.CallableValue{}
 
 // registerBindings registers default bindings for a mode to initialize the
 // global keyBindings map. Builtin names are resolved in the defaultMod
 // subnamespace using information from builtinMaps. It should be called in init
 // functions.
 func registerBindings(
-	mt ModeType, defaultMod string,
+	mt string, defaultMod string,
 	bindingData map[ui.Key]string) struct{} {
 
 	if _, ok := keyBindings[mt]; !ok {
