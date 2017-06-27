@@ -48,22 +48,12 @@ bind-mode history Ctrl-N $le:history:&down-or-quit
 bind-mode history Ctrl-P $le:history:&up
 bind-mode history Ctrl-G $le:insert:&start
 
-bind-mode histlist Ctrl-N $le:histlist:&down
-bind-mode histlist Ctrl-P $le:histlist:&up
-bind-mode histlist Ctrl-G $le:insert:&start
+# Binding for the listing "super mode".
+bind-mode listing Ctrl-N $le:listing:&down
+bind-mode listing Ctrl-P $le:listing:&up
+bind-mode listing Ctrl-V $le:listing:&page-down
+bind-mode listing Alt-v  $le:listing:&page-up
+bind-mode listing Ctrl-G $le:insert:&start
+
 bind-mode histlist Alt-g $le:histlist:&toggle-case-sensitivity
 bind-mode histlist Alt-d $le:histlist:&toggle-dedup
-bind-mode histlist Ctrl-V $le:histlist:&page-down
-bind-mode histlist Alt-v $le:histlist:&page-up
-
-bind-mode loc Ctrl-N $le:loc:&down
-bind-mode loc Ctrl-P $le:loc:&up
-bind-mode loc Ctrl-V $le:loc:&page-down
-bind-mode loc Alt-v $le:loc:&page-up
-bind-mode loc Ctrl-G $le:insert:&start
-
-bind-mode lastcmd Ctrl-N $le:lastcmd:&down
-bind-mode lastcmd Ctrl-P $le:lastcmd:&up
-bind-mode lastcmd Ctrl-V $le:lastcmd:&page-down
-bind-mode lastcmd Alt-v  $le:lastcmd:&page-up
-bind-mode lastcmd Ctrl-G $le:insert:&start

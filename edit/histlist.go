@@ -11,14 +11,14 @@ import (
 
 // Command history listing mode.
 
-var _ = registerListingBuiltins("histlist", map[string]func(*Editor){
+var _ = registerBuiltins(modeHistoryListing, map[string]func(*Editor){
 	"start":                   histlistStart,
 	"toggle-dedup":            histlistToggleDedup,
 	"toggle-case-sensitivity": histlistToggleCaseSensitivity,
 })
 
 func init() {
-	registerListingBindings(modeHistoryListing, "histlist",
+	registerBindings(modeHistoryListing, modeHistoryListing,
 		map[ui.Key]string{
 			{'G', ui.Ctrl}: "toggle-case-sensitivity",
 			{'D', ui.Ctrl}: "toggle-dedup",

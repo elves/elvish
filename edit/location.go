@@ -18,12 +18,12 @@ import (
 
 // Location mode.
 
-var _ = registerListingBuiltins("loc", map[string]func(*Editor){
+var _ = registerBuiltins(modeLocation, map[string]func(*Editor){
 	"start": locStart,
 })
 
 func init() {
-	registerListingBindings(modeLocation, "loc", map[ui.Key]string{})
+	registerBindings(modeLocation, modeLocation, map[ui.Key]string{})
 }
 
 // PinnedScore is a special value of Score in storedefs.Dir to represent that the

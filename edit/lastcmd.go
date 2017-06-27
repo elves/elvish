@@ -10,13 +10,13 @@ import (
 
 // LastCmd mode.
 
-var _ = registerListingBuiltins("lastcmd", map[string]func(*Editor){
+var _ = registerBuiltins(modeLastCmd, map[string]func(*Editor){
 	"start":       lastcmdStart,
 	"alt-default": lastcmdAltDefault,
 })
 
 func init() {
-	registerListingBindings(modeLastCmd, "lastcmd", map[ui.Key]string{
+	registerBindings(modeLastCmd, modeLastCmd, map[ui.Key]string{
 		ui.Default: "alt-default",
 	})
 }

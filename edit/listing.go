@@ -12,6 +12,38 @@ import (
 	"github.com/elves/elvish/util"
 )
 
+var _ = registerBuiltins(modeListing, map[string]func(*Editor){
+	"up":         func(ed *Editor) { getListing(ed).up(false) },
+	"up-cycle":   func(ed *Editor) { getListing(ed).up(true) },
+	"page-up":    func(ed *Editor) { getListing(ed).pageUp() },
+	"down":       func(ed *Editor) { getListing(ed).down(false) },
+	"down-cycle": func(ed *Editor) { getListing(ed).down(true) },
+	"page-down":  func(ed *Editor) { getListing(ed).pageDown() },
+	"backspace":  func(ed *Editor) { getListing(ed).backspace() },
+	"accept":     func(ed *Editor) { getListing(ed).accept(ed) },
+	"accept-close": func(ed *Editor) {
+		getListing(ed).accept(ed)
+		insertStart(ed)
+	},
+	"default": func(ed *Editor) { getListing(ed).defaultBinding(ed) },
+})
+
+func init() {
+	registerBindings(modeListing, modeListing, map[ui.Key]string{
+		ui.Key{ui.Up, 0}:         "up",
+		ui.Key{ui.PageUp, 0}:     "page-up",
+		ui.Key{ui.Down, 0}:       "down",
+		ui.Key{ui.PageDown, 0}:   "page-down",
+		ui.Key{ui.Tab, 0}:        "down-cycle",
+		ui.Key{ui.Tab, ui.Shift}: "up-cycle",
+		ui.Key{ui.Backspace, 0}:  "backspace",
+		ui.Key{ui.Enter, 0}:      "accept-close",
+		ui.Key{ui.Enter, ui.Alt}: "accept",
+		ui.Default:               "default",
+		ui.Key{'[', ui.Ctrl}:     "insert:start",
+	})
+}
+
 // listing implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type listing struct {
@@ -49,7 +81,23 @@ func newListing(t string, p listingProvider) listing {
 }
 
 func (l *listing) Binding(k ui.Key) eval.CallableValue {
-	return getBinding(l.name, k)
+	specificBindings := keyBindings[l.name]
+	if specificBindings == nil {
+		return getBinding(modeListing, k)
+	}
+	listingBindings := keyBindings[modeListing]
+	// mode-specific binding -> listing binding ->
+	// mode-specific default -> listing default
+	if v, ok := specificBindings[k]; ok {
+		return v
+	}
+	if v, ok := listingBindings[k]; ok {
+		return v
+	}
+	if v, ok := specificBindings[ui.Default]; ok {
+		return v
+	}
+	return listingBindings[ui.Default]
 }
 
 func (l *listing) ModeLine() renderer {
@@ -285,22 +333,6 @@ func (l *listing) defaultBinding(ed *Editor) {
 	}
 }
 
-func registerListingBuiltins(
-	module string, impls map[string]func(*Editor)) struct{} {
-
-	impls["up"] = func(ed *Editor) { getListing(ed).up(false) }
-	impls["up-cycle"] = func(ed *Editor) { getListing(ed).up(true) }
-	impls["page-up"] = func(ed *Editor) { getListing(ed).pageUp() }
-	impls["down"] = func(ed *Editor) { getListing(ed).down(false) }
-	impls["down-cycle"] = func(ed *Editor) { getListing(ed).down(true) }
-	impls["page-down"] = func(ed *Editor) { getListing(ed).pageDown() }
-	impls["backspace"] = func(ed *Editor) { getListing(ed).backspace() }
-	impls["accept"] = func(ed *Editor) { getListing(ed).accept(ed) }
-	impls["accept-close"] = func(ed *Editor) { getListing(ed).accept(ed); insertStart(ed) }
-	impls["default"] = func(ed *Editor) { getListing(ed).defaultBinding(ed) }
-	return registerBuiltins(module, impls)
-}
-
 var errNotListing = errors.New("not in a listing mode")
 
 func getListing(ed *Editor) *listing {
@@ -310,29 +342,4 @@ func getListing(ed *Editor) *listing {
 		throw(errNotListing)
 		panic("unreachable")
 	}
-}
-
-var defaultListingBindings = map[ui.Key]string{
-	ui.Key{ui.Up, 0}:         "up",
-	ui.Key{ui.PageUp, 0}:     "page-up",
-	ui.Key{ui.Down, 0}:       "down",
-	ui.Key{ui.PageDown, 0}:   "page-down",
-	ui.Key{ui.Tab, 0}:        "down-cycle",
-	ui.Key{ui.Tab, ui.Shift}: "up-cycle",
-	ui.Key{ui.Backspace, 0}:  "backspace",
-	ui.Key{ui.Enter, 0}:      "accept-close",
-	ui.Key{ui.Enter, ui.Alt}: "accept",
-	ui.Default:               "default",
-	ui.Key{'[', ui.Ctrl}:     "insert:start",
-}
-
-func registerListingBindings(
-	mt string, defaultMod string, m map[ui.Key]string) struct{} {
-
-	for k, defaultBinding := range defaultListingBindings {
-		if _, alreadyBound := m[k]; !alreadyBound {
-			m[k] = defaultBinding
-		}
-	}
-	return registerBindings(mt, defaultMod, m)
 }

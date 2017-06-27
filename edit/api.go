@@ -61,8 +61,8 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	// TODO Make binding specific to the Editor.
 	binding := &eval.Struct{
 		[]string{
-			modeInsert, modeCommand, modeCompletion, modeNavigation,
-			modeHistory, modeHistoryListing, modeLocation, modeLastCmd},
+			modeInsert, modeCommand, modeCompletion, modeNavigation, modeHistory,
+			modeHistoryListing, modeLocation, modeLastCmd, modeListing},
 		[]eval.Variable{
 			eval.NewRoVariable(BindingTable{keyBindings[modeInsert]}),
 			eval.NewRoVariable(BindingTable{keyBindings[modeCommand]}),
@@ -72,6 +72,7 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 			eval.NewRoVariable(BindingTable{keyBindings[modeHistoryListing]}),
 			eval.NewRoVariable(BindingTable{keyBindings[modeLocation]}),
 			eval.NewRoVariable(BindingTable{keyBindings[modeLastCmd]}),
+			eval.NewRoVariable(BindingTable{keyBindings[modeListing]}),
 		},
 	}
 	ns["binding"] = eval.NewRoVariable(binding)

@@ -437,6 +437,7 @@ MainLoop:
 				fn := ed.mode.Binding(k)
 				if fn == nil {
 					ed.addTip("Unbound and no default binding: %s", k)
+					continue MainLoop
 				}
 
 				ed.insert.insertedLiteral = false

@@ -25,6 +25,7 @@ const (
 	modeHistoryListing = "histlist"
 	modeLastCmd        = "lastcmd"
 	modeLocation       = "loc"
+	modeListing        = "listing" // A "super mode" for histlist, lastcmd, loc
 )
 
 // ListRenderer is a mode with a listing.
