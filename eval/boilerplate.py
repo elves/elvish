@@ -30,7 +30,7 @@ def main():
     print >>out, '''package eval
 
 import "github.com/elves/elvish/parse"'''
-    for fname in 'compile-op.go', 'compile-value.go':
+    for fname in 'compile_op.go', 'compile_value.go':
         for line in file(fname):
             m = re.match(r'^func \(cp \*compiler\) (\w+)\(\w+ ([^,\[\]]+)(.*)\) (\w*OpFunc) {$', line)
             if m:
