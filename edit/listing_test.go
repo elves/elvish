@@ -24,16 +24,12 @@ func (p provider) Show(i int) (string, ui.Styled) {
 }
 
 var (
-	mode = ModeType(233)
+	mode = "test233"
 	p    = provider{[]string{"foo", "bar", "foobar", "lorem", "ipsum"}, -1}
 	ls   = newListing(mode, p)
 )
 
 func TestListing(t *testing.T) {
-	if m := ls.Mode(); m != mode {
-		t.Errorf("ls.Mode() = %v, want %v", m, mode)
-	}
-
 	wantedModeLine := modeLineRenderer{"test 0", ""}
 	if modeLine := ls.ModeLine(); modeLine != wantedModeLine {
 		t.Errorf("ls.ModeLine() = %v, want %v", modeLine, wantedModeLine)

@@ -17,7 +17,8 @@ type listingFilterTestCases struct {
 	wantShowns []shown
 }
 
-func testListingFilter(t *testing.T, name string, ls listingProvider, testcases []listingFilterTestCases) {
+func testListingFilter(t *testing.T, name string, l *listing, testcases []listingFilterTestCases) {
+	ls := l.provider
 	for _, testcase := range testcases {
 		ls.Filter(testcase.filter)
 
