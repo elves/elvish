@@ -123,6 +123,7 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	// Utility functions.
 	eval.AddBuiltinFns(ns,
 		&eval.BuiltinFn{"le:styled", styled},
+		&eval.BuiltinFn{"le:-dump-buf", _dumpBuf},
 	)
 
 	modules["le"] = ns

@@ -468,3 +468,8 @@ func linesToChan(r io.Reader, ch chan<- Value) {
 func (ec *EvalCtx) OutputChan() chan<- Value {
 	return ec.ports[1].Chan
 }
+
+// OutputFile returns a file onto which output can be written.
+func (ec *EvalCtx) OutputFile() *os.File {
+	return ec.ports[1].File
+}
