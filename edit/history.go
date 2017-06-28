@@ -2,6 +2,7 @@ package edit
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
@@ -90,6 +91,13 @@ func historyDefault(ed *Editor) {
 // Implementation.
 
 func (ed *Editor) appendHistory(line string) {
+	// TODO: should have a user variable to control the behavior
+	// Do not add command leading by space into history. This is
+	// useful for confidential operations.
+	if strings.HasPrefix(line, " ") {
+		return
+	}
+
 	if ed.daemon != nil && ed.historyFuser != nil {
 		ed.historyMutex.Lock()
 		ed.daemon.Waits().Add(1)
