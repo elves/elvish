@@ -11,10 +11,7 @@ import (
 func _dumpBuf(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	out := ec.OutputFile()
 	buf := ec.Editor.(*Editor).writer.oldBuf
-	for i, line := range buf.lines {
-		if i > 0 {
-			fmt.Fprint(out, "<br>")
-		}
+	for _, line := range buf.lines {
 		style := ""
 		openedSpan := false
 		for _, c := range line {
@@ -36,5 +33,6 @@ func _dumpBuf(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 		if openedSpan {
 			fmt.Fprint(out, "</span>")
 		}
+		fmt.Fprint(out, "\n")
 	}
 }
