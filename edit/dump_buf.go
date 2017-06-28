@@ -28,6 +28,7 @@ func _dumpBuf(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 				}
 				fmt.Fprintf(out,
 					`<span class="%s">`, strings.Join(classes, " "))
+				style = c.style
 				openedSpan = true
 			}
 			fmt.Fprintf(out, "%s", html.EscapeString(c.string))
