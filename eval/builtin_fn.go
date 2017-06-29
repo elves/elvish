@@ -98,6 +98,7 @@ func init() {
 
 		// Misc shell basic
 		{"source", source},
+		{"builtin", builtin},
 
 		// Iterations.
 		{"each", each},
@@ -640,6 +641,34 @@ func source(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ScanOpts(opts)
 
 	ec.Source(string(fname))
+}
+
+func builtin(ec *EvalCtx, args []Value, opts map[string]Value) {
+	if len(args) == 0 {
+		out := ec.OutputChan()
+		for _, b := range builtinFns {
+			out <- b
+		}
+		return
+	}
+
+	var (
+		name    String
+		remains []Value
+	)
+
+	ScanArgsVariadic(args, &name, &remains)
+
+	maybeThrow(ShouldBeString(name))
+
+	for _, b := range builtinFns {
+		if b.Name == name.String() {
+			b.Call(ec, remains, opts)
+			return
+		}
+	}
+
+	throw(fmt.Errorf("no such builtin: %s", name))
 }
 
 // each takes a single closure and applies it to all input values.
