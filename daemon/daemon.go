@@ -24,9 +24,6 @@ type Daemon struct {
 	LogPathPrefix string
 }
 
-// closeFd is used in syscall.ProcAttr.Files to signify closing a fd.
-const closeFd = ^uintptr(0)
-
 // Main is the entry point of the daemon sub-program.
 func (d *Daemon) Main(serve func(string, string)) int {
 	switch d.Forked {
@@ -56,20 +53,15 @@ func (d *Daemon) Main(serve func(string, string)) int {
 
 		syscall.Umask(0077)
 		return d.pseudoFork(
-			&syscall.ProcAttr{
+			&os.ProcAttr{
 				// cd to /
 				Dir: "/",
 				// empty environment
 				Env: nil,
-				// inherit stderr only for logging
-				Files: []uintptr{closeFd, closeFd, 2},
-				Sys:   &syscall.SysProcAttr{Setsid: true},
+				Sys: &syscall.SysProcAttr{Setsid: true},
 			})
 	case 1:
-		return d.pseudoFork(
-			&syscall.ProcAttr{
-				Files: []uintptr{closeFd, closeFd, 2},
-			})
+		return d.pseudoFork(&os.ProcAttr{})
 	case 2:
 		serve(d.SockPath, d.DbPath)
 		return 0
@@ -96,20 +88,39 @@ func (d *Daemon) Spawn() error {
 			binPath = result
 		}
 	}
-	return forkExec(nil, 0, binPath, d.DbPath, d.SockPath, d.LogPathPrefix)
+
+	return forkExec(
+		&os.ProcAttr{Files: []*os.File{nil, nil, os.Stderr}},
+		0,
+		binPath,
+		d.DbPath,
+		d.SockPath,
+		d.LogPathPrefix,
+		true,
+	)
 }
 
 // pseudoFork forks a daemon. It is supposed to be called from the daemon.
-func (d *Daemon) pseudoFork(attr *syscall.ProcAttr) int {
-	err := forkExec(attr, d.Forked+1, d.BinPath, d.DbPath, d.SockPath, d.LogPathPrefix)
+func (d *Daemon) pseudoFork(attr *os.ProcAttr) int {
+	err := forkExec(
+		attr,
+		d.Forked+1,
+		d.BinPath,
+		d.DbPath,
+		d.SockPath,
+		d.LogPathPrefix,
+		false,
+	)
+
 	if err != nil {
 		return 2
 	}
 	return 0
 }
 
-func forkExec(attr *syscall.ProcAttr, forkLevel int, binPath, dbPath, sockPath, logPathPrefix string) error {
-	_, err := syscall.ForkExec(binPath, []string{
+func forkExec(attr *os.ProcAttr, forkLevel int, binPath, dbPath, sockPath,
+	logPathPrefix string, wait bool) error {
+	p, err := os.StartProcess(binPath, []string{
 		binPath,
 		"-daemon",
 		"-forked", strconv.Itoa(forkLevel),
@@ -118,5 +129,14 @@ func forkExec(attr *syscall.ProcAttr, forkLevel int, binPath, dbPath, sockPath, 
 		"-sock", sockPath,
 		"-logprefix", logPathPrefix,
 	}, attr)
+
+	if err != nil {
+		return err
+	}
+	if wait {
+		_, err = p.Wait()
+	} else {
+		err = p.Release()
+	}
 	return err
 }
