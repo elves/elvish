@@ -252,7 +252,7 @@ var evalTests = []struct {
 
 	{`range 3`, strs("0", "1", "2"), nomore},
 	{`range 1 3`, strs("1", "2"), nomore},
-	{`range 0 10 3`, strs("0", "3", "6", "9"), nomore},
+	{`range 0 10 &step=3`, strs("0", "3", "6", "9"), nomore},
 	{`range 100 | take 2`, strs("0", "1"), nomore},
 	{`range 100 | count`, strs("100"), nomore},
 	{`count [(range 100)]`, strs("100"), nomore},

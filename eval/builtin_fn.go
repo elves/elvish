@@ -749,32 +749,28 @@ func take(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
 func rangeFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoOpt(opts)
+	var step float64
+	ScanOpts(opts, Opt{"step", &step, String("1")})
 
-	var lower, upper int
-	step := 1
+	var lower, upper float64
 	var err error
 
 	switch len(args) {
 	case 1:
-		upper, err = toInt(args[0])
+		upper, err = toFloat(args[0])
 		maybeThrow(err)
-	case 2, 3:
-		lower, err = toInt(args[0])
+	case 2:
+		lower, err = toFloat(args[0])
 		maybeThrow(err)
-		upper, err = toInt(args[1])
+		upper, err = toFloat(args[1])
 		maybeThrow(err)
-		if len(args) == 3 {
-			step, err = toInt(args[2])
-			maybeThrow(err)
-		}
 	default:
 		throw(ErrArgs)
 	}
 
 	out := ec.ports[1].Chan
 	for i := lower; i < upper; i += step {
-		out <- String(strconv.Itoa(i))
+		out <- String(fmt.Sprintf("%g", i))
 	}
 }
 
