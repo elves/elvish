@@ -250,9 +250,6 @@ func wrapStringToStringError(f func(string) (string, error)) func(*EvalCtx, []Va
 func wrapStrCompare(cmp func(a, b string) bool) func(*EvalCtx, []Value, map[string]Value) {
 	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
-		if len(args) < 2 {
-			throw(ErrArgs)
-		}
 		for _, a := range args {
 			if _, ok := a.(String); !ok {
 				throw(ErrArgs)
@@ -272,9 +269,6 @@ func wrapStrCompare(cmp func(a, b string) bool) func(*EvalCtx, []Value, map[stri
 func wrapNumCompare(cmp func(a, b float64) bool) func(*EvalCtx, []Value, map[string]Value) {
 	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
-		if len(args) < 2 {
-			throw(ErrArgs)
-		}
 		floats := make([]float64, len(args))
 		for i, a := range args {
 			f, err := toFloat(a)
