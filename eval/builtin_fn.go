@@ -427,9 +427,6 @@ func kindOf(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 func is(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
-	if len(args) < 2 {
-		throw(ErrArgs)
-	}
 	result := true
 	for i := 0; i+1 < len(args); i++ {
 		if args[i] != args[i+1] {
@@ -442,9 +439,6 @@ func is(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
-	if len(args) < 2 {
-		throw(ErrArgs)
-	}
 	result := true
 	for i := 0; i+1 < len(args); i++ {
 		if !DeepEq(args[i], args[i+1]) {
