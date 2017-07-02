@@ -39,6 +39,10 @@ func NewList(vs ...Value) List {
 	return List{vec}
 }
 
+func NewListFromVector(vec vector.Vector) List {
+	return List{vec}
+}
+
 func (List) Kind() string {
 	return "list"
 }

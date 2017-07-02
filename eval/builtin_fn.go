@@ -124,9 +124,6 @@ func init() {
 		{"has-prefix", hasPrefix},
 		{"has-suffix", hasSuffix},
 
-		// Regular expression
-		{"-match", match},
-
 		// String comparison
 		{"<s",
 			wrapStrCompare(func(a, b string) bool { return a < b })},
@@ -149,12 +146,12 @@ func init() {
 		{"dirs", dirs},
 
 		// Path
-		{"path-abs", wrapStringToStringError(filepath.Abs)},
-		{"path-base", wrapStringToString(filepath.Base)},
-		{"path-clean", wrapStringToString(filepath.Clean)},
-		{"path-dir", wrapStringToString(filepath.Dir)},
-		{"path-ext", wrapStringToString(filepath.Ext)},
-		{"eval-symlinks", wrapStringToStringError(filepath.EvalSymlinks)},
+		{"path-abs", WrapStringToStringError(filepath.Abs)},
+		{"path-base", WrapStringToString(filepath.Base)},
+		{"path-clean", WrapStringToString(filepath.Clean)},
+		{"path-dir", WrapStringToString(filepath.Dir)},
+		{"path-ext", WrapStringToString(filepath.Ext)},
+		{"eval-symlinks", WrapStringToStringError(filepath.EvalSymlinks)},
 		{"tilde-abbr", tildeAbbr},
 
 		// Boolean operations
@@ -229,7 +226,7 @@ var (
 	ErrInterrupted       = errors.New("interrupted")
 )
 
-func wrapStringToString(f func(string) string) func(*EvalCtx, []Value, map[string]Value) {
+func WrapStringToString(f func(string) string) func(*EvalCtx, []Value, map[string]Value) {
 	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
 		s := mustGetOneString(args)
@@ -237,7 +234,7 @@ func wrapStringToString(f func(string) string) func(*EvalCtx, []Value, map[strin
 	}
 }
 
-func wrapStringToStringError(f func(string) (string, error)) func(*EvalCtx, []Value, map[string]Value) {
+func WrapStringToStringError(f func(string) (string, error)) func(*EvalCtx, []Value, map[string]Value) {
 	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
 		s := mustGetOneString(args)
@@ -902,16 +899,6 @@ func hasSuffix(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	ec.OutputChan() <- Bool(strings.HasSuffix(string(s), string(suffix)))
-}
-
-func match(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var p, s String
-	ScanArgs(args, &p, &s)
-	TakeNoOpt(opts)
-
-	matched, err := regexp.MatchString(string(p), string(s))
-	maybeThrow(err)
-	ec.OutputChan() <- Bool(matched)
 }
 
 var eawkWordSep = regexp.MustCompile("[ \t]+")

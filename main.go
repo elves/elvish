@@ -22,6 +22,7 @@ import (
 	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/daemon/service"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/re"
 	"github.com/elves/elvish/shell"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
@@ -234,7 +235,11 @@ func initRuntime() (*eval.Evaler, *api.Client) {
 	}
 spawnDaemonEnd:
 
-	return eval.NewEvaler(cl, toSpawn, dataDir), cl
+	// TODO(xiaq): This information might belong somewhere else.
+	extraModules := map[string]eval.Namespace{
+		"re": re.Namespace(),
+	}
+	return eval.NewEvaler(cl, toSpawn, dataDir, extraModules), cl
 }
 
 var (

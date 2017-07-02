@@ -65,10 +65,15 @@ type EvalCtx struct {
 }
 
 // NewEvaler creates a new Evaler.
-func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon, dataDir string) *Evaler {
+func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
+	dataDir string, extraModules map[string]Namespace) *Evaler {
+
 	// TODO(xiaq): Create daemon namespace asynchronously.
 	modules := map[string]Namespace{
 		"daemon": makeDaemonNamespace(daemon),
+	}
+	for name, mod := range extraModules {
+		modules[name] = mod
 	}
 
 	return &Evaler{
