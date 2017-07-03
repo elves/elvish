@@ -1,12 +1,7 @@
 package eval
 
 var embeddedModules = map[string]string{
-	"embedded:acme": `fn acme {
-    echo 'So this'
-    put works.
-}
-`,
-	"embedded:readline-binding": `fn bind-mode [m k f]{
+	"readline-binding": `fn bind-mode [m k f]{
     edit:binding[$m][$k] = $f
 }
 
