@@ -6,13 +6,13 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-// The $le:completer map, and its default values.
+// The $edit:completer map, and its default values.
 
 var (
 	// ErrCompleterMustBeFn is thrown if the user has put a non-function entry
-	// in $le:completer, and that entry needs to be used for completion.
+	// in $edit:completer, and that entry needs to be used for completion.
 	// TODO(xiaq): Detect the type violation when the user modifies
-	// $le:completer.
+	// $edit:completer.
 	ErrCompleterMustBeFn = errors.New("completer must be fn")
 	// ErrCompleterArgMustBeString is thrown when a builtin argument completer
 	// is called with non-string arguments.
@@ -72,7 +72,7 @@ func (bac *builtinArgCompleter) Kind() string {
 }
 
 func (bac *builtinArgCompleter) Repr(int) string {
-	return "$le:&" + bac.name
+	return "$edit:&" + bac.name
 }
 
 func (bac *builtinArgCompleter) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {

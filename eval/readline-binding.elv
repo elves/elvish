@@ -1,59 +1,59 @@
 fn bind-mode [m k f]{
-    le:binding[$m][$k] = $f
+    edit:binding[$m][$k] = $f
 }
 
 fn bind [k f]{
     bind-mode insert $k $f
 }
 
-bind Ctrl-A $le:&move-dot-sol
-bind Ctrl-B $le:&move-dot-left
+bind Ctrl-A $edit:&move-dot-sol
+bind Ctrl-B $edit:&move-dot-left
 bind Ctrl-D {
-    if (> (count $le:current-command) 0) {
-        le:kill-rune-right
+    if (> (count $edit:current-command) 0) {
+        edit:kill-rune-right
     } else {
-        le:return-eof
+        edit:return-eof
     }
 }
-bind Ctrl-E $le:&move-dot-eol
-bind Ctrl-F $le:&move-dot-right
-bind Ctrl-H $le:&kill-rune-left
+bind Ctrl-E $edit:&move-dot-eol
+bind Ctrl-F $edit:&move-dot-right
+bind Ctrl-H $edit:&kill-rune-left
 bind Ctrl-L { clear > /dev/tty }
-bind Ctrl-N $le:&end-of-history
+bind Ctrl-N $edit:&end-of-history
 # TODO: ^O
-bind Ctrl-P $le:history:&start
+bind Ctrl-P $edit:history:&start
 # TODO: ^S ^T ^X family ^Y ^_
-bind Alt-b  $le:&move-dot-left-word
+bind Alt-b  $edit:&move-dot-left-word
 # TODO Alt-c Alt-d
-bind Alt-f  $le:&move-dot-right-word
+bind Alt-f  $edit:&move-dot-right-word
 # TODO Alt-l Alt-r Alt-u
 
 # Ctrl-N and Ctrl-L occupied by readline binding, bind to Alt- instead.
-bind Alt-n $le:nav:&start
-bind Alt-l $le:loc:&start
+bind Alt-n $edit:nav:&start
+bind Alt-l $edit:loc:&start
 
-bind-mode completion Ctrl-B $le:compl:&left
-bind-mode completion Ctrl-F $le:compl:&right
-bind-mode completion Ctrl-N $le:compl:&down
-bind-mode completion Ctrl-P $le:compl:&up
-bind-mode completion Alt-f  $le:compl:&trigger-filter
+bind-mode completion Ctrl-B $edit:compl:&left
+bind-mode completion Ctrl-F $edit:compl:&right
+bind-mode completion Ctrl-N $edit:compl:&down
+bind-mode completion Ctrl-P $edit:compl:&up
+bind-mode completion Alt-f  $edit:compl:&trigger-filter
 
-bind-mode navigation Ctrl-B $le:nav:&left
-bind-mode navigation Ctrl-F $le:nav:&right
-bind-mode navigation Ctrl-N $le:nav:&down
-bind-mode navigation Ctrl-P $le:nav:&up
-bind-mode navigation Alt-f  $le:nav:&trigger-filter
+bind-mode navigation Ctrl-B $edit:nav:&left
+bind-mode navigation Ctrl-F $edit:nav:&right
+bind-mode navigation Ctrl-N $edit:nav:&down
+bind-mode navigation Ctrl-P $edit:nav:&up
+bind-mode navigation Alt-f  $edit:nav:&trigger-filter
 
-bind-mode history Ctrl-N $le:history:&down-or-quit
-bind-mode history Ctrl-P $le:history:&up
-bind-mode history Ctrl-G $le:insert:&start
+bind-mode history Ctrl-N $edit:history:&down-or-quit
+bind-mode history Ctrl-P $edit:history:&up
+bind-mode history Ctrl-G $edit:insert:&start
 
 # Binding for the listing "super mode".
-bind-mode listing Ctrl-N $le:listing:&down
-bind-mode listing Ctrl-P $le:listing:&up
-bind-mode listing Ctrl-V $le:listing:&page-down
-bind-mode listing Alt-v  $le:listing:&page-up
-bind-mode listing Ctrl-G $le:insert:&start
+bind-mode listing Ctrl-N $edit:listing:&down
+bind-mode listing Ctrl-P $edit:listing:&up
+bind-mode listing Ctrl-V $edit:listing:&page-down
+bind-mode listing Alt-v  $edit:listing:&page-up
+bind-mode listing Ctrl-G $edit:insert:&start
 
-bind-mode histlist Alt-g $le:histlist:&toggle-case-sensitivity
-bind-mode histlist Alt-d $le:histlist:&toggle-dedup
+bind-mode histlist Alt-g $edit:histlist:&toggle-case-sensitivity
+bind-mode histlist Alt-d $edit:histlist:&toggle-dedup

@@ -52,9 +52,9 @@ func (bf *BuiltinFn) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]e
 	bf.impl(ed)
 }
 
-// installModules installs le: and le:* modules.
+// installModules installs edit: and edit:* modules.
 func installModules(modules map[string]eval.Namespace, ed *Editor) {
-	// Construct the le: module, starting with builtins.
+	// Construct the edit: module, starting with builtins.
 	ns := makeNamespaceFromBuiltins(builtinMaps[""])
 
 	// Populate binding tables in the variable $binding.
@@ -112,25 +112,23 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	)
 
 	// Completers.
-	ns[eval.FnPrefix+"complete-getopt"] = eval.NewRoVariable(
-		&eval.BuiltinFn{"le:&complete-getopt", complGetopt})
-	ns[eval.FnPrefix+"complex-candidate"] = eval.NewRoVariable(
-		&eval.BuiltinFn{"le:&complex-candidate", outputComplexCandidate})
 	for _, bac := range argCompletersData {
 		ns[eval.FnPrefix+bac.name] = eval.NewRoVariable(bac)
 	}
 
-	// Utility functions.
+	// Functions.
 	eval.AddBuiltinFns(ns,
-		&eval.BuiltinFn{"le:styled", styled},
-		&eval.BuiltinFn{"le:-dump-buf", _dumpBuf},
+		&eval.BuiltinFn{"edit:complete-getopt", complGetopt},
+		&eval.BuiltinFn{"edit:complex-candidate", outputComplexCandidate},
+		&eval.BuiltinFn{"edit:styled", styled},
+		&eval.BuiltinFn{"edit:-dump-buf", _dumpBuf},
 	)
 
-	modules["le"] = ns
+	modules["edit"] = ns
 	// Install other modules.
 	for module, builtins := range builtinMaps {
 		if module != "" {
-			modules["le:"+module] = makeNamespaceFromBuiltins(builtins)
+			modules["edit:"+module] = makeNamespaceFromBuiltins(builtins)
 		}
 	}
 }
