@@ -5,8 +5,8 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-// Names of modes, used for subnamespaces of le: and name of binding table in
-// $le:binding.
+// Names of modes, used for subnamespaces of edit: and name of binding table in
+// $edit:binding.
 const (
 	modeInsert         = "insert"
 	modeRawInsert      = "raw-insert"

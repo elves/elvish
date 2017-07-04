@@ -14,7 +14,7 @@ import (
 
 var builtinMaps = map[string]map[string]*BuiltinFn{}
 
-// registerBuiltins registers builtins under a subnamespace of le:, to be used
+// registerBuiltins registers builtins under a subnamespace of edit:, to be used
 // during the initialization of the Editor. It should be called for global
 // variable initializations to make sure every subnamespace is registered before
 // makeBindings is ever called.
@@ -25,9 +25,9 @@ func registerBuiltins(module string, impls map[string]func(*Editor)) struct{} {
 	for name, impl := range impls {
 		var fullName string
 		if module == "" {
-			fullName = "le:" + eval.FnPrefix + name
+			fullName = "edit:" + eval.FnPrefix + name
 		} else {
-			fullName = "le:" + module + ":" + eval.FnPrefix + name
+			fullName = "edit:" + module + ":" + eval.FnPrefix + name
 		}
 		builtinMaps[module][name] = &BuiltinFn{fullName, impl}
 	}
@@ -80,7 +80,7 @@ var variableMakers = map[string]func() eval.Variable{}
 
 // registerVariables registers a variable, its name and a func used to derive
 // its value, later to be used during Editor initialization to populate
-// Editor.variables as well as the le: namespace.
+// Editor.variables as well as the edit: namespace.
 func registerVariable(name string, maker func() eval.Variable) struct{} {
 	variableMakers[name] = maker
 	return struct{}{}
