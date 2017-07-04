@@ -1,4 +1,4 @@
-// +build amd64,dragonfly amd64,freebsd amd64,linux arm64,linux
+// +build amd64,dragonfly amd64,linux arm64,linux
 
 // The type of FdSet.Bits is different on different platforms.
 // This file is for those where FdSet.Bits is []int64.

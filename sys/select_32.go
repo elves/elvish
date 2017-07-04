@@ -1,4 +1,4 @@
-// +build darwin 386,freebsd arm,freebsd 386,linux arm,linux netbsd openbsd
+// +build darwin 386,linux arm,linux netbsd openbsd
 
 // The type of FdSet.Bits is different on different platforms.
 // This file is for those where FdSet.Bits is []int32.
