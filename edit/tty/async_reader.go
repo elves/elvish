@@ -25,19 +25,18 @@ type AsyncReader struct {
 
 // NewAsyncReader creates a new AsyncReader from a file.
 func NewAsyncReader(rd *os.File) *AsyncReader {
-	ar := &AsyncReader{
-		rd:     rd,
-		bufrd:  bufio.NewReaderSize(rd, 0),
-		ctrlCh: make(chan struct{}),
-		ch:     make(chan rune, asyncReaderChanSize),
-	}
-
-	r, w, err := os.Pipe()
+	rCtrl, wCtrl, err := os.Pipe()
 	if err != nil {
 		panic(err)
 	}
-	ar.rCtrl, ar.wCtrl = r, w
-	return ar
+	return &AsyncReader{
+		rd,
+		bufio.NewReaderSize(rd, 0),
+		rCtrl, wCtrl,
+		make(chan struct{}),
+		make(chan rune, asyncReaderChanSize),
+		make(chan error),
+	}
 }
 
 // Chan returns a channel onto which the AsyncReader writes the runes it reads.
