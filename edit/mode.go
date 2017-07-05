@@ -18,6 +18,7 @@ const (
 	modeLastCmd        = "lastcmd"
 	modeLocation       = "loc"
 	modeListing        = "listing" // A "super mode" for histlist, lastcmd, loc
+	modeNarrow         = "narrow"  // a listing mode fork to be extended by scripts
 )
 
 // Mode is an editor mode.

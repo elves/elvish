@@ -62,7 +62,7 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	binding := &eval.Struct{
 		[]string{
 			modeInsert, modeCommand, modeCompletion, modeNavigation, modeHistory,
-			modeHistoryListing, modeLocation, modeLastCmd, modeListing},
+			modeHistoryListing, modeLocation, modeLastCmd, modeListing, modeNarrow},
 		[]eval.Variable{
 			eval.NewRoVariable(BindingTable{keyBindings[modeInsert]}),
 			eval.NewRoVariable(BindingTable{keyBindings[modeCommand]}),
@@ -73,6 +73,7 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 			eval.NewRoVariable(BindingTable{keyBindings[modeLocation]}),
 			eval.NewRoVariable(BindingTable{keyBindings[modeLastCmd]}),
 			eval.NewRoVariable(BindingTable{keyBindings[modeListing]}),
+			eval.NewRoVariable(BindingTable{keyBindings[modeNarrow]}),
 		},
 	}
 	ns["binding"] = eval.NewRoVariable(binding)
@@ -118,10 +119,15 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 
 	// Functions.
 	eval.AddBuiltinFns(ns,
+		&eval.BuiltinFn{"edit:command-history", CommandHistory},
 		&eval.BuiltinFn{"edit:complete-getopt", complGetopt},
 		&eval.BuiltinFn{"edit:complex-candidate", outputComplexCandidate},
+		&eval.BuiltinFn{"edit:insert-at-dot", InsertAtDot},
+		&eval.BuiltinFn{"edit:replace-input", ReplaceInput},
 		&eval.BuiltinFn{"edit:styled", styled},
+		&eval.BuiltinFn{"edit:wordify", Wordify},
 		&eval.BuiltinFn{"edit:-dump-buf", _dumpBuf},
+		&eval.BuiltinFn{"edit:-narrow-read", NarrowRead},
 	)
 
 	modules["edit"] = ns
