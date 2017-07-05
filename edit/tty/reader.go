@@ -30,15 +30,8 @@ type Reader struct {
 	raw bool
 
 	unitChan chan ReadUnit
-	/*
-		rawRuneChan chan rune
-		keyChan     chan ui.Key
-		cprChan     chan Pos
-		mouseChan   chan MouseEvent
-		pasteChan   chan bool
-	*/
-	errChan chan error
-	quit    chan struct{}
+	errChan  chan error
+	quit     chan struct{}
 }
 
 type MouseEvent struct {
@@ -55,13 +48,6 @@ func NewReader(f *os.File) *Reader {
 		NewAsyncReader(f),
 		false,
 		make(chan ReadUnit),
-		/*
-			make(chan rune),
-			make(chan ui.Key),
-			make(chan Pos),
-			make(chan MouseEvent),
-			make(chan bool),
-		*/
 		make(chan error),
 		nil,
 	}
@@ -88,19 +74,20 @@ func (rd *Reader) ErrorChan() <-chan error {
 // Run runs the Reader. It blocks until Quit is called and should be called in
 // a separate goroutine.
 func (rd *Reader) Run() {
-	runes := rd.ar.Chan()
 	quit := make(chan struct{})
 	rd.quit = quit
 	go rd.ar.Run()
 
 	for {
 		select {
-		case r := <-runes:
+		case r := <-rd.ar.Chan():
 			if rd.raw {
 				rd.unitChan <- RawRune(r)
 			} else {
 				rd.readOne(r)
 			}
+		case err := <-rd.ar.ErrorChan():
+			rd.errChan <- err
 		case <-quit:
 			return
 		}
