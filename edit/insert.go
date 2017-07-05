@@ -63,6 +63,8 @@ func init() {
 		{ui.Down, ui.Alt}:   "move-dot-down",
 		{ui.Left, ui.Ctrl}:  "move-dot-left-word",
 		{ui.Right, ui.Ctrl}: "move-dot-right-word",
+		{'b', ui.Alt}:       "move-dot-left-word",
+		{'f', ui.Alt}:       "move-dot-right-word",
 		{ui.Home, 0}:        "move-dot-sol",
 		{ui.End, 0}:         "move-dot-eol",
 		// Killing.
