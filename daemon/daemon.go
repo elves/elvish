@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strconv"
@@ -53,15 +54,13 @@ func (d *Daemon) Main(serve func(string, string)) int {
 
 		syscall.Umask(0077)
 		return d.pseudoFork(
-			&os.ProcAttr{
-				// cd to /
-				Dir: "/",
-				// empty environment
-				Env: nil,
-				Sys: &syscall.SysProcAttr{Setsid: true},
+			&exec.Cmd{
+				Dir:         "/", // cd to /
+				Env:         nil, // empty environment
+				SysProcAttr: &syscall.SysProcAttr{Setsid: true},
 			})
 	case 1:
-		return d.pseudoFork(&os.ProcAttr{})
+		return d.pseudoFork(nil)
 	case 2:
 		serve(d.SockPath, d.DbPath)
 		return 0
@@ -89,28 +88,26 @@ func (d *Daemon) Spawn() error {
 		}
 	}
 
-	return forkExec(
-		&os.ProcAttr{Files: []*os.File{nil, nil, os.Stderr}},
+	return setArgs(
+		nil,
 		0,
 		binPath,
 		d.DbPath,
 		d.SockPath,
 		d.LogPathPrefix,
-		true,
-	)
+	).Run()
 }
 
 // pseudoFork forks a daemon. It is supposed to be called from the daemon.
-func (d *Daemon) pseudoFork(attr *os.ProcAttr) int {
-	err := forkExec(
-		attr,
+func (d *Daemon) pseudoFork(cmd *exec.Cmd) int {
+	err := setArgs(
+		cmd,
 		d.Forked+1,
 		d.BinPath,
 		d.DbPath,
 		d.SockPath,
 		d.LogPathPrefix,
-		false,
-	)
+	).Start()
 
 	if err != nil {
 		return 2
@@ -118,9 +115,15 @@ func (d *Daemon) pseudoFork(attr *os.ProcAttr) int {
 	return 0
 }
 
-func forkExec(attr *os.ProcAttr, forkLevel int, binPath, dbPath, sockPath,
-	logPathPrefix string, wait bool) error {
-	p, err := os.StartProcess(binPath, []string{
+func setArgs(cmd *exec.Cmd, forkLevel int, binPath, dbPath, sockPath,
+	logPathPrefix string) *exec.Cmd {
+
+	if cmd == nil {
+		cmd = &exec.Cmd{}
+	}
+
+	cmd.Path = binPath
+	cmd.Args = []string{
 		binPath,
 		"-daemon",
 		"-forked", strconv.Itoa(forkLevel),
@@ -128,15 +131,7 @@ func forkExec(attr *os.ProcAttr, forkLevel int, binPath, dbPath, sockPath,
 		"-db", dbPath,
 		"-sock", sockPath,
 		"-logprefix", logPathPrefix,
-	}, attr)
+	}
 
-	if err != nil {
-		return err
-	}
-	if wait {
-		_, err = p.Wait()
-	} else {
-		err = p.Release()
-	}
-	return err
+	return cmd
 }
