@@ -143,7 +143,7 @@ func init() {
 
 		// Directory
 		{"cd", cd},
-		{"dirs", dirs},
+		{"dir-history", dirs},
 
 		// Path
 		{"path-abs", WrapStringToStringError(filepath.Abs)},
