@@ -239,13 +239,13 @@ func (er *editorRenderer) render(buf *buffer) {
 	clr := newCmdlineRenderer(es.promptContent, es.line, es.styling, es.dot, es.rpromptContent)
 	// TODO(xiaq): Instead of doing a type switch, expose an API for modes to
 	// modify the text (and mark their part as modified).
-	switch es.mode.(type) {
+	switch mode := es.mode.(type) {
 	case *completion:
 		c := es.completion
 		clr.setComp(c.begin, c.end, c.selectedCandidate().code)
 	case *hist:
-		begin := len(es.hist.Prefix())
-		clr.setHist(begin, es.hist.CurrentCmd()[begin:])
+		begin := len(mode.Prefix())
+		clr.setHist(begin, mode.CurrentCmd()[begin:])
 	}
 	bufLine = render(clr, width)
 

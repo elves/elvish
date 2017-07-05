@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -9,17 +10,15 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-// Command history subsystem.
-
-// Interface.
+// Command history mode.
 
 var _ = registerBuiltins("history", map[string]func(*Editor){
 	"start":              historyStart,
-	"up":                 historyUp,
-	"down":               historyDown,
-	"down-or-quit":       historyDownOrQuit,
-	"switch-to-histlist": historySwitchToHistlist,
-	"default":            historyDefault,
+	"up":                 wrapHistoryBuiltin(historyUp),
+	"down":               wrapHistoryBuiltin(historyDown),
+	"down-or-quit":       wrapHistoryBuiltin(historyDownOrQuit),
+	"switch-to-histlist": wrapHistoryBuiltin(historySwitchToHistlist),
+	"default":            wrapHistoryBuiltin(historyDefault),
 })
 
 func init() {
@@ -51,44 +50,63 @@ func historyStart(ed *Editor) {
 	}
 	prefix := ed.line[:ed.dot]
 	walker := ed.historyFuser.Walker(prefix)
-	ed.hist = hist{walker}
-	if ed.prevHistory() {
-		ed.mode = &ed.hist
+	hist := hist{walker}
+	_, _, err := hist.Prev()
+	if err == nil {
+		ed.mode = &hist
 	} else {
 		ed.addTip("no matching history item")
 	}
 }
 
-func historyUp(ed *Editor) {
-	ed.prevHistory()
+var errNotHistory = errors.New("not in history mode")
+
+func wrapHistoryBuiltin(f func(*Editor, *hist)) func(*Editor) {
+	return func(ed *Editor) {
+		hist, ok := ed.mode.(*hist)
+		if !ok {
+			throw(errNotHistory)
+		}
+		f(ed, hist)
+	}
 }
 
-func historyDown(ed *Editor) {
-	ed.nextHistory()
+func historyUp(ed *Editor, hist *hist) {
+	_, _, err := hist.Prev()
+	if err != nil {
+		ed.Notify("%s", err)
+	}
 }
 
-func historyDownOrQuit(ed *Editor) {
-	if !ed.nextHistory() {
+func historyDown(ed *Editor, hist *hist) {
+	_, _, err := hist.Next()
+	if err != nil {
+		ed.Notify("%s", err)
+	}
+}
+
+func historyDownOrQuit(ed *Editor, hist *hist) {
+	_, _, err := hist.Next()
+	if err != nil {
 		ed.mode = &ed.insert
 	}
 }
 
-func historySwitchToHistlist(ed *Editor) {
+func historySwitchToHistlist(ed *Editor, hist *hist) {
 	histlistStart(ed)
 	if hl := getHistlist(ed); hl != nil {
 		ed.line = ""
 		ed.dot = 0
-		hl.changeFilter(ed.hist.Prefix())
+		hl.changeFilter(hist.Prefix())
 	}
 }
 
-func historyDefault(ed *Editor) {
-	ed.acceptHistory()
+func historyDefault(ed *Editor, hist *hist) {
+	ed.line = hist.CurrentCmd()
+	ed.dot = len(ed.line)
 	ed.mode = &ed.insert
 	ed.nextAction = action{typ: reprocessKey}
 }
-
-// Implementation.
 
 func (ed *Editor) appendHistory(line string) {
 	// TODO: should have a user variable to control the behavior
@@ -113,20 +131,4 @@ func (ed *Editor) appendHistory(line string) {
 			}
 		}()
 	}
-}
-
-func (ed *Editor) prevHistory() bool {
-	_, _, err := ed.hist.Prev()
-	return err == nil
-}
-
-func (ed *Editor) nextHistory() bool {
-	_, _, err := ed.hist.Next()
-	return err == nil
-}
-
-// acceptHistory accepts the currently selected history.
-func (ed *Editor) acceptHistory() {
-	ed.line = ed.hist.CurrentCmd()
-	ed.dot = len(ed.line)
 }
