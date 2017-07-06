@@ -8,7 +8,7 @@
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/elves/elvish-public)
 [![Telegram Group](https://img.shields.io/badge/telegram%20group-join-blue.svg)](https://telegram.me/elvish)
-[![IRC Channel](https://img.shields.io/badge/irc%20channel-join-000000.svg)](irc://irc.freenode.net/elvish)
+![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-000000.svg)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
 This project aims to explore the potentials of the Unix shell. It is a work in
