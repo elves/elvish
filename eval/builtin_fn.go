@@ -223,7 +223,6 @@ var (
 	ErrStoreNotConnected = errors.New("store not connected")
 	ErrNoMatchingDir     = errors.New("no matching directory")
 	ErrNotInSameGroup    = errors.New("not in the same process group")
-	ErrInterrupted       = errors.New("interrupted")
 )
 
 func WrapStringToString(f func(string) string) func(*EvalCtx, []Value, map[string]Value) {

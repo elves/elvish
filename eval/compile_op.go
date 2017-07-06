@@ -30,6 +30,10 @@ func (cp *compiler) chunk(n *parse.Chunk) OpFunc {
 		for _, op := range ops {
 			op.Exec(ec)
 		}
+		// Check for interrupts after the chunk.
+		// We also check for interrupts before each pipeline, so there is no
+		// need to check it before the chunk or after each pipeline.
+		ec.CheckInterrupts()
 	}
 }
 
@@ -39,6 +43,8 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 	ops := cp.formOps(n.Forms)
 
 	return func(ec *EvalCtx) {
+		ec.CheckInterrupts()
+
 		bg := n.Background
 		if bg {
 			ec = ec.fork("background job " + n.SourceText())

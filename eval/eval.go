@@ -160,10 +160,6 @@ func (ev *Evaler) eval(op Op, ports []*Port, name, text string) error {
 	return ec.PEval(op)
 }
 
-func (ec *EvalCtx) Interrupts() <-chan struct{} {
-	return ec.intCh
-}
-
 // Eval sets up the Evaler with standard ports and evaluates an Op. The supplied
 // name and text are used in diagnostic messages.
 func (ev *Evaler) Eval(op Op, name, text string) error {
