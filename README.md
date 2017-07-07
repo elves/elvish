@@ -11,23 +11,40 @@
 ![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-000000.svg)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
-This project aims to explore the potentials of the Unix shell. It is a work in
-progress; things will change without warning. The [issues list](https://github.com/elves/elvish/issues) contains many things I'm working on.
-
-This README documents the development aspect of Elvish. All other information is to be found on the [official website](https://elvish.io).
+Elvish is a Unix shell built upon the assumption that an intuitive user interface and a powerful programming language can complement each other. In other words, Elvish takes your command prompt and adds lambdas to it.
 
 Here is a logo, which happens to be how Elvish looks like when you type `elvish` into it:
 
 ![logo](https://elvish.io/assets/logo.svg)
 
+Elvish is pre-release software. It is sufficient for most daily interactive use, but its design is still subject to change.
+
+This README documents the development aspect of Elvish. Other information is to be found on the [website](https://elvish.io).
+
 
 ## Building Elvish
 
-Go >= 1.6 is required. Linux is fully supported. It is likely to work on BSDs and Mac OS X. Windows is **not** supported yet.
+To build Elvish, you need
 
-Elvish is a go-gettable package, and can be installed using `go get github.com/elves/elvish`.
+*   A Go toolchain >= 1.6.
 
-If you are lazy and use `bash` or `zsh` now, here is something you can copy-paste into your terminal:
+*   Linux (with x86, x64 or amd64 CPU) or macOS (with reasonably new hardware).
+
+    It's quite likely that Elvish works on BSDs and other POSIX operating systems, or other CPU architectures; this is not guaranteed due to the lack of good CI support and developers who use such OSes. Pull requests are welcome.
+
+    Windows is **not** supported yet.
+
+### The Correct Way
+
+Elvish is a go-gettable package. To build Elvish, first set up your Go workspace according to [How To Write Go Code](http://golang.org/doc/code.html), and then run
+
+```sh
+go get github.com/elves/elvish
+```
+
+### The Lazy Way
+
+Here is something you can copy-paste into your terminal:
 
 ```sh
 export GOPATH=$HOME/go
@@ -41,9 +58,11 @@ for f in ~/.bashrc ~/.zshrc; do
 done
 ```
 
-[How To Write Go Code](http://golang.org/doc/code.html) explains how `$GOPATH` works.
+The scripts sets up the Go workspace and runs `go get` for you. It assumes that you have a working Go installation and currently use `bash` or `zsh`.
 
-Users of macOS can build Elvish via [homebrew](http://brew.sh):
+### The Homebrew Way
+
+Users of macOS can build Elvish using [Homebrew](http://brew.sh):
 
 ```sh
 brew install --HEAD elvish
@@ -52,8 +71,8 @@ brew install --HEAD elvish
 
 ## Name
 
-In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the elves have a reputation of high quality.  These are usually called *elven* items, but I chose "elvish" because it ends with "sh". It also rhymes with [fish](https://fishshell.com), one of shells that influenced the philosophy of Elvish.
+In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the elves have a reputation of high quality. These are usually called *elven* items, but I chose "elvish" because it ends with "sh", a long tradition of Unix shells. It also rhymes with [fish](https://fishshell.com), one of shells that influenced the philosophy of Elvish.
 
 The word "Elvish" should be capitalized like a proper noun. However, when referring to the `elvish` command, use it in lower case with fixed-width font.
 
-Whoever practices the elvish way by either contributing to it or simply using it is called an **elf**. (You might have guessed this from the name of the GitHub organization.) The official adjective for elvish (as in "Pythonic" for Python, "Rubyesque" for Ruby) is "elven".
+Whoever practices the Elvish way by either contributing to it or simply using it is called an **Elf**. (You might have guessed this from the name of the GitHub organization.) The official adjective for Elvish (as in "Pythonic" for Python, "Rubyesque" for Ruby) is **Elven**.
