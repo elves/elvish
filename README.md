@@ -11,13 +11,13 @@
 ![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-000000.svg)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
-Elvish is a Unix shell built upon the assumption that an intuitive user interface and a powerful programming language can complement each other. In other words, Elvish takes your command prompt and adds lambdas to it.
+Elvish is a cross-platform shell suitable for both interactive use and scripting. It features a full-fledged, non-POSIX-shell programming language with advanced features like namespacing and anonymous functions, and a fully programmable user interface that works well out of the box.
 
-Here is a logo, which happens to be how Elvish looks like when you type `elvish` into it:
+... which is not 100% true yet. Elvish is already suitable for most daily interactive use, but it is not yet complete. Contributions are more than welcome!
+
+Oh and here is a logo, which happens to be how Elvish looks like when you type `elvish` into it:
 
 ![logo](https://elvish.io/assets/logo.svg)
-
-Elvish is pre-release software. It is sufficient for most daily interactive use, but its design is still subject to change.
 
 This README documents the development aspect of Elvish. Other information is to be found on the [website](https://elvish.io).
 
