@@ -8,7 +8,7 @@
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/elves/elvish-public)
 [![Telegram Group](https://img.shields.io/badge/telegram%20group-join-blue.svg)](https://telegram.me/elvish)
-![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-000000.svg)
+[![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-000000.svg)](https://webchat.freenode.net/?channels=elvish)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
 Elvish is a cross-platform shell suitable for both interactive use and scripting. It features a full-fledged, non-POSIX-shell programming language with advanced features like namespacing and anonymous functions, and a powerful, fully programmable user interface that works well out of the box.
@@ -17,7 +17,7 @@ Elvish is a cross-platform shell suitable for both interactive use and scripting
 
 Oh and here is a logo, which happens to be how Elvish looks like when you type `elvish` into it:
 
-![logo](https://elvish.io/assets/logo.svg)
+[![logo](https://elvish.io/assets/logo.svg)](https://elvish.io/)
 
 This README documents the development aspect of Elvish. Other information is to be found on the [website](https://elvish.io).
 
