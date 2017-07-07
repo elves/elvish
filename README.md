@@ -11,7 +11,7 @@
 ![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-000000.svg)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
-Elvish is a cross-platform shell suitable for both interactive use and scripting. It features a full-fledged, non-POSIX-shell programming language with advanced features like namespacing and anonymous functions, and a fully programmable user interface that works well out of the box.
+Elvish is a cross-platform shell suitable for both interactive use and scripting. It features a full-fledged, non-POSIX-shell programming language with advanced features like namespacing and anonymous functions, and a powerful, fully programmable user interface that works well out of the box.
 
 ... which is not 100% true yet. Elvish is already suitable for most daily interactive use, but it is not yet complete. Contributions are more than welcome!
 
