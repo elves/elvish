@@ -232,6 +232,9 @@ var evalTests = []struct {
 	{`has-prefix golang x`, bools(false), nomore},
 	{`has-suffix golang x`, bools(false), nomore},
 
+	{`keys [&]`, noout, nomore},
+	{`keys [&a=foo &b=bar] | each echo | sort | each put`, strs("a", "b"), nomore},
+
 	{`==s haha haha`, bools(true), nomore},
 	{`==s 10 10.0`, bools(false), nomore},
 	{`<s a b`, bools(true), nomore},
