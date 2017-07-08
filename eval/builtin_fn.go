@@ -120,6 +120,9 @@ func init() {
 		{"wcswidth", wcswidth},
 		{"-override-wcwidth", overrideWcwidth},
 
+		// Map operations
+		{"keys", keys},
+
 		// String predicates
 		{"has-prefix", hasPrefix},
 		{"has-suffix", hasSuffix},
@@ -882,6 +885,20 @@ func overrideWcwidth(ec *EvalCtx, args []Value, opts map[string]Value) {
 	r, err := toRune(s)
 	maybeThrow(err)
 	util.OverrideWcwidth(r, w)
+}
+
+func keys(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+
+	var iter IterateKeyer
+	ScanArgs(args, &iter)
+
+	out := ec.ports[1].Chan
+
+	iter.IterateKey(func(v Value) bool {
+		out <- v
+		return true
+	})
 }
 
 func hasPrefix(ec *EvalCtx, args []Value, opts map[string]Value) {
