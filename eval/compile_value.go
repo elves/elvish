@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -364,14 +363,15 @@ func pcaptureOutput(ec *EvalCtx, op Op) ([]Value, error) {
 	go func() {
 		for {
 			line, err := bufferedPipeRead.ReadString('\n')
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				// TODO report error
-				log.Println(err)
+			if line != "" {
+				ch <- String(strings.TrimSuffix(line, "\n"))
+			}
+			if err != nil {
+				if err != io.EOF {
+					logger.Println("error on reading:", err)
+				}
 				break
 			}
-			ch <- String(line[:len(line)-1])
 		}
 		bytesCollected <- true
 	}()
