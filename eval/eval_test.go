@@ -125,6 +125,7 @@ var evalTests = []struct {
 
 	// Output capture
 	{"put (put lorem ipsum)", strs("lorem", "ipsum"), nomore},
+	{"put (print \"lorem\nipsum\")", strs("lorem", "ipsum"), nomore},
 
 	// Exception capture
 	{"bool ?(nop); bool ?(e:false)", bools(true, false), nomore},
