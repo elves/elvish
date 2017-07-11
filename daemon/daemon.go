@@ -75,19 +75,11 @@ func (d *Daemon) Spawn() error {
 	binPath := d.BinPath
 	// Determine binPath.
 	if binPath == "" {
-		if len(os.Args) > 0 && path.IsAbs(os.Args[0]) {
-			binPath = os.Args[0]
-		} else if len(os.Args) > 0 && strings.Contains(os.Args[0], "/") {
-			binPath = filepath.Abs(os.Args[0])
-		} else {
-			// Find elvish in PATH
-			paths := strings.Split(os.Getenv("PATH"), ":")
-			result, err := util.Search(paths, "elvish")
-			if err != nil {
-				return errors.New("cannot find elvish: " + err.Error())
-			}
-			binPath = result
+		bin, err := getAbsBinPath()
+		if err != nil {
+			return errors.New("cannot find elvish: " + err.Error())
 		}
+		binPath = bin
 	}
 
 	return setArgs(
@@ -98,6 +90,30 @@ func (d *Daemon) Spawn() error {
 		d.SockPath,
 		d.LogPathPrefix,
 	).Run()
+}
+
+// getAbsBinPath determines the absolute path to the Elvish binary, first by
+// looking at os.Args[0] and then searching for "elvish" in PATH.
+func getAbsBinPath() (string, error) {
+	if len(os.Args) > 0 {
+		arg0 := os.Args[0]
+		if path.IsAbs(arg0) {
+			return arg0, nil
+		} else if strings.Contains(arg0, "/") {
+			abs, err := filepath.Abs(arg0)
+			if err == nil {
+				return abs, nil
+			}
+			log.Printf("cannot resolve relative arg0 %q, searching in PATH", arg0)
+		}
+	}
+	// Find elvish in PATH
+	paths := strings.Split(os.Getenv("PATH"), ":")
+	binpath, err := util.Search(paths, "elvish")
+	if err != nil {
+		return "", err
+	}
+	return binpath, nil
 }
 
 // pseudoFork forks a daemon. It is supposed to be called from the daemon.
