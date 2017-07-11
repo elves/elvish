@@ -1,3 +1,4 @@
+// Package nodeutil provides utilities for inspecting the AST.
 package nodeutil
 
 import (

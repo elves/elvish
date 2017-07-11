@@ -10,7 +10,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// Completion subsystem.
+// Completion mode.
 
 // Interface.
 
