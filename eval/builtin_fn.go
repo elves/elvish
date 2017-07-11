@@ -626,7 +626,7 @@ func source(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ScanArgs(args, &fname)
 	ScanOpts(opts)
 
-	ec.Source(string(fname))
+	maybeThrow(ec.Source(string(fname)))
 }
 
 // each takes a single closure and applies it to all input values.
