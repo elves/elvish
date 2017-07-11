@@ -77,6 +77,8 @@ func (d *Daemon) Spawn() error {
 	if binPath == "" {
 		if len(os.Args) > 0 && path.IsAbs(os.Args[0]) {
 			binPath = os.Args[0]
+		} else if len(os.Args) > 0 && strings.Contains(os.Args[0], "/") {
+			binPath = filepath.Abs(os.Args[0])
 		} else {
 			// Find elvish in PATH
 			paths := strings.Split(os.Getenv("PATH"), ":")
