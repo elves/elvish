@@ -29,7 +29,7 @@ var (
 	}
 )
 
-var _ = registerVariable("completer", argCompleterVariable)
+var _ = registerVariable("arg-completer", argCompleterVariable)
 
 func argCompleterVariable() eval.Variable {
 	m := map[eval.Value]eval.Value{}
@@ -40,7 +40,7 @@ func argCompleterVariable() eval.Variable {
 }
 
 func (ed *Editor) argCompleter() eval.Map {
-	return ed.variables["completer"].Get().(eval.Map)
+	return ed.variables["arg-completer"].Get().(eval.Map)
 }
 
 func completeArg(words []string, ev *eval.Evaler) ([]rawCandidate, error) {
