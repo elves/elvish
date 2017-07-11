@@ -44,7 +44,7 @@ func init() {
 }
 
 type completion struct {
-	compl
+	complSpec
 	completer string
 
 	filtering       bool
@@ -189,7 +189,7 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 		return
 	}
 
-	completer, compl, err := complete(node, ed.evaler)
+	completer, complSpec, err := complete(node, ed.evaler)
 
 	if err != nil {
 		ed.addTip("%v", err)
@@ -199,7 +199,7 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 		for n := node; n != nil; n = n.Parent() {
 			logger.Printf("%T (%d-%d)", n, n.Begin(), n.End())
 		}
-	} else if len(compl.candidates) == 0 {
+	} else if len(complSpec.candidates) == 0 {
 		ed.addTip("no candidate for %s", completer)
 	} else {
 		if acceptPrefix {
@@ -208,23 +208,23 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 			//
 			// As a special case, when there is exactly one candidate, it is
 			// immeidately accepted.
-			prefix := compl.candidates[0].code
-			for _, cand := range compl.candidates[1:] {
+			prefix := complSpec.candidates[0].code
+			for _, cand := range complSpec.candidates[1:] {
 				prefix = commonPrefix(prefix, cand.code)
 				if prefix == "" {
 					break
 				}
 			}
-			if prefix != "" && prefix != ed.line[compl.begin:compl.end] {
-				ed.line = ed.line[:compl.begin] + prefix + ed.line[compl.end:]
-				ed.dot = compl.begin + len(prefix)
+			if prefix != "" && prefix != ed.line[complSpec.begin:complSpec.end] {
+				ed.line = ed.line[:complSpec.begin] + prefix + ed.line[complSpec.end:]
+				ed.dot = complSpec.begin + len(prefix)
 				return
 			}
 		}
 		ed.completion = completion{
 			completer: completer,
-			compl:     *compl,
-			filtered:  compl.candidates,
+			complSpec: *complSpec,
+			filtered:  complSpec.candidates,
 		}
 		ed.mode = &ed.completion
 	}

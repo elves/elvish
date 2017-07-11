@@ -1,5 +1,36 @@
 package edit
 
+// Completion in Elvish is organized around the concept of "completers",
+// functions that take the current AST Node (the Node that the cursor is at,
+// always a leaf in the AST) and an eval.Evaler and returns a specification for
+// the completion (a complSpec) -- a list of completion candidates, and which
+// part of the source code they can **replace**. When completion is requested,
+// the editor calls each completer; it is up to the completer to decide whether
+// they apply to the current context. As soon as one completer returns results,
+// the remaining completers are not tried.
+//
+// As an example instance, if the user writes the following and presses Tab:
+//
+// echo $p
+//
+// assuming that only the builtin variables $paths, $pid and $pwd are viable
+// candidates, one of the completers -- the variable completer -- will return a
+// complSpec that means "any of paths, pid and pwd can replace the 'p' in the
+// source code".
+//
+// Note that the "replace" part in the semantics of complSpec is important: in
+// the default setting of prefix matching, it might be easier to define complSpec
+// in such a way that completers say "any of aths, id and wd can be appended to
+// the 'p' in the source code". However, this is not flexible enough for
+// alternative matching mechanism like substring matching or subsequence
+// matching, where the "seed" of completion (here, p) may not be a prefix of the
+// candidates.
+//
+// There is one completer that deserves more attention than others, the
+// completer for arguments. Unlike other completers, it delegates most of its
+// work to argument completers. See the comment in arg_completers.go for
+// details.
+
 import (
 	"errors"
 	"fmt"
@@ -24,11 +55,11 @@ var (
 // completer takes the current Node (always a leaf in the AST) and an Editor and
 // returns a compl. If the completer does not apply to the type of the current
 // Node, it should return an error of ErrCompletionUnapplicable.
-type completer func(parse.Node, *eval.Evaler) (*compl, error)
+type completer func(parse.Node, *eval.Evaler) (*complSpec, error)
 
-// compl is the result of a completer, meaning that any of the candidates can
+// complSpec is the result of a completer, meaning that any of the candidates can
 // replace the text in the interval [begin, end).
-type compl struct {
+type complSpec struct {
 	begin      int
 	end        int
 	candidates []*candidate
@@ -50,7 +81,7 @@ var completers = []struct {
 // complete takes a Node and Evaler and tries all completers. It returns the
 // name of the completer, and the result and error it gave. If no completer is
 // available, it returns an empty completer name.
-func complete(n parse.Node, ev *eval.Evaler) (string, *compl, error) {
+func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 	for _, item := range completers {
 		compl, err := item.completer(n, ev)
 		if compl != nil {
@@ -63,7 +94,7 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *compl, error) {
 }
 
 // TODO(xiaq): Rewrite this to use cookCandidates
-func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
+func complVariable(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	primary := parse.GetPrimary(n)
 	if primary == nil || primary.Type != parse.Variable {
 		return nil, errCompletionUnapplicable
@@ -110,7 +141,7 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*compl, error) {
 		}
 	}
 
-	return &compl{begin, n.End(), cands}, nil
+	return &complSpec{begin, n.End(), cands}, nil
 }
 
 func hasProperPrefix(s, p string) bool {
@@ -139,7 +170,7 @@ func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
 	}
 }
 
-func complIndex(n parse.Node, ev *eval.Evaler) (*compl, error) {
+func complIndex(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	begin, end, current, q, indexee := findIndexContext(n)
 
 	if begin == -1 {
@@ -157,7 +188,7 @@ func complIndex(n parse.Node, ev *eval.Evaler) (*compl, error) {
 
 	cands := complIndexInner(m)
 	match := ev.Editor.(*Editor).matcher()
-	return &compl{begin, end, cookCandidates(cands, current, match, q)}, nil
+	return &complSpec{begin, end, cookCandidates(cands, current, match, q)}, nil
 }
 
 // Find context information for complIndex. It returns the begin and end for
@@ -218,7 +249,7 @@ func complIndexInner(m eval.IterateKeyer) []rawCandidate {
 	return keys
 }
 
-func complFormHead(n parse.Node, ev *eval.Evaler) (*compl, error) {
+func complFormHead(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	begin, end, head, q := findFormHeadContext(n)
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
@@ -229,7 +260,7 @@ func complFormHead(n parse.Node, ev *eval.Evaler) (*compl, error) {
 	}
 
 	match := ev.Editor.(*Editor).matcher()
-	return &compl{begin, end, cookCandidates(cands, head, match, q)}, nil
+	return &complSpec{begin, end, cookCandidates(cands, head, match, q)}, nil
 }
 
 func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
@@ -309,7 +340,7 @@ func (pc plainCandidates) Less(i, j int) bool {
 func (pc plainCandidates) Swap(i, j int) { pc[i], pc[j] = pc[j], pc[i] }
 
 // complRedir completes redirection RHS.
-func complRedir(n parse.Node, ev *eval.Evaler) (*compl, error) {
+func complRedir(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	begin, end, current, q := findRedirContext(n)
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
@@ -319,7 +350,7 @@ func complRedir(n parse.Node, ev *eval.Evaler) (*compl, error) {
 		return nil, err
 	}
 	match := ev.Editor.(*Editor).matcher()
-	return &compl{begin, end, cookCandidates(cands, current, match, q)}, nil
+	return &complSpec{begin, end, cookCandidates(cands, current, match, q)}, nil
 }
 
 func findRedirContext(n parse.Node) (int, int, string, parse.PrimaryType) {
@@ -340,7 +371,7 @@ func findRedirContext(n parse.Node) (int, int, string, parse.PrimaryType) {
 
 // complArg completes arguments. It identifies the context and then delegates
 // the actual completion work to a suitable completer.
-func complArg(n parse.Node, ev *eval.Evaler) (*compl, error) {
+func complArg(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	begin, end, current, q, form := findArgContext(n)
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
@@ -371,7 +402,7 @@ func complArg(n parse.Node, ev *eval.Evaler) (*compl, error) {
 		return nil, err
 	}
 	match := ev.Editor.(*Editor).matcher()
-	return &compl{begin, end, cookCandidates(cands, current, match, q)}, nil
+	return &complSpec{begin, end, cookCandidates(cands, current, match, q)}, nil
 }
 
 func findArgContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Form) {
