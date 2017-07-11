@@ -67,6 +67,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 
 		// For each form, create a dedicated evalCtx and run asynchronously
 		for i, op := range ops {
+			hasChanInput := i > 0
 			newEc := ec.fork(fmt.Sprintf("form op %v", op))
 			if i > 0 {
 				newEc.ports[0] = nextIn
@@ -95,6 +96,14 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 					*thisError = err.(*Exception)
 				}
 				wg.Done()
+				if hasChanInput {
+					// If the command has channel input, drain it. This
+					// mitigates the effect of erroneous pipelines like
+					// "range 100 | cat"; without draining the pipeline will
+					// lock up.
+					for range newEc.ports[0].Chan {
+					}
+				}
 			}()
 		}
 

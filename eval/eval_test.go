@@ -50,6 +50,8 @@ var evalTests = []struct {
 		[]Value{}, more{wantBytesOut: []byte("A1bert\nBer1in\n")}},
 	// Pure channel pipeline
 	{`put 233 42 19 | each [x]{+ $x 10}`, strs("243", "52", "29"), nomore},
+	// Pipeline draining.
+	{`range 100 | put x`, strs("x"), nomore},
 	// TODO: Add a useful hybrid pipeline sample
 
 	// List element assignment
