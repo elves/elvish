@@ -40,7 +40,7 @@ var (
 	errShouldBeFilename       = newError("", "a composite term representing filename")
 	errShouldBeArray          = newError("", "spaced")
 	errStringUnterminated     = newError("string not terminated")
-	errMultipleAssignment     = newError("assigning a single value to multiple variables isn't supported")
+	errChainedAssignment      = newError("chained assignment not yet supported")
 	errInvalidEscape          = newError("invalid escape sequence")
 	errInvalidEscapeOct       = newError("invalid escape sequence", "octal digit")
 	errInvalidEscapeHex       = newError("invalid escape sequence", "hex digit")
@@ -205,18 +205,16 @@ func (fn *Form) parse(ps *Parser) {
 				addChild(fn, NewSep(ps.src, cn.begin, cn.end))
 				// Turn the head and preceding arguments into LHSs.
 				addLHS := func(cn *Compound) {
-					if cn != nil {
-						if len(cn.Indexings) == 1 && checkVariableInAssignment(cn.Indexings[0].Head, ps) {
-							fn.Vars = append(fn.Vars, cn)
-						} else {
-							ps.errorp(cn.begin, cn.end, errBadLHS)
-						}
+					if len(cn.Indexings) == 1 && checkVariableInAssignment(cn.Indexings[0].Head, ps) {
+						fn.Vars = append(fn.Vars, cn)
+					} else {
+						ps.errorp(cn.begin, cn.end, errBadLHS)
 					}
 				}
 				if fn.Head != nil {
 					addLHS(fn.Head)
 				} else {
-					ps.error(errMultipleAssignment)
+					ps.error(errChainedAssignment)
 				}
 				fn.Head = nil
 				for _, cn := range fn.Args {
