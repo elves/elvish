@@ -11,6 +11,10 @@ import (
 
 // This file contains several "registries", data structure that are written
 // during program initialization and later used when initializing the Editor.
+//
+// The purpose of these registries is to decentralize the definition for
+// builtins, default bindings, and variables (e.g. $edit:prompt). For instance,
+// the definition for $edit:prompt can live in prompt.go instead of api.go.
 
 var builtinMaps = map[string]map[string]*BuiltinFn{}
 
