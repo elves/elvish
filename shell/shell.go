@@ -188,11 +188,8 @@ func handleUsr1AndQuit() {
 	sigs := make(chan os.Signal)
 	signal.Notify(sigs, syscall.SIGUSR1, syscall.SIGQUIT)
 	go func() {
-		for sig := range sigs {
+		for range sigs {
 			fmt.Print(sys.DumpStack())
-			if sig == syscall.SIGQUIT {
-				os.Exit(3)
-			}
 		}
 	}()
 }
