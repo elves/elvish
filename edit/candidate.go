@@ -1,6 +1,8 @@
 package edit
 
 import (
+	"fmt"
+
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
@@ -18,6 +20,7 @@ type rawCandidate interface {
 	cook(q parse.PrimaryType) *candidate
 }
 
+// plainCandidate is a minimal implementation of rawCandidate.
 type plainCandidate string
 
 func (plainCandidate) Kind() string        { return "string" }
@@ -31,6 +34,8 @@ func (p plainCandidate) cook(q parse.PrimaryType) *candidate {
 	return &candidate{code: quoted, menu: ui.Unstyled(s)}
 }
 
+// complexCandidate is an implementation of rawCandidate that offers
+// customization options.
 type complexCandidate struct {
 	stem          string    // Used in the code and the menu.
 	codeSuffix    string    // Appended to the code.
@@ -38,8 +43,14 @@ type complexCandidate struct {
 	style         ui.Styles // Used in the menu.
 }
 
-func (c *complexCandidate) Kind() string    { return "map" }
-func (c *complexCandidate) Repr(int) string { return "<complex candidate>" }
+func (c *complexCandidate) Kind() string { return "map" }
+
+func (c *complexCandidate) Repr(indent int) string {
+	// TODO(xiaq): Pretty-print when indent >= 0
+	return fmt.Sprintf("(edit:complex-candidate %s &code-suffix=%s &display-suffix=%s style=%s)",
+		parse.Quote(c.stem), parse.Quote(c.codeSuffix),
+		parse.Quote(c.displaySuffix), parse.Quote(c.style.String()))
+}
 
 func (c *complexCandidate) text() string { return c.stem }
 
@@ -49,6 +60,26 @@ func (c *complexCandidate) cook(q parse.PrimaryType) *candidate {
 		code: quoted + c.codeSuffix,
 		menu: ui.Styled{c.stem + c.displaySuffix, c.style},
 	}
+}
+
+// outputComplexCandidate composes a complexCandidate.
+func outputComplexCandidate(ec *eval.EvalCtx,
+	args []eval.Value, opts map[string]eval.Value) {
+
+	var style string
+	c := &complexCandidate{}
+
+	eval.ScanArgs(args, &c.stem)
+	eval.ScanOpts(opts,
+		eval.Opt{"code-suffix", &c.codeSuffix, eval.String("")},
+		eval.Opt{"display-suffix", &c.displaySuffix, eval.String("")},
+		eval.Opt{"style", &style, eval.String("")},
+	)
+	if style != "" {
+		c.style = ui.StylesFromString(style)
+	}
+
+	ec.OutputChan() <- c
 }
 
 func cookCandidates(raws []rawCandidate, pattern string,
