@@ -7,6 +7,7 @@ import (
 	"net/rpc"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/elves/elvish/daemon/api"
@@ -36,10 +37,15 @@ func Serve(sockpath, dbpath string) {
 	}
 
 	quitSignals := make(chan os.Signal)
+	quitChan := make(chan struct{})
 	signal.Notify(quitSignals, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
-		sig := <-quitSignals
-		logger.Printf("received signal %s", sig)
+		select {
+		case sig := <-quitSignals:
+			logger.Printf("received signal %s", sig)
+		case <-quitChan:
+			logger.Printf("No active client, daemon exit")
+		}
 		err := os.Remove(sockpath)
 		if err != nil {
 			logger.Printf("failed to remove socket %s: %v", sockpath, err)
@@ -59,7 +65,33 @@ func Serve(sockpath, dbpath string) {
 	rpc.RegisterName(api.ServiceName, service)
 
 	logger.Println("starting to serve RPC calls")
-	rpc.Accept(listener)
+
+	firstClient := true
+	activeClient := sync.WaitGroup{}
+	// prevent daemon exit before serving first client
+	activeClient.Add(1)
+	go func() {
+		activeClient.Wait()
+		close(quitChan)
+	}()
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			logger.Printf("Failed to accept: %#v", err)
+			break
+		}
+
+		if firstClient {
+			firstClient = false
+		} else {
+			activeClient.Add(1)
+		}
+		go func() {
+			rpc.DefaultServer.ServeConn(conn)
+			activeClient.Done()
+		}()
+	}
 
 	logger.Println("exiting")
 }
