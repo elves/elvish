@@ -66,6 +66,11 @@ func (term *Termios) SetEcho(v bool) {
 	setFlag(&term.Lflag, unix.ECHO, v)
 }
 
+// SetICRNL sets the CRNL iflag bit
+func (term *Termios) SetICRNL(v bool) {
+	setFlag(&term.Iflag, unix.ICRNL, v)
+}
+
 // FlushInput discards data written to a file descriptor but not read.
 func FlushInput(fd int) error {
 	return ioctlu(uintptr(fd), flushIOCTL, uintptr(unix.TCIFLUSH))

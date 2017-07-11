@@ -210,6 +210,10 @@ func setupTerminal(file *os.File) (*sys.Termios, error) {
 	term.SetVMin(1)
 	term.SetVTime(0)
 
+	// Enforcing crnl translation on readline. Assuming user won't set
+	// inlcr or -onlcr, otherwise we have to hardcode all of them here.
+	term.SetICRNL(true)
+
 	err = term.ApplyToFd(fd)
 	if err != nil {
 		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
