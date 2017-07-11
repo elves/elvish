@@ -15,6 +15,7 @@ var (
 	// ErrNeedIntIndex    = errors.New("need integer index")
 	ErrBadIndex        = errors.New("bad index")
 	ErrIndexOutOfRange = errors.New("index out of range")
+	ErrAssocWithSlice  = errors.New("assoc with slice not yet supported")
 )
 
 type ListLike interface {
@@ -28,7 +29,11 @@ type List struct {
 	inner vector.Vector
 }
 
-var _ ListLike = List{}
+// Make sure that List implements ListLike and Assocer at compile time.
+var (
+	_ ListLike = List{}
+	_ Assocer  = List{}
+)
 
 // NewList creates a new List.
 func NewList(vs ...Value) List {
@@ -96,6 +101,14 @@ func (l List) IndexOne(idx Value) Value {
 		return List{l.inner.SubVector(i, j)}
 	}
 	return l.inner.Nth(i).(Value)
+}
+
+func (l List) Assoc(idx, v Value) Value {
+	slice, i, _ := ParseAndFixListIndex(ToString(idx), l.Len())
+	if slice {
+		throw(ErrAssocWithSlice)
+	}
+	return List{l.inner.AssocN(i, v)}
 }
 
 // ParseAndFixListIndex parses a list index and returns whether the index is a

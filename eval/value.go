@@ -156,6 +156,12 @@ func (ioi IndexOneerIndexer) Index(vs []Value) []Value {
 	return results
 }
 
+// Assocer is anything tha can return a slightly modified version of itself as a
+// new Value.
+type Assocer interface {
+	Assoc(k, v Value) Value
+}
+
 // Error definitions.
 var (
 	ErrOnlyStrOrRat = errors.New("only str or rat may be converted to rat")

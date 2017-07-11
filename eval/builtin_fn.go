@@ -104,6 +104,9 @@ func init() {
 		{"peach", peach},
 		{"repeat", repeat},
 
+		// Container primitives.
+		{"assoc", assoc},
+
 		// Sequence primitives
 		{"explode", explode},
 		{"take", take},
@@ -711,6 +714,16 @@ func repeat(ec *EvalCtx, args []Value, opts map[string]Value) {
 	for i := 0; i < n; i++ {
 		out <- v
 	}
+}
+
+func assoc(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var (
+		a    Assocer
+		k, v Value
+	)
+	ScanArgs(args, &a, &k, &v)
+	TakeNoOpt(opts)
+	ec.OutputChan() <- a.Assoc(k, v)
 }
 
 // explode puts each element of the argument.
