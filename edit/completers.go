@@ -93,7 +93,6 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 	return "", nil, nil
 }
 
-// TODO(xiaq): Rewrite this to use cookCandidates
 func complVariable(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	primary := parse.GetPrimary(n)
 	if primary == nil || primary.Type != parse.Variable {
@@ -129,16 +128,14 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	}
 	sort.Strings(entries)
 
-	var cands []*candidate
-	// XXX(xiaq): Fragile. Perhaps the signature of this function should be
-	// changed.
-	match := ev.Editor.(*Editor).matcher()
-	// Build candidates.
-	for _, varname := range entries {
-		if match(varname, nameHead) {
-			cand := &candidate{code: varname, menu: ui.Unstyled(varname)}
-			cands = append(cands, cand)
-		}
+	var rawCands []rawCandidate
+	for _, entry := range entries {
+		rawCands = append(rawCands, plainCandidate(entry))
+	}
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, "variable", nameHead,
+		rawCands, parse.Bareword)
+	if err != nil {
+		return nil, err
 	}
 
 	return &complSpec{begin, n.End(), cands}, nil
@@ -186,9 +183,14 @@ func complIndex(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 		return nil, errCannotIterateKey
 	}
 
-	cands := complIndexInner(m)
-	match := ev.Editor.(*Editor).matcher()
-	return &complSpec{begin, end, cookCandidates(cands, current, match, q)}, nil
+	rawCands := complIndexInner(m)
+
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, "index",
+		current, rawCands, q)
+	if err != nil {
+		return nil, err
+	}
+	return &complSpec{begin, end, cands}, nil
 }
 
 // Find context information for complIndex. It returns the begin and end for
@@ -254,13 +256,17 @@ func complFormHead(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
 	}
-	cands, err := complFormHeadInner(head, ev)
+	rawCands, err := complFormHeadInner(head, ev)
 	if err != nil {
 		return nil, err
 	}
 
-	match := ev.Editor.(*Editor).matcher()
-	return &complSpec{begin, end, cookCandidates(cands, head, match, q)}, nil
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, "command",
+		head, rawCands, q)
+	if err != nil {
+		return nil, err
+	}
+	return &complSpec{begin, end, cands}, nil
 }
 
 func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
@@ -345,12 +351,18 @@ func complRedir(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
 	}
-	cands, err := complFilenameInner(current, false)
+	rawCands, err := complFilenameInner(current, false)
 	if err != nil {
 		return nil, err
 	}
-	match := ev.Editor.(*Editor).matcher()
-	return &complSpec{begin, end, cookCandidates(cands, current, match, q)}, nil
+
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, "redirect",
+		current, rawCands, q)
+	if err != nil {
+		return nil, err
+	}
+
+	return &complSpec{begin, end, cands}, nil
 }
 
 func findRedirContext(n parse.Node) (int, int, string, parse.PrimaryType) {
@@ -397,12 +409,18 @@ func complArg(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	words[len(words)-1] = current
 	copy(words[1:len(words)-1], args[:])
 
-	cands, err := completeArg(words, ev)
+	rawCands, err := completeArg(words, ev)
 	if err != nil {
 		return nil, err
 	}
-	match := ev.Editor.(*Editor).matcher()
-	return &complSpec{begin, end, cookCandidates(cands, current, match, q)}, nil
+
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, "argument",
+		current, rawCands, q)
+	if err != nil {
+		return nil, err
+	}
+
+	return &complSpec{begin, end, cands}, nil
 }
 
 func findArgContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Form) {

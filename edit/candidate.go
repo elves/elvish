@@ -81,15 +81,3 @@ func outputComplexCandidate(ec *eval.EvalCtx,
 
 	ec.OutputChan() <- c
 }
-
-func cookCandidates(raws []rawCandidate, pattern string,
-	match func(string, string) bool, q parse.PrimaryType) []*candidate {
-
-	var cooked []*candidate
-	for _, raw := range raws {
-		if match(raw.text(), pattern) {
-			cooked = append(cooked, raw.cook(q))
-		}
-	}
-	return cooked
-}
