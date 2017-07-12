@@ -5,8 +5,9 @@
 package service
 
 import (
-	"github.com/elves/elvish/util"
 	"syscall"
+
+	"github.com/elves/elvish/util"
 )
 
 var logger = util.GetLogger("[daemon-dummy] ")
