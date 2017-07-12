@@ -13,12 +13,12 @@ func (ed *Editor) abbr() eval.Map {
 
 func (ed *Editor) abbrIterate(cb func(abbr, full string) bool) {
 	m := ed.abbr()
-	m.IterateKey(func(k eval.Value) bool {
-		abbr, ok := k.(eval.String)
+	m.IteratePair(func(abbrValue, fullValue eval.Value) bool {
+		abbr, ok := abbrValue.(eval.String)
 		if !ok {
 			return true
 		}
-		full, ok := m.IndexOne(k).(eval.String)
+		full, ok := fullValue.(eval.String)
 		if !ok {
 			return true
 		}
