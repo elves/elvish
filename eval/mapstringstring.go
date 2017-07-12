@@ -49,8 +49,15 @@ func (m MapStringString) IndexOne(idx Value) Value {
 
 func (m MapStringString) IterateKey(f func(Value) bool) {
 	for k := range m {
-		cont := f(String(k))
-		if !cont {
+		if !f(String(k)) {
+			break
+		}
+	}
+}
+
+func (m MapStringString) IteratePair(f func(Value, Value) bool) {
+	for k, v := range m {
+		if !f(String(k), String(v)) {
 			break
 		}
 	}

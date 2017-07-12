@@ -20,6 +20,7 @@ type MapLike interface {
 	IndexOneer
 	HasKeyer
 	IterateKeyer
+	IteratePairer
 }
 
 var _ MapLike = Map{}
@@ -65,8 +66,15 @@ func (m Map) IndexOne(idx Value) Value {
 
 func (m Map) IterateKey(f func(Value) bool) {
 	for k := range *m.inner {
-		cont := f(k)
-		if !cont {
+		if !f(k) {
+			break
+		}
+	}
+}
+
+func (m Map) IteratePair(f func(Value, Value) bool) {
+	for k, v := range *m.inner {
+		if !f(k, v) {
 			break
 		}
 	}

@@ -83,6 +83,11 @@ type IterateKeyer interface {
 	IterateKey(func(Value) bool)
 }
 
+// IteratePairer is anything with key-value pairs that can be iterated.
+type IteratePairer interface {
+	IteratePair(func(Value, Value) bool)
+}
+
 var (
 	NoArgs = []Value{}
 	NoOpts = map[string]Value{}

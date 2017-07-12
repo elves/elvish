@@ -45,8 +45,15 @@ func (s *Struct) IndexOne(idx Value) Value {
 
 func (s *Struct) IterateKey(f func(Value) bool) {
 	for _, field := range s.FieldNames {
-		cont := f(String(field))
-		if !cont {
+		if !f(String(field)) {
+			break
+		}
+	}
+}
+
+func (s *Struct) IteratePair(f func(Value, Value) bool) {
+	for i, field := range s.FieldNames {
+		if !f(String(field), s.Fields[i].Get()) {
 			break
 		}
 	}
