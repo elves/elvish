@@ -14,7 +14,7 @@ var logger = util.GetLogger("[daemon-dummy] ")
 // A dummy implementation of Serve for the environment of Cgo being disabled.
 func Serve(sockpath, dbpath string) {
 	logger.Println("pid is", syscall.Getpid())
-	logger.Println("going to listen", sockpath)
+	logger.Println("this is the dummy service implementation", sockpath)
 
 	select {}
 
