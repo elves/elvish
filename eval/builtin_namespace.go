@@ -10,6 +10,7 @@ import (
 
 func makeBuiltinNamespace(daemon *api.Client) Namespace {
 	ns := Namespace{
+		"_":     BlackholeVariable{},
 		"pid":   NewRoVariable(String(strconv.Itoa(syscall.Getpid()))),
 		"ok":    NewRoVariable(OK),
 		"true":  NewRoVariable(Bool(true)),

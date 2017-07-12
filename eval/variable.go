@@ -113,6 +113,7 @@ func (ev elemVariable) Get() Value {
 	return ev.container.IndexOne(ev.index)
 }
 
+// envVariable represents an environment variable.
 type envVariable struct {
 	name string
 }
@@ -123,4 +124,19 @@ func (ev envVariable) Set(val Value) {
 
 func (ev envVariable) Get() Value {
 	return String(os.Getenv(ev.name))
+}
+
+// ErrGetBlackhole is raised when attempting to get the value of a blackhole
+// variable.
+var ErrGetBlackhole = errors.New("cannot get blackhole variable")
+
+// BlackholeVariable represents a blackhole variable. Assignments to a blackhole
+// variable will be discarded, and getting a blackhole variable raises an error.
+type BlackholeVariable struct{}
+
+func (bv BlackholeVariable) Set(Value) {}
+
+func (bv BlackholeVariable) Get() Value {
+	throw(ErrGetBlackhole)
+	panic("unreachable")
 }

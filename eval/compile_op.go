@@ -310,6 +310,8 @@ func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFu
 		// This is to fix #176, which only happens in the top level of REPL; in
 		// other cases, a failure in the evaluation of the RHS causes this
 		// level to fail, making the variables unaccessible.
+		//
+		// XXX(xiaq): Should think about how to get rid of this.
 		defer fixNilVariables(variables)
 		defer fixNilVariables(rest)
 
@@ -340,6 +342,9 @@ func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFu
 
 func fixNilVariables(vs []Variable) {
 	for _, v := range vs {
+		if _, isBlackhole := v.(BlackholeVariable); isBlackhole {
+			continue
+		}
 		if v.Get() == nil {
 			v.Set(String(""))
 		}
