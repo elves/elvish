@@ -1,3 +1,5 @@
+// +build cgo
+
 // Package service implements the daemon service for mediating access to the
 // storage backend.
 package service
