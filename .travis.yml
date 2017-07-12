@@ -9,3 +9,6 @@ os:
     - osx
 script:
     make travis
+env:
+    - CGO_ENABLED=0
+    - CGO_ENABLED=1
