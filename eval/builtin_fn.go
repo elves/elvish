@@ -390,42 +390,40 @@ func ScanOpts(m map[string]Value, opts ...Opt) {
 	}
 }
 
-// ScanIntoOpts scan options from a map like ScanOpts except the
-// destination is a struct whose fields are corresponded to the
-// options to be parsed. Without a explicit "name" tag as the option
-// name, it will use the lower-cased struct field name instead.
-func ScanIntoOpts(m map[string]Value, o interface{}) {
-	values := reflect.ValueOf(o)
-
-	for ; values.Kind() == reflect.Ptr; values = values.Elem() {
+// ScanOptsToStruct scan options from a map like ScanOpts except the destination
+// is a struct whose fields correspond to the options to be parsed. A field
+// named FieldName corresponds to the option named field-name, unless the field
+// has a explicit "name" tag.
+func ScanOptsToStruct(m map[string]Value, structPtr interface{}) {
+	ptrValue := reflect.ValueOf(structPtr)
+	if ptrValue.Kind() != reflect.Ptr || ptrValue.Elem().Kind() != reflect.Struct {
+		throwf("internal bug: need struct ptr for ScanOptsToStruct, got %T", structPtr)
 	}
-	if values.Kind() != reflect.Struct {
-		throwf("internal bug: need struct, got %T", values)
-	}
+	struc := ptrValue.Elem()
 
-	names := make(map[string]string)
-	for i := 0; i < values.Type().NumField(); i++ {
+	// fieldIdxForOpt maps option name to the index of field in struc.
+	fieldIdxForOpt := make(map[string]int)
+	for i := 0; i < struc.Type().NumField(); i++ {
 		// ignore unexported fields
-		if !values.Field(i).CanSet() {
+		if !struc.Field(i).CanSet() {
 			continue
 		}
 
-		f := values.Type().Field(i)
-		n := f.Tag.Get("name")
-		if n == "" {
-			n = strings.ToLower(f.Name)
+		f := struc.Type().Field(i)
+		optName := f.Tag.Get("name")
+		if optName == "" {
+			optName = util.CamelToDashed(f.Name)
 		}
-		names[n] = f.Name
+		fieldIdxForOpt[optName] = i
 	}
 
 	for k, v := range m {
-		vname, ok := names[k]
+		fieldIdx, ok := fieldIdxForOpt[k]
 		if !ok {
 			throwf("unknown option %s", parse.Quote(k))
 		}
-		scanArg(v, values.FieldByName(vname).Addr().Interface())
+		scanArg(v, struc.Field(fieldIdx).Addr().Interface())
 	}
-
 }
 
 func scanArg(value Value, a interface{}) {

@@ -331,13 +331,13 @@ type narrowItem interface {
 }
 
 type narrowOptions struct {
-	AutoCommit        bool     `name:"auto-commit"`
-	Bindings          eval.Map `name:"bindings"`
-	IgnoreDuplication bool     `name:"ignore-duplication"`
-	IgnoreCase        bool     `name:"ignore-case"`
-	KeepBottom        bool     `name:"keep-bottom"`
-	MaxLines          int      `name:"max-lines"`
-	Modeline          string   `name:"modeline"`
+	AutoCommit        bool
+	Bindings          eval.Map
+	IgnoreDuplication bool
+	IgnoreCase        bool
+	KeepBottom        bool
+	MaxLines          int
+	Modeline          string
 
 	bindingMap map[ui.Key]eval.CallableValue
 }
@@ -404,7 +404,7 @@ func NarrowRead(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value)
 	}
 
 	eval.ScanArgs(args, &source, &action)
-	eval.ScanIntoOpts(opts, &l.opts)
+	eval.ScanOptsToStruct(opts, &l.opts)
 
 	l.opts.Bindings.IterateKey(func(k eval.Value) bool {
 		key := ui.ToKey(k)
