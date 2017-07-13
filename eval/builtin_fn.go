@@ -97,7 +97,7 @@ func init() {
 		{"constantly", constantly},
 
 		// Misc shell basic
-		{"source", source},
+		{"-source", source},
 
 		// Iterations.
 		{"each", each},
