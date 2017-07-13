@@ -292,6 +292,17 @@ var evalTests = []struct {
 	{`ord a`, strs("0x61"), nomore},
 	{`base 16 42 233`, strs("2a", "e9"), nomore},
 	{`wcswidth 你好`, strs("4"), nomore},
+	{`has-key [foo bar] 0`, bools(true), nomore},
+	{`has-key [foo bar] 0:1`, bools(true), nomore},
+	{`has-key [foo bar] 0:20`, bools(false), nomore},
+	{`has-key [&lorem=ipsum &foo=bar] lorem`, bools(true), nomore},
+	{`has-key [&lorem=ipsum &foo=bar] loremwsq`, bools(false), nomore},
+	{`has-value [&lorem=ipsum &foo=bar] lorem`, bools(false), nomore},
+	{`has-value [&lorem=ipsum &foo=bar] bar`, bools(true), nomore},
+	{`has-value [foo bar] bar`, bools(true), nomore},
+	{`has-value [foo bar] badehose`, bools(false), nomore},
+	{`has-value "foo" o`, bools(true), nomore},
+	{`has-value "foo" d`, bools(false), nomore},
 }
 
 func strs(ss ...string) []Value {

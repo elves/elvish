@@ -112,6 +112,8 @@ func init() {
 		{"take", take},
 		{"range", rangeFn},
 		{"count", count},
+		{"has-key", hasKey},
+		{"has-value", hasValue},
 
 		// String
 		{"joins", joins},
@@ -778,6 +780,56 @@ func rangeFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	for i := lower; i < upper; i += step {
 		out <- String(fmt.Sprintf("%g", i))
 	}
+}
+
+func hasValue(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+
+	var container, value Value
+	var found bool
+
+	ScanArgs(args, &container, &value)
+
+	switch container := container.(type) {
+	case Iterable:
+		container.Iterate(func(v Value) bool {
+			found = (v == value)
+			return !found
+		})
+	case MapLike:
+		container.IterateKey(func(v Value) bool {
+			found = (container.IndexOne(v) == value)
+			return !found
+		})
+	default:
+		throw(fmt.Errorf("argument of type '%s' is not iterable", container.Kind()))
+	}
+
+	ec.ports[1].Chan <- Bool(found)
+}
+
+func hasKey(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+
+	var container, key Value
+	var found bool
+
+	ScanArgs(args, &container, &key)
+
+	switch container := container.(type) {
+	case HasKeyer:
+		found = container.HasKey(key)
+	case Lener:
+		// XXX(xiaq): Not all types that implement Lener have numerical indices
+		err := util.PCall(func() {
+			ParseAndFixListIndex(ToString(key), container.Len())
+		})
+		found = (err == nil)
+	default:
+		throw(fmt.Errorf("couldn't get key or index of type '%s'", container.Kind()))
+	}
+
+	ec.ports[1].Chan <- Bool(found)
 }
 
 func count(ec *EvalCtx, args []Value, opts map[string]Value) {
