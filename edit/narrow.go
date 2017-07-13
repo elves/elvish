@@ -111,6 +111,10 @@ func (l *narrow) CursorOnModeLine() bool {
 }
 
 func (l *narrow) List(maxHeight int) renderer {
+	if l.opts.MaxLines > 0 && l.opts.MaxLines < maxHeight {
+		maxHeight = l.opts.MaxLines
+	}
+
 	if l.filtered == nil {
 		l.refresh()
 	}
@@ -347,6 +351,7 @@ type narrowOptions struct {
 	IgnoreDuplication bool     `name:"ignore-duplication"`
 	IgnoreCase        bool     `name:"ignore-case"`
 	KeepBottom        bool     `name:"keep-bottom"`
+	MaxLines          int      `name:"max-lines"`
 	Modeline          string   `name:"modeline"`
 
 	bindingMap map[ui.Key]eval.CallableValue
