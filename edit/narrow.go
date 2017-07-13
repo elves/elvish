@@ -26,12 +26,12 @@ var _ = registerBuiltins(modeNarrow, map[string]func(*Editor){
 	},
 	"toggle-ignore-duplication": func(ed *Editor) {
 		l := getNarrow(ed)
-		l.opts.ignoreDup = !l.opts.ignoreDup
+		l.opts.IgnoreDuplication = !l.opts.IgnoreDuplication
 		l.refresh()
 	},
 	"toggle-ignore-case": func(ed *Editor) {
 		l := getNarrow(ed)
-		l.opts.ignoreCase = !l.opts.ignoreCase
+		l.opts.IgnoreCase = !l.opts.IgnoreCase
 		l.refresh()
 	},
 	"default": func(ed *Editor) { getNarrow(ed).defaultBinding(ed) },
@@ -74,8 +74,8 @@ type narrow struct {
 }
 
 func (l *narrow) Binding(k ui.Key) eval.CallableValue {
-	if l.opts.bindings != nil {
-		if f, ok := l.opts.bindings[k]; ok {
+	if l.opts.bindingMap != nil {
+		if f, ok := l.opts.bindingMap[k]; ok {
 			return f
 		}
 	}
@@ -89,15 +89,15 @@ func (l *narrow) Binding(k ui.Key) eval.CallableValue {
 }
 
 func (l *narrow) ModeLine() renderer {
-	ml := l.opts.modeline
+	ml := l.opts.Modeline
 	var opt []string
-	if l.opts.autoCommit {
+	if l.opts.AutoCommit {
 		opt = append(opt, "A")
 	}
-	if l.opts.ignoreCase {
+	if l.opts.IgnoreCase {
 		opt = append(opt, "C")
 	}
-	if l.opts.ignoreDup {
+	if l.opts.IgnoreDuplication {
 		opt = append(opt, "D")
 	}
 	if len(opt) != 0 {
@@ -200,7 +200,7 @@ func (l *narrow) refresh() {
 	l.filtered = make([]narrowItem, 0, len(candidates))
 
 	filter := l.filter
-	if l.opts.ignoreCase {
+	if l.opts.IgnoreCase {
 		filter = strings.ToLower(filter)
 	}
 
@@ -209,13 +209,13 @@ func (l *narrow) refresh() {
 	for _, item := range candidates {
 		text := item.FilterText()
 		s := text
-		if l.opts.ignoreCase {
+		if l.opts.IgnoreCase {
 			s = strings.ToLower(s)
 		}
 		if !l.match(s, filter) {
 			continue
 		}
-		if l.opts.ignoreDup {
+		if l.opts.IgnoreDuplication {
 			if _, ok := set[text]; ok {
 				continue
 			}
@@ -224,7 +224,7 @@ func (l *narrow) refresh() {
 		l.filtered = append(l.filtered, item)
 	}
 
-	if l.opts.keepBottom {
+	if l.opts.KeepBottom {
 		l.selected = len(l.filtered) - 1
 	} else {
 		l.selected = 0
@@ -307,7 +307,7 @@ func (l *narrow) handleFilterKey(ed *Editor) bool {
 	k := ed.lastKey
 	if likeChar(k) {
 		l.changeFilter(l.filter + string(k.Rune))
-		if len(l.filtered) == 1 && l.opts.autoCommit {
+		if len(l.filtered) == 1 && l.opts.AutoCommit {
 			l.accept(ed)
 			insertStart(ed)
 		}
@@ -342,12 +342,14 @@ type narrowItem interface {
 }
 
 type narrowOptions struct {
-	modeline   string
-	autoCommit bool
-	keepBottom bool
-	ignoreDup  bool
-	ignoreCase bool
-	bindings   map[ui.Key]eval.CallableValue
+	AutoCommit        bool     `name:"auto-commit"`
+	Bindings          eval.Map `name:"bindings"`
+	IgnoreDuplication bool     `name:"ignore-duplication"`
+	IgnoreCase        bool     `name:"ignore-case"`
+	KeepBottom        bool     `name:"keep-bottom"`
+	Modeline          string   `name:"modeline"`
+
+	bindingMap map[ui.Key]eval.CallableValue
 }
 
 type narrowItemString struct {
@@ -405,41 +407,23 @@ func (c *narrowItemComplex) FilterText() string {
 
 func NarrowRead(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	var source, action eval.CallableValue
-	l := &narrow{}
-	var bindings eval.Map
+	l := &narrow{
+		opts: narrowOptions{
+			Bindings: eval.NewMap(nil),
+		},
+	}
 
 	eval.ScanArgs(args, &source, &action)
-	eval.ScanOpts(opts,
-		eval.Opt{
-			Name:    "keep-bottom",
-			Ptr:     &l.opts.keepBottom,
-			Default: eval.Bool(false),
-		},
-		eval.Opt{
-			Name:    "auto-commit",
-			Ptr:     &l.opts.autoCommit,
-			Default: eval.Bool(false),
-		},
-		eval.Opt{
-			Name:    "modeline",
-			Ptr:     &l.opts.modeline,
-			Default: eval.String(""),
-		},
-		eval.Opt{
-			Name:    "bindings",
-			Ptr:     &bindings,
-			Default: eval.NewMap(nil),
-		},
-	)
+	eval.ScanIntoOpts(opts, &l.opts)
 
-	bindings.IterateKey(func(k eval.Value) bool {
+	l.opts.Bindings.IterateKey(func(k eval.Value) bool {
 		key := ui.ToKey(k)
-		f := bindings.IndexOne(k)
+		f := l.opts.Bindings.IndexOne(k)
 		maybeThrow(eval.ShouldBeFn(f))
-		if l.opts.bindings == nil {
-			l.opts.bindings = make(map[ui.Key]eval.CallableValue)
+		if l.opts.bindingMap == nil {
+			l.opts.bindingMap = make(map[ui.Key]eval.CallableValue)
 		}
-		l.opts.bindings[key] = f.(eval.CallableValue)
+		l.opts.bindingMap[key] = f.(eval.CallableValue)
 		return true
 	})
 
