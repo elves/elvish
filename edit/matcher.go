@@ -17,16 +17,15 @@ var (
 var prefixMatcher = eval.BuiltinFn{"prefixMatcher", func(ec *eval.EvalCtx,
 	args []eval.Value, opts map[string]eval.Value) {
 	out := ec.OutputChan()
+	in := ec.InputChan()
 	var pattern eval.String
-	var candidates eval.List
-	eval.ScanArgs(args, &pattern, &candidates)
+	eval.ScanArgs(args, &pattern)
 
-	candidates.Iterate(func(cand eval.Value) bool {
+	for cand := range in {
 		candidate := eval.ToString(cand)
 
 		out <- eval.Bool(strings.HasPrefix(candidate, string(pattern)))
-		return true
-	})
+	}
 }}
 
 var _ = registerVariable("-matcher", func() eval.Variable {
@@ -50,25 +49,24 @@ func (ed *Editor) filterAndCookCandidates(ev *eval.Evaler, completer string, pat
 		return nil, errMatcherMustBeFn
 	}
 
+	input := make(chan eval.Value, len(cands))
 	ports := []*eval.Port{
-		eval.DevNullClosedChan, {File: os.Stdout}, {File: os.Stderr}}
+		{Chan: input}, {File: os.Stdout}, {File: os.Stderr}}
 	ec := eval.NewTopEvalCtx(ev, "[editor matcher]", "", ports)
 
-	var candValues []eval.Value
-	patternValue := eval.String(pattern)
+	args := []eval.Value{
+		eval.String(pattern),
+	}
 
 	for _, cand := range cands {
-		candValues = append(candValues, eval.String(cand.text()))
+		input <- eval.String(cand.text())
 	}
+	close(input)
 
-	args := []eval.Value{
-		patternValue,
-		eval.NewList(candValues...),
-	}
 	values, err := ec.PCaptureOutput(m, args, eval.NoOpts)
 	if err != nil {
 		return nil, err
-	} else if len(values) != len(candValues) {
+	} else if len(values) != len(cands) {
 		return nil, errIncorrectNumOfResults
 	}
 	for i, value := range values {
