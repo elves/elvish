@@ -107,6 +107,8 @@ func (ed *Editor) filterAndCookCandidates(ev *eval.Evaler, completer string, pat
 		{Chan: input}, {File: os.Stdout}, {File: os.Stderr}}
 	ec := eval.NewTopEvalCtx(ev, "[editor matcher]", "", ports)
 
+	// TODO(xiaq): Revise the API of completers so that the complter write
+	// directly to a channel and run concurrently with the matcher.
 	for _, cand := range cands {
 		input <- eval.String(cand.text())
 	}
