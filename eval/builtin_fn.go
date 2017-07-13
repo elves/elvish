@@ -35,8 +35,10 @@ var builtinFns []*BuiltinFn
 // BuiltinFn is a builtin function.
 type BuiltinFn struct {
 	Name string
-	Impl func(*EvalCtx, []Value, map[string]Value)
+	Impl BuiltinFnImpl
 }
+
+type BuiltinFnImpl func(*EvalCtx, []Value, map[string]Value)
 
 var _ CallableValue = &BuiltinFn{}
 
@@ -233,7 +235,7 @@ var (
 	ErrNotInSameGroup    = errors.New("not in the same process group")
 )
 
-func WrapStringToString(f func(string) string) func(*EvalCtx, []Value, map[string]Value) {
+func WrapStringToString(f func(string) string) BuiltinFnImpl {
 	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
 		s := mustGetOneString(args)
@@ -241,7 +243,7 @@ func WrapStringToString(f func(string) string) func(*EvalCtx, []Value, map[strin
 	}
 }
 
-func WrapStringToStringError(f func(string) (string, error)) func(*EvalCtx, []Value, map[string]Value) {
+func WrapStringToStringError(f func(string) (string, error)) BuiltinFnImpl {
 	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
 		s := mustGetOneString(args)
@@ -251,7 +253,7 @@ func WrapStringToStringError(f func(string) (string, error)) func(*EvalCtx, []Va
 	}
 }
 
-func wrapStrCompare(cmp func(a, b string) bool) func(*EvalCtx, []Value, map[string]Value) {
+func wrapStrCompare(cmp func(a, b string) bool) BuiltinFnImpl {
 	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
 		for _, a := range args {
@@ -270,7 +272,7 @@ func wrapStrCompare(cmp func(a, b string) bool) func(*EvalCtx, []Value, map[stri
 	}
 }
 
-func wrapNumCompare(cmp func(a, b float64) bool) func(*EvalCtx, []Value, map[string]Value) {
+func wrapNumCompare(cmp func(a, b float64) bool) BuiltinFnImpl {
 	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
 		floats := make([]float64, len(args))
