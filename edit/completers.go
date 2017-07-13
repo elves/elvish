@@ -130,7 +130,7 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 
 	var rawCands []rawCandidate
 	for _, entry := range entries {
-		rawCands = append(rawCands, plainCandidate(entry))
+		rawCands = append(rawCands, noQuoteCandidate(entry))
 	}
 	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, "variable", nameHead,
 		rawCands, parse.Bareword)

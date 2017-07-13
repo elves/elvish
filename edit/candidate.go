@@ -26,13 +26,24 @@ type plainCandidate string
 
 func (plainCandidate) Kind() string        { return "string" }
 func (p plainCandidate) Repr(l int) string { return eval.String(p).Repr(l) }
-
-func (p plainCandidate) text() string { return string(p) }
+func (p plainCandidate) text() string      { return string(p) }
 
 func (p plainCandidate) cook(q parse.PrimaryType) *candidate {
 	s := string(p)
 	quoted, _ := parse.QuoteAs(s, q)
 	return &candidate{code: quoted, menu: ui.Unstyled(s)}
+}
+
+// noQuoteCandidate is a rawCandidate that does not quote when cooked.
+type noQuoteCandidate string
+
+func (noQuoteCandidate) Kind() string         { return "string" }
+func (nq noQuoteCandidate) Repr(l int) string { return eval.String(nq).Repr(l) }
+func (nq noQuoteCandidate) text() string      { return string(nq) }
+
+func (nq noQuoteCandidate) cook(parse.PrimaryType) *candidate {
+	s := string(nq)
+	return &candidate{code: s, menu: ui.Unstyled(s)}
 }
 
 // complexCandidate is an implementation of rawCandidate that offers
