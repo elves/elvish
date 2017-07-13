@@ -95,12 +95,7 @@ func source(ev *eval.Evaler, fname string, notexistok bool) bool {
 func sourceTextAndPrintError(ev *eval.Evaler, name, src string) bool {
 	err := ev.SourceText(name, src)
 	if err != nil {
-		switch err := err.(type) {
-		case util.Pprinter:
-			fmt.Fprintln(os.Stderr, err.Pprint(""))
-		default:
-			fmt.Fprintf(os.Stderr, "\033[31;1m%s\033[m", err.Error())
-		}
+		util.PprintError(err)
 		return false
 	}
 	return true
