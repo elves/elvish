@@ -215,9 +215,11 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 					break
 				}
 			}
-			if prefix != "" && prefix != ed.line[complSpec.begin:complSpec.end] {
+
+			if prefix != "" && len(prefix) > complSpec.end-complSpec.begin {
 				ed.line = ed.line[:complSpec.begin] + prefix + ed.line[complSpec.end:]
 				ed.dot = complSpec.begin + len(prefix)
+
 				return
 			}
 		}

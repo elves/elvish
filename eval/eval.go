@@ -465,6 +465,16 @@ func linesToChan(r io.Reader, ch chan<- Value) {
 	}
 }
 
+// InputChan returns a channel from which input can be read.
+func (ec *EvalCtx) InputChan() chan Value {
+	return ec.ports[0].Chan
+}
+
+// InputFile returns a file from which input can be read.
+func (ec *EvalCtx) InputFile() *os.File {
+	return ec.ports[0].File
+}
+
 // OutputChan returns a channel onto which output can be written.
 func (ec *EvalCtx) OutputChan() chan<- Value {
 	return ec.ports[1].Chan
