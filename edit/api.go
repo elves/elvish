@@ -57,6 +57,9 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	// Construct the edit: module, starting with builtins.
 	ns := makeNamespaceFromBuiltins(builtinMaps[""])
 
+	// TODO(xiaq): Everything here should be registered to some registry instead
+	// of centralized here.
+
 	// Populate binding tables in the variable $binding.
 	// TODO Make binding specific to the Editor.
 	binding := &eval.Struct{
@@ -116,6 +119,9 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	for _, bac := range argCompletersData {
 		ns[eval.FnPrefix+bac.name] = eval.NewRoVariable(bac)
 	}
+
+	// Matchers.
+	eval.AddBuiltinFns(ns, matchers...)
 
 	// Functions.
 	eval.AddBuiltinFns(ns,

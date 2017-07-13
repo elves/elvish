@@ -2,6 +2,7 @@ package edit
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -80,4 +81,42 @@ func outputComplexCandidate(ec *eval.EvalCtx,
 	}
 
 	ec.OutputChan() <- c
+}
+
+func (ed *Editor) filterAndCookCandidates(ev *eval.Evaler, completer string, pattern string,
+	cands []rawCandidate, q parse.PrimaryType) ([]*candidate, error) {
+
+	var filtered []*candidate
+	matcher := ed.variables["-matcher"].Get().(eval.Map).IndexOne(eval.String(completer))
+	m, ok := matcher.(eval.CallableValue)
+	if !ok {
+		return nil, errMatcherMustBeFn
+	}
+
+	input := make(chan eval.Value, len(cands))
+	ports := []*eval.Port{
+		{Chan: input}, {File: os.Stdout}, {File: os.Stderr}}
+	ec := eval.NewTopEvalCtx(ev, "[editor matcher]", "", ports)
+
+	args := []eval.Value{
+		eval.String(pattern),
+	}
+
+	for _, cand := range cands {
+		input <- eval.String(cand.text())
+	}
+	close(input)
+
+	values, err := ec.PCaptureOutput(m, args, eval.NoOpts)
+	if err != nil {
+		return nil, err
+	} else if len(values) != len(cands) {
+		return nil, errIncorrectNumOfResults
+	}
+	for i, value := range values {
+		if eval.ToBool(value) {
+			filtered = append(filtered, cands[i].cook(q))
+		}
+	}
+	return filtered, nil
 }
