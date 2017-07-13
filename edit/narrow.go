@@ -39,21 +39,6 @@ var _ = registerBuiltins(modeNarrow, map[string]func(*Editor){
 
 func init() {
 	registerBindings(modeNarrow, modeNarrow, nil)
-	// registerBindings(modeNarrow, modeNarrow, map[ui.Key]string{
-	// 	ui.Key{ui.Up, 0}:         "up",
-	// 	ui.Key{ui.PageUp, 0}:     "page-up",
-	// 	ui.Key{ui.Down, 0}:       "down",
-	// 	ui.Key{ui.PageDown, 0}:   "page-down",
-	// 	ui.Key{ui.Tab, 0}:        "down-cycle",
-	// 	ui.Key{ui.Tab, ui.Shift}: "up-cycle",
-	// 	ui.Key{ui.Backspace, 0}:  "backspace",
-	// 	ui.Key{ui.Enter, 0}:      "accept-close",
-	// 	ui.Key{ui.Enter, ui.Alt}: "accept",
-	// 	ui.Default:               "default",
-	// 	ui.Key{'[', ui.Ctrl}:     "insert:start",
-	// 	ui.Key{'G', ui.Ctrl}:     "toggle-ignore-case",
-	// 	ui.Key{'D', ui.Ctrl}:     "toggle-ignore-duplication",
-	// })
 }
 
 // narrow implements a listing mode that supports the notion of selecting an
