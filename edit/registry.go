@@ -16,6 +16,24 @@ import (
 // builtins, default bindings, and variables (e.g. $edit:prompt). For instance,
 // the definition for $edit:prompt can live in prompt.go instead of api.go.
 
+var variableRegistry = map[string]func() eval.Variable{}
+
+// registerVariable registers a variable: its name and a func to derive a
+// Variable instance. It is later to be used during Editor initialization to
+// populate Editor.variables as well as the edit: namespace.
+func registerVariable(name string, maker func() eval.Variable) struct{} {
+	variableRegistry[name] = maker
+	return struct{}{}
+}
+
+func makeVariables() map[string]eval.Variable {
+	m := make(map[string]eval.Variable, len(variableRegistry))
+	for name, maker := range variableRegistry {
+		m[name] = maker()
+	}
+	return m
+}
+
 var builtinMaps = map[string]map[string]*BuiltinFn{}
 
 // registerBuiltins registers builtins under a subnamespace of edit:, to be used
@@ -78,22 +96,4 @@ func registerBindings(
 		}
 	}
 	return struct{}{}
-}
-
-var variableMakers = map[string]func() eval.Variable{}
-
-// registerVariables registers a variable, its name and a func used to derive
-// its value, later to be used during Editor initialization to populate
-// Editor.variables as well as the edit: namespace.
-func registerVariable(name string, maker func() eval.Variable) struct{} {
-	variableMakers[name] = maker
-	return struct{}{}
-}
-
-func makeVariables() map[string]eval.Variable {
-	m := make(map[string]eval.Variable, len(variableMakers))
-	for name, maker := range variableMakers {
-		m[name] = maker()
-	}
-	return m
 }

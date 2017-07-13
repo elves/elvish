@@ -14,7 +14,7 @@ import (
 
 // Interface.
 
-var _ = registerBuiltins("compl", map[string]func(*Editor){
+var _ = registerBuiltins(modeCompletion, map[string]func(*Editor){
 	"smart-start":    complSmartStart,
 	"start":          complStart,
 	"up":             complUp,
@@ -29,7 +29,7 @@ var _ = registerBuiltins("compl", map[string]func(*Editor){
 })
 
 func init() {
-	registerBindings(modeCompletion, "compl", map[ui.Key]string{
+	registerBindings(modeCompletion, modeCompletion, map[ui.Key]string{
 		{ui.Up, 0}:         "up",
 		{ui.Down, 0}:       "down",
 		{ui.Tab, 0}:        "down-cycle",

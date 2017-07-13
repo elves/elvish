@@ -85,13 +85,13 @@ func init() {
 
 		// Other modes.
 		// ui.Key{'[', ui.Ctrl}: "command-start",
-		{ui.Tab, 0}:    "compl:smart-start",
+		{ui.Tab, 0}:    "completion:smart-start",
 		{ui.Up, 0}:     "history:start",
 		{ui.Down, 0}:   "end-of-history",
-		{'N', ui.Ctrl}: "nav:start",
+		{'N', ui.Ctrl}: "navigation:start",
 		{'R', ui.Ctrl}: "histlist:start",
 		{'1', ui.Alt}:  "lastcmd:start",
-		{'L', ui.Ctrl}: "loc:start",
+		{'L', ui.Ctrl}: "location:start",
 		{'V', ui.Ctrl}: "insert-raw",
 
 		ui.Default: "insert:default",

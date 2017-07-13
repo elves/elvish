@@ -60,27 +60,6 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	// TODO(xiaq): Everything here should be registered to some registry instead
 	// of centralized here.
 
-	// Populate binding tables in the variable $binding.
-	// TODO Make binding specific to the Editor.
-	binding := &eval.Struct{
-		[]string{
-			modeInsert, modeCommand, modeCompletion, modeNavigation, modeHistory,
-			modeHistoryListing, modeLocation, modeLastCmd, modeListing, modeNarrow},
-		[]eval.Variable{
-			eval.NewRoVariable(BindingTable{keyBindings[modeInsert]}),
-			eval.NewRoVariable(BindingTable{keyBindings[modeCommand]}),
-			eval.NewRoVariable(BindingTable{keyBindings[modeCompletion]}),
-			eval.NewRoVariable(BindingTable{keyBindings[modeNavigation]}),
-			eval.NewRoVariable(BindingTable{keyBindings[modeHistory]}),
-			eval.NewRoVariable(BindingTable{keyBindings[modeHistoryListing]}),
-			eval.NewRoVariable(BindingTable{keyBindings[modeLocation]}),
-			eval.NewRoVariable(BindingTable{keyBindings[modeLastCmd]}),
-			eval.NewRoVariable(BindingTable{keyBindings[modeListing]}),
-			eval.NewRoVariable(BindingTable{keyBindings[modeNarrow]}),
-		},
-	}
-	ns["binding"] = eval.NewRoVariable(binding)
-
 	// Editor configurations.
 	for name, variable := range ed.variables {
 		ns[name] = variable
@@ -142,6 +121,19 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 		if module != "" {
 			modules["edit:"+module] = makeNamespaceFromBuiltins(builtins)
 		}
+	}
+
+	// Add $edit:xxx:binding variables.
+	// TODO Make binding specific to the Editor.
+	for _, mode := range []string{
+		modeInsert, modeCommand, modeCompletion, modeNavigation, modeHistory,
+		modeHistoryListing, modeLocation, modeLastCmd, modeListing, modeNarrow} {
+
+		if modules["edit:"+mode] == nil {
+			modules["edit:"+mode] = make(eval.Namespace)
+		}
+		modules["edit:"+mode]["binding"] =
+			eval.NewRoVariable(BindingTable{keyBindings[mode]})
 	}
 }
 

@@ -16,7 +16,7 @@ const (
 	modeHistory        = "history"
 	modeHistoryListing = "histlist"
 	modeLastCmd        = "lastcmd"
-	modeLocation       = "loc"
+	modeLocation       = "location"
 	modeListing        = "listing" // A "super mode" for histlist, lastcmd, loc
 	modeNarrow         = "narrow"  // a listing mode fork to be extended by scripts
 )

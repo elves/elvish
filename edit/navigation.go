@@ -18,7 +18,7 @@ import (
 
 // Interface.
 
-var _ = registerBuiltins("nav", map[string]func(*Editor){
+var _ = registerBuiltins(modeNavigation, map[string]func(*Editor){
 	"start":                    navStart,
 	"up":                       navUp,
 	"down":                     navDown,
@@ -34,7 +34,7 @@ var _ = registerBuiltins("nav", map[string]func(*Editor){
 })
 
 func init() {
-	registerBindings(modeNavigation, "nav", map[ui.Key]string{
+	registerBindings(modeNavigation, modeNavigation, map[ui.Key]string{
 		{ui.Up, 0}:         "up",
 		{ui.Down, 0}:       "down",
 		{ui.PageUp, 0}:     "page-up",
