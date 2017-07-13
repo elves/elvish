@@ -97,9 +97,7 @@ func outputComplexCandidate(ec *eval.EvalCtx,
 func (ed *Editor) filterAndCookCandidates(ev *eval.Evaler, completer string, pattern string,
 	cands []rawCandidate, q parse.PrimaryType) ([]*candidate, error) {
 
-	var filtered []*candidate
-	matcher := ed.variables["-matcher"].Get().(eval.Map).IndexOne(eval.String(completer))
-	m, ok := matcher.(eval.CallableValue)
+	matcher, ok := ed.lookupMatcher(completer)
 	if !ok {
 		return nil, errMatcherMustBeFn
 	}
@@ -109,21 +107,20 @@ func (ed *Editor) filterAndCookCandidates(ev *eval.Evaler, completer string, pat
 		{Chan: input}, {File: os.Stdout}, {File: os.Stderr}}
 	ec := eval.NewTopEvalCtx(ev, "[editor matcher]", "", ports)
 
-	args := []eval.Value{
-		eval.String(pattern),
-	}
-
 	for _, cand := range cands {
 		input <- eval.String(cand.text())
 	}
 	close(input)
 
-	values, err := ec.PCaptureOutput(m, args, eval.NoOpts)
+	args := []eval.Value{eval.String(pattern)}
+	values, err := ec.PCaptureOutput(matcher, args, eval.NoOpts)
 	if err != nil {
 		return nil, err
 	} else if len(values) != len(cands) {
 		return nil, errIncorrectNumOfResults
 	}
+
+	var filtered []*candidate
 	for i, value := range values {
 		if eval.ToBool(value) {
 			filtered = append(filtered, cands[i].cook(q))

@@ -16,9 +16,9 @@ var (
 
 var (
 	matchPrefix = &eval.BuiltinFn{
-		"match-prefix", wrapMatcher(strings.HasPrefix)}
+		"edit:match-prefix", wrapMatcher(strings.HasPrefix)}
 	matchSubseq = &eval.BuiltinFn{
-		"match-subseq", wrapMatcher(util.HasSubseq)}
+		"edit:match-subseq", wrapMatcher(util.HasSubseq)}
 	matchers = []*eval.BuiltinFn{
 		matchPrefix,
 		matchSubseq,
@@ -26,15 +26,22 @@ var (
 
 	_ = registerVariable("-matcher", func() eval.Variable {
 		m := map[eval.Value]eval.Value{
-			eval.String("index"):    matchPrefix,
-			eval.String("redirect"): matchPrefix,
-			eval.String("argument"): matchPrefix,
-			eval.String("variable"): matchPrefix,
-			eval.String("command"):  matchPrefix,
+			// Fallback matcher uses empty string as key
+			eval.String(""): matchPrefix,
 		}
 		return eval.NewPtrVariableWithValidator(eval.NewMap(m), eval.ShouldBeMap)
 	})
 )
+
+func (ed *Editor) lookupMatcher(name string) (eval.CallableValue, bool) {
+	m := ed.variables["-matcher"].Get().(eval.Map)
+	if !m.HasKey(eval.String(name)) {
+		// Use fallback matcher
+		name = ""
+	}
+	matcher, ok := m.IndexOne(eval.String(name)).(eval.CallableValue)
+	return matcher, ok
+}
 
 func wrapMatcher(match func(s, p string) bool) eval.BuiltinFnImpl {
 	return func(ec *eval.EvalCtx,
