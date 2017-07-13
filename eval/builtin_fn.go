@@ -390,6 +390,44 @@ func ScanOpts(m map[string]Value, opts ...Opt) {
 	}
 }
 
+// ScanIntoOpts scan options from a map like ScanOpts except the
+// destination is a struct whose fields are corresponded to the
+// options to be parsed. Without a explicit "name" tag as the option
+// name, it will use the lower-cased struct field name instead.
+func ScanIntoOpts(m map[string]Value, o interface{}) {
+	values := reflect.ValueOf(o)
+
+	for ; values.Kind() == reflect.Ptr; values = values.Elem() {
+	}
+	if values.Kind() != reflect.Struct {
+		throwf("internal bug: need struct, got %T", values)
+	}
+
+	names := make(map[string]string)
+	for i := 0; i < values.Type().NumField(); i++ {
+		// ignore unexported fields
+		if !values.Field(i).CanSet() {
+			continue
+		}
+
+		f := values.Type().Field(i)
+		n := f.Tag.Get("name")
+		if n == "" {
+			n = strings.ToLower(f.Name)
+		}
+		names[n] = f.Name
+	}
+
+	for k, v := range m {
+		vname, ok := names[k]
+		if !ok {
+			throwf("unknown option %s", parse.Quote(k))
+		}
+		scanArg(v, values.FieldByName(vname).Addr().Interface())
+	}
+
+}
+
 func scanArg(value Value, a interface{}) {
 	ptr := reflect.ValueOf(a)
 	if ptr.Kind() != reflect.Ptr {
