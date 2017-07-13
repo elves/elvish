@@ -192,6 +192,8 @@ func initRuntime() (*eval.Evaler, *api.Client) {
 			version, err := cl.Version()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: socket exists but not responding version RPC:", err)
+				cl.Close()
+				cl = nil
 				goto spawnDaemonEnd
 			}
 			logger.Printf("daemon serving version %d, want version %d", version, api.Version)
@@ -199,12 +201,16 @@ func initRuntime() (*eval.Evaler, *api.Client) {
 				pid, err := cl.Pid()
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "warning: socket exists but not responding pid RPC:", err)
+					cl.Close()
+					cl = nil
 					goto spawnDaemonEnd
 				}
+				cl.Close()
 				logger.Printf("killing outdated daemon with pid %d", pid)
 				err = syscall.Kill(pid, syscall.SIGTERM)
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "warning: failed to kill outdated daemon process:", err)
+					cl = nil
 					goto spawnDaemonEnd
 				}
 				logger.Println("killed outdated daemon")

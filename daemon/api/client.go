@@ -41,14 +41,21 @@ func (c *Client) CallDaemon(f string, req, res interface{}) error {
 
 func (c *Client) Close() error {
 	c.waits.Wait()
-	return c.rpcClient.Close()
+	rc := c.rpcClient
+	c.rpcClient = nil
+	if rc != nil {
+		return rc.Close()
+	}
+	return nil
 }
 
 func (c *Client) connect() error {
-	rpcClient, err := rpc.Dial("unix", c.sockPath)
-	if err != nil {
-		return err
+	if c.rpcClient == nil {
+		rpcClient, err := rpc.Dial("unix", c.sockPath)
+		if err != nil {
+			return err
+		}
+		c.rpcClient = rpcClient
 	}
-	c.rpcClient = rpcClient
 	return nil
 }
