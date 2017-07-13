@@ -43,13 +43,36 @@ func (ed *Editor) lookupMatcher(name string) (eval.CallableValue, bool) {
 	return matcher, ok
 }
 
-func wrapMatcher(match func(s, p string) bool) eval.BuiltinFnImpl {
+func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
 	return func(ec *eval.EvalCtx,
 		args []eval.Value, opts map[string]eval.Value) {
 
 		var pattern eval.String
 		iterate := eval.ScanArgsAndOptionalIterate(ec, args, &pattern)
-		eval.TakeNoOpt(opts)
+		var options struct {
+			IgnoreCase bool
+			SmartCase  bool
+		}
+		eval.ScanOptsToStruct(opts, &options)
+		switch {
+		case options.IgnoreCase && options.SmartCase:
+			throwf("-ignore-case and -smart-case cannot be used together")
+		case options.IgnoreCase:
+			innerMatcher := matcher
+			matcher = func(s, p string) bool {
+				return innerMatcher(strings.ToLower(s), strings.ToLower(p))
+			}
+		case options.SmartCase:
+			innerMatcher := matcher
+			matcher = func(s, p string) bool {
+				if p == strings.ToLower(p) {
+					// Ignore case is pattern is all lower case.
+					return innerMatcher(strings.ToLower(s), p)
+				} else {
+					return innerMatcher(s, p)
+				}
+			}
+		}
 
 		out := ec.OutputChan()
 		iterate(func(v eval.Value) {
@@ -57,7 +80,7 @@ func wrapMatcher(match func(s, p string) bool) eval.BuiltinFnImpl {
 			if !ok {
 				throw(errMatcherInputMustBeString)
 			}
-			out <- eval.Bool(match(string(s), string(pattern)))
+			out <- eval.Bool(matcher(string(s), string(pattern)))
 		})
 	}
 }
