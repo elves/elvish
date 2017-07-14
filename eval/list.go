@@ -18,12 +18,6 @@ var (
 	ErrAssocWithSlice  = errors.New("assoc with slice not yet supported")
 )
 
-type ListLike interface {
-	Lener
-	Iterable
-	IndexOneer
-}
-
 // List is a list of Value's.
 type List struct {
 	inner vector.Vector
@@ -50,6 +44,10 @@ func NewListFromVector(vec vector.Vector) List {
 
 func (List) Kind() string {
 	return "list"
+}
+
+func (l List) Eq(rhs interface{}) bool {
+	return eqListLike(l, rhs)
 }
 
 func (l List) Repr(indent int) string {

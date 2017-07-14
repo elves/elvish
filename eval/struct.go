@@ -26,6 +26,11 @@ func (*Struct) Kind() string {
 	return "map"
 }
 
+// Eq returns true if the rhs is MapLike and all pairs are equal.
+func (s *Struct) Eq(rhs interface{}) bool {
+	return s == rhs || eqMapLike(s, rhs)
+}
+
 func (s *Struct) Repr(indent int) string {
 	var builder MapReprBuilder
 	builder.Indent = indent

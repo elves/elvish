@@ -31,6 +31,11 @@ func (*Closure) Kind() string {
 	return "fn"
 }
 
+// Eq compares by identity.
+func (c *Closure) Eq(rhs interface{}) bool {
+	return c == rhs
+}
+
 // Repr returns an opaque representation "<closure 0x23333333>".
 func (c *Closure) Repr(int) string {
 	return fmt.Sprintf("<closure %p>", c)

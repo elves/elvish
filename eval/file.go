@@ -17,6 +17,10 @@ func (File) Kind() string {
 	return "file"
 }
 
+func (f File) Eq(rhs interface{}) bool {
+	return f == rhs
+}
+
 func (f File) Repr(int) string {
 	return fmt.Sprintf("<file{%s %p}>", parse.Quote(f.inner.Name()), f.inner)
 }

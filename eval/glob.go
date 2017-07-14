@@ -3,6 +3,7 @@ package eval
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"unicode"
 
@@ -57,6 +58,10 @@ var runeMatchers = map[string]func(rune) bool{
 
 func (GlobPattern) Kind() string {
 	return "glob-pattern"
+}
+
+func (gp GlobPattern) Eq(a interface{}) bool {
+	return reflect.DeepEqual(gp, a)
 }
 
 func (gp GlobPattern) Repr(int) string {

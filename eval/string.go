@@ -22,6 +22,10 @@ func (s String) Repr(int) string {
 	return quote(string(s))
 }
 
+func (s String) Eq(rhs interface{}) bool {
+	return s == rhs
+}
+
 func (s String) String() string {
 	return string(s)
 }

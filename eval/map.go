@@ -15,14 +15,6 @@ type HasKeyer interface {
 	HasKey(k Value) bool
 }
 
-type MapLike interface {
-	Lener
-	IndexOneer
-	HasKeyer
-	IterateKeyer
-	IteratePairer
-}
-
 var _ MapLike = Map{}
 
 // NewMap creates a new Map.
@@ -32,6 +24,10 @@ func NewMap(inner map[Value]Value) Map {
 
 func (Map) Kind() string {
 	return "map"
+}
+
+func (m Map) Eq(a interface{}) bool {
+	return m == a || eqMapLike(m, a)
 }
 
 func (m Map) MarshalJSON() ([]byte, error) {

@@ -1,9 +1,7 @@
 package eval
 
 import (
-	"errors"
 	"fmt"
-	"math/big"
 	"reflect"
 
 	"github.com/elves/elvish/util"
@@ -19,6 +17,7 @@ const (
 // Value is an elvish value.
 type Value interface {
 	Kinder
+	// Eqer
 	Reprer
 }
 
@@ -39,6 +38,16 @@ type Reprer interface {
 	// been written and shall not be written in Repr. The returned string
 	// should never contain a trailing newline.
 	Repr(indent int) string
+}
+
+// Eqer is anything that knows how to compare itself against other values.
+type Eqer interface {
+	Eq(interface{}) bool
+}
+
+// Hasher is anything that knows how to compute its hash code.
+type Hasher interface {
+	Hash() uint32
 }
 
 // Booler is anything that can be converted to a bool.
@@ -167,74 +176,9 @@ type Assocer interface {
 	Assoc(k, v Value) Value
 }
 
-// Error definitions.
-var (
-	ErrOnlyStrOrRat = errors.New("only str or rat may be converted to rat")
-)
-
-// Bool represents truthness.
-type Bool bool
-
-func (Bool) Kind() string {
-	return "bool"
-}
-
-func (b Bool) Repr(int) string {
-	if b {
-		return "$true"
-	}
-	return "$false"
-}
-
-func (b Bool) Bool() bool {
-	return bool(b)
-}
-
-// ToBool converts a Value to bool. When the Value type implements Bool(), it
-// is used. Otherwise it is considered true.
-func ToBool(v Value) bool {
-	if b, ok := v.(Booler); ok {
-		return b.Bool()
-	}
-	return true
-}
-
-// Rat is a rational number.
-type Rat struct {
-	b *big.Rat
-}
-
-func (Rat) Kind() string {
-	return "string"
-}
-
-func (r Rat) Repr(int) string {
-	return "(rat " + r.String() + ")"
-}
-
-func (r Rat) String() string {
-	if r.b.IsInt() {
-		return r.b.Num().String()
-	}
-	return r.b.String()
-}
-
-// ToRat converts a Value to rat. A str can be converted to a rat if it can be
-// parsed. A rat is returned as-is. Other types of values cannot be converted.
-func ToRat(v Value) (Rat, error) {
-	switch v := v.(type) {
-	case Rat:
-		return v, nil
-	case String:
-		r := big.Rat{}
-		_, err := fmt.Sscanln(string(v), &r)
-		if err != nil {
-			return Rat{}, fmt.Errorf("%s cannot be parsed as rat", v.Repr(NoPretty))
-		}
-		return Rat{&r}, nil
-	default:
-		return Rat{}, ErrOnlyStrOrRat
-	}
+// TODO(xiaq): Use Eqer interface once all Value types implement it.
+func Eq(u, v Value) bool {
+	return reflect.DeepEqual(u, v)
 }
 
 // FromJSONInterface converts a interface{} that results from json.Unmarshal to
@@ -268,9 +212,4 @@ func FromJSONInterface(v interface{}) Value {
 		throw(fmt.Errorf("unexpected json type: %T", v))
 		return nil // not reached
 	}
-}
-
-// DeepEq compares two Value's deeply.
-func DeepEq(a, b Value) bool {
-	return reflect.DeepEqual(a, b)
 }

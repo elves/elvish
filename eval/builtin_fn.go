@@ -47,6 +47,11 @@ func (*BuiltinFn) Kind() string {
 	return "fn"
 }
 
+// Eq compares based on identity.
+func (b *BuiltinFn) Eq(rhs interface{}) bool {
+	return b == rhs
+}
+
 // Repr returns an opaque representation "<builtin xxx>".
 func (b *BuiltinFn) Repr(int) string {
 	return "<builtin " + b.Name + ">"
@@ -477,7 +482,7 @@ func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 	result := true
 	for i := 0; i+1 < len(args); i++ {
-		if !DeepEq(args[i], args[i+1]) {
+		if !Eq(args[i], args[i+1]) {
 			result = false
 			break
 		}

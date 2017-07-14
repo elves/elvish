@@ -66,6 +66,10 @@ func (epl *EnvPathList) Kind() string {
 	return "list"
 }
 
+func (epl *EnvPathList) Eq(a interface{}) bool {
+	return epl == a || eqListLike(epl, a)
+}
+
 // Repr returns the representation of an EnvPathList, as if it were an ordinary
 // list.
 func (epl *EnvPathList) Repr(indent int) string {
