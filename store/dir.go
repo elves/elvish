@@ -1,69 +1,109 @@
 package store
 
 import (
-	"database/sql"
+	"sort"
+	"strconv"
 
+	"github.com/boltdb/bolt"
 	"github.com/elves/elvish/store/storedefs"
 )
 
 const (
 	scoreDecay     = 0.986 // roughly 0.5^(1/50)
 	scoreIncrement = 10
+	scorePrecision = 6
 )
 
+const BucketDir = "dir"
+
 func init() {
-	initDB["initialize directory history table"] = func(db *sql.DB) error {
-		_, err := db.Exec(`create table if not exists dir (path text unique primary key, score real default 0)`)
-		return err
+	initDB["initialize directory history table"] = func(db *bolt.DB) error {
+		return db.Update(func(tx *bolt.Tx) error {
+			_, err := tx.CreateBucketIfNotExists([]byte(BucketDir))
+			return err
+		})
 	}
+}
+
+func marshalScore(score float64) []byte {
+	return []byte(strconv.FormatFloat(score, 'E', scorePrecision, 64))
+}
+func unmarshalScore(data []byte) float64 {
+	f, _ := strconv.ParseFloat(string(data), 64)
+	return f
 }
 
 // AddDir adds a directory to the directory history.
 func (s *Store) AddDir(d string, incFactor float64) error {
-	return transaction(s.db, func(tx *sql.Tx) error {
-		// Insert when the path does not already exist
-		_, err := tx.Exec("insert or ignore into dir (path) values(?)", d)
-		if err != nil {
-			return err
+	return s.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(BucketDir))
+
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			score := unmarshalScore(v) * scoreDecay
+			b.Put(k, marshalScore(score))
 		}
 
-		// Decay scores
-		_, err = tx.Exec("update dir set score = score * ?", scoreDecay)
-		if err != nil {
-			return err
+		k := []byte(d)
+		score := float64(0)
+		if v := b.Get(k); v != nil {
+			score = unmarshalScore(v)
 		}
+		score = score + scoreIncrement*incFactor
+		return b.Put(k, marshalScore(score))
+	})
+}
 
-		// Increment score
-		_, err = tx.Exec("update dir set score = score + ? where path = ?", scoreIncrement*incFactor, d)
-		return err
+// AddDir adds a directory and its score to history.
+func (s *Store) AddDirRaw(d string, score float64) error {
+	return s.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(BucketDir))
+		return b.Put([]byte(d), marshalScore(score))
+	})
+}
+
+// RemoveDir removes a directory record from history.
+func (s *Store) RemoveDir(d string) error {
+	return s.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(BucketDir))
+		return b.Delete([]byte(d))
 	})
 }
 
 // GetDirs lists all directories in the directory history whose names are not
 // in the blacklist. The results are ordered by scores in descending order.
 func (s *Store) GetDirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
-	rows, err := s.db.Query(
-		"select path, score from dir order by score desc")
-	if err != nil {
-		return nil, err
-	}
-	return convertDirs(rows, blacklist)
+	var dirs []storedefs.Dir
+
+	err := s.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(BucketDir))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			d := string(k)
+			if _, ok := blacklist[d]; ok {
+				continue
+			}
+			dirs = append(dirs, storedefs.Dir{
+				Path:  d,
+				Score: unmarshalScore(v),
+			})
+		}
+		sort.Sort(sort.Reverse(dirList(dirs)))
+		return nil
+	})
+	return dirs, err
 }
 
-func convertDirs(rows *sql.Rows, blacklist map[string]struct{}) ([]storedefs.Dir, error) {
-	var (
-		dir  storedefs.Dir
-		dirs []storedefs.Dir
-	)
+type dirList []storedefs.Dir
 
-	for rows.Next() {
-		rows.Scan(&dir.Path, &dir.Score)
-		if _, black := blacklist[dir.Path]; !black {
-			dirs = append(dirs, dir)
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return dirs, nil
+func (dl dirList) Len() int {
+	return len(dl)
+}
+
+func (dl dirList) Less(i, j int) bool {
+	return dl[i].Score < dl[j].Score
+}
+
+func (dl dirList) Swap(i, j int) {
+	dl[i], dl[j] = dl[j], dl[i]
 }

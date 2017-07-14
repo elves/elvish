@@ -2,18 +2,20 @@
 package store
 
 import (
-	"database/sql"
+	"errors"
 	"fmt"
-	"net/url"
 	"sync"
+	"time"
 
 	"github.com/elves/elvish/util"
 
-	_ "github.com/mattn/go-sqlite3" // enable the "sqlite3" SQL driver
+	"github.com/boltdb/bolt"
 )
 
 var logger = util.GetLogger("[store] ")
-var initDB = map[string](func(*sql.DB) error){}
+var initDB = map[string](func(*bolt.DB) error){}
+
+var ErrInvalidBucket = errors.New("invalid bucket")
 
 // Store is the permanent storage backend for elvish. It is not thread-safe. In
 // particular, the store may be closed while another goroutine is still
@@ -22,19 +24,17 @@ var initDB = map[string](func(*sql.DB) error){}
 // Waits.Add(1) in the main goroutine before spawning another goroutine, and
 // call Waits.Done() in the spawned goroutine after the operation is finished.
 type Store struct {
-	db *sql.DB
+	db *bolt.DB
 	// Waits is used for registering outstanding operations on the store.
 	waits sync.WaitGroup
 }
 
 // DefaultDB returns the default database for storage.
-func DefaultDB(dbname string) (*sql.DB, error) {
-	uri := "file:" + url.QueryEscape(dbname) +
-		"?mode=rwc&cache=shared&vfs=unix-dotfile"
-	db, err := sql.Open("sqlite3", uri)
-	if err == nil {
-		db.SetMaxOpenConns(1)
-	}
+func DefaultDB(dbname string) (*bolt.DB, error) {
+	db, err := bolt.Open(dbname, 0644,
+		&bolt.Options{
+			Timeout: 1 * time.Second,
+		})
 	return db, err
 }
 
@@ -48,11 +48,14 @@ func NewStore(dbname string) (*Store, error) {
 }
 
 // NewStoreDB creates a new Store with a custom database. The database must be
-// a SQLite database.
-func NewStoreDB(db *sql.DB) (*Store, error) {
+// a Bolt database.
+func NewStoreDB(db *bolt.DB) (*Store, error) {
 	logger.Println("initializing store")
 	defer logger.Println("initialized store")
-	st := &Store{db, sync.WaitGroup{}}
+	st := &Store{
+		db:    db,
+		waits: sync.WaitGroup{},
+	}
 
 	if SchemaUpToDate(db) {
 		logger.Println("DB schema up to date")
