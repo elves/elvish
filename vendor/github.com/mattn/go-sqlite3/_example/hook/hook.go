@@ -2,10 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"github.com/mattn/go-sqlite3"
 	"log"
 	"os"
-
-	"github.com/mattn/go-sqlite3"
 )
 
 func main() {
