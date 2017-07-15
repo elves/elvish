@@ -29,6 +29,22 @@ func (BindingTable) Kind() string {
 	return "map"
 }
 
+func (bt BindingTable) Eq(a interface{}) bool {
+	rhs, ok := a.(BindingTable)
+	if !ok {
+		return false
+	}
+	if len(bt.inner) != len(rhs.inner) {
+		return false
+	}
+	for k, v := range bt.inner {
+		if !v.Eq(rhs.inner[k]) {
+			return false
+		}
+	}
+	return true
+}
+
 // Repr returns the representation of the binding table as if it were an
 // ordinary map.
 func (bt BindingTable) Repr(indent int) string {

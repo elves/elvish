@@ -2,7 +2,6 @@ package eval
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/elves/elvish/util"
 )
@@ -17,7 +16,7 @@ const (
 // Value is an elvish value.
 type Value interface {
 	Kinder
-	// Eqer
+	Eqer
 	Reprer
 }
 
@@ -174,11 +173,6 @@ func (ioi IndexOneerIndexer) Index(vs []Value) []Value {
 // new Value.
 type Assocer interface {
 	Assoc(k, v Value) Value
-}
-
-// TODO(xiaq): Use Eqer interface once all Value types implement it.
-func Eq(u, v Value) bool {
-	return reflect.DeepEqual(u, v)
 }
 
 // FromJSONInterface converts a interface{} that results from json.Unmarshal to

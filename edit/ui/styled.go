@@ -64,6 +64,14 @@ func (s *Styled) Kind() string {
 	return "styled"
 }
 
+func (s *Styled) Eq(a interface{}) bool {
+	rhs, ok := a.(*Styled)
+	if !ok {
+		return false
+	}
+	return s.Text == rhs.Text && s.Styles.Eq(rhs.Styles)
+}
+
 func (s *Styled) String() string {
 	return "\033[" + s.Styles.String() + "m" + s.Text + "\033[m"
 }
@@ -73,6 +81,18 @@ func (s *Styled) Repr(indent int) string {
 }
 
 type Styles []string
+
+func (ss Styles) Eq(rhs Styles) bool {
+	if len(ss) != len(rhs) {
+		return false
+	}
+	for i, s := range ss {
+		if s != rhs[i] {
+			return false
+		}
+	}
+	return true
+}
 
 func JoinStyles(so Styles, st ...Styles) Styles {
 	for _, v := range st {

@@ -24,9 +24,10 @@ type rawCandidate interface {
 // plainCandidate is a minimal implementation of rawCandidate.
 type plainCandidate string
 
-func (plainCandidate) Kind() string        { return "string" }
-func (p plainCandidate) Repr(l int) string { return eval.String(p).Repr(l) }
-func (p plainCandidate) text() string      { return string(p) }
+func (plainCandidate) Kind() string            { return "string" }
+func (p plainCandidate) Eq(a interface{}) bool { return p == a }
+func (p plainCandidate) Repr(l int) string     { return eval.String(p).Repr(l) }
+func (p plainCandidate) text() string          { return string(p) }
 
 func (p plainCandidate) cook(q parse.PrimaryType) *candidate {
 	s := string(p)
@@ -37,9 +38,10 @@ func (p plainCandidate) cook(q parse.PrimaryType) *candidate {
 // noQuoteCandidate is a rawCandidate that does not quote when cooked.
 type noQuoteCandidate string
 
-func (noQuoteCandidate) Kind() string         { return "string" }
-func (nq noQuoteCandidate) Repr(l int) string { return eval.String(nq).Repr(l) }
-func (nq noQuoteCandidate) text() string      { return string(nq) }
+func (noQuoteCandidate) Kind() string             { return "string" }
+func (nq noQuoteCandidate) Eq(a interface{}) bool { return nq == a }
+func (nq noQuoteCandidate) Repr(l int) string     { return eval.String(nq).Repr(l) }
+func (nq noQuoteCandidate) text() string          { return string(nq) }
 
 func (nq noQuoteCandidate) cook(parse.PrimaryType) *candidate {
 	s := string(nq)
@@ -56,6 +58,11 @@ type complexCandidate struct {
 }
 
 func (c *complexCandidate) Kind() string { return "map" }
+
+func (c *complexCandidate) Eq(a interface{}) bool {
+	rhs, ok := a.(*complexCandidate)
+	return ok && c.stem == rhs.stem && c.codeSuffix == rhs.codeSuffix && c.displaySuffix == rhs.displaySuffix && c.style.Eq(rhs.style)
+}
 
 func (c *complexCandidate) Repr(indent int) string {
 	// TODO(xiaq): Pretty-print when indent >= 0

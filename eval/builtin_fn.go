@@ -482,7 +482,7 @@ func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 	result := true
 	for i := 0; i+1 < len(args); i++ {
-		if !Eq(args[i], args[i+1]) {
+		if !args[i].Eq(args[i+1]) {
 			result = false
 			break
 		}
