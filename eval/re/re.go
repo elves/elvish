@@ -67,14 +67,16 @@ func find(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 		groups := vector.Empty
 		for i := 0; i < len(match); i += 2 {
 			start, end := match[i], match[i+1]
-			var text eval.Variable
+			var text eval.Value
+			// FindAllSubmatchIndex may return negative indicies to indicate
+			// that the pattern didn't appear in the text.
 			if start < 0 || end < 0 {
-				text = eval.NewRoVariable(eval.String(""))
+				text = eval.String("")
 			} else {
-				text = eval.NewRoVariable(argSource[start:end])
+				text = argSource[start:end]
 			}
 			groups = groups.Cons(&eval.Struct{submatchFields, []eval.Variable{
-				text,
+				eval.NewRoVariable(text),
 				eval.NewRoVariable(eval.String(strconv.Itoa(start))),
 				eval.NewRoVariable(eval.String(strconv.Itoa(end))),
 			}})
