@@ -385,7 +385,7 @@ func findRedirContext(n parse.Node) (int, int, string, parse.PrimaryType) {
 // the actual completion work to a suitable completer.
 func complArg(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	begin, end, current, q, form := findArgContext(n)
-	if begin == -1 {
+	if begin == -1 || form.Head == nil {
 		return nil, errCompletionUnapplicable
 	}
 
