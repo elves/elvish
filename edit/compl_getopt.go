@@ -115,11 +115,15 @@ func complGetopt(ec *eval.EvalCtx, a []eval.Value, o map[string]eval.Value) {
 			argCompl = args[len(args)-1]
 		}
 		if argCompl != nil {
-			cands, err := callArgCompleter(argCompl, ec.Evaler, []string{ctx.Text})
+			rawCands := make(chan rawCandidate)
+			defer close(rawCands)
+			go func() {
+				for rc := range rawCands {
+					out <- rc
+				}
+			}()
+			err := callArgCompleter(argCompl, ec.Evaler, []string{ctx.Text}, rawCands)
 			maybeThrow(err)
-			for _, cand := range cands {
-				out <- cand
-			}
 		}
 		// TODO Notify that there is no suitable argument completer
 	case getopt.NewOption:

@@ -3,6 +3,7 @@ package edit
 import (
 	"os"
 	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/elves/elvish/edit/ui"
@@ -15,10 +16,22 @@ func TestComplIndexInner(t *testing.T) {
 		eval.String("foo"):   eval.String("bar"),
 		eval.String("lorem"): eval.String("ipsum"),
 	})
-	wantCandidates := []rawCandidate{
-		plainCandidate("foo"), plainCandidate("lorem"),
+	var (
+		candidates     rawCandidates
+		wantCandidates = rawCandidates{
+			plainCandidate("foo"), plainCandidate("lorem"),
+		}
+	)
+
+	gets := make(chan rawCandidate)
+	go func() {
+		defer close(gets)
+		complIndexInner(m, gets)
+	}()
+	for v := range gets {
+		candidates = append(candidates, v)
 	}
-	candidates := complIndexInner(m)
+	sort.Sort(candidates)
 	if !reflect.DeepEqual(candidates, wantCandidates) {
 		t.Errorf("complIndexInner(%v) = %v, want %v",
 			m, candidates, wantCandidates)
@@ -34,24 +47,24 @@ var (
 var complFilenameInnerTests = []struct {
 	head           string
 	executableOnly bool
-	wantCandidates []rawCandidate
+	wantCandidates rawCandidates
 }{
 	// Match all non-hidden files and dirs, in alphabetical order.
 	// Files have suffix " " and directories "/". Styles are set according to
 	// the LS_COLORS variable, which are set in the beginning of the test.
-	{"haha", false, []rawCandidate{
+	{"haha", false, rawCandidates{
 		&complexCandidate{stem: "Documents", codeSuffix: "/", style: dirStyle},
 		&complexCandidate{stem: "bar", codeSuffix: " ", style: fileStyle},
 		&complexCandidate{stem: "elvish", codeSuffix: " ", style: exeStyle},
 		&complexCandidate{stem: "foo", codeSuffix: " ", style: fileStyle},
 	}},
 	// Only match executables and directories.
-	{"haha", true, []rawCandidate{
+	{"haha", true, rawCandidates{
 		&complexCandidate{stem: "Documents", codeSuffix: "/", style: dirStyle},
 		&complexCandidate{stem: "elvish", codeSuffix: " ", style: exeStyle},
 	}},
 	// Match hidden files and directories.
-	{".haha", false, []rawCandidate{
+	{".haha", false, rawCandidates{
 		&complexCandidate{stem: ".elvish", codeSuffix: "/", style: dirStyle},
 		&complexCandidate{stem: ".vimrc", codeSuffix: " ", style: fileStyle},
 	}},
@@ -70,11 +83,23 @@ func TestComplFilenameInner(t *testing.T) {
 		mkdir(".elvish", 0700)
 
 		for _, test := range complFilenameInnerTests {
-			cands, err := complFilenameInner(test.head, test.executableOnly)
+			var (
+				err   error
+				cands rawCandidates
+				gets  = make(chan rawCandidate)
+			)
+			go func() {
+				defer close(gets)
+				err = complFilenameInner(test.head, test.executableOnly, gets)
+			}()
+			for v := range gets {
+				cands = append(cands, v)
+			}
 			if err != nil {
 				t.Errorf("complFilenameInner(%v, %v) returns error %v, want nil",
 					test.head, test.executableOnly, err)
 			}
+			sort.Sort(cands)
 			if !reflect.DeepEqual(cands, test.wantCandidates) {
 				t.Errorf("complFilenameInner(%v, %v) returns %v, want %v",
 					test.head, test.executableOnly, cands, test.wantCandidates)

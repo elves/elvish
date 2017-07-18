@@ -90,7 +90,7 @@ func (ed *Editor) argCompleter() eval.Map {
 // completeArg calls the correct argument completers according to the command
 // name. It is used by complArg and can also be useful when further dispatching
 // based on command name is needed -- e.g. in the argument completer for "sudo".
-func completeArg(words []string, ev *eval.Evaler) ([]rawCandidate, error) {
+func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
 	logger.Printf("completing argument: %q", words)
 	// XXX(xiaq): not the best way to get argCompleter.
 	m := ev.Editor.(*Editor).argCompleter()
@@ -102,14 +102,14 @@ func completeArg(words []string, ev *eval.Evaler) ([]rawCandidate, error) {
 	}
 	fn, ok := v.(eval.CallableValue)
 	if !ok {
-		return nil, ErrCompleterMustBeFn
+		return ErrCompleterMustBeFn
 	}
-	return callArgCompleter(fn, ev, words)
+	return callArgCompleter(fn, ev, words, rawCands)
 }
 
 type builtinArgCompleter struct {
 	name string
-	impl func([]string, *eval.Evaler) ([]rawCandidate, error)
+	impl func([]string, *eval.Evaler, chan<- rawCandidate) error
 }
 
 var _ eval.CallableValue = &builtinArgCompleter{}
@@ -137,27 +137,33 @@ func (bac *builtinArgCompleter) Call(ec *eval.EvalCtx, args []eval.Value, opts m
 		}
 		words[i] = string(s)
 	}
-	cands, err := bac.impl(words, ec.Evaler)
+
+	output := ec.OutputChan()
+	rawCands := make(chan rawCandidate)
+	defer close(rawCands)
+	go func() {
+		for rc := range rawCands {
+			output <- rc
+		}
+	}()
+
+	err := bac.impl(words, ec.Evaler, rawCands)
 	maybeThrow(err)
-	out := ec.OutputChan()
-	for _, cand := range cands {
-		out <- cand
-	}
 }
 
-func complFilename(words []string, ev *eval.Evaler) ([]rawCandidate, error) {
+func complFilename(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
 	if len(words) < 1 {
-		return nil, ErrTooFewArguments
+		return ErrTooFewArguments
 	}
-	return complFilenameInner(words[len(words)-1], false)
+	return complFilenameInner(words[len(words)-1], false, rawCands)
 }
 
-func complSudo(words []string, ev *eval.Evaler) ([]rawCandidate, error) {
+func complSudo(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
 	if len(words) < 2 {
-		return nil, ErrTooFewArguments
+		return ErrTooFewArguments
 	}
 	if len(words) == 2 {
-		return complFormHeadInner(words[1], ev)
+		return complFormHeadInner(words[1], ev, rawCands)
 	}
-	return completeArg(words[1:], ev)
+	return completeArg(words[1:], ev, rawCands)
 }

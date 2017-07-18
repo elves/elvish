@@ -3,7 +3,9 @@ package edit
 import (
 	"bufio"
 	"errors"
+	"io"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/elves/elvish/edit/ui"
@@ -240,15 +242,61 @@ func callPrompt(ed *Editor, fn eval.Callable) []*ui.Styled {
 // the Fn with specified arguments and closed input, and converts its output to
 // candidate objects.
 func callArgCompleter(fn eval.CallableValue,
-	ev *eval.Evaler, words []string) ([]rawCandidate, error) {
+	ev *eval.Evaler, words []string, rawCands chan<- rawCandidate) error {
 
 	// Quick path for builtin arg completers.
 	if builtin, ok := fn.(*builtinArgCompleter); ok {
-		return builtin.impl(words, ev)
+		return builtin.impl(words, ev, rawCands)
 	}
 
+	pipeRead, pipeWrite, err := os.Pipe()
+	if err != nil {
+		return err
+	}
+	defer pipeRead.Close()
+	defer pipeWrite.Close()
+	bufferedPipeRead := bufio.NewReader(pipeRead)
+
+	output := make(chan eval.Value)
+	var waiter sync.WaitGroup
+	waiter.Add(2)
+
+	// capture value output
+	go func() {
+		defer waiter.Done()
+
+		for v := range output {
+			switch v := v.(type) {
+			case rawCandidate:
+				rawCands <- v
+			case eval.String:
+				rawCands <- plainCandidate(v)
+			default:
+				logger.Printf("completer must output string or candidate")
+			}
+		}
+	}()
+
+	// capture file output
+	go func() {
+		defer waiter.Done()
+
+		for {
+			line, err := bufferedPipeRead.ReadString('\n')
+			if line != "" {
+				rawCands <- plainCandidate(strings.TrimSuffix(line, "\n"))
+			}
+			if err != nil {
+				if err != io.EOF {
+					logger.Println("error on reading:", err)
+				}
+				break
+			}
+		}
+	}()
+
 	ports := []*eval.Port{
-		eval.DevNullClosedChan, {File: os.Stdout}, {File: os.Stderr}}
+		eval.DevNullClosedChan, {Chan: output, File: pipeWrite, CloseFile: true}, {File: os.Stderr}}
 
 	args := make([]eval.Value, len(words))
 	for i, word := range words {
@@ -257,21 +305,12 @@ func callArgCompleter(fn eval.CallableValue,
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ev, "[editor completer]", "", ports)
-	values, err := ec.PCaptureOutput(fn, args, eval.NoOpts)
+	err = ec.PCall(fn, args, eval.NoOpts)
 	if err != nil {
-		return nil, errors.New("completer error: " + err.Error())
+		err = errors.New("completer error: " + err.Error())
 	}
 
-	cands := make([]rawCandidate, len(values))
-	for i, v := range values {
-		switch v := v.(type) {
-		case rawCandidate:
-			cands[i] = v
-		case eval.String:
-			cands[i] = plainCandidate(v)
-		default:
-			return nil, errors.New("completer must output string or candidate")
-		}
-	}
-	return cands, nil
+	eval.ClosePorts(ports)
+	waiter.Wait()
+	return err
 }
