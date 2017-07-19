@@ -425,14 +425,14 @@ func complArg(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 
 func findArgContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Form) {
 	if sep, ok := n.(*parse.Sep); ok {
-		if form, ok := sep.Parent().(*parse.Form); ok {
+		if form, ok := sep.Parent().(*parse.Form); ok && form.Head != nil {
 			return n.End(), n.End(), "", parse.Bareword, form
 		}
 	}
 	if primary, ok := n.(*parse.Primary); ok {
 		if compound, head := primaryInSimpleCompound(primary); compound != nil {
 			if form, ok := compound.Parent().(*parse.Form); ok {
-				if form.Head != compound {
+				if form.Head != nil && form.Head != compound {
 					return compound.Begin(), compound.End(), head, primary.Type, form
 				}
 			}
