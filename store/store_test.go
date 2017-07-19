@@ -3,35 +3,26 @@ package store
 // This file also sets up the test fixture.
 
 import (
-	"database/sql"
 	"fmt"
-	"testing"
-
-	"github.com/elves/elvish/store/storedefs"
+	"io/ioutil"
+	"os"
 )
 
 var tStore *Store
 
 func init() {
-	db, err := sql.Open("sqlite3", ":memory:")
+	f, err := ioutil.TempFile("", "elvish.test")
 	if err != nil {
-		panic(fmt.Sprintf("Failed to create in-memory SQLite3 DB: %v", err))
+		panic(fmt.Sprintf("Failed to open temp file: %v", err))
 	}
-	tStore, err = NewStoreDB(db)
+	db, err := DefaultDB(f.Name())
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create Store instance: %v", err))
 	}
-}
+	os.Remove(f.Name())
 
-func TestNewStore(t *testing.T) {
-	// XXX(xiaq): Also tests EnsureDataDir
-	dataDir, err := storedefs.EnsureDataDir()
+	tStore, err = NewStoreDB(db)
 	if err != nil {
-		t.Errorf("EnsureDataDir() -> (*, %v), want (*, <nil>)", err)
-	}
-
-	_, err = NewStore(dataDir + "/db")
-	if err != nil {
-		t.Errorf("NewStore() -> (*, %v), want (*, <nil>)", err)
+		panic(fmt.Sprintf("Failed to create Store instance: %v", err))
 	}
 }
