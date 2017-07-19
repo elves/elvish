@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/boltdb/bolt"
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/daemon/service"
@@ -123,12 +124,14 @@ func main() {
 	} else {
 		// Shell or web. Set up common runtime components.
 		ev, cl := initRuntime()
-		defer func() {
-			err := cl.Close()
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "warning: failed to close connection to daemon:", err)
-			}
-		}()
+		if cl != nil {
+			defer func() {
+				err := cl.Close()
+				if err != nil {
+					fmt.Fprintln(os.Stderr, "warning: failed to close connection to daemon:", err)
+				}
+			}()
+		}
 
 		if *isweb {
 			if *cmd {
@@ -150,6 +153,8 @@ const (
 	daemonWaitLoops   = 100
 	daemonWaitTotal   = daemonWaitOneLoop * daemonWaitLoops
 )
+
+const upgradeDbNotice = `If you upgraded Elvish from a pre-0.10 version, you need to upgrade your database by following instructions in https://github.com/elves/upgrade-db-for-0.10/`
 
 func initRuntime() (*eval.Evaler, *api.Client) {
 	var dataDir string
@@ -192,8 +197,12 @@ func initRuntime() (*eval.Evaler, *api.Client) {
 			version, err := cl.Version()
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: socket exists but not responding version RPC:", err)
-				cl.Close()
-				cl = nil
+				// TODO(xiaq): Remove this when the SQLite-backed database
+				// becomes an unmemorable past (perhaps 6 months after the
+				// switch to boltdb).
+				if err.Error() == bolt.ErrInvalid.Error() {
+					fmt.Fprintln(os.Stderr, upgradeDbNotice)
+				}
 				goto spawnDaemonEnd
 			}
 			logger.Printf("daemon serving version %d, want version %d", version, api.Version)
@@ -225,14 +234,16 @@ func initRuntime() (*eval.Evaler, *api.Client) {
 			} else {
 				logger.Println("started daemon")
 			}
-			for i := 0; i < daemonWaitLoops; i++ {
+			for i := 0; i <= daemonWaitLoops; i++ {
 				_, err := cl.Version()
 				if err == nil {
 					logger.Println("daemon online")
 					goto spawnDaemonEnd
-				} else if i == daemonWaitLoops-1 {
+				} else if err.Error() == bolt.ErrInvalid.Error() {
+					fmt.Fprintln(os.Stderr, upgradeDbNotice)
+					goto spawnDaemonEnd
+				} else if i == daemonWaitLoops {
 					fmt.Fprintf(os.Stderr, "cannot connect to daemon after %v: %v\n", daemonWaitTotal, err)
-					cl = nil
 					goto spawnDaemonEnd
 				}
 				time.Sleep(daemonWaitOneLoop)
