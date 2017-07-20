@@ -1,7 +1,7 @@
-// +build amd64,freebsd arm64,freebsd
+// +build dragonfly amd64,freebsd arm64,freebsd
 
 // The type of FdSet.Bits is different on different platforms.
-// This file is for FreeBSD where FdSet.Bits is actually X__fds_bits and it's []uint64.
+// This file is for those where FdSet.Bits is []int64.
 
 package sys
 
