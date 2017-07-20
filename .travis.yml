@@ -1,4 +1,6 @@
 language: go
+env:
+    - CGO_ENABLED=0
 go:
     - 1.6
     - 1.7
