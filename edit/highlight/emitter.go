@@ -83,7 +83,7 @@ func (e *Emitter) form(n *parse.Form) {
 }
 
 func (e *Emitter) formHead(n *parse.Compound) {
-	simple, head, err := nodeutil.SimpleCompound(n, nil)
+	simple, head, err := nodeutil.SimpleCompound(n, nil, nil)
 	st := ui.Styles{}
 	if simple {
 		if e.GoodFormHead(head) {
