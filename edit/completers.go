@@ -168,7 +168,7 @@ func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
 }
 
 func complIndex(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
-	begin, end, current, q, indexee := findIndexContext(n)
+	begin, end, current, q, indexee := findIndexContext(n, ev)
 
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
@@ -198,7 +198,7 @@ func complIndex(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 //
 // Right now we only support cases where there is only one level of indexing,
 // e.g. $a[<Tab> is supported but $a[x][<Tab> is not.
-func findIndexContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Primary) {
+func findIndexContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.PrimaryType, *parse.Primary) {
 	if parse.IsSep(n) {
 		if parse.IsIndexing(n.Parent()) {
 			// We are just after an opening bracket.
@@ -221,7 +221,7 @@ func findIndexContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse
 
 	if parse.IsPrimary(n) {
 		primary := parse.GetPrimary(n)
-		compound, current := primaryInSimpleCompound(primary)
+		compound, current := primaryInSimpleCompound(primary, ev)
 		if compound != nil {
 			if parse.IsArray(compound.Parent()) {
 				array := compound.Parent()
@@ -252,7 +252,7 @@ func complIndexInner(m eval.IterateKeyer) []rawCandidate {
 }
 
 func complFormHead(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
-	begin, end, head, q := findFormHeadContext(n)
+	begin, end, head, q := findFormHeadContext(n, ev)
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
 	}
@@ -269,7 +269,7 @@ func complFormHead(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	return &complSpec{begin, end, cands}, nil
 }
 
-func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
+func findFormHeadContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.PrimaryType) {
 	// Determine if we are starting a new command. There are 3 cases:
 	// 1. The whole chunk is empty (nothing entered at all): the leaf is a
 	//    Chunk.
@@ -287,7 +287,7 @@ func findFormHeadContext(n parse.Node) (int, int, string, parse.PrimaryType) {
 	}
 
 	if primary, ok := n.(*parse.Primary); ok {
-		if compound, head := primaryInSimpleCompound(primary); compound != nil {
+		if compound, head := primaryInSimpleCompound(primary, ev); compound != nil {
 			if form, ok := compound.Parent().(*parse.Form); ok {
 				if form.Head == compound {
 					return compound.Begin(), compound.End(), head, primary.Type
@@ -347,7 +347,7 @@ func (pc plainCandidates) Swap(i, j int) { pc[i], pc[j] = pc[j], pc[i] }
 
 // complRedir completes redirection RHS.
 func complRedir(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
-	begin, end, current, q := findRedirContext(n)
+	begin, end, current, q := findRedirContext(n, ev)
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
 	}
@@ -365,14 +365,14 @@ func complRedir(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	return &complSpec{begin, end, cands}, nil
 }
 
-func findRedirContext(n parse.Node) (int, int, string, parse.PrimaryType) {
+func findRedirContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.PrimaryType) {
 	if parse.IsSep(n) {
 		if parse.IsRedir(n.Parent()) {
 			return n.End(), n.End(), "", parse.Bareword
 		}
 	}
 	if primary, ok := n.(*parse.Primary); ok {
-		if compound, head := primaryInSimpleCompound(primary); compound != nil {
+		if compound, head := primaryInSimpleCompound(primary, ev); compound != nil {
 			if parse.IsRedir(compound.Parent()) {
 				return compound.Begin(), compound.End(), head, primary.Type
 			}
@@ -384,20 +384,20 @@ func findRedirContext(n parse.Node) (int, int, string, parse.PrimaryType) {
 // complArg completes arguments. It identifies the context and then delegates
 // the actual completion work to a suitable completer.
 func complArg(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
-	begin, end, current, q, form := findArgContext(n)
+	begin, end, current, q, form := findArgContext(n, ev)
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
 	}
 
 	// Find out head of the form and preceding arguments.
 	// If Form.Head is not a simple compound, head will be "", just what we want.
-	_, head, _ := simpleCompound(form.Head, nil)
+	_, head, _ := simpleCompound(form.Head, nil, ev)
 	var args []string
 	for _, compound := range form.Args {
 		if compound.Begin() >= begin {
 			break
 		}
-		ok, arg, _ := simpleCompound(compound, nil)
+		ok, arg, _ := simpleCompound(compound, nil, ev)
 		if ok {
 			// XXX Arguments that are not simple compounds are simply ignored.
 			args = append(args, arg)
@@ -423,14 +423,14 @@ func complArg(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	return &complSpec{begin, end, cands}, nil
 }
 
-func findArgContext(n parse.Node) (int, int, string, parse.PrimaryType, *parse.Form) {
+func findArgContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.PrimaryType, *parse.Form) {
 	if sep, ok := n.(*parse.Sep); ok {
 		if form, ok := sep.Parent().(*parse.Form); ok && form.Head != nil {
 			return n.End(), n.End(), "", parse.Bareword, form
 		}
 	}
 	if primary, ok := n.(*parse.Primary); ok {
-		if compound, head := primaryInSimpleCompound(primary); compound != nil {
+		if compound, head := primaryInSimpleCompound(primary, ev); compound != nil {
 			if form, ok := compound.Parent().(*parse.Form); ok {
 				if form.Head != nil && form.Head != compound {
 					return compound.Begin(), compound.End(), head, primary.Type, form

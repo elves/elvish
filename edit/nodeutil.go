@@ -10,7 +10,7 @@ import (
 
 // Utilities for insepcting the AST. Used for completers and stylists.
 
-func primaryInSimpleCompound(pn *parse.Primary) (*parse.Compound, string) {
+func primaryInSimpleCompound(pn *parse.Primary, ev *eval.Evaler) (*parse.Compound, string) {
 	indexing := parse.GetIndexing(pn.Parent())
 	if indexing == nil {
 		return nil, ""
@@ -19,35 +19,19 @@ func primaryInSimpleCompound(pn *parse.Primary) (*parse.Compound, string) {
 	if compound == nil {
 		return nil, ""
 	}
-	ok, head, _ := simpleCompound(compound, indexing)
+	ok, head, _ := simpleCompound(compound, indexing, ev)
 	if !ok {
 		return nil, ""
 	}
 	return compound, head
 }
 
-func simpleCompound(cn *parse.Compound, upto *parse.Indexing) (bool, string, error) {
-	return nodeutil.SimpleCompound(cn, upto)
+func simpleCompound(cn *parse.Compound, upto *parse.Indexing, ev *eval.Evaler) (bool, string, error) {
+	return nodeutil.SimpleCompound(cn, upto, ev)
 }
 
-// purelyEvalPrimary evaluates a primary node without causing any side effects.
-// If this cannot be done, it returns nil.
-//
-// Currently, only string literals and variables with no @ can be evaluated.
-func purelyEvalPrimary(pn *parse.Primary, ev *eval.Evaler) eval.Value {
-	switch pn.Type {
-	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
-		return eval.String(pn.Value)
-	case parse.Variable:
-		explode, ns, name := eval.ParseVariable(pn.Value)
-		if explode {
-			return nil
-		}
-		ec := eval.NewTopEvalCtx(ev, "[pure eval]", "", nil)
-		variable := ec.ResolveVar(ns, name)
-		return variable.Get()
-	}
-	return nil
+func purelyEvalPrimary(cn *parse.Primary, ev *eval.Evaler) eval.Value {
+	return nodeutil.PurelyEvalPrimary(cn, ev)
 }
 
 // leafNodeAtDot finds the leaf node at a specific position. It returns nil if
