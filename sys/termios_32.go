@@ -1,4 +1,4 @@
-// +build 386,darwin dragonfly freebsd linux netbsd openbsd
+// +build 386,darwin arm,darwin dragonfly freebsd linux netbsd openbsd
 
 package sys
 

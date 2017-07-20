@@ -1,7 +1,7 @@
-// +build arm,freebsd 386,freebsd
+// +build netbsd openbsd arm,freebsd 386,freebsd
 
 // The type of FdSet.Bits is different on different platforms.
-// This file is for FreeBSD where FdSet.Bits is actually X__fds_bits and it's []uint32.
+// This file is for those where FdSet.Bits is []uint32.
 
 package sys
 
