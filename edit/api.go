@@ -296,7 +296,10 @@ func callArgCompleter(fn eval.CallableValue,
 	}()
 
 	ports := []*eval.Port{
-		eval.DevNullClosedChan, {Chan: output, File: pipeWrite, CloseFile: true}, {File: os.Stderr}}
+		eval.DevNullClosedChan,
+		{Chan: output, File: pipeWrite, CloseFile: true, CloseChan: true},
+		{File: os.Stderr},
+	}
 
 	args := make([]eval.Value, len(words))
 	for i, word := range words {
