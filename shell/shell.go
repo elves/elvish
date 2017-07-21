@@ -37,8 +37,7 @@ func NewShell(ev *eval.Evaler, daemon *api.Client, cmd bool) *Shell {
 func (sh *Shell) Run(args []string) int {
 	defer rescue()
 
-	handleUsr1AndQuit()
-	logSignals()
+	handleSignals()
 
 	if len(args) > 0 {
 		if len(args) > 1 {
@@ -169,22 +168,15 @@ func basicReadLine() (string, error) {
 	return stdin.ReadString('\n')
 }
 
-func logSignals() {
+func handleSignals() {
 	sigs := make(chan os.Signal)
 	signal.Notify(sigs)
 	go func() {
 		for sig := range sigs {
 			logger.Println("signal", sig)
-		}
-	}()
-}
-
-func handleUsr1AndQuit() {
-	sigs := make(chan os.Signal)
-	signal.Notify(sigs, syscall.SIGUSR1, syscall.SIGQUIT)
-	go func() {
-		for range sigs {
-			fmt.Print(sys.DumpStack())
+			if sig == syscall.SIGQUIT || sig == syscall.SIGUSR1 {
+				fmt.Print(sys.DumpStack())
+			}
 		}
 	}()
 }
