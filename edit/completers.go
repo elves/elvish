@@ -37,7 +37,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"sort"
 	"strings"
 
 	"github.com/elves/elvish/edit/ui"
@@ -55,7 +54,7 @@ var (
 // completer takes the current Node (always a leaf in the AST) and an Editor and
 // returns a compl. If the completer does not apply to the type of the current
 // Node, it should return an error of ErrCompletionUnapplicable.
-type completer func(parse.Node, *eval.Evaler) (*complSpec, error)
+type completer func(parse.Node, *eval.Evaler, eval.CallableValue) (*complSpec, error)
 
 // complSpec is the result of a completer, meaning that any of the candidates can
 // replace the text in the interval [begin, end).
@@ -73,7 +72,7 @@ var completers = []struct {
 }{
 	{"variable", complVariable},
 	{"index", complIndex},
-	{"command name", complFormHead},
+	{"command", complFormHead},
 	{"redir", complRedir},
 	{"argument", complArg},
 }
@@ -83,7 +82,13 @@ var completers = []struct {
 // available, it returns an empty completer name.
 func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 	for _, item := range completers {
-		compl, err := item.completer(n, ev)
+		ed := ev.Editor.(*Editor)
+		matcher, ok := ed.lookupMatcher(item.name)
+		if !ok {
+			return item.name, nil, errMatcherMustBeFn
+		}
+
+		compl, err := item.completer(n, ev, matcher)
 		if compl != nil {
 			return item.name, compl, nil
 		} else if err != nil && err != errCompletionUnapplicable {
@@ -93,7 +98,7 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 	return "", nil, nil
 }
 
-func complVariable(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
+func complVariable(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
 	primary := parse.GetPrimary(n)
 	if primary == nil || primary.Type != parse.Variable {
 		return nil, errCompletionUnapplicable
@@ -111,29 +116,31 @@ func complVariable(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 		ns = ns[:len(ns)-1]
 	}
 
-	// Collect matching variables.
-	var entries []string
-	iterateVariables(ev, ns, func(varname string) {
-		entries = append(entries, varname)
-	})
-	// Collect namespace prefixes.
-	// TODO Support non-module namespaces.
-	for mod := range ev.Modules {
-		modNsPart := mod + ":"
-		// This is to match namespaces that are "nested" under the current
-		// namespace.
-		if hasProperPrefix(modNsPart, nsPart) {
-			entries = append(entries, modNsPart[len(nsPart):])
-		}
-	}
-	sort.Strings(entries)
+	rawCands := make(chan rawCandidate)
+	go func() {
+		defer close(rawCands)
 
-	var rawCands []rawCandidate
-	for _, entry := range entries {
-		rawCands = append(rawCands, noQuoteCandidate(entry))
-	}
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, "variable", nameHead,
+		// Collect matching variables.
+		iterateVariables(ev, ns, func(varname string) {
+			rawCands <- noQuoteCandidate(varname)
+		})
+
+		// Collect namespace prefixes.
+		// TODO Support non-module namespaces.
+		for mod := range ev.Modules {
+			modNsPart := mod + ":"
+			// This is to match namespaces that are "nested" under the current
+			// namespace.
+			if hasProperPrefix(modNsPart, nsPart) {
+				rawCands <- noQuoteCandidate(modNsPart[len(nsPart):])
+			}
+		}
+	}()
+
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher, nameHead,
 		rawCands, parse.Bareword)
+	// make sure completer exits
+	<-rawCands
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +174,7 @@ func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
 	}
 }
 
-func complIndex(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
+func complIndex(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
 	begin, end, current, q, indexee := findIndexContext(n, ev)
 
 	if begin == -1 {
@@ -183,10 +190,17 @@ func complIndex(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 		return nil, errCannotIterateKey
 	}
 
-	rawCands := complIndexInner(m)
+	rawCands := make(chan rawCandidate)
+	go func() {
+		defer close(rawCands)
 
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, "index",
+		complIndexInner(m, rawCands)
+	}()
+
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher,
 		current, rawCands, q)
+	// make sure completer exits
+	<-rawCands
 	if err != nil {
 		return nil, err
 	}
@@ -239,30 +253,38 @@ func findIndexContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.Pr
 	return -1, -1, "", 0, nil
 }
 
-func complIndexInner(m eval.IterateKeyer) []rawCandidate {
-	var keys []rawCandidate
+func complIndexInner(m eval.IterateKeyer, rawCands chan rawCandidate) {
 	m.IterateKey(func(v eval.Value) bool {
 		if keyv, ok := v.(eval.String); ok {
-			keys = append(keys, plainCandidate(keyv))
+			rawCands <- plainCandidate(keyv)
 		}
 		return true
 	})
-	sort.Sort(plainCandidates(keys))
-	return keys
 }
 
-func complFormHead(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
+func complFormHead(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
 	begin, end, head, q := findFormHeadContext(n, ev)
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
 	}
-	rawCands, err := complFormHeadInner(head, ev)
-	if err != nil {
-		return nil, err
-	}
 
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, "command",
+	rawCands := make(chan rawCandidate)
+	collectErr := make(chan error)
+	go func() {
+		var err error
+		defer func() {
+			close(rawCands)
+			collectErr <- err
+		}()
+
+		err = complFormHeadInner(head, ev, rawCands)
+	}()
+
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher,
 		head, rawCands, q)
+	if ce := <-collectErr; ce != nil {
+		return nil, ce
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -298,14 +320,13 @@ func findFormHeadContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse
 	return -1, -1, "", 0
 }
 
-func complFormHeadInner(head string, ev *eval.Evaler) ([]rawCandidate, error) {
+func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
 	if util.DontSearch(head) {
-		return complFilenameInner(head, true)
+		return complFilenameInner(head, true, rawCands)
 	}
 
-	var commands []rawCandidate
 	got := func(s string) {
-		commands = append(commands, plainCandidate(s))
+		rawCands <- plainCandidate(s)
 	}
 	for special := range eval.IsBuiltinSpecial {
 		got(special)
@@ -332,9 +353,8 @@ func complFormHeadInner(head string, ev *eval.Evaler) ([]rawCandidate, error) {
 			got(ns + ":")
 		}
 	}
-	sort.Sort(plainCandidates(commands))
 
-	return commands, nil
+	return nil
 }
 
 type plainCandidates []rawCandidate
@@ -346,18 +366,29 @@ func (pc plainCandidates) Less(i, j int) bool {
 func (pc plainCandidates) Swap(i, j int) { pc[i], pc[j] = pc[j], pc[i] }
 
 // complRedir completes redirection RHS.
-func complRedir(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
+func complRedir(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
 	begin, end, current, q := findRedirContext(n, ev)
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
 	}
-	rawCands, err := complFilenameInner(current, false)
-	if err != nil {
-		return nil, err
-	}
 
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, "redirect",
+	rawCands := make(chan rawCandidate)
+	collectErr := make(chan error)
+	go func() {
+		var err error
+		defer func() {
+			close(rawCands)
+			collectErr <- err
+		}()
+
+		err = complFilenameInner(current, false, rawCands)
+	}()
+
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher,
 		current, rawCands, q)
+	if ce := <-collectErr; ce != nil {
+		return nil, ce
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -383,7 +414,7 @@ func findRedirContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.Pr
 
 // complArg completes arguments. It identifies the context and then delegates
 // the actual completion work to a suitable completer.
-func complArg(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
+func complArg(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
 	begin, end, current, q, form := findArgContext(n, ev)
 	if begin == -1 {
 		return nil, errCompletionUnapplicable
@@ -409,13 +440,23 @@ func complArg(n parse.Node, ev *eval.Evaler) (*complSpec, error) {
 	words[len(words)-1] = current
 	copy(words[1:len(words)-1], args[:])
 
-	rawCands, err := completeArg(words, ev)
-	if err != nil {
+	rawCands := make(chan rawCandidate)
+	collectErr := make(chan error)
+	go func() {
+		var err error
+		defer func() {
+			close(rawCands)
+			collectErr <- err
+		}()
+
+		err = completeArg(words, ev, rawCands)
+	}()
+
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher,
+		current, rawCands, q)
+	if ce := <-collectErr; ce != nil {
 		return nil, err
 	}
-
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, "argument",
-		current, rawCands, q)
 	if err != nil {
 		return nil, err
 	}
@@ -442,9 +483,7 @@ func findArgContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.Prim
 }
 
 // TODO: getStyle does redundant stats.
-func complFilenameInner(head string, executableOnly bool) (
-	[]rawCandidate, error) {
-
+func complFilenameInner(head string, executableOnly bool, rawCands chan<- rawCandidate) error {
 	dir, fileprefix := path.Split(head)
 	dirToRead := dir
 	if dirToRead == "" {
@@ -453,10 +492,9 @@ func complFilenameInner(head string, executableOnly bool) (
 
 	infos, err := ioutil.ReadDir(dirToRead)
 	if err != nil {
-		return nil, fmt.Errorf("cannot list directory %s: %v", dirToRead, err)
+		return fmt.Errorf("cannot list directory %s: %v", dirToRead, err)
 	}
 
-	cands := []rawCandidate{}
 	lsColor := getLsColor()
 	// Make candidates out of elements that match the file component.
 	for _, info := range infos {
@@ -486,13 +524,13 @@ func complFilenameInner(head string, executableOnly bool) (
 			}
 		}
 
-		cands = append(cands, &complexCandidate{
+		rawCands <- &complexCandidate{
 			stem: full, codeSuffix: suffix,
 			style: ui.StylesFromString(lsColor.getStyle(full)),
-		})
+		}
 	}
 
-	return cands, nil
+	return nil
 }
 
 func dotfile(fname string) bool {

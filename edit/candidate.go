@@ -3,6 +3,7 @@ package edit
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -20,6 +21,12 @@ type rawCandidate interface {
 	text() string
 	cook(q parse.PrimaryType) *candidate
 }
+
+type rawCandidates []rawCandidate
+
+func (cs rawCandidates) Len() int           { return len(cs) }
+func (cs rawCandidates) Swap(i, j int)      { cs[i], cs[j] = cs[j], cs[i] }
+func (cs rawCandidates) Less(i, j int) bool { return cs[i].text() < cs[j].text() }
 
 // plainCandidate is a minimal implementation of rawCandidate.
 type plainCandidate string
@@ -101,39 +108,45 @@ func outputComplexCandidate(ec *eval.EvalCtx,
 	ec.OutputChan() <- c
 }
 
-func (ed *Editor) filterAndCookCandidates(ev *eval.Evaler, completer string, pattern string,
-	cands []rawCandidate, q parse.PrimaryType) ([]*candidate, error) {
+func (ed *Editor) filterAndCookCandidates(ev *eval.Evaler, matcher eval.CallableValue,
+	pattern string, cands chan rawCandidate, q parse.PrimaryType) ([]*candidate, error) {
 
-	matcher, ok := ed.lookupMatcher(completer)
-	if !ok {
-		return nil, errMatcherMustBeFn
-	}
+	input := make(chan eval.Value)
+	var rcs []rawCandidate
+	go func() {
+		defer close(input)
+		for rc := range cands {
+			rcs = append(rcs, rc)
+			input <- eval.String(rc.text())
+		}
+	}()
 
-	input := make(chan eval.Value, len(cands))
 	ports := []*eval.Port{
 		{Chan: input}, {File: os.Stdout}, {File: os.Stderr}}
 	ec := eval.NewTopEvalCtx(ev, "[editor matcher]", "", ports)
 
-	// TODO(xiaq): Revise the API of completers so that the complter write
-	// directly to a channel and run concurrently with the matcher.
-	for _, cand := range cands {
-		input <- eval.String(cand.text())
-	}
-	close(input)
-
 	args := []eval.Value{eval.String(pattern)}
 	values, err := ec.PCaptureOutput(matcher, args, eval.NoOpts)
+	<-input
 	if err != nil {
 		return nil, err
-	} else if len(values) != len(cands) {
+	} else if len(values) != len(rcs) {
 		return nil, errIncorrectNumOfResults
 	}
 
-	var filtered []*candidate
+	var (
+		filtered []*candidate
+		frcs     rawCandidates
+	)
 	for i, value := range values {
 		if eval.ToBool(value) {
-			filtered = append(filtered, cands[i].cook(q))
+			frcs = append(frcs, rcs[i])
 		}
 	}
+	sort.Sort(frcs)
+	for _, rc := range frcs {
+		filtered = append(filtered, rc.cook(q))
+	}
+
 	return filtered, nil
 }
