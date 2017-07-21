@@ -138,16 +138,17 @@ func (bac *builtinArgCompleter) Call(ec *eval.EvalCtx, args []eval.Value, opts m
 		words[i] = string(s)
 	}
 
-	output := ec.OutputChan()
 	rawCands := make(chan rawCandidate)
-	defer close(rawCands)
+	var err error
 	go func() {
-		for rc := range rawCands {
-			output <- rc
-		}
+		defer close(rawCands)
+		err = bac.impl(words, ec.Evaler, rawCands)
 	}()
 
-	err := bac.impl(words, ec.Evaler, rawCands)
+	output := ec.OutputChan()
+	for rc := range rawCands {
+		output <- rc
+	}
 	maybeThrow(err)
 }
 
