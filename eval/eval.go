@@ -38,7 +38,6 @@ type Namespace map[string]Variable
 // Evaler is used to evaluate elvish sources. It maintains runtime context
 // shared among all evalCtx instances.
 type Evaler struct {
-	Builtin Namespace
 	Global  Namespace
 	Modules map[string]Namespace
 	Daemon  *api.Client
@@ -70,14 +69,14 @@ func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
 
 	// TODO(xiaq): Create daemon namespace asynchronously.
 	modules := map[string]Namespace{
-		"daemon": makeDaemonNamespace(daemon),
+		"daemon":  makeDaemonNamespace(daemon),
+		"builtin": makeBuiltinNamespace(daemon),
 	}
 	for name, mod := range extraModules {
 		modules[name] = mod
 	}
 
 	return &Evaler{
-		Builtin: makeBuiltinNamespace(daemon),
 		Global:  Namespace{},
 		Modules: modules,
 		Daemon:  daemon,
@@ -88,8 +87,12 @@ func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
 	}
 }
 
+func (ev *Evaler) Builtin() Namespace {
+	return ev.Modules["builtin"]
+}
+
 func (ev *Evaler) searchPaths() []string {
-	return ev.Builtin["paths"].(*EnvPathList).get()
+	return ev.Builtin()["paths"].(*EnvPathList).get()
 }
 
 const (
@@ -267,7 +270,7 @@ func summarize(text string) string {
 // Compile compiles elvish code in the global scope. If the error is not nil, it
 // always has type CompilationError.
 func (ev *Evaler) Compile(n *parse.Chunk, name, text string) (Op, error) {
-	return compile(makeScope(ev.Builtin), makeScope(ev.Global), n, name, text)
+	return compile(makeScope(ev.Builtin()), makeScope(ev.Global), n, name, text)
 }
 
 // PEval evaluates an op in a protected environment so that calls to errorf are
@@ -374,7 +377,7 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	case "up":
 		return ec.up[name]
 	case "builtin":
-		return ec.Builtin[name]
+		return ec.Builtin()[name]
 	case "":
 		if v := ec.getLocal(name); v != nil {
 			return v
@@ -382,7 +385,7 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 		if v, ok := ec.up[name]; ok {
 			return v
 		}
-		return ec.Builtin[name]
+		return ec.Builtin()[name]
 	case "e":
 		if strings.HasPrefix(name, FnPrefix) {
 			return NewRoVariable(ExternalCmd{name[len(FnPrefix):]})
