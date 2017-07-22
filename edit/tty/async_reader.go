@@ -53,20 +53,25 @@ func (ar *AsyncReader) ErrorChan() <-chan error {
 // Run runs the AsyncReader. It blocks until Quit is called and should be
 // called in a separate goroutine.
 func (ar *AsyncReader) Run() {
-	fd := int(ar.rd.Fd())
-	cfd := int(ar.rCtrl.Fd())
-	maxfd := max(fd, cfd)
-	fs := sys.NewFdSet()
+	fd := ar.rd.Fd()
+	cfd := ar.rCtrl.Fd()
+	poller := sys.Poller{}
 	var cBuf [1]byte
 
-	if nonblock, _ := sys.GetNonblock(fd); !nonblock {
-		sys.SetNonblock(fd, true)
-		defer sys.SetNonblock(fd, false)
+	// unix-specific, no equavilent on windows
+	if nonblock, _ := sys.GetNonblock(int(fd)); !nonblock {
+		sys.SetNonblock(int(fd), true)
+		defer sys.SetNonblock(int(fd), false)
+	}
+
+	if err := poller.Init([]uintptr{fd, cfd}, []uintptr{}); err != nil {
+		// fatal error, unable to initialize poller
+		// TODO show erorr
+		return
 	}
 
 	for {
-		fs.Set(fd, cfd)
-		err := sys.Select(maxfd+1, fs, nil, nil, nil)
+		rfds, _, err := poller.Poll(nil)
 		if err != nil {
 			switch err {
 			case syscall.EINTR:
@@ -76,11 +81,13 @@ func (ar *AsyncReader) Run() {
 				return
 			}
 		}
-		if fs.IsSet(cfd) {
-			// Consume the written byte
-			ar.rCtrl.Read(cBuf[:])
-			<-ar.ctrlCh
-			return
+		for _, rfd := range *rfds {
+			if rfd == cfd {
+				// Consume the written byte
+				ar.rCtrl.Read(cBuf[:])
+				<-ar.ctrlCh
+				return
+			}
 		}
 	ReadRune:
 		for {
