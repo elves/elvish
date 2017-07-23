@@ -40,10 +40,11 @@ var (
 	// Flags handled in this package, or common to shell and daemon.
 	help = flag.Bool("help", false, "show usage help and quit")
 
-	logpath    = flag.String("log", "", "a file to write debug log to")
-	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-	dbpath     = flag.String("db", "", "path to the database")
-	sockpath   = flag.String("sock", "", "path to the daemon socket")
+	logpath     = flag.String("log", "", "a file to write debug log to")
+	cpuprofile  = flag.String("cpuprofile", "", "write cpu profile to file")
+	dbpath      = flag.String("db", "", "path to the database")
+	sockpath    = flag.String("sock", "", "path to the daemon socket")
+	compileonly = flag.Bool("compileonly", false, "Parse/Compile but do not execute")
 
 	isdaemon = flag.Bool("daemon", false, "run daemon instead of shell")
 	isweb    = flag.Bool("web", false, "run backend of web interface")
@@ -142,7 +143,7 @@ func main() {
 			w := web.NewWeb(ev, *webport)
 			ret = w.Run(args)
 		} else {
-			sh := shell.NewShell(ev, cl, *cmd)
+			sh := shell.NewShell(ev, cl, *cmd, *compileonly)
 			ret = sh.Run(args)
 		}
 	}
