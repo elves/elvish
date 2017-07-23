@@ -125,7 +125,7 @@ func (w *Writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 		// Move to the first differing column if necessary.
 		firstCol := cellsWidth(line[:j])
 		if firstCol != 0 {
-			fmt.Fprintf(bytesBuf, "\033[%dG", firstCol+1)
+			fmt.Fprintf(bytesBuf, "\033[%dC", firstCol)
 		}
 		// Erase the rest of the line if necessary.
 		if !fullRefresh && i < len(w.oldBuf.lines) && j < len(w.oldBuf.lines[i]) {
