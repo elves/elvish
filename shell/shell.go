@@ -15,6 +15,7 @@ import (
 	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -23,13 +24,14 @@ var logger = util.GetLogger("[shell] ")
 
 // Shell keeps flags to the shell.
 type Shell struct {
-	ev     *eval.Evaler
-	daemon *api.Client
-	cmd    bool
+	ev          *eval.Evaler
+	daemon      *api.Client
+	cmd         bool
+	compileonly bool
 }
 
-func NewShell(ev *eval.Evaler, daemon *api.Client, cmd bool) *Shell {
-	return &Shell{ev, daemon, cmd}
+func NewShell(ev *eval.Evaler, daemon *api.Client, cmd bool, compileonly bool) *Shell {
+	return &Shell{ev, daemon, cmd, compileonly}
 }
 
 // Run runs Elvish using the default terminal interface. It blocks until Elvish
@@ -45,7 +47,9 @@ func (sh *Shell) Run(args []string) int {
 			return 2
 		}
 		arg := args[0]
-		if sh.cmd {
+		if sh.compileonly {
+			compileonlyAndPrintError(sh.ev, arg, sh.cmd)
+		} else if sh.cmd {
 			sourceTextAndPrintError(sh.ev, "code from -c", arg)
 		} else {
 			script(sh.ev, arg)
@@ -87,6 +91,27 @@ func source(ev *eval.Evaler, fname string, notexistok bool) bool {
 	}
 
 	return sourceTextAndPrintError(ev, fname, src)
+}
+
+func compileonlyAndPrintError(ev *eval.Evaler, name string, command bool) {
+	var err error
+	src := name
+	if command {
+		name = "code from -c"
+	} else {
+		src, err = readFileUTF8(name)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}
+	n, err := parse.Parse(name, src)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	_, err = ev.Compile(n, name, src)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
 }
 
 // sourceTextAndPrintError sources text, prints error if there is any, and
