@@ -91,7 +91,7 @@ func init() {
 		{'N', ui.Ctrl}: "navigation:start",
 		{'R', ui.Ctrl}: "histlist:start",
 		{'1', ui.Alt}:  "lastcmd:start",
-		{'L', ui.Ctrl}: "location:start",
+		{'/', ui.Ctrl}: "location:start",
 		{'V', ui.Ctrl}: "insert-raw",
 
 		ui.Default: "insert:default",
