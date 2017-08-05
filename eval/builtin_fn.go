@@ -125,6 +125,7 @@ func init() {
 		// String
 		{"joins", joins},
 		{"splits", splits},
+		{"replaces", replaces},
 
 		// String operations
 		{"ord", ord},
@@ -937,6 +938,17 @@ func splits(ec *EvalCtx, args []Value, opts map[string]Value) {
 	for _, p := range parts {
 		out <- String(p)
 	}
+}
+
+func replaces(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var (
+		s, old, new String
+		optMax      int
+	)
+	ScanArgs(args, &s, &old, &new)
+	ScanOpts(opts, Opt{"max", &optMax, String("-1")})
+
+	ec.ports[1].Chan <- String(strings.Replace(string(s), string(old), string(new), optMax))
 }
 
 func ord(ec *EvalCtx, args []Value, opts map[string]Value) {
