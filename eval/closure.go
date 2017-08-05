@@ -15,13 +15,13 @@ var unnamedRestArg = "@"
 type Closure struct {
 	ArgNames []string
 	// The name for the rest argument. If empty, the function has fixed arity.
-	// If equal to unnamedRestArg, the rest argument is unnamed but can be
-	// accessed via $args.
-	RestArg    string
-	Op         Op
-	Captured   map[string]Variable
-	SourceName string
-	Source     string
+	RestArg     string
+	OptNames    []string
+	OptDefaults []Value
+	Op          Op
+	Captured    map[string]Variable
+	SourceName  string
+	Source      string
 }
 
 var _ CallableValue = &Closure{}
@@ -72,6 +72,13 @@ func (c *Closure) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 		ec.local[c.RestArg] = NewPtrVariable(NewList(args[len(c.ArgNames):]...))
 	}
 	// Logger.Printf("EvalCtx=%p, args=%v, opts=%v", ec, args, opts)
+	for i, name := range c.OptNames {
+		v, ok := opts[name]
+		if !ok {
+			v = c.OptDefaults[i]
+		}
+		ec.local[name] = NewPtrVariable(v)
+	}
 	// XXX This conversion was done by the other direction.
 	convertedOpts := make(map[Value]Value)
 	for k, v := range opts {

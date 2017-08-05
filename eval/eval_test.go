@@ -177,6 +177,10 @@ var evalTests = []struct {
 	{"[x @xs]{ put $x $xs } a b c",
 		[]Value{String("a"),
 			NewList(String("b"), String("c"))}, nomore},
+	// Options.
+	{"[a &k=v]{ put $a $k } foo &k=bar", strs("foo", "bar"), nomore},
+	// Option default value.
+	{"[a &k=v]{ put $a $k } foo", strs("foo", "v"), nomore},
 
 	// Namespaces
 	// Pseudo-namespaces local: and up:

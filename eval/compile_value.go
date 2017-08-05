@@ -372,17 +372,21 @@ func pcaptureOutput(ec *EvalCtx, op Op) ([]Value, error) {
 }
 
 func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
-	// Collect argument names
-	var argNames []string
-	var restArg string
+	// Parse signature.
+	var (
+		argNames      []string
+		restArgName   string
+		optNames      []string
+		optDefaultOps []ValuesOp
+	)
 	if len(n.Elements) > 0 {
-		// [argument list]{ chunk }
+		// Argument list.
 		argNames = make([]string, len(n.Elements))
 		for i, arg := range n.Elements {
-			qname := mustString(cp, arg, "expect string")
+			qname := mustString(cp, arg, "argument name must be literal string")
 			explode, ns, name := ParseAndFixVariable(qname)
 			if ns != "" {
-				cp.errorpf(arg.Begin(), arg.End(), "must be unqualified")
+				cp.errorpf(arg.Begin(), arg.End(), "argument name must be unqualified")
 			}
 			if name == "" {
 				cp.errorpf(arg.Begin(), arg.End(), "argument name must not be empty")
@@ -391,24 +395,49 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 				if i != len(n.Elements)-1 {
 					cp.errorpf(arg.Begin(), arg.End(), "only the last argument may have @")
 				}
-				restArg = name
+				restArgName = name
 				argNames = argNames[:i]
 			} else {
 				argNames[i] = name
 			}
 		}
 	}
+	if len(n.MapPairs) > 0 {
+		optNames = make([]string, len(n.MapPairs))
+		optDefaultOps = make([]ValuesOp, len(n.MapPairs))
+		for i, opt := range n.MapPairs {
+			qname := mustString(cp, opt.Key, "option name must be literal string")
+			_, ns, name := ParseAndFixVariable(qname)
+			if ns != "" {
+				cp.errorpf(opt.Key.Begin(), opt.Key.End(), "option name must be unqualified")
+			}
+			if name == "" {
+				cp.errorpf(opt.Key.Begin(), opt.Key.End(), "option name must not be empty")
+			}
+			optNames[i] = name
+			if opt.Value == nil {
+				cp.errorpf(opt.End(), opt.End(), "option must have default value")
+			} else {
+				optDefaultOps[i] = cp.compoundOp(opt.Value)
+			}
+		}
+	}
 
-	// XXX The fiddlings with cp.capture is error-prone.
 	thisScope := cp.pushScope()
 	for _, argName := range argNames {
 		thisScope[argName] = true
 	}
-	if restArg != "" {
-		thisScope[restArg] = true
+	if restArgName != "" {
+		thisScope[restArgName] = true
 	}
+	for _, optName := range optNames {
+		thisScope[optName] = true
+	}
+
 	thisScope["opts"] = true
 	op := cp.chunkOp(n.Chunk)
+
+	// XXX The fiddlings with cp.capture is error-prone.
 	capture := cp.capture
 	cp.capture = scope{}
 	cp.popScope()
@@ -424,7 +453,15 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		for name := range capture {
 			evCapture[name] = ec.ResolveVar("", name)
 		}
-		return []Value{&Closure{argNames, restArg, op, evCapture, name, text}}
+		optDefaults := make([]Value, len(optDefaultOps))
+		for i, op := range optDefaultOps {
+			values := op.Exec(ec)
+			if len(values) != 1 {
+				ec.errorpf(op.Begin, op.End, "option default value must evalute to a single value")
+			}
+			optDefaults[i] = values[0]
+		}
+		return []Value{&Closure{argNames, restArgName, optNames, optDefaults, op, evCapture, name, text}}
 	}
 }
 
