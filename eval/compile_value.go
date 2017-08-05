@@ -392,10 +392,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 	// Collect argument names
 	var argNames []string
 	var restArg string
-	if n.List == nil {
-		// { chunk }
-		restArg = unnamedRestArg
-	} else {
+	if n.List != nil {
 		// [argument list]{ chunk }
 		argNames = make([]string, len(n.List.Compounds))
 		for i, arg := range n.List.Compounds {
@@ -427,7 +424,6 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 	if restArg != "" {
 		thisScope[restArg] = true
 	}
-	thisScope["args"] = true
 	thisScope["opts"] = true
 	op := cp.chunkOp(n.Chunk)
 	capture := cp.capture

@@ -167,10 +167,6 @@ var evalTests = []struct {
 		      {inc1,put1}=(f); $put1; $inc1; $put1
 			  {inc2,put2}=(f); $put2; $inc2; $put2`,
 		strs("0", "1", "0", "1"), nomore},
-	// Positional variables.
-	{`{ put $1 } lorem ipsum`, strs("ipsum"), nomore},
-	// Positional variables in the up: namespace.
-	{`{ { put $up:0 } in } out`, strs("out"), nomore},
 
 	// fn.
 	{"fn f [x]{ put x=$x'.' }; f lorem; f ipsum",
@@ -178,14 +174,10 @@ var evalTests = []struct {
 	// return.
 	{"fn f []{ put a; return; put b }; f", strs("a"), nomore},
 
-	// rest args and $args.
-	{"[x @xs]{ put $x $xs $args } a b c",
+	// Rest argument.
+	{"[x @xs]{ put $x $xs } a b c",
 		[]Value{String("a"),
-			NewList(String("b"), String("c")),
-			NewList(String("a"), String("b"), String("c"))}, nomore},
-	// $args.
-	{"{ put $args } lorem ipsum",
-		[]Value{NewList(String("lorem"), String("ipsum"))}, nomore},
+			NewList(String("b"), String("c"))}, nomore},
 
 	// Namespaces
 	// Pseudo-namespaces local: and up:
@@ -253,8 +245,8 @@ var evalTests = []struct {
 	{`put 1 233 | each put`, strs("1", "233"), nomore},
 	{`echo "1\n233" | each put`, strs("1", "233"), nomore},
 	{`each put [1 233]`, strs("1", "233"), nomore},
-	{`range 10 | each { if (== $0 4) { break }; put $0 }`, strs("0", "1", "2", "3"), nomore},
-	{`range 10 | each { if (== $0 4) { fail haha }; put $0 }`, strs("0", "1", "2", "3"), more{wantError: errAny}},
+	{`range 10 | each [x]{ if (== $x 4) { break }; put $x }`, strs("0", "1", "2", "3"), nomore},
+	{`range 10 | each [x]{ if (== $x 4) { fail haha }; put $x }`, strs("0", "1", "2", "3"), more{wantError: errAny}},
 	{`repeat 4 foo`, strs("foo", "foo", "foo", "foo"), nomore},
 	// TODO: test peach
 
@@ -265,7 +257,7 @@ var evalTests = []struct {
 	{`range 100 | count`, strs("100"), nomore},
 	{`count [(range 100)]`, strs("100"), nomore},
 
-	{`echo "  ax  by cz  \n11\t22 33" | eawk { put $args[-1] }`,
+	{`echo "  ax  by cz  \n11\t22 33" | eawk [@a]{ put $a[-1] }`,
 		strs("cz", "33"), nomore},
 
 	{`path-base a/b/c.png`, strs("c.png"), nomore},

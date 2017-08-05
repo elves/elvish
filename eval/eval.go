@@ -13,7 +13,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
-	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -53,9 +52,8 @@ type EvalCtx struct {
 	*Evaler
 	name, srcName, src string
 
-	local, up   Namespace
-	ports       []*Port
-	positionals []Value
+	local, up Namespace
+	ports     []*Port
 
 	begin, end int
 	traceback  *util.SourceContext
@@ -108,7 +106,7 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
 		ev, "top",
 		name, text,
 		ev.Global, Namespace{},
-		ports, nil,
+		ports,
 		0, len(text), nil, false,
 	}
 }
@@ -124,7 +122,7 @@ func (ec *EvalCtx) fork(name string) *EvalCtx {
 		ec.Evaler, name,
 		ec.srcName, ec.src,
 		ec.local, ec.up,
-		newPorts, ec.positionals,
+		newPorts,
 		ec.begin, ec.end, ec.traceback, ec.background,
 	}
 }
@@ -373,13 +371,13 @@ var ErrStoreUnconnected = errors.New("store unconnected")
 func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	switch ns {
 	case "local":
-		return ec.getLocal(name)
+		return ec.local[name]
 	case "up":
 		return ec.up[name]
 	case "builtin":
 		return ec.Builtin()[name]
 	case "":
-		if v := ec.getLocal(name); v != nil {
+		if v := ec.local[name]; v != nil {
 			return v
 		}
 		if v, ok := ec.up[name]; ok {
@@ -403,25 +401,6 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 		}
 	}
 	return nil
-}
-
-// getLocal finds the named local variable.
-func (ec *EvalCtx) getLocal(name string) Variable {
-	i, err := strconv.Atoi(name)
-	if err == nil {
-		// Logger.Println("positional variable", i)
-		// Logger.Printf("EvalCtx=%p, args=%v", ec, ec.positionals)
-		if i < 0 {
-			i += len(ec.positionals)
-		}
-		if i < 0 || i >= len(ec.positionals) {
-			// Logger.Print("out of range")
-			return nil
-		}
-		// Logger.Print("found")
-		return NewRoVariable(ec.positionals[i])
-	}
-	return ec.local[name]
 }
 
 var ErrMoreThanOneRest = errors.New("more than one @ lvalue")

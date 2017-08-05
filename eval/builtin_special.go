@@ -209,7 +209,7 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 		ec.Evaler, "module " + modname,
 		filename, source,
 		local, Namespace{},
-		ec.ports, nil,
+		ec.ports,
 		0, len(source), ec.addTraceback(), false,
 	}
 
