@@ -942,13 +942,13 @@ func splits(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 func replaces(ec *EvalCtx, args []Value, opts map[string]Value) {
 	var (
-		s, old, new String
-		optMax      int
+		old, repl, s String
+		optMax       int
 	)
-	ScanArgs(args, &s, &old, &new)
+	ScanArgs(args, &old, &repl, &s)
 	ScanOpts(opts, Opt{"max", &optMax, String("-1")})
 
-	ec.ports[1].Chan <- String(strings.Replace(string(s), string(old), string(new), optMax))
+	ec.ports[1].Chan <- String(strings.Replace(string(s), string(old), string(repl), optMax))
 }
 
 func ord(ec *EvalCtx, args []Value, opts map[string]Value) {
