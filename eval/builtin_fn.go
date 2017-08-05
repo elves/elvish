@@ -930,8 +930,8 @@ func joins(ec *EvalCtx, args []Value, opts map[string]Value) {
 // splits splits an argument strings by a delimiter and writes all pieces.
 func splits(ec *EvalCtx, args []Value, opts map[string]Value) {
 	var s, sep String
-	ScanArgs(args, &s)
-	ScanOpts(opts, Opt{"sep", &sep, String("")})
+	ScanArgs(args, &sep, &s)
+	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
 	parts := strings.Split(string(s), string(sep))

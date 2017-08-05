@@ -225,7 +225,7 @@ var evalTests = []struct {
 `)}},
 
 	{`joins : [/usr /bin /tmp]`, strs("/usr:/bin:/tmp"), nomore},
-	{`splits &sep=: /usr:/bin:/tmp`, strs("/usr", "/bin", "/tmp"), nomore},
+	{`splits : /usr:/bin:/tmp`, strs("/usr", "/bin", "/tmp"), nomore},
 	{`replaces : / ":usr:bin:tmp"`, strs("/usr/bin/tmp"), nomore},
 	{`replaces &max=2 : / :usr:bin:tmp`, strs("/usr/bin:tmp"), nomore},
 	{`has-prefix golang go`, bools(true), nomore},
