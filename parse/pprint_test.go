@@ -13,15 +13,15 @@ var pprintCases = []struct {
 	{"ls $x[0]$y[1];echo",
 		`Chunk
   Pipeline/Form
-    Compound/Indexing/Primary Type=Bareword Value="ls" IsRange=[]
+    Compound/Indexing/Primary Type=Bareword Value="ls"
     Compound
       Indexing
-        Primary Type=Variable Value="x" IsRange=[]
-        Array/Compound/Indexing/Primary Type=Bareword Value="0" IsRange=[]
+        Primary Type=Variable Value="x"
+        Array/Compound/Indexing/Primary Type=Bareword Value="0"
       Indexing
-        Primary Type=Variable Value="y" IsRange=[]
-        Array/Compound/Indexing/Primary Type=Bareword Value="1" IsRange=[]
-  Pipeline/Form/Compound/Indexing/Primary Type=Bareword Value="echo" IsRange=[]
+        Primary Type=Variable Value="y"
+        Array/Compound/Indexing/Primary Type=Bareword Value="1"
+  Pipeline/Form/Compound/Indexing/Primary Type=Bareword Value="echo"
 `,
 		`Chunk "ls $x[0]$y[1];echo" 0-18
   Pipeline/Form "ls $x[0]$y[1]" 0-13

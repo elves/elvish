@@ -119,12 +119,12 @@ func (cp *compiler) primaryOps(ns []*parse.Primary) []ValuesOp {
 	return ops
 }
 
-func (cp *compiler) listOp(n *parse.Array) ValuesOp {
+func (cp *compiler) listOp(n *parse.Primary) ValuesOp {
 	cp.compiling(n)
 	return ValuesOp{cp.list(n), n.Begin(), n.End()}
 }
 
-func (cp *compiler) listOps(ns []*parse.Array) []ValuesOp {
+func (cp *compiler) listOps(ns []*parse.Primary) []ValuesOp {
 	ops := make([]ValuesOp, len(ns))
 	for i, n := range ns {
 		ops[i] = cp.listOp(n)

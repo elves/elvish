@@ -47,7 +47,7 @@ var (
 	errShouldBeBackquote          = newError("", "'`'")
 	errShouldBeCompound           = newError("", "compound")
 	errShouldBeEqual              = newError("", "'='")
-	errArgListAllowNoSemicolon    = newError("argument list doesn't allow semicolons")
+	errBothElementsAndPairs       = newError("cannot contain both list elements and map pairs")
 )
 
 // Chunk = { PipelineSep | Space } { Pipeline { PipelineSep | Space } }
@@ -473,11 +473,10 @@ type Primary struct {
 	// The unquoted string value. Valid for Bareword, SingleQuoted,
 	// DoubleQuoted, Variable, Wildcard and Tilde.
 	Value    string
-	List     *Array      // Valid for List and Lambda
+	Elements []*Compound // Valid for List and Labda
 	Chunk    *Chunk      // Valid for OutputCapture, ExitusCapture and Lambda
-	MapPairs []*MapPair  // Valid for Map
+	MapPairs []*MapPair  // Valid for Map and Lambda
 	Braced   []*Compound // Valid for Braced
-	IsRange  []bool      // Valid for Braced
 }
 
 // PrimaryType is the type of a Primary.
@@ -757,54 +756,52 @@ func (pn *Primary) outputCapture(ps *Parser) {
 	}
 }
 
-// List   = '[' { Space } Array ']'
-// Lambda = List '{' Chunk '}'
-// Map    = '[' { Space } '&' { Space } ']'
+// List   = '[' { Space } { Compound } ']'
 //        = '[' { Space } { MapPair { Space } } ']'
+// Map    = '[' { Space } '&' { Space } ']'
+// Lambda = '[' { Space } { (Compound | MapPair) { Space } } ']' '{' Chunk '}'
 
 func (pn *Primary) lbracket(ps *Parser) {
 	parseSep(pn, ps, '[')
 	parseSpacesAndNewlines(pn, ps)
 
-	r := ps.peek()
+	loneAmpersand := false
 	ps.pushCutset()
-
-	switch {
-	case r == '&':
-		pn.Type = Map
-		// parseSep(pn, ps, '&')
-		amp := ps.pos
-		ps.next()
+items:
+	for {
 		r := ps.peek()
 		switch {
-		case IsSpace(r), r == ']', r == eof:
-			// '&' { Space } ']': '&' is a sep
-			addSep(pn, ps)
-			parseSpaces(pn, ps)
-		default:
-			// { MapPair { Space } } ']': Wind back
-			ps.pos = amp
-			for ps.peek() == '&' {
-				pn.addToMapPairs(ParseMapPair(ps))
+		case r == '&':
+			ps.next()
+			hasMapPair := startsCompound(ps.peek(), false)
+			if !hasMapPair {
+				loneAmpersand = true
+				addSep(pn, ps)
 				parseSpacesAndNewlines(pn, ps)
+				break items
 			}
+			ps.backup()
+			pn.addToMapPairs(ParseMapPair(ps))
+		case startsCompound(r, false):
+			pn.addToElements(ParseCompound(ps, false))
+		default:
+			break items
 		}
-		ps.popCutset()
-		if !parseSep(pn, ps, ']') {
-			ps.error(errShouldBeRBracket)
-		}
-	default:
-		pn.setList(ParseArray(ps, true))
-		ps.popCutset()
+		parseSpacesAndNewlines(pn, ps)
+	}
+	ps.popCutset()
 
-		if !parseSep(pn, ps, ']') {
-			ps.error(errShouldBeRBracket)
-		}
-		if parseSep(pn, ps, '{') {
-			if len(pn.List.Semicolons) > 0 {
-				ps.errorp(pn.List.Begin(), pn.List.End(), errArgListAllowNoSemicolon)
+	if !parseSep(pn, ps, ']') {
+		ps.error(errShouldBeRBracket)
+	}
+	if parseSep(pn, ps, '{') {
+		pn.lambda(ps)
+	} else {
+		if loneAmpersand || len(pn.MapPairs) > 0 {
+			if len(pn.Elements) > 0 {
+				ps.error(errBothElementsAndPairs)
 			}
-			pn.lambda(ps)
+			pn.Type = Map
 		} else {
 			pn.Type = List
 		}

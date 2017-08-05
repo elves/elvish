@@ -117,7 +117,6 @@ var evalTests = []struct {
 	{"echo [a b c] [&key=value] | each put",
 		strs("[a b c] [&key=value]"), nomore},
 	{"put [a b c][2]", strs("c"), nomore},
-	{"put [;a;b c][2][0]", strs("b"), nomore},
 	{"put [&key=value][key]", strs("value"), nomore},
 
 	// String literal

@@ -282,8 +282,8 @@ func GetPrimary(n Node) *Primary {
 	return nil
 }
 
-func (n *Primary) setList(ch *Array) {
-	n.List = ch
+func (n *Primary) addToElements(ch *Compound) {
+	n.Elements = append(n.Elements, ch)
 	addChild(n, ch)
 }
 

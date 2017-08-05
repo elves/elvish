@@ -278,7 +278,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 	case parse.OutputCapture:
 		return cp.outputCapture(n)
 	case parse.List:
-		return cp.list(n.List)
+		return cp.list(n)
 	case parse.Lambda:
 		return cp.lambda(n)
 	case parse.Map:
@@ -291,29 +291,12 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 	}
 }
 
-func (cp *compiler) list(n *parse.Array) ValuesOpFunc {
-	if len(n.Semicolons) == 0 {
-		op := cp.arrayOp(n)
-		return func(ec *EvalCtx) []Value {
-			return []Value{NewList(op.Exec(ec)...)}
-		}
-	}
-	ns := len(n.Semicolons)
-	rowOps := make([]ValuesOpFunc, ns+1)
-	f := func(k, i, j int) {
-		rowOps[k] = catValuesOps(cp.compoundOps(n.Compounds[i:j]))
-	}
-	f(0, 0, n.Semicolons[0])
-	for i := 1; i < ns; i++ {
-		f(i, n.Semicolons[i-1], n.Semicolons[i])
-	}
-	f(ns, n.Semicolons[ns-1], len(n.Compounds))
+func (cp *compiler) list(n *parse.Primary) ValuesOpFunc {
+	// TODO(xiaq): Use Vector.Cons to build the list, instead of building a
+	// slice and converting to Vector.
+	op := catValuesOps(cp.compoundOps(n.Elements))
 	return func(ec *EvalCtx) []Value {
-		rows := make([]Value, ns+1)
-		for i := 0; i <= ns; i++ {
-			rows[i] = NewList(rowOps[i](ec)...)
-		}
-		return []Value{NewList(rows...)}
+		return []Value{NewList(op(ec)...)}
 	}
 }
 
@@ -392,10 +375,10 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 	// Collect argument names
 	var argNames []string
 	var restArg string
-	if n.List != nil {
+	if len(n.Elements) > 0 {
 		// [argument list]{ chunk }
-		argNames = make([]string, len(n.List.Compounds))
-		for i, arg := range n.List.Compounds {
+		argNames = make([]string, len(n.Elements))
+		for i, arg := range n.Elements {
 			qname := mustString(cp, arg, "expect string")
 			explode, ns, name := ParseAndFixVariable(qname)
 			if ns != "" {
@@ -405,7 +388,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 				cp.errorpf(arg.Begin(), arg.End(), "argument name must not be empty")
 			}
 			if explode {
-				if i != len(n.List.Compounds)-1 {
+				if i != len(n.Elements)-1 {
 					cp.errorpf(arg.Begin(), arg.End(), "only the last argument may have @")
 				}
 				restArg = name

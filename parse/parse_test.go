@@ -115,32 +115,23 @@ var goodCases = []struct {
 	// List
 	{"a [] [ ] [1] [ 2] [3 ] [\n 4 \n5\n 6 7 \n]", a(
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": List,
-			"List": ""}},
+			"Type":     List,
+			"Elements": []ast{}}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": List,
-			"List": ""}},
+			"Type":     List,
+			"Elements": []ast{}}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": List,
-			"List": ast{"Array", fs{"Compounds": []string{"1"}}}}},
+			"Type":     List,
+			"Elements": []string{"1"}}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": List,
-			"List": ast{"Array", fs{"Compounds": []string{"2"}}}}},
+			"Type":     List,
+			"Elements": []string{"2"}}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": List,
-			"List": ast{"Array", fs{"Compounds": []string{"3"}}}}},
+			"Type":     List,
+			"Elements": []string{"3"}}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": List,
-			"List": ast{"Array", fs{
-				"Compounds": []string{"4", "5", "6", "7"}}}}},
-	)},
-	// Semicolons in lists
-	{"a [a b;c;d;]", a(
-		ast{"Compound/Indexing/Primary", fs{
-			"Type": List,
-			"List": ast{"Array", fs{
-				"Compounds":  []string{"a", "b", "c", "d"},
-				"Semicolons": []int{2, 3, 4}}}}},
+			"Type":     List,
+			"Elements": []string{"4", "5", "6", "7"}}},
 	)},
 	// Map
 	{"a [&k=v] [ &k=v] [&k=v ] [ &k=v ] [ &k= v] [&k= \n v] [\n&a=b &c=d \n &e=f\n\n]", a(
@@ -178,21 +169,30 @@ var goodCases = []struct {
 		ast{"Compound/Indexing/Primary", fs{"Type": Map, "MapPairs": nil}},
 	)},
 	// Lambda
-	{"a []{} [ ]{ } []{ echo 233 } [ $x $y ]{puts $x $y} { put $1}", a(
+	{"a []{} [ ]{ } []{ echo 233 } [ x y ]{puts $x $y} { put haha}", a(
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": Lambda, "List": "", "Chunk": "",
+			"Type": Lambda, "Elements": []ast{}, "Chunk": "",
 		}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": Lambda, "List": "", "Chunk": " ",
+			"Type": Lambda, "Elements": []ast{}, "Chunk": " ",
 		}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": Lambda, "List": "", "Chunk": " echo 233 ",
+			"Type": Lambda, "Elements": []ast{}, "Chunk": " echo 233 ",
 		}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": Lambda, "List": "$x $y ", "Chunk": "puts $x $y",
+			"Type": Lambda, "Elements": []string{"x", "y"}, "Chunk": "puts $x $y",
 		}},
 		ast{"Compound/Indexing/Primary", fs{
-			"Type": Lambda, "List": nil, "Chunk": " put $1",
+			"Type": Lambda, "Elements": []ast{}, "Chunk": " put haha",
+		}},
+	)},
+	// Lambda with arguments and options
+	{"a [a b &k=v]{}", a(
+		ast{"Compound/Indexing/Primary", fs{
+			"Type":     Lambda,
+			"Elements": []string{"a", "b"},
+			"MapPairs": []string{"&k=v"},
+			"Chunk":    "",
 		}},
 	)},
 	// Output capture
