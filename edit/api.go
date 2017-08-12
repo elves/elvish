@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 	"sync"
@@ -217,25 +218,49 @@ func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
 // callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
 // arguments and closed input, and converts its outputs to styled objects.
 func callPrompt(ed *Editor, fn eval.Callable) []*ui.Styled {
-	ports := []*eval.Port{eval.DevNullClosedChan, {File: os.Stdout}, {File: os.Stderr}}
+	ports := []*eval.Port{
+		eval.DevNullClosedChan,
+		{}, // Will be replaced when capturing output
+		{File: os.Stderr},
+	}
+	var (
+		styleds      []*ui.Styled
+		styledsMutex sync.Mutex
+	)
+	add := func(s *ui.Styled) {
+		styledsMutex.Lock()
+		styleds = append(styleds, s)
+		styledsMutex.Unlock()
+	}
+	valuesCb := func(ch <-chan eval.Value) {
+		for v := range ch {
+			if s, ok := v.(*ui.Styled); ok {
+				add(s)
+			} else {
+				add(&ui.Styled{eval.ToString(v), ui.Styles{}})
+			}
+		}
+	}
+	bytesCb := func(r *os.File) {
+		allBytes, err := ioutil.ReadAll(r)
+		if err != nil {
+			logger.Println("error reading prompt byte output:", err)
+		}
+		if len(allBytes) > 0 {
+			add(&ui.Styled{string(allBytes), ui.Styles{}})
+		}
+	}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor prompt]", "", ports)
-	values, err := ec.PCaptureOutput(fn, nil, eval.NoOpts)
+	err := ec.PCaptureOutputInner(fn, nil, eval.NoOpts, valuesCb, bytesCb)
+
 	if err != nil {
 		ed.Notify("prompt function error: %v", err)
 		return nil
 	}
 
-	var ss []*ui.Styled
-	for _, v := range values {
-		if s, ok := v.(*ui.Styled); ok {
-			ss = append(ss, s)
-		} else {
-			ss = append(ss, &ui.Styled{eval.ToString(v), ui.Styles{}})
-		}
-	}
-	return ss
+	return styleds
 }
 
 // callArgCompleter calls a Fn, assuming that it is an arg completer. It calls
