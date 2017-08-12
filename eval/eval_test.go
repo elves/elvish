@@ -436,3 +436,40 @@ func TestMultipleEval(t *testing.T) {
 		t.Errorf("eval %s outputs %v, want %v", texts, outs, wanted)
 	}
 }
+
+func BenchmarkOutputCaptureOverhead(b *testing.B) {
+	op := Op{func(*EvalCtx) {}, 0, 0}
+	benchmarkOutputCapture(op, b.N)
+}
+
+func BenchmarkOutputCaptureValues(b *testing.B) {
+	op := Op{func(ec *EvalCtx) {
+		ec.ports[1].Chan <- String("test")
+	}, 0, 0}
+	benchmarkOutputCapture(op, b.N)
+}
+
+func BenchmarkOutputCaptureBytes(b *testing.B) {
+	bytesToWrite := []byte("test")
+	op := Op{func(ec *EvalCtx) {
+		ec.ports[1].File.Write(bytesToWrite)
+	}, 0, 0}
+	benchmarkOutputCapture(op, b.N)
+}
+
+func BenchmarkOutputCaptureMixed(b *testing.B) {
+	bytesToWrite := []byte("test")
+	op := Op{func(ec *EvalCtx) {
+		ec.ports[1].Chan <- Bool(false)
+		ec.ports[1].File.Write(bytesToWrite)
+	}, 0, 0}
+	benchmarkOutputCapture(op, b.N)
+}
+
+func benchmarkOutputCapture(op Op, n int) {
+	ev := NewEvaler(api.NewClient("/invalid"), nil, "", nil)
+	ec := NewTopEvalCtx(ev, "[benchmark]", "", []*Port{{}, {}, {}})
+	for i := 0; i < n; i++ {
+		pcaptureOutput(ec, op)
+	}
+}
