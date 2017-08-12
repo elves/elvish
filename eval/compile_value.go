@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
@@ -326,28 +327,23 @@ func captureOutput(ec *EvalCtx, op Op) []Value {
 
 func pcaptureOutput(ec *EvalCtx, op Op) ([]Value, error) {
 	vs := []Value{}
-	newEc := ec.fork(fmt.Sprintf("output capture %v", op))
-
-	pipeRead, pipeWrite, err := os.Pipe()
-	if err != nil {
-		throw(fmt.Errorf("failed to create pipe: %v", err))
-	}
-	bufferedPipeRead := bufio.NewReader(pipeRead)
-	ch := make(chan Value, outputCaptureBufferSize)
-	bytesCollected := make(chan bool)
-	chCollected := make(chan bool)
-	newEc.ports[1] = &Port{Chan: ch, File: pipeWrite, CloseFile: true}
-	go func() {
+	var m sync.Mutex
+	valueCb := func(ch <-chan Value) {
 		for v := range ch {
+			m.Lock()
 			vs = append(vs, v)
+			m.Unlock()
 		}
-		chCollected <- true
-	}()
-	go func() {
+	}
+	bytesCb := func(r *os.File) {
+		buffered := bufio.NewReader(r)
 		for {
-			line, err := bufferedPipeRead.ReadString('\n')
+			line, err := buffered.ReadString('\n')
 			if line != "" {
-				ch <- String(strings.TrimSuffix(line, "\n"))
+				v := String(strings.TrimSuffix(line, "\n"))
+				m.Lock()
+				vs = append(vs, v)
+				m.Unlock()
 			}
 			if err != nil {
 				if err != io.EOF {
@@ -356,19 +352,46 @@ func pcaptureOutput(ec *EvalCtx, op Op) ([]Value, error) {
 				break
 			}
 		}
-		bytesCollected <- true
+	}
+
+	err := pcaptureOutputInner(ec, op, valueCb, bytesCb)
+	return vs, err
+}
+
+func pcaptureOutputInner(ec *EvalCtx, op Op, valuesCb func(<-chan Value), bytesCb func(*os.File)) error {
+
+	newEc := ec.fork(fmt.Sprintf("output capture %v", op))
+
+	ch := make(chan Value, outputCaptureBufferSize)
+	pipeRead, pipeWrite, err := os.Pipe()
+	if err != nil {
+		return fmt.Errorf("failed to create pipe: %v", err)
+	}
+	newEc.ports[1] = &Port{
+		Chan: ch, CloseChan: true,
+		File: pipeWrite, CloseFile: true,
+	}
+
+	bytesCollected := make(chan struct{})
+	chCollected := make(chan struct{})
+
+	go func() {
+		valuesCb(ch)
+		close(chCollected)
+	}()
+	go func() {
+		bytesCb(pipeRead)
+		pipeRead.Close()
+		close(bytesCollected)
 	}()
 
 	err = newEc.PEval(op)
+
 	ClosePorts(newEc.ports)
-
 	<-bytesCollected
-	pipeRead.Close()
-
-	close(ch)
 	<-chCollected
 
-	return vs, err
+	return err
 }
 
 func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
