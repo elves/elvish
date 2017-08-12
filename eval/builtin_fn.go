@@ -74,6 +74,7 @@ func init() {
 		// Generic identity and equality
 		{"is", is},
 		{"eq", eq},
+		{"not-eq", notEq},
 
 		// Value output
 		{"put", put},
@@ -484,6 +485,18 @@ func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	result := true
 	for i := 0; i+1 < len(args); i++ {
 		if !args[i].Eq(args[i+1]) {
+			result = false
+			break
+		}
+	}
+	ec.OutputChan() <- Bool(result)
+}
+
+func notEq(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+	result := true
+	for i := 0; i+1 < len(args); i++ {
+		if args[i].Eq(args[i+1]) {
 			result = false
 			break
 		}
