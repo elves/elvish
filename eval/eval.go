@@ -291,6 +291,13 @@ func (ec *EvalCtx) PCaptureOutput(f Callable, args []Value, opts map[string]Valu
 		func(newec *EvalCtx) { f.Call(newec, args, opts) }, -1, -1})
 }
 
+func (ec *EvalCtx) PCaptureOutputInner(f Callable, args []Value, opts map[string]Value, valuesCb func(<-chan Value), bytesCb func(*os.File)) error {
+	// XXX There is no source.
+	return pcaptureOutputInner(ec, Op{
+		func(newec *EvalCtx) { f.Call(newec, args, opts) }, -1, -1},
+		valuesCb, bytesCb)
+}
+
 func catch(perr *error, ec *EvalCtx) {
 	// NOTE: We have to duplicate instead of calling util.Catch here, since
 	// recover can only catch a panic when called directly from a deferred

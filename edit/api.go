@@ -249,23 +249,19 @@ func callArgCompleter(fn eval.CallableValue,
 		return builtin.impl(words, ev, rawCands)
 	}
 
-	pipeRead, pipeWrite, err := os.Pipe()
-	if err != nil {
-		return err
+	args := make([]eval.Value, len(words))
+	for i, word := range words {
+		args[i] = eval.String(word)
 	}
-	defer pipeRead.Close()
-	defer pipeWrite.Close()
-	bufferedPipeRead := bufio.NewReader(pipeRead)
 
-	output := make(chan eval.Value)
-	var waiter sync.WaitGroup
-	waiter.Add(2)
+	ports := []*eval.Port{
+		eval.DevNullClosedChan,
+		{}, // Will be replaced when capturing output
+		{File: os.Stderr},
+	}
 
-	// capture value output
-	go func() {
-		defer waiter.Done()
-
-		for v := range output {
+	valuesCb := func(ch <-chan eval.Value) {
+		for v := range ch {
 			switch v := v.(type) {
 			case rawCandidate:
 				rawCands <- v
@@ -275,14 +271,12 @@ func callArgCompleter(fn eval.CallableValue,
 				logger.Printf("completer must output string or candidate")
 			}
 		}
-	}()
+	}
 
-	// capture file output
-	go func() {
-		defer waiter.Done()
-
+	bytesCb := func(r *os.File) {
+		buffered := bufio.NewReader(r)
 		for {
-			line, err := bufferedPipeRead.ReadString('\n')
+			line, err := buffered.ReadString('\n')
 			if line != "" {
 				rawCands <- plainCandidate(strings.TrimSuffix(line, "\n"))
 			}
@@ -293,27 +287,14 @@ func callArgCompleter(fn eval.CallableValue,
 				break
 			}
 		}
-	}()
-
-	ports := []*eval.Port{
-		eval.DevNullClosedChan,
-		{Chan: output, File: pipeWrite, CloseFile: true, CloseChan: true},
-		{File: os.Stderr},
-	}
-
-	args := make([]eval.Value, len(words))
-	for i, word := range words {
-		args[i] = eval.String(word)
 	}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ev, "[editor completer]", "", ports)
-	err = ec.PCall(fn, args, eval.NoOpts)
+	err := ec.PCaptureOutputInner(fn, args, eval.NoOpts, valuesCb, bytesCb)
 	if err != nil {
 		err = errors.New("completer error: " + err.Error())
 	}
 
-	eval.ClosePorts(ports)
-	waiter.Wait()
 	return err
 }
