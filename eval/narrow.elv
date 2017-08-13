@@ -4,15 +4,15 @@
 #
 # Usage:
 #   use narrow
-#   narrow:bind_keys
+#   narrow:bind-trigger-keys
 #
-# narrow:bind_keys binds keys for location, history and lastcmd
+# narrow:bind-trigger-keys binds keys for location, history and lastcmd
 # modes. Without options, it uses the default bindings (same as the
 # default bindings for edit:location, edit:history and edit:lastcmd),
 # but different keys can be specified with the options. To disable a
 # binding, specify its key as "".
 # Example:
-#   narrow:bind_keys &location=Alt-l &lastcmd="" 
+#   narrow:bind-trigger-keys &location=Alt-l &lastcmd="" 
 
 # Hooks
 # Each hook variable is an array which must contain lambdas, all of
@@ -88,11 +88,11 @@ fn lastcmd {
 }
 
 
-fn -bind_i [k f]{
+fn -bind-insert [k f]{
   edit:insert:binding[$k] = $f
 }
 
-fn -bind_n [k f]{
+fn -bind [k f]{
   edit:narrow:binding[$k] = $f
 }
 
@@ -101,24 +101,24 @@ fn -bind_n [k f]{
 # can be specified with the options. To disable a binding,
 # specify its key as "".
 # Example:
-#   narrow:bind_keys &location=Alt-l &lastcmd=""
-fn bind_keys [&location=C-l &history=C-r &lastcmd=M-1]{
-  if (> (count $location) 0) { -bind_i $location narrow:location }
-  if (> (count $history) 0)  { -bind_i $history  narrow:history }
-  if (> (count $lastcmd) 0)  { -bind_i $lastcmd  narrow:lastcmd }
+#   narrow:bind-trigger-keys &location=Alt-l &lastcmd=""
+fn bind-trigger-keys [&location=C-l &history=C-r &lastcmd=M-1]{
+  if (not-eq $location "") { -bind-insert $location narrow:location }
+  if (not-eq $history "")  { -bind-insert $history  narrow:history }
+  if (not-eq $lastcmd "")  { -bind-insert $lastcmd  narrow:lastcmd }
 }
 
 # Set up some default useful bindings for narrow mode
--bind_n Up        $edit:narrow:&up
--bind_n PageUp    $edit:narrow:&page-up
--bind_n Down      $edit:narrow:&down
--bind_n PageDown  $edit:narrow:&page-down
--bind_n Tab       $edit:narrow:&down-cycle
--bind_n S-Tab     $edit:narrow:&up-cycle
--bind_n Backspace $edit:narrow:&backspace
--bind_n Enter     $edit:narrow:&accept-close
--bind_n M-Enter   $edit:narrow:&accept
--bind_n default   $edit:narrow:&default
--bind_n "C-["     $edit:insert:&start
--bind_n C-G       $edit:narrow:&toggle-ignore-case
--bind_n C-D       $edit:narrow:&toggle-ignore-duplication
+-bind Up        $edit:narrow:&up
+-bind PageUp    $edit:narrow:&page-up
+-bind Down      $edit:narrow:&down
+-bind PageDown  $edit:narrow:&page-down
+-bind Tab       $edit:narrow:&down-cycle
+-bind S-Tab     $edit:narrow:&up-cycle
+-bind Backspace $edit:narrow:&backspace
+-bind Enter     $edit:narrow:&accept-close
+-bind M-Enter   $edit:narrow:&accept
+-bind default   $edit:narrow:&default
+-bind "C-["     $edit:insert:&start
+-bind C-G       $edit:narrow:&toggle-ignore-case
+-bind C-D       $edit:narrow:&toggle-ignore-duplication
