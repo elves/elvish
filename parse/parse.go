@@ -46,6 +46,7 @@ var (
 	errShouldBeCompound           = newError("", "compound")
 	errShouldBeEqual              = newError("", "'='")
 	errBothElementsAndPairs       = newError("cannot contain both list elements and map pairs")
+	errShouldBeNewline            = newError("", "newline")
 )
 
 // Chunk = { PipelineSep | Space } { Pipeline { PipelineSep | Space } }
@@ -908,7 +909,9 @@ func addSep(n Node, ps *Parser) {
 	} else {
 		begin = n.Begin()
 	}
-	addChild(n, NewSep(ps.src, begin, ps.pos))
+	if begin < ps.pos {
+		addChild(n, NewSep(ps.src, begin, ps.pos))
+	}
 }
 
 func parseSep(n Node, ps *Parser, sep rune) bool {
@@ -921,23 +924,34 @@ func parseSep(n Node, ps *Parser, sep rune) bool {
 }
 
 func parseSpaces(n Node, ps *Parser) {
-	if !IsSpace(ps.peek()) {
-		return
-	}
-	ps.next()
-	for IsSpace(ps.peek()) {
-		ps.next()
-	}
-	addSep(n, ps)
+	parseSpacesInner(n, ps, IsSpace)
 }
 
 func parseSpacesAndNewlines(n Node, ps *Parser) {
-	if !IsSpaceOrNewline(ps.peek()) {
-		return
-	}
-	ps.next()
-	for IsSpaceOrNewline(ps.peek()) {
-		ps.next()
+	parseSpacesInner(n, ps, IsSpaceOrNewline)
+}
+
+func parseSpacesInner(n Node, ps *Parser, isSpace func(rune) bool) {
+spaces:
+	for {
+		r := ps.peek()
+		switch {
+		case isSpace(r):
+			ps.next()
+		case r == '`': // line continuation
+			ps.next()
+			switch ps.peek() {
+			case '\n':
+				ps.next()
+			case eof:
+				ps.error(errShouldBeNewline)
+			default:
+				ps.backup()
+				break spaces
+			}
+		default:
+			break spaces
+		}
 	}
 	addSep(n, ps)
 }
