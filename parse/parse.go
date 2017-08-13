@@ -43,8 +43,6 @@ var (
 	errShouldBeRBrace             = newError("", "'}'")
 	errShouldBeBraceSepOrRBracket = newError("", "','", "'}'")
 	errShouldBeRParen             = newError("", "')'")
-	errShouldBeBackquoteOrLParen  = newError("", "'`'", "'('")
-	errShouldBeBackquote          = newError("", "'`'")
 	errShouldBeCompound           = newError("", "compound")
 	errShouldBeEqual              = newError("", "'='")
 	errBothElementsAndPairs       = newError("cannot contain both list elements and map pairs")
@@ -528,7 +526,7 @@ func (pn *Primary) parse(ps *Parser, head bool) {
 		} else {
 			pn.wildcard(ps)
 		}
-	case '(', '`':
+	case '(':
 		pn.outputCapture(ps)
 	case '[':
 		pn.lbracket(ps)
@@ -724,35 +722,14 @@ func (pn *Primary) exitusCapture(ps *Parser) {
 
 func (pn *Primary) outputCapture(ps *Parser) {
 	pn.Type = OutputCapture
+	parseSep(pn, ps, '(')
 
-	var closer rune
-	var shouldBeCloser error
-
-	switch ps.next() {
-	case '(':
-		closer = ')'
-		shouldBeCloser = errShouldBeRParen
-	case '`':
-		closer = '`'
-		shouldBeCloser = errShouldBeBackquote
-	default:
-		ps.backup()
-		ps.error(errShouldBeBackquoteOrLParen)
-		ps.next()
-		return
-	}
-	addSep(pn, ps)
-
-	if closer == '`' {
-		ps.pushCutset(closer)
-	} else {
-		ps.pushCutset()
-	}
+	ps.pushCutset()
 	pn.setChunk(ParseChunk(ps))
 	ps.popCutset()
 
-	if !parseSep(pn, ps, closer) {
-		ps.error(shouldBeCloser)
+	if !parseSep(pn, ps, ')') {
+		ps.error(errShouldBeRParen)
 	}
 }
 
@@ -883,7 +860,7 @@ func allowedInBareword(r rune, head bool) bool {
 
 func startsPrimary(r rune, head bool) bool {
 	return r == '\'' || r == '"' || r == '$' || allowedInBareword(r, head) ||
-		r == '?' || r == '*' || r == '(' || r == '`' || r == '[' || r == '{'
+		r == '?' || r == '*' || r == '(' || r == '[' || r == '{'
 }
 
 // MapPair = '&' { Space } Compound { Space } Compound
@@ -955,7 +932,6 @@ func parseSpaces(n Node, ps *Parser) {
 }
 
 func parseSpacesAndNewlines(n Node, ps *Parser) {
-	// TODO parse comments here.
 	if !IsSpaceOrNewline(ps.peek()) {
 		return
 	}

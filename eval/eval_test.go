@@ -62,10 +62,10 @@ var evalTests = []struct {
 	{"d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]",
 		strs("v", "u"), nomore},
 	// Multi-assignments.
-	{"{a,b}=`put a b`; put $a $b", strs("a", "b"), nomore},
-	{"@a=`put a b`; put $@a", strs("a", "b"), nomore},
-	{"{a,@b}=`put a b c`; put $@b", strs("b", "c"), nomore},
-	// {"di=[&]; di[a b]=`put a b`; put $di[a] $di[b]", strs("a", "b"), nomore},
+	{"{a,b}=(put a b); put $a $b", strs("a", "b"), nomore},
+	{"@a=(put a b); put $@a", strs("a", "b"), nomore},
+	{"{a,@b}=(put a b c); put $@b", strs("b", "c"), nomore},
+	// {"di=[&]; di[a b]=(put a b); put $di[a] $di[b]", strs("a", "b"), nomore},
 	// Temporary assignment.
 	{"a=alice b=bob; {a,@b}=(put amy ben) put $a $@b; put $a $b",
 		strs("amy", "ben", "alice", "bob"), nomore},
@@ -99,7 +99,7 @@ var evalTests = []struct {
 	{"for x [a b] { put $x; continue; put $x; }", strs("a", "b"), nomore},
 
 	// Redirections.
-	{"f=`mktemp elvXXXXXX`; echo 233 > $f; cat < $f; rm $f", noout,
+	{"f=(mktemp elvXXXXXX); echo 233 > $f; cat < $f; rm $f", noout,
 		more{wantBytesOut: []byte("233\n")}},
 	// Redirections from File object.
 	{`fname=(mktemp elvXXXXXX); echo haha > $fname;
