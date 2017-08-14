@@ -118,6 +118,7 @@ func init() {
 		// Sequence primitives
 		{"explode", explode},
 		{"take", take},
+		{"drop", drop},
 		{"range", rangeFn},
 		{"count", count},
 		{"has-key", hasKey},
@@ -807,6 +808,21 @@ func take(ec *EvalCtx, args []Value, opts map[string]Value) {
 	i := 0
 	iterate(func(v Value) {
 		if i < n {
+			out <- v
+		}
+		i++
+	})
+}
+
+func drop(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var n int
+	iterate := ScanArgsAndOptionalIterate(ec, args, &n)
+	TakeNoOpt(opts)
+
+	out := ec.ports[1].Chan
+	i := 0
+	iterate(func(v Value) {
+		if i >= n {
 			out <- v
 		}
 		i++
