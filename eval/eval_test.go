@@ -21,286 +21,290 @@ func TestBuiltinPid(t *testing.T) {
 	}
 }
 
-var errAny = errors.New("")
-
-type more struct {
-	wantBytesOut []byte
-	wantError    error
+type want struct {
+	out      []Value
+	bytesOut []byte
+	err      error
 }
 
-var noout = []Value{}
-var nomore more
+var (
+	wantNothing = want{}
+	// Special value for want.err to indicate that any error, as long as not
+	// nil, is OK
+	errAny = errors.New("")
+)
 
 var evalTests = []struct {
-	text    string
-	wantOut []Value
-	more
+	text string
+	want
 }{
 	// Chunks.
 	// Empty chunk
-	{"", []Value{}, nomore},
+	{"", wantNothing},
 	// Outputs of pipelines in a chunk are concatenated
-	{"put x; put y; put z", strs("x", "y", "z"), nomore},
+	{"put x; put y; put z", want{out: strs("x", "y", "z")}},
 	// A failed pipeline cause the whole chunk to fail
-	{"put a; e:false; put b", strs("a"), more{wantError: errAny}},
+	{"put a; e:false; put b", want{out: strs("a"), err: errAny}},
 
 	// Pipelines.
 	// Pure byte pipeline
 	{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`,
-		[]Value{}, more{wantBytesOut: []byte("A1bert\nBer1in\n")}},
+		want{bytesOut: []byte("A1bert\nBer1in\n")}},
 	// Pure channel pipeline
-	{`put 233 42 19 | each [x]{+ $x 10}`, strs("243", "52", "29"), nomore},
+	{`put 233 42 19 | each [x]{+ $x 10}`, want{out: strs("243", "52", "29")}},
 	// Pipeline draining.
-	{`range 100 | put x`, strs("x"), nomore},
+	{`range 100 | put x`, want{out: strs("x")}},
 	// TODO: Add a useful hybrid pipeline sample
 
 	// List element assignment
-	// {"li=[foo bar]; li[0]=233; put $@li", strs("233", "bar"), nomore},
+	// {"li=[foo bar]; li[0]=233; put $@li", strs("233", "bar")},
 	// Map element assignment
 	{"di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
-		strs("lorem", "ipsum"), nomore},
+		want{out: strs("lorem", "ipsum")}},
 	{"d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]",
-		strs("v", "u"), nomore},
+		want{out: strs("v", "u")}},
 	// Multi-assignments.
-	{"{a,b}=(put a b); put $a $b", strs("a", "b"), nomore},
-	{"@a=(put a b); put $@a", strs("a", "b"), nomore},
-	{"{a,@b}=(put a b c); put $@b", strs("b", "c"), nomore},
-	// {"di=[&]; di[a b]=(put a b); put $di[a] $di[b]", strs("a", "b"), nomore},
+	{"{a,b}=(put a b); put $a $b", want{out: strs("a", "b")}},
+	{"@a=(put a b); put $@a", want{out: strs("a", "b")}},
+	{"{a,@b}=(put a b c); put $@b", want{out: strs("b", "c")}},
+	// {"di=[&]; di[a b]=(put a b); put $di[a] $di[b]", want{out:strs("a", "b")}},
 	// Temporary assignment.
 	{"a=alice b=bob; {a,@b}=(put amy ben) put $a $@b; put $a $b",
-		strs("amy", "ben", "alice", "bob"), nomore},
+		want{out: strs("amy", "ben", "alice", "bob")}},
 	// Spacey assignment.
-	{"a @b = 2 3 foo; put $a $b[1]", strs("2", "foo"), nomore},
+	{"a @b = 2 3 foo; put $a $b[1]", want{out: strs("2", "foo")}},
 	// Spacey assignment with temporary assignment
-	{"x = 1; x=2 y = (+ 1 $x); put $x $y", strs("1", "3"), nomore},
+	{"x = 1; x=2 y = (+ 1 $x); put $x $y", want{out: strs("1", "3")}},
 
 	// Control structures.
 	// if
-	{"if true { put then }", strs("then"), nomore},
-	{"if $false { put then } else { put else }", strs("else"), nomore},
+	{"if true { put then }", want{out: strs("then")}},
+	{"if $false { put then } else { put else }", want{out: strs("else")}},
 	{"if $false { put 1 } elif $false { put 2 } else { put 3 }",
-		strs("3"), nomore},
+		want{out: strs("3")}},
 	{"if $false { put 2 } elif true { put 2 } else { put 3 }",
-		strs("2"), nomore},
+		want{out: strs("2")}},
 	// try
-	{"try { nop } except { put bad } else { put good }", strs("good"), nomore},
-	{"try { e:false } except - { put bad } else { put good }", strs("bad"), nomore},
+	{"try { nop } except { put bad } else { put good }", want{out: strs("good")}},
+	{"try { e:false } except - { put bad } else { put good }", want{out: strs("bad")}},
 	// while
 	{"x=0; while (< $x 4) { put $x; x=(+ $x 1) }",
-		strs("0", "1", "2", "3"), nomore},
+		want{out: strs("0", "1", "2", "3")}},
 	// for
 	{"for x [tempora mores] { put 'O '$x }",
-		strs("O tempora", "O mores"), nomore},
+		want{out: strs("O tempora", "O mores")}},
 	// break
-	{"for x [a] { break } else { put $x }", noout, nomore},
+	{"for x [a] { break } else { put $x }", wantNothing},
 	// else
-	{"for x [a] { put $x } else { put $x }", strs("a"), nomore},
+	{"for x [a] { put $x } else { put $x }", want{out: strs("a")}},
 	// continue
-	{"for x [a b] { put $x; continue; put $x; }", strs("a", "b"), nomore},
+	{"for x [a b] { put $x; continue; put $x; }", want{out: strs("a", "b")}},
 
 	// Redirections.
-	{"f=(mktemp elvXXXXXX); echo 233 > $f; cat < $f; rm $f", noout,
-		more{wantBytesOut: []byte("233\n")}},
+	{"f=(mktemp elvXXXXXX); echo 233 > $f; cat < $f; rm $f",
+		want{bytesOut: []byte("233\n")}},
 	// Redirections from File object.
 	{`fname=(mktemp elvXXXXXX); echo haha > $fname;
-			f=(fopen $fname); cat <$f; fclose $f; rm $fname`, noout,
-		more{wantBytesOut: []byte("haha\n")}},
+			f=(fopen $fname); cat <$f; fclose $f; rm $fname`,
+		want{bytesOut: []byte("haha\n")}},
 	// Redirections from Pipe object.
-	{`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`, noout,
-		more{wantBytesOut: []byte("haha\n")}},
+	{`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`,
+		want{bytesOut: []byte("haha\n")}},
 
 	// Compounding.
 	{"put {fi,elvi}sh{1.0,1.1}",
-		strs("fish1.0", "fish1.1", "elvish1.0", "elvish1.1"), nomore},
+		want{out: strs("fish1.0", "fish1.1", "elvish1.0", "elvish1.1")}},
 
 	// List, map and indexing
 	{"echo [a b c] [&key=value] | each put",
-		strs("[a b c] [&key=value]"), nomore},
-	{"put [a b c][2]", strs("c"), nomore},
-	{"put [&key=value][key]", strs("value"), nomore},
+		want{out: strs("[a b c] [&key=value]")}},
+	{"put [a b c][2]", want{out: strs("c")}},
+	{"put [&key=value][key]", want{out: strs("value")}},
 
 	// String literal
-	{`put 'such \"''literal'`, strs(`such \"'literal`), nomore},
+	{`put 'such \"''literal'`, want{out: strs(`such \"'literal`)}},
 	{`put "much \n\033[31;1m$cool\033[m"`,
-		strs("much \n\033[31;1m$cool\033[m"), nomore},
+		want{out: strs("much \n\033[31;1m$cool\033[m")}},
 
 	// Output capture
-	{"put (put lorem ipsum)", strs("lorem", "ipsum"), nomore},
-	{"put (print \"lorem\nipsum\")", strs("lorem", "ipsum"), nomore},
+	{"put (put lorem ipsum)", want{out: strs("lorem", "ipsum")}},
+	{"put (print \"lorem\nipsum\")", want{out: strs("lorem", "ipsum")}},
 
 	// Exception capture
-	{"bool ?(nop); bool ?(e:false)", bools(true, false), nomore},
+	{"bool ?(nop); bool ?(e:false)", want{out: bools(true, false)}},
 
 	// Variable and compounding
 	{"x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
-		strs("WOW, SUCH SHELL, MUCH COOL"), nomore},
+		want{out: strs("WOW, SUCH SHELL, MUCH COOL")}},
 	// Splicing
-	{"x=[elvish rules]; put $@x", strs("elvish", "rules"), nomore},
+	{"x=[elvish rules]; put $@x", want{out: strs("elvish", "rules")}},
 
 	// Wildcard.
-	{"put /*", strs(util.FullNames("/")...), nomore},
+	{"put /*", want{out: strs(util.FullNames("/")...)}},
 	// XXX assumes there is no /a/b/nonexistent*
-	{"put /a/b/nonexistent*", noout, more{wantError: ErrWildcardNoMatch}},
-	{"put /a/b/nonexistent*[nomatch-ok]", noout, nomore},
+	{"put /a/b/nonexistent*", want{err: ErrWildcardNoMatch}},
+	{"put /a/b/nonexistent*[nomatch-ok]", wantNothing},
 
 	// Tilde.
 	{"h=$E:HOME; E:HOME=/foo; put ~ ~/src; E:HOME=$h",
-		strs("/foo", "/foo/src"), nomore},
+		want{out: strs("/foo", "/foo/src")}},
 
 	// Closure
 	// Basics
-	{"[]{ }", noout, nomore},
-	{"[x]{put $x} foo", strs("foo"), nomore},
+	{"[]{ }", wantNothing},
+	{"[x]{put $x} foo", want{out: strs("foo")}},
 	// Variable capture
-	{"x=lorem; []{x=ipsum}; put $x", strs("ipsum"), nomore},
+	{"x=lorem; []{x=ipsum}; put $x", want{out: strs("ipsum")}},
 	{"x=lorem; []{ put $x; x=ipsum }; put $x",
-		strs("lorem", "ipsum"), nomore},
+		want{out: strs("lorem", "ipsum")}},
 	// Shadowing
 	{"x=ipsum; []{ local:x=lorem; put $x }; put $x",
-		strs("lorem", "ipsum"), nomore},
+		want{out: strs("lorem", "ipsum")}},
 	// Shadowing by argument
 	{"x=ipsum; [x]{ put $x; x=BAD } lorem; put $x",
-		strs("lorem", "ipsum"), nomore},
+		want{out: strs("lorem", "ipsum")}},
 	// Closure captures new local variables every time
 	{`fn f []{ x=0; put []{x=(+ $x 1)} []{put $x} }
 		      {inc1,put1}=(f); $put1; $inc1; $put1
 			  {inc2,put2}=(f); $put2; $inc2; $put2`,
-		strs("0", "1", "0", "1"), nomore},
+		want{out: strs("0", "1", "0", "1")}},
 
 	// fn.
 	{"fn f [x]{ put x=$x'.' }; f lorem; f ipsum",
-		strs("x=lorem.", "x=ipsum."), nomore},
+		want{out: strs("x=lorem.", "x=ipsum.")}},
 	// return.
-	{"fn f []{ put a; return; put b }; f", strs("a"), nomore},
+	{"fn f []{ put a; return; put b }; f", want{out: strs("a")}},
 
 	// Rest argument.
 	{"[x @xs]{ put $x $xs } a b c",
-		[]Value{String("a"),
-			NewList(String("b"), String("c"))}, nomore},
+		want{out: []Value{String("a"), NewList(String("b"), String("c"))}}},
 	// Options.
-	{"[a &k=v]{ put $a $k } foo &k=bar", strs("foo", "bar"), nomore},
+	{"[a &k=v]{ put $a $k } foo &k=bar", want{out: strs("foo", "bar")}},
 	// Option default value.
-	{"[a &k=v]{ put $a $k } foo", strs("foo", "v"), nomore},
+	{"[a &k=v]{ put $a $k } foo", want{out: strs("foo", "v")}},
 
 	// Namespaces
 	// Pseudo-namespaces local: and up:
 	{"x=lorem; []{local:x=ipsum; put $up:x $local:x}",
-		strs("lorem", "ipsum"), nomore},
+		want{out: strs("lorem", "ipsum")}},
 	{"x=lorem; []{up:x=ipsum; put $x}; put $x",
-		strs("ipsum", "ipsum"), nomore},
+		want{out: strs("ipsum", "ipsum")}},
 	// Pseudo-namespace E:
-	{"E:FOO=lorem; put $E:FOO", strs("lorem"), nomore},
-	{"del E:FOO; put $E:FOO", strs(""), nomore},
+	{"E:FOO=lorem; put $E:FOO", want{out: strs("lorem")}},
+	{"del E:FOO; put $E:FOO", want{out: strs("")}},
 	// TODO: Test module namespace
 
 	// Builtin functions
 	// -----------------
 
 	{"kind-of bare 'str' [] [&] []{ }",
-		strs("string", "string", "list", "map", "fn"), nomore},
+		want{out: strs("string", "string", "list", "map", "fn")}},
 
-	{`put foo bar`, strs("foo", "bar"), nomore},
-	{`explode [foo bar]`, strs("foo", "bar"), nomore},
+	{`put foo bar`, want{out: strs("foo", "bar")}},
+	{`explode [foo bar]`, want{out: strs("foo", "bar")}},
 
-	{`print [foo bar]`, noout, more{wantBytesOut: []byte("[foo bar]")}},
-	{`echo [foo bar]`, noout, more{wantBytesOut: []byte("[foo bar]\n")}},
-	{`pprint [foo bar]`, noout, more{wantBytesOut: []byte("[\n foo\n bar\n]\n")}},
+	{`print [foo bar]`, want{bytesOut: []byte("[foo bar]")}},
+	{`echo [foo bar]`, want{bytesOut: []byte("[foo bar]\n")}},
+	{`pprint [foo bar]`, want{bytesOut: []byte("[\n foo\n bar\n]\n")}},
 
-	{`print "a\nb" | slurp`, strs("a\nb"), nomore},
-	{`print "a\nb" | from-lines`, strs("a", "b"), nomore},
-	{`print "a\nb\n" | from-lines`, strs("a", "b"), nomore},
-	{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`, []Value{
-		NewMap(map[Value]Value{
-			String("k"): String("v"),
-			String("a"): NewList(strs("1", "2")...)}),
-		String("foo"),
-	}, nomore},
-	{`echo 'invalid' | from-json`, noout, more{wantError: errAny}},
+	{`print "a\nb" | slurp`, want{out: strs("a\nb")}},
+	{`print "a\nb" | from-lines`, want{out: strs("a", "b")}},
+	{`print "a\nb\n" | from-lines`, want{out: strs("a", "b")}},
+	{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`,
+		want{out: []Value{
+			NewMap(map[Value]Value{
+				String("k"): String("v"),
+				String("a"): NewList(strs("1", "2")...)}),
+			String("foo"),
+		}}},
+	{`echo 'invalid' | from-json`, want{err: errAny}},
 
-	{`put "l\norem" ipsum | to-lines`, noout,
-		more{wantBytesOut: []byte("l\norem\nipsum\n")}},
-	{`put [&k=v &a=[1 2]] foo | to-json`, noout,
-		more{wantBytesOut: []byte(`{"a":["1","2"],"k":"v"}
+	{`put "l\norem" ipsum | to-lines`,
+		want{bytesOut: []byte("l\norem\nipsum\n")}},
+	{`put [&k=v &a=[1 2]] foo | to-json`,
+		want{bytesOut: []byte(`{"a":["1","2"],"k":"v"}
 "foo"
 `)}},
 
-	{`joins : [/usr /bin /tmp]`, strs("/usr:/bin:/tmp"), nomore},
-	{`splits : /usr:/bin:/tmp`, strs("/usr", "/bin", "/tmp"), nomore},
-	{`replaces : / ":usr:bin:tmp"`, strs("/usr/bin/tmp"), nomore},
-	{`replaces &max=2 : / :usr:bin:tmp`, strs("/usr/bin:tmp"), nomore},
-	{`has-prefix golang go`, bools(true), nomore},
-	{`has-prefix golang x`, bools(false), nomore},
-	{`has-suffix golang x`, bools(false), nomore},
+	{`joins : [/usr /bin /tmp]`, want{out: strs("/usr:/bin:/tmp")}},
+	{`splits : /usr:/bin:/tmp`, want{out: strs("/usr", "/bin", "/tmp")}},
+	{`replaces : / ":usr:bin:tmp"`, want{out: strs("/usr/bin/tmp")}},
+	{`replaces &max=2 : / :usr:bin:tmp`, want{out: strs("/usr/bin:tmp")}},
+	{`has-prefix golang go`, want{out: bools(true)}},
+	{`has-prefix golang x`, want{out: bools(false)}},
+	{`has-suffix golang x`, want{out: bools(false)}},
 
-	{`keys [&]`, noout, nomore},
-	{`keys [&a=foo &b=bar] | each echo | sort | each put`, strs("a", "b"), nomore},
+	{`keys [&]`, wantNothing},
+	{`keys [&a=foo &b=bar] | each echo | sort | each put`, want{out: strs("a", "b")}},
 
-	{`==s haha haha`, bools(true), nomore},
-	{`==s 10 10.0`, bools(false), nomore},
-	{`<s a b`, bools(true), nomore},
-	{`<s 2 10`, bools(false), nomore},
+	{`==s haha haha`, want{out: bools(true)}},
+	{`==s 10 10.0`, want{out: bools(false)}},
+	{`<s a b`, want{out: bools(true)}},
+	{`<s 2 10`, want{out: bools(false)}},
 
-	{`fail haha`, noout, more{wantError: errAny}},
-	{`return`, noout, more{wantError: Return}},
+	{`fail haha`, want{err: errAny}},
+	{`return`, want{err: Return}},
 
-	{`f=(constantly foo); $f; $f`, strs("foo", "foo"), nomore},
-	{`(constantly foo) bad`, noout, more{wantError: errAny}},
-	{`put 1 233 | each put`, strs("1", "233"), nomore},
-	{`echo "1\n233" | each put`, strs("1", "233"), nomore},
-	{`each put [1 233]`, strs("1", "233"), nomore},
-	{`range 10 | each [x]{ if (== $x 4) { break }; put $x }`, strs("0", "1", "2", "3"), nomore},
-	{`range 10 | each [x]{ if (== $x 4) { fail haha }; put $x }`, strs("0", "1", "2", "3"), more{wantError: errAny}},
-	{`repeat 4 foo`, strs("foo", "foo", "foo", "foo"), nomore},
+	{`f=(constantly foo); $f; $f`, want{out: strs("foo", "foo")}},
+	{`(constantly foo) bad`, want{err: errAny}},
+	{`put 1 233 | each put`, want{out: strs("1", "233")}},
+	{`echo "1\n233" | each put`, want{out: strs("1", "233")}},
+	{`each put [1 233]`, want{out: strs("1", "233")}},
+	{`range 10 | each [x]{ if (== $x 4) { break }; put $x }`,
+		want{out: strs("0", "1", "2", "3")}},
+	{`range 10 | each [x]{ if (== $x 4) { fail haha }; put $x }`,
+		want{out: strs("0", "1", "2", "3"), err: errAny}},
+	{`repeat 4 foo`, want{out: strs("foo", "foo", "foo", "foo")}},
 	// TODO: test peach
 
-	{`range 3`, strs("0", "1", "2"), nomore},
-	{`range 1 3`, strs("1", "2"), nomore},
-	{`range 0 10 &step=3`, strs("0", "3", "6", "9"), nomore},
-	{`range 100 | take 2`, strs("0", "1"), nomore},
-	{`range 100 | drop 98`, strs("98", "99"), nomore},
-	{`range 100 | count`, strs("100"), nomore},
-	{`count [(range 100)]`, strs("100"), nomore},
+	{`range 3`, want{out: strs("0", "1", "2")}},
+	{`range 1 3`, want{out: strs("1", "2")}},
+	{`range 0 10 &step=3`, want{out: strs("0", "3", "6", "9")}},
+	{`range 100 | take 2`, want{out: strs("0", "1")}},
+	{`range 100 | drop 98`, want{out: strs("98", "99")}},
+	{`range 100 | count`, want{out: strs("100")}},
+	{`count [(range 100)]`, want{out: strs("100")}},
 
 	{`echo "  ax  by cz  \n11\t22 33" | eawk [@a]{ put $a[-1] }`,
-		strs("cz", "33"), nomore},
+		want{out: strs("cz", "33")}},
 
-	{`path-base a/b/c.png`, strs("c.png"), nomore},
+	{`path-base a/b/c.png`, want{out: strs("c.png")}},
 
 	// TODO test more edge cases
-	{"+ 233100 233", strs("233333"), nomore},
-	{"- 233333 233100", strs("233"), nomore},
-	{"- 233", strs("-233"), nomore},
-	{"* 353 661", strs("233333"), nomore},
-	{"/ 233333 353", strs("661"), nomore},
-	{"/ 1 0", strs("+Inf"), nomore},
-	{"^ 16 2", strs("256"), nomore},
-	{"% 23 7", strs("2"), nomore},
+	{"+ 233100 233", want{out: strs("233333")}},
+	{"- 233333 233100", want{out: strs("233")}},
+	{"- 233", want{out: strs("-233")}},
+	{"* 353 661", want{out: strs("233333")}},
+	{"/ 233333 353", want{out: strs("661")}},
+	{"/ 1 0", want{out: strs("+Inf")}},
+	{"^ 16 2", want{out: strs("256")}},
+	{"% 23 7", want{out: strs("2")}},
 
-	{`== 1 1.0`, bools(true), nomore},
-	{`== 10 0xa`, bools(true), nomore},
-	{`== a a`, noout, more{wantError: errAny}},
-	{`> 0x10 1`, bools(true), nomore},
+	{`== 1 1.0`, want{out: bools(true)}},
+	{`== 10 0xa`, want{out: bools(true)}},
+	{`== a a`, want{err: errAny}},
+	{`> 0x10 1`, want{out: bools(true)}},
 
-	{`is 1 1`, bools(true), nomore},
-	{`is [] []`, bools(true), nomore},
-	{`is [1] [1]`, bools(false), nomore},
-	{`eq 1 1`, bools(true), nomore},
-	{`eq [] []`, bools(true), nomore},
+	{`is 1 1`, want{out: bools(true)}},
+	{`is [] []`, want{out: bools(true)}},
+	{`is [1] [1]`, want{out: bools(false)}},
+	{`eq 1 1`, want{out: bools(true)}},
+	{`eq [] []`, want{out: bools(true)}},
 
-	{`ord a`, strs("0x61"), nomore},
-	{`base 16 42 233`, strs("2a", "e9"), nomore},
-	{`wcswidth 你好`, strs("4"), nomore},
-	{`has-key [foo bar] 0`, bools(true), nomore},
-	{`has-key [foo bar] 0:1`, bools(true), nomore},
-	{`has-key [foo bar] 0:20`, bools(false), nomore},
-	{`has-key [&lorem=ipsum &foo=bar] lorem`, bools(true), nomore},
-	{`has-key [&lorem=ipsum &foo=bar] loremwsq`, bools(false), nomore},
-	{`has-value [&lorem=ipsum &foo=bar] lorem`, bools(false), nomore},
-	{`has-value [&lorem=ipsum &foo=bar] bar`, bools(true), nomore},
-	{`has-value [foo bar] bar`, bools(true), nomore},
-	{`has-value [foo bar] badehose`, bools(false), nomore},
-	{`has-value "foo" o`, bools(true), nomore},
-	{`has-value "foo" d`, bools(false), nomore},
+	{`ord a`, want{out: strs("0x61")}},
+	{`base 16 42 233`, want{out: strs("2a", "e9")}},
+	{`wcswidth 你好`, want{out: strs("4")}},
+	{`has-key [foo bar] 0`, want{out: bools(true)}},
+	{`has-key [foo bar] 0:1`, want{out: bools(true)}},
+	{`has-key [foo bar] 0:20`, want{out: bools(false)}},
+	{`has-key [&lorem=ipsum &foo=bar] lorem`, want{out: bools(true)}},
+	{`has-key [&lorem=ipsum &foo=bar] loremwsq`, want{out: bools(false)}},
+	{`has-value [&lorem=ipsum &foo=bar] lorem`, want{out: bools(false)}},
+	{`has-value [&lorem=ipsum &foo=bar] bar`, want{out: bools(true)}},
+	{`has-value [foo bar] bar`, want{out: bools(true)}},
+	{`has-value [foo bar] badehose`, want{out: bools(false)}},
+	{`has-value "foo" o`, want{out: bools(true)}},
+	{`has-value "foo" d`, want{out: bools(false)}},
 }
 
 func strs(ss ...string) []Value {
@@ -329,6 +333,45 @@ func mustParseAndCompile(t *testing.T, ev *Evaler, name, text string) Op {
 		t.Fatalf("Compile(Parse(%q)) error: %s", text, err)
 	}
 	return op
+}
+
+func TestEval(t *testing.T) {
+	for _, tt := range evalTests {
+		// fmt.Printf("eval %q\n", tt.text)
+
+		out, bytesOut, err := evalAndCollect(t, []string{tt.text}, len(tt.want.out))
+
+		first := true
+		errorf := func(format string, args ...interface{}) {
+			if first {
+				first = false
+				t.Errorf("eval(%q) fails:", tt.text)
+			}
+			t.Errorf("  "+format, args...)
+		}
+
+		if !matchOut(tt.want.out, out) {
+			errorf("got out=%v, want %v", out, tt.want.out)
+		}
+		if string(tt.want.bytesOut) != string(bytesOut) {
+			errorf("got bytesOut=%q, want %q", bytesOut, tt.want.bytesOut)
+		}
+		if !matchErr(tt.want.err, err) {
+			errorf("got err=%v, want %v", err, tt.want.err)
+		}
+	}
+}
+
+func TestMultipleEval(t *testing.T) {
+	texts := []string{"x=hello", "put $x"}
+	outs, _, err := evalAndCollect(t, texts, 1)
+	wanted := strs("hello")
+	if err != nil {
+		t.Errorf("eval %s => %v, want nil", texts, err)
+	}
+	if !reflect.DeepEqual(outs, wanted) {
+		t.Errorf("eval %s outputs %v, want %v", texts, outs, wanted)
+	}
 }
 
 func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, error) {
@@ -387,55 +430,18 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	return outs, outBytes, ex
 }
 
-func TestEval(t *testing.T) {
-	for _, tt := range evalTests {
-		// fmt.Printf("eval %q\n", tt.text)
-
-		out, bytesOut, err := evalAndCollect(t, []string{tt.text}, len(tt.wantOut))
-
-		good := true
-		errorf := func(format string, args ...interface{}) {
-			if good {
-				good = false
-				t.Errorf("eval(%q) fails:", tt.text)
-			}
-			t.Errorf(format, args...)
-		}
-
-		if !reflect.DeepEqual(tt.wantOut, out) {
-			errorf("got out=%v, want %v", out, tt.wantOut)
-		}
-		if string(bytesOut) != string(tt.wantBytesOut) {
-			errorf("got bytesOut=%q, want %q", bytesOut, tt.wantBytesOut)
-		}
-		// Check exception cause. We accept errAny as a "wildcard" for all non-nil
-		// errors.
-		if err == nil {
-			if tt.wantError != nil {
-				errorf("got err=nil, want %v", tt.wantError)
-			}
-		} else {
-			exc := err.(*Exception)
-			if !(tt.wantError == errAny || reflect.DeepEqual(tt.wantError, exc.Cause)) {
-				errorf("got err=%v, want %v", err, tt.wantError)
-			}
-		}
-		if !good {
-			t.Errorf("--------------")
-		}
+func matchOut(want, got []Value) bool {
+	if len(got) == 0 && len(want) == 0 {
+		return true
 	}
+	return reflect.DeepEqual(got, want)
 }
 
-func TestMultipleEval(t *testing.T) {
-	texts := []string{"x=hello", "put $x"}
-	outs, _, err := evalAndCollect(t, texts, 1)
-	wanted := strs("hello")
-	if err != nil {
-		t.Errorf("eval %s => %v, want nil", texts, err)
+func matchErr(want, got error) bool {
+	if got == nil {
+		return want == nil
 	}
-	if !reflect.DeepEqual(outs, wanted) {
-		t.Errorf("eval %s outputs %v, want %v", texts, outs, wanted)
-	}
+	return want == errAny || reflect.DeepEqual(got.(*Exception).Cause, want)
 }
 
 func BenchmarkOutputCaptureOverhead(b *testing.B) {
