@@ -46,9 +46,13 @@ func newHistlist(cmds []string) *listing {
 		last[entry] = i
 	}
 	hl := &histlist{
-		// This has to be here for the initializatio to work :(
-		listing: &listing{},
-		all:     cmds, last: last, indexWidth: len(strconv.Itoa(len(cmds) - 1))}
+		// This has to be here for the initialization to work :(
+		listing:    &listing{},
+		all:        cmds,
+		dedup:      true,
+		last:       last,
+		indexWidth: len(strconv.Itoa(len(cmds) - 1)),
+	}
 	l := newListing(modeHistoryListing, hl)
 	hl.listing = &l
 	return &l
