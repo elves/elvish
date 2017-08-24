@@ -1,4 +1,4 @@
-// +build !freebsd,!windows,!gccgo
+// +build gccgo
 
 package sys
 
@@ -18,23 +18,20 @@ func NewFdSet(fds ...int) *FdSet {
 
 func (fs *FdSet) Clear(fds ...int) {
 	for _, fd := range fds {
-		idx, bit := index(fd)
-		fs.Bits[idx] &= ^bit
+		syscall.FDClr(fd, fs.s())
 	}
 }
 
 func (fs *FdSet) IsSet(fd int) bool {
-	idx, bit := index(fd)
-	return fs.Bits[idx]&bit != 0
+	return syscall.FDIsSet(fd, fs.s())
 }
 
 func (fs *FdSet) Set(fds ...int) {
 	for _, fd := range fds {
-		idx, bit := index(fd)
-		fs.Bits[idx] |= bit
+		syscall.FDSet(fd, fs.s())
 	}
 }
 
 func (fs *FdSet) Zero() {
-	*fs = FdSet{}
+	syscall.FDZero(fs.s())
 }
