@@ -7,10 +7,15 @@ type Equaler interface {
 	Equal(other interface{}) bool
 }
 
-// Key is the interface hashmap keys need to satisfy.
-type Key interface {
-	Equaler
+// Hasher is a value with a 32-bit hash code.
+type Hasher interface {
 	// Hash returns the hash for the key. If k1.Equal(k2), k1.Hash() ==
 	// k2.Hash() must be satisfied.
 	Hash() uint32
+}
+
+// EqualHasher packs Hasher and Equaler.
+type EqualHasher interface {
+	Equaler
+	Hasher
 }

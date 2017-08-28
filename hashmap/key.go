@@ -5,7 +5,7 @@ import "github.com/xiaq/persistent/types"
 // UInt32 is a uint32 that can be used as a types.Key.
 type UInt32 uint32
 
-var _ types.Key = UInt32(0)
+var _ types.EqualHasher = UInt32(0)
 
 func (i UInt32) Hash() uint32 {
 	return uint32(i)
@@ -19,7 +19,7 @@ func (i UInt32) Equal(other interface{}) bool {
 // UInt64 is a uint64 that can be used as a types.Key.
 type UInt64 uint64
 
-var _ types.Key = UInt64(0)
+var _ types.EqualHasher = UInt64(0)
 
 // Hash returns the hash code of an UInt64.
 func (i UInt64) Hash() uint32 {
@@ -35,7 +35,7 @@ func (i UInt64) Equal(other interface{}) bool {
 // String is a String that can be used as a types.Key.
 type String string
 
-var _ types.Key = String("")
+var _ types.EqualHasher = String("")
 
 // Hash returns the hash code of a String. It uses the djb hashing algorithm.
 func (s String) Hash() uint32 {

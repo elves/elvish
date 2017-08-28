@@ -19,13 +19,13 @@ type HashMap interface {
 	Len() int
 	// Get returns whether there is a value associated with the given key, and
 	// that value or nil.
-	Get(k types.Key) (bool, interface{})
+	Get(k types.EqualHasher) (bool, interface{})
 	// Assoc returns an almost identical hashmap, with the given key associated
 	// with the given value.
-	Assoc(k types.Key, v interface{}) HashMap
+	Assoc(k types.EqualHasher, v interface{}) HashMap
 	// Without returns an almost identical hashmap, with the given key
 	// associated with no value.
-	Without(k types.Key) HashMap
+	Without(k types.EqualHasher) HashMap
 	// Iterator returns an iterator over the map.
 	Iterator() Iterator
 }
@@ -38,7 +38,7 @@ type HashMap interface {
 //     }
 type Iterator interface {
 	// Elem returns the current key-value pair.
-	Elem() (types.Key, interface{})
+	Elem() (types.EqualHasher, interface{})
 	// HasElem returns whether the iterator is pointing to an element.
 	HasElem() bool
 	// Next moves the iterator to the next position.
@@ -57,11 +57,11 @@ func (m *hashMap) Len() int {
 	return m.count
 }
 
-func (m *hashMap) Get(k types.Key) (bool, interface{}) {
+func (m *hashMap) Get(k types.EqualHasher) (bool, interface{}) {
 	return m.root.find(0, k.Hash(), k)
 }
 
-func (m *hashMap) Assoc(k types.Key, v interface{}) HashMap {
+func (m *hashMap) Assoc(k types.EqualHasher, v interface{}) HashMap {
 	added, newRoot := m.root.assoc(0, k.Hash(), k, v)
 	newCount := m.count
 	if added {
@@ -70,7 +70,7 @@ func (m *hashMap) Assoc(k types.Key, v interface{}) HashMap {
 	return &hashMap{newCount, newRoot}
 }
 
-func (m *hashMap) Without(k types.Key) HashMap {
+func (m *hashMap) Without(k types.EqualHasher) HashMap {
 	deleted, newRoot := m.root.without(0, k.Hash(), k)
 	newCount := m.count
 	if deleted {
@@ -120,13 +120,13 @@ type node interface {
 	// assoc adds a new pair of key and value. It returns whether the key did
 	// not exist before (i.e. a new pair has been added, instead of replaced),
 	// and the new node.
-	assoc(shift, hash uint32, k types.Key, v interface{}) (bool, node)
+	assoc(shift, hash uint32, k types.EqualHasher, v interface{}) (bool, node)
 	// without removes a key. It returns whether the key did not exist before
 	// (i.e. a key was indeed removed) and the new node.
-	without(shift, hash uint32, k types.Key) (bool, node)
+	without(shift, hash uint32, k types.EqualHasher) (bool, node)
 	// find finds the value for a key. It returns whether such a pair exists,
 	// and the found value.
-	find(shift, hash uint32, k types.Key) (bool, interface{})
+	find(shift, hash uint32, k types.EqualHasher) (bool, interface{})
 	// iterator returns an iterator.
 	iterator() Iterator
 }
@@ -144,7 +144,7 @@ func (n *arrayNode) withNewChild(i uint32, newChild node, d int) *arrayNode {
 	return &arrayNode{n.nChildren + d, newChildren}
 }
 
-func (n *arrayNode) assoc(shift, hash uint32, k types.Key, v interface{}) (bool, node) {
+func (n *arrayNode) assoc(shift, hash uint32, k types.EqualHasher, v interface{}) (bool, node) {
 	idx := chunk(shift, hash)
 	child := n.children[idx]
 	if child == nil {
@@ -155,7 +155,7 @@ func (n *arrayNode) assoc(shift, hash uint32, k types.Key, v interface{}) (bool,
 	return added, n.withNewChild(idx, newChild, 0)
 }
 
-func (n *arrayNode) without(shift, hash uint32, k types.Key) (bool, node) {
+func (n *arrayNode) without(shift, hash uint32, k types.EqualHasher) (bool, node) {
 	idx := chunk(shift, hash)
 	child := n.children[idx]
 	if child == nil {
@@ -190,7 +190,7 @@ func (n *arrayNode) pack(skip int) *bitmapNode {
 	return &newNode
 }
 
-func (n *arrayNode) find(shift, hash uint32, k types.Key) (bool, interface{}) {
+func (n *arrayNode) find(shift, hash uint32, k types.EqualHasher) (bool, interface{}) {
 	idx := chunk(shift, hash)
 	child := n.children[idx]
 	if child == nil {
@@ -221,7 +221,7 @@ func (it *arrayNodeIterator) fixCurrent() {
 	}
 }
 
-func (it *arrayNodeIterator) Elem() (types.Key, interface{}) {
+func (it *arrayNodeIterator) Elem() (types.EqualHasher, interface{}) {
 	return it.current.Elem()
 }
 
@@ -248,7 +248,7 @@ type bitmapNode struct {
 // with non-nil key. When used in a bitmapNode, it is also abused to represent
 // children when the key is nil.
 type mapEntry struct {
-	key   types.Key
+	key   types.EqualHasher
 	value interface{}
 }
 
@@ -282,7 +282,7 @@ func popCount(u uint32) uint32 {
 	return u
 }
 
-func createNode(shift uint32, k1 types.Key, v1 interface{}, h2 uint32, k2 types.Key, v2 interface{}) node {
+func createNode(shift uint32, k1 types.EqualHasher, v1 interface{}, h2 uint32, k2 types.EqualHasher, v2 interface{}) node {
 	h1 := k1.Hash()
 	if h1 == h2 {
 		return &collisionNode{h1, []mapEntry{{k1, v1}, {k2, v2}}}
@@ -327,13 +327,13 @@ func (n *bitmapNode) withReplacedEntry(i uint32, entry mapEntry) *bitmapNode {
 	return &bitmapNode{n.bitmap, replaceEntry(n.entries, i, entry.key, entry.value)}
 }
 
-func replaceEntry(entries []mapEntry, i uint32, k types.Key, v interface{}) []mapEntry {
+func replaceEntry(entries []mapEntry, i uint32, k types.EqualHasher, v interface{}) []mapEntry {
 	newEntries := append([]mapEntry(nil), entries...)
 	newEntries[i] = mapEntry{k, v}
 	return newEntries
 }
 
-func (n *bitmapNode) assoc(shift, hash uint32, k types.Key, v interface{}) (bool, node) {
+func (n *bitmapNode) assoc(shift, hash uint32, k types.EqualHasher, v interface{}) (bool, node) {
 	bit := bitpos(shift, hash)
 	idx := index(n.bitmap, bit)
 	if n.bitmap&bit == 0 {
@@ -369,7 +369,7 @@ func (n *bitmapNode) assoc(shift, hash uint32, k types.Key, v interface{}) (bool
 	return true, n.withReplacedEntry(idx, mapEntry{nil, newNode})
 }
 
-func (n *bitmapNode) without(shift, hash uint32, k types.Key) (bool, node) {
+func (n *bitmapNode) without(shift, hash uint32, k types.EqualHasher) (bool, node) {
 	bit := bitpos(shift, hash)
 	if n.bitmap&bit == 0 {
 		return false, n
@@ -399,7 +399,7 @@ func (n *bitmapNode) without(shift, hash uint32, k types.Key) (bool, node) {
 	return false, n
 }
 
-func (n *bitmapNode) find(shift, hash uint32, k types.Key) (bool, interface{}) {
+func (n *bitmapNode) find(shift, hash uint32, k types.EqualHasher) (bool, interface{}) {
 	bit := bitpos(shift, hash)
 	if n.bitmap&bit == 0 {
 		return false, nil
@@ -440,7 +440,7 @@ func (it *bitmapNodeIterator) fixCurrent() {
 	}
 }
 
-func (it *bitmapNodeIterator) Elem() (types.Key, interface{}) {
+func (it *bitmapNodeIterator) Elem() (types.EqualHasher, interface{}) {
 	if it.current != nil {
 		return it.current.Elem()
 	}
@@ -467,7 +467,7 @@ type collisionNode struct {
 	entries []mapEntry
 }
 
-func (n *collisionNode) assoc(shift, hash uint32, k types.Key, v interface{}) (bool, node) {
+func (n *collisionNode) assoc(shift, hash uint32, k types.EqualHasher, v interface{}) (bool, node) {
 	if hash == n.hash {
 		idx := n.findIndex(k)
 		if idx != -1 {
@@ -484,7 +484,7 @@ func (n *collisionNode) assoc(shift, hash uint32, k types.Key, v interface{}) (b
 	return wrap.assoc(shift, hash, k, v)
 }
 
-func (n *collisionNode) without(shift, hash uint32, k types.Key) (bool, node) {
+func (n *collisionNode) without(shift, hash uint32, k types.EqualHasher) (bool, node) {
 	idx := n.findIndex(k)
 	if idx == -1 {
 		return false, n
@@ -495,7 +495,7 @@ func (n *collisionNode) without(shift, hash uint32, k types.Key) (bool, node) {
 	return true, &collisionNode{n.hash, withoutEntry(n.entries, uint32(idx))}
 }
 
-func (n *collisionNode) find(shift, hash uint32, k types.Key) (bool, interface{}) {
+func (n *collisionNode) find(shift, hash uint32, k types.EqualHasher) (bool, interface{}) {
 	idx := n.findIndex(k)
 	if idx == -1 {
 		return false, nil
@@ -503,7 +503,7 @@ func (n *collisionNode) find(shift, hash uint32, k types.Key) (bool, interface{}
 	return true, n.entries[idx].value
 }
 
-func (n *collisionNode) findIndex(k types.Key) int {
+func (n *collisionNode) findIndex(k types.EqualHasher) int {
 	for i, entry := range n.entries {
 		if k.Equal(entry.key) {
 			return i
@@ -521,7 +521,7 @@ type collisionNodeIterator struct {
 	index int
 }
 
-func (it *collisionNodeIterator) Elem() (types.Key, interface{}) {
+func (it *collisionNodeIterator) Elem() (types.EqualHasher, interface{}) {
 	entry := it.n.entries[it.index]
 	return entry.key, entry.value
 }
