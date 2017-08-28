@@ -1,23 +1,11 @@
 package hashmap
 
-// Equaler is a value that knows whether it is equal to another value or not.
-type Equaler interface {
-	// Equal returns whether this value is equal to another one.
-	Equal(other interface{}) bool
-}
+import "github.com/xiaq/persistent/types"
 
-// Key is the interface hashmap keys need to satisfy.
-type Key interface {
-	Equaler
-	// Hash returns the hash for the key. If k1.Equal(k2), k1.Hash() ==
-	// k2.Hash() must be satisfied.
-	Hash() uint32
-}
-
-// UInt32 is a uint32 that can be used as a Key.
+// UInt32 is a uint32 that can be used as a types.Key.
 type UInt32 uint32
 
-var _ Key = UInt32(0)
+var _ types.Key = UInt32(0)
 
 func (i UInt32) Hash() uint32 {
 	return uint32(i)
@@ -28,10 +16,10 @@ func (i UInt32) Equal(other interface{}) bool {
 	return ok && i == j
 }
 
-// UInt64 is a uint64 that can be used as a Key.
+// UInt64 is a uint64 that can be used as a types.Key.
 type UInt64 uint64
 
-var _ Key = UInt64(0)
+var _ types.Key = UInt64(0)
 
 // Hash returns the hash code of an UInt64.
 func (i UInt64) Hash() uint32 {
@@ -44,10 +32,10 @@ func (i UInt64) Equal(other interface{}) bool {
 	return ok && i == j
 }
 
-// String is a String that can be used as a Key.
+// String is a String that can be used as a types.Key.
 type String string
 
-var _ Key = String("")
+var _ types.Key = String("")
 
 // Hash returns the hash code of a String. It uses the djb hashing algorithm.
 func (s String) Hash() uint32 {

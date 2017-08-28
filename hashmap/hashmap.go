@@ -1,6 +1,8 @@
 // Package hashmap implements persistent hashmap.
 package hashmap
 
+import "github.com/xiaq/persistent/types"
+
 const (
 	chunkBits = 5
 	nodeCap   = 1 << chunkBits
@@ -12,18 +14,18 @@ const (
 // the hashmap that shares the underlying data structure, making it suitable for
 // concurrent access.
 type HashMap interface {
-	Equaler
+	types.Equaler
 	// Len returns the length of the hashmap.
 	Len() int
 	// Get returns whether there is a value associated with the given key, and
 	// that value or nil.
-	Get(k Key) (bool, interface{})
+	Get(k types.Key) (bool, interface{})
 	// Assoc returns an almost identical hashmap, with the given key associated
 	// with the given value.
-	Assoc(k Key, v interface{}) HashMap
+	Assoc(k types.Key, v interface{}) HashMap
 	// Without returns an almost identical hashmap, with the given key
 	// associated with no value.
-	Without(k Key) HashMap
+	Without(k types.Key) HashMap
 	// Iterator returns an iterator over the map.
 	Iterator() Iterator
 }
@@ -36,7 +38,7 @@ type HashMap interface {
 //     }
 type Iterator interface {
 	// Elem returns the current key-value pair.
-	Elem() (Key, interface{})
+	Elem() (types.Key, interface{})
 	// HasElem returns whether the iterator is pointing to an element.
 	HasElem() bool
 	// Next moves the iterator to the next position.
@@ -55,11 +57,11 @@ func (m *hashMap) Len() int {
 	return m.count
 }
 
-func (m *hashMap) Get(k Key) (bool, interface{}) {
+func (m *hashMap) Get(k types.Key) (bool, interface{}) {
 	return m.root.find(0, k.Hash(), k)
 }
 
-func (m *hashMap) Assoc(k Key, v interface{}) HashMap {
+func (m *hashMap) Assoc(k types.Key, v interface{}) HashMap {
 	added, newRoot := m.root.assoc(0, k.Hash(), k, v)
 	newCount := m.count
 	if added {
@@ -68,7 +70,7 @@ func (m *hashMap) Assoc(k Key, v interface{}) HashMap {
 	return &hashMap{newCount, newRoot}
 }
 
-func (m *hashMap) Without(k Key) HashMap {
+func (m *hashMap) Without(k types.Key) HashMap {
 	deleted, newRoot := m.root.without(0, k.Hash(), k)
 	newCount := m.count
 	if deleted {
@@ -100,7 +102,7 @@ func HashMapEqual(m1, m2 HashMap) bool {
 		if !ok2 {
 			return false
 		}
-		if v1Eq, ok := v1.(Equaler); ok {
+		if v1Eq, ok := v1.(types.Equaler); ok {
 			if !v1Eq.Equal(v2) {
 				return false
 			}
@@ -118,13 +120,13 @@ type node interface {
 	// assoc adds a new pair of key and value. It returns whether the key did
 	// not exist before (i.e. a new pair has been added, instead of replaced),
 	// and the new node.
-	assoc(shift, hash uint32, k Key, v interface{}) (bool, node)
+	assoc(shift, hash uint32, k types.Key, v interface{}) (bool, node)
 	// without removes a key. It returns whether the key did not exist before
 	// (i.e. a key was indeed removed) and the new node.
-	without(shift, hash uint32, k Key) (bool, node)
+	without(shift, hash uint32, k types.Key) (bool, node)
 	// find finds the value for a key. It returns whether such a pair exists,
 	// and the found value.
-	find(shift, hash uint32, k Key) (bool, interface{})
+	find(shift, hash uint32, k types.Key) (bool, interface{})
 	// iterator returns an iterator.
 	iterator() Iterator
 }
@@ -142,7 +144,7 @@ func (n *arrayNode) withNewChild(i uint32, newChild node, d int) *arrayNode {
 	return &arrayNode{n.nChildren + d, newChildren}
 }
 
-func (n *arrayNode) assoc(shift, hash uint32, k Key, v interface{}) (bool, node) {
+func (n *arrayNode) assoc(shift, hash uint32, k types.Key, v interface{}) (bool, node) {
 	idx := chunk(shift, hash)
 	child := n.children[idx]
 	if child == nil {
@@ -153,7 +155,7 @@ func (n *arrayNode) assoc(shift, hash uint32, k Key, v interface{}) (bool, node)
 	return added, n.withNewChild(idx, newChild, 0)
 }
 
-func (n *arrayNode) without(shift, hash uint32, k Key) (bool, node) {
+func (n *arrayNode) without(shift, hash uint32, k types.Key) (bool, node) {
 	idx := chunk(shift, hash)
 	child := n.children[idx]
 	if child == nil {
@@ -188,7 +190,7 @@ func (n *arrayNode) pack(skip int) *bitmapNode {
 	return &newNode
 }
 
-func (n *arrayNode) find(shift, hash uint32, k Key) (bool, interface{}) {
+func (n *arrayNode) find(shift, hash uint32, k types.Key) (bool, interface{}) {
 	idx := chunk(shift, hash)
 	child := n.children[idx]
 	if child == nil {
@@ -219,7 +221,7 @@ func (it *arrayNodeIterator) fixCurrent() {
 	}
 }
 
-func (it *arrayNodeIterator) Elem() (Key, interface{}) {
+func (it *arrayNodeIterator) Elem() (types.Key, interface{}) {
 	return it.current.Elem()
 }
 
@@ -246,7 +248,7 @@ type bitmapNode struct {
 // with non-nil key. When used in a bitmapNode, it is also abused to represent
 // children when the key is nil.
 type mapEntry struct {
-	key   Key
+	key   types.Key
 	value interface{}
 }
 
@@ -280,7 +282,7 @@ func popCount(u uint32) uint32 {
 	return u
 }
 
-func createNode(shift uint32, k1 Key, v1 interface{}, h2 uint32, k2 Key, v2 interface{}) node {
+func createNode(shift uint32, k1 types.Key, v1 interface{}, h2 uint32, k2 types.Key, v2 interface{}) node {
 	h1 := k1.Hash()
 	if h1 == h2 {
 		return &collisionNode{h1, []mapEntry{{k1, v1}, {k2, v2}}}
@@ -325,13 +327,13 @@ func (n *bitmapNode) withReplacedEntry(i uint32, entry mapEntry) *bitmapNode {
 	return &bitmapNode{n.bitmap, replaceEntry(n.entries, i, entry.key, entry.value)}
 }
 
-func replaceEntry(entries []mapEntry, i uint32, k Key, v interface{}) []mapEntry {
+func replaceEntry(entries []mapEntry, i uint32, k types.Key, v interface{}) []mapEntry {
 	newEntries := append([]mapEntry(nil), entries...)
 	newEntries[i] = mapEntry{k, v}
 	return newEntries
 }
 
-func (n *bitmapNode) assoc(shift, hash uint32, k Key, v interface{}) (bool, node) {
+func (n *bitmapNode) assoc(shift, hash uint32, k types.Key, v interface{}) (bool, node) {
 	bit := bitpos(shift, hash)
 	idx := index(n.bitmap, bit)
 	if n.bitmap&bit == 0 {
@@ -367,7 +369,7 @@ func (n *bitmapNode) assoc(shift, hash uint32, k Key, v interface{}) (bool, node
 	return true, n.withReplacedEntry(idx, mapEntry{nil, newNode})
 }
 
-func (n *bitmapNode) without(shift, hash uint32, k Key) (bool, node) {
+func (n *bitmapNode) without(shift, hash uint32, k types.Key) (bool, node) {
 	bit := bitpos(shift, hash)
 	if n.bitmap&bit == 0 {
 		return false, n
@@ -397,7 +399,7 @@ func (n *bitmapNode) without(shift, hash uint32, k Key) (bool, node) {
 	return false, n
 }
 
-func (n *bitmapNode) find(shift, hash uint32, k Key) (bool, interface{}) {
+func (n *bitmapNode) find(shift, hash uint32, k types.Key) (bool, interface{}) {
 	bit := bitpos(shift, hash)
 	if n.bitmap&bit == 0 {
 		return false, nil
@@ -438,7 +440,7 @@ func (it *bitmapNodeIterator) fixCurrent() {
 	}
 }
 
-func (it *bitmapNodeIterator) Elem() (Key, interface{}) {
+func (it *bitmapNodeIterator) Elem() (types.Key, interface{}) {
 	if it.current != nil {
 		return it.current.Elem()
 	}
@@ -465,7 +467,7 @@ type collisionNode struct {
 	entries []mapEntry
 }
 
-func (n *collisionNode) assoc(shift, hash uint32, k Key, v interface{}) (bool, node) {
+func (n *collisionNode) assoc(shift, hash uint32, k types.Key, v interface{}) (bool, node) {
 	if hash == n.hash {
 		idx := n.findIndex(k)
 		if idx != -1 {
@@ -482,7 +484,7 @@ func (n *collisionNode) assoc(shift, hash uint32, k Key, v interface{}) (bool, n
 	return wrap.assoc(shift, hash, k, v)
 }
 
-func (n *collisionNode) without(shift, hash uint32, k Key) (bool, node) {
+func (n *collisionNode) without(shift, hash uint32, k types.Key) (bool, node) {
 	idx := n.findIndex(k)
 	if idx == -1 {
 		return false, n
@@ -493,7 +495,7 @@ func (n *collisionNode) without(shift, hash uint32, k Key) (bool, node) {
 	return true, &collisionNode{n.hash, withoutEntry(n.entries, uint32(idx))}
 }
 
-func (n *collisionNode) find(shift, hash uint32, k Key) (bool, interface{}) {
+func (n *collisionNode) find(shift, hash uint32, k types.Key) (bool, interface{}) {
 	idx := n.findIndex(k)
 	if idx == -1 {
 		return false, nil
@@ -501,7 +503,7 @@ func (n *collisionNode) find(shift, hash uint32, k Key) (bool, interface{}) {
 	return true, n.entries[idx].value
 }
 
-func (n *collisionNode) findIndex(k Key) int {
+func (n *collisionNode) findIndex(k types.Key) int {
 	for i, entry := range n.entries {
 		if k.Equal(entry.key) {
 			return i
@@ -519,7 +521,7 @@ type collisionNodeIterator struct {
 	index int
 }
 
-func (it *collisionNodeIterator) Elem() (Key, interface{}) {
+func (it *collisionNodeIterator) Elem() (types.Key, interface{}) {
 	entry := it.n.entries[it.index]
 	return entry.key, entry.value
 }
