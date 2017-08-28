@@ -91,14 +91,14 @@ func (m *hashMap) Iterator() Iterator {
 
 func (m *hashMap) Equal(other interface{}) bool {
 	m2, ok := other.(HashMap)
-	return ok && HashMapEqual(m, m2)
+	return ok && Equal(m, m2)
 }
 
-// HashMapEqual returns whether two HashMap values are structurally equal. The
-// equality of the values are determined with m1[k].Equal(m2[k]) if m1[k]
-// satisfies Equaler, or m1[k] == m2[k] otherwise. If there is any value in m1
-// that do not satisfy Equaler and are uncomparable, this function can panic.
-func HashMapEqual(m1, m2 HashMap) bool {
+// Equal returns whether two HashMap values are structurally equal. The equality
+// of the values are determined with m1[k].Equal(m2[k]) if m1[k] satisfies
+// Equaler, or m1[k] == m2[k] otherwise. If there is any value in m1 that do not
+// satisfy Equaler and are uncomparable, this function can panic.
+func Equal(m1, m2 HashMap) bool {
 	if m1.Len() != m2.Len() {
 		return false
 	}
