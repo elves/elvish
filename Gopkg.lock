@@ -2,16 +2,16 @@
 
 
 [[projects]]
-  branch = "master"
   name = "github.com/boltdb/bolt"
   packages = ["."]
-  revision = "e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd"
+  revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
+  version = "v1.3.1"
 
 [[projects]]
-  branch = "master"
   name = "github.com/kr/pty"
   packages = ["."]
-  revision = "ce7fa45920dc37a92de8377972e52bc55ffa8d57"
+  revision = "2c10821df3c3cf905230d078702dfbe9404c9b23"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
@@ -22,14 +22,14 @@
 [[projects]]
   branch = "master"
   name = "github.com/xiaq/persistent"
-  packages = ["vector"]
-  revision = "06adb7b7bfda3d72748014cca677223091779411"
+  packages = ["types","vector"]
+  revision = "6019758bdeebb8bef8fa099bc96eb4f44c8e4579"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "1e99a4f9d247b28c670884b9a8d6801f39a47b77"
+  revision = "ab9e364efd8b52800ff7ee48a9ffba4e0ed78dfb"
 
 [solve-meta]
   analyzer-name = "dep"

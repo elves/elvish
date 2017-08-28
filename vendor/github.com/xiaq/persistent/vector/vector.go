@@ -1,6 +1,8 @@
 // Package vector implements persistent vector.
 package vector
 
+import "github.com/xiaq/persistent/types"
+
 const (
 	chunkBits  = 5
 	nodeSize   = 1 << chunkBits
@@ -15,6 +17,7 @@ const (
 // vector that shares the underlying data structure, making it suitable for
 // concurrent access. The empty value is a valid empty vector.
 type Vector interface {
+	types.Equaler
 	// Len returns the length of the vector.
 	Len() int
 	// Nth returns the i-th element of the vector. It returns nil if the index
@@ -36,6 +39,40 @@ type Vector interface {
 	SubVector(i, j int) Vector
 	// Iterator returns an iterator over the vector.
 	Iterator() Iterator
+}
+
+// Equal determines whether two Vector are structurally equal.
+func Equal(v1, v2 Vector) bool {
+	if v1.Len() != v2.Len() {
+		return false
+	}
+	n := v1.Len()
+	it1 := v1.Iterator()
+	it2 := v2.Iterator()
+	for i := 0; i < n; i++ {
+		elem1 := it1.Elem()
+		elem2 := it2.Elem()
+		if elem1eq, ok := elem1.(types.Equaler); ok {
+			if !elem1eq.Equal(elem2) {
+				return false
+			}
+		} else {
+			if elem1 != elem2 {
+				return false
+			}
+		}
+		it1.Next()
+		it2.Next()
+	}
+	return true
+}
+
+func equal(v Vector, other interface{}) bool {
+	v2, ok := other.(Vector)
+	if !ok {
+		return false
+	}
+	return Equal(v, v2)
 }
 
 // Iterator is an iterator over vector elements. It can be used like this:
@@ -75,6 +112,10 @@ func (n node) clone() node {
 	m := newNode()
 	copy(m, n)
 	return m
+}
+
+func (v *vector) Equal(other interface{}) bool {
+	return equal(v, other)
 }
 
 // Count returns the number of elements in a Vector.
@@ -248,6 +289,10 @@ type subVector struct {
 	v     *vector
 	begin int
 	end   int
+}
+
+func (s *subVector) Equal(other interface{}) bool {
+	return equal(s, other)
 }
 
 func (s *subVector) Len() int {
