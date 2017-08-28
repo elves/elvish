@@ -254,8 +254,8 @@ type bitmapNode struct {
 // with non-nil key. When used in a bitmapNode, it is also abused to represent
 // children when the key is nil.
 type mapEntry struct {
-	key   types.EqualHasher
-	value interface{}
+	key   Key
+	value Value
 }
 
 func chunk(shift, hash uint32) uint32 {
@@ -288,7 +288,7 @@ func popCount(u uint32) uint32 {
 	return u
 }
 
-func createNode(shift uint32, k1 types.EqualHasher, v1 interface{}, h2 uint32, k2 types.EqualHasher, v2 interface{}) node {
+func createNode(shift uint32, k1 Key, v1 Value, h2 uint32, k2 Key, v2 Value) node {
 	h1 := k1.Hash()
 	if h1 == h2 {
 		return &collisionNode{h1, []mapEntry{{k1, v1}, {k2, v2}}}
