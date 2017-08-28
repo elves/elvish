@@ -155,7 +155,7 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 
 	// Get.
 	testMapContent(t, m, ref)
-	in, got := m.Get(anotherTestKey(0))
+	got, in := m.Get(anotherTestKey(0))
 	if in {
 		t.Errorf("m.Get <bad key> returns entry %v", got)
 	}
@@ -180,7 +180,7 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 		if m.Len() != len(ref) {
 			t.Errorf("m.Len() = %d after removing, should be %v", m.Len(), len(ref))
 		}
-		in, _ := m.Get(k)
+		_, in := m.Get(k)
 		if in {
 			t.Errorf("m.Get(%v) still returns item after removal", k)
 		}
@@ -193,7 +193,7 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 
 func testMapContent(t *testing.T, m HashMap, ref map[testKey]string) {
 	for k, v := range ref {
-		in, got := m.Get(k)
+		got, in := m.Get(k)
 		if !in {
 			t.Errorf("m.Get 0x%x returns no entry", k)
 		}
