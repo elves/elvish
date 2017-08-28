@@ -1,6 +1,10 @@
 package vector
 
-import "testing"
+import (
+	"math/rand"
+	"testing"
+	"time"
+)
 
 // Nx is the minimum number of elements for the internal tree of the vector to
 // be x levels deep.
@@ -10,6 +14,10 @@ const (
 	N3 = nodeSize*nodeSize + tailMaxLen + 1          // 1057
 	N4 = nodeSize*nodeSize*nodeSize + tailMaxLen + 1 // 32801
 )
+
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+}
 
 func TestVector(t *testing.T) {
 	const (
@@ -191,6 +199,18 @@ func checkVector(v Vector, values ...interface{}) bool {
 	return true
 }
 
+func TestVectorEqual(t *testing.T) {
+	v1, v2 := Empty, Empty
+	for i := 0; i < N3; i++ {
+		elem := rand.Int63()
+		v1 = v1.Cons(elem)
+		v2 = v2.Cons(elem)
+		if !v1.Equal(v2) {
+			t.Errorf("Not equal after Cons'ing %d elements", i+1)
+		}
+	}
+}
+
 func BenchmarkNativeAppendN1(b *testing.B) {
 	benchmarkNativeAppend(b, N1)
 }
@@ -265,5 +285,45 @@ func BenchmarkNth(b *testing.B) {
 		for i := 0; i < N4; i++ {
 			_ = vectorN4.Nth(i)
 		}
+	}
+}
+
+func nativeEqual(s1, s2 []int) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	for i, v1 := range s1 {
+		if v1 != s2[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func BenchmarkNativeEqual(b *testing.B) {
+	b.StopTimer()
+	var s1, s2 []int
+	for i := 0; i < N4; i++ {
+		s1 = append(s1, i)
+		s2 = append(s2, i)
+	}
+	b.StartTimer()
+
+	for r := 0; r < b.N; r++ {
+		nativeEqual(s1, s2)
+	}
+}
+
+func BenchmarkEqual(b *testing.B) {
+	b.StopTimer()
+	v1, v2 := Empty, Empty
+	for i := 0; i < N4; i++ {
+		v1 = v1.Cons(i)
+		v2 = v2.Cons(i)
+	}
+	b.StartTimer()
+
+	for r := 0; r < b.N; r++ {
+		v1.Equal(v2)
 	}
 }
