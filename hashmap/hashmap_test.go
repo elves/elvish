@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/xiaq/persistent/types"
 )
 
 const (
@@ -27,7 +29,7 @@ const (
 	N3 = nodeCap*nodeCap*nodeCap + 1
 )
 
-// testKey is an implementation of the Key interface for testing.
+// testKey is an implementation of the types.Key interface for testing.
 type testKey uint64
 
 // Hash returns the lower 32 bits. This is intended so that hash collisions can
@@ -202,7 +204,7 @@ func testMapContent(t *testing.T, m HashMap, ref map[testKey]string) {
 }
 
 func testIterator(t *testing.T, m HashMap, ref map[testKey]string) {
-	ref2 := map[Key]interface{}{}
+	ref2 := map[types.Key]interface{}{}
 	for k, v := range ref {
 		ref2[k] = v
 	}
