@@ -12,6 +12,7 @@ const (
 // the hashmap that shares the underlying data structure, making it suitable for
 // concurrent access.
 type HashMap interface {
+	Equaler
 	// Len returns the length of the hashmap.
 	Len() int
 	// Get returns whether there is a value associated with the given key, and
@@ -78,6 +79,38 @@ func (m *hashMap) Without(k Key) HashMap {
 
 func (m *hashMap) Iterator() Iterator {
 	return m.root.iterator()
+}
+
+func (m *hashMap) Equal(other interface{}) bool {
+	m2, ok := other.(HashMap)
+	return ok && HashMapEqual(m, m2)
+}
+
+// HashMapEqual returns whether two HashMap values are structurally equal. The
+// equality of the values are determined with m1[k].Equal(m2[k]) if m1[k]
+// satisfies Equaler, or m1[k] == m2[k] otherwise. If there is any value in m1
+// that do not satisfy Equaler and are uncomparable, this function can panic.
+func HashMapEqual(m1, m2 HashMap) bool {
+	if m1.Len() != m2.Len() {
+		return false
+	}
+	for it := m1.Iterator(); it.HasElem(); it.Next() {
+		k, v1 := it.Elem()
+		ok2, v2 := m2.Get(k)
+		if !ok2 {
+			return false
+		}
+		if v1Eq, ok := v1.(Equaler); ok {
+			if !v1Eq.Equal(v2) {
+				return false
+			}
+		} else {
+			if v1 != v2 {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // node is an interface for all nodes in the hash map tree.

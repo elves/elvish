@@ -1,12 +1,17 @@
 package hashmap
 
+// Equaler is a value that knows whether it is equal to another value or not.
+type Equaler interface {
+	// Equal returns whether this value is equal to another one.
+	Equal(other interface{}) bool
+}
+
 // Key is the interface hashmap keys need to satisfy.
 type Key interface {
+	Equaler
 	// Hash returns the hash for the key. If k1.Equal(k2), k1.Hash() ==
 	// k2.Hash() must be satisfied.
 	Hash() uint32
-	// Equal returns whether this key is equal to another one.
-	Equal(other interface{}) bool
 }
 
 // UInt32 is a uint32 that can be used as a Key.
