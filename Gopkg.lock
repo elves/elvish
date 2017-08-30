@@ -22,18 +22,18 @@
 [[projects]]
   branch = "master"
   name = "github.com/xiaq/persistent"
-  packages = ["types","vector"]
-  revision = "6019758bdeebb8bef8fa099bc96eb4f44c8e4579"
+  packages = ["hash","types","vector"]
+  revision = "75c17f0e60b72842d8d93c9811aeb0da7fd0bdae"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
-  revision = "ab9e364efd8b52800ff7ee48a9ffba4e0ed78dfb"
+  revision = "bb24a47a89eac6c1227fbcb2ae37a8b9ed323366"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "93fb6cdd9f528da7f83306dfe211dc63e425ca5791ed677f8c27c2810c9ee480"
+  inputs-digest = "b5208755cf7cdf90d187e019a1453e3c9380de73c024e3268e676c6bef1aa60d"
   solver-name = "gps-cdcl"
   solver-version = 1
