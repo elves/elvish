@@ -90,7 +90,7 @@ func (ev *Evaler) Builtin() Namespace {
 }
 
 func (ev *Evaler) searchPaths() []string {
-	return ev.Builtin()["paths"].(*EnvPathList).get()
+	return strings.Split(os.Getenv("PATH"), ":")
 }
 
 const (

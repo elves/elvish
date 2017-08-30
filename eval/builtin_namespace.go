@@ -15,7 +15,7 @@ func makeBuiltinNamespace(daemon *api.Client) Namespace {
 		"ok":    NewRoVariable(OK),
 		"true":  NewRoVariable(Bool(true)),
 		"false": NewRoVariable(Bool(false)),
-		"paths": &EnvPathList{envName: "PATH"},
+		"paths": &EnvList{envName: "PATH"},
 		"pwd":   PwdVariable{daemon},
 	}
 	AddBuiltinFns(ns, builtinFns...)
