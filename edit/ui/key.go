@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hash"
 )
 
 var ErrKeyMustBeString = errors.New("key must be string")
@@ -85,6 +87,29 @@ var functionKeyNames = [...]string{
 // keyNames stores the name of function keys with a positive rune.
 var keyNames = map[rune]string{
 	Tab: "Tab", Enter: "Enter", Backspace: "Backspace",
+}
+
+func (k Key) Kind() string {
+	return "edit:Key"
+}
+
+func (k Key) Equal(other interface{}) bool {
+	v, ok := other.(eval.Value)
+	if !ok {
+		return false
+	}
+	return k == ToKey(v)
+}
+
+func (k Key) Hash() uint32 {
+	h := hash.DJBInit
+	h = hash.DJBCombine(h, uint32(k.Rune))
+	h = hash.DJBCombine(h, uint32(k.Mod))
+	return h
+}
+
+func (k Key) Repr(int) string {
+	return "(edit:key " + parse.Quote(k.String()) + ")"
 }
 
 func (k Key) String() string {
@@ -200,4 +225,13 @@ func ToKey(idx eval.Value) Key {
 		util.Throw(err)
 	}
 	return key
+}
+
+// KeyBuiltin implements the edit:key builtin.
+func KeyBuiltin(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+	var s eval.String
+	eval.ScanArgs(args, &s)
+	eval.TakeNoOpt(opts)
+
+	ec.OutputChan() <- ToKey(s)
 }

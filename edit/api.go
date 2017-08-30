@@ -124,6 +124,7 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 		&eval.BuiltinFn{"edit:insert-at-dot", InsertAtDot},
 		&eval.BuiltinFn{"edit:replace-input", ReplaceInput},
 		&eval.BuiltinFn{"edit:styled", styled},
+		&eval.BuiltinFn{"edit:key", ui.KeyBuiltin},
 		&eval.BuiltinFn{"edit:wordify", Wordify},
 		&eval.BuiltinFn{"edit:-dump-buf", _dumpBuf},
 		&eval.BuiltinFn{"edit:-narrow-read", NarrowRead},
