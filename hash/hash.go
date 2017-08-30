@@ -27,6 +27,14 @@ func Pointer(p unsafe.Pointer) uint32 {
 	// NOTE: We don't care about 128-bit archs yet.
 }
 
+func UIntPtr(u uintptr) uint32 {
+	if unsafe.Sizeof(u) == 4 {
+		return UInt32(uint32(u))
+	} else {
+		return UInt64(uint64(u))
+	}
+}
+
 func String(s string) uint32 {
 	h := DJBInit
 	for i := 0; i < len(s); i++ {
