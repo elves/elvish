@@ -17,7 +17,7 @@ func (File) Kind() string {
 	return "file"
 }
 
-func (f File) Eq(rhs interface{}) bool {
+func (f File) Equal(rhs interface{}) bool {
 	return f == rhs
 }
 

@@ -36,8 +36,8 @@ func (*BuiltinFn) Kind() string {
 	return "fn"
 }
 
-// Eq compares based on identity.
-func (bf *BuiltinFn) Eq(a interface{}) bool {
+// Equal compares based on identity.
+func (bf *BuiltinFn) Equal(a interface{}) bool {
 	return bf == a
 }
 

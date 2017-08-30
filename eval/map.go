@@ -26,7 +26,7 @@ func (Map) Kind() string {
 	return "map"
 }
 
-func (m Map) Eq(a interface{}) bool {
+func (m Map) Equal(a interface{}) bool {
 	return m == a || eqMapLike(m, a)
 }
 

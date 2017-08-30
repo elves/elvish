@@ -66,7 +66,7 @@ func (epl *EnvPathList) Kind() string {
 	return "list"
 }
 
-func (epl *EnvPathList) Eq(a interface{}) bool {
+func (epl *EnvPathList) Equal(a interface{}) bool {
 	return epl == a || eqListLike(epl, a)
 }
 

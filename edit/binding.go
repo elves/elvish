@@ -29,7 +29,7 @@ func (BindingTable) Kind() string {
 	return "map"
 }
 
-func (bt BindingTable) Eq(a interface{}) bool {
+func (bt BindingTable) Equal(a interface{}) bool {
 	rhs, ok := a.(BindingTable)
 	if !ok {
 		return false
@@ -38,7 +38,7 @@ func (bt BindingTable) Eq(a interface{}) bool {
 		return false
 	}
 	for k, v := range bt.inner {
-		if !v.Eq(rhs.inner[k]) {
+		if !v.Equal(rhs.inner[k]) {
 			return false
 		}
 	}

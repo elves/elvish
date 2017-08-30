@@ -28,7 +28,7 @@ func (ExternalCmd) Kind() string {
 	return "fn"
 }
 
-func (e ExternalCmd) Eq(a interface{}) bool {
+func (e ExternalCmd) Equal(a interface{}) bool {
 	return e == a
 }
 

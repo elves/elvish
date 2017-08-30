@@ -22,7 +22,7 @@ func (s String) Repr(int) string {
 	return quote(string(s))
 }
 
-func (s String) Eq(rhs interface{}) bool {
+func (s String) Equal(rhs interface{}) bool {
 	return s == rhs
 }
 

@@ -46,7 +46,7 @@ func (List) Kind() string {
 	return "list"
 }
 
-func (l List) Eq(rhs interface{}) bool {
+func (l List) Equal(rhs interface{}) bool {
 	return eqListLike(l, rhs)
 }
 

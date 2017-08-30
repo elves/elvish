@@ -7,7 +7,7 @@ func (Bool) Kind() string {
 	return "bool"
 }
 
-func (b Bool) Eq(rhs interface{}) bool {
+func (b Bool) Equal(rhs interface{}) bool {
 	return b == rhs
 }
 

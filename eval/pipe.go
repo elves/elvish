@@ -15,7 +15,7 @@ func (Pipe) Kind() string {
 	return "pipe"
 }
 
-func (p Pipe) Eq(rhs interface{}) bool {
+func (p Pipe) Equal(rhs interface{}) bool {
 	return p == rhs
 }
 

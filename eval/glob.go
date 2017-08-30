@@ -60,7 +60,7 @@ func (GlobPattern) Kind() string {
 	return "glob-pattern"
 }
 
-func (gp GlobPattern) Eq(a interface{}) bool {
+func (gp GlobPattern) Equal(a interface{}) bool {
 	return reflect.DeepEqual(gp, a)
 }
 

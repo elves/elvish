@@ -47,8 +47,8 @@ func (*BuiltinFn) Kind() string {
 	return "fn"
 }
 
-// Eq compares based on identity.
-func (b *BuiltinFn) Eq(rhs interface{}) bool {
+// Equal compares based on identity.
+func (b *BuiltinFn) Equal(rhs interface{}) bool {
 	return b == rhs
 }
 
@@ -485,7 +485,7 @@ func eq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 	result := true
 	for i := 0; i+1 < len(args); i++ {
-		if !args[i].Eq(args[i+1]) {
+		if !args[i].Equal(args[i+1]) {
 			result = false
 			break
 		}
@@ -497,7 +497,7 @@ func notEq(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 	result := true
 	for i := 0; i+1 < len(args); i++ {
-		if args[i].Eq(args[i+1]) {
+		if args[i].Equal(args[i+1]) {
 			result = false
 			break
 		}

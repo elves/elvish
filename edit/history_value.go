@@ -19,8 +19,8 @@ func (hv History) Kind() string {
 	return "list"
 }
 
-// Eq returns true as long as the rhs is also of type History.
-func (hv History) Eq(a interface{}) bool {
+// Equal returns true as long as the rhs is also of type History.
+func (hv History) Equal(a interface{}) bool {
 	_, ok := a.(History)
 	return ok
 }

@@ -16,7 +16,7 @@ const (
 // Value is an elvish value.
 type Value interface {
 	Kinder
-	Eqer
+	Equaler
 	Reprer
 }
 
@@ -39,9 +39,9 @@ type Reprer interface {
 	Repr(indent int) string
 }
 
-// Eqer is anything that knows how to compare itself against other values.
-type Eqer interface {
-	Eq(interface{}) bool
+// Equaler is anything that knows how to compare itself against other values.
+type Equaler interface {
+	Equal(interface{}) bool
 }
 
 // Hasher is anything that knows how to compute its hash code.

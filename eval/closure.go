@@ -31,8 +31,8 @@ func (*Closure) Kind() string {
 	return "fn"
 }
 
-// Eq compares by identity.
-func (c *Closure) Eq(rhs interface{}) bool {
+// Equal compares by identity.
+func (c *Closure) Equal(rhs interface{}) bool {
 	return c == rhs
 }
 

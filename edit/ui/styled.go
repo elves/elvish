@@ -64,7 +64,7 @@ func (s *Styled) Kind() string {
 	return "styled"
 }
 
-func (s *Styled) Eq(a interface{}) bool {
+func (s *Styled) Equal(a interface{}) bool {
 	rhs, ok := a.(*Styled)
 	if !ok {
 		return false

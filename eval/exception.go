@@ -71,8 +71,8 @@ func (exc *Exception) Repr(indent int) string {
 	return "?(fail " + parse.Quote(exc.Cause.Error()) + ")"
 }
 
-// Eq compares by identity.
-func (exc *Exception) Eq(rhs interface{}) bool {
+// Equal compares by identity.
+func (exc *Exception) Equal(rhs interface{}) bool {
 	return exc == rhs
 }
 

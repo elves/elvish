@@ -118,8 +118,8 @@ func (bac *builtinArgCompleter) Kind() string {
 	return "fn"
 }
 
-// Eq compares by identity.
-func (bac *builtinArgCompleter) Eq(a interface{}) bool {
+// Equal compares by identity.
+func (bac *builtinArgCompleter) Equal(a interface{}) bool {
 	return bac == a
 }
 

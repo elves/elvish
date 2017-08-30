@@ -19,7 +19,7 @@ func (Rat) Kind() string {
 	return "string"
 }
 
-func (r Rat) Eq(a interface{}) bool {
+func (r Rat) Equal(a interface{}) bool {
 	if r == a {
 		return true
 	}
