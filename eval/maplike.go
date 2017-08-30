@@ -5,6 +5,7 @@ import "github.com/xiaq/persistent/hash"
 type MapLike interface {
 	Lener
 	IndexOneer
+	Assocer
 	HasKeyer
 	IterateKeyer
 	IteratePairer

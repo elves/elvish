@@ -75,17 +75,17 @@ func find(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 			} else {
 				text = argSource[start:end]
 			}
-			groups = groups.Cons(&eval.Struct{submatchFields, []eval.Variable{
-				eval.NewRoVariable(text),
-				eval.NewRoVariable(eval.String(strconv.Itoa(start))),
-				eval.NewRoVariable(eval.String(strconv.Itoa(end))),
+			groups = groups.Cons(&eval.Struct{submatchFields, []eval.Value{
+				text,
+				eval.String(strconv.Itoa(start)),
+				eval.String(strconv.Itoa(end)),
 			}})
 		}
-		out <- &eval.Struct{matchFields, []eval.Variable{
-			eval.NewRoVariable(argSource[start:end]),
-			eval.NewRoVariable(eval.String(strconv.Itoa(start))),
-			eval.NewRoVariable(eval.String(strconv.Itoa(end))),
-			eval.NewRoVariable(eval.NewListFromVector(groups)),
+		out <- &eval.Struct{matchFields, []eval.Value{
+			argSource[start:end],
+			eval.String(strconv.Itoa(start)),
+			eval.String(strconv.Itoa(end)),
+			eval.NewListFromVector(groups),
 		}}
 	}
 }

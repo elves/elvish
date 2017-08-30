@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
@@ -14,6 +15,8 @@ var (
 	_ Value    = String("")
 	_ ListLike = String("")
 )
+
+var ErrReplacementMustBeString = errors.New("replacement must be string")
 
 func (String) Kind() string {
 	return "string"
@@ -40,18 +43,32 @@ func (s String) Len() int {
 }
 
 func (s String) IndexOne(idx Value) Value {
+	i, j := s.index(idx)
+	return s[i:j]
+}
+
+func (s String) Assoc(idx, v Value) Value {
+	i, j := s.index(idx)
+	repl, ok := v.(String)
+	if !ok {
+		throw(ErrReplacementMustBeString)
+	}
+	return s[:i] + repl + s[j:]
+}
+
+func (s String) index(idx Value) (int, int) {
 	slice, i, j := ParseAndFixListIndex(ToString(idx), len(s))
-	var r rune
-	if r, _ = utf8.DecodeRuneInString(string(s[i:])); r == utf8.RuneError {
+	r, size := utf8.DecodeRuneInString(string(s[i:]))
+	if r == utf8.RuneError {
 		throw(ErrBadIndex)
 	}
 	if slice {
 		if r, _ := utf8.DecodeLastRuneInString(string(s[:j])); r == utf8.RuneError {
 			throw(ErrBadIndex)
 		}
-		return String(s[i:j])
+		return i, j
 	}
-	return String(r)
+	return i, i + size
 }
 
 func (s String) Iterate(f func(v Value) bool) {

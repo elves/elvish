@@ -11,10 +11,13 @@ var (
 	ErrIndexMustBeString = errors.New("index must be string")
 )
 
+// TODO(xiaq): Use a more efficient implementation by putting the sequence of
+// field names into a struct descriptor.
+
 // Struct is like a Map with fixed keys.
 type Struct struct {
 	FieldNames []string
-	Fields     []Variable
+	Fields     []Value
 }
 
 var (
@@ -39,7 +42,7 @@ func (s *Struct) Repr(indent int) string {
 	var builder MapReprBuilder
 	builder.Indent = indent
 	for i, name := range s.FieldNames {
-		builder.WritePair(parse.Quote(name), indent+2, s.Fields[i].Get().Repr(indent+2))
+		builder.WritePair(parse.Quote(name), indent+2, s.Fields[i].Repr(indent+2))
 	}
 	return builder.String()
 }
@@ -49,7 +52,15 @@ func (s *Struct) Len() int {
 }
 
 func (s *Struct) IndexOne(idx Value) Value {
-	return s.index(idx).Get()
+	return s.Fields[s.index(idx)]
+}
+
+func (s *Struct) Assoc(k, v Value) Value {
+	i := s.index(k)
+	fields := make([]Value, len(s.Fields))
+	copy(fields, s.Fields)
+	fields[i] = v
+	return &Struct{s.FieldNames, fields}
 }
 
 func (s *Struct) IterateKey(f func(Value) bool) {
@@ -62,7 +73,7 @@ func (s *Struct) IterateKey(f func(Value) bool) {
 
 func (s *Struct) IteratePair(f func(Value, Value) bool) {
 	for i, field := range s.FieldNames {
-		if !f(String(field), s.Fields[i].Get()) {
+		if !f(String(field), s.Fields[i]) {
 			break
 		}
 	}
@@ -81,18 +92,14 @@ func (s *Struct) HasKey(k Value) bool {
 	return false
 }
 
-func (s *Struct) IndexSet(idx Value, v Value) {
-	s.index(idx).Set(v)
-}
-
-func (s *Struct) index(idx Value) Variable {
+func (s *Struct) index(idx Value) int {
 	index, ok := idx.(String)
 	if !ok {
 		throw(ErrIndexMustBeString)
 	}
 	for i, name := range s.FieldNames {
 		if string(index) == name {
-			return s.Fields[i]
+			return i
 		}
 	}
 	throw(fmt.Errorf("no such field: %s", index.Repr(NoPretty)))

@@ -77,6 +77,10 @@ func (m Map) IndexOne(idx Value) Value {
 	return v.(Value)
 }
 
+func (m Map) Assoc(k, v Value) Value {
+	return Map{m.inner.Assoc(k, v)}
+}
+
 func (m Map) IterateKey(f func(Value) bool) {
 	for it := m.inner.Iterator(); it.HasElem(); it.Next() {
 		k, _ := it.Elem()

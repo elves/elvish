@@ -1150,9 +1150,9 @@ func dirs(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 	out := ec.ports[1].Chan
 	for _, dir := range dirs {
-		out <- &Struct{dirFieldNames, []Variable{
-			NewRoVariable(String(dir.Path)),
-			NewRoVariable(String(fmt.Sprint(dir.Score))),
+		out <- &Struct{dirFieldNames, []Value{
+			String(dir.Path),
+			String(fmt.Sprint(dir.Score)),
 		}}
 	}
 }
