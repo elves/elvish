@@ -2,12 +2,23 @@
 // maps.
 package hash
 
+import "unsafe"
+
 func UInt32(u uint32) uint32 {
 	return u
 }
 
 func UInt64(u uint64) uint32 {
 	return mul33(uint32(u>>32)) + uint32(u&0xffffffff)
+}
+
+func Pointer(p unsafe.Pointer) uint32 {
+	if unsafe.Sizeof(p) == 4 {
+		return UInt32(uint32(uintptr(p)))
+	} else {
+		return UInt64(uint64(uintptr(p)))
+	}
+	// NOTE: We don't care about 128-bit archs yet.
 }
 
 func String(s string) uint32 {
