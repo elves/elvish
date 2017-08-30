@@ -4,7 +4,7 @@ package hash
 
 import "unsafe"
 
-const DJBInit = 5381
+const DJBInit uint32 = 5381
 
 func DJBCombine(acc, h uint32) uint32 {
 	return mul33(acc) + h
@@ -28,7 +28,7 @@ func Pointer(p unsafe.Pointer) uint32 {
 }
 
 func String(s string) uint32 {
-	h := uint32(DJBInit)
+	h := DJBInit
 	for i := 0; i < len(s); i++ {
 		h = DJBCombine(h, uint32(s[i]))
 	}
