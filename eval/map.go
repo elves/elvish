@@ -30,6 +30,10 @@ func (m Map) Equal(a interface{}) bool {
 	return m == a || eqMapLike(m, a)
 }
 
+func (m Map) Hash() uint32 {
+	return hashMapLike(m)
+}
+
 func (m Map) MarshalJSON() ([]byte, error) {
 	// XXX Not the most efficient way.
 	mm := map[string]Value{}

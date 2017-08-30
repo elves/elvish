@@ -11,6 +11,13 @@ func (b Bool) Equal(rhs interface{}) bool {
 	return b == rhs
 }
 
+func (b Bool) Hash() uint32 {
+	if b {
+		return 1
+	}
+	return 0
+}
+
 func (b Bool) Repr(int) string {
 	if b {
 		return "$true"

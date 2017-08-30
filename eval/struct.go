@@ -31,6 +31,10 @@ func (s *Struct) Equal(rhs interface{}) bool {
 	return s == rhs || eqMapLike(s, rhs)
 }
 
+func (s *Struct) Hash() uint32 {
+	return hashMapLike(s)
+}
+
 func (s *Struct) Repr(indent int) string {
 	var builder MapReprBuilder
 	builder.Indent = indent

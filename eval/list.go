@@ -50,6 +50,10 @@ func (l List) Equal(rhs interface{}) bool {
 	return eqListLike(l, rhs)
 }
 
+func (l List) Hash() uint32 {
+	return hashListLike(l)
+}
+
 func (l List) Repr(indent int) string {
 	var b ListReprBuilder
 	b.Indent = indent

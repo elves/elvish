@@ -8,9 +8,11 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"unsafe"
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/xiaq/persistent/hash"
 )
 
 // This file implements types and functions for interactions with the
@@ -39,6 +41,10 @@ func (*BuiltinFn) Kind() string {
 // Equal compares based on identity.
 func (bf *BuiltinFn) Equal(a interface{}) bool {
 	return bf == a
+}
+
+func (bf *BuiltinFn) Hash() uint32 {
+	return hash.Pointer(unsafe.Pointer(bf))
 }
 
 // Repr returns the representation of a builtin function as a variable name.

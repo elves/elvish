@@ -23,11 +23,13 @@ import (
 	"syscall"
 	"time"
 	"unicode/utf8"
+	"unsafe"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hash"
 )
 
 var builtinFns []*BuiltinFn
@@ -50,6 +52,10 @@ func (*BuiltinFn) Kind() string {
 // Equal compares based on identity.
 func (b *BuiltinFn) Equal(rhs interface{}) bool {
 	return b == rhs
+}
+
+func (b *BuiltinFn) Hash() uint32 {
+	return hash.Pointer(unsafe.Pointer(b))
 }
 
 // Repr returns an opaque representation "<builtin xxx>".

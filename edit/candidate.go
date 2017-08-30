@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
+	"github.com/xiaq/persistent/hash"
 )
 
 type candidate struct {
@@ -29,10 +30,11 @@ func (cs rawCandidates) Swap(i, j int)      { cs[i], cs[j] = cs[j], cs[i] }
 func (cs rawCandidates) Less(i, j int) bool { return cs[i].text() < cs[j].text() }
 
 // plainCandidate is a minimal implementation of rawCandidate.
-type plainCandidate string
+type plainCandidate eval.String
 
 func (plainCandidate) Kind() string               { return "string" }
 func (p plainCandidate) Equal(a interface{}) bool { return p == a }
+func (p plainCandidate) Hash() uint32             { return hash.String(string(p)) }
 func (p plainCandidate) Repr(l int) string        { return eval.String(p).Repr(l) }
 func (p plainCandidate) text() string             { return string(p) }
 
@@ -47,6 +49,7 @@ type noQuoteCandidate string
 
 func (noQuoteCandidate) Kind() string                { return "string" }
 func (nq noQuoteCandidate) Equal(a interface{}) bool { return nq == a }
+func (nq noQuoteCandidate) Hash() uint32             { return hash.String(string(nq)) }
 func (nq noQuoteCandidate) Repr(l int) string        { return eval.String(nq).Repr(l) }
 func (nq noQuoteCandidate) text() string             { return string(nq) }
 
@@ -69,6 +72,15 @@ func (c *complexCandidate) Kind() string { return "map" }
 func (c *complexCandidate) Equal(a interface{}) bool {
 	rhs, ok := a.(*complexCandidate)
 	return ok && c.stem == rhs.stem && c.codeSuffix == rhs.codeSuffix && c.displaySuffix == rhs.displaySuffix && c.style.Eq(rhs.style)
+}
+
+func (c *complexCandidate) Hash() uint32 {
+	h := hash.DJBInit
+	h = hash.DJBCombine(h, hash.String(c.stem))
+	h = hash.DJBCombine(h, hash.String(c.codeSuffix))
+	h = hash.DJBCombine(h, hash.String(c.displaySuffix))
+	h = hash.DJBCombine(h, c.style.Hash())
+	return h
 }
 
 func (c *complexCandidate) Repr(indent int) string {

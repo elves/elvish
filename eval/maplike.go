@@ -1,5 +1,7 @@
 package eval
 
+import "github.com/xiaq/persistent/hash"
+
 type MapLike interface {
 	Lener
 	IndexOneer
@@ -25,4 +27,14 @@ func eqMapLike(lhs MapLike, a interface{}) bool {
 		return true
 	})
 	return eq
+}
+
+func hashMapLike(m MapLike) uint32 {
+	h := hash.DJBInit
+	m.IteratePair(func(k, v Value) bool {
+		// h = hash.DJBCombine(h, k.Hash())
+		// h = hash.DJBCombine(h, v.Hash())
+		return true
+	})
+	return h
 }

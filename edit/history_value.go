@@ -25,6 +25,12 @@ func (hv History) Equal(a interface{}) bool {
 	return ok
 }
 
+func (hv History) Hash() uint32 {
+	// TODO(xiaq): Make a global registry of singleton hashes to avoid
+	// collision.
+	return 100
+}
+
 func (hv History) Repr(int) string {
 	return "$le:history"
 }

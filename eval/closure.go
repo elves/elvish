@@ -3,6 +3,9 @@ package eval
 import (
 	"errors"
 	"fmt"
+	"unsafe"
+
+	"github.com/xiaq/persistent/hash"
 )
 
 // ErrArityMismatch is thrown by a closure when the number of arguments the user
@@ -34,6 +37,10 @@ func (*Closure) Kind() string {
 // Equal compares by identity.
 func (c *Closure) Equal(rhs interface{}) bool {
 	return c == rhs
+}
+
+func (c *Closure) Hash() uint32 {
+	return hash.Pointer(unsafe.Pointer(c))
 }
 
 // Repr returns an opaque representation "<closure 0x23333333>".

@@ -8,6 +8,7 @@ import (
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hash"
 )
 
 // FdNil is a special impossible fd value used for "close fd" in
@@ -30,6 +31,10 @@ func (ExternalCmd) Kind() string {
 
 func (e ExternalCmd) Equal(a interface{}) bool {
 	return e == a
+}
+
+func (e ExternalCmd) Hash() uint32 {
+	return hash.String(e.Name)
 }
 
 func (e ExternalCmd) Repr(int) string {

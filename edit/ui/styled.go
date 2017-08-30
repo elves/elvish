@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/parse"
+	"github.com/xiaq/persistent/hash"
 )
 
 // Styled is a piece of text with style.
@@ -72,6 +73,13 @@ func (s *Styled) Equal(a interface{}) bool {
 	return s.Text == rhs.Text && s.Styles.Eq(rhs.Styles)
 }
 
+func (s *Styled) Hash() uint32 {
+	h := hash.DJBInit
+	h = hash.DJBCombine(h, hash.String(s.Text))
+	h = hash.DJBCombine(h, s.Styles.Hash())
+	return h
+}
+
 func (s *Styled) String() string {
 	return "\033[" + s.Styles.String() + "m" + s.Text + "\033[m"
 }
@@ -92,6 +100,14 @@ func (ss Styles) Eq(rhs Styles) bool {
 		}
 	}
 	return true
+}
+
+func (ss Styles) Hash() uint32 {
+	h := hash.DJBInit
+	for _, s := range ss {
+		h = hash.DJBCombine(h, hash.String(s))
+	}
+	return h
 }
 
 func JoinStyles(so Styles, st ...Styles) Styles {

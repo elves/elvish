@@ -4,6 +4,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
+	"github.com/xiaq/persistent/hash"
 )
 
 func getBinding(mode string, k ui.Key) eval.CallableValue {
@@ -43,6 +44,17 @@ func (bt BindingTable) Equal(a interface{}) bool {
 		}
 	}
 	return true
+}
+
+func (bt BindingTable) Hash() uint32 {
+	h := hash.DJBInit
+	for k, v := range bt.inner {
+		// TODO(xiaq): Use a more efficient implementation to derive a hash from
+		// ui.Key.
+		h = hash.DJBCombine(h, hash.String(k.String()))
+		h = hash.DJBCombine(h, v.Hash())
+	}
+	return h
 }
 
 // Repr returns the representation of the binding table as if it were an

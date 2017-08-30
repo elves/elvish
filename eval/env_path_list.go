@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/xiaq/persistent/hash"
 )
 
 // Errors
@@ -68,6 +70,14 @@ func (epl *EnvPathList) Kind() string {
 
 func (epl *EnvPathList) Equal(a interface{}) bool {
 	return epl == a || eqListLike(epl, a)
+}
+
+func (epl *EnvPathList) Hash() uint32 {
+	h := hash.DJBInit
+	for _, p := range epl.get() {
+		h = hash.DJBCombine(h, hash.String(p))
+	}
+	return h
 }
 
 // Repr returns the representation of an EnvPathList, as if it were an ordinary

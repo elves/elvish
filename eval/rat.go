@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+
+	"github.com/xiaq/persistent/hash"
 )
 
 var ErrOnlyStrOrRat = errors.New("only str or rat may be converted to rat")
@@ -28,6 +30,11 @@ func (r Rat) Equal(a interface{}) bool {
 		return false
 	}
 	return r.b.Cmp(r2.b) == 0
+}
+
+func (r Rat) Hash() uint32 {
+	// TODO(xiaq): Use a more efficient implementation.
+	return hash.String(r.String())
 }
 
 func (r Rat) Repr(int) string {

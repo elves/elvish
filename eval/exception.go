@@ -6,9 +6,11 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"unsafe"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hash"
 )
 
 // Exception represents an elvish exception. It is both a Value accessible to
@@ -74,6 +76,10 @@ func (exc *Exception) Repr(indent int) string {
 // Equal compares by identity.
 func (exc *Exception) Equal(rhs interface{}) bool {
 	return exc == rhs
+}
+
+func (exc *Exception) Hash() uint32 {
+	return hash.Pointer(unsafe.Pointer(exc))
 }
 
 func (exc *Exception) Bool() bool {

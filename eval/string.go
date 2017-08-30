@@ -4,6 +4,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/parse"
+	"github.com/xiaq/persistent/hash"
 )
 
 // String is just a string.
@@ -24,6 +25,10 @@ func (s String) Repr(int) string {
 
 func (s String) Equal(rhs interface{}) bool {
 	return s == rhs
+}
+
+func (s String) Hash() uint32 {
+	return hash.String(string(s))
 }
 
 func (s String) String() string {

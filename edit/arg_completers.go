@@ -2,8 +2,10 @@ package edit
 
 import (
 	"errors"
+	"unsafe"
 
 	"github.com/elves/elvish/eval"
+	"github.com/xiaq/persistent/hash"
 )
 
 // For an overview of completion, see the comment in completers.go.
@@ -121,6 +123,10 @@ func (bac *builtinArgCompleter) Kind() string {
 // Equal compares by identity.
 func (bac *builtinArgCompleter) Equal(a interface{}) bool {
 	return bac == a
+}
+
+func (bac *builtinArgCompleter) Hash() uint32 {
+	return hash.Pointer(unsafe.Pointer(bac))
 }
 
 func (bac *builtinArgCompleter) Repr(int) string {

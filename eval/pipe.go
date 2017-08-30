@@ -3,6 +3,8 @@ package eval
 import (
 	"fmt"
 	"os"
+
+	"github.com/xiaq/persistent/hash"
 )
 
 type Pipe struct {
@@ -17,6 +19,13 @@ func (Pipe) Kind() string {
 
 func (p Pipe) Equal(rhs interface{}) bool {
 	return p == rhs
+}
+
+func (p Pipe) Hash() uint32 {
+	h := hash.DJBInit
+	h = hash.DJBCombine(h, hash.UIntPtr(p.r.Fd()))
+	h = hash.DJBCombine(h, hash.UIntPtr(p.w.Fd()))
+	return h
 }
 
 func (p Pipe) Repr(int) string {

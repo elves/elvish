@@ -64,6 +64,11 @@ func (gp GlobPattern) Equal(a interface{}) bool {
 	return reflect.DeepEqual(gp, a)
 }
 
+func (gp GlobPattern) Hash() uint32 {
+	// GlobPattern is not a first-class value.
+	return 0
+}
+
 func (gp GlobPattern) Repr(int) string {
 	return fmt.Sprintf("<GlobPattern%v>", gp)
 }

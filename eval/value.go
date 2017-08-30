@@ -17,6 +17,7 @@ const (
 type Value interface {
 	Kinder
 	Equaler
+	Hasher
 	Reprer
 }
 
