@@ -40,8 +40,8 @@ func match(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 }
 
 var (
-	matchFields    = []string{"text", "start", "end", "groups"}
-	submatchFields = []string{"text", "start", "end"}
+	matchDescriptor    = eval.NewStructDescriptor("text", "start", "end", "groups")
+	submatchDescriptor = eval.NewStructDescriptor("text", "start", "end")
 )
 
 func find(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
@@ -75,13 +75,13 @@ func find(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 			} else {
 				text = argSource[start:end]
 			}
-			groups = groups.Cons(&eval.Struct{submatchFields, []eval.Value{
+			groups = groups.Cons(&eval.Struct{submatchDescriptor, []eval.Value{
 				text,
 				eval.String(strconv.Itoa(start)),
 				eval.String(strconv.Itoa(end)),
 			}})
 		}
-		out <- &eval.Struct{matchFields, []eval.Value{
+		out <- &eval.Struct{matchDescriptor, []eval.Value{
 			argSource[start:end],
 			eval.String(strconv.Itoa(start)),
 			eval.String(strconv.Itoa(end)),
