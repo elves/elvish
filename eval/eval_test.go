@@ -59,10 +59,10 @@ var evalTests = []struct {
 	// List element assignment
 	// {"li=[foo bar]; li[0]=233; put $@li", strs("233", "bar")},
 	// Map element assignment
-	{"di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
-		want{out: strs("lorem", "ipsum")}},
-	{"d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]",
-		want{out: strs("v", "u")}},
+	//{"di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
+	//	want{out: strs("lorem", "ipsum")}},
+	//{"d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]",
+	//	want{out: strs("v", "u")}},
 	// Multi-assignments.
 	{"{a,b}=(put a b); put $a $b", want{out: strs("a", "b")}},
 	{"@a=(put a b); put $@a", want{out: strs("a", "b")}},
@@ -212,7 +212,7 @@ var evalTests = []struct {
 	{`print "a\nb\n" | from-lines`, want{out: strs("a", "b")}},
 	{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`,
 		want{out: []Value{
-			NewMap(map[Value]Value{
+			ConvertToMap(map[Value]Value{
 				String("k"): String("v"),
 				String("a"): NewList(strs("1", "2")...)}),
 			String("foo"),

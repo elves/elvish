@@ -12,6 +12,7 @@ import (
 
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 var outputCaptureBufferSize = 16
@@ -508,7 +509,7 @@ func (cp *compiler) mapPairs(pairs []*parse.MapPair) ValuesOpFunc {
 		begins[i], ends[i] = pair.Begin(), pair.End()
 	}
 	return func(ec *EvalCtx) []Value {
-		m := make(map[Value]Value)
+		m := hashmap.Empty
 		for i := 0; i < npairs; i++ {
 			keys := keysOps[i].Exec(ec)
 			values := valuesOps[i].Exec(ec)
@@ -517,10 +518,10 @@ func (cp *compiler) mapPairs(pairs []*parse.MapPair) ValuesOpFunc {
 					"%d keys but %d values", len(keys), len(values))
 			}
 			for j, key := range keys {
-				m[key] = values[j]
+				m = m.Assoc(key, values[j])
 			}
 		}
-		return []Value{Map{&m}}
+		return []Value{NewMap(m)}
 	}
 }
 

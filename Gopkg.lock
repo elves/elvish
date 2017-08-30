@@ -22,7 +22,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/xiaq/persistent"
-  packages = ["hash","types","vector"]
+  packages = ["hash","hashmap","types","vector"]
   revision = "75c17f0e60b72842d8d93c9811aeb0da7fd0bdae"
 
 [[projects]]
@@ -34,6 +34,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b5208755cf7cdf90d187e019a1453e3c9380de73c024e3268e676c6bef1aa60d"
+  inputs-digest = "6cb3d3b39da358793be9d940cb2737c7cc4f793492e06358fe8851287e4591c9"
   solver-name = "gps-cdcl"
   solver-version = 1

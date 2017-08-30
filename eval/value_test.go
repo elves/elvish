@@ -26,8 +26,8 @@ var reprTests = []struct {
 	{&Exception{Return, nil}, "?(return)"},
 	{NewList(), "[]"},
 	{NewList(String("bash"), Bool(false)), "[bash $false]"},
-	{Map{&map[Value]Value{}}, "[&]"},
-	{Map{&map[Value]Value{&Exception{nil, nil}: String("elvish")}}, "[&$ok=elvish]"},
+	{ConvertToMap(map[Value]Value{}), "[&]"},
+	{ConvertToMap(map[Value]Value{&Exception{nil, nil}: String("elvish")}), "[&$ok=elvish]"},
 	// TODO: test maps of more elements
 }
 

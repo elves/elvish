@@ -6,6 +6,7 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/xiaq/persistent/hash"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 // For an overview of completion, see the comment in completers.go.
@@ -78,9 +79,9 @@ var (
 var _ = registerVariable("arg-completer", argCompleterVariable)
 
 func argCompleterVariable() eval.Variable {
-	m := map[eval.Value]eval.Value{}
+	m := hashmap.Empty
 	for k, v := range argCompletersData {
-		m[eval.String(k)] = v
+		m = m.Assoc(eval.String(k), v)
 	}
 	return eval.NewPtrVariableWithValidator(eval.NewMap(m), eval.ShouldBeMap)
 }

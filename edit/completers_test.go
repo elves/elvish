@@ -12,7 +12,7 @@ import (
 )
 
 func TestComplIndexInner(t *testing.T) {
-	m := eval.NewMap(map[eval.Value]eval.Value{
+	m := eval.ConvertToMap(map[eval.Value]eval.Value{
 		eval.String("foo"):   eval.String("bar"),
 		eval.String("lorem"): eval.String("ipsum"),
 	})

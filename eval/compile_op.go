@@ -262,13 +262,14 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		// XXX This conversion should be avoided.
 		opts := optsOp(ec)[0].(Map)
 		convertedOpts := make(map[string]Value)
-		for k, v := range *opts.inner {
+		opts.IteratePair(func(k, v Value) bool {
 			if ks, ok := k.(String); ok {
 				convertedOpts[string(ks)] = v
 			} else {
 				throwf("Option key must be string, got %s", k.Kind())
 			}
-		}
+			return true
+		})
 
 		// redirs
 		for _, redirOp := range redirOps {

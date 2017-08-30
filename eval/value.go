@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 // Definitions for Value interfaces, some simple Value types and some common
@@ -198,11 +199,11 @@ func FromJSONInterface(v interface{}) Value {
 		return NewList(vs...)
 	case map[string]interface{}:
 		m := v.(map[string]interface{})
-		mv := make(map[Value]Value)
+		mv := hashmap.Empty
 		for k, v := range m {
-			mv[String(k)] = FromJSONInterface(v)
+			mv = mv.Assoc(String(k), FromJSONInterface(v))
 		}
-		return Map{&mv}
+		return NewMap(mv)
 	default:
 		throw(fmt.Errorf("unexpected json type: %T", v))
 		return nil // not reached

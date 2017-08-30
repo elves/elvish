@@ -1,10 +1,13 @@
 package edit
 
-import "github.com/elves/elvish/eval"
+import (
+	"github.com/elves/elvish/eval"
+	"github.com/xiaq/persistent/hashmap"
+)
 
 var _ = registerVariable("abbr", func() eval.Variable {
 	return eval.NewPtrVariableWithValidator(
-		eval.NewMap(make(map[eval.Value]eval.Value)), eval.ShouldBeMap)
+		eval.NewMap(hashmap.Empty), eval.ShouldBeMap)
 })
 
 func (ed *Editor) abbr() eval.Map {

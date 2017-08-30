@@ -6,6 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/xiaq/persistent/hash"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 // ErrArityMismatch is thrown by a closure when the number of arguments the user
@@ -87,11 +88,11 @@ func (c *Closure) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 		ec.local[name] = NewPtrVariable(v)
 	}
 	// XXX This conversion was done by the other direction.
-	convertedOpts := make(map[Value]Value)
+	convertedOpts := hashmap.Empty
 	for k, v := range opts {
-		convertedOpts[String(k)] = v
+		convertedOpts = convertedOpts.Assoc(String(k), v)
 	}
-	ec.local["opts"] = NewPtrVariable(Map{&convertedOpts})
+	ec.local["opts"] = NewPtrVariable(NewMap(convertedOpts))
 
 	ec.traceback = ec.addTraceback()
 

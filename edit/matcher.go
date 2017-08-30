@@ -6,6 +6,7 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 var (
@@ -25,10 +26,9 @@ var (
 	}
 
 	_ = registerVariable("-matcher", func() eval.Variable {
-		m := map[eval.Value]eval.Value{
+		m := hashmap.Empty.Assoc(
 			// Fallback matcher uses empty string as key
-			eval.String(""): matchPrefix,
-		}
+			eval.String(""), matchPrefix)
 		return eval.NewPtrVariableWithValidator(eval.NewMap(m), eval.ShouldBeMap)
 	})
 )

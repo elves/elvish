@@ -9,6 +9,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 var _ = registerBuiltins(modeNarrow, map[string]func(*Editor){
@@ -399,7 +400,7 @@ func NarrowRead(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value)
 	var source, action eval.CallableValue
 	l := &narrow{
 		opts: narrowOptions{
-			Bindings: eval.NewMap(nil),
+			Bindings: eval.NewMap(hashmap.Empty),
 		},
 	}
 
@@ -490,8 +491,7 @@ func CommandHistory(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Va
 	}
 
 	for i := start; i < end; i++ {
-
-		out <- eval.NewMap(map[eval.Value]eval.Value{
+		out <- eval.ConvertToMap(map[eval.Value]eval.Value{
 			eval.String("id"):  eval.String(strconv.Itoa(i)),
 			eval.String("cmd"): eval.String(cmds[i]),
 		})
