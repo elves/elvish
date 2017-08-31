@@ -12,7 +12,7 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
-var ErrKeyMustBeString = errors.New("key must be string")
+var ErrKeyMustBeString = errors.New("key must be key or string value")
 
 // Key represents a single keyboard input, typically assembled from a escape
 // sequence.
@@ -94,11 +94,7 @@ func (k Key) Kind() string {
 }
 
 func (k Key) Equal(other interface{}) bool {
-	v, ok := other.(eval.Value)
-	if !ok {
-		return false
-	}
-	return k == ToKey(v)
+	return k == other
 }
 
 func (k Key) Hash() uint32 {
@@ -213,18 +209,22 @@ func parseKey(s string) (Key, error) {
 	return Key{}, fmt.Errorf("bad key: %q", s)
 }
 
-// ToKey converts an elvish String to a Key. If the passed Value is not a
+// ToKey converts an Elvish Value to a Key. If the passed Value is not Key or
 // String, it throws an error.
-func ToKey(idx eval.Value) Key {
-	skey, ok := idx.(eval.String)
-	if !ok {
+func ToKey(k eval.Value) Key {
+	switch k := k.(type) {
+	case Key:
+		return k
+	case eval.String:
+		key, err := parseKey(string(k))
+		if err != nil {
+			util.Throw(err)
+		}
+		return key
+	default:
 		util.Throw(ErrKeyMustBeString)
+		panic("unreachable")
 	}
-	key, err := parseKey(string(skey))
-	if err != nil {
-		util.Throw(err)
-	}
-	return key
 }
 
 // KeyBuiltin implements the edit:key builtin.

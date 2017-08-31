@@ -138,17 +138,12 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 		}
 	}
 
-	// Add $edit:xxx:binding variables.
-	// TODO Make binding specific to the Editor.
-	for _, mode := range []string{
-		modeInsert, modeCommand, modeCompletion, modeNavigation, modeHistory,
-		modeHistoryListing, modeLocation, modeLastCmd, modeListing, modeNarrow} {
-
+	// Add $edit:{mode}:binding variables.
+	for mode, bindingVar := range ed.bindings {
 		if modules["edit:"+mode] == nil {
 			modules["edit:"+mode] = make(eval.Namespace)
 		}
-		modules["edit:"+mode]["binding"] =
-			eval.NewRoVariable(BindingTable{keyBindings[mode]})
+		modules["edit:"+mode]["binding"] = bindingVar
 	}
 }
 

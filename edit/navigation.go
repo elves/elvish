@@ -60,8 +60,8 @@ type navigation struct {
 	chdir      func(string) error
 }
 
-func (*navigation) Binding(k ui.Key) eval.CallableValue {
-	return getBinding(modeNavigation, k)
+func (*navigation) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
+	return getBinding(m[modeNavigation], k)
 }
 
 func (n *navigation) ModeLine() renderer {
@@ -141,7 +141,7 @@ func navDefault(ed *Editor) {
 			n.refreshDirPreview()
 		}
 	} else {
-		ed.CallFn(getBinding(modeInsert, k))
+		ed.CallFn(getBinding(ed.bindings[modeInsert], k))
 	}
 }
 

@@ -132,8 +132,8 @@ func (ins *insert) ModeLine() renderer {
 	return nil
 }
 
-func (*insert) Binding(k ui.Key) eval.CallableValue {
-	return getBinding(modeInsert, k)
+func (*insert) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
+	return getBinding(m[modeInsert], k)
 }
 
 type command struct{}
@@ -142,8 +142,8 @@ func (*command) ModeLine() renderer {
 	return modeLineRenderer{" COMMAND ", ""}
 }
 
-func (*command) Binding(k ui.Key) eval.CallableValue {
-	return getBinding(modeCommand, k)
+func (*command) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
+	return getBinding(m[modeCommand], k)
 }
 
 func insertStart(ed *Editor) {

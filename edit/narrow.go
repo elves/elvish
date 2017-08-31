@@ -59,19 +59,14 @@ type narrow struct {
 	opts      narrowOptions
 }
 
-func (l *narrow) Binding(k ui.Key) eval.CallableValue {
+func (l *narrow) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
 	if l.opts.bindingMap != nil {
 		if f, ok := l.opts.bindingMap[k]; ok {
 			return f
 		}
 	}
 
-	bindings := keyBindings[modeNarrow]
-	if f, ok := bindings[k]; ok {
-		return f
-	}
-
-	return bindings[ui.Default]
+	return getBinding(m[modeNarrow], k)
 }
 
 func (l *narrow) ModeLine() renderer {

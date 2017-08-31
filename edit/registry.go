@@ -1,12 +1,14 @@
 package edit
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 // This file contains several "registries", data structure that are written
@@ -96,4 +98,26 @@ func registerBindings(
 		}
 	}
 	return struct{}{}
+}
+
+func makeBindings() map[string]eval.Variable {
+	bindings := make(map[string]eval.Variable)
+	for mode, binding := range keyBindings {
+		bindingValue := hashmap.Empty
+		for key, fn := range binding {
+			bindingValue = bindingValue.Assoc(key, fn)
+		}
+		bindings[mode] = eval.NewPtrVariableWithValidator(
+			BindingTable{eval.NewMap(bindingValue)}, shouldBeBindingTable)
+	}
+	return bindings
+}
+
+var errShouldBeBindingTable = errors.New("should be binding table")
+
+func shouldBeBindingTable(v eval.Value) error {
+	if _, ok := v.(BindingTable); !ok {
+		return errShouldBeBindingTable
+	}
+	return nil
 }

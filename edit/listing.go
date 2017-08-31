@@ -80,24 +80,26 @@ func newListing(t string, p listingProvider) listing {
 	return l
 }
 
-func (l *listing) Binding(k ui.Key) eval.CallableValue {
-	specificBindings := keyBindings[l.name]
-	if specificBindings == nil {
-		return getBinding(modeListing, k)
+func (l *listing) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
+	if m[l.name] == nil {
+		return getBinding(m[modeListing], k)
 	}
-	listingBindings := keyBindings[modeListing]
+	specificBindings := m[l.name].Get().(BindingTable)
+	listingBindings := m[modeListing].Get().(BindingTable)
 	// mode-specific binding -> listing binding ->
 	// mode-specific default -> listing default
-	if v, ok := specificBindings[k]; ok {
-		return v
+	switch {
+	case specificBindings.HasKey(k):
+		return specificBindings.get(k)
+	case listingBindings.HasKey(k):
+		return listingBindings.get(k)
+	case specificBindings.HasKey(ui.Default):
+		return specificBindings.get(ui.Default)
+	case listingBindings.HasKey(ui.Default):
+		return listingBindings.get(ui.Default)
+	default:
+		return nil
 	}
-	if v, ok := listingBindings[k]; ok {
-		return v
-	}
-	if v, ok := specificBindings[ui.Default]; ok {
-		return v
-	}
-	return listingBindings[ui.Default]
 }
 
 func (l *listing) ModeLine() renderer {

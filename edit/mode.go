@@ -24,7 +24,7 @@ const (
 // Mode is an editor mode.
 type Mode interface {
 	ModeLine() renderer
-	Binding(ui.Key) eval.CallableValue
+	Binding(map[string]eval.Variable, ui.Key) eval.CallableValue
 }
 
 // CursorOnModeLiner is an optional interface that modes can implement. If a

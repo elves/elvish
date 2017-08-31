@@ -56,8 +56,8 @@ type completion struct {
 	height          int
 }
 
-func (*completion) Binding(k ui.Key) eval.CallableValue {
-	return getBinding(modeCompletion, k)
+func (*completion) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
+	return getBinding(m[modeCompletion], k)
 }
 
 func (c *completion) needScrollbar() bool {

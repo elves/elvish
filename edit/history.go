@@ -35,8 +35,8 @@ type hist struct {
 	*history.Walker
 }
 
-func (*hist) Binding(k ui.Key) eval.CallableValue {
-	return getBinding(modeHistory, k)
+func (*hist) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
+	return getBinding(m[modeHistory], k)
 }
 
 func (h *hist) ModeLine() renderer {

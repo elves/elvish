@@ -38,6 +38,7 @@ type Editor struct {
 	evaler *eval.Evaler
 
 	variables map[string]eval.Variable
+	bindings  map[string]eval.Variable
 
 	active      bool
 	activeMutex sync.Mutex
@@ -92,6 +93,7 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, 
 		daemon: daemon,
 		evaler: ev,
 
+		bindings:  makeBindings(),
 		variables: makeVariables(),
 	}
 	if daemon != nil {
@@ -437,7 +439,7 @@ MainLoop:
 			case tty.Key:
 				k := ui.Key(unit)
 			lookupKey:
-				fn := ed.mode.Binding(k)
+				fn := ed.mode.Binding(ed.bindings, k)
 				if fn == nil {
 					ed.addTip("Unbound and no default binding: %s", k)
 					continue MainLoop
