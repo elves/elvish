@@ -57,12 +57,13 @@ var evalTests = []struct {
 	// TODO: Add a useful hybrid pipeline sample
 
 	// List element assignment
-	// {"li=[foo bar]; li[0]=233; put $@li", strs("233", "bar")},
+	{"li=[foo bar]; li[0]=233; put $@li",
+		want{out: strs("233", "bar")}},
 	// Map element assignment
-	//{"di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
-	//	want{out: strs("lorem", "ipsum")}},
-	//{"d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]",
-	//	want{out: strs("v", "u")}},
+	{"di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
+		want{out: strs("lorem", "ipsum")}},
+	{"d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]",
+		want{out: strs("v", "u")}},
 	// Multi-assignments.
 	{"{a,b}=(put a b); put $a $b", want{out: strs("a", "b")}},
 	{"@a=(put a b); put $@a", want{out: strs("a", "b")}},

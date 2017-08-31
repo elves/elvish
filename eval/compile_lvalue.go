@@ -122,7 +122,7 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 		}
 	}
 
-	p := n.Begin()
+	headBegin, headEnd := n.Head.Begin(), n.Head.End()
 	indexOps := cp.arrayOps(n.Indicies)
 
 	return explode, func(ec *EvalCtx) []Variable {
@@ -131,33 +131,59 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 			throwf("variable $%s does not exisit, compiler bug", varname)
 		}
 
-		// Indexing. Do Index up to the last but one index.
-		value := variable.Get()
-		n := len(indexOps)
-		// TODO set location information according.
-		for _, op := range indexOps[:n-1] {
-			indexer := mustIndexer(value, ec)
+		// Evaluate assocers and indices.
+		// Assignment of indexed variables actually assignes the variable, with
+		// the right hand being a nested series of Assocs. As the simplest
+		// example, `a[0] = x` is equivalent to `a = (assoc $a 0 x)`. A more
+		// complex example is that `a[0][1][2] = x` is equivalent to
+		//	`a = (assoc $a 0 (assoc $a[0] 1 (assoc $a[0][1] 2 x)))`.
+		// Note that in each assoc form, the first two arguments can be
+		// determined now, while the last argument is only known when the
+		// right-hand-side is known. So here we evaluate the first two arguments
+		// of each assoc form and put them in two slices, assocers and indicies.
+		// In the previous example, the two slices will contain:
+		//
+		// assocers: $a $a[0] $a[0][1]
+		// indicies:  0     1        2
+		//
+		// When the right-hand side of the assignment becomes available, the new
+		// value for $a is evaluated by doing Assoc from inside out.
+		assocers := make([]Assocer, len(indexOps))
+		indicies := make([]Value, len(indexOps))
+		varValue, ok := variable.Get().(IndexOneAssocer)
+		if !ok {
+			ec.errorpf(headBegin, headEnd, "cannot be indexed for setting")
+		}
+		assocers[0] = varValue
+		for i, op := range indexOps {
+			var lastAssocer IndexOneer
+			if i < len(indexOps)-1 {
+				var ok bool
+				lastAssocer, ok = assocers[i].(IndexOneer)
+				if !ok {
+					// This cannot occur when i==0, since varValue as already
+					// asserted to be an IndexOnner.
+					ec.errorpf(headBegin, indexOps[i-1].End, "cannot be indexed")
+				}
+			}
 
-			indicies := op.Exec(ec)
-			values := indexer.Index(indicies)
+			values := op.Exec(ec)
+			// TODO: Implement multi-indexing.
 			if len(values) != 1 {
 				throw(errors.New("multi indexing not implemented"))
 			}
-			value = values[0]
+			index := values[0]
+			indicies[i] = index
+
+			if i < len(indexOps)-1 {
+				assocer, ok := lastAssocer.IndexOne(index).(Assocer)
+				if !ok {
+					ec.errorpf(headBegin, indexOps[i].End,
+						"cannot be indexed for setting")
+				}
+				assocers[i+1] = assocer
+			}
 		}
-		// Now this must be an IndexSetter.
-		indexSetter, ok := value.(IndexSetter)
-		if !ok {
-			// XXX the indicated end location will fall on or after the opening
-			// bracket of the last index, instead of exactly on the penultimate
-			// index.
-			ec.errorpf(p, indexOps[n-1].Begin, "cannot be indexed for setting (value is %s, type %s)", value.Repr(NoPretty), value.Kind())
-		}
-		// XXX Duplicate code.
-		indicies := indexOps[n-1].Exec(ec)
-		if len(indicies) != 1 {
-			ec.errorpf(indexOps[n-1].Begin, indexOps[n-1].End, "index must eval to a single Value (got %v)", indicies)
-		}
-		return []Variable{elemVariable{indexSetter, indicies[0]}}
+		return []Variable{&elemVariable{variable, assocers, indicies, nil}}
 	}
 }

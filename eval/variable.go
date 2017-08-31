@@ -99,18 +99,34 @@ func (cv roCbVariable) Get() Value {
 	return cv()
 }
 
-// elemVariable is an element of a IndexSetter.
+// elemVariable is a (arbitrary nested) element.
+// XXX(xiaq): This is an ephemeral "variable" and is a bad hack.
 type elemVariable struct {
-	container IndexSetter
-	index     Value
+	variable Variable
+	assocers []Assocer
+	indices  []Value
+	setValue Value
 }
 
-func (ev elemVariable) Set(val Value) {
-	ev.container.IndexSet(ev.index, val)
+var errCannotIndex = errors.New("cannot index")
+
+func (ev *elemVariable) Set(v0 Value) {
+	v := v0
+	// Evaluate the actual new value from inside out. See comments in
+	// compile_lvalue.go for how assignment of indexed variables work.
+	for i := len(ev.assocers) - 1; i >= 0; i-- {
+		v = ev.assocers[i].Assoc(ev.indices[i], v)
+	}
+	ev.variable.Set(v)
+	// XXX(xiaq): Remember the set value for use in Get.
+	ev.setValue = v0
 }
 
-func (ev elemVariable) Get() Value {
-	return ev.container.IndexOne(ev.index)
+func (ev *elemVariable) Get() Value {
+	// XXX(xiaq): This is only called from fixNilVariables. We don't want to
+	// waste time accessing the variable, so we simply return the value that was
+	// set.
+	return ev.setValue
 }
 
 // envVariable represents an environment variable.

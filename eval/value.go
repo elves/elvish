@@ -131,12 +131,6 @@ type IndexOneer interface {
 	IndexOne(idx Value) Value
 }
 
-// IndexSetter is a Value whose elements can be get as well as set.
-type IndexSetter interface {
-	IndexOneer
-	IndexSet(idx Value, v Value)
-}
-
 func mustIndexer(v Value, ec *EvalCtx) Indexer {
 	indexer, ok := getIndexer(v, ec)
 	if !ok {
@@ -175,6 +169,12 @@ func (ioi IndexOneerIndexer) Index(vs []Value) []Value {
 // new Value.
 type Assocer interface {
 	Assoc(k, v Value) Value
+}
+
+// IndexOneAssocer combines IndexOneer and Assocer.
+type IndexOneAssocer interface {
+	IndexOneer
+	Assocer
 }
 
 // FromJSONInterface converts a interface{} that results from json.Unmarshal to
