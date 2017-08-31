@@ -218,7 +218,13 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			for _, op := range saveVarsOps {
 				saveVars = append(saveVars, op.Exec(ec)...)
 			}
-			for _, v := range saveVars {
+			for i, v := range saveVars {
+				// XXX(xiaq): If the variable to save is a elemVariable, save
+				// the outermost variable instead.
+				if elemVar, ok := v.(*elemVariable); ok {
+					v = elemVar.variable
+					saveVars[i] = v
+				}
 				val := v.Get()
 				saveVals = append(saveVals, val)
 				logger.Printf("saved %s = %s", v, val)

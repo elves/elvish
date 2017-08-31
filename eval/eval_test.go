@@ -38,7 +38,9 @@ var evalTests = []struct {
 	text string
 	want
 }{
-	// Chunks.
+	// Chunks
+	// ------
+
 	// Empty chunk
 	{"", wantNothing},
 	// Outputs of pipelines in a chunk are concatenated
@@ -46,7 +48,9 @@ var evalTests = []struct {
 	// A failed pipeline cause the whole chunk to fail
 	{"put a; e:false; put b", want{out: strs("a"), err: errAny}},
 
-	// Pipelines.
+	// Pipelines
+	// ---------
+
 	// Pure byte pipeline
 	{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`,
 		want{bytesOut: []byte("A1bert\nBer1in\n")}},
@@ -55,6 +59,9 @@ var evalTests = []struct {
 	// Pipeline draining.
 	{`range 100 | put x`, want{out: strs("x")}},
 	// TODO: Add a useful hybrid pipeline sample
+
+	// Assignments
+	// -----------
 
 	// List element assignment
 	{"li=[foo bar]; li[0]=233; put $@li",
@@ -68,16 +75,24 @@ var evalTests = []struct {
 	{"{a,b}=(put a b); put $a $b", want{out: strs("a", "b")}},
 	{"@a=(put a b); put $@a", want{out: strs("a", "b")}},
 	{"{a,@b}=(put a b c); put $@b", want{out: strs("b", "c")}},
-	// {"di=[&]; di[a b]=(put a b); put $di[a] $di[b]", want{out:strs("a", "b")}},
+	//{"di=[&]; di[a b]=(put a b); put $di[a] $di[b]", want{out: strs("a", "b")}},
+
 	// Temporary assignment.
 	{"a=alice b=bob; {a,@b}=(put amy ben) put $a $@b; put $a $b",
 		want{out: strs("amy", "ben", "alice", "bob")}},
+	// Temporary assignment of list element.
+	{"l = [a]; l[0]=x put $l[0]; put $l[0]", want{out: strs("x", "a")}},
+	// Temporary assignment of map element.
+	{"m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]", want{out: strs("v2", "v")}},
+
 	// Spacey assignment.
 	{"a @b = 2 3 foo; put $a $b[1]", want{out: strs("2", "foo")}},
 	// Spacey assignment with temporary assignment
 	{"x = 1; x=2 y = (+ 1 $x); put $x $y", want{out: strs("1", "3")}},
 
-	// Control structures.
+	// Control structures
+	// ------------------
+
 	// if
 	{"if true { put then }", want{out: strs("then")}},
 	{"if $false { put then } else { put else }", want{out: strs("else")}},
@@ -101,31 +116,42 @@ var evalTests = []struct {
 	// continue
 	{"for x [a b] { put $x; continue; put $x; }", want{out: strs("a", "b")}},
 
-	// Redirections.
+	// Redirections
+	// ------------
+
 	{"f=(mktemp elvXXXXXX); echo 233 > $f; cat < $f; rm $f",
 		want{bytesOut: []byte("233\n")}},
+
 	// Redirections from File object.
 	{`fname=(mktemp elvXXXXXX); echo haha > $fname;
 			f=(fopen $fname); cat <$f; fclose $f; rm $fname`,
 		want{bytesOut: []byte("haha\n")}},
+
 	// Redirections from Pipe object.
 	{`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`,
 		want{bytesOut: []byte("haha\n")}},
 
-	// Compounding.
+	// Compounding
+	// -----------
 	{"put {fi,elvi}sh{1.0,1.1}",
 		want{out: strs("fish1.0", "fish1.1", "elvish1.0", "elvish1.1")}},
 
-	// List, map and indexing
+	// List, Map and Indexing
+	// ----------------------
+
 	{"echo [a b c] [&key=value] | each put",
 		want{out: strs("[a b c] [&key=value]")}},
 	{"put [a b c][2]", want{out: strs("c")}},
 	{"put [&key=value][key]", want{out: strs("value")}},
 
-	// String literal
+	// String Literals
+	// ---------------
 	{`put 'such \"''literal'`, want{out: strs(`such \"'literal`)}},
 	{`put "much \n\033[31;1m$cool\033[m"`,
 		want{out: strs("much \n\033[31;1m$cool\033[m")}},
+
+	// Captures
+	// ---------
 
 	// Output capture
 	{"put (put lorem ipsum)", want{out: strs("lorem", "ipsum")}},
@@ -134,36 +160,47 @@ var evalTests = []struct {
 	// Exception capture
 	{"bool ?(nop); bool ?(e:false)", want{out: bools(true, false)}},
 
-	// Variable and compounding
+	// Variable Use
+	// ------------
+
+	// Compounding
 	{"x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
 		want{out: strs("WOW, SUCH SHELL, MUCH COOL")}},
 	// Splicing
 	{"x=[elvish rules]; put $@x", want{out: strs("elvish", "rules")}},
 
-	// Wildcard.
+	// Wildcard
+	// --------
+
 	{"put /*", want{out: strs(util.FullNames("/")...)}},
 	// XXX assumes there is no /a/b/nonexistent*
 	{"put /a/b/nonexistent*", want{err: ErrWildcardNoMatch}},
 	{"put /a/b/nonexistent*[nomatch-ok]", wantNothing},
 
-	// Tilde.
+	// Tilde
+	// -----
 	{"h=$E:HOME; E:HOME=/foo; put ~ ~/src; E:HOME=$h",
 		want{out: strs("/foo", "/foo/src")}},
 
 	// Closure
-	// Basics
+	// -------
+
 	{"[]{ }", wantNothing},
 	{"[x]{put $x} foo", want{out: strs("foo")}},
+
 	// Variable capture
 	{"x=lorem; []{x=ipsum}; put $x", want{out: strs("ipsum")}},
 	{"x=lorem; []{ put $x; x=ipsum }; put $x",
 		want{out: strs("lorem", "ipsum")}},
+
 	// Shadowing
 	{"x=ipsum; []{ local:x=lorem; put $x }; put $x",
 		want{out: strs("lorem", "ipsum")}},
+
 	// Shadowing by argument
 	{"x=ipsum; [x]{ put $x; x=BAD } lorem; put $x",
 		want{out: strs("lorem", "ipsum")}},
+
 	// Closure captures new local variables every time
 	{`fn f []{ x=0; put []{x=(+ $x 1)} []{put $x} }
 		      {inc1,put1}=(f); $put1; $inc1; $put1
@@ -185,6 +222,8 @@ var evalTests = []struct {
 	{"[a &k=v]{ put $a $k } foo", want{out: strs("foo", "v")}},
 
 	// Namespaces
+	// ----------
+
 	// Pseudo-namespaces local: and up:
 	{"x=lorem; []{local:x=ipsum; put $up:x $local:x}",
 		want{out: strs("lorem", "ipsum")}},
