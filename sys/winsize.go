@@ -26,7 +26,7 @@ type winSize struct {
 
 func GetWinsize(fd int) (row, col int) {
 	ws := winSize{}
-	if err := ioctl(uintptr(fd), unix.TIOCGWINSZ, unsafe.Pointer(&ws)); err != nil {
+	if err := Ioctl(fd, unix.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws))); err != nil {
 		fmt.Printf("error in winSize: %v", err)
 		return -1, -1
 	}

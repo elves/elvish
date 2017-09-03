@@ -1,25 +1,20 @@
 package sys
 
 import (
-	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 func Tcgetpgrp(fd int) (int, error) {
 	var pid int
-	_, _, errno := syscall.RawSyscall(syscall.SYS_IOCTL, uintptr(fd),
-		uintptr(syscall.TIOCGPGRP), uintptr(unsafe.Pointer(&pid)))
-	if errno == 0 {
+	errno := Ioctl(fd, unix.TIOCGPGRP, uintptr(unsafe.Pointer(&pid)))
+	if errno == nil {
 		return pid, nil
 	}
 	return -1, errno
 }
 
 func Tcsetpgrp(fd int, pid int) error {
-	_, _, errno := syscall.RawSyscall(syscall.SYS_IOCTL, uintptr(fd),
-		uintptr(syscall.TIOCSPGRP), uintptr(unsafe.Pointer(&pid)))
-	if errno == 0 {
-		return nil
-	}
-	return errno
+	return Ioctl(fd, unix.TIOCSPGRP, uintptr(unsafe.Pointer(&pid)))
 }
