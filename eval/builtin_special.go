@@ -132,7 +132,6 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 	var modname string
 	var filenameOp ValuesOp
-	var filenameBegin, filenameEnd int
 
 	switch len(fn.Args) {
 	case 0:
@@ -140,8 +139,6 @@ func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 		cp.errorpf(end, end, "lack module name")
 	case 2:
 		filenameOp = cp.compoundOp(fn.Args[1])
-		filenameBegin = fn.Args[1].Begin()
-		filenameEnd = fn.Args[1].End()
 		fallthrough
 	case 1:
 		modname = mustString(cp, fn.Args[0], "should be a literal module name")
@@ -151,9 +148,8 @@ func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 
 	return func(ec *EvalCtx) {
 		if filenameOp.Func != nil {
-			values := filenameOp.Exec(ec)
-			valuesMust := &muster{ec, "module filename", filenameBegin, filenameEnd, values}
-			filename := string(valuesMust.mustOneStr())
+			filename := string(ec.ExecAndUnwrap(
+				"module filename", filenameOp).One().String())
 			use(ec, modname, &filename)
 		} else {
 			use(ec, modname, nil)

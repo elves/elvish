@@ -254,9 +254,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		var args []Value
 		if headOp.Func != nil {
 			// head
-			headValues := headOp.Exec(ec)
-			ec.must(headValues, "head of command", headOp.Begin, headOp.End).mustLen(1)
-			headFn = mustFn(headValues[0])
+			headFn = ec.ExecAndUnwrap("head of command", headOp).One().Callable()
 
 			// args
 			for _, argOp := range argOps {
@@ -397,25 +395,24 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 			}
 		} else {
 			// dst must be a valid fd
-			dst = ec.must(dstOp.Exec(ec), "FD", dstOp.Begin, dstOp.End).mustOneNonNegativeInt()
+			dst = ec.ExecAndUnwrap("Fd", dstOp).One().NonNegativeInt()
 		}
 
 		ec.growPorts(dst + 1)
 		// Logger.Printf("closing old port %d of %s", dst, ec.context)
 		ec.ports[dst].Close()
 
-		srcMust := ec.must(srcOp.Exec(ec), "redirection source", srcOp.Begin, srcOp.End)
+		srcUnwrap := ec.ExecAndUnwrap("redirection source", srcOp).One()
 		if sourceIsFd {
-			src := string(srcMust.mustOneStr())
-			if src == "-" {
+			src := srcUnwrap.FdOrClose()
+			if src == -1 {
 				// close
 				ec.ports[dst] = &Port{}
 			} else {
-				fd := srcMust.zerothMustNonNegativeInt()
-				ec.ports[dst] = ec.ports[fd].Fork()
+				ec.ports[dst] = ec.ports[src].Fork()
 			}
 		} else {
-			switch src := srcMust.mustOne().(type) {
+			switch src := srcUnwrap.Any().(type) {
 			case String:
 				f, err := os.OpenFile(string(src), flag, defaultFileRedirPerm)
 				if err != nil {
@@ -445,7 +442,7 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 					CloseFile: false,
 				}
 			default:
-				srcMust.error("string or file", "%s", src.Kind())
+				srcUnwrap.error("string or file", "%s", src.Kind())
 			}
 		}
 	}
