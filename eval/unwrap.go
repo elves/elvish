@@ -97,3 +97,11 @@ func (u ValueUnwrapper) Callable() Callable {
 	}
 	return c
 }
+
+func (u ValueUnwrapper) Iterable() Iterable {
+	it, ok := u.values[0].(Iterable)
+	if !ok {
+		u.error("iterable", "%s", u.values[0].Kind())
+	}
+	return it
+}

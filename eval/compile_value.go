@@ -479,11 +479,8 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		}
 		optDefaults := make([]Value, len(optDefaultOps))
 		for i, op := range optDefaultOps {
-			values := op.Exec(ec)
-			if len(values) != 1 {
-				ec.errorpf(op.Begin, op.End, "option default value must evalute to a single value")
-			}
-			optDefaults[i] = values[0]
+			defaultValue := ec.ExecAndUnwrap("option default value", op).One().Any()
+			optDefaults[i] = defaultValue
 		}
 		return []Value{&Closure{argNames, restArgName, optNames, optDefaults, op, evCapture, name, text}}
 	}

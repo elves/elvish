@@ -358,14 +358,7 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 		}
 		variable := variables[0]
 
-		iterables := iterOp.Exec(ec)
-		if len(iterables) != 1 {
-			ec.errorpf(iterOp.Begin, iterOp.End, "should be one iterable")
-		}
-		iterable, ok := iterables[0].(Iterable)
-		if !ok {
-			ec.errorpf(iterOp.Begin, iterOp.End, "should be one iterable")
-		}
+		iterable := ec.ExecAndUnwrap("value being iterated", iterOp).One().Iterable()
 
 		body := bodyOp.execlambdaOp(ec)
 		elseBody := elseOp.execlambdaOp(ec)
