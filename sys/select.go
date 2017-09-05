@@ -1,8 +1,13 @@
-// +build !freebsd,!windows,!gccgo
+// +build !freebsd,!windows
 
 package sys
 
-import "syscall"
+import (
+	"syscall"
+	"unsafe"
+)
+
+var nFdBits = uint(8 * unsafe.Sizeof(syscall.FdSet{}.Bits[0]))
 
 type FdSet syscall.FdSet
 
@@ -18,20 +23,20 @@ func NewFdSet(fds ...int) *FdSet {
 
 func (fs *FdSet) Clear(fds ...int) {
 	for _, fd := range fds {
-		idx, bit := index(fd)
-		fs.Bits[idx] &= ^bit
+		u := uint(fd)
+		fs.Bits[u/nFdBits] &= ^(1 << (u % nFdBits))
 	}
 }
 
 func (fs *FdSet) IsSet(fd int) bool {
-	idx, bit := index(fd)
-	return fs.Bits[idx]&bit != 0
+	u := uint(fd)
+	return fs.Bits[u/nFdBits]&(1<<(u%nFdBits)) != 0
 }
 
 func (fs *FdSet) Set(fds ...int) {
 	for _, fd := range fds {
-		idx, bit := index(fd)
-		fs.Bits[idx] |= bit
+		u := uint(fd)
+		fs.Bits[u/nFdBits] |= 1 << (u % nFdBits)
 	}
 }
 

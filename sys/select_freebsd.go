@@ -4,7 +4,12 @@
 
 package sys
 
-import "syscall"
+import (
+	"reflect"
+	"syscall"
+)
+
+var nFdBits = (uint)(reflect.TypeOf(syscall.FdSet{}.X__fds_bits[0]).Size() * 8)
 
 type FdSet syscall.FdSet
 
@@ -20,20 +25,20 @@ func NewFdSet(fds ...int) *FdSet {
 
 func (fs *FdSet) Clear(fds ...int) {
 	for _, fd := range fds {
-		idx, bit := index(fd)
-		fs.X__fds_bits[idx] &= ^bit
+		u := uint(fd)
+		fs.X__fds_bits[u/nFdBits] &= ^(1 << (u % nFdBits))
 	}
 }
 
 func (fs *FdSet) IsSet(fd int) bool {
-	idx, bit := index(fd)
-	return fs.X__fds_bits[idx]&bit != 0
+	u := uint(fd)
+	return fs.X__fds_bits[u/nFdBits]&(1<<(u%nFdBits)) != 0
 }
 
 func (fs *FdSet) Set(fds ...int) {
 	for _, fd := range fds {
-		idx, bit := index(fd)
-		fs.X__fds_bits[idx] |= bit
+		u := uint(fd)
+		fs.X__fds_bits[u/nFdBits] |= 1 << (u % nFdBits)
 	}
 }
 
