@@ -6,8 +6,10 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
+	"unicode/utf8"
 	"unsafe"
 
 	"github.com/elves/elvish/edit/ui"
@@ -19,10 +21,14 @@ import (
 // Elvishscript runtime.
 
 var (
-	errNotNav         = errors.New("not in navigation mode")
-	errMustBeString   = errors.New("must be string")
-	errEditorInvalid  = errors.New("internal error: editor not set up")
-	errEditorInactive = errors.New("editor inactive")
+	errNotNav             = errors.New("not in navigation mode")
+	errLineMustBeString   = errors.New("line must be string")
+	errDotMustBeString    = errors.New("dot must be string")
+	errDotMustBeInt       = errors.New("dot must be integer")
+	errDotOutOfRange      = errors.New("dot out of range")
+	errDotInsideCodepoint = errors.New("dot cannot be inside a codepoint")
+	errEditorInvalid      = errors.New("internal error: editor not set up")
+	errEditorInactive     = errors.New("editor inactive")
 )
 
 // BuiltinFn records an editor builtin.
@@ -90,10 +96,37 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 				ed.line = string(s)
 				ed.dot = len(ed.line)
 			} else {
-				throw(errMustBeString)
+				throw(errLineMustBeString)
 			}
 		},
 		func() eval.Value { return eval.String(ed.line) },
+	)
+	ns["-dot"] = eval.MakeVariableFromCallback(
+		func(v eval.Value) {
+			s, ok := v.(eval.String)
+			if !ok {
+				throw(errDotMustBeString)
+			}
+			i, err := strconv.Atoi(string(s))
+			if err != nil {
+				if err.(*strconv.NumError).Err == strconv.ErrRange {
+					throw(errDotOutOfRange)
+				} else {
+					throw(errDotMustBeInt)
+				}
+			}
+			if i < 0 || i > len(ed.line) {
+				throw(errDotOutOfRange)
+			}
+			if i < len(ed.line) {
+				r, _ := utf8.DecodeRuneInString(ed.line[i:])
+				if r == utf8.RuneError {
+					throw(errDotInsideCodepoint)
+				}
+			}
+			ed.dot = i
+		},
+		func() eval.Value { return eval.String(strconv.Itoa(ed.dot)) },
 	)
 	ns["selected-file"] = eval.MakeRoVariableFromCallback(
 		func() eval.Value {
