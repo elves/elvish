@@ -1,6 +1,7 @@
 package history
 
 import (
+	"strings"
 	"sync"
 )
 
@@ -32,6 +33,8 @@ func NewFuser(store Store) (*Fuser, error) {
 func (f *Fuser) AddCmd(cmd string) error {
 	f.Lock()
 	defer f.Unlock()
+
+	cmd = strings.TrimSpace(cmd)
 	seq, err := f.store.AddCmd(cmd)
 	if err != nil {
 		return err
