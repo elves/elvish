@@ -233,6 +233,10 @@ func init() {
 		{"-gc", _gc},
 		{"-stack", _stack},
 		{"-log", _log},
+		// TODO(#327): Make this a variable, and make it possible to distinguish
+		// filename ("/path/to/script.elv") and fabricated source name
+		// ("[interactive]").
+		{"-src-name", _getSrcName},
 
 		{"-ifaddrs", _ifaddrs},
 	}
@@ -1514,6 +1518,12 @@ func _log(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	maybeThrow(util.SetOutputFile(fname))
+}
+
+func _getSrcName(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+	ec.OutputChan() <- String(ec.srcName)
 }
 
 func _ifaddrs(ec *EvalCtx, args []Value, opts map[string]Value) {
