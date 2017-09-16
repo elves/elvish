@@ -171,6 +171,12 @@ type Assocer interface {
 	Assoc(k, v Value) Value
 }
 
+// Assocer is anything tha can return a slightly modified version of itself with
+// the specified key removed, as a new value.
+type Dissocer interface {
+	Dissoc(k Value) Value
+}
+
 // IndexOneAssocer combines IndexOneer and Assocer.
 type IndexOneAssocer interface {
 	IndexOneer

@@ -120,6 +120,7 @@ func init() {
 
 		// Container primitives.
 		{"assoc", assoc},
+		{"dissoc", dissoc},
 
 		// Sequence primitives
 		{"explode", explode},
@@ -794,6 +795,16 @@ func assoc(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ScanArgs(args, &a, &k, &v)
 	TakeNoOpt(opts)
 	ec.OutputChan() <- a.Assoc(k, v)
+}
+
+func dissoc(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var (
+		a Dissocer
+		k Value
+	)
+	ScanArgs(args, &a, &k)
+	TakeNoOpt(opts)
+	ec.OutputChan() <- a.Dissoc(k)
 }
 
 // explode puts each element of the argument.

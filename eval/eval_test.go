@@ -345,6 +345,8 @@ var evalTests = []struct {
 	{`has-value [foo bar] badehose`, want{out: bools(false)}},
 	{`has-value "foo" o`, want{out: bools(true)}},
 	{`has-value "foo" d`, want{out: bools(false)}},
+
+	{`has-key (dissoc [&k=v] k) k`, want{out: bools(false)}},
 }
 
 func strs(ss ...string) []Value {
