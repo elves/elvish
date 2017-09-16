@@ -346,6 +346,9 @@ var evalTests = []struct {
 	{`has-value "foo" o`, want{out: bools(true)}},
 	{`has-value "foo" d`, want{out: bools(false)}},
 
+	{`put (assoc [0] 0 zero)[0]`, want{out: strs("zero")}},
+	{`put (assoc [&] k v)[k]`, want{out: strs("v")}},
+	{`put (assoc [&k=v] k v2)[k]`, want{out: strs("v2")}},
 	{`has-key (dissoc [&k=v] k) k`, want{out: bools(false)}},
 }
 
