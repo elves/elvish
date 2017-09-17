@@ -12,11 +12,19 @@ import (
 var _ = registerVariable("prompt", promptVariable)
 
 func promptVariable() eval.Variable {
+	user, err := user.Current()
+	isRoot := err == nil && user.Uid == "0"
+
 	prompt := func(ec *eval.EvalCtx,
 		args []eval.Value, opts map[string]eval.Value) {
 
 		out := ec.OutputChan()
-		out <- &ui.Styled{util.Getwd() + "> ", ui.Styles{}}
+		out <- eval.String(util.Getwd())
+		if isRoot {
+			out <- &ui.Styled{"# ", ui.Styles{"red"}}
+		} else {
+			out <- &ui.Styled{"> ", ui.Styles{}}
+		}
 	}
 	return eval.NewPtrVariableWithValidator(
 		&eval.BuiltinFn{"default prompt", prompt}, eval.ShouldBeFn)
@@ -43,7 +51,7 @@ func rpromptVariable() eval.Variable {
 		args []eval.Value, opts map[string]eval.Value) {
 
 		out := ec.OutputChan()
-		out <- &ui.Styled{rpromptStr, ui.Styles{"7"}}
+		out <- &ui.Styled{rpromptStr, ui.Styles{"inverse"}}
 	}
 
 	return eval.NewPtrVariableWithValidator(
