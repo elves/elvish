@@ -1,7 +1,29 @@
 package eval
 
 var embeddedModules = map[string]string{
-	"narrow": `before-location = []
+	"narrow": `# Implementation of location, history and lastcmd mode using the new
+# -narrow-read mode. One advantage of this is that it allows the
+# execution of arbitrary hooks before or after each mode.
+#
+# Usage:
+#   use narrow
+#   narrow:bind-trigger-keys
+#
+# narrow:bind-trigger-keys binds keys for location, history and lastcmd
+# modes. Without options, it uses the default bindings (same as the
+# default bindings for edit:location, edit:history and edit:lastcmd),
+# but different keys can be specified with the options. To disable a
+# binding, specify its key as "".
+# Example:
+#   narrow:bind-trigger-keys &location=Alt-l &lastcmd="" 
+
+# Hooks
+# Each hook variable is an array which must contain lambdas, all of
+# which will be executed in sequence before and after the
+# corresponding mode.
+# Example (list the new directory after switching to it in location mode):
+#    narrow:after-location = [ $@narrow:after-location { edit:insert-at-dot "ls"; edit:smart-enter } ]
+before-location = []
 after-location = []
 before-history = []
 after-history = []
@@ -77,12 +99,19 @@ fn -bind [k f]{
   edit:narrow:binding[$k] = $f
 }
 
+# Bind keys for location, history and lastcmd modes. Without
+# options, it uses the default bindings, but different keys
+# can be specified with the options. To disable a binding,
+# specify its key as "".
+# Example:
+#   narrow:bind-trigger-keys &location=Alt-l &lastcmd=""
 fn bind-trigger-keys [&location=C-l &history=C-r &lastcmd=M-1]{
   if (not-eq $location "") { -bind-insert $location narrow:location }
   if (not-eq $history "")  { -bind-insert $history  narrow:history }
   if (not-eq $lastcmd "")  { -bind-insert $lastcmd  narrow:lastcmd }
 }
 
+# Set up some default useful bindings for narrow mode
 -bind Up        $edit:narrow:&up
 -bind PageUp    $edit:narrow:&page-up
 -bind Down      $edit:narrow:&down
@@ -97,74 +126,67 @@ fn bind-trigger-keys [&location=C-l &history=C-r &lastcmd=M-1]{
 -bind C-G       $edit:narrow:&toggle-ignore-case
 -bind C-D       $edit:narrow:&toggle-ignore-duplication
 `,
-	"readline-binding": `binding = [&]
-
-fn bind [k f]{
-    binding[$k] = $f
-}
-
-binding=$edit:insert:binding {
-    bind Ctrl-A $edit:&move-dot-sol
-    bind Ctrl-B $edit:&move-dot-left
-    bind Ctrl-D {
+	"readline-binding": `b=[k f]{ edit:insert:binding[$k] = $f } {
+    $b Ctrl-A $edit:&move-dot-sol
+    $b Ctrl-B $edit:&move-dot-left
+    $b Ctrl-D {
         if (> (count $edit:current-command) 0) {
             edit:kill-rune-right
         } else {
             edit:return-eof
         }
     }
-    bind Ctrl-E $edit:&move-dot-eol
-    bind Ctrl-F $edit:&move-dot-right
-    bind Ctrl-H $edit:&kill-rune-left
-    bind Ctrl-L { clear > /dev/tty }
-    bind Ctrl-N $edit:&end-of-history
+    $b Ctrl-E $edit:&move-dot-eol
+    $b Ctrl-F $edit:&move-dot-right
+    $b Ctrl-H $edit:&kill-rune-left
+    $b Ctrl-L { clear > /dev/tty }
+    $b Ctrl-N $edit:&end-of-history
     # TODO: ^O
-    bind Ctrl-P $edit:history:&start
+    $b Ctrl-P $edit:history:&start
     # TODO: ^S ^T ^X family ^Y ^_
-    bind Alt-b  $edit:&move-dot-left-word
+    $b Alt-b  $edit:&move-dot-left-word
     # TODO Alt-c Alt-d
-    bind Alt-f  $edit:&move-dot-right-word
+    $b Alt-f  $edit:&move-dot-right-word
     # TODO Alt-l Alt-r Alt-u
 
-    # Ctrl-N and Ctrl-L occupied by readline binding, bind to Alt- instead.
-    bind Alt-n $edit:navigation:&start
-    bind Alt-l $edit:location:&start
+    # Ctrl-N and Ctrl-L occupied by readline binding, $b to Alt- instead.
+    $b Alt-n $edit:navigation:&start
+    $b Alt-l $edit:location:&start
 }
 
-binding=$edit:completion:binding {
-    bind Ctrl-B $edit:completion:&left
-    bind Ctrl-F $edit:completion:&right
-    bind Ctrl-N $edit:completion:&down
-    bind Ctrl-P $edit:completion:&up
-    bind Alt-f  $edit:completion:&trigger-filter
+b=[k f]{ edit:completion:binding[$k] = $f } {
+    $b Ctrl-B $edit:completion:&left
+    $b Ctrl-F $edit:completion:&right
+    $b Ctrl-N $edit:completion:&down
+    $b Ctrl-P $edit:completion:&up
+    $b Alt-f  $edit:completion:&trigger-filter
 }
 
-binding=$edit:navigation:binding {
-    bind Ctrl-B $edit:navigation:&left
-    bind Ctrl-F $edit:navigation:&right
-    bind Ctrl-N $edit:navigation:&down
-    bind Ctrl-P $edit:navigation:&up
-    bind Alt-f  $edit:navigation:&trigger-filter
+b=[k f]{ edit:navigation:binding[$k] = $f } {
+    $b Ctrl-B $edit:navigation:&left
+    $b Ctrl-F $edit:navigation:&right
+    $b Ctrl-N $edit:navigation:&down
+    $b Ctrl-P $edit:navigation:&up
+    $b Alt-f  $edit:navigation:&trigger-filter
 }
 
-binding=$edit:history:binding {
-    bind Ctrl-N $edit:history:&down-or-quit
-    bind Ctrl-P $edit:history:&up
-    bind Ctrl-G $edit:insert:&start
+b=[k f]{ edit:history:binding[$k] = $f } {
+    $b Ctrl-N $edit:history:&down-or-quit
+    $b Ctrl-P $edit:history:&up
+    $b Ctrl-G $edit:insert:&start
 }
 
-# Binding for the listing "super mode".
-binding=$edit:listing:binding {
-    bind Ctrl-N $edit:listing:&down
-    bind Ctrl-P $edit:listing:&up
-    bind Ctrl-V $edit:listing:&page-down
-    bind Alt-v  $edit:listing:&page-up
-    bind Ctrl-G $edit:insert:&start
+b=[k f]{ edit:listing:binding[$k] = $f } {
+    $b Ctrl-N $edit:listing:&down
+    $b Ctrl-P $edit:listing:&up
+    $b Ctrl-V $edit:listing:&page-down
+    $b Alt-v  $edit:listing:&page-up
+    $b Ctrl-G $edit:insert:&start
 }
 
-binding=$edit:histlist:binding {
-    bind Alt-g $edit:histlist:&toggle-case-sensitivity
-    bind Alt-d $edit:histlist:&toggle-dedup
+b=[k f]{ edit:histlist:binding[$k] = $f } {
+    $b Alt-g $edit:histlist:&toggle-case-sensitivity
+    $b Alt-d $edit:histlist:&toggle-dedup
 }
 `,
 }
