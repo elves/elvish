@@ -179,6 +179,9 @@ func init() {
 		{"eval-symlinks", WrapStringToStringError(filepath.EvalSymlinks)},
 		{"tilde-abbr", tildeAbbr},
 
+		// File types
+		{"-is-dir", isDir},
+
 		// Boolean operations
 		{"bool", boolFn},
 		{"not", not},
@@ -1180,6 +1183,20 @@ func tildeAbbr(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 	out := ec.ports[1].Chan
 	out <- String(util.TildeAbbr(path))
+}
+
+func isDir(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var pathv String
+	ScanArgs(args, &pathv)
+	path := string(pathv)
+	TakeNoOpt(opts)
+
+	ec.OutputChan() <- Bool(isDirInner(path))
+}
+
+func isDirInner(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && fi.Mode().IsDir()
 }
 
 func boolFn(ec *EvalCtx, args []Value, opts map[string]Value) {
