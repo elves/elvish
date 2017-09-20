@@ -17,6 +17,10 @@ type SourceContext struct {
 var CulpritStyle = "1;4"
 
 func (sc *SourceContext) Pprint(w io.Writer, sourceIndent string) {
+	sc.PprintOption(w, sourceIndent, true)
+}
+
+func (sc *SourceContext) PprintOption(w io.Writer, sourceIndent string, printContext bool) {
 	if sc.Begin == -1 {
 		fmt.Fprintf(w, "%s, unknown position", sc.Name)
 		return
@@ -43,14 +47,29 @@ func (sc *SourceContext) Pprint(w io.Writer, sourceIndent string) {
 	// Find on which line and column the culprit ends.
 	endLine := beginLine + strings.Count(culprit, "\n")
 
+	if printContext {
+		fmt.Fprintln(w, "%s, ", sc.Name)
+	}
+
+	// Save line %d expansion on a string, in case
+	// its length is needed for indentation (printContext=false).
+	var culpritLines string
 	if beginLine == endLine {
-		fmt.Fprintf(w, "%s, line %d:\n", sc.Name, beginLine)
+		culpritLines = fmt.Sprintf("line %d:", beginLine)
 	} else {
-		fmt.Fprintf(w, "%s, line %d-%d:\n", sc.Name, beginLine, endLine)
+		culpritLines = fmt.Sprintf("line %d:%d", beginLine, endLine)
+	}
+	fmt.Fprintf(w, culpritLines)
+	if printContext {
+		fmt.Fprintf(w, "\n")
 	}
 
 	fmt.Fprintf(w, "%s%s", sourceIndent, lineBefore)
 
+	if !printContext {
+		// If more lines come, they will be properly indented.
+		sourceIndent += strings.Repeat(" ", len(culpritLines))
+	}
 	if culprit == "" {
 		culprit = "^"
 	}

@@ -38,12 +38,28 @@ func (exc *Exception) Pprint(indent string) string {
 	} else {
 		msg = "\033[31;1m" + exc.Cause.Error() + "\033[m"
 	}
-	fmt.Fprintf(buf, "Exception: %s\n", msg)
-	buf.WriteString(indent + "Traceback:")
+	fmt.Fprintf(buf, "Exception: %s", msg)
+
+	// In case of a simple error generated from only one line
+	// don't print the full traceback format by setting
+	// printContext to false.
+	printContext := false
+	if tb := exc.Traceback; tb != nil {
+		if tb.Name != "[interactive]" {
+			printContext = true
+		}
+		printContext = printContext || tb.Next != nil
+	}
+
+	sourceIndent := indent
+	if printContext {
+		sourceIndent += "    "
+		buf.WriteString("\n" + indent + "Traceback:")
+	}
 
 	for tb := exc.Traceback; tb != nil; tb = tb.Next {
-		buf.WriteString("\n" + indent + "  ")
-		tb.Pprint(buf, indent+"    ")
+		buf.WriteString("\n" + sourceIndent)
+		tb.PprintOption(buf, sourceIndent+" ", printContext)
 	}
 
 	if pipeExcs, ok := exc.Cause.(PipelineError); ok {
@@ -52,7 +68,7 @@ func (exc *Exception) Pprint(indent string) string {
 			if e == OK {
 				continue
 			}
-			buf.WriteString("\n" + indent + "  " + e.Pprint(indent+"  "))
+			buf.WriteString("\n" + sourceIndent + e.Pprint(indent+"  "))
 		}
 	}
 
