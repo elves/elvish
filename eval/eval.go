@@ -35,6 +35,7 @@ const FnPrefix = "&"
 // shared among all evalCtx instances.
 type Evaler struct {
 	Global  Scope
+	Builtin Scope
 	Modules map[string]Namespace
 	Daemon  *api.Client
 	ToSpawn *daemon.Daemon
@@ -62,10 +63,12 @@ type EvalCtx struct {
 func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
 	dataDir string, extraModules map[string]Namespace) *Evaler {
 
+	builtin := Scope{makeBuiltinNamespace(daemon), map[string]Namespace{}}
+
 	// TODO(xiaq): Create daemon namespace asynchronously.
 	modules := map[string]Namespace{
 		"daemon":  makeDaemonNamespace(daemon),
-		"builtin": makeBuiltinNamespace(daemon),
+		"builtin": builtin.Names,
 	}
 	for name, mod := range extraModules {
 		modules[name] = mod
@@ -73,6 +76,7 @@ func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
 
 	return &Evaler{
 		Global:  makeScope(),
+		Builtin: builtin,
 		Modules: modules,
 		Daemon:  daemon,
 		ToSpawn: toSpawn,
@@ -80,10 +84,6 @@ func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
 		DataDir: dataDir,
 		intCh:   nil,
 	}
-}
-
-func (ev *Evaler) Builtin() Namespace {
-	return ev.Modules["builtin"]
 }
 
 func (ev *Evaler) searchPaths() []string {
@@ -257,7 +257,7 @@ func summarize(text string) string {
 // Compile compiles elvish code in the global scope. If the error is not nil, it
 // always has type CompilationError.
 func (ev *Evaler) Compile(n *parse.Chunk, name, text string) (Op, error) {
-	return compile(makeStaticScope(ev.Builtin()), makeStaticScope(ev.Global.Names), n, name, text)
+	return compile(makeStaticScope(ev.Builtin.Names), makeStaticScope(ev.Global.Names), n, name, text)
 }
 
 // PEval evaluates an op in a protected environment so that calls to errorf are
@@ -371,7 +371,7 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	case "up":
 		return ec.up.Names[name]
 	case "builtin":
-		return ec.Builtin()[name]
+		return ec.Builtin.Names[name]
 	case "":
 		if v := ec.local.Names[name]; v != nil {
 			return v
@@ -379,7 +379,7 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 		if v, ok := ec.up.Names[name]; ok {
 			return v
 		}
-		return ec.Builtin()[name]
+		return ec.Builtin.Names[name]
 	case "e":
 		if strings.HasPrefix(name, FnPrefix) {
 			return NewRoVariable(ExternalCmd{name[len(FnPrefix):]})

@@ -155,7 +155,7 @@ func hasProperPrefix(s, p string) bool {
 func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
 	switch ns {
 	case "":
-		for varname := range ev.Builtin() {
+		for varname := range ev.Builtin.Names {
 			f(varname)
 		}
 		for varname := range ev.Global.Names {
