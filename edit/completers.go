@@ -158,7 +158,7 @@ func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
 		for varname := range ev.Builtin() {
 			f(varname)
 		}
-		for varname := range ev.Global {
+		for varname := range ev.Global.Names {
 			f(varname)
 		}
 		// TODO Include local names as well.

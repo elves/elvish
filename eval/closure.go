@@ -23,7 +23,7 @@ type Closure struct {
 	OptNames    []string
 	OptDefaults []Value
 	Op          Op
-	Captured    map[string]Variable
+	Captured    Scope
 	SourceName  string
 	Source      string
 }
@@ -67,17 +67,23 @@ func (c *Closure) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 	// and ports can be problematic.
 
 	// Make upvalue namespace and capture variables.
-	ec.up = make(map[string]Variable)
-	for name, variable := range c.Captured {
-		ec.up[name] = variable
+	// TODO(xiaq): Is it safe to simply assign ec.up = c.Captured?
+	ec.up = makeScope()
+	for name, variable := range c.Captured.Names {
+		ec.up.Names[name] = variable
 	}
-	// Make local namespace and pass arguments.
-	ec.local = make(map[string]Variable)
+	for name, use := range c.Captured.Uses {
+		ec.up.Uses[name] = use
+	}
+
+	// Populate local scope with arguments, possibly a rest argument, and
+	// options.
+	ec.local = makeScope()
 	for i, name := range c.ArgNames {
-		ec.local[name] = NewPtrVariable(args[i])
+		ec.local.Names[name] = NewPtrVariable(args[i])
 	}
 	if c.RestArg != "" {
-		ec.local[c.RestArg] = NewPtrVariable(NewList(args[len(c.ArgNames):]...))
+		ec.local.Names[c.RestArg] = NewPtrVariable(NewList(args[len(c.ArgNames):]...))
 	}
 	// Logger.Printf("EvalCtx=%p, args=%v, opts=%v", ec, args, opts)
 	for i, name := range c.OptNames {
@@ -85,14 +91,14 @@ func (c *Closure) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 		if !ok {
 			v = c.OptDefaults[i]
 		}
-		ec.local[name] = NewPtrVariable(v)
+		ec.local.Names[name] = NewPtrVariable(v)
 	}
 	// XXX This conversion was done by the other direction.
 	convertedOpts := hashmap.Empty
 	for k, v := range opts {
 		convertedOpts = convertedOpts.Assoc(String(k), v)
 	}
-	ec.local["opts"] = NewPtrVariable(NewMap(convertedOpts))
+	ec.local.Names["opts"] = NewPtrVariable(NewMap(convertedOpts))
 
 	ec.traceback = ec.addTraceback()
 

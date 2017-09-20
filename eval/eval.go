@@ -31,13 +31,10 @@ var logger = util.GetLogger("[eval] ")
 // function "foo" is equivalent to setting a variable named FnPrefix + "foo".
 const FnPrefix = "&"
 
-// Namespace is a map from name to variables.
-type Namespace map[string]Variable
-
 // Evaler is used to evaluate elvish sources. It maintains runtime context
 // shared among all evalCtx instances.
 type Evaler struct {
-	Global  Namespace
+	Global  Scope
 	Modules map[string]Namespace
 	Daemon  *api.Client
 	ToSpawn *daemon.Daemon
@@ -52,7 +49,7 @@ type EvalCtx struct {
 	*Evaler
 	name, srcName, src string
 
-	local, up Namespace
+	local, up Scope
 	ports     []*Port
 
 	begin, end int
@@ -75,7 +72,7 @@ func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
 	}
 
 	return &Evaler{
-		Global:  Namespace{},
+		Global:  makeScope(),
 		Modules: modules,
 		Daemon:  daemon,
 		ToSpawn: toSpawn,
@@ -105,7 +102,7 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
 	return &EvalCtx{
 		ev, "top",
 		name, text,
-		ev.Global, Namespace{},
+		ev.Global, makeScope(),
 		ports,
 		0, len(text), nil, false,
 	}
@@ -144,14 +141,6 @@ func (ec *EvalCtx) growPorts(n int) {
 	ports := ec.ports
 	ec.ports = make([]*Port, n)
 	copy(ec.ports, ports)
-}
-
-func makeScope(s Namespace) scope {
-	sc := scope{}
-	for name := range s {
-		sc[name] = true
-	}
-	return sc
 }
 
 // eval evaluates a chunk node n. The supplied name and text are used in
@@ -268,7 +257,7 @@ func summarize(text string) string {
 // Compile compiles elvish code in the global scope. If the error is not nil, it
 // always has type CompilationError.
 func (ev *Evaler) Compile(n *parse.Chunk, name, text string) (Op, error) {
-	return compile(makeScope(ev.Builtin()), makeScope(ev.Global), n, name, text)
+	return compile(makeStaticScope(ev.Builtin()), makeStaticScope(ev.Global.Names), n, name, text)
 }
 
 // PEval evaluates an op in a protected environment so that calls to errorf are
@@ -378,16 +367,16 @@ var ErrStoreUnconnected = errors.New("store unconnected")
 func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	switch ns {
 	case "local":
-		return ec.local[name]
+		return ec.local.Names[name]
 	case "up":
-		return ec.up[name]
+		return ec.up.Names[name]
 	case "builtin":
 		return ec.Builtin()[name]
 	case "":
-		if v := ec.local[name]; v != nil {
+		if v := ec.local.Names[name]; v != nil {
 			return v
 		}
-		if v, ok := ec.up[name]; ok {
+		if v, ok := ec.up.Names[name]; ok {
 			return v
 		}
 		return ec.Builtin()[name]

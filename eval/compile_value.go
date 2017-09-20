@@ -463,7 +463,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 
 	// XXX The fiddlings with cp.capture is error-prone.
 	capture := cp.capture
-	cp.capture = scope{}
+	cp.capture = staticScope{}
 	cp.popScope()
 
 	for name := range capture {
@@ -482,7 +482,8 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 			defaultValue := ec.ExecAndUnwrap("option default value", op).One().Any()
 			optDefaults[i] = defaultValue
 		}
-		return []Value{&Closure{argNames, restArgName, optNames, optDefaults, op, evCapture, name, text}}
+		// XXX(xiaq): Capture uses.
+		return []Value{&Closure{argNames, restArgName, optNames, optDefaults, op, Scope{evCapture, make(map[string]Namespace)}, name, text}}
 	}
 }
 

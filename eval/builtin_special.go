@@ -83,7 +83,7 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 	}
 	return func(ec *EvalCtx) {
 		for _, name := range names {
-			delete(ec.local, name)
+			delete(ec.local.Names, name)
 		}
 		for _, name := range envNames {
 			// BUG(xiaq): We rely on the fact that os.Unsetenv always returns
@@ -121,10 +121,10 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 		// Initialize the function variable with the builtin nop
 		// function. This step allows the definition of recursive
 		// functions; the actual function will never be called.
-		ec.local[varName] = NewPtrVariable(&BuiltinFn{"<shouldn't be called>", nop})
+		ec.local.Names[varName] = NewPtrVariable(&BuiltinFn{"<shouldn't be called>", nop})
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
-		ec.local[varName].Set(closure)
+		ec.local.Names[varName].Set(closure)
 	}
 }
 
@@ -184,13 +184,13 @@ func use(ec *EvalCtx, spec string) {
 	n, err := parse.Parse(filename, source)
 	maybeThrow(err)
 
-	// Make an empty namespace to evaluate the module in.
-	local := Namespace{}
+	// Make an empty scope to evaluate the module in.
+	local := makeScope()
 
 	newEc := &EvalCtx{
 		ec.Evaler, "module " + modpath,
 		filename, source,
-		local, Namespace{},
+		local, makeScope(),
 		ec.ports,
 		0, len(source), ec.addTraceback(), false,
 	}
@@ -200,7 +200,7 @@ func use(ec *EvalCtx, spec string) {
 
 	// Load the namespace before executing. This avoids mutual and self use's to
 	// result in an infinite recursion.
-	ec.Evaler.Modules[modname] = local
+	ec.Evaler.Modules[modname] = local.Names
 	err = newEc.PEval(op)
 	if err != nil {
 		// Unload the namespace.

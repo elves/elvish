@@ -10,25 +10,23 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-type scope map[string]bool
-
 // compiler maintains the set of states needed when compiling a single source
 // file.
 type compiler struct {
 	// Builtin scope.
-	builtin scope
+	builtin staticScope
 	// Lexical scopes.
-	scopes []scope
+	scopes []staticScope
 	// Variables captured from outer scopes.
-	capture scope
+	capture staticScope
 	// Position of what is being compiled.
 	begin, end int
 	// Information about the source.
 	name, text string
 }
 
-func compile(b, g scope, n *parse.Chunk, name, text string) (op Op, err error) {
-	cp := &compiler{b, []scope{g}, scope{}, 0, 0, name, text}
+func compile(b, g staticScope, n *parse.Chunk, name, text string) (op Op, err error) {
+	cp := &compiler{b, []staticScope{g}, staticScope{}, 0, 0, name, text}
 	defer util.Catch(&err)
 	return cp.chunkOp(n), nil
 }
@@ -46,12 +44,12 @@ func (cp *compiler) errorf(format string, args ...interface{}) {
 	cp.errorpf(cp.begin, cp.end, format, args...)
 }
 
-func (cp *compiler) thisScope() scope {
+func (cp *compiler) thisScope() staticScope {
 	return cp.scopes[len(cp.scopes)-1]
 }
 
-func (cp *compiler) pushScope() scope {
-	sc := scope{}
+func (cp *compiler) pushScope() staticScope {
+	sc := staticScope{}
 	cp.scopes = append(cp.scopes, sc)
 	return sc
 }
