@@ -37,7 +37,11 @@ func goodFormHead(head string, ed *Editor) bool {
 					return true
 				}
 			default:
-				if ev.Modules[ns] != nil && ev.Modules[ns][eval.FnPrefix+name] != nil {
+				mod := ev.Global.Uses[ns]
+				if mod == nil {
+					mod = ev.Builtin.Uses[ns]
+				}
+				if mod != nil && mod[eval.FnPrefix+name] != nil {
 					return true
 				}
 			}

@@ -392,9 +392,23 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 		}
 		return sharedVariable{ec.Daemon, name}
 	default:
-		if ns, ok := ec.Modules[ns]; ok {
+		ns := ec.ResolveMod(ns)
+		if ns != nil {
 			return ns[name]
 		}
+	}
+	return nil
+}
+
+func (ec *EvalCtx) ResolveMod(name string) Namespace {
+	if ns, ok := ec.local.Uses[name]; ok {
+		return ns
+	}
+	if ns, ok := ec.up.Uses[name]; ok {
+		return ns
+	}
+	if ns, ok := ec.Builtin.Uses[name]; ok {
+		return ns
 	}
 	return nil
 }

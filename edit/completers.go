@@ -125,9 +125,7 @@ func complVariable(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*
 			rawCands <- noQuoteCandidate(varname)
 		})
 
-		// Collect namespace prefixes.
-		// TODO Support non-module namespaces.
-		for mod := range ev.Modules {
+		seenMod := func(mod string) {
 			modNsPart := mod + ":"
 			// This is to match namespaces that are "nested" under the current
 			// namespace.
@@ -135,12 +133,19 @@ func complVariable(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*
 				rawCands <- noQuoteCandidate(modNsPart[len(nsPart):])
 			}
 		}
+
+		// Collect namespace prefixes.
+		// TODO Support non-module namespaces.
+		for mod := range ev.Global.Uses {
+			seenMod(mod)
+		}
+		for mod := range ev.Builtin.Uses {
+			seenMod(mod)
+		}
 	}()
 
 	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher, nameHead,
 		rawCands, parse.Bareword)
-	// make sure completer exits
-	<-rawCands
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +173,11 @@ func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
 		}
 	default:
 		// TODO Support non-module namespaces.
-		for varname := range ev.Modules[ns] {
+		mod := ev.Global.Uses[ns]
+		if mod == nil {
+			mod = ev.Builtin.Uses[ns]
+		}
+		for varname := range mod {
 			f(varname)
 		}
 	}
@@ -348,7 +357,12 @@ func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandida
 		}
 	})
 	// TODO Support non-module namespaces.
-	for ns := range ev.Modules {
+	for ns := range ev.Global.Uses {
+		if head != ns+":" {
+			got(ns + ":")
+		}
+	}
+	for ns := range ev.Builtin.Uses {
 		if head != ns+":" {
 			got(ns + ":")
 		}

@@ -350,6 +350,24 @@ var evalTests = []struct {
 	{`put (assoc [&] k v)[k]`, want{out: strs("v")}},
 	{`put (assoc [&k=v] k v2)[k]`, want{out: strs("v2")}},
 	{`has-key (dissoc [&k=v] k) k`, want{out: bools(false)}},
+
+	// Modules (see setup_datadir_test.go for setup)
+	// "use" imports a module.
+	{`use lorem; put $lorem:name`, want{out: strs("lorem")}},
+	// imports are lexically scoped
+	// TODO: Support testing for compilation error
+	// {`{ use lorem }; put $lorem:name`, want{err: errAny}},
+	// imports are captured in upvalue
+	{`({ use lorem; put { { put $lorem:name } } })`, want{out: strs("lorem")}},
+	// multi-level module names
+	{`use a:b:c:d; put $a:b:c:d:name`, want{out: strs("a/b/c/d")}},
+	// shortening module names by using slashes for some path prefix
+	{`use a:b/c:d; put $c:d:name`, want{out: strs("a/b/c/d")}},
+	// module is cached after first use
+	{`use has/init; use has:init`, want{out: strs("has/init")}},
+	// overriding module
+	{`use d; put $d:name; use a/b/c/d; put $d:name`,
+		want{out: strs("d", "a/b/c/d")}},
 }
 
 func strs(ss ...string) []Value {
@@ -421,7 +439,7 @@ func TestMultipleEval(t *testing.T) {
 
 func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, error) {
 	name := "<eval test>"
-	ev := NewEvaler(api.NewClient("/invalid"), nil, "", nil)
+	ev := NewEvaler(api.NewClient("/invalid"), nil, dataDir, nil)
 
 	// Collect byte output
 	outBytes := []byte{}

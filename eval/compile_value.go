@@ -469,6 +469,9 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 	for name := range capture.Names {
 		cp.registerVariableGet(name)
 	}
+	for name := range capture.Uses {
+		cp.registerModAccess(name)
+	}
 
 	name, text := cp.name, cp.text
 
@@ -476,6 +479,9 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		evCapture := makeScope()
 		for name := range capture.Names {
 			evCapture.Names[name] = ec.ResolveVar("", name)
+		}
+		for name := range capture.Uses {
+			evCapture.Uses[name] = ec.ResolveMod(name)
 		}
 		optDefaults := make([]Value, len(optDefaultOps))
 		for i, op := range optDefaultOps {

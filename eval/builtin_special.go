@@ -130,29 +130,27 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 
 // UseForm = 'use' StringPrimary
 func compileUse(cp *compiler, fn *parse.Form) OpFunc {
-	var modname string
-
-	switch len(fn.Args) {
-	case 0:
+	if len(fn.Args) == 0 {
 		end := fn.Head.End()
 		cp.errorpf(end, end, "lack module name")
-	case 1:
-		modname = mustString(cp, fn.Args[0], "should be a literal module name")
-	default:
+	} else if len(fn.Args) >= 2 {
 		cp.errorpf(fn.Args[1].Begin(), fn.Args[len(fn.Args)-1].End(), "superfluous argument(s)")
 	}
 
-	return func(ec *EvalCtx) {
-		use(ec, modname)
-	}
-}
+	spec := mustString(cp, fn.Args[0], "should be a literal string")
 
-func use(ec *EvalCtx, spec string) {
 	// When modspec = "a/b/c:d", modname is c:d, and modpath is a/b/c/d
 	modname := spec[strings.LastIndexByte(spec, '/')+1:]
 	modpath := strings.Replace(spec, ":", "/", -1)
+	cp.thisScope().Uses[modname] = true
 
-	if _, ok := ec.Evaler.Modules[modname]; ok {
+	return func(ec *EvalCtx) {
+		use(ec, modname, modpath)
+	}
+}
+
+func use(ec *EvalCtx, modname, modpath string) {
+	if _, ok := ec.Evaler.Modules[modpath]; ok {
 		// Module already loaded.
 		return
 	}
@@ -200,13 +198,16 @@ func use(ec *EvalCtx, spec string) {
 
 	// Load the namespace before executing. This avoids mutual and self use's to
 	// result in an infinite recursion.
-	ec.Evaler.Modules[modname] = local.Names
+	ec.Evaler.Modules[modpath] = local.Names
 	err = newEc.PEval(op)
 	if err != nil {
 		// Unload the namespace.
 		delete(ec.Modules, modname)
 		throw(err)
 	}
+
+	// Put the just loaded module into local scope.
+	ec.local.Uses[modname] = local.Names
 }
 
 // compileAnd compiles the "and" special form.

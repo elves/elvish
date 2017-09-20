@@ -61,9 +61,13 @@ func (cp *compiler) popScope() {
 
 func (cp *compiler) registerVariableGet(qname string) bool {
 	_, ns, name := ParseAndFixVariable(qname)
-	if ns != "" && ns != "local" && ns != "up" {
-		// Variable in another mod, do nothing
+	switch ns {
+	case "", "local", "up":
+		// Handled below
+	case "e", "E", "shared":
 		return true
+	default:
+		return cp.registerModAccess(ns)
 	}
 	_, err := strconv.Atoi(name)
 	isnum := err == nil
@@ -127,8 +131,23 @@ func (cp *compiler) registerVariableSet(qname string) bool {
 		// New name. Register on this scope!
 		cp.thisScope().Names[name] = true
 		return true
+	case "e", "E", "shared":
+		// Special namespaces, do nothing
+		return true
 	default:
-		// Variable in another mod, do nothing
+		return cp.registerModAccess(ns)
+	}
+}
+
+func (cp *compiler) registerModAccess(name string) bool {
+	if cp.thisScope().Uses[name] {
 		return true
 	}
+	for i := len(cp.scopes) - 2; i >= 0; i-- {
+		if cp.scopes[i].Uses[name] {
+			cp.capture.Uses[name] = true
+			return true
+		}
+	}
+	return cp.builtin.Uses[name]
 }
