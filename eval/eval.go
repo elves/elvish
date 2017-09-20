@@ -257,7 +257,7 @@ func summarize(text string) string {
 // Compile compiles elvish code in the global scope. If the error is not nil, it
 // always has type CompilationError.
 func (ev *Evaler) Compile(n *parse.Chunk, name, text string) (Op, error) {
-	return compile(makeStaticScope(ev.Builtin.Names), makeStaticScope(ev.Global.Names), n, name, text)
+	return compile(ev.Builtin.static(), ev.Global.static(), n, name, text)
 }
 
 // PEval evaluates an op in a protected environment so that calls to errorf are

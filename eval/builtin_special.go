@@ -69,10 +69,10 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 		}
 		switch ns {
 		case "", "local":
-			if !cp.thisScope()[name] {
+			if !cp.thisScope().Names[name] {
 				cp.errorf("variable $%s not found on current local scope", name)
 			}
-			delete(cp.thisScope(), name)
+			delete(cp.thisScope().Names, name)
 			names = append(names, name)
 		case "E":
 			envNames = append(envNames, name)

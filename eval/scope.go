@@ -6,21 +6,31 @@ type Scope struct {
 	Uses  map[string]Namespace
 }
 
+// Namespace is a map from names to variables.
+type Namespace map[string]Variable
+
 func makeScope() Scope {
 	return Scope{Namespace{}, map[string]Namespace{}}
 }
 
-// Namespace is a map from names to variables.
-type Namespace map[string]Variable
-
 // staticScope represents static information of a staticScope.
 // TODO(xiaq): Represent Scope.Uses as well.
-type staticScope map[string]bool
+type staticScope struct {
+	Names map[string]bool
+	Uses  map[string]bool
+}
 
-func makeStaticScope(s Namespace) staticScope {
-	sc := staticScope{}
-	for name := range s {
-		sc[name] = true
+func makeStaticScope() staticScope {
+	return staticScope{map[string]bool{}, map[string]bool{}}
+}
+
+func (s Scope) static() staticScope {
+	ss := makeStaticScope()
+	for name := range s.Names {
+		ss.Names[name] = true
 	}
-	return sc
+	for name := range s.Uses {
+		ss.Uses[name] = true
+	}
+	return ss
 }

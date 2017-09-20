@@ -26,7 +26,7 @@ type compiler struct {
 }
 
 func compile(b, g staticScope, n *parse.Chunk, name, text string) (op Op, err error) {
-	cp := &compiler{b, []staticScope{g}, staticScope{}, 0, 0, name, text}
+	cp := &compiler{b, []staticScope{g}, makeStaticScope(), 0, 0, name, text}
 	defer util.Catch(&err)
 	return cp.chunkOp(n), nil
 }
@@ -49,13 +49,13 @@ func (cp *compiler) thisScope() staticScope {
 }
 
 func (cp *compiler) pushScope() staticScope {
-	sc := staticScope{}
+	sc := makeStaticScope()
 	cp.scopes = append(cp.scopes, sc)
 	return sc
 }
 
 func (cp *compiler) popScope() {
-	cp.scopes[len(cp.scopes)-1] = nil
+	cp.scopes[len(cp.scopes)-1] = makeStaticScope()
 	cp.scopes = cp.scopes[:len(cp.scopes)-1]
 }
 
@@ -69,23 +69,23 @@ func (cp *compiler) registerVariableGet(qname string) bool {
 	isnum := err == nil
 	// Find in local scope
 	if ns == "" || ns == "local" {
-		if cp.thisScope()[name] || isnum {
+		if cp.thisScope().Names[name] || isnum {
 			return true
 		}
 	}
 	// Find in upper scopes
 	if ns == "" || ns == "up" {
 		for i := len(cp.scopes) - 2; i >= 0; i-- {
-			if cp.scopes[i][name] || isnum {
+			if cp.scopes[i].Names[name] || isnum {
 				// Existing name: record capture and return.
-				cp.capture[name] = true
+				cp.capture.Names[name] = true
 				return true
 			}
 		}
 	}
 	// Find in builtin scope
 	if ns == "" || ns == "builtin" {
-		_, ok := cp.builtin[name]
+		_, ok := cp.builtin.Names[name]
 		if ok {
 			return true
 		}
@@ -97,13 +97,13 @@ func (cp *compiler) registerVariableSet(qname string) bool {
 	_, ns, name := ParseAndFixVariable(qname)
 	switch ns {
 	case "local":
-		cp.thisScope()[name] = true
+		cp.thisScope().Names[name] = true
 		return true
 	case "up":
 		for i := len(cp.scopes) - 2; i >= 0; i-- {
-			if cp.scopes[i][name] {
+			if cp.scopes[i].Names[name] {
 				// Existing name: record capture and return.
-				cp.capture[name] = true
+				cp.capture.Names[name] = true
 				return true
 			}
 		}
@@ -112,20 +112,20 @@ func (cp *compiler) registerVariableSet(qname string) bool {
 		cp.errorf("cannot set builtin variable")
 		return false
 	case "":
-		if cp.thisScope()[name] {
+		if cp.thisScope().Names[name] {
 			// A name on current scope. Do nothing.
 			return true
 		}
 		// Walk up the upper scopes
 		for i := len(cp.scopes) - 2; i >= 0; i-- {
-			if cp.scopes[i][name] {
+			if cp.scopes[i].Names[name] {
 				// Existing name. Do nothing
-				cp.capture[name] = true
+				cp.capture.Names[name] = true
 				return true
 			}
 		}
 		// New name. Register on this scope!
-		cp.thisScope()[name] = true
+		cp.thisScope().Names[name] = true
 		return true
 	default:
 		// Variable in another mod, do nothing
