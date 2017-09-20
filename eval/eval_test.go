@@ -368,6 +368,8 @@ var evalTests = []struct {
 	// overriding module
 	{`use d; put $d:name; use a/b/c/d; put $d:name`,
 		want{out: strs("d", "a/b/c/d")}},
+	// relative uses
+	{`use a/b/c/x; put $x:d $x:lorem`, want{out: strs("a/b/c/d", "lorem")}},
 }
 
 func strs(ss ...string) []Value {

@@ -12,6 +12,7 @@ var mods = map[string]string{
 	"lorem":    "name = lorem",
 	"d":        "name = d",
 	"a/b/c/d":  "name = a/b/c/d",
+	"a/b/c/x":  "use ./d; d = $d:name; use ../../../lorem; lorem = $lorem:name",
 	"has/init": "put has/init",
 }
 

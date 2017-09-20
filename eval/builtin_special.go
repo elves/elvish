@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/elves/elvish/parse"
@@ -27,9 +28,15 @@ import (
 
 type compileBuiltin func(*compiler, *parse.Form) OpFunc
 
-// ErrNoDataDir is thrown by the "use" special form when there is no data
-// directory.
-var ErrNoDataDir = errors.New("There is no data directory")
+var (
+	// ErrNoDataDir is thrown by "use" when there is no data directory.
+	ErrNoDataDir = errors.New("There is no data directory")
+	// ErrRelativeUseOutsideMod is thrown by "use" when relative use is used
+	// outside a module
+	ErrRelativeUseOutsideMod = errors.New("Relative use outside module")
+	// ModOutsideLib
+	ErrModOutsideLib = errors.New("Module outside library directory")
+)
 
 var builtinSpecials map[string]compileBuiltin
 
@@ -150,6 +157,21 @@ func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 }
 
 func use(ec *EvalCtx, modname, modpath string) {
+	resolvedPath := ""
+	if strings.HasPrefix(modpath, "./") || strings.HasPrefix(modpath, "../") {
+		if ec.modPath == "" {
+			throw(ErrRelativeUseOutsideMod)
+		}
+		// Resolve relative modpath.
+		resolvedPath = filepath.Clean(filepath.Dir(ec.modPath) + "/" + modpath)
+	} else {
+		resolvedPath = filepath.Clean(modpath)
+	}
+	if strings.HasPrefix(resolvedPath, "../") {
+		throw(ErrModOutsideLib)
+	}
+	modpath = resolvedPath
+
 	if _, ok := ec.Evaler.Modules[modpath]; ok {
 		// Module already loaded.
 		return
@@ -162,6 +184,7 @@ func use(ec *EvalCtx, modname, modpath string) {
 	if ec.DataDir == "" {
 		throw(ErrNoDataDir)
 	}
+
 	filename = ec.DataDir + "/lib/" + modpath + ".elv"
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		// File does not exist. Try loading from the table of builtin
@@ -187,7 +210,7 @@ func use(ec *EvalCtx, modname, modpath string) {
 
 	newEc := &EvalCtx{
 		ec.Evaler, "module " + modpath,
-		filename, source,
+		filename, source, modpath,
 		local, makeScope(),
 		ec.ports,
 		0, len(source), ec.addTraceback(), false,

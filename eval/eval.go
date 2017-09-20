@@ -48,7 +48,10 @@ type Evaler struct {
 // an EvalCtx is seldom modified, and new instances are created when needed.
 type EvalCtx struct {
 	*Evaler
-	name, srcName, src string
+	name    string
+	srcName string
+	src     string
+	modPath string // Only nonempty when evaluating a module.
 
 	local, up Scope
 	ports     []*Port
@@ -101,7 +104,7 @@ const (
 func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
 	return &EvalCtx{
 		ev, "top",
-		name, text,
+		name, text, "",
 		ev.Global, makeScope(),
 		ports,
 		0, len(text), nil, false,
@@ -117,7 +120,7 @@ func (ec *EvalCtx) fork(name string) *EvalCtx {
 	}
 	return &EvalCtx{
 		ec.Evaler, name,
-		ec.srcName, ec.src,
+		ec.srcName, ec.src, ec.modPath,
 		ec.local, ec.up,
 		newPorts,
 		ec.begin, ec.end, ec.traceback, ec.background,
