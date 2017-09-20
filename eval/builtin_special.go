@@ -128,36 +128,30 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 	}
 }
 
-// UseForm = 'use' StringPrimary [ Compound ]
+// UseForm = 'use' StringPrimary
 func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 	var modname string
-	var filenameOp ValuesOp
 
 	switch len(fn.Args) {
 	case 0:
 		end := fn.Head.End()
 		cp.errorpf(end, end, "lack module name")
-	case 2:
-		filenameOp = cp.compoundOp(fn.Args[1])
-		fallthrough
 	case 1:
 		modname = mustString(cp, fn.Args[0], "should be a literal module name")
 	default:
-		cp.errorpf(fn.Args[2].Begin(), fn.Args[len(fn.Args)-1].End(), "superfluous argument(s)")
+		cp.errorpf(fn.Args[1].Begin(), fn.Args[len(fn.Args)-1].End(), "superfluous argument(s)")
 	}
 
 	return func(ec *EvalCtx) {
-		if filenameOp.Func != nil {
-			filename := string(ec.ExecAndUnwrap(
-				"module filename", filenameOp).One().String())
-			use(ec, modname, &filename)
-		} else {
-			use(ec, modname, nil)
-		}
+		use(ec, modname)
 	}
 }
 
-func use(ec *EvalCtx, modname string, pfilename *string) {
+func use(ec *EvalCtx, spec string) {
+	// When modspec = "a/b/c:d", modname is c:d, and modpath is a/b/c/d
+	modname := spec[strings.LastIndexByte(spec, '/')+1:]
+	modpath := strings.Replace(spec, ":", "/", -1)
+
 	if _, ok := ec.Evaler.Modules[modname]; ok {
 		// Module already loaded.
 		return
@@ -166,43 +160,35 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 	// Load the source.
 	var filename, source string
 
-	if pfilename != nil {
-		filename = *pfilename
-		var err error
+	// No filename; defaulting to $datadir/lib/$modpath.elv.
+	if ec.DataDir == "" {
+		throw(ErrNoDataDir)
+	}
+	filename = ec.DataDir + "/lib/" + modpath + ".elv"
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		// File does not exist. Try loading from the table of builtin
+		// modules.
+		var ok bool
+		if source, ok = embeddedModules[modpath]; ok {
+			// Source is loaded. Do nothing more.
+			filename = "<builtin module>"
+		} else {
+			throw(fmt.Errorf("cannot load %s: %s does not exist", modpath, filename))
+		}
+	} else {
+		// File exists. Load it.
 		source, err = readFileUTF8(filename)
 		maybeThrow(err)
-	} else {
-		// No filename; defaulting to $datadir/lib/$modname.elv.
-		if ec.DataDir == "" {
-			throw(ErrNoDataDir)
-		}
-		filename = ec.DataDir + "/lib/" + strings.Replace(modname, ":", "/", -1) + ".elv"
-		if _, err := os.Stat(filename); os.IsNotExist(err) {
-			// File does not exist. Try loading from the table of builtin
-			// modules.
-			var ok bool
-			if source, ok = embeddedModules[modname]; ok {
-				// Source is loaded. Do nothing more.
-				filename = "<builtin module>"
-			} else {
-				throw(fmt.Errorf("cannot load %s: %s does not exist", modname, filename))
-			}
-		} else {
-			// File exists. Load it.
-			source, err = readFileUTF8(filename)
-			maybeThrow(err)
-		}
 	}
 
 	n, err := parse.Parse(filename, source)
 	maybeThrow(err)
 
-	// Make an empty namespace.
+	// Make an empty namespace to evaluate the module in.
 	local := Namespace{}
 
-	// TODO(xiaq): Should handle failures when evaluting the module
 	newEc := &EvalCtx{
-		ec.Evaler, "module " + modname,
+		ec.Evaler, "module " + modpath,
 		filename, source,
 		local, Namespace{},
 		ec.ports,
@@ -210,7 +196,6 @@ func use(ec *EvalCtx, modname string, pfilename *string) {
 	}
 
 	op, err := newEc.Compile(n, filename, source)
-	// TODO the err originates in another source, should add appropriate information.
 	maybeThrow(err)
 
 	// Load the namespace before executing. This avoids mutual and self use's to
