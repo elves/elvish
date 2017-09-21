@@ -30,6 +30,8 @@ import (
 	"github.com/elves/elvish/web"
 )
 
+var Version = "unknown"
+
 // defaultPort is the default port on which the web interface runs. The number
 // is chosen because it resembles "elvi".
 const defaultWebPort = 3171
@@ -38,7 +40,8 @@ var logger = util.GetLogger("[main] ")
 
 var (
 	// Flags handled in this package, or common to shell and daemon.
-	help = flag.Bool("help", false, "show usage help and quit")
+	help        = flag.Bool("help", false, "show usage help and quit")
+	showVersion = flag.Bool("version", false, "show version and quit")
 
 	logpath     = flag.String("log", "", "a file to write debug log to")
 	cpuprofile  = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -78,6 +81,12 @@ func main() {
 		usage()
 		return
 	}
+
+	if *showVersion {
+		fmt.Println(Version)
+		return
+	}
+
 	if *isdaemon && len(args) > 0 {
 		// The daemon takes no argument.
 		usage()
