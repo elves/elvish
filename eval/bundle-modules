@@ -1,10 +1,10 @@
 #!/usr/bin/env elvish
 
-out = ./embedded_modules.go
+out = ./bundled_modules.go
 
 {
 	echo "package eval"
-	echo "var embeddedModules = map[string]string{"
+	echo "var bundledModules = map[string]string{"
 
 	for f [*.elv] {
 		print '"'$f[:-4]'": `'
