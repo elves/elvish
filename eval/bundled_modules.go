@@ -4,7 +4,7 @@ var bundledModules = map[string]string{
 	"epm": `-data-dir = ~/.elvish
 -repo = $-data-dir/pkgindex
 -installed = $-data-dir/epm-installed
--repo-url = https://github.com/elves/pkginfo
+-repo-url = https://github.com/elves/pkgindex
 
 fn -info [text]{
     print (edit:styled '=> ' green)
