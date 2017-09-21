@@ -172,9 +172,14 @@ func use(ec *EvalCtx, modname, modpath string) {
 	}
 	modpath = resolvedPath
 
-	if _, ok := ec.Evaler.Modules[modpath]; ok {
+	// Put the just loaded module into local scope.
+	ec.local.Uses[modname] = loadModule(ec, modpath)
+}
+
+func loadModule(ec *EvalCtx, modpath string) Namespace {
+	if ns, ok := ec.Evaler.Modules[modpath]; ok {
 		// Module already loaded.
-		return
+		return ns
 	}
 
 	// Load the source.
@@ -225,12 +230,10 @@ func use(ec *EvalCtx, modname, modpath string) {
 	err = newEc.PEval(op)
 	if err != nil {
 		// Unload the namespace.
-		delete(ec.Modules, modname)
+		delete(ec.Modules, modpath)
 		throw(err)
 	}
-
-	// Put the just loaded module into local scope.
-	ec.local.Uses[modname] = local.Names
+	return local.Names
 }
 
 // compileAnd compiles the "and" special form.
