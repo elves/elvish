@@ -2,13 +2,14 @@ PKG_BASE := github.com/elves/elvish
 PKGS := $(shell go list ./... | grep -v /vendor/)
 PKG_COVERS := $(shell go list ./... | grep -v '^$(PKG_BASE)/vendor/' | grep -v '^$(PKG_BASE)$$' | sed "s|^$(PKG_BASE)/|cover/|" | sed 's/$$/.cover/')
 COVER_MODE := set
+VERSION := $(shell git describe --tags --always)
 
 FIRST_GOPATH=$(shell go env GOPATH | cut -d: -f1)
 
 default: get test
 
 get:
-	go get .
+	go get -ldflags "-X main.Version=$(VERSION)" .
 
 generate:
 	go generate ./...
