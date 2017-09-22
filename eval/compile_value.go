@@ -361,7 +361,7 @@ func pcaptureOutput(ec *EvalCtx, op Op) ([]Value, error) {
 
 func pcaptureOutputInner(ec *EvalCtx, op Op, valuesCb func(<-chan Value), bytesCb func(*os.File)) error {
 
-	newEc := ec.fork(fmt.Sprintf("output capture %v", op))
+	newEc := ec.fork("[output capture]")
 
 	ch := make(chan Value, outputCaptureBufferSize)
 	pipeRead, pipeWrite, err := os.Pipe()

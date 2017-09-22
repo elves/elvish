@@ -874,8 +874,8 @@ func rangeFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 
 	out := ec.ports[1].Chan
-	for i := lower; i < upper; i += step {
-		out <- String(fmt.Sprintf("%g", i))
+	for f := lower; f < upper; f += step {
+		out <- floatToString(f)
 	}
 }
 
@@ -1011,7 +1011,7 @@ func ord(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 	out := ec.ports[1].Chan
 	for _, r := range s {
-		out <- String(fmt.Sprintf("0x%x", r))
+		out <- String("0x" + strconv.FormatInt(r))
 	}
 }
 
@@ -1170,7 +1170,7 @@ func dirs(ec *EvalCtx, args []Value, opts map[string]Value) {
 	for _, dir := range dirs {
 		out <- &Struct{dirDescriptor, []Value{
 			String(dir.Path),
-			String(fmt.Sprint(dir.Score)),
+			floatToString(dir.Score),
 		}}
 	}
 }
@@ -1225,7 +1225,7 @@ func plus(ec *EvalCtx, args []Value, opts map[string]Value) {
 	for _, f := range nums {
 		sum += f
 	}
-	out <- String(fmt.Sprintf("%g", sum))
+	out <- floatToString(sum)
 }
 
 func minus(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -1245,7 +1245,7 @@ func minus(ec *EvalCtx, args []Value, opts map[string]Value) {
 			sum -= f
 		}
 	}
-	out <- String(fmt.Sprintf("%g", sum))
+	out <- floatToString(sum)
 }
 
 func times(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -1258,7 +1258,7 @@ func times(ec *EvalCtx, args []Value, opts map[string]Value) {
 	for _, f := range nums {
 		prod *= f
 	}
-	out <- String(fmt.Sprintf("%g", prod))
+	out <- floatToString(prod)
 }
 
 func slash(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -1284,7 +1284,7 @@ func divide(ec *EvalCtx, args []Value, opts map[string]Value) {
 	for _, f := range nums {
 		prod /= f
 	}
-	out <- String(fmt.Sprintf("%g", prod))
+	out <- floatToString(prod)
 }
 
 func pow(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -1293,7 +1293,7 @@ func pow(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
-	out <- String(fmt.Sprintf("%g", math.Pow(b, p)))
+	out <- floatToString(math.Pow(b, p))
 }
 
 func mod(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -1310,7 +1310,7 @@ func randFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
-	out <- String(fmt.Sprint(rand.Float64()))
+	out <- floatToString(rand.Float64())
 }
 
 func randint(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -1444,7 +1444,8 @@ func fg(ec *EvalCtx, args []Value, opts map[string]Value) {
 			errors[i] = &Exception{err, nil}
 		} else {
 			// TODO find command name
-			errors[i] = &Exception{NewExternalCmdExit(fmt.Sprintf("(pid %d)", pid), ws, pid), nil}
+			errors[i] = &Exception{NewExternalCmdExit(
+				"[pid "+strconv.Itoa(pid)+"]", ws, pid), nil}
 		}
 	}
 
@@ -1581,6 +1582,10 @@ func toFloat(arg Value) (float64, error) {
 		return float64(num), nil
 	}
 	return num, nil
+}
+
+func floatToString(f float64) String {
+	return strconv.FormatFloat(f, 'g', -1, 64)
 }
 
 func toInt(arg Value) (int, error) {
