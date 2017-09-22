@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"fmt"
 	"os"
 	"sync"
 
@@ -45,7 +44,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 	if len(ops) == 1 && !n.Background {
 		op := ops[0]
 		return func(ec *EvalCtx) {
-			newEc := ec.fork(fmt.Sprintf("form op %v", op))
+			newEc := ec.fork("[form op]")
 			err := newEc.PEval(op)
 			ClosePorts(newEc.ports)
 			maybeThrow(err)
@@ -78,7 +77,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 		// For each form, create a dedicated evalCtx and run asynchronously
 		for i, op := range ops {
 			hasChanInput := i > 0
-			newEc := ec.fork(fmt.Sprintf("form op %v", op))
+			newEc := ec.fork("[form op]")
 			if i > 0 {
 				newEc.ports[0] = nextIn
 			}
