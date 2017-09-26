@@ -1011,7 +1011,7 @@ func ord(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 	out := ec.ports[1].Chan
 	for _, r := range s {
-		out <- String("0x" + strconv.FormatInt(r))
+		out <- String("0x" + strconv.FormatInt(int64(r), 16))
 	}
 }
 
@@ -1585,7 +1585,7 @@ func toFloat(arg Value) (float64, error) {
 }
 
 func floatToString(f float64) String {
-	return strconv.FormatFloat(f, 'g', -1, 64)
+	return String(strconv.FormatFloat(f, 'g', -1, 64))
 }
 
 func toInt(arg Value) (int, error) {
