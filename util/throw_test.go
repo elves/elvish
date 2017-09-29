@@ -86,10 +86,10 @@ func TestThrows(t *testing.T) {
 }
 
 func TestThrowsAny(t *testing.T) {
-	if Throws(func() { Throw(errToThrow) }, errToThrow) != true {
+	if ThrowsAny(func() { Throw(errToThrow) }) != true {
 		t.Errorf("ThrowsAny returns false when function throws non-nil")
 	}
-	if Throws(func() {}, errToThrow) != false {
+	if ThrowsAny(func() {}) != false {
 		t.Errorf("ThrowsAny returns true when function does not throw")
 	}
 }
