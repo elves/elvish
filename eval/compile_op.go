@@ -41,16 +41,6 @@ const pipelineChanBufferSize = 32
 func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 	ops := cp.formOps(n.Forms)
 
-	if len(ops) == 1 && !n.Background {
-		op := ops[0]
-		return func(ec *EvalCtx) {
-			newEc := ec.fork("[form op]")
-			err := newEc.PEval(op)
-			ClosePorts(newEc.ports)
-			maybeThrow(err)
-		}
-	}
-
 	return func(ec *EvalCtx) {
 		ec.CheckInterrupts()
 
