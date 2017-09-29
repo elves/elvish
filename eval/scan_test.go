@@ -9,57 +9,103 @@ import (
 
 // These are used as arguments to scanArg, since Go does not allow taking
 // address of literals.
-var (
-	int_0     int
-	ints_0    []int
-	float64_0 float64
-	String_0  String
-)
+
+func intPtr() *int         { var x int; return &x }
+func intsPtr() *[]int      { var x []int; return &x }
+func float64Ptr() *float64 { var x float64; return &x }
+func stringPtr() *String   { var x String; return &x }
 
 var scanArgsTestCases = []struct {
 	variadic bool
 	src      []Value
 	dstPtrs  []interface{}
 	want     []interface{}
+	bad      bool
 }{
-	// Non-variadic (ScanArgs): scanning an int and a String
+	// Scanning an int and a String
 	{
 		src:     []Value{String("20"), String("20")},
-		dstPtrs: []interface{}{&int_0, &String_0},
+		dstPtrs: []interface{}{intPtr(), stringPtr()},
 		want:    []interface{}{20, String("20")},
 	},
-	// Variadic (ScanArgsVariadic): scanning a String and any number of ints
-	// (here 2)
+	// Scanning a String and any number of ints (here 2)
 	{
 		variadic: true,
 		src:      []Value{String("a"), String("1"), String("2")},
-		dstPtrs:  []interface{}{&String_0, &ints_0},
+		dstPtrs:  []interface{}{stringPtr(), intsPtr()},
 		want:     []interface{}{String("a"), []int{1, 2}},
 	},
-	// Variadic (ScanArgsVariadic): scanning a String and any number of ints
-	// (here 0)
+	// Scanning a String and any number of ints (here 0)
 	{
 		variadic: true,
 		src:      []Value{String("a")},
-		dstPtrs:  []interface{}{&String_0, &ints_0},
+		dstPtrs:  []interface{}{stringPtr(), intsPtr()},
 		want:     []interface{}{String("a"), []int{}},
+	},
+
+	// Arity mismatch: too few arguments (non-variadic)
+	{
+		bad:     true,
+		src:     []Value{},
+		dstPtrs: []interface{}{stringPtr()},
+	},
+	// Arity mismatch: too few arguments (non-variadic)
+	{
+		bad:     true,
+		src:     []Value{String("")},
+		dstPtrs: []interface{}{stringPtr(), intPtr()},
+	},
+	// Arity mismatch: too many arguments (non-variadic)
+	{
+		bad:     true,
+		src:     []Value{String("1"), String("2")},
+		dstPtrs: []interface{}{stringPtr()},
+	},
+	// Type mismatch (nonvariadic)
+	{
+		bad:     true,
+		src:     []Value{String("x")},
+		dstPtrs: []interface{}{intPtr()},
+	},
+
+	// Arity mismatch: too few arguments (variadic)
+	{
+		bad:      true,
+		src:      []Value{},
+		dstPtrs:  []interface{}{stringPtr(), intsPtr()},
+		variadic: true,
+	},
+	// Type mismatch within rest arg
+	{
+		bad:      true,
+		src:      []Value{String("a"), String("1"), String("lorem")},
+		dstPtrs:  []interface{}{stringPtr(), intsPtr()},
+		variadic: true,
 	},
 }
 
 func TestScanArgs(t *testing.T) {
 	for _, tc := range scanArgsTestCases {
+		funcToTest := ScanArgs
 		if tc.variadic {
-			ScanArgsVariadic(tc.src, tc.dstPtrs...)
-		} else {
-			ScanArgs(tc.src, tc.dstPtrs...)
+			funcToTest = ScanArgsVariadic
 		}
+
+		if tc.bad {
+			if !util.ThrowsAny(func() { funcToTest(tc.src, tc.dstPtrs...) }) {
+				t.Errorf("ScanArgs(%v, %v) should throw an error", tc.src, tc.dstPtrs)
+			}
+			continue
+		}
+
+		funcToTest(tc.src, tc.dstPtrs...)
 		dsts := make([]interface{}, len(tc.dstPtrs))
 		for i, ptr := range tc.dstPtrs {
 			dsts[i] = indirect(ptr)
 		}
 		err := compareSlice(tc.want, dsts)
 		if err != nil {
-			t.Errorf("ScanArgs(%s) got %q, want %v", tc.src, dsts, tc.want)
+			t.Errorf("ScanArgs(%v) got %v, want %v", tc.src, dsts, tc.want)
 		}
 	}
 }
@@ -68,55 +114,71 @@ var scanArgsBadTestCases = []struct {
 	variadic bool
 	src      []Value
 	dstPtrs  []interface{}
+}{}
+
+var scanOptsTestCases = []struct {
+	bad  bool
+	src  map[string]Value
+	opts []OptToScan
+	want []interface{}
 }{
-	// Non-variadic (ScanArgs):
-	// Arity mismatch: too few arguments
 	{
-		src:     []Value{},
-		dstPtrs: []interface{}{&String_0},
+		src: map[string]Value{
+			"foo": String("bar"),
+		},
+		opts: []OptToScan{
+			{"foo", stringPtr(), String("haha")},
+		},
+		want: []interface{}{
+			String("bar"),
+		},
 	},
-	// Arity mismatch: too few arguments
+	// Default values.
 	{
-		src:     []Value{String("")},
-		dstPtrs: []interface{}{&String_0, &int_0},
-	},
-	// Arity mismatch: too many arguments
-	{
-		src:     []Value{String("1"), String("2")},
-		dstPtrs: []interface{}{&String_0},
-	},
-	// Type mismatch
-	{
-		src:     []Value{String("x")},
-		dstPtrs: []interface{}{&int_0},
+		src: map[string]Value{
+			"foo": String("bar"),
+		},
+		opts: []OptToScan{
+			{"foo", stringPtr(), String("haha")},
+			{"lorem", stringPtr(), String("ipsum")},
+		},
+		want: []interface{}{
+			String("bar"),
+			String("ipsum"),
+		},
 	},
 
-	// Variadic (ScanArgs):
-	// Arity mismatch: too few arguments
+	// Unknown option
 	{
-		src:      []Value{},
-		dstPtrs:  []interface{}{&String_0, &ints_0},
-		variadic: true,
-	},
-	// Type mismatch within rest arg
-	{
-		src:      []Value{String("a"), String("1"), String("lorem")},
-		dstPtrs:  []interface{}{&String_0, &ints_0},
-		variadic: true,
+		bad: true,
+		src: map[string]Value{
+			"foo": String("bar"),
+		},
+		opts: []OptToScan{
+			{"lorem", stringPtr(), String("ipsum")},
+		},
 	},
 }
 
-func TestScanArgsBad(t *testing.T) {
-	for _, tc := range scanArgsBadTestCases {
-		ok := util.ThrowsAny(func() {
-			if tc.variadic {
-				ScanArgsVariadic(tc.src, tc.dstPtrs)
-			} else {
-				ScanArgs(tc.src, tc.dstPtrs)
+func TestScanOpts(t *testing.T) {
+	for _, tc := range scanOptsTestCases {
+		if tc.bad {
+			if !util.ThrowsAny(func() { ScanOpts(tc.src, tc.opts...) }) {
+				t.Errorf("ScanOpts(%v, %v...) should throw an error",
+					tc.src, tc.opts)
 			}
-		})
-		if !ok {
-			t.Errorf("ScanArgs(%v, %v) should throw an error", tc.src, tc.dstPtrs)
+			continue
+		}
+
+		ScanOpts(tc.src, tc.opts...)
+		dsts := make([]interface{}, len(tc.opts))
+		for i, opt := range tc.opts {
+			dsts[i] = indirect(opt.Ptr)
+		}
+		err := compareSlice(tc.want, dsts)
+		if err != nil {
+			t.Errorf("ScanOpts(%v, %v) got %v, want %v", tc.src, tc.opts,
+				dsts, tc.want)
 		}
 	}
 }
@@ -126,13 +188,13 @@ var scanArgTestCases = []struct {
 	destPtr interface{}
 	want    interface{}
 }{
-	{String("20"), &int_0, 20},
-	{String("0x20"), &int_0, 0x20},
-	{String("20"), &float64_0, 20.0},
-	{String("23.33"), &float64_0, 23.33},
-	{String(""), &String_0, String("")},
-	{String("1"), &String_0, String("1")},
-	{String("2.33"), &String_0, String("2.33")},
+	{String("20"), intPtr(), 20},
+	{String("0x20"), intPtr(), 0x20},
+	{String("20"), float64Ptr(), 20.0},
+	{String("23.33"), float64Ptr(), 23.33},
+	{String(""), stringPtr(), String("")},
+	{String("1"), stringPtr(), String("1")},
+	{String("2.33"), stringPtr(), String("2.33")},
 }
 
 func TestScanArg(t *testing.T) {
