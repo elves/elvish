@@ -299,7 +299,7 @@ func catch(perr *error, ec *EvalCtx) {
 		return
 	}
 	if exc, ok := r.(util.Thrown); ok {
-		err := exc.Error
+		err := exc.Wrapped
 		if _, ok := err.(*Exception); !ok {
 			err = ec.makeException(err)
 		}

@@ -3,7 +3,11 @@ package util
 // Thrown wraps an error that was raised by Throw, so that it can be recognized
 // by Catch.
 type Thrown struct {
-	Error error
+	Wrapped error
+}
+
+func (t Thrown) Error() string {
+	return "thrown: " + t.Wrapped.Error()
 }
 
 // Throw panics with err wrapped properly so that it can be catched by Catch.
@@ -20,7 +24,7 @@ func Catch(perr *error) {
 		return
 	}
 	if exc, ok := r.(Thrown); ok {
-		*perr = exc.Error
+		*perr = exc.Wrapped
 	} else {
 		panic(r)
 	}
