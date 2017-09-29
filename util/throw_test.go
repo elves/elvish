@@ -55,9 +55,10 @@ func TestThrowAndCatch(t *testing.T) {
 	}
 }
 
-func TestPCallThrowsDoesntThrow(t *testing.T) {
-	errToThrow := errors.New("error to throw")
+// errToThrow is the error to throw in test cases.
+var errToThrow = errors.New("error to throw")
 
+func TestPCall(t *testing.T) {
 	// PCall catches throws
 	if PCall(func() { Throw(errToThrow) }) != errToThrow {
 		t.Errorf("PCall does not catch throws")
@@ -70,7 +71,9 @@ func TestPCallThrowsDoesntThrow(t *testing.T) {
 	if PCall(func() { Throw(nil) }) != nil {
 		t.Errorf("PCall returns non-nil when nil has been thrown")
 	}
+}
 
+func TestThrows(t *testing.T) {
 	if Throws(func() { Throw(errToThrow) }, errToThrow) != true {
 		t.Errorf("Throws returns false when function throws wanted error")
 	}
@@ -80,7 +83,18 @@ func TestPCallThrowsDoesntThrow(t *testing.T) {
 	if Throws(func() {}, errToThrow) != false {
 		t.Errorf("Throws returns true when function does not throw")
 	}
+}
 
+func TestThrowsAny(t *testing.T) {
+	if Throws(func() { Throw(errToThrow) }, errToThrow) != true {
+		t.Errorf("ThrowsAny returns false when function throws non-nil")
+	}
+	if Throws(func() {}, errToThrow) != false {
+		t.Errorf("ThrowsAny returns true when function does not throw")
+	}
+}
+
+func TestDoesnotThrow(t *testing.T) {
 	if DoesntThrow(func() { Throw(errToThrow) }) != false {
 		t.Errorf("DoesntThrow returns true when function throws")
 	}
