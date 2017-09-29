@@ -11,28 +11,28 @@ import (
 
 // ScanArgs scans arguments into pointers to supported argument types. If the
 // arguments cannot be scanned, an error is thrown.
-func ScanArgs(src []Value, dst ...interface{}) {
-	if len(src) != len(dst) {
-		throwf("arity mistmatch: want %d arguments, got %d", len(dst), len(src))
+func ScanArgs(src []Value, dstPtrs ...interface{}) {
+	if len(src) != len(dstPtrs) {
+		throwf("arity mistmatch: want %d arguments, got %d", len(dstPtrs), len(src))
 	}
 	for i, value := range src {
-		scanArg(value, dst[i])
+		scanArg(value, dstPtrs[i])
 	}
 }
 
 // ScanArgsVariadic is like ScanArgs, but the last element of args should be a
 // pointer to a slice, and the rest of arguments will be scanned into it.
-func ScanArgsVariadic(src []Value, dst ...interface{}) {
-	if len(src) < len(dst)-1 {
-		throwf("arity mistmatch: want at least %d arguments, got %d", len(dst)-1, len(src))
+func ScanArgsVariadic(src []Value, dstPtrs ...interface{}) {
+	if len(src) < len(dstPtrs)-1 {
+		throwf("arity mistmatch: want at least %d arguments, got %d", len(dstPtrs)-1, len(src))
 	}
-	ScanArgs(src[:len(dst)-1], dst[:len(dst)-1]...)
+	ScanArgs(src[:len(dstPtrs)-1], dstPtrs[:len(dstPtrs)-1]...)
 
 	// Scan the rest of arguments into a slice.
-	rest := src[len(dst)-1:]
-	restDst := reflect.ValueOf(dst[len(dst)-1])
+	rest := src[len(dstPtrs)-1:]
+	restDst := reflect.ValueOf(dstPtrs[len(dstPtrs)-1])
 	if restDst.Kind() != reflect.Ptr || restDst.Elem().Kind() != reflect.Slice {
-		throwf("internal bug: %T to ScanArgsVariadic, need pointer to slice", dst[len(dst)-1])
+		throwf("internal bug: %T to ScanArgsVariadic, need pointer to slice", dstPtrs[len(dstPtrs)-1])
 	}
 	scanned := reflect.MakeSlice(restDst.Elem().Type(), len(rest), len(rest))
 	for i, value := range rest {
@@ -45,14 +45,14 @@ func ScanArgsVariadic(src []Value, dst ...interface{}) {
 // optional iterable value at the end containing inputs to the function. The
 // return value is a function that iterates the iterable value if it exists, or
 // the input otherwise.
-func ScanArgsOptionalInput(ec *EvalCtx, src []Value, dst ...interface{}) func(func(Value)) {
+func ScanArgsOptionalInput(ec *EvalCtx, src []Value, dstArgs ...interface{}) func(func(Value)) {
 	switch len(src) {
-	case len(dst):
-		ScanArgs(src, dst...)
+	case len(dstArgs):
+		ScanArgs(src, dstArgs...)
 		return ec.IterateInputs
-	case len(dst) + 1:
-		ScanArgs(src[:len(dst)], dst...)
-		value := src[len(dst)]
+	case len(dstArgs) + 1:
+		ScanArgs(src[:len(dstArgs)], dstArgs...)
+		value := src[len(dstArgs)]
 		iterable, ok := value.(Iterable)
 		if !ok {
 			throwf("need iterable argument, got %s", value.Kind())
@@ -64,7 +64,7 @@ func ScanArgsOptionalInput(ec *EvalCtx, src []Value, dst ...interface{}) func(fu
 			})
 		}
 	default:
-		throwf("arity mistmatch: want %d or %d arguments, got %d", len(dst), len(dst)+1, len(src))
+		throwf("arity mistmatch: want %d or %d arguments, got %d", len(dstArgs), len(dstArgs)+1, len(src))
 		return nil
 	}
 }
