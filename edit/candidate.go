@@ -109,9 +109,9 @@ func outputComplexCandidate(ec *eval.EvalCtx,
 
 	eval.ScanArgs(args, &c.stem)
 	eval.ScanOpts(opts,
-		eval.Opt{"code-suffix", &c.codeSuffix, eval.String("")},
-		eval.Opt{"display-suffix", &c.displaySuffix, eval.String("")},
-		eval.Opt{"style", &style, eval.String("")},
+		eval.OptToScan{"code-suffix", &c.codeSuffix, eval.String("")},
+		eval.OptToScan{"display-suffix", &c.displaySuffix, eval.String("")},
+		eval.OptToScan{"style", &style, eval.String("")},
 	)
 	if style != "" {
 		c.style = ui.StylesFromString(style)

@@ -11,47 +11,48 @@ import (
 
 // ScanArgs scans arguments into pointers to supported argument types. If the
 // arguments cannot be scanned, an error is thrown.
-func ScanArgs(s []Value, args ...interface{}) {
-	if len(s) != len(args) {
-		throwf("arity mistmatch: want %d arguments, got %d", len(args), len(s))
+func ScanArgs(src []Value, dst ...interface{}) {
+	if len(src) != len(dst) {
+		throwf("arity mistmatch: want %d arguments, got %d", len(dst), len(src))
 	}
-	for i, value := range s {
-		scanArg(value, args[i])
+	for i, value := range src {
+		scanArg(value, dst[i])
 	}
 }
 
 // ScanArgsVariadic is like ScanArgs, but the last element of args should be a
 // pointer to a slice, and the rest of arguments will be scanned into it.
-func ScanArgsVariadic(s []Value, args ...interface{}) {
-	if len(s) < len(args)-1 {
-		throwf("arity mistmatch: want at least %d arguments, got %d", len(args)-1, len(s))
+func ScanArgsVariadic(src []Value, dst ...interface{}) {
+	if len(src) < len(dst)-1 {
+		throwf("arity mistmatch: want at least %d arguments, got %d", len(dst)-1, len(src))
 	}
-	ScanArgs(s[:len(args)-1], args[:len(args)-1]...)
+	ScanArgs(src[:len(dst)-1], dst[:len(dst)-1]...)
 
 	// Scan the rest of arguments into a slice.
-	rest := s[len(args)-1:]
-	dst := reflect.ValueOf(args[len(args)-1])
-	if dst.Kind() != reflect.Ptr || dst.Elem().Kind() != reflect.Slice {
-		throwf("internal bug: %T to ScanArgsVariadic, need pointer to slice", args[len(args)-1])
+	rest := src[len(dst)-1:]
+	restDst := reflect.ValueOf(dst[len(dst)-1])
+	if restDst.Kind() != reflect.Ptr || restDst.Elem().Kind() != reflect.Slice {
+		throwf("internal bug: %T to ScanArgsVariadic, need pointer to slice", dst[len(dst)-1])
 	}
-	scanned := reflect.MakeSlice(dst.Elem().Type(), len(rest), len(rest))
+	scanned := reflect.MakeSlice(restDst.Elem().Type(), len(rest), len(rest))
 	for i, value := range rest {
 		scanArg(value, scanned.Index(i).Addr().Interface())
 	}
-	reflect.Indirect(dst).Set(scanned)
+	reflect.Indirect(restDst).Set(scanned)
 }
 
-// ScanArgsAndOptionalIterate is like ScanArgs, but the argument can contain an
-// optional iterable value at the end. The return value is a function that
-// iterates the iterable value if it exists, or the input otherwise.
-func ScanArgsAndOptionalIterate(ec *EvalCtx, s []Value, args ...interface{}) func(func(Value)) {
-	switch len(s) {
-	case len(args):
-		ScanArgs(s, args...)
+// ScanArgsOptionalInput is like ScanArgs, but the argument can contain an
+// optional iterable value at the end containing inputs to the function. The
+// return value is a function that iterates the iterable value if it exists, or
+// the input otherwise.
+func ScanArgsOptionalInput(ec *EvalCtx, src []Value, dst ...interface{}) func(func(Value)) {
+	switch len(src) {
+	case len(dst):
+		ScanArgs(src, dst...)
 		return ec.IterateInputs
-	case len(args) + 1:
-		ScanArgs(s[:len(args)], args...)
-		value := s[len(args)]
+	case len(dst) + 1:
+		ScanArgs(src[:len(dst)], dst...)
+		value := src[len(dst)]
 		iterable, ok := value.(Iterable)
 		if !ok {
 			throwf("need iterable argument, got %s", value.Kind())
@@ -63,20 +64,21 @@ func ScanArgsAndOptionalIterate(ec *EvalCtx, s []Value, args ...interface{}) fun
 			})
 		}
 	default:
-		throwf("arity mistmatch: want %d or %d arguments, got %d", len(args), len(args)+1, len(s))
+		throwf("arity mistmatch: want %d or %d arguments, got %d", len(dst), len(dst)+1, len(src))
 		return nil
 	}
 }
 
-// Opt is a data structure for an option that is intended to be used in ScanOpts.
-type Opt struct {
+// OptToScan is a data structure for an option that is intended to be used in
+// ScanOpts.
+type OptToScan struct {
 	Name    string
 	Ptr     interface{}
 	Default Value
 }
 
 // ScanOpts scans options from a map.
-func ScanOpts(m map[string]Value, opts ...Opt) {
+func ScanOpts(m map[string]Value, opts ...OptToScan) {
 	scanned := make(map[string]bool)
 	for _, opt := range opts {
 		a := opt.Ptr
@@ -130,26 +132,26 @@ func ScanOptsToStruct(m map[string]Value, structPtr interface{}) {
 	}
 }
 
-func scanArg(value Value, a interface{}) {
-	ptr := reflect.ValueOf(a)
+func scanArg(src Value, dstPtr interface{}) {
+	ptr := reflect.ValueOf(dstPtr)
 	if ptr.Kind() != reflect.Ptr {
-		throwf("internal bug: %T to ScanArgs, need pointer", a)
+		throwf("internal bug: %T to ScanArgs, need pointer", dstPtr)
 	}
-	v := reflect.Indirect(ptr)
-	switch v.Kind() {
+	dst := reflect.Indirect(ptr)
+	switch dst.Kind() {
 	case reflect.Int:
-		i, err := toInt(value)
+		i, err := toInt(src)
 		maybeThrow(err)
-		v.Set(reflect.ValueOf(i))
+		dst.Set(reflect.ValueOf(i))
 	case reflect.Float64:
-		f, err := toFloat(value)
+		f, err := toFloat(src)
 		maybeThrow(err)
-		v.Set(reflect.ValueOf(f))
+		dst.Set(reflect.ValueOf(f))
 	default:
-		if reflect.TypeOf(value).ConvertibleTo(v.Type()) {
-			v.Set(reflect.ValueOf(value).Convert(v.Type()))
+		if reflect.TypeOf(src).ConvertibleTo(dst.Type()) {
+			dst.Set(reflect.ValueOf(src).Convert(dst.Type()))
 		} else {
-			throwf("need %T argument, got %s", v.Interface(), value.Kind())
+			throwf("need %T argument, got %s", dst.Interface(), src.Kind())
 		}
 	}
 }

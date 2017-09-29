@@ -48,7 +48,7 @@ func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
 		args []eval.Value, opts map[string]eval.Value) {
 
 		var pattern eval.String
-		iterate := eval.ScanArgsAndOptionalIterate(ec, args, &pattern)
+		iterate := eval.ScanArgsOptionalInput(ec, args, &pattern)
 		var options struct {
 			IgnoreCase bool
 			SmartCase  bool

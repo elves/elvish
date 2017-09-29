@@ -382,7 +382,7 @@ func put(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 func print(ec *EvalCtx, args []Value, opts map[string]Value) {
 	var sepv String
-	ScanOpts(opts, Opt{"sep", &sepv, String(" ")})
+	ScanOpts(opts, OptToScan{"sep", &sepv, String(" ")})
 
 	out := ec.ports[1].File
 	sep := string(sepv)
@@ -470,7 +470,7 @@ func fromJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
 func toLines(ec *EvalCtx, args []Value, opts map[string]Value) {
-	iterate := ScanArgsAndOptionalIterate(ec, args)
+	iterate := ScanArgsOptionalInput(ec, args)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].File
@@ -482,7 +482,7 @@ func toLines(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 // toJSON converts a stream of Value's to JSON data.
 func toJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
-	iterate := ScanArgsAndOptionalIterate(ec, args)
+	iterate := ScanArgsOptionalInput(ec, args)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].File
@@ -562,7 +562,7 @@ func source(ec *EvalCtx, args []Value, opts map[string]Value) {
 // each takes a single closure and applies it to all input values.
 func each(ec *EvalCtx, args []Value, opts map[string]Value) {
 	var f CallableValue
-	iterate := ScanArgsAndOptionalIterate(ec, args, &f)
+	iterate := ScanArgsOptionalInput(ec, args, &f)
 	TakeNoOpt(opts)
 
 	broken := false
@@ -593,7 +593,7 @@ func each(ec *EvalCtx, args []Value, opts map[string]Value) {
 // peach takes a single closure and applies it to all input values in parallel.
 func peach(ec *EvalCtx, args []Value, opts map[string]Value) {
 	var f CallableValue
-	iterate := ScanArgsAndOptionalIterate(ec, args, &f)
+	iterate := ScanArgsOptionalInput(ec, args, &f)
 	TakeNoOpt(opts)
 
 	var w sync.WaitGroup
@@ -678,7 +678,7 @@ func explode(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 func take(ec *EvalCtx, args []Value, opts map[string]Value) {
 	var n int
-	iterate := ScanArgsAndOptionalIterate(ec, args, &n)
+	iterate := ScanArgsOptionalInput(ec, args, &n)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
@@ -693,7 +693,7 @@ func take(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 func drop(ec *EvalCtx, args []Value, opts map[string]Value) {
 	var n int
-	iterate := ScanArgsAndOptionalIterate(ec, args, &n)
+	iterate := ScanArgsOptionalInput(ec, args, &n)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
@@ -708,7 +708,7 @@ func drop(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 func rangeFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	var step float64
-	ScanOpts(opts, Opt{"step", &step, String("1")})
+	ScanOpts(opts, OptToScan{"step", &step, String("1")})
 
 	var lower, upper float64
 	var err error
@@ -814,7 +814,7 @@ func count(ec *EvalCtx, args []Value, opts map[string]Value) {
 // joins joins all input strings with a delimiter.
 func joins(ec *EvalCtx, args []Value, opts map[string]Value) {
 	var sepv String
-	iterate := ScanArgsAndOptionalIterate(ec, args, &sepv)
+	iterate := ScanArgsOptionalInput(ec, args, &sepv)
 	sep := string(sepv)
 	TakeNoOpt(opts)
 
@@ -852,7 +852,7 @@ func replaces(ec *EvalCtx, args []Value, opts map[string]Value) {
 		optMax       int
 	)
 	ScanArgs(args, &old, &repl, &s)
-	ScanOpts(opts, Opt{"max", &optMax, String("-1")})
+	ScanOpts(opts, OptToScan{"max", &optMax, String("-1")})
 
 	ec.ports[1].Chan <- String(strings.Replace(string(s), string(old), string(repl), optMax))
 }
@@ -952,7 +952,7 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // awk, hence the name.
 func eawk(ec *EvalCtx, args []Value, opts map[string]Value) {
 	var f CallableValue
-	iterate := ScanArgsAndOptionalIterate(ec, args, &f)
+	iterate := ScanArgsOptionalInput(ec, args, &f)
 	TakeNoOpt(opts)
 
 	broken := false

@@ -32,7 +32,7 @@ func match(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 		optPOSIX   eval.Bool
 	)
 	eval.ScanArgs(args, &argPattern, &argSource)
-	eval.ScanOpts(opts, eval.Opt{"posix", &optPOSIX, eval.Bool(false)})
+	eval.ScanOpts(opts, eval.OptToScan{"posix", &optPOSIX, eval.Bool(false)})
 
 	pattern := makePattern(argPattern, optPOSIX, eval.Bool(false))
 	matched := pattern.MatchString(string(argSource))
@@ -55,9 +55,9 @@ func find(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	)
 	eval.ScanArgs(args, &argPattern, &argSource)
 	eval.ScanOpts(opts,
-		eval.Opt{"posix", &optPOSIX, eval.Bool(false)},
-		eval.Opt{"longest", &optLongest, eval.Bool(false)},
-		eval.Opt{"max", &optMax, eval.String("-1")})
+		eval.OptToScan{"posix", &optPOSIX, eval.Bool(false)},
+		eval.OptToScan{"longest", &optLongest, eval.Bool(false)},
+		eval.OptToScan{"max", &optMax, eval.String("-1")})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
 
@@ -102,9 +102,9 @@ func replace(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	)
 	eval.ScanArgs(args, &argPattern, &argRepl, &argSource)
 	eval.ScanOpts(opts,
-		eval.Opt{"posix", &optPOSIX, eval.Bool(false)},
-		eval.Opt{"longest", &optLongest, eval.Bool(false)},
-		eval.Opt{"literal", &optLiteral, eval.Bool(false)})
+		eval.OptToScan{"posix", &optPOSIX, eval.Bool(false)},
+		eval.OptToScan{"longest", &optLongest, eval.Bool(false)},
+		eval.OptToScan{"literal", &optLiteral, eval.Bool(false)})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
 
@@ -154,9 +154,9 @@ func split(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	)
 	eval.ScanArgs(args, &argPattern, &argSource)
 	eval.ScanOpts(opts,
-		eval.Opt{"posix", &optPOSIX, eval.Bool(false)},
-		eval.Opt{"longest", &optLongest, eval.Bool(false)},
-		eval.Opt{"max", &optMax, eval.String("-1")})
+		eval.OptToScan{"posix", &optPOSIX, eval.Bool(false)},
+		eval.OptToScan{"longest", &optLongest, eval.Bool(false)},
+		eval.OptToScan{"max", &optMax, eval.String("-1")})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
 
