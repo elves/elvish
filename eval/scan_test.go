@@ -3,6 +3,8 @@ package eval
 import (
 	"reflect"
 	"testing"
+
+	"github.com/elves/elvish/util"
 )
 
 // These are used as arguments to scanArg, since Go does not allow taking
@@ -15,16 +17,33 @@ var (
 )
 
 var scanArgsTestCases = []struct {
+	variadic bool
 	src      []Value
 	dstPtrs  []interface{}
-	variadic bool
 	want     []interface{}
 }{
-	{nil, nil, false, nil},
-	{[]Value{String("20")}, []interface{}{&int_0}, false, []interface{}{20}},
-	{[]Value{String("a"), String("1"), String("2")},
-		[]interface{}{&String_0, &ints_0}, true, []interface{}{
-			String("a"), []int{1, 2}}},
+	// Non-variadic (ScanArgs): scanning an int and a String
+	{
+		src:     []Value{String("20"), String("20")},
+		dstPtrs: []interface{}{&int_0, &String_0},
+		want:    []interface{}{20, String("20")},
+	},
+	// Variadic (ScanArgsVariadic): scanning a String and any number of ints
+	// (here 2)
+	{
+		variadic: true,
+		src:      []Value{String("a"), String("1"), String("2")},
+		dstPtrs:  []interface{}{&String_0, &ints_0},
+		want:     []interface{}{String("a"), []int{1, 2}},
+	},
+	// Variadic (ScanArgsVariadic): scanning a String and any number of ints
+	// (here 0)
+	{
+		variadic: true,
+		src:      []Value{String("a")},
+		dstPtrs:  []interface{}{&String_0, &ints_0},
+		want:     []interface{}{String("a"), []int{}},
+	},
 }
 
 func TestScanArgs(t *testing.T) {
@@ -41,6 +60,63 @@ func TestScanArgs(t *testing.T) {
 		err := compareSlice(tc.want, dsts)
 		if err != nil {
 			t.Errorf("ScanArgs(%s) got %q, want %v", tc.src, dsts, tc.want)
+		}
+	}
+}
+
+var scanArgsBadTestCases = []struct {
+	variadic bool
+	src      []Value
+	dstPtrs  []interface{}
+}{
+	// Non-variadic (ScanArgs):
+	// Arity mismatch: too few arguments
+	{
+		src:     []Value{},
+		dstPtrs: []interface{}{&String_0},
+	},
+	// Arity mismatch: too few arguments
+	{
+		src:     []Value{String("")},
+		dstPtrs: []interface{}{&String_0, &int_0},
+	},
+	// Arity mismatch: too many arguments
+	{
+		src:     []Value{String("1"), String("2")},
+		dstPtrs: []interface{}{&String_0},
+	},
+	// Type mismatch
+	{
+		src:     []Value{String("x")},
+		dstPtrs: []interface{}{&int_0},
+	},
+
+	// Variadic (ScanArgs):
+	// Arity mismatch: too few arguments
+	{
+		src:      []Value{},
+		dstPtrs:  []interface{}{&String_0, &ints_0},
+		variadic: true,
+	},
+	// Type mismatch within rest arg
+	{
+		src:      []Value{String("a"), String("1"), String("lorem")},
+		dstPtrs:  []interface{}{&String_0, &ints_0},
+		variadic: true,
+	},
+}
+
+func TestScanArgsBad(t *testing.T) {
+	for _, tc := range scanArgsBadTestCases {
+		ok := util.ThrowsAny(func() {
+			if tc.variadic {
+				ScanArgsVariadic(tc.src, tc.dstPtrs)
+			} else {
+				ScanArgs(tc.src, tc.dstPtrs)
+			}
+		})
+		if !ok {
+			t.Errorf("ScanArgs(%v, %v) should throw an error", tc.src, tc.dstPtrs)
 		}
 	}
 }
