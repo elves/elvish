@@ -378,6 +378,10 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 	sourceIsFd := n.RightIsFd
 	mode := n.Mode
 	flag := makeFlag(mode)
+	if flag == -1 {
+		// TODO: Record and get redirection sign position
+		cp.errorf("bad redirection sign")
+	}
 
 	return func(ec *EvalCtx) {
 		var dst int

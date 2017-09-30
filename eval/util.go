@@ -88,8 +88,7 @@ func makeFlag(m parse.RedirMode) int {
 	case parse.Append:
 		return os.O_WRONLY | os.O_CREATE | os.O_APPEND
 	default:
-		// XXX should report parser bug
-		panic("bad RedirMode; parser bug")
+		return -1
 	}
 }
 
