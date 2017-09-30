@@ -1,12 +1,14 @@
-// +build !cgo
+// +build !windows
 
 package sys
 
 import (
-	"github.com/mattn/go-isatty"
+	"unsafe"
 )
 
+// IsATTY returns true if the given file descriptor is a terminal.
 func IsATTY(fd int) bool {
-	return isatty.IsTerminal(uintptr(fd)) ||
-		isatty.IsCygwinTerminal(uintptr(fd))
+	var term Termios
+	err := Ioctl(fd, getAttrIOCTL, uintptr(unsafe.Pointer(&term)))
+	return err == nil
 }

@@ -13,23 +13,11 @@ import (
 // Termios represents terminal attributes.
 type Termios unix.Termios
 
-func ioctl(fd, cmd uintptr, arg unsafe.Pointer) error {
-	return ioctlu(fd, cmd, uintptr(arg))
-}
-
-func ioctlu(fd, cmd, arg uintptr) error {
-	_, _, errno := unix.Syscall(unix.SYS_IOCTL, fd, cmd, arg)
-	if errno == 0 {
-		return nil
-	}
-	return errno
-}
-
 // NewTermiosFromFd extracts the terminal attribute of the given file
 // descriptor.
 func NewTermiosFromFd(fd int) (*Termios, error) {
 	var term Termios
-	if err := ioctl(uintptr(fd), getAttrIOCTL, unsafe.Pointer(&term)); err != nil {
+	if err := Ioctl(fd, getAttrIOCTL, uintptr(unsafe.Pointer(&term))); err != nil {
 		return nil, err
 	}
 	return &term, nil
@@ -37,7 +25,7 @@ func NewTermiosFromFd(fd int) (*Termios, error) {
 
 // ApplyToFd applies term to the given file descriptor.
 func (term *Termios) ApplyToFd(fd int) error {
-	return ioctl(uintptr(fd), setAttrNowIOCTL, unsafe.Pointer(term))
+	return Ioctl(fd, setAttrNowIOCTL, uintptr(unsafe.Pointer(term)))
 }
 
 // Copy returns a copy of term.
@@ -73,5 +61,5 @@ func (term *Termios) SetICRNL(v bool) {
 
 // FlushInput discards data written to a file descriptor but not read.
 func FlushInput(fd int) error {
-	return ioctlu(uintptr(fd), flushIOCTL, uintptr(unix.TCIFLUSH))
+	return Ioctl(fd, flushIOCTL, uintptr(unix.TCIFLUSH))
 }
