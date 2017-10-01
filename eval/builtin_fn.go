@@ -21,7 +21,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"unicode/utf8"
 	"unsafe"
 
 	"github.com/elves/elvish/store/storedefs"
@@ -1419,54 +1418,6 @@ func _ifaddrs(ec *EvalCtx, args []Value, opts map[string]Value) {
 	for _, addr := range addrs {
 		out <- String(addr.String())
 	}
-}
-
-func toFloat(arg Value) (float64, error) {
-	if _, ok := arg.(String); !ok {
-		return 0, fmt.Errorf("must be string")
-	}
-	s := string(arg.(String))
-	num, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		num, err2 := strconv.ParseInt(s, 0, 64)
-		if err2 != nil {
-			return 0, err
-		}
-		return float64(num), nil
-	}
-	return num, nil
-}
-
-func floatToString(f float64) String {
-	return String(strconv.FormatFloat(f, 'g', -1, 64))
-}
-
-func toInt(arg Value) (int, error) {
-	arg, ok := arg.(String)
-	if !ok {
-		return 0, fmt.Errorf("must be string")
-	}
-	num, err := strconv.ParseInt(string(arg.(String)), 0, 0)
-	if err != nil {
-		return 0, err
-	}
-	return int(num), nil
-}
-
-func toRune(arg Value) (rune, error) {
-	ss, ok := arg.(String)
-	if !ok {
-		return -1, fmt.Errorf("must be string")
-	}
-	s := string(ss)
-	r, size := utf8.DecodeRuneInString(s)
-	if r == utf8.RuneError {
-		return -1, fmt.Errorf("string is not valid UTF-8")
-	}
-	if size != len(s) {
-		return -1, fmt.Errorf("string has multiple runes")
-	}
-	return r, nil
 }
 
 func preExit(ec *EvalCtx) {

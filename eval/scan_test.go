@@ -199,7 +199,7 @@ var scanArgTestCases = []struct {
 
 func TestScanArg(t *testing.T) {
 	for _, tc := range scanArgTestCases {
-		scanArg(tc.source, tc.destPtr)
+		scanValueToGo(tc.source, tc.destPtr)
 		if !equals(indirect(tc.destPtr), tc.want) {
 			t.Errorf("scanArg(%s) got %q, want %v", tc.source,
 				indirect(tc.destPtr), tc.want)

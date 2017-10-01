@@ -16,7 +16,7 @@ func ScanArgs(src []Value, dstPtrs ...interface{}) {
 		throwf("arity mistmatch: want %d arguments, got %d", len(dstPtrs), len(src))
 	}
 	for i, value := range src {
-		scanArg(value, dstPtrs[i])
+		scanValueToGo(value, dstPtrs[i])
 	}
 }
 
@@ -36,7 +36,7 @@ func ScanArgsVariadic(src []Value, dstPtrs ...interface{}) {
 	}
 	scanned := reflect.MakeSlice(restDst.Elem().Type(), len(rest), len(rest))
 	for i, value := range rest {
-		scanArg(value, scanned.Index(i).Addr().Interface())
+		scanValueToGo(value, scanned.Index(i).Addr().Interface())
 	}
 	reflect.Indirect(restDst).Set(scanned)
 }
@@ -86,7 +86,7 @@ func ScanOpts(m map[string]Value, opts ...OptToScan) {
 		if !ok {
 			value = opt.Default
 		}
-		scanArg(value, a)
+		scanValueToGo(value, a)
 		scanned[opt.Name] = true
 	}
 	for key := range m {
@@ -128,30 +128,6 @@ func ScanOptsToStruct(m map[string]Value, structPtr interface{}) {
 		if !ok {
 			throwf("unknown option %s", parse.Quote(k))
 		}
-		scanArg(v, struc.Field(fieldIdx).Addr().Interface())
-	}
-}
-
-func scanArg(src Value, dstPtr interface{}) {
-	ptr := reflect.ValueOf(dstPtr)
-	if ptr.Kind() != reflect.Ptr {
-		throwf("internal bug: %T to ScanArgs, need pointer", dstPtr)
-	}
-	dst := reflect.Indirect(ptr)
-	switch dst.Kind() {
-	case reflect.Int:
-		i, err := toInt(src)
-		maybeThrow(err)
-		dst.Set(reflect.ValueOf(i))
-	case reflect.Float64:
-		f, err := toFloat(src)
-		maybeThrow(err)
-		dst.Set(reflect.ValueOf(f))
-	default:
-		if reflect.TypeOf(src).ConvertibleTo(dst.Type()) {
-			dst.Set(reflect.ValueOf(src).Convert(dst.Type()))
-		} else {
-			throwf("need %T argument, got %s", dst.Interface(), src.Kind())
-		}
+		scanValueToGo(v, struc.Field(fieldIdx).Addr().Interface())
 	}
 }
