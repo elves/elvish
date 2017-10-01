@@ -71,7 +71,9 @@ func PurelyEvalPrimary(pn *parse.Primary, ev *eval.Evaler) eval.Value {
 		}
 		ec := eval.NewTopEvalCtx(ev, "[pure eval]", "", nil)
 		variable := ec.ResolveVar(ns, name)
-		return variable.Get()
+		if variable != nil {
+			return variable.Get()
+		}
 	}
 	return nil
 }
