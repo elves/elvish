@@ -44,6 +44,14 @@ func (e *Emitter) form(n *parse.Form) {
 		e.formHead(n.Head)
 		// Special forms
 		switch n.Head.SourceText() {
+		case "if":
+			for i := 2; i < len(n.Args); i += 2 {
+				a := n.Args[i]
+				argText := a.SourceText()
+				if argText == "elif" || argText == "else" {
+					e.AddStyling(a.Begin(), a.End(), styleForSep[argText])
+				}
+			}
 		case "for":
 			if len(n.Args) >= 1 && len(n.Args[0].Indexings) > 0 {
 				v := n.Args[0].Indexings[0].Head
