@@ -129,6 +129,7 @@ func init() {
 		{"has-value", hasValue},
 
 		// String
+		{"to-string", toString},
 		{"joins", joins},
 		{"splits", splits},
 		{"replaces", replaces},
@@ -808,6 +809,15 @@ func count(ec *EvalCtx, args []Value, opts map[string]Value) {
 		throw(errors.New("want 0 or 1 argument"))
 	}
 	ec.ports[1].Chan <- String(strconv.Itoa(n))
+}
+
+// toString converts all arguments to strings.
+func toString(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoOpt(opts)
+	out := ec.OutputChan()
+	for _, a := range args {
+		out <- String(ToString(a))
+	}
 }
 
 // joins joins all input strings with a delimiter.
