@@ -60,31 +60,31 @@ func toRune(arg Value) (rune, error) {
 // scanValueToGo converts Value to Go data, depending on the type of the
 // destination.
 func scanValueToGo(src Value, dstPtr interface{}) {
-	ptr := reflect.ValueOf(dstPtr)
-	if ptr.Kind() != reflect.Ptr {
-		throwf("internal bug: %T to ScanArgs, need pointer", dstPtr)
-	}
-	dst := reflect.Indirect(ptr)
-	switch dst.Kind() {
-	case reflect.String:
+	switch dstPtr := dstPtr.(type) {
+	case *string:
 		s, ok := src.(String)
 		if !ok {
 			throwf("cannot convert %T to string", src)
 		}
-		dst.Set(reflect.ValueOf(string(s)))
-	case reflect.Int:
+		*dstPtr = string(s)
+	case *int:
 		i, err := toInt(src)
 		maybeThrow(err)
-		dst.Set(reflect.ValueOf(i))
-	case reflect.Float64:
+		*dstPtr = i
+	case *float64:
 		f, err := toFloat(src)
 		maybeThrow(err)
-		dst.Set(reflect.ValueOf(f))
+		*dstPtr = f
 	default:
-		if reflect.TypeOf(src).ConvertibleTo(dst.Type()) {
-			dst.Set(reflect.ValueOf(src).Convert(dst.Type()))
+		ptr := reflect.ValueOf(dstPtr)
+		if ptr.Kind() != reflect.Ptr {
+			throwf("internal bug: %T to ScanArgs, need pointer", dstPtr)
+		}
+		dstReflect := reflect.Indirect(ptr)
+		if reflect.TypeOf(src).ConvertibleTo(dstReflect.Type()) {
+			dstReflect.Set(reflect.ValueOf(src).Convert(dstReflect.Type()))
 		} else {
-			throwf("need %T argument, got %s", dst.Interface(), src.Kind())
+			throwf("need %T argument, got %s", dstReflect.Interface(), src.Kind())
 		}
 	}
 }
