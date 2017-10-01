@@ -84,6 +84,8 @@ var evalTests = []struct {
 	{"l = [a]; l[0]=x put $l[0]; put $l[0]", want{out: strs("x", "a")}},
 	// Temporary assignment of map element.
 	{"m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]", want{out: strs("v2", "v")}},
+	// Temporary assignment before special form.
+	{"li=[foo bar] for x $li { put $x }", want{out: strs("foo", "bar")}},
 
 	// Spacey assignment.
 	{"a @b = 2 3 foo; put $a $b[1]", want{out: strs("2", "foo")}},
@@ -121,6 +123,13 @@ var evalTests = []struct {
 
 	{"f=(mktemp elvXXXXXX); echo 233 > $f; cat < $f; rm $f",
 		want{bytesOut: []byte("233\n")}},
+
+	// Redirections from special form.
+	{`f = (mktemp elvXXXXXX);
+	for x [lorem ipsum] { echo $x } > $f
+	cat $f
+	rm $f`,
+		want{bytesOut: []byte("lorem\nipsum\n")}},
 
 	// Redirections from File object.
 	{`fname=(mktemp elvXXXXXX); echo haha > $fname;

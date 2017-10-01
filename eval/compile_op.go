@@ -156,19 +156,24 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
 	}
 
+	var specialOpFunc OpFunc
+
 	if n.Head != nil {
 		headStr, ok := oneString(n.Head)
 		if ok {
 			compileForm, ok := builtinSpecials[headStr]
 			if ok {
 				// special form
-				return compileForm(cp, n)
+				specialOpFunc = compileForm(cp, n)
+			} else {
+				// Ignore the output. If a matching function exists it will be
+				// captured and eventually the Evaler executes it. If not,
+				// nothing happens here and the Evaler executes an external
+				// command.
+				cp.registerVariableGet(FnPrefix + headStr)
+				// XXX Dynamic head names should always refer to external
+				// commands.
 			}
-			// Ignore the output. If a matching function exists it will be
-			// captured and eventually the Evaler executes it. If not, nothing
-			// happens here and the Evaler executes an external command.
-			cp.registerVariableGet(FnPrefix + headStr)
-			// XXX Dynamic head names should always refer to external commands
 		}
 	}
 
@@ -249,42 +254,45 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			}()
 		}
 
-		var headFn Callable
-		var args []Value
-		if headOp.Func != nil {
-			// head
-			headFn = ec.ExecAndUnwrap("head of command", headOp).One().Callable()
-
-			// args
-			for _, argOp := range argOps {
-				args = append(args, argOp.Exec(ec)...)
-			}
-		}
-
-		// opts
-		// XXX This conversion should be avoided.
-		opts := optsOp(ec)[0].(Map)
-		convertedOpts := make(map[string]Value)
-		opts.IteratePair(func(k, v Value) bool {
-			if ks, ok := k.(String); ok {
-				convertedOpts[string(ks)] = v
-			} else {
-				throwf("Option key must be string, got %s", k.Kind())
-			}
-			return true
-		})
-
 		// redirs
 		for _, redirOp := range redirOps {
 			redirOp.Exec(ec)
 		}
 
-		ec.begin, ec.end = begin, end
-
-		if headFn != nil {
-			headFn.Call(ec, args, convertedOpts)
+		if specialOpFunc != nil {
+			specialOpFunc(ec)
 		} else {
-			spaceyAssignOp.Exec(ec)
+			var headFn Callable
+			var args []Value
+			if headOp.Func != nil {
+				// head
+				headFn = ec.ExecAndUnwrap("head of command", headOp).One().Callable()
+
+				// args
+				for _, argOp := range argOps {
+					args = append(args, argOp.Exec(ec)...)
+				}
+			}
+
+			// opts
+			// XXX This conversion should be avoided.
+			opts := optsOp(ec)[0].(Map)
+			convertedOpts := make(map[string]Value)
+			opts.IteratePair(func(k, v Value) bool {
+				if ks, ok := k.(String); ok {
+					convertedOpts[string(ks)] = v
+				} else {
+					throwf("Option key must be string, got %s", k.Kind())
+				}
+				return true
+			})
+			ec.begin, ec.end = begin, end
+
+			if headFn != nil {
+				headFn.Call(ec, args, convertedOpts)
+			} else {
+				spaceyAssignOp.Exec(ec)
+			}
 		}
 	}
 }
