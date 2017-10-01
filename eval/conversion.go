@@ -57,6 +57,8 @@ func toRune(arg Value) (rune, error) {
 	return r, nil
 }
 
+// scanValueToGo converts Value to Go data, depending on the type of the
+// destination.
 func scanValueToGo(src Value, dstPtr interface{}) {
 	ptr := reflect.ValueOf(dstPtr)
 	if ptr.Kind() != reflect.Ptr {
@@ -64,6 +66,12 @@ func scanValueToGo(src Value, dstPtr interface{}) {
 	}
 	dst := reflect.Indirect(ptr)
 	switch dst.Kind() {
+	case reflect.String:
+		s, ok := src.(String)
+		if !ok {
+			throwf("cannot convert %T to string", src)
+		}
+		dst.Set(reflect.ValueOf(string(s)))
 	case reflect.Int:
 		i, err := toInt(src)
 		maybeThrow(err)
@@ -78,5 +86,22 @@ func scanValueToGo(src Value, dstPtr interface{}) {
 		} else {
 			throwf("need %T argument, got %s", dst.Interface(), src.Kind())
 		}
+	}
+}
+
+// convertGoToValue converts Go data to Value.
+func convertGoToValue(src interface{}) Value {
+	switch src := src.(type) {
+	case string:
+		return String(src)
+	case int:
+		return String(strconv.Itoa(src))
+	case float64:
+		return floatToString(src)
+	case Value:
+		return src
+	default:
+		throwf("cannot convert type %T to Value", src)
+		panic("unreachable")
 	}
 }
