@@ -199,6 +199,10 @@ func handleSignals() {
 	go func() {
 		for sig := range sigs {
 			logger.Println("signal", sig)
+			if sig == syscall.SIGHUP {
+				syscall.Kill(0, syscall.SIGHUP)
+				os.Exit(0)
+			}
 			if sig == syscall.SIGQUIT || sig == syscall.SIGUSR1 {
 				fmt.Print(sys.DumpStack())
 			}
