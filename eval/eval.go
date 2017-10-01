@@ -31,6 +31,12 @@ var logger = util.GetLogger("[eval] ")
 // function "foo" is equivalent to setting a variable named FnPrefix + "foo".
 const FnPrefix = "&"
 
+const (
+	outChanSize              = 32
+	defaultValueOutIndicator = "▶ "
+	initIndent               = NoPretty
+)
+
 // Evaler is used to evaluate elvish sources. It maintains runtime context
 // shared among all evalCtx instances.
 type Evaler struct {
@@ -42,6 +48,9 @@ type Evaler struct {
 	Editor  Editor
 	DataDir string
 	intCh   chan struct{}
+
+	// Configurations.
+	valueOutIndicator string
 }
 
 // EvalCtx maintains an Evaler along with its runtime context. After creation
@@ -77,7 +86,7 @@ func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
 		modules[name] = mod
 	}
 
-	return &Evaler{
+	ev := &Evaler{
 		Global:  makeScope(),
 		Builtin: builtin,
 		Modules: modules,
@@ -86,19 +95,16 @@ func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
 		Editor:  nil,
 		DataDir: dataDir,
 		intCh:   nil,
+
+		valueOutIndicator: defaultValueOutIndicator,
 	}
+	builtin.Names["value-out-indicator"] = NewBackedVariable(&ev.valueOutIndicator)
+	return ev
 }
 
 func (ev *Evaler) searchPaths() []string {
 	return strings.Split(os.Getenv("PATH"), ":")
 }
-
-const (
-	outChanSize    = 32
-	outChanLeader  = "▶ "
-	falseIndicator = "✗"
-	initIndent     = NoPretty
-)
 
 // NewTopEvalCtx creates a top-level evalCtx.
 func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
@@ -163,7 +169,7 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 	outDone := make(chan struct{})
 	go func() {
 		for v := range outCh {
-			fmt.Println(outChanLeader + v.Repr(initIndent))
+			fmt.Println(ev.valueOutIndicator + v.Repr(initIndent))
 		}
 		close(outDone)
 	}()
