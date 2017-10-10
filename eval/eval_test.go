@@ -366,8 +366,12 @@ var evalTests = []struct {
 	// imports are lexically scoped
 	// TODO: Support testing for compilation error
 	// {`{ use lorem }; put $lorem:name`, want{err: errAny}},
-	// imports are captured in upvalue
+
+	// use of imported variable is captured in upvalue
 	{`({ use lorem; put { { put $lorem:name } } })`, want{out: strs("lorem")}},
+	// use of imported function is also captured in upvalue
+	{`{ use lorem; { lorem:put-name } }`, want{out: strs("lorem")}},
+
 	// multi-level module names
 	{`use a:b:c:d; put $a:b:c:d:name`, want{out: strs("a/b/c/d")}},
 	// shortening module names by using slashes for some path prefix

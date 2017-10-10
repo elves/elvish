@@ -9,7 +9,7 @@ import (
 )
 
 var mods = map[string]string{
-	"lorem":    "name = lorem",
+	"lorem":    "name = lorem; fn put-name { put $name }",
 	"d":        "name = d",
 	"a/b/c/d":  "name = a/b/c/d",
 	"a/b/c/x":  "use ./d; d = $d:name; use ../../../lorem; lorem = $lorem:name",
