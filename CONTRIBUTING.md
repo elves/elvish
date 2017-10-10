@@ -4,7 +4,7 @@
 
 1.  Always run unit tests before committing. `make` will take care of this.
 
-2.  Some files are generated from other files. They should be commmited into the repository for this package to be go-getable. Run `go generate ./...` to regenerate them in case you modified the source.
+2.  Some files are generated from other files. They should be committed into the repository for this package to be go-getable. Run `go generate ./...` to regenerate them in case you modified the source.
 
 3.  Always format the code with `goimports` before committing. Run `go get golang.org/x/tools/cmd/goimports` to install `goimports`, and `goimports -w .` to format all golang sources.
 
@@ -14,7 +14,7 @@
             clean = goimports
             smudge = cat
 
-    Git will then always run `goimports` for you before comitting, since `.gitattributes` in this repository refers to this filter. More about Git attributes and filters [here](https://www.kernel.org/pub/software/scm/git/docs/gitattributes.html).
+    Git will then always run `goimports` for you before committing, since `.gitattributes` in this repository refers to this filter. More about Git attributes and filters [here](https://www.kernel.org/pub/software/scm/git/docs/gitattributes.html).
 
 ## Human Communication
 
