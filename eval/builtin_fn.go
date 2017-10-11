@@ -97,6 +97,9 @@ func init() {
 		{"to-lines", toLines},
 		{"to-json", toJSON},
 
+		// Execution control
+		{"run-parallel", runParallel},
+
 		// Exception and control
 		{"fail", fail},
 		{"multi-error", multiErrorFn},
@@ -492,6 +495,28 @@ func toJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
 		err := enc.Encode(v)
 		maybeThrow(err)
 	})
+}
+
+func runParallel(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var functions []CallableValue
+	ScanArgsVariadic(args, &functions)
+	TakeNoOpt(opts)
+
+	var waitg sync.WaitGroup
+	waitg.Add(len(functions))
+	exceptions := make([]*Exception, len(functions))
+	for i, function := range functions {
+		go func(ec *EvalCtx, function CallableValue, exception **Exception) {
+			err := ec.PCall(function, NoArgs, NoOpts)
+			if err != nil {
+				*exception = err.(*Exception)
+			}
+			waitg.Done()
+		}(ec.fork("[run-parallel function]"), function, &exceptions[i])
+	}
+
+	waitg.Wait()
+	maybeThrow(ComposeExceptionsFromPipeline(exceptions))
 }
 
 func fail(ec *EvalCtx, args []Value, opts map[string]Value) {

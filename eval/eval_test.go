@@ -291,6 +291,9 @@ var evalTests = []struct {
 	{`<s a b`, want{out: bools(true)}},
 	{`<s 2 10`, want{out: bools(false)}},
 
+	{`run-parallel { put lorem } { echo ipsum }`,
+		want{out: strs("lorem"), bytesOut: []byte("ipsum\n")}},
+
 	{`fail haha`, want{err: errAny}},
 	{`return`, want{err: Return}},
 
