@@ -4,7 +4,7 @@
 
 1.  Always run unit tests before committing. `make` will take care of this.
 
-2.  Some files are generated from other files. They should be committed into the repository for this package to be go-getable. Run `go generate ./...` to regenerate them in case you modified the source.
+2.  Some files are generated from other files. They should be committed into the repository for this package to be go-gettable. Run `go generate ./...` to regenerate them in case you modified the source.
 
 3.  Always format the code with `goimports` before committing. Run `go get golang.org/x/tools/cmd/goimports` to install `goimports`, and `goimports -w .` to format all golang sources.
 
