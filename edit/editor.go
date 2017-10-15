@@ -4,6 +4,7 @@ package edit
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 	"syscall"
@@ -372,6 +373,8 @@ MainLoop:
 		case sig := <-ed.sigs:
 			// TODO(xiaq): Maybe support customizable handling of signals
 			switch sig {
+			case syscall.SIGHUP:
+				return "", io.EOF
 			case syscall.SIGINT:
 				// Start over
 				ed.editorState = editorState{
