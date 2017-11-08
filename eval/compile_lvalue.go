@@ -128,7 +128,7 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 	return explode, func(ec *EvalCtx) []Variable {
 		variable := ec.ResolveVar(ns, barename)
 		if variable == nil {
-			throwf("variable $%s does not exisit, compiler bug", varname)
+			throwf("variable $%s does not exist, compiler bug", varname)
 		}
 
 		// Evaluate assocers and indices.
