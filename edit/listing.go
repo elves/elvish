@@ -331,7 +331,7 @@ func (l *listing) handleFilterKey(k ui.Key) bool {
 func (l *listing) defaultBinding(ed *Editor) {
 	if !l.handleFilterKey(ed.lastKey) {
 		insertStart(ed)
-		ed.nextAction = action{typ: reprocessKey}
+		ed.setAction(reprocessKey)
 	}
 }
 

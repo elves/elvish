@@ -116,7 +116,7 @@ func lastcmdAltDefault(ed *Editor) {
 		}
 	} else {
 		insertStart(ed)
-		ed.nextAction = action{typ: reprocessKey}
+		ed.setAction(reprocessKey)
 	}
 }
 

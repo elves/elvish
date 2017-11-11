@@ -304,7 +304,7 @@ func (l *narrow) handleFilterKey(ed *Editor) bool {
 func (l *narrow) defaultBinding(ed *Editor) {
 	if !l.handleFilterKey(ed) {
 		insertStart(ed)
-		ed.nextAction = action{typ: reprocessKey}
+		ed.setAction(reprocessKey)
 	}
 }
 

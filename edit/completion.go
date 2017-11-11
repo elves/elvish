@@ -134,7 +134,7 @@ func complDefault(ed *Editor) {
 		}
 	} else {
 		complAccept(ed)
-		ed.nextAction = action{typ: reprocessKey}
+		ed.setAction(reprocessKey)
 	}
 }
 

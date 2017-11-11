@@ -105,7 +105,7 @@ func historyDefault(ed *Editor, hist *hist) {
 	ed.line = hist.CurrentCmd()
 	ed.dot = len(ed.line)
 	ed.mode = &ed.insert
-	ed.nextAction = action{typ: reprocessKey}
+	ed.setAction(reprocessKey)
 }
 
 func (ed *Editor) appendHistory(line string) {

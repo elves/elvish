@@ -456,23 +456,19 @@ MainLoop:
 				} else {
 					ed.insert.literalInserts = 0
 				}
-				act := ed.nextAction
-				ed.nextAction = action{}
 
-				switch act.typ {
-				case noAction:
-					continue
+				switch ed.popAction() {
 				case reprocessKey:
 					err := ed.refresh(false, true)
 					if err != nil {
 						return "", err
 					}
 					goto lookupKey
-				case exitReadLine:
-					if act.returnErr == nil && act.returnLine != "" {
-						ed.appendHistory(act.returnLine)
-					}
-					return act.returnLine, act.returnErr
+				case commitLine:
+					ed.appendHistory(ed.line)
+					return ed.line, nil
+				case commitEOF:
+					return "", io.EOF
 				}
 			}
 		}
