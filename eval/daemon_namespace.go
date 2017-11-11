@@ -12,11 +12,9 @@ var ErrDaemonOffline = errors.New("daemon is offline")
 func makeDaemonNamespace(daemon *api.Client) Namespace {
 	// Obtain process ID
 	daemonPid := func() Value {
-		req := &api.PidRequest{}
-		res := &api.PidResponse{}
-		err := daemon.CallDaemon("Pid", req, res)
+		pid, err := daemon.Pid()
 		maybeThrow(err)
-		return String(strconv.Itoa(res.Pid))
+		return String(strconv.Itoa(pid))
 	}
 
 	return Namespace{

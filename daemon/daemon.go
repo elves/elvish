@@ -4,6 +4,7 @@ package daemon
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -16,61 +17,92 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// Daemon keeps configurations for the daemon process.
+// Daemon keeps configurations for the daemon sub-program. It can be used both
+// from the main function for running the daemon and from another process
+// (typically the first Elvish shell session) for spawning a daemon.
 type Daemon struct {
-	Forked        int
-	BinPath       string
-	DbPath        string
-	SockPath      string
+	// Forked is the number of times the daemon has forked itself.
+	Forked int
+	// BinPath is the path to the Elvish binary itself, used when forking.
+	BinPath string
+	// DbPath is the path to the database.
+	DbPath string
+	// SockPath is the path to the socket on which the daemon will serve
+	// requests.
+	SockPath string
+	// LogPathPrefix is used to derive the name of the log file by adding the
+	// pid.
 	LogPathPrefix string
 }
 
-// Main is the entry point of the daemon sub-program.
-func (d *Daemon) Main(serve func(string, string)) int {
+// Main is the entry point of the daemon sub-program. It takes a serve function
+// and returns the exit status. The caller can call os.Exit after doing more
+// cleanup work. The exact behavior of this function depends on the -forked
+// flag:
+//
+// When -forked is 0 (which is how the daemon gets started), it forks another
+// daemon process, with an empty environment, the working directory changed to
+// /, with umask 0077, and in a new process session. All the path flags are
+// resolved to absolute paths, and the -fork flag becomes 1.
+//
+// When -forked is 1, it simply forks another daemon process with all arguments
+// passed as is, except -forked which becomes 2.
+//
+// When -forked is 2, it calls the serve function with the value of -sockpath
+// and -dbpath.
+//
+// These 3 steps implement a standard demonizing procedure. The main deviation
+// is that since Go does not support a raw fork call, it has to use fork-exec to
+// simulate fork and pass all states via command line flags.
+func (d *Daemon) Main(serve func(string, string)) error {
 	switch d.Forked {
 	case 0:
-		errored := false
-		absify := func(f string, s *string) {
-			if *s == "" {
-				log.Println("flag", f, "is required for daemon")
-				errored = true
+		var absifyError error
+		absify := func(name string, pvalue *string) {
+			if absifyError == nil {
 				return
 			}
-			p, err := filepath.Abs(*s)
+			if *pvalue == "" {
+				absifyError = fmt.Errorf("flag %s is required for daemon", name)
+				return
+			}
+			newvalue, err := filepath.Abs(*pvalue)
 			if err != nil {
-				log.Println("abs:", err)
-				errored = true
+				absifyError = fmt.Errorf("cannot convert %s to absolute path: %s", name, err)
 			} else {
-				*s = p
+				*pvalue = newvalue
 			}
 		}
 		absify("-bin", &d.BinPath)
 		absify("-db", &d.DbPath)
 		absify("-sock", &d.SockPath)
 		absify("-logprefix", &d.LogPathPrefix)
-		if errored {
-			return 2
+		if absifyError != nil {
+			return absifyError
 		}
 
 		syscall.Umask(0077)
-		return d.pseudoFork(
+		return d.fork(
 			&exec.Cmd{
 				Dir:         "/", // cd to /
 				Env:         nil, // empty environment
 				SysProcAttr: &syscall.SysProcAttr{Setsid: true},
 			})
 	case 1:
-		return d.pseudoFork(nil)
+		return d.fork(nil)
 	case 2:
 		serve(d.SockPath, d.DbPath)
-		return 0
+		return nil
 	default:
-		return 2
+		return fmt.Errorf("-forked is %d, should be 0, 1 or 2", d.Forked)
 	}
 }
 
-// Spawn spawns a daemon in the background. It is supposed to be called from a
-// client.
+// Spawn spawns a daemon in the background by calling the Elvish binary with
+// appropriate flags. If d.BinPath is not set, it attempts to derive the binary
+// path first. The fields DbPath, SockPath and LogPathPrefix must be set.
+//
+// It is supposed to be called from a Elvish shell (as opposed to daemon) process.
 func (d *Daemon) Spawn() error {
 	binPath := d.BinPath
 	// Determine binPath.
@@ -116,8 +148,8 @@ func getAbsBinPath() (string, error) {
 	return binpath, nil
 }
 
-// pseudoFork forks a daemon. It is supposed to be called from the daemon.
-func (d *Daemon) pseudoFork(cmd *exec.Cmd) int {
+// fork forks a daemon. It is supposed to be called from the daemon.
+func (d *Daemon) fork(cmd *exec.Cmd) error {
 	err := setArgs(
 		cmd,
 		d.Forked+1,
@@ -126,11 +158,7 @@ func (d *Daemon) pseudoFork(cmd *exec.Cmd) int {
 		d.SockPath,
 		d.LogPathPrefix,
 	).Start()
-
-	if err != nil {
-		return 2
-	}
-	return 0
+	return err
 }
 
 func setArgs(cmd *exec.Cmd, forkLevel int, binPath, dbPath, sockPath,

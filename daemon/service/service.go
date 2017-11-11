@@ -17,7 +17,9 @@ import (
 
 var logger = util.GetLogger("[daemon] ")
 
-// Serve runs the daemon service. It does not return.
+// Serve runs the daemon service, listening on the socket specified by sockpath
+// and serving data from dbpath. It quits upon receiving SIGTERM, SIGINT or when
+// all active clients have disconnected.
 func Serve(sockpath, dbpath string) {
 	logger.Println("pid is", syscall.Getpid())
 
@@ -95,11 +97,14 @@ func Serve(sockpath, dbpath string) {
 	logger.Println("exiting")
 }
 
-// Service provides the daemon RPC service.
+// Service provides the daemon RPC service. It is suitable as a service for
+// net/rpc.
 type Service struct {
 	store *store.Store
 	err   error
 }
+
+// Implementations of RPC methods.
 
 func (s *Service) Version(req *api.VersionRequest, res *api.VersionResponse) error {
 	if s.err != nil {

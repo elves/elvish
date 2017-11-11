@@ -130,7 +130,11 @@ func main() {
 			SockPath:      *sockpath,
 			LogPathPrefix: *logpathprefix,
 		}
-		ret = d.Main(service.Serve)
+		err := d.Main(service.Serve)
+		if err != nil {
+			logger.Println(err)
+			ret = 2
+		}
 	} else {
 		// Shell or web. Set up common runtime components.
 		ev, cl := initRuntime()
