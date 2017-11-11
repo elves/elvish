@@ -1,7 +1,11 @@
 package edit
 
 import (
+	"bufio"
 	"errors"
+	"io"
+	"os"
+	"strings"
 	"unsafe"
 
 	"github.com/elves/elvish/eval"
@@ -174,4 +178,65 @@ func complSudo(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) er
 		return complFormHeadInner(words[1], ev, rawCands)
 	}
 	return completeArg(words[1:], ev, rawCands)
+}
+
+// callArgCompleter calls a Fn, assuming that it is an arg completer. It calls
+// the Fn with specified arguments and closed input, and converts its output to
+// candidate objects.
+func callArgCompleter(fn eval.CallableValue,
+	ev *eval.Evaler, words []string, rawCands chan<- rawCandidate) error {
+
+	// Quick path for builtin arg completers.
+	if builtin, ok := fn.(*builtinArgCompleter); ok {
+		return builtin.impl(words, ev, rawCands)
+	}
+
+	args := make([]eval.Value, len(words))
+	for i, word := range words {
+		args[i] = eval.String(word)
+	}
+
+	ports := []*eval.Port{
+		eval.DevNullClosedChan,
+		{}, // Will be replaced when capturing output
+		{File: os.Stderr},
+	}
+
+	valuesCb := func(ch <-chan eval.Value) {
+		for v := range ch {
+			switch v := v.(type) {
+			case rawCandidate:
+				rawCands <- v
+			case eval.String:
+				rawCands <- plainCandidate(v)
+			default:
+				logger.Printf("completer must output string or candidate")
+			}
+		}
+	}
+
+	bytesCb := func(r *os.File) {
+		buffered := bufio.NewReader(r)
+		for {
+			line, err := buffered.ReadString('\n')
+			if line != "" {
+				rawCands <- plainCandidate(strings.TrimSuffix(line, "\n"))
+			}
+			if err != nil {
+				if err != io.EOF {
+					logger.Println("error on reading:", err)
+				}
+				break
+			}
+		}
+	}
+
+	// XXX There is no source to pass to NewTopEvalCtx.
+	ec := eval.NewTopEvalCtx(ev, "[editor completer]", "", ports)
+	err := ec.PCaptureOutputInner(fn, args, eval.NoOpts, valuesCb, bytesCb)
+	if err != nil {
+		err = errors.New("completer error: " + err.Error())
+	}
+
+	return err
 }

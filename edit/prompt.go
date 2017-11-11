@@ -1,8 +1,10 @@
 package edit
 
 import (
+	"io/ioutil"
 	"os"
 	"os/user"
+	"sync"
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -68,4 +70,55 @@ var _ = registerVariable("rprompt-persistent", func() eval.Variable {
 
 func (ed *Editor) rpromptPersistent() bool {
 	return bool(ed.variables["rprompt-persistent"].Get().(eval.Bool).Bool())
+}
+
+// callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
+// arguments and closed input, and converts its outputs to styled objects.
+func callPrompt(ed *Editor, fn eval.Callable) []*ui.Styled {
+	ports := []*eval.Port{
+		eval.DevNullClosedChan,
+		{}, // Will be replaced when capturing output
+		{File: os.Stderr},
+	}
+	var (
+		styleds      []*ui.Styled
+		styledsMutex sync.Mutex
+	)
+	add := func(s *ui.Styled) {
+		styledsMutex.Lock()
+		styleds = append(styleds, s)
+		styledsMutex.Unlock()
+	}
+	// Value output may be of type ui.Styled or any other type, in which case
+	// they are converted to ui.Styled.
+	valuesCb := func(ch <-chan eval.Value) {
+		for v := range ch {
+			if s, ok := v.(*ui.Styled); ok {
+				add(s)
+			} else {
+				add(&ui.Styled{eval.ToString(v), ui.Styles{}})
+			}
+		}
+	}
+	// Byte output is added to the prompt as a single unstyled text.
+	bytesCb := func(r *os.File) {
+		allBytes, err := ioutil.ReadAll(r)
+		if err != nil {
+			logger.Println("error reading prompt byte output:", err)
+		}
+		if len(allBytes) > 0 {
+			add(&ui.Styled{string(allBytes), ui.Styles{}})
+		}
+	}
+
+	// XXX There is no source to pass to NewTopEvalCtx.
+	ec := eval.NewTopEvalCtx(ed.evaler, "[editor prompt]", "", ports)
+	err := ec.PCaptureOutputInner(fn, nil, eval.NoOpts, valuesCb, bytesCb)
+
+	if err != nil {
+		ed.Notify("prompt function error: %v", err)
+		return nil
+	}
+
+	return styleds
 }

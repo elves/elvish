@@ -1,14 +1,8 @@
 package edit
 
 import (
-	"bufio"
 	"errors"
-	"io"
-	"io/ioutil"
-	"os"
 	"strconv"
-	"strings"
-	"sync"
 	"unicode/utf8"
 	"unsafe"
 
@@ -201,113 +195,4 @@ func (ed *Editor) CallFn(fn eval.CallableValue, args ...eval.Value) {
 	}
 
 	ed.refresh(true, true)
-}
-
-// callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
-// arguments and closed input, and converts its outputs to styled objects.
-func callPrompt(ed *Editor, fn eval.Callable) []*ui.Styled {
-	ports := []*eval.Port{
-		eval.DevNullClosedChan,
-		{}, // Will be replaced when capturing output
-		{File: os.Stderr},
-	}
-	var (
-		styleds      []*ui.Styled
-		styledsMutex sync.Mutex
-	)
-	add := func(s *ui.Styled) {
-		styledsMutex.Lock()
-		styleds = append(styleds, s)
-		styledsMutex.Unlock()
-	}
-	valuesCb := func(ch <-chan eval.Value) {
-		for v := range ch {
-			if s, ok := v.(*ui.Styled); ok {
-				add(s)
-			} else {
-				add(&ui.Styled{eval.ToString(v), ui.Styles{}})
-			}
-		}
-	}
-	bytesCb := func(r *os.File) {
-		allBytes, err := ioutil.ReadAll(r)
-		if err != nil {
-			logger.Println("error reading prompt byte output:", err)
-		}
-		if len(allBytes) > 0 {
-			add(&ui.Styled{string(allBytes), ui.Styles{}})
-		}
-	}
-
-	// XXX There is no source to pass to NewTopEvalCtx.
-	ec := eval.NewTopEvalCtx(ed.evaler, "[editor prompt]", "", ports)
-	err := ec.PCaptureOutputInner(fn, nil, eval.NoOpts, valuesCb, bytesCb)
-
-	if err != nil {
-		ed.Notify("prompt function error: %v", err)
-		return nil
-	}
-
-	return styleds
-}
-
-// callArgCompleter calls a Fn, assuming that it is an arg completer. It calls
-// the Fn with specified arguments and closed input, and converts its output to
-// candidate objects.
-func callArgCompleter(fn eval.CallableValue,
-	ev *eval.Evaler, words []string, rawCands chan<- rawCandidate) error {
-
-	// Quick path for builtin arg completers.
-	if builtin, ok := fn.(*builtinArgCompleter); ok {
-		return builtin.impl(words, ev, rawCands)
-	}
-
-	args := make([]eval.Value, len(words))
-	for i, word := range words {
-		args[i] = eval.String(word)
-	}
-
-	ports := []*eval.Port{
-		eval.DevNullClosedChan,
-		{}, // Will be replaced when capturing output
-		{File: os.Stderr},
-	}
-
-	valuesCb := func(ch <-chan eval.Value) {
-		for v := range ch {
-			switch v := v.(type) {
-			case rawCandidate:
-				rawCands <- v
-			case eval.String:
-				rawCands <- plainCandidate(v)
-			default:
-				logger.Printf("completer must output string or candidate")
-			}
-		}
-	}
-
-	bytesCb := func(r *os.File) {
-		buffered := bufio.NewReader(r)
-		for {
-			line, err := buffered.ReadString('\n')
-			if line != "" {
-				rawCands <- plainCandidate(strings.TrimSuffix(line, "\n"))
-			}
-			if err != nil {
-				if err != io.EOF {
-					logger.Println("error on reading:", err)
-				}
-				break
-			}
-		}
-	}
-
-	// XXX There is no source to pass to NewTopEvalCtx.
-	ec := eval.NewTopEvalCtx(ev, "[editor completer]", "", ports)
-	err := ec.PCaptureOutputInner(fn, args, eval.NoOpts, valuesCb, bytesCb)
-	if err != nil {
-		err = errors.New("completer error: " + err.Error())
-	}
-
-	return err
 }
