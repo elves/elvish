@@ -2,6 +2,7 @@
 package edit
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -47,6 +48,12 @@ type Editor struct {
 	historyFuser *history.Fuser
 	historyMutex sync.RWMutex
 
+	// notifyPort is a write-only port that turns data written to it into editor
+	// notifications.
+	notifyPort *eval.Port
+	// notifyRead is the read end of notifyPort.File.
+	notifyRead *os.File
+
 	editorState
 }
 
@@ -83,7 +90,8 @@ type editorState struct {
 	nextAction action
 }
 
-// NewEditor creates an Editor.
+// NewEditor creates an Editor. When the instance is no longer used, its Close
+// method should be called.
 func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, daemon *api.Client) *Editor {
 	ed := &Editor{
 		in:     in,
@@ -97,6 +105,35 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, 
 		bindings:  makeBindings(),
 		variables: makeVariables(),
 	}
+
+	notifyChan := make(chan eval.Value)
+	notifyRead, notifyWrite, err := os.Pipe()
+	if err != nil {
+		panic(err)
+	}
+	ed.notifyPort = &eval.Port{File: notifyWrite, Chan: notifyChan}
+	ed.notifyRead = notifyRead
+	// Forward reads from notifyRead to notification.
+	go func() {
+		reader := bufio.NewReader(notifyRead)
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				break
+			}
+			ed.Notify("[bytes out] %s", line[:len(line)-1])
+		}
+		if err != io.EOF {
+			logger.Println("notifyRead error:", err)
+		}
+	}()
+	// Forward reads from notifyChan to notification.
+	go func() {
+		for v := range notifyChan {
+			ed.Notify("[value out] %s", v.Repr(eval.NoPretty))
+		}
+	}()
+
 	if daemon != nil {
 		f, err := history.NewFuser(daemon)
 		if err != nil {
@@ -110,6 +147,14 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, 
 	installModules(ev.Builtin.Uses, ed)
 
 	return ed
+}
+
+// Close releases resources used by the editor.
+func (ed *Editor) Close() {
+	ed.reader.Close()
+	close(ed.notifyPort.Chan)
+	ed.notifyPort.File.Close()
+	ed.notifyRead.Close()
 }
 
 // Active returns the activeness of the Editor.

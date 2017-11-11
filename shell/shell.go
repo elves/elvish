@@ -141,6 +141,7 @@ func interact(ev *eval.Evaler, daemon *api.Client) {
 	sigch := make(chan os.Signal)
 	signal.Notify(sigch)
 	ed := edit.NewEditor(os.Stdin, os.Stderr, sigch, ev, daemon)
+	defer ed.Close()
 
 	// Source rc.elv.
 	if ev.DataDir != "" {

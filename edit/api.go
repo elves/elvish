@@ -190,33 +190,9 @@ func (ed *Editor) CallFn(fn eval.CallableValue, args ...eval.Value) {
 		return
 	}
 
-	rout, chanOut, ports, err := makePorts()
-	if err != nil {
-		return
+	ports := []*eval.Port{
+		eval.DevNullClosedChan, ed.notifyPort, ed.notifyPort,
 	}
-
-	// Goroutines to collect output.
-	var wg sync.WaitGroup
-	wg.Add(2)
-	go func() {
-		rd := bufio.NewReader(rout)
-		for {
-			line, err := rd.ReadString('\n')
-			if err != nil {
-				break
-			}
-			ed.Notify("[bytes output] %s", line[:len(line)-1])
-		}
-		rout.Close()
-		wg.Done()
-	}()
-	go func() {
-		for v := range chanOut {
-			ed.Notify("[value output] %s", v.Repr(eval.NoPretty))
-		}
-		wg.Done()
-	}()
-
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopEvalCtx(ed.evaler, "[editor]", "", ports)
 	ex := ec.PCall(fn, args, eval.NoOpts)
@@ -224,30 +200,7 @@ func (ed *Editor) CallFn(fn eval.CallableValue, args ...eval.Value) {
 		ed.Notify("function error: %s", ex.Error())
 	}
 
-	eval.ClosePorts(ports)
-	wg.Wait()
 	ed.refresh(true, true)
-}
-
-// makePorts connects stdin to /dev/null and a closed channel, identifies
-// stdout and stderr and connects them to a pipe and channel. It returns the
-// other end of stdout and the resulting []*eval.Port. The caller is
-// responsible for closing the returned file and calling eval.ClosePorts on the
-// ports.
-func makePorts() (*os.File, chan eval.Value, []*eval.Port, error) {
-	// Output
-	rout, out, err := os.Pipe()
-	if err != nil {
-		logger.Println(err)
-		return nil, nil, nil, err
-	}
-	chanOut := make(chan eval.Value)
-
-	return rout, chanOut, []*eval.Port{
-		eval.DevNullClosedChan,
-		{File: out, CloseFile: true, Chan: chanOut, CloseChan: true},
-		{File: out, Chan: chanOut},
-	}, nil
 }
 
 // callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
