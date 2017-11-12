@@ -168,6 +168,14 @@ func (ed *Editor) ActiveMutex() *sync.Mutex {
 	return &ed.activeMutex
 }
 
+func (ed *Editor) Evaler() *eval.Evaler {
+	return ed.evaler
+}
+
+func (ed *Editor) Variable(name string) eval.Variable {
+	return ed.variables[name]
+}
+
 func (ed *Editor) flash() {
 	// TODO implement fish-like flash effect
 }
@@ -343,7 +351,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.mode = &ed.insert
 	ed.tips = nil
 	ed.dot = len(ed.line)
-	if !ed.rpromptPersistent() {
+	if !getRpromptPersistent(ed) {
 		ed.rpromptContent = nil
 	}
 	addError(ed.refresh(false, false))
@@ -399,15 +407,15 @@ func (ed *Editor) ReadLine() (line string, err error) {
 
 	callHooks(ed.evaler, ed.beforeReadLine())
 
-	promptUpdater := newPromptUpdater(ed.prompt)
-	rpromptUpdater := newPromptUpdater(ed.rprompt)
+	promptUpdater := newPromptUpdater(getPrompt)
+	rpromptUpdater := newPromptUpdater(getRprompt)
 
 MainLoop:
 	for {
 		promptCh := promptUpdater.update(ed)
 		rpromptCh := rpromptUpdater.update(ed)
-		promptTimeout := ed.promptsMaxWaitChan()
-		rpromptTimeout := ed.promptsMaxWaitChan()
+		promptTimeout := makePromptsMaxWaitChan(ed)
+		rpromptTimeout := makePromptsMaxWaitChan(ed)
 
 		select {
 		case ed.promptContent = <-promptCh:

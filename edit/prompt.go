@@ -14,6 +14,13 @@ import (
 	"github.com/elves/elvish/util"
 )
 
+// EditorIface is the interface used by the prompt to access the editor.
+type EditorIface interface {
+	Evaler() *eval.Evaler
+	Variable(string) eval.Variable
+	Notify(string, ...interface{})
+}
+
 // maxSeconds is the maximum number of seconds time.Duration can represent.
 const maxSeconds = float64(math.MaxInt64 / time.Second)
 
@@ -40,8 +47,8 @@ func promptVariable() eval.Variable {
 		&eval.BuiltinFn{"default prompt", prompt}, eval.ShouldBeFn)
 }
 
-func (ed *Editor) prompt() eval.Callable {
-	return ed.variables["prompt"].Get().(eval.Callable)
+func getPrompt(ed EditorIface) eval.Callable {
+	return ed.Variable("prompt").Get().(eval.Callable)
 }
 
 // Implementation for $rprompt.
@@ -70,8 +77,8 @@ func rpromptVariable() eval.Variable {
 		&eval.BuiltinFn{"default rprompt", rprompt}, eval.ShouldBeFn)
 }
 
-func (ed *Editor) rprompt() eval.Callable {
-	return ed.variables["rprompt"].Get().(eval.Callable)
+func getRprompt(ed EditorIface) eval.Callable {
+	return ed.Variable("rprompt").Get().(eval.Callable)
 }
 
 // Implementation for $rprompt-persistent.
@@ -80,8 +87,8 @@ var _ = RegisterVariable("rprompt-persistent", func() eval.Variable {
 	return eval.NewPtrVariableWithValidator(eval.Bool(false), eval.ShouldBeBool)
 })
 
-func (ed *Editor) rpromptPersistent() bool {
-	return bool(ed.variables["rprompt-persistent"].Get().(eval.Bool).Bool())
+func getRpromptPersistent(ed EditorIface) bool {
+	return bool(ed.Variable("rprompt-persistent").Get().(eval.Bool).Bool())
 }
 
 // Implementation for $-prompts-max-wait.
@@ -92,13 +99,13 @@ func promptsMaxWaitVariable() eval.Variable {
 	return eval.NewPtrVariableWithValidator(eval.String("+Inf"), eval.ShouldBeNumber)
 }
 
-func (ed *Editor) promptsMaxWait() float64 {
-	f, _ := strconv.ParseFloat(string(ed.variables["-prompts-max-wait"].Get().(eval.String)), 64)
+func getPromptsMaxWait(ed EditorIface) float64 {
+	f, _ := strconv.ParseFloat(string(ed.Variable("-prompts-max-wait").Get().(eval.String)), 64)
 	return f
 }
 
-func (ed *Editor) promptsMaxWaitChan() <-chan time.Time {
-	f := ed.promptsMaxWait()
+func makePromptsMaxWaitChan(ed *Editor) <-chan time.Time {
+	f := getPromptsMaxWait(ed)
 	if f > maxSeconds {
 		return nil
 	}
@@ -107,7 +114,7 @@ func (ed *Editor) promptsMaxWaitChan() <-chan time.Time {
 
 // callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
 // arguments and closed input, and converts its outputs to styled objects.
-func callPrompt(ed *Editor, fn eval.Callable) []*ui.Styled {
+func callPrompt(ed EditorIface, fn eval.Callable) []*ui.Styled {
 	ports := []*eval.Port{
 		eval.DevNullClosedChan,
 		{}, // Will be replaced when capturing output
@@ -145,7 +152,7 @@ func callPrompt(ed *Editor, fn eval.Callable) []*ui.Styled {
 	}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
-	ec := eval.NewTopEvalCtx(ed.evaler, "[editor prompt]", "", ports)
+	ec := eval.NewTopEvalCtx(ed.Evaler(), "[editor prompt]", "", ports)
 	err := ec.PCaptureOutputInner(fn, nil, eval.NoOpts, valuesCb, bytesCb)
 
 	if err != nil {
@@ -158,21 +165,21 @@ func callPrompt(ed *Editor, fn eval.Callable) []*ui.Styled {
 
 // promptUpdater manages the update of a prompt.
 type promptUpdater struct {
-	promptFn func() eval.Callable
+	promptFn func(EditorIface) eval.Callable
 	staled   []*ui.Styled
 }
 
 var staledPrompt = &ui.Styled{"?", ui.Styles{"inverse"}}
 
 // newPromptUpdater creates a new promptUpdater.
-func newPromptUpdater(promptFn func() eval.Callable) *promptUpdater {
+func newPromptUpdater(promptFn func(EditorIface) eval.Callable) *promptUpdater {
 	return &promptUpdater{promptFn, []*ui.Styled{staledPrompt}}
 }
 
-func (pu *promptUpdater) update(ed *Editor) <-chan []*ui.Styled {
+func (pu *promptUpdater) update(ed EditorIface) <-chan []*ui.Styled {
 	ch := make(chan []*ui.Styled)
 	go func() {
-		result := callPrompt(ed, pu.promptFn())
+		result := callPrompt(ed, pu.promptFn(ed))
 		pu.staled = make([]*ui.Styled, len(result)+1)
 		pu.staled[0] = staledPrompt
 		copy(pu.staled[1:], result)
