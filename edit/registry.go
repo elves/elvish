@@ -20,10 +20,10 @@ import (
 
 var variableRegistry = map[string]func() eval.Variable{}
 
-// registerVariable registers a variable: its name and a func to derive a
+// RegisterVariable registers a variable: its name and a func to derive a
 // Variable instance. It is later to be used during Editor initialization to
 // populate Editor.variables as well as the edit: namespace.
-func registerVariable(name string, maker func() eval.Variable) struct{} {
+func RegisterVariable(name string, maker func() eval.Variable) struct{} {
 	variableRegistry[name] = maker
 	return struct{}{}
 }

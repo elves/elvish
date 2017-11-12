@@ -80,7 +80,7 @@ var (
 	}
 )
 
-var _ = registerVariable("arg-completer", argCompleterVariable)
+var _ = RegisterVariable("arg-completer", argCompleterVariable)
 
 func argCompleterVariable() eval.Variable {
 	m := hashmap.Empty

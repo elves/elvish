@@ -10,13 +10,13 @@ import (
 // The $le:{before,after}-readline lists that contain hooks. We might have more
 // hooks in future.
 
-var _ = registerVariable("before-readline", makeListVariable)
+var _ = RegisterVariable("before-readline", makeListVariable)
 
 func (ed *Editor) beforeReadLine() eval.List {
 	return ed.variables["before-readline"].Get().(eval.List)
 }
 
-var _ = registerVariable("after-readline", makeListVariable)
+var _ = RegisterVariable("after-readline", makeListVariable)
 
 func (ed *Editor) afterReadLine() eval.List {
 	return ed.variables["after-readline"].Get().(eval.List)

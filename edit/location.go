@@ -200,7 +200,7 @@ func convertListToSet(li eval.List) map[string]struct{} {
 
 // Variables.
 
-var _ = registerVariable("loc-hidden", func() eval.Variable {
+var _ = RegisterVariable("loc-hidden", func() eval.Variable {
 	return eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList)
 })
 
@@ -208,7 +208,7 @@ func (ed *Editor) locHidden() eval.List {
 	return ed.variables["loc-hidden"].Get().(eval.List)
 }
 
-var _ = registerVariable("loc-pinned", func() eval.Variable {
+var _ = RegisterVariable("loc-pinned", func() eval.Variable {
 	return eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList)
 })
 

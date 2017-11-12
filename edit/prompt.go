@@ -19,7 +19,7 @@ const maxSeconds = float64(math.MaxInt64 / time.Second)
 
 // Implementation for $prompt.
 
-var _ = registerVariable("prompt", promptVariable)
+var _ = RegisterVariable("prompt", promptVariable)
 
 func promptVariable() eval.Variable {
 	user, err := user.Current()
@@ -46,7 +46,7 @@ func (ed *Editor) prompt() eval.Callable {
 
 // Implementation for $rprompt.
 
-var _ = registerVariable("rprompt", rpromptVariable)
+var _ = RegisterVariable("rprompt", rpromptVariable)
 
 func rpromptVariable() eval.Variable {
 	username := "???"
@@ -76,7 +76,7 @@ func (ed *Editor) rprompt() eval.Callable {
 
 // Implementation for $rprompt-persistent.
 
-var _ = registerVariable("rprompt-persistent", func() eval.Variable {
+var _ = RegisterVariable("rprompt-persistent", func() eval.Variable {
 	return eval.NewPtrVariableWithValidator(eval.Bool(false), eval.ShouldBeBool)
 })
 
@@ -86,7 +86,7 @@ func (ed *Editor) rpromptPersistent() bool {
 
 // Implementation for $-prompts-max-wait.
 
-var _ = registerVariable("-prompts-max-wait", promptsMaxWaitVariable)
+var _ = RegisterVariable("-prompts-max-wait", promptsMaxWaitVariable)
 
 func promptsMaxWaitVariable() eval.Variable {
 	return eval.NewPtrVariableWithValidator(eval.String("+Inf"), eval.ShouldBeNumber)

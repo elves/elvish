@@ -5,7 +5,7 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-var _ = registerVariable("abbr", func() eval.Variable {
+var _ = RegisterVariable("abbr", func() eval.Variable {
 	return eval.NewPtrVariableWithValidator(
 		eval.NewMap(hashmap.Empty), eval.ShouldBeMap)
 })

@@ -25,7 +25,7 @@ var (
 		matchSubseq,
 	}
 
-	_ = registerVariable("-matcher", func() eval.Variable {
+	_ = RegisterVariable("-matcher", func() eval.Variable {
 		m := hashmap.Empty.Assoc(
 			// Fallback matcher uses empty string as key
 			eval.String(""), matchPrefix)
