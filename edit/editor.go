@@ -399,11 +399,32 @@ func (ed *Editor) ReadLine() (line string, err error) {
 
 	callHooks(ed.evaler, ed.beforeReadLine())
 
+	promptUpdater := newPromptUpdater(ed.prompt)
+	rpromptUpdater := newPromptUpdater(ed.rprompt)
+
 MainLoop:
 	for {
-		ed.promptContent = callPrompt(ed, ed.prompt())
-		ed.rpromptContent = callPrompt(ed, ed.rprompt())
+		promptCh := promptUpdater.update(ed)
+		rpromptCh := rpromptUpdater.update(ed)
+		promptTimeout := ed.promptsMaxWaitChan()
+		rpromptTimeout := ed.promptsMaxWaitChan()
 
+		select {
+		case ed.promptContent = <-promptCh:
+			logger.Println("prompt fetched")
+		case <-promptTimeout:
+			logger.Println("stale prompt")
+			ed.promptContent = promptUpdater.staled
+		}
+		select {
+		case ed.rpromptContent = <-rpromptCh:
+			logger.Println("rprompt fetched")
+		case <-rpromptTimeout:
+			logger.Println("stale rprompt")
+			ed.rpromptContent = rpromptUpdater.staled
+		}
+
+	refresh:
 		err := ed.refresh(fullRefresh, true)
 		fullRefresh = false
 		if err != nil {
@@ -413,6 +434,12 @@ MainLoop:
 		ed.tips = nil
 
 		select {
+		case ed.promptContent = <-promptCh:
+			logger.Println("prompt fetched late")
+			goto refresh
+		case ed.rpromptContent = <-rpromptCh:
+			logger.Println("rprompt fetched late")
+			goto refresh
 		case m := <-isExternalCh:
 			ed.isExternal = m
 		case sig := <-ed.sigs:

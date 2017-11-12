@@ -2,14 +2,22 @@ package edit
 
 import (
 	"io/ioutil"
+	"math"
 	"os"
 	"os/user"
+	"strconv"
 	"sync"
+	"time"
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
+
+// maxSeconds is the maximum number of seconds time.Duration can represent.
+const maxSeconds = float64(math.MaxInt64 / time.Second)
+
+// Implementation for $prompt.
 
 var _ = registerVariable("prompt", promptVariable)
 
@@ -35,6 +43,8 @@ func promptVariable() eval.Variable {
 func (ed *Editor) prompt() eval.Callable {
 	return ed.variables["prompt"].Get().(eval.Callable)
 }
+
+// Implementation for $rprompt.
 
 var _ = registerVariable("rprompt", rpromptVariable)
 
@@ -64,12 +74,35 @@ func (ed *Editor) rprompt() eval.Callable {
 	return ed.variables["rprompt"].Get().(eval.Callable)
 }
 
+// Implementation for $rprompt-persistent.
+
 var _ = registerVariable("rprompt-persistent", func() eval.Variable {
 	return eval.NewPtrVariableWithValidator(eval.Bool(false), eval.ShouldBeBool)
 })
 
 func (ed *Editor) rpromptPersistent() bool {
 	return bool(ed.variables["rprompt-persistent"].Get().(eval.Bool).Bool())
+}
+
+// Implementation for $-prompts-max-wait.
+
+var _ = registerVariable("-prompts-max-wait", promptsMaxWaitVariable)
+
+func promptsMaxWaitVariable() eval.Variable {
+	return eval.NewPtrVariableWithValidator(eval.String("+Inf"), eval.ShouldBeNumber)
+}
+
+func (ed *Editor) promptsMaxWait() float64 {
+	f, _ := strconv.ParseFloat(string(ed.variables["-prompts-max-wait"].Get().(eval.String)), 64)
+	return f
+}
+
+func (ed *Editor) promptsMaxWaitChan() <-chan time.Time {
+	f := ed.promptsMaxWait()
+	if f > maxSeconds {
+		return nil
+	}
+	return time.After(time.Duration(f * float64(time.Second)))
 }
 
 // callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
@@ -121,4 +154,29 @@ func callPrompt(ed *Editor, fn eval.Callable) []*ui.Styled {
 	}
 
 	return styleds
+}
+
+// promptUpdater manages the update of a prompt.
+type promptUpdater struct {
+	promptFn func() eval.Callable
+	staled   []*ui.Styled
+}
+
+var staledPrompt = &ui.Styled{"?", ui.Styles{"inverse"}}
+
+// newPromptUpdater creates a new promptUpdater.
+func newPromptUpdater(promptFn func() eval.Callable) *promptUpdater {
+	return &promptUpdater{promptFn, []*ui.Styled{staledPrompt}}
+}
+
+func (pu *promptUpdater) update(ed *Editor) <-chan []*ui.Styled {
+	ch := make(chan []*ui.Styled)
+	go func() {
+		result := callPrompt(ed, pu.promptFn())
+		pu.staled = make([]*ui.Styled, len(result)+1)
+		pu.staled[0] = staledPrompt
+		copy(pu.staled[1:], result)
+		ch <- result
+	}()
+	return ch
 }
