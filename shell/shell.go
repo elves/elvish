@@ -139,7 +139,7 @@ func readFileUTF8(fname string) (string, error) {
 func interact(ev *eval.Evaler, daemon *api.Client) {
 	// Build Editor.
 	sigch := make(chan os.Signal)
-	signal.Notify(sigch)
+	signal.Notify(sigch, syscall.SIGHUP, syscall.SIGINT, syscall.SIGWINCH)
 	ed := edit.NewEditor(os.Stdin, os.Stderr, sigch, ev, daemon)
 	defer ed.Close()
 

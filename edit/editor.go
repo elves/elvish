@@ -458,8 +458,6 @@ MainLoop:
 			case syscall.SIGWINCH:
 				fullRefresh = true
 				continue MainLoop
-			case syscall.SIGCHLD:
-				// ignore
 			default:
 				ed.addTip("ignored signal %s", sig)
 			}
