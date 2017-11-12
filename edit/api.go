@@ -6,6 +6,7 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
+	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/xiaq/persistent/hash"
@@ -80,7 +81,7 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 	}
 
 	// Internal states.
-	ns["history"] = eval.NewRoVariable(History{&ed.historyMutex, ed.daemon})
+	ns["history"] = eval.NewRoVariable(history.List{&ed.historyMutex, ed.daemon})
 	ns["current-command"] = eval.MakeVariableFromCallback(
 		func(v eval.Value) {
 			if !ed.active {
