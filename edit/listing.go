@@ -205,29 +205,29 @@ func (l *listing) List(maxHeight int) renderer {
 	return ls
 }
 
-func writeHorizontalScrollbar(b *buffer, n, low, high, width int) {
+func writeHorizontalScrollbar(b *ui.Buffer, n, low, high, width int) {
 	slow, shigh := findScrollInterval(n, low, high, width)
 	for i := 0; i < width; i++ {
 		if slow <= i && i < shigh {
-			b.write(' ', styleForScrollBarThumb.String())
+			b.Write(' ', styleForScrollBarThumb.String())
 		} else {
-			b.write('━', styleForScrollBarArea.String())
+			b.Write('━', styleForScrollBarArea.String())
 		}
 	}
 }
 
-func renderScrollbar(n, low, high, height int) *buffer {
+func renderScrollbar(n, low, high, height int) *ui.Buffer {
 	slow, shigh := findScrollInterval(n, low, high, height)
 	// Logger.Printf("low = %d, high = %d, n = %d, slow = %d, shigh = %d", low, high, n, slow, shigh)
-	b := newBuffer(1)
+	b := ui.NewBuffer(1)
 	for i := 0; i < height; i++ {
 		if i > 0 {
-			b.newline()
+			b.Newline()
 		}
 		if slow <= i && i < shigh {
-			b.write(' ', styleForScrollBarThumb.String())
+			b.Write(' ', styleForScrollBarThumb.String())
 		} else {
-			b.write('│', styleForScrollBarArea.String())
+			b.Write('│', styleForScrollBarArea.String())
 		}
 	}
 	return b

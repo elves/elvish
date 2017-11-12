@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/sys"
 )
 
@@ -13,33 +14,33 @@ var logWriterDetail = false
 // Writer renders the editor UI.
 type Writer struct {
 	file   *os.File
-	oldBuf *buffer
+	oldBuf *ui.Buffer
 }
 
 func newWriter(f *os.File) *Writer {
-	writer := &Writer{file: f, oldBuf: &buffer{}}
+	writer := &Writer{file: f, oldBuf: &ui.Buffer{}}
 	return writer
 }
 
 func (w *Writer) resetOldBuf() {
-	w.oldBuf = &buffer{}
+	w.oldBuf = &ui.Buffer{}
 }
 
 // deltaPos calculates the escape sequence needed to move the cursor from one
 // position to another. It use relative movements to move to the destination
 // line and absolute movement to move to the destination column.
-func deltaPos(from, to Pos) []byte {
+func deltaPos(from, to ui.Pos) []byte {
 	buf := new(bytes.Buffer)
-	if from.line < to.line {
+	if from.Line < to.Line {
 		// move down
-		fmt.Fprintf(buf, "\033[%dB", to.line-from.line)
-	} else if from.line > to.line {
+		fmt.Fprintf(buf, "\033[%dB", to.Line-from.Line)
+	} else if from.Line > to.Line {
 		// move up
-		fmt.Fprintf(buf, "\033[%dA", from.line-to.line)
+		fmt.Fprintf(buf, "\033[%dA", from.Line-to.Line)
 	}
 	fmt.Fprint(buf, "\r")
-	if to.col > 0 {
-		fmt.Fprintf(buf, "\033[%dC", to.col)
+	if to.Col > 0 {
+		fmt.Fprintf(buf, "\033[%dC", to.Col)
 	}
 	return buf.Bytes()
 }
@@ -47,10 +48,10 @@ func deltaPos(from, to Pos) []byte {
 // commitBuffer updates the terminal display to reflect current buffer.
 // TODO Instead of erasing w.oldBuf entirely and then draw buf, compute a
 // delta between w.oldBuf and buf
-func (w *Writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
-	if buf.width != w.oldBuf.width && w.oldBuf.lines != nil {
+func (w *Writer) commitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
+	if buf.Width != w.oldBuf.Width && w.oldBuf.Lines != nil {
 		// Width change, force full refresh
-		w.oldBuf.lines = nil
+		w.oldBuf.Lines = nil
 		fullRefresh = true
 	}
 
@@ -60,7 +61,7 @@ func (w *Writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 	bytesBuf.WriteString("\033[?25l")
 
 	// Rewind cursor
-	if pLine := w.oldBuf.dot.line; pLine > 0 {
+	if pLine := w.oldBuf.Dot.Line; pLine > 0 {
 		fmt.Fprintf(bytesBuf, "\033[%dA", pLine)
 	}
 	bytesBuf.WriteString("\r")
@@ -80,61 +81,61 @@ func (w *Writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 		}
 	}
 
-	writeCells := func(cs []cell) {
+	writeCells := func(cs []ui.Cell) {
 		for _, c := range cs {
-			if c.width > 0 {
-				switchStyle(c.style)
+			if c.Width > 0 {
+				switchStyle(c.Style)
 			}
-			bytesBuf.WriteString(c.string)
+			bytesBuf.WriteString(c.Text)
 		}
 	}
 
 	if bufNoti != nil {
 		if logWriterDetail {
-			logger.Printf("going to write %d lines of notifications", len(bufNoti.lines))
+			logger.Printf("going to write %d lines of notifications", len(bufNoti.Lines))
 		}
 
 		// Write notifications
-		for _, line := range bufNoti.lines {
+		for _, line := range bufNoti.Lines {
 			writeCells(line)
 			switchStyle("")
 			bytesBuf.WriteString("\033[K\n")
 		}
 		// XXX Hacky.
-		if len(w.oldBuf.lines) > 0 {
-			w.oldBuf.lines = w.oldBuf.lines[1:]
+		if len(w.oldBuf.Lines) > 0 {
+			w.oldBuf.Lines = w.oldBuf.Lines[1:]
 		}
 	}
 
 	if logWriterDetail {
-		logger.Printf("going to write %d lines, oldBuf had %d", len(buf.lines), len(w.oldBuf.lines))
+		logger.Printf("going to write %d lines, oldBuf had %d", len(buf.Lines), len(w.oldBuf.Lines))
 	}
 
-	for i, line := range buf.lines {
+	for i, line := range buf.Lines {
 		if i > 0 {
 			bytesBuf.WriteString("\n")
 		}
 		var j int // First column where buf and oldBuf differ
 		// No need to update current line
-		if !fullRefresh && i < len(w.oldBuf.lines) {
+		if !fullRefresh && i < len(w.oldBuf.Lines) {
 			var eq bool
-			if eq, j = compareCells(line, w.oldBuf.lines[i]); eq {
+			if eq, j = ui.CompareCells(line, w.oldBuf.Lines[i]); eq {
 				continue
 			}
 		}
 		// Move to the first differing column if necessary.
-		firstCol := cellsWidth(line[:j])
+		firstCol := ui.CellsWidth(line[:j])
 		if firstCol != 0 {
 			fmt.Fprintf(bytesBuf, "\033[%dC", firstCol)
 		}
 		// Erase the rest of the line if necessary.
-		if !fullRefresh && i < len(w.oldBuf.lines) && j < len(w.oldBuf.lines[i]) {
+		if !fullRefresh && i < len(w.oldBuf.Lines) && j < len(w.oldBuf.Lines[i]) {
 			switchStyle("")
 			bytesBuf.WriteString("\033[K")
 		}
 		writeCells(line[j:])
 	}
-	if len(w.oldBuf.lines) > len(buf.lines) && !fullRefresh {
+	if len(w.oldBuf.Lines) > len(buf.Lines) && !fullRefresh {
 		// If the old buffer is higher, erase old content.
 		// Note that we cannot simply write \033[J, because if the cursor is
 		// just over the last column -- which is precisely the case if we have a
@@ -143,8 +144,8 @@ func (w *Writer) commitBuffer(bufNoti, buf *buffer, fullRefresh bool) error {
 		bytesBuf.WriteString("\n\033[J\033[A")
 	}
 	switchStyle("")
-	cursor := buf.cursor()
-	bytesBuf.Write(deltaPos(cursor, buf.dot))
+	cursor := buf.Cursor()
+	bytesBuf.Write(deltaPos(cursor, buf.Dot))
 
 	// Show cursor.
 	bytesBuf.WriteString("\033[?25h")

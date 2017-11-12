@@ -44,5 +44,5 @@ type Lister interface {
 type ListRenderer interface {
 	// ListRender renders the listing under the given constraint of width and
 	// maximum height. It returns a rendered buffer.
-	ListRender(width, maxHeight int) *buffer
+	ListRender(width, maxHeight int) *ui.Buffer
 }

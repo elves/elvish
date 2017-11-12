@@ -269,15 +269,15 @@ func (c *completion) maxWidth(lo, hi int) int {
 	return width
 }
 
-func (c *completion) ListRender(width, maxHeight int) *buffer {
-	b := newBuffer(width)
+func (c *completion) ListRender(width, maxHeight int) *ui.Buffer {
+	b := ui.NewBuffer(width)
 	cands := c.filtered
 	if len(cands) == 0 {
-		b.writes(util.TrimWcwidth("(no result)", width), "")
+		b.WriteString(util.TrimWcwidth("(no result)", width), "")
 		return b
 	}
 	if maxHeight <= 1 || width <= 2 {
-		b.writes(util.TrimWcwidth("(terminal too small)", width), "")
+		b.WriteString(util.TrimWcwidth("(terminal too small)", width), "")
 		return b
 	}
 
@@ -328,29 +328,29 @@ func (c *completion) ListRender(width, maxHeight int) *buffer {
 			trimmed = true
 		}
 
-		col := newBuffer(totalColWidth)
+		col := ui.NewBuffer(totalColWidth)
 		for j = i; j < i+height; j++ {
 			if j > i {
-				col.newline()
+				col.Newline()
 			}
 			if j >= len(cands) {
 				// Write padding to make the listing a rectangle.
-				col.writePadding(totalColWidth, styleForCompletion.String())
+				col.WriteSpaces(totalColWidth, styleForCompletion.String())
 			} else {
-				col.writePadding(completionColMarginLeft, styleForCompletion.String())
+				col.WriteSpaces(completionColMarginLeft, styleForCompletion.String())
 				s := ui.JoinStyles(styleForCompletion, cands[j].menu.Styles)
 				if j == c.selected {
 					s = append(s, styleForSelectedCompletion.String())
 				}
-				col.writes(util.ForceWcwidth(cands[j].menu.Text, colWidth), s.String())
-				col.writePadding(completionColMarginRight, styleForCompletion.String())
+				col.WriteString(util.ForceWcwidth(cands[j].menu.Text, colWidth), s.String())
+				col.WriteSpaces(completionColMarginRight, styleForCompletion.String())
 				if !trimmed {
 					c.lastShownInFull = j
 				}
 			}
 		}
 
-		b.extendRight(col, 0)
+		b.ExtendRight(col, 0)
 		remainedWidth -= totalColWidth
 		if remainedWidth <= completionColMarginTotal {
 			break
@@ -358,14 +358,14 @@ func (c *completion) ListRender(width, maxHeight int) *buffer {
 	}
 	// When the listing is incomplete, always use up the entire width.
 	if remainedWidth > 0 && c.needScrollbar() {
-		col := newBuffer(remainedWidth)
+		col := ui.NewBuffer(remainedWidth)
 		for i := 0; i < height; i++ {
 			if i > 0 {
-				col.newline()
+				col.Newline()
 			}
-			col.writePadding(remainedWidth, styleForCompletion.String())
+			col.WriteSpaces(remainedWidth, styleForCompletion.String())
 		}
-		b.extendRight(col, 0)
+		b.ExtendRight(col, 0)
 		remainedWidth = 0
 	}
 	return b

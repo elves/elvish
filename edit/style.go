@@ -19,8 +19,6 @@ var (
 	styleForScrollBarArea    = ui.Styles{"magenta"}
 	styleForScrollBarThumb   = ui.Styles{"magenta", "inverse"}
 
-	styleForControlChar = ui.Styles{"inverse"}
-
 	// Use default style for completion listing
 	styleForCompletion = ui.Styles{}
 	// Use inverse style for selected completion entry
