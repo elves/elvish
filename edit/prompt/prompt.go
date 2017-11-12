@@ -1,4 +1,5 @@
-package edit
+// Package prompt implements prompt-related functionalities of the editor.
+package prompt
 
 import (
 	"io/ioutil"
@@ -14,8 +15,10 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// EditorIface is the interface used by the prompt to access the editor.
-type EditorIface interface {
+var logger = util.GetLogger("[edit/prompt] ")
+
+// Editor is the interface used by the prompt to access the editor.
+type Editor interface {
 	Evaler() *eval.Evaler
 	Variable(string) eval.Variable
 	Notify(string, ...interface{})
@@ -24,11 +27,8 @@ type EditorIface interface {
 // maxSeconds is the maximum number of seconds time.Duration can represent.
 const maxSeconds = float64(math.MaxInt64 / time.Second)
 
-// Implementation for $prompt.
-
-var _ = RegisterVariable("prompt", promptVariable)
-
-func promptVariable() eval.Variable {
+// PromptVariable returns a variable for $edit:prompt.
+func PromptVariable() eval.Variable {
 	user, err := user.Current()
 	isRoot := err == nil && user.Uid == "0"
 
@@ -47,15 +47,13 @@ func promptVariable() eval.Variable {
 		&eval.BuiltinFn{"default prompt", prompt}, eval.ShouldBeFn)
 }
 
-func getPrompt(ed EditorIface) eval.Callable {
+// Prompt extracts $edit:prompt.
+func Prompt(ed Editor) eval.Callable {
 	return ed.Variable("prompt").Get().(eval.Callable)
 }
 
-// Implementation for $rprompt.
-
-var _ = RegisterVariable("rprompt", rpromptVariable)
-
-func rpromptVariable() eval.Variable {
+// RpromptVariable returns a variable for $edit:rprompt.
+func RpromptVariable() eval.Variable {
 	username := "???"
 	user, err := user.Current()
 	if err == nil {
@@ -77,35 +75,39 @@ func rpromptVariable() eval.Variable {
 		&eval.BuiltinFn{"default rprompt", rprompt}, eval.ShouldBeFn)
 }
 
-func getRprompt(ed EditorIface) eval.Callable {
+// Rprompt extracts $edit:rprompt.
+func Rprompt(ed Editor) eval.Callable {
 	return ed.Variable("rprompt").Get().(eval.Callable)
 }
 
 // Implementation for $rprompt-persistent.
 
-var _ = RegisterVariable("rprompt-persistent", func() eval.Variable {
+// RpromptPersistentVariable returns a variable for $edit:rprompt-persistent.
+func RpromptPersistentVariable() eval.Variable {
 	return eval.NewPtrVariableWithValidator(eval.Bool(false), eval.ShouldBeBool)
-})
+}
 
-func getRpromptPersistent(ed EditorIface) bool {
+// RpromptPersistent extracts $edit:rprompt-persistent.
+func RpromptPersistent(ed Editor) bool {
 	return bool(ed.Variable("rprompt-persistent").Get().(eval.Bool).Bool())
 }
 
-// Implementation for $-prompts-max-wait.
-
-var _ = RegisterVariable("-prompts-max-wait", promptsMaxWaitVariable)
-
-func promptsMaxWaitVariable() eval.Variable {
+// MaxWaitVariable returns a variable for $edit:-prompts-max-wait.
+func MaxWaitVariable() eval.Variable {
 	return eval.NewPtrVariableWithValidator(eval.String("+Inf"), eval.ShouldBeNumber)
 }
 
-func getPromptsMaxWait(ed EditorIface) float64 {
+// MaxWait extracts $edit:-prompts-max-wait.
+func MaxWait(ed Editor) float64 {
 	f, _ := strconv.ParseFloat(string(ed.Variable("-prompts-max-wait").Get().(eval.String)), 64)
 	return f
 }
 
-func makePromptsMaxWaitChan(ed *Editor) <-chan time.Time {
-	f := getPromptsMaxWait(ed)
+// MakeMaxWait makes a channel that sends the current time after
+// $edit:-prompts-max-wait seconds if the time fits in a time.Duration value, or
+// nil otherwise.
+func MakeMaxWaitChan(ed Editor) <-chan time.Time {
+	f := MaxWait(ed)
 	if f > maxSeconds {
 		return nil
 	}
@@ -114,7 +116,7 @@ func makePromptsMaxWaitChan(ed *Editor) <-chan time.Time {
 
 // callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
 // arguments and closed input, and converts its outputs to styled objects.
-func callPrompt(ed EditorIface, fn eval.Callable) []*ui.Styled {
+func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
 	ports := []*eval.Port{
 		eval.DevNullClosedChan,
 		{}, // Will be replaced when capturing output
@@ -163,26 +165,28 @@ func callPrompt(ed EditorIface, fn eval.Callable) []*ui.Styled {
 	return styleds
 }
 
-// promptUpdater manages the update of a prompt.
-type promptUpdater struct {
-	promptFn func(EditorIface) eval.Callable
-	staled   []*ui.Styled
+// Updater manages the update of a prompt.
+type Updater struct {
+	promptFn func(Editor) eval.Callable
+	Staled   []*ui.Styled
 }
 
 var staledPrompt = &ui.Styled{"?", ui.Styles{"inverse"}}
 
-// newPromptUpdater creates a new promptUpdater.
-func newPromptUpdater(promptFn func(EditorIface) eval.Callable) *promptUpdater {
-	return &promptUpdater{promptFn, []*ui.Styled{staledPrompt}}
+// NewUpdater creates a new Updater.
+func NewUpdater(promptFn func(Editor) eval.Callable) *Updater {
+	return &Updater{promptFn, []*ui.Styled{staledPrompt}}
 }
 
-func (pu *promptUpdater) update(ed EditorIface) <-chan []*ui.Styled {
+// Update updates the prompt, returning a channel onto which the result will be
+// written.
+func (pu *Updater) Update(ed Editor) <-chan []*ui.Styled {
 	ch := make(chan []*ui.Styled)
 	go func() {
 		result := callPrompt(ed, pu.promptFn(ed))
-		pu.staled = make([]*ui.Styled, len(result)+1)
-		pu.staled[0] = staledPrompt
-		copy(pu.staled[1:], result)
+		pu.Staled = make([]*ui.Styled, len(result)+1)
+		pu.Staled[0] = staledPrompt
+		copy(pu.Staled[1:], result)
 		ch <- result
 	}()
 	return ch

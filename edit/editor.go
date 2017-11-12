@@ -14,6 +14,7 @@ import (
 	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/edit/highlight"
 	"github.com/elves/elvish/edit/history"
+	"github.com/elves/elvish/edit/prompt"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -351,7 +352,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.mode = &ed.insert
 	ed.tips = nil
 	ed.dot = len(ed.line)
-	if !getRpromptPersistent(ed) {
+	if !prompt.RpromptPersistent(ed) {
 		ed.rpromptContent = nil
 	}
 	addError(ed.refresh(false, false))
@@ -407,29 +408,29 @@ func (ed *Editor) ReadLine() (line string, err error) {
 
 	callHooks(ed.evaler, ed.beforeReadLine())
 
-	promptUpdater := newPromptUpdater(getPrompt)
-	rpromptUpdater := newPromptUpdater(getRprompt)
+	promptUpdater := prompt.NewUpdater(prompt.Prompt)
+	rpromptUpdater := prompt.NewUpdater(prompt.Rprompt)
 
 MainLoop:
 	for {
-		promptCh := promptUpdater.update(ed)
-		rpromptCh := rpromptUpdater.update(ed)
-		promptTimeout := makePromptsMaxWaitChan(ed)
-		rpromptTimeout := makePromptsMaxWaitChan(ed)
+		promptCh := promptUpdater.Update(ed)
+		rpromptCh := rpromptUpdater.Update(ed)
+		promptTimeout := prompt.MakeMaxWaitChan(ed)
+		rpromptTimeout := prompt.MakeMaxWaitChan(ed)
 
 		select {
 		case ed.promptContent = <-promptCh:
 			logger.Println("prompt fetched")
 		case <-promptTimeout:
 			logger.Println("stale prompt")
-			ed.promptContent = promptUpdater.staled
+			ed.promptContent = promptUpdater.Staled
 		}
 		select {
 		case ed.rpromptContent = <-rpromptCh:
 			logger.Println("rprompt fetched")
 		case <-rpromptTimeout:
 			logger.Println("stale rprompt")
-			ed.rpromptContent = rpromptUpdater.staled
+			ed.rpromptContent = rpromptUpdater.Staled
 		}
 
 	refresh:
