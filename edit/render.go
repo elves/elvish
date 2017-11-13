@@ -218,6 +218,8 @@ func (clr *cmdlineRenderer) render(b *ui.Buffer) {
 	}
 }
 
+var logEditorRender = false
+
 // editorRenderer renders the entire editor.
 type editorRenderer struct {
 	*editorState
@@ -305,7 +307,7 @@ func (er *editorRenderer) render(buf *ui.Buffer) {
 		}
 	}
 
-	if logWriterDetail {
+	if logEditorRender {
 		logger.Printf("bufLine %d, bufMode %d, bufTips %d, bufListing %d",
 			ui.BuffersHeight(bufLine), ui.BuffersHeight(bufMode), ui.BuffersHeight(bufTips), ui.BuffersHeight(bufListing))
 	}

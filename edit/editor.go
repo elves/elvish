@@ -34,7 +34,7 @@ const (
 type Editor struct {
 	in     *os.File
 	out    *os.File
-	writer *Writer
+	writer *tty.Writer
 	reader *tty.Reader
 	sigs   chan os.Signal
 	daemon *api.Client
@@ -97,7 +97,7 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler, 
 	ed := &Editor{
 		in:     in,
 		out:    out,
-		writer: newWriter(out),
+		writer: tty.NewWriter(out),
 		reader: tty.NewReader(in),
 		sigs:   sigs,
 		daemon: daemon,
@@ -225,7 +225,11 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 			ed.styling.Add(badn.Begin(), badn.End(), styleForCompilerError.String())
 		}
 	}
-	return ed.writer.refresh(&ed.editorState, fullRefresh)
+	// Render onto a buffer.
+	height, width := sys.GetWinsize(int(ed.out.Fd()))
+	er := &editorRenderer{&ed.editorState, height, nil}
+	buf := render(er, width)
+	return ed.writer.CommitBuffer(er.bufNoti, buf, fullRefresh)
 }
 
 func atEnd(e error, n int) bool {
@@ -357,7 +361,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	}
 	addError(ed.refresh(false, false))
 	ed.out.WriteString("\n")
-	ed.writer.resetOldBuf()
+	ed.writer.ResetCurrentBuffer()
 
 	ed.reader.Quit()
 

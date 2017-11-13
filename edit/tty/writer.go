@@ -1,4 +1,4 @@
-package edit
+package tty
 
 import (
 	"bytes"
@@ -14,16 +14,22 @@ var logWriterDetail = false
 // Writer renders the editor UI.
 type Writer struct {
 	file   *os.File
-	oldBuf *ui.Buffer
+	curBuf *ui.Buffer
 }
 
-func newWriter(f *os.File) *Writer {
-	writer := &Writer{file: f, oldBuf: &ui.Buffer{}}
+func NewWriter(f *os.File) *Writer {
+	writer := &Writer{file: f, curBuf: &ui.Buffer{}}
 	return writer
 }
 
-func (w *Writer) resetOldBuf() {
-	w.oldBuf = &ui.Buffer{}
+// CurrentBuffer returns the current buffer.
+func (w *Writer) CurrentBuffer() *ui.Buffer {
+	return w.curBuf
+}
+
+// ResetCurrentBuffer resets the current buffer.
+func (w *Writer) ResetCurrentBuffer() {
+	w.curBuf = &ui.Buffer{}
 }
 
 // deltaPos calculates the escape sequence needed to move the cursor from one
@@ -45,13 +51,11 @@ func deltaPos(from, to ui.Pos) []byte {
 	return buf.Bytes()
 }
 
-// commitBuffer updates the terminal display to reflect current buffer.
-// TODO Instead of erasing w.oldBuf entirely and then draw buf, compute a
-// delta between w.oldBuf and buf
-func (w *Writer) commitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
-	if buf.Width != w.oldBuf.Width && w.oldBuf.Lines != nil {
+// CommitBuffer updates the terminal display to reflect current buffer.
+func (w *Writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
+	if buf.Width != w.curBuf.Width && w.curBuf.Lines != nil {
 		// Width change, force full refresh
-		w.oldBuf.Lines = nil
+		w.curBuf.Lines = nil
 		fullRefresh = true
 	}
 
@@ -61,7 +65,7 @@ func (w *Writer) commitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 	bytesBuf.WriteString("\033[?25l")
 
 	// Rewind cursor
-	if pLine := w.oldBuf.Dot.Line; pLine > 0 {
+	if pLine := w.curBuf.Dot.Line; pLine > 0 {
 		fmt.Fprintf(bytesBuf, "\033[%dA", pLine)
 	}
 	bytesBuf.WriteString("\r")
@@ -102,13 +106,13 @@ func (w *Writer) commitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 			bytesBuf.WriteString("\033[K\n")
 		}
 		// XXX Hacky.
-		if len(w.oldBuf.Lines) > 0 {
-			w.oldBuf.Lines = w.oldBuf.Lines[1:]
+		if len(w.curBuf.Lines) > 0 {
+			w.curBuf.Lines = w.curBuf.Lines[1:]
 		}
 	}
 
 	if logWriterDetail {
-		logger.Printf("going to write %d lines, oldBuf had %d", len(buf.Lines), len(w.oldBuf.Lines))
+		logger.Printf("going to write %d lines, oldBuf had %d", len(buf.Lines), len(w.curBuf.Lines))
 	}
 
 	for i, line := range buf.Lines {
@@ -117,9 +121,9 @@ func (w *Writer) commitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 		}
 		var j int // First column where buf and oldBuf differ
 		// No need to update current line
-		if !fullRefresh && i < len(w.oldBuf.Lines) {
+		if !fullRefresh && i < len(w.curBuf.Lines) {
 			var eq bool
-			if eq, j = ui.CompareCells(line, w.oldBuf.Lines[i]); eq {
+			if eq, j = ui.CompareCells(line, w.curBuf.Lines[i]); eq {
 				continue
 			}
 		}
@@ -129,13 +133,13 @@ func (w *Writer) commitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 			fmt.Fprintf(bytesBuf, "\033[%dC", firstCol)
 		}
 		// Erase the rest of the line if necessary.
-		if !fullRefresh && i < len(w.oldBuf.Lines) && j < len(w.oldBuf.Lines[i]) {
+		if !fullRefresh && i < len(w.curBuf.Lines) && j < len(w.curBuf.Lines[i]) {
 			switchStyle("")
 			bytesBuf.WriteString("\033[K")
 		}
 		writeCells(line[j:])
 	}
-	if len(w.oldBuf.Lines) > len(buf.Lines) && !fullRefresh {
+	if len(w.curBuf.Lines) > len(buf.Lines) && !fullRefresh {
 		// If the old buffer is higher, erase old content.
 		// Note that we cannot simply write \033[J, because if the cursor is
 		// just over the last column -- which is precisely the case if we have a
@@ -165,42 +169,6 @@ func (w *Writer) commitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 		return err
 	}
 
-	w.oldBuf = buf
+	w.curBuf = buf
 	return nil
-}
-
-// findWindow finds a window of lines around the selected line in a total
-// number of height lines, that is at most max lines.
-func findWindow(height, selected, max int) (low, high int) {
-	if height <= max {
-		// No need for windowing
-		return 0, height
-	}
-	low = selected - max/2
-	high = low + max
-	switch {
-	case low < 0:
-		// Near top of the list, move the window down
-		low = 0
-		high = low + max
-	case high > height:
-		// Near bottom of the list, move the window down
-		high = height
-		low = high - max
-	}
-	return
-}
-
-func trimToWindow(s []string, selected, max int) ([]string, int) {
-	low, high := findWindow(len(s), selected, max)
-	return s[low:high], low
-}
-
-// refresh redraws the line editor. The dot is passed as an index into text;
-// the corresponding position will be calculated.
-func (w *Writer) refresh(es *editorState, fullRefresh bool) error {
-	height, width := sys.GetWinsize(int(w.file.Fd()))
-	er := &editorRenderer{es, height, nil}
-	buf := render(er, width)
-	return w.commitBuffer(er.bufNoti, buf, fullRefresh)
 }

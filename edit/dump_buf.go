@@ -10,7 +10,7 @@ import (
 
 func _dumpBuf(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	out := ec.OutputFile()
-	buf := ec.Editor.(*Editor).writer.oldBuf
+	buf := ec.Editor.(*Editor).writer.CurrentBuffer()
 	for _, line := range buf.Lines {
 		style := ""
 		openedSpan := false
