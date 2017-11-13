@@ -1,6 +1,11 @@
-package edit
+// Package lscolors provides styling of filenames based on file features.
+//
+// This is a reverse-engineered implementation of the parsing and
+// interpretation of the LS_COLORS environmental variable used by GNU
+// coreutils.
+package lscolors
 
-//go:generate stringer -type=fileFeature -output=ls-colors_string.go
+//go:generate stringer -type=fileFeature -output=lscolors_string.go
 
 import (
 	"os"
@@ -9,12 +14,6 @@ import (
 	"sync"
 	"syscall"
 )
-
-// Color files based on their various features.
-//
-// This is a reverse-engineered implementation of the parsing and
-// interpretation of the LS_COLORS environmental variable used by GNU
-// coreutils.
 
 type fileFeature int
 
@@ -91,7 +90,7 @@ func init() {
 	lastLsColor = parseLsColor(defaultLsColorString)
 }
 
-func getLsColor() *lsColor {
+func GetLsColor() *lsColor {
 	lastLsColorMutex.Lock()
 	defer lastLsColorMutex.Unlock()
 
@@ -217,7 +216,8 @@ func determineFeature(fname string, mh bool) (fileFeature, error) {
 	return featureRegular, nil
 }
 
-func (lc *lsColor) getStyle(fname string) string {
+// GetStyle returns the style for the named file.
+func (lc *lsColor) GetStyle(fname string) string {
 	mh := strings.Trim(lc.styleForFeature[featureMultiHardLink], "0") != ""
 	// TODO Handle error from determineFeature
 	feature, _ := determineFeature(fname, mh)

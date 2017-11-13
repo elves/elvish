@@ -39,6 +39,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/elves/elvish/edit/lscolors"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
@@ -509,7 +510,7 @@ func complFilenameInner(head string, executableOnly bool, rawCands chan<- rawCan
 		return fmt.Errorf("cannot list directory %s: %v", dirToRead, err)
 	}
 
-	lsColor := getLsColor()
+	lsColor := lscolors.GetLsColor()
 	// Make candidates out of elements that match the file component.
 	for _, info := range infos {
 		name := info.Name()
@@ -540,7 +541,7 @@ func complFilenameInner(head string, executableOnly bool, rawCands chan<- rawCan
 
 		rawCands <- &complexCandidate{
 			stem: full, codeSuffix: suffix,
-			style: ui.StylesFromString(lsColor.getStyle(full)),
+			style: ui.StylesFromString(lsColor.GetStyle(full)),
 		}
 	}
 

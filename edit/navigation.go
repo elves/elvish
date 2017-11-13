@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/edit/lscolors"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
@@ -313,11 +314,11 @@ func (n *navigation) loaddir(dir string) ([]ui.Styled, error) {
 	sort.Strings(names)
 
 	var all []ui.Styled
-	lsColor := getLsColor()
+	lsColor := lscolors.GetLsColor()
 	for _, name := range names {
 		if n.showHidden || name[0] != '.' {
 			all = append(all, ui.Styled{name,
-				ui.StylesFromString(lsColor.getStyle(path.Join(dir, name)))})
+				ui.StylesFromString(lsColor.GetStyle(path.Join(dir, name)))})
 		}
 	}
 
