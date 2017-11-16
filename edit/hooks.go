@@ -31,20 +31,20 @@ func callHooks(ev *eval.Evaler, li eval.List, args ...eval.Value) {
 		return
 	}
 
-	opfunc := func(ec *eval.EvalCtx) {
-		li.Iterate(func(v eval.Value) bool {
+	li.Iterate(func(v eval.Value) bool {
+		opfunc := func(ec *eval.EvalCtx) {
 			fn, ok := v.(eval.CallableValue)
 			if !ok {
 				fmt.Fprintf(os.Stderr, "not a function: %s\n", v.Repr(eval.NoPretty))
-				return true
+				return
 			}
 			err := ec.PCall(fn, args, eval.NoOpts)
 			if err != nil {
 				// TODO Print stack trace.
 				fmt.Fprintf(os.Stderr, "function error: %s\n", err.Error())
 			}
-			return true
-		})
-	}
-	ev.Eval(eval.Op{opfunc, -1, -1}, "[hooks]", "no source")
+		}
+		ev.Eval(eval.Op{opfunc, -1, -1}, "[hooks]", "no source")
+		return true
+	})
 }
