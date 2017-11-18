@@ -9,25 +9,12 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-type renderer interface {
-	render(b *ui.Buffer)
-}
-
-func render(r renderer, width int) *ui.Buffer {
-	if r == nil {
-		return nil
-	}
-	b := ui.NewBuffer(width)
-	r.render(b)
-	return b
-}
-
 type modeLineRenderer struct {
 	title  string
 	filter string
 }
 
-func (ml modeLineRenderer) render(b *ui.Buffer) {
+func (ml modeLineRenderer) Render(b *ui.Buffer) {
 	b.WriteString(ml.title, styleForMode.String())
 	b.WriteSpaces(1, "")
 	b.WriteString(ml.filter, styleForFilter.String())
@@ -39,8 +26,8 @@ type modeLineWithScrollBarRenderer struct {
 	n, low, high int
 }
 
-func (ml modeLineWithScrollBarRenderer) render(b *ui.Buffer) {
-	ml.modeLineRenderer.render(b)
+func (ml modeLineWithScrollBarRenderer) Render(b *ui.Buffer) {
+	ml.modeLineRenderer.Render(b)
 
 	scrollbarWidth := b.Width - ui.CellsWidth(b.Lines[len(b.Lines)-1]) - 2
 	if scrollbarWidth >= 3 {
@@ -51,7 +38,7 @@ func (ml modeLineWithScrollBarRenderer) render(b *ui.Buffer) {
 
 type placeholderRenderer string
 
-func (lp placeholderRenderer) render(b *ui.Buffer) {
+func (lp placeholderRenderer) Render(b *ui.Buffer) {
 	b.WriteString(util.TrimWcwidth(string(lp), b.Width), "")
 }
 
@@ -59,7 +46,7 @@ type listingRenderer struct {
 	lines []ui.Styled
 }
 
-func (ls listingRenderer) render(b *ui.Buffer) {
+func (ls listingRenderer) Render(b *ui.Buffer) {
 	for i, line := range ls.lines {
 		if i > 0 {
 			b.Newline()
@@ -73,8 +60,8 @@ type listingWithScrollBarRenderer struct {
 	n, low, high, height int
 }
 
-func (ls listingWithScrollBarRenderer) render(b *ui.Buffer) {
-	b1 := render(ls.listingRenderer, b.Width-1)
+func (ls listingWithScrollBarRenderer) Render(b *ui.Buffer) {
+	b1 := ui.Render(ls.listingRenderer, b.Width-1)
 	b.ExtendRight(b1, 0)
 
 	scrollbar := renderScrollbar(ls.n, ls.low, ls.high, ls.height)
@@ -84,14 +71,14 @@ func (ls listingWithScrollBarRenderer) render(b *ui.Buffer) {
 type navRenderer struct {
 	maxHeight                      int
 	fwParent, fwCurrent, fwPreview int
-	parent, current, preview       renderer
+	parent, current, preview       ui.Renderer
 }
 
-func makeNavRenderer(h int, w1, w2, w3 int, r1, r2, r3 renderer) renderer {
+func makeNavRenderer(h int, w1, w2, w3 int, r1, r2, r3 ui.Renderer) ui.Renderer {
 	return &navRenderer{h, w1, w2, w3, r1, r2, r3}
 }
 
-func (nr *navRenderer) render(b *ui.Buffer) {
+func (nr *navRenderer) Render(b *ui.Buffer) {
 	margin := navigationListingColMargin
 
 	w := b.Width - margin*2
@@ -101,14 +88,14 @@ func (nr *navRenderer) render(b *ui.Buffer) {
 	)
 	wParent, wCurrent, wPreview := ws[0], ws[1], ws[2]
 
-	bParent := render(nr.parent, wParent)
+	bParent := ui.Render(nr.parent, wParent)
 	b.ExtendRight(bParent, 0)
 
-	bCurrent := render(nr.current, wCurrent)
+	bCurrent := ui.Render(nr.current, wCurrent)
 	b.ExtendRight(bCurrent, wParent+margin)
 
 	if wPreview > 0 {
-		bPreview := render(nr.preview, wPreview)
+		bPreview := ui.Render(nr.preview, wPreview)
 		b.ExtendRight(bPreview, wParent+wCurrent+2*margin)
 	}
 }
@@ -119,7 +106,7 @@ type linesRenderer struct {
 	style string
 }
 
-func (nr linesRenderer) render(b *ui.Buffer) {
+func (nr linesRenderer) Render(b *ui.Buffer) {
 	b.WriteString(strings.Join(nr.lines, "\n"), "")
 }
 
@@ -156,7 +143,7 @@ func (clr *cmdlineRenderer) setHist(b int, t string) {
 	clr.histBegin, clr.histText = b, t
 }
 
-func (clr *cmdlineRenderer) render(b *ui.Buffer) {
+func (clr *cmdlineRenderer) Render(b *ui.Buffer) {
 	b.EagerWrap = true
 
 	b.WriteStyleds(clr.prompt)
@@ -227,13 +214,13 @@ type editorRenderer struct {
 	bufNoti *ui.Buffer
 }
 
-func (er *editorRenderer) render(buf *ui.Buffer) {
+func (er *editorRenderer) Render(buf *ui.Buffer) {
 	height, width, es := er.height, buf.Width, er.editorState
 
 	var bufNoti, bufLine, bufMode, bufTips, bufListing *ui.Buffer
 	// butNoti
 	if len(es.notifications) > 0 {
-		bufNoti = render(linesRenderer{es.notifications, ""}, width)
+		bufNoti = ui.Render(linesRenderer{es.notifications, ""}, width)
 		es.notifications = nil
 	}
 
@@ -249,15 +236,15 @@ func (er *editorRenderer) render(buf *ui.Buffer) {
 		begin := len(mode.Prefix())
 		clr.setHist(begin, mode.CurrentCmd()[begin:])
 	}
-	bufLine = render(clr, width)
+	bufLine = ui.Render(clr, width)
 
 	// bufMode
-	bufMode = render(es.mode.ModeLine(), width)
+	bufMode = ui.Render(es.mode.ModeLine(), width)
 
 	// bufTips
 	// TODO tips is assumed to contain no newlines.
 	if len(es.tips) > 0 {
-		bufTips = render(linesRenderer{es.tips, styleForTip.String()}, width)
+		bufTips = ui.Render(linesRenderer{es.tips, styleForTip.String()}, width)
 	}
 
 	hListing := 0
@@ -295,7 +282,7 @@ func (er *editorRenderer) render(buf *ui.Buffer) {
 		if lister, ok := es.mode.(ListRenderer); ok {
 			bufListing = lister.ListRender(width, hListing)
 		} else if lister, ok := es.mode.(Lister); ok {
-			bufListing = render(lister.List(hListing), width)
+			bufListing = ui.Render(lister.List(hListing), width)
 		}
 		// XXX When in completion mode, we re-render the mode line, since the
 		// scrollbar in the mode line depends on completion.lastShown which is
@@ -303,7 +290,7 @@ func (er *editorRenderer) render(buf *ui.Buffer) {
 		// scrollbar never adds additional lines to bufMode, we may do this
 		// without recalculating the layout.
 		if _, ok := es.mode.(*completion); ok {
-			bufMode = render(es.mode.ModeLine(), width)
+			bufMode = ui.Render(es.mode.ModeLine(), width)
 		}
 	}
 

@@ -23,7 +23,7 @@ const (
 
 // Mode is an editor mode.
 type Mode interface {
-	ModeLine() renderer
+	ModeLine() ui.Renderer
 	Binding(map[string]eval.Variable, ui.Key) eval.CallableValue
 }
 
@@ -36,7 +36,7 @@ type CursorOnModeLiner interface {
 
 // Lister is a mode with a listing.
 type Lister interface {
-	List(maxHeight int) renderer
+	List(maxHeight int) ui.Renderer
 }
 
 // ListRenderer is a mode with a listing that handles the rendering itself.

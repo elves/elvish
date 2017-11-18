@@ -66,7 +66,7 @@ func TestListing(t *testing.T) {
 	})
 }
 
-func testListingList(t *testing.T, i, h int, want renderer) {
+func testListingList(t *testing.T, i, h int, want ui.Renderer) {
 	ls.selected = i
 	if r := ls.List(h); !reflect.DeepEqual(r, want) {
 		t.Errorf("selecting %d, ls.List(%d) = %v, want %v", i, h, r, want)

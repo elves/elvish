@@ -39,7 +39,7 @@ func (*hist) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
 	return getBinding(m[modeHistory], k)
 }
 
-func (h *hist) ModeLine() renderer {
+func (h *hist) ModeLine() ui.Renderer {
 	return modeLineRenderer{fmt.Sprintf(" HISTORY #%d ", h.CurrentSeq()), ""}
 }
 

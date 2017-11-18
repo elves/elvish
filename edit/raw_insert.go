@@ -28,6 +28,6 @@ func (rawInsert) Binding(map[string]eval.Variable, ui.Key) eval.CallableValue {
 	return nil
 }
 
-func (ri rawInsert) ModeLine() renderer {
+func (ri rawInsert) ModeLine() ui.Renderer {
 	return modeLineRenderer{" RAW ", ""}
 }

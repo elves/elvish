@@ -64,7 +64,7 @@ func (c *completion) needScrollbar() bool {
 	return c.firstShown > 0 || c.lastShownInFull < len(c.filtered)-1
 }
 
-func (c *completion) ModeLine() renderer {
+func (c *completion) ModeLine() ui.Renderer {
 	ml := modeLineRenderer{fmt.Sprintf(" COMPLETING %s ", c.completer), c.filter}
 	if !c.needScrollbar() {
 		return ml

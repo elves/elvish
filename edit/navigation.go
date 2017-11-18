@@ -65,7 +65,7 @@ func (*navigation) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableVa
 	return getBinding(m[modeNavigation], k)
 }
 
-func (n *navigation) ModeLine() renderer {
+func (n *navigation) ModeLine() ui.Renderer {
 	title := " NAVIGATING "
 	if n.showHidden {
 		title += "(show hidden) "
@@ -333,7 +333,7 @@ const (
 	previewColumnWeight = 9.0
 )
 
-func (n *navigation) List(maxHeight int) renderer {
+func (n *navigation) List(maxHeight int) ui.Renderer {
 	return makeNavRenderer(
 		maxHeight,
 		n.parent.FullWidth(maxHeight),

@@ -124,7 +124,7 @@ type insert struct {
 }
 
 // ui.Insert mode is the default mode and has an empty mode.
-func (ins *insert) ModeLine() renderer {
+func (ins *insert) ModeLine() ui.Renderer {
 	if ins.quotePaste {
 		return modeLineRenderer{" INSERT (quote paste) ", ""}
 	}
@@ -137,7 +137,7 @@ func (*insert) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue 
 
 type command struct{}
 
-func (*command) ModeLine() renderer {
+func (*command) ModeLine() ui.Renderer {
 	return modeLineRenderer{" COMMAND ", ""}
 }
 

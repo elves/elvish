@@ -69,7 +69,7 @@ func (l *narrow) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValu
 	return getBinding(m[modeNarrow], k)
 }
 
-func (l *narrow) ModeLine() renderer {
+func (l *narrow) ModeLine() ui.Renderer {
 	ml := l.opts.Modeline
 	var opt []string
 	if l.opts.AutoCommit {
@@ -91,7 +91,7 @@ func (l *narrow) CursorOnModeLine() bool {
 	return true
 }
 
-func (l *narrow) List(maxHeight int) renderer {
+func (l *narrow) List(maxHeight int) ui.Renderer {
 	if l.opts.MaxLines > 0 && l.opts.MaxLines < maxHeight {
 		maxHeight = l.opts.MaxLines
 	}

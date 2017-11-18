@@ -102,7 +102,7 @@ func (l *listing) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableVal
 	}
 }
 
-func (l *listing) ModeLine() renderer {
+func (l *listing) ModeLine() ui.Renderer {
 	return modeLineRenderer{l.provider.ModeTitle(l.selected), l.filter}
 }
 
@@ -113,7 +113,7 @@ func (l *listing) CursorOnModeLine() bool {
 	return false
 }
 
-func (l *listing) List(maxHeight int) renderer {
+func (l *listing) List(maxHeight int) ui.Renderer {
 	n := l.provider.Len()
 	if n == 0 {
 		var ph string
