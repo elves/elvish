@@ -124,6 +124,7 @@ func init() {
 
 		// Sequence primitives
 		{"explode", explode},
+		{"all", all},
 		{"take", take},
 		{"drop", drop},
 		{"range", rangeFn},
@@ -699,6 +700,24 @@ func explode(ec *EvalCtx, args []Value, opts map[string]Value) {
 		out <- e
 		return true
 	})
+}
+
+const allBufferSize = 4096
+
+func all(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
+	valuesDone := make(chan struct{})
+	go func() {
+		for input := range ec.ports[0].Chan {
+			ec.ports[1].Chan <- input
+		}
+		close(valuesDone)
+	}()
+	_, err := io.Copy(ec.ports[1].File, ec.ports[0].File)
+	maybeThrow(err)
+	<-valuesDone
 }
 
 func take(ec *EvalCtx, args []Value, opts map[string]Value) {

@@ -312,6 +312,10 @@ var evalTests = []struct {
 	{`range 3`, want{out: strs("0", "1", "2")}},
 	{`range 1 3`, want{out: strs("1", "2")}},
 	{`range 0 10 &step=3`, want{out: strs("0", "3", "6", "9")}},
+	{`put foo bar | all`, want{out: strs("foo", "bar")}},
+	{`echo foobar | all`, want{bytesOut: []byte("foobar\n")}},
+	{`{ put foo bar; echo foobar } | all`,
+		want{out: strs("foo", "bar"), bytesOut: []byte("foobar\n")}},
 	{`range 100 | take 2`, want{out: strs("0", "1")}},
 	{`range 100 | drop 98`, want{out: strs("98", "99")}},
 	{`range 100 | count`, want{out: strs("100")}},
@@ -462,14 +466,14 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	ev := NewEvaler(api.NewClient("/invalid"), nil, dataDir, nil)
 
 	// Collect byte output
-	outBytes := []byte{}
+	bytesOut := []byte{}
 	pr, pw, _ := os.Pipe()
 	bytesDone := make(chan struct{})
 	go func() {
 		for {
 			var buf [64]byte
 			nr, err := pr.Read(buf[:])
-			outBytes = append(outBytes, buf[:nr]...)
+			bytesOut = append(bytesOut, buf[:nr]...)
 			if err != nil {
 				break
 			}
@@ -510,7 +514,7 @@ func evalAndCollect(t *testing.T, texts []string, chsize int) ([]Value, []byte, 
 	<-bytesDone
 	pr.Close()
 
-	return outs, outBytes, ex
+	return outs, bytesOut, ex
 }
 
 func matchOut(want, got []Value) bool {
