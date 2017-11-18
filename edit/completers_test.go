@@ -118,3 +118,11 @@ func mkdir(dirname string, perm os.FileMode) {
 		panic(err)
 	}
 }
+
+func create(fname string, perm os.FileMode) {
+	f, err := os.OpenFile(fname, os.O_CREATE, perm)
+	if err != nil {
+		panic(err)
+	}
+	f.Close()
+}
