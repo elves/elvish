@@ -510,7 +510,7 @@ func complFilenameInner(head string, executableOnly bool, rawCands chan<- rawCan
 		return fmt.Errorf("cannot list directory %s: %v", dirToRead, err)
 	}
 
-	lsColor := lscolors.GetLsColor()
+	lsColor := lscolors.GetColorist()
 	// Make candidates out of elements that match the file component.
 	for _, info := range infos {
 		name := info.Name()

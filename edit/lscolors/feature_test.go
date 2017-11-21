@@ -7,16 +7,8 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func create(fname string, perm os.FileMode) {
-	f, err := os.OpenFile(fname, os.O_CREATE, perm)
-	if err != nil {
-		panic(err)
-	}
-	f.Close()
-}
-
 func TestDetermineFeature(t *testing.T) {
-	test := func(fname string, mh bool, wantedFeature fileFeature) {
+	test := func(fname string, mh bool, wantedFeature feature) {
 		feature, err := determineFeature(fname, mh)
 		if err != nil {
 			t.Errorf("determineFeature(%q, %v) returns error %v, want no error",
@@ -66,4 +58,12 @@ func TestDetermineFeature(t *testing.T) {
 		test("xg", true, featureExecutable)
 		test("xo", true, featureExecutable)
 	})
+}
+
+func create(fname string, perm os.FileMode) {
+	f, err := os.OpenFile(fname, os.O_CREATE, perm)
+	if err != nil {
+		panic(err)
+	}
+	f.Close()
 }

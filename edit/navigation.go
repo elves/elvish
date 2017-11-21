@@ -314,7 +314,7 @@ func (n *navigation) loaddir(dir string) ([]ui.Styled, error) {
 	sort.Strings(names)
 
 	var all []ui.Styled
-	lsColor := lscolors.GetLsColor()
+	lsColor := lscolors.GetColorist()
 	for _, name := range names {
 		if n.showHidden || name[0] != '.' {
 			all = append(all, ui.Styled{name,
