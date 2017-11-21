@@ -1,6 +1,6 @@
 PKG_BASE := github.com/elves/elvish
-PKGS := $(shell go list ./... | grep -v /vendor/)
-PKG_COVERS := $(shell go list ./... | grep -v '^$(PKG_BASE)/vendor/' | grep -v '^$(PKG_BASE)$$' | sed "s|^$(PKG_BASE)/|cover/|" | sed 's/$$/.cover/')
+PKGS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|' | grep -v '^./vendor')
+PKG_COVERS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|' | grep -v '^\./vendor' | grep -v '^\.$$' | sed 's/^\./cover/' | sed 's/$$/.cover/')
 COVER_MODE := set
 VERSION := $(shell git describe --tags --always)
 
