@@ -24,7 +24,7 @@ var (
 		"edit:match-subseq", wrapMatcher(util.HasSubseq)}
 	matchers = []*eval.BuiltinFn{
 		matchPrefix,
-		matchSubstring,
+		matchSubstr,
 		matchSubseq,
 	}
 
