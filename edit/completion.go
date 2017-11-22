@@ -193,6 +193,12 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 
 	if err != nil {
 		ed.addTip("%v", err)
+		// We don't show the full stack trace. To make debugging still possible,
+		// we log it.
+		if pprinter, ok := err.(util.Pprinter); ok {
+			logger.Println("matcher error:")
+			logger.Println(pprinter.Pprint(""))
+		}
 	} else if completer == "" {
 		ed.addTip("unsupported completion :(")
 		logger.Println("path to current leaf, leaf first")
