@@ -716,8 +716,8 @@ func all(ec *EvalCtx, args []Value, opts map[string]Value) {
 		close(valuesDone)
 	}()
 	_, err := io.Copy(ec.ports[1].File, ec.ports[0].File)
-	maybeThrow(err)
 	<-valuesDone
+	maybeThrow(err)
 }
 
 func take(ec *EvalCtx, args []Value, opts map[string]Value) {
