@@ -18,10 +18,13 @@ var (
 var (
 	matchPrefix = &eval.BuiltinFn{
 		"edit:match-prefix", wrapMatcher(strings.HasPrefix)}
+	matchSubstring = &eval.BuiltinFn{
+		"edit:match-substring", wrapMatcher(strings.Contains)}
 	matchSubseq = &eval.BuiltinFn{
 		"edit:match-subseq", wrapMatcher(util.HasSubseq)}
 	matchers = []*eval.BuiltinFn{
 		matchPrefix,
+		matchSubstring,
 		matchSubseq,
 	}
 
