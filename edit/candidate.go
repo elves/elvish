@@ -134,7 +134,7 @@ func (ed *Editor) filterAndCookCandidates(ev *eval.Evaler, matcher eval.Callable
 	}()
 
 	ports := []*eval.Port{
-		{Chan: input}, {File: os.Stdout}, {File: os.Stderr}}
+		{Chan: input, File: eval.DevNull}, {File: os.Stdout}, {File: os.Stderr}}
 	ec := eval.NewTopEvalCtx(ev, "[editor matcher]", "", ports)
 
 	args := []eval.Value{eval.String(pattern)}
