@@ -217,11 +217,8 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 			ed.addTip("%s", err)
 		}
 		// Highlight errors in the input buffer.
-		// TODO(xiaq): There might be multiple tokens involved in the
-		// compiler error; they should all be highlighted as erroneous.
-		p := err.(*eval.CompilationError).Context.Begin
-		badn := findLeafNode(n, p)
-		ed.styling.Add(badn.Begin(), badn.End(), styleForCompilerError.String())
+		ctx := err.(*eval.CompilationError).Context
+		ed.styling.Add(ctx.Begin, ctx.End, styleForCompilerError.String())
 	}
 
 	// Render onto a buffer.
