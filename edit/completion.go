@@ -117,7 +117,7 @@ func complDownCycle(ed *Editor) {
 func complAccept(ed *Editor) {
 	c := ed.completion
 	if 0 <= c.selected && c.selected < len(c.filtered) {
-		ed.line, ed.dot = c.apply(ed.line, ed.dot)
+		ed.buffer, ed.dot = c.apply(ed.buffer, ed.dot)
 	}
 	ed.mode = &ed.insert
 }
@@ -217,7 +217,7 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 			}
 
 			if prefix != "" && len(prefix) > complSpec.end-complSpec.begin {
-				ed.line = ed.line[:complSpec.begin] + prefix + ed.line[complSpec.end:]
+				ed.buffer = ed.buffer[:complSpec.begin] + prefix + ed.buffer[complSpec.end:]
 				ed.dot = complSpec.begin + len(prefix)
 
 				return

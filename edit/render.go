@@ -225,7 +225,7 @@ func (er *editorRenderer) Render(buf *ui.Buffer) {
 	}
 
 	// bufLine
-	clr := newCmdlineRenderer(es.promptContent, es.line, es.styling, es.dot, es.rpromptContent)
+	clr := newCmdlineRenderer(es.promptContent, es.buffer, es.styling, es.dot, es.rpromptContent)
 	// TODO(xiaq): Instead of doing a type switch, expose an API for modes to
 	// modify the text (and mark their part as modified).
 	switch mode := es.mode.(type) {

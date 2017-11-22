@@ -48,7 +48,7 @@ func historyStart(ed *Editor) {
 		ed.Notify("history offline")
 		return
 	}
-	prefix := ed.line[:ed.dot]
+	prefix := ed.buffer[:ed.dot]
 	walker := ed.historyFuser.Walker(prefix)
 	hist := hist{walker}
 	_, _, err := hist.Prev()
@@ -95,15 +95,15 @@ func historyDownOrQuit(ed *Editor, hist *hist) {
 func historySwitchToHistlist(ed *Editor, hist *hist) {
 	histlistStart(ed)
 	if hl := getHistlist(ed); hl != nil {
-		ed.line = ""
+		ed.buffer = ""
 		ed.dot = 0
 		hl.changeFilter(hist.Prefix())
 	}
 }
 
 func historyDefault(ed *Editor, hist *hist) {
-	ed.line = hist.CurrentCmd()
-	ed.dot = len(ed.line)
+	ed.buffer = hist.CurrentCmd()
+	ed.dot = len(ed.buffer)
 	ed.mode = &ed.insert
 	ed.setAction(reprocessKey)
 }

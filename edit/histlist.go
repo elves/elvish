@@ -121,7 +121,7 @@ func (hl *histlist) updateShown() {
 
 func (hl *histlist) Accept(i int, ed *Editor) {
 	line := hl.shown[i]
-	if len(ed.line) > 0 {
+	if len(ed.buffer) > 0 {
 		line = "\n" + line
 	}
 	ed.insertAtDot(line)

@@ -88,13 +88,13 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 				throw(errEditorInactive)
 			}
 			if s, ok := v.(eval.String); ok {
-				ed.line = string(s)
-				ed.dot = len(ed.line)
+				ed.buffer = string(s)
+				ed.dot = len(ed.buffer)
 			} else {
 				throw(errLineMustBeString)
 			}
 		},
-		func() eval.Value { return eval.String(ed.line) },
+		func() eval.Value { return eval.String(ed.buffer) },
 	)
 	ns["-dot"] = eval.MakeVariableFromCallback(
 		func(v eval.Value) {
@@ -110,11 +110,11 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 					throw(errDotMustBeInt)
 				}
 			}
-			if i < 0 || i > len(ed.line) {
+			if i < 0 || i > len(ed.buffer) {
 				throw(errDotOutOfRange)
 			}
-			if i < len(ed.line) {
-				r, _ := utf8.DecodeRuneInString(ed.line[i:])
+			if i < len(ed.buffer) {
+				r, _ := utf8.DecodeRuneInString(ed.buffer[i:])
 				if r == utf8.RuneError {
 					throw(errDotInsideCodepoint)
 				}

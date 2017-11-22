@@ -510,7 +510,7 @@ func ReplaceInput(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Valu
 	eval.TakeNoOpt(opts)
 
 	ed := ec.Editor.(*Editor)
-	ed.line = text.String()
+	ed.buffer = text.String()
 }
 
 func Wordify(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {

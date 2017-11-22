@@ -67,8 +67,8 @@ type editorState struct {
 	notifications []string
 	tips          []string
 
-	line string
-	dot  int
+	buffer string
+	dot    int
 
 	chunk           *parse.Chunk
 	styling         *highlight.Styling
@@ -194,7 +194,7 @@ func (ed *Editor) Notify(format string, args ...interface{}) {
 }
 
 func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
-	src := ed.line
+	src := ed.buffer
 	// Parse the current line
 	n, err := parse.Parse("[interactive]", src)
 	ed.chunk = n
@@ -247,7 +247,7 @@ func atEnd(e error, n int) bool {
 
 // insertAtDot inserts text at the dot and moves the dot after it.
 func (ed *Editor) insertAtDot(text string) {
-	ed.line = ed.line[:ed.dot] + text + ed.line[ed.dot:]
+	ed.buffer = ed.buffer[:ed.dot] + text + ed.buffer[ed.dot:]
 	ed.dot += len(text)
 }
 
@@ -351,7 +351,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	// Refresh the terminal for the last time in a clean-ish state.
 	ed.mode = &ed.insert
 	ed.tips = nil
-	ed.dot = len(ed.line)
+	ed.dot = len(ed.buffer)
 	if !prompt.RpromptPersistent(ed) {
 		ed.rpromptContent = nil
 	}
@@ -376,7 +376,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	}
 
 	// Save the line before resetting all of editorState.
-	line := ed.line
+	line := ed.buffer
 
 	ed.editorState = editorState{}
 
@@ -544,8 +544,8 @@ MainLoop:
 					}
 					goto lookupKey
 				case commitLine:
-					ed.appendHistory(ed.line)
-					return ed.line, nil
+					ed.appendHistory(ed.buffer)
+					return ed.buffer, nil
 				case commitEOF:
 					return "", io.EOF
 				}

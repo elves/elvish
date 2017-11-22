@@ -154,14 +154,14 @@ func commandStart(ed *Editor) {
 }
 
 func killLineLeft(ed *Editor) {
-	sol := util.FindLastSOL(ed.line[:ed.dot])
-	ed.line = ed.line[:sol] + ed.line[ed.dot:]
+	sol := util.FindLastSOL(ed.buffer[:ed.dot])
+	ed.buffer = ed.buffer[:sol] + ed.buffer[ed.dot:]
 	ed.dot = sol
 }
 
 func killLineRight(ed *Editor) {
-	eol := util.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
-	ed.line = ed.line[:ed.dot] + ed.line[eol:]
+	eol := util.FindFirstEOL(ed.buffer[ed.dot:]) + ed.dot
+	ed.buffer = ed.buffer[:ed.dot] + ed.buffer[eol:]
 }
 
 // NOTE(xiaq): A word is a run of non-space runes. When killing a word,
@@ -173,9 +173,9 @@ func killWordLeft(ed *Editor) {
 		return
 	}
 	space := strings.LastIndexFunc(
-		strings.TrimRightFunc(ed.line[:ed.dot], unicode.IsSpace),
+		strings.TrimRightFunc(ed.buffer[:ed.dot], unicode.IsSpace),
 		unicode.IsSpace) + 1
-	ed.line = ed.line[:space] + ed.line[ed.dot:]
+	ed.buffer = ed.buffer[:space] + ed.buffer[ed.dot:]
 	ed.dot = space
 }
 
@@ -186,7 +186,7 @@ func killWordLeft(ed *Editor) {
 // "abc/~" -> "abc", "~/abc" -> "~/", "abc* " -> "abc"
 
 func killSmallWordLeft(ed *Editor) {
-	left := strings.TrimRightFunc(ed.line[:ed.dot], unicode.IsSpace)
+	left := strings.TrimRightFunc(ed.buffer[:ed.dot], unicode.IsSpace)
 	// The case of left == "" is handled as well.
 	r, _ := utf8.DecodeLastRuneInString(left)
 	if isAlnum(r) {
@@ -195,7 +195,7 @@ func killSmallWordLeft(ed *Editor) {
 		left = strings.TrimRightFunc(
 			left, func(r rune) bool { return !isAlnum(r) })
 	}
-	ed.line = left + ed.line[ed.dot:]
+	ed.buffer = left + ed.buffer[ed.dot:]
 	ed.dot = len(left)
 }
 
@@ -205,8 +205,8 @@ func isAlnum(r rune) bool {
 
 func killRuneLeft(ed *Editor) {
 	if ed.dot > 0 {
-		_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
-		ed.line = ed.line[:ed.dot-w] + ed.line[ed.dot:]
+		_, w := utf8.DecodeLastRuneInString(ed.buffer[:ed.dot])
+		ed.buffer = ed.buffer[:ed.dot-w] + ed.buffer[ed.dot:]
 		ed.dot -= w
 	} else {
 		ed.flash()
@@ -214,21 +214,21 @@ func killRuneLeft(ed *Editor) {
 }
 
 func killRuneRight(ed *Editor) {
-	if ed.dot < len(ed.line) {
-		_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
-		ed.line = ed.line[:ed.dot] + ed.line[ed.dot+w:]
+	if ed.dot < len(ed.buffer) {
+		_, w := utf8.DecodeRuneInString(ed.buffer[ed.dot:])
+		ed.buffer = ed.buffer[:ed.dot] + ed.buffer[ed.dot+w:]
 	} else {
 		ed.flash()
 	}
 }
 
 func moveDotLeft(ed *Editor) {
-	_, w := utf8.DecodeLastRuneInString(ed.line[:ed.dot])
+	_, w := utf8.DecodeLastRuneInString(ed.buffer[:ed.dot])
 	ed.dot -= w
 }
 
 func moveDotRight(ed *Editor) {
-	_, w := utf8.DecodeRuneInString(ed.line[ed.dot:])
+	_, w := utf8.DecodeRuneInString(ed.buffer[ed.dot:])
 	ed.dot += w
 }
 
@@ -237,23 +237,23 @@ func moveDotLeftWord(ed *Editor) {
 		return
 	}
 	space := strings.LastIndexFunc(
-		strings.TrimRightFunc(ed.line[:ed.dot], unicode.IsSpace),
+		strings.TrimRightFunc(ed.buffer[:ed.dot], unicode.IsSpace),
 		unicode.IsSpace) + 1
 	ed.dot = space
 }
 
 func moveDotRightWord(ed *Editor) {
 	// Move to first space
-	p := strings.IndexFunc(ed.line[ed.dot:], unicode.IsSpace)
+	p := strings.IndexFunc(ed.buffer[ed.dot:], unicode.IsSpace)
 	if p == -1 {
-		ed.dot = len(ed.line)
+		ed.dot = len(ed.buffer)
 		return
 	}
 	ed.dot += p
 	// Move to first nonspace
-	p = strings.IndexFunc(ed.line[ed.dot:], notSpace)
+	p = strings.IndexFunc(ed.buffer[ed.dot:], notSpace)
 	if p == -1 {
-		ed.dot = len(ed.line)
+		ed.dot = len(ed.buffer)
 		return
 	}
 	ed.dot += p
@@ -264,38 +264,38 @@ func notSpace(r rune) bool {
 }
 
 func moveDotSOL(ed *Editor) {
-	sol := util.FindLastSOL(ed.line[:ed.dot])
+	sol := util.FindLastSOL(ed.buffer[:ed.dot])
 	ed.dot = sol
 }
 
 func moveDotEOL(ed *Editor) {
-	eol := util.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
+	eol := util.FindFirstEOL(ed.buffer[ed.dot:]) + ed.dot
 	ed.dot = eol
 }
 
 func moveDotUp(ed *Editor) {
-	sol := util.FindLastSOL(ed.line[:ed.dot])
+	sol := util.FindLastSOL(ed.buffer[:ed.dot])
 	if sol == 0 {
 		ed.flash()
 		return
 	}
 	prevEOL := sol - 1
-	prevSOL := util.FindLastSOL(ed.line[:prevEOL])
-	width := util.Wcswidth(ed.line[sol:ed.dot])
-	ed.dot = prevSOL + len(util.TrimWcwidth(ed.line[prevSOL:prevEOL], width))
+	prevSOL := util.FindLastSOL(ed.buffer[:prevEOL])
+	width := util.Wcswidth(ed.buffer[sol:ed.dot])
+	ed.dot = prevSOL + len(util.TrimWcwidth(ed.buffer[prevSOL:prevEOL], width))
 }
 
 func moveDotDown(ed *Editor) {
-	eol := util.FindFirstEOL(ed.line[ed.dot:]) + ed.dot
-	if eol == len(ed.line) {
+	eol := util.FindFirstEOL(ed.buffer[ed.dot:]) + ed.dot
+	if eol == len(ed.buffer) {
 		ed.flash()
 		return
 	}
 	nextSOL := eol + 1
-	nextEOL := util.FindFirstEOL(ed.line[nextSOL:]) + nextSOL
-	sol := util.FindLastSOL(ed.line[:ed.dot])
-	width := util.Wcswidth(ed.line[sol:ed.dot])
-	ed.dot = nextSOL + len(util.TrimWcwidth(ed.line[nextSOL:nextEOL], width))
+	nextEOL := util.FindFirstEOL(ed.buffer[nextSOL:]) + nextSOL
+	sol := util.FindLastSOL(ed.buffer[:ed.dot])
+	width := util.Wcswidth(ed.buffer[sol:ed.dot])
+	ed.dot = nextSOL + len(util.TrimWcwidth(ed.buffer[nextSOL:nextEOL], width))
 }
 
 func insertLastWord(ed *Editor) {
@@ -332,7 +332,7 @@ func smartEnter(ed *Editor) {
 	if ed.parseErrorAtEnd {
 		// There is a parsing error at the end. ui.Insert a newline and copy
 		// indents from previous line.
-		indent := findLastIndent(ed.line[:ed.dot])
+		indent := findLastIndent(ed.buffer[:ed.dot])
 		ed.insertAtDot("\n" + indent)
 	} else {
 		returnLine(ed)
@@ -346,7 +346,7 @@ func findLastIndent(s string) string {
 }
 
 func returnEOF(ed *Editor) {
-	if len(ed.line) == 0 {
+	if len(ed.buffer) == 0 {
 		ed.setAction(commitEOF)
 	}
 }
@@ -369,10 +369,10 @@ func insertDefault(ed *Editor) {
 		insertKey(ed)
 		// Match abbreviations.
 		expanded := false
-		literals := ed.line[ed.dot-ed.insert.literalInserts-1 : ed.dot]
+		literals := ed.buffer[ed.dot-ed.insert.literalInserts-1 : ed.dot]
 		ed.abbrIterate(func(abbr, full string) bool {
 			if strings.HasSuffix(literals, abbr) {
-				ed.line = ed.line[:ed.dot-len(abbr)] + full + ed.line[ed.dot:]
+				ed.buffer = ed.buffer[:ed.dot-len(abbr)] + full + ed.buffer[ed.dot:]
 				ed.dot += len(full) - len(abbr)
 				expanded = true
 				return false
