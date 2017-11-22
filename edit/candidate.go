@@ -132,6 +132,11 @@ func (ed *Editor) filterAndCookCandidates(ev *eval.Evaler, matcher eval.Callable
 			input <- eval.String(rc.text())
 		}
 	}()
+	// drain up input channel, make sure goroutine exits actually
+	defer func() {
+		for range input {
+		}
+	}()
 
 	ports := []*eval.Port{
 		{Chan: input, File: eval.DevNull}, {File: os.Stdout}, {File: os.Stderr}}
@@ -139,7 +144,6 @@ func (ed *Editor) filterAndCookCandidates(ev *eval.Evaler, matcher eval.Callable
 
 	args := []eval.Value{eval.String(pattern)}
 	values, err := ec.PCaptureOutput(matcher, args, eval.NoOpts)
-	<-input
 	if err != nil {
 		return nil, err
 	} else if len(values) != len(rcs) {

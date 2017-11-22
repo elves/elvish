@@ -209,8 +209,6 @@ func complIndex(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*com
 
 	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher,
 		current, rawCands, q)
-	// make sure completer exits
-	<-rawCands
 	if err != nil {
 		return nil, err
 	}
@@ -470,7 +468,7 @@ func complArg(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*compl
 	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher,
 		current, rawCands, q)
 	if ce := <-collectErr; ce != nil {
-		return nil, err
+		return nil, ce
 	}
 	if err != nil {
 		return nil, err
