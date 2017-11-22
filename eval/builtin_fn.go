@@ -717,7 +717,9 @@ func all(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}()
 	_, err := io.Copy(ec.ports[1].File, ec.ports[0].File)
 	<-valuesDone
-	maybeThrow(err)
+	if err != nil {
+		throwf("cannot copy byte input: %s", err)
+	}
 }
 
 func take(ec *EvalCtx, args []Value, opts map[string]Value) {
