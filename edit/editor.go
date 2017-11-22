@@ -67,13 +67,15 @@ type editorState struct {
 	notifications []string
 	tips          []string
 
-	line           string
-	lexedLine      *string
-	chunk          *parse.Chunk
-	styling        *highlight.Styling
+	line string
+	dot  int
+
+	chunk           *parse.Chunk
+	styling         *highlight.Styling
+	parseErrorAtEnd bool
+
 	promptContent  []*ui.Styled
 	rpromptContent []*ui.Styled
-	dot            int
 
 	mode Mode
 
@@ -83,8 +85,7 @@ type editorState struct {
 	navigation navigation
 
 	// A cache of external commands, used in stylist.
-	isExternal      map[string]bool
-	parseErrorAtEnd bool
+	isExternal map[string]bool
 
 	// Used for builtins.
 	lastKey    ui.Key
@@ -194,37 +195,35 @@ func (ed *Editor) Notify(format string, args ...interface{}) {
 
 func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 	src := ed.line
-	// Re-lex the line if needed
-	if ed.lexedLine == nil || *ed.lexedLine != src {
-		ed.lexedLine = &src
-		n, err := parse.Parse("[interactive]", src)
-		ed.chunk = n
+	// Parse the current line
+	n, err := parse.Parse("[interactive]", src)
+	ed.chunk = n
 
-		ed.parseErrorAtEnd = err != nil && atEnd(err, len(src))
-		// If all parse errors are at the end, it is likely caused by incomplete
-		// input. In that case, do not complain about parse errors.
-		// TODO(xiaq): Find a more reliable way to determine incomplete input.
-		// Ideally the parser should report it.
-		if err != nil && addErrorsToTips && !ed.parseErrorAtEnd {
+	ed.parseErrorAtEnd = err != nil && atEnd(err, len(src))
+	// If all parse errors are at the end, it is likely caused by incomplete
+	// input. In that case, do not complain about parse errors.
+	// TODO(xiaq): Find a more reliable way to determine incomplete input.
+	// Ideally the parser should report it.
+	if err != nil && addErrorsToTips && !ed.parseErrorAtEnd {
+		ed.addTip("%s", err)
+	}
+
+	ed.styling = &highlight.Styling{}
+	doHighlight(n, ed)
+
+	_, err = ed.evaler.Compile(n, "[interactive]", src)
+	if err != nil && !atEnd(err, len(src)) {
+		if addErrorsToTips {
 			ed.addTip("%s", err)
 		}
-
-		ed.styling = &highlight.Styling{}
-		doHighlight(n, ed)
-
-		_, err = ed.evaler.Compile(n, "[interactive]", src)
-		if err != nil && !atEnd(err, len(src)) {
-			if addErrorsToTips {
-				ed.addTip("%s", err)
-			}
-			// Highlight errors in the input buffer.
-			// TODO(xiaq): There might be multiple tokens involved in the
-			// compiler error; they should all be highlighted as erroneous.
-			p := err.(*eval.CompilationError).Context.Begin
-			badn := findLeafNode(n, p)
-			ed.styling.Add(badn.Begin(), badn.End(), styleForCompilerError.String())
-		}
+		// Highlight errors in the input buffer.
+		// TODO(xiaq): There might be multiple tokens involved in the
+		// compiler error; they should all be highlighted as erroneous.
+		p := err.(*eval.CompilationError).Context.Begin
+		badn := findLeafNode(n, p)
+		ed.styling.Add(badn.Begin(), badn.End(), styleForCompilerError.String())
 	}
+
 	// Render onto a buffer.
 	height, width := sys.GetWinsize(int(ed.out.Fd()))
 	er := &editorRenderer{&ed.editorState, height, nil}
