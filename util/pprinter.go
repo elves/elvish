@@ -15,6 +15,6 @@ func PprintError(err error) {
 	if pprinter, ok := err.(Pprinter); ok {
 		fmt.Fprintln(os.Stderr, pprinter.Pprint(""))
 	} else {
-		fmt.Fprintln(os.Stderr, "\033[31;1m%s\033[m", err.Error())
+		fmt.Fprintf(os.Stderr, "\033[31;1m%s\033[m", err.Error())
 	}
 }
