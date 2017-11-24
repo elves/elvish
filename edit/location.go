@@ -144,27 +144,20 @@ func locStart(ed *Editor) {
 		ed.Notify("%v", ErrStoreOffline)
 		return
 	}
-	black := convertListToSet(ed.locHidden())
-	dirs, err := ed.daemon.Dirs(black)
+
+	pinnedValue := ed.locPinned()
+	pinned := convertListToDirs(pinnedValue)
+	black := convertListToSet(ed.locHidden(), pinnedValue)
+	stored, err := ed.daemon.Dirs(black)
 	if err != nil {
 		ed.Notify("store error: %v", err)
 		return
 	}
 
-	pinnedValue := ed.locPinned()
-	pinned := convertListToDirs(pinnedValue)
-	pinnedSet := convertListToSet(pinnedValue)
-
-	// TODO(xiaq): Optimize this by changing GetDirs to a callback API, and
-	// build dirs by first putting pinned directories and then appending those
-	// from store.
-	for _, d := range dirs {
-		_, inPinned := pinnedSet[d.Path]
-		if !inPinned {
-			pinned = append(pinned, d)
-		}
-	}
-	dirs = pinned
+	// concatenate pinned and stored dirs, pinned first
+	dirs := make([]storedefs.Dir, len(pinned)+len(stored))
+	copy(dirs, pinned)
+	copy(dirs[len(pinned):], stored)
 
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
@@ -186,15 +179,17 @@ func convertListToDirs(li eval.List) []storedefs.Dir {
 	return pinned
 }
 
-func convertListToSet(li eval.List) map[string]struct{} {
+func convertListToSet(lis ...eval.List) map[string]struct{} {
 	set := make(map[string]struct{})
 	// XXX(xiaq): silently drops non-string items.
-	li.Iterate(func(v eval.Value) bool {
-		if s, ok := v.(eval.String); ok {
-			set[string(s)] = struct{}{}
-		}
-		return true
-	})
+	for _, li := range lis {
+		li.Iterate(func(v eval.Value) bool {
+			if s, ok := v.(eval.String); ok {
+				set[string(s)] = struct{}{}
+			}
+			return true
+		})
+	}
 	return set
 }
 
