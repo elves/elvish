@@ -41,13 +41,12 @@ goveralls: cover/all
 		|| echo "not sending to coveralls"
 
 upload: get
-	tar cfz elvish.tar.gz -C $(FIRST_GOPATH)/bin elvish
-	echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
+	test "$(TRAVIS_OS_NAME)" = linux \
+		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
 		&& test "$(TRAVIS_PULL_REQUEST)" = false \
 		&& test -n "$(TRAVIS_TAG)" -o "$(TRAVIS_BRANCH)" = master \
-		&& curl http://ul.elvish.io:6060/ -F name=elvish-$(if $(TRAVIS_TAG),$(TRAVIS_TAG)-,)$(TRAVIS_OS_NAME).tar.gz \
-			-F token=$$UPLOAD_TOKEN -F file=@./elvish.tar.gz\
-		|| echo "not uploading"
+		$(FIRST_GOPATH)/bin/elvish build-and-upload.elv \
+		|| echo "not build-and-uploading"
 
 travis: goveralls upload
 
