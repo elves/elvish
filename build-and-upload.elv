@@ -10,12 +10,13 @@ if (not-eq $E:TRAVIS_TAG '') {
 }
 
 fn build [os arch]{
-    fname = $fname-prefix'-'$os'-'$arch
-    echo 'Going to build '$fname
-    go build -ldflags "-X main.Version="$version -o $fname
-    tar cfz $fname.tar.gz $fname
-    curl https://ul.elvish.io/ -F name=$fname.tar.gz -F token=$E:UPLOAD_TOKEN -F file=@$fname
-    echo 'Built and uploaded '$fname
+    bin = $fname-prefix'-'$os'-'$arch
+    archive = $bin.tar.gz
+    echo 'Going to build '$bin
+    go build -ldflags "-X main.Version="$version -o $bin
+    tar cfz $archive $bin
+    curl https://ul.elvish.io/ -F name=$archive -F token=$E:UPLOAD_TOKEN -F file=@$archive
+    echo 'Built '$bin' and uploaded '$archive
 }
 
 build darwin amd64
