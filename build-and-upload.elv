@@ -13,7 +13,7 @@ fn build [os arch]{
     bin = $fname-prefix'-'$os'-'$arch
     archive = $bin.tar.gz
     echo 'Going to build '$bin
-    go build -ldflags "-X main.Version="$version -o $bin
+    E:GOOS=$os E:GOARCH=$arch go build -ldflags "-X main.Version="$version -o $bin
     tar cfz $archive $bin
     curl https://ul.elvish.io/ -F name=$archive -F token=$E:UPLOAD_TOKEN -F file=@$archive
     echo 'Built '$bin' and uploaded '$archive
