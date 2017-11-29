@@ -45,7 +45,7 @@ upload: get
 		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
 		&& test "$(TRAVIS_PULL_REQUEST)" = false \
 		&& test -n "$(TRAVIS_TAG)" -o "$(TRAVIS_BRANCH)" = master \
-		$(FIRST_GOPATH)/bin/elvish build-and-upload.elv \
+		&& $(FIRST_GOPATH)/bin/elvish build-and-upload.elv \
 		|| echo "not build-and-uploading"
 
 travis: goveralls upload
