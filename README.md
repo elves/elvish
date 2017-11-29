@@ -30,7 +30,7 @@ This README documents the development aspect of Elvish. Other information is to 
 
 To build Elvish, you need
 
-*   A Go toolchain >= 1.7.
+*   A Go toolchain >= 1.8.
 
 *   Linux (with x86, x64 or amd64 CPU) or macOS (with reasonably new hardware).
 
