@@ -145,16 +145,17 @@ func locStart(ed *Editor) {
 		return
 	}
 
-	pinnedValue := ed.locPinned()
-	pinned := convertListToDirs(pinnedValue)
-	black := convertListToSet(ed.locHidden(), pinnedValue)
+	// Pinned directories are also blacklisted to prevent them from showing up
+	// twice.
+	black := convertListsToSet(ed.locHidden(), ed.locPinned())
 	stored, err := ed.daemon.Dirs(black)
 	if err != nil {
 		ed.Notify("store error: %v", err)
 		return
 	}
 
-	// concatenate pinned and stored dirs, pinned first
+	// Concatenate pinned and stored dirs, pinned first.
+	pinned := convertListToDirs(ed.locPinned())
 	dirs := make([]storedefs.Dir, len(pinned)+len(stored))
 	copy(dirs, pinned)
 	copy(dirs[len(pinned):], stored)
@@ -179,7 +180,7 @@ func convertListToDirs(li eval.List) []storedefs.Dir {
 	return pinned
 }
 
-func convertListToSet(lis ...eval.List) map[string]struct{} {
+func convertListsToSet(lis ...eval.List) map[string]struct{} {
 	set := make(map[string]struct{})
 	// XXX(xiaq): silently drops non-string items.
 	for _, li := range lis {
