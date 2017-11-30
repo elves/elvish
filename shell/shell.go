@@ -204,7 +204,7 @@ func handleSignals() {
 				syscall.Kill(0, syscall.SIGHUP)
 				os.Exit(0)
 			}
-			if sig == syscall.SIGQUIT || sig == syscall.SIGUSR1 {
+			if sig == syscall.SIGUSR1 {
 				fmt.Print(sys.DumpStack())
 			}
 		}
