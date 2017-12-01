@@ -2,7 +2,6 @@ package lscolors
 
 import (
 	"os"
-	"syscall"
 )
 
 //go:generate stringer -type=feature -output=feature_string.go
@@ -40,23 +39,22 @@ const (
 // Weirdly, permission masks for group and other are missing on platforms other
 // than linux, darwin and netbsd. So we replicate some of them here.
 const (
-	_S_IWOTH = 0x2 // Writable by other
-	_S_IXGRP = 0x8 // Executable by group
-	_S_IXOTH = 0x1 // Executable by other
+	worldWritable   = 02   // Writable by other
+	groupExecutable = 010  // Executable by group
+	executable      = 0111 // Executable
 )
 
 func determineFeature(fname string, mh bool) (feature, error) {
-	var stat syscall.Stat_t
-	err := syscall.Lstat(fname, &stat)
+	stat, err := os.Lstat(fname)
+
 	if err != nil {
-		return 0, err
+		return featureInvalid, err
 	}
 
-	// The type of syscall.Stat_t.Mode is uint32 on Linux and uint16 on Mac
-	m := (uint32)(stat.Mode)
+	m := stat.Mode()
 
 	// Symlink and OrphanedSymlink has highest precedence
-	if is(m, syscall.S_IFLNK) {
+	if is(m, os.ModeSymlink) {
 		_, err := os.Stat(fname)
 		if err != nil {
 			return featureOrphanedSymlink, nil
@@ -65,32 +63,37 @@ func determineFeature(fname string, mh bool) (feature, error) {
 	}
 
 	// featureMultiHardLink
-	if mh && stat.Nlink > 1 {
+	if mh && isMultiHardlink(stat) {
 		return featureMultiHardLink, nil
 	}
 
 	// type bits features
 	switch {
-	case is(m, syscall.S_IFIFO):
+	case is(m, os.ModeNamedPipe):
 		return featureNamedPipe, nil
-	case is(m, syscall.S_IFSOCK):
+	case is(m, os.ModeSocket): // Never on Windows
 		return featureSocket, nil
-		/*
-			case m | syscall.S_IFDOOR != 0:
-				return featureDoor, nil
-		*/
-	case is(m, syscall.S_IFBLK):
-		return featureBlockDevice, nil
-	case is(m, syscall.S_IFCHR):
+	case isDoor(stat):
+		return featureDoor, nil
+	case is(m, os.ModeCharDevice):
 		return featureCharDevice, nil
-	case is(m, syscall.S_IFDIR):
+	case is(m, os.ModeDevice):
+		// There is no dedicated os.Mode* flag for block device. On all
+		// supported Unix platforms, when os.ModeDevice is set but
+		// os.ModeCharDevice is not, the file is a block device (i.e.
+		// syscall.S_IFBLK is set). On Windows, this branch is unreachable.
+		//
+		// On Plan9, this in inaccurate.
+		return featureBlockDevice, nil
+	case is(m, os.ModeDir):
 		// Perm bits features for directory
+		perm := m.Perm()
 		switch {
-		case is(m, _S_IWOTH|syscall.S_ISVTX):
+		case is(m, os.ModeSticky) && is(perm, worldWritable):
 			return featureWorldWritableStickyDirectory, nil
-		case is(m, _S_IWOTH):
+		case is(perm, worldWritable):
 			return featureWorldWritableDirectory, nil
-		case is(m, syscall.S_ISVTX):
+		case is(m, os.ModeSticky):
 			return featureStickyDirectory, nil
 		default:
 			return featureDirectory, nil
@@ -101,11 +104,11 @@ func determineFeature(fname string, mh bool) (feature, error) {
 
 	// Perm bits features for regular files
 	switch {
-	case is(m, syscall.S_ISUID):
+	case is(m, os.ModeSetuid):
 		return featureSetuid, nil
-	case is(m, syscall.S_ISGID):
+	case is(m, os.ModeSetgid):
 		return featureSetgid, nil
-	case m&(syscall.S_IXUSR|_S_IXGRP|_S_IXOTH) != 0:
+	case m&executable != 0:
 		return featureExecutable, nil
 	}
 
@@ -113,6 +116,6 @@ func determineFeature(fname string, mh bool) (feature, error) {
 	return featureRegular, nil
 }
 
-func is(u, p uint32) bool {
-	return u&p == p
+func is(m, p os.FileMode) bool {
+	return m&p == p
 }
