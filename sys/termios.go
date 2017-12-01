@@ -1,3 +1,6 @@
+// +build !windows
+// +build !plan9
+
 // Copyright 2015 go-termios Author. All Rights Reserved.
 // https://github.com/go-termios/termios
 // Author: John Lenton <chipaca@github.com>

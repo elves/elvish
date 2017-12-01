@@ -1,3 +1,6 @@
+// +build !windows
+// +build !plan9
+
 package sys
 
 import "os"
