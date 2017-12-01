@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
-	"syscall"
 )
 
 // Daemon keeps configurations for the daemon sub-program. It can be used both
@@ -76,12 +75,12 @@ func (d *Daemon) Main(serve func(string, string)) error {
 			return absifyError
 		}
 
-		syscall.Umask(0077)
+		setUmask()
 		return d.fork(
 			&exec.Cmd{
 				Dir:         "/", // cd to /
 				Env:         nil, // empty environment
-				SysProcAttr: &syscall.SysProcAttr{Setsid: true},
+				SysProcAttr: sysProAttrForFirstFork(),
 			})
 	case 1:
 		return d.fork(nil)
