@@ -19,12 +19,10 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 	"unsafe"
 
 	"github.com/elves/elvish/store/storedefs"
-	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
 )
@@ -432,11 +430,6 @@ func slurp(ec *EvalCtx, args []Value, opts map[string]Value) {
 	out := ec.ports[1].Chan
 
 	all, err := ioutil.ReadAll(in)
-	if err != nil {
-		b, err := sys.GetNonblock(0)
-		fmt.Println("stdin is nonblock:", b, err)
-		fmt.Println("stdin is stdin:", in == os.Stdin)
-	}
 	maybeThrow(err)
 	out <- String(string(all))
 }
@@ -1309,78 +1302,6 @@ func pwclose(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	maybeThrow(p.w.Close())
-}
-
-func fg(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var pids []int
-	ScanArgsVariadic(args, &pids)
-	TakeNoOpt(opts)
-
-	if len(pids) == 0 {
-		throw(ErrArgs)
-	}
-	var thepgid int
-	for i, pid := range pids {
-		pgid, err := syscall.Getpgid(pid)
-		maybeThrow(err)
-		if i == 0 {
-			thepgid = pgid
-		} else if pgid != thepgid {
-			throw(ErrNotInSameGroup)
-		}
-	}
-
-	err := sys.Tcsetpgrp(0, thepgid)
-	maybeThrow(err)
-
-	errors := make([]*Exception, len(pids))
-
-	for i, pid := range pids {
-		err := syscall.Kill(pid, syscall.SIGCONT)
-		if err != nil {
-			errors[i] = &Exception{err, nil}
-		}
-	}
-
-	for i, pid := range pids {
-		if errors[i] != nil {
-			continue
-		}
-		var ws syscall.WaitStatus
-		_, err = syscall.Wait4(pid, &ws, syscall.WUNTRACED, nil)
-		if err != nil {
-			errors[i] = &Exception{err, nil}
-		} else {
-			// TODO find command name
-			errors[i] = &Exception{NewExternalCmdExit(
-				"[pid "+strconv.Itoa(pid)+"]", ws, pid), nil}
-		}
-	}
-
-	maybeThrow(ComposeExceptionsFromPipeline(errors))
-}
-
-func exec(ec *EvalCtx, args []Value, opts map[string]Value) {
-	TakeNoOpt(opts)
-
-	var argstrings []string
-	if len(args) == 0 {
-		argstrings = []string{"elvish"}
-	} else {
-		argstrings = make([]string, len(args))
-		for i, a := range args {
-			argstrings[i] = ToString(a)
-		}
-	}
-
-	var err error
-	argstrings[0], err = ec.Search(argstrings[0])
-	maybeThrow(err)
-
-	preExit(ec)
-
-	err = syscall.Exec(argstrings[0], argstrings, os.Environ())
-	maybeThrow(err)
 }
 
 func exit(ec *EvalCtx, args []Value, opts map[string]Value) {
