@@ -203,10 +203,6 @@ func NewExternalCmdExit(name string, ws syscall.WaitStatus, pid int) error {
 	return ExternalCmdExit{ws, name, pid}
 }
 
-func FakeExternalCmdExit(name string, exit int, sig syscall.Signal) ExternalCmdExit {
-	return ExternalCmdExit{syscall.WaitStatus(exit<<8 + int(sig)), name, 0}
-}
-
 func (exit ExternalCmdExit) Error() string {
 	ws := exit.WaitStatus
 	quotedName := parse.Quote(exit.CmdName)

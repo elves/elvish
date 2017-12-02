@@ -202,7 +202,7 @@ func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, name, text string) error {
 	// (most likely for elvish), the call will outright fail. Therefore, for
 	// elvish to be able to move itself back to the foreground, we need to
 	// ignore TTOU.
-	signal.Ignore(syscall.SIGTTOU)
+	ignoreTTOU()
 	stopSigGoroutine := make(chan struct{})
 	sigGoRoutineDone := make(chan struct{})
 	// Set up intCh.
@@ -236,14 +236,14 @@ func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, name, text string) error {
 	// Put myself in foreground, in case some command has put me in background.
 	// XXX Should probably use fd of /dev/tty instead of 0.
 	if sys.IsATTY(0) {
-		err := sys.Tcsetpgrp(0, syscall.Getpgrp())
+		err := putSelfInFg()
 		if err != nil {
 			fmt.Println("failed to put myself in foreground:", err)
 		}
 	}
 
 	// Un-ignore TTOU.
-	signal.Reset(syscall.SIGTTOU)
+	unignoreTTOU()
 
 	return err
 }
