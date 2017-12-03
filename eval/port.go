@@ -58,9 +58,9 @@ func init() {
 	}()
 
 	var err error
-	DevNull, err = os.Open("/dev/null")
+	DevNull, err = os.Open(os.DevNull)
 	if err != nil {
-		os.Stderr.WriteString("cannot open /dev/null, shell might not function normally")
+		os.Stderr.WriteString("cannot open " + os.DevNull + ", shell might not function normally\n")
 	}
 	DevNullClosedChan = &Port{File: DevNull, Chan: ClosedChan}
 }
