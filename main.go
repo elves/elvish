@@ -15,7 +15,6 @@ import (
 	"path"
 	"runtime/pprof"
 	"strconv"
-	"syscall"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -98,7 +97,7 @@ func main() {
 	if *isdaemon {
 		if *forked == 2 && *logpathprefix != "" {
 			// Honor logpathprefix.
-			pid := syscall.Getpid()
+			pid := os.Getpid()
 			err := util.SetOutputFile(*logpathprefix + strconv.Itoa(pid))
 			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
@@ -230,7 +229,10 @@ func initRuntime() (*eval.Evaler, *api.Client) {
 				}
 				cl.Close()
 				logger.Printf("killing outdated daemon with pid %d", pid)
-				err = syscall.Kill(pid, syscall.SIGTERM)
+				p, err := os.FindProcess(pid)
+				if err != nil {
+					err = p.Kill()
+				}
 				if err != nil {
 					fmt.Fprintln(os.Stderr, "warning: failed to kill outdated daemon process:", err)
 					cl = nil
@@ -281,7 +283,7 @@ var (
 // getSecureRunDir stats /tmp/elvish-$uid, creating it if it doesn't yet exist,
 // and return the directory name if it has the correct owner and permission.
 func getSecureRunDir() (string, error) {
-	uid := syscall.Getuid()
+	uid := os.Getuid()
 
 	runDir := path.Join(os.TempDir(), fmt.Sprintf("elvish-%d", uid))
 	err := os.MkdirAll(runDir, 0700)
@@ -289,17 +291,10 @@ func getSecureRunDir() (string, error) {
 		return "", fmt.Errorf("mkdir: %v", err)
 	}
 
-	var stat syscall.Stat_t
-	err = syscall.Stat(runDir, &stat)
+	info, err := os.Stat(runDir)
 	if err != nil {
-		return "", fmt.Errorf("stat: %v", err)
+		return "", err
 	}
 
-	if int(stat.Uid) != uid {
-		return "", ErrBadOwner
-	}
-	if stat.Mode&077 != 0 {
-		return "", ErrBadPermission
-	}
-	return runDir, err
+	return runDir, checkExclusiveAccess(info, uid)
 }
