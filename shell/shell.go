@@ -13,7 +13,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/daemon/api"
-	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
@@ -138,9 +137,7 @@ func readFileUTF8(fname string) (string, error) {
 
 func interact(ev *eval.Evaler, daemon *api.Client) {
 	// Build Editor.
-	sigch := make(chan os.Signal)
-	signal.Notify(sigch, syscall.SIGHUP, syscall.SIGINT, syscall.SIGWINCH)
-	ed := edit.NewEditor(os.Stdin, os.Stderr, sigch, ev, daemon)
+	ed := makeEditor(os.Stdin, os.Stderr, ev, daemon)
 	defer ed.Close()
 
 	// Source rc.elv.
@@ -200,13 +197,7 @@ func handleSignals() {
 	go func() {
 		for sig := range sigs {
 			logger.Println("signal", sig)
-			if sig == syscall.SIGHUP {
-				syscall.Kill(0, syscall.SIGHUP)
-				os.Exit(0)
-			}
-			if sig == syscall.SIGUSR1 {
-				fmt.Print(sys.DumpStack())
-			}
+			handleSignal(sig)
 		}
 	}()
 }
