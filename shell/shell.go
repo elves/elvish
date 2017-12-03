@@ -53,8 +53,6 @@ func (sh *Shell) Run(args []string) int {
 		} else {
 			script(sh.ev, arg)
 		}
-	} else if !sys.IsATTY(0) {
-		script(sh.ev, "/dev/stdin")
 	} else {
 		interact(sh.ev, sh.daemon)
 	}
@@ -137,7 +135,12 @@ func readFileUTF8(fname string) (string, error) {
 
 func interact(ev *eval.Evaler, daemon *api.Client) {
 	// Build Editor.
-	ed := makeEditor(os.Stdin, os.Stderr, ev, daemon)
+	var ed editor
+	if sys.IsATTY(0) {
+		ed = makeEditor(os.Stdin, os.Stderr, ev, daemon)
+	} else {
+		ed = newMinEditor(os.Stdin, os.Stderr)
+	}
 	defer ed.Close()
 
 	// Source rc.elv.
