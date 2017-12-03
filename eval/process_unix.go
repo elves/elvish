@@ -23,3 +23,7 @@ func unignoreTTOU() {
 func putSelfInFg() error {
 	return sys.Tcsetpgrp(0, syscall.Getpgrp())
 }
+
+func makeSysProcAttr(bg bool) *syscall.SysProcAttr {
+	return &syscall.SysProcAttr{Setpgid: bg}
+}

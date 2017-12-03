@@ -2,7 +2,6 @@ package eval
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"syscall"
 
@@ -58,13 +57,9 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value, opts map[string]Value) {
 		}
 	}
 
-	files := make([]uintptr, len(ec.ports))
+	files := make([]*os.File, len(ec.ports))
 	for i, port := range ec.ports {
-		if port == nil || port.File == nil {
-			files[i] = fdNil
-		} else {
-			files[i] = port.File.Fd()
-		}
+		files[i] = port.File
 	}
 
 	args := make([]string, len(argVals)+1)
@@ -74,26 +69,25 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value, opts map[string]Value) {
 		args[i+1] = ToString(a)
 	}
 
-	sys := syscall.SysProcAttr{Setpgid: ec.background}
-	attr := syscall.ProcAttr{Env: os.Environ(), Files: files[:], Sys: &sys}
-
 	path, err := ec.Search(e.Name)
 	if err != nil {
 		throw(err)
 	}
 
 	args[0] = path
-	pid, err := syscall.ForkExec(path, args, &attr)
+
+	sys := makeSysProcAttr(ec.background)
+	proc, err := os.StartProcess(path, args, &os.ProcAttr{Files: files, Sys: sys})
+
 	if err != nil {
-		throw(errors.New("forkExec: " + err.Error()))
+		throw(err)
 	}
 
-	var ws syscall.WaitStatus
-	_, err = syscall.Wait4(pid, &ws, syscall.WUNTRACED, nil)
+	state, err := proc.Wait()
 
 	if err != nil {
-		throw(fmt.Errorf("wait: %s", err.Error()))
+		throw(err)
 	} else {
-		maybeThrow(NewExternalCmdExit(e.Name, ws, pid))
+		maybeThrow(NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid))
 	}
 }
