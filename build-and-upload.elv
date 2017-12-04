@@ -20,6 +20,7 @@ fn build [os arch]{
 }
 
 build darwin amd64
+build windows amd64
 for arch [386 amd64 arm64] {
     build linux $arch
 }
