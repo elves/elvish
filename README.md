@@ -1,18 +1,20 @@
 # A friendly and expressive Unix shell
 
-[![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
 [![Build Status on Travis](https://travis-ci.org/elves/elvish.svg?branch=master)](https://travis-ci.org/elves/elvish)
+[![Build status on AppVeyor](https://ci.appveyor.com/api/projects/status/l869l22vsjbubch9?svg=true)](https://ci.appveyor.com/project/xiaq/elvish)
+
+[![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
 [![Coverage Status](https://coveralls.io/repos/github/elves/elvish/badge.svg?branch=master)](https://coveralls.io/github/elves/elvish?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
-General discussions:
+User groups:
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/elves/elvish-public)
 [![Telegram Group](https://img.shields.io/badge/telegram%20group-join-blue.svg)](https://telegram.me/elvish)
 [![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-000000.svg)](https://webchat.freenode.net/?channels=elvish)
 
-Development discussions:
+Developer groups:
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/elves/elvish-dev)
 [![Telegram Group](https://img.shields.io/badge/telegram%20group-join-blue.svg)](https://telegram.me/elvish_dev)
 [![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish--dev-000000.svg)](https://webchat.freenode.net/?channels=elvish-dev)
@@ -32,11 +34,11 @@ To build Elvish, you need
 
 *   A Go toolchain >= 1.8.
 
-*   Linux (with x86, x64 or amd64 CPU) or macOS (with reasonably new hardware).
+*   Linux (with x86 or amd64 CPU) or macOS (with reasonably new hardware).
 
     It's quite likely that Elvish works on BSDs and other POSIX operating systems, or other CPU architectures; this is not guaranteed due to the lack of good CI support and developers who use such OSes. Pull requests are welcome.
 
-    Windows is **not** supported yet.
+    Windows support is experimental.
 
 ### The Correct Way
 
