@@ -4,7 +4,7 @@ import "errors"
 
 var NotSupportedOnWindows = errors.New("not supported on Windows")
 
-func exec(ec *EvalCtx, args []Value, opts map[string]Value) {
+func execFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	throw(NotSupportedOnWindows)
 }
 
