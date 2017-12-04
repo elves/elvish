@@ -9,6 +9,11 @@ import (
 	"github.com/xiaq/persistent/vector"
 )
 
+var (
+	pathListSeparator = string(os.PathListSeparator)
+	forbiddenInPath   = pathListSeparator + "\x00"
+)
+
 // Errors
 var (
 	ErrCanOnlyAssignList          = errors.New("can only assign compatible values")
@@ -16,10 +21,11 @@ var (
 	ErrPathCannotContainColonZero = errors.New(`path cannot contain colon or \0`)
 )
 
-// EnvList is a variable whose value is constructed from an environment
-// variable by splitting at colons. Changes to it are also propagated to the
-// corresponding environment variable. Its elements cannot contain colons or
-// \0; attempting to put colon or \0 in its elements will result in an error.
+// EnvList is a variable whose value is constructed from an environment variable
+// by splitting at pathListSeparator. Changes to it are also propagated to the
+// corresponding environment variable. Its elements cannot contain
+// pathListSeparator or \0; attempting to put any in its elements will result in
+// an error.
 type EnvList struct {
 	sync.RWMutex
 	envName    string
@@ -42,7 +48,7 @@ func (envli *EnvList) Get() Value {
 	}
 	envli.cacheFor = value
 	v := vector.Empty
-	for _, path := range strings.Split(value, ":") {
+	for _, path := range strings.Split(value, pathListSeparator) {
 		v = v.Cons(String(path))
 	}
 	envli.cacheValue = List{v}
@@ -62,7 +68,7 @@ func (envli *EnvList) Set(v Value) {
 			throw(ErrPathMustBeString)
 		}
 		path := string(s)
-		if strings.ContainsAny(path, ":\x00") {
+		if strings.ContainsAny(path, forbiddenInPath) {
 			throw(ErrPathCannotContainColonZero)
 		}
 		paths = append(paths, string(s))
@@ -71,5 +77,5 @@ func (envli *EnvList) Set(v Value) {
 
 	envli.Lock()
 	defer envli.Unlock()
-	os.Setenv(envli.envName, strings.Join(paths, ":"))
+	os.Setenv(envli.envName, strings.Join(paths, pathListSeparator))
 }
