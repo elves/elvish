@@ -38,8 +38,10 @@ var logger = util.GetLogger("[main] ")
 
 var (
 	// Flags handled in this package, or common to shell and daemon.
-	help        = flag.Bool("help", false, "show usage help and quit")
-	showVersion = flag.Bool("version", false, "show version and quit")
+	help          = flag.Bool("help", false, "show usage help and quit")
+	showVersion   = flag.Bool("version", false, "show version and quit")
+	showBuildInfo = flag.Bool("buildinfo", false, "show build info and quit")
+	showJSON      = flag.Bool("json", false, "show output in JSON. Useful with -buildinfo.")
 
 	logpath     = flag.String("log", "", "a file to write debug log to")
 	cpuprofile  = flag.String("cpuprofile", "", "write cpu profile to file")
@@ -78,6 +80,18 @@ func Main() int {
 
 	if *showVersion {
 		fmt.Println(build.Version)
+		fmt.Fprintln(os.Stderr, "-version is deprecated and will be removed in 0.12. Use -buildinfo instead.")
+		return 0
+	}
+
+	if *showBuildInfo {
+		if *showJSON {
+			fmt.Printf("{version: %s, builder: %s}\n",
+				quoteJSON(build.Version), quoteJSON(build.Builder))
+		} else {
+			fmt.Println("version:", build.Version)
+			fmt.Println("builder:", build.Builder)
+		}
 		return 0
 	}
 

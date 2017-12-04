@@ -9,7 +9,7 @@ FIRST_GOPATH=$(shell go env GOPATH | cut -d: -f1)
 default: get test
 
 get:
-	go get -ldflags "-X github.com/elves/elvish/build.Version=$(VERSION)" .
+	go get -ldflags "-X github.com/elves/elvish/build.Version=$(VERSION) -X github.com/elves/elvish/build.Builder=$(shell id -un)@$(shell hostname)" .
 
 generate:
 	go generate ./...

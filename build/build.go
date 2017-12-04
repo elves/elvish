@@ -4,4 +4,7 @@
 
 package build
 
-var Version = "unknown"
+var (
+	Version = "unknown"
+	Builder = "unknown"
+)
