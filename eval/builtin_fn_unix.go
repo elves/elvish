@@ -5,13 +5,14 @@ package eval
 
 import (
 	"os"
+	"os/exec"
 	"strconv"
 	"syscall"
 
 	"github.com/elves/elvish/sys"
 )
 
-func exec(ec *EvalCtx, args []Value, opts map[string]Value) {
+func execFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	var argstrings []string
@@ -25,7 +26,7 @@ func exec(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 
 	var err error
-	argstrings[0], err = ec.Search(argstrings[0])
+	argstrings[0], err = exec.LookPath(argstrings[0])
 	maybeThrow(err)
 
 	preExit(ec)

@@ -2,8 +2,8 @@ package util
 
 import (
 	"errors"
-	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -12,41 +12,10 @@ var (
 	ErrNotFound      = errors.New("not found")
 )
 
-// Search tries to resolve an external command and return the full (possibly
-// relative) path.
-func Search(paths []string, exe string) (string, error) {
-	if DontSearch(exe) {
-		if IsExecutable(exe) {
-			return exe, nil
-		}
-		return "", ErrNotExecutable
-	}
-	for _, p := range paths {
-		full := p + "/" + exe
-		if IsExecutable(full) {
-			return full, nil
-		}
-	}
-	return "", ErrNotFound
-}
-
-// EachExecutable calls f for each executable file in paths.
-func EachExecutable(paths []string, f func(string)) {
-	for _, dir := range paths {
-		// XXX Ignore error
-		infos, _ := ioutil.ReadDir(dir)
-		for _, info := range infos {
-			if !info.IsDir() && (info.Mode()&0111 != 0) {
-				f(info.Name())
-			}
-		}
-	}
-}
-
 // DontSearch determines whether the path to an external command should be
 // taken literally and not searched.
 func DontSearch(exe string) bool {
-	return exe == ".." || strings.ContainsRune(exe, '/')
+	return exe == ".." || strings.ContainsRune(exe, filepath.Separator)
 }
 
 // IsExecutable determines whether path refers to an executable file.

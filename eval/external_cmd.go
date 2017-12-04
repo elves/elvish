@@ -3,6 +3,7 @@ package eval
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"syscall"
 
 	"github.com/elves/elvish/parse"
@@ -69,7 +70,7 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value, opts map[string]Value) {
 		args[i+1] = ToString(a)
 	}
 
-	path, err := ec.Search(e.Name)
+	path, err := exec.LookPath(e.Name)
 	if err != nil {
 		throw(err)
 	}

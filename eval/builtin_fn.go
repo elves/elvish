@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -226,7 +227,7 @@ func init() {
 
 		// Process control
 		{"fg", fg},
-		{"exec", exec},
+		{"exec", execFn},
 		{"exit", exit},
 
 		// Time
@@ -1241,7 +1242,7 @@ func hasExternal(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
 
-	_, err := ec.Search(string(cmd))
+	_, err := exec.LookPath(string(cmd))
 	ec.OutputChan() <- Bool(err == nil)
 }
 
@@ -1250,7 +1251,7 @@ func searchExternal(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
 
-	path, err := ec.Search(string(cmd))
+	path, err := exec.LookPath(string(cmd))
 	maybeThrow(err)
 
 	out := ec.ports[1].Chan
