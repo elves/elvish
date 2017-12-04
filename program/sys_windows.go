@@ -1,4 +1,4 @@
-package main
+package program
 
 import "os"
 

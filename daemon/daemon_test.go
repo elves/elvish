@@ -2,6 +2,6 @@ package daemon
 
 import "testing"
 
-func TestDaemon(t *testing.T) {
-	// XXX(xiaq): Add tests.
+func TestService(t *testing.T) {
+	// TODO(xiaq): Add tests.
 }

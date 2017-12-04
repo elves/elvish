@@ -18,9 +18,9 @@ import (
 	"syscall"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/program/daemon"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )

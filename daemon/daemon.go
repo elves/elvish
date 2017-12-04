@@ -1,139 +1,213 @@
-// Package exec provides the entry point of the daemon sub-program and helpers
-// to spawn a daemon process.
+// Package daemon implements the daemon service for mediating access to the
+// storage backend.
 package daemon
 
 import (
-	"errors"
-	"fmt"
+	"net"
+	"net/rpc"
 	"os"
-	"path/filepath"
-	"strconv"
+	"os/signal"
+	"sync"
+	"syscall"
+
+	"github.com/elves/elvish/daemon/api"
+	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/util"
 )
 
-// Daemon keeps configurations for the daemon sub-program. It can be used both
-// from the main function for running the daemon and from another process
-// (typically the first Elvish shell session) for spawning a daemon.
-type Daemon struct {
-	// Forked is the number of times the daemon has forked itself. It is only
-	// relevant in the daemon sub-program.
-	Forked int
-	// BinPath is the path to the Elvish binary itself, used when forking. This
-	// field is optional only when spawning the daemon.
-	BinPath string
-	// DbPath is the path to the database.
-	DbPath string
-	// SockPath is the path to the socket on which the daemon will serve
-	// requests.
-	SockPath string
-	// LogPathPrefix is used to derive the name of the log file by adding the
-	// pid.
-	LogPathPrefix string
-}
+var logger = util.GetLogger("[daemon] ")
 
-// Main is the entry point of the daemon sub-program. It takes a serve function
-// and returns the exit status. The caller can call os.Exit after doing more
-// cleanup work. The exact behavior of this function depends on the -forked
-// flag:
-//
-// When d.Forked = 0 (which is how the daemon gets started), it forks another
-// daemon process, with an empty environment, the working directory changed to
-// /, with umask 0077, and in a new process session. All the path flags are
-// resolved to absolute paths, and the -fork flag becomes 1.
-//
-// When d.Forked = 1, it simply forks another daemon process with all arguments
-// passed as is, except -forked which becomes 2.
-//
-// When d.Forked = 2, it calls the serve function with the value of d.SockPath
-// and d.DbPath.
-//
-// These 3 steps implement a standard demonizing procedure. The main deviation
-// is that since Go does not support a raw fork call, it has to use fork-exec to
-// simulate fork and pass all states via command line flags.
-func (d *Daemon) Main(serve func(string, string)) error {
-	switch d.Forked {
-	case 0:
-		var absifyError error
-		absify := func(name string, path string) string {
-			if absifyError != nil {
-				return ""
-			}
-			if path == "" {
-				absifyError = fmt.Errorf("flag %s is required for daemon", name)
-				return ""
-			}
-			absPath, err := filepath.Abs(path)
-			if err != nil {
-				absifyError = fmt.Errorf("cannot convert %s to absolute path: %s", name, err)
-			}
-			return absPath
-		}
-		binPath := absify("-bin", d.BinPath)
-		dbPath := absify("-db", d.DbPath)
-		sockPath := absify("-sock", d.SockPath)
-		logPathPrefix := absify("-logprefix", d.LogPathPrefix)
-		if absifyError != nil {
-			return absifyError
-		}
+// Serve runs the daemon service, listening on the socket specified by sockpath
+// and serving data from dbpath. It quits upon receiving SIGTERM, SIGINT or when
+// all active clients have disconnected.
+func Serve(sockpath, dbpath string) {
+	logger.Println("pid is", syscall.Getpid())
 
-		setUmask()
-		return startProcess(
-			binPath, 1,
-			dbPath, sockPath, logPathPrefix,
-			&os.ProcAttr{
-				Dir: "/",        // cd to /
-				Env: []string{}, // empty environment
-				Sys: sysProAttrForFirstFork(),
-			})
-	case 1:
-		return startProcess(
-			d.BinPath, 2,
-			d.DbPath, d.SockPath, d.LogPathPrefix, nil)
-	case 2:
-		serve(d.SockPath, d.DbPath)
-		return nil
-	default:
-		return fmt.Errorf("-forked is %d, should be 0, 1 or 2", d.Forked)
+	logger.Println("going to listen", sockpath)
+	listener, err := net.Listen("unix", sockpath)
+	if err != nil {
+		logger.Printf("failed to listen on %s: %v", sockpath, err)
+		logger.Println("aborting")
+		os.Exit(2)
 	}
-}
 
-// Spawn spawns a daemon in the background by calling the Elvish binary with
-// appropriate flags. If d.BinPath is not set, it attempts to derive the binary
-// path using os.Executable(). The fields DbPath, SockPath and LogPathPrefix
-// must be set.
-//
-// It is supposed to be called from a Elvish shell (as opposed to daemon) process.
-func (d *Daemon) Spawn() error {
-	binPath := d.BinPath
-	// Determine binPath.
-	if binPath == "" {
-		bin, err := os.Executable()
+	st, err := store.NewStore(dbpath)
+	if err != nil {
+		logger.Printf("failed to create storage: %v", err)
+		logger.Printf("serving anyway")
+	}
+
+	quitSignals := make(chan os.Signal)
+	quitChan := make(chan struct{})
+	signal.Notify(quitSignals, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		select {
+		case sig := <-quitSignals:
+			logger.Printf("received signal %s", sig)
+		case <-quitChan:
+			logger.Printf("No active client, daemon exit")
+		}
+		err := os.Remove(sockpath)
 		if err != nil {
-			return errors.New("cannot find elvish: " + err.Error())
+			logger.Printf("failed to remove socket %s: %v", sockpath, err)
 		}
-		binPath = bin
+		err = st.Close()
+		if err != nil {
+			logger.Printf("failed to close storage: %v", err)
+		}
+		err = listener.Close()
+		if err != nil {
+			logger.Printf("failed to close listener: %v", err)
+		}
+		logger.Println("listener closed, waiting to exit")
+	}()
+
+	service := &Service{st, err}
+	rpc.RegisterName(api.ServiceName, service)
+
+	logger.Println("starting to serve RPC calls")
+
+	firstClient := true
+	activeClient := sync.WaitGroup{}
+	// prevent daemon exit before serving first client
+	activeClient.Add(1)
+	go func() {
+		activeClient.Wait()
+		close(quitChan)
+	}()
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			logger.Printf("Failed to accept: %#v", err)
+			break
+		}
+
+		if firstClient {
+			firstClient = false
+		} else {
+			activeClient.Add(1)
+		}
+		go func() {
+			rpc.DefaultServer.ServeConn(conn)
+			activeClient.Done()
+		}()
 	}
 
-	return startProcess(
-		binPath, 0,
-		d.DbPath, d.SockPath, d.LogPathPrefix, nil)
+	logger.Println("exiting")
 }
 
-func startProcess(binPath string, forked int,
-	dbPath, sockPath, logPathPrefix string, attr *os.ProcAttr) error {
+// Service provides the daemon RPC service. It is suitable as a service for
+// net/rpc.
+type Service struct {
+	store *store.Store
+	err   error
+}
 
-	if attr == nil {
-		attr = &os.ProcAttr{}
-	}
-	args := []string{
-		binPath,
-		"-daemon",
-		"-forked", strconv.Itoa(forked),
-		"-bin", binPath,
-		"-db", dbPath,
-		"-sock", sockPath,
-		"-logprefix", logPathPrefix,
-	}
+// Implementations of RPC methods.
 
-	_, err := os.StartProcess(binPath, args, attr)
+func (s *Service) Version(req *api.VersionRequest, res *api.VersionResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	res.Version = api.Version
+	return nil
+}
+
+func (s *Service) Pid(req *api.PidRequest, res *api.PidResponse) error {
+	res.Pid = syscall.Getpid()
+	return nil
+}
+
+func (s *Service) NextCmdSeq(req *api.NextCmdSeqRequest, res *api.NextCmdSeqResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	seq, err := s.store.NextCmdSeq()
+	res.Seq = seq
 	return err
+}
+
+func (s *Service) AddCmd(req *api.AddCmdRequest, res *api.AddCmdResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	seq, err := s.store.AddCmd(req.Text)
+	res.Seq = seq
+	return err
+}
+
+func (s *Service) Cmd(req *api.CmdRequest, res *api.CmdResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	text, err := s.store.Cmd(req.Seq)
+	res.Text = text
+	return err
+}
+
+func (s *Service) Cmds(req *api.CmdsRequest, res *api.CmdsResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	cmds, err := s.store.Cmds(req.From, req.Upto)
+	res.Cmds = cmds
+	return err
+}
+
+func (s *Service) NextCmd(req *api.NextCmdRequest, res *api.NextCmdResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	seq, text, err := s.store.NextCmd(req.From, req.Prefix)
+	res.Seq, res.Text = seq, text
+	return err
+}
+
+func (s *Service) PrevCmd(req *api.PrevCmdRequest, res *api.PrevCmdResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	seq, text, err := s.store.PrevCmd(req.Upto, req.Prefix)
+	res.Seq, res.Text = seq, text
+	return err
+}
+
+func (s *Service) AddDir(req *api.AddDirRequest, res *api.AddDirResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	return s.store.AddDir(req.Dir, req.IncFactor)
+}
+
+func (s *Service) Dirs(req *api.DirsRequest, res *api.DirsResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	dirs, err := s.store.GetDirs(req.Blacklist)
+	res.Dirs = dirs
+	return err
+}
+
+func (s *Service) SharedVar(req *api.SharedVarRequest, res *api.SharedVarResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	value, err := s.store.GetSharedVar(req.Name)
+	res.Value = value
+	return err
+}
+
+func (s *Service) SetSharedVar(req *api.SetSharedVarRequest, res *api.SetSharedVarResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	return s.store.SetSharedVar(req.Name, req.Value)
+}
+
+func (s *Service) DelSharedVar(req *api.DelSharedVarRequest, res *api.DelSharedVarResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	return s.store.DelSharedVar(req.Name)
 }
