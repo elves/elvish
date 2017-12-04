@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 type editor interface {
@@ -27,6 +28,10 @@ func (ed *minEditor) ReadLine() (string, error) {
 		wd = "?"
 	}
 	fmt.Fprintf(ed.out, "%s> ", wd)
+	line, err := ed.in.ReadString('\n')
+	// Chop off the trailing \r on Windows.
+	line = strings.TrimRight(line, "\r")
+	return line, err
 	return ed.in.ReadString('\n')
 }
 
