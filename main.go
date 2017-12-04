@@ -131,7 +131,7 @@ func main() {
 		}
 		err := d.Main(service.Serve)
 		if err != nil {
-			logger.Println(err)
+			logger.Println("daemon -forked", *forked, "error:", err)
 			ret = 2
 		}
 	} else {
