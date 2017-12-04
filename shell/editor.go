@@ -30,7 +30,7 @@ func (ed *minEditor) ReadLine() (string, error) {
 	fmt.Fprintf(ed.out, "%s> ", wd)
 	line, err := ed.in.ReadString('\n')
 	// Chop off the trailing \r on Windows.
-	line = strings.TrimRight(line, "\r")
+	line = strings.TrimRight(line, "\r\n")
 	return line, err
 	return ed.in.ReadString('\n')
 }
