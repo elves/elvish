@@ -3,6 +3,7 @@ package parse
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 	"unicode/utf8"
 
@@ -29,7 +30,8 @@ func NewParser(srcname, src string) *Parser {
 // Done tells the parser that parsing has completed.
 func (ps *Parser) Done() {
 	if ps.pos != len(ps.src) {
-		ps.error(errUnexpectedRune)
+		r, _ := utf8.DecodeRuneInString(ps.src[ps.pos:])
+		ps.error(fmt.Errorf("unexpected rune %q", r))
 	}
 }
 

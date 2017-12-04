@@ -22,7 +22,6 @@ func Parse(srcname, src string) (*Chunk, error) {
 
 // Errors.
 var (
-	errUnexpectedRune       = errors.New("unexpected rune")
 	errShouldBeForm         = newError("", "form")
 	errBadLHS               = errors.New("bad assignment LHS")
 	errDuplicateExitusRedir = newError("duplicate exitus redir")
