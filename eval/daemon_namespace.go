@@ -28,5 +28,5 @@ func makeDaemonNamespace(daemon *api.Client) Namespace {
 func daemonSpawn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
-	ec.ToSpawn.Spawn()
+	maybeThrow(ec.ToSpawn.Spawn())
 }
