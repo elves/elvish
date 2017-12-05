@@ -3,6 +3,7 @@ package glob
 import (
 	"os"
 	"reflect"
+	"runtime"
 	"sort"
 	"testing"
 
@@ -20,10 +21,12 @@ var (
 	createDots = []string{".x", ".el/x"}
 )
 
-var globCases = []struct {
+type globCase struct {
 	pattern string
 	want    []string
-}{
+}
+
+var globCases = []globCase{
 	{"*", []string{"a", "b", "c", "d1", "d2", "dX", "dXY", "lorem", "ipsum"}},
 	{".", []string{"."}},
 	{"./*", []string{"./a", "./b", "./c", "./d1", "./d2", "./dX", "./dXY", "./lorem", "./ipsum"}},
@@ -48,12 +51,21 @@ var globCases = []struct {
 	{"xxxx/*", []string{}},
 	{"a/*/", []string{}},
 
-	// Absolute paths.
-	// NOTE: If / or /usr changes during testing, this case will fail.
-	{"/*", util.FullNames("/")},
-	{"/usr/*", util.FullNames("/usr/")},
-
 	// TODO Test cases against dotfiles.
+}
+
+func init() {
+	// Add tests for absolute paths. This is platform-dependent and may break if
+	// the directories used change during testing.
+	var dirs []string
+	if runtime.GOOS == "windows" {
+		dirs = []string{`C:\`, `C:\Windows\`}
+	} else {
+		dirs = []string{"/", "/usr/"}
+	}
+	for _, dir := range dirs {
+		globCases = append(globCases, globCase{dir + "*", util.FullNames(dir)})
+	}
 }
 
 func TestGlob(t *testing.T) {
