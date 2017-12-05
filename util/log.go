@@ -8,8 +8,10 @@ import (
 )
 
 var (
-	out     io.Writer = ioutil.Discard
-	logFile *os.File
+	out io.Writer = ioutil.Discard
+	// If out is set by SetOutputFile, outFile is set and keeps the same value
+	// as out. Otherwise, outFile is nil.
+	outFile *os.File
 	loggers []*log.Logger
 )
 
@@ -20,27 +22,35 @@ func GetLogger(prefix string) *log.Logger {
 	return logger
 }
 
-func setOutput(newout io.Writer) {
+// SetOutput redirects the output of all loggers obtained with GetLogger to the
+// new io.Writer. If the old output was a file opened by SetOutputFile, it is
+// closed.
+func SetOutput(newout io.Writer) {
+	if outFile != nil {
+		outFile.Close()
+		outFile = nil
+	}
 	out = newout
+	outFile = nil
 	for _, logger := range loggers {
 		logger.SetOutput(out)
 	}
 }
 
+// SetOutputFile redirects the output of all loggers obtained with GetLogger to
+// the named file. If the old output was a file opened by SetOutputFile, it is
+// closed. The new file is truncated. SetOutFile("") is equivalent to
+// SetOutput(ioutil.Discard).
 func SetOutputFile(fname string) error {
-	if logFile != nil {
-		logFile.Close()
-	}
 	if fname == "" {
-		logFile = nil
-		setOutput(ioutil.Discard)
+		SetOutput(ioutil.Discard)
 		return nil
 	}
-	var err error
-	logFile, err = os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	file, err := os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return err
 	}
-	setOutput(logFile)
+	SetOutput(file)
+	outFile = file
 	return nil
 }
