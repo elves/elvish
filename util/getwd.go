@@ -2,8 +2,11 @@ package util
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 )
+
+var pathSep = string(filepath.Separator)
 
 // Getwd returns path of the working directory in a format suitable as the
 // prompt.
@@ -21,7 +24,7 @@ func TildeAbbr(path string) string {
 	if err == nil {
 		if path == home {
 			return "~"
-		} else if strings.HasPrefix(path, home+"/") {
+		} else if strings.HasPrefix(path, home+pathSep) {
 			return "~" + path[len(home):]
 		}
 	}

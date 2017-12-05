@@ -15,6 +15,8 @@ func TestGetwd(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
+		// Override $HOME to make sure that tmpdir is not abbreviatable.
+		os.Setenv("HOME", "/does/not/exist")
 		if gotwd := Getwd(); gotwd != tmpdir {
 			t.Errorf("Getwd() -> %v, want %v", gotwd, tmpdir)
 		}
@@ -28,7 +30,7 @@ func TestGetwd(t *testing.T) {
 
 		mustOK(os.Mkdir("a", 0700))
 		mustOK(os.Chdir("a"))
-		if gotwd := Getwd(); gotwd != "~/a" {
+		if gotwd := Getwd(); gotwd != filepath.Join("~", "a") {
 			t.Errorf("Getwd() -> %v, want ~/a", gotwd)
 		}
 
