@@ -5,6 +5,10 @@ import (
 	"os"
 
 	"github.com/elves/elvish/build"
+	daemonsvc "github.com/elves/elvish/daemon"
+	"github.com/elves/elvish/program/daemon"
+	"github.com/elves/elvish/program/shell"
+	"github.com/elves/elvish/program/web"
 )
 
 // ShowHelp shows help message.
@@ -49,4 +53,41 @@ func (info ShowBuildInfo) Main([]string) int {
 		fmt.Println("builder:", build.Builder)
 	}
 	return 0
+}
+
+// Daemon runs the daemon subprogram.
+type Daemon struct {
+	inner *daemon.Daemon
+}
+
+func (d Daemon) Main([]string) int {
+	err := d.inner.Main(daemonsvc.Serve)
+	if err != nil {
+		logger.Println("daemon -forked", d.inner.Forked, "error:", err)
+		return 2
+	}
+	return 0
+}
+
+// Shell runs the daemon subprogram.
+type Shell struct {
+	Cmd         bool
+	CompileOnly bool
+}
+
+func (sh Shell) Main(args []string) int {
+	ev, cl := initRuntime()
+	defer closeClient(cl)
+	return shell.NewShell(ev, cl, sh.Cmd, sh.CompileOnly).Run(args)
+}
+
+// Web runs the web subprogram.
+type Web struct {
+	Port int
+}
+
+func (w Web) Main(args []string) int {
+	ev, cl := initRuntime()
+	defer closeClient(cl)
+	return web.NewWeb(ev, *webport).Run(args)
 }

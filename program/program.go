@@ -18,13 +18,10 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	daemonsvc "github.com/elves/elvish/daemon"
 	daemonapi "github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/re"
 	"github.com/elves/elvish/program/daemon"
-	"github.com/elves/elvish/program/shell"
-	"github.com/elves/elvish/program/web"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
 )
@@ -113,58 +110,25 @@ func FindProgram(args []string) Program {
 		return ShowVersion{}
 	case *showBuildInfo:
 		return ShowBuildInfo{*showJSON}
-	case *isdaemon && len(args) > 0:
-		// The daemon takes no argument.
-		return ShowCorrectUsage{}
-	default:
-		// TODO: Get rid of OtherPrograms.
-		return SubPrograms{}
-	}
-}
-
-// SubPrograms is a temporary Program used to hold the logics for dispatching to
-// subprograms. It should be broken into several Program types and not look at flags.
-type SubPrograms struct{}
-
-func (SubPrograms) Main(args []string) int {
-	// Pick a sub-program to run.
-	if *isdaemon {
-		d := daemon.Daemon{
+	case *isdaemon:
+		if len(args) > 0 {
+			// The daemon takes no argument.
+			return ShowCorrectUsage{}
+		}
+		return Daemon{inner: &daemon.Daemon{
 			Forked:        *forked,
 			BinPath:       *binpath,
 			DbPath:        *dbpath,
 			SockPath:      *sockpath,
 			LogPathPrefix: *logpathprefix,
+		}}
+	case *isweb:
+		if *cmd {
+			return ShowCorrectUsage{}
 		}
-		err := d.Main(daemonsvc.Serve)
-		if err != nil {
-			logger.Println("daemon -forked", *forked, "error:", err)
-			return 2
-		}
-		return 0
-	} else {
-		// Shell or web. Set up common runtime components.
-		ev, cl := initRuntime()
-		if cl != nil {
-			defer func() {
-				err := cl.Close()
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "warning: failed to close connection to daemon:", err)
-				}
-			}()
-		}
-
-		if *isweb {
-			if *cmd {
-				fmt.Fprintln(os.Stderr, "-c -web not yet supported")
-				return 2
-			}
-			w := web.NewWeb(ev, *webport)
-			return w.Run(args)
-		} else {
-			sh := shell.NewShell(ev, cl, *cmd, *compileonly)
-			return sh.Run(args)
-		}
+		return Web{*webport}
+	default:
+		return Shell{*cmd, *compileonly}
 	}
 }
 
@@ -280,6 +244,16 @@ spawnDaemonEnd:
 		"re": re.Namespace(),
 	}
 	return eval.NewEvaler(cl, toSpawn, dataDir, extraModules), cl
+}
+
+func closeClient(cl *daemonapi.Client) {
+	if cl == nil {
+		return
+	}
+	err := cl.Close()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "warning: failed to close connection to daemon:", err)
+	}
 }
 
 var (
