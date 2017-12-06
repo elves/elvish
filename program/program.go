@@ -18,7 +18,6 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/elves/elvish/build"
 	daemonsvc "github.com/elves/elvish/daemon"
 	daemonapi "github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/eval"
@@ -73,34 +72,40 @@ func Main() int {
 	flag.Usage = usage
 	flag.Parse()
 	args := flag.Args()
-	if *help {
-		usage()
-		return 0
-	}
+	return FindProgram(args).Main(args)
+}
 
-	if *showVersion {
-		fmt.Println(build.Version)
-		fmt.Fprintln(os.Stderr, "-version is deprecated and will be removed in 0.12. Use -buildinfo instead.")
-		return 0
-	}
+// Program represents a subprogram.
+type Program interface {
+	// Main calls the subprogram with arguments. The return value will be used
+	// as the exit status of the entire program.
+	Main(args []string) int
+}
 
-	if *showBuildInfo {
-		if *showJSON {
-			fmt.Printf("{version: %s, builder: %s}\n",
-				quoteJSON(build.Version), quoteJSON(build.Builder))
-		} else {
-			fmt.Println("version:", build.Version)
-			fmt.Println("builder:", build.Builder)
-		}
-		return 0
-	}
-
-	if *isdaemon && len(args) > 0 {
+// FindProgram finds a suitable Program according to flags. It does not have any
+// side effects.
+func FindProgram(args []string) Program {
+	switch {
+	case *help:
+		return ShowHelp{}
+	case *showVersion:
+		return ShowVersion{}
+	case *showBuildInfo:
+		return ShowBuildInfo{*showJSON}
+	case *isdaemon && len(args) > 0:
 		// The daemon takes no argument.
-		usage()
-		return 2
+		return ShowCorrectUsage{}
+	default:
+		// TODO: Get rid of OtherPrograms.
+		return SubPrograms{}
 	}
+}
 
+// SubPrograms is a temporary Program used to hold the logics for dispatching to
+// subprograms. It should be broken into several Program types and not look at flags.
+type SubPrograms struct{}
+
+func (SubPrograms) Main(args []string) int {
 	// Flags common to all sub-programs: log and CPU profile.
 	if *isdaemon {
 		if *forked == 2 && *logpathprefix != "" {
