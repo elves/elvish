@@ -37,7 +37,7 @@ func SetOutputFile(fname string) error {
 		return nil
 	}
 	var err error
-	logFile, err = os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	logFile, err = os.OpenFile(fname, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return err
 	}
