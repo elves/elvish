@@ -46,9 +46,3 @@ func TestGetwd(t *testing.T) {
 		}
 	})
 }
-
-func mustOK(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
