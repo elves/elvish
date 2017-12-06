@@ -68,10 +68,31 @@ func usage() {
 }
 
 func Main() int {
-	// Parse and check flags.
 	flag.Usage = usage
 	flag.Parse()
 	args := flag.Args()
+
+	// Handle flags common to all subprograms.
+
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
+	var err error
+	if *logpath != "" {
+		err = util.SetOutputFile(*logpath)
+	} else if *logpathprefix != "" {
+		err = util.SetOutputFile(*logpathprefix + strconv.Itoa(os.Getpid()))
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+
 	return FindProgram(args).Main(args)
 }
 
@@ -106,33 +127,6 @@ func FindProgram(args []string) Program {
 type SubPrograms struct{}
 
 func (SubPrograms) Main(args []string) int {
-	// Flags common to all sub-programs: log and CPU profile.
-	if *isdaemon {
-		if *forked == 2 && *logpathprefix != "" {
-			// Honor logpathprefix.
-			pid := os.Getpid()
-			err := util.SetOutputFile(*logpathprefix + strconv.Itoa(pid))
-			if err != nil {
-				fmt.Fprintln(os.Stderr, err)
-			}
-		} else {
-			util.SetOutputFile("/dev/stderr")
-		}
-	} else if *logpath != "" {
-		err := util.SetOutputFile(*logpath)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
-	}
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
-
 	// Pick a sub-program to run.
 	if *isdaemon {
 		d := daemon.Daemon{
