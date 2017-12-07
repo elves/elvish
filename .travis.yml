@@ -7,6 +7,5 @@ go:
 sudo: false
 os:
     - linux
-    - osx
 script:
     make travis
