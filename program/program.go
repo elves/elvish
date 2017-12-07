@@ -9,6 +9,7 @@ package program
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"runtime/pprof"
@@ -26,47 +27,77 @@ const defaultWebPort = 3171
 
 var logger = util.GetLogger("[main] ")
 
-var (
-	// Flags handled in this package, or common to shell and daemon.
-	help          = flag.Bool("help", false, "show usage help and quit")
-	showVersion   = flag.Bool("version", false, "show version and quit")
-	showBuildInfo = flag.Bool("buildinfo", false, "show build info and quit")
-	showJSON      = flag.Bool("json", false, "show output in JSON. Useful with -buildinfo.")
+type flagSet struct {
+	flag.FlagSet
 
-	logpath     = flag.String("log", "", "a file to write debug log to")
-	cpuprofile  = flag.String("cpuprofile", "", "write cpu profile to file")
-	dbpath      = flag.String("db", "", "path to the database")
-	sockpath    = flag.String("sock", "", "path to the daemon socket")
-	compileonly = flag.Bool("compileonly", false, "Parse/Compile but do not execute")
+	Log, LogPrefix, CPUProfile string
 
-	isdaemon = flag.Bool("daemon", false, "run daemon instead of shell")
-	isweb    = flag.Bool("web", false, "run backend of web interface")
-	webport  = flag.Int("port", defaultWebPort, "the port of the web backend")
+	Help, Version, BuildInfo, JSON bool
 
-	// Flags for shell and web.
-	cmd = flag.Bool("c", false, "take first argument as a command to execute")
+	CodeInArg, CompileOnly bool
 
-	// Flags for daemon.
-	forked        = flag.Int("forked", 0, "how many times the daemon has forked")
-	binpath       = flag.String("bin", "", "path to the elvish binary")
-	logpathprefix = flag.String("logprefix", "", "the prefix for the daemon log file")
-)
+	Web  bool
+	Port int
 
-func usage() {
-	fmt.Println("usage: elvish [flags] [script]")
-	fmt.Println("flags:")
-	flag.PrintDefaults()
+	Daemon bool
+	Forked int
+
+	Bin, DB, Sock string
 }
 
-func Main() int {
-	flag.Usage = usage
-	flag.Parse()
+func newFlagSet() *flagSet {
+	f := flagSet{}
+	f.Init("elvish", flag.ExitOnError)
+	f.Usage = func() {
+		usage(os.Stderr, &f)
+	}
+
+	f.StringVar(&f.Log, "log", "", "a file to write debug log to")
+	f.StringVar(&f.LogPrefix, "logprefix", "", "the prefix for the daemon log file")
+	f.StringVar(&f.CPUProfile, "cpuprofile", "", "write cpu profile to file")
+
+	f.BoolVar(&f.Help, "help", false, "show usage help and quit")
+	f.BoolVar(&f.Version, "version", false, "show version and quit")
+	f.BoolVar(&f.BuildInfo, "buildinfo", false, "show build info and quit")
+	f.BoolVar(&f.JSON, "json", false, "show output in JSON. Useful with -buildinfo.")
+
+	f.BoolVar(&f.CodeInArg, "c", false, "take first argument as code to execute")
+	f.BoolVar(&f.CompileOnly, "compileonly", false, "Parse/Compile but do not execute")
+
+	f.BoolVar(&f.Web, "web", false, "run backend of web interface")
+	f.IntVar(&f.Port, "port", defaultWebPort, "the port of the web backend")
+
+	f.BoolVar(&f.Daemon, "daemon", false, "run daemon instead of shell")
+	f.IntVar(&f.Forked, "forked", 0, "how many times the daemon has forked")
+
+	f.StringVar(&f.Bin, "bin", "", "path to the elvish binary")
+	f.StringVar(&f.DB, "db", "", "path to the database")
+	f.StringVar(&f.Sock, "sock", "", "path to the daemon socket")
+
+	return &f
+}
+
+// usage prints usage to the specified output. It modifies the flagSet; there is
+// no API for getting the current output of a flag.FlagSet, so we can neither
+// use the current output of f to output our own usage string, nor restore the
+// previous value of f's output.
+func usage(out io.Writer, f *flagSet) {
+	f.SetOutput(out)
+	fmt.Fprintln(out, "Usage: elvish [flags] [script]")
+	fmt.Fprintln(out, "Supported flags:")
+	f.PrintDefaults()
+}
+
+func Main(allArgs []string) int {
+	flag := newFlagSet()
+	flag.Parse(allArgs)
+
 	args := flag.Args()
 
 	// Handle flags common to all subprograms.
 
-	if *cpuprofile != "" {
-		f, err := os.Create(*cpuprofile)
+	if flag.CPUProfile != "" {
+		f, err := os.Create(flag.CPUProfile)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -75,16 +106,16 @@ func Main() int {
 	}
 
 	var err error
-	if *logpath != "" {
-		err = util.SetOutputFile(*logpath)
-	} else if *logpathprefix != "" {
-		err = util.SetOutputFile(*logpathprefix + strconv.Itoa(os.Getpid()))
+	if flag.Log != "" {
+		err = util.SetOutputFile(flag.Log)
+	} else if flag.LogPrefix != "" {
+		err = util.SetOutputFile(flag.LogPrefix + strconv.Itoa(os.Getpid()))
 	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-	return FindProgram(args).Main(args)
+	return FindProgram(flag, args).Main(args)
 }
 
 // Program represents a subprogram.
@@ -96,32 +127,34 @@ type Program interface {
 
 // FindProgram finds a suitable Program according to flags. It does not have any
 // side effects.
-func FindProgram(args []string) Program {
+func FindProgram(flag *flagSet, args []string) Program {
 	switch {
-	case *help:
-		return ShowHelp{}
-	case *showVersion:
+	case flag.Help:
+		return ShowHelp{flag}
+	case flag.Version:
 		return ShowVersion{}
-	case *showBuildInfo:
-		return ShowBuildInfo{*showJSON}
-	case *isdaemon:
+	case flag.BuildInfo:
+		return ShowBuildInfo{flag.JSON}
+	case flag.Daemon:
 		if len(args) > 0 {
-			// The daemon takes no argument.
-			return ShowCorrectUsage{}
+			return ShowCorrectUsage{"arguments are not allowed with -daemon", flag}
 		}
 		return Daemon{inner: &daemon.Daemon{
-			Forked:        *forked,
-			BinPath:       *binpath,
-			DbPath:        *dbpath,
-			SockPath:      *sockpath,
-			LogPathPrefix: *logpathprefix,
+			Forked:        flag.Forked,
+			BinPath:       flag.Bin,
+			DbPath:        flag.DB,
+			SockPath:      flag.Sock,
+			LogPathPrefix: flag.LogPrefix,
 		}}
-	case *isweb:
-		if *cmd || len(args) > 0 {
-			return ShowCorrectUsage{}
+	case flag.Web:
+		if len(args) > 0 {
+			return ShowCorrectUsage{"arguments are not allowed with -web", flag}
 		}
-		return web.New(*binpath, *sockpath, *dbpath, *webport)
+		if flag.CodeInArg {
+			return ShowCorrectUsage{"-c cannot be used together with -web", flag}
+		}
+		return web.New(flag.Bin, flag.Sock, flag.DB, flag.Port)
 	default:
-		return shell.New(*binpath, *sockpath, *dbpath, *cmd, *compileonly)
+		return shell.New(flag.Bin, flag.Sock, flag.DB, flag.CodeInArg, flag.CompileOnly)
 	}
 }

@@ -11,20 +11,21 @@ import (
 
 // ShowHelp shows help message.
 type ShowHelp struct {
-	// Whether help is being shown because user invoked Elvish in a wrong way
-	// (i.e. with bad flags or arguments).
-	WrongUsage bool
+	flag *flagSet
 }
 
-func (ShowHelp) Main([]string) int {
-	usage()
+func (s ShowHelp) Main([]string) int {
+	usage(os.Stdout, s.flag)
 	return 0
 }
 
-type ShowCorrectUsage struct{}
+type ShowCorrectUsage struct {
+	message string
+	flag    *flagSet
+}
 
-func (ShowCorrectUsage) Main([]string) int {
-	usage()
+func (s ShowCorrectUsage) Main([]string) int {
+	usage(os.Stderr, s.flag)
 	return 2
 }
 
