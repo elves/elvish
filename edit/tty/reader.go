@@ -149,6 +149,17 @@ func (rd *Reader) readOne(r rune) {
 	switch r {
 	case 0x1b: // ^[ Escape
 		r2 := readRune()
+		// According to https://unix.stackexchange.com/a/73697, rxvt and derivatives
+		// prepend another ESC to a CSI-style or G3-style sequence to signal Alt.
+		// If that happens, remember this now; it will be later picked up when parsing
+		// those two kinds of sequences.
+		//
+		// issue #181
+		hasTwoLeadingESC := false
+		if r2 == 0x1b {
+			hasTwoLeadingESC = true
+			r2 = readRune()
+		}
 		if r2 == runeTimeout || r2 == runeReadError {
 			// Nothing follows. Taken as a lone Escape.
 			unit = Key{'[', ui.Ctrl}
@@ -248,6 +259,9 @@ func (rd *Reader) readOne(r rune) {
 				if k == (ui.Key{}) {
 					badSeq("bad CSI")
 				} else {
+					if hasTwoLeadingESC {
+						k.Mod |= ui.Alt
+					}
 					unit = Key(k)
 				}
 			}
@@ -261,7 +275,11 @@ func (rd *Reader) readOne(r rune) {
 			}
 			r, ok := g3Seq[r]
 			if ok {
-				unit = Key{r, 0}
+				k := Key{r, 0}
+				if hasTwoLeadingESC {
+					k.Mod |= ui.Alt
+				}
+				unit = Key(k)
 			} else {
 				badSeq("bad G3")
 			}
