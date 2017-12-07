@@ -76,9 +76,9 @@ type Shell struct {
 }
 
 func (sh Shell) Main(args []string) int {
-	ev, cl := initRuntime()
-	defer closeClient(cl)
-	return shell.NewShell(ev, cl, sh.Cmd, sh.CompileOnly).Run(args)
+	ev := initRuntime()
+	defer closeClient(ev.Daemon)
+	return shell.NewShell(ev, sh.Cmd, sh.CompileOnly).Run(args)
 }
 
 // Web runs the web subprogram.
@@ -87,7 +87,7 @@ type Web struct {
 }
 
 func (w Web) Main(args []string) int {
-	ev, cl := initRuntime()
-	defer closeClient(cl)
+	ev := initRuntime()
+	defer closeClient(ev.Daemon)
 	return web.NewWeb(ev, *webport).Run(args)
 }

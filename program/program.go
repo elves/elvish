@@ -140,7 +140,7 @@ const (
 
 const upgradeDbNotice = `If you upgraded Elvish from a pre-0.10 version, you need to upgrade your database by following instructions in https://github.com/elves/upgrade-db-for-0.10/`
 
-func initRuntime() (*eval.Evaler, *daemonapi.Client) {
+func initRuntime() *eval.Evaler {
 	var dataDir string
 	var err error
 
@@ -243,7 +243,7 @@ spawnDaemonEnd:
 	extraModules := map[string]eval.Namespace{
 		"re": re.Namespace(),
 	}
-	return eval.NewEvaler(cl, toSpawn, dataDir, extraModules), cl
+	return eval.NewEvaler(cl, toSpawn, dataDir, extraModules)
 }
 
 func closeClient(cl *daemonapi.Client) {

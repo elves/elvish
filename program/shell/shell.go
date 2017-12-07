@@ -12,7 +12,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
@@ -24,13 +23,12 @@ var logger = util.GetLogger("[shell] ")
 // Shell keeps flags to the shell.
 type Shell struct {
 	ev          *eval.Evaler
-	daemon      *api.Client
 	cmd         bool
 	compileonly bool
 }
 
-func NewShell(ev *eval.Evaler, daemon *api.Client, cmd bool, compileonly bool) *Shell {
-	return &Shell{ev, daemon, cmd, compileonly}
+func NewShell(ev *eval.Evaler, cmd bool, compileonly bool) *Shell {
+	return &Shell{ev, cmd, compileonly}
 }
 
 // Run runs Elvish using the default terminal interface. It blocks until Elvish
@@ -54,7 +52,7 @@ func (sh *Shell) Run(args []string) int {
 			script(sh.ev, arg)
 		}
 	} else {
-		interact(sh.ev, sh.daemon)
+		interact(sh.ev)
 	}
 
 	return 0
@@ -133,11 +131,11 @@ func readFileUTF8(fname string) (string, error) {
 	return string(bytes), nil
 }
 
-func interact(ev *eval.Evaler, daemon *api.Client) {
+func interact(ev *eval.Evaler) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(0) {
-		ed = makeEditor(os.Stdin, os.Stderr, ev, daemon)
+		ed = makeEditor(os.Stdin, os.Stderr, ev)
 	} else {
 		ed = newMinEditor(os.Stdin, os.Stderr)
 	}

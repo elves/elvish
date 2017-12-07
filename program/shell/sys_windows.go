@@ -4,7 +4,7 @@ import (
 	"os"
 )
 
-func makeEditor(in, out *os.File, _, _ interface{}) *minEditor {
+func makeEditor(in, out *os.File, _ interface{}) *minEditor {
 	return newMinEditor(in, out)
 }
 
