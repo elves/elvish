@@ -7,22 +7,16 @@ package program
 // interface.
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
-	"path"
 	"runtime/pprof"
 	"strconv"
-	"time"
 
-	"github.com/boltdb/bolt"
-	daemonapi "github.com/elves/elvish/daemon/api"
-	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/re"
 	"github.com/elves/elvish/program/daemon"
-	"github.com/elves/elvish/store/storedefs"
+	"github.com/elves/elvish/program/shell"
+	"github.com/elves/elvish/program/web"
 	"github.com/elves/elvish/util"
 )
 
@@ -123,159 +117,11 @@ func FindProgram(args []string) Program {
 			LogPathPrefix: *logpathprefix,
 		}}
 	case *isweb:
-		if *cmd {
+		if *cmd || len(args) > 0 {
 			return ShowCorrectUsage{}
 		}
-		return Web{*webport}
+		return web.New(*binpath, *sockpath, *dbpath, *webport)
 	default:
-		return Shell{*cmd, *compileonly}
+		return shell.New(*binpath, *sockpath, *dbpath, *cmd, *compileonly)
 	}
-}
-
-const (
-	daemonWaitOneLoop = 10 * time.Millisecond
-	daemonWaitLoops   = 100
-	daemonWaitTotal   = daemonWaitOneLoop * daemonWaitLoops
-)
-
-const upgradeDbNotice = `If you upgraded Elvish from a pre-0.10 version, you need to upgrade your database by following instructions in https://github.com/elves/upgrade-db-for-0.10/`
-
-func initRuntime() *eval.Evaler {
-	var dataDir string
-	var err error
-
-	// Determine data directory.
-	dataDir, err = storedefs.EnsureDataDir()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "warning: cannot create data directory ~/.elvish")
-	} else {
-		if *dbpath == "" {
-			*dbpath = dataDir + "/db"
-		}
-	}
-
-	// Determine runtime directory.
-	runDir, err := getSecureRunDir()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "cannot get runtime dir /tmp/elvish-$uid, falling back to data dir ~/.elvish:", err)
-		runDir = dataDir
-	}
-	if *sockpath == "" {
-		*sockpath = runDir + "/sock"
-	}
-
-	toSpawn := &daemon.Daemon{
-		Forked:        *forked,
-		BinPath:       *binpath,
-		DbPath:        *dbpath,
-		SockPath:      *sockpath,
-		LogPathPrefix: runDir + "/daemon.log.",
-	}
-	var cl *daemonapi.Client
-	if *sockpath != "" && *dbpath != "" {
-		cl = daemonapi.NewClient(*sockpath)
-		_, statErr := os.Stat(*sockpath)
-		killed := false
-		if statErr == nil {
-			// Kill the daemon if it is outdated.
-			version, err := cl.Version()
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "warning: socket exists but not responding version RPC:", err)
-				// TODO(xiaq): Remove this when the SQLite-backed database
-				// becomes an unmemorable past (perhaps 6 months after the
-				// switch to boltdb).
-				if err.Error() == bolt.ErrInvalid.Error() {
-					fmt.Fprintln(os.Stderr, upgradeDbNotice)
-				}
-				goto spawnDaemonEnd
-			}
-			logger.Printf("daemon serving version %d, want version %d", version, daemonapi.Version)
-			if version < daemonapi.Version {
-				pid, err := cl.Pid()
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "warning: socket exists but not responding pid RPC:", err)
-					cl.Close()
-					cl = nil
-					goto spawnDaemonEnd
-				}
-				cl.Close()
-				logger.Printf("killing outdated daemon with pid %d", pid)
-				p, err := os.FindProcess(pid)
-				if err != nil {
-					err = p.Kill()
-				}
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "warning: failed to kill outdated daemon process:", err)
-					cl = nil
-					goto spawnDaemonEnd
-				}
-				logger.Println("killed outdated daemon")
-				killed = true
-			}
-		}
-		if os.IsNotExist(statErr) || killed {
-			logger.Println("socket does not exists, starting daemon")
-			err := toSpawn.Spawn()
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "warning: cannot start daemon:", err)
-			} else {
-				logger.Println("started daemon")
-			}
-			for i := 0; i <= daemonWaitLoops; i++ {
-				_, err := cl.Version()
-				if err == nil {
-					logger.Println("daemon online")
-					goto spawnDaemonEnd
-				} else if err.Error() == bolt.ErrInvalid.Error() {
-					fmt.Fprintln(os.Stderr, upgradeDbNotice)
-					goto spawnDaemonEnd
-				} else if i == daemonWaitLoops {
-					fmt.Fprintf(os.Stderr, "cannot connect to daemon after %v: %v\n", daemonWaitTotal, err)
-					goto spawnDaemonEnd
-				}
-				time.Sleep(daemonWaitOneLoop)
-			}
-		}
-	}
-spawnDaemonEnd:
-
-	// TODO(xiaq): This information might belong somewhere else.
-	extraModules := map[string]eval.Namespace{
-		"re": re.Namespace(),
-	}
-	return eval.NewEvaler(cl, toSpawn, dataDir, extraModules)
-}
-
-func closeClient(cl *daemonapi.Client) {
-	if cl == nil {
-		return
-	}
-	err := cl.Close()
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "warning: failed to close connection to daemon:", err)
-	}
-}
-
-var (
-	ErrBadOwner      = errors.New("bad owner")
-	ErrBadPermission = errors.New("bad permission")
-)
-
-// getSecureRunDir stats /tmp/elvish-$uid, creating it if it doesn't yet exist,
-// and return the directory name if it has the correct owner and permission.
-func getSecureRunDir() (string, error) {
-	uid := os.Getuid()
-
-	runDir := path.Join(os.TempDir(), fmt.Sprintf("elvish-%d", uid))
-	err := os.MkdirAll(runDir, 0700)
-	if err != nil {
-		return "", fmt.Errorf("mkdir: %v", err)
-	}
-
-	info, err := os.Stat(runDir)
-	if err != nil {
-		return "", err
-	}
-
-	return runDir, checkExclusiveAccess(info, uid)
 }

@@ -14,6 +14,7 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/program/clientcommon"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -22,19 +23,24 @@ var logger = util.GetLogger("[shell] ")
 
 // Shell keeps flags to the shell.
 type Shell struct {
-	ev          *eval.Evaler
-	cmd         bool
-	compileonly bool
+	BinPath     string
+	SockPath    string
+	DbPath      string
+	Cmd         bool
+	CompileOnly bool
 }
 
-func NewShell(ev *eval.Evaler, cmd bool, compileonly bool) *Shell {
-	return &Shell{ev, cmd, compileonly}
+func New(binpath, sockpath, dbpath string, cmd, compileonly bool) *Shell {
+	return &Shell{binpath, sockpath, dbpath, cmd, compileonly}
 }
 
-// Run runs Elvish using the default terminal interface. It blocks until Elvish
+// Main runs Elvish using the default terminal interface. It blocks until Elvish
 // quites, and returns the exit code.
-func (sh *Shell) Run(args []string) int {
+func (sh *Shell) Main(args []string) int {
 	defer rescue()
+
+	ev := clientcommon.InitRuntime(sh.BinPath, sh.SockPath, sh.DbPath)
+	defer clientcommon.CleanupRuntime(ev)
 
 	handleSignals()
 
@@ -44,15 +50,15 @@ func (sh *Shell) Run(args []string) int {
 			return 2
 		}
 		arg := args[0]
-		if sh.compileonly {
-			compileonlyAndPrintError(sh.ev, arg, sh.cmd)
-		} else if sh.cmd {
-			sourceTextAndPrintError(sh.ev, "code from -c", arg)
+		if sh.CompileOnly {
+			compileonlyAndPrintError(ev, arg, sh.Cmd)
+		} else if sh.Cmd {
+			sourceTextAndPrintError(ev, "code from -c", arg)
 		} else {
-			script(sh.ev, arg)
+			script(ev, arg)
 		}
 	} else {
-		interact(sh.ev)
+		interact(ev)
 	}
 
 	return 0

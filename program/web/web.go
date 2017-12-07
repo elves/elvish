@@ -15,11 +15,18 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/program/clientcommon"
 )
 
 type Web struct {
-	ev   *eval.Evaler
-	port int
+	BinPath  string
+	SockPath string
+	DbPath   string
+	Port     int
+}
+
+type httpHandler struct {
+	ev *eval.Evaler
 }
 
 type ExecuteResponse struct {
@@ -29,19 +36,19 @@ type ExecuteResponse struct {
 	Err       string
 }
 
-func NewWeb(ev *eval.Evaler, port int) *Web {
-	return &Web{ev, port}
+func New(binpath, sockpath, dbpath string, port int) *Web {
+	return &Web{binpath, sockpath, dbpath, port}
 }
 
-func (web *Web) Run(args []string) int {
-	if len(args) > 0 {
-		fmt.Fprintln(os.Stderr, "arguments to -web are not supported yet")
-		return 2
-	}
+func (web *Web) Main([]string) int {
+	ev := clientcommon.InitRuntime(web.BinPath, web.SockPath, web.DbPath)
+	defer clientcommon.CleanupRuntime(ev)
 
-	http.HandleFunc("/", web.handleMainPage)
-	http.HandleFunc("/execute", web.handleExecute)
-	addr := fmt.Sprintf("localhost:%d", web.port)
+	h := httpHandler{ev}
+
+	http.HandleFunc("/", h.handleMainPage)
+	http.HandleFunc("/execute", h.handleExecute)
+	addr := fmt.Sprintf("localhost:%d", web.Port)
 	log.Println("going to listen", addr)
 	err := http.ListenAndServe(addr, nil)
 
@@ -49,14 +56,14 @@ func (web *Web) Run(args []string) int {
 	return 0
 }
 
-func (web *Web) handleMainPage(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) handleMainPage(w http.ResponseWriter, r *http.Request) {
 	_, err := w.Write([]byte(mainPageHTML))
 	if err != nil {
 		log.Println("cannot write response:", err)
 	}
 }
 
-func (web *Web) handleExecute(w http.ResponseWriter, r *http.Request) {
+func (h httpHandler) handleExecute(w http.ResponseWriter, r *http.Request) {
 	bytes, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Println("cannot read request body:", err)
@@ -64,7 +71,7 @@ func (web *Web) handleExecute(w http.ResponseWriter, r *http.Request) {
 	}
 	text := string(bytes)
 
-	outBytes, outValues, errBytes, err := evalAndCollect(web.ev, "<web>", text)
+	outBytes, outValues, errBytes, err := evalAndCollect(h.ev, "<web>", text)
 	errText := ""
 	if err != nil {
 		errText = err.Error()

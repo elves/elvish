@@ -7,8 +7,6 @@ import (
 	"github.com/elves/elvish/build"
 	daemonsvc "github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/program/daemon"
-	"github.com/elves/elvish/program/shell"
-	"github.com/elves/elvish/program/web"
 )
 
 // ShowHelp shows help message.
@@ -67,27 +65,4 @@ func (d Daemon) Main([]string) int {
 		return 2
 	}
 	return 0
-}
-
-// Shell runs the daemon subprogram.
-type Shell struct {
-	Cmd         bool
-	CompileOnly bool
-}
-
-func (sh Shell) Main(args []string) int {
-	ev := initRuntime()
-	defer closeClient(ev.Daemon)
-	return shell.NewShell(ev, sh.Cmd, sh.CompileOnly).Run(args)
-}
-
-// Web runs the web subprogram.
-type Web struct {
-	Port int
-}
-
-func (w Web) Main(args []string) int {
-	ev := initRuntime()
-	defer closeClient(ev.Daemon)
-	return web.NewWeb(ev, *webport).Run(args)
 }

@@ -1,4 +1,4 @@
-package program
+package clientcommon
 
 import "os"
 
