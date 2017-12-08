@@ -17,6 +17,9 @@ generate:
 test:
 	go test $(PKGS)
 
+testmain:
+	go test .
+
 cover/%.cover: %
 	mkdir -p $(dir $@)
 	go test -coverprofile=$@ -covermode=$(COVER_MODE) ./$<
@@ -49,6 +52,6 @@ upload:
 		&& ./elvish build-and-upload.elv \
 		|| echo "not build-and-uploading"
 
-travis: goveralls upload
+travis: goveralls testmain upload
 
 .PHONY: default get generate test goveralls upload travis
