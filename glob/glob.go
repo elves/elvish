@@ -144,11 +144,8 @@ func match(segs []Segment, name string) bool {
 	}
 	// If the name start with "." and the first segment is a Wild, only match
 	// when MatchHidden is true.
-	if len(name) > 0 && name[0] == '.' && IsWild(segs[0]) {
-		seg := segs[0].(Wild)
-		if !seg.MatchHidden {
-			return false
-		}
+	if len(name) > 0 && name[0] == '.' && IsWild(segs[0]) && !segs[0].(Wild).MatchHidden {
+		return false
 	}
 segs:
 	for len(segs) > 0 {
