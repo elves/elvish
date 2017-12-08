@@ -2,6 +2,7 @@ package lscolors
 
 import (
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/elves/elvish/util"
@@ -34,9 +35,11 @@ func TestDetermineFeature(t *testing.T) {
 		os.Symlink("aaaa", "bad-symlink")
 		test("bad-symlink", true, featureOrphanedSymlink)
 
-		// Multiple hard links.
-		os.Link("a", "a2")
-		test("a", true, featureMultiHardLink)
+		if runtime.GOOS != "windows" {
+			// Multiple hard links.
+			os.Link("a", "a2")
+			test("a", true, featureMultiHardLink)
+		}
 
 		// Don't test for multiple hard links.
 		test("a", false, featureRegular)
@@ -50,13 +53,15 @@ func TestDetermineFeature(t *testing.T) {
 			test("sg", true, featureSetgid)
 		*/
 
-		// Executable.
-		create("xu", 0100)
-		create("xg", 0010)
-		create("xo", 0001)
-		test("xu", true, featureExecutable)
-		test("xg", true, featureExecutable)
-		test("xo", true, featureExecutable)
+		if runtime.GOOS != "windows" {
+			// Executable.
+			create("xu", 0100)
+			create("xg", 0010)
+			create("xo", 0001)
+			test("xu", true, featureExecutable)
+			test("xg", true, featureExecutable)
+			test("xo", true, featureExecutable)
+		}
 	})
 }
 
