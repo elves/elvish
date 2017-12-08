@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"reflect"
+	"sort"
 	"strconv"
 	"syscall"
 	"testing"
@@ -33,6 +34,16 @@ var (
 	// nil, is OK
 	errAny = errors.New("")
 )
+
+var filesToCreate = sorted(
+	"a1", "a2", "a3", "a10", "b1", "b2", "b3",
+	"foo", "bar", "lorem", "ipsum",
+)
+
+func sorted(a ...string) []string {
+	sort.Strings(a)
+	return a
+}
 
 var evalTests = []struct {
 	text string
@@ -181,10 +192,9 @@ var evalTests = []struct {
 	// Wildcard
 	// --------
 
-	{"put /*", want{out: strs(util.FullNames("/")...)}},
-	// XXX assumes there is no /a/b/nonexistent*
-	{"put /a/b/nonexistent*", want{err: ErrWildcardNoMatch}},
-	{"put /a/b/nonexistent*[nomatch-ok]", wantNothing},
+	{"put *", want{out: strs(filesToCreate...)}},
+	{"put a/b/nonexistent*", want{err: ErrWildcardNoMatch}},
+	{"put a/b/nonexistent*[nomatch-ok]", wantNothing},
 
 	// Tilde
 	// -----
@@ -284,7 +294,10 @@ var evalTests = []struct {
 	{`has-suffix golang x`, want{out: bools(false)}},
 
 	{`keys [&]`, wantNothing},
-	{`keys [&a=foo &b=bar] | each echo | sort | each put`, want{out: strs("a", "b")}},
+	{`keys [&a=foo]`, want{out: strs("a")}},
+	// Windows does not have an external sort command. Disabled until we have a
+	// builtin sort command.
+	// {`keys [&a=foo &b=bar] | each echo | sort | each put`, want{out: strs("a", "b")}},
 
 	{`==s haha haha`, want{out: bools(true)}},
 	{`==s 10 10.0`, want{out: bools(false)}},
@@ -423,30 +436,39 @@ func mustParseAndCompile(t *testing.T, ev *Evaler, name, text string) Op {
 }
 
 func TestEval(t *testing.T) {
-	for _, tt := range evalTests {
-		// fmt.Printf("eval %q\n", tt.text)
-
-		out, bytesOut, err := evalAndCollect(t, []string{tt.text}, len(tt.want.out))
-
-		first := true
-		errorf := func(format string, args ...interface{}) {
-			if first {
-				first = false
-				t.Errorf("eval(%q) fails:", tt.text)
+	util.InTempDir(func(string) {
+		for _, filename := range filesToCreate {
+			file, err := os.Create(filename)
+			if err != nil {
+				panic(err)
 			}
-			t.Errorf("  "+format, args...)
+			file.Close()
 		}
+		for _, tt := range evalTests {
+			// fmt.Printf("eval %q\n", tt.text)
 
-		if !matchOut(tt.want.out, out) {
-			errorf("got out=%v, want %v", out, tt.want.out)
+			out, bytesOut, err := evalAndCollect(t, []string{tt.text}, len(tt.want.out))
+
+			first := true
+			errorf := func(format string, args ...interface{}) {
+				if first {
+					first = false
+					t.Errorf("eval(%q) fails:", tt.text)
+				}
+				t.Errorf("  "+format, args...)
+			}
+
+			if !matchOut(tt.want.out, out) {
+				errorf("got out=%v, want %v", out, tt.want.out)
+			}
+			if string(tt.want.bytesOut) != string(bytesOut) {
+				errorf("got bytesOut=%q, want %q", bytesOut, tt.want.bytesOut)
+			}
+			if !matchErr(tt.want.err, err) {
+				errorf("got err=%v, want %v", err, tt.want.err)
+			}
 		}
-		if string(tt.want.bytesOut) != string(bytesOut) {
-			errorf("got bytesOut=%q, want %q", bytesOut, tt.want.bytesOut)
-		}
-		if !matchErr(tt.want.err, err) {
-			errorf("got err=%v, want %v", err, tt.want.err)
-		}
-	}
+	})
 }
 
 func TestMultipleEval(t *testing.T) {
