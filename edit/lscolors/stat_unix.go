@@ -1,5 +1,4 @@
-// +build !windows
-// +build !plan9
+// +build !windows,!plan9
 
 package lscolors
 
