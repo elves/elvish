@@ -47,7 +47,7 @@ type flagSet struct {
 
 func newFlagSet() *flagSet {
 	f := flagSet{}
-	f.Init("elvish", flag.ExitOnError)
+	f.Init("elvish", flag.ContinueOnError)
 	f.Usage = func() {
 		usage(os.Stderr, &f)
 	}
@@ -90,9 +90,11 @@ func usage(out io.Writer, f *flagSet) {
 
 func Main(allArgs []string) int {
 	flag := newFlagSet()
-	flag.Parse(allArgs)
-
-	args := flag.Args()
+	err := flag.Parse(allArgs)
+	if err != nil {
+		// Error and usage messages are already shown.
+		return 2
+	}
 
 	// Handle flags common to all subprograms.
 
@@ -105,7 +107,6 @@ func Main(allArgs []string) int {
 		defer pprof.StopCPUProfile()
 	}
 
-	var err error
 	if flag.Log != "" {
 		err = util.SetOutputFile(flag.Log)
 	} else if flag.LogPrefix != "" {
@@ -115,7 +116,7 @@ func Main(allArgs []string) int {
 		fmt.Fprintln(os.Stderr, err)
 	}
 
-	return FindProgram(flag, args).Main(args)
+	return FindProgram(flag).Main(flag.Args())
 }
 
 // Program represents a subprogram.
@@ -127,7 +128,7 @@ type Program interface {
 
 // FindProgram finds a suitable Program according to flags. It does not have any
 // side effects.
-func FindProgram(flag *flagSet, args []string) Program {
+func FindProgram(flag *flagSet) Program {
 	switch {
 	case flag.Help:
 		return ShowHelp{flag}
@@ -136,7 +137,7 @@ func FindProgram(flag *flagSet, args []string) Program {
 	case flag.BuildInfo:
 		return ShowBuildInfo{flag.JSON}
 	case flag.Daemon:
-		if len(args) > 0 {
+		if len(flag.Args()) > 0 {
 			return ShowCorrectUsage{"arguments are not allowed with -daemon", flag}
 		}
 		return Daemon{inner: &daemon.Daemon{
@@ -147,7 +148,7 @@ func FindProgram(flag *flagSet, args []string) Program {
 			LogPathPrefix: flag.LogPrefix,
 		}}
 	case flag.Web:
-		if len(args) > 0 {
+		if len(flag.Args()) > 0 {
 			return ShowCorrectUsage{"arguments are not allowed with -web", flag}
 		}
 		if flag.CodeInArg {
