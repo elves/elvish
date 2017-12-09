@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/sys"
 )
 
 var logWriterDetail = false
@@ -156,12 +155,6 @@ func (w *Writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 
 	if logWriterDetail {
 		logger.Printf("going to write %q", bytesBuf.String())
-	}
-
-	fd := int(w.file.Fd())
-	if nonblock, _ := sys.GetNonblock(fd); nonblock {
-		sys.SetNonblock(fd, false)
-		defer sys.SetNonblock(fd, true)
 	}
 
 	_, err := w.file.Write(bytesBuf.Bytes())

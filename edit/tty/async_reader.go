@@ -1,6 +1,8 @@
 package tty
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"syscall"
 
@@ -18,6 +20,7 @@ type AsyncReader struct {
 	ctrlCh       chan struct{}
 	ch           chan rune
 	errCh        chan error
+	debug        bool
 }
 
 // NewAsyncReader creates a new AsyncReader from a file.
@@ -32,6 +35,7 @@ func NewAsyncReader(rd *os.File) *AsyncReader {
 		make(chan struct{}),
 		make(chan rune, asyncReaderChanSize),
 		make(chan error),
+		false,
 	}
 }
 
@@ -54,28 +58,19 @@ func (ar *AsyncReader) Run() {
 	poller := sys.Poller{}
 	var cBuf [1]byte
 
-	// unix-specific, no equavilent on windows
-	if nonblock, _ := sys.GetNonblock(int(fd)); !nonblock {
-		sys.SetNonblock(int(fd), true)
-		defer sys.SetNonblock(int(fd), false)
-	}
-
 	if err := poller.Init([]uintptr{fd, cfd}, []uintptr{}); err != nil {
-		// fatal error, unable to initialize poller
-		ar.waitForQuit(err)
+		ar.writeErrorAndWaitForQuit(err)
 		return
 	}
 
 	for {
 		rfds, _, err := poller.Poll(nil)
 		if err != nil {
-			switch err {
-			case syscall.EINTR:
+			if err == syscall.EINTR {
 				continue
-			default:
-				ar.waitForQuit(err)
-				return
 			}
+			ar.writeErrorAndWaitForQuit(err)
+			return
 		}
 		for _, rfd := range *rfds {
 			if rfd == cfd {
@@ -86,43 +81,85 @@ func (ar *AsyncReader) Run() {
 			}
 		}
 
-		bytes := make([]byte, 0, 32)
-	ReadRunes:
-		for {
-			buf := make([]byte, 32)
-			nr, err := syscall.Read(int(fd), buf[:])
-
-			if err == nil {
-				bytes = append(bytes, buf[:nr]...)
-			} else {
-				if err == syscall.EAGAIN || err == syscall.EWOULDBLOCK {
-					// All input read, break the loop.
-					break ReadRunes
-				}
-				// Write error to errCh, unless termination is requested.
-				select {
-				case ar.errCh <- err:
-				case <-ar.ctrlCh:
-					ar.rCtrl.Read(cBuf[:])
-					return
-				}
-			}
+		var buf [1]byte
+		nr, err := syscall.Read(int(fd), buf[:])
+		if nr != 1 {
+			continue
+		} else if err != nil {
+			ar.writeErrorAndWaitForQuit(err)
+			return
 		}
-		// TODO(xiaq): Invalid UTF-8 will result in a bunch of \ufffd, which is
-		// not helpful for debugging.
-		for _, r := range string(bytes) {
-			// Write error to ch, unless termination is requested.
-			select {
-			case ar.ch <- r:
-			case <-ar.ctrlCh:
-				ar.rCtrl.Read(cBuf[:])
+
+		leader := buf[0]
+		var (
+			r       rune
+			pending int
+		)
+		switch {
+		case leader>>7 == 0:
+			r = rune(leader)
+		case leader>>5 == 0x6:
+			r = rune(leader & 0x1f)
+			pending = 1
+		case leader>>4 == 0xe:
+			r = rune(leader & 0xf)
+			pending = 2
+		case leader>>3 == 0x1e:
+			r = rune(leader & 0x7)
+			pending = 3
+		}
+		if ar.debug {
+			fmt.Printf("leader 0x%x, pending %d, r = 0x%x\n", leader, pending, r)
+		}
+		for i := 0; i < pending; i++ {
+			nr, err := syscall.Read(int(fd), buf[:])
+			if nr != 1 {
+				r = 0xfffd
+				break
+			} else if err != nil {
+				ar.writeErrorAndWaitForQuit(err)
 				return
 			}
+			r = r<<6 + rune(buf[0]&0x3f)
+			if ar.debug {
+				fmt.Printf("  got 0x%d, r = 0x%x\n", buf[0], r)
+			}
+		}
+
+		// Write rune to ch, unless termination is requested.
+		select {
+		case ar.ch <- r:
+		case <-ar.ctrlCh:
+			ar.rCtrl.Read(cBuf[:])
+			return
 		}
 	}
 }
 
-func (ar *AsyncReader) waitForQuit(err error) {
+func subsequentBytes(b byte) int {
+	i := 0
+	for (b & 0x80) == 0x80 {
+		i++
+		b <<= 1
+	}
+	return i
+}
+
+func hexSeq(a []byte) string {
+	var buf bytes.Buffer
+	for i, b := range a {
+		if i == 0 {
+			buf.WriteRune('[')
+		} else {
+			buf.WriteRune(' ')
+		}
+		fmt.Fprintf(&buf, "0x%02x", b)
+	}
+	buf.WriteRune(']')
+	return buf.String()
+}
+
+func (ar *AsyncReader) writeErrorAndWaitForQuit(err error) {
 	var cBuf [1]byte
 
 	select {
