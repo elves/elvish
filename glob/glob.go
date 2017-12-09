@@ -28,10 +28,13 @@ func (p Pattern) Glob(cb func(string) bool) bool {
 	return glob(segs, dir, cb)
 }
 
+// glob finds all filenames matching the given Segments in the given dir, and
+// calls the callback on all of them. If the callback returns false, globbing is
+// interrupted, and glob returns false. Otherwise it returns true.
 func glob(segs []Segment, dir string, cb func(string) bool) bool {
-	// Consume the non-wildcard prefix. This is required so that "." and "..",
-	// which doesn't appear in the result of ReadDir, can appear as standalone
-	// path components in the pattern.
+	// Consume the non-wildcard prefix. This may seem like an optimization, but
+	// is actually required for "." and ".." to be used as path elements, as
+	// they do not appear in the result of ReadDir.
 	for len(segs) > 0 && IsLiteral(segs[0]) {
 		seg0 := segs[0].(Literal).Data
 		var path string
@@ -110,7 +113,7 @@ func glob(segs []Segment, dir string, cb func(string) bool) bool {
 
 		for _, info := range infos {
 			name := info.Name()
-			if match(first, name) && info.IsDir() {
+			if matchElement(first, name) && info.IsDir() {
 				if !glob(rest, prefix+name, cb) {
 					return false
 				}
@@ -127,7 +130,7 @@ func glob(segs []Segment, dir string, cb func(string) bool) bool {
 	// If we reach here, it is possible to have no slashes at all.
 	for _, info := range infos {
 		name := info.Name()
-		if match(segs, name) {
+		if matchElement(segs, name) {
 			if !cb(prefix + name) {
 				return false
 			}
@@ -136,9 +139,9 @@ func glob(segs []Segment, dir string, cb func(string) bool) bool {
 	return true
 }
 
-// match matches a name against segments. It treats StarStar segments as they
-// are Star segments. The segments may not contain Slash'es.
-func match(segs []Segment, name string) bool {
+// matchElement matches a path element against segments, which may not contain
+// any Slash segments. It treats StarStar segments as they are Star segments.
+func matchElement(segs []Segment, name string) bool {
 	if len(segs) == 0 {
 		return name == ""
 	}
@@ -149,8 +152,8 @@ func match(segs []Segment, name string) bool {
 	}
 segs:
 	for len(segs) > 0 {
-		// Find a chunk. A chunk is a run of Literal and Question, with an
-		// optional leading Star.
+		// Find a chunk. A chunk is an optional Star followed by a run of
+		// fixed-length segments (Literal and Question).
 		var i int
 		for i = 1; i < len(segs); i++ {
 			if IsWild2(segs[i], Star, StarStar) {
@@ -172,7 +175,7 @@ segs:
 
 		// Match at the current position. If this is the last chunk, we need to
 		// make sure name is exhausted by the matching.
-		ok, rest := matchChunk(chunk, name)
+		ok, rest := matchFixedLength(chunk, name)
 		if ok && (rest == "" || len(segs) > 0) {
 			name = rest
 			continue
@@ -187,7 +190,7 @@ segs:
 				if !startingStar.Match(r) {
 					break
 				}
-				ok, rest := matchChunk(chunk, name[j:])
+				ok, rest := matchFixedLength(chunk, name[j:])
 				if ok && (rest == "" || len(segs) > 0) {
 					name = rest
 					continue segs
@@ -199,10 +202,11 @@ segs:
 	return name == ""
 }
 
-// matchChunk returns whether a chunk matches a prefix of name. If succeeded, it
-// also returns the remaining part of name.
-func matchChunk(chunk []Segment, name string) (bool, string) {
-	for _, seg := range chunk {
+// matchFixedLength returns whether a run of fixed-length segments (Literal and
+// Question) matches a prefix of name. It returns whether the match is
+// successful and if if it is, the remaining part of name.
+func matchFixedLength(segs []Segment, name string) (bool, string) {
+	for _, seg := range segs {
 		if name == "" {
 			return false, ""
 		}
@@ -221,10 +225,10 @@ func matchChunk(chunk []Segment, name string) (bool, string) {
 				}
 				name = name[n:]
 			} else {
-				panic("chunk has non-question wild segment")
+				panic("matchFixedLength given non-question wild segment")
 			}
 		default:
-			panic("chunk has non-literal non-wild segment")
+			panic("matchFixedLength given non-literal non-wild segment")
 		}
 	}
 	return true, name
