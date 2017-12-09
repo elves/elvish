@@ -1,15 +1,13 @@
-// +build freebsd
-
-// For whatever reason, it's X__fds_bits instead of Bits on FreeBSD
+// +build !freebsd,!windows,!plan9
 
 package sys
 
 import (
-	"reflect"
 	"syscall"
+	"unsafe"
 )
 
-var nFdBits = (uint)(reflect.TypeOf(syscall.FdSet{}.X__fds_bits[0]).Size() * 8)
+var nFdBits = uint(8 * unsafe.Sizeof(syscall.FdSet{}.Bits[0]))
 
 type FdSet syscall.FdSet
 
@@ -26,19 +24,19 @@ func NewFdSet(fds ...int) *FdSet {
 func (fs *FdSet) Clear(fds ...int) {
 	for _, fd := range fds {
 		u := uint(fd)
-		fs.X__fds_bits[u/nFdBits] &= ^(1 << (u % nFdBits))
+		fs.Bits[u/nFdBits] &= ^(1 << (u % nFdBits))
 	}
 }
 
 func (fs *FdSet) IsSet(fd int) bool {
 	u := uint(fd)
-	return fs.X__fds_bits[u/nFdBits]&(1<<(u%nFdBits)) != 0
+	return fs.Bits[u/nFdBits]&(1<<(u%nFdBits)) != 0
 }
 
 func (fs *FdSet) Set(fds ...int) {
 	for _, fd := range fds {
 		u := uint(fd)
-		fs.X__fds_bits[u/nFdBits] |= 1 << (u % nFdBits)
+		fs.Bits[u/nFdBits] |= 1 << (u % nFdBits)
 	}
 }
 
