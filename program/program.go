@@ -90,7 +90,7 @@ func usage(out io.Writer, f *flagSet) {
 
 func Main(allArgs []string) int {
 	flag := newFlagSet()
-	err := flag.Parse(allArgs)
+	err := flag.Parse(allArgs[1:])
 	if err != nil {
 		// Error and usage messages are already shown.
 		return 2
