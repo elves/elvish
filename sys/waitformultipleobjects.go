@@ -38,7 +38,7 @@ var (
 func WaitForMultipleObjects(handles *[]syscall.Handle, waitAll bool, milliseconds uint32) (syscall.Handle, error) {
 	count := len(*handles)
 	ret, _, err := waitForMultipleObjects.Call(uintptr(count),
-		uintptr(unsafe.Pointer(handles)), boolToInt(waitAll), uintptr(milliseconds))
+		uintptr(unsafe.Pointer(handles)), boolToUintptr(waitAll), uintptr(milliseconds))
 	if err != nil {
 		return syscall.InvalidHandle, err
 	}
