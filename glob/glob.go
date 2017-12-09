@@ -4,8 +4,11 @@ package glob
 import (
 	"io/ioutil"
 	"os"
+	"runtime"
 	"unicode/utf8"
 )
+
+// TODO: Use native path separators instead of always using /.
 
 // Glob returns a list of file names satisfying the given pattern.
 func Glob(p string, cb func(string) bool) bool {
@@ -26,9 +29,21 @@ func (p Pattern) Glob(cb func(string) bool) bool {
 	if len(segs) > 0 && IsSlash(segs[0]) {
 		segs = segs[1:]
 		dir += "/"
+	} else if runtime.GOOS == "windows" && len(segs) > 1 && IsLiteral(segs[0]) && IsSlash(segs[1]) {
+		// TODO: Handle UNC.
+		elem := segs[0].(Literal).Data
+		if isDrive(elem) {
+			segs = segs[2:]
+			dir = elem + "/"
+		}
 	}
 
 	return glob(segs, dir, cb)
+}
+
+func isDrive(s string) {
+	return s[1] == ':' &&
+		(('a' <= s[0] && s[1] <= 'z') || ('A' <= s[0] && s[0] <= 'Z'))
 }
 
 // glob finds all filenames matching the given Segments in the given dir, and

@@ -59,7 +59,7 @@ func init() {
 	// the directories used change during testing.
 	var dirs []string
 	if runtime.GOOS == "windows" {
-		dirs = []string{`C:\`, `C:\Windows\`}
+		dirs = []string{`C:/`, `C:/Windows/`}
 	} else {
 		dirs = []string{"/", "/usr/"}
 	}
