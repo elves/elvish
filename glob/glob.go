@@ -41,7 +41,7 @@ func (p Pattern) Glob(cb func(string) bool) bool {
 	return glob(segs, dir, cb)
 }
 
-func isDrive(s string) {
+func isDrive(s string) bool {
 	return s[1] == ':' &&
 		(('a' <= s[0] && s[1] <= 'z') || ('A' <= s[0] && s[0] <= 'Z'))
 }
