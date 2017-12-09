@@ -53,18 +53,10 @@ func (ar *AsyncReader) ErrorChan() <-chan error {
 // Run runs the AsyncReader. It blocks until Quit is called and should be
 // called in a separate goroutine.
 func (ar *AsyncReader) Run() {
-	fd := ar.rd.Fd()
-	cfd := ar.rCtrl.Fd()
-	poller := sys.Poller{}
-	var cBuf [1]byte
-
-	if err := poller.Init([]uintptr{fd, cfd}, []uintptr{}); err != nil {
-		ar.writeErrorAndWaitForQuit(err)
-		return
-	}
+	var buf [1]byte
 
 	for {
-		rfds, _, err := poller.Poll(nil)
+		ready, err := sys.WaitForRead(ar.rd, ar.rCtrl)
 		if err != nil {
 			if err == syscall.EINTR {
 				continue
@@ -72,17 +64,14 @@ func (ar *AsyncReader) Run() {
 			ar.writeErrorAndWaitForQuit(err)
 			return
 		}
-		for _, rfd := range *rfds {
-			if rfd == cfd {
-				// Consume the written byte
-				ar.rCtrl.Read(cBuf[:])
-				<-ar.ctrlCh
-				return
-			}
+		if ready[1] {
+			// Consume the written byte
+			ar.rCtrl.Read(buf[:])
+			<-ar.ctrlCh
+			return
 		}
 
-		var buf [1]byte
-		nr, err := syscall.Read(int(fd), buf[:])
+		nr, err := ar.rd.Read(buf[:])
 		if nr != 1 {
 			continue
 		} else if err != nil {
@@ -112,7 +101,7 @@ func (ar *AsyncReader) Run() {
 			fmt.Printf("leader 0x%x, pending %d, r = 0x%x\n", leader, pending, r)
 		}
 		for i := 0; i < pending; i++ {
-			nr, err := syscall.Read(int(fd), buf[:])
+			nr, err := ar.rd.Read(buf[:])
 			if nr != 1 {
 				r = 0xfffd
 				break
@@ -130,7 +119,7 @@ func (ar *AsyncReader) Run() {
 		select {
 		case ar.ch <- r:
 		case <-ar.ctrlCh:
-			ar.rCtrl.Read(cBuf[:])
+			ar.rCtrl.Read(buf[:])
 			return
 		}
 	}

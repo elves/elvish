@@ -4,10 +4,7 @@ package sys
 
 import "os"
 
-// SelectRead blocks until any of the given files is ready to be read. It
-// returns a boolean array indicating which files are ready to be read and
-// possible errors.
-func SelectRead(files ...*os.File) (ready []bool, err error) {
+func waitForRead(files ...*os.File) (ready []bool, err error) {
 	maxfd := 0
 	fdset := NewFdSet()
 	for _, file := range files {
