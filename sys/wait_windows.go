@@ -19,7 +19,6 @@ const (
 )
 
 var (
-	kernel32               = windows.NewLazySystemDLL("kernel32.dll")
 	waitForMultipleObjects = kernel32.NewProc("WaitForMultipleObjects")
 	errTimeout             = errors.New("WaitForMultipleObjects timeout")
 )
