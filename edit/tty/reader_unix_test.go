@@ -20,8 +20,8 @@ func timeout() <-chan time.Time {
 }
 
 var (
-	writer *os.File
-	reader *Reader
+	theWriter *os.File
+	theReader *reader
 )
 
 func TestMain(m *testing.M) {
@@ -31,10 +31,10 @@ func TestMain(m *testing.M) {
 	}
 	defer r.Close()
 	defer w.Close()
-	writer = w
-	reader = NewReader(r)
-	go reader.Run()
-	defer reader.Quit()
+	theWriter = w
+	theReader = newReader(r)
+	theReader.Start()
+	defer theReader.Stop()
 
 	os.Exit(m.Run())
 }
@@ -83,9 +83,9 @@ var keyTests = []struct {
 
 func TestKey(t *testing.T) {
 	for _, test := range keyTests {
-		writer.WriteString(test.input)
+		theWriter.WriteString(test.input)
 		select {
-		case k := <-reader.EventChan():
+		case k := <-theReader.EventChan():
 			if k != test.want {
 				t.Errorf("Reader reads key %v, want %v", k, test.want)
 			}

@@ -26,8 +26,8 @@ const (
 	runeReadError
 )
 
-// Reader converts a stream of events on separate channels.
-type Reader struct {
+// reader reads terminal escape sequences and decodes them into events.
+type reader struct {
 	ar  *runeReader
 	raw bool
 
@@ -36,9 +36,8 @@ type Reader struct {
 	stopChan  chan struct{}
 }
 
-// NewReader creates a new Reader on the given terminal file.
-func NewReader(f *os.File) *Reader {
-	rd := &Reader{
+func newReader(f *os.File) *reader {
+	rd := &reader{
 		newRuneReader(f),
 		false,
 		make(chan Event),
@@ -50,24 +49,29 @@ func NewReader(f *os.File) *Reader {
 
 // SetRaw turns the raw option on or off. If the reader is in the middle of
 // reading one event, it takes effect after this event is fully read.
-func (rd *Reader) SetRaw(raw bool) {
+func (rd *reader) SetRaw(raw bool) {
 	rd.raw = raw
 }
 
 // EventChan returns the channel onto which the Reader writes what it has read.
-func (rd *Reader) EventChan() <-chan Event {
+func (rd *reader) EventChan() <-chan Event {
 	return rd.eventChan
 }
 
 // ErrorChan returns the channel onto which the Reader writes errors it came
 // across during the reading process.
-func (rd *Reader) ErrorChan() <-chan error {
+func (rd *reader) ErrorChan() <-chan error {
 	return rd.errorChan
 }
 
-// Run runs the Reader. It blocks until Quit is called and should be called in
-// a separate goroutine.
-func (rd *Reader) Run() {
+// Start starts the Reader.
+func (rd *reader) Start() {
+	rd.stopChan = make(chan struct{})
+	rd.ar.Start()
+	go rd.run()
+}
+
+func (rd *reader) run() {
 	quit := make(chan struct{})
 	rd.stopChan = quit
 	rd.ar.Start()
@@ -82,26 +86,26 @@ func (rd *Reader) Run() {
 			}
 		case err := <-rd.ar.ErrorChan():
 			rd.errorChan <- err
-		case <-quit:
+		case <-rd.stopChan:
 			return
 		}
 	}
 }
 
-// Quit terminates the loop of Run.
-func (rd *Reader) Quit() {
+// Stop stops the Reader.
+func (rd *reader) Stop() {
 	rd.ar.Stop()
 	close(rd.stopChan)
 }
 
 // Close releases files associated with the Reader. It does not close the file
 // used to create it.
-func (rd *Reader) Close() {
+func (rd *reader) Close() {
 	rd.ar.Close()
 }
 
 // readOne attempts to read one key or CPR, led by a rune already read.
-func (rd *Reader) readOne(r rune) {
+func (rd *reader) readOne(r rune) {
 	var event Event
 	var err error
 	currentSeq := string(r)

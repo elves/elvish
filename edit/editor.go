@@ -35,7 +35,7 @@ type Editor struct {
 	in     *os.File
 	out    *os.File
 	writer *tty.Writer
-	reader *tty.Reader
+	reader tty.Reader
 	sigs   chan os.Signal
 	daemon *api.Client
 	evaler *eval.Evaler
@@ -361,7 +361,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.out.WriteString("\n")
 	ed.writer.ResetCurrentBuffer()
 
-	ed.reader.Quit()
+	ed.reader.Stop()
 
 	// Turn on autowrap.
 	ed.out.WriteString("\033[?7h")
@@ -404,7 +404,7 @@ func (ed *Editor) ReadLine() (line string, err error) {
 	isExternalCh := make(chan map[string]bool, 1)
 	go getIsExternal(ed.evaler, isExternalCh)
 
-	go ed.reader.Run()
+	ed.reader.Start()
 
 	fullRefresh := false
 
