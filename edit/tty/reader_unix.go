@@ -72,10 +72,6 @@ func (rd *reader) Start() {
 }
 
 func (rd *reader) run() {
-	quit := make(chan struct{})
-	rd.stopChan = quit
-	rd.ar.Start()
-
 	for {
 		select {
 		case r := <-rd.ar.Chan():

@@ -20,8 +20,9 @@ func timeout() <-chan time.Time {
 }
 
 var (
-	theWriter *os.File
-	theReader *reader
+	theWriter   *os.File
+	innerReader *os.File
+	theReader   *reader
 )
 
 func TestMain(m *testing.M) {
@@ -32,6 +33,7 @@ func TestMain(m *testing.M) {
 	defer r.Close()
 	defer w.Close()
 	theWriter = w
+	innerReader = r
 	theReader = newReader(r)
 	theReader.Start()
 	defer theReader.Stop()
@@ -92,5 +94,30 @@ func TestKey(t *testing.T) {
 		case <-timeout():
 			t.Errorf("Reader fails to convert literal key")
 		}
+	}
+}
+
+func TestStop(t *testing.T) {
+	theReader.Stop()
+	defer theReader.Start()
+
+	s := "lorem ipsum"
+	theWriter.WriteString(s)
+	gotChan := make(chan string)
+	go func() {
+		var buf [32]byte
+		nr, err := innerReader.Read(buf[:])
+		if err != nil {
+			t.Errorf("inner.Read returns error: %v", err)
+		}
+		gotChan <- string(buf[:nr])
+	}()
+	select {
+	case got := <-gotChan:
+		if got != s {
+			t.Errorf("got %q, want %q", got, s)
+		}
+	case <-time.After(time.Second):
+		t.Error("inner.Read times out")
 	}
 }
