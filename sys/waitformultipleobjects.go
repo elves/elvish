@@ -1,19 +1,14 @@
-// +build windows
-
 package sys
 
 import (
 	"errors"
-	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 const (
-	INFINITE uint32 = 0xFFFFFFFF
-)
-
-const (
-	MAXIMUM_WAIT_OBJECTS int = 64
+	INFINITE = 0xFFFFFFFF
 )
 
 const (
@@ -24,34 +19,41 @@ const (
 )
 
 var (
-	kernel32               = syscall.MustLoadDLL("kernel32.dll")
-	waitForMultipleObjects = kernel32.MustFindProc("WaitForMultipleObjects")
+	kernel32               = windows.NewLazySystemDLL("kernel32.dll")
+	waitForMultipleObjects = kernel32.NewProc("WaitForMultipleObjects")
 	errTimeout             = errors.New("WaitForMultipleObjects timeout")
 )
 
+// WaitForMultipleObjects blocks until any of the objects is triggerd or
+// timeout.
+//
 // DWORD WINAPI WaitForMultipleObjects(
 //   _In_       DWORD  nCount,
 //   _In_ const HANDLE *lpHandles,
 //   _In_       BOOL   bWaitAll,
 //   _In_       DWORD  dwMilliseconds
 // );
-func WaitForMultipleObjects(handles *[]syscall.Handle, waitAll bool, milliseconds uint32) (syscall.Handle, error) {
-	count := len(*handles)
-	ret, _, err := waitForMultipleObjects.Call(uintptr(count),
-		uintptr(unsafe.Pointer(handles)), boolToUintptr(waitAll), uintptr(milliseconds))
-	if err != nil {
-		return syscall.InvalidHandle, err
+func WaitForMultipleObjects(handles []windows.Handle, waitAll bool,
+	timeout uint32) (trigger int, abandoned bool, err error) {
+
+	count := uintptr(len(handles))
+	ret, _, err := waitForMultipleObjects.Call(count,
+		uintptr(unsafe.Pointer(&handles[0])), boolToUintptr(waitAll), uintptr(timeout))
+	switch {
+	case WAIT_OBJECT_0 <= ret && ret < WAIT_OBJECT_0+count:
+		return int(ret - WAIT_OBJECT_0), false, nil
+	case WAIT_ABANDONED_0 <= ret && ret < WAIT_ABANDONED_0+count:
+		return int(ret - WAIT_ABANDONED_0), true, nil
+	case ret == WAIT_TIMEOUT:
+		return -1, false, errTimeout
+	default:
+		return -1, false, err
 	}
-	if WAIT_OBJECT_0 <= ret && ret < WAIT_OBJECT_0+uintptr(count) {
-		return (*handles)[ret-WAIT_OBJECT_0], nil
-	}
-	return syscall.InvalidHandle, errTimeout
 }
 
 func boolToUintptr(b bool) uintptr {
 	if b {
 		return 1
-	} else {
-		return 0
 	}
+	return 0
 }
