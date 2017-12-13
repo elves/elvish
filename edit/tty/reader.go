@@ -13,9 +13,6 @@ type Reader interface {
 	// EventChan returns the channel onto which the Reader writes events that it
 	// has read.
 	EventChan() <-chan Event
-	// ErrorChan returns the channel onto which the Reader writes errors it has
-	// come across during the reading process.
-	ErrorChan() <-chan error
 	// Start starts the Reader.
 	Start()
 	// Stop stops the Reader.

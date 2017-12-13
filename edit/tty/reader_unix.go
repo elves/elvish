@@ -10,39 +10,32 @@ import (
 	"github.com/elves/elvish/edit/ui"
 )
 
-var (
-	// EscSequenceTimeout is the amount of time within which runes that make up
-	// an escape sequence are supposed to follow each other. Modern terminal
-	// emulators send escape sequences very fast, so 10ms is more than
-	// sufficient. SSH connections on a slow link might be problematic though.
-	EscSequenceTimeout = 10 * time.Millisecond
-)
-
-// Special rune values used in the return value of (*Reader).ReadRune.
-const (
-	// No rune received before specified time.
-	runeTimeout rune = -1 - iota
-	// Error occurred in AsyncReader. The error is left at the readError field.
-	runeReadError
-)
+// DefaultSeqTimeout is the amount of time within which runes that make up an
+// escape sequence are supposed to follow each other. Modern terminal emulators
+// send escape sequences very fast, so 10ms is more than sufficient. SSH
+// connections on a slow link might be problematic though.
+const DefaultSeqTimeout = 10 * time.Millisecond
 
 // reader reads terminal escape sequences and decodes them into events.
 type reader struct {
-	ar  *runeReader
-	raw bool
+	ar         *runeReader
+	seqTimeout time.Duration
+	raw        bool
 
 	eventChan chan Event
-	errorChan chan error
 	stopChan  chan struct{}
+	// stopped keeps track of whether the stop signal was received.
+	stopped bool
 }
 
 func newReader(f *os.File) *reader {
 	rd := &reader{
 		newRuneReader(f),
+		DefaultSeqTimeout,
 		false,
 		make(chan Event),
-		make(chan error),
 		nil,
+		false,
 	}
 	return rd
 }
@@ -58,33 +51,61 @@ func (rd *reader) EventChan() <-chan Event {
 	return rd.eventChan
 }
 
-// ErrorChan returns the channel onto which the Reader writes errors it came
-// across during the reading process.
-func (rd *reader) ErrorChan() <-chan error {
-	return rd.errorChan
-}
-
 // Start starts the Reader.
 func (rd *reader) Start() {
 	rd.stopChan = make(chan struct{})
+	rd.stopped = false
 	rd.ar.Start()
 	go rd.run()
 }
 
 func (rd *reader) run() {
+	// NOTE: Stop may be called at any time. All channel reads and sends should
+	// be wrapped in a select and have a "case <-rd.stopChan" clause.
 	for {
 		select {
 		case r := <-rd.ar.Chan():
 			if rd.raw {
-				rd.eventChan <- RawRune(r)
+				rd.send(RawRune(r))
 			} else {
-				rd.readOne(r)
+				event, seqError, ioError := rd.readOne(r)
+				if event != nil {
+					rd.send(event)
+				}
+				if seqError != nil {
+					rd.send(NonfatalErrorEvent{seqError})
+				}
+				if ioError != nil {
+					rd.send(FatalErrorEvent{ioError})
+					<-rd.stopChan
+					rd.stopped = true
+					return
+				}
 			}
 		case err := <-rd.ar.ErrorChan():
-			rd.errorChan <- err
+			rd.send(FatalErrorEvent{err})
+			<-rd.stopChan
+			rd.stopped = true
+			return
 		case <-rd.stopChan:
+			rd.stopped = true
+		}
+		if rd.stopped {
 			return
 		}
+	}
+}
+
+// send tries to send an event, unless stop was requested. If stop was requested
+// before, it does nothing; hence it is safe to use after stop.
+func (rd *reader) send(event Event) {
+	if rd.stopped {
+		return
+	}
+	select {
+	case rd.eventChan <- event:
+	case <-rd.stopChan:
+		rd.stopped = true
 	}
 }
 
@@ -100,45 +121,41 @@ func (rd *reader) Close() {
 	rd.ar.Close()
 }
 
+// Used by readRune in readOne to signal end of current sequence.
+const runeEndOfSeq rune = -1
+
 // readOne attempts to read one key or CPR, led by a rune already read.
-func (rd *reader) readOne(r rune) {
-	var event Event
-	var err error
+func (rd *reader) readOne(r rune) (event Event, seqError, ioError error) {
 	currentSeq := string(r)
 
 	badSeq := func(msg string) {
-		err = fmt.Errorf("%s: %q", msg, currentSeq)
+		seqError = fmt.Errorf("%s: %q", msg, currentSeq)
 	}
 
-	// readRune attempts to read a rune within EscSequenceTimeout. It writes to
-	// the err and currentSeq variable in the outer scope.
+	// readRune attempts to read a rune within a timeout of EscSequenceTimeout.
+	// It may return runeEndOfSeq when the read timed out, an error was
+	// encountered (in which case it sets ioError) or when stopped (in which
+	// case rd.stopped is set). In all three cases, the reader should terminate
+	// the current sequence. If the current sequence is valid, it should set
+	// event. If not, it should set seqError by calling badSeq.
 	readRune :=
 		func() rune {
+			if rd.stopped {
+				return runeEndOfSeq
+			}
 			select {
 			case r := <-rd.ar.Chan():
 				currentSeq += string(r)
 				return r
-			case err = <-rd.ar.ErrorChan():
-				return runeReadError
-			case <-time.After(EscSequenceTimeout):
-				return runeTimeout
-			}
-		}
-
-	defer func() {
-		if event != nil {
-			select {
-			case rd.eventChan <- event:
+			case ioError = <-rd.ar.ErrorChan():
+				return runeEndOfSeq
+			case <-time.After(rd.seqTimeout):
+				return runeEndOfSeq
 			case <-rd.stopChan:
+				rd.stopped = true
+				return runeEndOfSeq
 			}
 		}
-		if err != nil {
-			select {
-			case rd.errorChan <- err:
-			case <-rd.stopChan:
-			}
-		}
-	}()
 
 	switch r {
 	case 0x1b: // ^[ Escape
@@ -154,7 +171,8 @@ func (rd *reader) readOne(r rune) {
 			hasTwoLeadingESC = true
 			r2 = readRune()
 		}
-		if r2 == runeTimeout || r2 == runeReadError {
+		if r2 == runeEndOfSeq {
+			// XXX Error is swallowed
 			// Nothing follows. Taken as a lone Escape.
 			event = KeyEvent{'[', ui.Ctrl}
 			break
@@ -163,7 +181,7 @@ func (rd *reader) readOne(r rune) {
 		case '[':
 			// A '[' follows. CSI style function key sequence.
 			r = readRune()
-			if r == runeTimeout || r == runeReadError {
+			if r == runeEndOfSeq {
 				event = KeyEvent{'[', ui.Alt}
 				return
 			}
@@ -179,17 +197,17 @@ func (rd *reader) readOne(r rune) {
 			case 'M':
 				// Mouse event.
 				cb := readRune()
-				if cb == runeTimeout || cb == runeReadError {
+				if cb == runeEndOfSeq {
 					badSeq("Incomplete mouse event")
 					return
 				}
 				cx := readRune()
-				if cx == runeTimeout || cx == runeReadError {
+				if cx == runeEndOfSeq {
 					badSeq("Incomplete mouse event")
 					return
 				}
 				cy := readRune()
-				if cy == runeTimeout || cy == runeReadError {
+				if cy == runeEndOfSeq {
 					badSeq("Incomplete mouse event")
 					return
 				}
@@ -215,12 +233,9 @@ func (rd *reader) readOne(r rune) {
 					}
 					cur := len(nums) - 1
 					nums[cur] = nums[cur]*10 + int(r-'0')
-				case r == runeTimeout:
+				case r == runeEndOfSeq:
 					// Incomplete CSI.
 					badSeq("Incomplete CSI")
-					return
-				case r == runeReadError:
-					// TODO Also complain about incomplte CSI.
 					return
 				default: // Treat as a terminator.
 					break CSISeq
@@ -262,8 +277,8 @@ func (rd *reader) readOne(r rune) {
 		case 'O':
 			// An 'O' follows. G3 style function key sequence: read one rune.
 			r = readRune()
-			if r == runeTimeout || r == runeReadError {
-				// Nothing follows after 'O'. Taken as ui.Alt-o.
+			if r == runeEndOfSeq {
+				// Nothing follows after 'O'. Taken as Alt-o.
 				event = KeyEvent{'o', ui.Alt}
 				return
 			}
@@ -279,18 +294,18 @@ func (rd *reader) readOne(r rune) {
 			}
 		default:
 			// Something other than '[' or 'O' follows. Taken as an
-			// ui.Alt-modified key, possibly also modified by ui.Ctrl.
+			// Alt-modified key, possibly also modified by Ctrl.
 			k := ctrlModify(r2)
 			k.Mod |= ui.Alt
 			event = KeyEvent(k)
 		}
 	default:
-		k := ctrlModify(r)
-		event = KeyEvent(k)
+		event = KeyEvent(ctrlModify(r))
 	}
+	return
 }
 
-// ctrlModify determines whether a rune corresponds to a ui.Ctrl-modified key and
+// ctrlModify determines whether a rune corresponds to a Ctrl-modified key and
 // returns the ui.Key the rune represents.
 func ctrlModify(r rune) ui.Key {
 	switch r {
@@ -312,15 +327,15 @@ func ctrlModify(r rune) ui.Key {
 }
 
 // G3-style key sequences: \eO followed by exactly one character. For instance,
-// \eOP is ui.F1.
+// \eOP is F1.
 var g3Seq = map[rune]rune{
 	'A': ui.Up, 'B': ui.Down, 'C': ui.Right, 'D': ui.Left,
 
-	// ui.F1-ui.F4: xterm, libvte and tmux
+	// F1-F4: xterm, libvte and tmux
 	'P': ui.F1, 'Q': ui.F2,
 	'R': ui.F3, 'S': ui.F4,
 
-	// ui.Home and ui.End: libvte
+	// Home and End: libvte
 	'H': ui.Home, 'F': ui.End,
 }
 
@@ -329,7 +344,7 @@ var g3Seq = map[rune]rune{
 // non-numeric, non-semicolon rune.
 
 // CSI-style key sequences that can be identified based on the ending rune. For
-// instance, \e[A is ui.Up.
+// instance, \e[A is Up.
 var keyByLast = map[rune]ui.Key{
 	'A': {ui.Up, 0}, 'B': {ui.Down, 0},
 	'C': {ui.Right, 0}, 'D': {ui.Left, 0},
@@ -338,7 +353,7 @@ var keyByLast = map[rune]ui.Key{
 }
 
 // CSI-style key sequences ending with '~' and can be identified based on the
-// only number argument. For instance, \e[~ is ui.Home. When they are
+// only number argument. For instance, \e[~ is Home. When they are
 // modified, they take two arguments, first being 1 and second identifying the
 // modifier (see xtermModify). For instance, \e[1;4~ is Shift-Alt-Home.
 var keyByNum0 = map[int]rune{
@@ -350,7 +365,7 @@ var keyByNum0 = map[int]rune{
 }
 
 // CSI-style key sequences ending with '~', with 27 as the first numeric
-// argument. For instance, \e[27;9~ is ui.Tab.
+// argument. For instance, \e[27;9~ is Tab.
 //
 // The list is taken blindly from tmux source xterm-keys.c. I don't have a
 // keyboard-terminal combination that generate such sequences, but assumably
@@ -368,10 +383,10 @@ var keyByNum2 = map[int]rune{
 func parseCSI(nums []int, last rune, seq string) ui.Key {
 	if k, ok := keyByLast[last]; ok {
 		if len(nums) == 0 {
-			// Unmodified: \e[A (ui.Up)
+			// Unmodified: \e[A (Up)
 			return k
 		} else if len(nums) == 2 && nums[0] == 1 {
-			// Modified: \e[1;5A (ui.Ctrl-ui.Up)
+			// Modified: \e[1;5A (Ctrl-Up)
 			return xtermModify(k, nums[1], seq)
 		} else {
 			return ui.Key{}
@@ -383,10 +398,10 @@ func parseCSI(nums []int, last rune, seq string) ui.Key {
 			if r, ok := keyByNum0[nums[0]]; ok {
 				k := ui.Key{r, 0}
 				if len(nums) == 1 {
-					// Unmodified: \e[5~ (ui.PageUp)
+					// Unmodified: \e[5~ (PageUp)
 					return k
 				}
-				// Modified: \e[5;5~ (ui.Ctrl-ui.PageUp)
+				// Modified: \e[5;5~ (Ctrl-PageUp)
 				return xtermModify(k, nums[1], seq)
 			}
 		} else if len(nums) == 3 && nums[0] == 27 {

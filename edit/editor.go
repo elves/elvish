@@ -472,10 +472,13 @@ MainLoop:
 			default:
 				ed.addTip("ignored signal %s", sig)
 			}
-		case err := <-ed.reader.ErrorChan():
-			ed.Notify("reader error: %s", err.Error())
 		case event := <-ed.reader.EventChan():
 			switch event := event.(type) {
+			case tty.NonfatalErrorEvent:
+				ed.Notify("error when reading terminal: %v", event.Err)
+			case tty.FatalErrorEvent:
+				ed.Notify("fatal error when reading terminal: %v", event.Err)
+				return "", event.Err
 			case tty.MouseEvent:
 				ed.addTip("mouse: %+v", event)
 			case tty.CursorPosition:
@@ -485,7 +488,7 @@ MainLoop:
 					continue
 				}
 				var buf bytes.Buffer
-				timer := time.NewTimer(tty.EscSequenceTimeout)
+				timer := time.NewTimer(tty.DefaultSeqTimeout)
 			paste:
 				for {
 					// XXX Should also select on other chans. However those chans
@@ -501,7 +504,7 @@ MainLoop:
 								break paste
 							}
 							buf.WriteRune(k.Rune)
-							timer.Reset(tty.EscSequenceTimeout)
+							timer.Reset(tty.DefaultSeqTimeout)
 						case tty.PasteSetting:
 							if !event {
 								break paste
