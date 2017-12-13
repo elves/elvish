@@ -474,14 +474,14 @@ MainLoop:
 			}
 		case err := <-ed.reader.ErrorChan():
 			ed.Notify("reader error: %s", err.Error())
-		case unit := <-ed.reader.UnitChan():
-			switch unit := unit.(type) {
+		case event := <-ed.reader.EventChan():
+			switch event := event.(type) {
 			case tty.MouseEvent:
-				ed.addTip("mouse: %+v", unit)
+				ed.addTip("mouse: %+v", event)
 			case tty.CursorPosition:
 				// Ignore CPR
 			case tty.PasteSetting:
-				if !unit {
+				if !event {
 					continue
 				}
 				var buf bytes.Buffer
@@ -492,10 +492,10 @@ MainLoop:
 					// will be unified (again) into one later so we don't do
 					// busywork here.
 					select {
-					case unit := <-ed.reader.UnitChan():
-						switch unit := unit.(type) {
-						case tty.Key:
-							k := ui.Key(unit)
+					case event := <-ed.reader.EventChan():
+						switch event := event.(type) {
+						case tty.KeyEvent:
+							k := ui.Key(event)
 							if k.Mod != 0 {
 								ed.Notify("function key within paste, aborting")
 								break paste
@@ -503,7 +503,7 @@ MainLoop:
 							buf.WriteRune(k.Rune)
 							timer.Reset(tty.EscSequenceTimeout)
 						case tty.PasteSetting:
-							if !unit {
+							if !event {
 								break paste
 							}
 						default: // Ignore other things.
@@ -519,9 +519,9 @@ MainLoop:
 				}
 				ed.insertAtDot(topaste)
 			case tty.RawRune:
-				insertRaw(ed, rune(unit))
-			case tty.Key:
-				k := ui.Key(unit)
+				insertRaw(ed, rune(event))
+			case tty.KeyEvent:
+				k := ui.Key(event)
 			lookupKey:
 				fn := ed.mode.Binding(ed.bindings, k)
 				if fn == nil {

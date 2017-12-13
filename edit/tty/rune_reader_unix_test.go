@@ -1,3 +1,5 @@
+// +build !windows,!plan9
+
 package tty
 
 import (
@@ -23,7 +25,10 @@ func jitter() {
 	time.Sleep(time.Duration(float64(DeadlockMaxJitter) * rand.Float64()))
 }
 
-func f(done chan struct{}) {
+// stopTester tries to trigger a potential race condition where
+// (*RuneReader).Stop deadlocks and blocks forever. It inserts random jitters to
+// try to trigger race condition.
+func stopTester() {
 	r, w, err := os.Pipe()
 	if err != nil {
 		panic(err)
@@ -31,20 +36,20 @@ func f(done chan struct{}) {
 	defer r.Close()
 	defer w.Close()
 
-	ar := NewAsyncReader(r)
+	ar := newRuneReader(r)
 	defer ar.Close()
 	fmt.Fprintf(w, "%*s", DeadlockNWrite, "")
 	go func() {
 		jitter()
-		ar.Run()
+		ar.Start()
 	}()
+
 	jitter()
-	ar.Quit()
-	done <- struct{}{}
+	// Is there a deadlock that makes this call block indefinitely.
+	ar.Stop()
 }
 
-func TestAsyncReaderDeadlock(t *testing.T) {
-	done := make(chan struct{})
+func TestRuneReaderStopAlwaysStops(t *testing.T) {
 	isatty := sys.IsATTY(1)
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -54,7 +59,11 @@ func TestAsyncReaderDeadlock(t *testing.T) {
 			fmt.Printf("\r%d/%d ", i+1, DeadlockRun)
 		}
 
-		go f(done)
+		done := make(chan bool)
+		go func() {
+			stopTester()
+			close(done)
+		}()
 
 		select {
 		case <-done:
@@ -73,7 +82,7 @@ func TestAsyncReaderDeadlock(t *testing.T) {
 
 var ReadTimeout = time.Second
 
-func TestAsyncReader(t *testing.T) {
+func TestRuneReader(t *testing.T) {
 	r, w, err := os.Pipe()
 	if err != nil {
 		panic(err)
@@ -81,9 +90,9 @@ func TestAsyncReader(t *testing.T) {
 	defer r.Close()
 	defer w.Close()
 
-	ar := NewAsyncReader(r)
+	ar := newRuneReader(r)
 	defer ar.Close()
-	go ar.Run()
+	ar.Start()
 
 	go func() {
 		var i rune
@@ -105,5 +114,5 @@ func TestAsyncReader(t *testing.T) {
 		}
 		timer.Reset(ReadTimeout)
 	}
-	ar.Quit()
+	ar.Stop()
 }

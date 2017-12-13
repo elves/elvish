@@ -1,3 +1,5 @@
+// +build !windows,!plan9
+
 package tty
 
 import (
@@ -39,51 +41,51 @@ func TestMain(m *testing.M) {
 
 var keyTests = []struct {
 	input string
-	want  ReadUnit
+	want  Event
 }{
 	// Simple graphical key.
-	{"x", Key{'x', 0}},
-	{"X", Key{'X', 0}},
-	{" ", Key{' ', 0}},
+	{"x", KeyEvent{'x', 0}},
+	{"X", KeyEvent{'X', 0}},
+	{" ", KeyEvent{' ', 0}},
 
 	// Ctrl key.
-	{"\001", Key{'A', ui.Ctrl}},
-	{"\033", Key{'[', ui.Ctrl}},
+	{"\001", KeyEvent{'A', ui.Ctrl}},
+	{"\033", KeyEvent{'[', ui.Ctrl}},
 
 	// Ctrl-ish keys, but not thought as Ctrl keys by our reader.
-	{"\n", Key{'\n', 0}},
-	{"\t", Key{'\t', 0}},
-	{"\x7f", Key{'\x7f', 0}}, // backspace
+	{"\n", KeyEvent{'\n', 0}},
+	{"\t", KeyEvent{'\t', 0}},
+	{"\x7f", KeyEvent{'\x7f', 0}}, // backspace
 
 	// Alt plus simple graphical key.
-	{"\033a", Key{'a', ui.Alt}},
-	{"\033[", Key{'[', ui.Alt}},
+	{"\033a", KeyEvent{'a', ui.Alt}},
+	{"\033[", KeyEvent{'[', ui.Alt}},
 
 	// G3-style key.
-	{"\033OA", Key{ui.Up, 0}},
-	{"\033OH", Key{ui.Home, 0}},
+	{"\033OA", KeyEvent{ui.Up, 0}},
+	{"\033OH", KeyEvent{ui.Home, 0}},
 
 	// CSI-sequence key identified by the ending rune.
-	{"\033[A", Key{ui.Up, 0}},
-	{"\033[H", Key{ui.Home, 0}},
+	{"\033[A", KeyEvent{ui.Up, 0}},
+	{"\033[H", KeyEvent{ui.Home, 0}},
 	// Test for all possible modifier
-	{"\033[1;2A", Key{ui.Up, ui.Shift}},
+	{"\033[1;2A", KeyEvent{ui.Up, ui.Shift}},
 
 	// CSI-sequence key with one argument, always ending in '~'.
-	{"\033[1~", Key{ui.Home, 0}},
-	{"\033[11~", Key{ui.F1, 0}},
+	{"\033[1~", KeyEvent{ui.Home, 0}},
+	{"\033[11~", KeyEvent{ui.F1, 0}},
 
 	// CSI-sequence key with three arguments and ending in '~'. The first
 	// argument is always 27, the second identifies the modifier and the last
 	// identifies the key.
-	{"\033[27;4;63~", Key{';', ui.Shift | ui.Alt}},
+	{"\033[27;4;63~", KeyEvent{';', ui.Shift | ui.Alt}},
 }
 
 func TestKey(t *testing.T) {
 	for _, test := range keyTests {
 		writer.WriteString(test.input)
 		select {
-		case k := <-reader.UnitChan():
+		case k := <-reader.EventChan():
 			if k != test.want {
 				t.Errorf("Reader reads key %v, want %v", k, test.want)
 			}

@@ -1,3 +1,5 @@
+// +build !windows,!plan9
+
 package tty
 
 import (
@@ -26,28 +28,20 @@ const (
 
 // Reader converts a stream of events on separate channels.
 type Reader struct {
-	ar  *AsyncReader
+	ar  *runeReader
 	raw bool
 
-	unitChan chan ReadUnit
-	errChan  chan error
-	quit     chan struct{}
-}
-
-type MouseEvent struct {
-	Pos
-	Down bool
-	// Number of the Button, 0-based. -1 for unknown.
-	Button int
-	Mod    ui.Mod
+	eventChan chan Event
+	errorChan chan error
+	stopChan  chan struct{}
 }
 
 // NewReader creates a new Reader on the given terminal file.
 func NewReader(f *os.File) *Reader {
 	rd := &Reader{
-		NewAsyncReader(f),
+		newRuneReader(f),
 		false,
-		make(chan ReadUnit),
+		make(chan Event),
 		make(chan error),
 		nil,
 	}
@@ -60,34 +54,34 @@ func (rd *Reader) SetRaw(raw bool) {
 	rd.raw = raw
 }
 
-// UnitChan returns the channel onto which the Reader writes what it has read.
-func (rd *Reader) UnitChan() <-chan ReadUnit {
-	return rd.unitChan
+// EventChan returns the channel onto which the Reader writes what it has read.
+func (rd *Reader) EventChan() <-chan Event {
+	return rd.eventChan
 }
 
 // ErrorChan returns the channel onto which the Reader writes errors it came
 // across during the reading process.
 func (rd *Reader) ErrorChan() <-chan error {
-	return rd.errChan
+	return rd.errorChan
 }
 
 // Run runs the Reader. It blocks until Quit is called and should be called in
 // a separate goroutine.
 func (rd *Reader) Run() {
 	quit := make(chan struct{})
-	rd.quit = quit
-	go rd.ar.Run()
+	rd.stopChan = quit
+	rd.ar.Start()
 
 	for {
 		select {
 		case r := <-rd.ar.Chan():
 			if rd.raw {
-				rd.unitChan <- RawRune(r)
+				rd.eventChan <- RawRune(r)
 			} else {
 				rd.readOne(r)
 			}
 		case err := <-rd.ar.ErrorChan():
-			rd.errChan <- err
+			rd.errorChan <- err
 		case <-quit:
 			return
 		}
@@ -96,8 +90,8 @@ func (rd *Reader) Run() {
 
 // Quit terminates the loop of Run.
 func (rd *Reader) Quit() {
-	rd.ar.Quit()
-	close(rd.quit)
+	rd.ar.Stop()
+	close(rd.stopChan)
 }
 
 // Close releases files associated with the Reader. It does not close the file
@@ -108,7 +102,7 @@ func (rd *Reader) Close() {
 
 // readOne attempts to read one key or CPR, led by a rune already read.
 func (rd *Reader) readOne(r rune) {
-	var unit ReadUnit
+	var event Event
 	var err error
 	currentSeq := string(r)
 
@@ -132,16 +126,16 @@ func (rd *Reader) readOne(r rune) {
 		}
 
 	defer func() {
-		if unit != nil {
+		if event != nil {
 			select {
-			case rd.unitChan <- unit:
-			case <-rd.quit:
+			case rd.eventChan <- event:
+			case <-rd.stopChan:
 			}
 		}
 		if err != nil {
 			select {
-			case rd.errChan <- err:
-			case <-rd.quit:
+			case rd.errorChan <- err:
+			case <-rd.stopChan:
 			}
 		}
 	}()
@@ -162,7 +156,7 @@ func (rd *Reader) readOne(r rune) {
 		}
 		if r2 == runeTimeout || r2 == runeReadError {
 			// Nothing follows. Taken as a lone Escape.
-			unit = Key{'[', ui.Ctrl}
+			event = KeyEvent{'[', ui.Ctrl}
 			break
 		}
 		switch r2 {
@@ -170,7 +164,7 @@ func (rd *Reader) readOne(r rune) {
 			// A '[' follows. CSI style function key sequence.
 			r = readRune()
 			if r == runeTimeout || r == runeReadError {
-				unit = Key{'[', ui.Alt}
+				event = KeyEvent{'[', ui.Alt}
 				return
 			}
 
@@ -206,7 +200,7 @@ func (rd *Reader) readOne(r rune) {
 					button = -1
 				}
 				mod := mouseModify(int(cb))
-				unit = MouseEvent{
+				event = MouseEvent{
 					Pos{int(cy) - 32, int(cx) - 32}, down, button, mod}
 				return
 			}
@@ -240,7 +234,7 @@ func (rd *Reader) readOne(r rune) {
 					badSeq("bad CPR")
 					return
 				}
-				unit = CursorPosition{nums[0], nums[1]}
+				event = CursorPosition{nums[0], nums[1]}
 			} else if starter == '<' && (r == 'm' || r == 'M') {
 				// SGR-style mouse event.
 				if len(nums) != 3 {
@@ -250,10 +244,10 @@ func (rd *Reader) readOne(r rune) {
 				down := r == 'M'
 				button := nums[0] & 3
 				mod := mouseModify(nums[0])
-				unit = MouseEvent{Pos{nums[2], nums[1]}, down, button, mod}
+				event = MouseEvent{Pos{nums[2], nums[1]}, down, button, mod}
 			} else if r == '~' && len(nums) == 1 && (nums[0] == 200 || nums[0] == 201) {
 				b := nums[0] == 200
-				unit = PasteSetting(b)
+				event = PasteSetting(b)
 			} else {
 				k := parseCSI(nums, r, currentSeq)
 				if k == (ui.Key{}) {
@@ -262,7 +256,7 @@ func (rd *Reader) readOne(r rune) {
 					if hasTwoLeadingESC {
 						k.Mod |= ui.Alt
 					}
-					unit = Key(k)
+					event = KeyEvent(k)
 				}
 			}
 		case 'O':
@@ -270,16 +264,16 @@ func (rd *Reader) readOne(r rune) {
 			r = readRune()
 			if r == runeTimeout || r == runeReadError {
 				// Nothing follows after 'O'. Taken as ui.Alt-o.
-				unit = Key{'o', ui.Alt}
+				event = KeyEvent{'o', ui.Alt}
 				return
 			}
 			r, ok := g3Seq[r]
 			if ok {
-				k := Key{r, 0}
+				k := KeyEvent{r, 0}
 				if hasTwoLeadingESC {
 					k.Mod |= ui.Alt
 				}
-				unit = Key(k)
+				event = KeyEvent(k)
 			} else {
 				badSeq("bad G3")
 			}
@@ -288,11 +282,11 @@ func (rd *Reader) readOne(r rune) {
 			// ui.Alt-modified key, possibly also modified by ui.Ctrl.
 			k := ctrlModify(r2)
 			k.Mod |= ui.Alt
-			unit = Key(k)
+			event = KeyEvent(k)
 		}
 	default:
 		k := ctrlModify(r)
-		unit = Key(k)
+		event = KeyEvent(k)
 	}
 }
 
