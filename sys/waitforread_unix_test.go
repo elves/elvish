@@ -1,3 +1,5 @@
+// +build !windows,!plan9
+
 package sys
 
 import (
