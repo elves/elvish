@@ -1,3 +1,6 @@
+// +build !windows
+
+// TODO: Enable on Windows.
 package edit
 
 import (
