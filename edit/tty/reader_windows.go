@@ -33,7 +33,7 @@ func newReader(file *os.File) Reader {
 		panic(fmt.Errorf("CreateEvent: %v", err))
 	}
 	return &reader{
-		console, cancelEvent, make(chan struct{}), make(chan Event)}
+		console, cancelEvent, nil, make(chan Event)}
 }
 
 func (r *reader) SetRaw(bool) {
@@ -45,6 +45,7 @@ func (r *reader) EventChan() <-chan Event {
 }
 
 func (r *reader) Start() {
+	r.stopChan = make(chan struct{})
 	go r.run()
 }
 
@@ -121,7 +122,6 @@ func (r *reader) Close() {
 	if err != nil {
 		log.Println("Closing stopEvent handle for reader:", err)
 	}
-	close(r.stopChan)
 	close(r.eventChan)
 }
 
@@ -168,7 +168,9 @@ func convertEvent(event sys.InputEvent) Event {
 		if event.DwControlKeyState == 0 {
 			// No modifier
 			// TODO: Deal with surrogate pairs
-			return KeyEvent(ui.Key{Rune: r})
+			if 0x20 <= r && r != 0x7f {
+				return KeyEvent(ui.Key{Rune: r})
+			}
 		} else if event.DwControlKeyState == shift {
 			// If only the shift is held down, we try and see if this is a
 			// non-functional key by looking if the rune generated is a
@@ -182,10 +184,6 @@ func convertEvent(event sys.InputEvent) Event {
 			return nil
 		}
 		mod := convertMod(event.DwControlKeyState)
-		if 'a' <= r && r <= 'z' && mod == ui.Ctrl {
-			// Yuck
-			r = r - 'a' + 'A'
-		}
 		return KeyEvent(ui.Key{Rune: r, Mod: mod})
 	//case *sys.MouseEvent:
 	//case *sys.WindowBufferSizeEvent:
@@ -200,11 +198,8 @@ func convertRune(keyCode uint16) rune {
 	if ok {
 		return r
 	}
-	if '0' <= r && r <= '9' {
-		return r
-	}
-	if 'A' <= r && r <= 'Z' {
-		return r - 'A' + 'a'
+	if '0' <= keyCode && keyCode <= '9' || 'A' <= keyCode && keyCode <= 'Z' {
+		return rune(keyCode)
 	}
 	return 0
 }
