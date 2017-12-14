@@ -23,6 +23,8 @@ type Reader interface {
 }
 
 // NewReader creates a new Reader on the given terminal file.
+// TODO: NewReader should return an error as well. Right now failure to
+// initialize Reader panics.
 func NewReader(f *os.File) Reader {
 	return newReader(f)
 }
