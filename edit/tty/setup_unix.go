@@ -11,8 +11,10 @@ import (
 
 const flushInputDuringSetup = false
 
-func setup(file *os.File) (func() error, error) {
-	fd := int(file.Fd())
+func setup(in, out *os.File) (func() error, error) {
+	// Ignore out on Unix; all fds pointing to the terminal are equivalent.
+
+	fd := int(in.Fd())
 	term, err := sys.NewTermiosFromFd(fd)
 	if err != nil {
 		return nil, fmt.Errorf("can't get terminal attribute: %s", err)

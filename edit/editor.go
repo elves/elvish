@@ -259,7 +259,7 @@ func (ed *Editor) startReadLine() error {
 	defer ed.activeMutex.Unlock()
 	ed.active = true
 
-	restoreTerminal, err := tty.Setup(ed.in)
+	restoreTerminal, err := tty.Setup(ed.in, ed.out)
 	if err != nil {
 		return err
 	}

@@ -181,10 +181,12 @@ func convertEvent(event sys.InputEvent) Event {
 		if r == 0 {
 			return nil
 		}
-		return KeyEvent(ui.Key{
-			Rune: r,
-			Mod:  convertMod(event.DwControlKeyState),
-		})
+		mod := convertMod(event.DwControlKeyState)
+		if 'a' <= r && r <= 'z' && mod == ui.Ctrl {
+			// Yuck
+			r = r - 'a' + 'A'
+		}
+		return KeyEvent(ui.Key{Rune: r, Mod: mod})
 	//case *sys.MouseEvent:
 	//case *sys.WindowBufferSizeEvent:
 	default:
