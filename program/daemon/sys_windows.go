@@ -1,6 +1,9 @@
 package daemon
 
-import "syscall"
+import (
+	"os"
+	"syscall"
+)
 
 func setUmask() {
 	// NOP on windows.
@@ -16,6 +19,10 @@ const (
 	DaemonCreationFlags = CREATE_BREAKAWAY_FROM_JOB | CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS
 )
 
-func sysProAttrForFirstFork() *syscall.SysProcAttr {
-	return &syscall.SysProcAttr{CreationFlags: DaemonCreationFlags}
+func proAttrForFirstFork() *os.ProcAttr {
+	return &os.ProcAttr{
+		Dir: `C:\`,      // cd to C:\
+		Env: []string{}, // empty environment
+		Sys: &syscall.SysProcAttr{CreationFlags: DaemonCreationFlags},
+	}
 }

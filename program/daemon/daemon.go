@@ -77,13 +77,7 @@ func (d *Daemon) Main(serve func(string, string)) error {
 
 		setUmask()
 		return startProcess(
-			binPath, 1,
-			dbPath, sockPath, logPathPrefix,
-			&os.ProcAttr{
-				Dir: "/",        // cd to /
-				Env: []string{}, // empty environment
-				Sys: sysProAttrForFirstFork(),
-			})
+			binPath, 1, dbPath, sockPath, logPathPrefix, proAttrForFirstFork())
 	case 1:
 		return startProcess(
 			d.BinPath, 2,
