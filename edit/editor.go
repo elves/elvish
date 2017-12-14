@@ -60,7 +60,7 @@ type Editor struct {
 
 type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
-	savedTermios *sys.Termios
+	restoreTerminal func() error
 
 	notificationMutex sync.Mutex
 
@@ -253,52 +253,17 @@ func (ed *Editor) insertAtDot(text string) {
 	ed.dot += len(text)
 }
 
-const flushInputDuringSetup = false
-
-func setupTerminal(file *os.File) (*sys.Termios, error) {
-	fd := int(file.Fd())
-	term, err := sys.NewTermiosFromFd(fd)
-	if err != nil {
-		return nil, fmt.Errorf("can't get terminal attribute: %s", err)
-	}
-
-	savedTermios := term.Copy()
-
-	term.SetICanon(false)
-	term.SetEcho(false)
-	term.SetVMin(1)
-	term.SetVTime(0)
-
-	// Enforcing crnl translation on readline. Assuming user won't set
-	// inlcr or -onlcr, otherwise we have to hardcode all of them here.
-	term.SetICRNL(true)
-
-	err = term.ApplyToFd(fd)
-	if err != nil {
-		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
-	}
-
-	if flushInputDuringSetup {
-		err = sys.FlushInput(fd)
-		if err != nil {
-			return nil, fmt.Errorf("can't flush input: %s", err)
-		}
-	}
-
-	return savedTermios, nil
-}
-
 // startReadLine prepares the terminal for the editor.
 func (ed *Editor) startReadLine() error {
 	ed.activeMutex.Lock()
 	defer ed.activeMutex.Unlock()
 	ed.active = true
 
-	savedTermios, err := setupTerminal(ed.in)
+	restoreTerminal, err := tty.Setup(ed.in)
 	if err != nil {
 		return err
 	}
-	ed.savedTermios = savedTermios
+	ed.restoreTerminal = restoreTerminal
 
 	_, width := sys.GetWinsize(int(ed.in.Fd()))
 	/*
@@ -372,7 +337,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.out.WriteString("\033[?2004l")
 
 	// Restore termios.
-	err := ed.savedTermios.ApplyToFd(int(ed.in.Fd()))
+	err := ed.restoreTerminal()
 	if err != nil {
 		addError(fmt.Errorf("can't restore terminal attribute: %s", err))
 	}
@@ -461,8 +426,8 @@ MainLoop:
 			case syscall.SIGINT:
 				// Start over
 				ed.editorState = editorState{
-					savedTermios: ed.savedTermios,
-					isExternal:   ed.isExternal,
+					restoreTerminal: ed.restoreTerminal,
+					isExternal:      ed.isExternal,
 				}
 				ed.mode = &ed.insert
 				continue MainLoop
