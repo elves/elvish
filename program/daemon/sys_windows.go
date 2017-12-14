@@ -19,10 +19,10 @@ const (
 	DaemonCreationFlags = CREATE_BREAKAWAY_FROM_JOB | CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS
 )
 
-func proAttrForFirstFork() *os.ProcAttr {
+func procAttrForFirstFork() *os.ProcAttr {
 	return &os.ProcAttr{
-		Dir: `C:\`,      // cd to C:\
-		Env: []string{}, // empty environment
-		Sys: &syscall.SysProcAttr{CreationFlags: DaemonCreationFlags},
+		Env:   []string{"SystemRoot=" + os.Getenv("SystemRoot")}, // SystemRoot is needed for net.Listen for some reason
+		Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
+		Sys:   &syscall.SysProcAttr{CreationFlags: DaemonCreationFlags},
 	}
 }

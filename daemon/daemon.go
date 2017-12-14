@@ -3,7 +3,6 @@
 package daemon
 
 import (
-	"net"
 	"net/rpc"
 	"os"
 	"os/signal"
@@ -22,9 +21,8 @@ var logger = util.GetLogger("[daemon] ")
 // all active clients have disconnected.
 func Serve(sockpath, dbpath string) {
 	logger.Println("pid is", syscall.Getpid())
-
 	logger.Println("going to listen", sockpath)
-	listener, err := net.Listen("unix", sockpath)
+	listener, err := listen(sockpath)
 	if err != nil {
 		logger.Printf("failed to listen on %s: %v", sockpath, err)
 		logger.Println("aborting")

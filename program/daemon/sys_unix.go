@@ -14,10 +14,11 @@ func setUmask() {
 	unix.Umask(0077)
 }
 
-func proAttrForFirstFork() *os.ProcAttr {
+func procAttrForFirstFork() *os.ProcAttr {
 	return &os.ProcAttr{
-		Dir: "/",        // cd to /
-		Env: []string{}, // empty environment
-		Sys: &syscall.SysProcAttr{Setsid: true},
+		Dir:   "/",        // cd to /
+		Env:   []string{}, // empty environment
+		Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
+		Sys:   &syscall.SysProcAttr{Setsid: true},
 	}
 }

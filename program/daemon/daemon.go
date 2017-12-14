@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 )
 
@@ -77,7 +78,7 @@ func (d *Daemon) Main(serve func(string, string)) error {
 
 		setUmask()
 		return startProcess(
-			binPath, 1, dbPath, sockPath, logPathPrefix, proAttrForFirstFork())
+			binPath, 1, dbPath, sockPath, logPathPrefix, procAttrForFirstFork())
 	case 1:
 		return startProcess(
 			d.BinPath, 2,
@@ -107,16 +108,25 @@ func (d *Daemon) Spawn() error {
 		binPath = bin
 	}
 
+	forked := 0
+	var procAttr *os.ProcAttr
+	if runtime.GOOS == "windows" {
+		// TODO: Don't retrofit Windows behavior into Unix
+		forked = 2
+		procAttr = procAttrForFirstFork()
+	}
 	return startProcess(
-		binPath, 0,
-		d.DbPath, d.SockPath, d.LogPathPrefix, nil)
+		binPath, forked,
+		d.DbPath, d.SockPath, d.LogPathPrefix, procAttr)
 }
 
 func startProcess(binPath string, forked int,
 	dbPath, sockPath, logPathPrefix string, attr *os.ProcAttr) error {
 
 	if attr == nil {
-		attr = &os.ProcAttr{}
+		attr = &os.ProcAttr{
+			Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
+		}
 	}
 	args := []string{
 		binPath,
