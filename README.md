@@ -1,10 +1,10 @@
 # A friendly and expressive Unix shell
 
-**Linux & macOS** on TravisCI: [![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg)](https://travis-ci.org/elves/elvish)
+[![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg)](https://travis-ci.org/elves/elvish) Linux & macOS on TravisCI
 
-**macOS** on VSTS: [![Build Status on VSTS](https://xiaq.visualstudio.com/_apis/public/build/definitions/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1/badge)](https://xiaq.visualstudio.com/elvish/_build)
+[![Build Status on VSTS](https://xiaq.visualstudio.com/_apis/public/build/definitions/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1/badge)](https://xiaq.visualstudio.com/elvish/_build) macOS on VSTS
 
-**Windows** on AppVeyor [![Build status on AppVeyor](https://ci.appveyor.com/api/projects/status/l869l22vsjbubch9?svg=true)](https://ci.appveyor.com/project/xiaq/elvish)
+[![Build status on AppVeyor](https://ci.appveyor.com/api/projects/status/l869l22vsjbubch9?svg=true)](https://ci.appveyor.com/project/xiaq/elvish) Windows on AppVeyor
 
 
 [![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
