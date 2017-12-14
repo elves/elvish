@@ -32,7 +32,6 @@ func (ed *minEditor) ReadLine() (string, error) {
 	// Chop off the trailing \r on Windows.
 	line = strings.TrimRight(line, "\r\n")
 	return line, err
-	return ed.in.ReadString('\n')
 }
 
 func (editor *minEditor) Close() {

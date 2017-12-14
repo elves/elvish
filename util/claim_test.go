@@ -22,7 +22,7 @@ func TestClaimFile(t *testing.T) {
 		for _, test := range claimFileTests {
 			f, err := ClaimFile(".", test.pattern)
 			if err != nil {
-				t.Error("ClaimFile errors: %s", err)
+				t.Errorf("ClaimFile errors: %v", err)
 			}
 			if f.Name() != test.wantFileName {
 				t.Errorf("ClaimFile claims %s, want %s", f.Name(), test.wantFileName)

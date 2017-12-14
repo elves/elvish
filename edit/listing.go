@@ -30,17 +30,17 @@ var _ = registerBuiltins(modeListing, map[string]func(*Editor){
 
 func init() {
 	registerBindings(modeListing, modeListing, map[ui.Key]string{
-		ui.Key{ui.Up, 0}:         "up",
-		ui.Key{ui.PageUp, 0}:     "page-up",
-		ui.Key{ui.Down, 0}:       "down",
-		ui.Key{ui.PageDown, 0}:   "page-down",
-		ui.Key{ui.Tab, 0}:        "down-cycle",
-		ui.Key{ui.Tab, ui.Shift}: "up-cycle",
-		ui.Key{ui.Backspace, 0}:  "backspace",
-		ui.Key{ui.Enter, 0}:      "accept-close",
-		ui.Key{ui.Enter, ui.Alt}: "accept",
-		ui.Default:               "default",
-		ui.Key{'[', ui.Ctrl}:     "insert:start",
+		{ui.Up, 0}:         "up",
+		{ui.PageUp, 0}:     "page-up",
+		{ui.Down, 0}:       "down",
+		{ui.PageDown, 0}:   "page-down",
+		{ui.Tab, 0}:        "down-cycle",
+		{ui.Tab, ui.Shift}: "up-cycle",
+		{ui.Backspace, 0}:  "backspace",
+		{ui.Enter, 0}:      "accept-close",
+		{ui.Enter, ui.Alt}: "accept",
+		ui.Default:         "default",
+		{'[', ui.Ctrl}:     "insert:start",
 	})
 }
 

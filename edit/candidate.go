@@ -12,7 +12,7 @@ import (
 )
 
 type candidate struct {
-	code string    // This is what will be substitued on the command line.
+	code string    // This is what will be substituted on the command line.
 	menu ui.Styled // This is what is displayed in the completion menu.
 }
 
