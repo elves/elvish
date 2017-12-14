@@ -12,6 +12,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/program/clientcommon"
@@ -140,8 +141,10 @@ func readFileUTF8(fname string) (string, error) {
 func interact(ev *eval.Evaler) {
 	// Build Editor.
 	var ed editor
-	if sys.IsATTY(0) {
-		ed = makeEditor(os.Stdin, os.Stderr, ev)
+	if sys.IsATTY(os.Stdin) {
+		sigch := make(chan os.Signal)
+		signal.Notify(sigch, syscall.SIGHUP, syscall.SIGINT, sys.SIGWINCH)
+		ed = edit.NewEditor(os.Stdin, os.Stderr, sigch, ev)
 	} else {
 		ed = newMinEditor(os.Stdin, os.Stderr)
 	}

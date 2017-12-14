@@ -3,12 +3,13 @@
 package sys
 
 import (
+	"os"
 	"unsafe"
 )
 
-// IsATTY returns true if the given file descriptor is a terminal.
-func IsATTY(fd int) bool {
+// IsATTY returns true if the given file is a terminal.
+func IsATTY(file *os.File) bool {
 	var term Termios
-	err := Ioctl(fd, getAttrIOCTL, uintptr(unsafe.Pointer(&term)))
+	err := Ioctl(int(file.Fd()), getAttrIOCTL, uintptr(unsafe.Pointer(&term)))
 	return err == nil
 }
