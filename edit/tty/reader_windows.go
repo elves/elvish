@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/sys"
 	"golang.org/x/sys/windows"
 )
+
+// XXX Put here to make edit package build on Windows.
+const DefaultSeqTimeout = 10 * time.Millisecond
 
 type reader struct {
 	console   windows.Handle

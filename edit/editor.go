@@ -224,7 +224,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 	}
 
 	// Render onto a buffer.
-	height, width := sys.GetWinsize(int(ed.out.Fd()))
+	height, width := sys.GetWinsize(ed.out)
 	er := &editorRenderer{&ed.editorState, height, nil}
 	buf := ui.Render(er, width)
 	return ed.writer.CommitBuffer(er.bufNoti, buf, fullRefresh)
@@ -265,7 +265,7 @@ func (ed *Editor) startReadLine() error {
 	}
 	ed.restoreTerminal = restoreTerminal
 
-	_, width := sys.GetWinsize(int(ed.in.Fd()))
+	_, width := sys.GetWinsize(ed.out)
 	/*
 		Write a lackEOLRune if the cursor is not in the leftmost column. This is
 		done as follows:
@@ -431,7 +431,7 @@ MainLoop:
 				}
 				ed.mode = &ed.insert
 				continue MainLoop
-			case syscall.SIGWINCH:
+			case sys.SIGWINCH:
 				fullRefresh = true
 				continue MainLoop
 			default:

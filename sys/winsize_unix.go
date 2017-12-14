@@ -8,10 +8,15 @@ package sys
 
 import (
 	"fmt"
+	"os"
+	"syscall"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
 )
+
+// SIGWINCH is the Window size change signal.
+const SIGWINCH = syscall.SIGWINCH
 
 // winSize mirrors struct winsize in the C header.
 // The following declaration matches struct winsize in the headers of
@@ -23,10 +28,9 @@ type winSize struct {
 	Ypixel uint16
 }
 
-// GetWinsize queries the size of the terminal referenced by
-// the given file descriptor.
-
-func GetWinsize(fd int) (row, col int) {
+// GetWinsize queries the size of the terminal referenced by the given file.
+func GetWinsize(file *os.File) (row, col int) {
+	fd := int(file.Fd())
 	ws := winSize{}
 	if err := Ioctl(fd, unix.TIOCGWINSZ, uintptr(unsafe.Pointer(&ws))); err != nil {
 		fmt.Printf("error in winSize: %v", err)
