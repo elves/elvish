@@ -50,7 +50,7 @@ func stopTester() {
 }
 
 func TestRuneReaderStopAlwaysStops(t *testing.T) {
-	isatty := sys.IsATTY(1)
+	isatty := sys.IsATTY(os.Stdin)
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	timer := time.NewTimer(DeadlockTimeout)
