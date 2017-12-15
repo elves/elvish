@@ -235,7 +235,7 @@ func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, name, text string) error {
 
 	// Put myself in foreground, in case some command has put me in background.
 	// XXX Should probably use fd of /dev/tty instead of 0.
-	if sys.IsATTY(0) {
+	if sys.IsATTY(os.Stdin) {
 		err := putSelfInFg()
 		if err != nil {
 			fmt.Println("failed to put myself in foreground:", err)

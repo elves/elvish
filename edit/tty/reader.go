@@ -13,9 +13,6 @@ type Reader interface {
 	// EventChan returns the channel onto which the Reader writes events that it
 	// has read.
 	EventChan() <-chan Event
-	// ErrorChan returns the channel onto which the Reader writes errors it has
-	// come across during the reading process.
-	ErrorChan() <-chan error
 	// Start starts the Reader.
 	Start()
 	// Stop stops the Reader.
@@ -26,6 +23,8 @@ type Reader interface {
 }
 
 // NewReader creates a new Reader on the given terminal file.
+// TODO: NewReader should return an error as well. Right now failure to
+// initialize Reader panics.
 func NewReader(f *os.File) Reader {
 	return newReader(f)
 }

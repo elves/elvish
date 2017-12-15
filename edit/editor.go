@@ -60,7 +60,7 @@ type Editor struct {
 
 type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
-	savedTermios *sys.Termios
+	restoreTerminal func() error
 
 	notificationMutex sync.Mutex
 
@@ -224,7 +224,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 	}
 
 	// Render onto a buffer.
-	height, width := sys.GetWinsize(int(ed.out.Fd()))
+	height, width := sys.GetWinsize(ed.out)
 	er := &editorRenderer{&ed.editorState, height, nil}
 	buf := ui.Render(er, width)
 	return ed.writer.CommitBuffer(er.bufNoti, buf, fullRefresh)
@@ -253,54 +253,19 @@ func (ed *Editor) insertAtDot(text string) {
 	ed.dot += len(text)
 }
 
-const flushInputDuringSetup = false
-
-func setupTerminal(file *os.File) (*sys.Termios, error) {
-	fd := int(file.Fd())
-	term, err := sys.NewTermiosFromFd(fd)
-	if err != nil {
-		return nil, fmt.Errorf("can't get terminal attribute: %s", err)
-	}
-
-	savedTermios := term.Copy()
-
-	term.SetICanon(false)
-	term.SetEcho(false)
-	term.SetVMin(1)
-	term.SetVTime(0)
-
-	// Enforcing crnl translation on readline. Assuming user won't set
-	// inlcr or -onlcr, otherwise we have to hardcode all of them here.
-	term.SetICRNL(true)
-
-	err = term.ApplyToFd(fd)
-	if err != nil {
-		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
-	}
-
-	if flushInputDuringSetup {
-		err = sys.FlushInput(fd)
-		if err != nil {
-			return nil, fmt.Errorf("can't flush input: %s", err)
-		}
-	}
-
-	return savedTermios, nil
-}
-
 // startReadLine prepares the terminal for the editor.
 func (ed *Editor) startReadLine() error {
 	ed.activeMutex.Lock()
 	defer ed.activeMutex.Unlock()
 	ed.active = true
 
-	savedTermios, err := setupTerminal(ed.in)
+	restoreTerminal, err := tty.Setup(ed.in, ed.out)
 	if err != nil {
 		return err
 	}
-	ed.savedTermios = savedTermios
+	ed.restoreTerminal = restoreTerminal
 
-	_, width := sys.GetWinsize(int(ed.in.Fd()))
+	_, width := sys.GetWinsize(ed.out)
 	/*
 		Write a lackEOLRune if the cursor is not in the leftmost column. This is
 		done as follows:
@@ -372,7 +337,7 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	ed.out.WriteString("\033[?2004l")
 
 	// Restore termios.
-	err := ed.savedTermios.ApplyToFd(int(ed.in.Fd()))
+	err := ed.restoreTerminal()
 	if err != nil {
 		addError(fmt.Errorf("can't restore terminal attribute: %s", err))
 	}
@@ -461,21 +426,24 @@ MainLoop:
 			case syscall.SIGINT:
 				// Start over
 				ed.editorState = editorState{
-					savedTermios: ed.savedTermios,
-					isExternal:   ed.isExternal,
+					restoreTerminal: ed.restoreTerminal,
+					isExternal:      ed.isExternal,
 				}
 				ed.mode = &ed.insert
 				continue MainLoop
-			case syscall.SIGWINCH:
+			case sys.SIGWINCH:
 				fullRefresh = true
 				continue MainLoop
 			default:
 				ed.addTip("ignored signal %s", sig)
 			}
-		case err := <-ed.reader.ErrorChan():
-			ed.Notify("reader error: %s", err.Error())
 		case event := <-ed.reader.EventChan():
 			switch event := event.(type) {
+			case tty.NonfatalErrorEvent:
+				ed.Notify("error when reading terminal: %v", event.Err)
+			case tty.FatalErrorEvent:
+				ed.Notify("fatal error when reading terminal: %v", event.Err)
+				return "", event.Err
 			case tty.MouseEvent:
 				ed.addTip("mouse: %+v", event)
 			case tty.CursorPosition:
@@ -485,7 +453,7 @@ MainLoop:
 					continue
 				}
 				var buf bytes.Buffer
-				timer := time.NewTimer(tty.EscSequenceTimeout)
+				timer := time.NewTimer(tty.DefaultSeqTimeout)
 			paste:
 				for {
 					// XXX Should also select on other chans. However those chans
@@ -501,7 +469,7 @@ MainLoop:
 								break paste
 							}
 							buf.WriteRune(k.Rune)
-							timer.Reset(tty.EscSequenceTimeout)
+							timer.Reset(tty.DefaultSeqTimeout)
 						case tty.PasteSetting:
 							if !event {
 								break paste

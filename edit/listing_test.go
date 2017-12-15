@@ -39,8 +39,8 @@ func TestListing(t *testing.T) {
 	// the first 2 elements, with the first being shown as selected.
 	testListingList(t, 0, 2, listingWithScrollBarRenderer{
 		listingRenderer: listingRenderer{[]ui.Styled{
-			ui.Styled{"0 foo", styleForSelected},
-			ui.Styled{"1 bar", ui.Styles{}},
+			{"0 foo", styleForSelected},
+			{"1 bar", ui.Styles{}},
 		}},
 		n: 5, low: 0, high: 2, height: 2,
 	})
@@ -48,8 +48,8 @@ func TestListing(t *testing.T) {
 	// the last 2 elements, with the last being shown as selected.
 	testListingList(t, 4, 2, listingWithScrollBarRenderer{
 		listingRenderer: listingRenderer{[]ui.Styled{
-			ui.Styled{"3 lorem", ui.Styles{}},
-			ui.Styled{"4 ipsum", styleForSelected},
+			{"3 lorem", ui.Styles{}},
+			{"4 ipsum", styleForSelected},
 		}},
 		n: 5, low: 3, high: 5, height: 2,
 	})
@@ -58,9 +58,9 @@ func TestListing(t *testing.T) {
 	// shown as selected.
 	testListingList(t, 2, 3, listingWithScrollBarRenderer{
 		listingRenderer: listingRenderer{[]ui.Styled{
-			ui.Styled{"1 bar", ui.Styles{}},
-			ui.Styled{"2 foobar", styleForSelected},
-			ui.Styled{"3 lorem", ui.Styles{}},
+			{"1 bar", ui.Styles{}},
+			{"2 foobar", styleForSelected},
+			{"3 lorem", ui.Styles{}},
 		}},
 		n: 5, low: 1, high: 4, height: 3,
 	})

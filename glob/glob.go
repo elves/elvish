@@ -90,7 +90,7 @@ func glob(segs []Segment, dir string, cb func(string) bool) bool {
 	}
 	nexti()
 
-	// Enumerate the position of the first slash. In the presense of multiple
+	// Enumerate the position of the first slash. In the presence of multiple
 	// **'s in the pattern, the first slash may be in any of those.
 	//
 	// For instance, in x**y**z, the first slash may be in the first ** or the
