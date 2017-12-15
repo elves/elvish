@@ -19,7 +19,7 @@ const (
 	DaemonCreationFlags = CREATE_BREAKAWAY_FROM_JOB | CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS
 )
 
-func procAttrForFirstFork() *os.ProcAttr {
+func procAttrForSpawn() *os.ProcAttr {
 	return &os.ProcAttr{
 		Dir:   `C:\`,
 		Env:   []string{"SystemRoot=" + os.Getenv("SystemRoot")}, // SystemRoot is needed for net.Listen for some reason
