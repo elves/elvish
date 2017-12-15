@@ -148,8 +148,10 @@ func locStart(ed *Editor) {
 	// Pinned directories are also blacklisted to prevent them from showing up
 	// twice.
 	black := convertListsToSet(ed.locHidden(), ed.locPinned())
-	pwd, _ := os.Getwd()
-	black[pwd] = struct{}{}
+	pwd, err := os.Getwd()
+	if err == nil {
+		black[pwd] = struct{}{}
+	}
 	stored, err := ed.daemon.Dirs(black)
 	if err != nil {
 		ed.Notify("store error: %v", err)
