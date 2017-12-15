@@ -21,6 +21,7 @@ const (
 
 func procAttrForFirstFork() *os.ProcAttr {
 	return &os.ProcAttr{
+		Dir:   `C:\`,
 		Env:   []string{"SystemRoot=" + os.Getenv("SystemRoot")}, // SystemRoot is needed for net.Listen for some reason
 		Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
 		Sys:   &syscall.SysProcAttr{CreationFlags: DaemonCreationFlags},

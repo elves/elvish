@@ -50,7 +50,6 @@ func InitRuntime(binpath, sockpath, dbpath string) *eval.Evaler {
 	}
 
 	toSpawn := &daemon.Daemon{
-		Forked:        0,
 		BinPath:       binpath,
 		DbPath:        dbpath,
 		SockPath:      sockpath,

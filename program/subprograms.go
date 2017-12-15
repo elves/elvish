@@ -62,7 +62,7 @@ type Daemon struct {
 func (d Daemon) Main([]string) int {
 	err := d.inner.Main(daemonsvc.Serve)
 	if err != nil {
-		logger.Println("daemon -forked", d.inner.Forked, "error:", err)
+		logger.Println("daemon error:", err)
 		return 2
 	}
 	return 0
