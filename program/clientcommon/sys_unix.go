@@ -13,7 +13,8 @@ import (
 // it doesn't yet exist, and return the directory name if it has the correct
 // owner and permission.
 func getSecureRunDir() (string, error) {
-	runDir := filepath.Join(os.TempDir(), fmt.Sprintf("elvish-%d", os.Getuid()))
+	uid := os.Getuid()
+	runDir := filepath.Join(os.TempDir(), fmt.Sprintf("elvish-%d", uid))
 	err := os.MkdirAll(runDir, 0700)
 	if err != nil {
 		return "", fmt.Errorf("mkdir: %v", err)
