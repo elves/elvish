@@ -1,11 +1,8 @@
 # A friendly and expressive Unix shell
 
-[![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg)](https://travis-ci.org/elves/elvish) Linux & macOS on TravisCI
-
-[![Build status on AppVeyor](https://ci.appveyor.com/api/projects/status/l869l22vsjbubch9?svg=true)](https://ci.appveyor.com/project/xiaq/elvish) Windows on AppVeyor
-
-[![Build Status on VSTS](https://xiaq.visualstudio.com/_apis/public/build/definitions/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1/badge)](https://xiaq.visualstudio.com/elvish/_build) macOS on VSTS
-
+[![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?label=Linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
+[![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=Windows)](https://ci.appveyor.com/project/xiaq/elvish)
+[![Build Status on VSTS](https://img.shields.io/vso/build/xiaq/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1.svg?label=macOS)](https://xiaq.visualstudio.com/elvish/_build)
 
 [![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
 [![Code Coverage on codecov.io](https://codecov.io/gh/elves/elvish/branch/master/graph/badge.svg)](https://codecov.io/gh/elves/elvish)
