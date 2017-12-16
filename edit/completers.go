@@ -36,7 +36,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/elves/elvish/edit/lscolors"
@@ -497,7 +497,7 @@ func findArgContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.Prim
 
 // TODO: getStyle does redundant stats.
 func complFilenameInner(head string, executableOnly bool, rawCands chan<- rawCandidate) error {
-	dir, fileprefix := path.Split(head)
+	dir, fileprefix := filepath.Split(head)
 	dirToRead := dir
 	if dirToRead == "" {
 		dirToRead = "."
@@ -528,12 +528,12 @@ func complFilenameInner(head string, executableOnly bool, rawCands chan<- rawCan
 
 		suffix := " "
 		if info.IsDir() {
-			suffix = "/"
+			suffix = string(filepath.Separator)
 		} else if info.Mode()&os.ModeSymlink != 0 {
 			stat, err := os.Stat(full)
 			if err == nil && stat.IsDir() {
 				// Symlink to directory.
-				suffix = "/"
+				suffix = string(filepath.Separator)
 			}
 		}
 
