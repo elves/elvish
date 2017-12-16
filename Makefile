@@ -45,7 +45,8 @@ goveralls: cover/all
 
 codecov: cover/all
 	test "$(TRAVIS_PULL_REQUEST)" = false \
-		&& bash <(curl -s https://codecov.io/bash) -f cover/all \
+		&& curl -s https://codecov.io/bash -o codecov.bash \
+		&& bash codecov.bash -f cover/all \
 		|| echo "not sending to codecov.io"
 
 upload:
