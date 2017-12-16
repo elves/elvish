@@ -43,6 +43,11 @@ goveralls: cover/all
 		&& $(FIRST_GOPATH)/bin/goveralls -coverprofile=cover/all -service=travis-ci \
 		|| echo "not sending to coveralls"
 
+codecov: cover/all
+	test "$(TRAVIS_PULL_REQUEST)" = false \
+		&& bash <(curl -s https://codecov.io/bash) -f cover/all \
+		|| echo "not sending to codecov.io"
+
 upload:
 	test "$(TRAVIS_OS_NAME)" = linux \
 		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
@@ -52,6 +57,6 @@ upload:
 		&& ./elvish build-and-upload.elv \
 		|| echo "not build-and-uploading"
 
-travis: goveralls testmain upload
+travis: goveralls codecov testmain upload
 
 .PHONY: default get generate test goveralls upload travis
