@@ -34,7 +34,7 @@ const (
 type Editor struct {
 	in     *os.File
 	out    *os.File
-	writer *tty.Writer
+	writer tty.Writer
 	reader tty.Reader
 	sigs   chan os.Signal
 	daemon *api.Client

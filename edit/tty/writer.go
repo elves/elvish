@@ -10,24 +10,32 @@ import (
 
 var logWriterDetail = false
 
-// Writer renders the editor UI.
-type Writer struct {
+type Writer interface {
+	// CurrentBuffer returns the current buffer.
+	CurrentBuffer() *ui.Buffer
+	// ResetCurrentBuffer resets the current buffer.
+	ResetCurrentBuffer()
+	// CommitBuffer updates the terminal display to reflect current buffer.
+	CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error
+}
+
+// writer renders the editor UI.
+type writer struct {
 	file   *os.File
 	curBuf *ui.Buffer
 }
 
-func NewWriter(f *os.File) *Writer {
-	writer := &Writer{file: f, curBuf: &ui.Buffer{}}
-	return writer
+func NewWriter(f *os.File) Writer {
+	return &writer{f, &ui.Buffer{}}
 }
 
 // CurrentBuffer returns the current buffer.
-func (w *Writer) CurrentBuffer() *ui.Buffer {
+func (w *writer) CurrentBuffer() *ui.Buffer {
 	return w.curBuf
 }
 
 // ResetCurrentBuffer resets the current buffer.
-func (w *Writer) ResetCurrentBuffer() {
+func (w *writer) ResetCurrentBuffer() {
 	w.curBuf = &ui.Buffer{}
 }
 
@@ -51,7 +59,7 @@ func deltaPos(from, to ui.Pos) []byte {
 }
 
 // CommitBuffer updates the terminal display to reflect current buffer.
-func (w *Writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
+func (w *writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 	if buf.Width != w.curBuf.Width && w.curBuf.Lines != nil {
 		// Width change, force full refresh
 		w.curBuf.Lines = nil
