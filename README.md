@@ -19,7 +19,7 @@ User groups:
 [![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-blue.svg)](https://webchat.freenode.net/?channels=elvish)
 
 Developer groups:
-[![Gitter](https://img.shields.io/badge/gitter-elvish--dev-000000?logo=gitter-white)](https://gitter.im/elves/elvish-dev)
+[![Gitter](https://img.shields.io/badge/gitter-elvish--dev-000000.svg?logo=gitter-white)](https://gitter.im/elves/elvish-dev)
 [![Telegram Group](https://img.shields.io/badge/telegram-@elvish__dev-000000.svg)](https://telegram.me/elvish_dev)
 [![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish--dev-000000.svg)](https://webchat.freenode.net/?channels=elvish-dev)
 
