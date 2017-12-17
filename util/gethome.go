@@ -15,7 +15,7 @@ func GetHome(uname string) (string, error) {
 		// variable.
 		home := os.Getenv("HOME")
 		if home != "" {
-			return strings.TrimRight(home, "/"), nil
+			return strings.TrimRight(home, pathSep), nil
 		}
 	}
 
