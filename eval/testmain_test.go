@@ -10,14 +10,21 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var filesToCreate = sorted(
-	"a1", "a2", "a3", "a10", "b1", "b2", "b3",
-	"foo", "bar", "lorem", "ipsum",
+var (
+	filesToCreate = []string{
+		"a1", "a2", "a3", "a10", "b1", "b2", "b3",
+		"foo", "bar", "lorem", "ipsum",
+	}
+	dirsToCreate = []string{"dir", "dir2"}
+	fileListing  = getFileListing()
 )
 
-func sorted(a ...string) []string {
-	sort.Strings(a)
-	return a
+func getFileListing() []string {
+	var x []string
+	x = append(x, filesToCreate...)
+	x = append(x, dirsToCreate...)
+	sort.Strings(x)
+	return x
 }
 
 var mods = map[string]string{
@@ -43,6 +50,13 @@ func TestMain(m *testing.M) {
 				panic(err)
 			}
 			file.Close()
+		}
+
+		for _, dirname := range dirsToCreate {
+			err := os.Mkdir(dirname, 0700)
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		util.WithTempDir(func(dir string) {

@@ -42,7 +42,7 @@ var valueTests = []evalTest{
 	// Wildcard
 	// --------
 
-	{"put *", want{out: strs(filesToCreate...)}},
+	{"put *", want{out: strs(fileListing...)}},
 	{"put a/b/nonexistent*", want{err: ErrWildcardNoMatch}},
 	{"put a/b/nonexistent*[nomatch-ok]", wantNothing},
 

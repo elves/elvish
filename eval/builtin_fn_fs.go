@@ -25,6 +25,7 @@ func init() {
 		{"path-clean", WrapStringToString(filepath.Clean)},
 		{"path-dir", WrapStringToString(filepath.Dir)},
 		{"path-ext", WrapStringToString(filepath.Ext)},
+
 		{"eval-symlinks", WrapStringToStringError(filepath.EvalSymlinks)},
 		{"tilde-abbr", tildeAbbr},
 

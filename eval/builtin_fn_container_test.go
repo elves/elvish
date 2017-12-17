@@ -34,6 +34,7 @@ func init() {
 
 		{`range 100 | count`, want{out: strs("100")}},
 		{`count [(range 100)]`, want{out: strs("100")}},
+		{`count 1 2 3`, want{err: errAny}},
 
 		{`keys [&]`, wantNothing},
 		{`keys [&a=foo]`, want{out: strs("a")}},

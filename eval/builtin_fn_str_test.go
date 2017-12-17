@@ -16,7 +16,10 @@ func init() {
 
 		{`ord a`, want{out: strs("0x61")}},
 		{`base 16 42 233`, want{out: strs("2a", "e9")}},
+		{`base 1 1`, want{err: errAny}},   // no base-1
+		{`base 37 10`, want{err: errAny}}, // no letter for base-37
 		{`wcswidth 你好`, want{out: strs("4")}},
+		{`-override-wcwidth x 10; wcswidth 1x2x; -override-wcwidth x 1`, want{out: strs("22")}},
 
 		{`has-prefix golang go`, wantTrue},
 		{`has-prefix golang x`, wantFalse},
