@@ -57,6 +57,11 @@ var (
 // Node, it should return an error of ErrCompletionUnapplicable.
 type completer func(parse.Node, *eval.Evaler, eval.CallableValue) (*complSpec, error)
 
+type completerIface interface {
+	name() string
+	complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error)
+}
+
 // complSpec is the result of a completer, meaning that any of the candidates can
 // replace the text in the interval [begin, end).
 type complSpec struct {
@@ -71,19 +76,22 @@ var completers = []struct {
 	name string
 	completer
 }{
-	{"variable", complVariable},
 	{"index", complIndex},
 	{"command", complFormHead},
 	{"redir", complRedir},
 	{"argument", complArg},
 }
 
+var completerFinders = []func(parse.Node) completerIface{
+	findVariableCompleter,
+}
+
 // complete takes a Node and Evaler and tries all completers. It returns the
 // name of the completer, and the result and error it gave. If no completer is
 // available, it returns an empty completer name.
 func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
+	ed := ev.Editor.(*Editor)
 	for _, item := range completers {
-		ed := ev.Editor.(*Editor)
 		matcher, ok := ed.lookupMatcher(item.name)
 		if !ok {
 			return item.name, nil, errMatcherMustBeFn
@@ -96,92 +104,22 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 			return item.name, nil, err
 		}
 	}
+	for _, finder := range completerFinders {
+		completer := finder(n)
+		if completer == nil {
+			continue
+		}
+		name := completer.name()
+
+		matcher, ok := ed.lookupMatcher(name)
+		if !ok {
+			return name, nil, errMatcherMustBeFn
+		}
+
+		compl, err := completer.complete(ev, matcher)
+		return name, compl, err
+	}
 	return "", nil, nil
-}
-
-func complVariable(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
-	primary := parse.GetPrimary(n)
-	if primary == nil || primary.Type != parse.Variable {
-		return nil, errCompletionUnapplicable
-	}
-
-	// The starting position of "what we are completing". First move past "$".
-	begin := n.Begin() + 1
-
-	// XXX Repeats eval.ParseVariable.
-	explode, qname := eval.ParseVariableSplice(primary.Value)
-	nsPart, nameHead := eval.ParseVariableQName(qname)
-	begin += len(explode) + len(nsPart) // Move past "@" and "ns:".
-	ns := nsPart
-	if len(ns) > 0 {
-		ns = ns[:len(ns)-1]
-	}
-
-	rawCands := make(chan rawCandidate)
-	go func() {
-		defer close(rawCands)
-
-		// Collect matching variables.
-		iterateVariables(ev, ns, func(varname string) {
-			rawCands <- noQuoteCandidate(varname)
-		})
-
-		seenMod := func(mod string) {
-			modNsPart := mod + ":"
-			// This is to match namespaces that are "nested" under the current
-			// namespace.
-			if hasProperPrefix(modNsPart, nsPart) {
-				rawCands <- noQuoteCandidate(modNsPart[len(nsPart):])
-			}
-		}
-
-		// Collect namespace prefixes.
-		// TODO Support non-module namespaces.
-		for mod := range ev.Global.Uses {
-			seenMod(mod)
-		}
-		for mod := range ev.Builtin.Uses {
-			seenMod(mod)
-		}
-	}()
-
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher, nameHead,
-		rawCands, parse.Bareword)
-	if err != nil {
-		return nil, err
-	}
-
-	return &complSpec{begin, n.End(), cands}, nil
-}
-
-func hasProperPrefix(s, p string) bool {
-	return len(s) > len(p) && strings.HasPrefix(s, p)
-}
-
-func iterateVariables(ev *eval.Evaler, ns string, f func(string)) {
-	switch ns {
-	case "":
-		for varname := range ev.Builtin.Names {
-			f(varname)
-		}
-		for varname := range ev.Global.Names {
-			f(varname)
-		}
-		// TODO Include local names as well.
-	case "E":
-		for _, s := range os.Environ() {
-			f(s[:strings.IndexByte(s, '=')])
-		}
-	default:
-		// TODO Support non-module namespaces.
-		mod := ev.Global.Uses[ns]
-		if mod == nil {
-			mod = ev.Builtin.Uses[ns]
-		}
-		for varname := range mod {
-			f(varname)
-		}
-	}
 }
 
 func complIndex(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
