@@ -4,14 +4,12 @@ import (
 	"errors"
 	"os"
 	"reflect"
-	"sort"
 	"strconv"
 	"syscall"
 	"testing"
 
 	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/util"
 )
 
 func TestBuiltinPid(t *testing.T) {
@@ -58,16 +56,6 @@ func bools(bs ...bool) []Value {
 	return vs
 }
 
-var filesToCreate = sorted(
-	"a1", "a2", "a3", "a10", "b1", "b2", "b3",
-	"foo", "bar", "lorem", "ipsum",
-)
-
-func sorted(a ...string) []string {
-	sort.Strings(a)
-	return a
-}
-
 // To be called from init in separate test files.
 func addToEvalTests(tests []evalTest) {
 	evalTests = append(evalTests, tests...)
@@ -98,43 +86,30 @@ func mustParseAndCompile(t *testing.T, ev *Evaler, name, text string) Op {
 }
 
 func TestEval(t *testing.T) {
-	util.InTempDir(func(tempDir string) {
-		oldHome := os.Getenv("HOME")
-		os.Setenv("HOME", tempDir)
-		defer os.Setenv("HOME", oldHome)
-		for _, filename := range filesToCreate {
-			file, err := os.Create(filename)
-			if err != nil {
-				panic(err)
+	for _, tt := range evalTests {
+		// fmt.Printf("eval %q\n", tt.text)
+
+		out, bytesOut, err := evalAndCollect(t, []string{tt.text}, len(tt.want.out))
+
+		first := true
+		errorf := func(format string, args ...interface{}) {
+			if first {
+				first = false
+				t.Errorf("eval(%q) fails:", tt.text)
 			}
-			file.Close()
+			t.Errorf("  "+format, args...)
 		}
 
-		for _, tt := range evalTests {
-			// fmt.Printf("eval %q\n", tt.text)
-
-			out, bytesOut, err := evalAndCollect(t, []string{tt.text}, len(tt.want.out))
-
-			first := true
-			errorf := func(format string, args ...interface{}) {
-				if first {
-					first = false
-					t.Errorf("eval(%q) fails:", tt.text)
-				}
-				t.Errorf("  "+format, args...)
-			}
-
-			if !matchOut(tt.want.out, out) {
-				errorf("got out=%v, want %v", out, tt.want.out)
-			}
-			if string(tt.want.bytesOut) != string(bytesOut) {
-				errorf("got bytesOut=%q, want %q", bytesOut, tt.want.bytesOut)
-			}
-			if !matchErr(tt.want.err, err) {
-				errorf("got err=%v, want %v", err, tt.want.err)
-			}
+		if !matchOut(tt.want.out, out) {
+			errorf("got out=%v, want %v", out, tt.want.out)
 		}
-	})
+		if string(tt.want.bytesOut) != string(bytesOut) {
+			errorf("got bytesOut=%q, want %q", bytesOut, tt.want.bytesOut)
+		}
+		if !matchErr(tt.want.err, err) {
+			errorf("got err=%v, want %v", err, tt.want.err)
+		}
+	}
 }
 
 func TestMultipleEval(t *testing.T) {
