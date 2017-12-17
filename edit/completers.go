@@ -311,14 +311,6 @@ func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandida
 	return nil
 }
 
-type plainCandidates []rawCandidate
-
-func (pc plainCandidates) Len() int { return len(pc) }
-func (pc plainCandidates) Less(i, j int) bool {
-	return pc[i].(plainCandidate) < pc[j].(plainCandidate)
-}
-func (pc plainCandidates) Swap(i, j int) { pc[i], pc[j] = pc[j], pc[i] }
-
 // complRedir completes redirection RHS.
 func complRedir(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
 	begin, end, current, q := findRedirContext(n, ev)
