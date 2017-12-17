@@ -16,7 +16,7 @@ type variableCompleter struct {
 
 func (*variableCompleter) name() string { return "variable" }
 
-func findVariableCompleter(n parse.Node) completerIface {
+func findVariableCompleter(n parse.Node, _ *eval.Evaler) completerIface {
 	primary := parse.GetPrimary(n)
 	if primary != nil && primary.Type == parse.Variable {
 		explode, qname := eval.ParseVariableSplice(primary.Value)

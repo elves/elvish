@@ -82,7 +82,8 @@ var completers = []struct {
 	{"argument", complArg},
 }
 
-type completerFinder func(parse.Node) completerIface
+// TODO: Replace *eval.Evaler with the smallest possible interface
+type completerFinder func(parse.Node, *eval.Evaler) completerIface
 
 var completerFinders = []completerFinder{
 	findVariableCompleter,
@@ -107,7 +108,7 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 		}
 	}
 	for _, finder := range completerFinders {
-		completer := finder(n)
+		completer := finder(n, ev)
 		if completer == nil {
 			continue
 		}
