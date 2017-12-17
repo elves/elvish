@@ -76,12 +76,6 @@ var valueTests = []evalTest{
 			  {inc2,put2}=(f); $put2; $inc2; $put2`,
 		want{out: strs("0", "1", "0", "1")}},
 
-	// fn.
-	{"fn f [x]{ put x=$x'.' }; f lorem; f ipsum",
-		want{out: strs("x=lorem.", "x=ipsum.")}},
-	// return.
-	{"fn f []{ put a; return; put b }; f", want{out: strs("a")}},
-
 	// Rest argument.
 	{"[x @xs]{ put $x $xs } a b c",
 		want{out: []Value{String("a"), NewList(String("b"), String("c"))}}},
