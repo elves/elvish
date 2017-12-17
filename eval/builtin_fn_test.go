@@ -1,8 +1,10 @@
 package eval
 
 var builtinFnTests = []evalTest{
-	// Builtin functions
-	// -----------------
+	{"nop", wantNothing},
+	{"nop a b", wantNothing},
+	{"nop &k=v", wantNothing},
+	{"nop a b &k=v", wantNothing},
 
 	{"kind-of bare 'str' [] [&] []{ }",
 		want{out: strs("string", "string", "list", "map", "fn")}},
