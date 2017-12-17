@@ -2,10 +2,10 @@ package eval
 
 func init() {
 	addToEvalTests([]evalTest{
-		{`== 1 1.0`, want{out: bools(true)}},
-		{`== 10 0xa`, want{out: bools(true)}},
+		{`== 1 1.0`, wantTrue},
+		{`== 10 0xa`, wantTrue},
 		{`== a a`, want{err: errAny}},
-		{`> 0x10 1`, want{out: bools(true)}},
+		{`> 0x10 1`, wantTrue},
 
 		// TODO test more edge cases
 		{"+ 233100 233", want{out: strs("233333")}},

@@ -31,11 +31,14 @@ type want struct {
 	err      error
 }
 
+// A special value for want.err to indicate that any error, as long as not nil,
+// is OK
+var errAny = errors.New("")
+
 var (
 	wantNothing = want{}
-	// Special value for want.err to indicate that any error, as long as not
-	// nil, is OK
-	errAny = errors.New("")
+	wantTrue    = want{out: bools(true)}
+	wantFalse   = want{out: bools(false)}
 )
 
 // Shorthands for values in want.out

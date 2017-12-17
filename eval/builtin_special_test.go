@@ -50,7 +50,7 @@ var builtinSpecialTests = []evalTest{
 	// shortening module names by using slashes for some path prefix
 	{`use a:b/c:d; put $c:d:name`, want{out: strs("a/b/c/d")}},
 	// importing the same module under different names
-	{`use a/b/c/d; use a/b/c:d; eq $d:name $c:d:name`, want{out: bools(true)}},
+	{`use a/b/c/d; use a/b/c:d; eq $d:name $c:d:name`, wantTrue},
 	// module is cached after first use
 	{`use has/init; use has:init`, want{out: strs("has/init")}},
 	// overriding module
