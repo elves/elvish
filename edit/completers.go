@@ -43,7 +43,6 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/util"
 )
 
 var (
@@ -77,7 +76,6 @@ var completers = []struct {
 	completer
 }{
 	{"index", complIndex},
-	{"command", complFormHead},
 	{"redir", complRedir},
 	{"argument", complArg},
 }
@@ -87,6 +85,7 @@ type completerFinder func(parse.Node, *eval.Evaler) completerIface
 
 var completerFinders = []completerFinder{
 	findVariableCompleter,
+	findCommandCompleter,
 }
 
 // complete takes a Node and Evaler and tries all completers. It returns the
@@ -209,106 +208,6 @@ func complIndexInner(m eval.IterateKeyer, rawCands chan rawCandidate) {
 		}
 		return true
 	})
-}
-
-func complFormHead(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
-	begin, end, head, q := findFormHeadContext(n, ev)
-	if begin == -1 {
-		return nil, errCompletionUnapplicable
-	}
-
-	rawCands := make(chan rawCandidate)
-	collectErr := make(chan error)
-	go func() {
-		var err error
-		defer func() {
-			close(rawCands)
-			collectErr <- err
-		}()
-
-		err = complFormHeadInner(head, ev, rawCands)
-	}()
-
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher,
-		head, rawCands, q)
-	if ce := <-collectErr; ce != nil {
-		return nil, ce
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &complSpec{begin, end, cands}, nil
-}
-
-func findFormHeadContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.PrimaryType) {
-	// Determine if we are starting a new command. There are 3 cases:
-	// 1. The whole chunk is empty (nothing entered at all): the leaf is a
-	//    Chunk.
-	// 2. Just after a newline or semicolon: the leaf is a Sep and its parent is
-	//    a Chunk.
-	// 3. Just after a pipe: the leaf is a Sep and its parent is a Pipeline.
-	if parse.IsChunk(n) {
-		return n.End(), n.End(), "", parse.Bareword
-	}
-	if parse.IsSep(n) {
-		parent := n.Parent()
-		if parse.IsChunk(parent) || parse.IsPipeline(parent) {
-			return n.End(), n.End(), "", parse.Bareword
-		}
-	}
-
-	if primary, ok := n.(*parse.Primary); ok {
-		if compound, head := primaryInSimpleCompound(primary, ev); compound != nil {
-			if form, ok := compound.Parent().(*parse.Form); ok {
-				if form.Head == compound {
-					return compound.Begin(), compound.End(), head, primary.Type
-				}
-			}
-		}
-	}
-	return -1, -1, "", 0
-}
-
-func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
-	if util.DontSearch(head) {
-		return complFilenameInner(head, true, rawCands)
-	}
-
-	got := func(s string) {
-		rawCands <- plainCandidate(s)
-	}
-	for special := range eval.IsBuiltinSpecial {
-		got(special)
-	}
-	explode, ns, _ := eval.ParseVariable(head)
-	if !explode {
-		iterateVariables(ev, ns, func(varname string) {
-			if strings.HasPrefix(varname, eval.FnPrefix) {
-				got(eval.MakeVariableName(false, ns, varname[len(eval.FnPrefix):]))
-			} else {
-				got(eval.MakeVariableName(false, ns, varname) + "=")
-			}
-		})
-	}
-	ev.EachExternal(func(command string) {
-		got(command)
-		if strings.HasPrefix(head, "e:") {
-			got("e:" + command)
-		}
-	})
-	// TODO Support non-module namespaces.
-	for ns := range ev.Global.Uses {
-		if head != ns+":" {
-			got(ns + ":")
-		}
-	}
-	for ns := range ev.Builtin.Uses {
-		if head != ns+":" {
-			got(ns + ":")
-		}
-	}
-
-	return nil
 }
 
 // complRedir completes redirection RHS.
