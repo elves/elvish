@@ -65,6 +65,8 @@ func init() {
 
 		{"kind-of", kindOf},
 
+		{"bool", boolFn},
+		{"not", not},
 		{"is", is},
 		{"eq", eq},
 		{"not-eq", notEq},
@@ -72,9 +74,6 @@ func init() {
 		{"constantly", constantly},
 
 		{"-source", source},
-
-		{"bool", boolFn},
-		{"not", not},
 
 		// Time
 		{"esleep", sleep},
@@ -104,6 +103,22 @@ func kindOf(ec *EvalCtx, args []Value, opts map[string]Value) {
 	for _, a := range args {
 		out <- String(a.Kind())
 	}
+}
+
+func boolFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var v Value
+	ScanArgs(args, &v)
+	TakeNoOpt(opts)
+
+	ec.OutputChan() <- Bool(ToBool(v))
+}
+
+func not(ec *EvalCtx, args []Value, opts map[string]Value) {
+	var v Value
+	ScanArgs(args, &v)
+	TakeNoOpt(opts)
+
+	ec.OutputChan() <- Bool(!ToBool(v))
 }
 
 func is(ec *EvalCtx, args []Value, opts map[string]Value) {
@@ -168,22 +183,6 @@ func source(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ScanOpts(opts)
 
 	maybeThrow(ec.Source(string(fname)))
-}
-
-func boolFn(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var v Value
-	ScanArgs(args, &v)
-	TakeNoOpt(opts)
-
-	ec.OutputChan() <- Bool(ToBool(v))
-}
-
-func not(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var v Value
-	ScanArgs(args, &v)
-	TakeNoOpt(opts)
-
-	ec.OutputChan() <- Bool(!ToBool(v))
 }
 
 func sleep(ec *EvalCtx, args []Value, opts map[string]Value) {

@@ -7,12 +7,6 @@ var builtinFnTests = []evalTest{
 	{"kind-of bare 'str' [] [&] []{ }",
 		want{out: strs("string", "string", "list", "map", "fn")}},
 
-	{`is 1 1`, wantTrue},
-	{`is [] []`, wantTrue},
-	{`is [1] [1]`, wantFalse},
-	{`eq 1 1`, wantTrue},
-	{`eq [] []`, wantTrue},
-
 	{`bool $true`, wantTrue},
 	{`bool a`, wantTrue},
 	{`bool [a]`, wantTrue},
@@ -27,6 +21,12 @@ var builtinFnTests = []evalTest{
 
 	{`not $false`, wantTrue},
 	{`not $true`, wantFalse},
+
+	{`is 1 1`, wantTrue},
+	{`is [] []`, wantTrue},
+	{`is [1] [1]`, wantFalse},
+	{`eq 1 1`, wantTrue},
+	{`eq [] []`, wantTrue},
 
 	{`f=(constantly foo); $f; $f`, want{out: strs("foo", "foo")}},
 	{`(constantly foo) bad`, want{err: errAny}},
