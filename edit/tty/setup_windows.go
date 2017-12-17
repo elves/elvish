@@ -3,7 +3,7 @@ package tty
 import (
 	"os"
 
-	"github.com/elves/elvish/sys"
+	"github.com/elves/elvish/util"
 	"golang.org/x/sys/windows"
 )
 
@@ -33,9 +33,9 @@ func setup(in, out *os.File) (func() error, error) {
 	errVT := setupVT(out)
 
 	return func() error {
-		return sys.CatErrors(
+		return util.Errors(
 			windows.SetConsoleMode(hIn, oldInMode),
 			windows.SetConsoleMode(hOut, oldOutMode),
-			restoreVT())
-	}, sys.CatErrors(errSetIn, errSetOut, errVT)
+			restoreVT(out))
+	}, util.Errors(errSetIn, errSetOut, errVT)
 }
