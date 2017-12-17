@@ -82,7 +82,9 @@ var completers = []struct {
 	{"argument", complArg},
 }
 
-var completerFinders = []func(parse.Node) completerIface{
+type completerFinder func(parse.Node) completerIface
+
+var completerFinders = []completerFinder{
 	findVariableCompleter,
 }
 
