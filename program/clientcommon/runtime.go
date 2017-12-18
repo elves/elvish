@@ -26,7 +26,7 @@ const upgradeDbNotice = `If you upgraded Elvish from a pre-0.10 version, you nee
 // InitRuntime initializes the runtime. The caller is responsible for calling
 // CleanupRuntime at some point.
 func InitRuntime(binpath, sockpath, dbpath string) *eval.Evaler {
-	spawnDaemonStart:
+spawnDaemonStart:
 	var dataDir string
 	var err error
 
@@ -75,7 +75,6 @@ func InitRuntime(binpath, sockpath, dbpath string) *eval.Evaler {
 						goto spawnDaemonStart
 					}
 				}
-			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: socket exists but not responding version RPC:", err)
 				// TODO(xiaq): Remove this when the SQLite-backed database
 				// becomes an unmemorable past (perhaps 6 months after the
