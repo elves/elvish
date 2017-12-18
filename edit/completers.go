@@ -75,7 +75,6 @@ var completers = []struct {
 	name string
 	completer
 }{
-	{"index", complIndex},
 	{"redir", complRedir},
 	{"argument", complArg},
 }
@@ -86,6 +85,7 @@ type completerFinder func(parse.Node, *eval.Evaler) completerIface
 var completerFinders = []completerFinder{
 	findVariableCompleter,
 	findCommandCompleter,
+	findIndexCompleter,
 }
 
 // complete takes a Node and Evaler and tries all completers. It returns the
@@ -122,92 +122,6 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 		return name, compl, err
 	}
 	return "", nil, nil
-}
-
-func complIndex(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
-	begin, end, current, q, indexee := findIndexContext(n, ev)
-
-	if begin == -1 {
-		return nil, errCompletionUnapplicable
-	}
-
-	indexeeValue := purelyEvalPrimary(indexee, ev)
-	if indexeeValue == nil {
-		return nil, errCannotEvalIndexee
-	}
-	m, ok := indexeeValue.(eval.IterateKeyer)
-	if !ok {
-		return nil, errCannotIterateKey
-	}
-
-	rawCands := make(chan rawCandidate)
-	go func() {
-		defer close(rawCands)
-
-		complIndexInner(m, rawCands)
-	}()
-
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher,
-		current, rawCands, q)
-	if err != nil {
-		return nil, err
-	}
-	return &complSpec{begin, end, cands}, nil
-}
-
-// Find context information for complIndex. It returns the begin and end for
-// compl, the current text of this index and its type, and the indexee node.
-//
-// Right now we only support cases where there is only one level of indexing,
-// e.g. $a[<Tab> is supported but $a[x][<Tab> is not.
-func findIndexContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.PrimaryType, *parse.Primary) {
-	if parse.IsSep(n) {
-		if parse.IsIndexing(n.Parent()) {
-			// We are just after an opening bracket.
-			indexing := parse.GetIndexing(n.Parent())
-			if len(indexing.Indicies) == 1 {
-				return n.End(), n.End(), "", parse.Bareword, indexing.Head
-			}
-		}
-		if parse.IsArray(n.Parent()) {
-			array := n.Parent()
-			if parse.IsIndexing(array.Parent()) {
-				// We are after an existing index and spaces.
-				indexing := parse.GetIndexing(array.Parent())
-				if len(indexing.Indicies) == 1 {
-					return n.End(), n.End(), "", parse.Bareword, indexing.Head
-				}
-			}
-		}
-	}
-
-	if parse.IsPrimary(n) {
-		primary := parse.GetPrimary(n)
-		compound, current := primaryInSimpleCompound(primary, ev)
-		if compound != nil {
-			if parse.IsArray(compound.Parent()) {
-				array := compound.Parent()
-				if parse.IsIndexing(array.Parent()) {
-					// We are just after an incomplete index.
-					indexing := parse.GetIndexing(array.Parent())
-					if len(indexing.Indicies) == 1 {
-						return compound.Begin(), compound.End(), current, primary.Type, indexing.Head
-					}
-				}
-			}
-		}
-	}
-
-	return -1, -1, "", 0, nil
-}
-
-func complIndexInner(m eval.IterateKeyer, rawCands chan rawCandidate) {
-	m.IterateKey(func(v eval.Value) bool {
-		if keyv, ok := v.(eval.String); ok {
-			rawCands <- plainCandidate(keyv)
-		}
-		return true
-	})
 }
 
 // complRedir completes redirection RHS.
