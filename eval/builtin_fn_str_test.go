@@ -1,7 +1,5 @@
 package eval
 
-var ()
-
 func init() {
 	addToEvalTests([]evalTest{
 		{`==s haha haha`, wantTrue},

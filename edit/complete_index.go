@@ -1,9 +1,13 @@
 package edit
 
 import (
+	"errors"
+
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
+
+var errCannotIterateKey = errors.New("indexee does not support iterating keys")
 
 type indexComplContext struct {
 	seed       string

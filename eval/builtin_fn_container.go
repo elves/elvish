@@ -106,8 +106,6 @@ func dissoc(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ec.OutputChan() <- a.Dissoc(k)
 }
 
-const allBufferSize = 4096
-
 func all(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)

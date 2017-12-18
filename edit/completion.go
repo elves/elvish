@@ -32,15 +32,8 @@ package edit
 // details.
 
 import (
-	"errors"
-
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
-)
-
-var (
-	errCannotEvalIndexee = errors.New("cannot evaluate indexee")
-	errCannotIterateKey  = errors.New("indexee does not support iterating keys")
 )
 
 type complContext interface {
