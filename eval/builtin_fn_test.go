@@ -22,13 +22,19 @@ var builtinFnTests = []evalTest{
 	{`bool $false`, wantFalse},
 
 	{`not $false`, wantTrue},
+	{`not ?(fail x)`, wantTrue},
 	{`not $true`, wantFalse},
+	{`not 0`, wantFalse},
 
 	{`is 1 1`, wantTrue},
+	{`is a b`, wantFalse},
 	{`is [] []`, wantTrue},
 	{`is [1] [1]`, wantFalse},
 	{`eq 1 1`, wantTrue},
+	{`eq a b`, wantFalse},
 	{`eq [] []`, wantTrue},
+	{`eq [1] [1]`, wantTrue},
+	{`not-eq a b`, wantTrue},
 
 	{`f=(constantly foo); $f; $f`, want{out: strs("foo", "foo")}},
 	{`(constantly foo) bad`, want{err: errAny}},
