@@ -103,8 +103,8 @@ func init() {
 		{'j', 0}: "move-dot-down",
 		{'b', 0}: "move-dot-left-word",
 		{'w', 0}: "move-dot-right-word",
-		{'0', 0}: "move-dot-sol",
-		{'$', 0}: "move-dot-eol",
+		{'I', 0}: "move-dot-sol",
+		{'A', 0}: "move-dot-eol",
 		// Killing.
 		{'x', 0}: "kill-rune-right",
 		{'D', 0}: "kill-line-right",
