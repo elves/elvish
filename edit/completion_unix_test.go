@@ -10,36 +10,8 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
-
-func TestComplIndexInner(t *testing.T) {
-	m := eval.ConvertToMap(map[eval.Value]eval.Value{
-		eval.String("foo"):   eval.String("bar"),
-		eval.String("lorem"): eval.String("ipsum"),
-	})
-	var (
-		candidates     rawCandidates
-		wantCandidates = rawCandidates{
-			plainCandidate("foo"), plainCandidate("lorem"),
-		}
-	)
-
-	gets := make(chan rawCandidate)
-	go func() {
-		defer close(gets)
-		complIndexInner(m, gets)
-	}()
-	for v := range gets {
-		candidates = append(candidates, v)
-	}
-	sort.Sort(candidates)
-	if !reflect.DeepEqual(candidates, wantCandidates) {
-		t.Errorf("complIndexInner(%v) = %v, want %v",
-			m, candidates, wantCandidates)
-	}
-}
 
 var (
 	fileStyle = ui.StylesFromString("1")
