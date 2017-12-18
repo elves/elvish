@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/elves/elvish/edit/nodeutil"
+
 	"github.com/elves/elvish/edit/lscolors"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -49,14 +51,13 @@ func findArgComplContext(n parse.Node, ev *eval.Evaler) complContext {
 func evalFormPure(form *parse.Form, seed string, seedBegin int, ev *eval.Evaler) []string {
 	// Find out head of the form and preceding arguments.
 	// If form.Head is not a simple compound, head will be "", just what we want.
-	_, head, _ := simpleCompound(form.Head, nil, ev)
+	head, _ := nodeutil.PurelyEvalPartialCompound(form.Head, nil, ev)
 	words := []string{head}
 	for _, compound := range form.Args {
 		if compound.Begin() >= seedBegin {
 			break
 		}
-		ok, arg, _ := simpleCompound(compound, nil, ev)
-		if ok {
+		if arg, err := nodeutil.PurelyEvalCompound(compound, ev); err == nil {
 			// XXX Arguments that are not simple compounds are simply ignored.
 			words = append(words, arg)
 		}

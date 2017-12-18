@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/edit/nodeutil"
+
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
@@ -19,19 +20,11 @@ func primaryInSimpleCompound(pn *parse.Primary, ev *eval.Evaler) (*parse.Compoun
 	if compound == nil {
 		return nil, ""
 	}
-	ok, head, _ := simpleCompound(compound, indexing, ev)
-	if !ok {
+	head, err := nodeutil.PurelyEvalPartialCompound(compound, indexing, ev)
+	if err != nil {
 		return nil, ""
 	}
 	return compound, head
-}
-
-func simpleCompound(cn *parse.Compound, upto *parse.Indexing, ev *eval.Evaler) (bool, string, error) {
-	return nodeutil.SimpleCompound(cn, upto, ev)
-}
-
-func purelyEvalPrimary(cn *parse.Primary, ev *eval.Evaler) eval.Value {
-	return nodeutil.PurelyEvalPrimary(cn, ev)
 }
 
 // leafNodeAtDot finds the leaf node at a specific position. It returns nil if

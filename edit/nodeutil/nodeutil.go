@@ -2,6 +2,7 @@
 package nodeutil
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/elves/elvish/eval"
@@ -11,12 +12,18 @@ import (
 
 var logger = util.GetLogger("[nodeutil] ")
 
-func SimpleCompound(cn *parse.Compound, upto *parse.Indexing, ev *eval.Evaler) (bool, string, error) {
+var ErrImpure = errors.New("expression is impure")
+
+func PurelyEvalCompound(cn *parse.Compound, ev *eval.Evaler) (string, error) {
+	return PurelyEvalPartialCompound(cn, nil, ev)
+}
+
+func PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Indexing, ev *eval.Evaler) (string, error) {
 	tilde := false
 	head := ""
 	for _, in := range cn.Indexings {
 		if len(in.Indicies) > 0 {
-			return false, "", nil
+			return "", ErrImpure
 		}
 		switch in.Head.Type {
 		case parse.Tilde:
@@ -25,16 +32,16 @@ func SimpleCompound(cn *parse.Compound, upto *parse.Indexing, ev *eval.Evaler) (
 			head += in.Head.Value
 		case parse.Variable:
 			if ev == nil {
-				return false, "", nil
+				return "", ErrImpure
 			}
 			v := PurelyEvalPrimary(in.Head, ev)
 			if s, ok := v.(eval.String); ok {
 				head += string(s)
 			} else {
-				return false, "", nil
+				return "", ErrImpure
 			}
 		default:
-			return false, "", nil
+			return "", ErrImpure
 		}
 
 		if in == upto {
@@ -49,11 +56,11 @@ func SimpleCompound(cn *parse.Compound, upto *parse.Indexing, ev *eval.Evaler) (
 		uname := head[:i]
 		home, err := util.GetHome(uname)
 		if err != nil {
-			return false, "", err
+			return "", err
 		}
 		head = home + head[i:]
 	}
-	return true, head, nil
+	return head, nil
 }
 
 // PurelyEvalPrimary evaluates a primary node without causing any side effects.

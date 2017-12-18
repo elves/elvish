@@ -91,15 +91,15 @@ func (e *Emitter) form(n *parse.Form) {
 }
 
 func (e *Emitter) formHead(n *parse.Compound) {
-	simple, head, err := nodeutil.SimpleCompound(n, nil, nil)
+	head, err := nodeutil.PurelyEvalCompound(n, nil)
 	st := ui.Styles{}
-	if simple {
+	if err == nil {
 		if e.GoodFormHead(head) {
 			st = styleForGoodCommand
 		} else {
 			st = styleForBadCommand
 		}
-	} else if err != nil {
+	} else if err != nodeutil.ErrImpure {
 		st = styleForBadCommand
 	}
 	if len(st) > 0 {
