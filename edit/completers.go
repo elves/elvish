@@ -75,7 +75,6 @@ var completers = []struct {
 	name string
 	completer
 }{
-	{"redir", complRedir},
 	{"argument", complArg},
 }
 
@@ -86,6 +85,7 @@ var completerFinders = []completerFinder{
 	findVariableCompleter,
 	findCommandCompleter,
 	findIndexCompleter,
+	findRedirCompleter,
 }
 
 // complete takes a Node and Evaler and tries all completers. It returns the
@@ -122,53 +122,6 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 		return name, compl, err
 	}
 	return "", nil, nil
-}
-
-// complRedir completes redirection RHS.
-func complRedir(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
-	begin, end, current, q := findRedirContext(n, ev)
-	if begin == -1 {
-		return nil, errCompletionUnapplicable
-	}
-
-	rawCands := make(chan rawCandidate)
-	collectErr := make(chan error)
-	go func() {
-		var err error
-		defer func() {
-			close(rawCands)
-			collectErr <- err
-		}()
-
-		err = complFilenameInner(current, false, rawCands)
-	}()
-
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher,
-		current, rawCands, q)
-	if ce := <-collectErr; ce != nil {
-		return nil, ce
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &complSpec{begin, end, cands}, nil
-}
-
-func findRedirContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.PrimaryType) {
-	if parse.IsSep(n) {
-		if parse.IsRedir(n.Parent()) {
-			return n.End(), n.End(), "", parse.Bareword
-		}
-	}
-	if primary, ok := n.(*parse.Primary); ok {
-		if compound, head := primaryInSimpleCompound(primary, ev); compound != nil {
-			if parse.IsRedir(compound.Parent()) {
-				return compound.Begin(), compound.End(), head, primary.Type
-			}
-		}
-	}
-	return -1, -1, "", 0
 }
 
 // complArg completes arguments. It identifies the context and then delegates
