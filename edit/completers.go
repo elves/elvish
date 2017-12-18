@@ -33,14 +33,7 @@ package edit
 
 import (
 	"errors"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
 
-	"github.com/elves/elvish/edit/lscolors"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
@@ -74,9 +67,7 @@ type complSpec struct {
 var completers = []struct {
 	name string
 	completer
-}{
-	{"argument", complArg},
-}
+}{}
 
 // TODO: Replace *eval.Evaler with the smallest possible interface
 type completerFinder func(parse.Node, *eval.Evaler) completerIface
@@ -86,6 +77,7 @@ var completerFinders = []completerFinder{
 	findCommandCompleter,
 	findIndexCompleter,
 	findRedirCompleter,
+	findArgCompleter,
 }
 
 // complete takes a Node and Evaler and tries all completers. It returns the
@@ -122,129 +114,4 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 		return name, compl, err
 	}
 	return "", nil, nil
-}
-
-// complArg completes arguments. It identifies the context and then delegates
-// the actual completion work to a suitable completer.
-func complArg(n parse.Node, ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
-	begin, end, current, q, form := findArgContext(n, ev)
-	if begin == -1 {
-		return nil, errCompletionUnapplicable
-	}
-
-	// Find out head of the form and preceding arguments.
-	// If Form.Head is not a simple compound, head will be "", just what we want.
-	_, head, _ := simpleCompound(form.Head, nil, ev)
-	var args []string
-	for _, compound := range form.Args {
-		if compound.Begin() >= begin {
-			break
-		}
-		ok, arg, _ := simpleCompound(compound, nil, ev)
-		if ok {
-			// XXX Arguments that are not simple compounds are simply ignored.
-			args = append(args, arg)
-		}
-	}
-
-	words := make([]string, len(args)+2)
-	words[0] = head
-	words[len(words)-1] = current
-	copy(words[1:len(words)-1], args[:])
-
-	rawCands := make(chan rawCandidate)
-	collectErr := make(chan error)
-	go func() {
-		var err error
-		defer func() {
-			close(rawCands)
-			collectErr <- err
-		}()
-
-		err = completeArg(words, ev, rawCands)
-	}()
-
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher,
-		current, rawCands, q)
-	if ce := <-collectErr; ce != nil {
-		return nil, ce
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &complSpec{begin, end, cands}, nil
-}
-
-func findArgContext(n parse.Node, ev *eval.Evaler) (int, int, string, parse.PrimaryType, *parse.Form) {
-	if sep, ok := n.(*parse.Sep); ok {
-		if form, ok := sep.Parent().(*parse.Form); ok && form.Head != nil {
-			return n.End(), n.End(), "", parse.Bareword, form
-		}
-	}
-	if primary, ok := n.(*parse.Primary); ok {
-		if compound, head := primaryInSimpleCompound(primary, ev); compound != nil {
-			if form, ok := compound.Parent().(*parse.Form); ok {
-				if form.Head != nil && form.Head != compound {
-					return compound.Begin(), compound.End(), head, primary.Type, form
-				}
-			}
-		}
-	}
-	return -1, -1, "", 0, nil
-}
-
-// TODO: getStyle does redundant stats.
-func complFilenameInner(head string, executableOnly bool, rawCands chan<- rawCandidate) error {
-	dir, fileprefix := filepath.Split(head)
-	dirToRead := dir
-	if dirToRead == "" {
-		dirToRead = "."
-	}
-
-	infos, err := ioutil.ReadDir(dirToRead)
-	if err != nil {
-		return fmt.Errorf("cannot list directory %s: %v", dirToRead, err)
-	}
-
-	lsColor := lscolors.GetColorist()
-	// Make candidates out of elements that match the file component.
-	for _, info := range infos {
-		name := info.Name()
-		// Show dot files iff file part of pattern starts with dot, and vice
-		// versa.
-		if dotfile(fileprefix) != dotfile(name) {
-			continue
-		}
-		// Only accept searchable directories and executable files if
-		// executableOnly is true.
-		if executableOnly && !(info.IsDir() || (info.Mode()&0111) != 0) {
-			continue
-		}
-
-		// Full filename for source and getStyle.
-		full := dir + name
-
-		suffix := " "
-		if info.IsDir() {
-			suffix = string(filepath.Separator)
-		} else if info.Mode()&os.ModeSymlink != 0 {
-			stat, err := os.Stat(full)
-			if err == nil && stat.IsDir() {
-				// Symlink to directory.
-				suffix = string(filepath.Separator)
-			}
-		}
-
-		rawCands <- &complexCandidate{
-			stem: full, codeSuffix: suffix,
-			style: ui.StylesFromString(lsColor.GetStyle(full)),
-		}
-	}
-
-	return nil
-}
-
-func dotfile(fname string) bool {
-	return strings.HasPrefix(fname, ".")
 }
