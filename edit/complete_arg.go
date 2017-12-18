@@ -22,7 +22,7 @@ type argComplContext struct {
 
 func (*argComplContext) name() string { return "argument" }
 
-func findArgComplContext(n parse.Node, ev *eval.Evaler) complContext {
+func findArgComplContext(n parse.Node, ev pureEvaler) complContext {
 	if sep, ok := n.(*parse.Sep); ok {
 		if form, ok := sep.Parent().(*parse.Form); ok && form.Head != nil {
 			return &argComplContext{
@@ -46,7 +46,7 @@ func findArgComplContext(n parse.Node, ev *eval.Evaler) complContext {
 	return nil
 }
 
-func evalFormPure(form *parse.Form, seed string, seedBegin int, ev *eval.Evaler) []string {
+func evalFormPure(form *parse.Form, seed string, seedBegin int, ev pureEvaler) []string {
 	// Find out head of the form and preceding arguments.
 	// If form.Head is not a simple compound, head will be "", just what we want.
 	head, _ := ev.PurelyEvalPartialCompound(form.Head, nil)

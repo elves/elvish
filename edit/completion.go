@@ -59,9 +59,13 @@ type complSpec struct {
 // A complContextFinder takes the current Node (always a leaf in the AST) and an
 // Evaler, and returns a complContext. If the complContext does not apply to the
 // type of the current Node, it should return nil.
-//
-// TODO: Replace *eval.Evaler with the smallest possible interface
-type complContextFinder func(parse.Node, *eval.Evaler) complContext
+type complContextFinder func(parse.Node, pureEvaler) complContext
+
+type pureEvaler interface {
+	PurelyEvalCompound(*parse.Compound) (string, error)
+	PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Indexing) (string, error)
+	PurelyEvalPrimary(*parse.Primary) eval.Value
+}
 
 var complContextFinders = []complContextFinder{
 	findVariableComplContext,

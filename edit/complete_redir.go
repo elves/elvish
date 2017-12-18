@@ -13,7 +13,7 @@ type redirComplContext struct {
 
 func (*redirComplContext) name() string { return "redir" }
 
-func findRedirComplContext(n parse.Node, ev *eval.Evaler) complContext {
+func findRedirComplContext(n parse.Node, ev pureEvaler) complContext {
 	if parse.IsSep(n) {
 		if parse.IsRedir(n.Parent()) {
 			return &redirComplContext{"", quotingForEmptySeed, n.End(), n.End()}

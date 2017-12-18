@@ -16,7 +16,7 @@ type commandComplContext struct {
 
 const quotingForEmptySeed = parse.Bareword
 
-func findCommandComplContext(n parse.Node, ev *eval.Evaler) complContext {
+func findCommandComplContext(n parse.Node, ev pureEvaler) complContext {
 	// Determine if we are starting a new command. There are 3 cases:
 	// 1. The whole chunk is empty (nothing entered at all): the leaf is a
 	//    Chunk.

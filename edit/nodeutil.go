@@ -3,13 +3,12 @@ package edit
 import (
 	"strings"
 
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
 
 // Utilities for insepcting the AST. Used for completers and stylists.
 
-func primaryInSimpleCompound(pn *parse.Primary, ev *eval.Evaler) (*parse.Compound, string) {
+func primaryInSimpleCompound(pn *parse.Primary, ev pureEvaler) (*parse.Compound, string) {
 	indexing := parse.GetIndexing(pn.Parent())
 	if indexing == nil {
 		return nil, ""

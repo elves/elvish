@@ -18,7 +18,7 @@ func (*indexComplContext) name() string { return "index" }
 //
 // Right now we only support cases where there is only one level of indexing,
 // e.g. $a[<Tab> is supported but $a[x][<Tab> is not.
-func findIndexComplContext(n parse.Node, ev *eval.Evaler) complContext {
+func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 	if parse.IsSep(n) {
 		if parse.IsIndexing(n.Parent()) {
 			// We are just after an opening bracket.

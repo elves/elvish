@@ -16,7 +16,7 @@ type variableComplContext struct {
 
 func (*variableComplContext) name() string { return "variable" }
 
-func findVariableComplContext(n parse.Node, _ *eval.Evaler) complContext {
+func findVariableComplContext(n parse.Node, _ pureEvaler) complContext {
 	primary := parse.GetPrimary(n)
 	if primary != nil && primary.Type == parse.Variable {
 		explode, qname := eval.ParseVariableSplice(primary.Value)
