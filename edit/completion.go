@@ -38,8 +38,17 @@ import (
 
 type complContext interface {
 	name() string
+	common() *complContextCommon
 	complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error)
 }
+
+type complContextCommon struct {
+	seed       string
+	quoting    parse.PrimaryType
+	begin, end int
+}
+
+func (c *complContextCommon) common() *complContextCommon { return c }
 
 // complSpec is the result of a completion, meaning that any of the candidates
 // can replace the text in the interval [begin, end).

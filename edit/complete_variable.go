@@ -9,9 +9,8 @@ import (
 )
 
 type variableComplContext struct {
+	complContextCommon
 	ns, nsPart string
-	nameSeed   string
-	begin, end int
 }
 
 func (*variableComplContext) name() string { return "variable" }
@@ -27,7 +26,10 @@ func findVariableComplContext(n parse.Node, _ pureEvaler) complContext {
 		if len(ns) > 0 {
 			ns = ns[:len(ns)-1]
 		}
-		return &variableComplContext{ns, nsPart, nameSeed, begin, primary.End()}
+		return &variableComplContext{
+			complContextCommon{nameSeed, parse.Bareword, begin, primary.End()},
+			ns, nsPart,
+		}
 	}
 	return nil
 }
@@ -61,7 +63,7 @@ func (ctx *variableComplContext) complete(ev *eval.Evaler, matcher eval.Callable
 		}
 	}()
 
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher, ctx.nameSeed,
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher, ctx.seed,
 		rawCands, parse.Bareword)
 	if err != nil {
 		return nil, err

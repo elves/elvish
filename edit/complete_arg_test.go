@@ -8,8 +8,10 @@ import (
 
 func TestFindArgComplContext(t *testing.T) {
 	testComplContextFinder(t, "findArgComplContext", findArgComplContext, []complContextFinderTest{
-		{"a ", &argComplContext{"", quotingForEmptySeed, []string{"a", ""}, 2, 2}},
-		{"a b", &argComplContext{"b", parse.Bareword, []string{"a", "b"}, 2, 3}},
+		{"a ", &argComplContext{
+			complContextCommon{"", quotingForEmptySeed, 2, 2}, []string{"a", ""}}},
+		{"a b", &argComplContext{
+			complContextCommon{"b", parse.Bareword, 2, 3}, []string{"a", "b"}}},
 		// No space after command; won't complete arg
 		{"a", nil},
 	})

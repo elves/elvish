@@ -10,10 +10,8 @@ import (
 var errCannotIterateKey = errors.New("indexee does not support iterating keys")
 
 type indexComplContext struct {
-	seed       string
-	quoting    parse.PrimaryType
-	indexee    eval.Value
-	begin, end int
+	complContextCommon
+	indexee eval.Value
 }
 
 func (*indexComplContext) name() string { return "index" }
@@ -29,7 +27,11 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 			indexing := parse.GetIndexing(n.Parent())
 			if len(indexing.Indicies) == 1 {
 				if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
-					return &indexComplContext{"", quotingForEmptySeed, indexee, n.End(), n.End()}
+					return &indexComplContext{
+						complContextCommon{
+							"", quotingForEmptySeed, n.End(), n.End()},
+						indexee,
+					}
 				}
 			}
 		}
@@ -40,7 +42,11 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 				indexing := parse.GetIndexing(array.Parent())
 				if len(indexing.Indicies) == 1 {
 					if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
-						return &indexComplContext{"", quotingForEmptySeed, indexee, n.End(), n.End()}
+						return &indexComplContext{
+							complContextCommon{
+								"", quotingForEmptySeed, n.End(), n.End()},
+							indexee,
+						}
 					}
 				}
 			}
@@ -49,7 +55,7 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 
 	if parse.IsPrimary(n) {
 		primary := parse.GetPrimary(n)
-		compound, current := primaryInSimpleCompound(primary, ev)
+		compound, seed := primaryInSimpleCompound(primary, ev)
 		if compound != nil {
 			if parse.IsArray(compound.Parent()) {
 				array := compound.Parent()
@@ -58,7 +64,11 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 					indexing := parse.GetIndexing(array.Parent())
 					if len(indexing.Indicies) == 1 {
 						if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
-							return &indexComplContext{current, primary.Type, indexee, compound.Begin(), compound.End()}
+							return &indexComplContext{
+								complContextCommon{
+									seed, primary.Type, compound.Begin(), compound.End()},
+								indexee,
+							}
 						}
 					}
 				}

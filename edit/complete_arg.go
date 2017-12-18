@@ -14,10 +14,8 @@ import (
 )
 
 type argComplContext struct {
-	seed       string
-	quoting    parse.PrimaryType
-	words      []string
-	begin, end int
+	complContextCommon
+	words []string
 }
 
 func (*argComplContext) name() string { return "argument" }
@@ -26,9 +24,10 @@ func findArgComplContext(n parse.Node, ev pureEvaler) complContext {
 	if sep, ok := n.(*parse.Sep); ok {
 		if form, ok := sep.Parent().(*parse.Form); ok && form.Head != nil {
 			return &argComplContext{
-				"", quotingForEmptySeed,
+				complContextCommon{
+					"", quotingForEmptySeed, n.End(), n.End()},
 				evalFormPure(form, "", n.End(), ev),
-				n.End(), n.End()}
+			}
 		}
 	}
 	if primary, ok := n.(*parse.Primary); ok {
@@ -36,9 +35,10 @@ func findArgComplContext(n parse.Node, ev pureEvaler) complContext {
 			if form, ok := compound.Parent().(*parse.Form); ok {
 				if form.Head != nil && form.Head != compound {
 					return &argComplContext{
-						seed, primary.Type,
+						complContextCommon{
+							seed, primary.Type, compound.Begin(), compound.End()},
 						evalFormPure(form, seed, compound.Begin(), ev),
-						compound.Begin(), compound.End()}
+					}
 				}
 			}
 		}

@@ -1,13 +1,21 @@
 package edit
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/elves/elvish/parse"
+)
 
 func TestFindVariableComplContext(t *testing.T) {
 	testComplContextFinder(t, "findVariableComplContext", findVariableComplContext, []complContextFinderTest{
-		{"$", &variableComplContext{"", "", "", 1, 1}},
-		{"$a", &variableComplContext{"", "", "a", 1, 2}},
-		{"$a:", &variableComplContext{"a", "a:", "", 3, 3}},
-		{"$a:b", &variableComplContext{"a", "a:", "b", 3, 4}},
+		{"$", &variableComplContext{
+			complContextCommon{"", parse.Bareword, 1, 1}, "", ""}},
+		{"$a", &variableComplContext{
+			complContextCommon{"a", parse.Bareword, 1, 2}, "", ""}},
+		{"$a:", &variableComplContext{
+			complContextCommon{"", parse.Bareword, 3, 3}, "a", "a:"}},
+		{"$a:b", &variableComplContext{
+			complContextCommon{"b", parse.Bareword, 3, 4}, "a", "a:"}},
 		// Wrong contexts
 		{"", nil},
 		{"echo", nil},

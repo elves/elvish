@@ -6,9 +6,7 @@ import (
 )
 
 type redirComplContext struct {
-	seed       string
-	quoting    parse.PrimaryType
-	begin, end int
+	complContextCommon
 }
 
 func (*redirComplContext) name() string { return "redir" }
@@ -16,13 +14,15 @@ func (*redirComplContext) name() string { return "redir" }
 func findRedirComplContext(n parse.Node, ev pureEvaler) complContext {
 	if parse.IsSep(n) {
 		if parse.IsRedir(n.Parent()) {
-			return &redirComplContext{"", quotingForEmptySeed, n.End(), n.End()}
+			return &redirComplContext{complContextCommon{
+				"", quotingForEmptySeed, n.End(), n.End()}}
 		}
 	}
 	if primary, ok := n.(*parse.Primary); ok {
 		if compound, seed := primaryInSimpleCompound(primary, ev); compound != nil {
 			if parse.IsRedir(compound.Parent()) {
-				return &redirComplContext{seed, primary.Type, compound.Begin(), compound.End()}
+				return &redirComplContext{complContextCommon{
+					seed, primary.Type, compound.Begin(), compound.End()}}
 			}
 		}
 	}

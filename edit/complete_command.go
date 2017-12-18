@@ -9,9 +9,7 @@ import (
 )
 
 type commandComplContext struct {
-	seed       string
-	quoting    parse.PrimaryType
-	begin, end int
+	complContextCommon
 }
 
 const quotingForEmptySeed = parse.Bareword
@@ -24,17 +22,20 @@ func findCommandComplContext(n parse.Node, ev pureEvaler) complContext {
 	//    a Chunk.
 	// 3. Just after a pipe: the leaf is a Sep and its parent is a Pipeline.
 	if parse.IsChunk(n) {
-		return &commandComplContext{"", parse.Bareword, n.End(), n.End()}
+		return &commandComplContext{
+			complContextCommon{"", parse.Bareword, n.End(), n.End()}}
 	}
 	if parse.IsSep(n) {
 		parent := n.Parent()
 		switch {
 		case parse.IsChunk(parent), parse.IsPipeline(parent):
-			return &commandComplContext{"", quotingForEmptySeed, n.End(), n.End()}
+			return &commandComplContext{
+				complContextCommon{"", quotingForEmptySeed, n.End(), n.End()}}
 		case parse.IsPrimary(parent):
 			ptype := parent.(*parse.Primary).Type
 			if ptype == parse.OutputCapture || ptype == parse.ExceptionCapture {
-				return &commandComplContext{"", quotingForEmptySeed, n.End(), n.End()}
+				return &commandComplContext{
+					complContextCommon{"", quotingForEmptySeed, n.End(), n.End()}}
 			}
 		}
 	}
@@ -43,7 +44,8 @@ func findCommandComplContext(n parse.Node, ev pureEvaler) complContext {
 		if compound, seed := primaryInSimpleCompound(primary, ev); compound != nil {
 			if form, ok := compound.Parent().(*parse.Form); ok {
 				if form.Head == compound {
-					return &commandComplContext{seed, primary.Type, compound.Begin(), compound.End()}
+					return &commandComplContext{
+						complContextCommon{seed, primary.Type, compound.Begin(), compound.End()}}
 				}
 			}
 		}
