@@ -33,9 +33,18 @@ func findVariableComplContext(n parse.Node, _ pureEvaler) complContext {
 	return nil
 }
 
+type evalerScopes interface {
+	EachVariableInTop(string, func(string))
+	EachNsInTop(func(string))
+}
+
 func (ctx *variableComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
-	// Collect matching variables.
-	ev.EachVariableInTop(ctx.ns, func(varname string) {
+	complVariable(ctx.ns, ctx.nsPart, ev, ch)
+	return nil
+}
+
+func complVariable(ctxNs, ctxNsPart string, ev evalerScopes, ch chan<- rawCandidate) {
+	ev.EachVariableInTop(ctxNs, func(varname string) {
 		ch <- noQuoteCandidate(varname)
 	})
 
@@ -43,12 +52,10 @@ func (ctx *variableComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidat
 		nsPart := ns + ":"
 		// This is to match namespaces that are "nested" under the current
 		// namespace.
-		if hasProperPrefix(nsPart, ctx.nsPart) {
-			ch <- noQuoteCandidate(nsPart[len(ctx.nsPart):])
+		if hasProperPrefix(nsPart, ctxNsPart) {
+			ch <- noQuoteCandidate(nsPart[len(ctxNsPart):])
 		}
 	})
-
-	return nil
 }
 
 func hasProperPrefix(s, p string) bool {
