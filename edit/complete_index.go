@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"github.com/elves/elvish/edit/nodeutil"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
@@ -25,7 +24,7 @@ func findIndexComplContext(n parse.Node, ev *eval.Evaler) complContext {
 			// We are just after an opening bracket.
 			indexing := parse.GetIndexing(n.Parent())
 			if len(indexing.Indicies) == 1 {
-				if indexee := nodeutil.PurelyEvalPrimary(indexing.Head, ev); indexee != nil {
+				if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 					return &indexComplContext{"", quotingForEmptySeed, indexee, n.End(), n.End()}
 				}
 			}
@@ -36,7 +35,7 @@ func findIndexComplContext(n parse.Node, ev *eval.Evaler) complContext {
 				// We are after an existing index and spaces.
 				indexing := parse.GetIndexing(array.Parent())
 				if len(indexing.Indicies) == 1 {
-					if indexee := nodeutil.PurelyEvalPrimary(indexing.Head, ev); indexee != nil {
+					if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 						return &indexComplContext{"", quotingForEmptySeed, indexee, n.End(), n.End()}
 					}
 				}
@@ -54,7 +53,7 @@ func findIndexComplContext(n parse.Node, ev *eval.Evaler) complContext {
 					// We are just after an incomplete index.
 					indexing := parse.GetIndexing(array.Parent())
 					if len(indexing.Indicies) == 1 {
-						if indexee := nodeutil.PurelyEvalPrimary(indexing.Head, ev); indexee != nil {
+						if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 							return &indexComplContext{current, primary.Type, indexee, compound.Begin(), compound.End()}
 						}
 					}

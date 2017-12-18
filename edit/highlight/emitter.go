@@ -3,8 +3,8 @@ package highlight
 import (
 	"strings"
 
-	"github.com/elves/elvish/edit/nodeutil"
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
 
@@ -91,7 +91,7 @@ func (e *Emitter) form(n *parse.Form) {
 }
 
 func (e *Emitter) formHead(n *parse.Compound) {
-	head, err := nodeutil.PurelyEvalCompound(n, nil)
+	head, err := eval.PurelyEvalCompound(n)
 	st := ui.Styles{}
 	if err == nil {
 		if e.GoodFormHead(head) {
@@ -99,7 +99,7 @@ func (e *Emitter) formHead(n *parse.Compound) {
 		} else {
 			st = styleForBadCommand
 		}
-	} else if err != nodeutil.ErrImpure {
+	} else if err != eval.ErrImpure {
 		st = styleForBadCommand
 	}
 	if len(st) > 0 {

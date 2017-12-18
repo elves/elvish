@@ -1,24 +1,24 @@
-// Package nodeutil provides utilities for inspecting the AST.
-package nodeutil
+package eval
 
 import (
 	"errors"
 	"strings"
 
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
 
-var logger = util.GetLogger("[nodeutil] ")
-
 var ErrImpure = errors.New("expression is impure")
 
-func PurelyEvalCompound(cn *parse.Compound, ev *eval.Evaler) (string, error) {
-	return PurelyEvalPartialCompound(cn, nil, ev)
+func PurelyEvalCompound(cn *parse.Compound) (string, error) {
+	return (*Evaler)(nil).PurelyEvalCompound(cn)
 }
 
-func PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Indexing, ev *eval.Evaler) (string, error) {
+func (ev *Evaler) PurelyEvalCompound(cn *parse.Compound) (string, error) {
+	return ev.PurelyEvalPartialCompound(cn, nil)
+}
+
+func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Indexing) (string, error) {
 	tilde := false
 	head := ""
 	for _, in := range cn.Indexings {
@@ -34,8 +34,8 @@ func PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Indexing, ev *eva
 			if ev == nil {
 				return "", ErrImpure
 			}
-			v := PurelyEvalPrimary(in.Head, ev)
-			if s, ok := v.(eval.String); ok {
+			v := ev.PurelyEvalPrimary(in.Head)
+			if s, ok := v.(String); ok {
 				head += string(s)
 			} else {
 				return "", ErrImpure
@@ -67,16 +67,16 @@ func PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Indexing, ev *eva
 // If this cannot be done, it returns nil.
 //
 // Currently, only string literals and variables with no @ can be evaluated.
-func PurelyEvalPrimary(pn *parse.Primary, ev *eval.Evaler) eval.Value {
+func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) Value {
 	switch pn.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
-		return eval.String(pn.Value)
+		return String(pn.Value)
 	case parse.Variable:
-		explode, ns, name := eval.ParseVariable(pn.Value)
+		explode, ns, name := ParseVariable(pn.Value)
 		if explode {
 			return nil
 		}
-		ec := eval.NewTopEvalCtx(ev, "[pure eval]", "", nil)
+		ec := NewTopEvalCtx(ev, "[pure eval]", "", nil)
 		variable := ec.ResolveVar(ns, name)
 		if variable != nil {
 			return variable.Get()

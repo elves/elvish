@@ -3,8 +3,6 @@ package edit
 import (
 	"strings"
 
-	"github.com/elves/elvish/edit/nodeutil"
-
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
@@ -20,7 +18,7 @@ func primaryInSimpleCompound(pn *parse.Primary, ev *eval.Evaler) (*parse.Compoun
 	if compound == nil {
 		return nil, ""
 	}
-	head, err := nodeutil.PurelyEvalPartialCompound(compound, indexing, ev)
+	head, err := ev.PurelyEvalPartialCompound(compound, indexing)
 	if err != nil {
 		return nil, ""
 	}
