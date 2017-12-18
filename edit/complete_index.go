@@ -79,31 +79,19 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 	return nil
 }
 
-func (ctx *indexComplContext) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
+func (ctx *indexComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
 	m, ok := ctx.indexee.(eval.IterateKeyer)
 	if !ok {
-		return nil, errCannotIterateKey
+		return errCannotIterateKey
 	}
-
-	rawCands := make(chan rawCandidate)
-	go func() {
-		defer close(rawCands)
-
-		complIndexInner(m, rawCands)
-	}()
-
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(
-		ev, matcher, ctx.seed, rawCands, ctx.quoting)
-	if err != nil {
-		return nil, err
-	}
-	return &complSpec{ctx.begin, ctx.end, cands}, nil
+	complIndexInner(m, ch)
+	return nil
 }
 
-func complIndexInner(m eval.IterateKeyer, rawCands chan rawCandidate) {
+func complIndexInner(m eval.IterateKeyer, ch chan<- rawCandidate) {
 	m.IterateKey(func(v eval.Value) bool {
 		if keyv, ok := v.(eval.String); ok {
-			rawCands <- plainCandidate(keyv)
+			ch <- plainCandidate(keyv)
 		}
 		return true
 	})

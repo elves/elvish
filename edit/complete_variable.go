@@ -34,42 +34,31 @@ func findVariableComplContext(n parse.Node, _ pureEvaler) complContext {
 	return nil
 }
 
-func (ctx *variableComplContext) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
-	rawCands := make(chan rawCandidate)
-	go func() {
-		defer close(rawCands)
+func (ctx *variableComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
 
-		// Collect matching variables.
-		iterateVariables(ev, ctx.ns, func(varname string) {
-			rawCands <- noQuoteCandidate(varname)
-		})
+	// Collect matching variables.
+	iterateVariables(ev, ctx.ns, func(varname string) {
+		ch <- noQuoteCandidate(varname)
+	})
 
-		seenMod := func(mod string) {
-			modNsPart := mod + ":"
-			// This is to match namespaces that are "nested" under the current
-			// namespace.
-			if hasProperPrefix(modNsPart, ctx.nsPart) {
-				rawCands <- noQuoteCandidate(modNsPart[len(ctx.nsPart):])
-			}
+	seenMod := func(mod string) {
+		modNsPart := mod + ":"
+		// This is to match namespaces that are "nested" under the current
+		// namespace.
+		if hasProperPrefix(modNsPart, ctx.nsPart) {
+			ch <- noQuoteCandidate(modNsPart[len(ctx.nsPart):])
 		}
-
-		// Collect namespace prefixes.
-		// TODO Support non-module namespaces.
-		for mod := range ev.Global.Uses {
-			seenMod(mod)
-		}
-		for mod := range ev.Builtin.Uses {
-			seenMod(mod)
-		}
-	}()
-
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher, ctx.seed,
-		rawCands, parse.Bareword)
-	if err != nil {
-		return nil, err
 	}
 
-	return &complSpec{ctx.begin, ctx.end, cands}, nil
+	// Collect namespace prefixes.
+	// TODO Support non-module namespaces.
+	for mod := range ev.Global.Uses {
+		seenMod(mod)
+	}
+	for mod := range ev.Builtin.Uses {
+		seenMod(mod)
+	}
+	return nil
 }
 
 func hasProperPrefix(s, p string) bool {

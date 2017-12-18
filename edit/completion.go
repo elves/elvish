@@ -34,12 +34,13 @@ package edit
 import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 type complContext interface {
 	name() string
 	common() *complContextCommon
-	complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error)
+	generate(*eval.Evaler, chan<- rawCandidate) error
 }
 
 type complContextCommon struct {
@@ -83,19 +84,31 @@ var complContextFinders = []complContextFinder{
 func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 	ed := ev.Editor.(*Editor)
 	for _, finder := range complContextFinders {
-		complContext := finder(n, ev)
-		if complContext == nil {
+		ctx := finder(n, ev)
+		if ctx == nil {
 			continue
 		}
-		name := complContext.name()
+		name := ctx.name()
+		ctxCommon := ctx.common()
 
 		matcher, ok := ed.lookupMatcher(name)
 		if !ok {
 			return name, nil, errMatcherMustBeFn
 		}
 
-		ctx, err := complContext.complete(ev, matcher)
-		return name, ctx, err
+		chanRawCandidate := make(chan rawCandidate)
+		chanErrGenerate := make(chan error)
+		go func() {
+			err := ctx.generate(ev, chanRawCandidate)
+			close(chanRawCandidate)
+			chanErrGenerate <- err
+		}()
+
+		candidates, errFilter := ev.Editor.(*Editor).filterAndCookCandidates(
+			ev, matcher, ctxCommon.seed, chanRawCandidate, ctxCommon.quoting)
+		spec := &complSpec{ctxCommon.begin, ctxCommon.end, candidates}
+		return name, spec, util.Errors(<-chanErrGenerate, errFilter)
+
 	}
 	return "", nil, nil
 }

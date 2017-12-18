@@ -29,28 +29,6 @@ func findRedirComplContext(n parse.Node, ev pureEvaler) complContext {
 	return nil
 }
 
-func (ctx *redirComplContext) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
-
-	rawCands := make(chan rawCandidate)
-	collectErr := make(chan error)
-	go func() {
-		var err error
-		defer func() {
-			close(rawCands)
-			collectErr <- err
-		}()
-
-		err = complFilenameInner(ctx.seed, false, rawCands)
-	}()
-
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(
-		ev, matcher, ctx.seed, rawCands, ctx.quoting)
-	if ce := <-collectErr; ce != nil {
-		return nil, ce
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &complSpec{ctx.begin, ctx.end, cands}, nil
+func (ctx *redirComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
+	return complFilenameInner(ctx.seed, false, ch)
 }

@@ -67,29 +67,8 @@ func evalFormPure(form *parse.Form, seed string, seedBegin int, ev pureEvaler) [
 
 // To complete an argument, delegate the actual completion work to a suitable
 // complContext.
-func (ctx *argComplContext) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
-	rawCands := make(chan rawCandidate)
-	collectErr := make(chan error)
-	go func() {
-		var err error
-		defer func() {
-			close(rawCands)
-			collectErr <- err
-		}()
-
-		err = completeArg(ctx.words, ev, rawCands)
-	}()
-
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(
-		ev, matcher, ctx.seed, rawCands, ctx.quoting)
-	if ce := <-collectErr; ce != nil {
-		return nil, ce
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &complSpec{ctx.begin, ctx.end, cands}, nil
+func (ctx *argComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
+	return completeArg(ctx.words, ev, ch)
 }
 
 // TODO: getStyle does redundant stats.

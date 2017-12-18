@@ -55,28 +55,8 @@ func findCommandComplContext(n parse.Node, ev pureEvaler) complContext {
 
 func (*commandComplContext) name() string { return "command" }
 
-func (ctx *commandComplContext) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
-	rawCands := make(chan rawCandidate)
-	collectErr := make(chan error)
-	go func() {
-		var err error
-		defer func() {
-			close(rawCands)
-			collectErr <- err
-		}()
-
-		err = complFormHeadInner(ctx.seed, ev, rawCands)
-	}()
-
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(
-		ev, matcher, ctx.seed, rawCands, ctx.quoting)
-	if ce := <-collectErr; ce != nil {
-		return nil, ce
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &complSpec{ctx.begin, ctx.end, cands}, nil
+func (ctx *commandComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
+	return complFormHeadInner(ctx.seed, ev, ch)
 }
 
 func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
