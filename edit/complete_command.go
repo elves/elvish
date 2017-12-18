@@ -14,6 +14,8 @@ type commandCompleter struct {
 	begin, end int
 }
 
+const quotingForEmptySeed = parse.Bareword
+
 func findCommandCompleter(n parse.Node, ev *eval.Evaler) completerIface {
 	// Determine if we are starting a new command. There are 3 cases:
 	// 1. The whole chunk is empty (nothing entered at all): the leaf is a
@@ -26,8 +28,14 @@ func findCommandCompleter(n parse.Node, ev *eval.Evaler) completerIface {
 	}
 	if parse.IsSep(n) {
 		parent := n.Parent()
-		if parse.IsChunk(parent) || parse.IsPipeline(parent) {
-			return &commandCompleter{"", parse.Bareword, n.End(), n.End()}
+		switch {
+		case parse.IsChunk(parent), parse.IsPipeline(parent):
+			return &commandCompleter{"", quotingForEmptySeed, n.End(), n.End()}
+		case parse.IsPrimary(parent):
+			ptype := parent.(*parse.Primary).Type
+			if ptype == parse.OutputCapture || ptype == parse.ExceptionCapture {
+				return &commandCompleter{"", quotingForEmptySeed, n.End(), n.End()}
+			}
 		}
 	}
 
