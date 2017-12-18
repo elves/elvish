@@ -53,11 +53,11 @@ func (c *Client) call(f string, req, res interface{}) error {
 
 func (c *Client) connect() error {
 	if c.rpcClient == nil {
-		rpcClient, err := rpc.Dial("unix", c.sockPath)
+		conn, err := dial(c.sockPath)
 		if err != nil {
 			return err
 		}
-		c.rpcClient = rpcClient
+		c.rpcClient = rpc.NewClient(conn)
 	}
 	return nil
 }

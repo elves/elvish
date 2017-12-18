@@ -39,9 +39,8 @@ const (
 // Weirdly, permission masks for group and other are missing on platforms other
 // than linux, darwin and netbsd. So we replicate some of them here.
 const (
-	worldWritable   = 02   // Writable by other
-	groupExecutable = 010  // Executable by group
-	executable      = 0111 // Executable
+	worldWritable = 02   // Writable by other
+	executable    = 0111 // Executable
 )
 
 func determineFeature(fname string, mh bool) (feature, error) {

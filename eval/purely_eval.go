@@ -1,22 +1,29 @@
-// Package nodeutil provides utilities for inspecting the AST.
-package nodeutil
+package eval
 
 import (
+	"errors"
 	"strings"
 
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
 
-var logger = util.GetLogger("[nodeutil] ")
+var ErrImpure = errors.New("expression is impure")
 
-func SimpleCompound(cn *parse.Compound, upto *parse.Indexing, ev *eval.Evaler) (bool, string, error) {
+func PurelyEvalCompound(cn *parse.Compound) (string, error) {
+	return (*Evaler)(nil).PurelyEvalCompound(cn)
+}
+
+func (ev *Evaler) PurelyEvalCompound(cn *parse.Compound) (string, error) {
+	return ev.PurelyEvalPartialCompound(cn, nil)
+}
+
+func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Indexing) (string, error) {
 	tilde := false
 	head := ""
 	for _, in := range cn.Indexings {
 		if len(in.Indicies) > 0 {
-			return false, "", nil
+			return "", ErrImpure
 		}
 		switch in.Head.Type {
 		case parse.Tilde:
@@ -25,16 +32,16 @@ func SimpleCompound(cn *parse.Compound, upto *parse.Indexing, ev *eval.Evaler) (
 			head += in.Head.Value
 		case parse.Variable:
 			if ev == nil {
-				return false, "", nil
+				return "", ErrImpure
 			}
-			v := PurelyEvalPrimary(in.Head, ev)
-			if s, ok := v.(eval.String); ok {
+			v := ev.PurelyEvalPrimary(in.Head)
+			if s, ok := v.(String); ok {
 				head += string(s)
 			} else {
-				return false, "", nil
+				return "", ErrImpure
 			}
 		default:
-			return false, "", nil
+			return "", ErrImpure
 		}
 
 		if in == upto {
@@ -49,27 +56,27 @@ func SimpleCompound(cn *parse.Compound, upto *parse.Indexing, ev *eval.Evaler) (
 		uname := head[:i]
 		home, err := util.GetHome(uname)
 		if err != nil {
-			return false, "", err
+			return "", err
 		}
 		head = home + head[i:]
 	}
-	return true, head, nil
+	return head, nil
 }
 
 // PurelyEvalPrimary evaluates a primary node without causing any side effects.
 // If this cannot be done, it returns nil.
 //
 // Currently, only string literals and variables with no @ can be evaluated.
-func PurelyEvalPrimary(pn *parse.Primary, ev *eval.Evaler) eval.Value {
+func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) Value {
 	switch pn.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
-		return eval.String(pn.Value)
+		return String(pn.Value)
 	case parse.Variable:
-		explode, ns, name := eval.ParseVariable(pn.Value)
+		explode, ns, name := ParseVariable(pn.Value)
 		if explode {
 			return nil
 		}
-		ec := eval.NewTopEvalCtx(ev, "[pure eval]", "", nil)
+		ec := NewTopEvalCtx(ev, "[pure eval]", "", nil)
 		variable := ec.ResolveVar(ns, name)
 		if variable != nil {
 			return variable.Get()

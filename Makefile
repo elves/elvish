@@ -28,22 +28,17 @@ cover/all: $(PKG_COVERS)
 	echo mode: $(COVER_MODE) > $@
 	for f in $(PKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
-# We would love to test for coverage in pull requests, but it's now
-# bettered turned off for two reasons:
-#
-# 1) The goverall badge will always show the "latest" coverage, even if that
-# comes from a PR.
-#
-# 2) Some of the tests have fluctuating coverage (the test against
-# edit.tty.AsyncReader), and goveralls will put a big cross on the PR when the
-# coverage happens to drop.
-goveralls: cover/all
+# Disable coverage reports for pull requests. The general testability of the
+# code is pretty bad and it is premature to require contributors to maintain
+# code coverage.
+upload-coverage: cover/all
 	test "$(TRAVIS_PULL_REQUEST)" = false \
-		&& go get -u github.com/mattn/goveralls \
-		&& $(FIRST_GOPATH)/bin/goveralls -coverprofile=cover/all -service=travis-ci \
-		|| echo "not sending to coveralls"
+		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
+		&& curl -s https://codecov.io/bash -o codecov.bash \
+		&& bash codecov.bash -f cover/all \
+		|| echo "not sending to codecov.io"
 
-upload:
+upload-bin:
 	test "$(TRAVIS_OS_NAME)" = linux \
 		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
 		&& test "$(TRAVIS_PULL_REQUEST)" = false \
@@ -52,6 +47,6 @@ upload:
 		&& ./elvish build-and-upload.elv \
 		|| echo "not build-and-uploading"
 
-travis: goveralls testmain upload
+travis: testmain upload-coverage upload-bin
 
-.PHONY: default get generate test goveralls upload travis
+.PHONY: default get generate test testmain upload-coverage upload-bin travis

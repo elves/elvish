@@ -13,8 +13,6 @@ import (
 // supplies does not match with what is required.
 var ErrArityMismatch = errors.New("arity mismatch")
 
-var unnamedRestArg = "@"
-
 // Closure is a closure defined in elvish script.
 type Closure struct {
 	ArgNames []string

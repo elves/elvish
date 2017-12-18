@@ -11,10 +11,6 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
-// FdNil is a special impossible fd value used for "close fd" in
-// syscall.ProcAttr.Files.
-const fdNil uintptr = ^uintptr(0)
-
 var (
 	ErrExternalCmdOpts = errors.New("external commands don't accept elvish options")
 	ErrCdNoArg         = errors.New("implicit cd accepts no arguments")

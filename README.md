@@ -1,26 +1,23 @@
 # A friendly and expressive Unix shell
 
-[![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg)](https://travis-ci.org/elves/elvish) Linux & macOS on TravisCI
-
-[![Build Status on VSTS](https://xiaq.visualstudio.com/_apis/public/build/definitions/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1/badge)](https://xiaq.visualstudio.com/elvish/_build) macOS on VSTS
-
-[![Build status on AppVeyor](https://ci.appveyor.com/api/projects/status/l869l22vsjbubch9?svg=true)](https://ci.appveyor.com/project/xiaq/elvish) Windows on AppVeyor
-
+[![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?label=Linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
+[![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=Windows)](https://ci.appveyor.com/project/xiaq/elvish)
+[![Build Status on VSTS](https://img.shields.io/vso/build/xiaq/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1.svg?label=macOS)](https://xiaq.visualstudio.com/elvish/_build)
 
 [![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
-[![Coverage Status](https://coveralls.io/repos/github/elves/elvish/badge.svg?branch=master)](https://coveralls.io/github/elves/elvish?branch=master)
+[![Code Coverage on codecov.io](https://codecov.io/gh/elves/elvish/branch/master/graph/badge.svg)](https://codecov.io/gh/elves/elvish)
 [![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
 [![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
 User groups:
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/elves/elvish-public)
-[![Telegram Group](https://img.shields.io/badge/telegram%20group-join-blue.svg)](https://telegram.me/elvish)
-[![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-000000.svg)](https://webchat.freenode.net/?channels=elvish)
+[![Gitter](https://img.shields.io/badge/gitter-elvish--public-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish-public)
+[![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg)](https://telegram.me/elvish)
+[![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-blue.svg)](https://webchat.freenode.net/?channels=elvish)
 
 Developer groups:
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/elves/elvish-dev)
-[![Telegram Group](https://img.shields.io/badge/telegram%20group-join-blue.svg)](https://telegram.me/elvish_dev)
+[![Gitter](https://img.shields.io/badge/gitter-elvish--dev-000000.svg?logo=gitter-white)](https://gitter.im/elves/elvish-dev)
+[![Telegram Group](https://img.shields.io/badge/telegram-@elvish__dev-000000.svg)](https://telegram.me/elvish_dev)
 [![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish--dev-000000.svg)](https://webchat.freenode.net/?channels=elvish-dev)
 
 [![logo](https://elvish.io/assets/logo.svg)](https://elvish.io/)

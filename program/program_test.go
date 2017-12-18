@@ -33,9 +33,6 @@ var findProgramTests = []struct {
 	}},
 	{[]string{"-daemon"}, isDaemon},
 	{[]string{"-daemon", "x"}, isShowCorrectUsage},
-	{[]string{"-daemon", "-forked", "1"}, func(p Program) bool {
-		return p.(Daemon).inner.Forked == 1
-	}},
 
 	{[]string{"-bin", "/elvish"}, func(p Program) bool {
 		return p.(*shell.Shell).BinPath == "/elvish"

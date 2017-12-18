@@ -68,7 +68,6 @@ func newFlagSet() *flagSet {
 	f.IntVar(&f.Port, "port", defaultWebPort, "the port of the web backend")
 
 	f.BoolVar(&f.Daemon, "daemon", false, "run daemon instead of shell")
-	f.IntVar(&f.Forked, "forked", 0, "how many times the daemon has forked")
 
 	f.StringVar(&f.Bin, "bin", "", "path to the elvish binary")
 	f.StringVar(&f.DB, "db", "", "path to the database")
@@ -141,7 +140,6 @@ func FindProgram(flag *flagSet) Program {
 			return ShowCorrectUsage{"arguments are not allowed with -daemon", flag}
 		}
 		return Daemon{inner: &daemon.Daemon{
-			Forked:        flag.Forked,
 			BinPath:       flag.Bin,
 			DbPath:        flag.DB,
 			SockPath:      flag.Sock,

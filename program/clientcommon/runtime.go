@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -35,7 +35,7 @@ func InitRuntime(binpath, sockpath, dbpath string) *eval.Evaler {
 		fmt.Fprintln(os.Stderr, "warning: cannot create data directory ~/.elvish")
 	} else {
 		if dbpath == "" {
-			dbpath = dataDir + "/db"
+			dbpath = filepath.Join(dataDir, "db")
 		}
 	}
 
@@ -46,15 +46,14 @@ func InitRuntime(binpath, sockpath, dbpath string) *eval.Evaler {
 		runDir = dataDir
 	}
 	if sockpath == "" {
-		sockpath = runDir + "/sock"
+		sockpath = filepath.Join(runDir, "sock")
 	}
 
 	toSpawn := &daemon.Daemon{
-		Forked:        0,
 		BinPath:       binpath,
 		DbPath:        dbpath,
 		SockPath:      sockpath,
-		LogPathPrefix: runDir + "/daemon.log.",
+		LogPathPrefix: filepath.Join(runDir, "daemon.log-"),
 	}
 	var cl *daemonapi.Client
 	if sockpath != "" && dbpath != "" {
@@ -145,22 +144,3 @@ var (
 	ErrBadOwner      = errors.New("bad owner")
 	ErrBadPermission = errors.New("bad permission")
 )
-
-// getSecureRunDir stats /tmp/elvish-$uid, creating it if it doesn't yet exist,
-// and return the directory name if it has the correct owner and permission.
-func getSecureRunDir() (string, error) {
-	uid := os.Getuid()
-
-	runDir := path.Join(os.TempDir(), fmt.Sprintf("elvish-%d", uid))
-	err := os.MkdirAll(runDir, 0700)
-	if err != nil {
-		return "", fmt.Errorf("mkdir: %v", err)
-	}
-
-	info, err := os.Stat(runDir)
-	if err != nil {
-		return "", err
-	}
-
-	return runDir, checkExclusiveAccess(info, uid)
-}

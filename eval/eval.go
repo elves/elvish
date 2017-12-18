@@ -6,7 +6,6 @@ package eval
 
 import (
 	"bufio"
-	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -133,15 +132,6 @@ func (ec *EvalCtx) fork(name string) *EvalCtx {
 	}
 }
 
-// port returns ec.ports[i] or nil if i is out of range. This makes it possible
-// to treat ec.ports as if it has an infinite tail of nil's.
-func (ec *EvalCtx) port(i int) *Port {
-	if i >= len(ec.ports) {
-		return nil
-	}
-	return ec.ports[i]
-}
-
 // growPorts makes the size of ec.ports at least n, adding nil's if necessary.
 func (ec *EvalCtx) growPorts(n int) {
 	if len(ec.ports) >= n {
@@ -246,21 +236,6 @@ func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, name, text string) error {
 	unignoreTTOU()
 
 	return err
-}
-
-func summarize(text string) string {
-	// TODO Make a proper summary.
-	if len(text) < 32 {
-		return text
-	}
-	var b bytes.Buffer
-	for i, r := range text {
-		if i+len(string(r)) >= 32 {
-			break
-		}
-		b.WriteRune(r)
-	}
-	return b.String()
 }
 
 // Compile compiles elvish code in the global scope. If the error is not nil, it

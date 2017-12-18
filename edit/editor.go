@@ -25,16 +25,11 @@ import (
 
 var logger = util.GetLogger("[edit] ")
 
-const (
-	lackEOLRune = '\u23ce'
-	lackEOL     = "\033[7m" + string(lackEOLRune) + "\033[m"
-)
-
 // Editor keeps the status of the line editor.
 type Editor struct {
 	in     *os.File
 	out    *os.File
-	writer *tty.Writer
+	writer tty.Writer
 	reader tty.Reader
 	sigs   chan os.Signal
 	daemon *api.Client
@@ -261,56 +256,19 @@ func (ed *Editor) startReadLine() error {
 
 	restoreTerminal, err := tty.Setup(ed.in, ed.out)
 	if err != nil {
+		if restoreTerminal != nil {
+			restoreTerminal()
+		}
 		return err
 	}
 	ed.restoreTerminal = restoreTerminal
-
-	_, width := sys.GetWinsize(ed.out)
-	/*
-		Write a lackEOLRune if the cursor is not in the leftmost column. This is
-		done as follows:
-
-		1. Turn on autowrap;
-
-		2. Write lackEOL along with enough padding, so that the total width is
-		   equal to the width of the screen.
-
-		   If the cursor was in the first column, we are still in the same line,
-		   just off the line boundary. Otherwise, we are now in the next line.
-
-		3. Rewind to the first column, write one space and rewind again. If the
-		   cursor was in the first column to start with, we have just erased the
-		   LackEOL character. Otherwise, we are now in the next line and this is
-		   a no-op. The LackEOL character remains.
-	*/
-	fmt.Fprintf(ed.out, "\033[?7h%s%*s\r \r", lackEOL, width-util.Wcwidth(lackEOLRune), "")
-
-	/*
-		Turn off autowrap.
-
-		The terminals sometimes has different opinions about how wide some
-		characters are (notably emojis and some dingbats) with elvish. When that
-		happens, elvish becomes wrong about where the cursor is when it writes
-		its output, and the effect can be disastrous.
-
-		If we turn off autowrap, the terminal won't insert any newlines behind
-		the scene, so elvish is always right about which line the cursor is.
-		With a bit more caution, this can restrict the consequence of the
-		mismatch within one line.
-	*/
-	ed.out.WriteString("\033[?7l")
-	// Turn on SGR-style mouse tracking.
-	//ed.out.WriteString("\033[?1000;1006h")
-
-	// Enable bracketed paste.
-	ed.out.WriteString("\033[?2004h")
 
 	return nil
 }
 
 // finishReadLine puts the terminal in a state suitable for other programs to
 // use.
-func (ed *Editor) finishReadLine(addError func(error)) {
+func (ed *Editor) finishReadLine() error {
 	ed.activeMutex.Lock()
 	defer ed.activeMutex.Unlock()
 	ed.active = false
@@ -322,45 +280,36 @@ func (ed *Editor) finishReadLine(addError func(error)) {
 	if !prompt.RpromptPersistent(ed) {
 		ed.rpromptContent = nil
 	}
-	addError(ed.refresh(false, false))
+	errRefresh := ed.refresh(false, false)
 	ed.out.WriteString("\n")
 	ed.writer.ResetCurrentBuffer()
 
 	ed.reader.Stop()
 
-	// Turn on autowrap.
-	ed.out.WriteString("\033[?7h")
-	// Turn off mouse tracking.
-	//ed.out.WriteString("\033[?1000;1006l")
-
-	// Disable bracketed paste.
-	ed.out.WriteString("\033[?2004l")
-
 	// Restore termios.
-	err := ed.restoreTerminal()
-	if err != nil {
-		addError(fmt.Errorf("can't restore terminal attribute: %s", err))
-	}
+	errRestore := ed.restoreTerminal()
 
 	// Save the line before resetting all of editorState.
 	line := ed.buffer
-
 	ed.editorState = editorState{}
 
 	callHooks(ed.evaler, ed.afterReadLine(), eval.String(line))
+
+	return util.Errors(errRefresh, errRestore)
 }
 
 // ReadLine reads a line interactively.
-func (ed *Editor) ReadLine() (line string, err error) {
-	e := ed.startReadLine()
-	if e != nil {
-		return "", e
+func (ed *Editor) ReadLine() (string, error) {
+	err := ed.startReadLine()
+	if err != nil {
+		return "", err
 	}
-	defer ed.finishReadLine(func(e error) {
-		if e != nil {
-			err = util.CatError(err, e)
+	defer func() {
+		err := ed.finishReadLine()
+		if err != nil {
+			fmt.Fprintln(ed.out, "error:", err)
 		}
-	})
+	}()
 
 	ed.mode = &ed.insert
 

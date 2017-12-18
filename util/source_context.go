@@ -68,10 +68,6 @@ func bca(s string, a, b int) (string, string, string) {
 	return s[:a], s[a:b], s[b:]
 }
 
-func countRunes(s string) int {
-	return strings.Count(s, "") - 1
-}
-
 func firstLine(s string) string {
 	i := strings.IndexByte(s, '\n')
 	if i == -1 {

@@ -1,397 +1,114 @@
 package edit
 
-import (
-	"fmt"
-	"strings"
-	"unicode/utf8"
+// Completion in Elvish is organized around the concept of "completers",
+// functions that take the current AST Node (the Node that the cursor is at,
+// always a leaf in the AST) and an eval.Evaler and returns a specification for
+// the completion (a complSpec) -- a list of completion candidates, and which
+// part of the source code they can **replace**. When completion is requested,
+// the editor calls each completer; it is up to the completer to decide whether
+// they apply to the current context. As soon as one completer returns results,
+// the remaining completers are not tried.
+//
+// As an example instance, if the user writes the following and presses Tab:
+//
+// echo $p
+//
+// assuming that only the builtin variables $paths, $pid and $pwd are viable
+// candidates, one of the completers -- the variable completer -- will return a
+// complSpec that means "any of paths, pid and pwd can replace the 'p' in the
+// source code".
+//
+// Note that the "replace" part in the semantics of complSpec is important: in
+// the default setting of prefix matching, it might be easier to define
+// complSpec in such a way that completers say "any of aths, id and wd can be
+// appended to the 'p' in the source code". However, this is not flexible enough
+// for alternative matching mechanism like substring matching or subsequence
+// matching, where the "seed" of completion (here, p) may not be a prefix of the
+// candidates.
+//
+// There is one completer that deserves more attention than others, the
+// completer for arguments. Unlike other completers, it delegates most of its
+// work to argument completers. See the comment in arg_completers.go for
+// details.
 
-	"github.com/elves/elvish/edit/ui"
+import (
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
 
-// Completion mode.
-
-// Interface.
-
-var _ = registerBuiltins(modeCompletion, map[string]func(*Editor){
-	"smart-start":    complSmartStart,
-	"start":          complStart,
-	"up":             complUp,
-	"up-cycle":       complUpCycle,
-	"down":           complDown,
-	"down-cycle":     complDownCycle,
-	"left":           complLeft,
-	"right":          complRight,
-	"accept":         complAccept,
-	"trigger-filter": complTriggerFilter,
-	"default":        complDefault,
-})
-
-func init() {
-	registerBindings(modeCompletion, modeCompletion, map[ui.Key]string{
-		{ui.Up, 0}:         "up",
-		{ui.Down, 0}:       "down",
-		{ui.Tab, 0}:        "down-cycle",
-		{ui.Tab, ui.Shift}: "up-cycle",
-		{ui.Left, 0}:       "left",
-		{ui.Right, 0}:      "right",
-		{ui.Enter, 0}:      "accept",
-		{'F', ui.Ctrl}:     "trigger-filter",
-		{'[', ui.Ctrl}:     "insert:start",
-		ui.Default:         "default",
-	})
+type complContext interface {
+	name() string
+	common() *complContextCommon
+	generate(*eval.Evaler, chan<- rawCandidate) error
 }
 
-type completion struct {
-	complSpec
-	completer string
-
-	filtering       bool
-	filter          string
-	filtered        []*candidate
-	selected        int
-	firstShown      int
-	lastShownInFull int
-	height          int
+type complContextCommon struct {
+	seed       string
+	quoting    parse.PrimaryType
+	begin, end int
 }
 
-func (*completion) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
-	return getBinding(m[modeCompletion], k)
+func (c *complContextCommon) common() *complContextCommon { return c }
+
+// complSpec is the result of a completion, meaning that any of the candidates
+// can replace the text in the interval [begin, end).
+type complSpec struct {
+	begin      int
+	end        int
+	candidates []*candidate
 }
 
-func (c *completion) needScrollbar() bool {
-	return c.firstShown > 0 || c.lastShownInFull < len(c.filtered)-1
+// A complContextFinder takes the current Node (always a leaf in the AST) and an
+// Evaler, and returns a complContext. If the complContext does not apply to the
+// type of the current Node, it should return nil.
+type complContextFinder func(parse.Node, pureEvaler) complContext
+
+type pureEvaler interface {
+	PurelyEvalCompound(*parse.Compound) (string, error)
+	PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Indexing) (string, error)
+	PurelyEvalPrimary(*parse.Primary) eval.Value
 }
 
-func (c *completion) ModeLine() ui.Renderer {
-	ml := modeLineRenderer{fmt.Sprintf(" COMPLETING %s ", c.completer), c.filter}
-	if !c.needScrollbar() {
-		return ml
-	}
-	return modeLineWithScrollBarRenderer{ml,
-		len(c.filtered), c.firstShown, c.lastShownInFull + 1}
+var complContextFinders = []complContextFinder{
+	findVariableComplContext,
+	findCommandComplContext,
+	findIndexComplContext,
+	findRedirComplContext,
+	findArgComplContext,
 }
 
-func (c *completion) CursorOnModeLine() bool {
-	return c.filtering
-}
-
-func complStart(ed *Editor) {
-	startCompletionInner(ed, false)
-}
-
-func complSmartStart(ed *Editor) {
-	startCompletionInner(ed, true)
-}
-
-func complUp(ed *Editor) {
-	ed.completion.prev(false)
-}
-
-func complDown(ed *Editor) {
-	ed.completion.next(false)
-}
-
-func complLeft(ed *Editor) {
-	if c := ed.completion.selected - ed.completion.height; c >= 0 {
-		ed.completion.selected = c
-	}
-}
-
-func complRight(ed *Editor) {
-	if c := ed.completion.selected + ed.completion.height; c < len(ed.completion.filtered) {
-		ed.completion.selected = c
-	}
-}
-
-func complUpCycle(ed *Editor) {
-	ed.completion.prev(true)
-}
-
-func complDownCycle(ed *Editor) {
-	ed.completion.next(true)
-}
-
-// acceptCompletion accepts currently selected completion candidate.
-func complAccept(ed *Editor) {
-	c := ed.completion
-	if 0 <= c.selected && c.selected < len(c.filtered) {
-		ed.buffer, ed.dot = c.apply(ed.buffer, ed.dot)
-	}
-	ed.mode = &ed.insert
-}
-
-func complDefault(ed *Editor) {
-	k := ed.lastKey
-	c := &ed.completion
-	if c.filtering && likeChar(k) {
-		c.changeFilter(c.filter + string(k.Rune))
-	} else if c.filtering && k == (ui.Key{ui.Backspace, 0}) {
-		_, size := utf8.DecodeLastRuneInString(c.filter)
-		if size > 0 {
-			c.changeFilter(c.filter[:len(c.filter)-size])
+// complete takes a Node and Evaler and tries all complContexts. It returns the
+// name of the complContext, and the result and error it gave. If no complContext is
+// available, it returns an empty complContext name.
+func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
+	ed := ev.Editor.(*Editor)
+	for _, finder := range complContextFinders {
+		ctx := finder(n, ev)
+		if ctx == nil {
+			continue
 		}
-	} else {
-		complAccept(ed)
-		ed.setAction(reprocessKey)
-	}
-}
+		name := ctx.name()
+		ctxCommon := ctx.common()
 
-func complTriggerFilter(ed *Editor) {
-	c := &ed.completion
-	if c.filtering {
-		c.filtering = false
-		c.changeFilter("")
-	} else {
-		c.filtering = true
-	}
-}
-
-func (c *completion) selectedCandidate() *candidate {
-	if c.selected == -1 {
-		return &candidate{}
-	}
-	return c.filtered[c.selected]
-}
-
-// apply returns the line and dot after applying a candidate.
-func (c *completion) apply(line string, dot int) (string, int) {
-	text := c.selectedCandidate().code
-	return line[:c.begin] + text + line[c.end:], c.begin + len(text)
-}
-
-func (c *completion) prev(cycle bool) {
-	c.selected--
-	if c.selected == -1 {
-		if cycle {
-			c.selected = len(c.filtered) - 1
-		} else {
-			c.selected++
-		}
-	}
-}
-
-func (c *completion) next(cycle bool) {
-	c.selected++
-	if c.selected == len(c.filtered) {
-		if cycle {
-			c.selected = 0
-		} else {
-			c.selected--
-		}
-	}
-}
-
-func startCompletionInner(ed *Editor, acceptPrefix bool) {
-	node := findLeafNode(ed.chunk, ed.dot)
-	if node == nil {
-		return
-	}
-
-	completer, complSpec, err := complete(node, ed.evaler)
-
-	if err != nil {
-		ed.addTip("%v", err)
-		// We don't show the full stack trace. To make debugging still possible,
-		// we log it.
-		if pprinter, ok := err.(util.Pprinter); ok {
-			logger.Println("matcher error:")
-			logger.Println(pprinter.Pprint(""))
-		}
-	} else if completer == "" {
-		ed.addTip("unsupported completion :(")
-		logger.Println("path to current leaf, leaf first")
-		for n := node; n != nil; n = n.Parent() {
-			logger.Printf("%T (%d-%d)", n, n.Begin(), n.End())
-		}
-	} else if len(complSpec.candidates) == 0 {
-		ed.addTip("no candidate for %s", completer)
-	} else {
-		if acceptPrefix {
-			// If there is a non-empty longest common prefix, insert it and
-			// don't start completion mode.
-			//
-			// As a special case, when there is exactly one candidate, it is
-			// immeidately accepted.
-			prefix := complSpec.candidates[0].code
-			for _, cand := range complSpec.candidates[1:] {
-				prefix = commonPrefix(prefix, cand.code)
-				if prefix == "" {
-					break
-				}
-			}
-
-			if prefix != "" && len(prefix) > complSpec.end-complSpec.begin {
-				ed.buffer = ed.buffer[:complSpec.begin] + prefix + ed.buffer[complSpec.end:]
-				ed.dot = complSpec.begin + len(prefix)
-
-				return
-			}
-		}
-		ed.completion = completion{
-			completer: completer,
-			complSpec: *complSpec,
-			filtered:  complSpec.candidates,
-		}
-		ed.mode = &ed.completion
-	}
-}
-
-// commonPrefix returns the longest common prefix of two strings.
-func commonPrefix(s, t string) string {
-	for i, r := range s {
-		if i >= len(t) {
-			return s[:i]
-		}
-		r2, _ := utf8.DecodeRuneInString(t[i:])
-		if r2 != r {
-			return s[:i]
-		}
-	}
-	return s
-}
-
-const (
-	completionColMarginLeft  = 1
-	completionColMarginRight = 1
-	completionColMarginTotal = completionColMarginLeft + completionColMarginRight
-)
-
-// maxWidth finds the maximum wcwidth of display texts of candidates [lo, hi).
-// hi may be larger than the number of candidates, in which case it is truncated
-// to the number of candidates.
-func (c *completion) maxWidth(lo, hi int) int {
-	if hi > len(c.filtered) {
-		hi = len(c.filtered)
-	}
-	width := 0
-	for i := lo; i < hi; i++ {
-		w := util.Wcswidth(c.filtered[i].menu.Text)
-		if width < w {
-			width = w
-		}
-	}
-	return width
-}
-
-func (c *completion) ListRender(width, maxHeight int) *ui.Buffer {
-	b := ui.NewBuffer(width)
-	cands := c.filtered
-	if len(cands) == 0 {
-		b.WriteString(util.TrimWcwidth("(no result)", width), "")
-		return b
-	}
-	if maxHeight <= 1 || width <= 2 {
-		b.WriteString(util.TrimWcwidth("(terminal too small)", width), "")
-		return b
-	}
-
-	// Reserve the the rightmost row as margins.
-	width--
-
-	// Determine comp.height and comp.firstShown.
-	// First determine whether all candidates can be fit in the screen,
-	// assuming that they are all of maximum width. If that is the case, we use
-	// the computed height as the height for the listing, and the first
-	// candidate to show is 0. Otherwise, we use min(height, len(cands)) as the
-	// height and find the first candidate to show.
-	perLine := max(1, width/(c.maxWidth(0, len(cands))+completionColMarginTotal))
-	heightBound := util.CeilDiv(len(cands), perLine)
-	first := 0
-	height := 0
-	if heightBound < maxHeight {
-		height = heightBound
-	} else {
-		height = min(maxHeight, len(cands))
-		// Determine the first column to show. We start with the column in which the
-		// selected one is found, moving to the left until either the width is
-		// exhausted, or the old value of firstShown has been hit.
-		first = c.selected / height * height
-		w := c.maxWidth(first, first+height) + completionColMarginTotal
-		for ; first > c.firstShown; first -= height {
-			dw := c.maxWidth(first-height, first) + completionColMarginTotal
-			if w+dw > width {
-				break
-			}
-			w += dw
-		}
-	}
-	c.height = height
-	c.firstShown = first
-
-	var i, j int
-	remainedWidth := width
-	trimmed := false
-	// Show the results in columns, until width is exceeded.
-	for i = first; i < len(cands); i += height {
-		// Determine the width of the column (without the margin)
-		colWidth := c.maxWidth(i, min(i+height, len(cands)))
-		totalColWidth := colWidth + completionColMarginTotal
-		if totalColWidth > remainedWidth {
-			totalColWidth = remainedWidth
-			colWidth = totalColWidth - completionColMarginTotal
-			trimmed = true
+		matcher, ok := ed.lookupMatcher(name)
+		if !ok {
+			return name, nil, errMatcherMustBeFn
 		}
 
-		col := ui.NewBuffer(totalColWidth)
-		for j = i; j < i+height; j++ {
-			if j > i {
-				col.Newline()
-			}
-			if j >= len(cands) {
-				// Write padding to make the listing a rectangle.
-				col.WriteSpaces(totalColWidth, styleForCompletion.String())
-			} else {
-				col.WriteSpaces(completionColMarginLeft, styleForCompletion.String())
-				s := ui.JoinStyles(styleForCompletion, cands[j].menu.Styles)
-				if j == c.selected {
-					s = append(s, styleForSelectedCompletion.String())
-				}
-				col.WriteString(util.ForceWcwidth(cands[j].menu.Text, colWidth), s.String())
-				col.WriteSpaces(completionColMarginRight, styleForCompletion.String())
-				if !trimmed {
-					c.lastShownInFull = j
-				}
-			}
-		}
+		chanRawCandidate := make(chan rawCandidate)
+		chanErrGenerate := make(chan error)
+		go func() {
+			err := ctx.generate(ev, chanRawCandidate)
+			close(chanRawCandidate)
+			chanErrGenerate <- err
+		}()
 
-		b.ExtendRight(col, 0)
-		remainedWidth -= totalColWidth
-		if remainedWidth <= completionColMarginTotal {
-			break
-		}
-	}
-	// When the listing is incomplete, always use up the entire width.
-	if remainedWidth > 0 && c.needScrollbar() {
-		col := ui.NewBuffer(remainedWidth)
-		for i := 0; i < height; i++ {
-			if i > 0 {
-				col.Newline()
-			}
-			col.WriteSpaces(remainedWidth, styleForCompletion.String())
-		}
-		b.ExtendRight(col, 0)
-		remainedWidth = 0
-	}
-	return b
-}
+		candidates, errFilter := ev.Editor.(*Editor).filterAndCookCandidates(
+			ev, matcher, ctxCommon.seed, chanRawCandidate, ctxCommon.quoting)
+		spec := &complSpec{ctxCommon.begin, ctxCommon.end, candidates}
+		return name, spec, util.Errors(<-chanErrGenerate, errFilter)
 
-func (c *completion) changeFilter(f string) {
-	c.filter = f
-	if f == "" {
-		c.filtered = c.candidates
-		return
 	}
-	c.filtered = nil
-	for _, cand := range c.candidates {
-		if strings.Contains(cand.menu.Text, f) {
-			c.filtered = append(c.filtered, cand)
-		}
-	}
-	if len(c.filtered) > 0 {
-		c.selected = 0
-	} else {
-		c.selected = -1
-	}
+	return "", nil, nil
 }

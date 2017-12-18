@@ -7,12 +7,14 @@ import (
 	"os"
 
 	"github.com/elves/elvish/sys"
+	"github.com/elves/elvish/util"
 )
 
 const flushInputDuringSetup = false
 
 func setup(in, out *os.File) (func() error, error) {
-	// Ignore out on Unix; all fds pointing to the terminal are equivalent.
+	// On Unix, use input file for changing termios. All fds pointing to the
+	// same terminal are equivalent.
 
 	fd := int(in.Fd())
 	term, err := sys.NewTermiosFromFd(fd)
@@ -44,7 +46,7 @@ func setup(in, out *os.File) (func() error, error) {
 	}
 
 	restore := func() error {
-		return savedTermios.ApplyToFd(fd)
+		return util.Errors(savedTermios.ApplyToFd(fd), restoreVT(out))
 	}
 	return restore, nil
 }
