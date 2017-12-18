@@ -39,15 +39,9 @@ import (
 )
 
 var (
-	errCompletionUnapplicable = errors.New("completion unapplicable")
-	errCannotEvalIndexee      = errors.New("cannot evaluate indexee")
-	errCannotIterateKey       = errors.New("indexee does not support iterating keys")
+	errCannotEvalIndexee = errors.New("cannot evaluate indexee")
+	errCannotIterateKey  = errors.New("indexee does not support iterating keys")
 )
-
-// completer takes the current Node (always a leaf in the AST) and an Editor and
-// returns a compl. If the completer does not apply to the type of the current
-// Node, it should return an error of ErrCompletionUnapplicable.
-type completer func(parse.Node, *eval.Evaler, eval.CallableValue) (*complSpec, error)
 
 type completerIface interface {
 	name() string
@@ -62,13 +56,10 @@ type complSpec struct {
 	candidates []*candidate
 }
 
-// completers is the list of all completers.
-// TODO(xiaq): Make this list programmable.
-var completers = []struct {
-	name string
-	completer
-}{}
-
+// A completerFinder takes the current Node (always a leaf in the AST) and an
+// Evaler, and returns a completerIface. If the completer does not apply to the
+// type of the current Node, it should return nil.
+//
 // TODO: Replace *eval.Evaler with the smallest possible interface
 type completerFinder func(parse.Node, *eval.Evaler) completerIface
 
@@ -85,19 +76,6 @@ var completerFinders = []completerFinder{
 // available, it returns an empty completer name.
 func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 	ed := ev.Editor.(*Editor)
-	for _, item := range completers {
-		matcher, ok := ed.lookupMatcher(item.name)
-		if !ok {
-			return item.name, nil, errMatcherMustBeFn
-		}
-
-		compl, err := item.completer(n, ev, matcher)
-		if compl != nil {
-			return item.name, compl, nil
-		} else if err != nil && err != errCompletionUnapplicable {
-			return item.name, nil, err
-		}
-	}
 	for _, finder := range completerFinders {
 		completer := finder(n, ev)
 		if completer == nil {
