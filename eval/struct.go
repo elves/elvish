@@ -1,6 +1,8 @@
 package eval
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -97,16 +99,47 @@ func (s *Struct) index(idx Value) int {
 	return i
 }
 
-type StructDescriptor struct {
-	fieldNames []string
-	fieldIndex map[string]int
+// MarshalJSON encodes the Struct to a JSON Object.
+func (s *Struct) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteByte('{')
+	for i, fieldName := range s.Descriptor.fieldNames {
+		if i > 0 {
+			buf.WriteByte(',')
+		}
+		buf.Write(s.Descriptor.jsonFieldNames[i])
+		buf.WriteByte(':')
+		fieldJSON, err := json.Marshal(s.Fields[i])
+		if err != nil {
+			return nil, fmt.Errorf("cannot encode field %q: %v", fieldName, err)
+		}
+		buf.Write(fieldJSON)
+	}
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
 }
 
+// StructDescriptor contains information about the fields in a Struct.
+type StructDescriptor struct {
+	fieldNames     []string
+	jsonFieldNames [][]byte
+	fieldIndex     map[string]int
+}
+
+// NewStructDescriptor creates a new struct descriptor from a list of field
+// names.
 func NewStructDescriptor(fields ...string) *StructDescriptor {
 	fieldNames := append([]string(nil), fields...)
+	jsonFieldNames := make([][]byte, len(fields))
 	fieldIndex := make(map[string]int)
 	for i, name := range fieldNames {
 		fieldIndex[name] = i
+		jsonFieldName, err := json.Marshal(name)
+		// json.Marshal should never fail on string.
+		if err != nil {
+			panic(err)
+		}
+		jsonFieldNames[i] = jsonFieldName
 	}
-	return &StructDescriptor{fieldNames, fieldIndex}
+	return &StructDescriptor{fieldNames, jsonFieldNames, fieldIndex}
 }
