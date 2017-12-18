@@ -14,7 +14,7 @@ var ErrStoreUnconnected = errors.New("store unconnected")
 
 // EachVariableInTop calls the passed function for each variable name in
 // namespace ns that can be found from the top context.
-func (ev *Evaler) EachVariableInTop(ns string, f func(s string)) {
+func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 	switch ns {
 	case "builtin":
 		for name := range ev.Builtin.Names {
@@ -28,7 +28,7 @@ func (ev *Evaler) EachVariableInTop(ns string, f func(s string)) {
 			f(name)
 		}
 	case "e":
-		ev.EachExternal(func(cmd string) {
+		EachExternal(func(cmd string) {
 			f(FnPrefix + cmd)
 		})
 	case "E":
@@ -52,7 +52,7 @@ func (ev *Evaler) EachVariableInTop(ns string, f func(s string)) {
 
 // EachModInTop calls the passed function for each module that can be found from
 // the top context.
-func (ev *Evaler) EachModInTop(f func(s string)) {
+func (ev *evalerScopes) EachModInTop(f func(s string)) {
 	for name := range ev.Global.Uses {
 		f(name)
 	}
@@ -63,7 +63,7 @@ func (ev *Evaler) EachModInTop(f func(s string)) {
 
 // EachNsInTop calls the passed function for each namespace that can be used
 // from the top context.
-func (ev *Evaler) EachNsInTop(f func(s string)) {
+func (ev *evalerScopes) EachNsInTop(f func(s string)) {
 	f("builtin")
 	f("e")
 	f("E")

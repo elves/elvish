@@ -80,7 +80,7 @@ func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandida
 			}
 		})
 	}
-	ev.EachExternal(func(command string) {
+	eval.EachExternal(func(command string) {
 		got(command)
 		if strings.HasPrefix(head, "e:") {
 			got("e:" + command)

@@ -39,8 +39,7 @@ const (
 // Evaler is used to evaluate elvish sources. It maintains runtime context
 // shared among all evalCtx instances.
 type Evaler struct {
-	Global  Scope
-	Builtin Scope
+	evalerScopes
 	Modules map[string]Namespace
 	Daemon  *api.Client
 	ToSpawn *daemon.Daemon
@@ -50,6 +49,11 @@ type Evaler struct {
 
 	// Configurations.
 	valueOutIndicator string
+}
+
+type evalerScopes struct {
+	Global  Scope
+	Builtin Scope
 }
 
 // EvalCtx maintains an Evaler along with its runtime context. After creation
@@ -86,8 +90,10 @@ func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
 	}
 
 	ev := &Evaler{
-		Global:  makeScope(),
-		Builtin: builtin,
+		evalerScopes: evalerScopes{
+			Global:  makeScope(),
+			Builtin: builtin,
+		},
 		Modules: modules,
 		Daemon:  daemon,
 		ToSpawn: toSpawn,
@@ -101,7 +107,7 @@ func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
 	return ev
 }
 
-func (ev *Evaler) searchPaths() []string {
+func searchPaths() []string {
 	return strings.Split(os.Getenv("PATH"), ":")
 }
 

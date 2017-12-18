@@ -477,7 +477,7 @@ MainLoop:
 // channel.
 func getIsExternal(ev *eval.Evaler, result chan<- map[string]bool) {
 	isExternal := make(map[string]bool)
-	ev.EachExternal(func(name string) {
+	eval.EachExternal(func(name string) {
 		isExternal[name] = true
 	})
 	result <- isExternal

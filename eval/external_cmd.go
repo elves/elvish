@@ -2,6 +2,7 @@ package eval
 
 import (
 	"errors"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"syscall"
@@ -86,5 +87,20 @@ func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value, opts map[string]Value) {
 		throw(err)
 	} else {
 		maybeThrow(NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid))
+	}
+}
+
+// EachExternal calls f for each name that can resolve to an external
+// command.
+// TODO(xiaq): Windows support
+func EachExternal(f func(string)) {
+	for _, dir := range searchPaths() {
+		// XXX Ignore error
+		infos, _ := ioutil.ReadDir(dir)
+		for _, info := range infos {
+			if !info.IsDir() && (info.Mode()&0111 != 0) {
+				f(info.Name())
+			}
+		}
 	}
 }
