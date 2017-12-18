@@ -9,12 +9,12 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type completerFinderTest struct {
+type complContextFinderTest struct {
 	src  string
-	want completerIface
+	want complContext
 }
 
-func testCompleterFinder(t *testing.T, name string, finder completerFinder, tests []completerFinderTest) {
+func testComplContextFinder(t *testing.T, name string, finder complContextFinder, tests []complContextFinderTest) {
 	ev := eval.NewEvaler(api.NewClient("/invalid"), nil, "", make(map[string]eval.Namespace))
 	for _, test := range tests {
 		n, err := parse.Parse("[test]", test.src)

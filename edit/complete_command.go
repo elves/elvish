@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-type commandCompleter struct {
+type commandComplContext struct {
 	seed       string
 	quoting    parse.PrimaryType
 	begin, end int
@@ -16,7 +16,7 @@ type commandCompleter struct {
 
 const quotingForEmptySeed = parse.Bareword
 
-func findCommandCompleter(n parse.Node, ev *eval.Evaler) completerIface {
+func findCommandComplContext(n parse.Node, ev *eval.Evaler) complContext {
 	// Determine if we are starting a new command. There are 3 cases:
 	// 1. The whole chunk is empty (nothing entered at all): the leaf is a
 	//    Chunk.
@@ -24,17 +24,17 @@ func findCommandCompleter(n parse.Node, ev *eval.Evaler) completerIface {
 	//    a Chunk.
 	// 3. Just after a pipe: the leaf is a Sep and its parent is a Pipeline.
 	if parse.IsChunk(n) {
-		return &commandCompleter{"", parse.Bareword, n.End(), n.End()}
+		return &commandComplContext{"", parse.Bareword, n.End(), n.End()}
 	}
 	if parse.IsSep(n) {
 		parent := n.Parent()
 		switch {
 		case parse.IsChunk(parent), parse.IsPipeline(parent):
-			return &commandCompleter{"", quotingForEmptySeed, n.End(), n.End()}
+			return &commandComplContext{"", quotingForEmptySeed, n.End(), n.End()}
 		case parse.IsPrimary(parent):
 			ptype := parent.(*parse.Primary).Type
 			if ptype == parse.OutputCapture || ptype == parse.ExceptionCapture {
-				return &commandCompleter{"", quotingForEmptySeed, n.End(), n.End()}
+				return &commandComplContext{"", quotingForEmptySeed, n.End(), n.End()}
 			}
 		}
 	}
@@ -43,7 +43,7 @@ func findCommandCompleter(n parse.Node, ev *eval.Evaler) completerIface {
 		if compound, seed := primaryInSimpleCompound(primary, ev); compound != nil {
 			if form, ok := compound.Parent().(*parse.Form); ok {
 				if form.Head == compound {
-					return &commandCompleter{seed, primary.Type, compound.Begin(), compound.End()}
+					return &commandComplContext{seed, primary.Type, compound.Begin(), compound.End()}
 				}
 			}
 		}
@@ -51,9 +51,9 @@ func findCommandCompleter(n parse.Node, ev *eval.Evaler) completerIface {
 	return nil
 }
 
-func (*commandCompleter) name() string { return "command" }
+func (*commandComplContext) name() string { return "command" }
 
-func (compl *commandCompleter) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
+func (ctx *commandComplContext) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
 	rawCands := make(chan rawCandidate)
 	collectErr := make(chan error)
 	go func() {
@@ -63,18 +63,18 @@ func (compl *commandCompleter) complete(ev *eval.Evaler, matcher eval.CallableVa
 			collectErr <- err
 		}()
 
-		err = complFormHeadInner(compl.seed, ev, rawCands)
+		err = complFormHeadInner(ctx.seed, ev, rawCands)
 	}()
 
 	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(
-		ev, matcher, compl.seed, rawCands, compl.quoting)
+		ev, matcher, ctx.seed, rawCands, ctx.quoting)
 	if ce := <-collectErr; ce != nil {
 		return nil, ce
 	}
 	if err != nil {
 		return nil, err
 	}
-	return &complSpec{compl.begin, compl.end, cands}, nil
+	return &complSpec{ctx.begin, ctx.end, cands}, nil
 }
 
 func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {

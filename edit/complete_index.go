@@ -5,27 +5,27 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type indexCompleter struct {
+type indexComplContext struct {
 	seed       string
 	quoting    parse.PrimaryType
 	indexee    eval.Value
 	begin, end int
 }
 
-func (*indexCompleter) name() string { return "index" }
+func (*indexComplContext) name() string { return "index" }
 
 // Find context information for complIndex.
 //
 // Right now we only support cases where there is only one level of indexing,
 // e.g. $a[<Tab> is supported but $a[x][<Tab> is not.
-func findIndexCompleter(n parse.Node, ev *eval.Evaler) completerIface {
+func findIndexComplContext(n parse.Node, ev *eval.Evaler) complContext {
 	if parse.IsSep(n) {
 		if parse.IsIndexing(n.Parent()) {
 			// We are just after an opening bracket.
 			indexing := parse.GetIndexing(n.Parent())
 			if len(indexing.Indicies) == 1 {
 				if indexee := purelyEvalPrimary(indexing.Head, ev); indexee != nil {
-					return &indexCompleter{"", quotingForEmptySeed, indexee, n.End(), n.End()}
+					return &indexComplContext{"", quotingForEmptySeed, indexee, n.End(), n.End()}
 				}
 			}
 		}
@@ -36,7 +36,7 @@ func findIndexCompleter(n parse.Node, ev *eval.Evaler) completerIface {
 				indexing := parse.GetIndexing(array.Parent())
 				if len(indexing.Indicies) == 1 {
 					if indexee := purelyEvalPrimary(indexing.Head, ev); indexee != nil {
-						return &indexCompleter{"", quotingForEmptySeed, indexee, n.End(), n.End()}
+						return &indexComplContext{"", quotingForEmptySeed, indexee, n.End(), n.End()}
 					}
 				}
 			}
@@ -54,7 +54,7 @@ func findIndexCompleter(n parse.Node, ev *eval.Evaler) completerIface {
 					indexing := parse.GetIndexing(array.Parent())
 					if len(indexing.Indicies) == 1 {
 						if indexee := purelyEvalPrimary(indexing.Head, ev); indexee != nil {
-							return &indexCompleter{current, primary.Type, indexee, compound.Begin(), compound.End()}
+							return &indexComplContext{current, primary.Type, indexee, compound.Begin(), compound.End()}
 						}
 					}
 				}
@@ -65,8 +65,8 @@ func findIndexCompleter(n parse.Node, ev *eval.Evaler) completerIface {
 	return nil
 }
 
-func (compl *indexCompleter) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
-	m, ok := compl.indexee.(eval.IterateKeyer)
+func (ctx *indexComplContext) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
+	m, ok := ctx.indexee.(eval.IterateKeyer)
 	if !ok {
 		return nil, errCannotIterateKey
 	}
@@ -79,11 +79,11 @@ func (compl *indexCompleter) complete(ev *eval.Evaler, matcher eval.CallableValu
 	}()
 
 	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(
-		ev, matcher, compl.seed, rawCands, compl.quoting)
+		ev, matcher, ctx.seed, rawCands, ctx.quoting)
 	if err != nil {
 		return nil, err
 	}
-	return &complSpec{compl.begin, compl.end, cands}, nil
+	return &complSpec{ctx.begin, ctx.end, cands}, nil
 }
 
 func complIndexInner(m eval.IterateKeyer, rawCands chan rawCandidate) {

@@ -13,20 +13,19 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-// XXX: Related to but not the same as those in arg_completer.go
-type argCompleter struct {
+type argComplContext struct {
 	seed       string
 	quoting    parse.PrimaryType
 	words      []string
 	begin, end int
 }
 
-func (*argCompleter) name() string { return "argument" }
+func (*argComplContext) name() string { return "argument" }
 
-func findArgCompleter(n parse.Node, ev *eval.Evaler) completerIface {
+func findArgComplContext(n parse.Node, ev *eval.Evaler) complContext {
 	if sep, ok := n.(*parse.Sep); ok {
 		if form, ok := sep.Parent().(*parse.Form); ok && form.Head != nil {
-			return &argCompleter{
+			return &argComplContext{
 				"", quotingForEmptySeed,
 				evalFormPure(form, "", n.End(), ev),
 				n.End(), n.End()}
@@ -36,7 +35,7 @@ func findArgCompleter(n parse.Node, ev *eval.Evaler) completerIface {
 		if compound, seed := primaryInSimpleCompound(primary, ev); compound != nil {
 			if form, ok := compound.Parent().(*parse.Form); ok {
 				if form.Head != nil && form.Head != compound {
-					return &argCompleter{
+					return &argComplContext{
 						seed, primary.Type,
 						evalFormPure(form, seed, compound.Begin(), ev),
 						compound.Begin(), compound.End()}
@@ -68,8 +67,8 @@ func evalFormPure(form *parse.Form, seed string, seedBegin int, ev *eval.Evaler)
 }
 
 // To complete an argument, delegate the actual completion work to a suitable
-// completer.
-func (compl *argCompleter) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
+// complContext.
+func (ctx *argComplContext) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
 	rawCands := make(chan rawCandidate)
 	collectErr := make(chan error)
 	go func() {
@@ -79,11 +78,11 @@ func (compl *argCompleter) complete(ev *eval.Evaler, matcher eval.CallableValue)
 			collectErr <- err
 		}()
 
-		err = completeArg(compl.words, ev, rawCands)
+		err = completeArg(ctx.words, ev, rawCands)
 	}()
 
 	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(
-		ev, matcher, compl.seed, rawCands, compl.quoting)
+		ev, matcher, ctx.seed, rawCands, ctx.quoting)
 	if ce := <-collectErr; ce != nil {
 		return nil, ce
 	}
@@ -91,7 +90,7 @@ func (compl *argCompleter) complete(ev *eval.Evaler, matcher eval.CallableValue)
 		return nil, err
 	}
 
-	return &complSpec{compl.begin, compl.end, cands}, nil
+	return &complSpec{ctx.begin, ctx.end, cands}, nil
 }
 
 // TODO: getStyle does redundant stats.

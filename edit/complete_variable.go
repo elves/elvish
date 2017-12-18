@@ -8,15 +8,15 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type variableCompleter struct {
+type variableComplContext struct {
 	ns, nsPart string
 	nameSeed   string
 	begin, end int
 }
 
-func (*variableCompleter) name() string { return "variable" }
+func (*variableComplContext) name() string { return "variable" }
 
-func findVariableCompleter(n parse.Node, _ *eval.Evaler) completerIface {
+func findVariableComplContext(n parse.Node, _ *eval.Evaler) complContext {
 	primary := parse.GetPrimary(n)
 	if primary != nil && primary.Type == parse.Variable {
 		explode, qname := eval.ParseVariableSplice(primary.Value)
@@ -27,18 +27,18 @@ func findVariableCompleter(n parse.Node, _ *eval.Evaler) completerIface {
 		if len(ns) > 0 {
 			ns = ns[:len(ns)-1]
 		}
-		return &variableCompleter{ns, nsPart, nameSeed, begin, primary.End()}
+		return &variableComplContext{ns, nsPart, nameSeed, begin, primary.End()}
 	}
 	return nil
 }
 
-func (compl *variableCompleter) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
+func (ctx *variableComplContext) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
 	rawCands := make(chan rawCandidate)
 	go func() {
 		defer close(rawCands)
 
 		// Collect matching variables.
-		iterateVariables(ev, compl.ns, func(varname string) {
+		iterateVariables(ev, ctx.ns, func(varname string) {
 			rawCands <- noQuoteCandidate(varname)
 		})
 
@@ -46,8 +46,8 @@ func (compl *variableCompleter) complete(ev *eval.Evaler, matcher eval.CallableV
 			modNsPart := mod + ":"
 			// This is to match namespaces that are "nested" under the current
 			// namespace.
-			if hasProperPrefix(modNsPart, compl.nsPart) {
-				rawCands <- noQuoteCandidate(modNsPart[len(compl.nsPart):])
+			if hasProperPrefix(modNsPart, ctx.nsPart) {
+				rawCands <- noQuoteCandidate(modNsPart[len(ctx.nsPart):])
 			}
 		}
 
@@ -61,13 +61,13 @@ func (compl *variableCompleter) complete(ev *eval.Evaler, matcher eval.CallableV
 		}
 	}()
 
-	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher, compl.nameSeed,
+	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(ev, matcher, ctx.nameSeed,
 		rawCands, parse.Bareword)
 	if err != nil {
 		return nil, err
 	}
 
-	return &complSpec{compl.begin, compl.end, cands}, nil
+	return &complSpec{ctx.begin, ctx.end, cands}, nil
 }
 
 func hasProperPrefix(s, p string) bool {

@@ -5,31 +5,31 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type redirCompleter struct {
+type redirComplContext struct {
 	seed       string
 	quoting    parse.PrimaryType
 	begin, end int
 }
 
-func (*redirCompleter) name() string { return "redir" }
+func (*redirComplContext) name() string { return "redir" }
 
-func findRedirCompleter(n parse.Node, ev *eval.Evaler) completerIface {
+func findRedirComplContext(n parse.Node, ev *eval.Evaler) complContext {
 	if parse.IsSep(n) {
 		if parse.IsRedir(n.Parent()) {
-			return &redirCompleter{"", quotingForEmptySeed, n.End(), n.End()}
+			return &redirComplContext{"", quotingForEmptySeed, n.End(), n.End()}
 		}
 	}
 	if primary, ok := n.(*parse.Primary); ok {
 		if compound, seed := primaryInSimpleCompound(primary, ev); compound != nil {
 			if parse.IsRedir(compound.Parent()) {
-				return &redirCompleter{seed, primary.Type, compound.Begin(), compound.End()}
+				return &redirComplContext{seed, primary.Type, compound.Begin(), compound.End()}
 			}
 		}
 	}
 	return nil
 }
 
-func (compl *redirCompleter) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
+func (ctx *redirComplContext) complete(ev *eval.Evaler, matcher eval.CallableValue) (*complSpec, error) {
 
 	rawCands := make(chan rawCandidate)
 	collectErr := make(chan error)
@@ -40,11 +40,11 @@ func (compl *redirCompleter) complete(ev *eval.Evaler, matcher eval.CallableValu
 			collectErr <- err
 		}()
 
-		err = complFilenameInner(compl.seed, false, rawCands)
+		err = complFilenameInner(ctx.seed, false, rawCands)
 	}()
 
 	cands, err := ev.Editor.(*Editor).filterAndCookCandidates(
-		ev, matcher, compl.seed, rawCands, compl.quoting)
+		ev, matcher, ctx.seed, rawCands, ctx.quoting)
 	if ce := <-collectErr; ce != nil {
 		return nil, ce
 	}
@@ -52,5 +52,5 @@ func (compl *redirCompleter) complete(ev *eval.Evaler, matcher eval.CallableValu
 		return nil, err
 	}
 
-	return &complSpec{compl.begin, compl.end, cands}, nil
+	return &complSpec{ctx.begin, ctx.end, cands}, nil
 }

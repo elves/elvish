@@ -2,12 +2,12 @@ package edit
 
 import "testing"
 
-func TestFindVariableCompleter(t *testing.T) {
-	testCompleterFinder(t, "findVariableCompleter", findVariableCompleter, []completerFinderTest{
-		{"$", &variableCompleter{"", "", "", 1, 1}},
-		{"$a", &variableCompleter{"", "", "a", 1, 2}},
-		{"$a:", &variableCompleter{"a", "a:", "", 3, 3}},
-		{"$a:b", &variableCompleter{"a", "a:", "b", 3, 4}},
+func TestFindVariableComplContext(t *testing.T) {
+	testComplContextFinder(t, "findVariableComplContext", findVariableComplContext, []complContextFinderTest{
+		{"$", &variableComplContext{"", "", "", 1, 1}},
+		{"$a", &variableComplContext{"", "", "a", 1, 2}},
+		{"$a:", &variableComplContext{"a", "a:", "", 3, 3}},
+		{"$a:b", &variableComplContext{"a", "a:", "b", 3, 4}},
 		// Wrong contexts
 		{"", nil},
 		{"echo", nil},

@@ -6,10 +6,10 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-func TestFindArgCompleter(t *testing.T) {
-	testCompleterFinder(t, "findArgCompleter", findArgCompleter, []completerFinderTest{
-		{"a ", &argCompleter{"", quotingForEmptySeed, []string{"a", ""}, 2, 2}},
-		{"a b", &argCompleter{"b", parse.Bareword, []string{"a", "b"}, 2, 3}},
+func TestFindArgComplContext(t *testing.T) {
+	testComplContextFinder(t, "findArgComplContext", findArgComplContext, []complContextFinderTest{
+		{"a ", &argComplContext{"", quotingForEmptySeed, []string{"a", ""}, 2, 2}},
+		{"a b", &argComplContext{"b", parse.Bareword, []string{"a", "b"}, 2, 3}},
 		// No space after command; won't complete arg
 		{"a", nil},
 	})
