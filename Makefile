@@ -31,7 +31,7 @@ cover/all: $(PKG_COVERS)
 # Disable coverage reports for pull requests. The general testability of the
 # code is pretty bad and it is premature to require contributors to maintain
 # code coverage.
-upload-codecov: cover/all
+upload-coverage: cover/all
 	test "$(TRAVIS_PULL_REQUEST)" = false \
 		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
 		&& curl -s https://codecov.io/bash -o codecov.bash \
