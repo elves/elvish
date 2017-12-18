@@ -31,19 +31,23 @@ func (exc *Exception) Error() string {
 
 func (exc *Exception) Pprint(indent string) string {
 	buf := new(bytes.Buffer)
-	// Error message
-	var msg string
-	if pprinter, ok := exc.Cause.(util.Pprinter); ok {
-		msg = pprinter.Pprint(indent)
-	} else {
-		msg = "\033[31;1m" + exc.Cause.Error() + "\033[m"
-	}
-	fmt.Fprintf(buf, "Exception: %s\n", msg)
-	buf.WriteString(indent + "Traceback:")
 
-	for tb := exc.Traceback; tb != nil; tb = tb.Next {
-		buf.WriteString("\n" + indent + "  ")
-		tb.Pprint(buf, indent+"    ")
+	var causeDescription string
+	if pprinter, ok := exc.Cause.(util.Pprinter); ok {
+		causeDescription = pprinter.Pprint(indent)
+	} else {
+		causeDescription = "\033[31;1m" + exc.Cause.Error() + "\033[m"
+	}
+	fmt.Fprintf(buf, "Exception: %s\n", causeDescription)
+
+	if exc.Traceback.Next == nil {
+		exc.Traceback.Pprint(buf, indent+"  ")
+	} else {
+		buf.WriteString(indent + "Traceback:")
+		for tb := exc.Traceback; tb != nil; tb = tb.Next {
+			buf.WriteString("\n" + indent + "  ")
+			tb.Pprint(buf, indent+"    ")
+		}
 	}
 
 	if pipeExcs, ok := exc.Cause.(PipelineError); ok {
@@ -210,18 +214,18 @@ func (exit ExternalCmdExit) Error() string {
 	case ws.Exited():
 		return quotedName + " exited with " + strconv.Itoa(ws.ExitStatus())
 	case ws.Signaled():
-		msg := quotedName + " killed by signal " + ws.Signal().String()
+		causeDescription := quotedName + " killed by signal " + ws.Signal().String()
 		if ws.CoreDump() {
-			msg += " (core dumped)"
+			causeDescription += " (core dumped)"
 		}
-		return msg
+		return causeDescription
 	case ws.Stopped():
-		msg := quotedName + " stopped by signal " + fmt.Sprintf("%s (pid=%d)", ws.StopSignal(), exit.Pid)
+		causeDescription := quotedName + " stopped by signal " + fmt.Sprintf("%s (pid=%d)", ws.StopSignal(), exit.Pid)
 		trap := ws.TrapCause()
 		if trap != -1 {
-			msg += fmt.Sprintf(" (trapped %v)", trap)
+			causeDescription += fmt.Sprintf(" (trapped %v)", trap)
 		}
-		return msg
+		return causeDescription
 	default:
 		return fmt.Sprint(quotedName, " has unknown WaitStatus ", ws)
 	}
