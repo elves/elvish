@@ -117,7 +117,7 @@ func makeFnOp(op Op) Op {
 func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 	args := cp.walkArgs(fn)
 	nameNode := args.next()
-	varName := FnPrefix + mustString(cp, nameNode, "must be a literal string")
+	varName := mustString(cp, nameNode, "must be a literal string") + FnSuffix
 	bodyNode := args.nextMustLambda()
 	args.mustEnd()
 

@@ -29,6 +29,6 @@ func AddBuiltinFns(ns Namespace, fns ...*BuiltinFn) {
 		if i := strings.IndexRune(b.Name, ':'); i != -1 {
 			name = b.Name[i+1:]
 		}
-		ns[FnPrefix+name] = NewRoVariable(b)
+		ns[name+FnSuffix] = NewRoVariable(b)
 	}
 }

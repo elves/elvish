@@ -135,7 +135,7 @@ func (bac *builtinArgCompleter) Hash() uint32 {
 }
 
 func (bac *builtinArgCompleter) Repr(int) string {
-	return "$edit:&" + bac.name
+	return "$edit:" + bac.name + eval.FnSuffix
 }
 
 func (bac *builtinArgCompleter) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {

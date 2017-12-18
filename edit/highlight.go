@@ -29,7 +29,7 @@ func goodFormHead(head string, ed *Editor) bool {
 		if !explode {
 			switch ns {
 			case "":
-				if ev.Builtin.Names[eval.FnPrefix+name] != nil || ev.Global.Names[eval.FnPrefix+name] != nil {
+				if ev.Builtin.Names[name+eval.FnSuffix] != nil || ev.Global.Names[name+eval.FnSuffix] != nil {
 					return true
 				}
 			case "e":
@@ -41,7 +41,7 @@ func goodFormHead(head string, ed *Editor) bool {
 				if mod == nil {
 					mod = ev.Builtin.Uses[ns]
 				}
-				if mod != nil && mod[eval.FnPrefix+name] != nil {
+				if mod != nil && mod[name+eval.FnSuffix] != nil {
 					return true
 				}
 			}

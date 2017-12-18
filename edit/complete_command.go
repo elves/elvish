@@ -73,8 +73,8 @@ func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandida
 	explode, ns, _ := eval.ParseVariable(head)
 	if !explode {
 		ev.EachVariableInTop(ns, func(varname string) {
-			if strings.HasPrefix(varname, eval.FnPrefix) {
-				got(eval.MakeVariableName(false, ns, varname[len(eval.FnPrefix):]))
+			if strings.HasSuffix(varname, eval.FnSuffix) {
+				got(eval.MakeVariableName(false, ns, varname[:len(varname)-len(eval.FnSuffix)]))
 			} else {
 				got(eval.MakeVariableName(false, ns, varname) + "=")
 			}

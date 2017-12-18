@@ -29,7 +29,7 @@ func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 		}
 	case "e":
 		EachExternal(func(cmd string) {
-			f(FnPrefix + cmd)
+			f(cmd + FnSuffix)
 		})
 	case "E":
 		for _, s := range os.Environ() {
@@ -90,8 +90,8 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 		}
 		return ec.Builtin.Names[name]
 	case "e":
-		if strings.HasPrefix(name, FnPrefix) {
-			return NewRoVariable(ExternalCmd{name[len(FnPrefix):]})
+		if strings.HasSuffix(name, FnSuffix) {
+			return NewRoVariable(ExternalCmd{name[:len(name)-len(FnSuffix)]})
 		}
 	case "E":
 		return envVariable{name}

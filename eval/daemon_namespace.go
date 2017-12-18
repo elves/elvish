@@ -21,7 +21,7 @@ func makeDaemonNamespace(daemon *api.Client) Namespace {
 		"pid":  MakeRoVariableFromCallback(daemonPid),
 		"sock": NewRoVariable(String(daemon.SockPath())),
 
-		FnPrefix + "spawn": NewRoVariable(&BuiltinFn{"daemon:spawn", daemonSpawn}),
+		"spawn" + FnSuffix: NewRoVariable(&BuiltinFn{"daemon:spawn", daemonSpawn}),
 	}
 }
 

@@ -26,9 +26,9 @@ import (
 
 var logger = util.GetLogger("[eval] ")
 
-// FnPrefix is the prefix for the variable names of functions. Defining a
-// function "foo" is equivalent to setting a variable named FnPrefix + "foo".
-const FnPrefix = "&"
+// FnSuffix is the suffix for the variable names of functions. Defining a
+// function "foo" is equivalent to setting a variable named "foo" + FnSuffix.
+const FnSuffix = "~"
 
 const (
 	outChanSize              = 32

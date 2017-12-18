@@ -138,7 +138,7 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 
 	// Completers.
 	for _, bac := range argCompletersData {
-		ns[eval.FnPrefix+bac.name] = eval.NewRoVariable(bac)
+		ns[bac.name+eval.FnSuffix] = eval.NewRoVariable(bac)
 	}
 
 	// Matchers.

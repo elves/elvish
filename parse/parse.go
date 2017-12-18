@@ -683,13 +683,13 @@ func (pn *Primary) variable(ps *Parser) {
 // The following are allowed in variable names:
 // * Anything beyond ASCII that is printable
 // * Letters and numbers
-// * The symbols "-_:&"
+// * The symbols "-_:~"
 func allowedInVariableName(r rune) bool {
 	return (r >= 0x80 && unicode.IsPrint(r)) ||
 		('0' <= r && r <= '9') ||
 		('a' <= r && r <= 'z') ||
 		('A' <= r && r <= 'Z') ||
-		r == '-' || r == '_' || r == ':' || r == '&'
+		r == '-' || r == '_' || r == ':' || r == '~'
 }
 
 func (pn *Primary) wildcard(ps *Parser) {
@@ -845,16 +845,16 @@ func (pn *Primary) bareword(ps *Parser, head bool) {
 }
 
 // The following are allowed in barewords:
-// * Anything allowed in variable names, except &
-// * The symbols "%+,./=@~!\"
+// * Anything allowed in variable names
+// * The symbols "%+,./=@!\"
 // * The symbols "<>*^", if the bareword is in head
 //
 // The seemingly weird inclusion of \ is for easier path manipulation in
 // Windows.
 func allowedInBareword(r rune, head bool) bool {
-	return (r != '&' && allowedInVariableName(r)) ||
+	return allowedInVariableName(r) ||
 		r == '%' || r == '+' || r == ',' || r == '.' ||
-		r == '/' || r == '=' || r == '@' || r == '~' || r == '!' || r == '\\' ||
+		r == '/' || r == '=' || r == '@' || r == '!' || r == '\\' ||
 		(head && (r == '<' || r == '>' || r == '*' || r == '^'))
 }
 

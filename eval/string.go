@@ -90,7 +90,7 @@ func resolve(s string, ec *EvalCtx) CallableValue {
 	// Try variable
 	explode, ns, name := ParseAndFixVariable(string(s))
 	if !explode {
-		if v := ec.ResolveVar(ns, FnPrefix+name); v != nil {
+		if v := ec.ResolveVar(ns, name+FnSuffix); v != nil {
 			if caller, ok := v.Get().(CallableValue); ok {
 				return caller
 			}

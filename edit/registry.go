@@ -47,12 +47,11 @@ func registerBuiltins(module string, impls map[string]func(*Editor)) struct{} {
 		builtinMaps[module] = make(map[string]*BuiltinFn)
 	}
 	for name, impl := range impls {
-		var fullName string
-		if module == "" {
-			fullName = "edit:" + eval.FnPrefix + name
-		} else {
-			fullName = "edit:" + module + ":" + eval.FnPrefix + name
+		ns := "edit"
+		if module != "" {
+			ns += ":" + module
 		}
+		fullName := ns + ":" + name + eval.FnSuffix
 		builtinMaps[module][name] = &BuiltinFn{fullName, impl}
 	}
 	return struct{}{}
@@ -61,7 +60,7 @@ func registerBuiltins(module string, impls map[string]func(*Editor)) struct{} {
 func makeNamespaceFromBuiltins(builtins map[string]*BuiltinFn) eval.Namespace {
 	ns := eval.Namespace{}
 	for name, builtin := range builtins {
-		ns[eval.FnPrefix+name] = eval.NewPtrVariable(builtin)
+		ns[name+eval.FnSuffix] = eval.NewPtrVariable(builtin)
 	}
 	return ns
 }
