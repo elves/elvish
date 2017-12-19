@@ -26,6 +26,7 @@ const upgradeDbNotice = `If you upgraded Elvish from a pre-0.10 version, you nee
 // InitRuntime initializes the runtime. The caller is responsible for calling
 // CleanupRuntime at some point.
 func InitRuntime(binpath, sockpath, dbpath string) *eval.Evaler {
+spawnDaemonStart:
 	var dataDir string
 	var err error
 
@@ -57,14 +58,33 @@ func InitRuntime(binpath, sockpath, dbpath string) *eval.Evaler {
 	}
 	var cl *daemonapi.Client
 	if sockpath != "" && dbpath != "" {
+		sockstate, statErr := os.Stat(sockpath)
 		cl = daemonapi.NewClient(sockpath)
-		_, statErr := os.Stat(sockpath)
 		killed := false
 		if statErr == nil {
 			// Kill the daemon if it is outdated.
 			version, err := cl.Version()
 			if err != nil {
+				if sockstate != nil {
+					sockstatesys := sockstate.Sys()
+					if sockstatesys != nil {
+						err := os.Remove(sockpath)
+						if err != nil {
+							fmt.Fprintln(os.Stderr, "warning: cannot remove socket : ", err)
+						}
+						goto spawnDaemonStart
+					}
+				}
 				fmt.Fprintln(os.Stderr, "warning: socket exists but not responding version RPC:", err)
+				fmt.Fprintln(os.Stderr, "warning: removing ", sockpath, " and restarting daemon !")
+				err3 := os.Remove(sockpath)
+				if err3 != nil {
+					fmt.Fprintln(os.Stderr, "warning: deletion of", sockpath, " failed! \n warning: remove it manually for the daemon to work correctly !", err3)
+				} else if err3 == nil {
+					fmt.Fprintln(os.Stderr, "[!]attempting to restart daemon .")
+					InitRuntime(toSpawn.BinPath, toSpawn.SockPath, toSpawn.DbPath)
+					fmt.Fprintln(os.Stderr, "[!]daemon successfully restarted .")
+				}
 				// TODO(xiaq): Remove this when the SQLite-backed database
 				// becomes an unmemorable past (perhaps 6 months after the
 				// switch to boltdb).
