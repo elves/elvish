@@ -41,7 +41,7 @@ func (exc *Exception) Pprint(indent string) string {
 	fmt.Fprintf(buf, "Exception: %s\n", causeDescription)
 
 	if exc.Traceback.Next == nil {
-		buf.WriteString(exc.Traceback.Pprint(indent + "  "))
+		buf.WriteString(exc.Traceback.PprintCompact(indent))
 	} else {
 		buf.WriteString(indent + "Traceback:")
 		for tb := exc.Traceback; tb != nil; tb = tb.Next {

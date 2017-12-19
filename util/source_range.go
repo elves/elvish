@@ -79,7 +79,20 @@ func (sr *SourceRange) Pprint(sourceIndent string) string {
 	if err := sr.checkPosition(); err != nil {
 		return err.Error()
 	}
-	return sr.posDescription() + "\n" + sourceIndent + sr.relevantSource(sourceIndent)
+	return (sr.Name + ", " + sr.lineRange() +
+		"\n" + sourceIndent + sr.relevantSource(sourceIndent))
+}
+
+// PprintCompact pretty-prints a SourceContext, with no line break between the
+// source position range description and relevant source excerpt.
+func (sr *SourceRange) PprintCompact(sourceIndent string) string {
+	if err := sr.checkPosition(); err != nil {
+		return err.Error()
+	}
+	desc := sr.Name + ", " + sr.lineRange() + " "
+	// Extra indent so that following lines line up with the first line.
+	descIndent := strings.Repeat(" ", Wcswidth(desc))
+	return desc + sr.relevantSource(sourceIndent+descIndent)
 }
 
 func (sr *SourceRange) checkPosition() error {
@@ -91,13 +104,13 @@ func (sr *SourceRange) checkPosition() error {
 	return nil
 }
 
-func (sr *SourceRange) posDescription() string {
+func (sr *SourceRange) lineRange() string {
 	info := sr.pprintInfo()
 
 	if info.BeginLine == info.EndLine {
-		return fmt.Sprintf("%s, line %d:", sr.Name, info.BeginLine)
+		return fmt.Sprintf("line %d:", info.BeginLine)
 	}
-	return fmt.Sprintf("%s, line %d-%d:", sr.Name, info.BeginLine, info.EndLine)
+	return fmt.Sprintf("line %d-%d:", info.BeginLine, info.EndLine)
 }
 
 func (sr *SourceRange) relevantSource(sourceIndent string) string {
