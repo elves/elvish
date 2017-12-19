@@ -109,16 +109,16 @@ fn bind-trigger-keys [&location=C-l &history=C-r &lastcmd=M-1]{
 }
 
 # Set up some default useful bindings for narrow mode
--bind Up        $edit:narrow:&up
--bind PageUp    $edit:narrow:&page-up
--bind Down      $edit:narrow:&down
--bind PageDown  $edit:narrow:&page-down
--bind Tab       $edit:narrow:&down-cycle
--bind S-Tab     $edit:narrow:&up-cycle
--bind Backspace $edit:narrow:&backspace
--bind Enter     $edit:narrow:&accept-close
--bind M-Enter   $edit:narrow:&accept
--bind default   $edit:narrow:&default
--bind "C-["     $edit:insert:&start
--bind C-G       $edit:narrow:&toggle-ignore-case
--bind C-D       $edit:narrow:&toggle-ignore-duplication
+-bind Up        $edit:narrow:up~
+-bind PageUp    $edit:narrow:page-up~
+-bind Down      $edit:narrow:down~
+-bind PageDown  $edit:narrow:page-down~
+-bind Tab       $edit:narrow:down-cycle~
+-bind S-Tab     $edit:narrow:up-cycle~
+-bind Backspace $edit:narrow:backspace~
+-bind Enter     $edit:narrow:accept-close~
+-bind M-Enter   $edit:narrow:accept~
+-bind default   $edit:narrow:default~
+-bind "C-["     $edit:insert:start~
+-bind C-G       $edit:narrow:toggle-ignore-case~
+-bind C-D       $edit:narrow:toggle-ignore-duplication~
