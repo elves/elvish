@@ -18,8 +18,8 @@ type Error struct {
 	Entries []*ErrorEntry
 }
 
-func (pe *Error) Add(msg string, ctx util.SourceContext) {
-	pe.Entries = append(pe.Entries, &ErrorEntry{msg, ctx})
+func (pe *Error) Add(msg string, ctx *util.SourceContext) {
+	pe.Entries = append(pe.Entries, &ErrorEntry{msg, *ctx})
 }
 
 func (pe *Error) Error() string {

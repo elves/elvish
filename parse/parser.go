@@ -116,7 +116,7 @@ func (ps *Parser) advance(c int) {
 }
 
 func (ps *Parser) errorp(begin, end int, e error) {
-	ps.errors.Add(e.Error(), util.SourceContext{ps.srcName, ps.src, begin, end, nil})
+	ps.errors.Add(e.Error(), util.NewSourceContext(ps.srcName, ps.src, begin, end, nil))
 }
 
 func (ps *Parser) error(e error) {
