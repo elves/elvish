@@ -69,7 +69,7 @@ type EvalCtx struct {
 	ports     []*Port
 
 	begin, end int
-	traceback  *util.SourceContext
+	traceback  *util.SourceRange
 
 	background bool
 }
@@ -301,8 +301,8 @@ func (ec *EvalCtx) makeException(e error) *Exception {
 	return &Exception{e, ec.addTraceback()}
 }
 
-func (ec *EvalCtx) addTraceback() *util.SourceContext {
-	return &util.SourceContext{
+func (ec *EvalCtx) addTraceback() *util.SourceRange {
+	return &util.SourceRange{
 		Name: ec.srcName, Source: ec.src,
 		Begin: ec.begin, End: ec.end, Next: ec.traceback,
 	}

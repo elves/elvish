@@ -10,7 +10,7 @@ import (
 // CompilationError represents a compilation error and can pretty print it.
 type CompilationError struct {
 	Message string
-	Context util.SourceContext
+	Context util.SourceRange
 }
 
 func (ce *CompilationError) Error() string {

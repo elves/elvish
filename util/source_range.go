@@ -6,25 +6,26 @@ import (
 	"strings"
 )
 
-// SourceContext is a range of text in a source code. It can point to another
-// SourceContext, thus forming a linked list. It is used for tracebacks.
-type SourceContext struct {
+// SourceRange is a range of text in a source code. It can point to another
+// SourceRange, thus forming a linked list. It is used for tracebacks.
+type SourceRange struct {
 	Name   string
 	Source string
 	Begin  int
 	End    int
-	Next   *SourceContext
+	Next   *SourceRange
 
-	savedPprintInfo *contextPprintInfo
+	savedPprintInfo *rangePprintInfo
 }
 
-func NewSourceContext(name, source string, begin, end int, next *SourceContext) *SourceContext {
-	return &SourceContext{name, source, begin, end, next, nil}
+// NewSourceRange creates a new SourceRange.
+func NewSourceRange(name, source string, begin, end int, next *SourceRange) *SourceRange {
+	return &SourceRange{name, source, begin, end, next, nil}
 }
 
-// contextPprintInfo is information about the source context that are friendly to
-// human, used when pretty-printing.
-type contextPprintInfo struct {
+// rangePprintInfo is information about the source range that are needed for
+// pretty-printing.
+type rangePprintInfo struct {
 	// Head is the piece of text immediately before Culprit, extending to, but
 	// not including the closest line boundary. If Culprit already starts after
 	// a line boundary, Head is an empty string.
@@ -47,14 +48,14 @@ var (
 	CulpritPlaceHolder = "^"
 )
 
-func (sc *SourceContext) pprintInfo() *contextPprintInfo {
-	if sc.savedPprintInfo != nil {
-		return sc.savedPprintInfo
+func (sr *SourceRange) pprintInfo() *rangePprintInfo {
+	if sr.savedPprintInfo != nil {
+		return sr.savedPprintInfo
 	}
 
-	before := sc.Source[:sc.Begin]
-	culprit := sc.Source[sc.Begin:sc.End]
-	after := sc.Source[sc.End:]
+	before := sr.Source[:sr.Begin]
+	culprit := sr.Source[sr.Begin:sr.End]
+	after := sr.Source[sr.End:]
 
 	head := lastLine(before)
 	beginLine := strings.Count(before, "\n") + 1
@@ -69,43 +70,55 @@ func (sc *SourceContext) pprintInfo() *contextPprintInfo {
 
 	endLine := beginLine + strings.Count(culprit, "\n")
 
-	sc.savedPprintInfo = &contextPprintInfo{head, culprit, tail, beginLine, endLine}
-	return sc.savedPprintInfo
+	sr.savedPprintInfo = &rangePprintInfo{head, culprit, tail, beginLine, endLine}
+	return sr.savedPprintInfo
 }
 
 // Pprint pretty-prints a SourceContext.
-func (sc *SourceContext) Pprint(w io.Writer, sourceIndent string) {
-	if sc.complainBadPosition(w) {
+func (sr *SourceRange) Pprint(w io.Writer, sourceIndent string) {
+	if sr.complainBadPosition(w) {
 		return
 	}
-	sc.printPosDescription(w)
+	sr.printPosDescription(w)
 	fmt.Fprintf(w, "\n%s%s", sourceIndent, "")
-	sc.pprintRelevantSource(w, sourceIndent)
+	sr.pprintRelevantSource(w, sourceIndent)
 }
 
-func (sc *SourceContext) complainBadPosition(w io.Writer) bool {
-	if sc.Begin == -1 {
-		fmt.Fprintf(w, "%s, unknown position", sc.Name)
+// PprintCompact pretty-prints a SourceContext, with no line break between the
+// position description and relevant source excerpt.
+func (sr *SourceRange) PprintCompact(w io.Writer, sourceIndent string) {
+	if sr.complainBadPosition(w) {
+		return
+	}
+	sr.printPosDescription(w)
+	fmt.Fprint(w, ": ")
+	// TODO sourceIndent += padding equal to what has been printed on this line
+	sr.pprintRelevantSource(w, sourceIndent)
+}
+
+func (sr *SourceRange) complainBadPosition(w io.Writer) bool {
+	if sr.Begin == -1 {
+		fmt.Fprintf(w, "%s, unknown position", sr.Name)
 		return true
-	} else if sc.Begin < 0 || sc.End > len(sc.Source) || sc.Begin > sc.End {
-		fmt.Fprintf(w, "%s, invalid position %d-%d", sc.Name, sc.Begin, sc.End)
+	} else if sr.Begin < 0 || sr.End > len(sr.Source) || sr.Begin > sr.End {
+		fmt.Fprintf(w, "%s, invalid position %d-%d", sr.Name, sr.Begin, sr.End)
 		return true
 	}
 	return false
 }
 
-func (sc *SourceContext) printPosDescription(w io.Writer) {
-	info := sc.pprintInfo()
+func (sr *SourceRange) printPosDescription(w io.Writer) {
+	info := sr.pprintInfo()
 
 	if info.BeginLine == info.EndLine {
-		fmt.Fprintf(w, "%s, line %d:", sc.Name, info.BeginLine)
+		fmt.Fprintf(w, "%s, line %d:", sr.Name, info.BeginLine)
 	} else {
-		fmt.Fprintf(w, "%s, line %d-%d:", sc.Name, info.BeginLine, info.EndLine)
+		fmt.Fprintf(w, "%s, line %d-%d:", sr.Name, info.BeginLine, info.EndLine)
 	}
 }
 
-func (sc *SourceContext) pprintRelevantSource(w io.Writer, sourceIndent string) {
-	info := sc.pprintInfo()
+func (sr *SourceRange) pprintRelevantSource(w io.Writer, sourceIndent string) {
+	info := sr.pprintInfo()
 
 	fmt.Fprint(w, info.Head)
 

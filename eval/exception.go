@@ -18,7 +18,7 @@ import (
 // methods like (*Evaler)PEval.
 type Exception struct {
 	Cause     error
-	Traceback *util.SourceContext
+	Traceback *util.SourceRange
 }
 
 // OK is a pointer to the zero value of Exception, representing the absence of

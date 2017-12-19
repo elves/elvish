@@ -37,7 +37,7 @@ func (cp *compiler) compiling(n parse.Node) {
 
 func (cp *compiler) errorpf(begin, end int, format string, args ...interface{}) {
 	throw(&CompilationError{fmt.Sprintf(format, args...),
-		*util.NewSourceContext(cp.name, cp.text, begin, end, nil)})
+		*util.NewSourceRange(cp.name, cp.text, begin, end, nil)})
 }
 
 func (cp *compiler) errorf(format string, args ...interface{}) {
