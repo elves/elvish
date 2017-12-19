@@ -66,7 +66,7 @@ func InitRuntime(binpath, sockpath, dbpath string) *eval.Evaler {
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "warning: socket exists but not responding version RPC:", err)
 				fmt.Fprintln(os.Stderr, "warning: removing ", sockpath, " and restarting daemon !")
-				err3 := os.Remove(sockpath)
+				err3 := os.Remove(sockpath) // If the sock file exists , but doesn't have a daemon attached to it , remove it .
 				if err3 != nil {
 					fmt.Fprintln(os.Stderr, "warning: deletion of", sockpath, " failed! \n warning: remove it manually for the daemon to work correctly !", err3)
 				} else if err3 == nil {
