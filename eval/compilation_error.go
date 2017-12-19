@@ -20,11 +20,11 @@ func (ce *CompilationError) Error() string {
 
 // Pprint pretty-prints a compilation error.
 func (ce *CompilationError) Pprint(indent string) string {
-	buf := new(bytes.Buffer)
+	var buf bytes.Buffer
 
-	fmt.Fprintf(buf, "Compilation error: \033[31;1m%s\033[m\n", ce.Message)
-	fmt.Fprint(buf, indent+"  ")
-	ce.Context.Pprint(buf, indent+"    ")
+	fmt.Fprintf(&buf, "Compilation error: \033[31;1m%s\033[m\n", ce.Message)
+	buf.WriteString(indent + "  ")
+	buf.WriteString(ce.Context.Pprint(indent + "    "))
 
 	return buf.String()
 }

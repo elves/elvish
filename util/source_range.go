@@ -1,8 +1,8 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
-	"io"
 	"strings"
 )
 
@@ -75,52 +75,36 @@ func (sr *SourceRange) pprintInfo() *rangePprintInfo {
 }
 
 // Pprint pretty-prints a SourceContext.
-func (sr *SourceRange) Pprint(w io.Writer, sourceIndent string) {
-	if sr.complainBadPosition(w) {
-		return
+func (sr *SourceRange) Pprint(sourceIndent string) string {
+	if err := sr.checkPosition(); err != nil {
+		return err.Error()
 	}
-	sr.printPosDescription(w)
-	fmt.Fprintf(w, "\n%s%s", sourceIndent, "")
-	sr.pprintRelevantSource(w, sourceIndent)
+	return sr.posDescription() + "\n" + sourceIndent + sr.relevantSource(sourceIndent)
 }
 
-// PprintCompact pretty-prints a SourceContext, with no line break between the
-// position description and relevant source excerpt.
-func (sr *SourceRange) PprintCompact(w io.Writer, sourceIndent string) {
-	if sr.complainBadPosition(w) {
-		return
-	}
-	sr.printPosDescription(w)
-	fmt.Fprint(w, ": ")
-	// TODO sourceIndent += padding equal to what has been printed on this line
-	sr.pprintRelevantSource(w, sourceIndent)
-}
-
-func (sr *SourceRange) complainBadPosition(w io.Writer) bool {
+func (sr *SourceRange) checkPosition() error {
 	if sr.Begin == -1 {
-		fmt.Fprintf(w, "%s, unknown position", sr.Name)
-		return true
+		return fmt.Errorf("%s, unknown position", sr.Name)
 	} else if sr.Begin < 0 || sr.End > len(sr.Source) || sr.Begin > sr.End {
-		fmt.Fprintf(w, "%s, invalid position %d-%d", sr.Name, sr.Begin, sr.End)
-		return true
+		return fmt.Errorf("%s, invalid position %d-%d", sr.Name, sr.Begin, sr.End)
 	}
-	return false
+	return nil
 }
 
-func (sr *SourceRange) printPosDescription(w io.Writer) {
+func (sr *SourceRange) posDescription() string {
 	info := sr.pprintInfo()
 
 	if info.BeginLine == info.EndLine {
-		fmt.Fprintf(w, "%s, line %d:", sr.Name, info.BeginLine)
-	} else {
-		fmt.Fprintf(w, "%s, line %d-%d:", sr.Name, info.BeginLine, info.EndLine)
+		return fmt.Sprintf("%s, line %d:", sr.Name, info.BeginLine)
 	}
+	return fmt.Sprintf("%s, line %d-%d:", sr.Name, info.BeginLine, info.EndLine)
 }
 
-func (sr *SourceRange) pprintRelevantSource(w io.Writer, sourceIndent string) {
+func (sr *SourceRange) relevantSource(sourceIndent string) string {
 	info := sr.pprintInfo()
 
-	fmt.Fprint(w, info.Head)
+	var buf bytes.Buffer
+	buf.WriteString(info.Head)
 
 	culprit := info.Culprit
 	if culprit == "" {
@@ -129,12 +113,14 @@ func (sr *SourceRange) pprintRelevantSource(w io.Writer, sourceIndent string) {
 
 	for i, line := range strings.Split(culprit, "\n") {
 		if i > 0 {
-			fmt.Fprintf(w, "\n%s", sourceIndent)
+			buf.WriteByte('\n')
+			buf.WriteString(sourceIndent)
 		}
-		fmt.Fprintf(w, "\033[%sm%s\033[m", CulpritStyle, line)
+		fmt.Fprintf(&buf, "\033[%sm%s\033[m", CulpritStyle, line)
 	}
 
-	fmt.Fprint(w, info.Tail)
+	buf.WriteString(info.Tail)
+	return buf.String()
 }
 
 func firstLine(s string) string {
