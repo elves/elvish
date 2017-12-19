@@ -139,6 +139,7 @@ func (loc *location) Accept(i int, ed *Editor) {
 	ed.mode = &ed.insert
 }
 
+
 func locStart(ed *Editor) {
 	if ed.daemon == nil {
 		ed.Notify("%v", ErrStoreOffline)
@@ -157,13 +158,11 @@ func locStart(ed *Editor) {
 		ed.Notify("store error: %v", err)
 		return
 	}
-
 	// Concatenate pinned and stored dirs, pinned first.
 	pinned := convertListToDirs(ed.locPinned())
 	dirs := make([]storedefs.Dir, len(pinned)+len(stored))
 	copy(dirs, pinned)
 	copy(dirs[len(pinned):], stored)
-
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
 	home, _ := util.GetHome("")
