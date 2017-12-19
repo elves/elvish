@@ -146,6 +146,8 @@ func ForceWcwidth(s string, width int) string {
 	return s + strings.Repeat(" ", width-w)
 }
 
+// TrimEachLineWcwidth trims each line of s so that it is no wider than the
+// specified width.
 func TrimEachLineWcwidth(s string, width int) string {
 	lines := strings.Split(s, "\n")
 	for i := range lines {

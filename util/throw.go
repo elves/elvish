@@ -46,8 +46,8 @@ func Throws(f func(), e error) bool {
 	return PCall(f) == e
 }
 
-// Throws returns whether calling f throws out anything that is not nil. It is
-// useful for testing.
+// ThrowsAny returns whether calling f throws out anything that is not nil. It
+// is useful for testing.
 func ThrowsAny(f func()) bool {
 	return PCall(f) != nil
 }

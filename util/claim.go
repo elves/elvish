@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+// ErrClaimFileBadPattern is thrown when the pattern argument passed to
+// ClaimFile does not contain exactly one asterisk.
 var ErrClaimFileBadPattern = errors.New("ClaimFile: pattern must contain exactly one asterisk")
 
 // ClaimFile takes a directory and a pattern string containing exactly one

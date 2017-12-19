@@ -1,15 +1,9 @@
 package util
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
-)
-
-var (
-	ErrNotExecutable = errors.New("not executable")
-	ErrNotFound      = errors.New("not found")
 )
 
 // DontSearch determines whether the path to an external command should be
