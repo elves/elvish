@@ -44,7 +44,8 @@ type rangePprintInfo struct {
 
 // Variables controlling the style of the culprit.
 var (
-	CulpritStyle       = "1;4"
+	CulpritLineBegin   = "\033[1;4m"
+	CulpritLineEnd     = "\033[m"
 	CulpritPlaceHolder = "^"
 )
 
@@ -129,7 +130,9 @@ func (sr *SourceRange) relevantSource(sourceIndent string) string {
 			buf.WriteByte('\n')
 			buf.WriteString(sourceIndent)
 		}
-		fmt.Fprintf(&buf, "\033[%sm%s\033[m", CulpritStyle, line)
+		buf.WriteString(CulpritLineBegin)
+		buf.WriteString(line)
+		buf.WriteString(CulpritLineEnd)
 	}
 
 	buf.WriteString(info.Tail)
