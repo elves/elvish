@@ -69,11 +69,10 @@ func InitRuntime(binpath, sockpath, dbpath string) *eval.Evaler {
 				err3 := os.Remove(sockpath) // If the sock file exists , but doesn't have a daemon attached to it , remove it .
 				if err3 != nil {
 					fmt.Fprintln(os.Stderr, "warning: deletion of", sockpath, " failed! \n warning: remove it manually for the daemon to work correctly !", err3)
-				} else if err3 == nil {
-					fmt.Fprintln(os.Stderr, "[!]attempting to restart daemon .")
-					InitRuntime(toSpawn.BinPath, toSpawn.SockPath, toSpawn.DbPath)
-					fmt.Fprintln(os.Stderr, "[!]daemon successfully restarted .")
 				}
+				fmt.Fprintln(os.Stderr, "[!]attempting to restart daemon .")
+				InitRuntime(toSpawn.BinPath, toSpawn.SockPath, toSpawn.DbPath)
+				fmt.Fprintln(os.Stderr, "[!]daemon successfully restarted .")
 				// TODO(xiaq): Remove this when the SQLite-backed database
 				// becomes an unmemorable past (perhaps 6 months after the
 				// switch to boltdb).
