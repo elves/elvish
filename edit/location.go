@@ -139,20 +139,7 @@ func (loc *location) Accept(i int, ed *Editor) {
 	ed.mode = &ed.insert
 }
 
-//This removes the $pwd from the current directory-historyDue to the way the paths are handled before this operation , we have to get all paths evaluated to the homedir , which gives
-func remPwd(dirs []storedefs.Dir, home string) []storedefs.Dir {
-	curr := showPath(util.Getwd(), home) // get the pwd value , will look like '/home/username/test1/test2' so we'll need to trim those forward
-	for i := 0; i < len(dirs); i++ {
-		b, _ := filepath.Abs(dirs[i].Path) // we need to get the AbsolutePath of the dirs[i].Path
-		if strings.Trim(curr, "'") == strings.Trim(showPath(b, home), "'") {
-			copy(dirs[i:], dirs[i+1:])
-			a := storedefs.Dir{"", 0}
-			dirs[len(dirs)-1] = a
-			dirs = dirs[:len(dirs)-1]
-		}
-	}
-	return dirs
-}
+
 func locStart(ed *Editor) {
 	if ed.daemon == nil {
 		ed.Notify("%v", ErrStoreOffline)
@@ -179,7 +166,6 @@ func locStart(ed *Editor) {
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
 	home, _ := util.GetHome("")
-	dirs = remPwd(dirs, home)
 	ed.mode = newLocation(dirs, home)
 }
 
