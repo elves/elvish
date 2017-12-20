@@ -3,6 +3,8 @@ package edit
 import (
 	"strings"
 
+	"github.com/elves/elvish/edit/ui"
+
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
@@ -76,7 +78,8 @@ func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandida
 			if strings.HasSuffix(varname, eval.FnSuffix) {
 				got(eval.MakeVariableName(false, ns, varname[:len(varname)-len(eval.FnSuffix)]))
 			} else {
-				got(eval.MakeVariableName(false, ns, varname) + "=")
+				name := eval.MakeVariableName(false, ns, varname)
+				rawCands <- &complexCandidate{name, " = ", " = ", ui.Styles{}}
 			}
 		})
 	}
