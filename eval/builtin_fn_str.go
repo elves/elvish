@@ -100,12 +100,15 @@ func joins(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 // splits splits an argument strings by a delimiter and writes all pieces.
 func splits(ec *EvalCtx, args []Value, opts map[string]Value) {
-	var s, sep String
+	var (
+		s, sep String
+		optMax int
+	)
 	ScanArgs(args, &sep, &s)
-	TakeNoOpt(opts)
+	ScanOpts(opts, OptToScan{"max", &optMax, String("-1")})
 
 	out := ec.ports[1].Chan
-	parts := strings.Split(string(s), string(sep))
+	parts := strings.SplitN(string(s), string(sep), optMax)
 	for _, p := range parts {
 		out <- String(p)
 	}

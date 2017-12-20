@@ -9,6 +9,7 @@ func init() {
 
 		{`joins : [/usr /bin /tmp]`, want{out: strs("/usr:/bin:/tmp")}},
 		{`splits : /usr:/bin:/tmp`, want{out: strs("/usr", "/bin", "/tmp")}},
+		{`splits : /usr:/bin:/tmp &max=2`, want{out: strs("/usr", "/bin:/tmp")}},
 		{`replaces : / ":usr:bin:tmp"`, want{out: strs("/usr/bin/tmp")}},
 		{`replaces &max=2 : / :usr:bin:tmp`, want{out: strs("/usr/bin:tmp")}},
 
