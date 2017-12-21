@@ -1,6 +1,6 @@
 package eval
 
-var opTests = []evalTest{
+var opTests = []Test{
 	// Chunks
 	// ------
 

@@ -1,6 +1,6 @@
 package eval
 
-var valueTests = []evalTest{
+var valueTests = []Test{
 	// Compounding
 	// -----------
 	{"put {fi,elvi}sh{1.0,1.1}",

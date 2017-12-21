@@ -1,7 +1,7 @@
 package eval
 
 func init() {
-	addToEvalTests([]evalTest{
+	addToEvalTests([]Test{
 		{`== 1 1.0`, wantTrue},
 		{`== 10 0xa`, wantTrue},
 		{`== a a`, want{err: errAny}},

@@ -1,7 +1,7 @@
 package eval
 
 func init() {
-	addToEvalTests([]evalTest{
+	addToEvalTests([]Test{
 		{`run-parallel { put lorem } { echo ipsum }`,
 			want{out: strs("lorem"), bytesOut: []byte("ipsum\n")}},
 

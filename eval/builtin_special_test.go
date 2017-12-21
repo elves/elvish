@@ -1,6 +1,6 @@
 package eval
 
-var builtinSpecialTests = []evalTest{
+var builtinSpecialTests = []Test{
 	// Control structures
 	// ------------------
 

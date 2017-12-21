@@ -18,11 +18,11 @@ func TestBuiltinPid(t *testing.T) {
 }
 
 // To be called from init in separate test files.
-func addToEvalTests(tests []evalTest) {
+func addToEvalTests(tests []Test) {
 	evalTests = append(evalTests, tests...)
 }
 
-var evalTests = []evalTest{
+var evalTests = []Test{
 	// Pseudo-namespaces local: and up:
 	{"x=lorem; []{local:x=ipsum; put $up:x $local:x}",
 		want{out: strs("lorem", "ipsum")}},

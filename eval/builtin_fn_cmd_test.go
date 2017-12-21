@@ -1,5 +1,5 @@
 package eval
 
 func init() {
-	addToEvalTests([]evalTest{})
+	addToEvalTests([]Test{})
 }

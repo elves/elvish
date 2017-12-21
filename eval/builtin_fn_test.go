@@ -1,6 +1,6 @@
 package eval
 
-var builtinFnTests = []evalTest{
+var builtinFnTests = []Test{
 	{"nop", wantNothing},
 	{"nop a b", wantNothing},
 	{"nop &k=v", wantNothing},

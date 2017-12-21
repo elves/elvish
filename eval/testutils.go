@@ -15,7 +15,8 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type evalTest struct {
+// Test is a test case for TestEval.
+type Test struct {
 	text string
 	want
 }
@@ -54,7 +55,54 @@ func bools(bs ...bool) []Value {
 	return vs
 }
 
-func testEval(t *testing.T, dataDir string, evalTests []evalTest) {
+// NewTest returns a new Test with the specified source code.
+func NewTest(text string) Test {
+	return Test{text: text}
+}
+
+// WantOut returns an altered Test that requires the source code to produce the
+// specified values in the value channel when evaluated.
+func (t Test) WantOut(vs ...Value) Test {
+	t.want.out = vs
+	return t
+}
+
+// WantOutStrings returns an altered Test that requires the source code to
+// produce the specified string values in the value channel when evaluated.
+func (t Test) WantOutStrings(ss ...string) Test {
+	t.want.out = strs(ss...)
+	return t
+}
+
+// WantOutBools returns an altered Test that requires the source code to produce
+// the specified boolean values in the value channel when evaluated.
+func (t Test) WantOutBools(bs ...bool) Test {
+	t.want.out = bools(bs...)
+	return t
+}
+
+// WantBytesOut returns an altered test that requires the source code to produce
+// the specified output in the byte pipe when evaluated.
+func (t Test) WantBytesOut(b []byte) Test {
+	t.want.bytesOut = b
+	return t
+}
+
+// WantErr returns an altered Test that requires the source code to result in
+// the specified error when evaluted.
+func (t Test) WantErr(err error) Test {
+	t.want.err = err
+	return t
+}
+
+// WantAnyErr returns an altered Test that requires the source code to result in
+// any error when evaluated.
+func (t Test) WantAnyErr(err error) Test {
+	t.want.err = err
+	return t
+}
+
+func testEval(t *testing.T, dataDir string, evalTests []Test) {
 	for _, tt := range evalTests {
 		// fmt.Printf("eval %q\n", tt.text)
 

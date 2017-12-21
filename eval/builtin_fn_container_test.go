@@ -1,7 +1,7 @@
 package eval
 
 func init() {
-	addToEvalTests([]evalTest{
+	addToEvalTests([]Test{
 		{`range 3`, want{out: strs("0", "1", "2")}},
 		{`range 1 3`, want{out: strs("1", "2")}},
 		{`range 0 10 &step=3`, want{out: strs("0", "3", "6", "9")}},
