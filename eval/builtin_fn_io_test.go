@@ -1,7 +1,9 @@
 package eval
 
-func init() {
-	addToEvalTests([]Test{
+import "testing"
+
+func TestBuiltinFnIO(t *testing.T) {
+	RunTests(t, dataDir, []Test{
 		{`put foo bar`, want{out: strs("foo", "bar")}},
 
 		{`print [foo bar]`, want{bytesOut: []byte("[foo bar]")}},

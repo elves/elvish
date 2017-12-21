@@ -1,5 +1,7 @@
 package eval
 
+import "testing"
+
 var builtinFnTests = []Test{
 	{"nop", wantNothing},
 	{"nop a b", wantNothing},
@@ -40,6 +42,6 @@ var builtinFnTests = []Test{
 	{`(constantly foo) bad`, want{err: errAny}},
 }
 
-func init() {
-	addToEvalTests(builtinFnTests)
+func TestBuiltinFn(t *testing.T) {
+	RunTests(t, dataDir, builtinFnTests)
 }

@@ -1,7 +1,9 @@
 package eval
 
-func init() {
-	addToEvalTests([]Test{
+import "testing"
+
+func TestBuiltinFnStr(t *testing.T) {
+	RunTests(t, dataDir, []Test{
 		{`==s haha haha`, wantTrue},
 		{`==s 10 10.0`, wantFalse},
 		{`<s a b`, wantTrue},

@@ -1,5 +1,7 @@
 package eval
 
+import "testing"
+
 var valueTests = []Test{
 	// Compounding
 	// -----------
@@ -94,6 +96,6 @@ var valueTests = []Test{
 	{"[a &k=v]{ put $a $k } foo", want{out: strs("foo", "v")}},
 }
 
-func init() {
-	addToEvalTests(valueTests)
+func TestValue(t *testing.T) {
+	RunTests(t, dataDir, valueTests)
 }

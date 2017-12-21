@@ -102,7 +102,7 @@ func (t Test) WantAnyErr(err error) Test {
 	return t
 }
 
-func testEval(t *testing.T, dataDir string, evalTests []Test) {
+func RunTests(t *testing.T, dataDir string, evalTests []Test) {
 	for _, tt := range evalTests {
 		// fmt.Printf("eval %q\n", tt.text)
 

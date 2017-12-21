@@ -1,7 +1,9 @@
 package eval
 
-func init() {
-	addToEvalTests([]Test{
+import "testing"
+
+func TestBuiltinFnFlow(t *testing.T) {
+	RunTests(t, dataDir, []Test{
 		{`run-parallel { put lorem } { echo ipsum }`,
 			want{out: strs("lorem"), bytesOut: []byte("ipsum\n")}},
 

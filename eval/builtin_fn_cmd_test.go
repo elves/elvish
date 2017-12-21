@@ -1,5 +1,7 @@
 package eval
 
-func init() {
-	addToEvalTests([]Test{})
+import "testing"
+
+func TestBuiltinFnCmd(t *testing.T) {
+	RunTests(t, dataDir, []Test{})
 }

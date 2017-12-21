@@ -17,12 +17,7 @@ func TestBuiltinPid(t *testing.T) {
 	}
 }
 
-// To be called from init in separate test files.
-func addToEvalTests(tests []Test) {
-	evalTests = append(evalTests, tests...)
-}
-
-var evalTests = []Test{
+var miscEvalTests = []Test{
 	// Pseudo-namespaces local: and up:
 	{"x=lorem; []{local:x=ipsum; put $up:x $local:x}",
 		want{out: strs("lorem", "ipsum")}},
@@ -33,8 +28,8 @@ var evalTests = []Test{
 	{"del E:FOO; put $E:FOO", want{out: strs("")}},
 }
 
-func TestEval(t *testing.T) {
-	testEval(t, dataDir, evalTests)
+func TestMiscEval(t *testing.T) {
+	RunTests(t, dataDir, miscEvalTests)
 }
 
 func TestMultipleEval(t *testing.T) {

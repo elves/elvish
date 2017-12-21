@@ -1,5 +1,7 @@
 package eval
 
+import "testing"
+
 var builtinSpecialTests = []Test{
 	// Control structures
 	// ------------------
@@ -62,6 +64,6 @@ var builtinSpecialTests = []Test{
 	// TODO: Test module namespace
 }
 
-func init() {
-	addToEvalTests(builtinSpecialTests)
+func TestBuiltinSpecial(t *testing.T) {
+	RunTests(t, dataDir, builtinSpecialTests)
 }

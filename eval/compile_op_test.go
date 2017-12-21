@@ -1,5 +1,7 @@
 package eval
 
+import "testing"
+
 var opTests = []Test{
 	// Chunks
 	// ------
@@ -78,6 +80,6 @@ var opTests = []Test{
 		want{bytesOut: []byte("haha\n")}},
 }
 
-func init() {
-	addToEvalTests(opTests)
+func TestOp(t *testing.T) {
+	RunTests(t, dataDir, opTests)
 }
