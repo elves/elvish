@@ -39,12 +39,21 @@ var valueTests = []evalTest{
 	// Splicing
 	{"x=[elvish rules]; put $@x", want{out: strs("elvish", "rules")}},
 
-	// Wildcard
-	// --------
+	// Wildcard; see testmain_test.go for FS setup
+	// -------------------------------------------
 
 	{"put *", want{out: strs(fileListing...)}},
 	{"put a/b/nonexistent*", want{err: ErrWildcardNoMatch}},
 	{"put a/b/nonexistent*[nomatch-ok]", wantNothing},
+
+	// Character set and range
+	{"put ?[set:ab]*", want{out: strs(getFilesWithPrefix("a", "b")...)}},
+	{"put ?[range:a-c]*", want{out: strs(getFilesWithPrefix("a", "b", "c")...)}},
+	{"put ?[range:a~c]*", want{out: strs(getFilesWithPrefix("a", "b")...)}},
+	{"put *[range:a-z]", want{out: strs("bar", "dir", "foo", "ipsum", "lorem")}},
+
+	// Exclusion
+	{"put *[but:foo but:lorem]", want{out: strs(getFilesBut("foo", "lorem")...)}},
 
 	// Tilde
 	// -----

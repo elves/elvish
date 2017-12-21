@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/elves/elvish/util"
@@ -12,7 +13,9 @@ import (
 
 var (
 	filesToCreate = []string{
-		"a1", "a2", "a3", "a10", "b1", "b2", "b3",
+		"a1", "a2", "a3", "a10",
+		"b1", "b2", "b3",
+		"c1", "c2",
 		"foo", "bar", "lorem", "ipsum",
 	}
 	dirsToCreate = []string{"dir", "dir2"}
@@ -23,6 +26,38 @@ func getFileListing() []string {
 	var x []string
 	x = append(x, filesToCreate...)
 	x = append(x, dirsToCreate...)
+	sort.Strings(x)
+	return x
+}
+
+func getFilesWithPrefix(prefixes ...string) []string {
+	var x []string
+	for _, name := range fileListing {
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(name, prefix) {
+				x = append(x, name)
+				break
+			}
+		}
+	}
+	sort.Strings(x)
+	return x
+}
+
+func getFilesBut(excludes ...string) []string {
+	var x []string
+	for _, name := range fileListing {
+		excluded := false
+		for _, exclude := range excludes {
+			if name == exclude {
+				excluded = true
+				break
+			}
+		}
+		if !excluded {
+			x = append(x, name)
+		}
+	}
 	sort.Strings(x)
 	return x
 }
