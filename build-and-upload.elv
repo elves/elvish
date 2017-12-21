@@ -4,13 +4,13 @@ if (eq $E:UPLOAD_TOKEN '') {
 }
 
 version = (git describe --tags --always)
-fname-prefix = elvish
+fname-suffix = ''
 if (not-eq $E:TRAVIS_TAG '') {
-    fname-prefix = elvish-$E:TRAVIS_TAG
+  fname-suffix = -$E:TRAVIS_TAG
 }
 
 fn build [os arch]{
-    bin = $fname-prefix'-'$os'-'$arch
+    bin = elvish-$os'-'$arch$fname-suffix
     archive = $bin.tar.gz
     echo 'Going to build '$bin
     E:GOOS=$os E:GOARCH=$arch go build -ldflags "-X main.Version="$version -o $bin
