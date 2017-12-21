@@ -8,8 +8,9 @@ environment:
 install:
   - echo %PATH%
   - echo %GOPATH%
-  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%
+  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%;C:\msys64\usr\bin
   - go version
   - go env
+  - choco install codecov
 build_script:
-  - go test github.com/elves/elvish/...
+  - make appveyor

@@ -31,12 +31,15 @@ cover/all: $(PKG_COVERS)
 # Disable coverage reports for pull requests. The general testability of the
 # code is pretty bad and it is premature to require contributors to maintain
 # code coverage.
-upload-coverage: cover/all
+upload-coverage-travis: cover/all
 	test "$(TRAVIS_PULL_REQUEST)" = false \
 		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
 		&& curl -s https://codecov.io/bash -o codecov.bash \
 		&& bash codecov.bash -f cover/all \
 		|| echo "not sending to codecov.io"
+
+upload-coverage-appveyor: cover/all
+	codecov -f cover/all
 
 upload-bin:
 	test "$(TRAVIS_OS_NAME)" = linux \
@@ -47,6 +50,7 @@ upload-bin:
 		&& ./elvish build-and-upload.elv \
 		|| echo "not build-and-uploading"
 
-travis: testmain upload-coverage upload-bin
+travis: testmain upload-coverage-travis upload-bin
+appveyor: testmain upload-coverage-appveyor
 
-.PHONY: default get generate test testmain upload-coverage upload-bin travis
+.PHONY: default get generate test testmain upload-coverage-travis upload-coverage-appveyor upload-bin travis
