@@ -8,7 +8,7 @@ environment:
 install:
   - echo %PATH%
   - echo %GOPATH%
-  - set PATH=%GOPATH%\bin;c:\go\bin;%PATH%;C:\msys64\usr\bin
+  - set PATH=%GOPATH%\bin;c:\go\bin;C:\msys64\usr\bin;%PATH%
   - go version
   - go env
   - choco install codecov
