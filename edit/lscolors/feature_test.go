@@ -28,12 +28,20 @@ func TestDetermineFeature(t *testing.T) {
 		test("a", true, featureRegular)
 
 		// Symlink.
-		os.Symlink("a", "symlink")
-		test("symlink", true, featureSymlink)
+		err := os.Symlink("a", "symlink")
+		if err != nil {
+			t.Logf("Failed to create symlink: %v; skipping symlink test", err)
+		} else {
+			test("symlink", true, featureSymlink)
+		}
 
 		// Broken symlink.
-		os.Symlink("aaaa", "bad-symlink")
-		test("bad-symlink", true, featureOrphanedSymlink)
+		err = os.Symlink("aaaa", "bad-symlink")
+		if err != nil {
+			t.Logf("Failed to create bad symlink: %v; skipping bad symlink test", err)
+		} else {
+			test("bad-symlink", true, featureOrphanedSymlink)
+		}
 
 		if runtime.GOOS != "windows" {
 			// Multiple hard links.
