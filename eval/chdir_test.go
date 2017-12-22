@@ -56,3 +56,19 @@ func TestChdir(t *testing.T) {
 		}
 	})
 }
+
+const badDir = "/i/dont/exist"
+
+func TestChdirError(t *testing.T) {
+	testAddDirer := testAddDirer(func(dir string, weight float64) error {
+		t.Errorf("Chdir called AddDir when os.Chdir errors")
+		return nil
+	})
+	if _, err := os.Stat(badDir); err == nil {
+		panic(badDir + " exists")
+	}
+	err := Chdir(badDir, testAddDirer)
+	if err == nil {
+		t.Errorf("Chdir => no error when dir does not exist")
+	}
+}
