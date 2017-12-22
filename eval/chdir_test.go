@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"os"
 	"testing"
 	"time"
@@ -30,7 +31,9 @@ func TestChdir(t *testing.T) {
 		chanAddedDir := make(chan string)
 		testAddDirer := testAddDirer(func(dir string, weight float64) error {
 			chanAddedDir <- dir
-			return nil
+			// Error returned from here should not affect the return value of
+			// Chdir
+			return errors.New("fake error")
 		})
 
 		err = Chdir(destDir, testAddDirer)
