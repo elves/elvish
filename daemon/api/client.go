@@ -8,10 +8,17 @@ import (
 	"github.com/elves/elvish/store/storedefs"
 )
 
-// ErrDaemonOffline is an error returned when the daemon cannot be connected.
-var ErrDaemonOffline = errors.New("daemon offline")
+const retriesOnShutdown = 3
 
-// Client is a client to the Elvish daemon.
+var (
+	// ErrClientNotInitialized is returned when the Client is not initialized.
+	ErrClientNotInitialized = errors.New("client not initialized")
+	// ErrDaemonUnreachable is returned when the daemon cannot be reached after
+	// several retries.
+	ErrDaemonUnreachable = errors.New("daemon offline")
+)
+
+// Client is a client to the Elvish daemon. A nil *Client is safe to use.
 type Client struct {
 	sockPath  string
 	rpcClient *rpc.Client
@@ -24,13 +31,21 @@ func NewClient(sockPath string) *Client {
 	return &Client{sockPath, nil, sync.WaitGroup{}}
 }
 
-// SockPath returns the socket path that the Client talks to.
+// SockPath returns the socket path that the Client talks to. If the client is
+// nil, it returns an empty string.
 func (c *Client) SockPath() string {
+	if c == nil {
+		return ""
+	}
 	return c.sockPath
 }
 
 // Close waits for all outstanding requests to finish and close the connection.
+// If the client is nil, it does nothing and returns nil.
 func (c *Client) Close() error {
+	if c == nil {
+		return nil
+	}
 	c.waits.Wait()
 	rc := c.rpcClient
 	c.rpcClient = nil
@@ -41,30 +56,31 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) call(f string, req, res interface{}) error {
+	if c == nil {
+		return ErrClientNotInitialized
+	}
 	c.waits.Add(1)
 	defer c.waits.Done()
 
-	err := c.connect()
-	if err != nil {
-		return err
-	}
-	err = c.rpcClient.Call(ServiceName+"."+f, req, res)
-	if err == rpc.ErrShutdown {
-		// Clear rpcClient so as to reconnect next time
-		c.rpcClient = nil
-	}
-	return err
-}
+	for attempt := 0; attempt < retriesOnShutdown; attempt++ {
+		if c.rpcClient == nil {
+			conn, err := dial(c.sockPath)
+			if err != nil {
+				return err
+			}
+			c.rpcClient = rpc.NewClient(conn)
+		}
 
-func (c *Client) connect() error {
-	if c.rpcClient == nil {
-		conn, err := dial(c.sockPath)
-		if err != nil {
+		err := c.rpcClient.Call(ServiceName+"."+f, req, res)
+		if err == rpc.ErrShutdown {
+			// Clear rpcClient so as to reconnect next time
+			c.rpcClient = nil
+			continue
+		} else {
 			return err
 		}
-		c.rpcClient = rpc.NewClient(conn)
 	}
-	return nil
+	return ErrDaemonUnreachable
 }
 
 // Convenience methods for RPC methods. These are quite repetitive; when the
