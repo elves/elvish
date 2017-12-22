@@ -3,7 +3,6 @@
 package edit
 
 import (
-	"io"
 	"testing"
 	"time"
 
@@ -36,10 +35,8 @@ func TestReadLine(t *testing.T) {
 		var buf [64]byte
 		for {
 			_, err := master.Read(buf[:])
-			if err == io.EOF {
+			if err != nil {
 				break
-			} else if err != nil {
-				panic(err)
 			}
 		}
 	}()
