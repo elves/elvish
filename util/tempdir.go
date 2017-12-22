@@ -4,20 +4,25 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 // WithTempDirs creates a requested number of temporary directories and runs a
-// function, passing the paths of the temporary directories. After the function
-// returns, it removes the temporary directories. It panics if it cannot make a
-// temporary directory, and prints an error message to stderr if it cannot
-// remove the temporary directories.
+// function, passing the paths of the temporary directories; the passed paths
+// all have their symlinks resolved using filepath.EvalSymlinks. After the
+// function returns, it removes the temporary directories. It panics if it
+// cannot make a temporary directory, and prints an error message to stderr if
+// it cannot remove the temporary directories.
 //
 // It is useful in tests.
 func WithTempDirs(n int, f func([]string)) {
 	tmpdirs := make([]string, n)
 	for i := range tmpdirs {
-		var err error
-		tmpdirs[i], err = ioutil.TempDir("", "elvishtest.")
+		tmpdir, err := ioutil.TempDir("", "elvishtest.")
+		if err != nil {
+			panic(err)
+		}
+		tmpdirs[i], err = filepath.EvalSymlinks(tmpdir)
 		if err != nil {
 			panic(err)
 		}
