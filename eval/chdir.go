@@ -2,14 +2,18 @@ package eval
 
 import (
 	"os"
-
-	"github.com/elves/elvish/daemon/api"
 )
+
+// AddDirer wraps the AddDir function.
+type AddDirer interface {
+	// AddDir adds a directory with the given weight to some storage.
+	AddDir(dir string, weight float64) error
+}
 
 // Chdir changes the current directory. On success it also updates the PWD
 // environment variable and records the new directory in the directory history.
 // It returns nil as long as the directory changing part succeeds.
-func Chdir(path string, daemon *api.Client) error {
+func Chdir(path string, store AddDirer) error {
 	err := os.Chdir(path)
 	if err != nil {
 		return err
@@ -20,13 +24,11 @@ func Chdir(path string, daemon *api.Client) error {
 		return nil
 	}
 	os.Setenv("PWD", pwd)
-	if daemon != nil {
-		go func() {
-			err := daemon.AddDir(pwd, 1)
-			if err != nil {
-				logger.Println("Failed to save dir to history:", err)
-			}
-		}()
-	}
+	go func() {
+		err := store.AddDir(pwd, 1)
+		if err != nil {
+			logger.Println("Failed to save dir to history:", err)
+		}
+	}()
 	return nil
 }
