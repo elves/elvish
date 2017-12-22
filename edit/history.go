@@ -118,16 +118,11 @@ func (ed *Editor) appendHistory(line string) {
 
 	if ed.daemon != nil && ed.historyFuser != nil {
 		ed.historyMutex.Lock()
-		ed.daemon.Waits().Add(1)
 		go func() {
-			// TODO(xiaq): Report possible error
 			err := ed.historyFuser.AddCmd(line)
-			ed.daemon.Waits().Done()
 			ed.historyMutex.Unlock()
 			if err != nil {
-				logger.Println("failed to add cmd to store:", err)
-			} else {
-				logger.Println("added cmd to store:", line)
+				logger.Printf("Failed to AddCmd %q: %v", line, err)
 			}
 		}()
 	}

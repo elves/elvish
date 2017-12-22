@@ -8,26 +8,28 @@ import (
 	"github.com/elves/elvish/store/storedefs"
 )
 
+// ErrDaemonOffline is an error returned when the daemon cannot be connected.
 var ErrDaemonOffline = errors.New("daemon offline")
 
+// Client is a client to the Elvish daemon.
 type Client struct {
 	sockPath  string
 	rpcClient *rpc.Client
 	waits     sync.WaitGroup
 }
 
+// NewClient creates a new Client instance that talks to the socket. Connection
+// creation is deferred to the first request.
 func NewClient(sockPath string) *Client {
 	return &Client{sockPath, nil, sync.WaitGroup{}}
 }
 
+// SockPath returns the socket path that the Client talks to.
 func (c *Client) SockPath() string {
 	return c.sockPath
 }
 
-func (c *Client) Waits() *sync.WaitGroup {
-	return &c.waits
-}
-
+// Close waits for all outstanding requests to finish and close the connection.
 func (c *Client) Close() error {
 	c.waits.Wait()
 	rc := c.rpcClient
@@ -39,6 +41,9 @@ func (c *Client) Close() error {
 }
 
 func (c *Client) call(f string, req, res interface{}) error {
+	c.waits.Add(1)
+	defer c.waits.Done()
+
 	err := c.connect()
 	if err != nil {
 		return err
@@ -62,7 +67,9 @@ func (c *Client) connect() error {
 	return nil
 }
 
-// Convenience methods for RPC methods.
+// Convenience methods for RPC methods. These are quite repetitive; when the
+// number of RPC calls grow above some threshold, a code generator should be
+// written to generate them.
 
 func (c *Client) Version() (int, error) {
 	req := &VersionRequest{}

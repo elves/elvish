@@ -21,10 +21,11 @@ func Chdir(path string, daemon *api.Client) error {
 	}
 	os.Setenv("PWD", pwd)
 	if daemon != nil {
-		daemon.Waits().Add(1)
 		go func() {
-			daemon.AddDir(pwd, 1)
-			daemon.Waits().Done()
+			err := daemon.AddDir(pwd, 1)
+			if err != nil {
+				logger.Println("Failed to save dir to history:", err)
+			}
 		}()
 	}
 	return nil

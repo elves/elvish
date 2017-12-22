@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -110,29 +109,10 @@ func makeLocationFilterPattern(s string) *regexp.Regexp {
 	return p
 }
 
-func (ed *Editor) chdir(dir string) error {
-	dir, err := filepath.Abs(dir)
-	if err != nil {
-		return err
-	}
-	err = os.Chdir(dir)
-	if err == nil {
-		store := ed.daemon
-		store.Waits().Add(1)
-		go func() {
-			// XXX Error ignored.
-			store.AddDir(dir, 1)
-			store.Waits().Done()
-			logger.Println("added dir to store:", dir)
-		}()
-	}
-	return err
-}
-
 // Editor interface.
 
 func (loc *location) Accept(i int, ed *Editor) {
-	err := ed.chdir(loc.filtered[i].Path)
+	err := eval.Chdir(loc.filtered[i].Path, ed.daemon)
 	if err != nil {
 		ed.Notify("%v", err)
 	}

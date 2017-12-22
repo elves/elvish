@@ -155,7 +155,9 @@ var (
 )
 
 func initNavigation(n *navigation, ed *Editor) {
-	*n = navigation{chdir: ed.chdir}
+	*n = navigation{chdir: func(dir string) error {
+		return eval.Chdir(dir, ed.daemon)
+	}}
 	n.refresh()
 }
 
