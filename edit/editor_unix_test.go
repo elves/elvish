@@ -29,6 +29,8 @@ func TestReadLine(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+	defer master.Close()
+	defer tty.Close()
 	// Continually consume tty outputs so that the editor is not blocked on
 	// writing.
 	go func() {
