@@ -71,9 +71,8 @@ func init() {
 		{'K', ui.Ctrl}:    "kill-line-right",
 		{'W', ui.Ctrl}:    "kill-word-left",
 		{ui.Backspace, 0}: "kill-rune-left",
-		// Some terminal send ^H on backspace
-		ui.Key{'H', ui.Ctrl}: "kill-rune-left",
-		{ui.Delete, 0}:       "kill-rune-right",
+		{'H', ui.Ctrl}:    "kill-rune-left", // Some terminal send ^H on backspace
+		{ui.Delete, 0}:    "kill-rune-right",
 		// Inserting.
 		{'.', ui.Alt}:      "insert-last-word",
 		{ui.Enter, ui.Alt}: "insert-key",
