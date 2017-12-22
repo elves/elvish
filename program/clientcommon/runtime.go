@@ -25,7 +25,7 @@ const upgradeDbNotice = `If you upgraded Elvish from a pre-0.10 version, you nee
 
 // InitRuntime initializes the runtime. The caller is responsible for calling
 // CleanupRuntime at some point.
-func InitRuntime(binpath, sockpath, dbpath string) *eval.Evaler {
+func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 	var dataDir string
 	var err error
 
@@ -123,17 +123,19 @@ func InitRuntime(binpath, sockpath, dbpath string) *eval.Evaler {
 	}
 spawnDaemonEnd:
 
-	// TODO(xiaq): This information might belong somewhere else.
-	extraModules := map[string]eval.Namespace{
-		"re": re.Namespace(),
-	}
-	return eval.NewEvaler(cl, toSpawn, dataDir, extraModules)
+	ev := eval.NewEvaler()
+	ev.SetLibDir(filepath.Join(dataDir, "lib"))
+	// TODO(xiaq): Maybe install daemon module asynchronously
+	ev.InstallDaemon(cl, toSpawn)
+	// TODO(xiaq): Installation of the re module might belong somewhere else.
+	ev.InstallModule("re", re.Namespace())
+	return ev, dataDir
 }
 
 // CleanupRuntime cleans up the runtime.
 func CleanupRuntime(ev *eval.Evaler) {
-	if ev.Daemon != nil {
-		err := ev.Daemon.Close()
+	if ev.DaemonClient != nil {
+		err := ev.DaemonClient.Close()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "warning: failed to close connection to daemon:", err)
 		}

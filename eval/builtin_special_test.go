@@ -65,5 +65,5 @@ var builtinSpecialTests = []Test{
 }
 
 func TestBuiltinSpecial(t *testing.T) {
-	RunTests(t, dataDir, builtinSpecialTests)
+	RunTests(t, libDir, builtinSpecialTests)
 }

@@ -29,13 +29,15 @@ import (
 type compileBuiltin func(*compiler, *parse.Form) OpFunc
 
 var (
-	// ErrNoDataDir is thrown by "use" when there is no data directory.
-	ErrNoDataDir = errors.New("There is no data directory")
-	// ErrRelativeUseOutsideMod is thrown by "use" when relative use is used
-	// outside a module
-	ErrRelativeUseOutsideMod = errors.New("Relative use outside module")
-	// ModOutsideLib
-	ErrModOutsideLib = errors.New("Module outside library directory")
+	// ErrNoLibDir is thrown by "use" when the Evaler does not have a library
+	// directory.
+	ErrNoLibDir = errors.New("Evaler does not have a lib directory")
+	// ErrRelativeUseNotFromMod is thrown by "use" when relative use is used
+	// not from a module
+	ErrRelativeUseNotFromMod = errors.New("Relative use not from module")
+	// ErrRelativeUseGoesOutsideLib is thrown when a relative use goes out of
+	// the library directory.
+	ErrRelativeUseGoesOutsideLib = errors.New("Module outside library directory")
 )
 
 var builtinSpecials map[string]compileBuiltin
@@ -160,7 +162,7 @@ func use(ec *EvalCtx, modname, modpath string) {
 	resolvedPath := ""
 	if strings.HasPrefix(modpath, "./") || strings.HasPrefix(modpath, "../") {
 		if ec.modPath == "" {
-			throw(ErrRelativeUseOutsideMod)
+			throw(ErrRelativeUseNotFromMod)
 		}
 		// Resolve relative modpath.
 		resolvedPath = filepath.Clean(filepath.Dir(ec.modPath) + "/" + modpath)
@@ -168,7 +170,7 @@ func use(ec *EvalCtx, modname, modpath string) {
 		resolvedPath = filepath.Clean(modpath)
 	}
 	if strings.HasPrefix(resolvedPath, "../") {
-		throw(ErrModOutsideLib)
+		throw(ErrRelativeUseGoesOutsideLib)
 	}
 	modpath = resolvedPath
 
@@ -186,11 +188,11 @@ func loadModule(ec *EvalCtx, modpath string) Namespace {
 	var filename, source string
 
 	// No filename; defaulting to $datadir/lib/$modpath.elv.
-	if ec.DataDir == "" {
-		throw(ErrNoDataDir)
+	if ec.libDir == "" {
+		throw(ErrNoLibDir)
 	}
 
-	filename = ec.DataDir + "/lib/" + modpath + ".elv"
+	filename = filepath.Join(ec.libDir, modpath+".elv")
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		// File does not exist. Try loading from the table of builtin
 		// modules.

@@ -70,7 +70,7 @@ var mods = map[string]string{
 	"has/init": "put has/init",
 }
 
-var dataDir string
+var libDir string
 
 func TestMain(m *testing.M) {
 	var exitCode int
@@ -95,10 +95,10 @@ func TestMain(m *testing.M) {
 		}
 
 		util.WithTempDir(func(dir string) {
-			dataDir = dir
+			libDir = dir
 
 			for mod, content := range mods {
-				fname := filepath.Join(dataDir, "lib", mod+".elv")
+				fname := filepath.Join(libDir, mod+".elv")
 				os.MkdirAll(filepath.Dir(fname), 0700)
 				err := ioutil.WriteFile(fname, []byte(content), 0600)
 				if err != nil {

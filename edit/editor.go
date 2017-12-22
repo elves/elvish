@@ -90,7 +90,7 @@ type editorState struct {
 // NewEditor creates an Editor. When the instance is no longer used, its Close
 // method should be called.
 func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) *Editor {
-	daemon := ev.Daemon
+	daemon := ev.DaemonClient
 
 	ed := &Editor{
 		in:     in,

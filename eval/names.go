@@ -96,10 +96,10 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	case "E":
 		return envVariable{name}
 	case "shared":
-		if ec.Daemon == nil {
+		if ec.DaemonClient == nil {
 			throw(ErrStoreUnconnected)
 		}
-		return sharedVariable{ec.Daemon, name}
+		return sharedVariable{ec.DaemonClient, name}
 	default:
 		ns := ec.ResolveMod(ns)
 		if ns != nil {

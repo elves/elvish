@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/sys"
 	"github.com/kr/pty"
@@ -43,7 +42,7 @@ func TestReadLine(t *testing.T) {
 		}
 	}()
 
-	ev := eval.NewEvaler(api.NewClient("/invalid"), nil, "", make(map[string]eval.Namespace))
+	ev := eval.NewEvaler()
 
 	for _, test := range readLineTests {
 		lineChan := make(chan string)

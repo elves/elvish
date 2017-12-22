@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestBuiltinFnIO(t *testing.T) {
-	RunTests(t, dataDir, []Test{
+	RunTests(t, libDir, []Test{
 		{`put foo bar`, want{out: strs("foo", "bar")}},
 
 		{`print [foo bar]`, want{bytesOut: []byte("[foo bar]")}},

@@ -75,7 +75,7 @@ func exit(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
 func preExit(ec *EvalCtx) {
-	err := ec.Daemon.Close()
+	err := ec.DaemonClient.Close()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}

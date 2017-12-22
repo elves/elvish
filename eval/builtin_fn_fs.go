@@ -81,7 +81,7 @@ func cd(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
 func cdInner(dir string, ec *EvalCtx) {
-	maybeThrow(Chdir(dir, ec.Daemon))
+	maybeThrow(Chdir(dir, ec.DaemonClient))
 }
 
 var dirDescriptor = NewStructDescriptor("path", "score")
@@ -90,10 +90,10 @@ func dirs(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
-	if ec.Daemon == nil {
+	if ec.DaemonClient == nil {
 		throw(ErrStoreNotConnected)
 	}
-	dirs, err := ec.Daemon.Dirs(storedefs.NoBlacklist)
+	dirs, err := ec.DaemonClient.Dirs(storedefs.NoBlacklist)
 	if err != nil {
 		throw(errors.New("store error: " + err.Error()))
 	}

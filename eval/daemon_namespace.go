@@ -7,7 +7,9 @@ import (
 	"github.com/elves/elvish/daemon/api"
 )
 
-var ErrDaemonOffline = errors.New("daemon is offline")
+// ErrDontKnowHowToSpawnDaemon is thrown by daemon:spawn when the Evaler's
+// DaemonSpawner field is nil.
+var ErrDontKnowHowToSpawnDaemon = errors.New("don't know how to spawn daemon")
 
 func makeDaemonNamespace(daemon *api.Client) Namespace {
 	// Obtain process ID
@@ -28,5 +30,8 @@ func makeDaemonNamespace(daemon *api.Client) Namespace {
 func daemonSpawn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
-	maybeThrow(ec.ToSpawn.Spawn())
+	if ec.DaemonSpawner == nil {
+		throw(ErrDontKnowHowToSpawnDaemon)
+	}
+	maybeThrow(ec.DaemonSpawner.Spawn())
 }

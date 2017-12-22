@@ -40,11 +40,10 @@ const (
 // shared among all evalCtx instances.
 type Evaler struct {
 	evalerScopes
+	evalerDaemon
 	Modules map[string]Namespace
-	Daemon  *api.Client
-	ToSpawn *daemon.Daemon
 	Editor  Editor
-	DataDir string
+	libDir  string
 	intCh   chan struct{}
 
 	// Configurations.
@@ -54,6 +53,11 @@ type Evaler struct {
 type evalerScopes struct {
 	Global  Scope
 	Builtin Scope
+}
+
+type evalerDaemon struct {
+	DaemonClient  *api.Client
+	DaemonSpawner *daemon.Daemon
 }
 
 // EvalCtx maintains an Evaler along with its runtime context. After creation
@@ -75,36 +79,43 @@ type EvalCtx struct {
 }
 
 // NewEvaler creates a new Evaler.
-func NewEvaler(daemon *api.Client, toSpawn *daemon.Daemon,
-	dataDir string, extraModules map[string]Namespace) *Evaler {
-
-	builtin := Scope{makeBuiltinNamespace(daemon), map[string]Namespace{}}
-
-	// TODO(xiaq): Create daemon namespace asynchronously.
-	modules := map[string]Namespace{
-		"daemon":  makeDaemonNamespace(daemon),
-		"builtin": builtin.Names,
-	}
-	for name, mod := range extraModules {
-		modules[name] = mod
-	}
+func NewEvaler() *Evaler {
+	builtin := Scope{makeBuiltinNamespace(), map[string]Namespace{}}
 
 	ev := &Evaler{
 		evalerScopes: evalerScopes{
 			Global:  makeScope(),
 			Builtin: builtin,
 		},
-		Modules: modules,
-		Daemon:  daemon,
-		ToSpawn: toSpawn,
-		Editor:  nil,
-		DataDir: dataDir,
-		intCh:   nil,
+		Modules: map[string]Namespace{
+			"builtin": builtin.Names,
+		},
+		Editor: nil,
+		intCh:  nil,
 
 		valueOutIndicator: defaultValueOutIndicator,
 	}
 	builtin.Names["value-out-indicator"] = NewBackedVariable(&ev.valueOutIndicator)
+
 	return ev
+}
+
+// InstallDaemon installs a daemon to the Evaler.
+func (ev *Evaler) InstallDaemon(client *api.Client, spawner *daemon.Daemon) {
+	ev.evalerDaemon = evalerDaemon{client, spawner}
+	ev.InstallModule("daemon", makeDaemonNamespace(client))
+	// XXX This is really brittle
+	ev.Builtin.Names["pwd"] = PwdVariable{client}
+}
+
+// InstallModule installs a module to the Evaler so that it can be used with
+// "use $name" from script.
+func (ev *Evaler) InstallModule(name string, mod Namespace) {
+	ev.Modules[name] = mod
+}
+
+func (ev *Evaler) SetLibDir(libDir string) {
+	ev.libDir = libDir
 }
 
 func searchPaths() []string {

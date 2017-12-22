@@ -24,11 +24,13 @@ func Chdir(path string, store AddDirer) error {
 		return nil
 	}
 	os.Setenv("PWD", pwd)
-	go func() {
-		err := store.AddDir(pwd, 1)
-		if err != nil {
-			logger.Println("Failed to save dir to history:", err)
-		}
-	}()
+	if store != nil {
+		go func() {
+			err := store.AddDir(pwd, 1)
+			if err != nil {
+				logger.Println("Failed to save dir to history:", err)
+			}
+		}()
+	}
 	return nil
 }

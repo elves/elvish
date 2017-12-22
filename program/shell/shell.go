@@ -40,7 +40,7 @@ func New(binpath, sockpath, dbpath string, cmd, compileonly bool) *Shell {
 func (sh *Shell) Main(args []string) int {
 	defer rescue()
 
-	ev := clientcommon.InitRuntime(sh.BinPath, sh.SockPath, sh.DbPath)
+	ev, dataDir := clientcommon.InitRuntime(sh.BinPath, sh.SockPath, sh.DbPath)
 	defer clientcommon.CleanupRuntime(ev)
 
 	handleSignals()
@@ -59,7 +59,7 @@ func (sh *Shell) Main(args []string) int {
 			script(ev, arg)
 		}
 	} else {
-		interact(ev)
+		interact(ev, dataDir)
 	}
 
 	return 0
@@ -138,7 +138,7 @@ func readFileUTF8(fname string) (string, error) {
 	return string(bytes), nil
 }
 
-func interact(ev *eval.Evaler) {
+func interact(ev *eval.Evaler, dataDir string) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(os.Stdin) {
@@ -151,8 +151,8 @@ func interact(ev *eval.Evaler) {
 	defer ed.Close()
 
 	// Source rc.elv.
-	if ev.DataDir != "" {
-		source(ev, ev.DataDir+"/rc.elv", true)
+	if dataDir != "" {
+		source(ev, dataDir+"/rc.elv", true)
 	}
 
 	// Build readLine function.

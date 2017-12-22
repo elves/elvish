@@ -41,7 +41,7 @@ func New(binpath, sockpath, dbpath string, port int) *Web {
 }
 
 func (web *Web) Main([]string) int {
-	ev := clientcommon.InitRuntime(web.BinPath, web.SockPath, web.DbPath)
+	ev, _ := clientcommon.InitRuntime(web.BinPath, web.SockPath, web.DbPath)
 	defer clientcommon.CleanupRuntime(ev)
 
 	h := httpHandler{ev}

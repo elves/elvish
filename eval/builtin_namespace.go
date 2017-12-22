@@ -4,11 +4,9 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-
-	"github.com/elves/elvish/daemon/api"
 )
 
-func makeBuiltinNamespace(daemon *api.Client) Namespace {
+func makeBuiltinNamespace() Namespace {
 	ns := Namespace{
 		"_":     BlackholeVariable{},
 		"pid":   NewRoVariable(String(strconv.Itoa(syscall.Getpid()))),
@@ -16,7 +14,7 @@ func makeBuiltinNamespace(daemon *api.Client) Namespace {
 		"true":  NewRoVariable(Bool(true)),
 		"false": NewRoVariable(Bool(false)),
 		"paths": &EnvList{envName: "PATH"},
-		"pwd":   PwdVariable{daemon},
+		"pwd":   PwdVariable{},
 	}
 	AddBuiltinFns(ns, builtinFns...)
 	return ns

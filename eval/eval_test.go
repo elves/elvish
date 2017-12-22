@@ -5,13 +5,11 @@ import (
 	"strconv"
 	"syscall"
 	"testing"
-
-	"github.com/elves/elvish/daemon/api"
 )
 
 func TestBuiltinPid(t *testing.T) {
 	pid := strconv.Itoa(syscall.Getpid())
-	builtinPid := ToString(makeBuiltinNamespace(nil)["pid"].Get())
+	builtinPid := ToString(makeBuiltinNamespace()["pid"].Get())
 	if builtinPid != pid {
 		t.Errorf(`ev.builtin["pid"] = %v, want %v`, builtinPid, pid)
 	}
@@ -29,12 +27,12 @@ var miscEvalTests = []Test{
 }
 
 func TestMiscEval(t *testing.T) {
-	RunTests(t, dataDir, miscEvalTests)
+	RunTests(t, libDir, miscEvalTests)
 }
 
 func TestMultipleEval(t *testing.T) {
 	texts := []string{"x=hello", "put $x"}
-	outs, _, err := evalAndCollect(t, dataDir, texts, 1)
+	outs, _, err := evalAndCollect(t, libDir, texts, 1)
 	wanted := strs("hello")
 	if err != nil {
 		t.Errorf("eval %s => %v, want nil", texts, err)
@@ -74,7 +72,7 @@ func BenchmarkOutputCaptureMixed(b *testing.B) {
 }
 
 func benchmarkOutputCapture(op Op, n int) {
-	ev := NewEvaler(api.NewClient("/invalid"), nil, "", nil)
+	ev := NewEvaler()
 	ec := NewTopEvalCtx(ev, "[benchmark]", "", []*Port{{}, {}, {}})
 	for i := 0; i < n; i++ {
 		pcaptureOutput(ec, op)

@@ -11,7 +11,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/daemon/api"
 	"github.com/elves/elvish/parse"
 )
 
@@ -102,11 +101,11 @@ func (t Test) WantAnyErr(err error) Test {
 	return t
 }
 
-func RunTests(t *testing.T, dataDir string, evalTests []Test) {
+func RunTests(t *testing.T, libDir string, evalTests []Test) {
 	for _, tt := range evalTests {
 		// fmt.Printf("eval %q\n", tt.text)
 
-		out, bytesOut, err := evalAndCollect(t, dataDir, []string{tt.text}, len(tt.want.out))
+		out, bytesOut, err := evalAndCollect(t, libDir, []string{tt.text}, len(tt.want.out))
 
 		first := true
 		errorf := func(format string, args ...interface{}) {
@@ -129,9 +128,10 @@ func RunTests(t *testing.T, dataDir string, evalTests []Test) {
 	}
 }
 
-func evalAndCollect(t *testing.T, dataDir string, texts []string, chsize int) ([]Value, []byte, error) {
+func evalAndCollect(t *testing.T, libDir string, texts []string, chsize int) ([]Value, []byte, error) {
 	name := "<eval test>"
-	ev := NewEvaler(api.NewClient("/invalid"), nil, dataDir, nil)
+	ev := NewEvaler()
+	ev.SetLibDir(libDir)
 
 	// Collect byte output
 	bytesOut := []byte{}
