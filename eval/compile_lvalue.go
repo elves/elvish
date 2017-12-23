@@ -2,6 +2,7 @@ package eval
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/elves/elvish/parse"
 )
@@ -109,7 +110,11 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 					// New variable.
 					// XXX We depend on the fact that this variable will
 					// immeidately be set.
-					variable = NewPtrVariable(nil)
+					if strings.HasSuffix(barename, FnSuffix) {
+						variable = NewPtrVariableWithValidator(nil, ShouldBeFn)
+					} else {
+						variable = NewPtrVariable(nil)
+					}
 					ec.local.Names[barename] = variable
 				} else if mod, ok := ec.Modules[ns]; ok {
 					variable = NewPtrVariable(nil)
