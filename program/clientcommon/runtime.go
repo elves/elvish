@@ -3,6 +3,7 @@ package clientcommon
 import (
 	"errors"
 	"fmt"
+	"net/rpc"
 	"os"
 	"path/filepath"
 	"time"
@@ -16,12 +17,28 @@ import (
 )
 
 const (
-	daemonWaitOneLoop = 10 * time.Millisecond
 	daemonWaitLoops   = 100
-	daemonWaitTotal   = daemonWaitOneLoop * daemonWaitLoops
+	daemonWaitPerLoop = 10 * time.Millisecond
 )
 
-const upgradeDbNotice = `If you upgraded Elvish from a pre-0.10 version, you need to upgrade your database by following instructions in https://github.com/elves/upgrade-db-for-0.10/`
+type daemonStatus int
+
+const (
+	daemonOK daemonStatus = iota
+	sockfileMissing
+	sockfileOtherError
+	connectionShutdown
+	connectionOtherError
+	daemonInvalidDB
+	daemonOutdated
+)
+
+const (
+	daemonWontWorkMsg     = "Daemon-related functions will likely not work."
+	connectionShutdownFmt = "Socket file %s exists but is not responding to request. This is likely due to abnormal shutdown of the daemon. Going to remove socket file and re-spawn a daemon.\n"
+)
+
+var errInvalidDB = errors.New("daemon reported that database is invalid. If you upgraded Elvish from a pre-0.10 version, you need to upgrade your database by following instructions in https://github.com/elves/upgrade-db-for-0.10/")
 
 // InitRuntime initializes the runtime. The caller is responsible for calling
 // CleanupRuntime at some point.
@@ -49,87 +66,138 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 		sockpath = filepath.Join(runDir, "sock")
 	}
 
-	toSpawn := &daemon.Daemon{
-		BinPath:       binpath,
-		DbPath:        dbpath,
-		SockPath:      sockpath,
-		LogPathPrefix: filepath.Join(runDir, "daemon.log-"),
-	}
-	var cl *daemonapi.Client
-	if sockpath != "" && dbpath != "" {
-		cl = daemonapi.NewClient(sockpath)
-		_, statErr := os.Stat(sockpath)
-		killed := false
-		if statErr == nil {
-			// Kill the daemon if it is outdated.
-			version, err := cl.Version()
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "warning: socket exists but not responding version RPC:", err)
-				// TODO(xiaq): Remove this when the SQLite-backed database
-				// becomes an unmemorable past (perhaps 6 months after the
-				// switch to boltdb).
-				if err.Error() == bolt.ErrInvalid.Error() {
-					fmt.Fprintln(os.Stderr, upgradeDbNotice)
-				}
-				goto spawnDaemonEnd
-			}
-			logger.Printf("daemon serving version %d, want version %d", version, daemonapi.Version)
-			if version < daemonapi.Version {
-				pid, err := cl.Pid()
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "warning: socket exists but not responding pid RPC:", err)
-					cl.Close()
-					cl = nil
-					goto spawnDaemonEnd
-				}
-				cl.Close()
-				logger.Printf("killing outdated daemon with pid %d", pid)
-				p, err := os.FindProcess(pid)
-				if err != nil {
-					err = p.Kill()
-				}
-				if err != nil {
-					fmt.Fprintln(os.Stderr, "warning: failed to kill outdated daemon process:", err)
-					cl = nil
-					goto spawnDaemonEnd
-				}
-				logger.Println("killed outdated daemon")
-				killed = true
-			}
-		}
-		if os.IsNotExist(statErr) || killed {
-			logger.Println("socket does not exists, starting daemon")
-			err := toSpawn.Spawn()
-			if err != nil {
-				fmt.Fprintln(os.Stderr, "warning: cannot start daemon:", err)
-			} else {
-				logger.Println("started daemon")
-			}
-			for i := 0; i <= daemonWaitLoops; i++ {
-				_, err := cl.Version()
-				if err == nil {
-					logger.Println("daemon online")
-					goto spawnDaemonEnd
-				} else if err.Error() == bolt.ErrInvalid.Error() {
-					fmt.Fprintln(os.Stderr, upgradeDbNotice)
-					goto spawnDaemonEnd
-				} else if i == daemonWaitLoops {
-					fmt.Fprintf(os.Stderr, "cannot connect to daemon after %v: %v\n", daemonWaitTotal, err)
-					goto spawnDaemonEnd
-				}
-				time.Sleep(daemonWaitOneLoop)
-			}
-		}
-	}
-spawnDaemonEnd:
-
 	ev := eval.NewEvaler()
 	ev.SetLibDir(filepath.Join(dataDir, "lib"))
-	// TODO(xiaq): Maybe install daemon module asynchronously
-	ev.InstallDaemon(cl, toSpawn)
 	// TODO(xiaq): Installation of the re module might belong somewhere else.
 	ev.InstallModule("re", re.Namespace())
+	if sockpath != "" && dbpath != "" {
+		spawner := &daemon.Daemon{
+			BinPath:       binpath,
+			DbPath:        dbpath,
+			SockPath:      sockpath,
+			LogPathPrefix: filepath.Join(runDir, "daemon.log-"),
+		}
+		// TODO(xiaq): Connect to daemon and install daemon module
+		// asynchronously.
+		client, err := connectToDaemon(sockpath, spawner)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Cannot connect to daemon:", err)
+			fmt.Fprintln(os.Stderr, daemonWontWorkMsg)
+		}
+		// Even if error is not nil, we install daemon-related functionalities
+		// anyway. Daemon may eventually come online and become functional.
+		ev.InstallDaemon(client, spawner)
+	}
 	return ev, dataDir
+}
+
+func connectToDaemon(sockpath string, spawner *daemon.Daemon) (*daemonapi.Client, error) {
+	cl := daemonapi.NewClient(sockpath)
+	status, err := detectDaemon(sockpath, cl)
+	shouldSpawn := false
+
+	switch status {
+	case daemonOK:
+	case sockfileMissing:
+		shouldSpawn = true
+	case sockfileOtherError:
+		return cl, fmt.Errorf("socket file %s inaccessible: %v", sockpath, err)
+	case connectionShutdown:
+		fmt.Fprintf(os.Stderr, connectionShutdownFmt, sockpath)
+		err := os.Remove(sockpath)
+		if err != nil {
+			return cl, fmt.Errorf("failed to remove socket file: %v", err)
+		}
+		shouldSpawn = true
+	case connectionOtherError:
+		return cl, fmt.Errorf("unexpected RPC error on socket %s: %v", sockpath, err)
+	case daemonInvalidDB:
+		return cl, errInvalidDB
+	case daemonOutdated:
+		fmt.Fprintln(os.Stderr, "Daemon is outdated; going to kill old daemon and re-spawn")
+		err := killDaemon(cl)
+		if err != nil {
+			return cl, fmt.Errorf("failed to kill old daemon: %v", err)
+		}
+		shouldSpawn = true
+	default:
+		return cl, fmt.Errorf("code bug: unknown daemon status %d", status)
+	}
+
+	if !shouldSpawn {
+		return cl, nil
+	}
+
+	err = spawner.Spawn()
+	if err != nil {
+		return cl, fmt.Errorf("failed to spawn daemon: %v", err)
+	}
+	fmt.Fprintln(os.Stderr, "Spawned daemon")
+
+	// Wait for daemon to come online
+	for i := 0; i <= daemonWaitLoops; i++ {
+		cl.ResetConn()
+		status, err := detectDaemon(sockpath, cl)
+
+		switch status {
+		case daemonOK:
+			return cl, nil
+		case sockfileMissing:
+			// Continue waiting
+		case sockfileOtherError:
+			return cl, fmt.Errorf("socket file %s inaccessible: %v", sockpath, err)
+		case connectionShutdown:
+			// Continue waiting
+		case connectionOtherError:
+			return cl, fmt.Errorf("unexpected RPC error on socket %s: %v", sockpath, err)
+		case daemonInvalidDB:
+			return cl, errInvalidDB
+		case daemonOutdated:
+			return cl, fmt.Errorf("code bug: newly spawned daemon is outdated")
+		default:
+			return cl, fmt.Errorf("code bug: unknown daemon status %d", status)
+		}
+		time.Sleep(daemonWaitPerLoop)
+	}
+	return cl, fmt.Errorf("daemon unreachable after waiting for %s", daemonWaitLoops*daemonWaitPerLoop)
+}
+
+func detectDaemon(sockpath string, cl *daemonapi.Client) (daemonStatus, error) {
+	_, err := os.Stat(sockpath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return sockfileMissing, err
+		}
+		return sockfileOtherError, err
+	}
+
+	version, err := cl.Version()
+	if err != nil {
+		switch {
+		case err == rpc.ErrShutdown:
+			return connectionShutdown, err
+		case err.Error() == bolt.ErrInvalid.Error():
+			return daemonInvalidDB, err
+		default:
+			return connectionOtherError, err
+		}
+	}
+	if version < daemonapi.Version {
+		return daemonOutdated, nil
+	}
+	return daemonOK, nil
+}
+
+func killDaemon(cl *daemonapi.Client) error {
+	pid, err := cl.Pid()
+	if err != nil {
+		return fmt.Errorf("cannot get pid of daemon: %v", err)
+	}
+	process, err := os.FindProcess(pid)
+	if err != nil {
+		return fmt.Errorf("cannot find daemon process (pid=%d): %v", pid, err)
+	}
+	return process.Kill()
 }
 
 // CleanupRuntime cleans up the runtime.

@@ -40,6 +40,17 @@ func (c *Client) SockPath() string {
 	return c.sockPath
 }
 
+// ResetConn resets the current connection. A new connection will be established
+// the next time a request is made. If the client is nil, it does nothing.
+func (c *Client) ResetConn() error {
+	if c == nil || c.rpcClient == nil {
+		return nil
+	}
+	rc := c.rpcClient
+	c.rpcClient = nil
+	return rc.Close()
+}
+
 // Close waits for all outstanding requests to finish and close the connection.
 // If the client is nil, it does nothing and returns nil.
 func (c *Client) Close() error {
@@ -47,12 +58,7 @@ func (c *Client) Close() error {
 		return nil
 	}
 	c.waits.Wait()
-	rc := c.rpcClient
-	c.rpcClient = nil
-	if rc != nil {
-		return rc.Close()
-	}
-	return nil
+	return c.ResetConn()
 }
 
 func (c *Client) call(f string, req, res interface{}) error {
