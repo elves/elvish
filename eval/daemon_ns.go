@@ -11,7 +11,7 @@ import (
 // DaemonSpawner field is nil.
 var ErrDontKnowHowToSpawnDaemon = errors.New("don't know how to spawn daemon")
 
-func makeDaemonNamespace(daemon *api.Client) Namespace {
+func makeDaemonNs(daemon *api.Client) Ns {
 	// Obtain process ID
 	daemonPid := func() Value {
 		pid, err := daemon.Pid()
@@ -19,7 +19,7 @@ func makeDaemonNamespace(daemon *api.Client) Namespace {
 		return String(strconv.Itoa(pid))
 	}
 
-	return Namespace{
+	return Ns{
 		"pid":  MakeRoVariableFromCallback(daemonPid),
 		"sock": NewRoVariable(String(daemon.SockPath())),
 

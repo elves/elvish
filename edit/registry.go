@@ -57,8 +57,8 @@ func registerBuiltins(module string, impls map[string]func(*Editor)) struct{} {
 	return struct{}{}
 }
 
-func makeNamespaceFromBuiltins(builtins map[string]*BuiltinFn) eval.Namespace {
-	ns := eval.Namespace{}
+func makeNsFromBuiltins(builtins map[string]*BuiltinFn) eval.Ns {
+	ns := make(eval.Ns)
 	for name, builtin := range builtins {
 		ns[name+eval.FnSuffix] = eval.NewPtrVariable(builtin)
 	}

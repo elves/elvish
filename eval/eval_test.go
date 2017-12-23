@@ -9,7 +9,7 @@ import (
 
 func TestBuiltinPid(t *testing.T) {
 	pid := strconv.Itoa(syscall.Getpid())
-	builtinPid := ToString(makeBuiltinNamespace()["pid"].Get())
+	builtinPid := ToString(makeBuiltinNs()["pid"].Get())
 	if builtinPid != pid {
 		t.Errorf(`ev.builtin["pid"] = %v, want %v`, builtinPid, pid)
 	}

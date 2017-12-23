@@ -68,9 +68,9 @@ func (bf *BuiltinFn) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]e
 }
 
 // installModules installs edit: and edit:* modules.
-func installModules(modules map[string]eval.Namespace, ed *Editor) {
+func installModules(builtin eval.Ns, ed *Editor) {
 	// Construct the edit: module, starting with builtins.
-	ns := makeNamespaceFromBuiltins(builtinMaps[""])
+	ns := makeNsFromBuiltins(builtinMaps[""])
 
 	// TODO(xiaq): Everything here should be registered to some registry instead
 	// of centralized here.
@@ -158,20 +158,27 @@ func installModules(modules map[string]eval.Namespace, ed *Editor) {
 		&eval.BuiltinFn{"edit:-narrow-read", NarrowRead},
 	)
 
-	modules["edit"] = ns
+	builtin["edit"+eval.NsSuffix] = eval.NewPtrVariableWithValidator(ns, eval.ShouldBeNs)
+	submods := make(map[string]eval.Ns)
 	// Install other modules.
 	for module, builtins := range builtinMaps {
 		if module != "" {
-			modules["edit:"+module] = makeNamespaceFromBuiltins(builtins)
+			submods[module] = makeNsFromBuiltins(builtins)
 		}
 	}
 
 	// Add $edit:{mode}:binding variables.
 	for mode, bindingVar := range ed.bindings {
-		if modules["edit:"+mode] == nil {
-			modules["edit:"+mode] = make(eval.Namespace)
+		submod, ok := submods[mode]
+		if !ok {
+			submod = make(eval.Ns)
+			submods[mode] = submod
 		}
-		modules["edit:"+mode]["binding"] = bindingVar
+		submod["binding"] = bindingVar
+	}
+
+	for name, ns := range submods {
+		builtin["edit:"+name+eval.NsSuffix] = eval.NewPtrVariableWithValidator(ns, eval.ShouldBeNs)
 	}
 }
 

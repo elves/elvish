@@ -17,14 +17,14 @@ var ErrStoreUnconnected = errors.New("store unconnected")
 func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 	switch ns {
 	case "builtin":
-		for name := range ev.Builtin.Names {
+		for name := range ev.Builtin {
 			f(name)
 		}
 	case "":
-		for name := range ev.Global.Names {
+		for name := range ev.Global {
 			f(name)
 		}
-		for name := range ev.Builtin.Names {
+		for name := range ev.Builtin {
 			f(name)
 		}
 	case "e":
@@ -40,11 +40,11 @@ func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 	case "shared":
 		// TODO Add daemon RPC for enumerating shared variables.
 	default:
-		mod := ev.Global.Uses[ns]
+		mod := ev.Global[ns+NsSuffix]
 		if mod == nil {
-			mod = ev.Builtin.Uses[ns]
+			mod = ev.Builtin[ns+NsSuffix]
 		}
-		for name := range mod {
+		for name := range mod.Get().(Ns) {
 			f(name)
 		}
 	}
@@ -53,11 +53,15 @@ func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 // EachModInTop calls the passed function for each module that can be found from
 // the top context.
 func (ev *evalerScopes) EachModInTop(f func(s string)) {
-	for name := range ev.Global.Uses {
-		f(name)
+	for name := range ev.Global {
+		if strings.HasSuffix(name, NsSuffix) {
+			f(name[:len(name)-len(NsSuffix)])
+		}
 	}
-	for name := range ev.Builtin.Uses {
-		f(name)
+	for name := range ev.Builtin {
+		if strings.HasSuffix(name, NsSuffix) {
+			f(name[:len(name)-len(NsSuffix)])
+		}
 	}
 }
 
@@ -76,19 +80,19 @@ func (ev *evalerScopes) EachNsInTop(f func(s string)) {
 func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	switch ns {
 	case "local":
-		return ec.local.Names[name]
+		return ec.local[name]
 	case "up":
-		return ec.up.Names[name]
+		return ec.up[name]
 	case "builtin":
-		return ec.Builtin.Names[name]
+		return ec.Builtin[name]
 	case "":
-		if v := ec.local.Names[name]; v != nil {
+		if v := ec.local[name]; v != nil {
 			return v
 		}
-		if v, ok := ec.up.Names[name]; ok {
+		if v, ok := ec.up[name]; ok {
 			return v
 		}
-		return ec.Builtin.Names[name]
+		return ec.Builtin[name]
 	case "e":
 		if strings.HasSuffix(name, FnSuffix) {
 			return NewRoVariable(ExternalCmd{name[:len(name)-len(FnSuffix)]})
@@ -109,15 +113,10 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	return nil
 }
 
-func (ec *EvalCtx) ResolveMod(name string) Namespace {
-	if ns, ok := ec.local.Uses[name]; ok {
-		return ns
+func (ec *EvalCtx) ResolveMod(name string) Ns {
+	ns := ec.ResolveVar("", name+NsSuffix)
+	if ns == nil {
+		return nil
 	}
-	if ns, ok := ec.up.Uses[name]; ok {
-		return ns
-	}
-	if ns, ok := ec.Builtin.Uses[name]; ok {
-		return ns
-	}
-	return nil
+	return ns.Get().(Ns)
 }

@@ -99,7 +99,7 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp)
 
 func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFunc) {
 	varname := cp.literal(n.Head, msg)
-	cp.registerVariableSet(varname)
+	cp.registerVariableSetQname(varname)
 	explode, ns, barename := ParseVariable(varname)
 
 	if len(n.Indicies) == 0 {
@@ -112,10 +112,12 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 					// immeidately be set.
 					if strings.HasSuffix(barename, FnSuffix) {
 						variable = NewPtrVariableWithValidator(nil, ShouldBeFn)
+					} else if strings.HasSuffix(barename, NsSuffix) {
+						variable = NewPtrVariableWithValidator(nil, ShouldBeNs)
 					} else {
 						variable = NewPtrVariable(nil)
 					}
-					ec.local.Names[barename] = variable
+					ec.local[barename] = variable
 				} else if mod, ok := ec.Modules[ns]; ok {
 					variable = NewPtrVariable(nil)
 					mod[barename] = variable

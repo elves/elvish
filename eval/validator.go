@@ -9,6 +9,7 @@ var (
 	errShouldBeList   = errors.New("should be list")
 	errShouldBeMap    = errors.New("should be map")
 	errShouldBeFn     = errors.New("should be function")
+	errShouldBeNs     = errors.New("should be ns")
 	errShouldBeBool   = errors.New("should be bool")
 	errShouldBeNumber = errors.New("should be number")
 )
@@ -30,6 +31,13 @@ func ShouldBeMap(v Value) error {
 func ShouldBeFn(v Value) error {
 	if _, ok := v.(Callable); !ok {
 		return errShouldBeFn
+	}
+	return nil
+}
+
+func ShouldBeNs(v Value) error {
+	if _, ok := v.(Ns); !ok {
+		return errShouldBeNs
 	}
 	return nil
 }

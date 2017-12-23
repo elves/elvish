@@ -69,7 +69,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 	ev := eval.NewEvaler()
 	ev.SetLibDir(filepath.Join(dataDir, "lib"))
 	// TODO(xiaq): Installation of the re module might belong somewhere else.
-	ev.InstallModule("re", re.Namespace())
+	ev.InstallModule("re", re.Ns())
 	if sockpath != "" && dbpath != "" {
 		spawner := &daemon.Daemon{
 			BinPath:       binpath,

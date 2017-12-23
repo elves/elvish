@@ -78,10 +78,10 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 		}
 		switch ns {
 		case "", "local":
-			if !cp.thisScope().Names[name] {
+			if cp.thisScope().has(name) {
 				cp.errorf("variable $%s not found on current local scope", name)
 			}
-			delete(cp.thisScope().Names, name)
+			cp.thisScope().del(name)
 			names = append(names, name)
 		case "E":
 			envNames = append(envNames, name)
@@ -92,7 +92,7 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 	}
 	return func(ec *EvalCtx) {
 		for _, name := range names {
-			delete(ec.local.Names, name)
+			delete(ec.local, name)
 		}
 		for _, name := range envNames {
 			// BUG(xiaq): We rely on the fact that os.Unsetenv always returns
@@ -123,17 +123,17 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 	bodyNode := args.nextMustLambda()
 	args.mustEnd()
 
-	cp.registerVariableSet(":" + varName)
+	cp.registerVariableSetQname(":" + varName)
 	op := cp.lambda(bodyNode)
 
 	return func(ec *EvalCtx) {
 		// Initialize the function variable with the builtin nop
 		// function. This step allows the definition of recursive
 		// functions; the actual function will never be called.
-		ec.local.Names[varName] = NewPtrVariable(&BuiltinFn{"<shouldn't be called>", nop})
+		ec.local[varName] = NewPtrVariable(&BuiltinFn{"<shouldn't be called>", nop})
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
-		ec.local.Names[varName].Set(closure)
+		ec.local[varName].Set(closure)
 	}
 }
 
@@ -151,7 +151,7 @@ func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 	// When modspec = "a/b/c:d", modname is c:d, and modpath is a/b/c/d
 	modname := spec[strings.LastIndexByte(spec, '/')+1:]
 	modpath := strings.Replace(spec, ":", "/", -1)
-	cp.thisScope().Uses[modname] = true
+	cp.thisScope().set(modname + NsSuffix)
 
 	return func(ec *EvalCtx) {
 		use(ec, modname, modpath)
@@ -175,10 +175,10 @@ func use(ec *EvalCtx, modname, modpath string) {
 	modpath = resolvedPath
 
 	// Put the just loaded module into local scope.
-	ec.local.Uses[modname] = loadModule(ec, modpath)
+	ec.local[modname+NsSuffix] = NewPtrVariable(loadModule(ec, modpath))
 }
 
-func loadModule(ec *EvalCtx, modpath string) Namespace {
+func loadModule(ec *EvalCtx, modpath string) Ns {
 	if ns, ok := ec.Evaler.Modules[modpath]; ok {
 		// Module already loaded.
 		return ns
@@ -213,12 +213,12 @@ func loadModule(ec *EvalCtx, modpath string) Namespace {
 	maybeThrow(err)
 
 	// Make an empty scope to evaluate the module in.
-	local := makeScope()
+	local := make(Ns)
 
 	newEc := &EvalCtx{
 		ec.Evaler, "module " + modpath,
 		filename, source, modpath,
-		local, makeScope(),
+		local, make(Ns),
 		ec.ports,
 		0, len(source), ec.addTraceback(), false,
 	}
@@ -228,14 +228,14 @@ func loadModule(ec *EvalCtx, modpath string) Namespace {
 
 	// Load the namespace before executing. This avoids mutual and self use's to
 	// result in an infinite recursion.
-	ec.Evaler.Modules[modpath] = local.Names
+	ec.Evaler.Modules[modpath] = local
 	err = newEc.PEval(op)
 	if err != nil {
 		// Unload the namespace.
 		delete(ec.Modules, modpath)
 		throw(err)
 	}
-	return local.Names
+	return local
 }
 
 // compileAnd compiles the "and" special form.

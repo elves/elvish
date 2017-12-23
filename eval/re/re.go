@@ -10,8 +10,8 @@ import (
 	"github.com/xiaq/persistent/vector"
 )
 
-func Namespace() eval.Namespace {
-	ns := eval.Namespace{}
+func Ns() eval.Ns {
+	ns := eval.Ns{}
 	eval.AddBuiltinFns(ns, fns...)
 	return ns
 }

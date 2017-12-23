@@ -13,6 +13,8 @@ import (
 
 func init() {
 	addToBuiltinFns([]*BuiltinFn{
+		{"ns", nsFn},
+
 		{"range", rangeFn},
 		{"repeat", repeat},
 		{"explode", explode},
@@ -31,6 +33,13 @@ func init() {
 
 		{"keys", keys},
 	})
+}
+
+func nsFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
+	ec.OutputChan() <- make(Ns)
 }
 
 func rangeFn(ec *EvalCtx, args []Value, opts map[string]Value) {

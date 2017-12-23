@@ -13,20 +13,20 @@ import (
 // compiler maintains the set of states needed when compiling a single source
 // file.
 type compiler struct {
-	// Builtin scope.
-	builtin staticScope
-	// Lexical scopes.
-	scopes []staticScope
+	// Builtin namespace.
+	builtin staticNs
+	// Lexical namespaces.
+	scopes []staticNs
 	// Variables captured from outer scopes.
-	capture staticScope
+	capture staticNs
 	// Position of what is being compiled.
 	begin, end int
 	// Information about the source.
 	name, text string
 }
 
-func compile(b, g staticScope, n *parse.Chunk, name, text string) (op Op, err error) {
-	cp := &compiler{b, []staticScope{g}, makeStaticScope(), 0, 0, name, text}
+func compile(b, g staticNs, n *parse.Chunk, name, text string) (op Op, err error) {
+	cp := &compiler{b, []staticNs{g}, make(staticNs), 0, 0, name, text}
 	defer util.Catch(&err)
 	return cp.chunkOp(n), nil
 }
@@ -44,23 +44,27 @@ func (cp *compiler) errorf(format string, args ...interface{}) {
 	cp.errorpf(cp.begin, cp.end, format, args...)
 }
 
-func (cp *compiler) thisScope() staticScope {
+func (cp *compiler) thisScope() staticNs {
 	return cp.scopes[len(cp.scopes)-1]
 }
 
-func (cp *compiler) pushScope() staticScope {
-	sc := makeStaticScope()
+func (cp *compiler) pushScope() staticNs {
+	sc := make(staticNs)
 	cp.scopes = append(cp.scopes, sc)
 	return sc
 }
 
 func (cp *compiler) popScope() {
-	cp.scopes[len(cp.scopes)-1] = makeStaticScope()
+	cp.scopes[len(cp.scopes)-1] = make(staticNs)
 	cp.scopes = cp.scopes[:len(cp.scopes)-1]
 }
 
-func (cp *compiler) registerVariableGet(qname string) bool {
+func (cp *compiler) registerVariableGetQname(qname string) bool {
 	_, ns, name := ParseVariable(qname)
+	return cp.registerVariableGet(ns, name)
+}
+
+func (cp *compiler) registerVariableGet(ns, name string) bool {
 	switch ns {
 	case "", "local", "up":
 		// Handled below
@@ -73,41 +77,40 @@ func (cp *compiler) registerVariableGet(qname string) bool {
 	isnum := err == nil
 	// Find in local scope
 	if ns == "" || ns == "local" {
-		if cp.thisScope().Names[name] || isnum {
+		if cp.thisScope().has(name) || isnum {
 			return true
 		}
 	}
 	// Find in upper scopes
 	if ns == "" || ns == "up" {
 		for i := len(cp.scopes) - 2; i >= 0; i-- {
-			if cp.scopes[i].Names[name] || isnum {
+			if cp.scopes[i].has(name) || isnum {
 				// Existing name: record capture and return.
-				cp.capture.Names[name] = true
+				cp.capture.set(name)
 				return true
 			}
 		}
 	}
 	// Find in builtin scope
 	if ns == "" || ns == "builtin" {
-		_, ok := cp.builtin.Names[name]
-		if ok {
+		if cp.builtin.has(name) {
 			return true
 		}
 	}
 	return false
 }
 
-func (cp *compiler) registerVariableSet(qname string) bool {
+func (cp *compiler) registerVariableSetQname(qname string) bool {
 	_, ns, name := ParseVariable(qname)
 	switch ns {
 	case "local":
-		cp.thisScope().Names[name] = true
+		cp.thisScope().set(name)
 		return true
 	case "up":
 		for i := len(cp.scopes) - 2; i >= 0; i-- {
-			if cp.scopes[i].Names[name] {
+			if cp.scopes[i].has(name) {
 				// Existing name: record capture and return.
-				cp.capture.Names[name] = true
+				cp.capture.set(name)
 				return true
 			}
 		}
@@ -116,20 +119,20 @@ func (cp *compiler) registerVariableSet(qname string) bool {
 		cp.errorf("cannot set builtin variable")
 		return false
 	case "":
-		if cp.thisScope().Names[name] {
+		if cp.thisScope().has(name) {
 			// A name on current scope. Do nothing.
 			return true
 		}
 		// Walk up the upper scopes
 		for i := len(cp.scopes) - 2; i >= 0; i-- {
-			if cp.scopes[i].Names[name] {
+			if cp.scopes[i].has(name) {
 				// Existing name. Do nothing
-				cp.capture.Names[name] = true
+				cp.capture.set(name)
 				return true
 			}
 		}
 		// New name. Register on this scope!
-		cp.thisScope().Names[name] = true
+		cp.thisScope().set(name)
 		return true
 	case "e", "E", "shared":
 		// Special namespaces, do nothing
@@ -140,14 +143,5 @@ func (cp *compiler) registerVariableSet(qname string) bool {
 }
 
 func (cp *compiler) registerModAccess(name string) bool {
-	if cp.thisScope().Uses[name] {
-		return true
-	}
-	for i := len(cp.scopes) - 2; i >= 0; i-- {
-		if cp.scopes[i].Uses[name] {
-			cp.capture.Uses[name] = true
-			return true
-		}
-	}
-	return cp.builtin.Uses[name]
+	return cp.registerVariableGet("", name+NsSuffix)
 }

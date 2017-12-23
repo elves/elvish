@@ -258,7 +258,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 		return literalStr(n.Value)
 	case parse.Variable:
 		qname := n.Value
-		if !cp.registerVariableGet(qname) {
+		if !cp.registerVariableGetQname(qname) {
 			cp.errorf("variable $%s not found", n.Value)
 		}
 		return variable(qname)
@@ -449,39 +449,33 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 
 	thisScope := cp.pushScope()
 	for _, argName := range argNames {
-		thisScope.Names[argName] = true
+		thisScope.set(argName)
 	}
 	if restArgName != "" {
-		thisScope.Names[restArgName] = true
+		thisScope.set(restArgName)
 	}
 	for _, optName := range optNames {
-		thisScope.Names[optName] = true
+		thisScope.set(optName)
 	}
-	thisScope.Names["opts"] = true
+	thisScope.set("opts")
 
 	op := cp.chunkOp(n.Chunk)
 
 	// XXX The fiddlings with cp.capture is error-prone.
 	capture := cp.capture
-	cp.capture = makeStaticScope()
+	cp.capture = make(staticNs)
 	cp.popScope()
 
-	for name := range capture.Names {
-		cp.registerVariableGet(name)
-	}
-	for name := range capture.Uses {
-		cp.registerModAccess(name)
+	for name := range capture {
+		cp.registerVariableGetQname(name)
 	}
 
 	name, text := cp.name, cp.text
 
 	return func(ec *EvalCtx) []Value {
-		evCapture := makeScope()
-		for name := range capture.Names {
-			evCapture.Names[name] = ec.ResolveVar("", name)
-		}
-		for name := range capture.Uses {
-			evCapture.Uses[name] = ec.ResolveMod(name)
+		evCapture := make(Ns)
+		for name := range capture {
+			evCapture[name] = ec.ResolveVar("", name)
 		}
 		optDefaults := make([]Value, len(optDefaultOps))
 		for i, op := range optDefaultOps {

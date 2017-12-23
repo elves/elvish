@@ -90,14 +90,14 @@ func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandida
 		}
 	})
 	// TODO Support non-module namespaces.
-	for ns := range ev.Global.Uses {
-		if head != ns+":" {
-			got(ns + ":")
+	for name := range ev.Global {
+		if head != name && strings.HasSuffix(name, eval.NsSuffix) {
+			got(name)
 		}
 	}
-	for ns := range ev.Builtin.Uses {
-		if head != ns+":" {
-			got(ns + ":")
+	for name := range ev.Builtin {
+		if head != name && strings.HasSuffix(name, eval.NsSuffix) {
+			got(name)
 		}
 	}
 	return nil

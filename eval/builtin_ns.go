@@ -6,8 +6,8 @@ import (
 	"syscall"
 )
 
-func makeBuiltinNamespace() Namespace {
-	ns := Namespace{
+func makeBuiltinNs() Ns {
+	ns := Ns{
 		"_":     BlackholeVariable{},
 		"pid":   NewRoVariable(String(strconv.Itoa(syscall.Getpid()))),
 		"ok":    NewRoVariable(OK),
@@ -21,7 +21,7 @@ func makeBuiltinNamespace() Namespace {
 }
 
 // AddBuiltinFns adds builtin functions to a namespace.
-func AddBuiltinFns(ns Namespace, fns ...*BuiltinFn) {
+func AddBuiltinFns(ns Ns, fns ...*BuiltinFn) {
 	for _, b := range fns {
 		name := b.Name
 		if i := strings.IndexRune(b.Name, ':'); i != -1 {

@@ -26,9 +26,16 @@ import (
 
 var logger = util.GetLogger("[eval] ")
 
-// FnSuffix is the suffix for the variable names of functions. Defining a
-// function "foo" is equivalent to setting a variable named "foo" + FnSuffix.
-const FnSuffix = "~"
+const (
+	// FnSuffix is the suffix for the variable names of functions. Defining a
+	// function "foo" is equivalent to setting a variable named "foo~", and vice
+	// versa.
+	FnSuffix = "~"
+	// NsSuffix is the suffix for the variable names of namespaces. Defining a
+	// namespace foo is equivalent to setting a variable named "foo:", and vice
+	// versa.
+	NsSuffix = ":"
+)
 
 const (
 	outChanSize              = 32
@@ -41,7 +48,7 @@ const (
 type Evaler struct {
 	evalerScopes
 	evalerDaemon
-	Modules map[string]Namespace
+	Modules map[string]Ns
 	Editor  Editor
 	libDir  string
 	intCh   chan struct{}
@@ -51,8 +58,8 @@ type Evaler struct {
 }
 
 type evalerScopes struct {
-	Global  Scope
-	Builtin Scope
+	Global  Ns
+	Builtin Ns
 }
 
 type evalerDaemon struct {
@@ -69,7 +76,7 @@ type EvalCtx struct {
 	src     string
 	modPath string // Only nonempty when evaluating a module.
 
-	local, up Scope
+	local, up Ns
 	ports     []*Port
 
 	begin, end int
@@ -80,22 +87,22 @@ type EvalCtx struct {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler() *Evaler {
-	builtin := Scope{makeBuiltinNamespace(), map[string]Namespace{}}
+	builtin := makeBuiltinNs()
 
 	ev := &Evaler{
 		evalerScopes: evalerScopes{
-			Global:  makeScope(),
+			Global:  make(Ns),
 			Builtin: builtin,
 		},
-		Modules: map[string]Namespace{
-			"builtin": builtin.Names,
+		Modules: map[string]Ns{
+			"builtin": builtin,
 		},
 		Editor: nil,
 		intCh:  nil,
 
 		valueOutIndicator: defaultValueOutIndicator,
 	}
-	builtin.Names["value-out-indicator"] = NewBackedVariable(&ev.valueOutIndicator)
+	builtin["value-out-indicator"] = NewBackedVariable(&ev.valueOutIndicator)
 
 	return ev
 }
@@ -103,14 +110,14 @@ func NewEvaler() *Evaler {
 // InstallDaemon installs a daemon to the Evaler.
 func (ev *Evaler) InstallDaemon(client *api.Client, spawner *daemon.Daemon) {
 	ev.evalerDaemon = evalerDaemon{client, spawner}
-	ev.InstallModule("daemon", makeDaemonNamespace(client))
+	ev.InstallModule("daemon", makeDaemonNs(client))
 	// XXX This is really brittle
-	ev.Builtin.Names["pwd"] = PwdVariable{client}
+	ev.Builtin["pwd"] = PwdVariable{client}
 }
 
 // InstallModule installs a module to the Evaler so that it can be used with
 // "use $name" from script.
-func (ev *Evaler) InstallModule(name string, mod Namespace) {
+func (ev *Evaler) InstallModule(name string, mod Ns) {
 	ev.Modules[name] = mod
 }
 
@@ -127,7 +134,7 @@ func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
 	return &EvalCtx{
 		ev, "top",
 		name, text, "",
-		ev.Global, makeScope(),
+		ev.Global, make(Ns),
 		ports,
 		0, len(text), nil, false,
 	}

@@ -143,7 +143,7 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 	}
 	ev.Editor = ed
 
-	installModules(ev.Builtin.Uses, ed)
+	installModules(ev.Builtin, ed)
 
 	return ed
 }
