@@ -81,5 +81,5 @@ var opTests = []Test{
 }
 
 func TestOp(t *testing.T) {
-	RunTests(t, libDir, opTests)
+	runTests(t, opTests)
 }

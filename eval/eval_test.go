@@ -27,12 +27,12 @@ var miscEvalTests = []Test{
 }
 
 func TestMiscEval(t *testing.T) {
-	RunTests(t, libDir, miscEvalTests)
+	runTests(t, miscEvalTests)
 }
 
 func TestMultipleEval(t *testing.T) {
 	texts := []string{"x=hello", "put $x"}
-	outs, _, err := evalAndCollect(t, libDir, texts, 1)
+	outs, _, err := evalAndCollect(t, NewEvaler(), texts, 1)
 	wanted := strs("hello")
 	if err != nil {
 		t.Errorf("eval %s => %v, want nil", texts, err)

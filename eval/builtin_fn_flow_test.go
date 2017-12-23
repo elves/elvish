@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestBuiltinFnFlow(t *testing.T) {
-	RunTests(t, libDir, []Test{
+	runTests(t, []Test{
 		{`run-parallel { put lorem } { echo ipsum }`,
 			want{out: strs("lorem"), bytesOut: []byte("ipsum\n")}},
 

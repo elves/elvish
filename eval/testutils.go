@@ -5,6 +5,7 @@
 package eval
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -101,11 +102,20 @@ func (t Test) WantAnyErr(err error) Test {
 	return t
 }
 
-func RunTests(t *testing.T, libDir string, evalTests []Test) {
+func runTests(t *testing.T, tests []Test) {
+	RunTests(t, tests, func() *Evaler {
+		ev := NewEvaler()
+		ev.SetLibDir(libDir)
+		return ev
+	})
+}
+
+func RunTests(t *testing.T, evalTests []Test, makeEvaler func() *Evaler) {
 	for _, tt := range evalTests {
 		// fmt.Printf("eval %q\n", tt.text)
 
-		out, bytesOut, err := evalAndCollect(t, libDir, []string{tt.text}, len(tt.want.out))
+		ev := makeEvaler()
+		out, bytesOut, err := evalAndCollect(t, ev, []string{tt.text}, len(tt.want.out))
 
 		first := true
 		errorf := func(format string, args ...interface{}) {
@@ -119,7 +129,7 @@ func RunTests(t *testing.T, libDir string, evalTests []Test) {
 		if !matchOut(tt.want.out, out) {
 			errorf("got out=%v, want %v", out, tt.want.out)
 		}
-		if string(tt.want.bytesOut) != string(bytesOut) {
+		if !bytes.Equal(tt.want.bytesOut, bytesOut) {
 			errorf("got bytesOut=%q, want %q", bytesOut, tt.want.bytesOut)
 		}
 		if !matchErr(tt.want.err, err) {
@@ -128,10 +138,8 @@ func RunTests(t *testing.T, libDir string, evalTests []Test) {
 	}
 }
 
-func evalAndCollect(t *testing.T, libDir string, texts []string, chsize int) ([]Value, []byte, error) {
+func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]Value, []byte, error) {
 	name := "<eval test>"
-	ev := NewEvaler()
-	ev.SetLibDir(libDir)
 
 	// Collect byte output
 	bytesOut := []byte{}

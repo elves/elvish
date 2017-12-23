@@ -97,5 +97,5 @@ var valueTests = []Test{
 }
 
 func TestValue(t *testing.T) {
-	RunTests(t, libDir, valueTests)
+	runTests(t, valueTests)
 }

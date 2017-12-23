@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestBuiltinFnStr(t *testing.T) {
-	RunTests(t, libDir, []Test{
+	runTests(t, []Test{
 		{`==s haha haha`, wantTrue},
 		{`==s 10 10.0`, wantFalse},
 		{`<s a b`, wantTrue},

@@ -43,5 +43,5 @@ var builtinFnTests = []Test{
 }
 
 func TestBuiltinFn(t *testing.T) {
-	RunTests(t, libDir, builtinFnTests)
+	runTests(t, builtinFnTests)
 }

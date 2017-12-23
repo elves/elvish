@@ -7,7 +7,7 @@ import (
 
 func TestBuiltinFnFS(t *testing.T) {
 	pathSep := string(filepath.Separator)
-	RunTests(t, libDir, []Test{
+	runTests(t, []Test{
 		{`path-base a/b/c.png`, want{out: strs("c.png")}},
 		{`tilde-abbr $E:HOME` + pathSep + `foobar`,
 			want{out: strs("~" + pathSep + "foobar")}},

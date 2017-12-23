@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestBuiltinFnNum(t *testing.T) {
-	RunTests(t, libDir, []Test{
+	runTests(t, []Test{
 		{`== 1 1.0`, wantTrue},
 		{`== 10 0xa`, wantTrue},
 		{`== a a`, want{err: errAny}},
