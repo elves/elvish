@@ -70,15 +70,13 @@ func (t Test) WantOut(vs ...Value) Test {
 // WantOutStrings returns an altered Test that requires the source code to
 // produce the specified string values in the value channel when evaluated.
 func (t Test) WantOutStrings(ss ...string) Test {
-	t.want.out = strs(ss...)
-	return t
+	return t.WantOut(strs(ss...)...)
 }
 
 // WantOutBools returns an altered Test that requires the source code to produce
 // the specified boolean values in the value channel when evaluated.
 func (t Test) WantOutBools(bs ...bool) Test {
-	t.want.out = bools(bs...)
-	return t
+	return t.WantOut(bools(bs...)...)
 }
 
 // WantBytesOut returns an altered test that requires the source code to produce
@@ -86,6 +84,12 @@ func (t Test) WantOutBools(bs ...bool) Test {
 func (t Test) WantBytesOut(b []byte) Test {
 	t.want.bytesOut = b
 	return t
+}
+
+// WantBytesOutString is the same as WantBytesOut except that its argument is a
+// string.
+func (t Test) WantBytesOutString(s string) Test {
+	return t.WantBytesOut([]byte(s))
 }
 
 // WantErr returns an altered Test that requires the source code to result in
