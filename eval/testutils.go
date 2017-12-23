@@ -102,14 +102,6 @@ func (t Test) WantAnyErr(err error) Test {
 	return t
 }
 
-func runTests(t *testing.T, tests []Test) {
-	RunTests(t, tests, func() *Evaler {
-		ev := NewEvaler()
-		ev.SetLibDir(libDir)
-		return ev
-	})
-}
-
 func RunTests(t *testing.T, evalTests []Test, makeEvaler func() *Evaler) {
 	for _, tt := range evalTests {
 		// fmt.Printf("eval %q\n", tt.text)

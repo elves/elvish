@@ -111,3 +111,11 @@ func TestMain(m *testing.M) {
 	})
 	os.Exit(exitCode)
 }
+
+func runTests(t *testing.T, tests []Test) {
+	RunTests(t, tests, func() *Evaler {
+		ev := NewEvaler()
+		ev.SetLibDir(libDir)
+		return ev
+	})
+}
