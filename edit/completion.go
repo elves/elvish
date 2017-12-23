@@ -104,8 +104,11 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 			chanErrGenerate <- err
 		}()
 
-		candidates, errFilter := ev.Editor.(*Editor).filterAndCookCandidates(
-			ev, matcher, ctxCommon.seed, chanRawCandidate, ctxCommon.quoting)
+		rawCandidates, errFilter := filterRawCandidates(ev, matcher, ctxCommon.seed, chanRawCandidate)
+		candidates := make([]*candidate, len(rawCandidates))
+		for i, raw := range rawCandidates {
+			candidates[i] = raw.cook(ctxCommon.quoting)
+		}
 		spec := &complSpec{ctxCommon.begin, ctxCommon.end, candidates}
 		return name, spec, util.Errors(<-chanErrGenerate, errFilter)
 

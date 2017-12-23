@@ -120,49 +120,43 @@ func outputComplexCandidate(ec *eval.EvalCtx,
 	ec.OutputChan() <- c
 }
 
-func (ed *Editor) filterAndCookCandidates(ev *eval.Evaler, matcher eval.CallableValue,
-	pattern string, cands chan rawCandidate, q parse.PrimaryType) ([]*candidate, error) {
+func filterRawCandidates(ev *eval.Evaler, matcher eval.CallableValue,
+	seed string, chanRawCandidate <-chan rawCandidate) ([]rawCandidate, error) {
 
-	input := make(chan eval.Value)
-	var rcs []rawCandidate
+	matcherInput := make(chan eval.Value)
+	stopCollector := make(chan struct{})
+	var collected []rawCandidate
 	go func() {
-		defer close(input)
-		for rc := range cands {
-			rcs = append(rcs, rc)
-			input <- eval.String(rc.text())
+		defer close(matcherInput)
+		for rc := range chanRawCandidate {
+			collected = append(collected, rc)
+			select {
+			case matcherInput <- eval.String(rc.text()):
+			case <-stopCollector:
+				return
+			}
 		}
 	}()
-	// drain up input channel, make sure goroutine exits actually
-	defer func() {
-		for range input {
-		}
-	}()
+	defer close(stopCollector)
 
 	ports := []*eval.Port{
-		{Chan: input, File: eval.DevNull}, {File: os.Stdout}, {File: os.Stderr}}
+		{Chan: matcherInput, File: eval.DevNull}, {File: os.Stdout}, {File: os.Stderr}}
 	ec := eval.NewTopEvalCtx(ev, "[editor matcher]", "", ports)
 
-	args := []eval.Value{eval.String(pattern)}
+	args := []eval.Value{eval.String(seed)}
 	values, err := ec.PCaptureOutput(matcher, args, eval.NoOpts)
 	if err != nil {
 		return nil, err
-	} else if len(values) != len(rcs) {
+	} else if len(values) != len(collected) {
 		return nil, errIncorrectNumOfResults
 	}
 
-	var (
-		filtered []*candidate
-		frcs     rawCandidates
-	)
+	var filtered []rawCandidate
 	for i, value := range values {
 		if eval.ToBool(value) {
-			frcs = append(frcs, rcs[i])
+			filtered = append(filtered, collected[i])
 		}
 	}
-	sort.Sort(frcs)
-	for _, rc := range frcs {
-		filtered = append(filtered, rc.cook(q))
-	}
-
+	sort.Sort(rawCandidates(filtered))
 	return filtered, nil
 }
