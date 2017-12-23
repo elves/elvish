@@ -23,8 +23,7 @@ func (ce *CompilationError) Pprint(indent string) string {
 	var buf bytes.Buffer
 
 	fmt.Fprintf(&buf, "Compilation error: \033[31;1m%s\033[m\n", ce.Message)
-	buf.WriteString(indent + "  ")
-	buf.WriteString(ce.Context.Pprint(indent + "    "))
+	buf.WriteString(ce.Context.PprintCompact(indent + "  "))
 
 	return buf.String()
 }
