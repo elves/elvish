@@ -233,7 +233,7 @@ func literalStr(text string) ValuesOpFunc {
 }
 
 func variable(qname string) ValuesOpFunc {
-	explode, ns, name := ParseAndFixVariable(qname)
+	explode, ns, name := ParseVariable(qname)
 	return func(ec *EvalCtx) []Value {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
@@ -408,7 +408,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		argNames = make([]string, len(n.Elements))
 		for i, arg := range n.Elements {
 			qname := mustString(cp, arg, "argument name must be literal string")
-			explode, ns, name := ParseAndFixVariable(qname)
+			explode, ns, name := ParseVariable(qname)
 			if ns != "" {
 				cp.errorpf(arg.Begin(), arg.End(), "argument name must be unqualified")
 			}
@@ -431,7 +431,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		optDefaultOps = make([]ValuesOp, len(n.MapPairs))
 		for i, opt := range n.MapPairs {
 			qname := mustString(cp, opt.Key, "option name must be literal string")
-			_, ns, name := ParseAndFixVariable(qname)
+			_, ns, name := ParseVariable(qname)
 			if ns != "" {
 				cp.errorpf(opt.Key.Begin(), opt.Key.End(), "option name must be unqualified")
 			}

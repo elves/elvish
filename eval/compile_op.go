@@ -170,7 +170,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 				// captured and eventually the Evaler executes it. If not,
 				// nothing happens here and the Evaler executes an external
 				// command.
-				_, ns, name := ParseAndFixVariable(headStr)
+				_, ns, name := ParseVariable(headStr)
 				cp.registerVariableGet(ns + ":" + name + FnSuffix)
 				// XXX Dynamic head names should always refer to external
 				// commands.

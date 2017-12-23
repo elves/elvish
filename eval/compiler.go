@@ -60,7 +60,7 @@ func (cp *compiler) popScope() {
 }
 
 func (cp *compiler) registerVariableGet(qname string) bool {
-	_, ns, name := ParseAndFixVariable(qname)
+	_, ns, name := ParseVariable(qname)
 	switch ns {
 	case "", "local", "up":
 		// Handled below
@@ -98,7 +98,7 @@ func (cp *compiler) registerVariableGet(qname string) bool {
 }
 
 func (cp *compiler) registerVariableSet(qname string) bool {
-	_, ns, name := ParseAndFixVariable(qname)
+	_, ns, name := ParseVariable(qname)
 	switch ns {
 	case "local":
 		cp.thisScope().Names[name] = true

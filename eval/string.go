@@ -88,7 +88,7 @@ func (s String) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
 
 func resolve(s string, ec *EvalCtx) CallableValue {
 	// Try variable
-	explode, ns, name := ParseAndFixVariable(string(s))
+	explode, ns, name := ParseVariable(string(s))
 	if !explode {
 		if v := ec.ResolveVar(ns, name+FnSuffix); v != nil {
 			if caller, ok := v.Get().(CallableValue); ok {

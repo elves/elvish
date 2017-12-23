@@ -32,15 +32,6 @@ func mustGetHome(uname string) string {
 	return dir
 }
 
-// ParseAndFixVariable parses a variable name. It "fixes" $@ to $@args.
-func ParseAndFixVariable(qname string) (explode bool, ns string, name string) {
-	explode, ns, name = ParseVariable(qname)
-	if explode && ns == "" && name == "" {
-		name = "args"
-	}
-	return explode, ns, name
-}
-
 func ParseVariable(text string) (explode bool, ns string, name string) {
 	explodePart, qname := ParseVariableSplice(text)
 	nsPart, name := ParseVariableQName(qname)
