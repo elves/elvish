@@ -87,17 +87,20 @@ func TestKey(t *testing.T) {
 	for _, test := range keyTests {
 		theWriter.WriteString(test.input)
 		select {
-		case k := <-theReader.EventChan():
-			if k != test.want {
-				t.Errorf("Reader reads key %v, want %v", k, test.want)
+		case event := <-theReader.EventChan():
+			if event != test.want {
+				t.Errorf("Reader reads event %v, want %v", event, test.want)
 			}
 		case <-timeout():
-			t.Errorf("Reader fails to convert literal key")
+			t.Errorf("Reader timed out")
 		}
 	}
 }
 
-func TestStop(t *testing.T) {
+// TestStopMakesUnderlyingFileAvailable tests that after calling Stop, the
+// Reader no longer attempts to read from the underlying file, so it is
+// available for use by others.
+func TestStopMakesUnderlyingFileAvailable(t *testing.T) {
 	theReader.Stop()
 	defer theReader.Start()
 
