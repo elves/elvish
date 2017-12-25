@@ -124,3 +124,23 @@ func TestStopMakesUnderlyingFileAvailable(t *testing.T) {
 		t.Error("inner.Read times out")
 	}
 }
+
+// TestStartAfterStopIndeedStarts tests that calling Start very shortly after
+// Stop puts the Reader the correct started state.
+func TestStartAfterStopIndeedStarts(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		theReader.Stop()
+		theReader.Start()
+
+		theWriter.WriteString("a")
+		select {
+		case event := <-theReader.EventChan():
+			wantEvent := KeyEvent(ui.Key{'a', 0})
+			if event != wantEvent {
+				t.Errorf("After Stop and Start, Reader reads %v, want %v", event, wantEvent)
+			}
+		case <-timeout():
+			t.Errorf("After Stop and Start, Reader timed out")
+		}
+	}
+}
