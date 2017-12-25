@@ -22,10 +22,9 @@ type reader struct {
 	seqTimeout time.Duration
 	raw        bool
 
-	eventChan chan Event
-	stopChan  chan struct{}
-	// stopped keeps track of whether the stop signal was received.
-	stopped bool
+	eventChan   chan Event
+	stopChan    chan struct{}
+	stopAckChan chan struct{}
 }
 
 func newReader(f *os.File) *reader {
@@ -35,7 +34,7 @@ func newReader(f *os.File) *reader {
 		false,
 		make(chan Event),
 		nil,
-		false,
+		nil,
 	}
 	return rd
 }
@@ -54,7 +53,7 @@ func (rd *reader) EventChan() <-chan Event {
 // Start starts the Reader.
 func (rd *reader) Start() {
 	rd.stopChan = make(chan struct{})
-	rd.stopped = false
+	rd.stopAckChan = make(chan struct{})
 	rd.ar.Start()
 	go rd.run()
 }
@@ -78,20 +77,19 @@ func (rd *reader) run() {
 				if ioError != nil {
 					rd.send(FatalErrorEvent{ioError})
 					<-rd.stopChan
-					rd.stopped = true
-					return
 				}
 			}
 		case err := <-rd.ar.ErrorChan():
 			rd.send(FatalErrorEvent{err})
 			<-rd.stopChan
-			rd.stopped = true
-			return
 		case <-rd.stopChan:
-			rd.stopped = true
 		}
-		if rd.stopped {
+
+		select {
+		case <-rd.stopChan:
+			close(rd.stopAckChan)
 			return
+		default:
 		}
 	}
 }
@@ -99,13 +97,9 @@ func (rd *reader) run() {
 // send tries to send an event, unless stop was requested. If stop was requested
 // before, it does nothing; hence it is safe to use after stop.
 func (rd *reader) send(event Event) {
-	if rd.stopped {
-		return
-	}
 	select {
 	case rd.eventChan <- event:
 	case <-rd.stopChan:
-		rd.stopped = true
 	}
 }
 
@@ -113,6 +107,7 @@ func (rd *reader) send(event Event) {
 func (rd *reader) Stop() {
 	rd.ar.Stop()
 	close(rd.stopChan)
+	<-rd.stopAckChan
 }
 
 // Close releases files associated with the Reader. It does not close the file
@@ -134,15 +129,12 @@ func (rd *reader) readOne(r rune) (event Event, seqError, ioError error) {
 
 	// readRune attempts to read a rune within a timeout of EscSequenceTimeout.
 	// It may return runeEndOfSeq when the read timed out, an error was
-	// encountered (in which case it sets ioError) or when stopped (in which
-	// case rd.stopped is set). In all three cases, the reader should terminate
-	// the current sequence. If the current sequence is valid, it should set
-	// event. If not, it should set seqError by calling badSeq.
+	// encountered (in which case it sets ioError) or when stopped. In all three
+	// cases, the reader should terminate the current sequence. If the current
+	// sequence is valid, it should set event. If not, it should set seqError by
+	// calling badSeq.
 	readRune :=
 		func() rune {
-			if rd.stopped {
-				return runeEndOfSeq
-			}
 			select {
 			case r := <-rd.ar.Chan():
 				currentSeq += string(r)
@@ -152,7 +144,6 @@ func (rd *reader) readOne(r rune) (event Event, seqError, ioError error) {
 			case <-time.After(rd.seqTimeout):
 				return runeEndOfSeq
 			case <-rd.stopChan:
-				rd.stopped = true
 				return runeEndOfSeq
 			}
 		}

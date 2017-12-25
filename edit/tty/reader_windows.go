@@ -17,9 +17,11 @@ const DefaultSeqTimeout = 10 * time.Millisecond
 
 type reader struct {
 	console   windows.Handle
-	stopEvent windows.Handle
-	stopChan  chan struct{}
 	eventChan chan Event
+
+	stopEvent   windows.Handle
+	stopChan    chan struct{}
+	stopAckChan chan struct{}
 }
 
 // NewReader creates a new Reader instance.
@@ -28,12 +30,12 @@ func newReader(file *os.File) Reader {
 	if err != nil {
 		panic(fmt.Errorf("GetStdHandle(STD_INPUT_HANDLE): %v", err))
 	}
-	cancelEvent, err := windows.CreateEvent(nil, 0, 0, nil)
+	stopEvent, err := windows.CreateEvent(nil, 0, 0, nil)
 	if err != nil {
 		panic(fmt.Errorf("CreateEvent: %v", err))
 	}
 	return &reader{
-		console, cancelEvent, nil, make(chan Event)}
+		console, make(chan Event), stopEvent, nil, nil}
 }
 
 func (r *reader) SetRaw(bool) {
@@ -46,6 +48,7 @@ func (r *reader) EventChan() <-chan Event {
 
 func (r *reader) Start() {
 	r.stopChan = make(chan struct{})
+	r.stopAckChan = make(chan struct{})
 	go r.run()
 }
 
@@ -61,6 +64,7 @@ func (r *reader) run() {
 		}
 		if triggered == 1 {
 			<-r.stopChan
+			close(r.stopAckChan)
 			return
 		}
 
@@ -88,6 +92,7 @@ func (r *reader) nonFatal(err error) {
 func (r *reader) fatal(err error) {
 	if !r.send(FatalErrorEvent{err}) {
 		<-r.stopChan
+		close(r.stopAckChan)
 		r.resetStopEvent()
 	}
 }
@@ -97,6 +102,7 @@ func (r *reader) send(event Event) (stopped bool) {
 	case r.eventChan <- event:
 		return false
 	case <-r.stopChan:
+		close(r.stopAckChan)
 		r.resetStopEvent()
 		return true
 	}
@@ -115,6 +121,7 @@ func (r *reader) Stop() {
 		log.Println("SetEvent:", err)
 	}
 	close(r.stopChan)
+	<-r.stopAckChan
 }
 
 func (r *reader) Close() {
