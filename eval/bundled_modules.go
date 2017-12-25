@@ -2,9 +2,7 @@ package eval
 
 var bundledModules = map[string]string{
 	"epm": `-data-dir = ~/.elvish
--repo = $-data-dir/pkgindex
 -installed = $-data-dir/epm-installed
--repo-url = https://github.com/elves/pkgindex
 
 fn -info [text]{
     print (edit:styled '=> ' green)
@@ -16,18 +14,12 @@ fn -error [text]{
     echo $text
 }
 
-fn update {
-    if (-is-dir $-repo) {
-        -info 'Updating epm repo...'
-        git -C $-repo pull
-    } else {
-        -info 'Cloning epm repo...'
-        git clone $-repo-url $-repo
-    }
-}
-
 fn add-installed [pkg]{
     echo $pkg >> $-installed
+}
+
+fn -get-url [pkg]{
+    put https://$pkg
 }
 
 fn -install-one [pkg]{
@@ -36,15 +28,9 @@ fn -install-one [pkg]{
         -error 'Package '$pkg' already exists locally.'
         return
     }
-    metafile = $-repo/pkg/$pkg
-    if (not ?(test -f $metafile)) {
-        -error 'Package '$pkg' not found. Try epm:update?'
-        return
-    }
-    meta = (cat $metafile | from-json)
-    url desc = $meta[url description]
-    -info 'Installing package '$pkg': '$desc
-    git clone $url $dest
+    -info 'Installing '$pkg
+    mkdir -p $dest
+    git clone (-get-url $pkg) $dest
     add-installed $pkg
 }
 
