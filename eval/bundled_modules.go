@@ -14,8 +14,14 @@ fn -error [text]{
     echo $text
 }
 
-fn add-installed [pkg]{
-    echo $pkg >> $-installed
+fn add-installed [@pkgs]{
+    if (eq $pkgs []) {
+        -error 'Must specify at least one package.'
+        return
+    }
+    for pkg $pkgs {
+        echo $pkg >> $-installed
+    }
 }
 
 fn -get-url [pkg]{
