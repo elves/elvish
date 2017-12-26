@@ -12,5 +12,6 @@ install:
   - go version
   - go env
   - choco install codecov
+  - go get github.com/mattn/goveralls
 build_script:
   - make appveyor

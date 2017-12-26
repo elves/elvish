@@ -4,7 +4,7 @@ PKG_COVERS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|' | grep -v '^\./ven
 COVER_MODE := set
 VERSION := $(shell git describe --tags --always)
 
-FIRST_GOPATH=$(shell go env GOPATH | cut -d: -f1)
+GOVERALLS := github.com/mattn/goveralls
 
 default: test get
 
@@ -31,15 +31,28 @@ cover/all: $(PKG_COVERS)
 # Disable coverage reports for pull requests. The general testability of the
 # code is pretty bad and it is premature to require contributors to maintain
 # code coverage.
-upload-coverage-travis: cover/all
+upload-codecov-travis: cover/all
 	test "$(TRAVIS_PULL_REQUEST)" = false \
 		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
 		&& curl -s https://codecov.io/bash -o codecov.bash \
-		&& bash codecov.bash -f cover/all \
+		&& bash codecov.bash -f $< \
 		|| echo "not sending to codecov.io"
 
-upload-coverage-appveyor: cover/all
-	codecov -f cover/all
+upload-coveralls-travis: cover/all
+	test "$(TRAVIS_PULL_REQUEST)" = false \
+		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
+		&& go get -d $(GOVERALLS) \
+		&& go build -o goveralls $(GOVERALLS) \
+		&& ./goveralls -coverprofile $< -service=travis-ci \
+		|| echo "not sending to coveralls"
+
+
+upload-codecov-appveyor: cover/all
+	codecov -f $<
+
+upload-coveralls-appveyor: cover/all
+	goveralls -coverprofile $< -service=appveyor-ci \
+		|| echo "failed to upload to coveralls"
 
 upload-bin:
 	test "$(TRAVIS_OS_NAME)" = linux \
@@ -50,7 +63,7 @@ upload-bin:
 		&& ./elvish build-and-upload.elv \
 		|| echo "not build-and-uploading"
 
-travis: testmain upload-coverage-travis upload-bin
-appveyor: testmain upload-coverage-appveyor
+travis: testmain upload-codecov-travis upload-coveralls-travis upload-bin
+appveyor: testmain upload-codecov-appveyor upload-coveralls-appveyor
 
-.PHONY: default get generate test testmain upload-coverage-travis upload-coverage-appveyor upload-bin travis
+.PHONY: default get generate test testmain upload-codecov-travis upload-coveralls-travis upload-codecov-appveyor upload-coveralls-appveyor upload-bin travis
