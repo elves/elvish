@@ -30,7 +30,6 @@ func init() {
 var ErrStoreOffline = errors.New("store offline")
 
 type histlist struct {
-	*listing
 	all             []string
 	dedup           bool
 	caseInsensitive bool
@@ -47,14 +46,12 @@ func newHistlist(cmds []string) *listing {
 	}
 	hl := &histlist{
 		// This has to be here for the initialization to work :(
-		listing:    &listing{},
 		all:        cmds,
 		dedup:      true,
 		last:       last,
 		indexWidth: len(strconv.Itoa(len(cmds) - 1)),
 	}
 	l := newListing(modeHistoryListing, hl)
-	hl.listing = &l
 	return &l
 }
 
@@ -82,25 +79,9 @@ func (hl *histlist) Show(i int) (string, ui.Styled) {
 }
 
 func (hl *histlist) Filter(filter string) int {
-	hl.updateShown()
-	return len(hl.shown) - 1
-}
-
-func (hl *histlist) toggleDedup() {
-	hl.dedup = !hl.dedup
-	hl.updateShown()
-}
-
-func (hl *histlist) toggleCaseSensitivity() {
-	hl.caseInsensitive = !hl.caseInsensitive
-	hl.updateShown()
-}
-
-func (hl *histlist) updateShown() {
 	hl.shown = nil
 	hl.index = nil
 	dedup := hl.dedup
-	filter := hl.filter
 	if hl.caseInsensitive {
 		filter = strings.ToLower(filter)
 	}
@@ -114,7 +95,8 @@ func (hl *histlist) updateShown() {
 			hl.shown = append(hl.shown, entry)
 		}
 	}
-	hl.selected = len(hl.shown) - 1
+	// TODO: Maintain old selection
+	return len(hl.shown) - 1
 }
 
 // Editor interface.
@@ -145,22 +127,24 @@ func getCmds(ed *Editor) ([]string, error) {
 }
 
 func histlistToggleDedup(ed *Editor) {
-	if hl := getHistlist(ed); hl != nil {
-		hl.toggleDedup()
+	if l, hl, ok := getHistlist(ed); ok {
+		hl.dedup = !hl.dedup
+		l.refresh()
 	}
 }
 
 func histlistToggleCaseSensitivity(ed *Editor) {
-	if hl := getHistlist(ed); hl != nil {
-		hl.toggleCaseSensitivity()
+	if l, hl, ok := getHistlist(ed); ok {
+		hl.caseInsensitive = !hl.caseInsensitive
+		l.refresh()
 	}
 }
 
-func getHistlist(ed *Editor) *histlist {
+func getHistlist(ed *Editor) (*listing, *histlist, bool) {
 	if l, ok := ed.mode.(*listing); ok {
 		if hl, ok := l.provider.(*histlist); ok {
-			return hl
+			return l, hl, true
 		}
 	}
-	return nil
+	return nil, nil, false
 }

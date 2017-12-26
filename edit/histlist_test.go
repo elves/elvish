@@ -32,6 +32,6 @@ var (
 
 func TestHistlist(t *testing.T) {
 	testListingFilter(t, "theHistList", theHistList, histlistDedupFilterTests)
-	theHistList.provider.(*histlist).toggleDedup()
+	theHistList.provider.(*histlist).dedup = false
 	testListingFilter(t, "theHistList", theHistList, histlistNoDedupFilterTests)
 }

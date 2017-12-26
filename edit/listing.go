@@ -69,7 +69,7 @@ type Placeholderer interface {
 
 func newListing(t string, p listingProvider) listing {
 	l := listing{t, p, 0, "", 0, 0}
-	l.changeFilter("")
+	l.refresh()
 	for i := 0; i < p.Len(); i++ {
 		header, _ := p.Show(i)
 		width := util.Wcswidth(header)
@@ -250,7 +250,11 @@ func findScrollInterval(n, low, high, height int) (int, int) {
 
 func (l *listing) changeFilter(newfilter string) {
 	l.filter = newfilter
-	l.selected = l.provider.Filter(newfilter)
+	l.refresh()
+}
+
+func (l *listing) refresh() {
+	l.selected = l.provider.Filter(l.filter)
 }
 
 func (l *listing) backspace() bool {
