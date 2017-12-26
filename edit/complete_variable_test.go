@@ -62,6 +62,8 @@ var complVariableTests = []struct {
 		noQuoteCandidate("bar:"),
 		noQuoteCandidate("ipsum"), noQuoteCandidate("lorem"),
 	}},
+	// Bad namespace
+	{"bad", "bad:", nil},
 }
 
 func TestComplVariable(t *testing.T) {

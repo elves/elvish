@@ -44,8 +44,10 @@ func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 		if mod == nil {
 			mod = ev.Builtin[ns+NsSuffix]
 		}
-		for name := range mod.Get().(Ns) {
-			f(name)
+		if mod != nil {
+			for name := range mod.Get().(Ns) {
+				f(name)
+			}
 		}
 	}
 }
