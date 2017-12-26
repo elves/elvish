@@ -64,6 +64,6 @@ upload-bin:
 		|| echo "not build-and-uploading"
 
 travis: testmain upload-codecov-travis upload-coveralls-travis upload-bin
-appveyor: testmain upload-codecov-appveyor upload-coveralls-appveyor
+appveyor: testmain upload-codecov-appveyor
 
 .PHONY: default get generate test testmain upload-codecov-travis upload-coveralls-travis upload-codecov-appveyor upload-coveralls-appveyor upload-bin travis
