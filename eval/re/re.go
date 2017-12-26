@@ -3,7 +3,6 @@ package re
 import (
 	"fmt"
 	"regexp"
-	"strconv"
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
@@ -39,11 +38,6 @@ func match(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	out <- eval.Bool(matched)
 }
 
-var (
-	matchDescriptor    = eval.NewStructDescriptor("text", "start", "end", "groups")
-	submatchDescriptor = eval.NewStructDescriptor("text", "start", "end")
-)
-
 func find(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	out := ec.OutputChan()
 	var (
@@ -60,6 +54,7 @@ func find(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 		eval.OptToScan{"max", &optMax, eval.String("-1")})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
+	source := string(argSource)
 
 	matches := pattern.FindAllSubmatchIndex([]byte(argSource), optMax)
 	for _, match := range matches {
@@ -67,26 +62,15 @@ func find(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 		groups := vector.Empty
 		for i := 0; i < len(match); i += 2 {
 			start, end := match[i], match[i+1]
-			var text eval.Value
+			text := ""
 			// FindAllSubmatchIndex may return negative indicies to indicate
 			// that the pattern didn't appear in the text.
-			if start < 0 || end < 0 {
-				text = eval.String("")
-			} else {
-				text = argSource[start:end]
+			if start >= 0 && end >= 0 {
+				text = source[start:end]
 			}
-			groups = groups.Cons(&eval.Struct{submatchDescriptor, []eval.Value{
-				text,
-				eval.String(strconv.Itoa(start)),
-				eval.String(strconv.Itoa(end)),
-			}})
+			groups = groups.Cons(newSubmatch(text, start, end))
 		}
-		out <- &eval.Struct{matchDescriptor, []eval.Value{
-			argSource[start:end],
-			eval.String(strconv.Itoa(start)),
-			eval.String(strconv.Itoa(end)),
-			eval.NewListFromVector(groups),
-		}}
+		out <- newMatch(source[start:end], start, end, groups)
 	}
 }
 
@@ -166,9 +150,7 @@ func split(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	}
 }
 
-func makePattern(argPattern eval.String,
-	optPOSIX, optLongest eval.Bool) *regexp.Regexp {
-
+func makePattern(argPattern eval.String, optPOSIX, optLongest eval.Bool) *regexp.Regexp {
 	var (
 		pattern *regexp.Regexp
 		err     error
