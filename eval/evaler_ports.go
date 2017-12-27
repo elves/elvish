@@ -38,6 +38,7 @@ func relayChanToFile(ch <-chan Value, file *os.File, prefix *string, w *sync.Wai
 	for v := range ch {
 		file.WriteString(*prefix)
 		file.WriteString(v.Repr(initIndent))
+		file.WriteString("\n")
 	}
 	w.Done()
 }
