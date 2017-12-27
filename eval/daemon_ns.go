@@ -27,7 +27,7 @@ func makeDaemonNs(daemon *api.Client) Ns {
 	}
 }
 
-func daemonSpawn(ec *EvalCtx, args []Value, opts map[string]Value) {
+func daemonSpawn(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 	if ec.DaemonSpawner == nil {

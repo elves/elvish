@@ -35,7 +35,7 @@ func init() {
 }
 
 func WrapStringToString(f func(string) string) BuiltinFnImpl {
-	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
+	return func(ec *Frame, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
 		s := mustGetOneString(args)
 		ec.ports[1].Chan <- String(f(s))
@@ -43,7 +43,7 @@ func WrapStringToString(f func(string) string) BuiltinFnImpl {
 }
 
 func WrapStringToStringError(f func(string) (string, error)) BuiltinFnImpl {
-	return func(ec *EvalCtx, args []Value, opts map[string]Value) {
+	return func(ec *Frame, args []Value, opts map[string]Value) {
 		TakeNoOpt(opts)
 		s := mustGetOneString(args)
 		result, err := f(s)
@@ -65,7 +65,7 @@ func mustGetOneString(args []Value) string {
 	return string(s)
 }
 
-func cd(ec *EvalCtx, args []Value, opts map[string]Value) {
+func cd(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	var dir string
@@ -80,13 +80,13 @@ func cd(ec *EvalCtx, args []Value, opts map[string]Value) {
 	cdInner(dir, ec)
 }
 
-func cdInner(dir string, ec *EvalCtx) {
+func cdInner(dir string, ec *Frame) {
 	maybeThrow(Chdir(dir, ec.DaemonClient))
 }
 
 var dirDescriptor = NewStructDescriptor("path", "score")
 
-func dirs(ec *EvalCtx, args []Value, opts map[string]Value) {
+func dirs(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -106,7 +106,7 @@ func dirs(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func tildeAbbr(ec *EvalCtx, args []Value, opts map[string]Value) {
+func tildeAbbr(ec *Frame, args []Value, opts map[string]Value) {
 	var pathv String
 	ScanArgs(args, &pathv)
 	path := string(pathv)
@@ -116,7 +116,7 @@ func tildeAbbr(ec *EvalCtx, args []Value, opts map[string]Value) {
 	out <- String(util.TildeAbbr(path))
 }
 
-func isDir(ec *EvalCtx, args []Value, opts map[string]Value) {
+func isDir(ec *Frame, args []Value, opts map[string]Value) {
 	var pathv String
 	ScanArgs(args, &pathv)
 	path := string(pathv)

@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-func complGetopt(ec *eval.EvalCtx, a []eval.Value, o map[string]eval.Value) {
+func complGetopt(ec *eval.Frame, a []eval.Value, o map[string]eval.Value) {
 	var elemsv, optsv, argsv eval.IterableValue
 	eval.ScanArgs(a, &elemsv, &optsv, &argsv)
 	eval.TakeNoOpt(o)

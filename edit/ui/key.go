@@ -228,7 +228,7 @@ func ToKey(k eval.Value) Key {
 }
 
 // KeyBuiltin implements the edit:key builtin.
-func KeyBuiltin(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func KeyBuiltin(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	var s eval.String
 	eval.ScanArgs(args, &s)
 	eval.TakeNoOpt(opts)

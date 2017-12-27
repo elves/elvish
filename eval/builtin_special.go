@@ -90,7 +90,7 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 		}
 
 	}
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		for _, name := range names {
 			delete(ec.local, name)
 		}
@@ -104,7 +104,7 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 
 // makeFnOp wraps an op such that a return is converted to an ok.
 func makeFnOp(op Op) Op {
-	return Op{func(ec *EvalCtx) {
+	return Op{func(ec *Frame) {
 		err := ec.PEval(op)
 		if err != nil && err.(*Exception).Cause != Return {
 			// rethrow
@@ -126,7 +126,7 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 	cp.registerVariableSetQname(":" + varName)
 	op := cp.lambda(bodyNode)
 
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		// Initialize the function variable with the builtin nop
 		// function. This step allows the definition of recursive
 		// functions; the actual function will never be called.
@@ -153,12 +153,12 @@ func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 	modpath := strings.Replace(spec, ":", "/", -1)
 	cp.thisScope().set(modname + NsSuffix)
 
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		use(ec, modname, modpath)
 	}
 }
 
-func use(ec *EvalCtx, modname, modpath string) {
+func use(ec *Frame, modname, modpath string) {
 	resolvedPath := ""
 	if strings.HasPrefix(modpath, "./") || strings.HasPrefix(modpath, "../") {
 		if ec.modPath == "" {
@@ -178,7 +178,7 @@ func use(ec *EvalCtx, modname, modpath string) {
 	ec.local[modname+NsSuffix] = NewPtrVariable(loadModule(ec, modpath))
 }
 
-func loadModule(ec *EvalCtx, modpath string) Ns {
+func loadModule(ec *Frame, modpath string) Ns {
 	if ns, ok := ec.Evaler.Modules[modpath]; ok {
 		// Module already loaded.
 		return ns
@@ -215,7 +215,7 @@ func loadModule(ec *EvalCtx, modpath string) Ns {
 	// Make an empty scope to evaluate the module in.
 	local := make(Ns)
 
-	newEc := &EvalCtx{
+	newEc := &Frame{
 		ec.Evaler, "module " + modpath,
 		filename, source, modpath,
 		local, make(Ns),
@@ -258,7 +258,7 @@ func compileOr(cp *compiler, fn *parse.Form) OpFunc {
 
 func compileAndOr(cp *compiler, fn *parse.Form, init, stopAt bool) OpFunc {
 	argOps := cp.compoundOps(fn.Args)
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		var lastValue Value = Bool(init)
 		for _, op := range argOps {
 			values := op.Exec(ec)
@@ -295,7 +295,7 @@ func compileIf(cp *compiler, fn *parse.Form) OpFunc {
 		elseOp = cp.primaryOp(elseNode)
 	}
 
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		bodies := make([]Callable, len(bodyOps))
 		for i, bodyOp := range bodyOps {
 			bodies[i] = bodyOp.execlambdaOp(ec)
@@ -322,7 +322,7 @@ func compileWhile(cp *compiler, fn *parse.Form) OpFunc {
 	condOp := cp.compoundOp(condNode)
 	bodyOp := cp.primaryOp(bodyNode)
 
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		body := bodyOp.execlambdaOp(ec)
 
 		for {
@@ -365,7 +365,7 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 		elseOp = cp.primaryOp(elseNode)
 	}
 
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		variables := varOp.Exec(ec)
 		if len(variables) != 1 {
 			ec.errorpf(varOp.Begin, varOp.End, "only one variable allowed")
@@ -442,7 +442,7 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 		finallyOp = cp.primaryOp(finallyNode)
 	}
 
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		body := bodyOp.execlambdaOp(ec)
 		exceptVar := exceptVarOp.execMustOne(ec)
 		except := exceptOp.execlambdaOp(ec)
@@ -473,7 +473,7 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 
 // execLambdaOp executes a ValuesOp that is known to yield a lambda and returns
 // the lambda. If the ValuesOp is empty, it returns a nil.
-func (op ValuesOp) execlambdaOp(ec *EvalCtx) Callable {
+func (op ValuesOp) execlambdaOp(ec *Frame) Callable {
 	if op.Func == nil {
 		return nil
 	}
@@ -484,7 +484,7 @@ func (op ValuesOp) execlambdaOp(ec *EvalCtx) Callable {
 // execMustOne executes the LValuesOp and raises an exception if it does not
 // evaluate to exactly one Variable. If the given LValuesOp is empty, it returns
 // nil.
-func (op LValuesOp) execMustOne(ec *EvalCtx) Variable {
+func (op LValuesOp) execMustOne(ec *Frame) Variable {
 	if op.Func == nil {
 		return nil
 	}

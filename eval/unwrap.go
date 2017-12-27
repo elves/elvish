@@ -11,7 +11,7 @@ import (
 
 type unwrapperInner struct {
 	// ctx is the evaluation context.
-	ctx *EvalCtx
+	ctx *Frame
 	// description describes what is being unwrapped. It is used in error
 	// messages.
 	description string
@@ -32,13 +32,13 @@ func (u *unwrapperInner) error(want, gotfmt string, gotargs ...interface{}) {
 type ValuesUnwrapper struct{ *unwrapperInner }
 
 // Unwrap creates an Unwrapper.
-func (ctx *EvalCtx) Unwrap(desc string, begin, end int, vs []Value) ValuesUnwrapper {
+func (ctx *Frame) Unwrap(desc string, begin, end int, vs []Value) ValuesUnwrapper {
 	return ValuesUnwrapper{&unwrapperInner{ctx, desc, begin, end, vs}}
 }
 
 // ExecAndUnwrap executes a ValuesOp and creates an Unwrapper for the obtained
 // values.
-func (ctx *EvalCtx) ExecAndUnwrap(desc string, op ValuesOp) ValuesUnwrapper {
+func (ctx *Frame) ExecAndUnwrap(desc string, op ValuesOp) ValuesUnwrapper {
 	return ctx.Unwrap(desc, op.Begin, op.End, op.Exec(ctx))
 }
 

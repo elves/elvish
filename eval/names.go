@@ -79,7 +79,7 @@ func (ev *evalerScopes) EachNsInTop(f func(s string)) {
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
-func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
+func (ec *Frame) ResolveVar(ns, name string) Variable {
 	switch ns {
 	case "local":
 		return ec.local[name]
@@ -115,7 +115,7 @@ func (ec *EvalCtx) ResolveVar(ns, name string) Variable {
 	return nil
 }
 
-func (ec *EvalCtx) ResolveMod(name string) Ns {
+func (ec *Frame) ResolveMod(name string) Ns {
 	ns := ec.ResolveVar("", name+NsSuffix)
 	if ns == nil {
 		return nil

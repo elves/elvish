@@ -35,14 +35,14 @@ func init() {
 	})
 }
 
-func nsFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+func nsFn(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
 	ec.OutputChan() <- make(Ns)
 }
 
-func rangeFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+func rangeFn(ec *Frame, args []Value, opts map[string]Value) {
 	var step float64
 	ScanOpts(opts, OptToScan{"step", &step, String("1")})
 
@@ -68,7 +68,7 @@ func rangeFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func repeat(ec *EvalCtx, args []Value, opts map[string]Value) {
+func repeat(ec *Frame, args []Value, opts map[string]Value) {
 	var (
 		n int
 		v Value
@@ -83,7 +83,7 @@ func repeat(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
 // explode puts each element of the argument.
-func explode(ec *EvalCtx, args []Value, opts map[string]Value) {
+func explode(ec *Frame, args []Value, opts map[string]Value) {
 	var v IterableValue
 	ScanArgs(args, &v)
 	TakeNoOpt(opts)
@@ -95,7 +95,7 @@ func explode(ec *EvalCtx, args []Value, opts map[string]Value) {
 	})
 }
 
-func assoc(ec *EvalCtx, args []Value, opts map[string]Value) {
+func assoc(ec *Frame, args []Value, opts map[string]Value) {
 	var (
 		a    Assocer
 		k, v Value
@@ -105,7 +105,7 @@ func assoc(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ec.OutputChan() <- a.Assoc(k, v)
 }
 
-func dissoc(ec *EvalCtx, args []Value, opts map[string]Value) {
+func dissoc(ec *Frame, args []Value, opts map[string]Value) {
 	var (
 		a Dissocer
 		k Value
@@ -115,7 +115,7 @@ func dissoc(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ec.OutputChan() <- a.Dissoc(k)
 }
 
-func all(ec *EvalCtx, args []Value, opts map[string]Value) {
+func all(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -133,7 +133,7 @@ func all(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func take(ec *EvalCtx, args []Value, opts map[string]Value) {
+func take(ec *Frame, args []Value, opts map[string]Value) {
 	var n int
 	iterate := ScanArgsOptionalInput(ec, args, &n)
 	TakeNoOpt(opts)
@@ -148,7 +148,7 @@ func take(ec *EvalCtx, args []Value, opts map[string]Value) {
 	})
 }
 
-func drop(ec *EvalCtx, args []Value, opts map[string]Value) {
+func drop(ec *Frame, args []Value, opts map[string]Value) {
 	var n int
 	iterate := ScanArgsOptionalInput(ec, args, &n)
 	TakeNoOpt(opts)
@@ -163,7 +163,7 @@ func drop(ec *EvalCtx, args []Value, opts map[string]Value) {
 	})
 }
 
-func hasValue(ec *EvalCtx, args []Value, opts map[string]Value) {
+func hasValue(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	var container, value Value
@@ -189,7 +189,7 @@ func hasValue(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ec.ports[1].Chan <- Bool(found)
 }
 
-func hasKey(ec *EvalCtx, args []Value, opts map[string]Value) {
+func hasKey(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	var container, key Value
@@ -213,7 +213,7 @@ func hasKey(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ec.ports[1].Chan <- Bool(found)
 }
 
-func count(ec *EvalCtx, args []Value, opts map[string]Value) {
+func count(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	var n int
@@ -242,7 +242,7 @@ func count(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ec.ports[1].Chan <- String(strconv.Itoa(n))
 }
 
-func keys(ec *EvalCtx, args []Value, opts map[string]Value) {
+func keys(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 
 	var iter IterateKeyer

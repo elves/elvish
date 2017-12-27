@@ -101,7 +101,7 @@ func (c *complexCandidate) cook(q parse.PrimaryType) *candidate {
 }
 
 // outputComplexCandidate composes a complexCandidate.
-func outputComplexCandidate(ec *eval.EvalCtx,
+func outputComplexCandidate(ec *eval.Frame,
 	args []eval.Value, opts map[string]eval.Value) {
 
 	var style string
@@ -141,7 +141,7 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.CallableValue,
 
 	ports := []*eval.Port{
 		{Chan: matcherInput, File: eval.DevNull}, {File: os.Stdout}, {File: os.Stderr}}
-	ec := eval.NewTopEvalCtx(ev, "[editor matcher]", "", ports)
+	ec := eval.NewTopFrame(ev, "[editor matcher]", "", ports)
 
 	args := []eval.Value{eval.String(seed)}
 	values, err := ec.PCaptureOutput(matcher, args, eval.NoOpts)

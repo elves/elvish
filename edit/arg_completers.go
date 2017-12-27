@@ -138,7 +138,7 @@ func (bac *builtinArgCompleter) Repr(int) string {
 	return "$edit:" + bac.name + eval.FnSuffix
 }
 
-func (bac *builtinArgCompleter) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	eval.TakeNoOpt(opts)
 	words := make([]string, len(args))
 	for i, arg := range args {
@@ -232,7 +232,7 @@ func callArgCompleter(fn eval.CallableValue,
 	}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
-	ec := eval.NewTopEvalCtx(ev, "[editor completer]", "", ports)
+	ec := eval.NewTopFrame(ev, "[editor completer]", "", ports)
 	err := ec.PCaptureOutputInner(fn, args, eval.NoOpts, valuesCb, bytesCb)
 	if err != nil {
 		err = errors.New("completer error: " + err.Error())

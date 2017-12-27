@@ -32,7 +32,7 @@ func callHooks(ev *eval.Evaler, li eval.List, args ...eval.Value) {
 	}
 
 	li.Iterate(func(v eval.Value) bool {
-		opfunc := func(ec *eval.EvalCtx) {
+		opfunc := func(ec *eval.Frame) {
 			fn, ok := v.(eval.CallableValue)
 			if !ok {
 				fmt.Fprintf(os.Stderr, "not a function: %s\n", v.Repr(eval.NoPretty))

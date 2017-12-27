@@ -47,7 +47,7 @@ func (ed *Editor) lookupMatcher(name string) (eval.CallableValue, bool) {
 }
 
 func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
-	return func(ec *eval.EvalCtx,
+	return func(ec *eval.Frame,
 		args []eval.Value, opts map[string]eval.Value) {
 
 		var pattern eval.String

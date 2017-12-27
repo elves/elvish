@@ -23,7 +23,7 @@ func TestBuiltinFn(t *testing.T) {
 		t.Errorf("Repr of BuiltinFn should be $foobar, is %q", repr)
 	}
 
-	ec := &eval.EvalCtx{Evaler: &eval.Evaler{}}
+	ec := &eval.Frame{Evaler: &eval.Evaler{}}
 
 	if !util.Throws(func() { builtinFn.Call(ec, nil, nil) }, errEditorInvalid) {
 		t.Errorf("BuiltinFn should error when Editor is nil, didn't")

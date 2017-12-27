@@ -54,7 +54,7 @@ func (bf *BuiltinFn) Repr(int) string {
 }
 
 // Call calls a builtin function.
-func (bf *BuiltinFn) Call(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func (bf *BuiltinFn) Call(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	eval.TakeNoOpt(opts)
 	eval.TakeNoArg(args)
 	ed, ok := ec.Editor.(*Editor)
@@ -196,7 +196,7 @@ func (ed *Editor) CallFn(fn eval.CallableValue, args ...eval.Value) {
 		eval.DevNullClosedChan, ed.notifyPort, ed.notifyPort,
 	}
 	// XXX There is no source to pass to NewTopEvalCtx.
-	ec := eval.NewTopEvalCtx(ed.evaler, "[editor]", "", ports)
+	ec := eval.NewTopFrame(ed.evaler, "[editor]", "", ports)
 	ex := ec.PCall(fn, args, eval.NoOpts)
 	if ex != nil {
 		ed.Notify("function error: %s", ex.Error())

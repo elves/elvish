@@ -32,7 +32,7 @@ func PromptVariable() eval.Variable {
 	user, err := user.Current()
 	isRoot := err == nil && user.Uid == "0"
 
-	prompt := func(ec *eval.EvalCtx,
+	prompt := func(ec *eval.Frame,
 		args []eval.Value, opts map[string]eval.Value) {
 
 		out := ec.OutputChan()
@@ -64,7 +64,7 @@ func RpromptVariable() eval.Variable {
 		hostname = "???"
 	}
 	rpromptStr := username + "@" + hostname
-	rprompt := func(ec *eval.EvalCtx,
+	rprompt := func(ec *eval.Frame,
 		args []eval.Value, opts map[string]eval.Value) {
 
 		out := ec.OutputChan()
@@ -154,7 +154,7 @@ func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
 	}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
-	ec := eval.NewTopEvalCtx(ed.Evaler(), "[editor prompt]", "", ports)
+	ec := eval.NewTopFrame(ed.Evaler(), "[editor prompt]", "", ports)
 	err := ec.PCaptureOutputInner(fn, nil, eval.NoOpts, valuesCb, bytesCb)
 
 	if err != nil {

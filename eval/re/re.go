@@ -23,7 +23,7 @@ var fns = []*eval.BuiltinFn{
 	{"split", split},
 }
 
-func match(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func match(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	out := ec.OutputChan()
 	var (
 		argPattern eval.String
@@ -38,7 +38,7 @@ func match(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	out <- eval.Bool(matched)
 }
 
-func find(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func find(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	out := ec.OutputChan()
 	var (
 		argPattern eval.String
@@ -74,7 +74,7 @@ func find(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	}
 }
 
-func replace(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func replace(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	out := ec.OutputChan()
 	var (
 		argPattern eval.String
@@ -127,7 +127,7 @@ func replace(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
 	out <- eval.String(result)
 }
 
-func split(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func split(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	out := ec.OutputChan()
 	var (
 		argPattern eval.String

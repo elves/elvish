@@ -39,7 +39,7 @@ func init() {
 	})
 }
 
-func put(ec *EvalCtx, args []Value, opts map[string]Value) {
+func put(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].Chan
 	for _, a := range args {
@@ -47,7 +47,7 @@ func put(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func print(ec *EvalCtx, args []Value, opts map[string]Value) {
+func print(ec *Frame, args []Value, opts map[string]Value) {
 	var sepv String
 	ScanOpts(opts, OptToScan{"sep", &sepv, String(" ")})
 
@@ -61,12 +61,12 @@ func print(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func echo(ec *EvalCtx, args []Value, opts map[string]Value) {
+func echo(ec *Frame, args []Value, opts map[string]Value) {
 	print(ec, args, opts)
 	ec.ports[1].File.WriteString("\n")
 }
 
-func pprint(ec *EvalCtx, args []Value, opts map[string]Value) {
+func pprint(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].File
 	for _, arg := range args {
@@ -75,7 +75,7 @@ func pprint(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func repr(ec *EvalCtx, args []Value, opts map[string]Value) {
+func repr(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].File
 	for i, arg := range args {
@@ -87,7 +87,7 @@ func repr(ec *EvalCtx, args []Value, opts map[string]Value) {
 	out.WriteString("\n")
 }
 
-func slurp(ec *EvalCtx, args []Value, opts map[string]Value) {
+func slurp(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -99,7 +99,7 @@ func slurp(ec *EvalCtx, args []Value, opts map[string]Value) {
 	out <- String(string(all))
 }
 
-func fromLines(ec *EvalCtx, args []Value, opts map[string]Value) {
+func fromLines(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -110,7 +110,7 @@ func fromLines(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
 // fromJSON parses a stream of JSON data into Value's.
-func fromJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
+func fromJSON(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -131,7 +131,7 @@ func fromJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func toLines(ec *EvalCtx, args []Value, opts map[string]Value) {
+func toLines(ec *Frame, args []Value, opts map[string]Value) {
 	iterate := ScanArgsOptionalInput(ec, args)
 	TakeNoOpt(opts)
 
@@ -143,7 +143,7 @@ func toLines(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
 // toJSON converts a stream of Value's to JSON data.
-func toJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
+func toJSON(ec *Frame, args []Value, opts map[string]Value) {
 	iterate := ScanArgsOptionalInput(ec, args)
 	TakeNoOpt(opts)
 
@@ -156,7 +156,7 @@ func toJSON(ec *EvalCtx, args []Value, opts map[string]Value) {
 	})
 }
 
-func fopen(ec *EvalCtx, args []Value, opts map[string]Value) {
+func fopen(ec *Frame, args []Value, opts map[string]Value) {
 	var namev String
 	ScanArgs(args, &namev)
 	name := string(namev)
@@ -169,7 +169,7 @@ func fopen(ec *EvalCtx, args []Value, opts map[string]Value) {
 	out <- File{f}
 }
 
-func fclose(ec *EvalCtx, args []Value, opts map[string]Value) {
+func fclose(ec *Frame, args []Value, opts map[string]Value) {
 	var f File
 	ScanArgs(args, &f)
 	TakeNoOpt(opts)
@@ -177,7 +177,7 @@ func fclose(ec *EvalCtx, args []Value, opts map[string]Value) {
 	maybeThrow(f.inner.Close())
 }
 
-func pipe(ec *EvalCtx, args []Value, opts map[string]Value) {
+func pipe(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -187,7 +187,7 @@ func pipe(ec *EvalCtx, args []Value, opts map[string]Value) {
 	out <- Pipe{r, w}
 }
 
-func prclose(ec *EvalCtx, args []Value, opts map[string]Value) {
+func prclose(ec *Frame, args []Value, opts map[string]Value) {
 	var p Pipe
 	ScanArgs(args, &p)
 	TakeNoOpt(opts)
@@ -195,7 +195,7 @@ func prclose(ec *EvalCtx, args []Value, opts map[string]Value) {
 	maybeThrow(p.r.Close())
 }
 
-func pwclose(ec *EvalCtx, args []Value, opts map[string]Value) {
+func pwclose(ec *Frame, args []Value, opts map[string]Value) {
 	var p Pipe
 	ScanArgs(args, &p)
 	TakeNoOpt(opts)

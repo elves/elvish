@@ -391,7 +391,7 @@ func (c *narrowItemComplex) FilterText() string {
 	return c.Content()
 }
 
-func NarrowRead(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func NarrowRead(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	var source, action eval.CallableValue
 	l := &narrow{
 		opts: narrowOptions{
@@ -425,7 +425,7 @@ func NarrowRead(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value)
 	ed.mode = l
 }
 
-func narrowGetSource(ec *eval.EvalCtx, source eval.CallableValue) func() []narrowItem {
+func narrowGetSource(ec *eval.Frame, source eval.CallableValue) func() []narrowItem {
 	return func() []narrowItem {
 		ed := ec.Editor.(*Editor)
 		vs, err := ec.PCaptureOutput(source, eval.NoArgs, eval.NoOpts)
@@ -446,7 +446,7 @@ func narrowGetSource(ec *eval.EvalCtx, source eval.CallableValue) func() []narro
 	}
 }
 
-func CommandHistory(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func CommandHistory(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	var (
 		rest              []int
 		limit, start, end int
@@ -493,7 +493,7 @@ func CommandHistory(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Va
 	}
 }
 
-func InsertAtDot(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func InsertAtDot(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	var text eval.String
 
 	eval.ScanArgs(args, &text)
@@ -503,7 +503,7 @@ func InsertAtDot(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value
 	ed.insertAtDot(text.String())
 }
 
-func ReplaceInput(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func ReplaceInput(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	var text eval.String
 
 	eval.ScanArgs(args, &text)
@@ -513,7 +513,7 @@ func ReplaceInput(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Valu
 	ed.buffer = text.String()
 }
 
-func Wordify(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func Wordify(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	var text eval.String
 
 	eval.ScanArgs(args, &text)

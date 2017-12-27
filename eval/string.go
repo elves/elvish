@@ -82,11 +82,11 @@ func (s String) Iterate(f func(v Value) bool) {
 
 // Call resolves a command name to either a Fn variable or external command and
 // calls it.
-func (s String) Call(ec *EvalCtx, args []Value, opts map[string]Value) {
+func (s String) Call(ec *Frame, args []Value, opts map[string]Value) {
 	resolve(string(s), ec).Call(ec, args, opts)
 }
 
-func resolve(s string, ec *EvalCtx) CallableValue {
+func resolve(s string, ec *Frame) CallableValue {
 	// Try variable
 	explode, ns, name := ParseVariable(string(s))
 	if !explode {

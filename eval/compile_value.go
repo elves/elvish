@@ -24,10 +24,10 @@ type ValuesOp struct {
 }
 
 // ValuesOpFunc is the body of ValuesOp.
-type ValuesOpFunc func(*EvalCtx) []Value
+type ValuesOpFunc func(*Frame) []Value
 
 // Exec executes a ValuesOp and produces Value's.
-func (op ValuesOp) Exec(ec *EvalCtx) []Value {
+func (op ValuesOp) Exec(ec *Frame) []Value {
 	ec.begin, ec.end = op.Begin, op.End
 	return op.Func(ec)
 }
@@ -43,7 +43,7 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOpFunc {
 	if n.Indexings[0].Head.Type == parse.Tilde {
 		// A lone ~.
 		if len(n.Indexings) == 1 {
-			return func(ec *EvalCtx) []Value {
+			return func(ec *Frame) []Value {
 				return []Value{String(mustGetHome(""))}
 			}
 		}
@@ -53,7 +53,7 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOpFunc {
 
 	ops := cp.indexingOps(indexings)
 
-	return func(ec *EvalCtx) []Value {
+	return func(ec *Frame) []Value {
 		// Accumulator.
 		vs := ops[0].Exec(ec)
 
@@ -188,7 +188,7 @@ func (cp *compiler) array(n *parse.Array) ValuesOpFunc {
 }
 
 func catValuesOps(ops []ValuesOp) ValuesOpFunc {
-	return func(ec *EvalCtx) []Value {
+	return func(ec *Frame) []Value {
 		// Use number of compound expressions as an estimation of the number
 		// of values
 		vs := make([]Value, 0, len(ops))
@@ -208,7 +208,7 @@ func (cp *compiler) indexing(n *parse.Indexing) ValuesOpFunc {
 	headOp := cp.primaryOp(n.Head)
 	indexOps := cp.arrayOps(n.Indicies)
 
-	return func(ec *EvalCtx) []Value {
+	return func(ec *Frame) []Value {
 		vs := headOp.Exec(ec)
 		for _, indexOp := range indexOps {
 			indicies := indexOp.Exec(ec)
@@ -223,7 +223,7 @@ func (cp *compiler) indexing(n *parse.Indexing) ValuesOpFunc {
 }
 
 func literalValues(v ...Value) ValuesOpFunc {
-	return func(e *EvalCtx) []Value {
+	return func(e *Frame) []Value {
 		return v
 	}
 }
@@ -234,7 +234,7 @@ func literalStr(text string) ValuesOpFunc {
 
 func variable(qname string) ValuesOpFunc {
 	explode, ns, name := ParseVariable(qname)
-	return func(ec *EvalCtx) []Value {
+	return func(ec *Frame) []Value {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
 			throwf("variable $%s not found", qname)
@@ -269,7 +269,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 		}
 		vs := []Value{
 			GlobPattern{glob.Pattern{[]glob.Segment{seg}, ""}, 0, nil}}
-		return func(ec *EvalCtx) []Value {
+		return func(ec *Frame) []Value {
 			return vs
 		}
 	case parse.Tilde:
@@ -297,14 +297,14 @@ func (cp *compiler) list(n *parse.Primary) ValuesOpFunc {
 	// TODO(xiaq): Use Vector.Cons to build the list, instead of building a
 	// slice and converting to Vector.
 	op := catValuesOps(cp.compoundOps(n.Elements))
-	return func(ec *EvalCtx) []Value {
+	return func(ec *Frame) []Value {
 		return []Value{NewList(op(ec)...)}
 	}
 }
 
 func (cp *compiler) exceptionCapture(n *parse.Chunk) ValuesOpFunc {
 	op := cp.chunkOp(n)
-	return func(ec *EvalCtx) []Value {
+	return func(ec *Frame) []Value {
 		err := ec.PEval(op)
 		if err == nil {
 			return []Value{OK}
@@ -315,18 +315,18 @@ func (cp *compiler) exceptionCapture(n *parse.Chunk) ValuesOpFunc {
 
 func (cp *compiler) outputCapture(n *parse.Primary) ValuesOpFunc {
 	op := cp.chunkOp(n.Chunk)
-	return func(ec *EvalCtx) []Value {
+	return func(ec *Frame) []Value {
 		return captureOutput(ec, op)
 	}
 }
 
-func captureOutput(ec *EvalCtx, op Op) []Value {
+func captureOutput(ec *Frame, op Op) []Value {
 	vs, err := pcaptureOutput(ec, op)
 	maybeThrow(err)
 	return vs
 }
 
-func pcaptureOutput(ec *EvalCtx, op Op) ([]Value, error) {
+func pcaptureOutput(ec *Frame, op Op) ([]Value, error) {
 	vs := []Value{}
 	var m sync.Mutex
 	valueCb := func(ch <-chan Value) {
@@ -359,7 +359,7 @@ func pcaptureOutput(ec *EvalCtx, op Op) ([]Value, error) {
 	return vs, err
 }
 
-func pcaptureOutputInner(ec *EvalCtx, op Op, valuesCb func(<-chan Value), bytesCb func(*os.File)) error {
+func pcaptureOutputInner(ec *Frame, op Op, valuesCb func(<-chan Value), bytesCb func(*os.File)) error {
 
 	newEc := ec.fork("[output capture]")
 
@@ -472,7 +472,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 
 	name, text := cp.name, cp.text
 
-	return func(ec *EvalCtx) []Value {
+	return func(ec *Frame) []Value {
 		evCapture := make(Ns)
 		for name := range capture {
 			evCapture[name] = ec.ResolveVar("", name)
@@ -506,7 +506,7 @@ func (cp *compiler) mapPairs(pairs []*parse.MapPair) ValuesOpFunc {
 		}
 		begins[i], ends[i] = pair.Begin(), pair.End()
 	}
-	return func(ec *EvalCtx) []Value {
+	return func(ec *Frame) []Value {
 		m := hashmap.Empty
 		for i := 0; i < npairs; i++ {
 			keys := keysOps[i].Exec(ec)

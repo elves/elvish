@@ -5,15 +5,12 @@ package eval
 //go:generate ./bundle-modules
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 	"unicode/utf8"
 
@@ -67,24 +64,6 @@ type evalerDaemon struct {
 	DaemonSpawner *daemon.Daemon
 }
 
-// EvalCtx maintains an Evaler along with its runtime context. After creation
-// an EvalCtx is seldom modified, and new instances are created when needed.
-type EvalCtx struct {
-	*Evaler
-	name    string
-	srcName string
-	src     string
-	modPath string // Only nonempty when evaluating a module.
-
-	local, up Ns
-	ports     []*Port
-
-	begin, end int
-	traceback  *util.SourceRange
-
-	background bool
-}
-
 // NewEvaler creates a new Evaler.
 func NewEvaler() *Evaler {
 	builtin := makeBuiltinNs()
@@ -129,35 +108,8 @@ func searchPaths() []string {
 	return strings.Split(os.Getenv("PATH"), ":")
 }
 
-// NewTopEvalCtx creates a top-level evalCtx.
-func NewTopEvalCtx(ev *Evaler, name, text string, ports []*Port) *EvalCtx {
-	return &EvalCtx{
-		ev, "top",
-		name, text, "",
-		ev.Global, make(Ns),
-		ports,
-		0, len(text), nil, false,
-	}
-}
-
-// fork returns a modified copy of ec. The ports are forked, and the name is
-// changed to the given value. Other fields are copied shallowly.
-func (ec *EvalCtx) fork(name string) *EvalCtx {
-	newPorts := make([]*Port, len(ec.ports))
-	for i, p := range ec.ports {
-		newPorts[i] = p.Fork()
-	}
-	return &EvalCtx{
-		ec.Evaler, name,
-		ec.srcName, ec.src, ec.modPath,
-		ec.local, ec.up,
-		newPorts,
-		ec.begin, ec.end, ec.traceback, ec.background,
-	}
-}
-
 // growPorts makes the size of ec.ports at least n, adding nil's if necessary.
-func (ec *EvalCtx) growPorts(n int) {
+func (ec *Frame) growPorts(n int) {
 	if len(ec.ports) >= n {
 		return
 	}
@@ -169,7 +121,7 @@ func (ec *EvalCtx) growPorts(n int) {
 // eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
 func (ev *Evaler) eval(op Op, ports []*Port, name, text string) error {
-	ec := NewTopEvalCtx(ev, name, text, ports)
+	ec := NewTopFrame(ev, name, text, ports)
 	return ec.PEval(op)
 }
 
@@ -268,71 +220,6 @@ func (ev *Evaler) Compile(n *parse.Chunk, name, text string) (Op, error) {
 	return compile(ev.Builtin.static(), ev.Global.static(), n, name, text)
 }
 
-// PEval evaluates an op in a protected environment so that calls to errorf are
-// wrapped in an Error.
-func (ec *EvalCtx) PEval(op Op) (err error) {
-	defer catch(&err, ec)
-	op.Exec(ec)
-	return nil
-}
-
-func (ec *EvalCtx) PCall(f Callable, args []Value, opts map[string]Value) (err error) {
-	defer catch(&err, ec)
-	f.Call(ec, args, opts)
-	return nil
-}
-
-func (ec *EvalCtx) PCaptureOutput(f Callable, args []Value, opts map[string]Value) (vs []Value, err error) {
-	// XXX There is no source.
-	return pcaptureOutput(ec, Op{
-		func(newec *EvalCtx) { f.Call(newec, args, opts) }, -1, -1})
-}
-
-func (ec *EvalCtx) PCaptureOutputInner(f Callable, args []Value, opts map[string]Value, valuesCb func(<-chan Value), bytesCb func(*os.File)) error {
-	// XXX There is no source.
-	return pcaptureOutputInner(ec, Op{
-		func(newec *EvalCtx) { f.Call(newec, args, opts) }, -1, -1},
-		valuesCb, bytesCb)
-}
-
-func catch(perr *error, ec *EvalCtx) {
-	// NOTE: We have to duplicate instead of calling util.Catch here, since
-	// recover can only catch a panic when called directly from a deferred
-	// function.
-	r := recover()
-	if r == nil {
-		return
-	}
-	if exc, ok := r.(util.Thrown); ok {
-		err := exc.Wrapped
-		if _, ok := err.(*Exception); !ok {
-			err = ec.makeException(err)
-		}
-		*perr = err
-	} else if r != nil {
-		panic(r)
-	}
-}
-
-// makeException turns an error into an Exception by adding traceback.
-func (ec *EvalCtx) makeException(e error) *Exception {
-	return &Exception{e, ec.addTraceback()}
-}
-
-func (ec *EvalCtx) addTraceback() *util.SourceRange {
-	return &util.SourceRange{
-		Name: ec.srcName, Source: ec.src,
-		Begin: ec.begin, End: ec.end, Next: ec.traceback,
-	}
-}
-
-// errorpf stops the ec.eval immediately by panicking with a diagnostic message.
-// The panic is supposed to be caught by ec.eval.
-func (ec *EvalCtx) errorpf(begin, end int, format string, args ...interface{}) {
-	ec.begin, ec.end = begin, end
-	throwf(format, args...)
-}
-
 // SourceText evaluates a chunk of elvish source.
 func (ev *Evaler) SourceText(name, src string) error {
 	n, err := parse.Parse(name, src)
@@ -367,65 +254,3 @@ func (ev *Evaler) Source(fname string) error {
 }
 
 var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
-
-// IterateInputs calls the passed function for each input element.
-func (ec *EvalCtx) IterateInputs(f func(Value)) {
-	var w sync.WaitGroup
-	inputs := make(chan Value)
-
-	w.Add(2)
-	go func() {
-		linesToChan(ec.ports[0].File, inputs)
-		w.Done()
-	}()
-	go func() {
-		for v := range ec.ports[0].Chan {
-			inputs <- v
-		}
-		w.Done()
-	}()
-	go func() {
-		w.Wait()
-		close(inputs)
-	}()
-
-	for v := range inputs {
-		f(v)
-	}
-}
-
-func linesToChan(r io.Reader, ch chan<- Value) {
-	filein := bufio.NewReader(r)
-	for {
-		line, err := filein.ReadString('\n')
-		if line != "" {
-			ch <- String(strings.TrimSuffix(line, "\n"))
-		}
-		if err != nil {
-			if err != io.EOF {
-				logger.Println("error on reading:", err)
-			}
-			break
-		}
-	}
-}
-
-// InputChan returns a channel from which input can be read.
-func (ec *EvalCtx) InputChan() chan Value {
-	return ec.ports[0].Chan
-}
-
-// InputFile returns a file from which input can be read.
-func (ec *EvalCtx) InputFile() *os.File {
-	return ec.ports[0].File
-}
-
-// OutputChan returns a channel onto which output can be written.
-func (ec *EvalCtx) OutputChan() chan<- Value {
-	return ec.ports[1].Chan
-}
-
-// OutputFile returns a file onto which output can be written.
-func (ec *EvalCtx) OutputFile() *os.File {
-	return ec.ports[1].File
-}

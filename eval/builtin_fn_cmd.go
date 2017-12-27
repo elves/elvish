@@ -25,7 +25,7 @@ func init() {
 	})
 }
 
-func resolveFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+func resolveFn(ec *Frame, args []Value, opts map[string]Value) {
 	var cmd String
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
@@ -34,7 +34,7 @@ func resolveFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	out <- resolve(string(cmd), ec)
 }
 
-func hasExternal(ec *EvalCtx, args []Value, opts map[string]Value) {
+func hasExternal(ec *Frame, args []Value, opts map[string]Value) {
 	var cmd String
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
@@ -43,7 +43,7 @@ func hasExternal(ec *EvalCtx, args []Value, opts map[string]Value) {
 	ec.OutputChan() <- Bool(err == nil)
 }
 
-func searchExternal(ec *EvalCtx, args []Value, opts map[string]Value) {
+func searchExternal(ec *Frame, args []Value, opts map[string]Value) {
 	var cmd String
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
@@ -55,7 +55,7 @@ func searchExternal(ec *EvalCtx, args []Value, opts map[string]Value) {
 	out <- String(path)
 }
 
-func exit(ec *EvalCtx, args []Value, opts map[string]Value) {
+func exit(ec *Frame, args []Value, opts map[string]Value) {
 	var codes []int
 	ScanArgsVariadic(args, &codes)
 	TakeNoOpt(opts)
@@ -74,7 +74,7 @@ func exit(ec *EvalCtx, args []Value, opts map[string]Value) {
 	}
 }
 
-func preExit(ec *EvalCtx) {
+func preExit(ec *Frame) {
 	err := ec.DaemonClient.Close()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

@@ -105,7 +105,7 @@ var (
 
 // Callable is anything may be called on an evalCtx with a list of Value's.
 type Callable interface {
-	Call(ec *EvalCtx, args []Value, opts map[string]Value)
+	Call(ec *Frame, args []Value, opts map[string]Value)
 }
 
 type CallableValue interface {
@@ -131,7 +131,7 @@ type IndexOneer interface {
 	IndexOne(idx Value) Value
 }
 
-func mustIndexer(v Value, ec *EvalCtx) Indexer {
+func mustIndexer(v Value, ec *Frame) Indexer {
 	indexer, ok := getIndexer(v, ec)
 	if !ok {
 		throw(fmt.Errorf("a %s is not indexable", v.Kind()))
@@ -141,7 +141,7 @@ func mustIndexer(v Value, ec *EvalCtx) Indexer {
 
 // getIndexer adapts a Value to an Indexer if there is an adapter. It adapts a
 // Fn if ec is not nil.
-func getIndexer(v Value, ec *EvalCtx) (Indexer, bool) {
+func getIndexer(v Value, ec *Frame) (Indexer, bool) {
 	if indexer, ok := v.(Indexer); ok {
 		return indexer, true
 	}

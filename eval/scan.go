@@ -45,7 +45,7 @@ func ScanArgsVariadic(src []Value, dstPtrs ...interface{}) {
 // optional iterable value at the end containing inputs to the function. The
 // return value is a function that iterates the iterable value if it exists, or
 // the input otherwise.
-func ScanArgsOptionalInput(ec *EvalCtx, src []Value, dstArgs ...interface{}) func(func(Value)) {
+func ScanArgsOptionalInput(ec *Frame, src []Value, dstArgs ...interface{}) func(func(Value)) {
 	switch len(src) {
 	case len(dstArgs):
 		ScanArgs(src, dstArgs...)

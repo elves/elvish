@@ -14,10 +14,10 @@ type LValuesOp struct {
 }
 
 // LValuesOpFunc is the body of an LValuesOp.
-type LValuesOpFunc func(*EvalCtx) []Variable
+type LValuesOpFunc func(*Frame) []Variable
 
 // Exec executes an LValuesOp, producing Variable's.
-func (op LValuesOp) Exec(ec *EvalCtx) []Variable {
+func (op LValuesOp) Exec(ec *Frame) []Variable {
 	// Empty value is considered to generate no lvalues.
 	if op.Func == nil {
 		return []Variable{}
@@ -85,7 +85,7 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp)
 	var op LValuesOp
 	// If there is still anything left in opFuncs, make LValuesOp for the fixed part.
 	if len(opFuncs) > 0 {
-		op = LValuesOp{func(ec *EvalCtx) []Variable {
+		op = LValuesOp{func(ec *Frame) []Variable {
 			var variables []Variable
 			for _, opFunc := range opFuncs {
 				variables = append(variables, opFunc(ec)...)
@@ -103,7 +103,7 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 	explode, ns, barename := ParseVariable(varname)
 
 	if len(n.Indicies) == 0 {
-		return explode, func(ec *EvalCtx) []Variable {
+		return explode, func(ec *Frame) []Variable {
 			variable := ec.ResolveVar(ns, barename)
 			if variable == nil {
 				if ns == "" || ns == "local" {
@@ -132,7 +132,7 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 	headBegin, headEnd := n.Head.Begin(), n.Head.End()
 	indexOps := cp.arrayOps(n.Indicies)
 
-	return explode, func(ec *EvalCtx) []Variable {
+	return explode, func(ec *Frame) []Variable {
 		variable := ec.ResolveVar(ns, barename)
 		if variable == nil {
 			throwf("variable $%s does not exist, compiler bug", varname)

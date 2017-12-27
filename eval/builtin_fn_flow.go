@@ -24,7 +24,7 @@ func init() {
 	})
 }
 
-func runParallel(ec *EvalCtx, args []Value, opts map[string]Value) {
+func runParallel(ec *Frame, args []Value, opts map[string]Value) {
 	var functions []CallableValue
 	ScanArgsVariadic(args, &functions)
 	TakeNoOpt(opts)
@@ -33,7 +33,7 @@ func runParallel(ec *EvalCtx, args []Value, opts map[string]Value) {
 	waitg.Add(len(functions))
 	exceptions := make([]*Exception, len(functions))
 	for i, function := range functions {
-		go func(ec *EvalCtx, function CallableValue, exception **Exception) {
+		go func(ec *Frame, function CallableValue, exception **Exception) {
 			err := ec.PCall(function, NoArgs, NoOpts)
 			if err != nil {
 				*exception = err.(*Exception)
@@ -47,7 +47,7 @@ func runParallel(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ec *EvalCtx, args []Value, opts map[string]Value) {
+func each(ec *Frame, args []Value, opts map[string]Value) {
 	var f CallableValue
 	iterate := ScanArgsOptionalInput(ec, args, &f)
 	TakeNoOpt(opts)
@@ -78,7 +78,7 @@ func each(ec *EvalCtx, args []Value, opts map[string]Value) {
 }
 
 // peach takes a single closure and applies it to all input values in parallel.
-func peach(ec *EvalCtx, args []Value, opts map[string]Value) {
+func peach(ec *Frame, args []Value, opts map[string]Value) {
 	var f CallableValue
 	iterate := ScanArgsOptionalInput(ec, args, &f)
 	TakeNoOpt(opts)
@@ -116,7 +116,7 @@ func peach(ec *EvalCtx, args []Value, opts map[string]Value) {
 	maybeThrow(err)
 }
 
-func fail(ec *EvalCtx, args []Value, opts map[string]Value) {
+func fail(ec *Frame, args []Value, opts map[string]Value) {
 	var msg String
 	ScanArgs(args, &msg)
 	TakeNoOpt(opts)
@@ -124,7 +124,7 @@ func fail(ec *EvalCtx, args []Value, opts map[string]Value) {
 	throw(errors.New(string(msg)))
 }
 
-func multiErrorFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+func multiErrorFn(ec *Frame, args []Value, opts map[string]Value) {
 	var excs []*Exception
 	ScanArgsVariadic(args, &excs)
 	TakeNoOpt(opts)
@@ -132,21 +132,21 @@ func multiErrorFn(ec *EvalCtx, args []Value, opts map[string]Value) {
 	throw(PipelineError{excs})
 }
 
-func returnFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+func returnFn(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
 	throw(Return)
 }
 
-func breakFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+func breakFn(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
 	throw(Break)
 }
 
-func continueFn(ec *EvalCtx, args []Value, opts map[string]Value) {
+func continueFn(ec *Frame, args []Value, opts map[string]Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 

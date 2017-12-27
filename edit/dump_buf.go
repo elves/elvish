@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-func _dumpBuf(ec *eval.EvalCtx, args []eval.Value, opts map[string]eval.Value) {
+func _dumpBuf(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	out := ec.OutputFile()
 	buf := ec.Editor.(*Editor).writer.CurrentBuffer()
 	for _, line := range buf.Lines {

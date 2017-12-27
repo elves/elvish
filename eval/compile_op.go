@@ -14,10 +14,10 @@ type Op struct {
 }
 
 // OpFunc is the body of an Op.
-type OpFunc func(*EvalCtx)
+type OpFunc func(*Frame)
 
 // Exec executes an Op.
-func (op Op) Exec(ec *EvalCtx) {
+func (op Op) Exec(ec *Frame) {
 	ec.begin, ec.end = op.Begin, op.End
 	op.Func(ec)
 }
@@ -25,7 +25,7 @@ func (op Op) Exec(ec *EvalCtx) {
 func (cp *compiler) chunk(n *parse.Chunk) OpFunc {
 	ops := cp.pipelineOps(n.Pipelines)
 
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		for _, op := range ops {
 			op.Exec(ec)
 		}
@@ -41,7 +41,7 @@ const pipelineChanBufferSize = 32
 func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 	ops := cp.formOps(n.Forms)
 
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		ec.CheckInterrupts()
 
 		bg := n.Background
@@ -143,7 +143,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		assignmentOps = cp.assignmentOps(n.Assignments)
 		if n.Head == nil && n.Vars == nil {
 			// Permanent assignment.
-			return func(ec *EvalCtx) {
+			return func(ec *Frame) {
 				for _, op := range assignmentOps {
 					op.Exec(ec)
 				}
@@ -187,7 +187,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 	} else {
 		varsOp, restOp := cp.lvaluesMulti(n.Vars)
 		argsOp := ValuesOp{
-			func(ec *EvalCtx) []Value {
+			func(ec *Frame) []Value {
 				var vs []Value
 				for _, op := range argOps {
 					vs = append(vs, op.Exec(ec)...)
@@ -213,7 +213,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 	begin, end := n.Begin(), n.End()
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		// Temporary assignment.
 		if len(saveVarsOps) > 0 {
 			// There is a temporary assignment.
@@ -314,7 +314,7 @@ func (cp *compiler) assignment(n *parse.Assignment) OpFunc {
 }
 
 func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFunc {
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		variables := variablesOp.Exec(ec)
 		rest := restOp.Exec(ec)
 
@@ -392,7 +392,7 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 		cp.errorf("bad redirection sign")
 	}
 
-	return func(ec *EvalCtx) {
+	return func(ec *Frame) {
 		var dst int
 		if dstOp.Func == nil {
 			// use default dst fd

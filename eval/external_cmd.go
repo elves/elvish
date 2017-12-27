@@ -39,7 +39,7 @@ func (e ExternalCmd) Repr(int) string {
 }
 
 // Call calls an external command.
-func (e ExternalCmd) Call(ec *EvalCtx, argVals []Value, opts map[string]Value) {
+func (e ExternalCmd) Call(ec *Frame, argVals []Value, opts map[string]Value) {
 	if len(opts) > 0 {
 		throw(ErrExternalCmdOpts)
 	}
