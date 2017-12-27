@@ -208,6 +208,7 @@ func CleanupRuntime(ev *eval.Evaler) {
 			fmt.Fprintln(os.Stderr, "warning: failed to close connection to daemon:", err)
 		}
 	}
+	ev.Close()
 }
 
 var (

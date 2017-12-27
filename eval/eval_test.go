@@ -73,6 +73,7 @@ func BenchmarkOutputCaptureMixed(b *testing.B) {
 
 func benchmarkOutputCapture(op Op, n int) {
 	ev := NewEvaler()
+	defer ev.Close()
 	ec := NewTopFrame(ev, "[benchmark]", "", []*Port{{}, {}, {}})
 	for i := 0; i < n; i++ {
 		pcaptureOutput(ec, op)

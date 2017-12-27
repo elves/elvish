@@ -35,7 +35,6 @@ const (
 )
 
 const (
-	outChanSize              = 32
 	defaultValueOutIndicator = "▶ "
 	initIndent               = NoPretty
 )
@@ -45,13 +44,11 @@ const (
 type Evaler struct {
 	evalerScopes
 	evalerDaemon
+	evalerPorts
 	Modules map[string]Ns
 	Editor  Editor
 	libDir  string
 	intCh   chan struct{}
-
-	// Configurations.
-	valueOutIndicator string
 }
 
 type evalerScopes struct {
@@ -78,12 +75,18 @@ func NewEvaler() *Evaler {
 		},
 		Editor: nil,
 		intCh:  nil,
-
-		valueOutIndicator: defaultValueOutIndicator,
 	}
-	builtin["value-out-indicator"] = NewBackedVariable(&ev.valueOutIndicator)
+
+	valueOutIndicator := defaultValueOutIndicator
+	ev.evalerPorts = newEvalerPorts(os.Stdin, os.Stdout, os.Stderr, &valueOutIndicator)
+	builtin["value-out-indicator"] = NewBackedVariable(&valueOutIndicator)
 
 	return ev
+}
+
+// Close releases resources allocated when creating this Evaler.
+func (ev *Evaler) Close() {
+	ev.evalerPorts.close()
 }
 
 // InstallDaemon installs a daemon to the Evaler.
@@ -128,29 +131,7 @@ func (ev *Evaler) eval(op Op, ports []*Port, name, text string) error {
 // Eval sets up the Evaler with standard ports and evaluates an Op. The supplied
 // name and text are used in diagnostic messages.
 func (ev *Evaler) Eval(op Op, name, text string) error {
-	inCh := make(chan Value)
-	close(inCh)
-
-	outCh := make(chan Value, outChanSize)
-	outDone := make(chan struct{})
-	go func() {
-		for v := range outCh {
-			fmt.Println(ev.valueOutIndicator + v.Repr(initIndent))
-		}
-		close(outDone)
-	}()
-	defer func() {
-		close(outCh)
-		<-outDone
-	}()
-
-	ports := []*Port{
-		{File: os.Stdin, Chan: inCh},
-		{File: os.Stdout, Chan: outCh},
-		{File: os.Stderr, Chan: BlackholeChan},
-	}
-
-	return ev.EvalWithPorts(ports, op, name, text)
+	return ev.EvalWithPorts(ev.ports[:], op, name, text)
 }
 
 // EvalWithPorts sets up the Evaler with the given ports and evaluates an Op.

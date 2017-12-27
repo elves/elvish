@@ -111,6 +111,7 @@ func RunTests(t *testing.T, evalTests []Test, makeEvaler func() *Evaler) {
 		// fmt.Printf("eval %q\n", tt.text)
 
 		ev := makeEvaler()
+		defer ev.Close()
 		out, bytesOut, err := evalAndCollect(t, ev, []string{tt.text}, len(tt.want.out))
 
 		first := true

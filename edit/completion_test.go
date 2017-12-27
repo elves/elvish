@@ -15,6 +15,7 @@ type complContextFinderTest struct {
 
 func testComplContextFinder(t *testing.T, name string, finder complContextFinder, tests []complContextFinderTest) {
 	ev := eval.NewEvaler()
+	defer ev.Close()
 	for _, test := range tests {
 		n, err := parse.Parse("[test]", test.src)
 		// Ignore error as long is n is non-nil

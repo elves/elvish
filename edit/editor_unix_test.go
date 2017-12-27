@@ -43,6 +43,7 @@ func TestReadLine(t *testing.T) {
 	}()
 
 	ev := eval.NewEvaler()
+	defer ev.Close()
 
 	for _, test := range readLineTests {
 		lineChan := make(chan string)
