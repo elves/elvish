@@ -26,9 +26,9 @@ func newEvalerPorts(stdin, stdout, stderr *os.File, prefix *string) evalerPorts 
 
 	return evalerPorts{
 		[3]*Port{
-			&Port{File: stdin, Chan: ClosedChan},
-			&Port{File: stdout, Chan: stdoutChan, CloseChan: true},
-			&Port{File: stderr, Chan: stderrChan, CloseChan: true},
+			{File: stdin, Chan: ClosedChan},
+			{File: stdout, Chan: stdoutChan, CloseChan: true},
+			{File: stderr, Chan: stderrChan, CloseChan: true},
 		},
 		&relayerWait,
 	}
