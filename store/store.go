@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
 
 	"github.com/boltdb/bolt"
@@ -28,6 +29,8 @@ type Store struct {
 	// Waits is used for registering outstanding operations on the store.
 	waits sync.WaitGroup
 }
+
+var _ storedefs.Store = (*Store)(nil)
 
 // DefaultDB returns the default database for storage.
 func DefaultDB(dbname string) (*bolt.DB, error) {

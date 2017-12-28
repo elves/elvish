@@ -20,8 +20,8 @@ func init() {
 	}
 }
 
-// GetSharedVar gets the value of a shared variable.
-func (s *Store) GetSharedVar(n string) (string, error) {
+// SharedVar gets the value of a shared variable.
+func (s *Store) SharedVar(n string) (string, error) {
 	var value string
 	err := s.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BucketSharedVar))

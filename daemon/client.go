@@ -25,6 +25,8 @@ type Client struct {
 	waits     sync.WaitGroup
 }
 
+var _ storedefs.Store = (*Client)(nil)
+
 // NewClient creates a new Client instance that talks to the socket. Connection
 // creation is deferred to the first request.
 func NewClient(sockPath string) *Client {

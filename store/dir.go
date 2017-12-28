@@ -70,9 +70,9 @@ func (s *Store) RemoveDir(d string) error {
 	})
 }
 
-// GetDirs lists all directories in the directory history whose names are not
+// Dirs lists all directories in the directory history whose names are not
 // in the blacklist. The results are ordered by scores in descending order.
-func (s *Store) GetDirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
+func (s *Store) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	var dirs []storedefs.Dir
 
 	err := s.db.View(func(tx *bolt.Tx) error {

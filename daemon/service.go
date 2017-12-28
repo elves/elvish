@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/store"
+	"github.com/elves/elvish/store/storedefs"
 )
 
 // Serve runs the daemon service, listening on the socket specified by sockpath
@@ -92,7 +93,7 @@ func Serve(sockpath, dbpath string) {
 // Service provides the daemon RPC service. It is suitable as a service for
 // net/rpc.
 type Service struct {
-	store *store.Store
+	store storedefs.Store
 	err   error
 }
 
@@ -176,7 +177,7 @@ func (s *Service) Dirs(req *DirsRequest, res *DirsResponse) error {
 	if s.err != nil {
 		return s.err
 	}
-	dirs, err := s.store.GetDirs(req.Blacklist)
+	dirs, err := s.store.Dirs(req.Blacklist)
 	res.Dirs = dirs
 	return err
 }
@@ -185,7 +186,7 @@ func (s *Service) SharedVar(req *SharedVarRequest, res *SharedVarResponse) error
 	if s.err != nil {
 		return s.err
 	}
-	value, err := s.store.GetSharedVar(req.Name)
+	value, err := s.store.SharedVar(req.Name)
 	res.Value = value
 	return err
 }

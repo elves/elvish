@@ -8,7 +8,7 @@ func TestSharedVar(t *testing.T) {
 	value2 := "o mores, o tempora"
 
 	// Getting an nonexistent variable should return ErrNoVar.
-	_, err := tStore.GetSharedVar(varname)
+	_, err := tStore.SharedVar(varname)
 	if err != ErrNoVar {
 		t.Error("want ErrNoVar, got", err)
 	}
@@ -18,7 +18,7 @@ func TestSharedVar(t *testing.T) {
 	if err != nil {
 		t.Error("want no error, got", err)
 	}
-	v, err := tStore.GetSharedVar(varname)
+	v, err := tStore.SharedVar(varname)
 	if v != value1 || err != nil {
 		t.Errorf("want %q and no error, got %q and %v", value1, v, err)
 	}
@@ -28,7 +28,7 @@ func TestSharedVar(t *testing.T) {
 	if err != nil {
 		t.Error("want no error, got", err)
 	}
-	v, err = tStore.GetSharedVar(varname)
+	v, err = tStore.SharedVar(varname)
 	if v != value2 || err != nil {
 		t.Errorf("want %q and no error, got %q and %v", value2, v, err)
 	}
@@ -38,7 +38,7 @@ func TestSharedVar(t *testing.T) {
 	if err != nil {
 		t.Error("want no error, got", err)
 	}
-	_, err = tStore.GetSharedVar(varname)
+	_, err = tStore.SharedVar(varname)
 	if err != ErrNoVar {
 		t.Error("want ErrNoVar, got", err)
 	}

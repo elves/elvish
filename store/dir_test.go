@@ -23,7 +23,7 @@ func TestDir(t *testing.T) {
 		}
 	}
 
-	dirs, err := tStore.GetDirs(black)
+	dirs, err := tStore.Dirs(black)
 	if err != nil || !reflect.DeepEqual(dirs, wantedDirs) {
 		t.Errorf(`tStore.ListDirs() => (%v, %v), want (%v, <nil>)`,
 			dirs, err, wantedDirs)
