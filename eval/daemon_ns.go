@@ -4,14 +4,14 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/elves/elvish/daemon/api"
+	"github.com/elves/elvish/daemon"
 )
 
 // ErrDontKnowHowToSpawnDaemon is thrown by daemon:spawn when the Evaler's
 // DaemonSpawner field is nil.
 var ErrDontKnowHowToSpawnDaemon = errors.New("don't know how to spawn daemon")
 
-func makeDaemonNs(daemon *api.Client) Ns {
+func makeDaemonNs(daemon *daemon.Client) Ns {
 	// Obtain process ID
 	daemonPid := func() Value {
 		pid, err := daemon.Pid()

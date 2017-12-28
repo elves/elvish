@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	daemonapi "github.com/elves/elvish/daemon/api"
+	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/re"
-	"github.com/elves/elvish/program/daemon"
+	daemonp "github.com/elves/elvish/program/daemon"
 	"github.com/elves/elvish/store/storedefs"
 )
 
@@ -71,7 +71,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 	// TODO(xiaq): Installation of the re module might belong somewhere else.
 	ev.InstallModule("re", re.Ns())
 	if sockpath != "" && dbpath != "" {
-		spawner := &daemon.Daemon{
+		spawner := &daemonp.Daemon{
 			BinPath:       binpath,
 			DbPath:        dbpath,
 			SockPath:      sockpath,
@@ -91,8 +91,8 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 	return ev, dataDir
 }
 
-func connectToDaemon(sockpath string, spawner *daemon.Daemon) (*daemonapi.Client, error) {
-	cl := daemonapi.NewClient(sockpath)
+func connectToDaemon(sockpath string, spawner *daemonp.Daemon) (*daemon.Client, error) {
+	cl := daemon.NewClient(sockpath)
 	status, err := detectDaemon(sockpath, cl)
 	shouldSpawn := false
 
@@ -162,7 +162,7 @@ func connectToDaemon(sockpath string, spawner *daemon.Daemon) (*daemonapi.Client
 	return cl, fmt.Errorf("daemon unreachable after waiting for %s", daemonWaitLoops*daemonWaitPerLoop)
 }
 
-func detectDaemon(sockpath string, cl *daemonapi.Client) (daemonStatus, error) {
+func detectDaemon(sockpath string, cl *daemon.Client) (daemonStatus, error) {
 	_, err := os.Stat(sockpath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -182,13 +182,13 @@ func detectDaemon(sockpath string, cl *daemonapi.Client) (daemonStatus, error) {
 			return connectionOtherError, err
 		}
 	}
-	if version < daemonapi.Version {
+	if version < daemon.Version {
 		return daemonOutdated, nil
 	}
 	return daemonOK, nil
 }
 
-func killDaemon(cl *daemonapi.Client) error {
+func killDaemon(cl *daemon.Client) error {
 	pid, err := cl.Pid()
 	if err != nil {
 		return fmt.Errorf("cannot get pid of daemon: %v", err)

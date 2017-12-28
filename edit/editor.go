@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/elves/elvish/daemon/api"
+	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/edit/highlight"
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/prompt"
@@ -32,7 +32,7 @@ type Editor struct {
 	writer tty.Writer
 	reader tty.Reader
 	sigs   chan os.Signal
-	daemon *api.Client
+	daemon *daemon.Client
 	evaler *eval.Evaler
 
 	variables map[string]eval.Variable

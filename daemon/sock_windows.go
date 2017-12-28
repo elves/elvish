@@ -3,6 +3,7 @@ package daemon
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 )
@@ -36,4 +37,12 @@ func listen(path string) (net.Listener, error) {
 	}
 	file.Close()
 	return listener, nil
+}
+
+func dial(path string) (net.Conn, error) {
+	buf, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return net.Dial("tcp", string(buf))
 }

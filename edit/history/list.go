@@ -3,7 +3,7 @@ package history
 import (
 	"sync"
 
-	"github.com/elves/elvish/daemon/api"
+	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
@@ -12,7 +12,7 @@ import (
 // backend. It is used in the $edit:history variable.
 type List struct {
 	*sync.RWMutex
-	Daemon *api.Client
+	Daemon *daemon.Client
 }
 
 var (

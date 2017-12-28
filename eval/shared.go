@@ -1,9 +1,9 @@
 package eval
 
-import "github.com/elves/elvish/daemon/api"
+import "github.com/elves/elvish/daemon"
 
 type sharedVariable struct {
-	store *api.Client
+	store *daemon.Client
 	name  string
 }
 

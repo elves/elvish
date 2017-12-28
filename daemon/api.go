@@ -1,5 +1,4 @@
-// Package API provides the API to the daemon RPC service.
-package api
+package daemon
 
 import (
 	"github.com/elves/elvish/store/storedefs"

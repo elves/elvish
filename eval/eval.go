@@ -14,9 +14,9 @@ import (
 	"syscall"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/daemon/api"
+	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/program/daemon"
+	daemonp "github.com/elves/elvish/program/daemon"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -57,8 +57,8 @@ type evalerScopes struct {
 }
 
 type evalerDaemon struct {
-	DaemonClient  *api.Client
-	DaemonSpawner *daemon.Daemon
+	DaemonClient  *daemon.Client
+	DaemonSpawner *daemonp.Daemon
 }
 
 // NewEvaler creates a new Evaler.
@@ -90,7 +90,7 @@ func (ev *Evaler) Close() {
 }
 
 // InstallDaemon installs a daemon to the Evaler.
-func (ev *Evaler) InstallDaemon(client *api.Client, spawner *daemon.Daemon) {
+func (ev *Evaler) InstallDaemon(client *daemon.Client, spawner *daemonp.Daemon) {
 	ev.evalerDaemon = evalerDaemon{client, spawner}
 	ev.InstallModule("daemon", makeDaemonNs(client))
 	// XXX This is really brittle
