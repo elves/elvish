@@ -44,15 +44,17 @@ upload-coveralls-travis: cover/all
 		&& go get -d $(GOVERALLS) \
 		&& go build -o goveralls $(GOVERALLS) \
 		&& ./goveralls -coverprofile $< -service=travis-ci \
-		|| echo "not sending to coveralls"
-
+		|| echo "not sending to coveralls.io"
 
 upload-codecov-appveyor: cover/all
-	codecov -f $<
+	test -z "$(APPVEYOR_PULL_REQUEST_NUMBER)" \
+		&& codecov -f $< \
+		|| echo "not sending to codecov.io"
 
 upload-coveralls-appveyor: cover/all
-	goveralls -coverprofile $< -service=appveyor-ci \
-		|| echo "failed to upload to coveralls"
+	test -z "$(APPVEYOR_PULL_REQUEST_NUMBER)" \
+		&& goveralls -coverprofile $< -service=appveyor-ci \
+		|| echo "not sending to coveralls.io"
 
 upload-bin:
 	test "$(TRAVIS_OS_NAME)" = linux \
