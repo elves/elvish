@@ -81,12 +81,7 @@ func makeNavRenderer(h int, w1, w2, w3 int, r1, r2, r3 ui.Renderer) ui.Renderer 
 func (nr *navRenderer) Render(b *ui.Buffer) {
 	margin := navigationListingColMargin
 
-	w := b.Width - margin*2
-	ws := distributeWidths(w,
-		[]float64{parentColumnWeight, currentColumnWeight, previewColumnWeight},
-		[]int{nr.fwParent, nr.fwCurrent, nr.fwPreview},
-	)
-	wParent, wCurrent, wPreview := ws[0], ws[1], ws[2]
+	wParent, wCurrent, wPreview := getNavWidths(b.Width-margin*2, nr.fwCurrent, nr.fwPreview)
 
 	bParent := ui.Render(nr.parent, wParent)
 	b.ExtendRight(bParent, 0)
