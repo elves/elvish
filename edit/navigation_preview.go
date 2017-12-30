@@ -7,6 +7,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/util"
 )
 
 // PreviewBytes is the maximum number of bytes to preview a file.
@@ -18,7 +19,48 @@ var (
 	ErrNotValidUTF8 = errors.New("no preview for non-utf8 file")
 )
 
-func newFilePreviewNavColumn(fname string) navPreview {
+type navFilePreview struct {
+	lines     []ui.Styled
+	fullWidth int
+	beginLine int
+}
+
+func newNavFilePreview(lines []string) *navFilePreview {
+	width := 0
+	convertedLines := make([]ui.Styled, len(lines))
+	for i, line := range lines {
+		// BUG: Handle tabstops correctly
+		convertedLine := strings.Replace(line, "\t", "    ", -1)
+		convertedLines[i] = ui.Unstyled(convertedLine)
+		width = max(width, util.Wcswidth(convertedLine))
+	}
+	return &navFilePreview{convertedLines, width, 0}
+}
+
+func (fp *navFilePreview) FullWidth(h int) int {
+	width := fp.fullWidth
+	if h < len(fp.lines) {
+		return width + 1
+	}
+	return width
+}
+
+func (fp *navFilePreview) List(h int) ui.Renderer {
+	if len(fp.lines) <= h {
+		logger.Printf("Height %d fit all lines", h)
+		return listingRenderer{fp.lines}
+	}
+	shown := fp.lines[fp.beginLine:]
+	if len(shown) > h {
+		shown = shown[:h]
+	}
+	logger.Printf("Showing lines %d to %d", fp.beginLine, fp.beginLine+len(shown))
+	return listingWithScrollBarRenderer{
+		listingRenderer{shown}, len(fp.lines),
+		fp.beginLine, fp.beginLine + len(shown), h}
+}
+
+func makeNavFilePreview(fname string) navPreview {
 	file, err := os.Open(fname)
 	if err != nil {
 		return newErrNavColumn(err)
@@ -44,10 +86,5 @@ func newFilePreviewNavColumn(fname string) navPreview {
 		return newErrNavColumn(ErrNotValidUTF8)
 	}
 
-	lines := strings.Split(content, "\n")
-	styleds := make([]ui.Styled, len(lines))
-	for i, line := range lines {
-		styleds[i] = ui.Styled{strings.Replace(line, "\t", "    ", -1), ui.Styles{}}
-	}
-	return newNavColumn(styleds, func(int) bool { return false })
+	return newNavFilePreview(strings.Split(content, "\n"))
 }

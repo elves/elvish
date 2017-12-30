@@ -234,7 +234,7 @@ func (n *navigation) refreshDirPreview() {
 			}
 			n.preview = newNavColumn(all, func(int) bool { return false })
 		} else {
-			n.preview = newFilePreviewNavColumn(name)
+			n.preview = makeNavFilePreview(name)
 		}
 	} else {
 		n.preview = nil
