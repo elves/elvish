@@ -220,6 +220,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 
 	// Render onto a buffer.
 	height, width := sys.GetWinsize(ed.out)
+	height = min(height, ed.maxHeight())
 	er := &editorRenderer{&ed.editorState, height, nil}
 	buf := ui.Render(er, width)
 	return ed.writer.CommitBuffer(er.bufNoti, buf, fullRefresh)
