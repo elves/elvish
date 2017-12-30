@@ -27,6 +27,8 @@ var _ = registerBuiltins(modeNavigation, map[string]func(*Editor){
 	"page-down":                navPageDown,
 	"left":                     navLeft,
 	"right":                    navRight,
+	"file-preview-up":          navFilePreviewUp,
+	"file-preview-down":        navFilePreviewDown,
 	"trigger-shown-hidden":     navTriggerShowHidden,
 	"trigger-filter":           navTriggerFilter,
 	"insert-selected":          navInsertSelected,
@@ -42,6 +44,8 @@ func init() {
 		{ui.PageDown, 0}:   "page-down",
 		{ui.Left, 0}:       "left",
 		{ui.Right, 0}:      "right",
+		{ui.Up, ui.Alt}:    "file-preview-up",
+		{ui.Down, ui.Alt}:  "file-preview-down",
 		{ui.Enter, ui.Alt}: "insert-selected",
 		{ui.Enter, 0}:      "insert-selected-and-quit",
 		{'H', ui.Ctrl}:     "trigger-shown-hidden",
@@ -111,6 +115,24 @@ func navLeft(ed *Editor) {
 
 func navRight(ed *Editor) {
 	ed.navigation.descend()
+}
+
+func navFilePreviewUp(ed *Editor) {
+	fp, ok := ed.navigation.preview.(*navFilePreview)
+	if ok {
+		if fp.beginLine > 0 {
+			fp.beginLine--
+		}
+	}
+}
+
+func navFilePreviewDown(ed *Editor) {
+	fp, ok := ed.navigation.preview.(*navFilePreview)
+	if ok {
+		if fp.beginLine < len(fp.lines)-1 {
+			fp.beginLine++
+		}
+	}
 }
 
 func navTriggerShowHidden(ed *Editor) {
