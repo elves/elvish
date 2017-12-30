@@ -38,15 +38,23 @@ func setup(in, out *os.File) (func() error, error) {
 		return nil, fmt.Errorf("can't set up terminal attribute: %s", err)
 	}
 
+	var errFlushInput error
 	if flushInputDuringSetup {
 		err = sys.FlushInput(fd)
 		if err != nil {
-			return nil, fmt.Errorf("can't flush input: %s", err)
+			errFlushInput = fmt.Errorf("can't flush input: %s", err)
 		}
+	}
+
+	var errSetupVT error
+	err = setupVT(out)
+	if err != nil {
+		errSetupVT = fmt.Errorf("can't setup VT: %s", err)
 	}
 
 	restore := func() error {
 		return util.Errors(savedTermios.ApplyToFd(fd), restoreVT(out))
 	}
-	return restore, nil
+
+	return restore, util.Errors(errFlushInput, errSetupVT)
 }
