@@ -2,6 +2,7 @@ package edit
 
 import (
 	"errors"
+	"io"
 	"os"
 	"strings"
 	"unicode/utf8"
@@ -77,7 +78,7 @@ func makeNavFilePreview(fname string) navPreview {
 	// BUG: when the file is bigger than the buffer, the scrollbar is wrong.
 	var buf [PreviewBytes]byte
 	nr, err := file.Read(buf[:])
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return newErrNavColumn(err)
 	}
 
