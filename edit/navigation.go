@@ -54,11 +54,16 @@ func init() {
 type navigation struct {
 	current    *navColumn
 	parent     *navColumn
-	preview    *navColumn
+	preview    navPreview
 	showHidden bool
 	filtering  bool
 	filter     string
 	chdir      func(string) error
+}
+
+type navPreview interface {
+	FullWidth(int) int
+	List(int) ui.Renderer
 }
 
 func (*navigation) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
@@ -372,52 +377,6 @@ func newErrNavColumn(err error) *navColumn {
 	nc := &navColumn{err: err}
 	nc.provider = nc
 	return nc
-}
-
-// PreviewBytes is the maximum number of bytes to preview a file.
-const PreviewBytes = 64 * 1024
-
-// Errors displayed in the preview area.
-var (
-	ErrNotRegular   = errors.New("no preview for non-regular file")
-	ErrNotValidUTF8 = errors.New("no preview for non-utf8 file")
-)
-
-func newFilePreviewNavColumn(fname string) *navColumn {
-	// XXX This implementation is a bit hacky, since listing is not really
-	// intended for listing file content.
-	var err error
-	file, err := os.Open(fname)
-	if err != nil {
-		return newErrNavColumn(err)
-	}
-
-	info, err := file.Stat()
-	if err != nil {
-		return newErrNavColumn(err)
-	}
-	if (info.Mode() & (os.ModeDevice | os.ModeNamedPipe | os.ModeSocket | os.ModeCharDevice)) != 0 {
-		return newErrNavColumn(ErrNotRegular)
-	}
-
-	// BUG when the file is bigger than the buffer, the scrollbar is wrong.
-	buf := make([]byte, PreviewBytes)
-	nr, err := file.Read(buf[:])
-	if err != nil {
-		return newErrNavColumn(err)
-	}
-
-	content := string(buf[:nr])
-	if !utf8.ValidString(content) {
-		return newErrNavColumn(ErrNotValidUTF8)
-	}
-
-	lines := strings.Split(content, "\n")
-	styleds := make([]ui.Styled, len(lines))
-	for i, line := range lines {
-		styleds[i] = ui.Styled{strings.Replace(line, "\t", "    ", -1), ui.Styles{}}
-	}
-	return newNavColumn(styleds, func(int) bool { return false })
 }
 
 func (nc *navColumn) Placeholder() string {
