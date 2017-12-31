@@ -25,9 +25,14 @@ fn -get-url [pkg]{
     put https://$pkg
 }
 
+fn is-installed [pkg]{
+  dest = $-data-dir/lib/$pkg
+  put ?(test -e $dest)
+}
+
 fn -install-one [pkg]{
     dest = $-data-dir/lib/$pkg
-    if ?(test -e $dest) {
+    if (is-installed $pkg) {
         -error 'Package '$pkg' already exists locally.'
         return
     }
@@ -55,7 +60,7 @@ fn installed {
 
 fn -upgrade-one [pkg]{
     dest = $-data-dir/lib/$pkg
-    if (not ?(test -d $dest)) {
+    if (not (is-installed $pkg)) {
         -error 'Package '$pkg' not installed locally.'
         return
     }
@@ -71,6 +76,40 @@ fn upgrade [@pkgs]{
     for pkg $pkgs {
         -upgrade-one $pkg
     }
+}
+
+fn -install-or-upgrade-one [pkg]{
+  if (is-installed $pkg) {
+    -upgrade-one $pkg
+  } else {
+    -install-one $pkg
+  }
+}
+
+fn install-or-upgrade [@pkgs]{
+  if (eq $pkgs []) {
+    -error 'Must specify at least one package.'
+    return
+  }
+  for pkg $pkgs {
+    -install-or-upgrade-one $pkg
+  }
+}
+
+fn -install-if-needed-one [pkg]{
+  if (not (is-installed $pkg)) {
+    -install-one $pkg
+  }
+}
+
+fn install-if-needed [@pkgs]{
+  if (eq $pkgs []) {
+    -error 'Must specify at least one package.'
+    return
+  }
+  for pkg $pkgs {
+    -install-if-needed-one $pkg
+  }
 }
 
 fn -uninstall-one [pkg]{
