@@ -10,11 +10,7 @@ import (
 // Definitions for Value interfaces, some simple Value types and some common
 // Value helpers.
 
-const (
-	NoPretty = util.MinInt
-)
-
-// Value is an elvish value.
+// Value is an Elvish value.
 type Value interface {
 	Kinder
 	Equaler
@@ -22,12 +18,12 @@ type Value interface {
 	Reprer
 }
 
-// Kinder is anything with kind string.
+// Kinder wraps the Kind method.
 type Kinder interface {
 	Kind() string
 }
 
-// Reprer is anything with a Repr method.
+// Reprer wraps the Repr method.
 type Reprer interface {
 	// Repr returns a string that represents a Value. The string either be a
 	// literal of that Value that is preferably deep-equal to it (like `[a b c]`
@@ -41,36 +37,48 @@ type Reprer interface {
 	Repr(indent int) string
 }
 
-// Equaler is anything that knows how to compare itself against other values.
+// NoPretty can be passed to Repr to suppress pretty-printing.
+const NoPretty = util.MinInt
+
+// Equaler wraps the Equal method.
 type Equaler interface {
-	Equal(interface{}) bool
+	// Equal compares the receiver to another value. Two equal values must have
+	// the same hash code.
+	Equal(other interface{}) bool
 }
 
-// Hasher is anything that knows how to compute its hash code.
+// Hasher wraps the Hash method.
 type Hasher interface {
+	// Hash computes the hash code of the receiver.
 	Hash() uint32
 }
 
-// Booler is anything that can be converted to a bool.
+// Booler wraps the Bool method.
 type Booler interface {
+	// Bool computes the truth value of the receiver.
 	Bool() bool
 }
 
-// Stringer is anything that can be converted to a string.
+// Stringer wraps the String method.
 type Stringer interface {
+	// Stringer converts the receiver to a string.
 	String() string
 }
 
-// Lener is anything with a length.
+// Lener wraps the Len method.
 type Lener interface {
+	// Len computes the length of the receiver.
 	Len() int
 }
 
-// Iterable is anything that can be iterated.
+// Iterable wraps the Iterate method.
 type Iterable interface {
-	Iterate(func(Value) bool)
+	// Iterate calls the passed function with each value within the receiver.
+	// The iteration is aborted if the function returns false.
+	Iterate(func(v Value) bool)
 }
 
+// IterableValue is an iterable Value.
 type IterableValue interface {
 	Iterable
 	Value
@@ -88,25 +96,32 @@ func collectFromIterable(it Iterable) []Value {
 	return vs
 }
 
-// IterateKeyer is anything with keys that can be iterated.
+// IterateKeyer wraps the IterateKey method.
 type IterateKeyer interface {
-	IterateKey(func(Value) bool)
+	// IterateKey calls the passed function with each value within the receiver.
+	// The iteration is aborted if the function returns false.
+	IterateKey(func(k Value) bool)
 }
 
-// IteratePairer is anything with key-value pairs that can be iterated.
+// IteratePairer wraps the IteratePair method.
 type IteratePairer interface {
-	IteratePair(func(Value, Value) bool)
+	// IteratePair calls the passed function with each key and value within the
+	// receiver. The iteration is aborted if the function returns false.
+	IteratePair(func(k, v Value) bool)
+}
+
+// Callable wraps the Call method.
+type Callable interface {
+	// Call calls the receiver in a Frame with arguments and options.
+	Call(ec *Frame, args []Value, opts map[string]Value)
 }
 
 var (
+	// NoArgs is an empty argument list. It can be used as an argument to Call.
 	NoArgs = []Value{}
+	// NoOpts is an empty option map. It can be used as an argument to Call.
 	NoOpts = map[string]Value{}
 )
-
-// Callable wraps the Call function.
-type Callable interface {
-	Call(ec *Frame, args []Value, opts map[string]Value)
-}
 
 // Fn is a callable value.
 type Fn interface {
@@ -114,13 +129,15 @@ type Fn interface {
 	Callable
 }
 
-// Indexer is anything that can be indexed by Values and yields Values.
+// Indexer wraps the Index method.
 type Indexer interface {
+	// Index retrieves the values within the receiver at the specified indicies.
 	Index(idx []Value) []Value
 }
 
-// IndexOneer is anything that can be indexed by one Value and yields one Value.
+// IndexOneer wraps the IndexOne method.
 type IndexOneer interface {
+	// Index retrieves one value from the receiver at the specified index.
 	IndexOne(idx Value) Value
 }
 
@@ -158,15 +175,18 @@ func (ioi IndexOneerIndexer) Index(vs []Value) []Value {
 	return results
 }
 
-// Assocer is anything tha can return a slightly modified version of itself as a
-// new Value.
+// Assocer wraps the Assoc method.
 type Assocer interface {
+	// Assoc returns a slightly modified version of the receiver with key k
+	// associated with value v.
 	Assoc(k, v Value) Value
 }
 
-// Assocer is anything tha can return a slightly modified version of itself with
+// Dissocer is anything tha can return a slightly modified version of itself with
 // the specified key removed, as a new value.
 type Dissocer interface {
+	// Dissoc returns a slightly modified version of the receiver with key k
+	// dissociated with any value.
 	Dissoc(k Value) Value
 }
 
