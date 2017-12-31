@@ -1,7 +1,8 @@
-// getopt is a command-line argument parser. It tries to cover all common
-// styles of option syntaxes, and provides context information when given a
-// partial input. It is useful for writing completion engines and wrapper
-// programs.
+// Package getopt contains a command-line argument parser.
+//
+// It tries to cover all common styles of option syntaxes, and provides context
+// information when given a partial input. It is mainly useful for writing
+// completion engines and wrapper programs.
 //
 // If you are looking for an option parser for your go programm, consider using
 // the flag package in the standard library instead.
