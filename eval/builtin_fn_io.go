@@ -168,15 +168,15 @@ func fopen(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.ports[1].Chan
 	f, err := os.Open(name)
 	maybeThrow(err)
-	out <- File{f}
+	out <- types.File{f}
 }
 
 func fclose(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var f File
+	var f types.File
 	ScanArgs(args, &f)
 	TakeNoOpt(opts)
 
-	maybeThrow(f.inner.Close())
+	maybeThrow(f.Inner.Close())
 }
 
 func pipe(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -186,21 +186,21 @@ func pipe(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	r, w, err := os.Pipe()
 	out := ec.ports[1].Chan
 	maybeThrow(err)
-	out <- Pipe{r, w}
+	out <- types.Pipe{r, w}
 }
 
 func prclose(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var p Pipe
+	var p types.Pipe
 	ScanArgs(args, &p)
 	TakeNoOpt(opts)
 
-	maybeThrow(p.r.Close())
+	maybeThrow(p.ReadEnd.Close())
 }
 
 func pwclose(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var p Pipe
+	var p types.Pipe
 	ScanArgs(args, &p)
 	TakeNoOpt(opts)
 
-	maybeThrow(p.w.Close())
+	maybeThrow(p.WriteEnd.Close())
 }

@@ -1,19 +1,19 @@
-package eval
+package types
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hash"
 )
 
+// File wraps a pointer to os.File.
 type File struct {
-	inner *os.File
+	Inner *os.File
 }
 
-var _ types.Value = File{}
+var _ Value = File{}
 
 func (File) Kind() string {
 	return "file"
@@ -24,9 +24,9 @@ func (f File) Equal(rhs interface{}) bool {
 }
 
 func (f File) Hash() uint32 {
-	return hash.UIntPtr(f.inner.Fd())
+	return hash.UIntPtr(f.Inner.Fd())
 }
 
 func (f File) Repr(int) string {
-	return fmt.Sprintf("<file{%s %p}>", parse.Quote(f.inner.Name()), f.inner)
+	return fmt.Sprintf("<file{%s %p}>", parse.Quote(f.Inner.Name()), f.Inner)
 }

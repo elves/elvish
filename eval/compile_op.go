@@ -435,18 +435,18 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 					File: f, Chan: BlackholeChan,
 					CloseFile: true,
 				}
-			case File:
+			case types.File:
 				ec.ports[dst] = &Port{
-					File: src.inner, Chan: BlackholeChan,
+					File: src.Inner, Chan: BlackholeChan,
 					CloseFile: false,
 				}
-			case Pipe:
+			case types.Pipe:
 				var f *os.File
 				switch mode {
 				case parse.Read:
-					f = src.r
+					f = src.ReadEnd
 				case parse.Write:
-					f = src.w
+					f = src.WriteEnd
 				default:
 					cp.errorf("can only use < or > with pipes")
 				}
