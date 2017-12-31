@@ -4,7 +4,7 @@
 
 Elvish is a cross-platform shell, supporting Linux, BSDs and Windows. It features an expressive programming language, with features like namespacing and anonymous functions, and a fully programmable user interface with friendly defaults. It is suitable for both interactive use and scripting.
 
-... Which is not 100% true yet. Elvish is already suitable for most daily interactive use, but it is neither complete nor stablized. Contributions are more than welcome!
+... which is not 100% true yet. Elvish is already suitable for most daily interactive use, but it is neither complete nor stablized. Contributions are more than welcome!
 
 This README documents the development aspect of Elvish. Other information is to be found on the [website](https://elvish.io).
 
@@ -30,13 +30,10 @@ This README documents the development aspect of Elvish. Other information is to 
 
 To build Elvish, you need
 
-*   A Go toolchain >= 1.8.
+*   Go >= 1.8.
 
-*   Linux (with x86 or amd64 CPU) or macOS (with reasonably new hardware).
+*   Linux, {Free,Net,Open}BSD, macOS, or Windows (Windows support is experimental).
 
-    It's quite likely that Elvish works on BSDs and other POSIX operating systems, or other CPU architectures; this is not guaranteed due to the lack of good CI support and developers who use such OSes. Pull requests are welcome.
-
-    Windows support is experimental.
 
 ### The Correct Way
 
