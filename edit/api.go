@@ -32,7 +32,7 @@ type BuiltinFn struct {
 	impl func(ed *Editor)
 }
 
-var _ eval.CallableValue = &BuiltinFn{}
+var _ eval.Fn = &BuiltinFn{}
 
 // Kind returns "fn".
 func (*BuiltinFn) Kind() string {
@@ -185,7 +185,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 // CallFn calls an Fn, displaying its outputs and possible errors as editor
 // notifications. It is the preferred way to call a Fn while the editor is
 // active.
-func (ed *Editor) CallFn(fn eval.CallableValue, args ...eval.Value) {
+func (ed *Editor) CallFn(fn eval.Fn, args ...eval.Value) {
 	if b, ok := fn.(*BuiltinFn); ok {
 		// Builtin function: quick path.
 		b.impl(ed)

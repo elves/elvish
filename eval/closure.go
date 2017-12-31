@@ -26,7 +26,7 @@ type Closure struct {
 	Source      string
 }
 
-var _ CallableValue = &Closure{}
+var _ Fn = &Closure{}
 
 // Kind returns "fn".
 func (*Closure) Kind() string {

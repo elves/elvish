@@ -6,13 +6,13 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-func getBinding(bindingVar eval.Variable, k ui.Key) eval.CallableValue {
+func getBinding(bindingVar eval.Variable, k ui.Key) eval.Fn {
 	binding := bindingVar.Get().(BindingTable)
 	switch {
 	case binding.HasKey(k):
-		return binding.IndexOne(k).(eval.CallableValue)
+		return binding.IndexOne(k).(eval.Fn)
 	case binding.HasKey(ui.Default):
-		return binding.IndexOne(ui.Default).(eval.CallableValue)
+		return binding.IndexOne(ui.Default).(eval.Fn)
 	default:
 		return nil
 	}
@@ -41,15 +41,15 @@ func (bt BindingTable) IndexOne(idx eval.Value) eval.Value {
 	return bt.Map.IndexOne(ui.ToKey(idx))
 }
 
-func (bt BindingTable) get(k ui.Key) eval.CallableValue {
-	return bt.Map.IndexOne(k).(eval.CallableValue)
+func (bt BindingTable) get(k ui.Key) eval.Fn {
+	return bt.Map.IndexOne(k).(eval.Fn)
 }
 
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,
 // uses the Assoc of the inner Map and converts the result to a BindingTable.
 func (bt BindingTable) Assoc(k, v eval.Value) eval.Value {
 	key := ui.ToKey(k)
-	f, ok := v.(eval.CallableValue)
+	f, ok := v.(eval.Fn)
 	if !ok {
 		throwf("want function, got %s", v.Kind())
 	}

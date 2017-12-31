@@ -130,7 +130,7 @@ func (ins *insert) ModeLine() ui.Renderer {
 	return nil
 }
 
-func (*insert) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
+func (*insert) Binding(m map[string]eval.Variable, k ui.Key) eval.Fn {
 	return getBinding(m[modeInsert], k)
 }
 
@@ -140,7 +140,7 @@ func (*command) ModeLine() ui.Renderer {
 	return modeLineRenderer{" COMMAND ", ""}
 }
 
-func (*command) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
+func (*command) Binding(m map[string]eval.Variable, k ui.Key) eval.Fn {
 	return getBinding(m[modeCommand], k)
 }
 

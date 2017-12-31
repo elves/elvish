@@ -65,7 +65,7 @@ func makeNsFromBuiltins(builtins map[string]*BuiltinFn) eval.Ns {
 	return ns
 }
 
-var keyBindings = map[string]map[ui.Key]eval.CallableValue{}
+var keyBindings = map[string]map[ui.Key]eval.Fn{}
 
 // registerBindings registers default bindings for a mode to initialize the
 // global keyBindings map. Builtin names are resolved in the defaultMod
@@ -75,7 +75,7 @@ func registerBindings(
 	mt string, defaultMod string, bindingData map[ui.Key]string) struct{} {
 
 	if _, ok := keyBindings[mt]; !ok {
-		keyBindings[mt] = map[ui.Key]eval.CallableValue{}
+		keyBindings[mt] = map[ui.Key]eval.Fn{}
 	}
 	for key, fullName := range bindingData {
 		// break fullName into mod and name.

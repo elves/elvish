@@ -86,12 +86,12 @@ func (s String) Call(ec *Frame, args []Value, opts map[string]Value) {
 	resolve(string(s), ec).Call(ec, args, opts)
 }
 
-func resolve(s string, ec *Frame) CallableValue {
+func resolve(s string, ec *Frame) Fn {
 	// Try variable
 	explode, ns, name := ParseVariable(string(s))
 	if !explode {
 		if v := ec.ResolveVar(ns, name+FnSuffix); v != nil {
-			if caller, ok := v.Get().(CallableValue); ok {
+			if caller, ok := v.Get().(Fn); ok {
 				return caller
 			}
 		}

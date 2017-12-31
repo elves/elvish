@@ -56,7 +56,7 @@ type completion struct {
 	height          int
 }
 
-func (*completion) Binding(m map[string]eval.Variable, k ui.Key) eval.CallableValue {
+func (*completion) Binding(m map[string]eval.Variable, k ui.Key) eval.Fn {
 	return getBinding(m[modeCompletion], k)
 }
 

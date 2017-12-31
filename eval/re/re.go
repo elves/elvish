@@ -104,7 +104,7 @@ func replace(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 		switch repl := argRepl.(type) {
 		case eval.String:
 			result = pattern.ReplaceAllString(string(argSource), string(repl))
-		case eval.CallableValue:
+		case eval.Fn:
 			replFunc := func(s string) string {
 				values, err := ec.PCaptureOutput(repl,
 					[]eval.Value{eval.String(s)}, eval.NoOpts)

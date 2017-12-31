@@ -25,7 +25,7 @@ func init() {
 }
 
 func runParallel(ec *Frame, args []Value, opts map[string]Value) {
-	var functions []CallableValue
+	var functions []Fn
 	ScanArgsVariadic(args, &functions)
 	TakeNoOpt(opts)
 
@@ -33,7 +33,7 @@ func runParallel(ec *Frame, args []Value, opts map[string]Value) {
 	waitg.Add(len(functions))
 	exceptions := make([]*Exception, len(functions))
 	for i, function := range functions {
-		go func(ec *Frame, function CallableValue, exception **Exception) {
+		go func(ec *Frame, function Fn, exception **Exception) {
 			err := ec.PCall(function, NoArgs, NoOpts)
 			if err != nil {
 				*exception = err.(*Exception)
@@ -48,7 +48,7 @@ func runParallel(ec *Frame, args []Value, opts map[string]Value) {
 
 // each takes a single closure and applies it to all input values.
 func each(ec *Frame, args []Value, opts map[string]Value) {
-	var f CallableValue
+	var f Fn
 	iterate := ScanArgsOptionalInput(ec, args, &f)
 	TakeNoOpt(opts)
 
@@ -79,7 +79,7 @@ func each(ec *Frame, args []Value, opts map[string]Value) {
 
 // peach takes a single closure and applies it to all input values in parallel.
 func peach(ec *Frame, args []Value, opts map[string]Value) {
-	var f CallableValue
+	var f Fn
 	iterate := ScanArgsOptionalInput(ec, args, &f)
 	TakeNoOpt(opts)
 

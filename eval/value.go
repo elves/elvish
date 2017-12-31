@@ -103,22 +103,15 @@ var (
 	NoOpts = map[string]Value{}
 )
 
-// Callable is anything may be called on an evalCtx with a list of Value's.
+// Callable wraps the Call function.
 type Callable interface {
 	Call(ec *Frame, args []Value, opts map[string]Value)
 }
 
-type CallableValue interface {
+// Fn is a callable value.
+type Fn interface {
 	Value
 	Callable
-}
-
-func mustFn(v Value) Callable {
-	fn, ok := v.(Callable)
-	if !ok {
-		throw(fmt.Errorf("a %s is not callable", v.Kind()))
-	}
-	return fn
 }
 
 // Indexer is anything that can be indexed by Values and yields Values.

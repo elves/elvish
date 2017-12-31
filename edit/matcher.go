@@ -36,13 +36,13 @@ var (
 	})
 )
 
-func (ed *Editor) lookupMatcher(name string) (eval.CallableValue, bool) {
+func (ed *Editor) lookupMatcher(name string) (eval.Fn, bool) {
 	m := ed.variables["-matcher"].Get().(eval.Map)
 	if !m.HasKey(eval.String(name)) {
 		// Use fallback matcher
 		name = ""
 	}
-	matcher, ok := m.IndexOne(eval.String(name)).(eval.CallableValue)
+	matcher, ok := m.IndexOne(eval.String(name)).(eval.Fn)
 	return matcher, ok
 }
 
