@@ -15,7 +15,7 @@ This README documents the development aspect of Elvish. Other information is to 
 [![Code Coverage on coveralls.io](https://img.shields.io/coveralls/github/elves/elvish.svg?label=coveralls)](https://coveralls.io/github/elves/elvish)
 [![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
 [![GoDoc](https://img.shields.io/badge/godoc-api-blue.svg)](http://godoc.org/github.com/elves/elvish)
-[![License](https://img.shields.io/badge/license-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
+[![License](https://img.shields.io/badge/license-BSD%202--clause-blue.svg)](https://github.com/elves/elvish/blob/master/LICENSE)
 
 [![Gitter](https://img.shields.io/badge/gitter-elvish--public-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish-public)
 [![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg)](https://telegram.me/elvish)
