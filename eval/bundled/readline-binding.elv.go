@@ -1,4 +1,4 @@
-package eval
+package bundled
 
 const readlineBindingElv = `
 b=[k f]{ edit:insert:binding[$k] = $f } {

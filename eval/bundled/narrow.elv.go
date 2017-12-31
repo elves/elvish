@@ -1,4 +1,4 @@
-package eval
+package bundled
 
 const narrowElv = `
 # Implementation of location, history and lastcmd mode using the new

@@ -15,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/daemon"
+	"github.com/elves/elvish/eval/bundled"
 	"github.com/elves/elvish/parse"
 	daemonp "github.com/elves/elvish/program/daemon"
 	"github.com/elves/elvish/sys"
@@ -75,7 +76,7 @@ func NewEvaler() *Evaler {
 		Modules: map[string]Ns{
 			"builtin": builtin,
 		},
-		bundled: makeBundled(),
+		bundled: bundled.Get(),
 		Editor:  nil,
 		intCh:   nil,
 	}

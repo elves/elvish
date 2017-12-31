@@ -1,4 +1,4 @@
-package eval
+package bundled
 
 const epmElv = `
 -data-dir = ~/.elvish
