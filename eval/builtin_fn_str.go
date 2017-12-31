@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/util"
 )
 
@@ -49,7 +50,7 @@ func init() {
 }
 
 func wrapStrCompare(cmp func(a, b string) bool) BuiltinFnImpl {
-	return func(ec *Frame, args []Value, opts map[string]Value) {
+	return func(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		TakeNoOpt(opts)
 		for _, a := range args {
 			if _, ok := a.(String); !ok {
@@ -68,7 +69,7 @@ func wrapStrCompare(cmp func(a, b string) bool) BuiltinFnImpl {
 }
 
 // toString converts all arguments to strings.
-func toString(ec *Frame, args []Value, opts map[string]Value) {
+func toString(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 	out := ec.OutputChan()
 	for _, a := range args {
@@ -77,14 +78,14 @@ func toString(ec *Frame, args []Value, opts map[string]Value) {
 }
 
 // joins joins all input strings with a delimiter.
-func joins(ec *Frame, args []Value, opts map[string]Value) {
+func joins(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var sepv String
 	iterate := ScanArgsOptionalInput(ec, args, &sepv)
 	sep := string(sepv)
 	TakeNoOpt(opts)
 
 	var buf bytes.Buffer
-	iterate(func(v Value) {
+	iterate(func(v types.Value) {
 		if s, ok := v.(String); ok {
 			if buf.Len() > 0 {
 				buf.WriteString(sep)
@@ -99,7 +100,7 @@ func joins(ec *Frame, args []Value, opts map[string]Value) {
 }
 
 // splits splits an argument strings by a delimiter and writes all pieces.
-func splits(ec *Frame, args []Value, opts map[string]Value) {
+func splits(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
 		s, sep String
 		optMax int
@@ -114,7 +115,7 @@ func splits(ec *Frame, args []Value, opts map[string]Value) {
 	}
 }
 
-func replaces(ec *Frame, args []Value, opts map[string]Value) {
+func replaces(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
 		old, repl, s String
 		optMax       int
@@ -125,7 +126,7 @@ func replaces(ec *Frame, args []Value, opts map[string]Value) {
 	ec.ports[1].Chan <- String(strings.Replace(string(s), string(old), string(repl), optMax))
 }
 
-func ord(ec *Frame, args []Value, opts map[string]Value) {
+func ord(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var s String
 	ScanArgs(args, &s)
 	TakeNoOpt(opts)
@@ -140,7 +141,7 @@ func ord(ec *Frame, args []Value, opts map[string]Value) {
 // greater than 36.
 var ErrBadBase = errors.New("bad base")
 
-func base(ec *Frame, args []Value, opts map[string]Value) {
+func base(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
 		b    int
 		nums []int
@@ -159,7 +160,7 @@ func base(ec *Frame, args []Value, opts map[string]Value) {
 	}
 }
 
-func wcswidth(ec *Frame, args []Value, opts map[string]Value) {
+func wcswidth(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var s String
 	ScanArgs(args, &s)
 	TakeNoOpt(opts)
@@ -168,7 +169,7 @@ func wcswidth(ec *Frame, args []Value, opts map[string]Value) {
 	out <- String(strconv.Itoa(util.Wcswidth(string(s))))
 }
 
-func overrideWcwidth(ec *Frame, args []Value, opts map[string]Value) {
+func overrideWcwidth(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
 		s String
 		w int
@@ -181,7 +182,7 @@ func overrideWcwidth(ec *Frame, args []Value, opts map[string]Value) {
 	util.OverrideWcwidth(r, w)
 }
 
-func hasPrefix(ec *Frame, args []Value, opts map[string]Value) {
+func hasPrefix(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var s, prefix String
 	ScanArgs(args, &s, &prefix)
 	TakeNoOpt(opts)
@@ -189,7 +190,7 @@ func hasPrefix(ec *Frame, args []Value, opts map[string]Value) {
 	ec.OutputChan() <- Bool(strings.HasPrefix(string(s), string(prefix)))
 }
 
-func hasSuffix(ec *Frame, args []Value, opts map[string]Value) {
+func hasSuffix(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var s, suffix String
 	ScanArgs(args, &s, &suffix)
 	TakeNoOpt(opts)
@@ -204,13 +205,13 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // stripping the line and splitting the line by whitespaces. The function may
 // call break and continue. Overall this provides a similar functionality to
 // awk, hence the name.
-func eawk(ec *Frame, args []Value, opts map[string]Value) {
+func eawk(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var f Fn
 	iterate := ScanArgsOptionalInput(ec, args, &f)
 	TakeNoOpt(opts)
 
 	broken := false
-	iterate(func(v Value) {
+	iterate(func(v types.Value) {
 		if broken {
 			return
 		}
@@ -218,7 +219,7 @@ func eawk(ec *Frame, args []Value, opts map[string]Value) {
 		if !ok {
 			throw(ErrInput)
 		}
-		args := []Value{line}
+		args := []types.Value{line}
 		for _, field := range eawkWordSep.Split(strings.Trim(string(line), " \t"), -1) {
 			args = append(args, String(field))
 		}

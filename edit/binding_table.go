@@ -3,6 +3,7 @@ package edit
 import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 )
 
@@ -29,7 +30,7 @@ type BindingTable struct {
 func (bt BindingTable) Repr(indent int) string {
 	var builder eval.MapReprBuilder
 	builder.Indent = indent
-	bt.Map.IteratePair(func(k, v eval.Value) bool {
+	bt.Map.IteratePair(func(k, v types.Value) bool {
 		builder.WritePair(parse.Quote(k.(ui.Key).String()), indent+2, v.Repr(indent+2))
 		return true
 	})
@@ -37,7 +38,7 @@ func (bt BindingTable) Repr(indent int) string {
 }
 
 // IndexOne converts the index to ui.Key and uses the IndexOne of the inner Map.
-func (bt BindingTable) IndexOne(idx eval.Value) eval.Value {
+func (bt BindingTable) IndexOne(idx types.Value) types.Value {
 	return bt.Map.IndexOne(ui.ToKey(idx))
 }
 
@@ -47,7 +48,7 @@ func (bt BindingTable) get(k ui.Key) eval.Fn {
 
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,
 // uses the Assoc of the inner Map and converts the result to a BindingTable.
-func (bt BindingTable) Assoc(k, v eval.Value) eval.Value {
+func (bt BindingTable) Assoc(k, v types.Value) types.Value {
 	key := ui.ToKey(k)
 	f, ok := v.(eval.Fn)
 	if !ok {

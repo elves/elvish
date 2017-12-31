@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -54,7 +55,7 @@ func (bf *BuiltinFn) Repr(int) string {
 }
 
 // Call calls a builtin function.
-func (bf *BuiltinFn) Call(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func (bf *BuiltinFn) Call(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	eval.TakeNoOpt(opts)
 	eval.TakeNoArg(args)
 	ed, ok := ec.Editor.(*Editor)
@@ -83,7 +84,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 	// Internal states.
 	ns["history"] = eval.NewRoVariable(history.List{&ed.historyMutex, ed.daemon})
 	ns["current-command"] = eval.MakeVariableFromCallback(
-		func(v eval.Value) {
+		func(v types.Value) {
 			if !ed.active {
 				throw(errEditorInactive)
 			}
@@ -94,10 +95,10 @@ func installModules(builtin eval.Ns, ed *Editor) {
 				throw(errLineMustBeString)
 			}
 		},
-		func() eval.Value { return eval.String(ed.buffer) },
+		func() types.Value { return eval.String(ed.buffer) },
 	)
 	ns["-dot"] = eval.MakeVariableFromCallback(
-		func(v eval.Value) {
+		func(v types.Value) {
 			s, ok := v.(eval.String)
 			if !ok {
 				throw(errDotMustBeString)
@@ -121,10 +122,10 @@ func installModules(builtin eval.Ns, ed *Editor) {
 			}
 			ed.dot = i
 		},
-		func() eval.Value { return eval.String(strconv.Itoa(ed.dot)) },
+		func() types.Value { return eval.String(strconv.Itoa(ed.dot)) },
 	)
 	ns["selected-file"] = eval.MakeRoVariableFromCallback(
-		func() eval.Value {
+		func() types.Value {
 			if !ed.active {
 				throw(errEditorInactive)
 			}
@@ -185,7 +186,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 // CallFn calls an Fn, displaying its outputs and possible errors as editor
 // notifications. It is the preferred way to call a Fn while the editor is
 // active.
-func (ed *Editor) CallFn(fn eval.Fn, args ...eval.Value) {
+func (ed *Editor) CallFn(fn eval.Fn, args ...types.Value) {
 	if b, ok := fn.(*BuiltinFn); ok {
 		// Builtin function: quick path.
 		b.impl(ed)

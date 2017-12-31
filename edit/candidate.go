@@ -7,6 +7,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hash"
 )
@@ -18,7 +19,7 @@ type candidate struct {
 
 // rawCandidate is what can be converted to a candidate.
 type rawCandidate interface {
-	eval.Value
+	types.Value
 	text() string
 	cook(q parse.PrimaryType) *candidate
 }
@@ -102,7 +103,7 @@ func (c *complexCandidate) cook(q parse.PrimaryType) *candidate {
 
 // outputComplexCandidate composes a complexCandidate.
 func outputComplexCandidate(ec *eval.Frame,
-	args []eval.Value, opts map[string]eval.Value) {
+	args []types.Value, opts map[string]types.Value) {
 
 	var style string
 	c := &complexCandidate{}
@@ -123,7 +124,7 @@ func outputComplexCandidate(ec *eval.Frame,
 func filterRawCandidates(ev *eval.Evaler, matcher eval.Fn,
 	seed string, chanRawCandidate <-chan rawCandidate) ([]rawCandidate, error) {
 
-	matcherInput := make(chan eval.Value)
+	matcherInput := make(chan types.Value)
 	stopCollector := make(chan struct{})
 	var collected []rawCandidate
 	go func() {
@@ -143,7 +144,7 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.Fn,
 		{Chan: matcherInput, File: eval.DevNull}, {File: os.Stdout}, {File: os.Stderr}}
 	ec := eval.NewTopFrame(ev, "[editor matcher]", "", ports)
 
-	args := []eval.Value{eval.String(seed)}
+	args := []types.Value{eval.String(seed)}
 	values, err := ec.PCaptureOutput(matcher, args, eval.NoOpts)
 	if err != nil {
 		return nil, err

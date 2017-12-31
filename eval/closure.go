@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"unsafe"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/hash"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -19,7 +20,7 @@ type Closure struct {
 	// The name for the rest argument. If empty, the function has fixed arity.
 	RestArg     string
 	OptNames    []string
-	OptDefaults []Value
+	OptDefaults []types.Value
 	Op          Op
 	Captured    Ns
 	SourceName  string
@@ -48,7 +49,7 @@ func (c *Closure) Repr(int) string {
 }
 
 // Call calls a closure.
-func (c *Closure) Call(ec *Frame, args []Value, opts map[string]Value) {
+func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	// TODO Support keyword arguments
 	if c.RestArg != "" {
 		if len(c.ArgNames) > len(args) {

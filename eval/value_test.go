@@ -5,11 +5,12 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/glob"
 )
 
 var reprTests = []struct {
-	v    Value
+	v    types.Value
 	want string
 }{
 	{String("233"), "233"},
@@ -26,14 +27,14 @@ var reprTests = []struct {
 	{&Exception{Return, nil}, "?(return)"},
 	{NewList(), "[]"},
 	{NewList(String("bash"), Bool(false)), "[bash $false]"},
-	{ConvertToMap(map[Value]Value{}), "[&]"},
-	{ConvertToMap(map[Value]Value{&Exception{nil, nil}: String("elvish")}), "[&$ok=elvish]"},
+	{ConvertToMap(map[types.Value]types.Value{}), "[&]"},
+	{ConvertToMap(map[types.Value]types.Value{&Exception{nil, nil}: String("elvish")}), "[&$ok=elvish]"},
 	// TODO: test maps of more elements
 }
 
 func TestRepr(t *testing.T) {
 	for _, test := range reprTests {
-		repr := test.v.Repr(NoPretty)
+		repr := test.v.Repr(types.NoPretty)
 		if repr != test.want {
 			t.Errorf("Repr = %s, want %s", repr, test.want)
 		}

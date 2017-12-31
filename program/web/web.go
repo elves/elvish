@@ -14,6 +14,7 @@ import (
 	"os"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/program/clientcommon"
 )
@@ -31,7 +32,7 @@ type httpHandler struct {
 
 type ExecuteResponse struct {
 	OutBytes  string
-	OutValues []eval.Value
+	OutValues []types.Value
 	ErrBytes  string
 	Err       string
 }
@@ -98,7 +99,7 @@ const (
 // return the results collected on stdout and stderr, and the possible error
 // that occurred.
 func evalAndCollect(ev *eval.Evaler, name, text string) (
-	outBytes []byte, outValues []eval.Value, errBytes []byte, err error) {
+	outBytes []byte, outValues []types.Value, errBytes []byte, err error) {
 
 	node, err := parse.Parse(name, text)
 	if err != nil {
@@ -162,12 +163,12 @@ func makeBytesWriterAndCollect() (*os.File, <-chan []byte) {
 // makeValuesWriterAndCollect makes a Value channel for writing, and the written
 // values will be collected in a Value slice that will be put on a channel as
 // soon as the writer is closed.
-func makeValuesWriterAndCollect() (chan eval.Value, <-chan []eval.Value) {
-	chanValues := make(chan eval.Value, outChanBufferSize)
-	chanCollected := make(chan []eval.Value)
+func makeValuesWriterAndCollect() (chan types.Value, <-chan []types.Value) {
+	chanValues := make(chan types.Value, outChanBufferSize)
+	chanCollected := make(chan []types.Value)
 
 	go func() {
-		var collected []eval.Value
+		var collected []types.Value
 		for {
 			for v := range chanValues {
 				collected = append(collected, v)

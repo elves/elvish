@@ -5,11 +5,13 @@ import (
 	"reflect"
 	"strconv"
 	"unicode/utf8"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 // Conversion between Go value and Value.
 
-func toFloat(arg Value) (float64, error) {
+func toFloat(arg types.Value) (float64, error) {
 	if _, ok := arg.(String); !ok {
 		return 0, fmt.Errorf("must be string")
 	}
@@ -29,7 +31,7 @@ func floatToString(f float64) String {
 	return String(strconv.FormatFloat(f, 'g', -1, 64))
 }
 
-func toInt(arg Value) (int, error) {
+func toInt(arg types.Value) (int, error) {
 	arg, ok := arg.(String)
 	if !ok {
 		return 0, fmt.Errorf("must be string")
@@ -41,7 +43,7 @@ func toInt(arg Value) (int, error) {
 	return int(num), nil
 }
 
-func toRune(arg Value) (rune, error) {
+func toRune(arg types.Value) (rune, error) {
 	ss, ok := arg.(String)
 	if !ok {
 		return -1, fmt.Errorf("must be string")
@@ -59,7 +61,7 @@ func toRune(arg Value) (rune, error) {
 
 // scanValueToGo converts Value to Go data, depending on the type of the
 // destination.
-func scanValueToGo(src Value, dstPtr interface{}) {
+func scanValueToGo(src types.Value, dstPtr interface{}) {
 	switch dstPtr := dstPtr.(type) {
 	case *string:
 		s, ok := src.(String)
@@ -90,7 +92,7 @@ func scanValueToGo(src Value, dstPtr interface{}) {
 }
 
 // convertGoToValue converts Go data to Value.
-func convertGoToValue(src interface{}) Value {
+func convertGoToValue(src interface{}) types.Value {
 	switch src := src.(type) {
 	case string:
 		return String(src)
@@ -98,7 +100,7 @@ func convertGoToValue(src interface{}) Value {
 		return String(strconv.Itoa(src))
 	case float64:
 		return floatToString(src)
-	case Value:
+	case types.Value:
 		return src
 	default:
 		throwf("cannot convert type %T to Value", src)

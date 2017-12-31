@@ -10,6 +10,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
@@ -155,7 +156,7 @@ func locStart(ed *Editor) {
 func convertListToDirs(li eval.List) []storedefs.Dir {
 	pinned := make([]storedefs.Dir, 0, li.Len())
 	// XXX(xiaq): silently drops non-string items.
-	li.Iterate(func(v eval.Value) bool {
+	li.Iterate(func(v types.Value) bool {
 		if s, ok := v.(eval.String); ok {
 			pinned = append(pinned, storedefs.Dir{string(s), PinnedScore})
 		}
@@ -168,7 +169,7 @@ func convertListsToSet(lis ...eval.List) map[string]struct{} {
 	set := make(map[string]struct{})
 	// XXX(xiaq): silently drops non-string items.
 	for _, li := range lis {
-		li.Iterate(func(v eval.Value) bool {
+		li.Iterate(func(v types.Value) bool {
 			if s, ok := v.(eval.String); ok {
 				set[string(s)] = struct{}{}
 			}

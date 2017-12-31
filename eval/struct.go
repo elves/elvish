@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 )
 
@@ -16,12 +17,12 @@ var (
 // Struct is like a Map with fixed keys.
 type Struct struct {
 	Descriptor *StructDescriptor
-	Fields     []Value
+	Fields     []types.Value
 }
 
 var (
-	_ Value   = (*Struct)(nil)
-	_ MapLike = (*Struct)(nil)
+	_ types.Value = (*Struct)(nil)
+	_ MapLike     = (*Struct)(nil)
 )
 
 func (*Struct) Kind() string {
@@ -50,19 +51,19 @@ func (s *Struct) Len() int {
 	return len(s.Descriptor.fieldNames)
 }
 
-func (s *Struct) IndexOne(idx Value) Value {
+func (s *Struct) IndexOne(idx types.Value) types.Value {
 	return s.Fields[s.index(idx)]
 }
 
-func (s *Struct) Assoc(k, v Value) Value {
+func (s *Struct) Assoc(k, v types.Value) types.Value {
 	i := s.index(k)
-	fields := make([]Value, len(s.Fields))
+	fields := make([]types.Value, len(s.Fields))
 	copy(fields, s.Fields)
 	fields[i] = v
 	return &Struct{s.Descriptor, fields}
 }
 
-func (s *Struct) IterateKey(f func(Value) bool) {
+func (s *Struct) IterateKey(f func(types.Value) bool) {
 	for _, field := range s.Descriptor.fieldNames {
 		if !f(String(field)) {
 			break
@@ -70,7 +71,7 @@ func (s *Struct) IterateKey(f func(Value) bool) {
 	}
 }
 
-func (s *Struct) IteratePair(f func(Value, Value) bool) {
+func (s *Struct) IteratePair(f func(types.Value, types.Value) bool) {
 	for i, field := range s.Descriptor.fieldNames {
 		if !f(String(field), s.Fields[i]) {
 			break
@@ -78,7 +79,7 @@ func (s *Struct) IteratePair(f func(Value, Value) bool) {
 	}
 }
 
-func (s *Struct) HasKey(k Value) bool {
+func (s *Struct) HasKey(k types.Value) bool {
 	index, ok := k.(String)
 	if !ok {
 		return false
@@ -87,14 +88,14 @@ func (s *Struct) HasKey(k Value) bool {
 	return ok
 }
 
-func (s *Struct) index(idx Value) int {
+func (s *Struct) index(idx types.Value) int {
 	index, ok := idx.(String)
 	if !ok {
 		throw(ErrIndexMustBeString)
 	}
 	i, ok := s.Descriptor.fieldIndex[string(index)]
 	if !ok {
-		throw(fmt.Errorf("no such field: %s", index.Repr(NoPretty)))
+		throw(fmt.Errorf("no such field: %s", index.Repr(types.NoPretty)))
 	}
 	return i
 }

@@ -4,6 +4,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 )
 
@@ -79,7 +80,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 				if e != nil {
 					throwf("failed to create pipe: %s", e)
 				}
-				ch := make(chan Value, pipelineChanBufferSize)
+				ch := make(chan types.Value, pipelineChanBufferSize)
 				newEc.ports[1] = &Port{
 					File: writer, Chan: ch, CloseFile: true, CloseChan: true}
 				nextIn = &Port{
@@ -187,8 +188,8 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 	} else {
 		varsOp, restOp := cp.lvaluesMulti(n.Vars)
 		argsOp := ValuesOp{
-			func(ec *Frame) []Value {
-				var vs []Value
+			func(ec *Frame) []types.Value {
+				var vs []types.Value
 				for _, op := range argOps {
 					vs = append(vs, op.Exec(ec)...)
 				}
@@ -219,7 +220,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			// There is a temporary assignment.
 			// Save variables.
 			var saveVars []Variable
-			var saveVals []Value
+			var saveVals []types.Value
 			for _, op := range saveVarsOps {
 				saveVars = append(saveVars, op.Exec(ec)...)
 			}
@@ -264,7 +265,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			specialOpFunc(ec)
 		} else {
 			var headFn Callable
-			var args []Value
+			var args []types.Value
 			if headOp.Func != nil {
 				// head
 				headFn = ec.ExecAndUnwrap("head of command", headOp).One().Callable()
@@ -278,8 +279,8 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			// opts
 			// XXX This conversion should be avoided.
 			opts := optsOp(ec)[0].(Map)
-			convertedOpts := make(map[string]Value)
-			opts.IteratePair(func(k, v Value) bool {
+			convertedOpts := make(map[string]types.Value)
+			opts.IteratePair(func(k, v types.Value) bool {
 				if ks, ok := k.(String); ok {
 					convertedOpts[string(ks)] = v
 				} else {
@@ -298,7 +299,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 	}
 }
 
-func allTrue(vs []Value) bool {
+func allTrue(vs []types.Value) bool {
 	for _, v := range vs {
 		if !ToBool(v) {
 			return false
@@ -428,7 +429,7 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 			case String:
 				f, err := os.OpenFile(string(src), flag, defaultFileRedirPerm)
 				if err != nil {
-					throwf("failed to open file %s: %s", src.Repr(NoPretty), err)
+					throwf("failed to open file %s: %s", src.Repr(types.NoPretty), err)
 				}
 				ec.ports[dst] = &Port{
 					File: f, Chan: BlackholeChan,

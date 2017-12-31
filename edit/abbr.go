@@ -2,6 +2,7 @@ package edit
 
 import (
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/hashmap"
 )
 
@@ -16,7 +17,7 @@ func (ed *Editor) abbr() eval.Map {
 
 func (ed *Editor) abbrIterate(cb func(abbr, full string) bool) {
 	m := ed.abbr()
-	m.IteratePair(func(abbrValue, fullValue eval.Value) bool {
+	m.IteratePair(func(abbrValue, fullValue types.Value) bool {
 		abbr, ok := abbrValue.(eval.String)
 		if !ok {
 			return true

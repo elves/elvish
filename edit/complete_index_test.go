@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 )
 
@@ -27,7 +28,7 @@ func TestFindIndexComplContext(t *testing.T) {
 }
 
 func TestComplIndexInner(t *testing.T) {
-	m := eval.ConvertToMap(map[eval.Value]eval.Value{
+	m := eval.ConvertToMap(map[types.Value]types.Value{
 		eval.String("foo"):   eval.String("bar"),
 		eval.String("lorem"): eval.String("ipsum"),
 	})

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 // Command and process control.
@@ -25,7 +27,7 @@ func init() {
 	})
 }
 
-func resolveFn(ec *Frame, args []Value, opts map[string]Value) {
+func resolveFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var cmd String
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
@@ -34,7 +36,7 @@ func resolveFn(ec *Frame, args []Value, opts map[string]Value) {
 	out <- resolve(string(cmd), ec)
 }
 
-func hasExternal(ec *Frame, args []Value, opts map[string]Value) {
+func hasExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var cmd String
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
@@ -43,7 +45,7 @@ func hasExternal(ec *Frame, args []Value, opts map[string]Value) {
 	ec.OutputChan() <- Bool(err == nil)
 }
 
-func searchExternal(ec *Frame, args []Value, opts map[string]Value) {
+func searchExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var cmd String
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
@@ -55,7 +57,7 @@ func searchExternal(ec *Frame, args []Value, opts map[string]Value) {
 	out <- String(path)
 }
 
-func exit(ec *Frame, args []Value, opts map[string]Value) {
+func exit(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var codes []int
 	ScanArgsVariadic(args, &codes)
 	TakeNoOpt(opts)
@@ -79,4 +81,10 @@ func preExit(ec *Frame) {
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
+}
+
+var errNotSupportedOnWindows = errors.New("not supported on Windows")
+
+func notSupportedOnWindows(ec *Frame, args []types.Value, opts map[string]types.Value) {
+	throw(errNotSupportedOnWindows)
 }

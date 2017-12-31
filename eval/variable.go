@@ -3,6 +3,8 @@ package eval
 import (
 	"errors"
 	"os"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 var (
@@ -11,13 +13,13 @@ var (
 
 // Variable represents an elvish variable.
 type Variable interface {
-	Set(v Value)
-	Get() Value
+	Set(v types.Value)
+	Get() types.Value
 }
 
 type ptrVariable struct {
-	valuePtr  *Value
-	validator func(Value) error
+	valuePtr  *types.Value
+	validator func(types.Value) error
 }
 
 type invalidValueError struct {
@@ -28,15 +30,15 @@ func (err invalidValueError) Error() string {
 	return "invalid value: " + err.inner.Error()
 }
 
-func NewPtrVariable(v Value) Variable {
+func NewPtrVariable(v types.Value) Variable {
 	return NewPtrVariableWithValidator(v, nil)
 }
 
-func NewPtrVariableWithValidator(v Value, vld func(Value) error) Variable {
+func NewPtrVariableWithValidator(v types.Value, vld func(types.Value) error) Variable {
 	return ptrVariable{&v, vld}
 }
 
-func (iv ptrVariable) Set(val Value) {
+func (iv ptrVariable) Set(val types.Value) {
 	if iv.validator != nil {
 		if err := iv.validator(val); err != nil {
 			throw(invalidValueError{err})
@@ -45,57 +47,57 @@ func (iv ptrVariable) Set(val Value) {
 	*iv.valuePtr = val
 }
 
-func (iv ptrVariable) Get() Value {
+func (iv ptrVariable) Get() types.Value {
 	return *iv.valuePtr
 }
 
 type roVariable struct {
-	value Value
+	value types.Value
 }
 
-func NewRoVariable(v Value) Variable {
+func NewRoVariable(v types.Value) Variable {
 	return roVariable{v}
 }
 
-func (rv roVariable) Set(val Value) {
+func (rv roVariable) Set(val types.Value) {
 	throw(ErrRoCannotBeSet)
 }
 
-func (rv roVariable) Get() Value {
+func (rv roVariable) Get() types.Value {
 	return rv.value
 }
 
 type cbVariable struct {
-	set func(Value)
-	get func() Value
+	set func(types.Value)
+	get func() types.Value
 }
 
 // MakeVariableFromCallback makes a variable from a set callback and a get
 // callback.
-func MakeVariableFromCallback(set func(Value), get func() Value) Variable {
+func MakeVariableFromCallback(set func(types.Value), get func() types.Value) Variable {
 	return &cbVariable{set, get}
 }
 
-func (cv *cbVariable) Set(val Value) {
+func (cv *cbVariable) Set(val types.Value) {
 	cv.set(val)
 }
 
-func (cv *cbVariable) Get() Value {
+func (cv *cbVariable) Get() types.Value {
 	return cv.get()
 }
 
-type roCbVariable func() Value
+type roCbVariable func() types.Value
 
 // MakeRoVariableFromCallback makes a read-only variable from a get callback.
-func MakeRoVariableFromCallback(get func() Value) Variable {
+func MakeRoVariableFromCallback(get func() types.Value) Variable {
 	return roCbVariable(get)
 }
 
-func (cv roCbVariable) Set(Value) {
+func (cv roCbVariable) Set(types.Value) {
 	throw(ErrRoCannotBeSet)
 }
 
-func (cv roCbVariable) Get() Value {
+func (cv roCbVariable) Get() types.Value {
 	return cv()
 }
 
@@ -103,14 +105,14 @@ func (cv roCbVariable) Get() Value {
 // XXX(xiaq): This is an ephemeral "variable" and is a bad hack.
 type elemVariable struct {
 	variable Variable
-	assocers []Assocer
-	indices  []Value
-	setValue Value
+	assocers []types.Assocer
+	indices  []types.Value
+	setValue types.Value
 }
 
 var errCannotIndex = errors.New("cannot index")
 
-func (ev *elemVariable) Set(v0 Value) {
+func (ev *elemVariable) Set(v0 types.Value) {
 	v := v0
 	// Evaluate the actual new value from inside out. See comments in
 	// compile_lvalue.go for how assignment of indexed variables work.
@@ -122,7 +124,7 @@ func (ev *elemVariable) Set(v0 Value) {
 	ev.setValue = v0
 }
 
-func (ev *elemVariable) Get() Value {
+func (ev *elemVariable) Get() types.Value {
 	// XXX(xiaq): This is only called from fixNilVariables. We don't want to
 	// waste time accessing the variable, so we simply return the value that was
 	// set.
@@ -134,11 +136,11 @@ type envVariable struct {
 	name string
 }
 
-func (ev envVariable) Set(val Value) {
+func (ev envVariable) Set(val types.Value) {
 	os.Setenv(ev.name, ToString(val))
 }
 
-func (ev envVariable) Get() Value {
+func (ev envVariable) Get() types.Value {
 	return String(os.Getenv(ev.name))
 }
 
@@ -150,9 +152,9 @@ var ErrGetBlackhole = errors.New("cannot get blackhole variable")
 // variable will be discarded, and getting a blackhole variable raises an error.
 type BlackholeVariable struct{}
 
-func (bv BlackholeVariable) Set(Value) {}
+func (bv BlackholeVariable) Set(types.Value) {}
 
-func (bv BlackholeVariable) Get() Value {
+func (bv BlackholeVariable) Get() types.Value {
 	throw(ErrGetBlackhole)
 	panic("unreachable")
 }

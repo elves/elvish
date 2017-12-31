@@ -1,6 +1,10 @@
 package eval
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/elves/elvish/eval/types"
+)
 
 var valueTests = []Test{
 	// Compounding
@@ -89,7 +93,7 @@ var valueTests = []Test{
 
 	// Rest argument.
 	{"[x @xs]{ put $x $xs } a b c",
-		want{out: []Value{String("a"), NewList(String("b"), String("c"))}}},
+		want{out: []types.Value{String("a"), NewList(String("b"), String("c"))}}},
 	// Options.
 	{"[a &k=v]{ put $a $k } foo &k=bar", want{out: strs("foo", "bar")}},
 	// Option default value.

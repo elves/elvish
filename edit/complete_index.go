@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 )
 
@@ -11,7 +12,7 @@ var errCannotIterateKey = errors.New("indexee does not support iterating keys")
 
 type indexComplContext struct {
 	complContextCommon
-	indexee eval.Value
+	indexee types.Value
 }
 
 func (*indexComplContext) name() string { return "index" }
@@ -80,7 +81,7 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 }
 
 func (ctx *indexComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
-	m, ok := ctx.indexee.(eval.IterateKeyer)
+	m, ok := ctx.indexee.(types.IterateKeyer)
 	if !ok {
 		return errCannotIterateKey
 	}
@@ -88,8 +89,8 @@ func (ctx *indexComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) 
 	return nil
 }
 
-func complIndexInner(m eval.IterateKeyer, ch chan<- rawCandidate) {
-	m.IterateKey(func(v eval.Value) bool {
+func complIndexInner(m types.IterateKeyer, ch chan<- rawCandidate) {
+	m.IterateKey(func(v types.Value) bool {
 		if keyv, ok := v.(eval.String); ok {
 			ch <- plainCandidate(keyv)
 		}

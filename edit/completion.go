@@ -33,6 +33,7 @@ package edit
 
 import (
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -67,7 +68,7 @@ type complContextFinder func(parse.Node, pureEvaler) complContext
 type pureEvaler interface {
 	PurelyEvalCompound(*parse.Compound) (string, error)
 	PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Indexing) (string, error)
-	PurelyEvalPrimary(*parse.Primary) eval.Value
+	PurelyEvalPrimary(*parse.Primary) types.Value
 }
 
 var complContextFinders = []complContextFinder{

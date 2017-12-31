@@ -1,11 +1,14 @@
 package eval
 
-import "github.com/xiaq/persistent/hash"
+import (
+	"github.com/elves/elvish/eval/types"
+	"github.com/xiaq/persistent/hash"
+)
 
 type ListLike interface {
-	Lener
-	Iterable
-	IndexOneer
+	types.Lener
+	types.Iterator
+	types.IndexOneer
 }
 
 func eqListLike(lhs ListLike, r interface{}) bool {
@@ -21,7 +24,7 @@ func eqListLike(lhs ListLike, r interface{}) bool {
 
 func hashListLike(l ListLike) uint32 {
 	h := hash.DJBInit
-	l.Iterate(func(v Value) bool {
+	l.Iterate(func(v types.Value) bool {
 		// h = hash.DJBCombine(h, v.Hash())
 		return true
 	})

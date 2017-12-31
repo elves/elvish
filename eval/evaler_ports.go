@@ -3,6 +3,8 @@ package eval
 import (
 	"os"
 	"sync"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 const (
@@ -16,8 +18,8 @@ type evalerPorts struct {
 }
 
 func newEvalerPorts(stdin, stdout, stderr *os.File, prefix *string) evalerPorts {
-	stdoutChan := make(chan Value, stdoutChanSize)
-	stderrChan := make(chan Value, stderrChanSize)
+	stdoutChan := make(chan types.Value, stdoutChanSize)
+	stderrChan := make(chan types.Value, stderrChanSize)
 
 	var relayerWait sync.WaitGroup
 	relayerWait.Add(2)
@@ -34,7 +36,7 @@ func newEvalerPorts(stdin, stdout, stderr *os.File, prefix *string) evalerPorts 
 	}
 }
 
-func relayChanToFile(ch <-chan Value, file *os.File, prefix *string, w *sync.WaitGroup) {
+func relayChanToFile(ch <-chan types.Value, file *os.File, prefix *string, w *sync.WaitGroup) {
 	for v := range ch {
 		file.WriteString(*prefix)
 		file.WriteString(v.Repr(initIndent))

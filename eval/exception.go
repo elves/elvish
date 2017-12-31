@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"unsafe"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
@@ -71,7 +72,7 @@ func (exc *Exception) Repr(indent int) string {
 	if exc.Cause == nil {
 		return "$ok"
 	}
-	if r, ok := exc.Cause.(Reprer); ok {
+	if r, ok := exc.Cause.(types.Reprer); ok {
 		return r.Repr(indent)
 	}
 	return "?(fail " + parse.Quote(exc.Cause.Error()) + ")"

@@ -2,6 +2,8 @@ package eval
 
 import (
 	"reflect"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 type backedVariable struct {
@@ -10,7 +12,7 @@ type backedVariable struct {
 
 var _ Variable = backedVariable{}
 
-var valueTypeReflect = reflect.TypeOf((*Value)(nil)).Elem()
+var valueTypeReflect = reflect.TypeOf((*types.Value)(nil)).Elem()
 
 // NewBackedVariable creates a variable backed by a pointer to something of a
 // Value-compatible type.
@@ -47,10 +49,10 @@ func NewBackedVariable(ptr interface{}) Variable {
 	return backedVariable{ptr}
 }
 
-func (v backedVariable) Get() Value {
+func (v backedVariable) Get() types.Value {
 	return convertGoToValue(reflect.Indirect(reflect.ValueOf(v.ptr)).Interface())
 }
 
-func (v backedVariable) Set(newval Value) {
+func (v backedVariable) Set(newval types.Value) {
 	scanValueToGo(newval, v.ptr)
 }

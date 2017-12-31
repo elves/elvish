@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
 )
@@ -35,7 +36,7 @@ func init() {
 }
 
 func WrapStringToString(f func(string) string) BuiltinFnImpl {
-	return func(ec *Frame, args []Value, opts map[string]Value) {
+	return func(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		TakeNoOpt(opts)
 		s := mustGetOneString(args)
 		ec.ports[1].Chan <- String(f(s))
@@ -43,7 +44,7 @@ func WrapStringToString(f func(string) string) BuiltinFnImpl {
 }
 
 func WrapStringToStringError(f func(string) (string, error)) BuiltinFnImpl {
-	return func(ec *Frame, args []Value, opts map[string]Value) {
+	return func(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		TakeNoOpt(opts)
 		s := mustGetOneString(args)
 		result, err := f(s)
@@ -54,7 +55,7 @@ func WrapStringToStringError(f func(string) (string, error)) BuiltinFnImpl {
 
 var errMustBeOneString = errors.New("must be one string argument")
 
-func mustGetOneString(args []Value) string {
+func mustGetOneString(args []types.Value) string {
 	if len(args) != 1 {
 		throw(errMustBeOneString)
 	}
@@ -65,7 +66,7 @@ func mustGetOneString(args []Value) string {
 	return string(s)
 }
 
-func cd(ec *Frame, args []Value, opts map[string]Value) {
+func cd(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 
 	var dir string
@@ -86,7 +87,7 @@ func cdInner(dir string, ec *Frame) {
 
 var dirDescriptor = NewStructDescriptor("path", "score")
 
-func dirs(ec *Frame, args []Value, opts map[string]Value) {
+func dirs(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -99,14 +100,14 @@ func dirs(ec *Frame, args []Value, opts map[string]Value) {
 	}
 	out := ec.ports[1].Chan
 	for _, dir := range dirs {
-		out <- &Struct{dirDescriptor, []Value{
+		out <- &Struct{dirDescriptor, []types.Value{
 			String(dir.Path),
 			floatToString(dir.Score),
 		}}
 	}
 }
 
-func tildeAbbr(ec *Frame, args []Value, opts map[string]Value) {
+func tildeAbbr(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var pathv String
 	ScanArgs(args, &pathv)
 	path := string(pathv)
@@ -116,7 +117,7 @@ func tildeAbbr(ec *Frame, args []Value, opts map[string]Value) {
 	out <- String(util.TildeAbbr(path))
 }
 
-func isDir(ec *Frame, args []Value, opts map[string]Value) {
+func isDir(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var pathv String
 	ScanArgs(args, &pathv)
 	path := string(pathv)

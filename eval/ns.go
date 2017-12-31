@@ -3,12 +3,14 @@ package eval
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 // Ns is a map from names to variables.
 type Ns map[string]Variable
 
-var _ Value = Ns(nil)
+var _ types.Value = Ns(nil)
 
 func (Ns) Kind() string {
 	return "ns"

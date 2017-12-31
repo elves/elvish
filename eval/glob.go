@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
 )
@@ -30,8 +31,8 @@ func (f GlobFlag) Has(g GlobFlag) bool {
 }
 
 var (
-	_ Value   = GlobPattern{}
-	_ Indexer = GlobPattern{}
+	_ types.Value   = GlobPattern{}
+	_ types.Indexer = GlobPattern{}
 )
 
 var (
@@ -73,7 +74,7 @@ func (gp GlobPattern) Repr(int) string {
 	return fmt.Sprintf("<GlobPattern%v>", gp)
 }
 
-func (gp GlobPattern) Index(modifiers []Value) []Value {
+func (gp GlobPattern) Index(modifiers []types.Value) []types.Value {
 	for _, value := range modifiers {
 		modifierv, ok := value.(String)
 		if !ok {
@@ -119,11 +120,11 @@ func (gp GlobPattern) Index(modifiers []Value) []Value {
 					throw(badRangeExpr)
 				}
 			} else {
-				throw(fmt.Errorf("unknown modifier %s", modifierv.Repr(NoPretty)))
+				throw(fmt.Errorf("unknown modifier %s", modifierv.Repr(types.NoPretty)))
 			}
 		}
 	}
-	return []Value{gp}
+	return []types.Value{gp}
 }
 
 func (gp *GlobPattern) mustGetLastWildSeg() glob.Wild {
@@ -182,13 +183,13 @@ func stringToSegments(s string) []glob.Segment {
 	return segs
 }
 
-func doGlob(gp GlobPattern, abort <-chan struct{}) []Value {
+func doGlob(gp GlobPattern, abort <-chan struct{}) []types.Value {
 	but := make(map[string]struct{})
 	for _, s := range gp.Buts {
 		but[s] = struct{}{}
 	}
 
-	vs := make([]Value, 0)
+	vs := make([]types.Value, 0)
 	if !gp.Glob(func(name string) bool {
 		select {
 		case <-abort:

@@ -9,6 +9,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/hashmap"
 )
 
@@ -320,7 +321,7 @@ func getNarrow(ed *Editor) *narrow {
 }
 
 type narrowItem interface {
-	eval.Value
+	types.Value
 	Display() ui.Styled
 	Content() string
 	FilterText() string
@@ -391,7 +392,7 @@ func (c *narrowItemComplex) FilterText() string {
 	return c.Content()
 }
 
-func NarrowRead(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func NarrowRead(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	var source, action eval.Fn
 	l := &narrow{
 		opts: narrowOptions{
@@ -402,7 +403,7 @@ func NarrowRead(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	eval.ScanArgs(args, &source, &action)
 	eval.ScanOptsToStruct(opts, &l.opts)
 
-	l.opts.Bindings.IterateKey(func(k eval.Value) bool {
+	l.opts.Bindings.IterateKey(func(k types.Value) bool {
 		key := ui.ToKey(k)
 		f := l.opts.Bindings.IndexOne(k)
 		maybeThrow(eval.ShouldBeFn(f))
@@ -446,7 +447,7 @@ func narrowGetSource(ec *eval.Frame, source eval.Fn) func() []narrowItem {
 	}
 }
 
-func CommandHistory(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func CommandHistory(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	var (
 		rest              []int
 		limit, start, end int
@@ -486,14 +487,14 @@ func CommandHistory(ec *eval.Frame, args []eval.Value, opts map[string]eval.Valu
 	}
 
 	for i := start; i < end; i++ {
-		out <- eval.ConvertToMap(map[eval.Value]eval.Value{
+		out <- eval.ConvertToMap(map[types.Value]types.Value{
 			eval.String("id"):  eval.String(strconv.Itoa(i)),
 			eval.String("cmd"): eval.String(cmds[i]),
 		})
 	}
 }
 
-func InsertAtDot(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func InsertAtDot(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	var text eval.String
 
 	eval.ScanArgs(args, &text)
@@ -503,7 +504,7 @@ func InsertAtDot(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) 
 	ed.insertAtDot(text.String())
 }
 
-func ReplaceInput(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func ReplaceInput(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	var text eval.String
 
 	eval.ScanArgs(args, &text)
@@ -513,7 +514,7 @@ func ReplaceInput(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value)
 	ed.buffer = text.String()
 }
 
-func Wordify(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func Wordify(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	var text eval.String
 
 	eval.ScanArgs(args, &text)

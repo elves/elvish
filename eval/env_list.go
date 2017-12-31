@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -30,7 +31,7 @@ type EnvList struct {
 	sync.RWMutex
 	envName    string
 	cacheFor   string
-	cacheValue Value
+	cacheValue types.Value
 }
 
 var (
@@ -38,7 +39,7 @@ var (
 )
 
 // Get returns a Value for an EnvPathList.
-func (envli *EnvList) Get() Value {
+func (envli *EnvList) Get() types.Value {
 	envli.Lock()
 	defer envli.Unlock()
 
@@ -56,13 +57,13 @@ func (envli *EnvList) Get() Value {
 }
 
 // Set sets an EnvPathList. The underlying environment variable is set.
-func (envli *EnvList) Set(v Value) {
-	iterator, ok := v.(Iterable)
+func (envli *EnvList) Set(v types.Value) {
+	iterator, ok := v.(types.Iterator)
 	if !ok {
 		throw(ErrCanOnlyAssignList)
 	}
 	var paths []string
-	iterator.Iterate(func(v Value) bool {
+	iterator.Iterate(func(v types.Value) bool {
 		s, ok := v.(String)
 		if !ok {
 			throw(ErrPathMustBeString)

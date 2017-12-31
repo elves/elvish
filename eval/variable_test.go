@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/util"
 )
 
@@ -35,12 +36,12 @@ func TestRoVariable(t *testing.T) {
 
 func TestCbVariable(t *testing.T) {
 	getCalled := false
-	get := func() Value {
+	get := func() types.Value {
 		getCalled = true
 		return String("cb")
 	}
-	var setCalledWith Value
-	set := func(v Value) {
+	var setCalledWith types.Value
+	set := func(v types.Value) {
 		setCalledWith = v
 	}
 
@@ -59,7 +60,7 @@ func TestCbVariable(t *testing.T) {
 
 func TestRoCbVariable(t *testing.T) {
 	getCalled := false
-	get := func() Value {
+	get := func() types.Value {
 		getCalled = true
 		return String("cb")
 	}

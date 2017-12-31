@@ -5,12 +5,13 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/getopt"
 	"github.com/elves/elvish/parse"
 )
 
-func complGetopt(ec *eval.Frame, a []eval.Value, o map[string]eval.Value) {
-	var elemsv, optsv, argsv eval.IterableValue
+func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
+	var elemsv, optsv, argsv types.IteratorValue
 	eval.ScanArgs(a, &elemsv, &optsv, &argsv)
 	eval.TakeNoOpt(o)
 
@@ -22,7 +23,7 @@ func complGetopt(ec *eval.Frame, a []eval.Value, o map[string]eval.Value) {
 	)
 	desc := make(map[*getopt.Option]string)
 	// Convert arguments.
-	elemsv.Iterate(func(v eval.Value) bool {
+	elemsv.Iterate(func(v types.Value) bool {
 		elem, ok := v.(eval.String)
 		if !ok {
 			throwf("arg should be string, got %s", v.Kind())
@@ -30,7 +31,7 @@ func complGetopt(ec *eval.Frame, a []eval.Value, o map[string]eval.Value) {
 		elems = append(elems, string(elem))
 		return true
 	})
-	optsv.Iterate(func(v eval.Value) bool {
+	optsv.Iterate(func(v types.Value) bool {
 		m, ok := v.(eval.MapLike)
 		if !ok {
 			throwf("opt should be map-like, got %s", v.Kind())
@@ -69,7 +70,7 @@ func complGetopt(ec *eval.Frame, a []eval.Value, o map[string]eval.Value) {
 		opts = append(opts, opt)
 		return true
 	})
-	argsv.Iterate(func(v eval.Value) bool {
+	argsv.Iterate(func(v types.Value) bool {
 		sv, ok := v.(eval.String)
 		if ok {
 			if string(sv) == "..." {

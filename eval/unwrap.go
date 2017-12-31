@@ -3,6 +3,8 @@ package eval
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 // Unwrappers are helper types for "unwrapping" values, the process for
@@ -19,7 +21,7 @@ type unwrapperInner struct {
 	// error occurs.
 	begin, end int
 	// values contain the Value's to unwrap.
-	values []Value
+	values []types.Value
 }
 
 func (u *unwrapperInner) error(want, gotfmt string, gotargs ...interface{}) {
@@ -32,7 +34,7 @@ func (u *unwrapperInner) error(want, gotfmt string, gotargs ...interface{}) {
 type ValuesUnwrapper struct{ *unwrapperInner }
 
 // Unwrap creates an Unwrapper.
-func (ctx *Frame) Unwrap(desc string, begin, end int, vs []Value) ValuesUnwrapper {
+func (ctx *Frame) Unwrap(desc string, begin, end int, vs []types.Value) ValuesUnwrapper {
 	return ValuesUnwrapper{&unwrapperInner{ctx, desc, begin, end, vs}}
 }
 
@@ -53,7 +55,7 @@ func (u ValuesUnwrapper) One() ValueUnwrapper {
 // ValueUnwrapper unwraps one Value.
 type ValueUnwrapper struct{ *unwrapperInner }
 
-func (u ValueUnwrapper) Any() Value {
+func (u ValueUnwrapper) Any() types.Value {
 	return u.values[0]
 }
 
@@ -98,8 +100,8 @@ func (u ValueUnwrapper) Callable() Callable {
 	return c
 }
 
-func (u ValueUnwrapper) Iterable() Iterable {
-	it, ok := u.values[0].(Iterable)
+func (u ValueUnwrapper) Iterable() types.Iterator {
+	it, ok := u.values[0].(types.Iterator)
 	if !ok {
 		u.error("iterable", "%s", u.values[0].Kind())
 	}

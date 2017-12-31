@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 )
 
@@ -259,7 +260,7 @@ func compileOr(cp *compiler, fn *parse.Form) OpFunc {
 func compileAndOr(cp *compiler, fn *parse.Form, init, stopAt bool) OpFunc {
 	argOps := cp.compoundOps(fn.Args)
 	return func(ec *Frame) {
-		var lastValue Value = Bool(init)
+		var lastValue types.Value = Bool(init)
 		for _, op := range argOps {
 			values := op.Exec(ec)
 			for _, value := range values {
@@ -378,7 +379,7 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 		elseBody := elseOp.execlambdaOp(ec)
 
 		iterated := false
-		iterable.Iterate(func(v Value) bool {
+		iterable.Iterate(func(v types.Value) bool {
 			iterated = true
 			variable.Set(v)
 			err := ec.fork("for").PCall(body, NoArgs, NoOpts)

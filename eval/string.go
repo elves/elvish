@@ -4,6 +4,7 @@ import (
 	"errors"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hash"
 )
@@ -12,8 +13,8 @@ import (
 type String string
 
 var (
-	_ Value    = String("")
-	_ ListLike = String("")
+	_ types.Value = String("")
+	_ ListLike    = String("")
 )
 
 var ErrReplacementMustBeString = errors.New("replacement must be string")
@@ -42,12 +43,12 @@ func (s String) Len() int {
 	return len(string(s))
 }
 
-func (s String) IndexOne(idx Value) Value {
+func (s String) IndexOne(idx types.Value) types.Value {
 	i, j := s.index(idx)
 	return s[i:j]
 }
 
-func (s String) Assoc(idx, v Value) Value {
+func (s String) Assoc(idx, v types.Value) types.Value {
 	i, j := s.index(idx)
 	repl, ok := v.(String)
 	if !ok {
@@ -56,7 +57,7 @@ func (s String) Assoc(idx, v Value) Value {
 	return s[:i] + repl + s[j:]
 }
 
-func (s String) index(idx Value) (int, int) {
+func (s String) index(idx types.Value) (int, int) {
 	slice, i, j := ParseAndFixListIndex(ToString(idx), len(s))
 	r, size := utf8.DecodeRuneInString(string(s[i:]))
 	if r == utf8.RuneError {
@@ -71,7 +72,7 @@ func (s String) index(idx Value) (int, int) {
 	return i, i + size
 }
 
-func (s String) Iterate(f func(v Value) bool) {
+func (s String) Iterate(f func(v types.Value) bool) {
 	for _, r := range s {
 		b := f(String(string(r)))
 		if !b {
@@ -82,7 +83,7 @@ func (s String) Iterate(f func(v Value) bool) {
 
 // Call resolves a command name to either a Fn variable or external command and
 // calls it.
-func (s String) Call(ec *Frame, args []Value, opts map[string]Value) {
+func (s String) Call(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	resolve(string(s), ec).Call(ec, args, opts)
 }
 
@@ -103,11 +104,11 @@ func resolve(s string, ec *Frame) Fn {
 
 // ToString converts a Value to String. When the Value type implements
 // String(), it is used. Otherwise Repr(NoPretty) is used.
-func ToString(v Value) string {
-	if s, ok := v.(Stringer); ok {
+func ToString(v types.Value) string {
+	if s, ok := v.(types.Stringer); ok {
 		return s.String()
 	}
-	return v.Repr(NoPretty)
+	return v.Repr(types.NoPretty)
 }
 
 func quote(s string) string {

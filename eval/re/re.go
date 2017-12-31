@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/vector"
 )
@@ -23,7 +24,7 @@ var fns = []*eval.BuiltinFn{
 	{"split", split},
 }
 
-func match(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func match(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.OutputChan()
 	var (
 		argPattern eval.String
@@ -38,7 +39,7 @@ func match(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	out <- eval.Bool(matched)
 }
 
-func find(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func find(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.OutputChan()
 	var (
 		argPattern eval.String
@@ -74,11 +75,11 @@ func find(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	}
 }
 
-func replace(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func replace(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.OutputChan()
 	var (
 		argPattern eval.String
-		argRepl    eval.Value
+		argRepl    types.Value
 		argSource  eval.String
 		optPOSIX   eval.Bool
 		optLongest eval.Bool
@@ -107,7 +108,7 @@ func replace(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 		case eval.Fn:
 			replFunc := func(s string) string {
 				values, err := ec.PCaptureOutput(repl,
-					[]eval.Value{eval.String(s)}, eval.NoOpts)
+					[]types.Value{eval.String(s)}, eval.NoOpts)
 				maybeThrow(err)
 				if len(values) != 1 {
 					throwf("replacement function must output exactly one value, got %d", len(values))
@@ -127,7 +128,7 @@ func replace(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
 	out <- eval.String(result)
 }
 
-func split(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func split(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.OutputChan()
 	var (
 		argPattern eval.String

@@ -8,10 +8,11 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/sys"
 )
 
-func execFn(ec *Frame, args []Value, opts map[string]Value) {
+func execFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 
 	var argstrings []string
@@ -34,7 +35,7 @@ func execFn(ec *Frame, args []Value, opts map[string]Value) {
 	maybeThrow(err)
 }
 
-func fg(ec *Frame, args []Value, opts map[string]Value) {
+func fg(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var pids []int
 	ScanArgsVariadic(args, &pids)
 	TakeNoOpt(opts)

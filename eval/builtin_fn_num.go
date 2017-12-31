@@ -4,6 +4,8 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 // Numerical operations.
@@ -39,7 +41,7 @@ func init() {
 }
 
 func wrapNumCompare(cmp func(a, b float64) bool) BuiltinFnImpl {
-	return func(ec *Frame, args []Value, opts map[string]Value) {
+	return func(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		TakeNoOpt(opts)
 		floats := make([]float64, len(args))
 		for i, a := range args {
@@ -58,7 +60,7 @@ func wrapNumCompare(cmp func(a, b float64) bool) BuiltinFnImpl {
 	}
 }
 
-func plus(ec *Frame, args []Value, opts map[string]Value) {
+func plus(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var nums []float64
 	ScanArgsVariadic(args, &nums)
 	TakeNoOpt(opts)
@@ -71,7 +73,7 @@ func plus(ec *Frame, args []Value, opts map[string]Value) {
 	out <- floatToString(sum)
 }
 
-func minus(ec *Frame, args []Value, opts map[string]Value) {
+func minus(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
 		sum  float64
 		nums []float64
@@ -91,7 +93,7 @@ func minus(ec *Frame, args []Value, opts map[string]Value) {
 	out <- floatToString(sum)
 }
 
-func times(ec *Frame, args []Value, opts map[string]Value) {
+func times(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var nums []float64
 	ScanArgsVariadic(args, &nums)
 	TakeNoOpt(opts)
@@ -104,7 +106,7 @@ func times(ec *Frame, args []Value, opts map[string]Value) {
 	out <- floatToString(prod)
 }
 
-func slash(ec *Frame, args []Value, opts map[string]Value) {
+func slash(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 	if len(args) == 0 {
 		// cd /
@@ -115,7 +117,7 @@ func slash(ec *Frame, args []Value, opts map[string]Value) {
 	divide(ec, args, opts)
 }
 
-func divide(ec *Frame, args []Value, opts map[string]Value) {
+func divide(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
 		prod float64
 		nums []float64
@@ -130,7 +132,7 @@ func divide(ec *Frame, args []Value, opts map[string]Value) {
 	out <- floatToString(prod)
 }
 
-func pow(ec *Frame, args []Value, opts map[string]Value) {
+func pow(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var b, p float64
 	ScanArgs(args, &b, &p)
 	TakeNoOpt(opts)
@@ -139,7 +141,7 @@ func pow(ec *Frame, args []Value, opts map[string]Value) {
 	out <- floatToString(math.Pow(b, p))
 }
 
-func mod(ec *Frame, args []Value, opts map[string]Value) {
+func mod(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var a, b int
 	ScanArgs(args, &a, &b)
 	TakeNoOpt(opts)
@@ -148,7 +150,7 @@ func mod(ec *Frame, args []Value, opts map[string]Value) {
 	out <- String(strconv.Itoa(a % b))
 }
 
-func randFn(ec *Frame, args []Value, opts map[string]Value) {
+func randFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -156,7 +158,7 @@ func randFn(ec *Frame, args []Value, opts map[string]Value) {
 	out <- floatToString(rand.Float64())
 }
 
-func randint(ec *Frame, args []Value, opts map[string]Value) {
+func randint(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var low, high int
 	ScanArgs(args, &low, &high)
 	TakeNoOpt(opts)

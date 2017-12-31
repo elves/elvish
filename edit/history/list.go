@@ -5,6 +5,7 @@ import (
 
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/util"
 )
 
@@ -16,7 +17,7 @@ type List struct {
 }
 
 var (
-	_ eval.Value    = List{}
+	_ types.Value   = List{}
 	_ eval.ListLike = List{}
 )
 
@@ -49,7 +50,7 @@ func (hv List) Len() int {
 	return nextseq - 1
 }
 
-func (hv List) Iterate(f func(eval.Value) bool) {
+func (hv List) Iterate(f func(types.Value) bool) {
 	hv.RLock()
 	defer hv.RUnlock()
 
@@ -64,7 +65,7 @@ func (hv List) Iterate(f func(eval.Value) bool) {
 	}
 }
 
-func (hv List) IndexOne(idx eval.Value) eval.Value {
+func (hv List) IndexOne(idx types.Value) types.Value {
 	hv.RLock()
 	defer hv.RUnlock()
 
@@ -72,7 +73,7 @@ func (hv List) IndexOne(idx eval.Value) eval.Value {
 	if slice {
 		cmds, err := hv.Daemon.Cmds(i+1, j+1)
 		maybeThrow(err)
-		vs := make([]eval.Value, len(cmds))
+		vs := make([]types.Value, len(cmds))
 		for i := range cmds {
 			vs[i] = eval.String(cmds[i])
 		}

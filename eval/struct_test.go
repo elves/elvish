@@ -1,6 +1,10 @@
 package eval
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/elves/elvish/eval/types"
+)
 
 var (
 	testStructDescriptor = NewStructDescriptor("foo", "bar")
@@ -22,7 +26,7 @@ func TestStructMethods(t *testing.T) {
 		t.Errorf(`testStruct.Assoc(...) => %v, want %v`, s2, testStruct2)
 	}
 	wantRepr := "[&foo=lorem &bar=ipsum]"
-	if gotRepr := testStruct.Repr(NoPretty); gotRepr != wantRepr {
+	if gotRepr := testStruct.Repr(types.NoPretty); gotRepr != wantRepr {
 		t.Errorf(`testStruct.Repr() => %q, want %q`, gotRepr, wantRepr)
 	}
 	wantJSON := `{"foo":"lorem","bar":"ipsum"}`

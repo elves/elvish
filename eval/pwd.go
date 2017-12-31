@@ -2,6 +2,8 @@ package eval
 
 import (
 	"os"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 // PwdVariable is a variable whose value always reflects the current working
@@ -12,13 +14,13 @@ type PwdVariable struct {
 
 var _ Variable = PwdVariable{}
 
-func (PwdVariable) Get() Value {
+func (PwdVariable) Get() types.Value {
 	pwd, err := os.Getwd()
 	maybeThrow(err)
 	return String(pwd)
 }
 
-func (pwd PwdVariable) Set(v Value) {
+func (pwd PwdVariable) Set(v types.Value) {
 	path, ok := v.(String)
 	if !ok {
 		throw(ErrPathMustBeString)

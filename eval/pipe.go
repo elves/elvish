@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -11,7 +12,7 @@ type Pipe struct {
 	r, w *os.File
 }
 
-var _ Value = Pipe{}
+var _ types.Value = Pipe{}
 
 func (Pipe) Kind() string {
 	return "pipe"

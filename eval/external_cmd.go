@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"syscall"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
@@ -39,7 +40,7 @@ func (e ExternalCmd) Repr(int) string {
 }
 
 // Call calls an external command.
-func (e ExternalCmd) Call(ec *Frame, argVals []Value, opts map[string]Value) {
+func (e ExternalCmd) Call(ec *Frame, argVals []types.Value, opts map[string]types.Value) {
 	if len(opts) > 0 {
 		throw(ErrExternalCmdOpts)
 	}

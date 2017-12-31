@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 )
 
@@ -22,7 +23,7 @@ type Test struct {
 }
 
 type want struct {
-	out      []Value
+	out      []types.Value
 	bytesOut []byte
 	err      error
 }
@@ -39,16 +40,16 @@ var (
 
 // Shorthands for values in want.out
 
-func strs(ss ...string) []Value {
-	vs := make([]Value, len(ss))
+func strs(ss ...string) []types.Value {
+	vs := make([]types.Value, len(ss))
 	for i, s := range ss {
 		vs[i] = String(s)
 	}
 	return vs
 }
 
-func bools(bs ...bool) []Value {
-	vs := make([]Value, len(bs))
+func bools(bs ...bool) []types.Value {
+	vs := make([]types.Value, len(bs))
 	for i, b := range bs {
 		vs[i] = Bool(b)
 	}
@@ -62,7 +63,7 @@ func NewTest(text string) Test {
 
 // WantOut returns an altered Test that requires the source code to produce the
 // specified values in the value channel when evaluated.
-func (t Test) WantOut(vs ...Value) Test {
+func (t Test) WantOut(vs ...types.Value) Test {
 	t.want.out = vs
 	return t
 }
@@ -137,7 +138,7 @@ func RunTests(t *testing.T, evalTests []Test, makeEvaler func() *Evaler) {
 	}
 }
 
-func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]Value, []byte, error) {
+func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]types.Value, []byte, error) {
 	name := "<eval test>"
 
 	// Collect byte output
@@ -157,7 +158,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]Val
 	}()
 
 	// Channel output
-	outs := []Value{}
+	outs := []types.Value{}
 
 	// Eval error. Only that of the last text is saved.
 	var ex error
@@ -165,7 +166,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]Val
 	for _, text := range texts {
 		op := mustParseAndCompile(t, ev, name, text)
 
-		outCh := make(chan Value, chsize)
+		outCh := make(chan types.Value, chsize)
 		outDone := make(chan struct{})
 		go func() {
 			for v := range outCh {
@@ -204,7 +205,7 @@ func mustParseAndCompile(t *testing.T, ev *Evaler, name, text string) Op {
 	return op
 }
 
-func matchOut(want, got []Value) bool {
+func matchOut(want, got []types.Value) bool {
 	if len(got) == 0 && len(want) == 0 {
 		return true
 	}
@@ -235,7 +236,7 @@ func compareSlice(wantValues, gotValues []interface{}) error {
 // equals compares two values. It uses Eq if want is a Value instance, or
 // reflect.DeepEqual otherwise.
 func equals(a, b interface{}) bool {
-	if aValue, ok := a.(Value); ok {
+	if aValue, ok := a.(types.Value); ok {
 		return aValue.Equal(b)
 	}
 	return reflect.DeepEqual(a, b)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hash"
 )
@@ -12,7 +13,7 @@ type File struct {
 	inner *os.File
 }
 
-var _ Value = File{}
+var _ types.Value = File{}
 
 func (File) Kind() string {
 	return "file"

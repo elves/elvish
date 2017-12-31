@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -48,7 +49,7 @@ func (ed *Editor) lookupMatcher(name string) (eval.Fn, bool) {
 
 func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
 	return func(ec *eval.Frame,
-		args []eval.Value, opts map[string]eval.Value) {
+		args []types.Value, opts map[string]types.Value) {
 
 		var pattern eval.String
 		iterate := eval.ScanArgsOptionalInput(ec, args, &pattern)
@@ -78,7 +79,7 @@ func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
 		}
 
 		out := ec.OutputChan()
-		iterate(func(v eval.Value) {
+		iterate(func(v types.Value) {
 			s, ok := v.(eval.String)
 			if !ok {
 				throw(errMatcherInputMustBeString)

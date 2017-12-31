@@ -9,6 +9,7 @@ import (
 	"unsafe"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/hash"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -101,7 +102,7 @@ func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) 
 	logger.Printf("completing argument: %q", words)
 	// XXX(xiaq): not the best way to get argCompleter.
 	m := ev.Editor.(*Editor).argCompleter()
-	var v eval.Value
+	var v types.Value
 	if m.HasKey(eval.String(words[0])) {
 		v = m.IndexOne(eval.String(words[0]))
 	} else {
@@ -138,7 +139,7 @@ func (bac *builtinArgCompleter) Repr(int) string {
 	return "$edit:" + bac.name + eval.FnSuffix
 }
 
-func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	eval.TakeNoOpt(opts)
 	words := make([]string, len(args))
 	for i, arg := range args {
@@ -191,7 +192,7 @@ func callArgCompleter(fn eval.Fn,
 		return builtin.impl(words, ev, rawCands)
 	}
 
-	args := make([]eval.Value, len(words))
+	args := make([]types.Value, len(words))
 	for i, word := range words {
 		args[i] = eval.String(word)
 	}
@@ -202,7 +203,7 @@ func callArgCompleter(fn eval.Fn,
 		{File: os.Stderr},
 	}
 
-	valuesCb := func(ch <-chan eval.Value) {
+	valuesCb := func(ch <-chan types.Value) {
 		for v := range ch {
 			switch v := v.(type) {
 			case rawCandidate:

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 )
 
 // The $le:{before,after}-readline lists that contain hooks. We might have more
@@ -26,16 +27,16 @@ func makeListVariable() eval.Variable {
 	return eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList)
 }
 
-func callHooks(ev *eval.Evaler, li eval.List, args ...eval.Value) {
+func callHooks(ev *eval.Evaler, li eval.List, args ...types.Value) {
 	if li.Len() == 0 {
 		return
 	}
 
-	li.Iterate(func(v eval.Value) bool {
+	li.Iterate(func(v types.Value) bool {
 		opfunc := func(ec *eval.Frame) {
 			fn, ok := v.(eval.Fn)
 			if !ok {
-				fmt.Fprintf(os.Stderr, "not a function: %s\n", v.Repr(eval.NoPretty))
+				fmt.Fprintf(os.Stderr, "not a function: %s\n", v.Repr(types.NoPretty))
 				return
 			}
 			err := ec.PCall(fn, args, eval.NoOpts)

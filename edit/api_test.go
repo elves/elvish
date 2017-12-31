@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/util"
 )
 
@@ -37,13 +38,13 @@ func TestBuiltinFn(t *testing.T) {
 	ec.Editor = &Editor{active: true}
 
 	if !util.Throws(func() {
-		builtinFn.Call(ec, []eval.Value{eval.String("2")}, nil)
+		builtinFn.Call(ec, []types.Value{eval.String("2")}, nil)
 	}, eval.ErrNoArgAccepted) {
 		t.Errorf("BuiltinFn should error when argument was supplied, didn't")
 	}
 
 	if !util.Throws(func() {
-		builtinFn.Call(ec, nil, map[string]eval.Value{"a": eval.String("b")})
+		builtinFn.Call(ec, nil, map[string]types.Value{"a": eval.String("b")})
 	}, eval.ErrNoOptAccepted) {
 		t.Errorf("BuiltinFn should error when option was supplied, didn't")
 	}

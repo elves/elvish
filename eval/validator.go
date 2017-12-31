@@ -3,6 +3,8 @@ package eval
 import (
 	"errors"
 	"strconv"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 var (
@@ -14,42 +16,42 @@ var (
 	errShouldBeNumber = errors.New("should be number")
 )
 
-func ShouldBeList(v Value) error {
+func ShouldBeList(v types.Value) error {
 	if _, ok := v.(List); !ok {
 		return errShouldBeList
 	}
 	return nil
 }
 
-func ShouldBeMap(v Value) error {
+func ShouldBeMap(v types.Value) error {
 	if _, ok := v.(Map); !ok {
 		return errShouldBeMap
 	}
 	return nil
 }
 
-func ShouldBeFn(v Value) error {
+func ShouldBeFn(v types.Value) error {
 	if _, ok := v.(Callable); !ok {
 		return errShouldBeFn
 	}
 	return nil
 }
 
-func ShouldBeNs(v Value) error {
+func ShouldBeNs(v types.Value) error {
 	if _, ok := v.(Ns); !ok {
 		return errShouldBeNs
 	}
 	return nil
 }
 
-func ShouldBeBool(v Value) error {
+func ShouldBeBool(v types.Value) error {
 	if _, ok := v.(Bool); !ok {
 		return errShouldBeBool
 	}
 	return nil
 }
 
-func ShouldBeNumber(v Value) error {
+func ShouldBeNumber(v types.Value) error {
 	if _, ok := v.(String); !ok {
 		return errShouldBeNumber
 	}

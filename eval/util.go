@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -88,13 +89,13 @@ var (
 	ErrNoOptAccepted = errors.New("no option accepted")
 )
 
-func TakeNoArg(args []Value) {
+func TakeNoArg(args []types.Value) {
 	if len(args) > 0 {
 		throw(ErrNoArgAccepted)
 	}
 }
 
-func TakeNoOpt(opts map[string]Value) {
+func TakeNoOpt(opts map[string]types.Value) {
 	if len(opts) > 0 {
 		throw(ErrNoOptAccepted)
 	}

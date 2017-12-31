@@ -1,6 +1,10 @@
 package eval
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/elves/elvish/eval/types"
+)
 
 func TestBuiltinFnIO(t *testing.T) {
 	runTests(t, []Test{
@@ -15,8 +19,8 @@ func TestBuiltinFnIO(t *testing.T) {
 		{`print "a\nb" | from-lines`, want{out: strs("a", "b")}},
 		{`print "a\nb\n" | from-lines`, want{out: strs("a", "b")}},
 		{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`,
-			want{out: []Value{
-				ConvertToMap(map[Value]Value{
+			want{out: []types.Value{
+				ConvertToMap(map[types.Value]types.Value{
 					String("k"): String("v"),
 					String("a"): NewList(strs("1", "2")...)}),
 				String("foo"),

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -25,12 +26,12 @@ type List struct {
 
 // Make sure that List implements ListLike and Assocer at compile time.
 var (
-	_ ListLike = List{}
-	_ Assocer  = List{}
+	_ ListLike      = List{}
+	_ types.Assocer = List{}
 )
 
 // NewList creates a new List.
-func NewList(vs ...Value) List {
+func NewList(vs ...types.Value) List {
 	vec := vector.Empty
 	for _, v := range vs {
 		vec = vec.Cons(v)
@@ -58,7 +59,7 @@ func (l List) Repr(indent int) string {
 	var b ListReprBuilder
 	b.Indent = indent
 	for it := l.inner.Iterator(); it.HasElem(); it.Next() {
-		v := it.Elem().(Value)
+		v := it.Elem().(types.Value)
 		b.WriteElem(v.Repr(indent + 1))
 	}
 	return b.String()
@@ -88,24 +89,24 @@ func (l List) Len() int {
 	return l.inner.Len()
 }
 
-func (l List) Iterate(f func(Value) bool) {
+func (l List) Iterate(f func(types.Value) bool) {
 	for it := l.inner.Iterator(); it.HasElem(); it.Next() {
-		v := it.Elem().(Value)
+		v := it.Elem().(types.Value)
 		if !f(v) {
 			break
 		}
 	}
 }
 
-func (l List) IndexOne(idx Value) Value {
+func (l List) IndexOne(idx types.Value) types.Value {
 	slice, i, j := ParseAndFixListIndex(ToString(idx), l.Len())
 	if slice {
 		return List{l.inner.SubVector(i, j)}
 	}
-	return l.inner.Nth(i).(Value)
+	return l.inner.Nth(i).(types.Value)
 }
 
-func (l List) Assoc(idx, v Value) Value {
+func (l List) Assoc(idx, v types.Value) types.Value {
 	slice, i, _ := ParseAndFixListIndex(ToString(idx), l.Len())
 	if slice {
 		throw(ErrAssocWithSlice)

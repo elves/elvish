@@ -1,14 +1,17 @@
 package eval
 
-import "github.com/xiaq/persistent/hash"
+import (
+	"github.com/elves/elvish/eval/types"
+	"github.com/xiaq/persistent/hash"
+)
 
 type MapLike interface {
-	Lener
-	IndexOneer
-	Assocer
+	types.Lener
+	types.IndexOneer
+	types.Assocer
 	HasKeyer
-	IterateKeyer
-	IteratePairer
+	types.IterateKeyer
+	types.IteratePairer
 }
 
 func eqMapLike(lhs MapLike, a interface{}) bool {
@@ -20,7 +23,7 @@ func eqMapLike(lhs MapLike, a interface{}) bool {
 		return false
 	}
 	eq := true
-	lhs.IteratePair(func(k, v Value) bool {
+	lhs.IteratePair(func(k, v types.Value) bool {
 		if !v.Equal(rhs.IndexOne(k)) {
 			eq = false
 			return false
@@ -32,7 +35,7 @@ func eqMapLike(lhs MapLike, a interface{}) bool {
 
 func hashMapLike(m MapLike) uint32 {
 	h := hash.DJBInit
-	m.IteratePair(func(k, v Value) bool {
+	m.IteratePair(func(k, v types.Value) bool {
 		// h = hash.DJBCombine(h, k.Hash())
 		// h = hash.DJBCombine(h, v.Hash())
 		return true

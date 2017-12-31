@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 )
 
@@ -155,18 +156,18 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 		//
 		// When the right-hand side of the assignment becomes available, the new
 		// value for $a is evaluated by doing Assoc from inside out.
-		assocers := make([]Assocer, len(indexOps))
-		indicies := make([]Value, len(indexOps))
+		assocers := make([]types.Assocer, len(indexOps))
+		indicies := make([]types.Value, len(indexOps))
 		varValue, ok := variable.Get().(IndexOneAssocer)
 		if !ok {
 			ec.errorpf(headBegin, headEnd, "cannot be indexed for setting")
 		}
 		assocers[0] = varValue
 		for i, op := range indexOps {
-			var lastAssocer IndexOneer
+			var lastAssocer types.IndexOneer
 			if i < len(indexOps)-1 {
 				var ok bool
-				lastAssocer, ok = assocers[i].(IndexOneer)
+				lastAssocer, ok = assocers[i].(types.IndexOneer)
 				if !ok {
 					// This cannot occur when i==0, since varValue as already
 					// asserted to be an IndexOnner.
@@ -183,7 +184,7 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 			indicies[i] = index
 
 			if i < len(indexOps)-1 {
-				assocer, ok := lastAssocer.IndexOne(index).(Assocer)
+				assocer, ok := lastAssocer.IndexOne(index).(types.Assocer)
 				if !ok {
 					ec.errorpf(headBegin, indexOps[i].End,
 						"cannot be indexed for setting")

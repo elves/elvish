@@ -3,9 +3,10 @@ package edit
 import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 )
 
-func styled(ec *eval.Frame, args []eval.Value, opts map[string]eval.Value) {
+func styled(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	var textv, stylev eval.String
 	eval.ScanArgs(args, &textv, &stylev)
 	text, style := string(textv), string(stylev)

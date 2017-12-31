@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -67,7 +68,7 @@ func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Inde
 // If this cannot be done, it returns nil.
 //
 // Currently, only string literals and variables with no @ can be evaluated.
-func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) Value {
+func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) types.Value {
 	switch pn.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return String(pn.Value)

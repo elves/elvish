@@ -6,6 +6,7 @@ import (
 	"io"
 	"strconv"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/util"
 )
 
@@ -35,14 +36,14 @@ func init() {
 	})
 }
 
-func nsFn(ec *Frame, args []Value, opts map[string]Value) {
+func nsFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
 	ec.OutputChan() <- make(Ns)
 }
 
-func rangeFn(ec *Frame, args []Value, opts map[string]Value) {
+func rangeFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var step float64
 	ScanOpts(opts, OptToScan{"step", &step, String("1")})
 
@@ -68,10 +69,10 @@ func rangeFn(ec *Frame, args []Value, opts map[string]Value) {
 	}
 }
 
-func repeat(ec *Frame, args []Value, opts map[string]Value) {
+func repeat(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
 		n int
-		v Value
+		v types.Value
 	)
 	ScanArgs(args, &n, &v)
 	TakeNoOpt(opts)
@@ -83,39 +84,39 @@ func repeat(ec *Frame, args []Value, opts map[string]Value) {
 }
 
 // explode puts each element of the argument.
-func explode(ec *Frame, args []Value, opts map[string]Value) {
-	var v IterableValue
+func explode(ec *Frame, args []types.Value, opts map[string]types.Value) {
+	var v types.IteratorValue
 	ScanArgs(args, &v)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
-	v.Iterate(func(e Value) bool {
+	v.Iterate(func(e types.Value) bool {
 		out <- e
 		return true
 	})
 }
 
-func assoc(ec *Frame, args []Value, opts map[string]Value) {
+func assoc(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
-		a    Assocer
-		k, v Value
+		a    types.Assocer
+		k, v types.Value
 	)
 	ScanArgs(args, &a, &k, &v)
 	TakeNoOpt(opts)
 	ec.OutputChan() <- a.Assoc(k, v)
 }
 
-func dissoc(ec *Frame, args []Value, opts map[string]Value) {
+func dissoc(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
-		a Dissocer
-		k Value
+		a types.Dissocer
+		k types.Value
 	)
 	ScanArgs(args, &a, &k)
 	TakeNoOpt(opts)
 	ec.OutputChan() <- a.Dissoc(k)
 }
 
-func all(ec *Frame, args []Value, opts map[string]Value) {
+func all(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -133,14 +134,14 @@ func all(ec *Frame, args []Value, opts map[string]Value) {
 	}
 }
 
-func take(ec *Frame, args []Value, opts map[string]Value) {
+func take(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var n int
 	iterate := ScanArgsOptionalInput(ec, args, &n)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
 	i := 0
-	iterate(func(v Value) {
+	iterate(func(v types.Value) {
 		if i < n {
 			out <- v
 		}
@@ -148,14 +149,14 @@ func take(ec *Frame, args []Value, opts map[string]Value) {
 	})
 }
 
-func drop(ec *Frame, args []Value, opts map[string]Value) {
+func drop(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var n int
 	iterate := ScanArgsOptionalInput(ec, args, &n)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
 	i := 0
-	iterate(func(v Value) {
+	iterate(func(v types.Value) {
 		if i >= n {
 			out <- v
 		}
@@ -163,22 +164,22 @@ func drop(ec *Frame, args []Value, opts map[string]Value) {
 	})
 }
 
-func hasValue(ec *Frame, args []Value, opts map[string]Value) {
+func hasValue(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 
-	var container, value Value
+	var container, value types.Value
 	var found bool
 
 	ScanArgs(args, &container, &value)
 
 	switch container := container.(type) {
-	case Iterable:
-		container.Iterate(func(v Value) bool {
+	case types.Iterator:
+		container.Iterate(func(v types.Value) bool {
 			found = (v == value)
 			return !found
 		})
 	case MapLike:
-		container.IterateKey(func(v Value) bool {
+		container.IterateKey(func(v types.Value) bool {
 			found = (container.IndexOne(v) == value)
 			return !found
 		})
@@ -189,10 +190,10 @@ func hasValue(ec *Frame, args []Value, opts map[string]Value) {
 	ec.ports[1].Chan <- Bool(found)
 }
 
-func hasKey(ec *Frame, args []Value, opts map[string]Value) {
+func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 
-	var container, key Value
+	var container, key types.Value
 	var found bool
 
 	ScanArgs(args, &container, &key)
@@ -200,7 +201,7 @@ func hasKey(ec *Frame, args []Value, opts map[string]Value) {
 	switch container := container.(type) {
 	case HasKeyer:
 		found = container.HasKey(key)
-	case Lener:
+	case types.Lener:
 		// XXX(xiaq): Not all types that implement Lener have numerical indices
 		err := util.PCall(func() {
 			ParseAndFixListIndex(ToString(key), container.Len())
@@ -213,23 +214,23 @@ func hasKey(ec *Frame, args []Value, opts map[string]Value) {
 	ec.ports[1].Chan <- Bool(found)
 }
 
-func count(ec *Frame, args []Value, opts map[string]Value) {
+func count(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 
 	var n int
 	switch len(args) {
 	case 0:
 		// Count inputs.
-		ec.IterateInputs(func(Value) {
+		ec.IterateInputs(func(types.Value) {
 			n++
 		})
 	case 1:
 		// Get length of argument.
 		v := args[0]
-		if lener, ok := v.(Lener); ok {
+		if lener, ok := v.(types.Lener); ok {
 			n = lener.Len()
-		} else if iterator, ok := v.(Iterable); ok {
-			iterator.Iterate(func(Value) bool {
+		} else if iterator, ok := v.(types.Iterator); ok {
+			iterator.Iterate(func(types.Value) bool {
 				n++
 				return true
 			})
@@ -242,15 +243,15 @@ func count(ec *Frame, args []Value, opts map[string]Value) {
 	ec.ports[1].Chan <- String(strconv.Itoa(n))
 }
 
-func keys(ec *Frame, args []Value, opts map[string]Value) {
+func keys(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 
-	var iter IterateKeyer
+	var iter types.IterateKeyer
 	ScanArgs(args, &iter)
 
 	out := ec.ports[1].Chan
 
-	iter.IterateKey(func(v Value) bool {
+	iter.IterateKey(func(v types.Value) bool {
 		out <- v
 		return true
 	})

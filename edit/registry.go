@@ -8,6 +8,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/hashmap"
 )
 
@@ -114,7 +115,7 @@ func makeBindings() map[string]eval.Variable {
 
 var errShouldBeBindingTable = errors.New("should be binding table")
 
-func shouldBeBindingTable(v eval.Value) error {
+func shouldBeBindingTable(v types.Value) error {
 	if _, ok := v.(BindingTable); !ok {
 		return errShouldBeBindingTable
 	}

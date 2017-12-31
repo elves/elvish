@@ -12,6 +12,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/util"
 )
 
@@ -33,7 +34,7 @@ func PromptVariable() eval.Variable {
 	isRoot := err == nil && user.Uid == "0"
 
 	prompt := func(ec *eval.Frame,
-		args []eval.Value, opts map[string]eval.Value) {
+		args []types.Value, opts map[string]types.Value) {
 
 		out := ec.OutputChan()
 		out <- eval.String(util.Getwd())
@@ -65,7 +66,7 @@ func RpromptVariable() eval.Variable {
 	}
 	rpromptStr := username + "@" + hostname
 	rprompt := func(ec *eval.Frame,
-		args []eval.Value, opts map[string]eval.Value) {
+		args []types.Value, opts map[string]types.Value) {
 
 		out := ec.OutputChan()
 		out <- &ui.Styled{rpromptStr, ui.Styles{"inverse"}}
@@ -133,7 +134,7 @@ func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
 	}
 	// Value output may be of type ui.Styled or any other type, in which case
 	// they are converted to ui.Styled.
-	valuesCb := func(ch <-chan eval.Value) {
+	valuesCb := func(ch <-chan types.Value) {
 		for v := range ch {
 			if s, ok := v.(*ui.Styled); ok {
 				add(s)

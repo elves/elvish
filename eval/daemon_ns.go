@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/daemon"
+	"github.com/elves/elvish/eval/types"
 )
 
 // ErrDontKnowHowToSpawnDaemon is thrown by daemon:spawn when the Evaler's
@@ -13,7 +14,7 @@ var ErrDontKnowHowToSpawnDaemon = errors.New("don't know how to spawn daemon")
 
 func makeDaemonNs(daemon *daemon.Client) Ns {
 	// Obtain process ID
-	daemonPid := func() Value {
+	daemonPid := func() types.Value {
 		pid, err := daemon.Pid()
 		maybeThrow(err)
 		return String(strconv.Itoa(pid))
@@ -27,7 +28,7 @@ func makeDaemonNs(daemon *daemon.Client) Ns {
 	}
 }
 
-func daemonSpawn(ec *Frame, args []Value, opts map[string]Value) {
+func daemonSpawn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 	if ec.DaemonSpawner == nil {
