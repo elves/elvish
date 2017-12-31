@@ -1,33 +1,29 @@
 # Elvish: Friendly and Expressive Shell
 
-[![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?label=Linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
-[![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=Windows)](https://ci.appveyor.com/project/xiaq/elvish)
-[![Build Status on VSTS](https://img.shields.io/vso/build/xiaq/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1.svg?label=macOS)](https://xiaq.visualstudio.com/elvish/_build)
-
-[![GoDoc](http://godoc.org/github.com/elves/elvish?status.svg)](http://godoc.org/github.com/elves/elvish)
-[![Code Coverage on codecov.io](https://img.shields.io/codecov/c/github/elves/elvish.svg?label=codecov)](https://codecov.io/gh/elves/elvish)
-[![Code Coverage on coveralls.io](https://img.shields.io/coveralls/github/elves/elvish.svg?label=coveralls)](https://coveralls.io/github/elves/elvish)
-[![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
-[![License](https://img.shields.io/badge/License-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
-[![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
-
-User groups:
-[![Gitter](https://img.shields.io/badge/gitter-elvish--public-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish-public)
-[![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg)](https://telegram.me/elvish)
-[![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-blue.svg)](https://webchat.freenode.net/?channels=elvish)
-
-Developer groups:
-[![Gitter](https://img.shields.io/badge/gitter-elvish--dev-000000.svg?logo=gitter-white)](https://gitter.im/elves/elvish-dev)
-[![Telegram Group](https://img.shields.io/badge/telegram-@elvish__dev-000000.svg)](https://telegram.me/elvish_dev)
-[![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish--dev-000000.svg)](https://webchat.freenode.net/?channels=elvish-dev)
-
 [![logo](https://elvish.io/assets/logo.svg)](https://elvish.io/)
 
 Elvish is a cross-platform shell, supporting Linux, BSDs and Windows. It features an expressive programming language, with features like namespacing and anonymous functions, and a fully programmable user interface with friendly defaults. It is suitable for both interactive use and scripting.
 
-... which is not 100% true yet. Elvish is already suitable for most daily interactive use, but it is not yet complete. Contributions are more than welcome!
+... Which is not 100% true yet. Elvish is already suitable for most daily interactive use, but it is neither complete nor stablized. Contributions are more than welcome!
 
 This README documents the development aspect of Elvish. Other information is to be found on the [website](https://elvish.io).
+
+[![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?label=linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
+[![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=windows)](https://ci.appveyor.com/project/xiaq/elvish)
+[![Build Status on VSTS](https://img.shields.io/vso/build/xiaq/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1.svg?label=macOS)](https://xiaq.visualstudio.com/elvish/_build)
+[![Code Coverage on codecov.io](https://img.shields.io/codecov/c/github/elves/elvish.svg?label=codecov)](https://codecov.io/gh/elves/elvish)
+[![Code Coverage on coveralls.io](https://img.shields.io/coveralls/github/elves/elvish.svg?label=coveralls)](https://coveralls.io/github/elves/elvish)
+[![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
+[![GoDoc](https://img.shields.io/badge/godoc-api-blue.svg)](http://godoc.org/github.com/elves/elvish)
+[![License](https://img.shields.io/badge/license-BSD%202--Clause-orange.svg)](https://opensource.org/licenses/BSD-2-Clause)
+
+[![Gitter](https://img.shields.io/badge/gitter-elvish--public-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish-public)
+[![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg)](https://telegram.me/elvish)
+[![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-blue.svg)](https://webchat.freenode.net/?channels=elvish)
+[![Gitter for Developers](https://img.shields.io/badge/gitter-elvish--dev-000000.svg?logo=gitter-white)](https://gitter.im/elves/elvish-dev)
+[![Telegram Group for Developers](https://img.shields.io/badge/telegram-@elvish__dev-000000.svg)](https://telegram.me/elvish_dev)
+[![#elvish-dev on freenode](https://img.shields.io/badge/freenode-%23elvish--dev-000000.svg)](https://webchat.freenode.net/?channels=elvish-dev)
+[![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
 
 ## Building Elvish
