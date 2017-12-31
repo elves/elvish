@@ -1,4 +1,4 @@
-# A friendly and expressive Unix shell
+# Elvish: Friendly and Expressive Shell
 
 [![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?label=Linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
 [![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=Windows)](https://ci.appveyor.com/project/xiaq/elvish)
@@ -23,7 +23,7 @@ Developer groups:
 
 [![logo](https://elvish.io/assets/logo.svg)](https://elvish.io/)
 
-Elvish is a cross-platform shell suitable for both interactive use and scripting. It features a full-fledged, non-POSIX-shell programming language with advanced features like namespacing and anonymous functions, and a powerful, fully programmable user interface that works well out of the box.
+Elvish is a cross-platform shell, supporting Linux, BSDs and Windows. It features an expressive programming language, with features like namespacing and anonymous functions, and a fully programmable user interface with friendly defaults. It is suitable for both interactive use and scripting.
 
 ... which is not 100% true yet. Elvish is already suitable for most daily interactive use, but it is not yet complete. Contributions are more than welcome!
 
