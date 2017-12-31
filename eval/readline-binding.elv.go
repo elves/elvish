@@ -1,3 +1,6 @@
+package eval
+
+const readlineBindingElv = `
 b=[k f]{ edit:insert:binding[$k] = $f } {
     $b Ctrl-A $edit:move-dot-sol~
     $b Ctrl-B $edit:move-dot-left~
@@ -60,3 +63,4 @@ b=[k f]{ edit:histlist:binding[$k] = $f } {
     $b Alt-g $edit:histlist:toggle-case-sensitivity~
     $b Alt-d $edit:histlist:toggle-dedup~
 }
+`

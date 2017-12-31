@@ -1,3 +1,6 @@
+package eval
+
+const narrowElv = `
 # Implementation of location, history and lastcmd mode using the new
 # -narrow-read mode. One advantage of this is that it allows the
 # execution of arbitrary hooks before or after each mode.
@@ -122,3 +125,4 @@ fn bind-trigger-keys [&location=C-l &history=C-r &lastcmd=M-1]{
 -bind "C-["     $edit:insert:start~
 -bind C-G       $edit:narrow:toggle-ignore-case~
 -bind C-D       $edit:narrow:toggle-ignore-duplication~
+`

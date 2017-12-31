@@ -1,3 +1,6 @@
+package eval
+
+const epmElv = `
 -data-dir = ~/.elvish
 -installed = $-data-dir/epm-installed
 
@@ -105,3 +108,4 @@ fn uninstall [@pkgs]{
         -uninstall-one $pkg
     }
 }
+`

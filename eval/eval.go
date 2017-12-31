@@ -46,6 +46,8 @@ type Evaler struct {
 	evalerDaemon
 	evalerPorts
 	Modules map[string]Ns
+	// bundled modules
+	bundled map[string]string
 	Editor  Editor
 	libDir  string
 	intCh   chan struct{}
@@ -73,8 +75,9 @@ func NewEvaler() *Evaler {
 		Modules: map[string]Ns{
 			"builtin": builtin,
 		},
-		Editor: nil,
-		intCh:  nil,
+		bundled: makeBundled(),
+		Editor:  nil,
+		intCh:   nil,
 	}
 
 	valueOutIndicator := defaultValueOutIndicator
@@ -101,6 +104,11 @@ func (ev *Evaler) InstallDaemon(client *daemon.Client, spawner *daemonp.Daemon) 
 // "use $name" from script.
 func (ev *Evaler) InstallModule(name string, mod Ns) {
 	ev.Modules[name] = mod
+}
+
+// InstallBundled installs a bundled module to the Evaler.
+func (ev *Evaler) InstallBundled(name, src string) {
+	ev.bundled[name] = src
 }
 
 func (ev *Evaler) SetLibDir(libDir string) {

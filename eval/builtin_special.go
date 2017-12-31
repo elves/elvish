@@ -197,7 +197,7 @@ func loadModule(ec *Frame, modpath string) Ns {
 		// File does not exist. Try loading from the table of builtin
 		// modules.
 		var ok bool
-		if source, ok = bundledModules[modpath]; ok {
+		if source, ok = ec.bundled[modpath]; ok {
 			// Source is loaded. Do nothing more.
 			filename = "<builtin module>"
 		} else {
