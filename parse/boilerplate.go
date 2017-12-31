@@ -207,9 +207,9 @@ func (n *Compound) addToIndexings(ch *Indexing) {
 	addChild(n, ch)
 }
 
-func ParseCompound(ps *Parser, head bool) *Compound {
+func ParseCompound(ps *Parser, ctx ExprCtx) *Compound {
 	n := &Compound{node: node{begin: ps.pos}}
-	n.parse(ps, head)
+	n.parse(ps, ctx)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
@@ -237,9 +237,9 @@ func (n *Indexing) addToIndicies(ch *Array) {
 	addChild(n, ch)
 }
 
-func ParseIndexing(ps *Parser, head bool) *Indexing {
+func ParseIndexing(ps *Parser, ctx ExprCtx) *Indexing {
 	n := &Indexing{node: node{begin: ps.pos}}
-	n.parse(ps, head)
+	n.parse(ps, ctx)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n
@@ -302,9 +302,9 @@ func (n *Primary) addToBraced(ch *Compound) {
 	addChild(n, ch)
 }
 
-func ParsePrimary(ps *Parser, head bool) *Primary {
+func ParsePrimary(ps *Parser, ctx ExprCtx) *Primary {
 	n := &Primary{node: node{begin: ps.pos}}
-	n.parse(ps, head)
+	n.parse(ps, ctx)
 	n.end = ps.pos
 	n.sourceText = ps.src[n.begin:n.end]
 	return n

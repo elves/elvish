@@ -2,7 +2,7 @@
 
 package parse
 
-import "fmt"
+import "strconv"
 
 const _PrimaryType_name = "BadPrimaryBarewordSingleQuotedDoubleQuotedVariableWildcardTildeExceptionCaptureOutputCaptureListLambdaMapBraced"
 
@@ -10,7 +10,7 @@ var _PrimaryType_index = [...]uint8{0, 10, 18, 30, 42, 50, 58, 63, 79, 92, 96, 1
 
 func (i PrimaryType) String() string {
 	if i < 0 || i >= PrimaryType(len(_PrimaryType_index)-1) {
-		return fmt.Sprintf("PrimaryType(%d)", i)
+		return "PrimaryType(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
 	return _PrimaryType_name[_PrimaryType_index[i]:_PrimaryType_index[i+1]]
 }
@@ -21,7 +21,7 @@ var _RedirMode_index = [...]uint8{0, 12, 16, 21, 30, 36}
 
 func (i RedirMode) String() string {
 	if i < 0 || i >= RedirMode(len(_RedirMode_index)-1) {
-		return fmt.Sprintf("RedirMode(%d)", i)
+		return "RedirMode(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
 	return _RedirMode_name[_RedirMode_index[i]:_RedirMode_index[i+1]]
 }

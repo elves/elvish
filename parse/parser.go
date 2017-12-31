@@ -56,33 +56,11 @@ func (ps *Parser) peek() rune {
 		return eof
 	}
 	r, _ := utf8.DecodeRuneInString(ps.src[ps.pos:])
-	if ps.currentCutset()[r] > 0 {
-		return eof
-	}
 	return r
 }
 
 func (ps *Parser) hasPrefix(prefix string) bool {
 	return strings.HasPrefix(ps.src[ps.pos:], prefix)
-}
-
-// findWord looks ahead for [a-z]* that is also a valid compound. If the
-// lookahead fails, it returns an empty string. It is useful for looking for
-// command leaders.
-func (ps *Parser) findPossibleLeader() string {
-	rest := ps.src[ps.pos:]
-	i := strings.IndexFunc(rest, func(r rune) bool {
-		return r < 'a' || r > 'z'
-	})
-	if i == -1 {
-		// The whole rest is just one possible leader.
-		return rest
-	}
-	r, _ := utf8.DecodeRuneInString(rest[i:])
-	if startsPrimary(r, false) {
-		return ""
-	}
-	return rest[:i]
 }
 
 func (ps *Parser) next() rune {
@@ -91,9 +69,6 @@ func (ps *Parser) next() rune {
 		return eof
 	}
 	r, s := utf8.DecodeRuneInString(ps.src[ps.pos:])
-	if ps.currentCutset()[r] > 0 {
-		return eof
-	}
 	ps.pos += s
 	return r
 }
@@ -125,35 +100,6 @@ func (ps *Parser) error(e error) {
 		end++
 	}
 	ps.errorp(ps.pos, end, e)
-}
-
-func (ps *Parser) pushCutset(rs ...rune) {
-	ps.cutsets = append(ps.cutsets, map[rune]int{})
-	ps.cut(rs...)
-}
-
-func (ps *Parser) popCutset() {
-	n := len(ps.cutsets)
-	ps.cutsets[n-1] = nil
-	ps.cutsets = ps.cutsets[:n-1]
-}
-
-func (ps *Parser) currentCutset() map[rune]int {
-	return ps.cutsets[len(ps.cutsets)-1]
-}
-
-func (ps *Parser) cut(rs ...rune) {
-	cutset := ps.currentCutset()
-	for _, r := range rs {
-		cutset[r]++
-	}
-}
-
-func (ps *Parser) uncut(rs ...rune) {
-	cutset := ps.currentCutset()
-	for _, r := range rs {
-		cutset[r]--
-	}
 }
 
 func newError(text string, shouldbe ...string) error {

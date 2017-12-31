@@ -115,7 +115,7 @@ var primaryTests = []emitTests{
 func TestPrimary(t *testing.T) {
 	test(t, "primary", primaryTests,
 		func(e *Emitter, ps *parse.Parser) {
-			e.primary(parse.ParsePrimary(ps, false))
+			e.primary(parse.ParsePrimary(ps, parse.NormalExpr))
 		})
 }
 

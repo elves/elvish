@@ -150,7 +150,7 @@ func (fn *Form) parse(ps *Parser) {
 	}
 
 	// Parse head.
-	if !startsCompound(ps.peek(), true) {
+	if !startsCompound(ps.peek(), CmdExpr) {
 		if len(fn.Assignments) > 0 {
 			// Assignment-only form.
 			return
@@ -158,7 +158,7 @@ func (fn *Form) parse(ps *Parser) {
 		// Bad form.
 		ps.error(fmt.Errorf("bad rune at form head: %q", ps.peek()))
 	}
-	fn.setHead(ParseCompound(ps, true))
+	fn.setHead(ParseCompound(ps, CmdExpr))
 	parseSpaces(fn, ps)
 
 	for {
@@ -166,14 +166,14 @@ func (fn *Form) parse(ps *Parser) {
 		switch {
 		case r == '&':
 			ps.next()
-			hasMapPair := startsCompound(ps.peek(), false)
+			hasMapPair := startsCompound(ps.peek(), LHSExpr)
 			ps.backup()
 			if !hasMapPair {
 				// background indicator
 				return
 			}
 			fn.addToOpts(ParseMapPair(ps))
-		case startsCompound(r, false):
+		case startsCompound(r, NormalExpr):
 			if ps.hasPrefix("?>") {
 				if fn.ExitusRedir != nil {
 					ps.error(errDuplicateExitusRedir)
@@ -184,7 +184,7 @@ func (fn *Form) parse(ps *Parser) {
 				}
 				continue
 			}
-			cn := ParseCompound(ps, false)
+			cn := ParseCompound(ps, NormalExpr)
 			if isRedirSign(ps.peek()) {
 				// Redir
 				fn.addToRedirs(ParseRedir(ps, cn))
@@ -226,7 +226,7 @@ func (fn *Form) parse(ps *Parser) {
 // assignment to fn.Assignments and returns true. Otherwise it rewinds the
 // parser and returns false.
 func (fn *Form) tryAssignment(ps *Parser) bool {
-	if !startsIndexing(ps.peek(), false) || ps.peek() == '=' {
+	if !startsIndexing(ps.peek(), LHSExpr) {
 		return false
 	}
 
@@ -244,7 +244,7 @@ func (fn *Form) tryAssignment(ps *Parser) bool {
 }
 
 func startsForm(r rune) bool {
-	return IsSpace(r) || startsCompound(r, true)
+	return IsSpace(r) || startsCompound(r, CmdExpr)
 }
 
 // Assignment = Indexing '=' Compound
@@ -255,18 +255,16 @@ type Assignment struct {
 }
 
 func (an *Assignment) parse(ps *Parser) {
-	ps.cut('=')
-	an.setLeft(ParseIndexing(ps, false))
+	an.setLeft(ParseIndexing(ps, LHSExpr))
 	head := an.Left.Head
 	if !checkVariableInAssignment(head, ps) {
 		ps.errorp(head.Begin(), head.End(), errShouldBeVariableName)
 	}
-	ps.uncut('=')
 
 	if !parseSep(an, ps, '=') {
 		ps.error(errShouldBeEqual)
 	}
-	an.setRight(ParseCompound(ps, false))
+	an.setRight(ParseCompound(ps, NormalExpr))
 }
 
 func checkVariableInAssignment(p *Primary, ps *Parser) bool {
@@ -300,7 +298,7 @@ func (ern *ExitusRedir) parse(ps *Parser) {
 	ps.next()
 	addSep(ern, ps)
 	parseSpaces(ern, ps)
-	ern.setDest(ParseCompound(ps, false))
+	ern.setDest(ParseCompound(ps, NormalExpr))
 }
 
 // Redir = { Compound } { '<'|'>'|'<>'|'>>' } { Space } ( '&'? Compound )
@@ -341,7 +339,7 @@ func (rn *Redir) parse(ps *Parser, dest *Compound) {
 	if parseSep(rn, ps, '&') {
 		rn.RightIsFd = true
 	}
-	rn.setRight(ParseCompound(ps, false))
+	rn.setRight(ParseCompound(ps, NormalExpr))
 	if len(rn.Right.Indexings) == 0 {
 		if rn.RightIsFd {
 			ps.error(errShouldBeFD)
@@ -374,10 +372,30 @@ type Compound struct {
 	Indexings []*Indexing
 }
 
-func (cn *Compound) parse(ps *Parser, head bool) {
+// ExprCtx represents special contexts of expression parsing.
+type ExprCtx int
+
+const (
+	// NormalExpr represents a normal expression, namely none of the special
+	// ones below.
+	NormalExpr ExprCtx = iota
+	// CmdExpr represents an expression used as the command in a form. In this
+	// context, unquoted <>*^ are treated as bareword characters.
+	CmdExpr
+	// LHSExpr represents an expression used as the left-hand-side in either
+	// assignments or map pairs. In this context, an unquoted = serves as an
+	// expression terminator and is thus not treated as a bareword character.
+	LHSExpr
+	// BracedElemExpr represents an expression used as an element in a braced
+	// expression. In this context, an unquoted , serves as an expression
+	// terminator and is thus not treated as a bareword character.
+	BracedElemExpr
+)
+
+func (cn *Compound) parse(ps *Parser, ctx ExprCtx) {
 	cn.tilde(ps)
-	for startsIndexing(ps.peek(), head) {
-		cn.addToIndexings(ParseIndexing(ps, head))
+	for startsIndexing(ps.peek(), ctx) {
+		cn.addToIndexings(ParseIndexing(ps, ctx))
 	}
 }
 
@@ -395,8 +413,8 @@ func (cn *Compound) tilde(ps *Parser) {
 	}
 }
 
-func startsCompound(r rune, head bool) bool {
-	return startsIndexing(r, head)
+func startsCompound(r rune, ctx ExprCtx) bool {
+	return startsIndexing(r, ctx)
 }
 
 // Indexing = Primary { '[' Array ']' }
@@ -406,16 +424,14 @@ type Indexing struct {
 	Indicies []*Array
 }
 
-func (in *Indexing) parse(ps *Parser, head bool) {
-	in.setHead(ParsePrimary(ps, head))
+func (in *Indexing) parse(ps *Parser, ctx ExprCtx) {
+	in.setHead(ParsePrimary(ps, ctx))
 	for parseSep(in, ps, '[') {
 		if !startsArray(ps.peek()) {
 			ps.error(errShouldBeArray)
 		}
 
-		ps.pushCutset()
 		in.addToIndicies(ParseArray(ps, false))
-		ps.popCutset()
 
 		if !parseSep(in, ps, ']') {
 			ps.error(errShouldBeRBracket)
@@ -424,8 +440,8 @@ func (in *Indexing) parse(ps *Parser, head bool) {
 	}
 }
 
-func startsIndexing(r rune, head bool) bool {
-	return startsPrimary(r, head)
+func startsIndexing(r rune, ctx ExprCtx) bool {
+	return startsPrimary(r, ctx)
 }
 
 // Array = { Space | '\n' } { Compound { Space | '\n' } }
@@ -450,8 +466,8 @@ func (sn *Array) parse(ps *Parser, allowSemicolon bool) {
 	}
 
 	parseSep()
-	for startsCompound(ps.peek(), false) {
-		sn.addToCompounds(ParseCompound(ps, false))
+	for startsCompound(ps.peek(), NormalExpr) {
+		sn.addToCompounds(ParseCompound(ps, NormalExpr))
 		parseSep()
 	}
 }
@@ -461,7 +477,7 @@ func IsSpace(r rune) bool {
 }
 
 func startsArray(r rune) bool {
-	return IsSpaceOrNewline(r) || startsIndexing(r, false)
+	return IsSpaceOrNewline(r) || startsIndexing(r, NormalExpr)
 }
 
 // Primary is the smallest expression unit.
@@ -497,17 +513,17 @@ const (
 	Braced
 )
 
-func (pn *Primary) parse(ps *Parser, head bool) {
+func (pn *Primary) parse(ps *Parser, ctx ExprCtx) {
 	r := ps.peek()
-	if !startsPrimary(r, head) {
+	if !startsPrimary(r, ctx) {
 		ps.error(errShouldBePrimary)
 		return
 	}
 
 	// Try bareword early, since it has precedence over wildcard on *
-	// when head is true.
-	if allowedInBareword(r, head) {
-		pn.bareword(ps, head)
+	// when ctx = commandExpr.
+	if allowedInBareword(r, ctx) {
+		pn.bareword(ps, ctx)
 		return
 	}
 
@@ -711,9 +727,7 @@ func (pn *Primary) exitusCapture(ps *Parser) {
 
 	pn.Type = ExceptionCapture
 
-	ps.pushCutset()
 	pn.setChunk(ParseChunk(ps))
-	ps.popCutset()
 
 	if !parseSep(pn, ps, ')') {
 		ps.error(errShouldBeRParen)
@@ -724,9 +738,7 @@ func (pn *Primary) outputCapture(ps *Parser) {
 	pn.Type = OutputCapture
 	parseSep(pn, ps, '(')
 
-	ps.pushCutset()
 	pn.setChunk(ParseChunk(ps))
-	ps.popCutset()
 
 	if !parseSep(pn, ps, ')') {
 		ps.error(errShouldBeRParen)
@@ -743,14 +755,13 @@ func (pn *Primary) lbracket(ps *Parser) {
 	parseSpacesAndNewlines(pn, ps)
 
 	loneAmpersand := false
-	ps.pushCutset()
 items:
 	for {
 		r := ps.peek()
 		switch {
 		case r == '&':
 			ps.next()
-			hasMapPair := startsCompound(ps.peek(), false)
+			hasMapPair := startsCompound(ps.peek(), LHSExpr)
 			if !hasMapPair {
 				loneAmpersand = true
 				addSep(pn, ps)
@@ -759,14 +770,13 @@ items:
 			}
 			ps.backup()
 			pn.addToMapPairs(ParseMapPair(ps))
-		case startsCompound(r, false):
-			pn.addToElements(ParseCompound(ps, false))
+		case startsCompound(r, NormalExpr):
+			pn.addToElements(ParseCompound(ps, NormalExpr))
 		default:
 			break items
 		}
 		parseSpacesAndNewlines(pn, ps)
 	}
-	ps.popCutset()
 
 	if !parseSep(pn, ps, ']') {
 		ps.error(errShouldBeRBracket)
@@ -788,9 +798,7 @@ items:
 // lambda parses a lambda expression. The opening brace has been seen.
 func (pn *Primary) lambda(ps *Parser) {
 	pn.Type = Lambda
-	ps.pushCutset()
 	pn.setChunk(ParseChunk(ps))
-	ps.popCutset()
 	if !parseSep(pn, ps, '}') {
 		ps.error(errShouldBeRBrace)
 	}
@@ -808,14 +816,9 @@ func (pn *Primary) lbrace(ps *Parser) {
 
 	pn.Type = Braced
 
-	ps.pushCutset()
-	defer ps.popCutset()
-
 	// XXX: The compound can be empty, which allows us to parse {,foo}.
 	// Allowing compounds to be empty can be fragile in other cases.
-	ps.cut(',')
-	pn.addToBraced(ParseCompound(ps, false))
-	ps.uncut(',')
+	pn.addToBraced(ParseCompound(ps, BracedElemExpr))
 
 	for isBracedSep(ps.peek()) {
 		parseSpacesAndNewlines(pn, ps)
@@ -823,9 +826,7 @@ func (pn *Primary) lbrace(ps *Parser) {
 		parseSep(pn, ps, ',')
 		parseSpacesAndNewlines(pn, ps)
 
-		ps.cut(',')
-		pn.addToBraced(ParseCompound(ps, false))
-		ps.uncut(',')
+		pn.addToBraced(ParseCompound(ps, BracedElemExpr))
 	}
 	if !parseSep(pn, ps, '}') {
 		ps.error(errShouldBeBraceSepOrRBracket)
@@ -836,30 +837,33 @@ func isBracedSep(r rune) bool {
 	return r == ',' || IsSpaceOrNewline(r)
 }
 
-func (pn *Primary) bareword(ps *Parser, head bool) {
+func (pn *Primary) bareword(ps *Parser, ctx ExprCtx) {
 	pn.Type = Bareword
 	defer func() { pn.Value = ps.src[pn.begin:ps.pos] }()
-	for allowedInBareword(ps.peek(), head) {
+	for allowedInBareword(ps.peek(), ctx) {
 		ps.next()
 	}
 }
 
 // The following are allowed in barewords:
 // * Anything allowed in variable names
-// * The symbols "%+,./=@!\"
-// * The symbols "<>*^", if the bareword is in head
+// * The symbols "./\@%+!"
+// * The symbol "=", if ctx != lhsExpr
+// * The symbol ",", if ctx != bracedExpr
+// * The symbols "<>*^", if ctx = commandExpr
 //
 // The seemingly weird inclusion of \ is for easier path manipulation in
 // Windows.
-func allowedInBareword(r rune, head bool) bool {
-	return allowedInVariableName(r) ||
-		r == '%' || r == '+' || r == ',' || r == '.' ||
-		r == '/' || r == '=' || r == '@' || r == '!' || r == '\\' ||
-		(head && (r == '<' || r == '>' || r == '*' || r == '^'))
+func allowedInBareword(r rune, ctx ExprCtx) bool {
+	return allowedInVariableName(r) || r == '.' || r == '/' || r == '\\' ||
+		r == '@' || r == '%' || r == '+' || r == '!' ||
+		(ctx != LHSExpr && r == '=') ||
+		(ctx != BracedElemExpr && r == ',') ||
+		(ctx == CmdExpr && (r == '<' || r == '>' || r == '*' || r == '^'))
 }
 
-func startsPrimary(r rune, head bool) bool {
-	return r == '\'' || r == '"' || r == '$' || allowedInBareword(r, head) ||
+func startsPrimary(r rune, ctx ExprCtx) bool {
+	return r == '\'' || r == '"' || r == '$' || allowedInBareword(r, ctx) ||
 		r == '?' || r == '*' || r == '(' || r == '[' || r == '{'
 }
 
@@ -872,18 +876,15 @@ type MapPair struct {
 func (mpn *MapPair) parse(ps *Parser) {
 	parseSep(mpn, ps, '&')
 
-	// Parse key part, cutting on '='.
-	ps.cut('=')
-	mpn.setKey(ParseCompound(ps, false))
+	mpn.setKey(ParseCompound(ps, LHSExpr))
 	if len(mpn.Key.Indexings) == 0 {
 		ps.error(errShouldBeCompound)
 	}
-	ps.uncut('=')
 
 	if parseSep(mpn, ps, '=') {
 		parseSpacesAndNewlines(mpn, ps)
 		// Parse value part.
-		mpn.setValue(ParseCompound(ps, false))
+		mpn.setValue(ParseCompound(ps, NormalExpr))
 		// The value part can be empty.
 	}
 }
