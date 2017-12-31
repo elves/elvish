@@ -73,7 +73,7 @@ func toString(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 	out := ec.OutputChan()
 	for _, a := range args {
-		out <- String(ToString(a))
+		out <- String(types.ToString(a))
 	}
 }
 

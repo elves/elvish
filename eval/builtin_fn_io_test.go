@@ -22,7 +22,7 @@ func TestBuiltinFnIO(t *testing.T) {
 			want{out: []types.Value{
 				ConvertToMap(map[types.Value]types.Value{
 					String("k"): String("v"),
-					String("a"): NewList(strs("1", "2")...)}),
+					String("a"): types.MakeList(strs("1", "2")...)}),
 				String("foo"),
 			}}},
 		{`echo 'invalid' | from-json`, want{err: errAny}},

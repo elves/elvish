@@ -73,7 +73,7 @@ func cd(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	if len(args) == 0 {
 		dir = mustGetHome("")
 	} else if len(args) == 1 {
-		dir = ToString(args[0])
+		dir = types.ToString(args[0])
 	} else {
 		throw(ErrArgs)
 	}

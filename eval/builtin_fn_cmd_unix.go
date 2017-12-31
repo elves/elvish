@@ -21,7 +21,7 @@ func execFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	} else {
 		argstrings = make([]string, len(args))
 		for i, a := range args {
-			argstrings[i] = ToString(a)
+			argstrings[i] = types.ToString(a)
 		}
 	}
 

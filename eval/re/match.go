@@ -18,7 +18,7 @@ func newMatch(text string, start, end int, groups vector.Vector) *eval.Struct {
 		eval.String(text),
 		eval.String(strconv.Itoa(start)),
 		eval.String(strconv.Itoa(end)),
-		eval.NewListFromVector(groups),
+		types.NewList(groups),
 	}}
 }
 

@@ -63,6 +63,15 @@ type Stringer interface {
 	String() string
 }
 
+// ToString converts a Value to string. When the Value type implements
+// String(), it is used. Otherwise Repr(NoPretty) is used.
+func ToString(v Value) string {
+	if s, ok := v.(Stringer); ok {
+		return s.String()
+	}
+	return v.Repr(NoPretty)
+}
+
 // Lener wraps the Len method.
 type Lener interface {
 	// Len computes the length of the receiver.

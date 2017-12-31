@@ -17,7 +17,7 @@ var (
 )
 
 func ShouldBeList(v types.Value) error {
-	if _, ok := v.(List); !ok {
+	if _, ok := v.(types.List); !ok {
 		return errShouldBeList
 	}
 	return nil

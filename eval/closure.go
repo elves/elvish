@@ -79,7 +79,7 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 		ec.local[name] = NewPtrVariable(args[i])
 	}
 	if c.RestArg != "" {
-		ec.local[c.RestArg] = NewPtrVariable(NewList(args[len(c.ArgNames):]...))
+		ec.local[c.RestArg] = NewPtrVariable(types.MakeList(args[len(c.ArgNames):]...))
 	}
 	// Logger.Printf("EvalCtx=%p, args=%v, opts=%v", ec, args, opts)
 	for i, name := range c.OptNames {

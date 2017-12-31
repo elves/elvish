@@ -51,7 +51,7 @@ func (m Map) MarshalJSON() ([]byte, error) {
 	mm := map[string]types.Value{}
 	for it := m.inner.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
-		mm[ToString(k.(types.Value))] = v.(types.Value)
+		mm[types.ToString(k.(types.Value))] = v.(types.Value)
 	}
 	return json.Marshal(mm)
 }
@@ -113,7 +113,7 @@ func (m Map) HasKey(k types.Value) bool {
 // implementing other Map-like values. The zero value of a MapReprBuilder is
 // ready to use.
 type MapReprBuilder struct {
-	ListReprBuilder
+	types.ListReprBuilder
 }
 
 func (b *MapReprBuilder) WritePair(k string, indent int, v string) {
@@ -125,8 +125,9 @@ func (b *MapReprBuilder) WritePair(k string, indent int, v string) {
 }
 
 func (b *MapReprBuilder) String() string {
-	if b.buf.Len() == 0 {
-		return "[&]"
+	s := b.ListReprBuilder.String()
+	if s == "[]" {
+		s = "[&]"
 	}
-	return b.ListReprBuilder.String()
+	return s
 }

@@ -93,7 +93,7 @@ var valueTests = []Test{
 
 	// Rest argument.
 	{"[x @xs]{ put $x $xs } a b c",
-		want{out: []types.Value{String("a"), NewList(String("b"), String("c"))}}},
+		want{out: []types.Value{String("a"), types.MakeList(String("b"), String("c"))}}},
 	// Options.
 	{"[a &k=v]{ put $a $k } foo &k=bar", want{out: strs("foo", "bar")}},
 	// Option default value.

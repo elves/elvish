@@ -299,7 +299,7 @@ func (cp *compiler) list(n *parse.Primary) ValuesOpFunc {
 	// slice and converting to Vector.
 	op := catValuesOps(cp.compoundOps(n.Elements))
 	return func(ec *Frame) []types.Value {
-		return []types.Value{NewList(op(ec)...)}
+		return []types.Value{types.MakeList(op(ec)...)}
 	}
 }
 

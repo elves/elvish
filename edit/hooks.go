@@ -13,21 +13,21 @@ import (
 
 var _ = RegisterVariable("before-readline", makeListVariable)
 
-func (ed *Editor) beforeReadLine() eval.List {
-	return ed.variables["before-readline"].Get().(eval.List)
+func (ed *Editor) beforeReadLine() types.List {
+	return ed.variables["before-readline"].Get().(types.List)
 }
 
 var _ = RegisterVariable("after-readline", makeListVariable)
 
-func (ed *Editor) afterReadLine() eval.List {
-	return ed.variables["after-readline"].Get().(eval.List)
+func (ed *Editor) afterReadLine() types.List {
+	return ed.variables["after-readline"].Get().(types.List)
 }
 
 func makeListVariable() eval.Variable {
-	return eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList)
+	return eval.NewPtrVariableWithValidator(types.EmptyList, eval.ShouldBeList)
 }
 
-func callHooks(ev *eval.Evaler, li eval.List, args ...types.Value) {
+func callHooks(ev *eval.Evaler, li types.List, args ...types.Value) {
 	if li.Len() == 0 {
 		return
 	}

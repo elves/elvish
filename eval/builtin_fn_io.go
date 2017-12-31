@@ -59,7 +59,7 @@ func print(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		if i > 0 {
 			out.WriteString(sep)
 		}
-		out.WriteString(ToString(arg))
+		out.WriteString(types.ToString(arg))
 	}
 }
 
@@ -140,7 +140,7 @@ func toLines(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.ports[1].File
 
 	iterate(func(v types.Value) {
-		fmt.Fprintln(out, ToString(v))
+		fmt.Fprintln(out, types.ToString(v))
 	})
 }
 

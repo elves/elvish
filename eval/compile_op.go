@@ -349,7 +349,7 @@ func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFu
 		}
 
 		if len(rest) == 1 {
-			rest[0].Set(NewList(values[len(variables):]...))
+			rest[0].Set(types.MakeList(values[len(variables):]...))
 		}
 	}
 }

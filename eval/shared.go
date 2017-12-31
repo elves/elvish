@@ -11,7 +11,7 @@ type sharedVariable struct {
 }
 
 func (sv sharedVariable) Set(val types.Value) {
-	err := sv.store.SetSharedVar(sv.name, ToString(val))
+	err := sv.store.SetSharedVar(sv.name, types.ToString(val))
 	maybeThrow(err)
 }
 

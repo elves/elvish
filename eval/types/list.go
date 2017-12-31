@@ -1,4 +1,4 @@
-package eval
+package types
 
 import (
 	"bytes"
@@ -7,13 +7,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/vector"
 )
 
 // Error definitions.
 var (
-	// ErrNeedIntIndex    = errors.New("need integer index")
 	ErrBadIndex        = errors.New("bad index")
 	ErrIndexOutOfRange = errors.New("index out of range")
 	ErrAssocWithSlice  = errors.New("assoc with slice not yet supported")
@@ -24,14 +22,17 @@ type List struct {
 	inner vector.Vector
 }
 
+// EmptyList is an empty list.
+var EmptyList = List{vector.Empty}
+
 // Make sure that List implements ListLike and Assocer at compile time.
 var (
-	_ ListLike      = List{}
-	_ types.Assocer = List{}
+	_ ListLike = List{}
+	_ Assocer  = List{}
 )
 
-// NewList creates a new List.
-func NewList(vs ...types.Value) List {
+// MakeList creates a new List from values.
+func MakeList(vs ...Value) List {
 	vec := vector.Empty
 	for _, v := range vs {
 		vec = vec.Cons(v)
@@ -39,7 +40,8 @@ func NewList(vs ...types.Value) List {
 	return List{vec}
 }
 
-func NewListFromVector(vec vector.Vector) List {
+// NewList creates a new List from an existing Vector.
+func NewList(vec vector.Vector) List {
 	return List{vec}
 }
 
@@ -59,7 +61,7 @@ func (l List) Repr(indent int) string {
 	var b ListReprBuilder
 	b.Indent = indent
 	for it := l.inner.Iterator(); it.HasElem(); it.Next() {
-		v := it.Elem().(types.Value)
+		v := it.Elem().(Value)
 		b.WriteElem(v.Repr(indent + 1))
 	}
 	return b.String()
@@ -89,24 +91,24 @@ func (l List) Len() int {
 	return l.inner.Len()
 }
 
-func (l List) Iterate(f func(types.Value) bool) {
+func (l List) Iterate(f func(Value) bool) {
 	for it := l.inner.Iterator(); it.HasElem(); it.Next() {
-		v := it.Elem().(types.Value)
+		v := it.Elem().(Value)
 		if !f(v) {
 			break
 		}
 	}
 }
 
-func (l List) IndexOne(idx types.Value) types.Value {
+func (l List) IndexOne(idx Value) Value {
 	slice, i, j := ParseAndFixListIndex(ToString(idx), l.Len())
 	if slice {
 		return List{l.inner.SubVector(i, j)}
 	}
-	return l.inner.Nth(i).(types.Value)
+	return l.inner.Nth(i).(Value)
 }
 
-func (l List) Assoc(idx, v types.Value) types.Value {
+func (l List) Assoc(idx, v Value) Value {
 	slice, i, _ := ParseAndFixListIndex(ToString(idx), l.Len())
 	if slice {
 		throw(ErrAssocWithSlice)
@@ -163,37 +165,4 @@ func parseListIndex(s string, n int) (slice bool, i int, j int) {
 	}
 	// Two numbers
 	return true, i, j
-}
-
-// ListReprBuilder helps to build Repr of list-like Values.
-type ListReprBuilder struct {
-	Indent int
-	buf    bytes.Buffer
-}
-
-func (b *ListReprBuilder) WriteElem(v string) {
-	if b.buf.Len() == 0 {
-		b.buf.WriteByte('[')
-	}
-	if b.Indent >= 0 {
-		// Pretty printing.
-		//
-		// Add a newline and indent+1 spaces, so that the
-		// starting & lines up with the first pair.
-		b.buf.WriteString("\n" + strings.Repeat(" ", b.Indent+1))
-	} else if b.buf.Len() > 1 {
-		b.buf.WriteByte(' ')
-	}
-	b.buf.WriteString(v)
-}
-
-func (b *ListReprBuilder) String() string {
-	if b.buf.Len() == 0 {
-		return "[]"
-	}
-	if b.Indent >= 0 {
-		b.buf.WriteString("\n" + strings.Repeat(" ", b.Indent))
-	}
-	b.buf.WriteByte(']')
-	return b.buf.String()
 }

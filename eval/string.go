@@ -13,8 +13,8 @@ import (
 type String string
 
 var (
-	_ types.Value = String("")
-	_ ListLike    = String("")
+	_ types.Value    = String("")
+	_ types.ListLike = String("")
 )
 
 var ErrReplacementMustBeString = errors.New("replacement must be string")
@@ -58,14 +58,14 @@ func (s String) Assoc(idx, v types.Value) types.Value {
 }
 
 func (s String) index(idx types.Value) (int, int) {
-	slice, i, j := ParseAndFixListIndex(ToString(idx), len(s))
+	slice, i, j := types.ParseAndFixListIndex(types.ToString(idx), len(s))
 	r, size := utf8.DecodeRuneInString(string(s[i:]))
 	if r == utf8.RuneError {
-		throw(ErrBadIndex)
+		throw(types.ErrBadIndex)
 	}
 	if slice {
 		if r, _ := utf8.DecodeLastRuneInString(string(s[:j])); r == utf8.RuneError {
-			throw(ErrBadIndex)
+			throw(types.ErrBadIndex)
 		}
 		return i, j
 	}
@@ -100,13 +100,4 @@ func resolve(s string, ec *Frame) Fn {
 
 	// External command
 	return ExternalCmd{string(s)}
-}
-
-// ToString converts a Value to String. When the Value type implements
-// String(), it is used. Otherwise Repr(NoPretty) is used.
-func ToString(v types.Value) string {
-	if s, ok := v.(types.Stringer); ok {
-		return s.String()
-	}
-	return v.Repr(types.NoPretty)
 }

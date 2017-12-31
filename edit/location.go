@@ -153,7 +153,7 @@ func locStart(ed *Editor) {
 
 // convertListToDirs converts a list of strings to []storedefs.Dir. It uses the
 // special score of PinnedScore to signify that the directory is pinned.
-func convertListToDirs(li eval.List) []storedefs.Dir {
+func convertListToDirs(li types.List) []storedefs.Dir {
 	pinned := make([]storedefs.Dir, 0, li.Len())
 	// XXX(xiaq): silently drops non-string items.
 	li.Iterate(func(v types.Value) bool {
@@ -165,7 +165,7 @@ func convertListToDirs(li eval.List) []storedefs.Dir {
 	return pinned
 }
 
-func convertListsToSet(lis ...eval.List) map[string]struct{} {
+func convertListsToSet(lis ...types.List) map[string]struct{} {
 	set := make(map[string]struct{})
 	// XXX(xiaq): silently drops non-string items.
 	for _, li := range lis {
@@ -182,17 +182,17 @@ func convertListsToSet(lis ...eval.List) map[string]struct{} {
 // Variables.
 
 var _ = RegisterVariable("loc-hidden", func() eval.Variable {
-	return eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList)
+	return eval.NewPtrVariableWithValidator(types.EmptyList, eval.ShouldBeList)
 })
 
-func (ed *Editor) locHidden() eval.List {
-	return ed.variables["loc-hidden"].Get().(eval.List)
+func (ed *Editor) locHidden() types.List {
+	return ed.variables["loc-hidden"].Get().(types.List)
 }
 
 var _ = RegisterVariable("loc-pinned", func() eval.Variable {
-	return eval.NewPtrVariableWithValidator(eval.NewList(), eval.ShouldBeList)
+	return eval.NewPtrVariableWithValidator(types.EmptyList, eval.ShouldBeList)
 })
 
-func (ed *Editor) locPinned() eval.List {
-	return ed.variables["loc-pinned"].Get().(eval.List)
+func (ed *Editor) locPinned() types.List {
+	return ed.variables["loc-pinned"].Get().(types.List)
 }

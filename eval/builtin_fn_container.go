@@ -204,7 +204,7 @@ func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	case types.Lener:
 		// XXX(xiaq): Not all types that implement Lener have numerical indices
 		err := util.PCall(func() {
-			ParseAndFixListIndex(ToString(key), container.Len())
+			types.ParseAndFixListIndex(types.ToString(key), container.Len())
 		})
 		found = (err == nil)
 	default:

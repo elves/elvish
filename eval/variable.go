@@ -135,7 +135,7 @@ type envVariable struct {
 }
 
 func (ev envVariable) Set(val types.Value) {
-	os.Setenv(ev.name, ToString(val))
+	os.Setenv(ev.name, types.ToString(val))
 }
 
 func (ev envVariable) Get() types.Value {

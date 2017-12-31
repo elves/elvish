@@ -139,7 +139,7 @@ func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
 			if s, ok := v.(*ui.Styled); ok {
 				add(s)
 			} else {
-				add(&ui.Styled{eval.ToString(v), ui.Styles{}})
+				add(&ui.Styled{types.ToString(v), ui.Styles{}})
 			}
 		}
 	}

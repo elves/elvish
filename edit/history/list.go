@@ -17,8 +17,8 @@ type List struct {
 }
 
 var (
-	_ types.Value   = List{}
-	_ eval.ListLike = List{}
+	_ types.Value    = List{}
+	_ types.ListLike = List{}
 )
 
 func (hv List) Kind() string {
@@ -69,7 +69,7 @@ func (hv List) IndexOne(idx types.Value) types.Value {
 	hv.RLock()
 	defer hv.RUnlock()
 
-	slice, i, j := eval.ParseAndFixListIndex(eval.ToString(idx), hv.Len())
+	slice, i, j := types.ParseAndFixListIndex(types.ToString(idx), hv.Len())
 	if slice {
 		cmds, err := hv.Daemon.Cmds(i+1, j+1)
 		maybeThrow(err)
@@ -77,7 +77,7 @@ func (hv List) IndexOne(idx types.Value) types.Value {
 		for i := range cmds {
 			vs[i] = eval.String(cmds[i])
 		}
-		return eval.NewList(vs...)
+		return types.MakeList(vs...)
 	}
 	s, err := hv.Daemon.Cmd(i + 1)
 	maybeThrow(err)

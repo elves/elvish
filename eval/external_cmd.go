@@ -65,7 +65,7 @@ func (e ExternalCmd) Call(ec *Frame, argVals []types.Value, opts map[string]type
 	for i, a := range argVals {
 		// NOTE Maybe we should enfore string arguments instead of coercing all
 		// args into string
-		args[i+1] = ToString(a)
+		args[i+1] = types.ToString(a)
 	}
 
 	path, err := exec.LookPath(e.Name)

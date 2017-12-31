@@ -59,7 +59,7 @@ func FromJSONInterface(v interface{}) types.Value {
 		for i, v := range a {
 			vs[i] = FromJSONInterface(v)
 		}
-		return NewList(vs...)
+		return types.MakeList(vs...)
 	case map[string]interface{}:
 		m := v.(map[string]interface{})
 		mv := hashmap.Empty
