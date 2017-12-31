@@ -390,6 +390,8 @@ const (
 	// expression. In this context, an unquoted , serves as an expression
 	// terminator and is thus not treated as a bareword character.
 	BracedElemExpr
+	// strictExpr is only meaningful to allowedInBareword.
+	strictExpr
 )
 
 func (cn *Compound) parse(ps *Parser, ctx ExprCtx) {
@@ -845,11 +847,16 @@ func (pn *Primary) bareword(ps *Parser, ctx ExprCtx) {
 	}
 }
 
+// allowedInBareword returns where a rune is allowed in barewords in the given
+// expression context. The special strictExpr context queries whether the rune
+// is allowed in all contexts.
+//
 // The following are allowed in barewords:
+//
 // * Anything allowed in variable names
 // * The symbols "./\@%+!"
-// * The symbol "=", if ctx != lhsExpr
-// * The symbol ",", if ctx != bracedExpr
+// * The symbol "=", if ctx != lhsExpr && ctx != strictExpr
+// * The symbol ",", if ctx != bracedExpr && ctx != strictExpr
 // * The symbols "<>*^", if ctx = commandExpr
 //
 // The seemingly weird inclusion of \ is for easier path manipulation in
@@ -857,8 +864,8 @@ func (pn *Primary) bareword(ps *Parser, ctx ExprCtx) {
 func allowedInBareword(r rune, ctx ExprCtx) bool {
 	return allowedInVariableName(r) || r == '.' || r == '/' || r == '\\' ||
 		r == '@' || r == '%' || r == '+' || r == '!' ||
-		(ctx != LHSExpr && r == '=') ||
-		(ctx != BracedElemExpr && r == ',') ||
+		(ctx != LHSExpr && ctx != strictExpr && r == '=') ||
+		(ctx != BracedElemExpr && ctx != strictExpr && r == ',') ||
 		(ctx == CmdExpr && (r == '<' || r == '>' || r == '*' || r == '^'))
 }
 

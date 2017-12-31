@@ -8,7 +8,7 @@ var quoteTests = []struct {
 	// Empty string is quoted with single quote.
 	{"", `''`},
 	// Bareword when possible.
-	{"x-y,z@h/d", "x-y,z@h/d"},
+	{"x-y:z@h/d", "x-y:z@h/d"},
 	// Single quote when there is special char but no unprintable.
 	{"x$y[]ef'", "'x$y[]ef'''"},
 	// Tilde needs quoting only when appearing at the beginning
@@ -17,6 +17,11 @@ var quoteTests = []struct {
 	// Double quote when there is unprintable char.
 	{"a\nb", `"a\nb"`},
 	{"\x1b\"\\", `"\e\"\\"`},
+
+	// Commas and equal signs are always quoted, so that the quoted string is
+	// safe for use everywhere.
+	{"a,b", `'a,b'`},
+	{"a=b", `'a=b'`},
 }
 
 func TestQuote(t *testing.T) {
