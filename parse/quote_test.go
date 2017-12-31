@@ -1,34 +1,36 @@
 package parse
 
-import "testing"
+import (
+	"testing"
 
-var quoteTests = []struct {
-	text, quoted string
-}{
-	// Empty string is quoted with single quote.
-	{"", `''`},
+	"github.com/elves/elvish/tt"
+)
+
+var quoteTests = tt.Table{
+	// Empty string is single-quoted.
+	tt.C("").Rets(`''`),
+
 	// Bareword when possible.
-	{"x-y:z@h/d", "x-y:z@h/d"},
-	// Single quote when there is special char but no unprintable.
-	{"x$y[]ef'", "'x$y[]ef'''"},
-	// Tilde needs quoting only when appearing at the beginning
-	{"~x", "'~x'"},
-	{"x~", "x~"},
+	tt.C("x-y:z@h/d").Rets("x-y:z@h/d"),
+
+	// Single quote when there are special characters but no unprintable
+	// characters.
+	tt.C("x$y[]ef'").Rets("'x$y[]ef'''"),
+
+	// Tilde needs quoting only leading the expression.
+	tt.C("~x").Rets("'~x'"),
+	tt.C("x~").Rets("x~"),
+
 	// Double quote when there is unprintable char.
-	{"a\nb", `"a\nb"`},
-	{"\x1b\"\\", `"\e\"\\"`},
+	tt.C("a\nb").Rets(`"a\nb"`),
+	tt.C("\x1b\"\\").Rets(`"\e\"\\"`),
 
 	// Commas and equal signs are always quoted, so that the quoted string is
 	// safe for use everywhere.
-	{"a,b", `'a,b'`},
-	{"a=b", `'a=b'`},
+	tt.C("a,b").Rets(`'a,b'`),
+	tt.C("a=b").Rets(`'a=b'`),
 }
 
 func TestQuote(t *testing.T) {
-	for _, tc := range quoteTests {
-		got := Quote(tc.text)
-		if got != tc.quoted {
-			t.Errorf("Quote(%q) => %s, want %s", tc.text, got, tc.quoted)
-		}
-	}
+	tt.Test(t, tt.Fn{"Quote", "(%q)", "%q", Quote}, quoteTests)
 }
