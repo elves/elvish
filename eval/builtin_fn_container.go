@@ -178,7 +178,7 @@ func hasValue(ec *Frame, args []types.Value, opts map[string]types.Value) {
 			found = (v == value)
 			return !found
 		})
-	case MapLike:
+	case types.MapLike:
 		container.IterateKey(func(v types.Value) bool {
 			found = (container.IndexOne(v) == value)
 			return !found
@@ -199,7 +199,7 @@ func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ScanArgs(args, &container, &key)
 
 	switch container := container.(type) {
-	case HasKeyer:
+	case types.HasKeyer:
 		found = container.HasKey(key)
 	case types.Lener:
 		// XXX(xiaq): Not all types that implement Lener have numerical indices

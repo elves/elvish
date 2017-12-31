@@ -278,7 +278,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 
 			// opts
 			// XXX This conversion should be avoided.
-			opts := optsOp(ec)[0].(Map)
+			opts := optsOp(ec)[0].(types.Map)
 			convertedOpts := make(map[string]types.Value)
 			opts.IteratePair(func(k, v types.Value) bool {
 				if ks, ok := k.(String); ok {

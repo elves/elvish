@@ -24,7 +24,7 @@ func ShouldBeList(v types.Value) error {
 }
 
 func ShouldBeMap(v types.Value) error {
-	if _, ok := v.(Map); !ok {
+	if _, ok := v.(types.Map); !ok {
 		return errShouldBeMap
 	}
 	return nil

@@ -22,13 +22,13 @@ func getBinding(bindingVar eval.Variable, k ui.Key) eval.Fn {
 // BindingTable is a special Map that converts its key to ui.Key and ensures
 // that its values satisfy eval.CallableValue.
 type BindingTable struct {
-	eval.Map
+	types.Map
 }
 
 // Repr returns the representation of the binding table as if it were an
 // ordinary map keyed by strings.
 func (bt BindingTable) Repr(indent int) string {
-	var builder eval.MapReprBuilder
+	var builder types.MapReprBuilder
 	builder.Indent = indent
 	bt.Map.IteratePair(func(k, v types.Value) bool {
 		builder.WritePair(parse.Quote(k.(ui.Key).String()), indent+2, v.Repr(indent+2))
@@ -54,5 +54,5 @@ func (bt BindingTable) Assoc(k, v types.Value) types.Value {
 	if !ok {
 		throwf("want function, got %s", v.Kind())
 	}
-	return BindingTable{bt.Map.Assoc(key, f).(eval.Map)}
+	return BindingTable{bt.Map.Assoc(key, f).(types.Map)}
 }

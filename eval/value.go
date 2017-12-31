@@ -66,7 +66,7 @@ func FromJSONInterface(v interface{}) types.Value {
 		for k, v := range m {
 			mv = mv.Assoc(String(k), FromJSONInterface(v))
 		}
-		return NewMap(mv)
+		return types.NewMap(mv)
 	default:
 		throw(fmt.Errorf("unexpected json type: %T", v))
 		return nil // not reached

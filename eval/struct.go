@@ -21,8 +21,8 @@ type Struct struct {
 }
 
 var (
-	_ types.Value = (*Struct)(nil)
-	_ MapLike     = (*Struct)(nil)
+	_ types.Value   = (*Struct)(nil)
+	_ types.MapLike = (*Struct)(nil)
 )
 
 func (*Struct) Kind() string {
@@ -31,15 +31,15 @@ func (*Struct) Kind() string {
 
 // Equal returns true if the rhs is MapLike and all pairs are equal.
 func (s *Struct) Equal(rhs interface{}) bool {
-	return s == rhs || eqMapLike(s, rhs)
+	return s == rhs || types.EqMapLike(s, rhs)
 }
 
 func (s *Struct) Hash() uint32 {
-	return hashMapLike(s)
+	return types.HashMapLike(s)
 }
 
 func (s *Struct) Repr(indent int) string {
-	var builder MapReprBuilder
+	var builder types.MapReprBuilder
 	builder.Indent = indent
 	for i, name := range s.Descriptor.fieldNames {
 		builder.WritePair(parse.Quote(name), indent+2, s.Fields[i].Repr(indent+2))

@@ -520,7 +520,7 @@ func (cp *compiler) mapPairs(pairs []*parse.MapPair) ValuesOpFunc {
 				m = m.Assoc(key, values[j])
 			}
 		}
-		return []types.Value{NewMap(m)}
+		return []types.Value{types.NewMap(m)}
 	}
 }
 

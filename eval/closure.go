@@ -94,7 +94,7 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 	for k, v := range opts {
 		convertedOpts = convertedOpts.Assoc(String(k), v)
 	}
-	ec.local["opts"] = NewPtrVariable(NewMap(convertedOpts))
+	ec.local["opts"] = NewPtrVariable(types.NewMap(convertedOpts))
 
 	ec.traceback = ec.addTraceback()
 

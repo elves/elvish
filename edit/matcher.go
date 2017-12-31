@@ -33,12 +33,12 @@ var (
 		m := hashmap.Empty.Assoc(
 			// Fallback matcher uses empty string as key
 			eval.String(""), matchPrefix)
-		return eval.NewPtrVariableWithValidator(eval.NewMap(m), eval.ShouldBeMap)
+		return eval.NewPtrVariableWithValidator(types.NewMap(m), eval.ShouldBeMap)
 	})
 )
 
 func (ed *Editor) lookupMatcher(name string) (eval.Fn, bool) {
-	m := ed.variables["-matcher"].Get().(eval.Map)
+	m := ed.variables["-matcher"].Get().(types.Map)
 	if !m.HasKey(eval.String(name)) {
 		// Use fallback matcher
 		name = ""

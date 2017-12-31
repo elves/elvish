@@ -32,7 +32,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 		return true
 	})
 	optsv.Iterate(func(v types.Value) bool {
-		m, ok := v.(eval.MapLike)
+		m, ok := v.(types.MapLike)
 		if !ok {
 			throwf("opt should be map-like, got %s", v.Kind())
 		}

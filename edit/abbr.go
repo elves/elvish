@@ -8,11 +8,11 @@ import (
 
 var _ = RegisterVariable("abbr", func() eval.Variable {
 	return eval.NewPtrVariableWithValidator(
-		eval.NewMap(hashmap.Empty), eval.ShouldBeMap)
+		types.NewMap(hashmap.Empty), eval.ShouldBeMap)
 })
 
-func (ed *Editor) abbr() eval.Map {
-	return ed.variables["abbr"].Get().(eval.Map)
+func (ed *Editor) abbr() types.Map {
+	return ed.variables["abbr"].Get().(types.Map)
 }
 
 func (ed *Editor) abbrIterate(cb func(abbr, full string) bool) {

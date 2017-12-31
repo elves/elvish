@@ -88,11 +88,11 @@ func argCompleterVariable() eval.Variable {
 	for k, v := range argCompletersData {
 		m = m.Assoc(eval.String(k), v)
 	}
-	return eval.NewPtrVariableWithValidator(eval.NewMap(m), eval.ShouldBeMap)
+	return eval.NewPtrVariableWithValidator(types.NewMap(m), eval.ShouldBeMap)
 }
 
-func (ed *Editor) argCompleter() eval.Map {
-	return ed.variables["arg-completer"].Get().(eval.Map)
+func (ed *Editor) argCompleter() types.Map {
+	return ed.variables["arg-completer"].Get().(types.Map)
 }
 
 // completeArg calls the correct argument completers according to the command

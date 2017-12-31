@@ -329,7 +329,7 @@ type narrowItem interface {
 
 type narrowOptions struct {
 	AutoCommit        bool
-	Bindings          eval.Map
+	Bindings          types.Map
 	IgnoreDuplication bool
 	IgnoreCase        bool
 	KeepBottom        bool
@@ -356,7 +356,7 @@ func (s *narrowItemString) FilterText() string {
 }
 
 type narrowItemComplex struct {
-	eval.Map
+	types.Map
 }
 
 func (c *narrowItemComplex) Content() string {
@@ -396,7 +396,7 @@ func NarrowRead(ec *eval.Frame, args []types.Value, opts map[string]types.Value)
 	var source, action eval.Fn
 	l := &narrow{
 		opts: narrowOptions{
-			Bindings: eval.NewMap(hashmap.Empty),
+			Bindings: types.NewMap(hashmap.Empty),
 		},
 	}
 
@@ -439,7 +439,7 @@ func narrowGetSource(ec *eval.Frame, source eval.Fn) func() []narrowItem {
 			switch raw := v.(type) {
 			case eval.String:
 				lis = append(lis, &narrowItemString{raw})
-			case eval.Map:
+			case types.Map:
 				lis = append(lis, &narrowItemComplex{raw})
 			}
 		}
@@ -487,7 +487,7 @@ func CommandHistory(ec *eval.Frame, args []types.Value, opts map[string]types.Va
 	}
 
 	for i := start; i < end; i++ {
-		out <- eval.ConvertToMap(map[types.Value]types.Value{
+		out <- types.MakeMap(map[types.Value]types.Value{
 			eval.String("id"):  eval.String(strconv.Itoa(i)),
 			eval.String("cmd"): eval.String(cmds[i]),
 		})

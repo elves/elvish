@@ -28,7 +28,7 @@ func TestFindIndexComplContext(t *testing.T) {
 }
 
 func TestComplIndexInner(t *testing.T) {
-	m := eval.ConvertToMap(map[types.Value]types.Value{
+	m := types.MakeMap(map[types.Value]types.Value{
 		eval.String("foo"):   eval.String("bar"),
 		eval.String("lorem"): eval.String("ipsum"),
 	})

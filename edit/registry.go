@@ -108,7 +108,7 @@ func makeBindings() map[string]eval.Variable {
 			bindingValue = bindingValue.Assoc(key, fn)
 		}
 		bindings[mode] = eval.NewPtrVariableWithValidator(
-			BindingTable{eval.NewMap(bindingValue)}, shouldBeBindingTable)
+			BindingTable{types.NewMap(bindingValue)}, shouldBeBindingTable)
 	}
 	return bindings
 }
