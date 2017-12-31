@@ -1,3 +1,4 @@
+// Package re implements the re: module for using regular expressions.
 package re
 
 import (
