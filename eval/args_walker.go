@@ -2,8 +2,13 @@ package eval
 
 import "github.com/elves/elvish/parse"
 
+type errorpfer interface {
+	errorpf(begin, end int, fmt string, args ...interface{})
+}
+
+// argsWalker is used by builtin special forms to implement argument parsing.
 type argsWalker struct {
-	cp   *compiler
+	cp   errorpfer
 	form *parse.Form
 	idx  int
 }

@@ -101,11 +101,13 @@ func (t Test) WantErr(err error) Test {
 
 // WantAnyErr returns an altered Test that requires the source code to result in
 // any error when evaluated.
-func (t Test) WantAnyErr(err error) Test {
-	t.want.err = err
+func (t Test) WantAnyErr() Test {
+	t.WantErr(errAny)
 	return t
 }
 
+// RunTests runs test cases. For each test case, a new Evaler is made by calling
+// makeEvaler.
 func RunTests(t *testing.T, evalTests []Test, makeEvaler func() *Evaler) {
 	for _, tt := range evalTests {
 		// fmt.Printf("eval %q\n", tt.text)
