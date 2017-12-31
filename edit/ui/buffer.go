@@ -19,8 +19,6 @@ type Pos struct {
 	Line, Col int
 }
 
-var invalidPos = Pos{-1, -1}
-
 // CellsWidth returns the total width of a Cell slice.
 func CellsWidth(cs []Cell) int {
 	w := 0

@@ -10,7 +10,6 @@ var (
 	styleForGoodCommand  = ui.Styles{"green"}
 	styleForBadCommand   = ui.Styles{"red"}
 	styleForGoodVariable = ui.Styles{"magenta"}
-	styleForBadVariable  = ui.Styles{"white", "bg-red"}
 )
 
 // Lexically applied styles.

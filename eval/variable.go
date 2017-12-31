@@ -110,8 +110,6 @@ type elemVariable struct {
 	setValue types.Value
 }
 
-var errCannotIndex = errors.New("cannot index")
-
 func (ev *elemVariable) Set(v0 types.Value) {
 	v := v0
 	// Evaluate the actual new value from inside out. See comments in

@@ -82,14 +82,6 @@ func (ps *Parser) backup() {
 	ps.pos -= s
 }
 
-func (ps *Parser) advance(c int) {
-	ps.pos += c
-	if ps.pos > len(ps.src) {
-		ps.overEOF = ps.pos - len(ps.src)
-		ps.pos = len(ps.src)
-	}
-}
-
 func (ps *Parser) errorp(begin, end int, e error) {
 	ps.errors.Add(e.Error(), util.NewSourceRange(ps.srcName, ps.src, begin, end, nil))
 }

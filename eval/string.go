@@ -24,7 +24,7 @@ func (String) Kind() string {
 }
 
 func (s String) Repr(int) string {
-	return quote(string(s))
+	return parse.Quote(string(s))
 }
 
 func (s String) Equal(rhs interface{}) bool {
@@ -109,8 +109,4 @@ func ToString(v types.Value) string {
 		return s.String()
 	}
 	return v.Repr(types.NoPretty)
-}
-
-func quote(s string) string {
-	return parse.Quote(s)
 }

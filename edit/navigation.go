@@ -176,10 +176,7 @@ func navDefault(ed *Editor) {
 // Implementation.
 // TODO(xiaq): Remember which file was selected in each directory.
 
-var (
-	errorEmptyCwd      = errors.New("current directory is empty")
-	errorNoCwdInParent = errors.New("could not find current directory in parent")
-)
+var errorEmptyCwd = errors.New("current directory is empty")
 
 func initNavigation(n *navigation, ed *Editor) {
 	*n = navigation{chdir: func(dir string) error {
@@ -353,14 +350,6 @@ func (n *navigation) loaddir(dir string) ([]ui.Styled, error) {
 
 	return all, nil
 }
-
-const (
-	navigationListingColMargin = 1
-
-	parentColumnWeight  = 3.0
-	currentColumnWeight = 8.0
-	previewColumnWeight = 9.0
-)
 
 func (n *navigation) List(maxHeight int) ui.Renderer {
 	return makeNavRenderer(

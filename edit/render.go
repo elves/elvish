@@ -78,20 +78,21 @@ func makeNavRenderer(h int, w1, w2, w3 int, r1, r2, r3 ui.Renderer) ui.Renderer 
 	return &navRenderer{h, w1, w2, w3, r1, r2, r3}
 }
 
-func (nr *navRenderer) Render(b *ui.Buffer) {
-	margin := navigationListingColMargin
+const navColMargin = 1
 
-	wParent, wCurrent, wPreview := getNavWidths(b.Width-margin*2, nr.fwCurrent, nr.fwPreview)
+func (nr *navRenderer) Render(b *ui.Buffer) {
+	wParent, wCurrent, wPreview := getNavWidths(b.Width-navColMargin*2,
+		nr.fwCurrent, nr.fwPreview)
 
 	bParent := ui.Render(nr.parent, wParent)
 	b.ExtendRight(bParent, 0)
 
 	bCurrent := ui.Render(nr.current, wCurrent)
-	b.ExtendRight(bCurrent, wParent+margin)
+	b.ExtendRight(bCurrent, wParent+navColMargin)
 
 	if wPreview > 0 {
 		bPreview := ui.Render(nr.preview, wPreview)
-		b.ExtendRight(bPreview, wParent+wCurrent+2*margin)
+		b.ExtendRight(bPreview, wParent+wCurrent+2*navColMargin)
 	}
 }
 
