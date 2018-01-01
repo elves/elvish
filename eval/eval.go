@@ -2,8 +2,6 @@
 // shell.
 package eval
 
-//go:generate ./bundle-modules
-
 import (
 	"errors"
 	"fmt"
