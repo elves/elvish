@@ -2,7 +2,7 @@
 
 package lscolors
 
-import "fmt"
+import "strconv"
 
 const _feature_name = "featureInvalidfeatureOrphanedSymlinkfeatureSymlinkfeatureMultiHardLinkfeatureNamedPipefeatureSocketfeatureDoorfeatureBlockDevicefeatureCharDevicefeatureWorldWritableStickyDirectoryfeatureWorldWritableDirectoryfeatureStickyDirectoryfeatureDirectoryfeatureCapabilityfeatureSetuidfeatureSetgidfeatureExecutablefeatureRegular"
 
@@ -10,7 +10,7 @@ var _feature_index = [...]uint16{0, 14, 36, 50, 70, 86, 99, 110, 128, 145, 180, 
 
 func (i feature) String() string {
 	if i < 0 || i >= feature(len(_feature_index)-1) {
-		return fmt.Sprintf("feature(%d)", i)
+		return "feature(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
 	return _feature_name[_feature_index[i]:_feature_index[i+1]]
 }
