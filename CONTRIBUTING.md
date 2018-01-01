@@ -6,6 +6,8 @@
 
 2.  Some files are generated from other files. They should be committed into the repository for this package to be go-gettable. Run `go generate ./...` to regenerate them in case you modified the source.
 
+    We use the `stringer` tool in some generation rules. Install with `go get -u golang.org/x/tools/cmd/stringer`.
+
 3.  Always format the code with `goimports` before committing. Run `go get golang.org/x/tools/cmd/goimports` to install `goimports`, and `goimports -w .` to format all golang sources.
 
     To automate this you can set up a `goimports` filter for Git by putting this in `~/.gitconfig`:

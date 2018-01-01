@@ -35,6 +35,9 @@ To build Elvish, you need
 *   Linux, {Free,Net,Open}BSD, macOS, or Windows (Windows support is experimental).
 
 
+If you would like to contribute code to Elvish, please read
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
 ### The Correct Way
 
 Elvish is a go-gettable package. To build Elvish, first set up your Go workspace according to [How To Write Go Code](http://golang.org/doc/code.html), and then run
