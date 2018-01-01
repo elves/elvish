@@ -158,35 +158,45 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
 	}
 
-	var specialOpFunc OpFunc
+	// Depending on the type of the form, exactly one of the three below will be
+	// set.
+	var (
+		specialOpFunc  OpFunc
+		headOp         ValuesOp
+		spaceyAssignOp Op
+	)
+
+	// Forward declaration; needed when compiling assignment forms.
+	var argOps []ValuesOp
 
 	if n.Head != nil {
 		headStr, ok := oneString(n.Head)
 		if ok {
 			compileForm, ok := builtinSpecials[headStr]
 			if ok {
-				// special form
+				// Special form.
 				specialOpFunc = compileForm(cp, n)
 			} else {
-				// Ignore the output. If a matching function exists it will be
-				// captured and eventually the Evaler executes it. If not,
-				// nothing happens here and the Evaler executes an external
-				// command.
-				_, ns, name := ParseVariable(headStr)
-				cp.registerVariableGetQname(ns + ":" + name + FnSuffix)
-				// XXX Dynamic head names should always refer to external
-				// commands.
+				var headOpFunc ValuesOpFunc
+				explode, ns, name := ParseVariable(headStr)
+				if !explode && cp.registerVariableGet(ns, name+FnSuffix) {
+					// $head~ resolves.
+					headOpFunc = variable(headStr + FnSuffix)
+				} else {
+					// Fall back to $e:head~.
+					headOpFunc = func(f *Frame) []types.Value {
+						return []types.Value{ExternalCmd{headStr}}
+					}
+				}
+				headOp = ValuesOp{headOpFunc, n.Head.Begin(), n.Head.End()}
 			}
+		} else {
+			// Head exists and is not a literal string. Evaluate as a normal
+			// expression.
+			headOp = cp.compoundOp(n.Head)
 		}
-	}
-
-	argOps := cp.compoundOps(n.Args)
-
-	var headOp ValuesOp
-	var spaceyAssignOp Op
-	if n.Head != nil {
-		headOp = cp.compoundOp(n.Head)
 	} else {
+		// Assignment form.
 		varsOp, restOp := cp.lvaluesMulti(n.Vars)
 		argsOp := ValuesOp{
 			func(ec *Frame) []types.Value {
@@ -208,6 +218,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		}
 	}
 
+	argOps = cp.compoundOps(n.Args)
 	optsOp := cp.mapPairs(n.Opts)
 	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir

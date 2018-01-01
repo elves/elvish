@@ -15,7 +15,7 @@ var valueTests = []Test{
 	// List, Map and Indexing
 	// ----------------------
 
-	{"echo [a b c] [&key=value] | each put",
+	{"echo [a b c] [&key=value] | each $put~",
 		want{out: strs("[a b c] [&key=value]")}},
 	{"put [a b c][2]", want{out: strs("c")}},
 	{"put [&key=value][key]", want{out: strs("value")}},

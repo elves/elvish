@@ -81,13 +81,10 @@ func (s String) Iterate(f func(v types.Value) bool) {
 	}
 }
 
-// Call resolves a command name to either a Fn variable or external command and
-// calls it.
-func (s String) Call(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	resolve(string(s), ec).Call(ec, args, opts)
-}
-
 func resolve(s string, ec *Frame) Fn {
+	// NOTE: This needs to be kept in sync with the resolution algorithm used in
+	// (*compiler).form.
+
 	// Try variable
 	explode, ns, name := ParseVariable(string(s))
 	if !explode {

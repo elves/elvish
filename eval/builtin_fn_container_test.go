@@ -42,6 +42,6 @@ func TestBuiltinFnContainer(t *testing.T) {
 		{`keys [&a=foo]`, want{out: strs("a")}},
 		// Windows does not have an external sort command. Disabled until we have a
 		// builtin sort command.
-		// {`keys [&a=foo &b=bar] | each echo | sort | each put`, want{out: strs("a", "b")}},
+		// {`keys [&a=foo &b=bar] | each echo | sort | each $put~`, want{out: strs("a", "b")}},
 	})
 }
