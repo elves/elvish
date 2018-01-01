@@ -51,7 +51,7 @@ func strs(ss ...string) []types.Value {
 func bools(bs ...bool) []types.Value {
 	vs := make([]types.Value, len(bs))
 	for i, b := range bs {
-		vs[i] = Bool(b)
+		vs[i] = types.Bool(b)
 	}
 	return vs
 }

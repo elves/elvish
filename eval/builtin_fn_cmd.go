@@ -42,7 +42,7 @@ func hasExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 
 	_, err := exec.LookPath(string(cmd))
-	ec.OutputChan() <- Bool(err == nil)
+	ec.OutputChan() <- types.Bool(err == nil)
 }
 
 func searchExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {

@@ -45,7 +45,7 @@ func ShouldBeNs(v types.Value) error {
 }
 
 func ShouldBeBool(v types.Value) error {
-	if _, ok := v.(Bool); !ok {
+	if _, ok := v.(types.Bool); !ok {
 		return errShouldBeBool
 	}
 	return nil

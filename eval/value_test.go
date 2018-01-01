@@ -17,8 +17,8 @@ var reprTests = []struct {
 	{String("a\nb"), `"a\nb"`},
 	{String("foo bar"), "'foo bar'"},
 	{String("a\x00b"), `"a\x00b"`},
-	{Bool(true), "$true"},
-	{Bool(false), "$false"},
+	{types.Bool(true), "$true"},
+	{types.Bool(false), "$false"},
 	{&Exception{nil, nil}, "$ok"},
 	{&Exception{errors.New("foo bar"), nil}, "?(fail 'foo bar')"},
 	{&Exception{
@@ -26,7 +26,7 @@ var reprTests = []struct {
 		"?(multi-error $ok ?(fail lorem))"},
 	{&Exception{Return, nil}, "?(return)"},
 	{types.EmptyList, "[]"},
-	{types.MakeList(String("bash"), Bool(false)), "[bash $false]"},
+	{types.MakeList(String("bash"), types.Bool(false)), "[bash $false]"},
 	{types.MakeMap(map[types.Value]types.Value{}), "[&]"},
 	{types.MakeMap(map[types.Value]types.Value{&Exception{nil, nil}: String("elvish")}), "[&$ok=elvish]"},
 	// TODO: test maps of more elements

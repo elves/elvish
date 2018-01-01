@@ -56,7 +56,7 @@ func wrapNumCompare(cmp func(a, b float64) bool) BuiltinFnImpl {
 				break
 			}
 		}
-		ec.OutputChan() <- Bool(result)
+		ec.OutputChan() <- types.Bool(result)
 	}
 }
 

@@ -187,7 +187,7 @@ func hasValue(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		throw(fmt.Errorf("argument of type '%s' is not iterable", container.Kind()))
 	}
 
-	ec.ports[1].Chan <- Bool(found)
+	ec.ports[1].Chan <- types.Bool(found)
 }
 
 func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -211,7 +211,7 @@ func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		throw(fmt.Errorf("couldn't get key or index of type '%s'", container.Kind()))
 	}
 
-	ec.ports[1].Chan <- Bool(found)
+	ec.ports[1].Chan <- types.Bool(found)
 }
 
 func count(ec *Frame, args []types.Value, opts map[string]types.Value) {

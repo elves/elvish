@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 func makeBuiltinNs() Ns {
@@ -11,8 +13,8 @@ func makeBuiltinNs() Ns {
 		"_":     BlackholeVariable{},
 		"pid":   NewRoVariable(String(strconv.Itoa(syscall.Getpid()))),
 		"ok":    NewRoVariable(OK),
-		"true":  NewRoVariable(Bool(true)),
-		"false": NewRoVariable(Bool(false)),
+		"true":  NewRoVariable(types.Bool(true)),
+		"false": NewRoVariable(types.Bool(false)),
 		"paths": &EnvList{envName: "PATH"},
 		"pwd":   PwdVariable{},
 	}

@@ -260,11 +260,11 @@ func compileOr(cp *compiler, fn *parse.Form) OpFunc {
 func compileAndOr(cp *compiler, fn *parse.Form, init, stopAt bool) OpFunc {
 	argOps := cp.compoundOps(fn.Args)
 	return func(ec *Frame) {
-		var lastValue types.Value = Bool(init)
+		var lastValue types.Value = types.Bool(init)
 		for _, op := range argOps {
 			values := op.Exec(ec)
 			for _, value := range values {
-				if ToBool(value) == stopAt {
+				if types.ToBool(value) == stopAt {
 					ec.OutputChan() <- value
 					return
 				}

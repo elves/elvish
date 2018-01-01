@@ -49,7 +49,7 @@ func FromJSONInterface(v interface{}) types.Value {
 	}
 	switch v.(type) {
 	case bool:
-		return Bool(v.(bool))
+		return types.Bool(v.(bool))
 	case float64, string:
 		// TODO Use a numeric type for float64
 		return String(fmt.Sprint(v))

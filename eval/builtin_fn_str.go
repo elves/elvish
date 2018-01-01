@@ -64,7 +64,7 @@ func wrapStrCompare(cmp func(a, b string) bool) BuiltinFnImpl {
 				break
 			}
 		}
-		ec.OutputChan() <- Bool(result)
+		ec.OutputChan() <- types.Bool(result)
 	}
 }
 
@@ -187,7 +187,7 @@ func hasPrefix(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ScanArgs(args, &s, &prefix)
 	TakeNoOpt(opts)
 
-	ec.OutputChan() <- Bool(strings.HasPrefix(string(s), string(prefix)))
+	ec.OutputChan() <- types.Bool(strings.HasPrefix(string(s), string(prefix)))
 }
 
 func hasSuffix(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -195,7 +195,7 @@ func hasSuffix(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ScanArgs(args, &s, &suffix)
 	TakeNoOpt(opts)
 
-	ec.OutputChan() <- Bool(strings.HasSuffix(string(s), string(suffix)))
+	ec.OutputChan() <- types.Bool(strings.HasSuffix(string(s), string(suffix)))
 }
 
 var eawkWordSep = regexp.MustCompile("[ \t]+")

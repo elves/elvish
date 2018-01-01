@@ -1,9 +1,9 @@
-package eval
-
-import "github.com/elves/elvish/eval/types"
+package types
 
 // Bool represents truthness.
 type Bool bool
+
+var _ Value = Bool(false)
 
 func (Bool) Kind() string {
 	return "bool"
@@ -33,8 +33,8 @@ func (b Bool) Bool() bool {
 
 // ToBool converts a Value to bool. When the Value type implements Bool(), it
 // is used. Otherwise it is considered true.
-func ToBool(v types.Value) bool {
-	if b, ok := v.(types.Booler); ok {
+func ToBool(v Value) bool {
+	if b, ok := v.(Booler); ok {
 		return b.Bool()
 	}
 	return true

@@ -9,8 +9,8 @@ import (
 )
 
 func TestPtrVariable(t *testing.T) {
-	v := NewPtrVariable(Bool(true))
-	if v.Get() != Bool(true) {
+	v := NewPtrVariable(types.Bool(true))
+	if v.Get() != types.Bool(true) {
 		t.Errorf("PtrVariable.Get doesn't return initial value")
 	}
 	v.Set(String("233"))
@@ -18,7 +18,7 @@ func TestPtrVariable(t *testing.T) {
 		t.Errorf("PtrVariable.Get doesn't return altered value")
 	}
 
-	v = NewPtrVariableWithValidator(Bool(true), ShouldBeBool)
+	v = NewPtrVariableWithValidator(types.Bool(true), ShouldBeBool)
 	if util.DoesntThrow(func() { v.Set(String("233")) }) {
 		t.Errorf("PtrVariable.Set doesn't error when setting incompatible value")
 	}

@@ -501,7 +501,7 @@ func (cp *compiler) mapPairs(pairs []*parse.MapPair) ValuesOpFunc {
 		keysOps[i] = cp.compoundOp(pair.Key)
 		if pair.Value == nil {
 			p := pair.End()
-			valuesOps[i] = ValuesOp{literalValues(Bool(true)), p, p}
+			valuesOps[i] = ValuesOp{literalValues(types.Bool(true)), p, p}
 		} else {
 			valuesOps[i] = cp.compoundOp(pairs[i].Value)
 		}

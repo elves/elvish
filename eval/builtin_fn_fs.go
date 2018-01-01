@@ -123,7 +123,7 @@ func isDir(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	path := string(pathv)
 	TakeNoOpt(opts)
 
-	ec.OutputChan() <- Bool(isDirInner(path))
+	ec.OutputChan() <- types.Bool(isDirInner(path))
 }
 
 func isDirInner(path string) bool {

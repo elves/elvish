@@ -30,14 +30,14 @@ func match(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	var (
 		argPattern eval.String
 		argSource  eval.String
-		optPOSIX   eval.Bool
+		optPOSIX   types.Bool
 	)
 	eval.ScanArgs(args, &argPattern, &argSource)
-	eval.ScanOpts(opts, eval.OptToScan{"posix", &optPOSIX, eval.Bool(false)})
+	eval.ScanOpts(opts, eval.OptToScan{"posix", &optPOSIX, types.Bool(false)})
 
-	pattern := makePattern(argPattern, optPOSIX, eval.Bool(false))
+	pattern := makePattern(argPattern, optPOSIX, types.Bool(false))
 	matched := pattern.MatchString(string(argSource))
-	out <- eval.Bool(matched)
+	out <- types.Bool(matched)
 }
 
 func find(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
@@ -45,14 +45,14 @@ func find(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	var (
 		argPattern eval.String
 		argSource  eval.String
-		optPOSIX   eval.Bool
-		optLongest eval.Bool
+		optPOSIX   types.Bool
+		optLongest types.Bool
 		optMax     int
 	)
 	eval.ScanArgs(args, &argPattern, &argSource)
 	eval.ScanOpts(opts,
-		eval.OptToScan{"posix", &optPOSIX, eval.Bool(false)},
-		eval.OptToScan{"longest", &optLongest, eval.Bool(false)},
+		eval.OptToScan{"posix", &optPOSIX, types.Bool(false)},
+		eval.OptToScan{"longest", &optLongest, types.Bool(false)},
 		eval.OptToScan{"max", &optMax, eval.String("-1")})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
@@ -82,15 +82,15 @@ func replace(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 		argPattern eval.String
 		argRepl    types.Value
 		argSource  eval.String
-		optPOSIX   eval.Bool
-		optLongest eval.Bool
-		optLiteral eval.Bool
+		optPOSIX   types.Bool
+		optLongest types.Bool
+		optLiteral types.Bool
 	)
 	eval.ScanArgs(args, &argPattern, &argRepl, &argSource)
 	eval.ScanOpts(opts,
-		eval.OptToScan{"posix", &optPOSIX, eval.Bool(false)},
-		eval.OptToScan{"longest", &optLongest, eval.Bool(false)},
-		eval.OptToScan{"literal", &optLiteral, eval.Bool(false)})
+		eval.OptToScan{"posix", &optPOSIX, types.Bool(false)},
+		eval.OptToScan{"longest", &optLongest, types.Bool(false)},
+		eval.OptToScan{"literal", &optLiteral, types.Bool(false)})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
 
@@ -134,14 +134,14 @@ func split(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	var (
 		argPattern eval.String
 		argSource  eval.String
-		optPOSIX   eval.Bool
-		optLongest eval.Bool
+		optPOSIX   types.Bool
+		optLongest types.Bool
 		optMax     int
 	)
 	eval.ScanArgs(args, &argPattern, &argSource)
 	eval.ScanOpts(opts,
-		eval.OptToScan{"posix", &optPOSIX, eval.Bool(false)},
-		eval.OptToScan{"longest", &optLongest, eval.Bool(false)},
+		eval.OptToScan{"posix", &optPOSIX, types.Bool(false)},
+		eval.OptToScan{"longest", &optLongest, types.Bool(false)},
 		eval.OptToScan{"max", &optMax, eval.String("-1")})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
@@ -152,7 +152,7 @@ func split(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	}
 }
 
-func makePattern(argPattern eval.String, optPOSIX, optLongest eval.Bool) *regexp.Regexp {
+func makePattern(argPattern eval.String, optPOSIX, optLongest types.Bool) *regexp.Regexp {
 	var (
 		pattern *regexp.Regexp
 		err     error

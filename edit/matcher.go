@@ -84,7 +84,7 @@ func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
 			if !ok {
 				throw(errMatcherInputMustBeString)
 			}
-			out <- eval.Bool(matcher(string(s), string(pattern)))
+			out <- types.Bool(matcher(string(s), string(pattern)))
 		})
 	}
 }

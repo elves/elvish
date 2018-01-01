@@ -111,7 +111,7 @@ func boolFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ScanArgs(args, &v)
 	TakeNoOpt(opts)
 
-	ec.OutputChan() <- Bool(ToBool(v))
+	ec.OutputChan() <- types.Bool(types.ToBool(v))
 }
 
 func not(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -119,7 +119,7 @@ func not(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ScanArgs(args, &v)
 	TakeNoOpt(opts)
 
-	ec.OutputChan() <- Bool(!ToBool(v))
+	ec.OutputChan() <- types.Bool(!types.ToBool(v))
 }
 
 func is(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -131,7 +131,7 @@ func is(ec *Frame, args []types.Value, opts map[string]types.Value) {
 			break
 		}
 	}
-	ec.OutputChan() <- Bool(result)
+	ec.OutputChan() <- types.Bool(result)
 }
 
 func eq(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -143,7 +143,7 @@ func eq(ec *Frame, args []types.Value, opts map[string]types.Value) {
 			break
 		}
 	}
-	ec.OutputChan() <- Bool(result)
+	ec.OutputChan() <- types.Bool(result)
 }
 
 func notEq(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -155,7 +155,7 @@ func notEq(ec *Frame, args []types.Value, opts map[string]types.Value) {
 			break
 		}
 	}
-	ec.OutputChan() <- Bool(result)
+	ec.OutputChan() <- types.Bool(result)
 }
 
 func constantly(ec *Frame, args []types.Value, opts map[string]types.Value) {

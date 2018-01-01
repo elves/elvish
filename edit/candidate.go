@@ -154,7 +154,7 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.Fn,
 
 	var filtered []rawCandidate
 	for i, value := range values {
-		if eval.ToBool(value) {
+		if types.ToBool(value) {
 			filtered = append(filtered, collected[i])
 		}
 	}

@@ -302,7 +302,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 
 func allTrue(vs []types.Value) bool {
 	for _, v := range vs {
-		if !ToBool(v) {
+		if !types.ToBool(v) {
 			return false
 		}
 	}
