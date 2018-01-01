@@ -1,6 +1,6 @@
 #!/usr/bin/env elvish
 
-out = ./embedded-html.go
+out = ./embedded_html.go
 
 {
 	echo "package web"
