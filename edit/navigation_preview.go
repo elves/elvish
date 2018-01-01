@@ -14,7 +14,7 @@ import (
 // PreviewBytes is the maximum number of bytes to preview a file.
 const PreviewBytes = 64 * 1024
 
-// Errors displayed in the preview area.
+// Errors displayed in the preview area of navigation mode.
 var (
 	ErrNotRegular   = errors.New("no preview for non-regular file")
 	ErrNotValidUTF8 = errors.New("no preview for non-utf8 file")

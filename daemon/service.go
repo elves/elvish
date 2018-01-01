@@ -99,6 +99,7 @@ type Service struct {
 
 // Implementations of RPC methods.
 
+// Version returns the API version number.
 func (s *Service) Version(req *VersionRequest, res *VersionResponse) error {
 	if s.err != nil {
 		return s.err
@@ -107,6 +108,7 @@ func (s *Service) Version(req *VersionRequest, res *VersionResponse) error {
 	return nil
 }
 
+// Pid returns the process ID of the daemon.
 func (s *Service) Pid(req *PidRequest, res *PidResponse) error {
 	res.Pid = syscall.Getpid()
 	return nil

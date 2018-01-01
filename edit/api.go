@@ -27,7 +27,7 @@ var (
 	errEditorInactive     = errors.New("editor inactive")
 )
 
-// BuiltinFn records an editor builtin.
+// BuiltinFn represents an editor builtin.
 type BuiltinFn struct {
 	name string
 	impl func(ed *Editor)

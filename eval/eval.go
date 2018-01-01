@@ -1,9 +1,8 @@
-// Package eval handles evaluation of nodes and consists the runtime of the
-// shell.
+// Package eval handles evaluation of parsed Elvish code and provides runtime
+// facilities.
 package eval
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -111,6 +110,8 @@ func (ev *Evaler) InstallBundled(name, src string) {
 	ev.bundled[name] = src
 }
 
+// SetLibDir sets the library directory, in which external modules are to be
+// found.
 func (ev *Evaler) SetLibDir(libDir string) {
 	ev.libDir = libDir
 }
@@ -145,19 +146,20 @@ func (ev *Evaler) Eval(op Op, name, text string) error {
 // EvalWithPorts sets up the Evaler with the given ports and evaluates an Op.
 // The supplied name and text are used in diagnostic messages.
 func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, name, text string) error {
-	// signal.Ignore(syscall.SIGTTIN)
-
 	// Ignore TTOU.
+	//
 	// When a subprocess in its own process group puts itself in the foreground,
-	// the elvish will be in the background. In that case, elvish will move
-	// itself back to the foreground by calling tcsetpgrp. However, whenever a
-	// background process calls tcsetpgrp (or otherwise attempts to modify the
-	// terminal configuration), TTOU will be sent, whose default handler is to
-	// stop the process. When the process lives in an orphaned process group
-	// (most likely for elvish), the call will outright fail. Therefore, for
-	// elvish to be able to move itself back to the foreground, we need to
-	// ignore TTOU.
+	// Elvish will be put in the background. When the code finishes execution,
+	// Elvish will attempt to move itself back to the foreground by calling
+	// tcsetpgrp. However, whenever a background process calls tcsetpgrp (or
+	// otherwise attempts to modify the terminal configuration), TTOU will be
+	// sent, whose default handler is to stop the process. Or, if the process
+	// lives in an orphaned process group (which is often the case for Elvish),
+	// the call will outright fail. Therefore, for Elvish to be able to move
+	// itself back to the foreground later, we need to ignore TTOU now.
 	ignoreTTOU()
+	defer unignoreTTOU()
+
 	stopSigGoroutine := make(chan struct{})
 	sigGoRoutineDone := make(chan struct{})
 	// Set up intCh.
@@ -196,9 +198,6 @@ func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, name, text string) error {
 			fmt.Println("failed to put myself in foreground:", err)
 		}
 	}
-
-	// Un-ignore TTOU.
-	unignoreTTOU()
 
 	return err
 }
@@ -241,5 +240,3 @@ func (ev *Evaler) Source(fname string) error {
 	}
 	return ev.SourceText(fname, src)
 }
-
-var ErrMoreThanOneRest = errors.New("more than one @ lvalue")

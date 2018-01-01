@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"os"
 	"sync"
 
@@ -313,6 +314,10 @@ func (cp *compiler) assignment(n *parse.Assignment) OpFunc {
 	valuesOp := cp.compoundOp(n.Right)
 	return makeAssignmentOpFunc(variablesOp, restOp, valuesOp)
 }
+
+// ErrMoreThanOneRest is thrown when the LHS of an assignment contains more than
+// one rest variables.
+var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
 
 func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFunc {
 	return func(ec *Frame) {

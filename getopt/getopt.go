@@ -1,4 +1,4 @@
-// Package getopt contains a command-line argument parser.
+// Package getopt implements a command-line argument parser.
 //
 // It tries to cover all common styles of option syntaxes, and provides context
 // information when given a partial input. It is mainly useful for writing

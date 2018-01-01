@@ -21,7 +21,7 @@ var ErrClaimFileBadPattern = errors.New("ClaimFile: pattern must contain exactly
 //
 // For example, if the directory /tmp/elvish contains a1.log, a2.log and a9.log,
 // calling ClaimFile("/tmp/elvish", "a*.log") will open a10.log. If the
-// directory has no files matching
+// directory has no files matching the pattern, this same call will open a1.log.
 //
 // This function is useful for automatically determining unique names for log
 // files. Unique filenames can also be derived by embedding the PID, but using

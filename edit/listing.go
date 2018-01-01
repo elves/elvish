@@ -63,7 +63,7 @@ type listingProvider interface {
 	ModeTitle(int) string
 }
 
-type Placeholderer interface {
+type placeholderer interface {
 	Placeholder() string
 }
 
@@ -117,7 +117,7 @@ func (l *listing) List(maxHeight int) ui.Renderer {
 	n := l.provider.Len()
 	if n == 0 {
 		var ph string
-		if pher, ok := l.provider.(Placeholderer); ok {
+		if pher, ok := l.provider.(placeholderer); ok {
 			ph = pher.Placeholder()
 		} else {
 			ph = "(no result)"
