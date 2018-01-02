@@ -1,4 +1,4 @@
-package clientcommon
+package runtime
 
 import (
 	"fmt"

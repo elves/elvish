@@ -1,6 +1,6 @@
 // +build !windows,!plan9
 
-package clientcommon
+package runtime
 
 import (
 	"fmt"

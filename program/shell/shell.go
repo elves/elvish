@@ -15,7 +15,7 @@ import (
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/program/clientcommon"
+	"github.com/elves/elvish/runtime"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -40,8 +40,8 @@ func New(binpath, sockpath, dbpath string, cmd, compileonly bool) *Shell {
 func (sh *Shell) Main(args []string) int {
 	defer rescue()
 
-	ev, dataDir := clientcommon.InitRuntime(sh.BinPath, sh.SockPath, sh.DbPath)
-	defer clientcommon.CleanupRuntime(ev)
+	ev, dataDir := runtime.InitRuntime(sh.BinPath, sh.SockPath, sh.DbPath)
+	defer runtime.CleanupRuntime(ev)
 
 	handleSignals()
 

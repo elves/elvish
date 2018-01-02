@@ -16,7 +16,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/program/clientcommon"
+	"github.com/elves/elvish/runtime"
 )
 
 type Web struct {
@@ -42,8 +42,8 @@ func New(binpath, sockpath, dbpath string, port int) *Web {
 }
 
 func (web *Web) Main([]string) int {
-	ev, _ := clientcommon.InitRuntime(web.BinPath, web.SockPath, web.DbPath)
-	defer clientcommon.CleanupRuntime(ev)
+	ev, _ := runtime.InitRuntime(web.BinPath, web.SockPath, web.DbPath)
+	defer runtime.CleanupRuntime(ev)
 
 	h := httpHandler{ev}
 
