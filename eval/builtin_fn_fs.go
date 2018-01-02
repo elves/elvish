@@ -85,7 +85,7 @@ func cdInner(dir string, ec *Frame) {
 	maybeThrow(Chdir(dir, ec.DaemonClient))
 }
 
-var dirDescriptor = NewStructDescriptor("path", "score")
+var dirDescriptor = types.NewStructDescriptor("path", "score")
 
 func dirs(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoArg(args)
@@ -100,7 +100,7 @@ func dirs(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 	out := ec.ports[1].Chan
 	for _, dir := range dirs {
-		out <- &Struct{dirDescriptor, []types.Value{
+		out <- &types.Struct{dirDescriptor, []types.Value{
 			types.String(dir.Path),
 			floatToString(dir.Score),
 		}}
