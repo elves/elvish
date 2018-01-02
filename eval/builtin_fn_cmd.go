@@ -17,6 +17,7 @@ func init() {
 	addToBuiltinFns([]*BuiltinFn{
 		// Command resolution
 		{"resolve", resolveFn},
+		{"external", external},
 		{"has-external", hasExternal},
 		{"search-external", searchExternal},
 
@@ -34,6 +35,14 @@ func resolveFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 
 	out := ec.ports[1].Chan
 	out <- resolve(string(cmd), ec)
+}
+
+func external(ec *Frame, args []types.Value, opts map[string]types.Value) {
+	var cmd types.String
+	ScanArgs(args, &cmd)
+	TakeNoOpt(opts)
+
+	ec.OutputChan() <- ExternalCmd{string(cmd)}
 }
 
 func hasExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
