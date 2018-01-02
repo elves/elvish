@@ -216,7 +216,7 @@ func ToKey(k types.Value) Key {
 	switch k := k.(type) {
 	case Key:
 		return k
-	case eval.String:
+	case types.String:
 		key, err := parseKey(string(k))
 		if err != nil {
 			util.Throw(err)
@@ -230,7 +230,7 @@ func ToKey(k types.Value) Key {
 
 // KeyBuiltin implements the edit:key builtin.
 func KeyBuiltin(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
-	var s eval.String
+	var s types.String
 	eval.ScanArgs(args, &s)
 	eval.TakeNoOpt(opts)
 

@@ -28,7 +28,7 @@ func init() {
 }
 
 func resolveFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var cmd String
+	var cmd types.String
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
 
@@ -37,7 +37,7 @@ func resolveFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func hasExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var cmd String
+	var cmd types.String
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
 
@@ -46,7 +46,7 @@ func hasExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func searchExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var cmd String
+	var cmd types.String
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
 
@@ -54,7 +54,7 @@ func searchExternal(ec *Frame, args []types.Value, opts map[string]types.Value) 
 	maybeThrow(err)
 
 	out := ec.ports[1].Chan
-	out <- String(path)
+	out <- types.String(path)
 }
 
 func exit(ec *Frame, args []types.Value, opts map[string]types.Value) {

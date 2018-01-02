@@ -91,7 +91,7 @@ func (ctx *indexComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) 
 
 func complIndexInner(m types.IterateKeyer, ch chan<- rawCandidate) {
 	m.IterateKey(func(v types.Value) bool {
-		if keyv, ok := v.(eval.String); ok {
+		if keyv, ok := v.(types.String); ok {
 			ch <- plainCandidate(keyv)
 		}
 		return true

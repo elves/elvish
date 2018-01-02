@@ -76,7 +76,7 @@ func (gp GlobPattern) Repr(int) string {
 
 func (gp GlobPattern) Index(modifiers []types.Value) []types.Value {
 	for _, value := range modifiers {
-		modifierv, ok := value.(String)
+		modifierv, ok := value.(types.String)
 		if !ok {
 			throw(ErrModifierMustBeString)
 		}
@@ -198,7 +198,7 @@ func doGlob(gp GlobPattern, abort <-chan struct{}) []types.Value {
 		default:
 		}
 		if _, b := but[name]; !b {
-			vs = append(vs, String(name))
+			vs = append(vs, types.String(name))
 		}
 		return true
 	}) {

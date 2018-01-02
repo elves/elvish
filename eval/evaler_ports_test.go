@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 func TestEvalerPorts(t *testing.T) {
@@ -16,10 +18,10 @@ func TestEvalerPorts(t *testing.T) {
 
 	prefix := "> "
 	ep := newEvalerPorts(DevNull, stdout, stderr, &prefix)
-	ep.ports[1].Chan <- String("x")
-	ep.ports[1].Chan <- String("y")
-	ep.ports[2].Chan <- String("bad")
-	ep.ports[2].Chan <- String("err")
+	ep.ports[1].Chan <- types.String("x")
+	ep.ports[1].Chan <- types.String("y")
+	ep.ports[2].Chan <- types.String("bad")
+	ep.ports[2].Chan <- types.String("err")
 	ep.close()
 	stdout.Close()
 	stderr.Close()

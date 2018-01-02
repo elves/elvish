@@ -297,7 +297,7 @@ func (ed *Editor) finishReadLine() error {
 	line := ed.buffer
 	ed.editorState = editorState{}
 
-	callHooks(ed.evaler, ed.afterReadLine(), eval.String(line))
+	callHooks(ed.evaler, ed.afterReadLine(), types.String(line))
 
 	return util.Errors(errRefresh, errRestore)
 }

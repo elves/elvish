@@ -45,7 +45,7 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOpFunc {
 		// A lone ~.
 		if len(n.Indexings) == 1 {
 			return func(ec *Frame) []types.Value {
-				return []types.Value{String(mustGetHome(""))}
+				return []types.Value{types.String(mustGetHome(""))}
 			}
 		}
 		tilde = true
@@ -97,9 +97,9 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOpFunc {
 
 func cat(lhs, rhs types.Value) types.Value {
 	switch lhs := lhs.(type) {
-	case String:
+	case types.String:
 		switch rhs := rhs.(type) {
-		case String:
+		case types.String:
 			return lhs + rhs
 		case GlobPattern:
 			segs := stringToSegments(string(lhs))
@@ -110,7 +110,7 @@ func cat(lhs, rhs types.Value) types.Value {
 	case GlobPattern:
 		// NOTE Modifies lhs in place.
 		switch rhs := rhs.(type) {
-		case String:
+		case types.String:
 			lhs.append(stringToSegments(string(rhs))...)
 			return lhs
 		case GlobPattern:
@@ -144,7 +144,7 @@ var (
 
 func doTilde(v types.Value) types.Value {
 	switch v := v.(type) {
-	case String:
+	case types.String:
 		s := string(v)
 		i := strings.Index(s, "/")
 		var uname, rest string
@@ -155,7 +155,7 @@ func doTilde(v types.Value) types.Value {
 			rest = s[i+1:]
 		}
 		dir := mustGetHome(uname)
-		return String(path.Join(dir, rest))
+		return types.String(path.Join(dir, rest))
 	case GlobPattern:
 		if len(v.Segments) == 0 {
 			throw(ErrBadGlobPattern)
@@ -230,7 +230,7 @@ func literalValues(v ...types.Value) ValuesOpFunc {
 }
 
 func literalStr(text string) ValuesOpFunc {
-	return literalValues(String(text))
+	return literalValues(types.String(text))
 }
 
 func variable(qname string) ValuesOpFunc {
@@ -342,7 +342,7 @@ func pcaptureOutput(ec *Frame, op Op) ([]types.Value, error) {
 		for {
 			line, err := buffered.ReadString('\n')
 			if line != "" {
-				v := String(strings.TrimSuffix(line, "\n"))
+				v := types.String(strings.TrimSuffix(line, "\n"))
 				m.Lock()
 				vs = append(vs, v)
 				m.Unlock()

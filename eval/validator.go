@@ -52,9 +52,9 @@ func ShouldBeBool(v types.Value) error {
 }
 
 func ShouldBeNumber(v types.Value) error {
-	if _, ok := v.(String); !ok {
+	if _, ok := v.(types.String); !ok {
 		return errShouldBeNumber
 	}
-	_, err := strconv.ParseFloat(string(v.(String)), 64)
+	_, err := strconv.ParseFloat(string(v.(types.String)), 64)
 	return err
 }

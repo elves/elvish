@@ -59,8 +59,8 @@ func (u ValueUnwrapper) Any() types.Value {
 	return u.values[0]
 }
 
-func (u ValueUnwrapper) String() String {
-	s, ok := u.values[0].(String)
+func (u ValueUnwrapper) String() types.String {
+	s, ok := u.values[0].(types.String)
 	if !ok {
 		u.error("string", "%s", u.values[0].Kind())
 	}

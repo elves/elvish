@@ -51,7 +51,7 @@ func BenchmarkOutputCaptureOverhead(b *testing.B) {
 
 func BenchmarkOutputCaptureValues(b *testing.B) {
 	op := Op{func(ec *Frame) {
-		ec.ports[1].Chan <- String("test")
+		ec.ports[1].Chan <- types.String("test")
 	}, 0, 0}
 	benchmarkOutputCapture(op, b.N)
 }

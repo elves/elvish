@@ -17,11 +17,11 @@ var _ Variable = PwdVariable{}
 func (PwdVariable) Get() types.Value {
 	pwd, err := os.Getwd()
 	maybeThrow(err)
-	return String(pwd)
+	return types.String(pwd)
 }
 
 func (pwd PwdVariable) Set(v types.Value) {
-	path, ok := v.(String)
+	path, ok := v.(types.String)
 	if !ok {
 		throw(ErrPathMustBeString)
 	}

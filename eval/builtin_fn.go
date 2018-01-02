@@ -102,7 +102,7 @@ func kindOf(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].Chan
 	for _, a := range args {
-		out <- String(a.Kind())
+		out <- types.String(a.Kind())
 	}
 }
 
@@ -179,7 +179,7 @@ func constantly(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func source(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var fname String
+	var fname types.String
 	ScanArgs(args, &fname)
 	ScanOpts(opts)
 
@@ -233,7 +233,7 @@ func _stack(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func _log(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var fnamev String
+	var fnamev types.String
 	ScanArgs(args, &fnamev)
 	fname := string(fnamev)
 	TakeNoOpt(opts)
@@ -244,7 +244,7 @@ func _log(ec *Frame, args []types.Value, opts map[string]types.Value) {
 func _getSrcName(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
-	ec.OutputChan() <- String(ec.srcName)
+	ec.OutputChan() <- types.String(ec.srcName)
 }
 
 func _ifaddrs(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -256,6 +256,6 @@ func _ifaddrs(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	addrs, err := net.InterfaceAddrs()
 	maybeThrow(err)
 	for _, addr := range addrs {
-		out <- String(addr.String())
+		out <- types.String(addr.String())
 	}
 }

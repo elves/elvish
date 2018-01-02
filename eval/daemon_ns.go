@@ -17,12 +17,12 @@ func makeDaemonNs(daemon *daemon.Client) Ns {
 	daemonPid := func() types.Value {
 		pid, err := daemon.Pid()
 		maybeThrow(err)
-		return String(strconv.Itoa(pid))
+		return types.String(strconv.Itoa(pid))
 	}
 
 	return Ns{
 		"pid":  MakeRoVariableFromCallback(daemonPid),
-		"sock": NewRoVariable(String(daemon.SockPath())),
+		"sock": NewRoVariable(types.String(daemon.SockPath())),
 
 		"spawn" + FnSuffix: NewRoVariable(&BuiltinFn{"daemon:spawn", daemonSpawn}),
 	}

@@ -65,7 +65,7 @@ func (s *Struct) Assoc(k, v types.Value) types.Value {
 
 func (s *Struct) IterateKey(f func(types.Value) bool) {
 	for _, field := range s.Descriptor.fieldNames {
-		if !f(String(field)) {
+		if !f(types.String(field)) {
 			break
 		}
 	}
@@ -73,14 +73,14 @@ func (s *Struct) IterateKey(f func(types.Value) bool) {
 
 func (s *Struct) IteratePair(f func(types.Value, types.Value) bool) {
 	for i, field := range s.Descriptor.fieldNames {
-		if !f(String(field), s.Fields[i]) {
+		if !f(types.String(field), s.Fields[i]) {
 			break
 		}
 	}
 }
 
 func (s *Struct) HasKey(k types.Value) bool {
-	index, ok := k.(String)
+	index, ok := k.(types.String)
 	if !ok {
 		return false
 	}
@@ -89,7 +89,7 @@ func (s *Struct) HasKey(k types.Value) bool {
 }
 
 func (s *Struct) index(idx types.Value) int {
-	index, ok := idx.(String)
+	index, ok := idx.(types.String)
 	if !ok {
 		throw(ErrIndexMustBeString)
 	}

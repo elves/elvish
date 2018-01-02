@@ -39,7 +39,7 @@ func WrapStringToString(f func(string) string) BuiltinFnImpl {
 	return func(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		TakeNoOpt(opts)
 		s := mustGetOneString(args)
-		ec.ports[1].Chan <- String(f(s))
+		ec.ports[1].Chan <- types.String(f(s))
 	}
 }
 
@@ -49,7 +49,7 @@ func WrapStringToStringError(f func(string) (string, error)) BuiltinFnImpl {
 		s := mustGetOneString(args)
 		result, err := f(s)
 		maybeThrow(err)
-		ec.ports[1].Chan <- String(result)
+		ec.ports[1].Chan <- types.String(result)
 	}
 }
 
@@ -59,7 +59,7 @@ func mustGetOneString(args []types.Value) string {
 	if len(args) != 1 {
 		throw(errMustBeOneString)
 	}
-	s, ok := args[0].(String)
+	s, ok := args[0].(types.String)
 	if !ok {
 		throw(errMustBeOneString)
 	}
@@ -101,24 +101,24 @@ func dirs(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.ports[1].Chan
 	for _, dir := range dirs {
 		out <- &Struct{dirDescriptor, []types.Value{
-			String(dir.Path),
+			types.String(dir.Path),
 			floatToString(dir.Score),
 		}}
 	}
 }
 
 func tildeAbbr(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var pathv String
+	var pathv types.String
 	ScanArgs(args, &pathv)
 	path := string(pathv)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
-	out <- String(util.TildeAbbr(path))
+	out <- types.String(util.TildeAbbr(path))
 }
 
 func isDir(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var pathv String
+	var pathv types.String
 	ScanArgs(args, &pathv)
 	path := string(pathv)
 	TakeNoOpt(opts)

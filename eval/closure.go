@@ -92,7 +92,7 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 	// XXX This conversion was done by the other direction.
 	convertedOpts := hashmap.Empty
 	for k, v := range opts {
-		convertedOpts = convertedOpts.Assoc(String(k), v)
+		convertedOpts = convertedOpts.Assoc(types.String(k), v)
 	}
 	ec.local["opts"] = NewPtrVariable(types.NewMap(convertedOpts))
 

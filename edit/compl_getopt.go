@@ -24,7 +24,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 	desc := make(map[*getopt.Option]string)
 	// Convert arguments.
 	elemsv.Iterate(func(v types.Value) bool {
-		elem, ok := v.(eval.String)
+		elem, ok := v.(types.String)
 		if !ok {
 			throwf("arg should be string, got %s", v.Kind())
 		}
@@ -37,12 +37,12 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 			throwf("opt should be map-like, got %s", v.Kind())
 		}
 		get := func(ks string) (string, bool) {
-			kv := eval.String(ks)
+			kv := types.String(ks)
 			if !m.HasKey(kv) {
 				return "", false
 			}
 			vv := m.IndexOne(kv)
-			if vs, ok := vv.(eval.String); ok {
+			if vs, ok := vv.(types.String); ok {
 				return string(vs), true
 			} else {
 				throwf("%s should be string, got %s", ks, vs.Kind())
@@ -71,7 +71,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 		return true
 	})
 	argsv.Iterate(func(v types.Value) bool {
-		sv, ok := v.(eval.String)
+		sv, ok := v.(types.String)
 		if ok {
 			if string(sv) == "..." {
 				variadic = true

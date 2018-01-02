@@ -260,7 +260,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 						// XXX Old value is nonexistent. We should delete the
 						// variable. However, since the compiler now doesn't delete
 						// it, we don't delete it in the evaler either.
-						val = String("")
+						val = types.String("")
 					}
 					v.Set(val)
 					logger.Printf("restored %s = %s", v, val)
@@ -293,7 +293,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			opts := optsOp(ec)[0].(types.Map)
 			convertedOpts := make(map[string]types.Value)
 			opts.IteratePair(func(k, v types.Value) bool {
-				if ks, ok := k.(String); ok {
+				if ks, ok := k.(types.String); ok {
 					convertedOpts[string(ks)] = v
 				} else {
 					throwf("Option key must be string, got %s", k.Kind())
@@ -376,7 +376,7 @@ func fixNilVariables(vs []Variable) {
 			continue
 		}
 		if v.Get() == nil {
-			v.Set(String(""))
+			v.Set(types.String(""))
 		}
 	}
 }
@@ -442,7 +442,7 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 			}
 		} else {
 			switch src := srcUnwrap.Any().(type) {
-			case String:
+			case types.String:
 				f, err := os.OpenFile(string(src), flag, defaultFileRedirPerm)
 				if err != nil {
 					throwf("failed to open file %s: %s", src.Repr(types.NoPretty), err)

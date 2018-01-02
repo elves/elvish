@@ -340,7 +340,7 @@ type narrowOptions struct {
 }
 
 type narrowItemString struct {
-	eval.String
+	types.String
 }
 
 func (s *narrowItemString) Content() string {
@@ -360,11 +360,11 @@ type narrowItemComplex struct {
 }
 
 func (c *narrowItemComplex) Content() string {
-	key := eval.String("content")
+	key := types.String("content")
 	if !c.Map.HasKey(key) {
 		return ""
 	}
-	if s, ok := c.Map.IndexOne(key).(eval.String); !ok {
+	if s, ok := c.Map.IndexOne(key).(types.String); !ok {
 		return ""
 	} else {
 		return s.String()
@@ -373,11 +373,11 @@ func (c *narrowItemComplex) Content() string {
 
 // TODO: add style
 func (c *narrowItemComplex) Display() ui.Styled {
-	key := eval.String("display")
+	key := types.String("display")
 	if !c.Map.HasKey(key) {
 		return ui.Unstyled("")
 	}
-	if s, ok := c.Map.IndexOne(key).(eval.String); !ok {
+	if s, ok := c.Map.IndexOne(key).(types.String); !ok {
 		return ui.Unstyled("")
 	} else {
 		return ui.Unstyled(s.String())
@@ -385,9 +385,9 @@ func (c *narrowItemComplex) Display() ui.Styled {
 }
 
 func (c *narrowItemComplex) FilterText() string {
-	key := eval.String("filter-text")
+	key := types.String("filter-text")
 	if c.Map.HasKey(key) {
-		return c.Map.IndexOne(key).(eval.String).String()
+		return c.Map.IndexOne(key).(types.String).String()
 	}
 	return c.Content()
 }
@@ -437,7 +437,7 @@ func narrowGetSource(ec *eval.Frame, source eval.Fn) func() []narrowItem {
 		var lis []narrowItem
 		for _, v := range vs {
 			switch raw := v.(type) {
-			case eval.String:
+			case types.String:
 				lis = append(lis, &narrowItemString{raw})
 			case types.Map:
 				lis = append(lis, &narrowItemComplex{raw})
@@ -488,14 +488,14 @@ func CommandHistory(ec *eval.Frame, args []types.Value, opts map[string]types.Va
 
 	for i := start; i < end; i++ {
 		out <- types.MakeMap(map[types.Value]types.Value{
-			eval.String("id"):  eval.String(strconv.Itoa(i)),
-			eval.String("cmd"): eval.String(cmds[i]),
+			types.String("id"):  types.String(strconv.Itoa(i)),
+			types.String("cmd"): types.String(cmds[i]),
 		})
 	}
 }
 
 func InsertAtDot(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
-	var text eval.String
+	var text types.String
 
 	eval.ScanArgs(args, &text)
 	eval.TakeNoOpt(opts)
@@ -505,7 +505,7 @@ func InsertAtDot(ec *eval.Frame, args []types.Value, opts map[string]types.Value
 }
 
 func ReplaceInput(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
-	var text eval.String
+	var text types.String
 
 	eval.ScanArgs(args, &text)
 	eval.TakeNoOpt(opts)
@@ -515,13 +515,13 @@ func ReplaceInput(ec *eval.Frame, args []types.Value, opts map[string]types.Valu
 }
 
 func Wordify(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
-	var text eval.String
+	var text types.String
 
 	eval.ScanArgs(args, &text)
 	eval.TakeNoOpt(opts)
 
 	out := ec.OutputChan()
 	for _, s := range wordify(text.String()) {
-		out <- eval.String(s)
+		out <- types.String(s)
 	}
 }

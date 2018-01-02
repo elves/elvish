@@ -55,7 +55,7 @@ func ToRat(v types.Value) (Rat, error) {
 	switch v := v.(type) {
 	case Rat:
 		return v, nil
-	case String:
+	case types.String:
 		r := big.Rat{}
 		_, err := fmt.Sscanln(string(v), &r)
 		if err != nil {

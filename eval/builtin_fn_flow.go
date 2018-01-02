@@ -119,7 +119,7 @@ func peach(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func fail(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var msg String
+	var msg types.String
 	ScanArgs(args, &msg)
 	TakeNoOpt(opts)
 

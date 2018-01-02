@@ -5,12 +5,11 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 )
 
-var testIndexee = eval.String("a")
+var testIndexee = types.String("a")
 
 func TestFindIndexComplContext(t *testing.T) {
 	testComplContextFinder(t, "findIndexComplContext", findIndexComplContext, []complContextFinderTest{
@@ -29,8 +28,8 @@ func TestFindIndexComplContext(t *testing.T) {
 
 func TestComplIndexInner(t *testing.T) {
 	m := types.MakeMap(map[types.Value]types.Value{
-		eval.String("foo"):   eval.String("bar"),
-		eval.String("lorem"): eval.String("ipsum"),
+		types.String("foo"):   types.String("bar"),
+		types.String("lorem"): types.String("ipsum"),
 	})
 	var (
 		candidates     rawCandidates

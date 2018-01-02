@@ -45,14 +45,14 @@ type Fn interface {
 func FromJSONInterface(v interface{}) types.Value {
 	if v == nil {
 		// TODO Use a more appropriate type
-		return String("")
+		return types.String("")
 	}
 	switch v.(type) {
 	case bool:
 		return types.Bool(v.(bool))
 	case float64, string:
 		// TODO Use a numeric type for float64
-		return String(fmt.Sprint(v))
+		return types.String(fmt.Sprint(v))
 	case []interface{}:
 		a := v.([]interface{})
 		vs := make([]types.Value, len(a))
@@ -64,7 +64,7 @@ func FromJSONInterface(v interface{}) types.Value {
 		m := v.(map[string]interface{})
 		mv := hashmap.Empty
 		for k, v := range m {
-			mv = mv.Assoc(String(k), FromJSONInterface(v))
+			mv = mv.Assoc(types.String(k), FromJSONInterface(v))
 		}
 		return types.NewMap(mv)
 	default:

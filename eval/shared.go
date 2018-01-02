@@ -18,5 +18,5 @@ func (sv sharedVariable) Set(val types.Value) {
 func (sv sharedVariable) Get() types.Value {
 	value, err := sv.store.SharedVar(sv.name)
 	maybeThrow(err)
-	return String(value)
+	return types.String(value)
 }

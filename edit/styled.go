@@ -7,7 +7,7 @@ import (
 )
 
 func styled(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
-	var textv, stylev eval.String
+	var textv, stylev types.String
 	eval.ScanArgs(args, &textv, &stylev)
 	text, style := string(textv), string(stylev)
 	eval.TakeNoOpt(opts)

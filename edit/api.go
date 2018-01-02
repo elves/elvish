@@ -88,18 +88,18 @@ func installModules(builtin eval.Ns, ed *Editor) {
 			if !ed.active {
 				throw(errEditorInactive)
 			}
-			if s, ok := v.(eval.String); ok {
+			if s, ok := v.(types.String); ok {
 				ed.buffer = string(s)
 				ed.dot = len(ed.buffer)
 			} else {
 				throw(errLineMustBeString)
 			}
 		},
-		func() types.Value { return eval.String(ed.buffer) },
+		func() types.Value { return types.String(ed.buffer) },
 	)
 	ns["-dot"] = eval.MakeVariableFromCallback(
 		func(v types.Value) {
-			s, ok := v.(eval.String)
+			s, ok := v.(types.String)
 			if !ok {
 				throw(errDotMustBeString)
 			}
@@ -122,7 +122,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 			}
 			ed.dot = i
 		},
-		func() types.Value { return eval.String(strconv.Itoa(ed.dot)) },
+		func() types.Value { return types.String(strconv.Itoa(ed.dot)) },
 	)
 	ns["selected-file"] = eval.MakeRoVariableFromCallback(
 		func() types.Value {
@@ -133,7 +133,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 			if !ok {
 				throw(errNotNav)
 			}
-			return eval.String(nav.current.selectedName())
+			return types.String(nav.current.selectedName())
 		},
 	)
 

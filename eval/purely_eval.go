@@ -36,7 +36,7 @@ func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Inde
 				return "", ErrImpure
 			}
 			v := ev.PurelyEvalPrimary(in.Head)
-			if s, ok := v.(String); ok {
+			if s, ok := v.(types.String); ok {
 				head += string(s)
 			} else {
 				return "", ErrImpure
@@ -71,7 +71,7 @@ func (ev *Evaler) PurelyEvalPartialCompound(cn *parse.Compound, upto *parse.Inde
 func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) types.Value {
 	switch pn.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
-		return String(pn.Value)
+		return types.String(pn.Value)
 	case parse.Variable:
 		explode, ns, name := ParseVariable(pn.Value)
 		if explode {

@@ -18,11 +18,11 @@ func (ed *Editor) abbr() types.Map {
 func (ed *Editor) abbrIterate(cb func(abbr, full string) bool) {
 	m := ed.abbr()
 	m.IteratePair(func(abbrValue, fullValue types.Value) bool {
-		abbr, ok := abbrValue.(eval.String)
+		abbr, ok := abbrValue.(types.String)
 		if !ok {
 			return true
 		}
-		full, ok := fullValue.(eval.String)
+		full, ok := fullValue.(types.String)
 		if !ok {
 			return true
 		}

@@ -4,7 +4,6 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/daemon"
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/util"
 )
@@ -59,7 +58,7 @@ func (hv List) Iterate(f func(types.Value) bool) {
 	maybeThrow(err)
 
 	for _, cmd := range cmds {
-		if !f(eval.String(cmd)) {
+		if !f(types.String(cmd)) {
 			break
 		}
 	}
@@ -75,13 +74,13 @@ func (hv List) IndexOne(idx types.Value) types.Value {
 		maybeThrow(err)
 		vs := make([]types.Value, len(cmds))
 		for i := range cmds {
-			vs[i] = eval.String(cmds[i])
+			vs[i] = types.String(cmds[i])
 		}
 		return types.MakeList(vs...)
 	}
 	s, err := hv.Daemon.Cmd(i + 1)
 	maybeThrow(err)
-	return eval.String(s)
+	return types.String(s)
 }
 
 func maybeThrow(e error) {

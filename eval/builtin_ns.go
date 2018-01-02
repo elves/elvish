@@ -11,7 +11,7 @@ import (
 func makeBuiltinNs() Ns {
 	ns := Ns{
 		"_":     BlackholeVariable{},
-		"pid":   NewRoVariable(String(strconv.Itoa(syscall.Getpid()))),
+		"pid":   NewRoVariable(types.String(strconv.Itoa(syscall.Getpid()))),
 		"ok":    NewRoVariable(OK),
 		"true":  NewRoVariable(types.Bool(true)),
 		"false": NewRoVariable(types.Bool(false)),

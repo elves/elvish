@@ -139,7 +139,7 @@ func (ev envVariable) Set(val types.Value) {
 }
 
 func (ev envVariable) Get() types.Value {
-	return String(os.Getenv(ev.name))
+	return types.String(os.Getenv(ev.name))
 }
 
 // ErrGetBlackhole is raised when attempting to get the value of a blackhole

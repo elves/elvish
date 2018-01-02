@@ -50,8 +50,8 @@ func put(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func print(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var sepv String
-	ScanOpts(opts, OptToScan{"sep", &sepv, String(" ")})
+	var sepv types.String
+	ScanOpts(opts, OptToScan{"sep", &sepv, types.String(" ")})
 
 	out := ec.ports[1].File
 	sep := string(sepv)
@@ -98,7 +98,7 @@ func slurp(ec *Frame, args []types.Value, opts map[string]types.Value) {
 
 	all, err := ioutil.ReadAll(in)
 	maybeThrow(err)
-	out <- String(string(all))
+	out <- types.String(string(all))
 }
 
 func fromLines(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -159,7 +159,7 @@ func toJSON(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func fopen(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var namev String
+	var namev types.String
 	ScanArgs(args, &namev)
 	name := string(namev)
 	TakeNoOpt(opts)
