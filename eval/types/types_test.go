@@ -1,6 +1,28 @@
 package types
 
-import "testing"
+import (
+	"os"
+	"testing"
 
-func TestTODO(t *testing.T) {
+	"github.com/elves/elvish/tt"
+	"github.com/xiaq/persistent/hashmap"
+	"github.com/xiaq/persistent/vector"
+)
+
+var Args = tt.Args
+
+func kind(k Kinder) string {
+	return k.Kind()
+}
+
+func TestKind(t *testing.T) {
+	tt.Test(t, tt.Fn("kind", kind), tt.Table{
+		Args(Bool(true)).Rets("bool"),
+		Args(String("")).Rets("string"),
+		Args(NewList(vector.Empty)).Rets("list"),
+		Args(NewMap(hashmap.Empty)).Rets("map"),
+		Args(NewStruct(NewStructDescriptor(), nil)).Rets("map"),
+		Args(NewFile(os.Stdin)).Rets("file"),
+		Args(NewPipe(os.Stdin, os.Stdout)).Rets("pipe"),
+	})
 }
