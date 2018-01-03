@@ -3,7 +3,6 @@ package types
 import (
 	"encoding/json"
 	"errors"
-	"strings"
 
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -116,7 +115,7 @@ type MapReprBuilder struct {
 
 func (b *MapReprBuilder) WritePair(k string, indent int, v string) {
 	if indent > 0 {
-		b.WriteElem("&" + k + "=\n" + strings.Repeat(" ", indent) + v)
+		b.WriteElem("&" + k + "=\t" + v)
 	} else {
 		b.WriteElem("&" + k + "=" + v)
 	}
