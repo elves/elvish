@@ -236,3 +236,13 @@ func KeyBuiltin(ec *eval.Frame, args []types.Value, opts map[string]types.Value)
 
 	ec.OutputChan() <- ToKey(s)
 }
+
+// Keys implements sort.Interface.
+type Keys []Key
+
+func (ks Keys) Len() int      { return len(ks) }
+func (ks Keys) Swap(i, j int) { ks[i], ks[j] = ks[j], ks[i] }
+func (ks Keys) Less(i, j int) bool {
+	return ks[i].Mod < ks[j].Mod ||
+		(ks[i].Mod == ks[j].Mod && ks[i].Rune < ks[j].Rune)
+}
