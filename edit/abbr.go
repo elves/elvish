@@ -8,7 +8,7 @@ import (
 )
 
 var _ = RegisterVariable("abbr", func() vartypes.Variable {
-	return vartypes.NewPtrVariableWithValidator(
+	return vartypes.NewValidatedPtrVariable(
 		types.NewMap(hashmap.Empty), eval.ShouldBeMap)
 })
 

@@ -40,7 +40,7 @@ func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
 		}
 	}
 	return eval.Ns{
-		"pid":  vartypes.MakeRoVariableFromCallback(daemonPid),
+		"pid":  vartypes.NewRoCallbackVariable(daemonPid),
 		"sock": vartypes.NewRoVariable(types.String(daemon.SockPath())),
 
 		"spawn" + eval.FnSuffix: vartypes.NewRoVariable(&eval.BuiltinFn{"daemon:spawn", daemonSpawn}),

@@ -113,9 +113,9 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 					// XXX We depend on the fact that this variable will
 					// immeidately be set.
 					if strings.HasSuffix(barename, FnSuffix) {
-						variable = vartypes.NewPtrVariableWithValidator(nil, ShouldBeFn)
+						variable = vartypes.NewValidatedPtrVariable(nil, ShouldBeFn)
 					} else if strings.HasSuffix(barename, NsSuffix) {
-						variable = vartypes.NewPtrVariableWithValidator(nil, ShouldBeNs)
+						variable = vartypes.NewValidatedPtrVariable(nil, ShouldBeNs)
 					} else {
 						variable = vartypes.NewPtrVariable(nil)
 					}

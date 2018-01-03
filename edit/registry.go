@@ -108,7 +108,7 @@ func makeBindings() map[string]vartypes.Variable {
 		for key, fn := range binding {
 			bindingValue = bindingValue.Assoc(key, fn)
 		}
-		bindings[mode] = vartypes.NewPtrVariableWithValidator(
+		bindings[mode] = vartypes.NewValidatedPtrVariable(
 			BindingTable{types.NewMap(bindingValue)}, shouldBeBindingTable)
 	}
 	return bindings

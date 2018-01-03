@@ -19,7 +19,7 @@ func TestPtrVariable(t *testing.T) {
 		t.Errorf("PtrVariable.Get doesn't return altered value")
 	}
 
-	v = vartypes.NewPtrVariableWithValidator(types.Bool(true), ShouldBeBool)
+	v = vartypes.NewValidatedPtrVariable(types.Bool(true), ShouldBeBool)
 	if util.DoesntThrow(func() { v.Set(types.String("233")) }) {
 		t.Errorf("PtrVariable.Set doesn't error when setting incompatible value")
 	}
@@ -46,7 +46,7 @@ func TestCbVariable(t *testing.T) {
 		setCalledWith = v
 	}
 
-	v := vartypes.MakeVariableFromCallback(set, get)
+	v := vartypes.NewCallbackVariable(set, get)
 	if v.Get() != types.String("cb") {
 		t.Errorf("cbVariable doesn't return value from callback")
 	}
@@ -65,7 +65,7 @@ func TestRoCbVariable(t *testing.T) {
 		getCalled = true
 		return types.String("cb")
 	}
-	v := vartypes.MakeRoVariableFromCallback(get)
+	v := vartypes.NewRoCallbackVariable(get)
 	if v.Get() != types.String("cb") {
 		t.Errorf("roCbVariable doesn't return value from callback")
 	}

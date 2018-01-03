@@ -28,10 +28,10 @@ func (err invalidValueError) Error() string {
 }
 
 func NewPtrVariable(v types.Value) Variable {
-	return NewPtrVariableWithValidator(v, nil)
+	return NewValidatedPtrVariable(v, nil)
 }
 
-func NewPtrVariableWithValidator(v types.Value, vld func(types.Value) error) Variable {
+func NewValidatedPtrVariable(v types.Value, vld func(types.Value) error) Variable {
 	return ptrVariable{&v, vld}
 }
 
@@ -69,9 +69,8 @@ type cbVariable struct {
 	get func() types.Value
 }
 
-// MakeVariableFromCallback makes a variable from a set callback and a get
-// callback.
-func MakeVariableFromCallback(set func(types.Value), get func() types.Value) Variable {
+// NewCallbackVariable makes a variable from a set callback and a get callback.
+func NewCallbackVariable(set func(types.Value), get func() types.Value) Variable {
 	return &cbVariable{set, get}
 }
 
@@ -85,8 +84,8 @@ func (cv *cbVariable) Get() types.Value {
 
 type roCbVariable func() types.Value
 
-// MakeRoVariableFromCallback makes a read-only variable from a get callback.
-func MakeRoVariableFromCallback(get func() types.Value) Variable {
+// NewRoCallbackVariable makes a read-only variable from a get callback.
+func NewRoCallbackVariable(get func() types.Value) Variable {
 	return roCbVariable(get)
 }
 

@@ -11,7 +11,7 @@ import (
 )
 
 var _ = RegisterVariable("max-height", func() vartypes.Variable {
-	return vartypes.NewPtrVariableWithValidator(types.String("+Inf"), eval.ShouldBeNumber)
+	return vartypes.NewValidatedPtrVariable(types.String("+Inf"), eval.ShouldBeNumber)
 })
 
 func (ed *Editor) maxHeight() int {
