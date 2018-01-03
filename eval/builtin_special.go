@@ -182,7 +182,7 @@ func use(ec *Frame, modname, modpath string) {
 }
 
 func loadModule(ec *Frame, modpath string) Ns {
-	if ns, ok := ec.Evaler.Modules[modpath]; ok {
+	if ns, ok := ec.Evaler.modules[modpath]; ok {
 		// Module already loaded.
 		return ns
 	}
@@ -231,11 +231,11 @@ func loadModule(ec *Frame, modpath string) Ns {
 
 	// Load the namespace before executing. This avoids mutual and self use's to
 	// result in an infinite recursion.
-	ec.Evaler.Modules[modpath] = local
+	ec.Evaler.modules[modpath] = local
 	err = newEc.PEval(op)
 	if err != nil {
 		// Unload the namespace.
-		delete(ec.Modules, modpath)
+		delete(ec.modules, modpath)
 		throw(err)
 	}
 	return local

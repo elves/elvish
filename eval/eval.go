@@ -44,7 +44,7 @@ type Evaler struct {
 	evalerScopes
 	evalerPorts
 	DaemonClient *daemon.Client
-	Modules      map[string]Ns
+	modules      map[string]Ns
 	// bundled modules
 	bundled map[string]string
 	Editor  Editor
@@ -66,7 +66,7 @@ func NewEvaler() *Evaler {
 			Global:  make(Ns),
 			Builtin: builtin,
 		},
-		Modules: map[string]Ns{
+		modules: map[string]Ns{
 			"builtin": builtin,
 		},
 		bundled: bundled.Get(),
@@ -96,7 +96,7 @@ func (ev *Evaler) InstallDaemonClient(client *daemon.Client) {
 // InstallModule installs a module to the Evaler so that it can be used with
 // "use $name" from script.
 func (ev *Evaler) InstallModule(name string, mod Ns) {
-	ev.Modules[name] = mod
+	ev.modules[name] = mod
 }
 
 // InstallBundled installs a bundled module to the Evaler.

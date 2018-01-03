@@ -120,7 +120,7 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 						variable = vartypes.NewPtrVariable(nil)
 					}
 					ec.local[barename] = variable
-				} else if mod, ok := ec.Modules[ns]; ok {
+				} else if mod, ok := ec.modules[ns]; ok {
 					variable = vartypes.NewPtrVariable(nil)
 					mod[barename] = variable
 				} else {
