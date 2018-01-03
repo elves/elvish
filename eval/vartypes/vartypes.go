@@ -1,3 +1,4 @@
+// Package vartypes contains basic types for manipulating Elvish variables.
 package vartypes
 
 import (
