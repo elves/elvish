@@ -14,6 +14,7 @@ import (
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/eval/bundled"
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
@@ -75,7 +76,7 @@ func NewEvaler() *Evaler {
 
 	valueOutIndicator := defaultValueOutIndicator
 	ev.evalerPorts = newEvalerPorts(os.Stdin, os.Stdout, os.Stderr, &valueOutIndicator)
-	builtin["value-out-indicator"] = NewBackedVariable(&valueOutIndicator)
+	builtin["value-out-indicator"] = vartypes.NewString(&valueOutIndicator)
 
 	return ev
 }
