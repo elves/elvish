@@ -19,7 +19,7 @@ func TestPtrVariable(t *testing.T) {
 		t.Errorf("PtrVariable.Get doesn't return altered value")
 	}
 
-	v = vartypes.NewValidatedPtrVariable(types.Bool(true), ShouldBeBool)
+	v = vartypes.NewValidatedPtrVariable(types.Bool(true), vartypes.ShouldBeBool)
 	if util.DoesntThrow(func() { v.Set(types.String("233")) }) {
 		t.Errorf("PtrVariable.Set doesn't error when setting incompatible value")
 	}

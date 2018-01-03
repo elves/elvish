@@ -86,7 +86,7 @@ func Rprompt(ed Editor) eval.Callable {
 
 // RpromptPersistentVariable returns a variable for $edit:rprompt-persistent.
 func RpromptPersistentVariable() vartypes.Variable {
-	return vartypes.NewValidatedPtrVariable(types.Bool(false), eval.ShouldBeBool)
+	return vartypes.NewValidatedPtrVariable(types.Bool(false), vartypes.ShouldBeBool)
 }
 
 // RpromptPersistent extracts $edit:rprompt-persistent.
@@ -96,7 +96,7 @@ func RpromptPersistent(ed Editor) bool {
 
 // MaxWaitVariable returns a variable for $edit:-prompts-max-wait.
 func MaxWaitVariable() vartypes.Variable {
-	return vartypes.NewValidatedPtrVariable(types.String("+Inf"), eval.ShouldBeNumber)
+	return vartypes.NewValidatedPtrVariable(types.String("+Inf"), vartypes.ShouldBeNumber)
 }
 
 // MaxWait extracts $edit:-prompts-max-wait.
