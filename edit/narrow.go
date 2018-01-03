@@ -40,10 +40,6 @@ var _ = registerBuiltins(modeNarrow, map[string]func(*Editor){
 	"default": func(ed *Editor) { getNarrow(ed).defaultBinding(ed) },
 })
 
-func init() {
-	registerBindings(modeNarrow, modeNarrow, nil)
-}
-
 // narrow implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type narrow struct {

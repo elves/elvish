@@ -29,22 +29,6 @@ var _ = registerBuiltins(modeListing, map[string]func(*Editor){
 	"default": func(ed *Editor) { getListing(ed).defaultBinding(ed) },
 })
 
-func init() {
-	registerBindings(modeListing, modeListing, map[ui.Key]string{
-		{ui.Up, 0}:         "up",
-		{ui.PageUp, 0}:     "page-up",
-		{ui.Down, 0}:       "down",
-		{ui.PageDown, 0}:   "page-down",
-		{ui.Tab, 0}:        "down-cycle",
-		{ui.Tab, ui.Shift}: "up-cycle",
-		{ui.Backspace, 0}:  "backspace",
-		{ui.Enter, 0}:      "accept-close",
-		{ui.Enter, ui.Alt}: "accept",
-		ui.Default:         "default",
-		{'[', ui.Ctrl}:     "insert:start",
-	})
-}
-
 // listing implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type listing struct {

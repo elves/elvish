@@ -22,16 +22,6 @@ var _ = registerBuiltins("history", map[string]func(*Editor){
 	"default":            wrapHistoryBuiltin(historyDefault),
 })
 
-func init() {
-	registerBindings(modeHistory, "history", map[ui.Key]string{
-		{ui.Up, 0}:     "up",
-		{ui.Down, 0}:   "down-or-quit",
-		{'[', ui.Ctrl}: "insert:start",
-		{'R', ui.Ctrl}: "switch-to-histlist",
-		ui.Default:     "default",
-	})
-}
-
 type hist struct {
 	*history.Walker
 }

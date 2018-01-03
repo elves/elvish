@@ -54,66 +54,6 @@ var (
 	})
 )
 
-func init() {
-	registerBindings(modeInsert, "", map[ui.Key]string{
-		// Moving.
-		{ui.Left, 0}:        "move-dot-left",
-		{ui.Right, 0}:       "move-dot-right",
-		{ui.Up, ui.Alt}:     "move-dot-up",
-		{ui.Down, ui.Alt}:   "move-dot-down",
-		{ui.Left, ui.Ctrl}:  "move-dot-left-word",
-		{ui.Right, ui.Ctrl}: "move-dot-right-word",
-		{'b', ui.Alt}:       "move-dot-left-word",
-		{'f', ui.Alt}:       "move-dot-right-word",
-		{ui.Home, 0}:        "move-dot-sol",
-		{ui.End, 0}:         "move-dot-eol",
-		// Killing.
-		{'U', ui.Ctrl}:    "kill-line-left",
-		{'K', ui.Ctrl}:    "kill-line-right",
-		{'W', ui.Ctrl}:    "kill-word-left",
-		{ui.Backspace, 0}: "kill-rune-left",
-		{'H', ui.Ctrl}:    "kill-rune-left", // Some terminal send ^H on backspace
-		{ui.Delete, 0}:    "kill-rune-right",
-		// Inserting.
-		{'.', ui.Alt}:      "insert-last-word",
-		{ui.Enter, ui.Alt}: "insert-key",
-		// Controls.
-		{ui.Enter, 0}:  "smart-enter",
-		{'D', ui.Ctrl}: "return-eof",
-		{ui.F2, 0}:     "toggle-quote-paste",
-
-		// Other modes.
-		// ui.Key{'[', ui.Ctrl}: "command-start",
-		{ui.Tab, 0}:    "completion:smart-start",
-		{ui.Up, 0}:     "history:start",
-		{ui.Down, 0}:   "end-of-history",
-		{'N', ui.Ctrl}: "navigation:start",
-		{'R', ui.Ctrl}: "histlist:start",
-		{'1', ui.Alt}:  "lastcmd:start",
-		{'L', ui.Ctrl}: "location:start",
-		{'V', ui.Ctrl}: "insert-raw",
-
-		ui.Default: "insert:default",
-	})
-	registerBindings(modeCommand, "", map[ui.Key]string{
-		// Moving.
-		{'h', 0}: "move-dot-left",
-		{'l', 0}: "move-dot-right",
-		{'k', 0}: "move-dot-up",
-		{'j', 0}: "move-dot-down",
-		{'b', 0}: "move-dot-left-word",
-		{'w', 0}: "move-dot-right-word",
-		{'0', 0}: "move-dot-sol",
-		{'$', 0}: "move-dot-eol",
-		// Killing.
-		{'x', 0}: "kill-rune-right",
-		{'D', 0}: "kill-line-right",
-		// Controls.
-		{'i', 0}:   "insert:start",
-		ui.Default: "command:default",
-	})
-}
-
 type insert struct {
 	quotePaste bool
 	// The number of consecutive key inserts. Used for abbreviation expansion.

@@ -15,12 +15,6 @@ var _ = registerBuiltins(modeLastCmd, map[string]func(*Editor){
 	"alt-default": lastcmdAltDefault,
 })
 
-func init() {
-	registerBindings(modeLastCmd, modeLastCmd, map[ui.Key]string{
-		ui.Default: "alt-default",
-	})
-}
-
 type lastcmdEntry struct {
 	i int
 	s string

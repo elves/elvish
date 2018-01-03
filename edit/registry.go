@@ -2,15 +2,10 @@ package edit
 
 import (
 	"errors"
-	"fmt"
-	"os"
-	"strings"
 
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
-	"github.com/xiaq/persistent/hashmap"
 )
 
 // This file contains several "registries", data structure that are written
@@ -67,49 +62,12 @@ func makeNsFromBuiltins(builtins map[string]*BuiltinFn) eval.Ns {
 	return ns
 }
 
-var keyBindings = map[string]map[ui.Key]eval.Fn{}
-
-// registerBindings registers default bindings for a mode to initialize the
-// global keyBindings map. Builtin names are resolved in the defaultMod
-// subnamespace using information from builtinMaps. It should be called in init
-// functions.
-func registerBindings(
-	mt string, defaultMod string, bindingData map[ui.Key]string) struct{} {
-
-	if _, ok := keyBindings[mt]; !ok {
-		keyBindings[mt] = map[ui.Key]eval.Fn{}
-	}
-	for key, fullName := range bindingData {
-		// break fullName into mod and name.
-		var mod, name string
-		nameParts := strings.SplitN(fullName, ":", 2)
-		if len(nameParts) == 2 {
-			mod, name = nameParts[0], nameParts[1]
-		} else {
-			mod, name = defaultMod, nameParts[0]
-		}
-		if m, ok := builtinMaps[mod]; ok {
-			if builtin, ok := m[name]; ok {
-				keyBindings[mt][key] = builtin
-			} else {
-				fmt.Fprintln(os.Stderr, "Internal warning: no such builtin", name, "in mod", mod)
-			}
-		} else {
-			fmt.Fprintln(os.Stderr, "Internal warning: no such mod:", mod)
-		}
-	}
-	return struct{}{}
-}
-
 func makeBindings() map[string]vartypes.Variable {
-	bindings := make(map[string]vartypes.Variable)
-	for mode, binding := range keyBindings {
-		bindingValue := hashmap.Empty
-		for key, fn := range binding {
-			bindingValue = bindingValue.Assoc(key, fn)
-		}
+	bindings := map[string]vartypes.Variable{}
+	// XXX This abuses the builtin registry to get a list of mode names
+	for mode := range builtinMaps {
 		bindings[mode] = vartypes.NewValidatedPtrVariable(
-			BindingTable{types.NewMap(bindingValue)}, shouldBeBindingTable)
+			BindingTable{types.EmptyMap}, shouldBeBindingTable)
 	}
 	return bindings
 }

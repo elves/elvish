@@ -23,10 +23,6 @@ var _ = registerBuiltins(modeLocation, map[string]func(*Editor){
 	"start": locStart,
 })
 
-func init() {
-	registerBindings(modeLocation, modeLocation, map[ui.Key]string{})
-}
-
 // PinnedScore is a special value of Score in storedefs.Dir to represent that the
 // directory is pinned.
 var PinnedScore = math.Inf(1)

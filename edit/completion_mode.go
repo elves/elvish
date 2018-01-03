@@ -29,21 +29,6 @@ var _ = registerBuiltins(modeCompletion, map[string]func(*Editor){
 	"default":        complDefault,
 })
 
-func init() {
-	registerBindings(modeCompletion, modeCompletion, map[ui.Key]string{
-		{ui.Up, 0}:         "up",
-		{ui.Down, 0}:       "down",
-		{ui.Tab, 0}:        "down-cycle",
-		{ui.Tab, ui.Shift}: "up-cycle",
-		{ui.Left, 0}:       "left",
-		{ui.Right, 0}:      "right",
-		{ui.Enter, 0}:      "accept",
-		{'F', ui.Ctrl}:     "trigger-filter",
-		{'[', ui.Ctrl}:     "insert:start",
-		ui.Default:         "default",
-	})
-}
-
 type completion struct {
 	complSpec
 	completer string

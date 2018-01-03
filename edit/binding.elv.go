@@ -1,4 +1,0 @@
-package edit
-
-const bindingElv = `
-`

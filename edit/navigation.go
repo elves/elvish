@@ -37,25 +37,6 @@ var _ = registerBuiltins(modeNavigation, map[string]func(*Editor){
 	"default":                  navDefault,
 })
 
-func init() {
-	registerBindings(modeNavigation, modeNavigation, map[ui.Key]string{
-		{ui.Up, 0}:         "up",
-		{ui.Down, 0}:       "down",
-		{ui.PageUp, 0}:     "page-up",
-		{ui.PageDown, 0}:   "page-down",
-		{ui.Left, 0}:       "left",
-		{ui.Right, 0}:      "right",
-		{ui.Up, ui.Alt}:    "file-preview-up",
-		{ui.Down, ui.Alt}:  "file-preview-down",
-		{ui.Enter, ui.Alt}: "insert-selected",
-		{ui.Enter, 0}:      "insert-selected-and-quit",
-		{'H', ui.Ctrl}:     "trigger-shown-hidden",
-		{'F', ui.Ctrl}:     "trigger-filter",
-		{'[', ui.Ctrl}:     "insert:start",
-		ui.Default:         "default",
-	})
-}
-
 type navigation struct {
 	current    *navColumn
 	parent     *navColumn

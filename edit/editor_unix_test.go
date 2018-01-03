@@ -30,19 +30,24 @@ func TestReadLine(t *testing.T) {
 	}
 	defer master.Close()
 	defer tty.Close()
+
 	// Continually consume tty outputs so that the editor is not blocked on
 	// writing.
+	var outputs []byte
 	go func() {
-		var buf [64]byte
+		var buf [256]byte
 		for {
-			_, err := master.Read(buf[:])
+			nr, err := master.Read(buf[:])
 			if err != nil {
 				break
 			}
+			outputs = append(outputs, buf[:nr]...)
 		}
 	}()
 
 	ev := eval.NewEvaler()
+	// XXX: Needed for "use" to work.
+	ev.SetLibDir("/non/exist/ent")
 	defer ev.Close()
 
 	for _, test := range readLineTests {
@@ -73,7 +78,9 @@ func TestReadLine(t *testing.T) {
 			t.Errorf("ReadLine() => error %v (input %q)", err, test.input)
 		case <-time.After(readLineTimeout):
 			t.Errorf("ReadLine() timed out (input %q)", test.input)
-			t.Log("\n" + sys.DumpStack())
+			t.Log("Stack trace: \n" + sys.DumpStack())
+			t.Logf("Terminal output: %q", outputs)
+			t.FailNow()
 		}
 	}
 }

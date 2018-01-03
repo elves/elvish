@@ -146,8 +146,10 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 	ev.Editor = ed
 
 	installModules(ev.Builtin, ed)
-	ev.InstallBundled("binding", bindingElv)
-	ev.SourceText("[editor]", "use binding")
+	err = ev.SourceText("[editor]", "use binding; binding:install")
+	if err != nil {
+		fmt.Fprintln(out, "Failed to load default binding:", err)
+	}
 
 	return ed
 }

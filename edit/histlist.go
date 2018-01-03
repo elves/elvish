@@ -17,14 +17,6 @@ var _ = registerBuiltins(modeHistoryListing, map[string]func(*Editor){
 	"toggle-case-sensitivity": histlistToggleCaseSensitivity,
 })
 
-func init() {
-	registerBindings(modeHistoryListing, modeHistoryListing,
-		map[ui.Key]string{
-			{'G', ui.Ctrl}: "toggle-case-sensitivity",
-			{'D', ui.Ctrl}: "toggle-dedup",
-		})
-}
-
 // ErrStoreOffline is thrown when an operation requires the storage backend, but
 // it is offline.
 var ErrStoreOffline = errors.New("store offline")
