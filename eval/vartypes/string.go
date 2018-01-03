@@ -6,7 +6,7 @@ import (
 	"github.com/elves/elvish/eval/types"
 )
 
-var errMustBeString = errors.New("must be list")
+var errMustBeString = errors.New("must be string")
 
 type stringVar struct {
 	ptr *string
