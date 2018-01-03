@@ -39,10 +39,15 @@ const (
 	Ctrl
 )
 
+const functionKeyOffset = 1000
+
 // Special negative runes to represent function keys, used in the Rune field of
 // the Key struct.
 const (
-	F1 rune = -iota - 1
+	// DefaultBindingRune is a special value to represent default binding.
+	DefaultBindingRune rune = iota - functionKeyOffset
+
+	F1
 	F2
 	F3
 	F4
@@ -67,8 +72,6 @@ const (
 	PageUp
 	PageDown
 
-	DefaultBindingRune // A special value to represent default binding.
-
 	// Some function key names are just aliases for their ASCII representation
 
 	Tab       = '\t'
@@ -76,13 +79,12 @@ const (
 	Backspace = 0x7f
 )
 
-// functionKey stores the names of function keys, where the name of a function
-// key k is stored at index -k. For instance, functionKeyNames[-F1] = "F1".
+// functionKey stores the names of function keys, in the same order they appeared above.
 var functionKeyNames = [...]string{
-	"(Invalid)",
+	"Default",
 	"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
 	"Up", "Down", "Right", "Left",
-	"Home", "Insert", "Delete", "End", "PageUp", "PageDown", "default",
+	"Home", "Insert", "Delete", "End", "PageUp", "PageDown",
 }
 
 // keyNames stores the name of function keys with a positive rune.
@@ -127,11 +129,11 @@ func (k Key) String() string {
 			b.WriteRune(k.Rune)
 		}
 	} else {
-		i := int(-k.Rune)
+		i := int(k.Rune + functionKeyOffset)
 		if i >= len(functionKeyNames) {
-			fmt.Fprintf(&b, "(bad function key %d)", i)
+			fmt.Fprintf(&b, "(bad function key %d)", k.Rune)
 		} else {
-			b.WriteString(functionKeyNames[-k.Rune])
+			b.WriteString(functionKeyNames[i])
 		}
 	}
 	return b.String()
@@ -200,9 +202,9 @@ func parseKey(s string) (Key, error) {
 		}
 	}
 
-	for i, name := range functionKeyNames[1:] {
+	for i, name := range functionKeyNames {
 		if s == name {
-			k.Rune = rune(-i - 1)
+			k.Rune = rune(i - functionKeyOffset)
 			return k, nil
 		}
 	}
