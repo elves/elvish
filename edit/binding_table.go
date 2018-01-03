@@ -1,12 +1,16 @@
 package edit
 
 import (
+	"errors"
+
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 )
+
+var errValueShouldBeFn = errors.New("value should be function")
 
 func getBinding(bindingVar vartypes.Variable, k ui.Key) eval.Fn {
 	binding := bindingVar.Get().(BindingTable)
@@ -53,7 +57,25 @@ func (bt BindingTable) Assoc(k, v types.Value) types.Value {
 	key := ui.ToKey(k)
 	f, ok := v.(eval.Fn)
 	if !ok {
-		throwf("want function, got %s", v.Kind())
+		throw(errValueShouldBeFn)
 	}
 	return BindingTable{bt.Map.Assoc(key, f).(types.Map)}
+}
+
+func makeBindingTable(f *eval.Frame, args []types.Value, opts map[string]types.Value) {
+	var raw types.Map
+	eval.ScanArgs(args, &raw)
+	eval.TakeNoOpt(opts)
+
+	converted := types.EmptyMap
+	raw.IteratePair(func(k, v types.Value) bool {
+		f, ok := v.(eval.Fn)
+		if !ok {
+			throw(errValueShouldBeFn)
+		}
+		converted = converted.Assoc(ui.ToKey(k), f).(types.Map)
+		return true
+	})
+
+	f.OutputChan() <- converted
 }

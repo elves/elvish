@@ -150,6 +150,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 
 	// Functions.
 	eval.AddBuiltinFns(ns,
+		&eval.BuiltinFn{"edit:binding-table", makeBindingTable},
 		&eval.BuiltinFn{"edit:command-history", CommandHistory},
 		&eval.BuiltinFn{"edit:complete-getopt", complGetopt},
 		&eval.BuiltinFn{"edit:complex-candidate", outputComplexCandidate},
