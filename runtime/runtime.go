@@ -12,6 +12,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/eval"
+	daemonmod "github.com/elves/elvish/eval/daemon"
 	"github.com/elves/elvish/eval/re"
 	daemonp "github.com/elves/elvish/program/daemon"
 	"github.com/elves/elvish/store/storedefs"
@@ -72,7 +73,6 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 
 	ev := eval.NewEvaler()
 	ev.SetLibDir(filepath.Join(dataDir, "lib"))
-	// TODO(xiaq): Installation of the re module might belong somewhere else.
 	ev.InstallModule("re", re.Ns())
 	if sockpath != "" && dbpath != "" {
 		spawner := &daemonp.Daemon{
@@ -90,7 +90,8 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 		}
 		// Even if error is not nil, we install daemon-related functionalities
 		// anyway. Daemon may eventually come online and become functional.
-		ev.InstallDaemon(client, spawner)
+		ev.InstallDaemonClient(client)
+		ev.InstallModule("daemon", daemonmod.Ns(client, spawner))
 	}
 	return ev, dataDir
 }

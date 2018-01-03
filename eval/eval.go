@@ -15,7 +15,6 @@ import (
 	"github.com/elves/elvish/eval/bundled"
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
-	daemonp "github.com/elves/elvish/program/daemon"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -42,9 +41,9 @@ const (
 // shared among all evalCtx instances.
 type Evaler struct {
 	evalerScopes
-	evalerDaemon
 	evalerPorts
-	Modules map[string]Ns
+	DaemonClient *daemon.Client
+	Modules      map[string]Ns
 	// bundled modules
 	bundled map[string]string
 	Editor  Editor
@@ -55,11 +54,6 @@ type Evaler struct {
 type evalerScopes struct {
 	Global  Ns
 	Builtin Ns
-}
-
-type evalerDaemon struct {
-	DaemonClient  *daemon.Client
-	DaemonSpawner *daemonp.Daemon
 }
 
 // NewEvaler creates a new Evaler.
@@ -91,10 +85,9 @@ func (ev *Evaler) Close() {
 	ev.evalerPorts.close()
 }
 
-// InstallDaemon installs a daemon to the Evaler.
-func (ev *Evaler) InstallDaemon(client *daemon.Client, spawner *daemonp.Daemon) {
-	ev.evalerDaemon = evalerDaemon{client, spawner}
-	ev.InstallModule("daemon", makeDaemonNs(client))
+// InstallDaemonClient installs a daemon client to the Evaler.
+func (ev *Evaler) InstallDaemonClient(client *daemon.Client) {
+	ev.DaemonClient = client
 	// XXX This is really brittle
 	ev.Builtin["pwd"] = PwdVariable{client}
 }
