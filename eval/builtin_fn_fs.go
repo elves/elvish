@@ -87,6 +87,11 @@ func cdInner(dir string, ec *Frame) {
 
 var dirDescriptor = types.NewStructDescriptor("path", "score")
 
+func newDirStruct(path string, score float64) *types.Struct {
+	return types.NewStruct(dirDescriptor,
+		[]types.Value{types.String(path), floatToString(score)})
+}
+
 func dirs(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
@@ -100,10 +105,7 @@ func dirs(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 	out := ec.ports[1].Chan
 	for _, dir := range dirs {
-		out <- &types.Struct{dirDescriptor, []types.Value{
-			types.String(dir.Path),
-			floatToString(dir.Score),
-		}}
+		out <- newDirStruct(dir.Path, dir.Score)
 	}
 }
 

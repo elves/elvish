@@ -6,10 +6,8 @@ import (
 
 var (
 	testStructDescriptor = NewStructDescriptor("foo", "bar")
-	testStruct           = &Struct{testStructDescriptor,
-		[]Value{String("lorem"), String("ipsum")}}
-	testStruct2 = &Struct{testStructDescriptor,
-		[]Value{String("lorem"), String("dolor")}}
+	testStruct           = NewStruct(testStructDescriptor, []Value{String("lorem"), String("ipsum")})
+	testStruct2          = NewStruct(testStructDescriptor, []Value{String("lorem"), String("dolor")})
 )
 
 func TestStructMethods(t *testing.T) {

@@ -15,8 +15,8 @@ var (
 
 // Struct is like a Map with fixed keys.
 type Struct struct {
-	Descriptor *StructDescriptor
-	Fields     []Value
+	descriptor *StructDescriptor
+	fields     []Value
 }
 
 var (
@@ -45,30 +45,30 @@ func (s *Struct) Hash() uint32 {
 func (s *Struct) Repr(indent int) string {
 	var builder MapReprBuilder
 	builder.Indent = indent
-	for i, name := range s.Descriptor.fieldNames {
-		builder.WritePair(parse.Quote(name), indent+2, s.Fields[i].Repr(indent+2))
+	for i, name := range s.descriptor.fieldNames {
+		builder.WritePair(parse.Quote(name), indent+2, s.fields[i].Repr(indent+2))
 	}
 	return builder.String()
 }
 
 func (s *Struct) Len() int {
-	return len(s.Descriptor.fieldNames)
+	return len(s.descriptor.fieldNames)
 }
 
 func (s *Struct) IndexOne(idx Value) Value {
-	return s.Fields[s.index(idx)]
+	return s.fields[s.index(idx)]
 }
 
 func (s *Struct) Assoc(k, v Value) Value {
 	i := s.index(k)
-	fields := make([]Value, len(s.Fields))
-	copy(fields, s.Fields)
+	fields := make([]Value, len(s.fields))
+	copy(fields, s.fields)
 	fields[i] = v
-	return &Struct{s.Descriptor, fields}
+	return &Struct{s.descriptor, fields}
 }
 
 func (s *Struct) IterateKey(f func(Value) bool) {
-	for _, field := range s.Descriptor.fieldNames {
+	for _, field := range s.descriptor.fieldNames {
 		if !f(String(field)) {
 			break
 		}
@@ -76,8 +76,8 @@ func (s *Struct) IterateKey(f func(Value) bool) {
 }
 
 func (s *Struct) IteratePair(f func(Value, Value) bool) {
-	for i, field := range s.Descriptor.fieldNames {
-		if !f(String(field), s.Fields[i]) {
+	for i, field := range s.descriptor.fieldNames {
+		if !f(String(field), s.fields[i]) {
 			break
 		}
 	}
@@ -88,7 +88,7 @@ func (s *Struct) HasKey(k Value) bool {
 	if !ok {
 		return false
 	}
-	_, ok = s.Descriptor.fieldIndex[string(index)]
+	_, ok = s.descriptor.fieldIndex[string(index)]
 	return ok
 }
 
@@ -97,7 +97,7 @@ func (s *Struct) index(idx Value) int {
 	if !ok {
 		throw(ErrIndexMustBeString)
 	}
-	i, ok := s.Descriptor.fieldIndex[string(index)]
+	i, ok := s.descriptor.fieldIndex[string(index)]
 	if !ok {
 		throw(fmt.Errorf("no such field: %s", index.Repr(NoPretty)))
 	}
@@ -108,13 +108,13 @@ func (s *Struct) index(idx Value) int {
 func (s *Struct) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	buf.WriteByte('{')
-	for i, fieldName := range s.Descriptor.fieldNames {
+	for i, fieldName := range s.descriptor.fieldNames {
 		if i > 0 {
 			buf.WriteByte(',')
 		}
-		buf.Write(s.Descriptor.jsonFieldNames[i])
+		buf.Write(s.descriptor.jsonFieldNames[i])
 		buf.WriteByte(':')
-		fieldJSON, err := json.Marshal(s.Fields[i])
+		fieldJSON, err := json.Marshal(s.fields[i])
 		if err != nil {
 			return nil, fmt.Errorf("cannot encode field %q: %v", fieldName, err)
 		}
