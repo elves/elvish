@@ -15,6 +15,11 @@ type Pipe struct {
 
 var _ Value = Pipe{}
 
+// NewPipe creates a new Pipe value.
+func NewPipe(r, w *os.File) Pipe {
+	return Pipe{r, w}
+}
+
 func (Pipe) Kind() string {
 	return "pipe"
 }

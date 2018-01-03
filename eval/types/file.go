@@ -15,6 +15,11 @@ type File struct {
 
 var _ Value = File{}
 
+// NewFile creates a new File value.
+func NewFile(inner *os.File) File {
+	return File{inner}
+}
+
 func (File) Kind() string {
 	return "file"
 }

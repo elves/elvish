@@ -24,6 +24,11 @@ var (
 	_ MapLike = (*Struct)(nil)
 )
 
+// NewStruct creates a new *Struct value.
+func NewStruct(descriptor *StructDescriptor, fields []Value) *Struct {
+	return &Struct{descriptor, fields}
+}
+
 func (*Struct) Kind() string {
 	return "map"
 }
