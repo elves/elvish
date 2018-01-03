@@ -13,11 +13,10 @@ type Map struct {
 	inner hashmap.HashMap
 }
 
-type HasKeyer interface {
-	HasKey(k Value) bool
-}
-
 var _ MapLike = Map{}
+
+// EmptyMap is an empty Map.
+var EmptyMap = Map{hashmap.Empty}
 
 // NewMap creates a new Map from an inner HashMap.
 func NewMap(inner hashmap.HashMap) Map {

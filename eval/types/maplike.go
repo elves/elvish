@@ -13,6 +13,10 @@ type MapLike interface {
 	IteratePairer
 }
 
+type HasKeyer interface {
+	HasKey(k Value) bool
+}
+
 func EqMapLike(lhs MapLike, a interface{}) bool {
 	rhs, ok := a.(MapLike)
 	if !ok {
