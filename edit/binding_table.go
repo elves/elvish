@@ -2,6 +2,7 @@ package edit
 
 import (
 	"errors"
+	"sort"
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -35,10 +36,19 @@ type BindingTable struct {
 func (bt BindingTable) Repr(indent int) string {
 	var builder types.MapReprBuilder
 	builder.Indent = indent
-	bt.Map.IteratePair(func(k, v types.Value) bool {
-		builder.WritePair(parse.Quote(k.(ui.Key).String()), indent+2, v.Repr(indent+2))
+
+	var keys ui.Keys
+	bt.Map.IterateKey(func(k types.Value) bool {
+		keys = append(keys, k.(ui.Key))
 		return true
 	})
+	sort.Sort(keys)
+
+	for _, k := range keys {
+		v := bt.Map.IndexOne(k)
+		builder.WritePair(parse.Quote(k.String()), indent+2, v.Repr(indent+2))
+	}
+
 	return builder.String()
 }
 
@@ -77,5 +87,5 @@ func makeBindingTable(f *eval.Frame, args []types.Value, opts map[string]types.V
 		return true
 	})
 
-	f.OutputChan() <- converted
+	f.OutputChan() <- BindingTable{converted}
 }
