@@ -6,11 +6,12 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
 )
 
-var _ = RegisterVariable("max-height", func() eval.Variable {
-	return eval.NewPtrVariableWithValidator(types.String("+Inf"), eval.ShouldBeNumber)
+var _ = RegisterVariable("max-height", func() vartypes.Variable {
+	return vartypes.NewPtrVariableWithValidator(types.String("+Inf"), eval.ShouldBeNumber)
 })
 
 func (ed *Editor) maxHeight() int {

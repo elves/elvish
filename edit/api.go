@@ -10,6 +10,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -82,8 +83,8 @@ func installModules(builtin eval.Ns, ed *Editor) {
 	}
 
 	// Internal states.
-	ns["history"] = eval.NewRoVariable(history.List{&ed.historyMutex, ed.daemon})
-	ns["current-command"] = eval.MakeVariableFromCallback(
+	ns["history"] = vartypes.NewRoVariable(history.List{&ed.historyMutex, ed.daemon})
+	ns["current-command"] = vartypes.MakeVariableFromCallback(
 		func(v types.Value) {
 			if !ed.active {
 				throw(errEditorInactive)
@@ -97,7 +98,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 		},
 		func() types.Value { return types.String(ed.buffer) },
 	)
-	ns["-dot"] = eval.MakeVariableFromCallback(
+	ns["-dot"] = vartypes.MakeVariableFromCallback(
 		func(v types.Value) {
 			s, ok := v.(types.String)
 			if !ok {
@@ -124,7 +125,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 		},
 		func() types.Value { return types.String(strconv.Itoa(ed.dot)) },
 	)
-	ns["selected-file"] = eval.MakeRoVariableFromCallback(
+	ns["selected-file"] = vartypes.MakeRoVariableFromCallback(
 		func() types.Value {
 			if !ed.active {
 				throw(errEditorInactive)
@@ -139,7 +140,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 
 	// Completers.
 	for _, bac := range argCompletersData {
-		ns[bac.name+eval.FnSuffix] = eval.NewRoVariable(bac)
+		ns[bac.name+eval.FnSuffix] = vartypes.NewRoVariable(bac)
 	}
 
 	// Matchers.
@@ -159,7 +160,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 		&eval.BuiltinFn{"edit:-narrow-read", NarrowRead},
 	)
 
-	builtin["edit"+eval.NsSuffix] = eval.NewPtrVariableWithValidator(ns, eval.ShouldBeNs)
+	builtin["edit"+eval.NsSuffix] = vartypes.NewPtrVariableWithValidator(ns, eval.ShouldBeNs)
 	submods := make(map[string]eval.Ns)
 	// Install other modules.
 	for module, builtins := range builtinMaps {
@@ -179,7 +180,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 	}
 
 	for name, ns := range submods {
-		builtin["edit:"+name+eval.NsSuffix] = eval.NewPtrVariableWithValidator(ns, eval.ShouldBeNs)
+		builtin["edit:"+name+eval.NsSuffix] = vartypes.NewPtrVariableWithValidator(ns, eval.ShouldBeNs)
 	}
 }
 

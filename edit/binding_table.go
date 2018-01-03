@@ -4,10 +4,11 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 )
 
-func getBinding(bindingVar eval.Variable, k ui.Key) eval.Fn {
+func getBinding(bindingVar vartypes.Variable, k ui.Key) eval.Fn {
 	binding := bindingVar.Get().(BindingTable)
 	switch {
 	case binding.HasKey(k):

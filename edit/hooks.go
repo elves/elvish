@@ -6,6 +6,7 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 )
 
 // The $le:{before,after}-readline lists that contain hooks. We might have more
@@ -23,8 +24,8 @@ func (ed *Editor) afterReadLine() types.List {
 	return ed.variables["after-readline"].Get().(types.List)
 }
 
-func makeListVariable() eval.Variable {
-	return eval.NewPtrVariableWithValidator(types.EmptyList, eval.ShouldBeList)
+func makeListVariable() vartypes.Variable {
+	return vartypes.NewPtrVariableWithValidator(types.EmptyList, eval.ShouldBeList)
 }
 
 func callHooks(ev *eval.Evaler, li types.List, args ...types.Value) {

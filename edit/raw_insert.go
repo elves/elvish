@@ -3,6 +3,7 @@ package edit
 import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vartypes"
 )
 
 // Raw insert mode is a special mode, in that it does not use the normal key
@@ -23,7 +24,7 @@ func insertRaw(ed *Editor, r rune) {
 	ed.mode = &ed.insert
 }
 
-func (rawInsert) Binding(map[string]eval.Variable, ui.Key) eval.Fn {
+func (rawInsert) Binding(map[string]vartypes.Variable, ui.Key) eval.Fn {
 	// The raw insert mode does not handle keys.
 	return nil
 }

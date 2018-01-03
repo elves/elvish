@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 )
 
@@ -15,13 +16,13 @@ type LValuesOp struct {
 }
 
 // LValuesOpFunc is the body of an LValuesOp.
-type LValuesOpFunc func(*Frame) []Variable
+type LValuesOpFunc func(*Frame) []vartypes.Variable
 
 // Exec executes an LValuesOp, producing Variable's.
-func (op LValuesOp) Exec(ec *Frame) []Variable {
+func (op LValuesOp) Exec(ec *Frame) []vartypes.Variable {
 	// Empty value is considered to generate no lvalues.
 	if op.Func == nil {
-		return []Variable{}
+		return []vartypes.Variable{}
 	}
 	ec.begin, ec.end = op.Begin, op.End
 	return op.Func(ec)
@@ -86,8 +87,8 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp)
 	var op LValuesOp
 	// If there is still anything left in opFuncs, make LValuesOp for the fixed part.
 	if len(opFuncs) > 0 {
-		op = LValuesOp{func(ec *Frame) []Variable {
-			var variables []Variable
+		op = LValuesOp{func(ec *Frame) []vartypes.Variable {
+			var variables []vartypes.Variable
 			for _, opFunc := range opFuncs {
 				variables = append(variables, opFunc(ec)...)
 			}
@@ -104,7 +105,7 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 	explode, ns, barename := ParseVariable(varname)
 
 	if len(n.Indicies) == 0 {
-		return explode, func(ec *Frame) []Variable {
+		return explode, func(ec *Frame) []vartypes.Variable {
 			variable := ec.ResolveVar(ns, barename)
 			if variable == nil {
 				if ns == "" || ns == "local" {
@@ -112,28 +113,28 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 					// XXX We depend on the fact that this variable will
 					// immeidately be set.
 					if strings.HasSuffix(barename, FnSuffix) {
-						variable = NewPtrVariableWithValidator(nil, ShouldBeFn)
+						variable = vartypes.NewPtrVariableWithValidator(nil, ShouldBeFn)
 					} else if strings.HasSuffix(barename, NsSuffix) {
-						variable = NewPtrVariableWithValidator(nil, ShouldBeNs)
+						variable = vartypes.NewPtrVariableWithValidator(nil, ShouldBeNs)
 					} else {
-						variable = NewPtrVariable(nil)
+						variable = vartypes.NewPtrVariable(nil)
 					}
 					ec.local[barename] = variable
 				} else if mod, ok := ec.Modules[ns]; ok {
-					variable = NewPtrVariable(nil)
+					variable = vartypes.NewPtrVariable(nil)
 					mod[barename] = variable
 				} else {
 					throwf("cannot set $%s", varname)
 				}
 			}
-			return []Variable{variable}
+			return []vartypes.Variable{variable}
 		}
 	}
 
 	headBegin, headEnd := n.Head.Begin(), n.Head.End()
 	indexOps := cp.arrayOps(n.Indicies)
 
-	return explode, func(ec *Frame) []Variable {
+	return explode, func(ec *Frame) []vartypes.Variable {
 		variable := ec.ResolveVar(ns, barename)
 		if variable == nil {
 			throwf("variable $%s does not exist, compiler bug", varname)
@@ -192,6 +193,6 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 				assocers[i+1] = assocer
 			}
 		}
-		return []Variable{&elemVariable{variable, assocers, indicies, nil}}
+		return []vartypes.Variable{&elemVariable{variable, assocers, indicies, nil}}
 	}
 }

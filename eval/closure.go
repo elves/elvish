@@ -6,6 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/xiaq/persistent/hash"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -76,10 +77,10 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 	// options.
 	ec.local = make(Ns)
 	for i, name := range c.ArgNames {
-		ec.local[name] = NewPtrVariable(args[i])
+		ec.local[name] = vartypes.NewPtrVariable(args[i])
 	}
 	if c.RestArg != "" {
-		ec.local[c.RestArg] = NewPtrVariable(types.MakeList(args[len(c.ArgNames):]...))
+		ec.local[c.RestArg] = vartypes.NewPtrVariable(types.MakeList(args[len(c.ArgNames):]...))
 	}
 	// Logger.Printf("EvalCtx=%p, args=%v, opts=%v", ec, args, opts)
 	for i, name := range c.OptNames {
@@ -87,14 +88,14 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 		if !ok {
 			v = c.OptDefaults[i]
 		}
-		ec.local[name] = NewPtrVariable(v)
+		ec.local[name] = vartypes.NewPtrVariable(v)
 	}
 	// XXX This conversion was done by the other direction.
 	convertedOpts := hashmap.Empty
 	for k, v := range opts {
 		convertedOpts = convertedOpts.Assoc(types.String(k), v)
 	}
-	ec.local["opts"] = NewPtrVariable(types.NewMap(convertedOpts))
+	ec.local["opts"] = vartypes.NewPtrVariable(types.NewMap(convertedOpts))
 
 	ec.traceback = ec.addTraceback()
 

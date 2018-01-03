@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 )
 
@@ -131,7 +132,7 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 		// Initialize the function variable with the builtin nop
 		// function. This step allows the definition of recursive
 		// functions; the actual function will never be called.
-		ec.local[varName] = NewPtrVariable(&BuiltinFn{"<shouldn't be called>", nop})
+		ec.local[varName] = vartypes.NewPtrVariable(&BuiltinFn{"<shouldn't be called>", nop})
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
 		ec.local[varName].Set(closure)
@@ -176,7 +177,7 @@ func use(ec *Frame, modname, modpath string) {
 	modpath = resolvedPath
 
 	// Put the just loaded module into local scope.
-	ec.local[modname+NsSuffix] = NewPtrVariable(loadModule(ec, modpath))
+	ec.local[modname+NsSuffix] = vartypes.NewPtrVariable(loadModule(ec, modpath))
 }
 
 func loadModule(ec *Frame, modpath string) Ns {
@@ -485,7 +486,7 @@ func (op ValuesOp) execlambdaOp(ec *Frame) Callable {
 // execMustOne executes the LValuesOp and raises an exception if it does not
 // evaluate to exactly one Variable. If the given LValuesOp is empty, it returns
 // nil.
-func (op LValuesOp) execMustOne(ec *Frame) Variable {
+func (op LValuesOp) execMustOne(ec *Frame) vartypes.Variable {
 	if op.Func == nil {
 		return nil
 	}

@@ -5,10 +5,11 @@ import (
 	"reflect"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 )
 
 // Ns is a map from names to variables.
-type Ns map[string]Variable
+type Ns map[string]vartypes.Variable
 
 var _ types.Value = Ns(nil)
 

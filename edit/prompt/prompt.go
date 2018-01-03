@@ -13,6 +13,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
 )
 
@@ -21,7 +22,7 @@ var logger = util.GetLogger("[edit/prompt] ")
 // Editor is the interface used by the prompt to access the editor.
 type Editor interface {
 	Evaler() *eval.Evaler
-	Variable(string) eval.Variable
+	Variable(string) vartypes.Variable
 	Notify(string, ...interface{})
 }
 
@@ -29,7 +30,7 @@ type Editor interface {
 const maxSeconds = float64(math.MaxInt64 / time.Second)
 
 // PromptVariable returns a variable for $edit:prompt.
-func PromptVariable() eval.Variable {
+func PromptVariable() vartypes.Variable {
 	user, err := user.Current()
 	isRoot := err == nil && user.Uid == "0"
 
@@ -44,7 +45,7 @@ func PromptVariable() eval.Variable {
 			out <- &ui.Styled{"> ", ui.Styles{}}
 		}
 	}
-	return eval.NewPtrVariableWithValidator(
+	return vartypes.NewPtrVariableWithValidator(
 		&eval.BuiltinFn{"default prompt", prompt}, eval.ShouldBeFn)
 }
 
@@ -54,7 +55,7 @@ func Prompt(ed Editor) eval.Callable {
 }
 
 // RpromptVariable returns a variable for $edit:rprompt.
-func RpromptVariable() eval.Variable {
+func RpromptVariable() vartypes.Variable {
 	username := "???"
 	user, err := user.Current()
 	if err == nil {
@@ -72,7 +73,7 @@ func RpromptVariable() eval.Variable {
 		out <- &ui.Styled{rpromptStr, ui.Styles{"inverse"}}
 	}
 
-	return eval.NewPtrVariableWithValidator(
+	return vartypes.NewPtrVariableWithValidator(
 		&eval.BuiltinFn{"default rprompt", rprompt}, eval.ShouldBeFn)
 }
 
@@ -84,8 +85,8 @@ func Rprompt(ed Editor) eval.Callable {
 // Implementation for $rprompt-persistent.
 
 // RpromptPersistentVariable returns a variable for $edit:rprompt-persistent.
-func RpromptPersistentVariable() eval.Variable {
-	return eval.NewPtrVariableWithValidator(types.Bool(false), eval.ShouldBeBool)
+func RpromptPersistentVariable() vartypes.Variable {
+	return vartypes.NewPtrVariableWithValidator(types.Bool(false), eval.ShouldBeBool)
 }
 
 // RpromptPersistent extracts $edit:rprompt-persistent.
@@ -94,8 +95,8 @@ func RpromptPersistent(ed Editor) bool {
 }
 
 // MaxWaitVariable returns a variable for $edit:-prompts-max-wait.
-func MaxWaitVariable() eval.Variable {
-	return eval.NewPtrVariableWithValidator(types.String("+Inf"), eval.ShouldBeNumber)
+func MaxWaitVariable() vartypes.Variable {
+	return vartypes.NewPtrVariableWithValidator(types.String("+Inf"), eval.ShouldBeNumber)
 }
 
 // MaxWait extracts $edit:-prompts-max-wait.

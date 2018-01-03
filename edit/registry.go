@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/xiaq/persistent/hashmap"
 )
 
@@ -19,18 +20,18 @@ import (
 // builtins, default bindings, and variables (e.g. $edit:prompt). For instance,
 // the definition for $edit:prompt can live in prompt.go instead of api.go.
 
-var variableRegistry = map[string]func() eval.Variable{}
+var variableRegistry = map[string]func() vartypes.Variable{}
 
 // RegisterVariable registers a variable: its name and a func to derive a
 // Variable instance. It is later to be used during Editor initialization to
 // populate Editor.variables as well as the edit: namespace.
-func RegisterVariable(name string, maker func() eval.Variable) struct{} {
+func RegisterVariable(name string, maker func() vartypes.Variable) struct{} {
 	variableRegistry[name] = maker
 	return struct{}{}
 }
 
-func makeVariables() map[string]eval.Variable {
-	m := make(map[string]eval.Variable, len(variableRegistry))
+func makeVariables() map[string]vartypes.Variable {
+	m := make(map[string]vartypes.Variable, len(variableRegistry))
 	for name, maker := range variableRegistry {
 		m[name] = maker()
 	}
@@ -61,7 +62,7 @@ func registerBuiltins(module string, impls map[string]func(*Editor)) struct{} {
 func makeNsFromBuiltins(builtins map[string]*BuiltinFn) eval.Ns {
 	ns := make(eval.Ns)
 	for name, builtin := range builtins {
-		ns[name+eval.FnSuffix] = eval.NewPtrVariable(builtin)
+		ns[name+eval.FnSuffix] = vartypes.NewPtrVariable(builtin)
 	}
 	return ns
 }
@@ -100,14 +101,14 @@ func registerBindings(
 	return struct{}{}
 }
 
-func makeBindings() map[string]eval.Variable {
-	bindings := make(map[string]eval.Variable)
+func makeBindings() map[string]vartypes.Variable {
+	bindings := make(map[string]vartypes.Variable)
 	for mode, binding := range keyBindings {
 		bindingValue := hashmap.Empty
 		for key, fn := range binding {
 			bindingValue = bindingValue.Assoc(key, fn)
 		}
-		bindings[mode] = eval.NewPtrVariableWithValidator(
+		bindings[mode] = vartypes.NewPtrVariableWithValidator(
 			BindingTable{types.NewMap(bindingValue)}, shouldBeBindingTable)
 	}
 	return bindings

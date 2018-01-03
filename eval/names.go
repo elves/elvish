@@ -4,6 +4,8 @@ import (
 	"errors"
 	"os"
 	"strings"
+
+	"github.com/elves/elvish/eval/vartypes"
 )
 
 // Resolution and iteration of variables and namespaces.
@@ -79,7 +81,7 @@ func (ev *evalerScopes) EachNsInTop(f func(s string)) {
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
-func (ec *Frame) ResolveVar(ns, name string) Variable {
+func (ec *Frame) ResolveVar(ns, name string) vartypes.Variable {
 	switch ns {
 	case "local":
 		return ec.local[name]
@@ -97,7 +99,7 @@ func (ec *Frame) ResolveVar(ns, name string) Variable {
 		return ec.Builtin[name]
 	case "e":
 		if strings.HasSuffix(name, FnSuffix) {
-			return NewRoVariable(ExternalCmd{name[:len(name)-len(FnSuffix)]})
+			return vartypes.NewRoVariable(ExternalCmd{name[:len(name)-len(FnSuffix)]})
 		}
 	case "E":
 		return envVariable{name}

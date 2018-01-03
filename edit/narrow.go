@@ -10,6 +10,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/xiaq/persistent/hashmap"
 )
 
@@ -60,7 +61,7 @@ type narrow struct {
 	opts      narrowOptions
 }
 
-func (l *narrow) Binding(m map[string]eval.Variable, k ui.Key) eval.Fn {
+func (l *narrow) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Fn {
 	if l.opts.bindingMap != nil {
 		if f, ok := l.opts.bindingMap[k]; ok {
 			return f

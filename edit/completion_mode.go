@@ -7,6 +7,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
 )
 
@@ -56,7 +57,7 @@ type completion struct {
 	height          int
 }
 
-func (*completion) Binding(m map[string]eval.Variable, k ui.Key) eval.Fn {
+func (*completion) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Fn {
 	return getBinding(m[modeCompletion], k)
 }
 

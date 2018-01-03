@@ -10,6 +10,7 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/xiaq/persistent/hash"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -83,12 +84,12 @@ var (
 
 var _ = RegisterVariable("arg-completer", argCompleterVariable)
 
-func argCompleterVariable() eval.Variable {
+func argCompleterVariable() vartypes.Variable {
 	m := hashmap.Empty
 	for k, v := range argCompletersData {
 		m = m.Assoc(types.String(k), v)
 	}
-	return eval.NewPtrVariableWithValidator(types.NewMap(m), eval.ShouldBeMap)
+	return vartypes.NewPtrVariableWithValidator(types.NewMap(m), eval.ShouldBeMap)
 }
 
 func (ed *Editor) argCompleter() types.Map {

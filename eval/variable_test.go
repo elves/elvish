@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
 )
 
 func TestPtrVariable(t *testing.T) {
-	v := NewPtrVariable(types.Bool(true))
+	v := vartypes.NewPtrVariable(types.Bool(true))
 	if v.Get() != types.Bool(true) {
 		t.Errorf("PtrVariable.Get doesn't return initial value")
 	}
@@ -18,14 +19,14 @@ func TestPtrVariable(t *testing.T) {
 		t.Errorf("PtrVariable.Get doesn't return altered value")
 	}
 
-	v = NewPtrVariableWithValidator(types.Bool(true), ShouldBeBool)
+	v = vartypes.NewPtrVariableWithValidator(types.Bool(true), ShouldBeBool)
 	if util.DoesntThrow(func() { v.Set(types.String("233")) }) {
 		t.Errorf("PtrVariable.Set doesn't error when setting incompatible value")
 	}
 }
 
 func TestRoVariable(t *testing.T) {
-	v := NewRoVariable(types.String("haha"))
+	v := vartypes.NewRoVariable(types.String("haha"))
 	if v.Get() != types.String("haha") {
 		t.Errorf("RoVariable.Get doesn't return initial value")
 	}
@@ -45,7 +46,7 @@ func TestCbVariable(t *testing.T) {
 		setCalledWith = v
 	}
 
-	v := MakeVariableFromCallback(set, get)
+	v := vartypes.MakeVariableFromCallback(set, get)
 	if v.Get() != types.String("cb") {
 		t.Errorf("cbVariable doesn't return value from callback")
 	}
@@ -64,7 +65,7 @@ func TestRoCbVariable(t *testing.T) {
 		getCalled = true
 		return types.String("cb")
 	}
-	v := MakeRoVariableFromCallback(get)
+	v := vartypes.MakeRoVariableFromCallback(get)
 	if v.Get() != types.String("cb") {
 		t.Errorf("roCbVariable doesn't return value from callback")
 	}

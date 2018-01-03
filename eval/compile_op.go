@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 )
 
@@ -231,7 +232,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		if len(saveVarsOps) > 0 {
 			// There is a temporary assignment.
 			// Save variables.
-			var saveVars []Variable
+			var saveVars []vartypes.Variable
 			var saveVals []types.Value
 			for _, op := range saveVarsOps {
 				saveVars = append(saveVars, op.Exec(ec)...)
@@ -370,7 +371,7 @@ func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFu
 	}
 }
 
-func fixNilVariables(vs []Variable) {
+func fixNilVariables(vs []vartypes.Variable) {
 	for _, v := range vs {
 		if _, isBlackhole := v.(BlackholeVariable); isBlackhole {
 			continue

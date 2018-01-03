@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 )
 
 // PwdVariable is a variable whose value always reflects the current working
@@ -12,7 +13,7 @@ type PwdVariable struct {
 	store AddDirer
 }
 
-var _ Variable = PwdVariable{}
+var _ vartypes.Variable = PwdVariable{}
 
 func (PwdVariable) Get() types.Value {
 	pwd, err := os.Getwd()

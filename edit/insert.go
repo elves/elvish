@@ -7,6 +7,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
 )
 
@@ -130,7 +131,7 @@ func (ins *insert) ModeLine() ui.Renderer {
 	return nil
 }
 
-func (*insert) Binding(m map[string]eval.Variable, k ui.Key) eval.Fn {
+func (*insert) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Fn {
 	return getBinding(m[modeInsert], k)
 }
 
@@ -140,7 +141,7 @@ func (*command) ModeLine() ui.Renderer {
 	return modeLineRenderer{" COMMAND ", ""}
 }
 
-func (*command) Binding(m map[string]eval.Variable, k ui.Key) eval.Fn {
+func (*command) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Fn {
 	return getBinding(m[modeCommand], k)
 }
 

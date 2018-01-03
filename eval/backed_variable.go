@@ -4,13 +4,14 @@ import (
 	"reflect"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 )
 
 type backedVariable struct {
 	ptr interface{}
 }
 
-var _ Variable = backedVariable{}
+var _ vartypes.Variable = backedVariable{}
 
 var valueTypeReflect = reflect.TypeOf((*types.Value)(nil)).Elem()
 
@@ -35,7 +36,7 @@ var valueTypeReflect = reflect.TypeOf((*types.Value)(nil)).Elem()
 //
 // The function panics if the argument is not a pointer to a Value-compatible
 // value.
-func NewBackedVariable(ptr interface{}) Variable {
+func NewBackedVariable(ptr interface{}) vartypes.Variable {
 	ptrReflect := reflect.ValueOf(ptr)
 	if ptrReflect.Kind() != reflect.Ptr {
 		panic("internal bug: NewBackedVariable only accepts pointer")

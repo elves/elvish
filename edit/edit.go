@@ -19,6 +19,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
@@ -36,8 +37,8 @@ type Editor struct {
 	daemon *daemon.Client
 	evaler *eval.Evaler
 
-	variables map[string]eval.Variable
-	bindings  map[string]eval.Variable
+	variables map[string]vartypes.Variable
+	bindings  map[string]vartypes.Variable
 
 	active      bool
 	activeMutex sync.Mutex
@@ -174,7 +175,7 @@ func (ed *Editor) Evaler() *eval.Evaler {
 	return ed.evaler
 }
 
-func (ed *Editor) Variable(name string) eval.Variable {
+func (ed *Editor) Variable(name string) vartypes.Variable {
 	return ed.variables[name]
 }
 
