@@ -17,16 +17,17 @@ type elemVariable struct {
 	setValue types.Value
 }
 
-func (ev *elemVariable) Set(v0 types.Value) {
+func (ev *elemVariable) Set(v0 types.Value) error {
 	v := v0
 	// Evaluate the actual new value from inside out. See comments in
 	// compile_lvalue.go for how assignment of indexed variables work.
 	for i := len(ev.assocers) - 1; i >= 0; i-- {
 		v = ev.assocers[i].Assoc(ev.indices[i], v)
 	}
-	ev.variable.Set(v)
+	err := ev.variable.Set(v)
 	// XXX(xiaq): Remember the set value for use in Get.
 	ev.setValue = v0
+	return err
 }
 
 func (ev *elemVariable) Get() types.Value {
@@ -41,8 +42,9 @@ type envVariable struct {
 	name string
 }
 
-func (ev envVariable) Set(val types.Value) {
+func (ev envVariable) Set(val types.Value) error {
 	os.Setenv(ev.name, types.ToString(val))
+	return nil
 }
 
 func (ev envVariable) Get() types.Value {
@@ -54,12 +56,15 @@ func (ev envVariable) Get() types.Value {
 var ErrGetBlackhole = errors.New("cannot get blackhole variable")
 
 // BlackholeVariable represents a blackhole variable. Assignments to a blackhole
-// variable will be discarded, and getting a blackhole variable raises an error.
+// variable will be discarded, and getting a blackhole variable always returns
+// an empty string.
 type BlackholeVariable struct{}
 
-func (bv BlackholeVariable) Set(types.Value) {}
+func (bv BlackholeVariable) Set(types.Value) error {
+	return nil
+}
 
 func (bv BlackholeVariable) Get() types.Value {
-	throw(ErrGetBlackhole)
-	panic("unreachable")
+	// TODO: Return a special placeholder value.
+	return types.String("")
 }

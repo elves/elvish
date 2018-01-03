@@ -5,6 +5,7 @@ import (
 
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/util"
 )
 
 type backedVariable struct {
@@ -54,6 +55,6 @@ func (v backedVariable) Get() types.Value {
 	return convertGoToValue(reflect.Indirect(reflect.ValueOf(v.ptr)).Interface())
 }
 
-func (v backedVariable) Set(newval types.Value) {
-	scanValueToGo(newval, v.ptr)
+func (v backedVariable) Set(newval types.Value) error {
+	return util.PCall(func() { scanValueToGo(newval, v.ptr) })
 }

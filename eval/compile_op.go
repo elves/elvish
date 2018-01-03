@@ -263,7 +263,8 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 						// it, we don't delete it in the evaler either.
 						val = types.String("")
 					}
-					v.Set(val)
+					err := v.Set(val)
+					maybeThrow(err)
 					logger.Printf("restored %s = %s", v, val)
 				}
 			}()
@@ -362,11 +363,13 @@ func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFu
 		}
 
 		for i, variable := range variables {
-			variable.Set(values[i])
+			err := variable.Set(values[i])
+			maybeThrow(err)
 		}
 
 		if len(rest) == 1 {
-			rest[0].Set(types.MakeList(values[len(variables):]...))
+			err := rest[0].Set(types.MakeList(values[len(variables):]...))
+			maybeThrow(err)
 		}
 	}
 }
@@ -377,7 +380,8 @@ func fixNilVariables(vs []vartypes.Variable) {
 			continue
 		}
 		if v.Get() == nil {
-			v.Set(types.String(""))
+			err := v.Set(types.String(""))
+			maybeThrow(err)
 		}
 	}
 }

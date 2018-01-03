@@ -85,43 +85,45 @@ func installModules(builtin eval.Ns, ed *Editor) {
 	// Internal states.
 	ns["history"] = vartypes.NewRoVariable(history.List{&ed.historyMutex, ed.daemon})
 	ns["current-command"] = vartypes.NewCallbackVariable(
-		func(v types.Value) {
+		func(v types.Value) error {
 			if !ed.active {
-				throw(errEditorInactive)
+				return errEditorInactive
 			}
 			if s, ok := v.(types.String); ok {
 				ed.buffer = string(s)
 				ed.dot = len(ed.buffer)
 			} else {
-				throw(errLineMustBeString)
+				return errLineMustBeString
 			}
+			return nil
 		},
 		func() types.Value { return types.String(ed.buffer) },
 	)
 	ns["-dot"] = vartypes.NewCallbackVariable(
-		func(v types.Value) {
+		func(v types.Value) error {
 			s, ok := v.(types.String)
 			if !ok {
-				throw(errDotMustBeString)
+				return errDotMustBeString
 			}
 			i, err := strconv.Atoi(string(s))
 			if err != nil {
 				if err.(*strconv.NumError).Err == strconv.ErrRange {
-					throw(errDotOutOfRange)
+					return errDotOutOfRange
 				} else {
-					throw(errDotMustBeInt)
+					return errDotMustBeInt
 				}
 			}
 			if i < 0 || i > len(ed.buffer) {
-				throw(errDotOutOfRange)
+				return errDotOutOfRange
 			}
 			if i < len(ed.buffer) {
 				r, _ := utf8.DecodeRuneInString(ed.buffer[i:])
 				if r == utf8.RuneError {
-					throw(errDotInsideCodepoint)
+					return errDotInsideCodepoint
 				}
 			}
 			ed.dot = i
+			return nil
 		},
 		func() types.Value { return types.String(strconv.Itoa(ed.dot)) },
 	)

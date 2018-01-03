@@ -21,11 +21,10 @@ func (PwdVariable) Get() types.Value {
 	return types.String(pwd)
 }
 
-func (pwd PwdVariable) Set(v types.Value) {
+func (pwd PwdVariable) Set(v types.Value) error {
 	path, ok := v.(types.String)
 	if !ok {
-		throw(ErrPathMustBeString)
+		return ErrPathMustBeString
 	}
-	err := Chdir(string(path), pwd.store)
-	maybeThrow(err)
+	return Chdir(string(path), pwd.store)
 }

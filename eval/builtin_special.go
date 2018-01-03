@@ -135,7 +135,8 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 		ec.local[varName] = vartypes.NewPtrVariable(&BuiltinFn{"<shouldn't be called>", nop})
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
-		ec.local[varName].Set(closure)
+		err := ec.local[varName].Set(closure)
+		maybeThrow(err)
 	}
 }
 
@@ -382,8 +383,9 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 		iterated := false
 		iterable.Iterate(func(v types.Value) bool {
 			iterated = true
-			variable.Set(v)
-			err := ec.fork("for").PCall(body, NoArgs, NoOpts)
+			err := variable.Set(v)
+			maybeThrow(err)
+			err = ec.fork("for").PCall(body, NoArgs, NoOpts)
 			if err != nil {
 				exc := err.(*Exception)
 				if exc.Cause == Continue {
@@ -455,7 +457,8 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 		if err != nil {
 			if except != nil {
 				if exceptVar != nil {
-					exceptVar.Set(err.(*Exception))
+					err := exceptVar.Set(err.(*Exception))
+					maybeThrow(err)
 				}
 				err = ec.fork("try except").PCall(except, NoArgs, NoOpts)
 			}

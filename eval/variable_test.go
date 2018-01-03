@@ -6,7 +6,6 @@ import (
 
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
-	"github.com/elves/elvish/util"
 )
 
 func TestPtrVariable(t *testing.T) {
@@ -14,14 +13,18 @@ func TestPtrVariable(t *testing.T) {
 	if v.Get() != types.Bool(true) {
 		t.Errorf("PtrVariable.Get doesn't return initial value")
 	}
-	v.Set(types.String("233"))
+	if v.Set(types.String("233")) != nil {
+		t.Errorf("PtrVariable.Set errors")
+	}
 	if v.Get() != types.String("233") {
 		t.Errorf("PtrVariable.Get doesn't return altered value")
 	}
+}
 
-	v = vartypes.NewValidatedPtrVariable(types.Bool(true), vartypes.ShouldBeBool)
-	if util.DoesntThrow(func() { v.Set(types.String("233")) }) {
-		t.Errorf("PtrVariable.Set doesn't error when setting incompatible value")
+func TestValidatedPtrVariable(t *testing.T) {
+	v := vartypes.NewValidatedPtrVariable(types.Bool(true), vartypes.ShouldBeBool)
+	if v.Set(types.String("233")) == nil {
+		t.Errorf("ValidatedPtrVariable.Set doesn't error when setting incompatible value")
 	}
 }
 
@@ -30,7 +33,7 @@ func TestRoVariable(t *testing.T) {
 	if v.Get() != types.String("haha") {
 		t.Errorf("RoVariable.Get doesn't return initial value")
 	}
-	if util.DoesntThrow(func() { v.Set(types.String("lala")) }) {
+	if v.Set(types.String("lala")) == nil {
 		t.Errorf("RoVariable.Set doesn't error")
 	}
 }
@@ -42,8 +45,9 @@ func TestCbVariable(t *testing.T) {
 		return types.String("cb")
 	}
 	var setCalledWith types.Value
-	set := func(v types.Value) {
+	set := func(v types.Value) error {
 		setCalledWith = v
+		return nil
 	}
 
 	v := vartypes.NewCallbackVariable(set, get)
@@ -72,7 +76,7 @@ func TestRoCbVariable(t *testing.T) {
 	if !getCalled {
 		t.Errorf("roCbVariable doesn't call callback")
 	}
-	if util.DoesntThrow(func() { v.Set(types.String("lala")) }) {
+	if v.Set(types.String("lala")) == nil {
 		t.Errorf("roCbVariable.Set doesn't error")
 	}
 }

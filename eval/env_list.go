@@ -58,26 +58,34 @@ func (envli *EnvList) Get() types.Value {
 }
 
 // Set sets an EnvPathList. The underlying environment variable is set.
-func (envli *EnvList) Set(v types.Value) {
+func (envli *EnvList) Set(v types.Value) error {
 	iterator, ok := v.(types.Iterator)
 	if !ok {
-		throw(ErrCanOnlyAssignList)
+		return ErrCanOnlyAssignList
 	}
 	var paths []string
+	var err error
 	iterator.Iterate(func(v types.Value) bool {
 		s, ok := v.(types.String)
 		if !ok {
-			throw(ErrPathMustBeString)
+			err = ErrPathMustBeString
+			return false
 		}
 		path := string(s)
 		if strings.ContainsAny(path, forbiddenInPath) {
-			throw(ErrPathCannotContainColonZero)
+			err = ErrPathCannotContainColonZero
+			return false
 		}
 		paths = append(paths, string(s))
 		return true
 	})
 
+	if err != nil {
+		return err
+	}
+
 	envli.Lock()
 	defer envli.Unlock()
 	os.Setenv(envli.envName, strings.Join(paths, pathListSeparator))
+	return nil
 }
