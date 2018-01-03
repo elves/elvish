@@ -15,6 +15,22 @@ type Variable interface {
 }
 
 type ptrVariable struct {
+	valuePtr *types.Value
+}
+
+func (pv ptrVariable) Set(val types.Value) {
+	*pv.valuePtr = val
+}
+
+func (pv ptrVariable) Get() types.Value {
+	return *pv.valuePtr
+}
+
+func NewPtrVariable(v types.Value) Variable {
+	return ptrVariable{&v}
+}
+
+type validatedPtrVariable struct {
 	valuePtr  *types.Value
 	validator func(types.Value) error
 }
@@ -27,15 +43,11 @@ func (err invalidValueError) Error() string {
 	return "invalid value: " + err.inner.Error()
 }
 
-func NewPtrVariable(v types.Value) Variable {
-	return NewValidatedPtrVariable(v, nil)
-}
-
 func NewValidatedPtrVariable(v types.Value, vld func(types.Value) error) Variable {
-	return ptrVariable{&v, vld}
+	return validatedPtrVariable{&v, vld}
 }
 
-func (iv ptrVariable) Set(val types.Value) {
+func (iv validatedPtrVariable) Set(val types.Value) {
 	if iv.validator != nil {
 		if err := iv.validator(val); err != nil {
 			throw(invalidValueError{err})
@@ -44,7 +56,7 @@ func (iv ptrVariable) Set(val types.Value) {
 	*iv.valuePtr = val
 }
 
-func (iv ptrVariable) Get() types.Value {
+func (iv validatedPtrVariable) Get() types.Value {
 	return *iv.valuePtr
 }
 
