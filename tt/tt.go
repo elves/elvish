@@ -4,6 +4,7 @@
 package tt
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 )
@@ -19,8 +20,8 @@ type Case struct {
 	retsMatchers [][]interface{}
 }
 
-// C returns a new Case with the given arguments.
-func C(args ...interface{}) *Case {
+// Args returns a new Case with the given arguments.
+func Args(args ...interface{}) *Case {
 	return &Case{args: args}
 }
 
@@ -41,12 +42,31 @@ func match(matchers, actual []interface{}) bool {
 	return true
 }
 
-// Fn describes a function under test.
-type Fn struct {
-	Name   string
-	ArgFmt string
-	RetFmt string
-	Body   interface{}
+// FnToTest describes a function to test.
+type FnToTest struct {
+	name    string
+	body    interface{}
+	argsFmt string
+	retsFmt string
+}
+
+// Fn makes a new FnToTest with the given function name and body.
+func Fn(name string, body interface{}) *FnToTest {
+	return &FnToTest{name: name, body: body}
+}
+
+// ArgsFmt sets the string for formatting arguments in test error messages, and
+// return fn itself.
+func (fn *FnToTest) ArgsFmt(s string) *FnToTest {
+	fn.argsFmt = s
+	return fn
+}
+
+// RetsFmt sets the string for formatting return values in test error messages,
+// and return fn itself.
+func (fn *FnToTest) RetsFmt(s string) *FnToTest {
+	fn.retsFmt = s
+	return fn
 }
 
 // T is the interface for accessing testing.T.
@@ -55,18 +75,50 @@ type T interface {
 }
 
 // Test tests a function against test cases.
-func Test(t T, fn Fn, tests Table) {
+func Test(t T, fn *FnToTest, tests Table) {
 	for _, test := range tests {
-		rets := call(fn.Body, test.args)
+		rets := call(fn.body, test.args)
 		for _, retsMatcher := range test.retsMatchers {
 			if !match(retsMatcher, rets) {
-				argsString := fmt.Sprintf(fn.ArgFmt, test.args...)
-				retsString := fmt.Sprintf(fn.RetFmt, rets...)
-				wantRetsString := fmt.Sprintf(fn.RetFmt, retsMatcher...)
-				t.Errorf("%s%s -> %s, want %s", fn.Name, argsString, retsString, wantRetsString)
+				var argsString, retsString, wantRetsString string
+				if fn.argsFmt == "" {
+					argsString = sprintArgs(test.args...)
+				} else {
+					argsString = fmt.Sprintf(fn.argsFmt, test.args...)
+				}
+				if fn.retsFmt == "" {
+					retsString = sprintRets(rets...)
+					wantRetsString = sprintRets(retsMatcher...)
+				} else {
+					retsString = fmt.Sprintf(fn.retsFmt, rets...)
+					wantRetsString = fmt.Sprintf(fn.retsFmt, retsMatcher...)
+				}
+				t.Errorf("%s(%s) -> %s, want %s", fn.name, argsString, retsString, wantRetsString)
 			}
 		}
 	}
+}
+
+func sprintArgs(args ...interface{}) string {
+	return sprintCommaDelimited(args...)
+}
+
+func sprintRets(rets ...interface{}) string {
+	if len(rets) == 1 {
+		return fmt.Sprint(rets[0])
+	}
+	return "(" + sprintCommaDelimited(rets...) + ")"
+}
+
+func sprintCommaDelimited(args ...interface{}) string {
+	var b bytes.Buffer
+	for i, arg := range args {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		fmt.Fprint(&b, arg)
+	}
+	return b.String()
 }
 
 func call(fn interface{}, args []interface{}) []interface{} {
