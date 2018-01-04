@@ -193,6 +193,6 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 				assocers[i+1] = assocer
 			}
 		}
-		return []vartypes.Variable{&elemVariable{variable, assocers, indicies, nil}}
+		return []vartypes.Variable{vartypes.NewElem(variable, assocers, indicies)}
 	}
 }

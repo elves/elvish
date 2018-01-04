@@ -240,8 +240,8 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			for i, v := range saveVars {
 				// XXX(xiaq): If the variable to save is a elemVariable, save
 				// the outermost variable instead.
-				if elemVar, ok := v.(*elemVariable); ok {
-					v = elemVar.variable
+				if u := vartypes.GetUnderlyingOfElem(v); u != nil {
+					v = u
 					saveVars[i] = v
 				}
 				val := v.Get()
@@ -376,7 +376,7 @@ func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFu
 
 func fixNilVariables(vs []vartypes.Variable) {
 	for _, v := range vs {
-		if _, isBlackhole := v.(BlackholeVariable); isBlackhole {
+		if vartypes.IsBlackhole(v) {
 			continue
 		}
 		if v.Get() == nil {

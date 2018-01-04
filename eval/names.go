@@ -102,7 +102,7 @@ func (ec *Frame) ResolveVar(ns, name string) vartypes.Variable {
 			return vartypes.NewRoVariable(ExternalCmd{name[:len(name)-len(FnSuffix)]})
 		}
 	case "E":
-		return envVariable{name}
+		return vartypes.NewEnv(name)
 	case "shared":
 		if ec.DaemonClient == nil {
 			throw(ErrStoreUnconnected)
