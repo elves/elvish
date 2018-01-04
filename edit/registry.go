@@ -57,7 +57,7 @@ func registerBuiltins(module string, impls map[string]func(*Editor)) struct{} {
 func makeNsFromBuiltins(builtins map[string]*BuiltinFn) eval.Ns {
 	ns := make(eval.Ns)
 	for name, builtin := range builtins {
-		ns[name+eval.FnSuffix] = vartypes.NewPtrVariable(builtin)
+		ns[name+eval.FnSuffix] = vartypes.NewPtr(builtin)
 	}
 	return ns
 }
@@ -66,7 +66,7 @@ func makeBindings() map[string]vartypes.Variable {
 	bindings := map[string]vartypes.Variable{}
 	// XXX This abuses the builtin registry to get a list of mode names
 	for mode := range builtinMaps {
-		bindings[mode] = vartypes.NewValidatedPtrVariable(
+		bindings[mode] = vartypes.NewValidatedPtr(
 			BindingTable{types.EmptyMap}, shouldBeBindingTable)
 	}
 	return bindings

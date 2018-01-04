@@ -132,7 +132,7 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 		// Initialize the function variable with the builtin nop
 		// function. This step allows the definition of recursive
 		// functions; the actual function will never be called.
-		ec.local[varName] = vartypes.NewPtrVariable(&BuiltinFn{"<shouldn't be called>", nop})
+		ec.local[varName] = vartypes.NewPtr(&BuiltinFn{"<shouldn't be called>", nop})
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
 		err := ec.local[varName].Set(closure)
@@ -178,7 +178,7 @@ func use(ec *Frame, modname, modpath string) {
 	modpath = resolvedPath
 
 	// Put the just loaded module into local scope.
-	ec.local[modname+NsSuffix] = vartypes.NewPtrVariable(loadModule(ec, modpath))
+	ec.local[modname+NsSuffix] = vartypes.NewPtr(loadModule(ec, modpath))
 }
 
 func loadModule(ec *Frame, modpath string) Ns {

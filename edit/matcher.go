@@ -34,7 +34,7 @@ var (
 		m := hashmap.Empty.Assoc(
 			// Fallback matcher uses empty string as key
 			types.String(""), matchPrefix)
-		return vartypes.NewValidatedPtrVariable(types.NewMap(m), vartypes.ShouldBeMap)
+		return vartypes.NewValidatedPtr(types.NewMap(m), vartypes.ShouldBeMap)
 	})
 )
 

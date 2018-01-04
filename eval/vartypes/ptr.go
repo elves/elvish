@@ -2,24 +2,24 @@ package vartypes
 
 import "github.com/elves/elvish/eval/types"
 
-type ptrVariable struct {
+type ptr struct {
 	valuePtr *types.Value
 }
 
-func (pv ptrVariable) Set(val types.Value) error {
+func (pv ptr) Set(val types.Value) error {
 	*pv.valuePtr = val
 	return nil
 }
 
-func (pv ptrVariable) Get() types.Value {
+func (pv ptr) Get() types.Value {
 	return *pv.valuePtr
 }
 
-func NewPtrVariable(v types.Value) Variable {
-	return ptrVariable{&v}
+func NewPtr(v types.Value) Variable {
+	return ptr{&v}
 }
 
-type validatedPtrVariable struct {
+type validatedPtr struct {
 	valuePtr  *types.Value
 	validator func(types.Value) error
 }
@@ -32,11 +32,11 @@ func (err invalidValueError) Error() string {
 	return "invalid value: " + err.inner.Error()
 }
 
-func NewValidatedPtrVariable(v types.Value, vld func(types.Value) error) Variable {
-	return validatedPtrVariable{&v, vld}
+func NewValidatedPtr(v types.Value, vld func(types.Value) error) Variable {
+	return validatedPtr{&v, vld}
 }
 
-func (iv validatedPtrVariable) Set(val types.Value) error {
+func (iv validatedPtr) Set(val types.Value) error {
 	if err := iv.validator(val); err != nil {
 		return invalidValueError{err}
 	}
@@ -44,6 +44,6 @@ func (iv validatedPtrVariable) Set(val types.Value) error {
 	return nil
 }
 
-func (iv validatedPtrVariable) Get() types.Value {
+func (iv validatedPtr) Get() types.Value {
 	return *iv.valuePtr
 }

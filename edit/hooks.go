@@ -25,7 +25,7 @@ func (ed *Editor) afterReadLine() types.List {
 }
 
 func makeListVariable() vartypes.Variable {
-	return vartypes.NewValidatedPtrVariable(types.EmptyList, vartypes.ShouldBeList)
+	return vartypes.NewValidatedPtr(types.EmptyList, vartypes.ShouldBeList)
 }
 
 func callHooks(ev *eval.Evaler, li types.List, args ...types.Value) {

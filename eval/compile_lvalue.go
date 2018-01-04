@@ -113,15 +113,15 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 					// XXX We depend on the fact that this variable will
 					// immeidately be set.
 					if strings.HasSuffix(barename, FnSuffix) {
-						variable = vartypes.NewValidatedPtrVariable(nil, ShouldBeFn)
+						variable = vartypes.NewValidatedPtr(nil, ShouldBeFn)
 					} else if strings.HasSuffix(barename, NsSuffix) {
-						variable = vartypes.NewValidatedPtrVariable(nil, ShouldBeNs)
+						variable = vartypes.NewValidatedPtr(nil, ShouldBeNs)
 					} else {
-						variable = vartypes.NewPtrVariable(nil)
+						variable = vartypes.NewPtr(nil)
 					}
 					ec.local[barename] = variable
 				} else if mod, ok := ec.modules[ns]; ok {
-					variable = vartypes.NewPtrVariable(nil)
+					variable = vartypes.NewPtr(nil)
 					mod[barename] = variable
 				} else {
 					throwf("cannot set $%s", varname)

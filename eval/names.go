@@ -99,7 +99,7 @@ func (ec *Frame) ResolveVar(ns, name string) vartypes.Variable {
 		return ec.Builtin[name]
 	case "e":
 		if strings.HasSuffix(name, FnSuffix) {
-			return vartypes.NewRoVariable(ExternalCmd{name[:len(name)-len(FnSuffix)]})
+			return vartypes.NewRo(ExternalCmd{name[:len(name)-len(FnSuffix)]})
 		}
 	case "E":
 		return vartypes.NewEnv(name)

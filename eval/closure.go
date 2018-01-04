@@ -77,10 +77,10 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 	// options.
 	ec.local = make(Ns)
 	for i, name := range c.ArgNames {
-		ec.local[name] = vartypes.NewPtrVariable(args[i])
+		ec.local[name] = vartypes.NewPtr(args[i])
 	}
 	if c.RestArg != "" {
-		ec.local[c.RestArg] = vartypes.NewPtrVariable(types.MakeList(args[len(c.ArgNames):]...))
+		ec.local[c.RestArg] = vartypes.NewPtr(types.MakeList(args[len(c.ArgNames):]...))
 	}
 	// Logger.Printf("EvalCtx=%p, args=%v, opts=%v", ec, args, opts)
 	for i, name := range c.OptNames {
@@ -88,14 +88,14 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 		if !ok {
 			v = c.OptDefaults[i]
 		}
-		ec.local[name] = vartypes.NewPtrVariable(v)
+		ec.local[name] = vartypes.NewPtr(v)
 	}
 	// XXX This conversion was done by the other direction.
 	convertedOpts := hashmap.Empty
 	for k, v := range opts {
 		convertedOpts = convertedOpts.Assoc(types.String(k), v)
 	}
-	ec.local["opts"] = vartypes.NewPtrVariable(types.NewMap(convertedOpts))
+	ec.local["opts"] = vartypes.NewPtr(types.NewMap(convertedOpts))
 
 	ec.traceback = ec.addTraceback()
 

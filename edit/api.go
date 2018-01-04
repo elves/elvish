@@ -83,8 +83,8 @@ func installModules(builtin eval.Ns, ed *Editor) {
 	}
 
 	// Internal states.
-	ns["history"] = vartypes.NewRoVariable(history.List{&ed.historyMutex, ed.daemon})
-	ns["current-command"] = vartypes.NewCallbackVariable(
+	ns["history"] = vartypes.NewRo(history.List{&ed.historyMutex, ed.daemon})
+	ns["current-command"] = vartypes.NewCallback(
 		func(v types.Value) error {
 			if !ed.active {
 				return errEditorInactive
@@ -99,7 +99,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 		},
 		func() types.Value { return types.String(ed.buffer) },
 	)
-	ns["-dot"] = vartypes.NewCallbackVariable(
+	ns["-dot"] = vartypes.NewCallback(
 		func(v types.Value) error {
 			s, ok := v.(types.String)
 			if !ok {
@@ -127,7 +127,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 		},
 		func() types.Value { return types.String(strconv.Itoa(ed.dot)) },
 	)
-	ns["selected-file"] = vartypes.NewRoCallbackVariable(
+	ns["selected-file"] = vartypes.NewRoCallback(
 		func() types.Value {
 			if !ed.active {
 				throw(errEditorInactive)
@@ -142,7 +142,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 
 	// Completers.
 	for _, bac := range argCompletersData {
-		ns[bac.name+eval.FnSuffix] = vartypes.NewRoVariable(bac)
+		ns[bac.name+eval.FnSuffix] = vartypes.NewRo(bac)
 	}
 
 	// Matchers.
@@ -163,7 +163,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 		&eval.BuiltinFn{"edit:-narrow-read", NarrowRead},
 	)
 
-	builtin["edit"+eval.NsSuffix] = vartypes.NewValidatedPtrVariable(ns, eval.ShouldBeNs)
+	builtin["edit"+eval.NsSuffix] = vartypes.NewValidatedPtr(ns, eval.ShouldBeNs)
 	submods := make(map[string]eval.Ns)
 	// Install other modules.
 	for module, builtins := range builtinMaps {
@@ -183,7 +183,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 	}
 
 	for name, ns := range submods {
-		builtin["edit:"+name+eval.NsSuffix] = vartypes.NewValidatedPtrVariable(ns, eval.ShouldBeNs)
+		builtin["edit:"+name+eval.NsSuffix] = vartypes.NewValidatedPtr(ns, eval.ShouldBeNs)
 	}
 }
 

@@ -8,18 +8,18 @@ import (
 
 var errRoCannotBeSet = errors.New("read-only variable; cannot be set")
 
-type roVariable struct {
+type ro struct {
 	value types.Value
 }
 
-func NewRoVariable(v types.Value) Variable {
-	return roVariable{v}
+func NewRo(v types.Value) Variable {
+	return ro{v}
 }
 
-func (rv roVariable) Set(val types.Value) error {
+func (rv ro) Set(val types.Value) error {
 	return errRoCannotBeSet
 }
 
-func (rv roVariable) Get() types.Value {
+func (rv ro) Get() types.Value {
 	return rv.value
 }

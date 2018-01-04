@@ -45,7 +45,7 @@ func PromptVariable() vartypes.Variable {
 			out <- &ui.Styled{"> ", ui.Styles{}}
 		}
 	}
-	return vartypes.NewValidatedPtrVariable(
+	return vartypes.NewValidatedPtr(
 		&eval.BuiltinFn{"default prompt", prompt}, eval.ShouldBeFn)
 }
 
@@ -73,7 +73,7 @@ func RpromptVariable() vartypes.Variable {
 		out <- &ui.Styled{rpromptStr, ui.Styles{"inverse"}}
 	}
 
-	return vartypes.NewValidatedPtrVariable(
+	return vartypes.NewValidatedPtr(
 		&eval.BuiltinFn{"default rprompt", rprompt}, eval.ShouldBeFn)
 }
 

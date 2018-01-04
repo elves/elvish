@@ -8,7 +8,7 @@ import (
 )
 
 func TestPtrVariable(t *testing.T) {
-	v := NewPtrVariable(types.Bool(true))
+	v := NewPtr(types.Bool(true))
 	if v.Get() != types.Bool(true) {
 		t.Errorf("PtrVariable.Get doesn't return initial value")
 	}
@@ -21,14 +21,14 @@ func TestPtrVariable(t *testing.T) {
 }
 
 func TestValidatedPtrVariable(t *testing.T) {
-	v := NewValidatedPtrVariable(types.Bool(true), ShouldBeBool)
+	v := NewValidatedPtr(types.Bool(true), ShouldBeBool)
 	if v.Set(types.String("233")) == nil {
 		t.Errorf("ValidatedPtrVariable.Set doesn't error when setting incompatible value")
 	}
 }
 
 func TestRoVariable(t *testing.T) {
-	v := NewRoVariable(types.String("haha"))
+	v := NewRo(types.String("haha"))
 	if v.Get() != types.String("haha") {
 		t.Errorf("RoVariable.Get doesn't return initial value")
 	}
@@ -49,7 +49,7 @@ func TestCbVariable(t *testing.T) {
 		return nil
 	}
 
-	v := NewCallbackVariable(set, get)
+	v := NewCallback(set, get)
 	if v.Get() != types.String("cb") {
 		t.Errorf("cbVariable doesn't return value from callback")
 	}
@@ -68,7 +68,7 @@ func TestRoCbVariable(t *testing.T) {
 		getCalled = true
 		return types.String("cb")
 	}
-	v := NewRoCallbackVariable(get)
+	v := NewRoCallback(get)
 	if v.Get() != types.String("cb") {
 		t.Errorf("roCbVariable doesn't return value from callback")
 	}

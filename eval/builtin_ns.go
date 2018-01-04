@@ -12,10 +12,10 @@ import (
 func makeBuiltinNs() Ns {
 	ns := Ns{
 		"_":     vartypes.NewBlackhole(),
-		"pid":   vartypes.NewRoVariable(types.String(strconv.Itoa(syscall.Getpid()))),
-		"ok":    vartypes.NewRoVariable(OK),
-		"true":  vartypes.NewRoVariable(types.Bool(true)),
-		"false": vartypes.NewRoVariable(types.Bool(false)),
+		"pid":   vartypes.NewRo(types.String(strconv.Itoa(syscall.Getpid()))),
+		"ok":    vartypes.NewRo(OK),
+		"true":  vartypes.NewRo(types.Bool(true)),
+		"false": vartypes.NewRo(types.Bool(false)),
 		"paths": &EnvList{envName: "PATH"},
 		"pwd":   PwdVariable{},
 	}
@@ -30,6 +30,6 @@ func AddBuiltinFns(ns Ns, fns ...*BuiltinFn) {
 		if i := strings.IndexRune(b.Name, ':'); i != -1 {
 			name = b.Name[i+1:]
 		}
-		ns[name+FnSuffix] = vartypes.NewRoVariable(b)
+		ns[name+FnSuffix] = vartypes.NewRo(b)
 	}
 }

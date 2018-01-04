@@ -38,7 +38,7 @@ var tests = []eval.Test{
 func TestRe(t *testing.T) {
 	eval.RunTests(t, tests, func() *eval.Evaler {
 		ev := eval.NewEvaler()
-		ev.Builtin["re"+eval.NsSuffix] = vartypes.NewRoVariable(Ns())
+		ev.Builtin["re"+eval.NsSuffix] = vartypes.NewRo(Ns())
 		return ev
 	})
 }

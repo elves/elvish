@@ -179,7 +179,7 @@ func convertListsToSet(lis ...types.List) map[string]struct{} {
 // Variables.
 
 var _ = RegisterVariable("loc-hidden", func() vartypes.Variable {
-	return vartypes.NewValidatedPtrVariable(types.EmptyList, vartypes.ShouldBeList)
+	return vartypes.NewValidatedPtr(types.EmptyList, vartypes.ShouldBeList)
 })
 
 func (ed *Editor) locHidden() types.List {
@@ -187,7 +187,7 @@ func (ed *Editor) locHidden() types.List {
 }
 
 var _ = RegisterVariable("loc-pinned", func() vartypes.Variable {
-	return vartypes.NewValidatedPtrVariable(types.EmptyList, vartypes.ShouldBeList)
+	return vartypes.NewValidatedPtr(types.EmptyList, vartypes.ShouldBeList)
 })
 
 func (ed *Editor) locPinned() types.List {

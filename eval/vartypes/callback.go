@@ -2,35 +2,35 @@ package vartypes
 
 import "github.com/elves/elvish/eval/types"
 
-type cbVariable struct {
+type callback struct {
 	set func(types.Value) error
 	get func() types.Value
 }
 
-// NewCallbackVariable makes a variable from a set callback and a get callback.
-func NewCallbackVariable(set func(types.Value) error, get func() types.Value) Variable {
-	return &cbVariable{set, get}
+// NewCallback makes a variable from a set callback and a get callback.
+func NewCallback(set func(types.Value) error, get func() types.Value) Variable {
+	return &callback{set, get}
 }
 
-func (cv *cbVariable) Set(val types.Value) error {
+func (cv *callback) Set(val types.Value) error {
 	return cv.set(val)
 }
 
-func (cv *cbVariable) Get() types.Value {
+func (cv *callback) Get() types.Value {
 	return cv.get()
 }
 
-type roCbVariable func() types.Value
+type roCallback func() types.Value
 
-// NewRoCallbackVariable makes a read-only variable from a get callback.
-func NewRoCallbackVariable(get func() types.Value) Variable {
-	return roCbVariable(get)
+// NewRoCallback makes a read-only variable from a get callback.
+func NewRoCallback(get func() types.Value) Variable {
+	return roCallback(get)
 }
 
-func (cv roCbVariable) Set(types.Value) error {
+func (cv roCallback) Set(types.Value) error {
 	return errRoCannotBeSet
 }
 
-func (cv roCbVariable) Get() types.Value {
+func (cv roCallback) Get() types.Value {
 	return cv()
 }
