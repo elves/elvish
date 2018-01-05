@@ -46,7 +46,7 @@ func callHooks(ev *eval.Evaler, li types.List, args ...types.Value) {
 				fmt.Fprintf(os.Stderr, "function error: %s\n", err.Error())
 			}
 		}
-		ev.Eval(eval.Op{opfunc, -1, -1}, "[hooks]", "no source")
+		ev.Eval(eval.Op{opfunc, -1, -1}, eval.NewInternalSource("[hooks]"))
 		return true
 	})
 }

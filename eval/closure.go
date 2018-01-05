@@ -24,8 +24,7 @@ type Closure struct {
 	OptDefaults []types.Value
 	Op          Op
 	Captured    Ns
-	SourceName  string
-	Source      string
+	SrcMeta     *Source
 }
 
 var _ Fn = &Closure{}
@@ -99,6 +98,6 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 
 	ec.traceback = ec.addTraceback()
 
-	ec.srcName, ec.src = c.SourceName, c.Source
+	ec.srcMeta = c.SrcMeta
 	c.Op.Exec(ec)
 }

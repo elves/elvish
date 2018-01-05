@@ -142,7 +142,7 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.Fn,
 
 	ports := []*eval.Port{
 		{Chan: matcherInput, File: eval.DevNull}, {File: os.Stdout}, {File: os.Stderr}}
-	ec := eval.NewTopFrame(ev, "[editor matcher]", "", ports)
+	ec := eval.NewTopFrame(ev, eval.NewInternalSource("[editor matcher]"), ports)
 
 	args := []types.Value{types.String(seed)}
 	values, err := ec.PCaptureOutput(matcher, args, eval.NoOpts)

@@ -77,7 +77,7 @@ func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) types.Value {
 		if explode {
 			return nil
 		}
-		ec := NewTopFrame(ev, "[pure eval]", "", nil)
+		ec := NewTopFrame(ev, NewInternalSource("[purely eval]"), nil)
 		variable := ec.ResolveVar(ns, name)
 		if variable != nil {
 			return variable.Get()

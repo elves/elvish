@@ -139,8 +139,6 @@ func RunTests(t *testing.T, evalTests []Test, makeEvaler func() *Evaler) {
 }
 
 func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]types.Value, []byte, error) {
-	name := "<eval test>"
-
 	// Collect byte output
 	bytesOut := []byte{}
 	pr, pw, _ := os.Pipe()
@@ -163,8 +161,11 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]typ
 	// Eval error. Only that of the last text is saved.
 	var ex error
 
-	for _, text := range texts {
-		op := mustParseAndCompile(t, ev, name, text)
+	for i, text := range texts {
+		name := fmt.Sprintf("test%d.elv", i)
+		src := NewScriptSource(name, name, text)
+
+		op := mustParseAndCompile(t, ev, src)
 
 		outCh := make(chan types.Value, chsize)
 		outDone := make(chan struct{})
@@ -181,7 +182,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]typ
 			{File: os.Stderr, Chan: BlackholeChan},
 		}
 
-		ex = ev.eval(op, ports, name, text)
+		ex = ev.eval(op, ports, src)
 		close(outCh)
 		<-outDone
 	}
@@ -193,14 +194,14 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]typ
 	return outs, bytesOut, ex
 }
 
-func mustParseAndCompile(t *testing.T, ev *Evaler, name, text string) Op {
-	n, err := parse.Parse(name, text)
+func mustParseAndCompile(t *testing.T, ev *Evaler, src *Source) Op {
+	n, err := parse.Parse(src.name, src.code)
 	if err != nil {
-		t.Fatalf("Parse(%q) error: %s", text, err)
+		t.Fatalf("Parse(%q) error: %s", src.code, err)
 	}
-	op, err := ev.Compile(n, name, text)
+	op, err := ev.Compile(n, src)
 	if err != nil {
-		t.Fatalf("Compile(Parse(%q)) error: %s", text, err)
+		t.Fatalf("Compile(Parse(%q)) error: %s", src.code, err)
 	}
 	return op
 }

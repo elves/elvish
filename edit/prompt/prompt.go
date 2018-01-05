@@ -161,7 +161,7 @@ func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
 	}
 
 	// XXX There is no source to pass to NewTopEvalCtx.
-	ec := eval.NewTopFrame(ed.Evaler(), "[editor prompt]", "", ports)
+	ec := eval.NewTopFrame(ed.Evaler(), eval.NewInternalSource("[prompt]"), ports)
 	err := ec.PCaptureOutputInner(fn, nil, eval.NoOpts, valuesCb, bytesCb)
 
 	if err != nil {

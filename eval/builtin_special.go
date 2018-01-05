@@ -164,81 +164,79 @@ func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 func use(ec *Frame, modname, modpath string) {
 	resolvedPath := ""
 	if strings.HasPrefix(modpath, "./") || strings.HasPrefix(modpath, "../") {
-		if ec.modPath == "" {
+		if ec.srcMeta.typ != SrcModule {
 			throw(ErrRelativeUseNotFromMod)
 		}
 		// Resolve relative modpath.
-		resolvedPath = filepath.Clean(filepath.Dir(ec.modPath) + "/" + modpath)
+		resolvedPath = filepath.Clean(filepath.Dir(ec.srcMeta.name) + "/" + modpath)
 	} else {
 		resolvedPath = filepath.Clean(modpath)
 	}
 	if strings.HasPrefix(resolvedPath, "../") {
 		throw(ErrRelativeUseGoesOutsideLib)
 	}
-	modpath = resolvedPath
 
 	// Put the just loaded module into local scope.
-	ec.local[modname+NsSuffix] = vartypes.NewPtr(loadModule(ec, modpath))
+	ec.local[modname+NsSuffix] = vartypes.NewPtr(loadModule(ec, resolvedPath))
 }
 
-func loadModule(ec *Frame, modpath string) Ns {
-	if ns, ok := ec.Evaler.modules[modpath]; ok {
+func loadModule(ec *Frame, name string) Ns {
+	if ns, ok := ec.Evaler.modules[name]; ok {
 		// Module already loaded.
 		return ns
 	}
 
 	// Load the source.
-	var filename, source string
+	var path, code string
 
-	// No filename; defaulting to $datadir/lib/$modpath.elv.
 	if ec.libDir == "" {
 		throw(ErrNoLibDir)
 	}
 
-	filename = filepath.Join(ec.libDir, modpath+".elv")
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
+	path = filepath.Join(ec.libDir, name+".elv")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
 		// File does not exist. Try loading from the table of builtin
 		// modules.
 		var ok bool
-		if source, ok = ec.bundled[modpath]; ok {
+		if code, ok = ec.bundled[name]; ok {
 			// Source is loaded. Do nothing more.
-			filename = "<builtin module>"
+			path = "<builtin module>"
 		} else {
-			throw(fmt.Errorf("cannot load %s: %s does not exist", modpath, filename))
+			throw(fmt.Errorf("cannot load %s: %s does not exist", name, path))
 		}
 	} else {
 		// File exists. Load it.
-		source, err = readFileUTF8(filename)
+		code, err = readFileUTF8(path)
 		maybeThrow(err)
 	}
 
-	n, err := parse.Parse(filename, source)
+	n, err := parse.Parse(name, code)
 	maybeThrow(err)
 
 	// Make an empty scope to evaluate the module in.
-	local := make(Ns)
+	meta := NewModuleSource(name, path, code)
+	modGlobal := Ns{}
 
 	newEc := &Frame{
-		ec.Evaler, "module " + modpath,
-		filename, source, modpath,
-		local, make(Ns),
+		ec.Evaler, meta,
+		modGlobal, make(Ns),
 		ec.ports,
-		0, len(source), ec.addTraceback(), false,
+		0, len(code), ec.addTraceback(), false,
 	}
 
-	op, err := newEc.Compile(n, filename, source)
+	op, err := newEc.Compile(n, meta)
 	maybeThrow(err)
 
 	// Load the namespace before executing. This avoids mutual and self use's to
 	// result in an infinite recursion.
-	ec.Evaler.modules[modpath] = local
+	ec.Evaler.modules[name] = modGlobal
 	err = newEc.PEval(op)
 	if err != nil {
 		// Unload the namespace.
-		delete(ec.modules, modpath)
+		delete(ec.modules, name)
 		throw(err)
 	}
-	return local
+	return modGlobal
 }
 
 // compileAnd compiles the "and" special form.

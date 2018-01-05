@@ -70,9 +70,9 @@ func (h httpHandler) handleExecute(w http.ResponseWriter, r *http.Request) {
 		log.Println("cannot read request body:", err)
 		return
 	}
-	text := string(bytes)
+	code := string(bytes)
 
-	outBytes, outValues, errBytes, err := evalAndCollect(h.ev, "<web>", text)
+	outBytes, outValues, errBytes, err := evalAndCollect(h.ev, code)
 	errText := ""
 	if err != nil {
 		errText = err.Error()
@@ -98,14 +98,15 @@ const (
 // stderr connected to pipes (value part of stderr being a blackhole), and
 // return the results collected on stdout and stderr, and the possible error
 // that occurred.
-func evalAndCollect(ev *eval.Evaler, name, text string) (
+func evalAndCollect(ev *eval.Evaler, code string) (
 	outBytes []byte, outValues []types.Value, errBytes []byte, err error) {
 
-	node, err := parse.Parse(name, text)
+	node, err := parse.Parse("[web]", code)
 	if err != nil {
 		return
 	}
-	op, err := ev.Compile(node, name, text)
+	src := eval.NewInteractiveSource(code)
+	op, err := ev.Compile(node, src)
 	if err != nil {
 		return
 	}
@@ -119,7 +120,7 @@ func evalAndCollect(ev *eval.Evaler, name, text string) (
 		{File: outFile, Chan: outChan},
 		{File: errFile, Chan: eval.BlackholeChan},
 	}
-	err = ev.EvalWithPorts(ports, op, name, text)
+	err = ev.EvalWithPorts(ports, op, src)
 
 	outFile.Close()
 	close(outChan)

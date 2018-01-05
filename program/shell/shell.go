@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 	"unicode/utf8"
@@ -52,11 +53,20 @@ func (sh *Shell) Main(args []string) int {
 		}
 		arg := args[0]
 		if sh.CompileOnly {
-			compileonlyAndPrintError(ev, arg, sh.Cmd)
+			err := compileonly(ev, arg, sh.Cmd)
+			if err != nil {
+				util.PprintError(err)
+				return 2
+			}
 		} else if sh.Cmd {
-			sourceTextAndPrintError(ev, "code from -c", arg)
+			err := ev.SourceText(eval.NewScriptSource("code from -c", "", arg))
+			if err != nil {
+				util.PprintError(err)
+				return 2
+			}
+			return 0
 		} else {
-			script(ev, arg)
+			return script(ev, arg)
 		}
 	} else {
 		interact(ev, dataDir)
@@ -76,14 +86,19 @@ func rescue() {
 	}
 }
 
-func script(ev *eval.Evaler, fname string) {
+func script(ev *eval.Evaler, fname string) int {
 	if !source(ev, fname, false) {
-		os.Exit(1)
+		return 1
 	}
+	return 0
 }
 
 func source(ev *eval.Evaler, fname string, notexistok bool) bool {
-	src, err := readFileUTF8(fname)
+	abs, err := filepath.Abs(fname)
+	var code string
+	if err == nil {
+		code, err = readFileUTF8(abs)
+	}
 	if err != nil {
 		if notexistok && os.IsNotExist(err) {
 			return true
@@ -92,39 +107,38 @@ func source(ev *eval.Evaler, fname string, notexistok bool) bool {
 		return false
 	}
 
-	return sourceTextAndPrintError(ev, fname, src)
-}
-
-func compileonlyAndPrintError(ev *eval.Evaler, name string, command bool) {
-	var err error
-	src := name
-	if command {
-		name = "code from -c"
-	} else {
-		src, err = readFileUTF8(name)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
-	}
-	n, err := parse.Parse(name, src)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
-	_, err = ev.Compile(n, name, src)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
-}
-
-// sourceTextAndPrintError sources text, prints error if there is any, and
-// returns whether there was no error.
-func sourceTextAndPrintError(ev *eval.Evaler, name, src string) bool {
-	err := ev.SourceText(name, src)
+	err = ev.SourceText(eval.NewScriptSource(fname, abs, code))
 	if err != nil {
 		util.PprintError(err)
 		return false
 	}
 	return true
+}
+
+func compileonly(ev *eval.Evaler, arg string, command bool) error {
+	var name, path, code string
+	if command {
+		name = "code from -c"
+		path = ""
+		code = arg
+	} else {
+		var err error
+		name = arg
+		path, err = filepath.Abs(name)
+		if err != nil {
+			return err
+		}
+		code, err = readFileUTF8(path)
+		if err != nil {
+			return err
+		}
+	}
+	n, err := parse.Parse(name, code)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	_, err = ev.Compile(n, eval.NewScriptSource(name, path, code))
+	return err
 }
 
 func readFileUTF8(fname string) (string, error) {
@@ -192,7 +206,10 @@ func interact(ev *eval.Evaler, dataDir string) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		sourceTextAndPrintError(ev, "[interactive]", line)
+		err = ev.SourceText(eval.NewInteractiveSource(line))
+		if err != nil {
+			util.PprintError(err)
+		}
 	}
 }
 

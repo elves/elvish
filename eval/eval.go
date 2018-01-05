@@ -126,20 +126,20 @@ func (ec *Frame) growPorts(n int) {
 
 // eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) eval(op Op, ports []*Port, name, text string) error {
-	ec := NewTopFrame(ev, name, text, ports)
+func (ev *Evaler) eval(op Op, ports []*Port, src *Source) error {
+	ec := NewTopFrame(ev, src, ports)
 	return ec.PEval(op)
 }
 
 // Eval sets up the Evaler with standard ports and evaluates an Op. The supplied
 // name and text are used in diagnostic messages.
-func (ev *Evaler) Eval(op Op, name, text string) error {
-	return ev.EvalWithPorts(ev.ports[:], op, name, text)
+func (ev *Evaler) Eval(op Op, src *Source) error {
+	return ev.EvalWithPorts(ev.ports[:], op, src)
 }
 
 // EvalWithPorts sets up the Evaler with the given ports and evaluates an Op.
 // The supplied name and text are used in diagnostic messages.
-func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, name, text string) error {
+func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, src *Source) error {
 	// Ignore TTOU.
 	//
 	// When a subprocess in its own process group puts itself in the foreground,
@@ -179,7 +179,7 @@ func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, name, text string) error {
 		close(sigGoRoutineDone)
 	}()
 
-	err := ev.eval(op, ports, name, text)
+	err := ev.eval(op, ports, src)
 
 	close(stopSigGoroutine)
 	<-sigGoRoutineDone
@@ -198,21 +198,21 @@ func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, name, text string) error {
 
 // Compile compiles elvish code in the global scope. If the error is not nil, it
 // always has type CompilationError.
-func (ev *Evaler) Compile(n *parse.Chunk, name, text string) (Op, error) {
-	return compile(ev.Builtin.static(), ev.Global.static(), n, name, text)
+func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (Op, error) {
+	return compile(ev.Builtin.static(), ev.Global.static(), n, src)
 }
 
 // SourceText evaluates a chunk of elvish source.
-func (ev *Evaler) SourceText(name, src string) error {
-	n, err := parse.Parse(name, src)
+func (ev *Evaler) SourceText(src *Source) error {
+	n, err := parse.Parse(src.name, src.code)
 	if err != nil {
 		return err
 	}
-	op, err := ev.Compile(n, name, src)
+	op, err := ev.Compile(n, src)
 	if err != nil {
 		return err
 	}
-	return ev.Eval(op, name, src)
+	return ev.Eval(op, src)
 }
 
 func readFileUTF8(fname string) (string, error) {
@@ -227,10 +227,10 @@ func readFileUTF8(fname string) (string, error) {
 }
 
 // Source evaluates the content of a file.
-func (ev *Evaler) Source(fname string) error {
-	src, err := readFileUTF8(fname)
+func (ev *Evaler) Source(name, path string) error {
+	code, err := readFileUTF8(path)
 	if err != nil {
 		return err
 	}
-	return ev.SourceText(fname, src)
+	return ev.SourceText(NewScriptSource(name, path, code))
 }

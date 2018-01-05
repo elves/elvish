@@ -22,11 +22,11 @@ type compiler struct {
 	// Position of what is being compiled.
 	begin, end int
 	// Information about the source.
-	name, text string
+	srcMeta *Source
 }
 
-func compile(b, g staticNs, n *parse.Chunk, name, text string) (op Op, err error) {
-	cp := &compiler{b, []staticNs{g}, make(staticNs), 0, 0, name, text}
+func compile(b, g staticNs, n *parse.Chunk, src *Source) (op Op, err error) {
+	cp := &compiler{b, []staticNs{g}, make(staticNs), 0, 0, src}
 	defer util.Catch(&err)
 	return cp.chunkOp(n), nil
 }
@@ -37,7 +37,7 @@ func (cp *compiler) compiling(n parse.Node) {
 
 func (cp *compiler) errorpf(begin, end int, format string, args ...interface{}) {
 	throw(&CompilationError{fmt.Sprintf(format, args...),
-		*util.NewSourceRange(cp.name, cp.text, begin, end, nil)})
+		*util.NewSourceRange(cp.srcMeta.describePath(), cp.srcMeta.code, begin, end, nil)})
 }
 
 func (cp *compiler) errorf(format string, args ...interface{}) {

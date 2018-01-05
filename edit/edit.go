@@ -146,7 +146,7 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 	ev.Editor = ed
 
 	installModules(ev.Builtin, ed)
-	err = ev.SourceText("[editor]", "use binding; binding:install")
+	err = ev.SourceText(eval.NewScriptSource("[editor]", "[editor]", "use binding; binding:install"))
 	if err != nil {
 		fmt.Fprintln(out, "Failed to load default binding:", err)
 	}
@@ -214,7 +214,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 	ed.styling = &highlight.Styling{}
 	doHighlight(n, ed)
 
-	_, err = ed.evaler.Compile(n, "[interactive]", src)
+	_, err = ed.evaler.Compile(n, eval.NewInteractiveSource(src))
 	if err != nil && !atEnd(err, len(src)) {
 		if addErrorsToTips {
 			ed.addTip("%s", err)

@@ -201,7 +201,7 @@ func (ed *Editor) CallFn(fn eval.Fn, args ...types.Value) {
 		eval.DevNullClosedChan, ed.notifyPort, ed.notifyPort,
 	}
 	// XXX There is no source to pass to NewTopEvalCtx.
-	ec := eval.NewTopFrame(ed.evaler, "[editor]", "", ports)
+	ec := eval.NewTopFrame(ed.evaler, eval.NewInternalSource("[editor]"), ports)
 	ex := ec.PCall(fn, args, eval.NoOpts)
 	if ex != nil {
 		ed.Notify("function error: %s", ex.Error())

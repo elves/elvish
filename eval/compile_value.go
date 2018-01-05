@@ -471,7 +471,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		cp.registerVariableGetQname(name)
 	}
 
-	name, text := cp.name, cp.text
+	srcMeta := cp.srcMeta
 
 	return func(ec *Frame) []types.Value {
 		evCapture := make(Ns)
@@ -484,7 +484,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 			optDefaults[i] = defaultValue
 		}
 		// XXX(xiaq): Capture uses.
-		return []types.Value{&Closure{argNames, restArgName, optNames, optDefaults, op, evCapture, name, text}}
+		return []types.Value{&Closure{argNames, restArgName, optNames, optDefaults, op, evCapture, srcMeta}}
 	}
 }
 

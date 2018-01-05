@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
+	"path/filepath"
 	"runtime"
 	"time"
 	"unsafe"
@@ -81,13 +82,10 @@ func init() {
 		{"-time", _time},
 
 		// Debugging
+		{"src", src},
 		{"-gc", _gc},
 		{"-stack", _stack},
 		{"-log", _log},
-		// TODO(#327): Make this a variable, and make it possible to distinguish
-		// filename ("/path/to/script.elv") and fabricated source name
-		// ("[interactive]").
-		{"-src-name", _getSrcName},
 
 		{"-ifaddrs", _ifaddrs},
 	})
@@ -179,11 +177,15 @@ func constantly(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func source(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var fname types.String
-	ScanArgs(args, &fname)
+	var argFname types.String
+	ScanArgs(args, &argFname)
 	ScanOpts(opts)
 
-	maybeThrow(ec.Source(string(fname)))
+	fname := string(argFname)
+	abs, err := filepath.Abs(fname)
+	maybeThrow(err)
+
+	maybeThrow(ec.Source(fname, abs))
 }
 
 func sleep(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -210,6 +212,13 @@ func _time(ec *Frame, args []types.Value, opts map[string]types.Value) {
 
 	dt := t1.Sub(t0)
 	fmt.Fprintln(ec.ports[1].File, dt)
+}
+
+func src(ec *Frame, args []types.Value, opts map[string]types.Value) {
+	TakeNoArg(args)
+	TakeNoOpt(opts)
+
+	ec.OutputChan() <- ec.srcMeta
 }
 
 func _gc(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -239,12 +248,6 @@ func _log(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 
 	maybeThrow(util.SetOutputFile(fname))
-}
-
-func _getSrcName(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-	ec.OutputChan() <- types.String(ec.srcName)
 }
 
 func _ifaddrs(ec *Frame, args []types.Value, opts map[string]types.Value) {

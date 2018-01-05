@@ -16,10 +16,7 @@ import (
 // shortly after creation; new Frame's are "forked" when needed.
 type Frame struct {
 	*Evaler
-	name    string
-	srcName string
-	src     string
-	modPath string // Only nonempty when evaluating a module.
+	srcMeta *Source
 
 	local, up Ns
 	ports     []*Port
@@ -31,13 +28,12 @@ type Frame struct {
 }
 
 // NewTopFrame creates a top-level Frame.
-func NewTopFrame(ev *Evaler, name, text string, ports []*Port) *Frame {
+func NewTopFrame(ev *Evaler, src *Source, ports []*Port) *Frame {
 	return &Frame{
-		ev, "top",
-		name, text, "",
+		ev, src,
 		ev.Global, make(Ns),
 		ports,
-		0, len(text), nil, false,
+		0, len(src.code), nil, false,
 	}
 }
 
@@ -111,8 +107,7 @@ func (ec *Frame) fork(name string) *Frame {
 		newPorts[i] = p.Fork()
 	}
 	return &Frame{
-		ec.Evaler, name,
-		ec.srcName, ec.src, ec.modPath,
+		ec.Evaler, ec.srcMeta,
 		ec.local, ec.up,
 		newPorts,
 		ec.begin, ec.end, ec.traceback, ec.background,
@@ -172,7 +167,7 @@ func (ec *Frame) makeException(e error) *Exception {
 
 func (ec *Frame) addTraceback() *util.SourceRange {
 	return &util.SourceRange{
-		Name: ec.srcName, Source: ec.src,
+		Name: ec.srcMeta.describePath(), Source: ec.srcMeta.code,
 		Begin: ec.begin, End: ec.end, Next: ec.traceback,
 	}
 }
