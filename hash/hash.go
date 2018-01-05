@@ -10,6 +10,14 @@ func DJBCombine(acc, h uint32) uint32 {
 	return mul33(acc) + h
 }
 
+func DJB(hs ...uint32) uint32 {
+	acc := DJBInit
+	for _, h := range hs {
+		acc = DJBCombine(acc, h)
+	}
+	return acc
+}
+
 func UInt32(u uint32) uint32 {
 	return u
 }
