@@ -8,10 +8,11 @@ import (
 )
 
 func open() (pty, tty *os.File, err error) {
-	p, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
+	pFD, err := syscall.Open("/dev/ptmx", syscall.O_RDWR|syscall.O_CLOEXEC, 0)
 	if err != nil {
 		return nil, nil, err
 	}
+	p := os.NewFile(uintptr(pFD), "/dev/ptmx")
 
 	sname, err := ptsname(p)
 	if err != nil {

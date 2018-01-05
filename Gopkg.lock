@@ -10,30 +10,30 @@
 [[projects]]
   name = "github.com/kr/pty"
   packages = ["."]
-  revision = "2c10821df3c3cf905230d078702dfbe9404c9b23"
-  version = "v1.0.0"
+  revision = "95d05c1eef33a45bd58676b6ce28d105839b8d0b"
+  version = "v1.0.1"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
   packages = ["."]
-  revision = "fc9e8d8ef48496124e79ae0df75490096eccf6fe"
-  version = "v0.0.2"
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
 
 [[projects]]
   branch = "master"
   name = "github.com/xiaq/persistent"
   packages = ["hash","hashmap","types","vector"]
-  revision = "75c17f0e60b72842d8d93c9811aeb0da7fd0bdae"
+  revision = "221501f424668419263ca5ee4e26637fdb05e229"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
-  revision = "bb24a47a89eac6c1227fbcb2ae37a8b9ed323366"
+  packages = ["unix","windows"]
+  revision = "a3f2cbd54cf5dfe3fbaccf76375fdb12f67654c8"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6cb3d3b39da358793be9d940cb2737c7cc4f793492e06358fe8851287e4591c9"
+  inputs-digest = "af3f22523d6ecfba4dccfb0f57e353923b401495cd7cf2e4a295062fc8d3028b"
   solver-name = "gps-cdcl"
   solver-version = 1

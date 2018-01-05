@@ -114,14 +114,6 @@ struct stat {
 
 #endif
 
-// Certain constants and structs are missing from the fs/crypto UAPI
-#define FS_MAX_KEY_SIZE                 64
-struct fscrypt_key {
-  __u32 mode;
-  __u8 raw[FS_MAX_KEY_SIZE];
-  __u32 size;
-};
-
 #ifdef TCSETS2
 // On systems that have "struct termios2" use this as type Termios.
 typedef struct termios2 termios_t;
@@ -520,6 +512,7 @@ type EpollEvent C.struct_my_epoll_event
 
 const (
 	AT_FDCWD            = C.AT_FDCWD
+	AT_NO_AUTOMOUNT     = C.AT_NO_AUTOMOUNT
 	AT_REMOVEDIR        = C.AT_REMOVEDIR
 	AT_SYMLINK_FOLLOW   = C.AT_SYMLINK_FOLLOW
 	AT_SYMLINK_NOFOLLOW = C.AT_SYMLINK_NOFOLLOW
@@ -542,10 +535,6 @@ type Sigset_t C.sigset_t
 const RNDGETENTCNT = C.RNDGETENTCNT
 
 const PERF_IOC_FLAG_GROUP = C.PERF_IOC_FLAG_GROUP
-
-// sysconf information
-
-const _SC_PAGESIZE = C._SC_PAGESIZE
 
 // Terminal handling
 
