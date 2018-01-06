@@ -1,4 +1,4 @@
-// +build linux
+// +build linux solaris
 
 // Copyright 2015 go-termios Author. All Rights Reserved.
 // https://github.com/go-termios/termios
