@@ -121,7 +121,7 @@ fn bind-trigger-keys [&location=C-l &history=C-r &lastcmd=M-1]{
 -bind Backspace $edit:narrow:backspace~
 -bind Enter     $edit:narrow:accept-close~
 -bind M-Enter   $edit:narrow:accept~
--bind default   $edit:narrow:default~
+-bind Default   $edit:narrow:default~
 -bind "C-["     $edit:insert:start~
 -bind C-G       $edit:narrow:toggle-ignore-case~
 -bind C-D       $edit:narrow:toggle-ignore-duplication~
