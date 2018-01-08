@@ -106,9 +106,9 @@ fn -bind [k f]{
 # Example:
 #   narrow:bind-trigger-keys &location=Alt-l &lastcmd=""
 fn bind-trigger-keys [&location=C-l &history=C-r &lastcmd=M-1]{
-  if (not-eq $location "") { -bind-insert $location narrow:location }
-  if (not-eq $history "")  { -bind-insert $history  narrow:history }
-  if (not-eq $lastcmd "")  { -bind-insert $lastcmd  narrow:lastcmd }
+  if (not-eq $location "") { -bind-insert $location $location~ }
+  if (not-eq $history "")  { -bind-insert $history  $history~ }
+  if (not-eq $lastcmd "")  { -bind-insert $lastcmd  $lastcmd~ }
 }
 
 # Set up some default useful bindings for narrow mode
