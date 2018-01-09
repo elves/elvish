@@ -18,6 +18,7 @@ import (
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/vector"
 )
 
 var logger = util.GetLogger("[eval] ")
@@ -102,6 +103,15 @@ func (ev *Evaler) InstallModule(name string, mod Ns) {
 // InstallBundled installs a bundled module to the Evaler.
 func (ev *Evaler) InstallBundled(name, src string) {
 	ev.bundled[name] = src
+}
+
+// SetArgs sets the $args builtin variable.
+func (ev *Evaler) SetArgs(args []string) {
+	v := vector.Empty
+	for _, arg := range args {
+		v = v.Cons(types.String(arg))
+	}
+	ev.Builtin["args"] = vartypes.NewRo(types.NewList(v))
 }
 
 // SetLibDir sets the library directory, in which external modules are to be

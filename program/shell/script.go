@@ -15,9 +15,7 @@ import (
 // be printed as-is (with util.PprintError).
 func script(ev *eval.Evaler, args []string, cmd, compileOnly bool) error {
 	arg0 := args[0]
-	if len(args) > 1 {
-		return errors.New("passing argument is not yet supported.")
-	}
+	ev.SetArgs(args[1:])
 
 	var name, path, code string
 	if cmd {
