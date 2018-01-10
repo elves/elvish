@@ -90,20 +90,3 @@ func scanValueToGo(src types.Value, dstPtr interface{}) {
 		}
 	}
 }
-
-// convertGoToValue converts Go data to Value.
-func convertGoToValue(src interface{}) types.Value {
-	switch src := src.(type) {
-	case string:
-		return types.String(src)
-	case int:
-		return types.String(strconv.Itoa(src))
-	case float64:
-		return floatToString(src)
-	case types.Value:
-		return src
-	default:
-		throwf("cannot convert type %T to Value", src)
-		panic("unreachable")
-	}
-}
