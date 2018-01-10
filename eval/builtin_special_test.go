@@ -3,9 +3,6 @@ package eval
 import "testing"
 
 var builtinSpecialTests = []Test{
-	// Control structures
-	// ------------------
-
 	// if
 	{"if true { put then }", want{out: strs("then")}},
 	{"if $false { put then } else { put else }", want{out: strs("else")}},
@@ -13,12 +10,15 @@ var builtinSpecialTests = []Test{
 		want{out: strs("3")}},
 	{"if $false { put 2 } elif true { put 2 } else { put 3 }",
 		want{out: strs("2")}},
+
 	// try
 	{"try { nop } except { put bad } else { put good }", want{out: strs("good")}},
 	{"try { e:false } except - { put bad } else { put good }", want{out: strs("bad")}},
+
 	// while
 	{"x=0; while (< $x 4) { put $x; x=(+ $x 1) }",
 		want{out: strs("0", "1", "2", "3")}},
+
 	// for
 	{"for x [tempora mores] { put 'O '$x }",
 		want{out: strs("O tempora", "O mores")}},
