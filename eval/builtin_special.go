@@ -80,7 +80,7 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 		}
 		switch ns {
 		case "", "local":
-			if cp.thisScope().has(name) {
+			if !cp.thisScope().has(name) {
 				cp.errorf("variable $%s not found on current local scope", name)
 			}
 			cp.thisScope().del(name)
