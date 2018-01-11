@@ -7,12 +7,6 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-// IndexOneAssocer combines IndexOneer and Assocer.
-type IndexOneAssocer interface {
-	types.IndexOneer
-	types.Assocer
-}
-
 func mustIndexer(v types.Value, ec *Frame) types.Indexer {
 	indexer, ok := types.GetIndexer(v)
 	if !ok {

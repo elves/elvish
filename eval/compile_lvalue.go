@@ -135,7 +135,13 @@ func (cp *compiler) lvalueVariable(ns, name string) LValuesOpFunc {
 }
 
 func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpFunc {
-	headBegin, headEnd := n.Head.Begin(), n.Head.End()
+	begin, end := n.Begin(), n.End()
+	ends := make([]int, len(n.Indicies)+1)
+	ends[0] = n.Head.End()
+	for i, idx := range n.Indicies {
+		ends[i+1] = idx.End()
+	}
+
 	indexOps := cp.arrayOps(n.Indicies)
 
 	return func(ec *Frame) []vartypes.Variable {
@@ -144,59 +150,24 @@ func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpF
 			throwf("variable $%s:%s does not exist, compiler bug", ns, name)
 		}
 
-		// Evaluate assocers and indices.
-		// Assignment of indexed variables actually assignes the variable, with
-		// the right hand being a nested series of Assocs. As the simplest
-		// example, `a[0] = x` is equivalent to `a = (assoc $a 0 x)`. A more
-		// complex example is that `a[0][1][2] = x` is equivalent to
-		//	`a = (assoc $a 0 (assoc $a[0] 1 (assoc $a[0][1] 2 x)))`.
-		// Note that in each assoc form, the first two arguments can be
-		// determined now, while the last argument is only known when the
-		// right-hand-side is known. So here we evaluate the first two arguments
-		// of each assoc form and put them in two slices, assocers and indicies.
-		// In the previous example, the two slices will contain:
-		//
-		// assocers: $a $a[0] $a[0][1]
-		// indicies:  0     1        2
-		//
-		// When the right-hand side of the assignment becomes available, the new
-		// value for $a is evaluated by doing Assoc from inside out.
-		assocers := make([]types.Assocer, len(indexOps))
 		indicies := make([]types.Value, len(indexOps))
-		varValue, ok := variable.Get().(IndexOneAssocer)
-		if !ok {
-			ec.errorpf(headBegin, headEnd, "cannot be indexed for setting")
-		}
-		assocers[0] = varValue
 		for i, op := range indexOps {
-			var lastAssocer types.IndexOneer
-			if i < len(indexOps)-1 {
-				var ok bool
-				lastAssocer, ok = assocers[i].(types.IndexOneer)
-				if !ok {
-					// This cannot occur when i==0, since varValue as already
-					// asserted to be an IndexOnner.
-					ec.errorpf(headBegin, indexOps[i-1].End, "cannot be indexed")
-				}
-			}
-
 			values := op.Exec(ec)
 			// TODO: Implement multi-indexing.
 			if len(values) != 1 {
 				throw(errors.New("multi indexing not implemented"))
 			}
-			index := values[0]
-			indicies[i] = index
-
-			if i < len(indexOps)-1 {
-				assocer, ok := lastAssocer.IndexOne(index).(types.Assocer)
-				if !ok {
-					ec.errorpf(headBegin, indexOps[i].End,
-						"cannot be indexed for setting")
-				}
-				assocers[i+1] = assocer
+			indicies[i] = values[0]
+		}
+		elemVar, err := vartypes.MakeElement(variable, indicies)
+		if err != nil {
+			level := vartypes.GetMakeElementErrorLevel(err)
+			if level < 0 {
+				ec.errorpf(begin, end, "%s", err)
+			} else {
+				ec.errorpf(begin, ends[level], "%s", err)
 			}
 		}
-		return []vartypes.Variable{vartypes.NewElement(variable, assocers, indicies)}
+		return []vartypes.Variable{elemVar}
 	}
 }
