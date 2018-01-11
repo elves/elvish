@@ -161,7 +161,7 @@ func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpF
 		}
 		elemVar, err := vartypes.MakeElement(variable, indicies)
 		if err != nil {
-			level := vartypes.GetMakeElementErrorLevel(err)
+			level := vartypes.GetElementErrorLevel(err)
 			if level < 0 {
 				ec.errorpf(begin, end, "%s", err)
 			} else {

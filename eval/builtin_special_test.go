@@ -3,6 +3,10 @@ package eval
 import "testing"
 
 var builtinSpecialTests = []Test{
+	// del
+	NewTest("x = [&k=v &k2=v2]; del x[k2]; keys $x").WantOutStrings("k"),
+	NewTest("x = [[&k=v &k2=v2]]; del x[0][k2]; keys $x[0]").WantOutStrings("k"),
+
 	// if
 	{"if true { put then }", want{out: strs("then")}},
 	{"if $false { put then } else { put else }", want{out: strs("else")}},

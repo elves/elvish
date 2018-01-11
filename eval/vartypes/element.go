@@ -58,7 +58,7 @@ func MakeElement(v Variable, indicies []types.Value) (Variable, error) {
 	assocers := make([]types.Assocer, len(indicies))
 	varValue, ok := v.Get().(indexOneAssocer)
 	if !ok {
-		return nil, makeElemErr{0, "cannot be indexed for setting"}
+		return nil, elemErr{0, "cannot be indexed for setting"}
 	}
 	assocers[0] = varValue
 	for i, index := range indicies[:len(indicies)-1] {
@@ -66,11 +66,11 @@ func MakeElement(v Variable, indicies []types.Value) (Variable, error) {
 		if !ok {
 			// This cannot occur when i==0, since varValue as already
 			// asserted to be an IndexOnner.
-			return nil, makeElemErr{i, "cannot be indexed"}
+			return nil, elemErr{i, "cannot be indexed"}
 		}
 		assocer, ok := lastAssocer.IndexOne(index).(types.Assocer)
 		if !ok {
-			return nil, makeElemErr{i + 1, "cannot be indexed for setting"}
+			return nil, elemErr{i + 1, "cannot be indexed for setting"}
 		}
 		assocers[i+1] = assocer
 	}
@@ -83,12 +83,12 @@ type indexOneAssocer interface {
 	types.Assocer
 }
 
-type makeElemErr struct {
+type elemErr struct {
 	level int
 	msg   string
 }
 
-func (err makeElemErr) Error() string {
+func (err elemErr) Error() string {
 	return err.msg
 }
 
@@ -101,11 +101,11 @@ func GetHeadOfElement(v Variable) Variable {
 	return nil
 }
 
-// GetMakeElementErrorLevel returns the level of an error returned by
-// MakeElement. Level 0 represents that the error is about the variable itself.
+// GetElementErrorLevel returns the level of an error returned by MakeElement or
+// DelElement. Level 0 represents that the error is about the variable itself.
 // If the argument was not returned from MakeVariable, -1 is returned.
-func GetMakeElementErrorLevel(err error) int {
-	if err, ok := err.(makeElemErr); ok {
+func GetElementErrorLevel(err error) int {
+	if err, ok := err.(elemErr); ok {
 		return err.level
 	}
 	return -1

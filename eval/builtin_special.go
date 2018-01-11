@@ -66,41 +66,96 @@ func init() {
 	}
 }
 
+const delArgMsg = "arguments to del must be variable or variable elements"
+
 // DelForm = 'del' { VariablePrimary }
 func compileDel(cp *compiler, fn *parse.Form) OpFunc {
-	// Do conventional compiling of all compound expressions, including
-	// ensuring that variables can be resolved
-	var names, envNames []string
+	var ops []Op
 	for _, cn := range fn.Args {
 		cp.compiling(cn)
-		qname := mustString(cp, cn, "should be a literal variable name")
-		explode, ns, name := ParseVariable(qname)
-		if explode {
-			cp.errorf("removing exploded variable makes no sense")
+		if len(cn.Indexings) != 1 {
+			cp.errorf(delArgMsg)
+			continue
 		}
-		switch ns {
-		case "", "local":
-			if !cp.thisScope().has(name) {
-				cp.errorf("variable $%s not found on current local scope", name)
+		head, indicies := cn.Indexings[0].Head, cn.Indexings[0].Indicies
+		if head.Type != parse.Bareword {
+			if head.Type == parse.Variable {
+				cp.errorf("arguments to del must drop $")
+			} else {
+				cp.errorf(delArgMsg)
 			}
-			cp.thisScope().del(name)
-			names = append(names, name)
-		case "E":
-			envNames = append(envNames, name)
-		default:
-			cp.errorf("can only delete a variable in local: or E:")
+			continue
 		}
 
+		explode, ns, name := ParseVariable(head.Value)
+		if explode {
+			cp.errorf("arguments to del may be have a leading @")
+			continue
+		}
+		var f OpFunc
+		if len(indicies) == 0 {
+			switch ns {
+			case "", "local":
+				if !cp.thisScope().has(name) {
+					cp.errorf("no variable $%s in local scope", name)
+					continue
+				}
+				cp.thisScope().del(name)
+				f = newDelLocalVariableOp(name)
+			case "E":
+				f = newDelEnvVariableOp(name)
+			default:
+				cp.errorf("only variables in local: or E: can be deleted")
+				continue
+			}
+		} else {
+			if !cp.registerVariableGet(ns, name) {
+				cp.errorf("no variable $%s", head.Value)
+				continue
+			}
+			f = newDelElementOp(ns, name, head.Begin(), head.End(), cp.arrayOps(indicies))
+		}
+		ops = append(ops, Op{f, cn.Begin(), cn.End()})
 	}
-	return func(ec *Frame) {
-		for _, name := range names {
-			delete(ec.local, name)
+	return func(f *Frame) {
+		for _, op := range ops {
+			op.Exec(f)
 		}
-		for _, name := range envNames {
-			// BUG(xiaq): We rely on the fact that os.Unsetenv always returns
-			// nil.
-			os.Unsetenv(name)
+	}
+}
+
+func newDelLocalVariableOp(name string) OpFunc {
+	return func(f *Frame) { delete(f.local, name) }
+}
+
+func newDelElementOp(ns, name string, begin, headEnd int, indexOps []ValuesOp) OpFunc {
+	ends := make([]int, len(indexOps)+1)
+	ends[0] = headEnd
+	for i, op := range indexOps {
+		ends[i+1] = op.End
+	}
+	return func(f *Frame) {
+		var indicies []types.Value
+		for _, indexOp := range indexOps {
+			indexValues := indexOp.Exec(f)
+			if len(indexValues) != 1 {
+				f.errorpf(indexOp.Begin, indexOp.End, "index must evaluate to a single value in argument to del")
+			}
+			indicies = append(indicies, indexValues[0])
 		}
+		err := vartypes.DelElement(f.ResolveVar(ns, name), indicies)
+		if err != nil {
+			if level := vartypes.GetElementErrorLevel(err); level >= 0 {
+				f.errorpf(begin, ends[level], "%s", err.Error())
+			}
+			throw(err)
+		}
+	}
+}
+
+func newDelEnvVariableOp(name string) OpFunc {
+	return func(*Frame) {
+		maybeThrow(os.Unsetenv(name))
 	}
 }
 
