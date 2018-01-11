@@ -240,7 +240,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			for i, v := range saveVars {
 				// XXX(xiaq): If the variable to save is a elemVariable, save
 				// the outermost variable instead.
-				if u := vartypes.GetUnderlyingOfElem(v); u != nil {
+				if u := vartypes.GetHeadOfElement(v); u != nil {
 					v = u
 					saveVars[i] = v
 				}

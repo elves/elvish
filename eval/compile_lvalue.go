@@ -37,13 +37,13 @@ func (op LValuesOp) Exec(ec *Frame) []vartypes.Variable {
 // {a[x],b,@c[z]}, "a[x],b" is the fixed part and "c[z]" is the rest part.
 func (cp *compiler) lvaluesOp(n *parse.Indexing) (LValuesOp, LValuesOp) {
 	if n.Head.Type == parse.Braced {
-		// Braced list of variable specs, possibly with indicies. The braced list
+		// Braced list of variable specs, possibly with indicies.
 		if len(n.Indicies) > 0 {
 			cp.errorf("may not have indicies")
 		}
 		return cp.lvaluesMulti(n.Head.Braced)
 	}
-	rest, opFunc := cp.lvaluesOne(n, "must be an lvalue or a braced list of those")
+	rest, opFunc := cp.lvalueBase(n, "must be an lvalue or a braced list of those")
 	op := LValuesOp{opFunc, n.Begin(), n.End()}
 	if rest {
 		return LValuesOp{}, op
@@ -63,7 +63,7 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp)
 			cp.errorpf(cn.Begin(), cn.End(), "must be an lvalue")
 		}
 		var rest bool
-		rest, opFuncs[i] = cp.lvaluesOne(cn.Indexings[0], "must be an lvalue ")
+		rest, opFuncs[i] = cp.lvalueBase(cn.Indexings[0], "must be an lvalue ")
 		// Only the last one may a rest part.
 		if rest {
 			if i == len(nodes)-1 {
@@ -99,45 +99,49 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp)
 	return op, restOp
 }
 
-func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFunc) {
-	varname := cp.literal(n.Head, msg)
-	cp.registerVariableSetQname(varname)
-	explode, ns, barename := ParseVariable(varname)
-
+func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, LValuesOpFunc) {
+	qname := cp.literal(n.Head, msg)
+	explode, ns, name := ParseVariable(qname)
 	if len(n.Indicies) == 0 {
-		return explode, func(ec *Frame) []vartypes.Variable {
-			variable := ec.ResolveVar(ns, barename)
-			if variable == nil {
-				if ns == "" || ns == "local" {
-					// New variable.
-					// XXX We depend on the fact that this variable will
-					// immeidately be set.
-					if strings.HasSuffix(barename, FnSuffix) {
-						variable = vartypes.NewValidatedPtr(nil, ShouldBeFn)
-					} else if strings.HasSuffix(barename, NsSuffix) {
-						variable = vartypes.NewValidatedPtr(nil, ShouldBeNs)
-					} else {
-						variable = vartypes.NewPtr(nil)
-					}
-					ec.local[barename] = variable
-				} else if mod, ok := ec.modules[ns]; ok {
-					variable = vartypes.NewPtr(nil)
-					mod[barename] = variable
-				} else {
-					throwf("cannot set $%s", varname)
-				}
-			}
-			return []vartypes.Variable{variable}
-		}
+		return explode, cp.lvalueVariable(ns, name)
 	}
+	return explode, cp.lvalueElement(ns, name, n)
+}
 
+func (cp *compiler) lvalueVariable(ns, name string) LValuesOpFunc {
+	cp.registerVariableSet(ns, name)
+
+	return func(ec *Frame) []vartypes.Variable {
+		variable := ec.ResolveVar(ns, name)
+		if variable == nil {
+			if ns == "" || ns == "local" {
+				// New variable.
+				// XXX We depend on the fact that this variable will
+				// immeidately be set.
+				if strings.HasSuffix(name, FnSuffix) {
+					variable = vartypes.NewValidatedPtr(nil, ShouldBeFn)
+				} else if strings.HasSuffix(name, NsSuffix) {
+					variable = vartypes.NewValidatedPtr(nil, ShouldBeNs)
+				} else {
+					variable = vartypes.NewPtr(nil)
+				}
+				ec.local[name] = variable
+			} else {
+				throwf("new variables can only be created in local scope")
+			}
+		}
+		return []vartypes.Variable{variable}
+	}
+}
+
+func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpFunc {
 	headBegin, headEnd := n.Head.Begin(), n.Head.End()
 	indexOps := cp.arrayOps(n.Indicies)
 
-	return explode, func(ec *Frame) []vartypes.Variable {
-		variable := ec.ResolveVar(ns, barename)
+	return func(ec *Frame) []vartypes.Variable {
+		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
-			throwf("variable $%s does not exist, compiler bug", varname)
+			throwf("variable $%s:%s does not exist, compiler bug", ns, name)
 		}
 
 		// Evaluate assocers and indices.
@@ -193,6 +197,6 @@ func (cp *compiler) lvaluesOne(n *parse.Indexing, msg string) (bool, LValuesOpFu
 				assocers[i+1] = assocer
 			}
 		}
-		return []vartypes.Variable{vartypes.NewElem(variable, assocers, indicies)}
+		return []vartypes.Variable{vartypes.NewElement(variable, assocers, indicies)}
 	}
 }

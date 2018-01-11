@@ -31,15 +31,14 @@ func (ev *elem) Get() types.Value {
 	return ev.setValue
 }
 
-// NewEleme represents an ephemeral variable that represents arbitrary nested
-// elements.
-func NewElem(v Variable, a []types.Assocer, i []types.Value) Variable {
+// NewElement returns an ephemeral variable used for assigning variable element.
+func NewElement(v Variable, a []types.Assocer, i []types.Value) Variable {
 	return &elem{v, a, i, types.String("")}
 }
 
-// GetUnderlyingOfEleme gets the underlying variable from an element variable,
-// or nil if the argument is not an element variable.
-func GetUnderlyingOfElem(v Variable) Variable {
+// GetHeadOfElement gets the underlying head variable of an element variable, or
+// nil if the argument is not an element variable.
+func GetHeadOfElement(v Variable) Variable {
 	if ev, ok := v.(*elem); ok {
 		return ev.variable
 	}

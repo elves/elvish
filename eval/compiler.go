@@ -102,6 +102,10 @@ func (cp *compiler) registerVariableGet(ns, name string) bool {
 
 func (cp *compiler) registerVariableSetQname(qname string) bool {
 	_, ns, name := ParseVariable(qname)
+	return cp.registerVariableSet(ns, name)
+}
+
+func (cp *compiler) registerVariableSet(ns, name string) bool {
 	switch ns {
 	case "local":
 		cp.thisScope().set(name)
