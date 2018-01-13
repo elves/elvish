@@ -50,14 +50,13 @@ func (c *Closure) Repr(int) string {
 
 // Call calls a closure.
 func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	// TODO Support keyword arguments
 	if c.RestArg != "" {
 		if len(c.ArgNames) > len(args) {
-			throw(ErrArityMismatch)
+			throwf("need %d or more arguments, got %d", len(c.ArgNames), len(args))
 		}
 	} else {
 		if len(c.ArgNames) != len(args) {
-			throw(ErrArityMismatch)
+			throwf("need %d arguments, got %d", len(c.ArgNames), len(args))
 		}
 	}
 
@@ -81,7 +80,6 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 	if c.RestArg != "" {
 		ec.local[c.RestArg] = vartypes.NewPtr(types.MakeList(args[len(c.ArgNames):]...))
 	}
-	// Logger.Printf("EvalCtx=%p, args=%v, opts=%v", ec, args, opts)
 	for i, name := range c.OptNames {
 		v, ok := opts[name]
 		if !ok {
