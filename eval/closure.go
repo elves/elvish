@@ -93,7 +93,7 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 	for name := range opts {
 		_, used := optUsed[name]
 		if !used {
-			throwf("Unknown option %s", parse.Quote(name))
+			throwf("unknown option %s", parse.Quote(name))
 		}
 	}
 
