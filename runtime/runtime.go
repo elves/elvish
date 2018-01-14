@@ -137,7 +137,7 @@ func connectToDaemon(sockpath string, spawner *daemonp.Daemon) (*daemon.Client, 
 	if err != nil {
 		return cl, fmt.Errorf("failed to spawn daemon: %v", err)
 	}
-	fmt.Fprintln(os.Stderr, "Spawned daemon")
+	logger.Println("Spawned daemon")
 
 	// Wait for daemon to come online
 	for i := 0; i <= daemonWaitLoops; i++ {
