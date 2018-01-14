@@ -103,8 +103,7 @@ func (t Test) WantErr(err error) Test {
 // WantAnyErr returns an altered Test that requires the source code to result in
 // any error when evaluated.
 func (t Test) WantAnyErr() Test {
-	t.WantErr(errAny)
-	return t
+	return t.WantErr(errAny)
 }
 
 // RunTests runs test cases. For each test case, a new Evaler is made by calling

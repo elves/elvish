@@ -7,8 +7,8 @@ import (
 
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hash"
-	"github.com/xiaq/persistent/hashmap"
 )
 
 // ErrArityMismatch is thrown by a closure when the number of arguments the user
@@ -80,19 +80,22 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 	if c.RestArg != "" {
 		ec.local[c.RestArg] = vartypes.NewPtr(types.MakeList(args[len(c.ArgNames):]...))
 	}
+	optUsed := make(map[string]struct{})
 	for i, name := range c.OptNames {
 		v, ok := opts[name]
-		if !ok {
+		if ok {
+			optUsed[name] = struct{}{}
+		} else {
 			v = c.OptDefaults[i]
 		}
 		ec.local[name] = vartypes.NewPtr(v)
 	}
-	// XXX This conversion was done by the other direction.
-	convertedOpts := hashmap.Empty
-	for k, v := range opts {
-		convertedOpts = convertedOpts.Assoc(types.String(k), v)
+	for name := range opts {
+		_, used := optUsed[name]
+		if !used {
+			throwf("Unknown option %s", parse.Quote(name))
+		}
 	}
-	ec.local["opts"] = vartypes.NewPtr(types.NewMap(convertedOpts))
 
 	ec.traceback = ec.addTraceback()
 
