@@ -10,6 +10,16 @@ debug-mode = $false
     &protocol= https
     &levels= 2
   ]
+  &"bitbucket.org"= [
+    &method= git
+    &protocol= https
+    &levels= 2
+  ]
+  &"gitlab.com"= [
+    &method= git
+    &protocol= https
+    &levels= 2
+  ]
 ]
 
 # Internal configuration
