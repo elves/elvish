@@ -66,7 +66,7 @@ func (cp *compiler) registerVariableGetQname(qname string) bool {
 
 func (cp *compiler) registerVariableGet(ns, name string) bool {
 	switch ns {
-	case "", "local", "up":
+	case "", "local", "up", "builtin":
 		// Handled below
 	case "e", "E", "shared":
 		return true

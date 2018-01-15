@@ -32,6 +32,10 @@ func goodFormHead(head string, ed *Editor) bool {
 				if ev.Builtin[name+eval.FnSuffix] != nil || ev.Global[name+eval.FnSuffix] != nil {
 					return true
 				}
+			case "builtin":
+				if ev.Builtin[name+eval.FnSuffix] != nil {
+					return true
+				}
 			case "e":
 				if ed.isExternal[name] {
 					return true
