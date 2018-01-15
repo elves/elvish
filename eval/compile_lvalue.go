@@ -135,6 +135,8 @@ func (cp *compiler) lvalueVariable(ns, name string) LValuesOpFunc {
 }
 
 func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpFunc {
+	cp.registerVariableGet(ns, name)
+
 	begin, end := n.Begin(), n.End()
 	ends := make([]int, len(n.Indicies)+1)
 	ends[0] = n.Head.End()
