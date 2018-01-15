@@ -168,6 +168,19 @@ fn metadata [pkg]{
   put $res
 }
 
+fn query [pkg]{
+  data = (metadata $pkg)
+  echo (edit:styled "Package "$pkg cyan)
+  if (is-installed $pkg) {
+    echo (edit:styled "Installed at "(dest $pkg) green)
+  } else {
+    echo (edit:styled "Not installed" red)
+  }
+  keys $data | each [key]{
+    echo (edit:styled $key":" blue) $data[$key]
+  }
+}
+
 fn -uninstall-package [pkg]{
   if (not (is-installed $pkg)) {
     -error "Package "$pkg" is not installed."
