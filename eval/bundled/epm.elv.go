@@ -114,6 +114,10 @@ fn -domain-config-file [dom]{
   put $-lib-dir/$dom/epm-domain.cfg
 }
 
+fn -package-metadata-file [pkg]{
+  put (dest $pkg)/metadata.json
+}
+
 fn -read-domain-config [dom]{
   cfgfile = (-domain-config-file $dom)
   # Only read config if it hasn't been loaded already
@@ -153,6 +157,15 @@ fn -package-op [pkg what]{
       fail "No handler defined for method '"$method"', specified in in config file "(-domain-config-file $dom)
     }
   }
+}
+
+fn metadata [pkg]{
+  res = [&]
+  mdata = (-package-metadata-file $pkg)
+  if (and (is-installed $pkg) ?(test -f $mdata)) {
+    res = (cat $mdata | from-json)
+  }
+  put $res
 }
 
 fn -uninstall-package [pkg]{
