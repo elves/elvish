@@ -75,6 +75,9 @@ fn -package-without-domain [pkg]{
 # received two arguments: package name and the domain config entry
 -method-handler = [
   &git= [
+    &src= [pkg dom-cfg]{
+      put $dom-cfg[protocol]"://"$pkg
+    }
     &install= [pkg dom-cfg]{
       dest = (dest $pkg)
       -info "Installing "$pkg
@@ -90,6 +93,9 @@ fn -package-without-domain [pkg]{
   ]
 
   &rsync= [
+    &src= [pkg dom-cfg]{
+      put $dom-cfg[location]/(-package-without-domain $pkg)/
+    }
     &install= [pkg dom-cfg]{
       dest = (dest $pkg)
       pkgd = (-package-without-domain $pkg)
@@ -140,6 +146,18 @@ fn -read-domain-config [dom]{
   }
 }
 
+# Return the method by which a package is installed
+fn -package-method [pkg]{
+  dom = (-package-domain $pkg)
+  -read-domain-config $dom
+  if (has-key $-domain-config $dom) {
+    cfg = $-domain-config[$dom]
+    put $cfg[method]
+  } else {
+    put $false
+  }
+}
+
 # Invoke package operations defined in $-method-handler above
 fn -package-op [pkg what]{
   dom = (-package-domain $pkg)
@@ -171,6 +189,7 @@ fn metadata [pkg]{
 fn query [pkg]{
   data = (metadata $pkg)
   echo (edit:styled "Package "$pkg cyan)
+  echo (edit:styled "Source:" blue) (-package-method $pkg) (-package-op $pkg src)
   if (is-installed $pkg) {
     echo (edit:styled "Installed at "(dest $pkg) green)
   } else {
