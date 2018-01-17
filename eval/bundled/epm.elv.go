@@ -119,14 +119,21 @@ fn -package-without-domain [pkg]{
   ]
 ]
 
+# Return the filename of the domain config file for the given domain
+# (regardless of whether it exists)
 fn -domain-config-file [dom]{
   put $-lib-dir/$dom/epm-domain.cfg
 }
 
+# Return the filename of the metadata file for the given package
+# (regardless of whether it exists)
 fn -package-metadata-file [pkg]{
   put (dest $pkg)/metadata.json
 }
 
+# Read the domain config file for a given domain. If the file does not
+# exist but we have a built-in definition, then we create the file
+# with the default.
 fn -read-domain-config [dom]{
   cfgfile = (-domain-config-file $dom)
   # Only read config if it hasn't been loaded already
@@ -180,6 +187,7 @@ fn -package-op [pkg what]{
   }
 }
 
+# Read and parse the package metadata, if it exists
 fn metadata [pkg]{
   res = [&]
   mdata = (-package-metadata-file $pkg)
@@ -189,6 +197,7 @@ fn metadata [pkg]{
   put $res
 }
 
+# Print out information about a package
 fn query [pkg]{
   data = (metadata $pkg)
   echo (edit:styled "Package "$pkg cyan)
@@ -203,6 +212,7 @@ fn query [pkg]{
   }
 }
 
+# Uninstall a single package by removing its directory
 fn -uninstall-package [pkg]{
   if (not (is-installed $pkg)) {
     -error "Package "$pkg" is not installed."
@@ -213,6 +223,10 @@ fn -uninstall-package [pkg]{
   rm -rf $dest
 }
 
+######################################################################
+# Main user-facing functions
+
+# List installed packages
 fn installed {
   e:ls $-lib-dir | each [dom]{
     if ?(test -f (-domain-config-file $dom)) {
@@ -225,8 +239,8 @@ fn installed {
   }
 }
 
-######################################################################
-
+# Install and upgrade are method-specific, so we call the
+# corresponding functions using -package-op
 fn install [&silent-if-installed=$false @pkgs]{
   for pkg $pkgs {
     if (is-installed $pkg) {
@@ -253,6 +267,7 @@ fn upgrade [@pkgs]{
   }
 }
 
+# Uninstall is the same for everyone, just remove the directory
 fn uninstall [@pkgs]{
   if (eq $pkgs []) {
     fail 'Must specify at least one package.'
