@@ -27,10 +27,11 @@ debug-mode = $false
 -lib-dir = $-data-dir/lib
 
 # Runtime state - records get copied from -default-domain-config
-# as needed
+# or read from epm-domain.cfg files as needed
 -domain-config = [&]
 
-# Utility functions
+# General utility functions
+
 fn -debug [text]{
   if $debug-mode {
     print (edit:styled '=> ' blue)
@@ -78,11 +79,12 @@ fn -package-without-domain [pkg]{
     &src= [pkg dom-cfg]{
       put $dom-cfg[protocol]"://"$pkg
     }
+
     &install= [pkg dom-cfg]{
       dest = (dest $pkg)
       -info "Installing "$pkg
       mkdir -p $dest
-      git clone $dom-cfg[protocol]"://"$pkg $dest
+      git clone ($-method-handler[git][src] $pkg $dom-cfg) $dest
     }
 
     &upgrade= [pkg dom-cfg]{
@@ -96,11 +98,12 @@ fn -package-without-domain [pkg]{
     &src= [pkg dom-cfg]{
       put $dom-cfg[location]/(-package-without-domain $pkg)/
     }
+
     &install= [pkg dom-cfg]{
       dest = (dest $pkg)
       pkgd = (-package-without-domain $pkg)
       -info "Installing "$pkg
-      rsync -av $dom-cfg[location]/$pkgd/ $dest
+      rsync -av ($-method-handler[rsync][src] $pkg $dom-cfg) $dest
     }
 
     &upgrade= [pkg dom-cfg]{
@@ -111,7 +114,7 @@ fn -package-without-domain [pkg]{
         return
       }
       -info "Updating "$pkg
-      rsync -av $dom-cfg[location]/$pkgd/ $dest
+      rsync -av ($-method-handler[rsync][src] $pkg $dom-cfg) $dest
     }
   ]
 ]
@@ -244,7 +247,7 @@ fn upgrade [@pkgs]{
   for pkg $pkgs {
     if (not (is-installed $pkg)) {
       -error "Package "$pkg" is not installed."
-    } else { 
+    } else {
       -package-op $pkg upgrade
     }
   }
