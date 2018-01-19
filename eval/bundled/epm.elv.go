@@ -72,7 +72,7 @@ fn -package-without-domain [pkg]{
 # received two arguments: package name and the domain config entry
 #
 # - Method 'git' requires the key 'protocol' in the domain config,
-#   which has to be `http` or `https`
+#   which has to be 'http' or 'https'
 # - Method 'rsync' requires the key 'location' in the domain config,
 #   which has to contain the directory where the domain files are
 #   stored. It can be any source location understood by the rsync
@@ -147,7 +147,7 @@ fn -write-domain-config [dom]{
 # Returns the domain config file for a given domain. If the file does not
 # exist but we have a built-in definition, then we return the
 # default. Otherwise we return $false, so the result can always be
-# checked with `if`.
+# checked with 'if'.
 fn -domain-config [dom]{
   cfgfile = (-domain-config-file $dom)
   cfg = $false
