@@ -26,10 +26,6 @@ debug-mode = $false
 -data-dir = ~/.elvish
 -lib-dir = $-data-dir/lib
 
-# Runtime state - records get copied from -default-domain-config
-# or read from epm-domain.cfg files as needed
--domain-config = [&]
-
 # General utility functions
 
 fn -debug [text]{
@@ -63,17 +59,24 @@ fn is-installed [pkg]{
 }
 
 fn -package-domain [pkg]{
-  splits / $pkg | take 1
+  splits &max=2 / $pkg | take 1
 }
 
 fn -package-without-domain [pkg]{
-  joins / [(splits / $pkg | drop 1)]
+  splits &max=2 / $pkg | drop 1 | joins ''
 }
 
 # Known method handlers. Each entry is indexed by method name (the
 # value of the "method" key in the domain configs), and must contain
 # two keys: install and upgrade, each one must be a closure that
 # received two arguments: package name and the domain config entry
+#
+# - Method 'git' requires the key 'protocol' in the domain config,
+#   which has to be `http` or `https`
+# - Method 'rsync' requires the key 'location' in the domain config,
+#   which has to contain the directory where the domain files are
+#   stored. It can be any source location understood by the rsync
+#   command.
 -method-handler = [
   &git= [
     &src= [pkg dom-cfg]{
@@ -131,37 +134,45 @@ fn -package-metadata-file [pkg]{
   put (dest $pkg)/metadata.json
 }
 
-# Read the domain config file for a given domain. If the file does not
-# exist but we have a built-in definition, then we create the file
-# with the default.
-fn -read-domain-config [dom]{
+fn -write-domain-config [dom]{
   cfgfile = (-domain-config-file $dom)
-  # Only read config if it hasn't been loaded already
-  if (not (has-key $-domain-config $dom)) {
-    if ?(test -f $cfgfile) {
-      # If the config file exists, read it...
-      -domain-config[$dom] = (cat $cfgfile | from-json)
-      -debug "Read domain config for "$dom": "(to-string $-domain-config[$dom])
-    } else {
-      # ...otherwise check if we have a default config for the domain, and save it
-      if (has-key $-default-domain-config $dom) {
-        -domain-config[$dom] = $-default-domain-config[$dom]
-        -debug "No existing config for "$dom", using the default: "(to-string $-domain-config[$dom])
-        mkdir -p (dirname $cfgfile)
-        put $-domain-config[$dom] | to-json > $cfgfile
-      } else {
-        fail "No existing config for "$dom" and no default available. Please create config file "(tilde-abbr $cfgfile)" by hand"
-      }
-    }
+  mkdir -p (dirname $cfgfile)
+  if (has-key $-default-domain-config $dom) {
+    put $-default-domain-config[$dom] | to-json > $cfgfile
+  } else {
+    -error "No default config exists for domain "$dom"."
   }
 }
+
+# Returns the domain config file for a given domain. If the file does not
+# exist but we have a built-in definition, then we return the
+# default. Otherwise we return $false, so the result can always be
+# checked with `if`.
+fn -domain-config [dom]{
+  cfgfile = (-domain-config-file $dom)
+  cfg = $false
+  if ?(test -f $cfgfile) {
+    # If the config file exists, read it...
+    cfg = (cat $cfgfile | from-json)
+    -debug "Read domain config for "$dom": "(to-string $cfg)
+  } else {
+    # ...otherwise check if we have a default config for the domain, and save it
+    if (has-key $-default-domain-config $dom) {
+      cfg = $-default-domain-config[$dom]
+      -debug "No existing config for "$dom", using the default: "(to-string $cfg)
+    } else {
+      -debug "No existing config for "$dom" and no default available."
+    }
+  }
+  put $cfg
+}
+
 
 # Return the method by which a package is installed
 fn -package-method [pkg]{
   dom = (-package-domain $pkg)
-  -read-domain-config $dom
-  if (has-key $-domain-config $dom) {
-    cfg = $-domain-config[$dom]
+  cfg = (-domain-config $dom)
+  if $cfg {
     put $cfg[method]
   } else {
     put $false
@@ -171,9 +182,8 @@ fn -package-method [pkg]{
 # Invoke package operations defined in $-method-handler above
 fn -package-op [pkg what]{
   dom = (-package-domain $pkg)
-  -read-domain-config $dom
-  if (has-key $-domain-config $dom) {
-    cfg = $-domain-config[$dom]
+  cfg = (-domain-config $dom)
+  if $cfg {
     method = $cfg[method]
     if (has-key $-method-handler $method) {
       if (has-key $-method-handler[$method] $what) {
@@ -184,6 +194,8 @@ fn -package-op [pkg what]{
     } else {
       fail "No handler defined for method '"$method"', specified in in config file "(-domain-config-file $dom)
     }
+  } else {
+    -error "No config for domain '"$dom"'."
   }
 }
 
@@ -229,9 +241,12 @@ fn -uninstall-package [pkg]{
 # List installed packages
 fn installed {
   e:ls $-lib-dir | each [dom]{
-    if ?(test -f (-domain-config-file $dom)) {
-      -read-domain-config $dom
-      lvl = $-domain-config[$dom][levels]
+    cfg = (-domain-config $dom)
+    # Only list domains for which we know the config, so that the user
+    # can have his own non-package directories under ~/.elvish/lib
+    # without conflicts.
+    if $cfg {
+      lvl = $cfg[levels]
       find $-lib-dir/$dom -type d -depth $lvl | each [pkg]{
         replaces $-lib-dir/ "" $pkg
       }
@@ -270,7 +285,7 @@ fn upgrade [@pkgs]{
 # Uninstall is the same for everyone, just remove the directory
 fn uninstall [@pkgs]{
   if (eq $pkgs []) {
-    fail 'Must specify at least one package.'
+    -error 'Must specify at least one package.'
     return
   }
   for pkg $pkgs {
