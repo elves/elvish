@@ -64,7 +64,7 @@ func (hv List) Iterate(f func(types.Value) bool) {
 	}
 }
 
-func (hv List) IndexOne(idx types.Value) (types.Value, error) {
+func (hv List) Index(idx types.Value) (types.Value, error) {
 	hv.RLock()
 	defer hv.RUnlock()
 

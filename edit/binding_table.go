@@ -45,7 +45,7 @@ func (bt BindingTable) Repr(indent int) string {
 	sort.Sort(keys)
 
 	for _, k := range keys {
-		v, err := bt.Map.IndexOne(k)
+		v, err := bt.Map.Index(k)
 		if err != nil {
 			panic(err)
 		}
@@ -55,13 +55,13 @@ func (bt BindingTable) Repr(indent int) string {
 	return builder.String()
 }
 
-// IndexOne converts the index to ui.Key and uses the IndexOne of the inner Map.
-func (bt BindingTable) IndexOne(idx types.Value) (types.Value, error) {
-	return bt.Map.IndexOne(ui.ToKey(idx))
+// Index converts the index to ui.Key and uses the Index of the inner Map.
+func (bt BindingTable) Index(idx types.Value) (types.Value, error) {
+	return bt.Map.Index(ui.ToKey(idx))
 }
 
 func (bt BindingTable) get(k ui.Key) eval.Fn {
-	v, err := bt.Map.IndexOne(k)
+	v, err := bt.Map.Index(k)
 	if err != nil {
 		panic(err)
 	}

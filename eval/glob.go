@@ -31,8 +31,8 @@ func (f GlobFlag) Has(g GlobFlag) bool {
 }
 
 var (
-	_ types.Value   = GlobPattern{}
-	_ types.Indexer = GlobPattern{}
+	_ types.Value        = GlobPattern{}
+	_ types.MultiIndexer = GlobPattern{}
 )
 
 var (

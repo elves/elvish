@@ -48,7 +48,7 @@ func (ed *Editor) lookupMatcher(name string) (eval.Fn, bool) {
 		}
 		key = types.String("")
 	}
-	matcher, ok := types.MustIndexOne(m, key).(eval.Fn)
+	matcher, ok := types.MustIndex(m, key).(eval.Fn)
 	return matcher, ok
 }
 

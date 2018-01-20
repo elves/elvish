@@ -108,7 +108,7 @@ func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) 
 	if !m.HasKey(types.String(index)) {
 		index = ""
 	}
-	v, err := m.IndexOne(types.String(index))
+	v, err := m.Index(types.String(index))
 	if err != nil {
 		return err
 	}

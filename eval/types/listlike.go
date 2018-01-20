@@ -10,7 +10,7 @@ import (
 type ListLike interface {
 	Lener
 	Iterator
-	IndexOneer
+	Indexer
 }
 
 func eqListLike(lhs ListLike, r interface{}) bool {

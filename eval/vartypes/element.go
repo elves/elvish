@@ -62,13 +62,13 @@ func MakeElement(v Variable, indicies []types.Value) (Variable, error) {
 	}
 	assocers[0] = varValue
 	for i, index := range indicies[:len(indicies)-1] {
-		lastAssocer, ok := assocers[i].(types.IndexOneer)
+		lastAssocer, ok := assocers[i].(types.Indexer)
 		if !ok {
 			// This cannot occur when i==0, since varValue as already
 			// asserted to be an IndexOnner.
 			return nil, elemErr{i, "cannot be indexed"}
 		}
-		v, err := lastAssocer.IndexOne(index)
+		v, err := lastAssocer.Index(index)
 		if err != nil {
 			return nil, err
 		}
@@ -81,9 +81,9 @@ func MakeElement(v Variable, indicies []types.Value) (Variable, error) {
 	return NewElement(v, assocers, indicies), nil
 }
 
-// indexOneAssocer combines IndexOneer and Assocer.
+// indexOneAssocer combines Indexer and Assocer.
 type indexOneAssocer interface {
-	types.IndexOneer
+	types.Indexer
 	types.Assocer
 }
 

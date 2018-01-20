@@ -80,7 +80,7 @@ func (m Map) Len() int {
 	return m.inner.Len()
 }
 
-func (m Map) IndexOne(idx Value) (Value, error) {
+func (m Map) Index(idx Value) (Value, error) {
 	v, ok := m.inner.Get(idx)
 	if !ok {
 		return nil, NoSuchKey(idx)

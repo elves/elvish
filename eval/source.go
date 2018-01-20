@@ -45,8 +45,8 @@ func (src *Source) describePath() string {
 }
 
 var (
-	_ types.Value      = (*Source)(nil)
-	_ types.IndexOneer = (*Source)(nil)
+	_ types.Value   = (*Source)(nil)
+	_ types.Indexer = (*Source)(nil)
 )
 
 func (src *Source) Kind() string {
@@ -70,7 +70,7 @@ func (src *Source) Repr(int) string {
 		src.typ, parse.Quote(src.name), parse.Quote(src.path))
 }
 
-func (src *Source) IndexOne(k types.Value) (types.Value, error) {
+func (src *Source) Index(k types.Value) (types.Value, error) {
 	ret := ""
 	switch k {
 	case types.String("type"):

@@ -14,7 +14,7 @@ func DelElement(variable Variable, indicies []types.Value) error {
 	assocers := make([]types.Assocer, len(indicies)-1)
 	container := variable.Get()
 	for i, index := range indicies[:len(indicies)-1] {
-		indexer, ok := container.(types.IndexOneer)
+		indexer, ok := container.(types.Indexer)
 		if !ok {
 			return elemErr{i, "value does not support indexing"}
 		}
@@ -25,7 +25,7 @@ func DelElement(variable Variable, indicies []types.Value) error {
 		assocers[i] = assocer
 
 		var err error
-		container, err = indexer.IndexOne(index)
+		container, err = indexer.Index(index)
 		if err != nil {
 			return err
 		}

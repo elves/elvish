@@ -361,7 +361,7 @@ func (c *narrowItemComplex) Content() string {
 	if !c.Map.HasKey(key) {
 		return ""
 	}
-	if s, ok := types.MustIndexOne(c.Map, key).(types.String); !ok {
+	if s, ok := types.MustIndex(c.Map, key).(types.String); !ok {
 		return ""
 	} else {
 		return s.String()
@@ -374,7 +374,7 @@ func (c *narrowItemComplex) Display() ui.Styled {
 	if !c.Map.HasKey(key) {
 		return ui.Unstyled("")
 	}
-	if s, ok := types.MustIndexOne(c.Map, key).(types.String); !ok {
+	if s, ok := types.MustIndex(c.Map, key).(types.String); !ok {
 		return ui.Unstyled("")
 	} else {
 		return ui.Unstyled(s.String())
@@ -384,7 +384,7 @@ func (c *narrowItemComplex) Display() ui.Styled {
 func (c *narrowItemComplex) FilterText() string {
 	key := types.String("filter-text")
 	if c.Map.HasKey(key) {
-		return types.MustIndexOne(c.Map, key).(types.String).String()
+		return types.MustIndex(c.Map, key).(types.String).String()
 	}
 	return c.Content()
 }

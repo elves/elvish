@@ -41,7 +41,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 			if !m.HasKey(kv) {
 				return "", false
 			}
-			vv, err := m.IndexOne(kv)
+			vv, err := m.Index(kv)
 			maybeThrow(err)
 			if vs, ok := vv.(types.String); ok {
 				return string(vs), true

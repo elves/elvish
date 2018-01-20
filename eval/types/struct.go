@@ -55,7 +55,7 @@ func (s *Struct) Len() int {
 	return len(s.descriptor.fieldNames)
 }
 
-func (s *Struct) IndexOne(idx Value) (Value, error) {
+func (s *Struct) Index(idx Value) (Value, error) {
 	i, err := s.index(idx)
 	if err != nil {
 		return nil, err

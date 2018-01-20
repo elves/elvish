@@ -117,51 +117,51 @@ type IteratePairer interface {
 	IteratePair(func(k, v Value) bool)
 }
 
-// Indexer wraps the Index method.
-type Indexer interface {
+// MultiIndexer wraps the Index method.
+type MultiIndexer interface {
 	// Index retrieves the values within the receiver at the specified indicies.
 	Index(idx []Value) []Value
 }
 
-// IndexOneer wraps the IndexOne method.
-type IndexOneer interface {
+// Indexer wraps the Index method.
+type Indexer interface {
 	// Index retrieves one value from the receiver at the specified index.
-	IndexOne(idx Value) (Value, error)
+	Index(idx Value) (Value, error)
 }
 
 // GetIndexer adapts a Value to an Indexer if there is an adapter.
-func GetIndexer(v Value) (Indexer, bool) {
-	if indexer, ok := v.(Indexer); ok {
+func GetIndexer(v Value) (MultiIndexer, bool) {
+	if indexer, ok := v.(MultiIndexer); ok {
 		return indexer, true
 	}
-	if indexOneer, ok := v.(IndexOneer); ok {
-		return IndexOneerIndexer{indexOneer}, true
+	if indexOneer, ok := v.(Indexer); ok {
+		return IndexerIndexer{indexOneer}, true
 	}
 	return nil, false
 }
 
-// MustIndexOne indexes i with k and returns the value. If the operation
+// MustIndex indexes i with k and returns the value. If the operation
 // resulted in an error, it panics. It is useful when the caller knows that the
 // key must be present.
-func MustIndexOne(i IndexOneer, k Value) Value {
-	v, err := i.IndexOne(k)
+func MustIndex(i Indexer, k Value) Value {
+	v, err := i.Index(k)
 	if err != nil {
 		panic(err)
 	}
 	return v
 }
 
-// IndexOneerIndexer adapts an IndexOneer to an Indexer by calling all the
-// indicies on the IndexOner and collect the results.
-type IndexOneerIndexer struct {
-	IndexOneer
+// IndexerIndexer adapts an Indexer to an Indexer by calling all the
+// indicies on the Indexr and collect the results.
+type IndexerIndexer struct {
+	Indexer
 }
 
-func (ioi IndexOneerIndexer) Index(vs []Value) []Value {
+func (ioi IndexerIndexer) Index(vs []Value) []Value {
 	results := make([]Value, len(vs))
 	for i, v := range vs {
 		var err error
-		results[i], err = ioi.IndexOneer.IndexOne(v)
+		results[i], err = ioi.Indexer.Index(v)
 		maybeThrow(err)
 	}
 	return results

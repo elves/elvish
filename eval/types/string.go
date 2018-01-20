@@ -42,7 +42,7 @@ func (s String) Len() int {
 	return len(string(s))
 }
 
-func (s String) IndexOne(idx Value) (Value, error) {
+func (s String) Index(idx Value) (Value, error) {
 	i, j, err := s.index(idx)
 	if err != nil {
 		return nil, err

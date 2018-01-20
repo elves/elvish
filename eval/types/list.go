@@ -100,7 +100,7 @@ func (l List) Iterate(f func(Value) bool) {
 	}
 }
 
-func (l List) IndexOne(idx Value) (Value, error) {
+func (l List) Index(idx Value) (Value, error) {
 	slice, i, j, err := ParseAndFixListIndex(ToString(idx), l.Len())
 	if err != nil {
 		return nil, err

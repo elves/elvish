@@ -14,10 +14,10 @@ func TestStructMethods(t *testing.T) {
 	if l := testStruct.Len(); l != 2 {
 		t.Errorf("testStruct.Len() = %d, want 2", l)
 	}
-	if foo, err := testStruct.IndexOne(String("foo")); foo != String("lorem") {
-		t.Errorf(`testStruct.IndexOne("foo") = %q, want "lorem"`, foo)
+	if foo, err := testStruct.Index(String("foo")); foo != String("lorem") {
+		t.Errorf(`testStruct.Index("foo") = %q, want "lorem"`, foo)
 	} else if err != nil {
-		t.Errorf(`testStruct.IndexOne("foo") => error %s, want no error`, err)
+		t.Errorf(`testStruct.Index("foo") => error %s, want no error`, err)
 	}
 	if testStruct.Equal(testStruct2) {
 		t.Errorf(`testStruct.Equal(testStruct2) => true, want false`)
