@@ -104,10 +104,13 @@ func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) 
 	// XXX(xiaq): not the best way to get argCompleter.
 	m := ev.Editor.(*Editor).argCompleter()
 	var v types.Value
-	if m.HasKey(types.String(words[0])) {
-		v = m.IndexOne(types.String(words[0]))
-	} else {
-		v = m.IndexOne(types.String(""))
+	index := words[0]
+	if !m.HasKey(types.String(index)) {
+		index = ""
+	}
+	v, err := m.IndexOne(types.String(index))
+	if err != nil {
+		return err
 	}
 	fn, ok := v.(eval.Fn)
 	if !ok {

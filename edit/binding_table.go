@@ -17,9 +17,9 @@ func getBinding(bindingVar vartypes.Variable, k ui.Key) eval.Fn {
 	binding := bindingVar.Get().(BindingTable)
 	switch {
 	case binding.HasKey(k):
-		return binding.IndexOne(k).(eval.Fn)
+		return binding.get(k)
 	case binding.HasKey(ui.Default):
-		return binding.IndexOne(ui.Default).(eval.Fn)
+		return binding.get(ui.Default)
 	default:
 		return nil
 	}
@@ -45,7 +45,10 @@ func (bt BindingTable) Repr(indent int) string {
 	sort.Sort(keys)
 
 	for _, k := range keys {
-		v := bt.Map.IndexOne(k)
+		v, err := bt.Map.IndexOne(k)
+		if err != nil {
+			panic(err)
+		}
 		builder.WritePair(parse.Quote(k.String()), indent+2, v.Repr(indent+2))
 	}
 
@@ -53,12 +56,16 @@ func (bt BindingTable) Repr(indent int) string {
 }
 
 // IndexOne converts the index to ui.Key and uses the IndexOne of the inner Map.
-func (bt BindingTable) IndexOne(idx types.Value) types.Value {
+func (bt BindingTable) IndexOne(idx types.Value) (types.Value, error) {
 	return bt.Map.IndexOne(ui.ToKey(idx))
 }
 
 func (bt BindingTable) get(k ui.Key) eval.Fn {
-	return bt.Map.IndexOne(k).(eval.Fn)
+	v, err := bt.Map.IndexOne(k)
+	if err != nil {
+		panic(err)
+	}
+	return v.(eval.Fn)
 }
 
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,

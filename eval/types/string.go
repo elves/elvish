@@ -42,13 +42,17 @@ func (s String) Len() int {
 	return len(string(s))
 }
 
-func (s String) IndexOne(idx Value) Value {
-	i, j := s.index(idx)
-	return s[i:j]
+func (s String) IndexOne(idx Value) (Value, error) {
+	i, j, err := s.index(idx)
+	if err != nil {
+		return nil, err
+	}
+	return s[i:j], nil
 }
 
 func (s String) Assoc(idx, v Value) Value {
-	i, j := s.index(idx)
+	i, j, err := s.index(idx)
+	maybeThrow(err)
 	repl, ok := v.(String)
 	if !ok {
 		throw(ErrReplacementMustBeString)
@@ -56,19 +60,22 @@ func (s String) Assoc(idx, v Value) Value {
 	return s[:i] + repl + s[j:]
 }
 
-func (s String) index(idx Value) (int, int) {
-	slice, i, j := ParseAndFixListIndex(ToString(idx), len(s))
+func (s String) index(idx Value) (int, int, error) {
+	slice, i, j, err := ParseAndFixListIndex(ToString(idx), len(s))
+	if err != nil {
+		return 0, 0, err
+	}
 	r, size := utf8.DecodeRuneInString(string(s[i:]))
 	if r == utf8.RuneError {
-		throw(ErrBadIndex)
+		return 0, 0, ErrBadIndex
 	}
 	if slice {
 		if r, _ := utf8.DecodeLastRuneInString(string(s[:j])); r == utf8.RuneError {
-			throw(ErrBadIndex)
+			return 0, 0, ErrBadIndex
 		}
-		return i, j
+		return i, j, nil
 	}
-	return i, i + size
+	return i, i + size, nil
 }
 
 func (s String) Iterate(f func(v Value) bool) {

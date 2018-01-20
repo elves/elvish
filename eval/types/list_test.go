@@ -2,8 +2,6 @@ package types
 
 import (
 	"testing"
-
-	"github.com/elves/elvish/util"
 )
 
 var parseAndFixListIndexTests = []struct {
@@ -12,43 +10,43 @@ var parseAndFixListIndexTests = []struct {
 	expr string
 	len  int
 	// output
-	shouldPanic, isSlice bool
-	begin, end           int
+	isError, isSlice bool
+	begin, end       int
 }{
 	{
 		name: "stringIndex",
 		expr: "a", len: 0,
-		shouldPanic: true,
+		isError: true,
 	},
 	{
 		name: "floatIndex",
 		expr: "1.0", len: 0,
-		shouldPanic: true,
+		isError: true,
 	},
 	{
 		name: "emptyZeroIndex",
 		expr: "0", len: 0,
-		shouldPanic: true,
+		isError: true,
 	},
 	{
 		name: "emptyPosIndex",
 		expr: "1", len: 0,
-		shouldPanic: true,
+		isError: true,
 	},
 	{
 		name: "emptyNegIndex",
 		expr: "-1", len: 0,
-		shouldPanic: true,
+		isError: true,
 	},
 	{
 		name: "emptySliceAbbrevBoth",
 		expr: ":", len: 0,
-		shouldPanic: true,
+		isError: true,
 	},
 	{
 		name: "i<-n",
 		expr: "-2", len: 1,
-		shouldPanic: true,
+		isError: true,
 	},
 	{
 		name: "i=-n",
@@ -73,12 +71,12 @@ var parseAndFixListIndexTests = []struct {
 	{
 		name: "i=n",
 		expr: "1", len: 1,
-		shouldPanic: true,
+		isError: true,
 	},
 	{
 		name: "i>n",
 		expr: "2", len: 1,
-		shouldPanic: true,
+		isError: true,
 	},
 	{
 		name: "sliceAbbrevBoth",
@@ -108,7 +106,7 @@ var parseAndFixListIndexTests = []struct {
 	{
 		name: "sliceBeginAboveEnd",
 		expr: "1:0", len: 2,
-		shouldPanic: true,
+		isError: true,
 	},
 }
 
@@ -121,20 +119,11 @@ func TestParseAndFixListIndex(t *testing.T) {
 	}
 
 	for _, item := range parseAndFixListIndexTests {
-		var (
-			isSlice    bool
-			begin, end int
-		)
+		isSlice, begin, end, err := ParseAndFixListIndex(item.expr, item.len)
 
-		if err := util.PCall(func() {
-			isSlice, begin, end = ParseAndFixListIndex(item.expr, item.len)
-		}); err != nil {
-			checkEqual(item.name, "shouldPanic", item.shouldPanic, err != nil)
-			continue
-		}
 		checkEqual(item.name, "isSlice", item.isSlice, isSlice)
 		checkEqual(item.name, "begin", item.begin, begin)
 		checkEqual(item.name, "end", item.end, end)
+		checkEqual(item.name, "isError", item.isError, err != nil)
 	}
-
 }

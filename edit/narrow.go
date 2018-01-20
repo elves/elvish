@@ -361,7 +361,7 @@ func (c *narrowItemComplex) Content() string {
 	if !c.Map.HasKey(key) {
 		return ""
 	}
-	if s, ok := c.Map.IndexOne(key).(types.String); !ok {
+	if s, ok := types.MustIndexOne(c.Map, key).(types.String); !ok {
 		return ""
 	} else {
 		return s.String()
@@ -374,7 +374,7 @@ func (c *narrowItemComplex) Display() ui.Styled {
 	if !c.Map.HasKey(key) {
 		return ui.Unstyled("")
 	}
-	if s, ok := c.Map.IndexOne(key).(types.String); !ok {
+	if s, ok := types.MustIndexOne(c.Map, key).(types.String); !ok {
 		return ui.Unstyled("")
 	} else {
 		return ui.Unstyled(s.String())
@@ -384,7 +384,7 @@ func (c *narrowItemComplex) Display() ui.Styled {
 func (c *narrowItemComplex) FilterText() string {
 	key := types.String("filter-text")
 	if c.Map.HasKey(key) {
-		return c.Map.IndexOne(key).(types.String).String()
+		return types.MustIndexOne(c.Map, key).(types.String).String()
 	}
 	return c.Content()
 }
@@ -400,9 +400,8 @@ func NarrowRead(ec *eval.Frame, args []types.Value, opts map[string]types.Value)
 	eval.ScanArgs(args, &source, &action)
 	eval.ScanOptsToStruct(opts, &l.opts)
 
-	l.opts.Bindings.IterateKey(func(k types.Value) bool {
+	l.opts.Bindings.IteratePair(func(k, f types.Value) bool {
 		key := ui.ToKey(k)
-		f := l.opts.Bindings.IndexOne(k)
 		maybeThrow(eval.ShouldBeFn(f))
 		if l.opts.bindingMap == nil {
 			l.opts.bindingMap = make(map[ui.Key]eval.Fn)

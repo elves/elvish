@@ -70,20 +70,21 @@ func (src *Source) Repr(int) string {
 		src.typ, parse.Quote(src.name), parse.Quote(src.path))
 }
 
-func (src *Source) IndexOne(k types.Value) types.Value {
+func (src *Source) IndexOne(k types.Value) (types.Value, error) {
+	ret := ""
 	switch k {
 	case types.String("type"):
-		return types.String(src.typ.String())
+		ret = src.typ.String()
 	case types.String("name"):
-		return types.String(src.name)
+		ret = src.name
 	case types.String("path"):
-		return types.String(src.path)
+		ret = src.path
 	case types.String("code"):
-		return types.String(src.code)
+		ret = src.code
 	default:
-		throwf("No such key %s", k.Repr(types.NoPretty))
-		panic("unreachable")
+		return nil, types.NoSuchKey(k)
 	}
+	return types.String(ret), nil
 }
 
 // SrcType records the type of a piece of source code.

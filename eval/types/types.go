@@ -126,7 +126,7 @@ type Indexer interface {
 // IndexOneer wraps the IndexOne method.
 type IndexOneer interface {
 	// Index retrieves one value from the receiver at the specified index.
-	IndexOne(idx Value) Value
+	IndexOne(idx Value) (Value, error)
 }
 
 // GetIndexer adapts a Value to an Indexer if there is an adapter.
@@ -140,6 +140,17 @@ func GetIndexer(v Value) (Indexer, bool) {
 	return nil, false
 }
 
+// MustIndexOne indexes i with k and returns the value. If the operation
+// resulted in an error, it panics. It is useful when the caller knows that the
+// key must be present.
+func MustIndexOne(i IndexOneer, k Value) Value {
+	v, err := i.IndexOne(k)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 // IndexOneerIndexer adapts an IndexOneer to an Indexer by calling all the
 // indicies on the IndexOner and collect the results.
 type IndexOneerIndexer struct {
@@ -149,7 +160,9 @@ type IndexOneerIndexer struct {
 func (ioi IndexOneerIndexer) Index(vs []Value) []Value {
 	results := make([]Value, len(vs))
 	for i, v := range vs {
-		results[i] = ioi.IndexOneer.IndexOne(v)
+		var err error
+		results[i], err = ioi.IndexOneer.IndexOne(v)
+		maybeThrow(err)
 	}
 	return results
 }

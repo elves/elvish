@@ -68,7 +68,11 @@ func MakeElement(v Variable, indicies []types.Value) (Variable, error) {
 			// asserted to be an IndexOnner.
 			return nil, elemErr{i, "cannot be indexed"}
 		}
-		assocer, ok := lastAssocer.IndexOne(index).(types.Assocer)
+		v, err := lastAssocer.IndexOne(index)
+		if err != nil {
+			return nil, err
+		}
+		assocer, ok := v.(types.Assocer)
 		if !ok {
 			return nil, elemErr{i + 1, "cannot be indexed for setting"}
 		}

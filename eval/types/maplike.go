@@ -27,7 +27,8 @@ func EqMapLike(lhs MapLike, a interface{}) bool {
 	}
 	eq := true
 	lhs.IteratePair(func(k, v Value) bool {
-		if !v.Equal(rhs.IndexOne(k)) {
+		v2, err := rhs.IndexOne(k)
+		if err != nil || !v.Equal(v2) {
 			eq = false
 			return false
 		}

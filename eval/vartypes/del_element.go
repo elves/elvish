@@ -23,7 +23,12 @@ func DelElement(variable Variable, indicies []types.Value) error {
 			return elemErr{i, "value does not support indexing for setting"}
 		}
 		assocers[i] = assocer
-		container = indexer.IndexOne(index)
+
+		var err error
+		container, err = indexer.IndexOne(index)
+		if err != nil {
+			return err
+		}
 	}
 	dissocer, ok := container.(types.Dissocer)
 	if !ok {

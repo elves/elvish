@@ -100,16 +100,20 @@ func (l List) Iterate(f func(Value) bool) {
 	}
 }
 
-func (l List) IndexOne(idx Value) Value {
-	slice, i, j := ParseAndFixListIndex(ToString(idx), l.Len())
-	if slice {
-		return List{l.inner.SubVector(i, j)}
+func (l List) IndexOne(idx Value) (Value, error) {
+	slice, i, j, err := ParseAndFixListIndex(ToString(idx), l.Len())
+	if err != nil {
+		return nil, err
 	}
-	return l.inner.Nth(i).(Value)
+	if slice {
+		return List{l.inner.SubVector(i, j)}, nil
+	}
+	return l.inner.Nth(i).(Value), nil
 }
 
 func (l List) Assoc(idx, v Value) Value {
-	slice, i, _ := ParseAndFixListIndex(ToString(idx), l.Len())
+	slice, i, _, err := ParseAndFixListIndex(ToString(idx), l.Len())
+	maybeThrow(err)
 	if slice {
 		throw(ErrAssocWithSlice)
 	}
@@ -117,10 +121,13 @@ func (l List) Assoc(idx, v Value) Value {
 }
 
 // ParseAndFixListIndex parses a list index and returns whether the index is a
-// slice and "real" (-1 becomes n-1) indicies. It throws errors when the index
+// slice and "real" (-1 becomes n-1) indicies. It returns an error when an index
 // is invalid or out of range.
-func ParseAndFixListIndex(s string, n int) (bool, int, int) {
-	slice, i, j := parseListIndex(s, n)
+func ParseAndFixListIndex(s string, n int) (bool, int, int, error) {
+	slice, i, j, err := parseListIndex(s, n)
+	if err != nil {
+		return false, 0, 0, err
+	}
 	if i < 0 {
 		i += n
 	}
@@ -128,41 +135,51 @@ func ParseAndFixListIndex(s string, n int) (bool, int, int) {
 		j += n
 	}
 	if i < 0 || i >= n || (slice && (j < 0 || j > n || i > j)) {
-		throw(ErrIndexOutOfRange)
+		return false, 0, 0, ErrIndexOutOfRange
 	}
-	return slice, i, j
+	return slice, i, j, nil
 }
 
 // ListIndex = Number |
 //             Number ':' Number
-func parseListIndex(s string, n int) (slice bool, i int, j int) {
-	atoi := func(a string) int {
-		i, err := strconv.Atoi(a)
-		if err != nil {
-			if err.(*strconv.NumError).Err == strconv.ErrRange {
-				throw(ErrIndexOutOfRange)
-			} else {
-				throw(ErrBadIndex)
-			}
-		}
-		return i
-	}
-
+func parseListIndex(s string, n int) (slice bool, i int, j int, err error) {
 	colon := strings.IndexRune(s, ':')
 	if colon == -1 {
 		// A single number
-		return false, atoi(s), 0
+		i, err := atoi(s)
+		if err != nil {
+			return false, 0, 0, err
+		}
+		return false, i, 0, nil
 	}
 	if s[:colon] == "" {
 		i = 0
 	} else {
-		i = atoi(s[:colon])
+		i, err = atoi(s[:colon])
+		if err != nil {
+			return false, 0, 0, err
+		}
 	}
 	if s[colon+1:] == "" {
 		j = n
 	} else {
-		j = atoi(s[colon+1:])
+		j, err = atoi(s[colon+1:])
+		if err != nil {
+			return false, 0, 0, err
+		}
 	}
 	// Two numbers
-	return true, i, j
+	return true, i, j, nil
+}
+
+func atoi(a string) (int, error) {
+	i, err := strconv.Atoi(a)
+	if err != nil {
+		if err.(*strconv.NumError).Err == strconv.ErrRange {
+			return 0, ErrIndexOutOfRange
+		} else {
+			return 0, ErrBadIndex
+		}
+	}
+	return i, nil
 }

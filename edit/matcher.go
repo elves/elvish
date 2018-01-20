@@ -40,11 +40,15 @@ var (
 
 func (ed *Editor) lookupMatcher(name string) (eval.Fn, bool) {
 	m := ed.variables["-matcher"].Get().(types.Map)
-	if !m.HasKey(types.String(name)) {
+	key := types.String(name)
+	if !m.HasKey(key) {
 		// Use fallback matcher
-		name = ""
+		if !m.HasKey(types.String("")) {
+			return nil, false
+		}
+		key = types.String("")
 	}
-	matcher, ok := m.IndexOne(types.String(name)).(eval.Fn)
+	matcher, ok := types.MustIndexOne(m, key).(eval.Fn)
 	return matcher, ok
 }
 

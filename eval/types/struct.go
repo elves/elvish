@@ -55,12 +55,17 @@ func (s *Struct) Len() int {
 	return len(s.descriptor.fieldNames)
 }
 
-func (s *Struct) IndexOne(idx Value) Value {
-	return s.fields[s.index(idx)]
+func (s *Struct) IndexOne(idx Value) (Value, error) {
+	i, err := s.index(idx)
+	if err != nil {
+		return nil, err
+	}
+	return s.fields[i], nil
 }
 
 func (s *Struct) Assoc(k, v Value) Value {
-	i := s.index(k)
+	i, err := s.index(k)
+	maybeThrow(err)
 	fields := make([]Value, len(s.fields))
 	copy(fields, s.fields)
 	fields[i] = v
@@ -84,24 +89,20 @@ func (s *Struct) IteratePair(f func(Value, Value) bool) {
 }
 
 func (s *Struct) HasKey(k Value) bool {
-	index, ok := k.(String)
-	if !ok {
-		return false
-	}
-	_, ok = s.descriptor.fieldIndex[string(index)]
-	return ok
+	_, err := s.index(k)
+	return err == nil
 }
 
-func (s *Struct) index(idx Value) int {
+func (s *Struct) index(idx Value) (int, error) {
 	index, ok := idx.(String)
 	if !ok {
-		throw(ErrIndexMustBeString)
+		return 0, ErrIndexMustBeString
 	}
 	i, ok := s.descriptor.fieldIndex[string(index)]
 	if !ok {
-		throw(fmt.Errorf("no such field: %s", index.Repr(NoPretty)))
+		return 0, NoSuchKey(idx)
 	}
-	return i
+	return i, nil
 }
 
 // MarshalJSON encodes the Struct to a JSON Object.

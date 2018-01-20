@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/util"
 )
 
 // Sequence, list and maps.
@@ -179,8 +178,8 @@ func hasValue(ec *Frame, args []types.Value, opts map[string]types.Value) {
 			return !found
 		})
 	case types.MapLike:
-		container.IterateKey(func(v types.Value) bool {
-			found = (container.IndexOne(v) == value)
+		container.IteratePair(func(_, v types.Value) bool {
+			found = v == value
 			return !found
 		})
 	default:
@@ -203,9 +202,7 @@ func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		found = container.HasKey(key)
 	case types.Lener:
 		// XXX(xiaq): Not all types that implement Lener have numerical indices
-		err := util.PCall(func() {
-			types.ParseAndFixListIndex(types.ToString(key), container.Len())
-		})
+		_, _, _, err := types.ParseAndFixListIndex(types.ToString(key), container.Len())
 		found = (err == nil)
 	default:
 		throw(fmt.Errorf("couldn't get key or index of type '%s'", container.Kind()))

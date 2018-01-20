@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -13,6 +12,20 @@ type Map struct {
 }
 
 var _ MapLike = Map{}
+
+type noSuchKeyError struct {
+	key Value
+}
+
+// NoSuchKey returns an error indicating that a key is not found in a map-like
+// value.
+func NoSuchKey(k Value) error {
+	return noSuchKeyError{k}
+}
+
+func (err noSuchKeyError) Error() string {
+	return "no such key: " + err.key.Repr(NoPretty)
+}
 
 // EmptyMap is an empty Map.
 var EmptyMap = Map{hashmap.Empty}
@@ -67,12 +80,12 @@ func (m Map) Len() int {
 	return m.inner.Len()
 }
 
-func (m Map) IndexOne(idx Value) Value {
+func (m Map) IndexOne(idx Value) (Value, error) {
 	v, ok := m.inner.Get(idx)
 	if !ok {
-		throw(errors.New("no such key: " + idx.Repr(NoPretty)))
+		return nil, NoSuchKey(idx)
 	}
-	return v.(Value)
+	return v.(Value), nil
 }
 
 func (m Map) Assoc(k, v Value) Value {

@@ -64,23 +64,27 @@ func (hv List) Iterate(f func(types.Value) bool) {
 	}
 }
 
-func (hv List) IndexOne(idx types.Value) types.Value {
+func (hv List) IndexOne(idx types.Value) (types.Value, error) {
 	hv.RLock()
 	defer hv.RUnlock()
 
-	slice, i, j := types.ParseAndFixListIndex(types.ToString(idx), hv.Len())
+	slice, i, j, err := types.ParseAndFixListIndex(types.ToString(idx), hv.Len())
+	if err != nil {
+		return nil, err
+	}
 	if slice {
 		cmds, err := hv.Daemon.Cmds(i+1, j+1)
-		maybeThrow(err)
+		if err != nil {
+			return nil, err
+		}
 		vs := make([]types.Value, len(cmds))
 		for i := range cmds {
 			vs[i] = types.String(cmds[i])
 		}
-		return types.MakeList(vs...)
+		return types.MakeList(vs...), nil
 	}
 	s, err := hv.Daemon.Cmd(i + 1)
-	maybeThrow(err)
-	return types.String(s)
+	return types.String(s), err
 }
 
 func maybeThrow(e error) {
