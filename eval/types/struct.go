@@ -63,13 +63,15 @@ func (s *Struct) Index(idx Value) (Value, error) {
 	return s.fields[i], nil
 }
 
-func (s *Struct) Assoc(k, v Value) Value {
+func (s *Struct) Assoc(k, v Value) (Value, error) {
 	i, err := s.index(k)
-	maybeThrow(err)
+	if err != nil {
+		return nil, err
+	}
 	fields := make([]Value, len(s.fields))
 	copy(fields, s.fields)
 	fields[i] = v
-	return &Struct{s.descriptor, fields}
+	return &Struct{s.descriptor, fields}, nil
 }
 
 func (s *Struct) IterateKey(f func(Value) bool) {

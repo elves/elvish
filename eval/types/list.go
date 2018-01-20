@@ -111,13 +111,15 @@ func (l List) Index(idx Value) (Value, error) {
 	return l.inner.Nth(i).(Value), nil
 }
 
-func (l List) Assoc(idx, v Value) Value {
+func (l List) Assoc(idx, v Value) (Value, error) {
 	slice, i, _, err := ParseAndFixListIndex(ToString(idx), l.Len())
-	maybeThrow(err)
-	if slice {
-		throw(ErrAssocWithSlice)
+	if err != nil {
+		return nil, err
 	}
-	return List{l.inner.AssocN(i, v)}
+	if slice {
+		return nil, ErrAssocWithSlice
+	}
+	return List{l.inner.AssocN(i, v)}, nil
 }
 
 // ParseAndFixListIndex parses a list index and returns whether the index is a

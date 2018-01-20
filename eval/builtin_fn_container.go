@@ -102,7 +102,9 @@ func assoc(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	)
 	ScanArgs(args, &a, &k, &v)
 	TakeNoOpt(opts)
-	ec.OutputChan() <- a.Assoc(k, v)
+	result, err := a.Assoc(k, v)
+	maybeThrow(err)
+	ec.OutputChan() <- result
 }
 
 func dissoc(ec *Frame, args []types.Value, opts map[string]types.Value) {

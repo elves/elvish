@@ -6,6 +6,7 @@ import "github.com/elves/elvish/eval/types"
 // except that the last level of container needs to be a Dissocer instead of an
 // Assocer.
 func DelElement(variable Variable, indicies []types.Value) error {
+	var err error
 	// In "del a[0][1][2]",
 	//
 	// indicies:  0  1     2
@@ -37,7 +38,10 @@ func DelElement(variable Variable, indicies []types.Value) error {
 
 	v := dissocer.Dissoc(indicies[len(indicies)-1])
 	for i := len(assocers) - 1; i >= 0; i-- {
-		v = assocers[i].Assoc(indicies[i], v)
+		v, err = assocers[i].Assoc(indicies[i], v)
+		if err != nil {
+			return err
+		}
 	}
 	return variable.Set(v)
 }

@@ -12,13 +12,17 @@ type elem struct {
 }
 
 func (ev *elem) Set(v0 types.Value) error {
+	var err error
 	v := v0
 	// Evaluate the actual new value from inside out. See comments in
 	// MakeElement for how element assignment works.
 	for i := len(ev.assocers) - 1; i >= 0; i-- {
-		v = ev.assocers[i].Assoc(ev.indices[i], v)
+		v, err = ev.assocers[i].Assoc(ev.indices[i], v)
+		if err != nil {
+			return err
+		}
 	}
-	err := ev.variable.Set(v)
+	err = ev.variable.Set(v)
 	// XXX(xiaq): Remember the set value for use in Get.
 	ev.setValue = v0
 	return err

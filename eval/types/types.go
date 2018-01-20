@@ -138,7 +138,7 @@ func MustIndex(i Indexer, k Value) Value {
 type Assocer interface {
 	// Assoc returns a slightly modified version of the receiver with key k
 	// associated with value v.
-	Assoc(k, v Value) Value
+	Assoc(k, v Value) (Value, error)
 }
 
 // Dissocer is anything tha can return a slightly modified version of itself with

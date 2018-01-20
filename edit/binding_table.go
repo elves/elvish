@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 var errValueShouldBeFn = errors.New("value should be function")
@@ -30,6 +31,11 @@ func getBinding(bindingVar vartypes.Variable, k ui.Key) eval.Fn {
 type BindingTable struct {
 	types.Map
 }
+
+var (
+	_ types.Value   = BindingTable{}
+	_ types.MapLike = BindingTable{}
+)
 
 // Repr returns the representation of the binding table as if it were an
 // ordinary map keyed by strings.
@@ -70,13 +76,17 @@ func (bt BindingTable) get(k ui.Key) eval.Fn {
 
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,
 // uses the Assoc of the inner Map and converts the result to a BindingTable.
-func (bt BindingTable) Assoc(k, v types.Value) types.Value {
+func (bt BindingTable) Assoc(k, v types.Value) (types.Value, error) {
 	key := ui.ToKey(k)
 	f, ok := v.(eval.Fn)
 	if !ok {
-		throw(errValueShouldBeFn)
+		return nil, errValueShouldBeFn
 	}
-	return BindingTable{bt.Map.Assoc(key, f).(types.Map)}
+	map2, err := bt.Map.Assoc(key, f)
+	if err != nil {
+		return nil, err
+	}
+	return BindingTable{map2.(types.Map)}, nil
 }
 
 func makeBindingTable(f *eval.Frame, args []types.Value, opts map[string]types.Value) {
@@ -84,15 +94,15 @@ func makeBindingTable(f *eval.Frame, args []types.Value, opts map[string]types.V
 	eval.ScanArgs(args, &raw)
 	eval.TakeNoOpt(opts)
 
-	converted := types.EmptyMap
+	converted := hashmap.Empty
 	raw.IteratePair(func(k, v types.Value) bool {
 		f, ok := v.(eval.Fn)
 		if !ok {
 			throw(errValueShouldBeFn)
 		}
-		converted = converted.Assoc(ui.ToKey(k), f).(types.Map)
+		converted = converted.Assoc(ui.ToKey(k), f)
 		return true
 	})
 
-	f.OutputChan() <- BindingTable{converted}
+	f.OutputChan() <- BindingTable{types.NewMap(converted)}
 }

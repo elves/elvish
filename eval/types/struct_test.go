@@ -22,8 +22,10 @@ func TestStructMethods(t *testing.T) {
 	if testStruct.Equal(testStruct2) {
 		t.Errorf(`testStruct.Equal(testStruct2) => true, want false`)
 	}
-	if s2 := testStruct.Assoc(String("bar"), String("dolor")); !s2.Equal(testStruct2) {
+	if s2, err := testStruct.Assoc(String("bar"), String("dolor")); !s2.Equal(testStruct2) {
 		t.Errorf(`testStruct.Assoc(...) => %v, want %v`, s2, testStruct2)
+	} else if err != nil {
+		t.Errorf(`testStruct.Assoc(...) => error %s, want no error`, err)
 	}
 	wantRepr := "[&foo=lorem &bar=ipsum]"
 	if gotRepr := testStruct.Repr(NoPretty); gotRepr != wantRepr {

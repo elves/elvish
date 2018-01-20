@@ -88,8 +88,8 @@ func (m Map) Index(idx Value) (Value, error) {
 	return v.(Value), nil
 }
 
-func (m Map) Assoc(k, v Value) Value {
-	return Map{m.inner.Assoc(k, v)}
+func (m Map) Assoc(k, v Value) (Value, error) {
+	return Map{m.inner.Assoc(k, v)}, nil
 }
 
 func (m Map) Dissoc(k Value) Value {

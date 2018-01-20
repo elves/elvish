@@ -50,14 +50,16 @@ func (s String) Index(idx Value) (Value, error) {
 	return s[i:j], nil
 }
 
-func (s String) Assoc(idx, v Value) Value {
+func (s String) Assoc(idx, v Value) (Value, error) {
 	i, j, err := s.index(idx)
-	maybeThrow(err)
+	if err != nil {
+		return nil, err
+	}
 	repl, ok := v.(String)
 	if !ok {
-		throw(ErrReplacementMustBeString)
+		return nil, ErrReplacementMustBeString
 	}
-	return s[:i] + repl + s[j:]
+	return s[:i] + repl + s[j:], nil
 }
 
 func (s String) index(idx Value) (int, int, error) {
