@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-// LValuesOp is an operation on an EvalCtx that produce Variable's.
+// LValuesOp is an operation on an Frame that produce Variable's.
 type LValuesOp struct {
 	Func       LValuesOpFunc
 	Begin, End int

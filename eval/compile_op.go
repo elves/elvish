@@ -10,7 +10,7 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-// Op is an operation on an EvalCtx.
+// Op is an operation on an Frame.
 type Op struct {
 	Func       OpFunc
 	Begin, End int

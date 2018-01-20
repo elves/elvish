@@ -18,7 +18,7 @@ import (
 
 var outputCaptureBufferSize = 16
 
-// ValuesOp is an operation on an EvalCtx that produce Value's.
+// ValuesOp is an operation on an Frame that produce Value's.
 type ValuesOp struct {
 	Func       ValuesOpFunc
 	Begin, End int
