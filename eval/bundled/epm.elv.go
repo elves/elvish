@@ -189,10 +189,10 @@ fn -package-op [pkg what]{
       if (has-key $-method-handler[$method] $what) {
         $-method-handler[$method][$what] $pkg $cfg
       } else {
-        fail "No handler for '"$what"' defined in method '"$method"'"
+        fail "Unknown operation '"$what"' for package "$pkg
       }
     } else {
-      fail "No handler defined for method '"$method"', specified in in config file "(-domain-config-file $dom)
+      fail "Unknown method '"$method"', specified in in config file "(-domain-config-file $dom)
     }
   } else {
     -error "No config for domain '"$dom"'."
