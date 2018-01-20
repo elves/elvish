@@ -59,7 +59,7 @@ var valueTests = []Test{
 	{"put *[range:a-z]", want{out: strs("bar", "dir", "foo", "ipsum", "lorem")}},
 
 	// Exclusion
-	{"put *[but:foo but:lorem]", want{out: strs(getFilesBut("foo", "lorem")...)}},
+	{"put *[but:foo][but:lorem]", want{out: strs(getFilesBut("foo", "lorem")...)}},
 
 	// Tilde
 	// -----

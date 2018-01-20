@@ -7,14 +7,6 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func mustIndexer(v types.Value, ec *Frame) types.MultiIndexer {
-	indexer, ok := types.GetIndexer(v)
-	if !ok {
-		throw(fmt.Errorf("a %s is not indexable", v.Kind()))
-	}
-	return indexer
-}
-
 // Callable wraps the Call method.
 type Callable interface {
 	// Call calls the receiver in a Frame with arguments and options.

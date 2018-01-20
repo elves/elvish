@@ -117,27 +117,10 @@ type IteratePairer interface {
 	IteratePair(func(k, v Value) bool)
 }
 
-// MultiIndexer wraps the Index method.
-type MultiIndexer interface {
-	// Index retrieves the values within the receiver at the specified indicies.
-	Index(idx []Value) []Value
-}
-
 // Indexer wraps the Index method.
 type Indexer interface {
 	// Index retrieves one value from the receiver at the specified index.
 	Index(idx Value) (Value, error)
-}
-
-// GetIndexer adapts a Value to an Indexer if there is an adapter.
-func GetIndexer(v Value) (MultiIndexer, bool) {
-	if indexer, ok := v.(MultiIndexer); ok {
-		return indexer, true
-	}
-	if indexOneer, ok := v.(Indexer); ok {
-		return IndexerIndexer{indexOneer}, true
-	}
-	return nil, false
 }
 
 // MustIndex indexes i with k and returns the value. If the operation
@@ -149,22 +132,6 @@ func MustIndex(i Indexer, k Value) Value {
 		panic(err)
 	}
 	return v
-}
-
-// IndexerIndexer adapts an Indexer to an Indexer by calling all the
-// indicies on the Indexr and collect the results.
-type IndexerIndexer struct {
-	Indexer
-}
-
-func (ioi IndexerIndexer) Index(vs []Value) []Value {
-	results := make([]Value, len(vs))
-	for i, v := range vs {
-		var err error
-		results[i], err = ioi.Indexer.Index(v)
-		maybeThrow(err)
-	}
-	return results
 }
 
 // Assocer wraps the Assoc method.

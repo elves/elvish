@@ -56,7 +56,7 @@ func MakeElement(v Variable, indicies []types.Value) (Variable, error) {
 	// When the right-hand side of the assignment becomes available, the new
 	// value for $a is evaluated by doing Assoc from inside out.
 	assocers := make([]types.Assocer, len(indicies))
-	varValue, ok := v.Get().(indexOneAssocer)
+	varValue, ok := v.Get().(indexAssocer)
 	if !ok {
 		return nil, elemErr{0, "cannot be indexed for setting"}
 	}
@@ -81,8 +81,8 @@ func MakeElement(v Variable, indicies []types.Value) (Variable, error) {
 	return NewElement(v, assocers, indicies), nil
 }
 
-// indexOneAssocer combines Indexer and Assocer.
-type indexOneAssocer interface {
+// indexAssocer combines Indexer and Assocer.
+type indexAssocer interface {
 	types.Indexer
 	types.Assocer
 }

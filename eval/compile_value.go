@@ -215,7 +215,15 @@ func (cp *compiler) indexing(n *parse.Indexing) ValuesOpFunc {
 			indicies := indexOp.Exec(ec)
 			newvs := make([]types.Value, 0, len(vs)*len(indicies))
 			for _, v := range vs {
-				newvs = append(newvs, mustIndexer(v, ec).Index(indicies)...)
+				indexer, ok := v.(types.Indexer)
+				if !ok {
+					throwf("a %s not indexable", v.Kind())
+				}
+				for _, index := range indicies {
+					result, err := indexer.Index(index)
+					maybeThrow(err)
+					newvs = append(newvs, result)
+				}
 			}
 			vs = newvs
 		}

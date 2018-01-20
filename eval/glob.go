@@ -31,8 +31,8 @@ func (f GlobFlag) Has(g GlobFlag) bool {
 }
 
 var (
-	_ types.Value        = GlobPattern{}
-	_ types.MultiIndexer = GlobPattern{}
+	_ types.Value   = GlobPattern{}
+	_ types.Indexer = GlobPattern{}
 )
 
 var (
@@ -74,57 +74,55 @@ func (gp GlobPattern) Repr(int) string {
 	return fmt.Sprintf("<GlobPattern%v>", gp)
 }
 
-func (gp GlobPattern) Index(modifiers []types.Value) []types.Value {
-	for _, value := range modifiers {
-		modifierv, ok := value.(types.String)
-		if !ok {
-			throw(ErrModifierMustBeString)
+func (gp GlobPattern) Index(k types.Value) (types.Value, error) {
+	modifierv, ok := k.(types.String)
+	if !ok {
+		return nil, ErrModifierMustBeString
+	}
+	modifier := string(modifierv)
+	switch {
+	case modifier == "nomatch-ok":
+		gp.Flags |= NoMatchOK
+	case strings.HasPrefix(modifier, "but:"):
+		gp.Buts = append(gp.Buts, modifier[len("but:"):])
+	case modifier == "match-hidden":
+		lastSeg := gp.mustGetLastWildSeg()
+		gp.Segments[len(gp.Segments)-1] = glob.Wild{
+			lastSeg.Type, true, lastSeg.Matchers,
 		}
-		modifier := string(modifierv)
-		switch {
-		case modifier == "nomatch-ok":
-			gp.Flags |= NoMatchOK
-		case strings.HasPrefix(modifier, "but:"):
-			gp.Buts = append(gp.Buts, modifier[len("but:"):])
-		case modifier == "match-hidden":
-			lastSeg := gp.mustGetLastWildSeg()
-			gp.Segments[len(gp.Segments)-1] = glob.Wild{
-				lastSeg.Type, true, lastSeg.Matchers,
+	default:
+		if matcher, ok := runeMatchers[modifier]; ok {
+			gp.addMatcher(matcher)
+		} else if strings.HasPrefix(modifier, "set:") {
+			set := modifier[len("set:"):]
+			gp.addMatcher(func(r rune) bool {
+				return strings.ContainsRune(set, r)
+			})
+		} else if strings.HasPrefix(modifier, "range:") {
+			rangeExpr := modifier[len("range:"):]
+			badRangeExpr := fmt.Errorf("bad range modifier: %s", parse.Quote(rangeExpr))
+			runes := []rune(rangeExpr)
+			if len(runes) != 3 {
+				return nil, badRangeExpr
 			}
-		default:
-			if matcher, ok := runeMatchers[modifier]; ok {
-				gp.addMatcher(matcher)
-			} else if strings.HasPrefix(modifier, "set:") {
-				set := modifier[len("set:"):]
+			from, sep, to := runes[0], runes[1], runes[2]
+			switch sep {
+			case '-':
 				gp.addMatcher(func(r rune) bool {
-					return strings.ContainsRune(set, r)
+					return from <= r && r <= to
 				})
-			} else if strings.HasPrefix(modifier, "range:") {
-				rangeExpr := modifier[len("range:"):]
-				badRangeExpr := fmt.Errorf("bad range modifier: %s", parse.Quote(rangeExpr))
-				runes := []rune(rangeExpr)
-				if len(runes) != 3 {
-					throw(badRangeExpr)
-				}
-				from, sep, to := runes[0], runes[1], runes[2]
-				switch sep {
-				case '-':
-					gp.addMatcher(func(r rune) bool {
-						return from <= r && r <= to
-					})
-				case '~':
-					gp.addMatcher(func(r rune) bool {
-						return from <= r && r < to
-					})
-				default:
-					throw(badRangeExpr)
-				}
-			} else {
-				throw(fmt.Errorf("unknown modifier %s", modifierv.Repr(types.NoPretty)))
+			case '~':
+				gp.addMatcher(func(r rune) bool {
+					return from <= r && r < to
+				})
+			default:
+				return nil, badRangeExpr
 			}
+		} else {
+			return nil, fmt.Errorf("unknown modifier %s", modifierv.Repr(types.NoPretty))
 		}
 	}
-	return []types.Value{gp}
+	return gp, nil
 }
 
 func (gp *GlobPattern) mustGetLastWildSeg() glob.Wild {
