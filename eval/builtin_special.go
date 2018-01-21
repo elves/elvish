@@ -440,7 +440,7 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 	args.mustEnd()
 
 	varOp, restOp := cp.lvaluesOp(varNode.Indexings[0])
-	if restOp.Func != nil {
+	if restOp.Body != nil {
 		cp.errorpf(restOp.Begin, restOp.End, "rest not allowed")
 	}
 
@@ -527,7 +527,7 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 	if exceptVarNode != nil {
 		var restOp LValuesOp
 		exceptVarOp, restOp = cp.lvaluesOp(exceptVarNode)
-		if restOp.Func != nil {
+		if restOp.Body != nil {
 			cp.errorpf(restOp.Begin, restOp.End, "may not use @rest in except variable")
 		}
 	}
@@ -589,7 +589,7 @@ func (op ValuesOp) execlambdaOp(ec *Frame) Callable {
 // evaluate to exactly one Variable. If the given LValuesOp is empty, it returns
 // nil.
 func (op LValuesOp) execMustOne(ec *Frame) vartypes.Variable {
-	if op.Func == nil {
+	if op.Body == nil {
 		return nil
 	}
 	variables, err := op.Exec(ec)

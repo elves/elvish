@@ -12,21 +12,23 @@ import (
 
 // LValuesOp is an operation on an Frame that produce Variable's.
 type LValuesOp struct {
-	Func       LValuesOpFunc
+	Body       LValuesOpBody
 	Begin, End int
 }
 
-// LValuesOpFunc is the body of an LValuesOp.
-type LValuesOpFunc func(*Frame) ([]vartypes.Variable, error)
+// LValuesOpBody is the body of an LValuesOp.
+type LValuesOpBody interface {
+	Invoke(*Frame) ([]vartypes.Variable, error)
+}
 
 // Exec executes an LValuesOp, producing Variable's.
 func (op LValuesOp) Exec(ec *Frame) ([]vartypes.Variable, error) {
 	// Empty value is considered to generate no lvalues.
-	if op.Func == nil {
+	if op.Body == nil {
 		return []vartypes.Variable{}, nil
 	}
 	ec.begin, ec.end = op.Begin, op.End
-	return op.Func(ec)
+	return op.Body.Invoke(ec)
 }
 
 // lvaluesOp compiles lvalues, returning the fixed part and, optionally a rest
@@ -53,9 +55,9 @@ func (cp *compiler) lvaluesOp(n *parse.Indexing) (LValuesOp, LValuesOp) {
 }
 
 func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp) {
-	opFuncs := make([]LValuesOpFunc, len(nodes))
+	opFuncs := make([]LValuesOpBody, len(nodes))
 	var restNode *parse.Indexing
-	var restOpFunc LValuesOpFunc
+	var restOpFunc LValuesOpBody
 
 	// Compile each spec inside the brace.
 	fixedEnd := 0
@@ -88,58 +90,23 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp)
 	var op LValuesOp
 	// If there is still anything left in opFuncs, make LValuesOp for the fixed part.
 	if len(opFuncs) > 0 {
-		op = LValuesOp{func(ec *Frame) ([]vartypes.Variable, error) {
-			var variables []vartypes.Variable
-			for _, opFunc := range opFuncs {
-				moreVariables, err := opFunc(ec)
-				if err != nil {
-					return nil, err
-				}
-				variables = append(variables, moreVariables...)
-			}
-			return variables, nil
-		}, nodes[0].Begin(), fixedEnd}
+		op = LValuesOp{seqLValuesOpBody{opFuncs}, nodes[0].Begin(), fixedEnd}
 	}
 
 	return op, restOp
 }
 
-func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, LValuesOpFunc) {
+func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, LValuesOpBody) {
 	qname := cp.literal(n.Head, msg)
 	explode, ns, name := ParseVariable(qname)
 	if len(n.Indicies) == 0 {
-		return explode, cp.lvalueVariable(ns, name)
+		cp.registerVariableSet(ns, name)
+		return explode, varOp{ns, name}
 	}
 	return explode, cp.lvalueElement(ns, name, n)
 }
 
-func (cp *compiler) lvalueVariable(ns, name string) LValuesOpFunc {
-	cp.registerVariableSet(ns, name)
-
-	return func(ec *Frame) ([]vartypes.Variable, error) {
-		variable := ec.ResolveVar(ns, name)
-		if variable == nil {
-			if ns == "" || ns == "local" {
-				// New variable.
-				// XXX We depend on the fact that this variable will
-				// immeidately be set.
-				if strings.HasSuffix(name, FnSuffix) {
-					variable = vartypes.NewValidatedPtr(nil, ShouldBeFn)
-				} else if strings.HasSuffix(name, NsSuffix) {
-					variable = vartypes.NewValidatedPtr(nil, ShouldBeNs)
-				} else {
-					variable = vartypes.NewPtr(nil)
-				}
-				ec.local[name] = variable
-			} else {
-				return nil, fmt.Errorf("new variables can only be created in local scope")
-			}
-		}
-		return []vartypes.Variable{variable}, nil
-	}
-}
-
-func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpFunc {
+func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpBody {
 	cp.registerVariableGet(ns, name)
 
 	begin, end := n.Begin(), n.End()
@@ -151,31 +118,84 @@ func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpF
 
 	indexOps := cp.arrayOps(n.Indicies)
 
-	return func(ec *Frame) ([]vartypes.Variable, error) {
-		variable := ec.ResolveVar(ns, name)
-		if variable == nil {
-			return nil, fmt.Errorf("variable $%s:%s does not exist, compiler bug", ns, name)
-		}
+	return &elemOp{ns, name, indexOps, begin, end, ends}
+}
 
-		indicies := make([]types.Value, len(indexOps))
-		for i, op := range indexOps {
-			values, err := op.Exec(ec)
-			maybeThrow(err)
-			// TODO: Implement multi-indexing.
-			if len(values) != 1 {
-				return nil, errors.New("multi indexing not implemented")
-			}
-			indicies[i] = values[0]
-		}
-		elemVar, err := vartypes.MakeElement(variable, indicies)
+type seqLValuesOpBody struct {
+	ops []LValuesOpBody
+}
+
+func (op seqLValuesOpBody) Invoke(fm *Frame) ([]vartypes.Variable, error) {
+	var variables []vartypes.Variable
+	for _, op := range op.ops {
+		moreVariables, err := op.Invoke(fm)
 		if err != nil {
-			level := vartypes.GetElementErrorLevel(err)
-			if level < 0 {
-				ec.errorpf(begin, end, "%s", err)
-			} else {
-				ec.errorpf(begin, ends[level], "%s", err)
-			}
+			return nil, err
 		}
-		return []vartypes.Variable{elemVar}, nil
+		variables = append(variables, moreVariables...)
 	}
+	return variables, nil
+}
+
+type varOp struct {
+	ns, name string
+}
+
+func (op varOp) Invoke(fm *Frame) ([]vartypes.Variable, error) {
+	variable := fm.ResolveVar(op.ns, op.name)
+	if variable == nil {
+		if op.ns == "" || op.ns == "local" {
+			// New variable.
+			// XXX We depend on the fact that this variable will
+			// immeidately be set.
+			if strings.HasSuffix(op.name, FnSuffix) {
+				variable = vartypes.NewValidatedPtr(nil, ShouldBeFn)
+			} else if strings.HasSuffix(op.name, NsSuffix) {
+				variable = vartypes.NewValidatedPtr(nil, ShouldBeNs)
+			} else {
+				variable = vartypes.NewPtr(nil)
+			}
+			fm.local[op.name] = variable
+		} else {
+			return nil, fmt.Errorf("new variables can only be created in local scope")
+		}
+	}
+	return []vartypes.Variable{variable}, nil
+}
+
+type elemOp struct {
+	ns       string
+	name     string
+	indexOps []ValuesOp
+	begin    int
+	end      int
+	ends     []int
+}
+
+func (op *elemOp) Invoke(ec *Frame) ([]vartypes.Variable, error) {
+	variable := ec.ResolveVar(op.ns, op.name)
+	if variable == nil {
+		return nil, fmt.Errorf("variable $%s:%s does not exist, compiler bug", op.ns, op.name)
+	}
+
+	indicies := make([]types.Value, len(op.indexOps))
+	for i, op := range op.indexOps {
+		values, err := op.Exec(ec)
+		maybeThrow(err)
+		// TODO: Implement multi-indexing.
+		if len(values) != 1 {
+			return nil, errors.New("multi indexing not implemented")
+		}
+		indicies[i] = values[0]
+	}
+	elemVar, err := vartypes.MakeElement(variable, indicies)
+	if err != nil {
+		level := vartypes.GetElementErrorLevel(err)
+		if level < 0 {
+			ec.errorpf(op.begin, op.end, "%s", err)
+		} else {
+			ec.errorpf(op.begin, op.ends[level], "%s", err)
+		}
+	}
+	return []vartypes.Variable{elemVar}, nil
 }
