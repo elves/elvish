@@ -34,8 +34,6 @@ func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 				f(s[:i])
 			}
 		}
-	case "shared":
-		// TODO Add daemon RPC for enumerating shared variables.
 	default:
 		mod := ev.Global[ns+NsSuffix]
 		if mod == nil {
@@ -70,7 +68,6 @@ func (ev *evalerScopes) EachNsInTop(f func(s string)) {
 	f("builtin")
 	f("e")
 	f("E")
-	f("shared")
 	ev.EachModInTop(f)
 }
 
@@ -98,11 +95,6 @@ func (ec *Frame) ResolveVar(ns, name string) vartypes.Variable {
 		}
 	case "E":
 		return vartypes.NewEnv(name)
-	case "shared":
-		if ec.DaemonClient == nil {
-			return nil
-		}
-		return sharedVariable{ec.DaemonClient, name}
 	default:
 		ns := ec.ResolveMod(ns)
 		if ns != nil {

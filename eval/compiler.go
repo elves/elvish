@@ -68,7 +68,7 @@ func (cp *compiler) registerVariableGet(ns, name string) bool {
 	switch ns {
 	case "", "local", "up":
 		// Handled below
-	case "e", "E", "shared":
+	case "e", "E":
 		return true
 	default:
 		return cp.registerModAccess(ns)
@@ -138,7 +138,7 @@ func (cp *compiler) registerVariableSet(ns, name string) bool {
 		// New name. Register on this scope!
 		cp.thisScope().set(name)
 		return true
-	case "e", "E", "shared":
+	case "e", "E":
 		// Special namespaces, do nothing
 		return true
 	default:
