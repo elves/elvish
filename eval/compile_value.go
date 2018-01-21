@@ -15,6 +15,7 @@ import (
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hashmap"
+	"github.com/xiaq/persistent/vector"
 )
 
 var outputCaptureBufferSize = 16
@@ -314,19 +315,23 @@ func (op variableOp) Invoke(ec *Frame) ([]types.Value, error) {
 }
 
 func (cp *compiler) list(n *parse.Primary) ValuesOpBody {
-	// TODO(xiaq): Use Vector.Cons to build the list, instead of building a
-	// slice and converting to Vector.
-	return listOp{seqValuesOp{cp.compoundOps(n.Elements)}}
+	return listOp{cp.compoundOps(n.Elements)}
 }
 
-type listOp struct{ subop ValuesOpBody }
+type listOp struct{ subops []ValuesOp }
 
 func (op listOp) Invoke(fm *Frame) ([]types.Value, error) {
-	values, err := op.subop.Invoke(fm)
-	if err != nil {
-		return nil, err
+	vec := vector.Empty
+	for _, subop := range op.subops {
+		moreValues, err := subop.Exec(fm)
+		if err != nil {
+			return nil, err
+		}
+		for _, moreValue := range moreValues {
+			vec = vec.Cons(moreValue)
+		}
 	}
-	return []types.Value{types.MakeList(values...)}, nil
+	return []types.Value{types.NewList(vec)}, nil
 }
 
 type exceptionCaptureOp struct{ subop Op }
