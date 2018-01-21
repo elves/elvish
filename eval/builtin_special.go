@@ -28,7 +28,7 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type compileBuiltin func(*compiler, *parse.Form) OpFunc
+type compileBuiltin func(*compiler, *parse.Form) OpBody
 
 var (
 	// ErrNoLibDir is thrown by "use" when the Evaler does not have a library
@@ -69,7 +69,7 @@ func init() {
 const delArgMsg = "arguments to del must be variable or variable elements"
 
 // DelForm = 'del' { VariablePrimary }
-func compileDel(cp *compiler, fn *parse.Form) OpFunc {
+func compileDel(cp *compiler, fn *parse.Form) OpBody {
 	var ops []Op
 	for _, cn := range fn.Args {
 		cp.compiling(cn)
@@ -92,7 +92,7 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 			cp.errorf("arguments to del may be have a leading @")
 			continue
 		}
-		var f OpFunc
+		var f OpBody
 		if len(indicies) == 0 {
 			switch ns {
 			case "", "local":
@@ -101,9 +101,9 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 					continue
 				}
 				cp.thisScope().del(name)
-				f = newDelLocalVariableOp(name)
+				f = delLocalVarOp{name}
 			case "E":
-				f = newDelEnvVariableOp(name)
+				f = delEnvVarOp{name}
 			default:
 				cp.errorf("only variables in local: or E: can be deleted")
 				continue
@@ -117,67 +117,65 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 		}
 		ops = append(ops, Op{f, cn.Begin(), cn.End()})
 	}
-	return newSeqOps(ops)
+	return seqOp{ops}
 }
 
-func newDelLocalVariableOp(name string) OpFunc {
-	return func(f *Frame) error {
-		delete(f.local, name)
-		return nil
-	}
+type delLocalVarOp struct{ name string }
+
+func (op delLocalVarOp) Invoke(fm *Frame) error {
+	delete(fm.local, op.name)
+	return nil
 }
 
-func newDelElementOp(ns, name string, begin, headEnd int, indexOps []ValuesOp) OpFunc {
+type delEnvVarOp struct{ name string }
+
+func (op delEnvVarOp) Invoke(*Frame) error {
+	return os.Unsetenv(op.name)
+}
+
+func newDelElementOp(ns, name string, begin, headEnd int, indexOps []ValuesOp) OpBody {
 	ends := make([]int, len(indexOps)+1)
 	ends[0] = headEnd
 	for i, op := range indexOps {
 		ends[i+1] = op.End
 	}
-	return func(f *Frame) error {
-		var indicies []types.Value
-		for _, indexOp := range indexOps {
-			indexValues, err := indexOp.Exec(f)
-			if err != nil {
-				return err
-			}
-			if len(indexValues) != 1 {
-				f.errorpf(indexOp.Begin, indexOp.End, "index must evaluate to a single value in argument to del")
-			}
-			indicies = append(indicies, indexValues[0])
-		}
-		err := vartypes.DelElement(f.ResolveVar(ns, name), indicies)
+	return &delElemOp{ns, name, indexOps, begin, ends}
+}
+
+type delElemOp struct {
+	ns       string
+	name     string
+	indexOps []ValuesOp
+	begin    int
+	ends     []int
+}
+
+func (op *delElemOp) Invoke(fm *Frame) error {
+	var indicies []types.Value
+	for _, indexOp := range op.indexOps {
+		indexValues, err := indexOp.Exec(fm)
 		if err != nil {
-			if level := vartypes.GetElementErrorLevel(err); level >= 0 {
-				f.errorpf(begin, ends[level], "%s", err.Error())
-			}
 			return err
 		}
-		return nil
-	}
-}
-
-func newDelEnvVariableOp(name string) OpFunc {
-	return func(*Frame) error {
-		return os.Unsetenv(name)
-	}
-}
-
-// makeFnOp wraps an op such that a return is converted to an ok.
-func makeFnOp(op Op) Op {
-	return Op{func(ec *Frame) error {
-		err := ec.PEval(op)
-		if err != nil && err.(*Exception).Cause != Return {
-			// rethrow
-			return err
+		if len(indexValues) != 1 {
+			fm.errorpf(indexOp.Begin, indexOp.End, "index must evaluate to a single value in argument to del")
 		}
-		return nil
-	}, op.Begin, op.End}
+		indicies = append(indicies, indexValues[0])
+	}
+	err := vartypes.DelElement(fm.ResolveVar(op.ns, op.name), indicies)
+	if err != nil {
+		if level := vartypes.GetElementErrorLevel(err); level >= 0 {
+			fm.errorpf(op.begin, op.ends[level], "%s", err.Error())
+		}
+		return err
+	}
+	return nil
 }
 
 // FnForm = 'fn' StringPrimary LambdaPrimary
 //
 // fn f []{foobar} is a shorthand for set '&'f = []{foobar}.
-func compileFn(cp *compiler, fn *parse.Form) OpFunc {
+func compileFn(cp *compiler, fn *parse.Form) OpBody {
 	args := cp.walkArgs(fn)
 	nameNode := args.next()
 	varName := mustString(cp, nameNode, "must be a literal string") + FnSuffix
@@ -187,23 +185,45 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 	cp.registerVariableSetQname(":" + varName)
 	op := cp.lambda(bodyNode)
 
-	return func(ec *Frame) error {
-		// Initialize the function variable with the builtin nop
-		// function. This step allows the definition of recursive
-		// functions; the actual function will never be called.
-		ec.local[varName] = vartypes.NewPtr(&BuiltinFn{"<shouldn't be called>", nop})
-		values, err := op(ec)
-		if err != nil {
-			return err
-		}
-		closure := values[0].(*Closure)
-		closure.Op = makeFnOp(closure.Op)
-		return ec.local[varName].Set(closure)
+	return fnOp{varName, op}
+}
+
+type fnOp struct {
+	varName  string
+	lambdaOp ValuesOpFunc
+}
+
+func (op fnOp) Invoke(fm *Frame) error {
+	// Initialize the function variable with the builtin nop function. This step
+	// allows the definition of recursive functions; the actual function will
+	// never be called.
+	fm.local[op.varName] = vartypes.NewPtr(&BuiltinFn{"<shouldn't be called>", nop})
+	values, err := op.lambdaOp(fm)
+	if err != nil {
+		return err
 	}
+	closure := values[0].(*Closure)
+	closure.Op = wrapFn(closure.Op)
+	return fm.local[op.varName].Set(closure)
+}
+
+func wrapFn(op Op) Op {
+	return Op{fnWrap{op}, op.Begin, op.End}
+}
+
+type fnWrap struct{ wrapped Op }
+
+func (op fnWrap) Invoke(ec *Frame) error {
+	err := ec.PEval(op.wrapped)
+	if err != nil && err.(*Exception).Cause != Return {
+		// rethrow
+		return err
+	}
+	return nil
 }
 
 // UseForm = 'use' StringPrimary
-func compileUse(cp *compiler, fn *parse.Form) OpFunc {
+func compileUse(cp *compiler, fn *parse.Form) OpBody {
 	if len(fn.Args) == 0 {
 		end := fn.Head.End()
 		cp.errorpf(end, end, "lack module name")
@@ -218,9 +238,13 @@ func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 	modpath := strings.Replace(spec, ":", "/", -1)
 	cp.thisScope().set(modname + NsSuffix)
 
-	return func(ec *Frame) error {
-		return use(ec, modname, modpath)
-	}
+	return useOp{modname, modpath}
+}
+
+type useOp struct{ modname, modpath string }
+
+func (op useOp) Invoke(fm *Frame) error {
+	return use(fm, op.modname, op.modpath)
 }
 
 func use(ec *Frame, modname, modpath string) error {
@@ -313,46 +337,51 @@ func loadModule(ec *Frame, name string) (Ns, error) {
 }
 
 // compileAnd compiles the "and" special form.
+//
 // The and special form evaluates arguments until a false-ish values is found
 // and outputs it; the remaining arguments are not evaluated. If there are no
 // false-ish values, the last value is output. If there are no arguments, it
 // outputs $true, as if there is a hidden $true before actual arguments.
-func compileAnd(cp *compiler, fn *parse.Form) OpFunc {
-	return compileAndOr(cp, fn, true, false)
+func compileAnd(cp *compiler, fn *parse.Form) OpBody {
+	return &andOrOp{cp.compoundOps(fn.Args), true, false}
 }
 
 // compileOr compiles the "or" special form.
+//
 // The or special form evaluates arguments until a true-ish values is found and
 // outputs it; the remaining arguments are not evaluated. If there are no
 // true-ish values, the last value is output. If there are no arguments, it
 // outputs $false, as if there is a hidden $false before actual arguments.
-func compileOr(cp *compiler, fn *parse.Form) OpFunc {
-	return compileAndOr(cp, fn, false, true)
+func compileOr(cp *compiler, fn *parse.Form) OpBody {
+	return &andOrOp{cp.compoundOps(fn.Args), false, true}
 }
 
-func compileAndOr(cp *compiler, fn *parse.Form, init, stopAt bool) OpFunc {
-	argOps := cp.compoundOps(fn.Args)
-	return func(ec *Frame) error {
-		var lastValue types.Value = types.Bool(init)
-		for _, op := range argOps {
-			values, err := op.Exec(ec)
-			if err != nil {
-				return err
-			}
-			for _, value := range values {
-				if types.ToBool(value) == stopAt {
-					ec.OutputChan() <- value
-					return nil
-				}
-				lastValue = value
-			}
+type andOrOp struct {
+	argOps []ValuesOp
+	init   bool
+	stopAt bool
+}
+
+func (op *andOrOp) Invoke(fm *Frame) error {
+	var lastValue types.Value = types.Bool(op.init)
+	for _, argOp := range op.argOps {
+		values, err := argOp.Exec(fm)
+		if err != nil {
+			return err
 		}
-		ec.OutputChan() <- lastValue
-		return nil
+		for _, value := range values {
+			if types.ToBool(value) == op.stopAt {
+				fm.OutputChan() <- value
+				return nil
+			}
+			lastValue = value
+		}
 	}
+	fm.OutputChan() <- lastValue
+	return nil
 }
 
-func compileIf(cp *compiler, fn *parse.Form) OpFunc {
+func compileIf(cp *compiler, fn *parse.Form) OpBody {
 	args := cp.walkArgs(fn)
 	var condNodes []*parse.Compound
 	var bodyNodes []*parse.Primary
@@ -373,65 +402,76 @@ func compileIf(cp *compiler, fn *parse.Form) OpFunc {
 		elseOp = cp.primaryOp(elseNode)
 	}
 
-	return func(ec *Frame) error {
-		bodies := make([]Callable, len(bodyOps))
-		for i, bodyOp := range bodyOps {
-			bodies[i] = bodyOp.execlambdaOp(ec)
-		}
-		else_ := elseOp.execlambdaOp(ec)
-		for i, condOp := range condOps {
-			condValues, err := condOp.Exec(ec.fork("if cond"))
-			if err != nil {
-				return err
-			}
-			if allTrue(condValues) {
-				return bodies[i].Call(ec.fork("if body"), NoArgs, NoOpts)
-			}
-		}
-		if elseOp.Func != nil {
-			return else_.Call(ec.fork("if else"), NoArgs, NoOpts)
-		}
-		return nil
-	}
+	return &ifOp{condOps, bodyOps, elseOp}
 }
 
-func compileWhile(cp *compiler, fn *parse.Form) OpFunc {
+type ifOp struct {
+	condOps []ValuesOp
+	bodyOps []ValuesOp
+	elseOp  ValuesOp
+}
+
+func (op *ifOp) Invoke(fm *Frame) error {
+	bodies := make([]Callable, len(op.bodyOps))
+	for i, bodyOp := range op.bodyOps {
+		bodies[i] = bodyOp.execlambdaOp(fm)
+	}
+	else_ := op.elseOp.execlambdaOp(fm)
+	for i, condOp := range op.condOps {
+		condValues, err := condOp.Exec(fm.fork("if cond"))
+		if err != nil {
+			return err
+		}
+		if allTrue(condValues) {
+			return bodies[i].Call(fm.fork("if body"), NoArgs, NoOpts)
+		}
+	}
+	if op.elseOp.Func != nil {
+		return else_.Call(fm.fork("if else"), NoArgs, NoOpts)
+	}
+	return nil
+}
+
+func compileWhile(cp *compiler, fn *parse.Form) OpBody {
 	args := cp.walkArgs(fn)
 	condNode := args.next()
 	bodyNode := args.nextMustLambda()
 	args.mustEnd()
 
-	condOp := cp.compoundOp(condNode)
-	bodyOp := cp.primaryOp(bodyNode)
-
-	return func(ec *Frame) error {
-		body := bodyOp.execlambdaOp(ec)
-
-		for {
-			condValues, err := condOp.Exec(ec.fork("while cond"))
-			if err != nil {
-				return err
-			}
-			if !allTrue(condValues) {
-				break
-			}
-			err = ec.fork("while").PCall(body, NoArgs, NoOpts)
-			if err != nil {
-				exc := err.(*Exception)
-				if exc.Cause == Continue {
-					// do nothing
-				} else if exc.Cause == Break {
-					continue
-				} else {
-					return nil
-				}
-			}
-		}
-		return nil
-	}
+	return &whileOp{cp.compoundOp(condNode), cp.primaryOp(bodyNode)}
 }
 
-func compileFor(cp *compiler, fn *parse.Form) OpFunc {
+type whileOp struct {
+	condOp, bodyOp ValuesOp
+}
+
+func (op *whileOp) Invoke(fm *Frame) error {
+	body := op.bodyOp.execlambdaOp(fm)
+
+	for {
+		condValues, err := op.condOp.Exec(fm.fork("while cond"))
+		if err != nil {
+			return err
+		}
+		if !allTrue(condValues) {
+			break
+		}
+		err = fm.fork("while").PCall(body, NoArgs, NoOpts)
+		if err != nil {
+			exc := err.(*Exception)
+			if exc.Cause == Continue {
+				// do nothing
+			} else if exc.Cause == Break {
+				continue
+			} else {
+				return nil
+			}
+		}
+	}
+	return nil
+}
+
+func compileFor(cp *compiler, fn *parse.Form) OpBody {
 	args := cp.walkArgs(fn)
 	varNode := args.next()
 	iterNode := args.next()
@@ -451,56 +491,65 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 		elseOp = cp.primaryOp(elseNode)
 	}
 
-	return func(ec *Frame) error {
-		variables, err := varOp.Exec(ec)
+	return &forOp{varOp, iterOp, bodyOp, elseOp}
+}
+
+type forOp struct {
+	varOp  LValuesOp
+	iterOp ValuesOp
+	bodyOp ValuesOp
+	elseOp ValuesOp
+}
+
+func (op *forOp) Invoke(ec *Frame) error {
+	variables, err := op.varOp.Exec(ec)
+	if err != nil {
+		return err
+	}
+	if len(variables) != 1 {
+		ec.errorpf(op.varOp.Begin, op.varOp.End, "only one variable allowed")
+	}
+	variable := variables[0]
+
+	iterable := ec.ExecAndUnwrap("value being iterated", op.iterOp).One().Iterable()
+
+	body := op.bodyOp.execlambdaOp(ec)
+	elseBody := op.elseOp.execlambdaOp(ec)
+
+	iterated := false
+	var errIterate error
+	iterable.Iterate(func(v types.Value) bool {
+		iterated = true
+		err := variable.Set(v)
 		if err != nil {
-			return err
+			errIterate = err
+			return false
 		}
-		if len(variables) != 1 {
-			ec.errorpf(varOp.Begin, varOp.End, "only one variable allowed")
-		}
-		variable := variables[0]
-
-		iterable := ec.ExecAndUnwrap("value being iterated", iterOp).One().Iterable()
-
-		body := bodyOp.execlambdaOp(ec)
-		elseBody := elseOp.execlambdaOp(ec)
-
-		iterated := false
-		var errIterate error
-		iterable.Iterate(func(v types.Value) bool {
-			iterated = true
-			err := variable.Set(v)
-			if err != nil {
+		err = ec.fork("for").PCall(body, NoArgs, NoOpts)
+		if err != nil {
+			exc := err.(*Exception)
+			if exc.Cause == Continue {
+				// do nothing
+			} else if exc.Cause == Break {
+				return false
+			} else {
 				errIterate = err
 				return false
 			}
-			err = ec.fork("for").PCall(body, NoArgs, NoOpts)
-			if err != nil {
-				exc := err.(*Exception)
-				if exc.Cause == Continue {
-					// do nothing
-				} else if exc.Cause == Break {
-					return false
-				} else {
-					errIterate = err
-					return false
-				}
-			}
-			return true
-		})
-		if errIterate != nil {
-			return errIterate
 		}
-
-		if !iterated && elseBody != nil {
-			return elseBody.Call(ec.fork("for else"), NoArgs, NoOpts)
-		}
-		return nil
+		return true
+	})
+	if errIterate != nil {
+		return errIterate
 	}
+
+	if !iterated && elseBody != nil {
+		return elseBody.Call(ec.fork("for else"), NoArgs, NoOpts)
+	}
+	return nil
 }
 
-func compileTry(cp *compiler, fn *parse.Form) OpFunc {
+func compileTry(cp *compiler, fn *parse.Form) OpBody {
 	logger.Println("compiling try")
 	args := cp.walkArgs(fn)
 	bodyNode := args.nextMustLambda()
@@ -541,34 +590,44 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 		finallyOp = cp.primaryOp(finallyNode)
 	}
 
-	return func(ec *Frame) error {
-		body := bodyOp.execlambdaOp(ec)
-		exceptVar := exceptVarOp.execMustOne(ec)
-		except := exceptOp.execlambdaOp(ec)
-		else_ := elseOp.execlambdaOp(ec)
-		finally := finallyOp.execlambdaOp(ec)
+	return &tryOp{bodyOp, exceptVarOp, exceptOp, elseOp, finallyOp}
+}
 
-		err := ec.fork("try body").PCall(body, NoArgs, NoOpts)
-		if err != nil {
-			if except != nil {
-				if exceptVar != nil {
-					err := exceptVar.Set(err.(*Exception))
-					if err != nil {
-						return err
-					}
+type tryOp struct {
+	bodyOp      ValuesOp
+	exceptVarOp LValuesOp
+	exceptOp    ValuesOp
+	elseOp      ValuesOp
+	finallyOp   ValuesOp
+}
+
+func (op *tryOp) Invoke(ec *Frame) error {
+	body := op.bodyOp.execlambdaOp(ec)
+	exceptVar := op.exceptVarOp.execMustOne(ec)
+	except := op.exceptOp.execlambdaOp(ec)
+	else_ := op.elseOp.execlambdaOp(ec)
+	finally := op.finallyOp.execlambdaOp(ec)
+
+	err := ec.fork("try body").PCall(body, NoArgs, NoOpts)
+	if err != nil {
+		if except != nil {
+			if exceptVar != nil {
+				err := exceptVar.Set(err.(*Exception))
+				if err != nil {
+					return err
 				}
-				err = ec.fork("try except").PCall(except, NoArgs, NoOpts)
 			}
-		} else {
-			if else_ != nil {
-				err = ec.fork("try else").PCall(else_, NoArgs, NoOpts)
-			}
+			err = ec.fork("try except").PCall(except, NoArgs, NoOpts)
 		}
-		if finally != nil {
-			return finally.Call(ec.fork("try finally"), NoArgs, NoOpts)
+	} else {
+		if else_ != nil {
+			err = ec.fork("try else").PCall(else_, NoArgs, NoOpts)
 		}
-		return err
 	}
+	if finally != nil {
+		return finally.Call(ec.fork("try finally"), NoArgs, NoOpts)
+	}
+	return err
 }
 
 // execLambdaOp executes a ValuesOp that is known to yield a lambda and returns

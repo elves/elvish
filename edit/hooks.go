@@ -34,20 +34,27 @@ func callHooks(ev *eval.Evaler, li types.List, args ...types.Value) {
 	}
 
 	li.Iterate(func(v types.Value) bool {
-		opfunc := func(ec *eval.Frame) error {
-			fn, ok := v.(eval.Fn)
-			if !ok {
-				fmt.Fprintf(os.Stderr, "not a function: %s\n", v.Repr(types.NoPretty))
-				return nil
-			}
-			err := ec.PCall(fn, args, eval.NoOpts)
-			if err != nil {
-				// TODO Print stack trace.
-				fmt.Fprintf(os.Stderr, "function error: %s\n", err.Error())
-			}
-			return nil
-		}
-		ev.Eval(eval.Op{opfunc, -1, -1}, eval.NewInternalSource("[hooks]"))
+		op := eval.Op{&hookOp{v, args}, -1, -1}
+		ev.Eval(op, eval.NewInternalSource("[hooks]"))
 		return true
 	})
+}
+
+type hookOp struct {
+	hook types.Value
+	args []types.Value
+}
+
+func (op *hookOp) Invoke(fm *eval.Frame) error {
+	fn, ok := op.hook.(eval.Fn)
+	if !ok {
+		fmt.Fprintf(os.Stderr, "not a function: %s\n", op.hook.Repr(types.NoPretty))
+		return nil
+	}
+	err := fm.PCall(fn, op.args, eval.NoOpts)
+	if err != nil {
+		// TODO Print stack trace.
+		fmt.Fprintf(os.Stderr, "function error: %s\n", err.Error())
+	}
+	return nil
 }

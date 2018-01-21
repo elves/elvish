@@ -145,7 +145,7 @@ func (ec *Frame) PCaptureOutput(fn Callable, args []types.Value, opts map[string
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)
 	}
-	return pcaptureOutput(ec, Op{opFunc, -1, -1})
+	return pcaptureOutput(ec, Op{funcOp(opFunc), -1, -1})
 }
 
 func (ec *Frame) PCaptureOutputInner(fn Callable, args []types.Value, opts map[string]types.Value, valuesCb func(<-chan types.Value), bytesCb func(*os.File)) error {
@@ -153,7 +153,7 @@ func (ec *Frame) PCaptureOutputInner(fn Callable, args []types.Value, opts map[s
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)
 	}
-	return pcaptureOutputInner(ec, Op{opFunc, -1, -1}, valuesCb, bytesCb)
+	return pcaptureOutputInner(ec, Op{funcOp(opFunc), -1, -1}, valuesCb, bytesCb)
 }
 
 func catch(perr *error, ec *Frame) {
