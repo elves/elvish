@@ -41,7 +41,9 @@ func (ctx *Frame) Unwrap(desc string, begin, end int, vs []types.Value) ValuesUn
 // ExecAndUnwrap executes a ValuesOp and creates an Unwrapper for the obtained
 // values.
 func (ctx *Frame) ExecAndUnwrap(desc string, op ValuesOp) ValuesUnwrapper {
-	return ctx.Unwrap(desc, op.Begin, op.End, op.Exec(ctx))
+	values, err := op.Exec(ctx)
+	maybeThrow(err)
+	return ctx.Unwrap(desc, op.Begin, op.End, values)
 }
 
 // One unwraps the value to be exactly one value.

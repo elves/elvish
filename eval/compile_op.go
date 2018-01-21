@@ -191,8 +191,8 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 					headOpFunc = variable(headStr + FnSuffix)
 				} else {
 					// Fall back to $e:head~.
-					headOpFunc = func(f *Frame) []types.Value {
-						return []types.Value{ExternalCmd{headStr}}
+					headOpFunc = func(f *Frame) ([]types.Value, error) {
+						return []types.Value{ExternalCmd{headStr}}, nil
 					}
 				}
 				headOp = ValuesOp{headOpFunc, n.Head.Begin(), n.Head.End()}
@@ -205,16 +205,20 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 	} else {
 		// Assignment form.
 		varsOp, restOp := cp.lvaluesMulti(n.Vars)
+		// This cannot be replaced with newSeqValuesOp as it depends on the fact
+		// that argOps will be changed later.
 		argsOp := ValuesOp{
-			func(ec *Frame) []types.Value {
-				var vs []types.Value
+			func(ec *Frame) ([]types.Value, error) {
+				var values []types.Value
 				for _, op := range argOps {
-					vs = append(vs, op.Exec(ec)...)
+					moreValues, err := op.Exec(ec)
+					if err != nil {
+						return nil, err
+					}
+					values = append(values, moreValues...)
 				}
-				return vs
-			},
-			-1, -1,
-		}
+				return values, nil
+			}, -1, -1}
 		if len(argOps) > 0 {
 			argsOp.Begin = argOps[0].Begin
 			argsOp.End = argOps[len(argOps)-1].End
@@ -300,13 +304,21 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 
 				// args
 				for _, argOp := range argOps {
-					args = append(args, argOp.Exec(ec)...)
+					moreArgs, err := argOp.Exec(ec)
+					if err != nil {
+						return err
+					}
+					args = append(args, moreArgs...)
 				}
 			}
 
 			// opts
 			// XXX This conversion should be avoided.
-			opts := optsOp(ec)[0].(types.Map)
+			optValues, err := optsOp(ec)
+			if err != nil {
+				return err
+			}
+			opts := optValues[0].(types.Map)
 			convertedOpts := make(map[string]types.Value)
 			var errOpt error
 			opts.IteratePair(func(k, v types.Value) bool {
@@ -371,7 +383,10 @@ func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFu
 		defer fixNilVariables(variables)
 		defer fixNilVariables(rest)
 
-		values := valuesOp.Exec(ec)
+		values, err := valuesOp.Exec(ec)
+		if err != nil {
+			return err
+		}
 
 		if len(rest) > 1 {
 			return ErrMoreThanOneRest

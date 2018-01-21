@@ -136,7 +136,10 @@ func newDelElementOp(ns, name string, begin, headEnd int, indexOps []ValuesOp) O
 	return func(f *Frame) error {
 		var indicies []types.Value
 		for _, indexOp := range indexOps {
-			indexValues := indexOp.Exec(f)
+			indexValues, err := indexOp.Exec(f)
+			if err != nil {
+				return err
+			}
 			if len(indexValues) != 1 {
 				f.errorpf(indexOp.Begin, indexOp.End, "index must evaluate to a single value in argument to del")
 			}
@@ -189,7 +192,11 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 		// function. This step allows the definition of recursive
 		// functions; the actual function will never be called.
 		ec.local[varName] = vartypes.NewPtr(&BuiltinFn{"<shouldn't be called>", nop})
-		closure := op(ec)[0].(*Closure)
+		values, err := op(ec)
+		if err != nil {
+			return err
+		}
+		closure := values[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
 		return ec.local[varName].Set(closure)
 	}
@@ -328,7 +335,10 @@ func compileAndOr(cp *compiler, fn *parse.Form, init, stopAt bool) OpFunc {
 	return func(ec *Frame) error {
 		var lastValue types.Value = types.Bool(init)
 		for _, op := range argOps {
-			values := op.Exec(ec)
+			values, err := op.Exec(ec)
+			if err != nil {
+				return err
+			}
 			for _, value := range values {
 				if types.ToBool(value) == stopAt {
 					ec.OutputChan() <- value
@@ -370,7 +380,11 @@ func compileIf(cp *compiler, fn *parse.Form) OpFunc {
 		}
 		else_ := elseOp.execlambdaOp(ec)
 		for i, condOp := range condOps {
-			if allTrue(condOp.Exec(ec.fork("if cond"))) {
+			condValues, err := condOp.Exec(ec.fork("if cond"))
+			if err != nil {
+				return err
+			}
+			if allTrue(condValues) {
 				bodies[i].Call(ec.fork("if body"), NoArgs, NoOpts)
 				return nil
 			}
@@ -395,11 +409,14 @@ func compileWhile(cp *compiler, fn *parse.Form) OpFunc {
 		body := bodyOp.execlambdaOp(ec)
 
 		for {
-			cond := condOp.Exec(ec.fork("while cond"))
-			if !allTrue(cond) {
+			condValues, err := condOp.Exec(ec.fork("while cond"))
+			if err != nil {
+				return err
+			}
+			if !allTrue(condValues) {
 				break
 			}
-			err := ec.fork("while").PCall(body, NoArgs, NoOpts)
+			err = ec.fork("while").PCall(body, NoArgs, NoOpts)
 			if err != nil {
 				exc := err.(*Exception)
 				if exc.Cause == Continue {
@@ -559,7 +576,11 @@ func (op ValuesOp) execlambdaOp(ec *Frame) Callable {
 		return nil
 	}
 
-	return op.Exec(ec)[0].(Callable)
+	values, err := op.Exec(ec)
+	if err != nil {
+		panic("must not be erroneous")
+	}
+	return values[0].(Callable)
 }
 
 // execMustOne executes the LValuesOp and raises an exception if it does not

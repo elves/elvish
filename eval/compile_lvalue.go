@@ -154,7 +154,8 @@ func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpF
 
 		indicies := make([]types.Value, len(indexOps))
 		for i, op := range indexOps {
-			values := op.Exec(ec)
+			values, err := op.Exec(ec)
+			maybeThrow(err)
 			// TODO: Implement multi-indexing.
 			if len(values) != 1 {
 				throw(errors.New("multi indexing not implemented"))

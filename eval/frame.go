@@ -118,7 +118,14 @@ func (ec *Frame) fork(name string) *Frame {
 // wrapped in an Error.
 func (ec *Frame) PEval(op Op) (err error) {
 	defer catch(&err, ec)
-	return op.Exec(ec)
+	e := op.Exec(ec)
+	if e != nil {
+		if exc, ok := e.(*Exception); ok {
+			return exc
+		}
+		return ec.makeException(e)
+	}
+	return nil
 }
 
 func (ec *Frame) PCall(f Callable, args []types.Value, opts map[string]types.Value) (err error) {
