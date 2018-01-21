@@ -190,7 +190,7 @@ func compileFn(cp *compiler, fn *parse.Form) OpBody {
 
 type fnOp struct {
 	varName  string
-	lambdaOp ValuesOpFunc
+	lambdaOp ValuesOpBody
 }
 
 func (op fnOp) Invoke(fm *Frame) error {
@@ -198,7 +198,7 @@ func (op fnOp) Invoke(fm *Frame) error {
 	// allows the definition of recursive functions; the actual function will
 	// never be called.
 	fm.local[op.varName] = vartypes.NewPtr(&BuiltinFn{"<shouldn't be called>", nop})
-	values, err := op.lambdaOp(fm)
+	values, err := op.lambdaOp.Invoke(fm)
 	if err != nil {
 		return err
 	}
@@ -426,7 +426,7 @@ func (op *ifOp) Invoke(fm *Frame) error {
 			return bodies[i].Call(fm.fork("if body"), NoArgs, NoOpts)
 		}
 	}
-	if op.elseOp.Func != nil {
+	if op.elseOp.Body != nil {
 		return else_.Call(fm.fork("if else"), NoArgs, NoOpts)
 	}
 	return nil
@@ -633,7 +633,7 @@ func (op *tryOp) Invoke(ec *Frame) error {
 // execLambdaOp executes a ValuesOp that is known to yield a lambda and returns
 // the lambda. If the ValuesOp is empty, it returns a nil.
 func (op ValuesOp) execlambdaOp(ec *Frame) Callable {
-	if op.Func == nil {
+	if op.Body == nil {
 		return nil
 	}
 

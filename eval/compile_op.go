@@ -196,16 +196,14 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 				// Special form.
 				specialOpFunc = compileForm(cp, n)
 			} else {
-				var headOpFunc ValuesOpFunc
+				var headOpFunc ValuesOpBody
 				explode, ns, name := ParseVariable(headStr)
 				if !explode && cp.registerVariableGet(ns, name+FnSuffix) {
 					// $head~ resolves.
-					headOpFunc = variable(headStr + FnSuffix)
+					headOpFunc = variableOp{false, ns, name + FnSuffix}
 				} else {
 					// Fall back to $e:head~.
-					headOpFunc = func(f *Frame) ([]types.Value, error) {
-						return []types.Value{ExternalCmd{headStr}}, nil
-					}
+					headOpFunc = literalValues(ExternalCmd{headStr})
 				}
 				headOp = ValuesOp{headOpFunc, n.Head.Begin(), n.Head.End()}
 			}
@@ -220,7 +218,7 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 		// This cannot be replaced with newSeqValuesOp as it depends on the fact
 		// that argOps will be changed later.
 		argsOp := ValuesOp{
-			func(ec *Frame) ([]types.Value, error) {
+			funcValuesOp(func(ec *Frame) ([]types.Value, error) {
 				var values []types.Value
 				for _, op := range argOps {
 					moreValues, err := op.Exec(ec)
@@ -230,7 +228,7 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 					values = append(values, moreValues...)
 				}
 				return values, nil
-			}, -1, -1}
+			}), -1, -1}
 		if len(argOps) > 0 {
 			argsOp.Begin = argOps[0].Begin
 			argsOp.End = argOps[len(argOps)-1].End
@@ -256,7 +254,7 @@ type formOp struct {
 	specialOpBody  OpBody
 	headOp         ValuesOp
 	argOps         []ValuesOp
-	optsOp         ValuesOpFunc
+	optsOp         ValuesOpBody
 	spaceyAssignOp Op
 	begin, end     int
 }
@@ -329,7 +327,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 	}
 	var headFn Callable
 	var args []types.Value
-	if op.headOp.Func != nil {
+	if op.headOp.Body != nil {
 		// head
 		headFn = ec.ExecAndUnwrap("head of command", op.headOp).One().Callable()
 
@@ -345,7 +343,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 
 	// opts
 	// XXX This conversion should be avoided.
-	optValues, err := op.optsOp(ec)
+	optValues, err := op.optsOp.Invoke(ec)
 	if err != nil {
 		return err
 	}
@@ -502,7 +500,7 @@ type redirOp struct {
 
 func (op *redirOp) Invoke(ec *Frame) error {
 	var dst int
-	if op.dstOp.Func == nil {
+	if op.dstOp.Body == nil {
 		// use default dst fd
 		switch op.mode {
 		case parse.Read:

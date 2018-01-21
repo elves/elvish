@@ -21,20 +21,22 @@ var outputCaptureBufferSize = 16
 
 // ValuesOp is an operation on an Frame that produce Value's.
 type ValuesOp struct {
-	Func       ValuesOpFunc
+	Body       ValuesOpBody
 	Begin, End int
 }
 
-// ValuesOpFunc is the body of ValuesOp.
-type ValuesOpFunc func(*Frame) ([]types.Value, error)
+// ValuesOpBody is the body of ValuesOp.
+type ValuesOpBody interface {
+	Invoke(*Frame) ([]types.Value, error)
+}
 
 // Exec executes a ValuesOp and produces Value's.
 func (op ValuesOp) Exec(ec *Frame) ([]types.Value, error) {
 	ec.begin, ec.end = op.Begin, op.End
-	return op.Func(ec)
+	return op.Body.Invoke(ec)
 }
 
-func (cp *compiler) compound(n *parse.Compound) ValuesOpFunc {
+func (cp *compiler) compound(n *parse.Compound) ValuesOpBody {
 	if len(n.Indexings) == 0 {
 		return literalStr("")
 	}
@@ -45,67 +47,70 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOpFunc {
 	if n.Indexings[0].Head.Type == parse.Tilde {
 		// A lone ~.
 		if len(n.Indexings) == 1 {
-			return func(ec *Frame) ([]types.Value, error) {
+			return funcValuesOp(func(ec *Frame) ([]types.Value, error) {
 				home, err := util.GetHome("")
 				if err != nil {
 					return nil, err
 				}
 				return []types.Value{types.String(home)}, nil
-			}
+			})
 		}
 		tilde = true
 		indexings = indexings[1:]
 	}
 
-	ops := cp.indexingOps(indexings)
+	return compoundOp{tilde, cp.indexingOps(indexings)}
+}
 
-	return func(ec *Frame) ([]types.Value, error) {
-		// Accumulator.
-		vs, err := ops[0].Exec(ec)
+type compoundOp struct {
+	tilde  bool
+	subops []ValuesOp
+}
+
+func (op compoundOp) Invoke(ec *Frame) ([]types.Value, error) {
+	// Accumulator.
+	vs, err := op.subops[0].Exec(ec)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, subop := range op.subops[1:] {
+		us, err := subop.Exec(ec)
 		if err != nil {
 			return nil, err
 		}
-
-		// Logger.Printf("concatenating %v with %d more", vs, len(ops)-1)
-
-		for _, op := range ops[1:] {
-			us, err := op.Exec(ec)
-			if err != nil {
-				return nil, err
-			}
-			vs, err = outerProduct(vs, us, cat)
-			if err != nil {
-				return nil, err
-			}
+		vs, err = outerProduct(vs, us, cat)
+		if err != nil {
+			return nil, err
 		}
-		if tilde {
-			newvs := make([]types.Value, len(vs))
-			for i, v := range vs {
-				newvs[i] = doTilde(v)
-			}
-			vs = newvs
-		}
-		hasGlob := false
-		for _, v := range vs {
-			if _, ok := v.(GlobPattern); ok {
-				hasGlob = true
-				break
-			}
-		}
-		if hasGlob {
-			newvs := make([]types.Value, 0, len(vs))
-			for _, v := range vs {
-				if gp, ok := v.(GlobPattern); ok {
-					// Logger.Printf("globbing %v", gp)
-					newvs = append(newvs, doGlob(gp, ec.Interrupts())...)
-				} else {
-					newvs = append(newvs, v)
-				}
-			}
-			vs = newvs
-		}
-		return vs, nil
 	}
+	if op.tilde {
+		newvs := make([]types.Value, len(vs))
+		for i, v := range vs {
+			newvs[i] = doTilde(v)
+		}
+		vs = newvs
+	}
+	hasGlob := false
+	for _, v := range vs {
+		if _, ok := v.(GlobPattern); ok {
+			hasGlob = true
+			break
+		}
+	}
+	if hasGlob {
+		newvs := make([]types.Value, 0, len(vs))
+		for _, v := range vs {
+			if gp, ok := v.(GlobPattern); ok {
+				// Logger.Printf("globbing %v", gp)
+				newvs = append(newvs, doGlob(gp, ec.Interrupts())...)
+			} else {
+				newvs = append(newvs, v)
+			}
+		}
+		vs = newvs
+	}
+	return vs, nil
 }
 
 func cat(lhs, rhs types.Value) (types.Value, error) {
@@ -200,88 +205,62 @@ func doTilde(v types.Value) types.Value {
 	}
 }
 
-func (cp *compiler) array(n *parse.Array) ValuesOpFunc {
-	return newSeqValuesOp(cp.compoundOps(n.Compounds))
+func (cp *compiler) array(n *parse.Array) ValuesOpBody {
+	return seqValuesOp{cp.compoundOps(n.Compounds)}
 }
 
-func (cp *compiler) indexing(n *parse.Indexing) ValuesOpFunc {
+func (cp *compiler) indexing(n *parse.Indexing) ValuesOpBody {
 	if len(n.Indicies) == 0 {
 		return cp.primary(n.Head)
 	}
 
-	headOp := cp.primaryOp(n.Head)
-	indexOps := cp.arrayOps(n.Indicies)
+	return &indexingOp{cp.primaryOp(n.Head), cp.arrayOps(n.Indicies)}
+}
 
-	return func(ec *Frame) ([]types.Value, error) {
-		vs, err := headOp.Exec(ec)
+type indexingOp struct {
+	headOp   ValuesOp
+	indexOps []ValuesOp
+}
+
+func (op *indexingOp) Invoke(ec *Frame) ([]types.Value, error) {
+	vs, err := op.headOp.Exec(ec)
+	if err != nil {
+		return nil, err
+	}
+	for _, indexOp := range op.indexOps {
+		indicies, err := indexOp.Exec(ec)
 		if err != nil {
 			return nil, err
 		}
-		for _, indexOp := range indexOps {
-			indicies, err := indexOp.Exec(ec)
-			if err != nil {
-				return nil, err
-			}
-			newvs := make([]types.Value, 0, len(vs)*len(indicies))
-			for _, v := range vs {
-				indexer, ok := v.(types.Indexer)
-				if !ok {
-					return nil, fmt.Errorf("a %s not indexable", v.Kind())
-				}
-				for _, index := range indicies {
-					result, err := indexer.Index(index)
-					if err != nil {
-						return nil, err
-					}
-					newvs = append(newvs, result)
-				}
-			}
-			vs = newvs
-		}
-		return vs, nil
-	}
-}
-
-func literalValues(v ...types.Value) ValuesOpFunc {
-	return func(e *Frame) ([]types.Value, error) {
-		return v, nil
-	}
-}
-
-func literalStr(text string) ValuesOpFunc {
-	return literalValues(types.String(text))
-}
-
-func variable(qname string) ValuesOpFunc {
-	explode, ns, name := ParseVariable(qname)
-	return func(ec *Frame) ([]types.Value, error) {
-		variable := ec.ResolveVar(ns, name)
-		if variable == nil {
-			return nil, fmt.Errorf("variable $%s not found", qname)
-		}
-		value := variable.Get()
-		if explode {
-			iterator, ok := value.(types.Iterator)
+		newvs := make([]types.Value, 0, len(vs)*len(indicies))
+		for _, v := range vs {
+			indexer, ok := v.(types.Indexer)
 			if !ok {
-				// Use qname[1:] to skip the leading "@"
-				return nil, fmt.Errorf("variable $%s (kind %s) cannot be exploded", qname[1:], value.Kind())
+				return nil, fmt.Errorf("a %s not indexable", v.Kind())
 			}
-			return types.CollectFromIterator(iterator), nil
+			for _, index := range indicies {
+				result, err := indexer.Index(index)
+				if err != nil {
+					return nil, err
+				}
+				newvs = append(newvs, result)
+			}
 		}
-		return []types.Value{value}, nil
+		vs = newvs
 	}
+	return vs, nil
 }
 
-func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
+func (cp *compiler) primary(n *parse.Primary) ValuesOpBody {
 	switch n.Type {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return literalStr(n.Value)
 	case parse.Variable:
-		qname := n.Value
-		if !cp.registerVariableGetQname(qname) {
+		explode, ns, name := ParseVariable(n.Value)
+		if !cp.registerVariableGet(ns, name) {
 			cp.errorf("variable $%s not found", n.Value)
 		}
-		return variable(qname)
+		return &variableOp{explode, ns, name}
 	case parse.Wildcard:
 		seg, err := wildcardToSegment(n.SourceText())
 		if err != nil {
@@ -294,9 +273,9 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 		cp.errorf("compiler bug: Tilde not handled in .compound")
 		return literalStr("~")
 	case parse.ExceptionCapture:
-		return cp.exceptionCapture(n.Chunk)
+		return exceptionCaptureOp{cp.chunkOp(n.Chunk)}
 	case parse.OutputCapture:
-		return cp.outputCapture(n)
+		return outputCaptureOp{cp.chunkOp(n.Chunk)}
 	case parse.List:
 		return cp.list(n)
 	case parse.Lambda:
@@ -311,41 +290,59 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpFunc {
 	}
 }
 
-func (cp *compiler) list(n *parse.Primary) ValuesOpFunc {
+type variableOp struct {
+	explode bool
+	ns      string
+	name    string
+}
+
+func (op variableOp) Invoke(ec *Frame) ([]types.Value, error) {
+	variable := ec.ResolveVar(op.ns, op.name)
+	if variable == nil {
+		return nil, fmt.Errorf("variable $%s:%s not found", op.ns, op.name)
+	}
+	value := variable.Get()
+	if op.explode {
+		iterator, ok := value.(types.Iterator)
+		if !ok {
+			// Use qname[1:] to skip the leading "@"
+			return nil, fmt.Errorf("variable $%s:%s (kind %s) cannot be exploded", op.ns, op.name, value.Kind())
+		}
+		return types.CollectFromIterator(iterator), nil
+	}
+	return []types.Value{value}, nil
+}
+
+func (cp *compiler) list(n *parse.Primary) ValuesOpBody {
 	// TODO(xiaq): Use Vector.Cons to build the list, instead of building a
 	// slice and converting to Vector.
-	op := newSeqValuesOp(cp.compoundOps(n.Elements))
-	return func(ec *Frame) ([]types.Value, error) {
-		values, err := op(ec)
-		if err != nil {
-			return nil, err
-		}
-		return []types.Value{types.MakeList(values...)}, nil
-	}
+	return listOp{seqValuesOp{cp.compoundOps(n.Elements)}}
 }
 
-func (cp *compiler) exceptionCapture(n *parse.Chunk) ValuesOpFunc {
-	op := cp.chunkOp(n)
-	return func(ec *Frame) ([]types.Value, error) {
-		err := ec.PEval(op)
-		if err == nil {
-			return []types.Value{OK}, nil
-		}
-		return []types.Value{err.(*Exception)}, nil
+type listOp struct{ subop ValuesOpBody }
+
+func (op listOp) Invoke(fm *Frame) ([]types.Value, error) {
+	values, err := op.subop.Invoke(fm)
+	if err != nil {
+		return nil, err
 	}
+	return []types.Value{types.MakeList(values...)}, nil
 }
 
-func (cp *compiler) outputCapture(n *parse.Primary) ValuesOpFunc {
-	op := cp.chunkOp(n.Chunk)
-	return func(ec *Frame) ([]types.Value, error) {
-		return captureOutput(ec, op), nil
+type exceptionCaptureOp struct{ subop Op }
+
+func (op exceptionCaptureOp) Invoke(fm *Frame) ([]types.Value, error) {
+	err := fm.PEval(op.subop)
+	if err == nil {
+		return []types.Value{OK}, nil
 	}
+	return []types.Value{err.(*Exception)}, nil
 }
 
-func captureOutput(ec *Frame, op Op) []types.Value {
-	vs, err := pcaptureOutput(ec, op)
-	maybeThrow(err)
-	return vs
+type outputCaptureOp struct{ subop Op }
+
+func (op outputCaptureOp) Invoke(fm *Frame) ([]types.Value, error) {
+	return pcaptureOutput(fm, op.subop)
 }
 
 func pcaptureOutput(ec *Frame, op Op) ([]types.Value, error) {
@@ -417,7 +414,7 @@ func pcaptureOutputInner(ec *Frame, op Op, valuesCb func(<-chan types.Value), by
 	return err
 }
 
-func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
+func (cp *compiler) lambda(n *parse.Primary) ValuesOpBody {
 	// Parse signature.
 	var (
 		argNames      []string
@@ -481,7 +478,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 	}
 	thisScope.set("opts")
 
-	op := cp.chunkOp(n.Chunk)
+	subop := cp.chunkOp(n.Chunk)
 
 	// XXX The fiddlings with cp.capture is error-prone.
 	capture := cp.capture
@@ -492,28 +489,38 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpFunc {
 		cp.registerVariableGetQname(name)
 	}
 
-	srcMeta := cp.srcMeta
-
-	return func(ec *Frame) ([]types.Value, error) {
-		evCapture := make(Ns)
-		for name := range capture {
-			evCapture[name] = ec.ResolveVar("", name)
-		}
-		optDefaults := make([]types.Value, len(optDefaultOps))
-		for i, op := range optDefaultOps {
-			defaultValue := ec.ExecAndUnwrap("option default value", op).One().Any()
-			optDefaults[i] = defaultValue
-		}
-		// XXX(xiaq): Capture uses.
-		return []types.Value{&Closure{argNames, restArgName, optNames, optDefaults, op, evCapture, srcMeta}}, nil
-	}
+	return &lambdaOp{argNames, restArgName, optNames, optDefaultOps, capture, subop, cp.srcMeta}
 }
 
-func (cp *compiler) map_(n *parse.Primary) ValuesOpFunc {
+type lambdaOp struct {
+	argNames      []string
+	restArgName   string
+	optNames      []string
+	optDefaultOps []ValuesOp
+	capture       staticNs
+	subop         Op
+	srcMeta       *Source
+}
+
+func (op *lambdaOp) Invoke(fm *Frame) ([]types.Value, error) {
+	evCapture := make(Ns)
+	for name := range op.capture {
+		evCapture[name] = fm.ResolveVar("", name)
+	}
+	optDefaults := make([]types.Value, len(op.optDefaultOps))
+	for i, op := range op.optDefaultOps {
+		defaultValue := fm.ExecAndUnwrap("option default value", op).One().Any()
+		optDefaults[i] = defaultValue
+	}
+	// XXX(xiaq): Capture uses.
+	return []types.Value{&Closure{op.argNames, op.restArgName, op.optNames, optDefaults, op.subop, evCapture, op.srcMeta}}, nil
+}
+
+func (cp *compiler) map_(n *parse.Primary) ValuesOpBody {
 	return cp.mapPairs(n.MapPairs)
 }
 
-func (cp *compiler) mapPairs(pairs []*parse.MapPair) ValuesOpFunc {
+func (cp *compiler) mapPairs(pairs []*parse.MapPair) ValuesOpBody {
 	npairs := len(pairs)
 	keysOps := make([]ValuesOp, npairs)
 	valuesOps := make([]ValuesOp, npairs)
@@ -528,46 +535,73 @@ func (cp *compiler) mapPairs(pairs []*parse.MapPair) ValuesOpFunc {
 		}
 		begins[i], ends[i] = pair.Begin(), pair.End()
 	}
-	return func(ec *Frame) ([]types.Value, error) {
-		m := hashmap.Empty
-		for i := 0; i < npairs; i++ {
-			keys, err := keysOps[i].Exec(ec)
-			if err != nil {
-				return nil, err
-			}
-			values, err := valuesOps[i].Exec(ec)
-			if err != nil {
-				return nil, err
-			}
-			if len(keys) != len(values) {
-				ec.errorpf(begins[i], ends[i],
-					"%d keys but %d values", len(keys), len(values))
-			}
-			for j, key := range keys {
-				m = m.Assoc(key, values[j])
-			}
-		}
-		return []types.Value{types.NewMap(m)}, nil
-	}
+	return &mapPairsOp{keysOps, valuesOps, begins, ends}
 }
 
-func (cp *compiler) braced(n *parse.Primary) ValuesOpFunc {
+type mapPairsOp struct {
+	keysOps   []ValuesOp
+	valuesOps []ValuesOp
+	begins    []int
+	ends      []int
+}
+
+func (op *mapPairsOp) Invoke(fm *Frame) ([]types.Value, error) {
+	m := hashmap.Empty
+	for i := range op.keysOps {
+		keys, err := op.keysOps[i].Exec(fm)
+		if err != nil {
+			return nil, err
+		}
+		values, err := op.valuesOps[i].Exec(fm)
+		if err != nil {
+			return nil, err
+		}
+		if len(keys) != len(values) {
+			fm.errorpf(op.begins[i], op.ends[i],
+				"%d keys but %d values", len(keys), len(values))
+		}
+		for j, key := range keys {
+			m = m.Assoc(key, values[j])
+		}
+	}
+	return []types.Value{types.NewMap(m)}, nil
+}
+
+func (cp *compiler) braced(n *parse.Primary) ValuesOpBody {
 	ops := cp.compoundOps(n.Braced)
 	// TODO: n.IsRange
 	// isRange := n.IsRange
-	return newSeqValuesOp(ops)
+	return seqValuesOp{ops}
 }
 
-func newSeqValuesOp(ops []ValuesOp) ValuesOpFunc {
-	return func(ec *Frame) ([]types.Value, error) {
-		var values []types.Value
-		for _, op := range ops {
-			moreValues, err := op.Exec(ec)
-			if err != nil {
-				return nil, err
-			}
-			values = append(values, moreValues...)
-		}
-		return values, nil
-	}
+type literalValuesOp struct{ values []types.Value }
+
+func (op literalValuesOp) Invoke(*Frame) ([]types.Value, error) {
+	return op.values, nil
 }
+
+func literalValues(v ...types.Value) ValuesOpBody {
+	return literalValuesOp{v}
+}
+
+func literalStr(text string) ValuesOpBody {
+	return literalValues(types.String(text))
+}
+
+type seqValuesOp struct{ subops []ValuesOp }
+
+func (op seqValuesOp) Invoke(ec *Frame) ([]types.Value, error) {
+	var values []types.Value
+	for _, subop := range op.subops {
+		moreValues, err := subop.Exec(ec)
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, moreValues...)
+	}
+	return values, nil
+}
+
+type funcValuesOp func(*Frame) ([]types.Value, error)
+
+func (op funcValuesOp) Invoke(fm *Frame) ([]types.Value, error) { return op(fm) }
