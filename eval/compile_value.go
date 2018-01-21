@@ -73,8 +73,10 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOpFunc {
 			if err != nil {
 				return nil, err
 			}
-			vs = outerProduct(vs, us, cat)
-			// Logger.Printf("with %v => %v", us, vs)
+			vs, err = outerProduct(vs, us, cat)
+			if err != nil {
+				return nil, err
+			}
 		}
 		if tilde {
 			newvs := make([]types.Value, len(vs))
@@ -106,45 +108,48 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOpFunc {
 	}
 }
 
-func cat(lhs, rhs types.Value) types.Value {
+func cat(lhs, rhs types.Value) (types.Value, error) {
 	switch lhs := lhs.(type) {
 	case types.String:
 		switch rhs := rhs.(type) {
 		case types.String:
-			return lhs + rhs
+			return lhs + rhs, nil
 		case GlobPattern:
 			segs := stringToSegments(string(lhs))
 			// We know rhs contains exactly one segment.
 			segs = append(segs, rhs.Segments[0])
-			return GlobPattern{glob.Pattern{segs, ""}, rhs.Flags, rhs.Buts}
+			return GlobPattern{glob.Pattern{segs, ""}, rhs.Flags, rhs.Buts}, nil
 		}
 	case GlobPattern:
 		// NOTE Modifies lhs in place.
 		switch rhs := rhs.(type) {
 		case types.String:
 			lhs.append(stringToSegments(string(rhs))...)
-			return lhs
+			return lhs, nil
 		case GlobPattern:
 			// We know rhs contains exactly one segment.
 			lhs.append(rhs.Segments[0])
 			lhs.Flags |= rhs.Flags
 			lhs.Buts = append(lhs.Buts, rhs.Buts...)
-			return lhs
+			return lhs, nil
 		}
 	}
-	throw(fmt.Errorf("unsupported concat: %s and %s", lhs.Kind(), rhs.Kind()))
-	panic("unreachable")
+	return nil, fmt.Errorf("unsupported concat: %s and %s", lhs.Kind(), rhs.Kind())
 }
 
-func outerProduct(vs []types.Value, us []types.Value, f func(types.Value, types.Value) types.Value) []types.Value {
+func outerProduct(vs []types.Value, us []types.Value, f func(types.Value, types.Value) (types.Value, error)) ([]types.Value, error) {
 	ws := make([]types.Value, len(vs)*len(us))
 	nu := len(us)
 	for i, v := range vs {
 		for j, u := range us {
-			ws[i*nu+j] = f(v, u)
+			var err error
+			ws[i*nu+j], err = f(v, u)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
-	return ws
+	return ws, nil
 }
 
 // Errors thrown when globbing.

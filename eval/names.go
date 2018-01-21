@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"errors"
 	"os"
 	"strings"
 
@@ -9,10 +8,6 @@ import (
 )
 
 // Resolution and iteration of variables and namespaces.
-
-// ErrStoreUnconnected is thrown by ResolveVar when a shared: variable needs to
-// be resolved but the store is not connected.
-var ErrStoreUnconnected = errors.New("store unconnected")
 
 // EachVariableInTop calls the passed function for each variable name in
 // namespace ns that can be found from the top context.
@@ -105,7 +100,7 @@ func (ec *Frame) ResolveVar(ns, name string) vartypes.Variable {
 		return vartypes.NewEnv(name)
 	case "shared":
 		if ec.DaemonClient == nil {
-			throw(ErrStoreUnconnected)
+			return nil
 		}
 		return sharedVariable{ec.DaemonClient, name}
 	default:

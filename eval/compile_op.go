@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 // Op is an operation on an Frame.
@@ -298,59 +299,53 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		}
 
 		if specialOpFunc != nil {
-			err := specialOpFunc(ec)
-			maybeThrow(err)
-		} else {
-			var headFn Callable
-			var args []types.Value
-			if headOp.Func != nil {
-				// head
-				headFn = ec.ExecAndUnwrap("head of command", headOp).One().Callable()
+			return specialOpFunc(ec)
+		}
+		var headFn Callable
+		var args []types.Value
+		if headOp.Func != nil {
+			// head
+			headFn = ec.ExecAndUnwrap("head of command", headOp).One().Callable()
 
-				// args
-				for _, argOp := range argOps {
-					moreArgs, err := argOp.Exec(ec)
-					if err != nil {
-						return err
-					}
-					args = append(args, moreArgs...)
-				}
-			}
-
-			// opts
-			// XXX This conversion should be avoided.
-			optValues, err := optsOp(ec)
-			if err != nil {
-				return err
-			}
-			opts := optValues[0].(types.Map)
-			convertedOpts := make(map[string]types.Value)
-			var errOpt error
-			opts.IteratePair(func(k, v types.Value) bool {
-				if ks, ok := k.(types.String); ok {
-					convertedOpts[string(ks)] = v
-				} else {
-					errOpt = fmt.Errorf("Option key must be string, got %s", k.Kind())
-					return false
-				}
-				return true
-			})
-			if errOpt != nil {
-				return errOpt
-			}
-
-			ec.begin, ec.end = begin, end
-
-			if headFn != nil {
-				return headFn.Call(ec, args, convertedOpts)
-			} else {
-				err := spaceyAssignOp.Exec(ec)
+			// args
+			for _, argOp := range argOps {
+				moreArgs, err := argOp.Exec(ec)
 				if err != nil {
 					return err
 				}
+				args = append(args, moreArgs...)
 			}
 		}
-		return nil
+
+		// opts
+		// XXX This conversion should be avoided.
+		optValues, err := optsOp(ec)
+		if err != nil {
+			return err
+		}
+		opts := optValues[0].(types.Map)
+		convertedOpts := make(map[string]types.Value)
+		var errOpt error
+		opts.IteratePair(func(k, v types.Value) bool {
+			if ks, ok := k.(types.String); ok {
+				convertedOpts[string(ks)] = v
+			} else {
+				errOpt = fmt.Errorf("Option key must be string, got %s", k.Kind())
+				return false
+			}
+			return true
+		})
+		if errOpt != nil {
+			return errOpt
+		}
+
+		ec.begin, ec.end = begin, end
+
+		if headFn != nil {
+			return headFn.Call(ec, args, convertedOpts)
+		} else {
+			return spaceyAssignOp.Exec(ec)
+		}
 	}
 }
 
@@ -374,7 +369,7 @@ func (cp *compiler) assignment(n *parse.Assignment) OpFunc {
 var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
 
 func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFunc {
-	return func(ec *Frame) error {
+	return func(ec *Frame) (errRet error) {
 		variables, err := variablesOp.Exec(ec)
 		if err != nil {
 			return err
@@ -391,8 +386,8 @@ func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFu
 		// level to fail, making the variables unaccessible.
 		//
 		// XXX(xiaq): Should think about how to get rid of this.
-		defer fixNilVariables(variables)
-		defer fixNilVariables(rest)
+		defer fixNilVariables(variables, &errRet)
+		defer fixNilVariables(rest, &errRet)
 
 		values, err := valuesOp.Exec(ec)
 		if err != nil {
@@ -429,14 +424,14 @@ func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFu
 	}
 }
 
-func fixNilVariables(vs []vartypes.Variable) {
+func fixNilVariables(vs []vartypes.Variable, perr *error) {
 	for _, v := range vs {
 		if vartypes.IsBlackhole(v) {
 			continue
 		}
 		if v.Get() == nil {
 			err := v.Set(types.String(""))
-			maybeThrow(err)
+			*perr = util.Errors(*perr, err)
 		}
 	}
 }
