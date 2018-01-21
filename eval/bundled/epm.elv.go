@@ -55,7 +55,7 @@ fn dest [pkg]{
 }
 
 fn is-installed [pkg]{
-  put ?(test -e (dest $pkg))
+  put (or (and ?(test -e (dest $pkg)) $true) $false)
 }
 
 fn -package-domain [pkg]{
