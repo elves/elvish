@@ -199,12 +199,28 @@ fn -package-op [pkg what]{
   }
 }
 
+# Merge two maps
+fn merge [a b]{ keys $b | each [k]{ a[$k] = $b[$k] }; put $a }
+
+# Uppercase first letter of a string
+fn first-upper [s]{
+  put (echo $s[0] | tr '[:lower:]' '[:upper:]')$s[(count $s[0]):]
+}
+
 # Read and parse the package metadata, if it exists
 fn metadata [pkg]{
-  res = [&]
-  mdata = (-package-metadata-file $pkg)
-  if (and (is-installed $pkg) ?(test -f $mdata)) {
-    res = (cat $mdata | from-json)
+  # Base metadata attributes
+  res = [
+    &name= $pkg
+    &method= (-package-method $pkg)
+    &src= (-package-op $pkg src)
+    &dst= (dest $pkg)
+    &installed= (is-installed $pkg)
+  ]
+  # Merge with package-specified attributes, if any
+  mdataf = (-package-metadata-file $pkg)
+  if (and (is-installed $pkg) ?(test -f $mdataf)) {
+    res = (merge (cat $mdataf | from-json) $res)
   }
   put $res
 }
