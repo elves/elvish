@@ -143,7 +143,7 @@ func (bac *builtinArgCompleter) Repr(int) string {
 	return "$edit:" + bac.name + eval.FnSuffix
 }
 
-func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []types.Value, opts map[string]types.Value) error {
 	eval.TakeNoOpt(opts)
 	words := make([]string, len(args))
 	for i, arg := range args {
@@ -165,7 +165,7 @@ func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []types.Value, opts ma
 	for rc := range rawCands {
 		output <- rc
 	}
-	maybeThrow(err)
+	return err
 }
 
 func complFilename(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {

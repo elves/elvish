@@ -298,7 +298,8 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		}
 
 		if specialOpFunc != nil {
-			specialOpFunc(ec)
+			err := specialOpFunc(ec)
+			maybeThrow(err)
 		} else {
 			var headFn Callable
 			var args []types.Value
@@ -341,7 +342,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			ec.begin, ec.end = begin, end
 
 			if headFn != nil {
-				headFn.Call(ec, args, convertedOpts)
+				return headFn.Call(ec, args, convertedOpts)
 			} else {
 				err := spaceyAssignOp.Exec(ec)
 				if err != nil {

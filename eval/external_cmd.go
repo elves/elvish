@@ -40,19 +40,19 @@ func (e ExternalCmd) Repr(int) string {
 }
 
 // Call calls an external command.
-func (e ExternalCmd) Call(ec *Frame, argVals []types.Value, opts map[string]types.Value) {
+func (e ExternalCmd) Call(ec *Frame, argVals []types.Value, opts map[string]types.Value) error {
 	if len(opts) > 0 {
-		throw(ErrExternalCmdOpts)
+		return ErrExternalCmdOpts
 	}
 	if util.DontSearch(e.Name) {
 		stat, err := os.Stat(e.Name)
 		if err == nil && stat.IsDir() {
 			// implicit cd
 			if len(argVals) > 0 {
-				throw(ErrCdNoArg)
+				return ErrCdNoArg
 			}
 			cdInner(e.Name, ec)
-			return
+			return nil
 		}
 	}
 
@@ -70,7 +70,7 @@ func (e ExternalCmd) Call(ec *Frame, argVals []types.Value, opts map[string]type
 
 	path, err := exec.LookPath(e.Name)
 	if err != nil {
-		throw(err)
+		return err
 	}
 
 	args[0] = path
@@ -79,16 +79,15 @@ func (e ExternalCmd) Call(ec *Frame, argVals []types.Value, opts map[string]type
 	proc, err := os.StartProcess(path, args, &os.ProcAttr{Files: files, Sys: sys})
 
 	if err != nil {
-		throw(err)
+		return err
 	}
 
 	state, err := proc.Wait()
 
 	if err != nil {
-		throw(err)
-	} else {
-		maybeThrow(NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid))
+		return err
 	}
+	return NewExternalCmdExit(e.Name, state.Sys().(syscall.WaitStatus), proc.Pid)
 }
 
 // EachExternal calls f for each name that can resolve to an external

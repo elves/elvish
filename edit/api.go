@@ -56,17 +56,18 @@ func (bf *BuiltinFn) Repr(int) string {
 }
 
 // Call calls a builtin function.
-func (bf *BuiltinFn) Call(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func (bf *BuiltinFn) Call(ec *eval.Frame, args []types.Value, opts map[string]types.Value) error {
 	eval.TakeNoOpt(opts)
 	eval.TakeNoArg(args)
 	ed, ok := ec.Editor.(*Editor)
 	if !ok {
-		throw(errEditorInvalid)
+		return errEditorInvalid
 	}
 	if !ed.active {
-		throw(errEditorInactive)
+		return errEditorInactive
 	}
 	bf.impl(ed)
+	return nil
 }
 
 // installModules installs edit: and edit:* modules.

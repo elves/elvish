@@ -47,8 +47,8 @@ func (b *BuiltinFn) Repr(int) string {
 }
 
 // Call calls a builtin function.
-func (b *BuiltinFn) Call(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	b.Impl(ec, args, opts)
+func (b *BuiltinFn) Call(ec *Frame, args []types.Value, opts map[string]types.Value) error {
+	return util.PCall(func() { b.Impl(ec, args, opts) })
 }
 
 var builtinFns []*BuiltinFn
@@ -207,7 +207,8 @@ func _time(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 
 	t0 := time.Now()
-	f.Call(ec, NoArgs, NoOpts)
+	err := f.Call(ec, NoArgs, NoOpts)
+	maybeThrow(err)
 	t1 := time.Now()
 
 	dt := t1.Sub(t0)

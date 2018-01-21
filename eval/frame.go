@@ -130,15 +130,20 @@ func (ec *Frame) PEval(op Op) (err error) {
 
 func (ec *Frame) PCall(f Callable, args []types.Value, opts map[string]types.Value) (err error) {
 	defer catch(&err, ec)
-	f.Call(ec, args, opts)
+	e := f.Call(ec, args, opts)
+	if e != nil {
+		if exc, ok := e.(*Exception); ok {
+			return exc
+		}
+		return ec.makeException(e)
+	}
 	return nil
 }
 
 func (ec *Frame) PCaptureOutput(fn Callable, args []types.Value, opts map[string]types.Value) (vs []types.Value, err error) {
 	// XXX There is no source.
 	opFunc := func(f *Frame) error {
-		fn.Call(f, args, opts)
-		return nil
+		return fn.Call(f, args, opts)
 	}
 	return pcaptureOutput(ec, Op{opFunc, -1, -1})
 }
@@ -146,8 +151,7 @@ func (ec *Frame) PCaptureOutput(fn Callable, args []types.Value, opts map[string
 func (ec *Frame) PCaptureOutputInner(fn Callable, args []types.Value, opts map[string]types.Value, valuesCb func(<-chan types.Value), bytesCb func(*os.File)) error {
 	// XXX There is no source.
 	opFunc := func(f *Frame) error {
-		fn.Call(f, args, opts)
-		return nil
+		return fn.Call(f, args, opts)
 	}
 	return pcaptureOutputInner(ec, Op{opFunc, -1, -1}, valuesCb, bytesCb)
 }

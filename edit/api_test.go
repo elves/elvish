@@ -26,12 +26,12 @@ func TestBuiltinFn(t *testing.T) {
 
 	ec := &eval.Frame{Evaler: &eval.Evaler{}}
 
-	if !util.Throws(func() { builtinFn.Call(ec, nil, nil) }, errEditorInvalid) {
+	if builtinFn.Call(ec, nil, nil) != errEditorInvalid {
 		t.Errorf("BuiltinFn should error when Editor is nil, didn't")
 	}
 
 	ec.Editor = &Editor{active: false}
-	if !util.Throws(func() { builtinFn.Call(ec, nil, nil) }, errEditorInactive) {
+	if builtinFn.Call(ec, nil, nil) != errEditorInactive {
 		t.Errorf("BuiltinFn should error when Editor is inactive, didn't")
 	}
 

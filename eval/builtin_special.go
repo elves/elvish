@@ -385,12 +385,11 @@ func compileIf(cp *compiler, fn *parse.Form) OpFunc {
 				return err
 			}
 			if allTrue(condValues) {
-				bodies[i].Call(ec.fork("if body"), NoArgs, NoOpts)
-				return nil
+				return bodies[i].Call(ec.fork("if body"), NoArgs, NoOpts)
 			}
 		}
 		if elseOp.Func != nil {
-			else_.Call(ec.fork("if else"), NoArgs, NoOpts)
+			return else_.Call(ec.fork("if else"), NoArgs, NoOpts)
 		}
 		return nil
 	}
@@ -495,7 +494,7 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 		}
 
 		if !iterated && elseBody != nil {
-			elseBody.Call(ec.fork("for else"), NoArgs, NoOpts)
+			return elseBody.Call(ec.fork("for else"), NoArgs, NoOpts)
 		}
 		return nil
 	}
@@ -566,7 +565,7 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 			}
 		}
 		if finally != nil {
-			finally.Call(ec.fork("try finally"), NoArgs, NoOpts)
+			return finally.Call(ec.fork("try finally"), NoArgs, NoOpts)
 		}
 		return err
 	}

@@ -49,14 +49,14 @@ func (c *Closure) Repr(int) string {
 }
 
 // Call calls a closure.
-func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Value) error {
 	if c.RestArg != "" {
 		if len(c.ArgNames) > len(args) {
-			throwf("need %d or more arguments, got %d", len(c.ArgNames), len(args))
+			return fmt.Errorf("need %d or more arguments, got %d", len(c.ArgNames), len(args))
 		}
 	} else {
 		if len(c.ArgNames) != len(args) {
-			throwf("need %d arguments, got %d", len(c.ArgNames), len(args))
+			return fmt.Errorf("need %d arguments, got %d", len(c.ArgNames), len(args))
 		}
 	}
 
@@ -93,13 +93,12 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 	for name := range opts {
 		_, used := optUsed[name]
 		if !used {
-			throwf("unknown option %s", parse.Quote(name))
+			return fmt.Errorf("unknown option %s", parse.Quote(name))
 		}
 	}
 
 	ec.traceback = ec.addTraceback()
 
 	ec.srcMeta = c.SrcMeta
-	err := c.Op.Exec(ec)
-	maybeThrow(err)
+	return c.Op.Exec(ec)
 }
