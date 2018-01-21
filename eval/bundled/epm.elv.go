@@ -228,15 +228,18 @@ fn metadata [pkg]{
 # Print out information about a package
 fn query [pkg]{
   data = (metadata $pkg)
-  echo (edit:styled "Package "$pkg cyan)
-  echo (edit:styled "Source:" blue) (-package-method $pkg) (-package-op $pkg src)
-  if (is-installed $pkg) {
-    echo (edit:styled "Installed at "(dest $pkg) green)
+  special-keys = [name method installed src dst]
+  echo (edit:styled "Package "$data[name] cyan)
+  if $data[installed] {
+    echo (edit:styled "Installed at "$data[dst] green)
   } else {
     echo (edit:styled "Not installed" red)
   }
+  echo (edit:styled "Source:" blue) $data[method] $data[src]
   keys $data | each [key]{
-    echo (edit:styled $key":" blue) $data[$key]
+    if (not (has-value $special-keys $key)) {
+      echo (edit:styled (first-upper $key)":" blue) $data[$key]
+    }
   }
 }
 
