@@ -45,30 +45,33 @@ func TestMultipleEval(t *testing.T) {
 }
 
 func BenchmarkOutputCaptureOverhead(b *testing.B) {
-	op := Op{func(*Frame) {}, 0, 0}
+	op := Op{func(*Frame) error { return nil }, 0, 0}
 	benchmarkOutputCapture(op, b.N)
 }
 
 func BenchmarkOutputCaptureValues(b *testing.B) {
-	op := Op{func(ec *Frame) {
+	op := Op{func(ec *Frame) error {
 		ec.ports[1].Chan <- types.String("test")
+		return nil
 	}, 0, 0}
 	benchmarkOutputCapture(op, b.N)
 }
 
 func BenchmarkOutputCaptureBytes(b *testing.B) {
 	bytesToWrite := []byte("test")
-	op := Op{func(ec *Frame) {
+	op := Op{func(ec *Frame) error {
 		ec.ports[1].File.Write(bytesToWrite)
+		return nil
 	}, 0, 0}
 	benchmarkOutputCapture(op, b.N)
 }
 
 func BenchmarkOutputCaptureMixed(b *testing.B) {
 	bytesToWrite := []byte("test")
-	op := Op{func(ec *Frame) {
+	op := Op{func(ec *Frame) error {
 		ec.ports[1].Chan <- types.Bool(false)
 		ec.ports[1].File.Write(bytesToWrite)
+		return nil
 	}, 0, 0}
 	benchmarkOutputCapture(op, b.N)
 }

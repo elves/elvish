@@ -9,12 +9,12 @@ func (ec *Frame) Interrupts() <-chan struct{} {
 
 var ErrInterrupted = errors.New("interrupted")
 
-// CheckInterrupts checks whether there has been an interrupt, and throws
-// ErrInterrupted if that is the case
-func (ec *Frame) CheckInterrupts() {
+// IsInterrupted reports whether there has been an interrupt.
+func (ec *Frame) IsInterrupted() bool {
 	select {
 	case <-ec.Interrupts():
-		throw(ErrInterrupted)
+		return true
 	default:
+		return false
 	}
 }

@@ -100,5 +100,6 @@ func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Valu
 	ec.traceback = ec.addTraceback()
 
 	ec.srcMeta = c.SrcMeta
-	c.Op.Exec(ec)
+	err := c.Op.Exec(ec)
+	maybeThrow(err)
 }

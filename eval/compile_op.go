@@ -2,6 +2,7 @@ package eval
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"sync"
 
@@ -17,25 +18,31 @@ type Op struct {
 }
 
 // OpFunc is the body of an Op.
-type OpFunc func(*Frame)
+type OpFunc func(*Frame) error
 
 // Exec executes an Op.
-func (op Op) Exec(ec *Frame) {
+func (op Op) Exec(ec *Frame) error {
 	ec.begin, ec.end = op.Begin, op.End
-	op.Func(ec)
+	return op.Func(ec)
 }
 
 func (cp *compiler) chunk(n *parse.Chunk) OpFunc {
 	ops := cp.pipelineOps(n.Pipelines)
 
-	return func(ec *Frame) {
+	return func(ec *Frame) error {
 		for _, op := range ops {
-			op.Exec(ec)
+			err := op.Exec(ec)
+			if err != nil {
+				return err
+			}
 		}
 		// Check for interrupts after the chunk.
 		// We also check for interrupts before each pipeline, so there is no
 		// need to check it before the chunk or after each pipeline.
-		ec.CheckInterrupts()
+		if ec.IsInterrupted() {
+			return ErrInterrupted
+		}
+		return nil
 	}
 }
 
@@ -44,8 +51,10 @@ const pipelineChanBufferSize = 32
 func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 	ops := cp.formOps(n.Forms)
 
-	return func(ec *Frame) {
-		ec.CheckInterrupts()
+	return func(ec *Frame) error {
+		if ec.IsInterrupted() {
+			return ErrInterrupted
+		}
 
 		bg := n.Background
 		if bg {
@@ -80,7 +89,7 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 				// os.Pipe sets O_CLOEXEC, which is what we want.
 				reader, writer, e := os.Pipe()
 				if e != nil {
-					throwf("failed to create pipe: %s", e)
+					return fmt.Errorf("failed to create pipe: %s", e)
 				}
 				ch := make(chan types.Value, pipelineChanBufferSize)
 				newEc.ports[1] = &Port{
@@ -132,9 +141,10 @@ func (cp *compiler) pipeline(n *parse.Pipeline) OpFunc {
 					ec.ports[2].File.WriteString(msg + "\n")
 				}
 			}()
+			return nil
 		} else {
 			wg.Wait()
-			maybeThrow(ComposeExceptionsFromPipeline(errors))
+			return ComposeExceptionsFromPipeline(errors)
 		}
 	}
 }
@@ -146,11 +156,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 		assignmentOps = cp.assignmentOps(n.Assignments)
 		if n.Head == nil && n.Vars == nil {
 			// Permanent assignment.
-			return func(ec *Frame) {
-				for _, op := range assignmentOps {
-					op.Exec(ec)
-				}
-			}
+			return newSeqOps(assignmentOps)
 		}
 		for _, a := range n.Assignments {
 			v, r := cp.lvaluesOp(a.Left)
@@ -227,7 +233,7 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 	begin, end := n.Begin(), n.End()
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
-	return func(ec *Frame) {
+	return func(ec *Frame) (errRet error) {
 		// Temporary assignment.
 		if len(saveVarsOps) > 0 {
 			// There is a temporary assignment.
@@ -250,7 +256,10 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			}
 			// Do assignment.
 			for _, op := range assignmentOps {
-				op.Exec(ec)
+				err := op.Exec(ec)
+				if err != nil {
+					return err
+				}
 			}
 			// Defer variable restoration. Will be executed even if an error
 			// occurs when evaling other part of the form.
@@ -264,7 +273,9 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 						val = types.String("")
 					}
 					err := v.Set(val)
-					maybeThrow(err)
+					if err != nil {
+						errRet = err
+					}
 					logger.Printf("restored %s = %s", v, val)
 				}
 			}()
@@ -272,7 +283,10 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 
 		// redirs
 		for _, redirOp := range redirOps {
-			redirOp.Exec(ec)
+			err := redirOp.Exec(ec)
+			if err != nil {
+				return err
+			}
 		}
 
 		if specialOpFunc != nil {
@@ -294,22 +308,32 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			// XXX This conversion should be avoided.
 			opts := optsOp(ec)[0].(types.Map)
 			convertedOpts := make(map[string]types.Value)
+			var errOpt error
 			opts.IteratePair(func(k, v types.Value) bool {
 				if ks, ok := k.(types.String); ok {
 					convertedOpts[string(ks)] = v
 				} else {
-					throwf("Option key must be string, got %s", k.Kind())
+					errOpt = fmt.Errorf("Option key must be string, got %s", k.Kind())
+					return false
 				}
 				return true
 			})
+			if errOpt != nil {
+				return errOpt
+			}
+
 			ec.begin, ec.end = begin, end
 
 			if headFn != nil {
 				headFn.Call(ec, args, convertedOpts)
 			} else {
-				spaceyAssignOp.Exec(ec)
+				err := spaceyAssignOp.Exec(ec)
+				if err != nil {
+					return err
+				}
 			}
 		}
+		return nil
 	}
 }
 
@@ -333,7 +357,7 @@ func (cp *compiler) assignment(n *parse.Assignment) OpFunc {
 var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
 
 func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFunc {
-	return func(ec *Frame) {
+	return func(ec *Frame) error {
 		variables := variablesOp.Exec(ec)
 		rest := restOp.Exec(ec)
 
@@ -350,27 +374,32 @@ func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFu
 		values := valuesOp.Exec(ec)
 
 		if len(rest) > 1 {
-			throw(ErrMoreThanOneRest)
+			return ErrMoreThanOneRest
 		}
 		if len(rest) == 1 {
 			if len(variables) > len(values) {
-				throw(ErrArityMismatch)
+				return ErrArityMismatch
 			}
 		} else {
 			if len(variables) != len(values) {
-				throw(ErrArityMismatch)
+				return ErrArityMismatch
 			}
 		}
 
 		for i, variable := range variables {
 			err := variable.Set(values[i])
-			maybeThrow(err)
+			if err != nil {
+				return err
+			}
 		}
 
 		if len(rest) == 1 {
 			err := rest[0].Set(types.MakeList(values[len(variables):]...))
-			maybeThrow(err)
+			if err != nil {
+				return err
+			}
 		}
+		return nil
 	}
 }
 
@@ -414,7 +443,7 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 		cp.errorf("bad redirection sign")
 	}
 
-	return func(ec *Frame) {
+	return func(ec *Frame) error {
 		var dst int
 		if dstOp.Func == nil {
 			// use default dst fd
@@ -424,7 +453,6 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 			case parse.Write, parse.ReadWrite, parse.Append:
 				dst = 1
 			default:
-				// XXX should report parser bug
 				panic("bad RedirMode; parser bug")
 			}
 		} else {
@@ -450,7 +478,7 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 			case types.String:
 				f, err := os.OpenFile(string(src), flag, defaultFileRedirPerm)
 				if err != nil {
-					throwf("failed to open file %s: %s", src.Repr(types.NoPretty), err)
+					return fmt.Errorf("failed to open file %s: %s", src.Repr(types.NoPretty), err)
 				}
 				ec.ports[dst] = &Port{
 					File: f, Chan: BlackholeChan,
@@ -479,5 +507,18 @@ func (cp *compiler) redir(n *parse.Redir) OpFunc {
 				srcUnwrap.error("string or file", "%s", src.Kind())
 			}
 		}
+		return nil
+	}
+}
+
+func newSeqOps(ops []Op) OpFunc {
+	return func(f *Frame) error {
+		for _, op := range ops {
+			err := op.Exec(f)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 }

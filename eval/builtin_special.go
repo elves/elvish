@@ -117,15 +117,14 @@ func compileDel(cp *compiler, fn *parse.Form) OpFunc {
 		}
 		ops = append(ops, Op{f, cn.Begin(), cn.End()})
 	}
-	return func(f *Frame) {
-		for _, op := range ops {
-			op.Exec(f)
-		}
-	}
+	return newSeqOps(ops)
 }
 
 func newDelLocalVariableOp(name string) OpFunc {
-	return func(f *Frame) { delete(f.local, name) }
+	return func(f *Frame) error {
+		delete(f.local, name)
+		return nil
+	}
 }
 
 func newDelElementOp(ns, name string, begin, headEnd int, indexOps []ValuesOp) OpFunc {
@@ -134,7 +133,7 @@ func newDelElementOp(ns, name string, begin, headEnd int, indexOps []ValuesOp) O
 	for i, op := range indexOps {
 		ends[i+1] = op.End
 	}
-	return func(f *Frame) {
+	return func(f *Frame) error {
 		var indicies []types.Value
 		for _, indexOp := range indexOps {
 			indexValues := indexOp.Exec(f)
@@ -148,25 +147,27 @@ func newDelElementOp(ns, name string, begin, headEnd int, indexOps []ValuesOp) O
 			if level := vartypes.GetElementErrorLevel(err); level >= 0 {
 				f.errorpf(begin, ends[level], "%s", err.Error())
 			}
-			throw(err)
+			return err
 		}
+		return nil
 	}
 }
 
 func newDelEnvVariableOp(name string) OpFunc {
-	return func(*Frame) {
-		maybeThrow(os.Unsetenv(name))
+	return func(*Frame) error {
+		return os.Unsetenv(name)
 	}
 }
 
 // makeFnOp wraps an op such that a return is converted to an ok.
 func makeFnOp(op Op) Op {
-	return Op{func(ec *Frame) {
+	return Op{func(ec *Frame) error {
 		err := ec.PEval(op)
 		if err != nil && err.(*Exception).Cause != Return {
 			// rethrow
-			throw(err)
+			return err
 		}
+		return nil
 	}, op.Begin, op.End}
 }
 
@@ -183,15 +184,14 @@ func compileFn(cp *compiler, fn *parse.Form) OpFunc {
 	cp.registerVariableSetQname(":" + varName)
 	op := cp.lambda(bodyNode)
 
-	return func(ec *Frame) {
+	return func(ec *Frame) error {
 		// Initialize the function variable with the builtin nop
 		// function. This step allows the definition of recursive
 		// functions; the actual function will never be called.
 		ec.local[varName] = vartypes.NewPtr(&BuiltinFn{"<shouldn't be called>", nop})
 		closure := op(ec)[0].(*Closure)
 		closure.Op = makeFnOp(closure.Op)
-		err := ec.local[varName].Set(closure)
-		maybeThrow(err)
+		return ec.local[varName].Set(closure)
 	}
 }
 
@@ -211,16 +211,16 @@ func compileUse(cp *compiler, fn *parse.Form) OpFunc {
 	modpath := strings.Replace(spec, ":", "/", -1)
 	cp.thisScope().set(modname + NsSuffix)
 
-	return func(ec *Frame) {
-		use(ec, modname, modpath)
+	return func(ec *Frame) error {
+		return use(ec, modname, modpath)
 	}
 }
 
-func use(ec *Frame, modname, modpath string) {
+func use(ec *Frame, modname, modpath string) error {
 	resolvedPath := ""
 	if strings.HasPrefix(modpath, "./") || strings.HasPrefix(modpath, "../") {
 		if ec.srcMeta.typ != SrcModule {
-			throw(ErrRelativeUseNotFromMod)
+			return ErrRelativeUseNotFromMod
 		}
 		// Resolve relative modpath.
 		resolvedPath = filepath.Clean(filepath.Dir(ec.srcMeta.name) + "/" + modpath)
@@ -228,24 +228,29 @@ func use(ec *Frame, modname, modpath string) {
 		resolvedPath = filepath.Clean(modpath)
 	}
 	if strings.HasPrefix(resolvedPath, "../") {
-		throw(ErrRelativeUseGoesOutsideLib)
+		return ErrRelativeUseGoesOutsideLib
 	}
 
 	// Put the just loaded module into local scope.
-	ec.local[modname+NsSuffix] = vartypes.NewPtr(loadModule(ec, resolvedPath))
+	ns, err := loadModule(ec, resolvedPath)
+	if err != nil {
+		return err
+	}
+	ec.local[modname+NsSuffix] = vartypes.NewPtr(ns)
+	return nil
 }
 
-func loadModule(ec *Frame, name string) Ns {
+func loadModule(ec *Frame, name string) (Ns, error) {
 	if ns, ok := ec.Evaler.modules[name]; ok {
 		// Module already loaded.
-		return ns
+		return ns, nil
 	}
 
 	// Load the source.
 	var path, code string
 
 	if ec.libDir == "" {
-		throw(ErrNoLibDir)
+		return nil, ErrNoLibDir
 	}
 
 	path = filepath.Join(ec.libDir, name+".elv")
@@ -257,16 +262,20 @@ func loadModule(ec *Frame, name string) Ns {
 			// Source is loaded. Do nothing more.
 			path = "<builtin module>"
 		} else {
-			throw(fmt.Errorf("cannot load %s: %s does not exist", name, path))
+			return nil, fmt.Errorf("cannot load %s: %s does not exist", name, path)
 		}
 	} else {
 		// File exists. Load it.
 		code, err = readFileUTF8(path)
-		maybeThrow(err)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	n, err := parse.Parse(name, code)
-	maybeThrow(err)
+	if err != nil {
+		return nil, err
+	}
 
 	// Make an empty scope to evaluate the module in.
 	meta := NewModuleSource(name, path, code)
@@ -280,7 +289,9 @@ func loadModule(ec *Frame, name string) Ns {
 	}
 
 	op, err := newEc.Compile(n, meta)
-	maybeThrow(err)
+	if err != nil {
+		return nil, err
+	}
 
 	// Load the namespace before executing. This avoids mutual and self use's to
 	// result in an infinite recursion.
@@ -289,9 +300,9 @@ func loadModule(ec *Frame, name string) Ns {
 	if err != nil {
 		// Unload the namespace.
 		delete(ec.modules, name)
-		throw(err)
+		return nil, err
 	}
-	return modGlobal
+	return modGlobal, nil
 }
 
 // compileAnd compiles the "and" special form.
@@ -314,19 +325,20 @@ func compileOr(cp *compiler, fn *parse.Form) OpFunc {
 
 func compileAndOr(cp *compiler, fn *parse.Form, init, stopAt bool) OpFunc {
 	argOps := cp.compoundOps(fn.Args)
-	return func(ec *Frame) {
+	return func(ec *Frame) error {
 		var lastValue types.Value = types.Bool(init)
 		for _, op := range argOps {
 			values := op.Exec(ec)
 			for _, value := range values {
 				if types.ToBool(value) == stopAt {
 					ec.OutputChan() <- value
-					return
+					return nil
 				}
 				lastValue = value
 			}
 		}
 		ec.OutputChan() <- lastValue
+		return nil
 	}
 }
 
@@ -351,7 +363,7 @@ func compileIf(cp *compiler, fn *parse.Form) OpFunc {
 		elseOp = cp.primaryOp(elseNode)
 	}
 
-	return func(ec *Frame) {
+	return func(ec *Frame) error {
 		bodies := make([]Callable, len(bodyOps))
 		for i, bodyOp := range bodyOps {
 			bodies[i] = bodyOp.execlambdaOp(ec)
@@ -360,12 +372,13 @@ func compileIf(cp *compiler, fn *parse.Form) OpFunc {
 		for i, condOp := range condOps {
 			if allTrue(condOp.Exec(ec.fork("if cond"))) {
 				bodies[i].Call(ec.fork("if body"), NoArgs, NoOpts)
-				return
+				return nil
 			}
 		}
 		if elseOp.Func != nil {
 			else_.Call(ec.fork("if else"), NoArgs, NoOpts)
 		}
+		return nil
 	}
 }
 
@@ -378,7 +391,7 @@ func compileWhile(cp *compiler, fn *parse.Form) OpFunc {
 	condOp := cp.compoundOp(condNode)
 	bodyOp := cp.primaryOp(bodyNode)
 
-	return func(ec *Frame) {
+	return func(ec *Frame) error {
 		body := bodyOp.execlambdaOp(ec)
 
 		for {
@@ -394,10 +407,11 @@ func compileWhile(cp *compiler, fn *parse.Form) OpFunc {
 				} else if exc.Cause == Break {
 					continue
 				} else {
-					throw(err)
+					return nil
 				}
 			}
 		}
+		return nil
 	}
 }
 
@@ -421,7 +435,7 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 		elseOp = cp.primaryOp(elseNode)
 	}
 
-	return func(ec *Frame) {
+	return func(ec *Frame) error {
 		variables := varOp.Exec(ec)
 		if len(variables) != 1 {
 			ec.errorpf(varOp.Begin, varOp.End, "only one variable allowed")
@@ -434,10 +448,14 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 		elseBody := elseOp.execlambdaOp(ec)
 
 		iterated := false
+		var errIterate error
 		iterable.Iterate(func(v types.Value) bool {
 			iterated = true
 			err := variable.Set(v)
-			maybeThrow(err)
+			if err != nil {
+				errIterate = err
+				return false
+			}
 			err = ec.fork("for").PCall(body, NoArgs, NoOpts)
 			if err != nil {
 				exc := err.(*Exception)
@@ -446,15 +464,20 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 				} else if exc.Cause == Break {
 					return false
 				} else {
-					throw(err)
+					errIterate = err
+					return false
 				}
 			}
 			return true
 		})
+		if errIterate != nil {
+			return errIterate
+		}
 
 		if !iterated && elseBody != nil {
 			elseBody.Call(ec.fork("for else"), NoArgs, NoOpts)
 		}
+		return nil
 	}
 }
 
@@ -499,7 +522,7 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 		finallyOp = cp.primaryOp(finallyNode)
 	}
 
-	return func(ec *Frame) {
+	return func(ec *Frame) error {
 		body := bodyOp.execlambdaOp(ec)
 		exceptVar := exceptVarOp.execMustOne(ec)
 		except := exceptOp.execlambdaOp(ec)
@@ -511,7 +534,9 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 			if except != nil {
 				if exceptVar != nil {
 					err := exceptVar.Set(err.(*Exception))
-					maybeThrow(err)
+					if err != nil {
+						return err
+					}
 				}
 				err = ec.fork("try except").PCall(except, NoArgs, NoOpts)
 			}
@@ -523,9 +548,7 @@ func compileTry(cp *compiler, fn *parse.Form) OpFunc {
 		if finally != nil {
 			finally.Call(ec.fork("try finally"), NoArgs, NoOpts)
 		}
-		if err != nil {
-			throw(err)
-		}
+		return err
 	}
 }
 

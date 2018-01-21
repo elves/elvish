@@ -34,17 +34,18 @@ func callHooks(ev *eval.Evaler, li types.List, args ...types.Value) {
 	}
 
 	li.Iterate(func(v types.Value) bool {
-		opfunc := func(ec *eval.Frame) {
+		opfunc := func(ec *eval.Frame) error {
 			fn, ok := v.(eval.Fn)
 			if !ok {
 				fmt.Fprintf(os.Stderr, "not a function: %s\n", v.Repr(types.NoPretty))
-				return
+				return nil
 			}
 			err := ec.PCall(fn, args, eval.NoOpts)
 			if err != nil {
 				// TODO Print stack trace.
 				fmt.Fprintf(os.Stderr, "function error: %s\n", err.Error())
 			}
+			return nil
 		}
 		ev.Eval(eval.Op{opfunc, -1, -1}, eval.NewInternalSource("[hooks]"))
 		return true

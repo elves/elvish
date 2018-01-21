@@ -118,8 +118,7 @@ func (ec *Frame) fork(name string) *Frame {
 // wrapped in an Error.
 func (ec *Frame) PEval(op Op) (err error) {
 	defer catch(&err, ec)
-	op.Exec(ec)
-	return nil
+	return op.Exec(ec)
 }
 
 func (ec *Frame) PCall(f Callable, args []types.Value, opts map[string]types.Value) (err error) {
@@ -128,17 +127,22 @@ func (ec *Frame) PCall(f Callable, args []types.Value, opts map[string]types.Val
 	return nil
 }
 
-func (ec *Frame) PCaptureOutput(f Callable, args []types.Value, opts map[string]types.Value) (vs []types.Value, err error) {
+func (ec *Frame) PCaptureOutput(fn Callable, args []types.Value, opts map[string]types.Value) (vs []types.Value, err error) {
 	// XXX There is no source.
-	return pcaptureOutput(ec, Op{
-		func(newec *Frame) { f.Call(newec, args, opts) }, -1, -1})
+	opFunc := func(f *Frame) error {
+		fn.Call(f, args, opts)
+		return nil
+	}
+	return pcaptureOutput(ec, Op{opFunc, -1, -1})
 }
 
-func (ec *Frame) PCaptureOutputInner(f Callable, args []types.Value, opts map[string]types.Value, valuesCb func(<-chan types.Value), bytesCb func(*os.File)) error {
+func (ec *Frame) PCaptureOutputInner(fn Callable, args []types.Value, opts map[string]types.Value, valuesCb func(<-chan types.Value), bytesCb func(*os.File)) error {
 	// XXX There is no source.
-	return pcaptureOutputInner(ec, Op{
-		func(newec *Frame) { f.Call(newec, args, opts) }, -1, -1},
-		valuesCb, bytesCb)
+	opFunc := func(f *Frame) error {
+		fn.Call(f, args, opts)
+		return nil
+	}
+	return pcaptureOutputInner(ec, Op{opFunc, -1, -1}, valuesCb, bytesCb)
 }
 
 func catch(perr *error, ec *Frame) {
