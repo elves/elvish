@@ -245,7 +245,11 @@ func (cp *compiler) form(n *parse.Form) OpFunc {
 			var saveVars []vartypes.Variable
 			var saveVals []types.Value
 			for _, op := range saveVarsOps {
-				saveVars = append(saveVars, op.Exec(ec)...)
+				moreSaveVars, err := op.Exec(ec)
+				if err != nil {
+					return err
+				}
+				saveVars = append(saveVars, moreSaveVars...)
 			}
 			for i, v := range saveVars {
 				// XXX(xiaq): If the variable to save is a elemVariable, save
@@ -364,14 +368,20 @@ func (cp *compiler) assignment(n *parse.Assignment) OpFunc {
 	return makeAssignmentOpFunc(variablesOp, restOp, valuesOp)
 }
 
-// ErrMoreThanOneRest is thrown when the LHS of an assignment contains more than
-// one rest variables.
+// ErrMoreThanOneRest is returned when the LHS of an assignment contains more
+// than one rest variables.
 var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
 
 func makeAssignmentOpFunc(variablesOp, restOp LValuesOp, valuesOp ValuesOp) OpFunc {
 	return func(ec *Frame) error {
-		variables := variablesOp.Exec(ec)
-		rest := restOp.Exec(ec)
+		variables, err := variablesOp.Exec(ec)
+		if err != nil {
+			return err
+		}
+		rest, err := restOp.Exec(ec)
+		if err != nil {
+			return err
+		}
 
 		// If any LHS ends up being nil, assign an empty string to all of them.
 		//

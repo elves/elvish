@@ -453,7 +453,10 @@ func compileFor(cp *compiler, fn *parse.Form) OpFunc {
 	}
 
 	return func(ec *Frame) error {
-		variables := varOp.Exec(ec)
+		variables, err := varOp.Exec(ec)
+		if err != nil {
+			return err
+		}
 		if len(variables) != 1 {
 			ec.errorpf(varOp.Begin, varOp.End, "only one variable allowed")
 		}
@@ -590,7 +593,8 @@ func (op LValuesOp) execMustOne(ec *Frame) vartypes.Variable {
 	if op.Func == nil {
 		return nil
 	}
-	variables := op.Exec(ec)
+	variables, err := op.Exec(ec)
+	maybeThrow(err)
 	if len(variables) != 1 {
 		ec.errorpf(op.Begin, op.End, "should be one variable")
 	}

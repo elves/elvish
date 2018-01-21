@@ -2,6 +2,7 @@ package eval
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/elves/elvish/eval/types"
@@ -16,13 +17,13 @@ type LValuesOp struct {
 }
 
 // LValuesOpFunc is the body of an LValuesOp.
-type LValuesOpFunc func(*Frame) []vartypes.Variable
+type LValuesOpFunc func(*Frame) ([]vartypes.Variable, error)
 
 // Exec executes an LValuesOp, producing Variable's.
-func (op LValuesOp) Exec(ec *Frame) []vartypes.Variable {
+func (op LValuesOp) Exec(ec *Frame) ([]vartypes.Variable, error) {
 	// Empty value is considered to generate no lvalues.
 	if op.Func == nil {
-		return []vartypes.Variable{}
+		return []vartypes.Variable{}, nil
 	}
 	ec.begin, ec.end = op.Begin, op.End
 	return op.Func(ec)
@@ -87,12 +88,16 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp)
 	var op LValuesOp
 	// If there is still anything left in opFuncs, make LValuesOp for the fixed part.
 	if len(opFuncs) > 0 {
-		op = LValuesOp{func(ec *Frame) []vartypes.Variable {
+		op = LValuesOp{func(ec *Frame) ([]vartypes.Variable, error) {
 			var variables []vartypes.Variable
 			for _, opFunc := range opFuncs {
-				variables = append(variables, opFunc(ec)...)
+				moreVariables, err := opFunc(ec)
+				if err != nil {
+					return nil, err
+				}
+				variables = append(variables, moreVariables...)
 			}
-			return variables
+			return variables, nil
 		}, nodes[0].Begin(), fixedEnd}
 	}
 
@@ -111,7 +116,7 @@ func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, LValuesOpFu
 func (cp *compiler) lvalueVariable(ns, name string) LValuesOpFunc {
 	cp.registerVariableSet(ns, name)
 
-	return func(ec *Frame) []vartypes.Variable {
+	return func(ec *Frame) ([]vartypes.Variable, error) {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
 			if ns == "" || ns == "local" {
@@ -127,10 +132,10 @@ func (cp *compiler) lvalueVariable(ns, name string) LValuesOpFunc {
 				}
 				ec.local[name] = variable
 			} else {
-				throwf("new variables can only be created in local scope")
+				return nil, fmt.Errorf("new variables can only be created in local scope")
 			}
 		}
-		return []vartypes.Variable{variable}
+		return []vartypes.Variable{variable}, nil
 	}
 }
 
@@ -146,10 +151,10 @@ func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpF
 
 	indexOps := cp.arrayOps(n.Indicies)
 
-	return func(ec *Frame) []vartypes.Variable {
+	return func(ec *Frame) ([]vartypes.Variable, error) {
 		variable := ec.ResolveVar(ns, name)
 		if variable == nil {
-			throwf("variable $%s:%s does not exist, compiler bug", ns, name)
+			return nil, fmt.Errorf("variable $%s:%s does not exist, compiler bug", ns, name)
 		}
 
 		indicies := make([]types.Value, len(indexOps))
@@ -158,7 +163,7 @@ func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpF
 			maybeThrow(err)
 			// TODO: Implement multi-indexing.
 			if len(values) != 1 {
-				throw(errors.New("multi indexing not implemented"))
+				return nil, errors.New("multi indexing not implemented")
 			}
 			indicies[i] = values[0]
 		}
@@ -171,6 +176,6 @@ func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpF
 				ec.errorpf(begin, ends[level], "%s", err)
 			}
 		}
-		return []vartypes.Variable{elemVar}
+		return []vartypes.Variable{elemVar}, nil
 	}
 }
