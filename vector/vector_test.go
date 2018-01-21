@@ -211,21 +211,10 @@ func TestVectorEqual(t *testing.T) {
 	}
 }
 
-func BenchmarkNativeAppendN1(b *testing.B) {
-	benchmarkNativeAppend(b, N1)
-}
-
-func BenchmarkNativeAppendN2(b *testing.B) {
-	benchmarkNativeAppend(b, N2)
-}
-
-func BenchmarkNativeAppendN3(b *testing.B) {
-	benchmarkNativeAppend(b, N3)
-}
-
-func BenchmarkNativeAppendN4(b *testing.B) {
-	benchmarkNativeAppend(b, N4)
-}
+func BenchmarkConsNative1(b *testing.B) { benchmarkNativeAppend(b, N1) }
+func BenchmarkConsNative2(b *testing.B) { benchmarkNativeAppend(b, N2) }
+func BenchmarkConsNative3(b *testing.B) { benchmarkNativeAppend(b, N3) }
+func BenchmarkConsNative4(b *testing.B) { benchmarkNativeAppend(b, N4) }
 
 func benchmarkNativeAppend(b *testing.B, n int) {
 	for r := 0; r < b.N; r++ {
@@ -236,21 +225,10 @@ func benchmarkNativeAppend(b *testing.B, n int) {
 	}
 }
 
-func BenchmarkConsN1(b *testing.B) {
-	benchmarkCons(b, N1)
-}
-
-func BenchmarkConsN2(b *testing.B) {
-	benchmarkCons(b, N2)
-}
-
-func BenchmarkConsN3(b *testing.B) {
-	benchmarkCons(b, N3)
-}
-
-func BenchmarkConsN4(b *testing.B) {
-	benchmarkCons(b, N4)
-}
+func BenchmarkConsPersistent1(b *testing.B) { benchmarkCons(b, N1) }
+func BenchmarkConsPersistent2(b *testing.B) { benchmarkCons(b, N2) }
+func BenchmarkConsPersistent3(b *testing.B) { benchmarkCons(b, N3) }
+func BenchmarkConsPersistent4(b *testing.B) { benchmarkCons(b, N4) }
 
 func benchmarkCons(b *testing.B, n int) {
 	for r := 0; r < b.N; r++ {
@@ -272,7 +250,7 @@ func init() {
 	}
 }
 
-func BenchmarkNaitiveNth(b *testing.B) {
+func BenchmarkNthNative(b *testing.B) {
 	for r := 0; r < b.N; r++ {
 		for i := 0; i < N4; i++ {
 			_ = sliceN4[i]
@@ -280,7 +258,7 @@ func BenchmarkNaitiveNth(b *testing.B) {
 	}
 }
 
-func BenchmarkNth(b *testing.B) {
+func BenchmarkNthPersistent(b *testing.B) {
 	for r := 0; r < b.N; r++ {
 		for i := 0; i < N4; i++ {
 			_ = vectorN4.Nth(i)
@@ -300,7 +278,7 @@ func nativeEqual(s1, s2 []int) bool {
 	return true
 }
 
-func BenchmarkNativeEqual(b *testing.B) {
+func BenchmarkEqualNative(b *testing.B) {
 	b.StopTimer()
 	var s1, s2 []int
 	for i := 0; i < N4; i++ {
@@ -314,7 +292,7 @@ func BenchmarkNativeEqual(b *testing.B) {
 	}
 }
 
-func BenchmarkEqual(b *testing.B) {
+func BenchmarkEqualPersistent(b *testing.B) {
 	b.StopTimer()
 	v1, v2 := Empty, Empty
 	for i := 0; i < N4; i++ {

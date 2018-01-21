@@ -220,9 +220,9 @@ func testIterator(t *testing.T, m HashMap, ref map[testKey]string) {
 	}
 }
 
-func BenchmarkNativeSequentialAddN1(b *testing.B) { nativeSequentialAdd(b.N, N1) }
-func BenchmarkNativeSequentialAddN2(b *testing.B) { nativeSequentialAdd(b.N, N2) }
-func BenchmarkNativeSequentialAddN3(b *testing.B) { nativeSequentialAdd(b.N, N3) }
+func BenchmarkSequentialConsNative1(b *testing.B) { nativeSequentialAdd(b.N, N1) }
+func BenchmarkSequentialConsNative2(b *testing.B) { nativeSequentialAdd(b.N, N2) }
+func BenchmarkSequentialConsNative3(b *testing.B) { nativeSequentialAdd(b.N, N3) }
 
 // nativeSequntialAdd starts with an empty native map and adds elements 0...n-1
 // to the map, using the same value as the key, repeating for N times.
@@ -235,9 +235,9 @@ func nativeSequentialAdd(N int, n uint32) {
 	}
 }
 
-func BenchmarkSequentialConsN1(b *testing.B) { sequentialCons(b.N, N1) }
-func BenchmarkSequentialConsN2(b *testing.B) { sequentialCons(b.N, N2) }
-func BenchmarkSequentialConsN3(b *testing.B) { sequentialCons(b.N, N3) }
+func BenchmarkSequentialConsPersistent1(b *testing.B) { sequentialCons(b.N, N1) }
+func BenchmarkSequentialConsPersistent2(b *testing.B) { sequentialCons(b.N, N2) }
+func BenchmarkSequentialConsPersistent3(b *testing.B) { sequentialCons(b.N, N3) }
 
 // sequentialCons starts with an empty HashMap and adds elements 0...n-1 to the
 // map, using the same value as the key, repeating for N times.
@@ -250,9 +250,9 @@ func sequentialCons(N int, n UInt32) {
 	}
 }
 
-func BenchmarkNativeRandomStringsAddN1(b *testing.B) { nativeRandomStringsAdd(b, N1) }
-func BenchmarkNativeRandomStringsAddN2(b *testing.B) { nativeRandomStringsAdd(b, N2) }
-func BenchmarkNativeRandomStringsAddN3(b *testing.B) { nativeRandomStringsAdd(b, N3) }
+func BenchmarkRandomStringsConsNative1(b *testing.B) { nativeRandomStringsAdd(b, N1) }
+func BenchmarkRandomStringsConsNative2(b *testing.B) { nativeRandomStringsAdd(b, N2) }
+func BenchmarkRandomStringsConsNative3(b *testing.B) { nativeRandomStringsAdd(b, N3) }
 
 // nativeSequntialAdd starts with an empty native map and adds n random strings
 // to the map, using the same value as the key, repeating for b.N times.
@@ -267,9 +267,9 @@ func nativeRandomStringsAdd(b *testing.B, n int) {
 	}
 }
 
-func BenchmarkRandomStringsConsN1(b *testing.B) { randomStringsCons(b, N1) }
-func BenchmarkRandomStringsConsN2(b *testing.B) { randomStringsCons(b, N2) }
-func BenchmarkRandomStringsConsN3(b *testing.B) { randomStringsCons(b, N3) }
+func BenchmarkRandomStringsConsPersistent1(b *testing.B) { randomStringsCons(b, N1) }
+func BenchmarkRandomStringsConsPersistent2(b *testing.B) { randomStringsCons(b, N2) }
+func BenchmarkRandomStringsConsPersistent3(b *testing.B) { randomStringsCons(b, N3) }
 
 func randomStringsCons(b *testing.B, n int) {
 	ss := getRandomStrings(b)
