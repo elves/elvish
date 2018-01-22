@@ -1,12 +1,13 @@
 package hashmap
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/xiaq/persistent/types"
+	"github.com/xiaq/persistent/hash"
 )
 
 const (
@@ -29,26 +30,44 @@ const (
 	N3 = nodeCap*nodeCap*nodeCap + 1
 )
 
-// testKey is an implementation of the types.Key interface for testing.
 type testKey uint64
-
-// Hash returns the lower 32 bits. This is intended so that hash collisions can
-// be easily constructed.
-func (x testKey) Hash() uint32 {
-	return uint32(x & 0xffffffff)
-}
-
-// Equal returns true if and only if the other value is also a testKey and they
-// are equal.
-func (x testKey) Equal(other interface{}) bool {
-	y, ok := other.(testKey)
-	return ok && x == y
-}
-
 type anotherTestKey uint32
 
-func (x anotherTestKey) Hash() uint32         { return uint32(x) }
-func (anotherTestKey) Equal(interface{}) bool { return false }
+func equalFunc(k1, k2 interface{}) bool {
+	switch k1 := k1.(type) {
+	case uint32:
+		return k1 == k2
+	case string:
+		s2, ok := k2.(string)
+		return ok && k1 == s2
+	case testKey:
+		t2, ok := k2.(testKey)
+		return ok && k1 == t2
+	case anotherTestKey:
+		return false
+	default:
+		panic(fmt.Errorf("unknown key type %T", k1))
+	}
+}
+
+func hashFunc(k interface{}) uint32 {
+	switch k := k.(type) {
+	case uint32:
+		return k
+	case string:
+		return hash.String(k)
+	case testKey:
+		// Return the lower 32 bits for testKey. This is intended so that hash
+		// collisions can be easily constructed.
+		return uint32(k & 0xffffffff)
+	case anotherTestKey:
+		return uint32(k)
+	default:
+		panic(fmt.Errorf("unknown key type %T", k))
+	}
+}
+
+var empty = New(equalFunc, hashFunc)
 
 type refEntry struct {
 	k testKey
@@ -137,7 +156,7 @@ func TestHashMapSmallRandom(t *testing.T) {
 // supplied list of entries to build the hash map, and then test all its
 // operations.
 func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
-	m := Empty
+	m := empty
 	// Len of Empty should be 0.
 	if m.Len() != 0 {
 		t.Errorf("m.Len = %d, want %d", m.Len(), 0)
@@ -204,7 +223,7 @@ func testMapContent(t *testing.T, m HashMap, ref map[testKey]string) {
 }
 
 func testIterator(t *testing.T, m HashMap, ref map[testKey]string) {
-	ref2 := map[types.EqualHasher]interface{}{}
+	ref2 := map[Key]interface{}{}
 	for k, v := range ref {
 		ref2[k] = v
 	}
@@ -241,10 +260,10 @@ func BenchmarkSequentialConsPersistent3(b *testing.B) { sequentialCons(b.N, N3) 
 
 // sequentialCons starts with an empty HashMap and adds elements 0...n-1 to the
 // map, using the same value as the key, repeating for N times.
-func sequentialCons(N int, n UInt32) {
+func sequentialCons(N int, n uint32) {
 	for r := 0; r < N; r++ {
-		m := Empty
-		for i := UInt32(0); i < n; i++ {
+		m := empty
+		for i := uint32(0); i < n; i++ {
 			m = m.Assoc(i, i)
 		}
 	}
@@ -274,9 +293,9 @@ func BenchmarkRandomStringsConsPersistent3(b *testing.B) { randomStringsCons(b, 
 func randomStringsCons(b *testing.B, n int) {
 	ss := getRandomStrings(b)
 	for r := 0; r < b.N; r++ {
-		m := Empty
+		m := empty
 		for i := 0; i < n; i++ {
-			s := String(ss[i])
+			s := ss[i]
 			m = m.Assoc(s, s)
 		}
 	}
