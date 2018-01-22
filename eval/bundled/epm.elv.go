@@ -273,6 +273,9 @@ fn installed {
   }
 }
 
+# epm:list is an alias for epm:installed
+fn list { installed }
+
 # Install and upgrade are method-specific, so we call the
 # corresponding functions using -package-op
 fn install [&silent-if-installed=$false @pkgs]{
