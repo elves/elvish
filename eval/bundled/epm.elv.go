@@ -279,6 +279,10 @@ fn list { installed }
 # Install and upgrade are method-specific, so we call the
 # corresponding functions using -package-op
 fn install [&silent-if-installed=$false @pkgs]{
+  if (eq $pkgs []) {
+    -error "You must specify at least one package."
+    return
+  }
   for pkg $pkgs {
     if (is-installed $pkg) {
       if (not $silent-if-installed) {
@@ -315,7 +319,7 @@ fn upgrade [@pkgs]{
 # Uninstall is the same for everyone, just remove the directory
 fn uninstall [@pkgs]{
   if (eq $pkgs []) {
-    -error 'Must specify at least one package.'
+    -error 'You must specify at least one package.'
     return
   }
   for pkg $pkgs {
