@@ -55,7 +55,7 @@ fn dest [pkg]{
 }
 
 fn is-installed [pkg]{
-  put (or (and ?(test -e (dest $pkg)) $true) $false)
+  bool ?(test -e (dest $pkg))
 }
 
 fn -package-domain [pkg]{
@@ -218,9 +218,9 @@ fn metadata [pkg]{
     &installed= (is-installed $pkg)
   ]
   # Merge with package-specified attributes, if any
-  mdataf = (-package-metadata-file $pkg)
-  if (and (is-installed $pkg) ?(test -f $mdataf)) {
-    res = (merge (cat $mdataf | from-json) $res)
+  file = (-package-metadata-file $pkg)
+  if (and (is-installed $pkg) ?(test -f $file)) {
+    res = (merge (cat $file | from-json) $res)
   }
   put $res
 }
