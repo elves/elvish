@@ -295,8 +295,15 @@ fn install [&silent-if-installed=$false @pkgs]{
       if (has-key $metadata dependencies) {
         deps = $metadata[dependencies]
         -info "Installing dependencies: "(joins " " $deps)
-        install $@deps
-        # TODO: what to do if install of dependencies fails? Uninstall everything?
+        # If the installation of dependencies fails, uninstall the
+        # target package (leave any already-installed dependencies in
+        # place)
+        try {
+          install $@deps
+        } except e {
+          -error "Dependency installation failed. Uninstalling "$pkg", please check the errors above and try again."
+          -uninstall-package $pkg
+        }
       }
     }
   }
