@@ -238,7 +238,11 @@ fn query [pkg]{
   echo (edit:styled "Source:" blue) $data[method] $data[src]
   keys $data | each [key]{
     if (not (has-value $special-keys $key)) {
-      echo (edit:styled (first-upper $key)":" blue) $data[$key]
+      val = $data[$key]
+      if (eq (kind-of $val) list) {
+        val = (joins ", " $val)
+      }
+      echo (edit:styled (first-upper $key)":" blue) $val
     }
   }
 }
