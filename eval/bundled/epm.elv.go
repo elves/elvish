@@ -283,6 +283,14 @@ fn install [&silent-if-installed=$false @pkgs]{
       }
     } else {
       -package-op $pkg install
+      # Check if there are any dependencies to install
+      metadata = (metadata $pkg)
+      if (has-key $metadata dependencies) {
+        deps = $metadata[dependencies]
+        -info "Installing dependencies: "(joins " " $deps)
+        install $@deps
+        # TODO: what to do if install of dependencies fails? Uninstall everything?
+      }
     }
   }
 }
