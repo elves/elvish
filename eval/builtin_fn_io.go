@@ -72,7 +72,7 @@ func pprint(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].File
 	for _, arg := range args {
-		out.WriteString(arg.Repr(0))
+		out.WriteString(types.Repr(arg, 0))
 		out.WriteString("\n")
 	}
 }
@@ -84,7 +84,7 @@ func repr(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		if i > 0 {
 			out.WriteString(" ")
 		}
-		out.WriteString(arg.Repr(types.NoPretty))
+		out.WriteString(types.Repr(arg, types.NoPretty))
 	}
 	out.WriteString("\n")
 }

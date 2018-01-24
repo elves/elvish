@@ -99,7 +99,7 @@ func replace(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 		repl, ok := argRepl.(types.String)
 		if !ok {
 			throwf("replacement must be string when literal is set, got %s",
-				argRepl.Kind())
+				types.Kind(argRepl))
 		}
 		result = pattern.ReplaceAllLiteralString(string(argSource), string(repl))
 	} else {
@@ -116,14 +116,15 @@ func replace(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 				}
 				output, ok := values[0].(types.String)
 				if !ok {
-					throwf("replacement function must output one string, got %s", values[0].Kind())
+					throwf("replacement function must output one string, got %s",
+						types.Kind(values[0]))
 				}
 				return string(output)
 			}
 			result = pattern.ReplaceAllStringFunc(string(argSource), replFunc)
 		default:
 			throwf("replacement must be string or function, got %s",
-				argRepl.Kind())
+				types.Kind(argRepl))
 		}
 	}
 	out <- types.String(result)

@@ -28,7 +28,7 @@ func EqMapLike(lhs MapLike, a interface{}) bool {
 	eq := true
 	lhs.IteratePair(func(k, v Value) bool {
 		v2, err := rhs.Index(k)
-		if err != nil || !v.Equal(v2) {
+		if err != nil || !Equal(v, v2) {
 			eq = false
 			return false
 		}
@@ -40,8 +40,8 @@ func EqMapLike(lhs MapLike, a interface{}) bool {
 func HashMapLike(m MapLike) uint32 {
 	h := hash.DJBInit
 	m.IteratePair(func(k, v Value) bool {
-		h = hash.DJBCombine(h, k.Hash())
-		h = hash.DJBCombine(h, v.Hash())
+		h = hash.DJBCombine(h, Hash(k))
+		h = hash.DJBCombine(h, Hash(v))
 		return true
 	})
 	return h

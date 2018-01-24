@@ -131,7 +131,7 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 	// Forward reads from notifyChan to notification.
 	go func() {
 		for v := range notifyChan {
-			ed.Notify("[value out] %s", v.Repr(types.NoPretty))
+			ed.Notify("[value out] %s", types.Repr(v, types.NoPretty))
 		}
 	}()
 

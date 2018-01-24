@@ -54,7 +54,7 @@ func (bt BindingTable) Repr(indent int) string {
 		if err != nil {
 			panic(err)
 		}
-		builder.WritePair(parse.Quote(k.String()), indent+2, v.Repr(indent+2))
+		builder.WritePair(parse.Quote(k.String()), indent+2, types.Repr(v, indent+2))
 	}
 
 	return builder.String()

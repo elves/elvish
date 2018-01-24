@@ -100,7 +100,7 @@ func kindOf(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].Chan
 	for _, a := range args {
-		out <- types.String(a.Kind())
+		out <- types.String(types.Kind(a))
 	}
 }
 
@@ -136,7 +136,7 @@ func eq(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 	result := true
 	for i := 0; i+1 < len(args); i++ {
-		if !args[i].Equal(args[i+1]) {
+		if !types.Equal(args[i], args[i+1]) {
 			result = false
 			break
 		}
@@ -148,7 +148,7 @@ func notEq(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 	result := true
 	for i := 0; i+1 < len(args); i++ {
-		if args[i].Equal(args[i+1]) {
+		if types.Equal(args[i], args[i+1]) {
 			result = false
 			break
 		}

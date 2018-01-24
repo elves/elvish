@@ -185,7 +185,7 @@ func hasValue(ec *Frame, args []types.Value, opts map[string]types.Value) {
 			return !found
 		})
 	default:
-		throw(fmt.Errorf("argument of type '%s' is not iterable", container.Kind()))
+		throw(fmt.Errorf("argument of type '%s' is not iterable", types.Kind(container)))
 	}
 
 	ec.ports[1].Chan <- types.Bool(found)
@@ -207,7 +207,7 @@ func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		_, _, _, err := types.ParseAndFixListIndex(types.ToString(key), container.Len())
 		found = (err == nil)
 	default:
-		throw(fmt.Errorf("couldn't get key or index of type '%s'", container.Kind()))
+		throw(fmt.Errorf("couldn't get key or index of type '%s'", types.Kind(container)))
 	}
 
 	ec.ports[1].Chan <- types.Bool(found)
@@ -234,7 +234,7 @@ func count(ec *Frame, args []types.Value, opts map[string]types.Value) {
 				return true
 			})
 		} else {
-			throw(fmt.Errorf("cannot get length of a %s", v.Kind()))
+			throw(fmt.Errorf("cannot get length of a %s", types.Kind(v)))
 		}
 	default:
 		throw(errors.New("want 0 or 1 argument"))

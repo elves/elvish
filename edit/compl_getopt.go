@@ -26,7 +26,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 	elemsv.Iterate(func(v types.Value) bool {
 		elem, ok := v.(types.String)
 		if !ok {
-			throwf("arg should be string, got %s", v.Kind())
+			throwf("arg should be string, got %s", types.Kind(v))
 		}
 		elems = append(elems, string(elem))
 		return true
@@ -34,7 +34,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 	optsv.Iterate(func(v types.Value) bool {
 		m, ok := v.(types.MapLike)
 		if !ok {
-			throwf("opt should be map-like, got %s", v.Kind())
+			throwf("opt should be map-like, got %s", types.Kind(v))
 		}
 		get := func(ks string) (string, bool) {
 			kv := types.String(ks)
@@ -82,7 +82,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 		}
 		arg, ok := v.(eval.Fn)
 		if !ok {
-			throwf("argument handler should be fn, got %s", v.Kind())
+			throwf("argument handler should be fn, got %s", types.Kind(v))
 		}
 		args = append(args, arg)
 		return true

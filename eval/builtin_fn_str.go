@@ -92,7 +92,7 @@ func joins(ec *Frame, args []types.Value, opts map[string]types.Value) {
 			}
 			buf.WriteString(string(s))
 		} else {
-			throwf("join wants string input, got %s", v.Kind())
+			throwf("join wants string input, got %s", types.Kind(v))
 		}
 	})
 	out := ec.ports[1].Chan

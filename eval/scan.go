@@ -56,7 +56,7 @@ func ScanArgsOptionalInput(ec *Frame, src []types.Value, dstArgs ...interface{})
 		value := src[len(dstArgs)]
 		iterable, ok := value.(types.Iterator)
 		if !ok {
-			throwf("need iterable argument, got %s", value.Kind())
+			throwf("need iterable argument, got %s", types.Kind(value))
 		}
 		return func(f func(types.Value)) {
 			iterable.Iterate(func(v types.Value) bool {

@@ -213,7 +213,7 @@ func matchOut(want, got []types.Value) bool {
 		return false
 	}
 	for i := range got {
-		if !got[i].Equal(want[i]) {
+		if !types.Equal(got[i], want[i]) {
 			return false
 		}
 	}
@@ -234,18 +234,9 @@ func compareSlice(wantValues, gotValues []interface{}) error {
 			len(wantValues), len(gotValues))
 	}
 	for i, want := range wantValues {
-		if !equals(want, gotValues[i]) {
+		if !types.Equal(want, gotValues[i]) {
 			return fmt.Errorf("want [%d] = %s, got %s", i, want, gotValues[i])
 		}
 	}
 	return nil
-}
-
-// equals compares two values. It uses Eq if want is a Value instance, or
-// reflect.DeepEqual otherwise.
-func equals(a, b interface{}) bool {
-	if aValue, ok := a.(types.Value); ok {
-		return aValue.Equal(b)
-	}
-	return reflect.DeepEqual(a, b)
 }

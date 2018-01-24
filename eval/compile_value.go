@@ -139,7 +139,8 @@ func cat(lhs, rhs types.Value) (types.Value, error) {
 			return lhs, nil
 		}
 	}
-	return nil, fmt.Errorf("unsupported concat: %s and %s", lhs.Kind(), rhs.Kind())
+	return nil, fmt.Errorf("unsupported concat: %s and %s",
+		types.Kind(lhs), types.Kind(rhs))
 }
 
 func outerProduct(vs []types.Value, us []types.Value, f func(types.Value, types.Value) (types.Value, error)) ([]types.Value, error) {
@@ -200,7 +201,7 @@ func doTilde(v types.Value) types.Value {
 		}
 		return v
 	default:
-		throw(fmt.Errorf("tilde doesn't work on value of type %s", v.Kind()))
+		throw(fmt.Errorf("tilde doesn't work on value of type %s", types.Kind(v)))
 		panic("unreachable")
 	}
 }
@@ -236,7 +237,7 @@ func (op *indexingOp) Invoke(ec *Frame) ([]types.Value, error) {
 		for _, v := range vs {
 			indexer, ok := v.(types.Indexer)
 			if !ok {
-				return nil, fmt.Errorf("a %s not indexable", v.Kind())
+				return nil, fmt.Errorf("a %s not indexable", types.Kind(v))
 			}
 			for _, index := range indicies {
 				result, err := indexer.Index(index)
@@ -306,7 +307,7 @@ func (op variableOp) Invoke(ec *Frame) ([]types.Value, error) {
 		iterator, ok := value.(types.Iterator)
 		if !ok {
 			// Use qname[1:] to skip the leading "@"
-			return nil, fmt.Errorf("variable $%s:%s (kind %s) cannot be exploded", op.ns, op.name, value.Kind())
+			return nil, fmt.Errorf("variable $%s:%s (kind %s) cannot be exploded", op.ns, op.name, types.Kind(value))
 		}
 		return types.CollectFromIterator(iterator), nil
 	}

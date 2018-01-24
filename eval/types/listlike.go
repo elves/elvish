@@ -27,7 +27,7 @@ func eqListLike(lhs ListLike, r interface{}) bool {
 func hashListLike(l ListLike) uint32 {
 	h := hash.DJBInit
 	l.Iterate(func(v Value) bool {
-		h = hash.DJBCombine(h, v.Hash())
+		h = hash.DJBCombine(h, Hash(v))
 		return true
 	})
 	return h

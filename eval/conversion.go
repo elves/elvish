@@ -86,7 +86,7 @@ func scanValueToGo(src types.Value, dstPtr interface{}) {
 		if reflect.TypeOf(src).ConvertibleTo(dstReflect.Type()) {
 			dstReflect.Set(reflect.ValueOf(src).Convert(dstReflect.Type()))
 		} else {
-			throwf("need %s argument, got %s", dstReflect.Type().Name(), src.Kind())
+			throwf("need %s argument, got %s", dstReflect.Type().Name(), types.Kind(src))
 		}
 	}
 }

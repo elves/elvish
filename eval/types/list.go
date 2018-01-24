@@ -62,7 +62,7 @@ func (l List) Repr(indent int) string {
 	b.Indent = indent
 	for it := l.inner.Iterator(); it.HasElem(); it.Next() {
 		v := it.Elem().(Value)
-		b.WriteElem(v.Repr(indent + 1))
+		b.WriteElem(Repr(v, indent+1))
 	}
 	return b.String()
 }

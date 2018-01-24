@@ -24,7 +24,7 @@ func NoSuchKey(k Value) error {
 }
 
 func (err noSuchKeyError) Error() string {
-	return "no such key: " + err.key.Repr(NoPretty)
+	return "no such key: " + Repr(err.key, NoPretty)
 }
 
 var EmptyMapInner = hashmap.New(Equal, Hash)
@@ -73,7 +73,7 @@ func (m Map) Repr(indent int) string {
 	builder.Indent = indent
 	for it := m.inner.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
-		builder.WritePair(k.(Value).Repr(indent+1), indent+2, v.(Value).Repr(indent+2))
+		builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
 	}
 	return builder.String()
 }

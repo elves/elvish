@@ -64,7 +64,7 @@ func (u ValueUnwrapper) Any() types.Value {
 func (u ValueUnwrapper) String() types.String {
 	s, ok := u.values[0].(types.String)
 	if !ok {
-		u.error("string", "%s", u.values[0].Kind())
+		u.error("string", "%s", types.Kind(u.values[0]))
 	}
 	return s
 }
@@ -97,7 +97,7 @@ func (u ValueUnwrapper) FdOrClose() int {
 func (u ValueUnwrapper) Callable() Callable {
 	c, ok := u.values[0].(Callable)
 	if !ok {
-		u.error("callable", "%s", u.values[0].Kind())
+		u.error("callable", "%s", types.Kind(u.values[0]))
 	}
 	return c
 }
@@ -105,7 +105,7 @@ func (u ValueUnwrapper) Callable() Callable {
 func (u ValueUnwrapper) Iterable() types.Iterator {
 	it, ok := u.values[0].(types.Iterator)
 	if !ok {
-		u.error("iterable", "%s", u.values[0].Kind())
+		u.error("iterable", "%s", types.Kind(u.values[0]))
 	}
 	return it
 }

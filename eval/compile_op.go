@@ -354,7 +354,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 		if ks, ok := k.(types.String); ok {
 			convertedOpts[string(ks)] = v
 		} else {
-			errOpt = fmt.Errorf("Option key must be string, got %s", k.Kind())
+			errOpt = fmt.Errorf("Option key must be string, got %s", types.Kind(k))
 			return false
 		}
 		return true
@@ -559,7 +559,7 @@ func (op *redirOp) Invoke(ec *Frame) error {
 				CloseFile: false,
 			}
 		default:
-			srcUnwrap.error("string or file", "%s", src.Kind())
+			srcUnwrap.error("string or file", "%s", types.Kind(src))
 		}
 	}
 	return nil
