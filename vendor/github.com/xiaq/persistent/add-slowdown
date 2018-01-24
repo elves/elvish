@@ -1,0 +1,33 @@
+#!/usr/bin/env elvish
+# Parse an output of "go test -bench .", annotating benchmark results for
+# persistent operations with the slowdown ratio compared to their native
+# counterparts.
+use re
+
+fn extract [line]{
+    # Extract the name and ns/op of a benchmark entry.
+    fields = [(re:split '\s+' $line)]
+    if (not (eq $fields[-1] ns/op)) {
+        fail 'Last column of '(repr $line)' not ns/op'
+    }
+    put $fields[0] $fields[-2]
+}
+
+native = [&]
+
+each [line]{
+    if (re:match Native $line) {
+        # Remember the result so that it can be used later.
+        name data = (extract $line)
+        native[$name] = $data
+    } elif (re:match Persistent $line) {
+        # Calculate slowdown and append to the end of the line.
+        name data = (extract $line)
+        native-name = (re:replace Persistent Native $name)
+        if (not (has-key $native $native-name)) {
+            fail 'Native counterpart for '$name' not found'
+        }
+        line = $line' '(printf '%.2f' (/ $data $native[$native-name]))'x'
+    }
+    echo $line
+}
