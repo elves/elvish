@@ -223,7 +223,7 @@ func testMapContent(t *testing.T, m HashMap, ref map[testKey]string) {
 }
 
 func testIterator(t *testing.T, m HashMap, ref map[testKey]string) {
-	ref2 := map[Key]interface{}{}
+	ref2 := map[interface{}]interface{}{}
 	for k, v := range ref {
 		ref2[k] = v
 	}
