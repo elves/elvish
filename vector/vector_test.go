@@ -205,10 +205,22 @@ func TestVectorEqual(t *testing.T) {
 		elem := rand.Int63()
 		v1 = v1.Cons(elem)
 		v2 = v2.Cons(elem)
-		if !v1.Equal(v2) {
+		if !eqVector(v1, v2) {
 			t.Errorf("Not equal after Cons'ing %d elements", i+1)
 		}
 	}
+}
+
+func eqVector(v1, v2 Vector) bool {
+	if v1.Len() != v2.Len() {
+		return false
+	}
+	for i := 0; i < v1.Len(); i++ {
+		if v1.Nth(i) != v2.Nth(i) {
+			return false
+		}
+	}
+	return true
 }
 
 func BenchmarkConsNative1(b *testing.B) { benchmarkNativeAppend(b, N1) }
@@ -302,6 +314,6 @@ func BenchmarkEqualPersistent(b *testing.B) {
 	b.StartTimer()
 
 	for r := 0; r < b.N; r++ {
-		v1.Equal(v2)
+		eqVector(v1, v2)
 	}
 }
