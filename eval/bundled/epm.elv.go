@@ -1,6 +1,8 @@
 package bundled
 
-const epmElv = `# Verbosity configuration
+const epmElv = `use re
+
+# Verbosity configuration
 debug-mode = $false
 
 # Configuration for common domains
@@ -66,6 +68,22 @@ fn -package-without-domain [pkg]{
   splits &max=2 / $pkg | drop 1 | joins ''
 }
 
+# Merge two maps
+fn merge [a b]{
+  keys $b | each [k]{ a[$k] = $b[$k] }
+  put $a
+}
+
+# Uppercase first letter of a string
+fn first-upper [s]{
+  put (echo $s[0] | tr '[:lower:]' '[:upper:]')$s[(count $s[0]):]
+}
+
+# Expand tilde at the beginning of a string to the home dir
+fn tilde-expand [p]{
+  re:replace "^~" $E:HOME $p
+}
+
 # Known method handlers. Each entry is indexed by method name (the
 # value of the "method" key in the domain configs), and must contain
 # two keys: install and upgrade, each one must be a closure that
@@ -99,7 +117,7 @@ fn -package-without-domain [pkg]{
 
   &rsync= [
     &src= [pkg dom-cfg]{
-      put $dom-cfg[location]/(-package-without-domain $pkg)/
+      put (tilde-expand $dom-cfg[location])/(-package-without-domain $pkg)/
     }
 
     &install= [pkg dom-cfg]{
@@ -197,14 +215,6 @@ fn -package-op [pkg what]{
   } else {
     -error "No config for domain '"$dom"'."
   }
-}
-
-# Merge two maps
-fn merge [a b]{ keys $b | each [k]{ a[$k] = $b[$k] }; put $a }
-
-# Uppercase first letter of a string
-fn first-upper [s]{
-  put (echo $s[0] | tr '[:lower:]' '[:upper:]')$s[(count $s[0]):]
 }
 
 # Read and parse the package metadata, if it exists
