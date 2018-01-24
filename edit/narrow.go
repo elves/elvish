@@ -11,7 +11,6 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
-	"github.com/xiaq/persistent/hashmap"
 )
 
 var _ = registerBuiltins(modeNarrow, map[string]func(*Editor){
@@ -393,7 +392,7 @@ func NarrowRead(ec *eval.Frame, args []types.Value, opts map[string]types.Value)
 	var source, action eval.Fn
 	l := &narrow{
 		opts: narrowOptions{
-			Bindings: types.NewMap(hashmap.Empty),
+			Bindings: types.NewMap(types.EmptyMapInner),
 		},
 	}
 

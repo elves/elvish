@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/tt"
-	"github.com/xiaq/persistent/hashmap"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -20,7 +19,7 @@ func TestKind(t *testing.T) {
 		Args(Bool(true)).Rets("bool"),
 		Args(String("")).Rets("string"),
 		Args(NewList(vector.Empty)).Rets("list"),
-		Args(NewMap(hashmap.Empty)).Rets("map"),
+		Args(NewMap(EmptyMapInner)).Rets("map"),
 		Args(NewStruct(NewStructDescriptor(), nil)).Rets("map"),
 		Args(NewFile(os.Stdin)).Rets("file"),
 		Args(NewPipe(os.Stdin, os.Stdout)).Rets("pipe"),

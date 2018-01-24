@@ -209,7 +209,15 @@ func matchOut(want, got []types.Value) bool {
 	if len(got) == 0 && len(want) == 0 {
 		return true
 	}
-	return reflect.DeepEqual(got, want)
+	if len(got) != len(want) {
+		return false
+	}
+	for i := range got {
+		if !got[i].Equal(want[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 func matchErr(want, got error) bool {

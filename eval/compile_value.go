@@ -14,7 +14,6 @@ import (
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
-	"github.com/xiaq/persistent/hashmap"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -551,7 +550,7 @@ type mapPairsOp struct {
 }
 
 func (op *mapPairsOp) Invoke(fm *Frame) ([]types.Value, error) {
-	m := hashmap.Empty
+	m := types.EmptyMapInner
 	for i := range op.keysOps {
 		keys, err := op.keysOps[i].Exec(fm)
 		if err != nil {

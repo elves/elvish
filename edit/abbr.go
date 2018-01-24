@@ -3,12 +3,11 @@ package edit
 import (
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
-	"github.com/xiaq/persistent/hashmap"
 )
 
 var _ = RegisterVariable("abbr", func() vartypes.Variable {
 	return vartypes.NewValidatedPtr(
-		types.NewMap(hashmap.Empty), vartypes.ShouldBeMap)
+		types.NewMap(types.EmptyMapInner), vartypes.ShouldBeMap)
 })
 
 func (ed *Editor) abbr() types.Map {

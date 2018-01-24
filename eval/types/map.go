@@ -27,8 +27,10 @@ func (err noSuchKeyError) Error() string {
 	return "no such key: " + err.key.Repr(NoPretty)
 }
 
+var EmptyMapInner = hashmap.New(Equal, Hash)
+
 // EmptyMap is an empty Map.
-var EmptyMap = Map{hashmap.Empty}
+var EmptyMap = Map{EmptyMapInner}
 
 // NewMap creates a new Map from an inner HashMap.
 func NewMap(inner hashmap.HashMap) Map {
@@ -37,7 +39,7 @@ func NewMap(inner hashmap.HashMap) Map {
 
 // MakeMap converts a native Go map to Map.
 func MakeMap(m map[Value]Value) Map {
-	inner := hashmap.Empty
+	inner := EmptyMapInner
 	for k, v := range m {
 		inner = inner.Assoc(k, v)
 	}

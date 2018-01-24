@@ -12,7 +12,6 @@ import (
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 	"github.com/xiaq/persistent/hash"
-	"github.com/xiaq/persistent/hashmap"
 )
 
 // For an overview of completion, see the comment in completers.go.
@@ -85,7 +84,7 @@ var (
 var _ = RegisterVariable("arg-completer", argCompleterVariable)
 
 func argCompleterVariable() vartypes.Variable {
-	m := hashmap.Empty
+	m := types.EmptyMapInner
 	for k, v := range argCompletersData {
 		m = m.Assoc(types.String(k), v)
 	}

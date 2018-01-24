@@ -9,7 +9,6 @@ import (
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
-	"github.com/xiaq/persistent/hashmap"
 )
 
 var errValueShouldBeFn = errors.New("value should be function")
@@ -94,7 +93,7 @@ func makeBindingTable(f *eval.Frame, args []types.Value, opts map[string]types.V
 	eval.ScanArgs(args, &raw)
 	eval.TakeNoOpt(opts)
 
-	converted := hashmap.Empty
+	converted := types.EmptyMapInner
 	raw.IteratePair(func(k, v types.Value) bool {
 		f, ok := v.(eval.Fn)
 		if !ok {

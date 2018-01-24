@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/eval/types"
-	"github.com/xiaq/persistent/hashmap"
 )
 
 // Callable wraps the Call method.
@@ -48,7 +47,7 @@ func FromJSONInterface(v interface{}) types.Value {
 		return types.MakeList(vs...)
 	case map[string]interface{}:
 		m := v.(map[string]interface{})
-		mv := hashmap.Empty
+		mv := types.EmptyMapInner
 		for k, v := range m {
 			mv = mv.Assoc(types.String(k), FromJSONInterface(v))
 		}

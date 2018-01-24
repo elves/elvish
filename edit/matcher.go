@@ -8,7 +8,6 @@ import (
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
-	"github.com/xiaq/persistent/hashmap"
 )
 
 var (
@@ -31,7 +30,7 @@ var (
 	}
 
 	_ = RegisterVariable("-matcher", func() vartypes.Variable {
-		m := hashmap.Empty.Assoc(
+		m := types.EmptyMapInner.Assoc(
 			// Fallback matcher uses empty string as key
 			types.String(""), matchPrefix)
 		return vartypes.NewValidatedPtr(types.NewMap(m), vartypes.ShouldBeMap)
