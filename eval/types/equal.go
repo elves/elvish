@@ -10,8 +10,11 @@ type Equaler interface {
 }
 
 func Equal(x, y interface{}) bool {
-	if equaler, ok := x.(Equaler); ok {
-		return equaler.Equal(y)
+	switch x := x.(type) {
+	case string:
+		return x == y
+	case Equaler:
+		return x.Equal(y)
 	}
 	return reflect.DeepEqual(x, y)
 }

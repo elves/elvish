@@ -29,41 +29,41 @@ func init() {
 }
 
 func resolveFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var cmd types.String
+	var cmd string
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
-	out <- resolve(string(cmd), ec)
+	out <- resolve(cmd, ec)
 }
 
 func external(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var cmd types.String
+	var cmd string
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
 
-	ec.OutputChan() <- ExternalCmd{string(cmd)}
+	ec.OutputChan() <- ExternalCmd{cmd}
 }
 
 func hasExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var cmd types.String
+	var cmd string
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
 
-	_, err := exec.LookPath(string(cmd))
+	_, err := exec.LookPath(cmd)
 	ec.OutputChan() <- types.Bool(err == nil)
 }
 
 func searchExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var cmd types.String
+	var cmd string
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
 
-	path, err := exec.LookPath(string(cmd))
+	path, err := exec.LookPath(cmd)
 	maybeThrow(err)
 
 	out := ec.ports[1].Chan
-	out <- types.String(path)
+	out <- path
 }
 
 func exit(ec *Frame, args []types.Value, opts map[string]types.Value) {

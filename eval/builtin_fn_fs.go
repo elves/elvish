@@ -39,7 +39,7 @@ func WrapStringToString(f func(string) string) BuiltinFnImpl {
 	return func(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		TakeNoOpt(opts)
 		s := mustGetOneString(args)
-		ec.ports[1].Chan <- types.String(f(s))
+		ec.ports[1].Chan <- f(s)
 	}
 }
 
@@ -49,7 +49,7 @@ func WrapStringToStringError(f func(string) (string, error)) BuiltinFnImpl {
 		s := mustGetOneString(args)
 		result, err := f(s)
 		maybeThrow(err)
-		ec.ports[1].Chan <- types.String(result)
+		ec.ports[1].Chan <- result
 	}
 }
 
@@ -59,11 +59,11 @@ func mustGetOneString(args []types.Value) string {
 	if len(args) != 1 {
 		throw(errMustBeOneString)
 	}
-	s, ok := args[0].(types.String)
+	s, ok := args[0].(string)
 	if !ok {
 		throw(errMustBeOneString)
 	}
-	return string(s)
+	return s
 }
 
 func cd(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -89,7 +89,7 @@ var dirDescriptor = types.NewStructDescriptor("path", "score")
 
 func newDirStruct(path string, score float64) *types.Struct {
 	return types.NewStruct(dirDescriptor,
-		[]types.Value{types.String(path), floatToString(score)})
+		[]types.Value{path, floatToString(score)})
 }
 
 func dirs(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -110,19 +110,19 @@ func dirs(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func tildeAbbr(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var pathv types.String
+	var pathv string
 	ScanArgs(args, &pathv)
-	path := string(pathv)
+	path := pathv
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
-	out <- types.String(util.TildeAbbr(path))
+	out <- util.TildeAbbr(path)
 }
 
 func isDir(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var pathv types.String
+	var pathv string
 	ScanArgs(args, &pathv)
-	path := string(pathv)
+	path := pathv
 	TakeNoOpt(opts)
 
 	ec.OutputChan() <- types.Bool(isDirInner(path))

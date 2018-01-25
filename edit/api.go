@@ -90,23 +90,23 @@ func installModules(builtin eval.Ns, ed *Editor) {
 			if !ed.active {
 				return errEditorInactive
 			}
-			if s, ok := v.(types.String); ok {
-				ed.buffer = string(s)
+			if s, ok := v.(string); ok {
+				ed.buffer = s
 				ed.dot = len(ed.buffer)
 			} else {
 				return errLineMustBeString
 			}
 			return nil
 		},
-		func() types.Value { return types.String(ed.buffer) },
+		func() types.Value { return ed.buffer },
 	)
 	ns["-dot"] = vartypes.NewCallback(
 		func(v types.Value) error {
-			s, ok := v.(types.String)
+			s, ok := v.(string)
 			if !ok {
 				return errDotMustBeString
 			}
-			i, err := strconv.Atoi(string(s))
+			i, err := strconv.Atoi(s)
 			if err != nil {
 				if err.(*strconv.NumError).Err == strconv.ErrRange {
 					return errDotOutOfRange
@@ -126,7 +126,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 			ed.dot = i
 			return nil
 		},
-		func() types.Value { return types.String(strconv.Itoa(ed.dot)) },
+		func() types.Value { return strconv.Itoa(ed.dot) },
 	)
 	ns["selected-file"] = vartypes.NewRoCallback(
 		func() types.Value {
@@ -137,7 +137,7 @@ func installModules(builtin eval.Ns, ed *Editor) {
 			if !ok {
 				throw(errNotNav)
 			}
-			return types.String(nav.current.selectedName())
+			return nav.current.selectedName()
 		},
 	)
 

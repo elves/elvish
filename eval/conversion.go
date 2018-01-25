@@ -12,10 +12,10 @@ import (
 // Conversion between Go value and Value.
 
 func toFloat(arg types.Value) (float64, error) {
-	if _, ok := arg.(types.String); !ok {
+	if _, ok := arg.(string); !ok {
 		return 0, fmt.Errorf("must be string")
 	}
-	s := string(arg.(types.String))
+	s := arg.(string)
 	num, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		num, err2 := strconv.ParseInt(s, 0, 64)
@@ -27,16 +27,16 @@ func toFloat(arg types.Value) (float64, error) {
 	return num, nil
 }
 
-func floatToString(f float64) types.String {
-	return types.String(strconv.FormatFloat(f, 'g', -1, 64))
+func floatToString(f float64) string {
+	return strconv.FormatFloat(f, 'g', -1, 64)
 }
 
 func toInt(arg types.Value) (int, error) {
-	arg, ok := arg.(types.String)
+	arg, ok := arg.(string)
 	if !ok {
 		return 0, fmt.Errorf("must be string")
 	}
-	num, err := strconv.ParseInt(string(arg.(types.String)), 0, 0)
+	num, err := strconv.ParseInt(arg.(string), 0, 0)
 	if err != nil {
 		return 0, err
 	}
@@ -44,11 +44,11 @@ func toInt(arg types.Value) (int, error) {
 }
 
 func toRune(arg types.Value) (rune, error) {
-	ss, ok := arg.(types.String)
+	ss, ok := arg.(string)
 	if !ok {
 		return -1, fmt.Errorf("must be string")
 	}
-	s := string(ss)
+	s := ss
 	r, size := utf8.DecodeRuneInString(s)
 	if r == utf8.RuneError {
 		return -1, fmt.Errorf("string is not valid UTF-8")
@@ -64,11 +64,11 @@ func toRune(arg types.Value) (rune, error) {
 func scanValueToGo(src types.Value, dstPtr interface{}) {
 	switch dstPtr := dstPtr.(type) {
 	case *string:
-		s, ok := src.(types.String)
+		s, ok := src.(string)
 		if !ok {
 			throwf("cannot convert %T to string", src)
 		}
-		*dstPtr = string(s)
+		*dstPtr = s
 	case *int:
 		i, err := toInt(src)
 		maybeThrow(err)

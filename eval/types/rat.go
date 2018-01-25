@@ -54,11 +54,11 @@ func ToRat(v Value) (Rat, error) {
 	switch v := v.(type) {
 	case Rat:
 		return v, nil
-	case String:
+	case string:
 		r := big.Rat{}
 		_, err := fmt.Sscanln(string(v), &r)
 		if err != nil {
-			return Rat{}, fmt.Errorf("%s cannot be parsed as rat", v.Repr(NoPretty))
+			return Rat{}, fmt.Errorf("%s cannot be parsed as rat", Repr(v, NoPretty))
 		}
 		return Rat{&r}, nil
 	default:

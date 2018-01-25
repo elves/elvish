@@ -61,8 +61,8 @@ func (u ValueUnwrapper) Any() types.Value {
 	return u.values[0]
 }
 
-func (u ValueUnwrapper) String() types.String {
-	s, ok := u.values[0].(types.String)
+func (u ValueUnwrapper) String() string {
+	s, ok := u.values[0].(string)
 	if !ok {
 		u.error("string", "%s", types.Kind(u.values[0]))
 	}
@@ -71,7 +71,7 @@ func (u ValueUnwrapper) String() types.String {
 
 func (u ValueUnwrapper) Int() int {
 	s := u.String()
-	i, err := strconv.Atoi(string(s))
+	i, err := strconv.Atoi(s)
 	if err != nil {
 		u.error("integer", "%s", s)
 	}
@@ -87,7 +87,7 @@ func (u ValueUnwrapper) NonNegativeInt() int {
 }
 
 func (u ValueUnwrapper) FdOrClose() int {
-	s := string(u.String())
+	s := u.String()
 	if s == "-" {
 		return -1
 	}

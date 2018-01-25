@@ -37,7 +37,7 @@ func (ev *elem) Get() types.Value {
 
 // NewElement returns an ephemeral variable used for assigning variable element.
 func NewElement(v Variable, a []types.Value, i []types.Value) Variable {
-	return &elem{v, a, i, types.String("")}
+	return &elem{v, a, i, string("")}
 }
 
 // MakeElement returns a variable, that when set, simulates the mutation of an

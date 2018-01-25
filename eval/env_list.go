@@ -52,7 +52,7 @@ func (envli *EnvList) Get() types.Value {
 	envli.cacheFor = value
 	v := vector.Empty
 	for _, path := range strings.Split(value, pathListSeparator) {
-		v = v.Cons(types.String(path))
+		v = v.Cons(path)
 	}
 	envli.cacheValue = types.NewList(v)
 	return envli.cacheValue
@@ -65,17 +65,17 @@ func (envli *EnvList) Set(v types.Value) error {
 		errElement error
 	)
 	errIterate := types.Iterate(v, func(v types.Value) bool {
-		s, ok := v.(types.String)
+		s, ok := v.(string)
 		if !ok {
 			errElement = ErrPathMustBeString
 			return false
 		}
-		path := string(s)
+		path := s
 		if strings.ContainsAny(path, forbiddenInPath) {
 			errElement = ErrPathCannotContainColonZero
 			return false
 		}
-		paths = append(paths, string(s))
+		paths = append(paths, s)
 		return true
 	})
 

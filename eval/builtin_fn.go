@@ -100,7 +100,7 @@ func kindOf(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].Chan
 	for _, a := range args {
-		out <- types.String(types.Kind(a))
+		out <- types.Kind(a)
 	}
 }
 
@@ -177,11 +177,11 @@ func constantly(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func source(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var argFname types.String
+	var argFname string
 	ScanArgs(args, &argFname)
 	ScanOpts(opts)
 
-	fname := string(argFname)
+	fname := argFname
 	abs, err := filepath.Abs(fname)
 	maybeThrow(err)
 
@@ -243,9 +243,9 @@ func _stack(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func _log(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var fnamev types.String
+	var fnamev string
 	ScanArgs(args, &fnamev)
-	fname := string(fnamev)
+	fname := fnamev
 	TakeNoOpt(opts)
 
 	maybeThrow(util.SetOutputFile(fname))
@@ -260,6 +260,6 @@ func _ifaddrs(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	addrs, err := net.InterfaceAddrs()
 	maybeThrow(err)
 	for _, addr := range addrs {
-		out <- types.String(addr.String())
+		out <- addr.String()
 	}
 }

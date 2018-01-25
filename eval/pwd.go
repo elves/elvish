@@ -18,13 +18,13 @@ var _ vartypes.Variable = PwdVariable{}
 func (PwdVariable) Get() types.Value {
 	pwd, err := os.Getwd()
 	maybeThrow(err)
-	return types.String(pwd)
+	return pwd
 }
 
 func (pwd PwdVariable) Set(v types.Value) error {
-	path, ok := v.(types.String)
+	path, ok := v.(string)
 	if !ok {
 		return ErrPathMustBeString
 	}
-	return Chdir(string(path), pwd.store)
+	return Chdir(path, pwd.store)
 }

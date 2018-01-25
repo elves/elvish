@@ -31,12 +31,12 @@ func (cs rawCandidates) Swap(i, j int)      { cs[i], cs[j] = cs[j], cs[i] }
 func (cs rawCandidates) Less(i, j int) bool { return cs[i].text() < cs[j].text() }
 
 // plainCandidate is a minimal implementation of rawCandidate.
-type plainCandidate types.String
+type plainCandidate string
 
 func (plainCandidate) Kind() string               { return "string" }
 func (p plainCandidate) Equal(a interface{}) bool { return p == a }
 func (p plainCandidate) Hash() uint32             { return hash.String(string(p)) }
-func (p plainCandidate) Repr(l int) string        { return types.String(p).Repr(l) }
+func (p plainCandidate) Repr(l int) string        { return types.Repr(string(p), l) }
 func (p plainCandidate) text() string             { return string(p) }
 
 func (p plainCandidate) cook(q parse.PrimaryType) *candidate {
@@ -51,7 +51,7 @@ type noQuoteCandidate string
 func (noQuoteCandidate) Kind() string                { return "string" }
 func (nq noQuoteCandidate) Equal(a interface{}) bool { return nq == a }
 func (nq noQuoteCandidate) Hash() uint32             { return hash.String(string(nq)) }
-func (nq noQuoteCandidate) Repr(l int) string        { return types.String(nq).Repr(l) }
+func (nq noQuoteCandidate) Repr(l int) string        { return types.Repr(string(nq), l) }
 func (nq noQuoteCandidate) text() string             { return string(nq) }
 
 func (nq noQuoteCandidate) cook(parse.PrimaryType) *candidate {
@@ -110,9 +110,9 @@ func outputComplexCandidate(ec *eval.Frame,
 
 	eval.ScanArgs(args, &c.stem)
 	eval.ScanOpts(opts,
-		eval.OptToScan{"code-suffix", &c.codeSuffix, types.String("")},
-		eval.OptToScan{"display-suffix", &c.displaySuffix, types.String("")},
-		eval.OptToScan{"style", &style, types.String("")},
+		eval.OptToScan{"code-suffix", &c.codeSuffix, ""},
+		eval.OptToScan{"display-suffix", &c.displaySuffix, ""},
+		eval.OptToScan{"style", &style, ""},
 	)
 	if style != "" {
 		c.style = ui.StylesFromString(style)
@@ -132,7 +132,7 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.Fn,
 		for rc := range chanRawCandidate {
 			collected = append(collected, rc)
 			select {
-			case matcherInput <- types.String(rc.text()):
+			case matcherInput <- rc.text():
 			case <-stopCollector:
 				return
 			}
@@ -144,7 +144,7 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.Fn,
 		{Chan: matcherInput, File: eval.DevNull}, {File: os.Stdout}, {File: os.Stderr}}
 	ec := eval.NewTopFrame(ev, eval.NewInternalSource("[editor matcher]"), ports)
 
-	args := []types.Value{types.String(seed)}
+	args := []types.Value{seed}
 	values, err := ec.PCaptureOutput(matcher, args, eval.NoOpts)
 	if err != nil {
 		return nil, err

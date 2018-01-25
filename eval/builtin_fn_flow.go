@@ -119,11 +119,11 @@ func peach(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func fail(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var msg types.String
+	var msg string
 	ScanArgs(args, &msg)
 	TakeNoOpt(opts)
 
-	throw(errors.New(string(msg)))
+	throw(errors.New(msg))
 }
 
 func multiErrorFn(ec *Frame, args []types.Value, opts map[string]types.Value) {

@@ -21,9 +21,9 @@ func TestBuiltinFnIO(t *testing.T) {
 		{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`,
 			want{out: []types.Value{
 				types.MakeMap(map[types.Value]types.Value{
-					types.String("k"): types.String("v"),
-					types.String("a"): types.MakeList(strs("1", "2")...)}),
-				types.String("foo"),
+					"k": "v",
+					"a": types.MakeList(strs("1", "2")...)}),
+				"foo",
 			}}},
 		{`echo 'invalid' | from-json`, want{err: errAny}},
 

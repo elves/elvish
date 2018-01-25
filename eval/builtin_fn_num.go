@@ -147,7 +147,7 @@ func mod(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
-	out <- types.String(strconv.Itoa(a % b))
+	out <- strconv.Itoa(a % b)
 }
 
 func randFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -168,5 +168,5 @@ func randint(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 	out := ec.ports[1].Chan
 	i := low + rand.Intn(high-low)
-	out <- types.String(strconv.Itoa(i))
+	out <- strconv.Itoa(i)
 }

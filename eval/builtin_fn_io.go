@@ -50,11 +50,11 @@ func put(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func print(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var sepv types.String
-	ScanOpts(opts, OptToScan{"sep", &sepv, types.String(" ")})
+	var sepv string
+	ScanOpts(opts, OptToScan{"sep", &sepv, " "})
 
 	out := ec.ports[1].File
-	sep := string(sepv)
+	sep := sepv
 	for i, arg := range args {
 		if i > 0 {
 			out.WriteString(sep)
@@ -98,7 +98,7 @@ func slurp(ec *Frame, args []types.Value, opts map[string]types.Value) {
 
 	all, err := ioutil.ReadAll(in)
 	maybeThrow(err)
-	out <- types.String(string(all))
+	out <- string(all)
 }
 
 func fromLines(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -159,9 +159,9 @@ func toJSON(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func fopen(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var namev types.String
+	var namev string
 	ScanArgs(args, &namev)
-	name := string(namev)
+	name := namev
 	TakeNoOpt(opts)
 
 	// TODO support opening files for writing etc as well.

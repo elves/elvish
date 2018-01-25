@@ -58,7 +58,7 @@ func (hv List) Iterate(f func(types.Value) bool) {
 	maybeThrow(err)
 
 	for _, cmd := range cmds {
-		if !f(types.String(cmd)) {
+		if !f(string(cmd)) {
 			break
 		}
 	}
@@ -79,12 +79,12 @@ func (hv List) Index(idx types.Value) (types.Value, error) {
 		}
 		vs := make([]types.Value, len(cmds))
 		for i := range cmds {
-			vs[i] = types.String(cmds[i])
+			vs[i] = string(cmds[i])
 		}
 		return types.MakeList(vs...), nil
 	}
 	s, err := hv.Daemon.Cmd(i + 1)
-	return types.String(s), err
+	return string(s), err
 }
 
 func maybeThrow(e error) {

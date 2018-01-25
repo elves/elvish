@@ -19,11 +19,11 @@ func NewString(ps *string) Variable {
 }
 
 func (sv stringVar) Get() types.Value {
-	return types.String(*sv.ptr)
+	return string(*sv.ptr)
 }
 
 func (sv stringVar) Set(v types.Value) error {
-	if s, ok := v.(types.String); ok {
+	if s, ok := v.(string); ok {
 		*sv.ptr = string(s)
 		return nil
 	}

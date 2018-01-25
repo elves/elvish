@@ -24,11 +24,11 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 	desc := make(map[*getopt.Option]string)
 	// Convert arguments.
 	err := types.Iterate(elemsv, func(v types.Value) bool {
-		elem, ok := v.(types.String)
+		elem, ok := v.(string)
 		if !ok {
 			throwf("arg should be string, got %s", types.Kind(v))
 		}
-		elems = append(elems, string(elem))
+		elems = append(elems, elem)
 		return true
 	})
 	maybeThrow(err)
@@ -38,16 +38,16 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 			throwf("opt should be map-like, got %s", types.Kind(v))
 		}
 		get := func(ks string) (string, bool) {
-			kv := types.String(ks)
+			kv := ks
 			if !m.HasKey(kv) {
 				return "", false
 			}
 			vv, err := m.Index(kv)
 			maybeThrow(err)
-			if vs, ok := vv.(types.String); ok {
-				return string(vs), true
+			if vs, ok := vv.(string); ok {
+				return vs, true
 			} else {
-				throwf("%s should be string, got %s", ks, vs.Kind())
+				throwf("%s should be string, got %s", ks, types.Kind(vv))
 				panic("unreachable")
 			}
 		}
@@ -74,13 +74,13 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 	})
 	maybeThrow(err)
 	err = types.Iterate(argsv, func(v types.Value) bool {
-		sv, ok := v.(types.String)
+		sv, ok := v.(string)
 		if ok {
-			if string(sv) == "..." {
+			if sv == "..." {
 				variadic = true
 				return true
 			}
-			throwf("string except for ... not allowed as argument handler, got %s", parse.Quote(string(sv)))
+			throwf("string except for ... not allowed as argument handler, got %s", parse.Quote(sv))
 		}
 		arg, ok := v.(eval.Fn)
 		if !ok {
@@ -104,7 +104,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 		out <- c
 	}
 	putLongOpt := func(opt *getopt.Option) {
-		c := &complexCandidate{stem: "--" + string(opt.Long)}
+		c := &complexCandidate{stem: "--" + opt.Long}
 		if d, ok := desc[opt]; ok {
 			c.displaySuffix = " (" + d + ")"
 		}

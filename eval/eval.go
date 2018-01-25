@@ -109,7 +109,7 @@ func (ev *Evaler) InstallBundled(name, src string) {
 func (ev *Evaler) SetArgs(args []string) {
 	v := vector.Empty
 	for _, arg := range args {
-		v = v.Cons(types.String(arg))
+		v = v.Cons(arg)
 	}
 	ev.Builtin["args"] = vartypes.NewRo(types.NewList(v))
 }

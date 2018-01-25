@@ -13,22 +13,6 @@ type Booler interface {
 	Bool() bool
 }
 
-// Stringer wraps the String method.
-type Stringer interface {
-	// Stringer converts the receiver to a string.
-	String() string
-}
-
-// ToString converts a Value to string. When the Value type implements
-// String(), it is used. Otherwise Repr(NoPretty) is used.
-func ToString(v Value) string {
-	switch v := v.(type) {
-	case Stringer:
-		return v.String()
-	}
-	return Repr(v, NoPretty)
-}
-
 // IterateKeyer wraps the IterateKey method.
 type IterateKeyer interface {
 	// IterateKey calls the passed function with each value within the receiver.

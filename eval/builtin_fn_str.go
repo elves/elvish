@@ -53,13 +53,13 @@ func wrapStrCompare(cmp func(a, b string) bool) BuiltinFnImpl {
 	return func(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		TakeNoOpt(opts)
 		for _, a := range args {
-			if _, ok := a.(types.String); !ok {
+			if _, ok := a.(string); !ok {
 				throw(ErrArgs)
 			}
 		}
 		result := true
 		for i := 0; i < len(args)-1; i++ {
-			if !cmp(string(args[i].(types.String)), string(args[i+1].(types.String))) {
+			if !cmp(args[i].(string), args[i+1].(string)) {
 				result = false
 				break
 			}
@@ -73,67 +73,67 @@ func toString(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 	out := ec.OutputChan()
 	for _, a := range args {
-		out <- types.String(types.ToString(a))
+		out <- types.ToString(a)
 	}
 }
 
 // joins joins all input strings with a delimiter.
 func joins(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var sepv types.String
+	var sepv string
 	iterate := ScanArgsOptionalInput(ec, args, &sepv)
-	sep := string(sepv)
+	sep := sepv
 	TakeNoOpt(opts)
 
 	var buf bytes.Buffer
 	iterate(func(v types.Value) {
-		if s, ok := v.(types.String); ok {
+		if s, ok := v.(string); ok {
 			if buf.Len() > 0 {
 				buf.WriteString(sep)
 			}
-			buf.WriteString(string(s))
+			buf.WriteString(s)
 		} else {
 			throwf("join wants string input, got %s", types.Kind(v))
 		}
 	})
 	out := ec.ports[1].Chan
-	out <- types.String(buf.String())
+	out <- buf.String()
 }
 
 // splits splits an argument strings by a delimiter and writes all pieces.
 func splits(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
-		s, sep types.String
+		s, sep string
 		optMax int
 	)
 	ScanArgs(args, &sep, &s)
-	ScanOpts(opts, OptToScan{"max", &optMax, types.String("-1")})
+	ScanOpts(opts, OptToScan{"max", &optMax, "-1"})
 
 	out := ec.ports[1].Chan
-	parts := strings.SplitN(string(s), string(sep), optMax)
+	parts := strings.SplitN(s, sep, optMax)
 	for _, p := range parts {
-		out <- types.String(p)
+		out <- p
 	}
 }
 
 func replaces(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
-		old, repl, s types.String
+		old, repl, s string
 		optMax       int
 	)
 	ScanArgs(args, &old, &repl, &s)
-	ScanOpts(opts, OptToScan{"max", &optMax, types.String("-1")})
+	ScanOpts(opts, OptToScan{"max", &optMax, "-1"})
 
-	ec.ports[1].Chan <- types.String(strings.Replace(string(s), string(old), string(repl), optMax))
+	ec.ports[1].Chan <- strings.Replace(s, old, repl, optMax)
 }
 
 func ord(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var s types.String
+	var s string
 	ScanArgs(args, &s)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
 	for _, r := range s {
-		out <- types.String("0x" + strconv.FormatInt(int64(r), 16))
+		out <- "0x" + strconv.FormatInt(int64(r), 16)
 	}
 }
 
@@ -156,22 +156,22 @@ func base(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.ports[1].Chan
 
 	for _, num := range nums {
-		out <- types.String(strconv.FormatInt(int64(num), b))
+		out <- strconv.FormatInt(int64(num), b)
 	}
 }
 
 func wcswidth(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var s types.String
+	var s string
 	ScanArgs(args, &s)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
-	out <- types.String(strconv.Itoa(util.Wcswidth(string(s))))
+	out <- strconv.Itoa(util.Wcswidth(s))
 }
 
 func overrideWcwidth(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var (
-		s types.String
+		s string
 		w int
 	)
 	ScanArgs(args, &s, &w)
@@ -183,19 +183,19 @@ func overrideWcwidth(ec *Frame, args []types.Value, opts map[string]types.Value)
 }
 
 func hasPrefix(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var s, prefix types.String
+	var s, prefix string
 	ScanArgs(args, &s, &prefix)
 	TakeNoOpt(opts)
 
-	ec.OutputChan() <- types.Bool(strings.HasPrefix(string(s), string(prefix)))
+	ec.OutputChan() <- types.Bool(strings.HasPrefix(s, prefix))
 }
 
 func hasSuffix(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var s, suffix types.String
+	var s, suffix string
 	ScanArgs(args, &s, &suffix)
 	TakeNoOpt(opts)
 
-	ec.OutputChan() <- types.Bool(strings.HasSuffix(string(s), string(suffix)))
+	ec.OutputChan() <- types.Bool(strings.HasSuffix(s, suffix))
 }
 
 var eawkWordSep = regexp.MustCompile("[ \t]+")
@@ -215,13 +215,13 @@ func eawk(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		if broken {
 			return
 		}
-		line, ok := v.(types.String)
+		line, ok := v.(string)
 		if !ok {
 			throw(ErrInput)
 		}
 		args := []types.Value{line}
-		for _, field := range eawkWordSep.Split(strings.Trim(string(line), " \t"), -1) {
-			args = append(args, types.String(field))
+		for _, field := range eawkWordSep.Split(strings.Trim(line, " \t"), -1) {
+			args = append(args, field)
 		}
 
 		newec := ec.fork("fn of eawk")

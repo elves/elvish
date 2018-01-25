@@ -38,7 +38,7 @@ func PromptVariable() vartypes.Variable {
 		args []types.Value, opts map[string]types.Value) {
 
 		out := ec.OutputChan()
-		out <- types.String(util.Getwd())
+		out <- string(util.Getwd())
 		if isRoot {
 			out <- &ui.Styled{"# ", ui.Styles{"red"}}
 		} else {
@@ -106,7 +106,7 @@ func MaxWaitVariable() vartypes.Variable {
 
 // MaxWait extracts $edit:-prompts-max-wait.
 func MaxWait(ed Editor) float64 {
-	f, _ := strconv.ParseFloat(string(ed.Variable("-prompts-max-wait").Get().(types.String)), 64)
+	f, _ := strconv.ParseFloat(ed.Variable("-prompts-max-wait").Get().(string), 64)
 	return f
 }
 

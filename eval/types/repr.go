@@ -3,6 +3,7 @@ package types
 import (
 	"fmt"
 
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
 
@@ -24,8 +25,12 @@ type Reprer interface {
 }
 
 func Repr(v interface{}, indent int) string {
-	if reprer, ok := v.(Reprer); ok {
-		return reprer.Repr(indent)
+	switch v := v.(type) {
+	case string:
+		return parse.Quote(v)
+	case Reprer:
+		return v.Repr(indent)
+	default:
+		return fmt.Sprint(v)
 	}
-	return fmt.Sprint(v)
 }

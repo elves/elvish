@@ -17,14 +17,14 @@ func (ed *Editor) abbr() types.Map {
 func (ed *Editor) abbrIterate(cb func(abbr, full string) bool) {
 	m := ed.abbr()
 	m.IteratePair(func(abbrValue, fullValue types.Value) bool {
-		abbr, ok := abbrValue.(types.String)
+		abbr, ok := abbrValue.(string)
 		if !ok {
 			return true
 		}
-		full, ok := fullValue.(types.String)
+		full, ok := fullValue.(string)
 		if !ok {
 			return true
 		}
-		return cb(string(abbr), string(full))
+		return cb(abbr, full)
 	})
 }

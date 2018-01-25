@@ -28,8 +28,8 @@ var fns = []*eval.BuiltinFn{
 func match(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.OutputChan()
 	var (
-		argPattern types.String
-		argSource  types.String
+		argPattern string
+		argSource  string
 		optPOSIX   types.Bool
 	)
 	eval.ScanArgs(args, &argPattern, &argSource)
@@ -43,8 +43,8 @@ func match(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 func find(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.OutputChan()
 	var (
-		argPattern types.String
-		argSource  types.String
+		argPattern string
+		argSource  string
 		optPOSIX   types.Bool
 		optLongest types.Bool
 		optMax     int
@@ -53,7 +53,7 @@ func find(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	eval.ScanOpts(opts,
 		eval.OptToScan{"posix", &optPOSIX, types.Bool(false)},
 		eval.OptToScan{"longest", &optLongest, types.Bool(false)},
-		eval.OptToScan{"max", &optMax, types.String("-1")})
+		eval.OptToScan{"max", &optMax, string("-1")})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
 	source := string(argSource)
@@ -79,9 +79,9 @@ func find(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 func replace(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.OutputChan()
 	var (
-		argPattern types.String
+		argPattern string
 		argRepl    types.Value
-		argSource  types.String
+		argSource  string
 		optPOSIX   types.Bool
 		optLongest types.Bool
 		optLiteral types.Bool
@@ -96,7 +96,7 @@ func replace(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 
 	var result string
 	if optLiteral {
-		repl, ok := argRepl.(types.String)
+		repl, ok := argRepl.(string)
 		if !ok {
 			throwf("replacement must be string when literal is set, got %s",
 				types.Kind(argRepl))
@@ -104,17 +104,17 @@ func replace(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 		result = pattern.ReplaceAllLiteralString(string(argSource), string(repl))
 	} else {
 		switch repl := argRepl.(type) {
-		case types.String:
+		case string:
 			result = pattern.ReplaceAllString(string(argSource), string(repl))
 		case eval.Fn:
 			replFunc := func(s string) string {
 				values, err := ec.PCaptureOutput(repl,
-					[]types.Value{types.String(s)}, eval.NoOpts)
+					[]types.Value{string(s)}, eval.NoOpts)
 				maybeThrow(err)
 				if len(values) != 1 {
 					throwf("replacement function must output exactly one value, got %d", len(values))
 				}
-				output, ok := values[0].(types.String)
+				output, ok := values[0].(string)
 				if !ok {
 					throwf("replacement function must output one string, got %s",
 						types.Kind(values[0]))
@@ -127,14 +127,14 @@ func replace(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 				types.Kind(argRepl))
 		}
 	}
-	out <- types.String(result)
+	out <- string(result)
 }
 
 func split(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	out := ec.OutputChan()
 	var (
-		argPattern types.String
-		argSource  types.String
+		argPattern string
+		argSource  string
 		optPOSIX   types.Bool
 		optLongest types.Bool
 		optMax     int
@@ -143,17 +143,17 @@ func split(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	eval.ScanOpts(opts,
 		eval.OptToScan{"posix", &optPOSIX, types.Bool(false)},
 		eval.OptToScan{"longest", &optLongest, types.Bool(false)},
-		eval.OptToScan{"max", &optMax, types.String("-1")})
+		eval.OptToScan{"max", &optMax, string("-1")})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
 
 	pieces := pattern.Split(string(argSource), optMax)
 	for _, piece := range pieces {
-		out <- types.String(piece)
+		out <- string(piece)
 	}
 }
 
-func makePattern(argPattern types.String, optPOSIX, optLongest types.Bool) *regexp.Regexp {
+func makePattern(argPattern string, optPOSIX, optLongest types.Bool) *regexp.Regexp {
 	var (
 		pattern *regexp.Regexp
 		err     error

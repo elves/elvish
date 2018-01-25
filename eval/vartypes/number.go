@@ -18,11 +18,11 @@ func NewNumber(ptr *float64) Variable {
 }
 
 func (nv number) Get() types.Value {
-	return types.String(strconv.FormatFloat(*nv.ptr, 'E', -1, 64))
+	return string(strconv.FormatFloat(*nv.ptr, 'E', -1, 64))
 }
 
 func (nv number) Set(v types.Value) error {
-	if s, ok := v.(types.String); ok {
+	if s, ok := v.(string); ok {
 		if num, err := strconv.ParseFloat(string(s), 64); err == nil {
 			*nv.ptr = num
 			return nil

@@ -43,7 +43,7 @@ var (
 func strs(ss ...string) []types.Value {
 	vs := make([]types.Value, len(ss))
 	for i, s := range ss {
-		vs[i] = types.String(s)
+		vs[i] = s
 	}
 	return vs
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-var testIndexee = types.String("a")
+var testIndexee = "a"
 
 func TestFindIndexComplContext(t *testing.T) {
 	testComplContextFinder(t, "findIndexComplContext", findIndexComplContext, []complContextFinderTest{
@@ -28,8 +28,8 @@ func TestFindIndexComplContext(t *testing.T) {
 
 func TestComplIndexInner(t *testing.T) {
 	m := types.MakeMap(map[types.Value]types.Value{
-		types.String("foo"):   types.String("bar"),
-		types.String("lorem"): types.String("ipsum"),
+		"foo":   "bar",
+		"lorem": "ipsum",
 	})
 	var (
 		candidates     rawCandidates

@@ -25,7 +25,7 @@ func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
 		if err != nil {
 			util.Throw(err)
 		}
-		return types.String(strconv.Itoa(pid))
+		return string(strconv.Itoa(pid))
 	}
 
 	daemonSpawn := func(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
@@ -41,7 +41,7 @@ func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
 	}
 	return eval.Ns{
 		"pid":  vartypes.NewRoCallback(daemonPid),
-		"sock": vartypes.NewRo(types.String(daemon.SockPath())),
+		"sock": vartypes.NewRo(string(daemon.SockPath())),
 
 		"spawn" + eval.FnSuffix: vartypes.NewRo(&eval.BuiltinFn{"daemon:spawn", daemonSpawn}),
 	}

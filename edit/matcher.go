@@ -31,21 +31,21 @@ var (
 
 	_ = RegisterVariable("-matcher", func() vartypes.Variable {
 		m := types.EmptyMapInner.Assoc(
-			// Fallback matcher uses empty string as key
-			types.String(""), matchPrefix)
+
+			"", matchPrefix)
 		return vartypes.NewValidatedPtr(types.NewMap(m), vartypes.ShouldBeMap)
 	})
 )
 
 func (ed *Editor) lookupMatcher(name string) (eval.Fn, bool) {
 	m := ed.variables["-matcher"].Get().(types.Map)
-	key := types.String(name)
+	key := name
 	if !m.HasKey(key) {
 		// Use fallback matcher
-		if !m.HasKey(types.String("")) {
+		if !m.HasKey("") {
 			return nil, false
 		}
-		key = types.String("")
+		key = ""
 	}
 	matcher, ok := types.MustIndex(m, key).(eval.Fn)
 	return matcher, ok
@@ -55,7 +55,7 @@ func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
 	return func(ec *eval.Frame,
 		args []types.Value, opts map[string]types.Value) {
 
-		var pattern types.String
+		var pattern string
 		iterate := eval.ScanArgsOptionalInput(ec, args, &pattern)
 		var options struct {
 			IgnoreCase bool
@@ -84,11 +84,11 @@ func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
 
 		out := ec.OutputChan()
 		iterate(func(v types.Value) {
-			s, ok := v.(types.String)
+			s, ok := v.(string)
 			if !ok {
 				throw(errMatcherInputMustBeString)
 			}
-			out <- types.Bool(matcher(string(s), string(pattern)))
+			out <- types.Bool(matcher(s, pattern))
 		})
 	}
 }

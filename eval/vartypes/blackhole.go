@@ -10,7 +10,7 @@ func (blackhole) Set(types.Value) error {
 
 func (blackhole) Get() types.Value {
 	// TODO: Return a special placeholder value.
-	return types.String("")
+	return string("")
 }
 
 // NewBlackhole returns a blackhole variable. Assignments to a blackhole

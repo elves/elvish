@@ -5,7 +5,7 @@ func resolve(s string, ec *Frame) Fn {
 	// (*compiler).form.
 
 	// Try variable
-	explode, ns, name := ParseVariable(string(s))
+	explode, ns, name := ParseVariable(s)
 	if !explode {
 		if v := ec.ResolveVar(ns, name+FnSuffix); v != nil {
 			if caller, ok := v.Get().(Fn); ok {
@@ -15,5 +15,5 @@ func resolve(s string, ec *Frame) Fn {
 	}
 
 	// External command
-	return ExternalCmd{string(s)}
+	return ExternalCmd{s}
 }

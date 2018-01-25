@@ -8,6 +8,8 @@ type Lener interface {
 
 func Len(v interface{}) int {
 	switch v := v.(type) {
+	case string:
+		return len(v)
 	case Lener:
 		return v.Len()
 	}

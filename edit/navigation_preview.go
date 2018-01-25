@@ -82,10 +82,10 @@ func makeNavFilePreview(fname string) navPreview {
 		return newErrNavColumn(err)
 	}
 
-	content := string(buf[:nr])
-	if !utf8.ValidString(content) {
+	content := buf[:nr]
+	if !utf8.Valid(content) {
 		return newErrNavColumn(ErrNotValidUTF8)
 	}
 
-	return newNavFilePreview(strings.Split(content, "\n"))
+	return newNavFilePreview(strings.Split(string(content), "\n"))
 }

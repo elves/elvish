@@ -336,15 +336,15 @@ type narrowOptions struct {
 }
 
 type narrowItemString struct {
-	types.String
+	String string
 }
 
 func (s *narrowItemString) Content() string {
-	return string(s.String)
+	return s.String
 }
 
 func (s *narrowItemString) Display() ui.Styled {
-	return ui.Unstyled(string(s.String))
+	return ui.Unstyled(s.String)
 }
 
 func (s *narrowItemString) FilterText() string {
@@ -356,34 +356,34 @@ type narrowItemComplex struct {
 }
 
 func (c *narrowItemComplex) Content() string {
-	key := types.String("content")
+	key := "content"
 	if !c.Map.HasKey(key) {
 		return ""
 	}
-	if s, ok := types.MustIndex(c.Map, key).(types.String); !ok {
+	if s, ok := types.MustIndex(c.Map, key).(string); !ok {
 		return ""
 	} else {
-		return s.String()
+		return s
 	}
 }
 
 // TODO: add style
 func (c *narrowItemComplex) Display() ui.Styled {
-	key := types.String("display")
+	key := "display"
 	if !c.Map.HasKey(key) {
 		return ui.Unstyled("")
 	}
-	if s, ok := types.MustIndex(c.Map, key).(types.String); !ok {
+	if s, ok := types.MustIndex(c.Map, key).(string); !ok {
 		return ui.Unstyled("")
 	} else {
-		return ui.Unstyled(s.String())
+		return ui.Unstyled(s)
 	}
 }
 
 func (c *narrowItemComplex) FilterText() string {
-	key := types.String("filter-text")
+	key := "filter-text"
 	if c.Map.HasKey(key) {
-		return types.MustIndex(c.Map, key).(types.String).String()
+		return types.MustIndex(c.Map, key).(string)
 	}
 	return c.Content()
 }
@@ -432,7 +432,7 @@ func narrowGetSource(ec *eval.Frame, source eval.Fn) func() []narrowItem {
 		var lis []narrowItem
 		for _, v := range vs {
 			switch raw := v.(type) {
-			case types.String:
+			case string:
 				lis = append(lis, &narrowItemString{raw})
 			case types.Map:
 				lis = append(lis, &narrowItemComplex{raw})
@@ -483,40 +483,40 @@ func CommandHistory(ec *eval.Frame, args []types.Value, opts map[string]types.Va
 
 	for i := start; i < end; i++ {
 		out <- types.MakeMap(map[types.Value]types.Value{
-			types.String("id"):  types.String(strconv.Itoa(i)),
-			types.String("cmd"): types.String(cmds[i]),
+			"id":  strconv.Itoa(i),
+			"cmd": cmds[i],
 		})
 	}
 }
 
 func InsertAtDot(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
-	var text types.String
+	var text string
 
 	eval.ScanArgs(args, &text)
 	eval.TakeNoOpt(opts)
 
 	ed := ec.Editor.(*Editor)
-	ed.insertAtDot(text.String())
+	ed.insertAtDot(text)
 }
 
 func ReplaceInput(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
-	var text types.String
+	var text string
 
 	eval.ScanArgs(args, &text)
 	eval.TakeNoOpt(opts)
 
 	ed := ec.Editor.(*Editor)
-	ed.buffer = text.String()
+	ed.buffer = text
 }
 
 func Wordify(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
-	var text types.String
+	var text string
 
 	eval.ScanArgs(args, &text)
 	eval.TakeNoOpt(opts)
 
 	out := ec.OutputChan()
-	for _, s := range wordify(text.String()) {
-		out <- types.String(s)
+	for _, s := range wordify(text) {
+		out <- s
 	}
 }

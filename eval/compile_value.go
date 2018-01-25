@@ -52,7 +52,7 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOpBody {
 				if err != nil {
 					return nil, err
 				}
-				return []types.Value{types.String(home)}, nil
+				return []types.Value{home}, nil
 			})
 		}
 		tilde = true
@@ -115,12 +115,12 @@ func (op compoundOp) Invoke(ec *Frame) ([]types.Value, error) {
 
 func cat(lhs, rhs types.Value) (types.Value, error) {
 	switch lhs := lhs.(type) {
-	case types.String:
+	case string:
 		switch rhs := rhs.(type) {
-		case types.String:
+		case string:
 			return lhs + rhs, nil
 		case GlobPattern:
-			segs := stringToSegments(string(lhs))
+			segs := stringToSegments(lhs)
 			// We know rhs contains exactly one segment.
 			segs = append(segs, rhs.Segments[0])
 			return GlobPattern{glob.Pattern{segs, ""}, rhs.Flags, rhs.Buts}, nil
@@ -128,8 +128,8 @@ func cat(lhs, rhs types.Value) (types.Value, error) {
 	case GlobPattern:
 		// NOTE Modifies lhs in place.
 		switch rhs := rhs.(type) {
-		case types.String:
-			lhs.append(stringToSegments(string(rhs))...)
+		case string:
+			lhs.append(stringToSegments(rhs)...)
 			return lhs, nil
 		case GlobPattern:
 			// We know rhs contains exactly one segment.
@@ -166,8 +166,8 @@ var (
 
 func doTilde(v types.Value) types.Value {
 	switch v := v.(type) {
-	case types.String:
-		s := string(v)
+	case string:
+		s := v
 		i := strings.Index(s, "/")
 		var uname, rest string
 		if i == -1 {
@@ -177,7 +177,7 @@ func doTilde(v types.Value) types.Value {
 			rest = s[i+1:]
 		}
 		dir := mustGetHome(uname)
-		return types.String(path.Join(dir, rest))
+		return path.Join(dir, rest)
 	case GlobPattern:
 		if len(v.Segments) == 0 {
 			throw(ErrBadGlobPattern)
@@ -356,7 +356,7 @@ func pcaptureOutput(ec *Frame, op Op) ([]types.Value, error) {
 		for {
 			line, err := buffered.ReadString('\n')
 			if line != "" {
-				v := types.String(strings.TrimSuffix(line, "\n"))
+				v := strings.TrimSuffix(line, "\n")
 				m.Lock()
 				vs = append(vs, v)
 				m.Unlock()
@@ -581,7 +581,7 @@ func literalValues(v ...types.Value) ValuesOpBody {
 }
 
 func literalStr(text string) ValuesOpBody {
-	return literalValues(types.String(text))
+	return literalValues(text)
 }
 
 type seqValuesOp struct{ subops []ValuesOp }

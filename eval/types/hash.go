@@ -1,5 +1,7 @@
 package types
 
+import "github.com/xiaq/persistent/hash"
+
 // Hasher wraps the Hash method.
 type Hasher interface {
 	// Hash computes the hash code of the receiver.
@@ -7,8 +9,11 @@ type Hasher interface {
 }
 
 func Hash(v interface{}) uint32 {
-	if hasher, ok := v.(Hasher); ok {
-		return hasher.Hash()
+	switch v := v.(type) {
+	case string:
+		return hash.String(v)
+	case Hasher:
+		return v.Hash()
 	}
 	return 0
 }

@@ -38,13 +38,13 @@ func TestBuiltinFn(t *testing.T) {
 	ec.Editor = &Editor{active: true}
 
 	if !util.Throws(func() {
-		builtinFn.Call(ec, []types.Value{types.String("2")}, nil)
+		builtinFn.Call(ec, []types.Value{"2"}, nil)
 	}, eval.ErrNoArgAccepted) {
 		t.Errorf("BuiltinFn should error when argument was supplied, didn't")
 	}
 
 	if !util.Throws(func() {
-		builtinFn.Call(ec, nil, map[string]types.Value{"a": types.String("b")})
+		builtinFn.Call(ec, nil, map[string]types.Value{"a": "b"})
 	}, eval.ErrNoOptAccepted) {
 		t.Errorf("BuiltinFn should error when option was supplied, didn't")
 	}

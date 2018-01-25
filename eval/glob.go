@@ -75,11 +75,11 @@ func (gp GlobPattern) Repr(int) string {
 }
 
 func (gp GlobPattern) Index(k types.Value) (types.Value, error) {
-	modifierv, ok := k.(types.String)
+	modifierv, ok := k.(string)
 	if !ok {
 		return nil, ErrModifierMustBeString
 	}
-	modifier := string(modifierv)
+	modifier := modifierv
 	switch {
 	case modifier == "nomatch-ok":
 		gp.Flags |= NoMatchOK
@@ -119,7 +119,7 @@ func (gp GlobPattern) Index(k types.Value) (types.Value, error) {
 				return nil, badRangeExpr
 			}
 		} else {
-			return nil, fmt.Errorf("unknown modifier %s", modifierv.Repr(types.NoPretty))
+			return nil, fmt.Errorf("unknown modifier %s", types.Repr(modifierv, types.NoPretty))
 		}
 	}
 	return gp, nil
@@ -196,7 +196,7 @@ func doGlob(gp GlobPattern, abort <-chan struct{}) []types.Value {
 		default:
 		}
 		if _, b := but[name]; !b {
-			vs = append(vs, types.String(name))
+			vs = append(vs, name)
 		}
 		return true
 	}) {

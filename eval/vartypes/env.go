@@ -15,7 +15,7 @@ type envVariable struct {
 }
 
 func (ev envVariable) Set(val types.Value) error {
-	if s, ok := val.(types.String); ok {
+	if s, ok := val.(string); ok {
 		os.Setenv(ev.name, string(s))
 		return nil
 	}
@@ -23,7 +23,7 @@ func (ev envVariable) Set(val types.Value) error {
 }
 
 func (ev envVariable) Get() types.Value {
-	return types.String(os.Getenv(ev.name))
+	return string(os.Getenv(ev.name))
 }
 
 // NewEnv returns an environment variable.

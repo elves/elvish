@@ -154,8 +154,8 @@ func convertListToDirs(li types.List) []storedefs.Dir {
 	pinned := make([]storedefs.Dir, 0, li.Len())
 	// XXX(xiaq): silently drops non-string items.
 	li.Iterate(func(v types.Value) bool {
-		if s, ok := v.(types.String); ok {
-			pinned = append(pinned, storedefs.Dir{string(s), PinnedScore})
+		if s, ok := v.(string); ok {
+			pinned = append(pinned, storedefs.Dir{s, PinnedScore})
 		}
 		return true
 	})
@@ -167,8 +167,8 @@ func convertListsToSet(lis ...types.List) map[string]struct{} {
 	// XXX(xiaq): silently drops non-string items.
 	for _, li := range lis {
 		li.Iterate(func(v types.Value) bool {
-			if s, ok := v.(types.String); ok {
-				set[string(s)] = struct{}{}
+			if s, ok := v.(string); ok {
+				set[s] = struct{}{}
 			}
 			return true
 		})

@@ -14,16 +14,16 @@ var (
 
 func newMatch(text string, start, end int, groups vector.Vector) *types.Struct {
 	return types.NewStruct(matchDescriptor, []types.Value{
-		types.String(text),
-		types.String(strconv.Itoa(start)),
-		types.String(strconv.Itoa(end)),
+		string(text),
+		string(strconv.Itoa(start)),
+		string(strconv.Itoa(end)),
 		types.NewList(groups),
 	})
 }
 
 func newSubmatch(text string, start, end int) *types.Struct {
 	return types.NewStruct(submatchDescriptor, []types.Value{
-		types.String(text),
-		types.String(strconv.Itoa(start)),
-		types.String(strconv.Itoa(end))})
+		string(text),
+		string(strconv.Itoa(start)),
+		string(strconv.Itoa(end))})
 }

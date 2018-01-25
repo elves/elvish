@@ -303,7 +303,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 					// XXX Old value is nonexistent. We should delete the
 					// variable. However, since the compiler now doesn't delete
 					// it, we don't delete it in the evaler either.
-					val = types.String("")
+					val = ""
 				}
 				err := v.Set(val)
 				if err != nil {
@@ -351,8 +351,8 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 	convertedOpts := make(map[string]types.Value)
 	var errOpt error
 	opts.IteratePair(func(k, v types.Value) bool {
-		if ks, ok := k.(types.String); ok {
-			convertedOpts[string(ks)] = v
+		if ks, ok := k.(string); ok {
+			convertedOpts[ks] = v
 		} else {
 			errOpt = fmt.Errorf("Option key must be string, got %s", types.Kind(k))
 			return false
@@ -457,7 +457,7 @@ func fixNilVariables(vs []vartypes.Variable, perr *error) {
 			continue
 		}
 		if v.Get() == nil {
-			err := v.Set(types.String(""))
+			err := v.Set("")
 			*perr = util.Errors(*perr, err)
 		}
 	}
@@ -530,10 +530,10 @@ func (op *redirOp) Invoke(ec *Frame) error {
 		}
 	} else {
 		switch src := srcUnwrap.Any().(type) {
-		case types.String:
-			f, err := os.OpenFile(string(src), op.flag, defaultFileRedirPerm)
+		case string:
+			f, err := os.OpenFile(src, op.flag, defaultFileRedirPerm)
 			if err != nil {
-				return fmt.Errorf("failed to open file %s: %s", src.Repr(types.NoPretty), err)
+				return fmt.Errorf("failed to open file %s: %s", types.Repr(src, types.NoPretty), err)
 			}
 			ec.ports[dst] = &Port{
 				File: f, Chan: BlackholeChan,

@@ -44,7 +44,7 @@ func nsFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 
 func rangeFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var step float64
-	ScanOpts(opts, OptToScan{"step", &step, types.String("1")})
+	ScanOpts(opts, OptToScan{"step", &step, "1"})
 
 	var lower, upper float64
 	var err error
@@ -239,7 +239,7 @@ func count(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	default:
 		throw(errors.New("want 0 or 1 argument"))
 	}
-	ec.ports[1].Chan <- types.String(strconv.Itoa(n))
+	ec.ports[1].Chan <- strconv.Itoa(n)
 }
 
 func keys(ec *Frame, args []types.Value, opts map[string]types.Value) {

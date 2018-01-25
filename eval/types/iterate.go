@@ -9,15 +9,22 @@ type Iterator interface {
 	Iterate(func(v Value) bool)
 }
 
-var errCannotIterate = errors.New("cannot be iterated")
-
 func Iterate(v Value, f func(Value) bool) error {
 	switch v := v.(type) {
+	case string:
+		for _, r := range v {
+			b := f(string(r))
+			if !b {
+				break
+			}
+		}
+		return nil
 	case Iterator:
 		v.Iterate(f)
 		return nil
+	default:
+		return errors.New(Kind(v) + " cannot be iterated")
 	}
-	return errCannotIterate
 }
 
 func Collect(it Value) ([]Value, error) {

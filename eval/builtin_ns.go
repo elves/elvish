@@ -12,7 +12,7 @@ import (
 func makeBuiltinNs() Ns {
 	ns := Ns{
 		"_":     vartypes.NewBlackhole(),
-		"pid":   vartypes.NewRo(types.String(strconv.Itoa(syscall.Getpid()))),
+		"pid":   vartypes.NewRo(strconv.Itoa(syscall.Getpid())),
 		"ok":    vartypes.NewRo(OK),
 		"true":  vartypes.NewRo(types.Bool(true)),
 		"false": vartypes.NewRo(types.Bool(false)),

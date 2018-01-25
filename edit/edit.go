@@ -300,7 +300,7 @@ func (ed *Editor) finishReadLine() error {
 	line := ed.buffer
 	ed.editorState = editorState{}
 
-	callHooks(ed.evaler, ed.afterReadLine(), types.String(line))
+	callHooks(ed.evaler, ed.afterReadLine(), line)
 
 	return util.Errors(errRefresh, errRestore)
 }

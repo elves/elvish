@@ -11,10 +11,10 @@ import (
 // These are used as arguments to scanArg, since Go does not allow taking
 // address of literals.
 
-func intPtr() *int             { var x int; return &x }
-func intsPtr() *[]int          { var x []int; return &x }
-func float64Ptr() *float64     { var x float64; return &x }
-func stringPtr() *types.String { var x types.String; return &x }
+func intPtr() *int         { var x int; return &x }
+func intsPtr() *[]int      { var x []int; return &x }
+func float64Ptr() *float64 { var x float64; return &x }
+func stringPtr() *string   { var x string; return &x }
 
 var scanArgsTestCases = []struct {
 	variadic bool
@@ -25,23 +25,23 @@ var scanArgsTestCases = []struct {
 }{
 	// Scanning an int and a String
 	{
-		src:     []types.Value{types.String("20"), types.String("20")},
+		src:     []types.Value{"20", "20"},
 		dstPtrs: []interface{}{intPtr(), stringPtr()},
-		want:    []interface{}{20, types.String("20")},
+		want:    []interface{}{20, "20"},
 	},
 	// Scanning a String and any number of ints (here 2)
 	{
 		variadic: true,
-		src:      []types.Value{types.String("a"), types.String("1"), types.String("2")},
+		src:      []types.Value{"a", "1", "2"},
 		dstPtrs:  []interface{}{stringPtr(), intsPtr()},
-		want:     []interface{}{types.String("a"), []int{1, 2}},
+		want:     []interface{}{"a", []int{1, 2}},
 	},
 	// Scanning a String and any number of ints (here 0)
 	{
 		variadic: true,
-		src:      []types.Value{types.String("a")},
+		src:      []types.Value{"a"},
 		dstPtrs:  []interface{}{stringPtr(), intsPtr()},
-		want:     []interface{}{types.String("a"), []int{}},
+		want:     []interface{}{"a", []int{}},
 	},
 
 	// Arity mismatch: too few arguments (non-variadic)
@@ -53,19 +53,19 @@ var scanArgsTestCases = []struct {
 	// Arity mismatch: too few arguments (non-variadic)
 	{
 		bad:     true,
-		src:     []types.Value{types.String("")},
+		src:     []types.Value{""},
 		dstPtrs: []interface{}{stringPtr(), intPtr()},
 	},
 	// Arity mismatch: too many arguments (non-variadic)
 	{
 		bad:     true,
-		src:     []types.Value{types.String("1"), types.String("2")},
+		src:     []types.Value{"1", "2"},
 		dstPtrs: []interface{}{stringPtr()},
 	},
 	// Type mismatch (nonvariadic)
 	{
 		bad:     true,
-		src:     []types.Value{types.String("x")},
+		src:     []types.Value{"x"},
 		dstPtrs: []interface{}{intPtr()},
 	},
 
@@ -79,7 +79,7 @@ var scanArgsTestCases = []struct {
 	// Type mismatch within rest arg
 	{
 		bad:      true,
-		src:      []types.Value{types.String("a"), types.String("1"), types.String("lorem")},
+		src:      []types.Value{"a", "1", "lorem"},
 		dstPtrs:  []interface{}{stringPtr(), intsPtr()},
 		variadic: true,
 	},
@@ -125,27 +125,27 @@ var scanOptsTestCases = []struct {
 }{
 	{
 		src: map[string]types.Value{
-			"foo": types.String("bar"),
+			"foo": "bar",
 		},
 		opts: []OptToScan{
-			{"foo", stringPtr(), types.String("haha")},
+			{"foo", stringPtr(), "haha"},
 		},
 		want: []interface{}{
-			types.String("bar"),
+			"bar",
 		},
 	},
 	// Default values.
 	{
 		src: map[string]types.Value{
-			"foo": types.String("bar"),
+			"foo": "bar",
 		},
 		opts: []OptToScan{
-			{"foo", stringPtr(), types.String("haha")},
-			{"lorem", stringPtr(), types.String("ipsum")},
+			{"foo", stringPtr(), "haha"},
+			{"lorem", stringPtr(), "ipsum"},
 		},
 		want: []interface{}{
-			types.String("bar"),
-			types.String("ipsum"),
+			"bar",
+			"ipsum",
 		},
 	},
 
@@ -153,10 +153,10 @@ var scanOptsTestCases = []struct {
 	{
 		bad: true,
 		src: map[string]types.Value{
-			"foo": types.String("bar"),
+			"foo": "bar",
 		},
 		opts: []OptToScan{
-			{"lorem", stringPtr(), types.String("ipsum")},
+			{"lorem", stringPtr(), "ipsum"},
 		},
 	},
 }
@@ -189,13 +189,13 @@ var scanArgTestCases = []struct {
 	destPtr interface{}
 	want    interface{}
 }{
-	{types.String("20"), intPtr(), 20},
-	{types.String("0x20"), intPtr(), 0x20},
-	{types.String("20"), float64Ptr(), 20.0},
-	{types.String("23.33"), float64Ptr(), 23.33},
-	{types.String(""), stringPtr(), types.String("")},
-	{types.String("1"), stringPtr(), types.String("1")},
-	{types.String("2.33"), stringPtr(), types.String("2.33")},
+	{"20", intPtr(), 20},
+	{"0x20", intPtr(), 0x20},
+	{"20", float64Ptr(), 20.0},
+	{"23.33", float64Ptr(), 23.33},
+	{"", stringPtr(), ""},
+	{"1", stringPtr(), "1"},
+	{"2.33", stringPtr(), "2.33"},
 }
 
 func TestScanArg(t *testing.T) {

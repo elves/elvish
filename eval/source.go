@@ -73,18 +73,18 @@ func (src *Source) Repr(int) string {
 func (src *Source) Index(k types.Value) (types.Value, error) {
 	ret := ""
 	switch k {
-	case types.String("type"):
+	case "type":
 		ret = src.typ.String()
-	case types.String("name"):
+	case "name":
 		ret = src.name
-	case types.String("path"):
+	case "path":
 		ret = src.path
-	case types.String("code"):
+	case "code":
 		ret = src.code
 	default:
 		return nil, types.NoSuchKey(k)
 	}
-	return types.String(ret), nil
+	return ret, nil
 }
 
 // SrcType records the type of a piece of source code.

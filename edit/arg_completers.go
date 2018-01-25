@@ -86,7 +86,7 @@ var _ = RegisterVariable("arg-completer", argCompleterVariable)
 func argCompleterVariable() vartypes.Variable {
 	m := types.EmptyMapInner
 	for k, v := range argCompletersData {
-		m = m.Assoc(types.String(k), v)
+		m = m.Assoc(k, v)
 	}
 	return vartypes.NewValidatedPtr(types.NewMap(m), vartypes.ShouldBeMap)
 }
@@ -104,10 +104,10 @@ func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) 
 	m := ev.Editor.(*Editor).argCompleter()
 	var v types.Value
 	index := words[0]
-	if !m.HasKey(types.String(index)) {
+	if !m.HasKey(index) {
 		index = ""
 	}
-	v, err := m.Index(types.String(index))
+	v, err := m.Index(index)
 	if err != nil {
 		return err
 	}
@@ -146,11 +146,11 @@ func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []types.Value, opts ma
 	eval.TakeNoOpt(opts)
 	words := make([]string, len(args))
 	for i, arg := range args {
-		s, ok := arg.(types.String)
+		s, ok := arg.(string)
 		if !ok {
 			throw(ErrCompleterArgMustBeString)
 		}
-		words[i] = string(s)
+		words[i] = s
 	}
 
 	rawCands := make(chan rawCandidate)
@@ -197,7 +197,7 @@ func callArgCompleter(fn eval.Fn,
 
 	args := make([]types.Value, len(words))
 	for i, word := range words {
-		args[i] = types.String(word)
+		args[i] = word
 	}
 
 	ports := []*eval.Port{
@@ -211,7 +211,7 @@ func callArgCompleter(fn eval.Fn,
 			switch v := v.(type) {
 			case rawCandidate:
 				rawCands <- v
-			case types.String:
+			case string:
 				rawCands <- plainCandidate(v)
 			default:
 				logger.Printf("completer must output string or candidate")
