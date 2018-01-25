@@ -1,6 +1,7 @@
 package vector
 
 import (
+	"errors"
 	"math/rand"
 	"testing"
 	"time"
@@ -221,6 +222,43 @@ func eqVector(v1, v2 Vector) bool {
 		}
 	}
 	return true
+}
+
+var marshalJSONTests = []struct {
+	in      Vector
+	wantOut string
+	wantErr error
+}{
+	{makeVector("1", 2, nil), `["1",2,null]`, nil},
+	{makeVector("1", makeVector(2)), `["1",[2]]`, nil},
+	{makeVector(0, 1, 2, 3, 4, 5).SubVector(1, 5), `[1,2,3,4]`, nil},
+	{makeVector(0, func() {}), "", errors.New("element 1: json: unsupported type: func()")},
+}
+
+func TestMarshalJSON(t *testing.T) {
+	for i, test := range marshalJSONTests {
+		out, err := test.in.MarshalJSON()
+		if string(out) != test.wantOut {
+			t.Errorf("v%d.MarshalJSON -> out %q, want %q", i, out, test.wantOut)
+		}
+		if err == nil || test.wantErr == nil {
+			if err != test.wantErr {
+				t.Errorf("v%d.MarshalJSON -> err %v, want %v", i, err, test.wantErr)
+			}
+		} else {
+			if err.Error() != test.wantErr.Error() {
+				t.Errorf("v%d.MarshalJSON -> err %v, want %v", i, err, test.wantErr)
+			}
+		}
+	}
+}
+
+func makeVector(elements ...interface{}) Vector {
+	v := Empty
+	for _, element := range elements {
+		v = v.Cons(element)
+	}
+	return v
 }
 
 func BenchmarkConsNative1(b *testing.B) { benchmarkNativeAppend(b, N1) }
