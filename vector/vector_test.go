@@ -300,18 +300,45 @@ func init() {
 	}
 }
 
-func BenchmarkNthNative(b *testing.B) {
+var x interface{}
+
+func BenchmarkNthSeqNative(b *testing.B) {
 	for r := 0; r < b.N; r++ {
 		for i := 0; i < N4; i++ {
-			_ = sliceN4[i]
+			x = sliceN4[i]
 		}
 	}
 }
 
-func BenchmarkNthPersistent(b *testing.B) {
+func BenchmarkNthSeqPersistent(b *testing.B) {
 	for r := 0; r < b.N; r++ {
 		for i := 0; i < N4; i++ {
-			_ = vectorN4.Nth(i)
+			x = vectorN4.Nth(i)
+		}
+	}
+}
+
+var randIndicies []int
+
+func init() {
+	randIndicies = make([]int, N4)
+	for i := 0; i < N4; i++ {
+		randIndicies[i] = rand.Intn(N4)
+	}
+}
+
+func BenchmarkNthRandNative(b *testing.B) {
+	for r := 0; r < b.N; r++ {
+		for _, i := range randIndicies {
+			x = sliceN4[i]
+		}
+	}
+}
+
+func BenchmarkNthRandPersistent(b *testing.B) {
+	for r := 0; r < b.N; r++ {
+		for _, i := range randIndicies {
+			x = vectorN4.Nth(i)
 		}
 	}
 }
