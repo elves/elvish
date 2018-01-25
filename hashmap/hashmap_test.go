@@ -147,7 +147,7 @@ func TestHashMapSmallRandom(t *testing.T) {
 }
 
 var marshalJSONTests = []struct {
-	in      HashMap
+	in      Map
 	wantOut string
 	wantErr bool
 }{
@@ -174,7 +174,7 @@ func TestMarshalJSON(t *testing.T) {
 	}
 }
 
-func makeHashMap(data ...interface{}) HashMap {
+func makeHashMap(data ...interface{}) Map {
 	m := empty
 	for i := 0; i+1 < len(data); i += 2 {
 		k, v := data[i], data[i+1]
@@ -183,9 +183,8 @@ func makeHashMap(data ...interface{}) HashMap {
 	return m
 }
 
-// testHashMapWithRefEntries tests the operations of a HashMap. It uses the
-// supplied list of entries to build the hash map, and then test all its
-// operations.
+// testHashMapWithRefEntries tests the operations of a Map. It uses the supplied
+// list of entries to build the map, and then test all its operations.
 func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 	m := empty
 	// Len of Empty should be 0.
@@ -241,7 +240,7 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 	}
 }
 
-func testMapContent(t *testing.T, m HashMap, ref map[testKey]string) {
+func testMapContent(t *testing.T, m Map, ref map[testKey]string) {
 	for k, v := range ref {
 		got, in := m.Get(k)
 		if !in {
@@ -253,7 +252,7 @@ func testMapContent(t *testing.T, m HashMap, ref map[testKey]string) {
 	}
 }
 
-func testIterator(t *testing.T, m HashMap, ref map[testKey]string) {
+func testIterator(t *testing.T, m Map, ref map[testKey]string) {
 	ref2 := map[interface{}]interface{}{}
 	for k, v := range ref {
 		ref2[k] = v
@@ -289,7 +288,7 @@ func BenchmarkSequentialConsPersistent1(b *testing.B) { sequentialCons(b.N, N1) 
 func BenchmarkSequentialConsPersistent2(b *testing.B) { sequentialCons(b.N, N2) }
 func BenchmarkSequentialConsPersistent3(b *testing.B) { sequentialCons(b.N, N3) }
 
-// sequentialCons starts with an empty HashMap and adds elements 0...n-1 to the
+// sequentialCons starts with an empty hash map and adds elements 0...n-1 to the
 // map, using the same value as the key, repeating for N times.
 func sequentialCons(N int, n uint32) {
 	for r := 0; r < N; r++ {

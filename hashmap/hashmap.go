@@ -22,11 +22,11 @@ type Equal func(k1, k2 interface{}) bool
 // Hash is the type of a function that returns the hash code of a key.
 type Hash func(k interface{}) uint32
 
-// HashMap is a persistent associative data structure mapping keys to values. It
+// Map is a persistent associative data structure mapping keys to values. It
 // is immutable, and supports near-O(1) operations to create modified version of
 // the hashmap that shares the underlying data structure, making it suitable for
 // concurrent access.
-type HashMap interface {
+type Map interface {
 	json.Marshaler
 	// Len returns the length of the hashmap.
 	Len() int
@@ -35,10 +35,10 @@ type HashMap interface {
 	Get(k interface{}) (interface{}, bool)
 	// Assoc returns an almost identical hashmap, with the given key associated
 	// with the given value.
-	Assoc(k, v interface{}) HashMap
+	Assoc(k, v interface{}) Map
 	// Without returns an almost identical hashmap, with the given key
 	// associated with no value.
-	Without(k interface{}) HashMap
+	Without(k interface{}) Map
 	// Iterator returns an iterator over the map.
 	Iterator() Iterator
 }
@@ -59,8 +59,8 @@ type Iterator interface {
 }
 
 // New takes an equality function and a hash function, and returns an empty
-// HashMap.
-func New(e Equal, h Hash) HashMap {
+// Map.
+func New(e Equal, h Hash) Map {
 	return &hashMap{0, emptyBitmapNode, e, h}
 }
 
@@ -79,7 +79,7 @@ func (m *hashMap) Get(k interface{}) (interface{}, bool) {
 	return m.root.find(0, m.hash(k), k, m.equal)
 }
 
-func (m *hashMap) Assoc(k, v interface{}) HashMap {
+func (m *hashMap) Assoc(k, v interface{}) Map {
 	newRoot, added := m.root.assoc(0, m.hash(k), k, v, m.hash, m.equal)
 	newCount := m.count
 	if added {
@@ -88,7 +88,7 @@ func (m *hashMap) Assoc(k, v interface{}) HashMap {
 	return &hashMap{newCount, newRoot, m.equal, m.hash}
 }
 
-func (m *hashMap) Without(k interface{}) HashMap {
+func (m *hashMap) Without(k interface{}) Map {
 	newRoot, deleted := m.root.without(0, m.hash(k), k, m.equal)
 	newCount := m.count
 	if deleted {
