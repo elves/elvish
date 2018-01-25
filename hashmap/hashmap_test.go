@@ -1,7 +1,6 @@
 package hashmap
 
 import (
-	"fmt"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -35,18 +34,13 @@ type anotherTestKey uint32
 
 func equalFunc(k1, k2 interface{}) bool {
 	switch k1 := k1.(type) {
-	case uint32:
-		return k1 == k2
-	case string:
-		s2, ok := k2.(string)
-		return ok && k1 == s2
 	case testKey:
 		t2, ok := k2.(testKey)
 		return ok && k1 == t2
 	case anotherTestKey:
 		return false
 	default:
-		panic(fmt.Errorf("unknown key type %T", k1))
+		return k1 == k2
 	}
 }
 
@@ -63,7 +57,7 @@ func hashFunc(k interface{}) uint32 {
 	case anotherTestKey:
 		return uint32(k)
 	default:
-		panic(fmt.Errorf("unknown key type %T", k))
+		return 0
 	}
 }
 
@@ -150,6 +144,43 @@ func TestHashMapSmallRandom(t *testing.T) {
 
 		testHashMapWithRefEntries(t, refEntries)
 	}
+}
+
+var marshalJSONTests = []struct {
+	in      HashMap
+	wantOut string
+	wantErr bool
+}{
+	{makeHashMap(uint32(1), "a", "2", "b"), `{"1":"a","2":"b"}`, false},
+	// Invalid key type
+	{makeHashMap([]interface{}{}, "x"), "", true},
+}
+
+func TestMarshalJSON(t *testing.T) {
+	for i, test := range marshalJSONTests {
+		out, err := test.in.MarshalJSON()
+		if string(out) != test.wantOut {
+			t.Errorf("m%d.MarshalJSON -> out %s, want %s", i, out, test.wantOut)
+		}
+		if (err != nil) != test.wantErr {
+			var wantErr string
+			if test.wantErr {
+				wantErr = "non-nil"
+			} else {
+				wantErr = "nil"
+			}
+			t.Errorf("m%d.MarshalJSON -> err %v, want %s", i, err, wantErr)
+		}
+	}
+}
+
+func makeHashMap(data ...interface{}) HashMap {
+	m := empty
+	for i := 0; i+1 < len(data); i += 2 {
+		k, v := data[i], data[i+1]
+		m = m.Assoc(k, v)
+	}
+	return m
 }
 
 // testHashMapWithRefEntries tests the operations of a HashMap. It uses the

@@ -1,6 +1,15 @@
 // Package hashmap implements persistent hashmap.
 package hashmap
 
+import (
+	"bytes"
+	"encoding"
+	"encoding/json"
+	"fmt"
+	"reflect"
+	"strconv"
+)
+
 const (
 	chunkBits = 5
 	nodeCap   = 1 << chunkBits
@@ -18,6 +27,7 @@ type Hash func(k interface{}) uint32
 // the hashmap that shares the underlying data structure, making it suitable for
 // concurrent access.
 type HashMap interface {
+	json.Marshaler
 	// Len returns the length of the hashmap.
 	Len() int
 	// Get returns whether there is a value associated with the given key, and
@@ -89,6 +99,60 @@ func (m *hashMap) Without(k interface{}) HashMap {
 
 func (m *hashMap) Iterator() Iterator {
 	return m.root.iterator()
+}
+
+func (m *hashMap) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteByte('{')
+	first := true
+	for it := m.Iterator(); it.HasElem(); it.Next() {
+		if first {
+			first = false
+		} else {
+			buf.WriteByte(',')
+		}
+		k, v := it.Elem()
+		kString, err := convertKey(k)
+		if err != nil {
+			return nil, err
+		}
+		kBytes, err := json.Marshal(kString)
+		if err != nil {
+			return nil, err
+		}
+		vBytes, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(kBytes)
+		buf.WriteByte(':')
+		buf.Write(vBytes)
+	}
+	buf.WriteByte('}')
+	return buf.Bytes(), nil
+}
+
+// convertKey converts a map key to a string. The implementation matches the
+// behavior of how json.Marshal encodes keys of the builtin map type.
+func convertKey(k interface{}) (string, error) {
+	kref := reflect.ValueOf(k)
+	if kref.Kind() == reflect.String {
+		return kref.String(), nil
+	}
+	if t, ok := k.(encoding.TextMarshaler); ok {
+		b2, err := t.MarshalText()
+		if err != nil {
+			return "", err
+		}
+		return string(b2), nil
+	}
+	switch kref.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return strconv.FormatInt(kref.Int(), 10), nil
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return strconv.FormatUint(kref.Uint(), 10), nil
+	}
+	return "", fmt.Errorf("unsupported key type %T", k)
 }
 
 // node is an interface for all nodes in the hash map tree.
