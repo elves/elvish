@@ -8,5 +8,8 @@ sudo: false
 os:
     - linux
     - osx
+exclude:
+    - os: osx
+      go: 1.6
 script:
     make travis
