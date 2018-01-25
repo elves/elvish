@@ -23,7 +23,7 @@
   branch = "master"
   name = "github.com/xiaq/persistent"
   packages = ["hash","hashmap","vector"]
-  revision = "3621ae09791316ac331a0cc984c6a1cbf9d4eabf"
+  revision = "8f8f5eb31fdd1340ad5abdf018d07448c6a768d7"
 
 [[projects]]
   branch = "master"

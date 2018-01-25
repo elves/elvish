@@ -1,6 +1,12 @@
 // Package vector implements persistent vector.
 package vector
 
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+)
+
 const (
 	chunkBits  = 5
 	nodeSize   = 1 << chunkBits
@@ -15,6 +21,7 @@ const (
 // vector that shares the underlying data structure, making it suitable for
 // concurrent access. The empty value is a valid empty vector.
 type Vector interface {
+	json.Marshaler
 	// Len returns the length of the vector.
 	Len() int
 	// Nth returns the i-th element of the vector. It returns nil if the index
@@ -244,6 +251,14 @@ func (v *vector) SubVector(begin, end int) Vector {
 	return &subVector{v, begin, end}
 }
 
+func (v *vector) Iterator() Iterator {
+	return newIterator(v)
+}
+
+func (v *vector) MarshalJSON() ([]byte, error) {
+	return marshalJSON(v.Iterator())
+}
+
 type subVector struct {
 	v     *vector
 	begin int
@@ -293,8 +308,8 @@ func (s *subVector) Iterator() Iterator {
 	return newIteratorWithRange(s.v, s.begin, s.end)
 }
 
-func (v *vector) Iterator() Iterator {
-	return newIterator(v)
+func (s *subVector) MarshalJSON() ([]byte, error) {
+	return marshalJSON(s.Iterator())
 }
 
 type iterator struct {
@@ -365,4 +380,32 @@ func (it *iterator) Next() {
 		it.path[i] = pathEntry{it.path[i-1].current().(node), 0}
 	}
 	it.index++
+}
+
+type marshalError struct {
+	index int
+	cause error
+}
+
+func (err *marshalError) Error() string {
+	return fmt.Sprintf("element %d: %s", err.index, err.cause)
+}
+
+func marshalJSON(it Iterator) ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteByte('[')
+	index := 0
+	for ; it.HasElem(); it.Next() {
+		if index > 0 {
+			buf.WriteByte(',')
+		}
+		elemBytes, err := json.Marshal(it.Elem())
+		if err != nil {
+			return nil, &marshalError{index, err}
+		}
+		buf.Write(elemBytes)
+		index++
+	}
+	buf.WriteByte(']')
+	return buf.Bytes(), nil
 }

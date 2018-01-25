@@ -1,7 +1,6 @@
 package hashmap
 
 import (
-	"fmt"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -35,18 +34,13 @@ type anotherTestKey uint32
 
 func equalFunc(k1, k2 interface{}) bool {
 	switch k1 := k1.(type) {
-	case uint32:
-		return k1 == k2
-	case string:
-		s2, ok := k2.(string)
-		return ok && k1 == s2
 	case testKey:
 		t2, ok := k2.(testKey)
 		return ok && k1 == t2
 	case anotherTestKey:
 		return false
 	default:
-		panic(fmt.Errorf("unknown key type %T", k1))
+		return k1 == k2
 	}
 }
 
@@ -63,7 +57,7 @@ func hashFunc(k interface{}) uint32 {
 	case anotherTestKey:
 		return uint32(k)
 	default:
-		panic(fmt.Errorf("unknown key type %T", k))
+		return 0
 	}
 }
 
@@ -152,9 +146,45 @@ func TestHashMapSmallRandom(t *testing.T) {
 	}
 }
 
-// testHashMapWithRefEntries tests the operations of a HashMap. It uses the
-// supplied list of entries to build the hash map, and then test all its
-// operations.
+var marshalJSONTests = []struct {
+	in      Map
+	wantOut string
+	wantErr bool
+}{
+	{makeHashMap(uint32(1), "a", "2", "b"), `{"1":"a","2":"b"}`, false},
+	// Invalid key type
+	{makeHashMap([]interface{}{}, "x"), "", true},
+}
+
+func TestMarshalJSON(t *testing.T) {
+	for i, test := range marshalJSONTests {
+		out, err := test.in.MarshalJSON()
+		if string(out) != test.wantOut {
+			t.Errorf("m%d.MarshalJSON -> out %s, want %s", i, out, test.wantOut)
+		}
+		if (err != nil) != test.wantErr {
+			var wantErr string
+			if test.wantErr {
+				wantErr = "non-nil"
+			} else {
+				wantErr = "nil"
+			}
+			t.Errorf("m%d.MarshalJSON -> err %v, want %s", i, err, wantErr)
+		}
+	}
+}
+
+func makeHashMap(data ...interface{}) Map {
+	m := empty
+	for i := 0; i+1 < len(data); i += 2 {
+		k, v := data[i], data[i+1]
+		m = m.Assoc(k, v)
+	}
+	return m
+}
+
+// testHashMapWithRefEntries tests the operations of a Map. It uses the supplied
+// list of entries to build the map, and then test all its operations.
 func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 	m := empty
 	// Len of Empty should be 0.
@@ -210,7 +240,7 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 	}
 }
 
-func testMapContent(t *testing.T, m HashMap, ref map[testKey]string) {
+func testMapContent(t *testing.T, m Map, ref map[testKey]string) {
 	for k, v := range ref {
 		got, in := m.Get(k)
 		if !in {
@@ -222,7 +252,7 @@ func testMapContent(t *testing.T, m HashMap, ref map[testKey]string) {
 	}
 }
 
-func testIterator(t *testing.T, m HashMap, ref map[testKey]string) {
+func testIterator(t *testing.T, m Map, ref map[testKey]string) {
 	ref2 := map[interface{}]interface{}{}
 	for k, v := range ref {
 		ref2[k] = v
@@ -258,7 +288,7 @@ func BenchmarkSequentialConsPersistent1(b *testing.B) { sequentialCons(b.N, N1) 
 func BenchmarkSequentialConsPersistent2(b *testing.B) { sequentialCons(b.N, N2) }
 func BenchmarkSequentialConsPersistent3(b *testing.B) { sequentialCons(b.N, N3) }
 
-// sequentialCons starts with an empty HashMap and adds elements 0...n-1 to the
+// sequentialCons starts with an empty hash map and adds elements 0...n-1 to the
 // map, using the same value as the key, repeating for N times.
 func sequentialCons(N int, n uint32) {
 	for r := 0; r < N; r++ {
