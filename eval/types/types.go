@@ -22,16 +22,11 @@ type Stringer interface {
 // ToString converts a Value to string. When the Value type implements
 // String(), it is used. Otherwise Repr(NoPretty) is used.
 func ToString(v Value) string {
-	if s, ok := v.(Stringer); ok {
-		return s.String()
+	switch v := v.(type) {
+	case Stringer:
+		return v.String()
 	}
 	return Repr(v, NoPretty)
-}
-
-// Lener wraps the Len method.
-type Lener interface {
-	// Len computes the length of the receiver.
-	Len() int
 }
 
 // Iterator wraps the Iterate method.
@@ -49,8 +44,8 @@ type IteratorValue interface {
 
 func CollectFromIterator(it Iterator) []Value {
 	var vs []Value
-	if lener, ok := it.(Lener); ok {
-		vs = make([]Value, 0, lener.Len())
+	if len := Len(it); len >= 0 {
+		vs = make([]Value, 0, len)
 	}
 	it.Iterate(func(v Value) bool {
 		vs = append(vs, v)
@@ -71,30 +66,6 @@ type IteratePairer interface {
 	// IteratePair calls the passed function with each key and value within the
 	// receiver. The iteration is aborted if the function returns false.
 	IteratePair(func(k, v Value) bool)
-}
-
-// Indexer wraps the Index method.
-type Indexer interface {
-	// Index retrieves one value from the receiver at the specified index.
-	Index(idx Value) (Value, error)
-}
-
-// MustIndex indexes i with k and returns the value. If the operation
-// resulted in an error, it panics. It is useful when the caller knows that the
-// key must be present.
-func MustIndex(i Indexer, k Value) Value {
-	v, err := i.Index(k)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Assocer wraps the Assoc method.
-type Assocer interface {
-	// Assoc returns a slightly modified version of the receiver with key k
-	// associated with value v.
-	Assoc(k, v Value) (Value, error)
 }
 
 // Dissocer is anything tha can return a slightly modified version of itself with

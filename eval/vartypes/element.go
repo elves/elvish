@@ -6,7 +6,7 @@ import (
 
 type elem struct {
 	variable Variable
-	assocers []types.Assocer
+	assocers []types.Value
 	indices  []types.Value
 	setValue types.Value
 }
@@ -17,7 +17,7 @@ func (ev *elem) Set(v0 types.Value) error {
 	// Evaluate the actual new value from inside out. See comments in
 	// MakeElement for how element assignment works.
 	for i := len(ev.assocers) - 1; i >= 0; i-- {
-		v, err = ev.assocers[i].Assoc(ev.indices[i], v)
+		v, err = types.Assoc(ev.assocers[i], ev.indices[i], v)
 		if err != nil {
 			return err
 		}
@@ -36,7 +36,7 @@ func (ev *elem) Get() types.Value {
 }
 
 // NewElement returns an ephemeral variable used for assigning variable element.
-func NewElement(v Variable, a []types.Assocer, i []types.Value) Variable {
+func NewElement(v Variable, a []types.Value, i []types.Value) Variable {
 	return &elem{v, a, i, types.String("")}
 }
 
@@ -59,36 +59,18 @@ func MakeElement(v Variable, indicies []types.Value) (Variable, error) {
 	//
 	// When the right-hand side of the assignment becomes available, the new
 	// value for $a is evaluated by doing Assoc from inside out.
-	assocers := make([]types.Assocer, len(indicies))
-	varValue, ok := v.Get().(indexAssocer)
-	if !ok {
-		return nil, elemErr{0, "cannot be indexed for setting"}
-	}
+	assocers := make([]types.Value, len(indicies))
+	varValue := v.Get()
 	assocers[0] = varValue
 	for i, index := range indicies[:len(indicies)-1] {
-		lastAssocer, ok := assocers[i].(types.Indexer)
-		if !ok {
-			// This cannot occur when i==0, since varValue as already
-			// asserted to be an IndexOnner.
-			return nil, elemErr{i, "cannot be indexed"}
-		}
-		v, err := lastAssocer.Index(index)
+		lastAssocer := assocers[i]
+		v, err := types.Index(lastAssocer, index)
 		if err != nil {
 			return nil, err
 		}
-		assocer, ok := v.(types.Assocer)
-		if !ok {
-			return nil, elemErr{i + 1, "cannot be indexed for setting"}
-		}
-		assocers[i+1] = assocer
+		assocers[i+1] = v
 	}
 	return NewElement(v, assocers, indicies), nil
-}
-
-// indexAssocer combines Indexer and Assocer.
-type indexAssocer interface {
-	types.Indexer
-	types.Assocer
 }
 
 type elemErr struct {

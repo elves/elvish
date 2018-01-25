@@ -96,13 +96,10 @@ func explode(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 func assoc(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var (
-		a    types.Assocer
-		k, v types.Value
-	)
+	var a, k, v types.Value
 	ScanArgs(args, &a, &k, &v)
 	TakeNoOpt(opts)
-	result, err := a.Assoc(k, v)
+	result, err := types.Assoc(a, k, v)
 	maybeThrow(err)
 	ec.OutputChan() <- result
 }
@@ -202,11 +199,13 @@ func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	switch container := container.(type) {
 	case types.HasKeyer:
 		found = container.HasKey(key)
-	case types.Lener:
-		// XXX(xiaq): Not all types that implement Lener have numerical indices
-		_, _, _, err := types.ParseAndFixListIndex(types.ToString(key), container.Len())
-		found = (err == nil)
 	default:
+		if len := types.Len(container); len >= 0 {
+			// XXX(xiaq): Not all types that implement Lener have numerical indices
+			_, _, _, err := types.ParseAndFixListIndex(types.ToString(key), len)
+			found = (err == nil)
+			break
+		}
 		throw(fmt.Errorf("couldn't get key or index of type '%s'", types.Kind(container)))
 	}
 
@@ -226,8 +225,8 @@ func count(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	case 1:
 		// Get length of argument.
 		v := args[0]
-		if lener, ok := v.(types.Lener); ok {
-			n = lener.Len()
+		if len := types.Len(v); len >= 0 {
+			n = len
 		} else if iterator, ok := v.(types.Iterator); ok {
 			iterator.Iterate(func(types.Value) bool {
 				n++

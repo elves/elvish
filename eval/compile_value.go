@@ -235,12 +235,8 @@ func (op *indexingOp) Invoke(ec *Frame) ([]types.Value, error) {
 		}
 		newvs := make([]types.Value, 0, len(vs)*len(indicies))
 		for _, v := range vs {
-			indexer, ok := v.(types.Indexer)
-			if !ok {
-				return nil, fmt.Errorf("a %s not indexable", types.Kind(v))
-			}
 			for _, index := range indicies {
-				result, err := indexer.Index(index)
+				result, err := types.Index(v, index)
 				if err != nil {
 					return nil, err
 				}
