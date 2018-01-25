@@ -101,11 +101,3 @@ func (u ValueUnwrapper) Callable() Callable {
 	}
 	return c
 }
-
-func (u ValueUnwrapper) Iterable() types.Iterator {
-	it, ok := u.values[0].(types.Iterator)
-	if !ok {
-		u.error("iterable", "%s", types.Kind(u.values[0]))
-	}
-	return it
-}

@@ -300,12 +300,7 @@ func (op variableOp) Invoke(ec *Frame) ([]types.Value, error) {
 	}
 	value := variable.Get()
 	if op.explode {
-		iterator, ok := value.(types.Iterator)
-		if !ok {
-			// Use qname[1:] to skip the leading "@"
-			return nil, fmt.Errorf("variable $%s:%s (kind %s) cannot be exploded", op.ns, op.name, types.Kind(value))
-		}
-		return types.CollectFromIterator(iterator), nil
+		return types.Collect(value)
 	}
 	return []types.Value{value}, nil
 }

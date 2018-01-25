@@ -8,6 +8,7 @@ import (
 
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -59,29 +60,27 @@ func (envli *EnvList) Get() types.Value {
 
 // Set sets an EnvPathList. The underlying environment variable is set.
 func (envli *EnvList) Set(v types.Value) error {
-	iterator, ok := v.(types.Iterator)
-	if !ok {
-		return ErrCanOnlyAssignList
-	}
-	var paths []string
-	var err error
-	iterator.Iterate(func(v types.Value) bool {
+	var (
+		paths      []string
+		errElement error
+	)
+	errIterate := types.Iterate(v, func(v types.Value) bool {
 		s, ok := v.(types.String)
 		if !ok {
-			err = ErrPathMustBeString
+			errElement = ErrPathMustBeString
 			return false
 		}
 		path := string(s)
 		if strings.ContainsAny(path, forbiddenInPath) {
-			err = ErrPathCannotContainColonZero
+			errElement = ErrPathCannotContainColonZero
 			return false
 		}
 		paths = append(paths, string(s))
 		return true
 	})
 
-	if err != nil {
-		return err
+	if errElement != nil || errIterate != nil {
+		return util.Errors(errElement, errIterate)
 	}
 
 	envli.Lock()

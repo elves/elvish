@@ -29,31 +29,6 @@ func ToString(v Value) string {
 	return Repr(v, NoPretty)
 }
 
-// Iterator wraps the Iterate method.
-type Iterator interface {
-	// Iterate calls the passed function with each value within the receiver.
-	// The iteration is aborted if the function returns false.
-	Iterate(func(v Value) bool)
-}
-
-// IteratorValue is an iterable Value.
-type IteratorValue interface {
-	Iterator
-	Value
-}
-
-func CollectFromIterator(it Iterator) []Value {
-	var vs []Value
-	if len := Len(it); len >= 0 {
-		vs = make([]Value, 0, len)
-	}
-	it.Iterate(func(v Value) bool {
-		vs = append(vs, v)
-		return true
-	})
-	return vs
-}
-
 // IterateKeyer wraps the IterateKey method.
 type IterateKeyer interface {
 	// IterateKey calls the passed function with each value within the receiver.

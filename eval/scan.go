@@ -54,15 +54,12 @@ func ScanArgsOptionalInput(ec *Frame, src []types.Value, dstArgs ...interface{})
 	case len(dstArgs) + 1:
 		ScanArgs(src[:len(dstArgs)], dstArgs...)
 		value := src[len(dstArgs)]
-		iterable, ok := value.(types.Iterator)
-		if !ok {
-			throwf("need iterable argument, got %s", types.Kind(value))
-		}
 		return func(f func(types.Value)) {
-			iterable.Iterate(func(v types.Value) bool {
+			err := types.Iterate(value, func(v types.Value) bool {
 				f(v)
 				return true
 			})
+			maybeThrow(err)
 		}
 	default:
 		throwf("arity mistmatch: want %d or %d arguments, got %d", len(dstArgs), len(dstArgs)+1, len(src))

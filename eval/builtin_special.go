@@ -510,19 +510,18 @@ func (op *forOp) Invoke(ec *Frame) error {
 		ec.errorpf(op.varOp.Begin, op.varOp.End, "only one variable allowed")
 	}
 	variable := variables[0]
-
-	iterable := ec.ExecAndUnwrap("value being iterated", op.iterOp).One().Iterable()
+	iterable := ec.ExecAndUnwrap("value being iterated", op.iterOp).One().Any()
 
 	body := op.bodyOp.execlambdaOp(ec)
 	elseBody := op.elseOp.execlambdaOp(ec)
 
 	iterated := false
-	var errIterate error
-	iterable.Iterate(func(v types.Value) bool {
+	var errElement error
+	errIterate := types.Iterate(iterable, func(v types.Value) bool {
 		iterated = true
 		err := variable.Set(v)
 		if err != nil {
-			errIterate = err
+			errElement = err
 			return false
 		}
 		err = ec.fork("for").PCall(body, NoArgs, NoOpts)
@@ -533,7 +532,7 @@ func (op *forOp) Invoke(ec *Frame) error {
 			} else if exc.Cause == Break {
 				return false
 			} else {
-				errIterate = err
+				errElement = err
 				return false
 			}
 		}
@@ -541,6 +540,9 @@ func (op *forOp) Invoke(ec *Frame) error {
 	})
 	if errIterate != nil {
 		return errIterate
+	}
+	if errElement != nil {
+		return errElement
 	}
 
 	if !iterated && elseBody != nil {

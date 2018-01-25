@@ -84,15 +84,16 @@ func repeat(ec *Frame, args []types.Value, opts map[string]types.Value) {
 
 // explode puts each element of the argument.
 func explode(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var v types.IteratorValue
+	var v types.Value
 	ScanArgs(args, &v)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
-	v.Iterate(func(e types.Value) bool {
+	err := types.Iterate(v, func(e types.Value) bool {
 		out <- e
 		return true
 	})
+	maybeThrow(err)
 }
 
 func assoc(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -171,18 +172,17 @@ func hasValue(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ScanArgs(args, &container, &value)
 
 	switch container := container.(type) {
-	case types.Iterator:
-		container.Iterate(func(v types.Value) bool {
-			found = (v == value)
-			return !found
-		})
 	case types.MapLike:
 		container.IteratePair(func(_, v types.Value) bool {
 			found = v == value
 			return !found
 		})
 	default:
-		throw(fmt.Errorf("argument of type '%s' is not iterable", types.Kind(container)))
+		err := types.Iterate(container, func(v types.Value) bool {
+			found = (v == value)
+			return !found
+		})
+		maybeThrow(err)
 	}
 
 	ec.ports[1].Chan <- types.Bool(found)
@@ -227,13 +227,14 @@ func count(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		v := args[0]
 		if len := types.Len(v); len >= 0 {
 			n = len
-		} else if iterator, ok := v.(types.Iterator); ok {
-			iterator.Iterate(func(types.Value) bool {
+		} else {
+			err := types.Iterate(v, func(types.Value) bool {
 				n++
 				return true
 			})
-		} else {
-			throw(fmt.Errorf("cannot get length of a %s", types.Kind(v)))
+			if err != nil {
+				throw(fmt.Errorf("cannot get length of a %s", types.Kind(v)))
+			}
 		}
 	default:
 		throw(errors.New("want 0 or 1 argument"))

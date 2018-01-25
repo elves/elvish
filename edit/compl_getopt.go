@@ -11,7 +11,7 @@ import (
 )
 
 func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
-	var elemsv, optsv, argsv types.IteratorValue
+	var elemsv, optsv, argsv types.Value
 	eval.ScanArgs(a, &elemsv, &optsv, &argsv)
 	eval.TakeNoOpt(o)
 
@@ -23,7 +23,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 	)
 	desc := make(map[*getopt.Option]string)
 	// Convert arguments.
-	elemsv.Iterate(func(v types.Value) bool {
+	err := types.Iterate(elemsv, func(v types.Value) bool {
 		elem, ok := v.(types.String)
 		if !ok {
 			throwf("arg should be string, got %s", types.Kind(v))
@@ -31,7 +31,8 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 		elems = append(elems, string(elem))
 		return true
 	})
-	optsv.Iterate(func(v types.Value) bool {
+	maybeThrow(err)
+	err = types.Iterate(optsv, func(v types.Value) bool {
 		m, ok := v.(types.MapLike)
 		if !ok {
 			throwf("opt should be map-like, got %s", types.Kind(v))
@@ -71,7 +72,8 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 		opts = append(opts, opt)
 		return true
 	})
-	argsv.Iterate(func(v types.Value) bool {
+	maybeThrow(err)
+	err = types.Iterate(argsv, func(v types.Value) bool {
 		sv, ok := v.(types.String)
 		if ok {
 			if string(sv) == "..." {
@@ -87,6 +89,8 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 		args = append(args, arg)
 		return true
 	})
+	maybeThrow(err)
+
 	// TODO Configurable config
 	g := getopt.Getopt{opts, getopt.GNUGetoptLong}
 	_, parsedArgs, ctx := g.Parse(elems)
