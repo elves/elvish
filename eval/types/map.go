@@ -8,7 +8,7 @@ import (
 
 // Map is a map from string to Value.
 type Map struct {
-	inner hashmap.HashMap
+	inner hashmap.Map
 }
 
 var _ MapLike = Map{}
@@ -33,7 +33,7 @@ var EmptyMapInner = hashmap.New(Equal, Hash)
 var EmptyMap = Map{EmptyMapInner}
 
 // NewMap creates a new Map from an inner HashMap.
-func NewMap(inner hashmap.HashMap) Map {
+func NewMap(inner hashmap.Map) Map {
 	return Map{inner}
 }
 
