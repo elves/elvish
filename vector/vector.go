@@ -103,6 +103,23 @@ func (v *vector) treeSize() int {
 	return ((v.count - 1) >> chunkBits) << chunkBits
 }
 
+func (v *vector) Nth(i int) interface{} {
+	if i < 0 || i >= v.count {
+		return nil
+	}
+
+	// The following is very similar to sliceFor, but is implemented separately
+	// to avoid unncessary copying.
+	if i >= v.treeSize() {
+		return v.tail[i&chunkMask]
+	}
+	n := v.root
+	for shift := v.height * chunkBits; shift > 0; shift -= chunkBits {
+		n = n[(i>>shift)&chunkMask].(node)
+	}
+	return n[i&chunkMask]
+}
+
 // sliceFor returns the slice where the i-th element is stored. The index must
 // be in bound.
 func (v *vector) sliceFor(i int) []interface{} {
@@ -114,13 +131,6 @@ func (v *vector) sliceFor(i int) []interface{} {
 		n = n[(i>>shift)&chunkMask].(node)
 	}
 	return n[:]
-}
-
-func (v *vector) Nth(i int) interface{} {
-	if i < 0 || i >= v.count {
-		return nil
-	}
-	return v.sliceFor(i)[i&chunkMask]
 }
 
 func (v *vector) AssocN(i int, val interface{}) Vector {
