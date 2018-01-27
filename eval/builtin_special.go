@@ -370,7 +370,7 @@ func (op *andOrOp) Invoke(fm *Frame) error {
 			return err
 		}
 		for _, value := range values {
-			if types.ToBool(value) == op.stopAt {
+			if types.Bool(value) == op.stopAt {
 				fm.OutputChan() <- value
 				return nil
 			}

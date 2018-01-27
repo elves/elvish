@@ -374,7 +374,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 
 func allTrue(vs []types.Value) bool {
 	for _, v := range vs {
-		if !types.ToBool(v) {
+		if !types.Bool(v) {
 			return false
 		}
 	}

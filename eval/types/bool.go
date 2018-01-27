@@ -1,41 +1,20 @@
 package types
 
-// Bool represents truthness.
-type Bool bool
-
-var _ Value = Bool(false)
-
-func (Bool) Kind() string {
-	return "bool"
+// Booler wraps the Bool method.
+type Booler interface {
+	// Bool computes the truth value of the receiver.
+	Bool() bool
 }
 
-func (b Bool) Equal(rhs interface{}) bool {
-	return b == rhs
-}
-
-func (b Bool) Hash() uint32 {
-	if b {
-		return 1
-	}
-	return 0
-}
-
-func (b Bool) Repr(int) string {
-	if b {
-		return "$true"
-	}
-	return "$false"
-}
-
-func (b Bool) Bool() bool {
-	return bool(b)
-}
-
-// ToBool converts a Value to bool. When the Value type implements Bool(), it
-// is used. Otherwise it is considered true.
-func ToBool(v Value) bool {
-	if b, ok := v.(Booler); ok {
-		return b.Bool()
+// Bool converts a value to bool. It is implemented for the builtin bool type
+// and types implementing the Booler interface. For all other values, it returns
+// true.
+func Bool(v Value) bool {
+	switch v := v.(type) {
+	case bool:
+		return v
+	case Booler:
+		return v.Bool()
 	}
 	return true
 }

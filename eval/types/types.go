@@ -7,12 +7,6 @@ package types
 // Value is an Elvish value.
 type Value interface{}
 
-// Booler wraps the Bool method.
-type Booler interface {
-	// Bool computes the truth value of the receiver.
-	Bool() bool
-}
-
 // IterateKeyer wraps the IterateKey method.
 type IterateKeyer interface {
 	// IterateKey calls the passed function with each value within the receiver.

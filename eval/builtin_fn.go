@@ -109,7 +109,7 @@ func boolFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ScanArgs(args, &v)
 	TakeNoOpt(opts)
 
-	ec.OutputChan() <- types.Bool(types.ToBool(v))
+	ec.OutputChan() <- types.Bool(v)
 }
 
 func not(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -117,7 +117,7 @@ func not(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ScanArgs(args, &v)
 	TakeNoOpt(opts)
 
-	ec.OutputChan() <- types.Bool(!types.ToBool(v))
+	ec.OutputChan() <- !types.Bool(v)
 }
 
 func is(ec *Frame, args []types.Value, opts map[string]types.Value) {

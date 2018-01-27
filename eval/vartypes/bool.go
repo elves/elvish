@@ -12,17 +12,19 @@ type boolVar struct {
 	ptr *bool
 }
 
+// NewBool returns a variable backed by a *bool. The Set method of the variable
+// only accept bool arguments.
 func NewBool(ptr *bool) Variable {
 	return boolVar{ptr}
 }
 
 func (bv boolVar) Get() types.Value {
-	return types.Bool(*bv.ptr)
+	return *bv.ptr
 }
 
 func (bv boolVar) Set(v types.Value) error {
-	if b, ok := v.(types.Bool); ok {
-		*bv.ptr = bool(b)
+	if b, ok := v.(bool); ok {
+		*bv.ptr = b
 		return nil
 	}
 	return errMustBeBool

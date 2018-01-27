@@ -29,7 +29,7 @@ func ShouldBeMap(v types.Value) error {
 }
 
 func ShouldBeBool(v types.Value) error {
-	if _, ok := v.(types.Bool); !ok {
+	if _, ok := v.(bool); !ok {
 		return errShouldBeBool
 	}
 	return nil
