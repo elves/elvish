@@ -6,15 +6,15 @@ import (
 
 var (
 	testStructDescriptor = NewStructDescriptor("foo", "bar")
-	testStruct           = NewStruct(testStructDescriptor, []Value{string("lorem"), string("ipsum")})
-	testStruct2          = NewStruct(testStructDescriptor, []Value{string("lorem"), string("dolor")})
+	testStruct           = NewStruct(testStructDescriptor, []Value{"lorem", "ipsum"})
+	testStruct2          = NewStruct(testStructDescriptor, []Value{"lorem", "dolor"})
 )
 
 func TestStructMethods(t *testing.T) {
 	if l := testStruct.Len(); l != 2 {
 		t.Errorf("testStruct.Len() = %d, want 2", l)
 	}
-	if foo, err := testStruct.Index(string("foo")); foo != string("lorem") {
+	if foo, err := testStruct.Index("foo"); foo != "lorem" {
 		t.Errorf(`testStruct.Index("foo") = %q, want "lorem"`, foo)
 	} else if err != nil {
 		t.Errorf(`testStruct.Index("foo") => error %s, want no error`, err)
@@ -22,7 +22,7 @@ func TestStructMethods(t *testing.T) {
 	if testStruct.Equal(testStruct2) {
 		t.Errorf(`testStruct.Equal(testStruct2) => true, want false`)
 	}
-	if s2, err := testStruct.Assoc(string("bar"), string("dolor")); !Equal(s2, testStruct2) {
+	if s2, err := testStruct.Assoc("bar", "dolor"); !Equal(s2, testStruct2) {
 		t.Errorf(`testStruct.Assoc(...) => %v, want %v`, s2, testStruct2)
 	} else if err != nil {
 		t.Errorf(`testStruct.Assoc(...) => error %s, want no error`, err)

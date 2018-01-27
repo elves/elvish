@@ -69,7 +69,7 @@ func BenchmarkOutputCaptureBytes(b *testing.B) {
 func BenchmarkOutputCaptureMixed(b *testing.B) {
 	bytesToWrite := []byte("test")
 	op := Op{funcOp(func(ec *Frame) error {
-		ec.ports[1].Chan <- types.Bool(false)
+		ec.ports[1].Chan <- false
 		ec.ports[1].File.Write(bytesToWrite)
 		return nil
 	}), 0, 0}

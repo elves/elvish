@@ -5,7 +5,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 )
 
@@ -14,8 +13,8 @@ func makeBuiltinNs() Ns {
 		"_":     vartypes.NewBlackhole(),
 		"pid":   vartypes.NewRo(strconv.Itoa(syscall.Getpid())),
 		"ok":    vartypes.NewRo(OK),
-		"true":  vartypes.NewRo(types.Bool(true)),
-		"false": vartypes.NewRo(types.Bool(false)),
+		"true":  vartypes.NewRo(true),
+		"false": vartypes.NewRo(false),
 		"paths": &EnvList{envName: "PATH"},
 		"pwd":   PwdVariable{},
 	}

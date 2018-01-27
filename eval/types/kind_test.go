@@ -10,8 +10,8 @@ import (
 
 func TestKind(t *testing.T) {
 	tt.Test(t, tt.Fn("Kind", Kind), tt.Table{
-		Args(Bool(true)).Rets("bool"),
-		Args(string("")).Rets("string"),
+		Args(true).Rets("bool"),
+		Args("").Rets("string"),
 		Args(NewList(vector.Empty)).Rets("list"),
 		Args(NewMap(EmptyMapInner)).Rets("map"),
 		Args(NewStruct(NewStructDescriptor(), nil)).Rets("map"),
