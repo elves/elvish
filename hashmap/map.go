@@ -37,3 +37,9 @@ type Iterator interface {
 	// Next moves the iterator to the next position.
 	Next()
 }
+
+// HasKey reports whether a Map has the given key.
+func HasKey(m Map, k interface{}) bool {
+	_, ok := m.Get(k)
+	return ok
+}
