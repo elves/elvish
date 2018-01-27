@@ -2,8 +2,6 @@
 // Elvish.
 package web
 
-//go:generate ./embed-html
-
 import (
 	"encoding/json"
 	"fmt"
