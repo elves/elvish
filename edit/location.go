@@ -15,6 +15,7 @@ import (
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/vector"
 )
 
 // Location mode.
@@ -150,28 +151,26 @@ func locStart(ed *Editor) {
 
 // convertListToDirs converts a list of strings to []storedefs.Dir. It uses the
 // special score of PinnedScore to signify that the directory is pinned.
-func convertListToDirs(li types.List) []storedefs.Dir {
+func convertListToDirs(li vector.Vector) []storedefs.Dir {
 	pinned := make([]storedefs.Dir, 0, li.Len())
 	// XXX(xiaq): silently drops non-string items.
-	li.Iterate(func(v types.Value) bool {
-		if s, ok := v.(string); ok {
+	for it := li.Iterator(); it.HasElem(); it.Next() {
+		if s, ok := it.Elem().(string); ok {
 			pinned = append(pinned, storedefs.Dir{s, PinnedScore})
 		}
-		return true
-	})
+	}
 	return pinned
 }
 
-func convertListsToSet(lis ...types.List) map[string]struct{} {
+func convertListsToSet(lis ...vector.Vector) map[string]struct{} {
 	set := make(map[string]struct{})
 	// XXX(xiaq): silently drops non-string items.
 	for _, li := range lis {
-		li.Iterate(func(v types.Value) bool {
-			if s, ok := v.(string); ok {
+		for it := li.Iterator(); it.HasElem(); it.Next() {
+			if s, ok := it.Elem().(string); ok {
 				set[s] = struct{}{}
 			}
-			return true
-		})
+		}
 	}
 	return set
 }
@@ -182,14 +181,14 @@ var _ = RegisterVariable("loc-hidden", func() vartypes.Variable {
 	return vartypes.NewValidatedPtr(types.EmptyList, vartypes.ShouldBeList)
 })
 
-func (ed *Editor) locHidden() types.List {
-	return ed.variables["loc-hidden"].Get().(types.List)
+func (ed *Editor) locHidden() vector.Vector {
+	return ed.variables["loc-hidden"].Get().(vector.Vector)
 }
 
 var _ = RegisterVariable("loc-pinned", func() vartypes.Variable {
 	return vartypes.NewValidatedPtr(types.EmptyList, vartypes.ShouldBeList)
 })
 
-func (ed *Editor) locPinned() types.List {
-	return ed.variables["loc-pinned"].Get().(types.List)
+func (ed *Editor) locPinned() vector.Vector {
+	return ed.variables["loc-pinned"].Get().(vector.Vector)
 }

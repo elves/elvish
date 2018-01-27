@@ -54,7 +54,7 @@ func (envli *EnvList) Get() types.Value {
 	for _, path := range strings.Split(value, pathListSeparator) {
 		v = v.Cons(path)
 	}
-	envli.cacheValue = types.NewList(v)
+	envli.cacheValue = v
 	return envli.cacheValue
 }
 

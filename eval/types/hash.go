@@ -1,6 +1,8 @@
 package types
 
-import "github.com/xiaq/persistent/hash"
+import (
+	"github.com/xiaq/persistent/hash"
+)
 
 // Hasher wraps the Hash method.
 type Hasher interface {
@@ -9,8 +11,9 @@ type Hasher interface {
 }
 
 // Hash returns the 32-bit hash of a value. It is implemented for the builtin
-// types bool and string, and types implementing the Hahser interface. For other
-// values, it returns 0 (which is OK in terms of correctness).
+// types bool and string, and types satisfying the listHashable or Hasher
+// interface. For other values, it returns 0 (which is OK in terms of
+// correctness).
 func Hash(v interface{}) uint32 {
 	switch v := v.(type) {
 	case bool:
@@ -18,6 +21,12 @@ func Hash(v interface{}) uint32 {
 			return 1
 		}
 		return 0
+	case listHashable:
+		h := hash.DJBInit
+		for it := v.Iterator(); it.HasElem(); it.Next() {
+			h = hash.DJBCombine(h, Hash(it.Elem()))
+		}
+		return h
 	case string:
 		return hash.String(v)
 	case Hasher:
@@ -25,3 +34,5 @@ func Hash(v interface{}) uint32 {
 	}
 	return 0
 }
+
+type listHashable listIterable

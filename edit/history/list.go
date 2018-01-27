@@ -15,11 +15,6 @@ type List struct {
 	Daemon *daemon.Client
 }
 
-var (
-	_ types.Value    = List{}
-	_ types.ListLike = List{}
-)
-
 func (hv List) Kind() string {
 	return "list"
 }
@@ -64,26 +59,26 @@ func (hv List) Iterate(f func(types.Value) bool) {
 	}
 }
 
-func (hv List) Index(idx types.Value) (types.Value, error) {
+func (hv List) Index(rawIndex types.Value) (types.Value, error) {
 	hv.RLock()
 	defer hv.RUnlock()
 
-	slice, i, j, err := types.ParseAndFixListIndex(types.ToString(idx), hv.Len())
+	index, err := types.ConvertListIndex(rawIndex, hv.Len())
 	if err != nil {
 		return nil, err
 	}
-	if slice {
-		cmds, err := hv.Daemon.Cmds(i+1, j+1)
+	if index.Slice {
+		cmds, err := hv.Daemon.Cmds(index.Lower+1, index.Upper+1)
 		if err != nil {
 			return nil, err
 		}
-		vs := make([]types.Value, len(cmds))
-		for i := range cmds {
-			vs[i] = string(cmds[i])
+		l := types.EmptyList
+		for _, cmd := range cmds {
+			l = l.Cons(cmd)
 		}
-		return types.MakeList(vs...), nil
+		return l, nil
 	}
-	s, err := hv.Daemon.Cmd(i + 1)
+	s, err := hv.Daemon.Cmd(index.Lower + 1)
 	return string(s), err
 }
 

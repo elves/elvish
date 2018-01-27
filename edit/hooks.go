@@ -7,6 +7,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
+	"github.com/xiaq/persistent/vector"
 )
 
 // The $le:{before,after}-readline lists that contain hooks. We might have more
@@ -14,30 +15,29 @@ import (
 
 var _ = RegisterVariable("before-readline", makeListVariable)
 
-func (ed *Editor) beforeReadLine() types.List {
-	return ed.variables["before-readline"].Get().(types.List)
+func (ed *Editor) beforeReadLine() vector.Vector {
+	return ed.variables["before-readline"].Get().(vector.Vector)
 }
 
 var _ = RegisterVariable("after-readline", makeListVariable)
 
-func (ed *Editor) afterReadLine() types.List {
-	return ed.variables["after-readline"].Get().(types.List)
+func (ed *Editor) afterReadLine() vector.Vector {
+	return ed.variables["after-readline"].Get().(vector.Vector)
 }
 
 func makeListVariable() vartypes.Variable {
 	return vartypes.NewValidatedPtr(types.EmptyList, vartypes.ShouldBeList)
 }
 
-func callHooks(ev *eval.Evaler, li types.List, args ...types.Value) {
+func callHooks(ev *eval.Evaler, li vector.Vector, args ...types.Value) {
 	if li.Len() == 0 {
 		return
 	}
 
-	li.Iterate(func(v types.Value) bool {
-		op := eval.Op{&hookOp{v, args}, -1, -1}
+	for it := li.Iterator(); it.HasElem(); it.Next() {
+		op := eval.Op{&hookOp{it.Elem(), args}, -1, -1}
 		ev.Eval(op, eval.NewInternalSource("[hooks]"))
-		return true
-	})
+	}
 }
 
 type hookOp struct {

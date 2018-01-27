@@ -202,7 +202,7 @@ func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	default:
 		if len := types.Len(container); len >= 0 {
 			// XXX(xiaq): Not all types that implement Lener have numerical indices
-			_, _, _, err := types.ParseAndFixListIndex(types.ToString(key), len)
+			_, err := types.ConvertListIndex(key, len)
 			found = (err == nil)
 			break
 		}

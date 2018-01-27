@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/xiaq/persistent/vector"
 )
 
 var (
@@ -15,7 +16,7 @@ var (
 )
 
 func ShouldBeList(v types.Value) error {
-	if _, ok := v.(types.List); !ok {
+	if _, ok := v.(vector.Vector); !ok {
 		return errShouldBeList
 	}
 	return nil

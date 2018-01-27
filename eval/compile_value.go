@@ -14,7 +14,6 @@ import (
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
-	"github.com/xiaq/persistent/vector"
 )
 
 var outputCaptureBufferSize = 16
@@ -312,17 +311,17 @@ func (cp *compiler) list(n *parse.Primary) ValuesOpBody {
 type listOp struct{ subops []ValuesOp }
 
 func (op listOp) Invoke(fm *Frame) ([]types.Value, error) {
-	vec := vector.Empty
+	list := types.EmptyList
 	for _, subop := range op.subops {
 		moreValues, err := subop.Exec(fm)
 		if err != nil {
 			return nil, err
 		}
 		for _, moreValue := range moreValues {
-			vec = vec.Cons(moreValue)
+			list = list.Cons(moreValue)
 		}
 	}
-	return []types.Value{types.NewList(vec)}, nil
+	return []types.Value{list}, nil
 }
 
 type exceptionCaptureOp struct{ subop Op }
