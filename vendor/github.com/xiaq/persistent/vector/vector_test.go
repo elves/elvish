@@ -261,10 +261,10 @@ func makeVector(elements ...interface{}) Vector {
 	return v
 }
 
-func BenchmarkConsNative1(b *testing.B) { benchmarkNativeAppend(b, N1) }
-func BenchmarkConsNative2(b *testing.B) { benchmarkNativeAppend(b, N2) }
-func BenchmarkConsNative3(b *testing.B) { benchmarkNativeAppend(b, N3) }
-func BenchmarkConsNative4(b *testing.B) { benchmarkNativeAppend(b, N4) }
+func BenchmarkConsNativeN1(b *testing.B) { benchmarkNativeAppend(b, N1) }
+func BenchmarkConsNativeN2(b *testing.B) { benchmarkNativeAppend(b, N2) }
+func BenchmarkConsNativeN3(b *testing.B) { benchmarkNativeAppend(b, N3) }
+func BenchmarkConsNativeN4(b *testing.B) { benchmarkNativeAppend(b, N4) }
 
 func benchmarkNativeAppend(b *testing.B, n int) {
 	for r := 0; r < b.N; r++ {
@@ -275,10 +275,10 @@ func benchmarkNativeAppend(b *testing.B, n int) {
 	}
 }
 
-func BenchmarkConsPersistent1(b *testing.B) { benchmarkCons(b, N1) }
-func BenchmarkConsPersistent2(b *testing.B) { benchmarkCons(b, N2) }
-func BenchmarkConsPersistent3(b *testing.B) { benchmarkCons(b, N3) }
-func BenchmarkConsPersistent4(b *testing.B) { benchmarkCons(b, N4) }
+func BenchmarkConsPersistentN1(b *testing.B) { benchmarkCons(b, N1) }
+func BenchmarkConsPersistentN2(b *testing.B) { benchmarkCons(b, N2) }
+func BenchmarkConsPersistentN3(b *testing.B) { benchmarkCons(b, N3) }
+func BenchmarkConsPersistentN4(b *testing.B) { benchmarkCons(b, N4) }
 
 func benchmarkCons(b *testing.B, n int) {
 	for r := 0; r < b.N; r++ {
@@ -300,18 +300,49 @@ func init() {
 	}
 }
 
-func BenchmarkNthNative(b *testing.B) {
+var x interface{}
+
+func BenchmarkNthSeqNativeN4(b *testing.B) { benchmarkNthSeqNative(b, N4) }
+
+func benchmarkNthSeqNative(b *testing.B, n int) {
 	for r := 0; r < b.N; r++ {
-		for i := 0; i < N4; i++ {
-			_ = sliceN4[i]
+		for i := 0; i < n; i++ {
+			x = sliceN4[i]
 		}
 	}
 }
 
-func BenchmarkNthPersistent(b *testing.B) {
+func BenchmarkNthSeqPersistentN4(b *testing.B) { benchmarkNthSeqPersistent(b, N4) }
+
+func benchmarkNthSeqPersistent(b *testing.B, n int) {
 	for r := 0; r < b.N; r++ {
-		for i := 0; i < N4; i++ {
-			_ = vectorN4.Nth(i)
+		for i := 0; i < n; i++ {
+			x = vectorN4.Nth(i)
+		}
+	}
+}
+
+var randIndicies []int
+
+func init() {
+	randIndicies = make([]int, N4)
+	for i := 0; i < N4; i++ {
+		randIndicies[i] = rand.Intn(N4)
+	}
+}
+
+func BenchmarkNthRandNative(b *testing.B) {
+	for r := 0; r < b.N; r++ {
+		for _, i := range randIndicies {
+			x = sliceN4[i]
+		}
+	}
+}
+
+func BenchmarkNthRandPersistent(b *testing.B) {
+	for r := 0; r < b.N; r++ {
+		for _, i := range randIndicies {
+			x = vectorN4.Nth(i)
 		}
 	}
 }
@@ -338,7 +369,10 @@ func BenchmarkEqualNative(b *testing.B) {
 	b.StartTimer()
 
 	for r := 0; r < b.N; r++ {
-		nativeEqual(s1, s2)
+		eq := nativeEqual(s1, s2)
+		if !eq {
+			panic("not equal")
+		}
 	}
 }
 
@@ -352,6 +386,9 @@ func BenchmarkEqualPersistent(b *testing.B) {
 	b.StartTimer()
 
 	for r := 0; r < b.N; r++ {
-		eqVector(v1, v2)
+		eq := eqVector(v1, v2)
+		if !eq {
+			panic("not equal")
+		}
 	}
 }

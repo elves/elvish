@@ -10,8 +10,8 @@
 [[projects]]
   name = "github.com/kr/pty"
   packages = ["."]
-  revision = "95d05c1eef33a45bd58676b6ce28d105839b8d0b"
-  version = "v1.0.1"
+  revision = "282ce0e5322c82529687d609ee670fac7c7d917c"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/mattn/go-isatty"
@@ -23,13 +23,13 @@
   branch = "master"
   name = "github.com/xiaq/persistent"
   packages = ["hash","hashmap","vector"]
-  revision = "8f8f5eb31fdd1340ad5abdf018d07448c6a768d7"
+  revision = "3d4eb2be76e07dd8cf579c114e2048cbfd540cca"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix","windows"]
-  revision = "a3f2cbd54cf5dfe3fbaccf76375fdb12f67654c8"
+  revision = "ff2a66f350cefa5c93a634eadb5d25bb60c85a9c"
 
 [solve-meta]
   analyzer-name = "dep"

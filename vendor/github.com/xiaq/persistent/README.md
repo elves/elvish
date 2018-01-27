@@ -6,7 +6,8 @@
 
 This is a Go clone of Clojure's persistent data structures.
 
-DO NOT USE. The API is not stable yet.
+The API is not stable yet. **DO NOT USE** unless you are willing to cope with
+API changes.
 
 License is [Eclipse Public License 1.0](http://opensource.org/licenses/eclipse-1.0.php) (like Clojure). See [epl-v10.html](epl-v10.html) for a copy.
 
@@ -21,53 +22,58 @@ The implementation of persistent vector and hash map and based on a series of [e
 
 ### Vectors
 
-Adding elements to a persistent vector is about 4x as slow as appending elements to a native slices for small-ish data (hundreds of elements). The relative performance **improve** with the size of the vector, perhaps due to the fact that adding elements to the persistent vector never requires reallocating the entire vector, while appending elements to a native slice can do that.
+Compared to native slices,
 
-These are run on a MacBook Pro, early 2016 model.
+*   Adding elements is anywhere from 2x to 8x as slow.
 
-Run 1:
+*   Sequential read is about 9x as slow.
 
-```
-BenchmarkNativeAppendN1-4        1000000              1993 ns/op
-BenchmarkNativeAppendN2-4         300000              3495 ns/op
-BenchmarkNativeAppendN3-4          30000             43821 ns/op
-BenchmarkNativeAppendN4-4            500           3208284 ns/op
-BenchmarkConsN1-4                 200000              7711 ns/op 3.87x
-BenchmarkConsN2-4                 100000             15974 ns/op 4.57x
-BenchmarkConsN3-4                   5000            253898 ns/op 5.79x
-BenchmarkConsN4-4                    200           8744860 ns/op 2.73x
-```
+*   Random read is about 7x as slow.
 
-Run 2:
+Benchmarked on an early 2015 MacBook Pro, with Go 1.9:
 
 ```
-BenchmarkNativeAppendN1-4         500000              2209 ns/op
-BenchmarkNativeAppendN2-4         300000              5998 ns/op
-BenchmarkNativeAppendN3-4          30000             46853 ns/op
-BenchmarkNativeAppendN4-4            500           2790387 ns/op
-BenchmarkConsN1-4                 200000             10594 ns/op 4.80x
-BenchmarkConsN2-4                 100000             26767 ns/op 4.46x
-BenchmarkConsN3-4                   5000            373414 ns/op 7.97x
-BenchmarkConsN4-4                    100          10536014 ns/op 3.78x
+goos: darwin
+goarch: amd64
+pkg: github.com/xiaq/persistent/vector
+BenchmarkConsNativeN1-4                  1000000              2457 ns/op
+BenchmarkConsNativeN2-4                   300000              4418 ns/op
+BenchmarkConsNativeN3-4                    30000             55424 ns/op
+BenchmarkConsNativeN4-4                      300           4493289 ns/op
+BenchmarkConsPersistentN1-4               100000             12250 ns/op 4.99x
+BenchmarkConsPersistentN2-4                50000             26394 ns/op 5.97x
+BenchmarkConsPersistentN3-4                 3000            452146 ns/op 8.16x
+BenchmarkConsPersistentN4-4                  100          13057887 ns/op 2.91x
+BenchmarkNthSeqNativeN4-4                  30000             43156 ns/op
+BenchmarkNthSeqPersistentN4-4               3000            399193 ns/op 9.25x
+BenchmarkNthRandNative-4                   20000             73860 ns/op
+BenchmarkNthRandPersistent-4                3000            546124 ns/op 7.39x
+BenchmarkEqualNative-4                     50000             23828 ns/op
+BenchmarkEqualPersistent-4                  2000           1020893 ns/op 42.84x
 ```
 
 ### Hash map
 
-Adding elements to a persistent hash map is about 5x as slow as adding elements to a native map for small-ish data (hundreds of elements). The relative performance **worsens** with the size of the map.
+Compared to native maps, adding elements is about 3-6x slow. Difference is
+more pronunced when keys are sequential integers, but that workload is very
+rare in the real world.
 
-These are run on a $5/mo DigitalOcean VPS.
+Benchmarked on an early 2015 MacBook Pro, with Go 1.9:
 
 ```
-BenchmarkNativeSequentialAddN1    200000              6855 ns/op
-BenchmarkNativeSequentialAddN2     10000            217681 ns/op
-BenchmarkNativeSequentialAddN3       200           7039884 ns/op
-BenchmarkSequentialConsN1          50000             28746 ns/op 4.2x
-BenchmarkSequentialConsN2           1000           1208015 ns/op 5.5x
-BenchmarkSequentialConsN3             10         138323217 ns/op 19.6x
-BenchmarkNativeRandomStringsAddN1         100000             12900 ns/op
-BenchmarkNativeRandomStringsAddN2           3000            462787 ns/op
-BenchmarkNativeRandomStringsAddN3             50          26765594 ns/op
-BenchmarkRandomStringsConsN1               30000             46482 ns/op 3.6x
-BenchmarkRandomStringsConsN2                1000           2503646 ns/op 5.4x
-BenchmarkRandomStringsConsN3                  10         200831466 ns/op 7.5x
+goos: darwin
+goarch: amd64
+pkg: github.com/xiaq/persistent/hashmap
+BenchmarkSequentialConsNative1-4                  300000              4143 ns/op
+BenchmarkSequentialConsNative2-4                   10000            130423 ns/op
+BenchmarkSequentialConsNative3-4                     300           4600842 ns/op
+BenchmarkSequentialConsPersistent1-4              100000             14005 ns/op 3.38x
+BenchmarkSequentialConsPersistent2-4                2000            641820 ns/op 4.92x
+BenchmarkSequentialConsPersistent3-4                  20          55180306 ns/op 11.99x
+BenchmarkRandomStringsConsNative1-4               200000              7536 ns/op
+BenchmarkRandomStringsConsNative2-4                 5000            264489 ns/op
+BenchmarkRandomStringsConsNative3-4                  100          12132244 ns/op
+BenchmarkRandomStringsConsPersistent1-4            50000             29109 ns/op 3.86x
+BenchmarkRandomStringsConsPersistent2-4             1000           1327321 ns/op 5.02x
+BenchmarkRandomStringsConsPersistent3-4               20          74204196 ns/op 6.12x
 ```

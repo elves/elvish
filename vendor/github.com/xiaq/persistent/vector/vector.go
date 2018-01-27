@@ -72,16 +72,21 @@ type vector struct {
 var Empty Vector = &vector{}
 
 // node is a node in the vector tree. It is always of the size nodeSize.
-type node []interface{}
+type node *[nodeSize]interface{}
 
 func newNode() node {
-	return node(make([]interface{}, nodeSize))
+	return node(&[nodeSize]interface{}{})
 }
 
-func (n node) clone() node {
-	m := newNode()
-	copy(m, n)
-	return m
+func clone(n node) node {
+	a := *n
+	return node(&a)
+}
+
+func nodeFromSlice(s []interface{}) node {
+	var n [nodeSize]interface{}
+	copy(n[:], s)
+	return &n
 }
 
 // Count returns the number of elements in a Vector.
@@ -98,6 +103,23 @@ func (v *vector) treeSize() int {
 	return ((v.count - 1) >> chunkBits) << chunkBits
 }
 
+func (v *vector) Nth(i int) interface{} {
+	if i < 0 || i >= v.count {
+		return nil
+	}
+
+	// The following is very similar to sliceFor, but is implemented separately
+	// to avoid unncessary copying.
+	if i >= v.treeSize() {
+		return v.tail[i&chunkMask]
+	}
+	n := v.root
+	for shift := v.height * chunkBits; shift > 0; shift -= chunkBits {
+		n = n[(i>>shift)&chunkMask].(node)
+	}
+	return n[i&chunkMask]
+}
+
 // sliceFor returns the slice where the i-th element is stored. The index must
 // be in bound.
 func (v *vector) sliceFor(i int) []interface{} {
@@ -108,14 +130,7 @@ func (v *vector) sliceFor(i int) []interface{} {
 	for shift := v.height * chunkBits; shift > 0; shift -= chunkBits {
 		n = n[(i>>shift)&chunkMask].(node)
 	}
-	return n
-}
-
-func (v *vector) Nth(i int) interface{} {
-	if i < 0 || i >= v.count {
-		return nil
-	}
-	return v.sliceFor(i)[i&chunkMask]
+	return n[:]
 }
 
 func (v *vector) AssocN(i int, val interface{}) Vector {
@@ -136,7 +151,7 @@ func (v *vector) AssocN(i int, val interface{}) Vector {
 // doAssoc returns an almost identical tree, with the i-th element replaced by
 // val.
 func doAssoc(height uint, n node, i int, val interface{}) node {
-	m := n.clone()
+	m := clone(n)
 	if height == 0 {
 		m[i&chunkMask] = val
 	} else {
@@ -155,7 +170,7 @@ func (v *vector) Cons(val interface{}) Vector {
 		return &vector{v.count + 1, v.height, v.root, newTail}
 	}
 	// Full tail; push into tree.
-	tailNode := node(v.tail)
+	tailNode := nodeFromSlice(v.tail)
 	newHeight := v.height
 	var newRoot node
 	// Overflow root?
@@ -176,7 +191,7 @@ func (v *vector) pushTail(height uint, n node, tail node) node {
 		return tail
 	}
 	idx := ((v.count - 1) >> (height * chunkBits)) & chunkMask
-	m := n.clone()
+	m := clone(n)
 	child := n[idx]
 	if child == nil {
 		m[idx] = newPath(height-1, tail)
@@ -226,7 +241,7 @@ func (v *vector) popTail(level uint, n node) node {
 		if newChild == nil && idx == 0 {
 			return nil
 		}
-		m := n.clone()
+		m := clone(n)
 		if newChild == nil {
 			// This is needed since `m[idx] = newChild` would store an
 			// interface{} with a non-nil type part, which is non-nil
@@ -238,7 +253,7 @@ func (v *vector) popTail(level uint, n node) node {
 	} else if idx == 0 {
 		return nil
 	} else {
-		m := n.clone()
+		m := clone(n)
 		m[idx] = nil
 		return m
 	}
