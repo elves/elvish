@@ -87,7 +87,7 @@ func compileDel(cp *compiler, fn *parse.Form) OpBody {
 			continue
 		}
 
-		explode, ns, name := ParseVariable(head.Value)
+		explode, ns, name := ParseVariableRef(head.Value)
 		if explode {
 			cp.errorf("arguments to del may be have a leading @")
 			continue

@@ -198,7 +198,7 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 				specialOpFunc = compileForm(cp, n)
 			} else {
 				var headOpFunc ValuesOpBody
-				explode, ns, name := ParseVariable(headStr)
+				explode, ns, name := ParseVariableRef(headStr)
 				if !explode && cp.registerVariableGet(ns, name+FnSuffix) {
 					// $head~ resolves.
 					headOpFunc = variableOp{false, ns, name + FnSuffix}

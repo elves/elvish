@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
@@ -31,45 +30,6 @@ func mustGetHome(uname string) string {
 		throw(err)
 	}
 	return dir
-}
-
-// ParseVariable parses a variable reference.
-func ParseVariable(text string) (explode bool, ns string, name string) {
-	explodePart, nsPart, name := SplitVariable(text)
-	ns = nsPart
-	if len(ns) > 0 {
-		ns = ns[:len(ns)-1]
-	}
-	return explodePart != "", ns, name
-}
-
-// SplitVariable splits a variable reference into three parts: an optional
-// explode operator (either "" or "@"), a namespace part, and a name part.
-func SplitVariable(text string) (explodePart, nsPart, name string) {
-	if text == "" {
-		return "", "", ""
-	}
-	e, qname := "", text
-	if text[0] == '@' {
-		e = "@"
-		qname = text[1:]
-	}
-	if qname == "" {
-		return e, "", ""
-	}
-	i := strings.LastIndexByte(qname, ':')
-	return e, qname[:i+1], qname[i+1:]
-}
-
-func MakeVariableName(explode bool, ns string, name string) string {
-	prefix := ""
-	if explode {
-		prefix = "@"
-	}
-	if ns != "" {
-		prefix += ns + ":"
-	}
-	return prefix + name
 }
 
 func makeFlag(m parse.RedirMode) int {

@@ -5,7 +5,7 @@ func resolve(s string, ec *Frame) Fn {
 	// (*compiler).form.
 
 	// Try variable
-	explode, ns, name := ParseVariable(s)
+	explode, ns, name := ParseVariableRef(s)
 	if !explode {
 		if v := ec.ResolveVar(ns, name+FnSuffix); v != nil {
 			if caller, ok := v.Get().(Fn); ok {

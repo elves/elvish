@@ -25,7 +25,7 @@ func goodFormHead(head string, ed *Editor) bool {
 		return util.IsExecutable(head) || isDir(head)
 	} else {
 		ev := ed.evaler
-		explode, ns, name := eval.ParseVariable(head)
+		explode, ns, name := eval.ParseVariableRef(head)
 		if !explode {
 			switch ns {
 			case "":

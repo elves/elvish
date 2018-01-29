@@ -60,7 +60,7 @@ func (cp *compiler) popScope() {
 }
 
 func (cp *compiler) registerVariableGetQname(qname string) bool {
-	_, ns, name := ParseVariable(qname)
+	_, ns, name := ParseVariableRef(qname)
 	return cp.registerVariableGet(ns, name)
 }
 
@@ -101,7 +101,7 @@ func (cp *compiler) registerVariableGet(ns, name string) bool {
 }
 
 func (cp *compiler) registerVariableSetQname(qname string) bool {
-	_, ns, name := ParseVariable(qname)
+	_, ns, name := ParseVariableRef(qname)
 	return cp.registerVariableSet(ns, name)
 }
 

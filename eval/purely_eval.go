@@ -73,7 +73,7 @@ func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) types.Value {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return pn.Value
 	case parse.Variable:
-		explode, ns, name := ParseVariable(pn.Value)
+		explode, ns, name := ParseVariableRef(pn.Value)
 		if explode {
 			return nil
 		}

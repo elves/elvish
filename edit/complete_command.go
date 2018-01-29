@@ -72,13 +72,13 @@ func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandida
 	for special := range eval.IsBuiltinSpecial {
 		got(special)
 	}
-	explode, ns, _ := eval.ParseVariable(head)
+	explode, ns, _ := eval.ParseVariableRef(head)
 	if !explode {
 		ev.EachVariableInTop(ns, func(varname string) {
 			if strings.HasSuffix(varname, eval.FnSuffix) {
-				got(eval.MakeVariableName(false, ns, varname[:len(varname)-len(eval.FnSuffix)]))
+				got(eval.MakeVariableRef(false, ns, varname[:len(varname)-len(eval.FnSuffix)]))
 			} else {
-				name := eval.MakeVariableName(false, ns, varname)
+				name := eval.MakeVariableRef(false, ns, varname)
 				rawCands <- &complexCandidate{name, " = ", " = ", ui.Styles{}}
 			}
 		})

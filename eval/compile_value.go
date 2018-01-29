@@ -252,7 +252,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpBody {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return literalStr(n.Value)
 	case parse.Variable:
-		explode, ns, name := ParseVariable(n.Value)
+		explode, ns, name := ParseVariableRef(n.Value)
 		if !cp.registerVariableGet(ns, name) {
 			cp.errorf("variable $%s not found", n.Value)
 		}
@@ -422,7 +422,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpBody {
 		argNames = make([]string, len(n.Elements))
 		for i, arg := range n.Elements {
 			qname := mustString(cp, arg, "argument name must be literal string")
-			explode, ns, name := ParseVariable(qname)
+			explode, ns, name := ParseVariableRef(qname)
 			if ns != "" {
 				cp.errorpf(arg.Begin(), arg.End(), "argument name must be unqualified")
 			}
@@ -445,7 +445,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpBody {
 		optDefaultOps = make([]ValuesOp, len(n.MapPairs))
 		for i, opt := range n.MapPairs {
 			qname := mustString(cp, opt.Key, "option name must be literal string")
-			_, ns, name := ParseVariable(qname)
+			_, ns, name := ParseVariableRef(qname)
 			if ns != "" {
 				cp.errorpf(opt.Key.Begin(), opt.Key.End(), "option name must be unqualified")
 			}

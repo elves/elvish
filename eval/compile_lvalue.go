@@ -98,7 +98,7 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp)
 
 func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, LValuesOpBody) {
 	qname := cp.literal(n.Head, msg)
-	explode, ns, name := ParseVariable(qname)
+	explode, ns, name := ParseVariableRef(qname)
 	if len(n.Indicies) == 0 {
 		cp.registerVariableSet(ns, name)
 		return explode, varOp{ns, name}
