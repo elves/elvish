@@ -72,7 +72,7 @@ func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandida
 	for special := range eval.IsBuiltinSpecial {
 		got(special)
 	}
-	explode, ns, _ := eval.ParseVariableRef(head)
+	explode, ns, _ := eval.ParseIncompleteVariableRef(head)
 	if !explode {
 		ev.EachVariableInTop(ns, func(varname string) {
 			if strings.HasSuffix(varname, eval.FnSuffix) {
