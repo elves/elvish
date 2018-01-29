@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/xiaq/persistent/hashmap"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -23,7 +24,7 @@ func ShouldBeList(v types.Value) error {
 }
 
 func ShouldBeMap(v types.Value) error {
-	if _, ok := v.(types.Map); !ok {
+	if _, ok := v.(hashmap.Map); !ok {
 		return errShouldBeMap
 	}
 	return nil

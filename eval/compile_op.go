@@ -10,6 +10,7 @@ import (
 	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 // Op is an operation on an Frame.
@@ -347,20 +348,15 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 	if err != nil {
 		return err
 	}
-	opts := optValues[0].(types.Map)
+	opts := optValues[0].(hashmap.Map)
 	convertedOpts := make(map[string]types.Value)
-	var errOpt error
-	opts.IteratePair(func(k, v types.Value) bool {
+	for it := opts.Iterator(); it.HasElem(); it.Next() {
+		k, v := it.Elem()
 		if ks, ok := k.(string); ok {
 			convertedOpts[ks] = v
 		} else {
-			errOpt = fmt.Errorf("Option key must be string, got %s", types.Kind(k))
-			return false
+			return fmt.Errorf("Option key must be string, got %s", types.Kind(k))
 		}
-		return true
-	})
-	if errOpt != nil {
-		return errOpt
 	}
 
 	ec.begin, ec.end = op.begin, op.end

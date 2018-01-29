@@ -22,15 +22,35 @@ var (
 	errIndexOutOfRange   = errors.New("index out of range")
 )
 
+type noSuchKeyError struct {
+	key Value
+}
+
+// NoSuchKey returns an error indicating that a key is not found in a map-like
+// value.
+func NoSuchKey(k Value) error {
+	return noSuchKeyError{k}
+}
+
+func (err noSuchKeyError) Error() string {
+	return "no such key: " + Repr(err.key, NoPretty)
+}
+
 // Index indexes a value with the given key. It is implemented for the builtin
-// type string, and types satisfying the listIndexable or Indexer interface. For
-// other types, it returns a nil value and a non-nil error.
+// type string, and types satisfying the listIndexable, mapIndexable or Indexer
+// interface. For other types, it returns a nil value and a non-nil error.
 func Index(a, k Value) (Value, error) {
 	switch a := a.(type) {
 	case string:
 		return indexString(a, k)
 	case listIndexable:
 		return indexList(a, k)
+	case mapIndexable:
+		v, ok := a.Get(k)
+		if !ok {
+			return nil, NoSuchKey(k)
+		}
+		return v, nil
 	case Indexer:
 		return a.Index(k)
 	default:

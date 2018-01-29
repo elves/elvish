@@ -20,14 +20,16 @@ var (
 
 // Assoc takes a container, a key and value, and returns a modified version of
 // the container, in which the key associated with the value. It is implemented
-// for the builtin type string, and types satisfying the listAssocable or
-// Assocer interface. For other types, it returns an error.
+// for the builtin type string, and types satisfying the listAssocable,
+// mapAssocable or Assocer interface. For other types, it returns an error.
 func Assoc(a, k, v Value) (Value, error) {
 	switch a := a.(type) {
 	case string:
 		return assocString(a, k, v)
 	case listAssocable:
 		return assocList(a, k, v)
+	case mapAssocable:
+		return a.Assoc(k, v), nil
 	case Assocer:
 		return a.Assoc(k, v)
 	}

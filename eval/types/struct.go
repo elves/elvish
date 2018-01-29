@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/parse"
+	"github.com/xiaq/persistent/hash"
 )
 
 var (
@@ -19,11 +20,6 @@ type Struct struct {
 	fields     []Value
 }
 
-var (
-	_ Value   = (*Struct)(nil)
-	_ MapLike = (*Struct)(nil)
-)
-
 // NewStruct creates a new *Struct value.
 func NewStruct(descriptor *StructDescriptor, fields []Value) *Struct {
 	return &Struct{descriptor, fields}
@@ -35,11 +31,30 @@ func (*Struct) Kind() string {
 
 // Equal returns true if the rhs is MapLike and all pairs are equal.
 func (s *Struct) Equal(rhs interface{}) bool {
-	return s == rhs || EqMapLike(s, rhs)
+	if s == rhs {
+		return true
+	}
+	s2, ok := rhs.(*Struct)
+	if !ok {
+		return false
+	}
+	if s.descriptor != s2.descriptor {
+		return false
+	}
+	for i, field := range s.fields {
+		if !Equal(field, s2.fields[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *Struct) Hash() uint32 {
-	return HashMapLike(s)
+	h := hash.DJBInit
+	for _, field := range s.fields {
+		h = hash.DJBCombine(h, Hash(field))
+	}
+	return h
 }
 
 func (s *Struct) Repr(indent int) string {

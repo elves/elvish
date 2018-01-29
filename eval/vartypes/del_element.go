@@ -23,12 +23,12 @@ func DelElement(variable Variable, indicies []types.Value) error {
 			return err
 		}
 	}
-	dissocer, ok := container.(types.Dissocer)
-	if !ok {
+
+	v := types.Dissoc(container, indicies[len(indicies)-1])
+	if v == nil {
 		return elemErr{len(indicies), "value does not support element removal"}
 	}
 
-	v := dissocer.Dissoc(indicies[len(indicies)-1])
 	for i := len(assocers) - 1; i >= 0; i-- {
 		v, err = types.Assoc(assocers[i], indicies[i], v)
 		if err != nil {

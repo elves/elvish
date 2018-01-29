@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 var (
@@ -30,24 +31,24 @@ var (
 	}
 
 	_ = RegisterVariable("-matcher", func() vartypes.Variable {
-		m := types.EmptyMapInner.Assoc(
-
+		m := types.EmptyMap.Assoc(
 			"", matchPrefix)
-		return vartypes.NewValidatedPtr(types.NewMap(m), vartypes.ShouldBeMap)
+		return vartypes.NewValidatedPtr(m, vartypes.ShouldBeMap)
 	})
 )
 
 func (ed *Editor) lookupMatcher(name string) (eval.Fn, bool) {
-	m := ed.variables["-matcher"].Get().(types.Map)
+	m := ed.variables["-matcher"].Get().(hashmap.Map)
 	key := name
-	if !m.HasKey(key) {
+	if !hashmap.HasKey(m, key) {
 		// Use fallback matcher
-		if !m.HasKey("") {
+		if !hashmap.HasKey(m, "") {
 			return nil, false
 		}
 		key = ""
 	}
-	matcher, ok := types.MustIndex(m, key).(eval.Fn)
+	value, _ := m.Get(key)
+	matcher, ok := value.(eval.Fn)
 	return matcher, ok
 }
 

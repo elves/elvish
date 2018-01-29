@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 // Sequence, list and maps.
@@ -105,14 +106,17 @@ func assoc(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ec.OutputChan() <- result
 }
 
+var errCannotDissoc = errors.New("cannot dissoc")
+
 func dissoc(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var (
-		a types.Dissocer
-		k types.Value
-	)
+	var a, k types.Value
 	ScanArgs(args, &a, &k)
 	TakeNoOpt(opts)
-	ec.OutputChan() <- a.Dissoc(k)
+	a2 := types.Dissoc(a, k)
+	if a2 == nil {
+		throw(errCannotDissoc)
+	}
+	ec.OutputChan() <- a2
 }
 
 func all(ec *Frame, args []types.Value, opts map[string]types.Value) {
@@ -172,11 +176,14 @@ func hasValue(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ScanArgs(args, &container, &value)
 
 	switch container := container.(type) {
-	case types.MapLike:
-		container.IteratePair(func(_, v types.Value) bool {
-			found = v == value
-			return !found
-		})
+	case hashmap.Map:
+		for it := container.Iterator(); it.HasElem(); it.Next() {
+			_, v := it.Elem()
+			if types.Equal(v, value) {
+				found = true
+				break
+			}
+		}
 	default:
 		err := types.Iterate(container, func(v types.Value) bool {
 			found = (v == value)
@@ -197,8 +204,8 @@ func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ScanArgs(args, &container, &key)
 
 	switch container := container.(type) {
-	case types.HasKeyer:
-		found = container.HasKey(key)
+	case hashmap.Map:
+		found = hashmap.HasKey(container, key)
 	default:
 		if len := types.Len(container); len >= 0 {
 			// XXX(xiaq): Not all types that implement Lener have numerical indices
@@ -245,13 +252,13 @@ func count(ec *Frame, args []types.Value, opts map[string]types.Value) {
 func keys(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	TakeNoOpt(opts)
 
-	var iter types.IterateKeyer
-	ScanArgs(args, &iter)
+	var m hashmap.Map
+	ScanArgs(args, &m)
 
 	out := ec.ports[1].Chan
 
-	iter.IterateKey(func(v types.Value) bool {
-		out <- v
-		return true
-	})
+	for it := m.Iterator(); it.HasElem(); it.Next() {
+		k, _ := it.Elem()
+		out <- k
+	}
 }

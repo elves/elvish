@@ -541,7 +541,7 @@ type mapPairsOp struct {
 }
 
 func (op *mapPairsOp) Invoke(fm *Frame) ([]types.Value, error) {
-	m := types.EmptyMapInner
+	m := types.EmptyMap
 	for i := range op.keysOps {
 		keys, err := op.keysOps[i].Exec(fm)
 		if err != nil {
@@ -559,7 +559,7 @@ func (op *mapPairsOp) Invoke(fm *Frame) ([]types.Value, error) {
 			m = m.Assoc(key, values[j])
 		}
 	}
-	return []types.Value{types.NewMap(m)}, nil
+	return []types.Value{m}, nil
 }
 
 func (cp *compiler) braced(n *parse.Primary) ValuesOpBody {

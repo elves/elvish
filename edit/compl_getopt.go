@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/getopt"
 	"github.com/elves/elvish/parse"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
@@ -33,23 +34,20 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 	})
 	maybeThrow(err)
 	err = types.Iterate(optsv, func(v types.Value) bool {
-		m, ok := v.(types.MapLike)
+		m, ok := v.(hashmap.Map)
 		if !ok {
-			throwf("opt should be map-like, got %s", types.Kind(v))
+			throwf("opt should be map, got %s", types.Kind(v))
 		}
-		get := func(ks string) (string, bool) {
-			kv := ks
-			if !m.HasKey(kv) {
+		get := func(k string) (string, bool) {
+			v, ok := m.Get(k)
+			if !ok {
 				return "", false
 			}
-			vv, err := m.Index(kv)
-			maybeThrow(err)
-			if vs, ok := vv.(string); ok {
+			if vs, ok := v.(string); ok {
 				return vs, true
-			} else {
-				throwf("%s should be string, got %s", ks, types.Kind(vv))
-				panic("unreachable")
 			}
+			throwf("%s should be string, got %s", k, types.Kind(v))
+			panic("unreachable")
 		}
 
 		opt := &getopt.Option{}

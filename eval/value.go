@@ -32,26 +32,24 @@ func FromJSONInterface(v interface{}) types.Value {
 		// TODO Use a more appropriate type
 		return ""
 	}
-	switch v.(type) {
-	case bool:
-		return types.Bool(v.(bool))
-	case float64, string:
+	switch v := v.(type) {
+	case bool, string:
+		return v
+	case float64:
 		// TODO Use a numeric type for float64
 		return fmt.Sprint(v)
 	case []interface{}:
-		a := v.([]interface{})
-		vs := make([]types.Value, len(a))
-		for i, v := range a {
+		vs := make([]types.Value, len(v))
+		for i, v := range v {
 			vs[i] = FromJSONInterface(v)
 		}
 		return types.MakeList(vs...)
 	case map[string]interface{}:
-		m := v.(map[string]interface{})
-		mv := types.EmptyMapInner
-		for k, v := range m {
-			mv = mv.Assoc(k, FromJSONInterface(v))
+		m := types.EmptyMap
+		for key, val := range v {
+			m = m.Assoc(key, FromJSONInterface(val))
 		}
-		return types.NewMap(mv)
+		return m
 	default:
 		throw(fmt.Errorf("unexpected json type: %T", v))
 		return nil // not reached

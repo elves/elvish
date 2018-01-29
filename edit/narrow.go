@@ -11,6 +11,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 var _ = registerBuiltins(modeNarrow, map[string]func(*Editor){
@@ -325,7 +326,7 @@ type narrowItem interface {
 
 type narrowOptions struct {
 	AutoCommit        bool
-	Bindings          types.Map
+	Bindings          hashmap.Map
 	IgnoreDuplication bool
 	IgnoreCase        bool
 	KeepBottom        bool
@@ -352,38 +353,33 @@ func (s *narrowItemString) FilterText() string {
 }
 
 type narrowItemComplex struct {
-	types.Map
+	hashmap.Map
 }
 
 func (c *narrowItemComplex) Content() string {
-	key := "content"
-	if !c.Map.HasKey(key) {
-		return ""
+	if v, ok := c.Map.Get("content"); ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
 	}
-	if s, ok := types.MustIndex(c.Map, key).(string); !ok {
-		return ""
-	} else {
-		return s
-	}
+	return ""
 }
 
 // TODO: add style
 func (c *narrowItemComplex) Display() ui.Styled {
-	key := "display"
-	if !c.Map.HasKey(key) {
-		return ui.Unstyled("")
+	if v, ok := c.Map.Get("display"); ok {
+		if s, ok := v.(string); ok {
+			return ui.Unstyled(s)
+		}
 	}
-	if s, ok := types.MustIndex(c.Map, key).(string); !ok {
-		return ui.Unstyled("")
-	} else {
-		return ui.Unstyled(s)
-	}
+	return ui.Unstyled("")
 }
 
 func (c *narrowItemComplex) FilterText() string {
-	key := "filter-text"
-	if c.Map.HasKey(key) {
-		return types.MustIndex(c.Map, key).(string)
+	if v, ok := c.Map.Get("filter-text"); ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
 	}
 	return c.Content()
 }
@@ -392,22 +388,22 @@ func NarrowRead(ec *eval.Frame, args []types.Value, opts map[string]types.Value)
 	var source, action eval.Fn
 	l := &narrow{
 		opts: narrowOptions{
-			Bindings: types.NewMap(types.EmptyMapInner),
+			Bindings: types.EmptyMap,
 		},
 	}
 
 	eval.ScanArgs(args, &source, &action)
 	eval.ScanOptsToStruct(opts, &l.opts)
 
-	l.opts.Bindings.IteratePair(func(k, f types.Value) bool {
+	for it := l.opts.Bindings.Iterator(); it.HasElem(); it.Next() {
+		k, f := it.Elem()
 		key := ui.ToKey(k)
 		maybeThrow(eval.ShouldBeFn(f))
 		if l.opts.bindingMap == nil {
 			l.opts.bindingMap = make(map[ui.Key]eval.Fn)
 		}
 		l.opts.bindingMap[key] = f.(eval.Fn)
-		return true
-	})
+	}
 
 	l.source = narrowGetSource(ec, source)
 	l.action = func(ed *Editor, item narrowItem) {
@@ -434,7 +430,7 @@ func narrowGetSource(ec *eval.Frame, source eval.Fn) func() []narrowItem {
 			switch raw := v.(type) {
 			case string:
 				lis = append(lis, &narrowItemString{raw})
-			case types.Map:
+			case hashmap.Map:
 				lis = append(lis, &narrowItemComplex{raw})
 			}
 		}

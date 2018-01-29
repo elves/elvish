@@ -12,6 +12,7 @@ import (
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 	"github.com/xiaq/persistent/hash"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 // For an overview of completion, see the comment in completers.go.
@@ -66,6 +67,9 @@ var (
 	// TODO(xiaq): Detect the type violation when the user modifies
 	// $edit:completer.
 	ErrCompleterMustBeFn = errors.New("completer must be fn")
+	// ErrNoMatchingCompleter is thrown if there is no completer matching the
+	// current command.
+	ErrNoMatchingCompleter = errors.New("no matching completer")
 	// ErrCompleterArgMustBeString is thrown when a builtin argument completer
 	// is called with non-string arguments.
 	ErrCompleterArgMustBeString = errors.New("arguments to arg completers must be string")
@@ -84,15 +88,15 @@ var (
 var _ = RegisterVariable("arg-completer", argCompleterVariable)
 
 func argCompleterVariable() vartypes.Variable {
-	m := types.EmptyMapInner
+	m := types.EmptyMap
 	for k, v := range argCompletersData {
 		m = m.Assoc(k, v)
 	}
-	return vartypes.NewValidatedPtr(types.NewMap(m), vartypes.ShouldBeMap)
+	return vartypes.NewValidatedPtr(m, vartypes.ShouldBeMap)
 }
 
-func (ed *Editor) argCompleter() types.Map {
-	return ed.variables["arg-completer"].Get().(types.Map)
+func (ed *Editor) argCompleter() hashmap.Map {
+	return ed.variables["arg-completer"].Get().(hashmap.Map)
 }
 
 // completeArg calls the correct argument completers according to the command
@@ -104,12 +108,12 @@ func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) 
 	m := ev.Editor.(*Editor).argCompleter()
 	var v types.Value
 	index := words[0]
-	if !m.HasKey(index) {
-		index = ""
-	}
-	v, err := m.Index(index)
-	if err != nil {
-		return err
+	v, ok := m.Get(index)
+	if !ok {
+		v, ok = m.Get("")
+		if !ok {
+			return ErrNoMatchingCompleter
+		}
 	}
 	fn, ok := v.(eval.Fn)
 	if !ok {
