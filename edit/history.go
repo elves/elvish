@@ -26,7 +26,7 @@ type hist struct {
 	*history.Walker
 }
 
-func (*hist) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Fn {
+func (*hist) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Callable {
 	return getBinding(m[modeHistory], k)
 }
 

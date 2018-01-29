@@ -27,7 +27,7 @@ type Closure struct {
 	SrcMeta     *Source
 }
 
-var _ Fn = &Closure{}
+var _ Callable = &Closure{}
 
 // Kind returns "fn".
 func (*Closure) Kind() string {

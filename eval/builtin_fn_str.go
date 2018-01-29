@@ -206,7 +206,7 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // call break and continue. Overall this provides a similar functionality to
 // awk, hence the name.
 func eawk(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var f Fn
+	var f Callable
 	iterate := ScanArgsOptionalInput(ec, args, &f)
 	TakeNoOpt(opts)
 

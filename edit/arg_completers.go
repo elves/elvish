@@ -115,7 +115,7 @@ func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) 
 			return ErrNoMatchingCompleter
 		}
 	}
-	fn, ok := v.(eval.Fn)
+	fn, ok := v.(eval.Callable)
 	if !ok {
 		return ErrCompleterMustBeFn
 	}
@@ -127,7 +127,7 @@ type builtinArgCompleter struct {
 	impl func([]string, *eval.Evaler, chan<- rawCandidate) error
 }
 
-var _ eval.Fn = &builtinArgCompleter{}
+var _ eval.Callable = &builtinArgCompleter{}
 
 func (bac *builtinArgCompleter) Kind() string {
 	return "fn"
@@ -191,8 +191,7 @@ func complSudo(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) er
 // callArgCompleter calls a Fn, assuming that it is an arg completer. It calls
 // the Fn with specified arguments and closed input, and converts its output to
 // candidate objects.
-func callArgCompleter(fn eval.Fn,
-	ev *eval.Evaler, words []string, rawCands chan<- rawCandidate) error {
+func callArgCompleter(fn eval.Callable, ev *eval.Evaler, words []string, rawCands chan<- rawCandidate) error {
 
 	// Quick path for builtin arg completers.
 	if builtin, ok := fn.(*builtinArgCompleter); ok {

@@ -25,7 +25,7 @@ type BuiltinFn struct {
 
 type BuiltinFnImpl func(*Frame, []interface{}, map[string]interface{})
 
-var _ Fn = &BuiltinFn{}
+var _ Callable = &BuiltinFn{}
 
 // Kind returns "fn".
 func (*BuiltinFn) Kind() string {
@@ -202,7 +202,7 @@ func sleep(ec *Frame, args []interface{}, opts map[string]interface{}) {
 }
 
 func _time(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var f Fn
+	var f Callable
 	ScanArgs(args, &f)
 	TakeNoOpt(opts)
 

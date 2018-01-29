@@ -57,7 +57,7 @@ type narrow struct {
 	opts      narrowOptions
 }
 
-func (l *narrow) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Fn {
+func (l *narrow) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Callable {
 	if l.opts.bindingMap != nil {
 		if f, ok := l.opts.bindingMap[k]; ok {
 			return f
@@ -332,7 +332,7 @@ type narrowOptions struct {
 	MaxLines          int
 	Modeline          string
 
-	bindingMap map[ui.Key]eval.Fn
+	bindingMap map[ui.Key]eval.Callable
 }
 
 type narrowItemString struct {
@@ -384,7 +384,7 @@ func (c *narrowItemComplex) FilterText() string {
 }
 
 func NarrowRead(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	var source, action eval.Fn
+	var source, action eval.Callable
 	l := &narrow{
 		opts: narrowOptions{
 			Bindings: types.EmptyMap,
@@ -399,9 +399,9 @@ func NarrowRead(ec *eval.Frame, args []interface{}, opts map[string]interface{})
 		key := ui.ToKey(k)
 		maybeThrow(eval.ShouldBeFn(f))
 		if l.opts.bindingMap == nil {
-			l.opts.bindingMap = make(map[ui.Key]eval.Fn)
+			l.opts.bindingMap = make(map[ui.Key]eval.Callable)
 		}
-		l.opts.bindingMap[key] = f.(eval.Fn)
+		l.opts.bindingMap[key] = f.(eval.Callable)
 	}
 
 	l.source = narrowGetSource(ec, source)
@@ -416,7 +416,7 @@ func NarrowRead(ec *eval.Frame, args []interface{}, opts map[string]interface{})
 	ed.mode = l
 }
 
-func narrowGetSource(ec *eval.Frame, source eval.Fn) func() []narrowItem {
+func narrowGetSource(ec *eval.Frame, source eval.Callable) func() []narrowItem {
 	return func() []narrowItem {
 		ed := ec.Editor.(*Editor)
 		vs, err := ec.PCaptureOutput(source, eval.NoArgs, eval.NoOpts)

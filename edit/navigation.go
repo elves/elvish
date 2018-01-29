@@ -52,7 +52,7 @@ type navPreview interface {
 	List(int) ui.Renderer
 }
 
-func (*navigation) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Fn {
+func (*navigation) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Callable {
 	return getBinding(m[modeNavigation], k)
 }
 

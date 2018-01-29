@@ -120,8 +120,7 @@ func outputComplexCandidate(ec *eval.Frame,
 	ec.OutputChan() <- c
 }
 
-func filterRawCandidates(ev *eval.Evaler, matcher eval.Fn,
-	seed string, chanRawCandidate <-chan rawCandidate) ([]rawCandidate, error) {
+func filterRawCandidates(ev *eval.Evaler, matcher eval.Callable, seed string, chanRawCandidate <-chan rawCandidate) ([]rawCandidate, error) {
 
 	matcherInput := make(chan interface{})
 	stopCollector := make(chan struct{})

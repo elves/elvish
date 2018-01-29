@@ -14,7 +14,7 @@ import (
 
 var errValueShouldBeFn = errors.New("value should be function")
 
-func getBinding(bindingVar vartypes.Variable, k ui.Key) eval.Fn {
+func getBinding(bindingVar vartypes.Variable, k ui.Key) eval.Callable {
 	binding := bindingVar.Get().(BindingTable)
 	switch {
 	case binding.HasKey(k):
@@ -63,19 +63,19 @@ func (bt BindingTable) HasKey(k interface{}) bool {
 	return ok
 }
 
-func (bt BindingTable) get(k ui.Key) eval.Fn {
+func (bt BindingTable) get(k ui.Key) eval.Callable {
 	v, ok := bt.Map.Get(k)
 	if !ok {
 		panic("get called when key not present")
 	}
-	return v.(eval.Fn)
+	return v.(eval.Callable)
 }
 
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,
 // uses the Assoc of the inner Map and converts the result to a BindingTable.
 func (bt BindingTable) Assoc(k, v interface{}) (interface{}, error) {
 	key := ui.ToKey(k)
-	f, ok := v.(eval.Fn)
+	f, ok := v.(eval.Callable)
 	if !ok {
 		return nil, errValueShouldBeFn
 	}
@@ -91,7 +91,7 @@ func makeBindingTable(f *eval.Frame, args []interface{}, opts map[string]interfa
 	converted := types.EmptyMap
 	for it := raw.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
-		f, ok := v.(eval.Fn)
+		f, ok := v.(eval.Callable)
 		if !ok {
 			throw(errValueShouldBeFn)
 		}

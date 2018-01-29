@@ -65,7 +65,7 @@ func newListing(t string, p listingProvider) listing {
 	return l
 }
 
-func (l *listing) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Fn {
+func (l *listing) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Callable {
 	if m[l.name] == nil {
 		return getBinding(m[modeListing], k)
 	}

@@ -106,7 +106,7 @@ func replace(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 		switch repl := argRepl.(type) {
 		case string:
 			result = pattern.ReplaceAllString(string(argSource), string(repl))
-		case eval.Fn:
+		case eval.Callable:
 			replFunc := func(s string) string {
 				values, err := ec.PCaptureOutput(repl,
 					[]interface{}{string(s)}, eval.NoOpts)

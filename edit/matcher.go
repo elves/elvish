@@ -37,7 +37,7 @@ var (
 	})
 )
 
-func (ed *Editor) lookupMatcher(name string) (eval.Fn, bool) {
+func (ed *Editor) lookupMatcher(name string) (eval.Callable, bool) {
 	m := ed.variables["-matcher"].Get().(hashmap.Map)
 	key := name
 	if !hashmap.HasKey(m, key) {
@@ -48,7 +48,7 @@ func (ed *Editor) lookupMatcher(name string) (eval.Fn, bool) {
 		key = ""
 	}
 	value, _ := m.Get(key)
-	matcher, ok := value.(eval.Fn)
+	matcher, ok := value.(eval.Callable)
 	return matcher, ok
 }
 

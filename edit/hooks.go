@@ -46,7 +46,7 @@ type hookOp struct {
 }
 
 func (op *hookOp) Invoke(fm *eval.Frame) error {
-	fn, ok := op.hook.(eval.Fn)
+	fn, ok := op.hook.(eval.Callable)
 	if !ok {
 		fmt.Fprintf(os.Stderr, "not a function: %s\n", types.Repr(op.hook, types.NoPretty))
 		return nil

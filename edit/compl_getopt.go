@@ -19,7 +19,7 @@ func complGetopt(ec *eval.Frame, a []interface{}, o map[string]interface{}) {
 	var (
 		elems    []string
 		opts     []*getopt.Option
-		args     []eval.Fn
+		args     []eval.Callable
 		variadic bool
 	)
 	desc := make(map[*getopt.Option]string)
@@ -80,7 +80,7 @@ func complGetopt(ec *eval.Frame, a []interface{}, o map[string]interface{}) {
 			}
 			throwf("string except for ... not allowed as argument handler, got %s", parse.Quote(sv))
 		}
-		arg, ok := v.(eval.Fn)
+		arg, ok := v.(eval.Callable)
 		if !ok {
 			throwf("argument handler should be fn, got %s", types.Kind(v))
 		}
@@ -112,7 +112,7 @@ func complGetopt(ec *eval.Frame, a []interface{}, o map[string]interface{}) {
 	switch ctx.Type {
 	case getopt.NewOptionOrArgument, getopt.Argument:
 		// Find argument completer
-		var argCompl eval.Fn
+		var argCompl eval.Callable
 		if len(parsedArgs) < len(args) {
 			argCompl = args[len(parsedArgs)]
 		} else if variadic {

@@ -19,11 +19,6 @@ var (
 	NoOpts = map[string]interface{}{}
 )
 
-// Fn is a callable value.
-type Fn interface {
-	Callable
-}
-
 // FromJSONInterface converts a interface{} that results from json.Unmarshal to
 // a Value.
 func FromJSONInterface(v interface{}) interface{} {
