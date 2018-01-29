@@ -20,6 +20,8 @@ type Struct struct {
 	fields     []interface{}
 }
 
+var _ Getter = (*Struct)(nil)
+
 // NewStruct creates a new *Struct value.
 func NewStruct(descriptor *StructDescriptor, fields []interface{}) *Struct {
 	return &Struct{descriptor, fields}
@@ -70,18 +72,18 @@ func (s *Struct) Len() int {
 	return len(s.descriptor.fieldNames)
 }
 
-func (s *Struct) Index(idx interface{}) (interface{}, error) {
-	i, err := s.index(idx)
-	if err != nil {
-		return nil, err
+func (s *Struct) Get(k interface{}) (interface{}, bool) {
+	i, ok := s.index(k)
+	if !ok {
+		return nil, false
 	}
-	return s.fields[i], nil
+	return s.fields[i], true
 }
 
 func (s *Struct) Assoc(k, v interface{}) (interface{}, error) {
-	i, err := s.index(k)
-	if err != nil {
-		return nil, err
+	i, ok := s.index(k)
+	if !ok {
+		return nil, NoSuchKey(k)
 	}
 	fields := make([]interface{}, len(s.fields))
 	copy(fields, s.fields)
@@ -106,20 +108,17 @@ func (s *Struct) IteratePair(f func(interface{}, interface{}) bool) {
 }
 
 func (s *Struct) HasKey(k interface{}) bool {
-	_, err := s.index(k)
-	return err == nil
+	_, ok := s.index(k)
+	return ok
 }
 
-func (s *Struct) index(idx interface{}) (int, error) {
-	index, ok := idx.(string)
+func (s *Struct) index(k interface{}) (int, bool) {
+	kstring, ok := k.(string)
 	if !ok {
-		return 0, ErrIndexMustBeString
+		return 0, false
 	}
-	i, ok := s.descriptor.fieldIndex[string(index)]
-	if !ok {
-		return 0, NoSuchKey(idx)
-	}
-	return i, nil
+	index, ok := s.descriptor.fieldIndex[kstring]
+	return index, ok
 }
 
 // MarshalJSON encodes the Struct to a JSON Object.

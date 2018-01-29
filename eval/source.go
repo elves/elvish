@@ -45,8 +45,7 @@ func (src *Source) describePath() string {
 }
 
 var (
-	_ interface{}   = (*Source)(nil)
-	_ types.Indexer = (*Source)(nil)
+	_ types.Getter = (*Source)(nil)
 )
 
 func (src *Source) Kind() string {
@@ -70,7 +69,7 @@ func (src *Source) Repr(int) string {
 		src.typ, parse.Quote(src.name), parse.Quote(src.path))
 }
 
-func (src *Source) Index(k interface{}) (interface{}, error) {
+func (src *Source) Get(k interface{}) (interface{}, bool) {
 	ret := ""
 	switch k {
 	case "type":
@@ -82,9 +81,9 @@ func (src *Source) Index(k interface{}) (interface{}, error) {
 	case "code":
 		ret = src.code
 	default:
-		return nil, types.NoSuchKey(k)
+		return nil, false
 	}
-	return ret, nil
+	return ret, true
 }
 
 // SrcType records the type of a piece of source code.

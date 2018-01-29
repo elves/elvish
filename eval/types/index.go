@@ -9,6 +9,14 @@ import (
 	"github.com/xiaq/persistent/vector"
 )
 
+// Getter wraps the Get method.
+type Getter interface {
+	// Get retrieves the value corresponding to the specified key in the
+	// container. It returns the value (if any), and whether it actually
+	// exists.
+	Get(k interface{}) (v interface{}, ok bool)
+}
+
 // Indexer wraps the Index method.
 type Indexer interface {
 	// Index retrieves one value from the receiver at the specified index.
@@ -37,7 +45,7 @@ func (err noSuchKeyError) Error() string {
 }
 
 // Index indexes a value with the given key. It is implemented for the builtin
-// type string, and types satisfying the listIndexable, mapIndexable or Indexer
+// type string, and types satisfying the listIndexable, Getter or Indexer
 // interface. For other types, it returns a nil value and a non-nil error.
 func Index(a, k interface{}) (interface{}, error) {
 	switch a := a.(type) {
@@ -45,7 +53,7 @@ func Index(a, k interface{}) (interface{}, error) {
 		return indexString(a, k)
 	case listIndexable:
 		return indexList(a, k)
-	case mapIndexable:
+	case Getter:
 		v, ok := a.Get(k)
 		if !ok {
 			return nil, NoSuchKey(k)

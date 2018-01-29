@@ -7,9 +7,6 @@ import (
 type mapIterable interface {
 	Iterator() hashmap.Iterator
 }
-type mapIndexable interface {
-	Get(interface{}) (interface{}, bool)
-}
 type mapAssocable interface {
 	Assoc(k, v interface{}) hashmap.Map
 }
@@ -19,7 +16,7 @@ type mapDissocable interface {
 
 var (
 	_ mapIterable   = hashmap.Map(nil)
-	_ mapIndexable  = hashmap.Map(nil)
+	_ Getter        = hashmap.Map(nil)
 	_ mapAssocable  = hashmap.Map(nil)
 	_ mapDissocable = hashmap.Map(nil)
 )
