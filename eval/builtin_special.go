@@ -151,7 +151,7 @@ type delElemOp struct {
 }
 
 func (op *delElemOp) Invoke(fm *Frame) error {
-	var indicies []types.Value
+	var indicies []interface{}
 	for _, indexOp := range op.indexOps {
 		indexValues, err := indexOp.Exec(fm)
 		if err != nil {
@@ -363,7 +363,7 @@ type andOrOp struct {
 }
 
 func (op *andOrOp) Invoke(fm *Frame) error {
-	var lastValue types.Value = types.Bool(op.init)
+	var lastValue interface{} = types.Bool(op.init)
 	for _, argOp := range op.argOps {
 		values, err := argOp.Exec(fm)
 		if err != nil {
@@ -517,7 +517,7 @@ func (op *forOp) Invoke(ec *Frame) error {
 
 	iterated := false
 	var errElement error
-	errIterate := types.Iterate(iterable, func(v types.Value) bool {
+	errIterate := types.Iterate(iterable, func(v interface{}) bool {
 		iterated = true
 		err := variable.Set(v)
 		if err != nil {

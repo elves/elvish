@@ -10,7 +10,7 @@ import (
 )
 
 var reprTests = []struct {
-	v    types.Value
+	v    interface{}
 	want string
 }{
 	{"233", "233"},
@@ -27,8 +27,8 @@ var reprTests = []struct {
 	{&Exception{Return, nil}, "?(return)"},
 	{types.EmptyList, "[]"},
 	{types.MakeList("bash", false), "[bash $false]"},
-	{types.MakeMap(map[types.Value]types.Value{}), "[&]"},
-	{types.MakeMap(map[types.Value]types.Value{&Exception{nil, nil}: "elvish"}), "[&$ok=elvish]"},
+	{types.MakeMap(map[interface{}]interface{}{}), "[&]"},
+	{types.MakeMap(map[interface{}]interface{}{&Exception{nil, nil}: "elvish"}), "[&$ok=elvish]"},
 	// TODO: test maps of more elements
 }
 

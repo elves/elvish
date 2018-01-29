@@ -1,27 +1,25 @@
 package vartypes
 
-import "github.com/elves/elvish/eval/types"
-
 type ptr struct {
-	valuePtr *types.Value
+	valuePtr *interface{}
 }
 
-func (pv ptr) Set(val types.Value) error {
+func (pv ptr) Set(val interface{}) error {
 	*pv.valuePtr = val
 	return nil
 }
 
-func (pv ptr) Get() types.Value {
+func (pv ptr) Get() interface{} {
 	return *pv.valuePtr
 }
 
-func NewPtr(v types.Value) Variable {
+func NewPtr(v interface{}) Variable {
 	return ptr{&v}
 }
 
 type validatedPtr struct {
-	valuePtr  *types.Value
-	validator func(types.Value) error
+	valuePtr  *interface{}
+	validator func(interface{}) error
 }
 
 type invalidValueError struct {
@@ -32,11 +30,11 @@ func (err invalidValueError) Error() string {
 	return "invalid value: " + err.inner.Error()
 }
 
-func NewValidatedPtr(v types.Value, vld func(types.Value) error) Variable {
+func NewValidatedPtr(v interface{}, vld func(interface{}) error) Variable {
 	return validatedPtr{&v, vld}
 }
 
-func (iv validatedPtr) Set(val types.Value) error {
+func (iv validatedPtr) Set(val interface{}) error {
 	if err := iv.validator(val); err != nil {
 		return invalidValueError{err}
 	}
@@ -44,6 +42,6 @@ func (iv validatedPtr) Set(val types.Value) error {
 	return nil
 }
 
-func (iv validatedPtr) Get() types.Value {
+func (iv validatedPtr) Get() interface{} {
 	return *iv.valuePtr
 }

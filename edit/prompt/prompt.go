@@ -35,7 +35,7 @@ func PromptVariable() vartypes.Variable {
 	isRoot := err == nil && user.Uid == "0"
 
 	prompt := func(ec *eval.Frame,
-		args []types.Value, opts map[string]types.Value) {
+		args []interface{}, opts map[string]interface{}) {
 
 		out := ec.OutputChan()
 		out <- string(util.Getwd())
@@ -67,7 +67,7 @@ func RpromptVariable() vartypes.Variable {
 	}
 	rpromptStr := username + "@" + hostname
 	rprompt := func(ec *eval.Frame,
-		args []types.Value, opts map[string]types.Value) {
+		args []interface{}, opts map[string]interface{}) {
 
 		out := ec.OutputChan()
 		out <- &ui.Styled{rpromptStr, ui.Styles{"inverse"}}
@@ -140,7 +140,7 @@ func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
 	}
 	// Value output may be of type ui.Styled or any other type, in which case
 	// they are converted to ui.Styled.
-	valuesCb := func(ch <-chan types.Value) {
+	valuesCb := func(ch <-chan interface{}) {
 		for v := range ch {
 			if s, ok := v.(*ui.Styled); ok {
 				add(s)

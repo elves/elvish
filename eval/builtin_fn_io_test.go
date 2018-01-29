@@ -19,8 +19,8 @@ func TestBuiltinFnIO(t *testing.T) {
 		{`print "a\nb" | from-lines`, want{out: strs("a", "b")}},
 		{`print "a\nb\n" | from-lines`, want{out: strs("a", "b")}},
 		{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`,
-			want{out: []types.Value{
-				types.MakeMap(map[types.Value]types.Value{
+			want{out: []interface{}{
+				types.MakeMap(map[interface{}]interface{}{
 					"k": "v",
 					"a": types.MakeList(strs("1", "2")...)}),
 				"foo",

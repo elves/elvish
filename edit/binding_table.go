@@ -54,11 +54,11 @@ func (bt BindingTable) Repr(indent int) string {
 }
 
 // Index converts the index to ui.Key and uses the Index of the inner Map.
-func (bt BindingTable) Index(index types.Value) (types.Value, error) {
+func (bt BindingTable) Index(index interface{}) (interface{}, error) {
 	return types.Index(bt.Map, ui.ToKey(index))
 }
 
-func (bt BindingTable) HasKey(k types.Value) bool {
+func (bt BindingTable) HasKey(k interface{}) bool {
 	_, ok := bt.Map.Get(k)
 	return ok
 }
@@ -73,7 +73,7 @@ func (bt BindingTable) get(k ui.Key) eval.Fn {
 
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,
 // uses the Assoc of the inner Map and converts the result to a BindingTable.
-func (bt BindingTable) Assoc(k, v types.Value) (types.Value, error) {
+func (bt BindingTable) Assoc(k, v interface{}) (interface{}, error) {
 	key := ui.ToKey(k)
 	f, ok := v.(eval.Fn)
 	if !ok {
@@ -83,7 +83,7 @@ func (bt BindingTable) Assoc(k, v types.Value) (types.Value, error) {
 	return BindingTable{map2}, nil
 }
 
-func makeBindingTable(f *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func makeBindingTable(f *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	var raw hashmap.Map
 	eval.ScanArgs(args, &raw)
 	eval.TakeNoOpt(opts)

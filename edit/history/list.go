@@ -44,7 +44,7 @@ func (hv List) Len() int {
 	return nextseq - 1
 }
 
-func (hv List) Iterate(f func(types.Value) bool) {
+func (hv List) Iterate(f func(interface{}) bool) {
 	hv.RLock()
 	defer hv.RUnlock()
 
@@ -59,7 +59,7 @@ func (hv List) Iterate(f func(types.Value) bool) {
 	}
 }
 
-func (hv List) Index(rawIndex types.Value) (types.Value, error) {
+func (hv List) Index(rawIndex interface{}) (interface{}, error) {
 	hv.RLock()
 	defer hv.RUnlock()
 

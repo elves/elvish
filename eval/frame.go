@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/util"
 )
 
@@ -38,7 +37,7 @@ func NewTopFrame(ev *Evaler, src *Source, ports []*Port) *Frame {
 }
 
 // InputChan returns a channel from which input can be read.
-func (ec *Frame) InputChan() chan types.Value {
+func (ec *Frame) InputChan() chan interface{} {
 	return ec.ports[0].Chan
 }
 
@@ -48,7 +47,7 @@ func (ec *Frame) InputFile() *os.File {
 }
 
 // OutputChan returns a channel onto which output can be written.
-func (ec *Frame) OutputChan() chan<- types.Value {
+func (ec *Frame) OutputChan() chan<- interface{} {
 	return ec.ports[1].Chan
 }
 
@@ -58,9 +57,9 @@ func (ec *Frame) OutputFile() *os.File {
 }
 
 // IterateInputs calls the passed function for each input element.
-func (ec *Frame) IterateInputs(f func(types.Value)) {
+func (ec *Frame) IterateInputs(f func(interface{})) {
 	var w sync.WaitGroup
-	inputs := make(chan types.Value)
+	inputs := make(chan interface{})
 
 	w.Add(2)
 	go func() {
@@ -83,7 +82,7 @@ func (ec *Frame) IterateInputs(f func(types.Value)) {
 	}
 }
 
-func linesToChan(r io.Reader, ch chan<- types.Value) {
+func linesToChan(r io.Reader, ch chan<- interface{}) {
 	filein := bufio.NewReader(r)
 	for {
 		line, err := filein.ReadString('\n')
@@ -128,7 +127,7 @@ func (ec *Frame) PEval(op Op) (err error) {
 	return nil
 }
 
-func (ec *Frame) PCall(f Callable, args []types.Value, opts map[string]types.Value) (err error) {
+func (ec *Frame) PCall(f Callable, args []interface{}, opts map[string]interface{}) (err error) {
 	defer catch(&err, ec)
 	e := f.Call(ec, args, opts)
 	if e != nil {
@@ -140,7 +139,7 @@ func (ec *Frame) PCall(f Callable, args []types.Value, opts map[string]types.Val
 	return nil
 }
 
-func (ec *Frame) PCaptureOutput(fn Callable, args []types.Value, opts map[string]types.Value) (vs []types.Value, err error) {
+func (ec *Frame) PCaptureOutput(fn Callable, args []interface{}, opts map[string]interface{}) (vs []interface{}, err error) {
 	// XXX There is no source.
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)
@@ -148,7 +147,7 @@ func (ec *Frame) PCaptureOutput(fn Callable, args []types.Value, opts map[string
 	return pcaptureOutput(ec, Op{funcOp(opFunc), -1, -1})
 }
 
-func (ec *Frame) PCaptureOutputInner(fn Callable, args []types.Value, opts map[string]types.Value, valuesCb func(<-chan types.Value), bytesCb func(*os.File)) error {
+func (ec *Frame) PCaptureOutputInner(fn Callable, args []interface{}, opts map[string]interface{}, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
 	// XXX There is no source.
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)

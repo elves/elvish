@@ -31,7 +31,7 @@ func (f GlobFlag) Has(g GlobFlag) bool {
 }
 
 var (
-	_ types.Value   = GlobPattern{}
+	_ interface{}   = GlobPattern{}
 	_ types.Indexer = GlobPattern{}
 )
 
@@ -74,7 +74,7 @@ func (gp GlobPattern) Repr(int) string {
 	return fmt.Sprintf("<GlobPattern%v>", gp)
 }
 
-func (gp GlobPattern) Index(k types.Value) (types.Value, error) {
+func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
 	modifierv, ok := k.(string)
 	if !ok {
 		return nil, ErrModifierMustBeString
@@ -181,13 +181,13 @@ func stringToSegments(s string) []glob.Segment {
 	return segs
 }
 
-func doGlob(gp GlobPattern, abort <-chan struct{}) []types.Value {
+func doGlob(gp GlobPattern, abort <-chan struct{}) []interface{} {
 	but := make(map[string]struct{})
 	for _, s := range gp.Buts {
 		but[s] = struct{}{}
 	}
 
-	vs := make([]types.Value, 0)
+	vs := make([]interface{}, 0)
 	if !gp.Glob(func(name string) bool {
 		select {
 		case <-abort:

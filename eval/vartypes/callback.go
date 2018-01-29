@@ -1,36 +1,34 @@
 package vartypes
 
-import "github.com/elves/elvish/eval/types"
-
 type callback struct {
-	set func(types.Value) error
-	get func() types.Value
+	set func(interface{}) error
+	get func() interface{}
 }
 
 // NewCallback makes a variable from a set callback and a get callback.
-func NewCallback(set func(types.Value) error, get func() types.Value) Variable {
+func NewCallback(set func(interface{}) error, get func() interface{}) Variable {
 	return &callback{set, get}
 }
 
-func (cv *callback) Set(val types.Value) error {
+func (cv *callback) Set(val interface{}) error {
 	return cv.set(val)
 }
 
-func (cv *callback) Get() types.Value {
+func (cv *callback) Get() interface{} {
 	return cv.get()
 }
 
-type roCallback func() types.Value
+type roCallback func() interface{}
 
 // NewRoCallback makes a read-only variable from a get callback.
-func NewRoCallback(get func() types.Value) Variable {
+func NewRoCallback(get func() interface{}) Variable {
 	return roCallback(get)
 }
 
-func (cv roCallback) Set(types.Value) error {
+func (cv roCallback) Set(interface{}) error {
 	return errRoCannotBeSet
 }
 
-func (cv roCallback) Get() types.Value {
+func (cv roCallback) Get() interface{} {
 	return cv()
 }

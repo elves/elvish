@@ -13,7 +13,7 @@ type File struct {
 	Inner *os.File
 }
 
-var _ Value = File{}
+var _ interface{} = File{}
 
 // NewFile creates a new File value.
 func NewFile(inner *os.File) File {

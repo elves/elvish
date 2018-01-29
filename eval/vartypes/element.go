@@ -6,12 +6,12 @@ import (
 
 type elem struct {
 	variable Variable
-	assocers []types.Value
-	indices  []types.Value
-	setValue types.Value
+	assocers []interface{}
+	indices  []interface{}
+	setValue interface{}
 }
 
-func (ev *elem) Set(v0 types.Value) error {
+func (ev *elem) Set(v0 interface{}) error {
 	var err error
 	v := v0
 	// Evaluate the actual new value from inside out. See comments in
@@ -28,7 +28,7 @@ func (ev *elem) Set(v0 types.Value) error {
 	return err
 }
 
-func (ev *elem) Get() types.Value {
+func (ev *elem) Get() interface{} {
 	// XXX(xiaq): This is only called from fixNilVariables. We don't want to
 	// waste time accessing the variable, so we simply return the value that was
 	// set.
@@ -36,13 +36,13 @@ func (ev *elem) Get() types.Value {
 }
 
 // NewElement returns an ephemeral variable used for assigning variable element.
-func NewElement(v Variable, a []types.Value, i []types.Value) Variable {
+func NewElement(v Variable, a []interface{}, i []interface{}) Variable {
 	return &elem{v, a, i, ""}
 }
 
 // MakeElement returns a variable, that when set, simulates the mutation of an
 // element.
-func MakeElement(v Variable, indicies []types.Value) (Variable, error) {
+func MakeElement(v Variable, indicies []interface{}) (Variable, error) {
 	// Assignment of indexed variables actually assignes the variable, with
 	// the right hand being a nested series of Assocs. As the simplest
 	// example, `a[0] = x` is equivalent to `a = (assoc $a 0 x)`. A more
@@ -59,7 +59,7 @@ func MakeElement(v Variable, indicies []types.Value) (Variable, error) {
 	//
 	// When the right-hand side of the assignment becomes available, the new
 	// value for $a is evaluated by doing Assoc from inside out.
-	assocers := make([]types.Value, len(indicies))
+	assocers := make([]interface{}, len(indicies))
 	varValue := v.Get()
 	assocers[0] = varValue
 	for i, index := range indicies[:len(indicies)-1] {

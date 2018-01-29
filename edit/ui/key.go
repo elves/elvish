@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
@@ -214,7 +213,7 @@ func parseKey(s string) (Key, error) {
 
 // ToKey converts an Elvish Value to a Key. If the passed Value is not Key or
 // String, it throws an error.
-func ToKey(k types.Value) Key {
+func ToKey(k interface{}) Key {
 	switch k := k.(type) {
 	case Key:
 		return k
@@ -231,7 +230,7 @@ func ToKey(k types.Value) Key {
 }
 
 // KeyBuiltin implements the edit:key builtin.
-func KeyBuiltin(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func KeyBuiltin(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	var s string
 	eval.ScanArgs(args, &s)
 	eval.TakeNoOpt(opts)

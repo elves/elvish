@@ -54,7 +54,7 @@ func (ed *Editor) lookupMatcher(name string) (eval.Fn, bool) {
 
 func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
 	return func(ec *eval.Frame,
-		args []types.Value, opts map[string]types.Value) {
+		args []interface{}, opts map[string]interface{}) {
 
 		var pattern string
 		iterate := eval.ScanArgsOptionalInput(ec, args, &pattern)
@@ -84,7 +84,7 @@ func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
 		}
 
 		out := ec.OutputChan()
-		iterate(func(v types.Value) {
+		iterate(func(v interface{}) {
 			s, ok := v.(string)
 			if !ok {
 				throw(errMatcherInputMustBeString)

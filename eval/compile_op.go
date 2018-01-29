@@ -105,7 +105,7 @@ func (op *pipelineOp) Invoke(ec *Frame) error {
 			if e != nil {
 				return fmt.Errorf("failed to create pipe: %s", e)
 			}
-			ch := make(chan types.Value, pipelineChanBufferSize)
+			ch := make(chan interface{}, pipelineChanBufferSize)
 			newEc.ports[1] = &Port{
 				File: writer, Chan: ch, CloseFile: true, CloseChan: true}
 			nextIn = &Port{
@@ -219,8 +219,8 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 		// This cannot be replaced with newSeqValuesOp as it depends on the fact
 		// that argOps will be changed later.
 		argsOp := ValuesOp{
-			funcValuesOp(func(ec *Frame) ([]types.Value, error) {
-				var values []types.Value
+			funcValuesOp(func(ec *Frame) ([]interface{}, error) {
+				var values []interface{}
 				for _, op := range argOps {
 					moreValues, err := op.Exec(ec)
 					if err != nil {
@@ -269,7 +269,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 		// There is a temporary assignment.
 		// Save variables.
 		var saveVars []vartypes.Variable
-		var saveVals []types.Value
+		var saveVals []interface{}
 		for _, op := range op.saveVarsOps {
 			moreSaveVars, err := op.Exec(ec)
 			if err != nil {
@@ -327,7 +327,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 		return op.specialOpBody.Invoke(ec)
 	}
 	var headFn Callable
-	var args []types.Value
+	var args []interface{}
 	if op.headOp.Body != nil {
 		// head
 		headFn = ec.ExecAndUnwrap("head of command", op.headOp).One().Callable()
@@ -349,7 +349,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 		return err
 	}
 	opts := optValues[0].(hashmap.Map)
-	convertedOpts := make(map[string]types.Value)
+	convertedOpts := make(map[string]interface{})
 	for it := opts.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		if ks, ok := k.(string); ok {
@@ -368,7 +368,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 	}
 }
 
-func allTrue(vs []types.Value) bool {
+func allTrue(vs []interface{}) bool {
 	for _, v := range vs {
 		if !types.Bool(v) {
 			return false

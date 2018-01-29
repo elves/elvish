@@ -28,7 +28,7 @@ func init() {
 	})
 }
 
-func resolveFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func resolveFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var cmd string
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
@@ -37,7 +37,7 @@ func resolveFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	out <- resolve(cmd, ec)
 }
 
-func external(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func external(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var cmd string
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
@@ -45,7 +45,7 @@ func external(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ec.OutputChan() <- ExternalCmd{cmd}
 }
 
-func hasExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func hasExternal(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var cmd string
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
@@ -54,7 +54,7 @@ func hasExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ec.OutputChan() <- types.Bool(err == nil)
 }
 
-func searchExternal(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func searchExternal(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var cmd string
 	ScanArgs(args, &cmd)
 	TakeNoOpt(opts)
@@ -66,7 +66,7 @@ func searchExternal(ec *Frame, args []types.Value, opts map[string]types.Value) 
 	out <- path
 }
 
-func exit(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func exit(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var codes []int
 	ScanArgsVariadic(args, &codes)
 	TakeNoOpt(opts)
@@ -94,6 +94,6 @@ func preExit(ec *Frame) {
 
 var errNotSupportedOnWindows = errors.New("not supported on Windows")
 
-func notSupportedOnWindows(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func notSupportedOnWindows(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	throw(errNotSupportedOnWindows)
 }

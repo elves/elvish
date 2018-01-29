@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/sys"
 )
 
-func execFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func execFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 
 	var argstrings []string
@@ -35,7 +35,7 @@ func execFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	maybeThrow(err)
 }
 
-func fg(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func fg(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var pids []int
 	ScanArgsVariadic(args, &pids)
 	TakeNoOpt(opts)

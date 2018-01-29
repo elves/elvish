@@ -11,7 +11,7 @@ import (
 
 // Conversion between Go value and Value.
 
-func toFloat(arg types.Value) (float64, error) {
+func toFloat(arg interface{}) (float64, error) {
 	if _, ok := arg.(string); !ok {
 		return 0, fmt.Errorf("must be string")
 	}
@@ -31,7 +31,7 @@ func floatToString(f float64) string {
 	return strconv.FormatFloat(f, 'g', -1, 64)
 }
 
-func toInt(arg types.Value) (int, error) {
+func toInt(arg interface{}) (int, error) {
 	arg, ok := arg.(string)
 	if !ok {
 		return 0, fmt.Errorf("must be string")
@@ -43,7 +43,7 @@ func toInt(arg types.Value) (int, error) {
 	return int(num), nil
 }
 
-func toRune(arg types.Value) (rune, error) {
+func toRune(arg interface{}) (rune, error) {
 	ss, ok := arg.(string)
 	if !ok {
 		return -1, fmt.Errorf("must be string")
@@ -61,7 +61,7 @@ func toRune(arg types.Value) (rune, error) {
 
 // scanValueToGo converts Value to Go data, depending on the type of the
 // destination.
-func scanValueToGo(src types.Value, dstPtr interface{}) {
+func scanValueToGo(src interface{}, dstPtr interface{}) {
 	switch dstPtr := dstPtr.(type) {
 	case *string:
 		s, ok := src.(string)

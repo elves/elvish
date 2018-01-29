@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 )
 
 // Ns is a map from names to variables.
 type Ns map[string]vartypes.Variable
 
-var _ types.Value = Ns(nil)
+var _ interface{} = Ns(nil)
 
 func (Ns) Kind() string {
 	return "ns"

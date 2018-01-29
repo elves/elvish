@@ -318,7 +318,6 @@ func getNarrow(ed *Editor) *narrow {
 }
 
 type narrowItem interface {
-	types.Value
 	Display() ui.Styled
 	Content() string
 	FilterText() string
@@ -384,7 +383,7 @@ func (c *narrowItemComplex) FilterText() string {
 	return c.Content()
 }
 
-func NarrowRead(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func NarrowRead(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	var source, action eval.Fn
 	l := &narrow{
 		opts: narrowOptions{
@@ -438,7 +437,7 @@ func narrowGetSource(ec *eval.Frame, source eval.Fn) func() []narrowItem {
 	}
 }
 
-func CommandHistory(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func CommandHistory(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	var (
 		rest              []int
 		limit, start, end int
@@ -478,14 +477,14 @@ func CommandHistory(ec *eval.Frame, args []types.Value, opts map[string]types.Va
 	}
 
 	for i := start; i < end; i++ {
-		out <- types.MakeMap(map[types.Value]types.Value{
+		out <- types.MakeMap(map[interface{}]interface{}{
 			"id":  strconv.Itoa(i),
 			"cmd": cmds[i],
 		})
 	}
 }
 
-func InsertAtDot(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func InsertAtDot(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	var text string
 
 	eval.ScanArgs(args, &text)
@@ -495,7 +494,7 @@ func InsertAtDot(ec *eval.Frame, args []types.Value, opts map[string]types.Value
 	ed.insertAtDot(text)
 }
 
-func ReplaceInput(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func ReplaceInput(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	var text string
 
 	eval.ScanArgs(args, &text)
@@ -505,7 +504,7 @@ func ReplaceInput(ec *eval.Frame, args []types.Value, opts map[string]types.Valu
 	ed.buffer = text
 }
 
-func Wordify(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func Wordify(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	var text string
 
 	eval.ScanArgs(args, &text)

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/hashmap"
 	"github.com/xiaq/persistent/vector"
 )
@@ -16,28 +15,28 @@ var (
 	errShouldBeNumber = errors.New("should be number")
 )
 
-func ShouldBeList(v types.Value) error {
+func ShouldBeList(v interface{}) error {
 	if _, ok := v.(vector.Vector); !ok {
 		return errShouldBeList
 	}
 	return nil
 }
 
-func ShouldBeMap(v types.Value) error {
+func ShouldBeMap(v interface{}) error {
 	if _, ok := v.(hashmap.Map); !ok {
 		return errShouldBeMap
 	}
 	return nil
 }
 
-func ShouldBeBool(v types.Value) error {
+func ShouldBeBool(v interface{}) error {
 	if _, ok := v.(bool); !ok {
 		return errShouldBeBool
 	}
 	return nil
 }
 
-func ShouldBeNumber(v types.Value) error {
+func ShouldBeNumber(v interface{}) error {
 	if _, ok := v.(string); !ok {
 		return errShouldBeNumber
 	}

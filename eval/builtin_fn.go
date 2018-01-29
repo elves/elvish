@@ -23,7 +23,7 @@ type BuiltinFn struct {
 	Impl BuiltinFnImpl
 }
 
-type BuiltinFnImpl func(*Frame, []types.Value, map[string]types.Value)
+type BuiltinFnImpl func(*Frame, []interface{}, map[string]interface{})
 
 var _ Fn = &BuiltinFn{}
 
@@ -47,7 +47,7 @@ func (b *BuiltinFn) Repr(int) string {
 }
 
 // Call calls a builtin function.
-func (b *BuiltinFn) Call(ec *Frame, args []types.Value, opts map[string]types.Value) error {
+func (b *BuiltinFn) Call(ec *Frame, args []interface{}, opts map[string]interface{}) error {
 	return util.PCall(func() { b.Impl(ec, args, opts) })
 }
 
@@ -93,10 +93,10 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-func nop(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func nop(ec *Frame, args []interface{}, opts map[string]interface{}) {
 }
 
-func kindOf(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func kindOf(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].Chan
 	for _, a := range args {
@@ -104,23 +104,23 @@ func kindOf(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 }
 
-func boolFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var v types.Value
+func boolFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
+	var v interface{}
 	ScanArgs(args, &v)
 	TakeNoOpt(opts)
 
 	ec.OutputChan() <- types.Bool(v)
 }
 
-func not(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var v types.Value
+func not(ec *Frame, args []interface{}, opts map[string]interface{}) {
+	var v interface{}
 	ScanArgs(args, &v)
 	TakeNoOpt(opts)
 
 	ec.OutputChan() <- !types.Bool(v)
 }
 
-func is(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func is(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 	result := true
 	for i := 0; i+1 < len(args); i++ {
@@ -132,7 +132,7 @@ func is(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ec.OutputChan() <- types.Bool(result)
 }
 
-func eq(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func eq(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 	result := true
 	for i := 0; i+1 < len(args); i++ {
@@ -144,7 +144,7 @@ func eq(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ec.OutputChan() <- types.Bool(result)
 }
 
-func notEq(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func notEq(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 	result := true
 	for i := 0; i+1 < len(args); i++ {
@@ -156,14 +156,14 @@ func notEq(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ec.OutputChan() <- types.Bool(result)
 }
 
-func constantly(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func constantly(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
 	// XXX Repr of this fn is not right
 	out <- &BuiltinFn{
 		"created by constantly",
-		func(ec *Frame, a []types.Value, o map[string]types.Value) {
+		func(ec *Frame, a []interface{}, o map[string]interface{}) {
 			TakeNoOpt(o)
 			if len(a) != 0 {
 				throw(ErrArgs)
@@ -176,7 +176,7 @@ func constantly(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 }
 
-func source(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func source(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var argFname string
 	ScanArgs(args, &argFname)
 	ScanOpts(opts)
@@ -188,7 +188,7 @@ func source(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	maybeThrow(ec.Source(fname, abs))
 }
 
-func sleep(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func sleep(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var t float64
 	ScanArgs(args, &t)
 	TakeNoOpt(opts)
@@ -201,7 +201,7 @@ func sleep(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 }
 
-func _time(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func _time(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var f Fn
 	ScanArgs(args, &f)
 	TakeNoOpt(opts)
@@ -215,21 +215,21 @@ func _time(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	fmt.Fprintln(ec.ports[1].File, dt)
 }
 
-func src(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func src(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
 	ec.OutputChan() <- ec.srcMeta
 }
 
-func _gc(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func _gc(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
 	runtime.GC()
 }
 
-func _stack(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func _stack(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -242,7 +242,7 @@ func _stack(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	out.Write(buf)
 }
 
-func _log(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func _log(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var fnamev string
 	ScanArgs(args, &fnamev)
 	fname := fnamev
@@ -251,7 +251,7 @@ func _log(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	maybeThrow(util.SetOutputFile(fname))
 }
 
-func _ifaddrs(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func _ifaddrs(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 

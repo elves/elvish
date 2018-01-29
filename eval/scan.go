@@ -13,7 +13,7 @@ import (
 
 // ScanArgs scans arguments into pointers to supported argument types. If the
 // arguments cannot be scanned, an error is thrown.
-func ScanArgs(src []types.Value, dstPtrs ...interface{}) {
+func ScanArgs(src []interface{}, dstPtrs ...interface{}) {
 	if len(src) != len(dstPtrs) {
 		throwf("arity mistmatch: want %d arguments, got %d", len(dstPtrs), len(src))
 	}
@@ -24,7 +24,7 @@ func ScanArgs(src []types.Value, dstPtrs ...interface{}) {
 
 // ScanArgsVariadic is like ScanArgs, but the last element of args should be a
 // pointer to a slice, and the rest of arguments will be scanned into it.
-func ScanArgsVariadic(src []types.Value, dstPtrs ...interface{}) {
+func ScanArgsVariadic(src []interface{}, dstPtrs ...interface{}) {
 	if len(src) < len(dstPtrs)-1 {
 		throwf("arity mistmatch: want at least %d arguments, got %d", len(dstPtrs)-1, len(src))
 	}
@@ -47,7 +47,7 @@ func ScanArgsVariadic(src []types.Value, dstPtrs ...interface{}) {
 // optional iterable value at the end containing inputs to the function. The
 // return value is a function that iterates the iterable value if it exists, or
 // the input otherwise.
-func ScanArgsOptionalInput(ec *Frame, src []types.Value, dstArgs ...interface{}) func(func(types.Value)) {
+func ScanArgsOptionalInput(ec *Frame, src []interface{}, dstArgs ...interface{}) func(func(interface{})) {
 	switch len(src) {
 	case len(dstArgs):
 		ScanArgs(src, dstArgs...)
@@ -55,8 +55,8 @@ func ScanArgsOptionalInput(ec *Frame, src []types.Value, dstArgs ...interface{})
 	case len(dstArgs) + 1:
 		ScanArgs(src[:len(dstArgs)], dstArgs...)
 		value := src[len(dstArgs)]
-		return func(f func(types.Value)) {
-			err := types.Iterate(value, func(v types.Value) bool {
+		return func(f func(interface{})) {
+			err := types.Iterate(value, func(v interface{}) bool {
 				f(v)
 				return true
 			})
@@ -73,11 +73,11 @@ func ScanArgsOptionalInput(ec *Frame, src []types.Value, dstArgs ...interface{})
 type OptToScan struct {
 	Name    string
 	Ptr     interface{}
-	Default types.Value
+	Default interface{}
 }
 
 // ScanOpts scans options from a map.
-func ScanOpts(m map[string]types.Value, opts ...OptToScan) {
+func ScanOpts(m map[string]interface{}, opts ...OptToScan) {
 	scanned := make(map[string]bool)
 	for _, opt := range opts {
 		a := opt.Ptr
@@ -99,7 +99,7 @@ func ScanOpts(m map[string]types.Value, opts ...OptToScan) {
 // is a struct whose fields correspond to the options to be parsed. A field
 // named FieldName corresponds to the option named field-name, unless the field
 // has a explicit "name" tag.
-func ScanOptsToStruct(m map[string]types.Value, structPtr interface{}) {
+func ScanOptsToStruct(m map[string]interface{}, structPtr interface{}) {
 	ptrValue := reflect.ValueOf(structPtr)
 	if ptrValue.Kind() != reflect.Ptr || ptrValue.Elem().Kind() != reflect.Struct {
 		throwf("internal bug: need struct ptr for ScanOptsToStruct, got %T", structPtr)
@@ -136,13 +136,13 @@ var (
 	ErrNoOptAccepted = errors.New("no option accepted")
 )
 
-func TakeNoArg(args []types.Value) {
+func TakeNoArg(args []interface{}) {
 	if len(args) > 0 {
 		throw(ErrNoArgAccepted)
 	}
 }
 
-func TakeNoOpt(opts map[string]types.Value) {
+func TakeNoOpt(opts map[string]interface{}) {
 	if len(opts) > 0 {
 		throw(ErrNoOptAccepted)
 	}

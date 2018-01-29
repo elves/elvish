@@ -106,7 +106,7 @@ func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) 
 	logger.Printf("completing argument: %q", words)
 	// XXX(xiaq): not the best way to get argCompleter.
 	m := ev.Editor.(*Editor).argCompleter()
-	var v types.Value
+	var v interface{}
 	index := words[0]
 	v, ok := m.Get(index)
 	if !ok {
@@ -146,7 +146,7 @@ func (bac *builtinArgCompleter) Repr(int) string {
 	return "$edit:" + bac.name + eval.FnSuffix
 }
 
-func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []types.Value, opts map[string]types.Value) error {
+func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []interface{}, opts map[string]interface{}) error {
 	eval.TakeNoOpt(opts)
 	words := make([]string, len(args))
 	for i, arg := range args {
@@ -199,7 +199,7 @@ func callArgCompleter(fn eval.Fn,
 		return builtin.impl(words, ev, rawCands)
 	}
 
-	args := make([]types.Value, len(words))
+	args := make([]interface{}, len(words))
 	for i, word := range words {
 		args[i] = word
 	}
@@ -210,7 +210,7 @@ func callArgCompleter(fn eval.Fn,
 		{File: os.Stderr},
 	}
 
-	valuesCb := func(ch <-chan types.Value) {
+	valuesCb := func(ch <-chan interface{}) {
 		for v := range ch {
 			switch v := v.(type) {
 			case rawCandidate:

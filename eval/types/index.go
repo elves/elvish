@@ -12,7 +12,7 @@ import (
 // Indexer wraps the Index method.
 type Indexer interface {
 	// Index retrieves one value from the receiver at the specified index.
-	Index(idx Value) (Value, error)
+	Index(idx interface{}) (interface{}, error)
 }
 
 var (
@@ -23,12 +23,12 @@ var (
 )
 
 type noSuchKeyError struct {
-	key Value
+	key interface{}
 }
 
 // NoSuchKey returns an error indicating that a key is not found in a map-like
 // value.
-func NoSuchKey(k Value) error {
+func NoSuchKey(k interface{}) error {
 	return noSuchKeyError{k}
 }
 
@@ -39,7 +39,7 @@ func (err noSuchKeyError) Error() string {
 // Index indexes a value with the given key. It is implemented for the builtin
 // type string, and types satisfying the listIndexable, mapIndexable or Indexer
 // interface. For other types, it returns a nil value and a non-nil error.
-func Index(a, k Value) (Value, error) {
+func Index(a, k interface{}) (interface{}, error) {
 	switch a := a.(type) {
 	case string:
 		return indexString(a, k)
@@ -61,7 +61,7 @@ func Index(a, k Value) (Value, error) {
 // MustIndex indexes i with k and returns the value. If the operation
 // resulted in an error, it panics. It is useful when the caller knows that the
 // key must be present.
-func MustIndex(i Indexer, k Value) Value {
+func MustIndex(i Indexer, k interface{}) interface{} {
 	v, err := i.Index(k)
 	if err != nil {
 		panic(err)
@@ -69,7 +69,7 @@ func MustIndex(i Indexer, k Value) Value {
 	return v
 }
 
-func indexString(s string, index Value) (string, error) {
+func indexString(s string, index interface{}) (string, error) {
 	i, j, err := convertStringIndex(index, s)
 	if err != nil {
 		return "", err
@@ -77,7 +77,7 @@ func indexString(s string, index Value) (string, error) {
 	return s[i:j], nil
 }
 
-func convertStringIndex(rawIndex Value, s string) (int, int, error) {
+func convertStringIndex(rawIndex interface{}, s string) (int, int, error) {
 	index, err := ConvertListIndex(rawIndex, len(s))
 	if err != nil {
 		return 0, 0, err
@@ -103,7 +103,7 @@ type listIndexable interface {
 
 var _ listIndexable = vector.Vector(nil)
 
-func indexList(l listIndexable, rawIndex Value) (Value, error) {
+func indexList(l listIndexable, rawIndex interface{}) (interface{}, error) {
 	index, err := ConvertListIndex(rawIndex, l.Len())
 	if err != nil {
 		return nil, err
@@ -123,7 +123,7 @@ type ListIndex struct {
 
 // ConvertListIndex parses a list index, check whether it is valid, and returns
 // the converted structure.
-func ConvertListIndex(rawIndex Value, n int) (*ListIndex, error) {
+func ConvertListIndex(rawIndex interface{}, n int) (*ListIndex, error) {
 	s, ok := rawIndex.(string)
 	if !ok {
 		return nil, errIndexMustBeString

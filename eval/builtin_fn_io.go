@@ -41,7 +41,7 @@ func init() {
 	})
 }
 
-func put(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func put(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].Chan
 	for _, a := range args {
@@ -49,7 +49,7 @@ func put(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 }
 
-func print(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func print(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var sepv string
 	ScanOpts(opts, OptToScan{"sep", &sepv, " "})
 
@@ -63,12 +63,12 @@ func print(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 }
 
-func echo(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func echo(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	print(ec, args, opts)
 	ec.ports[1].File.WriteString("\n")
 }
 
-func pprint(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func pprint(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].File
 	for _, arg := range args {
@@ -77,7 +77,7 @@ func pprint(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 }
 
-func repr(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func repr(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 	out := ec.ports[1].File
 	for i, arg := range args {
@@ -89,7 +89,7 @@ func repr(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	out.WriteString("\n")
 }
 
-func slurp(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func slurp(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -101,7 +101,7 @@ func slurp(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	out <- string(all)
 }
 
-func fromLines(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func fromLines(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -112,7 +112,7 @@ func fromLines(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 // fromJSON parses a stream of JSON data into Value's.
-func fromJSON(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func fromJSON(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -133,32 +133,32 @@ func fromJSON(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 }
 
-func toLines(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func toLines(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	iterate := ScanArgsOptionalInput(ec, args)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].File
 
-	iterate(func(v types.Value) {
+	iterate(func(v interface{}) {
 		fmt.Fprintln(out, types.ToString(v))
 	})
 }
 
 // toJSON converts a stream of Value's to JSON data.
-func toJSON(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func toJSON(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	iterate := ScanArgsOptionalInput(ec, args)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].File
 
 	enc := json.NewEncoder(out)
-	iterate(func(v types.Value) {
+	iterate(func(v interface{}) {
 		err := enc.Encode(v)
 		maybeThrow(err)
 	})
 }
 
-func fopen(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func fopen(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var namev string
 	ScanArgs(args, &namev)
 	name := namev
@@ -171,7 +171,7 @@ func fopen(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	out <- types.File{f}
 }
 
-func fclose(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func fclose(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var f types.File
 	ScanArgs(args, &f)
 	TakeNoOpt(opts)
@@ -179,7 +179,7 @@ func fclose(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	maybeThrow(f.Inner.Close())
 }
 
-func pipe(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func pipe(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -189,7 +189,7 @@ func pipe(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	out <- types.Pipe{r, w}
 }
 
-func prclose(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func prclose(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var p types.Pipe
 	ScanArgs(args, &p)
 	TakeNoOpt(opts)
@@ -197,7 +197,7 @@ func prclose(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	maybeThrow(p.ReadEnd.Close())
 }
 
-func pwclose(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func pwclose(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var p types.Pipe
 	ScanArgs(args, &p)
 	TakeNoOpt(opts)

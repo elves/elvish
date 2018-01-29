@@ -26,11 +26,11 @@ type ValuesOp struct {
 
 // ValuesOpBody is the body of ValuesOp.
 type ValuesOpBody interface {
-	Invoke(*Frame) ([]types.Value, error)
+	Invoke(*Frame) ([]interface{}, error)
 }
 
 // Exec executes a ValuesOp and produces Value's.
-func (op ValuesOp) Exec(ec *Frame) ([]types.Value, error) {
+func (op ValuesOp) Exec(ec *Frame) ([]interface{}, error) {
 	ec.begin, ec.end = op.Begin, op.End
 	return op.Body.Invoke(ec)
 }
@@ -46,12 +46,12 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOpBody {
 	if n.Indexings[0].Head.Type == parse.Tilde {
 		// A lone ~.
 		if len(n.Indexings) == 1 {
-			return funcValuesOp(func(ec *Frame) ([]types.Value, error) {
+			return funcValuesOp(func(ec *Frame) ([]interface{}, error) {
 				home, err := util.GetHome("")
 				if err != nil {
 					return nil, err
 				}
-				return []types.Value{home}, nil
+				return []interface{}{home}, nil
 			})
 		}
 		tilde = true
@@ -66,7 +66,7 @@ type compoundOp struct {
 	subops []ValuesOp
 }
 
-func (op compoundOp) Invoke(ec *Frame) ([]types.Value, error) {
+func (op compoundOp) Invoke(ec *Frame) ([]interface{}, error) {
 	// Accumulator.
 	vs, err := op.subops[0].Exec(ec)
 	if err != nil {
@@ -84,7 +84,7 @@ func (op compoundOp) Invoke(ec *Frame) ([]types.Value, error) {
 		}
 	}
 	if op.tilde {
-		newvs := make([]types.Value, len(vs))
+		newvs := make([]interface{}, len(vs))
 		for i, v := range vs {
 			newvs[i] = doTilde(v)
 		}
@@ -98,7 +98,7 @@ func (op compoundOp) Invoke(ec *Frame) ([]types.Value, error) {
 		}
 	}
 	if hasGlob {
-		newvs := make([]types.Value, 0, len(vs))
+		newvs := make([]interface{}, 0, len(vs))
 		for _, v := range vs {
 			if gp, ok := v.(GlobPattern); ok {
 				// Logger.Printf("globbing %v", gp)
@@ -112,7 +112,7 @@ func (op compoundOp) Invoke(ec *Frame) ([]types.Value, error) {
 	return vs, nil
 }
 
-func cat(lhs, rhs types.Value) (types.Value, error) {
+func cat(lhs, rhs interface{}) (interface{}, error) {
 	switch lhs := lhs.(type) {
 	case string:
 		switch rhs := rhs.(type) {
@@ -142,8 +142,8 @@ func cat(lhs, rhs types.Value) (types.Value, error) {
 		types.Kind(lhs), types.Kind(rhs))
 }
 
-func outerProduct(vs []types.Value, us []types.Value, f func(types.Value, types.Value) (types.Value, error)) ([]types.Value, error) {
-	ws := make([]types.Value, len(vs)*len(us))
+func outerProduct(vs []interface{}, us []interface{}, f func(interface{}, interface{}) (interface{}, error)) ([]interface{}, error) {
+	ws := make([]interface{}, len(vs)*len(us))
 	nu := len(us)
 	for i, v := range vs {
 		for j, u := range us {
@@ -163,7 +163,7 @@ var (
 	ErrCannotDetermineUsername = errors.New("cannot determine user name from glob pattern")
 )
 
-func doTilde(v types.Value) types.Value {
+func doTilde(v interface{}) interface{} {
 	switch v := v.(type) {
 	case string:
 		s := v
@@ -222,7 +222,7 @@ type indexingOp struct {
 	indexOps []ValuesOp
 }
 
-func (op *indexingOp) Invoke(ec *Frame) ([]types.Value, error) {
+func (op *indexingOp) Invoke(ec *Frame) ([]interface{}, error) {
 	vs, err := op.headOp.Exec(ec)
 	if err != nil {
 		return nil, err
@@ -232,7 +232,7 @@ func (op *indexingOp) Invoke(ec *Frame) ([]types.Value, error) {
 		if err != nil {
 			return nil, err
 		}
-		newvs := make([]types.Value, 0, len(vs)*len(indicies))
+		newvs := make([]interface{}, 0, len(vs)*len(indicies))
 		for _, v := range vs {
 			for _, index := range indicies {
 				result, err := types.Index(v, index)
@@ -262,7 +262,7 @@ func (cp *compiler) primary(n *parse.Primary) ValuesOpBody {
 		if err != nil {
 			cp.errorf("%s", err)
 		}
-		vs := []types.Value{
+		vs := []interface{}{
 			GlobPattern{glob.Pattern{[]glob.Segment{seg}, ""}, 0, nil}}
 		return literalValues(vs...)
 	case parse.Tilde:
@@ -292,7 +292,7 @@ type variableOp struct {
 	name    string
 }
 
-func (op variableOp) Invoke(ec *Frame) ([]types.Value, error) {
+func (op variableOp) Invoke(ec *Frame) ([]interface{}, error) {
 	variable := ec.ResolveVar(op.ns, op.name)
 	if variable == nil {
 		return nil, fmt.Errorf("variable $%s:%s not found", op.ns, op.name)
@@ -301,7 +301,7 @@ func (op variableOp) Invoke(ec *Frame) ([]types.Value, error) {
 	if op.explode {
 		return types.Collect(value)
 	}
-	return []types.Value{value}, nil
+	return []interface{}{value}, nil
 }
 
 func (cp *compiler) list(n *parse.Primary) ValuesOpBody {
@@ -310,7 +310,7 @@ func (cp *compiler) list(n *parse.Primary) ValuesOpBody {
 
 type listOp struct{ subops []ValuesOp }
 
-func (op listOp) Invoke(fm *Frame) ([]types.Value, error) {
+func (op listOp) Invoke(fm *Frame) ([]interface{}, error) {
 	list := types.EmptyList
 	for _, subop := range op.subops {
 		moreValues, err := subop.Exec(fm)
@@ -321,29 +321,29 @@ func (op listOp) Invoke(fm *Frame) ([]types.Value, error) {
 			list = list.Cons(moreValue)
 		}
 	}
-	return []types.Value{list}, nil
+	return []interface{}{list}, nil
 }
 
 type exceptionCaptureOp struct{ subop Op }
 
-func (op exceptionCaptureOp) Invoke(fm *Frame) ([]types.Value, error) {
+func (op exceptionCaptureOp) Invoke(fm *Frame) ([]interface{}, error) {
 	err := fm.PEval(op.subop)
 	if err == nil {
-		return []types.Value{OK}, nil
+		return []interface{}{OK}, nil
 	}
-	return []types.Value{err.(*Exception)}, nil
+	return []interface{}{err.(*Exception)}, nil
 }
 
 type outputCaptureOp struct{ subop Op }
 
-func (op outputCaptureOp) Invoke(fm *Frame) ([]types.Value, error) {
+func (op outputCaptureOp) Invoke(fm *Frame) ([]interface{}, error) {
 	return pcaptureOutput(fm, op.subop)
 }
 
-func pcaptureOutput(ec *Frame, op Op) ([]types.Value, error) {
-	vs := []types.Value{}
+func pcaptureOutput(ec *Frame, op Op) ([]interface{}, error) {
+	vs := []interface{}{}
 	var m sync.Mutex
-	valueCb := func(ch <-chan types.Value) {
+	valueCb := func(ch <-chan interface{}) {
 		for v := range ch {
 			m.Lock()
 			vs = append(vs, v)
@@ -373,11 +373,11 @@ func pcaptureOutput(ec *Frame, op Op) ([]types.Value, error) {
 	return vs, err
 }
 
-func pcaptureOutputInner(ec *Frame, op Op, valuesCb func(<-chan types.Value), bytesCb func(*os.File)) error {
+func pcaptureOutputInner(ec *Frame, op Op, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
 
 	newEc := ec.fork("[output capture]")
 
-	ch := make(chan types.Value, outputCaptureBufferSize)
+	ch := make(chan interface{}, outputCaptureBufferSize)
 	pipeRead, pipeWrite, err := os.Pipe()
 	if err != nil {
 		return fmt.Errorf("failed to create pipe: %v", err)
@@ -497,18 +497,18 @@ type lambdaOp struct {
 	srcMeta       *Source
 }
 
-func (op *lambdaOp) Invoke(fm *Frame) ([]types.Value, error) {
+func (op *lambdaOp) Invoke(fm *Frame) ([]interface{}, error) {
 	evCapture := make(Ns)
 	for name := range op.capture {
 		evCapture[name] = fm.ResolveVar("", name)
 	}
-	optDefaults := make([]types.Value, len(op.optDefaultOps))
+	optDefaults := make([]interface{}, len(op.optDefaultOps))
 	for i, op := range op.optDefaultOps {
 		defaultValue := fm.ExecAndUnwrap("option default value", op).One().Any()
 		optDefaults[i] = defaultValue
 	}
 	// XXX(xiaq): Capture uses.
-	return []types.Value{&Closure{op.argNames, op.restArgName, op.optNames, optDefaults, op.subop, evCapture, op.srcMeta}}, nil
+	return []interface{}{&Closure{op.argNames, op.restArgName, op.optNames, optDefaults, op.subop, evCapture, op.srcMeta}}, nil
 }
 
 func (cp *compiler) map_(n *parse.Primary) ValuesOpBody {
@@ -540,7 +540,7 @@ type mapPairsOp struct {
 	ends      []int
 }
 
-func (op *mapPairsOp) Invoke(fm *Frame) ([]types.Value, error) {
+func (op *mapPairsOp) Invoke(fm *Frame) ([]interface{}, error) {
 	m := types.EmptyMap
 	for i := range op.keysOps {
 		keys, err := op.keysOps[i].Exec(fm)
@@ -559,7 +559,7 @@ func (op *mapPairsOp) Invoke(fm *Frame) ([]types.Value, error) {
 			m = m.Assoc(key, values[j])
 		}
 	}
-	return []types.Value{m}, nil
+	return []interface{}{m}, nil
 }
 
 func (cp *compiler) braced(n *parse.Primary) ValuesOpBody {
@@ -569,13 +569,13 @@ func (cp *compiler) braced(n *parse.Primary) ValuesOpBody {
 	return seqValuesOp{ops}
 }
 
-type literalValuesOp struct{ values []types.Value }
+type literalValuesOp struct{ values []interface{} }
 
-func (op literalValuesOp) Invoke(*Frame) ([]types.Value, error) {
+func (op literalValuesOp) Invoke(*Frame) ([]interface{}, error) {
 	return op.values, nil
 }
 
-func literalValues(v ...types.Value) ValuesOpBody {
+func literalValues(v ...interface{}) ValuesOpBody {
 	return literalValuesOp{v}
 }
 
@@ -585,8 +585,8 @@ func literalStr(text string) ValuesOpBody {
 
 type seqValuesOp struct{ subops []ValuesOp }
 
-func (op seqValuesOp) Invoke(ec *Frame) ([]types.Value, error) {
-	var values []types.Value
+func (op seqValuesOp) Invoke(ec *Frame) ([]interface{}, error) {
+	var values []interface{}
 	for _, subop := range op.subops {
 		moreValues, err := subop.Exec(ec)
 		if err != nil {
@@ -597,6 +597,6 @@ func (op seqValuesOp) Invoke(ec *Frame) ([]types.Value, error) {
 	return values, nil
 }
 
-type funcValuesOp func(*Frame) ([]types.Value, error)
+type funcValuesOp func(*Frame) ([]interface{}, error)
 
-func (op funcValuesOp) Invoke(fm *Frame) ([]types.Value, error) { return op(fm) }
+func (op funcValuesOp) Invoke(fm *Frame) ([]interface{}, error) { return op(fm) }

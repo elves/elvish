@@ -45,7 +45,7 @@ var fns = []*eval.BuiltinFn{
 }
 
 func wrapSS(inner func(string) string) eval.BuiltinFnImpl {
-	return func(fm *eval.Frame, args []types.Value, opts map[string]types.Value) {
+	return func(fm *eval.Frame, args []interface{}, opts map[string]interface{}) {
 		var s string
 		eval.ScanArgs(args, &s)
 		eval.TakeNoOpt(opts)
@@ -55,7 +55,7 @@ func wrapSS(inner func(string) string) eval.BuiltinFnImpl {
 }
 
 func wrapSSS(inner func(a, b string) string) eval.BuiltinFnImpl {
-	return func(fm *eval.Frame, args []types.Value, opts map[string]types.Value) {
+	return func(fm *eval.Frame, args []interface{}, opts map[string]interface{}) {
 		var a, b string
 		eval.ScanArgs(args, &a, &b)
 		eval.TakeNoOpt(opts)
@@ -65,7 +65,7 @@ func wrapSSS(inner func(a, b string) string) eval.BuiltinFnImpl {
 }
 
 func wrapSSI(inner func(a, b string) int) eval.BuiltinFnImpl {
-	return func(fm *eval.Frame, args []types.Value, opts map[string]types.Value) {
+	return func(fm *eval.Frame, args []interface{}, opts map[string]interface{}) {
 		var a, b string
 		eval.ScanArgs(args, &a, &b)
 		eval.TakeNoOpt(opts)
@@ -75,7 +75,7 @@ func wrapSSI(inner func(a, b string) int) eval.BuiltinFnImpl {
 }
 
 func wrapSSB(inner func(a, b string) bool) eval.BuiltinFnImpl {
-	return func(fm *eval.Frame, args []types.Value, opts map[string]types.Value) {
+	return func(fm *eval.Frame, args []interface{}, opts map[string]interface{}) {
 		var a, b string
 		eval.ScanArgs(args, &a, &b)
 		eval.TakeNoOpt(opts)

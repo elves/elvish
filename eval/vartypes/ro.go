@@ -2,24 +2,22 @@ package vartypes
 
 import (
 	"errors"
-
-	"github.com/elves/elvish/eval/types"
 )
 
 var errRoCannotBeSet = errors.New("read-only variable; cannot be set")
 
 type ro struct {
-	value types.Value
+	value interface{}
 }
 
-func NewRo(v types.Value) Variable {
+func NewRo(v interface{}) Variable {
 	return ro{v}
 }
 
-func (rv ro) Set(val types.Value) error {
+func (rv ro) Set(val interface{}) error {
 	return errRoCannotBeSet
 }
 
-func (rv ro) Get() types.Value {
+func (rv ro) Get() interface{} {
 	return rv.value
 }

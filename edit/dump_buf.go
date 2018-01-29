@@ -6,10 +6,9 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
 )
 
-func _dumpBuf(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func _dumpBuf(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	out := ec.OutputFile()
 	buf := ec.Editor.(*Editor).writer.CurrentBuffer()
 	for _, line := range buf.Lines {

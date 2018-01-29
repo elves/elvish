@@ -19,7 +19,6 @@ type candidate struct {
 
 // rawCandidate is what can be converted to a candidate.
 type rawCandidate interface {
-	types.Value
 	text() string
 	cook(q parse.PrimaryType) *candidate
 }
@@ -103,7 +102,7 @@ func (c *complexCandidate) cook(q parse.PrimaryType) *candidate {
 
 // outputComplexCandidate composes a complexCandidate.
 func outputComplexCandidate(ec *eval.Frame,
-	args []types.Value, opts map[string]types.Value) {
+	args []interface{}, opts map[string]interface{}) {
 
 	var style string
 	c := &complexCandidate{}
@@ -124,7 +123,7 @@ func outputComplexCandidate(ec *eval.Frame,
 func filterRawCandidates(ev *eval.Evaler, matcher eval.Fn,
 	seed string, chanRawCandidate <-chan rawCandidate) ([]rawCandidate, error) {
 
-	matcherInput := make(chan types.Value)
+	matcherInput := make(chan interface{})
 	stopCollector := make(chan struct{})
 	var collected []rawCandidate
 	go func() {
@@ -144,7 +143,7 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.Fn,
 		{Chan: matcherInput, File: eval.DevNull}, {File: os.Stdout}, {File: os.Stderr}}
 	ec := eval.NewTopFrame(ev, eval.NewInternalSource("[editor matcher]"), ports)
 
-	args := []types.Value{seed}
+	args := []interface{}{seed}
 	values, err := ec.PCaptureOutput(matcher, args, eval.NoOpts)
 	if err != nil {
 		return nil, err

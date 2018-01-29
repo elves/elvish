@@ -21,7 +21,7 @@ type Closure struct {
 	// The name for the rest argument. If empty, the function has fixed arity.
 	RestArg     string
 	OptNames    []string
-	OptDefaults []types.Value
+	OptDefaults []interface{}
 	Op          Op
 	Captured    Ns
 	SrcMeta     *Source
@@ -49,7 +49,7 @@ func (c *Closure) Repr(int) string {
 }
 
 // Call calls a closure.
-func (c *Closure) Call(ec *Frame, args []types.Value, opts map[string]types.Value) error {
+func (c *Closure) Call(ec *Frame, args []interface{}, opts map[string]interface{}) error {
 	if c.RestArg != "" {
 		if len(c.ArgNames) > len(args) {
 			return fmt.Errorf("need %d or more arguments, got %d", len(c.ArgNames), len(args))

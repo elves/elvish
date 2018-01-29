@@ -18,8 +18,8 @@ type evalerPorts struct {
 }
 
 func newEvalerPorts(stdin, stdout, stderr *os.File, prefix *string) evalerPorts {
-	stdoutChan := make(chan types.Value, stdoutChanSize)
-	stderrChan := make(chan types.Value, stderrChanSize)
+	stdoutChan := make(chan interface{}, stdoutChanSize)
+	stderrChan := make(chan interface{}, stderrChanSize)
 
 	var relayerWait sync.WaitGroup
 	relayerWait.Add(2)
@@ -36,7 +36,7 @@ func newEvalerPorts(stdin, stdout, stderr *os.File, prefix *string) evalerPorts 
 	}
 }
 
-func relayChanToFile(ch <-chan types.Value, file *os.File, prefix *string, w *sync.WaitGroup) {
+func relayChanToFile(ch <-chan interface{}, file *os.File, prefix *string, w *sync.WaitGroup) {
 	for v := range ch {
 		file.WriteString(*prefix)
 		file.WriteString(types.Repr(v, initIndent))

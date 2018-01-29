@@ -18,28 +18,28 @@ func stringPtr() *string   { var x string; return &x }
 
 var scanArgsTestCases = []struct {
 	variadic bool
-	src      []types.Value
+	src      []interface{}
 	dstPtrs  []interface{}
 	want     []interface{}
 	bad      bool
 }{
 	// Scanning an int and a String
 	{
-		src:     []types.Value{"20", "20"},
+		src:     []interface{}{"20", "20"},
 		dstPtrs: []interface{}{intPtr(), stringPtr()},
 		want:    []interface{}{20, "20"},
 	},
 	// Scanning a String and any number of ints (here 2)
 	{
 		variadic: true,
-		src:      []types.Value{"a", "1", "2"},
+		src:      []interface{}{"a", "1", "2"},
 		dstPtrs:  []interface{}{stringPtr(), intsPtr()},
 		want:     []interface{}{"a", []int{1, 2}},
 	},
 	// Scanning a String and any number of ints (here 0)
 	{
 		variadic: true,
-		src:      []types.Value{"a"},
+		src:      []interface{}{"a"},
 		dstPtrs:  []interface{}{stringPtr(), intsPtr()},
 		want:     []interface{}{"a", []int{}},
 	},
@@ -47,39 +47,39 @@ var scanArgsTestCases = []struct {
 	// Arity mismatch: too few arguments (non-variadic)
 	{
 		bad:     true,
-		src:     []types.Value{},
+		src:     []interface{}{},
 		dstPtrs: []interface{}{stringPtr()},
 	},
 	// Arity mismatch: too few arguments (non-variadic)
 	{
 		bad:     true,
-		src:     []types.Value{""},
+		src:     []interface{}{""},
 		dstPtrs: []interface{}{stringPtr(), intPtr()},
 	},
 	// Arity mismatch: too many arguments (non-variadic)
 	{
 		bad:     true,
-		src:     []types.Value{"1", "2"},
+		src:     []interface{}{"1", "2"},
 		dstPtrs: []interface{}{stringPtr()},
 	},
 	// Type mismatch (nonvariadic)
 	{
 		bad:     true,
-		src:     []types.Value{"x"},
+		src:     []interface{}{"x"},
 		dstPtrs: []interface{}{intPtr()},
 	},
 
 	// Arity mismatch: too few arguments (variadic)
 	{
 		bad:      true,
-		src:      []types.Value{},
+		src:      []interface{}{},
 		dstPtrs:  []interface{}{stringPtr(), intsPtr()},
 		variadic: true,
 	},
 	// Type mismatch within rest arg
 	{
 		bad:      true,
-		src:      []types.Value{"a", "1", "lorem"},
+		src:      []interface{}{"a", "1", "lorem"},
 		dstPtrs:  []interface{}{stringPtr(), intsPtr()},
 		variadic: true,
 	},
@@ -113,18 +113,18 @@ func TestScanArgs(t *testing.T) {
 
 var scanArgsBadTestCases = []struct {
 	variadic bool
-	src      []types.Value
+	src      []interface{}
 	dstPtrs  []interface{}
 }{}
 
 var scanOptsTestCases = []struct {
 	bad  bool
-	src  map[string]types.Value
+	src  map[string]interface{}
 	opts []OptToScan
 	want []interface{}
 }{
 	{
-		src: map[string]types.Value{
+		src: map[string]interface{}{
 			"foo": "bar",
 		},
 		opts: []OptToScan{
@@ -136,7 +136,7 @@ var scanOptsTestCases = []struct {
 	},
 	// Default values.
 	{
-		src: map[string]types.Value{
+		src: map[string]interface{}{
 			"foo": "bar",
 		},
 		opts: []OptToScan{
@@ -152,7 +152,7 @@ var scanOptsTestCases = []struct {
 	// Unknown option
 	{
 		bad: true,
-		src: map[string]types.Value{
+		src: map[string]interface{}{
 			"foo": "bar",
 		},
 		opts: []OptToScan{
@@ -185,7 +185,7 @@ func TestScanOpts(t *testing.T) {
 }
 
 var scanArgTestCases = []struct {
-	source  types.Value
+	source  interface{}
 	destPtr interface{}
 	want    interface{}
 }{

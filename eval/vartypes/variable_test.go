@@ -3,8 +3,6 @@ package vartypes
 import (
 	"os"
 	"testing"
-
-	"github.com/elves/elvish/eval/types"
 )
 
 func TestPtrVariable(t *testing.T) {
@@ -39,12 +37,12 @@ func TestRoVariable(t *testing.T) {
 
 func TestCbVariable(t *testing.T) {
 	getCalled := false
-	get := func() types.Value {
+	get := func() interface{} {
 		getCalled = true
 		return "cb"
 	}
-	var setCalledWith types.Value
-	set := func(v types.Value) error {
+	var setCalledWith interface{}
+	set := func(v interface{}) error {
 		setCalledWith = v
 		return nil
 	}
@@ -64,7 +62,7 @@ func TestCbVariable(t *testing.T) {
 
 func TestRoCbVariable(t *testing.T) {
 	getCalled := false
-	get := func() types.Value {
+	get := func() interface{} {
 		getCalled = true
 		return "cb"
 	}

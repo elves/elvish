@@ -25,7 +25,7 @@ var fns = []*eval.BuiltinFn{
 	{"split", split},
 }
 
-func match(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func match(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	out := ec.OutputChan()
 	var (
 		argPattern string
@@ -40,7 +40,7 @@ func match(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	out <- matched
 }
 
-func find(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func find(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	out := ec.OutputChan()
 	var (
 		argPattern string
@@ -76,11 +76,11 @@ func find(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	}
 }
 
-func replace(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func replace(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	out := ec.OutputChan()
 	var (
 		argPattern string
-		argRepl    types.Value
+		argRepl    interface{}
 		argSource  string
 		optPOSIX   bool
 		optLongest bool
@@ -109,7 +109,7 @@ func replace(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 		case eval.Fn:
 			replFunc := func(s string) string {
 				values, err := ec.PCaptureOutput(repl,
-					[]types.Value{string(s)}, eval.NoOpts)
+					[]interface{}{string(s)}, eval.NoOpts)
 				maybeThrow(err)
 				if len(values) != 1 {
 					throwf("replacement function must output exactly one value, got %d", len(values))
@@ -130,7 +130,7 @@ func replace(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
 	out <- string(result)
 }
 
-func split(ec *eval.Frame, args []types.Value, opts map[string]types.Value) {
+func split(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	out := ec.OutputChan()
 	var (
 		argPattern string

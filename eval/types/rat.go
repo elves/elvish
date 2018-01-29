@@ -15,7 +15,7 @@ type Rat struct {
 	b *big.Rat
 }
 
-var _ Value = Rat{}
+var _ interface{} = Rat{}
 
 func (Rat) Kind() string {
 	return "string"
@@ -50,7 +50,7 @@ func (r Rat) String() string {
 
 // ToRat converts a Value to rat. A str can be converted to a rat if it can be
 // parsed. A rat is returned as-is. Other types of values cannot be converted.
-func ToRat(v Value) (Rat, error) {
+func ToRat(v interface{}) (Rat, error) {
 	switch v := v.(type) {
 	case Rat:
 		return v, nil

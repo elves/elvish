@@ -40,7 +40,7 @@ func (e ExternalCmd) Repr(int) string {
 }
 
 // Call calls an external command.
-func (e ExternalCmd) Call(ec *Frame, argVals []types.Value, opts map[string]types.Value) error {
+func (e ExternalCmd) Call(ec *Frame, argVals []interface{}, opts map[string]interface{}) error {
 	if len(opts) > 0 {
 		return ErrExternalCmdOpts
 	}

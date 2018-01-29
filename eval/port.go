@@ -2,14 +2,12 @@ package eval
 
 import (
 	"os"
-
-	"github.com/elves/elvish/eval/types"
 )
 
 // Port conveys data stream. It always consists of a byte band and a channel band.
 type Port struct {
 	File      *os.File
-	Chan      chan types.Value
+	Chan      chan interface{}
 	CloseFile bool
 	CloseChan bool
 }
@@ -43,10 +41,10 @@ func ClosePorts(ports []*Port) {
 
 var (
 	// ClosedChan is a closed channel, suitable for use as placeholder channel input.
-	ClosedChan = make(chan types.Value)
+	ClosedChan = make(chan interface{})
 	// BlackholeChan is channel writes onto which disappear, suitable for use as
 	// placeholder channel output.
-	BlackholeChan = make(chan types.Value)
+	BlackholeChan = make(chan interface{})
 	// DevNull is /dev/null.
 	DevNull *os.File
 	// DevNullClosedInput is a port made up from DevNull and ClosedChan,

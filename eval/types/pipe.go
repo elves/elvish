@@ -13,7 +13,7 @@ type Pipe struct {
 	ReadEnd, WriteEnd *os.File
 }
 
-var _ Value = Pipe{}
+var _ interface{} = Pipe{}
 
 // NewPipe creates a new Pipe value.
 func NewPipe(r, w *os.File) Pipe {

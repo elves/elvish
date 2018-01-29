@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -13,7 +12,7 @@ var errCannotIterateKey = errors.New("indexee does not support iterating keys")
 
 type indexComplContext struct {
 	complContextCommon
-	indexee types.Value
+	indexee interface{}
 }
 
 func (*indexComplContext) name() string { return "index" }

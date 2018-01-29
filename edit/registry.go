@@ -74,7 +74,7 @@ func makeBindings() map[string]vartypes.Variable {
 
 var errShouldBeBindingTable = errors.New("should be binding table")
 
-func shouldBeBindingTable(v types.Value) error {
+func shouldBeBindingTable(v interface{}) error {
 	if _, ok := v.(BindingTable); !ok {
 		return errShouldBeBindingTable
 	}

@@ -1,14 +1,12 @@
 package vartypes
 
-import "github.com/elves/elvish/eval/types"
-
 type blackhole struct{}
 
-func (blackhole) Set(types.Value) error {
+func (blackhole) Set(interface{}) error {
 	return nil
 }
 
-func (blackhole) Get() types.Value {
+func (blackhole) Get() interface{} {
 	// TODO: Return a special placeholder value.
 	return ""
 }

@@ -23,7 +23,7 @@ type Test struct {
 }
 
 type want struct {
-	out      []types.Value
+	out      []interface{}
 	bytesOut []byte
 	err      error
 }
@@ -40,16 +40,16 @@ var (
 
 // Shorthands for values in want.out
 
-func strs(ss ...string) []types.Value {
-	vs := make([]types.Value, len(ss))
+func strs(ss ...string) []interface{} {
+	vs := make([]interface{}, len(ss))
 	for i, s := range ss {
 		vs[i] = s
 	}
 	return vs
 }
 
-func bools(bs ...bool) []types.Value {
-	vs := make([]types.Value, len(bs))
+func bools(bs ...bool) []interface{} {
+	vs := make([]interface{}, len(bs))
 	for i, b := range bs {
 		vs[i] = types.Bool(b)
 	}
@@ -63,7 +63,7 @@ func NewTest(text string) Test {
 
 // WantOut returns an altered Test that requires the source code to produce the
 // specified values in the value channel when evaluated.
-func (t Test) WantOut(vs ...types.Value) Test {
+func (t Test) WantOut(vs ...interface{}) Test {
 	t.want.out = vs
 	return t
 }
@@ -137,7 +137,7 @@ func RunTests(t *testing.T, evalTests []Test, makeEvaler func() *Evaler) {
 	}
 }
 
-func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]types.Value, []byte, error) {
+func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]interface{}, []byte, error) {
 	// Collect byte output
 	bytesOut := []byte{}
 	pr, pw, _ := os.Pipe()
@@ -155,7 +155,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]typ
 	}()
 
 	// Channel output
-	outs := []types.Value{}
+	outs := []interface{}{}
 
 	// Eval error. Only that of the last text is saved.
 	var ex error
@@ -166,7 +166,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]typ
 
 		op := mustParseAndCompile(t, ev, src)
 
-		outCh := make(chan types.Value, chsize)
+		outCh := make(chan interface{}, chsize)
 		outDone := make(chan struct{})
 		go func() {
 			for v := range outCh {
@@ -205,7 +205,7 @@ func mustParseAndCompile(t *testing.T, ev *Evaler, src *Source) Op {
 	return op
 }
 
-func matchOut(want, got []types.Value) bool {
+func matchOut(want, got []interface{}) bool {
 	if len(got) == 0 && len(want) == 0 {
 		return true
 	}

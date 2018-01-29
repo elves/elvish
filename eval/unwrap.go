@@ -21,7 +21,7 @@ type unwrapperInner struct {
 	// error occurs.
 	begin, end int
 	// values contain the Value's to unwrap.
-	values []types.Value
+	values []interface{}
 }
 
 func (u *unwrapperInner) error(want, gotfmt string, gotargs ...interface{}) {
@@ -34,7 +34,7 @@ func (u *unwrapperInner) error(want, gotfmt string, gotargs ...interface{}) {
 type ValuesUnwrapper struct{ *unwrapperInner }
 
 // Unwrap creates an Unwrapper.
-func (ctx *Frame) Unwrap(desc string, begin, end int, vs []types.Value) ValuesUnwrapper {
+func (ctx *Frame) Unwrap(desc string, begin, end int, vs []interface{}) ValuesUnwrapper {
 	return ValuesUnwrapper{&unwrapperInner{ctx, desc, begin, end, vs}}
 }
 
@@ -57,7 +57,7 @@ func (u ValuesUnwrapper) One() ValueUnwrapper {
 // ValueUnwrapper unwraps one Value.
 type ValueUnwrapper struct{ *unwrapperInner }
 
-func (u ValueUnwrapper) Any() types.Value {
+func (u ValueUnwrapper) Any() interface{} {
 	return u.values[0]
 }
 

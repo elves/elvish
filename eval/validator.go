@@ -2,8 +2,6 @@ package eval
 
 import (
 	"errors"
-
-	"github.com/elves/elvish/eval/types"
 )
 
 var (
@@ -11,14 +9,14 @@ var (
 	errShouldBeNs = errors.New("should be ns")
 )
 
-func ShouldBeFn(v types.Value) error {
+func ShouldBeFn(v interface{}) error {
 	if _, ok := v.(Callable); !ok {
 		return errShouldBeFn
 	}
 	return nil
 }
 
-func ShouldBeNs(v types.Value) error {
+func ShouldBeNs(v interface{}) error {
 	if _, ok := v.(Ns); !ok {
 		return errShouldBeNs
 	}

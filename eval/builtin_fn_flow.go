@@ -3,8 +3,6 @@ package eval
 import (
 	"errors"
 	"sync"
-
-	"github.com/elves/elvish/eval/types"
 )
 
 // Flow control.
@@ -26,7 +24,7 @@ func init() {
 	})
 }
 
-func runParallel(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func runParallel(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var functions []Fn
 	ScanArgsVariadic(args, &functions)
 	TakeNoOpt(opts)
@@ -49,13 +47,13 @@ func runParallel(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func each(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var f Fn
 	iterate := ScanArgsOptionalInput(ec, args, &f)
 	TakeNoOpt(opts)
 
 	broken := false
-	iterate(func(v types.Value) {
+	iterate(func(v interface{}) {
 		if broken {
 			return
 		}
@@ -63,7 +61,7 @@ func each(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		// Ideally, it should be kept in the Closure itself.
 		newec := ec.fork("closure of each")
 		newec.ports[0] = DevNullClosedChan
-		ex := newec.PCall(f, []types.Value{v}, NoOpts)
+		ex := newec.PCall(f, []interface{}{v}, NoOpts)
 		ClosePorts(newec.ports)
 
 		if ex != nil {
@@ -80,7 +78,7 @@ func each(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 // peach takes a single closure and applies it to all input values in parallel.
-func peach(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func peach(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var f Fn
 	iterate := ScanArgsOptionalInput(ec, args, &f)
 	TakeNoOpt(opts)
@@ -88,7 +86,7 @@ func peach(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	var w sync.WaitGroup
 	broken := false
 	var err error
-	iterate(func(v types.Value) {
+	iterate(func(v interface{}) {
 		if broken || err != nil {
 			return
 		}
@@ -98,7 +96,7 @@ func peach(ec *Frame, args []types.Value, opts map[string]types.Value) {
 			// Ideally, it should be kept in the Closure itself.
 			newec := ec.fork("closure of each")
 			newec.ports[0] = DevNullClosedChan
-			ex := newec.PCall(f, []types.Value{v}, NoOpts)
+			ex := newec.PCall(f, []interface{}{v}, NoOpts)
 			ClosePorts(newec.ports)
 
 			if ex != nil {
@@ -118,7 +116,7 @@ func peach(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	maybeThrow(err)
 }
 
-func fail(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func fail(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var msg string
 	ScanArgs(args, &msg)
 	TakeNoOpt(opts)
@@ -126,7 +124,7 @@ func fail(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	throw(errors.New(msg))
 }
 
-func multiErrorFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func multiErrorFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var excs []*Exception
 	ScanArgsVariadic(args, &excs)
 	TakeNoOpt(opts)
@@ -134,21 +132,21 @@ func multiErrorFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	throw(PipelineError{excs})
 }
 
-func returnFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func returnFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
 	throw(Return)
 }
 
-func breakFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func breakFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
 	throw(Break)
 }
 
-func continueFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func continueFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 

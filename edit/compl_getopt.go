@@ -11,8 +11,8 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
-	var elemsv, optsv, argsv types.Value
+func complGetopt(ec *eval.Frame, a []interface{}, o map[string]interface{}) {
+	var elemsv, optsv, argsv interface{}
 	eval.ScanArgs(a, &elemsv, &optsv, &argsv)
 	eval.TakeNoOpt(o)
 
@@ -24,7 +24,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 	)
 	desc := make(map[*getopt.Option]string)
 	// Convert arguments.
-	err := types.Iterate(elemsv, func(v types.Value) bool {
+	err := types.Iterate(elemsv, func(v interface{}) bool {
 		elem, ok := v.(string)
 		if !ok {
 			throwf("arg should be string, got %s", types.Kind(v))
@@ -33,7 +33,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 		return true
 	})
 	maybeThrow(err)
-	err = types.Iterate(optsv, func(v types.Value) bool {
+	err = types.Iterate(optsv, func(v interface{}) bool {
 		m, ok := v.(hashmap.Map)
 		if !ok {
 			throwf("opt should be map, got %s", types.Kind(v))
@@ -71,7 +71,7 @@ func complGetopt(ec *eval.Frame, a []types.Value, o map[string]types.Value) {
 		return true
 	})
 	maybeThrow(err)
-	err = types.Iterate(argsv, func(v types.Value) bool {
+	err = types.Iterate(argsv, func(v interface{}) bool {
 		sv, ok := v.(string)
 		if ok {
 			if sv == "..." {

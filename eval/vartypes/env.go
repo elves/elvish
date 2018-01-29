@@ -3,8 +3,6 @@ package vartypes
 import (
 	"errors"
 	"os"
-
-	"github.com/elves/elvish/eval/types"
 )
 
 var errEnvMustBeString = errors.New("environment variable can only be set string values")
@@ -14,7 +12,7 @@ type envVariable struct {
 	name string
 }
 
-func (ev envVariable) Set(val types.Value) error {
+func (ev envVariable) Set(val interface{}) error {
 	if s, ok := val.(string); ok {
 		os.Setenv(ev.name, string(s))
 		return nil
@@ -22,7 +20,7 @@ func (ev envVariable) Set(val types.Value) error {
 	return errEnvMustBeString
 }
 
-func (ev envVariable) Get() types.Value {
+func (ev envVariable) Get() interface{} {
 	return string(os.Getenv(ev.name))
 }
 

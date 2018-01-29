@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 )
@@ -178,7 +177,7 @@ func (op *elemOp) Invoke(ec *Frame) ([]vartypes.Variable, error) {
 		return nil, fmt.Errorf("variable $%s:%s does not exist, compiler bug", op.ns, op.name)
 	}
 
-	indicies := make([]types.Value, len(op.indexOps))
+	indicies := make([]interface{}, len(op.indexOps))
 	for i, op := range op.indexOps {
 		values, err := op.Exec(ec)
 		maybeThrow(err)

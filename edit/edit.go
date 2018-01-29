@@ -107,7 +107,7 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 		variables: makeVariables(),
 	}
 
-	notifyChan := make(chan types.Value)
+	notifyChan := make(chan interface{})
 	notifyRead, notifyWrite, err := os.Pipe()
 	if err != nil {
 		panic(err)

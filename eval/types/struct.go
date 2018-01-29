@@ -17,11 +17,11 @@ var (
 // Struct is like a Map with fixed keys.
 type Struct struct {
 	descriptor *StructDescriptor
-	fields     []Value
+	fields     []interface{}
 }
 
 // NewStruct creates a new *Struct value.
-func NewStruct(descriptor *StructDescriptor, fields []Value) *Struct {
+func NewStruct(descriptor *StructDescriptor, fields []interface{}) *Struct {
 	return &Struct{descriptor, fields}
 }
 
@@ -70,7 +70,7 @@ func (s *Struct) Len() int {
 	return len(s.descriptor.fieldNames)
 }
 
-func (s *Struct) Index(idx Value) (Value, error) {
+func (s *Struct) Index(idx interface{}) (interface{}, error) {
 	i, err := s.index(idx)
 	if err != nil {
 		return nil, err
@@ -78,18 +78,18 @@ func (s *Struct) Index(idx Value) (Value, error) {
 	return s.fields[i], nil
 }
 
-func (s *Struct) Assoc(k, v Value) (Value, error) {
+func (s *Struct) Assoc(k, v interface{}) (interface{}, error) {
 	i, err := s.index(k)
 	if err != nil {
 		return nil, err
 	}
-	fields := make([]Value, len(s.fields))
+	fields := make([]interface{}, len(s.fields))
 	copy(fields, s.fields)
 	fields[i] = v
 	return &Struct{s.descriptor, fields}, nil
 }
 
-func (s *Struct) IterateKey(f func(Value) bool) {
+func (s *Struct) IterateKey(f func(interface{}) bool) {
 	for _, field := range s.descriptor.fieldNames {
 		if !f(string(field)) {
 			break
@@ -97,7 +97,7 @@ func (s *Struct) IterateKey(f func(Value) bool) {
 	}
 }
 
-func (s *Struct) IteratePair(f func(Value, Value) bool) {
+func (s *Struct) IteratePair(f func(interface{}, interface{}) bool) {
 	for i, field := range s.descriptor.fieldNames {
 		if !f(string(field), s.fields[i]) {
 			break
@@ -105,12 +105,12 @@ func (s *Struct) IteratePair(f func(Value, Value) bool) {
 	}
 }
 
-func (s *Struct) HasKey(k Value) bool {
+func (s *Struct) HasKey(k interface{}) bool {
 	_, err := s.index(k)
 	return err == nil
 }
 
-func (s *Struct) index(idx Value) (int, error) {
+func (s *Struct) index(idx interface{}) (int, error) {
 	index, ok := idx.(string)
 	if !ok {
 		return 0, ErrIndexMustBeString

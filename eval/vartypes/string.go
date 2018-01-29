@@ -2,8 +2,6 @@ package vartypes
 
 import (
 	"errors"
-
-	"github.com/elves/elvish/eval/types"
 )
 
 var errMustBeString = errors.New("must be string")
@@ -18,11 +16,11 @@ func NewString(ps *string) Variable {
 	return stringVar{ps}
 }
 
-func (sv stringVar) Get() types.Value {
+func (sv stringVar) Get() interface{} {
 	return string(*sv.ptr)
 }
 
-func (sv stringVar) Set(v types.Value) error {
+func (sv stringVar) Set(v interface{}) error {
 	if s, ok := v.(string); ok {
 		*sv.ptr = string(s)
 		return nil

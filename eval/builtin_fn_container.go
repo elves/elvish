@@ -36,14 +36,14 @@ func init() {
 	})
 }
 
-func nsFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func nsFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
 	ec.OutputChan() <- make(Ns)
 }
 
-func rangeFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func rangeFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var step float64
 	ScanOpts(opts, OptToScan{"step", &step, "1"})
 
@@ -69,10 +69,10 @@ func rangeFn(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 }
 
-func repeat(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func repeat(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var (
 		n int
-		v types.Value
+		v interface{}
 	)
 	ScanArgs(args, &n, &v)
 	TakeNoOpt(opts)
@@ -84,21 +84,21 @@ func repeat(ec *Frame, args []types.Value, opts map[string]types.Value) {
 }
 
 // explode puts each element of the argument.
-func explode(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var v types.Value
+func explode(ec *Frame, args []interface{}, opts map[string]interface{}) {
+	var v interface{}
 	ScanArgs(args, &v)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
-	err := types.Iterate(v, func(e types.Value) bool {
+	err := types.Iterate(v, func(e interface{}) bool {
 		out <- e
 		return true
 	})
 	maybeThrow(err)
 }
 
-func assoc(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var a, k, v types.Value
+func assoc(ec *Frame, args []interface{}, opts map[string]interface{}) {
+	var a, k, v interface{}
 	ScanArgs(args, &a, &k, &v)
 	TakeNoOpt(opts)
 	result, err := types.Assoc(a, k, v)
@@ -108,8 +108,8 @@ func assoc(ec *Frame, args []types.Value, opts map[string]types.Value) {
 
 var errCannotDissoc = errors.New("cannot dissoc")
 
-func dissoc(ec *Frame, args []types.Value, opts map[string]types.Value) {
-	var a, k types.Value
+func dissoc(ec *Frame, args []interface{}, opts map[string]interface{}) {
+	var a, k interface{}
 	ScanArgs(args, &a, &k)
 	TakeNoOpt(opts)
 	a2 := types.Dissoc(a, k)
@@ -119,7 +119,7 @@ func dissoc(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ec.OutputChan() <- a2
 }
 
-func all(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func all(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoArg(args)
 	TakeNoOpt(opts)
 
@@ -137,14 +137,14 @@ func all(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	}
 }
 
-func take(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func take(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var n int
 	iterate := ScanArgsOptionalInput(ec, args, &n)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
 	i := 0
-	iterate(func(v types.Value) {
+	iterate(func(v interface{}) {
 		if i < n {
 			out <- v
 		}
@@ -152,14 +152,14 @@ func take(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	})
 }
 
-func drop(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func drop(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	var n int
 	iterate := ScanArgsOptionalInput(ec, args, &n)
 	TakeNoOpt(opts)
 
 	out := ec.ports[1].Chan
 	i := 0
-	iterate(func(v types.Value) {
+	iterate(func(v interface{}) {
 		if i >= n {
 			out <- v
 		}
@@ -167,10 +167,10 @@ func drop(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	})
 }
 
-func hasValue(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func hasValue(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 
-	var container, value types.Value
+	var container, value interface{}
 	var found bool
 
 	ScanArgs(args, &container, &value)
@@ -185,7 +185,7 @@ func hasValue(ec *Frame, args []types.Value, opts map[string]types.Value) {
 			}
 		}
 	default:
-		err := types.Iterate(container, func(v types.Value) bool {
+		err := types.Iterate(container, func(v interface{}) bool {
 			found = (v == value)
 			return !found
 		})
@@ -195,10 +195,10 @@ func hasValue(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ec.ports[1].Chan <- types.Bool(found)
 }
 
-func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func hasKey(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 
-	var container, key types.Value
+	var container, key interface{}
 	var found bool
 
 	ScanArgs(args, &container, &key)
@@ -219,14 +219,14 @@ func hasKey(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ec.ports[1].Chan <- types.Bool(found)
 }
 
-func count(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func count(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 
 	var n int
 	switch len(args) {
 	case 0:
 		// Count inputs.
-		ec.IterateInputs(func(types.Value) {
+		ec.IterateInputs(func(interface{}) {
 			n++
 		})
 	case 1:
@@ -235,7 +235,7 @@ func count(ec *Frame, args []types.Value, opts map[string]types.Value) {
 		if len := types.Len(v); len >= 0 {
 			n = len
 		} else {
-			err := types.Iterate(v, func(types.Value) bool {
+			err := types.Iterate(v, func(interface{}) bool {
 				n++
 				return true
 			})
@@ -249,7 +249,7 @@ func count(ec *Frame, args []types.Value, opts map[string]types.Value) {
 	ec.ports[1].Chan <- strconv.Itoa(n)
 }
 
-func keys(ec *Frame, args []types.Value, opts map[string]types.Value) {
+func keys(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	TakeNoOpt(opts)
 
 	var m hashmap.Map

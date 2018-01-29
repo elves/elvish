@@ -3,7 +3,6 @@ package eval
 import (
 	"os"
 
-	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 )
 
@@ -15,13 +14,13 @@ type PwdVariable struct {
 
 var _ vartypes.Variable = PwdVariable{}
 
-func (PwdVariable) Get() types.Value {
+func (PwdVariable) Get() interface{} {
 	pwd, err := os.Getwd()
 	maybeThrow(err)
 	return pwd
 }
 
-func (pwd PwdVariable) Set(v types.Value) error {
+func (pwd PwdVariable) Set(v interface{}) error {
 	path, ok := v.(string)
 	if !ok {
 		return ErrPathMustBeString

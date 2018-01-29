@@ -10,7 +10,7 @@ import (
 type Iterator interface {
 	// Iterate calls the passed function with each value within the receiver.
 	// The iteration is aborted if the function returns false.
-	Iterate(func(v Value) bool)
+	Iterate(func(v interface{}) bool)
 }
 
 // Iterate iterates the supplied value, and calls the supplied function in each
@@ -18,7 +18,7 @@ type Iterator interface {
 // implemented for the builtin type string, and types satisfying the
 // listIterable or Iterator interface. For these types, it always returns a nil
 // error. For other types, it doesn't do anything and returns an error.
-func Iterate(v Value, f func(Value) bool) error {
+func Iterate(v interface{}, f func(interface{}) bool) error {
 	switch v := v.(type) {
 	case string:
 		for _, r := range v {
@@ -50,12 +50,12 @@ type listIterable interface {
 var _ listIterable = vector.Vector(nil)
 
 // Collect collects all elements of an iterable value into a slice.
-func Collect(it Value) ([]Value, error) {
-	var vs []Value
+func Collect(it interface{}) ([]interface{}, error) {
+	var vs []interface{}
 	if len := Len(it); len >= 0 {
-		vs = make([]Value, 0, len)
+		vs = make([]interface{}, 0, len)
 	}
-	err := Iterate(it, func(v Value) bool {
+	err := Iterate(it, func(v interface{}) bool {
 		vs = append(vs, v)
 		return true
 	})

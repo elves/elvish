@@ -2,8 +2,6 @@ package vartypes
 
 import (
 	"errors"
-
-	"github.com/elves/elvish/eval/types"
 )
 
 var errMustBeBool = errors.New("must be bool")
@@ -18,11 +16,11 @@ func NewBool(ptr *bool) Variable {
 	return boolVar{ptr}
 }
 
-func (bv boolVar) Get() types.Value {
+func (bv boolVar) Get() interface{} {
 	return *bv.ptr
 }
 
-func (bv boolVar) Set(v types.Value) error {
+func (bv boolVar) Set(v interface{}) error {
 	if b, ok := v.(bool); ok {
 		*bv.ptr = b
 		return nil

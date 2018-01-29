@@ -27,7 +27,7 @@ func TestFindIndexComplContext(t *testing.T) {
 }
 
 func TestComplIndexInner(t *testing.T) {
-	m := types.MakeMap(map[types.Value]types.Value{
+	m := types.MakeMap(map[interface{}]interface{}{
 		"foo":   "bar",
 		"lorem": "ipsum",
 	})

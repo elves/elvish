@@ -33,7 +33,7 @@ type EnvList struct {
 	sync.RWMutex
 	envName    string
 	cacheFor   string
-	cacheValue types.Value
+	cacheValue interface{}
 }
 
 var (
@@ -41,7 +41,7 @@ var (
 )
 
 // Get returns a Value for an EnvPathList.
-func (envli *EnvList) Get() types.Value {
+func (envli *EnvList) Get() interface{} {
 	envli.Lock()
 	defer envli.Unlock()
 
@@ -59,12 +59,12 @@ func (envli *EnvList) Get() types.Value {
 }
 
 // Set sets an EnvPathList. The underlying environment variable is set.
-func (envli *EnvList) Set(v types.Value) error {
+func (envli *EnvList) Set(v interface{}) error {
 	var (
 		paths      []string
 		errElement error
 	)
-	errIterate := types.Iterate(v, func(v types.Value) bool {
+	errIterate := types.Iterate(v, func(v interface{}) bool {
 		s, ok := v.(string)
 		if !ok {
 			errElement = ErrPathMustBeString

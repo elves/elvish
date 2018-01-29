@@ -10,7 +10,7 @@ import (
 type Assocer interface {
 	// Assoc returns a slightly modified version of the receiver with key k
 	// associated with value v.
-	Assoc(k, v Value) (Value, error)
+	Assoc(k, v interface{}) (interface{}, error)
 }
 
 var (
@@ -22,7 +22,7 @@ var (
 // the container, in which the key associated with the value. It is implemented
 // for the builtin type string, and types satisfying the listAssocable,
 // mapAssocable or Assocer interface. For other types, it returns an error.
-func Assoc(a, k, v Value) (Value, error) {
+func Assoc(a, k, v interface{}) (interface{}, error) {
 	switch a := a.(type) {
 	case string:
 		return assocString(a, k, v)
@@ -38,7 +38,7 @@ func Assoc(a, k, v Value) (Value, error) {
 
 var errReplacementMustBeString = errors.New("replacement must be string")
 
-func assocString(s string, k, v Value) (Value, error) {
+func assocString(s string, k, v interface{}) (interface{}, error) {
 	i, j, err := convertStringIndex(k, s)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ type listAssocable interface {
 
 var _ listAssocable = vector.Vector(nil)
 
-func assocList(l listAssocable, k, v Value) (Value, error) {
+func assocList(l listAssocable, k, v interface{}) (interface{}, error) {
 	kstring, ok := k.(string)
 	if kstring, ok = k.(string); !ok {
 		return nil, errIndexMustBeString

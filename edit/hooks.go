@@ -29,7 +29,7 @@ func makeListVariable() vartypes.Variable {
 	return vartypes.NewValidatedPtr(types.EmptyList, vartypes.ShouldBeList)
 }
 
-func callHooks(ev *eval.Evaler, li vector.Vector, args ...types.Value) {
+func callHooks(ev *eval.Evaler, li vector.Vector, args ...interface{}) {
 	if li.Len() == 0 {
 		return
 	}
@@ -41,8 +41,8 @@ func callHooks(ev *eval.Evaler, li vector.Vector, args ...types.Value) {
 }
 
 type hookOp struct {
-	hook types.Value
-	args []types.Value
+	hook interface{}
+	args []interface{}
 }
 
 func (op *hookOp) Invoke(fm *eval.Frame) error {

@@ -8,7 +8,7 @@ type Stringer interface {
 
 // ToString converts a Value to string. When the Value type implements
 // String(), it is used. Otherwise Repr(NoPretty) is used.
-func ToString(v Value) string {
+func ToString(v interface{}) string {
 	switch v := v.(type) {
 	case string:
 		return v

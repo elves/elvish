@@ -11,7 +11,7 @@ import (
 var EmptyList = vector.Empty
 
 // MakeList creates a new List from values.
-func MakeList(vs ...Value) vector.Vector {
+func MakeList(vs ...interface{}) vector.Vector {
 	vec := vector.Empty
 	for _, v := range vs {
 		vec = vec.Cons(v)

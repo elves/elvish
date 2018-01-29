@@ -9,25 +9,24 @@ import (
 // Callable wraps the Call method.
 type Callable interface {
 	// Call calls the receiver in a Frame with arguments and options.
-	Call(ec *Frame, args []types.Value, opts map[string]types.Value) error
+	Call(ec *Frame, args []interface{}, opts map[string]interface{}) error
 }
 
 var (
 	// NoArgs is an empty argument list. It can be used as an argument to Call.
-	NoArgs = []types.Value{}
+	NoArgs = []interface{}{}
 	// NoOpts is an empty option map. It can be used as an argument to Call.
-	NoOpts = map[string]types.Value{}
+	NoOpts = map[string]interface{}{}
 )
 
 // Fn is a callable value.
 type Fn interface {
-	types.Value
 	Callable
 }
 
 // FromJSONInterface converts a interface{} that results from json.Unmarshal to
 // a Value.
-func FromJSONInterface(v interface{}) types.Value {
+func FromJSONInterface(v interface{}) interface{} {
 	if v == nil {
 		// TODO Use a more appropriate type
 		return ""
@@ -39,7 +38,7 @@ func FromJSONInterface(v interface{}) types.Value {
 		// TODO Use a numeric type for float64
 		return fmt.Sprint(v)
 	case []interface{}:
-		vs := make([]types.Value, len(v))
+		vs := make([]interface{}, len(v))
 		for i, v := range v {
 			vs[i] = FromJSONInterface(v)
 		}

@@ -28,7 +28,7 @@ var (
 var EmptyMap = hashmap.New(Equal, Hash)
 
 // MakeMap converts a native Go map to Map.
-func MakeMap(raw map[Value]Value) hashmap.Map {
+func MakeMap(raw map[interface{}]interface{}) hashmap.Map {
 	m := EmptyMap
 	for k, v := range raw {
 		m = m.Assoc(k, v)
