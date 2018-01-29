@@ -33,9 +33,9 @@ func mustGetHome(uname string) string {
 	return dir
 }
 
+// ParseVariable parses a variable reference.
 func ParseVariable(text string) (explode bool, ns string, name string) {
-	explodePart, qname := ParseVariableSplice(text)
-	nsPart, name := ParseVariableQName(qname)
+	explodePart, nsPart, name := SplitVariable(text)
 	ns = nsPart
 	if len(ns) > 0 {
 		ns = ns[:len(ns)-1]
@@ -43,19 +43,22 @@ func ParseVariable(text string) (explode bool, ns string, name string) {
 	return explodePart != "", ns, name
 }
 
-func ParseVariableSplice(text string) (explode, qname string) {
-	if strings.HasPrefix(text, "@") {
-		return "@", text[1:]
+// SplitVariable splits a variable reference into three parts: an optional
+// explode operator (either "" or "@"), a namespace part, and a name part.
+func SplitVariable(text string) (explodePart, nsPart, name string) {
+	if text == "" {
+		return "", "", ""
 	}
-	return "", text
-}
-
-func ParseVariableQName(qname string) (ns, name string) {
+	e, qname := "", text
+	if text[0] == '@' {
+		e = "@"
+		qname = text[1:]
+	}
+	if qname == "" {
+		return e, "", ""
+	}
 	i := strings.LastIndexByte(qname, ':')
-	if i == -1 {
-		return "", qname
-	}
-	return qname[:i+1], qname[i+1:]
+	return e, qname[:i+1], qname[i+1:]
 }
 
 func MakeVariableName(explode bool, ns string, name string) string {

@@ -17,8 +17,7 @@ func (*variableComplContext) name() string { return "variable" }
 func findVariableComplContext(n parse.Node, _ pureEvaler) complContext {
 	primary := parse.GetPrimary(n)
 	if primary != nil && primary.Type == parse.Variable {
-		explode, qname := eval.ParseVariableSplice(primary.Value)
-		nsPart, nameSeed := eval.ParseVariableQName(qname)
+		explode, nsPart, nameSeed := eval.SplitVariable(primary.Value)
 		// Move past "$", "@" and "<ns>:".
 		begin := primary.Begin() + 1 + len(explode) + len(nsPart)
 		ns := nsPart
