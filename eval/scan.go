@@ -3,6 +3,7 @@ package eval
 // This file implements facilities for "scanning" arguments and options.
 
 import (
+	"errors"
 	"reflect"
 
 	"github.com/elves/elvish/eval/types"
@@ -127,5 +128,22 @@ func ScanOptsToStruct(m map[string]types.Value, structPtr interface{}) {
 			throwf("unknown option %s", parse.Quote(k))
 		}
 		scanValueToGo(v, struc.Field(fieldIdx).Addr().Interface())
+	}
+}
+
+var (
+	ErrNoArgAccepted = errors.New("no argument accepted")
+	ErrNoOptAccepted = errors.New("no option accepted")
+)
+
+func TakeNoArg(args []types.Value) {
+	if len(args) > 0 {
+		throw(ErrNoArgAccepted)
+	}
+}
+
+func TakeNoOpt(opts map[string]types.Value) {
+	if len(opts) > 0 {
+		throw(ErrNoOptAccepted)
 	}
 }

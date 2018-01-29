@@ -1,11 +1,9 @@
 package eval
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
-	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -44,22 +42,5 @@ func makeFlag(m parse.RedirMode) int {
 		return os.O_WRONLY | os.O_CREATE | os.O_APPEND
 	default:
 		return -1
-	}
-}
-
-var (
-	ErrNoArgAccepted = errors.New("no argument accepted")
-	ErrNoOptAccepted = errors.New("no option accepted")
-)
-
-func TakeNoArg(args []types.Value) {
-	if len(args) > 0 {
-		throw(ErrNoArgAccepted)
-	}
-}
-
-func TakeNoOpt(opts map[string]types.Value) {
-	if len(opts) > 0 {
-		throw(ErrNoOptAccepted)
 	}
 }
