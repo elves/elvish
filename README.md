@@ -30,47 +30,31 @@ This README documents the development aspect of Elvish. Other information is to 
 
 To build Elvish, you need
 
-*   Go >= 1.8.
-
 *   Linux, {Free,Net,Open}BSD, macOS, or Windows (Windows support is experimental).
 
+*   Go >= 1.8.
 
-If you would like to contribute code to Elvish, please read
-[CONTRIBUTING.md](CONTRIBUTING.md).
-
-### The Correct Way
-
-Elvish is a go-gettable package. To build Elvish, first set up your Go workspace according to [How To Write Go Code](http://golang.org/doc/code.html), and then run
+Once you have a suitable environment, simply build Elvish with `go get`:
 
 ```sh
 go get github.com/elves/elvish
 ```
 
-### The Lazy Way
+The binary will be placed in `$GOPATH/bin`. If you haven't configured a
+`GOPATH`, it defaults to `~/go`. Refer to [How To Write Go
+Code](http://golang.org/doc/code.html) on how to set up workspace for Go.
 
-Here is something you can copy-paste into your terminal:
 
-```sh
-export GOPATH=$HOME/go
-export PATH=$PATH:$GOPATH/bin
-mkdir -p $GOPATH
-
-go get github.com/elves/elvish
-
-for f in ~/.bashrc ~/.zshrc; do
-    printf 'export %s=%s\n' GOPATH '$HOME/go' PATH '$PATH:$GOPATH/bin' >> $f
-done
-```
-
-The scripts sets up the Go workspace and runs `go get` for you. It assumes that you have a working Go installation and currently use `bash` or `zsh`.
-
-### The Homebrew Way
-
-Users of macOS can build Elvish using [Homebrew](http://brew.sh):
+Users of macOS can also build Elvish using [Homebrew](http://brew.sh):
 
 ```sh
 brew install --HEAD elvish
 ```
+
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 
 ## Name
