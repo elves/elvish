@@ -33,6 +33,19 @@ func MakeMap(raw map[interface{}]interface{}) hashmap.Map {
 	return m
 }
 
+// MakeMapFromKV creates a map from arguments that are alternately keys and
+// values. It panics if the number of arguments is odd.
+func MakeMapFromKV(a ...interface{}) hashmap.Map {
+	if len(a)%2 == 1 {
+		panic("Odd number of arguments to MakeMapFromKV")
+	}
+	m := EmptyMap
+	for i := 0; i < len(a); i += 2 {
+		m = m.Assoc(a[i], a[i+1])
+	}
+	return m
+}
+
 // MapReprBuilder helps building the Repr of a Map. It is also useful for
 // implementing other Map-like values. The zero value of a MapReprBuilder is
 // ready to use.

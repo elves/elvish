@@ -14,8 +14,9 @@ type Assocer interface {
 }
 
 var (
-	errAssocUnsupported = errors.New("assoc is not supported")
-	errAssocWithSlice   = errors.New("assoc with slice not yet supported")
+	errAssocUnsupported        = errors.New("assoc is not supported")
+	errReplacementMustBeString = errors.New("replacement must be string")
+	errAssocWithSlice          = errors.New("assoc with slice not yet supported")
 )
 
 // Assoc takes a container, a key and value, and returns a modified version of
@@ -35,8 +36,6 @@ func Assoc(a, k, v interface{}) (interface{}, error) {
 	}
 	return nil, errAssocUnsupported
 }
-
-var errReplacementMustBeString = errors.New("replacement must be string")
 
 func assocString(s string, k, v interface{}) (interface{}, error) {
 	i, j, err := convertStringIndex(k, s)
