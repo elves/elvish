@@ -1,19 +1,27 @@
-package types_test
+package types
 
 import (
 	"testing"
 
-	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/tt"
 )
 
+type customBooler struct{ b bool }
+
+func (b customBooler) Bool() bool { return b.b }
+
+type customNonBooler struct{}
+
+var boolTests = tt.Table{
+	Args(true).Rets(true),
+	Args(false).Rets(false),
+
+	Args(customBooler{true}).Rets(true),
+	Args(customBooler{false}).Rets(false),
+
+	Args(customNonBooler{}).Rets(true),
+}
+
 func TestBool(t *testing.T) {
-	eval.RunTests(t, []eval.Test{
-		eval.NewTest("kind-of $true").WantOutStrings("bool"),
-		eval.NewTest("eq $true $true").WantOutBools(true),
-		eval.NewTest("eq $true true").WantOutBools(false),
-		eval.NewTest("repr $true").WantBytesOutString("$true\n"),
-		eval.NewTest("repr $false").WantBytesOutString("$false\n"),
-		eval.NewTest("bool $true").WantOutBools(true),
-		eval.NewTest("bool $false").WantOutBools(false),
-	}, eval.NewEvaler)
+	tt.Test(t, tt.Fn("Bool", Bool), boolTests)
 }
