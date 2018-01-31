@@ -26,20 +26,12 @@ func Args(args ...interface{}) *Case {
 }
 
 // Rets modifies the test case so that it requires the return values to match
-// the given values. It returns the receiver.
+// the given values. It returns the receiver. The arguments may implement the
+// Matcher interface, in which case its Match method is called with the actual
+// return value. Otherwise, reflect.DeepEqual is used to determine matches.
 func (c *Case) Rets(matchers ...interface{}) *Case {
 	c.retsMatchers = append(c.retsMatchers, matchers)
 	return c
-}
-
-func match(matchers, actual []interface{}) bool {
-	for i, matcher := range matchers {
-		// TODO: Support custom matching strategy
-		if !reflect.DeepEqual(matcher, actual[i]) {
-			return false
-		}
-	}
-	return true
 }
 
 // FnToTest describes a function to test.
@@ -97,6 +89,32 @@ func Test(t T, fn *FnToTest, tests Table) {
 			}
 		}
 	}
+}
+
+// RetValue is an empty interface used in the Matcher interface.
+type RetValue interface{}
+
+// Matcher wraps the Match method.
+type Matcher interface {
+	// Match reports whether a return value is considered a match. The argument
+	// is of type RetValue so that it cannot be implemented accidentally.
+	Match(RetValue) bool
+}
+
+func match(matchers, actual []interface{}) bool {
+	for i, matcher := range matchers {
+		if !matchOne(matcher, actual[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func matchOne(m, a interface{}) bool {
+	if m, ok := m.(Matcher); ok {
+		return m.Match(a)
+	}
+	return reflect.DeepEqual(m, a)
 }
 
 func sprintArgs(args ...interface{}) string {
