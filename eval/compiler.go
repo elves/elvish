@@ -5,6 +5,7 @@ package eval
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
@@ -147,5 +148,8 @@ func (cp *compiler) registerVariableSet(ns, name string) bool {
 }
 
 func (cp *compiler) registerModAccess(name string) bool {
+	if strings.ContainsRune(name, ':') {
+		name = name[:strings.IndexByte(name, ':')]
+	}
 	return cp.registerVariableGet("", name+NsSuffix)
 }

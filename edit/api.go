@@ -182,8 +182,8 @@ func installModules(builtin eval.Ns, ed *Editor) {
 		submod["binding"] = bindingVar
 	}
 
-	for name, ns := range submods {
-		builtin["edit:"+name+eval.NsSuffix] = vartypes.NewValidatedPtr(ns, eval.ShouldBeNs)
+	for name, submod := range submods {
+		ns[name+eval.NsSuffix] = vartypes.NewValidatedPtr(submod, eval.ShouldBeNs)
 	}
 }
 

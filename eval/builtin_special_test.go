@@ -51,14 +51,10 @@ var builtinSpecialTests = []Test{
 	// use of imported function is also captured in upvalue
 	{`{ use lorem; { lorem:put-name } }`, want{out: strs("lorem")}},
 
-	// multi-level module names
-	{`use a:b:c:d; put $a:b:c:d:name`, want{out: strs("a/b/c/d")}},
-	// shortening module names by using slashes for some path prefix
-	{`use a:b/c:d; put $c:d:name`, want{out: strs("a/b/c/d")}},
-	// importing the same module under different names
-	{`use a/b/c/d; use a/b/c:d; eq $d:name $c:d:name`, wantTrue},
+	// use of a nested module
+	{`use a:b/c/d; put $d:name`, want{out: strs("a/b/c/d")}},
 	// module is cached after first use
-	{`use has/init; use has:init`, want{out: strs("has/init")}},
+	{`use has/init; use has/init`, want{out: strs("has/init")}},
 	// overriding module
 	{`use d; put $d:name; use a/b/c/d; put $d:name`,
 		want{out: strs("d", "a/b/c/d")}},

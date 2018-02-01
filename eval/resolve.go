@@ -47,9 +47,13 @@ func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 	}
 }
 
-// EachModInTop calls the passed function for each module that can be found from
-// the top context.
-func (ev *evalerScopes) EachModInTop(f func(s string)) {
+// EachNsInTop calls the passed function for each namespace that can be used
+// from the top context.
+func (ev *evalerScopes) EachNsInTop(f func(s string)) {
+	f("builtin")
+	f("e")
+	f("E")
+
 	for name := range ev.Global {
 		if strings.HasSuffix(name, NsSuffix) {
 			f(name[:len(name)-len(NsSuffix)])
@@ -62,52 +66,74 @@ func (ev *evalerScopes) EachModInTop(f func(s string)) {
 	}
 }
 
-// EachNsInTop calls the passed function for each namespace that can be used
-// from the top context.
-func (ev *evalerScopes) EachNsInTop(f func(s string)) {
-	f("builtin")
-	f("e")
-	f("E")
-	ev.EachModInTop(f)
-}
-
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
-func (ec *Frame) ResolveVar(ns, name string) vartypes.Variable {
-	switch ns {
-	case "local":
-		return ec.local[name]
-	case "up":
-		return ec.up[name]
-	case "builtin":
-		return ec.Builtin[name]
-	case "":
-		if v := ec.local[name]; v != nil {
-			return v
-		}
-		if v, ok := ec.up[name]; ok {
-			return v
-		}
-		return ec.Builtin[name]
-	case "e":
-		if strings.HasSuffix(name, FnSuffix) {
-			return vartypes.NewRo(ExternalCmd{name[:len(name)-len(FnSuffix)]})
-		}
-	case "E":
-		return vartypes.NewEnv(name)
-	default:
-		ns := ec.ResolveMod(ns)
-		if ns != nil {
-			return ns[name]
-		}
+func (ec *Frame) ResolveVar(n, name string) vartypes.Variable {
+	if n == "" {
+		return ec.resolveUnqualified(name)
 	}
-	return nil
+
+	// TODO: Let this function accept the fully qualified name.
+	segs := splitQName(n + ":" + name)
+
+	var ns Ns
+
+	switch segs[0] {
+	case "e:":
+		if len(segs) == 2 && strings.HasSuffix(segs[1], FnSuffix) {
+			return vartypes.NewRo(ExternalCmd{Name: segs[1][:len(segs[1])-len(FnSuffix)]})
+		}
+		return nil
+	case "E:":
+		if len(segs) == 2 {
+			return vartypes.NewEnv(segs[1])
+		}
+		return nil
+	case "local:":
+		ns = ec.local
+	case "up:":
+		ns = ec.up
+	case "builtin:":
+		ns = ec.Builtin
+	default:
+		v := ec.resolveUnqualified(segs[0])
+		if v == nil {
+			return nil
+		}
+		ns = v.Get().(Ns)
+	}
+
+	for _, seg := range segs[1 : len(segs)-1] {
+		v := ns[seg]
+		if v == nil {
+			return nil
+		}
+		ns = v.Get().(Ns)
+	}
+	return ns[segs[len(segs)-1]]
 }
 
-func (ec *Frame) ResolveMod(name string) Ns {
-	ns := ec.ResolveVar("", name+NsSuffix)
-	if ns == nil {
-		return nil
+func splitQName(qname string) []string {
+	i := 0
+	var segs []string
+	for i < len(qname) {
+		j := strings.IndexByte(qname[i:], ':')
+		if j == -1 {
+			segs = append(segs, qname[i:])
+			break
+		}
+		segs = append(segs, qname[i:i+j+1])
+		i += j + 1
 	}
-	return ns.Get().(Ns)
+	return segs
+}
+
+func (ec *Frame) resolveUnqualified(name string) vartypes.Variable {
+	if v, ok := ec.local[name]; ok {
+		return v
+	}
+	if v, ok := ec.up[name]; ok {
+		return v
+	}
+	return ec.Builtin[name]
 }
