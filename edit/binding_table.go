@@ -83,6 +83,12 @@ func (bt BindingTable) Assoc(k, v interface{}) (interface{}, error) {
 	return BindingTable{map2}, nil
 }
 
+// Dissoc converts the key to ui.Key and calls the Dissoc method of the inner
+// map.
+func (bt BindingTable) Dissoc(k interface{}) interface{} {
+	return BindingTable{bt.Map.Without(ui.ToKey(k))}
+}
+
 func makeBindingTable(f *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	var raw hashmap.Map
 	eval.ScanArgs(args, &raw)
