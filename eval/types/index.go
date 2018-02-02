@@ -49,6 +49,8 @@ func (err noSuchKeyError) Error() string {
 // interface. For other types, it returns a nil value and a non-nil error.
 func Index(a, k interface{}) (interface{}, error) {
 	switch a := a.(type) {
+	case Indexer:
+		return a.Index(k)
 	case string:
 		return indexString(a, k)
 	case listIndexable:
@@ -59,8 +61,6 @@ func Index(a, k interface{}) (interface{}, error) {
 			return nil, NoSuchKey(k)
 		}
 		return v, nil
-	case Indexer:
-		return a.Index(k)
 	default:
 		return nil, errNotIndexable
 	}

@@ -18,6 +18,8 @@ type Kinder interface {
 // other types, it returns the Go type name of the argument preceeded by "!!".
 func Kind(v interface{}) string {
 	switch v := v.(type) {
+	case Kinder:
+		return v.Kind()
 	case bool:
 		return "bool"
 	case string:
@@ -26,8 +28,6 @@ func Kind(v interface{}) string {
 		return "list"
 	case hashmap.Map:
 		return "map"
-	case Kinder:
-		return v.Kind()
 	default:
 		return fmt.Sprintf("!!%T", v)
 	}

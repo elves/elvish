@@ -10,10 +10,10 @@ type Stringer interface {
 // String(), it is used. Otherwise Repr(NoPretty) is used.
 func ToString(v interface{}) string {
 	switch v := v.(type) {
-	case string:
-		return v
 	case Stringer:
 		return v.String()
+	case string:
+		return v
 	default:
 		return Repr(v, NoPretty)
 	}

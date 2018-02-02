@@ -20,6 +20,8 @@ type Iterator interface {
 // error. For other types, it doesn't do anything and returns an error.
 func Iterate(v interface{}, f func(interface{}) bool) error {
 	switch v := v.(type) {
+	case Iterator:
+		v.Iterate(f)
 	case string:
 		for _, r := range v {
 			b := f(string(r))
@@ -27,20 +29,16 @@ func Iterate(v interface{}, f func(interface{}) bool) error {
 				break
 			}
 		}
-		return nil
 	case listIterable:
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			if !f(it.Elem()) {
 				break
 			}
 		}
-		return nil
-	case Iterator:
-		v.Iterate(f)
-		return nil
 	default:
 		return errors.New(Kind(v) + " cannot be iterated")
 	}
+	return nil
 }
 
 type listIterable interface {

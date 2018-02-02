@@ -32,6 +32,8 @@ type Reprer interface {
 // format "<unknown %v>".
 func Repr(v interface{}, indent int) string {
 	switch v := v.(type) {
+	case Reprer:
+		return v.Repr(indent)
 	case bool:
 		if v {
 			return "$true"
@@ -53,8 +55,6 @@ func Repr(v interface{}, indent int) string {
 			builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
 		}
 		return builder.String()
-	case Reprer:
-		return v.Repr(indent)
 	default:
 		return fmt.Sprintf("<unknown %v>", v)
 	}

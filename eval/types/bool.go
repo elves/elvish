@@ -11,10 +11,10 @@ type Booler interface {
 // true.
 func Bool(v interface{}) bool {
 	switch v := v.(type) {
-	case bool:
-		return v
 	case Booler:
 		return v.Bool()
+	case bool:
+		return v
 	}
 	return true
 }
