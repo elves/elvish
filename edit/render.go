@@ -264,8 +264,18 @@ func (er *editorRenderer) Render(buf *ui.Buffer) {
 		}
 	case height >= 1:
 		bufNoti, bufTips, bufMode = nil, nil, nil
-		dotLine := bufLine.Dot.Line
-		bufLine.TrimToLines(dotLine+1-height, dotLine+1)
+		// Determine a window of bufLine that has $height lines around the line
+		// where the dot is currently on.
+		low := bufLine.Dot.Line - height/2
+		high := low + height
+		if low < 0 {
+			low = 0
+			high = low + height
+		} else if high > len(bufLine.Lines) {
+			high = len(bufLine.Lines)
+			low = high - height
+		}
+		bufLine.TrimToLines(low, high)
 	default:
 		// Broken terminal. Still try to render one line of bufLine.
 		bufNoti, bufTips, bufMode = nil, nil, nil
