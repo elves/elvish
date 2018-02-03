@@ -46,6 +46,7 @@ var (
 	errShouldBeEqual              = newError("", "'='")
 	errBothElementsAndPairs       = newError("cannot contain both list elements and map pairs")
 	errShouldBeNewline            = newError("", "newline")
+	errShouldBeEscapeSequence     = newError("", "escape sequence")
 )
 
 // Chunk = { PipelineSep | Space } { Pipeline { PipelineSep | Space } }
@@ -854,7 +855,7 @@ func (pn *Primary) bareword(ps *Parser, ctx ExprCtx) {
 // The following are allowed in barewords:
 //
 // * Anything allowed in variable names
-// * The symbols "./\@%+!"
+// * The symbols "./@%+!"
 // * The symbol "=", if ctx != lhsExpr && ctx != strictExpr
 // * The symbol ",", if ctx != bracedExpr && ctx != strictExpr
 // * The symbols "<>*^", if ctx = commandExpr
@@ -862,7 +863,7 @@ func (pn *Primary) bareword(ps *Parser, ctx ExprCtx) {
 // The seemingly weird inclusion of \ is for easier path manipulation in
 // Windows.
 func allowedInBareword(r rune, ctx ExprCtx) bool {
-	return allowedInVariableName(r) || r == '.' || r == '/' || r == '\\' ||
+	return allowedInVariableName(r) || r == '.' || r == '/' ||
 		r == '@' || r == '%' || r == '+' || r == '!' ||
 		(ctx != LHSExpr && ctx != strictExpr && r == '=') ||
 		(ctx != BracedElemExpr && ctx != strictExpr && r == ',') ||
@@ -945,13 +946,13 @@ spaces:
 		switch {
 		case isSpace(r):
 			ps.next()
-		case r == '`': // line continuation
+		case r == '\\': // line continuation
 			ps.next()
 			switch ps.peek() {
 			case '\n':
 				ps.next()
 			case eof:
-				ps.error(errShouldBeNewline)
+				ps.error(errShouldBeEscapeSequence)
 			default:
 				ps.backup()
 				break spaces

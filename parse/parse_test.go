@@ -230,8 +230,8 @@ var goodCases = []struct {
 		}},
 	)},
 
-	// Line continuation: "`\n" is considered whitespace
-	{"a b`\nc", ast{
+	// Line continuation: "\\\n" is considered whitespace
+	{"a b\\\nc", ast{
 		"Chunk/Pipeline/Form", fs{"Head": "a", "Args": []string{"b", "c"}}}},
 }
 
