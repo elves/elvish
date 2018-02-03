@@ -273,9 +273,8 @@ func (rd *reader) readOne(r rune) (event Event, seqError, ioError error) {
 				event = KeyEvent{'o', ui.Alt}
 				return
 			}
-			r, ok := g3Seq[r]
+			k, ok := g3Seq[r]
 			if ok {
-				k := KeyEvent{r, 0}
 				if hasTwoLeadingESC {
 					k.Mod |= ui.Alt
 				}
@@ -317,17 +316,25 @@ func ctrlModify(r rune) ui.Key {
 	return ui.Key{r, 0}
 }
 
+// TODO: Check key sequences of xterm, libvte, konsole
+
 // G3-style key sequences: \eO followed by exactly one character. For instance,
 // \eOP is F1. These are pretty limited in that they cannot be extended to
 // support modifier keys, other than a leading \e for Alt (e.g. \e\eOP is
 // Alt-F1). Terminals that send G3-style key sequences typically switch to
 // sending a CSI-style key sequence when a non-Alt modifier key is pressed.
-var g3Seq = map[rune]rune{
-	'A': ui.Up, 'B': ui.Down, 'C': ui.Right, 'D': ui.Left,
-	// xterm, libvte and tmux
-	'P': ui.F1, 'Q': ui.F2, 'R': ui.F3, 'S': ui.F4,
+var g3Seq = map[rune]ui.Key{
+	// Terminal.app
+	// XXX(xiaq): urxvt uses the same sequences for Ctrl-Shift-modified arrow
+	// keys.
+	'A': {ui.Up, 0}, 'B': {ui.Down, 0}, 'C': {ui.Right, 0}, 'D': {ui.Left, 0},
+	// urxvt
+	'a': {ui.Up, ui.Ctrl}, 'b': {ui.Down, ui.Ctrl},
+	'c': {ui.Right, ui.Ctrl}, 'd': {ui.Left, ui.Ctrl},
+	// Terminal.app, tmux, xterm, libvte
+	'P': {ui.F1, 0}, 'Q': {ui.F2, 0}, 'R': {ui.F3, 0}, 'S': {ui.F4, 0},
 	// libvte
-	'H': ui.Home, 'F': ui.End,
+	'H': {ui.Home, 0}, 'F': {ui.End, 0},
 }
 
 // Tables for CSI-style key sequences. A CSI sequence is \e[ followed by zero or
@@ -347,9 +354,14 @@ var g3Seq = map[rune]rune{
 // Up. When modified, two numerical arguments are added, the first always beging
 // 1 and the second identifying the modifier. For instance, \e1;5A is Ctrl-Up.
 var keyByLast = map[rune]ui.Key{
-	'A': {ui.Up, 0}, 'B': {ui.Down, 0},
-	'C': {ui.Right, 0}, 'D': {ui.Left, 0},
-	'H': {ui.Home, 0}, 'F': {ui.End, 0},
+	// Terminal.app, tmux, urxvt
+	'A': {ui.Up, 0}, 'B': {ui.Down, 0}, 'C': {ui.Right, 0}, 'D': {ui.Left, 0},
+	// urxvt
+	'a': {ui.Up, ui.Shift}, 'b': {ui.Down, ui.Shift},
+	'c': {ui.Right, ui.Shift}, 'd': {ui.Left, ui.Shift},
+	// Terminal.app
+	'H': {ui.Home, 0}, 'M': {ui.Insert, 0}, 'F': {ui.End, 0},
+	// Terminal.app, tmux, urxvt
 	'Z': {ui.Tab, ui.Shift},
 }
 
@@ -357,9 +369,13 @@ var keyByLast = map[rune]ui.Key{
 // argument. For instance, \e[1~ is Home. When modified, an additional argument
 // identifies the modifier; for instance, \e[1;5~ is Ctrl-Home.
 var keyByNum0 = map[int]rune{
-	1: ui.Home, 2: ui.Insert, 3: ui.Delete, 4: ui.End,
-	5: ui.PageUp, 6: ui.PageDown,
+	// Terminal.app, tmux
+	3: ui.Delete, 5: ui.PageUp, 6: ui.PageDown,
+	// tmux
+	1: ui.Home, 2: ui.Insert, 4: ui.End,
+	// ???
 	11: ui.F1, 12: ui.F2, 13: ui.F3, 14: ui.F4,
+	// Terminal.app, tmux (NOTE: 16 and 22 are unused)
 	15: ui.F5, 17: ui.F6, 18: ui.F7, 19: ui.F8,
 	20: ui.F9, 21: ui.F10, 23: ui.F11, 24: ui.F12,
 }
