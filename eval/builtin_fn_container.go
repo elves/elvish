@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vartypes"
 	"github.com/xiaq/persistent/hashmap"
 )
 
@@ -36,11 +37,24 @@ func init() {
 	})
 }
 
+var errKeyMustBeString = errors.New("key must be string")
+
 func nsFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
 	TakeNoOpt(opts)
 
-	ec.OutputChan() <- make(Ns)
+	var m hashmap.Map
+	ScanArgs(args, &m)
+
+	ns := make(Ns)
+	for it := m.Iterator(); it.HasElem(); it.Next() {
+		k, v := it.Elem()
+		kstring, ok := k.(string)
+		if !ok {
+			throw(errKeyMustBeString)
+		}
+		ns[kstring] = vartypes.NewPtr(v)
+	}
+	ec.OutputChan() <- ns
 }
 
 func rangeFn(ec *Frame, args []interface{}, opts map[string]interface{}) {

@@ -4,6 +4,8 @@ import "testing"
 
 func TestBuiltinFnContainer(t *testing.T) {
 	runTests(t, []Test{
+		NewTest(`ns: = (ns [&a=b &x=y]); put $ns:a`).WantOutStrings("b"),
+
 		{`range 3`, want{out: strs("0", "1", "2")}},
 		{`range 1 3`, want{out: strs("1", "2")}},
 		{`range 0 10 &step=3`, want{out: strs("0", "3", "6", "9")}},
