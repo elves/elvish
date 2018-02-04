@@ -316,7 +316,10 @@ func ctrlModify(r rune) ui.Key {
 	return ui.Key{r, 0}
 }
 
-// TODO: Check key sequences of xterm, libvte, konsole
+// Tables for key sequences. Comments document which terminal emulators are
+// known to generate which sequences. The terminal emulators tested are
+// categorized into xterm (including actual xterm, libvte-based terminals,
+// Konsole and Terminal.app unless otherwise noted), urxvt, tmux.
 
 // G3-style key sequences: \eO followed by exactly one character. For instance,
 // \eOP is F1. These are pretty limited in that they cannot be extended to
@@ -324,19 +327,18 @@ func ctrlModify(r rune) ui.Key {
 // Alt-F1). Terminals that send G3-style key sequences typically switch to
 // sending a CSI-style key sequence when a non-Alt modifier key is pressed.
 var g3Seq = map[rune]ui.Key{
-	// Terminal.app
-	// XXX(xiaq): urxvt uses the same sequences for Ctrl-Shift-modified arrow
-	// keys.
+	// xterm, tmux -- only in Vim, depends on termios setting?
+	// NOTE(xiaq): According to urxvt's manpage, \eO[ABCD] sequences are used for
+	// Ctrl-Shift-modified arrow keys; however, this doesn't seem to be true for
+	// urxvt 9.22 packaged by Debian; those keys simply send the same sequence
+	// as Ctrl-modified keys (\eO[abcd]).
 	'A': {ui.Up, 0}, 'B': {ui.Down, 0}, 'C': {ui.Right, 0}, 'D': {ui.Left, 0},
+	'H': {ui.Home, 0}, 'F': {ui.End, 0}, 'M': {ui.Insert, 0},
 	// urxvt
 	'a': {ui.Up, ui.Ctrl}, 'b': {ui.Down, ui.Ctrl},
 	'c': {ui.Right, ui.Ctrl}, 'd': {ui.Left, ui.Ctrl},
-	// Terminal.app, tmux, xterm, libvte
+	// xterm, urxvt, tmux
 	'P': {ui.F1, 0}, 'Q': {ui.F2, 0}, 'R': {ui.F3, 0}, 'S': {ui.F4, 0},
-	// Terminal.app, libvte
-	'H': {ui.Home, 0}, 'F': {ui.End, 0},
-	// Terminal.app (sent in Vim, but not in cat - termio flag to enable?)
-	'M': {ui.Insert, 0},
 }
 
 // Tables for CSI-style key sequences. A CSI sequence is \e[ followed by zero or
@@ -356,14 +358,14 @@ var g3Seq = map[rune]ui.Key{
 // Up. When modified, two numerical arguments are added, the first always beging
 // 1 and the second identifying the modifier. For instance, \e1;5A is Ctrl-Up.
 var csiSeqByLast = map[rune]ui.Key{
-	// Terminal.app, tmux, urxvt
+	// xterm, urxvt, tmux
 	'A': {ui.Up, 0}, 'B': {ui.Down, 0}, 'C': {ui.Right, 0}, 'D': {ui.Left, 0},
 	// urxvt
 	'a': {ui.Up, ui.Shift}, 'b': {ui.Down, ui.Shift},
 	'c': {ui.Right, ui.Shift}, 'd': {ui.Left, ui.Shift},
-	// ??? (also check for 'M' for Insert)
+	// xterm (Terminal.app only sends those in alternate screen)
 	'H': {ui.Home, 0}, 'F': {ui.End, 0},
-	// Terminal.app, tmux, urxvt
+	// xterm, urxvt, tmux
 	'Z': {ui.Tab, ui.Shift},
 }
 
@@ -378,17 +380,19 @@ var csiSeqByLast = map[rune]ui.Key{
 var csiSeqTilde = map[int]rune{
 	// tmux (NOTE: urxvt uses the pair for Find/Select)
 	1: ui.Home, 4: ui.End,
-	// tmux, urxvt
+	// xterm (Terminal.app sends ^M for Fn+Enter), urxvt, tmux
 	2: ui.Insert,
-	// Terminal.app, tmux, urxvt
+	// xterm, urxvt, tmux
 	3: ui.Delete,
-	// Terminal.app, tmux, urxvt (NOTE: called Prior/Next in urxvt manpage)
+	// xterm (Terminal.app only sends those in alternate screen), urxvt, tmux
+	// NOTE: called Prior/Next in urxvt manpage
 	5: ui.PageUp, 6: ui.PageDown,
 	// urxvt
 	7: ui.Home, 8: ui.End,
 	// urxvt
 	11: ui.F1, 12: ui.F2, 13: ui.F3, 14: ui.F4,
-	// Terminal.app, tmux, urxvt (NOTE: 16 and 22 are unused)
+	// xterm, urxvt, tmux
+	// NOTE: 16 and 22 are unused
 	15: ui.F5, 17: ui.F6, 18: ui.F7, 19: ui.F8,
 	20: ui.F9, 21: ui.F10, 23: ui.F11, 24: ui.F12,
 }
