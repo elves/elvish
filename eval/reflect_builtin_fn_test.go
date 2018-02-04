@@ -1,10 +1,13 @@
 package eval
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
-func TestReflectBuiltinFn(t *testing.T) {
+func TestReflectBuiltinFnCall(t *testing.T) {
 	theFrame := new(Frame)
-	theOptions := map[string]interface{}{"foo": "bar"}
+	theOptions := map[string]interface{}{}
 
 	var f Callable
 	callGood := func(fm *Frame, args []interface{}, opts map[string]interface{}) {
@@ -34,7 +37,7 @@ func TestReflectBuiltinFn(t *testing.T) {
 			t.Errorf("Options parameter doesn't get options")
 		}
 	})
-	callGood(theFrame, nil, theOptions)
+	callGood(theFrame, nil, Options{"foo": "bar"})
 
 	// Combination of Frame and Options.
 	f = NewReflectBuiltinFn("f", func(f *Frame, opts Options) {
@@ -45,7 +48,7 @@ func TestReflectBuiltinFn(t *testing.T) {
 			t.Errorf("Options parameter doesn't get options")
 		}
 	})
-	callGood(theFrame, nil, theOptions)
+	callGood(theFrame, nil, Options{"foo": "bar"})
 
 	// Argument passing.
 	f = NewReflectBuiltinFn("f", func(x, y string) {
@@ -76,6 +79,23 @@ func TestReflectBuiltinFn(t *testing.T) {
 		}
 	})
 	callGood(theFrame, []interface{}{"314", "1.25"}, theOptions)
+
+	// Outputting of return values.
+	outFrame := &Frame{ports: make([]*Port, 3)}
+	ch := make(chan interface{}, 10)
+	outFrame.ports[1] = &Port{Chan: ch}
+	f = NewReflectBuiltinFn("f", func() string { return "ret" })
+	callGood(outFrame, nil, theOptions)
+	if <-ch != "ret" {
+		t.Errorf("Return value not outputted")
+	}
+
+	// Passing of error return value.
+	theError := errors.New("the error")
+	f = NewReflectBuiltinFn("f", func() error { return theError })
+	if f.Call(theFrame, nil, theOptions) != theError {
+		t.Errorf("Returned error is not passed")
+	}
 
 	// Too many arguments.
 	f = NewReflectBuiltinFn("f", func() {
