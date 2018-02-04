@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-
-	"github.com/elves/elvish/eval/types"
 )
 
 // Command and process control.
@@ -14,65 +12,46 @@ import (
 var ErrNotInSameGroup = errors.New("not in the same process group")
 
 func init() {
-	addToBuiltinFns([]*BuiltinFn{
+	addToReflectBuiltinFns(map[string]interface{}{
 		// Command resolution
-		{"external", external},
-		{"has-external", hasExternal},
-		{"search-external", searchExternal},
+		"external":        external,
+		"has-external":    hasExternal,
+		"search-external": searchExternal,
 
 		// Process control
-		{"fg", fg},
-		{"exec", execFn},
-		{"exit", exit},
+		"fg":   fg,
+		"exec": execFn,
+		"exit": exit,
 	})
 }
 
-func external(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var cmd string
-	ScanArgs(args, &cmd)
-	TakeNoOpt(opts)
-
-	ec.OutputChan() <- ExternalCmd{cmd}
+func external(cmd string) ExternalCmd {
+	return ExternalCmd{cmd}
 }
 
-func hasExternal(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var cmd string
-	ScanArgs(args, &cmd)
-	TakeNoOpt(opts)
-
+func hasExternal(cmd string) bool {
 	_, err := exec.LookPath(cmd)
-	ec.OutputChan() <- types.Bool(err == nil)
+	return err == nil
 }
 
-func searchExternal(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var cmd string
-	ScanArgs(args, &cmd)
-	TakeNoOpt(opts)
-
-	path, err := exec.LookPath(cmd)
-	maybeThrow(err)
-
-	out := ec.ports[1].Chan
-	out <- path
+func searchExternal(cmd string) (string, error) {
+	return exec.LookPath(cmd)
 }
 
-func exit(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var codes []int
-	ScanArgsVariadic(args, &codes)
-	TakeNoOpt(opts)
-
-	doexit := func(i int) {
-		preExit(ec)
-		os.Exit(i)
-	}
+func exit(fm *Frame, codes ...int) error {
+	code := 0
 	switch len(codes) {
 	case 0:
-		doexit(0)
 	case 1:
-		doexit(codes[0])
+		code = codes[0]
 	default:
-		throw(ErrArgs)
+		return ErrArgs
 	}
+
+	preExit(fm)
+	os.Exit(code)
+	// Does not return
+	panic("os.Exit returned")
 }
 
 func preExit(ec *Frame) {
@@ -84,6 +63,6 @@ func preExit(ec *Frame) {
 
 var errNotSupportedOnWindows = errors.New("not supported on Windows")
 
-func notSupportedOnWindows(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	throw(errNotSupportedOnWindows)
+func notSupportedOnWindows() error {
+	return errNotSupportedOnWindows
 }

@@ -12,9 +12,7 @@ import (
 	"github.com/elves/elvish/sys"
 )
 
-func execFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-
+func execFn(fm *Frame, args ...interface{}) error {
 	var argstrings []string
 	if len(args) == 0 {
 		argstrings = []string{"elvish"}
@@ -27,35 +25,36 @@ func execFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
 
 	var err error
 	argstrings[0], err = exec.LookPath(argstrings[0])
-	maybeThrow(err)
+	if err != nil {
+		return err
+	}
 
-	preExit(ec)
+	preExit(fm)
 
-	err = syscall.Exec(argstrings[0], argstrings, os.Environ())
-	maybeThrow(err)
+	return syscall.Exec(argstrings[0], argstrings, os.Environ())
 }
 
-func fg(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var pids []int
-	ScanArgsVariadic(args, &pids)
-	TakeNoOpt(opts)
-
+func fg(pids ...int) error {
 	if len(pids) == 0 {
-		throw(ErrArgs)
+		return ErrArgs
 	}
 	var thepgid int
 	for i, pid := range pids {
 		pgid, err := syscall.Getpgid(pid)
-		maybeThrow(err)
+		if err != nil {
+			return err
+		}
 		if i == 0 {
 			thepgid = pgid
 		} else if pgid != thepgid {
-			throw(ErrNotInSameGroup)
+			return ErrNotInSameGroup
 		}
 	}
 
 	err := sys.Tcsetpgrp(0, thepgid)
-	maybeThrow(err)
+	if err != nil {
+		return err
+	}
 
 	errors := make([]*Exception, len(pids))
 
@@ -81,5 +80,5 @@ func fg(ec *Frame, args []interface{}, opts map[string]interface{}) {
 		}
 	}
 
-	maybeThrow(ComposeExceptionsFromPipeline(errors))
+	return ComposeExceptionsFromPipeline(errors)
 }
