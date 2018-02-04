@@ -113,6 +113,12 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	})
 	callBad(theFrame, nil, theOptions)
 
+	// Options when the function does not accept options.
+	f = NewReflectBuiltinFn("f", func() {
+		t.Errorf("Function called when there are extra options")
+	})
+	callBad(theFrame, nil, Options{"foo": "bar"})
+
 	// Wrong argument type.
 	f = NewReflectBuiltinFn("f", func(x string) {
 		t.Errorf("Function called when arguments have wrong type")

@@ -1,6 +1,7 @@
 package eval
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"unsafe"
@@ -23,6 +24,9 @@ func addToReflectBuiltinFns(moreFns []*ReflectBuiltinFn) {
 // options. Parameters of type int or float64 admit all values that can be
 // converted using toInt or toFloat. All other parameters admit whatever values
 // are assignable to them and no special conversion happens.
+//
+// If the function has not declared an Options parameter but is passed options,
+// an error is thrown.
 //
 // If the last return value has type error and is not nil, it is turned into an
 // exception. Other return values goes to the channel part of the stdout port.
@@ -97,6 +101,8 @@ func (b *ReflectBuiltinFn) Repr(int) string {
 // *error and use Elem to obtain type of error.
 var errorType = reflect.TypeOf((*error)(nil)).Elem()
 
+var errNoOptions = errors.New("function does not accept any options")
+
 // Call calls the implementation using reflection.
 func (b *ReflectBuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
 	if b.variadicArg != nil {
@@ -106,6 +112,9 @@ func (b *ReflectBuiltinFn) Call(f *Frame, args []interface{}, opts map[string]in
 		}
 	} else if len(args) != len(b.normalArgs) {
 		return fmt.Errorf("want %d arguments, got %d", len(b.normalArgs), len(args))
+	}
+	if !b.options && len(opts) > 0 {
+		return errNoOptions
 	}
 
 	var in []reflect.Value
