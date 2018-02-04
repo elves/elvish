@@ -3,7 +3,6 @@ package eval
 import (
 	"math"
 	"math/rand"
-	"strconv"
 )
 
 // Numerical operations.
@@ -22,11 +21,11 @@ func init() {
 		"+": plus,
 		"-": minus,
 		"*": times,
-		"^": pow,
-		"%": mod,
+		"^": math.Pow,
+		"%": func(a, b int) int { return a % b },
 
 		// Random
-		"rand":    randFn,
+		"rand":    rand.Float64,
 		"randint": randint,
 	})
 	addToBuiltinFns([]*BuiltinFn{
@@ -34,31 +33,31 @@ func init() {
 	})
 }
 
-func plus(nums ...float64) string {
+func plus(nums ...float64) float64 {
 	sum := 0.0
 	for _, f := range nums {
 		sum += f
 	}
-	return floatToString(sum)
+	return sum
 }
 
-func minus(sum float64, nums ...float64) string {
+func minus(sum float64, nums ...float64) float64 {
 	if len(nums) == 0 {
 		// Unary -
-		return floatToString(-sum)
+		return -sum
 	}
 	for _, f := range nums {
 		sum -= f
 	}
-	return floatToString(sum)
+	return sum
 }
 
-func times(nums ...float64) string {
+func times(nums ...float64) float64 {
 	prod := 1.0
 	for _, f := range nums {
 		prod *= f
 	}
-	return floatToString(prod)
+	return prod
 }
 
 func slash(ec *Frame, args []interface{}, opts map[string]interface{}) {
@@ -87,21 +86,9 @@ func divide(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	out <- floatToString(prod)
 }
 
-func pow(b, p float64) string {
-	return floatToString(math.Pow(b, p))
-}
-
-func mod(a, b int) string {
-	return strconv.Itoa(a % b)
-}
-
-func randFn() string {
-	return floatToString(rand.Float64())
-}
-
-func randint(low, high int) (string, error) {
+func randint(low, high int) (int, error) {
 	if low >= high {
-		return "", ErrArgs
+		return 0, ErrArgs
 	}
-	return strconv.Itoa(low + rand.Intn(high-low)), nil
+	return low + rand.Intn(high-low), nil
 }

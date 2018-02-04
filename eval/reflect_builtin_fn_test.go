@@ -95,6 +95,18 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 		t.Errorf("Return value is not outputted")
 	}
 
+	// Conversion of return values.
+	f = NewReflectBuiltinFn("f", func() int { return 314 })
+	callGood(outFrame, nil, theOptions)
+	select {
+	case ret := <-ch:
+		if ret != "314" {
+			t.Errorf("Return value is not converted to string")
+		}
+	default:
+		t.Errorf("Return value is not outputted")
+	}
+
 	// Passing of error return value.
 	theError := errors.New("the error")
 	f = NewReflectBuiltinFn("f", func() (string, error) {

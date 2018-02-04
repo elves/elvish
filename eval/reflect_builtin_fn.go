@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"unsafe"
 
 	"github.com/elves/elvish/eval/types"
@@ -33,7 +34,8 @@ func addToReflectBuiltinFns(moreFns map[string]interface{}) {
 // Return values go to the channel part of the stdout port. However, if the last
 // return value has type error and is not nil, it is turned into an exception
 // and no ouputting happens. If the last return value is a nil error, it is
-// ignored.
+// ignored. Return values of type int or float64 are converted to strings with
+// strconv.Itoa and strconv.FormatFloat(f, 'g', -1, 64) respectively.
 type ReflectBuiltinFn struct {
 	name string
 	impl interface{}
@@ -157,7 +159,7 @@ func (b *ReflectBuiltinFn) Call(f *Frame, args []interface{}, opts map[string]in
 	}
 
 	for _, out := range outs {
-		f.OutputChan() <- out.Interface()
+		f.OutputChan() <- convertRet(out.Interface())
 	}
 	return nil
 }
@@ -186,5 +188,17 @@ func convertArg(arg interface{}, typ reflect.Type) (interface{}, error) {
 		}
 		return nil, fmt.Errorf("need %s, got %s",
 			types.Kind(reflect.Zero(typ).Interface()), types.Kind(arg))
+	}
+}
+
+// convertRet converts the return value.
+func convertRet(ret interface{}) interface{} {
+	switch ret := ret.(type) {
+	case int:
+		return strconv.Itoa(ret)
+	case float64:
+		return strconv.FormatFloat(ret, 'g', -1, 64)
+	default:
+		return ret
 	}
 }
