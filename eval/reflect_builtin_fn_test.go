@@ -86,15 +86,27 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	outFrame.ports[1] = &Port{Chan: ch}
 	f = NewReflectBuiltinFn("f", func() string { return "ret" })
 	callGood(outFrame, nil, theOptions)
-	if <-ch != "ret" {
-		t.Errorf("Return value not outputted")
+	select {
+	case ret := <-ch:
+		if ret != "ret" {
+			t.Errorf("Output is not the same as return value")
+		}
+	default:
+		t.Errorf("Return value is not outputted")
 	}
 
 	// Passing of error return value.
 	theError := errors.New("the error")
-	f = NewReflectBuiltinFn("f", func() error { return theError })
-	if f.Call(theFrame, nil, theOptions) != theError {
+	f = NewReflectBuiltinFn("f", func() (string, error) {
+		return "x", theError
+	})
+	if f.Call(outFrame, nil, theOptions) != theError {
 		t.Errorf("Returned error is not passed")
+	}
+	select {
+	case <-ch:
+		t.Errorf("Return value is outputted when error is not nil")
+	default:
 	}
 
 	// Too many arguments.

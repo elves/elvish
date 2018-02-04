@@ -12,8 +12,10 @@ import (
 
 var reflectBuiltinFns []*ReflectBuiltinFn
 
-func addToReflectBuiltinFns(moreFns []*ReflectBuiltinFn) {
-	reflectBuiltinFns = append(reflectBuiltinFns, moreFns...)
+func addToReflectBuiltinFns(moreFns map[string]interface{}) {
+	for name, impl := range moreFns {
+		reflectBuiltinFns = append(reflectBuiltinFns, NewReflectBuiltinFn(name, impl))
+	}
 }
 
 // ReflectBuiltinFn uses reflection to wrap arbitrary Go functions into Elvish
@@ -28,8 +30,10 @@ func addToReflectBuiltinFns(moreFns []*ReflectBuiltinFn) {
 // If the function has not declared an Options parameter but is passed options,
 // an error is thrown.
 //
-// If the last return value has type error and is not nil, it is turned into an
-// exception. Other return values goes to the channel part of the stdout port.
+// Return values go to the channel part of the stdout port. However, if the last
+// return value has type error and is not nil, it is turned into an exception
+// and no ouputting happens. If the last return value is a nil error, it is
+// ignored.
 type ReflectBuiltinFn struct {
 	name string
 	impl interface{}
@@ -140,15 +144,16 @@ func (b *ReflectBuiltinFn) Call(f *Frame, args []interface{}, opts map[string]in
 
 	outs := reflect.ValueOf(b.impl).Call(in)
 
-	for i, out := range outs {
-		a := out.Interface()
-		if i == len(outs)-1 && out.Type() == errorType {
-			if a != nil {
-				return a.(error)
-			}
-		} else {
-			f.OutputChan() <- a
+	if len(outs) > 0 && outs[len(outs)-1].Type() == errorType {
+		err := outs[len(outs)-1].Interface()
+		if err != nil {
+			return err.(error)
 		}
+		outs = outs[:len(outs)-1]
+	}
+
+	for _, out := range outs {
+		f.OutputChan() <- out.Interface()
 	}
 	return nil
 }
