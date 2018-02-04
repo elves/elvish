@@ -9,6 +9,12 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
+var reflectBuiltinFns []*ReflectBuiltinFn
+
+func addToReflectBuiltinFns(moreFns []*ReflectBuiltinFn) {
+	reflectBuiltinFns = append(reflectBuiltinFns, moreFns...)
+}
+
 // ReflectBuiltinFn uses reflection to wrap arbitrary Go functions into Elvish
 // functions.
 //
