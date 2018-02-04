@@ -7,33 +7,23 @@ import (
 )
 
 func init() {
-	addToBuiltinFns([]*BuiltinFn{
-		// Debugging
-		{"src", src},
-		{"-gc", _gc},
-		{"-stack", _stack},
-		{"-log", _log},
+	addToReflectBuiltinFns(map[string]interface{}{
+		"src":    src,
+		"-gc":    _gc,
+		"-stack": _stack,
+		"-log":   _log,
 	})
 }
 
-func src(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	ec.OutputChan() <- ec.srcMeta
+func src(ec *Frame) *Source {
+	return ec.srcMeta
 }
 
-func _gc(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
+func _gc() {
 	runtime.GC()
 }
 
-func _stack(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
+func _stack(ec *Frame) {
 	out := ec.ports[1].File
 	// XXX dup with main.go
 	buf := make([]byte, 1024)
@@ -43,11 +33,6 @@ func _stack(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	out.Write(buf)
 }
 
-func _log(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var fnamev string
-	ScanArgs(args, &fnamev)
-	fname := fnamev
-	TakeNoOpt(opts)
-
-	maybeThrow(util.SetOutputFile(fname))
+func _log(fname string) error {
+	return util.SetOutputFile(fname)
 }

@@ -16,62 +16,38 @@ import (
 var ErrInput = errors.New("input error")
 
 func init() {
-	addToBuiltinFns([]*BuiltinFn{
-		{"<s",
-			wrapStrCompare(func(a, b string) bool { return a < b })},
-		{"<=s",
-			wrapStrCompare(func(a, b string) bool { return a <= b })},
-		{"==s",
-			wrapStrCompare(func(a, b string) bool { return a == b })},
-		{"!=s",
-			wrapStrCompare(func(a, b string) bool { return a != b })},
-		{">s",
-			wrapStrCompare(func(a, b string) bool { return a > b })},
-		{">=s",
-			wrapStrCompare(func(a, b string) bool { return a >= b })},
+	addToReflectBuiltinFns(map[string]interface{}{
+		"<s":  func(a, b string) bool { return a < b },
+		"<=s": func(a, b string) bool { return a <= b },
+		"==s": func(a, b string) bool { return a == b },
+		"!=s": func(a, b string) bool { return a != b },
+		">s":  func(a, b string) bool { return a > b },
+		">=s": func(a, b string) bool { return a >= b },
 
-		{"to-string", toString},
+		"to-string": toString,
+
+		"ord":  ord,
+		"base": base,
+
+		"wcswidth":          wcswidth,
+		"-override-wcwidth": overrideWcwidth,
+
+		"has-prefix": strings.HasPrefix,
+		"has-suffix": strings.HasSuffix,
+	})
+	addToBuiltinFns([]*BuiltinFn{
 
 		{"joins", joins},
 		{"splits", splits},
 		{"replaces", replaces},
 
-		{"ord", ord},
-		{"base", base},
-
-		{"wcswidth", wcswidth},
-		{"-override-wcwidth", overrideWcwidth},
-
-		{"has-prefix", hasPrefix},
-		{"has-suffix", hasSuffix},
-
 		{"eawk", eawk},
 	})
 }
 
-func wrapStrCompare(cmp func(a, b string) bool) BuiltinFnImpl {
-	return func(ec *Frame, args []interface{}, opts map[string]interface{}) {
-		TakeNoOpt(opts)
-		for _, a := range args {
-			if _, ok := a.(string); !ok {
-				throw(ErrArgs)
-			}
-		}
-		result := true
-		for i := 0; i < len(args)-1; i++ {
-			if !cmp(args[i].(string), args[i+1].(string)) {
-				result = false
-				break
-			}
-		}
-		ec.OutputChan() <- types.Bool(result)
-	}
-}
-
 // toString converts all arguments to strings.
-func toString(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-	out := ec.OutputChan()
+func toString(fm *Frame, args ...interface{}) {
+	out := fm.OutputChan()
 	for _, a := range args {
 		out <- types.ToString(a)
 	}
@@ -126,12 +102,8 @@ func replaces(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	ec.ports[1].Chan <- strings.Replace(s, old, repl, optMax)
 }
 
-func ord(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var s string
-	ScanArgs(args, &s)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
+func ord(fm *Frame, s string) {
+	out := fm.ports[1].Chan
 	for _, r := range s {
 		out <- "0x" + strconv.FormatInt(int64(r), 16)
 	}
@@ -141,61 +113,29 @@ func ord(ec *Frame, args []interface{}, opts map[string]interface{}) {
 // greater than 36.
 var ErrBadBase = errors.New("bad base")
 
-func base(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var (
-		b    int
-		nums []int
-	)
-	ScanArgsVariadic(args, &b, &nums)
-	TakeNoOpt(opts)
-
+func base(fm *Frame, b int, nums ...int) error {
 	if b < 2 || b > 36 {
-		throw(ErrBadBase)
+		return ErrBadBase
 	}
 
-	out := ec.ports[1].Chan
-
+	out := fm.ports[1].Chan
 	for _, num := range nums {
 		out <- strconv.FormatInt(int64(num), b)
 	}
+	return nil
 }
 
-func wcswidth(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var s string
-	ScanArgs(args, &s)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
-	out <- strconv.Itoa(util.Wcswidth(s))
+func wcswidth(s string) string {
+	return strconv.Itoa(util.Wcswidth(s))
 }
 
-func overrideWcwidth(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var (
-		s string
-		w int
-	)
-	ScanArgs(args, &s, &w)
-	TakeNoOpt(opts)
-
+func overrideWcwidth(s string, w int) error {
 	r, err := toRune(s)
-	maybeThrow(err)
+	if err != nil {
+		return err
+	}
 	util.OverrideWcwidth(r, w)
-}
-
-func hasPrefix(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var s, prefix string
-	ScanArgs(args, &s, &prefix)
-	TakeNoOpt(opts)
-
-	ec.OutputChan() <- types.Bool(strings.HasPrefix(s, prefix))
-}
-
-func hasSuffix(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var s, suffix string
-	ScanArgs(args, &s, &suffix)
-	TakeNoOpt(opts)
-
-	ec.OutputChan() <- types.Bool(strings.HasSuffix(s, suffix))
+	return nil
 }
 
 var eawkWordSep = regexp.MustCompile("[ \t]+")

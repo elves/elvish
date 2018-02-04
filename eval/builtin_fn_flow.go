@@ -8,42 +8,39 @@ import (
 // Flow control.
 
 func init() {
-	addToBuiltinFns([]*BuiltinFn{
-		{"run-parallel", runParallel},
+	addToReflectBuiltinFns(map[string]interface{}{
+		"run-parallel": runParallel,
+		// Exception and control
+		"fail":        fail,
+		"multi-error": multiErrorFn,
+		"return":      returnFn,
+		"break":       breakFn,
+		"continue":    continueFn,
+	})
 
+	addToBuiltinFns([]*BuiltinFn{
 		// Iterations.
 		{"each", each},
 		{"peach", peach},
-
-		// Exception and control
-		{"fail", fail},
-		{"multi-error", multiErrorFn},
-		{"return", returnFn},
-		{"break", breakFn},
-		{"continue", continueFn},
 	})
 }
 
-func runParallel(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var functions []Callable
-	ScanArgsVariadic(args, &functions)
-	TakeNoOpt(opts)
-
+func runParallel(fm *Frame, functions ...Callable) error {
 	var waitg sync.WaitGroup
 	waitg.Add(len(functions))
 	exceptions := make([]*Exception, len(functions))
 	for i, function := range functions {
-		go func(ec *Frame, function Callable, exception **Exception) {
-			err := ec.PCall(function, NoArgs, NoOpts)
+		go func(fm2 *Frame, function Callable, exception **Exception) {
+			err := fm2.PCall(function, NoArgs, NoOpts)
 			if err != nil {
 				*exception = err.(*Exception)
 			}
 			waitg.Done()
-		}(ec.fork("[run-parallel function]"), function, &exceptions[i])
+		}(fm.fork("[run-parallel function]"), function, &exceptions[i])
 	}
 
 	waitg.Wait()
-	maybeThrow(ComposeExceptionsFromPipeline(exceptions))
+	return ComposeExceptionsFromPipeline(exceptions)
 }
 
 // each takes a single closure and applies it to all input values.
@@ -116,39 +113,22 @@ func peach(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	maybeThrow(err)
 }
 
-func fail(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var msg string
-	ScanArgs(args, &msg)
-	TakeNoOpt(opts)
-
-	throw(errors.New(msg))
+func fail(msg string) error {
+	return errors.New(msg)
 }
 
-func multiErrorFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var excs []*Exception
-	ScanArgsVariadic(args, &excs)
-	TakeNoOpt(opts)
-
-	throw(PipelineError{excs})
+func multiErrorFn(excs ...*Exception) error {
+	return PipelineError{excs}
 }
 
-func returnFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	throw(Return)
+func returnFn() error {
+	return Return
 }
 
-func breakFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	throw(Break)
+func breakFn() error {
+	return Break
 }
 
-func continueFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	throw(Continue)
+func continueFn() error {
+	return Continue
 }
