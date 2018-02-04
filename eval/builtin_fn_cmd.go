@@ -16,7 +16,6 @@ var ErrNotInSameGroup = errors.New("not in the same process group")
 func init() {
 	addToBuiltinFns([]*BuiltinFn{
 		// Command resolution
-		{"resolve", resolveFn},
 		{"external", external},
 		{"has-external", hasExternal},
 		{"search-external", searchExternal},
@@ -26,33 +25,6 @@ func init() {
 		{"exec", execFn},
 		{"exit", exit},
 	})
-}
-
-func resolveFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var cmd string
-	ScanArgs(args, &cmd)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
-	out <- resolve(cmd, ec)
-}
-
-func resolve(s string, ec *Frame) Callable {
-	// NOTE: This needs to be kept in sync with the resolution algorithm used in
-	// (*compiler).form.
-
-	// Try variable
-	explode, ns, name := ParseVariableRef(s)
-	if !explode {
-		if v := ec.ResolveVar(ns, name+FnSuffix); v != nil {
-			if caller, ok := v.Get().(Callable); ok {
-				return caller
-			}
-		}
-	}
-
-	// External command
-	return ExternalCmd{s}
 }
 
 func external(ec *Frame, args []interface{}, opts map[string]interface{}) {
