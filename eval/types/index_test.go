@@ -2,78 +2,56 @@ package types
 
 import (
 	"testing"
+
+	"github.com/elves/elvish/tt"
 )
 
-var convertListIndexTests = []struct {
-	name string
-	// input
-	expr string
-	len  int
-	// output
-	wantOut *ListIndex
-	wantErr bool
-}{
-	{name: "stringIndex", expr: "a", len: 0,
-		wantErr: true},
-	{name: "floatIndex", expr: "1.0", len: 0,
-		wantErr: true},
-	{name: "emptyZeroIndex", expr: "0", len: 0,
-		wantErr: true},
-	{name: "emptyPosIndex", expr: "1", len: 0,
-		wantErr: true},
-	{name: "emptyNegIndex", expr: "-1", len: 0,
-		wantErr: true},
-	// BUG(xiaq): Should not be error
-	{name: "emptySliceAbbrevBoth", expr: ":", len: 0,
-		wantErr: true},
-	{name: "i<-n", expr: "-2", len: 1, wantErr: true},
-	{name: "i=-n", expr: "-1", len: 1,
-		wantOut: &ListIndex{Lower: 0}},
-	{name: "-n<i<0", expr: "-1", len: 2,
-		wantOut: &ListIndex{Lower: 1}},
-	{name: "i=0", expr: "0", len: 2,
-		wantOut: &ListIndex{Lower: 0}},
-	{name: "0<i<n", expr: "1", len: 2,
-		wantOut: &ListIndex{Lower: 1}},
-	{name: "i=n", expr: "1", len: 1,
-		wantErr: true},
-	{name: "i>n", expr: "2", len: 1,
-		wantErr: true},
-	{name: "sliceAbbrevBoth", expr: ":", len: 1,
-		wantOut: &ListIndex{Slice: true, Lower: 0, Upper: 1}},
-	{name: "sliceAbbrevBegin", expr: ":1", len: 1,
-		wantOut: &ListIndex{Slice: true, Lower: 0, Upper: 1}},
-	{name: "sliceAbbrevEnd", expr: "0:", len: 1,
-		wantOut: &ListIndex{Slice: true, Lower: 0, Upper: 1}},
-	{name: "sliceNegEnd", expr: "0:-1", len: 1,
-		wantOut: &ListIndex{Slice: true, Lower: 0, Upper: 0}},
-	{name: "sliceBeginEqualEnd", expr: "1:1", len: 2,
-		wantOut: &ListIndex{Slice: true, Lower: 1, Upper: 1}},
-	{name: "sliceBeginAboveEnd", expr: "1:0", len: 2,
-		wantErr: true},
+var (
+	li0 = EmptyList
+	li4 = MakeList("foo", "bar", "lorem", "ipsum")
+	m   = MakeMapFromKV("foo", "bar", "lorem", "ipsum")
+)
+
+var indexTests = tt.Table{
+	// List indices
+	// ============
+
+	// Simple indicies: 0 <= i < n.
+	Args(li4, "0").Rets("foo", nil),
+	Args(li4, "3").Rets("ipsum", nil),
+	Args(li0, "0").Rets(any, anyError),
+	Args(li4, "4").Rets(any, anyError),
+	Args(li4, "5").Rets(any, anyError),
+	// Negative indices: -n <= i < 0.
+	Args(li4, "-1").Rets("ipsum", nil),
+	Args(li4, "-4").Rets("foo", nil),
+	Args(li4, "-5").Rets(any, anyError), // Too negative.
+	// Decimal indicies are not allowed even if the value is an integer.
+	Args(li4, "0.0").Rets(any, anyError),
+
+	// Slice indicies: 0 <= i <= j <= n.
+	Args(li4, "1:3").Rets(eq(MakeList("bar", "lorem")), nil),
+	Args(li4, "3:4").Rets(eq(MakeList("ipsum")), nil),
+	Args(li4, "4:4").Rets(eq(EmptyList), nil), // i == j == n is allowed.
+	// i defaults to 0
+	Args(li4, ":2").Rets(eq(MakeList("foo", "bar")), nil),
+	Args(li4, ":-1").Rets(eq(MakeList("foo", "bar", "lorem")), nil),
+	// j defaults to n
+	Args(li4, "3:").Rets(eq(MakeList("ipsum")), nil),
+	Args(li4, "-2:").Rets(eq(MakeList("lorem", "ipsum")), nil),
+	// Both indices can be omitted.
+	Args(li0, ":").Rets(eq(li0), nil),
+	Args(li4, ":").Rets(eq(li4), nil),
+
+	// Malformed list indices.
+	Args(li4, "a").Rets(any, anyError),
+	Args(li4, "1:3:2").Rets(any, anyError),
+
+	// Map indicies
+	Args(m, "foo").Rets("bar", nil),
+	Args(m, "bad").Rets(any, anyError),
 }
 
-func TestConvertListIndex(t *testing.T) {
-	for _, test := range convertListIndexTests {
-		index, err := ConvertListIndex(test.expr, test.len)
-		if !eqListIndex(index, test.wantOut) {
-			t.Errorf("ConvertListIndex(%q, %d) => %v, want %v",
-				test.expr, test.len, index, test.wantOut)
-		}
-		wantErr := "no error"
-		if test.wantErr {
-			wantErr = "non-nil error"
-		}
-		if test.wantErr != (err != nil) {
-			t.Errorf("ConvertListIndex(%q, %d) => err %v, want %s",
-				err, wantErr)
-		}
-	}
-}
-
-func eqListIndex(a, b *ListIndex) bool {
-	if a == nil || b == nil {
-		return a == b
-	}
-	return *a == *b
+func TestIndex(t *testing.T) {
+	tt.Test(t, tt.Fn("Index", Index), indexTests)
 }

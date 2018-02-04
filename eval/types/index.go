@@ -146,8 +146,14 @@ func ConvertListIndex(rawIndex interface{}, n int) (*ListIndex, error) {
 	if j < 0 {
 		j += n
 	}
-	if i < 0 || i >= n || (slice && (j < 0 || j > n || i > j)) {
-		return nil, errIndexOutOfRange
+	if slice {
+		if !(0 <= i && i <= j && j <= n) {
+			return nil, errIndexOutOfRange
+		}
+	} else {
+		if !(0 <= i && i < n) {
+			return nil, errIndexOutOfRange
+		}
 	}
 	return &ListIndex{slice, i, j}, nil
 }
