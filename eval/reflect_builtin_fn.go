@@ -52,6 +52,10 @@ var _ Callable = &ReflectBuiltinFn{}
 
 type Options map[string]interface{}
 
+func (opt Options) Scan(opts ...OptToScan) {
+	ScanOpts(map[string]interface{}(opt), opts...)
+}
+
 var (
 	frameType   = reflect.TypeOf((*Frame)(nil))
 	optionsType = reflect.TypeOf(Options(nil))

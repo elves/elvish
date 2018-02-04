@@ -15,36 +15,33 @@ import (
 
 func init() {
 	addToBuiltinFns([]*BuiltinFn{
-		{"ns", nsFn},
-
-		{"range", rangeFn},
-		{"repeat", repeat},
-		{"explode", explode},
-
-		{"assoc", assoc},
-		{"dissoc", dissoc},
-
-		{"all", all},
 		{"take", take},
 		{"drop", drop},
-
-		{"has-key", hasKey},
-		{"has-value", hasValue},
-
 		{"count", count},
+	})
 
-		{"keys", keys},
+	addToReflectBuiltinFns(map[string]interface{}{
+		"ns": nsFn,
+
+		"range":   rangeFn,
+		"repeat":  repeat,
+		"explode": explode,
+
+		"assoc":  assoc,
+		"dissoc": dissoc,
+
+		"all": all,
+
+		"has-key":   hasKey,
+		"has-value": hasValue,
+
+		"keys": keys,
 	})
 }
 
 var errKeyMustBeString = errors.New("key must be string")
 
-func nsFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-
-	var m hashmap.Map
-	ScanArgs(args, &m)
-
+func nsFn(m hashmap.Map) Ns {
 	ns := make(Ns)
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
@@ -54,43 +51,32 @@ func nsFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
 		}
 		ns[kstring] = vartypes.NewPtr(v)
 	}
-	ec.OutputChan() <- ns
+	return ns
 }
 
-func rangeFn(ec *Frame, args []interface{}, opts map[string]interface{}) {
+func rangeFn(fm *Frame, opts Options, args ...float64) error {
 	var step float64
-	ScanOpts(opts, OptToScan{"step", &step, "1"})
+	opts.Scan(OptToScan{"step", &step, "1"})
 
 	var lower, upper float64
-	var err error
 
 	switch len(args) {
 	case 1:
-		upper, err = toFloat(args[0])
-		maybeThrow(err)
+		upper = args[0]
 	case 2:
-		lower, err = toFloat(args[0])
-		maybeThrow(err)
-		upper, err = toFloat(args[1])
-		maybeThrow(err)
+		lower, upper = args[0], args[1]
 	default:
-		throw(ErrArgs)
+		return ErrArgs
 	}
 
-	out := ec.ports[1].Chan
+	out := fm.ports[1].Chan
 	for f := lower; f < upper; f += step {
 		out <- floatToString(f)
 	}
+	return nil
 }
 
-func repeat(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var (
-		n int
-		v interface{}
-	)
-	ScanArgs(args, &n, &v)
-	TakeNoOpt(opts)
-
+func repeat(ec *Frame, n int, v interface{}) {
 	out := ec.OutputChan()
 	for i := 0; i < n; i++ {
 		out <- v
@@ -98,11 +84,7 @@ func repeat(ec *Frame, args []interface{}, opts map[string]interface{}) {
 }
 
 // explode puts each element of the argument.
-func explode(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var v interface{}
-	ScanArgs(args, &v)
-	TakeNoOpt(opts)
-
+func explode(ec *Frame, v interface{}) {
 	out := ec.ports[1].Chan
 	err := types.Iterate(v, func(e interface{}) bool {
 		out <- e
@@ -111,32 +93,21 @@ func explode(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	maybeThrow(err)
 }
 
-func assoc(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var a, k, v interface{}
-	ScanArgs(args, &a, &k, &v)
-	TakeNoOpt(opts)
-	result, err := types.Assoc(a, k, v)
-	maybeThrow(err)
-	ec.OutputChan() <- result
+func assoc(a, k, v interface{}) (interface{}, error) {
+	return types.Assoc(a, k, v)
 }
 
 var errCannotDissoc = errors.New("cannot dissoc")
 
-func dissoc(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var a, k interface{}
-	ScanArgs(args, &a, &k)
-	TakeNoOpt(opts)
+func dissoc(a, k interface{}) (interface{}, error) {
 	a2 := types.Dissoc(a, k)
 	if a2 == nil {
-		throw(errCannotDissoc)
+		return nil, errCannotDissoc
 	}
-	ec.OutputChan() <- a2
+	return a2, nil
 }
 
-func all(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
+func all(ec *Frame) error {
 	valuesDone := make(chan struct{})
 	go func() {
 		for input := range ec.ports[0].Chan {
@@ -147,8 +118,9 @@ func all(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	_, err := io.Copy(ec.ports[1].File, ec.ports[0].File)
 	<-valuesDone
 	if err != nil {
-		throwf("cannot copy byte input: %s", err)
+		return fmt.Errorf("cannot copy byte input: %s", err)
 	}
+	return nil
 }
 
 func take(ec *Frame, args []interface{}, opts map[string]interface{}) {
@@ -181,56 +153,38 @@ func drop(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	})
 }
 
-func hasValue(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-
-	var container, value interface{}
-	var found bool
-
-	ScanArgs(args, &container, &value)
-
+func hasValue(container, value interface{}) (bool, error) {
 	switch container := container.(type) {
 	case hashmap.Map:
 		for it := container.Iterator(); it.HasElem(); it.Next() {
 			_, v := it.Elem()
 			if types.Equal(v, value) {
-				found = true
-				break
+				return true, nil
 			}
 		}
+		return false, nil
 	default:
+		var found bool
 		err := types.Iterate(container, func(v interface{}) bool {
 			found = (v == value)
 			return !found
 		})
-		maybeThrow(err)
+		return found, err
 	}
-
-	ec.ports[1].Chan <- types.Bool(found)
 }
 
-func hasKey(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-
-	var container, key interface{}
-	var found bool
-
-	ScanArgs(args, &container, &key)
-
+func hasKey(container, key interface{}) (bool, error) {
 	switch container := container.(type) {
 	case hashmap.Map:
-		found = hashmap.HasKey(container, key)
+		return hashmap.HasKey(container, key), nil
 	default:
 		if len := types.Len(container); len >= 0 {
 			// XXX(xiaq): Not all types that implement Lener have numerical indices
 			_, err := types.ConvertListIndex(key, len)
-			found = (err == nil)
-			break
+			return err == nil, nil
 		}
-		throw(fmt.Errorf("couldn't get key or index of type '%s'", types.Kind(container)))
+		return false, fmt.Errorf("couldn't get key or index of type '%s'", types.Kind(container))
 	}
-
-	ec.ports[1].Chan <- types.Bool(found)
 }
 
 func count(ec *Frame, args []interface{}, opts map[string]interface{}) {
@@ -263,12 +217,7 @@ func count(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	ec.ports[1].Chan <- strconv.Itoa(n)
 }
 
-func keys(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-
-	var m hashmap.Map
-	ScanArgs(args, &m)
-
+func keys(ec *Frame, m hashmap.Map) {
 	out := ec.ports[1].Chan
 
 	for it := m.Iterator(); it.HasElem(); it.Next() {
