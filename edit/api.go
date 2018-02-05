@@ -69,8 +69,8 @@ func (bf *BuiltinFn) Call(ec *eval.Frame, args []interface{}, opts map[string]in
 	return nil
 }
 
-// installModules installs edit: and edit:* modules.
-func installModules(builtin eval.Ns, ed *Editor) {
+// makeNs makes the edit: namespace.
+func makeNs(ed *Editor) eval.Ns {
 	// Construct the edit: module, starting with builtins.
 	ns := makeNsFromBuiltins(builtinMaps[""])
 
@@ -163,7 +163,6 @@ func installModules(builtin eval.Ns, ed *Editor) {
 		&eval.BuiltinFn{"edit:-narrow-read", NarrowRead},
 	)
 
-	builtin["edit"+eval.NsSuffix] = vartypes.NewValidatedPtr(ns, eval.ShouldBeNs)
 	submods := make(map[string]eval.Ns)
 	// Install other modules.
 	for module, builtins := range builtinMaps {
@@ -185,6 +184,8 @@ func installModules(builtin eval.Ns, ed *Editor) {
 	for name, submod := range submods {
 		ns[name+eval.NsSuffix] = vartypes.NewValidatedPtr(submod, eval.ShouldBeNs)
 	}
+
+	return ns
 }
 
 // CallFn calls an Fn, displaying its outputs and possible errors as editor
