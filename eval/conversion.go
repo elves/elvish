@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"strconv"
 	"unicode/utf8"
-
-	"github.com/elves/elvish/eval/types"
 )
 
 // Conversion between Go value and Value.
@@ -62,27 +60,7 @@ func toRune(arg interface{}) (rune, error) {
 // scanValueToGo converts Value to Go data, depending on the type of the
 // destination.
 func scanValueToGo(src interface{}, ptr interface{}) {
-	switch dstPtr := ptr.(type) {
-	case *int:
-		i, err := toInt(src)
-		maybeThrow(err)
-		*dstPtr = i
-	case *float64:
-		f, err := toFloat(src)
-		maybeThrow(err)
-		*dstPtr = f
-	default:
-		ptrReflect := reflect.ValueOf(dstPtr)
-		if ptrReflect.Kind() != reflect.Ptr {
-			throwf("internal bug: %T to ScanArgs, need pointer", dstPtr)
-		}
-		dstReflect := reflect.Indirect(ptrReflect)
-		if reflect.TypeOf(src).AssignableTo(dstReflect.Type()) {
-			dstReflect.Set(reflect.ValueOf(src))
-		} else {
-			throwf("need %s argument, got %s",
-				types.Kind(reflect.Zero(dstReflect.Type()).Interface()),
-				types.Kind(src))
-		}
-	}
+	v, err := convertArg(src, reflect.TypeOf(ptr).Elem())
+	maybeThrow(err)
+	reflect.Indirect(reflect.ValueOf(ptr)).Set(reflect.ValueOf(v))
 }
