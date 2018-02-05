@@ -40,6 +40,14 @@ func (ns Ns) Get(k interface{}) (interface{}, bool) {
 	return nil, false
 }
 
+func (ns Ns) SetFn(name string, v Callable) {
+	ns[name+FnSuffix] = vartypes.NewValidatedPtr(v, ShouldBeFn)
+}
+
+func (ns Ns) SetNs(name string, subns Ns) {
+	ns[name+NsSuffix] = vartypes.NewValidatedPtr(subns, ShouldBeNs)
+}
+
 func addrOf(a interface{}) uintptr {
 	return reflect.ValueOf(a).Pointer()
 }

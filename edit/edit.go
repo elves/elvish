@@ -145,7 +145,7 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 	}
 	ev.Editor = ed
 
-	ev.Builtin["edit"+eval.NsSuffix] = vartypes.NewValidatedPtr(makeNs(ed), eval.ShouldBeNs)
+	ev.Builtin.SetNs("edit", makeNs(ed))
 	err = ev.SourceText(eval.NewScriptSource("[editor]", "[editor]", "use binding; binding:install"))
 	if err != nil {
 		fmt.Fprintln(out, "Failed to load default binding:", err)

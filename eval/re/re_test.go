@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vartypes"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -38,7 +37,7 @@ var tests = []eval.Test{
 func TestRe(t *testing.T) {
 	eval.RunTests(t, tests, func() *eval.Evaler {
 		ev := eval.NewEvaler()
-		ev.Builtin["re"+eval.NsSuffix] = vartypes.NewRo(Ns())
+		ev.Builtin.SetNs("re", Ns())
 		return ev
 	})
 }

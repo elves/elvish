@@ -267,7 +267,7 @@ func use(ec *Frame, modname, modpath string) error {
 	if err != nil {
 		return err
 	}
-	ec.local[modname+NsSuffix] = vartypes.NewPtr(ns)
+	ec.local.SetNs(modname, ns)
 	return nil
 }
 

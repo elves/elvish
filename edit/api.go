@@ -182,7 +182,7 @@ func makeNs(ed *Editor) eval.Ns {
 	}
 
 	for name, submod := range submods {
-		ns[name+eval.NsSuffix] = vartypes.NewValidatedPtr(submod, eval.ShouldBeNs)
+		ns.SetNs(name, submod)
 	}
 
 	return ns
