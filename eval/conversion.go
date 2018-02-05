@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"strconv"
 	"unicode/utf8"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 // Conversion between native and Elvish values.
@@ -23,7 +25,53 @@ import (
 // float64(1.0) or rune('1'). Conversion in this direction depends on the
 // destination type.
 
-func toFloat(arg interface{}) (float64, error) {
+var (
+	intType   = reflect.TypeOf(int(0))
+	floatType = reflect.TypeOf(float64(0))
+)
+
+// elvToGo converts an Elvish value to a Go value of the specified type.
+// Conversion happens for a whitelist of target types; for other types, this
+// function just checks whether the source value is already assignable to the
+// target type and returns the source value.
+func elvToGo(arg interface{}, typ reflect.Type) (interface{}, error) {
+	switch typ {
+	case intType:
+		i, err := elvToInt(arg)
+		return i, err
+	case floatType:
+		f, err := elvToFloat(arg)
+		return f, err
+	default:
+		if reflect.TypeOf(arg).AssignableTo(typ) {
+			return arg, nil
+		}
+		return nil, fmt.Errorf("need %s, got %s",
+			types.Kind(reflect.Zero(typ).Interface()), types.Kind(arg))
+	}
+}
+
+// scanElvToGo converts an Elvish value to a Go value, putting the result in a
+// pointer.
+func scanElvToGo(src interface{}, ptr interface{}) {
+	v, err := elvToGo(src, reflect.TypeOf(ptr).Elem())
+	maybeThrow(err)
+	reflect.Indirect(reflect.ValueOf(ptr)).Set(reflect.ValueOf(v))
+}
+
+// goToElv a Go value to an Elvish value.
+func goToElv(ret interface{}) interface{} {
+	switch ret := ret.(type) {
+	case int:
+		return strconv.Itoa(ret)
+	case float64:
+		return strconv.FormatFloat(ret, 'g', -1, 64)
+	default:
+		return ret
+	}
+}
+
+func elvToFloat(arg interface{}) (float64, error) {
 	if _, ok := arg.(string); !ok {
 		return 0, fmt.Errorf("must be string")
 	}
@@ -39,11 +87,11 @@ func toFloat(arg interface{}) (float64, error) {
 	return num, nil
 }
 
-func floatToString(f float64) string {
+func floatToElv(f float64) string {
 	return strconv.FormatFloat(f, 'g', -1, 64)
 }
 
-func toInt(arg interface{}) (int, error) {
+func elvToInt(arg interface{}) (int, error) {
 	arg, ok := arg.(string)
 	if !ok {
 		return 0, fmt.Errorf("must be string")
@@ -55,7 +103,7 @@ func toInt(arg interface{}) (int, error) {
 	return int(num), nil
 }
 
-func toRune(arg interface{}) (rune, error) {
+func elvToRune(arg interface{}) (rune, error) {
 	ss, ok := arg.(string)
 	if !ok {
 		return -1, fmt.Errorf("must be string")
@@ -69,12 +117,4 @@ func toRune(arg interface{}) (rune, error) {
 		return -1, fmt.Errorf("string has multiple runes")
 	}
 	return r, nil
-}
-
-// scanValueToGo converts Value to Go data, depending on the type of the
-// destination.
-func scanValueToGo(src interface{}, ptr interface{}) {
-	v, err := convertArg(src, reflect.TypeOf(ptr).Elem())
-	maybeThrow(err)
-	reflect.Indirect(reflect.ValueOf(ptr)).Set(reflect.ValueOf(v))
 }

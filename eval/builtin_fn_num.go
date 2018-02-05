@@ -83,7 +83,7 @@ func divide(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	for _, f := range nums {
 		prod /= f
 	}
-	out <- floatToString(prod)
+	out <- floatToElv(prod)
 }
 
 func randint(low, high int) (int, error) {

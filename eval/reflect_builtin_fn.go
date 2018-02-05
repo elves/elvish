@@ -4,10 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strconv"
 	"unsafe"
 
-	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -22,20 +20,21 @@ func addToReflectBuiltinFns(moreFns map[string]interface{}) {
 // ReflectBuiltinFn uses reflection to wrap arbitrary Go functions into Elvish
 // functions.
 //
-// If the first parameter of function has type *Frame, it gets the current call
-// frame. After that, if the first parameter has type Options, it gets a map of
-// options. Parameters of type int or float64 admit all values that can be
-// converted using toInt or toFloat. All other parameters admit whatever values
-// are assignable to them and no special conversion happens.
+// Parameters are passed following these rules:
 //
-// If the function has not declared an Options parameter but is passed options,
-// an error is thrown.
+// 1. If the first parameter of function has type *Frame, it gets the current call
+//    frame.
 //
-// Return values go to the channel part of the stdout port. However, if the last
-// return value has type error and is not nil, it is turned into an exception
-// and no ouputting happens. If the last return value is a nil error, it is
-// ignored. Return values of type int or float64 are converted to strings with
-// strconv.Itoa and strconv.FormatFloat(f, 'g', -1, 64) respectively.
+// 2. If (possibly after a *Frame parameter) the first parameter has type
+//    Options, it gets a map of options. If the function has not declared an
+//    Options parameter but is passed options, an error is thrown.
+//
+// 3. Other parameters are converted using elvToGo.
+//
+// Return values go to the channel part of the stdout port, after being
+// converted using goToElv. If the last return value has type error and is not
+// nil, it is turned into an exception and no ouputting happens. If the last
+// return value is a nil error, it is ignored.
 type ReflectBuiltinFn struct {
 	name string
 	impl interface{}
@@ -141,7 +140,7 @@ func (b *ReflectBuiltinFn) Call(f *Frame, args []interface{}, opts map[string]in
 		} else {
 			typ = b.variadicArg
 		}
-		converted, err := convertArg(arg, typ)
+		converted, err := elvToGo(arg, typ)
 		if err != nil {
 			return fmt.Errorf("wrong type of %d'th argument: %v", i+1, err)
 		}
@@ -159,46 +158,7 @@ func (b *ReflectBuiltinFn) Call(f *Frame, args []interface{}, opts map[string]in
 	}
 
 	for _, out := range outs {
-		f.OutputChan() <- convertRet(out.Interface())
+		f.OutputChan() <- goToElv(out.Interface())
 	}
 	return nil
-}
-
-var (
-	intType   = reflect.TypeOf(int(0))
-	floatType = reflect.TypeOf(float64(0))
-)
-
-// convertArg converts an argument to the specified type so that it can be
-// passed to implementation body. Only conversions to int and float happen
-// implicitly; in other cases, the argument must be assignable to the specified
-// type.
-// TODO: Reimplement scanValueToGo in terms of this function.
-func convertArg(arg interface{}, typ reflect.Type) (interface{}, error) {
-	switch typ {
-	case intType:
-		i, err := toInt(arg)
-		return i, err
-	case floatType:
-		f, err := toFloat(arg)
-		return f, err
-	default:
-		if reflect.TypeOf(arg).AssignableTo(typ) {
-			return arg, nil
-		}
-		return nil, fmt.Errorf("need %s, got %s",
-			types.Kind(reflect.Zero(typ).Interface()), types.Kind(arg))
-	}
-}
-
-// convertRet converts the return value.
-func convertRet(ret interface{}) interface{} {
-	switch ret := ret.(type) {
-	case int:
-		return strconv.Itoa(ret)
-	case float64:
-		return strconv.FormatFloat(ret, 'g', -1, 64)
-	default:
-		return ret
-	}
 }

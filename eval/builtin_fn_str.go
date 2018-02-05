@@ -130,7 +130,7 @@ func wcswidth(s string) string {
 }
 
 func overrideWcwidth(s string, w int) error {
-	r, err := toRune(s)
+	r, err := elvToRune(s)
 	if err != nil {
 		return err
 	}
