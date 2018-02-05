@@ -7,7 +7,21 @@ import (
 	"unicode/utf8"
 )
 
-// Conversion between Go value and Value.
+// Conversion between native and Elvish values.
+//
+// Elvish uses native Go types most of the time - string, bool, hashmap.Map,
+// vector.Vector, etc., and there is no need for any conversions. There are some
+// exceptions, for instance the numerical types int and float64: in native Go
+// code they are distinct types, but Elvish uses string for all numbers.
+// Similarly, Elvish uses string to represent runes. In all cases, there is a
+// many-to-one relationship between Go types and Elvish types.
+//
+// Conversion from Go value to Elvish value can happen without knowing the
+// destination type: int, float64 and rune values are converted to strings, and
+// values of other types remain unchanged. The opposite is not true: the native
+// Go value corresponding to the Elvish value "1" can be string("1"), int(1),
+// float64(1.0) or rune('1'). Conversion in this direction depends on the
+// destination type.
 
 func toFloat(arg interface{}) (float64, error) {
 	if _, ok := arg.(string); !ok {
