@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strconv"
 
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
@@ -14,12 +13,6 @@ import (
 // Sequence, list and maps.
 
 func init() {
-	addToBuiltinFns([]*BuiltinFn{
-		{"take", take},
-		{"drop", drop},
-		{"count", count},
-	})
-
 	addToReflectBuiltinFns(map[string]interface{}{
 		"ns": nsFn,
 
@@ -34,6 +27,10 @@ func init() {
 
 		"has-key":   hasKey,
 		"has-value": hasValue,
+
+		"take":  take,
+		"drop":  drop,
+		"count": count,
 
 		"keys": keys,
 	})
@@ -123,14 +120,10 @@ func all(ec *Frame) error {
 	return nil
 }
 
-func take(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var n int
-	iterate := ScanArgsOptionalInput(ec, args, &n)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
+func take(fm *Frame, n int, inputs Inputs) {
+	out := fm.ports[1].Chan
 	i := 0
-	iterate(func(v interface{}) {
+	inputs(func(v interface{}) {
 		if i < n {
 			out <- v
 		}
@@ -138,14 +131,10 @@ func take(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	})
 }
 
-func drop(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var n int
-	iterate := ScanArgsOptionalInput(ec, args, &n)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
+func drop(fm *Frame, n int, inputs Inputs) {
+	out := fm.ports[1].Chan
 	i := 0
-	iterate(func(v interface{}) {
+	inputs(func(v interface{}) {
 		if i >= n {
 			out <- v
 		}
@@ -187,14 +176,12 @@ func hasKey(container, key interface{}) (bool, error) {
 	}
 }
 
-func count(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-
+func count(fm *Frame, args ...interface{}) int {
 	var n int
 	switch len(args) {
 	case 0:
 		// Count inputs.
-		ec.IterateInputs(func(interface{}) {
+		fm.IterateInputs(func(interface{}) {
 			n++
 		})
 	case 1:
@@ -214,7 +201,7 @@ func count(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	default:
 		throw(errors.New("want 0 or 1 argument"))
 	}
-	ec.ports[1].Chan <- strconv.Itoa(n)
+	return n
 }
 
 func keys(ec *Frame, m hashmap.Map) {

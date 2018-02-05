@@ -61,104 +61,85 @@ func addToBuiltinFns(moreFns []*BuiltinFn) {
 var ErrArgs = errors.New("args error")
 
 func init() {
-	addToBuiltinFns([]*BuiltinFn{
-		{"nop", nop},
+	addToReflectBuiltinFns(map[string]interface{}{
+		"nop":        nop,
+		"kind-of":    kindOf,
+		"constantly": constantly,
 
-		{"kind-of", kindOf},
-
-		{"constantly", constantly},
-
-		{"-source", source},
+		"-source": source,
 
 		// Time
-		{"esleep", sleep},
-		{"-time", _time},
+		"esleep": sleep,
+		"-time":  _time,
 
-		{"-ifaddrs", _ifaddrs},
+		"-ifaddrs": _ifaddrs,
 	})
+
 	// For rand and randint.
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-func nop(ec *Frame, args []interface{}, opts map[string]interface{}) {
+func nop(opts Options, args ...interface{}) {
+	// Do nothing
 }
 
-func kindOf(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-	out := ec.ports[1].Chan
+func kindOf(fm *Frame, args ...interface{}) {
+	out := fm.ports[1].Chan
 	for _, a := range args {
 		out <- types.Kind(a)
 	}
 }
 
-func constantly(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
+func constantly(args ...interface{}) Callable {
 	// XXX Repr of this fn is not right
-	out <- &BuiltinFn{
+	return NewReflectBuiltinFn(
 		"created by constantly",
-		func(ec *Frame, a []interface{}, o map[string]interface{}) {
-			TakeNoOpt(o)
-			if len(a) != 0 {
-				throw(ErrArgs)
-			}
-			out := ec.ports[1].Chan
+		func(fm *Frame) {
+			out := fm.ports[1].Chan
 			for _, v := range args {
 				out <- v
 			}
 		},
-	}
+	)
 }
 
-func source(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var argFname string
-	ScanArgs(args, &argFname)
-	ScanOpts(opts)
-
-	fname := argFname
+func source(fm *Frame, fname string) error {
 	abs, err := filepath.Abs(fname)
-	maybeThrow(err)
-
-	maybeThrow(ec.Source(fname, abs))
+	if err != nil {
+		return err
+	}
+	return fm.Source(fname, abs)
 }
 
-func sleep(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var t float64
-	ScanArgs(args, &t)
-	TakeNoOpt(opts)
-
+func sleep(fm *Frame, t float64) error {
 	d := time.Duration(float64(time.Second) * t)
 	select {
-	case <-ec.Interrupts():
-		throw(ErrInterrupted)
+	case <-fm.Interrupts():
+		return ErrInterrupted
 	case <-time.After(d):
+		return nil
 	}
 }
 
-func _time(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var f Callable
-	ScanArgs(args, &f)
-	TakeNoOpt(opts)
-
+func _time(ec *Frame, f Callable) error {
 	t0 := time.Now()
 	err := f.Call(ec, NoArgs, NoOpts)
-	maybeThrow(err)
 	t1 := time.Now()
 
 	dt := t1.Sub(t0)
 	fmt.Fprintln(ec.ports[1].File, dt)
+
+	return err
 }
 
-func _ifaddrs(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
-
+func _ifaddrs(fm *Frame) error {
 	addrs, err := net.InterfaceAddrs()
-	maybeThrow(err)
+	if err != nil {
+		return err
+	}
+	out := fm.ports[1].Chan
 	for _, addr := range addrs {
 		out <- addr.String()
 	}
+	return nil
 }

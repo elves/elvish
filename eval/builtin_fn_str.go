@@ -34,14 +34,12 @@ func init() {
 
 		"has-prefix": strings.HasPrefix,
 		"has-suffix": strings.HasSuffix,
-	})
-	addToBuiltinFns([]*BuiltinFn{
 
-		{"joins", joins},
-		{"splits", splits},
-		{"replaces", replaces},
+		"joins":    joins,
+		"splits":   splits,
+		"replaces": replaces,
 
-		{"eawk", eawk},
+		"eawk": eawk,
 	})
 }
 
@@ -54,14 +52,9 @@ func toString(fm *Frame, args ...interface{}) {
 }
 
 // joins joins all input strings with a delimiter.
-func joins(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var sepv string
-	iterate := ScanArgsOptionalInput(ec, args, &sepv)
-	sep := sepv
-	TakeNoOpt(opts)
-
+func joins(sep string, inputs Inputs) string {
 	var buf bytes.Buffer
-	iterate(func(v interface{}) {
+	inputs(func(v interface{}) {
 		if s, ok := v.(string); ok {
 			if buf.Len() > 0 {
 				buf.WriteString(sep)
@@ -71,35 +64,25 @@ func joins(ec *Frame, args []interface{}, opts map[string]interface{}) {
 			throwf("join wants string input, got %s", types.Kind(v))
 		}
 	})
-	out := ec.ports[1].Chan
-	out <- buf.String()
+	return buf.String()
 }
 
 // splits splits an argument strings by a delimiter and writes all pieces.
-func splits(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var (
-		s, sep string
-		optMax int
-	)
-	ScanArgs(args, &sep, &s)
-	ScanOpts(opts, OptToScan{"max", &optMax, "-1"})
+func splits(fm *Frame, opts Options, sep, s string) {
+	var optMax int
+	opts.Scan(OptToScan{"max", &optMax, "-1"})
 
-	out := ec.ports[1].Chan
+	out := fm.ports[1].Chan
 	parts := strings.SplitN(s, sep, optMax)
 	for _, p := range parts {
 		out <- p
 	}
 }
 
-func replaces(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var (
-		old, repl, s string
-		optMax       int
-	)
-	ScanArgs(args, &old, &repl, &s)
-	ScanOpts(opts, OptToScan{"max", &optMax, "-1"})
-
-	ec.ports[1].Chan <- strings.Replace(s, old, repl, optMax)
+func replaces(opts Options, old, repl, s string) string {
+	var optMax int
+	opts.Scan(OptToScan{"max", &optMax, "-1"})
+	return strings.Replace(s, old, repl, optMax)
 }
 
 func ord(fm *Frame, s string) {
@@ -132,13 +115,9 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // stripping the line and splitting the line by whitespaces. The function may
 // call break and continue. Overall this provides a similar functionality to
 // awk, hence the name.
-func eawk(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var f Callable
-	iterate := ScanArgsOptionalInput(ec, args, &f)
-	TakeNoOpt(opts)
-
+func eawk(fm *Frame, f Callable, inputs Inputs) {
 	broken := false
-	iterate(func(v interface{}) {
+	inputs(func(v interface{}) {
 		if broken {
 			return
 		}
@@ -151,7 +130,7 @@ func eawk(ec *Frame, args []interface{}, opts map[string]interface{}) {
 			args = append(args, field)
 		}
 
-		newec := ec.fork("fn of eawk")
+		newec := fm.fork("fn of eawk")
 		// TODO: Close port 0 of newec.
 		ex := newec.PCall(f, args, NoOpts)
 		ClosePorts(newec.ports)

@@ -16,12 +16,9 @@ func init() {
 		"return":      returnFn,
 		"break":       breakFn,
 		"continue":    continueFn,
-	})
-
-	addToBuiltinFns([]*BuiltinFn{
 		// Iterations.
-		{"each", each},
-		{"peach", peach},
+		"each":  each,
+		"peach": peach,
 	})
 }
 
@@ -44,19 +41,15 @@ func runParallel(fm *Frame, functions ...Callable) error {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var f Callable
-	iterate := ScanArgsOptionalInput(ec, args, &f)
-	TakeNoOpt(opts)
-
+func each(fm *Frame, f Callable, inputs Inputs) {
 	broken := false
-	iterate(func(v interface{}) {
+	inputs(func(v interface{}) {
 		if broken {
 			return
 		}
 		// NOTE We don't have the position range of the closure in the source.
 		// Ideally, it should be kept in the Closure itself.
-		newec := ec.fork("closure of each")
+		newec := fm.fork("closure of each")
 		newec.ports[0] = DevNullClosedChan
 		ex := newec.PCall(f, []interface{}{v}, NoOpts)
 		ClosePorts(newec.ports)
@@ -75,15 +68,11 @@ func each(ec *Frame, args []interface{}, opts map[string]interface{}) {
 }
 
 // peach takes a single closure and applies it to all input values in parallel.
-func peach(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var f Callable
-	iterate := ScanArgsOptionalInput(ec, args, &f)
-	TakeNoOpt(opts)
-
+func peach(fm *Frame, f Callable, inputs Inputs) {
 	var w sync.WaitGroup
 	broken := false
 	var err error
-	iterate(func(v interface{}) {
+	inputs(func(v interface{}) {
 		if broken || err != nil {
 			return
 		}
@@ -91,7 +80,7 @@ func peach(ec *Frame, args []interface{}, opts map[string]interface{}) {
 		go func() {
 			// NOTE We don't have the position range of the closure in the source.
 			// Ideally, it should be kept in the Closure itself.
-			newec := ec.fork("closure of each")
+			newec := fm.fork("closure of peach")
 			newec.ports[0] = DevNullClosedChan
 			ex := newec.PCall(f, []interface{}{v}, NoOpts)
 			ClosePorts(newec.ports)
