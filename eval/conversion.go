@@ -28,6 +28,7 @@ import (
 var (
 	intType   = reflect.TypeOf(int(0))
 	floatType = reflect.TypeOf(float64(0))
+	runeType  = reflect.TypeOf(rune(0))
 )
 
 // elvToGo converts an Elvish value to a Go value of the specified type.
@@ -42,6 +43,9 @@ func elvToGo(arg interface{}, typ reflect.Type) (interface{}, error) {
 	case floatType:
 		f, err := elvToFloat(arg)
 		return f, err
+	case runeType:
+		r, err := elvToRune(arg)
+		return r, err
 	default:
 		if reflect.TypeOf(arg).AssignableTo(typ) {
 			return arg, nil
@@ -60,14 +64,16 @@ func scanElvToGo(src interface{}, ptr interface{}) {
 }
 
 // goToElv a Go value to an Elvish value.
-func goToElv(ret interface{}) interface{} {
-	switch ret := ret.(type) {
+func goToElv(a interface{}) interface{} {
+	switch a := a.(type) {
 	case int:
-		return strconv.Itoa(ret)
+		return strconv.Itoa(a)
 	case float64:
-		return strconv.FormatFloat(ret, 'g', -1, 64)
+		return strconv.FormatFloat(a, 'g', -1, 64)
+	case rune:
+		return string(a)
 	default:
-		return ret
+		return a
 	}
 }
 

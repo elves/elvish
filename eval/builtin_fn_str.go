@@ -29,8 +29,8 @@ func init() {
 		"ord":  ord,
 		"base": base,
 
-		"wcswidth":          wcswidth,
-		"-override-wcwidth": overrideWcwidth,
+		"wcswidth":          util.Wcswidth,
+		"-override-wcwidth": util.OverrideWcwidth,
 
 		"has-prefix": strings.HasPrefix,
 		"has-suffix": strings.HasSuffix,
@@ -122,19 +122,6 @@ func base(fm *Frame, b int, nums ...int) error {
 	for _, num := range nums {
 		out <- strconv.FormatInt(int64(num), b)
 	}
-	return nil
-}
-
-func wcswidth(s string) string {
-	return strconv.Itoa(util.Wcswidth(s))
-}
-
-func overrideWcwidth(s string, w int) error {
-	r, err := elvToRune(s)
-	if err != nil {
-		return err
-	}
-	util.OverrideWcwidth(r, w)
 	return nil
 }
 
