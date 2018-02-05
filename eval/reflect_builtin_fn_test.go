@@ -3,6 +3,8 @@ package eval
 import (
 	"errors"
 	"testing"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 func TestReflectBuiltinFnCall(t *testing.T) {
@@ -80,9 +82,39 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	})
 	callGood(theFrame, []interface{}{"314", "1.25"}, theOptions)
 
+	// Conversion of supplied inputs.
+	f = NewReflectBuiltinFn("f", func(i Inputs) {
+		var values []interface{}
+		i(func(x interface{}) {
+			values = append(values, x)
+		})
+		if len(values) != 2 || values[0] != "foo" || values[1] != "bar" {
+			t.Errorf("Inputs parameter didn't get supplied inputs")
+		}
+	})
+	callGood(theFrame, []interface{}{types.MakeList("foo", "bar")}, theOptions)
+
+	// Conversion of implicit inputs.
+	inFrame := &Frame{ports: make([]*Port, 3)}
+	ch := make(chan interface{}, 10)
+	ch <- "foo"
+	ch <- "bar"
+	close(ch)
+	inFrame.ports[0] = &Port{Chan: ch}
+	f = NewReflectBuiltinFn("f", func(i Inputs) {
+		var values []interface{}
+		i(func(x interface{}) {
+			values = append(values, x)
+		})
+		if len(values) != 2 || values[0] != "foo" || values[1] != "bar" {
+			t.Errorf("Inputs parameter didn't get implicit inputs")
+		}
+	})
+	callGood(inFrame, []interface{}{types.MakeList("foo", "bar")}, theOptions)
+
 	// Outputting of return values.
 	outFrame := &Frame{ports: make([]*Port, 3)}
-	ch := make(chan interface{}, 10)
+	ch = make(chan interface{}, 10)
 	outFrame.ports[1] = &Port{Chan: ch}
 	f = NewReflectBuiltinFn("f", func() string { return "ret" })
 	callGood(outFrame, nil, theOptions)

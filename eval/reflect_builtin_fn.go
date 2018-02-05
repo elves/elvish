@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"unsafe"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -29,7 +30,12 @@ func addToReflectBuiltinFns(moreFns map[string]interface{}) {
 //    Options, it gets a map of options. If the function has not declared an
 //    Options parameter but is passed options, an error is thrown.
 //
-// 3. Other parameters are converted using elvToGo.
+// 3. If the last parameter is non-variadic and has type Inputs, it represents
+//    an optional parameter that contains the input to this function. If the
+//    argument is not supplied, the input channel of the Frame will be used to
+//    supply the inputs.
+//
+// 4. Other parameters are converted using elvToGo.
 //
 // Return values go to the channel part of the stdout port, after being
 // converted using goToElv. If the last return value has type error and is not
@@ -43,6 +49,7 @@ type ReflectBuiltinFn struct {
 
 	frame   bool
 	options bool
+	inputs  bool
 	// Type of "normal" (non-Frame, non-Options, non-variadic) arguments.
 	normalArgs []reflect.Type
 	// Type of variadic arguments, nil if function is non-variadic
@@ -51,7 +58,10 @@ type ReflectBuiltinFn struct {
 
 var _ Callable = &ReflectBuiltinFn{}
 
-type Options map[string]interface{}
+type (
+	Options map[string]interface{}
+	Inputs  func(func(interface{}))
+)
 
 func (opt Options) Scan(opts ...OptToScan) {
 	ScanOpts(map[string]interface{}(opt), opts...)
@@ -60,6 +70,7 @@ func (opt Options) Scan(opts ...OptToScan) {
 var (
 	frameType   = reflect.TypeOf((*Frame)(nil))
 	optionsType = reflect.TypeOf(Options(nil))
+	inputsType  = reflect.TypeOf(Inputs(nil))
 )
 
 // NewReflectBuiltinFn creates a new ReflectBuiltinFn instance.
@@ -77,11 +88,17 @@ func NewReflectBuiltinFn(name string, impl interface{}) *ReflectBuiltinFn {
 		i++
 	}
 	for ; i < implType.NumIn(); i++ {
-		if implType.IsVariadic() && i == implType.NumIn()-1 {
-			b.variadicArg = implType.In(i).Elem()
-		} else {
-			b.normalArgs = append(b.normalArgs, implType.In(i))
+		paramType := implType.In(i)
+		if i == implType.NumIn()-1 {
+			if implType.IsVariadic() {
+				b.variadicArg = paramType.Elem()
+				break
+			} else if paramType == inputsType {
+				b.inputs = true
+				break
+			}
 		}
+		b.normalArgs = append(b.normalArgs, paramType)
 	}
 	return b
 }
@@ -119,6 +136,11 @@ func (b *ReflectBuiltinFn) Call(f *Frame, args []interface{}, opts map[string]in
 			return fmt.Errorf("want %d or more arguments, got %d",
 				len(b.normalArgs), len(args))
 		}
+	} else if b.inputs {
+		if len(args) != len(b.normalArgs) && len(args) != len(b.normalArgs)+1 {
+			return fmt.Errorf("want %d or %d arguments, got %d",
+				len(b.normalArgs), len(b.normalArgs)+1, len(args))
+		}
 	} else if len(args) != len(b.normalArgs) {
 		return fmt.Errorf("want %d arguments, got %d", len(b.normalArgs), len(args))
 	}
@@ -137,14 +159,36 @@ func (b *ReflectBuiltinFn) Call(f *Frame, args []interface{}, opts map[string]in
 		var typ reflect.Type
 		if i < len(b.normalArgs) {
 			typ = b.normalArgs[i]
-		} else {
+		} else if b.variadicArg != nil {
 			typ = b.variadicArg
+		} else if b.inputs {
+			break // Handled after the loop
+		} else {
+			panic("impossible")
 		}
 		converted, err := elvToGo(arg, typ)
 		if err != nil {
 			return fmt.Errorf("wrong type of %d'th argument: %v", i+1, err)
 		}
 		in = append(in, reflect.ValueOf(converted))
+	}
+
+	if b.inputs {
+		var inputs Inputs
+		if len(args) == len(b.normalArgs) {
+			inputs = Inputs(f.IterateInputs)
+		} else {
+			// Wrap an iterable argument in Inputs.
+			iterable := args[len(args)-1]
+			inputs = Inputs(func(f func(interface{})) {
+				err := types.Iterate(iterable, func(v interface{}) bool {
+					f(v)
+					return true
+				})
+				maybeThrow(err)
+			})
+		}
+		in = append(in, reflect.ValueOf(inputs))
 	}
 
 	outs := reflect.ValueOf(b.impl).Call(in)
