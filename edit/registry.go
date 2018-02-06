@@ -1,8 +1,6 @@
 package edit
 
 import (
-	"errors"
-
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
@@ -58,13 +56,4 @@ func makeBindings() map[string]vartypes.Variable {
 		bindings[mode] = eval.NewVariableFromPtr(&table)
 	}
 	return bindings
-}
-
-var errShouldBeBindingTable = errors.New("should be binding table")
-
-func shouldBeBindingTable(v interface{}) error {
-	if _, ok := v.(BindingTable); !ok {
-		return errShouldBeBindingTable
-	}
-	return nil
 }
