@@ -57,10 +57,19 @@ func elvToGo(arg interface{}, typ reflect.Type) (interface{}, error) {
 
 // scanElvToGo converts an Elvish value to a Go value, putting the result in a
 // pointer.
-func scanElvToGo(src interface{}, ptr interface{}) {
+func scanElvToGo(src interface{}, ptr interface{}) error {
 	v, err := elvToGo(src, reflect.TypeOf(ptr).Elem())
-	maybeThrow(err)
+	if err != nil {
+		return err
+	}
 	reflect.Indirect(reflect.ValueOf(ptr)).Set(reflect.ValueOf(v))
+	return nil
+}
+
+// mustScanElvToGo is like scanElvToGo, except that errors are turned into
+// exceptions.
+func mustScanElvToGo(src interface{}, ptr interface{}) {
+	maybeThrow(scanElvToGo(src, ptr))
 }
 
 // goToElv a Go value to an Elvish value.

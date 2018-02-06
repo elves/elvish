@@ -200,7 +200,7 @@ var scanArgTestCases = []struct {
 
 func TestScanArg(t *testing.T) {
 	for _, tc := range scanArgTestCases {
-		scanElvToGo(tc.source, tc.destPtr)
+		mustScanElvToGo(tc.source, tc.destPtr)
 		if !types.Equal(indirect(tc.destPtr), tc.want) {
 			t.Errorf("scanArg(%s) got %q, want %v", tc.source,
 				indirect(tc.destPtr), tc.want)
