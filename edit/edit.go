@@ -115,7 +115,7 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 		evaler: ev,
 
 		bindings:  makeBindings(),
-		variables: makeVariables(),
+		variables: map[string]vartypes.Variable{},
 	}
 
 	for _, f := range editorInitFuncs {

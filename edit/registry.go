@@ -21,24 +21,6 @@ func atEditorInit(f func(*Editor)) {
 	editorInitFuncs = append(editorInitFuncs, f)
 }
 
-var variableRegistry = map[string]func() vartypes.Variable{}
-
-// RegisterVariable registers a variable: its name and a func to derive a
-// Variable instance. It is later to be used during Editor initialization to
-// populate Editor.variables as well as the edit: namespace.
-func RegisterVariable(name string, maker func() vartypes.Variable) struct{} {
-	variableRegistry[name] = maker
-	return struct{}{}
-}
-
-func makeVariables() map[string]vartypes.Variable {
-	m := make(map[string]vartypes.Variable, len(variableRegistry))
-	for name, maker := range variableRegistry {
-		m[name] = maker()
-	}
-	return m
-}
-
 var builtinMaps = map[string]map[string]*BuiltinFn{}
 
 // registerBuiltins registers builtins under a subnamespace of edit:, to be used
