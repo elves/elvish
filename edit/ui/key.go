@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
@@ -227,15 +226,6 @@ func ToKey(k interface{}) Key {
 		util.Throw(ErrKeyMustBeString)
 		panic("unreachable")
 	}
-}
-
-// KeyBuiltin implements the edit:key builtin.
-func KeyBuiltin(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	var s string
-	eval.ScanArgs(args, &s)
-	eval.TakeNoOpt(opts)
-
-	ec.OutputChan() <- ToKey(s)
 }
 
 // Keys implements sort.Interface.

@@ -2,7 +2,6 @@ package eval
 
 import (
 	"strconv"
-	"strings"
 	"syscall"
 
 	"github.com/elves/elvish/eval/vartypes"
@@ -20,17 +19,6 @@ func makeBuiltinNs() Ns {
 	}
 	AddReflectBuiltinFns(ns, "", reflectBuiltinFns)
 	return ns
-}
-
-// AddBuiltinFns adds builtin functions to a namespace.
-func AddBuiltinFns(ns Ns, fns ...*BuiltinFn) {
-	for _, b := range fns {
-		name := b.Name
-		if i := strings.IndexRune(b.Name, ':'); i != -1 {
-			name = b.Name[i+1:]
-		}
-		ns[name+FnSuffix] = vartypes.NewRo(b)
-	}
 }
 
 // AddReflectBuiltinFns adds reflect builtin functions to a namespace.

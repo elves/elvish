@@ -9,46 +9,9 @@ import (
 	"net"
 	"path/filepath"
 	"time"
-	"unsafe"
 
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/util"
-	"github.com/xiaq/persistent/hash"
 )
-
-// BuiltinFn is a builtin function.
-type BuiltinFn struct {
-	Name string
-	Impl BuiltinFnImpl
-}
-
-type BuiltinFnImpl func(*Frame, []interface{}, map[string]interface{})
-
-var _ Callable = &BuiltinFn{}
-
-// Kind returns "fn".
-func (*BuiltinFn) Kind() string {
-	return "fn"
-}
-
-// Equal compares based on identity.
-func (b *BuiltinFn) Equal(rhs interface{}) bool {
-	return b == rhs
-}
-
-func (b *BuiltinFn) Hash() uint32 {
-	return hash.Pointer(unsafe.Pointer(b))
-}
-
-// Repr returns an opaque representation "<builtin xxx>".
-func (b *BuiltinFn) Repr(int) string {
-	return "<builtin " + b.Name + ">"
-}
-
-// Call calls a builtin function.
-func (b *BuiltinFn) Call(ec *Frame, args []interface{}, opts map[string]interface{}) error {
-	return util.PCall(func() { b.Impl(ec, args, opts) })
-}
 
 // Builtins that have not been put into their own groups go here.
 

@@ -8,9 +8,9 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-func _dumpBuf(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	out := ec.OutputFile()
-	buf := ec.Editor.(*Editor).writer.CurrentBuffer()
+func (ed *Editor) dumpBuf(fm *eval.Frame) {
+	out := fm.OutputFile()
+	buf := ed.writer.CurrentBuffer()
 	for _, line := range buf.Lines {
 		style := ""
 		openedSpan := false

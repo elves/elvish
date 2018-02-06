@@ -89,11 +89,7 @@ func (bt BindingTable) Dissoc(k interface{}) interface{} {
 	return BindingTable{bt.Map.Without(ui.ToKey(k))}
 }
 
-func makeBindingTable(f *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	var raw hashmap.Map
-	eval.ScanArgs(args, &raw)
-	eval.TakeNoOpt(opts)
-
+func makeBindingTable(raw hashmap.Map) BindingTable {
 	converted := types.EmptyMap
 	for it := raw.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
@@ -104,5 +100,5 @@ func makeBindingTable(f *eval.Frame, args []interface{}, opts map[string]interfa
 		converted = converted.Assoc(ui.ToKey(k), f)
 	}
 
-	f.OutputChan() <- BindingTable{converted}
+	return BindingTable{converted}
 }

@@ -151,19 +151,22 @@ func makeNs(ed *Editor) eval.Ns {
 	ns.SetFn("match-subseq", matchSubseq)
 
 	// Functions.
-	eval.AddBuiltinFns(ns,
-		&eval.BuiltinFn{"edit:binding-table", makeBindingTable},
-		&eval.BuiltinFn{"edit:command-history", CommandHistory},
-		&eval.BuiltinFn{"edit:complete-getopt", complGetopt},
-		&eval.BuiltinFn{"edit:complex-candidate", outputComplexCandidate},
-		&eval.BuiltinFn{"edit:insert-at-dot", InsertAtDot},
-		&eval.BuiltinFn{"edit:replace-input", ReplaceInput},
-		&eval.BuiltinFn{"edit:styled", styled},
-		&eval.BuiltinFn{"edit:key", ui.KeyBuiltin},
-		&eval.BuiltinFn{"edit:wordify", Wordify},
-		&eval.BuiltinFn{"edit:-dump-buf", _dumpBuf},
-		&eval.BuiltinFn{"edit:-narrow-read", NarrowRead},
-	)
+	fns := map[string]interface{}{
+		"binding-table":     makeBindingTable,
+		"command-history":   CommandHistory,
+		"complete-getopt":   complGetopt,
+		"complex-candidate": makeComplexCandidate,
+		"insert-at-dot":     ed.insertAtDot,
+		"replace-input":     ed.replaceInput,
+		"styled":            styled,
+		"key":               ui.ToKey,
+		"wordify":           wordifyBuiltin,
+		"-dump-buf":         ed.dumpBuf,
+		"-narrow-read":      NarrowRead,
+	}
+	for name, impl := range fns {
+		ns.SetFn(name, eval.NewReflectBuiltinFn("edit:"+name, impl))
+	}
 
 	submods := make(map[string]eval.Ns)
 	// Install other modules.

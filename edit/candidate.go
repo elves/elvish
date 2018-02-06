@@ -100,15 +100,12 @@ func (c *complexCandidate) cook(q parse.PrimaryType) *candidate {
 	}
 }
 
-// outputComplexCandidate composes a complexCandidate.
-func outputComplexCandidate(ec *eval.Frame,
-	args []interface{}, opts map[string]interface{}) {
+// makeComplexCandidate composes a complexCandidate.
+func makeComplexCandidate(opts eval.Options, stem string) *complexCandidate {
+	c := &complexCandidate{stem: stem}
 
 	var style string
-	c := &complexCandidate{}
-
-	eval.ScanArgs(args, &c.stem)
-	eval.ScanOpts(opts,
+	opts.Scan(
 		eval.OptToScan{"code-suffix", &c.codeSuffix, ""},
 		eval.OptToScan{"display-suffix", &c.displaySuffix, ""},
 		eval.OptToScan{"style", &style, ""},
@@ -117,7 +114,7 @@ func outputComplexCandidate(ec *eval.Frame,
 		c.style = ui.StylesFromString(style)
 	}
 
-	ec.OutputChan() <- c
+	return c
 }
 
 func filterRawCandidates(ev *eval.Evaler, matcher eval.Callable, seed string, chanRawCandidate <-chan rawCandidate) ([]rawCandidate, error) {

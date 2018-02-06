@@ -383,16 +383,14 @@ func (c *narrowItemComplex) FilterText() string {
 	return c.Content()
 }
 
-func NarrowRead(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	var source, action eval.Callable
+func NarrowRead(fm *eval.Frame, opts eval.Options, source, action eval.Callable) {
 	l := &narrow{
 		opts: narrowOptions{
 			Bindings: types.EmptyMap,
 		},
 	}
 
-	eval.ScanArgs(args, &source, &action)
-	eval.ScanOptsToStruct(opts, &l.opts)
+	opts.ScanToStruct(&l.opts)
 
 	for it := l.opts.Bindings.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
@@ -407,7 +405,7 @@ func NarrowRead(ec *eval.Frame, args []interface{}, opts map[string]interface{})
 		l.opts.bindingMap[key] = val
 	}
 
-	l.source = narrowGetSource(ec, source)
+	l.source = narrowGetSource(fm, source)
 	l.action = func(ed *Editor, item narrowItem) {
 		ed.CallFn(action, item)
 	}
@@ -415,7 +413,7 @@ func NarrowRead(ec *eval.Frame, args []interface{}, opts map[string]interface{})
 	l.match = strings.Contains
 
 	l.changeFilter("")
-	ed := ec.Editor.(*Editor)
+	ed := fm.Editor.(*Editor)
 	ed.mode = l
 }
 
@@ -440,24 +438,18 @@ func narrowGetSource(ec *eval.Frame, source eval.Callable) func() []narrowItem {
 	}
 }
 
-func CommandHistory(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	var (
-		rest              []int
-		limit, start, end int
-	)
+func CommandHistory(fm *eval.Frame, args ...int) {
+	var limit, start, end int
 
-	eval.ScanArgsVariadic(args, &rest)
-	eval.TakeNoOpt(opts)
-
-	out := ec.OutputChan()
-	ed := ec.Editor.(*Editor)
+	out := fm.OutputChan()
+	ed := fm.Editor.(*Editor)
 	cmds, err := ed.historyFuser.AllCmds()
 	if err != nil {
 		return
 	}
 
-	if len(rest) > 0 {
-		limit = rest[0]
+	if len(args) > 0 {
+		limit = args[0]
 	}
 
 	total := len(cmds)
@@ -480,40 +472,19 @@ func CommandHistory(ec *eval.Frame, args []interface{}, opts map[string]interfac
 	}
 
 	for i := start; i < end; i++ {
-		out <- types.MakeMap(map[interface{}]interface{}{
-			"id":  strconv.Itoa(i),
-			"cmd": cmds[i],
-		})
+		out <- types.MakeMapFromKV(
+			"id", strconv.Itoa(i),
+			"cmd", cmds[i],
+		)
 	}
 }
 
-func InsertAtDot(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	var text string
-
-	eval.ScanArgs(args, &text)
-	eval.TakeNoOpt(opts)
-
-	ed := ec.Editor.(*Editor)
-	ed.insertAtDot(text)
-}
-
-func ReplaceInput(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	var text string
-
-	eval.ScanArgs(args, &text)
-	eval.TakeNoOpt(opts)
-
-	ed := ec.Editor.(*Editor)
+func (ed *Editor) replaceInput(text string) {
 	ed.buffer = text
 }
 
-func Wordify(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	var text string
-
-	eval.ScanArgs(args, &text)
-	eval.TakeNoOpt(opts)
-
-	out := ec.OutputChan()
+func wordifyBuiltin(fm *eval.Frame, text string) {
+	out := fm.OutputChan()
 	for _, s := range wordify(text) {
 		out <- s
 	}

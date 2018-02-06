@@ -11,11 +11,7 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func complGetopt(ec *eval.Frame, a []interface{}, o map[string]interface{}) {
-	var elemsv, optsv, argsv interface{}
-	eval.ScanArgs(a, &elemsv, &optsv, &argsv)
-	eval.TakeNoOpt(o)
-
+func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 	var (
 		elems    []string
 		opts     []*getopt.Option
@@ -92,7 +88,7 @@ func complGetopt(ec *eval.Frame, a []interface{}, o map[string]interface{}) {
 	// TODO Configurable config
 	g := getopt.Getopt{opts, getopt.GNUGetoptLong}
 	_, parsedArgs, ctx := g.Parse(elems)
-	out := ec.OutputChan()
+	out := fm.OutputChan()
 
 	putShortOpt := func(opt *getopt.Option) {
 		c := &complexCandidate{stem: "-" + string(opt.Short)}
@@ -126,7 +122,7 @@ func complGetopt(ec *eval.Frame, a []interface{}, o map[string]interface{}) {
 					out <- rc
 				}
 			}()
-			err := callArgCompleter(argCompl, ec.Evaler, []string{ctx.Text}, rawCands)
+			err := callArgCompleter(argCompl, fm.Evaler, []string{ctx.Text}, rawCands)
 			maybeThrow(err)
 		}
 		// TODO Notify that there is no suitable argument completer
