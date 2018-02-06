@@ -12,7 +12,7 @@ import (
 func Ns() eval.Ns {
 	ns := eval.Ns{}
 	for name, impl := range fns {
-		ns[name+eval.FnSuffix] = vartypes.NewRo(eval.NewReflectBuiltinFn("str:"+name, impl))
+		ns[name+eval.FnSuffix] = vartypes.NewRo(eval.NewBuiltinFn("str:"+name, impl))
 	}
 	return ns
 }

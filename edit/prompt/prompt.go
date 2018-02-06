@@ -43,7 +43,7 @@ func PromptVariable() vartypes.Variable {
 			out <- &ui.Styled{"> ", ui.Styles{}}
 		}
 	}
-	val := eval.Callable(eval.NewReflectBuiltinFn("default prompt", prompt))
+	val := eval.Callable(eval.NewBuiltinFn("default prompt", prompt))
 	return eval.NewVariableFromPtr(&val)
 }
 
@@ -69,7 +69,7 @@ func RpromptVariable() vartypes.Variable {
 		out <- &ui.Styled{rpromptStr, ui.Styles{"inverse"}}
 	}
 
-	val := eval.Callable(eval.NewReflectBuiltinFn("default rprompt", rprompt))
+	val := eval.Callable(eval.NewBuiltinFn("default rprompt", rprompt))
 	return eval.NewVariableFromPtr(&val)
 }
 

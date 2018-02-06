@@ -18,7 +18,7 @@ import (
 var ErrArgs = errors.New("args error")
 
 func init() {
-	addToReflectBuiltinFns(map[string]interface{}{
+	addToBuiltinFns(map[string]interface{}{
 		"nop":        nop,
 		"kind-of":    kindOf,
 		"constantly": constantly,
@@ -49,7 +49,7 @@ func kindOf(fm *Frame, args ...interface{}) {
 
 func constantly(args ...interface{}) Callable {
 	// XXX Repr of this fn is not right
-	return NewReflectBuiltinFn(
+	return NewBuiltinFn(
 		"created by constantly",
 		func(fm *Frame) {
 			out := fm.ports[1].Chan

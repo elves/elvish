@@ -13,7 +13,7 @@ import (
 // Sequence, list and maps.
 
 func init() {
-	addToReflectBuiltinFns(map[string]interface{}{
+	addToBuiltinFns(map[string]interface{}{
 		"ns": nsFn,
 
 		"range":   rangeFn,

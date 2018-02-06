@@ -15,7 +15,7 @@ import (
 var ErrStoreNotConnected = errors.New("store not connected")
 
 func init() {
-	addToReflectBuiltinFns(map[string]interface{}{
+	addToBuiltinFns(map[string]interface{}{
 		// Directory
 		"cd":          cd,
 		"dir-history": dirs,

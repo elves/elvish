@@ -8,7 +8,7 @@ import (
 // Numerical operations.
 
 func init() {
-	addToReflectBuiltinFns(map[string]interface{}{
+	addToBuiltinFns(map[string]interface{}{
 		// Comparison
 		"<":  func(a, b float64) bool { return a < b },
 		"<=": func(a, b float64) bool { return a <= b },

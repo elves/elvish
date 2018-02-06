@@ -42,6 +42,6 @@ func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
 		"sock": vartypes.NewRo(string(daemon.SockPath())),
 
 		"spawn" + eval.FnSuffix: vartypes.NewRo(
-			eval.NewReflectBuiltinFn("daemon:spawn", daemonSpawn)),
+			eval.NewBuiltinFn("daemon:spawn", daemonSpawn)),
 	}
 }

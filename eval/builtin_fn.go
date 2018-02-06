@@ -10,15 +10,15 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
-var reflectBuiltinFns = map[string]interface{}{}
+var builtinFns = map[string]interface{}{}
 
-func addToReflectBuiltinFns(moreFns map[string]interface{}) {
+func addToBuiltinFns(moreFns map[string]interface{}) {
 	for name, impl := range moreFns {
-		reflectBuiltinFns[name] = impl
+		builtinFns[name] = impl
 	}
 }
 
-// ReflectBuiltinFn uses reflection to wrap arbitrary Go functions into Elvish
+// BuiltinFn uses reflection to wrap arbitrary Go functions into Elvish
 // functions.
 //
 // Parameters are passed following these rules:
@@ -41,7 +41,7 @@ func addToReflectBuiltinFns(moreFns map[string]interface{}) {
 // converted using goToElv. If the last return value has type error and is not
 // nil, it is turned into an exception and no ouputting happens. If the last
 // return value is a nil error, it is ignored.
-type ReflectBuiltinFn struct {
+type BuiltinFn struct {
 	name string
 	impl interface{}
 
@@ -56,7 +56,7 @@ type ReflectBuiltinFn struct {
 	variadicArg reflect.Type
 }
 
-var _ Callable = &ReflectBuiltinFn{}
+var _ Callable = &BuiltinFn{}
 
 type (
 	Options map[string]interface{}
@@ -77,10 +77,10 @@ var (
 	inputsType  = reflect.TypeOf(Inputs(nil))
 )
 
-// NewReflectBuiltinFn creates a new ReflectBuiltinFn instance.
-func NewReflectBuiltinFn(name string, impl interface{}) *ReflectBuiltinFn {
+// NewBuiltinFn creates a new ReflectBuiltinFn instance.
+func NewBuiltinFn(name string, impl interface{}) *BuiltinFn {
 	implType := reflect.TypeOf(impl)
-	b := &ReflectBuiltinFn{name: name, impl: impl}
+	b := &BuiltinFn{name: name, impl: impl}
 
 	i := 0
 	if i < implType.NumIn() && implType.In(i) == frameType {
@@ -108,22 +108,22 @@ func NewReflectBuiltinFn(name string, impl interface{}) *ReflectBuiltinFn {
 }
 
 // Kind returns "fn".
-func (*ReflectBuiltinFn) Kind() string {
+func (*BuiltinFn) Kind() string {
 	return "fn"
 }
 
 // Equal compares identity.
-func (b *ReflectBuiltinFn) Equal(rhs interface{}) bool {
+func (b *BuiltinFn) Equal(rhs interface{}) bool {
 	return b == rhs
 }
 
 // Hash hashes the address.
-func (b *ReflectBuiltinFn) Hash() uint32 {
+func (b *BuiltinFn) Hash() uint32 {
 	return hash.Pointer(unsafe.Pointer(b))
 }
 
 // Repr returns an opaque representation "<builtin $name>".
-func (b *ReflectBuiltinFn) Repr(int) string {
+func (b *BuiltinFn) Repr(int) string {
 	return "<builtin " + b.name + ">"
 }
 
@@ -134,7 +134,7 @@ var errorType = reflect.TypeOf((*error)(nil)).Elem()
 var errNoOptions = errors.New("function does not accept any options")
 
 // Call calls the implementation using reflection.
-func (b *ReflectBuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
+func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
 	if b.variadicArg != nil {
 		if len(args) < len(b.normalArgs) {
 			return fmt.Errorf("want %d or more arguments, got %d",

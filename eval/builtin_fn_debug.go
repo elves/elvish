@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	addToReflectBuiltinFns(map[string]interface{}{
+	addToBuiltinFns(map[string]interface{}{
 		"src":    src,
 		"-gc":    _gc,
 		"-stack": _stack,

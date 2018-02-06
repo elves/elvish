@@ -17,7 +17,7 @@ func makeBuiltinNs() Ns {
 		"paths": &EnvList{envName: "PATH"},
 		"pwd":   PwdVariable{},
 	}
-	AddReflectBuiltinFns(ns, "", reflectBuiltinFns)
+	AddReflectBuiltinFns(ns, "", builtinFns)
 	return ns
 }
 
@@ -28,6 +28,6 @@ func AddReflectBuiltinFns(ns Ns, nsName string, fns map[string]interface{}) {
 		if nsName != "" {
 			qname = nsName + ":" + name
 		}
-		ns.SetFn(name, NewReflectBuiltinFn(qname, impl))
+		ns.SetFn(name, NewBuiltinFn(qname, impl))
 	}
 }

@@ -18,11 +18,11 @@ var (
 )
 
 var (
-	matchPrefix = eval.NewReflectBuiltinFn(
+	matchPrefix = eval.NewBuiltinFn(
 		"edit:match-prefix", wrapMatcher(strings.HasPrefix))
-	matchSubstr = eval.NewReflectBuiltinFn(
+	matchSubstr = eval.NewBuiltinFn(
 		"edit:match-substr", wrapMatcher(strings.Contains))
-	matchSubseq = eval.NewReflectBuiltinFn(
+	matchSubseq = eval.NewBuiltinFn(
 		"edit:match-subseq", wrapMatcher(util.HasSubseq))
 
 	_ = RegisterVariable("-matcher", func() vartypes.Variable {

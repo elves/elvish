@@ -8,7 +8,7 @@ import (
 // Flow control.
 
 func init() {
-	addToReflectBuiltinFns(map[string]interface{}{
+	addToBuiltinFns(map[string]interface{}{
 		"run-parallel": runParallel,
 		// Exception and control
 		"fail":        fail,

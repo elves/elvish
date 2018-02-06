@@ -16,7 +16,7 @@ import (
 var ErrInput = errors.New("input error")
 
 func init() {
-	addToReflectBuiltinFns(map[string]interface{}{
+	addToBuiltinFns(map[string]interface{}{
 		"<s":  func(a, b string) bool { return a < b },
 		"<=s": func(a, b string) bool { return a <= b },
 		"==s": func(a, b string) bool { return a == b },

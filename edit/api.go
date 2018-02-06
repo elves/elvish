@@ -165,7 +165,7 @@ func makeNs(ed *Editor) eval.Ns {
 		"-narrow-read":      NarrowRead,
 	}
 	for name, impl := range fns {
-		ns.SetFn(name, eval.NewReflectBuiltinFn("edit:"+name, impl))
+		ns.SetFn(name, eval.NewBuiltinFn("edit:"+name, impl))
 	}
 
 	submods := make(map[string]eval.Ns)

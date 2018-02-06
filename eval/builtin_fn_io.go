@@ -13,7 +13,7 @@ import (
 // Input and output.
 
 func init() {
-	addToReflectBuiltinFns(map[string]interface{}{
+	addToBuiltinFns(map[string]interface{}{
 		// Value output
 		"put": put,
 
