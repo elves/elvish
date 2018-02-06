@@ -8,7 +8,6 @@ import (
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vartypes"
 )
 
 // Command history mode.
@@ -26,8 +25,8 @@ type hist struct {
 	*history.Walker
 }
 
-func (*hist) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Callable {
-	return getBinding(m[modeHistory], k)
+func (*hist) Binding(ed *Editor, k ui.Key) eval.Callable {
+	return getBinding(ed.bindings[modeHistory], k)
 }
 
 func (h *hist) ModeLine() ui.Renderer {

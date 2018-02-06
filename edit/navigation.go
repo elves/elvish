@@ -11,7 +11,6 @@ import (
 	"github.com/elves/elvish/edit/lscolors"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -52,8 +51,8 @@ type navPreview interface {
 	List(int) ui.Renderer
 }
 
-func (*navigation) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Callable {
-	return getBinding(m[modeNavigation], k)
+func (*navigation) Binding(ed *Editor, k ui.Key) eval.Callable {
+	return getBinding(ed.bindings[modeNavigation], k)
 }
 
 func (n *navigation) ModeLine() ui.Renderer {

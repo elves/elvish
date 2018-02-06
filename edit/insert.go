@@ -7,7 +7,6 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
 )
 
@@ -71,8 +70,8 @@ func (ins *insert) ModeLine() ui.Renderer {
 	return nil
 }
 
-func (*insert) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Callable {
-	return getBinding(m[modeInsert], k)
+func (*insert) Binding(ed *Editor, k ui.Key) eval.Callable {
+	return getBinding(ed.bindings[modeInsert], k)
 }
 
 type command struct{}
@@ -81,8 +80,8 @@ func (*command) ModeLine() ui.Renderer {
 	return modeLineRenderer{" COMMAND ", ""}
 }
 
-func (*command) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Callable {
-	return getBinding(m[modeCommand], k)
+func (*command) Binding(ed *Editor, k ui.Key) eval.Callable {
+	return getBinding(ed.bindings[modeCommand], k)
 }
 
 func insertStart(ed *Editor) {

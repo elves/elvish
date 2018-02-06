@@ -9,7 +9,6 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
 )
 
@@ -65,7 +64,8 @@ func newListing(t string, p listingProvider) listing {
 	return l
 }
 
-func (l *listing) Binding(m map[string]vartypes.Variable, k ui.Key) eval.Callable {
+func (l *listing) Binding(ed *Editor, k ui.Key) eval.Callable {
+	m := ed.bindings
 	if m[l.name] == nil {
 		return getBinding(m[modeListing], k)
 	}

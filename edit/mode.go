@@ -3,7 +3,6 @@ package edit
 import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vartypes"
 )
 
 // Names of modes, used for subnamespaces of edit:.
@@ -24,7 +23,7 @@ const (
 // Mode is an editor mode.
 type Mode interface {
 	ModeLine() ui.Renderer
-	Binding(map[string]vartypes.Variable, ui.Key) eval.Callable
+	Binding(*Editor, ui.Key) eval.Callable
 }
 
 // CursorOnModeLiner is an optional interface that modes can implement. If a
