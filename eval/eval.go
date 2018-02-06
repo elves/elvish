@@ -60,13 +60,18 @@ type evalerScopes struct {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler() *Evaler {
-	builtin := makeBuiltinNs()
+	valueOutIndicator := defaultValueOutIndicator
+
+	builtin := builtinNs.Clone()
+	builtin["value-out-indicator"] = NewVariableFromPtr(&valueOutIndicator)
 
 	ev := &Evaler{
 		evalerScopes: evalerScopes{
 			Global:  make(Ns),
-			Builtin: builtin,
+			Builtin: builtinNs,
 		},
+		evalerPorts: newEvalerPorts(
+			os.Stdin, os.Stdout, os.Stderr, &valueOutIndicator),
 		modules: map[string]Ns{
 			"builtin": builtin,
 		},
@@ -74,10 +79,6 @@ func NewEvaler() *Evaler {
 		Editor:  nil,
 		intCh:   nil,
 	}
-
-	valueOutIndicator := defaultValueOutIndicator
-	ev.evalerPorts = newEvalerPorts(os.Stdin, os.Stdout, os.Stderr, &valueOutIndicator)
-	builtin["value-out-indicator"] = NewVariableFromPtr(&valueOutIndicator)
 
 	return ev
 }

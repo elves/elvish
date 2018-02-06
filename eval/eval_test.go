@@ -11,7 +11,7 @@ import (
 
 func TestBuiltinPid(t *testing.T) {
 	pid := strconv.Itoa(syscall.Getpid())
-	builtinPid := types.ToString(makeBuiltinNs()["pid"].Get())
+	builtinPid := types.ToString(builtinNs["pid"].Get())
 	if builtinPid != pid {
 		t.Errorf(`ev.builtin["pid"] = %v, want %v`, builtinPid, pid)
 	}

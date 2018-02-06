@@ -6,16 +6,9 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vartypes"
 )
 
-func Ns() eval.Ns {
-	ns := eval.Ns{}
-	for name, impl := range fns {
-		ns[name+eval.FnSuffix] = vartypes.NewRo(eval.NewBuiltinFn("str:"+name, impl))
-	}
-	return ns
-}
+var Ns = eval.NewNs().AddBuiltinFns("str:", fns)
 
 var fns = map[string]interface{}{
 	"compare":      strings.Compare,

@@ -12,7 +12,7 @@ import (
 var ErrNotInSameGroup = errors.New("not in the same process group")
 
 func init() {
-	addToBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]interface{}{
 		// Command resolution
 		"external":        external,
 		"has-external":    hasExternal,

@@ -11,11 +11,7 @@ import (
 	"github.com/xiaq/persistent/vector"
 )
 
-func Ns() eval.Ns {
-	ns := eval.Ns{}
-	eval.AddReflectBuiltinFns(ns, "re", fns)
-	return ns
-}
+var Ns = eval.NewNs().AddBuiltinFns("re:", fns)
 
 var fns = map[string]interface{}{
 	"quote":   regexp.QuoteMeta,

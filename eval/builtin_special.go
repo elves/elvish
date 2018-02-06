@@ -267,7 +267,7 @@ func use(ec *Frame, modname, modpath string) error {
 	if err != nil {
 		return err
 	}
-	ec.local.SetNs(modname, ns)
+	ec.local.AddNs(modname, ns)
 	return nil
 }
 

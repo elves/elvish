@@ -18,7 +18,7 @@ import (
 var ErrArgs = errors.New("args error")
 
 func init() {
-	addToBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]interface{}{
 		"nop":        nop,
 		"kind-of":    kindOf,
 		"constantly": constantly,

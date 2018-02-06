@@ -146,9 +146,9 @@ func makeNs(ed *Editor) eval.Ns {
 	}
 
 	// Matchers.
-	ns.SetFn("match-prefix", matchPrefix)
-	ns.SetFn("match-substr", matchSubstr)
-	ns.SetFn("match-subseq", matchSubseq)
+	ns.AddFn("match-prefix", matchPrefix)
+	ns.AddFn("match-substr", matchSubstr)
+	ns.AddFn("match-subseq", matchSubseq)
 
 	// Functions.
 	fns := map[string]interface{}{
@@ -164,9 +164,7 @@ func makeNs(ed *Editor) eval.Ns {
 		"-dump-buf":         ed.dumpBuf,
 		"-narrow-read":      NarrowRead,
 	}
-	for name, impl := range fns {
-		ns.SetFn(name, eval.NewBuiltinFn("edit:"+name, impl))
-	}
+	ns.AddBuiltinFns("edit:", fns)
 
 	submods := make(map[string]eval.Ns)
 	// Install other modules.
@@ -187,7 +185,7 @@ func makeNs(ed *Editor) eval.Ns {
 	}
 
 	for name, submod := range submods {
-		ns.SetNs(name, submod)
+		ns.AddNs(name, submod)
 	}
 
 	return ns

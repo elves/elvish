@@ -5,7 +5,7 @@ import "github.com/elves/elvish/eval/types"
 // Basic predicate commands.
 
 func init() {
-	addToBuiltinFns(map[string]interface{}{
+	addBuiltinFns(map[string]interface{}{
 		"bool":   types.Bool,
 		"not":    not,
 		"is":     is,

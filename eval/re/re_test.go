@@ -37,7 +37,7 @@ var tests = []eval.Test{
 func TestRe(t *testing.T) {
 	eval.RunTests(t, tests, func() *eval.Evaler {
 		ev := eval.NewEvaler()
-		ev.Builtin.SetNs("re", Ns())
+		ev.Builtin.AddNs("re", Ns)
 		return ev
 	})
 }

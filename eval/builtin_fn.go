@@ -10,14 +10,6 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
-var builtinFns = map[string]interface{}{}
-
-func addToBuiltinFns(moreFns map[string]interface{}) {
-	for name, impl := range moreFns {
-		builtinFns[name] = impl
-	}
-}
-
 // BuiltinFn uses reflection to wrap arbitrary Go functions into Elvish
 // functions.
 //

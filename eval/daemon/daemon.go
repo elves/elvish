@@ -19,7 +19,7 @@ var errDontKnowHowToSpawnDaemon = errors.New("don't know how to spawn daemon")
 // Ns makes the daemon: namespace.
 func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
 	// Obtain process ID
-	daemonPid := func() interface{} {
+	getPid := func() interface{} {
 		pid, err := daemon.Pid()
 		if err != nil {
 			util.Throw(err)
@@ -27,21 +27,15 @@ func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
 		return string(strconv.Itoa(pid))
 	}
 
-	daemonSpawn := func() {
+	spawn := func() error {
 		if spawner == nil {
 			util.Throw(errDontKnowHowToSpawnDaemon)
 		}
-		err := spawner.Spawn()
-		if err != nil {
-			util.Throw(err)
-		}
+		return spawner.Spawn()
 	}
 
 	return eval.Ns{
-		"pid":  vartypes.NewRoCallback(daemonPid),
+		"pid":  vartypes.NewRoCallback(getPid),
 		"sock": vartypes.NewRo(string(daemon.SockPath())),
-
-		"spawn" + eval.FnSuffix: vartypes.NewRo(
-			eval.NewBuiltinFn("daemon:spawn", daemonSpawn)),
-	}
+	}.AddBuiltinFn("daemon:", "spawn", spawn)
 }
