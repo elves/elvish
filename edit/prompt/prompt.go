@@ -34,10 +34,8 @@ func PromptVariable() vartypes.Variable {
 	user, err := user.Current()
 	isRoot := err == nil && user.Uid == "0"
 
-	prompt := func(ec *eval.Frame,
-		args []interface{}, opts map[string]interface{}) {
-
-		out := ec.OutputChan()
+	prompt := func(fm *eval.Frame) {
+		out := fm.OutputChan()
 		out <- string(util.Getwd())
 		if isRoot {
 			out <- &ui.Styled{"# ", ui.Styles{"red"}}
@@ -45,7 +43,7 @@ func PromptVariable() vartypes.Variable {
 			out <- &ui.Styled{"> ", ui.Styles{}}
 		}
 	}
-	val := eval.Callable(&eval.BuiltinFn{"default prompt", prompt})
+	val := eval.Callable(eval.NewReflectBuiltinFn("default prompt", prompt))
 	return eval.NewVariableFromPtr(&val)
 }
 
@@ -66,14 +64,12 @@ func RpromptVariable() vartypes.Variable {
 		hostname = "???"
 	}
 	rpromptStr := username + "@" + hostname
-	rprompt := func(ec *eval.Frame,
-		args []interface{}, opts map[string]interface{}) {
-
-		out := ec.OutputChan()
+	rprompt := func(fm *eval.Frame) {
+		out := fm.OutputChan()
 		out <- &ui.Styled{rpromptStr, ui.Styles{"inverse"}}
 	}
 
-	val := eval.Callable(&eval.BuiltinFn{"default rprompt", rprompt})
+	val := eval.Callable(eval.NewReflectBuiltinFn("default rprompt", rprompt))
 	return eval.NewVariableFromPtr(&val)
 }
 

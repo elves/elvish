@@ -18,17 +18,12 @@ var (
 )
 
 var (
-	matchPrefix = &eval.BuiltinFn{
-		"edit:match-prefix", wrapMatcher(strings.HasPrefix)}
-	matchSubstr = &eval.BuiltinFn{
-		"edit:match-substr", wrapMatcher(strings.Contains)}
-	matchSubseq = &eval.BuiltinFn{
-		"edit:match-subseq", wrapMatcher(util.HasSubseq)}
-	matchers = []*eval.BuiltinFn{
-		matchPrefix,
-		matchSubstr,
-		matchSubseq,
-	}
+	matchPrefix = eval.NewReflectBuiltinFn(
+		"edit:match-prefix", wrapMatcher(strings.HasPrefix))
+	matchSubstr = eval.NewReflectBuiltinFn(
+		"edit:match-substr", wrapMatcher(strings.Contains))
+	matchSubseq = eval.NewReflectBuiltinFn(
+		"edit:match-subseq", wrapMatcher(util.HasSubseq))
 
 	_ = RegisterVariable("-matcher", func() vartypes.Variable {
 		m := types.MakeMapFromKV("", matchPrefix)
@@ -51,17 +46,15 @@ func (ed *Editor) lookupMatcher(name string) (eval.Callable, bool) {
 	return matcher, ok
 }
 
-func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
-	return func(ec *eval.Frame,
-		args []interface{}, opts map[string]interface{}) {
+func wrapMatcher(matcher func(s, p string) bool) interface{} {
+	return func(fm *eval.Frame,
+		opts eval.Options, pattern string, inputs eval.Inputs) {
 
-		var pattern string
-		iterate := eval.ScanArgsOptionalInput(ec, args, &pattern)
 		var options struct {
 			IgnoreCase bool
 			SmartCase  bool
 		}
-		eval.ScanOptsToStruct(opts, &options)
+		opts.ScanToStruct(&options)
 		switch {
 		case options.IgnoreCase && options.SmartCase:
 			throwf("-ignore-case and -smart-case cannot be used together")
@@ -82,8 +75,8 @@ func wrapMatcher(matcher func(s, p string) bool) eval.BuiltinFnImpl {
 			}
 		}
 
-		out := ec.OutputChan()
-		iterate(func(v interface{}) {
+		out := fm.OutputChan()
+		inputs(func(v interface{}) {
 			s, ok := v.(string)
 			if !ok {
 				throw(errMatcherInputMustBeString)

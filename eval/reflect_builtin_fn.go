@@ -67,6 +67,10 @@ func (opt Options) Scan(opts ...OptToScan) {
 	ScanOpts(map[string]interface{}(opt), opts...)
 }
 
+func (opt Options) ScanToStruct(ptr interface{}) {
+	ScanOptsToStruct(map[string]interface{}(opt), ptr)
+}
+
 var (
 	frameType   = reflect.TypeOf((*Frame)(nil))
 	optionsType = reflect.TypeOf(Options(nil))

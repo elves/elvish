@@ -146,7 +146,9 @@ func makeNs(ed *Editor) eval.Ns {
 	}
 
 	// Matchers.
-	eval.AddBuiltinFns(ns, matchers...)
+	ns.SetFn("match-prefix", matchPrefix)
+	ns.SetFn("match-substr", matchSubstr)
+	ns.SetFn("match-subseq", matchSubseq)
 
 	// Functions.
 	eval.AddBuiltinFns(ns,
