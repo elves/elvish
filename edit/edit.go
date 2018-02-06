@@ -57,6 +57,7 @@ type Editor struct {
 	// using atEditorInit.
 	editorHooks
 	editorLocConfig
+	prompt.Config
 	matcher      hashmap.Map
 	abbr         hashmap.Map
 	argCompleter hashmap.Map
@@ -298,7 +299,7 @@ func (ed *Editor) finishReadLine() error {
 	ed.mode = &ed.insert
 	ed.tips = nil
 	ed.dot = len(ed.buffer)
-	if !prompt.RpromptPersistent(ed) {
+	if !ed.RpromptPersistent {
 		ed.rpromptContent = nil
 	}
 	errRefresh := ed.refresh(false, false)
@@ -345,15 +346,15 @@ func (ed *Editor) ReadLine() (string, error) {
 
 	callHooks(ed.evaler, ed.beforeReadline)
 
-	promptUpdater := prompt.NewUpdater(prompt.Prompt)
-	rpromptUpdater := prompt.NewUpdater(prompt.Rprompt)
+	promptUpdater := prompt.NewUpdater(ed.Prompt)
+	rpromptUpdater := prompt.NewUpdater(ed.Rprompt)
 
 MainLoop:
 	for {
 		promptCh := promptUpdater.Update(ed)
 		rpromptCh := rpromptUpdater.Update(ed)
-		promptTimeout := prompt.MakeMaxWaitChan(ed)
-		rpromptTimeout := prompt.MakeMaxWaitChan(ed)
+		promptTimeout := ed.MakeMaxWaitChan()
+		rpromptTimeout := ed.MakeMaxWaitChan()
 
 		select {
 		case ed.promptContent = <-promptCh:

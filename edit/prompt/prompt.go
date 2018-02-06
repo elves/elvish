@@ -6,31 +6,36 @@ import (
 	"math"
 	"os"
 	"os/user"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
 )
 
 var logger = util.GetLogger("[edit/prompt] ")
 
+type Config struct {
+	Prompt  eval.Callable
+	Rprompt eval.Callable
+
+	RpromptPersistent bool
+	PromptsMaxWait    float64
+}
+
 // Editor is the interface used by the prompt to access the editor.
 type Editor interface {
 	Evaler() *eval.Evaler
-	Variable(string) vartypes.Variable
 	Notify(string, ...interface{})
 }
 
 // maxSeconds is the maximum number of seconds time.Duration can represent.
 const maxSeconds = float64(math.MaxInt64 / time.Second)
 
-// PromptVariable returns a variable for $edit:prompt.
-func PromptVariable() vartypes.Variable {
+// PromptInit returns an initial value for $edit:prompt.
+func PromptInit() eval.Callable {
 	user, err := user.Current()
 	isRoot := err == nil && user.Uid == "0"
 
@@ -43,17 +48,11 @@ func PromptVariable() vartypes.Variable {
 			out <- &ui.Styled{"> ", ui.Styles{}}
 		}
 	}
-	val := eval.Callable(eval.NewBuiltinFn("default prompt", prompt))
-	return eval.NewVariableFromPtr(&val)
+	return eval.NewBuiltinFn("default prompt", prompt)
 }
 
-// Prompt extracts $edit:prompt.
-func Prompt(ed Editor) eval.Callable {
-	return ed.Variable("prompt").Get().(eval.Callable)
-}
-
-// RpromptVariable returns a variable for $edit:rprompt.
-func RpromptVariable() vartypes.Variable {
+// RpromptInit returns an initial value for $edit:rprompt.
+func RpromptInit() eval.Callable {
 	username := "???"
 	user, err := user.Current()
 	if err == nil {
@@ -69,48 +68,14 @@ func RpromptVariable() vartypes.Variable {
 		out <- &ui.Styled{rpromptStr, ui.Styles{"inverse"}}
 	}
 
-	val := eval.Callable(eval.NewBuiltinFn("default rprompt", rprompt))
-	return eval.NewVariableFromPtr(&val)
-}
-
-// Rprompt extracts $edit:rprompt.
-func Rprompt(ed Editor) eval.Callable {
-	return ed.Variable("rprompt").Get().(eval.Callable)
-}
-
-// Implementation for $rprompt-persistent.
-
-// TODO Keep the underlying boolean and float64 values somewhere within the
-// Editor to avoid casts.
-
-// RpromptPersistentVariable returns a variable for $edit:rprompt-persistent.
-func RpromptPersistentVariable() vartypes.Variable {
-	b := false
-	return eval.NewVariableFromPtr(&b)
-}
-
-// RpromptPersistent extracts $edit:rprompt-persistent.
-func RpromptPersistent(ed Editor) bool {
-	return ed.Variable("rprompt-persistent").Get().(bool)
-}
-
-// MaxWaitVariable returns a variable for $edit:-prompts-max-wait.
-func MaxWaitVariable() vartypes.Variable {
-	f := math.Inf(1)
-	return eval.NewVariableFromPtr(&f)
-}
-
-// MaxWait extracts $edit:-prompts-max-wait.
-func MaxWait(ed Editor) float64 {
-	f, _ := strconv.ParseFloat(ed.Variable("-prompts-max-wait").Get().(string), 64)
-	return f
+	return eval.NewBuiltinFn("default rprompt", rprompt)
 }
 
 // MakeMaxWait makes a channel that sends the current time after
 // $edit:-prompts-max-wait seconds if the time fits in a time.Duration value, or
 // nil otherwise.
-func MakeMaxWaitChan(ed Editor) <-chan time.Time {
-	f := MaxWait(ed)
+func (cfg *Config) MakeMaxWaitChan() <-chan time.Time {
+	f := cfg.PromptsMaxWait
 	if f > maxSeconds {
 		return nil
 	}
@@ -170,14 +135,14 @@ func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
 
 // Updater manages the update of a prompt.
 type Updater struct {
-	promptFn func(Editor) eval.Callable
+	promptFn eval.Callable
 	Staled   []*ui.Styled
 }
 
 var staledPrompt = &ui.Styled{"?", ui.Styles{"inverse"}}
 
 // NewUpdater creates a new Updater.
-func NewUpdater(promptFn func(Editor) eval.Callable) *Updater {
+func NewUpdater(promptFn eval.Callable) *Updater {
 	return &Updater{promptFn, []*ui.Styled{staledPrompt}}
 }
 
@@ -186,7 +151,7 @@ func NewUpdater(promptFn func(Editor) eval.Callable) *Updater {
 func (pu *Updater) Update(ed Editor) <-chan []*ui.Styled {
 	ch := make(chan []*ui.Styled)
 	go func() {
-		result := callPrompt(ed, pu.promptFn(ed))
+		result := callPrompt(ed, pu.promptFn)
 		pu.Staled = make([]*ui.Styled, len(result)+1)
 		pu.Staled[0] = staledPrompt
 		copy(pu.Staled[1:], result)
