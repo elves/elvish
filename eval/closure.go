@@ -75,10 +75,10 @@ func (c *Closure) Call(ec *Frame, args []interface{}, opts map[string]interface{
 	// options.
 	ec.local = make(Ns)
 	for i, name := range c.ArgNames {
-		ec.local[name] = vartypes.NewPtr(args[i])
+		ec.local[name] = vartypes.NewAny(args[i])
 	}
 	if c.RestArg != "" {
-		ec.local[c.RestArg] = vartypes.NewPtr(types.MakeList(args[len(c.ArgNames):]...))
+		ec.local[c.RestArg] = vartypes.NewAny(types.MakeList(args[len(c.ArgNames):]...))
 	}
 	optUsed := make(map[string]struct{})
 	for i, name := range c.OptNames {
@@ -88,7 +88,7 @@ func (c *Closure) Call(ec *Frame, args []interface{}, opts map[string]interface{
 		} else {
 			v = c.OptDefaults[i]
 		}
-		ec.local[name] = vartypes.NewPtr(v)
+		ec.local[name] = vartypes.NewAny(v)
 	}
 	for name := range opts {
 		_, used := optUsed[name]

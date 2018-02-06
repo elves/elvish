@@ -152,7 +152,7 @@ func (op varOp) Invoke(fm *Frame) ([]vartypes.Variable, error) {
 			} else if strings.HasSuffix(op.name, NsSuffix) {
 				variable = vartypes.NewValidatedPtr(nil, ShouldBeNs)
 			} else {
-				variable = vartypes.NewPtr(nil)
+				variable = vartypes.NewAny(nil)
 			}
 			fm.local[op.name] = variable
 		} else {

@@ -1,22 +1,5 @@
 package vartypes
 
-type ptr struct {
-	valuePtr *interface{}
-}
-
-func (pv ptr) Set(val interface{}) error {
-	*pv.valuePtr = val
-	return nil
-}
-
-func (pv ptr) Get() interface{} {
-	return *pv.valuePtr
-}
-
-func NewPtr(v interface{}) Variable {
-	return ptr{&v}
-}
-
 type validatedPtr struct {
 	valuePtr  *interface{}
 	validator func(interface{}) error

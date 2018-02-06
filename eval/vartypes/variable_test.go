@@ -6,7 +6,7 @@ import (
 )
 
 func TestPtrVariable(t *testing.T) {
-	v := NewPtr(true)
+	v := NewAny(true)
 	if v.Get() != true {
 		t.Errorf("PtrVariable.Get doesn't return initial value")
 	}

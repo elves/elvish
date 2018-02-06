@@ -57,7 +57,7 @@ func registerBuiltins(module string, impls map[string]func(*Editor)) struct{} {
 func makeNsFromBuiltins(builtins map[string]*BuiltinFn) eval.Ns {
 	ns := make(eval.Ns)
 	for name, builtin := range builtins {
-		ns[name+eval.FnSuffix] = vartypes.NewPtr(builtin)
+		ns[name+eval.FnSuffix] = vartypes.NewAny(builtin)
 	}
 	return ns
 }
