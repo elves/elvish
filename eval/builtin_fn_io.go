@@ -13,47 +13,46 @@ import (
 // Input and output.
 
 func init() {
-	addToBuiltinFns([]*BuiltinFn{
+	addToReflectBuiltinFns(map[string]interface{}{
 		// Value output
-		{"put", put},
+		"put": put,
 
 		// Bytes output
-		{"print", print},
-		{"echo", echo},
-		{"pprint", pprint},
-		{"repr", repr},
+		"print":  print,
+		"echo":   echo,
+		"pprint": pprint,
+		"repr":   repr,
 
 		// Bytes to value
-		{"slurp", slurp},
-		{"from-lines", fromLines},
-		{"from-json", fromJSON},
+		"slurp":      slurp,
+		"from-lines": fromLines,
+		"from-json":  fromJSON,
 
 		// Value to bytes
-		{"to-lines", toLines},
-		{"to-json", toJSON},
+		"to-lines": toLines,
+		"to-json":  toJSON,
 
 		// File and pipe
-		{"fopen", fopen},
-		{"fclose", fclose},
-		{"pipe", pipe},
-		{"prclose", prclose},
-		{"pwclose", pwclose},
+		"fopen":   fopen,
+		"fclose":  fclose,
+		"pipe":    pipe,
+		"prclose": prclose,
+		"pwclose": pwclose,
 	})
 }
 
-func put(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-	out := ec.ports[1].Chan
+func put(fm *Frame, args ...interface{}) {
+	out := fm.ports[1].Chan
 	for _, a := range args {
 		out <- a
 	}
 }
 
-func print(ec *Frame, args []interface{}, opts map[string]interface{}) {
+func print(fm *Frame, opts Options, args ...interface{}) {
 	var sepv string
-	ScanOpts(opts, OptToScan{"sep", &sepv, " "})
+	opts.Scan(OptToScan{"sep", &sepv, " "})
 
-	out := ec.ports[1].File
+	out := fm.ports[1].File
 	sep := sepv
 	for i, arg := range args {
 		if i > 0 {
@@ -63,23 +62,21 @@ func print(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	}
 }
 
-func echo(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	print(ec, args, opts)
-	ec.ports[1].File.WriteString("\n")
+func echo(fm *Frame, opts Options, args ...interface{}) {
+	print(fm, opts, args...)
+	fm.ports[1].File.WriteString("\n")
 }
 
-func pprint(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-	out := ec.ports[1].File
+func pprint(fm *Frame, args ...interface{}) {
+	out := fm.ports[1].File
 	for _, arg := range args {
 		out.WriteString(types.Repr(arg, 0))
 		out.WriteString("\n")
 	}
 }
 
-func repr(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
-	out := ec.ports[1].File
+func repr(fm *Frame, args ...interface{}) {
+	out := fm.ports[1].File
 	for i, arg := range args {
 		if i > 0 {
 			out.WriteString(" ")
@@ -89,35 +86,19 @@ func repr(ec *Frame, args []interface{}, opts map[string]interface{}) {
 	out.WriteString("\n")
 }
 
-func slurp(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	in := ec.ports[0].File
-	out := ec.ports[1].Chan
-
-	all, err := ioutil.ReadAll(in)
-	maybeThrow(err)
-	out <- string(all)
+func slurp(fm *Frame) (string, error) {
+	b, err := ioutil.ReadAll(fm.ports[0].File)
+	return string(b), err
 }
 
-func fromLines(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	in := ec.ports[0].File
-	out := ec.ports[1].Chan
-
-	linesToChan(in, out)
+func fromLines(fm *Frame) {
+	linesToChan(fm.ports[0].File, fm.ports[1].Chan)
 }
 
 // fromJSON parses a stream of JSON data into Value's.
-func fromJSON(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
-	in := ec.ports[0].File
-	out := ec.ports[1].Chan
+func fromJSON(fm *Frame) error {
+	in := fm.ports[0].File
+	out := fm.ports[1].Chan
 
 	dec := json.NewDecoder(in)
 	var v interface{}
@@ -125,82 +106,53 @@ func fromJSON(ec *Frame, args []interface{}, opts map[string]interface{}) {
 		err := dec.Decode(&v)
 		if err != nil {
 			if err == io.EOF {
-				return
+				return nil
 			}
-			throw(err)
+			return err
 		}
 		out <- FromJSONInterface(v)
 	}
+	return nil
 }
 
-func toLines(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	iterate := ScanArgsOptionalInput(ec, args)
-	TakeNoOpt(opts)
+func toLines(fm *Frame, inputs Inputs) {
+	out := fm.ports[1].File
 
-	out := ec.ports[1].File
-
-	iterate(func(v interface{}) {
+	inputs(func(v interface{}) {
 		fmt.Fprintln(out, types.ToString(v))
 	})
 }
 
 // toJSON converts a stream of Value's to JSON data.
-func toJSON(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	iterate := ScanArgsOptionalInput(ec, args)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].File
+func toJSON(fm *Frame, inputs Inputs) {
+	out := fm.ports[1].File
 
 	enc := json.NewEncoder(out)
-	iterate(func(v interface{}) {
+	inputs(func(v interface{}) {
 		err := enc.Encode(v)
 		maybeThrow(err)
 	})
 }
 
-func fopen(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var namev string
-	ScanArgs(args, &namev)
-	name := namev
-	TakeNoOpt(opts)
-
+func fopen(fm *Frame, name string) (types.File, error) {
 	// TODO support opening files for writing etc as well.
-	out := ec.ports[1].Chan
 	f, err := os.Open(name)
-	maybeThrow(err)
-	out <- types.File{f}
+	return types.File{f}, err
 }
 
-func fclose(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var f types.File
-	ScanArgs(args, &f)
-	TakeNoOpt(opts)
-
-	maybeThrow(f.Inner.Close())
+func fclose(f types.File) error {
+	return f.Inner.Close()
 }
 
-func pipe(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoArg(args)
-	TakeNoOpt(opts)
-
+func pipe() (types.Pipe, error) {
 	r, w, err := os.Pipe()
-	out := ec.ports[1].Chan
-	maybeThrow(err)
-	out <- types.Pipe{r, w}
+	return types.Pipe{r, w}, err
 }
 
-func prclose(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var p types.Pipe
-	ScanArgs(args, &p)
-	TakeNoOpt(opts)
-
-	maybeThrow(p.ReadEnd.Close())
+func prclose(p types.Pipe) error {
+	return p.ReadEnd.Close()
 }
 
-func pwclose(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var p types.Pipe
-	ScanArgs(args, &p)
-	TakeNoOpt(opts)
-
-	maybeThrow(p.WriteEnd.Close())
+func pwclose(p types.Pipe) error {
+	return p.WriteEnd.Close()
 }
