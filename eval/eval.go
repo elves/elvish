@@ -77,7 +77,7 @@ func NewEvaler() *Evaler {
 
 	valueOutIndicator := defaultValueOutIndicator
 	ev.evalerPorts = newEvalerPorts(os.Stdin, os.Stdout, os.Stderr, &valueOutIndicator)
-	builtin["value-out-indicator"] = vartypes.NewString(&valueOutIndicator)
+	builtin["value-out-indicator"] = NewVariableFromPtr(&valueOutIndicator)
 
 	return ev
 }
