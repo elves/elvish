@@ -19,31 +19,21 @@ func atEditorInit(f func(*Editor)) {
 	editorInitFuncs = append(editorInitFuncs, f)
 }
 
-var builtinMaps = map[string]map[string]*BuiltinFn{}
+var builtinMaps = map[string]map[string]func(*Editor){}
 
 // registerBuiltins registers builtins under a subnamespace of edit:, to be used
 // during the initialization of the Editor. It should be called for global
 // variable initializations to make sure every subnamespace is registered before
 // makeBindings is ever called.
 func registerBuiltins(module string, impls map[string]func(*Editor)) struct{} {
-	if _, ok := builtinMaps[module]; !ok {
-		builtinMaps[module] = make(map[string]*BuiltinFn)
-	}
-	for name, impl := range impls {
-		ns := "edit"
-		if module != "" {
-			ns += ":" + module
-		}
-		fullName := ns + ":" + name + eval.FnSuffix
-		builtinMaps[module][name] = &BuiltinFn{fullName, impl}
-	}
+	builtinMaps[module] = impls
 	return struct{}{}
 }
 
-func makeNsFromBuiltins(builtins map[string]*BuiltinFn) eval.Ns {
-	ns := make(eval.Ns)
-	for name, builtin := range builtins {
-		ns[name+eval.FnSuffix] = vartypes.NewAny(builtin)
+func makeNsFromBuiltins(nsName string, builtins map[string]func(*Editor)) eval.Ns {
+	ns := eval.NewNs()
+	for name, impl := range builtins {
+		ns.AddFn(name, &BuiltinFn{"edit:" + nsName + name, impl})
 	}
 	return ns
 }

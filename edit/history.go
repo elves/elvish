@@ -12,21 +12,27 @@ import (
 
 // Command history mode.
 
-var _ = registerBuiltins("history", map[string]func(*Editor){
+var historyFns = map[string]func(*Editor){
 	"start":              historyStart,
 	"up":                 wrapHistoryBuiltin(historyUp),
 	"down":               wrapHistoryBuiltin(historyDown),
 	"down-or-quit":       wrapHistoryBuiltin(historyDownOrQuit),
 	"switch-to-histlist": wrapHistoryBuiltin(historySwitchToHistlist),
 	"default":            wrapHistoryBuiltin(historyDefault),
-})
+}
 
 type hist struct {
 	*history.Walker
 }
 
+func initHistory(ed *Editor) eval.Ns {
+	ed.historyBinding = emptyBindingTable
+	return makeNsFromBuiltins("history:", historyFns).Add(
+		"binding", eval.NewVariableFromPtr(&ed.historyBinding))
+}
+
 func (*hist) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return getBinding(ed.bindings[modeHistory], k)
+	return ed.historyBinding.getOrDefault(k)
 }
 
 func (h *hist) ModeLine() ui.Renderer {

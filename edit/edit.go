@@ -44,8 +44,9 @@ type Editor struct {
 	active      bool
 	activeMutex sync.Mutex
 
-	historyFuser *history.Fuser
-	historyMutex sync.RWMutex
+	historyFuser   *history.Fuser
+	historyMutex   sync.RWMutex
+	historyBinding BindingTable
 
 	// notifyPort is a write-only port that turns data written to it into editor
 	// notifications.

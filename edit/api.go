@@ -72,7 +72,7 @@ func (bf *BuiltinFn) Call(ec *eval.Frame, args []interface{}, opts map[string]in
 // makeNs makes the edit: namespace.
 func makeNs(ed *Editor) eval.Ns {
 	// Construct the edit: module, starting with builtins.
-	ns := makeNsFromBuiltins(builtinMaps[""])
+	ns := makeNsFromBuiltins("", builtinMaps[""])
 
 	// TODO(xiaq): Everything here should be registered to some registry instead
 	// of centralized here.
@@ -166,11 +166,15 @@ func makeNs(ed *Editor) eval.Ns {
 	}
 	ns.AddBuiltinFns("edit:", fns)
 
+	ns.AddNs("history", initHistory(ed))
+
+	// To be migrated: old-style submodule API building
+
 	submods := make(map[string]eval.Ns)
 	// Install other modules.
 	for module, builtins := range builtinMaps {
 		if module != "" {
-			submods[module] = makeNsFromBuiltins(builtins)
+			submods[module] = makeNsFromBuiltins(module+":", builtins)
 		}
 	}
 

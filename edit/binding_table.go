@@ -15,15 +15,7 @@ import (
 var errValueShouldBeFn = errors.New("value should be function")
 
 func getBinding(bindingVar vartypes.Variable, k ui.Key) eval.Callable {
-	binding := bindingVar.Get().(BindingTable)
-	switch {
-	case binding.HasKey(k):
-		return binding.get(k)
-	case binding.HasKey(ui.Default):
-		return binding.get(ui.Default)
-	default:
-		return nil
-	}
+	return bindingVar.Get().(BindingTable).getOrDefault(k)
 }
 
 // BindingTable is a special Map that converts its key to ui.Key and ensures
@@ -31,6 +23,8 @@ func getBinding(bindingVar vartypes.Variable, k ui.Key) eval.Callable {
 type BindingTable struct {
 	hashmap.Map
 }
+
+var emptyBindingTable = BindingTable{types.EmptyMap}
 
 // Repr returns the representation of the binding table as if it were an
 // ordinary map keyed by strings.
@@ -69,6 +63,16 @@ func (bt BindingTable) get(k ui.Key) eval.Callable {
 		panic("get called when key not present")
 	}
 	return v.(eval.Callable)
+}
+
+func (bt BindingTable) getOrDefault(k ui.Key) eval.Callable {
+	switch {
+	case bt.HasKey(k):
+		return bt.get(k)
+	case bt.HasKey(ui.Default):
+		return bt.get(ui.Default)
+	}
+	return nil
 }
 
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,
