@@ -148,9 +148,11 @@ func (op varOp) Invoke(fm *Frame) ([]vartypes.Variable, error) {
 			// XXX We depend on the fact that this variable will
 			// immeidately be set.
 			if strings.HasSuffix(op.name, FnSuffix) {
-				variable = vartypes.NewValidatedPtr(nil, ShouldBeFn)
+				val := Callable(nil)
+				variable = NewVariableFromPtr(&val)
 			} else if strings.HasSuffix(op.name, NsSuffix) {
-				variable = vartypes.NewValidatedPtr(nil, ShouldBeNs)
+				val := Ns(nil)
+				variable = NewVariableFromPtr(&val)
 			} else {
 				variable = vartypes.NewAny(nil)
 			}

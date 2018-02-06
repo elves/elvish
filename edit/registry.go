@@ -66,8 +66,8 @@ func makeBindings() map[string]vartypes.Variable {
 	bindings := map[string]vartypes.Variable{}
 	// XXX This abuses the builtin registry to get a list of mode names
 	for mode := range builtinMaps {
-		bindings[mode] = vartypes.NewValidatedPtr(
-			BindingTable{types.EmptyMap}, shouldBeBindingTable)
+		table := BindingTable{types.EmptyMap}
+		bindings[mode] = eval.NewVariableFromPtr(&table)
 	}
 	return bindings
 }

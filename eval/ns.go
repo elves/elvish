@@ -41,11 +41,11 @@ func (ns Ns) Get(k interface{}) (interface{}, bool) {
 }
 
 func (ns Ns) SetFn(name string, v Callable) {
-	ns[name+FnSuffix] = vartypes.NewValidatedPtr(v, ShouldBeFn)
+	ns[name+FnSuffix] = NewVariableFromPtr(&v)
 }
 
-func (ns Ns) SetNs(name string, subns Ns) {
-	ns[name+NsSuffix] = vartypes.NewValidatedPtr(subns, ShouldBeNs)
+func (ns Ns) SetNs(name string, v Ns) {
+	ns[name+NsSuffix] = NewVariableFromPtr(&v)
 }
 
 func addrOf(a interface{}) uintptr {

@@ -31,9 +31,8 @@ var (
 	}
 
 	_ = RegisterVariable("-matcher", func() vartypes.Variable {
-		m := types.EmptyMap.Assoc(
-			"", matchPrefix)
-		return vartypes.NewValidatedPtr(m, vartypes.ShouldBeMap)
+		m := types.MakeMapFromKV("", matchPrefix)
+		return eval.NewVariableFromPtr(&m)
 	})
 )
 

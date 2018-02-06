@@ -92,7 +92,7 @@ func argCompleterVariable() vartypes.Variable {
 	for k, v := range argCompletersData {
 		m = m.Assoc(k, v)
 	}
-	return vartypes.NewValidatedPtr(m, vartypes.ShouldBeMap)
+	return eval.NewVariableFromPtr(&m)
 }
 
 func (ed *Editor) argCompleter() hashmap.Map {

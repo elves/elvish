@@ -18,13 +18,6 @@ func TestPtrVariable(t *testing.T) {
 	}
 }
 
-func TestValidatedPtrVariable(t *testing.T) {
-	v := NewValidatedPtr(true, ShouldBeBool)
-	if v.Set("233") == nil {
-		t.Errorf("ValidatedPtrVariable.Set doesn't error when setting incompatible value")
-	}
-}
-
 func TestRoVariable(t *testing.T) {
 	v := NewRo("haha")
 	if v.Get() != "haha" {

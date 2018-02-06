@@ -10,8 +10,6 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
@@ -177,17 +175,13 @@ func convertListsToSet(lis ...vector.Vector) map[string]struct{} {
 
 // Variables.
 
-var _ = RegisterVariable("loc-hidden", func() vartypes.Variable {
-	return vartypes.NewValidatedPtr(types.EmptyList, vartypes.ShouldBeList)
-})
+var _ = RegisterVariable("loc-hidden", makeListVariable)
 
 func (ed *Editor) locHidden() vector.Vector {
 	return ed.variables["loc-hidden"].Get().(vector.Vector)
 }
 
-var _ = RegisterVariable("loc-pinned", func() vartypes.Variable {
-	return vartypes.NewValidatedPtr(types.EmptyList, vartypes.ShouldBeList)
-})
+var _ = RegisterVariable("loc-pinned", makeListVariable)
 
 func (ed *Editor) locPinned() vector.Vector {
 	return ed.variables["loc-pinned"].Get().(vector.Vector)

@@ -4,12 +4,14 @@ import (
 	"math"
 	"strconv"
 
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
 )
 
 var _ = RegisterVariable("max-height", func() vartypes.Variable {
-	return vartypes.NewValidatedPtr("+Inf", vartypes.ShouldBeNumber)
+	maxHeight := math.Inf(1)
+	return eval.NewVariableFromPtr(&maxHeight)
 })
 
 func (ed *Editor) maxHeight() int {

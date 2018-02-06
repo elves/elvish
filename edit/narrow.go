@@ -395,13 +395,16 @@ func NarrowRead(ec *eval.Frame, args []interface{}, opts map[string]interface{})
 	eval.ScanOptsToStruct(opts, &l.opts)
 
 	for it := l.opts.Bindings.Iterator(); it.HasElem(); it.Next() {
-		k, f := it.Elem()
+		k, v := it.Elem()
 		key := ui.ToKey(k)
-		maybeThrow(eval.ShouldBeFn(f))
+		val, ok := v.(eval.Callable)
+		if !ok {
+			throwf("should be fn")
+		}
 		if l.opts.bindingMap == nil {
 			l.opts.bindingMap = make(map[ui.Key]eval.Callable)
 		}
-		l.opts.bindingMap[key] = f.(eval.Callable)
+		l.opts.bindingMap[key] = val
 	}
 
 	l.source = narrowGetSource(ec, source)
