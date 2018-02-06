@@ -54,31 +54,34 @@ func (ns Ns) Clone() Ns {
 	return ns2
 }
 
+// Add adds a variable to the namespace and returns the namespace itself.
+func (ns Ns) Add(name string, v vartypes.Variable) Ns {
+	ns[name] = v
+	return ns
+}
+
+// AddFn adds a function to a namespace. It returns the namespace itself.
+func (ns Ns) AddFn(name string, v Callable) Ns {
+	return ns.Add(name+FnSuffix, NewVariableFromPtr(&v))
+}
+
+// AddNs adds a sub-namespace to a namespace. It returns the namespace itself.
+func (ns Ns) AddNs(name string, v Ns) Ns {
+	return ns.Add(name+NsSuffix, NewVariableFromPtr(&v))
+}
+
+// AddBuiltinFn adds a builtin function to a namespace. It returns the namespace
+// itself.
+func (ns Ns) AddBuiltinFn(nsName, name string, impl interface{}) Ns {
+	return ns.AddFn(name, NewBuiltinFn(nsName+name, impl))
+}
+
 // AddBuiltinFns adds builtin functions to a namespace. It returns the namespace
 // itself.
 func (ns Ns) AddBuiltinFns(nsName string, fns map[string]interface{}) Ns {
 	for name, impl := range fns {
 		ns.AddBuiltinFn(nsName, name, impl)
 	}
-	return ns
-}
-
-// AddBuiltinFn adds a builtin function to a namespace. It returns the namespace
-// itself.
-func (ns Ns) AddBuiltinFn(nsName, name string, impl interface{}) Ns {
-	ns.AddFn(name, NewBuiltinFn(nsName+name, impl))
-	return ns
-}
-
-// AddFn adds a function to a namespace. It returns the namespace itself.
-func (ns Ns) AddFn(name string, v Callable) Ns {
-	ns[name+FnSuffix] = NewVariableFromPtr(&v)
-	return ns
-}
-
-// AddNs adds a sub-namespace to a namespace. It returns the namespace itself.
-func (ns Ns) AddNs(name string, v Ns) Ns {
-	ns[name+NsSuffix] = NewVariableFromPtr(&v)
 	return ns
 }
 
