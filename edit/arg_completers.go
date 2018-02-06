@@ -10,9 +10,7 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
 	"github.com/xiaq/persistent/hash"
-	"github.com/xiaq/persistent/hashmap"
 )
 
 // For an overview of completion, see the comment in completers.go.
@@ -85,18 +83,15 @@ var (
 	}
 )
 
-var _ = RegisterVariable("arg-completer", argCompleterVariable)
-
-func argCompleterVariable() vartypes.Variable {
-	m := types.EmptyMap
-	for k, v := range argCompletersData {
-		m = m.Assoc(k, v)
-	}
-	return eval.NewVariableFromPtr(&m)
-}
-
-func (ed *Editor) argCompleter() hashmap.Map {
-	return ed.variables["arg-completer"].Get().(hashmap.Map)
+func init() {
+	atEditorInit(func(ed *Editor) {
+		m := types.EmptyMap
+		for k, v := range argCompletersData {
+			m = m.Assoc(k, v)
+		}
+		ed.argCompleter = m
+		ed.variables["arg-completer"] = eval.NewVariableFromPtr(&ed.argCompleter)
+	})
 }
 
 // completeArg calls the correct argument completers according to the command
@@ -105,7 +100,7 @@ func (ed *Editor) argCompleter() hashmap.Map {
 func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
 	logger.Printf("completing argument: %q", words)
 	// XXX(xiaq): not the best way to get argCompleter.
-	m := ev.Editor.(*Editor).argCompleter()
+	m := ev.Editor.(*Editor).argCompleter
 	var v interface{}
 	index := words[0]
 	v, ok := m.Get(index)

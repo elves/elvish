@@ -91,7 +91,7 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 		name := ctx.name()
 		ctxCommon := ctx.common()
 
-		matcher, ok := ed.lookupMatcher(name)
+		matcher, ok := lookupMatcher(ed.matcher, name)
 		if !ok {
 			return name, nil, errMatcherMustBeFn
 		}

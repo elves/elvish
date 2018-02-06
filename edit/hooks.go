@@ -6,7 +6,6 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -25,11 +24,6 @@ func init() {
 		ed.afterReadline = types.EmptyList
 		ed.variables["after-readline"] = eval.NewVariableFromPtr(&ed.afterReadline)
 	})
-}
-
-func makeListVariable() vartypes.Variable {
-	l := types.EmptyList
-	return eval.NewVariableFromPtr(&l)
 }
 
 func callHooks(ev *eval.Evaler, li vector.Vector, args ...interface{}) {

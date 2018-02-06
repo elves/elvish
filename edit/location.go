@@ -10,6 +10,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
@@ -124,7 +125,7 @@ func locStart(ed *Editor) {
 
 	// Pinned directories are also blacklisted to prevent them from showing up
 	// twice.
-	black := convertListsToSet(ed.locHidden(), ed.locPinned())
+	black := convertListsToSet(ed.locHidden, ed.locPinned)
 	pwd, err := os.Getwd()
 	if err == nil {
 		black[pwd] = struct{}{}
@@ -136,7 +137,7 @@ func locStart(ed *Editor) {
 	}
 
 	// Concatenate pinned and stored dirs, pinned first.
-	pinned := convertListToDirs(ed.locPinned())
+	pinned := convertListToDirs(ed.locPinned)
 	dirs := make([]storedefs.Dir, len(pinned)+len(stored))
 	copy(dirs, pinned)
 	copy(dirs[len(pinned):], stored)
@@ -173,16 +174,18 @@ func convertListsToSet(lis ...vector.Vector) map[string]struct{} {
 	return set
 }
 
-// Variables.
+// Configurations.
 
-var _ = RegisterVariable("loc-hidden", makeListVariable)
-
-func (ed *Editor) locHidden() vector.Vector {
-	return ed.variables["loc-hidden"].Get().(vector.Vector)
+type editorLocConfig struct {
+	locHidden vector.Vector
+	locPinned vector.Vector
 }
 
-var _ = RegisterVariable("loc-pinned", makeListVariable)
-
-func (ed *Editor) locPinned() vector.Vector {
-	return ed.variables["loc-pinned"].Get().(vector.Vector)
+func init() {
+	atEditorInit(func(ed *Editor) {
+		ed.locHidden = types.EmptyList
+		ed.variables["loc-hidden"] = eval.NewVariableFromPtr(&ed.locHidden)
+		ed.locPinned = types.EmptyList
+		ed.variables["loc-pinned"] = eval.NewVariableFromPtr(&ed.locPinned)
+	})
 }

@@ -6,7 +6,6 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -24,15 +23,16 @@ var (
 		"edit:match-substr", wrapMatcher(strings.Contains))
 	matchSubseq = eval.NewBuiltinFn(
 		"edit:match-subseq", wrapMatcher(util.HasSubseq))
-
-	_ = RegisterVariable("-matcher", func() vartypes.Variable {
-		m := types.MakeMapFromKV("", matchPrefix)
-		return eval.NewVariableFromPtr(&m)
-	})
 )
 
-func (ed *Editor) lookupMatcher(name string) (eval.Callable, bool) {
-	m := ed.variables["-matcher"].Get().(hashmap.Map)
+func init() {
+	atEditorInit(func(ed *Editor) {
+		ed.matcher = types.MakeMapFromKV("", matchPrefix)
+		ed.variables["-matcher"] = eval.NewVariableFromPtr(&ed.matcher)
+	})
+}
+
+func lookupMatcher(m hashmap.Map, name string) (eval.Callable, bool) {
 	key := name
 	if !hashmap.HasKey(m, key) {
 		// Use fallback matcher

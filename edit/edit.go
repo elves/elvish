@@ -23,6 +23,7 @@ import (
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 var logger = util.GetLogger("[edit] ")
@@ -52,7 +53,14 @@ type Editor struct {
 	// notifyRead is the read end of notifyPort.File.
 	notifyRead *os.File
 
+	// Configurations. Each of the following fields have an initializer defined
+	// using atEditorInit.
 	editorHooks
+	editorLocConfig
+	matcher      hashmap.Map
+	abbr         hashmap.Map
+	argCompleter hashmap.Map
+	maxHeight    float64
 
 	editorState
 }
@@ -232,7 +240,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 
 	// Render onto a buffer.
 	height, width := sys.GetWinsize(ed.out)
-	height = min(height, ed.maxHeight())
+	height = min(height, maxHeightToInt(ed.maxHeight))
 	er := &editorRenderer{&ed.editorState, height, nil}
 	buf := ui.Render(er, width)
 	return ed.writer.CommitBuffer(er.bufNoti, buf, fullRefresh)

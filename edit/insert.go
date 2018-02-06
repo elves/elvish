@@ -310,7 +310,7 @@ func insertDefault(ed *Editor) {
 		// Match abbreviations.
 		expanded := false
 		literals := ed.buffer[ed.dot-ed.insert.literalInserts-1 : ed.dot]
-		ed.abbrIterate(func(abbr, full string) bool {
+		abbrIterate(ed.abbr, func(abbr, full string) bool {
 			if strings.HasSuffix(literals, abbr) {
 				ed.buffer = ed.buffer[:ed.dot-len(abbr)] + full + ed.buffer[ed.dot:]
 				ed.dot += len(full) - len(abbr)
