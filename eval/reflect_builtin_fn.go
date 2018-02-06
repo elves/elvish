@@ -10,11 +10,11 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
-var reflectBuiltinFns []*ReflectBuiltinFn
+var reflectBuiltinFns = map[string]interface{}{}
 
 func addToReflectBuiltinFns(moreFns map[string]interface{}) {
 	for name, impl := range moreFns {
-		reflectBuiltinFns = append(reflectBuiltinFns, NewReflectBuiltinFn(name, impl))
+		reflectBuiltinFns[name] = impl
 	}
 }
 

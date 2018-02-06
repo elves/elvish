@@ -34,37 +34,6 @@ func init() {
 	})
 }
 
-func WrapStringToString(f func(string) string) BuiltinFnImpl {
-	return func(ec *Frame, args []interface{}, opts map[string]interface{}) {
-		TakeNoOpt(opts)
-		s := mustGetOneString(args)
-		ec.ports[1].Chan <- f(s)
-	}
-}
-
-func WrapStringToStringError(f func(string) (string, error)) BuiltinFnImpl {
-	return func(ec *Frame, args []interface{}, opts map[string]interface{}) {
-		TakeNoOpt(opts)
-		s := mustGetOneString(args)
-		result, err := f(s)
-		maybeThrow(err)
-		ec.ports[1].Chan <- result
-	}
-}
-
-var errMustBeOneString = errors.New("must be one string argument")
-
-func mustGetOneString(args []interface{}) string {
-	if len(args) != 1 {
-		throw(errMustBeOneString)
-	}
-	s, ok := args[0].(string)
-	if !ok {
-		throw(errMustBeOneString)
-	}
-	return s
-}
-
 func cd(fm *Frame, args ...string) error {
 	var dir string
 	switch len(args) {

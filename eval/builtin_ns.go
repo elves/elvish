@@ -18,7 +18,7 @@ func makeBuiltinNs() Ns {
 		"paths": &EnvList{envName: "PATH"},
 		"pwd":   PwdVariable{},
 	}
-	AddReflectBuiltinFns(ns, reflectBuiltinFns...)
+	AddReflectBuiltinFns(ns, "", reflectBuiltinFns)
 	return ns
 }
 
@@ -34,12 +34,12 @@ func AddBuiltinFns(ns Ns, fns ...*BuiltinFn) {
 }
 
 // AddReflectBuiltinFns adds reflect builtin functions to a namespace.
-func AddReflectBuiltinFns(ns Ns, fns ...*ReflectBuiltinFn) {
-	for _, b := range fns {
-		name := b.name
-		if i := strings.IndexRune(b.name, ':'); i != -1 {
-			name = b.name[i+1:]
+func AddReflectBuiltinFns(ns Ns, nsName string, fns map[string]interface{}) {
+	for name, impl := range fns {
+		qname := name
+		if nsName != "" {
+			qname = nsName + ":" + name
 		}
-		ns[name+FnSuffix] = vartypes.NewRo(b)
+		ns.SetFn(name, NewReflectBuiltinFn(qname, impl))
 	}
 }

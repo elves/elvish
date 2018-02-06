@@ -13,52 +13,41 @@ import (
 
 func Ns() eval.Ns {
 	ns := eval.Ns{}
-	eval.AddBuiltinFns(ns, fns...)
+	eval.AddReflectBuiltinFns(ns, "re", fns)
 	return ns
 }
 
-var fns = []*eval.BuiltinFn{
-	{"quote", eval.WrapStringToString(regexp.QuoteMeta)},
-	{"match", match},
-	{"find", find},
-	{"replace", replace},
-	{"split", split},
+var fns = map[string]interface{}{
+	"quote":   regexp.QuoteMeta,
+	"match":   match,
+	"find":    find,
+	"replace": replace,
+	"split":   split,
 }
 
-func match(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	out := ec.OutputChan()
-	var (
-		argPattern string
-		argSource  string
-		optPOSIX   bool
-	)
-	eval.ScanArgs(args, &argPattern, &argSource)
-	eval.ScanOpts(opts, eval.OptToScan{"posix", &optPOSIX, false})
+func match(opts eval.Options, argPattern, source string) bool {
+	var optPOSIX bool
+	opts.Scan(eval.OptToScan{"posix", &optPOSIX, false})
 
 	pattern := makePattern(argPattern, optPOSIX, false)
-	matched := pattern.MatchString(string(argSource))
-	out <- matched
+	return pattern.MatchString(source)
 }
 
-func find(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	out := ec.OutputChan()
+func find(fm *eval.Frame, opts eval.Options, argPattern, source string) {
+	out := fm.OutputChan()
 	var (
-		argPattern string
-		argSource  string
 		optPOSIX   bool
 		optLongest bool
 		optMax     int
 	)
-	eval.ScanArgs(args, &argPattern, &argSource)
-	eval.ScanOpts(opts,
+	opts.Scan(
 		eval.OptToScan{"posix", &optPOSIX, false},
 		eval.OptToScan{"longest", &optLongest, false},
 		eval.OptToScan{"max", &optMax, "-1"})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
-	source := string(argSource)
+	matches := pattern.FindAllSubmatchIndex([]byte(source), optMax)
 
-	matches := pattern.FindAllSubmatchIndex([]byte(argSource), optMax)
 	for _, match := range matches {
 		start, end := match[0], match[1]
 		groups := vector.Empty
@@ -76,40 +65,35 @@ func find(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 	}
 }
 
-func replace(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	out := ec.OutputChan()
+func replace(fm *eval.Frame, opts eval.Options,
+	argPattern string, argRepl interface{}, source string) string {
+
 	var (
-		argPattern string
-		argRepl    interface{}
-		argSource  string
 		optPOSIX   bool
 		optLongest bool
 		optLiteral bool
 	)
-	eval.ScanArgs(args, &argPattern, &argRepl, &argSource)
-	eval.ScanOpts(opts,
+	opts.Scan(
 		eval.OptToScan{"posix", &optPOSIX, false},
 		eval.OptToScan{"longest", &optLongest, false},
 		eval.OptToScan{"literal", &optLiteral, false})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
 
-	var result string
 	if optLiteral {
 		repl, ok := argRepl.(string)
 		if !ok {
 			throwf("replacement must be string when literal is set, got %s",
 				types.Kind(argRepl))
 		}
-		result = pattern.ReplaceAllLiteralString(string(argSource), string(repl))
+		return pattern.ReplaceAllLiteralString(source, repl)
 	} else {
 		switch repl := argRepl.(type) {
 		case string:
-			result = pattern.ReplaceAllString(string(argSource), string(repl))
+			return pattern.ReplaceAllString(source, repl)
 		case eval.Callable:
 			replFunc := func(s string) string {
-				values, err := ec.PCaptureOutput(repl,
-					[]interface{}{string(s)}, eval.NoOpts)
+				values, err := fm.PCaptureOutput(repl, []interface{}{s}, eval.NoOpts)
 				maybeThrow(err)
 				if len(values) != 1 {
 					throwf("replacement function must output exactly one value, got %d", len(values))
@@ -119,37 +103,34 @@ func replace(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
 					throwf("replacement function must output one string, got %s",
 						types.Kind(values[0]))
 				}
-				return string(output)
+				return output
 			}
-			result = pattern.ReplaceAllStringFunc(string(argSource), replFunc)
+			return pattern.ReplaceAllStringFunc(source, replFunc)
 		default:
 			throwf("replacement must be string or function, got %s",
 				types.Kind(argRepl))
+			panic("unreachable")
 		}
 	}
-	out <- string(result)
 }
 
-func split(ec *eval.Frame, args []interface{}, opts map[string]interface{}) {
-	out := ec.OutputChan()
+func split(fm *eval.Frame, opts eval.Options, argPattern, source string) {
+	out := fm.OutputChan()
 	var (
-		argPattern string
-		argSource  string
 		optPOSIX   bool
 		optLongest bool
 		optMax     int
 	)
-	eval.ScanArgs(args, &argPattern, &argSource)
-	eval.ScanOpts(opts,
+	opts.Scan(
 		eval.OptToScan{"posix", &optPOSIX, false},
 		eval.OptToScan{"longest", &optLongest, false},
 		eval.OptToScan{"max", &optMax, "-1"})
 
 	pattern := makePattern(argPattern, optPOSIX, optLongest)
 
-	pieces := pattern.Split(string(argSource), optMax)
+	pieces := pattern.Split(source, optMax)
 	for _, piece := range pieces {
-		out <- string(piece)
+		out <- piece
 	}
 }
 
