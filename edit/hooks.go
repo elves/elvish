@@ -10,19 +10,21 @@ import (
 	"github.com/xiaq/persistent/vector"
 )
 
-// The $le:{before,after}-readline lists that contain hooks. We might have more
+// The $edit:{before,after}-readline lists that contain hooks. We might have more
 // hooks in future.
 
-var _ = RegisterVariable("before-readline", makeListVariable)
-
-func (ed *Editor) beforeReadLine() vector.Vector {
-	return ed.variables["before-readline"].Get().(vector.Vector)
+type editorHooks struct {
+	beforeReadline vector.Vector
+	afterReadline  vector.Vector
 }
 
-var _ = RegisterVariable("after-readline", makeListVariable)
-
-func (ed *Editor) afterReadLine() vector.Vector {
-	return ed.variables["after-readline"].Get().(vector.Vector)
+func init() {
+	atEditorInit(func(ed *Editor) {
+		ed.beforeReadline = types.EmptyList
+		ed.variables["before-readline"] = eval.NewVariableFromPtr(&ed.beforeReadline)
+		ed.afterReadline = types.EmptyList
+		ed.variables["after-readline"] = eval.NewVariableFromPtr(&ed.afterReadline)
+	})
 }
 
 func makeListVariable() vartypes.Variable {

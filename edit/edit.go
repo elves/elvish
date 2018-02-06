@@ -52,6 +52,8 @@ type Editor struct {
 	// notifyRead is the read end of notifyPort.File.
 	notifyRead *os.File
 
+	editorHooks
+
 	editorState
 }
 
@@ -105,6 +107,10 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 
 		bindings:  makeBindings(),
 		variables: makeVariables(),
+	}
+
+	for _, f := range editorInitFuncs {
+		f(ed)
 	}
 
 	notifyChan := make(chan interface{})
@@ -300,7 +306,7 @@ func (ed *Editor) finishReadLine() error {
 	line := ed.buffer
 	ed.editorState = editorState{}
 
-	callHooks(ed.evaler, ed.afterReadLine(), line)
+	callHooks(ed.evaler, ed.afterReadline, line)
 
 	return util.Errors(errRefresh, errRestore)
 }
@@ -329,7 +335,7 @@ func (ed *Editor) ReadLine() (string, error) {
 
 	fullRefresh := false
 
-	callHooks(ed.evaler, ed.beforeReadLine())
+	callHooks(ed.evaler, ed.beforeReadline)
 
 	promptUpdater := prompt.NewUpdater(prompt.Prompt)
 	rpromptUpdater := prompt.NewUpdater(prompt.Rprompt)

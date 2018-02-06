@@ -15,6 +15,12 @@ import (
 // builtins, default bindings, and variables (e.g. $edit:prompt). For instance,
 // the definition for $edit:prompt can live in prompt.go instead of api.go.
 
+var editorInitFuncs []func(*Editor)
+
+func atEditorInit(f func(*Editor)) {
+	editorInitFuncs = append(editorInitFuncs, f)
+}
+
 var variableRegistry = map[string]func() vartypes.Variable{}
 
 // RegisterVariable registers a variable: its name and a func to derive a
