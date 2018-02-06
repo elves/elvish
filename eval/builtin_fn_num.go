@@ -21,15 +21,13 @@ func init() {
 		"+": plus,
 		"-": minus,
 		"*": times,
+		"/": slash,
 		"^": math.Pow,
 		"%": func(a, b int) int { return a % b },
 
 		// Random
 		"rand":    rand.Float64,
 		"randint": randint,
-	})
-	addToBuiltinFns([]*BuiltinFn{
-		{"/", slash},
 	})
 }
 
@@ -60,26 +58,18 @@ func times(nums ...float64) float64 {
 	return prod
 }
 
-func slash(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	TakeNoOpt(opts)
+func slash(fm *Frame, args ...float64) {
 	if len(args) == 0 {
 		// cd /
-		cdInner("/", ec)
+		cdInner("/", fm)
 		return
 	}
 	// Division
-	divide(ec, args, opts)
+	divide(fm, args[0], args[1:]...)
 }
 
-func divide(ec *Frame, args []interface{}, opts map[string]interface{}) {
-	var (
-		prod float64
-		nums []float64
-	)
-	ScanArgsVariadic(args, &prod, &nums)
-	TakeNoOpt(opts)
-
-	out := ec.ports[1].Chan
+func divide(fm *Frame, prod float64, nums ...float64) {
+	out := fm.ports[1].Chan
 	for _, f := range nums {
 		prod /= f
 	}

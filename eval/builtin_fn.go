@@ -50,12 +50,6 @@ func (b *BuiltinFn) Call(ec *Frame, args []interface{}, opts map[string]interfac
 	return util.PCall(func() { b.Impl(ec, args, opts) })
 }
 
-var builtinFns []*BuiltinFn
-
-func addToBuiltinFns(moreFns []*BuiltinFn) {
-	builtinFns = append(builtinFns, moreFns...)
-}
-
 // Builtins that have not been put into their own groups go here.
 
 var ErrArgs = errors.New("args error")

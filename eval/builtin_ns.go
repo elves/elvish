@@ -18,7 +18,6 @@ func makeBuiltinNs() Ns {
 		"paths": &EnvList{envName: "PATH"},
 		"pwd":   PwdVariable{},
 	}
-	AddBuiltinFns(ns, builtinFns...)
 	AddReflectBuiltinFns(ns, reflectBuiltinFns...)
 	return ns
 }
