@@ -112,7 +112,7 @@ func lastcmdAltDefault(ed *Editor) {
 		}
 	} else {
 		insertStart(ed)
-		ed.setAction(reprocessKey)
+		ed.SetAction(ReprocessKey)
 	}
 }
 

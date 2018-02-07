@@ -1,27 +1,27 @@
 package edit
 
-// action is used in the nextAction field of editorState to schedule a special
-// action after a keybinding has been executed.
-type action int
+// Action is used in the SetAction method of the Editor to schedule a special
+// Action after a keybinding has been executed.
+type Action int
 
 const (
-	noAction action = iota
-	// reprocessKey makes the editor to reprocess the keybinding.
-	reprocessKey
-	// commitLine makes the editor return with the current line.
-	commitLine
-	// commitEOF makes the editor return with an EOF.
-	commitEOF
+	NoAction Action = iota
+	// ReprocessKey makes the editor to reprocess the keybinding.
+	ReprocessKey
+	// CommitLine makes the editor return with the current line.
+	CommitLine
+	// CommitEOF makes the editor return with an EOF.
+	CommitEOF
 )
 
-func (ed *Editor) setAction(action action) {
-	if ed.nextAction == noAction {
+func (ed *Editor) SetAction(action Action) {
+	if ed.nextAction == NoAction {
 		ed.nextAction = action
 	}
 }
 
-func (ed *Editor) popAction() action {
+func (ed *Editor) popAction() Action {
 	action := ed.nextAction
-	ed.nextAction = noAction
+	ed.nextAction = NoAction
 	return action
 }

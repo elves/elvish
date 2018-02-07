@@ -119,7 +119,7 @@ func complDefault(ed *Editor) {
 		}
 	} else {
 		complAccept(ed)
-		ed.setAction(reprocessKey)
+		ed.SetAction(ReprocessKey)
 	}
 }
 
@@ -177,7 +177,7 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 	completer, complSpec, err := complete(node, ed.evaler)
 
 	if err != nil {
-		ed.addTip("%v", err)
+		ed.AddTip("%v", err)
 		// We don't show the full stack trace. To make debugging still possible,
 		// we log it.
 		if pprinter, ok := err.(util.Pprinter); ok {
@@ -185,13 +185,13 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 			logger.Println(pprinter.Pprint(""))
 		}
 	} else if completer == "" {
-		ed.addTip("unsupported completion :(")
+		ed.AddTip("unsupported completion :(")
 		logger.Println("path to current leaf, leaf first")
 		for n := node; n != nil; n = n.Parent() {
 			logger.Printf("%T (%d-%d)", n, n.Begin(), n.End())
 		}
 	} else if len(complSpec.candidates) == 0 {
-		ed.addTip("no candidate for %s", completer)
+		ed.AddTip("no candidate for %s", completer)
 	} else {
 		if acceptPrefix {
 			// If there is a non-empty longest common prefix, insert it and

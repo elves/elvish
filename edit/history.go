@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -26,14 +25,16 @@ type hist struct {
 }
 
 func init() {
-	atEditorInit(initHist)
+	atEditorInit(func(ed *Editor, ns eval.Ns) {
+		ed.hist = initHist(ed, ns)
+	})
 }
 
-func initHist(ed *Editor, ns eval.Ns) {
+func initHist(ed *Editor, ns eval.Ns) *hist {
 	hist := &hist{ed: ed, binding: emptyBindingTable}
 
-	if ed.daemon != nil {
-		fuser, err := history.NewFuser(ed.daemon)
+	if ed.Daemon() != nil {
+		fuser, err := history.NewFuser(ed.Daemon())
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Failed to initialize command history; disabled.")
 		} else {
@@ -41,11 +42,10 @@ func initHist(ed *Editor, ns eval.Ns) {
 			ed.AddAfterReadline(hist.appendHistory)
 		}
 	}
-	ed.hist = hist
 
 	subns := eval.Ns{
 		"binding": eval.NewVariableFromPtr(&hist.binding),
-		"list":    vartypes.NewRo(history.List{&hist.mutex, ed.daemon}),
+		"list":    vartypes.NewRo(history.List{&hist.mutex, ed.Daemon()}),
 	}
 	subns.AddBuiltinFns("edit:history:", map[string]interface{}{
 		"start":              hist.start,
@@ -57,6 +57,8 @@ func initHist(ed *Editor, ns eval.Ns) {
 	})
 
 	ns.AddNs("history", subns)
+
+	return hist
 }
 
 func (h *hist) Binding(ed *Editor, k ui.Key) eval.Callable {
@@ -74,19 +76,18 @@ func (hist *hist) start() {
 		return
 	}
 
-	prefix := ed.buffer[:ed.dot]
+	buffer, dot := ed.Buffer()
+	prefix := buffer[:dot]
 	walker := hist.fuser.Walker(prefix)
 	_, _, err := walker.Prev()
 
 	if err == nil {
 		hist.walker = walker
-		ed.mode = hist
+		ed.SetMode(hist)
 	} else {
-		ed.addTip("no matching history item")
+		ed.AddTip("no matching history item")
 	}
 }
-
-var errNotHistory = errors.New("not in history mode")
 
 func (hist *hist) up() {
 	_, _, err := hist.walker.Prev()
@@ -105,7 +106,7 @@ func (hist *hist) down() {
 func (hist *hist) downOrQuit() {
 	_, _, err := hist.walker.Next()
 	if err != nil {
-		hist.ed.mode = &hist.ed.insert
+		hist.ed.SetModeInsert()
 	}
 }
 
@@ -113,18 +114,16 @@ func (hist *hist) switchToHistlist() {
 	ed := hist.ed
 	histlistStart(ed)
 	if l, _, ok := getHistlist(ed); ok {
-		ed.buffer = ""
-		ed.dot = 0
+		ed.SetBuffer("", 0)
 		l.changeFilter(hist.walker.Prefix())
 	}
 }
 
 func (hist *hist) defaultFn() {
-	ed := hist.ed
-	ed.buffer = hist.walker.CurrentCmd()
-	ed.dot = len(ed.buffer)
-	ed.mode = &ed.insert
-	ed.setAction(reprocessKey)
+	newBuffer := hist.walker.CurrentCmd()
+	hist.ed.SetBuffer(newBuffer, len(newBuffer))
+	hist.ed.SetModeInsert()
+	hist.ed.SetAction(ReprocessKey)
 }
 
 func (hist *hist) appendHistory(line string) {

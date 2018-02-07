@@ -103,7 +103,7 @@ type editorState struct {
 
 	// Used for builtins.
 	lastKey    ui.Key
-	nextAction action
+	nextAction Action
 }
 
 // NewEditor creates an Editor. When the instance is no longer used, its Close
@@ -173,15 +173,42 @@ func (ed *Editor) Close() {
 	ed.notifyRead.Close()
 }
 
+// Evaler returns the Evaler associated with the Editor.
 func (ed *Editor) Evaler() *eval.Evaler {
 	return ed.evaler
+}
+
+// Daemon returns the daemon client associated with the Editor.
+func (ed *Editor) Daemon() *daemon.Client {
+	return ed.daemon
+}
+
+// Buffer returns the current content and dot position of the buffer.
+func (ed *Editor) Buffer() (string, int) {
+	return ed.buffer, ed.dot
+}
+
+// SetBuffer sets the current content and dot position of the buffer.
+func (ed *Editor) SetBuffer(buffer string, dot int) {
+	ed.buffer, ed.dot = buffer, dot
+}
+
+// SetMode sets the current mode of the Editor.
+func (ed *Editor) SetMode(m Mode) {
+	ed.mode = m
+}
+
+// SetModeInsert sets the current mode of the Editor to insert mode.
+func (ed *Editor) SetModeInsert() {
+	ed.mode = &ed.insert
 }
 
 func (ed *Editor) flash() {
 	// TODO implement fish-like flash effect
 }
 
-func (ed *Editor) addTip(format string, args ...interface{}) {
+// AddTip adds a message to the tip area.
+func (ed *Editor) AddTip(format string, args ...interface{}) {
 	ed.tips = append(ed.tips, fmt.Sprintf(format, args...))
 }
 
@@ -216,7 +243,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 	// TODO(xiaq): Find a more reliable way to determine incomplete input.
 	// Ideally the parser should report it.
 	if err != nil && addErrorsToTips && !ed.parseErrorAtEnd {
-		ed.addTip("%s", err)
+		ed.AddTip("%s", err)
 	}
 
 	ed.styling = &highlight.Styling{}
@@ -225,7 +252,7 @@ func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 	_, err = ed.evaler.Compile(n, eval.NewInteractiveSource(src))
 	if err != nil && !atEnd(err, len(src)) {
 		if addErrorsToTips {
-			ed.addTip("%s", err)
+			ed.AddTip("%s", err)
 		}
 		// Highlight errors in the input buffer.
 		ctx := err.(*eval.CompilationError).Context
@@ -403,7 +430,7 @@ MainLoop:
 				fullRefresh = true
 				continue MainLoop
 			default:
-				ed.addTip("ignored signal %s", sig)
+				ed.AddTip("ignored signal %s", sig)
 			}
 		case event := <-ed.reader.EventChan():
 			switch event := event.(type) {
@@ -413,7 +440,7 @@ MainLoop:
 				ed.Notify("fatal error when reading terminal: %v", event.Err)
 				return "", event.Err
 			case tty.MouseEvent:
-				ed.addTip("mouse: %+v", event)
+				ed.AddTip("mouse: %+v", event)
 			case tty.CursorPosition:
 				// Ignore CPR
 			case tty.PasteSetting:
@@ -461,7 +488,7 @@ MainLoop:
 			lookupKey:
 				fn := ed.mode.Binding(ed, k)
 				if fn == nil {
-					ed.addTip("Unbound and no default binding: %s", k)
+					ed.AddTip("Unbound and no default binding: %s", k)
 					continue MainLoop
 				}
 
@@ -475,15 +502,15 @@ MainLoop:
 				}
 
 				switch ed.popAction() {
-				case reprocessKey:
+				case ReprocessKey:
 					err := ed.refresh(false, true)
 					if err != nil {
 						return "", err
 					}
 					goto lookupKey
-				case commitLine:
+				case CommitLine:
 					return ed.buffer, nil
-				case commitEOF:
+				case CommitEOF:
 					return "", io.EOF
 				}
 			}

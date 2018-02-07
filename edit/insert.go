@@ -239,14 +239,14 @@ func moveDotDown(ed *Editor) {
 
 func insertLastWord(ed *Editor) {
 	if ed.daemon == nil {
-		ed.addTip("daemon offline")
+		ed.AddTip("daemon offline")
 		return
 	}
 	_, cmd, err := ed.daemon.PrevCmd(-1, "")
 	if err == nil {
 		ed.insertAtDot(lastWord(cmd))
 	} else {
-		ed.addTip("db error: %s", err.Error())
+		ed.AddTip("db error: %s", err.Error())
 	}
 }
 
@@ -264,7 +264,7 @@ func insertKey(ed *Editor) {
 }
 
 func returnLine(ed *Editor) {
-	ed.setAction(commitLine)
+	ed.SetAction(CommitLine)
 }
 
 func smartEnter(ed *Editor) {
@@ -286,7 +286,7 @@ func findLastIndent(s string) string {
 
 func returnEOF(ed *Editor) {
 	if len(ed.buffer) == 0 {
-		ed.setAction(commitEOF)
+		ed.SetAction(CommitEOF)
 	}
 }
 
