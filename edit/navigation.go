@@ -73,7 +73,7 @@ type navPreview interface {
 	List(int) ui.Renderer
 }
 
-func (n *navigation) Deinit() {
+func (n *navigation) Teardown() {
 	n.navigationState = navigationState{}
 }
 

@@ -80,7 +80,7 @@ func initInsert(ed *Editor, ns eval.Ns) {
 	ns.AddNs("insert", insertNs)
 }
 
-func (ins *insert) Deinit() {
+func (ins *insert) Teardown() {
 	ins.insertState = insertState{}
 }
 

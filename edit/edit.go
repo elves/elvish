@@ -189,13 +189,10 @@ func (ed *Editor) SetBuffer(buffer string, dot int) {
 
 // SetMode sets the current mode of the Editor.
 func (ed *Editor) SetMode(m Mode) {
-	if deiniter, ok := ed.mode.(deiniter); ok {
-		deiniter.Deinit()
+	if teardowner, ok := ed.mode.(teardowner); ok {
+		teardowner.Teardown()
 	}
 	ed.mode = m
-	if initer, ok := m.(initer); ok {
-		initer.Init()
-	}
 }
 
 // SetModeInsert sets the current mode of the Editor to insert mode.
@@ -329,8 +326,8 @@ func (ed *Editor) finishReadLine() error {
 		ed.rpromptContent = nil
 	}
 	errRefresh := ed.refresh(false, false)
-	if deiniter, ok := ed.mode.(deiniter); ok {
-		deiniter.Deinit()
+	if teardowner, ok := ed.mode.(teardowner); ok {
+		teardowner.Teardown()
 	}
 	ed.out.WriteString("\n")
 	ed.writer.ResetCurrentBuffer()

@@ -60,7 +60,7 @@ func initCompletion(ed *Editor, ns eval.Ns) {
 	ns.AddNs("completion", subns)
 }
 
-func (c *completion) Deinit() {
+func (c *completion) Teardown() {
 	c.completionState = completionState{}
 }
 

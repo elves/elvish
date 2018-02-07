@@ -82,7 +82,7 @@ func newListing(pb *BindingMap, p listingProvider) *listingState {
 	return l
 }
 
-func (l *listing) Deinit() {
+func (l *listing) Teardown() {
 	l.listingState = listingState{}
 }
 

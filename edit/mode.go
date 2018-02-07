@@ -11,12 +11,8 @@ type Mode interface {
 	Binding(ui.Key) eval.Callable
 }
 
-type initer interface {
-	Init()
-}
-
-type deiniter interface {
-	Deinit()
+type teardowner interface {
+	Teardown()
 }
 
 // CursorOnModeLiner is an optional interface that modes can implement. If a
