@@ -45,7 +45,6 @@ var (
 	errShouldBeCompound           = newError("", "compound")
 	errShouldBeEqual              = newError("", "'='")
 	errBothElementsAndPairs       = newError("cannot contain both list elements and map pairs")
-	errShouldBeNewline            = newError("", "newline")
 	errShouldBeEscapeSequence     = newError("", "escape sequence")
 )
 

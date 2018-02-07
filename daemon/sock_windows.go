@@ -1,14 +1,11 @@
 package daemon
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
 )
-
-var errSockExists = errors.New("socket file already exists")
 
 func listen(path string) (net.Listener, error) {
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0006)

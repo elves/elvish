@@ -202,10 +202,6 @@ func (ed *Editor) Evaler() *eval.Evaler {
 	return ed.evaler
 }
 
-func (ed *Editor) Variable(name string) vartypes.Variable {
-	return ed.variables[name]
-}
-
 func (ed *Editor) flash() {
 	// TODO implement fish-like flash effect
 }
