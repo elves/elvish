@@ -40,12 +40,6 @@ type Editor struct {
 	active      bool
 	activeMutex sync.Mutex
 
-	listingBinding  BindingMap
-	narrowBinding   BindingMap
-	histlistBinding BindingMap
-	lastcmdBinding  BindingMap
-	locationBinding BindingMap
-
 	// notifyPort is a write-only port that turns data written to it into editor
 	// notifications.
 	notifyPort *eval.Port
@@ -69,6 +63,10 @@ type Editor struct {
 	completion *completion
 	navigation *navigation
 	listing    *listing
+
+	histlistBinding BindingMap
+	lastcmdBinding  BindingMap
+	locationBinding BindingMap
 
 	editorState
 }

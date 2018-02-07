@@ -156,11 +156,9 @@ func makeNs(ed *Editor) eval.Ns {
 		"key":               ui.ToKey,
 		"wordify":           wordifyBuiltin,
 		"-dump-buf":         ed.dumpBuf,
-		"-narrow-read":      NarrowRead,
 	}
 	ns.AddBuiltinFns("edit:", fns)
 
-	ns.AddNs("narrow", initModeAPI("narrow:", narrowFns, &ed.narrowBinding))
 	ns.AddNs("histlist", initModeAPI("histlist:", histlistFns, &ed.histlistBinding))
 	ns.AddNs("lastcmd", initModeAPI("lastcmd:", lastcmdFns, &ed.lastcmdBinding))
 	ns.AddNs("location", initModeAPI("location:", locationFns, &ed.locationBinding))

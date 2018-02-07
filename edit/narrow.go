@@ -2,7 +2,6 @@ package edit
 
 import (
 	"container/list"
-	"errors"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -14,35 +13,48 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-var narrowFns = map[string]func(*Editor){
-	"up":         func(ed *Editor) { getNarrow(ed).up(false) },
-	"up-cycle":   func(ed *Editor) { getNarrow(ed).up(true) },
-	"page-up":    func(ed *Editor) { getNarrow(ed).pageUp() },
-	"down":       func(ed *Editor) { getNarrow(ed).down(false) },
-	"down-cycle": func(ed *Editor) { getNarrow(ed).down(true) },
-	"page-down":  func(ed *Editor) { getNarrow(ed).pageDown() },
-	"backspace":  func(ed *Editor) { getNarrow(ed).backspace() },
-	"accept":     func(ed *Editor) { getNarrow(ed).accept(ed) },
-	"accept-close": func(ed *Editor) {
-		getNarrow(ed).accept(ed)
-		ed.SetModeInsert()
-	},
-	"toggle-ignore-duplication": func(ed *Editor) {
-		l := getNarrow(ed)
-		l.opts.IgnoreDuplication = !l.opts.IgnoreDuplication
-		l.refresh()
-	},
-	"toggle-ignore-case": func(ed *Editor) {
-		l := getNarrow(ed)
-		l.opts.IgnoreCase = !l.opts.IgnoreCase
-		l.refresh()
-	},
-	"default": func(ed *Editor) { getNarrow(ed).defaultBinding(ed) },
-}
-
 // narrow implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type narrow struct {
+	binding BindingMap
+	narrowState
+}
+
+func init() { atEditorInit(initNarrow) }
+
+func initNarrow(ed *Editor, ns eval.Ns) {
+	n := &narrow{binding: EmptyBindingMap}
+	subns := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&n.binding),
+	}
+	subns.AddBuiltinFns("edit:narrow:", map[string]interface{}{
+		"up":         func() { n.up(false) },
+		"up-cycle":   func() { n.up(true) },
+		"page-up":    func() { n.pageUp() },
+		"down":       func() { n.down(false) },
+		"down-cycle": func() { n.down(true) },
+		"page-down":  func() { n.pageDown() },
+		"backspace":  func() { n.backspace() },
+		"accept":     func() { n.accept(ed) },
+		"accept-close": func() {
+			n.accept(ed)
+			ed.SetModeInsert()
+		},
+		"toggle-ignore-duplication": func() {
+			n.opts.IgnoreDuplication = !n.opts.IgnoreDuplication
+			n.refresh()
+		},
+		"toggle-ignore-case": func() {
+			n.opts.IgnoreCase = !n.opts.IgnoreCase
+			n.refresh()
+		},
+		"default": func() { n.defaultBinding(ed) },
+	})
+	ns.AddNs("narrow", subns)
+	ns.AddBuiltinFn("edit:", "-narrow-read", n.NarrowRead)
+}
+
+type narrowState struct {
 	name        string
 	selected    int
 	filter      string
@@ -63,10 +75,10 @@ func (l *narrow) Binding(ed *Editor, k ui.Key) eval.Callable {
 			return f
 		}
 	}
-	return ed.narrowBinding.GetOrDefault(k)
+	return l.binding.GetOrDefault(k)
 }
 
-func (l *narrow) ModeLine() ui.Renderer {
+func (l *narrowState) ModeLine() ui.Renderer {
 	ml := l.opts.Modeline
 	var opt []string
 	if l.opts.AutoCommit {
@@ -84,11 +96,11 @@ func (l *narrow) ModeLine() ui.Renderer {
 	return modeLineRenderer{ml, l.filter}
 }
 
-func (l *narrow) CursorOnModeLine() bool {
+func (l *narrowState) CursorOnModeLine() bool {
 	return true
 }
 
-func (l *narrow) List(maxHeight int) ui.Renderer {
+func (l *narrowState) List(maxHeight int) ui.Renderer {
 	if l.opts.MaxLines > 0 && l.opts.MaxLines < maxHeight {
 		maxHeight = l.opts.MaxLines
 	}
@@ -174,7 +186,7 @@ func (l *narrow) List(maxHeight int) ui.Renderer {
 	return ls
 }
 
-func (l *narrow) refresh() {
+func (l *narrowState) refresh() {
 	var candidates []narrowItem
 	if l.source != nil {
 		candidates = l.source()
@@ -213,12 +225,12 @@ func (l *narrow) refresh() {
 	}
 }
 
-func (l *narrow) changeFilter(newfilter string) {
+func (l *narrowState) changeFilter(newfilter string) {
 	l.filter = newfilter
 	l.refresh()
 }
 
-func (l *narrow) backspace() bool {
+func (l *narrowState) backspace() bool {
 	_, size := utf8.DecodeLastRuneInString(l.filter)
 	if size > 0 {
 		l.changeFilter(l.filter[:len(l.filter)-size])
@@ -227,7 +239,7 @@ func (l *narrow) backspace() bool {
 	return false
 }
 
-func (l *narrow) up(cycle bool) {
+func (l *narrowState) up(cycle bool) {
 	n := len(l.filtered)
 	if n == 0 {
 		return
@@ -242,7 +254,7 @@ func (l *narrow) up(cycle bool) {
 	}
 }
 
-func (l *narrow) pageUp() {
+func (l *narrowState) pageUp() {
 	n := len(l.filtered)
 	if n == 0 {
 		return
@@ -253,7 +265,7 @@ func (l *narrow) pageUp() {
 	}
 }
 
-func (l *narrow) down(cycle bool) {
+func (l *narrowState) down(cycle bool) {
 	n := len(l.filtered)
 	if n == 0 {
 		return
@@ -268,7 +280,7 @@ func (l *narrow) down(cycle bool) {
 	}
 }
 
-func (l *narrow) pageDown() {
+func (l *narrowState) pageDown() {
 	n := len(l.filtered)
 	if n == 0 {
 		return
@@ -279,13 +291,13 @@ func (l *narrow) pageDown() {
 	}
 }
 
-func (l *narrow) accept(ed *Editor) {
+func (l *narrowState) accept(ed *Editor) {
 	if l.selected >= 0 {
 		l.action(ed, l.filtered[l.selected])
 	}
 }
 
-func (l *narrow) handleFilterKey(ed *Editor) bool {
+func (l *narrowState) handleFilterKey(ed *Editor) bool {
 	k := ed.lastKey
 	if likeChar(k) {
 		l.changeFilter(l.filter + string(k.Rune))
@@ -298,21 +310,10 @@ func (l *narrow) handleFilterKey(ed *Editor) bool {
 	return false
 }
 
-func (l *narrow) defaultBinding(ed *Editor) {
+func (l *narrowState) defaultBinding(ed *Editor) {
 	if !l.handleFilterKey(ed) {
 		ed.SetModeInsert()
 		ed.SetAction(ReprocessKey)
-	}
-}
-
-var errNotNarrow = errors.New("not in a narrow mode")
-
-func getNarrow(ed *Editor) *narrow {
-	if l, ok := ed.mode.(*narrow); ok {
-		return l
-	} else {
-		throw(errNotNarrow)
-		panic("unreachable")
 	}
 }
 
@@ -382,8 +383,8 @@ func (c *narrowItemComplex) FilterText() string {
 	return c.Content()
 }
 
-func NarrowRead(fm *eval.Frame, opts eval.Options, source, action eval.Callable) {
-	l := &narrow{
+func (n *narrow) NarrowRead(fm *eval.Frame, opts eval.Options, source, action eval.Callable) {
+	l := &narrowState{
 		opts: narrowOptions{
 			Bindings: types.EmptyMap,
 		},
@@ -412,8 +413,9 @@ func NarrowRead(fm *eval.Frame, opts eval.Options, source, action eval.Callable)
 	l.match = strings.Contains
 
 	l.changeFilter("")
-	ed := fm.Editor.(*Editor)
-	ed.mode = l
+
+	n.narrowState = *l
+	fm.Editor.(*Editor).SetMode(n)
 }
 
 func narrowGetSource(ec *eval.Frame, source eval.Callable) func() []narrowItem {
