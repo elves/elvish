@@ -7,15 +7,10 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
 )
 
 // Command history listing mode.
-
-var histlistFns = map[string]func(*editor){
-	"start":                   histlistStart,
-	"toggle-dedup":            histlistToggleDedup,
-	"toggle-case-sensitivity": histlistToggleCaseSensitivity,
-}
 
 // ErrStoreOffline is thrown when an operation requires the storage backend, but
 // it is offline.
@@ -29,6 +24,20 @@ type histlist struct {
 	shown           []string
 	index           []int
 	indexWidth      int
+}
+
+func init() { atEditorInit(initHistlist) }
+
+func initHistlist(ed *editor, ns eval.Ns) {
+	subns := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&ed.histlistBinding),
+	}
+	subns.AddBuiltinFns("edit:histlist:", map[string]interface{}{
+		"start":                   func() { histlistStart(ed) },
+		"toggle-dedup":            func() { histlistToggleDedup(ed) },
+		"toggle-case-sensitivity": func() { histlistToggleCaseSensitivity(ed) },
+	})
+	ns.AddNs("histlist", subns)
 }
 
 func newHistlist(cmds []string) *listingState {

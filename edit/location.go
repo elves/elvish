@@ -19,10 +19,6 @@ import (
 
 // Location mode.
 
-var locationFns = map[string]func(*editor){
-	"start": locStart,
-}
-
 // PinnedScore is a special value of Score in storedefs.Dir to represent that the
 // directory is pinned.
 var PinnedScore = math.Inf(1)
@@ -31,6 +27,18 @@ type location struct {
 	home     string // The home directory; leave empty if unknown.
 	all      []storedefs.Dir
 	filtered []storedefs.Dir
+}
+
+func init() { atEditorInit(initLocation) }
+
+func initLocation(ed *editor, ns eval.Ns) {
+	subns := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&ed.locationBinding),
+	}
+	subns.AddBuiltinFns("edit:location:", map[string]interface{}{
+		"start": func() { locStart(ed) },
+	})
+	ns.AddNs("location", subns)
 }
 
 func newLocation(dirs []storedefs.Dir, home string) *listingState {

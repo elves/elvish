@@ -4,14 +4,12 @@ import (
 	"errors"
 	"strconv"
 	"unicode/utf8"
-	"unsafe"
 
 	. "github.com/elves/elvish/edit/edtypes"
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vartypes"
-	"github.com/xiaq/persistent/hash"
 )
 
 // This file implements types and functions for interactions with the
@@ -27,48 +25,6 @@ var (
 	errEditorInvalid      = errors.New("internal error: editor not set up")
 	errEditorInactive     = errors.New("editor inactive")
 )
-
-// BuiltinFn represents an editor builtin.
-type BuiltinFn struct {
-	name string
-	impl func(ed *editor)
-}
-
-var _ eval.Callable = &BuiltinFn{}
-
-// Kind returns "fn".
-func (*BuiltinFn) Kind() string {
-	return "fn"
-}
-
-// Equal compares based on identity.
-func (bf *BuiltinFn) Equal(a interface{}) bool {
-	return bf == a
-}
-
-func (bf *BuiltinFn) Hash() uint32 {
-	return hash.Pointer(unsafe.Pointer(bf))
-}
-
-// Repr returns the representation of a builtin function as a variable name.
-func (bf *BuiltinFn) Repr(int) string {
-	return "$" + bf.name
-}
-
-// Call calls a builtin function.
-func (bf *BuiltinFn) Call(ec *eval.Frame, args []interface{}, opts map[string]interface{}) error {
-	eval.TakeNoOpt(opts)
-	eval.TakeNoArg(args)
-	ed, ok := ec.Editor.(*editor)
-	if !ok {
-		return errEditorInvalid
-	}
-	if !ed.active {
-		return errEditorInactive
-	}
-	bf.impl(ed)
-	return nil
-}
 
 // makeNs makes the edit: namespace.
 func makeNs(ed *editor) eval.Ns {
@@ -159,10 +115,6 @@ func makeNs(ed *editor) eval.Ns {
 	}
 	ns.AddBuiltinFns("edit:", fns)
 
-	ns.AddNs("histlist", initModeAPI("histlist:", histlistFns, &ed.histlistBinding))
-	ns.AddNs("lastcmd", initModeAPI("lastcmd:", lastcmdFns, &ed.lastcmdBinding))
-	ns.AddNs("location", initModeAPI("location:", locationFns, &ed.locationBinding))
-
 	return ns
 }
 
@@ -170,12 +122,6 @@ func makeNs(ed *editor) eval.Ns {
 // notifications. It is the preferred way to call a Fn while the editor is
 // active.
 func (ed *editor) CallFn(fn eval.Callable, args ...interface{}) {
-	if b, ok := fn.(*BuiltinFn); ok {
-		// Builtin function: quick path.
-		b.impl(ed)
-		return
-	}
-
 	ports := []*eval.Port{
 		eval.DevNullClosedChan, ed.notifyPort, ed.notifyPort,
 	}

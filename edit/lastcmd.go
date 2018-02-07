@@ -7,13 +7,16 @@ import (
 
 	. "github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
 )
 
 // LastCmd mode.
 
-var lastcmdFns = map[string]func(*editor){
-	"start":       lastcmdStart,
-	"alt-default": lastcmdAltDefault,
+type lastcmd struct {
+	line     string
+	words    []string
+	filtered []lastcmdEntry
+	minus    bool
 }
 
 type lastcmdEntry struct {
@@ -21,11 +24,17 @@ type lastcmdEntry struct {
 	s string
 }
 
-type lastcmd struct {
-	line     string
-	words    []string
-	filtered []lastcmdEntry
-	minus    bool
+func init() { atEditorInit(initLastcmd) }
+
+func initLastcmd(ed *editor, ns eval.Ns) {
+	subns := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&ed.lastcmdBinding),
+	}
+	subns.AddBuiltinFns("edit:lastcmd:", map[string]interface{}{
+		"start":       func() { lastcmdStart(ed) },
+		"alt-default": func() { lastcmdAltDefault(ed) },
+	})
+	ns.AddNs("lastcmd", subns)
 }
 
 func newLastCmd(line string) *listingState {
