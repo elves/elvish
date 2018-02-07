@@ -114,7 +114,7 @@ func (loc *location) Accept(i int, ed *Editor) {
 	if err != nil {
 		ed.Notify("%v", err)
 	}
-	ed.mode = &ed.insert
+	ed.SetModeInsert()
 }
 
 func locStart(ed *Editor) {

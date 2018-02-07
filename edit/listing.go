@@ -24,7 +24,7 @@ var listingFns = map[string]func(*Editor){
 	"accept":     func(ed *Editor) { getListing(ed).accept(ed) },
 	"accept-close": func(ed *Editor) {
 		getListing(ed).accept(ed)
-		ed.insertStart()
+		ed.SetModeInsert()
 	},
 	"default": func(ed *Editor) { getListing(ed).defaultBinding(ed) },
 }
@@ -319,7 +319,7 @@ func (l *listing) handleFilterKey(k ui.Key) bool {
 
 func (l *listing) defaultBinding(ed *Editor) {
 	if !l.handleFilterKey(ed.lastKey) {
-		ed.insertStart()
+		ed.SetModeInsert()
 		ed.SetAction(ReprocessKey)
 	}
 }

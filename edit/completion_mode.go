@@ -105,7 +105,7 @@ func complAccept(ed *Editor) {
 	if 0 <= c.selected && c.selected < len(c.filtered) {
 		ed.buffer, ed.dot = c.apply(ed.buffer, ed.dot)
 	}
-	ed.mode = &ed.insert
+	ed.SetModeInsert()
 }
 
 func complDefault(ed *Editor) {

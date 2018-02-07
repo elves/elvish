@@ -131,7 +131,7 @@ func navInsertSelected(ed *Editor) {
 
 func navInsertSelectedAndQuit(ed *Editor) {
 	ed.insertAtDot(parse.Quote(ed.navigation.current.selectedName()) + " ")
-	ed.mode = &ed.insert
+	ed.SetModeInsert()
 }
 
 func navDefault(ed *Editor) {
@@ -150,7 +150,7 @@ func navDefault(ed *Editor) {
 			n.refreshDirPreview()
 		}
 	} else {
-		fn := ed.insertBinding.GetOrDefault(k)
+		fn := ed.insert.binding.GetOrDefault(k)
 		if fn == nil {
 			ed.Notify("key %s unbound and no default binding", k)
 		} else {

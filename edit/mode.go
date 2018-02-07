@@ -11,6 +11,14 @@ type Mode interface {
 	Binding(*Editor, ui.Key) eval.Callable
 }
 
+type initer interface {
+	Init()
+}
+
+type deiniter interface {
+	Deinit()
+}
+
 // CursorOnModeLiner is an optional interface that modes can implement. If a
 // mode does and the method returns true, the cursor is placed on the modeline
 // when that mode is active.

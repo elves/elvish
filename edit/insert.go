@@ -14,12 +14,12 @@ import (
 // Builtins related to insert and command mode.
 
 func init() {
-	atEditorInit(func(ed *Editor, ns eval.Ns) {
-		initCoreModes(ed, ns)
-	})
+	atEditorInit(initCoreFns)
+	atEditorInit(initInsert)
+	atEditorInit(initCommand)
 }
 
-func initCoreModes(ed *Editor, ns eval.Ns) {
+func initCoreFns(ed *Editor, ns eval.Ns) {
 	ns.AddBuiltinFns("edit:", map[string]interface{}{
 		"kill-line-left":       ed.killLineLeft,
 		"kill-line-right":      ed.killLineRight,
@@ -50,33 +50,38 @@ func initCoreModes(ed *Editor, ns eval.Ns) {
 		"end-of-history": ed.endOfHistory,
 		"redraw":         ed.redraw,
 	})
-
-	insertNs := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&ed.insertBinding),
-	}
-	insertNs.AddBuiltinFns("edit:insert:", map[string]interface{}{
-		"start":   ed.insertStart,
-		"default": ed.insertDefault,
-	})
-	ns.AddNs("insert", insertNs)
-
-	commandNs := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&ed.commandBinding),
-	}
-	commandNs.AddBuiltinFns("edit:command:", map[string]interface{}{
-		"start":   ed.commandStart,
-		"default": ed.commandDefault,
-	})
-	ns.AddNs("command", commandNs)
 }
 
 type insert struct {
+	binding BindingMap
+	insertState
+}
+
+type insertState struct {
 	quotePaste bool
 	// The number of consecutive key inserts. Used for abbreviation expansion.
 	literalInserts int
 	// Indicates whether a key was inserted (via insert-default). A hack for
 	// maintaining the inserts field.
 	insertedLiteral bool
+}
+
+func initInsert(ed *Editor, ns eval.Ns) {
+	insert := &insert{binding: EmptyBindingMap}
+	ed.insert = insert
+
+	insertNs := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&insert.binding),
+	}
+	insertNs.AddBuiltinFns("edit:insert:", map[string]interface{}{
+		"start":   ed.SetModeInsert,
+		"default": ed.insertDefault,
+	})
+	ns.AddNs("insert", insertNs)
+}
+
+func (ins *insert) Deinit() {
+	ins.insertState = insertState{}
 }
 
 // ui.Insert mode is the default mode and has an empty mode.
@@ -87,26 +92,38 @@ func (ins *insert) ModeLine() ui.Renderer {
 	return nil
 }
 
-func (*insert) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return ed.insertBinding.GetOrDefault(k)
+func (ins *insert) Binding(ed *Editor, k ui.Key) eval.Callable {
+	return ins.binding.GetOrDefault(k)
 }
 
-type command struct{}
+type command struct {
+	binding BindingMap
+}
+
+func initCommand(ed *Editor, ns eval.Ns) {
+	command := &command{binding: EmptyBindingMap}
+	ed.command = command
+
+	commandNs := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&command.binding),
+	}
+	commandNs.AddBuiltinFns("edit:command:", map[string]interface{}{
+		"start":   ed.commandStart,
+		"default": ed.commandDefault,
+	})
+	ns.AddNs("command", commandNs)
+}
 
 func (*command) ModeLine() ui.Renderer {
 	return modeLineRenderer{" COMMAND ", ""}
 }
 
-func (*command) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return ed.commandBinding.GetOrDefault(k)
-}
-
-func (ed *Editor) insertStart() {
-	ed.mode = &ed.insert
+func (cmd *command) Binding(ed *Editor, k ui.Key) eval.Callable {
+	return cmd.binding.GetOrDefault(k)
 }
 
 func (ed *Editor) commandStart() {
-	ed.mode = &ed.command
+	ed.SetMode(ed.command)
 }
 
 func (ed *Editor) killLineLeft() {

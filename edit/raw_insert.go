@@ -20,7 +20,7 @@ func (ed *Editor) startInsertRaw() {
 func insertRaw(ed *Editor, r rune) {
 	ed.insertAtDot(string(r))
 	ed.reader.SetRaw(false)
-	ed.mode = &ed.insert
+	ed.SetModeInsert()
 }
 
 func (rawInsert) Binding(*Editor, ui.Key) eval.Callable {

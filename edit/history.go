@@ -26,14 +26,11 @@ type hist struct {
 }
 
 func init() {
-	atEditorInit(func(ed *Editor, ns eval.Ns) {
-		ed.hist = initHist(ed, ns)
-	})
+	atEditorInit(initHist)
 }
 
-func initHist(ed *Editor, ns eval.Ns) *hist {
+func initHist(ed *Editor, ns eval.Ns) {
 	hist := &hist{ed: ed, binding: EmptyBindingMap}
-
 	if ed.Daemon() != nil {
 		fuser, err := history.NewFuser(ed.Daemon())
 		if err != nil {
@@ -43,6 +40,7 @@ func initHist(ed *Editor, ns eval.Ns) *hist {
 			ed.AddAfterReadline(hist.appendHistory)
 		}
 	}
+	ed.hist = hist
 
 	subns := eval.Ns{
 		"binding": eval.NewVariableFromPtr(&hist.binding),
@@ -58,8 +56,6 @@ func initHist(ed *Editor, ns eval.Ns) *hist {
 	})
 
 	ns.AddNs("history", subns)
-
-	return hist
 }
 
 func (h *hist) Binding(ed *Editor, k ui.Key) eval.Callable {

@@ -82,7 +82,7 @@ func (b *lastcmd) Filter(filter string) int {
 
 func (b *lastcmd) Accept(i int, ed *Editor) {
 	ed.insertAtDot(b.filtered[i].s)
-	ed.insertStart()
+	ed.SetModeInsert()
 }
 
 func lastcmdStart(ed *Editor) {
@@ -112,7 +112,7 @@ func lastcmdAltDefault(ed *Editor) {
 			logger.Println("accepting")
 		}
 	} else {
-		ed.insertStart()
+		ed.SetModeInsert()
 		ed.SetAction(ReprocessKey)
 	}
 }

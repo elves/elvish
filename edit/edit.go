@@ -40,8 +40,6 @@ type Editor struct {
 	active      bool
 	activeMutex sync.Mutex
 
-	insertBinding     BindingMap
-	commandBinding    BindingMap
 	completionBinding BindingMap
 	navigationBinding BindingMap
 
@@ -68,7 +66,9 @@ type Editor struct {
 	maxHeight    float64
 
 	// Modes.
-	hist *hist
+	insert  *insert
+	command *command
+	hist    *hist
 
 	editorState
 }
@@ -94,8 +94,6 @@ type editorState struct {
 
 	mode Mode
 
-	insert     insert
-	command    command
 	completion completion
 	navigation navigation
 
@@ -196,12 +194,18 @@ func (ed *Editor) SetBuffer(buffer string, dot int) {
 
 // SetMode sets the current mode of the Editor.
 func (ed *Editor) SetMode(m Mode) {
+	if deiniter, ok := ed.mode.(deiniter); ok {
+		deiniter.Deinit()
+	}
 	ed.mode = m
+	if initer, ok := m.(initer); ok {
+		initer.Init()
+	}
 }
 
 // SetModeInsert sets the current mode of the Editor to insert mode.
 func (ed *Editor) SetModeInsert() {
-	ed.mode = &ed.insert
+	ed.SetMode(ed.insert)
 }
 
 func (ed *Editor) flash() {
@@ -317,13 +321,16 @@ func (ed *Editor) finishReadLine() error {
 	ed.active = false
 
 	// Refresh the terminal for the last time in a clean-ish state.
-	ed.mode = &ed.insert
+	ed.SetModeInsert()
 	ed.tips = nil
 	ed.dot = len(ed.buffer)
 	if !ed.RpromptPersistent {
 		ed.rpromptContent = nil
 	}
 	errRefresh := ed.refresh(false, false)
+	if deiniter, ok := ed.mode.(deiniter); ok {
+		deiniter.Deinit()
+	}
 	ed.out.WriteString("\n")
 	ed.writer.ResetCurrentBuffer()
 
@@ -356,7 +363,7 @@ func (ed *Editor) ReadLine() (string, error) {
 		}
 	}()
 
-	ed.mode = &ed.insert
+	ed.SetModeInsert()
 
 	// Find external commands asynchronously, so that slow I/O won't block the
 	// editor.
@@ -425,7 +432,7 @@ MainLoop:
 					restoreTerminal: ed.restoreTerminal,
 					isExternal:      ed.isExternal,
 				}
-				ed.mode = &ed.insert
+				ed.SetModeInsert()
 				continue MainLoop
 			case sys.SIGWINCH:
 				fullRefresh = true
