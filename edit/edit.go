@@ -482,7 +482,6 @@ MainLoop:
 					}
 					goto lookupKey
 				case commitLine:
-					ed.appendHistory(ed.buffer)
 					return ed.buffer, nil
 				case commitEOF:
 					return "", io.EOF

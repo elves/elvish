@@ -31,7 +31,6 @@ func init() {
 
 func initHist(ed *Editor, ns eval.Ns) {
 	hist := &hist{ed: ed, binding: emptyBindingTable}
-	ed.hist = hist
 
 	if ed.daemon != nil {
 		fuser, err := history.NewFuser(ed.daemon)
@@ -39,8 +38,10 @@ func initHist(ed *Editor, ns eval.Ns) {
 			fmt.Fprintln(os.Stderr, "Failed to initialize command history; disabled.")
 		} else {
 			hist.fuser = fuser
+			ed.AddAfterReadline(hist.appendHistory)
 		}
 	}
+	ed.hist = hist
 
 	subns := eval.Ns{
 		"binding": eval.NewVariableFromPtr(&hist.binding),
@@ -126,19 +127,19 @@ func (hist *hist) defaultFn() {
 	ed.setAction(reprocessKey)
 }
 
-func (ed *Editor) appendHistory(line string) {
-	// TODO: should have a user variable to control the behavior
-	// Do not add command leading by space into history. This is
-	// useful for confidential operations.
+func (hist *hist) appendHistory(line string) {
+	// Do not add command leading by space into history. This is useful for
+	// confidential operations.
+	// TODO: Make this customizable.
 	if strings.HasPrefix(line, " ") {
 		return
 	}
 
-	if ed.daemon != nil && ed.hist.fuser != nil {
-		ed.hist.mutex.Lock()
+	if hist.fuser != nil {
+		hist.mutex.Lock()
 		go func() {
-			err := ed.hist.fuser.AddCmd(line)
-			ed.hist.mutex.Unlock()
+			err := hist.fuser.AddCmd(line)
+			hist.mutex.Unlock()
 			if err != nil {
 				logger.Printf("Failed to AddCmd %q: %v", line, err)
 			}

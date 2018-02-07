@@ -21,13 +21,22 @@ func init() {
 	atEditorInit(func(ed *Editor, ns eval.Ns) {
 		beforeReadline := types.EmptyList
 		ns["before-readline"] = eval.NewVariableFromPtr(&beforeReadline)
-		ed.beforeReadline = []func(){func() { callHooks(ed, beforeReadline) }}
+		ed.AddBeforeReadline(func() { callHooks(ed, beforeReadline) })
 
 		afterReadline := types.EmptyList
 		ns["after-readline"] = eval.NewVariableFromPtr(&afterReadline)
-		ed.afterReadline = []func(string){
-			func(s string) { callHooks(ed, afterReadline, s) }}
+		ed.AddAfterReadline(func(s string) { callHooks(ed, afterReadline, s) })
 	})
+}
+
+// AddBeforeReadline adds a function to the before-readline hook.
+func (h *editorHooks) AddBeforeReadline(f func()) {
+	h.beforeReadline = append(h.beforeReadline, f)
+}
+
+// AddAfterReadline adds a function to the after-readline hook.
+func (h *editorHooks) AddAfterReadline(f func(string)) {
+	h.afterReadline = append(h.afterReadline, f)
 }
 
 func callHooks(ed *Editor, li vector.Vector, args ...interface{}) {
