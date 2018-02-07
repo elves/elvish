@@ -22,15 +22,16 @@ var historyFns = map[string]func(*Editor){
 }
 
 type hist struct {
-	*history.Walker
+	binding BindingTable
+	walker  *history.Walker
 }
 
-func (*hist) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return ed.historyBinding.getOrDefault(k)
+func (h *hist) Binding(ed *Editor, k ui.Key) eval.Callable {
+	return h.binding.getOrDefault(k)
 }
 
 func (h *hist) ModeLine() ui.Renderer {
-	return modeLineRenderer{fmt.Sprintf(" HISTORY #%d ", h.CurrentSeq()), ""}
+	return modeLineRenderer{fmt.Sprintf(" HISTORY #%d ", h.walker.CurrentSeq()), ""}
 }
 
 func historyStart(ed *Editor) {
@@ -38,12 +39,14 @@ func historyStart(ed *Editor) {
 		ed.Notify("history offline")
 		return
 	}
+
 	prefix := ed.buffer[:ed.dot]
 	walker := ed.historyFuser.Walker(prefix)
-	hist := hist{walker}
-	_, _, err := hist.Prev()
+	_, _, err := walker.Prev()
+
 	if err == nil {
-		ed.mode = &hist
+		ed.hist.walker = walker
+		ed.mode = &ed.hist
 	} else {
 		ed.addTip("no matching history item")
 	}
@@ -62,21 +65,21 @@ func wrapHistoryBuiltin(f func(*Editor, *hist)) func(*Editor) {
 }
 
 func historyUp(ed *Editor, hist *hist) {
-	_, _, err := hist.Prev()
+	_, _, err := hist.walker.Prev()
 	if err != nil {
 		ed.Notify("%s", err)
 	}
 }
 
 func historyDown(ed *Editor, hist *hist) {
-	_, _, err := hist.Next()
+	_, _, err := hist.walker.Next()
 	if err != nil {
 		ed.Notify("%s", err)
 	}
 }
 
 func historyDownOrQuit(ed *Editor, hist *hist) {
-	_, _, err := hist.Next()
+	_, _, err := hist.walker.Next()
 	if err != nil {
 		ed.mode = &ed.insert
 	}
@@ -87,12 +90,12 @@ func historySwitchToHistlist(ed *Editor, hist *hist) {
 	if l, _, ok := getHistlist(ed); ok {
 		ed.buffer = ""
 		ed.dot = 0
-		l.changeFilter(hist.Prefix())
+		l.changeFilter(hist.walker.Prefix())
 	}
 }
 
 func historyDefault(ed *Editor, hist *hist) {
-	ed.buffer = hist.CurrentCmd()
+	ed.buffer = hist.walker.CurrentCmd()
 	ed.dot = len(ed.buffer)
 	ed.mode = &ed.insert
 	ed.setAction(reprocessKey)

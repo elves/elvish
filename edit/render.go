@@ -229,8 +229,8 @@ func (er *editorRenderer) Render(buf *ui.Buffer) {
 		c := es.completion
 		clr.setComp(c.begin, c.end, c.selectedCandidate().code)
 	case *hist:
-		begin := len(mode.Prefix())
-		clr.setHist(begin, mode.CurrentCmd()[begin:])
+		begin := len(mode.walker.Prefix())
+		clr.setHist(begin, mode.walker.CurrentCmd()[begin:])
 	}
 	bufLine = ui.Render(clr, width)
 

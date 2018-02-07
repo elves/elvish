@@ -54,9 +54,8 @@ type Editor struct {
 	lastcmdBinding  BindingTable
 	locationBinding BindingTable
 
-	historyFuser   *history.Fuser
-	historyMutex   sync.RWMutex
-	historyBinding BindingTable
+	historyFuser *history.Fuser
+	historyMutex sync.RWMutex
 
 	// notifyPort is a write-only port that turns data written to it into editor
 	// notifications.
@@ -73,6 +72,9 @@ type Editor struct {
 	abbr         hashmap.Map
 	argCompleter hashmap.Map
 	maxHeight    float64
+
+	// Modes.
+	hist hist
 
 	editorState
 }

@@ -169,7 +169,7 @@ func makeNs(ed *Editor) eval.Ns {
 	ns.AddNs("insert", initModeAPI("insert:", insertFns, &ed.insertBinding))
 	ns.AddNs("command", initModeAPI("command:", commandFns, &ed.commandBinding))
 
-	ns.AddNs("history", initModeAPI("history:", historyFns, &ed.historyBinding))
+	ns.AddNs("history", initModeAPI("history:", historyFns, &ed.hist.binding))
 	ns.AddNs("completion",
 		initModeAPI("completion:", completionFns, &ed.completionBinding))
 	ns.AddNs("navigation",
