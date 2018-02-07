@@ -1,15 +1,8 @@
 package edit
 
-import (
-	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/eval"
-)
+import "github.com/elves/elvish/edit/ui"
 
-// Mode is an editor mode.
-type Mode interface {
-	ModeLine() ui.Renderer
-	Binding(ui.Key) eval.Callable
-}
+// Additional interfaces mode implementations may satisfy.
 
 type teardowner interface {
 	Teardown()
