@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	. "github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/lscolors"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -19,31 +20,52 @@ import (
 
 // Interface.
 
-var navigationFns = map[string]func(*Editor){
-	"start":                    navStart,
-	"up":                       navUp,
-	"down":                     navDown,
-	"page-up":                  navPageUp,
-	"page-down":                navPageDown,
-	"left":                     navLeft,
-	"right":                    navRight,
-	"file-preview-up":          navFilePreviewUp,
-	"file-preview-down":        navFilePreviewDown,
-	"trigger-shown-hidden":     navTriggerShowHidden,
-	"trigger-filter":           navTriggerFilter,
-	"insert-selected":          navInsertSelected,
-	"insert-selected-and-quit": navInsertSelectedAndQuit,
-	"default":                  navDefault,
-}
+var navigationFns = map[string]func(*Editor){}
 
 type navigation struct {
+	binding BindingMap
+	chdir   func(string) error
+	navigationState
+}
+
+type navigationState struct {
 	current    *navColumn
 	parent     *navColumn
 	preview    navPreview
 	showHidden bool
 	filtering  bool
 	filter     string
-	chdir      func(string) error
+}
+
+func init() { atEditorInit(initNavigation) }
+
+func initNavigation(ed *Editor, ns eval.Ns) {
+	n := &navigation{
+		binding: EmptyBindingMap,
+		chdir:   func(dir string) error { return eval.Chdir(dir, ed.daemon) },
+	}
+	ed.navigation = n
+
+	subns := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&n.binding),
+	}
+	subns.AddBuiltinFns("edit:navigation:", map[string]interface{}{
+		"start":                    func() { n.start(ed) },
+		"up":                       n.prev,
+		"down":                     n.next,
+		"page-up":                  n.pageUp,
+		"page-down":                n.pageDown,
+		"left":                     n.ascend,
+		"right":                    n.descend,
+		"file-preview-up":          n.filePreviewUp,
+		"file-preview-down":        n.filePreviewDown,
+		"trigger-shown-hidden":     n.triggerShowHidden,
+		"trigger-filter":           n.triggerFilter,
+		"insert-selected":          func() { n.insertSelected(ed) },
+		"insert-selected-and-quit": func() { n.insertSelectedAndQuit(ed) },
+		"default":                  func() { n.defaultFn(ed) },
+	})
+	ns.AddNs("navigation", subns)
 }
 
 type navPreview interface {
@@ -51,8 +73,12 @@ type navPreview interface {
 	List(int) ui.Renderer
 }
 
-func (*navigation) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return ed.navigationBinding.GetOrDefault(k)
+func (n *navigation) Deinit() {
+	n.navigationState = navigationState{}
+}
+
+func (n *navigation) Binding(ed *Editor, k ui.Key) eval.Callable {
+	return n.binding.GetOrDefault(k)
 }
 
 func (n *navigation) ModeLine() ui.Renderer {
@@ -67,39 +93,23 @@ func (n *navigation) CursorOnModeLine() bool {
 	return n.filtering
 }
 
-func navStart(ed *Editor) {
-	initNavigation(&ed.navigation, ed)
-	ed.mode = &ed.navigation
+func (n *navigation) start(ed *Editor) {
+	n.refresh()
+	ed.SetMode(n)
 }
 
-func navUp(ed *Editor) {
-	ed.navigation.prev()
+func (n *navigation) pageUp() {
+	n.current.pageUp()
+	n.refresh()
 }
 
-func navDown(ed *Editor) {
-	ed.navigation.next()
+func (n *navigation) pageDown() {
+	n.current.pageDown()
+	n.refresh()
 }
 
-func navPageUp(ed *Editor) {
-	ed.navigation.current.pageUp()
-	ed.navigation.refresh()
-}
-
-func navPageDown(ed *Editor) {
-	ed.navigation.current.pageDown()
-	ed.navigation.refresh()
-}
-
-func navLeft(ed *Editor) {
-	ed.navigation.ascend()
-}
-
-func navRight(ed *Editor) {
-	ed.navigation.descend()
-}
-
-func navFilePreviewUp(ed *Editor) {
-	fp, ok := ed.navigation.preview.(*navFilePreview)
+func (n *navigation) filePreviewUp() {
+	fp, ok := n.preview.(*navFilePreview)
 	if ok {
 		if fp.beginLine > 0 {
 			fp.beginLine--
@@ -107,8 +117,8 @@ func navFilePreviewUp(ed *Editor) {
 	}
 }
 
-func navFilePreviewDown(ed *Editor) {
-	fp, ok := ed.navigation.preview.(*navFilePreview)
+func (n *navigation) filePreviewDown() {
+	fp, ok := n.preview.(*navFilePreview)
 	if ok {
 		if fp.beginLine < len(fp.lines)-1 {
 			fp.beginLine++
@@ -116,28 +126,27 @@ func navFilePreviewDown(ed *Editor) {
 	}
 }
 
-func navTriggerShowHidden(ed *Editor) {
-	ed.navigation.showHidden = !ed.navigation.showHidden
-	ed.navigation.refresh()
+func (n *navigation) triggerShowHidden() {
+	n.showHidden = !n.showHidden
+	n.refresh()
 }
 
-func navTriggerFilter(ed *Editor) {
-	ed.navigation.filtering = !ed.navigation.filtering
+func (n *navigation) triggerFilter() {
+	n.filtering = !n.filtering
 }
 
-func navInsertSelected(ed *Editor) {
-	ed.insertAtDot(parse.Quote(ed.navigation.current.selectedName()) + " ")
+func (n *navigation) insertSelected(ed *Editor) {
+	ed.insertAtDot(parse.Quote(n.current.selectedName()) + " ")
 }
 
-func navInsertSelectedAndQuit(ed *Editor) {
-	ed.insertAtDot(parse.Quote(ed.navigation.current.selectedName()) + " ")
+func (n *navigation) insertSelectedAndQuit(ed *Editor) {
+	ed.insertAtDot(parse.Quote(n.current.selectedName()) + " ")
 	ed.SetModeInsert()
 }
 
-func navDefault(ed *Editor) {
+func (n *navigation) defaultFn(ed *Editor) {
 	// Use key binding for insert mode without exiting nigation mode.
 	k := ed.lastKey
-	n := &ed.navigation
 	if n.filtering && likeChar(k) {
 		n.filter += k.String()
 		n.refreshCurrent()
@@ -163,13 +172,6 @@ func navDefault(ed *Editor) {
 // TODO(xiaq): Remember which file was selected in each directory.
 
 var errorEmptyCwd = errors.New("current directory is empty")
-
-func initNavigation(n *navigation, ed *Editor) {
-	*n = navigation{chdir: func(dir string) error {
-		return eval.Chdir(dir, ed.daemon)
-	}}
-	n.refresh()
-}
 
 func (n *navigation) maintainSelected(name string) {
 	n.current.selected = 0

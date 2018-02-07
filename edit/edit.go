@@ -40,8 +40,6 @@ type Editor struct {
 	active      bool
 	activeMutex sync.Mutex
 
-	navigationBinding BindingMap
-
 	listingBinding  BindingMap
 	narrowBinding   BindingMap
 	histlistBinding BindingMap
@@ -69,6 +67,7 @@ type Editor struct {
 	command    *command
 	hist       *hist
 	completion *completion
+	navigation *navigation
 
 	editorState
 }
@@ -93,8 +92,6 @@ type editorState struct {
 	rpromptContent []*ui.Styled
 
 	mode Mode
-
-	navigation navigation
 
 	// A cache of external commands, used in stylist.
 	isExternal map[string]bool
