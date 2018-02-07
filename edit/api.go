@@ -160,7 +160,6 @@ func makeNs(ed *Editor) eval.Ns {
 	}
 	ns.AddBuiltinFns("edit:", fns)
 
-	ns.AddNs("listing", initModeAPI("listing:", listingFns, &ed.listingBinding))
 	ns.AddNs("narrow", initModeAPI("narrow:", narrowFns, &ed.narrowBinding))
 	ns.AddNs("histlist", initModeAPI("histlist:", histlistFns, &ed.histlistBinding))
 	ns.AddNs("lastcmd", initModeAPI("lastcmd:", lastcmdFns, &ed.lastcmdBinding))

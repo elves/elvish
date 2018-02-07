@@ -33,9 +33,8 @@ type location struct {
 	filtered []storedefs.Dir
 }
 
-func newLocation(dirs []storedefs.Dir, home string) *listing {
-	l := newListing(nil, &location{all: dirs, home: home})
-	return &l
+func newLocation(dirs []storedefs.Dir, home string) *listingState {
+	return newListing(nil, &location{all: dirs, home: home})
 }
 
 func (loc *location) ModeTitle(i int) string {
@@ -145,9 +144,7 @@ func locStart(ed *Editor) {
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
 	home, _ := util.GetHome("")
-	listing := newLocation(dirs, home)
-	listing.binding = &ed.locationBinding
-	ed.mode = listing
+	ed.SetModeListing(newLocation(dirs, home), &ed.locationBinding)
 }
 
 // convertListToDirs converts a list of strings to []storedefs.Dir. It uses the

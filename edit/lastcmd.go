@@ -28,10 +28,9 @@ type lastcmd struct {
 	minus    bool
 }
 
-func newLastCmd(line string) *listing {
+func newLastCmd(line string) *listingState {
 	b := &lastcmd{line, wordify(line), nil, false}
-	l := newListing(nil, b)
-	return &l
+	return newListing(nil, b)
 }
 
 func (b *lastcmd) ModeTitle(int) string {
@@ -92,9 +91,7 @@ func lastcmdStart(ed *Editor) {
 		ed.Notify("db error: %s", err.Error())
 		return
 	}
-	listing := newLastCmd(cmd)
-	listing.binding = &ed.lastcmdBinding
-	ed.mode = listing
+	ed.SetModeListing(newLastCmd(cmd), &ed.lastcmdBinding)
 }
 
 func lastcmdAltDefault(ed *Editor) {

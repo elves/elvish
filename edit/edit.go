@@ -68,6 +68,7 @@ type Editor struct {
 	hist       *hist
 	completion *completion
 	navigation *navigation
+	listing    *listing
 
 	editorState
 }
@@ -202,6 +203,12 @@ func (ed *Editor) SetMode(m Mode) {
 // SetModeInsert sets the current mode of the Editor to insert mode.
 func (ed *Editor) SetModeInsert() {
 	ed.SetMode(ed.insert)
+}
+
+func (ed *Editor) SetModeListing(ls *listingState, pb *BindingMap) {
+	ls.binding = pb
+	ed.listing.listingState = *ls
+	ed.SetMode(ed.listing)
 }
 
 func (ed *Editor) flash() {

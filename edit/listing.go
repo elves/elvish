@@ -2,7 +2,6 @@ package edit
 
 import (
 	"container/list"
-	"errors"
 	"fmt"
 	"strings"
 	"unicode/utf8"
@@ -13,31 +12,49 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var listingFns = map[string]func(*Editor){
-	"up":         func(ed *Editor) { getListing(ed).up(false) },
-	"up-cycle":   func(ed *Editor) { getListing(ed).up(true) },
-	"page-up":    func(ed *Editor) { getListing(ed).pageUp() },
-	"down":       func(ed *Editor) { getListing(ed).down(false) },
-	"down-cycle": func(ed *Editor) { getListing(ed).down(true) },
-	"page-down":  func(ed *Editor) { getListing(ed).pageDown() },
-	"backspace":  func(ed *Editor) { getListing(ed).backspace() },
-	"accept":     func(ed *Editor) { getListing(ed).accept(ed) },
-	"accept-close": func(ed *Editor) {
-		getListing(ed).accept(ed)
-		ed.SetModeInsert()
-	},
-	"default": func(ed *Editor) { getListing(ed).defaultBinding(ed) },
-}
+var listingFns = map[string]func(*Editor){}
 
 // listing implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type listing struct {
+	commonBinding BindingMap
+	listingState
+}
+
+type listingState struct {
 	binding     *BindingMap
 	provider    listingProvider
 	selected    int
 	filter      string
 	pagesize    int
 	headerWidth int
+}
+
+func init() { atEditorInit(initListing) }
+
+func initListing(ed *Editor, ns eval.Ns) {
+	l := &listing{commonBinding: EmptyBindingMap}
+	ed.listing = l
+
+	subns := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&l.commonBinding),
+	}
+	subns.AddBuiltinFns("edit:listing:", map[string]interface{}{
+		"up":         func() { l.up(false) },
+		"up-cycle":   func() { l.up(true) },
+		"page-up":    func() { l.pageUp() },
+		"down":       func() { l.down(false) },
+		"down-cycle": func() { l.down(true) },
+		"page-down":  func() { l.pageDown() },
+		"backspace":  func() { l.backspace() },
+		"accept":     func() { l.accept(ed) },
+		"accept-close": func() {
+			l.accept(ed)
+			ed.SetModeInsert()
+		},
+		"default": func() { l.defaultBinding(ed) },
+	})
+	ns.AddNs("listing", subns)
 }
 
 type listingProvider interface {
@@ -52,8 +69,8 @@ type placeholderer interface {
 	Placeholder() string
 }
 
-func newListing(pb *BindingMap, p listingProvider) listing {
-	l := listing{pb, p, 0, "", 0, 0}
+func newListing(pb *BindingMap, p listingProvider) *listingState {
+	l := &listingState{pb, p, 0, "", 0, 0}
 	l.refresh()
 	for i := 0; i < p.Len(); i++ {
 		header, _ := p.Show(i)
@@ -65,12 +82,16 @@ func newListing(pb *BindingMap, p listingProvider) listing {
 	return l
 }
 
+func (l *listing) Deinit() {
+	l.listingState = listingState{}
+}
+
 func (l *listing) Binding(ed *Editor, k ui.Key) eval.Callable {
 	if l.binding == nil {
-		return ed.listingBinding.GetOrDefault(k)
+		return l.commonBinding.GetOrDefault(k)
 	}
 	specificBindings := *l.binding
-	listingBindings := ed.listingBinding
+	listingBindings := l.commonBinding
 	// mode-specific binding -> listing binding ->
 	// mode-specific default -> listing default
 	switch {
@@ -87,18 +108,18 @@ func (l *listing) Binding(ed *Editor, k ui.Key) eval.Callable {
 	}
 }
 
-func (l *listing) ModeLine() ui.Renderer {
+func (l *listingState) ModeLine() ui.Renderer {
 	return modeLineRenderer{l.provider.ModeTitle(l.selected), l.filter}
 }
 
-func (l *listing) CursorOnModeLine() bool {
+func (l *listingState) CursorOnModeLine() bool {
 	if c, ok := l.provider.(CursorOnModeLiner); ok {
 		return c.CursorOnModeLine()
 	}
 	return false
 }
 
-func (l *listing) List(maxHeight int) ui.Renderer {
+func (l *listingState) List(maxHeight int) ui.Renderer {
 	n := l.provider.Len()
 	if n == 0 {
 		var ph string
@@ -233,16 +254,16 @@ func findScrollInterval(n, low, high, height int) (int, int) {
 	return scrollLow, scrollHigh
 }
 
-func (l *listing) changeFilter(newfilter string) {
+func (l *listingState) changeFilter(newfilter string) {
 	l.filter = newfilter
 	l.refresh()
 }
 
-func (l *listing) refresh() {
+func (l *listingState) refresh() {
 	l.selected = l.provider.Filter(l.filter)
 }
 
-func (l *listing) backspace() bool {
+func (l *listingState) backspace() bool {
 	_, size := utf8.DecodeLastRuneInString(l.filter)
 	if size > 0 {
 		l.changeFilter(l.filter[:len(l.filter)-size])
@@ -251,7 +272,7 @@ func (l *listing) backspace() bool {
 	return false
 }
 
-func (l *listing) up(cycle bool) {
+func (l *listingState) up(cycle bool) {
 	n := l.provider.Len()
 	if n == 0 {
 		return
@@ -266,7 +287,7 @@ func (l *listing) up(cycle bool) {
 	}
 }
 
-func (l *listing) pageUp() {
+func (l *listingState) pageUp() {
 	n := l.provider.Len()
 	if n == 0 {
 		return
@@ -277,7 +298,7 @@ func (l *listing) pageUp() {
 	}
 }
 
-func (l *listing) down(cycle bool) {
+func (l *listingState) down(cycle bool) {
 	n := l.provider.Len()
 	if n == 0 {
 		return
@@ -292,7 +313,7 @@ func (l *listing) down(cycle bool) {
 	}
 }
 
-func (l *listing) pageDown() {
+func (l *listingState) pageDown() {
 	n := l.provider.Len()
 	if n == 0 {
 		return
@@ -303,13 +324,13 @@ func (l *listing) pageDown() {
 	}
 }
 
-func (l *listing) accept(ed *Editor) {
+func (l *listingState) accept(ed *Editor) {
 	if l.selected >= 0 {
 		l.provider.Accept(l.selected, ed)
 	}
 }
 
-func (l *listing) handleFilterKey(k ui.Key) bool {
+func (l *listingState) handleFilterKey(k ui.Key) bool {
 	if likeChar(k) {
 		l.changeFilter(l.filter + string(k.Rune))
 		return true
@@ -317,20 +338,9 @@ func (l *listing) handleFilterKey(k ui.Key) bool {
 	return false
 }
 
-func (l *listing) defaultBinding(ed *Editor) {
+func (l *listingState) defaultBinding(ed *Editor) {
 	if !l.handleFilterKey(ed.lastKey) {
 		ed.SetModeInsert()
 		ed.SetAction(ReprocessKey)
-	}
-}
-
-var errNotListing = errors.New("not in a listing mode")
-
-func getListing(ed *Editor) *listing {
-	if l, ok := ed.mode.(*listing); ok {
-		return l
-	} else {
-		throw(errNotListing)
-		panic("unreachable")
 	}
 }

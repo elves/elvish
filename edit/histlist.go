@@ -31,7 +31,7 @@ type histlist struct {
 	indexWidth      int
 }
 
-func newHistlist(cmds []string) *listing {
+func newHistlist(cmds []string) *listingState {
 	last := make(map[string]int)
 	for i, entry := range cmds {
 		last[entry] = i
@@ -43,8 +43,7 @@ func newHistlist(cmds []string) *listing {
 		last:       last,
 		indexWidth: len(strconv.Itoa(len(cmds) - 1)),
 	}
-	l := newListing(nil, hl)
-	return &l
+	return newListing(nil, hl)
 }
 
 func (hl *histlist) ModeTitle(i int) string {
@@ -108,9 +107,7 @@ func histlistStart(ed *Editor) {
 		return
 	}
 
-	listing := newHistlist(cmds)
-	listing.binding = &ed.histlistBinding
-	ed.mode = listing
+	ed.SetModeListing(newHistlist(cmds), &ed.histlistBinding)
 }
 
 func getCmds(ed *Editor) ([]string, error) {
