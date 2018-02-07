@@ -18,13 +18,13 @@ type editorHooks struct {
 }
 
 func init() {
-	atEditorInit(func(ed *Editor) {
+	atEditorInit(func(ed *Editor, ns eval.Ns) {
 		beforeReadline := types.EmptyList
-		ed.variables["before-readline"] = eval.NewVariableFromPtr(&beforeReadline)
+		ns["before-readline"] = eval.NewVariableFromPtr(&beforeReadline)
 		ed.beforeReadline = []func(){func() { callHooks(ed, beforeReadline) }}
 
 		afterReadline := types.EmptyList
-		ed.variables["after-readline"] = eval.NewVariableFromPtr(&afterReadline)
+		ns["after-readline"] = eval.NewVariableFromPtr(&afterReadline)
 		ed.afterReadline = []func(string){
 			func(s string) { callHooks(ed, afterReadline, s) }}
 	})

@@ -6,9 +6,9 @@ import (
 
 // This file contains utilities that facilitates modularization of the editor.
 
-var editorInitFuncs []func(*Editor)
+var editorInitFuncs []func(*Editor, eval.Ns)
 
-func atEditorInit(f func(*Editor)) {
+func atEditorInit(f func(*Editor, eval.Ns)) {
 	editorInitFuncs = append(editorInitFuncs, f)
 }
 

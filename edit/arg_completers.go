@@ -84,13 +84,13 @@ var (
 )
 
 func init() {
-	atEditorInit(func(ed *Editor) {
+	atEditorInit(func(ed *Editor, ns eval.Ns) {
 		m := types.EmptyMap
 		for k, v := range argCompletersData {
 			m = m.Assoc(k, v)
 		}
 		ed.argCompleter = m
-		ed.variables["arg-completer"] = eval.NewVariableFromPtr(&ed.argCompleter)
+		ns["arg-completer"] = eval.NewVariableFromPtr(&ed.argCompleter)
 	})
 }
 

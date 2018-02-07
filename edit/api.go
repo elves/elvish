@@ -77,11 +77,6 @@ func makeNs(ed *Editor) eval.Ns {
 	// TODO(xiaq): Everything here should be registered to some registry instead
 	// of centralized here.
 
-	// Editor configurations.
-	for name, variable := range ed.variables {
-		ns[name] = variable
-	}
-
 	// Internal states.
 	ns["history"] = vartypes.NewRo(history.List{&ed.historyMutex, ed.daemon})
 	ns["current-command"] = vartypes.NewCallback(

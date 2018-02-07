@@ -19,7 +19,6 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
@@ -37,8 +36,6 @@ type Editor struct {
 	sigs   chan os.Signal
 	daemon *daemon.Client
 	evaler *eval.Evaler
-
-	variables map[string]vartypes.Variable
 
 	active      bool
 	activeMutex sync.Mutex
@@ -126,12 +123,6 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 		sigs:   sigs,
 		daemon: daemon,
 		evaler: ev,
-
-		variables: map[string]vartypes.Variable{},
-	}
-
-	for _, f := range editorInitFuncs {
-		f(ed)
 	}
 
 	notifyChan := make(chan interface{})
@@ -172,7 +163,12 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 	}
 	ev.Editor = ed
 
-	ev.Builtin.AddNs("edit", makeNs(ed))
+	ns := makeNs(ed)
+	for _, f := range editorInitFuncs {
+		f(ed, ns)
+	}
+	ev.Builtin.AddNs("edit", ns)
+
 	err = ev.SourceText(eval.NewScriptSource("[editor]", "[editor]", "use binding; binding:install"))
 	if err != nil {
 		fmt.Fprintln(out, "Failed to load default binding:", err)

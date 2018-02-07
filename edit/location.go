@@ -184,10 +184,10 @@ type editorLocConfig struct {
 }
 
 func init() {
-	atEditorInit(func(ed *Editor) {
+	atEditorInit(func(ed *Editor, ns eval.Ns) {
 		ed.locHidden = types.EmptyList
-		ed.variables["loc-hidden"] = eval.NewVariableFromPtr(&ed.locHidden)
+		ns["loc-hidden"] = eval.NewVariableFromPtr(&ed.locHidden)
 		ed.locPinned = types.EmptyList
-		ed.variables["loc-pinned"] = eval.NewVariableFromPtr(&ed.locPinned)
+		ns["loc-pinned"] = eval.NewVariableFromPtr(&ed.locPinned)
 	})
 }
