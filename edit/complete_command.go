@@ -74,10 +74,14 @@ func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandida
 	}
 	explode, ns, _ := eval.ParseIncompleteVariableRef(head)
 	if !explode {
+		logger.Printf("completing commands in ns %q", ns)
 		ev.EachVariableInTop(ns, func(varname string) {
-			if strings.HasSuffix(varname, eval.FnSuffix) {
+			switch {
+			case strings.HasSuffix(varname, eval.FnSuffix):
 				got(eval.MakeVariableRef(false, ns, varname[:len(varname)-len(eval.FnSuffix)]))
-			} else {
+			case strings.HasSuffix(varname, eval.NsSuffix):
+				got(eval.MakeVariableRef(false, ns, varname))
+			default:
 				name := eval.MakeVariableRef(false, ns, varname)
 				rawCands <- &complexCandidate{name, " = ", " = ", ui.Styles{}}
 			}
@@ -89,16 +93,5 @@ func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandida
 			got("e:" + command)
 		}
 	})
-	// TODO Support non-module namespaces.
-	for name := range ev.Global {
-		if head != name && strings.HasSuffix(name, eval.NsSuffix) {
-			got(name)
-		}
-	}
-	for name := range ev.Builtin {
-		if head != name && strings.HasSuffix(name, eval.NsSuffix) {
-			got(name)
-		}
-	}
 	return nil
 }

@@ -35,9 +35,16 @@ func (ev *evalerScopes) EachVariableInTop(ns string, f func(s string)) {
 			}
 		}
 	default:
-		mod := ev.Global[ns+NsSuffix]
+		segs := splitQName(ns + NsSuffix)
+		mod := ev.Global[segs[0]]
 		if mod == nil {
-			mod = ev.Builtin[ns+NsSuffix]
+			mod = ev.Builtin[segs[0]]
+		}
+		for _, seg := range segs[1:] {
+			if mod == nil {
+				return
+			}
+			mod = mod.Get().(Ns)[seg]
 		}
 		if mod != nil {
 			for name := range mod.Get().(Ns) {
