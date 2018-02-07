@@ -117,7 +117,7 @@ func getCmds(ed *Editor) ([]string, error) {
 	if ed.daemon == nil {
 		return nil, ErrStoreOffline
 	}
-	return ed.historyFuser.AllCmds()
+	return ed.hist.fuser.AllCmds()
 }
 
 func histlistToggleDedup(ed *Editor) {

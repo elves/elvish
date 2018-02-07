@@ -13,7 +13,6 @@ import (
 
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/edit/highlight"
-	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/prompt"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
@@ -51,9 +50,6 @@ type Editor struct {
 	lastcmdBinding  BindingTable
 	locationBinding BindingTable
 
-	historyFuser *history.Fuser
-	historyMutex sync.RWMutex
-
 	// notifyPort is a write-only port that turns data written to it into editor
 	// notifications.
 	notifyPort *eval.Port
@@ -71,7 +67,7 @@ type Editor struct {
 	maxHeight    float64
 
 	// Modes.
-	hist hist
+	hist *hist
 
 	editorState
 }
@@ -153,14 +149,6 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 		}
 	}()
 
-	if daemon != nil {
-		f, err := history.NewFuser(daemon)
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Failed to initialize command history. Disabled.")
-		} else {
-			ed.historyFuser = f
-		}
-	}
 	ev.Editor = ed
 
 	ns := makeNs(ed)

@@ -6,7 +6,6 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vartypes"
@@ -78,7 +77,6 @@ func makeNs(ed *Editor) eval.Ns {
 	// of centralized here.
 
 	// Internal states.
-	ns["history"] = vartypes.NewRo(history.List{&ed.historyMutex, ed.daemon})
 	ns["current-command"] = vartypes.NewCallback(
 		func(v interface{}) error {
 			if !ed.active {
@@ -164,7 +162,6 @@ func makeNs(ed *Editor) eval.Ns {
 	ns.AddNs("insert", initModeAPI("insert:", insertFns, &ed.insertBinding))
 	ns.AddNs("command", initModeAPI("command:", commandFns, &ed.commandBinding))
 
-	ns.AddNs("history", initModeAPI("history:", historyFns, &ed.hist.binding))
 	ns.AddNs("completion",
 		initModeAPI("completion:", completionFns, &ed.completionBinding))
 	ns.AddNs("navigation",

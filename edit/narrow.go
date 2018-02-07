@@ -441,7 +441,7 @@ func CommandHistory(fm *eval.Frame, args ...int) {
 
 	out := fm.OutputChan()
 	ed := fm.Editor.(*Editor)
-	cmds, err := ed.historyFuser.AllCmds()
+	cmds, err := ed.hist.fuser.AllCmds()
 	if err != nil {
 		return
 	}

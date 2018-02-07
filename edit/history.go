@@ -3,27 +3,59 @@ package edit
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
+	"sync"
 
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vartypes"
 )
 
 // Command history mode.
 
-var historyFns = map[string]func(*Editor){
-	"start":              historyStart,
-	"up":                 wrapHistoryBuiltin(historyUp),
-	"down":               wrapHistoryBuiltin(historyDown),
-	"down-or-quit":       wrapHistoryBuiltin(historyDownOrQuit),
-	"switch-to-histlist": wrapHistoryBuiltin(historySwitchToHistlist),
-	"default":            wrapHistoryBuiltin(historyDefault),
+type hist struct {
+	ed      *Editor
+	mutex   sync.RWMutex
+	fuser   *history.Fuser
+	binding BindingTable
+
+	// Non-persistent state.
+	walker *history.Walker
 }
 
-type hist struct {
-	binding BindingTable
-	walker  *history.Walker
+func init() {
+	atEditorInit(initHist)
+}
+
+func initHist(ed *Editor, ns eval.Ns) {
+	hist := &hist{ed: ed, binding: emptyBindingTable}
+	ed.hist = hist
+
+	if ed.daemon != nil {
+		fuser, err := history.NewFuser(ed.daemon)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to initialize command history; disabled.")
+		} else {
+			hist.fuser = fuser
+		}
+	}
+
+	subns := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&hist.binding),
+		"list":    vartypes.NewRo(history.List{&hist.mutex, ed.daemon}),
+	}
+	subns.AddBuiltinFns("edit:history:", map[string]interface{}{
+		"start":              hist.start,
+		"up":                 hist.up,
+		"down":               hist.down,
+		"down-or-quit":       hist.downOrQuit,
+		"switch-to-histlist": hist.switchToHistlist,
+		"default":            hist.defaultFn,
+	})
+
+	ns.AddNs("history", subns)
 }
 
 func (h *hist) Binding(ed *Editor, k ui.Key) eval.Callable {
@@ -34,19 +66,20 @@ func (h *hist) ModeLine() ui.Renderer {
 	return modeLineRenderer{fmt.Sprintf(" HISTORY #%d ", h.walker.CurrentSeq()), ""}
 }
 
-func historyStart(ed *Editor) {
-	if ed.historyFuser == nil {
+func (hist *hist) start() {
+	ed := hist.ed
+	if hist.fuser == nil {
 		ed.Notify("history offline")
 		return
 	}
 
 	prefix := ed.buffer[:ed.dot]
-	walker := ed.historyFuser.Walker(prefix)
+	walker := hist.fuser.Walker(prefix)
 	_, _, err := walker.Prev()
 
 	if err == nil {
-		ed.hist.walker = walker
-		ed.mode = &ed.hist
+		hist.walker = walker
+		ed.mode = hist
 	} else {
 		ed.addTip("no matching history item")
 	}
@@ -54,38 +87,29 @@ func historyStart(ed *Editor) {
 
 var errNotHistory = errors.New("not in history mode")
 
-func wrapHistoryBuiltin(f func(*Editor, *hist)) func(*Editor) {
-	return func(ed *Editor) {
-		hist, ok := ed.mode.(*hist)
-		if !ok {
-			throw(errNotHistory)
-		}
-		f(ed, hist)
-	}
-}
-
-func historyUp(ed *Editor, hist *hist) {
+func (hist *hist) up() {
 	_, _, err := hist.walker.Prev()
 	if err != nil {
-		ed.Notify("%s", err)
+		hist.ed.Notify("%s", err)
 	}
 }
 
-func historyDown(ed *Editor, hist *hist) {
+func (hist *hist) down() {
 	_, _, err := hist.walker.Next()
 	if err != nil {
-		ed.Notify("%s", err)
+		hist.ed.Notify("%s", err)
 	}
 }
 
-func historyDownOrQuit(ed *Editor, hist *hist) {
+func (hist *hist) downOrQuit() {
 	_, _, err := hist.walker.Next()
 	if err != nil {
-		ed.mode = &ed.insert
+		hist.ed.mode = &hist.ed.insert
 	}
 }
 
-func historySwitchToHistlist(ed *Editor, hist *hist) {
+func (hist *hist) switchToHistlist() {
+	ed := hist.ed
 	histlistStart(ed)
 	if l, _, ok := getHistlist(ed); ok {
 		ed.buffer = ""
@@ -94,7 +118,8 @@ func historySwitchToHistlist(ed *Editor, hist *hist) {
 	}
 }
 
-func historyDefault(ed *Editor, hist *hist) {
+func (hist *hist) defaultFn() {
+	ed := hist.ed
 	ed.buffer = hist.walker.CurrentCmd()
 	ed.dot = len(ed.buffer)
 	ed.mode = &ed.insert
@@ -109,11 +134,11 @@ func (ed *Editor) appendHistory(line string) {
 		return
 	}
 
-	if ed.daemon != nil && ed.historyFuser != nil {
-		ed.historyMutex.Lock()
+	if ed.daemon != nil && ed.hist.fuser != nil {
+		ed.hist.mutex.Lock()
 		go func() {
-			err := ed.historyFuser.AddCmd(line)
-			ed.historyMutex.Unlock()
+			err := ed.hist.fuser.AddCmd(line)
+			ed.hist.mutex.Unlock()
 			if err != nil {
 				logger.Printf("Failed to AddCmd %q: %v", line, err)
 			}
