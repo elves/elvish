@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	. "github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"

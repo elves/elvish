@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/elves/elvish/daemon"
+	. "github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/highlight"
 	"github.com/elves/elvish/edit/prompt"
 	"github.com/elves/elvish/edit/tty"

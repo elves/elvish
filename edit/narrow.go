@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	. "github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"

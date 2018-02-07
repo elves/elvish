@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	. "github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
 )
 
