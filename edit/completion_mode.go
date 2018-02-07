@@ -15,8 +15,6 @@ import (
 
 // Interface.
 
-var completionFns = map[string]func(*editor){}
-
 type completion struct {
 	binding BindingMap
 	completionState

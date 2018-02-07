@@ -22,7 +22,6 @@ var (
 	errDotMustBeInt       = errors.New("dot must be integer")
 	errDotOutOfRange      = errors.New("dot out of range")
 	errDotInsideCodepoint = errors.New("dot cannot be inside a codepoint")
-	errEditorInvalid      = errors.New("internal error: editor not set up")
 	errEditorInactive     = errors.New("editor inactive")
 )
 

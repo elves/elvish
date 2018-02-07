@@ -12,8 +12,6 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var listingFns = map[string]func(*editor){}
-
 // listing implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type listing struct {

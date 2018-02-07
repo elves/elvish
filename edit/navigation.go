@@ -20,8 +20,6 @@ import (
 
 // Interface.
 
-var navigationFns = map[string]func(*editor){}
-
 type navigation struct {
 	binding BindingMap
 	chdir   func(string) error
