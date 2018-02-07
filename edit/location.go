@@ -19,9 +19,9 @@ import (
 
 // Location mode.
 
-var _ = registerBuiltins(modeLocation, map[string]func(*Editor){
+var locationFns = map[string]func(*Editor){
 	"start": locStart,
-})
+}
 
 // PinnedScore is a special value of Score in storedefs.Dir to represent that the
 // directory is pinned.
@@ -34,7 +34,7 @@ type location struct {
 }
 
 func newLocation(dirs []storedefs.Dir, home string) *listing {
-	l := newListing(modeLocation, &location{all: dirs, home: home})
+	l := newListing(nil, &location{all: dirs, home: home})
 	return &l
 }
 
@@ -145,7 +145,9 @@ func locStart(ed *Editor) {
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
 	home, _ := util.GetHome("")
-	ed.mode = newLocation(dirs, home)
+	listing := newLocation(dirs, home)
+	listing.binding = &ed.locationBinding
+	ed.mode = listing
 }
 
 // convertListToDirs converts a list of strings to []storedefs.Dir. It uses the

@@ -13,7 +13,7 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-var _ = registerBuiltins(modeNarrow, map[string]func(*Editor){
+var narrowFns = map[string]func(*Editor){
 	"up":         func(ed *Editor) { getNarrow(ed).up(false) },
 	"up-cycle":   func(ed *Editor) { getNarrow(ed).up(true) },
 	"page-up":    func(ed *Editor) { getNarrow(ed).pageUp() },
@@ -37,7 +37,7 @@ var _ = registerBuiltins(modeNarrow, map[string]func(*Editor){
 		l.refresh()
 	},
 	"default": func(ed *Editor) { getNarrow(ed).defaultBinding(ed) },
-})
+}
 
 // narrow implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
@@ -62,8 +62,7 @@ func (l *narrow) Binding(ed *Editor, k ui.Key) eval.Callable {
 			return f
 		}
 	}
-
-	return getBinding(ed.bindings[modeNarrow], k)
+	return ed.narrowBinding.getOrDefault(k)
 }
 
 func (l *narrow) ModeLine() ui.Renderer {

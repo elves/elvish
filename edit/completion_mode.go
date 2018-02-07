@@ -14,7 +14,7 @@ import (
 
 // Interface.
 
-var _ = registerBuiltins(modeCompletion, map[string]func(*Editor){
+var completionFns = map[string]func(*Editor){
 	"smart-start":    complSmartStart,
 	"start":          complStart,
 	"up":             complUp,
@@ -26,7 +26,7 @@ var _ = registerBuiltins(modeCompletion, map[string]func(*Editor){
 	"accept":         complAccept,
 	"trigger-filter": complTriggerFilter,
 	"default":        complDefault,
-})
+}
 
 type completion struct {
 	complSpec
@@ -42,7 +42,7 @@ type completion struct {
 }
 
 func (*completion) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return getBinding(ed.bindings[modeCompletion], k)
+	return ed.completionBinding.getOrDefault(k)
 }
 
 func (c *completion) needScrollbar() bool {

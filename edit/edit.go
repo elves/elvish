@@ -39,10 +39,20 @@ type Editor struct {
 	evaler *eval.Evaler
 
 	variables map[string]vartypes.Variable
-	bindings  map[string]vartypes.Variable
 
 	active      bool
 	activeMutex sync.Mutex
+
+	insertBinding     BindingTable
+	commandBinding    BindingTable
+	completionBinding BindingTable
+	navigationBinding BindingTable
+
+	listingBinding  BindingTable
+	narrowBinding   BindingTable
+	histlistBinding BindingTable
+	lastcmdBinding  BindingTable
+	locationBinding BindingTable
 
 	historyFuser   *history.Fuser
 	historyMutex   sync.RWMutex
@@ -115,7 +125,6 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 		daemon: daemon,
 		evaler: ev,
 
-		bindings:  makeBindings(),
 		variables: map[string]vartypes.Variable{},
 	}
 

@@ -19,7 +19,7 @@ import (
 
 // Interface.
 
-var _ = registerBuiltins(modeNavigation, map[string]func(*Editor){
+var navigationFns = map[string]func(*Editor){
 	"start":                    navStart,
 	"up":                       navUp,
 	"down":                     navDown,
@@ -34,7 +34,7 @@ var _ = registerBuiltins(modeNavigation, map[string]func(*Editor){
 	"insert-selected":          navInsertSelected,
 	"insert-selected-and-quit": navInsertSelectedAndQuit,
 	"default":                  navDefault,
-})
+}
 
 type navigation struct {
 	current    *navColumn
@@ -52,7 +52,7 @@ type navPreview interface {
 }
 
 func (*navigation) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return getBinding(ed.bindings[modeNavigation], k)
+	return ed.navigationBinding.getOrDefault(k)
 }
 
 func (n *navigation) ModeLine() ui.Renderer {
@@ -150,7 +150,12 @@ func navDefault(ed *Editor) {
 			n.refreshDirPreview()
 		}
 	} else {
-		ed.CallFn(getBinding(ed.bindings[modeInsert], k))
+		fn := ed.insertBinding.getOrDefault(k)
+		if fn == nil {
+			ed.Notify("key %s unbound and no default binding", k)
+		} else {
+			ed.CallFn(fn)
+		}
 	}
 }
 

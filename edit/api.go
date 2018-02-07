@@ -72,7 +72,7 @@ func (bf *BuiltinFn) Call(ec *eval.Frame, args []interface{}, opts map[string]in
 // makeNs makes the edit: namespace.
 func makeNs(ed *Editor) eval.Ns {
 	// Construct the edit: module, starting with builtins.
-	ns := makeNsFromBuiltins("", builtinMaps[""])
+	ns := makeNsFromBuiltins("", coreFns)
 
 	// TODO(xiaq): Everything here should be registered to some registry instead
 	// of centralized here.
@@ -166,31 +166,20 @@ func makeNs(ed *Editor) eval.Ns {
 	}
 	ns.AddBuiltinFns("edit:", fns)
 
-	ns.AddNs("history", initHistory(ed))
+	ns.AddNs("insert", initModeAPI("insert:", insertFns, &ed.insertBinding))
+	ns.AddNs("command", initModeAPI("command:", commandFns, &ed.commandBinding))
 
-	// To be migrated: old-style submodule API building
+	ns.AddNs("history", initModeAPI("history:", historyFns, &ed.historyBinding))
+	ns.AddNs("completion",
+		initModeAPI("completion:", completionFns, &ed.completionBinding))
+	ns.AddNs("navigation",
+		initModeAPI("navigation:", navigationFns, &ed.navigationBinding))
 
-	submods := make(map[string]eval.Ns)
-	// Install other modules.
-	for module, builtins := range builtinMaps {
-		if module != "" {
-			submods[module] = makeNsFromBuiltins(module+":", builtins)
-		}
-	}
-
-	// Add $edit:{mode}:binding variables.
-	for mode, bindingVar := range ed.bindings {
-		submod, ok := submods[mode]
-		if !ok {
-			submod = make(eval.Ns)
-			submods[mode] = submod
-		}
-		submod["binding"] = bindingVar
-	}
-
-	for name, submod := range submods {
-		ns.AddNs(name, submod)
-	}
+	ns.AddNs("listing", initModeAPI("listing:", listingFns, &ed.listingBinding))
+	ns.AddNs("narrow", initModeAPI("narrow:", narrowFns, &ed.narrowBinding))
+	ns.AddNs("histlist", initModeAPI("histlist:", histlistFns, &ed.histlistBinding))
+	ns.AddNs("lastcmd", initModeAPI("lastcmd:", lastcmdFns, &ed.lastcmdBinding))
+	ns.AddNs("location", initModeAPI("location:", locationFns, &ed.locationBinding))
 
 	return ns
 }

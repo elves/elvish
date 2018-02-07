@@ -24,9 +24,8 @@ func (p provider) Show(i int) (string, ui.Styled) {
 }
 
 var (
-	mode = "test233"
-	p    = provider{[]string{"foo", "bar", "foobar", "lorem", "ipsum"}, -1}
-	ls   = newListing(mode, p)
+	p  = provider{[]string{"foo", "bar", "foobar", "lorem", "ipsum"}, -1}
+	ls = newListing(nil, p)
 )
 
 func TestListing(t *testing.T) {

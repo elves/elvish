@@ -13,7 +13,7 @@ import (
 // Builtins related to insert and command mode.
 
 var (
-	_ = registerBuiltins("", map[string]func(*Editor){
+	coreFns = map[string]func(*Editor){
 		"kill-line-left":       killLineLeft,
 		"kill-line-right":      killLineRight,
 		"kill-word-left":       killWordLeft,
@@ -42,15 +42,15 @@ var (
 
 		"end-of-history": endOfHistory,
 		"redraw":         redraw,
-	})
-	_ = registerBuiltins("insert", map[string]func(*Editor){
+	}
+	insertFns = map[string]func(*Editor){
 		"start":   insertStart,
 		"default": insertDefault,
-	})
-	_ = registerBuiltins("command", map[string]func(*Editor){
+	}
+	commandFns = map[string]func(*Editor){
 		"start":   commandStart,
 		"default": commandDefault,
-	})
+	}
 )
 
 type insert struct {
@@ -71,7 +71,7 @@ func (ins *insert) ModeLine() ui.Renderer {
 }
 
 func (*insert) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return getBinding(ed.bindings[modeInsert], k)
+	return ed.insertBinding.getOrDefault(k)
 }
 
 type command struct{}
@@ -81,7 +81,7 @@ func (*command) ModeLine() ui.Renderer {
 }
 
 func (*command) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return getBinding(ed.bindings[modeCommand], k)
+	return ed.commandBinding.getOrDefault(k)
 }
 
 func insertStart(ed *Editor) {

@@ -11,11 +11,11 @@ import (
 
 // Command history listing mode.
 
-var _ = registerBuiltins(modeHistoryListing, map[string]func(*Editor){
+var histlistFns = map[string]func(*Editor){
 	"start":                   histlistStart,
 	"toggle-dedup":            histlistToggleDedup,
 	"toggle-case-sensitivity": histlistToggleCaseSensitivity,
-})
+}
 
 // ErrStoreOffline is thrown when an operation requires the storage backend, but
 // it is offline.
@@ -43,7 +43,7 @@ func newHistlist(cmds []string) *listing {
 		last:       last,
 		indexWidth: len(strconv.Itoa(len(cmds) - 1)),
 	}
-	l := newListing(modeHistoryListing, hl)
+	l := newListing(nil, hl)
 	return &l
 }
 
@@ -108,7 +108,9 @@ func histlistStart(ed *Editor) {
 		return
 	}
 
-	ed.mode = newHistlist(cmds)
+	listing := newHistlist(cmds)
+	listing.binding = &ed.histlistBinding
+	ed.mode = listing
 }
 
 func getCmds(ed *Editor) ([]string, error) {

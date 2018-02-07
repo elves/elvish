@@ -10,10 +10,10 @@ import (
 
 // LastCmd mode.
 
-var _ = registerBuiltins(modeLastCmd, map[string]func(*Editor){
+var lastcmdFns = map[string]func(*Editor){
 	"start":       lastcmdStart,
 	"alt-default": lastcmdAltDefault,
-})
+}
 
 type lastcmdEntry struct {
 	i int
@@ -29,7 +29,7 @@ type lastcmd struct {
 
 func newLastCmd(line string) *listing {
 	b := &lastcmd{line, wordify(line), nil, false}
-	l := newListing(modeLastCmd, b)
+	l := newListing(nil, b)
 	return &l
 }
 
@@ -91,7 +91,9 @@ func lastcmdStart(ed *Editor) {
 		ed.Notify("db error: %s", err.Error())
 		return
 	}
-	ed.mode = newLastCmd(cmd)
+	listing := newLastCmd(cmd)
+	listing.binding = &ed.lastcmdBinding
+	ed.mode = listing
 }
 
 func lastcmdAltDefault(ed *Editor) {

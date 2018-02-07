@@ -25,12 +25,6 @@ type hist struct {
 	*history.Walker
 }
 
-func initHistory(ed *Editor) eval.Ns {
-	ed.historyBinding = emptyBindingTable
-	return makeNsFromBuiltins("history:", historyFns).Add(
-		"binding", eval.NewVariableFromPtr(&ed.historyBinding))
-}
-
 func (*hist) Binding(ed *Editor, k ui.Key) eval.Callable {
 	return ed.historyBinding.getOrDefault(k)
 }

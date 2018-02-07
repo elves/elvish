@@ -7,16 +7,11 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hashmap"
 )
 
 var errValueShouldBeFn = errors.New("value should be function")
-
-func getBinding(bindingVar vartypes.Variable, k ui.Key) eval.Callable {
-	return bindingVar.Get().(BindingTable).getOrDefault(k)
-}
 
 // BindingTable is a special Map that converts its key to ui.Key and ensures
 // that its values satisfy eval.CallableValue.

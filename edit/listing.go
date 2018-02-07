@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var _ = registerBuiltins(modeListing, map[string]func(*Editor){
+var listingFns = map[string]func(*Editor){
 	"up":         func(ed *Editor) { getListing(ed).up(false) },
 	"up-cycle":   func(ed *Editor) { getListing(ed).up(true) },
 	"page-up":    func(ed *Editor) { getListing(ed).pageUp() },
@@ -26,12 +26,12 @@ var _ = registerBuiltins(modeListing, map[string]func(*Editor){
 		insertStart(ed)
 	},
 	"default": func(ed *Editor) { getListing(ed).defaultBinding(ed) },
-})
+}
 
 // listing implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type listing struct {
-	name        string
+	binding     *BindingTable
 	provider    listingProvider
 	selected    int
 	filter      string
@@ -51,8 +51,8 @@ type placeholderer interface {
 	Placeholder() string
 }
 
-func newListing(t string, p listingProvider) listing {
-	l := listing{t, p, 0, "", 0, 0}
+func newListing(pb *BindingTable, p listingProvider) listing {
+	l := listing{pb, p, 0, "", 0, 0}
 	l.refresh()
 	for i := 0; i < p.Len(); i++ {
 		header, _ := p.Show(i)
@@ -65,12 +65,11 @@ func newListing(t string, p listingProvider) listing {
 }
 
 func (l *listing) Binding(ed *Editor, k ui.Key) eval.Callable {
-	m := ed.bindings
-	if m[l.name] == nil {
-		return getBinding(m[modeListing], k)
+	if l.binding == nil {
+		return ed.listingBinding.getOrDefault(k)
 	}
-	specificBindings := m[l.name].Get().(BindingTable)
-	listingBindings := m[modeListing].Get().(BindingTable)
+	specificBindings := *l.binding
+	listingBindings := ed.listingBinding
 	// mode-specific binding -> listing binding ->
 	// mode-specific default -> listing default
 	switch {

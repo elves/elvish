@@ -5,21 +5,6 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-// Names of modes, used for subnamespaces of edit:.
-const (
-	modeInsert         = "insert"
-	modeRawInsert      = "raw-insert"
-	modeCommand        = "command"
-	modeCompletion     = "completion"
-	modeNavigation     = "navigation"
-	modeHistory        = "history"
-	modeHistoryListing = "histlist"
-	modeLastCmd        = "lastcmd"
-	modeLocation       = "location"
-	modeListing        = "listing" // A "super mode" for histlist, lastcmd, loc
-	modeNarrow         = "narrow"  // a listing mode fork to be extended by scripts
-)
-
 // Mode is an editor mode.
 type Mode interface {
 	ModeLine() ui.Renderer
