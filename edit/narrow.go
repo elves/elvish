@@ -69,6 +69,10 @@ type narrowState struct {
 	opts      narrowOptions
 }
 
+func (l *narrow) Teardown() {
+	l.narrowState = narrowState{}
+}
+
 func (l *narrow) Binding(k ui.Key) eval.Callable {
 	if l.opts.bindingMap != nil {
 		if f, ok := l.opts.bindingMap[k]; ok {

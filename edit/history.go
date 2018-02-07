@@ -58,6 +58,10 @@ func initHist(ed *editor, ns eval.Ns) {
 	ns.AddNs("history", subns)
 }
 
+func (h *hist) Teardown() {
+	h.walker = nil
+}
+
 func (h *hist) Binding(k ui.Key) eval.Callable {
 	return h.binding.GetOrDefault(k)
 }

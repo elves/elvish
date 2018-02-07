@@ -114,6 +114,8 @@ func initCommand(ed *editor, ns eval.Ns) {
 	ns.AddNs("command", commandNs)
 }
 
+func (*command) Teardown() {}
+
 func (*command) ModeLine() ui.Renderer {
 	return modeLineRenderer{" COMMAND ", ""}
 }

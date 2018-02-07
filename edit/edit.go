@@ -183,8 +183,8 @@ func (ed *editor) SetBuffer(buffer string, dot int) {
 }
 
 func (ed *editor) SetMode(m Mode) {
-	if teardowner, ok := ed.mode.(teardowner); ok {
-		teardowner.Teardown()
+	if ed.mode != nil {
+		ed.mode.Teardown()
 	}
 	ed.mode = m
 }
@@ -319,9 +319,7 @@ func (ed *editor) finishReadLine() error {
 		ed.rpromptContent = nil
 	}
 	errRefresh := ed.refresh(false, false)
-	if teardowner, ok := ed.mode.(teardowner); ok {
-		teardowner.Teardown()
-	}
+	ed.mode.Teardown()
 	ed.out.WriteString("\n")
 	ed.writer.ResetCurrentBuffer()
 

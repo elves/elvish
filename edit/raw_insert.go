@@ -23,6 +23,8 @@ func insertRaw(ed *editor, r rune) {
 	ed.SetModeInsert()
 }
 
+func (rawInsert) Teardown() {}
+
 func (rawInsert) Binding(ui.Key) eval.Callable {
 	// The raw insert mode does not handle keys.
 	return nil

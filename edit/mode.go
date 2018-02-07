@@ -4,10 +4,6 @@ import "github.com/elves/elvish/edit/ui"
 
 // Additional interfaces mode implementations may satisfy.
 
-type teardowner interface {
-	Teardown()
-}
-
 // CursorOnModeLiner is an optional interface that modes can implement. If a
 // mode does and the method returns true, the cursor is placed on the modeline
 // when that mode is active.

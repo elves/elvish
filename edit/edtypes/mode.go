@@ -9,4 +9,5 @@ import (
 type Mode interface {
 	ModeLine() ui.Renderer
 	Binding(ui.Key) eval.Callable
+	Teardown()
 }
