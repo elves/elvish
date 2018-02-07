@@ -27,8 +27,8 @@ import (
 
 var logger = util.GetLogger("[edit] ")
 
-// Editor keeps the status of the line editor.
-type Editor struct {
+// editor implements the line editor.
+type editor struct {
 	in     *os.File
 	out    *os.File
 	writer tty.Writer
@@ -102,10 +102,10 @@ type editorState struct {
 
 // NewEditor creates an Editor. When the instance is no longer used, its Close
 // method should be called.
-func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) *Editor {
+func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) Editor {
 	daemon := ev.DaemonClient
 
-	ed := &Editor{
+	ed := &editor{
 		in:     in,
 		out:    out,
 		writer: tty.NewWriter(out),
@@ -159,59 +159,52 @@ func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) 
 	return ed
 }
 
-// Close releases resources used by the editor.
-func (ed *Editor) Close() {
+func (ed *editor) Close() {
 	ed.reader.Close()
 	close(ed.notifyPort.Chan)
 	ed.notifyPort.File.Close()
 	ed.notifyRead.Close()
 }
 
-// Evaler returns the Evaler associated with the Editor.
-func (ed *Editor) Evaler() *eval.Evaler {
+func (ed *editor) Evaler() *eval.Evaler {
 	return ed.evaler
 }
 
-// Daemon returns the daemon client associated with the Editor.
-func (ed *Editor) Daemon() *daemon.Client {
+func (ed *editor) Daemon() *daemon.Client {
 	return ed.daemon
 }
 
-// Buffer returns the current content and dot position of the buffer.
-func (ed *Editor) Buffer() (string, int) {
+func (ed *editor) Buffer() (string, int) {
 	return ed.buffer, ed.dot
 }
 
-// SetBuffer sets the current content and dot position of the buffer.
-func (ed *Editor) SetBuffer(buffer string, dot int) {
+func (ed *editor) SetBuffer(buffer string, dot int) {
 	ed.buffer, ed.dot = buffer, dot
 }
 
-// SetMode sets the current mode of the Editor.
-func (ed *Editor) SetMode(m Mode) {
+func (ed *editor) SetMode(m Mode) {
 	if teardowner, ok := ed.mode.(teardowner); ok {
 		teardowner.Teardown()
 	}
 	ed.mode = m
 }
 
-// SetModeInsert sets the current mode of the Editor to insert mode.
-func (ed *Editor) SetModeInsert() {
+func (ed *editor) SetModeInsert() {
 	ed.SetMode(ed.insert)
 }
 
-func (ed *Editor) SetModeListing(ls *listingState, pb *BindingMap) {
+func (ed *editor) SetModeListing(ls *listingState, pb *BindingMap) {
 	ls.binding = pb
 	ed.listing.listingState = *ls
 	ed.SetMode(ed.listing)
 }
 
-func (ed *Editor) flash() {
+func (ed *editor) flash() {
 	// TODO implement fish-like flash effect
 }
 
 // AddTip adds a message to the tip area.
-func (ed *Editor) AddTip(format string, args ...interface{}) {
+func (ed *editor) AddTip(format string, args ...interface{}) {
 	ed.tips = append(ed.tips, fmt.Sprintf(format, args...))
 }
 
@@ -220,7 +213,7 @@ func (ed *Editor) AddTip(format string, args ...interface{}) {
 // terminal. When the editor is active, it appends the message to the
 // notification queue, which will be written out during the update cycle. It can
 // be safely used concurrently.
-func (ed *Editor) Notify(format string, args ...interface{}) {
+func (ed *editor) Notify(format string, args ...interface{}) {
 	msg := fmt.Sprintf(format, args...)
 	ed.activeMutex.Lock()
 	defer ed.activeMutex.Unlock()
@@ -234,7 +227,7 @@ func (ed *Editor) Notify(format string, args ...interface{}) {
 	ed.notifications = append(ed.notifications, msg)
 }
 
-func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
+func (ed *editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 	src := ed.buffer
 	// Parse the current line
 	n, err := parse.Parse("[interactive]", src)
@@ -288,13 +281,13 @@ func atEnd(e error, n int) bool {
 }
 
 // insertAtDot inserts text at the dot and moves the dot after it.
-func (ed *Editor) insertAtDot(text string) {
+func (ed *editor) insertAtDot(text string) {
 	ed.buffer = ed.buffer[:ed.dot] + text + ed.buffer[ed.dot:]
 	ed.dot += len(text)
 }
 
 // startReadLine prepares the terminal for the editor.
-func (ed *Editor) startReadLine() error {
+func (ed *editor) startReadLine() error {
 	ed.activeMutex.Lock()
 	defer ed.activeMutex.Unlock()
 	ed.active = true
@@ -313,7 +306,7 @@ func (ed *Editor) startReadLine() error {
 
 // finishReadLine puts the terminal in a state suitable for other programs to
 // use.
-func (ed *Editor) finishReadLine() error {
+func (ed *editor) finishReadLine() error {
 	ed.activeMutex.Lock()
 	defer ed.activeMutex.Unlock()
 	ed.active = false
@@ -349,7 +342,7 @@ func (ed *Editor) finishReadLine() error {
 }
 
 // ReadLine reads a line interactively.
-func (ed *Editor) ReadLine() (string, error) {
+func (ed *editor) ReadLine() (string, error) {
 	err := ed.startReadLine()
 	if err != nil {
 		return "", err

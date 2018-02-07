@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var listingFns = map[string]func(*Editor){}
+var listingFns = map[string]func(*editor){}
 
 // listing implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
@@ -32,7 +32,7 @@ type listingState struct {
 
 func init() { atEditorInit(initListing) }
 
-func initListing(ed *Editor, ns eval.Ns) {
+func initListing(ed *editor, ns eval.Ns) {
 	l := &listing{commonBinding: EmptyBindingMap}
 	ed.listing = l
 
@@ -61,7 +61,7 @@ type listingProvider interface {
 	Len() int
 	Show(i int) (string, ui.Styled)
 	Filter(filter string) int
-	Accept(i int, ed *Editor)
+	Accept(i int, ed *editor)
 	ModeTitle(int) string
 }
 
@@ -324,7 +324,7 @@ func (l *listingState) pageDown() {
 	}
 }
 
-func (l *listingState) accept(ed *Editor) {
+func (l *listingState) accept(ed *editor) {
 	if l.selected >= 0 {
 		l.provider.Accept(l.selected, ed)
 	}
@@ -338,7 +338,7 @@ func (l *listingState) handleFilterKey(k ui.Key) bool {
 	return false
 }
 
-func (l *listingState) defaultBinding(ed *Editor) {
+func (l *listingState) defaultBinding(ed *editor) {
 	if !l.handleFilterKey(ed.lastKey) {
 		ed.SetModeInsert()
 		ed.SetAction(ReprocessKey)

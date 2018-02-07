@@ -31,7 +31,7 @@ var (
 // BuiltinFn represents an editor builtin.
 type BuiltinFn struct {
 	name string
-	impl func(ed *Editor)
+	impl func(ed *editor)
 }
 
 var _ eval.Callable = &BuiltinFn{}
@@ -59,7 +59,7 @@ func (bf *BuiltinFn) Repr(int) string {
 func (bf *BuiltinFn) Call(ec *eval.Frame, args []interface{}, opts map[string]interface{}) error {
 	eval.TakeNoOpt(opts)
 	eval.TakeNoArg(args)
-	ed, ok := ec.Editor.(*Editor)
+	ed, ok := ec.Editor.(*editor)
 	if !ok {
 		return errEditorInvalid
 	}
@@ -71,7 +71,7 @@ func (bf *BuiltinFn) Call(ec *eval.Frame, args []interface{}, opts map[string]in
 }
 
 // makeNs makes the edit: namespace.
-func makeNs(ed *Editor) eval.Ns {
+func makeNs(ed *editor) eval.Ns {
 	ns := eval.NewNs()
 
 	// TODO(xiaq): Everything here should be registered to some registry instead
@@ -169,7 +169,7 @@ func makeNs(ed *Editor) eval.Ns {
 // CallFn calls an Fn, displaying its outputs and possible errors as editor
 // notifications. It is the preferred way to call a Fn while the editor is
 // active.
-func (ed *Editor) CallFn(fn eval.Callable, args ...interface{}) {
+func (ed *editor) CallFn(fn eval.Callable, args ...interface{}) {
 	if b, ok := fn.(*BuiltinFn); ok {
 		// Builtin function: quick path.
 		b.impl(ed)

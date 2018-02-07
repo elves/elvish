@@ -16,7 +16,7 @@ type provider struct {
 
 func (p provider) Len() int                 { return len(p.elems) }
 func (p provider) Filter(string) int        { return 0 }
-func (p provider) Accept(i int, ed *Editor) { p.accepted = i }
+func (p provider) Accept(i int, ed *editor) { p.accepted = i }
 func (p provider) ModeTitle(i int) string   { return fmt.Sprintf("test %d", i) }
 
 func (p provider) Show(i int) (string, ui.Styled) {

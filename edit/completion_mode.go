@@ -15,7 +15,7 @@ import (
 
 // Interface.
 
-var completionFns = map[string]func(*Editor){}
+var completionFns = map[string]func(*editor){}
 
 type completion struct {
 	binding BindingMap
@@ -37,7 +37,7 @@ type completionState struct {
 
 func init() { atEditorInit(initCompletion) }
 
-func initCompletion(ed *Editor, ns eval.Ns) {
+func initCompletion(ed *editor, ns eval.Ns) {
 	c := &completion{binding: EmptyBindingMap}
 	ed.completion = c
 
@@ -98,7 +98,7 @@ func (c *completion) right() {
 }
 
 // acceptCompletion accepts currently selected completion candidate.
-func complAccept(ed *Editor) {
+func complAccept(ed *editor) {
 	c := ed.completion
 	if 0 <= c.selected && c.selected < len(c.filtered) {
 		ed.buffer, ed.dot = c.apply(ed.buffer, ed.dot)
@@ -106,7 +106,7 @@ func complAccept(ed *Editor) {
 	ed.SetModeInsert()
 }
 
-func complDefault(ed *Editor) {
+func complDefault(ed *editor) {
 	k := ed.lastKey
 	c := ed.completion
 	if c.filtering && likeChar(k) {
@@ -166,7 +166,7 @@ func (c *completion) next(cycle bool) {
 	}
 }
 
-func startCompletionInner(ed *Editor, acceptPrefix bool) {
+func startCompletionInner(ed *editor, acceptPrefix bool) {
 	node := findLeafNode(ed.chunk, ed.dot)
 	if node == nil {
 		return

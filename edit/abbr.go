@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	atEditorInit(func(ed *Editor, ns eval.Ns) {
+	atEditorInit(func(ed *editor, ns eval.Ns) {
 		ed.abbr = types.EmptyMap
 		ns["abbr"] = eval.NewVariableFromPtr(&ed.abbr)
 	})

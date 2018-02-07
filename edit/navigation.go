@@ -20,7 +20,7 @@ import (
 
 // Interface.
 
-var navigationFns = map[string]func(*Editor){}
+var navigationFns = map[string]func(*editor){}
 
 type navigation struct {
 	binding BindingMap
@@ -39,7 +39,7 @@ type navigationState struct {
 
 func init() { atEditorInit(initNavigation) }
 
-func initNavigation(ed *Editor, ns eval.Ns) {
+func initNavigation(ed *editor, ns eval.Ns) {
 	n := &navigation{
 		binding: EmptyBindingMap,
 		chdir:   func(dir string) error { return eval.Chdir(dir, ed.daemon) },
@@ -93,7 +93,7 @@ func (n *navigation) CursorOnModeLine() bool {
 	return n.filtering
 }
 
-func (n *navigation) start(ed *Editor) {
+func (n *navigation) start(ed *editor) {
 	n.refresh()
 	ed.SetMode(n)
 }
@@ -135,16 +135,16 @@ func (n *navigation) triggerFilter() {
 	n.filtering = !n.filtering
 }
 
-func (n *navigation) insertSelected(ed *Editor) {
+func (n *navigation) insertSelected(ed *editor) {
 	ed.insertAtDot(parse.Quote(n.current.selectedName()) + " ")
 }
 
-func (n *navigation) insertSelectedAndQuit(ed *Editor) {
+func (n *navigation) insertSelectedAndQuit(ed *editor) {
 	ed.insertAtDot(parse.Quote(n.current.selectedName()) + " ")
 	ed.SetModeInsert()
 }
 
-func (n *navigation) defaultFn(ed *Editor) {
+func (n *navigation) defaultFn(ed *editor) {
 	// Use key binding for insert mode without exiting nigation mode.
 	k := ed.lastKey
 	if n.filtering && likeChar(k) {
@@ -421,7 +421,7 @@ func (nc *navColumn) FullWidth(h int) int {
 	return maxw
 }
 
-func (nc *navColumn) Accept(i int, ed *Editor) {
+func (nc *navColumn) Accept(i int, ed *editor) {
 	// TODO
 }
 

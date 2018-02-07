@@ -19,7 +19,7 @@ func init() {
 	atEditorInit(initCommand)
 }
 
-func initCoreFns(ed *Editor, ns eval.Ns) {
+func initCoreFns(ed *editor, ns eval.Ns) {
 	ns.AddBuiltinFns("edit:", map[string]interface{}{
 		"kill-line-left":       ed.killLineLeft,
 		"kill-line-right":      ed.killLineRight,
@@ -66,7 +66,7 @@ type insertState struct {
 	insertedLiteral bool
 }
 
-func initInsert(ed *Editor, ns eval.Ns) {
+func initInsert(ed *editor, ns eval.Ns) {
 	insert := &insert{binding: EmptyBindingMap}
 	ed.insert = insert
 
@@ -100,7 +100,7 @@ type command struct {
 	binding BindingMap
 }
 
-func initCommand(ed *Editor, ns eval.Ns) {
+func initCommand(ed *editor, ns eval.Ns) {
 	command := &command{binding: EmptyBindingMap}
 	ed.command = command
 
@@ -122,17 +122,17 @@ func (cmd *command) Binding(k ui.Key) eval.Callable {
 	return cmd.binding.GetOrDefault(k)
 }
 
-func (ed *Editor) commandStart() {
+func (ed *editor) commandStart() {
 	ed.SetMode(ed.command)
 }
 
-func (ed *Editor) killLineLeft() {
+func (ed *editor) killLineLeft() {
 	sol := util.FindLastSOL(ed.buffer[:ed.dot])
 	ed.buffer = ed.buffer[:sol] + ed.buffer[ed.dot:]
 	ed.dot = sol
 }
 
-func (ed *Editor) killLineRight() {
+func (ed *editor) killLineRight() {
 	eol := util.FindFirstEOL(ed.buffer[ed.dot:]) + ed.dot
 	ed.buffer = ed.buffer[:ed.dot] + ed.buffer[eol:]
 }
@@ -141,7 +141,7 @@ func (ed *Editor) killLineRight() {
 // trimming spaces are removed as well. Examples:
 // "abc  xyz" -> "abc  ", "abc xyz " -> "abc  ".
 
-func (ed *Editor) killWordLeft() {
+func (ed *editor) killWordLeft() {
 	if ed.dot == 0 {
 		return
 	}
@@ -158,7 +158,7 @@ func (ed *Editor) killWordLeft() {
 // killing a small word, trimming spaces are removed as well. Examples:
 // "abc/~" -> "abc", "~/abc" -> "~/", "abc* " -> "abc"
 
-func (ed *Editor) killSmallWordLeft() {
+func (ed *editor) killSmallWordLeft() {
 	left := strings.TrimRightFunc(ed.buffer[:ed.dot], unicode.IsSpace)
 	// The case of left == "" is handled as well.
 	r, _ := utf8.DecodeLastRuneInString(left)
@@ -176,7 +176,7 @@ func isAlnum(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsNumber(r)
 }
 
-func (ed *Editor) killRuneLeft() {
+func (ed *editor) killRuneLeft() {
 	if ed.dot > 0 {
 		_, w := utf8.DecodeLastRuneInString(ed.buffer[:ed.dot])
 		ed.buffer = ed.buffer[:ed.dot-w] + ed.buffer[ed.dot:]
@@ -186,7 +186,7 @@ func (ed *Editor) killRuneLeft() {
 	}
 }
 
-func (ed *Editor) killRuneRight() {
+func (ed *editor) killRuneRight() {
 	if ed.dot < len(ed.buffer) {
 		_, w := utf8.DecodeRuneInString(ed.buffer[ed.dot:])
 		ed.buffer = ed.buffer[:ed.dot] + ed.buffer[ed.dot+w:]
@@ -195,17 +195,17 @@ func (ed *Editor) killRuneRight() {
 	}
 }
 
-func (ed *Editor) moveDotLeft() {
+func (ed *editor) moveDotLeft() {
 	_, w := utf8.DecodeLastRuneInString(ed.buffer[:ed.dot])
 	ed.dot -= w
 }
 
-func (ed *Editor) moveDotRight() {
+func (ed *editor) moveDotRight() {
 	_, w := utf8.DecodeRuneInString(ed.buffer[ed.dot:])
 	ed.dot += w
 }
 
-func (ed *Editor) moveDotLeftWord() {
+func (ed *editor) moveDotLeftWord() {
 	if ed.dot == 0 {
 		return
 	}
@@ -215,7 +215,7 @@ func (ed *Editor) moveDotLeftWord() {
 	ed.dot = space
 }
 
-func (ed *Editor) moveDotRightWord() {
+func (ed *editor) moveDotRightWord() {
 	// Move to first space
 	p := strings.IndexFunc(ed.buffer[ed.dot:], unicode.IsSpace)
 	if p == -1 {
@@ -236,17 +236,17 @@ func notSpace(r rune) bool {
 	return !unicode.IsSpace(r)
 }
 
-func (ed *Editor) moveDotSOL() {
+func (ed *editor) moveDotSOL() {
 	sol := util.FindLastSOL(ed.buffer[:ed.dot])
 	ed.dot = sol
 }
 
-func (ed *Editor) moveDotEOL() {
+func (ed *editor) moveDotEOL() {
 	eol := util.FindFirstEOL(ed.buffer[ed.dot:]) + ed.dot
 	ed.dot = eol
 }
 
-func (ed *Editor) moveDotUp() {
+func (ed *editor) moveDotUp() {
 	sol := util.FindLastSOL(ed.buffer[:ed.dot])
 	if sol == 0 {
 		ed.flash()
@@ -258,7 +258,7 @@ func (ed *Editor) moveDotUp() {
 	ed.dot = prevSOL + len(util.TrimWcwidth(ed.buffer[prevSOL:prevEOL], width))
 }
 
-func (ed *Editor) moveDotDown() {
+func (ed *editor) moveDotDown() {
 	eol := util.FindFirstEOL(ed.buffer[ed.dot:]) + ed.dot
 	if eol == len(ed.buffer) {
 		ed.flash()
@@ -271,7 +271,7 @@ func (ed *Editor) moveDotDown() {
 	ed.dot = nextSOL + len(util.TrimWcwidth(ed.buffer[nextSOL:nextEOL], width))
 }
 
-func (ed *Editor) insertLastWord() {
+func (ed *editor) insertLastWord() {
 	if ed.daemon == nil {
 		ed.AddTip("daemon offline")
 		return
@@ -292,16 +292,16 @@ func lastWord(s string) string {
 	return words[len(words)-1]
 }
 
-func (ed *Editor) insertKey() {
+func (ed *editor) insertKey() {
 	k := ed.lastKey
 	ed.insertAtDot(string(k.Rune))
 }
 
-func (ed *Editor) returnLine() {
+func (ed *editor) returnLine() {
 	ed.SetAction(CommitLine)
 }
 
-func (ed *Editor) smartEnter() {
+func (ed *editor) smartEnter() {
 	if ed.parseErrorAtEnd {
 		// There is a parsing error at the end. ui.Insert a newline and copy
 		// indents from previous line.
@@ -318,25 +318,25 @@ func findLastIndent(s string) string {
 	return line[:len(line)-len(trimmed)]
 }
 
-func (ed *Editor) returnEOF() {
+func (ed *editor) returnEOF() {
 	if len(ed.buffer) == 0 {
 		ed.SetAction(CommitEOF)
 	}
 }
 
-func (ed *Editor) toggleQuotePaste() {
+func (ed *editor) toggleQuotePaste() {
 	ed.insert.quotePaste = !ed.insert.quotePaste
 }
 
-func (ed *Editor) endOfHistory() {
+func (ed *editor) endOfHistory() {
 	ed.Notify("End of history")
 }
 
-func (ed *Editor) redraw() {
+func (ed *editor) redraw() {
 	ed.refresh(true, true)
 }
 
-func (ed *Editor) insertDefault() {
+func (ed *editor) insertDefault() {
 	k := ed.lastKey
 	if likeChar(k) {
 		ed.insertKey()
@@ -367,7 +367,7 @@ func likeChar(k ui.Key) bool {
 	return k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune)
 }
 
-func (ed *Editor) commandDefault() {
+func (ed *editor) commandDefault() {
 	k := ed.lastKey
 	ed.Notify("Unbound: %s", k)
 }

@@ -11,7 +11,7 @@ import (
 
 // Command history listing mode.
 
-var histlistFns = map[string]func(*Editor){
+var histlistFns = map[string]func(*editor){
 	"start":                   histlistStart,
 	"toggle-dedup":            histlistToggleDedup,
 	"toggle-case-sensitivity": histlistToggleCaseSensitivity,
@@ -92,7 +92,7 @@ func (hl *histlist) Filter(filter string) int {
 
 // Editor interface.
 
-func (hl *histlist) Accept(i int, ed *Editor) {
+func (hl *histlist) Accept(i int, ed *editor) {
 	line := hl.shown[i]
 	if len(ed.buffer) > 0 {
 		line = "\n" + line
@@ -100,7 +100,7 @@ func (hl *histlist) Accept(i int, ed *Editor) {
 	ed.insertAtDot(line)
 }
 
-func histlistStart(ed *Editor) {
+func histlistStart(ed *editor) {
 	cmds, err := getCmds(ed)
 	if err != nil {
 		ed.Notify("%v", err)
@@ -110,28 +110,28 @@ func histlistStart(ed *Editor) {
 	ed.SetModeListing(newHistlist(cmds), &ed.histlistBinding)
 }
 
-func getCmds(ed *Editor) ([]string, error) {
+func getCmds(ed *editor) ([]string, error) {
 	if ed.daemon == nil {
 		return nil, ErrStoreOffline
 	}
 	return ed.hist.fuser.AllCmds()
 }
 
-func histlistToggleDedup(ed *Editor) {
+func histlistToggleDedup(ed *editor) {
 	if l, hl, ok := getHistlist(ed); ok {
 		hl.dedup = !hl.dedup
 		l.refresh()
 	}
 }
 
-func histlistToggleCaseSensitivity(ed *Editor) {
+func histlistToggleCaseSensitivity(ed *editor) {
 	if l, hl, ok := getHistlist(ed); ok {
 		hl.caseInsensitive = !hl.caseInsensitive
 		l.refresh()
 	}
 }
 
-func getHistlist(ed *Editor) (*listing, *histlist, bool) {
+func getHistlist(ed *editor) (*listing, *histlist, bool) {
 	if l, ok := ed.mode.(*listing); ok {
 		if hl, ok := l.provider.(*histlist); ok {
 			return l, hl, true

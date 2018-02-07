@@ -9,7 +9,7 @@ import (
 
 func TestBuiltinFn(t *testing.T) {
 	called := false
-	builtinFn := &BuiltinFn{"foobar", func(*Editor) {
+	builtinFn := &BuiltinFn{"foobar", func(*editor) {
 		if called {
 			t.Errorf("builtin impl called multiple times, called not reset")
 		}
@@ -29,12 +29,12 @@ func TestBuiltinFn(t *testing.T) {
 		t.Errorf("BuiltinFn should error when Editor is nil, didn't")
 	}
 
-	ec.Editor = &Editor{active: false}
+	ec.Editor = &editor{active: false}
 	if builtinFn.Call(ec, nil, nil) != errEditorInactive {
 		t.Errorf("BuiltinFn should error when Editor is inactive, didn't")
 	}
 
-	ec.Editor = &Editor{active: true}
+	ec.Editor = &editor{active: true}
 
 	if !util.Throws(func() {
 		builtinFn.Call(ec, []interface{}{"2"}, nil)

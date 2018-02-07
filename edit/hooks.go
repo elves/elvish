@@ -18,7 +18,7 @@ type editorHooks struct {
 }
 
 func init() {
-	atEditorInit(func(ed *Editor, ns eval.Ns) {
+	atEditorInit(func(ed *editor, ns eval.Ns) {
 		beforeReadline := types.EmptyList
 		ns["before-readline"] = eval.NewVariableFromPtr(&beforeReadline)
 		ed.AddBeforeReadline(func() { callHooks(ed, beforeReadline) })
@@ -39,7 +39,7 @@ func (h *editorHooks) AddAfterReadline(f func(string)) {
 	h.afterReadline = append(h.afterReadline, f)
 }
 
-func callHooks(ed *Editor, li vector.Vector, args ...interface{}) {
+func callHooks(ed *editor, li vector.Vector, args ...interface{}) {
 	for it := li.Iterator(); it.HasElem(); it.Next() {
 		fn, ok := it.Elem().(eval.Callable)
 		if !ok {

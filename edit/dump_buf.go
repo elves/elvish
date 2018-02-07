@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-func (ed *Editor) dumpBuf(fm *eval.Frame) {
+func (ed *editor) dumpBuf(fm *eval.Frame) {
 	out := fm.OutputFile()
 	buf := ed.writer.CurrentBuffer()
 	for _, line := range buf.Lines {

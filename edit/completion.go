@@ -82,7 +82,7 @@ var complContextFinders = []complContextFinder{
 // name of the complContext, and the result and error it gave. If no complContext is
 // available, it returns an empty complContext name.
 func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
-	ed := ev.Editor.(*Editor)
+	ed := ev.Editor.(*editor)
 	for _, finder := range complContextFinders {
 		ctx := finder(n, ev)
 		if ctx == nil {

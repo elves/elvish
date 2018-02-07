@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func doHighlight(n parse.Node, ed *Editor) {
+func doHighlight(n parse.Node, ed *editor) {
 	s := &highlight.Emitter{
 		func(s string) bool { return goodFormHead(s, ed) },
 		ed.styling.Add,
@@ -17,7 +17,7 @@ func doHighlight(n parse.Node, ed *Editor) {
 	s.EmitAll(n)
 }
 
-func goodFormHead(head string, ed *Editor) bool {
+func goodFormHead(head string, ed *editor) bool {
 	if eval.IsBuiltinSpecial[head] {
 		return true
 	} else if util.DontSearch(head) {

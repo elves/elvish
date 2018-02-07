@@ -11,7 +11,7 @@ import (
 
 // LastCmd mode.
 
-var lastcmdFns = map[string]func(*Editor){
+var lastcmdFns = map[string]func(*editor){
 	"start":       lastcmdStart,
 	"alt-default": lastcmdAltDefault,
 }
@@ -79,12 +79,12 @@ func (b *lastcmd) Filter(filter string) int {
 
 // Editor interface.
 
-func (b *lastcmd) Accept(i int, ed *Editor) {
+func (b *lastcmd) Accept(i int, ed *editor) {
 	ed.insertAtDot(b.filtered[i].s)
 	ed.SetModeInsert()
 }
 
-func lastcmdStart(ed *Editor) {
+func lastcmdStart(ed *editor) {
 	logger.Println("lastcmd-alt-start")
 	_, cmd, err := ed.daemon.PrevCmd(-1, "")
 	if err != nil {
@@ -94,7 +94,7 @@ func lastcmdStart(ed *Editor) {
 	ed.SetModeListing(newLastCmd(cmd), &ed.lastcmdBinding)
 }
 
-func lastcmdAltDefault(ed *Editor) {
+func lastcmdAltDefault(ed *editor) {
 	l, lc := getLastcmd(ed)
 	if l == nil {
 		return
@@ -114,7 +114,7 @@ func lastcmdAltDefault(ed *Editor) {
 	}
 }
 
-func getLastcmd(ed *Editor) (*listing, *lastcmd) {
+func getLastcmd(ed *editor) (*listing, *lastcmd) {
 	if l, ok := ed.mode.(*listing); ok {
 		if lc, ok := l.provider.(*lastcmd); ok {
 			return l, lc

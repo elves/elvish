@@ -22,7 +22,7 @@ type narrow struct {
 
 func init() { atEditorInit(initNarrow) }
 
-func initNarrow(ed *Editor, ns eval.Ns) {
+func initNarrow(ed *editor, ns eval.Ns) {
 	n := &narrow{binding: EmptyBindingMap}
 	subns := eval.Ns{
 		"binding": eval.NewVariableFromPtr(&n.binding),
@@ -63,7 +63,7 @@ type narrowState struct {
 
 	placehold string
 	source    func() []narrowItem
-	action    func(*Editor, narrowItem)
+	action    func(*editor, narrowItem)
 	match     func(string, string) bool
 	filtered  []narrowItem
 	opts      narrowOptions
@@ -291,13 +291,13 @@ func (l *narrowState) pageDown() {
 	}
 }
 
-func (l *narrowState) accept(ed *Editor) {
+func (l *narrowState) accept(ed *editor) {
 	if l.selected >= 0 {
 		l.action(ed, l.filtered[l.selected])
 	}
 }
 
-func (l *narrowState) handleFilterKey(ed *Editor) bool {
+func (l *narrowState) handleFilterKey(ed *editor) bool {
 	k := ed.lastKey
 	if likeChar(k) {
 		l.changeFilter(l.filter + string(k.Rune))
@@ -310,7 +310,7 @@ func (l *narrowState) handleFilterKey(ed *Editor) bool {
 	return false
 }
 
-func (l *narrowState) defaultBinding(ed *Editor) {
+func (l *narrowState) defaultBinding(ed *editor) {
 	if !l.handleFilterKey(ed) {
 		ed.SetModeInsert()
 		ed.SetAction(ReprocessKey)
@@ -406,7 +406,7 @@ func (n *narrow) NarrowRead(fm *eval.Frame, opts eval.Options, source, action ev
 	}
 
 	l.source = narrowGetSource(fm, source)
-	l.action = func(ed *Editor, item narrowItem) {
+	l.action = func(ed *editor, item narrowItem) {
 		ed.CallFn(action, item)
 	}
 	// TODO: user customize varible
@@ -415,12 +415,12 @@ func (n *narrow) NarrowRead(fm *eval.Frame, opts eval.Options, source, action ev
 	l.changeFilter("")
 
 	n.narrowState = *l
-	fm.Editor.(*Editor).SetMode(n)
+	fm.Editor.(*editor).SetMode(n)
 }
 
 func narrowGetSource(ec *eval.Frame, source eval.Callable) func() []narrowItem {
 	return func() []narrowItem {
-		ed := ec.Editor.(*Editor)
+		ed := ec.Editor.(*editor)
 		vs, err := ec.PCaptureOutput(source, eval.NoArgs, eval.NoOpts)
 		if err != nil {
 			ed.Notify(err.Error())
@@ -443,7 +443,7 @@ func CommandHistory(fm *eval.Frame, args ...int) {
 	var limit, start, end int
 
 	out := fm.OutputChan()
-	ed := fm.Editor.(*Editor)
+	ed := fm.Editor.(*editor)
 	cmds, err := ed.hist.fuser.AllCmds()
 	if err != nil {
 		return
@@ -480,7 +480,7 @@ func CommandHistory(fm *eval.Frame, args ...int) {
 	}
 }
 
-func (ed *Editor) replaceInput(text string) {
+func (ed *editor) replaceInput(text string) {
 	ed.buffer = text
 }
 

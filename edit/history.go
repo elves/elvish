@@ -16,7 +16,7 @@ import (
 // Command history mode.
 
 type hist struct {
-	ed      *Editor
+	ed      *editor
 	mutex   sync.RWMutex
 	fuser   *history.Fuser
 	binding BindingMap
@@ -29,7 +29,7 @@ func init() {
 	atEditorInit(initHist)
 }
 
-func initHist(ed *Editor, ns eval.Ns) {
+func initHist(ed *editor, ns eval.Ns) {
 	hist := &hist{ed: ed, binding: EmptyBindingMap}
 	if ed.Daemon() != nil {
 		fuser, err := history.NewFuser(ed.Daemon())

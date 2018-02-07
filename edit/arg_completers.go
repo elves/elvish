@@ -84,7 +84,7 @@ var (
 )
 
 func init() {
-	atEditorInit(func(ed *Editor, ns eval.Ns) {
+	atEditorInit(func(ed *editor, ns eval.Ns) {
 		m := types.EmptyMap
 		for k, v := range argCompletersData {
 			m = m.Assoc(k, v)
@@ -100,7 +100,7 @@ func init() {
 func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
 	logger.Printf("completing argument: %q", words)
 	// XXX(xiaq): not the best way to get argCompleter.
-	m := ev.Editor.(*Editor).argCompleter
+	m := ev.Editor.(*editor).argCompleter
 	var v interface{}
 	index := words[0]
 	v, ok := m.Get(index)

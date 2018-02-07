@@ -26,7 +26,7 @@ var (
 )
 
 func init() {
-	atEditorInit(func(ed *Editor, ns eval.Ns) {
+	atEditorInit(func(ed *editor, ns eval.Ns) {
 		ed.matcher = types.MakeMapFromKV("", matchPrefix)
 		ns["-matcher"] = eval.NewVariableFromPtr(&ed.matcher)
 	})

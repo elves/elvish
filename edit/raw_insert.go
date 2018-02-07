@@ -12,12 +12,12 @@ import (
 type rawInsert struct {
 }
 
-func (ed *Editor) startInsertRaw() {
+func (ed *editor) startInsertRaw() {
 	ed.reader.SetRaw(true)
 	ed.mode = rawInsert{}
 }
 
-func insertRaw(ed *Editor, r rune) {
+func insertRaw(ed *editor, r rune) {
 	ed.insertAtDot(string(r))
 	ed.reader.SetRaw(false)
 	ed.SetModeInsert()

@@ -19,7 +19,7 @@ import (
 
 // Location mode.
 
-var locationFns = map[string]func(*Editor){
+var locationFns = map[string]func(*editor){
 	"start": locStart,
 }
 
@@ -108,7 +108,7 @@ func makeLocationFilterPattern(s string) *regexp.Regexp {
 
 // Editor interface.
 
-func (loc *location) Accept(i int, ed *Editor) {
+func (loc *location) Accept(i int, ed *editor) {
 	err := eval.Chdir(loc.filtered[i].Path, ed.daemon)
 	if err != nil {
 		ed.Notify("%v", err)
@@ -116,7 +116,7 @@ func (loc *location) Accept(i int, ed *Editor) {
 	ed.SetModeInsert()
 }
 
-func locStart(ed *Editor) {
+func locStart(ed *editor) {
 	if ed.daemon == nil {
 		ed.Notify("%v", ErrStoreOffline)
 		return
@@ -181,7 +181,7 @@ type editorLocConfig struct {
 }
 
 func init() {
-	atEditorInit(func(ed *Editor, ns eval.Ns) {
+	atEditorInit(func(ed *editor, ns eval.Ns) {
 		ed.locHidden = types.EmptyList
 		ns["loc-hidden"] = eval.NewVariableFromPtr(&ed.locHidden)
 		ed.locPinned = types.EmptyList

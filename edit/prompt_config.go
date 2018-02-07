@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	atEditorInit(func(ed *Editor, ns eval.Ns) {
+	atEditorInit(func(ed *editor, ns eval.Ns) {
 		ed.Prompt = prompt.PromptInit()
 		ns["prompt"] = eval.NewVariableFromPtr(&ed.Prompt)
 		ed.Rprompt = prompt.RpromptInit()
