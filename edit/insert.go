@@ -92,7 +92,7 @@ func (ins *insert) ModeLine() ui.Renderer {
 	return nil
 }
 
-func (ins *insert) Binding(ed *Editor, k ui.Key) eval.Callable {
+func (ins *insert) Binding(k ui.Key) eval.Callable {
 	return ins.binding.GetOrDefault(k)
 }
 
@@ -118,7 +118,7 @@ func (*command) ModeLine() ui.Renderer {
 	return modeLineRenderer{" COMMAND ", ""}
 }
 
-func (cmd *command) Binding(ed *Editor, k ui.Key) eval.Callable {
+func (cmd *command) Binding(k ui.Key) eval.Callable {
 	return cmd.binding.GetOrDefault(k)
 }
 

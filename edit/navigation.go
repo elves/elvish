@@ -77,7 +77,7 @@ func (n *navigation) Deinit() {
 	n.navigationState = navigationState{}
 }
 
-func (n *navigation) Binding(ed *Editor, k ui.Key) eval.Callable {
+func (n *navigation) Binding(k ui.Key) eval.Callable {
 	return n.binding.GetOrDefault(k)
 }
 

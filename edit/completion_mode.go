@@ -64,7 +64,7 @@ func (c *completion) Deinit() {
 	c.completionState = completionState{}
 }
 
-func (c *completion) Binding(ed *Editor, k ui.Key) eval.Callable {
+func (c *completion) Binding(k ui.Key) eval.Callable {
 	return c.binding.GetOrDefault(k)
 }
 

@@ -86,7 +86,7 @@ func (l *listing) Deinit() {
 	l.listingState = listingState{}
 }
 
-func (l *listing) Binding(ed *Editor, k ui.Key) eval.Callable {
+func (l *listing) Binding(k ui.Key) eval.Callable {
 	if l.binding == nil {
 		return l.commonBinding.GetOrDefault(k)
 	}

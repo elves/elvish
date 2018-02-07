@@ -495,7 +495,7 @@ MainLoop:
 			case tty.KeyEvent:
 				k := ui.Key(event)
 			lookupKey:
-				fn := ed.mode.Binding(ed, k)
+				fn := ed.mode.Binding(k)
 				if fn == nil {
 					ed.AddTip("Unbound and no default binding: %s", k)
 					continue MainLoop

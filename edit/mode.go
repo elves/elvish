@@ -8,7 +8,7 @@ import (
 // Mode is an editor mode.
 type Mode interface {
 	ModeLine() ui.Renderer
-	Binding(*Editor, ui.Key) eval.Callable
+	Binding(ui.Key) eval.Callable
 }
 
 type initer interface {

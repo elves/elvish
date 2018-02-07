@@ -58,7 +58,7 @@ func initHist(ed *Editor, ns eval.Ns) {
 	ns.AddNs("history", subns)
 }
 
-func (h *hist) Binding(ed *Editor, k ui.Key) eval.Callable {
+func (h *hist) Binding(k ui.Key) eval.Callable {
 	return h.binding.GetOrDefault(k)
 }
 
