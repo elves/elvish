@@ -43,7 +43,7 @@ type completion struct {
 }
 
 func (*completion) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return ed.completionBinding.getOrDefault(k)
+	return ed.completionBinding.GetOrDefault(k)
 }
 
 func (c *completion) needScrollbar() bool {

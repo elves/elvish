@@ -63,7 +63,7 @@ func (l *narrow) Binding(ed *Editor, k ui.Key) eval.Callable {
 			return f
 		}
 	}
-	return ed.narrowBinding.getOrDefault(k)
+	return ed.narrowBinding.GetOrDefault(k)
 }
 
 func (l *narrow) ModeLine() ui.Renderer {

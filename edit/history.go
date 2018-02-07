@@ -19,7 +19,7 @@ type hist struct {
 	ed      *Editor
 	mutex   sync.RWMutex
 	fuser   *history.Fuser
-	binding BindingTable
+	binding BindingMap
 
 	// Non-persistent state.
 	walker *history.Walker
@@ -32,7 +32,7 @@ func init() {
 }
 
 func initHist(ed *Editor, ns eval.Ns) *hist {
-	hist := &hist{ed: ed, binding: emptyBindingTable}
+	hist := &hist{ed: ed, binding: EmptyBindingMap}
 
 	if ed.Daemon() != nil {
 		fuser, err := history.NewFuser(ed.Daemon())
@@ -63,7 +63,7 @@ func initHist(ed *Editor, ns eval.Ns) *hist {
 }
 
 func (h *hist) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return h.binding.getOrDefault(k)
+	return h.binding.GetOrDefault(k)
 }
 
 func (h *hist) ModeLine() ui.Renderer {

@@ -1,4 +1,4 @@
-package edit
+package edtypes
 
 import (
 	"errors"
@@ -13,17 +13,17 @@ import (
 
 var errValueShouldBeFn = errors.New("value should be function")
 
-// BindingTable is a special Map that converts its key to ui.Key and ensures
+// BindingMap is a special Map that converts its key to ui.Key and ensures
 // that its values satisfy eval.CallableValue.
-type BindingTable struct {
+type BindingMap struct {
 	hashmap.Map
 }
 
-var emptyBindingTable = BindingTable{types.EmptyMap}
+var EmptyBindingMap = BindingMap{types.EmptyMap}
 
 // Repr returns the representation of the binding table as if it were an
 // ordinary map keyed by strings.
-func (bt BindingTable) Repr(indent int) string {
+func (bt BindingMap) Repr(indent int) string {
 	var builder types.MapReprBuilder
 	builder.Indent = indent
 
@@ -43,16 +43,16 @@ func (bt BindingTable) Repr(indent int) string {
 }
 
 // Index converts the index to ui.Key and uses the Index of the inner Map.
-func (bt BindingTable) Index(index interface{}) (interface{}, error) {
+func (bt BindingMap) Index(index interface{}) (interface{}, error) {
 	return types.Index(bt.Map, ui.ToKey(index))
 }
 
-func (bt BindingTable) HasKey(k interface{}) bool {
+func (bt BindingMap) HasKey(k interface{}) bool {
 	_, ok := bt.Map.Get(k)
 	return ok
 }
 
-func (bt BindingTable) get(k ui.Key) eval.Callable {
+func (bt BindingMap) GetKey(k ui.Key) eval.Callable {
 	v, ok := bt.Map.Get(k)
 	if !ok {
 		panic("get called when key not present")
@@ -60,44 +60,44 @@ func (bt BindingTable) get(k ui.Key) eval.Callable {
 	return v.(eval.Callable)
 }
 
-func (bt BindingTable) getOrDefault(k ui.Key) eval.Callable {
+func (bt BindingMap) GetOrDefault(k ui.Key) eval.Callable {
 	switch {
 	case bt.HasKey(k):
-		return bt.get(k)
+		return bt.GetKey(k)
 	case bt.HasKey(ui.Default):
-		return bt.get(ui.Default)
+		return bt.GetKey(ui.Default)
 	}
 	return nil
 }
 
 // Assoc converts the index to ui.Key, ensures that the value is CallableValue,
 // uses the Assoc of the inner Map and converts the result to a BindingTable.
-func (bt BindingTable) Assoc(k, v interface{}) (interface{}, error) {
+func (bt BindingMap) Assoc(k, v interface{}) (interface{}, error) {
 	key := ui.ToKey(k)
 	f, ok := v.(eval.Callable)
 	if !ok {
 		return nil, errValueShouldBeFn
 	}
 	map2 := bt.Map.Assoc(key, f)
-	return BindingTable{map2}, nil
+	return BindingMap{map2}, nil
 }
 
 // Dissoc converts the key to ui.Key and calls the Dissoc method of the inner
 // map.
-func (bt BindingTable) Dissoc(k interface{}) interface{} {
-	return BindingTable{bt.Map.Without(ui.ToKey(k))}
+func (bt BindingMap) Dissoc(k interface{}) interface{} {
+	return BindingMap{bt.Map.Without(ui.ToKey(k))}
 }
 
-func makeBindingTable(raw hashmap.Map) BindingTable {
+func MakeBindingMap(raw hashmap.Map) (BindingMap, error) {
 	converted := types.EmptyMap
 	for it := raw.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		f, ok := v.(eval.Callable)
 		if !ok {
-			throw(errValueShouldBeFn)
+			return EmptyBindingMap, errValueShouldBeFn
 		}
 		converted = converted.Assoc(ui.ToKey(k), f)
 	}
 
-	return BindingTable{converted}
+	return BindingMap{converted}, nil
 }

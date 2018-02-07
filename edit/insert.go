@@ -72,7 +72,7 @@ func (ins *insert) ModeLine() ui.Renderer {
 }
 
 func (*insert) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return ed.insertBinding.getOrDefault(k)
+	return ed.insertBinding.GetOrDefault(k)
 }
 
 type command struct{}
@@ -82,7 +82,7 @@ func (*command) ModeLine() ui.Renderer {
 }
 
 func (*command) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return ed.commandBinding.getOrDefault(k)
+	return ed.commandBinding.GetOrDefault(k)
 }
 
 func insertStart(ed *Editor) {

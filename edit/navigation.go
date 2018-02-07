@@ -52,7 +52,7 @@ type navPreview interface {
 }
 
 func (*navigation) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return ed.navigationBinding.getOrDefault(k)
+	return ed.navigationBinding.GetOrDefault(k)
 }
 
 func (n *navigation) ModeLine() ui.Renderer {
@@ -150,7 +150,7 @@ func navDefault(ed *Editor) {
 			n.refreshDirPreview()
 		}
 	} else {
-		fn := ed.insertBinding.getOrDefault(k)
+		fn := ed.insertBinding.GetOrDefault(k)
 		if fn == nil {
 			ed.Notify("key %s unbound and no default binding", k)
 		} else {

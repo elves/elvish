@@ -32,7 +32,7 @@ var listingFns = map[string]func(*Editor){
 // listing implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type listing struct {
-	binding     *BindingTable
+	binding     *BindingMap
 	provider    listingProvider
 	selected    int
 	filter      string
@@ -52,7 +52,7 @@ type placeholderer interface {
 	Placeholder() string
 }
 
-func newListing(pb *BindingTable, p listingProvider) listing {
+func newListing(pb *BindingMap, p listingProvider) listing {
 	l := listing{pb, p, 0, "", 0, 0}
 	l.refresh()
 	for i := 0; i < p.Len(); i++ {
@@ -67,7 +67,7 @@ func newListing(pb *BindingTable, p listingProvider) listing {
 
 func (l *listing) Binding(ed *Editor, k ui.Key) eval.Callable {
 	if l.binding == nil {
-		return ed.listingBinding.getOrDefault(k)
+		return ed.listingBinding.GetOrDefault(k)
 	}
 	specificBindings := *l.binding
 	listingBindings := ed.listingBinding
@@ -75,13 +75,13 @@ func (l *listing) Binding(ed *Editor, k ui.Key) eval.Callable {
 	// mode-specific default -> listing default
 	switch {
 	case specificBindings.HasKey(k):
-		return specificBindings.get(k)
+		return specificBindings.GetKey(k)
 	case listingBindings.HasKey(k):
-		return listingBindings.get(k)
+		return listingBindings.GetKey(k)
 	case specificBindings.HasKey(ui.Default):
-		return specificBindings.get(ui.Default)
+		return specificBindings.GetKey(ui.Default)
 	case listingBindings.HasKey(ui.Default):
-		return listingBindings.get(ui.Default)
+		return listingBindings.GetKey(ui.Default)
 	default:
 		return nil
 	}

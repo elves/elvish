@@ -6,6 +6,8 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
+	. "github.com/elves/elvish/edit/edtypes"
+
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vartypes"
@@ -145,7 +147,7 @@ func makeNs(ed *Editor) eval.Ns {
 
 	// Functions.
 	fns := map[string]interface{}{
-		"binding-table":     makeBindingTable,
+		"binding-table":     MakeBindingMap,
 		"command-history":   CommandHistory,
 		"complete-getopt":   complGetopt,
 		"complex-candidate": makeComplexCandidate,

@@ -1,6 +1,7 @@
 package edit
 
 import (
+	. "github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/eval"
 )
 
@@ -20,7 +21,7 @@ func makeNsFromBuiltins(nsName string, builtins map[string]func(*Editor)) eval.N
 	return ns
 }
 
-func initModeAPI(n string, f map[string]func(*Editor), p *BindingTable) eval.Ns {
-	*p = emptyBindingTable
+func initModeAPI(n string, f map[string]func(*Editor), p *BindingMap) eval.Ns {
+	*p = EmptyBindingMap
 	return makeNsFromBuiltins(n, f).Add("binding", eval.NewVariableFromPtr(p))
 }
