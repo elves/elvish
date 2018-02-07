@@ -160,8 +160,6 @@ func makeNs(ed *Editor) eval.Ns {
 	}
 	ns.AddBuiltinFns("edit:", fns)
 
-	ns.AddNs("completion",
-		initModeAPI("completion:", completionFns, &ed.completionBinding))
 	ns.AddNs("navigation",
 		initModeAPI("navigation:", navigationFns, &ed.navigationBinding))
 

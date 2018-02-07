@@ -226,7 +226,7 @@ func (er *editorRenderer) Render(buf *ui.Buffer) {
 	// modify the text (and mark their part as modified).
 	switch mode := es.mode.(type) {
 	case *completion:
-		c := es.completion
+		c := mode
 		clr.setComp(c.begin, c.end, c.selectedCandidate().code)
 	case *hist:
 		begin := len(mode.walker.Prefix())

@@ -40,7 +40,6 @@ type Editor struct {
 	active      bool
 	activeMutex sync.Mutex
 
-	completionBinding BindingMap
 	navigationBinding BindingMap
 
 	listingBinding  BindingMap
@@ -66,9 +65,10 @@ type Editor struct {
 	maxHeight    float64
 
 	// Modes.
-	insert  *insert
-	command *command
-	hist    *hist
+	insert     *insert
+	command    *command
+	hist       *hist
+	completion *completion
 
 	editorState
 }
@@ -94,7 +94,6 @@ type editorState struct {
 
 	mode Mode
 
-	completion completion
 	navigation navigation
 
 	// A cache of external commands, used in stylist.

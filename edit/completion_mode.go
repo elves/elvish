@@ -15,21 +15,14 @@ import (
 
 // Interface.
 
-var completionFns = map[string]func(*Editor){
-	"smart-start":    complSmartStart,
-	"start":          complStart,
-	"up":             complUp,
-	"up-cycle":       complUpCycle,
-	"down":           complDown,
-	"down-cycle":     complDownCycle,
-	"left":           complLeft,
-	"right":          complRight,
-	"accept":         complAccept,
-	"trigger-filter": complTriggerFilter,
-	"default":        complDefault,
-}
+var completionFns = map[string]func(*Editor){}
 
 type completion struct {
+	binding BindingMap
+	completionState
+}
+
+type completionState struct {
 	complSpec
 	completer string
 
@@ -42,8 +35,37 @@ type completion struct {
 	height          int
 }
 
-func (*completion) Binding(ed *Editor, k ui.Key) eval.Callable {
-	return ed.completionBinding.GetOrDefault(k)
+func init() { atEditorInit(initCompletion) }
+
+func initCompletion(ed *Editor, ns eval.Ns) {
+	c := &completion{binding: EmptyBindingMap}
+	ed.completion = c
+
+	subns := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&c.binding),
+	}
+	subns.AddBuiltinFns("edit:completion:", map[string]interface{}{
+		"start":          func() { startCompletionInner(ed, false) },
+		"smart-start":    func() { startCompletionInner(ed, true) },
+		"up":             func() { c.prev(false) },
+		"up-cycle":       func() { c.prev(true) },
+		"down":           func() { c.next(false) },
+		"down-cycle":     func() { c.next(true) },
+		"left":           c.left,
+		"right":          c.right,
+		"accept":         func() { complAccept(ed) },
+		"trigger-filter": c.triggerFilter,
+		"default":        func() { complDefault(ed) },
+	})
+	ns.AddNs("completion", subns)
+}
+
+func (c *completion) Deinit() {
+	c.completionState = completionState{}
+}
+
+func (c *completion) Binding(ed *Editor, k ui.Key) eval.Callable {
+	return c.binding.GetOrDefault(k)
 }
 
 func (c *completion) needScrollbar() bool {
@@ -63,40 +85,16 @@ func (c *completion) CursorOnModeLine() bool {
 	return c.filtering
 }
 
-func complStart(ed *Editor) {
-	startCompletionInner(ed, false)
-}
-
-func complSmartStart(ed *Editor) {
-	startCompletionInner(ed, true)
-}
-
-func complUp(ed *Editor) {
-	ed.completion.prev(false)
-}
-
-func complDown(ed *Editor) {
-	ed.completion.next(false)
-}
-
-func complLeft(ed *Editor) {
-	if c := ed.completion.selected - ed.completion.height; c >= 0 {
-		ed.completion.selected = c
+func (c *completion) left() {
+	if x := c.selected - c.height; x >= 0 {
+		c.selected = x
 	}
 }
 
-func complRight(ed *Editor) {
-	if c := ed.completion.selected + ed.completion.height; c < len(ed.completion.filtered) {
-		ed.completion.selected = c
+func (c *completion) right() {
+	if x := c.selected + c.height; x < len(c.filtered) {
+		c.selected = x
 	}
-}
-
-func complUpCycle(ed *Editor) {
-	ed.completion.prev(true)
-}
-
-func complDownCycle(ed *Editor) {
-	ed.completion.next(true)
 }
 
 // acceptCompletion accepts currently selected completion candidate.
@@ -110,7 +108,7 @@ func complAccept(ed *Editor) {
 
 func complDefault(ed *Editor) {
 	k := ed.lastKey
-	c := &ed.completion
+	c := ed.completion
 	if c.filtering && likeChar(k) {
 		c.changeFilter(c.filter + string(k.Rune))
 	} else if c.filtering && k == (ui.Key{ui.Backspace, 0}) {
@@ -124,8 +122,7 @@ func complDefault(ed *Editor) {
 	}
 }
 
-func complTriggerFilter(ed *Editor) {
-	c := &ed.completion
+func (c *completion) triggerFilter() {
 	if c.filtering {
 		c.filtering = false
 		c.changeFilter("")
@@ -215,12 +212,12 @@ func startCompletionInner(ed *Editor, acceptPrefix bool) {
 				return
 			}
 		}
-		ed.completion = completion{
+		ed.completion.completionState = completionState{
 			completer: completer,
 			complSpec: *complSpec,
 			filtered:  complSpec.candidates,
 		}
-		ed.mode = &ed.completion
+		ed.SetMode(ed.completion)
 	}
 }
 
