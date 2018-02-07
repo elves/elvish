@@ -204,5 +204,6 @@ func (ed *Editor) CallFn(fn eval.Callable, args ...interface{}) {
 		ed.Notify("function error: %s", ex.Error())
 	}
 
+	// XXX Concurrency-dangerous!
 	ed.refresh(true, true)
 }

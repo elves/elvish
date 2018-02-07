@@ -322,7 +322,9 @@ func (ed *Editor) finishReadLine() error {
 	line := ed.buffer
 	ed.editorState = editorState{}
 
-	callHooks(ed.evaler, ed.afterReadline, line)
+	for _, f := range ed.afterReadline {
+		f(line)
+	}
 
 	return util.Errors(errRefresh, errRestore)
 }
@@ -351,7 +353,9 @@ func (ed *Editor) ReadLine() (string, error) {
 
 	fullRefresh := false
 
-	callHooks(ed.evaler, ed.beforeReadline)
+	for _, f := range ed.beforeReadline {
+		f()
+	}
 
 	promptUpdater := prompt.NewUpdater(ed.Prompt)
 	rpromptUpdater := prompt.NewUpdater(ed.Rprompt)

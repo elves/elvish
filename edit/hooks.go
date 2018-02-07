@@ -1,9 +1,6 @@
 package edit
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
 	"github.com/xiaq/persistent/vector"
@@ -12,46 +9,34 @@ import (
 // The $edit:{before,after}-readline lists that contain hooks. We might have more
 // hooks in future.
 
+// editorHooks contain hooks for the editor. They are just slices of functions;
+// each of them is initialized with a function that calls all Elvish functions
+// contained in the eponymous variable under edit:.
 type editorHooks struct {
-	beforeReadline vector.Vector
-	afterReadline  vector.Vector
+	beforeReadline []func()
+	afterReadline  []func(string)
 }
 
 func init() {
 	atEditorInit(func(ed *Editor) {
-		ed.beforeReadline = types.EmptyList
-		ed.variables["before-readline"] = eval.NewVariableFromPtr(&ed.beforeReadline)
-		ed.afterReadline = types.EmptyList
-		ed.variables["after-readline"] = eval.NewVariableFromPtr(&ed.afterReadline)
+		beforeReadline := types.EmptyList
+		ed.variables["before-readline"] = eval.NewVariableFromPtr(&beforeReadline)
+		ed.beforeReadline = []func(){func() { callHooks(ed, beforeReadline) }}
+
+		afterReadline := types.EmptyList
+		ed.variables["after-readline"] = eval.NewVariableFromPtr(&afterReadline)
+		ed.afterReadline = []func(string){
+			func(s string) { callHooks(ed, afterReadline, s) }}
 	})
 }
 
-func callHooks(ev *eval.Evaler, li vector.Vector, args ...interface{}) {
-	if li.Len() == 0 {
-		return
-	}
-
+func callHooks(ed *Editor, li vector.Vector, args ...interface{}) {
 	for it := li.Iterator(); it.HasElem(); it.Next() {
-		op := eval.Op{&hookOp{it.Elem(), args}, -1, -1}
-		ev.Eval(op, eval.NewInternalSource("[hooks]"))
+		fn, ok := it.Elem().(eval.Callable)
+		if !ok {
+			// TODO More detailed error message.
+			ed.Notify("hook not a function")
+		}
+		ed.CallFn(fn, args...)
 	}
-}
-
-type hookOp struct {
-	hook interface{}
-	args []interface{}
-}
-
-func (op *hookOp) Invoke(fm *eval.Frame) error {
-	fn, ok := op.hook.(eval.Callable)
-	if !ok {
-		fmt.Fprintf(os.Stderr, "not a function: %s\n", types.Repr(op.hook, types.NoPretty))
-		return nil
-	}
-	err := fm.PCall(fn, op.args, eval.NoOpts)
-	if err != nil {
-		// TODO Print stack trace.
-		fmt.Fprintf(os.Stderr, "function error: %s\n", err.Error())
-	}
-	return nil
 }
