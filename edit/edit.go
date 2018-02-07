@@ -187,17 +187,6 @@ func (ed *Editor) Close() {
 	ed.notifyRead.Close()
 }
 
-// Active returns the activeness of the Editor.
-func (ed *Editor) Active() bool {
-	return ed.active
-}
-
-// ActiveMutex returns a mutex that must be used when changing the activeness of
-// the Editor.
-func (ed *Editor) ActiveMutex() *sync.Mutex {
-	return &ed.activeMutex
-}
-
 func (ed *Editor) Evaler() *eval.Evaler {
 	return ed.evaler
 }
@@ -210,11 +199,23 @@ func (ed *Editor) addTip(format string, args ...interface{}) {
 	ed.tips = append(ed.tips, fmt.Sprintf(format, args...))
 }
 
-// Notify adds one notification entry. It is concurrency-safe.
+// Notify writes out a message in a way that does not interrupt the editor
+// display. When the editor is not active, it simply writes the message to the
+// terminal. When the editor is active, it appends the message to the
+// notification queue, which will be written out during the update cycle. It can
+// be safely used concurrently.
 func (ed *Editor) Notify(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	ed.activeMutex.Lock()
+	defer ed.activeMutex.Unlock()
+	// If the editor is not active, simply write out the message.
+	if !ed.active {
+		ed.out.WriteString(msg + "\n")
+		return
+	}
 	ed.notificationMutex.Lock()
 	defer ed.notificationMutex.Unlock()
-	ed.notifications = append(ed.notifications, fmt.Sprintf(format, args...))
+	ed.notifications = append(ed.notifications, msg)
 }
 
 func (ed *Editor) refresh(fullRefresh bool, addErrorsToTips bool) error {

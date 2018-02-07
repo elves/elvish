@@ -142,15 +142,7 @@ func (op *pipelineOp) Invoke(ec *Frame) error {
 				msg += ", errors = " + err.Error()
 			}
 			if ec.Editor != nil {
-				m := ec.Editor.ActiveMutex()
-				m.Lock()
-				defer m.Unlock()
-
-				if ec.Editor.Active() {
-					ec.Editor.Notify("%s", msg)
-				} else {
-					ec.ports[2].File.WriteString(msg + "\n")
-				}
+				ec.Editor.Notify("%s", msg)
 			} else {
 				ec.ports[2].File.WriteString(msg + "\n")
 			}
