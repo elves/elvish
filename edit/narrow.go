@@ -25,7 +25,7 @@ var narrowFns = map[string]func(*Editor){
 	"accept":     func(ed *Editor) { getNarrow(ed).accept(ed) },
 	"accept-close": func(ed *Editor) {
 		getNarrow(ed).accept(ed)
-		insertStart(ed)
+		ed.insertStart()
 	},
 	"toggle-ignore-duplication": func(ed *Editor) {
 		l := getNarrow(ed)
@@ -291,7 +291,7 @@ func (l *narrow) handleFilterKey(ed *Editor) bool {
 		l.changeFilter(l.filter + string(k.Rune))
 		if len(l.filtered) == 1 && l.opts.AutoCommit {
 			l.accept(ed)
-			insertStart(ed)
+			ed.insertStart()
 		}
 		return true
 	}
@@ -300,7 +300,7 @@ func (l *narrow) handleFilterKey(ed *Editor) bool {
 
 func (l *narrow) defaultBinding(ed *Editor) {
 	if !l.handleFilterKey(ed) {
-		insertStart(ed)
+		ed.insertStart()
 		ed.SetAction(ReprocessKey)
 	}
 }

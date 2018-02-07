@@ -12,7 +12,7 @@ import (
 type rawInsert struct {
 }
 
-func startInsertRaw(ed *Editor) {
+func (ed *Editor) startInsertRaw() {
 	ed.reader.SetRaw(true)
 	ed.mode = rawInsert{}
 }

@@ -13,46 +13,62 @@ import (
 
 // Builtins related to insert and command mode.
 
-var (
-	coreFns = map[string]func(*Editor){
-		"kill-line-left":       killLineLeft,
-		"kill-line-right":      killLineRight,
-		"kill-word-left":       killWordLeft,
-		"kill-small-word-left": killSmallWordLeft,
-		"kill-rune-left":       killRuneLeft,
-		"kill-rune-right":      killRuneRight,
+func init() {
+	atEditorInit(func(ed *Editor, ns eval.Ns) {
+		initCoreModes(ed, ns)
+	})
+}
 
-		"move-dot-left":       moveDotLeft,
-		"move-dot-right":      moveDotRight,
-		"move-dot-left-word":  moveDotLeftWord,
-		"move-dot-right-word": moveDotRightWord,
-		"move-dot-sol":        moveDotSOL,
-		"move-dot-eol":        moveDotEOL,
-		"move-dot-up":         moveDotUp,
-		"move-dot-down":       moveDotDown,
+func initCoreModes(ed *Editor, ns eval.Ns) {
+	ns.AddBuiltinFns("edit:", map[string]interface{}{
+		"kill-line-left":       ed.killLineLeft,
+		"kill-line-right":      ed.killLineRight,
+		"kill-word-left":       ed.killWordLeft,
+		"kill-small-word-left": ed.killSmallWordLeft,
+		"kill-rune-left":       ed.killRuneLeft,
+		"kill-rune-right":      ed.killRuneRight,
 
-		"insert-last-word": insertLastWord,
-		"insert-key":       insertKey,
+		"move-dot-left":       ed.moveDotLeft,
+		"move-dot-right":      ed.moveDotRight,
+		"move-dot-left-word":  ed.moveDotLeftWord,
+		"move-dot-right-word": ed.moveDotRightWord,
+		"move-dot-sol":        ed.moveDotSOL,
+		"move-dot-eol":        ed.moveDotEOL,
+		"move-dot-up":         ed.moveDotUp,
+		"move-dot-down":       ed.moveDotDown,
 
-		"return-line": returnLine,
-		"smart-enter": smartEnter,
-		"return-eof":  returnEOF,
+		"insert-last-word": ed.insertLastWord,
+		"insert-key":       ed.insertKey,
 
-		"toggle-quote-paste": toggleQuotePaste,
-		"insert-raw":         startInsertRaw,
+		"return-line": ed.returnLine,
+		"smart-enter": ed.smartEnter,
+		"return-eof":  ed.returnEOF,
 
-		"end-of-history": endOfHistory,
-		"redraw":         redraw,
+		"toggle-quote-paste": ed.toggleQuotePaste,
+		"insert-raw":         ed.startInsertRaw,
+
+		"end-of-history": ed.endOfHistory,
+		"redraw":         ed.redraw,
+	})
+
+	insertNs := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&ed.insertBinding),
 	}
-	insertFns = map[string]func(*Editor){
-		"start":   insertStart,
-		"default": insertDefault,
+	insertNs.AddBuiltinFns("edit:insert:", map[string]interface{}{
+		"start":   ed.insertStart,
+		"default": ed.insertDefault,
+	})
+	ns.AddNs("insert", insertNs)
+
+	commandNs := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&ed.commandBinding),
 	}
-	commandFns = map[string]func(*Editor){
-		"start":   commandStart,
-		"default": commandDefault,
-	}
-)
+	commandNs.AddBuiltinFns("edit:command:", map[string]interface{}{
+		"start":   ed.commandStart,
+		"default": ed.commandDefault,
+	})
+	ns.AddNs("command", commandNs)
+}
 
 type insert struct {
 	quotePaste bool
@@ -85,21 +101,21 @@ func (*command) Binding(ed *Editor, k ui.Key) eval.Callable {
 	return ed.commandBinding.GetOrDefault(k)
 }
 
-func insertStart(ed *Editor) {
+func (ed *Editor) insertStart() {
 	ed.mode = &ed.insert
 }
 
-func commandStart(ed *Editor) {
+func (ed *Editor) commandStart() {
 	ed.mode = &ed.command
 }
 
-func killLineLeft(ed *Editor) {
+func (ed *Editor) killLineLeft() {
 	sol := util.FindLastSOL(ed.buffer[:ed.dot])
 	ed.buffer = ed.buffer[:sol] + ed.buffer[ed.dot:]
 	ed.dot = sol
 }
 
-func killLineRight(ed *Editor) {
+func (ed *Editor) killLineRight() {
 	eol := util.FindFirstEOL(ed.buffer[ed.dot:]) + ed.dot
 	ed.buffer = ed.buffer[:ed.dot] + ed.buffer[eol:]
 }
@@ -108,7 +124,7 @@ func killLineRight(ed *Editor) {
 // trimming spaces are removed as well. Examples:
 // "abc  xyz" -> "abc  ", "abc xyz " -> "abc  ".
 
-func killWordLeft(ed *Editor) {
+func (ed *Editor) killWordLeft() {
 	if ed.dot == 0 {
 		return
 	}
@@ -125,7 +141,7 @@ func killWordLeft(ed *Editor) {
 // killing a small word, trimming spaces are removed as well. Examples:
 // "abc/~" -> "abc", "~/abc" -> "~/", "abc* " -> "abc"
 
-func killSmallWordLeft(ed *Editor) {
+func (ed *Editor) killSmallWordLeft() {
 	left := strings.TrimRightFunc(ed.buffer[:ed.dot], unicode.IsSpace)
 	// The case of left == "" is handled as well.
 	r, _ := utf8.DecodeLastRuneInString(left)
@@ -143,7 +159,7 @@ func isAlnum(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsNumber(r)
 }
 
-func killRuneLeft(ed *Editor) {
+func (ed *Editor) killRuneLeft() {
 	if ed.dot > 0 {
 		_, w := utf8.DecodeLastRuneInString(ed.buffer[:ed.dot])
 		ed.buffer = ed.buffer[:ed.dot-w] + ed.buffer[ed.dot:]
@@ -153,7 +169,7 @@ func killRuneLeft(ed *Editor) {
 	}
 }
 
-func killRuneRight(ed *Editor) {
+func (ed *Editor) killRuneRight() {
 	if ed.dot < len(ed.buffer) {
 		_, w := utf8.DecodeRuneInString(ed.buffer[ed.dot:])
 		ed.buffer = ed.buffer[:ed.dot] + ed.buffer[ed.dot+w:]
@@ -162,17 +178,17 @@ func killRuneRight(ed *Editor) {
 	}
 }
 
-func moveDotLeft(ed *Editor) {
+func (ed *Editor) moveDotLeft() {
 	_, w := utf8.DecodeLastRuneInString(ed.buffer[:ed.dot])
 	ed.dot -= w
 }
 
-func moveDotRight(ed *Editor) {
+func (ed *Editor) moveDotRight() {
 	_, w := utf8.DecodeRuneInString(ed.buffer[ed.dot:])
 	ed.dot += w
 }
 
-func moveDotLeftWord(ed *Editor) {
+func (ed *Editor) moveDotLeftWord() {
 	if ed.dot == 0 {
 		return
 	}
@@ -182,7 +198,7 @@ func moveDotLeftWord(ed *Editor) {
 	ed.dot = space
 }
 
-func moveDotRightWord(ed *Editor) {
+func (ed *Editor) moveDotRightWord() {
 	// Move to first space
 	p := strings.IndexFunc(ed.buffer[ed.dot:], unicode.IsSpace)
 	if p == -1 {
@@ -203,17 +219,17 @@ func notSpace(r rune) bool {
 	return !unicode.IsSpace(r)
 }
 
-func moveDotSOL(ed *Editor) {
+func (ed *Editor) moveDotSOL() {
 	sol := util.FindLastSOL(ed.buffer[:ed.dot])
 	ed.dot = sol
 }
 
-func moveDotEOL(ed *Editor) {
+func (ed *Editor) moveDotEOL() {
 	eol := util.FindFirstEOL(ed.buffer[ed.dot:]) + ed.dot
 	ed.dot = eol
 }
 
-func moveDotUp(ed *Editor) {
+func (ed *Editor) moveDotUp() {
 	sol := util.FindLastSOL(ed.buffer[:ed.dot])
 	if sol == 0 {
 		ed.flash()
@@ -225,7 +241,7 @@ func moveDotUp(ed *Editor) {
 	ed.dot = prevSOL + len(util.TrimWcwidth(ed.buffer[prevSOL:prevEOL], width))
 }
 
-func moveDotDown(ed *Editor) {
+func (ed *Editor) moveDotDown() {
 	eol := util.FindFirstEOL(ed.buffer[ed.dot:]) + ed.dot
 	if eol == len(ed.buffer) {
 		ed.flash()
@@ -238,7 +254,7 @@ func moveDotDown(ed *Editor) {
 	ed.dot = nextSOL + len(util.TrimWcwidth(ed.buffer[nextSOL:nextEOL], width))
 }
 
-func insertLastWord(ed *Editor) {
+func (ed *Editor) insertLastWord() {
 	if ed.daemon == nil {
 		ed.AddTip("daemon offline")
 		return
@@ -259,23 +275,23 @@ func lastWord(s string) string {
 	return words[len(words)-1]
 }
 
-func insertKey(ed *Editor) {
+func (ed *Editor) insertKey() {
 	k := ed.lastKey
 	ed.insertAtDot(string(k.Rune))
 }
 
-func returnLine(ed *Editor) {
+func (ed *Editor) returnLine() {
 	ed.SetAction(CommitLine)
 }
 
-func smartEnter(ed *Editor) {
+func (ed *Editor) smartEnter() {
 	if ed.parseErrorAtEnd {
 		// There is a parsing error at the end. ui.Insert a newline and copy
 		// indents from previous line.
 		indent := findLastIndent(ed.buffer[:ed.dot])
 		ed.insertAtDot("\n" + indent)
 	} else {
-		returnLine(ed)
+		ed.returnLine()
 	}
 }
 
@@ -285,28 +301,28 @@ func findLastIndent(s string) string {
 	return line[:len(line)-len(trimmed)]
 }
 
-func returnEOF(ed *Editor) {
+func (ed *Editor) returnEOF() {
 	if len(ed.buffer) == 0 {
 		ed.SetAction(CommitEOF)
 	}
 }
 
-func toggleQuotePaste(ed *Editor) {
+func (ed *Editor) toggleQuotePaste() {
 	ed.insert.quotePaste = !ed.insert.quotePaste
 }
 
-func endOfHistory(ed *Editor) {
+func (ed *Editor) endOfHistory() {
 	ed.Notify("End of history")
 }
 
-func redraw(ed *Editor) {
+func (ed *Editor) redraw() {
 	ed.refresh(true, true)
 }
 
-func insertDefault(ed *Editor) {
+func (ed *Editor) insertDefault() {
 	k := ed.lastKey
 	if likeChar(k) {
-		insertKey(ed)
+		ed.insertKey()
 		// Match abbreviations.
 		expanded := false
 		literals := ed.buffer[ed.dot-ed.insert.literalInserts-1 : ed.dot]
@@ -334,7 +350,7 @@ func likeChar(k ui.Key) bool {
 	return k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune)
 }
 
-func commandDefault(ed *Editor) {
+func (ed *Editor) commandDefault() {
 	k := ed.lastKey
 	ed.Notify("Unbound: %s", k)
 }

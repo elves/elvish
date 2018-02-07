@@ -72,8 +72,7 @@ func (bf *BuiltinFn) Call(ec *eval.Frame, args []interface{}, opts map[string]in
 
 // makeNs makes the edit: namespace.
 func makeNs(ed *Editor) eval.Ns {
-	// Construct the edit: module, starting with builtins.
-	ns := makeNsFromBuiltins("", coreFns)
+	ns := eval.NewNs()
 
 	// TODO(xiaq): Everything here should be registered to some registry instead
 	// of centralized here.
@@ -160,9 +159,6 @@ func makeNs(ed *Editor) eval.Ns {
 		"-narrow-read":      NarrowRead,
 	}
 	ns.AddBuiltinFns("edit:", fns)
-
-	ns.AddNs("insert", initModeAPI("insert:", insertFns, &ed.insertBinding))
-	ns.AddNs("command", initModeAPI("command:", commandFns, &ed.commandBinding))
 
 	ns.AddNs("completion",
 		initModeAPI("completion:", completionFns, &ed.completionBinding))
