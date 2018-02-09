@@ -7,21 +7,22 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/listing"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
 
-// listing implements a listing mode that supports the notion of selecting an
-// entry and filtering entries.
-type listing struct {
+// listingMode implements a mode that supports listing, selecting and filtering
+// entries.
+type listingMode struct {
 	commonBinding edtypes.BindingMap
 	listingState
 }
 
 type listingState struct {
 	binding     *edtypes.BindingMap
-	provider    listingProvider
+	provider    listing.Provider
 	selected    int
 	filter      string
 	pagesize    int
@@ -31,7 +32,7 @@ type listingState struct {
 func init() { atEditorInit(initListing) }
 
 func initListing(ed *editor, ns eval.Ns) {
-	l := &listing{commonBinding: emptyBindingMap}
+	l := &listingMode{commonBinding: emptyBindingMap}
 	ed.listing = l
 
 	subns := eval.Ns{
@@ -55,19 +56,11 @@ func initListing(ed *editor, ns eval.Ns) {
 	ns.AddNs("listing", subns)
 }
 
-type listingProvider interface {
-	Len() int
-	Show(i int) (string, ui.Styled)
-	Filter(filter string) int
-	Accept(i int, ed *editor)
-	ModeTitle(int) string
-}
-
 type placeholderer interface {
 	Placeholder() string
 }
 
-func newListing(pb *edtypes.BindingMap, p listingProvider) *listingState {
+func newListing(pb *edtypes.BindingMap, p listing.Provider) *listingState {
 	l := &listingState{pb, p, 0, "", 0, 0}
 	l.refresh()
 	for i := 0; i < p.Len(); i++ {
@@ -80,11 +73,11 @@ func newListing(pb *edtypes.BindingMap, p listingProvider) *listingState {
 	return l
 }
 
-func (l *listing) Teardown() {
+func (l *listingMode) Teardown() {
 	l.listingState = listingState{}
 }
 
-func (l *listing) Binding(k ui.Key) eval.Callable {
+func (l *listingMode) Binding(k ui.Key) eval.Callable {
 	if l.binding == nil {
 		return l.commonBinding.GetOrDefault(k)
 	}

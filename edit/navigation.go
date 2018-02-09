@@ -134,11 +134,11 @@ func (n *navigation) triggerFilter() {
 }
 
 func (n *navigation) insertSelected(ed *editor) {
-	ed.insertAtDot(parse.Quote(n.current.selectedName()) + " ")
+	ed.InsertAtDot(parse.Quote(n.current.selectedName()) + " ")
 }
 
 func (n *navigation) insertSelectedAndQuit(ed *editor) {
-	ed.insertAtDot(parse.Quote(n.current.selectedName()) + " ")
+	ed.InsertAtDot(parse.Quote(n.current.selectedName()) + " ")
 	ed.SetModeInsert()
 }
 
@@ -351,7 +351,7 @@ func (n *navigation) List(maxHeight int) ui.Renderer {
 
 // navColumn is a column in the navigation layout.
 type navColumn struct {
-	listing
+	listingMode
 	all        []ui.Styled
 	candidates []ui.Styled
 	// selected int
@@ -419,7 +419,7 @@ func (nc *navColumn) FullWidth(h int) int {
 	return maxw
 }
 
-func (nc *navColumn) Accept(i int, ed *editor) {
+func (nc *navColumn) Accept(i int, ed edtypes.Editor) {
 	// TODO
 }
 

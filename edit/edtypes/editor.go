@@ -20,6 +20,8 @@ type Editor interface {
 	Buffer() (string, int)
 	// SetBuffer sets the current content and dot position of the buffer.
 	SetBuffer(buffer string, dot int)
+	// InsertAtDot inserts text at the dot and moves the dot after it.
+	InsertAtDot(text string)
 
 	// SetMode sets the current mode of the Editor.
 	SetMode(m Mode)

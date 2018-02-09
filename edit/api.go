@@ -104,7 +104,7 @@ func makeNs(ed *editor) eval.Ns {
 		"command-history":   commandHistory,
 		"complete-getopt":   complGetopt,
 		"complex-candidate": makeComplexCandidate,
-		"insert-at-dot":     ed.insertAtDot,
+		"insert-at-dot":     ed.InsertAtDot,
 		"replace-input":     ed.replaceInput,
 		"styled":            styled,
 		"key":               ui.ToKey,

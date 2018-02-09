@@ -14,6 +14,7 @@ import (
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/highlight"
+	"github.com/elves/elvish/edit/listing"
 	"github.com/elves/elvish/edit/prompt"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
@@ -62,7 +63,7 @@ type editor struct {
 	hist       *hist
 	completion *completion
 	navigation *navigation
-	listing    *listing
+	listing    *listingMode
 
 	histlistBinding edtypes.BindingMap
 	lastcmdBinding  edtypes.BindingMap
@@ -193,7 +194,7 @@ func (ed *editor) SetModeInsert() {
 	ed.SetMode(ed.insert)
 }
 
-func (ed *editor) SetModeListing(pb *edtypes.BindingMap, lp listingProvider) {
+func (ed *editor) SetModeListing(pb *edtypes.BindingMap, lp listing.Provider) {
 	ed.listing.listingState = *newListing(pb, lp)
 	ed.SetMode(ed.listing)
 }
@@ -279,8 +280,8 @@ func atEnd(e error, n int) bool {
 	}
 }
 
-// insertAtDot inserts text at the dot and moves the dot after it.
-func (ed *editor) insertAtDot(text string) {
+// InsertAtDot inserts text at the dot and moves the dot after it.
+func (ed *editor) InsertAtDot(text string) {
 	ed.buffer = ed.buffer[:ed.dot] + text + ed.buffer[ed.dot:]
 	ed.dot += len(text)
 }
@@ -476,7 +477,7 @@ MainLoop:
 				if ed.insert.quotePaste {
 					topaste = parse.Quote(topaste)
 				}
-				ed.insertAtDot(topaste)
+				ed.InsertAtDot(topaste)
 			case tty.RawRune:
 				insertRaw(ed, rune(event))
 			case tty.KeyEvent:

@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
@@ -116,8 +117,8 @@ func makeLocationFilterPattern(s string) *regexp.Regexp {
 
 // Editor interface.
 
-func (loc *location) Accept(i int, ed *editor) {
-	err := eval.Chdir(loc.filtered[i].Path, ed.daemon)
+func (loc *location) Accept(i int, ed edtypes.Editor) {
+	err := eval.Chdir(loc.filtered[i].Path, ed.Daemon())
 	if err != nil {
 		ed.Notify("%v", err)
 	}

@@ -18,7 +18,7 @@ func (ed *editor) startInsertRaw() {
 }
 
 func insertRaw(ed *editor, r rune) {
-	ed.insertAtDot(string(r))
+	ed.InsertAtDot(string(r))
 	ed.reader.SetRaw(false)
 	ed.SetModeInsert()
 }

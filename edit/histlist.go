@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 )
@@ -100,12 +101,13 @@ func (hl *histlist) Filter(filter string) int {
 
 // Editor interface.
 
-func (hl *histlist) Accept(i int, ed *editor) {
+func (hl *histlist) Accept(i int, ed edtypes.Editor) {
 	line := hl.shown[i]
-	if len(ed.buffer) > 0 {
+	buffer, _ := ed.Buffer()
+	if len(buffer) > 0 {
 		line = "\n" + line
 	}
-	ed.insertAtDot(line)
+	ed.InsertAtDot(line)
 }
 
 func histlistStart(ed *editor) {
@@ -139,8 +141,8 @@ func histlistToggleCaseSensitivity(ed *editor) {
 	}
 }
 
-func getHistlist(ed *editor) (*listing, *histlist, bool) {
-	if l, ok := ed.mode.(*listing); ok {
+func getHistlist(ed *editor) (*listingMode, *histlist, bool) {
+	if l, ok := ed.mode.(*listingMode); ok {
 		if hl, ok := l.provider.(*histlist); ok {
 			return l, hl, true
 		}

@@ -280,7 +280,7 @@ func (ed *editor) insertLastWord() {
 	}
 	_, cmd, err := ed.daemon.PrevCmd(-1, "")
 	if err == nil {
-		ed.insertAtDot(lastWord(cmd))
+		ed.InsertAtDot(lastWord(cmd))
 	} else {
 		ed.AddTip("db error: %s", err.Error())
 	}
@@ -296,7 +296,7 @@ func lastWord(s string) string {
 
 func (ed *editor) insertKey() {
 	k := ed.lastKey
-	ed.insertAtDot(string(k.Rune))
+	ed.InsertAtDot(string(k.Rune))
 }
 
 func (ed *editor) returnLine() {
@@ -308,7 +308,7 @@ func (ed *editor) smartEnter() {
 		// There is a parsing error at the end. ui.Insert a newline and copy
 		// indents from previous line.
 		indent := findLastIndent(ed.buffer[:ed.dot])
-		ed.insertAtDot("\n" + indent)
+		ed.InsertAtDot("\n" + indent)
 	} else {
 		ed.returnLine()
 	}

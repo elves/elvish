@@ -3,27 +3,28 @@ package edit
 import (
 	"testing"
 
+	"github.com/elves/elvish/edit/listing"
 	"github.com/elves/elvish/edit/ui"
 )
 
 var (
 	theHistList = newHistlist([]string{"ls", "echo lalala", "ls"})
 
-	histlistDedupFilterTests = []listingFilterTestCases{
-		{"", []shown{
+	histlistDedupFilterTests = []listing.FilterTest{
+		{"", []listing.Shown{
 			{"1", ui.Unstyled("echo lalala")},
 			{"2", ui.Unstyled("ls")}}},
-		{"l", []shown{
+		{"l", []listing.Shown{
 			{"1", ui.Unstyled("echo lalala")},
 			{"2", ui.Unstyled("ls")}}},
 	}
 
-	histlistNoDedupFilterTests = []listingFilterTestCases{
-		{"", []shown{
+	histlistNoDedupFilterTests = []listing.FilterTest{
+		{"", []listing.Shown{
 			{"0", ui.Unstyled("ls")},
 			{"1", ui.Unstyled("echo lalala")},
 			{"2", ui.Unstyled("ls")}}},
-		{"l", []shown{
+		{"l", []listing.Shown{
 			{"0", ui.Unstyled("ls")},
 			{"1", ui.Unstyled("echo lalala")},
 			{"2", ui.Unstyled("ls")}}},
@@ -31,7 +32,7 @@ var (
 )
 
 func TestHistlist(t *testing.T) {
-	testListingProviderFilter(t, "theHistList", theHistList, histlistDedupFilterTests)
+	listing.TestProviderFilter(t, "theHistList", theHistList, histlistDedupFilterTests)
 	theHistList.dedup = false
-	testListingProviderFilter(t, "theHistList", theHistList, histlistNoDedupFilterTests)
+	listing.TestProviderFilter(t, "theHistList", theHistList, histlistNoDedupFilterTests)
 }

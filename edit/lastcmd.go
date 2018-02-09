@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 )
@@ -86,8 +87,8 @@ func (b *lastcmd) Filter(filter string) int {
 
 // Editor interface.
 
-func (b *lastcmd) Accept(i int, ed *editor) {
-	ed.insertAtDot(b.filtered[i].s)
+func (b *lastcmd) Accept(i int, ed edtypes.Editor) {
+	ed.InsertAtDot(b.filtered[i].s)
 	ed.SetModeInsert()
 }
 
@@ -121,8 +122,8 @@ func lastcmdAltDefault(ed *editor) {
 	}
 }
 
-func getLastcmd(ed *editor) (*listing, *lastcmd) {
-	if l, ok := ed.mode.(*listing); ok {
+func getLastcmd(ed *editor) (*listingMode, *lastcmd) {
+	if l, ok := ed.mode.(*listingMode); ok {
 		if lc, ok := l.provider.(*lastcmd); ok {
 			return l, lc
 		}
