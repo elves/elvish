@@ -59,7 +59,6 @@ type editor struct {
 	insert     *insert
 	command    *command
 	hist       *hist
-	completion *completion
 	navigation *navigation
 	listing    *listingMode
 

@@ -37,23 +37,22 @@ func init() { atEditorInit(initCompletion) }
 
 func initCompletion(ed *editor, ns eval.Ns) {
 	c := &completion{binding: emptyBindingMap}
-	ed.completion = c
 
 	subns := eval.Ns{
 		"binding": eval.NewVariableFromPtr(&c.binding),
 	}
 	subns.AddBuiltinFns("edit:completion:", map[string]interface{}{
-		"start":          func() { startCompletionInner(ed, false) },
-		"smart-start":    func() { startCompletionInner(ed, true) },
+		"start":          func() { c.start(ed, false) },
+		"smart-start":    func() { c.start(ed, true) },
 		"up":             func() { c.prev(false) },
 		"up-cycle":       func() { c.prev(true) },
 		"down":           func() { c.next(false) },
 		"down-cycle":     func() { c.next(true) },
 		"left":           c.left,
 		"right":          c.right,
-		"accept":         func() { complAccept(ed) },
+		"accept":         func() { c.accept(ed) },
 		"trigger-filter": c.triggerFilter,
-		"default":        func() { complDefault(ed) },
+		"default":        func() { c.complDefault(ed) },
 	})
 	ns.AddNs("completion", subns)
 }
@@ -96,17 +95,15 @@ func (c *completion) right() {
 }
 
 // acceptCompletion accepts currently selected completion candidate.
-func complAccept(ed *editor) {
-	c := ed.completion
+func (c *completion) accept(ed *editor) {
 	if 0 <= c.selected && c.selected < len(c.filtered) {
-		ed.buffer, ed.dot = c.apply(ed.buffer, ed.dot)
+		ed.SetBuffer(c.apply(ed.Buffer()))
 	}
 	ed.SetModeInsert()
 }
 
-func complDefault(ed *editor) {
-	k := ed.lastKey
-	c := ed.completion
+func (c *completion) complDefault(ed *editor) {
+	k := ed.LastKey()
 	if c.filtering && likeChar(k) {
 		c.changeFilter(c.filter + string(k.Rune))
 	} else if c.filtering && k == (ui.Key{ui.Backspace, 0}) {
@@ -115,7 +112,7 @@ func complDefault(ed *editor) {
 			c.changeFilter(c.filter[:len(c.filter)-size])
 		}
 	} else {
-		complAccept(ed)
+		c.accept(ed)
 		ed.SetAction(reprocessKey)
 	}
 }
@@ -164,13 +161,13 @@ func (c *completion) next(cycle bool) {
 	}
 }
 
-func startCompletionInner(ed *editor, acceptPrefix bool) {
+func (c *completion) start(ed *editor, acceptPrefix bool) {
 	node := findLeafNode(ed.chunk, ed.dot)
 	if node == nil {
 		return
 	}
 
-	completer, complSpec, err := complete(node, ed.evaler)
+	completer, complSpec, err := complete(node, ed.Evaler())
 
 	if err != nil {
 		ed.AddTip("%v", err)
@@ -204,18 +201,19 @@ func startCompletionInner(ed *editor, acceptPrefix bool) {
 			}
 
 			if prefix != "" && len(prefix) > complSpec.end-complSpec.begin {
-				ed.buffer = ed.buffer[:complSpec.begin] + prefix + ed.buffer[complSpec.end:]
-				ed.dot = complSpec.begin + len(prefix)
-
+				buffer, _ := ed.Buffer()
+				ed.SetBuffer(
+					buffer[:complSpec.begin]+prefix+buffer[complSpec.end:],
+					complSpec.begin+len(prefix))
 				return
 			}
 		}
-		ed.completion.completionState = completionState{
+		c.completionState = completionState{
 			completer: completer,
 			complSpec: *complSpec,
 			filtered:  complSpec.candidates,
 		}
-		ed.SetMode(ed.completion)
+		ed.SetMode(c)
 	}
 }
 
