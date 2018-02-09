@@ -162,7 +162,7 @@ func (c *completion) next(cycle bool) {
 }
 
 func (c *completion) start(ed *editor, acceptPrefix bool) {
-	node := findLeafNode(ed.chunk, ed.dot)
+	node := parseutil.FindLeafNode(ed.chunk, ed.dot)
 	if node == nil {
 		return
 	}

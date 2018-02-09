@@ -22,7 +22,7 @@ func testComplContextFinder(t *testing.T, name string, finder complContextFinder
 		if n == nil {
 			panic(err)
 		}
-		leaf := findLeafNode(n, len(test.src))
+		leaf := parseutil.FindLeafNode(n, len(test.src))
 		got := finder(leaf, ev)
 		if !reflect.DeepEqual(got, test.want) {
 			t.Errorf("For %q, %s(leaf) => %v, want %v", test.src, name, got, test.want)

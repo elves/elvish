@@ -490,7 +490,7 @@ func (ed *editor) replaceInput(text string) {
 
 func wordifyBuiltin(fm *eval.Frame, text string) {
 	out := fm.OutputChan()
-	for _, s := range wordify(text) {
+	for _, s := range parseutil.Wordify(text) {
 		out <- s
 	}
 }

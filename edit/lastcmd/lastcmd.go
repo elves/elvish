@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/parse/parseutils"
+	"github.com/elves/elvish/parse/parseutil"
 )
 
 type state struct {
@@ -39,7 +39,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 }
 
 func newState(line string) *state {
-	return &state{line, parseutils.Wordify(line), nil, false}
+	return &state{line, parseutil.Wordify(line), nil, false}
 }
 
 func (*state) AutoAccept() bool {

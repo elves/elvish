@@ -1,4 +1,4 @@
-package parseutils
+package parseutil
 
 import "testing"
 

@@ -1,11 +1,27 @@
-// Package parseutils contains utilities built on top of the parse package.
-package parseutils
+// Package parseutil contains utilities built on top of the parse package.
+package parseutil
 
 import (
 	"strings"
 
 	"github.com/elves/elvish/parse"
 )
+
+// LeafNodeAtDot finds the leaf node at a specific position. It returns nil if
+// position is out of bound.
+func FindLeafNode(n parse.Node, p int) parse.Node {
+descend:
+	for len(n.Children()) > 0 {
+		for _, ch := range n.Children() {
+			if ch.Begin() <= p && p <= ch.End() {
+				n = ch
+				continue descend
+			}
+		}
+		return nil
+	}
+	return n
+}
 
 // Wordify turns a piece of source code into words.
 func Wordify(src string) []string {

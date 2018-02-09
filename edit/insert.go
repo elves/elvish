@@ -287,7 +287,7 @@ func (ed *editor) insertLastWord() {
 }
 
 func lastWord(s string) string {
-	words := wordify(s)
+	words := parseutil.Wordify(s)
 	if len(words) == 0 {
 		return ""
 	}
