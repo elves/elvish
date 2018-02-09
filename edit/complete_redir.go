@@ -1,7 +1,6 @@
 package edit
 
 import (
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
 
@@ -29,6 +28,6 @@ func findRedirComplContext(n parse.Node, ev pureEvaler) complContext {
 	return nil
 }
 
-func (ctx *redirComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
+func (ctx *redirComplContext) generate(env *complEnv, ch chan<- rawCandidate) error {
 	return complFilenameInner(ctx.seed, false, ch)
 }

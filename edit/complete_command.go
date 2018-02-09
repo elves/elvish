@@ -57,8 +57,8 @@ func findCommandComplContext(n parse.Node, ev pureEvaler) complContext {
 
 func (*commandComplContext) name() string { return "command" }
 
-func (ctx *commandComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
-	return complFormHeadInner(ctx.seed, ev, ch)
+func (ctx *commandComplContext) generate(env *complEnv, ch chan<- rawCandidate) error {
+	return complFormHeadInner(ctx.seed, env.evaler, ch)
 }
 
 func complFormHeadInner(head string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {

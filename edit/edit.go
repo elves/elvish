@@ -178,6 +178,10 @@ func (ed *editor) SetBuffer(buffer string, dot int) {
 	ed.buffer, ed.dot = buffer, dot
 }
 
+func (ed *editor) ParsedBuffer() *parse.Chunk {
+	return ed.chunk
+}
+
 func (ed *editor) SetMode(m eddefs.Mode) {
 	if ed.mode != nil {
 		ed.mode.Teardown()

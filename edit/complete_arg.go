@@ -9,7 +9,6 @@ import (
 
 	"github.com/elves/elvish/edit/lscolors"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
 
@@ -67,8 +66,8 @@ func evalFormPure(form *parse.Form, seed string, seedBegin int, ev pureEvaler) [
 
 // To complete an argument, delegate the actual completion work to a suitable
 // complContext.
-func (ctx *argComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
-	return completeArg(ctx.words, ev, ch)
+func (ctx *argComplContext) generate(env *complEnv, ch chan<- rawCandidate) error {
+	return completeArg(ctx.words, env.evaler, ch)
 }
 
 // TODO: getStyle does redundant stats.

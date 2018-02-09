@@ -4,6 +4,7 @@ import (
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse"
 )
 
 type Editor interface {
@@ -21,6 +22,8 @@ type Editor interface {
 	Buffer() (string, int)
 	// SetBuffer sets the current content and dot position of the buffer.
 	SetBuffer(buffer string, dot int)
+	// ParsedBuffer returns the node from parsing the buffer.
+	ParsedBuffer() *parse.Chunk
 	// InsertAtDot inserts text at the dot and moves the dot after it.
 	InsertAtDot(text string)
 

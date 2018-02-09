@@ -6,6 +6,7 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/parse/parseutil"
 )
 
 type complContextFinderTest struct {

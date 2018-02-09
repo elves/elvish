@@ -3,7 +3,6 @@ package edit
 import (
 	"errors"
 
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -80,7 +79,7 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 	return nil
 }
 
-func (ctx *indexComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
+func (ctx *indexComplContext) generate(env *complEnv, ch chan<- rawCandidate) error {
 	m, ok := ctx.indexee.(hashmap.Map)
 	if !ok {
 		return errCannotIterateKey

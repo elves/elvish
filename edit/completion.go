@@ -40,7 +40,7 @@ import (
 type complContext interface {
 	name() string
 	common() *complContextCommon
-	generate(*eval.Evaler, chan<- rawCandidate) error
+	generate(*complEnv, chan<- rawCandidate) error
 }
 
 type complContextCommon struct {
@@ -50,6 +50,13 @@ type complContextCommon struct {
 }
 
 func (c *complContextCommon) common() *complContextCommon { return c }
+
+// complEnv contains environment information that may affect candidate
+// generation.
+type complEnv struct {
+	evaler *eval.Evaler
+	editor *editor
+}
 
 // complSpec is the result of a completion, meaning that any of the candidates
 // can replace the text in the interval [begin, end).
@@ -81,17 +88,16 @@ var complContextFinders = []complContextFinder{
 // complete takes a Node and Evaler and tries all complContexts. It returns the
 // name of the complContext, and the result and error it gave. If no complContext is
 // available, it returns an empty complContext name.
-func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
-	ed := ev.Editor.(*editor)
+func complete(n parse.Node, env *complEnv) (string, *complSpec, error) {
 	for _, finder := range complContextFinders {
-		ctx := finder(n, ev)
+		ctx := finder(n, env.evaler)
 		if ctx == nil {
 			continue
 		}
 		name := ctx.name()
 		ctxCommon := ctx.common()
 
-		matcher, ok := lookupMatcher(ed.matcher, name)
+		matcher, ok := lookupMatcher(env.editor.matcher, name)
 		if !ok {
 			return name, nil, errMatcherMustBeFn
 		}
@@ -99,12 +105,12 @@ func complete(n parse.Node, ev *eval.Evaler) (string, *complSpec, error) {
 		chanRawCandidate := make(chan rawCandidate)
 		chanErrGenerate := make(chan error)
 		go func() {
-			err := ctx.generate(ev, chanRawCandidate)
+			err := ctx.generate(env, chanRawCandidate)
 			close(chanRawCandidate)
 			chanErrGenerate <- err
 		}()
 
-		rawCandidates, errFilter := filterRawCandidates(ev, matcher, ctxCommon.seed, chanRawCandidate)
+		rawCandidates, errFilter := filterRawCandidates(env.evaler, matcher, ctxCommon.seed, chanRawCandidate)
 		candidates := make([]*candidate, len(rawCandidates))
 		for i, raw := range rawCandidates {
 			candidates[i] = raw.cook(ctxCommon.quoting)

@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse/parseutil"
 	"github.com/elves/elvish/util"
 )
 
@@ -95,14 +96,14 @@ func (c *completion) right() {
 }
 
 // acceptCompletion accepts currently selected completion candidate.
-func (c *completion) accept(ed *editor) {
+func (c *completion) accept(ed eddefs.Editor) {
 	if 0 <= c.selected && c.selected < len(c.filtered) {
 		ed.SetBuffer(c.apply(ed.Buffer()))
 	}
 	ed.SetModeInsert()
 }
 
-func (c *completion) complDefault(ed *editor) {
+func (c *completion) complDefault(ed eddefs.Editor) {
 	k := ed.LastKey()
 	if c.filtering && likeChar(k) {
 		c.changeFilter(c.filter + string(k.Rune))
@@ -161,13 +162,15 @@ func (c *completion) next(cycle bool) {
 	}
 }
 
-func (c *completion) start(ed *editor, acceptPrefix bool) {
-	node := parseutil.FindLeafNode(ed.chunk, ed.dot)
+func (c *completion) start(ed eddefs.Editor, acceptPrefix bool) {
+	_, dot := ed.Buffer()
+	chunk := ed.ParsedBuffer()
+	node := parseutil.FindLeafNode(chunk, dot)
 	if node == nil {
 		return
 	}
 
-	completer, complSpec, err := complete(node, ed.Evaler())
+	completer, complSpec, err := complete(node, &complEnv{ed.Evaler(), ed.(*editor)})
 
 	if err != nil {
 		ed.AddTip("%v", err)

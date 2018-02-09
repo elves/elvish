@@ -37,8 +37,8 @@ type evalerScopes interface {
 	EachNsInTop(func(string))
 }
 
-func (ctx *variableComplContext) generate(ev *eval.Evaler, ch chan<- rawCandidate) error {
-	complVariable(ctx.ns, ctx.nsPart, ev, ch)
+func (ctx *variableComplContext) generate(env *complEnv, ch chan<- rawCandidate) error {
+	complVariable(ctx.ns, ctx.nsPart, env.evaler, ch)
 	return nil
 }
 
