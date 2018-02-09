@@ -322,17 +322,22 @@ func (l *listingState) accept(ed *editor) {
 	}
 }
 
-func (l *listingState) handleFilterKey(k ui.Key) bool {
-	if likeChar(k) {
-		l.changeFilter(l.filter + string(k.Rune))
-		return true
-	}
-	return false
-}
-
 func (l *listingState) defaultBinding(ed *editor) {
-	if !l.handleFilterKey(ed.lastKey) {
+	k := ed.LastKey()
+	if likeChar(k) {
+		// Append to filter
+		l.changeFilter(l.filter + string(k.Rune))
+		if aa, ok := l.provider.(autoAccepter); ok {
+			if aa.AutoAccept() {
+				l.accept(ed)
+			}
+		}
+	} else {
 		ed.SetModeInsert()
 		ed.SetAction(reprocessKey)
 	}
+}
+
+type autoAccepter interface {
+	AutoAccept() bool
 }

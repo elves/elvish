@@ -1,4 +1,4 @@
-package edit
+package lastcmd
 
 import (
 	"testing"
@@ -9,9 +9,9 @@ import (
 
 var (
 	theLine    = "qw search 'foo bar ~y'"
-	theLastCmd = newLastCmd(theLine)
+	theLastCmd = newState(theLine)
 
-	lastcmdFilterTests = []eddefs.ListingProviderFilterTest{
+	tests = []eddefs.ListingProviderFilterTest{
 		{"", []eddefs.ListingShown{
 			{"M-1", ui.Unstyled(theLine)},
 			{"0", ui.Unstyled("qw")},
@@ -28,5 +28,5 @@ var (
 )
 
 func TestLastCmd(t *testing.T) {
-	eddefs.TestListingProviderFilter(t, "theLastCmd", theLastCmd, lastcmdFilterTests)
+	eddefs.TestListingProviderFilter(t, "theLastCmd", theLastCmd, tests)
 }

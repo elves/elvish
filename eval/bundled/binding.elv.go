@@ -93,7 +93,7 @@ fn install {
     edit:location:binding = (edit:binding-table [&])
 
     edit:lastcmd:binding = (edit:binding-table [
-        &Default= $edit:lastcmd:alt-default~
+        &Alt-1= $edit:lastcmd:accept-line~
     ])
 
     edit:navigation:binding = (edit:binding-table [
@@ -116,3 +116,5 @@ fn install {
     edit:narrow:binding = (edit:binding-table [&])
 }
 `
+
+// vi: se ft=elvish et:
