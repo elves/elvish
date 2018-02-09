@@ -27,6 +27,9 @@ type Editor interface {
 	SetMode(m Mode)
 	// SetModeInsert sets the current mode of the Editor to insert mode.
 	SetModeInsert()
+	// SetModeListing sets the current mode of the Editor to listing mode with
+	// the supplied binding and provider.
+	SetModeListing(b BindingMap, p ListingProvider)
 
 	// AddTip adds a message to the tip area.
 	AddTip(format string, args ...interface{})

@@ -1,4 +1,4 @@
-package edit
+package location
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	theLocation = newLocation([]storedefs.Dir{
+	theLocation = newState([]storedefs.Dir{
 		{"/pinned", pinnedScore},
 		{"/src/github.com/elves/elvish", 300},
 		{"/src/home/xyz", 233},
