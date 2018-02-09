@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/parse/parseutil"
 	"github.com/elves/elvish/util"
 )
 

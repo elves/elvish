@@ -10,6 +10,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/parse/parseutil"
 	"github.com/xiaq/persistent/hashmap"
 )
 
