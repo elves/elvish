@@ -60,20 +60,20 @@ import (
 //    for "ls", but not only those starting with "x".
 
 var (
-	// ErrCompleterMustBeFn is thrown if the user has put a non-function entry
+	// errCompleterMustBeFn is thrown if the user has put a non-function entry
 	// in $edit:completer, and that entry needs to be used for completion.
 	// TODO(xiaq): Detect the type violation when the user modifies
 	// $edit:completer.
-	ErrCompleterMustBeFn = errors.New("completer must be fn")
-	// ErrNoMatchingCompleter is thrown if there is no completer matching the
+	errCompleterMustBeFn = errors.New("completer must be fn")
+	// errNoMatchingCompleter is thrown if there is no completer matching the
 	// current command.
-	ErrNoMatchingCompleter = errors.New("no matching completer")
-	// ErrCompleterArgMustBeString is thrown when a builtin argument completer
+	errNoMatchingCompleter = errors.New("no matching completer")
+	// errCompleterArgMustBeString is thrown when a builtin argument completer
 	// is called with non-string arguments.
-	ErrCompleterArgMustBeString = errors.New("arguments to arg completers must be string")
-	// ErrTooFewArguments is thrown when a builtin argument completer is called
+	errCompleterArgMustBeString = errors.New("arguments to arg completers must be string")
+	// errTooFewArguments is thrown when a builtin argument completer is called
 	// with too few arguments.
-	ErrTooFewArguments = errors.New("too few arguments")
+	errTooFewArguments = errors.New("too few arguments")
 )
 
 var (
@@ -107,12 +107,12 @@ func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) 
 	if !ok {
 		v, ok = m.Get("")
 		if !ok {
-			return ErrNoMatchingCompleter
+			return errNoMatchingCompleter
 		}
 	}
 	fn, ok := v.(eval.Callable)
 	if !ok {
-		return ErrCompleterMustBeFn
+		return errCompleterMustBeFn
 	}
 	return callArgCompleter(fn, ev, words, rawCands)
 }
@@ -147,7 +147,7 @@ func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []interface{}, opts ma
 	for i, arg := range args {
 		s, ok := arg.(string)
 		if !ok {
-			throw(ErrCompleterArgMustBeString)
+			throw(errCompleterArgMustBeString)
 		}
 		words[i] = s
 	}
@@ -168,14 +168,14 @@ func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []interface{}, opts ma
 
 func complFilename(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
 	if len(words) < 1 {
-		return ErrTooFewArguments
+		return errTooFewArguments
 	}
 	return complFilenameInner(words[len(words)-1], false, rawCands)
 }
 
 func complSudo(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
 	if len(words) < 2 {
-		return ErrTooFewArguments
+		return errTooFewArguments
 	}
 	if len(words) == 2 {
 		return complFormHeadInner(words[1], ev, rawCands)

@@ -19,9 +19,9 @@ import (
 
 // Location mode.
 
-// PinnedScore is a special value of Score in storedefs.Dir to represent that the
+// pinnedScore is a special value of Score in storedefs.Dir to represent that the
 // directory is pinned.
-var PinnedScore = math.Inf(1)
+var pinnedScore = math.Inf(1)
 
 type location struct {
 	home     string // The home directory; leave empty if unknown.
@@ -60,7 +60,7 @@ func (loc *location) Len() int {
 func (loc *location) Show(i int) (string, ui.Styled) {
 	var header string
 	score := loc.filtered[i].Score
-	if score == PinnedScore {
+	if score == pinnedScore {
 		header = "*"
 	} else {
 		header = fmt.Sprintf("%.0f", score)
@@ -126,7 +126,7 @@ func (loc *location) Accept(i int, ed *editor) {
 
 func locStart(ed *editor) {
 	if ed.daemon == nil {
-		ed.Notify("%v", ErrStoreOffline)
+		ed.Notify("%v", errStoreOffline)
 		return
 	}
 
@@ -156,13 +156,13 @@ func locStart(ed *editor) {
 }
 
 // convertListToDirs converts a list of strings to []storedefs.Dir. It uses the
-// special score of PinnedScore to signify that the directory is pinned.
+// special score of pinnedScore to signify that the directory is pinned.
 func convertListToDirs(li vector.Vector) []storedefs.Dir {
 	pinned := make([]storedefs.Dir, 0, li.Len())
 	// XXX(xiaq): silently drops non-string items.
 	for it := li.Iterator(); it.HasElem(); it.Next() {
 		if s, ok := it.Elem().(string); ok {
-			pinned = append(pinned, storedefs.Dir{s, PinnedScore})
+			pinned = append(pinned, storedefs.Dir{s, pinnedScore})
 		}
 	}
 	return pinned

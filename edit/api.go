@@ -102,7 +102,7 @@ func makeNs(ed *editor) eval.Ns {
 	// Functions.
 	fns := map[string]interface{}{
 		"binding-table":     MakeBindingMap,
-		"command-history":   CommandHistory,
+		"command-history":   commandHistory,
 		"complete-getopt":   complGetopt,
 		"complex-candidate": makeComplexCandidate,
 		"insert-at-dot":     ed.insertAtDot,

@@ -9,7 +9,7 @@ import (
 
 var (
 	theLocation = newLocation([]storedefs.Dir{
-		{"/pinned", PinnedScore},
+		{"/pinned", pinnedScore},
 		{"/src/github.com/elves/elvish", 300},
 		{"/src/home/xyz", 233},
 		{"/home/dir", 100},

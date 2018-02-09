@@ -16,8 +16,8 @@ const PreviewBytes = 64 * 1024
 
 // Errors displayed in the preview area of navigation mode.
 var (
-	ErrNotRegular   = errors.New("no preview for non-regular file")
-	ErrNotValidUTF8 = errors.New("no preview for non-utf8 file")
+	errNotRegular   = errors.New("no preview for non-regular file")
+	errNotValidUTF8 = errors.New("no preview for non-utf8 file")
 )
 
 type navFilePreview struct {
@@ -72,7 +72,7 @@ func makeNavFilePreview(fname string) navPreview {
 		return newErrNavColumn(err)
 	}
 	if (info.Mode() & (os.ModeDevice | os.ModeNamedPipe | os.ModeSocket | os.ModeCharDevice)) != 0 {
-		return newErrNavColumn(ErrNotRegular)
+		return newErrNavColumn(errNotRegular)
 	}
 
 	// BUG: when the file is bigger than the buffer, the scrollbar is wrong.
@@ -84,7 +84,7 @@ func makeNavFilePreview(fname string) navPreview {
 
 	content := buf[:nr]
 	if !utf8.Valid(content) {
-		return newErrNavColumn(ErrNotValidUTF8)
+		return newErrNavColumn(errNotValidUTF8)
 	}
 
 	return newNavFilePreview(strings.Split(string(content), "\n"))

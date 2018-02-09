@@ -443,7 +443,7 @@ func narrowGetSource(ec *eval.Frame, source eval.Callable) func() []narrowItem {
 	}
 }
 
-func CommandHistory(fm *eval.Frame, args ...int) {
+func commandHistory(fm *eval.Frame, args ...int) {
 	var limit, start, end int
 
 	out := fm.OutputChan()

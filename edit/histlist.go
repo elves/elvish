@@ -12,9 +12,9 @@ import (
 
 // Command history listing mode.
 
-// ErrStoreOffline is thrown when an operation requires the storage backend, but
+// errStoreOffline is thrown when an operation requires the storage backend, but
 // it is offline.
-var ErrStoreOffline = errors.New("store offline")
+var errStoreOffline = errors.New("store offline")
 
 type histlist struct {
 	all             []string
@@ -121,7 +121,7 @@ func histlistStart(ed *editor) {
 
 func getCmds(ed *editor) ([]string, error) {
 	if ed.daemon == nil {
-		return nil, ErrStoreOffline
+		return nil, errStoreOffline
 	}
 	return ed.hist.fuser.AllCmds()
 }
