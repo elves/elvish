@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	. "github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/lscolors"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -21,7 +21,7 @@ import (
 // Interface.
 
 type navigation struct {
-	binding BindingMap
+	binding edtypes.BindingMap
 	chdir   func(string) error
 	navigationState
 }
@@ -39,7 +39,7 @@ func init() { atEditorInit(initNavigation) }
 
 func initNavigation(ed *editor, ns eval.Ns) {
 	n := &navigation{
-		binding: EmptyBindingMap,
+		binding: emptyBindingMap,
 		chdir:   func(dir string) error { return eval.Chdir(dir, ed.daemon) },
 	}
 	ed.navigation = n

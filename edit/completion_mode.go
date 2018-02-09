@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	. "github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
@@ -16,7 +16,7 @@ import (
 // Interface.
 
 type completion struct {
-	binding BindingMap
+	binding edtypes.BindingMap
 	completionState
 }
 
@@ -36,7 +36,7 @@ type completionState struct {
 func init() { atEditorInit(initCompletion) }
 
 func initCompletion(ed *editor, ns eval.Ns) {
-	c := &completion{binding: EmptyBindingMap}
+	c := &completion{binding: emptyBindingMap}
 	ed.completion = c
 
 	subns := eval.Ns{
@@ -116,7 +116,7 @@ func complDefault(ed *editor) {
 		}
 	} else {
 		complAccept(ed)
-		ed.SetAction(ReprocessKey)
+		ed.SetAction(reprocessKey)
 	}
 }
 

@@ -5,7 +5,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	. "github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
@@ -53,7 +53,7 @@ func initCoreFns(ed *editor, ns eval.Ns) {
 }
 
 type insert struct {
-	binding BindingMap
+	binding edtypes.BindingMap
 	insertState
 }
 
@@ -67,7 +67,7 @@ type insertState struct {
 }
 
 func initInsert(ed *editor, ns eval.Ns) {
-	insert := &insert{binding: EmptyBindingMap}
+	insert := &insert{binding: emptyBindingMap}
 	ed.insert = insert
 
 	insertNs := eval.Ns{
@@ -97,11 +97,11 @@ func (ins *insert) Binding(k ui.Key) eval.Callable {
 }
 
 type command struct {
-	binding BindingMap
+	binding edtypes.BindingMap
 }
 
 func initCommand(ed *editor, ns eval.Ns) {
-	command := &command{binding: EmptyBindingMap}
+	command := &command{binding: emptyBindingMap}
 	ed.command = command
 
 	commandNs := eval.Ns{
@@ -300,7 +300,7 @@ func (ed *editor) insertKey() {
 }
 
 func (ed *editor) returnLine() {
-	ed.SetAction(CommitLine)
+	ed.SetAction(commitLine)
 }
 
 func (ed *editor) smartEnter() {
@@ -322,7 +322,7 @@ func findLastIndent(s string) string {
 
 func (ed *editor) returnEOF() {
 	if len(ed.buffer) == 0 {
-		ed.SetAction(CommitEOF)
+		ed.SetAction(commitEOF)
 	}
 }
 

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	. "github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -19,7 +19,7 @@ type hist struct {
 	ed      *editor
 	mutex   sync.RWMutex
 	fuser   *history.Fuser
-	binding BindingMap
+	binding edtypes.BindingMap
 
 	// Non-persistent state.
 	walker *history.Walker
@@ -30,7 +30,7 @@ func init() {
 }
 
 func initHist(ed *editor, ns eval.Ns) {
-	hist := &hist{ed: ed, binding: EmptyBindingMap}
+	hist := &hist{ed: ed, binding: emptyBindingMap}
 	if ed.Daemon() != nil {
 		fuser, err := history.NewFuser(ed.Daemon())
 		if err != nil {
@@ -124,7 +124,7 @@ func (hist *hist) defaultFn() {
 	newBuffer := hist.walker.CurrentCmd()
 	hist.ed.SetBuffer(newBuffer, len(newBuffer))
 	hist.ed.SetModeInsert()
-	hist.ed.SetAction(ReprocessKey)
+	hist.ed.SetAction(reprocessKey)
 }
 
 func (hist *hist) appendHistory(line string) {

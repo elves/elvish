@@ -1,15 +1,15 @@
 package edit
 
-import . "github.com/elves/elvish/edit/edtypes"
+import "github.com/elves/elvish/edit/edtypes"
 
-func (ed *editor) SetAction(action Action) {
-	if ed.nextAction == NoAction {
+func (ed *editor) SetAction(action edtypes.Action) {
+	if ed.nextAction == noAction {
 		ed.nextAction = action
 	}
 }
 
-func (ed *editor) popAction() Action {
+func (ed *editor) popAction() edtypes.Action {
 	action := ed.nextAction
-	ed.nextAction = NoAction
+	ed.nextAction = noAction
 	return action
 }

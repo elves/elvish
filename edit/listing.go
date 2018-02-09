@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	. "github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
@@ -15,12 +15,12 @@ import (
 // listing implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type listing struct {
-	commonBinding BindingMap
+	commonBinding edtypes.BindingMap
 	listingState
 }
 
 type listingState struct {
-	binding     *BindingMap
+	binding     *edtypes.BindingMap
 	provider    listingProvider
 	selected    int
 	filter      string
@@ -31,7 +31,7 @@ type listingState struct {
 func init() { atEditorInit(initListing) }
 
 func initListing(ed *editor, ns eval.Ns) {
-	l := &listing{commonBinding: EmptyBindingMap}
+	l := &listing{commonBinding: emptyBindingMap}
 	ed.listing = l
 
 	subns := eval.Ns{
@@ -67,7 +67,7 @@ type placeholderer interface {
 	Placeholder() string
 }
 
-func newListing(pb *BindingMap, p listingProvider) *listingState {
+func newListing(pb *edtypes.BindingMap, p listingProvider) *listingState {
 	l := &listingState{pb, p, 0, "", 0, 0}
 	l.refresh()
 	for i := 0; i < p.Len(); i++ {
@@ -339,6 +339,6 @@ func (l *listingState) handleFilterKey(k ui.Key) bool {
 func (l *listingState) defaultBinding(ed *editor) {
 	if !l.handleFilterKey(ed.lastKey) {
 		ed.SetModeInsert()
-		ed.SetAction(ReprocessKey)
+		ed.SetAction(reprocessKey)
 	}
 }

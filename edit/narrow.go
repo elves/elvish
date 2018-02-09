@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	. "github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
@@ -16,14 +16,14 @@ import (
 // narrow implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type narrow struct {
-	binding BindingMap
+	binding edtypes.BindingMap
 	narrowState
 }
 
 func init() { atEditorInit(initNarrow) }
 
 func initNarrow(ed *editor, ns eval.Ns) {
-	n := &narrow{binding: EmptyBindingMap}
+	n := &narrow{binding: emptyBindingMap}
 	subns := eval.Ns{
 		"binding": eval.NewVariableFromPtr(&n.binding),
 	}
@@ -317,7 +317,7 @@ func (l *narrowState) handleFilterKey(ed *editor) bool {
 func (l *narrowState) defaultBinding(ed *editor) {
 	if !l.handleFilterKey(ed) {
 		ed.SetModeInsert()
-		ed.SetAction(ReprocessKey)
+		ed.SetAction(reprocessKey)
 	}
 }
 

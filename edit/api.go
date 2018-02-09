@@ -5,8 +5,7 @@ import (
 	"strconv"
 	"unicode/utf8"
 
-	. "github.com/elves/elvish/edit/edtypes"
-
+	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vartypes"
@@ -101,7 +100,7 @@ func makeNs(ed *editor) eval.Ns {
 
 	// Functions.
 	fns := map[string]interface{}{
-		"binding-table":     MakeBindingMap,
+		"binding-table":     edtypes.MakeBindingMap,
 		"command-history":   commandHistory,
 		"complete-getopt":   complGetopt,
 		"complex-candidate": makeComplexCandidate,

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/elves/elvish/daemon"
-	. "github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/highlight"
 	"github.com/elves/elvish/edit/prompt"
 	"github.com/elves/elvish/edit/tty"
@@ -64,9 +64,9 @@ type editor struct {
 	navigation *navigation
 	listing    *listing
 
-	histlistBinding BindingMap
-	lastcmdBinding  BindingMap
-	locationBinding BindingMap
+	histlistBinding edtypes.BindingMap
+	lastcmdBinding  edtypes.BindingMap
+	locationBinding edtypes.BindingMap
 
 	editorState
 }
@@ -90,19 +90,19 @@ type editorState struct {
 	promptContent  []*ui.Styled
 	rpromptContent []*ui.Styled
 
-	mode Mode
+	mode edtypes.Mode
 
 	// A cache of external commands, used in stylist.
 	isExternal map[string]bool
 
 	// Used for builtins.
 	lastKey    ui.Key
-	nextAction Action
+	nextAction edtypes.Action
 }
 
 // NewEditor creates an Editor. When the instance is no longer used, its Close
 // method should be called.
-func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) Editor {
+func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) edtypes.Editor {
 	daemon := ev.DaemonClient
 
 	ed := &editor{
@@ -182,7 +182,7 @@ func (ed *editor) SetBuffer(buffer string, dot int) {
 	ed.buffer, ed.dot = buffer, dot
 }
 
-func (ed *editor) SetMode(m Mode) {
+func (ed *editor) SetMode(m edtypes.Mode) {
 	if ed.mode != nil {
 		ed.mode.Teardown()
 	}
@@ -193,7 +193,7 @@ func (ed *editor) SetModeInsert() {
 	ed.SetMode(ed.insert)
 }
 
-func (ed *editor) SetModeListing(pb *BindingMap, lp listingProvider) {
+func (ed *editor) SetModeListing(pb *edtypes.BindingMap, lp listingProvider) {
 	ed.listing.listingState = *newListing(pb, lp)
 	ed.SetMode(ed.listing)
 }
@@ -498,15 +498,15 @@ MainLoop:
 				}
 
 				switch ed.popAction() {
-				case ReprocessKey:
+				case reprocessKey:
 					err := ed.refresh(false, true)
 					if err != nil {
 						return "", err
 					}
 					goto lookupKey
-				case CommitLine:
+				case commitLine:
 					return ed.buffer, nil
-				case CommitEOF:
+				case commitEOF:
 					return "", io.EOF
 				}
 			}

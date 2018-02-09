@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 
-	. "github.com/elves/elvish/edit/edtypes"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 )
@@ -118,7 +117,7 @@ func lastcmdAltDefault(ed *editor) {
 		}
 	} else {
 		ed.SetModeInsert()
-		ed.SetAction(ReprocessKey)
+		ed.SetAction(reprocessKey)
 	}
 }
 
