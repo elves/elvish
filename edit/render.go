@@ -285,10 +285,11 @@ func (er *editorRenderer) Render(buf *ui.Buffer) {
 
 	// bufListing.
 	if hListing > 0 {
-		if lister, ok := es.mode.(ListRenderer); ok {
-			bufListing = lister.ListRender(width, hListing)
-		} else if lister, ok := es.mode.(Lister); ok {
-			bufListing = ui.Render(lister.List(hListing), width)
+		switch mode := es.mode.(type) {
+		case listRenderer:
+			bufListing = mode.ListRender(width, hListing)
+		case lister:
+			bufListing = ui.Render(mode.List(hListing), width)
 		}
 		// XXX When in completion mode, we re-render the mode line, since the
 		// scrollbar in the mode line depends on completion.lastShown which is
@@ -310,7 +311,7 @@ func (er *editorRenderer) Render(buf *ui.Buffer) {
 	// Combine buffers (reusing bufLine)
 	buf.Extend(bufLine, true)
 	cursorOnModeLine := false
-	if coml, ok := es.mode.(CursorOnModeLiner); ok {
+	if coml, ok := es.mode.(cursorOnModeLiner); ok {
 		cursorOnModeLine = coml.CursorOnModeLine()
 	}
 	buf.Extend(bufMode, cursorOnModeLine)

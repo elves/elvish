@@ -111,7 +111,7 @@ func (l *listingState) ModeLine() ui.Renderer {
 }
 
 func (l *listingState) CursorOnModeLine() bool {
-	if c, ok := l.provider.(CursorOnModeLiner); ok {
+	if c, ok := l.provider.(cursorOnModeLiner); ok {
 		return c.CursorOnModeLine()
 	}
 	return false

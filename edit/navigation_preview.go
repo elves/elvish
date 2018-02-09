@@ -11,8 +11,8 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// PreviewBytes is the maximum number of bytes to preview a file.
-const PreviewBytes = 64 * 1024
+// previewBytes is the maximum number of bytes to preview a file.
+const previewBytes = 64 * 1024
 
 // Errors displayed in the preview area of navigation mode.
 var (
@@ -76,7 +76,7 @@ func makeNavFilePreview(fname string) navPreview {
 	}
 
 	// BUG: when the file is bigger than the buffer, the scrollbar is wrong.
-	var buf [PreviewBytes]byte
+	var buf [previewBytes]byte
 	nr, err := file.Read(buf[:])
 	if err != nil && err != io.EOF {
 		return newErrNavColumn(err)
