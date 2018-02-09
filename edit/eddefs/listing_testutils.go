@@ -1,4 +1,4 @@
-package listing
+package eddefs
 
 import (
 	"reflect"
@@ -7,17 +7,17 @@ import (
 	"github.com/elves/elvish/edit/ui"
 )
 
-type Shown struct {
+type ListingShown struct {
 	Header  string
 	Content ui.Styled
 }
 
-type FilterTest struct {
+type ListingProviderFilterTest struct {
 	Filter     string
-	WantShowns []Shown
+	WantShowns []ListingShown
 }
 
-func TestProviderFilter(t *testing.T, name string, ls Provider, testcases []FilterTest) {
+func TestListingProviderFilter(t *testing.T, name string, ls ListingProvider, testcases []ListingProviderFilterTest) {
 	for _, testcase := range testcases {
 		ls.Filter(testcase.Filter)
 

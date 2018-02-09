@@ -14,7 +14,6 @@ import (
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/highlight"
-	"github.com/elves/elvish/edit/listing"
 	"github.com/elves/elvish/edit/prompt"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
@@ -192,7 +191,7 @@ func (ed *editor) SetModeInsert() {
 	ed.SetMode(ed.insert)
 }
 
-func (ed *editor) SetModeListing(pb *eddefs.BindingMap, lp listing.Provider) {
+func (ed *editor) SetModeListing(pb *eddefs.BindingMap, lp eddefs.ListingProvider) {
 	ed.listing.listingState = *newListing(pb, lp)
 	ed.SetMode(ed.listing)
 }

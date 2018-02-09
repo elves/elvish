@@ -7,7 +7,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/eddefs"
-	"github.com/elves/elvish/edit/listing"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
@@ -22,7 +21,7 @@ type listingMode struct {
 
 type listingState struct {
 	binding     *eddefs.BindingMap
-	provider    listing.Provider
+	provider    eddefs.ListingProvider
 	selected    int
 	filter      string
 	pagesize    int
@@ -60,7 +59,7 @@ type placeholderer interface {
 	Placeholder() string
 }
 
-func newListing(pb *eddefs.BindingMap, p listing.Provider) *listingState {
+func newListing(pb *eddefs.BindingMap, p eddefs.ListingProvider) *listingState {
 	l := &listingState{pb, p, 0, "", 0, 0}
 	l.refresh()
 	for i := 0; i < p.Len(); i++ {
