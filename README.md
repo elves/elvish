@@ -8,9 +8,9 @@ Elvish is a cross-platform shell, supporting Linux, BSDs and Windows. It feature
 
 This README documents the development aspect of Elvish. Other information is to be found on the [website](https://elvish.io).
 
-[![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?label=linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
+[![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?logo=travis&label=linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
 [![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=windows)](https://ci.appveyor.com/project/xiaq/elvish)
-[![Build Status on VSTS](https://img.shields.io/vso/build/xiaq/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1.svg?label=macOS)](https://xiaq.visualstudio.com/elvish/_build)
+[![Build Status on VSTS](https://img.shields.io/vso/build/xiaq/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1.svg?logo=tfs&label=macOS)](https://xiaq.visualstudio.com/elvish/_build)
 [![Code Coverage on codecov.io](https://img.shields.io/codecov/c/github/elves/elvish.svg?label=codecov)](https://codecov.io/gh/elves/elvish)
 [![Code Coverage on coveralls.io](https://img.shields.io/coveralls/github/elves/elvish.svg?label=coveralls)](https://coveralls.io/github/elves/elvish)
 [![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
