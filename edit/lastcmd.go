@@ -37,9 +37,8 @@ func initLastcmd(ed *editor, ns eval.Ns) {
 	ns.AddNs("lastcmd", subns)
 }
 
-func newLastCmd(line string) *listingState {
-	b := &lastcmd{line, wordify(line), nil, false}
-	return newListing(nil, b)
+func newLastCmd(line string) *lastcmd {
+	return &lastcmd{line, wordify(line), nil, false}
 }
 
 func (b *lastcmd) ModeTitle(int) string {
@@ -100,7 +99,7 @@ func lastcmdStart(ed *editor) {
 		ed.Notify("db error: %s", err.Error())
 		return
 	}
-	ed.SetModeListing(newLastCmd(cmd), &ed.lastcmdBinding)
+	ed.SetModeListing(&ed.lastcmdBinding, newLastCmd(cmd))
 }
 
 func lastcmdAltDefault(ed *editor) {

@@ -46,5 +46,5 @@ var (
 )
 
 func TestLocation(t *testing.T) {
-	testListingFilter(t, "theLocation", theLocation, locationFilterTests)
+	testListingProviderFilter(t, "theLocation", theLocation, locationFilterTests)
 }

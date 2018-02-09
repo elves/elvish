@@ -41,8 +41,8 @@ func initLocation(ed *editor, ns eval.Ns) {
 	ns.AddNs("location", subns)
 }
 
-func newLocation(dirs []storedefs.Dir, home string) *listingState {
-	return newListing(nil, &location{all: dirs, home: home})
+func newLocation(dirs []storedefs.Dir, home string) *location {
+	return &location{all: dirs, home: home}
 }
 
 func (loc *location) ModeTitle(i int) string {
@@ -152,7 +152,7 @@ func locStart(ed *editor) {
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
 	home, _ := util.GetHome("")
-	ed.SetModeListing(newLocation(dirs, home), &ed.locationBinding)
+	ed.SetModeListing(&ed.locationBinding, newLocation(dirs, home))
 }
 
 // convertListToDirs converts a list of strings to []storedefs.Dir. It uses the

@@ -40,19 +40,18 @@ func initHistlist(ed *editor, ns eval.Ns) {
 	ns.AddNs("histlist", subns)
 }
 
-func newHistlist(cmds []string) *listingState {
+func newHistlist(cmds []string) *histlist {
 	last := make(map[string]int)
 	for i, entry := range cmds {
 		last[entry] = i
 	}
-	hl := &histlist{
+	return &histlist{
 		// This has to be here for the initialization to work :(
 		all:        cmds,
 		dedup:      true,
 		last:       last,
 		indexWidth: len(strconv.Itoa(len(cmds) - 1)),
 	}
-	return newListing(nil, hl)
 }
 
 func (hl *histlist) ModeTitle(i int) string {
@@ -116,7 +115,7 @@ func histlistStart(ed *editor) {
 		return
 	}
 
-	ed.SetModeListing(newHistlist(cmds), &ed.histlistBinding)
+	ed.SetModeListing(&ed.histlistBinding, newHistlist(cmds))
 }
 
 func getCmds(ed *editor) ([]string, error) {

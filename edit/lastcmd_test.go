@@ -27,5 +27,5 @@ var (
 )
 
 func TestLastCmd(t *testing.T) {
-	testListingFilter(t, "theLastCmd", theLastCmd, lastcmdFilterTests)
+	testListingProviderFilter(t, "theLastCmd", theLastCmd, lastcmdFilterTests)
 }
