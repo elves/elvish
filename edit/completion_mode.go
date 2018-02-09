@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
@@ -16,7 +16,7 @@ import (
 // Interface.
 
 type completion struct {
-	binding edtypes.BindingMap
+	binding eddefs.BindingMap
 	completionState
 }
 

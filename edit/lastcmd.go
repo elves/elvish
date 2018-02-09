@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 )
@@ -87,7 +87,7 @@ func (b *lastcmd) Filter(filter string) int {
 
 // Editor interface.
 
-func (b *lastcmd) Accept(i int, ed edtypes.Editor) {
+func (b *lastcmd) Accept(i int, ed eddefs.Editor) {
 	ed.InsertAtDot(b.filtered[i].s)
 	ed.SetModeInsert()
 }

@@ -3,7 +3,7 @@
 package listing
 
 import (
-	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 )
 
@@ -11,6 +11,6 @@ type Provider interface {
 	Len() int
 	Show(i int) (string, ui.Styled)
 	Filter(filter string) int
-	Accept(i int, ed edtypes.Editor)
+	Accept(i int, ed eddefs.Editor)
 	ModeTitle(int) string
 }

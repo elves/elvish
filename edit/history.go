@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -19,7 +19,7 @@ type hist struct {
 	ed      *editor
 	mutex   sync.RWMutex
 	fuser   *history.Fuser
-	binding edtypes.BindingMap
+	binding eddefs.BindingMap
 
 	// Non-persistent state.
 	walker *history.Walker

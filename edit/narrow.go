@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
@@ -16,7 +16,7 @@ import (
 // narrow implements a listing mode that supports the notion of selecting an
 // entry and filtering entries.
 type narrow struct {
-	binding edtypes.BindingMap
+	binding eddefs.BindingMap
 	narrowState
 }
 

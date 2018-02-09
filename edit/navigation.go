@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/lscolors"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -21,7 +21,7 @@ import (
 // Interface.
 
 type navigation struct {
-	binding edtypes.BindingMap
+	binding eddefs.BindingMap
 	chdir   func(string) error
 	navigationState
 }
@@ -419,7 +419,7 @@ func (nc *navColumn) FullWidth(h int) int {
 	return maxw
 }
 
-func (nc *navColumn) Accept(i int, ed edtypes.Editor) {
+func (nc *navColumn) Accept(i int, ed eddefs.Editor) {
 	// TODO
 }
 

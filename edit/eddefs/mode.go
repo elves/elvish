@@ -1,4 +1,4 @@
-package edtypes
+package eddefs
 
 import (
 	"github.com/elves/elvish/edit/ui"

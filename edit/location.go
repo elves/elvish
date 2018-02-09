@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
@@ -25,7 +25,7 @@ import (
 var pinnedScore = math.Inf(1)
 
 type locationMode struct {
-	binding edtypes.BindingMap
+	binding eddefs.BindingMap
 	hidden  vector.Vector
 	pinned  vector.Vector
 	locationState
@@ -41,7 +41,7 @@ func init() { atEditorInit(initLocation) }
 
 func initLocation(ed *editor, ns eval.Ns) {
 	mode := &locationMode{
-		binding: edtypes.EmptyBindingMap,
+		binding: eddefs.EmptyBindingMap,
 		hidden:  types.EmptyList,
 		pinned:  types.EmptyList,
 	}
@@ -132,7 +132,7 @@ func makeLocationFilterPattern(s string) *regexp.Regexp {
 
 // Editor interface.
 
-func (loc *locationState) Accept(i int, ed edtypes.Editor) {
+func (loc *locationState) Accept(i int, ed eddefs.Editor) {
 	err := eval.Chdir(loc.filtered[i].Path, ed.Daemon())
 	if err != nil {
 		ed.Notify("%v", err)
@@ -140,7 +140,7 @@ func (loc *locationState) Accept(i int, ed edtypes.Editor) {
 	ed.SetModeInsert()
 }
 
-func locStart(ed *editor, hidden, pinned vector.Vector, binding *edtypes.BindingMap) {
+func locStart(ed *editor, hidden, pinned vector.Vector, binding *eddefs.BindingMap) {
 	daemon := ed.Daemon()
 	if daemon == nil {
 		ed.Notify("%v", errStoreOffline)

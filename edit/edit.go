@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/elves/elvish/daemon"
-	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/highlight"
 	"github.com/elves/elvish/edit/listing"
 	"github.com/elves/elvish/edit/prompt"
@@ -64,8 +64,8 @@ type editor struct {
 	navigation *navigation
 	listing    *listingMode
 
-	histlistBinding edtypes.BindingMap
-	lastcmdBinding  edtypes.BindingMap
+	histlistBinding eddefs.BindingMap
+	lastcmdBinding  eddefs.BindingMap
 
 	editorState
 }
@@ -89,19 +89,19 @@ type editorState struct {
 	promptContent  []*ui.Styled
 	rpromptContent []*ui.Styled
 
-	mode edtypes.Mode
+	mode eddefs.Mode
 
 	// A cache of external commands, used in stylist.
 	isExternal map[string]bool
 
 	// Used for builtins.
 	lastKey    ui.Key
-	nextAction edtypes.Action
+	nextAction eddefs.Action
 }
 
 // NewEditor creates an Editor. When the instance is no longer used, its Close
 // method should be called.
-func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) edtypes.Editor {
+func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) eddefs.Editor {
 	daemon := ev.DaemonClient
 
 	ed := &editor{
@@ -181,7 +181,7 @@ func (ed *editor) SetBuffer(buffer string, dot int) {
 	ed.buffer, ed.dot = buffer, dot
 }
 
-func (ed *editor) SetMode(m edtypes.Mode) {
+func (ed *editor) SetMode(m eddefs.Mode) {
 	if ed.mode != nil {
 		ed.mode.Teardown()
 	}
@@ -192,7 +192,7 @@ func (ed *editor) SetModeInsert() {
 	ed.SetMode(ed.insert)
 }
 
-func (ed *editor) SetModeListing(pb *edtypes.BindingMap, lp listing.Provider) {
+func (ed *editor) SetModeListing(pb *eddefs.BindingMap, lp listing.Provider) {
 	ed.listing.listingState = *newListing(pb, lp)
 	ed.SetMode(ed.listing)
 }

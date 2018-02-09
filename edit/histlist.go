@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 )
@@ -101,7 +101,7 @@ func (hl *histlist) Filter(filter string) int {
 
 // Editor interface.
 
-func (hl *histlist) Accept(i int, ed edtypes.Editor) {
+func (hl *histlist) Accept(i int, ed eddefs.Editor) {
 	line := hl.shown[i]
 	buffer, _ := ed.Buffer()
 	if len(buffer) > 0 {

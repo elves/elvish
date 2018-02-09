@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/listing"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -16,12 +16,12 @@ import (
 // listingMode implements a mode that supports listing, selecting and filtering
 // entries.
 type listingMode struct {
-	commonBinding edtypes.BindingMap
+	commonBinding eddefs.BindingMap
 	listingState
 }
 
 type listingState struct {
-	binding     *edtypes.BindingMap
+	binding     *eddefs.BindingMap
 	provider    listing.Provider
 	selected    int
 	filter      string
@@ -60,7 +60,7 @@ type placeholderer interface {
 	Placeholder() string
 }
 
-func newListing(pb *edtypes.BindingMap, p listing.Provider) *listingState {
+func newListing(pb *eddefs.BindingMap, p listing.Provider) *listingState {
 	l := &listingState{pb, p, 0, "", 0, 0}
 	l.refresh()
 	for i := 0; i < p.Len(); i++ {

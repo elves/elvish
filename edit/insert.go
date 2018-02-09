@@ -5,7 +5,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/edit/edtypes"
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
@@ -53,7 +53,7 @@ func initCoreFns(ed *editor, ns eval.Ns) {
 }
 
 type insert struct {
-	binding edtypes.BindingMap
+	binding eddefs.BindingMap
 	insertState
 }
 
@@ -97,7 +97,7 @@ func (ins *insert) Binding(k ui.Key) eval.Callable {
 }
 
 type command struct {
-	binding edtypes.BindingMap
+	binding eddefs.BindingMap
 }
 
 func initCommand(ed *editor, ns eval.Ns) {
