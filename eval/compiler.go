@@ -4,7 +4,6 @@ package eval
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/elves/elvish/parse"
@@ -74,18 +73,16 @@ func (cp *compiler) registerVariableGet(ns, name string) bool {
 	default:
 		return cp.registerModAccess(ns)
 	}
-	_, err := strconv.Atoi(name)
-	isnum := err == nil
 	// Find in local scope
 	if ns == "" || ns == "local" {
-		if cp.thisScope().has(name) || isnum {
+		if cp.thisScope().has(name) {
 			return true
 		}
 	}
 	// Find in upper scopes
 	if ns == "" || ns == "up" {
 		for i := len(cp.scopes) - 2; i >= 0; i-- {
-			if cp.scopes[i].has(name) || isnum {
+			if cp.scopes[i].has(name) {
 				// Existing name: record capture and return.
 				cp.capture.set(name)
 				return true
