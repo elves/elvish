@@ -99,7 +99,7 @@ func lastcmdStart(ed *editor) {
 		ed.Notify("db error: %s", err.Error())
 		return
 	}
-	ed.SetModeListing(&ed.lastcmdBinding, newLastCmd(cmd))
+	ed.SetModeListing(ed.lastcmdBinding, newLastCmd(cmd))
 }
 
 func lastcmdAltDefault(ed *editor) {

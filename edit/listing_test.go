@@ -26,7 +26,7 @@ func (p provider) Show(i int) (string, ui.Styled) {
 
 var (
 	p  = provider{[]string{"foo", "bar", "foobar", "lorem", "ipsum"}, -1}
-	ls = newListing(nil, p)
+	ls = newListing(emptyBindingMap, p)
 )
 
 func TestListing(t *testing.T) {

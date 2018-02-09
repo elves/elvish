@@ -117,7 +117,7 @@ func histlistStart(ed *editor) {
 		return
 	}
 
-	ed.SetModeListing(&ed.histlistBinding, newHistlist(cmds))
+	ed.SetModeListing(ed.histlistBinding, newHistlist(cmds))
 }
 
 func getCmds(ed *editor) ([]string, error) {

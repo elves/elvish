@@ -191,8 +191,8 @@ func (ed *editor) SetModeInsert() {
 	ed.SetMode(ed.insert)
 }
 
-func (ed *editor) SetModeListing(pb *eddefs.BindingMap, lp eddefs.ListingProvider) {
-	ed.listing.listingState = *newListing(pb, lp)
+func (ed *editor) SetModeListing(b eddefs.BindingMap, p eddefs.ListingProvider) {
+	ed.listing.setup(b, p)
 	ed.SetMode(ed.listing)
 }
 

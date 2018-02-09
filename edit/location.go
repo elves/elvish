@@ -52,7 +52,7 @@ func initLocation(ed *editor, ns eval.Ns) {
 		"pinned":  eval.NewVariableFromPtr(&mode.pinned),
 	}
 	subns.AddBuiltinFns("edit:location:", map[string]interface{}{
-		"start": func() { locStart(ed, mode.hidden, mode.pinned, &mode.binding) },
+		"start": func() { locStart(ed, mode.hidden, mode.pinned, mode.binding) },
 	})
 	ns.AddNs("location", subns)
 }
@@ -140,7 +140,7 @@ func (loc *locationState) Accept(i int, ed eddefs.Editor) {
 	ed.SetModeInsert()
 }
 
-func locStart(ed *editor, hidden, pinned vector.Vector, binding *eddefs.BindingMap) {
+func locStart(ed *editor, hidden, pinned vector.Vector, binding eddefs.BindingMap) {
 	daemon := ed.Daemon()
 	if daemon == nil {
 		ed.Notify("%v", errStoreOffline)

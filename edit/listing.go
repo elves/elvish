@@ -20,7 +20,7 @@ type listingMode struct {
 }
 
 type listingState struct {
-	binding     *eddefs.BindingMap
+	binding     eddefs.BindingMap
 	provider    eddefs.ListingProvider
 	selected    int
 	filter      string
@@ -59,28 +59,12 @@ type placeholderer interface {
 	Placeholder() string
 }
 
-func newListing(pb *eddefs.BindingMap, p eddefs.ListingProvider) *listingState {
-	l := &listingState{pb, p, 0, "", 0, 0}
-	l.refresh()
-	for i := 0; i < p.Len(); i++ {
-		header, _ := p.Show(i)
-		width := util.Wcswidth(header)
-		if l.headerWidth < width {
-			l.headerWidth = width
-		}
-	}
-	return l
-}
-
 func (l *listingMode) Teardown() {
 	l.listingState = listingState{}
 }
 
 func (l *listingMode) Binding(k ui.Key) eval.Callable {
-	if l.binding == nil {
-		return l.commonBinding.GetOrDefault(k)
-	}
-	specificBindings := *l.binding
+	specificBindings := l.binding
 	listingBindings := l.commonBinding
 	// mode-specific binding -> listing binding ->
 	// mode-specific default -> listing default
@@ -95,6 +79,24 @@ func (l *listingMode) Binding(k ui.Key) eval.Callable {
 		return listingBindings.GetKey(ui.Default)
 	default:
 		return nil
+	}
+}
+
+func newListing(b eddefs.BindingMap, p eddefs.ListingProvider) *listingState {
+	l := &listingState{}
+	l.setup(b, p)
+	return l
+}
+
+func (l *listingState) setup(b eddefs.BindingMap, p eddefs.ListingProvider) {
+	*l = listingState{b, p, 0, "", 0, 0}
+	l.refresh()
+	for i := 0; i < p.Len(); i++ {
+		header, _ := p.Show(i)
+		width := util.Wcswidth(header)
+		if l.headerWidth < width {
+			l.headerWidth = width
+		}
 	}
 }
 
