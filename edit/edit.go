@@ -64,7 +64,6 @@ type editor struct {
 	listing    *listingMode
 
 	histlistBinding eddefs.BindingMap
-	lastcmdBinding  eddefs.BindingMap
 
 	editorState
 }
@@ -222,6 +221,10 @@ func (ed *editor) Notify(format string, args ...interface{}) {
 	ed.notificationMutex.Lock()
 	defer ed.notificationMutex.Unlock()
 	ed.notifications = append(ed.notifications, msg)
+}
+
+func (ed *editor) LastKey() ui.Key {
+	return ed.lastKey
 }
 
 func (ed *editor) refresh(fullRefresh bool, addErrorsToTips bool) error {

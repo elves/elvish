@@ -27,11 +27,13 @@ type lastcmdEntry struct {
 func init() { atEditorInit(initLastcmd) }
 
 func initLastcmd(ed *editor, ns eval.Ns) {
+	binding := emptyBindingMap
+
 	subns := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&ed.lastcmdBinding),
+		"binding": eval.NewVariableFromPtr(&binding),
 	}
 	subns.AddBuiltinFns("edit:lastcmd:", map[string]interface{}{
-		"start":       func() { lastcmdStart(ed) },
+		"start":       func() { lastcmdStart(ed, binding) },
 		"alt-default": func() { lastcmdAltDefault(ed) },
 	})
 	ns.AddNs("lastcmd", subns)
@@ -92,38 +94,42 @@ func (b *lastcmd) Accept(i int, ed eddefs.Editor) {
 	ed.SetModeInsert()
 }
 
-func lastcmdStart(ed *editor) {
-	logger.Println("lastcmd-alt-start")
-	_, cmd, err := ed.daemon.PrevCmd(-1, "")
+func lastcmdStart(ed eddefs.Editor, binding eddefs.BindingMap) {
+	daemon := ed.Daemon()
+	if daemon == nil {
+		ed.Notify("store offline, cannot start lastcmd mode")
+		return
+	}
+	_, cmd, err := daemon.PrevCmd(-1, "")
 	if err != nil {
 		ed.Notify("db error: %s", err.Error())
 		return
 	}
-	ed.SetModeListing(ed.lastcmdBinding, newLastCmd(cmd))
+	ed.SetModeListing(binding, newLastCmd(cmd))
 }
 
-func lastcmdAltDefault(ed *editor) {
+func lastcmdAltDefault(ed eddefs.Editor) {
 	l, lc := getLastcmd(ed)
 	if l == nil {
 		return
 	}
-	logger.Println("lastcmd-alt-default")
-	if ed.lastKey == (ui.Key{'1', ui.Alt}) {
+	k := ed.LastKey()
+	if k == (ui.Key{'1', ui.Alt}) {
 		lc.Accept(0, ed)
 		logger.Println("accepting")
-	} else if l.handleFilterKey(ed.lastKey) {
+	} else if l.handleFilterKey(k) {
 		if lc.Len() == 1 {
 			lc.Accept(l.selected, ed)
 			logger.Println("accepting")
 		}
 	} else {
 		ed.SetModeInsert()
-		ed.SetAction(reprocessKey)
+		ed.SetAction(eddefs.ReprocessKey)
 	}
 }
 
-func getLastcmd(ed *editor) (*listingMode, *lastcmd) {
-	if l, ok := ed.mode.(*listingMode); ok {
+func getLastcmd(ed eddefs.Editor) (*listingMode, *lastcmd) {
+	if l, ok := ed.(*editor).mode.(*listingMode); ok {
 		if lc, ok := l.provider.(*lastcmd); ok {
 			return l, lc
 		}

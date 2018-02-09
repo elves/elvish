@@ -2,6 +2,7 @@ package eddefs
 
 import (
 	"github.com/elves/elvish/daemon"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 )
 
@@ -39,4 +40,11 @@ type Editor interface {
 	// notification queue, which will be written out during the update cycle. It
 	// can be safely used concurrently.
 	Notify(format string, args ...interface{})
+
+	// LastKey returns the last key received from the user. It is useful mainly
+	// in keybindings.
+	LastKey() ui.Key
+
+	// SetAction sets the action to execute after the key binding has finished.
+	SetAction(a Action)
 }
