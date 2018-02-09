@@ -24,7 +24,14 @@ import (
 // directory is pinned.
 var pinnedScore = math.Inf(1)
 
-type location struct {
+type locationMode struct {
+	binding edtypes.BindingMap
+	hidden  vector.Vector
+	pinned  vector.Vector
+	locationState
+}
+
+type locationState struct {
 	home     string // The home directory; leave empty if unknown.
 	all      []storedefs.Dir
 	filtered []storedefs.Dir
@@ -33,32 +40,40 @@ type location struct {
 func init() { atEditorInit(initLocation) }
 
 func initLocation(ed *editor, ns eval.Ns) {
+	mode := &locationMode{
+		binding: edtypes.EmptyBindingMap,
+		hidden:  types.EmptyList,
+		pinned:  types.EmptyList,
+	}
+
 	subns := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&ed.locationBinding),
+		"binding": eval.NewVariableFromPtr(&mode.binding),
+		"hidden":  eval.NewVariableFromPtr(&mode.hidden),
+		"pinned":  eval.NewVariableFromPtr(&mode.pinned),
 	}
 	subns.AddBuiltinFns("edit:location:", map[string]interface{}{
-		"start": func() { locStart(ed) },
+		"start": func() { locStart(ed, mode.hidden, mode.pinned, &mode.binding) },
 	})
 	ns.AddNs("location", subns)
 }
 
-func newLocation(dirs []storedefs.Dir, home string) *location {
-	return &location{all: dirs, home: home}
+func newLocation(dirs []storedefs.Dir, home string) *locationState {
+	return &locationState{all: dirs, home: home}
 }
 
-func (loc *location) ModeTitle(i int) string {
+func (loc *locationState) ModeTitle(i int) string {
 	return " LOCATION "
 }
 
-func (*location) CursorOnModeLine() bool {
+func (*locationState) CursorOnModeLine() bool {
 	return true
 }
 
-func (loc *location) Len() int {
+func (loc *locationState) Len() int {
 	return len(loc.filtered)
 }
 
-func (loc *location) Show(i int) (string, ui.Styled) {
+func (loc *locationState) Show(i int) (string, ui.Styled) {
 	var header string
 	score := loc.filtered[i].Score
 	if score == pinnedScore {
@@ -69,7 +84,7 @@ func (loc *location) Show(i int) (string, ui.Styled) {
 	return header, ui.Unstyled(showPath(loc.filtered[i].Path, loc.home))
 }
 
-func (loc *location) Filter(filter string) int {
+func (loc *locationState) Filter(filter string) int {
 	loc.filtered = nil
 	pattern := makeLocationFilterPattern(filter)
 	for _, item := range loc.all {
@@ -117,7 +132,7 @@ func makeLocationFilterPattern(s string) *regexp.Regexp {
 
 // Editor interface.
 
-func (loc *location) Accept(i int, ed edtypes.Editor) {
+func (loc *locationState) Accept(i int, ed edtypes.Editor) {
 	err := eval.Chdir(loc.filtered[i].Path, ed.Daemon())
 	if err != nil {
 		ed.Notify("%v", err)
@@ -125,35 +140,36 @@ func (loc *location) Accept(i int, ed edtypes.Editor) {
 	ed.SetModeInsert()
 }
 
-func locStart(ed *editor) {
-	if ed.daemon == nil {
+func locStart(ed *editor, hidden, pinned vector.Vector, binding *edtypes.BindingMap) {
+	daemon := ed.Daemon()
+	if daemon == nil {
 		ed.Notify("%v", errStoreOffline)
 		return
 	}
 
 	// Pinned directories are also blacklisted to prevent them from showing up
 	// twice.
-	black := convertListsToSet(ed.locHidden, ed.locPinned)
+	black := convertListsToSet(hidden, pinned)
 	pwd, err := os.Getwd()
 	if err == nil {
 		black[pwd] = struct{}{}
 	}
-	stored, err := ed.daemon.Dirs(black)
+	stored, err := daemon.Dirs(black)
 	if err != nil {
 		ed.Notify("store error: %v", err)
 		return
 	}
 
 	// Concatenate pinned and stored dirs, pinned first.
-	pinned := convertListToDirs(ed.locPinned)
-	dirs := make([]storedefs.Dir, len(pinned)+len(stored))
-	copy(dirs, pinned)
-	copy(dirs[len(pinned):], stored)
+	pinnedDirs := convertListToDirs(pinned)
+	dirs := make([]storedefs.Dir, len(pinnedDirs)+len(stored))
+	copy(dirs, pinnedDirs)
+	copy(dirs[len(pinnedDirs):], stored)
 
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
 	home, _ := util.GetHome("")
-	ed.SetModeListing(&ed.locationBinding, newLocation(dirs, home))
+	ed.SetModeListing(binding, newLocation(dirs, home))
 }
 
 // convertListToDirs converts a list of strings to []storedefs.Dir. It uses the
@@ -180,20 +196,4 @@ func convertListsToSet(lis ...vector.Vector) map[string]struct{} {
 		}
 	}
 	return set
-}
-
-// Configurations.
-
-type editorLocConfig struct {
-	locHidden vector.Vector
-	locPinned vector.Vector
-}
-
-func init() {
-	atEditorInit(func(ed *editor, ns eval.Ns) {
-		ed.locHidden = types.EmptyList
-		ns["loc-hidden"] = eval.NewVariableFromPtr(&ed.locHidden)
-		ed.locPinned = types.EmptyList
-		ns["loc-pinned"] = eval.NewVariableFromPtr(&ed.locPinned)
-	})
 }

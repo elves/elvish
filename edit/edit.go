@@ -50,7 +50,6 @@ type editor struct {
 	// Configurations. Each of the following fields have an initializer defined
 	// using atEditorInit.
 	editorHooks
-	editorLocConfig
 	prompt.Config
 	matcher      hashmap.Map
 	abbr         hashmap.Map
@@ -67,7 +66,6 @@ type editor struct {
 
 	histlistBinding edtypes.BindingMap
 	lastcmdBinding  edtypes.BindingMap
-	locationBinding edtypes.BindingMap
 
 	editorState
 }
