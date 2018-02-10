@@ -310,6 +310,12 @@ func (ed *editor) startReadLine() error {
 // finishReadLine puts the terminal in a state suitable for other programs to
 // use.
 func (ed *editor) finishReadLine() error {
+	// After-readline hooks should be called before most teardown happens as
+	// they can cause the editor to refresh.
+	for _, f := range ed.afterReadline {
+		f(ed.buffer)
+	}
+
 	ed.activeMutex.Lock()
 	defer ed.activeMutex.Unlock()
 	ed.active = false
@@ -331,13 +337,8 @@ func (ed *editor) finishReadLine() error {
 	// Restore termios.
 	errRestore := ed.restoreTerminal()
 
-	// Save the line before resetting all of editorState.
-	line := ed.buffer
+	// Reset all of editorState.
 	ed.editorState = editorState{}
-
-	for _, f := range ed.afterReadline {
-		f(line)
-	}
 
 	return util.Errors(errRefresh, errRestore)
 }
