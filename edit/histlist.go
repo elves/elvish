@@ -124,6 +124,9 @@ func getCmds(ed *editor) ([]string, error) {
 	if ed.daemon == nil {
 		return nil, errStoreOffline
 	}
+	if ed.hist.fuser == nil {
+		return nil, errStoreOffline
+	}
 	return ed.hist.fuser.AllCmds()
 }
 
