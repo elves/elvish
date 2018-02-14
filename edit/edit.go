@@ -421,6 +421,7 @@ MainLoop:
 				return "", io.EOF
 			case syscall.SIGINT:
 				// Start over
+				ed.mode.Teardown()
 				ed.editorState = editorState{
 					restoreTerminal: ed.restoreTerminal,
 					isExternal:      ed.isExternal,
