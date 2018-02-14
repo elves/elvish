@@ -31,9 +31,6 @@ import (
 type compileBuiltin func(*compiler, *parse.Form) OpBody
 
 var (
-	// ErrNoLibDir is thrown by "use" when the Evaler does not have a library
-	// directory.
-	ErrNoLibDir = errors.New("Evaler does not have a lib directory")
 	// ErrRelativeUseNotFromMod is thrown by "use" when relative use is used
 	// not from a module
 	ErrRelativeUseNotFromMod = errors.New("Relative use not from module")
@@ -278,54 +275,33 @@ func loadModule(ec *Frame, name string) (Ns, error) {
 	}
 
 	// Load the source.
-	var path, code string
-
-	if ec.libDir == "" {
-		return nil, ErrNoLibDir
+	src, err := getModuleSource(ec.Evaler, name)
+	if err != nil {
+		return nil, err
 	}
 
-	path = filepath.Join(ec.libDir, name+".elv")
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		// File does not exist. Try loading from the table of builtin
-		// modules.
-		var ok bool
-		if code, ok = ec.bundled[name]; ok {
-			// Source is loaded. Do nothing more.
-			path = "<builtin module>"
-		} else {
-			return nil, fmt.Errorf("cannot load %s: %s does not exist", name, path)
-		}
-	} else {
-		// File exists. Load it.
-		code, err = readFileUTF8(path)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	n, err := parse.Parse(name, code)
+	n, err := parse.Parse(name, src.code)
 	if err != nil {
 		return nil, err
 	}
 
 	// Make an empty scope to evaluate the module in.
-	meta := NewModuleSource(name, path, code)
 	modGlobal := Ns{}
 
 	newEc := &Frame{
-		ec.Evaler, meta,
+		ec.Evaler, src,
 		modGlobal, make(Ns),
 		ec.ports,
-		0, len(code), ec.addTraceback(), false,
+		0, len(src.code), ec.addTraceback(), false,
 	}
 
-	op, err := newEc.Compile(n, meta)
+	op, err := newEc.Compile(n, src)
 	if err != nil {
 		return nil, err
 	}
 
-	// Load the namespace before executing. This avoids mutual and self use's to
-	// result in an infinite recursion.
+	// Load the namespace before executing. This prevent circular "use"es from
+	// resulting in an infinite recursion.
 	ec.Evaler.modules[name] = modGlobal
 	err = newEc.PEval(op)
 	if err != nil {
@@ -334,6 +310,30 @@ func loadModule(ec *Frame, name string) (Ns, error) {
 		return nil, err
 	}
 	return modGlobal, nil
+}
+
+func getModuleSource(ev *Evaler, name string) (*Source, error) {
+	// First try loading from file.
+	path := filepath.Join(ev.libDir, name+".elv")
+	if ev.libDir != "" {
+		_, err := os.Stat(path)
+		if err == nil {
+			code, err := readFileUTF8(path)
+			if err != nil {
+				return nil, err
+			}
+			return NewModuleSource(name, path, code), nil
+		} else if !os.IsNotExist(err) {
+			return nil, err
+		}
+	}
+
+	// Try loading bundled module.
+	if code, ok := ev.bundled[name]; ok {
+		return NewModuleSource(name, "", code), nil
+	}
+
+	return nil, fmt.Errorf("cannot load %s: %s does not exist", name, path)
 }
 
 // compileAnd compiles the "and" special form.
