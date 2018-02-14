@@ -33,7 +33,7 @@ type editor struct {
 	out    *os.File
 	writer tty.Writer
 	reader tty.Reader
-	sigs   chan os.Signal
+	sigs   <-chan os.Signal
 	daemon *daemon.Client
 	evaler *eval.Evaler
 
@@ -98,7 +98,7 @@ type editorState struct {
 
 // NewEditor creates an Editor. When the instance is no longer used, its Close
 // method should be called.
-func NewEditor(in *os.File, out *os.File, sigs chan os.Signal, ev *eval.Evaler) eddefs.Editor {
+func NewEditor(in *os.File, out *os.File, sigs <-chan os.Signal, ev *eval.Evaler) eddefs.Editor {
 	daemon := ev.DaemonClient
 
 	ed := &editor{
