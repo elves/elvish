@@ -23,49 +23,51 @@ import (
 // float64(1.0) or rune('1'). Conversion in this direction depends on the
 // destination type.
 
-var (
-	intType   = reflect.TypeOf(int(0))
-	floatType = reflect.TypeOf(float64(0))
-	runeType  = reflect.TypeOf(rune(0))
-)
-
-// ToGo converts an Elvish value to a Go value of the specified type. Conversion
-// happens for a whitelist of target types; for other types, this function just
-// checks whether the source value is already assignable to the target type and
-// returns the source value.
-func ToGo(arg interface{}, typ reflect.Type) (interface{}, error) {
-	switch typ {
-	case intType:
-		i, err := elvToInt(arg)
-		return i, err
-	case floatType:
-		f, err := elvToFloat(arg)
-		return f, err
-	case runeType:
-		r, err := elvToRune(arg)
-		return r, err
-	default:
-		if reflect.TypeOf(arg).AssignableTo(typ) {
-			return arg, nil
-		}
-		return nil, fmt.Errorf("need %s, got %s",
-			Kind(reflect.Zero(typ).Interface()), Kind(arg))
-	}
-}
-
-// ScanToGo converts an Elvish value to a Go value. It uses the type of the
-// pointer to determine the destination type, and puts the converted value in
-// the location the pointer points to.
+// ScanToGo converts an Elvish value to a Go value. the pointer points to. It
+// uses the type of the pointer to determine the destination type, and puts the
+// converted value in the location the pointer points to. Conversion only
+// happens when the destination type is int, float64 or rune; in other cases,
+// this function just checks that the source value is already assignable to the
+// destination.
 func ScanToGo(src interface{}, ptr interface{}) error {
-	v, err := ToGo(src, reflect.TypeOf(ptr).Elem())
-	if err != nil {
+	switch ptr := ptr.(type) {
+	case *int:
+		i, err := elvToInt(src)
+		if err == nil {
+			*ptr = i
+		}
 		return err
+	case *float64:
+		f, err := elvToFloat(src)
+		if err == nil {
+			*ptr = f
+		}
+		return err
+	case *rune:
+		r, err := elvToRune(src)
+		if err == nil {
+			*ptr = r
+		}
+		return err
+	default:
+		// Do a generic `*ptr = src` via reflection
+		ptrType := reflect.TypeOf(ptr)
+		if ptrType.Kind() != reflect.Ptr {
+			return fmt.Errorf("need pointer to scan into, got %T", ptr)
+		}
+		dstType := ptrType.Elem()
+		if !reflect.TypeOf(src).AssignableTo(dstType) {
+			return fmt.Errorf("need %s, got %s",
+				Kind(reflect.Zero(dstType).Interface()), Kind(src))
+		}
+		reflect.ValueOf(ptr).Elem().Set(reflect.ValueOf(src))
+		return nil
 	}
-	reflect.Indirect(reflect.ValueOf(ptr)).Set(reflect.ValueOf(v))
-	return nil
 }
 
-// FromGo converts a Go value to an Elvish value.
+// FromGo converts a Go value to an Elvish value. Conversion happens when the
+// argument is int, float64 or rune (this is consistent with ScanToGo). In other
+// cases, this function just returns the argument.
 func FromGo(a interface{}) interface{} {
 	switch a := a.(type) {
 	case int:

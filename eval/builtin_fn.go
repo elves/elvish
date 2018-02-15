@@ -153,11 +153,12 @@ func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface
 		} else {
 			panic("impossible")
 		}
-		converted, err := vals.ToGo(arg, typ)
+		ptr := reflect.New(typ)
+		err := vals.ScanToGo(arg, ptr.Interface())
 		if err != nil {
 			return fmt.Errorf("wrong type of %d'th argument: %v", i+1, err)
 		}
-		in = append(in, reflect.ValueOf(converted))
+		in = append(in, ptr.Elem())
 	}
 
 	if b.inputs {
