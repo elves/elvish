@@ -101,7 +101,6 @@ func makeNs(ed *editor) eval.Ns {
 	// Functions.
 	fns := map[string]interface{}{
 		"binding-table":     eddefs.MakeBindingMap,
-		"command-history":   commandHistory,
 		"complete-getopt":   complGetopt,
 		"complex-candidate": makeComplexCandidate,
 		"insert-at-dot":     ed.InsertAtDot,

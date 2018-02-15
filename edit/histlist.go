@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/edit/eddefs"
+	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/eval"
 )
 
 // Command history listing mode.
@@ -25,20 +25,6 @@ type histlist struct {
 	shown           []string
 	index           []int
 	indexWidth      int
-}
-
-func init() { atEditorInit(initHistlist) }
-
-func initHistlist(ed *editor, ns eval.Ns) {
-	subns := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&ed.histlistBinding),
-	}
-	subns.AddBuiltinFns("edit:histlist:", map[string]interface{}{
-		"start":                   func() { histlistStart(ed) },
-		"toggle-dedup":            func() { histlistToggleDedup(ed) },
-		"toggle-case-sensitivity": func() { histlistToggleCaseSensitivity(ed) },
-	})
-	ns.AddNs("histlist", subns)
 }
 
 func newHistlist(cmds []string) *histlist {
@@ -110,24 +96,21 @@ func (hl *histlist) Accept(i int, ed eddefs.Editor) {
 	ed.InsertAtDot(line)
 }
 
-func histlistStart(ed *editor) {
-	cmds, err := getCmds(ed)
+func histlistStart(ed *editor, fuser *history.Fuser, binding eddefs.BindingMap) {
+	cmds, err := getCmds(fuser)
 	if err != nil {
 		ed.Notify("%v", err)
 		return
 	}
 
-	ed.SetModeListing(ed.histlistBinding, newHistlist(cmds))
+	ed.SetModeListing(binding, newHistlist(cmds))
 }
 
-func getCmds(ed *editor) ([]string, error) {
-	if ed.daemon == nil {
+func getCmds(fuser *history.Fuser) ([]string, error) {
+	if fuser == nil {
 		return nil, errStoreOffline
 	}
-	if ed.hist.fuser == nil {
-		return nil, errStoreOffline
-	}
-	return ed.hist.fuser.AllCmds()
+	return fuser.AllCmds()
 }
 
 func histlistToggleDedup(ed *editor) {

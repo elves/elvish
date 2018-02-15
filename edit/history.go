@@ -3,6 +3,7 @@ package edit
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vartypes"
 )
 
@@ -40,22 +42,37 @@ func initHist(ed *editor, ns eval.Ns) {
 			ed.AddAfterReadline(hist.appendHistory)
 		}
 	}
-	ed.hist = hist
 
-	subns := eval.Ns{
+	histlistBinding := eddefs.EmptyBindingMap
+
+	historyNs := eval.Ns{
 		"binding": eval.NewVariableFromPtr(&hist.binding),
 		"list":    vartypes.NewRo(history.List{&hist.mutex, ed.Daemon()}),
 	}
-	subns.AddBuiltinFns("edit:history:", map[string]interface{}{
+	historyNs.AddBuiltinFns("edit:history:", map[string]interface{}{
 		"start":              hist.start,
 		"up":                 hist.up,
 		"down":               hist.down,
 		"down-or-quit":       hist.downOrQuit,
-		"switch-to-histlist": hist.switchToHistlist,
+		"switch-to-histlist": func() { hist.switchToHistlist(histlistBinding) },
 		"default":            hist.defaultFn,
 	})
 
-	ns.AddNs("history", subns)
+	histlistNs := eval.Ns{
+		"binding": eval.NewVariableFromPtr(&histlistBinding),
+	}
+	histlistNs.AddBuiltinFns("edit:histlist:", map[string]interface{}{
+		"start": func() {
+			histlistStart(ed, hist.fuser, histlistBinding)
+		},
+		"toggle-dedup":            func() { histlistToggleDedup(ed) },
+		"toggle-case-sensitivity": func() { histlistToggleCaseSensitivity(ed) },
+	})
+
+	ns.AddNs("history", historyNs)
+	ns.AddNs("histlist", histlistNs)
+	// TODO(xiaq): Rename and put in edit:history
+	ns.AddBuiltinFn("edit:", "command-history", hist.commandHistory)
 }
 
 func (h *hist) Teardown() {
@@ -111,10 +128,10 @@ func (hist *hist) downOrQuit() {
 	}
 }
 
-func (hist *hist) switchToHistlist() {
+func (hist *hist) switchToHistlist(binding eddefs.BindingMap) {
 	ed := hist.ed
-	histlistStart(ed)
-	if l, _, ok := getHistlist(ed); ok {
+	histlistStart(ed, hist.fuser, binding)
+	if l, ok := ed.mode.(*listingMode); ok {
 		ed.SetBuffer("", 0)
 		l.changeFilter(hist.walker.Prefix())
 	}
@@ -144,5 +161,45 @@ func (hist *hist) appendHistory(line string) {
 				logger.Printf("Failed to AddCmd %q: %v", line, err)
 			}
 		}()
+	}
+}
+
+func (hist *hist) commandHistory(fm *eval.Frame, args ...int) {
+	var limit, start, end int
+
+	out := fm.OutputChan()
+	cmds, err := hist.fuser.AllCmds()
+	if err != nil {
+		return
+	}
+
+	if len(args) > 0 {
+		limit = args[0]
+	}
+
+	total := len(cmds)
+	switch {
+	case limit > 0:
+		start = 0
+		end = limit
+		if limit > total {
+			end = total
+		}
+	case limit < 0:
+		start = limit + total
+		if start < 0 {
+			start = 0
+		}
+		end = total
+	default:
+		start = 0
+		end = total
+	}
+
+	for i := start; i < end; i++ {
+		out <- types.MakeMapFromKV(
+			"id", strconv.Itoa(i),
+			"cmd", cmds[i],
+		)
 	}
 }

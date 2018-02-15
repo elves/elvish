@@ -2,7 +2,6 @@ package edit
 
 import (
 	"container/list"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -441,47 +440,6 @@ func narrowGetSource(ec *eval.Frame, source eval.Callable) func() []narrowItem {
 			}
 		}
 		return lis
-	}
-}
-
-func commandHistory(fm *eval.Frame, args ...int) {
-	var limit, start, end int
-
-	out := fm.OutputChan()
-	ed := fm.Editor.(*editor)
-	cmds, err := ed.hist.fuser.AllCmds()
-	if err != nil {
-		return
-	}
-
-	if len(args) > 0 {
-		limit = args[0]
-	}
-
-	total := len(cmds)
-	switch {
-	case limit > 0:
-		start = 0
-		end = limit
-		if limit > total {
-			end = total
-		}
-	case limit < 0:
-		start = limit + total
-		if start < 0 {
-			start = 0
-		}
-		end = total
-	default:
-		start = 0
-		end = total
-	}
-
-	for i := start; i < end; i++ {
-		out <- types.MakeMapFromKV(
-			"id", strconv.Itoa(i),
-			"cmd", cmds[i],
-		)
 	}
 }
 

@@ -58,11 +58,8 @@ type editor struct {
 	// Modes.
 	insert     *insert
 	command    *command
-	hist       *hist
 	navigation *navigation
 	listing    *listingMode
-
-	histlistBinding eddefs.BindingMap
 
 	editorState
 }
