@@ -51,9 +51,9 @@ func nsFn(m hashmap.Map) Ns {
 	return ns
 }
 
-func rangeFn(fm *Frame, opts Options, args ...float64) error {
-	var step float64
-	opts.Scan(OptToScan{"step", &step, "1"})
+func rangeFn(fm *Frame, rawOpts Options, args ...float64) error {
+	opts := struct{ Step float64 }{1}
+	rawOpts.ScanToStruct(&opts)
 
 	var lower, upper float64
 
@@ -67,7 +67,7 @@ func rangeFn(fm *Frame, opts Options, args ...float64) error {
 	}
 
 	out := fm.ports[1].Chan
-	for f := lower; f < upper; f += step {
+	for f := lower; f < upper; f += opts.Step {
 		out <- vals.FromGo(f)
 	}
 	return nil

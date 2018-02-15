@@ -10,33 +10,6 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// OptToScan is a data structure for an option that is intended to be used in
-// ScanOpts.
-type OptToScan struct {
-	Name    string
-	Ptr     interface{}
-	Default interface{}
-}
-
-// ScanOpts scans options from a map.
-func ScanOpts(m map[string]interface{}, opts ...OptToScan) {
-	scanned := make(map[string]bool)
-	for _, opt := range opts {
-		a := opt.Ptr
-		value, ok := m[opt.Name]
-		if !ok {
-			value = opt.Default
-		}
-		mustScanToGo(value, a)
-		scanned[opt.Name] = true
-	}
-	for key := range m {
-		if !scanned[key] {
-			throwf("unknown option %s", parse.Quote(key))
-		}
-	}
-}
-
 // ScanOptsToStruct scan options from a map like ScanOpts except the destination
 // is a struct whose fields correspond to the options to be parsed. A field
 // named FieldName corresponds to the option named field-name, unless the field

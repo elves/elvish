@@ -101,20 +101,20 @@ func (c *complexCandidate) cook(q parse.PrimaryType) *candidate {
 }
 
 // makeComplexCandidate composes a complexCandidate.
-func makeComplexCandidate(opts eval.Options, stem string) *complexCandidate {
-	c := &complexCandidate{stem: stem}
+func makeComplexCandidate(rawOpts eval.Options, stem string) *complexCandidate {
+	opts := struct {
+		CodeSuffix    string
+		DisplaySuffix string
+		Style         string
+	}{}
+	rawOpts.ScanToStruct(&opts)
 
-	var style string
-	opts.Scan(
-		eval.OptToScan{"code-suffix", &c.codeSuffix, ""},
-		eval.OptToScan{"display-suffix", &c.displaySuffix, ""},
-		eval.OptToScan{"style", &style, ""},
-	)
-	if style != "" {
-		c.style = ui.StylesFromString(style)
+	return &complexCandidate{
+		stem:          stem,
+		codeSuffix:    opts.CodeSuffix,
+		displaySuffix: opts.DisplaySuffix,
+		style:         ui.StylesFromString(opts.Style),
 	}
-
-	return c
 }
 
 func filterRawCandidates(ev *eval.Evaler, matcher eval.Callable, seed string, chanRawCandidate <-chan rawCandidate) ([]rawCandidate, error) {

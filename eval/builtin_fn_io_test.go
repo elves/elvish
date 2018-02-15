@@ -11,6 +11,7 @@ func TestBuiltinFnIO(t *testing.T) {
 		{`put foo bar`, want{out: strs("foo", "bar")}},
 
 		{`print [foo bar]`, want{bytesOut: []byte("[foo bar]")}},
+		{`print foo bar &sep=,`, want{bytesOut: []byte("foo,bar")}},
 		{`echo [foo bar]`, want{bytesOut: []byte("[foo bar]\n")}},
 		{`pprint [foo bar]`, want{bytesOut: []byte("[\n foo\n bar\n]\n")}},
 		NewTest(`repr foo bar ['foo bar']`).WantBytesOutString("foo bar ['foo bar']\n"),

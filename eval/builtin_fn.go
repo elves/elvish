@@ -55,10 +55,6 @@ type (
 	Inputs  func(func(interface{}))
 )
 
-func (opt Options) Scan(opts ...OptToScan) {
-	ScanOpts(map[string]interface{}(opt), opts...)
-}
-
 func (opt Options) ScanToStruct(ptr interface{}) {
 	ScanOptsToStruct(map[string]interface{}(opt), ptr)
 }

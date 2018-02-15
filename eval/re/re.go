@@ -21,28 +21,25 @@ var fns = map[string]interface{}{
 	"split":   split,
 }
 
-func match(opts eval.Options, argPattern, source string) bool {
-	var optPOSIX bool
-	opts.Scan(eval.OptToScan{"posix", &optPOSIX, false})
+func match(rawOpts eval.Options, argPattern, source string) bool {
+	opts := struct{ Posix bool }{}
+	rawOpts.ScanToStruct(&opts)
 
-	pattern := makePattern(argPattern, optPOSIX, false)
+	pattern := makePattern(argPattern, opts.Posix, false)
 	return pattern.MatchString(source)
 }
 
-func find(fm *eval.Frame, opts eval.Options, argPattern, source string) {
+func find(fm *eval.Frame, rawOpts eval.Options, argPattern, source string) {
 	out := fm.OutputChan()
-	var (
-		optPOSIX   bool
-		optLongest bool
-		optMax     int
-	)
-	opts.Scan(
-		eval.OptToScan{"posix", &optPOSIX, false},
-		eval.OptToScan{"longest", &optLongest, false},
-		eval.OptToScan{"max", &optMax, "-1"})
+	opts := struct {
+		Posix   bool
+		Longest bool
+		Max     int
+	}{Max: -1}
+	rawOpts.ScanToStruct(&opts)
 
-	pattern := makePattern(argPattern, optPOSIX, optLongest)
-	matches := pattern.FindAllSubmatchIndex([]byte(source), optMax)
+	pattern := makePattern(argPattern, opts.Posix, opts.Longest)
+	matches := pattern.FindAllSubmatchIndex([]byte(source), opts.Max)
 
 	for _, match := range matches {
 		start, end := match[0], match[1]
@@ -61,22 +58,19 @@ func find(fm *eval.Frame, opts eval.Options, argPattern, source string) {
 	}
 }
 
-func replace(fm *eval.Frame, opts eval.Options,
+func replace(fm *eval.Frame, rawOpts eval.Options,
 	argPattern string, argRepl interface{}, source string) string {
 
-	var (
-		optPOSIX   bool
-		optLongest bool
-		optLiteral bool
-	)
-	opts.Scan(
-		eval.OptToScan{"posix", &optPOSIX, false},
-		eval.OptToScan{"longest", &optLongest, false},
-		eval.OptToScan{"literal", &optLiteral, false})
+	opts := struct {
+		Posix   bool
+		Longest bool
+		Literal bool
+	}{}
+	rawOpts.ScanToStruct(&opts)
 
-	pattern := makePattern(argPattern, optPOSIX, optLongest)
+	pattern := makePattern(argPattern, opts.Posix, opts.Longest)
 
-	if optLiteral {
+	if opts.Literal {
 		repl, ok := argRepl.(string)
 		if !ok {
 			throwf("replacement must be string when literal is set, got %s",
@@ -110,21 +104,18 @@ func replace(fm *eval.Frame, opts eval.Options,
 	}
 }
 
-func split(fm *eval.Frame, opts eval.Options, argPattern, source string) {
+func split(fm *eval.Frame, rawOpts eval.Options, argPattern, source string) {
 	out := fm.OutputChan()
-	var (
-		optPOSIX   bool
-		optLongest bool
-		optMax     int
-	)
-	opts.Scan(
-		eval.OptToScan{"posix", &optPOSIX, false},
-		eval.OptToScan{"longest", &optLongest, false},
-		eval.OptToScan{"max", &optMax, "-1"})
+	opts := struct {
+		Posix   bool
+		Longest bool
+		Max     int
+	}{Max: -1}
+	rawOpts.ScanToStruct(&opts)
 
-	pattern := makePattern(argPattern, optPOSIX, optLongest)
+	pattern := makePattern(argPattern, opts.Posix, opts.Longest)
 
-	pieces := pattern.Split(source, optMax)
+	pieces := pattern.Split(source, opts.Max)
 	for _, piece := range pieces {
 		out <- piece
 	}

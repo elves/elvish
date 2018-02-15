@@ -68,21 +68,21 @@ func joins(sep string, inputs Inputs) string {
 }
 
 // splits splits an argument strings by a delimiter and writes all pieces.
-func splits(fm *Frame, opts Options, sep, s string) {
-	var optMax int
-	opts.Scan(OptToScan{"max", &optMax, "-1"})
+func splits(fm *Frame, rawOpts Options, sep, s string) {
+	opts := struct{ Max int }{-1}
+	rawOpts.ScanToStruct(&opts)
 
 	out := fm.ports[1].Chan
-	parts := strings.SplitN(s, sep, optMax)
+	parts := strings.SplitN(s, sep, opts.Max)
 	for _, p := range parts {
 		out <- p
 	}
 }
 
-func replaces(opts Options, old, repl, s string) string {
-	var optMax int
-	opts.Scan(OptToScan{"max", &optMax, "-1"})
-	return strings.Replace(s, old, repl, optMax)
+func replaces(rawOpts Options, old, repl, s string) string {
+	opts := struct{ Max int }{-1}
+	rawOpts.ScanToStruct(&opts)
+	return strings.Replace(s, old, repl, opts.Max)
 }
 
 func ord(fm *Frame, s string) {

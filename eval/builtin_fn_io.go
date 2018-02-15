@@ -48,15 +48,14 @@ func put(fm *Frame, args ...interface{}) {
 	}
 }
 
-func print(fm *Frame, opts Options, args ...interface{}) {
-	var sepv string
-	opts.Scan(OptToScan{"sep", &sepv, " "})
+func print(fm *Frame, rawOpts Options, args ...interface{}) {
+	opts := struct{ Sep string }{" "}
+	rawOpts.ScanToStruct(&opts)
 
 	out := fm.ports[1].File
-	sep := sepv
 	for i, arg := range args {
 		if i > 0 {
-			out.WriteString(sep)
+			out.WriteString(opts.Sep)
 		}
 		out.WriteString(vals.ToString(arg))
 	}
