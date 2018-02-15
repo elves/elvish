@@ -12,6 +12,7 @@ import (
 	"github.com/elves/elvish/edit/lscolors"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -45,7 +46,7 @@ func initNavigation(ed *editor, ns eval.Ns) {
 	ed.navigation = n
 
 	subns := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&n.binding),
+		"binding": vars.NewFromPtr(&n.binding),
 	}
 	subns.AddBuiltinFns("edit:navigation:", map[string]interface{}{
 		"start":                    func() { n.start(ed) },

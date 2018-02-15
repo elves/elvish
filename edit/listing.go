@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/util"
 )
 
@@ -35,7 +36,7 @@ func initListing(ed *editor, ns eval.Ns) {
 	ed.listing = l
 
 	subns := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&l.commonBinding),
+		"binding": vars.NewFromPtr(&l.commonBinding),
 	}
 	subns.AddBuiltinFns("edit:listing:", map[string]interface{}{
 		"up":         func() { l.up(false) },

@@ -4,13 +4,14 @@ import (
 	"math"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/util"
 )
 
 func init() {
 	atEditorInit(func(ed *editor, ns eval.Ns) {
 		ed.maxHeight = math.Inf(1)
-		ns["max-height"] = eval.NewVariableFromPtr(&ed.maxHeight)
+		ns["max-height"] = vars.NewFromPtr(&ed.maxHeight)
 	})
 }
 

@@ -10,6 +10,7 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -90,7 +91,7 @@ func init() {
 			m = m.Assoc(k, v)
 		}
 		ed.argCompleter = m
-		ns["arg-completer"] = eval.NewVariableFromPtr(&ed.argCompleter)
+		ns["arg-completer"] = vars.NewFromPtr(&ed.argCompleter)
 	})
 }
 

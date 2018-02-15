@@ -1,10 +1,10 @@
-package eval
+package vars
 
 import "testing"
 
 func TestPtrVariable(t *testing.T) {
 	i := 10
-	variable := NewVariableFromPtr(&i)
+	variable := NewFromPtr(&i)
 	if g := variable.Get(); g != "10" {
 		t.Errorf(`Getting ptrVariable returns %v, want "10"`, g)
 	}

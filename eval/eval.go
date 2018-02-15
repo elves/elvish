@@ -63,7 +63,7 @@ func NewEvaler() *Evaler {
 	valueOutIndicator := defaultValueOutIndicator
 
 	builtin := builtinNs.Clone()
-	builtin["value-out-indicator"] = NewVariableFromPtr(&valueOutIndicator)
+	builtin["value-out-indicator"] = vars.NewFromPtr(&valueOutIndicator)
 
 	ev := &Evaler{
 		evalerScopes: evalerScopes{

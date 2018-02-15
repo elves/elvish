@@ -62,12 +62,12 @@ func (ns Ns) Add(name string, v vars.Type) Ns {
 
 // AddFn adds a function to a namespace. It returns the namespace itself.
 func (ns Ns) AddFn(name string, v Callable) Ns {
-	return ns.Add(name+FnSuffix, NewVariableFromPtr(&v))
+	return ns.Add(name+FnSuffix, vars.NewFromPtr(&v))
 }
 
 // AddNs adds a sub-namespace to a namespace. It returns the namespace itself.
 func (ns Ns) AddNs(name string, v Ns) Ns {
-	return ns.Add(name+NsSuffix, NewVariableFromPtr(&v))
+	return ns.Add(name+NsSuffix, vars.NewFromPtr(&v))
 }
 
 // AddBuiltinFn adds a builtin function to a namespace. It returns the namespace

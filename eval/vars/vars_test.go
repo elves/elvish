@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestPtrVariable(t *testing.T) {
+func TestAnyVariable(t *testing.T) {
 	v := NewAnyWithInit(true)
 	if v.Get() != true {
 		t.Errorf("PtrVariable.Get doesn't return initial value")

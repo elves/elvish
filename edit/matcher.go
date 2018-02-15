@@ -6,6 +6,7 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -28,7 +29,7 @@ var (
 func init() {
 	atEditorInit(func(ed *editor, ns eval.Ns) {
 		ed.matcher = vals.MakeMapFromKV("", matchPrefix)
-		ns["-matcher"] = eval.NewVariableFromPtr(&ed.matcher)
+		ns["-matcher"] = vars.NewFromPtr(&ed.matcher)
 	})
 }
 

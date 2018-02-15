@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse/parseutil"
 )
 
@@ -29,7 +30,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 	binding := eddefs.EmptyBindingMap
 
 	subns := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&binding),
+		"binding": vars.NewFromPtr(&binding),
 	}
 	subns.AddBuiltinFns("edit:lastcmd:", map[string]interface{}{
 		"start":       func() { lc.start(ed, binding) },

@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse/parseutil"
 	"github.com/elves/elvish/util"
 )
@@ -72,7 +73,7 @@ func initInsert(ed *editor, ns eval.Ns) {
 	ed.insert = insert
 
 	insertNs := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&insert.binding),
+		"binding": vars.NewFromPtr(&insert.binding),
 	}
 	insertNs.AddBuiltinFns("edit:insert:", map[string]interface{}{
 		"start":   ed.SetModeInsert,
@@ -106,7 +107,7 @@ func initCommand(ed *editor, ns eval.Ns) {
 	ed.command = command
 
 	commandNs := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&command.binding),
+		"binding": vars.NewFromPtr(&command.binding),
 	}
 	commandNs.AddBuiltinFns("edit:command:", map[string]interface{}{
 		"start":   ed.commandStart,

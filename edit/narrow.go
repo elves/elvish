@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse/parseutil"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -25,7 +26,7 @@ func init() { atEditorInit(initNarrow) }
 func initNarrow(ed *editor, ns eval.Ns) {
 	n := &narrow{binding: emptyBindingMap}
 	subns := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&n.binding),
+		"binding": vars.NewFromPtr(&n.binding),
 	}
 	subns.AddBuiltinFns("edit:narrow:", map[string]interface{}{
 		"up":         func() { n.up(false) },

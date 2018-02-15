@@ -13,6 +13,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
@@ -46,9 +47,9 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 	}
 
 	subns := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&cfg.binding),
-		"hidden":  eval.NewVariableFromPtr(&cfg.hidden),
-		"pinned":  eval.NewVariableFromPtr(&cfg.pinned),
+		"binding": vars.NewFromPtr(&cfg.binding),
+		"hidden":  vars.NewFromPtr(&cfg.hidden),
+		"pinned":  vars.NewFromPtr(&cfg.pinned),
 	}
 	subns.AddBuiltinFns("edit:location:", map[string]interface{}{
 		"start": func() { locStart(ed, cfg.hidden, cfg.pinned, cfg.binding) },

@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse/parseutil"
 	"github.com/elves/elvish/util"
 )
@@ -40,7 +41,7 @@ func initCompletion(ed *editor, ns eval.Ns) {
 	c := &completion{binding: emptyBindingMap}
 
 	subns := eval.Ns{
-		"binding": eval.NewVariableFromPtr(&c.binding),
+		"binding": vars.NewFromPtr(&c.binding),
 	}
 	subns.AddBuiltinFns("edit:completion:", map[string]interface{}{
 		"start":          func() { c.start(ed, false) },

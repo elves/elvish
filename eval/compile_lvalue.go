@@ -149,10 +149,10 @@ func (op varOp) Invoke(fm *Frame) ([]vars.Type, error) {
 			// immeidately be set.
 			if strings.HasSuffix(op.name, FnSuffix) {
 				val := Callable(nil)
-				variable = NewVariableFromPtr(&val)
+				variable = vars.NewFromPtr(&val)
 			} else if strings.HasSuffix(op.name, NsSuffix) {
 				val := Ns(nil)
-				variable = NewVariableFromPtr(&val)
+				variable = vars.NewFromPtr(&val)
 			} else {
 				variable = vars.NewAnyWithInit(nil)
 			}
