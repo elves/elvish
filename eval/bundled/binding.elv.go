@@ -54,7 +54,6 @@ fn install {
         &Default=  $edit:history:default~
         &Up=       $edit:history:up~
         &Down=     $edit:history:down-or-quit~
-        &Ctrl-R=   $edit:history:switch-to-histlist~
         &'Ctrl-['= $edit:insert:start~
     ])
 

@@ -41,6 +41,10 @@ func newHistlist(cmds []string) *histlist {
 	}
 }
 
+func (hl *histlist) Teardown() {
+	*hl = histlist{}
+}
+
 func (hl *histlist) ModeTitle(i int) string {
 	s := " HISTORY "
 	if hl.dedup {
@@ -96,14 +100,16 @@ func (hl *histlist) Accept(i int, ed eddefs.Editor) {
 	ed.InsertAtDot(line)
 }
 
-func histlistStart(ed *editor, fuser *history.Fuser, binding eddefs.BindingMap) {
+func (hl *histlist) start(ed eddefs.Editor, fuser *history.Fuser, binding eddefs.BindingMap) {
 	cmds, err := getCmds(fuser)
 	if err != nil {
 		ed.Notify("%v", err)
 		return
 	}
 
-	ed.SetModeListing(binding, newHistlist(cmds))
+	*hl = *newHistlist(cmds)
+
+	ed.SetModeListing(binding, hl)
 }
 
 func getCmds(fuser *history.Fuser) ([]string, error) {
@@ -113,25 +119,12 @@ func getCmds(fuser *history.Fuser) ([]string, error) {
 	return fuser.AllCmds()
 }
 
-func histlistToggleDedup(ed *editor) {
-	if l, hl, ok := getHistlist(ed); ok {
-		hl.dedup = !hl.dedup
-		l.refresh()
-	}
+func (hl *histlist) toggleDedup(ed eddefs.Editor) {
+	hl.dedup = !hl.dedup
+	ed.RefreshListing()
 }
 
-func histlistToggleCaseSensitivity(ed *editor) {
-	if l, hl, ok := getHistlist(ed); ok {
-		hl.caseInsensitive = !hl.caseInsensitive
-		l.refresh()
-	}
-}
-
-func getHistlist(ed *editor) (*listingMode, *histlist, bool) {
-	if l, ok := ed.mode.(*listingMode); ok {
-		if hl, ok := l.provider.(*histlist); ok {
-			return l, hl, true
-		}
-	}
-	return nil, nil, false
+func (hl *histlist) toggleCaseSensitivity(ed eddefs.Editor) {
+	hl.caseInsensitive = !hl.caseInsensitive
+	ed.RefreshListing()
 }

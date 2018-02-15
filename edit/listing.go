@@ -61,6 +61,13 @@ type placeholderer interface {
 
 func (l *listingMode) Teardown() {
 	l.listingState = listingState{}
+	if p, ok := l.provider.(teardowner); ok {
+		p.Teardown()
+	}
+}
+
+type teardowner interface {
+	Teardown()
 }
 
 func (l *listingMode) Binding(k ui.Key) eval.Callable {

@@ -195,6 +195,12 @@ func (ed *editor) SetModeListing(b eddefs.BindingMap, p eddefs.ListingProvider) 
 	ed.SetMode(ed.listing)
 }
 
+func (ed *editor) RefreshListing() {
+	if l, ok := ed.mode.(*listingMode); ok {
+		l.refresh()
+	}
+}
+
 func (ed *editor) flash() {
 	// TODO implement fish-like flash effect
 }

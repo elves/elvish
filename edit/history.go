@@ -18,7 +18,7 @@ import (
 // Command history mode.
 
 type hist struct {
-	ed      *editor
+	ed      eddefs.Editor
 	mutex   sync.RWMutex
 	fuser   *history.Fuser
 	binding eddefs.BindingMap
@@ -43,6 +43,7 @@ func initHist(ed *editor, ns eval.Ns) {
 		}
 	}
 
+	hl := &histlist{}
 	histlistBinding := eddefs.EmptyBindingMap
 
 	historyNs := eval.Ns{
@@ -50,12 +51,11 @@ func initHist(ed *editor, ns eval.Ns) {
 		"list":    vartypes.NewRo(history.List{&hist.mutex, ed.Daemon()}),
 	}
 	historyNs.AddBuiltinFns("edit:history:", map[string]interface{}{
-		"start":              hist.start,
-		"up":                 hist.up,
-		"down":               hist.down,
-		"down-or-quit":       hist.downOrQuit,
-		"switch-to-histlist": func() { hist.switchToHistlist(histlistBinding) },
-		"default":            hist.defaultFn,
+		"start":        hist.start,
+		"up":           hist.up,
+		"down":         hist.down,
+		"down-or-quit": hist.downOrQuit,
+		"default":      hist.defaultFn,
 	})
 
 	histlistNs := eval.Ns{
@@ -63,10 +63,10 @@ func initHist(ed *editor, ns eval.Ns) {
 	}
 	histlistNs.AddBuiltinFns("edit:histlist:", map[string]interface{}{
 		"start": func() {
-			histlistStart(ed, hist.fuser, histlistBinding)
+			hl.start(ed, hist.fuser, histlistBinding)
 		},
-		"toggle-dedup":            func() { histlistToggleDedup(ed) },
-		"toggle-case-sensitivity": func() { histlistToggleCaseSensitivity(ed) },
+		"toggle-dedup":            func() { hl.toggleDedup(ed) },
+		"toggle-case-sensitivity": func() { hl.toggleCaseSensitivity(ed) },
 	})
 
 	ns.AddNs("history", historyNs)
@@ -125,15 +125,6 @@ func (hist *hist) downOrQuit() {
 	_, _, err := hist.walker.Next()
 	if err != nil {
 		hist.ed.SetModeInsert()
-	}
-}
-
-func (hist *hist) switchToHistlist(binding eddefs.BindingMap) {
-	ed := hist.ed
-	histlistStart(ed, hist.fuser, binding)
-	if l, ok := ed.mode.(*listingMode); ok {
-		ed.SetBuffer("", 0)
-		l.changeFilter(hist.walker.Prefix())
 	}
 }
 

@@ -34,6 +34,10 @@ type Editor interface {
 	// SetModeListing sets the current mode of the Editor to listing mode with
 	// the supplied binding and provider.
 	SetModeListing(b BindingMap, p ListingProvider)
+	// RefreshListing refreshes the listing mode, recalculating the listing
+	// items. It is useful when the underlying listing provider has been
+	// changed. If the editor is not in listing mode, it does nothing.
+	RefreshListing()
 
 	// AddTip adds a message to the tip area.
 	AddTip(format string, args ...interface{})
