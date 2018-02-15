@@ -56,7 +56,7 @@ var dirDescriptor = types.NewStructDescriptor("path", "score")
 
 func newDirStruct(path string, score float64) *types.Struct {
 	return types.NewStruct(dirDescriptor,
-		[]interface{}{path, floatToElv(score)})
+		[]interface{}{path, types.FromGo(score)})
 }
 
 func dirs(ec *Frame) error {

@@ -3,6 +3,8 @@ package eval
 import (
 	"math"
 	"math/rand"
+
+	"github.com/elves/elvish/eval/types"
 )
 
 // Numerical operations.
@@ -73,7 +75,7 @@ func divide(fm *Frame, prod float64, nums ...float64) {
 	for _, f := range nums {
 		prod /= f
 	}
-	out <- floatToElv(prod)
+	out <- types.FromGo(prod)
 }
 
 func randint(low, high int) (int, error) {

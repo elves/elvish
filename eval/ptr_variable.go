@@ -3,6 +3,7 @@ package eval
 import (
 	"reflect"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/eval/vars"
 )
 
@@ -19,10 +20,10 @@ func NewVariableFromPtr(ptr interface{}) vars.Type {
 
 // Get returns the value pointed by the pointer, after conversion using goToElv.
 func (v ptrVariable) Get() interface{} {
-	return goToElv(reflect.Indirect(reflect.ValueOf(v.ptr)).Interface())
+	return types.FromGo(reflect.Indirect(reflect.ValueOf(v.ptr)).Interface())
 }
 
 // Get sets the value pointed by the pointer, after conversion using elvToGo.
 func (v ptrVariable) Set(val interface{}) error {
-	return scanElvToGo(val, v.ptr)
+	return types.ScanToGo(val, v.ptr)
 }

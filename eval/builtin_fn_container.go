@@ -68,7 +68,7 @@ func rangeFn(fm *Frame, opts Options, args ...float64) error {
 
 	out := fm.ports[1].Chan
 	for f := lower; f < upper; f += step {
-		out <- floatToElv(f)
+		out <- types.FromGo(f)
 	}
 	return nil
 }

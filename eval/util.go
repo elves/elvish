@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/elves/elvish/eval/types"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -20,6 +21,12 @@ func maybeThrow(err error) {
 	if err != nil {
 		util.Throw(err)
 	}
+}
+
+// mustScanToGo is like types.ScanToGo, except that errors are turned into
+// exceptions.
+func mustScanToGo(src interface{}, ptr interface{}) {
+	maybeThrow(types.ScanToGo(src, ptr))
 }
 
 func mustGetHome(uname string) string {

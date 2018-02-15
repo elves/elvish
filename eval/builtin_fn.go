@@ -162,7 +162,7 @@ func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface
 		} else {
 			panic("impossible")
 		}
-		converted, err := elvToGo(arg, typ)
+		converted, err := types.ToGo(arg, typ)
 		if err != nil {
 			return fmt.Errorf("wrong type of %d'th argument: %v", i+1, err)
 		}
@@ -198,7 +198,7 @@ func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface
 	}
 
 	for _, out := range outs {
-		f.OutputChan() <- goToElv(out.Interface())
+		f.OutputChan() <- types.FromGo(out.Interface())
 	}
 	return nil
 }

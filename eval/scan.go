@@ -18,7 +18,7 @@ func ScanArgs(src []interface{}, dstPtrs ...interface{}) {
 		throwf("arity mistmatch: want %d arguments, got %d", len(dstPtrs), len(src))
 	}
 	for i, value := range src {
-		mustScanElvToGo(value, dstPtrs[i])
+		mustScanToGo(value, dstPtrs[i])
 	}
 }
 
@@ -38,7 +38,7 @@ func ScanArgsVariadic(src []interface{}, dstPtrs ...interface{}) {
 	}
 	scanned := reflect.MakeSlice(restDst.Elem().Type(), len(rest), len(rest))
 	for i, value := range rest {
-		mustScanElvToGo(value, scanned.Index(i).Addr().Interface())
+		mustScanToGo(value, scanned.Index(i).Addr().Interface())
 	}
 	reflect.Indirect(restDst).Set(scanned)
 }
@@ -85,7 +85,7 @@ func ScanOpts(m map[string]interface{}, opts ...OptToScan) {
 		if !ok {
 			value = opt.Default
 		}
-		mustScanElvToGo(value, a)
+		mustScanToGo(value, a)
 		scanned[opt.Name] = true
 	}
 	for key := range m {
@@ -127,7 +127,7 @@ func ScanOptsToStruct(m map[string]interface{}, structPtr interface{}) {
 		if !ok {
 			throwf("unknown option %s", parse.Quote(k))
 		}
-		mustScanElvToGo(v, struc.Field(fieldIdx).Addr().Interface())
+		mustScanToGo(v, struc.Field(fieldIdx).Addr().Interface())
 	}
 }
 
