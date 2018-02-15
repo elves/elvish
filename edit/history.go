@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 )
 
 // Command history mode.
@@ -48,7 +48,7 @@ func initHist(ed *editor, ns eval.Ns) {
 
 	historyNs := eval.Ns{
 		"binding": eval.NewVariableFromPtr(&hist.binding),
-		"list":    vartypes.NewRo(history.List{&hist.mutex, ed.Daemon()}),
+		"list":    vars.NewRo(history.List{&hist.mutex, ed.Daemon()}),
 	}
 	historyNs.AddBuiltinFns("edit:history:", map[string]interface{}{
 		"start":        hist.start,

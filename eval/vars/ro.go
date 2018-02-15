@@ -1,4 +1,4 @@
-package vartypes
+package vars
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ type ro struct {
 	value interface{}
 }
 
-func NewRo(v interface{}) Variable {
+func NewRo(v interface{}) Type {
 	return ro{v}
 }
 

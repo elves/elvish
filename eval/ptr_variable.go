@@ -3,7 +3,7 @@ package eval
 import (
 	"reflect"
 
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 )
 
 type ptrVariable struct {
@@ -13,7 +13,7 @@ type ptrVariable struct {
 // NewVariableFromPtr creates a variable from a pointer. The variable is kept in
 // sync with the value the pointer points to, using elvToGo and goToElv
 // conversions when Get and Set.
-func NewVariableFromPtr(ptr interface{}) vartypes.Variable {
+func NewVariableFromPtr(ptr interface{}) vars.Type {
 	return ptrVariable{ptr}
 }
 

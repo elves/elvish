@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/xiaq/persistent/hashmap"
 )
 
@@ -46,7 +46,7 @@ func nsFn(m hashmap.Map) Ns {
 		if !ok {
 			throw(errKeyMustBeString)
 		}
-		ns[kstring] = vartypes.NewAny(v)
+		ns[kstring] = vars.NewAnyWithInit(v)
 	}
 	return ns
 }

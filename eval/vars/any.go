@@ -1,4 +1,4 @@
-package vartypes
+package vars
 
 type any struct {
 	ptr *interface{}
@@ -13,8 +13,8 @@ func (v any) Get() interface{} {
 	return *v.ptr
 }
 
-// NewAny creates a variable with an initial value. The variable created can be
-// assigned values of any type.
-func NewAny(v interface{}) Variable {
+// NewAnyWithInit creates a variable with an initial value. The variable created
+// can be assigned values of any type.
+func NewAnyWithInit(v interface{}) Type {
 	return any{&v}
 }

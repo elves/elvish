@@ -7,7 +7,7 @@ import (
 
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 	daemonp "github.com/elves/elvish/program/daemon"
 	"github.com/elves/elvish/util"
 )
@@ -35,7 +35,7 @@ func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
 	}
 
 	return eval.Ns{
-		"pid":  vartypes.NewRoCallback(getPid),
-		"sock": vartypes.NewRo(string(daemon.SockPath())),
+		"pid":  vars.NewRoCallback(getPid),
+		"sock": vars.NewRo(string(daemon.SockPath())),
 	}.AddBuiltinFn("daemon:", "spawn", spawn)
 }

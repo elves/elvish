@@ -4,15 +4,15 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 )
 
 var builtinNs = Ns{
-	"_":     vartypes.NewBlackhole(),
-	"pid":   vartypes.NewRo(strconv.Itoa(syscall.Getpid())),
-	"ok":    vartypes.NewRo(OK),
-	"true":  vartypes.NewRo(true),
-	"false": vartypes.NewRo(false),
+	"_":     vars.NewBlackhole(),
+	"pid":   vars.NewRo(strconv.Itoa(syscall.Getpid())),
+	"ok":    vars.NewRo(OK),
+	"true":  vars.NewRo(true),
+	"false": vars.NewRo(false),
 	"paths": &EnvList{envName: "PATH"},
 	"pwd":   PwdVariable{},
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 )
 
 // This file implements types and functions for interactions with the
@@ -32,7 +32,7 @@ func makeNs(ed *editor) eval.Ns {
 	// of centralized here.
 
 	// Internal states.
-	ns["current-command"] = vartypes.NewCallback(
+	ns["current-command"] = vars.NewCallback(
 		func(v interface{}) error {
 			if !ed.active {
 				return errEditorInactive
@@ -47,7 +47,7 @@ func makeNs(ed *editor) eval.Ns {
 		},
 		func() interface{} { return ed.buffer },
 	)
-	ns["-dot"] = vartypes.NewCallback(
+	ns["-dot"] = vars.NewCallback(
 		func(v interface{}) error {
 			s, ok := v.(string)
 			if !ok {
@@ -75,7 +75,7 @@ func makeNs(ed *editor) eval.Ns {
 		},
 		func() interface{} { return strconv.Itoa(ed.dot) },
 	)
-	ns["selected-file"] = vartypes.NewRoCallback(
+	ns["selected-file"] = vars.NewRoCallback(
 		func() interface{} {
 			if !ed.active {
 				throw(errEditorInactive)
@@ -90,7 +90,7 @@ func makeNs(ed *editor) eval.Ns {
 
 	// Completers.
 	for _, bac := range argCompletersData {
-		ns[bac.name+eval.FnSuffix] = vartypes.NewRo(bac)
+		ns[bac.name+eval.FnSuffix] = vars.NewRo(bac)
 	}
 
 	// Matchers.

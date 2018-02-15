@@ -1,4 +1,4 @@
-package vartypes
+package vars
 
 type callback struct {
 	set func(interface{}) error
@@ -6,7 +6,7 @@ type callback struct {
 }
 
 // NewCallback makes a variable from a set callback and a get callback.
-func NewCallback(set func(interface{}) error, get func() interface{}) Variable {
+func NewCallback(set func(interface{}) error, get func() interface{}) Type {
 	return &callback{set, get}
 }
 
@@ -21,7 +21,7 @@ func (cv *callback) Get() interface{} {
 type roCallback func() interface{}
 
 // NewRoCallback makes a read-only variable from a get callback.
-func NewRoCallback(get func() interface{}) Variable {
+func NewRoCallback(get func() interface{}) Type {
 	return roCallback(get)
 }
 

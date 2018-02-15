@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hashmap"
@@ -260,7 +260,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 	if len(op.saveVarsOps) > 0 {
 		// There is a temporary assignment.
 		// Save variables.
-		var saveVars []vartypes.Variable
+		var saveVars []vars.Type
 		var saveVals []interface{}
 		for _, op := range op.saveVarsOps {
 			moreSaveVars, err := op.Exec(ec)
@@ -272,7 +272,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 		for i, v := range saveVars {
 			// XXX(xiaq): If the variable to save is a elemVariable, save
 			// the outermost variable instead.
-			if u := vartypes.GetHeadOfElement(v); u != nil {
+			if u := vars.GetHeadOfElement(v); u != nil {
 				v = u
 				saveVars[i] = v
 			}
@@ -439,9 +439,9 @@ func (op *assignmentOp) Invoke(ec *Frame) (errRet error) {
 	return nil
 }
 
-func fixNilVariables(vs []vartypes.Variable, perr *error) {
+func fixNilVariables(vs []vars.Type, perr *error) {
 	for _, v := range vs {
-		if vartypes.IsBlackhole(v) {
+		if vars.IsBlackhole(v) {
 			continue
 		}
 		if v.Get() == nil {

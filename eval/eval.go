@@ -14,7 +14,7 @@ import (
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/eval/bundled"
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
@@ -112,7 +112,7 @@ func (ev *Evaler) SetArgs(args []string) {
 	for _, arg := range args {
 		v = v.Cons(arg)
 	}
-	ev.Builtin["args"] = vartypes.NewRo(v)
+	ev.Builtin["args"] = vars.NewRo(v)
 }
 
 // SetLibDir sets the library directory, in which external modules are to be

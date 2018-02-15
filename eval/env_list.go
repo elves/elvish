@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/vector"
 )
@@ -37,7 +37,7 @@ type EnvList struct {
 }
 
 var (
-	_ vartypes.Variable = (*EnvList)(nil)
+	_ vars.Type = (*EnvList)(nil)
 )
 
 // Get returns a Value for an EnvPathList.

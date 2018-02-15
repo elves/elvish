@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 )
 
 // Ns is a map from names to variables.
-type Ns map[string]vartypes.Variable
+type Ns map[string]vars.Type
 
 var _ interface{} = Ns(nil)
 
@@ -55,7 +55,7 @@ func (ns Ns) Clone() Ns {
 }
 
 // Add adds a variable to the namespace and returns the namespace itself.
-func (ns Ns) Add(name string, v vartypes.Variable) Ns {
+func (ns Ns) Add(name string, v vars.Type) Ns {
 	ns[name] = v
 	return ns
 }

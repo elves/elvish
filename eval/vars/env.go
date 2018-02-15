@@ -1,4 +1,4 @@
-package vartypes
+package vars
 
 import (
 	"errors"
@@ -25,6 +25,6 @@ func (ev envVariable) Get() interface{} {
 }
 
 // NewEnv returns an environment variable.
-func NewEnv(name string) Variable {
+func NewEnv(name string) Type {
 	return envVariable{name}
 }

@@ -1,11 +1,11 @@
-package vartypes
+package vars
 
 import (
 	"github.com/elves/elvish/eval/types"
 )
 
 type elem struct {
-	variable Variable
+	variable Type
 	assocers []interface{}
 	indices  []interface{}
 	setValue interface{}
@@ -36,13 +36,13 @@ func (ev *elem) Get() interface{} {
 }
 
 // NewElement returns an ephemeral variable used for assigning variable element.
-func NewElement(v Variable, a []interface{}, i []interface{}) Variable {
+func NewElement(v Type, a []interface{}, i []interface{}) Type {
 	return &elem{v, a, i, ""}
 }
 
 // MakeElement returns a variable, that when set, simulates the mutation of an
 // element.
-func MakeElement(v Variable, indicies []interface{}) (Variable, error) {
+func MakeElement(v Type, indicies []interface{}) (Type, error) {
 	// Assignment of indexed variables actually assignes the variable, with
 	// the right hand being a nested series of Assocs. As the simplest
 	// example, `a[0] = x` is equivalent to `a = (assoc $a 0 x)`. A more
@@ -84,7 +84,7 @@ func (err elemErr) Error() string {
 
 // GetHeadOfElement gets the underlying head variable of an element variable, or
 // nil if the argument is not an element variable.
-func GetHeadOfElement(v Variable) Variable {
+func GetHeadOfElement(v Type) Type {
 	if ev, ok := v.(*elem); ok {
 		return ev.variable
 	}

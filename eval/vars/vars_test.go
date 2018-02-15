@@ -1,4 +1,4 @@
-package vartypes
+package vars
 
 import (
 	"os"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestPtrVariable(t *testing.T) {
-	v := NewAny(true)
+	v := NewAnyWithInit(true)
 	if v.Get() != true {
 		t.Errorf("PtrVariable.Get doesn't return initial value")
 	}

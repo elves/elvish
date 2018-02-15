@@ -24,7 +24,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 )
 
@@ -159,9 +159,9 @@ func (op *delElemOp) Invoke(fm *Frame) error {
 		}
 		indicies = append(indicies, indexValues[0])
 	}
-	err := vartypes.DelElement(fm.ResolveVar(op.ns, op.name), indicies)
+	err := vars.DelElement(fm.ResolveVar(op.ns, op.name), indicies)
 	if err != nil {
-		if level := vartypes.GetElementErrorLevel(err); level >= 0 {
+		if level := vars.GetElementErrorLevel(err); level >= 0 {
 			fm.errorpf(op.begin, op.ends[level], "%s", err.Error())
 		}
 		return err
@@ -194,7 +194,7 @@ func (op fnOp) Invoke(fm *Frame) error {
 	// Initialize the function variable with the builtin nop function. This step
 	// allows the definition of recursive functions; the actual function will
 	// never be called.
-	fm.local[op.varName] = vartypes.NewAny(NewBuiltinFn("<shouldn't be called>", nop))
+	fm.local[op.varName] = vars.NewAnyWithInit(NewBuiltinFn("<shouldn't be called>", nop))
 	values, err := op.lambdaOp.Invoke(fm)
 	if err != nil {
 		return err
@@ -649,7 +649,7 @@ func (op ValuesOp) execlambdaOp(ec *Frame) Callable {
 // execMustOne executes the LValuesOp and raises an exception if it does not
 // evaluate to exactly one Variable. If the given LValuesOp is empty, it returns
 // nil.
-func (op LValuesOp) execMustOne(ec *Frame) vartypes.Variable {
+func (op LValuesOp) execMustOne(ec *Frame) vars.Type {
 	if op.Body == nil {
 		return nil
 	}

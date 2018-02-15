@@ -6,7 +6,7 @@ import (
 	"unsafe"
 
 	"github.com/elves/elvish/eval/types"
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hash"
 )
@@ -75,10 +75,10 @@ func (c *Closure) Call(ec *Frame, args []interface{}, opts map[string]interface{
 	// options.
 	ec.local = make(Ns)
 	for i, name := range c.ArgNames {
-		ec.local[name] = vartypes.NewAny(args[i])
+		ec.local[name] = vars.NewAnyWithInit(args[i])
 	}
 	if c.RestArg != "" {
-		ec.local[c.RestArg] = vartypes.NewAny(types.MakeList(args[len(c.ArgNames):]...))
+		ec.local[c.RestArg] = vars.NewAnyWithInit(types.MakeList(args[len(c.ArgNames):]...))
 	}
 	optUsed := make(map[string]struct{})
 	for i, name := range c.OptNames {
@@ -88,7 +88,7 @@ func (c *Closure) Call(ec *Frame, args []interface{}, opts map[string]interface{
 		} else {
 			v = c.OptDefaults[i]
 		}
-		ec.local[name] = vartypes.NewAny(v)
+		ec.local[name] = vars.NewAnyWithInit(v)
 	}
 	for name := range opts {
 		_, used := optUsed[name]

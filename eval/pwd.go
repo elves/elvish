@@ -3,7 +3,7 @@ package eval
 import (
 	"os"
 
-	"github.com/elves/elvish/eval/vartypes"
+	"github.com/elves/elvish/eval/vars"
 )
 
 // PwdVariable is a variable whose value always reflects the current working
@@ -12,7 +12,7 @@ type PwdVariable struct {
 	store AddDirer
 }
 
-var _ vartypes.Variable = PwdVariable{}
+var _ vars.Type = PwdVariable{}
 
 func (PwdVariable) Get() interface{} {
 	pwd, err := os.Getwd()
