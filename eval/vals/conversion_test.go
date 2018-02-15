@@ -3,6 +3,8 @@ package vals
 import (
 	"reflect"
 	"testing"
+
+	"github.com/elves/elvish/tt"
 )
 
 type someType struct {
@@ -30,4 +32,15 @@ func TestScanToGo(t *testing.T) {
 			t.Errorf("Scan %v %v -> %v, want %v", test.src, test.preScan, dst, test.postScan)
 		}
 	}
+}
+
+var fromGoTests = tt.Table{
+	tt.Args(12).Rets("12"),
+	tt.Args(1.5).Rets("1.5"),
+	tt.Args('x').Rets("x"),
+	tt.Args(someType{"foo"}).Rets(someType{"foo"}),
+}
+
+func TestFromGo(t *testing.T) {
+	tt.Test(t, tt.Fn("FromGo", FromGo), fromGoTests)
 }
