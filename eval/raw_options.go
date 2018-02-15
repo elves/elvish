@@ -1,7 +1,5 @@
 package eval
 
-// This file implements facilities for "scanning" arguments and options.
-
 import (
 	"errors"
 	"reflect"
@@ -10,14 +8,15 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// ScanOptsToStruct scan options from a map like ScanOpts except the destination
-// is a struct whose fields correspond to the options to be parsed. A field
+type RawOptions map[string]interface{}
+
+// Scan takes a pointer to a struct and scan options into it. A field
 // named FieldName corresponds to the option named field-name, unless the field
 // has a explicit "name" tag.
-func ScanOptsToStruct(m map[string]interface{}, structPtr interface{}) {
-	ptrValue := reflect.ValueOf(structPtr)
+func (rawOpts RawOptions) Scan(ptr interface{}) {
+	ptrValue := reflect.ValueOf(ptr)
 	if ptrValue.Kind() != reflect.Ptr || ptrValue.Elem().Kind() != reflect.Struct {
-		throwf("internal bug: need struct ptr for ScanOptsToStruct, got %T", structPtr)
+		throwf("internal bug: need struct ptr to scan options, got %T", ptr)
 	}
 	struc := ptrValue.Elem()
 
@@ -37,7 +36,7 @@ func ScanOptsToStruct(m map[string]interface{}, structPtr interface{}) {
 		fieldIdxForOpt[optName] = i
 	}
 
-	for k, v := range m {
+	for k, v := range rawOpts {
 		fieldIdx, ok := fieldIdxForOpt[k]
 		if !ok {
 			throwf("unknown option %s", parse.Quote(k))

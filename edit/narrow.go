@@ -388,14 +388,14 @@ func (c *narrowItemComplex) FilterText() string {
 	return c.Content()
 }
 
-func (n *narrow) NarrowRead(fm *eval.Frame, opts eval.Options, source, action eval.Callable) {
+func (n *narrow) NarrowRead(fm *eval.Frame, opts eval.RawOptions, source, action eval.Callable) {
 	l := &narrowState{
 		opts: narrowOptions{
 			Bindings: vals.EmptyMap,
 		},
 	}
 
-	opts.ScanToStruct(&l.opts)
+	opts.Scan(&l.opts)
 
 	for it := l.opts.Bindings.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()

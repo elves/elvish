@@ -36,7 +36,7 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-func nop(opts Options, args ...interface{}) {
+func nop(opts RawOptions, args ...interface{}) {
 	// Do nothing
 }
 

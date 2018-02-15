@@ -34,15 +34,15 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	callGood(theFrame, nil, theOptions)
 
 	// Options parameter gets options.
-	f = NewBuiltinFn("f", func(opts Options) {
+	f = NewBuiltinFn("f", func(opts RawOptions) {
 		if opts["foo"] != "bar" {
 			t.Errorf("Options parameter doesn't get options")
 		}
 	})
-	callGood(theFrame, nil, Options{"foo": "bar"})
+	callGood(theFrame, nil, RawOptions{"foo": "bar"})
 
 	// Combination of Frame and Options.
-	f = NewBuiltinFn("f", func(f *Frame, opts Options) {
+	f = NewBuiltinFn("f", func(f *Frame, opts RawOptions) {
 		if f != theFrame {
 			t.Errorf("*Frame parameter doesn't get current frame")
 		}
@@ -50,7 +50,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 			t.Errorf("Options parameter doesn't get options")
 		}
 	})
-	callGood(theFrame, nil, Options{"foo": "bar"})
+	callGood(theFrame, nil, RawOptions{"foo": "bar"})
 
 	// Argument passing.
 	f = NewBuiltinFn("f", func(x, y string) {
@@ -173,7 +173,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	f = NewBuiltinFn("f", func() {
 		t.Errorf("Function called when there are extra options")
 	})
-	callBad(theFrame, nil, Options{"foo": "bar"})
+	callBad(theFrame, nil, RawOptions{"foo": "bar"})
 
 	// Wrong argument type.
 	f = NewBuiltinFn("f", func(x string) {

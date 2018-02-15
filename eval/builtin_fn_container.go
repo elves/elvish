@@ -51,9 +51,9 @@ func nsFn(m hashmap.Map) Ns {
 	return ns
 }
 
-func rangeFn(fm *Frame, rawOpts Options, args ...float64) error {
+func rangeFn(fm *Frame, rawOpts RawOptions, args ...float64) error {
 	opts := struct{ Step float64 }{1}
-	rawOpts.ScanToStruct(&opts)
+	rawOpts.Scan(&opts)
 
 	var lower, upper float64
 

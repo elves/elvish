@@ -19,8 +19,8 @@ import (
 //    frame.
 //
 // 2. If (possibly after a *Frame parameter) the first parameter has type
-//    Options, it gets a map of options. If the function has not declared an
-//    Options parameter but is passed options, an error is thrown.
+//    RawOptions, it gets a map of options. If the function has not declared an
+//    RawOptions parameter but is passed options, an error is thrown.
 //
 // 3. If the last parameter is non-variadic and has type Inputs, it represents
 //    an optional parameter that contains the input to this function. If the
@@ -51,18 +51,13 @@ type BuiltinFn struct {
 var _ Callable = &BuiltinFn{}
 
 type (
-	Options map[string]interface{}
-	Inputs  func(func(interface{}))
+	Inputs func(func(interface{}))
 )
 
-func (opt Options) ScanToStruct(ptr interface{}) {
-	ScanOptsToStruct(map[string]interface{}(opt), ptr)
-}
-
 var (
-	frameType   = reflect.TypeOf((*Frame)(nil))
-	optionsType = reflect.TypeOf(Options(nil))
-	inputsType  = reflect.TypeOf(Inputs(nil))
+	frameType      = reflect.TypeOf((*Frame)(nil))
+	rawOptionsType = reflect.TypeOf(RawOptions(nil))
+	inputsType     = reflect.TypeOf(Inputs(nil))
 )
 
 // NewBuiltinFn creates a new ReflectBuiltinFn instance.
@@ -75,7 +70,7 @@ func NewBuiltinFn(name string, impl interface{}) *BuiltinFn {
 		b.frame = true
 		i++
 	}
-	if i < implType.NumIn() && implType.In(i) == optionsType {
+	if i < implType.NumIn() && implType.In(i) == rawOptionsType {
 		b.options = true
 		i++
 	}

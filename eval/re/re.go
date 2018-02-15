@@ -21,22 +21,22 @@ var fns = map[string]interface{}{
 	"split":   split,
 }
 
-func match(rawOpts eval.Options, argPattern, source string) bool {
+func match(rawOpts eval.RawOptions, argPattern, source string) bool {
 	opts := struct{ Posix bool }{}
-	rawOpts.ScanToStruct(&opts)
+	rawOpts.Scan(&opts)
 
 	pattern := makePattern(argPattern, opts.Posix, false)
 	return pattern.MatchString(source)
 }
 
-func find(fm *eval.Frame, rawOpts eval.Options, argPattern, source string) {
+func find(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) {
 	out := fm.OutputChan()
 	opts := struct {
 		Posix   bool
 		Longest bool
 		Max     int
 	}{Max: -1}
-	rawOpts.ScanToStruct(&opts)
+	rawOpts.Scan(&opts)
 
 	pattern := makePattern(argPattern, opts.Posix, opts.Longest)
 	matches := pattern.FindAllSubmatchIndex([]byte(source), opts.Max)
@@ -58,15 +58,14 @@ func find(fm *eval.Frame, rawOpts eval.Options, argPattern, source string) {
 	}
 }
 
-func replace(fm *eval.Frame, rawOpts eval.Options,
-	argPattern string, argRepl interface{}, source string) string {
+func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl interface{}, source string) string {
 
 	opts := struct {
 		Posix   bool
 		Longest bool
 		Literal bool
 	}{}
-	rawOpts.ScanToStruct(&opts)
+	rawOpts.Scan(&opts)
 
 	pattern := makePattern(argPattern, opts.Posix, opts.Longest)
 
@@ -104,14 +103,14 @@ func replace(fm *eval.Frame, rawOpts eval.Options,
 	}
 }
 
-func split(fm *eval.Frame, rawOpts eval.Options, argPattern, source string) {
+func split(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) {
 	out := fm.OutputChan()
 	opts := struct {
 		Posix   bool
 		Longest bool
 		Max     int
 	}{Max: -1}
-	rawOpts.ScanToStruct(&opts)
+	rawOpts.Scan(&opts)
 
 	pattern := makePattern(argPattern, opts.Posix, opts.Longest)
 

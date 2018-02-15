@@ -49,13 +49,13 @@ func lookupMatcher(m hashmap.Map, name string) (eval.Callable, bool) {
 
 func wrapMatcher(matcher func(s, p string) bool) interface{} {
 	return func(fm *eval.Frame,
-		opts eval.Options, pattern string, inputs eval.Inputs) {
+		opts eval.RawOptions, pattern string, inputs eval.Inputs) {
 
 		var options struct {
 			IgnoreCase bool
 			SmartCase  bool
 		}
-		opts.ScanToStruct(&options)
+		opts.Scan(&options)
 		switch {
 		case options.IgnoreCase && options.SmartCase:
 			throwf("-ignore-case and -smart-case cannot be used together")

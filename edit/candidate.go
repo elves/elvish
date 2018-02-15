@@ -101,13 +101,13 @@ func (c *complexCandidate) cook(q parse.PrimaryType) *candidate {
 }
 
 // makeComplexCandidate composes a complexCandidate.
-func makeComplexCandidate(rawOpts eval.Options, stem string) *complexCandidate {
+func makeComplexCandidate(rawOpts eval.RawOptions, stem string) *complexCandidate {
 	opts := struct {
 		CodeSuffix    string
 		DisplaySuffix string
 		Style         string
 	}{}
-	rawOpts.ScanToStruct(&opts)
+	rawOpts.Scan(&opts)
 
 	return &complexCandidate{
 		stem:          stem,

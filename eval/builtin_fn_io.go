@@ -48,9 +48,9 @@ func put(fm *Frame, args ...interface{}) {
 	}
 }
 
-func print(fm *Frame, rawOpts Options, args ...interface{}) {
+func print(fm *Frame, rawOpts RawOptions, args ...interface{}) {
 	opts := struct{ Sep string }{" "}
-	rawOpts.ScanToStruct(&opts)
+	rawOpts.Scan(&opts)
 
 	out := fm.ports[1].File
 	for i, arg := range args {
@@ -61,7 +61,7 @@ func print(fm *Frame, rawOpts Options, args ...interface{}) {
 	}
 }
 
-func echo(fm *Frame, opts Options, args ...interface{}) {
+func echo(fm *Frame, opts RawOptions, args ...interface{}) {
 	print(fm, opts, args...)
 	fm.ports[1].File.WriteString("\n")
 }
