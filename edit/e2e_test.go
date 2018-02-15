@@ -8,6 +8,7 @@ package edit
 import (
 	"io"
 	"os"
+	"syscall"
 	"testing"
 	"time"
 
@@ -16,14 +17,36 @@ import (
 	"github.com/kr/pty"
 )
 
-var readLineTests = []struct {
-	input string
-	want  string
-}{
-	{"\n", ""},
-	{"test\n", "test"},
-	{"abc\x7fd\n", "abd"},
-	{"abc\x17d\n", "d"},
+// readLineTest contains the data for a test case of ReadLine.
+type readLineTest struct {
+	// The input to write to the master side.
+	input []byte
+	// Places where SIGINT should be sent to the editor, as indicies into the
+	// input string. For example, if sigints is {1}, it means that a SIGINT
+	// should be sent right after the first byte is sent.
+	sigints []int
+	// Expected line to be returned from ReadLine.
+	wantLine string
+}
+
+func newTest(input string, wantLine string) *readLineTest {
+	return &readLineTest{input: []byte(input), wantLine: wantLine}
+}
+
+func (t *readLineTest) sigint(x ...int) *readLineTest {
+	t.sigints = x
+	return t
+}
+
+var readLineTests = []*readLineTest{
+	newTest("\n", ""),
+	newTest("test\n", "test"),
+	// \x7f is DEL and erases the previous character
+	newTest("abc\x7fd\n", "abd"),
+	// \x17 is ^U and erases the line before the cursor
+	newTest("abc\x17d\n", "d"),
+	// SIGINT resets the editor and erases the line. Disabled for now.
+	// newTest("000123\n", "123").sigint(3),
 }
 
 var readLineTimeout = 5 * time.Second
@@ -35,18 +58,17 @@ func TestReadLine(t *testing.T) {
 	for _, test := range readLineTests {
 		// Editor output is only used in failure messages.
 		var outputs []byte
-		master, lineChan, errChan := run(ev, nil, &outputs)
+		sigs := make(chan os.Signal, 10)
+		defer close(sigs)
+		master, lineChan, errChan := run(ev, sigs, &outputs)
 		defer master.Close()
 
-		_, err := master.WriteString(test.input)
-		if err != nil {
-			panic(err)
-		}
+		write(master, sigs, test.input, test.sigints)
 
 		select {
 		case line := <-lineChan:
-			if line != test.want {
-				t.Errorf("ReadLine() => %q, want %q (input %q)", line, test.want, test.input)
+			if line != test.wantLine {
+				t.Errorf("ReadLine() => %q, want %q (input %q)", line, test.wantLine, test.input)
 			}
 		case err := <-errChan:
 			t.Errorf("ReadLine() => error %v (input %q)", err, test.input)
@@ -106,5 +128,30 @@ func drain(r io.Reader, ptrOutputs *[]byte) {
 		if ptrOutputs != nil {
 			*ptrOutputs = append(*ptrOutputs, buf[:nr]...)
 		}
+	}
+}
+
+// write interprets the input and sigints arguments, and write inputs and
+// signals to the writer and signal channel.
+func write(w *os.File, sigs chan<- os.Signal, input []byte, sigints []int) {
+	if len(sigints) == 0 {
+		mustWrite(w, input)
+		return
+	}
+	for i, idx := range sigints {
+		lastidx := 0
+		if i > 0 {
+			lastidx = sigints[i-1]
+		}
+		mustWrite(w, input[lastidx:idx])
+		sigs <- syscall.SIGINT
+	}
+	mustWrite(w, input[sigints[len(sigints)-1]:])
+}
+
+func mustWrite(w io.Writer, p []byte) {
+	_, err := w.Write(p)
+	if err != nil {
+		panic(err)
 	}
 }
