@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 )
 
 // Input and output.
@@ -58,7 +58,7 @@ func print(fm *Frame, opts Options, args ...interface{}) {
 		if i > 0 {
 			out.WriteString(sep)
 		}
-		out.WriteString(types.ToString(arg))
+		out.WriteString(vals.ToString(arg))
 	}
 }
 
@@ -70,7 +70,7 @@ func echo(fm *Frame, opts Options, args ...interface{}) {
 func pprint(fm *Frame, args ...interface{}) {
 	out := fm.ports[1].File
 	for _, arg := range args {
-		out.WriteString(types.Repr(arg, 0))
+		out.WriteString(vals.Repr(arg, 0))
 		out.WriteString("\n")
 	}
 }
@@ -81,7 +81,7 @@ func repr(fm *Frame, args ...interface{}) {
 		if i > 0 {
 			out.WriteString(" ")
 		}
-		out.WriteString(types.Repr(arg, types.NoPretty))
+		out.WriteString(vals.Repr(arg, vals.NoPretty))
 	}
 	out.WriteString("\n")
 }
@@ -119,7 +119,7 @@ func toLines(fm *Frame, inputs Inputs) {
 	out := fm.ports[1].File
 
 	inputs(func(v interface{}) {
-		fmt.Fprintln(out, types.ToString(v))
+		fmt.Fprintln(out, vals.ToString(v))
 	})
 }
 
@@ -134,25 +134,25 @@ func toJSON(fm *Frame, inputs Inputs) {
 	})
 }
 
-func fopen(fm *Frame, name string) (types.File, error) {
+func fopen(fm *Frame, name string) (vals.File, error) {
 	// TODO support opening files for writing etc as well.
 	f, err := os.Open(name)
-	return types.File{f}, err
+	return vals.File{f}, err
 }
 
-func fclose(f types.File) error {
+func fclose(f vals.File) error {
 	return f.Inner.Close()
 }
 
-func pipe() (types.Pipe, error) {
+func pipe() (vals.Pipe, error) {
 	r, w, err := os.Pipe()
-	return types.Pipe{r, w}, err
+	return vals.Pipe{r, w}, err
 }
 
-func prclose(p types.Pipe) error {
+func prclose(p vals.Pipe) error {
 	return p.ReadEnd.Close()
 }
 
-func pwclose(p types.Pipe) error {
+func pwclose(p vals.Pipe) error {
 	return p.WriteEnd.Close()
 }

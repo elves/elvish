@@ -13,7 +13,7 @@ import (
 
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/eval/bundled"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
@@ -36,7 +36,7 @@ const (
 
 const (
 	defaultValueOutIndicator = "▶ "
-	initIndent               = types.NoPretty
+	initIndent               = vals.NoPretty
 )
 
 // Evaler is used to evaluate elvish sources. It maintains runtime context

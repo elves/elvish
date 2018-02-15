@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/vector"
@@ -64,7 +64,7 @@ func (envli *EnvList) Set(v interface{}) error {
 		paths      []string
 		errElement error
 	)
-	errIterate := types.Iterate(v, func(v interface{}) bool {
+	errIterate := vals.Iterate(v, func(v interface{}) bool {
 		s, ok := v.(string)
 		if !ok {
 			errElement = ErrPathMustBeString

@@ -18,7 +18,7 @@ import (
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
@@ -132,7 +132,7 @@ func NewEditor(in *os.File, out *os.File, sigs <-chan os.Signal, ev *eval.Evaler
 	// Forward reads from notifyChan to notification.
 	go func() {
 		for v := range notifyChan {
-			ed.Notify("[value out] %s", types.Repr(v, types.NoPretty))
+			ed.Notify("[value out] %s", vals.Repr(v, vals.NoPretty))
 		}
 	}()
 

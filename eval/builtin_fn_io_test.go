@@ -3,7 +3,7 @@ package eval
 import (
 	"testing"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 )
 
 func TestBuiltinFnIO(t *testing.T) {
@@ -20,9 +20,9 @@ func TestBuiltinFnIO(t *testing.T) {
 		{`print "a\nb\n" | from-lines`, want{out: strs("a", "b")}},
 		{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`,
 			want{out: []interface{}{
-				types.MakeMap(map[interface{}]interface{}{
+				vals.MakeMap(map[interface{}]interface{}{
 					"k": "v",
-					"a": types.MakeList(strs("1", "2")...)}),
+					"a": vals.MakeList(strs("1", "2")...)}),
 				"foo",
 			}}},
 		{`echo 'invalid' | from-json`, want{err: errAny}},

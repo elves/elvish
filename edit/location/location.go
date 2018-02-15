@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
@@ -41,8 +41,8 @@ type state struct {
 func Init(ed eddefs.Editor, ns eval.Ns) {
 	cfg := &config{
 		binding: eddefs.EmptyBindingMap,
-		hidden:  types.EmptyList,
-		pinned:  types.EmptyList,
+		hidden:  vals.EmptyList,
+		pinned:  vals.EmptyList,
 	}
 
 	subns := eval.Ns{

@@ -12,7 +12,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 )
 
@@ -51,7 +51,7 @@ func strs(ss ...string) []interface{} {
 func bools(bs ...bool) []interface{} {
 	vs := make([]interface{}, len(bs))
 	for i, b := range bs {
-		vs[i] = types.Bool(b)
+		vs[i] = vals.Bool(b)
 	}
 	return vs
 }
@@ -213,7 +213,7 @@ func matchOut(want, got []interface{}) bool {
 		return false
 	}
 	for i := range got {
-		if !types.Equal(got[i], want[i]) {
+		if !vals.Equal(got[i], want[i]) {
 			return false
 		}
 	}
@@ -234,7 +234,7 @@ func compareSlice(wantValues, gotValues []interface{}) error {
 			len(wantValues), len(gotValues))
 	}
 	for i, want := range wantValues {
-		if !types.Equal(want, gotValues[i]) {
+		if !vals.Equal(want, gotValues[i]) {
 			return fmt.Errorf("want [%d] = %s, got %s", i, want, gotValues[i])
 		}
 	}

@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -27,7 +27,7 @@ var (
 
 func init() {
 	atEditorInit(func(ed *editor, ns eval.Ns) {
-		ed.matcher = types.MakeMapFromKV("", matchPrefix)
+		ed.matcher = vals.MakeMapFromKV("", matchPrefix)
 		ns["-matcher"] = eval.NewVariableFromPtr(&ed.matcher)
 	})
 }
@@ -81,7 +81,7 @@ func wrapMatcher(matcher func(s, p string) bool) interface{} {
 			if !ok {
 				throw(errMatcherInputMustBeString)
 			}
-			out <- types.Bool(matcher(s, pattern))
+			out <- vals.Bool(matcher(s, pattern))
 		})
 	}
 }

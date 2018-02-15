@@ -5,7 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/getopt"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hashmap"
@@ -20,19 +20,19 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 	)
 	desc := make(map[*getopt.Option]string)
 	// Convert arguments.
-	err := types.Iterate(elemsv, func(v interface{}) bool {
+	err := vals.Iterate(elemsv, func(v interface{}) bool {
 		elem, ok := v.(string)
 		if !ok {
-			throwf("arg should be string, got %s", types.Kind(v))
+			throwf("arg should be string, got %s", vals.Kind(v))
 		}
 		elems = append(elems, elem)
 		return true
 	})
 	maybeThrow(err)
-	err = types.Iterate(optsv, func(v interface{}) bool {
+	err = vals.Iterate(optsv, func(v interface{}) bool {
 		m, ok := v.(hashmap.Map)
 		if !ok {
-			throwf("opt should be map, got %s", types.Kind(v))
+			throwf("opt should be map, got %s", vals.Kind(v))
 		}
 		get := func(k string) (string, bool) {
 			v, ok := m.Get(k)
@@ -42,7 +42,7 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 			if vs, ok := v.(string); ok {
 				return vs, true
 			}
-			throwf("%s should be string, got %s", k, types.Kind(v))
+			throwf("%s should be string, got %s", k, vals.Kind(v))
 			panic("unreachable")
 		}
 
@@ -67,7 +67,7 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 		return true
 	})
 	maybeThrow(err)
-	err = types.Iterate(argsv, func(v interface{}) bool {
+	err = vals.Iterate(argsv, func(v interface{}) bool {
 		sv, ok := v.(string)
 		if ok {
 			if sv == "..." {
@@ -78,7 +78,7 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 		}
 		arg, ok := v.(eval.Callable)
 		if !ok {
-			throwf("argument handler should be fn, got %s", types.Kind(v))
+			throwf("argument handler should be fn, got %s", vals.Kind(v))
 		}
 		args = append(args, arg)
 		return true

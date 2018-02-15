@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 )
 
 // Unwrappers are helper types for "unwrapping" values, the process for
@@ -64,7 +64,7 @@ func (u ValueUnwrapper) Any() interface{} {
 func (u ValueUnwrapper) String() string {
 	s, ok := u.values[0].(string)
 	if !ok {
-		u.error("string", "%s", types.Kind(u.values[0]))
+		u.error("string", "%s", vals.Kind(u.values[0]))
 	}
 	return s
 }
@@ -97,7 +97,7 @@ func (u ValueUnwrapper) FdOrClose() int {
 func (u ValueUnwrapper) Callable() Callable {
 	c, ok := u.values[0].(Callable)
 	if !ok {
-		u.error("callable", "%s", types.Kind(u.values[0]))
+		u.error("callable", "%s", vals.Kind(u.values[0]))
 	}
 	return c
 }

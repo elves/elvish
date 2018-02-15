@@ -1,12 +1,12 @@
 package eval
 
-import "github.com/elves/elvish/eval/types"
+import "github.com/elves/elvish/eval/vals"
 
 // Basic predicate commands.
 
 func init() {
 	addBuiltinFns(map[string]interface{}{
-		"bool":   types.Bool,
+		"bool":   vals.Bool,
 		"not":    not,
 		"is":     is,
 		"eq":     eq,
@@ -15,7 +15,7 @@ func init() {
 }
 
 func not(v interface{}) bool {
-	return !types.Bool(v)
+	return !vals.Bool(v)
 }
 
 func is(args ...interface{}) bool {
@@ -29,7 +29,7 @@ func is(args ...interface{}) bool {
 
 func eq(args ...interface{}) bool {
 	for i := 0; i+1 < len(args); i++ {
-		if !types.Equal(args[i], args[i+1]) {
+		if !vals.Equal(args[i], args[i+1]) {
 			return false
 		}
 	}
@@ -38,7 +38,7 @@ func eq(args ...interface{}) bool {
 
 func notEq(args ...interface{}) bool {
 	for i := 0; i+1 < len(args); i++ {
-		if types.Equal(args[i], args[i+1]) {
+		if vals.Equal(args[i], args[i+1]) {
 			return false
 		}
 	}

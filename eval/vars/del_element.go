@@ -1,6 +1,6 @@
 package vars
 
-import "github.com/elves/elvish/eval/types"
+import "github.com/elves/elvish/eval/vals"
 
 // DelElement deletes an element. It uses a similar process to MakeElement,
 // except that the last level of container needs to be Dissoc-able instead of
@@ -18,19 +18,19 @@ func DelElement(variable Type, indicies []interface{}) error {
 		assocers[i] = container
 
 		var err error
-		container, err = types.Index(container, index)
+		container, err = vals.Index(container, index)
 		if err != nil {
 			return err
 		}
 	}
 
-	v := types.Dissoc(container, indicies[len(indicies)-1])
+	v := vals.Dissoc(container, indicies[len(indicies)-1])
 	if v == nil {
 		return elemErr{len(indicies), "value does not support element removal"}
 	}
 
 	for i := len(assocers) - 1; i >= 0; i-- {
-		v, err = types.Assoc(assocers[i], indicies[i], v)
+		v, err = vals.Assoc(assocers[i], indicies[i], v)
 		if err != nil {
 			return err
 		}

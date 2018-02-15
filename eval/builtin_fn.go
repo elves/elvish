@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"unsafe"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -162,7 +162,7 @@ func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface
 		} else {
 			panic("impossible")
 		}
-		converted, err := types.ToGo(arg, typ)
+		converted, err := vals.ToGo(arg, typ)
 		if err != nil {
 			return fmt.Errorf("wrong type of %d'th argument: %v", i+1, err)
 		}
@@ -177,7 +177,7 @@ func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface
 			// Wrap an iterable argument in Inputs.
 			iterable := args[len(args)-1]
 			inputs = Inputs(func(f func(interface{})) {
-				err := types.Iterate(iterable, func(v interface{}) bool {
+				err := vals.Iterate(iterable, func(v interface{}) bool {
 					f(v)
 					return true
 				})
@@ -198,7 +198,7 @@ func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface
 	}
 
 	for _, out := range outs {
-		f.OutputChan() <- types.FromGo(out.Interface())
+		f.OutputChan() <- vals.FromGo(out.Interface())
 	}
 	return nil
 }

@@ -5,7 +5,7 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 )
 
@@ -27,7 +27,7 @@ func TestFindIndexComplContext(t *testing.T) {
 }
 
 func TestComplIndexInner(t *testing.T) {
-	m := types.MakeMap(map[interface{}]interface{}{
+	m := vals.MakeMap(map[interface{}]interface{}{
 		"foo":   "bar",
 		"lorem": "ipsum",
 	})

@@ -1,4 +1,4 @@
-package types
+package vals
 
 // Stringer wraps the String method.
 type Stringer interface {

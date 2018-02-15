@@ -1,7 +1,7 @@
 package vars
 
 import (
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 )
 
 type elem struct {
@@ -17,7 +17,7 @@ func (ev *elem) Set(v0 interface{}) error {
 	// Evaluate the actual new value from inside out. See comments in
 	// MakeElement for how element assignment works.
 	for i := len(ev.assocers) - 1; i >= 0; i-- {
-		v, err = types.Assoc(ev.assocers[i], ev.indices[i], v)
+		v, err = vals.Assoc(ev.assocers[i], ev.indices[i], v)
 		if err != nil {
 			return err
 		}
@@ -64,7 +64,7 @@ func MakeElement(v Type, indicies []interface{}) (Type, error) {
 	assocers[0] = varValue
 	for i, index := range indicies[:len(indicies)-1] {
 		lastAssocer := assocers[i]
-		v, err := types.Index(lastAssocer, index)
+		v, err := vals.Index(lastAssocer, index)
 		if err != nil {
 			return nil, err
 		}

@@ -6,7 +6,7 @@ import (
 	"errors"
 	"reflect"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -56,7 +56,7 @@ func ScanArgsOptionalInput(ec *Frame, src []interface{}, dstArgs ...interface{})
 		ScanArgs(src[:len(dstArgs)], dstArgs...)
 		value := src[len(dstArgs)]
 		return func(f func(interface{})) {
-			err := types.Iterate(value, func(v interface{}) bool {
+			err := vals.Iterate(value, func(v interface{}) bool {
 				f(v)
 				return true
 			})

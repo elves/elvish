@@ -2,13 +2,13 @@ package edit
 
 import (
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/xiaq/persistent/hashmap"
 )
 
 func init() {
 	atEditorInit(func(ed *editor, ns eval.Ns) {
-		ed.abbr = types.EmptyMap
+		ed.abbr = vals.EmptyMap
 		ns["abbr"] = eval.NewVariableFromPtr(&ed.abbr)
 	})
 }

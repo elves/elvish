@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -68,7 +68,7 @@ func rangeFn(fm *Frame, opts Options, args ...float64) error {
 
 	out := fm.ports[1].Chan
 	for f := lower; f < upper; f += step {
-		out <- types.FromGo(f)
+		out <- vals.FromGo(f)
 	}
 	return nil
 }
@@ -83,7 +83,7 @@ func repeat(ec *Frame, n int, v interface{}) {
 // explode puts each element of the argument.
 func explode(ec *Frame, v interface{}) {
 	out := ec.ports[1].Chan
-	err := types.Iterate(v, func(e interface{}) bool {
+	err := vals.Iterate(v, func(e interface{}) bool {
 		out <- e
 		return true
 	})
@@ -91,13 +91,13 @@ func explode(ec *Frame, v interface{}) {
 }
 
 func assoc(a, k, v interface{}) (interface{}, error) {
-	return types.Assoc(a, k, v)
+	return vals.Assoc(a, k, v)
 }
 
 var errCannotDissoc = errors.New("cannot dissoc")
 
 func dissoc(a, k interface{}) (interface{}, error) {
-	a2 := types.Dissoc(a, k)
+	a2 := vals.Dissoc(a, k)
 	if a2 == nil {
 		return nil, errCannotDissoc
 	}
@@ -147,14 +147,14 @@ func hasValue(container, value interface{}) (bool, error) {
 	case hashmap.Map:
 		for it := container.Iterator(); it.HasElem(); it.Next() {
 			_, v := it.Elem()
-			if types.Equal(v, value) {
+			if vals.Equal(v, value) {
 				return true, nil
 			}
 		}
 		return false, nil
 	default:
 		var found bool
-		err := types.Iterate(container, func(v interface{}) bool {
+		err := vals.Iterate(container, func(v interface{}) bool {
 			found = (v == value)
 			return !found
 		})
@@ -167,12 +167,12 @@ func hasKey(container, key interface{}) (bool, error) {
 	case hashmap.Map:
 		return hashmap.HasKey(container, key), nil
 	default:
-		if len := types.Len(container); len >= 0 {
+		if len := vals.Len(container); len >= 0 {
 			// XXX(xiaq): Not all types that implement Lener have numerical indices
-			_, err := types.ConvertListIndex(key, len)
+			_, err := vals.ConvertListIndex(key, len)
 			return err == nil, nil
 		}
-		return false, fmt.Errorf("couldn't get key or index of type '%s'", types.Kind(container))
+		return false, fmt.Errorf("couldn't get key or index of type '%s'", vals.Kind(container))
 	}
 }
 
@@ -187,15 +187,15 @@ func count(fm *Frame, args ...interface{}) int {
 	case 1:
 		// Get length of argument.
 		v := args[0]
-		if len := types.Len(v); len >= 0 {
+		if len := vals.Len(v); len >= 0 {
 			n = len
 		} else {
-			err := types.Iterate(v, func(interface{}) bool {
+			err := vals.Iterate(v, func(interface{}) bool {
 				n++
 				return true
 			})
 			if err != nil {
-				throw(fmt.Errorf("cannot get length of a %s", types.Kind(v)))
+				throw(fmt.Errorf("cannot get length of a %s", vals.Kind(v)))
 			}
 		}
 	default:

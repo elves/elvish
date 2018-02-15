@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/sys"
 )
 
@@ -19,7 +19,7 @@ func execFn(fm *Frame, args ...interface{}) error {
 	} else {
 		argstrings = make([]string, len(args))
 		for i, a := range args {
-			argstrings[i] = types.ToString(a)
+			argstrings[i] = vals.ToString(a)
 		}
 	}
 

@@ -1,4 +1,4 @@
-package types
+package vals
 
 // Booler wraps the Bool method.
 type Booler interface {

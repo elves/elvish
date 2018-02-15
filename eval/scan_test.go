@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/util"
 )
 
@@ -201,7 +201,7 @@ var scanArgTestCases = []struct {
 func TestScanArg(t *testing.T) {
 	for _, tc := range scanArgTestCases {
 		mustScanToGo(tc.source, tc.destPtr)
-		if !types.Equal(indirect(tc.destPtr), tc.want) {
+		if !vals.Equal(indirect(tc.destPtr), tc.want) {
 			t.Errorf("scanArg(%s) got %q, want %v", tc.source,
 				indirect(tc.destPtr), tc.want)
 		}

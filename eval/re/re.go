@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/vector"
 )
@@ -80,7 +80,7 @@ func replace(fm *eval.Frame, opts eval.Options,
 		repl, ok := argRepl.(string)
 		if !ok {
 			throwf("replacement must be string when literal is set, got %s",
-				types.Kind(argRepl))
+				vals.Kind(argRepl))
 		}
 		return pattern.ReplaceAllLiteralString(source, repl)
 	} else {
@@ -97,14 +97,14 @@ func replace(fm *eval.Frame, opts eval.Options,
 				output, ok := values[0].(string)
 				if !ok {
 					throwf("replacement function must output one string, got %s",
-						types.Kind(values[0]))
+						vals.Kind(values[0]))
 				}
 				return output
 			}
 			return pattern.ReplaceAllStringFunc(source, replFunc)
 		default:
 			throwf("replacement must be string or function, got %s",
-				types.Kind(argRepl))
+				vals.Kind(argRepl))
 			panic("unreachable")
 		}
 	}

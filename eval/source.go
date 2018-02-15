@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hash"
 )
@@ -45,7 +45,7 @@ func (src *Source) describePath() string {
 }
 
 var (
-	_ types.Getter = (*Source)(nil)
+	_ vals.Getter = (*Source)(nil)
 )
 
 func (src *Source) Kind() string {

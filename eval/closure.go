@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hash"
@@ -78,7 +78,7 @@ func (c *Closure) Call(ec *Frame, args []interface{}, opts map[string]interface{
 		ec.local[name] = vars.NewAnyWithInit(args[i])
 	}
 	if c.RestArg != "" {
-		ec.local[c.RestArg] = vars.NewAnyWithInit(types.MakeList(args[len(c.ArgNames):]...))
+		ec.local[c.RestArg] = vars.NewAnyWithInit(vals.MakeList(args[len(c.ArgNames):]...))
 	}
 	optUsed := make(map[string]struct{})
 	for i, name := range c.OptNames {

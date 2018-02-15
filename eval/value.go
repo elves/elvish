@@ -3,7 +3,7 @@ package eval
 import (
 	"fmt"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 )
 
 // Callable wraps the Call method.
@@ -37,9 +37,9 @@ func FromJSONInterface(v interface{}) interface{} {
 		for i, v := range v {
 			vs[i] = FromJSONInterface(v)
 		}
-		return types.MakeList(vs...)
+		return vals.MakeList(vs...)
 	case map[string]interface{}:
-		m := types.EmptyMap
+		m := vals.EmptyMap
 		for key, val := range v {
 			m = m.Assoc(key, FromJSONInterface(val))
 		}

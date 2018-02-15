@@ -4,7 +4,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 )
 
 const (
@@ -39,7 +39,7 @@ func newEvalerPorts(stdin, stdout, stderr *os.File, prefix *string) evalerPorts 
 func relayChanToFile(ch <-chan interface{}, file *os.File, prefix *string, w *sync.WaitGroup) {
 	for v := range ch {
 		file.WriteString(*prefix)
-		file.WriteString(types.Repr(v, initIndent))
+		file.WriteString(vals.Repr(v, initIndent))
 		file.WriteString("\n")
 	}
 	w.Done()

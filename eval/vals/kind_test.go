@@ -1,4 +1,4 @@
-package types
+package vals
 
 import (
 	"os"
@@ -15,7 +15,7 @@ func TestKind(t *testing.T) {
 		Args("").Rets("string"),
 		Args(EmptyList).Rets("list"),
 		Args(EmptyMap).Rets("map"),
-		Args(xtype(0)).Rets("!!types.xtype"),
+		Args(xtype(0)).Rets("!!vals.xtype"),
 
 		Args(NewStruct(NewStructDescriptor(), nil)).Rets("map"),
 		Args(NewFile(os.Stdin)).Rets("file"),

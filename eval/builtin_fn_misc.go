@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 )
 
 // Builtins that have not been put into their own groups go here.
@@ -43,7 +43,7 @@ func nop(opts Options, args ...interface{}) {
 func kindOf(fm *Frame, args ...interface{}) {
 	out := fm.ports[1].Chan
 	for _, a := range args {
-		out <- types.Kind(a)
+		out <- vals.Kind(a)
 	}
 }
 

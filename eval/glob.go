@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
 )
@@ -32,7 +32,7 @@ func (f GlobFlag) Has(g GlobFlag) bool {
 
 var (
 	_ interface{}   = GlobPattern{}
-	_ types.Indexer = GlobPattern{}
+	_ vals.Indexer = GlobPattern{}
 )
 
 var (
@@ -119,7 +119,7 @@ func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
 				return nil, badRangeExpr
 			}
 		} else {
-			return nil, fmt.Errorf("unknown modifier %s", types.Repr(modifierv, types.NoPretty))
+			return nil, fmt.Errorf("unknown modifier %s", vals.Repr(modifierv, vals.NoPretty))
 		}
 	}
 	return gp, nil

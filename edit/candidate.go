@@ -7,7 +7,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hash"
 )
@@ -35,7 +35,7 @@ type plainCandidate string
 func (plainCandidate) Kind() string               { return "string" }
 func (p plainCandidate) Equal(a interface{}) bool { return p == a }
 func (p plainCandidate) Hash() uint32             { return hash.String(string(p)) }
-func (p plainCandidate) Repr(l int) string        { return types.Repr(string(p), l) }
+func (p plainCandidate) Repr(l int) string        { return vals.Repr(string(p), l) }
 func (p plainCandidate) text() string             { return string(p) }
 
 func (p plainCandidate) cook(q parse.PrimaryType) *candidate {
@@ -50,7 +50,7 @@ type noQuoteCandidate string
 func (noQuoteCandidate) Kind() string                { return "string" }
 func (nq noQuoteCandidate) Equal(a interface{}) bool { return nq == a }
 func (nq noQuoteCandidate) Hash() uint32             { return hash.String(string(nq)) }
-func (nq noQuoteCandidate) Repr(l int) string        { return types.Repr(string(nq), l) }
+func (nq noQuoteCandidate) Repr(l int) string        { return vals.Repr(string(nq), l) }
 func (nq noQuoteCandidate) text() string             { return string(nq) }
 
 func (nq noQuoteCandidate) cook(parse.PrimaryType) *candidate {
@@ -149,7 +149,7 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.Callable, seed string, ch
 
 	var filtered []rawCandidate
 	for i, value := range values {
-		if types.Bool(value) {
+		if vals.Bool(value) {
 			filtered = append(filtered, collected[i])
 		}
 	}

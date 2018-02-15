@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/glob"
 )
 
@@ -25,16 +25,16 @@ var reprTests = []struct {
 		PipelineError{[]*Exception{{nil, nil}, {errors.New("lorem"), nil}}}, nil},
 		"?(multi-error $ok ?(fail lorem))"},
 	{&Exception{Return, nil}, "?(return)"},
-	{types.EmptyList, "[]"},
-	{types.MakeList("bash", false), "[bash $false]"},
-	{types.MakeMap(map[interface{}]interface{}{}), "[&]"},
-	{types.MakeMap(map[interface{}]interface{}{&Exception{nil, nil}: "elvish"}), "[&$ok=elvish]"},
+	{vals.EmptyList, "[]"},
+	{vals.MakeList("bash", false), "[bash $false]"},
+	{vals.MakeMap(map[interface{}]interface{}{}), "[&]"},
+	{vals.MakeMap(map[interface{}]interface{}{&Exception{nil, nil}: "elvish"}), "[&$ok=elvish]"},
 	// TODO: test maps of more elements
 }
 
 func TestRepr(t *testing.T) {
 	for _, test := range reprTests {
-		repr := types.Repr(test.v, types.NoPretty)
+		repr := vals.Repr(test.v, vals.NoPretty)
 		if repr != test.want {
 			t.Errorf("Repr = %s, want %s", repr, test.want)
 		}

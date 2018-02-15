@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
 )
@@ -52,11 +52,11 @@ func cdInner(dir string, fm *Frame) {
 	maybeThrow(Chdir(dir, fm.DaemonClient))
 }
 
-var dirDescriptor = types.NewStructDescriptor("path", "score")
+var dirDescriptor = vals.NewStructDescriptor("path", "score")
 
-func newDirStruct(path string, score float64) *types.Struct {
-	return types.NewStruct(dirDescriptor,
-		[]interface{}{path, types.FromGo(score)})
+func newDirStruct(path string, score float64) *vals.Struct {
+	return vals.NewStruct(dirDescriptor,
+		[]interface{}{path, vals.FromGo(score)})
 }
 
 func dirs(ec *Frame) error {

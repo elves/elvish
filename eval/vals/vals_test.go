@@ -1,4 +1,4 @@
-package types
+package vals
 
 import "github.com/elves/elvish/tt"
 

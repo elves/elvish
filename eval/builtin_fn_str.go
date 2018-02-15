@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/util"
 )
 
@@ -47,7 +47,7 @@ func init() {
 func toString(fm *Frame, args ...interface{}) {
 	out := fm.OutputChan()
 	for _, a := range args {
-		out <- types.ToString(a)
+		out <- vals.ToString(a)
 	}
 }
 
@@ -61,7 +61,7 @@ func joins(sep string, inputs Inputs) string {
 			}
 			buf.WriteString(s)
 		} else {
-			throwf("join wants string input, got %s", types.Kind(v))
+			throwf("join wants string input, got %s", vals.Kind(v))
 		}
 	})
 	return buf.String()

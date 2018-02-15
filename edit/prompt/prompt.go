@@ -11,7 +11,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/util"
 )
 
@@ -106,7 +106,7 @@ func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
 			if s, ok := v.(*ui.Styled); ok {
 				add(s)
 			} else {
-				add(&ui.Styled{types.ToString(v), ui.Styles{}})
+				add(&ui.Styled{vals.ToString(v), ui.Styles{}})
 			}
 		}
 	}

@@ -6,12 +6,12 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 )
 
 func TestBuiltinPid(t *testing.T) {
 	pid := strconv.Itoa(syscall.Getpid())
-	builtinPid := types.ToString(builtinNs["pid"].Get())
+	builtinPid := vals.ToString(builtinNs["pid"].Get())
 	if builtinPid != pid {
 		t.Errorf(`ev.builtin["pid"] = %v, want %v`, builtinPid, pid)
 	}

@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
@@ -65,7 +65,7 @@ func (e ExternalCmd) Call(ec *Frame, argVals []interface{}, opts map[string]inte
 	for i, a := range argVals {
 		// NOTE Maybe we should enfore string arguments instead of coercing all
 		// args into string
-		args[i+1] = types.ToString(a)
+		args[i+1] = vals.ToString(a)
 	}
 
 	path, err := exec.LookPath(e.Name)

@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse/parseutil"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -390,7 +390,7 @@ func (c *narrowItemComplex) FilterText() string {
 func (n *narrow) NarrowRead(fm *eval.Frame, opts eval.Options, source, action eval.Callable) {
 	l := &narrowState{
 		opts: narrowOptions{
-			Bindings: types.EmptyMap,
+			Bindings: vals.EmptyMap,
 		},
 	}
 

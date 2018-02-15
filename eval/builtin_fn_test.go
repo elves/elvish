@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 )
 
 func TestReflectBuiltinFnCall(t *testing.T) {
@@ -92,7 +92,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 			t.Errorf("Inputs parameter didn't get supplied inputs")
 		}
 	})
-	callGood(theFrame, []interface{}{types.MakeList("foo", "bar")}, theOptions)
+	callGood(theFrame, []interface{}{vals.MakeList("foo", "bar")}, theOptions)
 
 	// Conversion of implicit inputs.
 	inFrame := &Frame{ports: make([]*Port, 3)}
@@ -110,7 +110,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 			t.Errorf("Inputs parameter didn't get implicit inputs")
 		}
 	})
-	callGood(inFrame, []interface{}{types.MakeList("foo", "bar")}, theOptions)
+	callGood(inFrame, []interface{}{vals.MakeList("foo", "bar")}, theOptions)
 
 	// Outputting of return values.
 	outFrame := &Frame{ports: make([]*Port, 3)}

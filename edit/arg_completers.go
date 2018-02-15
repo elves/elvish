@@ -9,7 +9,7 @@ import (
 	"unsafe"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -85,7 +85,7 @@ var (
 
 func init() {
 	atEditorInit(func(ed *editor, ns eval.Ns) {
-		m := types.EmptyMap
+		m := vals.EmptyMap
 		for k, v := range argCompletersData {
 			m = m.Assoc(k, v)
 		}

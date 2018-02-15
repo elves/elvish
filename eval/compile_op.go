@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
@@ -347,7 +347,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 		if ks, ok := k.(string); ok {
 			convertedOpts[ks] = v
 		} else {
-			return fmt.Errorf("Option key must be string, got %s", types.Kind(k))
+			return fmt.Errorf("Option key must be string, got %s", vals.Kind(k))
 		}
 	}
 
@@ -362,7 +362,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 
 func allTrue(vs []interface{}) bool {
 	for _, v := range vs {
-		if !types.Bool(v) {
+		if !vals.Bool(v) {
 			return false
 		}
 	}
@@ -431,7 +431,7 @@ func (op *assignmentOp) Invoke(ec *Frame) (errRet error) {
 	}
 
 	if len(rest) == 1 {
-		err := rest[0].Set(types.MakeList(values[len(variables):]...))
+		err := rest[0].Set(vals.MakeList(values[len(variables):]...))
 		if err != nil {
 			return err
 		}
@@ -521,18 +521,18 @@ func (op *redirOp) Invoke(ec *Frame) error {
 		case string:
 			f, err := os.OpenFile(src, op.flag, defaultFileRedirPerm)
 			if err != nil {
-				return fmt.Errorf("failed to open file %s: %s", types.Repr(src, types.NoPretty), err)
+				return fmt.Errorf("failed to open file %s: %s", vals.Repr(src, vals.NoPretty), err)
 			}
 			ec.ports[dst] = &Port{
 				File: f, Chan: BlackholeChan,
 				CloseFile: true,
 			}
-		case types.File:
+		case vals.File:
 			ec.ports[dst] = &Port{
 				File: src.Inner, Chan: BlackholeChan,
 				CloseFile: false,
 			}
-		case types.Pipe:
+		case vals.Pipe:
 			var f *os.File
 			switch op.mode {
 			case parse.Read:
@@ -547,7 +547,7 @@ func (op *redirOp) Invoke(ec *Frame) error {
 				CloseFile: false,
 			}
 		default:
-			srcUnwrap.error("string or file", "%s", types.Kind(src))
+			srcUnwrap.error("string or file", "%s", vals.Kind(src))
 		}
 	}
 	return nil

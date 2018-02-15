@@ -1,4 +1,4 @@
-package types
+package vals
 
 // Dissocer wraps the Dissoc method.
 type Dissocer interface {

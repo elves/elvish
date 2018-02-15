@@ -6,7 +6,7 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -19,12 +19,12 @@ type BindingMap struct {
 	hashmap.Map
 }
 
-var EmptyBindingMap = BindingMap{types.EmptyMap}
+var EmptyBindingMap = BindingMap{vals.EmptyMap}
 
 // Repr returns the representation of the binding table as if it were an
 // ordinary map keyed by strings.
 func (bt BindingMap) Repr(indent int) string {
-	var builder types.MapReprBuilder
+	var builder vals.MapReprBuilder
 	builder.Indent = indent
 
 	var keys ui.Keys
@@ -36,7 +36,7 @@ func (bt BindingMap) Repr(indent int) string {
 
 	for _, k := range keys {
 		v, _ := bt.Map.Get(k)
-		builder.WritePair(parse.Quote(k.String()), indent+2, types.Repr(v, indent+2))
+		builder.WritePair(parse.Quote(k.String()), indent+2, vals.Repr(v, indent+2))
 	}
 
 	return builder.String()
@@ -44,7 +44,7 @@ func (bt BindingMap) Repr(indent int) string {
 
 // Index converts the index to ui.Key and uses the Index of the inner Map.
 func (bt BindingMap) Index(index interface{}) (interface{}, error) {
-	return types.Index(bt.Map, ui.ToKey(index))
+	return vals.Index(bt.Map, ui.ToKey(index))
 }
 
 func (bt BindingMap) HasKey(k interface{}) bool {
@@ -89,7 +89,7 @@ func (bt BindingMap) Dissoc(k interface{}) interface{} {
 }
 
 func MakeBindingMap(raw hashmap.Map) (BindingMap, error) {
-	converted := types.EmptyMap
+	converted := vals.EmptyMap
 	for it := raw.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		f, ok := v.(eval.Callable)

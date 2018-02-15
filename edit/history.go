@@ -11,7 +11,7 @@ import (
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 )
 
@@ -188,7 +188,7 @@ func (hist *hist) commandHistory(fm *eval.Frame, args ...int) {
 	}
 
 	for i := start; i < end; i++ {
-		out <- types.MakeMapFromKV(
+		out <- vals.MakeMapFromKV(
 			"id", strconv.Itoa(i),
 			"cmd", cmds[i],
 		)

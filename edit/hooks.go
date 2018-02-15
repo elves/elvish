@@ -2,7 +2,7 @@ package edit
 
 import (
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -19,11 +19,11 @@ type editorHooks struct {
 
 func init() {
 	atEditorInit(func(ed *editor, ns eval.Ns) {
-		beforeReadline := types.EmptyList
+		beforeReadline := vals.EmptyList
 		ns["before-readline"] = eval.NewVariableFromPtr(&beforeReadline)
 		ed.AddBeforeReadline(func() { callHooks(ed, beforeReadline) })
 
-		afterReadline := types.EmptyList
+		afterReadline := vals.EmptyList
 		ns["after-readline"] = eval.NewVariableFromPtr(&afterReadline)
 		ed.AddAfterReadline(func(s string) { callHooks(ed, afterReadline, s) })
 	})

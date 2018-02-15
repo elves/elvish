@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/daemon"
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/util"
 )
 
@@ -63,7 +63,7 @@ func (hv List) Index(rawIndex interface{}) (interface{}, error) {
 	hv.RLock()
 	defer hv.RUnlock()
 
-	index, err := types.ConvertListIndex(rawIndex, hv.Len())
+	index, err := vals.ConvertListIndex(rawIndex, hv.Len())
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (hv List) Index(rawIndex interface{}) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		l := types.EmptyList
+		l := vals.EmptyList
 		for _, cmd := range cmds {
 			l = l.Cons(cmd)
 		}

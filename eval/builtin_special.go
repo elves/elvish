@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 )
@@ -363,14 +363,14 @@ type andOrOp struct {
 }
 
 func (op *andOrOp) Invoke(fm *Frame) error {
-	var lastValue interface{} = types.Bool(op.init)
+	var lastValue interface{} = vals.Bool(op.init)
 	for _, argOp := range op.argOps {
 		values, err := argOp.Exec(fm)
 		if err != nil {
 			return err
 		}
 		for _, value := range values {
-			if types.Bool(value) == op.stopAt {
+			if vals.Bool(value) == op.stopAt {
 				fm.OutputChan() <- value
 				return nil
 			}
@@ -517,7 +517,7 @@ func (op *forOp) Invoke(ec *Frame) error {
 
 	iterated := false
 	var errElement error
-	errIterate := types.Iterate(iterable, func(v interface{}) bool {
+	errIterate := vals.Iterate(iterable, func(v interface{}) bool {
 		iterated = true
 		err := variable.Set(v)
 		if err != nil {

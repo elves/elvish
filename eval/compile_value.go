@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/elves/elvish/eval/types"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
@@ -139,7 +139,7 @@ func cat(lhs, rhs interface{}) (interface{}, error) {
 		}
 	}
 	return nil, fmt.Errorf("unsupported concat: %s and %s",
-		types.Kind(lhs), types.Kind(rhs))
+		vals.Kind(lhs), vals.Kind(rhs))
 }
 
 func outerProduct(vs []interface{}, us []interface{}, f func(interface{}, interface{}) (interface{}, error)) ([]interface{}, error) {
@@ -200,7 +200,7 @@ func doTilde(v interface{}) interface{} {
 		}
 		return v
 	default:
-		throw(fmt.Errorf("tilde doesn't work on value of type %s", types.Kind(v)))
+		throw(fmt.Errorf("tilde doesn't work on value of type %s", vals.Kind(v)))
 		panic("unreachable")
 	}
 }
@@ -235,7 +235,7 @@ func (op *indexingOp) Invoke(ec *Frame) ([]interface{}, error) {
 		newvs := make([]interface{}, 0, len(vs)*len(indicies))
 		for _, v := range vs {
 			for _, index := range indicies {
-				result, err := types.Index(v, index)
+				result, err := vals.Index(v, index)
 				if err != nil {
 					return nil, err
 				}
@@ -299,7 +299,7 @@ func (op variableOp) Invoke(ec *Frame) ([]interface{}, error) {
 	}
 	value := variable.Get()
 	if op.explode {
-		return types.Collect(value)
+		return vals.Collect(value)
 	}
 	return []interface{}{value}, nil
 }
@@ -311,7 +311,7 @@ func (cp *compiler) list(n *parse.Primary) ValuesOpBody {
 type listOp struct{ subops []ValuesOp }
 
 func (op listOp) Invoke(fm *Frame) ([]interface{}, error) {
-	list := types.EmptyList
+	list := vals.EmptyList
 	for _, subop := range op.subops {
 		moreValues, err := subop.Exec(fm)
 		if err != nil {
@@ -541,7 +541,7 @@ type mapPairsOp struct {
 }
 
 func (op *mapPairsOp) Invoke(fm *Frame) ([]interface{}, error) {
-	m := types.EmptyMap
+	m := vals.EmptyMap
 	for i := range op.keysOps {
 		keys, err := op.keysOps[i].Exec(fm)
 		if err != nil {
