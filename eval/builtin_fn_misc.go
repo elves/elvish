@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net"
+	"os"
 	"path/filepath"
 	"time"
 	"unicode/utf8"
@@ -18,13 +19,19 @@ import (
 
 // Builtins that have not been put into their own groups go here.
 
-var ErrArgs = errors.New("args error")
+var (
+	ErrMissingEnvVar = errors.New("Non-existent environment variable")
+	ErrArgs = errors.New("args error")
+)
 
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		"nop":        nop,
 		"kind-of":    kindOf,
 		"constantly": constantly,
+		"getenv":     getenv,
+		"setenv":     os.Setenv,
+		"unsetenv":   os.Unsetenv,
 
 		"resolve": resolve,
 
@@ -80,6 +87,14 @@ func resolve(fm *Frame, head string) string {
 			return "(external " + parse.Quote(head) + ")"
 		}
 	}
+}
+
+func getenv(key string) (string, error) {
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		return "", ErrMissingEnvVar
+	}
+	return value, nil
 }
 
 func source(fm *Frame, fname string) error {

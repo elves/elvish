@@ -1,6 +1,11 @@
 package eval
 
-import "testing"
+import (
+	"os"
+	"testing"
+
+	"github.com/elves/elvish/eval/vals"
+)
 
 func TestBuiltinFnMisc(t *testing.T) {
 	runTests(t, []Test{
@@ -11,4 +16,26 @@ func TestBuiltinFnMisc(t *testing.T) {
 			"$lorem:put-name~"),
 		NewTest("resolve cat").WantOutStrings("(external cat)"),
 	})
+}
+
+func TestBuiltinFnEnv(t *testing.T) {
+	oldpath := os.Getenv("PATH")
+	listSep := string(os.PathListSeparator)
+	runTests(t, []Test{
+		{`getenv var`, want{err: ErrMissingEnvVar}},
+		{`setenv var test1`, want{}},
+		{`getenv var`, want{out: strs("test1")}},
+		{`put $E:var`, want{out: strs("test1")}},
+		{`setenv var test2`, want{}},
+		{`getenv var`, want{out: strs("test2")}},
+		{`put $E:var`, want{out: strs("test2")}},
+
+		{`setenv PATH /test-path`, want{}},
+		{`put $paths`, want{out: []interface{}{
+			vals.MakeList(strs("/test-path")...)}}},
+		{`paths = [/test-path2 $@paths]`, want{}},
+		{`getenv PATH`, want{out: strs(
+			"/test-path2" + listSep + "/test-path")}},
+	})
+	os.Setenv("PATH", oldpath)
 }
