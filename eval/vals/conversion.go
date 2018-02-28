@@ -49,6 +49,8 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 			*ptr = r
 		}
 		return err
+	case Scanner:
+		return ptr.ScanElvish(src)
 	default:
 		// Do a generic `*ptr = src` via reflection
 		ptrType := reflect.TypeOf(ptr)
@@ -63,6 +65,11 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 		reflect.ValueOf(ptr).Elem().Set(reflect.ValueOf(src))
 		return nil
 	}
+}
+
+// Scanner is implemented by types that can scan an Elvish value into itself.
+type Scanner interface {
+	ScanElvish(interface{}) error
 }
 
 // FromGo converts a Go value to an Elvish value. Conversion happens when the
