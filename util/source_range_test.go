@@ -62,5 +62,5 @@ func parseSourceRange(s, starter, ender string, endAfter bool) *SourceRange {
 	if endAfter {
 		end += len(ender)
 	}
-	return NewSourceRange("[test]", s, strings.Index(s, starter), end, nil)
+	return NewSourceRange("[test]", s, strings.Index(s, starter), end)
 }

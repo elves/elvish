@@ -13,14 +13,13 @@ type SourceRange struct {
 	Source string
 	Begin  int
 	End    int
-	Next   *SourceRange
 
 	savedPprintInfo *rangePprintInfo
 }
 
 // NewSourceRange creates a new SourceRange.
-func NewSourceRange(name, source string, begin, end int, next *SourceRange) *SourceRange {
-	return &SourceRange{name, source, begin, end, next, nil}
+func NewSourceRange(name, source string, begin, end int) *SourceRange {
+	return &SourceRange{name, source, begin, end, nil}
 }
 
 // rangePprintInfo is information about the source range that are needed for

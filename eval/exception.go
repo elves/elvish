@@ -19,7 +19,7 @@ import (
 // methods like (*Evaler)PEval.
 type Exception struct {
 	Cause     error
-	Traceback *util.SourceRange
+	Traceback *stackTrace
 }
 
 // OK is a pointer to the zero value of Exception, representing the absence of
@@ -41,13 +41,13 @@ func (exc *Exception) Pprint(indent string) string {
 	}
 	fmt.Fprintf(buf, "Exception: %s\n", causeDescription)
 
-	if exc.Traceback.Next == nil {
-		buf.WriteString(exc.Traceback.PprintCompact(indent))
+	if exc.Traceback.next == nil {
+		buf.WriteString(exc.Traceback.entry.PprintCompact(indent))
 	} else {
 		buf.WriteString(indent + "Traceback:")
-		for tb := exc.Traceback; tb != nil; tb = tb.Next {
+		for tb := exc.Traceback; tb != nil; tb = tb.next {
 			buf.WriteString("\n" + indent + "  ")
-			buf.WriteString(tb.Pprint(indent + "    "))
+			buf.WriteString(tb.entry.Pprint(indent + "    "))
 		}
 	}
 

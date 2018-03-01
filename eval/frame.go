@@ -21,7 +21,7 @@ type Frame struct {
 	ports     []*Port
 
 	begin, end int
-	traceback  *util.SourceRange
+	traceback  *stackTrace
 
 	background bool
 }
@@ -179,10 +179,13 @@ func (ec *Frame) makeException(e error) *Exception {
 	return &Exception{e, ec.addTraceback()}
 }
 
-func (ec *Frame) addTraceback() *util.SourceRange {
-	return &util.SourceRange{
-		Name: ec.srcMeta.describePath(), Source: ec.srcMeta.code,
-		Begin: ec.begin, End: ec.end, Next: ec.traceback,
+func (ec *Frame) addTraceback() *stackTrace {
+	return &stackTrace{
+		entry: &util.SourceRange{
+			Name: ec.srcMeta.describePath(), Source: ec.srcMeta.code,
+			Begin: ec.begin, End: ec.end,
+		},
+		next: ec.traceback,
 	}
 }
 
