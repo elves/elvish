@@ -50,8 +50,8 @@ func BenchmarkOutputCaptureOverhead(b *testing.B) {
 }
 
 func BenchmarkOutputCaptureValues(b *testing.B) {
-	op := Op{funcOp(func(ec *Frame) error {
-		ec.ports[1].Chan <- "test"
+	op := Op{funcOp(func(fm *Frame) error {
+		fm.ports[1].Chan <- "test"
 		return nil
 	}), 0, 0}
 	benchmarkOutputCapture(op, b.N)
@@ -59,8 +59,8 @@ func BenchmarkOutputCaptureValues(b *testing.B) {
 
 func BenchmarkOutputCaptureBytes(b *testing.B) {
 	bytesToWrite := []byte("test")
-	op := Op{funcOp(func(ec *Frame) error {
-		ec.ports[1].File.Write(bytesToWrite)
+	op := Op{funcOp(func(fm *Frame) error {
+		fm.ports[1].File.Write(bytesToWrite)
 		return nil
 	}), 0, 0}
 	benchmarkOutputCapture(op, b.N)
@@ -68,9 +68,9 @@ func BenchmarkOutputCaptureBytes(b *testing.B) {
 
 func BenchmarkOutputCaptureMixed(b *testing.B) {
 	bytesToWrite := []byte("test")
-	op := Op{funcOp(func(ec *Frame) error {
-		ec.ports[1].Chan <- false
-		ec.ports[1].File.Write(bytesToWrite)
+	op := Op{funcOp(func(fm *Frame) error {
+		fm.ports[1].Chan <- false
+		fm.ports[1].File.Write(bytesToWrite)
 		return nil
 	}), 0, 0}
 	benchmarkOutputCapture(op, b.N)

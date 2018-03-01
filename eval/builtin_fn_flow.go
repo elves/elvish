@@ -49,10 +49,10 @@ func each(fm *Frame, f Callable, inputs Inputs) {
 		}
 		// NOTE We don't have the position range of the closure in the source.
 		// Ideally, it should be kept in the Closure itself.
-		newec := fm.fork("closure of each")
-		newec.ports[0] = DevNullClosedChan
-		ex := newec.Call(f, []interface{}{v}, NoOpts)
-		newec.Close()
+		newFm := fm.fork("closure of each")
+		newFm.ports[0] = DevNullClosedChan
+		ex := newFm.Call(f, []interface{}{v}, NoOpts)
+		newFm.Close()
 
 		if ex != nil {
 			switch ex.(*Exception).Cause {
@@ -80,10 +80,10 @@ func peach(fm *Frame, f Callable, inputs Inputs) {
 		go func() {
 			// NOTE We don't have the position range of the closure in the source.
 			// Ideally, it should be kept in the Closure itself.
-			newec := fm.fork("closure of peach")
-			newec.ports[0] = DevNullClosedChan
-			ex := newec.Call(f, []interface{}{v}, NoOpts)
-			newec.Close()
+			newFm := fm.fork("closure of peach")
+			newFm.ports[0] = DevNullClosedChan
+			ex := newFm.Call(f, []interface{}{v}, NoOpts)
+			newFm.Close()
 
 			if ex != nil {
 				switch ex.(*Exception).Cause {

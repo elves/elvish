@@ -210,8 +210,8 @@ func wrapFn(op Op) Op {
 
 type fnWrap struct{ wrapped Op }
 
-func (op fnWrap) Invoke(ec *Frame) error {
-	err := ec.Eval(op.wrapped)
+func (op fnWrap) Invoke(fm *Frame) error {
+	err := fm.Eval(op.wrapped)
 	if err != nil && err.(*Exception).Cause != Return {
 		// rethrow
 		return err
@@ -244,14 +244,14 @@ func (op useOp) Invoke(fm *Frame) error {
 	return use(fm, op.modname, op.modpath)
 }
 
-func use(ec *Frame, modname, modpath string) error {
+func use(fm *Frame, modname, modpath string) error {
 	resolvedPath := ""
 	if strings.HasPrefix(modpath, "./") || strings.HasPrefix(modpath, "../") {
-		if ec.srcMeta.typ != SrcModule {
+		if fm.srcMeta.typ != SrcModule {
 			return ErrRelativeUseNotFromMod
 		}
 		// Resolve relative modpath.
-		resolvedPath = filepath.Clean(filepath.Dir(ec.srcMeta.name) + "/" + modpath)
+		resolvedPath = filepath.Clean(filepath.Dir(fm.srcMeta.name) + "/" + modpath)
 	} else {
 		resolvedPath = filepath.Clean(modpath)
 	}
@@ -260,22 +260,22 @@ func use(ec *Frame, modname, modpath string) error {
 	}
 
 	// Put the just loaded module into local scope.
-	ns, err := loadModule(ec, resolvedPath)
+	ns, err := loadModule(fm, resolvedPath)
 	if err != nil {
 		return err
 	}
-	ec.local.AddNs(modname, ns)
+	fm.local.AddNs(modname, ns)
 	return nil
 }
 
-func loadModule(ec *Frame, name string) (Ns, error) {
-	if ns, ok := ec.Evaler.modules[name]; ok {
+func loadModule(fm *Frame, name string) (Ns, error) {
+	if ns, ok := fm.Evaler.modules[name]; ok {
 		// Module already loaded.
 		return ns, nil
 	}
 
 	// Load the source.
-	src, err := getModuleSource(ec.Evaler, name)
+	src, err := getModuleSource(fm.Evaler, name)
 	if err != nil {
 		return nil, err
 	}
@@ -288,25 +288,25 @@ func loadModule(ec *Frame, name string) (Ns, error) {
 	// Make an empty scope to evaluate the module in.
 	modGlobal := Ns{}
 
-	newEc := &Frame{
-		ec.Evaler, src,
+	newFm := &Frame{
+		fm.Evaler, src,
 		modGlobal, make(Ns),
-		ec.ports,
-		0, len(src.code), ec.addTraceback(), false,
+		fm.ports,
+		0, len(src.code), fm.addTraceback(), false,
 	}
 
-	op, err := newEc.Compile(n, src)
+	op, err := newFm.Compile(n, src)
 	if err != nil {
 		return nil, err
 	}
 
 	// Load the namespace before executing. This prevent circular "use"es from
 	// resulting in an infinite recursion.
-	ec.Evaler.modules[name] = modGlobal
-	err = newEc.Eval(op)
+	fm.Evaler.modules[name] = modGlobal
+	err = newFm.Eval(op)
 	if err != nil {
 		// Unload the namespace.
-		delete(ec.modules, name)
+		delete(fm.modules, name)
 		return nil, err
 	}
 	return modGlobal, nil
@@ -501,19 +501,19 @@ type forOp struct {
 	elseOp ValuesOp
 }
 
-func (op *forOp) Invoke(ec *Frame) error {
-	variables, err := op.varOp.Exec(ec)
+func (op *forOp) Invoke(fm *Frame) error {
+	variables, err := op.varOp.Exec(fm)
 	if err != nil {
 		return err
 	}
 	if len(variables) != 1 {
-		ec.errorpf(op.varOp.Begin, op.varOp.End, "only one variable allowed")
+		fm.errorpf(op.varOp.Begin, op.varOp.End, "only one variable allowed")
 	}
 	variable := variables[0]
-	iterable := ec.ExecAndUnwrap("value being iterated", op.iterOp).One().Any()
+	iterable := fm.ExecAndUnwrap("value being iterated", op.iterOp).One().Any()
 
-	body := op.bodyOp.execlambdaOp(ec)
-	elseBody := op.elseOp.execlambdaOp(ec)
+	body := op.bodyOp.execlambdaOp(fm)
+	elseBody := op.elseOp.execlambdaOp(fm)
 
 	iterated := false
 	var errElement error
@@ -524,7 +524,7 @@ func (op *forOp) Invoke(ec *Frame) error {
 			errElement = err
 			return false
 		}
-		err = ec.fork("for").Call(body, NoArgs, NoOpts)
+		err = fm.fork("for").Call(body, NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(*Exception)
 			if exc.Cause == Continue {
@@ -546,7 +546,7 @@ func (op *forOp) Invoke(ec *Frame) error {
 	}
 
 	if !iterated && elseBody != nil {
-		return elseBody.Call(ec.fork("for else"), NoArgs, NoOpts)
+		return elseBody.Call(fm.fork("for else"), NoArgs, NoOpts)
 	}
 	return nil
 }
@@ -603,14 +603,14 @@ type tryOp struct {
 	finallyOp   ValuesOp
 }
 
-func (op *tryOp) Invoke(ec *Frame) error {
-	body := op.bodyOp.execlambdaOp(ec)
-	exceptVar := op.exceptVarOp.execMustOne(ec)
-	except := op.exceptOp.execlambdaOp(ec)
-	else_ := op.elseOp.execlambdaOp(ec)
-	finally := op.finallyOp.execlambdaOp(ec)
+func (op *tryOp) Invoke(fm *Frame) error {
+	body := op.bodyOp.execlambdaOp(fm)
+	exceptVar := op.exceptVarOp.execMustOne(fm)
+	except := op.exceptOp.execlambdaOp(fm)
+	else_ := op.elseOp.execlambdaOp(fm)
+	finally := op.finallyOp.execlambdaOp(fm)
 
-	err := ec.fork("try body").Call(body, NoArgs, NoOpts)
+	err := fm.fork("try body").Call(body, NoArgs, NoOpts)
 	if err != nil {
 		if except != nil {
 			if exceptVar != nil {
@@ -619,27 +619,27 @@ func (op *tryOp) Invoke(ec *Frame) error {
 					return err
 				}
 			}
-			err = ec.fork("try except").Call(except, NoArgs, NoOpts)
+			err = fm.fork("try except").Call(except, NoArgs, NoOpts)
 		}
 	} else {
 		if else_ != nil {
-			err = ec.fork("try else").Call(else_, NoArgs, NoOpts)
+			err = fm.fork("try else").Call(else_, NoArgs, NoOpts)
 		}
 	}
 	if finally != nil {
-		return finally.Call(ec.fork("try finally"), NoArgs, NoOpts)
+		return finally.Call(fm.fork("try finally"), NoArgs, NoOpts)
 	}
 	return err
 }
 
 // execLambdaOp executes a ValuesOp that is known to yield a lambda and returns
 // the lambda. If the ValuesOp is empty, it returns a nil.
-func (op ValuesOp) execlambdaOp(ec *Frame) Callable {
+func (op ValuesOp) execlambdaOp(fm *Frame) Callable {
 	if op.Body == nil {
 		return nil
 	}
 
-	values, err := op.Exec(ec)
+	values, err := op.Exec(fm)
 	if err != nil {
 		panic("must not be erroneous")
 	}
@@ -649,14 +649,14 @@ func (op ValuesOp) execlambdaOp(ec *Frame) Callable {
 // execMustOne executes the LValuesOp and raises an exception if it does not
 // evaluate to exactly one Variable. If the given LValuesOp is empty, it returns
 // nil.
-func (op LValuesOp) execMustOne(ec *Frame) vars.Type {
+func (op LValuesOp) execMustOne(fm *Frame) vars.Type {
 	if op.Body == nil {
 		return nil
 	}
-	variables, err := op.Exec(ec)
+	variables, err := op.Exec(fm)
 	maybeThrow(err)
 	if len(variables) != 1 {
-		ec.errorpf(op.Begin, op.End, "should be one variable")
+		fm.errorpf(op.Begin, op.End, "should be one variable")
 	}
 	return variables[0]
 }

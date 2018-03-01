@@ -59,15 +59,15 @@ func newDirStruct(path string, score float64) *vals.Struct {
 		[]interface{}{path, vals.FromGo(score)})
 }
 
-func dirs(ec *Frame) error {
-	if ec.DaemonClient == nil {
+func dirs(fm *Frame) error {
+	if fm.DaemonClient == nil {
 		throw(ErrStoreNotConnected)
 	}
-	dirs, err := ec.DaemonClient.Dirs(storedefs.NoBlacklist)
+	dirs, err := fm.DaemonClient.Dirs(storedefs.NoBlacklist)
 	if err != nil {
 		return err
 	}
-	out := ec.ports[1].Chan
+	out := fm.ports[1].Chan
 	for _, dir := range dirs {
 		out <- newDirStruct(dir.Path, dir.Score)
 	}

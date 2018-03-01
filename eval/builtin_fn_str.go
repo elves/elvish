@@ -130,10 +130,10 @@ func eawk(fm *Frame, f Callable, inputs Inputs) {
 			args = append(args, field)
 		}
 
-		newec := fm.fork("fn of eawk")
-		// TODO: Close port 0 of newec.
-		ex := newec.Call(f, args, NoOpts)
-		newec.Close()
+		newFm := fm.fork("fn of eawk")
+		// TODO: Close port 0 of newFm.
+		ex := newFm.Call(f, args, NoOpts)
+		newFm.Close()
 
 		if ex != nil {
 			switch ex.(*Exception).Cause {

@@ -73,16 +73,16 @@ func rangeFn(fm *Frame, rawOpts RawOptions, args ...float64) error {
 	return nil
 }
 
-func repeat(ec *Frame, n int, v interface{}) {
-	out := ec.OutputChan()
+func repeat(fm *Frame, n int, v interface{}) {
+	out := fm.OutputChan()
 	for i := 0; i < n; i++ {
 		out <- v
 	}
 }
 
 // explode puts each element of the argument.
-func explode(ec *Frame, v interface{}) {
-	out := ec.ports[1].Chan
+func explode(fm *Frame, v interface{}) {
+	out := fm.ports[1].Chan
 	err := vals.Iterate(v, func(e interface{}) bool {
 		out <- e
 		return true
@@ -104,15 +104,15 @@ func dissoc(a, k interface{}) (interface{}, error) {
 	return a2, nil
 }
 
-func all(ec *Frame) error {
+func all(fm *Frame) error {
 	valuesDone := make(chan struct{})
 	go func() {
-		for input := range ec.ports[0].Chan {
-			ec.ports[1].Chan <- input
+		for input := range fm.ports[0].Chan {
+			fm.ports[1].Chan <- input
 		}
 		close(valuesDone)
 	}()
-	_, err := io.Copy(ec.ports[1].File, ec.ports[0].File)
+	_, err := io.Copy(fm.ports[1].File, fm.ports[0].File)
 	<-valuesDone
 	if err != nil {
 		return fmt.Errorf("cannot copy byte input: %s", err)
@@ -204,8 +204,8 @@ func count(fm *Frame, args ...interface{}) int {
 	return n
 }
 
-func keys(ec *Frame, m hashmap.Map) {
-	out := ec.ports[1].Chan
+func keys(fm *Frame, m hashmap.Map) {
+	out := fm.ports[1].Chan
 
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		k, _ := it.Elem()

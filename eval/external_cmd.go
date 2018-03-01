@@ -40,7 +40,7 @@ func (e ExternalCmd) Repr(int) string {
 }
 
 // Call calls an external command.
-func (e ExternalCmd) Call(ec *Frame, argVals []interface{}, opts map[string]interface{}) error {
+func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]interface{}) error {
 	if len(opts) > 0 {
 		return ErrExternalCmdOpts
 	}
@@ -51,13 +51,13 @@ func (e ExternalCmd) Call(ec *Frame, argVals []interface{}, opts map[string]inte
 			if len(argVals) > 0 {
 				return ErrCdNoArg
 			}
-			cdInner(e.Name, ec)
+			cdInner(e.Name, fm)
 			return nil
 		}
 	}
 
-	files := make([]*os.File, len(ec.ports))
-	for i, port := range ec.ports {
+	files := make([]*os.File, len(fm.ports))
+	for i, port := range fm.ports {
 		files[i] = port.File
 	}
 
@@ -75,7 +75,7 @@ func (e ExternalCmd) Call(ec *Frame, argVals []interface{}, opts map[string]inte
 
 	args[0] = path
 
-	sys := makeSysProcAttr(ec.background)
+	sys := makeSysProcAttr(fm.background)
 	proc, err := os.StartProcess(path, args, &os.ProcAttr{Files: files, Sys: sys})
 
 	if err != nil {

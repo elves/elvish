@@ -54,8 +54,8 @@ func exit(fm *Frame, codes ...int) error {
 	panic("os.Exit returned")
 }
 
-func preExit(ec *Frame) {
-	err := ec.DaemonClient.Close()
+func preExit(fm *Frame) {
+	err := fm.DaemonClient.Close()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}

@@ -46,37 +46,37 @@ func (fm *Frame) Close() error {
 }
 
 // InputChan returns a channel from which input can be read.
-func (ec *Frame) InputChan() chan interface{} {
-	return ec.ports[0].Chan
+func (fm *Frame) InputChan() chan interface{} {
+	return fm.ports[0].Chan
 }
 
 // InputFile returns a file from which input can be read.
-func (ec *Frame) InputFile() *os.File {
-	return ec.ports[0].File
+func (fm *Frame) InputFile() *os.File {
+	return fm.ports[0].File
 }
 
 // OutputChan returns a channel onto which output can be written.
-func (ec *Frame) OutputChan() chan<- interface{} {
-	return ec.ports[1].Chan
+func (fm *Frame) OutputChan() chan<- interface{} {
+	return fm.ports[1].Chan
 }
 
 // OutputFile returns a file onto which output can be written.
-func (ec *Frame) OutputFile() *os.File {
-	return ec.ports[1].File
+func (fm *Frame) OutputFile() *os.File {
+	return fm.ports[1].File
 }
 
 // IterateInputs calls the passed function for each input element.
-func (ec *Frame) IterateInputs(f func(interface{})) {
+func (fm *Frame) IterateInputs(f func(interface{})) {
 	var w sync.WaitGroup
 	inputs := make(chan interface{})
 
 	w.Add(2)
 	go func() {
-		linesToChan(ec.ports[0].File, inputs)
+		linesToChan(fm.ports[0].File, inputs)
 		w.Done()
 	}()
 	go func() {
-		for v := range ec.ports[0].Chan {
+		for v := range fm.ports[0].Chan {
 			inputs <- v
 		}
 		w.Done()
@@ -109,43 +109,43 @@ func linesToChan(r io.Reader, ch chan<- interface{}) {
 
 // fork returns a modified copy of ec. The ports are forked, and the name is
 // changed to the given value. Other fields are copied shallowly.
-func (ec *Frame) fork(name string) *Frame {
-	newPorts := make([]*Port, len(ec.ports))
-	for i, p := range ec.ports {
+func (fm *Frame) fork(name string) *Frame {
+	newPorts := make([]*Port, len(fm.ports))
+	for i, p := range fm.ports {
 		newPorts[i] = p.Fork()
 	}
 	return &Frame{
-		ec.Evaler, ec.srcMeta,
-		ec.local, ec.up,
+		fm.Evaler, fm.srcMeta,
+		fm.local, fm.up,
 		newPorts,
-		ec.begin, ec.end, ec.traceback, ec.background,
+		fm.begin, fm.end, fm.traceback, fm.background,
 	}
 }
 
 // Eval evaluates an op. It does so in a protected environment so that
 // exceptions thrown are wrapped in an Error.
-func (ec *Frame) Eval(op Op) (err error) {
-	defer catch(&err, ec)
-	e := op.Exec(ec)
+func (fm *Frame) Eval(op Op) (err error) {
+	defer catch(&err, fm)
+	e := op.Exec(fm)
 	if e != nil {
 		if exc, ok := e.(*Exception); ok {
 			return exc
 		}
-		return ec.makeException(e)
+		return fm.makeException(e)
 	}
 	return nil
 }
 
 // Call calls a function with the given arguments and options. It does so in a
 // protected environment so that exceptions thrown are wrapped in an Error.
-func (ec *Frame) Call(f Callable, args []interface{}, opts map[string]interface{}) (err error) {
-	defer catch(&err, ec)
-	e := f.Call(ec, args, opts)
+func (fm *Frame) Call(f Callable, args []interface{}, opts map[string]interface{}) (err error) {
+	defer catch(&err, fm)
+	e := f.Call(fm, args, opts)
 	if e != nil {
 		if exc, ok := e.(*Exception); ok {
 			return exc
 		}
-		return ec.makeException(e)
+		return fm.makeException(e)
 	}
 	return nil
 }
@@ -153,26 +153,26 @@ func (ec *Frame) Call(f Callable, args []interface{}, opts map[string]interface{
 // CaptureOutput calls a function with the given arguments and options,
 // capturing and returning the output. It does so in a protected environment so
 // that exceptions thrown are wrapped in an Error.
-func (ec *Frame) CaptureOutput(fn Callable, args []interface{}, opts map[string]interface{}) (vs []interface{}, err error) {
+func (fm *Frame) CaptureOutput(fn Callable, args []interface{}, opts map[string]interface{}) (vs []interface{}, err error) {
 	// XXX There is no source.
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)
 	}
-	return pcaptureOutput(ec, Op{funcOp(opFunc), -1, -1})
+	return pcaptureOutput(fm, Op{funcOp(opFunc), -1, -1})
 }
 
 // CallWithOutputCallback calls a function with the given arguments and options,
 // feeding the outputs to the given callbacks. It does so in a protected
 // environment so that exceptions thrown are wrapped in an Error.
-func (ec *Frame) CallWithOutputCallback(fn Callable, args []interface{}, opts map[string]interface{}, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
+func (fm *Frame) CallWithOutputCallback(fn Callable, args []interface{}, opts map[string]interface{}, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
 	// XXX There is no source.
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)
 	}
-	return pcaptureOutputInner(ec, Op{funcOp(opFunc), -1, -1}, valuesCb, bytesCb)
+	return pcaptureOutputInner(fm, Op{funcOp(opFunc), -1, -1}, valuesCb, bytesCb)
 }
 
-func catch(perr *error, ec *Frame) {
+func catch(perr *error, fm *Frame) {
 	// NOTE: We have to duplicate instead of calling util.Catch here, since
 	// recover can only catch a panic when called directly from a deferred
 	// function.
@@ -183,7 +183,7 @@ func catch(perr *error, ec *Frame) {
 	if exc, ok := r.(util.Thrown); ok {
 		err := exc.Wrapped
 		if _, ok := err.(*Exception); !ok {
-			err = ec.makeException(err)
+			err = fm.makeException(err)
 		}
 		*perr = err
 	} else if r != nil {
@@ -192,23 +192,23 @@ func catch(perr *error, ec *Frame) {
 }
 
 // makeException turns an error into an Exception by adding traceback.
-func (ec *Frame) makeException(e error) *Exception {
-	return &Exception{e, ec.addTraceback()}
+func (fm *Frame) makeException(e error) *Exception {
+	return &Exception{e, fm.addTraceback()}
 }
 
-func (ec *Frame) addTraceback() *stackTrace {
+func (fm *Frame) addTraceback() *stackTrace {
 	return &stackTrace{
 		entry: &util.SourceRange{
-			Name: ec.srcMeta.describePath(), Source: ec.srcMeta.code,
-			Begin: ec.begin, End: ec.end,
+			Name: fm.srcMeta.describePath(), Source: fm.srcMeta.code,
+			Begin: fm.begin, End: fm.end,
 		},
-		next: ec.traceback,
+		next: fm.traceback,
 	}
 }
 
 // errorpf stops the ec.eval immediately by panicking with a diagnostic message.
 // The panic is supposed to be caught by ec.eval.
-func (ec *Frame) errorpf(begin, end int, format string, args ...interface{}) {
-	ec.begin, ec.end = begin, end
+func (fm *Frame) errorpf(begin, end int, format string, args ...interface{}) {
+	fm.begin, fm.end = begin, end
 	throwf(format, args...)
 }

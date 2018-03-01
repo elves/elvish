@@ -49,7 +49,7 @@ func (c *Closure) Repr(int) string {
 }
 
 // Call calls a closure.
-func (c *Closure) Call(ec *Frame, args []interface{}, opts map[string]interface{}) error {
+func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{}) error {
 	if c.RestArg != "" {
 		if len(c.ArgNames) > len(args) {
 			return fmt.Errorf("need %d or more arguments, got %d", len(c.ArgNames), len(args))
@@ -66,19 +66,19 @@ func (c *Closure) Call(ec *Frame, args []interface{}, opts map[string]interface{
 
 	// Make upvalue namespace and capture variables.
 	// TODO(xiaq): Is it safe to simply assign ec.up = c.Captured?
-	ec.up = make(Ns)
+	fm.up = make(Ns)
 	for name, variable := range c.Captured {
-		ec.up[name] = variable
+		fm.up[name] = variable
 	}
 
 	// Populate local scope with arguments, possibly a rest argument, and
 	// options.
-	ec.local = make(Ns)
+	fm.local = make(Ns)
 	for i, name := range c.ArgNames {
-		ec.local[name] = vars.NewAnyWithInit(args[i])
+		fm.local[name] = vars.NewAnyWithInit(args[i])
 	}
 	if c.RestArg != "" {
-		ec.local[c.RestArg] = vars.NewAnyWithInit(vals.MakeList(args[len(c.ArgNames):]...))
+		fm.local[c.RestArg] = vars.NewAnyWithInit(vals.MakeList(args[len(c.ArgNames):]...))
 	}
 	optUsed := make(map[string]struct{})
 	for i, name := range c.OptNames {
@@ -88,7 +88,7 @@ func (c *Closure) Call(ec *Frame, args []interface{}, opts map[string]interface{
 		} else {
 			v = c.OptDefaults[i]
 		}
-		ec.local[name] = vars.NewAnyWithInit(v)
+		fm.local[name] = vars.NewAnyWithInit(v)
 	}
 	for name := range opts {
 		_, used := optUsed[name]
@@ -97,8 +97,8 @@ func (c *Closure) Call(ec *Frame, args []interface{}, opts map[string]interface{
 		}
 	}
 
-	ec.traceback = ec.addTraceback()
+	fm.traceback = fm.addTraceback()
 
-	ec.srcMeta = c.SrcMeta
-	return c.Op.Exec(ec)
+	fm.srcMeta = c.SrcMeta
+	return c.Op.Exec(fm)
 }

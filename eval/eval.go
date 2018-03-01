@@ -126,13 +126,13 @@ func searchPaths() []string {
 }
 
 // growPorts makes the size of ec.ports at least n, adding nil's if necessary.
-func (ec *Frame) growPorts(n int) {
-	if len(ec.ports) >= n {
+func (fm *Frame) growPorts(n int) {
+	if len(fm.ports) >= n {
 		return
 	}
-	ports := ec.ports
-	ec.ports = make([]*Port, n)
-	copy(ec.ports, ports)
+	ports := fm.ports
+	fm.ports = make([]*Port, n)
+	copy(fm.ports, ports)
 }
 
 // eval evaluates a chunk node n. The supplied name and text are used in

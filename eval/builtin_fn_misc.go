@@ -78,13 +78,13 @@ func sleep(fm *Frame, t float64) error {
 	}
 }
 
-func _time(ec *Frame, f Callable) error {
+func _time(fm *Frame, f Callable) error {
 	t0 := time.Now()
-	err := f.Call(ec, NoArgs, NoOpts)
+	err := f.Call(fm, NoArgs, NoOpts)
 	t1 := time.Now()
 
 	dt := t1.Sub(t0)
-	fmt.Fprintln(ec.ports[1].File, dt)
+	fmt.Fprintln(fm.ports[1].File, dt)
 
 	return err
 }

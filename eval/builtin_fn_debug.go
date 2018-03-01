@@ -15,16 +15,16 @@ func init() {
 	})
 }
 
-func src(ec *Frame) *Source {
-	return ec.srcMeta
+func src(fm *Frame) *Source {
+	return fm.srcMeta
 }
 
 func _gc() {
 	runtime.GC()
 }
 
-func _stack(ec *Frame) {
-	out := ec.ports[1].File
+func _stack(fm *Frame) {
+	out := fm.ports[1].File
 	// XXX dup with main.go
 	buf := make([]byte, 1024)
 	for runtime.Stack(buf, true) == cap(buf) {

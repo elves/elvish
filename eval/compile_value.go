@@ -30,9 +30,9 @@ type ValuesOpBody interface {
 }
 
 // Exec executes a ValuesOp and produces Value's.
-func (op ValuesOp) Exec(ec *Frame) ([]interface{}, error) {
-	ec.begin, ec.end = op.Begin, op.End
-	return op.Body.Invoke(ec)
+func (op ValuesOp) Exec(fm *Frame) ([]interface{}, error) {
+	fm.begin, fm.end = op.Begin, op.End
+	return op.Body.Invoke(fm)
 }
 
 func (cp *compiler) compound(n *parse.Compound) ValuesOpBody {
@@ -46,7 +46,7 @@ func (cp *compiler) compound(n *parse.Compound) ValuesOpBody {
 	if n.Indexings[0].Head.Type == parse.Tilde {
 		// A lone ~.
 		if len(n.Indexings) == 1 {
-			return funcValuesOp(func(ec *Frame) ([]interface{}, error) {
+			return funcValuesOp(func(fm *Frame) ([]interface{}, error) {
 				home, err := util.GetHome("")
 				if err != nil {
 					return nil, err
@@ -66,15 +66,15 @@ type compoundOp struct {
 	subops []ValuesOp
 }
 
-func (op compoundOp) Invoke(ec *Frame) ([]interface{}, error) {
+func (op compoundOp) Invoke(fm *Frame) ([]interface{}, error) {
 	// Accumulator.
-	vs, err := op.subops[0].Exec(ec)
+	vs, err := op.subops[0].Exec(fm)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, subop := range op.subops[1:] {
-		us, err := subop.Exec(ec)
+		us, err := subop.Exec(fm)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +102,7 @@ func (op compoundOp) Invoke(ec *Frame) ([]interface{}, error) {
 		for _, v := range vs {
 			if gp, ok := v.(GlobPattern); ok {
 				// Logger.Printf("globbing %v", gp)
-				newvs = append(newvs, doGlob(gp, ec.Interrupts())...)
+				newvs = append(newvs, doGlob(gp, fm.Interrupts())...)
 			} else {
 				newvs = append(newvs, v)
 			}
@@ -222,13 +222,13 @@ type indexingOp struct {
 	indexOps []ValuesOp
 }
 
-func (op *indexingOp) Invoke(ec *Frame) ([]interface{}, error) {
-	vs, err := op.headOp.Exec(ec)
+func (op *indexingOp) Invoke(fm *Frame) ([]interface{}, error) {
+	vs, err := op.headOp.Exec(fm)
 	if err != nil {
 		return nil, err
 	}
 	for _, indexOp := range op.indexOps {
-		indicies, err := indexOp.Exec(ec)
+		indicies, err := indexOp.Exec(fm)
 		if err != nil {
 			return nil, err
 		}
@@ -292,8 +292,8 @@ type variableOp struct {
 	name    string
 }
 
-func (op variableOp) Invoke(ec *Frame) ([]interface{}, error) {
-	variable := ec.ResolveVar(op.ns, op.name)
+func (op variableOp) Invoke(fm *Frame) ([]interface{}, error) {
+	variable := fm.ResolveVar(op.ns, op.name)
 	if variable == nil {
 		return nil, fmt.Errorf("variable $%s:%s not found", op.ns, op.name)
 	}
@@ -340,7 +340,7 @@ func (op outputCaptureOp) Invoke(fm *Frame) ([]interface{}, error) {
 	return pcaptureOutput(fm, op.subop)
 }
 
-func pcaptureOutput(ec *Frame, op Op) ([]interface{}, error) {
+func pcaptureOutput(fm *Frame, op Op) ([]interface{}, error) {
 	vs := []interface{}{}
 	var m sync.Mutex
 	valueCb := func(ch <-chan interface{}) {
@@ -369,20 +369,20 @@ func pcaptureOutput(ec *Frame, op Op) ([]interface{}, error) {
 		}
 	}
 
-	err := pcaptureOutputInner(ec, op, valueCb, bytesCb)
+	err := pcaptureOutputInner(fm, op, valueCb, bytesCb)
 	return vs, err
 }
 
-func pcaptureOutputInner(ec *Frame, op Op, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
+func pcaptureOutputInner(fm *Frame, op Op, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
 
-	newEc := ec.fork("[output capture]")
+	newFm := fm.fork("[output capture]")
 
 	ch := make(chan interface{}, outputCaptureBufferSize)
 	pipeRead, pipeWrite, err := os.Pipe()
 	if err != nil {
 		return fmt.Errorf("failed to create pipe: %v", err)
 	}
-	newEc.ports[1] = &Port{
+	newFm.ports[1] = &Port{
 		Chan: ch, CloseChan: true,
 		File: pipeWrite, CloseFile: true,
 	}
@@ -400,9 +400,9 @@ func pcaptureOutputInner(ec *Frame, op Op, valuesCb func(<-chan interface{}), by
 		close(bytesCollected)
 	}()
 
-	err = newEc.Eval(op)
+	err = newFm.Eval(op)
 
-	newEc.Close()
+	newFm.Close()
 	<-bytesCollected
 	<-chCollected
 
@@ -585,10 +585,10 @@ func literalStr(text string) ValuesOpBody {
 
 type seqValuesOp struct{ subops []ValuesOp }
 
-func (op seqValuesOp) Invoke(ec *Frame) ([]interface{}, error) {
+func (op seqValuesOp) Invoke(fm *Frame) ([]interface{}, error) {
 	var values []interface{}
 	for _, subop := range op.subops {
-		moreValues, err := subop.Exec(ec)
+		moreValues, err := subop.Exec(fm)
 		if err != nil {
 			return nil, err
 		}

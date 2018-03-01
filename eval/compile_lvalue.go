@@ -21,13 +21,13 @@ type LValuesOpBody interface {
 }
 
 // Exec executes an LValuesOp, producing Variable's.
-func (op LValuesOp) Exec(ec *Frame) ([]vars.Type, error) {
+func (op LValuesOp) Exec(fm *Frame) ([]vars.Type, error) {
 	// Empty value is considered to generate no lvalues.
 	if op.Body == nil {
 		return []vars.Type{}, nil
 	}
-	ec.begin, ec.end = op.Begin, op.End
-	return op.Body.Invoke(ec)
+	fm.begin, fm.end = op.Begin, op.End
+	return op.Body.Invoke(fm)
 }
 
 // lvaluesOp compiles lvalues, returning the fixed part and, optionally a rest
@@ -173,15 +173,15 @@ type elemOp struct {
 	ends     []int
 }
 
-func (op *elemOp) Invoke(ec *Frame) ([]vars.Type, error) {
-	variable := ec.ResolveVar(op.ns, op.name)
+func (op *elemOp) Invoke(fm *Frame) ([]vars.Type, error) {
+	variable := fm.ResolveVar(op.ns, op.name)
 	if variable == nil {
 		return nil, fmt.Errorf("variable $%s:%s does not exist, compiler bug", op.ns, op.name)
 	}
 
 	indicies := make([]interface{}, len(op.indexOps))
 	for i, op := range op.indexOps {
-		values, err := op.Exec(ec)
+		values, err := op.Exec(fm)
 		maybeThrow(err)
 		// TODO: Implement multi-indexing.
 		if len(values) != 1 {
@@ -193,9 +193,9 @@ func (op *elemOp) Invoke(ec *Frame) ([]vars.Type, error) {
 	if err != nil {
 		level := vars.GetElementErrorLevel(err)
 		if level < 0 {
-			ec.errorpf(op.begin, op.end, "%s", err)
+			fm.errorpf(op.begin, op.end, "%s", err)
 		} else {
-			ec.errorpf(op.begin, op.ends[level], "%s", err)
+			fm.errorpf(op.begin, op.ends[level], "%s", err)
 		}
 	}
 	return []vars.Type{elemVar}, nil

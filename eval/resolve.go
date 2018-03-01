@@ -75,9 +75,9 @@ func (ev *evalerScopes) EachNsInTop(f func(s string)) {
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
-func (ec *Frame) ResolveVar(n, name string) vars.Type {
+func (fm *Frame) ResolveVar(n, name string) vars.Type {
 	if n == "" {
-		return ec.resolveUnqualified(name)
+		return fm.resolveUnqualified(name)
 	}
 
 	// TODO: Let this function accept the fully qualified name.
@@ -97,13 +97,13 @@ func (ec *Frame) ResolveVar(n, name string) vars.Type {
 		}
 		return nil
 	case "local:":
-		ns = ec.local
+		ns = fm.local
 	case "up:":
-		ns = ec.up
+		ns = fm.up
 	case "builtin:":
-		ns = ec.Builtin
+		ns = fm.Builtin
 	default:
-		v := ec.resolveUnqualified(segs[0])
+		v := fm.resolveUnqualified(segs[0])
 		if v == nil {
 			return nil
 		}
@@ -135,12 +135,12 @@ func splitQName(qname string) []string {
 	return segs
 }
 
-func (ec *Frame) resolveUnqualified(name string) vars.Type {
-	if v, ok := ec.local[name]; ok {
+func (fm *Frame) resolveUnqualified(name string) vars.Type {
+	if v, ok := fm.local[name]; ok {
 		return v
 	}
-	if v, ok := ec.up[name]; ok {
+	if v, ok := fm.up[name]; ok {
 		return v
 	}
-	return ec.Builtin[name]
+	return fm.Builtin[name]
 }

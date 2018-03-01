@@ -25,9 +25,9 @@ type OpBody interface {
 }
 
 // Exec executes an Op.
-func (op Op) Exec(ec *Frame) error {
-	ec.begin, ec.end = op.Begin, op.End
-	return op.Body.Invoke(ec)
+func (op Op) Exec(fm *Frame) error {
+	fm.begin, fm.end = op.Begin, op.End
+	return op.Body.Invoke(fm)
 }
 
 func (cp *compiler) chunk(n *parse.Chunk) OpBody {
@@ -66,17 +66,17 @@ type pipelineOp struct {
 
 const pipelineChanBufferSize = 32
 
-func (op *pipelineOp) Invoke(ec *Frame) error {
-	if ec.IsInterrupted() {
+func (op *pipelineOp) Invoke(fm *Frame) error {
+	if fm.IsInterrupted() {
 		return ErrInterrupted
 	}
 
 	if op.bg {
-		ec = ec.fork("background job" + op.source)
-		ec.intCh = nil
-		ec.background = true
+		fm = fm.fork("background job" + op.source)
+		fm.intCh = nil
+		fm.background = true
 
-		if ec.Editor != nil {
+		if fm.Editor != nil {
 			// TODO: Redirect output in interactive mode so that the line
 			// editor does not get messed up.
 		}
@@ -93,9 +93,9 @@ func (op *pipelineOp) Invoke(ec *Frame) error {
 	// For each form, create a dedicated evalCtx and run asynchronously
 	for i, op := range op.subops {
 		hasChanInput := i > 0
-		newEc := ec.fork("[form op]")
+		newFm := fm.fork("[form op]")
 		if i > 0 {
-			newEc.ports[0] = nextIn
+			newFm.ports[0] = nextIn
 		}
 		if i < nforms-1 {
 			// Each internal port pair consists of a (byte) pipe pair and a
@@ -106,7 +106,7 @@ func (op *pipelineOp) Invoke(ec *Frame) error {
 				return fmt.Errorf("failed to create pipe: %s", e)
 			}
 			ch := make(chan interface{}, pipelineChanBufferSize)
-			newEc.ports[1] = &Port{
+			newFm.ports[1] = &Port{
 				File: writer, Chan: ch, CloseFile: true, CloseChan: true}
 			nextIn = &Port{
 				File: reader, Chan: ch, CloseFile: true, CloseChan: false}
@@ -114,8 +114,8 @@ func (op *pipelineOp) Invoke(ec *Frame) error {
 		thisOp := op
 		thisError := &errors[i]
 		go func() {
-			err := newEc.Eval(thisOp)
-			newEc.Close()
+			err := newFm.Eval(thisOp)
+			newFm.Close()
 			if err != nil {
 				*thisError = err.(*Exception)
 			}
@@ -125,7 +125,7 @@ func (op *pipelineOp) Invoke(ec *Frame) error {
 				// mitigates the effect of erroneous pipelines like
 				// "range 100 | cat"; without draining the pipeline will
 				// lock up.
-				for range newEc.ports[0].Chan {
+				for range newFm.ports[0].Chan {
 				}
 			}
 		}()
@@ -140,10 +140,10 @@ func (op *pipelineOp) Invoke(ec *Frame) error {
 			if err != nil {
 				msg += ", errors = " + err.Error()
 			}
-			if ec.Editor != nil {
-				ec.Editor.Notify("%s", msg)
+			if fm.Editor != nil {
+				fm.Editor.Notify("%s", msg)
 			} else {
-				ec.ports[2].File.WriteString(msg + "\n")
+				fm.ports[2].File.WriteString(msg + "\n")
 			}
 		}()
 		return nil
@@ -210,10 +210,10 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 		// This cannot be replaced with newSeqValuesOp as it depends on the fact
 		// that argOps will be changed later.
 		argsOp := ValuesOp{
-			funcValuesOp(func(ec *Frame) ([]interface{}, error) {
+			funcValuesOp(func(fm *Frame) ([]interface{}, error) {
 				var values []interface{}
 				for _, op := range argOps {
-					moreValues, err := op.Exec(ec)
+					moreValues, err := op.Exec(fm)
 					if err != nil {
 						return nil, err
 					}
@@ -251,7 +251,7 @@ type formOp struct {
 	begin, end     int
 }
 
-func (op *formOp) Invoke(ec *Frame) (errRet error) {
+func (op *formOp) Invoke(fm *Frame) (errRet error) {
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
 
@@ -262,7 +262,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 		var saveVars []vars.Type
 		var saveVals []interface{}
 		for _, op := range op.saveVarsOps {
-			moreSaveVars, err := op.Exec(ec)
+			moreSaveVars, err := op.Exec(fm)
 			if err != nil {
 				return err
 			}
@@ -281,7 +281,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 		}
 		// Do assignment.
 		for _, subop := range op.assignmentOps {
-			err := subop.Exec(ec)
+			err := subop.Exec(fm)
 			if err != nil {
 				return err
 			}
@@ -308,24 +308,24 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 
 	// redirs
 	for _, redirOp := range op.redirOps {
-		err := redirOp.Exec(ec)
+		err := redirOp.Exec(fm)
 		if err != nil {
 			return err
 		}
 	}
 
 	if op.specialOpBody != nil {
-		return op.specialOpBody.Invoke(ec)
+		return op.specialOpBody.Invoke(fm)
 	}
 	var headFn Callable
 	var args []interface{}
 	if op.headOp.Body != nil {
 		// head
-		headFn = ec.ExecAndUnwrap("head of command", op.headOp).One().Callable()
+		headFn = fm.ExecAndUnwrap("head of command", op.headOp).One().Callable()
 
 		// args
 		for _, argOp := range op.argOps {
-			moreArgs, err := argOp.Exec(ec)
+			moreArgs, err := argOp.Exec(fm)
 			if err != nil {
 				return err
 			}
@@ -335,7 +335,7 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 
 	// opts
 	// XXX This conversion should be avoided.
-	optValues, err := op.optsOp.Invoke(ec)
+	optValues, err := op.optsOp.Invoke(fm)
 	if err != nil {
 		return err
 	}
@@ -350,12 +350,12 @@ func (op *formOp) Invoke(ec *Frame) (errRet error) {
 		}
 	}
 
-	ec.begin, ec.end = op.begin, op.end
+	fm.begin, fm.end = op.begin, op.end
 
 	if headFn != nil {
-		return headFn.Call(ec, args, convertedOpts)
+		return headFn.Call(fm, args, convertedOpts)
 	} else {
-		return op.spaceyAssignOp.Exec(ec)
+		return op.spaceyAssignOp.Exec(fm)
 	}
 }
 
@@ -384,12 +384,12 @@ type assignmentOp struct {
 	valuesOp    ValuesOp
 }
 
-func (op *assignmentOp) Invoke(ec *Frame) (errRet error) {
-	variables, err := op.variablesOp.Exec(ec)
+func (op *assignmentOp) Invoke(fm *Frame) (errRet error) {
+	variables, err := op.variablesOp.Exec(fm)
 	if err != nil {
 		return err
 	}
-	rest, err := op.restOp.Exec(ec)
+	rest, err := op.restOp.Exec(fm)
 	if err != nil {
 		return err
 	}
@@ -404,7 +404,7 @@ func (op *assignmentOp) Invoke(ec *Frame) (errRet error) {
 	defer fixNilVariables(variables, &errRet)
 	defer fixNilVariables(rest, &errRet)
 
-	values, err := op.valuesOp.Exec(ec)
+	values, err := op.valuesOp.Exec(fm)
 	if err != nil {
 		return err
 	}
@@ -485,7 +485,7 @@ type redirOp struct {
 	flag    int
 }
 
-func (op *redirOp) Invoke(ec *Frame) error {
+func (op *redirOp) Invoke(fm *Frame) error {
 	var dst int
 	if op.dstOp.Body == nil {
 		// use default dst fd
@@ -499,21 +499,21 @@ func (op *redirOp) Invoke(ec *Frame) error {
 		}
 	} else {
 		// dst must be a valid fd
-		dst = ec.ExecAndUnwrap("Fd", op.dstOp).One().NonNegativeInt()
+		dst = fm.ExecAndUnwrap("Fd", op.dstOp).One().NonNegativeInt()
 	}
 
-	ec.growPorts(dst + 1)
+	fm.growPorts(dst + 1)
 	// Logger.Printf("closing old port %d of %s", dst, ec.context)
-	ec.ports[dst].Close()
+	fm.ports[dst].Close()
 
-	srcUnwrap := ec.ExecAndUnwrap("redirection source", op.srcOp).One()
+	srcUnwrap := fm.ExecAndUnwrap("redirection source", op.srcOp).One()
 	if op.srcIsFd {
 		src := srcUnwrap.FdOrClose()
 		if src == -1 {
 			// close
-			ec.ports[dst] = &Port{}
+			fm.ports[dst] = &Port{}
 		} else {
-			ec.ports[dst] = ec.ports[src].Fork()
+			fm.ports[dst] = fm.ports[src].Fork()
 		}
 	} else {
 		switch src := srcUnwrap.Any().(type) {
@@ -522,12 +522,12 @@ func (op *redirOp) Invoke(ec *Frame) error {
 			if err != nil {
 				return fmt.Errorf("failed to open file %s: %s", vals.Repr(src, vals.NoPretty), err)
 			}
-			ec.ports[dst] = &Port{
+			fm.ports[dst] = &Port{
 				File: f, Chan: BlackholeChan,
 				CloseFile: true,
 			}
 		case vals.File:
-			ec.ports[dst] = &Port{
+			fm.ports[dst] = &Port{
 				File: src.Inner, Chan: BlackholeChan,
 				CloseFile: false,
 			}
@@ -541,7 +541,7 @@ func (op *redirOp) Invoke(ec *Frame) error {
 			default:
 				return errors.New("can only use < or > with pipes")
 			}
-			ec.ports[dst] = &Port{
+			fm.ports[dst] = &Port{
 				File: f, Chan: BlackholeChan,
 				CloseFile: false,
 			}

@@ -9,7 +9,7 @@ import (
 // Callable wraps the Call method.
 type Callable interface {
 	// Call calls the receiver in a Frame with arguments and options.
-	Call(ec *Frame, args []interface{}, opts map[string]interface{}) error
+	Call(fm *Frame, args []interface{}, opts map[string]interface{}) error
 }
 
 var (
