@@ -39,7 +39,7 @@ func (m *hashMap) Len() int {
 	return m.count
 }
 
-func (m *hashMap) Get(k interface{}) (interface{}, bool) {
+func (m *hashMap) Index(k interface{}) (interface{}, bool) {
 	return m.root.find(0, m.hash(k), k, m.equal)
 }
 

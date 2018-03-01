@@ -10,9 +10,9 @@ type Map interface {
 	json.Marshaler
 	// Len returns the length of the map.
 	Len() int
-	// Get returns whether there is a value associated with the given key, and
+	// Index returns whether there is a value associated with the given key, and
 	// that value or nil.
-	Get(k interface{}) (interface{}, bool)
+	Index(k interface{}) (interface{}, bool)
 	// Assoc returns an almost identical map, with the given key associated with
 	// the given value.
 	Assoc(k, v interface{}) Map

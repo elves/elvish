@@ -27,7 +27,7 @@ func TestVector(t *testing.T) {
 	)
 
 	v := testCons(t, n)
-	testNth(t, v, 0, n)
+	testIndex(t, v, 0, n)
 	testAssocN(t, v, subst)
 	testIterator(t, v.Iterator(), 0, n)
 	testPop(t, v)
@@ -52,18 +52,18 @@ func testCons(t *testing.T, n int) Vector {
 	return v
 }
 
-// testNth tests Nth, assuming that the vector contains begin...int-1.
-func testNth(t *testing.T, v Vector, begin, end int) {
+// testIndex tests Index, assuming that the vector contains begin...int-1.
+func testIndex(t *testing.T, v Vector, begin, end int) {
 	n := v.Len()
 	for i := 0; i < n; i++ {
-		elem := v.Nth(i)
+		elem, _ := v.Index(i)
 		if elem != i {
-			t.Errorf("v.Nth(%v) == %v, want %v", i, elem, i)
+			t.Errorf("v.Index(%v) == %v, want %v", i, elem, i)
 		}
 	}
 	for _, i := range []int{-2, -1, n, n + 1, n * 2} {
-		if elem := v.Nth(i); elem != nil {
-			t.Errorf("v.Nth(%d) == %v, want nil", i, elem)
+		if elem, _ := v.Index(i); elem != nil {
+			t.Errorf("v.Index(%d) == %v, want nil", i, elem)
 		}
 	}
 }
@@ -91,15 +91,15 @@ func testAssocN(t *testing.T, v Vector, subst interface{}) {
 		v = v.AssocN(i, subst)
 
 		if i < n {
-			elem := oldv.Nth(i)
+			elem, _ := oldv.Index(i)
 			if elem != i {
-				t.Errorf("oldv.Nth(%v) == %v, want %v", i, elem, i)
+				t.Errorf("oldv.Index(%v) == %v, want %v", i, elem, i)
 			}
 		}
 
-		elem := v.Nth(i)
+		elem, _ := v.Index(i)
 		if elem != subst {
-			t.Errorf("v.Nth(%v) == %v, want %v", i, elem, subst)
+			t.Errorf("v.Index(%v) == %v, want %v", i, elem, subst)
 		}
 	}
 
@@ -139,7 +139,7 @@ func TestSubVector(t *testing.T) {
 	}
 
 	sv := v.SubVector(0, 4)
-	testNth(t, sv, 0, 4)
+	testIndex(t, sv, 0, 4)
 	testAssocN(t, sv, "233")
 	testIterator(t, sv.Iterator(), 0, 4)
 	testPop(t, sv)
@@ -193,7 +193,7 @@ func checkVector(v Vector, values ...interface{}) bool {
 		return false
 	}
 	for i, a := range values {
-		if v.Nth(i) != a {
+		if x, _ := v.Index(i); x != a {
 			return false
 		}
 	}
@@ -217,7 +217,9 @@ func eqVector(v1, v2 Vector) bool {
 		return false
 	}
 	for i := 0; i < v1.Len(); i++ {
-		if v1.Nth(i) != v2.Nth(i) {
+		a1, _ := v1.Index(i)
+		a2, _ := v2.Index(i)
+		if a1 != a2 {
 			return false
 		}
 	}
@@ -302,9 +304,9 @@ func init() {
 
 var x interface{}
 
-func BenchmarkNthSeqNativeN4(b *testing.B) { benchmarkNthSeqNative(b, N4) }
+func BenchmarkIndexSeqNativeN4(b *testing.B) { benchmarkIndexSeqNative(b, N4) }
 
-func benchmarkNthSeqNative(b *testing.B, n int) {
+func benchmarkIndexSeqNative(b *testing.B, n int) {
 	for r := 0; r < b.N; r++ {
 		for i := 0; i < n; i++ {
 			x = sliceN4[i]
@@ -312,12 +314,12 @@ func benchmarkNthSeqNative(b *testing.B, n int) {
 	}
 }
 
-func BenchmarkNthSeqPersistentN4(b *testing.B) { benchmarkNthSeqPersistent(b, N4) }
+func BenchmarkIndexSeqPersistentN4(b *testing.B) { benchmarkIndexSeqPersistent(b, N4) }
 
-func benchmarkNthSeqPersistent(b *testing.B, n int) {
+func benchmarkIndexSeqPersistent(b *testing.B, n int) {
 	for r := 0; r < b.N; r++ {
 		for i := 0; i < n; i++ {
-			x = vectorN4.Nth(i)
+			x, _ = vectorN4.Index(i)
 		}
 	}
 }
@@ -331,7 +333,7 @@ func init() {
 	}
 }
 
-func BenchmarkNthRandNative(b *testing.B) {
+func BenchmarkIndexRandNative(b *testing.B) {
 	for r := 0; r < b.N; r++ {
 		for _, i := range randIndicies {
 			x = sliceN4[i]
@@ -339,10 +341,10 @@ func BenchmarkNthRandNative(b *testing.B) {
 	}
 }
 
-func BenchmarkNthRandPersistent(b *testing.B) {
+func BenchmarkIndexRandPersistent(b *testing.B) {
 	for r := 0; r < b.N; r++ {
 		for _, i := range randIndicies {
-			x = vectorN4.Nth(i)
+			x, _ = vectorN4.Index(i)
 		}
 	}
 }
