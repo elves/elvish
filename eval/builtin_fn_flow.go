@@ -52,7 +52,7 @@ func each(fm *Frame, f Callable, inputs Inputs) {
 		newec := fm.fork("closure of each")
 		newec.ports[0] = DevNullClosedChan
 		ex := newec.Call(f, []interface{}{v}, NoOpts)
-		ClosePorts(newec.ports)
+		newec.Close()
 
 		if ex != nil {
 			switch ex.(*Exception).Cause {
@@ -83,7 +83,7 @@ func peach(fm *Frame, f Callable, inputs Inputs) {
 			newec := fm.fork("closure of peach")
 			newec.ports[0] = DevNullClosedChan
 			ex := newec.Call(f, []interface{}{v}, NoOpts)
-			ClosePorts(newec.ports)
+			newec.Close()
 
 			if ex != nil {
 				switch ex.(*Exception).Cause {

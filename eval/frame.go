@@ -36,6 +36,15 @@ func NewTopFrame(ev *Evaler, src *Source, ports []*Port) *Frame {
 	}
 }
 
+// Close releases resources allocated for this frame. It always returns a nil
+// error. It may be called only once.
+func (fm *Frame) Close() error {
+	for _, port := range fm.ports {
+		port.Close()
+	}
+	return nil
+}
+
 // InputChan returns a channel from which input can be read.
 func (ec *Frame) InputChan() chan interface{} {
 	return ec.ports[0].Chan

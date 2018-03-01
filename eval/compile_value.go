@@ -402,7 +402,7 @@ func pcaptureOutputInner(ec *Frame, op Op, valuesCb func(<-chan interface{}), by
 
 	err = newEc.Eval(op)
 
-	ClosePorts(newEc.ports)
+	newEc.Close()
 	<-bytesCollected
 	<-chCollected
 
