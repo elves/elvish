@@ -39,7 +39,7 @@ func (m *hashMap) Len() int {
 	return m.count
 }
 
-func (m *hashMap) Get(k interface{}) (interface{}, bool) {
+func (m *hashMap) Index(k interface{}) (interface{}, bool) {
 	return m.root.find(0, m.hash(k), k, m.equal)
 }
 
@@ -52,7 +52,7 @@ func (m *hashMap) Assoc(k, v interface{}) Map {
 	return &hashMap{newCount, newRoot, m.equal, m.hash}
 }
 
-func (m *hashMap) Without(k interface{}) Map {
+func (m *hashMap) Dissoc(k interface{}) Map {
 	newRoot, deleted := m.root.without(0, m.hash(k), k, m.equal)
 	newCount := m.count
 	if deleted {

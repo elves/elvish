@@ -22,7 +22,7 @@ const (
 
 	NArrayNode = 0x100
 
-	NIneffectiveWithout = 0x200
+	NIneffectiveDissoc = 0x200
 
 	N1 = nodeCap + 1
 	N2 = nodeCap*nodeCap + 1
@@ -202,22 +202,22 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 		}
 	}
 
-	// Get.
+	// Index.
 	testMapContent(t, m, ref)
-	got, in := m.Get(anotherTestKey(0))
+	got, in := m.Index(anotherTestKey(0))
 	if in {
-		t.Errorf("m.Get <bad key> returns entry %v", got)
+		t.Errorf("m.Index <bad key> returns entry %v", got)
 	}
 	// Iterator.
 	testIterator(t, m, ref)
 
-	// Without.
+	// Dissoc.
 	// Ineffective ones.
-	for i := 0; i < NIneffectiveWithout; i++ {
+	for i := 0; i < NIneffectiveDissoc; i++ {
 		k := anotherTestKey(uint32(rand.Int31())>>15 | uint32(rand.Int31())<<16)
-		m = m.Without(k)
+		m = m.Dissoc(k)
 		if m.Len() != len(ref) {
-			t.Errorf("m.Without removes item when it shouldn't")
+			t.Errorf("m.Dissoc removes item when it shouldn't")
 		}
 	}
 
@@ -225,13 +225,13 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 	for i := len(refEntries) - 1; i >= 0; i-- {
 		k := refEntries[i].k
 		delete(ref, k)
-		m = m.Without(k)
+		m = m.Dissoc(k)
 		if m.Len() != len(ref) {
 			t.Errorf("m.Len() = %d after removing, should be %v", m.Len(), len(ref))
 		}
-		_, in := m.Get(k)
+		_, in := m.Index(k)
 		if in {
-			t.Errorf("m.Get(%v) still returns item after removal", k)
+			t.Errorf("m.Index(%v) still returns item after removal", k)
 		}
 		// Checking all elements is expensive. Only do this 1% of the time.
 		if rand.Float64() < 0.01 {
@@ -242,12 +242,12 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 
 func testMapContent(t *testing.T, m Map, ref map[testKey]string) {
 	for k, v := range ref {
-		got, in := m.Get(k)
+		got, in := m.Index(k)
 		if !in {
-			t.Errorf("m.Get 0x%x returns no entry", k)
+			t.Errorf("m.Index 0x%x returns no entry", k)
 		}
 		if got != v {
-			t.Errorf("m.Get(0x%x) = %v, want %v", k, got, v)
+			t.Errorf("m.Index(0x%x) = %v, want %v", k, got, v)
 		}
 	}
 }

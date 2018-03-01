@@ -10,15 +10,15 @@ type Map interface {
 	json.Marshaler
 	// Len returns the length of the map.
 	Len() int
-	// Get returns whether there is a value associated with the given key, and
+	// Index returns whether there is a value associated with the given key, and
 	// that value or nil.
-	Get(k interface{}) (interface{}, bool)
+	Index(k interface{}) (interface{}, bool)
 	// Assoc returns an almost identical map, with the given key associated with
 	// the given value.
 	Assoc(k, v interface{}) Map
-	// Without returns an almost identical map, with the given key associated
+	// Dissoc returns an almost identical map, with the given key associated
 	// with no value.
-	Without(k interface{}) Map
+	Dissoc(k interface{}) Map
 	// Iterator returns an iterator over the map.
 	Iterator() Iterator
 }
@@ -40,6 +40,6 @@ type Iterator interface {
 
 // HasKey reports whether a Map has the given key.
 func HasKey(m Map, k interface{}) bool {
-	_, ok := m.Get(k)
+	_, ok := m.Index(k)
 	return ok
 }
