@@ -35,15 +35,15 @@ const (
 )
 
 const (
-	defaultValueOutIndicator = "▶ "
-	initIndent               = vals.NoPretty
+	defaultValuePrefix = "▶ "
+	initIndent         = vals.NoPretty
 )
 
 // Evaler is used to evaluate elvish sources. It maintains runtime context
 // shared among all evalCtx instances.
 type Evaler struct {
 	evalerScopes
-	evalerPorts
+	valuePrefix  string
 	DaemonClient *daemon.Client
 	modules      map[string]Ns
 	// bundled modules
@@ -60,18 +60,14 @@ type evalerScopes struct {
 
 // NewEvaler creates a new Evaler.
 func NewEvaler() *Evaler {
-	valueOutIndicator := defaultValueOutIndicator
-
 	builtin := builtinNs.Clone()
-	builtin["value-out-indicator"] = vars.NewFromPtr(&valueOutIndicator)
 
 	ev := &Evaler{
+		valuePrefix: defaultValuePrefix,
 		evalerScopes: evalerScopes{
 			Global:  make(Ns),
 			Builtin: builtinNs,
 		},
-		evalerPorts: newEvalerPorts(
-			os.Stdin, os.Stdout, os.Stderr, &valueOutIndicator),
 		modules: map[string]Ns{
 			"builtin": builtin,
 		},
@@ -80,12 +76,15 @@ func NewEvaler() *Evaler {
 		intCh:   nil,
 	}
 
+	builtin["value-out-indicator"] = vars.NewFromPtr(&ev.valuePrefix)
+
 	return ev
 }
 
-// Close releases resources allocated when creating this Evaler.
-func (ev *Evaler) Close() {
-	ev.evalerPorts.close()
+// Close releases resources allocated when creating this Evaler. Currently this
+// does nothing and always returns a nil error.
+func (ev *Evaler) Close() error {
+	return nil
 }
 
 // InstallDaemonClient installs a daemon client to the Evaler.
@@ -142,15 +141,17 @@ func (ev *Evaler) eval(op Op, ports []*Port, src *Source) error {
 	return ec.Eval(op)
 }
 
-// Eval sets up the Evaler with standard ports and evaluates an Op. The supplied
-// name and text are used in diagnostic messages.
-func (ev *Evaler) Eval(op Op, src *Source) error {
-	return ev.EvalWithPorts(ev.ports[:], op, src)
+// EvalWithStdPorts sets up the Evaler with standard ports and evaluates an Op.
+// The supplied name and text are used in diagnostic messages.
+func (ev *Evaler) EvalWithStdPorts(op Op, src *Source) error {
+	stdPorts := newStdPorts(os.Stdin, os.Stdout, os.Stderr, ev.valuePrefix)
+	defer stdPorts.close()
+	return ev.Eval(op, stdPorts.ports[:], src)
 }
 
-// EvalWithPorts sets up the Evaler with the given ports and evaluates an Op.
+// Eval sets up the Evaler with the given ports and evaluates an Op.
 // The supplied name and text are used in diagnostic messages.
-func (ev *Evaler) EvalWithPorts(ports []*Port, op Op, src *Source) error {
+func (ev *Evaler) Eval(op Op, ports []*Port, src *Source) error {
 	// Ignore TTOU.
 	//
 	// When a subprocess in its own process group puts itself in the foreground,
@@ -223,7 +224,7 @@ func (ev *Evaler) SourceText(src *Source) error {
 	if err != nil {
 		return err
 	}
-	return ev.Eval(op, src)
+	return ev.EvalWithStdPorts(op, src)
 }
 
 func readFileUTF8(fname string) (string, error) {

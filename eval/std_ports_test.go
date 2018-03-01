@@ -15,7 +15,7 @@ func TestEvalerPorts(t *testing.T) {
 	defer stderrReader.Close()
 
 	prefix := "> "
-	ep := newEvalerPorts(DevNull, stdout, stderr, &prefix)
+	ep := newStdPorts(DevNull, stdout, stderr, prefix)
 	ep.ports[1].Chan <- "x"
 	ep.ports[1].Chan <- "y"
 	ep.ports[2].Chan <- "bad"
