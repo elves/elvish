@@ -40,6 +40,6 @@ type Iterator interface {
 
 // HasKey reports whether a Map has the given key.
 func HasKey(m Map, k interface{}) bool {
-	_, ok := m.Get(k)
+	_, ok := m.Index(k)
 	return ok
 }
