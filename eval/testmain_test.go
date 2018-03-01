@@ -68,6 +68,7 @@ var mods = map[string]string{
 	"a/b/c/d":  "name = a/b/c/d",
 	"a/b/c/x":  "use ./d; d = $d:name; use ../../../lorem; lorem = $lorem:name",
 	"has/init": "put has/init",
+	"put-x":    "put $x",
 }
 
 var libDir string

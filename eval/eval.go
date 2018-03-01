@@ -206,7 +206,7 @@ func (ev *Evaler) eval(op Op, ports []*Port, src *Source) error {
 	return ec.Eval(op)
 }
 
-// Compile compiles elvish code in the global scope. If the error is not nil, it
+// Compile compiles Elvish code in the global scope. If the error is not nil, it
 // always has type CompilationError.
 func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (Op, error) {
 	return compile(ev.Builtin.static(), ev.Global.static(), n, src)

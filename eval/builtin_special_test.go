@@ -39,7 +39,7 @@ var builtinSpecialTests = []Test{
 	// return.
 	{"fn f []{ put a; return; put b }; f", want{out: strs("a")}},
 
-	// Modules (see setup_datadir_test.go for setup)
+	// Modules (see testmain_test.go for setup)
 	// "use" imports a module.
 	{`use lorem; put $lorem:name`, want{out: strs("lorem")}},
 	// imports are lexically scoped
@@ -60,6 +60,9 @@ var builtinSpecialTests = []Test{
 		want{out: strs("d", "a/b/c/d")}},
 	// relative uses
 	{`use a/b/c/x; put $x:d $x:lorem`, want{out: strs("a/b/c/d", "lorem")}},
+
+	// Variables defined in the default global scope is invisible from modules
+	NewTest("x = foo; use put-x").WantAnyErr(),
 
 	// TODO: Test module namespace
 }

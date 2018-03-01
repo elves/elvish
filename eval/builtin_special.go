@@ -295,7 +295,7 @@ func loadModule(fm *Frame, name string) (Ns, error) {
 		0, len(src.code), fm.addTraceback(), false,
 	}
 
-	op, err := newFm.Compile(n, src)
+	op, err := compile(newFm.Builtin.static(), modGlobal.static(), n, src)
 	if err != nil {
 		return nil, err
 	}
