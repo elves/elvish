@@ -16,6 +16,7 @@ import (
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hashmap"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -223,4 +224,43 @@ func (ev *Evaler) EvalSource(src *Source) error {
 		return err
 	}
 	return ev.EvalWithStdPorts(op, src)
+}
+
+// SourceRC evaluates a rc.elv file. It evaluates the file in the global
+// namespace. If the file defines a $-exports- map variable, the variable is
+// removed and its content is poured into the global namespace, not overriding
+// existing variables.
+func (ev *Evaler) SourceRC(src *Source) error {
+	n, err := parse.Parse(src.name, src.code)
+	if err != nil {
+		return err
+	}
+	op, err := ev.Compile(n, src)
+	if err != nil {
+		return err
+	}
+	errEval := ev.EvalWithStdPorts(op, src)
+	var errExports error
+	if ev.Global.HasName("-exports-") {
+		exports := ev.Global.PopName("-exports-").Get()
+		switch exports := exports.(type) {
+		case hashmap.Map:
+			for it := exports.Iterator(); it.HasElem(); it.Next() {
+				k, v := it.Elem()
+				if name, ok := k.(string); ok {
+					if !ev.Global.HasName(name) {
+						ev.Global.Add(name, vars.NewAnyWithInit(v))
+					}
+				} else {
+					errKey := fmt.Errorf("non-string key in $-exports-: %s",
+						vals.Repr(k, vals.NoPretty))
+					errExports = util.Errors(errExports, errKey)
+				}
+			}
+		default:
+			errExports = fmt.Errorf(
+				"$-exports- should be a map, got %s", vals.Kind(exports))
+		}
+	}
+	return util.Errors(errEval, errExports)
 }

@@ -45,6 +45,20 @@ func (ns Ns) Get(k interface{}) (interface{}, bool) {
 	return nil, false
 }
 
+// HasName reports the namespace contains the given name.
+func (ns Ns) HasName(name string) bool {
+	_, ok := ns[name]
+	return ok
+}
+
+// PopName removes a name from the namespace and returns the variable it used to
+// contain.
+func (ns Ns) PopName(name string) vars.Type {
+	v := ns[name]
+	delete(ns, name)
+	return v
+}
+
 // Clone returns a shallow copy of the namespace.
 func (ns Ns) Clone() Ns {
 	ns2 := make(Ns)

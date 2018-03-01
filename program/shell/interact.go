@@ -89,7 +89,7 @@ func sourceRC(ev *eval.Evaler, dataDir string) error {
 	}
 	code, err := readFileUTF8(absPath)
 
-	return ev.EvalSource(eval.NewScriptSource("rc.elv", absPath, code))
+	return ev.SourceRC(eval.NewScriptSource("rc.elv", absPath, code))
 }
 
 func basicReadLine() (string, error) {
