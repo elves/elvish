@@ -72,7 +72,7 @@ func interact(ev *eval.Evaler, dataDir string) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		err = ev.SourceText(eval.NewInteractiveSource(line))
+		err = ev.EvalSource(eval.NewInteractiveSource(line))
 		if err != nil {
 			util.PprintError(err)
 		}
@@ -89,7 +89,7 @@ func sourceRC(ev *eval.Evaler, dataDir string) error {
 	}
 	code, err := readFileUTF8(absPath)
 
-	return ev.SourceText(eval.NewScriptSource("rc.elv", absPath, code))
+	return ev.EvalSource(eval.NewScriptSource("rc.elv", absPath, code))
 }
 
 func basicReadLine() (string, error) {

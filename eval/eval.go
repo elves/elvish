@@ -4,12 +4,10 @@ package eval
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
-	"unicode/utf8"
 
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/eval/bundled"
@@ -134,13 +132,6 @@ func (fm *Frame) growPorts(n int) {
 	copy(fm.ports, ports)
 }
 
-// eval evaluates a chunk node n. The supplied name and text are used in
-// diagnostic messages.
-func (ev *Evaler) eval(op Op, ports []*Port, src *Source) error {
-	ec := NewTopFrame(ev, src, ports)
-	return ec.Eval(op)
-}
-
 // EvalWithStdPorts sets up the Evaler with standard ports and evaluates an Op.
 // The supplied name and text are used in diagnostic messages.
 func (ev *Evaler) EvalWithStdPorts(op Op, src *Source) error {
@@ -208,14 +199,21 @@ func (ev *Evaler) Eval(op Op, ports []*Port, src *Source) error {
 	return err
 }
 
+// eval evaluates a chunk node n. The supplied name and text are used in
+// diagnostic messages.
+func (ev *Evaler) eval(op Op, ports []*Port, src *Source) error {
+	ec := NewTopFrame(ev, src, ports)
+	return ec.Eval(op)
+}
+
 // Compile compiles elvish code in the global scope. If the error is not nil, it
 // always has type CompilationError.
 func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (Op, error) {
 	return compile(ev.Builtin.static(), ev.Global.static(), n, src)
 }
 
-// SourceText evaluates a chunk of elvish source.
-func (ev *Evaler) SourceText(src *Source) error {
+// EvalSource evaluates a chunk of Elvish source.
+func (ev *Evaler) EvalSource(src *Source) error {
 	n, err := parse.Parse(src.name, src.code)
 	if err != nil {
 		return err
@@ -225,24 +223,4 @@ func (ev *Evaler) SourceText(src *Source) error {
 		return err
 	}
 	return ev.EvalWithStdPorts(op, src)
-}
-
-func readFileUTF8(fname string) (string, error) {
-	bytes, err := ioutil.ReadFile(fname)
-	if err != nil {
-		return "", err
-	}
-	if !utf8.Valid(bytes) {
-		return "", fmt.Errorf("%s: source is not valid UTF-8", fname)
-	}
-	return string(bytes), nil
-}
-
-// Source evaluates the content of a file.
-func (ev *Evaler) Source(name, path string) error {
-	code, err := readFileUTF8(path)
-	if err != nil {
-		return err
-	}
-	return ev.SourceText(NewScriptSource(name, path, code))
 }

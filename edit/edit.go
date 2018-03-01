@@ -144,7 +144,7 @@ func NewEditor(in *os.File, out *os.File, sigs <-chan os.Signal, ev *eval.Evaler
 	}
 	ev.Builtin.AddNs("edit", ns)
 
-	err = ev.SourceText(eval.NewScriptSource("[editor]", "[editor]", "use binding; binding:install"))
+	err = ev.EvalSource(eval.NewScriptSource("[editor]", "[editor]", "use binding; binding:install"))
 	if err != nil {
 		fmt.Fprintln(out, "Failed to load default binding:", err)
 	}

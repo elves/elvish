@@ -5,12 +5,15 @@ package eval
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"net"
 	"path/filepath"
 	"time"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/parse"
 )
 
 // Builtins that have not been put into their own groups go here.
@@ -61,11 +64,34 @@ func constantly(args ...interface{}) Callable {
 }
 
 func source(fm *Frame, fname string) error {
-	abs, err := filepath.Abs(fname)
+	path, err := filepath.Abs(fname)
 	if err != nil {
 		return err
 	}
-	return fm.Source(fname, abs)
+	code, err := readFileUTF8(path)
+	if err != nil {
+		return err
+	}
+	n, err := parse.Parse(fname, code)
+	if err != nil {
+		return err
+	}
+	op, err := fm.Evaler.Compile(n, NewScriptSource(fname, path, code))
+	if err != nil {
+		return err
+	}
+	return fm.Eval(op)
+}
+
+func readFileUTF8(fname string) (string, error) {
+	bytes, err := ioutil.ReadFile(fname)
+	if err != nil {
+		return "", err
+	}
+	if !utf8.Valid(bytes) {
+		return "", fmt.Errorf("%s: source is not valid UTF-8", fname)
+	}
+	return string(bytes), nil
 }
 
 func sleep(fm *Frame, t float64) error {
