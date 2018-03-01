@@ -203,11 +203,10 @@ func count(fm *Frame, args ...interface{}) (int, error) {
 	return n, nil
 }
 
-func keys(fm *Frame, m hashmap.Map) {
+func keys(fm *Frame, v interface{}) error {
 	out := fm.ports[1].Chan
-
-	for it := m.Iterator(); it.HasElem(); it.Next() {
-		k, _ := it.Elem()
+	return vals.IterateKeys(v, func(k interface{}) bool {
 		out <- k
-	}
+		return true
+	})
 }

@@ -1,13 +1,9 @@
 package edit
 
 import (
-	"errors"
-
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
-	"github.com/xiaq/persistent/hashmap"
 )
-
-var errCannotIterateKey = errors.New("indexee does not support iterating keys")
 
 type indexComplContext struct {
 	complContextCommon
@@ -80,19 +76,10 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 }
 
 func (ctx *indexComplContext) generate(env *complEnv, ch chan<- rawCandidate) error {
-	m, ok := ctx.indexee.(hashmap.Map)
-	if !ok {
-		return errCannotIterateKey
-	}
-	complIndexInner(m, ch)
-	return nil
-}
-
-func complIndexInner(m hashmap.Map, ch chan<- rawCandidate) {
-	for it := m.Iterator(); it.HasElem(); it.Next() {
-		k, _ := it.Elem()
+	return vals.IterateKeys(ctx.indexee, func(k interface{}) bool {
 		if kstring, ok := k.(string); ok {
 			ch <- plainCandidate(kstring)
 		}
-	}
+		return true
+	})
 }

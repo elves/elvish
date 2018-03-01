@@ -1,11 +1,8 @@
 package edit
 
 import (
-	"reflect"
-	"sort"
 	"testing"
 
-	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 )
 
@@ -24,31 +21,4 @@ func TestFindIndexComplContext(t *testing.T) {
 		// Multi-layer indexing not supported yet
 		{"a[x][", nil},
 	})
-}
-
-func TestComplIndexInner(t *testing.T) {
-	m := vals.MakeMap(map[interface{}]interface{}{
-		"foo":   "bar",
-		"lorem": "ipsum",
-	})
-	var (
-		candidates     rawCandidates
-		wantCandidates = rawCandidates{
-			plainCandidate("foo"), plainCandidate("lorem"),
-		}
-	)
-
-	gets := make(chan rawCandidate)
-	go func() {
-		defer close(gets)
-		complIndexInner(m, gets)
-	}()
-	for v := range gets {
-		candidates = append(candidates, v)
-	}
-	sort.Sort(candidates)
-	if !reflect.DeepEqual(candidates, wantCandidates) {
-		t.Errorf("complIndexInner(%v) = %v, want %v",
-			m, candidates, wantCandidates)
-	}
 }

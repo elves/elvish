@@ -66,6 +66,11 @@ func (c *Closure) Get(k interface{}) (interface{}, bool) {
 	return nil, false
 }
 
+func (c *Closure) IterateKeys(f func(interface{}) bool) {
+	vals.Feed(f, "arg-names", "rest-arg",
+		"opt-names", "opt-defaults", "src", "body")
+}
+
 // Call calls a closure.
 func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{}) error {
 	if c.RestArg != "" {
