@@ -20,7 +20,7 @@ func WaitForRead(files ...*os.File) (ready []bool, err error) {
 		}
 		fdset.Set(fd)
 	}
-	err = Select(maxfd+1, fdset, nil, nil, nil)
+	err = Select(maxfd+1, fdset, nil, nil)
 	ready = make([]bool, len(files))
 	for i, file := range files {
 		ready[i] = fdset.IsSet(int(file.Fd()))

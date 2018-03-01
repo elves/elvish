@@ -8,15 +8,16 @@ package sys
 
 import (
 	"reflect"
-	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
-var nFdBits = (uint)(reflect.TypeOf(syscall.FdSet{}.X__fds_bits[0]).Size() * 8)
+var nFdBits = (uint)(reflect.TypeOf(unix.FdSet{}.X__fds_bits[0]).Size() * 8)
 
-type FdSet syscall.FdSet
+type FdSet unix.FdSet
 
-func (fs *FdSet) s() *syscall.FdSet {
-	return (*syscall.FdSet)(fs)
+func (fs *FdSet) s() *unix.FdSet {
+	return (*unix.FdSet)(fs)
 }
 
 func NewFdSet(fds ...int) *FdSet {

@@ -2,8 +2,8 @@
 
 package sys
 
-import "syscall"
+import "golang.org/x/sys/unix"
 
-func Select(nfd int, r *FdSet, w *FdSet, e *FdSet, timeout *syscall.Timeval) (err error) {
-	return syscall.Select(nfd, r.s(), w.s(), e.s(), timeout)
+func Select(nfd int, r *FdSet, w *FdSet, e *FdSet) error {
+	return unix.Select(nfd, r.s(), w.s(), e.s(), nil)
 }

@@ -3,8 +3,9 @@
 package sys
 
 import (
-	"syscall"
 	"testing"
+
+	"golang.org/x/sys/unix"
 )
 
 func TestFdSet(t *testing.T) {
@@ -30,8 +31,8 @@ func TestFdSet(t *testing.T) {
 
 func TestSelect(t *testing.T) {
 	var p1, p2 [2]int
-	mustNil(syscall.Pipe(p1[:]))
-	mustNil(syscall.Pipe(p2[:]))
+	mustNil(unix.Pipe(p1[:]))
+	mustNil(unix.Pipe(p2[:]))
 	fs := NewFdSet(p1[0], p2[0])
 	var maxfd int
 	if p1[0] > p2[0] {
@@ -40,16 +41,16 @@ func TestSelect(t *testing.T) {
 		maxfd = p2[0] + 1
 	}
 	go func() {
-		syscall.Write(p1[1], []byte("to p1"))
-		syscall.Write(p2[1], []byte("to p2"))
-		syscall.Close(p1[1])
-		syscall.Close(p2[1])
+		unix.Write(p1[1], []byte("to p1"))
+		unix.Write(p2[1], []byte("to p2"))
+		unix.Close(p1[1])
+		unix.Close(p2[1])
 	}()
-	e := Select(maxfd+1, fs, nil, nil, nil)
+	e := Select(maxfd+1, fs, nil, nil)
 	if e != nil {
-		t.Errorf("Select(%v, %v, nil, nil, nil) => %v, want <nil>",
+		t.Errorf("Select(%v, %v, nil, nil) => %v, want <nil>",
 			maxfd+1, fs, e)
 	}
-	syscall.Close(p1[0])
-	syscall.Close(p2[0])
+	unix.Close(p1[0])
+	unix.Close(p2[0])
 }
