@@ -11,27 +11,34 @@ type someType struct {
 	foo string
 }
 
-var scanToGoTests = []struct {
-	src      interface{}
-	preScan  interface{}
-	postScan interface{}
-}{
-	{"12", 0, 12},
-	{"23", 0.0, 23.0},
-	{"x", ' ', 'x'},
-	{"foo", "", "foo"},
-	{someType{"foo"}, someType{}, someType{"foo"}},
+// A wrapper around ScanToGo, to make it easier to test. Instead of supplying a
+// pointer to the destination, an initial value to the destination is supplied
+// and the result is returned.
+func scanToGo2(src interface{}, dstInit interface{}) (interface{}, error) {
+	ptr := reflect.New(reflect.TypeOf(dstInit))
+	err := ScanToGo(src, ptr.Interface())
+	return ptr.Elem().Interface(), err
+}
+
+var scanToGoTests = tt.Table{
+	Args("12", 0).Rets(12),
+	Args("23", 0.0).Rets(23.0),
+	Args("x", ' ').Rets('x'),
+	Args("foo", "").Rets("foo"),
+	Args(someType{"foo"}, someType{}).Rets(someType{"foo"}),
+
+	Args("x", someType{}).Rets(any, anyError),
+	Args(someType{}, 0).Rets(any, anyError),
+	Args("x", 0).Rets(any, anyError),
+	Args(someType{}, 0.0).Rets(any, anyError),
+	Args("x", 0.0).Rets(any, anyError),
+	Args(someType{}, ' ').Rets(any, anyError),
+	Args("\xc3\x28", ' ').Rets(any, anyError), // Invalid UTF8
+	Args("ab", ' ').Rets(any, anyError),
 }
 
 func TestScanToGo(t *testing.T) {
-	for _, test := range scanToGoTests {
-		ptr := reflect.New(reflect.TypeOf(test.preScan))
-		ScanToGo(test.src, ptr.Interface())
-		dst := ptr.Elem().Interface()
-		if dst != test.postScan {
-			t.Errorf("Scan %v %v -> %v, want %v", test.src, test.preScan, dst, test.postScan)
-		}
-	}
+	tt.Test(t, tt.Fn("ScanToGo", scanToGo2), scanToGoTests)
 }
 
 var fromGoTests = tt.Table{

@@ -10,7 +10,7 @@ import (
 
 var (
 	errIndexMustBeString = errors.New("index must be string")
-	errBadIndex          = errors.New("bad index")
+	errIndexMustBeNumber = errors.New("index or slice component must be number")
 	errIndexOutOfRange   = errors.New("index out of range")
 )
 
@@ -111,7 +111,7 @@ func atoi(a string) (int, error) {
 		if err.(*strconv.NumError).Err == strconv.ErrRange {
 			return 0, errIndexOutOfRange
 		}
-		return 0, errBadIndex
+		return 0, errIndexMustBeNumber
 	}
 	return i, nil
 }

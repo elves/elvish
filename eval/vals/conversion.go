@@ -104,10 +104,6 @@ func elvToFloat(arg interface{}) (float64, error) {
 	return num, nil
 }
 
-func floatToElv(f float64) string {
-	return strconv.FormatFloat(f, 'g', -1, 64)
-}
-
 func elvToInt(arg interface{}) (int, error) {
 	arg, ok := arg.(string)
 	if !ok {

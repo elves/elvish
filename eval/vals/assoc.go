@@ -58,7 +58,7 @@ var _ listAssocable = vector.Vector(nil)
 
 func assocList(l listAssocable, k, v interface{}) (interface{}, error) {
 	kstring, ok := k.(string)
-	if kstring, ok = k.(string); !ok {
+	if !ok {
 		return nil, errIndexMustBeString
 	}
 	index, err := ConvertListIndex(kstring, l.Len())
