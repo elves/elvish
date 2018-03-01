@@ -29,7 +29,7 @@ func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
 
 	spawn := func() error {
 		if spawner == nil {
-			util.Throw(errDontKnowHowToSpawnDaemon)
+			return errDontKnowHowToSpawnDaemon
 		}
 		return spawner.Spawn()
 	}

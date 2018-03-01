@@ -61,7 +61,7 @@ func newDirStruct(path string, score float64) *vals.Struct {
 
 func dirs(fm *Frame) error {
 	if fm.DaemonClient == nil {
-		throw(ErrStoreNotConnected)
+		return ErrStoreNotConnected
 	}
 	dirs, err := fm.DaemonClient.Dirs(storedefs.NoBlacklist)
 	if err != nil {

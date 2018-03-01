@@ -27,8 +27,9 @@ func (es MultiError) Error() string {
 }
 
 // Errors concatenate multiple errors into one. If all errors are nil, it
-// returns nil, otherwise the return value is a MultiError containing all the
-// non-nil arguments. Arguments of the type MultiError are flattened.
+// returns nil. If there is one non-nil error, it is returned. Otherwise the
+// return value is a MultiError containing all the non-nil arguments. Arguments
+// of the type MultiError are flattened.
 func Errors(errs ...error) error {
 	var nonNil []error
 	for _, err := range errs {
@@ -40,8 +41,12 @@ func Errors(errs ...error) error {
 			}
 		}
 	}
-	if len(nonNil) == 0 {
+	switch len(nonNil) {
+	case 0:
 		return nil
+	case 1:
+		return nonNil[0]
+	default:
+		return MultiError{nonNil}
 	}
-	return MultiError{nonNil}
 }

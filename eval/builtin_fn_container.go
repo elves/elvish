@@ -38,17 +38,17 @@ func init() {
 
 var errKeyMustBeString = errors.New("key must be string")
 
-func nsFn(m hashmap.Map) Ns {
+func nsFn(m hashmap.Map) (Ns, error) {
 	ns := make(Ns)
 	for it := m.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		kstring, ok := k.(string)
 		if !ok {
-			throw(errKeyMustBeString)
+			return nil, errKeyMustBeString
 		}
 		ns[kstring] = vars.NewAnyWithInit(v)
 	}
-	return ns
+	return ns, nil
 }
 
 func rangeFn(fm *Frame, rawOpts RawOptions, args ...float64) error {
@@ -81,13 +81,12 @@ func repeat(fm *Frame, n int, v interface{}) {
 }
 
 // explode puts each element of the argument.
-func explode(fm *Frame, v interface{}) {
+func explode(fm *Frame, v interface{}) error {
 	out := fm.ports[1].Chan
-	err := vals.Iterate(v, func(e interface{}) bool {
+	return vals.Iterate(v, func(e interface{}) bool {
 		out <- e
 		return true
 	})
-	maybeThrow(err)
 }
 
 func assoc(a, k, v interface{}) (interface{}, error) {
@@ -176,7 +175,7 @@ func hasKey(container, key interface{}) (bool, error) {
 	}
 }
 
-func count(fm *Frame, args ...interface{}) int {
+func count(fm *Frame, args ...interface{}) (int, error) {
 	var n int
 	switch len(args) {
 	case 0:
@@ -195,13 +194,13 @@ func count(fm *Frame, args ...interface{}) int {
 				return true
 			})
 			if err != nil {
-				throw(fmt.Errorf("cannot get length of a %s", vals.Kind(v)))
+				return 0, fmt.Errorf("cannot get length of a %s", vals.Kind(v))
 			}
 		}
 	default:
-		throw(errors.New("want 0 or 1 argument"))
+		return 0, errors.New("want 0 or 1 argument")
 	}
-	return n
+	return n, nil
 }
 
 func keys(fm *Frame, m hashmap.Map) {

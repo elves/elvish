@@ -58,7 +58,7 @@ func find(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) {
 	}
 }
 
-func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl interface{}, source string) string {
+func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl interface{}, source string) (string, error) {
 
 	opts := struct {
 		Posix   bool
@@ -72,14 +72,15 @@ func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl
 	if opts.Literal {
 		repl, ok := argRepl.(string)
 		if !ok {
-			throwf("replacement must be string when literal is set, got %s",
+			return "", fmt.Errorf(
+				"replacement must be string when literal is set, got %s",
 				vals.Kind(argRepl))
 		}
-		return pattern.ReplaceAllLiteralString(source, repl)
+		return pattern.ReplaceAllLiteralString(source, repl), nil
 	} else {
 		switch repl := argRepl.(type) {
 		case string:
-			return pattern.ReplaceAllString(source, repl)
+			return pattern.ReplaceAllString(source, repl), nil
 		case eval.Callable:
 			replFunc := func(s string) string {
 				values, err := fm.CaptureOutput(repl, []interface{}{s}, eval.NoOpts)
@@ -94,11 +95,11 @@ func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl
 				}
 				return output
 			}
-			return pattern.ReplaceAllStringFunc(source, replFunc)
+			return pattern.ReplaceAllStringFunc(source, replFunc), nil
 		default:
-			throwf("replacement must be string or function, got %s",
+			return "", fmt.Errorf(
+				"replacement must be string or function, got %s",
 				vals.Kind(argRepl))
-			panic("unreachable")
 		}
 	}
 }

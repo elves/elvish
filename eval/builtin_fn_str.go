@@ -115,15 +115,18 @@ var eawkWordSep = regexp.MustCompile("[ \t]+")
 // stripping the line and splitting the line by whitespaces. The function may
 // call break and continue. Overall this provides a similar functionality to
 // awk, hence the name.
-func eawk(fm *Frame, f Callable, inputs Inputs) {
+func eawk(fm *Frame, f Callable, inputs Inputs) error {
 	broken := false
+	var err error
 	inputs(func(v interface{}) {
 		if broken {
 			return
 		}
 		line, ok := v.(string)
 		if !ok {
-			throw(ErrInput)
+			broken = true
+			err = ErrInput
+			return
 		}
 		args := []interface{}{line}
 		for _, field := range eawkWordSep.Split(strings.Trim(line, " \t"), -1) {
@@ -142,8 +145,10 @@ func eawk(fm *Frame, f Callable, inputs Inputs) {
 			case Break:
 				broken = true
 			default:
-				throw(ex)
+				broken = true
+				err = ex
 			}
 		}
 	})
+	return err
 }

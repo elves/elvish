@@ -182,7 +182,9 @@ func (op *elemOp) Invoke(fm *Frame) ([]vars.Type, error) {
 	indicies := make([]interface{}, len(op.indexOps))
 	for i, op := range op.indexOps {
 		values, err := op.Exec(fm)
-		maybeThrow(err)
+		if err != nil {
+			return nil, err
+		}
 		// TODO: Implement multi-indexing.
 		if len(values) != 1 {
 			return nil, errors.New("multi indexing not implemented")

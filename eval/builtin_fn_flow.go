@@ -3,6 +3,8 @@ package eval
 import (
 	"errors"
 	"sync"
+
+	"github.com/elves/elvish/util"
 )
 
 // Flow control.
@@ -41,14 +43,13 @@ func runParallel(fm *Frame, functions ...Callable) error {
 }
 
 // each takes a single closure and applies it to all input values.
-func each(fm *Frame, f Callable, inputs Inputs) {
+func each(fm *Frame, f Callable, inputs Inputs) error {
 	broken := false
+	var err error
 	inputs(func(v interface{}) {
 		if broken {
 			return
 		}
-		// NOTE We don't have the position range of the closure in the source.
-		// Ideally, it should be kept in the Closure itself.
 		newFm := fm.fork("closure of each")
 		newFm.ports[0] = DevNullClosedChan
 		ex := newFm.Call(f, []interface{}{v}, NoOpts)
@@ -61,14 +62,16 @@ func each(fm *Frame, f Callable, inputs Inputs) {
 			case Break:
 				broken = true
 			default:
-				throw(ex)
+				broken = true
+				err = ex
 			}
 		}
 	})
+	return err
 }
 
 // peach takes a single closure and applies it to all input values in parallel.
-func peach(fm *Frame, f Callable, inputs Inputs) {
+func peach(fm *Frame, f Callable, inputs Inputs) error {
 	var w sync.WaitGroup
 	broken := false
 	var err error
@@ -78,8 +81,6 @@ func peach(fm *Frame, f Callable, inputs Inputs) {
 		}
 		w.Add(1)
 		go func() {
-			// NOTE We don't have the position range of the closure in the source.
-			// Ideally, it should be kept in the Closure itself.
 			newFm := fm.fork("closure of peach")
 			newFm.ports[0] = DevNullClosedChan
 			ex := newFm.Call(f, []interface{}{v}, NoOpts)
@@ -92,14 +93,15 @@ func peach(fm *Frame, f Callable, inputs Inputs) {
 				case Break:
 					broken = true
 				default:
-					err = ex
+					broken = true
+					err = util.Errors(err, ex)
 				}
 			}
 			w.Done()
 		}()
 	})
 	w.Wait()
-	maybeThrow(err)
+	return err
 }
 
 func fail(msg string) error {
