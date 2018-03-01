@@ -136,10 +136,9 @@ func (hist *hist) defaultFn() {
 }
 
 func (hist *hist) appendHistory(line string) {
-	// Do not add command leading by space into history. This is useful for
-	// confidential operations.
+	// Do not add empty commands or commands with leading spaces to history.
 	// TODO: Make this customizable.
-	if strings.HasPrefix(line, " ") {
+	if line == "" || strings.HasPrefix(line, " ") {
 		return
 	}
 
