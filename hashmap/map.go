@@ -16,9 +16,9 @@ type Map interface {
 	// Assoc returns an almost identical map, with the given key associated with
 	// the given value.
 	Assoc(k, v interface{}) Map
-	// Without returns an almost identical map, with the given key associated
+	// Dissoc returns an almost identical map, with the given key associated
 	// with no value.
-	Without(k interface{}) Map
+	Dissoc(k interface{}) Map
 	// Iterator returns an iterator over the map.
 	Iterator() Iterator
 }

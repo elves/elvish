@@ -27,11 +27,11 @@ type Vector interface {
 	// Index returns the i-th element of the vector, if it exists. The second
 	// return value indicates whether the element exists.
 	Index(i int) (interface{}, bool)
-	// AssocN returns an almost identical Vector, with the i-th element
+	// Assoc returns an almost identical Vector, with the i-th element
 	// replaced. If the index is smaller than 0 or greater than the length of
 	// the vector, it returns nil. If the index is equal to the size of the
 	// vector, it is equivalent to Cons.
-	AssocN(i int, val interface{}) Vector
+	Assoc(i int, val interface{}) Vector
 	// Cons returns an almost identical Vector, with an additional element
 	// appended to the end.
 	Cons(val interface{}) Vector
@@ -133,7 +133,7 @@ func (v *vector) sliceFor(i int) []interface{} {
 	return n[:]
 }
 
-func (v *vector) AssocN(i int, val interface{}) Vector {
+func (v *vector) Assoc(i int, val interface{}) Vector {
 	if i < 0 || i > v.count {
 		return nil
 	} else if i == v.count {
@@ -291,17 +291,17 @@ func (s *subVector) Index(i int) (interface{}, bool) {
 	return s.v.Index(s.begin + i)
 }
 
-func (s *subVector) AssocN(i int, val interface{}) Vector {
+func (s *subVector) Assoc(i int, val interface{}) Vector {
 	if i < 0 || s.begin+i > s.end {
 		return nil
 	} else if s.begin+i == s.end {
 		return s.Cons(val)
 	}
-	return s.v.AssocN(s.begin+i, val).SubVector(s.begin, s.end)
+	return s.v.Assoc(s.begin+i, val).SubVector(s.begin, s.end)
 }
 
 func (s *subVector) Cons(val interface{}) Vector {
-	return s.v.AssocN(s.end, val).SubVector(s.begin, s.end+1)
+	return s.v.Assoc(s.end, val).SubVector(s.begin, s.end+1)
 }
 
 func (s *subVector) Pop() Vector {

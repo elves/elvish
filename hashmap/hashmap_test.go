@@ -22,7 +22,7 @@ const (
 
 	NArrayNode = 0x100
 
-	NIneffectiveWithout = 0x200
+	NIneffectiveDissoc = 0x200
 
 	N1 = nodeCap + 1
 	N2 = nodeCap*nodeCap + 1
@@ -211,13 +211,13 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 	// Iterator.
 	testIterator(t, m, ref)
 
-	// Without.
+	// Dissoc.
 	// Ineffective ones.
-	for i := 0; i < NIneffectiveWithout; i++ {
+	for i := 0; i < NIneffectiveDissoc; i++ {
 		k := anotherTestKey(uint32(rand.Int31())>>15 | uint32(rand.Int31())<<16)
-		m = m.Without(k)
+		m = m.Dissoc(k)
 		if m.Len() != len(ref) {
-			t.Errorf("m.Without removes item when it shouldn't")
+			t.Errorf("m.Dissoc removes item when it shouldn't")
 		}
 	}
 
@@ -225,7 +225,7 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 	for i := len(refEntries) - 1; i >= 0; i-- {
 		k := refEntries[i].k
 		delete(ref, k)
-		m = m.Without(k)
+		m = m.Dissoc(k)
 		if m.Len() != len(ref) {
 			t.Errorf("m.Len() = %d after removing, should be %v", m.Len(), len(ref))
 		}

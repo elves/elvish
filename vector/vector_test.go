@@ -28,7 +28,7 @@ func TestVector(t *testing.T) {
 
 	v := testCons(t, n)
 	testIndex(t, v, 0, n)
-	testAssocN(t, v, subst)
+	testAssoc(t, v, subst)
 	testIterator(t, v.Iterator(), 0, n)
 	testPop(t, v)
 }
@@ -83,12 +83,12 @@ func testIterator(t *testing.T, it Iterator, begin, end int) {
 	}
 }
 
-// testAssocN tests AssocN by replacing each element.
-func testAssocN(t *testing.T, v Vector, subst interface{}) {
+// testAssoc tests Assoc by replacing each element.
+func testAssoc(t *testing.T, v Vector, subst interface{}) {
 	n := v.Len()
 	for i := 0; i <= n; i++ {
 		oldv := v
-		v = v.AssocN(i, subst)
+		v = v.Assoc(i, subst)
 
 		if i < n {
 			elem, _ := oldv.Index(i)
@@ -105,9 +105,9 @@ func testAssocN(t *testing.T, v Vector, subst interface{}) {
 
 	n++
 	for _, i := range []int{-1, n + 1, n + 2, n * 2} {
-		newv := v.AssocN(i, subst)
+		newv := v.Assoc(i, subst)
 		if newv != nil {
-			t.Errorf("v.AssocN(%d) = %v, want nil", i, newv)
+			t.Errorf("v.Assoc(%d) = %v, want nil", i, newv)
 		}
 	}
 }
@@ -140,7 +140,7 @@ func TestSubVector(t *testing.T) {
 
 	sv := v.SubVector(0, 4)
 	testIndex(t, sv, 0, 4)
-	testAssocN(t, sv, "233")
+	testAssoc(t, sv, "233")
 	testIterator(t, sv.Iterator(), 0, 4)
 	testPop(t, sv)
 
@@ -148,8 +148,8 @@ func TestSubVector(t *testing.T) {
 	if !checkVector(sv, 1, 2, 3) {
 		t.Errorf("v[0:4] is not expected")
 	}
-	if !checkVector(sv.AssocN(1, "233"), 1, "233", 3) {
-		t.Errorf("v[0:4].AssocN is not expected")
+	if !checkVector(sv.Assoc(1, "233"), 1, "233", 3) {
+		t.Errorf("v[0:4].Assoc is not expected")
 	}
 	if !checkVector(sv.Cons("233"), 1, 2, 3, "233") {
 		t.Errorf("v[0:4].Cons is not expected")
