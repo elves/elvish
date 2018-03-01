@@ -19,6 +19,15 @@ func MakeList(vs ...interface{}) vector.Vector {
 	return vec
 }
 
+// MakeList creates a new List from strings.
+func MakeStringList(vs ...string) vector.Vector {
+	vec := vector.Empty
+	for _, v := range vs {
+		vec = vec.Cons(v)
+	}
+	return vec
+}
+
 // ListReprBuilder helps to build Repr of list-like Values.
 type ListReprBuilder struct {
 	Indent int

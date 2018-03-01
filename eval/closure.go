@@ -48,6 +48,24 @@ func (c *Closure) Repr(int) string {
 	return fmt.Sprintf("<closure %p>", c)
 }
 
+func (c *Closure) Get(k interface{}) (interface{}, bool) {
+	switch k {
+	case "arg-names":
+		return vals.MakeStringList(c.ArgNames...), true
+	case "rest-arg":
+		return c.RestArg, true
+	case "opt-names":
+		return vals.MakeStringList(c.OptNames...), true
+	case "opt-defaults":
+		return vals.MakeList(c.OptDefaults...), true
+	case "src":
+		return c.SrcMeta, true
+	case "body":
+		return c.SrcMeta.code[c.Op.Begin:c.Op.End], true
+	}
+	return nil, false
+}
+
 // Call calls a closure.
 func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{}) error {
 	if c.RestArg != "" {
