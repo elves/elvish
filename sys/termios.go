@@ -12,6 +12,23 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+func setFlag(flag interface{}, mask int, v bool) {
+	switch flag.(type) {
+	case *uint64:
+		if v {
+			*flag.(*uint64) |= uint64(mask)
+		} else {
+			*flag.(*uint64) &= ^uint64(mask)
+		}
+	case *uint32:
+		if v {
+			*flag.(*uint32) |= uint32(mask)
+		} else {
+			*flag.(*uint32) &= ^uint32(mask)
+		}
+	}
+}
+
 // Termios represents terminal attributes.
 type Termios unix.Termios
 
