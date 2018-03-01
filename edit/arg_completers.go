@@ -236,7 +236,7 @@ func callArgCompleter(fn eval.Callable, ev *eval.Evaler, words []string, rawCand
 
 	// XXX There is no source to pass to NewTopEvalCtx.
 	ec := eval.NewTopFrame(ev, eval.NewInternalSource("[editor completer]"), ports)
-	err := ec.PCaptureOutputInner(fn, args, eval.NoOpts, valuesCb, bytesCb)
+	err := ec.CallWithOutputCallback(fn, args, eval.NoOpts, valuesCb, bytesCb)
 	if err != nil {
 		err = errors.New("completer error: " + err.Error())
 	}

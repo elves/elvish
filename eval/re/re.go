@@ -82,7 +82,7 @@ func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl
 			return pattern.ReplaceAllString(source, repl)
 		case eval.Callable:
 			replFunc := func(s string) string {
-				values, err := fm.PCaptureOutput(repl, []interface{}{s}, eval.NoOpts)
+				values, err := fm.CaptureOutput(repl, []interface{}{s}, eval.NoOpts)
 				maybeThrow(err)
 				if len(values) != 1 {
 					throwf("replacement function must output exactly one value, got %d", len(values))

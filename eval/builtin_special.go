@@ -211,7 +211,7 @@ func wrapFn(op Op) Op {
 type fnWrap struct{ wrapped Op }
 
 func (op fnWrap) Invoke(ec *Frame) error {
-	err := ec.PEval(op.wrapped)
+	err := ec.Eval(op.wrapped)
 	if err != nil && err.(*Exception).Cause != Return {
 		// rethrow
 		return err
@@ -303,7 +303,7 @@ func loadModule(ec *Frame, name string) (Ns, error) {
 	// Load the namespace before executing. This prevent circular "use"es from
 	// resulting in an infinite recursion.
 	ec.Evaler.modules[name] = modGlobal
-	err = newEc.PEval(op)
+	err = newEc.Eval(op)
 	if err != nil {
 		// Unload the namespace.
 		delete(ec.modules, name)
@@ -456,7 +456,7 @@ func (op *whileOp) Invoke(fm *Frame) error {
 		if !allTrue(condValues) {
 			break
 		}
-		err = fm.fork("while").PCall(body, NoArgs, NoOpts)
+		err = fm.fork("while").Call(body, NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(*Exception)
 			if exc.Cause == Continue {
@@ -524,7 +524,7 @@ func (op *forOp) Invoke(ec *Frame) error {
 			errElement = err
 			return false
 		}
-		err = ec.fork("for").PCall(body, NoArgs, NoOpts)
+		err = ec.fork("for").Call(body, NoArgs, NoOpts)
 		if err != nil {
 			exc := err.(*Exception)
 			if exc.Cause == Continue {
@@ -610,7 +610,7 @@ func (op *tryOp) Invoke(ec *Frame) error {
 	else_ := op.elseOp.execlambdaOp(ec)
 	finally := op.finallyOp.execlambdaOp(ec)
 
-	err := ec.fork("try body").PCall(body, NoArgs, NoOpts)
+	err := ec.fork("try body").Call(body, NoArgs, NoOpts)
 	if err != nil {
 		if except != nil {
 			if exceptVar != nil {
@@ -619,11 +619,11 @@ func (op *tryOp) Invoke(ec *Frame) error {
 					return err
 				}
 			}
-			err = ec.fork("try except").PCall(except, NoArgs, NoOpts)
+			err = ec.fork("try except").Call(except, NoArgs, NoOpts)
 		}
 	} else {
 		if else_ != nil {
-			err = ec.fork("try else").PCall(else_, NoArgs, NoOpts)
+			err = ec.fork("try else").Call(else_, NoArgs, NoOpts)
 		}
 	}
 	if finally != nil {

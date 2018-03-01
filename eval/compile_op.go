@@ -114,7 +114,7 @@ func (op *pipelineOp) Invoke(ec *Frame) error {
 		thisOp := op
 		thisError := &errors[i]
 		go func() {
-			err := newEc.PEval(thisOp)
+			err := newEc.Eval(thisOp)
 			// Logger.Printf("closing ports of %s", newEc.context)
 			ClosePorts(newEc.ports)
 			if err != nil {

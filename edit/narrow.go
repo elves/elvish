@@ -426,7 +426,7 @@ func (n *narrow) NarrowRead(fm *eval.Frame, opts eval.RawOptions, source, action
 func narrowGetSource(ec *eval.Frame, source eval.Callable) func() []narrowItem {
 	return func() []narrowItem {
 		ed := ec.Editor.(*editor)
-		vs, err := ec.PCaptureOutput(source, eval.NoArgs, eval.NoOpts)
+		vs, err := ec.CaptureOutput(source, eval.NoArgs, eval.NoOpts)
 		if err != nil {
 			ed.Notify(err.Error())
 			return nil

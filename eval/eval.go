@@ -139,7 +139,7 @@ func (ec *Frame) growPorts(n int) {
 // diagnostic messages.
 func (ev *Evaler) eval(op Op, ports []*Port, src *Source) error {
 	ec := NewTopFrame(ev, src, ports)
-	return ec.PEval(op)
+	return ec.Eval(op)
 }
 
 // Eval sets up the Evaler with standard ports and evaluates an Op. The supplied

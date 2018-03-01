@@ -132,7 +132,7 @@ func eawk(fm *Frame, f Callable, inputs Inputs) {
 
 		newec := fm.fork("fn of eawk")
 		// TODO: Close port 0 of newec.
-		ex := newec.PCall(f, args, NoOpts)
+		ex := newec.Call(f, args, NoOpts)
 		ClosePorts(newec.ports)
 
 		if ex != nil {

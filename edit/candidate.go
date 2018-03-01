@@ -140,7 +140,7 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.Callable, seed string, ch
 	ec := eval.NewTopFrame(ev, eval.NewInternalSource("[editor matcher]"), ports)
 
 	args := []interface{}{seed}
-	values, err := ec.PCaptureOutput(matcher, args, eval.NoOpts)
+	values, err := ec.CaptureOutput(matcher, args, eval.NoOpts)
 	if err != nil {
 		return nil, err
 	} else if len(values) != len(collected) {

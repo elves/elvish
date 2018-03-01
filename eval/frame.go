@@ -113,9 +113,9 @@ func (ec *Frame) fork(name string) *Frame {
 	}
 }
 
-// PEval evaluates an op in a protected environment so that calls to errorf are
-// wrapped in an Error.
-func (ec *Frame) PEval(op Op) (err error) {
+// Eval evaluates an op. It does so in a protected environment so that
+// exceptions thrown are wrapped in an Error.
+func (ec *Frame) Eval(op Op) (err error) {
 	defer catch(&err, ec)
 	e := op.Exec(ec)
 	if e != nil {
@@ -127,7 +127,9 @@ func (ec *Frame) PEval(op Op) (err error) {
 	return nil
 }
 
-func (ec *Frame) PCall(f Callable, args []interface{}, opts map[string]interface{}) (err error) {
+// Call calls a function with the given arguments and options. It does so in a
+// protected environment so that exceptions thrown are wrapped in an Error.
+func (ec *Frame) Call(f Callable, args []interface{}, opts map[string]interface{}) (err error) {
 	defer catch(&err, ec)
 	e := f.Call(ec, args, opts)
 	if e != nil {
@@ -139,7 +141,10 @@ func (ec *Frame) PCall(f Callable, args []interface{}, opts map[string]interface
 	return nil
 }
 
-func (ec *Frame) PCaptureOutput(fn Callable, args []interface{}, opts map[string]interface{}) (vs []interface{}, err error) {
+// CaptureOutput calls a function with the given arguments and options,
+// capturing and returning the output. It does so in a protected environment so
+// that exceptions thrown are wrapped in an Error.
+func (ec *Frame) CaptureOutput(fn Callable, args []interface{}, opts map[string]interface{}) (vs []interface{}, err error) {
 	// XXX There is no source.
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)
@@ -147,7 +152,10 @@ func (ec *Frame) PCaptureOutput(fn Callable, args []interface{}, opts map[string
 	return pcaptureOutput(ec, Op{funcOp(opFunc), -1, -1})
 }
 
-func (ec *Frame) PCaptureOutputInner(fn Callable, args []interface{}, opts map[string]interface{}, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
+// CallWithOutputCallback calls a function with the given arguments and options,
+// feeding the outputs to the given callbacks. It does so in a protected
+// environment so that exceptions thrown are wrapped in an Error.
+func (ec *Frame) CallWithOutputCallback(fn Callable, args []interface{}, opts map[string]interface{}, valuesCb func(<-chan interface{}), bytesCb func(*os.File)) error {
 	// XXX There is no source.
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)
