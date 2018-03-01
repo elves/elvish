@@ -45,6 +45,14 @@ func (ns Ns) Get(k interface{}) (interface{}, bool) {
 	return nil, false
 }
 
+func (ns Ns) IterateKeys(f func(interface{}) bool) {
+	for k := range ns {
+		if !f(k) {
+			break
+		}
+	}
+}
+
 // HasName reports the namespace contains the given name.
 func (ns Ns) HasName(name string) bool {
 	_, ok := ns[name]
