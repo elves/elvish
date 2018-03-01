@@ -31,8 +31,8 @@ func (f GlobFlag) Has(g GlobFlag) bool {
 }
 
 var (
-	_ interface{}  = GlobPattern{}
-	_ vals.Indexer = GlobPattern{}
+	_ interface{}     = GlobPattern{}
+	_ vals.ErrIndexer = GlobPattern{}
 )
 
 var (

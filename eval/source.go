@@ -45,7 +45,7 @@ func (src *Source) describePath() string {
 }
 
 var (
-	_ vals.Getter = (*Source)(nil)
+	_ vals.Indexer = (*Source)(nil)
 )
 
 func (src *Source) Kind() string {
@@ -69,7 +69,7 @@ func (src *Source) Repr(int) string {
 		src.typ, parse.Quote(src.name), parse.Quote(src.path))
 }
 
-func (src *Source) Get(k interface{}) (interface{}, bool) {
+func (src *Source) Index(k interface{}) (interface{}, bool) {
 	ret := ""
 	switch k {
 	case "type":

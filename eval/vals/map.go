@@ -11,12 +11,12 @@ type mapAssocable interface {
 	Assoc(k, v interface{}) hashmap.Map
 }
 type mapDissocable interface {
-	Without(interface{}) hashmap.Map
+	Dissoc(interface{}) hashmap.Map
 }
 
 var (
 	_ mapIterable   = hashmap.Map(nil)
-	_ Getter        = hashmap.Map(nil)
+	_ Indexer       = hashmap.Map(nil)
 	_ mapAssocable  = hashmap.Map(nil)
 	_ mapDissocable = hashmap.Map(nil)
 )

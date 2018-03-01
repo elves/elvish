@@ -35,7 +35,7 @@ func (bt BindingMap) Repr(indent int) string {
 	sort.Sort(keys)
 
 	for _, k := range keys {
-		v, _ := bt.Map.Get(k)
+		v, _ := bt.Map.Index(k)
 		builder.WritePair(parse.Quote(k.String()), indent+2, vals.Repr(v, indent+2))
 	}
 
@@ -48,12 +48,12 @@ func (bt BindingMap) Index(index interface{}) (interface{}, error) {
 }
 
 func (bt BindingMap) HasKey(k interface{}) bool {
-	_, ok := bt.Map.Get(k)
+	_, ok := bt.Map.Index(k)
 	return ok
 }
 
 func (bt BindingMap) GetKey(k ui.Key) eval.Callable {
-	v, ok := bt.Map.Get(k)
+	v, ok := bt.Map.Index(k)
 	if !ok {
 		panic("get called when key not present")
 	}
@@ -85,7 +85,7 @@ func (bt BindingMap) Assoc(k, v interface{}) (interface{}, error) {
 // Dissoc converts the key to ui.Key and calls the Dissoc method of the inner
 // map.
 func (bt BindingMap) Dissoc(k interface{}) interface{} {
-	return BindingMap{bt.Map.Without(ui.ToKey(k))}
+	return BindingMap{bt.Map.Dissoc(ui.ToKey(k))}
 }
 
 func MakeBindingMap(raw hashmap.Map) (BindingMap, error) {

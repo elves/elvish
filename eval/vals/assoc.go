@@ -51,7 +51,7 @@ func assocString(s string, k, v interface{}) (interface{}, error) {
 
 type listAssocable interface {
 	Lener
-	AssocN(int, interface{}) vector.Vector
+	Assoc(int, interface{}) vector.Vector
 }
 
 var _ listAssocable = vector.Vector(nil)
@@ -68,5 +68,5 @@ func assocList(l listAssocable, k, v interface{}) (interface{}, error) {
 	if index.Slice {
 		return nil, errAssocWithSlice
 	}
-	return l.AssocN(index.Lower, v), nil
+	return l.Assoc(index.Lower, v), nil
 }

@@ -104,9 +104,9 @@ func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) 
 	m := ev.Editor.(*editor).argCompleter
 	var v interface{}
 	index := words[0]
-	v, ok := m.Get(index)
+	v, ok := m.Index(index)
 	if !ok {
-		v, ok = m.Get("")
+		v, ok = m.Index("")
 		if !ok {
 			return errNoMatchingCompleter
 		}

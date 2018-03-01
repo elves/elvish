@@ -36,7 +36,7 @@ func (ns Ns) Repr(int) string {
 	return fmt.Sprintf("<ns 0x%x>", addrOf(ns))
 }
 
-func (ns Ns) Get(k interface{}) (interface{}, bool) {
+func (ns Ns) Index(k interface{}) (interface{}, bool) {
 	if kstring, ok := k.(string); ok {
 		if v, ok := ns[kstring]; ok {
 			return v.Get(), true

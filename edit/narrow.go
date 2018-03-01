@@ -361,7 +361,7 @@ type narrowItemComplex struct {
 }
 
 func (c *narrowItemComplex) Content() string {
-	if v, ok := c.Map.Get("content"); ok {
+	if v, ok := c.Map.Index("content"); ok {
 		if s, ok := v.(string); ok {
 			return s
 		}
@@ -371,7 +371,7 @@ func (c *narrowItemComplex) Content() string {
 
 // TODO: add style
 func (c *narrowItemComplex) Display() ui.Styled {
-	if v, ok := c.Map.Get("display"); ok {
+	if v, ok := c.Map.Index("display"); ok {
 		if s, ok := v.(string); ok {
 			return ui.Unstyled(s)
 		}
@@ -380,7 +380,7 @@ func (c *narrowItemComplex) Display() ui.Styled {
 }
 
 func (c *narrowItemComplex) FilterText() string {
-	if v, ok := c.Map.Get("filter-text"); ok {
+	if v, ok := c.Map.Index("filter-text"); ok {
 		if s, ok := v.(string); ok {
 			return s
 		}

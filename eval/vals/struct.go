@@ -20,7 +20,7 @@ type Struct struct {
 	fields     []interface{}
 }
 
-var _ Getter = (*Struct)(nil)
+var _ Indexer = (*Struct)(nil)
 
 // NewStruct creates a new *Struct value.
 func NewStruct(descriptor *StructDescriptor, fields []interface{}) *Struct {
@@ -72,7 +72,7 @@ func (s *Struct) Len() int {
 	return len(s.descriptor.fieldNames)
 }
 
-func (s *Struct) Get(k interface{}) (interface{}, bool) {
+func (s *Struct) Index(k interface{}) (interface{}, bool) {
 	i, ok := s.index(k)
 	if !ok {
 		return nil, false

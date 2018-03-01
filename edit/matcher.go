@@ -42,7 +42,7 @@ func lookupMatcher(m hashmap.Map, name string) (eval.Callable, bool) {
 		}
 		key = ""
 	}
-	value, _ := m.Get(key)
+	value, _ := m.Index(key)
 	matcher, ok := value.(eval.Callable)
 	return matcher, ok
 }

@@ -48,7 +48,7 @@ func (c *Closure) Repr(int) string {
 	return fmt.Sprintf("<closure %p>", c)
 }
 
-func (c *Closure) Get(k interface{}) (interface{}, bool) {
+func (c *Closure) Index(k interface{}) (interface{}, bool) {
 	switch k {
 	case "arg-names":
 		return vals.MakeStringList(c.ArgNames...), true

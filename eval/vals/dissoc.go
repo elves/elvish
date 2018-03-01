@@ -16,7 +16,7 @@ func Dissoc(a, k interface{}) interface{} {
 	case Dissocer:
 		return a.Dissoc(k)
 	case mapDissocable:
-		return a.Without(k)
+		return a.Dissoc(k)
 	default:
 		return nil
 	}

@@ -35,7 +35,7 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 			throwf("opt should be map, got %s", vals.Kind(v))
 		}
 		get := func(k string) (string, bool) {
-			v, ok := m.Get(k)
+			v, ok := m.Index(k)
 			if !ok {
 				return "", false
 			}

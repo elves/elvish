@@ -62,7 +62,7 @@ func equalList(x, y listEqualable) bool {
 
 type mapEqualable interface {
 	Lener
-	Get(interface{}) (interface{}, bool)
+	Index(interface{}) (interface{}, bool)
 	Iterator() hashmap.Iterator
 }
 
@@ -74,7 +74,7 @@ func equalMap(x, y mapEqualable) bool {
 	}
 	for it := x.Iterator(); it.HasElem(); it.Next() {
 		k, vx := it.Elem()
-		vy, ok := y.Get(k)
+		vy, ok := y.Index(k)
 		if !ok || !Equal(vx, vy) {
 			return false
 		}
