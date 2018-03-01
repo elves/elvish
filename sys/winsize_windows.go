@@ -10,6 +10,8 @@ import (
 
 // SIGWINCH is the Window size change signal. On Windows this signal does not
 // exist, so we use -1, an impossible value for signals.
+// NOTE: This has to use the syscall package before the x/sys/* packages also
+// use syscall.Signal to define signals.
 const SIGWINCH = syscall.Signal(-1)
 
 // GetWinsize queries the size of the terminal referenced by the given file.

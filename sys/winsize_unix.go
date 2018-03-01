@@ -9,14 +9,13 @@ package sys
 import (
 	"fmt"
 	"os"
-	"syscall"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
 )
 
 // SIGWINCH is the Window size change signal.
-const SIGWINCH = syscall.SIGWINCH
+const SIGWINCH = unix.SIGWINCH
 
 // winSize mirrors struct winsize in the C header.
 // The following declaration matches struct winsize in the headers of
