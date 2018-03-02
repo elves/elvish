@@ -462,9 +462,9 @@ func (op *whileOp) Invoke(fm *Frame) error {
 			if exc.Cause == Continue {
 				// do nothing
 			} else if exc.Cause == Break {
-				continue
+				break
 			} else {
-				return nil
+				return err
 			}
 		}
 	}

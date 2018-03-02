@@ -22,6 +22,8 @@ var builtinSpecialTests = []Test{
 	// while
 	{"x=0; while (< $x 4) { put $x; x=(+ $x 1) }",
 		want{out: strs("0", "1", "2", "3")}},
+	NewTest("x = 0; while (< $x 4) { put $x; break }").WantOutStrings("0"),
+	NewTest("x = 0; while (< $x 4) { fail haha }").WantAnyErr(),
 
 	// for
 	{"for x [tempora mores] { put 'O '$x }",
