@@ -18,6 +18,8 @@ var builtinSpecialTests = []Test{
 	// try
 	{"try { nop } except { put bad } else { put good }", want{out: strs("good")}},
 	{"try { e:false } except - { put bad } else { put good }", want{out: strs("bad")}},
+	// "finally" should not catch the exception
+	NewTest("try { fail bad } finally { put final }").WantOut("final").WantAnyErr(),
 
 	// while
 	{"x=0; while (< $x 4) { put $x; x=(+ $x 1) }",

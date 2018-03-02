@@ -627,7 +627,12 @@ func (op *tryOp) Invoke(fm *Frame) error {
 		}
 	}
 	if finally != nil {
-		return finally.Call(fm.fork("try finally"), NoArgs, NoOpts)
+		errFinally := finally.Call(fm.fork("try finally"), NoArgs, NoOpts)
+		if errFinally != nil {
+			// TODO: If err is not nil, this discards err. Use something similar
+			// to pipeline exception to expose both.
+			return errFinally
+		}
 	}
 	return err
 }
