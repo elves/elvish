@@ -78,6 +78,12 @@ var opTests = []Test{
 	// Redirections from Pipe object.
 	{`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`,
 		want{bytesOut: []byte("haha\n")}},
+
+	// Redirection from a file closes the value part.
+	NewTest(`count < /dev/null`).WantOutStrings("0"),
+	NewTest(`fname=(mktemp elvXXXXXX); echo "foo\nbar" > $fname;
+			 f=(fopen $fname); count <$f; fclose $f; rm $fname
+			`).WantOutStrings("2"),
 }
 
 func TestOp(t *testing.T) {

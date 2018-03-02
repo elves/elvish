@@ -523,12 +523,12 @@ func (op *redirOp) Invoke(fm *Frame) error {
 				return fmt.Errorf("failed to open file %s: %s", vals.Repr(src, vals.NoPretty), err)
 			}
 			fm.ports[dst] = &Port{
-				File: f, Chan: BlackholeChan,
+				File: f, Chan: ClosedChan,
 				CloseFile: true,
 			}
 		case vals.File:
 			fm.ports[dst] = &Port{
-				File: src.Inner, Chan: BlackholeChan,
+				File: src.Inner, Chan: ClosedChan,
 				CloseFile: false,
 			}
 		case vals.Pipe:
