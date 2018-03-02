@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	theLocation = newState([]storedefs.Dir{
+	theLocation = newProvider([]storedefs.Dir{
 		{"/pinned", pinnedScore},
 		{"/src/github.com/elves/elvish", 300},
 		{"/src/home/xyz", 233},
@@ -47,5 +47,6 @@ var (
 )
 
 func TestLocation(t *testing.T) {
-	eddefs.TestListingProviderFilter(t, "theLocation", theLocation, locationFilterTests)
+	eddefs.TestListingProviderFilter(
+		t, "theLocation", theLocation, locationFilterTests)
 }

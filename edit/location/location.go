@@ -26,119 +26,27 @@ var logger = util.GetLogger("[edit/location] ")
 // directory is pinned.
 var pinnedScore = math.Inf(1)
 
-type config struct {
+type mode struct {
+	editor  eddefs.Editor
 	binding eddefs.BindingMap
 	hidden  vector.Vector
 	pinned  vector.Vector
 }
 
-type state struct {
-	home     string // The home directory; leave empty if unknown.
-	all      []storedefs.Dir
-	filtered []storedefs.Dir
-}
-
 // Init initializes the location mode for an Editor.
 func Init(ed eddefs.Editor, ns eval.Ns) {
-	cfg := &config{
-		binding: eddefs.EmptyBindingMap,
-		hidden:  vals.EmptyList,
-		pinned:  vals.EmptyList,
-	}
-
-	subns := eval.Ns{
-		"binding": vars.NewFromPtr(&cfg.binding),
-		"hidden":  vars.NewFromPtr(&cfg.hidden),
-		"pinned":  vars.NewFromPtr(&cfg.pinned),
-	}
-	subns.AddBuiltinFns("edit:location:", map[string]interface{}{
-		"start": func() { locStart(ed, cfg.hidden, cfg.pinned, cfg.binding) },
-	})
-	ns.AddNs("location", subns)
+	m := &mode{ed, eddefs.EmptyBindingMap, vals.EmptyList, vals.EmptyList}
+	ns.AddNs("location",
+		eval.Ns{
+			"binding": vars.NewFromPtr(&m.binding),
+			"hidden":  vars.NewFromPtr(&m.hidden),
+			"pinned":  vars.NewFromPtr(&m.pinned),
+		}.AddBuiltinFn("edit:location:", "start", m.start))
 }
 
-func newState(dirs []storedefs.Dir, home string) *state {
-	return &state{all: dirs, home: home}
-}
+func (m *mode) start() {
+	ed := m.editor
 
-func (loc *state) ModeTitle(i int) string {
-	return " LOCATION "
-}
-
-func (*state) CursorOnModeLine() bool {
-	return true
-}
-
-func (loc *state) Len() int {
-	return len(loc.filtered)
-}
-
-func (loc *state) Show(i int) (string, ui.Styled) {
-	var header string
-	score := loc.filtered[i].Score
-	if score == pinnedScore {
-		header = "*"
-	} else {
-		header = fmt.Sprintf("%.0f", score)
-	}
-	return header, ui.Unstyled(showPath(loc.filtered[i].Path, loc.home))
-}
-
-func (loc *state) Filter(filter string) int {
-	loc.filtered = nil
-	pattern := makeLocationFilterPattern(filter)
-	for _, item := range loc.all {
-		if pattern.MatchString(showPath(item.Path, loc.home)) {
-			loc.filtered = append(loc.filtered, item)
-		}
-	}
-
-	if len(loc.filtered) == 0 {
-		return -1
-	}
-	return 0
-}
-
-func showPath(path, home string) string {
-	if home != "" && path == home {
-		return "~"
-	} else if home != "" && strings.HasPrefix(path, home+"/") {
-		return "~/" + parse.Quote(path[len(home)+1:])
-	} else {
-		return parse.Quote(path)
-	}
-}
-
-var emptyRegexp = regexp.MustCompile("")
-
-func makeLocationFilterPattern(s string) *regexp.Regexp {
-	var b bytes.Buffer
-	b.WriteString(".*")
-	segs := strings.Split(s, "/")
-	for i, seg := range segs {
-		if i > 0 {
-			b.WriteString(".*/.*")
-		}
-		b.WriteString(regexp.QuoteMeta(seg))
-	}
-	b.WriteString(".*")
-	p, err := regexp.Compile(b.String())
-	if err != nil {
-		logger.Printf("failed to compile regexp %q: %v", b.String(), err)
-		return emptyRegexp
-	}
-	return p
-}
-
-func (loc *state) Accept(i int, ed eddefs.Editor) {
-	err := eval.Chdir(loc.filtered[i].Path, ed.Daemon())
-	if err != nil {
-		ed.Notify("%v", err)
-	}
-	ed.SetModeInsert()
-}
-
-func locStart(ed eddefs.Editor, hidden, pinned vector.Vector, binding eddefs.BindingMap) {
 	daemon := ed.Daemon()
 	if daemon == nil {
 		ed.Notify("store offline, cannot start location mode")
@@ -147,7 +55,7 @@ func locStart(ed eddefs.Editor, hidden, pinned vector.Vector, binding eddefs.Bin
 
 	// Pinned directories are also blacklisted to prevent them from showing up
 	// twice.
-	black := convertListsToSet(hidden, pinned)
+	black := convertListsToSet(m.hidden, m.pinned)
 	pwd, err := os.Getwd()
 	if err == nil {
 		black[pwd] = struct{}{}
@@ -159,7 +67,7 @@ func locStart(ed eddefs.Editor, hidden, pinned vector.Vector, binding eddefs.Bin
 	}
 
 	// Concatenate pinned and stored dirs, pinned first.
-	pinnedDirs := convertListToDirs(pinned)
+	pinnedDirs := convertListToDirs(m.pinned)
 	dirs := make([]storedefs.Dir, len(pinnedDirs)+len(stored))
 	copy(dirs, pinnedDirs)
 	copy(dirs[len(pinnedDirs):], stored)
@@ -167,7 +75,7 @@ func locStart(ed eddefs.Editor, hidden, pinned vector.Vector, binding eddefs.Bin
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
 	home, _ := util.GetHome("")
-	ed.SetModeListing(binding, newState(dirs, home))
+	ed.SetModeListing(m.binding, newProvider(dirs, home))
 }
 
 // convertListToDirs converts a list of strings to []storedefs.Dir. It uses the
@@ -194,4 +102,91 @@ func convertListsToSet(lis ...vector.Vector) map[string]struct{} {
 		}
 	}
 	return set
+}
+
+type provider struct {
+	home     string // The home directory; leave empty if unknown.
+	all      []storedefs.Dir
+	filtered []storedefs.Dir
+}
+
+func newProvider(dirs []storedefs.Dir, home string) *provider {
+	return &provider{all: dirs, home: home}
+}
+
+func (*provider) ModeTitle(i int) string {
+	return " LOCATION "
+}
+
+func (*provider) CursorOnModeLine() bool {
+	return true
+}
+
+func (p *provider) Len() int {
+	return len(p.filtered)
+}
+
+func (p *provider) Show(i int) (string, ui.Styled) {
+	var header string
+	score := p.filtered[i].Score
+	if score == pinnedScore {
+		header = "*"
+	} else {
+		header = fmt.Sprintf("%.0f", score)
+	}
+	return header, ui.Unstyled(showPath(p.filtered[i].Path, p.home))
+}
+
+func showPath(path, home string) string {
+	if home != "" && path == home {
+		return "~"
+	} else if home != "" && strings.HasPrefix(path, home+"/") {
+		return "~/" + parse.Quote(path[len(home)+1:])
+	} else {
+		return parse.Quote(path)
+	}
+}
+
+func (p *provider) Filter(filter string) int {
+	p.filtered = nil
+	pattern := makeLocationFilterPattern(filter)
+	for _, item := range p.all {
+		if pattern.MatchString(showPath(item.Path, p.home)) {
+			p.filtered = append(p.filtered, item)
+		}
+	}
+
+	if len(p.filtered) == 0 {
+		return -1
+	}
+	return 0
+}
+
+var emptyRegexp = regexp.MustCompile("")
+
+func makeLocationFilterPattern(s string) *regexp.Regexp {
+	var b bytes.Buffer
+	b.WriteString(".*")
+	segs := strings.Split(s, "/")
+	for i, seg := range segs {
+		if i > 0 {
+			b.WriteString(".*/.*")
+		}
+		b.WriteString(regexp.QuoteMeta(seg))
+	}
+	b.WriteString(".*")
+	p, err := regexp.Compile(b.String())
+	if err != nil {
+		logger.Printf("failed to compile regexp %q: %v", b.String(), err)
+		return emptyRegexp
+	}
+	return p
+}
+
+func (p *provider) Accept(i int, ed eddefs.Editor) {
+	err := eval.Chdir(p.filtered[i].Path, ed.Daemon())
+	if err != nil {
+		ed.Notify("%v", err)
+	}
+	ed.SetModeInsert()
 }
