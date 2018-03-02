@@ -4,20 +4,15 @@ import (
 	"github.com/elves/elvish/edit/ui"
 )
 
-var styleForCompilerError = ui.Styles{"white", "bg-red"}
-
 // Styles for UI.
 var (
-	//styleForPrompt           = ""
-	//styleForRPrompt          = "inverse"
-	styleForCompleted        = ui.Styles{"underlined"}
-	styleForCompletedHistory = ui.Styles{"underlined"}
-	styleForMode             = ui.Styles{"bold", "lightgray", "bg-magenta"}
-	styleForTip              = ui.Styles{}
-	styleForFilter           = ui.Styles{"underlined"}
-	styleForSelected         = ui.Styles{"inverse"}
-	styleForScrollBarArea    = ui.Styles{"magenta"}
-	styleForScrollBarThumb   = ui.Styles{"magenta", "inverse"}
+	styleForReplacement    = ui.Styles{"underlined"}
+	styleForTip            = ui.Styles{}
+	styleForSelected       = ui.Styles{"inverse"}
+	styleForScrollBarArea  = ui.Styles{"magenta"}
+	styleForScrollBarThumb = ui.Styles{"magenta", "inverse"}
+
+	styleForCompilerError = ui.Styles{"white", "bg-red"}
 
 	// Use default style for completion listing
 	styleForCompletion = ui.Styles{}

@@ -98,7 +98,7 @@ func (l *narrowState) ModeLine() ui.Renderer {
 	if len(opt) != 0 {
 		ml += "[" + strings.Join(opt, " ") + "]"
 	}
-	return modeLineRenderer{ml, l.filter}
+	return ui.NewModeLineRenderer(ml, l.filter)
 }
 
 func (l *narrowState) CursorOnModeLine() bool {

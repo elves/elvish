@@ -16,3 +16,20 @@ func Render(r Renderer, width int) *Buffer {
 	r.Render(b)
 	return b
 }
+
+// NewModeLineRenderer returns a Renderer for a mode line.
+func NewModeLineRenderer(title, filter string) Renderer {
+	return modeLineRenderer{title, filter}
+}
+
+type modeLineRenderer struct {
+	title  string
+	filter string
+}
+
+func (ml modeLineRenderer) Render(b *Buffer) {
+	b.WriteString(ml.title, styleForMode.String())
+	b.WriteSpaces(1, "")
+	b.WriteString(ml.filter, styleForFilter.String())
+	b.Dot = b.Cursor()
+}

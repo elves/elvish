@@ -30,7 +30,7 @@ var (
 )
 
 func TestListing(t *testing.T) {
-	wantedModeLine := modeLineRenderer{"test 0", ""}
+	wantedModeLine := ui.NewModeLineRenderer("test 0", "")
 	if modeLine := ls.ModeLine(); modeLine != wantedModeLine {
 		t.Errorf("ls.ModeLine() = %v, want %v", modeLine, wantedModeLine)
 	}

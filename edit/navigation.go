@@ -85,7 +85,7 @@ func (n *navigation) ModeLine() ui.Renderer {
 	if n.showHidden {
 		title += "(show hidden) "
 	}
-	return modeLineRenderer{title, n.filter}
+	return ui.NewModeLineRenderer(title, n.filter)
 }
 
 func (n *navigation) CursorOnModeLine() bool {

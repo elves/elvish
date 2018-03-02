@@ -31,5 +31,5 @@ func (rawInsert) Binding(ui.Key) eval.Callable {
 }
 
 func (ri rawInsert) ModeLine() ui.Renderer {
-	return modeLineRenderer{" RAW ", ""}
+	return ui.NewModeLineRenderer(" RAW ", "")
 }

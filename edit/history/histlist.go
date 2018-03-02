@@ -1,4 +1,4 @@
-package edit
+package history
 
 import (
 	"errors"
@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/edit/eddefs"
-	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/ui"
 )
 
@@ -100,7 +99,7 @@ func (hl *histlist) Accept(i int, ed eddefs.Editor) {
 	ed.InsertAtDot(line)
 }
 
-func (hl *histlist) start(ed eddefs.Editor, fuser *history.Fuser, binding eddefs.BindingMap) {
+func (hl *histlist) start(ed eddefs.Editor, fuser *Fuser, binding eddefs.BindingMap) {
 	cmds, err := getCmds(fuser)
 	if err != nil {
 		ed.Notify("%v", err)
@@ -112,7 +111,7 @@ func (hl *histlist) start(ed eddefs.Editor, fuser *history.Fuser, binding eddefs
 	ed.SetModeListing(binding, hl)
 }
 
-func getCmds(fuser *history.Fuser) ([]string, error) {
+func getCmds(fuser *Fuser) ([]string, error) {
 	if fuser == nil {
 		return nil, errStoreOffline
 	}

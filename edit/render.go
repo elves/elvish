@@ -9,25 +9,13 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-type modeLineRenderer struct {
-	title  string
-	filter string
-}
-
-func (ml modeLineRenderer) Render(b *ui.Buffer) {
-	b.WriteString(ml.title, styleForMode.String())
-	b.WriteSpaces(1, "")
-	b.WriteString(ml.filter, styleForFilter.String())
-	b.Dot = b.Cursor()
-}
-
 type modeLineWithScrollBarRenderer struct {
-	modeLineRenderer
+	base         ui.Renderer
 	n, low, high int
 }
 
 func (ml modeLineWithScrollBarRenderer) Render(b *ui.Buffer) {
-	ml.modeLineRenderer.Render(b)
+	ml.base.Render(b)
 
 	scrollbarWidth := b.Width - ui.CellsWidth(b.Lines[len(b.Lines)-1]) - 2
 	if scrollbarWidth >= 3 {
@@ -115,28 +103,19 @@ type cmdlineRenderer struct {
 	dot     int
 	rprompt []*ui.Styled
 
-	hasComp   bool
-	compBegin int
-	compEnd   int
-	compText  string
-
-	hasHist   bool
-	histBegin int
-	histText  string
+	hasRepl   bool
+	replBegin int
+	replEnd   int
+	replText  string
 }
 
 func newCmdlineRenderer(p []*ui.Styled, l string, s *highlight.Styling, d int, rp []*ui.Styled) *cmdlineRenderer {
 	return &cmdlineRenderer{prompt: p, line: l, styling: s, dot: d, rprompt: rp}
 }
 
-func (clr *cmdlineRenderer) setComp(b, e int, t string) {
-	clr.hasComp = true
-	clr.compBegin, clr.compEnd, clr.compText = b, e, t
-}
-
-func (clr *cmdlineRenderer) setHist(b int, t string) {
-	clr.hasHist = true
-	clr.histBegin, clr.histText = b, t
+func (clr *cmdlineRenderer) setRepl(b, e int, t string) {
+	clr.hasRepl = true
+	clr.replBegin, clr.replEnd, clr.replText = b, e, t
 }
 
 func (clr *cmdlineRenderer) Render(b *ui.Buffer) {
@@ -157,8 +136,11 @@ func (clr *cmdlineRenderer) Render(b *ui.Buffer) {
 	// nowAt is called at every rune boundary.
 	nowAt := func(i int) {
 		applier.At(i)
-		if clr.hasComp && i == clr.compBegin {
-			b.WriteString(clr.compText, styleForCompleted.String())
+		// Replacement should be written before setting b.Dot. This way, if the
+		// replacement starts right at the dot, the cursor is correctly placed
+		// after the replacement.
+		if clr.hasRepl && i == clr.replBegin {
+			b.WriteString(clr.replText, styleForReplacement.String())
 		}
 		if i == clr.dot {
 			b.Dot = b.Cursor()
@@ -167,24 +149,14 @@ func (clr *cmdlineRenderer) Render(b *ui.Buffer) {
 	nowAt(0)
 
 	for _, r := range clr.line {
-		if clr.hasComp && clr.compBegin <= i && i < clr.compEnd {
-			// Do nothing. This part is replaced by the completion candidate.
+		if clr.hasRepl && clr.replBegin <= i && i < clr.replEnd {
+			// Do nothing. This part is replaced by the replacement.
 		} else {
 			b.Write(r, applier.Get())
 		}
 		i += utf8.RuneLen(r)
 
 		nowAt(i)
-		if clr.hasHist && i == clr.histBegin {
-			break
-		}
-	}
-
-	if clr.hasHist {
-		// Put the rest of current history and position the cursor at the
-		// end of the line.
-		b.WriteString(clr.histText, styleForCompletedHistory.String())
-		b.Dot = b.Cursor()
 	}
 
 	// Write rprompt
@@ -222,15 +194,8 @@ func (er *editorRenderer) Render(buf *ui.Buffer) {
 
 	// bufLine
 	clr := newCmdlineRenderer(es.promptContent, es.buffer, es.styling, es.dot, es.rpromptContent)
-	// TODO(xiaq): Instead of doing a type switch, expose an API for modes to
-	// modify the text (and mark their part as modified).
-	switch mode := es.mode.(type) {
-	case *completion:
-		c := mode
-		clr.setComp(c.begin, c.end, c.selectedCandidate().code)
-	case *hist:
-		begin := len(mode.walker.Prefix())
-		clr.setHist(begin, mode.walker.CurrentCmd()[begin:])
+	if repl, ok := es.mode.(replacementer); ok {
+		clr.setRepl(repl.Replacement())
 	}
 	bufLine = ui.Render(clr, width)
 

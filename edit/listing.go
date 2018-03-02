@@ -109,7 +109,7 @@ func (l *listingState) setup(b eddefs.BindingMap, p eddefs.ListingProvider) {
 }
 
 func (l *listingState) ModeLine() ui.Renderer {
-	return modeLineRenderer{l.provider.ModeTitle(l.selected), l.filter}
+	return ui.NewModeLineRenderer(l.provider.ModeTitle(l.selected), l.filter)
 }
 
 func (l *listingState) CursorOnModeLine() bool {

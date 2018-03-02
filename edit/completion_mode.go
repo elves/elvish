@@ -67,12 +67,17 @@ func (c *completion) Binding(k ui.Key) eval.Callable {
 	return c.binding.GetOrDefault(k)
 }
 
+func (c *completion) Replacement() (int, int, string) {
+	return c.begin, c.end, c.selectedCandidate().code
+}
+
 func (c *completion) needScrollbar() bool {
 	return c.firstShown > 0 || c.lastShownInFull < len(c.filtered)-1
 }
 
 func (c *completion) ModeLine() ui.Renderer {
-	ml := modeLineRenderer{fmt.Sprintf(" COMPLETING %s ", c.completer), c.filter}
+	ml := ui.NewModeLineRenderer(
+		fmt.Sprintf(" COMPLETING %s ", c.completer), c.filter)
 	if !c.needScrollbar() {
 		return ml
 	}

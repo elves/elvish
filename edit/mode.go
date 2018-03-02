@@ -11,6 +11,11 @@ type cursorOnModeLiner interface {
 	CursorOnModeLine() bool
 }
 
+type replacementer interface {
+	// Replacement returns the part of the buffer that is replaced.
+	Replacement() (begin, end int, text string)
+}
+
 // lister is an optional interface that modes can implement. If a mode
 // implements this interface, the result of this method will be shown in the
 // listing area.

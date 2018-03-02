@@ -54,4 +54,7 @@ type Editor interface {
 
 	// SetAction sets the action to execute after the key binding has finished.
 	SetAction(a Action)
+
+	// AddAfterReadline adds a hook function that runs after readline ends.
+	AddAfterReadline(func(string))
 }

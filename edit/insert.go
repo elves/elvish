@@ -86,10 +86,11 @@ func (ins *insert) Teardown() {
 	ins.insertState = insertState{}
 }
 
-// ui.Insert mode is the default mode and has an empty mode.
+// Insert mode is the default mode and has an empty mode, unless quotePaste is
+// true.
 func (ins *insert) ModeLine() ui.Renderer {
 	if ins.quotePaste {
-		return modeLineRenderer{" INSERT (quote paste) ", ""}
+		return ui.NewModeLineRenderer(" INSERT (quote paste) ", "")
 	}
 	return nil
 }
@@ -119,7 +120,7 @@ func initCommand(ed *editor, ns eval.Ns) {
 func (*command) Teardown() {}
 
 func (*command) ModeLine() ui.Renderer {
-	return modeLineRenderer{" COMMAND ", ""}
+	return ui.NewModeLineRenderer(" COMMAND ", "")
 }
 
 func (cmd *command) Binding(k ui.Key) eval.Callable {
