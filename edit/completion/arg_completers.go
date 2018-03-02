@@ -1,4 +1,4 @@
-package edit
+package completion
 
 import (
 	"bufio"
@@ -9,9 +9,8 @@ import (
 	"unsafe"
 
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vals"
-	"github.com/elves/elvish/eval/vars"
 	"github.com/xiaq/persistent/hash"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 // For an overview of completion, see the comment in completers.go.
@@ -78,35 +77,27 @@ var (
 )
 
 var (
-	argCompletersData = map[string]*builtinArgCompleter{
+	argCompletersData = map[string]*argCompleterEntry{
 		"":     {"complete-filename", complFilename},
 		"sudo": {"complete-sudo", complSudo},
 	}
 )
 
-func init() {
-	atEditorInit(func(ed *editor, ns eval.Ns) {
-		m := vals.EmptyMap
-		for k, v := range argCompletersData {
-			m = m.Assoc(k, v)
-		}
-		ed.argCompleter = m
-		ns["arg-completer"] = vars.NewFromPtr(&ed.argCompleter)
-	})
+type argCompleterEntry struct {
+	name string
+	impl func([]string, *eval.Evaler, hashmap.Map, chan<- rawCandidate) error
 }
 
 // completeArg calls the correct argument completers according to the command
 // name. It is used by complArg and can also be useful when further dispatching
 // based on command name is needed -- e.g. in the argument completer for "sudo".
-func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
+func completeArg(words []string, ev *eval.Evaler, ac hashmap.Map, rawCands chan<- rawCandidate) error {
 	logger.Printf("completing argument: %q", words)
-	// XXX(xiaq): not the best way to get argCompleter.
-	m := ev.Editor.(*editor).argCompleter
 	var v interface{}
 	index := words[0]
-	v, ok := m.Index(index)
+	v, ok := ac.Index(index)
 	if !ok {
-		v, ok = m.Index("")
+		v, ok = ac.Index("")
 		if !ok {
 			return errNoMatchingCompleter
 		}
@@ -120,7 +111,9 @@ func completeArg(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) 
 
 type builtinArgCompleter struct {
 	name string
-	impl func([]string, *eval.Evaler, chan<- rawCandidate) error
+	impl func([]string, *eval.Evaler, hashmap.Map, chan<- rawCandidate) error
+
+	argCompleter hashmap.Map
 }
 
 var _ eval.Callable = &builtinArgCompleter{}
@@ -157,7 +150,7 @@ func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []interface{}, opts ma
 	var err error
 	go func() {
 		defer close(rawCands)
-		err = bac.impl(words, ec.Evaler, rawCands)
+		err = bac.impl(words, ec.Evaler, bac.argCompleter, rawCands)
 	}()
 
 	output := ec.OutputChan()
@@ -167,21 +160,21 @@ func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []interface{}, opts ma
 	return err
 }
 
-func complFilename(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
+func complFilename(words []string, ev *eval.Evaler, ac hashmap.Map, rawCands chan<- rawCandidate) error {
 	if len(words) < 1 {
 		return errTooFewArguments
 	}
 	return complFilenameInner(words[len(words)-1], false, rawCands)
 }
 
-func complSudo(words []string, ev *eval.Evaler, rawCands chan<- rawCandidate) error {
+func complSudo(words []string, ev *eval.Evaler, ac hashmap.Map, rawCands chan<- rawCandidate) error {
 	if len(words) < 2 {
 		return errTooFewArguments
 	}
 	if len(words) == 2 {
 		return complFormHeadInner(words[1], ev, rawCands)
 	}
-	return completeArg(words[1:], ev, rawCands)
+	return completeArg(words[1:], ev, ac, rawCands)
 }
 
 // callArgCompleter calls a Fn, assuming that it is an arg completer. It calls
@@ -191,7 +184,7 @@ func callArgCompleter(fn eval.Callable, ev *eval.Evaler, words []string, rawCand
 
 	// Quick path for builtin arg completers.
 	if builtin, ok := fn.(*builtinArgCompleter); ok {
-		return builtin.impl(words, ev, rawCands)
+		return builtin.impl(words, ev, builtin.argCompleter, rawCands)
 	}
 
 	args := make([]interface{}, len(words))

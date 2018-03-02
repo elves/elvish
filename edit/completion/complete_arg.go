@@ -1,4 +1,4 @@
-package edit
+package completion
 
 import (
 	"fmt"
@@ -67,7 +67,7 @@ func evalFormPure(form *parse.Form, seed string, seedBegin int, ev pureEvaler) [
 // To complete an argument, delegate the actual completion work to a suitable
 // complContext.
 func (ctx *argComplContext) generate(env *complEnv, ch chan<- rawCandidate) error {
-	return completeArg(ctx.words, env.evaler, ch)
+	return completeArg(ctx.words, env.evaler, env.argCompleter, ch)
 }
 
 // TODO: getStyle does redundant stats.

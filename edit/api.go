@@ -88,27 +88,15 @@ func makeNs(ed *editor) eval.Ns {
 		},
 	)
 
-	// Completers.
-	for _, bac := range argCompletersData {
-		ns[bac.name+eval.FnSuffix] = vars.NewRo(bac)
-	}
-
-	// Matchers.
-	ns.AddFn("match-prefix", matchPrefix)
-	ns.AddFn("match-substr", matchSubstr)
-	ns.AddFn("match-subseq", matchSubseq)
-
 	// Functions.
 	fns := map[string]interface{}{
-		"binding-table":     eddefs.MakeBindingMap,
-		"complete-getopt":   complGetopt,
-		"complex-candidate": makeComplexCandidate,
-		"insert-at-dot":     ed.InsertAtDot,
-		"replace-input":     ed.replaceInput,
-		"styled":            styled,
-		"key":               ui.ToKey,
-		"wordify":           wordifyBuiltin,
-		"-dump-buf":         ed.dumpBuf,
+		"binding-table": eddefs.MakeBindingMap,
+		"insert-at-dot": ed.InsertAtDot,
+		"replace-input": ed.replaceInput,
+		"styled":        styled,
+		"key":           ui.ToKey,
+		"wordify":       wordifyBuiltin,
+		"-dump-buf":     ed.dumpBuf,
 	}
 	ns.AddBuiltinFns("edit:", fns)
 

@@ -16,6 +16,12 @@ type replacementer interface {
 	Replacement() (begin, end int, text string)
 }
 
+type redrawModeLiner interface {
+	// RedrawModelLine indicates that the modeline should be redrawn after
+	// listing. This is only used in completion mode now.
+	RedrawModeLine()
+}
+
 // lister is an optional interface that modes can implement. If a mode
 // implements this interface, the result of this method will be shown in the
 // listing area.

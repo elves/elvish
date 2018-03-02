@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"github.com/elves/elvish/edit/completion"
 	"github.com/elves/elvish/edit/history"
 	"github.com/elves/elvish/edit/lastcmd"
 	"github.com/elves/elvish/edit/location"
@@ -12,5 +13,6 @@ func init() {
 		location.Init(ed, ns)
 		lastcmd.Init(ed, ns)
 		history.Init(ed, ns)
+		completion.Init(ed, ns)
 	})
 }

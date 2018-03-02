@@ -1,7 +1,7 @@
 // +build !windows,!plan9
 
 // TODO: Enable on Windows.
-package edit
+package completion
 
 import (
 	"os"

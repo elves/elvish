@@ -33,3 +33,22 @@ func (ml modeLineRenderer) Render(b *Buffer) {
 	b.WriteString(ml.filter, styleForFilter.String())
 	b.Dot = b.Cursor()
 }
+
+func NewModeLineWithScrollBarRenderer(base Renderer, n, low, high int) Renderer {
+	return &modeLineWithScrollBarRenderer{base, n, low, high}
+}
+
+type modeLineWithScrollBarRenderer struct {
+	base         Renderer
+	n, low, high int
+}
+
+func (ml modeLineWithScrollBarRenderer) Render(b *Buffer) {
+	ml.base.Render(b)
+
+	scrollbarWidth := b.Width - CellsWidth(b.Lines[len(b.Lines)-1]) - 2
+	if scrollbarWidth >= 3 {
+		b.WriteSpaces(1, "")
+		writeHorizontalScrollbar(b, ml.n, ml.low, ml.high, scrollbarWidth)
+	}
+}

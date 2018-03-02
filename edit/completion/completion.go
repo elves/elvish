@@ -1,4 +1,4 @@
-package edit
+package completion
 
 // Completion in Elvish is organized around the concept of "completers",
 // functions that take the current AST Node (the Node that the cursor is at,
@@ -38,6 +38,8 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
+var logger = util.GetLogger("[edit/completion] ")
+
 type complContext interface {
 	name() string
 	common() *complContextCommon
@@ -55,8 +57,9 @@ func (c *complContextCommon) common() *complContextCommon { return c }
 // complEnv contains environment information that may affect candidate
 // generation.
 type complEnv struct {
-	evaler  *eval.Evaler
-	matcher hashmap.Map
+	evaler       *eval.Evaler
+	matcher      hashmap.Map
+	argCompleter hashmap.Map
 }
 
 // complSpec is the result of a completion, meaning that any of the candidates

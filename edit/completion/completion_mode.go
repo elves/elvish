@@ -1,4 +1,4 @@
-package edit
+package completion
 
 import (
 	"fmt"
@@ -20,8 +20,9 @@ import (
 // Interface.
 
 type completion struct {
-	binding eddefs.BindingMap
-	matcher hashmap.Map
+	binding      eddefs.BindingMap
+	matcher      hashmap.Map
+	argCompleter hashmap.Map
 	completionState
 }
 
@@ -38,18 +39,18 @@ type completionState struct {
 	height          int
 }
 
-func init() { atEditorInit(initCompletion) }
-
-func initCompletion(ed *editor, ns eval.Ns) {
+func Init(ed eddefs.Editor, ns eval.Ns) {
 	c := &completion{
-		binding: emptyBindingMap,
-		matcher: vals.MakeMapFromKV("", matchPrefix),
+		binding:      eddefs.EmptyBindingMap,
+		matcher:      vals.MakeMapFromKV("", matchPrefix),
+		argCompleter: makeArgCompleter(),
 	}
 
 	ns.AddNs("completion",
 		eval.Ns{
-			"binding": vars.NewFromPtr(&c.binding),
-			"matcher": vars.NewFromPtr(&c.matcher),
+			"binding":       vars.NewFromPtr(&c.binding),
+			"matcher":       vars.NewFromPtr(&c.matcher),
+			"arg-completer": vars.NewFromPtr(&c.argCompleter),
 		}.AddBuiltinFns("edit:completion:", map[string]interface{}{
 			"start":          func() { c.start(ed, false) },
 			"smart-start":    func() { c.start(ed, true) },
@@ -63,6 +64,31 @@ func initCompletion(ed *editor, ns eval.Ns) {
 			"trigger-filter": c.triggerFilter,
 			"default":        func() { c.complDefault(ed) },
 		}))
+
+	// Exposing arg completers.
+	for _, v := range argCompletersData {
+		ns[v.name+eval.FnSuffix] = vars.NewRo(
+			&builtinArgCompleter{v.name, v.impl, c.argCompleter})
+	}
+
+	// Matchers.
+	ns.AddFn("match-prefix", matchPrefix)
+	ns.AddFn("match-substr", matchSubstr)
+	ns.AddFn("match-subseq", matchSubseq)
+
+	// Other functions.
+	ns.AddBuiltinFns("edit:", map[string]interface{}{
+		"complete-getopt":   complGetopt,
+		"complex-candidate": makeComplexCandidate,
+	})
+}
+
+func makeArgCompleter() hashmap.Map {
+	m := vals.EmptyMap
+	for k, v := range argCompletersData {
+		m = m.Assoc(k, &builtinArgCompleter{v.name, v.impl, m})
+	}
+	return m
 }
 
 func (c *completion) Teardown() {
@@ -77,6 +103,8 @@ func (c *completion) Replacement() (int, int, string) {
 	return c.begin, c.end, c.selectedCandidate().code
 }
 
+func (*completion) RedrawModeLine() {}
+
 func (c *completion) needScrollbar() bool {
 	return c.firstShown > 0 || c.lastShownInFull < len(c.filtered)-1
 }
@@ -87,8 +115,8 @@ func (c *completion) ModeLine() ui.Renderer {
 	if !c.needScrollbar() {
 		return ml
 	}
-	return modeLineWithScrollBarRenderer{ml,
-		len(c.filtered), c.firstShown, c.lastShownInFull + 1}
+	return ui.NewModeLineWithScrollBarRenderer(ml,
+		len(c.filtered), c.firstShown, c.lastShownInFull+1)
 }
 
 func (c *completion) CursorOnModeLine() bool {
@@ -126,7 +154,7 @@ func (c *completion) complDefault(ed eddefs.Editor) {
 		}
 	} else {
 		c.accept(ed)
-		ed.SetAction(reprocessKey)
+		ed.SetAction(eddefs.ReprocessKey)
 	}
 }
 
@@ -183,7 +211,7 @@ func (c *completion) start(ed eddefs.Editor, acceptPrefix bool) {
 	}
 
 	completer, complSpec, err := complete(
-		node, &complEnv{ed.Evaler(), c.matcher})
+		node, &complEnv{ed.Evaler(), c.matcher, c.argCompleter})
 
 	if err != nil {
 		ed.AddTip("%v", err)

@@ -9,21 +9,6 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-type modeLineWithScrollBarRenderer struct {
-	base         ui.Renderer
-	n, low, high int
-}
-
-func (ml modeLineWithScrollBarRenderer) Render(b *ui.Buffer) {
-	ml.base.Render(b)
-
-	scrollbarWidth := b.Width - ui.CellsWidth(b.Lines[len(b.Lines)-1]) - 2
-	if scrollbarWidth >= 3 {
-		b.WriteSpaces(1, "")
-		writeHorizontalScrollbar(b, ml.n, ml.low, ml.high, scrollbarWidth)
-	}
-}
-
 type placeholderRenderer string
 
 func (lp placeholderRenderer) Render(b *ui.Buffer) {
@@ -261,7 +246,7 @@ func (er *editorRenderer) Render(buf *ui.Buffer) {
 		// only known after the listing has been rendered. Since rendering the
 		// scrollbar never adds additional lines to bufMode, we may do this
 		// without recalculating the layout.
-		if _, ok := es.mode.(*completion); ok {
+		if _, ok := es.mode.(redrawModeLiner); ok {
 			bufMode = ui.Render(es.mode.ModeLine(), width)
 		}
 	}
