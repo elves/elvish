@@ -6,7 +6,6 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
-	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -25,13 +24,6 @@ var (
 	matchSubseq = eval.NewBuiltinFn(
 		"edit:match-subseq", wrapMatcher(util.HasSubseq))
 )
-
-func init() {
-	atEditorInit(func(ed *editor, ns eval.Ns) {
-		ed.matcher = vals.MakeMapFromKV("", matchPrefix)
-		ns["-matcher"] = vars.NewFromPtr(&ed.matcher)
-	})
-}
 
 func lookupMatcher(m hashmap.Map, name string) (eval.Callable, bool) {
 	key := name

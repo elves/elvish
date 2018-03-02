@@ -35,6 +35,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 type complContext interface {
@@ -54,8 +55,8 @@ func (c *complContextCommon) common() *complContextCommon { return c }
 // complEnv contains environment information that may affect candidate
 // generation.
 type complEnv struct {
-	evaler *eval.Evaler
-	editor *editor
+	evaler  *eval.Evaler
+	matcher hashmap.Map
 }
 
 // complSpec is the result of a completion, meaning that any of the candidates
@@ -97,7 +98,7 @@ func complete(n parse.Node, env *complEnv) (string, *complSpec, error) {
 		name := ctx.name()
 		ctxCommon := ctx.common()
 
-		matcher, ok := lookupMatcher(env.editor.matcher, name)
+		matcher, ok := lookupMatcher(env.matcher, name)
 		if !ok {
 			return name, nil, errMatcherMustBeFn
 		}

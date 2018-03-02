@@ -50,7 +50,6 @@ type editor struct {
 	// using atEditorInit.
 	editorHooks
 	prompt.Config
-	matcher      hashmap.Map
 	abbr         hashmap.Map
 	argCompleter hashmap.Map
 	maxHeight    float64

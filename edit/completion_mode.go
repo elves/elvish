@@ -8,9 +8,11 @@ import (
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse/parseutil"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 // Completion mode.
@@ -19,6 +21,7 @@ import (
 
 type completion struct {
 	binding eddefs.BindingMap
+	matcher hashmap.Map
 	completionState
 }
 
@@ -38,25 +41,28 @@ type completionState struct {
 func init() { atEditorInit(initCompletion) }
 
 func initCompletion(ed *editor, ns eval.Ns) {
-	c := &completion{binding: emptyBindingMap}
-
-	subns := eval.Ns{
-		"binding": vars.NewFromPtr(&c.binding),
+	c := &completion{
+		binding: emptyBindingMap,
+		matcher: vals.MakeMapFromKV("", matchPrefix),
 	}
-	subns.AddBuiltinFns("edit:completion:", map[string]interface{}{
-		"start":          func() { c.start(ed, false) },
-		"smart-start":    func() { c.start(ed, true) },
-		"up":             func() { c.prev(false) },
-		"up-cycle":       func() { c.prev(true) },
-		"down":           func() { c.next(false) },
-		"down-cycle":     func() { c.next(true) },
-		"left":           c.left,
-		"right":          c.right,
-		"accept":         func() { c.accept(ed) },
-		"trigger-filter": c.triggerFilter,
-		"default":        func() { c.complDefault(ed) },
-	})
-	ns.AddNs("completion", subns)
+
+	ns.AddNs("completion",
+		eval.Ns{
+			"binding": vars.NewFromPtr(&c.binding),
+			"matcher": vars.NewFromPtr(&c.matcher),
+		}.AddBuiltinFns("edit:completion:", map[string]interface{}{
+			"start":          func() { c.start(ed, false) },
+			"smart-start":    func() { c.start(ed, true) },
+			"up":             func() { c.prev(false) },
+			"up-cycle":       func() { c.prev(true) },
+			"down":           func() { c.next(false) },
+			"down-cycle":     func() { c.next(true) },
+			"left":           c.left,
+			"right":          c.right,
+			"accept":         func() { c.accept(ed) },
+			"trigger-filter": c.triggerFilter,
+			"default":        func() { c.complDefault(ed) },
+		}))
 }
 
 func (c *completion) Teardown() {
@@ -176,7 +182,8 @@ func (c *completion) start(ed eddefs.Editor, acceptPrefix bool) {
 		return
 	}
 
-	completer, complSpec, err := complete(node, &complEnv{ed.Evaler(), ed.(*editor)})
+	completer, complSpec, err := complete(
+		node, &complEnv{ed.Evaler(), c.matcher})
 
 	if err != nil {
 		ed.AddTip("%v", err)
