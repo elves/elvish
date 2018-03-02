@@ -22,7 +22,9 @@ func scanToGo2(src interface{}, dstInit interface{}) (interface{}, error) {
 
 var scanToGoTests = tt.Table{
 	Args("12", 0).Rets(12),
+	Args("0x12", 0).Rets(0x12),
 	Args("23", 0.0).Rets(23.0),
+	Args("0x23", 0.0).Rets(float64(0x23)),
 	Args("x", ' ').Rets('x'),
 	Args("foo", "").Rets("foo"),
 	Args(someType{"foo"}, someType{}).Rets(someType{"foo"}),
