@@ -10,6 +10,7 @@ func TestBuiltinFnStr(t *testing.T) {
 		{`<s 2 10`, wantFalse},
 
 		{`joins : [/usr /bin /tmp]`, want{out: strs("/usr:/bin:/tmp")}},
+		NewTest(`joins : ['' a '']`).WantOutStrings(":a:"),
 		{`splits : /usr:/bin:/tmp`, want{out: strs("/usr", "/bin", "/tmp")}},
 		{`splits : /usr:/bin:/tmp &max=2`, want{out: strs("/usr", "/bin:/tmp")}},
 		{`replaces : / ":usr:bin:tmp"`, want{out: strs("/usr/bin/tmp")}},

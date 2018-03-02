@@ -54,9 +54,12 @@ func toString(fm *Frame, args ...interface{}) {
 // joins joins all input strings with a delimiter.
 func joins(sep string, inputs Inputs) string {
 	var buf bytes.Buffer
+	first := true
 	inputs(func(v interface{}) {
 		if s, ok := v.(string); ok {
-			if buf.Len() > 0 {
+			if first {
+				first = false
+			} else {
 				buf.WriteString(sep)
 			}
 			buf.WriteString(s)
