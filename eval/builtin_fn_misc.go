@@ -26,6 +26,8 @@ func init() {
 		"kind-of":    kindOf,
 		"constantly": constantly,
 
+		"resolve": resolve,
+
 		"-source": source,
 
 		// Time
@@ -61,6 +63,24 @@ func constantly(args ...interface{}) Callable {
 			}
 		},
 	)
+}
+
+func resolve(fm *Frame, head string) {
+	// Emulate static resolution of a command head. This needs to be kept in
+	// sync with (*compiler).form.
+	out := fm.OutputFile()
+
+	_, special := builtinSpecials[head]
+	if special {
+		out.WriteString("special")
+	} else {
+		explode, ns, name := ParseVariableRef(head)
+		if !explode && fm.ResolveVar(ns, name+FnSuffix) != nil {
+			out.WriteString("$" + head + FnSuffix)
+		} else {
+			out.WriteString("(external " + parse.Quote(head) + ")")
+		}
+	}
 }
 
 func source(fm *Frame, fname string) error {
