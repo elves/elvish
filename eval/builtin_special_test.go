@@ -1,6 +1,9 @@
 package eval
 
-import "testing"
+import (
+	"errors"
+	"testing"
+)
 
 var builtinSpecialTests = []Test{
 	// del
@@ -18,8 +21,14 @@ var builtinSpecialTests = []Test{
 	// try
 	{"try { nop } except { put bad } else { put good }", want{out: strs("good")}},
 	{"try { e:false } except - { put bad } else { put good }", want{out: strs("bad")}},
-	// "finally" should not catch the exception
-	NewTest("try { fail bad } finally { put final }").WantOut("final").WantAnyErr(),
+	{"try { fail tr }", want{err: errors.New("tr")}},
+	{"try { fail tr } finally { put final }", want{out: strs("final"), err: errors.New("tr")}},
+	{"try { fail tr } except { fail ex } finally { put final }",
+		want{out: strs("final"), err: errors.New("ex")}},
+	{"try { fail tr } except { put ex } finally { fail final }",
+		want{out: strs("ex"), err: errors.New("final")}},
+	{"try { fail tr } except { fail ex } finally { fail final }",
+		want{err: errors.New("final")}},
 
 	// while
 	{"x=0; while (< $x 4) { put $x; x=(+ $x 1) }",
