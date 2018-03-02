@@ -65,20 +65,19 @@ func constantly(args ...interface{}) Callable {
 	)
 }
 
-func resolve(fm *Frame, head string) {
+func resolve(fm *Frame, head string) string {
 	// Emulate static resolution of a command head. This needs to be kept in
 	// sync with (*compiler).form.
-	out := fm.OutputFile()
 
 	_, special := builtinSpecials[head]
 	if special {
-		out.WriteString("special")
+		return "special"
 	} else {
 		explode, ns, name := ParseVariableRef(head)
 		if !explode && fm.ResolveVar(ns, name+FnSuffix) != nil {
-			out.WriteString("$" + head + FnSuffix)
+			return "$" + head + FnSuffix
 		} else {
-			out.WriteString("(external " + parse.Quote(head) + ")")
+			return "(external " + parse.Quote(head) + ")"
 		}
 	}
 }
