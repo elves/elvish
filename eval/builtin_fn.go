@@ -10,6 +10,8 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
+var ErrArgs = errors.New("args error")
+
 // BuiltinFn uses reflection to wrap arbitrary Go functions into Elvish
 // functions.
 //
