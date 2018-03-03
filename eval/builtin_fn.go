@@ -15,17 +15,17 @@ import (
 //
 // Parameters are passed following these rules:
 //
-// 1. If the first parameter of function has type *Frame, it gets the current call
-//    frame.
+// 1. If the first parameter of function has type *Frame, it gets the current
+// call frame.
 //
 // 2. If (possibly after a *Frame parameter) the first parameter has type
-//    RawOptions, it gets a map of options. If the function has not declared an
-//    RawOptions parameter but is passed options, an error is thrown.
+// RawOptions, it gets a map of options. If the function has not declared an
+// RawOptions parameter but is passed options, an error is thrown.
 //
 // 3. If the last parameter is non-variadic and has type Inputs, it represents
-//    an optional parameter that contains the input to this function. If the
-//    argument is not supplied, the input channel of the Frame will be used to
-//    supply the inputs.
+// an optional parameter that contains the input to this function. If the
+// argument is not supplied, the input channel of the Frame will be used to
+// supply the inputs.
 //
 // 4. Other parameters are converted using elvToGo.
 //
