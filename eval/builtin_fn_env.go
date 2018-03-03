@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-var ErrMissingEnvVar = errors.New("Non-existent environment variable")
+var ErrNonExistentEnvVar = errors.New("non-existent environment variable")
 
 func init() {
 	addBuiltinFns(map[string]interface{}{
@@ -24,7 +24,7 @@ func hasEnv(key string) bool {
 func getEnv(key string) (string, error) {
 	value, ok := os.LookupEnv(key)
 	if !ok {
-		return "", ErrMissingEnvVar
+		return "", ErrNonExistentEnvVar
 	}
 	return value, nil
 }
