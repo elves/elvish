@@ -24,7 +24,7 @@ func hasEnv(key string) bool {
 func getEnv(key string) (string, error) {
 	value, ok := os.LookupEnv(key)
 	if !ok {
-		return "", ErrNonExistentEnvVar
+		return "", errNonExistentEnvVar
 	}
 	return value, nil
 }
