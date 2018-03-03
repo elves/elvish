@@ -21,7 +21,7 @@ import (
 
 var (
 	ErrMissingEnvVar = errors.New("Non-existent environment variable")
-	ErrArgs = errors.New("args error")
+	ErrArgs          = errors.New("args error")
 )
 
 func init() {
@@ -29,9 +29,11 @@ func init() {
 		"nop":        nop,
 		"kind-of":    kindOf,
 		"constantly": constantly,
-		"getenv":     getenv,
-		"setenv":     os.Setenv,
-		"unsetenv":   os.Unsetenv,
+
+		"hasenv":   hasenv,
+		"getenv":   getenv,
+		"setenv":   os.Setenv,
+		"unsetenv": os.Unsetenv,
 
 		"resolve": resolve,
 
@@ -89,9 +91,14 @@ func resolve(fm *Frame, head string) string {
 	}
 }
 
+func hasenv(key string) bool {
+	_, ok := os.LookupEnv(key)
+	return ok
+}
+
 func getenv(key string) (string, error) {
-	value, exists := os.LookupEnv(key)
-	if !exists {
+	value, ok := os.LookupEnv(key)
+	if !ok {
 		return "", ErrMissingEnvVar
 	}
 	return value, nil
