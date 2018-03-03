@@ -110,7 +110,12 @@ func source(fm *Frame, fname string) error {
 	if err != nil {
 		return err
 	}
-	op, err := fm.Evaler.Compile(n, NewScriptSource(fname, path, code))
+	scriptGlobal := fm.local.static()
+	for name := range fm.up.static() {
+		scriptGlobal.set(name)
+	}
+	op, err := compile(fm.Builtin.static(),
+		scriptGlobal, n, NewScriptSource(fname, path, code))
 	if err != nil {
 		return err
 	}

@@ -15,6 +15,11 @@ func TestBuiltinFnMisc(t *testing.T) {
 		NewTest("use lorem; resolve lorem:put-name").WantOutStrings(
 			"$lorem:put-name~"),
 		NewTest("resolve cat").WantOutStrings("(external cat)"),
+
+		NewTest(`f = (mktemp elvXXXXXX); echo 'put x' > $f
+		         -source $f; rm $f`).WantOut("x"),
+		NewTest(`f = (mktemp elvXXXXXX); echo 'put $x' > $f
+		         fn p [x]{ -source $f }; p x; rm $f`).WantOut("x"),
 	})
 }
 
