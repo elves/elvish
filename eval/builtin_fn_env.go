@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-var ErrNonExistentEnvVar = errors.New("non-existent environment variable")
+var errNonExistentEnvVar = errors.New("non-existent environment variable")
 
 func init() {
 	addBuiltinFns(map[string]interface{}{

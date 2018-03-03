@@ -11,7 +11,7 @@ func TestBuiltinFnEnv(t *testing.T) {
 	oldpath := os.Getenv("PATH")
 	listSep := string(os.PathListSeparator)
 	runTests(t, []Test{
-		{`get-env var`, want{err: ErrMissingEnvVar}},
+		{`get-env var`, want{err: errNonExistentEnvVar}},
 		{`set-env var test1`, want{}},
 		{`get-env var`, want{out: strs("test1")}},
 		{`put $E:var`, want{out: strs("test1")}},
