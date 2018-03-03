@@ -12,12 +12,12 @@ import (
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		// Comparison
-		"<":  func(a, b float64) bool { return a < b },
-		"<=": func(a, b float64) bool { return a <= b },
-		"==": func(a, b float64) bool { return a == b },
-		"!=": func(a, b float64) bool { return a != b },
-		">":  func(a, b float64) bool { return a > b },
-		">=": func(a, b float64) bool { return a >= b },
+		"<":  lt,
+		"<=": le,
+		"==": eqNum,
+		"!=": ne,
+		">":  gt,
+		">=": ge,
 
 		// Arithmetics
 		"+": plus,
@@ -31,6 +31,60 @@ func init() {
 		"rand":    rand.Float64,
 		"randint": randint,
 	})
+}
+
+func lt(nums ...float64) bool {
+	for i := 0; i < len(nums)-1; i++ {
+		if !(nums[i] < nums[i+1]) {
+			return false
+		}
+	}
+	return true
+}
+
+func le(nums ...float64) bool {
+	for i := 0; i < len(nums)-1; i++ {
+		if !(nums[i] <= nums[i+1]) {
+			return false
+		}
+	}
+	return true
+}
+
+func eqNum(nums ...float64) bool {
+	for i := 0; i < len(nums)-1; i++ {
+		if !(nums[i] == nums[i+1]) {
+			return false
+		}
+	}
+	return true
+}
+
+func ne(nums ...float64) bool {
+	for i := 0; i < len(nums)-1; i++ {
+		if !(nums[i] != nums[i+1]) {
+			return false
+		}
+	}
+	return true
+}
+
+func gt(nums ...float64) bool {
+	for i := 0; i < len(nums)-1; i++ {
+		if !(nums[i] > nums[i+1]) {
+			return false
+		}
+	}
+	return true
+}
+
+func ge(nums ...float64) bool {
+	for i := 0; i < len(nums)-1; i++ {
+		if !(nums[i] >= nums[i+1]) {
+			return false
+		}
+	}
+	return true
 }
 
 func plus(nums ...float64) float64 {

@@ -4,10 +4,18 @@ import "testing"
 
 func TestBuiltinFnNum(t *testing.T) {
 	runTests(t, []Test{
-		{`== 1 1.0`, wantTrue},
-		{`== 10 0xa`, wantTrue},
-		{`== a a`, want{err: errAny}},
-		{`> 0x10 1`, wantTrue},
+		NewTest("< 1 2 3").WantOut(true),
+		NewTest("< 1 3 2").WantOut(false),
+		NewTest("<= 1 1 2").WantOut(true),
+		NewTest("<= 1 2 1").WantOut(false),
+		NewTest("== 1 1 1").WantOut(true),
+		NewTest("== 1 2 1").WantOut(false),
+		NewTest("!= 1 2 1").WantOut(true),
+		NewTest("!= 1 1 2").WantOut(false),
+		NewTest("> 3 2 1").WantOut(true),
+		NewTest("> 3 1 2").WantOut(false),
+		NewTest(">= 3 3 2").WantOut(true),
+		NewTest(">= 3 2 3").WantOut(false),
 
 		// TODO test more edge cases
 		{"+ 233100 233", want{out: strs("233333")}},
