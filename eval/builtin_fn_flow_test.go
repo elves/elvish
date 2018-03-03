@@ -4,19 +4,19 @@ import "testing"
 
 func TestBuiltinFnFlow(t *testing.T) {
 	runTests(t, []Test{
-		{`run-parallel { put lorem } { echo ipsum }`,
-			want{out: strs("lorem"), bytesOut: []byte("ipsum\n")}},
+		That(`run-parallel { put lorem } { echo ipsum }`).Puts(
+			"lorem").Prints("ipsum\n"),
 
-		{`put 1 233 | each $put~`, want{out: strs("1", "233")}},
-		{`echo "1\n233" | each $put~`, want{out: strs("1", "233")}},
-		{`each $put~ [1 233]`, want{out: strs("1", "233")}},
-		{`range 10 | each [x]{ if (== $x 4) { break }; put $x }`,
-			want{out: strs("0", "1", "2", "3")}},
-		{`range 10 | each [x]{ if (== $x 4) { fail haha }; put $x }`,
-			want{out: strs("0", "1", "2", "3"), err: errAny}},
+		That(`put 1 233 | each $put~`).Puts("1", "233"),
+		That(`echo "1\n233" | each $put~`).Puts("1", "233"),
+		That(`each $put~ [1 233]`).Puts("1", "233"),
+		That(`range 10 | each [x]{ if (== $x 4) { break }; put $x }`).Puts(
+			"0", "1", "2", "3"),
+		That(`range 10 | each [x]{ if (== $x 4) { fail haha }; put $x }`).Puts(
+			"0", "1", "2", "3").Errors(),
 		// TODO: test peach
 
-		{`fail haha`, want{err: errAny}},
-		{`return`, want{err: Return}},
+		That(`fail haha`).Errors(),
+		That(`return`).ErrorsWith(Return),
 	})
 }

@@ -9,95 +9,89 @@ import (
 var valueTests = []Test{
 	// Compounding
 	// -----------
-	{"put {fi,elvi}sh{1.0,1.1}",
-		want{out: strs("fish1.0", "fish1.1", "elvish1.0", "elvish1.1")}},
+	That("put {fi,elvi}sh{1.0,1.1}").Puts(
+		"fish1.0", "fish1.1", "elvish1.0", "elvish1.1"),
 
 	// List, Map and Indexing
 	// ----------------------
 
-	{"echo [a b c] [&key=value] | each $put~",
-		want{out: strs("[a b c] [&key=value]")}},
-	{"put [a b c][2]", want{out: strs("c")}},
-	{"put [&key=value][key]", want{out: strs("value")}},
+	That("echo [a b c] [&key=value] | each $put~").Puts(
+		"[a b c] [&key=value]"),
+	That("put [a b c][2]").Puts("c"),
+	That("put [&key=value][key]").Puts("value"),
 
 	// String Literals
 	// ---------------
-	{`put 'such \"''literal'`, want{out: strs(`such \"'literal`)}},
-	{`put "much \n\033[31;1m$cool\033[m"`,
-		want{out: strs("much \n\033[31;1m$cool\033[m")}},
+	That(`put 'such \"''literal'`).Puts(`such \"'literal`),
+	That(`put "much \n\033[31;1m$cool\033[m"`).Puts(
+		"much \n\033[31;1m$cool\033[m"),
 
 	// Captures
 	// ---------
 
 	// Output capture
-	{"put (put lorem ipsum)", want{out: strs("lorem", "ipsum")}},
-	{"put (print \"lorem\nipsum\")", want{out: strs("lorem", "ipsum")}},
+	That("put (put lorem ipsum)").Puts("lorem", "ipsum"),
+	That("put (print \"lorem\nipsum\")").Puts("lorem", "ipsum"),
 
 	// Exception capture
-	{"bool ?(nop); bool ?(e:false)", want{out: bools(true, false)}},
+	That("bool ?(nop); bool ?(e:false)").Puts(true, false),
 
 	// Variable Use
 	// ------------
 
 	// Compounding
-	{"x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n",
-		want{out: strs("WOW, SUCH SHELL, MUCH COOL")}},
+	That("x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n").Puts(
+		"WOW, SUCH SHELL, MUCH COOL"),
 	// Splicing
-	{"x=[elvish rules]; put $@x", want{out: strs("elvish", "rules")}},
+	That("x=[elvish rules]; put $@x").Puts("elvish", "rules"),
 
 	// Wildcard; see testmain_test.go for FS setup
 	// -------------------------------------------
 
-	{"put *", want{out: strs(fileListing...)}},
-	{"put a/b/nonexistent*", want{err: ErrWildcardNoMatch}},
-	{"put a/b/nonexistent*[nomatch-ok]", wantNothing},
+	That("put *").PutsStrings(fileListing),
+	That("put a/b/nonexistent*").ErrorsWith(ErrWildcardNoMatch),
+	That("put a/b/nonexistent*[nomatch-ok]").DoesNothing(),
 
 	// Character set and range
-	{"put ?[set:ab]*", want{out: strs(getFilesWithPrefix("a", "b")...)}},
-	{"put ?[range:a-c]*", want{out: strs(getFilesWithPrefix("a", "b", "c")...)}},
-	{"put ?[range:a~c]*", want{out: strs(getFilesWithPrefix("a", "b")...)}},
-	{"put *[range:a-z]", want{out: strs("bar", "dir", "foo", "ipsum", "lorem")}},
+	That("put ?[set:ab]*").PutsStrings(getFilesWithPrefix("a", "b")),
+	That("put ?[range:a-c]*").PutsStrings(getFilesWithPrefix("a", "b", "c")),
+	That("put ?[range:a~c]*").PutsStrings(getFilesWithPrefix("a", "b")),
+	That("put *[range:a-z]").Puts("bar", "dir", "foo", "ipsum", "lorem"),
 
 	// Exclusion
-	{"put *[but:foo][but:lorem]", want{out: strs(getFilesBut("foo", "lorem")...)}},
+	That("put *[but:foo][but:lorem]").PutsStrings(getFilesBut("foo", "lorem")),
 
 	// Tilde
 	// -----
-	{"h=$E:HOME; E:HOME=/foo; put ~ ~/src; E:HOME=$h",
-		want{out: strs("/foo", "/foo/src")}},
+	That("h=$E:HOME; E:HOME=/foo; put ~ ~/src; E:HOME=$h").Puts("/foo", "/foo/src"),
 
 	// Closure
 	// -------
 
-	{"[]{ }", wantNothing},
-	{"[x]{put $x} foo", want{out: strs("foo")}},
+	That("[]{ }").DoesNothing(),
+	That("[x]{put $x} foo").Puts("foo"),
 
 	// Variable capture
-	{"x=lorem; []{x=ipsum}; put $x", want{out: strs("ipsum")}},
-	{"x=lorem; []{ put $x; x=ipsum }; put $x",
-		want{out: strs("lorem", "ipsum")}},
+	That("x=lorem; []{x=ipsum}; put $x").Puts("ipsum"),
+	That("x=lorem; []{ put $x; x=ipsum }; put $x").Puts("lorem", "ipsum"),
 
 	// Shadowing
-	{"x=ipsum; []{ local:x=lorem; put $x }; put $x",
-		want{out: strs("lorem", "ipsum")}},
+	That("x=ipsum; []{ local:x=lorem; put $x }; put $x").Puts("lorem", "ipsum"),
 
 	// Shadowing by argument
-	{"x=ipsum; [x]{ put $x; x=BAD } lorem; put $x",
-		want{out: strs("lorem", "ipsum")}},
+	That("x=ipsum; [x]{ put $x; x=BAD } lorem; put $x").Puts("lorem", "ipsum"),
 
 	// Closure captures new local variables every time
-	{`fn f []{ x=0; put []{x=(+ $x 1)} []{put $x} }
+	That(`fn f []{ x=0; put []{x=(+ $x 1)} []{put $x} }
 		      {inc1,put1}=(f); $put1; $inc1; $put1
-			  {inc2,put2}=(f); $put2; $inc2; $put2`,
-		want{out: strs("0", "1", "0", "1")}},
+			  {inc2,put2}=(f); $put2; $inc2; $put2`).Puts("0", "1", "0", "1"),
 
 	// Rest argument.
-	{"[x @xs]{ put $x $xs } a b c",
-		want{out: []interface{}{"a", vals.MakeList("b", "c")}}},
+	That("[x @xs]{ put $x $xs } a b c").Puts("a", vals.MakeList("b", "c")),
 	// Options.
-	{"[a &k=v]{ put $a $k } foo &k=bar", want{out: strs("foo", "bar")}},
+	That("[a &k=v]{ put $a $k } foo &k=bar").Puts("foo", "bar"),
 	// Option default value.
-	{"[a &k=v]{ put $a $k } foo", want{out: strs("foo", "v")}},
+	That("[a &k=v]{ put $a $k } foo").Puts("foo", "v"),
 }
 
 func TestValue(t *testing.T) {

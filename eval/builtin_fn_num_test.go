@@ -18,13 +18,13 @@ func TestBuiltinFnNum(t *testing.T) {
 		That(">= 3 2 3").Puts(false),
 
 		// TODO test more edge cases
-		{"+ 233100 233", want{out: strs("233333")}},
-		{"- 233333 233100", want{out: strs("233")}},
-		{"- 233", want{out: strs("-233")}},
-		{"* 353 661", want{out: strs("233333")}},
-		{"/ 233333 353", want{out: strs("661")}},
-		{"/ 1 0", want{out: strs("+Inf")}},
-		{"^ 16 2", want{out: strs("256")}},
-		{"% 23 7", want{out: strs("2")}},
+		That("+ 233100 233").Puts("233333"),
+		That("- 233333 233100").Puts("233"),
+		That("- 233").Puts("-233"),
+		That("* 353 661").Puts("233333"),
+		That("/ 233333 353").Puts("661"),
+		That("/ 1 0").Puts("+Inf"),
+		That("^ 16 2").Puts("256"),
+		That("% 23 7").Puts("2"),
 	})
 }

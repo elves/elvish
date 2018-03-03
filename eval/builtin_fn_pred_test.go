@@ -6,31 +6,31 @@ import (
 
 func TestBool(t *testing.T) {
 	runTests(t, []Test{
-		{`bool $true`, wantTrue},
-		{`bool a`, wantTrue},
-		{`bool [a]`, wantTrue},
+		That(`bool $true`).Puts(true),
+		That(`bool a`).Puts(true),
+		That(`bool [a]`).Puts(true),
 		// "Empty" values are also true in Elvish
-		{`bool []`, wantTrue},
-		{`bool [&]`, wantTrue},
-		{`bool 0`, wantTrue},
-		{`bool ""`, wantTrue},
+		That(`bool []`).Puts(true),
+		That(`bool [&]`).Puts(true),
+		That(`bool 0`).Puts(true),
+		That(`bool ""`).Puts(true),
 		// Only errors and $false are false
-		{`bool ?(fail x)`, wantFalse},
-		{`bool $false`, wantFalse},
+		That(`bool ?(fail x)`).Puts(false),
+		That(`bool $false`).Puts(false),
 
-		{`not $false`, wantTrue},
-		{`not ?(fail x)`, wantTrue},
-		{`not $true`, wantFalse},
-		{`not 0`, wantFalse},
+		That(`not $false`).Puts(true),
+		That(`not ?(fail x)`).Puts(true),
+		That(`not $true`).Puts(false),
+		That(`not 0`).Puts(false),
 
-		{`is 1 1`, wantTrue},
-		{`is a b`, wantFalse},
-		{`is [] []`, wantTrue},
-		{`is [1] [1]`, wantFalse},
-		{`eq 1 1`, wantTrue},
-		{`eq a b`, wantFalse},
-		{`eq [] []`, wantTrue},
-		{`eq [1] [1]`, wantTrue},
-		{`not-eq a b`, wantTrue},
+		That(`is 1 1`).Puts(true),
+		That(`is a b`).Puts(false),
+		That(`is [] []`).Puts(true),
+		That(`is [1] [1]`).Puts(false),
+		That(`eq 1 1`).Puts(true),
+		That(`eq a b`).Puts(false),
+		That(`eq [] []`).Puts(true),
+		That(`eq [1] [1]`).Puts(true),
+		That(`not-eq a b`).Puts(true),
 	})
 }

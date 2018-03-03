@@ -30,31 +30,7 @@ type want struct {
 
 // A special value for want.err to indicate that any error, as long as not nil,
 // is OK
-var errAny = errors.New("")
-
-var (
-	wantNothing = want{}
-	wantTrue    = want{out: bools(true)}
-	wantFalse   = want{out: bools(false)}
-)
-
-// Shorthands for values in want.out
-
-func strs(ss ...string) []interface{} {
-	vs := make([]interface{}, len(ss))
-	for i, s := range ss {
-		vs[i] = s
-	}
-	return vs
-}
-
-func bools(bs ...bool) []interface{} {
-	vs := make([]interface{}, len(bs))
-	for i, b := range bs {
-		vs[i] = vals.Bool(b)
-	}
-	return vs
-}
+var errAny = errors.New("any error")
 
 // The following functions and methods are used to build Test structs. They are
 // supposed to read like English, so a test that "put x" should put "x" reads:
@@ -66,6 +42,13 @@ func That(text string) Test {
 	return Test{text: text}
 }
 
+// DoesNothing returns t unchanged. It is used to mark that a piece of code
+// should simply does nothing. In particular, it shouldn't have any output and
+// does not error.
+func (t Test) DoesNothing() Test {
+	return t
+}
+
 // Puts returns an altered Test that requires the source code to produce the
 // specified values in the value channel when evaluated.
 func (t Test) Puts(vs ...interface{}) Test {
@@ -73,30 +56,34 @@ func (t Test) Puts(vs ...interface{}) Test {
 	return t
 }
 
-// Prints returns an altered test that requires the source code to produce
-// the specified output in the byte pipe when evaluated.
-func (t Test) Prints(b []byte) Test {
-	t.want.bytesOut = b
+// Puts returns an altered Test that requires the source code to produce the
+// specified strings in the value channel when evaluated.
+func (t Test) PutsStrings(ss []string) Test {
+	t.want.out = make([]interface{}, len(ss))
+	for i, s := range ss {
+		t.want.out[i] = s
+	}
 	return t
 }
 
-// PrintsString is the same as WantBytesOut except that its argument is a
-// string.
-func (t Test) PrintsString(s string) Test {
-	return t.Prints([]byte(s))
+// Prints returns an altered test that requires the source code to produce
+// the specified output in the byte pipe when evaluated.
+func (t Test) Prints(s string) Test {
+	t.want.bytesOut = []byte(s)
+	return t
 }
 
-// Errors returns an altered Test that requires the source code to result in
+// ErrorsWith returns an altered Test that requires the source code to result in
 // the specified error when evaluted.
-func (t Test) Errors(err error) Test {
+func (t Test) ErrorsWith(err error) Test {
 	t.want.err = err
 	return t
 }
 
-// ErrorsAny returns an altered Test that requires the source code to result in
-// any error when evaluated.
-func (t Test) ErrorsAny() Test {
-	return t.Errors(errAny)
+// Errors returns an altered Test that requires the source code to result in any
+// error when evaluated.
+func (t Test) Errors() Test {
+	return t.ErrorsWith(errAny)
 }
 
 // RunTests runs test cases. For each test case, a new Evaler is made by calling

@@ -7,77 +7,72 @@ var opTests = []Test{
 	// ------
 
 	// Empty chunk
-	{"", wantNothing},
+	That("").DoesNothing(),
 	// Outputs of pipelines in a chunk are concatenated
-	{"put x; put y; put z", want{out: strs("x", "y", "z")}},
+	That("put x; put y; put z").Puts("x", "y", "z"),
 	// A failed pipeline cause the whole chunk to fail
-	{"put a; e:false; put b", want{out: strs("a"), err: errAny}},
+	That("put a; e:false; put b").Puts("a").Errors(),
 
 	// Pipelines
 	// ---------
 
 	// Pure byte pipeline
-	{`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`,
-		want{bytesOut: []byte("A1bert\nBer1in\n")}},
+	That(`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`).Prints(
+		"A1bert\nBer1in\n"),
 	// Pure channel pipeline
-	{`put 233 42 19 | each [x]{+ $x 10}`, want{out: strs("243", "52", "29")}},
+	That(`put 233 42 19 | each [x]{+ $x 10}`).Puts("243", "52", "29"),
 	// Pipeline draining.
-	{`range 100 | put x`, want{out: strs("x")}},
+	That(`range 100 | put x`).Puts("x"),
 	// TODO: Add a useful hybrid pipeline sample
 
 	// Assignments
 	// -----------
 
 	// List element assignment
-	{"li=[foo bar]; li[0]=233; put $@li",
-		want{out: strs("233", "bar")}},
+	That("li=[foo bar]; li[0]=233; put $@li").Puts("233", "bar"),
 	// Map element assignment
-	{"di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]",
-		want{out: strs("lorem", "ipsum")}},
-	{"d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]",
-		want{out: strs("v", "u")}},
+	That("di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]").Puts(
+		"lorem", "ipsum"),
+	That("d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]").Puts("v", "u"),
 	// Multi-assignments.
-	{"{a,b}=(put a b); put $a $b", want{out: strs("a", "b")}},
-	{"@a=(put a b); put $@a", want{out: strs("a", "b")}},
-	{"{a,@b}=(put a b c); put $@b", want{out: strs("b", "c")}},
-	//{"di=[&]; di[a b]=(put a b); put $di[a] $di[b]", want{out: strs("a", "b")}},
+	That("{a,b}=(put a b); put $a $b").Puts("a", "b"),
+	That("@a=(put a b); put $@a").Puts("a", "b"),
+	That("{a,@b}=(put a b c); put $@b").Puts("b", "c"),
+	//That("di=[&]; di[a b]=(put a b); put $di[a] $di[b]").Puts("a", "b"),
 
 	// Temporary assignment.
-	{"a=alice b=bob; {a,@b}=(put amy ben) put $a $@b; put $a $b",
-		want{out: strs("amy", "ben", "alice", "bob")}},
+	That("a=alice b=bob; {a,@b}=(put amy ben) put $a $@b; put $a $b").Puts(
+		"amy", "ben", "alice", "bob"),
 	// Temporary assignment of list element.
-	{"l = [a]; l[0]=x put $l[0]; put $l[0]", want{out: strs("x", "a")}},
+	That("l = [a]; l[0]=x put $l[0]; put $l[0]").Puts("x", "a"),
 	// Temporary assignment of map element.
-	{"m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]", want{out: strs("v2", "v")}},
+	That("m = [&k=v]; m[k]=v2 put $m[k]; put $m[k]").Puts("v2", "v"),
 	// Temporary assignment before special form.
-	{"li=[foo bar] for x $li { put $x }", want{out: strs("foo", "bar")}},
+	That("li=[foo bar] for x $li { put $x }").Puts("foo", "bar"),
 
 	// Spacey assignment.
-	{"a @b = 2 3 foo; put $a $b[1]", want{out: strs("2", "foo")}},
+	That("a @b = 2 3 foo; put $a $b[1]").Puts("2", "foo"),
 	// Spacey assignment with temporary assignment
-	{"x = 1; x=2 y = (+ 1 $x); put $x $y", want{out: strs("1", "3")}},
+	That("x = 1; x=2 y = (+ 1 $x); put $x $y").Puts("1", "3"),
 
 	// Redirections
 	// ------------
 
-	{"f=(mktemp elvXXXXXX); echo 233 > $f; cat < $f; rm $f",
-		want{bytesOut: []byte("233\n")}},
+	That("f=(mktemp elvXXXXXX); echo 233 > $f; cat < $f; rm $f").Prints("233\n"),
 
 	// Redirections from special form.
-	{`f = (mktemp elvXXXXXX);
+	That(`f = (mktemp elvXXXXXX);
 	for x [lorem ipsum] { echo $x } > $f
 	cat $f
-	rm $f`,
-		want{bytesOut: []byte("lorem\nipsum\n")}},
+	rm $f`).Prints("lorem\nipsum\n"),
 
 	// Redirections from File object.
-	{`fname=(mktemp elvXXXXXX); echo haha > $fname;
-			f=(fopen $fname); cat <$f; fclose $f; rm $fname`,
-		want{bytesOut: []byte("haha\n")}},
+	That(`fname=(mktemp elvXXXXXX); echo haha > $fname;
+			f=(fopen $fname); cat <$f; fclose $f; rm $fname`).Prints("haha\n"),
 
 	// Redirections from Pipe object.
-	{`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`,
-		want{bytesOut: []byte("haha\n")}},
+	That(`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`).Prints(
+		"haha\n"),
 }
 
 func TestOp(t *testing.T) {

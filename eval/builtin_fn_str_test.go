@@ -4,30 +4,30 @@ import "testing"
 
 func TestBuiltinFnStr(t *testing.T) {
 	runTests(t, []Test{
-		{`==s haha haha`, wantTrue},
-		{`==s 10 10.0`, wantFalse},
-		{`<s a b`, wantTrue},
-		{`<s 2 10`, wantFalse},
+		That(`==s haha haha`).Puts(true),
+		That(`==s 10 10.0`).Puts(false),
+		That(`<s a b`).Puts(true),
+		That(`<s 2 10`).Puts(false),
 
-		{`joins : [/usr /bin /tmp]`, want{out: strs("/usr:/bin:/tmp")}},
+		That(`joins : [/usr /bin /tmp]`).Puts("/usr:/bin:/tmp"),
 		That(`joins : ['' a '']`).Puts(":a:"),
-		{`splits : /usr:/bin:/tmp`, want{out: strs("/usr", "/bin", "/tmp")}},
-		{`splits : /usr:/bin:/tmp &max=2`, want{out: strs("/usr", "/bin:/tmp")}},
-		{`replaces : / ":usr:bin:tmp"`, want{out: strs("/usr/bin/tmp")}},
-		{`replaces &max=2 : / :usr:bin:tmp`, want{out: strs("/usr/bin:tmp")}},
+		That(`splits : /usr:/bin:/tmp`).Puts("/usr", "/bin", "/tmp"),
+		That(`splits : /usr:/bin:/tmp &max=2`).Puts("/usr", "/bin:/tmp"),
+		That(`replaces : / ":usr:bin:tmp"`).Puts("/usr/bin/tmp"),
+		That(`replaces &max=2 : / :usr:bin:tmp`).Puts("/usr/bin:tmp"),
 
-		{`ord a`, want{out: strs("0x61")}},
-		{`base 16 42 233`, want{out: strs("2a", "e9")}},
-		{`base 1 1`, want{err: errAny}},   // no base-1
-		{`base 37 10`, want{err: errAny}}, // no letter for base-37
-		{`wcswidth 你好`, want{out: strs("4")}},
-		{`-override-wcwidth x 10; wcswidth 1x2x; -override-wcwidth x 1`, want{out: strs("22")}},
+		That(`ord a`).Puts("0x61"),
+		That(`base 16 42 233`).Puts("2a", "e9"),
+		That(`base 1 1`).Errors(),   // no base-1
+		That(`base 37 10`).Errors(), // no letter for base-37
+		That(`wcswidth 你好`).Puts("4"),
+		That(`-override-wcwidth x 10; wcswidth 1x2x; -override-wcwidth x 1`).Puts("22"),
 
-		{`has-prefix golang go`, wantTrue},
-		{`has-prefix golang x`, wantFalse},
-		{`has-suffix golang x`, wantFalse},
+		That(`has-prefix golang go`).Puts(true),
+		That(`has-prefix golang x`).Puts(false),
+		That(`has-suffix golang x`).Puts(false),
 
-		{`echo "  ax  by cz  \n11\t22 33" | eawk [@a]{ put $a[-1] }`,
-			want{out: strs("cz", "33")}},
+		That(`echo "  ax  by cz  \n11\t22 33" | eawk [@a]{ put $a[-1] }`).Puts(
+			"cz", "33"),
 	})
 }

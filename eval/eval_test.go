@@ -17,30 +17,27 @@ func TestBuiltinPid(t *testing.T) {
 	}
 }
 
-var miscEvalTests = []Test{
-	// Pseudo-namespaces local: and up:
-	{"x=lorem; []{local:x=ipsum; put $up:x $local:x}",
-		want{out: strs("lorem", "ipsum")}},
-	{"x=lorem; []{up:x=ipsum; put $x}; put $x",
-		want{out: strs("ipsum", "ipsum")}},
-	// Pseudo-namespace E:
-	{"E:FOO=lorem; put $E:FOO", want{out: strs("lorem")}},
-	{"del E:FOO; put $E:FOO", want{out: strs("")}},
-}
-
 func TestMiscEval(t *testing.T) {
-	runTests(t, miscEvalTests)
+	runTests(t, []Test{
+		// Pseudo-namespaces local: and up:
+		That("x=lorem; { local:x=ipsum; put $up:x $local:x }").Puts(
+			"lorem", "ipsum"),
+		That("x=lorem; { up:x=ipsum; put $x }; put $x").Puts("ipsum", "ipsum"),
+		// Pseudo-namespace E:
+		That("E:FOO=lorem; put $E:FOO").Puts("lorem"),
+		That("del E:FOO; put $E:FOO").Puts(""),
+	})
 }
 
 func TestMultipleEval(t *testing.T) {
 	texts := []string{"x=hello", "put $x"}
 	outs, _, err := evalAndCollect(t, NewEvaler(), texts, 1)
-	wanted := strs("hello")
+	wantOuts := []interface{}{"hello"}
 	if err != nil {
 		t.Errorf("eval %s => %v, want nil", texts, err)
 	}
-	if !reflect.DeepEqual(outs, wanted) {
-		t.Errorf("eval %s outputs %v, want %v", texts, outs, wanted)
+	if !reflect.DeepEqual(outs, wantOuts) {
+		t.Errorf("eval %s outputs %v, want %v", texts, outs, wantOuts)
 	}
 }
 

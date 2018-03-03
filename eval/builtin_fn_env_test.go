@@ -11,20 +11,18 @@ func TestBuiltinFnEnv(t *testing.T) {
 	oldpath := os.Getenv("PATH")
 	listSep := string(os.PathListSeparator)
 	runTests(t, []Test{
-		{`get-env var`, want{err: errNonExistentEnvVar}},
-		{`set-env var test1`, want{}},
-		{`get-env var`, want{out: strs("test1")}},
-		{`put $E:var`, want{out: strs("test1")}},
-		{`set-env var test2`, want{}},
-		{`get-env var`, want{out: strs("test2")}},
-		{`put $E:var`, want{out: strs("test2")}},
+		That(`get-env var`).ErrorsWith(errNonExistentEnvVar),
+		That(`set-env var test1`),
+		That(`get-env var`).Puts("test1"),
+		That(`put $E:var`).Puts("test1"),
+		That(`set-env var test2`),
+		That(`get-env var`).Puts("test2"),
+		That(`put $E:var`).Puts("test2"),
 
-		{`set-env PATH /test-path`, want{}},
-		{`put $paths`, want{out: []interface{}{
-			vals.MakeList(strs("/test-path")...)}}},
-		{`paths = [/test-path2 $@paths]`, want{}},
-		{`get-env PATH`, want{out: strs(
-			"/test-path2" + listSep + "/test-path")}},
+		That(`set-env PATH /test-path`),
+		That(`put $paths`).Puts(vals.MakeList("/test-path")),
+		That(`paths = [/test-path2 $@paths]`),
+		That(`get-env PATH`).Puts("/test-path2" + listSep + "/test-path"),
 	})
 	os.Setenv("PATH", oldpath)
 }

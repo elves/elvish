@@ -8,31 +8,28 @@ import (
 
 func TestBuiltinFnIO(t *testing.T) {
 	runTests(t, []Test{
-		{`put foo bar`, want{out: strs("foo", "bar")}},
+		That(`put foo bar`).Puts("foo", "bar"),
 
-		{`print [foo bar]`, want{bytesOut: []byte("[foo bar]")}},
-		{`print foo bar &sep=,`, want{bytesOut: []byte("foo,bar")}},
-		{`echo [foo bar]`, want{bytesOut: []byte("[foo bar]\n")}},
-		{`pprint [foo bar]`, want{bytesOut: []byte("[\n foo\n bar\n]\n")}},
-		That(`repr foo bar ['foo bar']`).PrintsString("foo bar ['foo bar']\n"),
+		That(`print [foo bar]`).Prints("[foo bar]"),
+		That(`print foo bar &sep=,`).Prints("foo,bar"),
+		That(`echo [foo bar]`).Prints("[foo bar]\n"),
+		That(`pprint [foo bar]`).Prints("[\n foo\n bar\n]\n"),
+		That(`repr foo bar ['foo bar']`).Prints("foo bar ['foo bar']\n"),
 
-		{`print "a\nb" | slurp`, want{out: strs("a\nb")}},
-		{`print "a\nb" | from-lines`, want{out: strs("a", "b")}},
-		{`print "a\nb\n" | from-lines`, want{out: strs("a", "b")}},
-		{`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`,
-			want{out: []interface{}{
-				vals.MakeMap(map[interface{}]interface{}{
-					"k": "v",
-					"a": vals.MakeList(strs("1", "2")...)}),
-				"foo",
-			}}},
-		{`echo 'invalid' | from-json`, want{err: errAny}},
+		That(`print "a\nb" | slurp`).Puts("a\nb"),
+		That(`print "a\nb" | from-lines`).Puts("a", "b"),
+		That(`print "a\nb\n" | from-lines`).Puts("a", "b"),
+		That(`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`).Puts(
+			vals.MakeMap(map[interface{}]interface{}{
+				"k": "v",
+				"a": vals.MakeList("1", "2")}),
+			"foo"),
+		That(`echo 'invalid' | from-json`).Errors(),
 
-		{`put "l\norem" ipsum | to-lines`,
-			want{bytesOut: []byte("l\norem\nipsum\n")}},
-		{`put [&k=v &a=[1 2]] foo | to-json`,
-			want{bytesOut: []byte(`{"a":["1","2"],"k":"v"}
+		That(`put "l\norem" ipsum | to-lines`).Prints("l\norem\nipsum\n"),
+		That(`put [&k=v &a=[1 2]] foo | to-json`).Prints(
+			`{"a":["1","2"],"k":"v"}
 "foo"
-`)}},
+`),
 	})
 }
