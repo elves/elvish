@@ -7,8 +7,8 @@ import (
 
 var builtinSpecialTests = []Test{
 	// del
-	NewTest("x = [&k=v &k2=v2]; del x[k2]; keys $x").WantOutStrings("k"),
-	NewTest("x = [[&k=v &k2=v2]]; del x[0][k2]; keys $x[0]").WantOutStrings("k"),
+	That("x = [&k=v &k2=v2]; del x[k2]; keys $x").Puts("k"),
+	That("x = [[&k=v &k2=v2]]; del x[0][k2]; keys $x[0]").Puts("k"),
 
 	// if
 	{"if true { put then }", want{out: strs("then")}},
@@ -33,8 +33,8 @@ var builtinSpecialTests = []Test{
 	// while
 	{"x=0; while (< $x 4) { put $x; x=(+ $x 1) }",
 		want{out: strs("0", "1", "2", "3")}},
-	NewTest("x = 0; while (< $x 4) { put $x; break }").WantOutStrings("0"),
-	NewTest("x = 0; while (< $x 4) { fail haha }").WantAnyErr(),
+	That("x = 0; while (< $x 4) { put $x; break }").Puts("0"),
+	That("x = 0; while (< $x 4) { fail haha }").ErrorsAny(),
 
 	// for
 	{"for x [tempora mores] { put 'O '$x }",
@@ -75,7 +75,7 @@ var builtinSpecialTests = []Test{
 	{`use a/b/c/x; put $x:d $x:lorem`, want{out: strs("a/b/c/d", "lorem")}},
 
 	// Variables defined in the default global scope is invisible from modules
-	NewTest("x = foo; use put-x").WantAnyErr(),
+	That("x = foo; use put-x").ErrorsAny(),
 
 	// TODO: Test module namespace
 }

@@ -4,10 +4,10 @@ import "testing"
 
 func TestNs(t *testing.T) {
 	runTests(t, []Test{
-		NewTest("kind-of (ns [&])").WantOutStrings("ns"),
+		That("kind-of (ns [&])").Puts("ns"),
 		// A Ns is only equal to itself
-		NewTest("ns = (ns [&]); eq $ns $ns").WantOutBools(true),
-		NewTest("eq (ns [&]) (ns [&])").WantOutBools(false),
-		NewTest("eq (ns [&]) [&]").WantOutBools(false),
+		That("ns = (ns [&]); eq $ns $ns").Puts(true),
+		That("eq (ns [&]) (ns [&])").Puts(false),
+		That("eq (ns [&]) [&]").Puts(false),
 	})
 }

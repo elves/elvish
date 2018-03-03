@@ -56,54 +56,47 @@ func bools(bs ...bool) []interface{} {
 	return vs
 }
 
-// NewTest returns a new Test with the specified source code.
-func NewTest(text string) Test {
+// The following functions and methods are used to build Test structs. They are
+// supposed to read like English, so a test that "put x" should put "x" reads:
+//
+// That("put x").Puts("x")
+
+// That returns a new Test with the specified source code.
+func That(text string) Test {
 	return Test{text: text}
 }
 
-// WantOut returns an altered Test that requires the source code to produce the
+// Puts returns an altered Test that requires the source code to produce the
 // specified values in the value channel when evaluated.
-func (t Test) WantOut(vs ...interface{}) Test {
+func (t Test) Puts(vs ...interface{}) Test {
 	t.want.out = vs
 	return t
 }
 
-// WantOutStrings returns an altered Test that requires the source code to
-// produce the specified string values in the value channel when evaluated.
-func (t Test) WantOutStrings(ss ...string) Test {
-	return t.WantOut(strs(ss...)...)
-}
-
-// WantOutBools returns an altered Test that requires the source code to produce
-// the specified boolean values in the value channel when evaluated.
-func (t Test) WantOutBools(bs ...bool) Test {
-	return t.WantOut(bools(bs...)...)
-}
-
-// WantBytesOut returns an altered test that requires the source code to produce
+// Prints returns an altered test that requires the source code to produce
 // the specified output in the byte pipe when evaluated.
-func (t Test) WantBytesOut(b []byte) Test {
+func (t Test) Prints(b []byte) Test {
 	t.want.bytesOut = b
 	return t
 }
 
-// WantBytesOutString is the same as WantBytesOut except that its argument is a
+// PrintsString is the same as WantBytesOut except that its argument is a
 // string.
-func (t Test) WantBytesOutString(s string) Test {
-	return t.WantBytesOut([]byte(s))
+func (t Test) PrintsString(s string) Test {
+	return t.Prints([]byte(s))
 }
 
-// WantErr returns an altered Test that requires the source code to result in
+// Errors returns an altered Test that requires the source code to result in
 // the specified error when evaluted.
-func (t Test) WantErr(err error) Test {
+func (t Test) Errors(err error) Test {
 	t.want.err = err
 	return t
 }
 
-// WantAnyErr returns an altered Test that requires the source code to result in
+// ErrorsAny returns an altered Test that requires the source code to result in
 // any error when evaluated.
-func (t Test) WantAnyErr() Test {
-	return t.WantErr(errAny)
+func (t Test) ErrorsAny() Test {
+	return t.Errors(errAny)
 }
 
 // RunTests runs test cases. For each test case, a new Evaler is made by calling

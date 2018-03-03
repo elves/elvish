@@ -4,18 +4,18 @@ import "testing"
 
 func TestBuiltinFnNum(t *testing.T) {
 	runTests(t, []Test{
-		NewTest("< 1 2 3").WantOut(true),
-		NewTest("< 1 3 2").WantOut(false),
-		NewTest("<= 1 1 2").WantOut(true),
-		NewTest("<= 1 2 1").WantOut(false),
-		NewTest("== 1 1 1").WantOut(true),
-		NewTest("== 1 2 1").WantOut(false),
-		NewTest("!= 1 2 1").WantOut(true),
-		NewTest("!= 1 1 2").WantOut(false),
-		NewTest("> 3 2 1").WantOut(true),
-		NewTest("> 3 1 2").WantOut(false),
-		NewTest(">= 3 3 2").WantOut(true),
-		NewTest(">= 3 2 3").WantOut(false),
+		That("< 1 2 3").Puts(true),
+		That("< 1 3 2").Puts(false),
+		That("<= 1 1 2").Puts(true),
+		That("<= 1 2 1").Puts(false),
+		That("== 1 1 1").Puts(true),
+		That("== 1 2 1").Puts(false),
+		That("!= 1 2 1").Puts(true),
+		That("!= 1 1 2").Puts(false),
+		That("> 3 2 1").Puts(true),
+		That("> 3 1 2").Puts(false),
+		That(">= 3 3 2").Puts(true),
+		That(">= 3 2 3").Puts(false),
 
 		// TODO test more edge cases
 		{"+ 233100 233", want{out: strs("233333")}},

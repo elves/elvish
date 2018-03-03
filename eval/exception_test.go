@@ -4,6 +4,6 @@ import "testing"
 
 func TestException(t *testing.T) {
 	runTests(t, []Test{
-		NewTest("kind-of ?(fail foo)").WantOutStrings("exception"),
+		That("kind-of ?(fail foo)").Puts("exception"),
 	})
 }

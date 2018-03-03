@@ -6,16 +6,16 @@ import (
 
 func TestBuiltinFnMisc(t *testing.T) {
 	runTests(t, []Test{
-		NewTest("resolve for").WantOutStrings("special"),
-		NewTest("resolve put").WantOutStrings("$put~"),
-		NewTest("fn f { }; resolve f").WantOutStrings("$f~"),
-		NewTest("use lorem; resolve lorem:put-name").WantOutStrings(
+		That("resolve for").Puts("special"),
+		That("resolve put").Puts("$put~"),
+		That("fn f { }; resolve f").Puts("$f~"),
+		That("use lorem; resolve lorem:put-name").Puts(
 			"$lorem:put-name~"),
-		NewTest("resolve cat").WantOutStrings("(external cat)"),
+		That("resolve cat").Puts("(external cat)"),
 
-		NewTest(`f = (mktemp elvXXXXXX); echo 'put x' > $f
-		         -source $f; rm $f`).WantOut("x"),
-		NewTest(`f = (mktemp elvXXXXXX); echo 'put $x' > $f
-		         fn p [x]{ -source $f }; p x; rm $f`).WantOut("x"),
+		That(`f = (mktemp elvXXXXXX); echo 'put x' > $f
+		         -source $f; rm $f`).Puts("x"),
+		That(`f = (mktemp elvXXXXXX); echo 'put $x' > $f
+		         fn p [x]{ -source $f }; p x; rm $f`).Puts("x"),
 	})
 }

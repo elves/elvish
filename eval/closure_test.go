@@ -4,20 +4,20 @@ import "testing"
 
 func TestClosure(t *testing.T) {
 	runTests(t, []Test{
-		NewTest("kind-of { }").WantOutStrings("fn"),
-		NewTest("eq { } { }").WantOutBools(false),
-		NewTest("x = { }; put [&$x= foo][$x]").WantOutStrings("foo"),
-		NewTest("[x]{ } a b").WantAnyErr(),
-		NewTest("[x y]{ } a").WantAnyErr(),
-		NewTest("[x y @rest]{ } a").WantAnyErr(),
-		NewTest("[]{ } &k=v").WantAnyErr(),
+		That("kind-of { }").Puts("fn"),
+		That("eq { } { }").Puts(false),
+		That("x = { }; put [&$x= foo][$x]").Puts("foo"),
+		That("[x]{ } a b").ErrorsAny(),
+		That("[x y]{ } a").ErrorsAny(),
+		That("[x y @rest]{ } a").ErrorsAny(),
+		That("[]{ } &k=v").ErrorsAny(),
 
-		NewTest("explode [a b]{ }[arg-names]").WantOutStrings("a", "b"),
-		NewTest("put [@r]{ }[rest-arg]").WantOutStrings("r"),
-		NewTest("explode [&opt=def]{ }[opt-names]").WantOutStrings("opt"),
-		NewTest("explode [&opt=def]{ }[opt-defaults]").WantOutStrings("def"),
-		NewTest("put { body }[src][code]").WantOutStrings(
+		That("explode [a b]{ }[arg-names]").Puts("a", "b"),
+		That("put [@r]{ }[rest-arg]").Puts("r"),
+		That("explode [&opt=def]{ }[opt-names]").Puts("opt"),
+		That("explode [&opt=def]{ }[opt-defaults]").Puts("def"),
+		That("put { body }[src][code]").Puts(
 			"put { body }[src][code]"),
-		NewTest("put { body }[body]").WantOutStrings(" body "),
+		That("put { body }[body]").Puts(" body "),
 	})
 }
