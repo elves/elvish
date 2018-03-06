@@ -3,8 +3,10 @@ package ui
 import (
 	"strings"
 
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 	"github.com/xiaq/persistent/hash"
+	"github.com/xiaq/persistent/vector"
 )
 
 // Styled is a piece of text with style.
@@ -86,6 +88,25 @@ func (s *Styled) String() string {
 
 func (s *Styled) Repr(indent int) string {
 	return "(le:styled " + parse.Quote(s.Text) + " " + parse.Quote(s.Styles.String()) + ")"
+}
+
+func (s *Styled) Index(k interface{}) (interface{}, bool) {
+	switch k {
+	case "text":
+		return s.Text, true
+	case "styles":
+		li := vector.Empty
+		for _, st := range s.Styles {
+			li = li.Cons(st)
+		}
+		return li, true
+	default:
+		return nil, false
+	}
+}
+
+func (s *Styled) IterateKeys(f func(interface{}) bool) {
+	vals.Feed(f, "text", "styles")
 }
 
 type Styles []string
