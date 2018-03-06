@@ -25,6 +25,7 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
+var lastPromptContent []*ui.Styled
 var logger = util.GetLogger("[edit] ")
 
 // editor implements the line editor.
@@ -83,7 +84,8 @@ type editorState struct {
 	styling         *highlight.Styling
 	parseErrorAtEnd bool
 
-	promptContent  []*ui.Styled
+	promptContent []*ui.Styled
+
 	rpromptContent []*ui.Styled
 	// Working directory when the prompt was last updated. Used for updating the
 	// prompt. The default value of "" will cause the prompts to be updated as
@@ -382,8 +384,8 @@ func (ed *editor) ReadLine() (string, error) {
 		f()
 	}
 
-	promptUpdater := prompt.NewUpdater(ed.Prompt)
-	rpromptUpdater := prompt.NewUpdater(ed.Rprompt)
+	promptUpdater := prompt.NewUpdater(ed.Prompt, ed.StalePromptTransform)
+	rpromptUpdater := prompt.NewUpdater(ed.Rprompt, ed.StalePromptTransform)
 	fresh := true
 
 MainLoop:
@@ -398,18 +400,18 @@ MainLoop:
 			select {
 			case ed.promptContent = <-promptCh:
 				logger.Println("prompt fetched")
+				lastPromptContent = ed.promptContent
 			case <-promptTimeout:
 				logger.Println("stale prompt")
-				ed.promptContent = promptUpdater.Staled
+				ed.promptContent = promptUpdater.StalePromptTransformed(ed, lastPromptContent)
 			}
 			select {
 			case ed.rpromptContent = <-rpromptCh:
 				logger.Println("rprompt fetched")
 			case <-rpromptTimeout:
 				logger.Println("stale rprompt")
-				ed.rpromptContent = rpromptUpdater.Staled
+				//ed.rpromptContent = promptUpdater.StalePromptTransformed(ed)
 			}
-
 		}
 		fresh = false
 
@@ -425,6 +427,7 @@ MainLoop:
 		select {
 		case ed.promptContent = <-promptCh:
 			logger.Println("prompt fetched late")
+			lastPromptContent = ed.promptContent
 			goto refresh
 		case ed.rpromptContent = <-rpromptCh:
 			logger.Println("rprompt fetched late")
