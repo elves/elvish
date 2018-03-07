@@ -20,5 +20,7 @@ func init() {
 		ns["-prompts-max-wait"] = vars.NewFromPtr(&ed.PromptsMaxWait)
 		ed.StalePromptTransform = prompt.StalePromptTransformInit()
 		ns["-stale-prompt-transform"] = vars.NewFromPtr(&ed.StalePromptTransform)
+		ed.StaleRpromptTransform = prompt.StalePromptTransformInit()
+		ns["-stale-rprompt-transform"] = vars.NewFromPtr(&ed.StaleRpromptTransform)
 	})
 }

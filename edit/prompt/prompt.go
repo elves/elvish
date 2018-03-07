@@ -19,9 +19,10 @@ var logger = util.GetLogger("[edit/prompt] ")
 
 // Config holds the config for the prompt
 type Config struct {
-	Prompt               eval.Callable
-	Rprompt              eval.Callable
-	StalePromptTransform eval.Callable
+	Prompt                eval.Callable
+	Rprompt               eval.Callable
+	StalePromptTransform  eval.Callable
+	StaleRpromptTransform eval.Callable
 
 	RpromptPersistent bool
 	PromptsMaxWait    float64

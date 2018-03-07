@@ -25,8 +25,11 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-var lastPromptContent []*ui.Styled
-var logger = util.GetLogger("[edit] ")
+var (
+	lastPromptContent  []*ui.Styled
+	lastRpromptContent []*ui.Styled
+	logger             = util.GetLogger("[edit] ")
+)
 
 // editor implements the line editor.
 type editor struct {
@@ -408,9 +411,10 @@ MainLoop:
 			select {
 			case ed.rpromptContent = <-rpromptCh:
 				logger.Println("rprompt fetched")
+				lastRpromptContent = ed.rpromptContent
 			case <-rpromptTimeout:
 				logger.Println("stale rprompt")
-				//ed.rpromptContent = promptUpdater.StalePromptTransformed(ed)
+				ed.rpromptContent = rpromptUpdater.StalePromptTransformed(ed, lastRpromptContent)
 			}
 		}
 		fresh = false
@@ -431,6 +435,7 @@ MainLoop:
 			goto refresh
 		case ed.rpromptContent = <-rpromptCh:
 			logger.Println("rprompt fetched late")
+			lastRpromptContent = ed.rpromptContent
 			goto refresh
 		case m := <-isExternalCh:
 			ed.isExternal = m
