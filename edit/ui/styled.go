@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/elves/elvish/eval/vals"
@@ -87,7 +88,12 @@ func (s *Styled) String() string {
 }
 
 func (s *Styled) Repr(indent int) string {
-	return "(le:styled " + parse.Quote(s.Text) + " " + parse.Quote(s.Styles.String()) + ")"
+	quotedStyles := make([]string, len(s.Styles))
+	for i, st := range s.Styles {
+		quotedStyles[i] = parse.Quote(st)
+	}
+	return fmt.Sprintf("(edit:styled %s [%s]",
+		parse.Quote(s.Text), strings.Join(quotedStyles, " "))
 }
 
 func (s *Styled) Index(k interface{}) (interface{}, bool) {
