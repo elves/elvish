@@ -86,6 +86,10 @@ func (src *Source) Index(k interface{}) (interface{}, bool) {
 	return ret, true
 }
 
+func (src *Source) IterateKeys(f func(interface{}) bool) {
+	vals.Feed(f, "type", "name", "path", "code")
+}
+
 // SrcType records the type of a piece of source code.
 type SrcType int
 
