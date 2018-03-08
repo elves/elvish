@@ -17,9 +17,12 @@ import (
 
 var logger = util.GetLogger("[edit/prompt] ")
 
+// Config holds the config for the prompt
 type Config struct {
-	Prompt  eval.Callable
-	Rprompt eval.Callable
+	Prompt                eval.Callable
+	Rprompt               eval.Callable
+	StalePromptTransform  eval.Callable
+	StaleRpromptTransform eval.Callable
 
 	RpromptPersistent bool
 	PromptsMaxWait    float64
@@ -34,8 +37,8 @@ type Editor interface {
 // maxSeconds is the maximum number of seconds time.Duration can represent.
 const maxSeconds = float64(math.MaxInt64 / time.Second)
 
-// PromptInit returns an initial value for $edit:prompt.
-func PromptInit() eval.Callable {
+// DefaultPromptInit returns an initial value for $edit:prompt.
+func DefaultPromptInit() eval.Callable {
 	user, err := user.Current()
 	isRoot := err == nil && user.Uid == "0"
 
@@ -51,8 +54,8 @@ func PromptInit() eval.Callable {
 	return eval.NewBuiltinFn("default prompt", prompt)
 }
 
-// RpromptInit returns an initial value for $edit:rprompt.
-func RpromptInit() eval.Callable {
+// DefaultRpromptInit returns an initial value for $edit:rprompt.
+func DefaultRpromptInit() eval.Callable {
 	username := "???"
 	user, err := user.Current()
 	if err == nil {
@@ -71,7 +74,19 @@ func RpromptInit() eval.Callable {
 	return eval.NewBuiltinFn("default rprompt", rprompt)
 }
 
-// MakeMaxWait makes a channel that sends the current time after
+// StalePromptTransformInit returns an initial value for $edit:-stale-prompt-transform
+func StalePromptTransformInit() eval.Callable {
+	stalePromptTransform := func(fm *eval.Frame) {
+		out := fm.OutputChan()
+		fm.IterateInputs(func(i interface{}) {
+			out <- i
+		})
+	}
+
+	return eval.NewBuiltinFn("default stale prompt transform", stalePromptTransform)
+}
+
+// MakeMaxWaitChan makes a channel that sends the current time after
 // $edit:-prompts-max-wait seconds if the time fits in a time.Duration value, or
 // nil otherwise.
 func (cfg *Config) MakeMaxWaitChan() <-chan time.Time {
@@ -90,6 +105,11 @@ func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
 		{}, // Will be replaced when capturing output
 		{File: os.Stderr},
 	}
+
+	return callAndGetStyled(ed, fn, ports)
+}
+
+func callAndGetStyled(ed Editor, fn eval.Callable, ports []*eval.Port) []*ui.Styled {
 	var (
 		styleds      []*ui.Styled
 		styledsMutex sync.Mutex
@@ -133,17 +153,49 @@ func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
 	return styleds
 }
 
-// Updater manages the update of a prompt.
-type Updater struct {
-	promptFn eval.Callable
-	Staled   []*ui.Styled
+// callTransformer calls a Fn, assuming that it is a prompt transformer. It calls the Fn with no
+// arguments and input, and converts its outputs to styled objects.
+func callTransformer(ed Editor, fn eval.Callable, currentPrompt []*ui.Styled) []*ui.Styled {
+	input := make(chan interface{})
+	stopInputWriter := make(chan struct{})
+
+	ports := []*eval.Port{
+		{Chan: input, File: eval.DevNull},
+		{}, // Will be replaced when capturing output
+		{File: os.Stderr},
+	}
+	go func() {
+		defer close(input)
+		for _, char := range currentPrompt {
+			select {
+			case input <- char:
+			case <-stopInputWriter:
+				return
+			}
+		}
+	}()
+	defer close(stopInputWriter)
+
+	return callAndGetStyled(ed, fn, ports)
 }
 
-var staledPrompt = &ui.Styled{"?", ui.Styles{"inverse"}}
+// Updater manages the update of a prompt.
+type Updater struct {
+	promptFn         eval.Callable
+	staleTransformFn eval.Callable
+}
 
 // NewUpdater creates a new Updater.
-func NewUpdater(promptFn eval.Callable) *Updater {
-	return &Updater{promptFn, []*ui.Styled{staledPrompt}}
+func NewUpdater(promptFn eval.Callable, staleTransformFn eval.Callable) *Updater {
+	return &Updater{
+		promptFn:         promptFn,
+		staleTransformFn: staleTransformFn,
+	}
+}
+
+// StalePromptTransformed returns the prompt transformed
+func (pu *Updater) StalePromptTransformed(ed Editor, currentPrompt []*ui.Styled) []*ui.Styled {
+	return callTransformer(ed, pu.staleTransformFn, currentPrompt)
 }
 
 // Update updates the prompt, returning a channel onto which the result will be
@@ -152,9 +204,6 @@ func (pu *Updater) Update(ed Editor) <-chan []*ui.Styled {
 	ch := make(chan []*ui.Styled)
 	go func() {
 		result := callPrompt(ed, pu.promptFn)
-		pu.Staled = make([]*ui.Styled, len(result)+1)
-		pu.Staled[0] = staledPrompt
-		copy(pu.Staled[1:], result)
 		ch <- result
 	}()
 	return ch
