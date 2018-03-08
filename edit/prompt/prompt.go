@@ -64,23 +64,24 @@ func makePrompt(ed eddefs.Editor, fn eval.Callable) *prompt {
 }
 
 func (p *prompt) loop() {
-	last := []*ui.Styled{&ui.Styled{"???> ", ui.Styles{}}}
+	content := []*ui.Styled{&ui.Styled{"???> ", ui.Styles{}}}
 	for range p.updateReq {
 		timeout := makeMaxWaitChan(p.staleThreshold)
 		ch := make(chan []*ui.Styled)
 		logger.Println("calling prompt")
 		go func() {
-			content := callPrompt(p.ed, p.fn)
-			last = content
-			ch <- content
+			ch <- callPrompt(p.ed, p.fn)
 		}()
+
 		select {
 		case <-timeout:
-			p.ch <- callTransformer(p.ed, p.staleTransform, last)
-			p.ch <- <-ch
-		case content := <-ch:
-			p.ch <- content
+			p.ch <- callTransformer(p.ed, p.staleTransform, content)
+			content = <-ch
+		case content = <-ch:
 		}
+		// TODO: If another update is already requested by the time we finish,
+		// mark the prompt as stale immediately.
+		p.ch <- content
 	}
 }
 

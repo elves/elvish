@@ -422,6 +422,7 @@ MainLoop:
 			goto refresh
 		case m := <-isExternalCh:
 			ed.isExternal = m
+			goto refresh
 		case sig := <-ed.sigs:
 			// TODO(xiaq): Maybe support customizable handling of signals
 			switch sig {
