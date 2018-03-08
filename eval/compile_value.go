@@ -471,7 +471,6 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpBody {
 	for _, optName := range optNames {
 		thisScope.set(optName)
 	}
-	thisScope.set("opts")
 
 	subop := cp.chunkOp(n.Chunk)
 
