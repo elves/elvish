@@ -12,7 +12,7 @@ type PwdVariable struct {
 	store AddDirer
 }
 
-var _ vars.Type = PwdVariable{}
+var _ vars.Var = PwdVariable{}
 
 func (PwdVariable) Get() interface{} {
 	pwd, err := os.Getwd()

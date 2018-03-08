@@ -4,7 +4,7 @@ import "testing"
 
 func TestPtrVariable(t *testing.T) {
 	i := 10
-	variable := NewFromPtr(&i)
+	variable := FromPtr(&i)
 	if g := variable.Get(); g != "10" {
 		t.Errorf(`Getting ptrVariable returns %v, want "10"`, g)
 	}

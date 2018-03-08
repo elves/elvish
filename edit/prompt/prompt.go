@@ -29,10 +29,10 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 }
 
 func installAPI(ns eval.Ns, p *prompt, basename string) {
-	ns.Add(basename, vars.NewFromPtr(&p.fn))
-	ns.Add(basename+"-stale-threshold", vars.NewFromPtr(&p.staleThreshold))
-	ns.Add(basename+"-stale-transform", vars.NewFromPtr(&p.staleTransform))
-	ns.Add("-"+basename+"-eagerness", vars.NewFromPtr(&p.eagerness))
+	ns.Add(basename, vars.FromPtr(&p.fn))
+	ns.Add(basename+"-stale-threshold", vars.FromPtr(&p.staleThreshold))
+	ns.Add(basename+"-stale-transform", vars.FromPtr(&p.staleTransform))
+	ns.Add("-"+basename+"-eagerness", vars.FromPtr(&p.eagerness))
 }
 
 type prompt struct {

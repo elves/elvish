@@ -73,7 +73,7 @@ func initInsert(ed *editor, ns eval.Ns) {
 	ed.insert = insert
 
 	insertNs := eval.Ns{
-		"binding": vars.NewFromPtr(&insert.binding),
+		"binding": vars.FromPtr(&insert.binding),
 	}
 	insertNs.AddBuiltinFns("edit:insert:", map[string]interface{}{
 		"start":   ed.SetModeInsert,
@@ -108,7 +108,7 @@ func initCommand(ed *editor, ns eval.Ns) {
 	ed.command = command
 
 	commandNs := eval.Ns{
-		"binding": vars.NewFromPtr(&command.binding),
+		"binding": vars.FromPtr(&command.binding),
 	}
 	commandNs.AddBuiltinFns("edit:command:", map[string]interface{}{
 		"start":   ed.commandStart,

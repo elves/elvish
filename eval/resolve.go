@@ -75,7 +75,7 @@ func (ev *evalerScopes) EachNsInTop(f func(s string)) {
 
 // ResolveVar resolves a variable. When the variable cannot be found, nil is
 // returned.
-func (fm *Frame) ResolveVar(n, name string) vars.Type {
+func (fm *Frame) ResolveVar(n, name string) vars.Var {
 	if n == "" {
 		return fm.resolveUnqualified(name)
 	}
@@ -135,7 +135,7 @@ func splitQName(qname string) []string {
 	return segs
 }
 
-func (fm *Frame) resolveUnqualified(name string) vars.Type {
+func (fm *Frame) resolveUnqualified(name string) vars.Var {
 	if v, ok := fm.local[name]; ok {
 		return v
 	}

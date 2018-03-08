@@ -5,7 +5,7 @@ import "github.com/elves/elvish/eval/vals"
 // DelElement deletes an element. It uses a similar process to MakeElement,
 // except that the last level of container needs to be Dissoc-able instead of
 // Assoc-able.
-func DelElement(variable Type, indicies []interface{}) error {
+func DelElement(variable Var, indicies []interface{}) error {
 	var err error
 	// In "del a[0][1][2]",
 	//

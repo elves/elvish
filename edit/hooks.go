@@ -21,11 +21,11 @@ type editorHooks struct {
 func init() {
 	atEditorInit(func(ed *editor, ns eval.Ns) {
 		beforeReadline := vals.EmptyList
-		ns["before-readline"] = vars.NewFromPtr(&beforeReadline)
+		ns["before-readline"] = vars.FromPtr(&beforeReadline)
 		ed.AddBeforeReadline(func() { callHooks(ed, beforeReadline) })
 
 		afterReadline := vals.EmptyList
-		ns["after-readline"] = vars.NewFromPtr(&afterReadline)
+		ns["after-readline"] = vars.FromPtr(&afterReadline)
 		ed.AddAfterReadline(func(s string) { callHooks(ed, afterReadline, s) })
 	})
 }

@@ -36,7 +36,7 @@ func initListing(ed *editor, ns eval.Ns) {
 	ed.listing = l
 
 	subns := eval.Ns{
-		"binding": vars.NewFromPtr(&l.commonBinding),
+		"binding": vars.FromPtr(&l.commonBinding),
 	}
 	subns.AddBuiltinFns("edit:listing:", map[string]interface{}{
 		"up":         func() { l.up(false) },

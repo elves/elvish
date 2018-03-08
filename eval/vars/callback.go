@@ -5,8 +5,8 @@ type callback struct {
 	get func() interface{}
 }
 
-// NewCallback makes a variable from a set callback and a get callback.
-func NewCallback(set func(interface{}) error, get func() interface{}) Type {
+// FromSetGet makes a variable from a set callback and a get callback.
+func FromSetGet(set func(interface{}) error, get func() interface{}) Var {
 	return &callback{set, get}
 }
 
@@ -20,8 +20,8 @@ func (cv *callback) Get() interface{} {
 
 type roCallback func() interface{}
 
-// NewRoCallback makes a read-only variable from a get callback.
-func NewRoCallback(get func() interface{}) Type {
+// FromGet makes a variable from a get callback. The variable is read-only.
+func FromGet(get func() interface{}) Var {
 	return roCallback(get)
 }
 

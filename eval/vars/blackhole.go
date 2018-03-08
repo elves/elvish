@@ -14,12 +14,12 @@ func (blackhole) Get() interface{} {
 // NewBlackhole returns a blackhole variable. Assignments to a blackhole
 // variable will be discarded, and getting a blackhole variable always returns
 // an empty string.
-func NewBlackhole() Type {
+func NewBlackhole() Var {
 	return blackhole{}
 }
 
 // IsBlackhole returns whether the variable is a blackhole variable.
-func IsBlackhole(v Type) bool {
+func IsBlackhole(v Var) bool {
 	_, ok := v.(blackhole)
 	return ok
 }

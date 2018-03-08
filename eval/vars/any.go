@@ -15,6 +15,6 @@ func (v any) Get() interface{} {
 
 // NewAnyWithInit creates a variable with an initial value. The variable created
 // can be assigned values of any type.
-func NewAnyWithInit(v interface{}) Type {
+func NewAnyWithInit(v interface{}) Var {
 	return any{&v}
 }

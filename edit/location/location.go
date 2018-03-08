@@ -38,9 +38,9 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 	m := &mode{ed, eddefs.EmptyBindingMap, vals.EmptyList, vals.EmptyList}
 	ns.AddNs("location",
 		eval.Ns{
-			"binding": vars.NewFromPtr(&m.binding),
-			"hidden":  vars.NewFromPtr(&m.hidden),
-			"pinned":  vars.NewFromPtr(&m.pinned),
+			"binding": vars.FromPtr(&m.binding),
+			"hidden":  vars.FromPtr(&m.hidden),
+			"pinned":  vars.FromPtr(&m.pinned),
 		}.AddBuiltinFn("edit:location:", "start", m.start))
 }
 

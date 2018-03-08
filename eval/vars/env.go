@@ -25,6 +25,6 @@ func (ev envVariable) Get() interface{} {
 }
 
 // NewEnv returns an environment variable.
-func NewEnv(name string) Type {
+func NewEnv(name string) Var {
 	return envVariable{name}
 }

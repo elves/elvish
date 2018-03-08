@@ -10,10 +10,10 @@ type ptr struct {
 	ptr interface{}
 }
 
-// NewFromPtr creates a variable from a pointer. The variable is kept in sync
+// FromPtr creates a variable from a pointer. The variable is kept in sync
 // with the value the pointer points to, using elvToGo and goToElv conversions
 // when Get and Set.
-func NewFromPtr(p interface{}) Type {
+func FromPtr(p interface{}) Var {
 	return ptr{p}
 }
 

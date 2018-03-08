@@ -11,7 +11,7 @@ import (
 func init() {
 	atEditorInit(func(ed *editor, ns eval.Ns) {
 		ed.maxHeight = math.Inf(1)
-		ns["max-height"] = vars.NewFromPtr(&ed.maxHeight)
+		ns["max-height"] = vars.FromPtr(&ed.maxHeight)
 	})
 }
 

@@ -48,9 +48,9 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 
 	ns.AddNs("completion",
 		eval.Ns{
-			"binding":       vars.NewFromPtr(&c.binding),
-			"matcher":       vars.NewFromPtr(&c.matcher),
-			"arg-completer": vars.NewFromPtr(&c.argCompleter),
+			"binding":       vars.FromPtr(&c.binding),
+			"matcher":       vars.FromPtr(&c.matcher),
+			"arg-completer": vars.FromPtr(&c.argCompleter),
 		}.AddBuiltinFns("edit:completion:", map[string]interface{}{
 			"start":          func() { c.start(ed, false) },
 			"smart-start":    func() { c.start(ed, true) },

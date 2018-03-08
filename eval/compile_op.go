@@ -259,7 +259,7 @@ func (op *formOp) Invoke(fm *Frame) (errRet error) {
 	if len(op.saveVarsOps) > 0 {
 		// There is a temporary assignment.
 		// Save variables.
-		var saveVars []vars.Type
+		var saveVars []vars.Var
 		var saveVals []interface{}
 		for _, op := range op.saveVarsOps {
 			moreSaveVars, err := op.Exec(fm)
@@ -438,7 +438,7 @@ func (op *assignmentOp) Invoke(fm *Frame) (errRet error) {
 	return nil
 }
 
-func fixNilVariables(vs []vars.Type, perr *error) {
+func fixNilVariables(vs []vars.Var, perr *error) {
 	for _, v := range vs {
 		if vars.IsBlackhole(v) {
 			continue

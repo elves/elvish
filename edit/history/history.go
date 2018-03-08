@@ -46,7 +46,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 	histlistBinding := eddefs.EmptyBindingMap
 
 	historyNs := eval.Ns{
-		"binding": vars.NewFromPtr(&hist.binding),
+		"binding": vars.FromPtr(&hist.binding),
 		"list":    vars.NewRo(List{&hist.mutex, ed.Daemon()}),
 	}
 	historyNs.AddBuiltinFns("edit:history:", map[string]interface{}{
@@ -58,7 +58,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 	})
 
 	histlistNs := eval.Ns{
-		"binding": vars.NewFromPtr(&histlistBinding),
+		"binding": vars.FromPtr(&histlistBinding),
 	}
 	histlistNs.AddBuiltinFns("edit:histlist:", map[string]interface{}{
 		"start": func() {

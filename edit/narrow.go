@@ -26,7 +26,7 @@ func init() { atEditorInit(initNarrow) }
 func initNarrow(ed *editor, ns eval.Ns) {
 	n := &narrow{binding: emptyBindingMap}
 	subns := eval.Ns{
-		"binding": vars.NewFromPtr(&n.binding),
+		"binding": vars.FromPtr(&n.binding),
 	}
 	subns.AddBuiltinFns("edit:narrow:", map[string]interface{}{
 		"up":         func() { n.up(false) },

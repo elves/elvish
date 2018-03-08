@@ -8,7 +8,7 @@ import (
 )
 
 // Ns is a map from names to variables.
-type Ns map[string]vars.Type
+type Ns map[string]vars.Var
 
 var _ interface{} = Ns(nil)
 
@@ -61,7 +61,7 @@ func (ns Ns) HasName(name string) bool {
 
 // PopName removes a name from the namespace and returns the variable it used to
 // contain.
-func (ns Ns) PopName(name string) vars.Type {
+func (ns Ns) PopName(name string) vars.Var {
 	v := ns[name]
 	delete(ns, name)
 	return v
@@ -77,19 +77,19 @@ func (ns Ns) Clone() Ns {
 }
 
 // Add adds a variable to the namespace and returns the namespace itself.
-func (ns Ns) Add(name string, v vars.Type) Ns {
+func (ns Ns) Add(name string, v vars.Var) Ns {
 	ns[name] = v
 	return ns
 }
 
 // AddFn adds a function to a namespace. It returns the namespace itself.
 func (ns Ns) AddFn(name string, v Callable) Ns {
-	return ns.Add(name+FnSuffix, vars.NewFromPtr(&v))
+	return ns.Add(name+FnSuffix, vars.FromPtr(&v))
 }
 
 // AddNs adds a sub-namespace to a namespace. It returns the namespace itself.
 func (ns Ns) AddNs(name string, v Ns) Ns {
-	return ns.Add(name+NsSuffix, vars.NewFromPtr(&v))
+	return ns.Add(name+NsSuffix, vars.FromPtr(&v))
 }
 
 // AddBuiltinFn adds a builtin function to a namespace. It returns the namespace

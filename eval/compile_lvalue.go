@@ -17,14 +17,14 @@ type LValuesOp struct {
 
 // LValuesOpBody is the body of an LValuesOp.
 type LValuesOpBody interface {
-	Invoke(*Frame) ([]vars.Type, error)
+	Invoke(*Frame) ([]vars.Var, error)
 }
 
 // Exec executes an LValuesOp, producing Variable's.
-func (op LValuesOp) Exec(fm *Frame) ([]vars.Type, error) {
+func (op LValuesOp) Exec(fm *Frame) ([]vars.Var, error) {
 	// Empty value is considered to generate no lvalues.
 	if op.Body == nil {
-		return []vars.Type{}, nil
+		return []vars.Var{}, nil
 	}
 	fm.begin, fm.end = op.Begin, op.End
 	return op.Body.Invoke(fm)
@@ -124,8 +124,8 @@ type seqLValuesOpBody struct {
 	ops []LValuesOpBody
 }
 
-func (op seqLValuesOpBody) Invoke(fm *Frame) ([]vars.Type, error) {
-	var variables []vars.Type
+func (op seqLValuesOpBody) Invoke(fm *Frame) ([]vars.Var, error) {
+	var variables []vars.Var
 	for _, op := range op.ops {
 		moreVariables, err := op.Invoke(fm)
 		if err != nil {
@@ -140,7 +140,7 @@ type varOp struct {
 	ns, name string
 }
 
-func (op varOp) Invoke(fm *Frame) ([]vars.Type, error) {
+func (op varOp) Invoke(fm *Frame) ([]vars.Var, error) {
 	variable := fm.ResolveVar(op.ns, op.name)
 	if variable == nil {
 		if op.ns == "" || op.ns == "local" {
@@ -149,10 +149,10 @@ func (op varOp) Invoke(fm *Frame) ([]vars.Type, error) {
 			// immeidately be set.
 			if strings.HasSuffix(op.name, FnSuffix) {
 				val := Callable(nil)
-				variable = vars.NewFromPtr(&val)
+				variable = vars.FromPtr(&val)
 			} else if strings.HasSuffix(op.name, NsSuffix) {
 				val := Ns(nil)
-				variable = vars.NewFromPtr(&val)
+				variable = vars.FromPtr(&val)
 			} else {
 				variable = vars.NewAnyWithInit(nil)
 			}
@@ -161,7 +161,7 @@ func (op varOp) Invoke(fm *Frame) ([]vars.Type, error) {
 			return nil, fmt.Errorf("new variables can only be created in local scope")
 		}
 	}
-	return []vars.Type{variable}, nil
+	return []vars.Var{variable}, nil
 }
 
 type elemOp struct {
@@ -173,7 +173,7 @@ type elemOp struct {
 	ends     []int
 }
 
-func (op *elemOp) Invoke(fm *Frame) ([]vars.Type, error) {
+func (op *elemOp) Invoke(fm *Frame) ([]vars.Var, error) {
 	variable := fm.ResolveVar(op.ns, op.name)
 	if variable == nil {
 		return nil, fmt.Errorf("variable $%s:%s does not exist, compiler bug", op.ns, op.name)
@@ -193,12 +193,12 @@ func (op *elemOp) Invoke(fm *Frame) ([]vars.Type, error) {
 	}
 	elemVar, err := vars.MakeElement(variable, indicies)
 	if err != nil {
-		level := vars.GetElementErrorLevel(err)
+		level := vars.HeadOfElement(err)
 		if level < 0 {
 			fm.errorpf(op.begin, op.end, "%s", err)
 		} else {
 			fm.errorpf(op.begin, op.ends[level], "%s", err)
 		}
 	}
-	return []vars.Type{elemVar}, nil
+	return []vars.Var{elemVar}, nil
 }

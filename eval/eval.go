@@ -75,7 +75,7 @@ func NewEvaler() *Evaler {
 		intCh:   nil,
 	}
 
-	builtin["value-out-indicator"] = vars.NewFromPtr(&ev.valuePrefix)
+	builtin["value-out-indicator"] = vars.FromPtr(&ev.valuePrefix)
 
 	return ev
 }

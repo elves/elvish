@@ -10,7 +10,7 @@ type ro struct {
 	value interface{}
 }
 
-func NewRo(v interface{}) Type {
+func NewRo(v interface{}) Var {
 	return ro{v}
 }
 

@@ -35,7 +35,7 @@ func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
 	}
 
 	return eval.Ns{
-		"pid":  vars.NewRoCallback(getPid),
+		"pid":  vars.FromGet(getPid),
 		"sock": vars.NewRo(string(daemon.SockPath())),
 	}.AddBuiltinFn("daemon:", "spawn", spawn)
 }

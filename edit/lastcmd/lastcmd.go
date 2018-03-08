@@ -30,7 +30,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 	binding := eddefs.EmptyBindingMap
 
 	subns := eval.Ns{
-		"binding": vars.NewFromPtr(&binding),
+		"binding": vars.FromPtr(&binding),
 	}
 	subns.AddBuiltinFns("edit:lastcmd:", map[string]interface{}{
 		"start":       func() { lc.start(ed, binding) },

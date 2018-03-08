@@ -40,7 +40,7 @@ func TestCbVariable(t *testing.T) {
 		return nil
 	}
 
-	v := NewCallback(set, get)
+	v := FromSetGet(set, get)
 	if v.Get() != "cb" {
 		t.Errorf("cbVariable doesn't return value from callback")
 	}
@@ -59,7 +59,7 @@ func TestRoCbVariable(t *testing.T) {
 		getCalled = true
 		return "cb"
 	}
-	v := NewRoCallback(get)
+	v := FromGet(get)
 	if v.Get() != "cb" {
 		t.Errorf("roCbVariable doesn't return value from callback")
 	}

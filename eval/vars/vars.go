@@ -1,8 +1,8 @@
 // Package vars contains basic types for manipulating Elvish variables.
 package vars
 
-// Type represents an Elvish variable.
-type Type interface {
+// Var represents an Elvish variable.
+type Var interface {
 	Set(v interface{}) error
 	Get() interface{}
 }

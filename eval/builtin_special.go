@@ -161,7 +161,7 @@ func (op *delElemOp) Invoke(fm *Frame) error {
 	}
 	err := vars.DelElement(fm.ResolveVar(op.ns, op.name), indicies)
 	if err != nil {
-		if level := vars.GetElementErrorLevel(err); level >= 0 {
+		if level := vars.HeadOfElement(err); level >= 0 {
 			fm.errorpf(op.begin, op.ends[level], "%s", err.Error())
 		}
 		return err
@@ -654,7 +654,7 @@ func (op ValuesOp) execlambdaOp(fm *Frame) Callable {
 // execMustOne executes the LValuesOp and raises an exception if it does not
 // evaluate to exactly one Variable. If the given LValuesOp is empty, it returns
 // nil.
-func (op LValuesOp) execMustOne(fm *Frame) vars.Type {
+func (op LValuesOp) execMustOne(fm *Frame) vars.Var {
 	if op.Body == nil {
 		return nil
 	}

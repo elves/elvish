@@ -10,7 +10,7 @@ import (
 func init() {
 	atEditorInit(func(ed *editor, ns eval.Ns) {
 		ed.abbr = vals.EmptyMap
-		ns["abbr"] = vars.NewFromPtr(&ed.abbr)
+		ns["abbr"] = vars.FromPtr(&ed.abbr)
 	})
 }
 

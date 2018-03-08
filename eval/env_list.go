@@ -37,7 +37,7 @@ type EnvList struct {
 }
 
 var (
-	_ vars.Type = (*EnvList)(nil)
+	_ vars.Var = (*EnvList)(nil)
 )
 
 // Get returns a Value for an EnvPathList.

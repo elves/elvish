@@ -32,7 +32,7 @@ func makeNs(ed *editor) eval.Ns {
 	// of centralized here.
 
 	// Internal states.
-	ns["current-command"] = vars.NewCallback(
+	ns["current-command"] = vars.FromSetGet(
 		func(v interface{}) error {
 			if !ed.active {
 				return errEditorInactive
@@ -47,7 +47,7 @@ func makeNs(ed *editor) eval.Ns {
 		},
 		func() interface{} { return ed.buffer },
 	)
-	ns["-dot"] = vars.NewCallback(
+	ns["-dot"] = vars.FromSetGet(
 		func(v interface{}) error {
 			s, ok := v.(string)
 			if !ok {
@@ -75,7 +75,7 @@ func makeNs(ed *editor) eval.Ns {
 		},
 		func() interface{} { return strconv.Itoa(ed.dot) },
 	)
-	ns["selected-file"] = vars.NewRoCallback(
+	ns["selected-file"] = vars.FromGet(
 		func() interface{} {
 			if !ed.active {
 				throw(errEditorInactive)

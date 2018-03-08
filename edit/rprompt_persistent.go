@@ -8,6 +8,6 @@ import (
 func init() {
 	atEditorInit(func(ed *editor, ns eval.Ns) {
 		ed.RpromptPersistent = false
-		ns["rprompt-persistent"] = vars.NewFromPtr(&ed.RpromptPersistent)
+		ns["rprompt-persistent"] = vars.FromPtr(&ed.RpromptPersistent)
 	})
 }
