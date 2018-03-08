@@ -91,6 +91,20 @@ func (exc *Exception) Bool() bool {
 	return exc.Cause == nil
 }
 
+func (exc *Exception) Index(k interface{}) (interface{}, bool) {
+	// TODO: Access to Traceback
+	switch k {
+	case "cause":
+		return exc.Cause, true
+	default:
+		return nil, false
+	}
+}
+
+func (exc *Exception) IterateKeys(f func(interface{}) bool) {
+	vals.Feed(f, "cause")
+}
+
 // PipelineError represents the errors of pipelines, in which multiple commands
 // may error.
 type PipelineError struct {
