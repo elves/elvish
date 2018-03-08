@@ -388,12 +388,16 @@ func (ed *editor) ReadLine() (string, error) {
 	}
 
 	fresh := true
-
 MainLoop:
 	for {
-		ed.prompt.Update(fresh)
-		ed.rprompt.Update(fresh)
-		fresh = false
+		if fresh {
+			ed.promptContent = ed.prompt.ForceUpdate()
+			ed.rpromptContent = ed.rprompt.ForceUpdate()
+			fresh = false
+		} else {
+			ed.prompt.Update()
+			ed.rprompt.Update()
+		}
 
 	refresh:
 		err := ed.refresh(fullRefresh, true)
