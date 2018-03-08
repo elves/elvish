@@ -50,7 +50,7 @@ type prompt struct {
 	// Working directory when prompt was last updated.
 	lastWd string
 	// Channel for update requests.
-	updateReq chan struct{}
+	updateReq chan bool
 	// Channel on which prompt contents are sent.
 	ch chan []*ui.Styled
 }
@@ -58,14 +58,17 @@ type prompt struct {
 func makePrompt(ed eddefs.Editor, fn eval.Callable) *prompt {
 	p := &prompt{
 		ed, fn, defaultStaleTransform, 0.2, 5,
-		"", make(chan struct{}, 1), make(chan []*ui.Styled, 1)}
+		"", make(chan bool, 1), make(chan []*ui.Styled, 1)}
 	go p.loop()
 	return p
 }
 
 func (p *prompt) loop() {
 	content := []*ui.Styled{&ui.Styled{"???> ", ui.Styles{}}}
-	for range p.updateReq {
+	for force := range p.updateReq {
+		if force {
+			p.ch <- callTransformer(p.ed, p.staleTransform, content)
+		}
 		timeout := makeMaxWaitChan(p.staleThreshold)
 		ch := make(chan []*ui.Styled)
 		logger.Println("calling prompt")
@@ -92,7 +95,7 @@ func (p *prompt) Chan() <-chan []*ui.Styled {
 func (p *prompt) Update(force bool) {
 	if force || p.shouldUpdate() {
 		select {
-		case p.updateReq <- struct{}{}:
+		case p.updateReq <- force:
 		default:
 		}
 	}
