@@ -161,7 +161,7 @@ func (op *delElemOp) Invoke(fm *Frame) error {
 	}
 	err := vars.DelElement(fm.ResolveVar(op.ns, op.name), indicies)
 	if err != nil {
-		if level := vars.HeadOfElement(err); level >= 0 {
+		if level := vars.ElementErrorLevel(err); level >= 0 {
 			fm.errorpf(op.begin, op.ends[level], "%s", err.Error())
 		}
 		return err

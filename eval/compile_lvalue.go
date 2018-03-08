@@ -193,7 +193,7 @@ func (op *elemOp) Invoke(fm *Frame) ([]vars.Var, error) {
 	}
 	elemVar, err := vars.MakeElement(variable, indicies)
 	if err != nil {
-		level := vars.HeadOfElement(err)
+		level := vars.ElementErrorLevel(err)
 		if level < 0 {
 			fm.errorpf(op.begin, op.end, "%s", err)
 		} else {

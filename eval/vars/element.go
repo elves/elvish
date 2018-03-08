@@ -82,19 +82,19 @@ func (err elemErr) Error() string {
 	return err.msg
 }
 
-// GetHeadOfElement gets the underlying head variable of an element variable, or
+// HeadOfElement gets the underlying head variable of an element variable, or
 // nil if the argument is not an element variable.
-func GetHeadOfElement(v Var) Var {
+func HeadOfElement(v Var) Var {
 	if ev, ok := v.(*elem); ok {
 		return ev.variable
 	}
 	return nil
 }
 
-// HeadOfElement returns the level of an error returned by MakeElement or
+// ElementErrorLevel returns the level of an error returned by MakeElement or
 // DelElement. Level 0 represents that the error is about the variable itself.
 // If the argument was not returned from MakeVariable, -1 is returned.
-func HeadOfElement(err error) int {
+func ElementErrorLevel(err error) int {
 	if err, ok := err.(elemErr); ok {
 		return err.level
 	}

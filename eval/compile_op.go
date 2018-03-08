@@ -271,7 +271,7 @@ func (op *formOp) Invoke(fm *Frame) (errRet error) {
 		for i, v := range saveVars {
 			// XXX(xiaq): If the variable to save is a elemVariable, save
 			// the outermost variable instead.
-			if u := vars.GetHeadOfElement(v); u != nil {
+			if u := vars.HeadOfElement(v); u != nil {
 				v = u
 				saveVars[i] = v
 			}
