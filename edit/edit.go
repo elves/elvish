@@ -84,14 +84,7 @@ type editorState struct {
 	styling         *highlight.Styling
 	parseErrorAtEnd bool
 
-	promptContent []*ui.Styled
-
-	rpromptContent []*ui.Styled
-	// Working directory when the prompt was last updated. Used for updating the
-	// prompt. The default value of "" will cause the prompts to be updated as
-	// soon as possible. The special value of "error" indicates failure in
-	// os.Getwd.
-	pwdOnLastPromptUpdate string
+	promptContent, rpromptContent []*ui.Styled
 
 	mode eddefs.Mode
 
