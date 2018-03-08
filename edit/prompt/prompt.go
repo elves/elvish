@@ -50,25 +50,28 @@ type prompt struct {
 	// Working directory when prompt was last updated.
 	lastWd string
 	// Channel for update requests.
-	updateReq chan bool
+	updateReq chan struct{}
 	// Channel on which prompt contents are sent.
 	ch chan []*ui.Styled
+	// Last prompt content
+	last      []*ui.Styled
+	lastMutex *sync.RWMutex
 }
+
+var unknownContent = []*ui.Styled{&ui.Styled{"???> ", ui.Styles{}}}
 
 func makePrompt(ed eddefs.Editor, fn eval.Callable) *prompt {
 	p := &prompt{
 		ed, fn, defaultStaleTransform, 0.2, 5,
-		"", make(chan bool, 1), make(chan []*ui.Styled, 1)}
+		"", make(chan struct{}, 1), make(chan []*ui.Styled, 1),
+		unknownContent, new(sync.RWMutex)}
 	go p.loop()
 	return p
 }
 
 func (p *prompt) loop() {
-	content := []*ui.Styled{&ui.Styled{"???> ", ui.Styles{}}}
-	for force := range p.updateReq {
-		if force {
-			p.ch <- callTransformer(p.ed, p.staleTransform, content)
-		}
+	content := unknownContent
+	for range p.updateReq {
 		timeout := makeMaxWaitChan(p.staleThreshold)
 		ch := make(chan []*ui.Styled)
 		logger.Println("calling prompt")
@@ -82,9 +85,20 @@ func (p *prompt) loop() {
 			content = <-ch
 		case content = <-ch:
 		}
-		// TODO: If another update is already requested by the time we finish,
-		// mark the prompt as stale immediately.
-		p.ch <- content
+
+		p.lastMutex.Lock()
+		p.last = content
+		p.lastMutex.Unlock()
+
+		select {
+		case <-p.updateReq:
+			// TODO: If another update is already requested by the time we
+			// finish, mark the prompt as stale immediately.
+			p.ch <- callTransformer(p.ed, p.staleTransform, content)
+			p.queueUpdate()
+		default:
+			p.ch <- content
+		}
 	}
 }
 
@@ -94,15 +108,27 @@ func (p *prompt) Chan() <-chan []*ui.Styled {
 
 func (p *prompt) Update(force bool) {
 	if force || p.shouldUpdate() {
-		select {
-		case p.updateReq <- force:
-		default:
-		}
+		p.queueUpdate()
+	}
+	if force {
+		go func() {
+			p.lastMutex.RLock()
+			p.ch <- callTransformer(p.ed, p.staleTransform, p.last)
+			p.lastMutex.RUnlock()
+		}()
+	}
+}
+
+func (p *prompt) queueUpdate() {
+	select {
+	case p.updateReq <- struct{}{}:
+	default:
 	}
 }
 
 func (p *prompt) Close() error {
-	close(p.updateReq)
+	// TODO: Close p.updateReq. However, doing this can cause
+	// write-to-closed-channel panics.
 	return nil
 }
 
