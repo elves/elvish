@@ -107,15 +107,13 @@ func (p *prompt) Chan() <-chan []*ui.Styled {
 }
 
 func (p *prompt) Update(force bool) {
+	if force {
+		p.lastMutex.RLock()
+		p.ch <- callTransformer(p.ed, p.staleTransform, p.last)
+		p.lastMutex.RUnlock()
+	}
 	if force || p.shouldUpdate() {
 		p.queueUpdate()
-	}
-	if force {
-		go func() {
-			p.lastMutex.RLock()
-			p.ch <- callTransformer(p.ed, p.staleTransform, p.last)
-			p.lastMutex.RUnlock()
-		}()
 	}
 }
 
