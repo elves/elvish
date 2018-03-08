@@ -167,6 +167,8 @@ func (ed *editor) Close() {
 	close(ed.notifyPort.Chan)
 	ed.notifyPort.File.Close()
 	ed.notifyRead.Close()
+	ed.prompt.Close()
+	ed.rprompt.Close()
 }
 
 func (ed *editor) Evaler() *eval.Evaler {
@@ -396,8 +398,8 @@ func (ed *editor) ReadLine() (string, error) {
 
 MainLoop:
 	for {
-		ed.promptContent = ed.prompt.Update(fresh)
-		ed.rpromptContent = ed.rprompt.Update(fresh)
+		ed.prompt.Update(fresh)
+		ed.rprompt.Update(fresh)
 		fresh = false
 
 	refresh:

@@ -49,7 +49,8 @@ func init() {
 	staleTransform := func(fm *eval.Frame) {
 		out := fm.OutputChan()
 		fm.IterateInputs(func(i interface{}) {
-			out <- i
+			s := i.(*ui.Styled)
+			out <- &ui.Styled{s.Text, ui.Styles{"inverse"}}
 		})
 	}
 	defaultStaleTransform = eval.NewBuiltinFn("default stale transform", staleTransform)

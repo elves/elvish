@@ -30,9 +30,9 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 
 func installAPI(ns eval.Ns, p *prompt, basename string) {
 	ns.Add(basename, vars.NewFromPtr(&p.fn))
+	ns.Add(basename+"-stale-threshold", vars.NewFromPtr(&p.staleThreshold))
 	ns.Add(basename+"-stale-transform", vars.NewFromPtr(&p.staleTransform))
 	ns.Add("-"+basename+"-eagerness", vars.NewFromPtr(&p.eagerness))
-	ns.Add("-"+basename+"-max-wait", vars.NewFromPtr(&p.maxWait))
 }
 
 type prompt struct {
@@ -41,51 +41,65 @@ type prompt struct {
 	fn eval.Callable
 	// Callback used to transform stale prompts.
 	staleTransform eval.Callable
-	// Maximum time to block waiting for prompt callback.
-	maxWait float64
+	// Threshold in seconds for a prompt to be considered as stale.
+	staleThreshold float64
 	// How eager the prompt should be updated. When >= 5, updated when directory
 	// is changed. When >= 10, always update. Default is 5.
 	eagerness int
 
-	// Prompt content from last time.
-	last []*ui.Styled
 	// Working directory when prompt was last updated.
 	lastWd string
+	// Channel for update requests.
+	updateReq chan struct{}
 	// Channel on which prompt contents are sent.
 	ch chan []*ui.Styled
 }
 
 func makePrompt(ed eddefs.Editor, fn eval.Callable) *prompt {
-	return &prompt{
-		ed, fn, defaultStaleTransform, math.Inf(1), 5,
-		nil, "", make(chan []*ui.Styled)}
+	p := &prompt{
+		ed, fn, defaultStaleTransform, 0.2, 5,
+		"", make(chan struct{}, 1), make(chan []*ui.Styled, 1)}
+	go p.loop()
+	return p
+}
+
+func (p *prompt) loop() {
+	last := []*ui.Styled{&ui.Styled{"???> ", ui.Styles{}}}
+	for range p.updateReq {
+		timeout := makeMaxWaitChan(p.staleThreshold)
+		ch := make(chan []*ui.Styled)
+		logger.Println("calling prompt")
+		go func() {
+			content := callPrompt(p.ed, p.fn)
+			last = content
+			ch <- content
+		}()
+		select {
+		case <-timeout:
+			p.ch <- callTransformer(p.ed, p.staleTransform, last)
+			p.ch <- <-ch
+		case content := <-ch:
+			p.ch <- content
+		}
+	}
 }
 
 func (p *prompt) Chan() <-chan []*ui.Styled {
 	return p.ch
 }
 
-func (p *prompt) Update(force bool) []*ui.Styled {
-	if !force && !p.shouldUpdate() {
-		return p.last
+func (p *prompt) Update(force bool) {
+	if force || p.shouldUpdate() {
+		select {
+		case p.updateReq <- struct{}{}:
+		default:
+		}
 	}
+}
 
-	timeout := makeMaxWaitChan(p.maxWait)
-	ch := make(chan []*ui.Styled)
-	go func() {
-		content := callPrompt(p.ed, p.fn)
-		p.last = content
-		ch <- result
-	}()
-	select {
-	case <-timeout:
-		go func() {
-			p.ch <- <-ch
-		}()
-		return callTransformer(p.ed, p.staleTransform, p.last)
-	case content := <-ch:
-		return content
-	}
+func (p *prompt) Close() error {
+	close(p.updateReq)
+	return nil
 }
 
 func (p *prompt) shouldUpdate() bool {

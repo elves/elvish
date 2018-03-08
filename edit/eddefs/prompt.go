@@ -8,5 +8,7 @@ type Prompt interface {
 	// available.
 	Chan() <-chan []*ui.Styled
 	// Update signifies that the prompt should be updated.
-	Update(force bool) []*ui.Styled
+	Update(force bool)
+	// Close releases resources associated with the prompt.
+	Close() error
 }
