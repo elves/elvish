@@ -9,16 +9,16 @@ import (
 
 func init() {
 	atEditorInit(func(ed *editor, ns eval.Ns) {
-		ed.promptEagerness = 5
-		ns["-prompt-eagerness"] = vars.NewFromPtr(&ed.promptEagerness)
+		ed.promptsEagerness = 5
+		ns["-prompts-eagerness"] = vars.NewFromPtr(&ed.promptsEagerness)
 	})
 }
 
 func shouldUpdatePrompt(ed *editor) bool {
-	if ed.promptEagerness >= 10 {
+	if ed.promptsEagerness >= 10 {
 		return true
 	}
-	if ed.promptEagerness >= 5 {
+	if ed.promptsEagerness >= 5 {
 		pwd, err := os.Getwd()
 		if err != nil {
 			pwd = "error"

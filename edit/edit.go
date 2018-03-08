@@ -56,7 +56,7 @@ type editor struct {
 	// How eager the prompt should be updated. Prompt is always updated for each
 	// readline. When >= 5, updated when directory is changed. When >= 10,
 	// updated in each iteration in the main loop. Default is 5.
-	promptEagerness int
+	promptsEagerness int
 
 	// Modes.
 	insert     *insert
