@@ -53,6 +53,10 @@ type editor struct {
 	abbr         hashmap.Map
 	argCompleter hashmap.Map
 	maxHeight    float64
+	// How eager the prompt should be updated. Prompt is always updated for each
+	// readline. When >= 5, updated when directory is changed. When >= 10,
+	// updated in each iteration in the main loop. Default is 5.
+	promptEagerness int
 
 	// Modes.
 	insert     *insert
@@ -81,6 +85,11 @@ type editorState struct {
 
 	promptContent  []*ui.Styled
 	rpromptContent []*ui.Styled
+	// Working directory when the prompt was last updated. Used for updating the
+	// prompt. The default value of "" will cause the prompts to be updated as
+	// soon as possible. The special value of "error" indicates failure in
+	// os.Getwd.
+	pwdOnLastPromptUpdate string
 
 	mode eddefs.Mode
 
@@ -375,28 +384,34 @@ func (ed *editor) ReadLine() (string, error) {
 
 	promptUpdater := prompt.NewUpdater(ed.Prompt)
 	rpromptUpdater := prompt.NewUpdater(ed.Rprompt)
+	fresh := true
 
 MainLoop:
 	for {
-		promptCh := promptUpdater.Update(ed)
-		rpromptCh := rpromptUpdater.Update(ed)
-		promptTimeout := ed.MakeMaxWaitChan()
-		rpromptTimeout := ed.MakeMaxWaitChan()
+		var promptCh, rpromptCh <-chan []*ui.Styled
+		if fresh || shouldUpdatePrompt(ed) {
+			promptCh = promptUpdater.Update(ed)
+			rpromptCh = rpromptUpdater.Update(ed)
+			promptTimeout := ed.MakeMaxWaitChan()
+			rpromptTimeout := ed.MakeMaxWaitChan()
 
-		select {
-		case ed.promptContent = <-promptCh:
-			logger.Println("prompt fetched")
-		case <-promptTimeout:
-			logger.Println("stale prompt")
-			ed.promptContent = promptUpdater.Staled
+			select {
+			case ed.promptContent = <-promptCh:
+				logger.Println("prompt fetched")
+			case <-promptTimeout:
+				logger.Println("stale prompt")
+				ed.promptContent = promptUpdater.Staled
+			}
+			select {
+			case ed.rpromptContent = <-rpromptCh:
+				logger.Println("rprompt fetched")
+			case <-rpromptTimeout:
+				logger.Println("stale rprompt")
+				ed.rpromptContent = rpromptUpdater.Staled
+			}
+
 		}
-		select {
-		case ed.rpromptContent = <-rpromptCh:
-			logger.Println("rprompt fetched")
-		case <-rpromptTimeout:
-			logger.Println("stale rprompt")
-			ed.rpromptContent = rpromptUpdater.Staled
-		}
+		fresh = false
 
 	refresh:
 		err := ed.refresh(fullRefresh, true)
@@ -429,6 +444,7 @@ MainLoop:
 					isExternal:      ed.isExternal,
 				}
 				ed.SetModeInsert()
+				fresh = true
 				continue MainLoop
 			case sys.SIGWINCH:
 				fullRefresh = true
