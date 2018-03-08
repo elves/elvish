@@ -14,7 +14,6 @@ import (
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/highlight"
-	"github.com/elves/elvish/edit/prompt"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -53,14 +52,12 @@ type editor struct {
 	// Configurations. Each of the following fields have an initializer defined
 	// using atEditorInit.
 	editorHooks
-	prompt.Config
 	abbr         hashmap.Map
 	argCompleter hashmap.Map
 	maxHeight    float64
-	// How eager the prompt should be updated. Prompt is always updated for each
-	// readline. When >= 5, updated when directory is changed. When >= 10,
-	// updated in each iteration in the main loop. Default is 5.
-	promptsEagerness int
+
+	prompt, rprompt   eddefs.Prompt
+	RpromptPersistent bool
 
 	// Modes.
 	insert     *insert
@@ -305,6 +302,14 @@ func (ed *editor) InsertAtDot(text string) {
 	ed.dot += len(text)
 }
 
+func (ed *editor) SetPrompt(prompt eddefs.Prompt) {
+	ed.prompt = prompt
+}
+
+func (ed *editor) SetRPrompt(rprompt eddefs.Prompt) {
+	ed.rprompt = rprompt
+}
+
 // startReadLine prepares the terminal for the editor.
 func (ed *editor) startReadLine() error {
 	ed.activeMutex.Lock()
@@ -387,36 +392,12 @@ func (ed *editor) ReadLine() (string, error) {
 		f()
 	}
 
-	promptUpdater := prompt.NewUpdater(ed.Prompt, ed.StalePromptTransform)
-	rpromptUpdater := prompt.NewUpdater(ed.Rprompt, ed.StalePromptTransform)
 	fresh := true
 
 MainLoop:
 	for {
-		var promptCh, rpromptCh <-chan []*ui.Styled
-		if fresh || shouldUpdatePrompt(ed) {
-			promptCh = promptUpdater.Update(ed)
-			rpromptCh = rpromptUpdater.Update(ed)
-			promptTimeout := ed.MakeMaxWaitChan()
-			rpromptTimeout := ed.MakeMaxWaitChan()
-
-			select {
-			case ed.promptContent = <-promptCh:
-				logger.Println("prompt fetched")
-				lastPromptContent = ed.promptContent
-			case <-promptTimeout:
-				logger.Println("stale prompt")
-				ed.promptContent = promptUpdater.StalePromptTransformed(ed, lastPromptContent)
-			}
-			select {
-			case ed.rpromptContent = <-rpromptCh:
-				logger.Println("rprompt fetched")
-				lastRpromptContent = ed.rpromptContent
-			case <-rpromptTimeout:
-				logger.Println("stale rprompt")
-				ed.rpromptContent = rpromptUpdater.StalePromptTransformed(ed, lastRpromptContent)
-			}
-		}
+		ed.promptContent = ed.prompt.Update(fresh)
+		ed.rpromptContent = ed.rprompt.Update(fresh)
 		fresh = false
 
 	refresh:
@@ -429,11 +410,11 @@ MainLoop:
 		ed.tips = nil
 
 		select {
-		case ed.promptContent = <-promptCh:
+		case ed.promptContent = <-ed.prompt.Chan():
 			logger.Println("prompt fetched late")
 			lastPromptContent = ed.promptContent
 			goto refresh
-		case ed.rpromptContent = <-rpromptCh:
+		case ed.rpromptContent = <-ed.rprompt.Chan():
 			logger.Println("rprompt fetched late")
 			lastRpromptContent = ed.rpromptContent
 			goto refresh

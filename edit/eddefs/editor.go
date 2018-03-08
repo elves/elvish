@@ -7,6 +7,7 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
+// Editor is the interface for the Elvish line editor.
 type Editor interface {
 	// ReadLine reads a line interactively.
 	ReadLine() (string, error)
@@ -26,6 +27,11 @@ type Editor interface {
 	ParsedBuffer() *parse.Chunk
 	// InsertAtDot inserts text at the dot and moves the dot after it.
 	InsertAtDot(text string)
+
+	// SetPrompt sets the prompt of the editor.
+	SetPrompt(prompt Prompt)
+	// SetPrompt sets the rprompt of the editor.
+	SetRPrompt(rprompt Prompt)
 
 	// SetMode sets the current mode of the Editor.
 	SetMode(m Mode)

@@ -1,105 +1,125 @@
-// Package prompt implements prompt-related functionalities of the editor.
+// Package prompt implements the prompt subsystem of the editor.
 package prompt
 
 import (
 	"io/ioutil"
 	"math"
 	"os"
-	"os/user"
 	"sync"
 	"time"
 
+	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/util"
 )
 
 var logger = util.GetLogger("[edit/prompt] ")
 
-// Config holds the config for the prompt
-type Config struct {
-	Prompt                eval.Callable
-	Rprompt               eval.Callable
-	StalePromptTransform  eval.Callable
-	StaleRpromptTransform eval.Callable
-
-	RpromptPersistent bool
-	PromptsMaxWait    float64
+// Init initializes the prompt subsystem of the editor.
+func Init(ed eddefs.Editor, ns eval.Ns) {
+	prompt := makePrompt(ed, defaultPrompt)
+	rprompt := makePrompt(ed, defaultRPrompt)
+	ed.SetPrompt(prompt)
+	ed.SetRPrompt(rprompt)
+	installAPI(ns, prompt, "prompt")
+	installAPI(ns, rprompt, "rprompt")
 }
 
-// Editor is the interface used by the prompt to access the editor.
-type Editor interface {
-	Evaler() *eval.Evaler
-	Notify(string, ...interface{})
+func installAPI(ns eval.Ns, p *prompt, basename string) {
+	ns.Add(basename, vars.NewFromPtr(&p.fn))
+	ns.Add(basename+"-stale-transform", vars.NewFromPtr(&p.staleTransform))
+	ns.Add("-"+basename+"-eagerness", vars.NewFromPtr(&p.eagerness))
+	ns.Add("-"+basename+"-max-wait", vars.NewFromPtr(&p.maxWait))
+}
+
+type prompt struct {
+	ed eddefs.Editor
+	// The main callback.
+	fn eval.Callable
+	// Callback used to transform stale prompts.
+	staleTransform eval.Callable
+	// Maximum time to block waiting for prompt callback.
+	maxWait float64
+	// How eager the prompt should be updated. When >= 5, updated when directory
+	// is changed. When >= 10, always update. Default is 5.
+	eagerness int
+
+	// Prompt content from last time.
+	last []*ui.Styled
+	// Working directory when prompt was last updated.
+	lastWd string
+	// Channel on which prompt contents are sent.
+	ch chan []*ui.Styled
+}
+
+func makePrompt(ed eddefs.Editor, fn eval.Callable) *prompt {
+	return &prompt{
+		ed, fn, defaultStaleTransform, math.Inf(1), 5,
+		nil, "", make(chan []*ui.Styled)}
+}
+
+func (p *prompt) Chan() <-chan []*ui.Styled {
+	return p.ch
+}
+
+func (p *prompt) Update(force bool) []*ui.Styled {
+	if !force && !p.shouldUpdate() {
+		return p.last
+	}
+
+	timeout := makeMaxWaitChan(p.maxWait)
+	ch := make(chan []*ui.Styled)
+	go func() {
+		content := callPrompt(p.ed, p.fn)
+		p.last = content
+		ch <- result
+	}()
+	select {
+	case <-timeout:
+		go func() {
+			p.ch <- <-ch
+		}()
+		return callTransformer(p.ed, p.staleTransform, p.last)
+	case content := <-ch:
+		return content
+	}
+}
+
+func (p *prompt) shouldUpdate() bool {
+	if p.eagerness >= 10 {
+		return true
+	}
+	if p.eagerness >= 5 {
+		wd, err := os.Getwd()
+		if err != nil {
+			wd = "error"
+		}
+		oldWd := p.lastWd
+		p.lastWd = wd
+		return wd != oldWd
+	}
+	return false
 }
 
 // maxSeconds is the maximum number of seconds time.Duration can represent.
 const maxSeconds = float64(math.MaxInt64 / time.Second)
 
-// DefaultPromptInit returns an initial value for $edit:prompt.
-func DefaultPromptInit() eval.Callable {
-	user, err := user.Current()
-	isRoot := err == nil && user.Uid == "0"
-
-	prompt := func(fm *eval.Frame) {
-		out := fm.OutputChan()
-		out <- string(util.Getwd())
-		if isRoot {
-			out <- &ui.Styled{"# ", ui.Styles{"red"}}
-		} else {
-			out <- &ui.Styled{"> ", ui.Styles{}}
-		}
-	}
-	return eval.NewBuiltinFn("default prompt", prompt)
-}
-
-// DefaultRpromptInit returns an initial value for $edit:rprompt.
-func DefaultRpromptInit() eval.Callable {
-	username := "???"
-	user, err := user.Current()
-	if err == nil {
-		username = user.Username
-	}
-	hostname, err := os.Hostname()
-	if err != nil {
-		hostname = "???"
-	}
-	rpromptStr := username + "@" + hostname
-	rprompt := func(fm *eval.Frame) {
-		out := fm.OutputChan()
-		out <- &ui.Styled{rpromptStr, ui.Styles{"inverse"}}
-	}
-
-	return eval.NewBuiltinFn("default rprompt", rprompt)
-}
-
-// StalePromptTransformInit returns an initial value for $edit:-stale-prompt-transform
-func StalePromptTransformInit() eval.Callable {
-	stalePromptTransform := func(fm *eval.Frame) {
-		out := fm.OutputChan()
-		fm.IterateInputs(func(i interface{}) {
-			out <- i
-		})
-	}
-
-	return eval.NewBuiltinFn("default stale prompt transform", stalePromptTransform)
-}
-
-// MakeMaxWaitChan makes a channel that sends the current time after
-// $edit:-prompts-max-wait seconds if the time fits in a time.Duration value, or
-// nil otherwise.
-func (cfg *Config) MakeMaxWaitChan() <-chan time.Time {
-	f := cfg.PromptsMaxWait
+// makeMaxWaitChan makes a channel that sends the current time after f seconds.
+// If f does not fits in a time.Duration value, it returns nil, which is a
+// channel that never sends any value.
+func makeMaxWaitChan(f float64) <-chan time.Time {
 	if f > maxSeconds {
 		return nil
 	}
 	return time.After(time.Duration(f * float64(time.Second)))
 }
 
-// callPrompt calls a Fn, assuming that it is a prompt. It calls the Fn with no
-// arguments and closed input, and converts its outputs to styled objects.
-func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
+// callPrompt calls a function with no arguments and closed input, and converts
+// its outputs to styled objects. Used to call prompt callbacks.
+func callPrompt(ed eddefs.Editor, fn eval.Callable) []*ui.Styled {
 	ports := []*eval.Port{
 		eval.DevNullClosedChan,
 		{}, // Will be replaced when capturing output
@@ -109,7 +129,33 @@ func callPrompt(ed Editor, fn eval.Callable) []*ui.Styled {
 	return callAndGetStyled(ed, fn, ports)
 }
 
-func callAndGetStyled(ed Editor, fn eval.Callable, ports []*eval.Port) []*ui.Styled {
+// callTransformer calls a function with no arguments and the given inputs, and
+// converts its outputs to styled objects. Used to call stale transformers.
+func callTransformer(ed eddefs.Editor, fn eval.Callable, currentPrompt []*ui.Styled) []*ui.Styled {
+	input := make(chan interface{})
+	stopInputWriter := make(chan struct{})
+
+	ports := []*eval.Port{
+		{Chan: input, File: eval.DevNull},
+		{}, // Will be replaced when capturing output
+		{File: os.Stderr},
+	}
+	go func() {
+		defer close(input)
+		for _, char := range currentPrompt {
+			select {
+			case input <- char:
+			case <-stopInputWriter:
+				return
+			}
+		}
+	}()
+	defer close(stopInputWriter)
+
+	return callAndGetStyled(ed, fn, ports)
+}
+
+func callAndGetStyled(ed eddefs.Editor, fn eval.Callable, ports []*eval.Port) []*ui.Styled {
 	var (
 		styleds      []*ui.Styled
 		styledsMutex sync.Mutex
@@ -151,60 +197,4 @@ func callAndGetStyled(ed Editor, fn eval.Callable, ports []*eval.Port) []*ui.Sty
 	}
 
 	return styleds
-}
-
-// callTransformer calls a Fn, assuming that it is a prompt transformer. It calls the Fn with no
-// arguments and input, and converts its outputs to styled objects.
-func callTransformer(ed Editor, fn eval.Callable, currentPrompt []*ui.Styled) []*ui.Styled {
-	input := make(chan interface{})
-	stopInputWriter := make(chan struct{})
-
-	ports := []*eval.Port{
-		{Chan: input, File: eval.DevNull},
-		{}, // Will be replaced when capturing output
-		{File: os.Stderr},
-	}
-	go func() {
-		defer close(input)
-		for _, char := range currentPrompt {
-			select {
-			case input <- char:
-			case <-stopInputWriter:
-				return
-			}
-		}
-	}()
-	defer close(stopInputWriter)
-
-	return callAndGetStyled(ed, fn, ports)
-}
-
-// Updater manages the update of a prompt.
-type Updater struct {
-	promptFn         eval.Callable
-	staleTransformFn eval.Callable
-}
-
-// NewUpdater creates a new Updater.
-func NewUpdater(promptFn eval.Callable, staleTransformFn eval.Callable) *Updater {
-	return &Updater{
-		promptFn:         promptFn,
-		staleTransformFn: staleTransformFn,
-	}
-}
-
-// StalePromptTransformed returns the prompt transformed
-func (pu *Updater) StalePromptTransformed(ed Editor, currentPrompt []*ui.Styled) []*ui.Styled {
-	return callTransformer(ed, pu.staleTransformFn, currentPrompt)
-}
-
-// Update updates the prompt, returning a channel onto which the result will be
-// written.
-func (pu *Updater) Update(ed Editor) <-chan []*ui.Styled {
-	ch := make(chan []*ui.Styled)
-	go func() {
-		result := callPrompt(ed, pu.promptFn)
-		ch <- result
-	}()
-	return ch
 }
