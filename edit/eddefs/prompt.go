@@ -8,10 +8,10 @@ type Prompt interface {
 	// available.
 	Chan() <-chan []*ui.Styled
 	// Update signifies that the prompt should be updated.
-	Update()
-	// ForceUpdate signifies that the prompt should be updated and requires a
-	// prompt to be returned immediately.
-	ForceUpdate() []*ui.Styled
+	Update(force bool)
+	// Last returns the last content written to Chan. If Chan was never written,
+	// it should return some content representing an unknown prompt.
+	Last() []*ui.Styled
 	// Close releases resources associated with the prompt.
 	Close() error
 }

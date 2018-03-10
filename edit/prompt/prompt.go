@@ -71,33 +71,27 @@ func makePrompt(ed eddefs.Editor, fn eval.Callable) *prompt {
 
 func (p *prompt) loop() {
 	content := unknownContent
+	ch := make(chan []*ui.Styled)
 	for range p.updateReq {
-		timeout := makeMaxWaitChan(p.staleThreshold)
-		ch := make(chan []*ui.Styled)
-		logger.Println("calling prompt")
 		go func() {
 			ch <- callPrompt(p.ed, p.fn)
 		}()
 
 		select {
-		case <-timeout:
-			p.ch <- callTransformer(p.ed, p.staleTransform, content)
+		case <-makeMaxWaitChan(p.staleThreshold):
+			p.send(callTransformer(p.ed, p.staleTransform, content))
 			content = <-ch
 		case content = <-ch:
 		}
-
-		p.lastMutex.Lock()
-		p.last = content
-		p.lastMutex.Unlock()
 
 		select {
 		case <-p.updateReq:
 			// TODO: If another update is already requested by the time we
 			// finish, mark the prompt as stale immediately.
-			p.ch <- callTransformer(p.ed, p.staleTransform, content)
+			p.send(callTransformer(p.ed, p.staleTransform, content))
 			p.queueUpdate()
 		default:
-			p.ch <- content
+			p.send(content)
 		}
 	}
 }
@@ -106,18 +100,22 @@ func (p *prompt) Chan() <-chan []*ui.Styled {
 	return p.ch
 }
 
-func (p *prompt) Update() {
-	if p.shouldUpdate() {
+func (p *prompt) Update(force bool) {
+	if force || p.shouldUpdate() {
 		p.queueUpdate()
 	}
 }
 
-func (p *prompt) ForceUpdate() []*ui.Styled {
+func (p *prompt) Last() []*ui.Styled {
 	p.lastMutex.RLock()
 	defer p.lastMutex.RUnlock()
-	ret := callTransformer(p.ed, p.staleTransform, p.last)
-	p.queueUpdate()
-	return ret
+	return p.last
+}
+
+func (p *prompt) Close() error {
+	// TODO: Close p.updateReq. However, doing this can cause
+	// write-to-closed-channel panics.
+	return nil
 }
 
 func (p *prompt) queueUpdate() {
@@ -127,10 +125,11 @@ func (p *prompt) queueUpdate() {
 	}
 }
 
-func (p *prompt) Close() error {
-	// TODO: Close p.updateReq. However, doing this can cause
-	// write-to-closed-channel panics.
-	return nil
+func (p *prompt) send(content []*ui.Styled) {
+	p.lastMutex.Lock()
+	p.last = content
+	defer p.lastMutex.Unlock()
+	p.ch <- content
 }
 
 func (p *prompt) shouldUpdate() bool {
