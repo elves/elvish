@@ -128,7 +128,7 @@ func (p *prompt) queueUpdate() {
 func (p *prompt) send(content []*ui.Styled) {
 	p.lastMutex.Lock()
 	p.last = content
-	defer p.lastMutex.Unlock()
+	p.lastMutex.Unlock()
 	p.ch <- content
 }
 
