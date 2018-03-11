@@ -79,18 +79,21 @@ func (p *prompt) loop() {
 
 		select {
 		case <-makeMaxWaitChan(p.staleThreshold):
+			// The prompt callback did not finish within the threshold. Send the
+			// previous content, marked as stale.
 			p.send(callTransformer(p.ed, p.staleTransform, content))
 			content = <-ch
-		case content = <-ch:
-		}
 
-		select {
-		case <-p.updateReq:
-			// TODO: If another update is already requested by the time we
-			// finish, mark the prompt as stale immediately.
-			p.send(callTransformer(p.ed, p.staleTransform, content))
-			p.queueUpdate()
-		default:
+			select {
+			case <-p.updateReq:
+				// If another update is already requested by the time we finish,
+				// keep marking the prompt as stale. This reduces flickering.
+				p.send(callTransformer(p.ed, p.staleTransform, content))
+				p.queueUpdate()
+			default:
+				p.send(content)
+			}
+		case content = <-ch:
 			p.send(content)
 		}
 	}
