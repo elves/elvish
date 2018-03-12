@@ -83,6 +83,12 @@ func restoreVT(out *os.File) error {
 	}
 	// Disable bracketed paste.
 	s += "\033[?2004l"
+	// Move the cursor to the first row, even if we haven't written anything
+	// visible. This is because the terminal driver might not be smart enough to
+	// recognize some escape sequences as invisible and wrongly assume that we
+	// are not in the first column, which can mess up with tabs. See
+	// https://github.com/elves/elvish/issues/629 for an example.
+	s += "\r"
 	_, err := out.WriteString(s)
 	return err
 }
