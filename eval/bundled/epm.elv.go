@@ -111,7 +111,11 @@ fn tilde-expand [p]{
     &upgrade= [pkg dom-cfg]{
       dest = (dest $pkg)
       -info "Updating "$pkg
-      git -C $dest pull
+      try {
+        git -C $dest pull
+      } except _ {
+          -error "Something failed, please check error above and retry."
+      }
     }
   ]
 
