@@ -125,6 +125,22 @@ func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
 	return gp, nil
 }
 
+func (gp GlobPattern) ConcatWith(other interface{}) (interface{}, bool) {
+	switch o := other.(type) {
+	case string:
+		gp.append(stringToSegments(o)...)
+		return gp, true
+	case GlobPattern:
+		// We know o contains exactly one segment.
+		gp.append(o.Segments[0])
+		gp.Flags |= o.Flags
+		gp.Buts = append(gp.Buts, o.Buts...)
+		return gp, true
+	}
+
+	return nil, false
+}
+
 func (gp *GlobPattern) mustGetLastWildSeg() glob.Wild {
 	if len(gp.Segments) == 0 {
 		throw(ErrBadGlobPattern)

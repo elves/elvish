@@ -113,30 +113,17 @@ func (op compoundOp) Invoke(fm *Frame) ([]interface{}, error) {
 }
 
 func cat(lhs, rhs interface{}) (interface{}, error) {
+	if s, ok := lhs.(string); ok {
+		lhs = StringConcater(s)
+	}
+
 	switch lhs := lhs.(type) {
-	case string:
-		switch rhs := rhs.(type) {
-		case string:
-			return lhs + rhs, nil
-		case GlobPattern:
-			segs := stringToSegments(lhs)
-			// We know rhs contains exactly one segment.
-			segs = append(segs, rhs.Segments[0])
-			return GlobPattern{glob.Pattern{segs, ""}, rhs.Flags, rhs.Buts}, nil
+	case Concater:
+		if v, ok := lhs.ConcatWith(rhs); ok {
+			return v, nil
 		}
-	case GlobPattern:
-		// NOTE Modifies lhs in place.
-		switch rhs := rhs.(type) {
-		case string:
-			lhs.append(stringToSegments(rhs)...)
-			return lhs, nil
-		case GlobPattern:
-			// We know rhs contains exactly one segment.
-			lhs.append(rhs.Segments[0])
-			lhs.Flags |= rhs.Flags
-			lhs.Buts = append(lhs.Buts, rhs.Buts...)
-			return lhs, nil
-		}
+	case ErrConcater:
+		return lhs.ConcatWith(rhs)
 	}
 	return nil, fmt.Errorf("unsupported concat: %s and %s",
 		vals.Kind(lhs), vals.Kind(rhs))
