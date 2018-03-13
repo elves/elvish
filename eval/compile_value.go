@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/elves/elvish/eval/concat"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
@@ -78,7 +79,7 @@ func (op compoundOp) Invoke(fm *Frame) ([]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		vs, err = outerProduct(vs, us, cat)
+		vs, err = outerProduct(vs, us, concat.Concat)
 		if err != nil {
 			return nil, err
 		}
@@ -110,23 +111,6 @@ func (op compoundOp) Invoke(fm *Frame) ([]interface{}, error) {
 		vs = newvs
 	}
 	return vs, nil
-}
-
-func cat(lhs, rhs interface{}) (interface{}, error) {
-	if s, ok := lhs.(string); ok {
-		lhs = StringConcater(s)
-	}
-
-	switch lhs := lhs.(type) {
-	case Concater:
-		if v, ok := lhs.ConcatWith(rhs); ok {
-			return v, nil
-		}
-	case ErrConcater:
-		return lhs.ConcatWith(rhs)
-	}
-	return nil, fmt.Errorf("unsupported concat: %s and %s",
-		vals.Kind(lhs), vals.Kind(rhs))
 }
 
 func outerProduct(vs []interface{}, us []interface{}, f func(interface{}, interface{}) (interface{}, error)) ([]interface{}, error) {

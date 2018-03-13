@@ -7,6 +7,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/elves/elvish/eval/concat"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
@@ -18,6 +19,32 @@ type GlobPattern struct {
 	glob.Pattern
 	Flags GlobFlag
 	Buts  []string
+}
+
+func init() {
+	globPatternType := reflect.TypeOf((*GlobPattern)(nil)).Elem()
+	stringType := reflect.TypeOf((*string)(nil)).Elem()
+
+	concat.Register(globPatternType, stringType, func(lhs, rhs interface{}) (interface{}, error) {
+		gp := lhs.(GlobPattern)
+		gp.append(stringToSegments(rhs.(string))...)
+		return gp, nil
+	})
+	concat.Register(stringType, globPatternType, func(lhs, rhs interface{}) (interface{}, error) {
+		s, gp := lhs.(string), rhs.(GlobPattern)
+		segs := stringToSegments(s)
+		// We know gp contains exactly one segment.
+		segs = append(segs, gp.Segments[0])
+		return GlobPattern{glob.Pattern{Segments: segs}, gp.Flags, gp.Buts}, nil
+	})
+	concat.Register(globPatternType, globPatternType, func(lhs, rhs interface{}) (interface{}, error) {
+		gp, o := lhs.(GlobPattern), rhs.(GlobPattern)
+		// We know o contains exactly one segment.
+		gp.append(o.Segments[0])
+		gp.Flags |= o.Flags
+		gp.Buts = append(gp.Buts, o.Buts...)
+		return gp, nil
+	})
 }
 
 type GlobFlag uint
@@ -123,22 +150,6 @@ func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
 		}
 	}
 	return gp, nil
-}
-
-func (gp GlobPattern) ConcatWith(other interface{}) (interface{}, bool) {
-	switch o := other.(type) {
-	case string:
-		gp.append(stringToSegments(o)...)
-		return gp, true
-	case GlobPattern:
-		// We know o contains exactly one segment.
-		gp.append(o.Segments[0])
-		gp.Flags |= o.Flags
-		gp.Buts = append(gp.Buts, o.Buts...)
-		return gp, true
-	}
-
-	return nil, false
 }
 
 func (gp *GlobPattern) mustGetLastWildSeg() glob.Wild {
