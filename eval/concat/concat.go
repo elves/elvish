@@ -3,28 +3,39 @@ package concat
 import (
 	"fmt"
 	"reflect"
+	"sync"
 
 	"github.com/elves/elvish/eval/vals"
 )
 
-type Concater = func(lhs, rhs interface{}) (interface{}, error)
+type (
+	conc   func(lhs, rhs interface{}) (interface{}, error)
+	matrix map[reflect.Type]map[reflect.Type]conc
+)
 
-var registry = make(map[reflect.Type]map[reflect.Type]Concater)
+var reg = struct {
+	sync.RWMutex
+	m matrix
+}{m: make(matrix)}
 
-func Register(lhs, rhs reflect.Type, concater Concater) {
-	submap, ok := registry[lhs]
+func Register(lhs, rhs reflect.Type, concater conc) {
+	reg.Lock()
+	defer reg.Unlock()
+
+	submap, ok := reg.m[lhs]
 	if !ok {
-		submap = make(map[reflect.Type]Concater)
-		registry[lhs] = submap
+		submap = make(map[reflect.Type]conc)
+		reg.m[lhs] = submap
 	}
 	submap[rhs] = concater
 }
 
 func Concat(lhs, rhs interface{}) (interface{}, error) {
-	if submap, ok := registry[reflect.TypeOf(lhs)]; ok {
-		if concater, ok := submap[reflect.TypeOf(rhs)]; ok {
-			return concater(lhs, rhs)
-		}
+	reg.RLock()
+	defer reg.RUnlock()
+
+	if concater, ok := reg.m[reflect.TypeOf(lhs)][reflect.TypeOf(rhs)]; ok {
+		return concater(lhs, rhs)
 	}
 
 	return nil, fmt.Errorf("unsupported concat: %s and %s",
