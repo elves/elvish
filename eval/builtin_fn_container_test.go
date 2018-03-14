@@ -5,6 +5,9 @@ import "testing"
 func TestBuiltinFnContainer(t *testing.T) {
 	runTests(t, []Test{
 		That(`ns: = (ns [&a=b &x=y]); put $ns:a`).Puts("b"),
+		That(`ns: = (ns [&a=b &x=y]); keys $ns:`).Puts("a", "x"),
+		That(`ns: = (ns [&a=b &x=y]); has-key $ns: a`).Puts(true),
+		That(`ns: = (ns [&a=b &x=y]); has-key $ns: b`).Puts(false),
 
 		That(`range 3`).Puts("0", "1", "2"),
 		That(`range 1 3`).Puts("1", "2"),
