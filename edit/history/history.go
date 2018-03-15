@@ -55,6 +55,8 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 		"down":         hist.down,
 		"down-or-quit": hist.downOrQuit,
 		"default":      hist.defaultFn,
+
+		"fast-forward": hist.fuser.FastForward,
 	})
 
 	histlistNs := eval.Ns{

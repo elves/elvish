@@ -29,6 +29,20 @@ func NewFuser(store Store) (*Fuser, error) {
 	}, nil
 }
 
+func (f *Fuser) FastForward() error {
+	f.Lock()
+	defer f.Unlock()
+
+	upper, err := f.store.NextCmdSeq()
+	if err != nil {
+		return err
+	}
+	f.storeUpper = upper
+	f.cmds = nil
+	f.seqs = nil
+	return nil
+}
+
 func (f *Fuser) AddCmd(cmd string) error {
 	f.Lock()
 	defer f.Unlock()
