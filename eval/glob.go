@@ -138,7 +138,7 @@ func (gp GlobPattern) Concat(v interface{}) (interface{}, error) {
 		return gp, nil
 	}
 
-	return nil, vals.ErrCatNotImplemented
+	return nil, vals.ErrConcatNotImplemented
 }
 
 func (gp GlobPattern) RConcat(v interface{}) (interface{}, error) {
@@ -150,7 +150,7 @@ func (gp GlobPattern) RConcat(v interface{}) (interface{}, error) {
 		return GlobPattern{glob.Pattern{Segments: segs}, gp.Flags, gp.Buts}, nil
 	}
 
-	return nil, vals.ErrCatNotImplemented
+	return nil, vals.ErrConcatNotImplemented
 }
 
 func (gp *GlobPattern) mustGetLastWildSeg() glob.Wild {
