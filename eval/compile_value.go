@@ -10,7 +10,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/elves/elvish/eval/concat"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/glob"
 	"github.com/elves/elvish/parse"
@@ -79,7 +78,7 @@ func (op compoundOp) Invoke(fm *Frame) ([]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		vs, err = outerProduct(vs, us, concat.Concat)
+		vs, err = outerProduct(vs, us, vals.Concat)
 		if err != nil {
 			return nil, err
 		}
