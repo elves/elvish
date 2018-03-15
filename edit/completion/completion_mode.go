@@ -202,7 +202,7 @@ func (c *completion) next(cycle bool) {
 	}
 }
 
-func (c *completion) start(ed eddefs.Editor, acceptPrefix bool) {
+func (c *completion) start(ed eddefs.Editor, acceptSingleton bool) {
 	_, dot := ed.Buffer()
 	chunk := ed.ParsedBuffer()
 	node := parseutil.FindLeafNode(chunk, dot)
@@ -230,27 +230,14 @@ func (c *completion) start(ed eddefs.Editor, acceptPrefix bool) {
 	} else if len(complSpec.candidates) == 0 {
 		ed.AddTip("no candidate for %s", completer)
 	} else {
-		if acceptPrefix {
-			// If there is a non-empty longest common prefix, insert it and
-			// don't start completion mode.
-			//
-			// As a special case, when there is exactly one candidate, it is
-			// immeidately accepted.
-			prefix := complSpec.candidates[0].code
-			for _, cand := range complSpec.candidates[1:] {
-				prefix = commonPrefix(prefix, cand.code)
-				if prefix == "" {
-					break
-				}
-			}
-
-			if prefix != "" && len(prefix) > complSpec.end-complSpec.begin {
-				buffer, _ := ed.Buffer()
-				ed.SetBuffer(
-					buffer[:complSpec.begin]+prefix+buffer[complSpec.end:],
-					complSpec.begin+len(prefix))
-				return
-			}
+		if acceptSingleton && len(complSpec.candidates) == 1 {
+			// Just accept this single candidate.
+			repl := complSpec.candidates[0].code
+			buffer, _ := ed.Buffer()
+			ed.SetBuffer(
+				buffer[:complSpec.begin]+repl+buffer[complSpec.end:],
+				complSpec.begin+len(repl))
+			return
 		}
 		c.completionState = completionState{
 			completer: completer,
