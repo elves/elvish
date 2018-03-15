@@ -16,16 +16,17 @@ func TestDaemon(t *testing.T) {
 		}()
 
 		client := NewClient("sock")
-		for i := 0; i < 10; i++ {
+		for i := 0; i < 100; i++ {
 			client.ResetConn()
 			_, err := client.Version()
 			if err == nil {
 				break
-			} else if i == 9 {
-				t.Fatal("Failed to connect after 100ms")
+			} else if i == 99 {
+				t.Fatal("Failed to connect after 1s")
 			}
 			time.Sleep(10 * time.Millisecond)
 		}
+
 		_, err := client.AddCmd("test cmd")
 		if err != nil {
 			t.Errorf("client.AddCmd -> error %v", err)
