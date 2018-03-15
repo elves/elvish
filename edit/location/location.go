@@ -31,17 +31,22 @@ type mode struct {
 	binding eddefs.BindingMap
 	hidden  vector.Vector
 	pinned  vector.Vector
+	matcher eval.Callable
 }
+
+var matchDirPatternBuiltin = eval.NewBuiltinFn("edit:location:match-dir-pattern", matchDirPattern)
 
 // Init initializes the location mode for an Editor.
 func Init(ed eddefs.Editor, ns eval.Ns) {
-	m := &mode{ed, eddefs.EmptyBindingMap, vals.EmptyList, vals.EmptyList}
+	m := &mode{ed, eddefs.EmptyBindingMap, vals.EmptyList, vals.EmptyList, matchDirPatternBuiltin}
 	ns.AddNs("location",
 		eval.Ns{
 			"binding": vars.FromPtr(&m.binding),
 			"hidden":  vars.FromPtr(&m.hidden),
 			"pinned":  vars.FromPtr(&m.pinned),
-		}.AddBuiltinFn("edit:location:", "start", m.start))
+			"matcher": vars.FromPtr(&m.matcher),
+		}.AddBuiltinFn("edit:location:", "start", m.start).
+			AddFn("match-pattern", matchDirPatternBuiltin))
 }
 
 func (m *mode) start() {
@@ -75,7 +80,7 @@ func (m *mode) start() {
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
 	home, _ := util.GetHome("")
-	ed.SetModeListing(m.binding, newProvider(dirs, home))
+	ed.SetModeListing(m.binding, newProvider(dirs, home, ed.Evaler(), m.matcher))
 }
 
 // convertListToDirs converts a list of strings to []storedefs.Dir. It uses the
@@ -105,13 +110,15 @@ func convertListsToSet(lis ...vector.Vector) map[string]struct{} {
 }
 
 type provider struct {
+	ev       *eval.Evaler
+	matcher  eval.Callable
 	home     string // The home directory; leave empty if unknown.
 	all      []storedefs.Dir
 	filtered []storedefs.Dir
 }
 
-func newProvider(dirs []storedefs.Dir, home string) *provider {
-	return &provider{all: dirs, home: home}
+func newProvider(dirs []storedefs.Dir, home string, ev *eval.Evaler, matcher eval.Callable) *provider {
+	return &provider{ev: ev, matcher: matcher, all: dirs, home: home}
 }
 
 func (*provider) ModeTitle(i int) string {
@@ -149,10 +156,40 @@ func showPath(path, home string) string {
 
 func (p *provider) Filter(filter string) int {
 	p.filtered = nil
-	pattern := makeLocationFilterPattern(filter)
-	for _, item := range p.all {
-		if pattern.MatchString(showPath(item.Path, p.home)) {
-			p.filtered = append(p.filtered, item)
+
+	// TODO: this is just a replica of `filterRawCandidates`.
+	matcherInput := make(chan interface{}, len(p.all))
+	stopCollector := make(chan struct{})
+	go func() {
+		defer close(matcherInput)
+		for _, item := range p.all {
+			select {
+			case matcherInput <- showPath(item.Path, p.home):
+				logger.Printf("put %s\n", item.Path)
+			case <-stopCollector:
+				return
+			}
+		}
+	}()
+	defer close(stopCollector)
+
+	ports := []*eval.Port{
+		{Chan: matcherInput, File: eval.DevNull}, {File: os.Stdout}, {File: os.Stderr}}
+	ec := eval.NewTopFrame(p.ev, eval.NewInternalSource("[editor matcher]"), ports)
+	args := []interface{}{filter}
+
+	values, err := ec.CaptureOutput(p.matcher, args, eval.NoOpts)
+	if err != nil {
+		logger.Printf("failed to match %s: %v", filter, err)
+		return -1
+	} else if got, expect := len(values), len(p.all); got != expect {
+		logger.Printf("wrong match count: got %d, want %d", got, expect)
+		return -1
+	}
+
+	for i, value := range values {
+		if vals.Bool(value) {
+			p.filtered = append(p.filtered, p.all[i])
 		}
 	}
 
@@ -164,8 +201,11 @@ func (p *provider) Filter(filter string) int {
 
 var emptyRegexp = regexp.MustCompile("")
 
-func makeLocationFilterPattern(s string) *regexp.Regexp {
+func makeLocationFilterPattern(s string, ignoreCase bool) *regexp.Regexp {
 	var b bytes.Buffer
+	if ignoreCase {
+		b.WriteString("(?i)")
+	}
 	b.WriteString(".*")
 	segs := strings.Split(s, "/")
 	for i, seg := range segs {
@@ -189,4 +229,22 @@ func (p *provider) Accept(i int, ed eddefs.Editor) {
 		ed.Notify("%v", err)
 	}
 	ed.SetModeInsert()
+}
+
+func matchDirPattern(fm *eval.Frame, opts eval.RawOptions, pattern string, inputs eval.Inputs) {
+	var options struct {
+		IgnoreCase bool
+	}
+	opts.Scan(&options)
+
+	p := makeLocationFilterPattern(pattern, options.IgnoreCase)
+	out := fm.OutputChan()
+	inputs(func(v interface{}) {
+		s, ok := v.(string)
+		if !ok {
+			logger.Printf("input item must be string, but got %#v", v)
+			return
+		}
+		out <- vals.Bool(p.MatchString(s))
+	})
 }
