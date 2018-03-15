@@ -78,7 +78,7 @@ func (op compoundOp) Invoke(fm *Frame) ([]interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		vs, err = outerProduct(vs, us, cat)
+		vs, err = outerProduct(vs, us, vals.Concat)
 		if err != nil {
 			return nil, err
 		}
@@ -110,36 +110,6 @@ func (op compoundOp) Invoke(fm *Frame) ([]interface{}, error) {
 		vs = newvs
 	}
 	return vs, nil
-}
-
-func cat(lhs, rhs interface{}) (interface{}, error) {
-	switch lhs := lhs.(type) {
-	case string:
-		switch rhs := rhs.(type) {
-		case string:
-			return lhs + rhs, nil
-		case GlobPattern:
-			segs := stringToSegments(lhs)
-			// We know rhs contains exactly one segment.
-			segs = append(segs, rhs.Segments[0])
-			return GlobPattern{glob.Pattern{segs, ""}, rhs.Flags, rhs.Buts}, nil
-		}
-	case GlobPattern:
-		// NOTE Modifies lhs in place.
-		switch rhs := rhs.(type) {
-		case string:
-			lhs.append(stringToSegments(rhs)...)
-			return lhs, nil
-		case GlobPattern:
-			// We know rhs contains exactly one segment.
-			lhs.append(rhs.Segments[0])
-			lhs.Flags |= rhs.Flags
-			lhs.Buts = append(lhs.Buts, rhs.Buts...)
-			return lhs, nil
-		}
-	}
-	return nil, fmt.Errorf("unsupported concat: %s and %s",
-		vals.Kind(lhs), vals.Kind(rhs))
 }
 
 func outerProduct(vs []interface{}, us []interface{}, f func(interface{}, interface{}) (interface{}, error)) ([]interface{}, error) {
