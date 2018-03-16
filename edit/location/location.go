@@ -46,7 +46,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 			"pinned":  vars.FromPtr(&m.pinned),
 			"matcher": vars.FromPtr(&m.matcher),
 		}.AddBuiltinFn("edit:location:", "start", m.start).
-			AddFn("match-pattern", matchDirPatternBuiltin))
+			AddFn("match-dir-pattern", matchDirPatternBuiltin))
 }
 
 func (m *mode) start() {
