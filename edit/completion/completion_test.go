@@ -30,3 +30,36 @@ func testComplContextFinder(t *testing.T, name string, finder complContextFinder
 		}
 	}
 }
+
+type filterRawCandidatesTest struct {
+	name    string
+	matcher eval.Callable
+	seed    string
+	src     []string
+	want    []string
+}
+
+func testRawFilterCandidates(t *testing.T, tests []filterRawCandidatesTest) {
+	ev := eval.NewEvaler()
+	defer ev.Close()
+	for _, test := range tests {
+		input := make(chan rawCandidate, len(test.src))
+		for _, s := range test.src {
+			input <- plainCandidate(s)
+		}
+		close(input)
+
+		result, err := filterRawCandidates(ev, test.matcher, test.seed, input)
+		if err != nil {
+			t.Errorf("For %s, got unexpected error %v", test.name, err)
+		}
+
+		got := make([]string, len(result))
+		for i, r := range result {
+			got[i] = r.text()
+		}
+		if !reflect.DeepEqual(got, test.want) {
+			t.Errorf("For %s, got unexpected result => %v, want %v", test.name, got, test.want)
+		}
+	}
+}
