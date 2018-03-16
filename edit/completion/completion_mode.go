@@ -22,6 +22,7 @@ import (
 type completion struct {
 	binding      eddefs.BindingMap
 	matcher      hashmap.Map
+	sorter       hashmap.Map
 	argCompleter hashmap.Map
 	completionState
 }
@@ -43,6 +44,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 	c := &completion{
 		binding:      eddefs.EmptyBindingMap,
 		matcher:      vals.MakeMapFromKV("", matchPrefix),
+		sorter:       vals.EmptyMap,
 		argCompleter: makeArgCompleter(),
 	}
 
@@ -50,6 +52,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 		eval.Ns{
 			"binding":       vars.FromPtr(&c.binding),
 			"matcher":       vars.FromPtr(&c.matcher),
+			"sorter":        vars.FromPtr(&c.sorter),
 			"arg-completer": vars.FromPtr(&c.argCompleter),
 		}.AddBuiltinFns("edit:completion:", map[string]interface{}{
 			"start":          func() { c.start(ed, false) },
@@ -211,7 +214,7 @@ func (c *completion) start(ed eddefs.Editor, acceptSingleton bool) {
 	}
 
 	completer, complSpec, err := complete(
-		node, &complEnv{ed.Evaler(), c.matcher, c.argCompleter})
+		node, &complEnv{ed.Evaler(), c.matcher, c.sorter, c.argCompleter})
 
 	if err != nil {
 		ed.AddTip("%v", err)

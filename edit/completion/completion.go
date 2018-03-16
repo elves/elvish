@@ -59,6 +59,7 @@ func (c *complContextCommon) common() *complContextCommon { return c }
 type complEnv struct {
 	evaler       *eval.Evaler
 	matcher      hashmap.Map
+	sorter       hashmap.Map
 	argCompleter hashmap.Map
 }
 
@@ -106,6 +107,11 @@ func complete(n parse.Node, env *complEnv) (string, *complSpec, error) {
 			return name, nil, errMatcherMustBeFn
 		}
 
+		sorter, ok := lookupSorter(env.sorter, name)
+		if !ok {
+			return name, nil, errSorterMustBeFn
+		}
+
 		chanRawCandidate := make(chan rawCandidate)
 		chanErrGenerate := make(chan error)
 		go func() {
@@ -115,12 +121,14 @@ func complete(n parse.Node, env *complEnv) (string, *complSpec, error) {
 		}()
 
 		rawCandidates, errFilter := filterRawCandidates(env.evaler, matcher, ctxCommon.seed, chanRawCandidate)
+		rawCandidates, errSorter := sortRawCandidates(env.evaler, sorter, ctxCommon.seed, rawCandidates)
+
 		candidates := make([]*candidate, len(rawCandidates))
 		for i, raw := range rawCandidates {
 			candidates[i] = raw.cook(ctxCommon.quoting)
 		}
 		spec := &complSpec{ctxCommon.begin, ctxCommon.end, candidates}
-		return name, spec, util.Errors(<-chanErrGenerate, errFilter)
+		return name, spec, util.Errors(<-chanErrGenerate, errFilter, errSorter)
 
 	}
 	return "", nil, nil

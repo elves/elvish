@@ -3,7 +3,6 @@ package completion
 import (
 	"fmt"
 	"os"
-	"sort"
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -22,12 +21,6 @@ type rawCandidate interface {
 	text() string
 	cook(q parse.PrimaryType) *candidate
 }
-
-type rawCandidates []rawCandidate
-
-func (cs rawCandidates) Len() int           { return len(cs) }
-func (cs rawCandidates) Swap(i, j int)      { cs[i], cs[j] = cs[j], cs[i] }
-func (cs rawCandidates) Less(i, j int) bool { return cs[i].text() < cs[j].text() }
 
 // plainCandidate is a minimal implementation of rawCandidate.
 type plainCandidate string
@@ -153,6 +146,5 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.Callable, seed string, ch
 			filtered = append(filtered, collected[i])
 		}
 	}
-	sort.Sort(rawCandidates(filtered))
 	return filtered, nil
 }
