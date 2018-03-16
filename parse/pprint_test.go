@@ -1,16 +1,15 @@
 package parse
 
 import (
-	"bytes"
 	"testing"
+
+	"github.com/elves/elvish/tt"
 )
 
-var pprintCases = []struct {
-	src           string
-	wantAST       string
-	wantParseTree string
-}{
-	{"ls $x[0]$y[1];echo",
+var n = mustParse("ls $x[0]$y[1];echo")
+
+var pprintASTTests = tt.Table{
+	tt.Args(n).Rets(
 		`Chunk
   Pipeline/Form
     Compound/Indexing/Primary Type=Bareword Value="ls"
@@ -22,7 +21,15 @@ var pprintCases = []struct {
         Primary Type=Variable Value="y"
         Array/Compound/Indexing/Primary Type=Bareword Value="1"
   Pipeline/Form/Compound/Indexing/Primary Type=Bareword Value="echo"
-`,
+`),
+}
+
+func TestPPrintAST(t *testing.T) {
+	tt.Test(t, tt.Fn("PPrintAST", PPrintAST), pprintASTTests)
+}
+
+var pprintParseTreeTests = tt.Table{
+	tt.Args(n).Rets(
 		`Chunk "ls $x[0]$y[1];echo" 0-18
   Pipeline/Form "ls $x[0]$y[1]" 0-13
     Compound/Indexing/Primary "ls" 0-2
@@ -40,26 +47,17 @@ var pprintCases = []struct {
         Sep "]" 12-13
   Sep ";" 13-14
   Pipeline/Form/Compound/Indexing/Primary "echo" 14-18
-`},
+`),
 }
 
-func TestPprint(t *testing.T) {
-	for _, tc := range pprintCases {
-		n, err := Parse("[test]", tc.src)
-		if err != nil {
-			t.Error(err)
-		}
-		var b bytes.Buffer
-		PprintAST(n, &b)
-		ast := b.String()
-		if b.String() != tc.wantAST {
-			t.Errorf("PprintAST(%q):\n%s\nwant:\n%s", tc.src, ast, tc.wantAST)
-		}
-		b = bytes.Buffer{}
-		PprintParseTree(n, &b)
-		pt := b.String()
-		if pt != tc.wantParseTree {
-			t.Errorf("PprintParseTree(%q):\n%s\nwant:\n%s", tc.src, pt, tc.wantParseTree)
-		}
+func TestPprintParseTree(t *testing.T) {
+	tt.Test(t, tt.Fn("PPrintParseTree", PPrintParseTree), pprintParseTreeTests)
+}
+
+func mustParse(src string) Node {
+	n, err := Parse("[test]", src)
+	if err != nil {
+		panic(err)
 	}
+	return n
 }
