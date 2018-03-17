@@ -3,12 +3,12 @@ package styled
 import "github.com/elves/elvish/util"
 
 type TextStyle struct {
-	bold      *bool
-	dim       *bool
-	italic    *bool
-	underline *bool
-	blink     *bool
-	inverse   *bool
+	bold       *bool
+	dim        *bool
+	italic     *bool
+	underlined *bool
+	blink      *bool
+	inverse    *bool
 }
 
 type Style struct {
@@ -28,12 +28,12 @@ func TextStyleFromMap(m map[string]interface{}) TextStyle {
 	}
 
 	return TextStyle{
-		bold:      b("bold"),
-		dim:       b("dim"),
-		italic:    b("italic"),
-		underline: b("underline"),
-		blink:     b("blink"),
-		inverse:   b("inverse"),
+		bold:       b("bold"),
+		dim:        b("dim"),
+		italic:     b("italic"),
+		underlined: b("underlined"),
+		blink:      b("blink"),
+		inverse:    b("inverse"),
 	}
 }
 
@@ -47,8 +47,8 @@ func (s TextStyle) Merge(o TextStyle) TextStyle {
 	if o.italic != nil {
 		s.italic = o.italic
 	}
-	if o.underline != nil {
-		s.underline = o.underline
+	if o.underlined != nil {
+		s.underlined = o.underlined
 	}
 	if o.blink != nil {
 		s.blink = o.blink
@@ -77,14 +77,14 @@ func (s Style) ToMap() map[string]interface{} {
 	b := func(b *bool) bool { return b != nil && *b }
 
 	return map[string]interface{}{
-		"fg-color":  c(s.Foreground),
-		"bg-color":  c(s.Background),
-		"bold":      b(s.bold),
-		"dim":       b(s.dim),
-		"italic":    b(s.italic),
-		"underline": b(s.underline),
-		"blink":     b(s.blink),
-		"inverse":   b(s.inverse),
+		"fg-color":   c(s.Foreground),
+		"bg-color":   c(s.Background),
+		"bold":       b(s.bold),
+		"dim":        b(s.dim),
+		"italic":     b(s.italic),
+		"underlined": b(s.underlined),
+		"blink":      b(s.blink),
+		"inverse":    b(s.inverse),
 	}
 }
 

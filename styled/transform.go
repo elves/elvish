@@ -20,8 +20,8 @@ func init() {
 			segment.italic = &myTrue
 			return segment
 		},
-		"underline": func(segment Segment) Segment {
-			segment.underline = &myTrue
+		"underlined": func(segment Segment) Segment {
+			segment.underlined = &myTrue
 			return segment
 		},
 		"blink": func(segment Segment) Segment {
