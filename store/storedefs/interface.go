@@ -10,6 +10,7 @@ type Store interface {
 	PrevCmd(upto int, prefix string) (int, string, error)
 
 	AddDir(dir string, incFactor float64) error
+	DelDir(dir string) error
 	Dirs(blacklist map[string]struct{}) ([]Dir, error)
 
 	SharedVar(name string) (string, error)

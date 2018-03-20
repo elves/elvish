@@ -14,6 +14,7 @@ import (
 	"github.com/elves/elvish/eval"
 	daemonmod "github.com/elves/elvish/eval/daemon"
 	"github.com/elves/elvish/eval/re"
+	storemod "github.com/elves/elvish/eval/store"
 	"github.com/elves/elvish/eval/str"
 	daemonp "github.com/elves/elvish/program/daemon"
 	"github.com/elves/elvish/store/storedefs"
@@ -93,6 +94,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 		// Even if error is not nil, we install daemon-related functionalities
 		// anyway. Daemon may eventually come online and become functional.
 		ev.InstallDaemonClient(client)
+		ev.InstallModule("store", storemod.Ns(client))
 		ev.InstallModule("daemon", daemonmod.Ns(client, spawner))
 	}
 	return ev, dataDir

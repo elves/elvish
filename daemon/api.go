@@ -9,7 +9,7 @@ const (
 	ServiceName = "Daemon"
 
 	// Version is the API version. It should be bumped any time the API changes.
-	Version = -97
+	Version = -96
 )
 
 // Basic requests.
@@ -87,6 +87,12 @@ type AddDirRequest struct {
 }
 
 type AddDirResponse struct{}
+
+type DelDirRequest struct {
+	Dir string
+}
+
+type DelDirResponse struct{}
 
 type DirsRequest struct {
 	Blacklist map[string]struct{}

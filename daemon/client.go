@@ -158,6 +158,13 @@ func (c *Client) AddDir(dir string, incFactor float64) error {
 	return err
 }
 
+func (c *Client) DelDir(dir string) error {
+	req := &DelDirRequest{dir}
+	res := &DelDirResponse{}
+	err := c.call("DelDir", req, res)
+	return err
+}
+
 func (c *Client) Dirs(blacklist map[string]struct{}) ([]storedefs.Dir, error) {
 	req := &DirsRequest{blacklist}
 	res := &DirsResponse{}

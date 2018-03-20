@@ -175,6 +175,13 @@ func (s *Service) AddDir(req *AddDirRequest, res *AddDirResponse) error {
 	return s.store.AddDir(req.Dir, req.IncFactor)
 }
 
+func (s *Service) DelDir(req *DelDirRequest, res *DelDirResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	return s.store.DelDir(req.Dir)
+}
+
 func (s *Service) Dirs(req *DirsRequest, res *DirsResponse) error {
 	if s.err != nil {
 		return s.err
