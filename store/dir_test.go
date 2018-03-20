@@ -13,6 +13,9 @@ var (
 	wantedDirs = []storedefs.Dir{
 		{"/usr", scoreIncrement*scoreDecay*scoreDecay + scoreIncrement},
 		{"/usr/bin", scoreIncrement * scoreDecay}}
+	dirToDel           = "/usr"
+	wantedDirsAfterDel = []storedefs.Dir{
+		{"/usr/bin", scoreIncrement * scoreDecay}}
 )
 
 func TestDir(t *testing.T) {
@@ -27,5 +30,12 @@ func TestDir(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(dirs, wantedDirs) {
 		t.Errorf(`tStore.ListDirs() => (%v, %v), want (%v, <nil>)`,
 			dirs, err, wantedDirs)
+	}
+
+	tStore.DelDir("/usr")
+	dirs, err = tStore.Dirs(black)
+	if err != nil || !reflect.DeepEqual(dirs, wantedDirsAfterDel) {
+		t.Errorf(`After DelDir("/usr"), tStore.ListDirs() => (%v, %v), want (%v, <nil>)`,
+			dirs, err, wantedDirsAfterDel)
 	}
 }

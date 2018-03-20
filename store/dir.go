@@ -62,8 +62,8 @@ func (s *Store) AddDirRaw(d string, score float64) error {
 	})
 }
 
-// RemoveDir removes a directory record from history.
-func (s *Store) RemoveDir(d string) error {
+// DelDir deletes a directory record from history.
+func (s *Store) DelDir(d string) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BucketDir))
 		return b.Delete([]byte(d))
