@@ -47,6 +47,23 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 			"matcher": vars.FromPtr(&m.matcher),
 		}.AddBuiltinFn("edit:location:", "start", m.start).
 			AddFn("match-dir-pattern", matchDirPatternBuiltin))
+
+	ed.Evaler().AddAfterChdir(func(string) {
+		store := ed.Daemon()
+		if store == nil {
+			return
+		}
+		pwd, err := os.Getwd()
+		if err != nil {
+			logger.Println("Failed to get pwd in after-chdir hook:", err)
+		}
+		go func() {
+			err = store.AddDir(pwd, 1)
+			if err != nil {
+				logger.Println("Failed to AddDir in after-chdir hook:", err)
+			}
+		}()
+	})
 }
 
 func (m *mode) start() {

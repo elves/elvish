@@ -36,14 +36,5 @@ func (ev *Evaler) Chdir(path string) error {
 	}
 	os.Setenv("PWD", pwd)
 
-	store := ev.DaemonClient
-	if store != nil {
-		go func() {
-			err := store.AddDir(pwd, 1)
-			if err != nil {
-				logger.Println("Failed to save dir to history:", err)
-			}
-		}()
-	}
 	return nil
 }
