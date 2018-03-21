@@ -25,6 +25,8 @@ type Closure struct {
 	Op          Op
 	Captured    Ns
 	SrcMeta     *Source
+	DefBegint   int
+	DefEnd      int
 }
 
 var _ Callable = &Closure{}
@@ -58,17 +60,19 @@ func (c *Closure) Index(k interface{}) (interface{}, bool) {
 		return vals.MakeStringList(c.OptNames...), true
 	case "opt-defaults":
 		return vals.MakeList(c.OptDefaults...), true
-	case "src":
-		return c.SrcMeta, true
 	case "body":
 		return c.SrcMeta.code[c.Op.Begin:c.Op.End], true
+	case "def":
+		return c.SrcMeta.code[c.DefBegint:c.DefEnd], true
+	case "src":
+		return c.SrcMeta, true
 	}
 	return nil, false
 }
 
 func (c *Closure) IterateKeys(f func(interface{}) bool) {
 	vals.Feed(f, "arg-names", "rest-arg",
-		"opt-names", "opt-defaults", "src", "body")
+		"opt-names", "opt-defaults", "body", "def", "src")
 }
 
 // Call calls a closure.

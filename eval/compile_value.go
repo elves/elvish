@@ -453,7 +453,7 @@ func (cp *compiler) lambda(n *parse.Primary) ValuesOpBody {
 		cp.registerVariableGetQname(name)
 	}
 
-	return &lambdaOp{argNames, restArgName, optNames, optDefaultOps, capture, subop, cp.srcMeta}
+	return &lambdaOp{argNames, restArgName, optNames, optDefaultOps, capture, subop, cp.srcMeta, n.Begin(), n.End()}
 }
 
 type lambdaOp struct {
@@ -464,6 +464,8 @@ type lambdaOp struct {
 	capture       staticNs
 	subop         Op
 	srcMeta       *Source
+	defBegin      int
+	defEnd        int
 }
 
 func (op *lambdaOp) Invoke(fm *Frame) ([]interface{}, error) {
@@ -477,7 +479,7 @@ func (op *lambdaOp) Invoke(fm *Frame) ([]interface{}, error) {
 		optDefaults[i] = defaultValue
 	}
 	// XXX(xiaq): Capture uses.
-	return []interface{}{&Closure{op.argNames, op.restArgName, op.optNames, optDefaults, op.subop, evCapture, op.srcMeta}}, nil
+	return []interface{}{&Closure{op.argNames, op.restArgName, op.optNames, optDefaults, op.subop, evCapture, op.srcMeta, op.defBegin, op.defEnd}}, nil
 }
 
 func (cp *compiler) map_(n *parse.Primary) ValuesOpBody {

@@ -16,8 +16,9 @@ func TestClosure(t *testing.T) {
 		That("put [@r]{ }[rest-arg]").Puts("r"),
 		That("explode [&opt=def]{ }[opt-names]").Puts("opt"),
 		That("explode [&opt=def]{ }[opt-defaults]").Puts("def"),
+		That("put { body }[body]").Puts(" body "),
+		That("put [x @y]{ body }[def]").Puts("[x @y]{ body }"),
 		That("put { body }[src][code]").Puts(
 			"put { body }[src][code]"),
-		That("put { body }[body]").Puts(" body "),
 	})
 }
