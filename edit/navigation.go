@@ -41,7 +41,7 @@ func init() { atEditorInit(initNavigation) }
 func initNavigation(ed *editor, ns eval.Ns) {
 	n := &navigation{
 		binding: emptyBindingMap,
-		chdir:   func(dir string) error { return eval.Chdir(dir, ed.daemon) },
+		chdir:   ed.Evaler().Chdir,
 	}
 	ed.navigation = n
 

@@ -224,7 +224,7 @@ func makeLocationFilterPattern(s string, ignoreCase bool) *regexp.Regexp {
 }
 
 func (p *provider) Accept(i int, ed eddefs.Editor) {
-	err := eval.Chdir(p.filtered[i].Path, ed.Daemon())
+	err := ed.Evaler().Chdir(p.filtered[i].Path)
 	if err != nil {
 		ed.Notify("%v", err)
 	}

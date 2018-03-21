@@ -1,11 +1,10 @@
 package eval
 
 import (
-	"errors"
 	"os"
 	"testing"
-	"time"
 
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
 
@@ -16,59 +15,61 @@ func (t testAddDirer) AddDir(dir string, weight float64) error {
 }
 
 func TestChdir(t *testing.T) {
-	util.WithTempDir(func(destDir string) {
-		pwd, err := os.Getwd()
-		if err != nil {
-			panic(err)
-		}
-		defer func() {
-			err = os.Chdir(pwd)
-			if err != nil {
-				panic(err)
-			}
-		}()
+	inWithTempDir(func(pwd, dst string) {
+		ev := NewEvaler()
 
-		chanAddedDir := make(chan string)
-		testAddDirer := testAddDirer(func(dir string, weight float64) error {
-			chanAddedDir <- dir
-			// Error returned from here should not affect the return value of
-			// Chdir
-			return errors.New("fake error")
-		})
+		argDirInBefore, argDirInAfter := "", ""
+		ev.AddBeforeChdir(func(dir string) { argDirInBefore = dir })
+		ev.AddAfterChdir(func(dir string) { argDirInAfter = dir })
 
-		err = Chdir(destDir, testAddDirer)
+		err := ev.Chdir(dst)
 
 		if err != nil {
 			t.Errorf("Chdir => error %v", err)
 		}
-
-		if env := os.Getenv("PWD"); env != destDir {
-			t.Errorf("$PWD is %q after Chdir, want %q", env, destDir)
+		if envPwd := os.Getenv("PWD"); envPwd != dst {
+			t.Errorf("$PWD is %q after Chdir, want %q", envPwd, dst)
 		}
 
-		select {
-		case addedDir := <-chanAddedDir:
-			if addedDir != destDir {
-				t.Errorf("Chdir called AddDir %q, want %q", addedDir[0], destDir)
-			}
-		case <-time.After(100 * time.Millisecond):
-			t.Errorf("Chdir did not call AddDir within 100ms")
+		if argDirInBefore != dst {
+			t.Errorf("Chdir called before-hook with %q, want %q",
+				argDirInBefore, dst)
+		}
+		if argDirInAfter != dst {
+			t.Errorf("Chdir called before-hook with %q, want %q",
+				argDirInAfter, dst)
 		}
 	})
 }
 
-const badDir = "/i/dont/exist"
+func TestChdirElvishHooks(t *testing.T) {
+	inWithTempDir(func(pwd, dst string) {
+		runTests(t, []Test{
+			That(`
+			dir-in-before dir-in-after = '' ''
+			@before-chdir = [dst]{ dir-in-before = $dst }
+			@after-chdir  = [dst]{ dir-in-after  = $dst }
+			cd `+parse.Quote(dst)+`
+			put $dir-in-before $dir-in-after
+			`).Puts(dst, dst),
+		})
+	})
+}
 
 func TestChdirError(t *testing.T) {
-	testAddDirer := testAddDirer(func(dir string, weight float64) error {
-		t.Errorf("Chdir called AddDir when os.Chdir errors")
-		return nil
+	util.InTempDir(func(pwd string) {
+		ev := NewEvaler()
+		err := ev.Chdir("i/dont/exist")
+		if err == nil {
+			t.Errorf("Chdir => no error when dir does not exist")
+		}
 	})
-	if _, err := os.Stat(badDir); err == nil {
-		panic(badDir + " exists")
-	}
-	err := Chdir(badDir, testAddDirer)
-	if err == nil {
-		t.Errorf("Chdir => no error when dir does not exist")
-	}
+}
+
+func inWithTempDir(f func(pwd, other string)) {
+	util.InTempDir(func(pwd string) {
+		util.WithTempDir(func(other string) {
+			f(pwd, other)
+		})
+	})
 }

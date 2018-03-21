@@ -43,6 +43,8 @@ const (
 type Evaler struct {
 	evalerScopes
 	valuePrefix  string
+	beforeChdir  []func(string)
+	afterChdir   []func(string)
 	DaemonClient *daemon.Client
 	modules      map[string]Ns
 	// bundled modules
@@ -65,7 +67,7 @@ func NewEvaler() *Evaler {
 		valuePrefix: defaultValuePrefix,
 		evalerScopes: evalerScopes{
 			Global:  make(Ns),
-			Builtin: builtinNs,
+			Builtin: builtin,
 		},
 		modules: map[string]Ns{
 			"builtin": builtin,
@@ -75,9 +77,39 @@ func NewEvaler() *Evaler {
 		intCh:   nil,
 	}
 
+	beforeChdirElvish, afterChdirElvish := vector.Empty, vector.Empty
+	ev.beforeChdir = append(ev.beforeChdir,
+		adaptChdirHook("before-chdir", ev, &beforeChdirElvish))
+	ev.afterChdir = append(ev.afterChdir,
+		adaptChdirHook("after-chdir", ev, &afterChdirElvish))
+	builtin["before-chdir"] = vars.FromPtr(&beforeChdirElvish)
+	builtin["after-chdir"] = vars.FromPtr(&afterChdirElvish)
+
 	builtin["value-out-indicator"] = vars.FromPtr(&ev.valuePrefix)
+	builtin["pwd"] = PwdVariable{ev}
 
 	return ev
+}
+
+func adaptChdirHook(name string, ev *Evaler, pfns *vector.Vector) func(string) {
+	return func(path string) {
+		stdPorts := newStdPorts(os.Stdin, os.Stdout, os.Stderr, ev.valuePrefix)
+		defer stdPorts.close()
+		for it := (*pfns).Iterator(); it.HasElem(); it.Next() {
+			fn, ok := it.Elem().(Callable)
+			if !ok {
+				fmt.Fprintln(os.Stderr, name, "hook must be callable")
+				continue
+			}
+			fm := NewTopFrame(ev,
+				NewInternalSource("["+name+" hook]"), stdPorts.ports[:])
+			err := fm.Call(fn, []interface{}{path}, NoOpts)
+			if err != nil {
+				// TODO: Stack trace
+				fmt.Fprintln(os.Stderr, err)
+			}
+		}
+	}
 }
 
 // Close releases resources allocated when creating this Evaler. Currently this
@@ -86,11 +118,19 @@ func (ev *Evaler) Close() error {
 	return nil
 }
 
+// AddBeforeChdir adds a function to run before changing directory.
+func (ev *Evaler) AddBeforeChdir(f func(string)) {
+	ev.beforeChdir = append(ev.beforeChdir, f)
+}
+
+// AddAfterChdir adds a function to run after changing directory.
+func (ev *Evaler) AddAfterChdir(f func(string)) {
+	ev.afterChdir = append(ev.afterChdir, f)
+}
+
 // InstallDaemonClient installs a daemon client to the Evaler.
 func (ev *Evaler) InstallDaemonClient(client *daemon.Client) {
 	ev.DaemonClient = client
-	// XXX This is really brittle
-	ev.Builtin["pwd"] = PwdVariable{client}
 }
 
 // InstallModule installs a module to the Evaler so that it can be used with

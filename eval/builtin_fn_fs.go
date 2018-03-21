@@ -45,11 +45,7 @@ func cd(fm *Frame, args ...string) error {
 		return ErrArgs
 	}
 
-	return Chdir(dir, fm.DaemonClient)
-}
-
-func cdInner(dir string, fm *Frame) {
-	maybeThrow(Chdir(dir, fm.DaemonClient))
+	return fm.Chdir(dir)
 }
 
 var dirDescriptor = vals.NewStructDescriptor("path", "score")

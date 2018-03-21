@@ -114,14 +114,14 @@ func times(nums ...float64) float64 {
 	return prod
 }
 
-func slash(fm *Frame, args ...float64) {
+func slash(fm *Frame, args ...float64) error {
 	if len(args) == 0 {
 		// cd /
-		cdInner("/", fm)
-		return
+		return fm.Chdir("/")
 	}
 	// Division
 	divide(fm, args[0], args[1:]...)
+	return nil
 }
 
 func divide(fm *Frame, prod float64, nums ...float64) {

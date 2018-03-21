@@ -9,7 +9,7 @@ import (
 // PwdVariable is a variable whose value always reflects the current working
 // directory. Setting it changes the current working directory.
 type PwdVariable struct {
-	store AddDirer
+	ev *Evaler
 }
 
 var _ vars.Var = PwdVariable{}
@@ -25,5 +25,5 @@ func (pwd PwdVariable) Set(v interface{}) error {
 	if !ok {
 		return ErrPathMustBeString
 	}
-	return Chdir(path, pwd.store)
+	return pwd.ev.Chdir(path)
 }

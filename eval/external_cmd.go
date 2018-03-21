@@ -51,8 +51,7 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 			if len(argVals) > 0 {
 				return ErrCdNoArg
 			}
-			cdInner(e.Name, fm)
-			return nil
+			return fm.Chdir(e.Name)
 		}
 	}
 
