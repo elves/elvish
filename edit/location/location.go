@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hashmap"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -27,24 +29,28 @@ var logger = util.GetLogger("[edit/location] ")
 var pinnedScore = math.Inf(1)
 
 type mode struct {
-	editor  eddefs.Editor
-	binding eddefs.BindingMap
-	hidden  vector.Vector
-	pinned  vector.Vector
-	matcher eval.Callable
+	editor     eddefs.Editor
+	binding    eddefs.BindingMap
+	hidden     vector.Vector
+	pinned     vector.Vector
+	workspaces hashmap.Map
+	matcher    eval.Callable
 }
 
 var matchDirPatternBuiltin = eval.NewBuiltinFn("edit:location:match-dir-pattern", matchDirPattern)
 
 // Init initializes the location mode for an Editor.
 func Init(ed eddefs.Editor, ns eval.Ns) {
-	m := &mode{ed, eddefs.EmptyBindingMap, vals.EmptyList, vals.EmptyList, matchDirPatternBuiltin}
+	m := &mode{ed, eddefs.EmptyBindingMap,
+		vals.EmptyList, vals.EmptyList, vals.EmptyMap, matchDirPatternBuiltin}
+
 	ns.AddNs("location",
 		eval.Ns{
-			"binding": vars.FromPtr(&m.binding),
-			"hidden":  vars.FromPtr(&m.hidden),
-			"pinned":  vars.FromPtr(&m.pinned),
-			"matcher": vars.FromPtr(&m.matcher),
+			"binding":    vars.FromPtr(&m.binding),
+			"hidden":     vars.FromPtr(&m.hidden),
+			"pinned":     vars.FromPtr(&m.pinned),
+			"matcher":    vars.FromPtr(&m.matcher),
+			"workspaces": vars.FromPtr(&m.workspaces),
 		}.AddBuiltinFn("edit:location:", "start", m.start).
 			AddFn("match-dir-pattern", matchDirPatternBuiltin))
 
@@ -57,13 +63,60 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 		if err != nil {
 			logger.Println("Failed to get pwd in after-chdir hook:", err)
 		}
-		go func() {
-			err = store.AddDir(pwd, 1)
-			if err != nil {
-				logger.Println("Failed to AddDir in after-chdir hook:", err)
-			}
-		}()
+		go addDir(store, pwd, m.workspaces)
 	})
+}
+
+func addDir(store storedefs.Store, pwd string, workspaces hashmap.Map) {
+	err := store.AddDir(pwd, 1)
+	if err != nil {
+		logger.Println("add dir in after-chdir hook:", err)
+		return
+	}
+	_, wsPwd := workspacify(pwd, workspaces)
+	if wsPwd == "" {
+		return
+	}
+	err = store.AddDir(wsPwd, 1)
+	if err != nil {
+		logger.Println("add workspacified dir in after-chdir hook:", err)
+	}
+}
+
+func workspacify(dir string, workspaces hashmap.Map) (string, string) {
+	for it := workspaces.Iterator(); it.HasElem(); it.Next() {
+		k, v := it.Elem()
+		name, ok := k.(string)
+		if !ok {
+			// TODO: Surface to user
+			logger.Println("$workspaces key not string", k)
+			continue
+		}
+		if strings.HasPrefix(name, "/") {
+			// TODO: Surface to user
+			logger.Println("$workspaces key starts with /", k)
+			continue
+		}
+		pattern, ok := v.(string)
+		if !ok {
+			// TODO: Surface to user
+			logger.Println("$workspaces value not string", v)
+			continue
+		}
+		if !strings.HasPrefix(pattern, "^") {
+			pattern = "^" + pattern
+		}
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			// TODO: Surface to user
+			logger.Println("$workspaces pattern invalid", pattern)
+			continue
+		}
+		if ws := re.FindString(dir); ws != "" {
+			return name, filepath.Join(name, dir[len(ws):])
+		}
+	}
+	return "", ""
 }
 
 func (m *mode) start() {
@@ -88,11 +141,24 @@ func (m *mode) start() {
 		return
 	}
 
-	// Concatenate pinned and stored dirs, pinned first.
+	// TODO: Move workspace filtering to the daemon.
+	ws, wsSlash := "", ""
+	if pwd != "" {
+		ws, _ = workspacify(pwd, m.workspaces)
+		wsSlash = ws + "/"
+	}
+	var filtered []storedefs.Dir
+	for _, dir := range stored {
+		if filepath.IsAbs(dir.Path) || (ws != "" && (dir.Path == ws || strings.HasPrefix(dir.Path, wsSlash))) {
+			filtered = append(filtered, dir)
+		}
+	}
+
+	// Prepend pinned dirs.
 	pinnedDirs := convertListToDirs(m.pinned)
-	dirs := make([]storedefs.Dir, len(pinnedDirs)+len(stored))
+	dirs := make([]storedefs.Dir, len(pinnedDirs)+len(filtered))
 	copy(dirs, pinnedDirs)
-	copy(dirs[len(pinnedDirs):], stored)
+	copy(dirs[len(pinnedDirs):], filtered)
 
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.

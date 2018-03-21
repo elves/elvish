@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/store/storedefs"
+	"github.com/elves/elvish/tt"
 )
 
 var (
@@ -84,4 +85,23 @@ func TestLocation(t *testing.T) {
 		t, "theLocation", theLocation, locationFilterTests)
 	eddefs.TestListingProviderFilter(
 		t, "locationWithPrefixMatcher", locationWithPrefixMatcher, locationWithPrefixMatcherTests)
+}
+
+var workspaces = vals.MakeMapFromKV(
+	// Pattern is always anchored at beginning; this won't match anything
+	"bad", "bad",
+	// This is a normal pattern.
+	"linux", "/src/linux/[^/]+",
+	// Pattern may match a trailing /, in which case it only matches subdirs
+	"bsd", "/src/bsd/[^/]+/",
+)
+
+func TestWorkspacify(t *testing.T) {
+	tt.Test(t, tt.Fn("workspacify", workspacify), tt.Table{
+		tt.Args("/bad", workspaces).Rets("", ""),
+		tt.Args("/src/linux/ws1", workspaces).Rets("linux", "linux"),
+		tt.Args("/src/linux/ws1/dir", workspaces).Rets("linux", "linux/dir"),
+		tt.Args("/src/bsd/ws1", workspaces).Rets("", ""),
+		tt.Args("/src/bsd/ws1/dir", workspaces).Rets("bsd", "bsd/dir"),
+	})
 }
