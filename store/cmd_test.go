@@ -73,7 +73,7 @@ func TestCmd(t *testing.T) {
 		}
 	}
 
-	if err := tStore.RemoveCmd(1); err != nil {
+	if err := tStore.DelCmd(1); err != nil {
 		t.Error("Failed to remove cmd")
 	}
 	if seq, err := tStore.Cmd(1); err != storedefs.ErrNoMatchingCmd {

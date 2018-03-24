@@ -47,9 +47,8 @@ func (s *Store) AddCmd(cmd string) (int, error) {
 	return int(seq), err
 }
 
-// RemoveCmd removes a command from command history referenced by
-// sequence.
-func (s *Store) RemoveCmd(seq int) error {
+// DelCmd deletes a command history item with the given sequence number.
+func (s *Store) DelCmd(seq int) error {
 	return s.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BucketCmd))
 		return b.Delete(marshalSeq(uint64(seq)))
