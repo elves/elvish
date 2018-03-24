@@ -9,7 +9,6 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/store/storedefs"
-	"github.com/elves/elvish/tt"
 )
 
 var (
@@ -20,7 +19,7 @@ var (
 		{"/home/dir", 100},
 		{"/foo/\nbar", 77},
 		{"/usr/elves/elvish", 6},
-	}, "/home", eval.NewEvaler(), matchDirPatternBuiltin)
+	}, "/home", nil, eval.NewEvaler(), matchDirPatternBuiltin)
 
 	locationFilterTests = []eddefs.ListingProviderFilterTest{
 		{"", []eddefs.ListingShown{
@@ -56,7 +55,11 @@ var (
 		{"/home/dir", 100},
 		{"/foo/\nbar", 77},
 		{"/usr/elves/elvish", 6},
-	}, "/home", eval.NewEvaler(), eval.NewBuiltinFn("edit:location:test:match-prefix", matchPrefix))
+	},
+		"/home",
+		nil,
+		eval.NewEvaler(),
+		eval.NewBuiltinFn("edit:location:test:match-prefix", matchPrefix))
 
 	locationWithPrefixMatcherTests = []eddefs.ListingProviderFilterTest{
 		{"", []eddefs.ListingShown{
@@ -80,28 +83,9 @@ func matchPrefix(fm *eval.Frame, opts eval.RawOptions, pattern string, inputs ev
 	})
 }
 
-func TestLocation(t *testing.T) {
+func TestProvider(t *testing.T) {
 	eddefs.TestListingProviderFilter(
 		t, "theLocation", theLocation, locationFilterTests)
 	eddefs.TestListingProviderFilter(
 		t, "locationWithPrefixMatcher", locationWithPrefixMatcher, locationWithPrefixMatcherTests)
-}
-
-var workspaces = vals.MakeMapFromKV(
-	// Pattern is always anchored at beginning; this won't match anything
-	"bad", "bad",
-	// This is a normal pattern.
-	"linux", "/src/linux/[^/]+",
-	// Pattern may match a trailing /, in which case it only matches subdirs
-	"bsd", "/src/bsd/[^/]+/",
-)
-
-func TestWorkspacify(t *testing.T) {
-	tt.Test(t, tt.Fn("workspacify", workspacify), tt.Table{
-		tt.Args("/bad", workspaces).Rets("", ""),
-		tt.Args("/src/linux/ws1", workspaces).Rets("linux", "linux"),
-		tt.Args("/src/linux/ws1/dir", workspaces).Rets("linux", "linux/dir"),
-		tt.Args("/src/bsd/ws1", workspaces).Rets("", ""),
-		tt.Args("/src/bsd/ws1/dir", workspaces).Rets("bsd", "bsd/dir"),
-	})
 }

@@ -73,17 +73,22 @@ func addDir(store storedefs.Store, pwd string, workspaces hashmap.Map) {
 		logger.Println("add dir in after-chdir hook:", err)
 		return
 	}
-	_, wsPwd := workspacify(pwd, workspaces)
-	if wsPwd == "" {
+	ws := matchWorkspace(pwd, workspaces)
+	if ws == nil {
 		return
 	}
-	err = store.AddDir(wsPwd, 1)
+	err = store.AddDir(ws.workspacify(pwd), 1)
 	if err != nil {
 		logger.Println("add workspacified dir in after-chdir hook:", err)
 	}
 }
 
-func workspacify(dir string, workspaces hashmap.Map) (string, string) {
+type wsInfo struct {
+	name string
+	root string
+}
+
+func matchWorkspace(dir string, workspaces hashmap.Map) *wsInfo {
 	for it := workspaces.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
 		name, ok := k.(string)
@@ -113,10 +118,18 @@ func workspacify(dir string, workspaces hashmap.Map) (string, string) {
 			continue
 		}
 		if ws := re.FindString(dir); ws != "" {
-			return name, filepath.Join(name, dir[len(ws):])
+			return &wsInfo{name, ws}
 		}
 	}
-	return "", ""
+	return nil
+}
+
+func (w *wsInfo) workspacify(dir string) string {
+	return w.name + dir[len(w.root):]
+}
+
+func (w *wsInfo) unworkspacify(dir string) string {
+	return w.root + dir[len(w.name):]
 }
 
 func (m *mode) start() {
@@ -142,14 +155,16 @@ func (m *mode) start() {
 	}
 
 	// TODO: Move workspace filtering to the daemon.
-	ws, wsSlash := "", ""
-	if pwd != "" {
-		ws, _ = workspacify(pwd, m.workspaces)
-		wsSlash = ws + "/"
+	ws := matchWorkspace(pwd, m.workspaces)
+	wsName := ""
+	if ws != nil {
+		wsName = ws.name
 	}
+	wsNameSlash := wsName + string(filepath.Separator)
+
 	var filtered []storedefs.Dir
 	for _, dir := range stored {
-		if filepath.IsAbs(dir.Path) || (ws != "" && (dir.Path == ws || strings.HasPrefix(dir.Path, wsSlash))) {
+		if filepath.IsAbs(dir.Path) || (wsName != "" && (dir.Path == wsName || strings.HasPrefix(dir.Path, wsNameSlash))) {
 			filtered = append(filtered, dir)
 		}
 	}
@@ -163,7 +178,8 @@ func (m *mode) start() {
 	// Drop the error. When there is an error, home is "", which is used to
 	// signify "no home known" in location.
 	home, _ := util.GetHome("")
-	ed.SetModeListing(m.binding, newProvider(dirs, home, ed.Evaler(), m.matcher))
+	ed.SetModeListing(m.binding,
+		newProvider(dirs, home, ws, ed.Evaler(), m.matcher))
 }
 
 // convertListToDirs converts a list of strings to []storedefs.Dir. It uses the
@@ -193,15 +209,16 @@ func convertListsToSet(lis ...vector.Vector) map[string]struct{} {
 }
 
 type provider struct {
-	ev       *eval.Evaler
-	matcher  eval.Callable
-	home     string // The home directory; leave empty if unknown.
 	all      []storedefs.Dir
 	filtered []storedefs.Dir
+	home     string // The home directory; leave empty if unknown.
+	ws       *wsInfo
+	ev       *eval.Evaler
+	matcher  eval.Callable
 }
 
-func newProvider(dirs []storedefs.Dir, home string, ev *eval.Evaler, matcher eval.Callable) *provider {
-	return &provider{ev: ev, matcher: matcher, all: dirs, home: home}
+func newProvider(dirs []storedefs.Dir, home string, ws *wsInfo, ev *eval.Evaler, matcher eval.Callable) *provider {
+	return &provider{dirs, nil, home, ws, ev, matcher}
 }
 
 func (*provider) ModeTitle(i int) string {
@@ -307,7 +324,11 @@ func makeLocationFilterPattern(s string, ignoreCase bool) *regexp.Regexp {
 }
 
 func (p *provider) Accept(i int, ed eddefs.Editor) {
-	err := ed.Evaler().Chdir(p.filtered[i].Path)
+	path := p.filtered[i].Path
+	if !filepath.IsAbs(path) {
+		path = p.ws.unworkspacify(path)
+	}
+	err := ed.Evaler().Chdir(path)
 	if err != nil {
 		ed.Notify("%v", err)
 	}
