@@ -206,7 +206,7 @@ func killDaemon(cl *daemon.Client) error {
 	if err != nil {
 		return fmt.Errorf("cannot find daemon process (pid=%d): %v", pid, err)
 	}
-	return process.Kill()
+	return process.Signal(os.Interrupt)
 }
 
 // CleanupRuntime cleans up the runtime.
