@@ -123,6 +123,13 @@ func (c *Client) AddCmd(text string) (int, error) {
 	return res.Seq, err
 }
 
+func (c *Client) DelCmd(seq int) error {
+	req := &DelCmdRequest{seq}
+	res := &DelCmdResponse{}
+	err := c.call("DelCmd", req, res)
+	return err
+}
+
 func (c *Client) Cmd(seq int) (string, error) {
 	req := &CmdRequest{seq}
 	res := &CmdResponse{}

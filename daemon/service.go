@@ -132,6 +132,14 @@ func (s *Service) AddCmd(req *AddCmdRequest, res *AddCmdResponse) error {
 	return err
 }
 
+func (s *Service) DelCmd(req *DelCmdRequest, res *DelCmdResponse) error {
+	if s.err != nil {
+		return s.err
+	}
+	err := s.store.DelCmd(req.Seq)
+	return err
+}
+
 func (s *Service) Cmd(req *CmdRequest, res *CmdResponse) error {
 	if s.err != nil {
 		return s.err

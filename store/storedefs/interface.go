@@ -4,6 +4,7 @@ package storedefs
 type Store interface {
 	NextCmdSeq() (int, error)
 	AddCmd(text string) (int, error)
+	DelCmd(seq int) error
 	Cmd(seq int) (string, error)
 	Cmds(from, upto int) ([]string, error)
 	NextCmd(from int, prefix string) (int, string, error)

@@ -9,7 +9,7 @@ const (
 	ServiceName = "Daemon"
 
 	// Version is the API version. It should be bumped any time the API changes.
-	Version = -96
+	Version = -94
 )
 
 // Basic requests.
@@ -40,6 +40,13 @@ type AddCmdRequest struct {
 
 type AddCmdResponse struct {
 	Seq int
+}
+
+type DelCmdRequest struct {
+	Seq int
+}
+
+type DelCmdResponse struct {
 }
 
 type CmdRequest struct {
