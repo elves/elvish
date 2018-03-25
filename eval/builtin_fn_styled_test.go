@@ -57,7 +57,7 @@ func TestCompatibility(t *testing.T) {
 	tests := make([]Test, len(styleTranslationTable))
 	i := 0
 	for k, v := range styleTranslationTable {
-		tests[i] = That(fmt.Sprintf("echo (styled %s %s)", text, k)).Prints(fmt.Sprintf("\033[%sm%s\033[m", v, text))
+		tests[i] = That(fmt.Sprintf("print (styled %s %s)", text, k)).Prints(fmt.Sprintf("\033[%sm%s\033[m", v, text))
 		i++
 	}
 
