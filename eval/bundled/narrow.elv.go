@@ -15,7 +15,7 @@ const narrowElv = `
 # but different keys can be specified with the options. To disable a
 # binding, specify its key as "".
 # Example:
-#   narrow:bind-trigger-keys &location=Alt-l &lastcmd="" 
+#   narrow:bind-trigger-keys &location=Alt-l &lastcmd=""
 
 # Hooks
 # Each hook variable is an array which must contain lambdas, all of
@@ -36,7 +36,7 @@ fn location {
 	      score = (splits . $arg[score] | take 1)
         put [
           &content=$arg[path]
-          &display=$score" "$arg[path]
+          &display=$score" "(tilde-abbr $arg[path])
 	      ]
   })]
 
@@ -53,7 +53,7 @@ fn history {
   candidates = [(edit:command-history | each [arg]{
         put [
 	        &content=$arg[cmd]
-	        &display=$arg[id]" "(replaces "\t" " " (replaces "\n" " " $arg[cmd]))
+	        &display=$arg[id]" "$arg[cmd]
         ]
   })]
 
