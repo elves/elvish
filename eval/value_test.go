@@ -19,6 +19,7 @@ var reprTests = []struct {
 	{"a\x00b", `"a\x00b"`},
 	{true, "$true"},
 	{false, "$false"},
+	{vals.Nil{}, "$nil"},
 	{&Exception{nil, nil}, "$ok"},
 	{&Exception{errors.New("foo bar"), nil}, "?(fail 'foo bar')"},
 	{&Exception{

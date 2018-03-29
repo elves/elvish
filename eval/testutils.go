@@ -106,7 +106,7 @@ func RunTests(t *testing.T, evalTests []Test, makeEvaler func() *Evaler) {
 		}
 
 		if !matchOut(tt.want.out, out) {
-			errorf("got out=%v, want %v", out, tt.want.out)
+			errorf("got out=%#v, want %#v", out, tt.want.out)
 		}
 		if !bytes.Equal(tt.want.bytesOut, bytesOut) {
 			errorf("got bytesOut=%q, want %q", bytesOut, tt.want.bytesOut)

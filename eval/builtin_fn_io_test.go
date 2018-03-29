@@ -1,10 +1,6 @@
 package eval
 
-import (
-	"testing"
-
-	"github.com/elves/elvish/eval/vals"
-)
+import "testing"
 
 func TestBuiltinFnIO(t *testing.T) {
 	runTests(t, []Test{
@@ -19,17 +15,19 @@ func TestBuiltinFnIO(t *testing.T) {
 		That(`print "a\nb" | slurp`).Puts("a\nb"),
 		That(`print "a\nb" | from-lines`).Puts("a", "b"),
 		That(`print "a\nb\n" | from-lines`).Puts("a", "b"),
-		That(`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`).Puts(
-			vals.MakeMap(map[interface{}]interface{}{
-				"k": "v",
-				"a": vals.MakeList("1", "2")}),
-			"foo"),
 		That(`echo 'invalid' | from-json`).Errors(),
 
 		That(`put "l\norem" ipsum | to-lines`).Prints("l\norem\nipsum\n"),
 		That(`put [&k=v &a=[1 2]] foo | to-json`).Prints(
 			`{"a":["1","2"],"k":"v"}
 "foo"
+`),
+		That(`put [&k=v &a=[1 2.5 $nil $false $true]] foo | to-json &numberify`).Prints(
+			`{"a":[1,2.5,null,false,true],"k":"v"}
+"foo"
+`),
+		That(`echo '{"a":[1,2.5,null,false,true],"k":"v"}' |from-json |to-json &numberify`).Prints(
+			`{"a":[1,2.5,null,false,true],"k":"v"}
 `),
 	})
 }

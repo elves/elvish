@@ -32,6 +32,8 @@ type Reprer interface {
 // format "<unknown %v>".
 func Repr(v interface{}, indent int) string {
 	switch v := v.(type) {
+	case Nil:
+		return "$nil"
 	case Reprer:
 		return v.Repr(indent)
 	case bool:

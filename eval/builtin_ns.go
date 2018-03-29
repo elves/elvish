@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 )
 
@@ -13,6 +14,7 @@ var builtinNs = Ns{
 	"ok":    vars.NewRo(OK),
 	"true":  vars.NewRo(true),
 	"false": vars.NewRo(false),
+	"nil":   vars.NewRo(vals.Nil{}),
 	"paths": &EnvList{envName: "PATH"},
 	"pwd":   PwdVariable{},
 }

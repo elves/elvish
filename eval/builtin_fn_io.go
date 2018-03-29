@@ -6,8 +6,11 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 
 	"github.com/elves/elvish/eval/vals"
+	"github.com/xiaq/persistent/hashmap"
+	"github.com/xiaq/persistent/vector"
 )
 
 // Input and output.
@@ -122,13 +125,48 @@ func toLines(fm *Frame, inputs Inputs) {
 	})
 }
 
+// Exported so that other packages can refer to it for proper nil
+// handling and numberification
+func FixVarForJSON(src interface{}, numberify bool) interface{} {
+	switch v := src.(type) {
+	case vals.Nil:
+		return nil
+	case string:
+		if numberify {
+			if i, err := strconv.ParseInt(v, 10, 64); err == nil {
+				return i
+			} else if f, err := strconv.ParseFloat(v, 64); err == nil {
+				return f
+			}
+		}
+		return src
+	case vector.Vector:
+		res := vals.EmptyList
+		for it := v.Iterator(); it.HasElem(); it.Next() {
+			res = res.Cons(FixVarForJSON(it.Elem(), numberify))
+		}
+		return res
+	case hashmap.Map:
+		res := vals.EmptyMap
+		for it := v.Iterator(); it.HasElem(); it.Next() {
+			key, elem := it.Elem()
+			res = res.Assoc(key, FixVarForJSON(elem, numberify))
+		}
+		return res
+	default:
+		return src
+	}
+}
+
 // toJSON converts a stream of Value's to JSON data.
-func toJSON(fm *Frame, inputs Inputs) {
+func toJSON(fm *Frame, rawOpts RawOptions, inputs Inputs) {
+	opts := struct{ Numberify bool }{false}
+	rawOpts.Scan(&opts)
 	out := fm.ports[1].File
 
 	enc := json.NewEncoder(out)
 	inputs(func(v interface{}) {
-		err := enc.Encode(v)
+		err := enc.Encode(FixVarForJSON(v, opts.Numberify))
 		maybeThrow(err)
 	})
 }

@@ -22,6 +22,7 @@ import (
 )
 
 var logger = util.GetLogger("[runtime] ")
+var ExtraNS = map[string]eval.Ns{}
 
 const (
 	daemonWaitLoops   = 100
@@ -96,6 +97,9 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 		ev.InstallDaemonClient(client)
 		ev.InstallModule("store", storemod.Ns(client))
 		ev.InstallModule("daemon", daemonmod.Ns(client, spawner))
+	}
+	for k, v := range ExtraNS {
+		ev.InstallModule(k, v)
 	}
 	return ev, dataDir
 }
