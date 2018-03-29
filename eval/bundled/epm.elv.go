@@ -277,16 +277,16 @@ fn -uninstall-package [pkg]{
 
 # List installed packages
 fn installed {
-  put $epm:-lib-dir/*[nomatch-ok] | each [dir]{
-    dom = (re:replace &literal $epm:-lib-dir/ '' $dir)
-    cfg = (epm:-domain-config $dom)
+  put $-lib-dir/*[nomatch-ok] | each [dir]{
+    dom = (re:replace &literal $-lib-dir/ '' $dir)
+    cfg = (-domain-config $dom)
     # Only list domains for which we know the config, so that the user
     # can have his own non-package directories under ~/.elvish/lib
     # without conflicts.
     if $cfg {
       lvl = $cfg[levels]
-      pat = '^\Q'$epm:-lib-dir'/\E('(repeat (+ $lvl 1) '[^/]+' | joins '/')')/$'
-      put (each [d]{ re:find $pat $d } [ $epm:-lib-dir/$dom/**[nomatch-ok]/ ] )[groups][1][text]
+      pat = '^\Q'$-lib-dir'/\E('(repeat (+ $lvl 1) '[^/]+' | joins '/')')/$'
+      put (each [d]{ re:find $pat $d } [ $-lib-dir/$dom/**[nomatch-ok]/ ] )[groups][1][text]
     }
   }
 }
