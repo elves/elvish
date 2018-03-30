@@ -69,18 +69,18 @@ fn -package-without-domain [pkg]{
 }
 
 # Merge two maps
-fn merge [a b]{
+fn -merge [a b]{
   keys $b | each [k]{ a[$k] = $b[$k] }
   put $a
 }
 
 # Uppercase first letter of a string
-fn first-upper [s]{
+fn -first-upper [s]{
   put (echo $s[0] | tr '[:lower:]' '[:upper:]')$s[(count $s[0]):]
 }
 
 # Expand tilde at the beginning of a string to the home dir
-fn tilde-expand [p]{
+fn -tilde-expand [p]{
   re:replace "^~" $E:HOME $p
 }
 
@@ -121,7 +121,7 @@ fn tilde-expand [p]{
 
   &rsync= [
     &src= [pkg dom-cfg]{
-      put (tilde-expand $dom-cfg[location])/(-package-without-domain $pkg)/
+      put (-tilde-expand $dom-cfg[location])/(-package-without-domain $pkg)/
     }
 
     &install= [pkg dom-cfg]{
@@ -166,10 +166,10 @@ fn -write-domain-config [dom]{
   }
 }
 
-# Returns the domain config file for a given domain. If the file does not
-# exist but we have a built-in definition, then we return the
-# default. Otherwise we return $false, so the result can always be
-# checked with 'if'.
+# Returns the domain config for a given domain, as a JSON data
+# structure. If the file does not exist but we have a built-in
+# definition, then we return the default. Otherwise we return $false,
+# so the result can always be checked with 'if'.
 fn -domain-config [dom]{
   cfgfile = (-domain-config-file $dom)
   cfg = $false
@@ -221,6 +221,20 @@ fn -package-op [pkg what]{
   }
 }
 
+# Uninstall a single package by removing its directory
+fn -uninstall-package [pkg]{
+  if (not (is-installed $pkg)) {
+    -error "Package "$pkg" is not installed."
+    return
+  }
+  dest = (dest $pkg)
+  -info "Removing package "$pkg
+  rm -rf $dest
+}
+
+######################################################################
+# Main user-facing functions
+
 # Read and parse the package metadata, if it exists
 fn metadata [pkg]{
   # Base metadata attributes
@@ -234,7 +248,7 @@ fn metadata [pkg]{
   # Merge with package-specified attributes, if any
   file = (-package-metadata-file $pkg)
   if (and (is-installed $pkg) ?(test -f $file)) {
-    res = (merge (cat $file | from-json) $res)
+    res = (-merge (cat $file | from-json) $res)
   }
   put $res
 }
@@ -256,37 +270,23 @@ fn query [pkg]{
       if (eq (kind-of $val) list) {
         val = (joins ", " $val)
       }
-      echo (edit:styled (first-upper $key)":" blue) $val
+      echo (edit:styled (-first-upper $key)":" blue) $val
     }
   }
 }
 
-# Uninstall a single package by removing its directory
-fn -uninstall-package [pkg]{
-  if (not (is-installed $pkg)) {
-    -error "Package "$pkg" is not installed."
-    return
-  }
-  dest = (dest $pkg)
-  -info "Removing package "$pkg
-  rm -rf $dest
-}
-
-######################################################################
-# Main user-facing functions
-
 # List installed packages
 fn installed {
-  e:ls $-lib-dir | each [dom]{
+  put $-lib-dir/*[nomatch-ok] | each [dir]{
+    dom = (re:replace &literal $-lib-dir/ '' $dir)
     cfg = (-domain-config $dom)
     # Only list domains for which we know the config, so that the user
     # can have his own non-package directories under ~/.elvish/lib
     # without conflicts.
     if $cfg {
       lvl = $cfg[levels]
-      find $-lib-dir/$dom -type d -depth $lvl | each [pkg]{
-        replaces $-lib-dir/ "" $pkg
-      }
+      pat = '^\Q'$-lib-dir'/\E('(repeat (+ $lvl 1) '[^/]+' | joins '/')')/$'
+      put (each [d]{ re:find $pat $d } [ $-lib-dir/$dom/**[nomatch-ok]/ ] )[groups][1][text]
     }
   }
 }
