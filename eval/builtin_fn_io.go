@@ -129,7 +129,7 @@ func toLines(fm *Frame, inputs Inputs) {
 // handling and numberification
 func FixVarForJSON(src interface{}, numberify bool) interface{} {
 	switch v := src.(type) {
-	case vals.Nil:
+	case vals.JsonNil:
 		return nil
 	case string:
 		if numberify {
@@ -160,7 +160,9 @@ func FixVarForJSON(src interface{}, numberify bool) interface{} {
 
 // toJSON converts a stream of Value's to JSON data.
 func toJSON(fm *Frame, rawOpts RawOptions, inputs Inputs) {
-	opts := struct{ Numberify bool }{false}
+	opts := struct {
+		Numberify bool `name:"-numberify"`
+	}{false}
 	rawOpts.Scan(&opts)
 	out := fm.ports[1].File
 

@@ -22,11 +22,11 @@ func TestBuiltinFnIO(t *testing.T) {
 			`{"a":["1","2"],"k":"v"}
 "foo"
 `),
-		That(`put [&k=v &a=[1 2.5 $nil $false $true]] foo | to-json &numberify`).Prints(
+		That(`put [&k=v &a=[1 2.5 $-json-nil $false $true]] foo | to-json &-numberify`).Prints(
 			`{"a":[1,2.5,null,false,true],"k":"v"}
 "foo"
 `),
-		That(`echo '{"a":[1,2.5,null,false,true],"k":"v"}' |from-json |to-json &numberify`).Prints(
+		That(`echo '{"a":[1,2.5,null,false,true],"k":"v"}' |from-json |to-json &-numberify`).Prints(
 			`{"a":[1,2.5,null,false,true],"k":"v"}
 `),
 	})

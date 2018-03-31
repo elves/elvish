@@ -24,7 +24,7 @@ var (
 func FromJSONInterface(v interface{}) interface{} {
 	if v == nil {
 		// TODO Use a more appropriate type
-		return vals.Nil{}
+		return vals.JsonNil{}
 	}
 	switch v := v.(type) {
 	case bool, string:
