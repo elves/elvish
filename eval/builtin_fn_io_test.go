@@ -18,8 +18,8 @@ func TestBuiltinFnIO(t *testing.T) {
 		That(`echo 'invalid' | from-json`).Errors(),
 
 		That(`put "l\norem" ipsum | to-lines`).Prints("l\norem\nipsum\n"),
-		That(`put [&k=v &a=[1 2]] foo | to-json`).Prints(
-			`{"a":["1","2"],"k":"v"}
+		That(`put [&k=v &a=[1 2 $-json-nil]] foo | to-json`).Prints(
+			`{"a":["1","2",null],"k":"v"}
 "foo"
 `),
 		That(`put [&k=v &a=[1 2.5 $-json-nil $false $true]] foo | to-json &-numberify`).Prints(

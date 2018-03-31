@@ -125,12 +125,14 @@ func toLines(fm *Frame, inputs Inputs) {
 	})
 }
 
-// Exported so that other packages can refer to it for proper nil
-// handling and numberification
+// Exported so that other packages (namely, ones that implement an
+// elvish namespace that provide Go functions that deal with var ->
+// JSON transformation) can refer to it for numberification.
 func FixVarForJSON(src interface{}, numberify bool) interface{} {
+	if !numberify {
+		return src
+	}
 	switch v := src.(type) {
-	case vals.JsonNil:
-		return nil
 	case string:
 		if numberify {
 			if i, err := strconv.ParseInt(v, 10, 64); err == nil {

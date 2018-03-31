@@ -16,3 +16,11 @@ func (j JsonNil) Repr(i int) string {
 	}
 	return res
 }
+
+func (j JsonNil) MarshalJSON() ([]byte, error) {
+	return []byte("null"), nil
+}
+
+func (j JsonNil) UnmarshalJSON([]byte) error {
+	return nil
+}
