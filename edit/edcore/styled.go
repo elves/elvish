@@ -1,30 +1,28 @@
 package edcore
 
 import (
-	"errors"
+	"strings"
 
-	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/eval"
+	styled2 "github.com/elves/elvish/styled"
 	"github.com/xiaq/persistent/vector"
 )
 
-var errStyledStyles = errors.New("styles must either be a string or list of strings")
+func styled(fm *eval.Frame, text string, styles interface{}) (*styled2.Text, error) {
+	transformers := make([]interface{}, 0)
 
-// A constructor for *ui.Styled, for use in Elvish script.
-func styled(text string, styles interface{}) (*ui.Styled, error) {
 	switch styles := styles.(type) {
 	case string:
-		return &ui.Styled{text, ui.StylesFromString(styles)}, nil
-	case vector.Vector:
-		converted := make([]string, 0, styles.Len())
-		for it := styles.Iterator(); it.HasElem(); it.Next() {
-			elem, ok := it.Elem().(string)
-			if !ok {
-				return nil, errStyledStyles
-			}
-			converted = append(converted, elem)
+		for _, s := range strings.Split(styles, ";") {
+			transformers = append(transformers, s)
 		}
-		return &ui.Styled{text, ui.Styles(converted)}, nil
+	case vector.Vector:
+		for it := styles.Iterator(); it.HasElem(); it.Next() {
+			transformers = append(transformers, it.Elem())
+		}
 	default:
-		return nil, errStyledStyles
+		return eval.StyledBuiltin(fm, text, styles)
 	}
+
+	return eval.StyledBuiltin(fm, text, transformers...)
 }
