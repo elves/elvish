@@ -1,7 +1,5 @@
 package styled
 
-import "github.com/elves/elvish/util"
-
 type TextStyle struct {
 	bold       *bool
 	dim        *bool
@@ -60,10 +58,10 @@ func (s TextStyle) Merge(o TextStyle) TextStyle {
 	return s
 }
 
-func ForegroundColorFromOptions(options map[string]interface{}) *Color {
+func ForegroundColorFromOptions(options map[string]interface{}) (*Color, error) {
 	return colorFromOptions(options, "fg-color")
 }
-func BackgroundColorFromOptions(options map[string]interface{}) *Color {
+func BackgroundColorFromOptions(options map[string]interface{}) (*Color, error) {
 	return colorFromOptions(options, "bg-color")
 }
 
@@ -88,17 +86,17 @@ func (s Style) ToMap() map[string]interface{} {
 	}
 }
 
-func colorFromOptions(options map[string]interface{}, which string) *Color {
+func colorFromOptions(options map[string]interface{}, which string) (*Color, error) {
 	if col, ok := options[which]; ok {
 		if colString, ok := col.(string); ok {
 			col, err := GetColorFromString(colString)
 			if err != nil {
-				util.Throw(err)
+				return nil, err
 			}
 
-			return &col
+			return &col, nil
 		}
 	}
 
-	return nil
+	return nil, nil
 }
