@@ -1,5 +1,11 @@
 package styled
 
+import (
+	"fmt"
+
+	"github.com/elves/elvish/eval/vals"
+)
+
 type TextStyle struct {
 	bold       *bool
 	dim        *bool
@@ -15,27 +21,59 @@ type Style struct {
 	TextStyle
 }
 
-func TextStyleFromMap(m map[string]interface{}) TextStyle {
-	b := func(key string) *bool {
+func TextStyleFromMap(m map[string]interface{}) (*TextStyle, error) {
+	b := func(key string) (*bool, error) {
 		if b, ok := m[key]; ok {
-			if b, ok := b.(bool); ok {
-				return &b
+			if bl, ok := b.(bool); ok {
+				return &bl, nil
+			} else {
+				return nil, fmt.Errorf("'%s' must be a boolean value; got %s", key, vals.Kind(b))
 			}
 		}
-		return nil
+		return nil, nil
 	}
 
-	return TextStyle{
-		bold:       b("bold"),
-		dim:        b("dim"),
-		italic:     b("italic"),
-		underlined: b("underlined"),
-		blink:      b("blink"),
-		inverse:    b("inverse"),
+	bold, err := b("bold")
+	if err != nil {
+		return nil, err
 	}
+
+	dim, err := b("dim")
+	if err != nil {
+		return nil, err
+	}
+
+	italic, err := b("italic")
+	if err != nil {
+		return nil, err
+	}
+
+	underlined, err := b("underlined")
+	if err != nil {
+		return nil, err
+	}
+
+	blink, err := b("blink")
+	if err != nil {
+		return nil, err
+	}
+
+	inverse, err := b("inverse")
+	if err != nil {
+		return nil, err
+	}
+
+	return &TextStyle{
+		bold:       bold,
+		dim:        dim,
+		italic:     italic,
+		underlined: underlined,
+		blink:      blink,
+		inverse:    inverse,
+	}, nil
 }
 
-func (s TextStyle) Merge(o TextStyle) TextStyle {
+func (s TextStyle) Merge(o *TextStyle) TextStyle {
 	if o.bold != nil {
 		s.bold = o.bold
 	}

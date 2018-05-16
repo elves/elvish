@@ -43,10 +43,15 @@ func styledSegment(options RawOptions, input interface{}) (*styled.Segment, erro
 			return nil, err
 		}
 
+		textStyle, err := styled.TextStyleFromMap(options)
+		if err != nil {
+			return nil, err
+		}
+
 		style := styled.Style{
 			Foreground: fg,
 			Background: bg,
-			TextStyle:  styled.TextStyleFromMap(options),
+			TextStyle:  *textStyle,
 		}
 
 		return &styled.Segment{
@@ -70,10 +75,15 @@ func styledSegment(options RawOptions, input interface{}) (*styled.Segment, erro
 			bg = input.Background
 		}
 
+		textStyle, err := styled.TextStyleFromMap(options)
+		if err != nil {
+			return nil, err
+		}
+
 		style := styled.Style{
 			Foreground: fg,
 			Background: bg,
-			TextStyle:  input.TextStyle.Merge(styled.TextStyleFromMap(options)),
+			TextStyle:  input.TextStyle.Merge(textStyle),
 		}
 
 		return &styled.Segment{
