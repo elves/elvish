@@ -85,7 +85,7 @@ func (c *complexCandidate) Hash() uint32 {
 
 func (c *complexCandidate) Repr(indent int) string {
 	// TODO(xiaq): Pretty-print when indent >= 0
-	return fmt.Sprintf("(edit:complex-candidate %s &code-suffix=%s &display-suffix=%s style=%s)",
+	return fmt.Sprintf("(edit:complex-candidate %s &code-suffix=%s &display-suffix=%s &style=%s)",
 		parse.Quote(c.stem), parse.Quote(c.codeSuffix),
 		parse.Quote(c.displaySuffix), parse.Quote(c.style.String()))
 }
