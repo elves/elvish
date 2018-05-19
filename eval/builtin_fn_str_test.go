@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestBuiltinFnStr(t *testing.T) {
-	runTests(t, []Test{
+	test(t, []TestCase{
 		That(`==s haha haha`).Puts(true),
 		That(`==s 10 10.0`).Puts(false),
 		That(`<s a b`).Puts(true),

@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestNs(t *testing.T) {
-	runTests(t, []Test{
+	test(t, []TestCase{
 		That("kind-of (ns [&])").Puts("ns"),
 		// A Ns is only equal to itself
 		That("ns = (ns [&]); eq $ns $ns").Puts(true),

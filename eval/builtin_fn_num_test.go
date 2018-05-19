@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestBuiltinFnNum(t *testing.T) {
-	runTests(t, []Test{
+	test(t, []TestCase{
 		That("< 1 2 3").Puts(true),
 		That("< 1 3 2").Puts(false),
 		That("<= 1 1 2").Puts(true),

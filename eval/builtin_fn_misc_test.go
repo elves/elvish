@@ -5,7 +5,7 @@ import (
 )
 
 func TestBuiltinFnMisc(t *testing.T) {
-	runTests(t, []Test{
+	test(t, []TestCase{
 		That("resolve for").Puts("special"),
 		That("resolve put").Puts("$put~"),
 		That("fn f { }; resolve f").Puts("$f~"),

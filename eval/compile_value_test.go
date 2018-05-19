@@ -6,7 +6,7 @@ import (
 	"github.com/elves/elvish/eval/vals"
 )
 
-var valueTests = []Test{
+var valueTests = []TestCase{
 	// Compounding
 	// -----------
 	That("put {fi,elvi}sh{1.0,1.1}").Puts(
@@ -95,5 +95,5 @@ var valueTests = []Test{
 }
 
 func TestValue(t *testing.T) {
-	runTests(t, valueTests)
+	test(t, valueTests)
 }

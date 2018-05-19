@@ -7,7 +7,7 @@ import (
 )
 
 func TestBuiltinFnIO(t *testing.T) {
-	runTests(t, []Test{
+	test(t, []TestCase{
 		That(`put foo bar`).Puts("foo", "bar"),
 
 		That(`print [foo bar]`).Prints("[foo bar]"),

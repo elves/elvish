@@ -1,6 +1,15 @@
-// Common testing utilities. This file does not file a _test.go suffix so that
-// it can be used from other packages that also want to test the modules they
-// implement (e.g. edit: and re:).
+// Framework for testing Elvish script. This file does not file a _test.go
+// suffix so that it can be used from other packages that also want to test the
+// modules they implement (e.g. edit: and re:).
+//
+// A test case is represented by the Test type and can be constructed using the
+// That function and methods on the Test type. Test cases are then run using the
+// RunTests function. Overall, a test looks like:
+//
+//     RunTests(t, []Test{
+//         That("put x").Puts("x"),
+//         That("echo x").Prints("x\n"),
+//     }, func() *Evaler { return NewEvaler() })
 
 package eval
 
@@ -16,8 +25,8 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-// Test is a test case for TestEval.
-type Test struct {
+// TestCase is a test case for Test.
+type TestCase struct {
 	text string
 	want
 }
@@ -38,27 +47,27 @@ var errAny = errors.New("any error")
 // That("put x").Puts("x")
 
 // That returns a new Test with the specified source code.
-func That(text string) Test {
-	return Test{text: text}
+func That(text string) TestCase {
+	return TestCase{text: text}
 }
 
 // DoesNothing returns t unchanged. It is used to mark that a piece of code
 // should simply does nothing. In particular, it shouldn't have any output and
 // does not error.
-func (t Test) DoesNothing() Test {
+func (t TestCase) DoesNothing() TestCase {
 	return t
 }
 
 // Puts returns an altered Test that requires the source code to produce the
 // specified values in the value channel when evaluated.
-func (t Test) Puts(vs ...interface{}) Test {
+func (t TestCase) Puts(vs ...interface{}) TestCase {
 	t.want.out = vs
 	return t
 }
 
 // Puts returns an altered Test that requires the source code to produce the
 // specified strings in the value channel when evaluated.
-func (t Test) PutsStrings(ss []string) Test {
+func (t TestCase) PutsStrings(ss []string) TestCase {
 	t.want.out = make([]interface{}, len(ss))
 	for i, s := range ss {
 		t.want.out[i] = s
@@ -68,32 +77,36 @@ func (t Test) PutsStrings(ss []string) Test {
 
 // Prints returns an altered test that requires the source code to produce
 // the specified output in the byte pipe when evaluated.
-func (t Test) Prints(s string) Test {
+func (t TestCase) Prints(s string) TestCase {
 	t.want.bytesOut = []byte(s)
 	return t
 }
 
 // ErrorsWith returns an altered Test that requires the source code to result in
 // the specified error when evaluted.
-func (t Test) ErrorsWith(err error) Test {
+func (t TestCase) ErrorsWith(err error) TestCase {
 	t.want.err = err
 	return t
 }
 
 // Errors returns an altered Test that requires the source code to result in any
 // error when evaluated.
-func (t Test) Errors() Test {
+func (t TestCase) Errors() TestCase {
 	return t.ErrorsWith(errAny)
 }
 
-// RunTests runs test cases. For each test case, a new Evaler is made by calling
-// makeEvaler.
-func RunTests(t *testing.T, evalTests []Test, makeEvaler func() *Evaler) {
-	for _, tt := range evalTests {
-		// fmt.Printf("eval %q\n", tt.text)
+// Test runs test cases. For each test case, a new Evaler is created with
+// NewEvaler.
+func Test(t *testing.T, tests []TestCase) {
+	TestWithSetup(t, func(*Evaler) {}, tests)
+}
 
-		ev := makeEvaler()
-		defer ev.Close()
+// Test runs test cases. For each test case, a new Evaler is created with
+// NewEvaler and passed to the setup function.
+func TestWithSetup(t *testing.T, setup func(*Evaler), tests []TestCase) {
+	for _, tt := range tests {
+		ev := NewEvaler()
+		setup(ev)
 		out, bytesOut, err := evalAndCollect(t, ev, []string{tt.text}, len(tt.want.out))
 
 		first := true
@@ -114,6 +127,8 @@ func RunTests(t *testing.T, evalTests []Test, makeEvaler func() *Evaler) {
 		if !matchErr(tt.want.err, err) {
 			errorf("got err=%v, want %v", err, tt.want.err)
 		}
+
+		ev.Close()
 	}
 }
 

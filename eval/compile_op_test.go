@@ -2,7 +2,7 @@ package eval
 
 import "testing"
 
-var opTests = []Test{
+var opTests = []TestCase{
 	// Chunks
 	// ------
 
@@ -76,5 +76,5 @@ var opTests = []Test{
 }
 
 func TestOp(t *testing.T) {
-	runTests(t, opTests)
+	test(t, opTests)
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-var builtinSpecialTests = []Test{
+var builtinSpecialTests = []TestCase{
 	// del
 	That("x = [&k=v &k2=v2]; del x[k2]; keys $x").Puts("k"),
 	That("x = [[&k=v &k2=v2]]; del x[0][k2]; keys $x[0]").Puts("k"),
@@ -77,5 +77,5 @@ var builtinSpecialTests = []Test{
 }
 
 func TestBuiltinSpecial(t *testing.T) {
-	runTests(t, builtinSpecialTests)
+	test(t, builtinSpecialTests)
 }

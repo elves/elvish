@@ -7,7 +7,7 @@ import (
 
 func TestBuiltinFnFS(t *testing.T) {
 	pathSep := string(filepath.Separator)
-	runTests(t, []Test{
+	test(t, []TestCase{
 		That(`path-base a/b/c.png`).Puts("c.png"),
 		That(`tilde-abbr $E:HOME'` + pathSep + `'foobar`).Puts(
 			"~" + pathSep + "foobar"),
