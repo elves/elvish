@@ -34,7 +34,10 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 		if !ok {
 			throwf("opt should be map, got %s", vals.Kind(v))
 		}
-		get := func(k string) (string, bool) {
+
+		opt := &getopt.Option{}
+
+		getStringField := func(k string) (string, bool) {
 			v, ok := m.Index(k)
 			if !ok {
 				return "", false
@@ -45,22 +48,43 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 			throwf("%s should be string, got %s", k, vals.Kind(v))
 			panic("unreachable")
 		}
-
-		opt := &getopt.Option{}
-		if s, ok := get("short"); ok {
+		if s, ok := getStringField("short"); ok {
 			r, size := utf8.DecodeRuneInString(s)
 			if r == utf8.RuneError || size != len(s) {
 				throwf("short option should be exactly one rune, got %v", parse.Quote(s))
 			}
 			opt.Short = r
 		}
-		if s, ok := get("long"); ok {
+		if s, ok := getStringField("long"); ok {
 			opt.Long = s
 		}
 		if opt.Short == 0 && opt.Long == "" {
 			throwf("opt should have at least one of short and long forms")
 		}
-		if s, ok := get("desc"); ok {
+
+		getBoolField := func(k string) (bool, bool) {
+			v, ok := m.Index(k)
+			if !ok {
+				return false, false
+			}
+			if vb, ok := v.(bool); ok {
+				return vb, true
+			}
+			throwf("%s should be bool, got %s", k, vals.Kind(v))
+			panic("unreachable")
+		}
+		argRequired, _ := getBoolField("arg-required")
+		argOptional, _ := getBoolField("arg-optional")
+		switch {
+		case argRequired && argOptional:
+			throwf("opt cannot have both arg-required and arg-optional")
+		case argRequired:
+			opt.HasArg = getopt.RequiredArgument
+		case argOptional:
+			opt.HasArg = getopt.OptionalArgument
+		}
+
+		if s, ok := getStringField("desc"); ok {
 			desc[opt] = s
 		}
 		opts = append(opts, opt)
