@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestClosure(t *testing.T) {
-	test(t, []TestCase{
+	Test(t, []TestCase{
 		That("kind-of { }").Puts("fn"),
 		That("eq { } { }").Puts(false),
 		That("x = { }; put [&$x= foo][$x]").Puts("foo"),

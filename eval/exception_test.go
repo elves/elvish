@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestException(t *testing.T) {
-	test(t, []TestCase{
+	Test(t, []TestCase{
 		That("kind-of ?(fail foo)").Puts("exception"),
 	})
 }

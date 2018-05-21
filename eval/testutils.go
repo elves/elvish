@@ -17,12 +17,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"reflect"
 	"testing"
 
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 )
 
 // TestCase is a test case for Test.
@@ -222,16 +224,41 @@ func matchErr(want, got error) bool {
 	return want == errAny || reflect.DeepEqual(got.(*Exception).Cause, want)
 }
 
-// compareValues compares two slices, using equals for each element.
-func compareSlice(wantValues, gotValues []interface{}) error {
-	if len(wantValues) != len(gotValues) {
-		return fmt.Errorf("want %d values, got %d",
-			len(wantValues), len(gotValues))
+// MustMkdirAll calls os.MkdirAll and panics if an error is returned. It is
+// mainly useful in tests.
+func MustMkdirAll(name string, perm os.FileMode) {
+	err := os.MkdirAll(name, perm)
+	if err != nil {
+		panic(err)
 	}
-	for i, want := range wantValues {
-		if !vals.Equal(want, gotValues[i]) {
-			return fmt.Errorf("want [%d] = %s, got %s", i, want, gotValues[i])
-		}
+}
+
+// MustCreateEmpty creates an empty file, and panics if an error occurs. It is
+// mainly useful in tests.
+func MustCreateEmpty(name string) {
+	file, err := os.Create(name)
+	if err != nil {
+		panic(err)
 	}
-	return nil
+	file.Close()
+}
+
+// MustWriteFile calls ioutil.WriteFile and panics if an error occurs. It is
+// mainly useful in tests.
+func MustWriteFile(filename string, data []byte, perm os.FileMode) {
+	err := ioutil.WriteFile(filename, data, perm)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// InTempHome is like util.InTempDir, but it also sets HOME to the temporary
+// directory when f is called.
+func InTempHome(f func(string)) {
+	util.InTempDir(func(tmpHome string) {
+		oldHome := os.Getenv("HOME")
+		os.Setenv("HOME", tmpHome)
+		f(tmpHome)
+		os.Setenv("HOME", oldHome)
+	})
 }

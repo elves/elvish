@@ -18,7 +18,7 @@ func TestBuiltinPid(t *testing.T) {
 }
 
 func TestMiscEval(t *testing.T) {
-	test(t, []TestCase{
+	Test(t, []TestCase{
 		// Pseudo-namespaces local: and up:
 		That("x=lorem; { local:x=ipsum; put $up:x $local:x }").Puts(
 			"lorem", "ipsum"),

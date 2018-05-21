@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestBuiltinFnContainer(t *testing.T) {
-	test(t, []TestCase{
+	Test(t, []TestCase{
 		That(`range 3`).Puts("0", "1", "2"),
 		That(`range 1 3`).Puts("1", "2"),
 		That(`range 0 10 &step=3`).Puts("0", "3", "6", "9"),

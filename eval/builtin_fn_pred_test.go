@@ -5,7 +5,7 @@ import (
 )
 
 func TestBool(t *testing.T) {
-	test(t, []TestCase{
+	Test(t, []TestCase{
 		That(`bool $true`).Puts(true),
 		That(`bool a`).Puts(true),
 		That(`bool [a]`).Puts(true),

@@ -76,5 +76,5 @@ var opTests = []TestCase{
 }
 
 func TestOp(t *testing.T) {
-	test(t, opTests)
+	Test(t, opTests)
 }

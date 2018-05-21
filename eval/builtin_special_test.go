@@ -2,7 +2,11 @@ package eval
 
 import (
 	"errors"
+	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/elves/elvish/util"
 )
 
 var builtinSpecialTests = []TestCase{
@@ -48,9 +52,13 @@ var builtinSpecialTests = []TestCase{
 		"x=lorem.", "x=ipsum."),
 	// return.
 	That("fn f []{ put a; return; put b }; f").Puts("a"),
+}
 
-	// Modules (see testmain_test.go for setup)
-	// "use" imports a module.
+func TestBuiltinSpecial(t *testing.T) {
+	Test(t, builtinSpecialTests)
+}
+
+var useTests = []TestCase{
 	That(`use lorem; put $lorem:name`).Puts("lorem"),
 	// imports are lexically scoped
 	// TODO: Support testing for compilation error
@@ -64,7 +72,7 @@ var builtinSpecialTests = []TestCase{
 	// use of a nested module
 	That(`use a:b/c/d; put $d:name`).Puts("a/b/c/d"),
 	// module is cached after first use
-	That(`use has/init; use has/init`).Puts("has/init"),
+	That(`use has-init; use has-init`).Puts("has-init"),
 	// overriding module
 	That(`use d; put $d:name; use a/b/c/d; put $d:name`).Puts("d", "a/b/c/d"),
 	// relative uses
@@ -76,6 +84,22 @@ var builtinSpecialTests = []TestCase{
 	// TODO: Test module namespace
 }
 
-func TestBuiltinSpecial(t *testing.T) {
-	test(t, builtinSpecialTests)
+func TestUse(t *testing.T) {
+	util.InTempDir(func(libdir string) {
+		MustMkdirAll(filepath.Join("a", "b", "c"), 0700)
+
+		writeMod := func(name, content string) {
+			fname := filepath.Join(strings.Split(name, "/")...) + ".elv"
+			MustWriteFile(fname, []byte(content), 0600)
+		}
+		writeMod("has-init", "put has-init")
+		writeMod("put-x", "put $x")
+		writeMod("lorem", "name = lorem; fn put-name { put $name }")
+		writeMod("d", "name = d")
+		writeMod("a/b/c/d", "name = a/b/c/d")
+		writeMod("a/b/c/x",
+			"use ./d; d = $d:name; use ../../../lorem; lorem = $lorem:name")
+
+		TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) }, useTests)
+	})
 }
