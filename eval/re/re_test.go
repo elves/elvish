@@ -10,7 +10,7 @@ import (
 func TestRe(t *testing.T) {
 	setup := func(ev *eval.Evaler) { ev.Builtin.AddNs("re", Ns) }
 	That := eval.That
-	eval.TestWithSetup(t, setup, []eval.TestCase{
+	eval.TestWithSetup(t, setup,
 		That("re:match . xyz").Puts(true),
 		That("re:match . ''").Puts(false),
 		That("re:match '[a-z]' A").Puts(false),
@@ -35,5 +35,5 @@ func TestRe(t *testing.T) {
 
 		That("re:quote a.txt").Puts(`a\.txt`),
 		That("re:quote '(*)'").Puts(`\(\*\)`),
-	})
+	)
 }

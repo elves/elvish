@@ -3,5 +3,5 @@ package eval
 import "testing"
 
 func TestBuiltinFnCmd(t *testing.T) {
-	Test(t, []TestCase{})
+	Test(t /* TODO: Add test cases */)
 }

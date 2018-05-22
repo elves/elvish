@@ -2,14 +2,16 @@
 // suffix so that it can be used from other packages that also want to test the
 // modules they implement (e.g. edit: and re:).
 //
-// A test case is represented by the Test type and can be constructed using the
-// That function and methods on the Test type. Test cases are then run using the
-// RunTests function. Overall, a test looks like:
+// The entry point for the framework is the Test function, which accepts a
+// *testing.T and a variadic number of test cases. Test cases are constructed
+// using the That function followed by methods that add constraints on the test
+// case. Overall, a test looks like:
 //
-//     RunTests(t, []Test{
+//     Test(t,
 //         That("put x").Puts("x"),
-//         That("echo x").Prints("x\n"),
-//     }, func() *Evaler { return NewEvaler() })
+//         That("echo x").Prints("x\n"))
+//
+// If some setup is needed, use the TestWithSetup function instead.
 
 package eval
 
@@ -99,13 +101,13 @@ func (t TestCase) Errors() TestCase {
 
 // Test runs test cases. For each test case, a new Evaler is created with
 // NewEvaler.
-func Test(t *testing.T, tests []TestCase) {
-	TestWithSetup(t, func(*Evaler) {}, tests)
+func Test(t *testing.T, tests ...TestCase) {
+	TestWithSetup(t, func(*Evaler) {}, tests...)
 }
 
 // Test runs test cases. For each test case, a new Evaler is created with
 // NewEvaler and passed to the setup function.
-func TestWithSetup(t *testing.T, setup func(*Evaler), tests []TestCase) {
+func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 	for _, tt := range tests {
 		ev := NewEvaler()
 		setup(ev)

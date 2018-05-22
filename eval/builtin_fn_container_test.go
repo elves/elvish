@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestBuiltinFnContainer(t *testing.T) {
-	Test(t, []TestCase{
+	Test(t,
 		That(`range 3`).Puts("0", "1", "2"),
 		That(`range 1 3`).Puts("1", "2"),
 		That(`range 0 10 &step=3`).Puts("0", "3", "6", "9"),
@@ -43,5 +43,5 @@ func TestBuiltinFnContainer(t *testing.T) {
 		// Windows does not have an external sort command. Disabled until we have a
 		// builtin sort command.
 		// That(`keys [&a=foo &b=bar] | each echo | sort | each $put~`).Puts("a", "b"),
-	})
+	)
 }

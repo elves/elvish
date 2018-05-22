@@ -10,7 +10,7 @@ import (
 func TestBuiltinFnEnv(t *testing.T) {
 	oldpath := os.Getenv("PATH")
 	listSep := string(os.PathListSeparator)
-	Test(t, []TestCase{
+	Test(t,
 		That(`get-env var`).ErrorsWith(errNonExistentEnvVar),
 		That(`set-env var test1`),
 		That(`get-env var`).Puts("test1"),
@@ -22,7 +22,7 @@ func TestBuiltinFnEnv(t *testing.T) {
 		That(`set-env PATH /test-path`),
 		That(`put $paths`).Puts(vals.MakeList("/test-path")),
 		That(`paths = [/test-path2 $@paths]`),
-		That(`get-env PATH`).Puts("/test-path2" + listSep + "/test-path"),
-	})
+		That(`get-env PATH`).Puts("/test-path2"+listSep+"/test-path"),
+	)
 	os.Setenv("PATH", oldpath)
 }

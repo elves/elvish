@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestBuiltinFnFlow(t *testing.T) {
-	Test(t, []TestCase{
+	Test(t,
 		That(`run-parallel { put lorem } { echo ipsum }`).Puts(
 			"lorem").Prints("ipsum\n"),
 
@@ -18,5 +18,5 @@ func TestBuiltinFnFlow(t *testing.T) {
 
 		That(`fail haha`).Errors(),
 		That(`return`).ErrorsWith(Return),
-	})
+	)
 }

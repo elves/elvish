@@ -44,7 +44,7 @@ func TestChdir(t *testing.T) {
 
 func TestChdirElvishHooks(t *testing.T) {
 	inWithTempDir(func(pwd, dst string) {
-		Test(t, []TestCase{
+		Test(t,
 			That(`
 			dir-in-before dir-in-after = '' ''
 			@before-chdir = [dst]{ dir-in-before = $dst }
@@ -52,7 +52,7 @@ func TestChdirElvishHooks(t *testing.T) {
 			cd `+parse.Quote(dst)+`
 			put $dir-in-before $dir-in-after
 			`).Puts(dst, dst),
-		})
+		)
 	})
 }
 

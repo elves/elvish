@@ -3,7 +3,7 @@ package eval
 import "testing"
 
 func TestBuiltinFnStr(t *testing.T) {
-	Test(t, []TestCase{
+	Test(t,
 		That(`==s haha haha`).Puts(true),
 		That(`==s 10 10.0`).Puts(false),
 		That(`<s a b`).Puts(true),
@@ -29,5 +29,5 @@ func TestBuiltinFnStr(t *testing.T) {
 
 		That(`echo "  ax  by cz  \n11\t22 33" | eawk [@a]{ put $a[-1] }`).Puts(
 			"cz", "33"),
-	})
+	)
 }
