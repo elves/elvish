@@ -32,23 +32,23 @@ debug-mode = $false
 
 fn -debug [text]{
   if $debug-mode {
-    print (edit:styled '=> ' blue)
+    print (styled '=> ' blue)
     echo $text
   }
 }
 
 fn -info [text]{
-  print (edit:styled '=> ' green)
+  print (styled '=> ' green)
   echo $text
 }
 
 fn -warn [text]{
-  print (edit:styled '=> ' yellow)
+  print (styled '=> ' yellow)
   echo $text
 }
 
 fn -error [text]{
-  print (edit:styled '=> ' red)
+  print (styled '=> ' red)
   echo $text
 }
 
@@ -257,20 +257,20 @@ fn metadata [pkg]{
 fn query [pkg]{
   data = (metadata $pkg)
   special-keys = [name method installed src dst]
-  echo (edit:styled "Package "$data[name] cyan)
+  echo (styled "Package "$data[name] cyan)
   if $data[installed] {
-    echo (edit:styled "Installed at "$data[dst] green)
+    echo (styled "Installed at "$data[dst] green)
   } else {
-    echo (edit:styled "Not installed" red)
+    echo (styled "Not installed" red)
   }
-  echo (edit:styled "Source:" blue) $data[method] $data[src]
+  echo (styled "Source:" blue) $data[method] $data[src]
   keys $data | each [key]{
     if (not (has-value $special-keys $key)) {
       val = $data[$key]
       if (eq (kind-of $val) list) {
         val = (joins ", " $val)
       }
-      echo (edit:styled (-first-upper $key)":" blue) $val
+      echo (styled (-first-upper $key)":" blue) $val
     }
   }
 }
