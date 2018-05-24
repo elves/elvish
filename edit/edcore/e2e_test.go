@@ -3,7 +3,7 @@
 // End-to-end tests for the editor. Only enabled on UNIX where pseudo-terminals
 // are supported.
 
-package edit
+package edcore
 
 import (
 	"io"

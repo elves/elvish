@@ -1,4 +1,4 @@
-package edit
+package edcore
 
 // getNavWidths calculates the widths for the three (parent, current and
 // preview) columns in the navigation mode. It takes the available width, full

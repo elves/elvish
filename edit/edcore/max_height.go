@@ -1,4 +1,4 @@
-package edit
+package edcore
 
 import (
 	"math"

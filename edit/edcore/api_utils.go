@@ -1,4 +1,4 @@
-package edit
+package edcore
 
 // Trivial utilities for the elvishscript API.
 
