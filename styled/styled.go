@@ -16,8 +16,8 @@ type TextStyle struct {
 }
 
 type Style struct {
-	Foreground *Color
-	Background *Color
+	Foreground string
+	Background string
 	TextStyle
 }
 
@@ -96,25 +96,19 @@ func (s TextStyle) Merge(o *TextStyle) TextStyle {
 	return s
 }
 
-func ForegroundColorFromOptions(options map[string]interface{}) (*Color, error) {
+func ForegroundColorFromOptions(options map[string]interface{}) (string, error) {
 	return colorFromOptions(options, "fg-color")
 }
-func BackgroundColorFromOptions(options map[string]interface{}) (*Color, error) {
+func BackgroundColorFromOptions(options map[string]interface{}) (string, error) {
 	return colorFromOptions(options, "bg-color")
 }
 
 func (s Style) ToMap() map[string]interface{} {
-	c := func(c *Color) Color {
-		if c != nil {
-			return *c
-		}
-		return ColorDefault
-	}
 	b := func(b *bool) bool { return b != nil && *b }
 
 	return map[string]interface{}{
-		"fg-color":   c(s.Foreground),
-		"bg-color":   c(s.Background),
+		"fg-color":   s.Foreground,
+		"bg-color":   s.Background,
 		"bold":       b(s.bold),
 		"dim":        b(s.dim),
 		"italic":     b(s.italic),
@@ -124,17 +118,15 @@ func (s Style) ToMap() map[string]interface{} {
 	}
 }
 
-func colorFromOptions(options map[string]interface{}, which string) (*Color, error) {
+func colorFromOptions(options map[string]interface{}, which string) (string, error) {
 	if col, ok := options[which]; ok {
-		if colString, ok := col.(string); ok {
-			col, err := GetColorFromString(colString)
-			if err != nil {
-				return nil, err
-			}
-
-			return &col, nil
+		if col, ok := col.(string); ok {
+			// todo: Validate the color string
+			return col, nil
+		} else {
+			return "", fmt.Errorf("value to option '%s' must be a valid color string", which)
 		}
 	}
 
-	return nil, nil
+	return "", nil
 }

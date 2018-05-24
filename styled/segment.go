@@ -27,10 +27,10 @@ func (s Segment) Repr(indent int) string {
 
 	for k, v := range s.Style.ToMap() {
 		switch v := v.(type) {
-		case Color:
-			// todo: Display ColorDefault?
-			if v != ColorDefault {
-				add(k, v.String())
+		case string:
+			// todo: Display default color?
+			if v != "default" {
+				add(k, v)
 			}
 		case bool:
 			if v {
@@ -61,9 +61,6 @@ func (s Segment) Index(k interface{}) (v interface{}, ok bool) {
 	} else if k, ok := k.(string); ok {
 		m := s.Style.ToMap()
 		if v, ok := m[k]; ok {
-			if v, ok := v.(Color); ok {
-				return v.String(), true
-			}
 			return v, true
 		}
 	}

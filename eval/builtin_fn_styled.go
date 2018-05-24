@@ -37,10 +37,16 @@ func styledSegment(options RawOptions, input interface{}) (*styled.Segment, erro
 		if err != nil {
 			return nil, err
 		}
+		if fg == "" {
+			fg = "default"
+		}
 
 		bg, err := styled.BackgroundColorFromOptions(options)
 		if err != nil {
 			return nil, err
+		}
+		if bg == "" {
+			bg = "default"
 		}
 
 		textStyle, err := styled.TextStyleFromMap(options)
@@ -63,7 +69,7 @@ func styledSegment(options RawOptions, input interface{}) (*styled.Segment, erro
 		if err != nil {
 			return nil, err
 		}
-		if fg == nil {
+		if fg == "" {
 			fg = input.Foreground
 		}
 
@@ -71,7 +77,7 @@ func styledSegment(options RawOptions, input interface{}) (*styled.Segment, erro
 		if err != nil {
 			return nil, err
 		}
-		if bg == nil {
+		if bg == "" {
 			bg = input.Background
 		}
 

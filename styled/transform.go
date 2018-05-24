@@ -38,21 +38,40 @@ func init() {
 		},
 	}
 
-	makeFg := func(col Color) segmentTransformer {
+	makeFg := func(col string) segmentTransformer {
 		return func(segment Segment) Segment {
-			segment.Foreground = &col
+			segment.Foreground = col
 			return segment
 		}
 	}
-	makeBg := func(col Color) segmentTransformer {
+	makeBg := func(col string) segmentTransformer {
 		return func(segment Segment) Segment {
-			segment.Background = &col
+			segment.Background = col
 			return segment
 		}
 	}
 
-	for c := ColorDefault; c <= ColorWhite; c++ {
-		SegmentTransformers[c.String()] = makeFg(c)
-		SegmentTransformers["bg-"+c.String()] = makeBg(c)
+	colors := []string{
+		"default",
+		"black",
+		"red",
+		"green",
+		"yellow",
+		"blue",
+		"magenta",
+		"cyan",
+		"lightgray",
+		"gray",
+		"lightred",
+		"lightgreen",
+		"lightyellow",
+		"lightblue",
+		"lightmagenta",
+		"lightcyan",
+		"white",
+	}
+	for _, col := range colors {
+		SegmentTransformers[col] = makeFg(col)
+		SegmentTransformers["bg-"+col] = makeBg(col)
 	}
 }

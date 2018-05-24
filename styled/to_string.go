@@ -1,7 +1,6 @@
 package styled
 
 import (
-	"strconv"
 	"strings"
 )
 
@@ -31,20 +30,16 @@ func (t Text) String() string {
 			styleBuf = append(styleBuf, "7")
 		}
 
-		if segment.Foreground != nil {
-			colString := segment.Foreground.String()
+		if segment.Foreground != "default" {
+			colString := segment.Foreground
 			if col, ok := colorTranslationTable[colString]; ok {
 				styleBuf = append(styleBuf, col)
-			} else {
-				styleBuf = append(styleBuf, strconv.Itoa(int(*segment.Foreground)))
 			}
 		}
-		if segment.Background != nil {
-			colString := "bg-" + segment.Background.String()
+		if segment.Background != "default" {
+			colString := "bg-" + segment.Background
 			if col, ok := colorTranslationTable[colString]; ok {
 				styleBuf = append(styleBuf, col)
-			} else {
-				styleBuf = append(styleBuf, strconv.Itoa(int(*segment.Background)))
 			}
 		}
 
