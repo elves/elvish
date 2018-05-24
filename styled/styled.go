@@ -15,11 +15,17 @@ type Style struct {
 	Inverse    bool
 }
 
+func EmptyStyle() Style {
+	return Style{
+		Foreground: "default",
+		Background: "default",
+	}
+}
+
 func (s *Style) ImportFromOptions(options map[string]interface{}) error {
 	assignColor := func(key string, assign func(string)) error {
 		if c, ok := options[key]; ok {
-			if c, ok := c.(string); ok {
-				// todo: Validate the color string
+			if c, ok := c.(string); ok && IsValidColorString(c) {
 				assign(c)
 			} else {
 				return fmt.Errorf("value to option '%s' must be a valid color string", key)
@@ -77,5 +83,32 @@ func (s Style) ToMap() map[string]interface{} {
 		"underlined": s.Underlined,
 		"blink":      s.Blink,
 		"inverse":    s.Inverse,
+	}
+}
+
+func IsValidColorString(col string) bool {
+	switch col {
+	case
+		"default",
+		"black",
+		"red",
+		"green",
+		"yellow",
+		"blue",
+		"magenta",
+		"cyan",
+		"lightgray",
+		"gray",
+		"lightred",
+		"lightgreen",
+		"lightyellow",
+		"lightblue",
+		"lightmagenta",
+		"lightcyan",
+		"white":
+		return true
+
+	default:
+		return false
 	}
 }

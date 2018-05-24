@@ -33,13 +33,11 @@ func init() {
 // attributes are copied and modified.
 func styledSegment(options RawOptions, input interface{}) (*styled.Segment, error) {
 	var text string
-	var style styled.Style
+	var style = styled.EmptyStyle()
 
 	switch input := input.(type) {
 	case string:
 		text = input
-		style.Foreground = "default"
-		style.Background = "default"
 	case styled.Segment:
 		text = input.Text
 		style = input.Style
@@ -64,7 +62,10 @@ func styledBuiltin(fm *Frame, input interface{}, transformers ...interface{}) (*
 
 	switch input := input.(type) {
 	case string:
-		text = styled.Text{styled.Segment{Text: input}}
+		text = styled.Text{styled.Segment{
+			Text:  input,
+			Style: styled.EmptyStyle(),
+		}}
 	case styled.Segment:
 		text = styled.Text{input}
 	case styled.Text:
