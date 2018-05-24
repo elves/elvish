@@ -373,7 +373,7 @@ func (ed *editor) ReadLine() (string, error) {
 	// Find external commands asynchronously, so that slow I/O won't block the
 	// editor.
 	isExternalCh := make(chan map[string]bool, 1)
-	go getIsExternal(ed.evaler, isExternalCh)
+	go getIsExternal(isExternalCh)
 
 	ed.reader.Start()
 
@@ -520,7 +520,7 @@ MainLoop:
 
 // getIsExternal finds a set of all external commands and puts it on the result
 // channel.
-func getIsExternal(ev *eval.Evaler, result chan<- map[string]bool) {
+func getIsExternal(result chan<- map[string]bool) {
 	isExternal := make(map[string]bool)
 	eval.EachExternal(func(name string) {
 		isExternal[name] = true
