@@ -1,4 +1,4 @@
-// Package edit implements a command line editor.
+// Package edcore implements the core of the Elvish command editor.
 package edcore
 
 import (
