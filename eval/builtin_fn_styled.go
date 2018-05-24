@@ -10,6 +10,7 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
+var errStyledSegmentArgType = errors.New("argument to styled-segment must be a string or a styled segment")
 var styledTransformers hashmap.Map
 
 func init() {
@@ -31,74 +32,29 @@ func init() {
 // from the supplied options applied to it. If the input is already a Segment its
 // attributes are copied and modified.
 func styledSegment(options RawOptions, input interface{}) (*styled.Segment, error) {
+	var text string
+	var style styled.Style
+
 	switch input := input.(type) {
 	case string:
-		fg, err := styled.ForegroundColorFromOptions(options)
-		if err != nil {
-			return nil, err
-		}
-		if fg == "" {
-			fg = "default"
-		}
-
-		bg, err := styled.BackgroundColorFromOptions(options)
-		if err != nil {
-			return nil, err
-		}
-		if bg == "" {
-			bg = "default"
-		}
-
-		textStyle, err := styled.TextStyleFromMap(options)
-		if err != nil {
-			return nil, err
-		}
-
-		style := styled.Style{
-			Foreground: fg,
-			Background: bg,
-			TextStyle:  *textStyle,
-		}
-
-		return &styled.Segment{
-			Text:  input,
-			Style: style,
-		}, nil
+		text = input
+		style.Foreground = "default"
+		style.Background = "default"
 	case styled.Segment:
-		fg, err := styled.ForegroundColorFromOptions(options)
-		if err != nil {
-			return nil, err
-		}
-		if fg == "" {
-			fg = input.Foreground
-		}
-
-		bg, err := styled.BackgroundColorFromOptions(options)
-		if err != nil {
-			return nil, err
-		}
-		if bg == "" {
-			bg = input.Background
-		}
-
-		textStyle, err := styled.TextStyleFromMap(options)
-		if err != nil {
-			return nil, err
-		}
-
-		style := styled.Style{
-			Foreground: fg,
-			Background: bg,
-			TextStyle:  input.TextStyle.Merge(textStyle),
-		}
-
-		return &styled.Segment{
-			Text:  input.Text,
-			Style: style,
-		}, nil
+		text = input.Text
+		style = input.Style
+	default:
+		return nil, errStyledSegmentArgType
 	}
 
-	return nil, errors.New("expected string or styled segment")
+	if err := style.ImportFromOptions(options); err != nil {
+		return nil, err
+	}
+
+	return &styled.Segment{
+		Text:  text,
+		Style: style,
+	}, nil
 }
 
 // Turns a string, a styled Segment or a styled Text into a styled Text. This is done by

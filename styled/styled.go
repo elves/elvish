@@ -2,131 +2,80 @@ package styled
 
 import (
 	"fmt"
-
-	"github.com/elves/elvish/eval/vals"
 )
-
-type TextStyle struct {
-	bold       *bool
-	dim        *bool
-	italic     *bool
-	underlined *bool
-	blink      *bool
-	inverse    *bool
-}
 
 type Style struct {
 	Foreground string
 	Background string
-	TextStyle
+	Bold       bool
+	Dim        bool
+	Italic     bool
+	Underlined bool
+	Blink      bool
+	Inverse    bool
 }
 
-func TextStyleFromMap(m map[string]interface{}) (*TextStyle, error) {
-	b := func(key string) (*bool, error) {
-		if b, ok := m[key]; ok {
-			if bl, ok := b.(bool); ok {
-				return &bl, nil
+func (s *Style) ImportFromOptions(options map[string]interface{}) error {
+	assignColor := func(key string, assign func(string)) error {
+		if c, ok := options[key]; ok {
+			if c, ok := c.(string); ok {
+				// todo: Validate the color string
+				assign(c)
 			} else {
-				return nil, fmt.Errorf("'%s' must be a boolean value; got %s", key, vals.Kind(b))
+				return fmt.Errorf("value to option '%s' must be a valid color string", key)
 			}
 		}
-		return nil, nil
+		return nil
+	}
+	assignBool := func(key string, assign func(bool)) error {
+		if b, ok := options[key]; ok {
+			if b, ok := b.(bool); ok {
+				assign(b)
+			} else {
+				return fmt.Errorf("value to option '%s' must be a bool value", key)
+			}
+		}
+
+		return nil
 	}
 
-	bold, err := b("bold")
-	if err != nil {
-		return nil, err
+	if err := assignColor("fg-color", func(c string) { s.Foreground = c }); err != nil {
+		return err
+	}
+	if err := assignColor("bg-color", func(c string) { s.Background = c }); err != nil {
+		return err
+	}
+	if err := assignBool("bold", func(b bool) { s.Bold = b }); err != nil {
+		return err
+	}
+	if err := assignBool("dim", func(b bool) { s.Dim = b }); err != nil {
+		return err
+	}
+	if err := assignBool("italic", func(b bool) { s.Italic = b }); err != nil {
+		return err
+	}
+	if err := assignBool("underlined", func(b bool) { s.Underlined = b }); err != nil {
+		return err
+	}
+	if err := assignBool("blink", func(b bool) { s.Blink = b }); err != nil {
+		return err
+	}
+	if err := assignBool("inverse", func(b bool) { s.Inverse = b }); err != nil {
+		return err
 	}
 
-	dim, err := b("dim")
-	if err != nil {
-		return nil, err
-	}
-
-	italic, err := b("italic")
-	if err != nil {
-		return nil, err
-	}
-
-	underlined, err := b("underlined")
-	if err != nil {
-		return nil, err
-	}
-
-	blink, err := b("blink")
-	if err != nil {
-		return nil, err
-	}
-
-	inverse, err := b("inverse")
-	if err != nil {
-		return nil, err
-	}
-
-	return &TextStyle{
-		bold:       bold,
-		dim:        dim,
-		italic:     italic,
-		underlined: underlined,
-		blink:      blink,
-		inverse:    inverse,
-	}, nil
-}
-
-func (s TextStyle) Merge(o *TextStyle) TextStyle {
-	if o.bold != nil {
-		s.bold = o.bold
-	}
-	if o.dim != nil {
-		s.dim = o.dim
-	}
-	if o.italic != nil {
-		s.italic = o.italic
-	}
-	if o.underlined != nil {
-		s.underlined = o.underlined
-	}
-	if o.blink != nil {
-		s.blink = o.blink
-	}
-	if o.inverse != nil {
-		s.inverse = o.inverse
-	}
-
-	return s
-}
-
-func ForegroundColorFromOptions(options map[string]interface{}) (string, error) {
-	return colorFromOptions(options, "fg-color")
-}
-func BackgroundColorFromOptions(options map[string]interface{}) (string, error) {
-	return colorFromOptions(options, "bg-color")
+	return nil
 }
 
 func (s Style) ToMap() map[string]interface{} {
-	b := func(b *bool) bool { return b != nil && *b }
-
 	return map[string]interface{}{
 		"fg-color":   s.Foreground,
 		"bg-color":   s.Background,
-		"bold":       b(s.bold),
-		"dim":        b(s.dim),
-		"italic":     b(s.italic),
-		"underlined": b(s.underlined),
-		"blink":      b(s.blink),
-		"inverse":    b(s.inverse),
+		"bold":       s.Bold,
+		"dim":        s.Dim,
+		"italic":     s.Italic,
+		"underlined": s.Underlined,
+		"blink":      s.Blink,
+		"inverse":    s.Inverse,
 	}
-}
-
-func colorFromOptions(options map[string]interface{}, which string) (string, error) {
-	if col, ok := options[which]; ok {
-		if col, ok := col.(string); ok {
-			// todo: Validate the color string
-			return col, nil
-		} else {
-			return "", fmt.Errorf("value to option '%s' must be a valid color string", which)
-		}
-	}
-
-	return "", nil
 }

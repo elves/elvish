@@ -11,22 +11,22 @@ func (t Text) String() string {
 	for _, segment := range t {
 		styleBuf := make([]string, 0, 8)
 
-		if segment.bold != nil && *segment.bold {
+		if segment.Bold {
 			styleBuf = append(styleBuf, "1")
 		}
-		if segment.dim != nil && *segment.dim {
+		if segment.Dim {
 			styleBuf = append(styleBuf, "2")
 		}
-		if segment.italic != nil && *segment.italic {
+		if segment.Italic {
 			styleBuf = append(styleBuf, "3")
 		}
-		if segment.underlined != nil && *segment.underlined {
+		if segment.Underlined {
 			styleBuf = append(styleBuf, "4")
 		}
-		if segment.blink != nil && *segment.blink {
+		if segment.Blink {
 			styleBuf = append(styleBuf, "5")
 		}
-		if segment.inverse != nil && *segment.inverse {
+		if segment.Inverse {
 			styleBuf = append(styleBuf, "7")
 		}
 

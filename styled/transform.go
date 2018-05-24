@@ -5,38 +5,21 @@ type segmentTransformer func(Segment) Segment
 var SegmentTransformers map[string]segmentTransformer
 
 func init() {
-	myTrue := true
+	SegmentTransformers = make(map[string]segmentTransformer)
 
-	SegmentTransformers = map[string]segmentTransformer{
-		"bold": func(segment Segment) Segment {
-			segment.bold = &myTrue
+	makeBool := func(assign func(*Segment)) segmentTransformer {
+		return func(segment Segment) Segment {
+			assign(&segment)
 			return segment
-		},
-		"dim": func(segment Segment) Segment {
-			segment.dim = &myTrue
-			return segment
-		},
-		"italic": func(segment Segment) Segment {
-			segment.italic = &myTrue
-			return segment
-		},
-		"underlined": func(segment Segment) Segment {
-			segment.underlined = &myTrue
-			return segment
-		},
-		"blink": func(segment Segment) Segment {
-			segment.blink = &myTrue
-			return segment
-		},
-		"inverse": func(segment Segment) Segment {
-			var val bool
-			if segment.inverse == nil || !(*segment.inverse) {
-				val = true
-			}
-			segment.inverse = &val
-			return segment
-		},
+		}
 	}
+
+	SegmentTransformers["bold"] = makeBool(func(segment *Segment) { segment.Bold = true })
+	SegmentTransformers["dim"] = makeBool(func(segment *Segment) { segment.Dim = true })
+	SegmentTransformers["italic"] = makeBool(func(segment *Segment) { segment.Italic = true })
+	SegmentTransformers["underlined"] = makeBool(func(segment *Segment) { segment.Underlined = true })
+	SegmentTransformers["blink"] = makeBool(func(segment *Segment) { segment.Blink = true })
+	SegmentTransformers["inverse"] = makeBool(func(segment *Segment) { segment.Inverse = !segment.Inverse })
 
 	makeFg := func(col string) segmentTransformer {
 		return func(segment Segment) Segment {
