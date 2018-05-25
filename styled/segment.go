@@ -21,23 +21,20 @@ func (Segment) Kind() string { return "styled-segment" }
 // represents an unstyled string only this string is returned.
 func (s Segment) Repr(indent int) string {
 	buf := new(bytes.Buffer)
-	add := func(key string, val interface{}) {
-		fmt.Fprintf(buf, "&%s=%s ", key, vals.Repr(val, 0))
-	}
-
-	for k, v := range s.Style.ToMap() {
-		switch v := v.(type) {
-		case string:
-			// todo: Display default color?
-			if v != "default" {
-				add(k, v)
-			}
-		case bool:
-			if v {
-				add(k, v)
-			}
+	addIfNotEqual := func(key string, val, cmp interface{}) {
+		if val != cmp {
+			fmt.Fprintf(buf, "&%s=%s ", key, vals.Repr(val, 0))
 		}
 	}
+
+	addIfNotEqual("fg-color", s.Foreground, "default")
+	addIfNotEqual("bg-color", s.Background, "default")
+	addIfNotEqual("bold", s.Bold, false)
+	addIfNotEqual("dim", s.Dim, false)
+	addIfNotEqual("italic", s.Italic, false)
+	addIfNotEqual("underlined", s.Underlined, false)
+	addIfNotEqual("blink", s.Blink, false)
+	addIfNotEqual("inverse", s.Inverse, false)
 
 	if buf.Len() == 0 {
 		return s.Text
@@ -47,22 +44,30 @@ func (s Segment) Repr(indent int) string {
 }
 
 func (s Segment) IterateKeys(fn func(v interface{}) bool) {
-	for k := range s.Style.ToMap() {
-		if !fn(k) {
-			break
-		}
-	}
+	vals.Feed(fn, "text", "fg-color", "bg-color", "bold", "dim", "italic", "underlined", "blink", "inverse")
 }
 
 // Provides access to the attributes of the Segment.
 func (s Segment) Index(k interface{}) (v interface{}, ok bool) {
-	if k == "text" {
+	switch k {
+	case "text":
 		return s.Text, true
-	} else if k, ok := k.(string); ok {
-		m := s.Style.ToMap()
-		if v, ok := m[k]; ok {
-			return v, true
-		}
+	case "fg-color":
+		return s.Foreground, true
+	case "bg-color":
+		return s.Background, true
+	case "bold":
+		return s.Bold, true
+	case "dim":
+		return s.Dim, true
+	case "italic":
+		return s.Italic, true
+	case "underlined":
+		return s.Underlined, true
+	case "blink":
+		return s.Blink, true
+	case "inverse":
+		return s.Inverse, true
 	}
 
 	return nil, false

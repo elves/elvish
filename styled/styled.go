@@ -73,19 +73,6 @@ func (s *Style) ImportFromOptions(options map[string]interface{}) error {
 	return nil
 }
 
-func (s Style) ToMap() map[string]interface{} {
-	return map[string]interface{}{
-		"fg-color":   s.Foreground,
-		"bg-color":   s.Background,
-		"bold":       s.Bold,
-		"dim":        s.Dim,
-		"italic":     s.Italic,
-		"underlined": s.Underlined,
-		"blink":      s.Blink,
-		"inverse":    s.Inverse,
-	}
-}
-
 func IsValidColorString(col string) bool {
 	switch col {
 	case
