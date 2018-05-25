@@ -5,27 +5,16 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/eval/vals"
-	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/styled"
-	"github.com/xiaq/persistent/hashmap"
 )
 
 var errStyledSegmentArgType = errors.New("argument to styled-segment must be a string or a styled segment")
-var styledTransformers hashmap.Map
 
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		"styled-segment": styledSegment,
 		"styled":         styledBuiltin,
 	})
-
-	transformers := make(map[interface{}]interface{})
-	for k, v := range styled.SegmentTransformers {
-		transformers[k] = NewBuiltinFn("style-transform "+k, v)
-	}
-
-	styledTransformers = vals.MakeMap(transformers)
-	builtinNs.Add("styled-transformers", vars.FromPtr(&styledTransformers))
 }
 
 // Turns a string or styled Segment into a new styled Segment with the attributes
@@ -75,42 +64,35 @@ func styledBuiltin(fm *Frame, input interface{}, transformers ...interface{}) (*
 	}
 
 	for _, transformer := range transformers {
-		var fn Callable
 		switch transformer := transformer.(type) {
 		case string:
-			if transformerFn, ok := styledTransformers.Index(transformer); ok {
-				if transformerFn, ok := transformerFn.(Callable); ok {
-					fn = transformerFn
-				} else {
-					return nil, fmt.Errorf("transformer %s is not callable", transformer)
-				}
-			} else {
-				return nil, fmt.Errorf("transformer %s not found in $styled-transformers", transformer)
-			}
-		case Callable:
-			fn = transformer
-		default:
-			return nil, fmt.Errorf("need string or callable; got %s", vals.Kind(transformer))
-		}
-
-		for i, segment := range text {
-			vs, err := fm.CaptureOutput(fn, []interface{}{segment}, NoOpts)
+			transformerFn, err := styled.FindTransformer(transformer)
 			if err != nil {
 				return nil, err
 			}
 
-			if n := len(vs); n != 1 {
-				return nil, fmt.Errorf("style transformers must return a single styled segment; got %d", n)
+			for i, segment := range text {
+				text[i] = transformerFn(segment)
 			}
 
-			switch transformedSegment := vs[0].(type) {
-			case styled.Segment:
-				text[i] = transformedSegment
-			case *styled.Segment:
-				text[i] = *transformedSegment
-			default:
-				return nil, fmt.Errorf("style transformers must return a styled segment; got %s", vals.Kind(vs[0]))
+		case Callable:
+			for i, segment := range text {
+				vs, err := fm.CaptureOutput(transformer, []interface{}{segment}, NoOpts)
+				if err != nil {
+					return nil, err
+				}
+
+				if n := len(vs); n != 1 {
+					return nil, fmt.Errorf("style transformers must return a single styled segment; got %d", n)
+				} else if transformedSegment, ok := vs[0].(*styled.Segment); !ok {
+					return nil, fmt.Errorf("style transformers must return a styled segment; got %s", vals.Kind(vs[0]))
+				} else {
+					text[i] = *transformedSegment
+				}
 			}
+
+		default:
+			return nil, fmt.Errorf("need string or callable; got %s", vals.Kind(transformer))
 		}
 	}
 

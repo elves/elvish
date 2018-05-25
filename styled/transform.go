@@ -1,60 +1,74 @@
 package styled
 
-type segmentTransformer func(Segment) Segment
+import (
+	"fmt"
+	"strings"
+)
 
-var SegmentTransformers map[string]segmentTransformer
+func FindTransformer(transformerName string) (func(Segment) Segment, error) {
+	var innerTransformer func(*Segment)
 
-func init() {
-	SegmentTransformers = make(map[string]segmentTransformer)
+	// Special cases for handling inverse
+	switch {
+	case transformerName == "inverse":
+		innerTransformer = func(s *Segment) { s.Inverse = !s.Inverse }
+	case transformerName == "force-inverse":
+		innerTransformer = func(s *Segment) { s.Inverse = true }
+	case transformerName == "force-no-inverse":
+		innerTransformer = func(s *Segment) { s.Inverse = false }
 
-	makeBool := func(assign func(*Segment)) segmentTransformer {
-		return func(segment Segment) Segment {
-			assign(&segment)
-			return segment
+	case strings.HasPrefix(transformerName, "bg-"):
+		innerTransformer = buildColorTransformer(strings.TrimPrefix(transformerName, "bg-"), false)
+	case strings.HasPrefix(transformerName, "no-"):
+		innerTransformer = buildBoolTransformer(strings.TrimPrefix(transformerName, "no-"), false)
+
+	default:
+		innerTransformer = buildColorTransformer(transformerName, true)
+
+		if innerTransformer == nil {
+			innerTransformer = buildBoolTransformer(transformerName, true)
 		}
 	}
 
-	SegmentTransformers["bold"] = makeBool(func(segment *Segment) { segment.Bold = true })
-	SegmentTransformers["dim"] = makeBool(func(segment *Segment) { segment.Dim = true })
-	SegmentTransformers["italic"] = makeBool(func(segment *Segment) { segment.Italic = true })
-	SegmentTransformers["underlined"] = makeBool(func(segment *Segment) { segment.Underlined = true })
-	SegmentTransformers["blink"] = makeBool(func(segment *Segment) { segment.Blink = true })
-	SegmentTransformers["inverse"] = makeBool(func(segment *Segment) { segment.Inverse = !segment.Inverse })
-
-	makeFg := func(col string) segmentTransformer {
-		return func(segment Segment) Segment {
-			segment.Foreground = col
-			return segment
-		}
-	}
-	makeBg := func(col string) segmentTransformer {
-		return func(segment Segment) Segment {
-			segment.Background = col
-			return segment
-		}
+	if innerTransformer == nil {
+		return nil, fmt.Errorf("'%s' is no valid style transformer", transformerName)
 	}
 
-	colors := []string{
-		"default",
-		"black",
-		"red",
-		"green",
-		"yellow",
-		"blue",
-		"magenta",
-		"cyan",
-		"lightgray",
-		"gray",
-		"lightred",
-		"lightgreen",
-		"lightyellow",
-		"lightblue",
-		"lightmagenta",
-		"lightcyan",
-		"white",
+	return func(segment Segment) Segment {
+		innerTransformer(&segment)
+		return segment
+	}, nil
+}
+
+func buildColorTransformer(transformerName string, setForeground bool) func(*Segment) {
+	if IsValidColorString(transformerName) {
+		if setForeground {
+			return func(s *Segment) {
+				s.Foreground = transformerName
+			}
+		} else {
+			return func(s *Segment) {
+				s.Background = transformerName
+			}
+		}
 	}
-	for _, col := range colors {
-		SegmentTransformers[col] = makeFg(col)
-		SegmentTransformers["bg-"+col] = makeBg(col)
+
+	return nil
+}
+
+func buildBoolTransformer(transformerName string, val bool) func(*Segment) {
+	switch transformerName {
+	case "bold":
+		return func(s *Segment) { s.Bold = val }
+	case "dim":
+		return func(s *Segment) { s.Dim = val }
+	case "italic":
+		return func(s *Segment) { s.Italic = val }
+	case "underlined":
+		return func(s *Segment) { s.Underlined = val }
+	case "blink":
+		return func(s *Segment) { s.Blink = val }
 	}
+
+	return nil
 }
