@@ -76,10 +76,10 @@ func (s Segment) Concat(v interface{}) (interface{}, error) {
 			s,
 			Segment{Text: rhs},
 		}, nil
-	case Segment:
-		return Text{s, rhs}, nil
-	case Text:
-		return Text(append([]Segment{s}, rhs...)), nil
+	case *Segment:
+		return Text{s, *rhs}, nil
+	case *Text:
+		return Text(append([]Segment{s}, *rhs...)), nil
 	}
 
 	return nil, vals.ErrConcatNotImplemented

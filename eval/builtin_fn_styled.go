@@ -27,7 +27,7 @@ func styledSegment(options RawOptions, input interface{}) (*styled.Segment, erro
 	switch input := input.(type) {
 	case string:
 		text = input
-	case styled.Segment:
+	case *styled.Segment:
 		text = input.Text
 		style = input.Style
 	default:
@@ -55,10 +55,10 @@ func styledBuiltin(fm *Frame, input interface{}, transformers ...interface{}) (*
 			Text:  input,
 			Style: styled.EmptyStyle(),
 		}}
-	case styled.Segment:
-		text = styled.Text{input}
-	case styled.Text:
-		text = input
+	case *styled.Segment:
+		text = styled.Text{*input}
+	case *styled.Text:
+		text = *input
 	default:
 		return nil, fmt.Errorf("expected string, styled segment or styled text; got %s", vals.Kind(input))
 	}
@@ -77,7 +77,7 @@ func styledBuiltin(fm *Frame, input interface{}, transformers ...interface{}) (*
 
 		case Callable:
 			for i, segment := range text {
-				vs, err := fm.CaptureOutput(transformer, []interface{}{segment}, NoOpts)
+				vs, err := fm.CaptureOutput(transformer, []interface{}{&segment}, NoOpts)
 				if err != nil {
 					return nil, err
 				}

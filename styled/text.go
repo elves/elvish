@@ -48,10 +48,10 @@ func (t Text) Concat(v interface{}) (interface{}, error) {
 	switch rhs := v.(type) {
 	case string:
 		return Text(append(t, Segment{Text: rhs})), nil
-	case Segment:
-		return Text(append(t, rhs)), nil
-	case Text:
-		return Text(append(t, rhs...)), nil
+	case *Segment:
+		return Text(append(t, *rhs)), nil
+	case *Text:
+		return Text(append(t, *rhs...)), nil
 	}
 
 	return nil, vals.ErrConcatNotImplemented
