@@ -56,18 +56,21 @@ func TestStyledConcat(t *testing.T) {
 func TestFunctionalStyleTransformers(t *testing.T) {
 	// lambda
 	Test(t,
+		That("print (styled abc [s]{ put $s })").Prints("abc"),
 		That("print (styled abc [s]{ styled-segment $s &bold=$true &italic=$false })").Prints("\033[1mabc\033[m"),
 		That("print (styled abc italic [s]{ styled-segment $s &bold=$true &italic=$false })").Prints("\033[1mabc\033[m"),
 	)
 
 	// fn
 	Test(t,
+		That("fn f [s]{ put $s }; print (styled abc $f~)").Prints("abc"),
 		That("fn f [s]{ styled-segment $s &bold=$true &italic=$false }; print (styled abc $f~)").Prints("\033[1mabc\033[m"),
 		That("fn f [s]{ styled-segment $s &bold=$true &italic=$false }; print (styled abc italic $f~)").Prints("\033[1mabc\033[m"),
 	)
 
 	// var
 	Test(t,
+		That("f = [s]{ put $s }; print (styled abc $f)").Prints("abc"),
 		That("f = [s]{ styled-segment $s &bold=$true &italic=$false }; print (styled abc $f)").Prints("\033[1mabc\033[m"),
 		That("f = [s]{ styled-segment $s &bold=$true &italic=$false }; print (styled abc italic $f)").Prints("\033[1mabc\033[m"),
 	)
@@ -78,5 +81,12 @@ func TestStyledIndexing(t *testing.T) {
 		That("put (styled-segment abc &italic=$true &fg-color=red)[bold]").Puts(false),
 		That("put (styled-segment abc &italic=$true &fg-color=red)[italic]").Puts(true),
 		That("put (styled-segment abc &italic=$true &fg-color=red)[fg-color]").Puts("red"),
+	)
+
+	Test(t,
+		That("put (styled abc red)[0][bold]").Puts(false),
+		That("put (styled abc red)[0][bg-color]").Puts("default"),
+		That("t = (styled-segment abc &underlined=$true)(styled abc lightcyan); put $t[1][fg-color]").Puts("lightcyan"),
+		That("t = (styled-segment abc &underlined=$true)(styled abc lightcyan); put $t[1][underlined]").Puts(false),
 	)
 }
