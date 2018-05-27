@@ -45,7 +45,7 @@ type ShowBuildInfo struct {
 
 func (info ShowBuildInfo) Main([]string) int {
 	if info.JSON {
-		fmt.Printf("{version: %s, builder: %s}\n",
+		fmt.Printf("{\"version\": %s, \"builder\": %s}\n",
 			quoteJSON(build.Version), quoteJSON(build.Builder))
 	} else {
 		fmt.Println("version:", build.Version)
