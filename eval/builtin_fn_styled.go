@@ -66,9 +66,9 @@ func styledBuiltin(fm *Frame, input interface{}, transformers ...interface{}) (*
 	for _, transformer := range transformers {
 		switch transformer := transformer.(type) {
 		case string:
-			transformerFn, err := styled.FindTransformer(transformer)
-			if err != nil {
-				return nil, err
+			transformerFn := styled.FindTransformer(transformer)
+			if transformerFn == nil {
+				return nil, fmt.Errorf("'%s' is no valid style transformer", transformer)
 			}
 
 			for i, segment := range text {
