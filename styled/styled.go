@@ -25,7 +25,7 @@ func EmptyStyle() Style {
 func (s *Style) ImportFromOptions(options map[string]interface{}) error {
 	assignColor := func(key string, colorField *string) error {
 		if c, ok := options[key]; ok {
-			if c, ok := c.(string); ok && IsValidColorString(c) {
+			if c, ok := c.(string); ok && isValidColorName(c) {
 				*colorField = c
 			} else {
 				return fmt.Errorf("value to option '%s' must be a valid color string", key)
@@ -73,7 +73,7 @@ func (s *Style) ImportFromOptions(options map[string]interface{}) error {
 	return nil
 }
 
-func IsValidColorString(col string) bool {
+func isValidColorName(col string) bool {
 	switch col {
 	case
 		"default",
