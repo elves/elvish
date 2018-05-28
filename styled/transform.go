@@ -42,6 +42,10 @@ func FindTransformer(transformerName string) (func(Segment) Segment, error) {
 
 func buildColorTransformer(transformerName string, setForeground bool) func(*Segment) {
 	if isValidColorName(transformerName) {
+		if transformerName == "default" {
+			transformerName = ""
+		}
+
 		if setForeground {
 			return func(s *Segment) {
 				s.Foreground = transformerName

@@ -27,8 +27,8 @@ func (s Segment) Repr(indent int) string {
 		}
 	}
 
-	addIfNotEqual("fg-color", s.Foreground, "default")
-	addIfNotEqual("bg-color", s.Background, "default")
+	addIfNotEqual("fg-color", s.Foreground, "")
+	addIfNotEqual("bg-color", s.Background, "")
 	addIfNotEqual("bold", s.Bold, false)
 	addIfNotEqual("dim", s.Dim, false)
 	addIfNotEqual("italic", s.Italic, false)
@@ -51,26 +51,30 @@ func (s Segment) IterateKeys(fn func(v interface{}) bool) {
 func (s Segment) Index(k interface{}) (v interface{}, ok bool) {
 	switch k {
 	case "text":
-		return s.Text, true
+		v = s.Text
 	case "fg-color":
-		return s.Foreground, true
+		v = s.Foreground
 	case "bg-color":
-		return s.Background, true
+		v = s.Background
 	case "bold":
-		return s.Bold, true
+		v = s.Bold
 	case "dim":
-		return s.Dim, true
+		v = s.Dim
 	case "italic":
-		return s.Italic, true
+		v = s.Italic
 	case "underlined":
-		return s.Underlined, true
+		v = s.Underlined
 	case "blink":
-		return s.Blink, true
+		v = s.Blink
 	case "inverse":
-		return s.Inverse, true
+		v = s.Inverse
 	}
 
-	return nil, false
+	if v == "" {
+		v = "default"
+	}
+
+	return v, v != nil
 }
 
 // Implements Segment+string, Segment+Segment and Segment+Text.

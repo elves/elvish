@@ -30,15 +30,13 @@ func (t Text) String() string {
 			styleBuf = append(styleBuf, "7")
 		}
 
-		if segment.Foreground != "default" {
-			colString := segment.Foreground
-			if col, ok := colorTranslationTable[colString]; ok {
+		if segment.Foreground != "" {
+			if col, ok := colorTranslationTable[segment.Foreground]; ok {
 				styleBuf = append(styleBuf, col)
 			}
 		}
-		if segment.Background != "default" {
-			colString := "bg-" + segment.Background
-			if col, ok := colorTranslationTable[colString]; ok {
+		if segment.Background != "" {
+			if col, ok := colorTranslationTable["bg-"+segment.Background]; ok {
 				styleBuf = append(styleBuf, col)
 			}
 		}
@@ -57,7 +55,6 @@ func (t Text) String() string {
 }
 
 var colorTranslationTable = map[string]string{
-	"default":      "39",
 	"black":        "30",
 	"red":          "31",
 	"green":        "32",
@@ -75,7 +72,6 @@ var colorTranslationTable = map[string]string{
 	"lightcyan":    "96",
 	"white":        "97",
 
-	"bg-default":      "49",
 	"bg-black":        "40",
 	"bg-red":          "41",
 	"bg-green":        "42",
