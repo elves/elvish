@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/eval/vals"
 )
 
-// A styled Segment is a string that has some style applied to it.
+// Segment is a string that has some style applied to it.
 type Segment struct {
 	Style
 	Text string
@@ -16,9 +16,9 @@ type Segment struct {
 
 func (Segment) Kind() string { return "styled-segment" }
 
-// Returns the representation of this Segment. The string can be used to construct
-// an identical Segment. Unset or default attributes are skipped. If the Segment
-// represents an unstyled string only this string is returned.
+// Repr returns the representation of this Segment. The string can be used to
+// construct an identical Segment. Unset or default attributes are skipped. If
+// the Segment represents an unstyled string only this string is returned.
 func (s Segment) Repr(indent int) string {
 	buf := new(bytes.Buffer)
 	addIfNotEqual := func(key string, val, cmp interface{}) {
@@ -47,7 +47,7 @@ func (s Segment) IterateKeys(fn func(v interface{}) bool) {
 	vals.Feed(fn, "text", "fg-color", "bg-color", "bold", "dim", "italic", "underlined", "blink", "inverse")
 }
 
-// Provides access to the attributes of the Segment.
+// Index provides access to the attributes of the Segment.
 func (s Segment) Index(k interface{}) (v interface{}, ok bool) {
 	switch k {
 	case "text":
@@ -77,7 +77,7 @@ func (s Segment) Index(k interface{}) (v interface{}, ok bool) {
 	return v, v != nil
 }
 
-// Implements Segment+string, Segment+Segment and Segment+Text.
+// Concat implements Segment+string, Segment+Segment and Segment+Text.
 func (s Segment) Concat(v interface{}) (interface{}, error) {
 	switch rhs := v.(type) {
 	case string:
@@ -94,7 +94,7 @@ func (s Segment) Concat(v interface{}) (interface{}, error) {
 	return nil, vals.ErrConcatNotImplemented
 }
 
-// Implements string+Segment.
+// RConcat implements string+Segment.
 func (s Segment) RConcat(v interface{}) (interface{}, error) {
 	switch lhs := v.(type) {
 	case string:

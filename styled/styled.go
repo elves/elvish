@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// Style specifies how something (mostly a string) shall be displayed.
 type Style struct {
 	Foreground string
 	Background string
@@ -15,6 +16,8 @@ type Style struct {
 	Inverse    bool
 }
 
+// ImportFromOptions assigns all recognized values from a map to the current
+// Style.
 func (s *Style) ImportFromOptions(options map[string]interface{}) error {
 	assignColor := func(key string, colorField *string) error {
 		if c, ok := options[key]; ok {

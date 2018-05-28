@@ -4,6 +4,8 @@ import (
 	"strings"
 )
 
+// FindTransformer looks up a transformer name and if successful returns a
+// function that can be used to transform a styled Segment.
 func FindTransformer(transformerName string) func(Segment) Segment {
 	var innerTransformer func(*Segment)
 
