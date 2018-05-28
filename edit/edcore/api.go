@@ -93,7 +93,6 @@ func makeNs(ed *editor) eval.Ns {
 		"binding-table": eddefs.MakeBindingMap,
 		"insert-at-dot": ed.InsertAtDot,
 		"replace-input": ed.replaceInput,
-		"styled":        styled,
 		"key":           ui.ToKey,
 		"wordify":       wordifyBuiltin,
 		"-dump-buf":     ed.dumpBuf,
