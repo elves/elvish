@@ -13,7 +13,7 @@ var errStyledSegmentArgType = errors.New("argument to styled-segment must be a s
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		"styled-segment": styledSegment,
-		"styled":         styledBuiltin,
+		"styled":         Styled,
 	})
 }
 
@@ -44,9 +44,9 @@ func styledSegment(options RawOptions, input interface{}) (*styled.Segment, erro
 	}, nil
 }
 
-// Turns a string, a styled Segment or a styled Text into a styled Text. This is done by
-// applying a range of transformers to the input.
-func styledBuiltin(fm *Frame, input interface{}, transformers ...interface{}) (*styled.Text, error) {
+// Styled turns a string, a styled Segment or a styled Text into a styled Text.
+// This is done by applying a range of transformers to the input.
+func Styled(fm *Frame, input interface{}, transformers ...interface{}) (*styled.Text, error) {
 	var text styled.Text
 
 	switch input := input.(type) {
