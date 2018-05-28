@@ -13,6 +13,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
+	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
@@ -218,6 +219,10 @@ func callAndGetStyled(ed eddefs.Editor, fn eval.Callable, ports []*eval.Port) []
 		for v := range ch {
 			if s, ok := v.(*ui.Styled); ok {
 				add(s)
+			} else if s, ok := v.(*styled.Text); ok {
+				for _, seg := range *s {
+					add(seg.ToLegacyType())
+				}
 			} else {
 				add(&ui.Styled{vals.ToString(v), ui.Styles{}})
 			}
