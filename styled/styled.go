@@ -19,55 +19,53 @@ type Style struct {
 // ImportFromOptions assigns all recognized values from a map to the current
 // Style.
 func (s *Style) ImportFromOptions(options map[string]interface{}) error {
-	assignColor := func(key string, colorField *string) error {
-		if c, ok := options[key]; ok {
-			if c, ok := c.(string); ok && isValidColorName(c) {
-				if c == "default" {
-					*colorField = ""
-				} else {
-					*colorField = c
-				}
-			} else {
-				return fmt.Errorf("value to option '%s' must be a valid color string", key)
-			}
+	assignColor := func(val interface{}, colorField *string) string {
+		if val == "default" {
+			*colorField = ""
+		} else if c, ok := val.(string); ok && isValidColorName(c) {
+			*colorField = c
+		} else {
+			return "valid color string"
 		}
-		return nil
+		return ""
 	}
-	assignBool := func(key string, attrField *bool) error {
-		if b, ok := options[key]; ok {
-			if b, ok := b.(bool); ok {
-				*attrField = b
-			} else {
-				return fmt.Errorf("value to option '%s' must be a bool value", key)
-			}
+	assignBool := func(val interface{}, attrField *bool) string {
+		if b, ok := val.(bool); ok {
+			*attrField = b
+		} else {
+			return "bool value"
 		}
-
-		return nil
+		return ""
 	}
 
-	if err := assignColor("fg-color", &s.Foreground); err != nil {
-		return err
-	}
-	if err := assignColor("bg-color", &s.Background); err != nil {
-		return err
-	}
-	if err := assignBool("bold", &s.Bold); err != nil {
-		return err
-	}
-	if err := assignBool("dim", &s.Dim); err != nil {
-		return err
-	}
-	if err := assignBool("italic", &s.Italic); err != nil {
-		return err
-	}
-	if err := assignBool("underlined", &s.Underlined); err != nil {
-		return err
-	}
-	if err := assignBool("blink", &s.Blink); err != nil {
-		return err
-	}
-	if err := assignBool("inverse", &s.Inverse); err != nil {
-		return err
+	for k, v := range options {
+		var need string
+
+		switch k {
+		case "fg-color":
+			need = assignColor(v, &s.Foreground)
+		case "bg-color":
+			need = assignColor(v, &s.Background)
+		case "bold":
+			need = assignBool(v, &s.Bold)
+		case "dim":
+			need = assignBool(v, &s.Dim)
+		case "italic":
+			need = assignBool(v, &s.Italic)
+		case "underlined":
+			need = assignBool(v, &s.Underlined)
+		case "blink":
+			need = assignBool(v, &s.Blink)
+		case "inverse":
+			need = assignBool(v, &s.Inverse)
+
+		default:
+			return fmt.Errorf("unrecognized option '%s'", k)
+		}
+
+		if need != "" {
+			return fmt.Errorf("value to option '%s' must be a %s", k, need)
+		}
 	}
 
 	return nil
@@ -76,7 +74,6 @@ func (s *Style) ImportFromOptions(options map[string]interface{}) error {
 func isValidColorName(col string) bool {
 	switch col {
 	case
-		"default",
 		"black",
 		"red",
 		"green",
