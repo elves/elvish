@@ -34,19 +34,21 @@ const (
 )
 
 const (
-	defaultValuePrefix = "▶ "
-	initIndent         = vals.NoPretty
+	defaultValuePrefix        = "▶ "
+	defaultNotifyBgJobSuccess = true
+	initIndent                = vals.NoPretty
 )
 
 // Evaler is used to evaluate elvish sources. It maintains runtime context
 // shared among all evalCtx instances.
 type Evaler struct {
 	evalerScopes
-	valuePrefix  string
-	beforeChdir  []func(string)
-	afterChdir   []func(string)
-	DaemonClient *daemon.Client
-	modules      map[string]Ns
+	valuePrefix        string
+	notifyBgJobSuccess bool
+	beforeChdir        []func(string)
+	afterChdir         []func(string)
+	DaemonClient       *daemon.Client
+	modules            map[string]Ns
 	// bundled modules
 	bundled map[string]string
 	Editor  Editor
@@ -64,7 +66,8 @@ func NewEvaler() *Evaler {
 	builtin := builtinNs.Clone()
 
 	ev := &Evaler{
-		valuePrefix: defaultValuePrefix,
+		valuePrefix:        defaultValuePrefix,
+		notifyBgJobSuccess: defaultNotifyBgJobSuccess,
 		evalerScopes: evalerScopes{
 			Global:  make(Ns),
 			Builtin: builtin,
@@ -86,6 +89,7 @@ func NewEvaler() *Evaler {
 	builtin["after-chdir"] = vars.FromPtr(&afterChdirElvish)
 
 	builtin["value-out-indicator"] = vars.FromPtr(&ev.valuePrefix)
+	builtin["notify-bg-job-success"] = vars.FromPtr(&ev.notifyBgJobSuccess)
 	builtin["pwd"] = PwdVariable{ev}
 
 	return ev

@@ -140,10 +140,12 @@ func (op *pipelineOp) Invoke(fm *Frame) error {
 			if err != nil {
 				msg += ", errors = " + err.Error()
 			}
-			if fm.Editor != nil {
-				fm.Editor.Notify("%s", msg)
-			} else {
-				fm.ports[2].File.WriteString(msg + "\n")
+			if fm.Evaler.notifyBgJobSuccess || err != nil {
+				if fm.Editor != nil {
+					fm.Editor.Notify("%s", msg)
+				} else {
+					fm.ports[2].File.WriteString(msg + "\n")
+				}
 			}
 		}()
 		return nil
