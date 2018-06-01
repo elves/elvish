@@ -36,6 +36,7 @@ const (
 const (
 	defaultValuePrefix = "▶ "
 	initIndent         = vals.NoPretty
+	defaultSuppressBackground = "false"
 )
 
 // Evaler is used to evaluate elvish sources. It maintains runtime context
@@ -43,6 +44,7 @@ const (
 type Evaler struct {
 	evalerScopes
 	valuePrefix  string
+	suppressBackground string
 	beforeChdir  []func(string)
 	afterChdir   []func(string)
 	DaemonClient *daemon.Client
@@ -65,6 +67,7 @@ func NewEvaler() *Evaler {
 
 	ev := &Evaler{
 		valuePrefix: defaultValuePrefix,
+		suppressBackground: defaultSuppressBackground,
 		evalerScopes: evalerScopes{
 			Global:  make(Ns),
 			Builtin: builtin,
@@ -86,6 +89,7 @@ func NewEvaler() *Evaler {
 	builtin["after-chdir"] = vars.FromPtr(&afterChdirElvish)
 
 	builtin["value-out-indicator"] = vars.FromPtr(&ev.valuePrefix)
+	builtin["suppress-background"] = vars.FromPtr(&ev.suppressBackground)
 	builtin["pwd"] = PwdVariable{ev}
 
 	return ev

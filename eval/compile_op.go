@@ -137,13 +137,16 @@ func (op *pipelineOp) Invoke(fm *Frame) error {
 			wg.Wait()
 			msg := "job " + op.source + " finished"
 			err := ComposeExceptionsFromPipeline(errors)
+			suppressBackground := vars.FromPtr(fm.Evaler.suppressBackground)
 			if err != nil {
 				msg += ", errors = " + err.Error()
 			}
-			if fm.Editor != nil {
-				fm.Editor.Notify("%s", msg)
-			} else {
-				fm.ports[2].File.WriteString(msg + "\n")
+			if suppressBackground.Get() != "true" {
+				if fm.Editor != nil {
+					fm.Editor.Notify("%s", msg)
+				} else {
+					fm.ports[2].File.WriteString(msg + "\n")
+				}
 			}
 		}()
 		return nil
