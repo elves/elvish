@@ -34,8 +34,8 @@ const (
 )
 
 const (
-	defaultValuePrefix = "▶ "
-	initIndent         = vals.NoPretty
+	defaultValuePrefix        = "▶ "
+	initIndent                = vals.NoPretty
 	defaultSuppressBackground = false
 )
 
@@ -43,12 +43,12 @@ const (
 // shared among all evalCtx instances.
 type Evaler struct {
 	evalerScopes
-	valuePrefix  string
+	valuePrefix        string
 	suppressBackground bool
-	beforeChdir  []func(string)
-	afterChdir   []func(string)
-	DaemonClient *daemon.Client
-	modules      map[string]Ns
+	beforeChdir        []func(string)
+	afterChdir         []func(string)
+	DaemonClient       *daemon.Client
+	modules            map[string]Ns
 	// bundled modules
 	bundled map[string]string
 	Editor  Editor
@@ -66,7 +66,7 @@ func NewEvaler() *Evaler {
 	builtin := builtinNs.Clone()
 
 	ev := &Evaler{
-		valuePrefix: defaultValuePrefix,
+		valuePrefix:        defaultValuePrefix,
 		suppressBackground: defaultSuppressBackground,
 		evalerScopes: evalerScopes{
 			Global:  make(Ns),
