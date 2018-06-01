@@ -35,8 +35,8 @@ const (
 
 const (
 	defaultValuePrefix        = "▶ "
+	defaultNotifyBgJobSuccess = false
 	initIndent                = vals.NoPretty
-	defaultSuppressBackground = false
 )
 
 // Evaler is used to evaluate elvish sources. It maintains runtime context
@@ -44,7 +44,7 @@ const (
 type Evaler struct {
 	evalerScopes
 	valuePrefix        string
-	suppressBackground bool
+	notifyBgJobSuccess bool
 	beforeChdir        []func(string)
 	afterChdir         []func(string)
 	DaemonClient       *daemon.Client
@@ -67,7 +67,7 @@ func NewEvaler() *Evaler {
 
 	ev := &Evaler{
 		valuePrefix:        defaultValuePrefix,
-		suppressBackground: defaultSuppressBackground,
+		notifyBgJobSuccess: defaultNotifyBgJobSuccess,
 		evalerScopes: evalerScopes{
 			Global:  make(Ns),
 			Builtin: builtin,
@@ -89,7 +89,7 @@ func NewEvaler() *Evaler {
 	builtin["after-chdir"] = vars.FromPtr(&afterChdirElvish)
 
 	builtin["value-out-indicator"] = vars.FromPtr(&ev.valuePrefix)
-	builtin["suppress-background"] = vars.FromPtr(&ev.suppressBackground)
+	builtin["notify-bg-job-success"] = vars.FromPtr(&ev.notifyBgJobSuccess)
 	builtin["pwd"] = PwdVariable{ev}
 
 	return ev
