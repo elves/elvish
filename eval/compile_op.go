@@ -140,7 +140,7 @@ func (op *pipelineOp) Invoke(fm *Frame) error {
 			if err != nil {
 				msg += ", errors = " + err.Error()
 			}
-			if fm.Evaler.notifyBgJobSuccess != true || err != nil {
+			if fm.Evaler.notifyBgJobSuccess || err != nil {
 				if fm.Editor != nil {
 					fm.Editor.Notify("%s", msg)
 				} else {

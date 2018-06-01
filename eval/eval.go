@@ -35,7 +35,7 @@ const (
 
 const (
 	defaultValuePrefix        = "▶ "
-	defaultNotifyBgJobSuccess = false
+	defaultNotifyBgJobSuccess = true
 	initIndent                = vals.NoPretty
 )
 
