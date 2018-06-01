@@ -141,7 +141,7 @@ func (op *pipelineOp) Invoke(fm *Frame) error {
 			if err != nil {
 				msg += ", errors = " + err.Error()
 			}
-			if suppressBackground.Get() != "true" {
+			if suppressBackground.Get() != "true" || err != nil {
 				if fm.Editor != nil {
 					fm.Editor.Notify("%s", msg)
 				} else {
