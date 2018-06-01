@@ -36,7 +36,7 @@ const (
 const (
 	defaultValuePrefix = "▶ "
 	initIndent         = vals.NoPretty
-	defaultSuppressBackground = "false"
+	defaultSuppressBackground = false
 )
 
 // Evaler is used to evaluate elvish sources. It maintains runtime context
@@ -44,7 +44,7 @@ const (
 type Evaler struct {
 	evalerScopes
 	valuePrefix  string
-	suppressBackground string
+	suppressBackground bool
 	beforeChdir  []func(string)
 	afterChdir   []func(string)
 	DaemonClient *daemon.Client
