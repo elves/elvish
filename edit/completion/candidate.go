@@ -67,6 +67,24 @@ type complexCandidate struct {
 	style         ui.Styles // Used in the menu.
 }
 
+func (c *complexCandidate) Index(k interface{}) (interface{}, bool) {
+	switch k {
+	case "stem":
+		return c.stem, true
+	case "code-suffix":
+		return c.codeSuffix, true
+	case "display-suffix":
+		return c.displaySuffix, true
+	case "style":
+		return c.style.String(), true
+	}
+	return nil, false
+}
+
+func (c *complexCandidate) IterateKeys(f func(interface{}) bool) {
+	vals.Feed(f, "stem", "code-suffix", "display-suffix", "style")
+}
+
 func (c *complexCandidate) Kind() string { return "map" }
 
 func (c *complexCandidate) Equal(a interface{}) bool {
