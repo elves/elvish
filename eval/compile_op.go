@@ -75,6 +75,7 @@ func (op *pipelineOp) Invoke(fm *Frame) error {
 		fm = fm.fork("background job" + op.source)
 		fm.intCh = nil
 		fm.background = true
+		fm.Evaler.numBgJobs++
 
 		if fm.Editor != nil {
 			// TODO: Redirect output in interactive mode so that the line
@@ -135,6 +136,7 @@ func (op *pipelineOp) Invoke(fm *Frame) error {
 		// Background job, wait for form termination asynchronously.
 		go func() {
 			wg.Wait()
+			fm.Evaler.numBgJobs--
 			msg := "job " + op.source + " finished"
 			err := ComposeExceptionsFromPipeline(errors)
 			if err != nil {
