@@ -36,6 +36,7 @@ const (
 const (
 	defaultValuePrefix        = "▶ "
 	defaultNotifyBgJobSuccess = true
+	defaultNumBgJobs          = 0
 	initIndent                = vals.NoPretty
 )
 
@@ -45,6 +46,7 @@ type Evaler struct {
 	evalerScopes
 	valuePrefix        string
 	notifyBgJobSuccess bool
+	numBgJobs          int
 	beforeChdir        []func(string)
 	afterChdir         []func(string)
 	DaemonClient       *daemon.Client
@@ -68,6 +70,7 @@ func NewEvaler() *Evaler {
 	ev := &Evaler{
 		valuePrefix:        defaultValuePrefix,
 		notifyBgJobSuccess: defaultNotifyBgJobSuccess,
+		numBgJobs:          defaultNumBgJobs,
 		evalerScopes: evalerScopes{
 			Global:  make(Ns),
 			Builtin: builtin,
@@ -90,6 +93,7 @@ func NewEvaler() *Evaler {
 
 	builtin["value-out-indicator"] = vars.FromPtr(&ev.valuePrefix)
 	builtin["notify-bg-job-success"] = vars.FromPtr(&ev.notifyBgJobSuccess)
+	builtin["num-bg-jobs"] = vars.FromPtr(&ev.numBgJobs)
 	builtin["pwd"] = PwdVariable{ev}
 
 	return ev
