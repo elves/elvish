@@ -299,6 +299,31 @@ edit:completion:arg-completer[apt] = [@args]{
 }
 ```
 
+Here is another slightly more complex example for the `git` command. It
+supports completing some common subcommands and then branch names after that:
+
+```elvish
+fn all-git-branches {
+    # Note: this assumes a recent version of git that supports the format
+    # string used.
+    git branch -a --format="%(refname:strip=2)" | eawk [0 1 @rest]{ put $1 }
+}
+
+common-git-commands = [
+  add branch checkout clone commit diff init log merge
+  pull push rebase reset revert show stash status
+]
+
+edit:arg-completer[git] = [@args]{
+    n = (count $args)
+    if (== $n 2) {
+        put $@common-git-commands
+    } elif (>= $n 3) {
+        all-git-branches
+    }
+}
+```
+
 
 ## Matcher
 
