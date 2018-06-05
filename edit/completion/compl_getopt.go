@@ -19,6 +19,7 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 		variadic bool
 	)
 	desc := make(map[*getopt.Option]string)
+	argdesc := make(map[*getopt.Option]string)
 	// Convert arguments.
 	err := vals.Iterate(elemsv, func(v interface{}) bool {
 		elem, ok := v.(string)
@@ -87,6 +88,9 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 		if s, ok := getStringField("desc"); ok {
 			desc[opt] = s
 		}
+		if s, ok := getStringField("arg-desc"); ok {
+			argdesc[opt] = s
+		}
 		opts = append(opts, opt)
 		return true
 	})
@@ -117,14 +121,22 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 	putShortOpt := func(opt *getopt.Option) {
 		c := &complexCandidate{stem: "-" + string(opt.Short)}
 		if d, ok := desc[opt]; ok {
-			c.displaySuffix = " (" + d + ")"
+			if e, ok := argdesc[opt]; ok {
+				c.displaySuffix = " " + e + " (" + d + ")"
+			} else {
+				c.displaySuffix = " (" + d + ")"
+			}
 		}
 		out <- c
 	}
 	putLongOpt := func(opt *getopt.Option) {
 		c := &complexCandidate{stem: "--" + opt.Long}
 		if d, ok := desc[opt]; ok {
-			c.displaySuffix = " (" + d + ")"
+			if e, ok := argdesc[opt]; ok {
+				c.displaySuffix = " " + e + " (" + d + ")"
+			} else {
+				c.displaySuffix = " (" + d + ")"
+			}
 		}
 		out <- c
 	}
