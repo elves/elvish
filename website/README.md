@@ -1,11 +1,17 @@
-This directory contains source for Elvish's official website. It is the source
-of a static website. To generate the website you need the following tools.
+This directory contains source for Elvish's official website. They are
+converted to HTML with a custom toolchain with the following dependencies:
+
+*   GNU Make (any "reasonably modern" version should do).
 
 *   pandoc 2.2.1 (other versions in the 2.x series might also work).
 
-*   [genblog](https://github.com/xiaq/genblog).
+*   A Go toolchain, for building [genblog](https://github.com/xiaq/genblog)
+    and some custom preprocessors in the `tools` directory.
 
-*   A Go toolchain.
+The documents are written in GitHub-flavored markdown sprinkled with some HTML
+and custom macros. Most of them can be viewed directly in GitHub.
+
+# History
 
 These files used to live in a [separate
 repository](https://github.com/elves/elvish.io). However, because @xiaq did
