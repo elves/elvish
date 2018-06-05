@@ -7,13 +7,15 @@ default: gen
 %.html: %.md tools/macros tools/highlighter tools/md-to-html
 	./tools/md-to-html $< $@
 
-# For building tools/*
+# For building tools/*.
 %: %.go
 	go build -o $@ $<
 
+# Generates the website into the dst directory.
 gen: $(HTMLS)
 	genblog src dst
 
+# Installs or updates genblog.
 genblog:
 	cd $(GOPATH)/src/github.com/xiaq/genblog; \
 		git pull; \
@@ -21,6 +23,7 @@ genblog:
 		go get
 	genblog -print-default-css > assets/genblog.css
 
+# Copies the generated website into $(PUBLISH_DIR).
 publish: gen
 	rsync -aLv --delete ./dst/ $(PUBLISH_DIR)
 
