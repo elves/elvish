@@ -385,6 +385,75 @@ edit:insert:binding[Ctrl-X] = { edit:-dump-buf > $tty }
 ```
 
 
+## edit:complete-filename
+
+```elvish
+edit:complete-filename @args
+```
+
+Produces a list of filenames found in the directory of the last argument. All other arguments are ignored. If the last argument does not contain a path (either absolute or relative to the current directory), then the current directory is used. Relevant files are output as `edit:complex-candidate` objects.
+
+This function is the default handler for any commands without explicit handlers in `$edit:completion:arg-completer`. See [Argument Completer](#argument-completer).
+
+Example:
+
+```elvish-transcript
+~> edit:complete-filename ''
+▶ (edit:complex-candidate Applications &code-suffix=/ &display-suffix='' &style='01;34')
+▶ (edit:complex-candidate Books &code-suffix=/ &display-suffix='' &style='01;34')
+▶ (edit:complex-candidate Desktop &code-suffix=/ &display-suffix='' &style='01;34')
+▶ (edit:complex-candidate Docsafe &code-suffix=/ &display-suffix='' &style='01;34')
+▶ (edit:complex-candidate Documents &code-suffix=/ &display-suffix='' &style='01;34')
+...
+~> edit:complete-filename .elvish/
+▶ (edit:complex-candidate .elvish/aliases &code-suffix=/ &display-suffix='' &style='01;34')
+▶ (edit:complex-candidate .elvish/db &code-suffix=' ' &display-suffix='' &style='')
+▶ (edit:complex-candidate .elvish/epm-installed &code-suffix=' ' &display-suffix='' &style='')
+▶ (edit:complex-candidate .elvish/lib &code-suffix=/ &display-suffix='' &style='01;34')
+▶ (edit:complex-candidate .elvish/rc.elv &code-suffix=' ' &display-suffix='' &style='')
+```
+
+## edit:complete-getopt
+
+```elvish
+edit:complete-getopt $args $opts $handlers
+```
+
+Produces completions according to a specification of accepted command-line options (both short and long options are handled), positional handler functions for each command position, and the current arguments in the command line. The arguments are as follows:
+
+- `$args` is an array containing the current arguments in the command line (without the command itself). These are the arguments as passed to the  [Argument Completer](#argument-completer) function.
+- `$opts` is an array of maps, each one containing the definition of one possible command-line option. Matching options will be provided as completions when the last element of `$args` starts with a dash, but not otherwise. Each map can contain the following keys (at least one of `short` or `long` needs to be specified):
+  - `short` contains the one-letter short option, if any, without the dash.
+  - `long` contains the long option name, if any, without the initial two dashes.
+  - `arg-optional`, if set to `$true`, specifies that the option receives an optional argument.
+  - `arg-mandatory`, if set to `$true`, specifies that the option receives a mandatory argument. Only one of `arg-optional` or `arg-mandatory` can be set to `$true`.
+  - `desc` can be set to a human-readable description of the option which will be displayed in the completion menu.
+- `$handlers` is an array of functions, each one returning the possible completions for that position in the arguments. Each function receives as argument the last element of `$args`, and should return zero or more possible values for the completions at that point. The returned values can be plain strings or the output of `edit:complex-candidate`. If the last element of the list is the string `...`, then the last handler is reused for all following arguments.
+
+Example:
+
+```elvish-transcript
+~> for args [ [''] ['-'] ['-a' ''] [ arg1 '' ] [ arg1 arg2 '']] {
+     echo "args = "(to-string $args)
+     edit:complete-getopt $args [ [&short=a &long=all &desc="Show all"] ] [ [_]{ put first1 first2 } [_]{ put second1 second2 } ... ]
+   }
+args = ['']
+▶ first1
+▶ first2
+args = [-]
+▶ (edit:complex-candidate -a &code-suffix='' &display-suffix=' (Show all)' &style='')
+▶ (edit:complex-candidate --all &code-suffix='' &display-suffix=' (Show all)' &style='')
+args = [-a '']
+▶ first1
+▶ first2
+args = [arg1 '']
+▶ second1
+▶ second2
+args = [arg1 arg2 '']
+▶ second1
+▶ second2
+```
+
 ## edit:styled
 
 ```elvish

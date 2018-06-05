@@ -1439,6 +1439,69 @@ function**. Example:
 ```
 
 
+## styled
+
+```elvish
+styled $object $style-transformer...
+```
+
+Construct a styled text by applying the supplied transformers to the supplied
+object. `$object` can be either a string, a styled segment (see below), a styled
+text or an arbitrary concatenation of them. A `$style-transformer` is either:
+
+* The name of a builtin style transformer
+  * On of the attribute names `bold`, `dim`, `italic`, `underlined`, `blink` or
+    `inverse` for setting the corresponding attribute
+  * An attribute name prefixed by `no-` for unsetting the attribute
+  * An attribute name prefixed by `toggle-` for toggling the attribute between set
+    and unset
+  * One of the color names `black`, `red`, `green`, `yellow`, `blue`, `magenta`,
+    `cyan`, `lightgray`, `gray`, `lightred`, `lightgreen`, `lightyellow`,
+    `lightblue`, `lightmagenta`, `lightcyan` or `white` for setting the text color
+  * A color name prefixed by `bg-` to set the background color
+* A lambda that receives a styled segment as the only argument and returns a
+  single styled segment
+* A function with the same properties as the lambda (provided via the
+  `$transformer~` syntax)
+
+When a styled text is converted to a string the corresponding [ANSI SGR code](https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_.28Select_Graphic_Rendition.29_parameters)
+is built to render the style.
+
+A styled text is nothing more than a wrapper around a list of styled segments. They
+can be accessed by indexing into it.
+
+```elvish
+s = (styled abc red)(styled def green)
+put $s[0] $s[1]
+```
+
+
+## styled-segment
+
+```elvish
+styled-segment $object &fg-color=default &bg-color=default &bold=$false &dim=$false &italic=$false &underlined=$false &blink=$false &inverse=$false
+```
+
+Constructs a styled segment and is a helper function for styled transformers.
+`$object` can be a plain string, a styled segment or a concatenation thereof.
+Probably the only reason to use it is to build custom style transformers:
+
+```elvish
+fn my-awesome-style-transformer [seg]{ styled-segment $seg &bold=(not $seg[dim]) &dim=(not $seg[italic]) &italic=$seg[bold] }
+styled abc $my-awesome-style-transformer~
+```
+
+As just seen the properties of styled segments can be inspected by indexing into it.
+Valid indices are the same as the options to `styled-segment` plus `text`.
+
+```elvish
+s = (styled-segment abc &bold)
+put $s[text]
+put $s[fg-color]
+put $s[bold]
+```
+
+
 ## take
 
 ```elvish
