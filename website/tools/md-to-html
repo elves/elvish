@@ -1,0 +1,21 @@
+#!/bin/sh
+in=$1
+out=$2
+opts=
+
+has() {
+    head -n1 $in | grep "$@" >/dev/null
+}
+
+has toc && {
+    opts="$opts --toc --template=toc-and-body"
+}
+has number-sections && {
+    opts="$opts --number-sections"
+}
+
+mydir=$(dirname "$0")
+
+$mydir/highlighter < $1 |
+  $mydir/macros |
+  pandoc -f gfm --data-dir=$mydir/pandoc-data -o $2 $opts

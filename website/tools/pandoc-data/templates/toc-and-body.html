@@ -1,0 +1,25 @@
+<div class="toc">
+  <p>Table of Content: <a id="toc-toggle" href="">[Hide]</a></p>
+  <div id="toc-list">
+    $toc$
+  </div>
+  <script>
+  (function() {
+    var shown = true,
+        tocToggle = document.getElementById('toc-toggle'),
+        tocList = document.getElementById('toc-list');
+    tocToggle.onclick = function(ev) {
+      shown = !shown;
+      if (shown) {
+        tocToggle.innerText = "[Hide]";
+        tocList.className = "";
+      } else {
+        tocToggle.innerText = "[Show]";
+        tocList.className = "no-display";
+      }
+      ev.preventDefault();
+    };
+  })();
+  </script>
+</div>
+$body$

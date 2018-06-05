@@ -1,0 +1,111 @@
+#demo-window {
+  background-color: #f0ede2;
+  margin-bottom: 16px;
+  border-radius: 5px;
+  /* Graceful degrading: the demo window starts with a scrollbar, which gets
+   * hiden only when the JavaScript code finishes adding demo switchers. */
+  overflow: scroll;
+}
+
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+.animated-transition {
+  transition: all 300ms cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+#demo-container {
+  transform: translateX(0);
+  width: 500%;
+}
+
+.demo-wrapper {
+  width: 20%;
+  float: left;
+}
+
+/* Expanded view. */
+#demo-container.expanded {
+  width: 100%;
+}
+#demo-container.expanded .demo-wrapper {
+  width: 100%;
+}
+
+.demo:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.demo {
+  padding: 16px;
+}
+
+.demo-col {
+  width: 100%;
+  height: 100%;
+  float: left;
+}
+
+.demo-col .demo-ttyshot {
+  text-align: center;
+}
+
+.demo-col .demo-ttyshot .ttyshot {
+  text-align: left;
+}
+
+.demo-description {
+  margin: 16px 5% 0;
+}
+
+@media screen and (min-width: 1024px) {
+  .demo-col.left {
+    width: 60%;
+  }
+  .demo-col.right {
+    width: 40%;
+  }
+  .demo-description {
+    margin: 0 5%;
+  }
+  .animated-transition {
+    transition-duration: 400ms;
+  }
+}
+
+.demo-title {
+  font-size: 1.3em;
+}
+
+.demo-col p {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+ul#demo-switcher {
+  display: inline;
+  margin: 0;
+}
+
+ul#demo-switcher > li {
+  list-style: none;
+  display: inline-block;
+}
+
+ul#demo-switcher > li > a {
+  color: black;
+  padding: 4px 14px;
+}
+
+ul#demo-switcher > li > a.current , ul#demo-switcher > li > a.current:hover {
+  color: white;
+  background-color: black;
+}
+
+ul#demo-switcher > li > a:hover {
+  background-color: #ccc;
+  cursor: pointer;
+}

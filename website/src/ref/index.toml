@@ -1,0 +1,27 @@
+[[articles]]
+name = "philosophy"
+title = "The Philosophy"
+
+[[articles]]
+name = "language"
+title = "The Language"
+
+[[articles]]
+name = "builtin"
+title = "The Builtin Module"
+
+[[articles]]
+name = "edit"
+title = "The Editor Module (edit:)"
+
+[[articles]]
+name = "re"
+title = "The Regular Expression Module (re:)"
+
+[[articles]]
+name = "epm"
+title = "The Elvish Package Manager (epm:)"
+
+[[articles]]
+name = "bundled"
+title = "Bundled Modules"

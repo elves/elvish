@@ -1,0 +1,289 @@
+/*
+Copied from:  http://code.google.com/p/html5resetcss/
+
+html5doctor.com Reset Stylesheet
+v1.6.1
+Last Updated: 2010-09-17
+Author: Richard Clark - http: //richclarkdesign.com
+Twitter: @rich_clark
+*/
+html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p,
+blockquote, pre, abbr, address, cite, code, del, dfn, em, img, ins,
+kbd, q, samp, small, strong, sub, sup, var, b, i, dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, figcaption, figure, footer, header, hgroup,
+menu, nav, section, summary, time, mark, audio,
+video { margin: 0; padding: 0; border: 0; outline: 0;
+            font-size: 100%; vertical-align: baseline; background: transparent; }
+body { line-height: 1; }
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav,
+section { display: block; }
+nav ul { list-style: none; }
+blockquote, q { quotes: none; }
+blockquote:before, blockquote:after, q:before, q:after { content: ''; content: none; }
+a { margin: 0; padding: 0; font-size: 100%; vertical-align: baseline; background: transparent; }
+ins { background-color: #ff9; color: #000; text-decoration: none; }
+mark { background-color: #ff9; color: #000; font-style: italic; font-weight: bold; }
+del { text-decoration: line-through; }
+abbr[title], dfn[title] { border-bottom: 1px dotted; cursor: help; }
+table { border-collapse: collapse; border-spacing: 0; }
+hr { display: block; height: 1px; border: 0; border-top: 1px solid #cccccc; margin: 1em 0; padding: 0; }
+input, select { vertical-align: middle; }
+/* end HTML5 reset */
+/* Global styling. */
+
+html {
+  /* Prevent font scaling in landscape while allowing user zoom */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Microsoft Yahei", FZHei-B01, "WenQuanYi Micro Hei", SimHei;
+    font-size: 16px;
+    background-color: white;
+}
+
+/*
+#blog-title, h1, h2, h3 {
+    font-family: Georgia, Times, Serif, FZShuSong-Z01, SimSun;
+}
+*/
+
+/* Layout primitives. */
+
+#navbar-container {
+    top: 0;
+    width: 1280px;
+    max-width: 100%;
+    margin: auto;
+    color: white;
+    background-color: #1a1a1a;
+}
+
+.card {
+    background-color: white;
+}
+
+.card, #navbar {
+    margin: 0 auto;
+    max-width: 1024px;
+}
+
+.nav-link, .nav-link:visited {
+    color: black;
+    display: inline;
+    text-decoration: none;
+    line-height: 1.4em;
+}
+
+.clear {
+    clear: both;
+}
+
+img {
+    max-width: 100%;
+}
+
+a {
+    color: #6666ff;
+}
+
+/* Global header card. */
+
+#navbar {
+    padding-bottom: 16px;
+}
+
+#blog-title {
+    font-size: 2em;
+    color: white;
+    display: inline-block;
+    margin: 16px 2% 0 4%;
+}
+
+.card-splitter {
+    height: 1px;
+    width: 100%;
+    background-color: #667;
+}
+
+#category-list {
+    display: inline-block;
+    /* The top margin is used when the category list is not on the same line
+     * as the title. Otherwise it is not important. */
+    margin-top: 16px;
+    /* Used (together with margin-right of #blog-title) to separate category
+     * list and blog title when they are on the same line. Otherwise, used as
+     * spacing from the page edge. This needs to be the same as that of
+     * #blog-title to keep them left-aligned. */
+    margin-left: 2%;
+}
+
+#category-list > li {
+    list-style: none;
+    display: inline-block;
+    /* This margin is important for the correct spacing when the category list
+     * runs multiple lines. */
+    margin-top: 10px;
+}
+
+#category-list > li > .nav-link {
+    color: white;
+    position: relative;
+    top: -4px; /* Cancel padding-bottom to align with baseline. */
+    padding: 4px 10px 4px;
+}
+
+#category-list > li > .nav-link:hover {
+    background-color: #333;
+}
+
+#category-list > li.current > .nav-link {
+    color: black;
+    background-color: white;
+}
+
+/* Article content. */
+
+.timestamp {
+    margin-bottom: 0.6em;
+}
+
+.article-header {
+    padding: 2.4% 4% 1.6%;
+}
+
+.article-content {
+    padding: 4%;
+}
+
+.article p, .article ul, .article pre {
+    margin-bottom: 16px;
+}
+
+.article p {
+    line-height: 1.5;
+}
+
+.article li {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.article li > p {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.article pre {
+    padding: 1em;
+    line-height: 1.45;
+    overflow: auto;
+}
+
+.article p code {
+    padding: 0.2em 0;
+}
+
+.article p code::before, .article p code::after {
+    letter-spacing: -0.2em;
+    content: "\00a0";
+}
+
+code, pre {
+    font-family: Consolas, Menlo, "Bitstream Vera Sans Mono", "DejaVu Sans Mono", monospace;
+}
+
+.article code, .article pre {
+    background-color: #f0f0f0;
+    border-radius: 3px;
+}
+
+.article code {
+    font-size: 85%;
+}
+
+/* Use headers up to h2 should be used in .article-content */
+.article h1, .article h2 {
+    line-height: 1.25;
+}
+
+.article .article-header h1 {
+    font-size: 2em;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.article h1, .article h2 {
+    margin-top: 24px;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.article h1 {
+    font-size: 1.5em;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid #eee;
+}
+
+.article h2 {
+    font-size: 1.25em;
+}
+
+.article ul, .article ol {
+    margin-left: 1em;
+}
+
+/* Category content. */
+
+.category-prelude {
+    padding: 4% 5.8% 0;
+    margin-bottom: -20px;
+}
+
+.article-list {
+    padding: 4%;
+}
+
+.article-list > li {
+    list-style: square inside;
+    padding: 3px;
+    line-height: 1.4;
+}
+
+.article-list > li:hover {
+    background-color: #c0c0c0;
+}
+
+.article-list > li > .nav-link {
+    border-bottom: 1px solid black;
+}
+
+.article-timestamp {
+    float: right;
+    display: inline-block;
+    margin-left: 1em;
+}
+
+/* Utilities usable in articles. */
+
+hr {
+    clear: both;
+    border-color: #aaa;
+    text-align: center;
+}
+
+hr:after {
+    content: "❧";
+    text-shadow: 0px 0px 2px #667;
+    display: inline-block;
+    position: relative;
+    top: -0.5em;
+    padding: 0 0.25em;
+    font-size: 1.1em;
+    color: black;
+    background-color: white;
+}
+
+/* vi: se ts=4 sts=4 sw=4: */

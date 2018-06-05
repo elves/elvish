@@ -1,0 +1,15 @@
+~&gt; <span class="sgr-32">curl</span><span class="sgr-"> https://api.github.com/repos/elves/elvish/issues </span><span class="sgr-32">|</span>
+     <span class="sgr-32">from-json</span><span class="sgr-"> </span><span class="sgr-32">|</span><span class="sgr-"> </span><span class="sgr-32">each</span><span class="sgr-"> <span class="sgr-35">$explode~</span> </span><span class="sgr-32">|</span>
+     <span class="sgr-32">each</span><span class="sgr-"> </span><span class="sgr-1">[</span><span class="sgr-">issue</span><span class="sgr-1">]{</span><span class="sgr-"> </span><span class="sgr-32">echo</span><span class="sgr-"> </span><span class="sgr-35">$issue</span><span class="sgr-1">[</span><span class="sgr-">number</span><span class="sgr-1">]</span><span class="sgr-">: </span><span class="sgr-35">$issue</span><span class="sgr-1">[</span><span class="sgr-">title</span><span class="sgr-1">]</span><span class="sgr-"> </span><span class="sgr-1">}</span><span class="sgr-"> </span><span class="sgr-32">|</span>
+     <span class="sgr-32">head</span><span class="sgr-"> -n 11</span>
+366: Support searching file from elvish directly
+364: Ctrl-C in elvish kills Atom in background
+357: Asynchronous syntax highlighting
+356: In web backend, run commands with pty IO, not pipe
+354: Support multi-line prompts from byte output
+353: Completers should detect context in a top-down manner
+352: Quoted command names are highlighted randomly
+351: keep navigation mode open after command
+350: Raw mode requires two presses of ^V
+344: Elvish won't compile
+343: Possible to suppress job control messages?
