@@ -1,6 +1,6 @@
-curl -sL -o ~/bin/gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
-chmod +x ~/bin/gimme
-eval "$(gimme 1.9)"
+curl -sL -o gimme https://raw.githubusercontent.com/travis-ci/gimme/master/gimme
+chmod +x gimme
+eval "$(./gimme 1.9)"
 
 export GOPATH=$HOME/go
 mkdir -p $GOPATH/src/github.com/elves
