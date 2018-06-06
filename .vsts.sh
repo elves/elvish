@@ -3,6 +3,8 @@ chmod +x gimme
 eval "$(./gimme 1.9)"
 
 export GOPATH=$HOME/go
-mkdir -p $GOPATH/src/github.com/elves
-ln -s $PWD $GOPATH/src/github.com/elves/elvish
+SRCDIR=$GOPATH/src/github.com/elves/elvish
+mkdir -p $(dirname $SRCDIR)
+cp -r $PWD $SRCDIR
+cd $SRCDIR
 make test
