@@ -40,3 +40,18 @@ func TestRawFilterCandidates(t *testing.T) {
 
 	testRawFilterCandidates(t, tests)
 }
+
+func TestComplexCandidate(t *testing.T) {
+	setup := func(ev *eval.Evaler) {
+		ev.Builtin.AddNs("edit", eval.NewNs().AddBuiltinFn(
+			"edit:", "complex-candidate", makeComplexCandidate))
+	}
+	That := eval.That
+	eval.TestWithSetup(t, setup,
+		That("put  (edit:complex-candidate lorem &code-suffix=ipsum &display-suffix=dolor &style=red)[stem]").Puts("lorem"),
+		That("put  (edit:complex-candidate lorem &code-suffix=ipsum &display-suffix=dolor &style=red)[code-suffix]").Puts("ipsum"),
+		That("put  (edit:complex-candidate lorem &code-suffix=ipsum &display-suffix=dolor &style=red)[display-suffix]").Puts("dolor"),
+		That("put  (edit:complex-candidate lorem &code-suffix=ipsum &display-suffix=dolor &style=red)[style]").Puts("31"),
+		That("keys (edit:complex-candidate lorem &code-suffix=ipsum &display-suffix=dolor &style=red)").Puts("stem", "code-suffix", "display-suffix", "style"),
+	)
+}
