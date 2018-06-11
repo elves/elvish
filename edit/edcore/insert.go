@@ -30,14 +30,16 @@ func initCoreFns(ed *editor, ns eval.Ns) {
 		"kill-rune-left":       ed.killRuneLeft,
 		"kill-rune-right":      ed.killRuneRight,
 
-		"move-dot-left":       ed.moveDotLeft,
-		"move-dot-right":      ed.moveDotRight,
-		"move-dot-left-word":  ed.moveDotLeftWord,
-		"move-dot-right-word": ed.moveDotRightWord,
-		"move-dot-sol":        ed.moveDotSOL,
-		"move-dot-eol":        ed.moveDotEOL,
-		"move-dot-up":         ed.moveDotUp,
-		"move-dot-down":       ed.moveDotDown,
+		"move-dot-left":             ed.moveDotLeft,
+		"move-dot-right":            ed.moveDotRight,
+		"move-dot-left-word":        ed.moveDotLeftWord,
+		"move-dot-right-word":       ed.moveDotRightWord,
+		"move-dot-left-small-word":  ed.moveDotLeftSmallWord,
+		"move-dot-right-small-word": ed.moveDotRightSmallWord,
+		"move-dot-sol":              ed.moveDotSOL,
+		"move-dot-eol":              ed.moveDotEOL,
+		"move-dot-up":               ed.moveDotUp,
+		"move-dot-down":             ed.moveDotDown,
 
 		"insert-last-word": ed.insertLastWord,
 		"insert-key":       ed.insertKey,
@@ -210,26 +212,26 @@ func (ed *editor) moveDotRight() {
 	ed.dot += w
 }
 
-func (ed *editor) moveDotLeftWord() {
+func (ed *editor) moveDotLeftSepFunc(fn func(rune) bool) {
 	if ed.dot == 0 {
 		return
 	}
 	space := strings.LastIndexFunc(
-		strings.TrimRightFunc(ed.buffer[:ed.dot], unicode.IsSpace),
-		unicode.IsSpace) + 1
+		strings.TrimRightFunc(ed.buffer[:ed.dot], fn),
+		fn) + 1
 	ed.dot = space
 }
 
-func (ed *editor) moveDotRightWord() {
-	// Move to first space
-	p := strings.IndexFunc(ed.buffer[ed.dot:], unicode.IsSpace)
+func (ed *editor) moveDotRightSepFunc(fn func(rune) bool) {
+	// Move to first matching rune
+	p := strings.IndexFunc(ed.buffer[ed.dot:], fn)
 	if p == -1 {
 		ed.dot = len(ed.buffer)
 		return
 	}
 	ed.dot += p
-	// Move to first nonspace
-	p = strings.IndexFunc(ed.buffer[ed.dot:], notSpace)
+	// Move to first non-matching rune
+	p = strings.IndexFunc(ed.buffer[ed.dot:], func(r rune) bool { return !fn(r) })
 	if p == -1 {
 		ed.dot = len(ed.buffer)
 		return
@@ -237,8 +239,20 @@ func (ed *editor) moveDotRightWord() {
 	ed.dot += p
 }
 
-func notSpace(r rune) bool {
-	return !unicode.IsSpace(r)
+func (ed *editor) moveDotLeftWord() {
+	ed.moveDotLeftSepFunc(unicode.IsSpace)
+}
+
+func (ed *editor) moveDotRightWord() {
+	ed.moveDotRightSepFunc(unicode.IsSpace)
+}
+
+func (ed *editor) moveDotLeftSmallWord() {
+	ed.moveDotLeftSepFunc(func(r rune) bool { return !isAlnum(r) })
+}
+
+func (ed *editor) moveDotRightSmallWord() {
+	ed.moveDotRightSepFunc(func(r rune) bool { return !isAlnum(r) })
 }
 
 func (ed *editor) moveDotSOL() {
