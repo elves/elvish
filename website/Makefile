@@ -15,15 +15,16 @@ default: gen
 	go build -o $@ $<
 
 # Generates the website into the dst directory.
-gen: $(HTMLS)
+gen: $(HTMLS) maybe-genblog
 	genblog src dst
 
-# Installs or updates genblog.
+# Installs genblog only if not found.
+maybe-genblog:
+	which genblog || make genblog
+
+# Installs latest genblog.
 genblog:
-	cd $(GOPATH)/src/github.com/xiaq/genblog; \
-		git pull; \
-		go generate; \
-		go get
+	go get -u github.com/xiaq/genblog
 	genblog -print-default-css > assets/genblog.css
 
 # Copies the generated website into $(PUBLISH_DIR).
@@ -33,5 +34,5 @@ publish: gen
 clean:
 	rm -f $(HTMLS) $(TOOL_BINARIES)
 
-.PHONY: default gen genblog publish clean
+.PHONY: default gen maybe-genblog genblog publish clean
 .SECONDARY: $(TOOL_BINARIES)
