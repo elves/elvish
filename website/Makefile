@@ -1,14 +1,17 @@
+PUBLISH_DIR := ./published # ul.elvish.io:elvish.io/published
+
 MDS := $(wildcard src/*.md src/*/*.md)
 HTMLS := $(MDS:.md=.html)
-PUBLISH_DIR := ../published/ # ul.elvish.io:elvish.io/published
+
+TOOL_SOURCES := $(wildcard *.go)
+TOOL_BINARIES := $(TOOL_SOURCES:.go=.tool)
 
 default: gen
 
-%.html: %.md tools/macros tools/highlighter tools/md-to-html
-	./tools/md-to-html $< $@
+%.html: %.md $(TOOL_BINARIES) md-to-html
+	./md-to-html $< $@
 
-# For building tools/*.
-%: %.go
+%.tool: %.go
 	go build -o $@ $<
 
 # Generates the website into the dst directory.
@@ -25,9 +28,10 @@ genblog:
 
 # Copies the generated website into $(PUBLISH_DIR).
 publish: gen
-	rsync -aLv --delete ./dst/ $(PUBLISH_DIR)
+	rsync -aLv --delete ./dst/ $(PUBLISH_DIR)/
 
 clean:
-	rm $(HTMLS)
+	rm -f $(HTMLS) $(TOOL_BINARIES)
 
 .PHONY: default gen genblog publish clean
+.SECONDARY: $(TOOL_BINARIES)
