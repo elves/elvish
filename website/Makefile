@@ -17,6 +17,8 @@ default: gen
 # Generates the website into the dst directory.
 gen: $(HTMLS) maybe-genblog
 	genblog src dst
+	ln -sf `pwd`/assets dst/
+	ln -sf `pwd`/favicons/* dst/
 
 # Installs genblog only if not found.
 maybe-genblog:
