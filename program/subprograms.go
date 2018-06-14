@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/elves/elvish/build"
+	"github.com/elves/elvish/buildinfo"
 	daemonsvc "github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/program/daemon"
 )
@@ -33,7 +33,7 @@ func (s ShowCorrectUsage) Main([]string) int {
 type ShowVersion struct{}
 
 func (ShowVersion) Main([]string) int {
-	fmt.Println(build.Version)
+	fmt.Println(buildinfo.Version)
 	fmt.Fprintln(os.Stderr, "-version is deprecated and will be removed in 0.12. Use -buildinfo instead.")
 	return 0
 }
@@ -45,11 +45,13 @@ type ShowBuildInfo struct {
 
 func (info ShowBuildInfo) Main([]string) int {
 	if info.JSON {
-		fmt.Printf("{\"version\": %s, \"builder\": %s}\n",
-			quoteJSON(build.Version), quoteJSON(build.Builder))
+		fmt.Printf(`{"version": %s, "goroot": %s, "gopath": %s}`+"\n",
+			quoteJSON(buildinfo.Version), quoteJSON(buildinfo.GoRoot),
+			quoteJSON(buildinfo.GoPath))
 	} else {
-		fmt.Println("version:", build.Version)
-		fmt.Println("builder:", build.Builder)
+		fmt.Println("Version:", buildinfo.Version)
+		fmt.Println("GOROOT at build time:", buildinfo.GoRoot)
+		fmt.Println("GOPATH at build time:", buildinfo.GoPath)
 	}
 	return 0
 }

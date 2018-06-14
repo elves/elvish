@@ -9,7 +9,9 @@ GOVERALLS := github.com/mattn/goveralls
 default: test get
 
 get:
-	go get -ldflags "-X github.com/elves/elvish/build.Version=$(VERSION) -X github.com/elves/elvish/build.Builder=$(shell id -un)@$(shell hostname)" .
+	go get -ldflags "-X github.com/elves/elvish/buildinfo.Version=$(VERSION) \
+		-X github.com/elves/elvish/buildinfo.GoRoot=$(shell go env GOROOT) \
+		-X github.com/elves/elvish/buildinfo.GoPath=$(shell go env GOPATH)" .
 
 buildall:
 	./buildall.sh
