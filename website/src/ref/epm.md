@@ -106,7 +106,7 @@ Pretty print the available metadata of the given package.
 ## uninstall
 
 ```elvish
-epm:install $pkg...
+epm:uninstall $pkg...
 ```
 
 Uninstall named packages.
