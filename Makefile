@@ -2,7 +2,7 @@ PKG_BASE := github.com/elves/elvish
 PKGS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|' | grep -v '^./\(vendor\|website\)')
 PKG_COVERS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|' | grep -v '^\./\(vendor\|website\)' | grep -v '^\.$$' | sed 's/^\./cover/' | sed 's/$$/.cover/')
 COVER_MODE := set
-VERSION := $(shell git describe --tags --always)
+VERSION := $(shell git describe --tags --always --dirty=-dirty)
 
 GOVERALLS := github.com/mattn/goveralls
 

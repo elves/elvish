@@ -2,8 +2,10 @@
 
 IFS=
 
+VERSION=`git describe --tags --always --dirty=-dirty`
+
 : ${BUILDER:=`id -un`@`hostname`}
-: ${VERSION:=`git describe --tags --always`}
+: ${VERSION_SUFFIX:=$VERSION}
 : ${BIN_DIR:=./bin}
 
 export GOOS GOARCH
@@ -11,7 +13,7 @@ export GOOS GOARCH
 buildone() {
     GOOS=$1
     GOARCH=$2
-    STEM=elvish-$GOOS-$GOARCH-$VERSION
+    STEM=elvish-$GOOS-$GOARCH-$VERSION_SUFFIX
     if test $GOOS = windows; then
         BIN=$STEM.exe
         ARCHIVE=$STEM.zip
