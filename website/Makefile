@@ -1,4 +1,4 @@
-PUBLISH_DIR := ./published # ul.elvish.io:elvish.io/published
+PUBLISH_DIR := ./publish
 
 MDS := $(wildcard src/*.md src/*/*.md)
 HTMLS := $(MDS:.md=.html)
