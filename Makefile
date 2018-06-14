@@ -11,6 +11,9 @@ default: test get
 get:
 	go get -ldflags "-X github.com/elves/elvish/build.Version=$(VERSION) -X github.com/elves/elvish/build.Builder=$(shell id -un)@$(shell hostname)" .
 
+buildall:
+	./buildall.sh
+
 generate:
 	go generate ./...
 
@@ -68,4 +71,4 @@ upload-bin:
 travis: testmain upload-codecov-travis upload-coveralls-travis upload-bin
 appveyor: testmain upload-codecov-appveyor
 
-.PHONY: default get generate test testmain upload-codecov-travis upload-coveralls-travis upload-codecov-appveyor upload-coveralls-appveyor upload-bin travis
+.PHONY: default get buildall generate test testmain upload-codecov-travis upload-coveralls-travis upload-codecov-appveyor upload-coveralls-appveyor upload-bin travis
