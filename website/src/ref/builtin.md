@@ -1684,9 +1684,8 @@ Compilation error: variable $foo not found
 This is because the reading of the file is done in the evaluation phase, while
 the check for variables happens at the compilation phase (before evaluation).
 So the compiler has no evidence showing that `$foo` is actually valid, and
-will complain. (See
-[here](https://elvish.io/learn/unique-semantics.html#execution-phases) for a
-more detailed description of execution phases.)
+will complain. (See [here](/learn/unique-semantics.html#execution-phases) for
+a more detailed description of execution phases.)
 
 To work around this, you can add a forward declaration for `$foo`:
 

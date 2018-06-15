@@ -2,7 +2,7 @@ title = "Elvish: Friendly and Expressive Shell"
 author = "Qi Xiao"
 feedPosts = 10
 template = "template.html"
-rootURL = "https://elvish.io"
+rootURL = "https://elv.sh"
 
 [index]
 name = "home"

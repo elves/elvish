@@ -400,7 +400,7 @@ release.
 ## edit:-dump-buf
 
 Dump the content of onscreen buffer as HTML. This command is used to generate
-"ttyshots" on [elvish.io](https://elvish.io).
+"ttyshots" on [the homepage](/).
 
 Example:
 

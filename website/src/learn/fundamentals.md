@@ -95,7 +95,7 @@ Elvish entirely from the command line: you can use `wget` to download files,
 are external commands:
 
 ```elvish-transcript
-~> wget https://dl.elvish.io/elvish-linux.tar.gz
+~> wget https://dl.elv.sh/elvish-linux-amd64-HEAD.tar.gz
 ... omit ...
 elvish-linux.tar.gz  100%[======================>]   4.91M  10.9MB/s    in 0.4s
 ~> shasum -a 256 elvish-linux.tar.gz
