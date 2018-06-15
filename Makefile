@@ -61,16 +61,7 @@ upload-coveralls-appveyor: cover/all
 		&& goveralls -coverprofile $< -service=appveyor-ci \
 		|| echo "not sending to coveralls.io"
 
-upload-bin:
-	test "$(TRAVIS_OS_NAME)" = linux \
-		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
-		&& test "$(TRAVIS_PULL_REQUEST)" = false \
-		&& test -n "$(TRAVIS_TAG)" -o "$(TRAVIS_BRANCH)" = master \
-		&& go build -o ./elvish \
-		&& ./elvish build-and-upload.elv \
-		|| echo "not build-and-uploading"
-
-travis: testmain upload-codecov-travis upload-coveralls-travis upload-bin
+travis: testmain upload-codecov-travis upload-coveralls-travis
 appveyor: testmain upload-codecov-appveyor
 
-.PHONY: default get buildall generate test testmain upload-codecov-travis upload-coveralls-travis upload-codecov-appveyor upload-coveralls-appveyor upload-bin travis
+.PHONY: default get buildall generate test testmain upload-codecov-travis upload-coveralls-travis upload-codecov-appveyor upload-coveralls-appveyor travis
