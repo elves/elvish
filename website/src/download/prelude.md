@@ -1,21 +1,12 @@
-Prebuilt binaries for Elvish are available for some common platforms. The
-binaries are statically linked and don't have any runtime dependencies. If
-your platform is not listed, you may build Elvish from
-[source](https://github.com/elves/elvish).
+**Elvish is pre-release software**.
 
-The download links might be too slow for users in China. Try using the
-[mirror](https://mirrors.tuna.tsinghua.edu.cn/elvish) if that happens.
-
-Please beware that **Elvish does not have a 1.0 release yet**. Before that, the
-shell can be buggy, and might change dramatically from release to release.
-However, the primary developer does use the HEAD version of Elvish on all his
-personal and work computers, so most functions should work properly (and are
-fixed quickly when they don't).
+All binaries are statically linked.
 
 <style>
   table {
     border-collapse: collpase;
-    width: 100%
+    width: 100%;
+    margin-bottom: 16px;
   }
   td, th {
     border: 1px solid #aaa;
@@ -28,13 +19,11 @@ fixed quickly when they don't).
 </style>
 
 <table>
-  <colgroup span="4">
-  <!--
-    <col width="34%"></col>
-    <col width="22%"></col>
-    <col width="22%"></col>
-    <col width="22%"></col>
-    -->
+  <colgroup>
+    <col style="width:34%">
+    <col style="width:22%">
+    <col style="width:22%">
+    <col style="width:22%">
   </colgroup>
   <tr>
     <th>Version</th>
@@ -73,6 +62,29 @@ fixed quickly when they don't).
       $dl amd64 elvish-windows-amd64-0.11.zip
       $dl 386 elvish-windows-386-0.11.zip
     </td>
+  </tr>
+</table>
+
+For users in China, the [mirror](https://mirrors.tuna.tsinghua.edu.cn/elvish)
+hosted by TUNA may be faster.
+
+If your environment is not listed above, you may still be able to build Elvish
+from [source](https://github.com/elves/elvish).
+
+Historical versions:
+
+<table>
+  <colgroup>
+    <col style="width:34%">
+    <col style="width:22%">
+    <col style="width:22%">
+    <col style="width:22%">
+  </colgroup>
+  <tr>
+    <th>Version</th>
+    <th>Linux</th>
+    <th>macOS</th>
+    <th>Windows</th>
   </tr>
   <tr>
     <td>0.10.1 (<a href="/blog/0.10-release-notes.html">Release Note</a>)</td>
@@ -176,13 +188,12 @@ fixed quickly when they don't).
   </tr>
 </table>
 
+
 # OS-Specific Packages
 
-## RPM Package
+## Fedora
 
-RPM Package for Fedora is available in [FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository).
-
-Instructions:
+RPM Package for Fedora is available from [the FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository):
 
 ```elvish
 # Add FZUG repo
@@ -191,16 +202,14 @@ dnf config-manager --add-repo=http://repo.fdzh.org/FZUG/FZUG.repo
 dnf install elvish
 ```
 
-## DEB Package
+## Debian / Ubuntu
 
-Users of [Ubuntu](http://packages.ubuntu.com/elvish)(>= 17.10) and
-[Debian](https://packages.debian.org/elvish)(>= 10) can install Elvish from
-official repository. You can just run `sudo apt install elvish` to install.
-(Note: This is likely to not give you the latest version.)
+Elvish is packaged by [Debian](https://packages.debian.org/elvish) since
+buster and by [Ubuntu](http://packages.ubuntu.com/elvish) since 17.10.
 
-If you want to keep updated to the latest version, or are using older
-distributions or other derivatives, you can always install from
-[PPA](https://launchpad.net/~zhsj/+archive/ubuntu/elvish).
+However, packages in official repositories are likely outdated. You can
+install the latest release from
+[PPA](https://launchpad.net/~zhsj/+archive/ubuntu/elvish):
 
 ```elvish
 # Add Elvish PPA repo
@@ -216,14 +225,13 @@ sudo apt-get update
 sudo apt-get install elvish
 ```
 
-(This is a script for bash or zsh. If you are running from Elvish, replace the
-trailing backslash `\` with a backquote `` ` ``.)
+## macOS (Homebrew)
 
-## Homebrew Package
-
-Users of [Homebrew](http://brew.sh) can build Elvish with:
+Elvish is packaged in Homebrew:
 
 ```elvish
-# Remove --HEAD for latest release
+# Install latest release
+brew install elvish
+# Or install HEAD:
 brew install --HEAD elvish
 ```
