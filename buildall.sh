@@ -28,11 +28,15 @@ buildone() {
          -X github.com/elves/elvish/buildinfo.GoRoot=`go env GOROOT` \
          -X github.com/elves/elvish/buildinfo.GoPath=`go env GOPATH`"
 
+    (
+    cd $BIN_DIR
     if test $GOOS = windows; then
-        zip $BIN_DIR/$ARCHIVE $BIN_DIR/$BIN
+        zip $ARCHIVE $BIN
     else
-        tar cfz $BIN_DIR/$ARCHIVE $BIN_DIR/$BIN
+        tar cfz $ARCHIVE $BIN
     fi
+    )
+
     echo "Built $BIN and archived $ARCHIVE"
 }
 
