@@ -75,6 +75,12 @@ func expandDl(line string) string {
 	if i < 0 {
 		return line
 	}
-	name := line[i+len(dl):]
-	return line[:i] + fmt.Sprintf(`<a href="https://dl.elv.sh/%s">%s</a>`, name, name)
+	fields := strings.SplitN(line[i+len(dl):], " ", 2)
+	name := fields[0]
+	url := name
+	if len(fields) == 2 {
+		url = fields[1]
+	}
+	return line[:i] + fmt.Sprintf(
+		`<a href="https://dl.elv.sh/%s">%s</a>`, url, name)
 }
