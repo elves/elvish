@@ -37,97 +37,137 @@ fixed quickly when they don't).
   <tr>
     <td>HEAD</td>
     <td>
-      <a href="https://dl.elv.sh/elvish-linux-amd64-HEAD.tar.gz">elvish-linux-amd64.tar.gz</a>
+      $dl elvish-linux-amd64-HEAD.tar.gz
       <br>
-      <a href="https://dl.elv.sh/elvish-linux-386-HEAD.tar.gz">elvish-linux-386.tar.gz</a>
+      $dl elvish-linux-386-HEAD.tar.gz
       <br>
-      <a href="https://dl.elv.sh/elvish-linux-arm64-HEAD.tar.gz">elvish-linux-arm64.tar.gz</a>
+      $dl elvish-linux-arm64-HEAD.tar.gz
     </td>
     <td>
-      <a href="https://dl.elv.sh/elvish-darwin-amd64-HEAD.tar.gz">elvish-darwin-amd64.tar.gz</a>
+      $dl elvish-darwin-amd64.tar.gz
     </td>
     <td>
-      <a href="https://dl.elv.sh/elvish-windows-amd64-HEAD.zip">elvish-windows-amd64.zip</a>
+      $dl elvish-windows-amd64.zip
       <br>
-      <a href="https://dl.elv.sh/elvish-windows-386-HEAD.zip">elvish-windows-386.zip</a>
+      $dl elvish-windows-386.zip
     </td>
   </tr>
   <tr>
     <td>0.11</td>
     <td>
-      <a href="https://dl.elv.sh/elvish-linux-amd64-0.11.tar.gz">elvish-linux-amd64-0.11.tar.gz</a>
+      $dl elvish-linux-amd64-0.11.tar.gz
       <br>
-      <a href="https://dl.elv.sh/elvish-linux-386-0.11.tar.gz">elvish-linux-386-0.11.tar.gz</a>
+      $dl elvish-linux-386-0.11.tar.gz
       <br>
-      <a href="https://dl.elv.sh/elvish-linux-arm64-0.11.tar.gz">elvish-linux-arm64-0.11.tar.gz</a>
+      $dl elvish-linux-arm64-0.11.tar.gz
     </td>
     <td>
-      <a href="https://dl.elv.sh/elvish-darwin-amd64-0.11.tar.gz">elvish-darwin-amd64-0.11.tar.gz</a>
+      $dl elvish-darwin-amd64-0.11.tar.gz
     </td>
     <td>
-      <a href="https://dl.elv.sh/elvish-windows-amd64-0.11.zip">elvish-windows-amd64-0.11.zip</a>
+      $dl elvish-windows-amd64-0.11.zip
       <br>
-      <a href="https://dl.elv.sh/elvish-windows-386-0.11.zip">elvish-windows-386-0.11.zip</a>
+      $dl elvish-windows-386-0.11.zip
     </td>
   </tr>
   <tr>
     <td>0.10.1 (<a href="/blog/0.10-release-notes.html">Release Note</a>)</td>
-    <td><a href="https://dl.elv.sh/elvish-0.10.1-linux.tar.gz">elvish-0.10.1-linux.tar.gz</a></td>
-    <td><a href="https://dl.elv.sh/elvish-0.10.1-osx.tar.gz">elvish-0.10.1-osx.tar.gz</a></td>
+    <td>
+      $dl elvish-0.10.1-linux.tar.gz
+    </td>
+    <td>
+      $dl elvish-0.10.1-osx.tar.gz
+    </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.9 (<a href="/blog/0.9-release-notes.html">Release Note</a>)</td>
-    <td><a href="https://dl.elv.sh/elvish-0.9-linux.tar.gz">elvish-0.9-linux.tar.gz</a></td>
-    <td><a href="https://dl.elv.sh/elvish-0.9-osx.tar.gz">elvish-0.9-osx.tar.gz</a></td>
+    <td>
+      $dl elvish-0.9-linux.tar.gz
+    </td>
+    <td>
+      $dl elvish-0.9-osx.tar.gz
+    </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.8 (<a href="https://github.com/elves/elvish/releases/tag/0.8">Release Note</a>)</td>
-    <td><a href="https://dl.elv.sh/elvish-0.8-linux.tar.gz">elvish-0.8-linux.tar.gz</a></td>
-    <td><a href="https://dl.elv.sh/elvish-0.8-osx.tar.gz">elvish-0.8-osx.tar.gz</a></td>
+    <td>
+      $dl elvish-0.8-linux.tar.gz
+    </td>
+    <td>
+      $dl elvish-0.8-osx.tar.gz
+    </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.7 (<a href="https://github.com/elves/elvish/releases/tag/0.7">Release Note</a>)</td>
-    <td><a href="https://dl.elv.sh/elvish-0.7-linux.tar.gz">elvish-0.7-linux.tar.gz</a></td>
-    <td><a href="https://dl.elv.sh/elvish-0.7-osx.tar.gz">elvish-0.7-osx.tar.gz</a></td>
+    <td>
+      $dl elvish-0.7-linux.tar.gz
+    </td>
+    <td>
+      $dl elvish-0.7-osx.tar.gz
+    </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.6 (<a href="https://github.com/elves/elvish/releases/tag/0.6">Release Note</a>)</td>
-    <td><a href="https://dl.elv.sh/elvish-0.6-linux.tar.gz">elvish-0.6-linux.tar.gz</a></td>
-    <td><a href="https://dl.elv.sh/elvish-0.6-osx.tar.gz">elvish-0.6-osx.tar.gz</a></td>
+    <td>
+      $dl elvish-0.6-linux.tar.gz
+    </td>
+    <td>
+      $dl elvish-0.6-osx.tar.gz
+    </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.5 (<a href="https://github.com/elves/elvish/releases/tag/0.5">Release Note</a>)</td>
-    <td><a href="https://dl.elv.sh/elvish-0.5-linux.tar.gz">elvish-0.5-linux.tar.gz</a></td>
-    <td><a href="https://dl.elv.sh/elvish-0.5-osx.tar.gz">elvish-0.5-osx.tar.gz</a></td>
+    <td>
+    $dl elvish-0.5-linux.tar.gz
+    </td>
+    <td>
+      $dl elvish-0.5-osx.tar.gz
+    </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.4</td>
-    <td><a href="https://dl.elv.sh/elvish-0.4-linux.tar.gz">elvish-0.4-linux.tar.gz</a></td>
-    <td><a href="https://dl.elv.sh/elvish-0.4-osx.tar.gz">elvish-0.4-osx.tar.gz</a></td>
+    <td>
+      $dl elvish-0.4-linux.tar.gz
+    </td>
+    <td>
+      $dl elvish-0.4-osx.tar.gz
+    </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.3</td>
-    <td><a href="https://dl.elv.sh/elvish-0.3-linux.tar.gz">elvish-0.3-linux.tar.gz</a></td>
-    <td><a href="https://dl.elv.sh/elvish-0.3-osx.tar.gz">elvish-0.3-osx.tar.gz</a></td>
+    <td>
+      $dl elvish-0.3-linux.tar.gz
+    </td>
+    <td>
+      $dl elvish-0.3-osx.tar.gz
+    </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.2</td>
-    <td><a href="https://dl.elv.sh/elvish-0.2-linux.tar.gz">elvish-0.2-linux.tar.gz</a></td>
-    <td><a href="https://dl.elv.sh/elvish-0.2-osx.tar.gz">elvish-0.2-osx.tar.gz</a></td>
+    <td>
+      $dl elvish-0.2-linux.tar.gz
+    </td>
+    <td>
+      $dl elvish-0.2-osx.tar.gz
+    </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.1</td>
-    <td><a href="https://dl.elv.sh/elvish-0.1-linux.tar.gz">elvish-0.1-linux.tar.gz</a></td>
-    <td><a href="https://dl.elv.sh/elvish-0.1-osx.tar.gz">elvish-0.1-osx.tar.gz</a></td>
+    <td>
+      $dl elvish-0.1-linux.tar.gz
+    </td>
+    <td>
+      $dl elvish-0.1-osx.tar.gz
+    </td>
     <td>N/A</td>
   </tr>
 </table>

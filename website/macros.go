@@ -14,6 +14,7 @@ import (
 const (
 	ttyshot = "$ttyshot "
 	cf      = "$cf "
+	dl      = "$dl "
 )
 
 func main() {
@@ -22,6 +23,7 @@ func main() {
 		line := scanner.Text()
 		line = expandTtyshot(line)
 		line = expandCf(line)
+		line = expandDl(line)
 		fmt.Println(line)
 	}
 }
@@ -66,4 +68,13 @@ func expandCf(line string) string {
 	}
 	buf.WriteString(".")
 	return buf.String()
+}
+
+func expandDl(line string) string {
+	i := strings.Index(line, dl)
+	if i < 0 {
+		return line
+	}
+	name := line[i+len(dl):]
+	return line[:i] + fmt.Sprintf(`<a href="https://dl.elv.sh/%s">%s</a>`, name, name)
 }
