@@ -1,6 +1,13 @@
-**Elvish is pre-release software**.
+Prebuilt, statically linked binaries for some common platforms are provided
+below.
+If your environment is not listed above, you may still be able to build Elvish
+from [source](https://github.com/elves/elvish).
+For users in China, the
+[mirror](https://mirrors.tuna.tsinghua.edu.cn/elvish) hosted by TUNA may be
+faster.
 
-All binaries are statically linked.
+Note that Elvish is **pre-release software**. It can be unstable, and does not
+maintain backward compatibility from version to version.
 
 <style>
   table {
@@ -65,13 +72,8 @@ All binaries are statically linked.
   </tr>
 </table>
 
-For users in China, the [mirror](https://mirrors.tuna.tsinghua.edu.cn/elvish)
-hosted by TUNA may be faster.
 
-If your environment is not listed above, you may still be able to build Elvish
-from [source](https://github.com/elves/elvish).
-
-Historical versions:
+Old versions:
 
 <table>
   <colgroup>
@@ -193,7 +195,7 @@ Historical versions:
 
 ## Fedora
 
-RPM Package for Fedora is available from [the FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository):
+RPM packages are available from [the FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository):
 
 ```elvish
 # Add FZUG repo
