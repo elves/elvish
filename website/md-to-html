@@ -18,4 +18,4 @@ mydir=$(dirname "$0")
 
 $mydir/highlighter.tool < $1 |
   $mydir/macros.tool |
-  pandoc -f gfm --data-dir=$mydir/pandoc-data -o $2 $opts
+  pandoc -f gfm+smart --data-dir=$mydir/pandoc-data -o $2 $opts
