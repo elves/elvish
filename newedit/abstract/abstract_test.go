@@ -6,15 +6,16 @@ import (
 	"testing"
 )
 
-func TestRead_returnsReturnValueOfHandler(t *testing.T) {
-	ed := NewEditor(inputOf("^D"), quitOn("^D", "buffer"))
+func TestRead_returnsReturnValueOfHandleCb(t *testing.T) {
+	handleCbRet := "lorem ipsum"
+	ed := NewEditor(inputOf("^D"), quitOn("^D", handleCbRet))
 	buf, _ := ed.Read()
-	if buf != "buffer" {
-		t.Errorf("Read returns %v, want buffer", buf)
+	if buf != handleCbRet {
+		t.Errorf("Read returns %v, want %v", buf, handleCbRet)
 	}
 }
 
-func TestRead_callsSetupAndRestore(t *testing.T) {
+func TestRead_callsSetupCbAndRestoreCbOnce(t *testing.T) {
 	ed := NewEditor(inputOf("^D"), quitOn("^D", ""))
 
 	setupCalled, restoreCalled := 0, 0
@@ -25,24 +26,24 @@ func TestRead_callsSetupAndRestore(t *testing.T) {
 
 	_, _ = ed.Read()
 	if setupCalled != 1 {
-		t.Errorf("setup called %d times, expect once", setupCalled)
+		t.Errorf("setup called %d times, want once", setupCalled)
 	}
 	if restoreCalled != 1 {
-		t.Errorf("restore called %d times, expect once", restoreCalled)
+		t.Errorf("restore called %d times, want once", restoreCalled)
 	}
 }
 
-func TestRead_returnsErrorFromSetuper(t *testing.T) {
+func TestRead_returnsErrorFromSetupCb(t *testing.T) {
 	ed := NewEditor(inputOf("^D"), quitOn("^D", ""))
 	ed.SetupCb(badSetuper)
 
 	_, err := ed.Read()
-	if err != errBadSetuper {
-		t.Errorf("Read returned with error %v, expect errBadSetuper", err)
+	if err != errSetupCb {
+		t.Errorf("Read returned with error %v, want errSetupCb", err)
 	}
 }
 
-func TestRead_doesntCallInputWhenSetupErrors(t *testing.T) {
+func TestRead_doesntCallInputWhenSetupCbErrors(t *testing.T) {
 	inputCalled := false
 	input := func() (<-chan Event, func()) {
 		inputCalled = true
@@ -79,17 +80,19 @@ func TestRead_passInputEventsToHandler(t *testing.T) {
 }
 
 func TestRead_callsDrawWhenRedrawRequestedBeforeRead(t *testing.T) {
-	testRead_callsDrawWhenRedrawRequestedBeforeRead(t, true)
-	testRead_callsDrawWhenRedrawRequestedBeforeRead(t, false)
+	testRead_callsDrawWhenRedrawRequestedBeforeRead(t, true, FullRedraw)
+	testRead_callsDrawWhenRedrawRequestedBeforeRead(t, false, 0)
 }
 
-func testRead_callsDrawWhenRedrawRequestedBeforeRead(t *testing.T, arg bool) {
-	var drawerGotArg RedrawFlag
+func testRead_callsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wantRedrawFlag RedrawFlag) {
+	t.Helper()
+
+	var gotRedrawFlag RedrawFlag
 	drawSeq := 0
 	doneCh := make(chan struct{})
-	drawer := func(arg RedrawFlag) {
+	drawer := func(full RedrawFlag) {
 		if drawSeq == 0 {
-			drawerGotArg = arg
+			gotRedrawFlag = full
 			close(doneCh)
 		}
 		drawSeq++
@@ -97,10 +100,10 @@ func testRead_callsDrawWhenRedrawRequestedBeforeRead(t *testing.T, arg bool) {
 
 	ed := NewEditor(inputAfter(doneCh, "^D"), quitOn("^D", ""))
 	ed.RedrawCb(drawer)
-	ed.Redraw(arg)
+	ed.Redraw(full)
 	_, _ = ed.Read()
-	if drawerGotArg != FullRedraw {
-		t.Errorf("Drawer got args %v, expect FullRedraw", drawerGotArg)
+	if gotRedrawFlag != wantRedrawFlag {
+		t.Errorf("Drawer got flag %v, want %v", gotRedrawFlag, wantRedrawFlag)
 	}
 }
 
@@ -109,7 +112,9 @@ func TestRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T) {
 	testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t, false, 0)
 }
 
-func testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool, wantRedrawrFlag RedrawFlag) {
+func testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool, wantRedrawFlag RedrawFlag) {
+	t.Helper()
+
 	var gotRedrawFlag RedrawFlag
 	drawSeq := 0
 	firstDrawCalledCh := make(chan struct{})
@@ -131,17 +136,16 @@ func testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool
 		ed.Redraw(full)
 	}()
 	_, _ = ed.Read()
-	if gotRedrawFlag != wantRedrawrFlag {
-		t.Errorf("Drawer got args %v, want %v instead",
-			gotRedrawFlag, wantRedrawrFlag)
+	if gotRedrawFlag != wantRedrawFlag {
+		t.Errorf("Drawer got flag %v, want %v", gotRedrawFlag, wantRedrawFlag)
 	}
 }
 
 // Helpers.
 
-var errBadSetuper = errors.New("418 I'm a teapot")
+var errSetupCb = errors.New("O mores, O tempora")
 
-func badSetuper() (func(), error) { return nil, errBadSetuper }
+func badSetuper() (func(), error) { return nil, errSetupCb }
 
 func inputOf(events ...Event) InputCb {
 	eventCh := make(chan Event, len(events))
