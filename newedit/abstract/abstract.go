@@ -4,11 +4,13 @@ package abstract
 
 import "sync"
 
+const inputChBuffer = 10
+
 // Editor is an abstract command-line editor. It implements a UI main loop, and
 // relies on callbacks for concrete functionalities -- setting up, reading and
 // writing terminal and handling terminal events.
 type Editor struct {
-	inputCb  InputCb
+	inputCh  chan Event
 	handleCb HandleCb
 
 	setupCb  SetupCb
@@ -30,10 +32,6 @@ type Event interface{}
 type SetupCb func() (undo func(), err error)
 
 func dummySetupCb() (func(), error) { return nil, nil }
-
-// InputCb provides terminal events for the Editor. It should return a channel
-// of events, and a function for stopping reading events from the terminal.
-type InputCb func() (eventCh <-chan Event, stop func())
 
 // RedrawCb redraws the editor UI to the terminal.
 type RedrawCb func(flag RedrawFlag)
@@ -62,9 +60,9 @@ const (
 // HandleCb handles a terminal event. If quit is true, Read returns with buffer.
 type HandleCb func(event Event) (buffer string, quit bool)
 
-func NewEditor(inputCb InputCb, handleCb HandleCb) *Editor {
+func NewEditor(handleCb HandleCb) *Editor {
 	return &Editor{
-		inputCb:  inputCb,
+		inputCh:  make(chan Event, inputChBuffer),
 		handleCb: handleCb,
 
 		setupCb:  dummySetupCb,
@@ -96,6 +94,10 @@ func (ed *Editor) Redraw(full bool) {
 	}
 }
 
+func (ed *Editor) Input(event Event) {
+	ed.inputCh <- event
+}
+
 // Read reads and processes terminal events, until HandleCb requests it to quit.
 // It only manages the event loop, and delegates concrete work to callbacks. It
 // is fully serial: it does not spawn any goroutines and never calls two
@@ -110,11 +112,6 @@ func (ed *Editor) Read() (buffer string, err error) {
 		defer restore()
 	}
 
-	eventCh, stop := ed.inputCb()
-	if stop != nil {
-		defer stop()
-	}
-
 	for {
 		var redrawFlag RedrawFlag
 		if ed.extractRedrawFull() {
@@ -122,7 +119,7 @@ func (ed *Editor) Read() (buffer string, err error) {
 		}
 		ed.redrawCb(redrawFlag)
 		select {
-		case event := <-eventCh:
+		case event := <-ed.inputCh:
 			buffer, quit := ed.handleCb(event)
 			if quit {
 				ed.redrawCb(FinalRedraw)

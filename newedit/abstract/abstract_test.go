@@ -8,7 +8,8 @@ import (
 
 func TestRead_returnsReturnValueOfHandleCb(t *testing.T) {
 	handleCbRet := "lorem ipsum"
-	ed := NewEditor(inputOf("^D"), quitOn("^D", handleCbRet))
+	ed := NewEditor(quitOn("^D", handleCbRet))
+	go supplyInputs(ed, "^D")
 	buf, _ := ed.Read()
 	if buf != handleCbRet {
 		t.Errorf("Read returns %v, want %v", buf, handleCbRet)
@@ -16,7 +17,8 @@ func TestRead_returnsReturnValueOfHandleCb(t *testing.T) {
 }
 
 func TestRead_callsSetupCbAndRestoreCbOnce(t *testing.T) {
-	ed := NewEditor(inputOf("^D"), quitOn("^D", ""))
+	ed := NewEditor(quitOn("^D", ""))
+	go supplyInputs(ed, "^D")
 
 	setupCalled, restoreCalled := 0, 0
 	ed.SetupCb(func() (func(), error) {
@@ -34,7 +36,8 @@ func TestRead_callsSetupCbAndRestoreCbOnce(t *testing.T) {
 }
 
 func TestRead_returnsErrorFromSetupCb(t *testing.T) {
-	ed := NewEditor(inputOf("^D"), quitOn("^D", ""))
+	ed := NewEditor(quitOn("^D", ""))
+	go supplyInputs(ed, "^D")
 	ed.SetupCb(badSetuper)
 
 	_, err := ed.Read()
@@ -43,34 +46,16 @@ func TestRead_returnsErrorFromSetupCb(t *testing.T) {
 	}
 }
 
-func TestRead_doesntCallInputWhenSetupCbErrors(t *testing.T) {
-	inputCalled := false
-	input := func() (<-chan Event, func()) {
-		inputCalled = true
-		return nil, func() {}
-	}
-	handler := func(Event) (string, bool) { return "", false }
-
-	ed := NewEditor(input, handler)
-
-	ed.SetupCb(badSetuper)
-
-	_, _ = ed.Read()
-	if inputCalled {
-		t.Errorf("Input still called when setup returned error")
-	}
-}
-
 func TestRead_passInputEventsToHandler(t *testing.T) {
 	inputPassedEvents := []Event{"foo", "bar", "lorem", "ipsum", "^D"}
-	input := inputOf(inputPassedEvents...)
 	var handlerGotEvents []Event
 	handler := func(e Event) (string, bool) {
 		handlerGotEvents = append(handlerGotEvents, e)
 		return "", e == "^D"
 	}
 
-	ed := NewEditor(input, handler)
+	ed := NewEditor(handler)
+	go supplyInputs(ed, inputPassedEvents...)
 
 	_, _ = ed.Read()
 	if !reflect.DeepEqual(handlerGotEvents, inputPassedEvents) {
@@ -98,7 +83,11 @@ func testRead_callsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wa
 		drawSeq++
 	}
 
-	ed := NewEditor(inputAfter(doneCh, "^D"), quitOn("^D", ""))
+	ed := NewEditor(quitOn("^D", ""))
+	go func() {
+		<-doneCh
+		ed.Input("^D")
+	}()
 	ed.RedrawCb(drawer)
 	ed.Redraw(full)
 	_, _ = ed.Read()
@@ -129,7 +118,11 @@ func testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool
 		drawSeq++
 	}
 
-	ed := NewEditor(inputAfter(doneCh, "^D"), quitOn("^D", ""))
+	ed := NewEditor(quitOn("^D", ""))
+	go func() {
+		<-doneCh
+		ed.Input("^D")
+	}()
 	ed.RedrawCb(drawer)
 	go func() {
 		<-firstDrawCalledCh
@@ -147,26 +140,9 @@ var errSetupCb = errors.New("O mores, O tempora")
 
 func badSetuper() (func(), error) { return nil, errSetupCb }
 
-func inputOf(events ...Event) InputCb {
-	eventCh := make(chan Event, len(events))
+func supplyInputs(ed *Editor, events ...Event) {
 	for _, event := range events {
-		eventCh <- event
-	}
-	return func() (<-chan Event, func()) {
-		return eventCh, func() {}
-	}
-}
-
-func inputAfter(ch <-chan struct{}, events ...Event) InputCb {
-	eventCh := make(chan Event)
-	go func() {
-		<-ch
-		for _, event := range events {
-			eventCh <- event
-		}
-	}()
-	return func() (<-chan Event, func()) {
-		return eventCh, func() {}
+		ed.Input(event)
 	}
 }
 
