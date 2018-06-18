@@ -13,7 +13,6 @@ type Editor struct {
 	inputCh  chan Event
 	handleCb HandleCb
 
-	setupCb  SetupCb
 	redrawCb RedrawCb
 
 	redrawCh    chan struct{}
@@ -24,14 +23,6 @@ type Editor struct {
 // Event is a placeholder type for terminal events. Should Go support generic
 // typing, this will be a type parameter on Editor.
 type Event interface{}
-
-// SetupCb sets up the terminal for the editor, and returns a callback for
-// undoing the setup and any errors. It should only return an error when the
-// terminal is completely unsuitable for subsequent operations. Nonfatal errors
-// can be printed directly to the terminal.
-type SetupCb func() (undo func(), err error)
-
-func dummySetupCb() (func(), error) { return nil, nil }
 
 // RedrawCb redraws the editor UI to the terminal.
 type RedrawCb func(flag RedrawFlag)
@@ -66,18 +57,12 @@ func NewEditor(handleCb HandleCb) *Editor {
 		inputCh:  make(chan Event, inputChBuffer),
 		handleCb: handleCb,
 
-		setupCb:  dummySetupCb,
 		redrawCb: dummyRedrawCb,
 
 		redrawCh:    make(chan struct{}, 1),
 		redrawFull:  false,
 		redrawMutex: new(sync.Mutex),
 	}
-}
-
-// SetupCb sets the setup callback. It must be called before any Read call.
-func (ed *Editor) SetupCb(cb SetupCb) {
-	ed.setupCb = cb
 }
 
 // RedrawCb sets the redraw callback. It must be called before any Read call.
@@ -110,14 +95,6 @@ func (ed *Editor) Input(event Event) {
 // callbacks in parallel, so the callbacks may manipulate shared states without
 // synchronization.
 func (ed *Editor) Read() (buffer string, err error) {
-	restore, err := ed.setupCb()
-	if err != nil {
-		return "", err
-	}
-	if restore != nil {
-		defer restore()
-	}
-
 	for {
 		var redrawFlag RedrawFlag
 		if ed.extractRedrawFull() {

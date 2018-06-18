@@ -1,7 +1,6 @@
 package abstract
 
 import (
-	"errors"
 	"reflect"
 	"testing"
 )
@@ -13,36 +12,6 @@ func TestRead_returnsReturnValueOfHandleCb(t *testing.T) {
 	buf, _ := ed.Read()
 	if buf != handleCbRet {
 		t.Errorf("Read returns %v, want %v", buf, handleCbRet)
-	}
-}
-
-func TestRead_callsSetupCbAndRestoreCbOnce(t *testing.T) {
-	ed := NewEditor(quitOn("^D", ""))
-	go supplyInputs(ed, "^D")
-
-	setupCalled, restoreCalled := 0, 0
-	ed.SetupCb(func() (func(), error) {
-		setupCalled++
-		return func() { restoreCalled++ }, nil
-	})
-
-	_, _ = ed.Read()
-	if setupCalled != 1 {
-		t.Errorf("setup called %d times, want once", setupCalled)
-	}
-	if restoreCalled != 1 {
-		t.Errorf("restore called %d times, want once", restoreCalled)
-	}
-}
-
-func TestRead_returnsErrorFromSetupCb(t *testing.T) {
-	ed := NewEditor(quitOn("^D", ""))
-	go supplyInputs(ed, "^D")
-	ed.SetupCb(badSetuper)
-
-	_, err := ed.Read()
-	if err != errSetupCb {
-		t.Errorf("Read returned with error %v, want errSetupCb", err)
 	}
 }
 
@@ -135,10 +104,6 @@ func testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool
 }
 
 // Helpers.
-
-var errSetupCb = errors.New("O mores, O tempora")
-
-func badSetuper() (func(), error) { return nil, errSetupCb }
 
 func supplyInputs(ed *Editor, events ...Event) {
 	for _, event := range events {
