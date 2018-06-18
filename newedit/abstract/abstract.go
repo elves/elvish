@@ -60,6 +60,7 @@ const (
 // HandleCb handles a terminal event. If quit is true, Read returns with buffer.
 type HandleCb func(event Event) (buffer string, quit bool)
 
+// NewEditor creates a new Editor.
 func NewEditor(handleCb HandleCb) *Editor {
 	return &Editor{
 		inputCh:  make(chan Event, inputChBuffer),
@@ -74,14 +75,18 @@ func NewEditor(handleCb HandleCb) *Editor {
 	}
 }
 
+// SetupCb sets the setup callback. It must be called before any Read call.
 func (ed *Editor) SetupCb(cb SetupCb) {
 	ed.setupCb = cb
 }
 
+// RedrawCb sets the redraw callback. It must be called before any Read call.
 func (ed *Editor) RedrawCb(cb RedrawCb) {
 	ed.redrawCb = cb
 }
 
+// Redraw requests a redraw. If full is true, a full redraw is requested. It
+// never blocks.
 func (ed *Editor) Redraw(full bool) {
 	ed.redrawMutex.Lock()
 	defer ed.redrawMutex.Unlock()
@@ -94,6 +99,7 @@ func (ed *Editor) Redraw(full bool) {
 	}
 }
 
+// Input provides an input event.
 func (ed *Editor) Input(event Event) {
 	ed.inputCh <- event
 }
