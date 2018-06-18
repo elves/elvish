@@ -1,4 +1,4 @@
-package abstract
+package loop
 
 import "fmt"
 
@@ -15,14 +15,14 @@ func Example() {
 		return "", false
 	}
 
-	ed := NewEditor(handler)
+	ed := New(handler)
 	go func() {
 		for _, event := range "echo\n" {
 			ed.Input(event)
 		}
 	}()
 	ed.RedrawCb(drawer)
-	ed.Read()
+	ed.Run()
 	// Output:
 	// buffer is ""
 	// buffer is "e"

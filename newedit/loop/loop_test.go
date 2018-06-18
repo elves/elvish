@@ -1,4 +1,4 @@
-package abstract
+package loop
 
 import (
 	"reflect"
@@ -7,9 +7,9 @@ import (
 
 func TestRead_returnsReturnValueOfHandleCb(t *testing.T) {
 	handleCbRet := "lorem ipsum"
-	ed := NewEditor(quitOn("^D", handleCbRet))
+	ed := New(quitOn("^D", handleCbRet))
 	go supplyInputs(ed, "^D")
-	buf, _ := ed.Read()
+	buf, _ := ed.Run()
 	if buf != handleCbRet {
 		t.Errorf("Read returns %v, want %v", buf, handleCbRet)
 	}
@@ -23,10 +23,10 @@ func TestRead_passInputEventsToHandler(t *testing.T) {
 		return "", e == "^D"
 	}
 
-	ed := NewEditor(handler)
+	ed := New(handler)
 	go supplyInputs(ed, inputPassedEvents...)
 
-	_, _ = ed.Read()
+	_, _ = ed.Run()
 	if !reflect.DeepEqual(handlerGotEvents, inputPassedEvents) {
 		t.Errorf("Handler got events %v, expect same as events passed to input (%v)",
 			handlerGotEvents, inputPassedEvents)
@@ -52,14 +52,14 @@ func testRead_callsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wa
 		drawSeq++
 	}
 
-	ed := NewEditor(quitOn("^D", ""))
+	ed := New(quitOn("^D", ""))
 	go func() {
 		<-doneCh
 		ed.Input("^D")
 	}()
 	ed.RedrawCb(drawer)
 	ed.Redraw(full)
-	_, _ = ed.Read()
+	_, _ = ed.Run()
 	if gotRedrawFlag != wantRedrawFlag {
 		t.Errorf("Drawer got flag %v, want %v", gotRedrawFlag, wantRedrawFlag)
 	}
@@ -87,7 +87,7 @@ func testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool
 		drawSeq++
 	}
 
-	ed := NewEditor(quitOn("^D", ""))
+	ed := New(quitOn("^D", ""))
 	go func() {
 		<-doneCh
 		ed.Input("^D")
@@ -97,7 +97,7 @@ func testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool
 		<-firstDrawCalledCh
 		ed.Redraw(full)
 	}()
-	_, _ = ed.Read()
+	_, _ = ed.Run()
 	if gotRedrawFlag != wantRedrawFlag {
 		t.Errorf("Drawer got flag %v, want %v", gotRedrawFlag, wantRedrawFlag)
 	}
@@ -105,7 +105,7 @@ func testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool
 
 // Helpers.
 
-func supplyInputs(ed *Editor, events ...Event) {
+func supplyInputs(ed *Loop, events ...Event) {
 	for _, event := range events {
 		ed.Input(event)
 	}
