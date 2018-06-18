@@ -42,18 +42,24 @@ const (
 // returns with buffer.
 type HandleCb func(event Event) (buffer string, quit bool)
 
+func dummyHandleCb(Event) (string, bool) { return "", false }
+
 // New creates a new Loop instance.
-func New(handleCb HandleCb) *Loop {
+func New() *Loop {
 	return &Loop{
 		inputCh:  make(chan Event, inputEventBuffer),
-		handleCb: handleCb,
-
+		handleCb: dummyHandleCb,
 		redrawCb: dummyRedrawCb,
 
 		redrawCh:    make(chan struct{}, 1),
 		redrawFull:  false,
 		redrawMutex: new(sync.Mutex),
 	}
+}
+
+// HandleCb sets the handle callback. It must be called before any Read call.
+func (ed *Loop) HandleCb(cb HandleCb) {
+	ed.handleCb = cb
 }
 
 // RedrawCb sets the redraw callback. It must be called before any Read call.

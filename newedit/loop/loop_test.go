@@ -7,7 +7,8 @@ import (
 
 func TestRead_returnsReturnValueOfHandleCb(t *testing.T) {
 	handleCbRet := "lorem ipsum"
-	ed := New(quitOn("^D", handleCbRet))
+	ed := New()
+	ed.HandleCb(quitOn("^D", handleCbRet))
 	go supplyInputs(ed, "^D")
 	buf, _ := ed.Run()
 	if buf != handleCbRet {
@@ -23,7 +24,8 @@ func TestRead_passInputEventsToHandler(t *testing.T) {
 		return "", e == "^D"
 	}
 
-	ed := New(handler)
+	ed := New()
+	ed.HandleCb(handler)
 	go supplyInputs(ed, inputPassedEvents...)
 
 	_, _ = ed.Run()
@@ -52,7 +54,8 @@ func testRead_callsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wa
 		drawSeq++
 	}
 
-	ed := New(quitOn("^D", ""))
+	ed := New()
+	ed.HandleCb(quitOn("^D", ""))
 	go func() {
 		<-doneCh
 		ed.Input("^D")
@@ -87,7 +90,8 @@ func testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool
 		drawSeq++
 	}
 
-	ed := New(quitOn("^D", ""))
+	ed := New()
+	ed.HandleCb(quitOn("^D", ""))
 	go func() {
 		<-doneCh
 		ed.Input("^D")

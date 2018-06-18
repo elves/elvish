@@ -15,7 +15,8 @@ func Example() {
 		return "", false
 	}
 
-	ed := New(handler)
+	ed := New()
+	ed.HandleCb(handler)
 	go func() {
 		for _, event := range "echo\n" {
 			ed.Input(event)
