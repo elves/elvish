@@ -4,8 +4,17 @@ import "fmt"
 
 func Example() {
 	buffer := ""
-	drawer := func(RedrawFlag) {
-		fmt.Printf("buffer is %q\n", buffer)
+	firstDrawerCall := true
+	drawer := func(flag RedrawFlag) {
+		// Because the consumption of events is batched, calls to the drawer is
+		// nondeterministic except for the first and final calls.
+		switch {
+		case firstDrawerCall:
+			fmt.Printf("initial buffer is %q\n", buffer)
+			firstDrawerCall = false
+		case flag&FinalRedraw != 0:
+			fmt.Printf("final buffer is %q\n", buffer)
+		}
 	}
 	handler := func(event Event) (string, bool) {
 		if event == '\n' {
@@ -23,12 +32,12 @@ func Example() {
 		}
 	}()
 	ed.RedrawCb(drawer)
-	ed.Run()
+	buf, err := ed.Run()
+	fmt.Printf("returned buffer is %q\n", buf)
+	fmt.Printf("returned error is %v\n", err)
 	// Output:
-	// buffer is ""
-	// buffer is "e"
-	// buffer is "ec"
-	// buffer is "ech"
-	// buffer is "echo"
-	// buffer is "echo"
+	// initial buffer is ""
+	// final buffer is "echo"
+	// returned buffer is "echo"
+	// returned error is <nil>
 }

@@ -3,7 +3,9 @@ package loop
 
 import "sync"
 
-const inputEventBuffer = 10
+// Buffer size of the input channel. The value is chosen for no particular
+// reason.
+const inputChSize = 128
 
 // Loop implements a generic main loop for an editor.
 type Loop struct {
@@ -47,7 +49,7 @@ func dummyHandleCb(Event) (string, bool) { return "", false }
 // New creates a new Loop instance.
 func New() *Loop {
 	return &Loop{
-		inputCh:  make(chan Event, inputEventBuffer),
+		inputCh:  make(chan Event, inputChSize),
 		handleCb: dummyHandleCb,
 		redrawCb: dummyRedrawCb,
 
@@ -101,10 +103,20 @@ func (ed *Loop) Run() (buffer string, err error) {
 		ed.redrawCb(redrawFlag)
 		select {
 		case event := <-ed.inputCh:
-			buffer, quit := ed.handleCb(event)
-			if quit {
-				ed.redrawCb(FinalRedraw)
-				return buffer, nil
+			// Consume all events in the channel to minimize redraws.
+		consumeAllEvents:
+			for {
+				buffer, quit := ed.handleCb(event)
+				if quit {
+					ed.redrawCb(FinalRedraw)
+					return buffer, nil
+				}
+				select {
+				case event = <-ed.inputCh:
+					// Continue the loop of consuming all events.
+				default:
+					break consumeAllEvents
+				}
 			}
 		case <-ed.redrawCh:
 		}
