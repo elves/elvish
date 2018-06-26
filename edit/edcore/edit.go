@@ -48,9 +48,8 @@ type editor struct {
 	// Configurations. Each of the following fields have an initializer defined
 	// using atEditorInit.
 	editorHooks
-	abbr         hashmap.Map
-	argCompleter hashmap.Map
-	maxHeight    float64
+	abbr      hashmap.Map
+	maxHeight float64
 
 	prompt, rprompt   eddefs.Prompt
 	RpromptPersistent bool
