@@ -66,3 +66,36 @@ func (t Text) RConcat(v interface{}) (interface{}, error) {
 
 	return nil, vals.ErrConcatNotImplemented
 }
+
+// Partition partitions the Text at n indicies into n+1 Text values.
+func (t Text) Partition(indicies ...int) []Text {
+	out := make([]Text, len(indicies)+1)
+	segs := t
+	consumedSegsLen := 0
+	seg0Consumed := 0
+	for i, idx := range indicies {
+		text := make(Text, 0)
+		for len(segs) > 0 && idx >= consumedSegsLen+len(segs[0].Text) {
+			text = append(text, Segment{
+				segs[0].Style, segs[0].Text[seg0Consumed:]})
+			consumedSegsLen += len(segs[0].Text)
+			seg0Consumed = 0
+			segs = segs[1:]
+		}
+		if len(segs) > 0 && idx > consumedSegsLen {
+			text = append(text, Segment{
+				segs[0].Style, segs[0].Text[:idx-consumedSegsLen]})
+			seg0Consumed = idx - consumedSegsLen
+		}
+		out[i] = text
+	}
+	trailing := make(Text, 0)
+	for len(segs) > 0 {
+		trailing = append(trailing, Segment{
+			segs[0].Style, segs[0].Text[seg0Consumed:]})
+		seg0Consumed = 0
+		segs = segs[1:]
+	}
+	out[len(indicies)] = trailing
+	return out
+}
