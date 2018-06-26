@@ -2,6 +2,14 @@ package styled
 
 import "github.com/elves/elvish/edit/ui"
 
+func (t Text) ToLegacyType() []*ui.Styled {
+	out := make([]*ui.Styled, len(t))
+	for i, seg := range t {
+		out[i] = seg.ToLegacyType()
+	}
+	return out
+}
+
 func (s Segment) ToLegacyType() *ui.Styled {
 	legacy := &ui.Styled{Text: s.Text}
 	addLegacyStyle := func(style string) {
