@@ -15,11 +15,10 @@ var (
 )
 
 func TestRead_PassesInputEventsToMode(t *testing.T) {
-	r := newFakeReader(tty.KeyEvent(ka), tty.KeyEvent(kb), tty.KeyEvent(kc))
-	w := newFakeWriter()
-	tm := newFakeTTY(24, 80)
+	ft := newFakeTTY(24, 80,
+		[]tty.Event{tty.KeyEvent(ka), tty.KeyEvent(kb), tty.KeyEvent(kc)})
 
-	ed := NewEditor(r, w, tm)
+	ed := NewEditor(ft)
 
 	m := newFakeMode(3)
 	ed.state.Mode = m
