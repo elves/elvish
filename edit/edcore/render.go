@@ -252,8 +252,11 @@ func (er *editorRenderer) Render(buf *ui.Buffer) {
 	}
 
 	if logEditorRender {
-		logger.Printf("bufLine %d, bufMode %d, bufTips %d, bufListing %d",
-			ui.BuffersHeight(bufLine), ui.BuffersHeight(bufMode), ui.BuffersHeight(bufTips), ui.BuffersHeight(bufListing))
+		logger.Printf("bufNoti %d, bufLine %d, bufMode %d, bufTips %d, "+
+			"hListing %d, bufListing %d",
+			ui.BuffersHeight(bufNoti), ui.BuffersHeight(bufLine),
+			ui.BuffersHeight(bufMode), ui.BuffersHeight(bufTips),
+			hListing, ui.BuffersHeight(bufListing))
 	}
 
 	// XXX
