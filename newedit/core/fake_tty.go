@@ -30,7 +30,11 @@ type fakeTTY struct {
 	eventCh chan tty.Event
 }
 
-func newFakeTTY(h, w int, events []tty.Event) *fakeTTY {
+func newFakeTTY(events []tty.Event) *fakeTTY {
+	return newFakeTTYWithSize(24, 80, events)
+}
+
+func newFakeTTYWithSize(h, w int, events []tty.Event) *fakeTTY {
 	return &fakeTTY{
 		h, w, events,
 		make(chan *ui.Buffer, maxBufferUpdates), nil, nil,

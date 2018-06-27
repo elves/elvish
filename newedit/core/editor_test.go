@@ -21,7 +21,7 @@ var (
 )
 
 func TestRead_PassesInputEventsToMode(t *testing.T) {
-	ed := NewEditor(newFakeTTY(24, 80, eventsABCEnter))
+	ed := NewEditor(newFakeTTY(eventsABCEnter))
 	m := newFakeMode(len(eventsABCEnter))
 	ed.state.Mode = m
 
@@ -33,7 +33,7 @@ func TestRead_PassesInputEventsToMode(t *testing.T) {
 }
 
 func TestRead_CallsBeforeReadlineOnce(t *testing.T) {
-	ed := NewEditor(newFakeTTY(24, 80, eventsABCEnter))
+	ed := NewEditor(newFakeTTY(eventsABCEnter))
 
 	called := 0
 	ed.config.BeforeReadline = []func(){func() { called++ }}
@@ -46,7 +46,7 @@ func TestRead_CallsBeforeReadlineOnce(t *testing.T) {
 }
 
 func TestRead_CallsAfterReadlineOnceWithCode(t *testing.T) {
-	ed := NewEditor(newFakeTTY(24, 80, eventsABCEnter))
+	ed := NewEditor(newFakeTTY(eventsABCEnter))
 
 	called := 0
 	code := ""
