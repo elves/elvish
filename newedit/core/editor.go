@@ -59,6 +59,10 @@ func redraw(st *State, cfg *Config, w Writer, sz Sizer, flag loop.RedrawFlag) {
 	}
 
 	w.UpdateBuffer(bufNotes, bufMain, flag&loop.FullRedraw != 0)
+
+	if final {
+		w.ResetBuffer()
+	}
 }
 
 func (ed *Editor) Read() (string, error) {
