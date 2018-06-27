@@ -34,7 +34,7 @@ type flagSet struct {
 
 	Help, Version, BuildInfo, JSON bool
 
-	CodeInArg, CompileOnly bool
+	CodeInArg, CompileOnly, NoRc bool
 
 	Web  bool
 	Port int
@@ -63,6 +63,7 @@ func newFlagSet() *flagSet {
 
 	f.BoolVar(&f.CodeInArg, "c", false, "take first argument as code to execute")
 	f.BoolVar(&f.CompileOnly, "compileonly", false, "Parse/Compile but do not execute")
+	f.BoolVar(&f.NoRc, "norc", false, "run elvish without invoking rc.elv")
 
 	f.BoolVar(&f.Web, "web", false, "run backend of web interface")
 	f.IntVar(&f.Port, "port", defaultWebPort, "the port of the web backend")
@@ -154,6 +155,6 @@ func FindProgram(flag *flagSet) Program {
 		}
 		return web.New(flag.Bin, flag.Sock, flag.DB, flag.Port)
 	default:
-		return shell.New(flag.Bin, flag.Sock, flag.DB, flag.CodeInArg, flag.CompileOnly)
+		return shell.New(flag.Bin, flag.Sock, flag.DB, flag.CodeInArg, flag.CompileOnly, flag.NoRc)
 	}
 }

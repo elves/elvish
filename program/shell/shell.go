@@ -21,14 +21,15 @@ type Shell struct {
 	DbPath      string
 	Cmd         bool
 	CompileOnly bool
+	NoRc        bool
 }
 
-func New(binpath, sockpath, dbpath string, cmd, compileonly bool) *Shell {
-	return &Shell{binpath, sockpath, dbpath, cmd, compileonly}
+func New(binpath, sockpath, dbpath string, cmd, compileonly, norc bool) *Shell {
+	return &Shell{binpath, sockpath, dbpath, cmd, compileonly, norc}
 }
 
 // Main runs Elvish using the default terminal interface. It blocks until Elvish
-// quites, and returns the exit code.
+// quits, and returns the exit code.
 func (sh *Shell) Main(args []string) int {
 	defer rescue()
 
@@ -44,7 +45,7 @@ func (sh *Shell) Main(args []string) int {
 			return 2
 		}
 	} else {
-		interact(ev, dataDir)
+		interact(ev, dataDir, sh.NoRc)
 	}
 
 	return 0

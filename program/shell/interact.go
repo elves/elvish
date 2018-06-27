@@ -16,7 +16,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func interact(ev *eval.Evaler, dataDir string) {
+func interact(ev *eval.Evaler, dataDir string, norc bool) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(os.Stdin) {
@@ -29,7 +29,7 @@ func interact(ev *eval.Evaler, dataDir string) {
 	defer ed.Close()
 
 	// Source rc.elv.
-	if dataDir != "" {
+	if !norc && dataDir != "" {
 		err := sourceRC(ev, dataDir)
 		if err != nil {
 			util.PprintError(err)
