@@ -5,23 +5,32 @@ import (
 	"github.com/elves/elvish/edit/ui"
 )
 
-// An implementation of tty.Reader. Replays a predefined stream of events, and
-// records all SetRaw calls.
+const (
+	// Maximum number of events fakeTTY produces.
+	maxEvents = 1024
+)
 
+// An implementation of the TTY interface.
 type fakeTTY struct {
-	h, w   int
+	// Predefined sizes.
+	h, w int
+	// Predefined events.
 	events []tty.Event
 
-	eventCh chan tty.Event
-	stopCh  chan struct{}
-
-	bufs    []*ui.Buffer
+	// Records buffer history.
+	bufs []*ui.Buffer
+	// Records SetRaw calls.
 	setRaws []bool
+
+	// Channel returned from StartRead. Can be used to inject additional events.
+	eventCh chan tty.Event
 }
 
-func newFakeTTY(h, t int, events []tty.Event) *fakeTTY {
+func newFakeTTY(h, w int, events []tty.Event) *fakeTTY {
 	return &fakeTTY{
-		h, t, events, make(chan tty.Event), make(chan struct{}), nil, nil}
+		h, w, events,
+		nil, nil,
+		make(chan tty.Event, maxEvents)}
 }
 
 func (t *fakeTTY) Setup() (func(), error) { return func() {}, nil }
@@ -29,24 +38,15 @@ func (t *fakeTTY) Setup() (func(), error) { return func() {}, nil }
 func (t *fakeTTY) Size() (h, w int) { return t.h, t.w }
 
 func (t *fakeTTY) StartRead() <-chan tty.Event {
-	go t.run()
-	return t.eventCh
-}
-
-func (t *fakeTTY) run() {
 	for _, event := range t.events {
-		select {
-		case t.eventCh <- event:
-		case <-t.stopCh:
-			return
-		}
+		t.eventCh <- event
 	}
-	<-t.stopCh
+	return t.eventCh
 }
 
 func (t *fakeTTY) SetRaw(b bool) { t.setRaws = append(t.setRaws, b) }
 
-func (t *fakeTTY) StopRead() { t.stopCh <- struct{}{} }
+func (t *fakeTTY) StopRead() {}
 
 func (t *fakeTTY) Buffer() *ui.Buffer { return t.bufs[len(t.bufs)-1] }
 
