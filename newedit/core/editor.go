@@ -76,6 +76,15 @@ func (ed *Editor) Read() (string, error) {
 		}
 	}()
 
+	for _, f := range ed.config.BeforeReadline {
+		f()
+	}
+	defer func() {
+		for _, f := range ed.config.AfterReadline {
+			f(ed.state.Code)
+		}
+	}()
+
 	return ed.loop.Run()
 }
 
