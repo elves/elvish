@@ -101,7 +101,7 @@ The following are bareword characters depending on their position:
     assignments](#temporary-assignment).
 
 Unlike traditional shells, an unquoted backslash ``\`` does not escape
-metacharacters; use quoted strings intead. For instance, to echo a star, write
+metacharacters; use quoted strings instead. For instance, to echo a star, write
 `echo "*"` or `echo '*'`, not ``echo \*``. Unquote backslashes are now only
 used in line continuations; their use elsewhere is reserved will cause a
 syntax error.
@@ -431,7 +431,7 @@ curly braces:
 ```
 
 One or more whitespace characters after `{` is required: Elvish relies on the
-presense of whitespace to disambiguate lambda literals and [braced
+presence of whitespace to disambiguate lambda literals and [braced
 lists](#braced-lists). It is good style to put some whitespace before the
 closing `}` as well, but this is not required by the syntax.
 
@@ -583,7 +583,7 @@ Lists can be indexed with any of the following:
     instance, `$li[-1]` is the last element `$li`.
 
 *   A slice `$a:$b`, where both `$a` and `$b` are integers. The result is
-    sublist of `$li[$a]` upto, but not including, `$li[$b]`. For instance,
+    sublist of `$li[$a]` up to, but not including, `$li[$b]`. For instance,
     `$li[4:7]` equals `[$li[4] $li[5] $li[6]]`, while `$li[1:-1]` contains all
     elements from `$li` except the first and last one.
 

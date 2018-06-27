@@ -178,7 +178,7 @@ TBD
 The modes `histlist`, `loc` and `lastcmd` are all **listing modes**: They all
 show a list, and you can filter items and accept items.
 
-Because they are very similiar, you may want to change their bindings at the
+Because they are very similar, you may want to change their bindings at the
 same time. This is made possible by the `$edit:listing:binding` binding table
 (`listing` is not a "real" mode but an "abstract" mode). These modes still have
 their own binding tables like `$edit:histlist:binding`, and bindings there have
