@@ -24,7 +24,7 @@ type Shell struct {
 	NoRc        bool
 }
 
-func New(binpath, sockpath, dbpath string, cmd, compileonly bool, norc bool) *Shell {
+func New(binpath, sockpath, dbpath string, cmd, compileonly, norc bool) *Shell {
 	return &Shell{binpath, sockpath, dbpath, cmd, compileonly, norc}
 }
 
