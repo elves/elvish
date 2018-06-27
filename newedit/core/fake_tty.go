@@ -6,6 +6,8 @@ import (
 )
 
 const (
+	// Maximum number of buffer updates fakeTTY expect to see.
+	maxBufferUpdates = 1024
 	// Maximum number of events fakeTTY produces.
 	maxEvents = 1024
 )
@@ -17,6 +19,8 @@ type fakeTTY struct {
 	// Predefined events.
 	events []tty.Event
 
+	// Channel for publishing buffer updates.
+	bufCh chan *ui.Buffer
 	// Records buffer history.
 	bufs []*ui.Buffer
 	// Records SetRaw calls.
@@ -29,7 +33,7 @@ type fakeTTY struct {
 func newFakeTTY(h, w int, events []tty.Event) *fakeTTY {
 	return &fakeTTY{
 		h, w, events,
-		nil, nil,
+		make(chan *ui.Buffer, maxBufferUpdates), nil, nil,
 		make(chan tty.Event, maxEvents)}
 }
 
@@ -50,11 +54,16 @@ func (t *fakeTTY) StopRead() {}
 
 func (t *fakeTTY) Buffer() *ui.Buffer { return t.bufs[len(t.bufs)-1] }
 
-func (t *fakeTTY) ResetBuffer() { t.bufs = append(t.bufs, nil) }
+func (t *fakeTTY) ResetBuffer() { t.recordBuf(nil) }
 
 func (t *fakeTTY) UpdateBuffer(_, buf *ui.Buffer, _ bool) error {
-	t.bufs = append(t.bufs, buf)
+	t.recordBuf(buf)
 	return nil
+}
+
+func (t *fakeTTY) recordBuf(buf *ui.Buffer) {
+	t.bufs = append(t.bufs, buf)
+	t.bufCh <- buf
 }
 
 // An implementation of Mode. The HandleKey method returns CommitCode after a
