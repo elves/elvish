@@ -21,7 +21,7 @@ type Shell struct {
 	DbPath      string
 	Cmd         bool
 	CompileOnly bool
-	norc        bool
+	NoRc        bool
 }
 
 func New(binpath, sockpath, dbpath string, cmd, compileonly bool, norc bool) *Shell {
@@ -45,7 +45,7 @@ func (sh *Shell) Main(args []string) int {
 			return 2
 		}
 	} else {
-		interact(ev, dataDir, sh.norc)
+		interact(ev, dataDir, sh.NoRc)
 	}
 
 	return 0

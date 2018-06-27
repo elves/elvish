@@ -29,7 +29,7 @@ func interact(ev *eval.Evaler, dataDir string, norc bool) {
 	defer ed.Close()
 
 	// Source rc.elv.
-	if norc == false && dataDir != "" {
+	if !norc && dataDir != "" {
 		err := sourceRC(ev, dataDir)
 		if err != nil {
 			util.PprintError(err)
