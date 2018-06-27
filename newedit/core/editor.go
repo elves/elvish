@@ -92,6 +92,10 @@ func (ed *Editor) Read() (string, error) {
 	return ed.loop.Run()
 }
 
+func (ed *Editor) Redraw(full bool) {
+	ed.loop.Redraw(full)
+}
+
 func NewStdEditor() *Editor {
 	return NewEditor(newTTY(os.Stdin, os.Stdout))
 }
