@@ -62,6 +62,7 @@ func (t *aTTY) Size() (h, w int) {
 
 func (t *aTTY) StartRead() <-chan tty.Event {
 	t.r = tty.NewReader(t.in)
+	t.r.Start()
 	return t.r.EventChan()
 }
 
