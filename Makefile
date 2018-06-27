@@ -38,14 +38,14 @@ cover/all: $(PKG_COVERS)
 # code coverage.
 upload-codecov-travis: cover/all
 	test "$(TRAVIS_PULL_REQUEST)" = false \
-		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
+		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.10' \
 		&& curl -s https://codecov.io/bash -o codecov.bash \
 		&& bash codecov.bash -f $< \
 		|| echo "not sending to codecov.io"
 
 upload-coveralls-travis: cover/all
 	test "$(TRAVIS_PULL_REQUEST)" = false \
-		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.9' \
+		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.10' \
 		&& go get -d $(GOVERALLS) \
 		&& go build -o goveralls $(GOVERALLS) \
 		&& ./goveralls -coverprofile $< -service=travis-ci \
