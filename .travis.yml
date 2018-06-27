@@ -1,5 +1,5 @@
 language: go
-go: 1.9
+go: 1.10
 env: CGO_ENABLED=0
 script: make travis
 
@@ -9,4 +9,4 @@ os:
     - osx
 matrix:
   include:
-    - go: 1.8
+    - go: 1.9
