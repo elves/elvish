@@ -2,6 +2,7 @@ package core
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -70,7 +71,30 @@ func TestRead_CallsAfterReadlineOnceWithCode(t *testing.T) {
 }
 
 func TestRead_RespectsMaxHeight(t *testing.T) {
-	// TODO
+	maxHeight := 5
+
+	terminal := newFakeTTY(nil)
+	ed := NewEditor(terminal)
+	// Will fill more than maxHeight but less than terminal height
+	ed.state.Code = strings.Repeat("a", 80*10)
+	ed.state.Dot = len(ed.state.Code)
+
+	go ed.Read()
+
+	buf1 := <-terminal.bufCh
+	// Make sure that normally the height does exceed maxHeight.
+	if h := len(buf1.Lines); h <= maxHeight {
+		t.Errorf("Buffer height is %d, should > %d", h, maxHeight)
+	}
+
+	ed.config.Render.MaxHeight = maxHeight
+	ed.loop.Redraw(false)
+	buf2 := <-terminal.bufCh
+	if h := len(buf2.Lines); h > maxHeight {
+		t.Errorf("Buffer height is %d, should <= %d", h, maxHeight)
+	}
+
+	terminal.eventCh <- tty.KeyEvent(kEnter)
 }
 
 var bufChTimeout = 1 * time.Second
