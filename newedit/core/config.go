@@ -5,13 +5,13 @@ import (
 )
 
 type Config struct {
-	RenderConfig   *RenderConfig
+	Render         *RenderConfig
 	BeforeReadline []func()
 	AfterReadline  []func(string)
 }
 
 func newConfig() *Config {
-	return &Config{RenderConfig: &RenderConfig{
+	return &Config{Render: &RenderConfig{
 		Highlighter: dummyHighlighter,
 		Prompt:      dummyPrompt,
 		Rprompt:     dummyPrompt,

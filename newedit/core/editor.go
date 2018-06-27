@@ -52,7 +52,7 @@ func redraw(st *State, cfg *Config, w Writer, sz Sizer, flag loop.RedrawFlag) {
 
 	_, width := sz.Size()
 
-	bufNotes, bufMain := render(st, cfg.RenderConfig, width)
+	bufNotes, bufMain := render(st, cfg.Render, width)
 	if final {
 		bufMain.Newline()
 		bufMain.SetDot(bufMain.Cursor())
