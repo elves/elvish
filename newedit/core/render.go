@@ -7,20 +7,26 @@ import (
 )
 
 // Renders the editor state.
-func render(st *State, cfg *RenderConfig, width int) (notes, main *ui.Buffer) {
+func render(st *State, cfg *RenderConfig, h, w int) (notes, main *ui.Buffer) {
 	var bufNotes *ui.Buffer
 	if len(st.Notes) > 0 {
-		bufNotes = ui.Render(&notesRenderer{st.Notes}, width)
+		bufNotes = ui.Render(&notesRenderer{st.Notes}, w)
 	}
 
 	prompt := cfg.Prompt()
 	rprompt := cfg.Rprompt()
 	code, dot, errors := prepareCode(
 		st.Code, st.Dot, st.Pending, cfg.Highlighter)
-	bufCode := ui.Render(&codeContentRenderer{code, dot, prompt, rprompt}, width)
-	bufCodeErrors := ui.Render(&codeErrorsRenderer{errors}, width)
-	bufCode.Extend(bufCodeErrors, false)
-	bufMain := ui.Render(&mainRenderer{cfg.MaxHeight, bufCode, st.Mode}, width)
+	bufCode := ui.Render(&codeContentRenderer{code, dot, prompt, rprompt}, w)
+	if len(errors) > 0 {
+		bufCodeErrors := ui.Render(&codeErrorsRenderer{errors}, w)
+		bufCode.Extend(bufCodeErrors, false)
+	}
+
+	if cfg.MaxHeight > 0 && cfg.MaxHeight < h {
+		h = cfg.MaxHeight
+	}
+	bufMain := ui.Render(&mainRenderer{h, bufCode, st.Mode}, w)
 
 	return bufNotes, bufMain
 }
