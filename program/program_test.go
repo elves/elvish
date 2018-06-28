@@ -13,7 +13,6 @@ var findProgramTests = []struct {
 	checker func(Program) bool
 }{
 	{[]string{"-help"}, isShowHelp},
-	{[]string{"-version"}, isShowVersion},
 	{[]string{"-buildinfo"}, isShowBuildInfo},
 	{[]string{"-buildinfo", "-json"}, func(p Program) bool {
 		return p.(ShowBuildInfo).JSON
@@ -67,7 +66,6 @@ var findProgramTests = []struct {
 
 func isShowHelp(p Program) bool         { _, ok := p.(ShowHelp); return ok }
 func isShowCorrectUsage(p Program) bool { _, ok := p.(ShowCorrectUsage); return ok }
-func isShowVersion(p Program) bool      { _, ok := p.(ShowVersion); return ok }
 func isShowBuildInfo(p Program) bool    { _, ok := p.(ShowBuildInfo); return ok }
 func isDaemon(p Program) bool           { _, ok := p.(Daemon); return ok }
 func isWeb(p Program) bool              { _, ok := p.(*web.Web); return ok }
