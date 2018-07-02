@@ -32,7 +32,7 @@ type flagSet struct {
 
 	Log, LogPrefix, CPUProfile string
 
-	Help, Version, BuildInfo, JSON bool
+	Help, BuildInfo, JSON bool
 
 	CodeInArg, CompileOnly, NoRc bool
 
@@ -57,7 +57,6 @@ func newFlagSet() *flagSet {
 	f.StringVar(&f.CPUProfile, "cpuprofile", "", "write cpu profile to file")
 
 	f.BoolVar(&f.Help, "help", false, "show usage help and quit")
-	f.BoolVar(&f.Version, "version", false, "show version and quit")
 	f.BoolVar(&f.BuildInfo, "buildinfo", false, "show build info and quit")
 	f.BoolVar(&f.JSON, "json", false, "show output in JSON. Useful with -buildinfo.")
 
@@ -132,8 +131,6 @@ func FindProgram(flag *flagSet) Program {
 	switch {
 	case flag.Help:
 		return ShowHelp{flag}
-	case flag.Version:
-		return ShowVersion{}
 	case flag.BuildInfo:
 		return ShowBuildInfo{flag.JSON}
 	case flag.Daemon:
