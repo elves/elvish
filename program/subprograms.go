@@ -34,7 +34,6 @@ type ShowVersion struct{}
 
 func (ShowVersion) Main([]string) int {
 	fmt.Println(buildinfo.Version)
-	fmt.Fprintln(os.Stderr, "-version is deprecated and will be removed in 0.12. Use -buildinfo instead.")
 	return 0
 }
 
