@@ -1,4 +1,4 @@
-// +build !windows,plan9
+// +build !windows,!plan9
 
 package tty
 
@@ -11,12 +11,12 @@ import (
 func TestSetupTerminal(t *testing.T) {
 	pty, tty, err := pty.Open()
 	if err != nil {
-		t.Errorf("cannot open pty for testing setupTerminal")
+		t.Skip("cannot open pty for testing setupTerminal")
 	}
 	defer pty.Close()
 	defer tty.Close()
 
-	_, err = setup(tty)
+	_, err = setup(tty, tty)
 	if err != nil {
 		t.Errorf("setupTerminal returns an error")
 	}

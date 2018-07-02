@@ -60,8 +60,11 @@ func TestReadLine(t *testing.T) {
 		var outputs []byte
 		sigs := make(chan os.Signal, 10)
 		defer close(sigs)
-		master, lineChan, errChan := run(ev, sigs, &outputs)
+		master, lineChan, errChan, err := run(ev, sigs, &outputs)
 		defer master.Close()
+		if err != nil {
+			t.Skip(err)
+		}
 
 		write(master, sigs, test.input, test.sigints)
 
@@ -86,11 +89,11 @@ func TestReadLine(t *testing.T) {
 // connected to, and two channels onto which the result of ReadLine will be
 // delivered. The caller is responsible for closing the master file.
 func run(ev *eval.Evaler, sigs <-chan os.Signal, ptrOutputs *[]byte) (*os.File,
-	<-chan string, <-chan error) {
+	<-chan string, <-chan error, error) {
 
 	master, tty, err := pty.Open()
 	if err != nil {
-		panic(err)
+		return nil, nil, nil, err
 	}
 	// Continually consume tty outputs so that the editor is not blocked on
 	// writing.
@@ -113,7 +116,7 @@ func run(ev *eval.Evaler, sigs <-chan os.Signal, ptrOutputs *[]byte) (*os.File,
 		close(errChan)
 	}()
 
-	return master, lineChan, errChan
+	return master, lineChan, errChan, nil
 }
 
 // drain drains the given reader. If a non-nil []byte pointer is passed, it also
