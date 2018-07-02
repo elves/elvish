@@ -3,6 +3,7 @@ package program
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/elves/elvish/buildinfo"
 	daemonsvc "github.com/elves/elvish/daemon"
@@ -44,11 +45,14 @@ type ShowBuildInfo struct {
 
 func (info ShowBuildInfo) Main([]string) int {
 	if info.JSON {
-		fmt.Printf(`{"version": %s, "goroot": %s, "gopath": %s}`+"\n",
-			quoteJSON(buildinfo.Version), quoteJSON(buildinfo.GoRoot),
-			quoteJSON(buildinfo.GoPath))
+		fmt.Printf(`{"version": %s,`, quoteJSON(buildinfo.Version))
+		fmt.Printf(` "goversion": %s,`, quoteJSON(runtime.Version()))
+		fmt.Printf(` "goroot": %s,`, quoteJSON(buildinfo.GoRoot))
+		fmt.Printf(` "gopath": %s}`, quoteJSON(buildinfo.GoPath))
+		fmt.Println()
 	} else {
 		fmt.Println("Version:", buildinfo.Version)
+		fmt.Println("Go version:", runtime.Version())
 		fmt.Println("GOROOT at build time:", buildinfo.GoRoot)
 		fmt.Println("GOPATH at build time:", buildinfo.GoPath)
 	}
