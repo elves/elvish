@@ -86,10 +86,10 @@ var styleForControlChar = Styles{"inverse"}
 // Write writes a single rune to a buffer, wrapping the line when needed. If the
 // rune is a control character, it will be written using the caret notation
 // (like ^X) and gets the additional style of styleForControlChar.
-func (bb *BufferBuilder) Write(r rune, style string) {
+func (bb *BufferBuilder) Write(r rune, style string) *BufferBuilder {
 	if r == '\n' {
 		bb.Newline()
-		return
+		return bb
 	}
 	wd := util.Wcwidth(r)
 	c := Cell{string(r), byte(wd), style}
@@ -112,30 +112,33 @@ func (bb *BufferBuilder) Write(r rune, style string) {
 			bb.Newline()
 		}
 	}
+	return bb
 }
 
 // WriteString writes a string to a buffer, with one style.
-func (bb *BufferBuilder) WriteString(text, style string) {
+func (bb *BufferBuilder) WriteString(text, style string) *BufferBuilder {
 	for _, r := range text {
 		bb.Write(r, style)
 	}
+	return bb
 }
 
 // WriteSpaces writes w spaces.
-func (bb *BufferBuilder) WriteSpaces(w int, style string) {
-	bb.WriteString(strings.Repeat(" ", w), style)
+func (bb *BufferBuilder) WriteSpaces(w int, style string) *BufferBuilder {
+	return bb.WriteString(strings.Repeat(" ", w), style)
 }
 
 // WriteStyleds writes a slice of styled structs.
-func (bb *BufferBuilder) WriteStyleds(ss []*Styled) {
+func (bb *BufferBuilder) WriteStyleds(ss []*Styled) *BufferBuilder {
 	for _, s := range ss {
 		bb.WriteString(s.Text, s.Styles.String())
 	}
+	return bb
 }
 
 // Extend adds all lines from b2 to the bottom of this buffer. If moveDot is
 // true, the dot is updated to match the dot of b2.
-func (bb *BufferBuilder) Extend(b2 *Buffer, moveDot bool) {
+func (bb *BufferBuilder) Extend(b2 *Buffer, moveDot bool) *BufferBuilder {
 	if b2 != nil && b2.Lines != nil {
 		if moveDot {
 			bb.Dot.Line = b2.Dot.Line + len(bb.Lines)
@@ -144,6 +147,7 @@ func (bb *BufferBuilder) Extend(b2 *Buffer, moveDot bool) {
 		bb.Lines = append(bb.Lines, b2.Lines...)
 		bb.Col = b2.Col
 	}
+	return bb
 }
 
 // ExtendRight extends bb to the right. It pads each line in bb to be at least of
@@ -151,7 +155,7 @@ func (bb *BufferBuilder) Extend(b2 *Buffer, moveDot bool) {
 // when b2 has more lines than bb.
 // BUG(xiaq): after calling ExtendRight, the widths of some lines can exceed
 // bb.width.
-func (bb *BufferBuilder) ExtendRight(b2 *Buffer, w int) {
+func (bb *BufferBuilder) ExtendRight(b2 *Buffer, w int) *BufferBuilder {
 	i := 0
 	for ; i < len(bb.Lines) && i < len(b2.Lines); i++ {
 		if w0 := CellsWidth(bb.Lines[i]); w0 < w {
@@ -164,6 +168,7 @@ func (bb *BufferBuilder) ExtendRight(b2 *Buffer, w int) {
 		bb.Lines = append(bb.Lines, row)
 	}
 	bb.Col = CellsWidth(bb.Lines[len(bb.Lines)-1])
+	return bb
 }
 
 func makeSpacing(n int) []Cell {
