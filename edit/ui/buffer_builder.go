@@ -133,21 +133,6 @@ func (bb *BufferBuilder) WriteStyleds(ss []*Styled) {
 	}
 }
 
-// TrimToLines trims a buffer to the lines [low, high).
-func (bb *BufferBuilder) TrimToLines(low, high int) {
-	for i := 0; i < low; i++ {
-		bb.Lines[i] = nil
-	}
-	for i := high; i < len(bb.Lines); i++ {
-		bb.Lines[i] = nil
-	}
-	bb.Lines = bb.Lines[low:high]
-	bb.Dot.Line -= low
-	if bb.Dot.Line < 0 {
-		bb.Dot.Line = 0
-	}
-}
-
 // Extend adds all lines from b2 to the bottom of this buffer. If moveDot is
 // true, the dot is updated to match the dot of b2.
 func (bb *BufferBuilder) Extend(b2 *Buffer, moveDot bool) {
