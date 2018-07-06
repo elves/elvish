@@ -19,16 +19,16 @@ func TestValue(t *testing.T) {
 		// List, Map and Indexing
 		// ----------------------
 
-		That("echo [a b c] [&key=value] | each $put~").Puts(
-			"[a b c] [&key=value]"),
+		That("echo [a b c] [&key=value] | each $put~").
+			Puts("[a b c] [&key=value]"),
 		That("put [a b c][2]").Puts("c"),
 		That("put [&key=value][key]").Puts("value"),
 
 		// String Literals
 		// ---------------
 		That(`put 'such \"''literal'`).Puts(`such \"'literal`),
-		That(`put "much \n\033[31;1m$cool\033[m"`).Puts(
-			"much \n\033[31;1m$cool\033[m"),
+		That(`put "much \n\033[31;1m$cool\033[m"`).
+			Puts("much \n\033[31;1m$cool\033[m"),
 
 		// Captures
 		// ---------
@@ -44,8 +44,8 @@ func TestValue(t *testing.T) {
 		// ------------
 
 		// Compounding
-		That("x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n").Puts(
-			"WOW, SUCH SHELL, MUCH COOL"),
+		That("x='SHELL'\nput 'WOW, SUCH '$x', MUCH COOL'\n").
+			Puts("WOW, SUCH SHELL, MUCH COOL"),
 		// Splicing
 		That("x=[elvish rules]; put $@x").Puts("elvish", "rules"),
 

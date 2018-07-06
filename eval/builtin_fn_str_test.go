@@ -21,13 +21,14 @@ func TestBuiltinFnStr(t *testing.T) {
 		That(`base 1 1`).Errors(),   // no base-1
 		That(`base 37 10`).Errors(), // no letter for base-37
 		That(`wcswidth 你好`).Puts("4"),
-		That(`-override-wcwidth x 10; wcswidth 1x2x; -override-wcwidth x 1`).Puts("22"),
+		That(`-override-wcwidth x 10; wcswidth 1x2x; -override-wcwidth x 1`).
+			Puts("22"),
 
 		That(`has-prefix golang go`).Puts(true),
 		That(`has-prefix golang x`).Puts(false),
 		That(`has-suffix golang x`).Puts(false),
 
-		That(`echo "  ax  by cz  \n11\t22 33" | eawk [@a]{ put $a[-1] }`).Puts(
-			"cz", "33"),
+		That(`echo "  ax  by cz  \n11\t22 33" | eawk [@a]{ put $a[-1] }`).
+			Puts("cz", "33"),
 	)
 }

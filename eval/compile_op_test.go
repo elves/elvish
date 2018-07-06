@@ -18,8 +18,8 @@ func TestOp(t *testing.T) {
 		// ---------
 
 		// Pure byte pipeline
-		That(`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`).Prints(
-			"A1bert\nBer1in\n"),
+		That(`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`).
+			Prints("A1bert\nBer1in\n"),
 		// Pure channel pipeline
 		That(`put 233 42 19 | each [x]{+ $x 10}`).Puts("243", "52", "29"),
 		// Pipeline draining.
@@ -32,9 +32,10 @@ func TestOp(t *testing.T) {
 		// List element assignment
 		That("li=[foo bar]; li[0]=233; put $@li").Puts("233", "bar"),
 		// Map element assignment
-		That("di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]").Puts(
-			"lorem", "ipsum"),
-		That("d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]").Puts("v", "u"),
+		That("di=[&k=v]; di[k]=lorem; di[k2]=ipsum; put $di[k] $di[k2]").
+			Puts("lorem", "ipsum"),
+		That("d=[&a=[&b=v]]; put $d[a][b]; d[a][b]=u; put $d[a][b]").
+			Puts("v", "u"),
 		// Multi-assignments.
 		That("{a,b}=(put a b); put $a $b").Puts("a", "b"),
 		That("@a=(put a b); put $@a").Puts("a", "b"),
@@ -42,8 +43,8 @@ func TestOp(t *testing.T) {
 		//That("di=[&]; di[a b]=(put a b); put $di[a] $di[b]").Puts("a", "b"),
 
 		// Temporary assignment.
-		That("a=alice b=bob; {a,@b}=(put amy ben) put $a $@b; put $a $b").Puts(
-			"amy", "ben", "alice", "bob"),
+		That("a=alice b=bob; {a,@b}=(put amy ben) put $a $@b; put $a $b").
+			Puts("amy", "ben", "alice", "bob"),
 		// Temporary assignment of list element.
 		That("l = [a]; l[0]=x put $l[0]; put $l[0]").Puts("x", "a"),
 		// Temporary assignment of map element.
@@ -59,7 +60,8 @@ func TestOp(t *testing.T) {
 		// Redirections
 		// ------------
 
-		That("f=(mktemp elvXXXXXX); echo 233 > $f; cat < $f; rm $f").Prints("233\n"),
+		That("f=(mktemp elvXXXXXX); echo 233 > $f; cat < $f; rm $f").
+			Prints("233\n"),
 
 		// Redirections from special form.
 		That(`f = (mktemp elvXXXXXX);
@@ -72,7 +74,7 @@ func TestOp(t *testing.T) {
 			f=(fopen $fname); cat <$f; fclose $f; rm $fname`).Prints("haha\n"),
 
 		// Redirections from Pipe object.
-		That(`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`).Prints(
-			"haha\n"),
+		That(`p=(pipe); echo haha > $p; pwclose $p; cat < $p; prclose $p`).
+			Prints("haha\n"),
 	)
 }

@@ -15,8 +15,8 @@ func TestBuiltinFnFS(t *testing.T) {
 
 		Test(t,
 			That(`path-base a/b/c.png`).Puts("c.png"),
-			That("tilde-abbr "+parse.Quote(filepath.Join(tmpHome, "foobar"))).Puts(
-				"~"+pathSep+"foobar"),
+			That("tilde-abbr "+parse.Quote(filepath.Join(tmpHome, "foobar"))).
+				Puts("~"+pathSep+"foobar"),
 
 			That(`-is-dir ~/dir`).Puts(true),
 			That(`-is-dir ~/file`).Puts(false),

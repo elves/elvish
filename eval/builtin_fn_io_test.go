@@ -19,16 +19,16 @@ func TestBuiltinFnIO(t *testing.T) {
 		That(`print "a\nb" | slurp`).Puts("a\nb"),
 		That(`print "a\nb" | from-lines`).Puts("a", "b"),
 		That(`print "a\nb\n" | from-lines`).Puts("a", "b"),
-		That(`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`).Puts(
-			vals.MakeMap(map[interface{}]interface{}{
+		That(`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`).
+			Puts(vals.MakeMap(map[interface{}]interface{}{
 				"k": "v",
 				"a": vals.MakeList("1", "2")}),
-			"foo"),
+				"foo"),
 		That(`echo 'invalid' | from-json`).Errors(),
 
 		That(`put "l\norem" ipsum | to-lines`).Prints("l\norem\nipsum\n"),
-		That(`put [&k=v &a=[1 2]] foo | to-json`).Prints(
-			`{"a":["1","2"],"k":"v"}
+		That(`put [&k=v &a=[1 2]] foo | to-json`).
+			Prints(`{"a":["1","2"],"k":"v"}
 "foo"
 `),
 	)

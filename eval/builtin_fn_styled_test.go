@@ -17,20 +17,29 @@ func TestStyledString(t *testing.T) {
 
 func TestStyledSegment(t *testing.T) {
 	Test(t,
-		That("print (styled (styled-segment abc &fg-color=cyan) bold)").Prints("\033[1;36mabc\033[m"),
-		That("print (styled (styled-segment (styled-segment abc &fg-color=magenta) &dim=$true) cyan)").Prints("\033[2;36mabc\033[m"),
-		That("print (styled (styled-segment abc &inverse=$true) inverse)").Prints("\033[7mabc\033[m"),
-		That("print (styled (styled-segment abc) toggle-inverse)").Prints("\033[7mabc\033[m"),
-		That("print (styled (styled-segment abc &inverse=$true) no-inverse)").Prints("abc"),
-		That("print (styled (styled-segment abc &inverse=$true) toggle-inverse)").Prints("abc"),
+		That("print (styled (styled-segment abc &fg-color=cyan) bold)").
+			Prints("\033[1;36mabc\033[m"),
+		That("print (styled (styled-segment (styled-segment abc &fg-color=magenta) &dim=$true) cyan)").
+			Prints("\033[2;36mabc\033[m"),
+		That("print (styled (styled-segment abc &inverse=$true) inverse)").
+			Prints("\033[7mabc\033[m"),
+		That("print (styled (styled-segment abc) toggle-inverse)").
+			Prints("\033[7mabc\033[m"),
+		That("print (styled (styled-segment abc &inverse=$true) no-inverse)").
+			Prints("abc"),
+		That("print (styled (styled-segment abc &inverse=$true) toggle-inverse)").
+			Prints("abc"),
 	)
 }
 
 func TestStyledText(t *testing.T) {
 	Test(t,
-		That("print (styled (styled abc red) blue)").Prints("\033[34mabc\033[m"),
-		That("print (styled (styled abc italic) red)").Prints("\033[3;31mabc\033[m"),
-		That("print (styled (styled abc inverse) inverse)").Prints("\033[7mabc\033[m"),
+		That("print (styled (styled abc red) blue)").
+			Prints("\033[34mabc\033[m"),
+		That("print (styled (styled abc italic) red)").
+			Prints("\033[3;31mabc\033[m"),
+		That("print (styled (styled abc inverse) inverse)").
+			Prints("\033[7mabc\033[m"),
 		That("print (styled (styled abc inverse) no-inverse)").Prints("abc"),
 		That("print (styled (styled abc inverse) toggle-inverse)").Prints("abc"),
 		That("print (styled (styled abc inverse) toggle-inverse toggle-inverse)").Prints("\033[7mabc\033[m"),

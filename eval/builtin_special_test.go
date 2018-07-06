@@ -18,29 +18,33 @@ func TestBuiltinSpecial(t *testing.T) {
 		// if
 		That("if true { put then }").Puts("then"),
 		That("if $false { put then } else { put else }").Puts("else"),
-		That("if $false { put 1 } elif $false { put 2 } else { put 3 }").Puts("3"),
+		That("if $false { put 1 } elif $false { put 2 } else { put 3 }").
+			Puts("3"),
 		That("if $false { put 2 } elif true { put 2 } else { put 3 }").Puts("2"),
 
 		// try
 		That("try { nop } except { put bad } else { put good }").Puts("good"),
-		That("try { e:false } except - { put bad } else { put good }").Puts("bad"),
+		That("try { e:false } except - { put bad } else { put good }").
+			Puts("bad"),
 		That("try { fail tr }").ErrorsWith(errors.New("tr")),
-		That("try { fail tr } finally { put final }").Puts(
-			"final").ErrorsWith(errors.New("tr")),
-		That("try { fail tr } except { fail ex } finally { put final }").Puts(
-			"final").ErrorsWith(errors.New("ex")),
-		That("try { fail tr } except { put ex } finally { fail final }").Puts(
-			"ex").ErrorsWith(errors.New("final")),
-		That("try { fail tr } except { fail ex } finally { fail final }").ErrorsWith(
-			errors.New("final")),
+		That("try { fail tr } finally { put final }").
+			Puts("final").ErrorsWith(errors.New("tr")),
+		That("try { fail tr } except { fail ex } finally { put final }").
+			Puts("final").ErrorsWith(errors.New("ex")),
+		That("try { fail tr } except { put ex } finally { fail final }").
+			Puts("ex").ErrorsWith(errors.New("final")),
+		That("try { fail tr } except { fail ex } finally { fail final }").
+			ErrorsWith(errors.New("final")),
 
 		// while
-		That("x=0; while (< $x 4) { put $x; x=(+ $x 1) }").Puts("0", "1", "2", "3"),
+		That("x=0; while (< $x 4) { put $x; x=(+ $x 1) }").
+			Puts("0", "1", "2", "3"),
 		That("x = 0; while (< $x 4) { put $x; break }").Puts("0"),
 		That("x = 0; while (< $x 4) { fail haha }").Errors(),
 
 		// for
-		That("for x [tempora mores] { put 'O '$x }").Puts("O tempora", "O mores"),
+		That("for x [tempora mores] { put 'O '$x }").
+			Puts("O tempora", "O mores"),
 		// break
 		That("for x [a] { break } else { put $x }").DoesNothing(),
 		// else
@@ -49,8 +53,8 @@ func TestBuiltinSpecial(t *testing.T) {
 		That("for x [a b] { put $x; continue; put $x; }").Puts("a", "b"),
 
 		// fn.
-		That("fn f [x]{ put x=$x'.' }; f lorem; f ipsum").Puts(
-			"x=lorem.", "x=ipsum."),
+		That("fn f [x]{ put x=$x'.' }; f lorem; f ipsum").
+			Puts("x=lorem.", "x=ipsum."),
 		// return.
 		That("fn f []{ put a; return; put b }; f").Puts("a"),
 	)
