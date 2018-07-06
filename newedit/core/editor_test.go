@@ -110,8 +110,9 @@ func TestRead_RendersHighlightedCode(t *testing.T) {
 
 	go ed.Read()
 
-	wantBuf := ui.NewBuffer(80)
-	wantBuf.WriteString("abc", "31" /* SGR for red foreground */)
+	wantBuf := ui.NewBufferBuilder(80).
+		WriteString("abc", "31" /* SGR for red foreground */).
+		Buffer()
 checkBuffer:
 	for {
 		select {

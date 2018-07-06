@@ -7,7 +7,7 @@ import (
 )
 
 // Renders the editor state.
-func render(st *State, cfg *RenderConfig, h, w int) (notes, main *ui.Buffer) {
+func render(st *State, cfg *RenderConfig, h, w int, final bool) (notes, main *ui.Buffer) {
 	var bufNotes *ui.Buffer
 	if len(st.Notes) > 0 {
 		bufNotes = ui.Render(&notesRenderer{st.Notes}, w)
@@ -17,18 +17,25 @@ func render(st *State, cfg *RenderConfig, h, w int) (notes, main *ui.Buffer) {
 	rprompt := cfg.Rprompt()
 	code, dot, errors := prepareCode(
 		st.Code, st.Dot, st.Pending, cfg.Highlighter)
-	bufCode := ui.Render(&codeContentRenderer{code, dot, prompt, rprompt}, w)
+	bbCode := ui.NewBufferBuilder(w)
+	(&codeContentRenderer{code, dot, prompt, rprompt}).Render(bbCode)
 	if len(errors) > 0 {
 		bufCodeErrors := ui.Render(&codeErrorsRenderer{errors}, w)
-		bufCode.Extend(bufCodeErrors, false)
+		bbCode.Extend(bufCodeErrors, false)
 	}
+	bufCode := bbCode.Buffer()
 
 	if cfg.MaxHeight > 0 && cfg.MaxHeight < h {
 		h = cfg.MaxHeight
 	}
-	bufMain := ui.Render(&mainRenderer{h, bufCode, st.Mode}, w)
+	bbMain := ui.NewBufferBuilder(w)
+	(&mainRenderer{h, bufCode, st.Mode}).Render(bbMain)
+	if final {
+		bbMain.Newline()
+		bbMain.SetDotToCursor()
+	}
 
-	return bufNotes, bufMain
+	return bufNotes, bbMain.Buffer()
 }
 
 var transformerForPending = "underline"
@@ -55,7 +62,7 @@ type notesRenderer struct {
 	notes []string
 }
 
-func (r *notesRenderer) Render(buf *ui.Buffer) {
+func (r *notesRenderer) Render(buf *ui.BufferBuilder) {
 	for i, note := range r.notes {
 		if i > 0 {
 			buf.Newline()
@@ -73,7 +80,7 @@ type mainRenderer struct {
 	mode      Mode
 }
 
-func (r *mainRenderer) Render(buf *ui.Buffer) {
+func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 	bufCode := r.bufCode
 	bufMode := ui.Render(r.mode.ModeLine(), buf.Width)
 
@@ -150,7 +157,7 @@ type codeContentRenderer struct {
 	rprompt styled.Text
 }
 
-func (r *codeContentRenderer) Render(buf *ui.Buffer) {
+func (r *codeContentRenderer) Render(buf *ui.BufferBuilder) {
 	buf.EagerWrap = true
 
 	buf.WriteStyleds(r.prompt.ToLegacyType())
@@ -186,7 +193,7 @@ type codeErrorsRenderer struct {
 	errors []error
 }
 
-func (r *codeErrorsRenderer) Render(buf *ui.Buffer) {
+func (r *codeErrorsRenderer) Render(buf *ui.BufferBuilder) {
 	for i, err := range r.errors {
 		if i > 0 {
 			buf.Newline()

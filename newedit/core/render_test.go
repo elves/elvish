@@ -68,45 +68,53 @@ func TestRenderers(t *testing.T) {
 }
 
 func init() {
-	wantBuf0 = ui.NewBuffer(7)
-	wantBuf0.WriteString("note 1\n", "")
-	wantBuf0.WriteString("long note 2", "")
+	wantBuf0 = ui.NewBufferBuilder(7).
+		WriteString("note 1\n", "").
+		WriteString("long note 2", "").
+		Buffer()
 
-	wantBuf20 = ui.NewBuffer(7)
-	wantBuf20.Indent = 2
-	wantBuf20.EagerWrap = true
-	wantBuf20.WriteString("> abcdefg", "")
-	wantBuf20.SetDot(wantBuf20.Cursor())
+	wantBuf20 = ui.NewBufferBuilder(7).
+		SetIndent(2).
+		SetEagerWrap(true).
+		WriteString("> abcdefg", "").
+		SetDotToCursor().
+		Buffer()
 
-	wantBuf21 = ui.NewBuffer(7)
-	// No indent as the prompt is multi-line
-	wantBuf21.EagerWrap = true
-	wantBuf21.WriteString(">\n", "")
-	wantBuf21.WriteString("abcdefg", "")
-	wantBuf21.SetDot(wantBuf21.Cursor())
+	wantBuf21 = ui.NewBufferBuilder(7).
+		// No indent as the prompt is multi-line
+		SetEagerWrap(true).
+		WriteString(">\n", "").
+		WriteString("abcdefg", "").
+		SetDotToCursor().
+		Buffer()
 
-	wantBuf22 = ui.NewBuffer(7)
-	// No indent as the prompt is too long
-	wantBuf22.EagerWrap = true
-	wantBuf22.WriteString(">>> abcdefg", "")
-	wantBuf22.SetDot(wantBuf22.Cursor())
+	wantBuf22 = ui.NewBufferBuilder(7).
+		// No indent as the prompt is too long
+		SetEagerWrap(true).
+		WriteString(">>> abcdefg", "").
+		SetDotToCursor().
+		Buffer()
 
-	wantBuf23 = ui.NewBuffer(7)
-	wantBuf23.WriteString("abc", "")
-	wantBuf23.SetDot(wantBuf23.Cursor())
-	wantBuf23.WriteString("  RP", "")
+	wantBuf23 = ui.NewBufferBuilder(7).
+		WriteString("abc", "").
+		SetDotToCursor().
+		WriteString("  RP", "").
+		Buffer()
 
-	wantBuf24 = ui.NewBuffer(7)
-	wantBuf24.WriteString("abcdef", "")
-	wantBuf24.SetDot(wantBuf24.Cursor())
+	wantBuf24 = ui.NewBufferBuilder(7).
+		WriteString("abcdef", "").
+		SetDotToCursor().
+		Buffer()
 
-	wantBuf25 = ui.NewBuffer(7)
-	wantBuf25.WriteString("abcde", "")
-	wantBuf25.SetDot(wantBuf25.Cursor())
+	wantBuf25 = ui.NewBufferBuilder(7).
+		WriteString("abcde", "").
+		SetDotToCursor().
+		Buffer()
 
-	wantBuf3 = ui.NewBuffer(7)
-	wantBuf3.WriteString("error 1\n", "")
-	wantBuf3.WriteString("long error 2", "")
+	wantBuf3 = ui.NewBufferBuilder(7).
+		WriteString("error 1\n", "").
+		WriteString("long error 2", "").
+		Buffer()
 }
 
 type matchBuffer struct {
