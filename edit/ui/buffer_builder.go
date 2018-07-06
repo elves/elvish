@@ -44,6 +44,12 @@ func (bb *BufferBuilder) SetEagerWrap(v bool) *BufferBuilder {
 	return bb
 }
 
+func (bb *BufferBuilder) SetLines(lines ...[]Cell) *BufferBuilder {
+	bb.Lines = lines
+	bb.Col = CellsWidth(lines[len(lines)-1])
+	return bb
+}
+
 func (bb *BufferBuilder) SetDot(dot Pos) *BufferBuilder {
 	bb.Dot = dot
 	return bb
@@ -138,4 +144,37 @@ func (bb *BufferBuilder) TrimToLines(low, high int) {
 	if bb.Dot.Line < 0 {
 		bb.Dot.Line = 0
 	}
+}
+
+// Extend adds all lines from b2 to the bottom of this buffer. If moveDot is
+// true, the dot is updated to match the dot of b2.
+func (bb *BufferBuilder) Extend(b2 *Buffer, moveDot bool) {
+	if b2 != nil && b2.Lines != nil {
+		if moveDot {
+			bb.Dot.Line = b2.Dot.Line + len(bb.Lines)
+			bb.Dot.Col = b2.Dot.Col
+		}
+		bb.Lines = append(bb.Lines, b2.Lines...)
+		bb.Col = b2.Col
+	}
+}
+
+// ExtendRight extends bb to the right. It pads each line in bb to be at least of
+// width w and appends the corresponding line in b2 to it, making new lines in bb
+// when b2 has more lines than bb.
+// BUG(xiaq): after calling ExtendRight, the widths of some lines can exceed
+// bb.width.
+func (bb *BufferBuilder) ExtendRight(b2 *Buffer, w int) {
+	i := 0
+	for ; i < len(bb.Lines) && i < len(b2.Lines); i++ {
+		if w0 := CellsWidth(bb.Lines[i]); w0 < w {
+			bb.Lines[i] = append(bb.Lines[i], makeSpacing(w-w0)...)
+		}
+		bb.Lines[i] = append(bb.Lines[i], b2.Lines[i]...)
+	}
+	for ; i < len(b2.Lines); i++ {
+		row := append(makeSpacing(w), b2.Lines[i]...)
+		bb.Lines = append(bb.Lines, row)
+	}
+	bb.Col = CellsWidth(bb.Lines[len(bb.Lines)-1])
 }

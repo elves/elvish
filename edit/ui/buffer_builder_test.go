@@ -73,3 +73,114 @@ func TestBufferBuilderWrites(t *testing.T) {
 		}
 	}
 }
+
+var bufferBuilderExtendTests = []struct {
+	bb      *BufferBuilder
+	buf2    *Buffer
+	moveDot bool
+	want    *Buffer
+}{
+	{
+		NewBufferBuilder(10).SetLines(
+			[]Cell{{"a", 1, ""}}, []Cell{{"b", 1, ""}}),
+		NewBuffer(11).SetLines([]Cell{{"c", 1, ""}}, []Cell{{"d", 1, ""}}),
+		false,
+		NewBuffer(10).SetLines(
+			[]Cell{{"a", 1, ""}}, []Cell{{"b", 1, ""}},
+			[]Cell{{"c", 1, ""}}, []Cell{{"d", 1, ""}}),
+	},
+	// Moving dot.
+	{
+		NewBufferBuilder(10).SetLines(
+			[]Cell{{"a", 1, ""}}, []Cell{{"b", 1, ""}}),
+		NewBuffer(11).SetLines(
+			[]Cell{{"c", 1, ""}}, []Cell{{"d", 1, ""}},
+		).SetDot(Pos{1, 1}),
+		true,
+		NewBuffer(10).SetLines(
+			[]Cell{{"a", 1, ""}}, []Cell{{"b", 1, ""}},
+			[]Cell{{"c", 1, ""}}, []Cell{{"d", 1, ""}},
+		).SetDot(Pos{3, 1}),
+	},
+}
+
+func TestBufferBuilderExtend(t *testing.T) {
+	for _, test := range bufferBuilderExtendTests {
+		bb := test.bb
+		bb.Extend(test.buf2, test.moveDot)
+		b := bb.Buffer()
+		if !reflect.DeepEqual(b, test.want) {
+			t.Errorf("buf.extend(%v, %v) makes it %v, want %v",
+				test.buf2, test.moveDot, b, test.want)
+		}
+	}
+}
+
+var bufferBuilderExtendRightTests = []struct {
+	bb   *BufferBuilder
+	buf2 *Buffer
+	w    int
+	want *Buffer
+}{
+	// No padding, equal height.
+	{
+		NewBufferBuilder(10).SetLines([]Cell{{"a", 1, ""}}, []Cell{}),
+		NewBuffer(11).SetLines([]Cell{{"c", 1, ""}}, []Cell{{"d", 1, ""}}),
+		0,
+		NewBuffer(10).SetLines(
+			[]Cell{{"a", 1, ""}, {"c", 1, ""}},
+			[]Cell{{"d", 1, ""}},
+		),
+	},
+	// With padding.
+	{
+		NewBufferBuilder(10).SetLines(
+			[]Cell{{"a", 1, ""}}, []Cell{{"b", 1, ""}}),
+		NewBuffer(11).SetLines([]Cell{{"c", 1, ""}}, []Cell{{"d", 1, ""}}),
+		2,
+		NewBuffer(10).SetLines(
+			[]Cell{{"a", 1, ""}, {" ", 1, ""}, {"c", 1, ""}},
+			[]Cell{{"b", 1, ""}, {" ", 1, ""}, {"d", 1, ""}},
+		),
+	},
+	// buf is higher.
+	{
+		NewBufferBuilder(10).SetLines(
+			[]Cell{{"a", 1, ""}},
+			[]Cell{{"b", 1, ""}},
+			[]Cell{{"x", 1, ""}},
+		),
+		NewBuffer(11).SetLines([]Cell{{"c", 1, ""}}, []Cell{{"d", 1, ""}}),
+		1,
+		NewBuffer(10).SetLines(
+			[]Cell{{"a", 1, ""}, {"c", 1, ""}},
+			[]Cell{{"b", 1, ""}, {"d", 1, ""}},
+			[]Cell{{"x", 1, ""}},
+		),
+	},
+	// buf2 is higher.
+	{
+		NewBufferBuilder(10).SetLines(
+			[]Cell{{"a", 1, ""}}, []Cell{{"b", 1, ""}}),
+		NewBuffer(11).SetLines(
+			[]Cell{{"c", 1, ""}}, []Cell{{"d", 1, ""}}, []Cell{{"e", 1, ""}}),
+		1,
+		NewBuffer(10).SetLines(
+			[]Cell{{"a", 1, ""}, {"c", 1, ""}},
+			[]Cell{{"b", 1, ""}, {"d", 1, ""}},
+			[]Cell{{" ", 1, ""}, {"e", 1, ""}},
+		),
+	},
+}
+
+func TestBufferBuilderExtendRight(t *testing.T) {
+	for _, test := range bufferBuilderExtendRightTests {
+		bb := test.bb
+		bb.ExtendRight(test.buf2, test.w)
+		b := bb.Buffer()
+		if !reflect.DeepEqual(b, test.want) {
+			t.Errorf("buf.extendRight(%v, %v) makes it %v, want %v",
+				test.buf2, test.w, b, test.want)
+		}
+	}
+}
