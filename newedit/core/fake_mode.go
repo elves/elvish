@@ -10,8 +10,12 @@ type fakeMode struct {
 	keys []ui.Key
 }
 
-func newFakeMode(n int) *fakeMode {
-	return &fakeMode{n, nil}
+func newFakeMode() *fakeMode {
+	return &fakeMode{}
+}
+
+func (m *fakeMode) setMaxKeys(n int) {
+	m.nkeys = n
 }
 
 func (m *fakeMode) ModeLine() ui.Renderer          { return nil }
