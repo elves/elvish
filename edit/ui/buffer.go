@@ -44,12 +44,7 @@ func CompareCells(r1, r2 []Cell) (bool, int) {
 // exactly match the terminal's idea of the width of characters (wcwidth) and
 // where to insert soft carriage returns, so there could be bugs.
 type Buffer struct {
-	Width, Col, Indent int
-	// EagerWrap controls whether to wrap line as soon as the cursor reaches the
-	// right edge of the terminal. This is not often desirable as it creates
-	// unneessary line breaks, but is is useful when echoing the user input.
-	// will otherwise
-	EagerWrap bool
+	Width, Col int
 	// Lines the content of the buffer.
 	Lines [][]Cell
 	// Dot is what the user perceives as the cursor.
@@ -59,16 +54,6 @@ type Buffer struct {
 // NewBuffer builds a new buffer, with one empty line.
 func NewBuffer(width int) *Buffer {
 	return &Buffer{Width: width, Lines: [][]Cell{make([]Cell, 0, width)}}
-}
-
-func (b *Buffer) SetIndent(indent int) *Buffer {
-	b.Indent = indent
-	return b
-}
-
-func (b *Buffer) SetEagerWrap(v bool) *Buffer {
-	b.EagerWrap = v
-	return b
 }
 
 func (b *Buffer) SetLines(lines ...[]Cell) *Buffer {
