@@ -1,12 +1,12 @@
 package ui
 
-func writeHorizontalScrollbar(b *Buffer, n, low, high, width int) {
+func writeHorizontalScrollbar(bb *BufferBuilder, n, low, high, width int) {
 	slow, shigh := findScrollInterval(n, low, high, width)
 	for i := 0; i < width; i++ {
 		if slow <= i && i < shigh {
-			b.Write(' ', styleForScrollBarThumb.String())
+			bb.Write(' ', styleForScrollBarThumb.String())
 		} else {
-			b.Write('━', styleForScrollBarArea.String())
+			bb.Write('━', styleForScrollBarArea.String())
 		}
 	}
 }

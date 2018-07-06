@@ -11,20 +11,20 @@ import (
 
 type placeholderRenderer string
 
-func (lp placeholderRenderer) Render(b *ui.Buffer) {
-	b.WriteString(util.TrimWcwidth(string(lp), b.Width), "")
+func (lp placeholderRenderer) Render(bb *ui.BufferBuilder) {
+	bb.WriteString(util.TrimWcwidth(string(lp), bb.Width), "")
 }
 
 type listingRenderer struct {
 	lines []ui.Styled
 }
 
-func (ls listingRenderer) Render(b *ui.Buffer) {
+func (ls listingRenderer) Render(bb *ui.BufferBuilder) {
 	for i, line := range ls.lines {
 		if i > 0 {
-			b.Newline()
+			bb.Newline()
 		}
-		b.WriteString(util.ForceWcwidth(line.Text, b.Width), line.Styles.String())
+		bb.WriteString(util.ForceWcwidth(line.Text, bb.Width), line.Styles.String())
 	}
 }
 
@@ -33,12 +33,12 @@ type listingWithScrollBarRenderer struct {
 	n, low, high, height int
 }
 
-func (ls listingWithScrollBarRenderer) Render(b *ui.Buffer) {
-	b1 := ui.Render(ls.listingRenderer, b.Width-1)
-	b.ExtendRight(b1, 0)
+func (ls listingWithScrollBarRenderer) Render(bb *ui.BufferBuilder) {
+	b1 := ui.Render(ls.listingRenderer, bb.Width-1)
+	bb.ExtendRight(b1, 0)
 
 	scrollbar := renderScrollbar(ls.n, ls.low, ls.high, ls.height)
-	b.ExtendRight(scrollbar, b.Width-1)
+	bb.ExtendRight(scrollbar, bb.Width-1)
 }
 
 type navRenderer struct {
@@ -53,19 +53,19 @@ func makeNavRenderer(h int, w1, w2, w3 int, r1, r2, r3 ui.Renderer) ui.Renderer 
 
 const navColMargin = 1
 
-func (nr *navRenderer) Render(b *ui.Buffer) {
-	wParent, wCurrent, wPreview := getNavWidths(b.Width-navColMargin*2,
+func (nr *navRenderer) Render(bb *ui.BufferBuilder) {
+	wParent, wCurrent, wPreview := getNavWidths(bb.Width-navColMargin*2,
 		nr.fwCurrent, nr.fwPreview)
 
 	bParent := ui.Render(nr.parent, wParent)
-	b.ExtendRight(bParent, 0)
+	bb.ExtendRight(bParent, 0)
 
 	bCurrent := ui.Render(nr.current, wCurrent)
-	b.ExtendRight(bCurrent, wParent+navColMargin)
+	bb.ExtendRight(bCurrent, wParent+navColMargin)
 
 	if wPreview > 0 {
 		bPreview := ui.Render(nr.preview, wPreview)
-		b.ExtendRight(bPreview, wParent+wCurrent+2*navColMargin)
+		bb.ExtendRight(bPreview, wParent+wCurrent+2*navColMargin)
 	}
 }
 
@@ -75,8 +75,8 @@ type linesRenderer struct {
 	style string
 }
 
-func (nr linesRenderer) Render(b *ui.Buffer) {
-	b.WriteString(strings.Join(nr.lines, "\n"), "")
+func (nr linesRenderer) Render(bb *ui.BufferBuilder) {
+	bb.WriteString(strings.Join(nr.lines, "\n"), "")
 }
 
 // cmdlineRenderer renders the command line, including the prompt, the user's
@@ -98,19 +98,19 @@ func newCmdlineRenderer(p []*ui.Styled, l string, s *highlight.Styling, d int, r
 	return &cmdlineRenderer{prompt: p, line: l, styling: s, dot: d, rprompt: rp}
 }
 
-func (clr *cmdlineRenderer) setRepl(b, e int, t string) {
+func (clr *cmdlineRenderer) setRepl(bb, e int, t string) {
 	clr.hasRepl = true
-	clr.replBegin, clr.replEnd, clr.replText = b, e, t
+	clr.replBegin, clr.replEnd, clr.replText = bb, e, t
 }
 
-func (clr *cmdlineRenderer) Render(b *ui.Buffer) {
-	b.EagerWrap = true
+func (clr *cmdlineRenderer) Render(bb *ui.BufferBuilder) {
+	bb.EagerWrap = true
 
-	b.WriteStyleds(clr.prompt)
+	bb.WriteStyleds(clr.prompt)
 
 	// If the prompt takes less than half of a line, set the indent.
-	if len(b.Lines) == 1 && b.Col*2 < b.Width {
-		b.Indent = b.Col
+	if len(bb.Lines) == 1 && bb.Col*2 < bb.Width {
+		bb.Indent = bb.Col
 	}
 
 	// i keeps track of number of bytes written.
@@ -121,14 +121,14 @@ func (clr *cmdlineRenderer) Render(b *ui.Buffer) {
 	// nowAt is called at every rune boundary.
 	nowAt := func(i int) {
 		applier.At(i)
-		// Replacement should be written before setting b.Dot. This way, if the
+		// Replacement should be written before setting bb.Dot. This way, if the
 		// replacement starts right at the dot, the cursor is correctly placed
 		// after the replacement.
 		if clr.hasRepl && i == clr.replBegin {
-			b.WriteString(clr.replText, styleForReplacement.String())
+			bb.WriteString(clr.replText, styleForReplacement.String())
 		}
 		if i == clr.dot {
-			b.Dot = b.Cursor()
+			bb.Dot = bb.Cursor()
 		}
 	}
 	nowAt(0)
@@ -137,7 +137,7 @@ func (clr *cmdlineRenderer) Render(b *ui.Buffer) {
 		if clr.hasRepl && clr.replBegin <= i && i < clr.replEnd {
 			// Do nothing. This part is replaced by the replacement.
 		} else {
-			b.Write(r, applier.Get())
+			bb.Write(r, applier.Get())
 		}
 		i += utf8.RuneLen(r)
 
@@ -146,14 +146,14 @@ func (clr *cmdlineRenderer) Render(b *ui.Buffer) {
 
 	// Write rprompt
 	if len(clr.rprompt) > 0 {
-		padding := b.Width - b.Col
+		padding := bb.Width - bb.Col
 		for _, s := range clr.rprompt {
 			padding -= util.Wcswidth(s.Text)
 		}
 		if padding >= 1 {
-			b.EagerWrap = false
-			b.WriteSpaces(padding, "")
-			b.WriteStyleds(clr.rprompt)
+			bb.EagerWrap = false
+			bb.WriteSpaces(padding, "")
+			bb.WriteStyleds(clr.rprompt)
 		}
 	}
 }
@@ -167,8 +167,8 @@ type editorRenderer struct {
 	bufNoti *ui.Buffer
 }
 
-func (er *editorRenderer) Render(buf *ui.Buffer) {
-	height, width, es := er.height, buf.Width, er.editorState
+func (er *editorRenderer) Render(bb *ui.BufferBuilder) {
+	height, width, es := er.height, bb.Width, er.editorState
 
 	var bufNoti, bufLine, bufMode, bufTips, bufListing *ui.Buffer
 	// butNoti
@@ -260,16 +260,16 @@ func (er *editorRenderer) Render(buf *ui.Buffer) {
 	}
 
 	// XXX
-	buf.Lines = nil
+	bb.Lines = nil
 	// Combine buffers (reusing bufLine)
-	buf.Extend(bufLine, true)
+	bb.Extend(bufLine, true)
 	cursorOnModeLine := false
 	if coml, ok := es.mode.(cursorOnModeLiner); ok {
 		cursorOnModeLine = coml.CursorOnModeLine()
 	}
-	buf.Extend(bufMode, cursorOnModeLine)
-	buf.Extend(bufTips, false)
-	buf.Extend(bufListing, false)
+	bb.Extend(bufMode, cursorOnModeLine)
+	bb.Extend(bufTips, false)
+	bb.Extend(bufListing, false)
 
 	er.bufNoti = bufNoti
 }

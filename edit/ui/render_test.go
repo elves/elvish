@@ -5,8 +5,8 @@ import "testing"
 type dummyRenderer struct {
 }
 
-func (dummyRenderer) Render(b *Buffer) {
-	b.WriteString("xy", "1")
+func (dummyRenderer) Render(bb *BufferBuilder) {
+	bb.WriteString("xy", "1")
 }
 
 func TestRender(t *testing.T) {

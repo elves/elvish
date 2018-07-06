@@ -3,7 +3,7 @@ package ui
 // Renderer wraps the Render method.
 type Renderer interface {
 	// Render renders onto a Buffer.
-	Render(b *Buffer)
+	Render(bb *BufferBuilder)
 }
 
 // Render creates a new Buffer with the given width, and lets a Renderer render
@@ -12,9 +12,9 @@ func Render(r Renderer, width int) *Buffer {
 	if r == nil {
 		return nil
 	}
-	b := NewBuffer(width)
-	r.Render(b)
-	return b
+	bb := NewBufferBuilder(width)
+	r.Render(bb)
+	return bb.Buffer()
 }
 
 // NewModeLineRenderer returns a Renderer for a mode line.
@@ -27,11 +27,11 @@ type modeLineRenderer struct {
 	filter string
 }
 
-func (ml modeLineRenderer) Render(b *Buffer) {
-	b.WriteString(ml.title, styleForMode.String())
-	b.WriteSpaces(1, "")
-	b.WriteString(ml.filter, styleForFilter.String())
-	b.Dot = b.Cursor()
+func (ml modeLineRenderer) Render(bb *BufferBuilder) {
+	bb.WriteString(ml.title, styleForMode.String())
+	bb.WriteSpaces(1, "")
+	bb.WriteString(ml.filter, styleForFilter.String())
+	bb.Dot = bb.Cursor()
 }
 
 func NewModeLineWithScrollBarRenderer(base Renderer, n, low, high int) Renderer {
@@ -43,12 +43,12 @@ type modeLineWithScrollBarRenderer struct {
 	n, low, high int
 }
 
-func (ml modeLineWithScrollBarRenderer) Render(b *Buffer) {
-	ml.base.Render(b)
+func (ml modeLineWithScrollBarRenderer) Render(bb *BufferBuilder) {
+	ml.base.Render(bb)
 
-	scrollbarWidth := b.Width - CellsWidth(b.Lines[len(b.Lines)-1]) - 2
+	scrollbarWidth := bb.Width - CellsWidth(bb.Lines[len(bb.Lines)-1]) - 2
 	if scrollbarWidth >= 3 {
-		b.WriteSpaces(1, "")
-		writeHorizontalScrollbar(b, ml.n, ml.low, ml.high, scrollbarWidth)
+		bb.WriteSpaces(1, "")
+		writeHorizontalScrollbar(bb, ml.n, ml.low, ml.high, scrollbarWidth)
 	}
 }
