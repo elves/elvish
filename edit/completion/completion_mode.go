@@ -286,15 +286,15 @@ func (c *completion) maxWidth(lo, hi int) int {
 }
 
 func (c *completion) ListRender(width, maxHeight int) *ui.Buffer {
-	b := ui.NewBuffer(width)
+	bb := ui.NewBufferBuilder(width)
 	cands := c.filtered
 	if len(cands) == 0 {
-		b.WriteString(util.TrimWcwidth("(no result)", width), "")
-		return b
+		bb.WriteString(util.TrimWcwidth("(no result)", width), "")
+		return bb.Buffer()
 	}
 	if maxHeight <= 1 || width <= 2 {
-		b.WriteString(util.TrimWcwidth("(terminal too small)", width), "")
-		return b
+		bb.WriteString(util.TrimWcwidth("(terminal too small)", width), "")
+		return bb.Buffer()
 	}
 
 	// Reserve the the rightmost row as margins.
@@ -344,7 +344,7 @@ func (c *completion) ListRender(width, maxHeight int) *ui.Buffer {
 			trimmed = true
 		}
 
-		col := ui.NewBuffer(totalColWidth)
+		col := ui.NewBufferBuilder(totalColWidth)
 		for j = i; j < i+height; j++ {
 			if j > i {
 				col.Newline()
@@ -366,7 +366,7 @@ func (c *completion) ListRender(width, maxHeight int) *ui.Buffer {
 			}
 		}
 
-		b.ExtendRight(col, 0)
+		bb.ExtendRight(col.Buffer(), 0)
 		remainedWidth -= totalColWidth
 		if remainedWidth <= completionColMarginTotal {
 			break
@@ -374,17 +374,17 @@ func (c *completion) ListRender(width, maxHeight int) *ui.Buffer {
 	}
 	// When the listing is incomplete, always use up the entire width.
 	if remainedWidth > 0 && c.needScrollbar() {
-		col := ui.NewBuffer(remainedWidth)
+		col := ui.NewBufferBuilder(remainedWidth)
 		for i := 0; i < height; i++ {
 			if i > 0 {
 				col.Newline()
 			}
 			col.WriteSpaces(remainedWidth, styleForCompletion.String())
 		}
-		b.ExtendRight(col, 0)
+		bb.ExtendRight(col.Buffer(), 0)
 		remainedWidth = 0
 	}
-	return b
+	return bb.Buffer()
 }
 
 func (c *completion) changeFilter(f string) {

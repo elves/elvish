@@ -11,23 +11,6 @@ func writeHorizontalScrollbar(bb *BufferBuilder, n, low, high, width int) {
 	}
 }
 
-func renderScrollbar(n, low, high, height int) *Buffer {
-	slow, shigh := findScrollInterval(n, low, high, height)
-	// Logger.Printf("low = %d, high = %d, n = %d, slow = %d, shigh = %d", low, high, n, slow, shigh)
-	b := NewBuffer(1)
-	for i := 0; i < height; i++ {
-		if i > 0 {
-			b.Newline()
-		}
-		if slow <= i && i < shigh {
-			b.Write(' ', styleForScrollBarThumb.String())
-		} else {
-			b.Write('│', styleForScrollBarArea.String())
-		}
-	}
-	return b
-}
-
 func findScrollInterval(n, low, high, height int) (int, int) {
 	f := func(i int) int {
 		return int(float64(i)/float64(n)*float64(height) + 0.5)

@@ -81,6 +81,8 @@ func (bb *BufferBuilder) Newline() {
 	}
 }
 
+var styleForControlChar = Styles{"inverse"}
+
 // Write writes a single rune to a buffer, wrapping the line when needed. If the
 // rune is a control character, it will be written using the caret notation
 // (like ^X) and gets the additional style of styleForControlChar.
@@ -177,4 +179,13 @@ func (bb *BufferBuilder) ExtendRight(b2 *Buffer, w int) {
 		bb.Lines = append(bb.Lines, row)
 	}
 	bb.Col = CellsWidth(bb.Lines[len(bb.Lines)-1])
+}
+
+func makeSpacing(n int) []Cell {
+	s := make([]Cell, n)
+	for i := 0; i < n; i++ {
+		s[i].Text = " "
+		s[i].Width = 1
+	}
+	return s
 }
