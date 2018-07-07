@@ -125,6 +125,11 @@ func (bb *BufferBuilder) WriteString(text, style string) *BufferBuilder {
 	return bb
 }
 
+// WriteUnstyled writes unstyled string.
+func (bb *BufferBuilder) WriteUnstyled(text string) *BufferBuilder {
+	return bb.WriteString(text, "")
+}
+
 // WriteSpaces writes w spaces.
 func (bb *BufferBuilder) WriteSpaces(w int, style string) *BufferBuilder {
 	return bb.WriteString(strings.Repeat(" ", w), style)
