@@ -274,3 +274,13 @@ func TestRenderers(t *testing.T) {
 				Buffer()),
 	})
 }
+
+func TestFindWindow(t *testing.T) {
+	tt.Test(t, tt.Fn("findWindow", findWindow), tt.Table{
+		Args(0, 10, 3).Rets(0, 3),
+		Args(1, 10, 3).Rets(0, 3),
+		Args(5, 10, 3).Rets(4, 7),
+		Args(9, 10, 3).Rets(7, 10),
+		Args(10, 10, 3).Rets(7, 10),
+	})
+}
