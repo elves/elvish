@@ -1,6 +1,10 @@
 package core
 
-import "github.com/elves/elvish/edit/ui"
+import (
+	"fmt"
+
+	"github.com/elves/elvish/edit/ui"
+)
 
 // An implementation of Mode. Its HandleKey method returns CommitCode after a
 // certain number of key events and keeps the key event history, and its
@@ -10,29 +14,47 @@ type fakeMode struct {
 	modeLine       ui.Renderer
 	modeRenderFlag ModeRenderFlag
 
-	keys []ui.Key
+	keysHandled []ui.Key
 }
 
-func (m *fakeMode) ModeLine() ui.Renderer { return m.modeLine }
+func (m *fakeMode) ModeLine() ui.Renderer {
+	return m.modeLine
+}
 
 func (m *fakeMode) ModeRenderFlag() ModeRenderFlag { return m.modeRenderFlag }
 
 func (m *fakeMode) HandleKey(k ui.Key, st *State) HandlerAction {
-	m.keys = append(m.keys, k)
-	if len(m.keys) == m.maxKeys {
+	m.keysHandled = append(m.keysHandled, k)
+	if len(m.keysHandled) == m.maxKeys {
 		return CommitCode
 	}
 	return 0
 }
 
-type fakeListerMode struct {
+// A listing mode with a predefined listing.
+type fakeListingMode struct {
 	fakeMode
 	list []string
 }
 
-func (m *fakeListerMode) List(h int) ui.Renderer {
+func (m *fakeListingMode) List(h int) ui.Renderer {
 	if h >= len(m.list) {
 		return &linesRenderer{m.list}
 	}
 	return &linesRenderer{m.list[:h]}
+}
+
+// A listing mode whose Modeline shows how many time it is called.
+type fakeListingModeWithModeline struct {
+	fakeMode
+	modeLineCalled int
+}
+
+func (m *fakeListingModeWithModeline) ModeLine() ui.Renderer {
+	m.modeLineCalled++
+	return &linesRenderer{[]string{fmt.Sprintf("#%d", m.modeLineCalled)}}
+}
+
+func (m *fakeListingModeWithModeline) List(h int) ui.Renderer {
+	return nil
 }

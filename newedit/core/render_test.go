@@ -115,7 +115,7 @@ func TestRenderers(t *testing.T) {
 			maxHeight: 4,
 			bufCode: ui.NewBufferBuilder(7).
 				WriteUnstyled("code 1").SetDotToCursor().Buffer(),
-			mode: &fakeListerMode{
+			mode: &fakeListingMode{
 				fakeMode{
 					modeLine: &linesRenderer{[]string{"MODE"}},
 				},
@@ -135,7 +135,7 @@ func TestRenderers(t *testing.T) {
 			bufCode: ui.NewBufferBuilder(7).
 				WriteUnstyled("code 1").SetDotToCursor().Newline().
 				WriteUnstyled("code 2").Buffer(),
-			mode: &fakeListerMode{
+			mode: &fakeListingMode{
 				fakeMode{
 					modeLine: &linesRenderer{[]string{"MODE 1", "MODE 2"}},
 				},
@@ -147,6 +147,44 @@ func TestRenderers(t *testing.T) {
 				WriteUnstyled("code 2").Newline().
 				WriteUnstyled("MODE 1").Newline().
 				WriteUnstyled("MODE 2").Buffer()),
+
+		// mainRenderer: CursorOnModeLine
+		Args(&mainRenderer{
+			maxHeight: 10,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("some code").SetDotToCursor().Buffer(),
+			mode: &fakeMode{
+				modeLine:       &linesRenderer{[]string{"MODE"}},
+				modeRenderFlag: CursorOnModeLine,
+			},
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("some code").Newline().
+				SetDotToCursor().WriteUnstyled("MODE").Buffer()),
+
+		// mainRenderer: No RedrawModeLineAfterList
+		Args(&mainRenderer{
+			maxHeight: 10,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("some code").SetDotToCursor().Buffer(),
+			mode: &fakeListingModeWithModeline{},
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("some code").SetDotToCursor().Newline().
+				WriteUnstyled("#1").Buffer()),
+
+		// mainRenderer: RedrawModeLineAfterList
+		Args(&mainRenderer{
+			maxHeight: 10,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("some code").SetDotToCursor().Buffer(),
+			mode: &fakeListingModeWithModeline{
+				fakeMode: fakeMode{modeRenderFlag: RedrawModeLineAfterList},
+			},
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("some code").SetDotToCursor().Newline().
+				WriteUnstyled("#2").Buffer()),
 
 		// codeContentRenderer: Prompt and code, with indentation
 		Args(&codeContentRenderer{

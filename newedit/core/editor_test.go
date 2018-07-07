@@ -32,8 +32,8 @@ func TestRead_PassesInputEventsToMode(t *testing.T) {
 
 	ed.Read()
 
-	if !reflect.DeepEqual(m.keys, keysABCEnter) {
-		t.Errorf("Mode gets keys %v, want %v", m.keys, keysABCEnter)
+	if !reflect.DeepEqual(m.keysHandled, keysABCEnter) {
+		t.Errorf("Mode gets keys %v, want %v", m.keysHandled, keysABCEnter)
 	}
 }
 
