@@ -69,7 +69,8 @@ type mainRenderer struct {
 
 func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 	bufCode := r.bufCode
-	bufMode := ui.Render(r.mode.ModeLine(), buf.Width)
+	mode := getMode(r.mode)
+	bufMode := ui.Render(mode.ModeLine(), buf.Width)
 
 	// Determine which parts to render and the available height for the listing.
 	hListing := 0
@@ -106,7 +107,7 @@ func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 	}
 
 	var bufListing *ui.Buffer
-	lister, isLister := r.mode.(Lister)
+	lister, isLister := mode.(Lister)
 	if hListing > 0 && isLister {
 		bufListing = ui.Render(lister.List(hListing), buf.Width)
 		// Re-render the mode line if the current mode implements
@@ -118,15 +119,15 @@ func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 		// bufMode, we may do this without recalculating the layout. We also do
 		// not need to trim bufMode because when hListing > 0, bufMode can
 		// always be shown in full.
-		if r.mode.ModeRenderFlag()&RedrawModeLineAfterList != 0 {
-			bufMode = ui.Render(r.mode.ModeLine(), buf.Width)
+		if mode.ModeRenderFlag()&RedrawModeLineAfterList != 0 {
+			bufMode = ui.Render(mode.ModeLine(), buf.Width)
 		}
 	}
 
 	// XXX The buffer contains one line in the beginning; we don't want that.
 	buf.Lines = nil
 	buf.Extend(bufCode, true)
-	buf.Extend(bufMode, r.mode.ModeRenderFlag()&CursorOnModeLine != 0)
+	buf.Extend(bufMode, mode.ModeRenderFlag()&CursorOnModeLine != 0)
 	buf.Extend(bufListing, false)
 }
 

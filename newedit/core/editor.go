@@ -18,7 +18,7 @@ type Editor struct {
 
 func NewEditor(t TTY) *Editor {
 	lp := loop.New()
-	ed := &Editor{lp, t, &Config{}, newState()}
+	ed := &Editor{lp, t, &Config{}, &State{}}
 	lp.HandleCb(ed.handle)
 	lp.RedrawCb(ed.redraw)
 	return ed
@@ -31,7 +31,7 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 func handle(st *State, event tty.Event) (string, bool) {
 	switch event := event.(type) {
 	case tty.KeyEvent:
-		action := st.Mode.HandleKey(ui.Key(event), st)
+		action := getMode(st.Mode).HandleKey(ui.Key(event), st)
 		switch action {
 		case CommitCode:
 			return st.Code, true

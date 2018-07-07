@@ -14,8 +14,11 @@ type PendingCode struct {
 	Text  string
 }
 
-func newState() *State {
-	return &State{Mode: basicMode{}}
+func getMode(m Mode) Mode {
+	if m == nil {
+		return basicMode{}
+	}
+	return m
 }
 
 func (st *State) final() *State {
