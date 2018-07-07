@@ -38,6 +38,19 @@ func TestRenderers(t *testing.T) {
 				WriteUnstyled("line 2").Newline().
 				WriteUnstyled("line 3").SetDotToCursor().Buffer()),
 
+		// mainRenderer: No modeline, no listing, height = 1: show current line
+		// of code area
+		Args(&mainRenderer{
+			maxHeight: 1,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("line 1").Newline().
+				WriteUnstyled("line 2").SetDotToCursor().Newline().
+				WriteUnstyled("line 3").Buffer(),
+			mode: &fakeMode{},
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("line 2").SetDotToCursor().Buffer()),
+
 		// mainRenderer: Modeline, no listing, enough height - result is the
 		// bufCode + bufMode
 		Args(&mainRenderer{
@@ -51,6 +64,50 @@ func TestRenderers(t *testing.T) {
 			Rets(ui.NewBufferBuilder(7).
 				WriteUnstyled("some code").SetDotToCursor().Newline().
 				WriteUnstyled("MODE").Buffer()),
+
+		// mainRenderer: Modeline, no listing, modeline fits, but not enough
+		// height to show all of code area: trim code area
+		Args(&mainRenderer{
+			maxHeight: 2,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("line 1").Newline().
+				WriteUnstyled("line 2").SetDotToCursor().Buffer(),
+			mode: &fakeMode{
+				modeLine: &linesRenderer{[]string{"MODE"}},
+			},
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("line 2").SetDotToCursor().Newline().
+				WriteUnstyled("MODE").Buffer()),
+
+		// mainRenderer: Modeline, no listing, cannot fit all of modeline
+		// without hiding code area: trim both modeline and code area
+		Args(&mainRenderer{
+			maxHeight: 2,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("line 1").Newline().
+				WriteUnstyled("line 2").SetDotToCursor().Buffer(),
+			mode: &fakeMode{
+				modeLine: &linesRenderer{[]string{"MODE", "MODE 2"}},
+			},
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("line 2").SetDotToCursor().Newline().
+				WriteUnstyled("MODE").Buffer()),
+
+		// mainRenderer: Modeline, no listing, height = 1. Show current line in
+		// code area.
+		Args(&mainRenderer{
+			maxHeight: 1,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("line 1").Newline().
+				WriteUnstyled("line 2").SetDotToCursor().Buffer(),
+			mode: &fakeMode{
+				modeLine: &linesRenderer{[]string{"MODE", "MODE 2"}},
+			},
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("line 2").SetDotToCursor().Buffer()),
 
 		// codeContentRenderer: Prompt and code, with indentation
 		Args(&codeContentRenderer{
