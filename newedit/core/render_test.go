@@ -18,10 +18,11 @@ func TestRenderers(t *testing.T) {
 		Args(&mainRenderer{
 			maxHeight: 10,
 			bufCode: ui.NewBufferBuilder(7).
-				WriteUnstyled("some code").Buffer(),
+				WriteUnstyled("some code").SetDotToCursor().Buffer(),
 			mode: &fakeMode{},
 		}, 7).
-			Rets(ui.NewBufferBuilder(7).WriteUnstyled("some code").Buffer()),
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("some code").SetDotToCursor().Buffer()),
 
 		// mainRenderer: No modeline, no listing, not enough height - show
 		// lines close to where the dot is on
@@ -36,6 +37,20 @@ func TestRenderers(t *testing.T) {
 			Rets(ui.NewBufferBuilder(7).
 				WriteUnstyled("line 2").Newline().
 				WriteUnstyled("line 3").SetDotToCursor().Buffer()),
+
+		// mainRenderer: Modeline, no listing, enough height - result is the
+		// bufCode + bufMode
+		Args(&mainRenderer{
+			maxHeight: 10,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("some code").SetDotToCursor().Buffer(),
+			mode: &fakeMode{
+				modeLine: &linesRenderer{[]string{"MODE"}},
+			},
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("some code").SetDotToCursor().Newline().
+				WriteUnstyled("MODE").Buffer()),
 
 		// codeContentRenderer: Prompt and code, with indentation
 		Args(&codeContentRenderer{

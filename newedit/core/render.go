@@ -126,7 +126,7 @@ func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 	// XXX The buffer contains one line in the beginning; we don't want that.
 	buf.Lines = nil
 	buf.Extend(bufCode, true)
-	buf.Extend(bufMode, r.mode.ModeRenderFlag()|CursorOnModeLine != 0)
+	buf.Extend(bufMode, r.mode.ModeRenderFlag()&CursorOnModeLine != 0)
 	buf.Extend(bufListing, false)
 }
 
