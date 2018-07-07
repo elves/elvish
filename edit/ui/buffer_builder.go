@@ -71,7 +71,7 @@ func (bb *BufferBuilder) appendCell(c Cell) {
 }
 
 // Newline starts a newline.
-func (bb *BufferBuilder) Newline() {
+func (bb *BufferBuilder) Newline() *BufferBuilder {
 	bb.appendLine()
 
 	if bb.Indent > 0 {
@@ -79,6 +79,8 @@ func (bb *BufferBuilder) Newline() {
 			bb.appendCell(Cell{Text: " ", Width: 1})
 		}
 	}
+
+	return bb
 }
 
 var styleForControlChar = Styles{"inverse"}
