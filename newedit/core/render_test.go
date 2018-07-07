@@ -11,6 +11,50 @@ import (
 
 var Args = tt.Args
 
+func TestRender(t *testing.T) {
+	tt.Test(t, tt.Fn("render", render), tt.Table{
+		// Notes
+		Args(&State{Notes: []string{"note"}}, &RenderConfig{}, 2, 7, false).
+			Rets(
+				ui.NewBufferBuilder(7).WriteUnstyled("note").Buffer(),
+				ui.NewBuffer(7)),
+		// Notes are always rendered in full, not restricted by height
+		Args(&State{Notes: []string{"n1", "n2"}}, &RenderConfig{}, 1, 7, false).
+			Rets(
+				ui.NewBufferBuilder(7).
+					WriteUnstyled("n1").Newline().
+					WriteUnstyled("n2").Buffer(),
+				ui.NewBuffer(7)),
+
+		// Code area: code
+		Args(&State{Code: "code", Dot: 4}, &RenderConfig{}, 2, 7, false).
+			Rets(
+				(*ui.Buffer)(nil),
+				ui.NewBufferBuilder(7).WriteUnstyled("code").
+					SetDotToCursor().Buffer()),
+
+		// Code area: prompt
+		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
+			Prompt: func() styled.Text {
+				return styled.Text{styled.Segment{Text: "> "}}
+			}}, 2, 10, false).
+			Rets(
+				(*ui.Buffer)(nil),
+				ui.NewBufferBuilder(10).WriteUnstyled("> code").
+					SetDotToCursor().Buffer()),
+
+		// Code area: rprompt
+		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
+			Rprompt: func() styled.Text {
+				return styled.Text{styled.Segment{Text: "R"}}
+			}}, 2, 7, false).
+			Rets(
+				(*ui.Buffer)(nil),
+				ui.NewBufferBuilder(7).WriteUnstyled("code").SetDotToCursor().
+					WriteUnstyled("  R").Buffer()),
+	})
+}
+
 func TestRenderers(t *testing.T) {
 	tt.Test(t, tt.Fn("ui.Render", ui.Render), tt.Table{
 		// mainRenderer: No modeline, no listing, enough height - result is the
