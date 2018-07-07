@@ -14,8 +14,9 @@ func newFakeMode() *fakeMode {
 	return &fakeMode{}
 }
 
-func (m *fakeMode) setMaxKeys(n int) {
+func (m *fakeMode) setMaxKeys(n int) *fakeMode {
 	m.nkeys = n
+	return m
 }
 
 func (m *fakeMode) ModeLine() ui.Renderer          { return nil }

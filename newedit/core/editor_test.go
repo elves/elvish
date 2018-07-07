@@ -27,8 +27,8 @@ var (
 
 func TestRead_PassesInputEventsToMode(t *testing.T) {
 	ed := NewEditor(newFakeTTY(eventsABCEnter))
-	m := newFakeMode()
-	m.setMaxKeys(len(eventsABCEnter))
+	m := newFakeMode().
+		setMaxKeys(len(eventsABCEnter))
 	ed.state.Mode = m
 
 	ed.Read()
