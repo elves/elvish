@@ -5,17 +5,9 @@ import (
 )
 
 type Config struct {
-	Render         *RenderConfig
+	RenderConfig   RenderConfig
 	BeforeReadline []func()
 	AfterReadline  []func(string)
-}
-
-func newConfig() *Config {
-	return &Config{Render: &RenderConfig{
-		Highlighter: dummyHighlighter,
-		Prompt:      dummyPrompt,
-		Rprompt:     dummyPrompt,
-	}}
 }
 
 type RenderConfig struct {
@@ -29,12 +21,18 @@ type RenderConfig struct {
 
 type HighlighterCb func(string) (styled.Text, []error)
 
-func dummyHighlighter(s string) (styled.Text, []error) {
-	return styled.Text{styled.Segment{Text: s}}, nil
+func (cb HighlighterCb) call(code string) (styled.Text, []error) {
+	if cb == nil {
+		return styled.Text{styled.Segment{Text: code}}, nil
+	}
+	return cb(code)
 }
 
 type PromptCb func() styled.Text
 
-func dummyPrompt() styled.Text {
-	return nil
+func (cb PromptCb) call() styled.Text {
+	if cb == nil {
+		return nil
+	}
+	return cb()
 }

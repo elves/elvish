@@ -13,8 +13,8 @@ func render(st *State, cfg *RenderConfig, h, w int, final bool) (notes, main *ui
 		bufNotes = ui.Render(&linesRenderer{st.Notes}, w)
 	}
 
-	prompt := cfg.Prompt()
-	rprompt := cfg.Rprompt()
+	prompt := cfg.Prompt.call()
+	rprompt := cfg.Rprompt.call()
 	code, dot, errors := prepareCode(
 		st.Code, st.Dot, st.Pending, cfg.Highlighter)
 	bbCode := ui.NewBufferBuilder(w)
@@ -52,7 +52,7 @@ func prepareCode(code string, dot int, pending *PendingCode, hl HighlighterCb) (
 			newDot = pending.Begin + len(pending.Text)
 		}
 	}
-	styledCode, errors = hl(code)
+	styledCode, errors = hl.call(code)
 	// TODO: Apply transformerForPending to pending.Begin to pending.Begin +
 	// len(pending.Text)
 	return styledCode, newDot, errors

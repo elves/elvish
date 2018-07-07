@@ -87,7 +87,7 @@ func TestRead_RespectsMaxHeight(t *testing.T) {
 		t.Errorf("Buffer height is %d, should > %d", h, maxHeight)
 	}
 
-	ed.config.Render.MaxHeight = maxHeight
+	ed.config.RenderConfig.MaxHeight = maxHeight
 	ed.loop.Redraw(false)
 	buf2 := <-terminal.bufCh
 	if h := len(buf2.Lines); h > maxHeight {
@@ -102,7 +102,7 @@ var bufChTimeout = 1 * time.Second
 func TestRead_RendersHighlightedCode(t *testing.T) {
 	terminal := newFakeTTY(eventsABC)
 	ed := NewEditor(terminal)
-	ed.config.Render.Highlighter = func(code string) (styled.Text, []error) {
+	ed.config.RenderConfig.Highlighter = func(code string) (styled.Text, []error) {
 		return styled.Text{
 			styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 	}

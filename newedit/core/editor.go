@@ -18,7 +18,7 @@ type Editor struct {
 
 func NewEditor(t TTY) *Editor {
 	lp := loop.New()
-	ed := &Editor{lp, t, newConfig(), newState()}
+	ed := &Editor{lp, t, &Config{}, newState()}
 	lp.HandleCb(ed.handle)
 	lp.RedrawCb(ed.redraw)
 	return ed
@@ -52,7 +52,7 @@ func redraw(st *State, cfg *Config, w Writer, sz Sizer, flag loop.RedrawFlag) {
 
 	height, width := sz.Size()
 
-	bufNotes, bufMain := render(st, cfg.Render, height, width, final)
+	bufNotes, bufMain := render(st, &cfg.RenderConfig, height, width, final)
 
 	w.UpdateBuffer(bufNotes, bufMain, flag&loop.FullRedraw != 0)
 
