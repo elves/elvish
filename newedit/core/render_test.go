@@ -19,7 +19,7 @@ func TestRenderers(t *testing.T) {
 			maxHeight: 10,
 			bufCode: ui.NewBufferBuilder(7).
 				WriteUnstyled("some code").Buffer(),
-			mode: newFakeMode(),
+			mode: &fakeMode{},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).WriteUnstyled("some code").Buffer()),
 
@@ -31,7 +31,7 @@ func TestRenderers(t *testing.T) {
 				WriteUnstyled("line 1").Newline().
 				WriteUnstyled("line 2").Newline().
 				WriteUnstyled("line 3").SetDotToCursor().Buffer(),
-			mode: newFakeMode(),
+			mode: &fakeMode{},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).
 				WriteUnstyled("line 2").Newline().
