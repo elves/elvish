@@ -12,7 +12,7 @@ import (
 var Args = tt.Args
 
 func TestRenderers(t *testing.T) {
-	tt.Test(t, tt.Fn("Render", ui.Render), tt.Table{
+	tt.Test(t, tt.Fn("ui.Render", ui.Render), tt.Table{
 		// mainRenderer: No modeline, no listing, enough height - result is the
 		// same as bufCode
 		Args(&mainRenderer{
