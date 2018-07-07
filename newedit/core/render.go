@@ -93,13 +93,18 @@ func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 		hListing = r.maxHeight - ui.BuffersHeight(bufCode, bufMode)
 	case r.maxHeight >= ui.BuffersHeight(bufMode)+1:
 		// The modeline fits and there is at least one line for the code area.
+		// As a special case, when the modeline does not exist, this brach is
+		// taken when r.maxHeight >= 1.
+		//
 		// Show the code area near the dot.
 		hCode := r.maxHeight - ui.BuffersHeight(bufMode)
 		low, high := findWindow(bufCode.Dot.Line, len(bufCode.Lines), hCode)
 		bufCode.TrimToLines(low, high)
 	case r.maxHeight >= 2:
 		// We have one line for the modeline and at least one line for the code
-		// area.
+		// area. Note that this branch is only taken when the modeline has at
+		// least one line; otherwise the previous branch always takes
+		// precedence over this one.
 		bufMode.TrimToLines(0, 1)
 		hCode := r.maxHeight - 1
 		low, high := findWindow(bufCode.Dot.Line, len(bufCode.Lines), hCode)

@@ -17,11 +17,33 @@ func TestRenderers(t *testing.T) {
 			"note 1", "long note 2",
 		}}, 7).
 			Rets(ui.NewBufferBuilder(7).
-				WriteString("note 1\n", "").
-				WriteString("long note 2", "").
+				WriteUnstyled("note 1\n").
+				WriteUnstyled("long note 2").
 				Buffer()),
 
-		// TODO: mainRenderer
+		// mainRenderer: No modeline, no listing, enough height - result is the
+		// same as bufCode
+		Args(&mainRenderer{
+			maxHeight: 10,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("some code").Buffer(),
+			mode: newFakeMode(),
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).WriteUnstyled("some code").Buffer()),
+
+		// mainRenderer: No modeline, no listing, not enough height - show
+		// lines close to where the dot is on
+		Args(&mainRenderer{
+			maxHeight: 2,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("line 1").Newline().
+				WriteUnstyled("line 2").Newline().
+				WriteUnstyled("line 3").SetDotToCursor().Buffer(),
+			mode: newFakeMode(),
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("line 2").Newline().
+				WriteUnstyled("line 3").SetDotToCursor().Buffer()),
 
 		// codeContentRenderer: Prompt and code, with indentation
 		Args(&codeContentRenderer{
@@ -31,7 +53,7 @@ func TestRenderers(t *testing.T) {
 			Rets(ui.NewBufferBuilder(7).
 				SetIndent(2).
 				SetEagerWrap(true).
-				WriteString("> abcdefg", "").
+				WriteUnstyled("> abcdefg").
 				SetDotToCursor().
 				Buffer()),
 
@@ -43,8 +65,8 @@ func TestRenderers(t *testing.T) {
 			Rets(ui.NewBufferBuilder(7).
 				// No indent as the prompt is multi-line
 				SetEagerWrap(true).
-				WriteString(">\n", "").
-				WriteString("abcdefg", "").
+				WriteUnstyled(">\n").
+				WriteUnstyled("abcdefg").
 				SetDotToCursor().
 				Buffer()),
 
@@ -56,7 +78,7 @@ func TestRenderers(t *testing.T) {
 			Rets(ui.NewBufferBuilder(7).
 				// No indent as the prompt is too long
 				SetEagerWrap(true).
-				WriteString(">>> abcdefg", "").
+				WriteUnstyled(">>> abcdefg").
 				SetDotToCursor().
 				Buffer()),
 
@@ -66,9 +88,9 @@ func TestRenderers(t *testing.T) {
 			rprompt: styled.Text{styled.Segment{Text: "RP"}},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).
-				WriteString("abc", "").
+				WriteUnstyled("abc").
 				SetDotToCursor().
-				WriteString("  RP", "").
+				WriteUnstyled("  RP").
 				Buffer()),
 
 		// codeContentRenderer: Rprompt hidden as no padding available (negative
@@ -78,7 +100,7 @@ func TestRenderers(t *testing.T) {
 			rprompt: styled.Text{styled.Segment{Text: "RP"}},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).
-				WriteString("abcdef", "").
+				WriteUnstyled("abcdef").
 				SetDotToCursor().
 				Buffer()),
 
@@ -89,7 +111,7 @@ func TestRenderers(t *testing.T) {
 			rprompt: styled.Text{styled.Segment{Text: "RP"}},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).
-				WriteString("abcde", "").
+				WriteUnstyled("abcde").
 				SetDotToCursor().
 				Buffer()),
 
@@ -98,8 +120,8 @@ func TestRenderers(t *testing.T) {
 			errors.New("long error 2"),
 		}}, 7).
 			Rets(ui.NewBufferBuilder(7).
-				WriteString("error 1\n", "").
-				WriteString("long error 2", "").
+				WriteUnstyled("error 1\n").
+				WriteUnstyled("long error 2").
 				Buffer()),
 	})
 }
