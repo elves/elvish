@@ -13,14 +13,6 @@ var Args = tt.Args
 
 func TestRenderers(t *testing.T) {
 	tt.Test(t, tt.Fn("Render", ui.Render), tt.Table{
-		Args(&notesRenderer{[]string{
-			"note 1", "long note 2",
-		}}, 7).
-			Rets(ui.NewBufferBuilder(7).
-				WriteUnstyled("note 1\n").
-				WriteUnstyled("long note 2").
-				Buffer()),
-
 		// mainRenderer: No modeline, no listing, enough height - result is the
 		// same as bufCode
 		Args(&mainRenderer{
@@ -113,6 +105,14 @@ func TestRenderers(t *testing.T) {
 			Rets(ui.NewBufferBuilder(7).
 				WriteUnstyled("abcde").
 				SetDotToCursor().
+				Buffer()),
+
+		Args(&linesRenderer{[]string{
+			"note 1", "long note 2",
+		}}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("note 1\n").
+				WriteUnstyled("long note 2").
 				Buffer()),
 
 		Args(&codeErrorsRenderer{[]error{

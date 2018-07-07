@@ -10,7 +10,7 @@ import (
 func render(st *State, cfg *RenderConfig, h, w int, final bool) (notes, main *ui.Buffer) {
 	var bufNotes *ui.Buffer
 	if len(st.Notes) > 0 {
-		bufNotes = ui.Render(&notesRenderer{st.Notes}, w)
+		bufNotes = ui.Render(&linesRenderer{st.Notes}, w)
 	}
 
 	prompt := cfg.Prompt()
@@ -56,19 +56,6 @@ func prepareCode(code string, dot int, pending *PendingCode, hl HighlighterCb) (
 	// TODO: Apply transformerForPending to pending.Begin to pending.Begin +
 	// len(pending.Text)
 	return styledCode, newDot, errors
-}
-
-type notesRenderer struct {
-	notes []string
-}
-
-func (r *notesRenderer) Render(buf *ui.BufferBuilder) {
-	for i, note := range r.notes {
-		if i > 0 {
-			buf.Newline()
-		}
-		buf.WriteString(note, "")
-	}
 }
 
 // Renderer of the entire editor. The code area and the status area needs to be
@@ -192,6 +179,19 @@ func styledWcswidth(t styled.Text) int {
 		w += util.Wcswidth(seg.Text)
 	}
 	return w
+}
+
+type linesRenderer struct {
+	lines []string
+}
+
+func (r *linesRenderer) Render(buf *ui.BufferBuilder) {
+	for i, note := range r.lines {
+		if i > 0 {
+			buf.Newline()
+		}
+		buf.WriteString(note, "")
+	}
 }
 
 type codeErrorsRenderer struct {
