@@ -118,7 +118,7 @@ func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 		// bufMode, we may do this without recalculating the layout. We also do
 		// not need to trim bufMode because when hListing > 0, bufMode can
 		// always be shown in full.
-		if r.mode.ModeRenderFlag()|RedrawModeLineAfterList != 0 {
+		if r.mode.ModeRenderFlag()&RedrawModeLineAfterList != 0 {
 			bufMode = ui.Render(r.mode.ModeLine(), buf.Width)
 		}
 	}

@@ -24,3 +24,15 @@ func (m *fakeMode) HandleKey(k ui.Key, st *State) HandlerAction {
 	}
 	return 0
 }
+
+type fakeListerMode struct {
+	fakeMode
+	list []string
+}
+
+func (m *fakeListerMode) List(h int) ui.Renderer {
+	if h >= len(m.list) {
+		return &linesRenderer{m.list}
+	}
+	return &linesRenderer{m.list[:h]}
+}

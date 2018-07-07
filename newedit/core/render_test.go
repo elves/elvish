@@ -109,6 +109,45 @@ func TestRenderers(t *testing.T) {
 			Rets(ui.NewBufferBuilder(7).
 				WriteUnstyled("line 2").SetDotToCursor().Buffer()),
 
+		// mainRenderer: Listing when there is enough height. Use the remaining
+		// height after showing modeline and code area for listing.
+		Args(&mainRenderer{
+			maxHeight: 4,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("code 1").SetDotToCursor().Buffer(),
+			mode: &fakeListerMode{
+				fakeMode{
+					modeLine: &linesRenderer{[]string{"MODE"}},
+				},
+				[]string{"list 1", "list 2", "list 3", "list 4"},
+			},
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("code 1").SetDotToCursor().Newline().
+				WriteUnstyled("MODE").Newline().
+				WriteUnstyled("list 1").Newline().
+				WriteUnstyled("list 2").Buffer()),
+
+		// mainRenderer: Listing when code area + modeline already takes up all
+		// height. No listing is shown.
+		Args(&mainRenderer{
+			maxHeight: 4,
+			bufCode: ui.NewBufferBuilder(7).
+				WriteUnstyled("code 1").SetDotToCursor().Newline().
+				WriteUnstyled("code 2").Buffer(),
+			mode: &fakeListerMode{
+				fakeMode{
+					modeLine: &linesRenderer{[]string{"MODE 1", "MODE 2"}},
+				},
+				[]string{"list 1", "list 2", "list 3", "list 4"},
+			},
+		}, 7).
+			Rets(ui.NewBufferBuilder(7).
+				WriteUnstyled("code 1").SetDotToCursor().Newline().
+				WriteUnstyled("code 2").Newline().
+				WriteUnstyled("MODE 1").Newline().
+				WriteUnstyled("MODE 2").Buffer()),
+
 		// codeContentRenderer: Prompt and code, with indentation
 		Args(&codeContentRenderer{
 			code: styled.Text{styled.Segment{Text: "abcdefg"}}, dot: 7,
