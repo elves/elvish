@@ -9,6 +9,6 @@ import (
 
 func main() {
 	ed := newedit.NewEditor(os.Stdin, os.Stdout)
-	buf, err := ed.ReadCode()
+	buf, err := ed.ReadLine()
 	fmt.Println("buffer:", buf, "error:", err)
 }
