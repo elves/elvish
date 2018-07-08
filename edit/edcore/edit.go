@@ -60,13 +60,13 @@ type editor struct {
 	navigation *navigation
 	listing    *listingMode
 
+	restoreTerminal func() error
+
 	editorState
 }
 
 type editorState struct {
 	// States used during ReadLine. Reset at the beginning of ReadLine.
-	restoreTerminal func() error
-
 	notificationMutex sync.Mutex
 
 	notifications []string
@@ -313,7 +313,12 @@ func (ed *editor) startReadLine() error {
 		}
 		return err
 	}
-	ed.restoreTerminal = restoreTerminal
+	// Save the restore callback when Readline is called for the first time, and
+	// reuse that callback. This is guard against commands that misbehave and
+	// put the terminal in a bad state when it quits.
+	if ed.restoreTerminal == nil {
+		ed.restoreTerminal = restoreTerminal
+	}
 
 	return nil
 }
@@ -419,8 +424,7 @@ MainLoop:
 				// Start over
 				ed.mode.Teardown()
 				ed.editorState = editorState{
-					restoreTerminal: ed.restoreTerminal,
-					isExternal:      ed.isExternal,
+					isExternal: ed.isExternal,
 				}
 				ed.SetModeInsert()
 				fresh = true
