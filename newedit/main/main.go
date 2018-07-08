@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"os"
 
-	"github.com/elves/elvish/newedit/core"
+	"github.com/elves/elvish/newedit"
 )
 
 func main() {
-	ed := core.NewStdEditor()
+	ed := newedit.NewEditor(os.Stdin, os.Stdout)
 	buf, err := ed.ReadCode()
 	fmt.Println("buffer:", buf, "error:", err)
 }
