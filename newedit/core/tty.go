@@ -43,7 +43,7 @@ type aTTY struct {
 	w       tty.Writer
 }
 
-func newTTY(in, out *os.File) TTY {
+func NewTTY(in, out *os.File) TTY {
 	return &aTTY{in, out, nil, tty.NewWriter(out)}
 }
 

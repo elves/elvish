@@ -94,5 +94,5 @@ func (ed *Editor) Redraw(full bool) {
 }
 
 func NewStdEditor() *Editor {
-	return NewEditor(newTTY(os.Stdin, os.Stdout))
+	return NewEditor(NewTTY(os.Stdin, os.Stdout))
 }
