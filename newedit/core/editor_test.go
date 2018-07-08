@@ -30,7 +30,7 @@ func TestRead_PassesInputEventsToMode(t *testing.T) {
 	m := &fakeMode{maxKeys: len(eventsABCEnter)}
 	ed.state.Mode = m
 
-	ed.Read()
+	ed.ReadCode()
 
 	if !reflect.DeepEqual(m.keysHandled, keysABCEnter) {
 		t.Errorf("Mode gets keys %v, want %v", m.keysHandled, keysABCEnter)
@@ -43,7 +43,7 @@ func TestRead_CallsBeforeReadlineOnce(t *testing.T) {
 	called := 0
 	ed.config.BeforeReadline = []func(){func() { called++ }}
 
-	ed.Read()
+	ed.ReadCode()
 
 	if called != 1 {
 		t.Errorf("BeforeReadline hook called %d times, want 1", called)
@@ -60,7 +60,7 @@ func TestRead_CallsAfterReadlineOnceWithCode(t *testing.T) {
 		code = s
 	}}
 
-	ed.Read()
+	ed.ReadCode()
 
 	if called != 1 {
 		t.Errorf("AfterReadline hook called %d times, want 1", called)
@@ -79,7 +79,7 @@ func TestRead_RespectsMaxHeight(t *testing.T) {
 	ed.state.Code = strings.Repeat("a", 80*10)
 	ed.state.Dot = len(ed.state.Code)
 
-	go ed.Read()
+	go ed.ReadCode()
 
 	buf1 := <-terminal.bufCh
 	// Make sure that normally the height does exceed maxHeight.
@@ -107,7 +107,7 @@ func TestRead_RendersHighlightedCode(t *testing.T) {
 			styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 	}
 
-	go ed.Read()
+	go ed.ReadCode()
 
 	wantBuf := ui.NewBufferBuilder(80).
 		WriteString("abc", "31" /* SGR for red foreground */).

@@ -62,7 +62,7 @@ func redraw(st *State, cfg *Config, w Writer, sz Sizer, flag loop.RedrawFlag) {
 	}
 }
 
-func (ed *Editor) Read() (string, error) {
+func (ed *Editor) ReadCode() (string, error) {
 	restore, err := ed.tty.Setup()
 	if err != nil {
 		return "", err

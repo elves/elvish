@@ -8,6 +8,6 @@ import (
 
 func main() {
 	ed := core.NewStdEditor()
-	buf, err := ed.Read()
+	buf, err := ed.ReadCode()
 	fmt.Println("buffer:", buf, "error:", err)
 }
