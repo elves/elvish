@@ -25,6 +25,8 @@ type fakeTTY struct {
 	bufs []*ui.Buffer
 	// Records SetRaw calls.
 	setRaws []bool
+	// Records Newline calls.
+	newlines []struct{}
 
 	// Channel returned from StartRead. Can be used to inject additional events.
 	eventCh chan tty.Event
@@ -37,7 +39,7 @@ func newFakeTTY(events []tty.Event) *fakeTTY {
 func newFakeTTYWithSize(h, w int, events []tty.Event) *fakeTTY {
 	return &fakeTTY{
 		h, w, events,
-		make(chan *ui.Buffer, maxBufferUpdates), nil, nil,
+		make(chan *ui.Buffer, maxBufferUpdates), nil, nil, nil,
 		make(chan tty.Event, maxEvents)}
 }
 
@@ -55,6 +57,8 @@ func (t *fakeTTY) StartRead() <-chan tty.Event {
 func (t *fakeTTY) SetRaw(b bool) { t.setRaws = append(t.setRaws, b) }
 
 func (t *fakeTTY) StopRead() {}
+
+func (t *fakeTTY) Newline() { t.newlines = append(t.newlines, struct{}{}) }
 
 func (t *fakeTTY) Buffer() *ui.Buffer { return t.bufs[len(t.bufs)-1] }
 

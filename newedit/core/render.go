@@ -31,7 +31,6 @@ func render(st *State, cfg *RenderConfig, h, w int, final bool) (notes, main *ui
 	bbMain := ui.NewBufferBuilder(w)
 	(&mainRenderer{h, bufCode, st.Mode}).Render(bbMain)
 	if final {
-		bbMain.Newline()
 		bbMain.SetDotToCursor()
 	}
 

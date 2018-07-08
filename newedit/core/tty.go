@@ -31,6 +31,7 @@ type Reader interface {
 }
 
 type Writer interface {
+	Newline()
 	Buffer() *ui.Buffer
 	ResetBuffer()
 	UpdateBuffer(bufNotes, bufMain *ui.Buffer, full bool) error
@@ -74,6 +75,10 @@ func (t *aTTY) StopRead() {
 	t.r.Stop()
 	t.r.Close()
 	t.r = nil
+}
+
+func (t *aTTY) Newline() {
+	t.w.Newline()
 }
 
 func (t *aTTY) Buffer() *ui.Buffer {
