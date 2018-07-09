@@ -3,10 +3,12 @@ package core
 import (
 	"os"
 	"sync"
+	"syscall"
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/loop"
+	"github.com/elves/elvish/sys"
 )
 
 type Editor struct {
@@ -29,16 +31,20 @@ func NewEditor(t TTY, sigs SignalSource) *Editor {
 func (ed *Editor) handle(e loop.Event) (string, bool) {
 	switch e := e.(type) {
 	case os.Signal:
-		return handleSignal()
+		switch e {
+		case syscall.SIGHUP:
+			return "", true
+		case syscall.SIGINT:
+			*ed.state = State{}
+		case sys.SIGWINCH:
+			ed.Redraw(true)
+		}
+		return "", false
 	case tty.Event:
 		return handleTTYEvent(ed.state, e)
 	default:
 		panic("unreachable")
 	}
-}
-
-func handleSignal() (string, bool) {
-	return "", false
 }
 
 func handleTTYEvent(st *State, event tty.Event) (string, bool) {
