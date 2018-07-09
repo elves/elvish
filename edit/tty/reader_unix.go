@@ -113,6 +113,7 @@ func (rd *reader) Stop() {
 // Close releases files associated with the Reader. It does not close the file
 // used to create it.
 func (rd *reader) Close() {
+	close(rd.eventChan)
 	rd.ar.Close()
 }
 
