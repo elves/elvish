@@ -25,7 +25,7 @@ var (
 		tty.KeyEvent(kc), tty.KeyEvent(kEnter)}
 )
 
-func TestRead_PassesInputEventsToMode(t *testing.T) {
+func TestReadCode_PassesInputEventsToMode(t *testing.T) {
 	ed := NewEditor(newFakeTTY(eventsABCEnter), nil)
 	m := &fakeMode{maxKeys: len(eventsABCEnter)}
 	ed.state.Mode = m
@@ -37,7 +37,7 @@ func TestRead_PassesInputEventsToMode(t *testing.T) {
 	}
 }
 
-func TestRead_CallsBeforeReadlineOnce(t *testing.T) {
+func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 	ed := NewEditor(newFakeTTY(eventsABCEnter), nil)
 
 	called := 0
@@ -50,7 +50,7 @@ func TestRead_CallsBeforeReadlineOnce(t *testing.T) {
 	}
 }
 
-func TestRead_CallsAfterReadlineOnceWithCode(t *testing.T) {
+func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 	ed := NewEditor(newFakeTTY(eventsABCEnter), nil)
 
 	called := 0
@@ -70,7 +70,7 @@ func TestRead_CallsAfterReadlineOnceWithCode(t *testing.T) {
 	}
 }
 
-func TestRead_RespectsMaxHeight(t *testing.T) {
+func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	maxHeight := 5
 
 	terminal := newFakeTTY(nil)
@@ -99,7 +99,7 @@ func TestRead_RespectsMaxHeight(t *testing.T) {
 
 var bufChTimeout = 1 * time.Second
 
-func TestRead_RendersHighlightedCode(t *testing.T) {
+func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	terminal := newFakeTTY(eventsABC)
 	ed := NewEditor(terminal, nil)
 	ed.config.RenderConfig.Highlighter = func(code string) (styled.Text, []error) {
@@ -111,35 +111,40 @@ func TestRead_RendersHighlightedCode(t *testing.T) {
 
 	wantBuf := ui.NewBufferBuilder(80).
 		WriteString("abc", "31" /* SGR for red foreground */).
-		Buffer()
-checkBuffer:
-	for {
-		select {
-		case buf := <-terminal.bufCh:
-			// Check if the buffer matches out expectation.
-			if reflect.DeepEqual(buf.Lines, wantBuf.Lines) {
-				break checkBuffer
-			}
-		case <-time.After(time.Second):
-			t.Errorf("Timeout waiting for matching buffer")
-			break checkBuffer
-		}
+		SetDotToCursor().Buffer()
+	if !checkBuffer(terminal.bufCh, wantBuf) {
+		t.Errorf("Did not see buffer containing highlighted code")
 	}
 	terminal.eventCh <- tty.KeyEvent(kEnter)
 }
 
-func TestRead_RendersErrorFromHighlighter(t *testing.T) {
+func TestReadCode_RendersErrorFromHighlighter(t *testing.T) {
 	// TODO
 }
 
-func TestRead_RendersPrompt(t *testing.T) {
+func TestReadCode_RendersPrompt(t *testing.T) {
 	// TODO
 }
 
-func TestRead_RendersRprompt(t *testing.T) {
+func TestReadCode_RendersRprompt(t *testing.T) {
 	// TODO
 }
 
-func TestRead_SupportsPersistentRprompt(t *testing.T) {
+func TestReadCode_SupportsPersistentRprompt(t *testing.T) {
 	// TODO
+}
+
+var checkBufferTimeout = time.Second
+
+func checkBuffer(ch <-chan *ui.Buffer, want *ui.Buffer) bool {
+	for {
+		select {
+		case buf := <-ch:
+			if reflect.DeepEqual(buf, want) {
+				return true
+			}
+		case <-time.After(checkBufferTimeout):
+			return false
+		}
+	}
 }
