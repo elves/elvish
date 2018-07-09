@@ -1,7 +1,7 @@
 package core
 
 import (
-	"os"
+	"sync"
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
@@ -11,14 +11,15 @@ import (
 type Editor struct {
 	loop *loop.Loop
 	tty  TTY
+	sigs SignalSource
 
 	config *Config
 	state  *State
 }
 
-func NewEditor(t TTY) *Editor {
+func NewEditor(t TTY, sigs SignalSource) *Editor {
 	lp := loop.New()
-	ed := &Editor{lp, t, &Config{}, &State{}}
+	ed := &Editor{lp, t, sigs, &Config{}, &State{}}
 	lp.HandleCb(ed.handle)
 	lp.RedrawCb(ed.redraw)
 	return ed
@@ -69,17 +70,18 @@ func (ed *Editor) ReadCode() (string, error) {
 	}
 	defer restore()
 
+	var wg sync.WaitGroup
 	eventCh := ed.tty.StartRead()
-	eventsDone := make(chan struct{})
 	defer func() {
 		ed.tty.StopRead()
-		<-eventsDone
+		wg.Wait()
 	}()
+	wg.Add(1)
 	go func() {
 		for event := range eventCh {
 			ed.loop.Input(event)
 		}
-		close(eventsDone)
+		wg.Done()
 	}()
 
 	for _, f := range ed.config.BeforeReadline {
@@ -96,8 +98,4 @@ func (ed *Editor) ReadCode() (string, error) {
 
 func (ed *Editor) Redraw(full bool) {
 	ed.loop.Redraw(full)
-}
-
-func NewStdEditor() *Editor {
-	return NewEditor(NewTTY(os.Stdin, os.Stdout))
 }

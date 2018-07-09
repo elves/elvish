@@ -26,7 +26,7 @@ var (
 )
 
 func TestRead_PassesInputEventsToMode(t *testing.T) {
-	ed := NewEditor(newFakeTTY(eventsABCEnter))
+	ed := NewEditor(newFakeTTY(eventsABCEnter), nil)
 	m := &fakeMode{maxKeys: len(eventsABCEnter)}
 	ed.state.Mode = m
 
@@ -38,7 +38,7 @@ func TestRead_PassesInputEventsToMode(t *testing.T) {
 }
 
 func TestRead_CallsBeforeReadlineOnce(t *testing.T) {
-	ed := NewEditor(newFakeTTY(eventsABCEnter))
+	ed := NewEditor(newFakeTTY(eventsABCEnter), nil)
 
 	called := 0
 	ed.config.BeforeReadline = []func(){func() { called++ }}
@@ -51,7 +51,7 @@ func TestRead_CallsBeforeReadlineOnce(t *testing.T) {
 }
 
 func TestRead_CallsAfterReadlineOnceWithCode(t *testing.T) {
-	ed := NewEditor(newFakeTTY(eventsABCEnter))
+	ed := NewEditor(newFakeTTY(eventsABCEnter), nil)
 
 	called := 0
 	code := ""
@@ -74,7 +74,7 @@ func TestRead_RespectsMaxHeight(t *testing.T) {
 	maxHeight := 5
 
 	terminal := newFakeTTY(nil)
-	ed := NewEditor(terminal)
+	ed := NewEditor(terminal, nil)
 	// Will fill more than maxHeight but less than terminal height
 	ed.state.Code = strings.Repeat("a", 80*10)
 	ed.state.Dot = len(ed.state.Code)
@@ -101,7 +101,7 @@ var bufChTimeout = 1 * time.Second
 
 func TestRead_RendersHighlightedCode(t *testing.T) {
 	terminal := newFakeTTY(eventsABC)
-	ed := NewEditor(terminal)
+	ed := NewEditor(terminal, nil)
 	ed.config.RenderConfig.Highlighter = func(code string) (styled.Text, []error) {
 		return styled.Text{
 			styled.Segment{styled.Style{Foreground: "red"}, code}}, nil

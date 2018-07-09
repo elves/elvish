@@ -45,7 +45,7 @@ var stateUpdateTimeout = 1 * time.Second
 func TestBasicMode(t *testing.T) {
 	for _, test := range basicModeTests {
 		terminal := newFakeTTY(test.events)
-		ed := NewEditor(terminal)
+		ed := NewEditor(terminal, nil)
 		go ed.ReadCode()
 	checkState:
 		for {

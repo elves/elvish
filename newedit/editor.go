@@ -20,7 +20,7 @@ type editor struct {
 }
 
 func NewEditor(in, out *os.File) Editor {
-	ed := core.NewEditor(core.NewTTY(in, out))
+	ed := core.NewEditor(core.NewTTY(in, out), nil)
 	return &editor{ed}
 }
 
