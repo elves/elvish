@@ -56,7 +56,7 @@ func (t *fakeTTY) StartRead() <-chan tty.Event {
 
 func (t *fakeTTY) SetRaw(b bool) { t.setRaws = append(t.setRaws, b) }
 
-func (t *fakeTTY) StopRead() {}
+func (t *fakeTTY) StopRead() { close(t.eventCh) }
 
 func (t *fakeTTY) Newline() { t.newlines = append(t.newlines, struct{}{}) }
 

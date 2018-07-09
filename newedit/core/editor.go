@@ -70,11 +70,16 @@ func (ed *Editor) ReadCode() (string, error) {
 	defer restore()
 
 	eventCh := ed.tty.StartRead()
-	defer ed.tty.StopRead()
+	eventsDone := make(chan struct{})
+	defer func() {
+		ed.tty.StopRead()
+		<-eventsDone
+	}()
 	go func() {
 		for event := range eventCh {
 			ed.loop.Input(event)
 		}
+		close(eventsDone)
 	}()
 
 	for _, f := range ed.config.BeforeReadline {
