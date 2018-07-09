@@ -1,6 +1,7 @@
 package core
 
 import (
+	"os"
 	"sync"
 
 	"github.com/elves/elvish/edit/tty"
@@ -26,10 +27,21 @@ func NewEditor(t TTY, sigs SignalSource) *Editor {
 }
 
 func (ed *Editor) handle(e loop.Event) (string, bool) {
-	return handle(ed.state, e.(tty.Event))
+	switch e := e.(type) {
+	case os.Signal:
+		return handleSignal()
+	case tty.Event:
+		return handleTTYEvent(ed.state, e)
+	default:
+		panic("unreachable")
+	}
 }
 
-func handle(st *State, event tty.Event) (string, bool) {
+func handleSignal() (string, bool) {
+	return "", false
+}
+
+func handleTTYEvent(st *State, event tty.Event) (string, bool) {
 	switch event := event.(type) {
 	case tty.KeyEvent:
 		action := getMode(st.Mode).HandleKey(ui.Key(event), st)
@@ -71,11 +83,10 @@ func (ed *Editor) ReadCode() (string, error) {
 	defer restore()
 
 	var wg sync.WaitGroup
+	defer wg.Wait()
+
 	eventCh := ed.tty.StartRead()
-	defer func() {
-		ed.tty.StopRead()
-		wg.Wait()
-	}()
+	defer ed.tty.StopRead()
 	wg.Add(1)
 	go func() {
 		for event := range eventCh {
@@ -83,6 +94,18 @@ func (ed *Editor) ReadCode() (string, error) {
 		}
 		wg.Done()
 	}()
+
+	if ed.sigs != nil {
+		sigCh := ed.sigs.NotifySignals()
+		defer ed.sigs.StopSignals()
+		wg.Add(1)
+		go func() {
+			for sig := range sigCh {
+				ed.loop.Input(sig)
+			}
+			wg.Done()
+		}()
+	}
 
 	for _, f := range ed.config.BeforeReadline {
 		f()

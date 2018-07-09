@@ -29,5 +29,6 @@ func (sigs *signalSource) NotifySignals() <-chan os.Signal {
 
 func (sigs *signalSource) StopSignals() {
 	signal.Stop(sigs.ch)
+	close(sigs.ch)
 	sigs.ch = nil
 }
