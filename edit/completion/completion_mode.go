@@ -242,6 +242,7 @@ func (c *completion) start(ed eddefs.Editor, acceptSingleton bool) {
 		c.completionState = completionState{
 			completer: completer,
 			complSpec: *complSpec,
+			filtering: true,
 			filtered:  complSpec.candidates,
 		}
 		ed.SetMode(c)
