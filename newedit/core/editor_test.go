@@ -26,22 +26,34 @@ var (
 )
 
 func TestReadCode_PassesInputEventsToMode(t *testing.T) {
-	ed := NewEditor(newFakeTTY(eventsABCEnter), nil)
-	m := &fakeMode{maxKeys: len(eventsABCEnter)}
+	terminal := newFakeTTY()
+	ed := NewEditor(terminal, nil)
+	m := &fakeMode{maxKeys: 3}
 	ed.state.Mode = m
+
+	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
+	terminal.eventCh <- tty.KeyEvent{Rune: 'c'}
 
 	ed.ReadCode()
 
-	if !reflect.DeepEqual(m.keysHandled, keysABCEnter) {
-		t.Errorf("Mode gets keys %v, want %v", m.keysHandled, keysABCEnter)
+	wantKeysHandled := []ui.Key{
+		ui.Key{Rune: 'a'}, ui.Key{Rune: 'b'}, ui.Key{Rune: 'c'},
+	}
+	if !reflect.DeepEqual(m.keysHandled, wantKeysHandled) {
+		t.Errorf("Mode gets keys %v, want %v", m.keysHandled, wantKeysHandled)
 	}
 }
 
 func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
-	ed := NewEditor(newFakeTTY(eventsABCEnter), nil)
+	terminal := newFakeTTY()
+	ed := NewEditor(terminal, nil)
 
 	called := 0
 	ed.config.BeforeReadline = []func(){func() { called++ }}
+
+	// Causes basicMode to quit
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
 
 	ed.ReadCode()
 
@@ -51,7 +63,8 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 }
 
 func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
-	ed := NewEditor(newFakeTTY(eventsABCEnter), nil)
+	terminal := newFakeTTY()
+	ed := NewEditor(terminal, nil)
 
 	called := 0
 	code := ""
@@ -59,6 +72,12 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 		called++
 		code = s
 	}}
+
+	// Causes basicMode to write state.Code and then quit
+	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
+	terminal.eventCh <- tty.KeyEvent{Rune: 'c'}
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
 
 	ed.ReadCode()
 
@@ -73,13 +92,13 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	maxHeight := 5
 
-	terminal := newFakeTTY(nil)
+	terminal := newFakeTTY()
 	ed := NewEditor(terminal, nil)
 	// Will fill more than maxHeight but less than terminal height
 	ed.state.Code = strings.Repeat("a", 80*10)
 	ed.state.Dot = len(ed.state.Code)
 
-	go ed.ReadCode()
+	codeCh, _ := readCodeAsync(ed)
 
 	buf1 := <-terminal.bufCh
 	// Make sure that normally the height does exceed maxHeight.
@@ -94,20 +113,24 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 		t.Errorf("Buffer height is %d, should <= %d", h, maxHeight)
 	}
 
-	terminal.eventCh <- tty.KeyEvent(kEnter)
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	<-codeCh
 }
 
 var bufChTimeout = 1 * time.Second
 
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
-	terminal := newFakeTTY(eventsABC)
+	terminal := newFakeTTY()
 	ed := NewEditor(terminal, nil)
 	ed.config.RenderConfig.Highlighter = func(code string) (styled.Text, []error) {
 		return styled.Text{
 			styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 	}
 
-	go ed.ReadCode()
+	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
+	terminal.eventCh <- tty.KeyEvent{Rune: 'c'}
+	codeCh, _ := readCodeAsync(ed)
 
 	wantBuf := ui.NewBufferBuilder(80).
 		WriteString("abc", "31" /* SGR for red foreground */).
@@ -115,7 +138,9 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	if !checkBuffer(terminal.bufCh, wantBuf) {
 		t.Errorf("Did not see buffer containing highlighted code")
 	}
-	terminal.eventCh <- tty.KeyEvent(kEnter)
+
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	<-codeCh
 }
 
 func TestReadCode_RendersErrorFromHighlighter(t *testing.T) {
@@ -132,6 +157,17 @@ func TestReadCode_RendersRprompt(t *testing.T) {
 
 func TestReadCode_SupportsPersistentRprompt(t *testing.T) {
 	// TODO
+}
+
+func readCodeAsync(ed *Editor) (<-chan string, <-chan error) {
+	codeCh := make(chan string, 1)
+	errCh := make(chan error, 1)
+	go func() {
+		code, err := ed.ReadCode()
+		codeCh <- code
+		errCh <- err
+	}()
+	return codeCh, errCh
 }
 
 var checkBufferTimeout = time.Second

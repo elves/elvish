@@ -44,9 +44,12 @@ var stateUpdateTimeout = 1 * time.Second
 
 func TestBasicMode(t *testing.T) {
 	for _, test := range basicModeTests {
-		terminal := newFakeTTY(test.events)
+		terminal := newFakeTTY()
 		ed := NewEditor(terminal, nil)
-		go ed.ReadCode()
+		for _, event := range test.events {
+			terminal.eventCh <- event
+		}
+		codeCh, _ := readCodeAsync(ed)
 	checkState:
 		for {
 			select {
@@ -60,5 +63,6 @@ func TestBasicMode(t *testing.T) {
 			}
 		}
 		terminal.eventCh <- tty.KeyEvent{Rune: ui.Enter}
+		<-codeCh
 	}
 }

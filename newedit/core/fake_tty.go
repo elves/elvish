@@ -16,8 +16,6 @@ const (
 type fakeTTY struct {
 	// Predefined sizes.
 	h, w int
-	// Predefined events.
-	events []tty.Event
 
 	// Channel for publishing buffer updates.
 	bufCh chan *ui.Buffer
@@ -32,13 +30,13 @@ type fakeTTY struct {
 	eventCh chan tty.Event
 }
 
-func newFakeTTY(events []tty.Event) *fakeTTY {
-	return newFakeTTYWithSize(24, 80, events)
+func newFakeTTY() *fakeTTY {
+	return newFakeTTYWithSize(24, 80)
 }
 
-func newFakeTTYWithSize(h, w int, events []tty.Event) *fakeTTY {
+func newFakeTTYWithSize(h, w int) *fakeTTY {
 	return &fakeTTY{
-		h, w, events,
+		h, w,
 		make(chan *ui.Buffer, maxBufferUpdates), nil, nil, nil,
 		make(chan tty.Event, maxEvents)}
 }
@@ -48,9 +46,6 @@ func (t *fakeTTY) Setup() (func(), error) { return func() {}, nil }
 func (t *fakeTTY) Size() (h, w int) { return t.h, t.w }
 
 func (t *fakeTTY) StartRead() <-chan tty.Event {
-	for _, event := range t.events {
-		t.eventCh <- event
-	}
 	return t.eventCh
 }
 
