@@ -13,20 +13,6 @@ import (
 	"github.com/elves/elvish/sys"
 )
 
-var (
-	ka     = ui.Key{Rune: 'a'}
-	kb     = ui.Key{Rune: 'b'}
-	kc     = ui.Key{Rune: 'c'}
-	kEnter = ui.Key{Rune: ui.Enter}
-
-	keysABCEnter = []ui.Key{ka, kb, kc, kEnter}
-	eventsABC    = []tty.Event{
-		tty.KeyEvent(ka), tty.KeyEvent(kb), tty.KeyEvent(kc)}
-	eventsABCEnter = []tty.Event{
-		tty.KeyEvent(ka), tty.KeyEvent(kb),
-		tty.KeyEvent(kc), tty.KeyEvent(kEnter)}
-)
-
 func TestReadCode_PassesInputEventsToMode(t *testing.T) {
 	terminal := newFakeTTY()
 	ed := NewEditor(terminal, nil)
