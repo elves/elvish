@@ -32,6 +32,18 @@ func NewEditor(t TTY, sigs SignalSource) *Editor {
 	return ed
 }
 
+func (ed *Editor) UseConfig(f func(*Config)) {
+	ed.configMutex.Lock()
+	defer ed.configMutex.Unlock()
+	f(ed.config)
+}
+
+func (ed *Editor) UseState(f func(*State)) {
+	ed.stateMutex.Lock()
+	defer ed.stateMutex.Unlock()
+	f(ed.state)
+}
+
 func (ed *Editor) handle(e loop.Event) (string, bool) {
 	switch e := e.(type) {
 	case os.Signal:
@@ -39,17 +51,20 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 		case syscall.SIGHUP:
 			return "", true
 		case syscall.SIGINT:
-			ed.stateMutex.Lock()
-			*ed.state = State{}
-			ed.stateMutex.Unlock()
+			ed.UseState(func(st *State) {
+				*st = State{}
+			})
 		case sys.SIGWINCH:
 			ed.Redraw(true)
 		}
 		return "", false
 	case tty.Event:
-		ed.stateMutex.Lock()
-		defer ed.stateMutex.Unlock()
-		return handleTTYEvent(ed.state, e)
+		var code string
+		var quit bool
+		ed.UseState(func(st *State) {
+			code, quit = handleTTYEvent(st, e)
+		})
+		return code, quit
 	default:
 		panic("unreachable")
 	}
