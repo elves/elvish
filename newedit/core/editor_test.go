@@ -3,12 +3,14 @@ package core
 import (
 	"reflect"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/sys"
 )
 
 var (
@@ -157,6 +159,81 @@ func TestReadCode_RendersRprompt(t *testing.T) {
 
 func TestReadCode_SupportsPersistentRprompt(t *testing.T) {
 	// TODO
+}
+
+func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
+	terminal := newFakeTTY()
+	sigs := newFakeSignalSource()
+	ed := NewEditor(terminal, sigs)
+
+	codeCh, _ := readCodeAsync(ed)
+	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
+		SetDotToCursor().Buffer()
+	if !checkBuffer(terminal.bufCh, wantBuf) {
+		t.Errorf("did not get expected buffer before sending SIGHUP")
+	}
+
+	sigs.ch <- syscall.SIGHUP
+
+	select {
+	case <-codeCh:
+		// TODO: Test that ReadCode returns with io.EOF
+	case <-time.After(time.Second):
+		t.Errorf("SIGHUP did not cause ReadCode to return")
+	}
+}
+
+func TestReadCode_ResetsOnSIGHUP(t *testing.T) {
+	terminal := newFakeTTY()
+	sigs := newFakeSignalSource()
+	ed := NewEditor(terminal, sigs)
+
+	codeCh, _ := readCodeAsync(ed)
+	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
+		SetDotToCursor().Buffer()
+	if !checkBuffer(terminal.bufCh, wantBuf) {
+		t.Errorf("did not get expected buffer before sending SIGINT")
+	}
+
+	sigs.ch <- syscall.SIGINT
+
+	wantBuf = ui.NewBufferBuilder(80).Buffer()
+	if !checkBuffer(terminal.bufCh, wantBuf) {
+		t.Errorf("Terminal state is not reset after SIGINT")
+	}
+
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	<-codeCh
+}
+
+func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
+	terminal := newFakeTTY()
+	sigs := newFakeSignalSource()
+	ed := NewEditor(terminal, sigs)
+
+	ed.state.Code = "1234567890"
+	ed.state.Dot = len(ed.state.Code)
+
+	codeCh, _ := readCodeAsync(ed)
+	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("1234567890").
+		SetDotToCursor().Buffer()
+	if !checkBuffer(terminal.bufCh, wantBuf) {
+		t.Errorf("did not get expected buffer before sending SIGWINCH")
+	}
+
+	terminal.w = 4
+	sigs.ch <- sys.SIGWINCH
+
+	wantBuf = ui.NewBufferBuilder(4).WriteUnstyled("1234567890").
+		SetDotToCursor().Buffer()
+	if !checkBuffer(terminal.bufCh, wantBuf) {
+		t.Errorf("Terminal is not redrawn after SIGWINCH")
+	}
+
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	<-codeCh
 }
 
 func readCodeAsync(ed *Editor) (<-chan string, <-chan error) {
