@@ -54,7 +54,7 @@ func TestBasicMode(t *testing.T) {
 		for {
 			select {
 			case <-terminal.bufCh:
-				if ed.state.Code == test.wantCode && ed.state.Dot == test.wantDot {
+				if ed.State.Code == test.wantCode && ed.State.Dot == test.wantDot {
 					break checkState
 				}
 			case <-time.After(time.Second):

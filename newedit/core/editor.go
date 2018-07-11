@@ -16,11 +16,11 @@ type Editor struct {
 	tty  TTY
 	sigs SignalSource
 
-	config *Config
-	state  *State
+	Config *Config
+	State  *State
 
-	configMutex sync.RWMutex
-	stateMutex  sync.RWMutex
+	ConfigMutex sync.RWMutex
+	StateMutex  sync.RWMutex
 }
 
 func NewEditor(t TTY, sigs SignalSource) *Editor {
@@ -32,18 +32,6 @@ func NewEditor(t TTY, sigs SignalSource) *Editor {
 	return ed
 }
 
-func (ed *Editor) UseConfig(f func(*Config)) {
-	ed.configMutex.Lock()
-	defer ed.configMutex.Unlock()
-	f(ed.config)
-}
-
-func (ed *Editor) UseState(f func(*State)) {
-	ed.stateMutex.Lock()
-	defer ed.stateMutex.Unlock()
-	f(ed.state)
-}
-
 func (ed *Editor) handle(e loop.Event) (string, bool) {
 	switch e := e.(type) {
 	case os.Signal:
@@ -51,20 +39,17 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 		case syscall.SIGHUP:
 			return "", true
 		case syscall.SIGINT:
-			ed.UseState(func(st *State) {
-				*st = State{}
-			})
+			ed.StateMutex.Lock()
+			*ed.State = State{}
+			ed.StateMutex.Unlock()
 		case sys.SIGWINCH:
 			ed.Redraw(true)
 		}
 		return "", false
 	case tty.Event:
-		var code string
-		var quit bool
-		ed.UseState(func(st *State) {
-			code, quit = handleTTYEvent(st, e)
-		})
-		return code, quit
+		ed.StateMutex.Lock()
+		defer ed.StateMutex.Unlock()
+		return handleTTYEvent(ed.State, e)
 	default:
 		panic("unreachable")
 	}
@@ -83,11 +68,11 @@ func handleTTYEvent(st *State, event tty.Event) (string, bool) {
 }
 
 func (ed *Editor) redraw(flag loop.RedrawFlag) {
-	ed.stateMutex.RLock()
-	defer ed.stateMutex.RUnlock()
-	ed.configMutex.RLock()
-	defer ed.configMutex.RUnlock()
-	redraw(ed.state, ed.config, ed.tty, ed.tty, flag)
+	ed.StateMutex.RLock()
+	defer ed.StateMutex.RUnlock()
+	ed.ConfigMutex.RLock()
+	defer ed.ConfigMutex.RUnlock()
+	redraw(ed.State, ed.Config, ed.tty, ed.tty, flag)
 }
 
 func redraw(st *State, cfg *Config, w Writer, sz Sizer, flag loop.RedrawFlag) {
@@ -140,22 +125,22 @@ func (ed *Editor) ReadCode() (string, error) {
 		}()
 	}
 
-	ed.configMutex.RLock()
-	funcs := ed.config.BeforeReadline
-	ed.configMutex.RUnlock()
+	ed.ConfigMutex.RLock()
+	funcs := ed.Config.BeforeReadline
+	ed.ConfigMutex.RUnlock()
 
 	for _, f := range funcs {
 		f()
 	}
 
 	defer func() {
-		ed.configMutex.RLock()
-		funcs := ed.config.AfterReadline
-		ed.configMutex.RUnlock()
+		ed.ConfigMutex.RLock()
+		funcs := ed.Config.AfterReadline
+		ed.ConfigMutex.RUnlock()
 
-		ed.stateMutex.RLock()
-		code := ed.state.Code
-		ed.stateMutex.RUnlock()
+		ed.StateMutex.RLock()
+		code := ed.State.Code
+		ed.StateMutex.RUnlock()
 
 		for _, f := range funcs {
 			f(code)

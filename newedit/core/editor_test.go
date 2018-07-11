@@ -17,7 +17,7 @@ func TestReadCode_PassesInputEventsToMode(t *testing.T) {
 	terminal := newFakeTTY()
 	ed := NewEditor(terminal, nil)
 	m := &fakeMode{maxKeys: 3}
-	ed.state.Mode = m
+	ed.State.Mode = m
 
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
@@ -38,7 +38,7 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 	ed := NewEditor(terminal, nil)
 
 	called := 0
-	ed.config.BeforeReadline = []func(){func() { called++ }}
+	ed.Config.BeforeReadline = []func(){func() { called++ }}
 
 	// Causes basicMode to quit
 	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
@@ -56,7 +56,7 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 
 	called := 0
 	code := ""
-	ed.config.AfterReadline = []func(string){func(s string) {
+	ed.Config.AfterReadline = []func(string){func(s string) {
 		called++
 		code = s
 	}}
@@ -83,8 +83,8 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	terminal := newFakeTTY()
 	ed := NewEditor(terminal, nil)
 	// Will fill more than maxHeight but less than terminal height
-	ed.state.Code = strings.Repeat("a", 80*10)
-	ed.state.Dot = len(ed.state.Code)
+	ed.State.Code = strings.Repeat("a", 80*10)
+	ed.State.Dot = len(ed.State.Code)
 
 	codeCh, _ := readCodeAsync(ed)
 
@@ -94,9 +94,9 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 		t.Errorf("Buffer height is %d, should > %d", h, maxHeight)
 	}
 
-	ed.UseConfig(func(cfg *Config) {
-		cfg.RenderConfig.MaxHeight = maxHeight
-	})
+	ed.ConfigMutex.Lock()
+	ed.Config.RenderConfig.MaxHeight = maxHeight
+	ed.ConfigMutex.Unlock()
 
 	ed.loop.Redraw(false)
 	buf2 := <-terminal.bufCh
@@ -113,7 +113,7 @@ var bufChTimeout = 1 * time.Second
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	terminal := newFakeTTY()
 	ed := NewEditor(terminal, nil)
-	ed.config.RenderConfig.Highlighter = func(code string) (styled.Text, []error) {
+	ed.Config.RenderConfig.Highlighter = func(code string) (styled.Text, []error) {
 		return styled.Text{
 			styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 	}
@@ -202,8 +202,8 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	sigs := newFakeSignalSource()
 	ed := NewEditor(terminal, sigs)
 
-	ed.state.Code = "1234567890"
-	ed.state.Dot = len(ed.state.Code)
+	ed.State.Code = "1234567890"
+	ed.State.Dot = len(ed.State.Code)
 
 	codeCh, _ := readCodeAsync(ed)
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("1234567890").
