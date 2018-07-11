@@ -223,7 +223,7 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 		t.Errorf("did not get expected buffer before sending SIGWINCH")
 	}
 
-	terminal.w = 4
+	terminal.setSize(24, 4)
 	sigs.ch <- sys.SIGWINCH
 
 	wantBuf = ui.NewBufferBuilder(4).WriteUnstyled("1234567890").

@@ -1,6 +1,8 @@
 package core
 
 import (
+	"sync"
+
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 )
@@ -14,8 +16,9 @@ const (
 
 // An implementation of the TTY interface.
 type fakeTTY struct {
+	sizeMutex sync.RWMutex
 	// Predefined sizes.
-	h, w int
+	height, width int
 
 	// Channel returned from StartRead. Can be used to inject additional events.
 	eventCh chan tty.Event
@@ -27,20 +30,26 @@ type fakeTTY struct {
 }
 
 func newFakeTTY() *fakeTTY {
-	return newFakeTTYWithSize(24, 80)
-}
-
-func newFakeTTYWithSize(h, w int) *fakeTTY {
 	return &fakeTTY{
-		h, w,
-		make(chan tty.Event, maxEvents),
-		make(chan *ui.Buffer, maxBufferUpdates), nil,
+		height: 24, width: 80,
+		eventCh: make(chan tty.Event, maxEvents),
+		bufCh:   make(chan *ui.Buffer, maxBufferUpdates),
 	}
 }
 
 func (t *fakeTTY) Setup() (func(), error) { return func() {}, nil }
 
-func (t *fakeTTY) Size() (h, w int) { return t.h, t.w }
+func (t *fakeTTY) Size() (h, w int) {
+	t.sizeMutex.RLock()
+	defer t.sizeMutex.RUnlock()
+	return t.height, t.width
+}
+
+func (t *fakeTTY) setSize(h, w int) {
+	t.sizeMutex.Lock()
+	defer t.sizeMutex.Unlock()
+	t.height, t.width = h, w
+}
 
 func (t *fakeTTY) StartRead() <-chan tty.Event {
 	return t.eventCh
