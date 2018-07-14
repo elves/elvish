@@ -60,13 +60,13 @@ func (t *fakeTTY) setSize(h, w int) {
 	t.height, t.width = h, w
 }
 
-func (t *fakeTTY) StartRead() <-chan tty.Event {
+func (t *fakeTTY) StartInput() <-chan tty.Event {
 	return t.eventCh
 }
 
-func (t *fakeTTY) SetRaw(b bool) {}
+func (t *fakeTTY) SetRawInput(b bool) {}
 
-func (t *fakeTTY) StopRead() { close(t.eventCh) }
+func (t *fakeTTY) StopInput() { close(t.eventCh) }
 
 func (t *fakeTTY) Newline() {}
 

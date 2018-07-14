@@ -75,7 +75,7 @@ func (ed *Editor) redraw(flag loop.RedrawFlag) {
 	redraw(ed.State, ed.Config, ed.tty, ed.tty, flag)
 }
 
-func redraw(st *State, cfg *Config, w Writer, sz Sizer, flag loop.RedrawFlag) {
+func redraw(st *State, cfg *Config, w Output, sz Sizer, flag loop.RedrawFlag) {
 	final := flag&loop.FinalRedraw != 0
 	if final {
 		st = st.final()
@@ -103,8 +103,8 @@ func (ed *Editor) ReadCode() (string, error) {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	eventCh := ed.tty.StartRead()
-	defer ed.tty.StopRead()
+	eventCh := ed.tty.StartInput()
+	defer ed.tty.StopInput()
 	wg.Add(1)
 	go func() {
 		for event := range eventCh {

@@ -12,8 +12,8 @@ import (
 type TTY interface {
 	Setuper
 	Sizer
-	Reader
-	Writer
+	Input
+	Output
 }
 
 type Setuper interface {
@@ -24,13 +24,13 @@ type Sizer interface {
 	Size() (h, w int)
 }
 
-type Reader interface {
-	StartRead() <-chan tty.Event
-	SetRaw(raw bool)
-	StopRead()
+type Input interface {
+	StartInput() <-chan tty.Event
+	SetRawInput(raw bool)
+	StopInput()
 }
 
-type Writer interface {
+type Output interface {
 	Newline()
 	Buffer() *ui.Buffer
 	ResetBuffer()
@@ -61,17 +61,17 @@ func (t *aTTY) Size() (h, w int) {
 	return sys.GetWinsize(t.out)
 }
 
-func (t *aTTY) StartRead() <-chan tty.Event {
+func (t *aTTY) StartInput() <-chan tty.Event {
 	t.r = tty.NewReader(t.in)
 	t.r.Start()
 	return t.r.EventChan()
 }
 
-func (t *aTTY) SetRaw(raw bool) {
+func (t *aTTY) SetRawInput(raw bool) {
 	t.r.SetRaw(raw)
 }
 
-func (t *aTTY) StopRead() {
+func (t *aTTY) StopInput() {
 	t.r.Stop()
 	t.r.Close()
 	t.r = nil
