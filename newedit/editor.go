@@ -3,6 +3,7 @@ package newedit
 import (
 	"os"
 
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/newedit/core"
 )
 
@@ -13,6 +14,7 @@ import (
 // Close.
 type Editor interface {
 	ReadLine() (string, error)
+	Ns() eval.Ns
 	Close()
 }
 

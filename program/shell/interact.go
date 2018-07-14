@@ -22,7 +22,9 @@ func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
 	var ed editor
 	if sys.IsATTY(os.Stdin) {
 		if newEdit {
-			ed = newedit.NewEditor(os.Stdin, os.Stderr)
+			newed := newedit.NewEditor(os.Stdin, os.Stderr)
+			ev.Global.AddNs("edit", newed.Ns())
+			ed = newed
 		} else {
 			sigch := make(chan os.Signal)
 			signal.Notify(sigch, syscall.SIGHUP, syscall.SIGINT, sys.SIGWINCH)
