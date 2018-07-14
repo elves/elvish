@@ -12,6 +12,7 @@ import (
 
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/newedit"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 )
@@ -20,9 +21,13 @@ func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(os.Stdin) {
-		sigch := make(chan os.Signal)
-		signal.Notify(sigch, syscall.SIGHUP, syscall.SIGINT, sys.SIGWINCH)
-		ed = edit.NewEditor(os.Stdin, os.Stderr, sigch, ev)
+		if newEdit {
+			ed = newedit.NewEditor(os.Stdin, os.Stderr)
+		} else {
+			sigch := make(chan os.Signal)
+			signal.Notify(sigch, syscall.SIGHUP, syscall.SIGINT, sys.SIGWINCH)
+			ed = edit.NewEditor(os.Stdin, os.Stderr, sigch, ev)
+		}
 	} else {
 		ed = newMinEditor(os.Stdin, os.Stderr)
 	}

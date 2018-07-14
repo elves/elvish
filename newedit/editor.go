@@ -13,6 +13,7 @@ import (
 // Close.
 type Editor interface {
 	ReadLine() (string, error)
+	Close()
 }
 
 type editor struct {
