@@ -19,6 +19,10 @@ type fakeTTY struct {
 	sizeMutex sync.RWMutex
 	// Predefined sizes.
 	height, width int
+	// Callback to be returned from Setup.
+	restoreFunc func()
+	// Error to be returned from Setup.
+	setupErr error
 
 	// Channel returned from StartRead. Can be used to inject additional events.
 	eventCh chan tty.Event
@@ -32,12 +36,15 @@ type fakeTTY struct {
 func newFakeTTY() *fakeTTY {
 	return &fakeTTY{
 		height: 24, width: 80,
-		eventCh: make(chan tty.Event, maxEvents),
-		bufCh:   make(chan *ui.Buffer, maxBufferUpdates),
+		restoreFunc: func() {},
+		eventCh:     make(chan tty.Event, maxEvents),
+		bufCh:       make(chan *ui.Buffer, maxBufferUpdates),
 	}
 }
 
-func (t *fakeTTY) Setup() (func(), error) { return func() {}, nil }
+func (t *fakeTTY) Setup() (func(), error) {
+	return t.restoreFunc, t.setupErr
+}
 
 func (t *fakeTTY) Size() (h, w int) {
 	t.sizeMutex.RLock()

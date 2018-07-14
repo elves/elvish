@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 	"syscall"
@@ -12,6 +13,32 @@ import (
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
+
+func TestReadCode_AbortsOnSetupError(t *testing.T) {
+	terminal := newFakeTTY()
+	terminal.setupErr = errors.New("a fake error")
+
+	ed := NewEditor(terminal, nil)
+	_, err := ed.ReadCode()
+
+	if err != terminal.setupErr {
+		t.Errorf("ReadCode returns error %v, want %v", err, terminal.setupErr)
+	}
+}
+
+func TestReadCode_CallsRestore(t *testing.T) {
+	restoreCalled := 0
+	terminal := newFakeTTY()
+	terminal.restoreFunc = func() { restoreCalled++ }
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+
+	ed := NewEditor(terminal, nil)
+	ed.ReadCode()
+
+	if restoreCalled != 1 {
+		t.Errorf("Restore callback called %d times, want once", restoreCalled)
+	}
+}
 
 func TestReadCode_PassesInputEventsToMode(t *testing.T) {
 	terminal := newFakeTTY()
