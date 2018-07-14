@@ -22,10 +22,11 @@ type Shell struct {
 	Cmd         bool
 	CompileOnly bool
 	NoRc        bool
+	NewEdit     bool
 }
 
-func New(binpath, sockpath, dbpath string, cmd, compileonly, norc bool) *Shell {
-	return &Shell{binpath, sockpath, dbpath, cmd, compileonly, norc}
+func New(binpath, sockpath, dbpath string, cmd, compileonly, norc, newEdit bool) *Shell {
+	return &Shell{binpath, sockpath, dbpath, cmd, compileonly, norc, newEdit}
 }
 
 // Main runs Elvish using the default terminal interface. It blocks until Elvish
@@ -45,7 +46,7 @@ func (sh *Shell) Main(args []string) int {
 			return 2
 		}
 	} else {
-		interact(ev, dataDir, sh.NoRc)
+		interact(ev, dataDir, sh.NoRc, sh.NewEdit)
 	}
 
 	return 0

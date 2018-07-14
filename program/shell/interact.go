@@ -16,7 +16,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func interact(ev *eval.Evaler, dataDir string, norc bool) {
+func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
 	// Build Editor.
 	var ed editor
 	if sys.IsATTY(os.Stdin) {

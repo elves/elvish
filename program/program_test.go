@@ -63,6 +63,10 @@ var findProgramTests = []struct {
 	{[]string{"-daemon", "-sock", "/sock"}, func(p Program) bool {
 		return p.(Daemon).inner.SockPath == "/sock"
 	}},
+
+	{[]string{"-newedit"}, func(p Program) bool {
+		return p.(*shell.Shell).NewEdit
+	}},
 }
 
 func isShowHelp(p Program) bool         { _, ok := p.(ShowHelp); return ok }
