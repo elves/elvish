@@ -15,8 +15,8 @@ type ptrWithMutex struct {
 // FromPtr creates a variable from a pointer. The variable is kept in sync
 // with the value the pointer points to, using elvToGo and goToElv conversions
 // when Get and Set. Its access is guarded by the supplied mutex.
-func FromPtrWithRWMutex(p interface{}, m *sync.RWMutex) Var {
-	return ptr{p, m}
+func FromPtrWithMutex(p interface{}, m *sync.RWMutex) Var {
+	return ptrWithMutex{p, m}
 }
 
 // Get returns the value pointed by the pointer, after conversion using FromGo.
