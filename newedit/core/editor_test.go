@@ -40,6 +40,19 @@ func TestReadCode_CallsRestore(t *testing.T) {
 	}
 }
 
+func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
+	terminal := newFakeTTY()
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+
+	ed := NewEditor(terminal, nil)
+	ed.State.Code = "some code"
+	ed.ReadCode()
+
+	if ed.State.Code != "" {
+		t.Errorf("Editor state has code %q, want empty", ed.State.Code)
+	}
+}
+
 func TestReadCode_PassesInputEventsToMode(t *testing.T) {
 	terminal := newFakeTTY()
 	ed := NewEditor(terminal, nil)

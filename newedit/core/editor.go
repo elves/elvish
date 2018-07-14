@@ -103,6 +103,7 @@ func (ed *Editor) ReadCode() (string, error) {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
+	// Relay input events.
 	eventCh := ed.tty.StartInput()
 	defer ed.tty.StopInput()
 	wg.Add(1)
@@ -114,6 +115,7 @@ func (ed *Editor) ReadCode() (string, error) {
 	}()
 
 	if ed.sigs != nil {
+		// Relay signals.
 		sigCh := ed.sigs.NotifySignals()
 		defer ed.sigs.StopSignals()
 		wg.Add(1)
@@ -125,14 +127,20 @@ func (ed *Editor) ReadCode() (string, error) {
 		}()
 	}
 
+	// Reset state before returning.
+	defer func() {
+		ed.StateMutex.Lock()
+		defer ed.StateMutex.Unlock()
+		*ed.State = State{}
+	}()
+
+	// BeforeReadline and AfterReadline hooks.
 	ed.ConfigMutex.RLock()
 	funcs := ed.Config.BeforeReadline
 	ed.ConfigMutex.RUnlock()
-
 	for _, f := range funcs {
 		f()
 	}
-
 	defer func() {
 		ed.ConfigMutex.RLock()
 		funcs := ed.Config.AfterReadline
