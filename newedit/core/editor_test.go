@@ -177,6 +177,35 @@ func TestReadCode_SupportsPersistentRprompt(t *testing.T) {
 	// TODO
 }
 
+func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
+	terminal := newFakeTTY()
+
+	ed := NewEditor(terminal, nil)
+	ed.State.Code = "some code"
+	// We use the dot as a signal for distinguishing non-final and final state.
+	// In the final state, the dot will be set to the length of the code (9).
+	ed.State.Dot = 1
+
+	codeCh, _ := readCodeAsync(ed)
+	// Wait until a non-final state is drawn.
+	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("s").SetDotToCursor().
+		WriteUnstyled("ome code").Buffer()
+	if !checkBuffer(terminal.bufCh, wantBuf) {
+		t.Errorf("did not get expected buffer before sending Enter")
+	}
+
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	<-codeCh
+
+	// Last element in bufs is nil
+	finalBuf := terminal.bufs[len(terminal.bufs)-2]
+	wantFinalBuf := ui.NewBufferBuilder(80).WriteUnstyled("some code").
+		SetDotToCursor().Buffer()
+	if !reflect.DeepEqual(finalBuf, wantFinalBuf) {
+		t.Errorf("final buffer is %v, want %v", finalBuf, wantFinalBuf)
+	}
+}
+
 func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 	terminal := newFakeTTY()
 	sigs := newFakeSignalSource()
