@@ -181,6 +181,9 @@ func (c *completion) apply(line string, dot int) (string, int) {
 }
 
 func (c *completion) prev(cycle bool) {
+	if c.selected == -1 {
+		return
+	}
 	c.selected--
 	if c.selected == -1 {
 		if cycle {
@@ -192,6 +195,9 @@ func (c *completion) prev(cycle bool) {
 }
 
 func (c *completion) next(cycle bool) {
+	if c.selected == -1 {
+		return
+	}
 	c.selected++
 	if c.selected == len(c.filtered) {
 		if cycle {
