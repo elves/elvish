@@ -113,7 +113,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	ed.State.Code = strings.Repeat("a", 80*10)
 	ed.State.Dot = len(ed.State.Code)
 
-	codeCh, _ := readCodeAsync(ed)
+	codeCh, _ := ed.readCodeAsync()
 
 	buf1 := <-terminal.bufCh
 	// Make sure that normally the height does exceed maxHeight.
@@ -148,12 +148,12 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
 	terminal.eventCh <- tty.KeyEvent{Rune: 'c'}
-	codeCh, _ := readCodeAsync(ed)
+	codeCh, _ := ed.readCodeAsync()
 
 	wantBuf := ui.NewBufferBuilder(80).
 		WriteString("abc", "31" /* SGR for red foreground */).
 		SetDotToCursor().Buffer()
-	if !checkBuffer(terminal.bufCh, wantBuf) {
+	if !terminal.checkBuffer(wantBuf) {
 		t.Errorf("Did not see buffer containing highlighted code")
 	}
 
@@ -186,11 +186,11 @@ func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 	// In the final state, the dot will be set to the length of the code (9).
 	ed.State.Dot = 1
 
-	codeCh, _ := readCodeAsync(ed)
+	codeCh, _ := ed.readCodeAsync()
 	// Wait until a non-final state is drawn.
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("s").SetDotToCursor().
 		WriteUnstyled("ome code").Buffer()
-	if !checkBuffer(terminal.bufCh, wantBuf) {
+	if !terminal.checkBuffer(wantBuf) {
 		t.Errorf("did not get expected buffer before sending Enter")
 	}
 
@@ -211,11 +211,11 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 	sigs := newFakeSignalSource()
 	ed := NewEditor(terminal, sigs)
 
-	codeCh, _ := readCodeAsync(ed)
+	codeCh, _ := ed.readCodeAsync()
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
 		SetDotToCursor().Buffer()
-	if !checkBuffer(terminal.bufCh, wantBuf) {
+	if !terminal.checkBuffer(wantBuf) {
 		t.Errorf("did not get expected buffer before sending SIGHUP")
 	}
 
@@ -234,18 +234,18 @@ func TestReadCode_ResetsOnSIGHUP(t *testing.T) {
 	sigs := newFakeSignalSource()
 	ed := NewEditor(terminal, sigs)
 
-	codeCh, _ := readCodeAsync(ed)
+	codeCh, _ := ed.readCodeAsync()
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
 		SetDotToCursor().Buffer()
-	if !checkBuffer(terminal.bufCh, wantBuf) {
+	if !terminal.checkBuffer(wantBuf) {
 		t.Errorf("did not get expected buffer before sending SIGINT")
 	}
 
 	sigs.ch <- syscall.SIGINT
 
 	wantBuf = ui.NewBufferBuilder(80).Buffer()
-	if !checkBuffer(terminal.bufCh, wantBuf) {
+	if !terminal.checkBuffer(wantBuf) {
 		t.Errorf("Terminal state is not reset after SIGINT")
 	}
 
@@ -261,10 +261,10 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	ed.State.Code = "1234567890"
 	ed.State.Dot = len(ed.State.Code)
 
-	codeCh, _ := readCodeAsync(ed)
+	codeCh, _ := ed.readCodeAsync()
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("1234567890").
 		SetDotToCursor().Buffer()
-	if !checkBuffer(terminal.bufCh, wantBuf) {
+	if !terminal.checkBuffer(wantBuf) {
 		t.Errorf("did not get expected buffer before sending SIGWINCH")
 	}
 
@@ -273,36 +273,10 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 
 	wantBuf = ui.NewBufferBuilder(4).WriteUnstyled("1234567890").
 		SetDotToCursor().Buffer()
-	if !checkBuffer(terminal.bufCh, wantBuf) {
+	if !terminal.checkBuffer(wantBuf) {
 		t.Errorf("Terminal is not redrawn after SIGWINCH")
 	}
 
 	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
 	<-codeCh
-}
-
-func readCodeAsync(ed *Editor) (<-chan string, <-chan error) {
-	codeCh := make(chan string, 1)
-	errCh := make(chan error, 1)
-	go func() {
-		code, err := ed.ReadCode()
-		codeCh <- code
-		errCh <- err
-	}()
-	return codeCh, errCh
-}
-
-var checkBufferTimeout = time.Second
-
-func checkBuffer(ch <-chan *ui.Buffer, want *ui.Buffer) bool {
-	for {
-		select {
-		case buf := <-ch:
-			if reflect.DeepEqual(buf, want) {
-				return true
-			}
-		case <-time.After(checkBufferTimeout):
-			return false
-		}
-	}
 }

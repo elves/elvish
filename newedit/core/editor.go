@@ -150,6 +150,19 @@ func (ed *Editor) ReadCode() (string, error) {
 	return ed.loop.Run()
 }
 
+// Like ReadCode, but returns immediately with two channels that will get the
+// return values of ReadCode. Useful in tests.
+func (ed *Editor) readCodeAsync() (<-chan string, <-chan error) {
+	codeCh := make(chan string, 1)
+	errCh := make(chan error, 1)
+	go func() {
+		code, err := ed.ReadCode()
+		codeCh <- code
+		errCh <- err
+	}()
+	return codeCh, errCh
+}
+
 func (ed *Editor) Redraw(full bool) {
 	ed.loop.Redraw(full)
 }

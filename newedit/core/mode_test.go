@@ -49,7 +49,7 @@ func TestBasicMode(t *testing.T) {
 		for _, event := range test.events {
 			terminal.eventCh <- event
 		}
-		codeCh, _ := readCodeAsync(ed)
+		codeCh, _ := ed.readCodeAsync()
 	checkState:
 		for {
 			select {

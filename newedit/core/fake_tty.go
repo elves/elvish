@@ -1,7 +1,9 @@
 package core
 
 import (
+	"reflect"
 	"sync"
+	"time"
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
@@ -80,4 +82,21 @@ func (t *fakeTTY) UpdateBuffer(_, buf *ui.Buffer, _ bool) error {
 func (t *fakeTTY) recordBuf(buf *ui.Buffer) {
 	t.bufs = append(t.bufs, buf)
 	t.bufCh <- buf
+}
+
+var checkBufferTimeout = time.Second
+
+// Check that an expected buffer will eventually appear. Also useful for waiting
+// until the editor reaches a certain state.
+func (t *fakeTTY) checkBuffer(want *ui.Buffer) bool {
+	for {
+		select {
+		case buf := <-t.bufCh:
+			if reflect.DeepEqual(buf, want) {
+				return true
+			}
+		case <-time.After(checkBufferTimeout):
+			return false
+		}
+	}
 }
