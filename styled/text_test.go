@@ -16,8 +16,8 @@ var (
 	text2 = Text{red("lorem"), blue("foobar")}
 )
 
-func red(s string) Segment  { return Segment{Style{Foreground: "red"}, s} }
-func blue(s string) Segment { return Segment{Style{Foreground: "blue"}, s} }
+func red(s string) *Segment  { return &Segment{Style{Foreground: "red"}, s} }
+func blue(s string) *Segment { return &Segment{Style{Foreground: "blue"}, s} }
 
 var partitionTests = tt.Table{
 	Args(text0).Rets([]Text{text0}),

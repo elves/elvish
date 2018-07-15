@@ -14,12 +14,12 @@ type Segment struct {
 	Text string
 }
 
-func (Segment) Kind() string { return "styled-segment" }
+func (*Segment) Kind() string { return "styled-segment" }
 
 // Repr returns the representation of this Segment. The string can be used to
 // construct an identical Segment. Unset or default attributes are skipped. If
 // the Segment represents an unstyled string only this string is returned.
-func (s Segment) Repr(indent int) string {
+func (s *Segment) Repr(indent int) string {
 	buf := new(bytes.Buffer)
 	addIfNotEqual := func(key string, val, cmp interface{}) {
 		if val != cmp {
@@ -43,12 +43,12 @@ func (s Segment) Repr(indent int) string {
 	return fmt.Sprintf("(styled-segment %s %s)", s.Text, strings.TrimSpace(buf.String()))
 }
 
-func (s Segment) IterateKeys(fn func(v interface{}) bool) {
+func (*Segment) IterateKeys(fn func(v interface{}) bool) {
 	vals.Feed(fn, "text", "fg-color", "bg-color", "bold", "dim", "italic", "underlined", "blink", "inverse")
 }
 
 // Index provides access to the attributes of the Segment.
-func (s Segment) Index(k interface{}) (v interface{}, ok bool) {
+func (s *Segment) Index(k interface{}) (v interface{}, ok bool) {
 	switch k {
 	case "text":
 		v = s.Text
@@ -78,31 +78,36 @@ func (s Segment) Index(k interface{}) (v interface{}, ok bool) {
 }
 
 // Concat implements Segment+string, Segment+Segment and Segment+Text.
-func (s Segment) Concat(v interface{}) (interface{}, error) {
+func (s *Segment) Concat(v interface{}) (interface{}, error) {
 	switch rhs := v.(type) {
 	case string:
 		return Text{
 			s,
-			Segment{Text: rhs},
+			&Segment{Text: rhs},
 		}, nil
 	case *Segment:
-		return Text{s, *rhs}, nil
-	case *Text:
-		return Text(append([]Segment{s}, *rhs...)), nil
+		return Text{s, rhs}, nil
+	case Text:
+		return Text(append([]*Segment{s}, rhs...)), nil
 	}
 
 	return nil, vals.ErrConcatNotImplemented
 }
 
 // RConcat implements string+Segment.
-func (s Segment) RConcat(v interface{}) (interface{}, error) {
+func (s *Segment) RConcat(v interface{}) (interface{}, error) {
 	switch lhs := v.(type) {
 	case string:
 		return Text{
-			Segment{Text: lhs},
+			&Segment{Text: lhs},
 			s,
 		}, nil
 	}
-
 	return nil, vals.ErrConcatNotImplemented
+}
+
+// Clone returns a copy of the Segment.
+func (s *Segment) Clone() *Segment {
+	value := *s
+	return &value
 }

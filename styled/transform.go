@@ -6,38 +6,25 @@ import (
 
 // FindTransformer looks up a transformer name and if successful returns a
 // function that can be used to transform a styled Segment.
-func FindTransformer(transformerName string) func(Segment) Segment {
-	var innerTransformer func(*Segment)
-
+func FindTransformer(transformerName string) func(*Segment) {
 	switch {
 	// Catch special colors early
 	case transformerName == "default":
-		innerTransformer = func(s *Segment) { s.Foreground = "" }
+		return func(s *Segment) { s.Foreground = "" }
 	case transformerName == "bg-default":
-		innerTransformer = func(s *Segment) { s.Background = "" }
-
+		return func(s *Segment) { s.Background = "" }
 	case strings.HasPrefix(transformerName, "bg-"):
-		innerTransformer = buildColorTransformer(strings.TrimPrefix(transformerName, "bg-"), false)
+		return buildColorTransformer(strings.TrimPrefix(transformerName, "bg-"), false)
 	case strings.HasPrefix(transformerName, "no-"):
-		innerTransformer = buildBoolTransformer(strings.TrimPrefix(transformerName, "no-"), false, false)
+		return buildBoolTransformer(strings.TrimPrefix(transformerName, "no-"), false, false)
 	case strings.HasPrefix(transformerName, "toggle-"):
-		innerTransformer = buildBoolTransformer(strings.TrimPrefix(transformerName, "toggle-"), false, true)
+		return buildBoolTransformer(strings.TrimPrefix(transformerName, "toggle-"), false, true)
 
 	default:
-		innerTransformer = buildColorTransformer(transformerName, true)
-
-		if innerTransformer == nil {
-			innerTransformer = buildBoolTransformer(transformerName, true, false)
+		if f := buildColorTransformer(transformerName, true); f != nil {
+			return f
 		}
-	}
-
-	if innerTransformer == nil {
-		return nil
-	}
-
-	return func(segment Segment) Segment {
-		innerTransformer(&segment)
-		return segment
+		return buildBoolTransformer(transformerName, true, false)
 	}
 }
 

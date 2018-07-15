@@ -7,7 +7,7 @@ import (
 
 func TestStyledString(t *testing.T) {
 	Test(t,
-		That("print (styled abc hopefully-never-exists)").ErrorsWith(errors.New("'hopefully-never-exists' is no valid style transformer")),
+		That("print (styled abc hopefully-never-exists)").ErrorsWith(errors.New("hopefully-never-exists is not a valid style transformer")),
 		That("print (styled abc bold)").Prints("\033[1mabc\033[m"),
 		That("print (styled abc red cyan)").Prints("\033[36mabc\033[m"),
 		That("print (styled abc bg-green)").Prints("\033[42mabc\033[m"),
@@ -43,6 +43,15 @@ func TestStyledText(t *testing.T) {
 		That("print (styled (styled abc inverse) no-inverse)").Prints("abc"),
 		That("print (styled (styled abc inverse) toggle-inverse)").Prints("abc"),
 		That("print (styled (styled abc inverse) toggle-inverse toggle-inverse)").Prints("\033[7mabc\033[m"),
+	)
+}
+
+func TestStyled_DoesNotModifyArgument(t *testing.T) {
+	Test(t,
+		That("x = (styled text); _ = (styled $x red); put $x[0][fg-color]").
+			Puts("default"),
+		That("x = (styled-segment text); _ = (styled $x red); put $x[fg-color]").
+			Puts("default"),
 	)
 }
 

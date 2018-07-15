@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/styled"
 )
 
@@ -46,19 +47,19 @@ func styledSegment(options RawOptions, input interface{}) (*styled.Segment, erro
 
 // Styled turns a string, a styled Segment or a styled Text into a styled Text.
 // This is done by applying a range of transformers to the input.
-func Styled(fm *Frame, input interface{}, transformers ...interface{}) (*styled.Text, error) {
+func Styled(fm *Frame, input interface{}, transformers ...interface{}) (styled.Text, error) {
 	var text styled.Text
 
 	switch input := input.(type) {
 	case string:
-		text = styled.Text{styled.Segment{
+		text = styled.Text{&styled.Segment{
 			Text:  input,
 			Style: styled.Style{},
 		}}
 	case *styled.Segment:
-		text = styled.Text{*input}
-	case *styled.Text:
-		text = *input
+		text = styled.Text{input.Clone()}
+	case styled.Text:
+		text = input.Clone()
 	default:
 		return nil, fmt.Errorf("expected string, styled segment or styled text; got %s", vals.Kind(input))
 	}
@@ -68,26 +69,24 @@ func Styled(fm *Frame, input interface{}, transformers ...interface{}) (*styled.
 		case string:
 			transformerFn := styled.FindTransformer(transformer)
 			if transformerFn == nil {
-				return nil, fmt.Errorf("'%s' is no valid style transformer", transformer)
+				return nil, fmt.Errorf("%s is not a valid style transformer", parse.Quote(transformer))
 			}
-
-			for i, segment := range text {
-				text[i] = transformerFn(segment)
+			for _, seg := range text {
+				transformerFn(seg)
 			}
-
 		case Callable:
-			for i, segment := range text {
-				vs, err := fm.CaptureOutput(transformer, []interface{}{&segment}, NoOpts)
+			for i, seg := range text {
+				vs, err := fm.CaptureOutput(transformer, []interface{}{seg}, NoOpts)
 				if err != nil {
 					return nil, err
 				}
 
 				if n := len(vs); n != 1 {
-					return nil, fmt.Errorf("style transformers must return a single styled segment; got %d", n)
+					return nil, fmt.Errorf("style transformers must return a single styled segment; got %d values", n)
 				} else if transformedSegment, ok := vs[0].(*styled.Segment); !ok {
 					return nil, fmt.Errorf("style transformers must return a styled segment; got %s", vals.Kind(vs[0]))
 				} else {
-					text[i] = *transformedSegment
+					text[i] = transformedSegment
 				}
 			}
 
@@ -96,5 +95,5 @@ func Styled(fm *Frame, input interface{}, transformers ...interface{}) (*styled.
 		}
 	}
 
-	return &text, nil
+	return text, nil
 }

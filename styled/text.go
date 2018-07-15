@@ -9,7 +9,7 @@ import (
 )
 
 // Text contains of a list of styled Segments.
-type Text []Segment
+type Text []*Segment
 
 func (t Text) Kind() string { return "styled-text" }
 
@@ -47,11 +47,11 @@ func (t Text) Index(k interface{}) (interface{}, error) {
 func (t Text) Concat(v interface{}) (interface{}, error) {
 	switch rhs := v.(type) {
 	case string:
-		return Text(append(t, Segment{Text: rhs})), nil
+		return Text(append(t, &Segment{Text: rhs})), nil
 	case *Segment:
-		return Text(append(t, *rhs)), nil
-	case *Text:
-		return Text(append(t, *rhs...)), nil
+		return Text(append(t, rhs)), nil
+	case Text:
+		return Text(append(t, rhs...)), nil
 	}
 
 	return nil, vals.ErrConcatNotImplemented
@@ -61,7 +61,7 @@ func (t Text) Concat(v interface{}) (interface{}, error) {
 func (t Text) RConcat(v interface{}) (interface{}, error) {
 	switch lhs := v.(type) {
 	case string:
-		return Text(append([]Segment{{Text: lhs}}, t...)), nil
+		return Text(append([]*Segment{{Text: lhs}}, t...)), nil
 	}
 
 	return nil, vals.ErrConcatNotImplemented
@@ -76,14 +76,14 @@ func (t Text) Partition(indicies ...int) []Text {
 	for i, idx := range indicies {
 		text := make(Text, 0)
 		for len(segs) > 0 && idx >= consumedSegsLen+len(segs[0].Text) {
-			text = append(text, Segment{
+			text = append(text, &Segment{
 				segs[0].Style, segs[0].Text[seg0Consumed:]})
 			consumedSegsLen += len(segs[0].Text)
 			seg0Consumed = 0
 			segs = segs[1:]
 		}
 		if len(segs) > 0 && idx > consumedSegsLen {
-			text = append(text, Segment{
+			text = append(text, &Segment{
 				segs[0].Style, segs[0].Text[:idx-consumedSegsLen]})
 			seg0Consumed = idx - consumedSegsLen
 		}
@@ -91,11 +91,20 @@ func (t Text) Partition(indicies ...int) []Text {
 	}
 	trailing := make(Text, 0)
 	for len(segs) > 0 {
-		trailing = append(trailing, Segment{
+		trailing = append(trailing, &Segment{
 			segs[0].Style, segs[0].Text[seg0Consumed:]})
 		seg0Consumed = 0
 		segs = segs[1:]
 	}
 	out[len(indicies)] = trailing
 	return out
+}
+
+// Clone returns a deep copy of Text.
+func (t Text) Clone() Text {
+	newt := make(Text, len(t))
+	for i, seg := range t {
+		newt[i] = seg.Clone()
+	}
+	return newt
 }
