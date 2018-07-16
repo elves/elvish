@@ -178,7 +178,7 @@ func (ed *editor) killWordRight() {
 		space = len(ed.buffer)
 	}
 
-	ed.buffer = ed.buffer[:ed.dot] + ed.buffer[space:]
+	ed.buffer = ed.buffer[:ed.dot] + ed.buffer[ed.dot+space:]
 }
 
 // NOTE(xiaq): A small word is either a run of alphanumeric (Unicode category L
