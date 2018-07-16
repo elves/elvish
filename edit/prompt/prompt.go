@@ -219,8 +219,8 @@ func callAndGetStyled(ed eddefs.Editor, fn eval.Callable, ports []*eval.Port) []
 		for v := range ch {
 			if s, ok := v.(*ui.Styled); ok {
 				add(s)
-			} else if s, ok := v.(*styled.Text); ok {
-				for _, seg := range *s {
+			} else if s, ok := v.(styled.Text); ok {
+				for _, seg := range s {
 					add(seg.ToLegacyType())
 				}
 			} else {
