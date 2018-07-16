@@ -23,12 +23,14 @@ func init() {
 
 func initCoreFns(ed *editor, ns eval.Ns) {
 	ns.AddBuiltinFns("edit:", map[string]interface{}{
-		"kill-line-left":       ed.killLineLeft,
-		"kill-line-right":      ed.killLineRight,
-		"kill-word-left":       ed.killWordLeft,
-		"kill-small-word-left": ed.killSmallWordLeft,
-		"kill-rune-left":       ed.killRuneLeft,
-		"kill-rune-right":      ed.killRuneRight,
+		"kill-line-left":        ed.killLineLeft,
+		"kill-line-right":       ed.killLineRight,
+		"kill-word-left":        ed.killWordLeft,
+		"kill-word-right":       ed.killWordRight,
+		"kill-small-word-left":  ed.killSmallWordLeft,
+		"kill-small-word-right": ed.killSmallWordRight,
+		"kill-rune-left":        ed.killRuneLeft,
+		"kill-rune-right":       ed.killRuneRight,
 
 		"move-dot-left":             ed.moveDotLeft,
 		"move-dot-right":            ed.moveDotRight,
@@ -159,6 +161,26 @@ func (ed *editor) killWordLeft() {
 	ed.dot = space
 }
 
+// NOTE(kwshi): The definition of word is the same as above.  When killing a
+// word to the right, preceding spaces (but not trailing spaces) are also
+// removed, in symmetry to killWordLeft.  Examples (| indicates cursor
+// position):
+//
+// "abc  | xyz d" -> "abc  d"
+func (ed *editor) killWordRight() {
+	space := strings.IndexFunc(
+		strings.TrimLeftFunc(ed.buffer[ed.dot:], unicode.IsSpace),
+		unicode.IsSpace)
+
+	// no non-whitespace characters right of cursor; delete only
+	// remaining whitespace (i.e. everything right of cursor)
+	if space == -1 {
+		space = len(ed.buffer)
+	}
+
+	ed.buffer = ed.buffer[:ed.dot] + ed.buffer[space:]
+}
+
 // NOTE(xiaq): A small word is either a run of alphanumeric (Unicode category L
 // or N) runes or a run of non-alphanumeric runes. This is consistent with vi's
 // definition of word, except that "_" is not considered alphanumeric. When
@@ -177,6 +199,19 @@ func (ed *editor) killSmallWordLeft() {
 	}
 	ed.buffer = left + ed.buffer[ed.dot:]
 	ed.dot = len(left)
+}
+
+func (ed *editor) killSmallWordRight() {
+	right := strings.TrimLeftFunc(ed.buffer[ed.dot:], unicode.IsSpace)
+	// right == "" is also handled here.
+	r, _ := utf8.DecodeRuneInString(right)
+	if isAlnum(r) {
+		right = strings.TrimLeftFunc(right, isAlnum)
+	} else {
+		right = strings.TrimLeftFunc(
+			right, func(r rune) bool { return !isAlnum(r) })
+	}
+	ed.buffer = ed.buffer[:ed.dot] + right
 }
 
 func isAlnum(r rune) bool {
@@ -212,48 +247,68 @@ func (ed *editor) moveDotRight() {
 	ed.dot += w
 }
 
-func (ed *editor) moveDotLeftSepFunc(fn func(rune) bool) {
-	if ed.dot == 0 {
-		return
+func moveDotLeftCategoryFunc(categorize func(rune) int) func(string, int) int {
+	return func(buffer string, dot int) int {
+		// move to last word
+		left := strings.TrimRightFunc(buffer[:dot], func (r rune) { categorize(r) == 0 })
+
+		// get category of last character
+		r, _ := utf8.DecodeLastRuneInString(left)
+		cat := categorize(r)
+		
+		// trim away characters of same category
+		last := strings.TrimRightFunc(left, func(r rune) { categorize(r) == cat })
+
+		return len(last)
 	}
-	space := strings.LastIndexFunc(
-		strings.TrimRightFunc(ed.buffer[:ed.dot], fn),
-		fn) + 1
-	ed.dot = space
 }
 
-func (ed *editor) moveDotRightSepFunc(fn func(rune) bool) {
-	// Move to first matching rune
-	p := strings.IndexFunc(ed.buffer[ed.dot:], fn)
-	if p == -1 {
-		ed.dot = len(ed.buffer)
-		return
+func moveDotRightCategoryFunc(categorize func(rune) int) func(string, int) int {
+	return func(buffer string, dot int) int {
+		// skip non-word characters
+		skip := strings.IndexFunc(buffer[dot:], func(r rune) { categorize(r) != 0 })
+		right := buffer[dot+skip:]
+
+		// get category of first character
+		r, _ := utf8.DecodeRuneInString(right)
+		cat := categorize(r)
+
+		// skip past characters of same category
+		skipSame := strings.IndexFunc(right, func(r rune) { categorize(r) != cat })
+		return dot + skip + skipSame
 	}
-	ed.dot += p
-	// Move to first non-matching rune
-	p = strings.IndexFunc(ed.buffer[ed.dot:], func(r rune) bool { return !fn(r) })
-	if p == -1 {
-		ed.dot = len(ed.buffer)
-		return
-	}
-	ed.dot += p
 }
 
-func (ed *editor) moveDotLeftWord() {
-	ed.moveDotLeftSepFunc(unicode.IsSpace)
+func categorizeWord(r rune) int {
+  switch {
+  case unicode.IsSpace(r): return 0
+  default: return 1
+  }
 }
 
-func (ed *editor) moveDotRightWord() {
-	ed.moveDotRightSepFunc(unicode.IsSpace)
+func categorizeSmallWord(r rune) int {
+  switch {
+  case unicode.IsSpace(r): return 0
+  case isAlnum(r): return 1
+  default: return 2
+  }
 }
 
-func (ed *editor) moveDotLeftSmallWord() {
-	ed.moveDotLeftSepFunc(func(r rune) bool { return !isAlnum(r) })
+func categorizeAlphanumeric(r rune) int {
+  switch {
+  case isAlnum(r): return 1
+  default: return 0
+  }
 }
 
-func (ed *editor) moveDotRightSmallWord() {
-	ed.moveDotRightSepFunc(func(r rune) bool { return !isAlnum(r) })
-}
+var (
+	moveDotLeftWord = moveDotLeftCategoryFunc(categorizeWord)
+	moveDotRightWord = moveDotRightCategoryFunc(categorizeWord)
+	moveDotLeftSmallWord = moveDotLeftCategoryFunc(categorizeSmallWord)
+	moveDotRightSmallWord = moveDotRightCategoryFunc(categorizeSmallWord)
+	moveDotLeftAlphanumeric = moveDotLeftCategoryFunc(categorizeAlphanumeric)
+	moveDotRightAlphanumeric = moveDotRightCategoryFunc(categorizeAlphanumeric)
+)
 
 func (ed *editor) moveDotSOL() {
 	sol := util.FindLastSOL(ed.buffer[:ed.dot])
