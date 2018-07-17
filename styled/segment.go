@@ -14,6 +14,10 @@ type Segment struct {
 	Text string
 }
 
+func UnstyledSegment(s string) *Segment {
+	return &Segment{Text: s}
+}
+
 func (*Segment) Kind() string { return "styled-segment" }
 
 // Repr returns the representation of this Segment. The string can be used to

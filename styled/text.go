@@ -11,6 +11,11 @@ import (
 // Text contains of a list of styled Segments.
 type Text []*Segment
 
+// Unstyled returns an unstyled Text.
+func Unstyled(s string) Text {
+	return Text{UnstyledSegment(s)}
+}
+
 func (t Text) Kind() string { return "styled-text" }
 
 // Repr returns the representation of the current Text. It is just a wrapper
