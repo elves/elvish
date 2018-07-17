@@ -4,6 +4,20 @@ import (
 	"strings"
 )
 
+// Transform transforms a Text according to a transformer. It does nothing if
+// the transformer is not valid.
+func Transform(t Text, transformer string) Text {
+	f := FindTransformer(transformer)
+	if f == nil {
+		return t
+	}
+	t = t.Clone()
+	for _, seg := range t {
+		f(seg)
+	}
+	return t
+}
+
 // FindTransformer looks up a transformer name and if successful returns a
 // function that can be used to transform a styled Segment.
 func FindTransformer(transformerName string) func(*Segment) {
