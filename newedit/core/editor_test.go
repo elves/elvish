@@ -155,7 +155,7 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	ed := NewEditor(terminal, nil)
 	ed.Config.RenderConfig.Highlighter = func(code string) (styled.Text, []error) {
 		return styled.Text{
-			styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
+			&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 	}
 
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}

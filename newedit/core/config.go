@@ -23,7 +23,7 @@ type HighlighterCb func(string) (styled.Text, []error)
 
 func (cb HighlighterCb) call(code string) (styled.Text, []error) {
 	if cb == nil {
-		return styled.Text{styled.Segment{Text: code}}, nil
+		return styled.Unstyled(code), nil
 	}
 	return cb(code)
 }

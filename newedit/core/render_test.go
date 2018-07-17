@@ -37,7 +37,7 @@ func TestRender(t *testing.T) {
 		// Code area: prompt
 		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
 			Prompt: func() styled.Text {
-				return styled.Text{styled.Segment{Text: "> "}}
+				return styled.Unstyled("> ")
 			}}, 2, 10, false).
 			Rets(
 				nilBuffer,
@@ -47,7 +47,7 @@ func TestRender(t *testing.T) {
 		// Code area: rprompt
 		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
 			Rprompt: func() styled.Text {
-				return styled.Text{styled.Segment{Text: "R"}}
+				return styled.Unstyled("R")
 			}}, 2, 7, false).
 			Rets(
 				nilBuffer,
@@ -59,7 +59,7 @@ func TestRender(t *testing.T) {
 		// Highlighter
 		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
 			Highlighter: func(text string) (styled.Text, []error) {
-				return styled.Text{styled.Segment{
+				return styled.Text{&styled.Segment{
 					Style: styled.Style{Foreground: "red"}, Text: text}}, nil
 			}}, 2, 7, false).
 			Rets(
@@ -70,7 +70,7 @@ func TestRender(t *testing.T) {
 		// Highlighter error
 		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
 			Highlighter: func(text string) (styled.Text, []error) {
-				return styled.Text{styled.Segment{Text: text}}, []error{
+				return styled.Text{&styled.Segment{Text: text}}, []error{
 					errors.New("error 1"), errors.New("error 2"),
 				}
 			}}, 4, 7, false).
@@ -274,8 +274,8 @@ func TestRenderers(t *testing.T) {
 
 		// codeContentRenderer: Prompt and code, with indentation
 		Args(&codeContentRenderer{
-			code: styled.Text{styled.Segment{Text: "abcdefg"}}, dot: 7,
-			prompt: styled.Text{styled.Segment{Text: "> "}},
+			code: styled.Text{&styled.Segment{Text: "abcdefg"}}, dot: 7,
+			prompt: styled.Text{&styled.Segment{Text: "> "}},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).
 				SetIndent(2).
@@ -286,8 +286,8 @@ func TestRenderers(t *testing.T) {
 
 		// codeContentRenderer: Multi-line prompt and code, without indentation
 		Args(&codeContentRenderer{
-			code: styled.Text{styled.Segment{Text: "abcdefg"}}, dot: 7,
-			prompt: styled.Text{styled.Segment{Text: ">\n"}},
+			code: styled.Text{&styled.Segment{Text: "abcdefg"}}, dot: 7,
+			prompt: styled.Text{&styled.Segment{Text: ">\n"}},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).
 				// No indent as the prompt is multi-line
@@ -299,8 +299,8 @@ func TestRenderers(t *testing.T) {
 
 		// codeContentRenderer: Long prompt and code, without indentation
 		Args(&codeContentRenderer{
-			code: styled.Text{styled.Segment{Text: "abcdefg"}}, dot: 7,
-			prompt: styled.Text{styled.Segment{Text: ">>> "}},
+			code: styled.Text{&styled.Segment{Text: "abcdefg"}}, dot: 7,
+			prompt: styled.Text{&styled.Segment{Text: ">>> "}},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).
 				// No indent as the prompt is too long
@@ -311,8 +311,8 @@ func TestRenderers(t *testing.T) {
 
 		// codeContentRenderer: Visible rprompt
 		Args(&codeContentRenderer{
-			code: styled.Text{styled.Segment{Text: "abc"}}, dot: 3,
-			rprompt: styled.Text{styled.Segment{Text: "RP"}},
+			code: styled.Text{&styled.Segment{Text: "abc"}}, dot: 3,
+			rprompt: styled.Text{&styled.Segment{Text: "RP"}},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).
 				WriteUnstyled("abc").
@@ -323,8 +323,8 @@ func TestRenderers(t *testing.T) {
 		// codeContentRenderer: Rprompt hidden as no padding available (negative
 		// padding)
 		Args(&codeContentRenderer{
-			code: styled.Text{styled.Segment{Text: "abcdef"}}, dot: 6,
-			rprompt: styled.Text{styled.Segment{Text: "RP"}},
+			code: styled.Text{&styled.Segment{Text: "abcdef"}}, dot: 6,
+			rprompt: styled.Text{&styled.Segment{Text: "RP"}},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).
 				WriteUnstyled("abcdef").
@@ -334,8 +334,8 @@ func TestRenderers(t *testing.T) {
 		// codeContentRenderer: Rprompt hidden as no padding available (zero
 		// padding)
 		Args(&codeContentRenderer{
-			code: styled.Text{styled.Segment{Text: "abcde"}}, dot: 5,
-			rprompt: styled.Text{styled.Segment{Text: "RP"}},
+			code: styled.Text{&styled.Segment{Text: "abcde"}}, dot: 5,
+			rprompt: styled.Text{&styled.Segment{Text: "RP"}},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).
 				WriteUnstyled("abcde").
