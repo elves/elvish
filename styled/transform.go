@@ -18,75 +18,56 @@ func Transform(t Text, transformer string) Text {
 	return t
 }
 
-// FindTransformer looks up a transformer name and if successful returns a
-// function that can be used to transform a styled Segment.
-func FindTransformer(transformerName string) func(*Segment) {
+// FindTransformer finds the named transformer, a function that mutates a
+// *Segment. If the name is not a valid transformer, it returns nil.
+func FindTransformer(name string) func(*Segment) {
 	switch {
 	// Catch special colors early
-	case transformerName == "default":
+	case name == "default":
 		return func(s *Segment) { s.Foreground = "" }
-	case transformerName == "bg-default":
+	case name == "bg-default":
 		return func(s *Segment) { s.Background = "" }
-	case strings.HasPrefix(transformerName, "bg-"):
-		return buildColorTransformer(strings.TrimPrefix(transformerName, "bg-"), false)
-	case strings.HasPrefix(transformerName, "no-"):
-		return buildBoolTransformer(strings.TrimPrefix(transformerName, "no-"), false, false)
-	case strings.HasPrefix(transformerName, "toggle-"):
-		return buildBoolTransformer(strings.TrimPrefix(transformerName, "toggle-"), false, true)
-
+	case strings.HasPrefix(name, "bg-"):
+		if color := name[len("bg-"):]; isValidColorName(color) {
+			return func(s *Segment) { s.Background = color }
+		}
+	case strings.HasPrefix(name, "no-"):
+		if f := boolFieldAccessor(name[len("no-"):]); f != nil {
+			return func(s *Segment) { *f(s) = false }
+		}
+	case strings.HasPrefix(name, "toggle-"):
+		if f := boolFieldAccessor(name[len("toggle-"):]); f != nil {
+			return func(s *Segment) {
+				p := f(s)
+				*p = !*p
+			}
+		}
 	default:
-		if f := buildColorTransformer(transformerName, true); f != nil {
-			return f
+		if isValidColorName(name) {
+			return func(s *Segment) { s.Foreground = name }
 		}
-		return buildBoolTransformer(transformerName, true, false)
-	}
-}
-
-func buildColorTransformer(transformerName string, setForeground bool) func(*Segment) {
-	if isValidColorName(transformerName) {
-		if setForeground {
-			return func(s *Segment) { s.Foreground = transformerName }
-		} else {
-			return func(s *Segment) { s.Background = transformerName }
+		if f := boolFieldAccessor(name); f != nil {
+			return func(s *Segment) { *f(s) = true }
 		}
 	}
-
 	return nil
 }
 
-func buildBoolTransformer(transformerName string, val, toggle bool) func(*Segment) {
-	switch transformerName {
+func boolFieldAccessor(name string) func(*Segment) *bool {
+	switch name {
 	case "bold":
-		if toggle {
-			return func(s *Segment) { s.Bold = !s.Bold }
-		}
-		return func(s *Segment) { s.Bold = val }
+		return func(s *Segment) *bool { return &s.Bold }
 	case "dim":
-		if toggle {
-			return func(s *Segment) { s.Dim = !s.Dim }
-		}
-		return func(s *Segment) { s.Dim = val }
+		return func(s *Segment) *bool { return &s.Dim }
 	case "italic":
-		if toggle {
-			return func(s *Segment) { s.Italic = !s.Italic }
-		}
-		return func(s *Segment) { s.Italic = val }
+		return func(s *Segment) *bool { return &s.Italic }
 	case "underlined":
-		if toggle {
-			return func(s *Segment) { s.Underlined = !s.Underlined }
-		}
-		return func(s *Segment) { s.Underlined = val }
+		return func(s *Segment) *bool { return &s.Underlined }
 	case "blink":
-		if toggle {
-			return func(s *Segment) { s.Blink = !s.Blink }
-		}
-		return func(s *Segment) { s.Blink = val }
+		return func(s *Segment) *bool { return &s.Blink }
 	case "inverse":
-		if toggle {
-			return func(s *Segment) { s.Inverse = !s.Inverse }
-		}
-		return func(s *Segment) { s.Inverse = val }
+		return func(s *Segment) *bool { return &s.Inverse }
+	default:
+		return nil
 	}
-
-	return nil
 }
