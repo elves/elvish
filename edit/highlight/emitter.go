@@ -3,7 +3,6 @@ package highlight
 import (
 	"strings"
 
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 )
@@ -31,13 +30,13 @@ func (e *Emitter) form(n *parse.Form) {
 	for _, an := range n.Assignments {
 		if an.Left != nil && an.Left.Head != nil {
 			v := an.Left.Head
-			e.AddStyling(v.Begin(), v.End(), styleForGoodVariable.String())
+			e.AddStyling(v.Begin(), v.End(), styleForGoodVariable)
 		}
 	}
 	for _, cn := range n.Vars {
 		if len(cn.Indexings) > 0 && cn.Indexings[0].Head != nil {
 			v := cn.Indexings[0].Head
-			e.AddStyling(v.Begin(), v.End(), styleForGoodVariable.String())
+			e.AddStyling(v.Begin(), v.End(), styleForGoodVariable)
 		}
 	}
 	if n.Head != nil {
@@ -55,7 +54,7 @@ func (e *Emitter) form(n *parse.Form) {
 		case "for":
 			if len(n.Args) >= 1 && len(n.Args[0].Indexings) > 0 {
 				v := n.Args[0].Indexings[0].Head
-				e.AddStyling(v.Begin(), v.End(), styleForGoodVariable.String())
+				e.AddStyling(v.Begin(), v.End(), styleForGoodVariable)
 			}
 			if len(n.Args) >= 4 && n.Args[3].SourceText() == "else" {
 				a := n.Args[3]
@@ -77,7 +76,7 @@ func (e *Emitter) form(n *parse.Form) {
 			if highlightKeyword("except") {
 				if i+1 < len(n.Args) && len(n.Args[i+1].Indexings) > 0 {
 					v := n.Args[i+1].Indexings[0]
-					e.AddStyling(v.Begin(), v.End(), styleForGoodVariable.String())
+					e.AddStyling(v.Begin(), v.End(), styleForGoodVariable)
 				}
 				i += 3
 			}
@@ -92,7 +91,7 @@ func (e *Emitter) form(n *parse.Form) {
 
 func (e *Emitter) formHead(n *parse.Compound) {
 	head, err := eval.PurelyEvalCompound(n)
-	st := ui.Styles{}
+	st := ""
 	if err == nil {
 		if e.GoodFormHead(head) {
 			st = styleForGoodCommand
@@ -103,12 +102,12 @@ func (e *Emitter) formHead(n *parse.Compound) {
 		st = styleForBadCommand
 	}
 	if len(st) > 0 {
-		e.AddStyling(n.Begin(), n.End(), st.String())
+		e.AddStyling(n.Begin(), n.End(), st)
 	}
 }
 
 func (e *Emitter) primary(n *parse.Primary) {
-	e.AddStyling(n.Begin(), n.End(), styleForPrimary[n.Type].String())
+	e.AddStyling(n.Begin(), n.End(), styleForPrimary[n.Type])
 }
 
 func (e *Emitter) sep(n *parse.Sep) {
@@ -118,7 +117,7 @@ func (e *Emitter) sep(n *parse.Sep) {
 		// Don't do anything. Whitespaces don't get any styling.
 	case strings.HasPrefix(septext, "#"):
 		// Comment.
-		e.AddStyling(n.Begin(), n.End(), styleForComment.String())
+		e.AddStyling(n.Begin(), n.End(), styleForComment)
 	default:
 		e.AddStyling(n.Begin(), n.End(), styleForSep[septext])
 	}

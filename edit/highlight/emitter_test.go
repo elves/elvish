@@ -28,9 +28,9 @@ func goodFormHead(head string) bool { return !strings.HasPrefix(head, "x") }
 var emitAllTests = []emitTests{
 	//01234
 	{"x 'y'", []styling{
-		{0, 1, styleForBadCommand.String()},
-		{0, 1, styleForPrimary[parse.Bareword].String()},
-		{2, 5, styleForPrimary[parse.SingleQuoted].String()},
+		{0, 1, styleForBadCommand},
+		{0, 1, styleForPrimary[parse.Bareword]},
+		{2, 5, styleForPrimary[parse.SingleQuoted]},
 	}},
 }
 
@@ -44,55 +44,55 @@ func TestEmitAll(t *testing.T) {
 var formTests = []emitTests{
 	// Temporary assignments.
 	{"a=1 b=2", []styling{
-		{0, 1, styleForGoodVariable.String()},
-		{4, 5, styleForGoodVariable.String()}}},
+		{0, 1, styleForGoodVariable},
+		{4, 5, styleForGoodVariable}}},
 	// Normal assignments,
 	{"a b = 1 2", []styling{
-		{0, 1, styleForGoodVariable.String()},
-		{2, 3, styleForGoodVariable.String()}}},
+		{0, 1, styleForGoodVariable},
+		{2, 3, styleForGoodVariable}}},
 	// Good commands.
-	{"a", []styling{{0, 1, styleForGoodCommand.String()}}},
+	{"a", []styling{{0, 1, styleForGoodCommand}}},
 	// Bad commands.
-	{"xabc", []styling{{0, 4, styleForBadCommand.String()}}},
-	{"'xa'", []styling{{0, 4, styleForBadCommand.String()}}},
+	{"xabc", []styling{{0, 4, styleForBadCommand}}},
+	{"'xa'", []styling{{0, 4, styleForBadCommand}}},
 
 	// "for".
 	// Highlighting variable.
 	//012345678901
 	{"for x [] { }", []styling{
-		{0, 3, styleForGoodCommand.String()},
-		{4, 5, styleForGoodVariable.String()}}},
+		{0, 3, styleForGoodCommand},
+		{4, 5, styleForGoodVariable}}},
 	// Highlighting variable, incomplete form.
 	//01234
 	{"for x", []styling{
-		{0, 3, styleForGoodCommand.String()},
-		{4, 5, styleForGoodVariable.String()}}},
+		{0, 3, styleForGoodCommand},
+		{4, 5, styleForGoodVariable}}},
 	// Highlighting variable and "else".
 	//012345678901234567890
 	{"for x [] { } else { }", []styling{
-		{0, 3, styleForGoodCommand.String()},
-		{4, 5, styleForGoodVariable.String()},
+		{0, 3, styleForGoodCommand},
+		{4, 5, styleForGoodVariable},
 		{13, 17, styleForSep["else"]}}},
 
 	// "try".
 	// Highlighting except-variable.
 	//01234567890123456789
 	{"try { } except x { }", []styling{
-		{0, 3, styleForGoodCommand.String()},
+		{0, 3, styleForGoodCommand},
 		{8, 14, styleForSep["except"]},
-		{15, 16, styleForGoodVariable.String()},
+		{15, 16, styleForGoodVariable},
 	}},
 	// Highlighting except-variable, incomplete form.
 	//0123456789012345
 	{"try { } except x", []styling{
-		{0, 3, styleForGoodCommand.String()},
+		{0, 3, styleForGoodCommand},
 		{8, 14, styleForSep["except"]},
-		{15, 16, styleForGoodVariable.String()},
+		{15, 16, styleForGoodVariable},
 	}},
 	// Highlighting "else" and "finally".
 	//0123456789012345678901234567
 	{"try { } else { } finally { }", []styling{
-		{0, 3, styleForGoodCommand.String()},
+		{0, 3, styleForGoodCommand},
 		{8, 12, styleForSep["else"]},
 		{17, 24, styleForSep["finally"]},
 	}},
@@ -106,10 +106,10 @@ func TestForm(t *testing.T) {
 }
 
 var primaryTests = []emitTests{
-	{"what", []styling{{0, 4, styleForPrimary[parse.Bareword].String()}}},
-	{"$var", []styling{{0, 4, styleForPrimary[parse.Variable].String()}}},
-	{"'a'", []styling{{0, 3, styleForPrimary[parse.SingleQuoted].String()}}},
-	{`"x"`, []styling{{0, 3, styleForPrimary[parse.DoubleQuoted].String()}}},
+	{"what", []styling{{0, 4, styleForPrimary[parse.Bareword]}}},
+	{"$var", []styling{{0, 4, styleForPrimary[parse.Variable]}}},
+	{"'a'", []styling{{0, 3, styleForPrimary[parse.SingleQuoted]}}},
+	{`"x"`, []styling{{0, 3, styleForPrimary[parse.DoubleQuoted]}}},
 }
 
 func TestPrimary(t *testing.T) {
@@ -121,7 +121,7 @@ func TestPrimary(t *testing.T) {
 
 var sepTests = []emitTests{
 	{">", []styling{{0, 1, styleForSep[">"]}}},
-	{"# comment", []styling{{0, 9, styleForComment.String()}}},
+	{"# comment", []styling{{0, 9, styleForComment}}},
 }
 
 func TestSep(t *testing.T) {

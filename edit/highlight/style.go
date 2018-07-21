@@ -1,32 +1,31 @@
 package highlight
 
 import (
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/parse"
 )
 
 // Semantically applied styles.
 var (
-	styleForGoodCommand  = ui.Styles{"green"}
-	styleForBadCommand   = ui.Styles{"red"}
-	styleForGoodVariable = ui.Styles{"magenta"}
+	styleForGoodCommand  = "green"
+	styleForBadCommand   = "red"
+	styleForGoodVariable = "magenta"
 )
 
 // Lexically applied styles.
 
-// ui.Styles for Primary nodes.
-var styleForPrimary = map[parse.PrimaryType]ui.Styles{
-	parse.Bareword:     {},
-	parse.SingleQuoted: {"yellow"},
-	parse.DoubleQuoted: {"yellow"},
+// Styles for Primary nodes.
+var styleForPrimary = map[parse.PrimaryType]string{
+	parse.Bareword:     "",
+	parse.SingleQuoted: "yellow",
+	parse.DoubleQuoted: "yellow",
 	parse.Variable:     styleForGoodVariable,
-	parse.Wildcard:     {},
-	parse.Tilde:        {},
+	parse.Wildcard:     "",
+	parse.Tilde:        "",
 }
 
-var styleForComment = ui.Styles{"cyan"}
+var styleForComment = "cyan"
 
-// ui.Styles for Sep nodes.
+// Styles for Sep nodes.
 var styleForSep = map[string]string{
 	">":  "green",
 	">>": "green",
