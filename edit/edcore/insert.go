@@ -23,23 +23,24 @@ func init() {
 
 func initCoreFns(ed *editor, ns eval.Ns) {
 	ns.AddBuiltinFns("edit:", map[string]interface{}{
-		"kill-line-left":        ed.killLineLeft,
-		"kill-line-right":       ed.killLineRight,
-		"kill-word-left":        ed.killWordLeft,
-		"kill-word-right":       ed.killWordRight,
-		"kill-small-word-left":  ed.killSmallWordLeft,
-		"kill-small-word-right": ed.killSmallWordRight,
-		"kill-rune-left":        ed.killRuneLeft,
-		"kill-rune-right":       ed.killRuneRight,
+		"kill-line-left":        ed.applyKill(moveDotSOL),
+		"kill-line-right":       ed.applyKill(moveDotEOL),
+		"kill-word-left":        ed.applyKill(moveDotLeftWord),
+		"kill-word-right":       ed.applyKill(moveDotRightWord),
+		"kill-small-word-left":  ed.applyKill(moveDotLeftSmallWord),
+		"kill-small-word-right": ed.applyKill(moveDotRightSmallWord),
+		"kill-rune-left":        ed.applyKill(moveDotLeft),
+		"kill-rune-right":       ed.applyKill(moveDotRight),
 
-		"move-dot-left":             ed.moveDotLeft,
-		"move-dot-right":            ed.moveDotRight,
-		"move-dot-left-word":        ed.moveDotLeftWord,
-		"move-dot-right-word":       ed.moveDotRightWord,
-		"move-dot-left-small-word":  ed.moveDotLeftSmallWord,
-		"move-dot-right-small-word": ed.moveDotRightSmallWord,
-		"move-dot-sol":              ed.moveDotSOL,
-		"move-dot-eol":              ed.moveDotEOL,
+		"move-dot-left":             ed.applyMove(moveDotLeft),
+		"move-dot-right":            ed.applyMove(moveDotRight),
+		"move-dot-left-word":        ed.applyMove(moveDotLeftWord),
+		"move-dot-right-word":       ed.applyMove(moveDotRightWord),
+		"move-dot-left-small-word":  ed.applyMove(moveDotLeftSmallWord),
+		"move-dot-right-small-word": ed.applyMove(moveDotRightSmallWord),
+		"move-dot-sol":              ed.applyMove(moveDotSOL),
+		"move-dot-eol":              ed.applyMove(moveDotEOL),
+		
 		"move-dot-up":               ed.moveDotUp,
 		"move-dot-down":             ed.moveDotDown,
 
@@ -135,129 +136,56 @@ func (ed *editor) commandStart() {
 	ed.SetMode(ed.command)
 }
 
-func (ed *editor) killLineLeft() {
-	sol := util.FindLastSOL(ed.buffer[:ed.dot])
-	ed.buffer = ed.buffer[:sol] + ed.buffer[ed.dot:]
-	ed.dot = sol
-}
-
-func (ed *editor) killLineRight() {
-	eol := util.FindFirstEOL(ed.buffer[ed.dot:]) + ed.dot
-	ed.buffer = ed.buffer[:ed.dot] + ed.buffer[eol:]
-}
-
-// NOTE(xiaq): A word is a run of non-space runes. When killing a word,
-// trimming spaces are removed as well. Examples:
-// "abc  xyz" -> "abc  ", "abc xyz " -> "abc  ".
-
-func (ed *editor) killWordLeft() {
-	if ed.dot == 0 {
-		return
+func (ed *editor) applyMove(move func(string, int) int) func() {
+	return func() {
+		ed.dot = move(ed.buffer, ed.dot)
 	}
-	space := strings.LastIndexFunc(
-		strings.TrimRightFunc(ed.buffer[:ed.dot], unicode.IsSpace),
-		unicode.IsSpace) + 1
-	ed.buffer = ed.buffer[:space] + ed.buffer[ed.dot:]
-	ed.dot = space
 }
 
-// NOTE(kwshi): The definition of word is the same as above.  When killing a
-// word to the right, preceding spaces (but not trailing spaces) are also
-// removed, in symmetry to killWordLeft.  Examples (| indicates cursor
-// position):
-//
-// "abc  | xyz d" -> "abc  d"
-func (ed *editor) killWordRight() {
-	space := strings.IndexFunc(
-		strings.TrimLeftFunc(ed.buffer[ed.dot:], unicode.IsSpace),
-		unicode.IsSpace)
-
-	// no non-whitespace characters right of cursor; delete only
-	// remaining whitespace (i.e. everything right of cursor)
-	if space == -1 {
-		space = len(ed.buffer)
+func (ed *editor) applyKill(move func(string, int) int) func() {
+	return func() {
+		index := move(ed.buffer, ed.dot)
+		
+    if index < ed.dot { // delete left
+      ed.buffer = ed.buffer[:index] + ed.buffer[ed.dot:]
+			ed.dot = index
+    } else { // delete right
+      ed.buffer = ed.buffer[:ed.dot] + ed.buffer[index:]
+    }
 	}
-
-	ed.buffer = ed.buffer[:ed.dot] + ed.buffer[ed.dot+space:]
 }
 
-// NOTE(xiaq): A small word is either a run of alphanumeric (Unicode category L
-// or N) runes or a run of non-alphanumeric runes. This is consistent with vi's
-// definition of word, except that "_" is not considered alphanumeric. When
-// killing a small word, trimming spaces are removed as well. Examples:
-// "abc/~" -> "abc", "~/abc" -> "~/", "abc* " -> "abc"
 
-func (ed *editor) killSmallWordLeft() {
-	left := strings.TrimRightFunc(ed.buffer[:ed.dot], unicode.IsSpace)
-	// The case of left == "" is handled as well.
-	r, _ := utf8.DecodeLastRuneInString(left)
-	if isAlnum(r) {
-		left = strings.TrimRightFunc(left, isAlnum)
-	} else {
-		left = strings.TrimRightFunc(
-			left, func(r rune) bool { return !isAlnum(r) })
-	}
-	ed.buffer = left + ed.buffer[ed.dot:]
-	ed.dot = len(left)
-}
-
-func (ed *editor) killSmallWordRight() {
-	right := strings.TrimLeftFunc(ed.buffer[ed.dot:], unicode.IsSpace)
-	// right == "" is also handled here.
-	r, _ := utf8.DecodeRuneInString(right)
-	if isAlnum(r) {
-		right = strings.TrimLeftFunc(right, isAlnum)
-	} else {
-		right = strings.TrimLeftFunc(
-			right, func(r rune) bool { return !isAlnum(r) })
-	}
-	ed.buffer = ed.buffer[:ed.dot] + right
-}
 
 func isAlnum(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsNumber(r)
 }
 
-func (ed *editor) killRuneLeft() {
-	if ed.dot > 0 {
-		_, w := utf8.DecodeLastRuneInString(ed.buffer[:ed.dot])
-		ed.buffer = ed.buffer[:ed.dot-w] + ed.buffer[ed.dot:]
-		ed.dot -= w
-	} else {
-		ed.flash()
-	}
+func moveDotLeft(buffer string, dot int) int {
+	_, w := utf8.DecodeLastRuneInString(buffer[:dot])
+	return dot - w
 }
 
-func (ed *editor) killRuneRight() {
-	if ed.dot < len(ed.buffer) {
-		_, w := utf8.DecodeRuneInString(ed.buffer[ed.dot:])
-		ed.buffer = ed.buffer[:ed.dot] + ed.buffer[ed.dot+w:]
-	} else {
-		ed.flash()
-	}
-}
-
-func (ed *editor) moveDotLeft() {
-	_, w := utf8.DecodeLastRuneInString(ed.buffer[:ed.dot])
-	ed.dot -= w
-}
-
-func (ed *editor) moveDotRight() {
-	_, w := utf8.DecodeRuneInString(ed.buffer[ed.dot:])
-	ed.dot += w
+func moveDotRight(buffer string, dot int) int {
+	_, w := utf8.DecodeRuneInString(buffer[dot:])
+	return dot + w
 }
 
 func moveDotLeftCategoryFunc(categorize func(rune) int) func(string, int) int {
 	return func(buffer string, dot int) int {
 		// move to last word
-		left := strings.TrimRightFunc(buffer[:dot], func (r rune) { categorize(r) == 0 })
+		left := strings.TrimRightFunc(buffer[:dot], func (r rune) bool {
+			return categorize(r) == 0
+		})
 
 		// get category of last character
 		r, _ := utf8.DecodeLastRuneInString(left)
 		cat := categorize(r)
 		
 		// trim away characters of same category
-		last := strings.TrimRightFunc(left, func(r rune) { categorize(r) == cat })
+		last := strings.TrimRightFunc(left, func(r rune) bool {
+			return categorize(r) == cat
+		})
 
 		return len(last)
 	}
@@ -266,7 +194,9 @@ func moveDotLeftCategoryFunc(categorize func(rune) int) func(string, int) int {
 func moveDotRightCategoryFunc(categorize func(rune) int) func(string, int) int {
 	return func(buffer string, dot int) int {
 		// skip non-word characters
-		skip := strings.IndexFunc(buffer[dot:], func(r rune) { categorize(r) != 0 })
+		skip := strings.IndexFunc(buffer[dot:], func(r rune) bool {
+			return categorize(r) != 0
+		})
 		right := buffer[dot+skip:]
 
 		// get category of first character
@@ -274,7 +204,9 @@ func moveDotRightCategoryFunc(categorize func(rune) int) func(string, int) int {
 		cat := categorize(r)
 
 		// skip past characters of same category
-		skipSame := strings.IndexFunc(right, func(r rune) { categorize(r) != cat })
+		skipSame := strings.IndexFunc(right, func(r rune) bool {
+			return categorize(r) != cat
+		})
 		return dot + skip + skipSame
 	}
 }
@@ -295,7 +227,7 @@ func categorizeSmallWord(r rune) int {
 }
 
 func categorizeAlphanumeric(r rune) int {
-  switch {
+	switch {
   case isAlnum(r): return 1
   default: return 0
   }
@@ -310,14 +242,12 @@ var (
 	moveDotRightAlphanumeric = moveDotRightCategoryFunc(categorizeAlphanumeric)
 )
 
-func (ed *editor) moveDotSOL() {
-	sol := util.FindLastSOL(ed.buffer[:ed.dot])
-	ed.dot = sol
+func moveDotSOL(buffer string, dot int) int {
+	return util.FindLastSOL(buffer[:dot])
 }
 
-func (ed *editor) moveDotEOL() {
-	eol := util.FindFirstEOL(ed.buffer[ed.dot:]) + ed.dot
-	ed.dot = eol
+func moveDotEOL(buffer string, dot int) int {
+	return util.FindFirstEOL(buffer[dot:]) + dot
 }
 
 func (ed *editor) moveDotUp() {
