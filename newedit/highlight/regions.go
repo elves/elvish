@@ -61,19 +61,14 @@ func getRegions(n parse.Node) []region {
 	emitRegions(n, func(n parse.Node, kind regionKind, typ string) {
 		regions = append(regions, region{n.Begin(), n.End(), kind, typ})
 	})
-	// Sort the regions by the begin position, putting larger regions in the
-	// front and semantic regions before lexical regions.
+	// Sort the regions by the begin position, putting semantic regions before
+	// lexical regions.
 	sort.Slice(regions, func(i, j int) bool {
 		if regions[i].begin < regions[j].begin {
 			return true
 		}
 		if regions[i].begin == regions[j].begin {
-			if regions[i].end > regions[j].end {
-				return true
-			}
-			if regions[i].end == regions[j].end {
-				return regions[i].kind == semanticRegion && regions[j].kind == lexicalRegion
-			}
+			return regions[i].kind == semanticRegion && regions[j].kind == lexicalRegion
 		}
 		return false
 	})
