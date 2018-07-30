@@ -5,6 +5,7 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/newedit/core"
+	"github.com/elves/elvish/newedit/highlight"
 )
 
 // Editor is the line editor for Elvish.
@@ -24,6 +25,7 @@ type editor struct {
 
 func NewEditor(in, out *os.File) Editor {
 	ed := core.NewEditor(core.NewTTY(in, out), core.NewSignalSource())
+	ed.Config.RenderConfig.Highlighter = highlight.Highlight
 	return &editor{ed}
 }
 
