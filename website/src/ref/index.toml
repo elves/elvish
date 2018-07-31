@@ -23,5 +23,9 @@ name = "epm"
 title = "The Elvish Package Manager (epm:)"
 
 [[articles]]
+name = "store"
+title = "The Elvish Store (store:)"
+
+[[articles]]
 name = "bundled"
 title = "Bundled Modules"
