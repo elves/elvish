@@ -609,7 +609,18 @@ See [Stale Prompt](#stale-prompt).
 
 See [Stale Prompt](#stale-prompt).
 
-# Functions and Variables in edit:history
+# Location Mode (edit:location)
+
+Work in progress.
+
+## $edit:location:hidden
+
+## $edit:location:pinned
+
+## $edit:location:workspaces
+
+
+# History Mode (edit:history)
 
 ## edit:history:fast-forward
 
