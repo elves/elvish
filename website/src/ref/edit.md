@@ -608,3 +608,10 @@ See [Stale Prompt](#stale-prompt).
 ## $edit:rprompt-stale-transformer
 
 See [Stale Prompt](#stale-prompt).
+
+# Functions and Variables in edit:history
+
+## edit:history:fast-forward
+
+Import command history entries that happened after the current session
+started.
