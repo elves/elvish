@@ -1866,23 +1866,6 @@ The boolean false value.
 
 The special value used by `?()` to signal absence of exceptions.
 
-## $value-out-indicator
-
-A string put before value outputs (such as those of of `put`). Defaults to
-`'▶ '`. Example:
-
-```elvish-transcript
-~> put lorem ipsum
-▶ lorem
-▶ ipsum
-~> value-out-indicator = 'val> '
-~> put lorem ipsum
-val> lorem
-val> ipsum
-```
-
-Note that you almost always want some trailing whitespace for readability.
-
 ## $paths
 
 A list of search paths, kept in sync with `$E:PATH`. It is easier to use than
@@ -1915,3 +1898,20 @@ Etymology: the `pwd` command.
 ## $true
 
 The boolean true value.
+
+## $value-out-indicator
+
+A string put before value outputs (such as those of of `put`). Defaults to
+`'▶ '`. Example:
+
+```elvish-transcript
+~> put lorem ipsum
+▶ lorem
+▶ ipsum
+~> value-out-indicator = 'val> '
+~> put lorem ipsum
+val> lorem
+val> ipsum
+```
+
+Note that you almost always want some trailing whitespace for readability.
