@@ -55,19 +55,19 @@ maintain backward compatibility from version to version.
   </tr>
   <tr>
     <td>
-      0.11 (<a href="/blog/0.11-release-notes.html">Release Note</a>)
+      0.12 (<a href="/blog/0.12-release-notes.html">Release Note</a>)
     </td>
     <td>
-      $dl amd64 elvish-linux-amd64-0.11.tar.gz
-      $dl 386 elvish-linux-386-0.11.tar.gz
-      $dl arm64 elvish-linux-arm64-0.11.tar.gz
+      $dl amd64 elvish-linux-amd64-0.12.tar.gz
+      $dl 386 elvish-linux-386-0.12.tar.gz
+      $dl arm64 elvish-linux-arm64-0.12.tar.gz
     </td>
     <td>
-      $dl amd64 elvish-darwin-amd64-0.11.tar.gz
+      $dl amd64 elvish-darwin-amd64-0.12.tar.gz
     </td>
     <td>
-      $dl amd64 elvish-windows-amd64-0.11.zip
-      $dl 386 elvish-windows-386-0.11.zip
+      $dl amd64 elvish-windows-amd64-0.12.zip
+      $dl 386 elvish-windows-386-0.12.zip
     </td>
   </tr>
 </table>
@@ -87,6 +87,23 @@ Old versions:
     <th>Linux</th>
     <th>macOS</th>
     <th>Windows</th>
+  </tr>
+  <tr>
+    <td>
+      0.11 (<a href="/blog/0.11-release-notes.html">Release Note</a>)
+    </td>
+    <td>
+      $dl amd64 elvish-linux-amd64-0.11.tar.gz
+      $dl 386 elvish-linux-386-0.11.tar.gz
+      $dl arm64 elvish-linux-arm64-0.11.tar.gz
+    </td>
+    <td>
+      $dl amd64 elvish-darwin-amd64-0.11.tar.gz
+    </td>
+    <td>
+      $dl amd64 elvish-windows-amd64-0.11.zip
+      $dl 386 elvish-windows-386-0.11.zip
+    </td>
   </tr>
   <tr>
     <td>0.10.1 (<a href="/blog/0.10-release-notes.html">Release Note</a>)</td>
