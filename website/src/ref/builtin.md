@@ -1866,6 +1866,16 @@ The boolean false value.
 
 The special value used by `?()` to signal absence of exceptions.
 
+## $num-bg-jobs
+
+Number of background jobs.
+
+## $notify-bg-job-success
+
+Whether to notify success of background jobs, defaulting to `$true`.
+
+Failures of background jobs are always notified.
+
 ## $paths
 
 A list of search paths, kept in sync with `$E:PATH`. It is easier to use than
