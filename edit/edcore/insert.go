@@ -169,8 +169,9 @@ func moveDotRight(buffer string, dot int) int {
 	return dot + w
 }
 
-// Returns a move- function that moves the cursor to the beginning of
-// the nearest "run" (characters of the same category) to the left.
+// Returns a move- function that moves the dot to the beginning of the
+// last run of characters of the same non-whitespace category to the
+// left of the dot..
 //
 // The categorization of characters is derived from the categorizer
 // function, which returns for each character an integer representing
@@ -182,68 +183,61 @@ func moveDotRight(buffer string, dot int) int {
 //
 // See `categorizeWord`, `categorizeSmallWord`, and
 // `categorizeAlphanumeric` for examples.
-func moveDotLeftCategoryFunc(categorize func(rune) int) func(string, int) int {
-	return func(buffer string, dot int) int {
-		// move to last word
-		left := strings.TrimRightFunc(buffer[:dot], func(r rune) bool {
-			return categorize(r) == 0
-		})
+func moveDotLeftCategoryFunc(categorize func(rune) int, buffer string, dot int) int {
+	// skip trailing whitespaces left of cursor
+	left := strings.TrimRightFunc(buffer[:dot], func(r rune) bool {
+		return categorize(r) == 0
+	})
 
-		// get category of last character
-		r, _ := utf8.DecodeLastRuneInString(left)
-		cat := categorize(r)
+	// get category of last character
+	r, _ := utf8.DecodeLastRuneInString(left)
+	cat := categorize(r)
 
-		// trim away characters of same category
-		last := strings.TrimRightFunc(left, func(r rune) bool {
-			return categorize(r) == cat
-		})
+	// skip characters of same category
+	left = strings.TrimRightFunc(left, func(r rune) bool {
+		return categorize(r) == cat
+	})
 
-		return len(last)
-	}
+	return len(left)
 }
 
 // Returns a move-function that moves the cursor to the beginning of
-// the next run of characters *after* the nearest run of characters to
-// the right.
+// the next run of characters of the same non-whitespace category to
+// the right of the dot.
 //
 // See `moveDotLeftCategoryFunc`.
-func moveDotRightCategoryFunc(categorize func(rune) int) func(string, int) int {
-	return func(buffer string, dot int) int {
-		var skip int
+func moveDotRightCategoryFunc(categorize func(rune) int, buffer string, dot int) int {
 
-		// skip preceding whitespace
-		skip = strings.IndexFunc(buffer[dot:], func(r rune) bool {
-			return categorize(r) != 0
-		})
-		if skip == -1 {
-			return len(buffer)
-		}
-		dot += skip
+	// skip leading whitespaces right of dot
+	right := strings.TrimLeftFunc(buffer[dot:], func(r rune) bool {
+		return categorize(r) == 0
+	})
 
-		// get category of first character
-		r, _ := utf8.DecodeRuneInString(buffer[dot:])
-		cat := categorize(r)
-
-		// skip past characters of same category
-		skip = strings.IndexFunc(buffer[dot:], func(r rune) bool {
-			return categorize(r) != cat
-		})
-		if skip == -1 {
-			return len(buffer)
-		}
-		dot += skip
-
-		// skip always-skip (non-word) characters
-		skip = strings.IndexFunc(buffer[dot:], func(r rune) bool {
-			return categorize(r) != 0
-		})
-		if skip == -1 {
-			return len(buffer)
-		}
-		dot += skip
-
-		return dot
+	// check whether any whitespace was skipped; if whitespace was
+	// skipped, then dot is already successfully moved to next
+	// non-whitespace run
+	if dot < len(buffer)-len(right) {
+		return len(buffer) - len(right)
 	}
+
+	// no whitespace was skipped, so we still have to skip to the next
+	// non-whitespace run
+
+	// get category of first non-whitespace character
+	r, _ := utf8.DecodeRuneInString(right)
+	cat := categorize(r)
+
+	// skip characters of same category
+	right = strings.TrimLeftFunc(right, func(r rune) bool {
+		return categorize(r) == cat
+	})
+
+	// skip remaining whitespace
+	right = strings.TrimLeftFunc(right, func(r rune) bool {
+		return categorize(r) == 0
+	})
+
+	return len(buffer) - len(right)
 }
 
 func categorizeWord(r rune) int {
@@ -275,14 +269,24 @@ func categorizeAlphanumeric(r rune) int {
 	}
 }
 
-var (
-	moveDotLeftWord          = moveDotLeftCategoryFunc(categorizeWord)
-	moveDotRightWord         = moveDotRightCategoryFunc(categorizeWord)
-	moveDotLeftSmallWord     = moveDotLeftCategoryFunc(categorizeSmallWord)
-	moveDotRightSmallWord    = moveDotRightCategoryFunc(categorizeSmallWord)
-	moveDotLeftAlphanumeric  = moveDotLeftCategoryFunc(categorizeAlphanumeric)
-	moveDotRightAlphanumeric = moveDotRightCategoryFunc(categorizeAlphanumeric)
-)
+func moveDotLeftWord(buffer string, dot int) int {
+	return moveDotLeftCategoryFunc(categorizeWord, buffer, dot)
+}
+func moveDotRightWord(buffer string, dot int) int {
+	return moveDotRightCategoryFunc(categorizeWord, buffer, dot)
+}
+func moveDotLeftSmallWord(buffer string, dot int) int {
+	return moveDotLeftCategoryFunc(categorizeSmallWord, buffer, dot)
+}
+func moveDotRightSmallWord(buffer string, dot int) int {
+	return moveDotRightCategoryFunc(categorizeSmallWord, buffer, dot)
+}
+func moveDotLeftAlphanumeric(buffer string, dot int) int {
+	return moveDotLeftCategoryFunc(categorizeAlphanumeric, buffer, dot)
+}
+func moveDotRightAlphanumeric(buffer string, dot int) int {
+	return moveDotRightCategoryFunc(categorizeAlphanumeric, buffer, dot)
+}
 
 func moveDotSOL(buffer string, dot int) int {
 	return util.FindLastSOL(buffer[:dot])
