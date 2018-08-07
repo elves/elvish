@@ -470,25 +470,26 @@ func parseCSI(nums []int, last rune, seq string) ui.Key {
 }
 
 func xtermModify(k ui.Key, mod int, seq string) ui.Key {
-	switch mod {
-	case 0:
-		// do nothing
-	case 2:
-		k.Mod |= ui.Shift
-	case 3:
-		k.Mod |= ui.Alt
-	case 4:
-		k.Mod |= ui.Shift | ui.Alt
-	case 5:
-		k.Mod |= ui.Ctrl
-	case 6:
-		k.Mod |= ui.Shift | ui.Ctrl
-	case 7:
-		k.Mod |= ui.Alt | ui.Ctrl
-	case 8:
-		k.Mod |= ui.Shift | ui.Alt | ui.Ctrl
-	default:
+	if mod < 0 || mod > 16 {
+		// Out of range
 		return ui.Key{}
+	}
+	if mod == 0 {
+		return k
+	}
+	modFlags := mod - 1
+	if modFlags&0x1 != 0 {
+		k.Mod |= ui.Shift
+	}
+	if modFlags&0x2 != 0 {
+		k.Mod |= ui.Alt
+	}
+	if modFlags&0x4 != 0 {
+		k.Mod |= ui.Ctrl
+	}
+	if modFlags&0x8 != 0 {
+		// This should be Meta, but we currently conflate Meta and Alt.
+		k.Mod |= ui.Alt
 	}
 	return k
 }

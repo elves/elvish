@@ -70,8 +70,24 @@ var keyTests = []struct {
 	// CSI-sequence key identified by the ending rune.
 	{"\033[A", KeyEvent{ui.Up, 0}},
 	{"\033[H", KeyEvent{ui.Home, 0}},
-	// Test for all possible modifier
+	// Modifiers.
+	{"\033[1;1A", KeyEvent{ui.Up, 0}},
 	{"\033[1;2A", KeyEvent{ui.Up, ui.Shift}},
+	{"\033[1;3A", KeyEvent{ui.Up, ui.Alt}},
+	{"\033[1;4A", KeyEvent{ui.Up, ui.Shift | ui.Alt}},
+	{"\033[1;5A", KeyEvent{ui.Up, ui.Ctrl}},
+	{"\033[1;6A", KeyEvent{ui.Up, ui.Shift | ui.Ctrl}},
+	{"\033[1;7A", KeyEvent{ui.Up, ui.Alt | ui.Ctrl}},
+	{"\033[1;8A", KeyEvent{ui.Up, ui.Shift | ui.Alt | ui.Ctrl}},
+	// The modifiers below should be for Meta, but we conflate Alt and Meta.
+	{"\033[1;9A", KeyEvent{ui.Up, ui.Alt}},
+	{"\033[1;10A", KeyEvent{ui.Up, ui.Shift | ui.Alt}},
+	{"\033[1;11A", KeyEvent{ui.Up, ui.Alt}},
+	{"\033[1;12A", KeyEvent{ui.Up, ui.Shift | ui.Alt}},
+	{"\033[1;13A", KeyEvent{ui.Up, ui.Alt | ui.Ctrl}},
+	{"\033[1;14A", KeyEvent{ui.Up, ui.Shift | ui.Alt | ui.Ctrl}},
+	{"\033[1;15A", KeyEvent{ui.Up, ui.Alt | ui.Ctrl}},
+	{"\033[1;16A", KeyEvent{ui.Up, ui.Shift | ui.Alt | ui.Ctrl}},
 
 	// CSI-sequence key with one argument, always ending in '~'.
 	{"\033[1~", KeyEvent{ui.Home, 0}},
