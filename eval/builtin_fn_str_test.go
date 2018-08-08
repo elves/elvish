@@ -17,6 +17,11 @@ func TestBuiltinFnStr(t *testing.T) {
 		That(`replaces &max=2 : / :usr:bin:tmp`).Puts("/usr/bin:tmp"),
 
 		That(`ord a`).Puts("0x61"),
+		That(`ord 你好`).Puts("0x4f60", "0x597d"),
+		That(`chr 0x61`).Puts("a"),
+		That(`chr 0x4f60 0x597d`).Puts("你好"),
+		That(`chr -1`).Errors(),
+
 		That(`base 16 42 233`).Puts("2a", "e9"),
 		That(`base 1 1`).Errors(),   // no base-1
 		That(`base 37 10`).Errors(), // no letter for base-37

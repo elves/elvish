@@ -3,9 +3,11 @@ package eval
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/util"
@@ -27,6 +29,7 @@ func init() {
 		"to-string": toString,
 
 		"ord":  ord,
+		"chr":  chr,
 		"base": base,
 
 		"wcswidth":          util.Wcswidth,
@@ -93,6 +96,17 @@ func ord(fm *Frame, s string) {
 	for _, r := range s {
 		out <- "0x" + strconv.FormatInt(int64(r), 16)
 	}
+}
+
+func chr(nums ...int) (string, error) {
+	var b bytes.Buffer
+	for _, num := range nums {
+		if !utf8.ValidRune(rune(num)) {
+			return "", fmt.Errorf("Invalid codepoint: %d", num)
+		}
+		b.WriteRune(rune(num))
+	}
+	return b.String(), nil
 }
 
 // ErrBadBase is thrown by the "base" builtin if the base is smaller than 2 or

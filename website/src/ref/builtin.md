@@ -370,6 +370,27 @@ Change directory.
 
 Note that Elvish's `cd` does not support `cd -`.
 
+
+## chr
+
+```elvish
+chr $number...
+```
+
+Outputs a string consisting of the given Unicode codepoints. Example:
+
+```elvish-transcript
+~> chr 0x61
+▶ a
+~> chr 0x4f60 0x597d
+▶ 你好
+```
+
+Etymology: [Python](https://docs.python.org/3/library/functions.html#chr).
+
+$cf ord
+
+
 ## constantly
 
 ```elvish
@@ -998,9 +1019,8 @@ ord $string
 Output value of each codepoint in `$string`, in hexadecimal. Examples:
 
 ```elvish-transcript
-~> ord aA
+~> ord a
 ▶ 0x61
-▶ 0x41
 ~> ord 你好
 ▶ 0x4f60
 ▶ 0x597d
@@ -1009,6 +1029,9 @@ Output value of each codepoint in `$string`, in hexadecimal. Examples:
 The output format is subject to change.
 
 Etymology: [Python](https://docs.python.org/3/library/functions.html#ord).
+
+$cf chr
+
 
 ## path-*
 
