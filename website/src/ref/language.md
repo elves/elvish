@@ -1393,30 +1393,38 @@ c
 **TODO**: Find a better way to describe this. Hopefully the example is
 illustrative enough, though.
 
+Under the hood, `fn` defines a variable with the given name plus `~` (see
+[command resolution](#command-resolution)).
+
 
 # Command Resolution
 
 When using a literal string as the head of a command, it is first **resolved**
 during the compilation phase, using the following order:
 
-1.  Special commands.
+1.  If the name matches any of the [special commands](#special-commands), it
+    is treated as so.
 
-2.  Functions defined on any of the containing lexical scopes, with inner
-    scopes looked up first. (This is exactly the same process as variable
-    resolution).
+2.  Finding a variable with the name of the command plus a `~` suffix.
 
-3.  The `builtin:` namespace.
+    For instance, given a command `f a b`, Elvish looks for the variable
+    `$f~`, using the ordinary variable [scoping rule](#scoping-rule), except
+    that resolution failures do not cause errors but fall back to the next
+    step.
 
-4.  Should all these steps fail, it is resolved to be an external command.
-    Determination of the path of the external command does not happen in the
-    resolution process; that happens during evaluation.
+    Functions defined with `fn` as well as builtin functions are actually
+    variables with a `~` suffix in their names.
 
-You can use the [resolve](/ref/builtin.html#resolve) command to see which
-command Elvish resolves a string to.
+3.  External commands.
 
-During the evaluation phase, external commands are then subject to
-**searching**. This can be observed with the
-[search-external](/ref/builtin.html#search-builtin) command.
+    This step always succeeds during compilation, even if the command does not
+    exist. Later, during evaluation, a **searching** step determines whether
+    the external command exists.
+
+The entire resolution procedure can be emulated with the
+[resolve](/ref/builtin.html#resolve) command. Searching of external commands
+can be emulated with the [search-external](/ref/builtin.html#search-builtin)
+command.
 
 
 # Pipeline
