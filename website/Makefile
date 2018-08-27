@@ -1,40 +1,43 @@
-PUBLISH_DIR := ./publish
+TOOLS_DIR := ./_tools
+DST_DIR = ./_dst
+PUBLISH_DIR := ./_publish
 
-MDS := $(wildcard src/*.md src/*/*.md)
+MDS := home.md $(wildcard */*.md)
 HTMLS := $(MDS:.md=.html)
 
-TOOL_SOURCES := $(wildcard *.go)
-TOOL_BINARIES := $(TOOL_SOURCES:.go=.tool)
+TOOL_SOURCES := $(wildcard $(TOOLS_DIR)/*.go)
+TOOL_BINARIES := $(TOOL_SOURCES:/=.bin)
 
 default: gen
 
-%.html: %.md $(TOOL_BINARIES) md-to-html
-	./md-to-html $< $@
+%.html: %.md $(TOOL_BINARIES) $(TOOLS_DIR)/md-to-html
+	$(TOOLS_DIR)/md-to-html $< $@
 
-%.tool: %.go
-	go build -o $@ $<
+%.bin: %.go
+	go build -o $@ ./$<
 
 # Generates the website into the dst directory.
 gen: $(HTMLS) maybe-genblog
-	genblog src dst
-	ln -sf `pwd`/assets dst/
-	ln -sf `pwd`/favicons/* dst/
+	genblog . $(DST_DIR)
+	ln -sf `pwd`/_assets $(DST_DIR)/assets
+	ln -sf `pwd`/_favicons/* $(DST_DIR)/
 
 # Installs genblog only if not found.
 maybe-genblog:
-	which genblog || make genblog
+	which genblog || $(MAKE) genblog
 
-# Installs latest genblog.
+# Installs latest genblog and synchronize the default CSS.
 genblog:
 	go get -u github.com/xiaq/genblog
 	genblog -print-default-css > assets/genblog.css
 
 # Copies the generated website into $(PUBLISH_DIR).
 publish: gen
-	rsync -aLv --delete ./dst/ $(PUBLISH_DIR)/
+	rsync -aLv --delete ./_dst/ $(PUBLISH_DIR)/
 
 clean:
 	rm -f $(HTMLS) $(TOOL_BINARIES)
+	rm -rf $(DST_DIR)
 
 .PHONY: default gen maybe-genblog genblog publish clean
 .SECONDARY: $(TOOL_BINARIES)

@@ -1,5 +1,4 @@
-/src/*.html
-!/src/template.html
-/src/*/*.html
-/dst
-/*.tool
+/home.html
+/*/*.html
+/_dst
+/_tools/*.bin

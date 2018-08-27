@@ -16,6 +16,6 @@ has number-sections && {
 
 mydir=$(dirname "$0")
 
-$mydir/highlighter.tool < $1 |
-  $mydir/macros.tool |
+$mydir/highlighter.bin < $1 |
+  $mydir/macros.bin |
   pandoc -f gfm+smart --data-dir=$mydir/pandoc-data -o $2 $opts
