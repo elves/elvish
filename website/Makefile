@@ -6,7 +6,7 @@ MDS := home.md $(wildcard */*.md)
 HTMLS := $(MDS:.md=.html)
 
 TOOL_SOURCES := $(wildcard $(TOOLS_DIR)/*.go)
-TOOL_BINARIES := $(TOOL_SOURCES:/=.bin)
+TOOL_BINARIES := $(TOOL_SOURCES:.go=.bin)
 
 default: gen
 
