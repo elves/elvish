@@ -1,6 +1,6 @@
 PKG_BASE := github.com/elves/elvish
 PKGS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|' | grep -v '^./\(vendor\|website\)')
-PKG_COVERS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|' | grep -v '^\./\(vendor\|website\)' | grep -v '^\.$$' | sed 's/^\./cover/' | sed 's/$$/.cover/')
+PKG_COVERS := $(shell go list ./... | sed 's|^$(PKG_BASE)|.|' | grep -v '^\./\(vendor\|website\)' | grep -v '^\.$$' | sed 's/^\./_cover/' | sed 's/$$/.cover/')
 COVER_MODE := set
 VERSION := $(shell git describe --tags --always --dirty=-dirty)
 
@@ -14,7 +14,7 @@ get:
 		-X github.com/elves/elvish/buildinfo.GoPath=$(shell go env GOPATH)" .
 
 buildall:
-	./buildall.sh
+	./_tools/buildall.sh
 
 generate:
 	go generate ./...
@@ -25,25 +25,25 @@ test:
 testmain:
 	go test .
 
-cover/%.cover: %
+_cover/%.cover: %
 	mkdir -p $(dir $@)
 	go test -coverprofile=$@ -covermode=$(COVER_MODE) ./$<
 
-cover/all: $(PKG_COVERS)
+_cover/all: $(PKG_COVERS)
 	echo mode: $(COVER_MODE) > $@
 	for f in $(PKG_COVERS); do test -f $$f && sed 1d $$f >> $@ || true; done
 
 # Disable coverage reports for pull requests. The general testability of the
 # code is pretty bad and it is premature to require contributors to maintain
 # code coverage.
-upload-codecov-travis: cover/all
+upload-codecov-travis: _cover/all
 	test "$(TRAVIS_PULL_REQUEST)" = false \
 		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.10' \
 		&& curl -s https://codecov.io/bash -o codecov.bash \
 		&& bash codecov.bash -f $< \
 		|| echo "not sending to codecov.io"
 
-upload-coveralls-travis: cover/all
+upload-coveralls-travis: _cover/all
 	test "$(TRAVIS_PULL_REQUEST)" = false \
 		&& echo "$(TRAVIS_GO_VERSION)" | grep -q '^1.10' \
 		&& go get -d $(GOVERALLS) \
@@ -51,12 +51,12 @@ upload-coveralls-travis: cover/all
 		&& ./goveralls -coverprofile $< -service=travis-ci \
 		|| echo "not sending to coveralls.io"
 
-upload-codecov-appveyor: cover/all
+upload-codecov-appveyor: _cover/all
 	test -z "$(APPVEYOR_PULL_REQUEST_NUMBER)" \
 		&& codecov -f $< \
 		|| echo "not sending to codecov.io"
 
-upload-coveralls-appveyor: cover/all
+upload-coveralls-appveyor: _cover/all
 	test -z "$(APPVEYOR_PULL_REQUEST_NUMBER)" \
 		&& goveralls -coverprofile $< -service=appveyor-ci \
 		|| echo "not sending to coveralls.io"
