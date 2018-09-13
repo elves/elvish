@@ -11,15 +11,15 @@ jobs:
   include:
     # NOTE: Coverages are not enabled for pull requests yet
     - stage: deploy
-      name: Upload Linux coverage profiles
+      name: Generate and upload Linux coverage profiles
       script: make coverage-travis
       if: type = push
       os: linux
-    - name: Upload macOS coverage profiles
+    - name: Generate and upload macOS coverage profiles
       script: make coverage-travis
       if: type = push
       os: osx
-    - name: Deploy artifacts to bintray
+    - name: Build and upload binaries to bintray
       script: make deploy-travis
       if: type = push
 script: make test
