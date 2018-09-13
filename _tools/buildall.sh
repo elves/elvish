@@ -2,11 +2,7 @@
 
 # Should be invoked from repo root.
 
-IFS=
-
-VERSION=`git describe --tags --always --dirty=-dirty`
-
-: ${VERSION_SUFFIX:=$VERSION}
+: ${VERSION:=unknown}
 : ${BIN_DIR:=./bin}
 : ${MANIFEST:=$BIN_DIR/manifest}
 
@@ -17,7 +13,7 @@ export GOOS GOARCH
 buildone() {
     GOOS=$1
     GOARCH=$2
-    STEM=elvish-$GOOS-$GOARCH-$VERSION_SUFFIX
+    STEM=elvish-$GOOS-$GOARCH-$VERSION
     if test $GOOS = windows; then
         BIN=$STEM.exe
         ARCHIVE=$STEM.zip
@@ -27,6 +23,7 @@ buildone() {
     fi
 
     echo "Going to build $BIN"
+    return
     go build -o $BIN_DIR/$BIN -ldflags \
         "-X github.com/elves/elvish/buildinfo.Version=$VERSION \
          -X github.com/elves/elvish/buildinfo.GoRoot=`go env GOROOT` \
