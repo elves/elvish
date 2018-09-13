@@ -14,6 +14,6 @@ fi
 cd bin
 cat manifest | while read f; do
     echo Deploying $f
-    curl -T $f -uxiaq:$BINTRAY_CREDENTIAL \
+    curl -T $f -u$BINTRAY_CREDENTIAL \
         https://api.bintray.com/content/elves/elvish/elvish/$VERSION/$f'?publish=1'
 done
