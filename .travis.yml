@@ -9,8 +9,13 @@ go:
 env: CGO_ENABLED=0
 jobs:
   include:
+    # NOTE: Coverages are not enabled for pull requests yet
     - stage: coverage
-      script: make upload-codecov-travis upload-coveralls-travis
-      # Not enabled for pull requests yet
+      script: make coverage-travis
       if: type = push
+      os: linux
+    - stage: coverage
+      script: make coverage-travis
+      if: type = push
+      os: osx
 script: make test
