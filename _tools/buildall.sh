@@ -1,11 +1,16 @@
 #!/bin/sh -e
 
+# Should be invoked from repo root.
+
 IFS=
 
 VERSION=`git describe --tags --always --dirty=-dirty`
 
 : ${VERSION_SUFFIX:=$VERSION}
 : ${BIN_DIR:=./bin}
+: ${MANIFEST:=$BIN_DIR/manifest}
+
+printf '' > $MANIFEST
 
 export GOOS GOARCH
 
@@ -37,6 +42,7 @@ buildone() {
     )
 
     echo "Built $BIN and archived $ARCHIVE"
+    echo $ARCHIVE >> $MANIFEST
 }
 
 build() {
