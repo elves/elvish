@@ -23,7 +23,6 @@ buildone() {
     fi
 
     echo "Going to build $BIN"
-    return
     go build -o $BIN_DIR/$BIN -ldflags \
         "-X github.com/elves/elvish/buildinfo.Version=$VERSION \
          -X github.com/elves/elvish/buildinfo.GoRoot=`go env GOROOT` \
