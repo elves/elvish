@@ -18,4 +18,7 @@ jobs:
       script: make coverage-travis
       if: type = push
       os: osx
+    - stage: deploy
+      script: make deploy-travis
+      if: type = push
 script: make test
