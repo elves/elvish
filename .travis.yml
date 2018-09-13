@@ -1,12 +1,16 @@
 language: go
-go: "1.10"
-env: CGO_ENABLED=0
-script: make travis
-
-sudo: false
 os:
-    - linux
-    - osx
-matrix:
+  - linux
+  - osx
+sudo: false
+go:
+  - "1.11"
+  - "1.10"
+env: CGO_ENABLED=0
+jobs:
   include:
-    - go: "1.9"
+    - stage: coverage
+      script: make upload-codecov-travis upload-coveralls-travis
+      # Not enabled for pull requests yet
+      if: type = push
+script: make test
