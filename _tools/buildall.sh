@@ -4,7 +4,6 @@ IFS=
 
 VERSION=`git describe --tags --always --dirty=-dirty`
 
-: ${BUILDER:=`id -un`@`hostname`}
 : ${VERSION_SUFFIX:=$VERSION}
 : ${BIN_DIR:=./bin}
 
