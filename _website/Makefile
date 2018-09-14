@@ -29,7 +29,7 @@ maybe-genblog:
 # Installs latest genblog and synchronize the default CSS.
 genblog:
 	go get -u github.com/xiaq/genblog
-	genblog -print-default-css > assets/genblog.css
+	genblog -print-default-css > _assets/genblog.css
 
 # Copies the generated website into $(PUBLISH_DIR).
 publish: gen
