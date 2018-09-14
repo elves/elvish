@@ -35,14 +35,12 @@ _cover/all: $(PKG_COVERS)
 
 upload-codecov-travis: _cover/all
 	curl -s https://codecov.io/bash -o codecov.bash \
-		&& bash codecov.bash -f $< \
-		|| echo "not sending to codecov.io"
+		&& bash codecov.bash -f $<
 
 upload-coveralls-travis: _cover/all
 	go get -d $(GOVERALLS) \
 		&& go build -o goveralls $(GOVERALLS) \
-		&& ./goveralls -coverprofile $< -service=travis-ci \
-		|| echo "not sending to coveralls.io"
+		&& ./goveralls -coverprofile $< -service=travis-ci
 
 # Disable coverage reports for pull requests. The general testability of the
 # code is pretty bad and it is premature to require contributors to maintain
