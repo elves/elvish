@@ -14,4 +14,6 @@ install:
   - choco install codecov
   - go get github.com/mattn/goveralls
 build_script:
-  - make appveyor
+  - make test
+deploy_script:
+  - make coverage-appveyor

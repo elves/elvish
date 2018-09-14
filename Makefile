@@ -62,6 +62,6 @@ deploy-travis:
 	./_tools/deploy-travis.sh
 
 coverage-travis: upload-codecov-travis upload-coveralls-travis
-appveyor: testmain upload-codecov-appveyor upload-coveralls-appveyor
+coverage-appveyor: upload-codecov-appveyor upload-coveralls-appveyor
 
-.PHONY: default get buildall generate test testmain upload-codecov-travis upload-coveralls-travis upload-codecov-appveyor upload-coveralls-appveyor coverage-travis appveyor deploy-travis
+.PHONY: default get buildall generate test testmain upload-codecov-travis upload-coveralls-travis upload-codecov-appveyor upload-coveralls-appveyor coverage-travis coverage-appveyor deploy-travis
