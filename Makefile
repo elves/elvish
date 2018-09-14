@@ -49,14 +49,10 @@ upload-coveralls-travis: _cover/all
 # code coverage.
 
 upload-codecov-appveyor: _cover/all
-	test -z "$(APPVEYOR_PULL_REQUEST_NUMBER)" \
-		&& codecov -f $< \
-		|| echo "not sending to codecov.io"
+	codecov -f $<
 
 upload-coveralls-appveyor: _cover/all
-	test -z "$(APPVEYOR_PULL_REQUEST_NUMBER)" \
-		&& goveralls -coverprofile $< -service=appveyor-ci \
-		|| echo "not sending to coveralls.io"
+	goveralls -coverprofile $< -service=appveyor-ci
 
 binaries-travis:
 	./_tools/binaries-travis.sh
