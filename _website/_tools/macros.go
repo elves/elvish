@@ -34,7 +34,7 @@ func expandTtyshot(line string) string {
 		return line
 	}
 	name := line[i+len(ttyshot):]
-	content, err := ioutil.ReadFile(path.Join("tty", name+".html"))
+	content, err := ioutil.ReadFile(path.Join("_ttyshot", name+".html"))
 	if err != nil {
 		log.Fatal(err)
 	}
