@@ -20,6 +20,6 @@ jobs:
       if: type = push
       os: osx
     - name: Build and upload binaries to bintray
-      script: make deploy-travis
+      script: make binaries-travis
       if: type = push
 script: make test

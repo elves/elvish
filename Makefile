@@ -58,10 +58,10 @@ upload-coveralls-appveyor: _cover/all
 		&& goveralls -coverprofile $< -service=appveyor-ci \
 		|| echo "not sending to coveralls.io"
 
-deploy-travis:
-	./_tools/deploy-travis.sh
+binaries-travis:
+	./_tools/binaries-travis.sh
 
 coverage-travis: upload-codecov-travis upload-coveralls-travis
 coverage-appveyor: upload-codecov-appveyor upload-coveralls-appveyor
 
-.PHONY: default get buildall generate test testmain upload-codecov-travis upload-coveralls-travis upload-codecov-appveyor upload-coveralls-appveyor coverage-travis coverage-appveyor deploy-travis
+.PHONY: default get buildall generate test testmain upload-codecov-travis upload-coveralls-travis upload-codecov-appveyor upload-coveralls-appveyor coverage-travis coverage-appveyor binaries-travis
