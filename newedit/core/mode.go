@@ -1,6 +1,7 @@
 package core
 
 import (
+	"sync"
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/ui"
@@ -10,7 +11,7 @@ import (
 type Mode interface {
 	ModeLine() ui.Renderer
 	ModeRenderFlag() ModeRenderFlag
-	HandleKey(ui.Key, *State) HandlerAction
+	HandleKey(ui.Key, *State, *sync.RWMutex) HandlerAction
 	// Teardown()
 }
 
@@ -50,7 +51,10 @@ func (basicMode) ModeRenderFlag() ModeRenderFlag {
 	return 0
 }
 
-func (basicMode) HandleKey(k ui.Key, st *State) HandlerAction {
+func (basicMode) HandleKey(k ui.Key, st *State, m *sync.RWMutex) HandlerAction {
+	m.Lock()
+	defer m.Unlock()
+
 	switch k {
 	case ui.Key{Rune: '\n'}:
 		return CommitCode

@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/elves/elvish/edit/ui"
 )
@@ -23,7 +24,7 @@ func (m *fakeMode) ModeLine() ui.Renderer {
 
 func (m *fakeMode) ModeRenderFlag() ModeRenderFlag { return m.modeRenderFlag }
 
-func (m *fakeMode) HandleKey(k ui.Key, st *State) HandlerAction {
+func (m *fakeMode) HandleKey(k ui.Key, _ *State, _ *sync.RWMutex) HandlerAction {
 	m.keysHandled = append(m.keysHandled, k)
 	if len(m.keysHandled) == m.maxKeys {
 		return CommitCode

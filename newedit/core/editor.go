@@ -47,24 +47,26 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 		}
 		return "", false
 	case tty.Event:
-		ed.StateMutex.Lock()
-		defer ed.StateMutex.Unlock()
-		return handleTTYEvent(ed.State, e)
+		switch e := e.(type) {
+		case tty.KeyEvent:
+			ed.StateMutex.RLock()
+			mode := ed.State.Mode
+			ed.StateMutex.RUnlock()
+
+			a := getMode(mode).HandleKey(ui.Key(e), ed.State, &ed.StateMutex)
+
+			switch a {
+			case CommitCode:
+				ed.StateMutex.RLock()
+				code := ed.State.Code
+				ed.StateMutex.RUnlock()
+				return code, true
+			}
+		}
+		return "", false
 	default:
 		panic("unreachable")
 	}
-}
-
-func handleTTYEvent(st *State, event tty.Event) (string, bool) {
-	switch event := event.(type) {
-	case tty.KeyEvent:
-		action := getMode(st.Mode).HandleKey(ui.Key(event), st)
-		switch action {
-		case CommitCode:
-			return st.Code, true
-		}
-	}
-	return "", false
 }
 
 func (ed *Editor) redraw(flag loop.RedrawFlag) {
