@@ -8,5 +8,5 @@ import (
 func (ed *editor) Ns() eval.Ns {
 	return eval.NewNs().
 		Add("max-height", vars.FromPtrWithMutex(
-			&ed.core.Config.RenderConfig.MaxHeight, &ed.core.ConfigMutex))
+			&ed.core.Config.Raw.RenderConfig.MaxHeight, &ed.core.Config.Mutex))
 }

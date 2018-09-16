@@ -78,7 +78,7 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 	ed := NewEditor(terminal, nil)
 
 	called := 0
-	ed.Config.BeforeReadline = []func(){func() { called++ }}
+	ed.Config.Raw.BeforeReadline = []func(){func() { called++ }}
 
 	// Causes basicMode to quit
 	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
@@ -96,7 +96,7 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 
 	called := 0
 	code := ""
-	ed.Config.AfterReadline = []func(string){func(s string) {
+	ed.Config.Raw.AfterReadline = []func(string){func(s string) {
 		called++
 		code = s
 	}}
@@ -134,9 +134,9 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 		t.Errorf("Buffer height is %d, should > %d", h, maxHeight)
 	}
 
-	ed.ConfigMutex.Lock()
-	ed.Config.RenderConfig.MaxHeight = maxHeight
-	ed.ConfigMutex.Unlock()
+	ed.Config.Mutex.Lock()
+	ed.Config.Raw.RenderConfig.MaxHeight = maxHeight
+	ed.Config.Mutex.Unlock()
 
 	ed.loop.Redraw(false)
 	buf2 := <-terminal.bufCh
@@ -153,7 +153,7 @@ var bufChTimeout = 1 * time.Second
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	terminal := newFakeTTY()
 	ed := NewEditor(terminal, nil)
-	ed.Config.RenderConfig.Highlighter = func(code string) (styled.Text, []error) {
+	ed.Config.Raw.RenderConfig.Highlighter = func(code string) (styled.Text, []error) {
 		return styled.Text{
 			&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 	}

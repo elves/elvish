@@ -1,10 +1,47 @@
 package core
 
 import (
+	"sync"
+
 	"github.com/elves/elvish/styled"
 )
 
 type Config struct {
+	Raw   RawConfig
+	Mutex sync.RWMutex
+}
+
+func (c *Config) copyRenderConfig() *RenderConfig {
+	c.Mutex.RLock()
+	defer c.Mutex.RUnlock()
+	render := c.Raw.RenderConfig
+	return &render
+}
+
+func (c *Config) BeforeReadline() []func() {
+	c.Mutex.RLock()
+	defer c.Mutex.RUnlock()
+	return c.Raw.BeforeReadline
+}
+
+func (c *Config) AfterReadline() []func(string) {
+	c.Mutex.RLock()
+	defer c.Mutex.RUnlock()
+	return c.Raw.AfterReadline
+}
+
+func (c *Config) triggerPrompts() {
+	c.Mutex.RLock()
+	defer c.Mutex.RUnlock()
+	if c.Raw.RenderConfig.Prompt != nil {
+		c.Raw.RenderConfig.Prompt.Trigger()
+	}
+	if c.Raw.RenderConfig.RPrompt != nil {
+		c.Raw.RenderConfig.RPrompt.Trigger()
+	}
+}
+
+type RawConfig struct {
 	RenderConfig   RenderConfig
 	BeforeReadline []func()
 	AfterReadline  []func(string)
