@@ -84,7 +84,7 @@ func redraw(s *State, cfg *Config, w Output, sz Sizer, flag loop.RedrawFlag) {
 
 	height, width := sz.Size()
 
-	bufNotes, bufMain := render(rawState, cfg.copyRenderConfig(), height, width, final)
+	bufNotes, bufMain := render(rawState, makeRenderSetup(cfg, height, width))
 
 	w.UpdateBuffer(bufNotes, bufMain, flag&loop.FullRedraw != 0)
 

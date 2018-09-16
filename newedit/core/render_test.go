@@ -15,36 +15,36 @@ var nilBuffer *ui.Buffer = nil
 func TestRender(t *testing.T) {
 	tt.Test(t, tt.Fn("render", render), tt.Table{
 		// Notes
-		Args(&RawState{Notes: []string{"note"}}, &RenderConfig{}, 2, 7, false).
+		Args(&RawState{Notes: []string{"note"}}, &renderSetup{height: 2, width: 7}).
 			Rets(
 				ui.NewBufferBuilder(7).WriteUnstyled("note").Buffer(),
 				ui.NewBuffer(7)),
 
 		// Code area: code
-		Args(&RawState{Code: "code", Dot: 4}, &RenderConfig{}, 2, 7, false).
+		Args(&RawState{Code: "code", Dot: 4}, &renderSetup{height: 2, width: 7}).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(7).WriteUnstyled("code").
 					SetDotToCursor().Buffer()),
 
 		// Code area: dot
-		Args(&RawState{Code: "code", Dot: 3}, &RenderConfig{}, 2, 7, false).
+		Args(&RawState{Code: "code", Dot: 3}, &renderSetup{height: 2, width: 7}).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(7).WriteUnstyled("cod").SetDotToCursor().
 					WriteUnstyled("e").Buffer()),
 
 		// Code area: prompt
-		Args(&RawState{Code: "code", Dot: 4}, &RenderConfig{
-			Prompt: constPrompt{styled.Unstyled("> ")}}, 2, 10, false).
+		Args(&RawState{Code: "code", Dot: 4},
+			&renderSetup{height: 2, width: 10, prompt: styled.Unstyled("> ")}).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(10).WriteUnstyled("> code").
 					SetDotToCursor().Buffer()),
 
 		// Code area: rprompt
-		Args(&RawState{Code: "code", Dot: 4}, &RenderConfig{
-			RPrompt: constPrompt{styled.Unstyled("R")}}, 2, 7, false).
+		Args(&RawState{Code: "code", Dot: 4},
+			&renderSetup{height: 2, width: 7, rprompt: styled.Unstyled("R")}).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(7).WriteUnstyled("code").SetDotToCursor().
@@ -53,46 +53,49 @@ func TestRender(t *testing.T) {
 		// TODO: Pending code
 
 		// Highlighter
-		Args(&RawState{Code: "code", Dot: 4}, &RenderConfig{
-			Highlighter: func(text string) (styled.Text, []error) {
-				return styled.Text{&styled.Segment{
-					Style: styled.Style{Foreground: "red"}, Text: text}}, nil
-			}}, 2, 7, false).
+		Args(&RawState{Code: "code", Dot: 4},
+			&renderSetup{
+				height: 2, width: 7,
+				highlighter: func(text string) (styled.Text, []error) {
+					return styled.Text{&styled.Segment{
+						Style: styled.Style{Foreground: "red"}, Text: text}}, nil
+				}}).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(7).WriteString("code", "31").
 					SetDotToCursor().Buffer()),
 
 		// Highlighter error
-		Args(&RawState{Code: "code", Dot: 4}, &RenderConfig{
-			Highlighter: func(text string) (styled.Text, []error) {
-				return styled.Text{&styled.Segment{Text: text}}, []error{
-					errors.New("error 1"), errors.New("error 2"),
-				}
-			}}, 4, 7, false).
+		Args(&RawState{Code: "code", Dot: 4},
+			&renderSetup{
+				height: 4, width: 7,
+				highlighter: func(text string) (styled.Text, []error) {
+					return styled.Text{&styled.Segment{Text: text}}, []error{
+						errors.New("error 1"), errors.New("error 2"),
+					}
+				}}).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(7).WriteUnstyled("code").SetDotToCursor().
 					Newline().WriteUnstyled("error 1").
 					Newline().WriteUnstyled("error 2").Buffer()),
 
-		// Max height
-		Args(&RawState{Code: "code 1\ncode 2\ncode 3", Dot: 6}, &RenderConfig{},
-			2, 7, false).
+		// Height
+		Args(&RawState{Code: "code 1\ncode 2\ncode 3", Dot: 6},
+			&renderSetup{height: 2, width: 7}).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(7).WriteUnstyled("code 1").SetDotToCursor().
 					Newline().WriteUnstyled("code 2").Buffer()),
 
 		// Max height does not affect rendering of notes
-		Args(&RawState{Notes: []string{"n1", "n2"}}, &RenderConfig{}, 1, 7, false).
+		Args(&RawState{Notes: []string{"n1", "n2"}},
+			&renderSetup{height: 1, width: 7}).
 			Rets(
 				ui.NewBufferBuilder(7).
 					WriteUnstyled("n1").Newline().
 					WriteUnstyled("n2").Buffer(),
 				ui.NewBuffer(7)),
-
-		// TODO: final
 	})
 }
 

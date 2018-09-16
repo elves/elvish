@@ -135,7 +135,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	}
 
 	ed.Config.Mutex.Lock()
-	ed.Config.Raw.RenderConfig.MaxHeight = maxHeight
+	ed.Config.Raw.MaxHeight = maxHeight
 	ed.Config.Mutex.Unlock()
 
 	ed.loop.Redraw(false)
@@ -153,7 +153,7 @@ var bufChTimeout = 1 * time.Second
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	terminal := newFakeTTY()
 	ed := NewEditor(terminal, nil)
-	ed.Config.Raw.RenderConfig.Highlighter = func(code string) (styled.Text, []error) {
+	ed.Config.Raw.Highlighter = func(code string) (styled.Text, []error) {
 		return styled.Text{
 			&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 	}

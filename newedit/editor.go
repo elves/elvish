@@ -25,7 +25,7 @@ type editor struct {
 
 func NewEditor(in, out *os.File) Editor {
 	ed := core.NewEditor(core.NewTTY(in, out), core.NewSignalSource())
-	ed.Config.Raw.RenderConfig.Highlighter = highlight.Highlight
+	ed.Config.Raw.Highlighter = highlight.Highlight
 	return &editor{ed}
 }
 

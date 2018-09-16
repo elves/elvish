@@ -13,7 +13,7 @@ func TestNs(t *testing.T) {
 	ev.Global.AddNs("edit", ed.Ns())
 
 	ev.EvalSource(eval.NewScriptSource("[t]", "[t]", "edit:max-height = 20"))
-	if ed.core.Config.RenderConfig.MaxHeight != 20 {
+	if ed.core.Config.Raw.MaxHeight != 20 {
 		t.Errorf("Failed to set MaxHeight to 20 via binding")
 	}
 }

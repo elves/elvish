@@ -11,13 +11,6 @@ type Config struct {
 	Mutex sync.RWMutex
 }
 
-func (c *Config) copyRenderConfig() *RenderConfig {
-	c.Mutex.RLock()
-	defer c.Mutex.RUnlock()
-	render := c.Raw.RenderConfig
-	return &render
-}
-
 func (c *Config) BeforeReadline() []func() {
 	c.Mutex.RLock()
 	defer c.Mutex.RUnlock()
@@ -33,27 +26,51 @@ func (c *Config) AfterReadline() []func(string) {
 func (c *Config) triggerPrompts() {
 	c.Mutex.RLock()
 	defer c.Mutex.RUnlock()
-	if c.Raw.RenderConfig.Prompt != nil {
-		c.Raw.RenderConfig.Prompt.Trigger()
+	if c.Raw.Prompt != nil {
+		c.Raw.Prompt.Trigger()
 	}
-	if c.Raw.RenderConfig.RPrompt != nil {
-		c.Raw.RenderConfig.RPrompt.Trigger()
+	if c.Raw.RPrompt != nil {
+		c.Raw.RPrompt.Trigger()
 	}
 }
 
 type RawConfig struct {
-	RenderConfig   RenderConfig
 	BeforeReadline []func()
 	AfterReadline  []func(string)
+
+	MaxHeight         int
+	Highlighter       HighlighterCb
+	Prompt            Prompt
+	RPrompt           Prompt
+	RPromptPersistent bool
 }
 
-type RenderConfig struct {
-	MaxHeight   int
-	Highlighter HighlighterCb
-	Prompt      Prompt
-	RPrompt     Prompt
+type renderSetup struct {
+	height int
+	width  int
 
-	RPromptPersistent bool
+	prompt  styled.Text
+	rprompt styled.Text
+
+	highlighter HighlighterCb
+}
+
+func makeRenderSetup(c *Config, h, w int) *renderSetup {
+	c.Mutex.RLock()
+	defer c.Mutex.RUnlock()
+	if c.Raw.MaxHeight > 0 && c.Raw.MaxHeight < h {
+		h = c.Raw.MaxHeight
+	}
+	return &renderSetup{
+		h, w,
+		promptGet(c.Raw.Prompt), promptGet(c.Raw.RPrompt), c.Raw.Highlighter}
+}
+
+func promptGet(p Prompt) styled.Text {
+	if p == nil {
+		return nil
+	}
+	return p.Get()
 }
 
 type HighlighterCb func(string) (styled.Text, []error)

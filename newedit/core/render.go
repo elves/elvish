@@ -7,38 +7,24 @@ import (
 )
 
 // Renders the editor state.
-func render(st *RawState, cfg *RenderConfig, h, w int, final bool) (notes, main *ui.Buffer) {
+func render(st *RawState, r *renderSetup) (notes, main *ui.Buffer) {
 	var bufNotes *ui.Buffer
 	if len(st.Notes) > 0 {
-		bufNotes = ui.Render(&linesRenderer{st.Notes}, w)
-	}
-
-	var prompt, rprompt styled.Text
-	if cfg.Prompt != nil {
-		prompt = cfg.Prompt.Get()
-	}
-	if cfg.RPrompt != nil {
-		rprompt = cfg.RPrompt.Get()
+		bufNotes = ui.Render(&linesRenderer{st.Notes}, r.width)
 	}
 
 	code, dot, errors := prepareCode(
-		st.Code, st.Dot, st.Pending, cfg.Highlighter)
-	bbCode := ui.NewBufferBuilder(w)
-	(&codeContentRenderer{code, dot, prompt, rprompt}).Render(bbCode)
+		st.Code, st.Dot, st.Pending, r.highlighter)
+	bbCode := ui.NewBufferBuilder(r.width)
+	(&codeContentRenderer{code, dot, r.prompt, r.rprompt}).Render(bbCode)
 	if len(errors) > 0 {
-		bufCodeErrors := ui.Render(&codeErrorsRenderer{errors}, w)
+		bufCodeErrors := ui.Render(&codeErrorsRenderer{errors}, r.width)
 		bbCode.Extend(bufCodeErrors, false)
 	}
 	bufCode := bbCode.Buffer()
 
-	if cfg.MaxHeight > 0 && cfg.MaxHeight < h {
-		h = cfg.MaxHeight
-	}
-	bbMain := ui.NewBufferBuilder(w)
-	(&mainRenderer{h, bufCode, st.Mode}).Render(bbMain)
-	if final {
-		bbMain.SetDotToCursor()
-	}
+	bbMain := ui.NewBufferBuilder(r.width)
+	(&mainRenderer{r.height, bufCode, st.Mode}).Render(bbMain)
 
 	return bufNotes, bbMain.Buffer()
 }
