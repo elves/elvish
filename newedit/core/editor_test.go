@@ -45,11 +45,11 @@ func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
 
 	ed := NewEditor(terminal, nil)
-	ed.State.Code = "some code"
+	ed.State.Raw.Code = "some code"
 	ed.ReadCode()
 
-	if ed.State.Code != "" {
-		t.Errorf("Editor state has code %q, want empty", ed.State.Code)
+	if code := ed.State.Raw.Code; code != "" {
+		t.Errorf("Editor state has code %q, want empty", code)
 	}
 }
 
@@ -57,7 +57,7 @@ func TestReadCode_PassesInputEventsToMode(t *testing.T) {
 	terminal := newFakeTTY()
 	ed := NewEditor(terminal, nil)
 	m := &fakeMode{maxKeys: 3}
-	ed.State.Mode = m
+	ed.State.Raw.Mode = m
 
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
@@ -123,8 +123,8 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	terminal := newFakeTTY()
 	ed := NewEditor(terminal, nil)
 	// Will fill more than maxHeight but less than terminal height
-	ed.State.Code = strings.Repeat("a", 80*10)
-	ed.State.Dot = len(ed.State.Code)
+	ed.State.Raw.Code = strings.Repeat("a", 80*10)
+	ed.State.Raw.Dot = len(ed.State.Raw.Code)
 
 	codeCh, _ := ed.readCodeAsync()
 
@@ -194,10 +194,10 @@ func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 	terminal := newFakeTTY()
 
 	ed := NewEditor(terminal, nil)
-	ed.State.Code = "some code"
+	ed.State.Raw.Code = "some code"
 	// We use the dot as a signal for distinguishing non-final and final state.
 	// In the final state, the dot will be set to the length of the code (9).
-	ed.State.Dot = 1
+	ed.State.Raw.Dot = 1
 
 	codeCh, _ := ed.readCodeAsync()
 	// Wait until a non-final state is drawn.
@@ -271,8 +271,8 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	sigs := newFakeSignalSource()
 	ed := NewEditor(terminal, sigs)
 
-	ed.State.Code = "1234567890"
-	ed.State.Dot = len(ed.State.Code)
+	ed.State.Raw.Code = "1234567890"
+	ed.State.Raw.Dot = len(ed.State.Raw.Code)
 
 	codeCh, _ := ed.readCodeAsync()
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("1234567890").

@@ -15,27 +15,27 @@ var nilBuffer *ui.Buffer = nil
 func TestRender(t *testing.T) {
 	tt.Test(t, tt.Fn("render", render), tt.Table{
 		// Notes
-		Args(&State{Notes: []string{"note"}}, &RenderConfig{}, 2, 7, false).
+		Args(&RawState{Notes: []string{"note"}}, &RenderConfig{}, 2, 7, false).
 			Rets(
 				ui.NewBufferBuilder(7).WriteUnstyled("note").Buffer(),
 				ui.NewBuffer(7)),
 
 		// Code area: code
-		Args(&State{Code: "code", Dot: 4}, &RenderConfig{}, 2, 7, false).
+		Args(&RawState{Code: "code", Dot: 4}, &RenderConfig{}, 2, 7, false).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(7).WriteUnstyled("code").
 					SetDotToCursor().Buffer()),
 
 		// Code area: dot
-		Args(&State{Code: "code", Dot: 3}, &RenderConfig{}, 2, 7, false).
+		Args(&RawState{Code: "code", Dot: 3}, &RenderConfig{}, 2, 7, false).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(7).WriteUnstyled("cod").SetDotToCursor().
 					WriteUnstyled("e").Buffer()),
 
 		// Code area: prompt
-		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
+		Args(&RawState{Code: "code", Dot: 4}, &RenderConfig{
 			Prompt: constPrompt{styled.Unstyled("> ")}}, 2, 10, false).
 			Rets(
 				nilBuffer,
@@ -43,7 +43,7 @@ func TestRender(t *testing.T) {
 					SetDotToCursor().Buffer()),
 
 		// Code area: rprompt
-		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
+		Args(&RawState{Code: "code", Dot: 4}, &RenderConfig{
 			RPrompt: constPrompt{styled.Unstyled("R")}}, 2, 7, false).
 			Rets(
 				nilBuffer,
@@ -53,7 +53,7 @@ func TestRender(t *testing.T) {
 		// TODO: Pending code
 
 		// Highlighter
-		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
+		Args(&RawState{Code: "code", Dot: 4}, &RenderConfig{
 			Highlighter: func(text string) (styled.Text, []error) {
 				return styled.Text{&styled.Segment{
 					Style: styled.Style{Foreground: "red"}, Text: text}}, nil
@@ -64,7 +64,7 @@ func TestRender(t *testing.T) {
 					SetDotToCursor().Buffer()),
 
 		// Highlighter error
-		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
+		Args(&RawState{Code: "code", Dot: 4}, &RenderConfig{
 			Highlighter: func(text string) (styled.Text, []error) {
 				return styled.Text{&styled.Segment{Text: text}}, []error{
 					errors.New("error 1"), errors.New("error 2"),
@@ -77,7 +77,7 @@ func TestRender(t *testing.T) {
 					Newline().WriteUnstyled("error 2").Buffer()),
 
 		// Max height
-		Args(&State{Code: "code 1\ncode 2\ncode 3", Dot: 6}, &RenderConfig{},
+		Args(&RawState{Code: "code 1\ncode 2\ncode 3", Dot: 6}, &RenderConfig{},
 			2, 7, false).
 			Rets(
 				nilBuffer,
@@ -85,7 +85,7 @@ func TestRender(t *testing.T) {
 					Newline().WriteUnstyled("code 2").Buffer()),
 
 		// Max height does not affect rendering of notes
-		Args(&State{Notes: []string{"n1", "n2"}}, &RenderConfig{}, 1, 7, false).
+		Args(&RawState{Notes: []string{"n1", "n2"}}, &RenderConfig{}, 1, 7, false).
 			Rets(
 				ui.NewBufferBuilder(7).
 					WriteUnstyled("n1").Newline().

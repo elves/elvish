@@ -7,7 +7,7 @@ import (
 )
 
 // Renders the editor state.
-func render(st *State, cfg *RenderConfig, h, w int, final bool) (notes, main *ui.Buffer) {
+func render(st *RawState, cfg *RenderConfig, h, w int, final bool) (notes, main *ui.Buffer) {
 	var bufNotes *ui.Buffer
 	if len(st.Notes) > 0 {
 		bufNotes = ui.Render(&linesRenderer{st.Notes}, w)

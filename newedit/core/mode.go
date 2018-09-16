@@ -1,7 +1,6 @@
 package core
 
 import (
-	"sync"
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/ui"
@@ -11,7 +10,7 @@ import (
 type Mode interface {
 	ModeLine() ui.Renderer
 	ModeRenderFlag() ModeRenderFlag
-	HandleKey(ui.Key, *State, *sync.RWMutex) HandlerAction
+	HandleKey(ui.Key, *State) HandlerAction
 	// Teardown()
 }
 
@@ -51,29 +50,30 @@ func (basicMode) ModeRenderFlag() ModeRenderFlag {
 	return 0
 }
 
-func (basicMode) HandleKey(k ui.Key, st *State, m *sync.RWMutex) HandlerAction {
-	m.Lock()
-	defer m.Unlock()
+func (basicMode) HandleKey(k ui.Key, st *State) HandlerAction {
+	st.Mutex.Lock()
+	defer st.Mutex.Unlock()
 
 	switch k {
 	case ui.Key{Rune: '\n'}:
 		return CommitCode
 	case ui.Key{Rune: ui.Backspace}:
-		beforeDot := st.CodeBeforeDot()
+		beforeDot := st.Raw.Code[:st.Raw.Dot]
+		afterDot := st.Raw.Code[st.Raw.Dot:]
 		_, chop := utf8.DecodeLastRuneInString(beforeDot)
-		st.Code = beforeDot[:len(beforeDot)-chop] + st.CodeAfterDot()
-		st.Dot -= chop
+		st.Raw.Code = beforeDot[:len(beforeDot)-chop] + afterDot
+		st.Raw.Dot -= chop
 	case ui.Key{Rune: ui.Left}:
-		_, skip := utf8.DecodeLastRuneInString(st.CodeBeforeDot())
-		st.Dot -= skip
+		_, skip := utf8.DecodeLastRuneInString(st.Raw.Code[:st.Raw.Dot])
+		st.Raw.Dot -= skip
 	case ui.Key{Rune: ui.Right}:
-		_, skip := utf8.DecodeRuneInString(st.CodeAfterDot())
-		st.Dot += skip
+		_, skip := utf8.DecodeRuneInString(st.Raw.Code[st.Raw.Dot:])
+		st.Raw.Dot += skip
 	default:
 		if k.Mod == 0 {
 			s := string(k.Rune)
-			st.Code += s
-			st.Dot += len(s)
+			st.Raw.Code += s
+			st.Raw.Dot += len(s)
 		}
 	}
 	return NoAction

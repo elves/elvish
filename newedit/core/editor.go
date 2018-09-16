@@ -22,7 +22,6 @@ type Editor struct {
 	State  *State
 
 	ConfigMutex sync.RWMutex
-	StateMutex  sync.RWMutex
 
 	// Internal states
 	prompt, rprompt styled.Text
@@ -33,7 +32,7 @@ func NewEditor(t TTY, sigs SignalSource) *Editor {
 	ed := &Editor{
 		lp, t, sigs,
 		&Config{}, &State{},
-		sync.RWMutex{}, sync.RWMutex{},
+		sync.RWMutex{},
 		nil, nil,
 	}
 	lp.HandleCb(ed.handle)
@@ -48,9 +47,7 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 		case syscall.SIGHUP:
 			return "", true
 		case syscall.SIGINT:
-			ed.StateMutex.Lock()
-			*ed.State = State{}
-			ed.StateMutex.Unlock()
+			ed.State.Reset()
 			ed.triggerPrompts()
 		case sys.SIGWINCH:
 			ed.Redraw(true)
@@ -59,18 +56,11 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 	case tty.Event:
 		switch e := e.(type) {
 		case tty.KeyEvent:
-			ed.StateMutex.RLock()
-			mode := ed.State.Mode
-			ed.StateMutex.RUnlock()
+			action := ed.State.Mode().HandleKey(ui.Key(e), ed.State)
 
-			a := getMode(mode).HandleKey(ui.Key(e), ed.State, &ed.StateMutex)
-
-			switch a {
+			switch action {
 			case CommitCode:
-				ed.StateMutex.RLock()
-				code := ed.State.Code
-				ed.StateMutex.RUnlock()
-				return code, true
+				return ed.State.Code(), true
 			}
 			ed.triggerPrompts()
 		}
@@ -92,22 +82,23 @@ func (ed *Editor) triggerPrompts() {
 }
 
 func (ed *Editor) redraw(flag loop.RedrawFlag) {
-	ed.StateMutex.RLock()
-	defer ed.StateMutex.RUnlock()
 	ed.ConfigMutex.RLock()
 	defer ed.ConfigMutex.RUnlock()
 	redraw(ed.State, ed.Config, ed.tty, ed.tty, flag)
 }
 
-func redraw(st *State, cfg *Config, w Output, sz Sizer, flag loop.RedrawFlag) {
+func redraw(s *State, cfg *Config, w Output, sz Sizer, flag loop.RedrawFlag) {
+	var rawState *RawState
 	final := flag&loop.FinalRedraw != 0
 	if final {
-		st = st.final()
+		rawState = s.finalize()
+	} else {
+		rawState = s.CopyRaw()
 	}
 
 	height, width := sz.Size()
 
-	bufNotes, bufMain := render(st, &cfg.RenderConfig, height, width, final)
+	bufNotes, bufMain := render(rawState, &cfg.RenderConfig, height, width, final)
 
 	w.UpdateBuffer(bufNotes, bufMain, flag&loop.FullRedraw != 0)
 
@@ -154,11 +145,7 @@ func (ed *Editor) ReadCode() (string, error) {
 	// TODO: relay late prompt/rprompt updates.
 
 	// Reset state before returning.
-	defer func() {
-		ed.StateMutex.Lock()
-		defer ed.StateMutex.Unlock()
-		*ed.State = State{}
-	}()
+	defer ed.State.Reset()
 
 	// BeforeReadline and AfterReadline hooks.
 	ed.ConfigMutex.RLock()
@@ -172,9 +159,7 @@ func (ed *Editor) ReadCode() (string, error) {
 		funcs := ed.Config.AfterReadline
 		ed.ConfigMutex.RUnlock()
 
-		ed.StateMutex.RLock()
-		code := ed.State.Code
-		ed.StateMutex.RUnlock()
+		code := ed.State.Code()
 
 		for _, f := range funcs {
 			f(code)
