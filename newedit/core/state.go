@@ -45,6 +45,13 @@ func (s *State) Code() string {
 	return s.Raw.Code
 }
 
+// CodeAndDot returns the code and dot of the state.
+func (s *State) CodeAndDot() (string, int) {
+	s.Mutex.RLock()
+	defer s.Mutex.RUnlock()
+	return s.Raw.Code, s.Raw.Dot
+}
+
 // CodeBeforeDot returns the part of code before the dot.
 func (s *State) CodeBeforeDot() string {
 	s.Mutex.RLock()
