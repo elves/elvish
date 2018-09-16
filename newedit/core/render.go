@@ -13,8 +13,14 @@ func render(st *State, cfg *RenderConfig, h, w int, final bool) (notes, main *ui
 		bufNotes = ui.Render(&linesRenderer{st.Notes}, w)
 	}
 
-	prompt := cfg.Prompt.call()
-	rprompt := cfg.Rprompt.call()
+	var prompt, rprompt styled.Text
+	if cfg.Prompt != nil {
+		prompt = cfg.Prompt.Get()
+	}
+	if cfg.Rprompt != nil {
+		rprompt = cfg.Rprompt.Get()
+	}
+
 	code, dot, errors := prepareCode(
 		st.Code, st.Dot, st.Pending, cfg.Highlighter)
 	bbCode := ui.NewBufferBuilder(w)

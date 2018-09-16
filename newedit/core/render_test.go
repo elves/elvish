@@ -36,9 +36,7 @@ func TestRender(t *testing.T) {
 
 		// Code area: prompt
 		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
-			Prompt: func() styled.Text {
-				return styled.Unstyled("> ")
-			}}, 2, 10, false).
+			Prompt: constPrompt{styled.Unstyled("> ")}}, 2, 10, false).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(10).WriteUnstyled("> code").
@@ -46,9 +44,7 @@ func TestRender(t *testing.T) {
 
 		// Code area: rprompt
 		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
-			Rprompt: func() styled.Text {
-				return styled.Unstyled("R")
-			}}, 2, 7, false).
+			Rprompt: constPrompt{styled.Unstyled("R")}}, 2, 7, false).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(7).WriteUnstyled("code").SetDotToCursor().

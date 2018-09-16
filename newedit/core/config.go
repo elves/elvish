@@ -13,8 +13,8 @@ type Config struct {
 type RenderConfig struct {
 	MaxHeight   int
 	Highlighter HighlighterCb
-	Prompt      PromptCb
-	Rprompt     PromptCb
+	Prompt      Prompt
+	Rprompt     Prompt
 
 	RpromptPersistent bool
 }
@@ -28,11 +28,26 @@ func (cb HighlighterCb) call(code string) (styled.Text, []error) {
 	return cb(code)
 }
 
-type PromptCb func() styled.Text
-
-func (cb PromptCb) call() styled.Text {
-	if cb == nil {
-		return nil
-	}
-	return cb()
+// Prompt represents a prompt that can be delivered asynchronously.
+type Prompt interface {
+	// Trigger requests a re-computation of the prompt.
+	Trigger()
+	// Get returns the prompt.
+	Get() styled.Text
+	// LastUpdates returns a channel for delivering late updates.
+	LateUpdates() <-chan styled.Text
 }
+
+// A Prompt implementation that always return the same styled.Text.
+type constPrompt struct{ t styled.Text }
+
+func (constPrompt) Trigger()                        {}
+func (p constPrompt) Get() styled.Text              { return p.t }
+func (constPrompt) LateUpdates() <-chan styled.Text { return nil }
+
+// Wraps a function into a Prompt.
+type syncPrompt struct{ f func() styled.Text }
+
+func (syncPrompt) Trigger()                        {}
+func (p syncPrompt) Get() styled.Text              { return p.f() }
+func (syncPrompt) LateUpdates() <-chan styled.Text { return nil }

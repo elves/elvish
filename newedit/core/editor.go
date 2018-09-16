@@ -8,10 +8,12 @@ import (
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/loop"
+	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
 
 type Editor struct {
+	// Dependencies
 	loop *loop.Loop
 	tty  TTY
 	sigs SignalSource
@@ -21,12 +23,19 @@ type Editor struct {
 
 	ConfigMutex sync.RWMutex
 	StateMutex  sync.RWMutex
+
+	// Internal states
+	prompt, rprompt styled.Text
 }
 
 func NewEditor(t TTY, sigs SignalSource) *Editor {
 	lp := loop.New()
 	ed := &Editor{
-		lp, t, sigs, &Config{}, &State{}, sync.RWMutex{}, sync.RWMutex{}}
+		lp, t, sigs,
+		&Config{}, &State{},
+		sync.RWMutex{}, sync.RWMutex{},
+		nil, nil,
+	}
 	lp.HandleCb(ed.handle)
 	lp.RedrawCb(ed.redraw)
 	return ed
@@ -42,6 +51,7 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 			ed.StateMutex.Lock()
 			*ed.State = State{}
 			ed.StateMutex.Unlock()
+			ed.triggerPrompts()
 		case sys.SIGWINCH:
 			ed.Redraw(true)
 		}
@@ -62,11 +72,23 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 				ed.StateMutex.RUnlock()
 				return code, true
 			}
+			ed.triggerPrompts()
 		}
 		return "", false
 	default:
 		panic("unreachable")
 	}
+}
+
+func (ed *Editor) triggerPrompts() {
+	ed.ConfigMutex.RLock()
+	if ed.Config.RenderConfig.Prompt != nil {
+		ed.Config.RenderConfig.Prompt.Trigger()
+	}
+	if ed.Config.RenderConfig.Rprompt != nil {
+		ed.Config.RenderConfig.Rprompt.Trigger()
+	}
+	defer ed.ConfigMutex.RUnlock()
 }
 
 func (ed *Editor) redraw(flag loop.RedrawFlag) {
@@ -128,6 +150,8 @@ func (ed *Editor) ReadCode() (string, error) {
 			wg.Done()
 		}()
 	}
+
+	// TODO: relay late prompt/rprompt updates.
 
 	// Reset state before returning.
 	defer func() {
