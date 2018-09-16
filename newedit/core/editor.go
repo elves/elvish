@@ -8,7 +8,6 @@ import (
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/loop"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
 
@@ -20,15 +19,12 @@ type Editor struct {
 
 	Config *Config
 	State  *State
-
-	// Internal states
-	prompt, rprompt styled.Text
 }
 
 func NewEditor(t TTY, sigs SignalSource) *Editor {
 	lp := loop.New()
 	ed := &Editor{
-		lp, t, sigs, &Config{}, &State{}, nil, nil,
+		lp, t, sigs, &Config{}, &State{},
 	}
 	lp.HandleCb(ed.handle)
 	lp.RedrawCb(ed.redraw)
