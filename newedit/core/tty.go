@@ -11,17 +11,12 @@ import (
 
 type TTY interface {
 	Setuper
-	Sizer
 	Input
 	Output
 }
 
 type Setuper interface {
 	Setup() (restore func(), err error)
-}
-
-type Sizer interface {
-	Size() (h, w int)
 }
 
 type Input interface {
@@ -31,6 +26,7 @@ type Input interface {
 }
 
 type Output interface {
+	Size() (h, w int)
 	Newline()
 	Buffer() *ui.Buffer
 	ResetBuffer()

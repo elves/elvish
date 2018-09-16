@@ -64,10 +64,10 @@ func (ed *Editor) triggerPrompts() {
 }
 
 func (ed *Editor) redraw(flag loop.RedrawFlag) {
-	redraw(&ed.State, &ed.Config, ed.tty, ed.tty, flag)
+	redraw(&ed.State, &ed.Config, ed.tty, flag)
 }
 
-func redraw(s *State, cfg *Config, w Output, sz Sizer, flag loop.RedrawFlag) {
+func redraw(s *State, cfg *Config, w Output, flag loop.RedrawFlag) {
 	var rawState *RawState
 	final := flag&loop.FinalRedraw != 0
 	if final {
@@ -76,7 +76,7 @@ func redraw(s *State, cfg *Config, w Output, sz Sizer, flag loop.RedrawFlag) {
 		rawState = s.CopyRaw()
 	}
 
-	height, width := sz.Size()
+	height, width := w.Size()
 
 	bufNotes, bufMain := render(rawState, makeRenderSetup(cfg, height, width))
 
