@@ -12,8 +12,10 @@ import (
 )
 
 type Editor struct {
-	// Dependencies
 	loop *loop.Loop
+	// Internal dependencies
+	render renderCb
+	// External dependencies
 	tty  TTY
 	sigs SignalSource
 
@@ -23,7 +25,7 @@ type Editor struct {
 
 func NewEditor(t TTY, sigs SignalSource) *Editor {
 	lp := loop.New()
-	ed := &Editor{loop: lp, tty: t, sigs: sigs}
+	ed := &Editor{loop: lp, render: render, tty: t, sigs: sigs}
 	lp.HandleCb(ed.handle)
 	lp.RedrawCb(ed.redraw)
 	return ed
@@ -64,27 +66,23 @@ func (ed *Editor) triggerPrompts() {
 }
 
 func (ed *Editor) redraw(flag loop.RedrawFlag) {
-	redraw(&ed.State, &ed.Config, ed.tty, flag)
-}
-
-func redraw(s *State, cfg *Config, w Output, flag loop.RedrawFlag) {
 	var rawState *RawState
 	final := flag&loop.FinalRedraw != 0
 	if final {
-		rawState = s.finalize()
+		rawState = ed.State.finalize()
 	} else {
-		rawState = s.CopyRaw()
+		rawState = ed.State.CopyRaw()
 	}
 
-	height, width := w.Size()
+	height, width := ed.tty.Size()
+	setup := makeRenderSetup(&ed.Config, height, width)
 
-	bufNotes, bufMain := render(rawState, makeRenderSetup(cfg, height, width))
+	bufNotes, bufMain := ed.render(rawState, setup)
 
-	w.UpdateBuffer(bufNotes, bufMain, flag&loop.FullRedraw != 0)
-
+	ed.tty.UpdateBuffer(bufNotes, bufMain, flag&loop.FullRedraw != 0)
 	if final {
-		w.Newline()
-		w.ResetBuffer()
+		ed.tty.Newline()
+		ed.tty.ResetBuffer()
 	}
 }
 

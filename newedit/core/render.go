@@ -6,6 +6,8 @@ import (
 	"github.com/elves/elvish/util"
 )
 
+type renderCb func(*RawState, *renderSetup) (notes, main *ui.Buffer)
+
 // Renders the editor state.
 func render(st *RawState, r *renderSetup) (notes, main *ui.Buffer) {
 	var bufNotes *ui.Buffer
