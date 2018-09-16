@@ -138,7 +138,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	ed.Config.Raw.MaxHeight = maxHeight
 	ed.Config.Mutex.Unlock()
 
-	ed.loop.Redraw(false)
+	ed.Redraw(false)
 	buf2 := <-terminal.bufCh
 	if h := len(buf2.Lines); h > maxHeight {
 		t.Errorf("Buffer height is %d, should <= %d", h, maxHeight)
