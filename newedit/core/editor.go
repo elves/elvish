@@ -17,15 +17,13 @@ type Editor struct {
 	tty  TTY
 	sigs SignalSource
 
-	Config *Config
-	State  *State
+	Config Config
+	State  State
 }
 
 func NewEditor(t TTY, sigs SignalSource) *Editor {
 	lp := loop.New()
-	ed := &Editor{
-		lp, t, sigs, &Config{}, &State{},
-	}
+	ed := &Editor{loop: lp, tty: t, sigs: sigs}
 	lp.HandleCb(ed.handle)
 	lp.RedrawCb(ed.redraw)
 	return ed
@@ -47,7 +45,7 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 	case tty.Event:
 		switch e := e.(type) {
 		case tty.KeyEvent:
-			action := ed.State.Mode().HandleKey(ui.Key(e), ed.State)
+			action := ed.State.Mode().HandleKey(ui.Key(e), &ed.State)
 
 			switch action {
 			case CommitCode:
@@ -66,7 +64,7 @@ func (ed *Editor) triggerPrompts() {
 }
 
 func (ed *Editor) redraw(flag loop.RedrawFlag) {
-	redraw(ed.State, ed.Config, ed.tty, ed.tty, flag)
+	redraw(&ed.State, &ed.Config, ed.tty, ed.tty, flag)
 }
 
 func redraw(s *State, cfg *Config, w Output, sz Sizer, flag loop.RedrawFlag) {
