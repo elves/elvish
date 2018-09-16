@@ -85,8 +85,8 @@ func (ed *Editor) triggerPrompts() {
 	if ed.Config.RenderConfig.Prompt != nil {
 		ed.Config.RenderConfig.Prompt.Trigger()
 	}
-	if ed.Config.RenderConfig.Rprompt != nil {
-		ed.Config.RenderConfig.Rprompt.Trigger()
+	if ed.Config.RenderConfig.RPrompt != nil {
+		ed.Config.RenderConfig.RPrompt.Trigger()
 	}
 	defer ed.ConfigMutex.RUnlock()
 }

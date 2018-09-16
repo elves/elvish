@@ -17,8 +17,8 @@ func render(st *State, cfg *RenderConfig, h, w int, final bool) (notes, main *ui
 	if cfg.Prompt != nil {
 		prompt = cfg.Prompt.Get()
 	}
-	if cfg.Rprompt != nil {
-		rprompt = cfg.Rprompt.Get()
+	if cfg.RPrompt != nil {
+		rprompt = cfg.RPrompt.Get()
 	}
 
 	code, dot, errors := prepareCode(

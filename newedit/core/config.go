@@ -14,9 +14,9 @@ type RenderConfig struct {
 	MaxHeight   int
 	Highlighter HighlighterCb
 	Prompt      Prompt
-	Rprompt     Prompt
+	RPrompt     Prompt
 
-	RpromptPersistent bool
+	RPromptPersistent bool
 }
 
 type HighlighterCb func(string) (styled.Text, []error)

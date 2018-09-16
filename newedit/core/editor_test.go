@@ -182,11 +182,11 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 	// TODO
 }
 
-func TestReadCode_RendersRprompt(t *testing.T) {
+func TestReadCode_RendersRPrompt(t *testing.T) {
 	// TODO
 }
 
-func TestReadCode_SupportsPersistentRprompt(t *testing.T) {
+func TestReadCode_SupportsPersistentRPrompt(t *testing.T) {
 	// TODO
 }
 

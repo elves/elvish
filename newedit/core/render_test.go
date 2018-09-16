@@ -44,7 +44,7 @@ func TestRender(t *testing.T) {
 
 		// Code area: rprompt
 		Args(&State{Code: "code", Dot: 4}, &RenderConfig{
-			Rprompt: constPrompt{styled.Unstyled("R")}}, 2, 7, false).
+			RPrompt: constPrompt{styled.Unstyled("R")}}, 2, 7, false).
 			Rets(
 				nilBuffer,
 				ui.NewBufferBuilder(7).WriteUnstyled("code").SetDotToCursor().
@@ -316,7 +316,7 @@ func TestRenderers(t *testing.T) {
 				WriteUnstyled("  RP").
 				Buffer()),
 
-		// codeContentRenderer: Rprompt hidden as no padding available (negative
+		// codeContentRenderer: RPrompt hidden as no padding available (negative
 		// padding)
 		Args(&codeContentRenderer{
 			code: styled.Text{&styled.Segment{Text: "abcdef"}}, dot: 6,
@@ -327,7 +327,7 @@ func TestRenderers(t *testing.T) {
 				SetDotToCursor().
 				Buffer()),
 
-		// codeContentRenderer: Rprompt hidden as no padding available (zero
+		// codeContentRenderer: RPrompt hidden as no padding available (zero
 		// padding)
 		Args(&codeContentRenderer{
 			code: styled.Text{&styled.Segment{Text: "abcde"}}, dot: 5,
