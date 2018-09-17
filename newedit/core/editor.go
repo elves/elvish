@@ -44,7 +44,7 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 			return "", true
 		case syscall.SIGINT:
 			ed.State.Reset()
-			ed.triggerPrompts()
+			ed.Config.triggerPrompts()
 		case sys.SIGWINCH:
 			ed.Redraw(true)
 		}
@@ -58,16 +58,12 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 			case CommitCode:
 				return ed.State.Code(), true
 			}
-			ed.triggerPrompts()
+			ed.Config.triggerPrompts()
 		}
 		return "", false
 	default:
 		panic("unreachable")
 	}
-}
-
-func (ed *Editor) triggerPrompts() {
-	ed.Config.triggerPrompts()
 }
 
 func (ed *Editor) redraw(flag loop.RedrawFlag) {

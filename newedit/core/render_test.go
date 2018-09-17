@@ -10,7 +10,7 @@ import (
 )
 
 var Args = tt.Args
-var nilBuffer *ui.Buffer = nil
+var nilBuffer *ui.Buffer
 
 func TestRender(t *testing.T) {
 	tt.Test(t, tt.Fn("render", render), tt.Table{
