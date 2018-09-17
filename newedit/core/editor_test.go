@@ -179,11 +179,41 @@ func TestReadCode_RendersErrorFromHighlighter(t *testing.T) {
 }
 
 func TestReadCode_RendersPrompt(t *testing.T) {
-	// TODO
+	terminal := newFakeTTY()
+	ed := NewEditor(terminal, nil)
+	ed.Config.Raw.Prompt = constPrompt{styled.Unstyled("> ")}
+
+	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+	codeCh, _ := ed.readCodeAsync()
+
+	wantBuf := ui.NewBufferBuilder(80).
+		WriteUnstyled("> a").
+		SetDotToCursor().Buffer()
+	if !terminal.checkBuffer(wantBuf) {
+		t.Errorf("Did not see buffer containing prompt")
+	}
+
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	<-codeCh
 }
 
 func TestReadCode_RendersRPrompt(t *testing.T) {
-	// TODO
+	terminal := newFakeTTY()
+	terminal.width = 4
+	ed := NewEditor(terminal, nil)
+	ed.Config.Raw.RPrompt = constPrompt{styled.Unstyled("R")}
+
+	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+	codeCh, _ := ed.readCodeAsync()
+
+	wantBuf := ui.NewBufferBuilder(4).
+		WriteUnstyled("a").SetDotToCursor().WriteUnstyled("  R").Buffer()
+	if !terminal.checkBuffer(wantBuf) {
+		t.Errorf("Did not see buffer containing rprompt")
+	}
+
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	<-codeCh
 }
 
 func TestReadCode_SupportsPersistentRPrompt(t *testing.T) {
