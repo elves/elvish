@@ -6,21 +6,26 @@ import (
 	"github.com/elves/elvish/edit/ui"
 )
 
-// Mode is an editor mode.
+// Mode is an editor mode; it handles keys and can affect the current UI.
 type Mode interface {
+	// ModeLine returns a Renderer for the modeline. It may return nil, in which
+	// case the modeline is hidden.
 	ModeLine() ui.Renderer
+	// ModeRenderFlag returns flags that can affect the UI.
 	ModeRenderFlag() ModeRenderFlag
+	// HandleKey handles a key event; its return value can affect the editor
+	// lifecycle.
 	HandleKey(ui.Key, *State) HandlerAction
-	// Teardown()
 }
 
-// An optional interface that modes can implement. If a mode implements this
-// interface, the result of this method is shown in the listing area.
+// Lister is an optional interface that modes can implement. If a mode
+// implements this interface, the result of this method is shown in the listing
+// area.
 type Lister interface {
 	List(maxHeight int) ui.Renderer
 }
 
-// Bitmask for configuring the rendering behavior of modes.
+// ModeRenderFlag is a bitmask for configuring the rendering behavior of modes.
 type ModeRenderFlag uint
 
 // Bits for ModeRenderFlag.
@@ -32,10 +37,16 @@ const (
 	RedrawModeLineAfterList
 )
 
+// HandlerAction is used as the return code of Mode.HandleKey and can affect the
+// editor lifecycle.
 type HandlerAction int
 
 const (
+	// NoAction is the default value of HandlerAction, which enacts no effect on
+	// the editor lifecycle.
 	NoAction HandlerAction = iota
+	// CommitCode will cause the editor's ReadCode function to return with the
+	// current code.
 	CommitCode
 	// CommitEOF
 )

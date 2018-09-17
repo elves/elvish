@@ -9,27 +9,55 @@ import (
 	"github.com/elves/elvish/sys"
 )
 
+// TTY is the type the terminal dependency of the editor needs to satisfy.
 type TTY interface {
 	Setuper
 	Input
 	Output
 }
 
+// Setuper encapsulates the setup that is needed before and after
+// Editor.ReadCode.
 type Setuper interface {
+	// Configures the terminal at the beginning of Editor.ReadCode. It returns a
+	// restore function to be called at the end of Editor.ReadCode and any
+	// error. Errors are always considered fatal and will make ReadCode abort;
+	// non-fatal errors should be handled by Setup itself (e.g. by showing a
+	// warning message) instead of being returned.
 	Setup() (restore func(), err error)
 }
 
+// Input represents the input source aspect of the terminal. It is used for
+// obtaining events.
 type Input interface {
+	// Starts the delivery of terminal events and returns a channel on which
+	// events are made available.
 	StartInput() <-chan tty.Event
+	// Sets the "raw input" mode of the terminal. The raw input mode is
+	// applicable when terminal events are delivered as escape sequences; the
+	// raw input mode will cause those escape sequences to be interpreted as
+	// individual key events. If the concept is not applicable, this method is a
+	// no-op.
 	SetRawInput(raw bool)
+	// Causes input delivery to be stopped. When this function returns, the
+	// channel previously returned by StartInput should no longer deliver
+	// events.
 	StopInput()
 }
 
+// Output represents the output sink aspect of the terminal. It is used for
+// drawing the editor onto the terminal.
 type Output interface {
+	// Returns the height and width of the terminal.
 	Size() (h, w int)
+	// Outputs a newline.
 	Newline()
+	// Returns the current buffer. The initial value of the current buffer is
+	// nil.
 	Buffer() *ui.Buffer
+	// Resets the current buffer to nil without actuating any redraw.
 	ResetBuffer()
+	// Updates the current buffer and draw it to the terminal.
 	UpdateBuffer(bufNotes, bufMain *ui.Buffer, full bool) error
 }
 
@@ -39,6 +67,7 @@ type aTTY struct {
 	w       tty.Writer
 }
 
+// NewTTY returns a new TTY from input and output terminal files.
 func NewTTY(in, out *os.File) TTY {
 	return &aTTY{in, out, nil, tty.NewWriter(out)}
 }

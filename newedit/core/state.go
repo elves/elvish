@@ -4,7 +4,8 @@ import "sync"
 
 // State wraps RawState, providing methods for concurrency-safe access. The
 // getter methods also paper over nil values to make the empty State value more
-// usable.
+// usable. Direct field access is also allowed but must be explicitly
+// synchronized.
 type State struct {
 	Raw   RawState
 	Mutex sync.RWMutex
@@ -59,30 +60,42 @@ func (s *State) CodeBeforeDot() string {
 	return s.Raw.Code[:s.Raw.Dot]
 }
 
-// CodeBeforeDot returns the part of code after the dot.
+// CodeAfterDot returns the part of code after the dot.
 func (s *State) CodeAfterDot() string {
 	s.Mutex.RLock()
 	defer s.Mutex.RUnlock()
 	return s.Raw.Code[s.Raw.Dot:]
 }
 
-// Resets resets the internal state to an empty value.
+// Reset resets the internal state to an empty value.
 func (s *State) Reset() {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 	s.Raw = RawState{}
 }
 
+// RawState contains all the state of the editor.
 type RawState struct {
-	Mode    Mode
-	Code    string
-	Dot     int
+	// The current mode.
+	Mode Mode
+	// The current content of the input buffer.
+	Code string
+	// The position of the cursor, as a byte index into Code.
+	Dot int
+	// Pending code, if any, such as during completion.
 	Pending *PendingCode
-	Notes   []string
+	// Notes that have been added since the last redraw.
+	Notes []string
 }
 
+// PendingCode represents pending code, such as during completion.
 type PendingCode struct {
+	// Beginning index of the text area that the pending code replaces, as a
+	// byte index into RawState.Code.
 	Begin int
-	End   int
-	Text  string
+	// End index of the text area that the pending code replaces, as a byte
+	// index into RawState.Code.
+	End int
+	// The content of the pending code.
+	Text string
 }

@@ -11,6 +11,8 @@ import (
 	"github.com/elves/elvish/sys"
 )
 
+// Editor keeps all the state of an interactive line editor throughout its life
+// time as well as its dependencies.
 type Editor struct {
 	loop *loop.Loop
 	// Internal dependencies
@@ -23,6 +25,9 @@ type Editor struct {
 	State  State
 }
 
+// NewEditor creates a new editor from its two dependencies. The creation does
+// not have any observable side effect; a newly created editor is not
+// immediately active.
 func NewEditor(t TTY, sigs SignalSource) *Editor {
 	lp := loop.New()
 	ed := &Editor{loop: lp, render: render, tty: t, sigs: sigs}
@@ -86,6 +91,13 @@ func (ed *Editor) redraw(flag loop.RedrawFlag) {
 	}
 }
 
+// ReadCode requests the Editor to read code from the terminal. It causes the
+// Editor to read events from the terminal and signal source supplied at
+// creation, redraws the editor to the terminal on such events, and eventually
+// return when an event triggers the current mode to request an exit.
+//
+// This function is not re-entrant; when it is being executed, the editor is
+// said to be active.
 func (ed *Editor) ReadCode() (string, error) {
 	restore, err := ed.tty.Setup()
 	if err != nil {
@@ -152,6 +164,8 @@ func (ed *Editor) readCodeAsync() (<-chan string, <-chan error) {
 	return codeCh, errCh
 }
 
+// Redraw requests a redraw. It never blocks and can be called regardless of
+// whether the editor is active or not.
 func (ed *Editor) Redraw(full bool) {
 	ed.loop.Redraw(full)
 }

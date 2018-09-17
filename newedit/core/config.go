@@ -6,17 +6,21 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
+// Config wraps RawConfig for safe concurrent access. All of its methods are
+// concurrency-safe, but direct field access must still be synchronized.
 type Config struct {
 	Raw   RawConfig
 	Mutex sync.RWMutex
 }
 
+// BeforeReadline returns c.Raw.BeforeReadline while r-locking c.Mutex.
 func (c *Config) BeforeReadline() []func() {
 	c.Mutex.RLock()
 	defer c.Mutex.RUnlock()
 	return c.Raw.BeforeReadline
 }
 
+// AfterReadline returns c.Raw.AfterReadline while r-locking c.Mutex.
 func (c *Config) AfterReadline() []func(string) {
 	c.Mutex.RLock()
 	defer c.Mutex.RUnlock()
@@ -34,14 +38,25 @@ func (c *Config) triggerPrompts() {
 	}
 }
 
+// RawConfig keeps configurations of the editor.
 type RawConfig struct {
+	// A list of functions called when ReadCode starts.
 	BeforeReadline []func()
-	AfterReadline  []func(string)
+	// A list of functions called when ReadCode ends; the argument is the code
+	// that has been read.
+	AfterReadline []func(string)
 
-	MaxHeight         int
-	Highlighter       HighlighterCb
-	Prompt            Prompt
-	RPrompt           Prompt
+	// Maximum lines of the terminal the editor may use. If MaxHeight <= 0,
+	// there is no limit.
+	MaxHeight int
+	// Callback for highlighting the code the user has typed.
+	Highlighter HighlighterCb
+	// Left-hand prompt.
+	Prompt Prompt
+	// Right-hand prompt.
+	RPrompt Prompt
+	// Whether the rprompt is shown in the final redraw; in other words, whether
+	// the rprompt persists in the terminal history when ReadCode returns.
 	RPromptPersistent bool
 }
 
@@ -73,6 +88,7 @@ func promptGet(p Prompt) styled.Text {
 	return p.Get()
 }
 
+// HighlighterCb is the type of callbacks for highlighting code.
 type HighlighterCb func(string) (styled.Text, []error)
 
 func (cb HighlighterCb) call(code string) (styled.Text, []error) {
@@ -82,7 +98,7 @@ func (cb HighlighterCb) call(code string) (styled.Text, []error) {
 	return cb(code)
 }
 
-// Prompt represents a prompt that can be delivered asynchronously.
+// Prompt represents a prompt whose result can be delivered asynchronously.
 type Prompt interface {
 	// Trigger requests a re-computation of the prompt.
 	Trigger()
