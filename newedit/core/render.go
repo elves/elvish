@@ -33,7 +33,7 @@ func render(st *RawState, r *renderSetup) (notes, main *ui.Buffer) {
 
 var transformerForPending = "underline"
 
-func prepareCode(code string, dot int, pending *PendingCode, hl HighlighterCb) (
+func prepareCode(code string, dot int, pending *PendingCode, hl Highlighter) (
 	styledCode styled.Text, newDot int, errors []error) {
 
 	newDot = dot

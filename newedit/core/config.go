@@ -50,7 +50,7 @@ type RawConfig struct {
 	// there is no limit.
 	MaxHeight int
 	// Callback for highlighting the code the user has typed.
-	Highlighter HighlighterCb
+	Highlighter Highlighter
 	// Left-hand prompt.
 	Prompt Prompt
 	// Right-hand prompt.
@@ -67,7 +67,7 @@ type renderSetup struct {
 	prompt  styled.Text
 	rprompt styled.Text
 
-	highlighter HighlighterCb
+	highlighter Highlighter
 }
 
 func makeRenderSetup(c *Config, h, w int) *renderSetup {
@@ -88,10 +88,10 @@ func promptGet(p Prompt) styled.Text {
 	return p.Get()
 }
 
-// HighlighterCb is the type of callbacks for highlighting code.
-type HighlighterCb func(string) (styled.Text, []error)
+// Highlighter is the type of callbacks for highlighting code.
+type Highlighter func(string) (styled.Text, []error)
 
-func (cb HighlighterCb) call(code string) (styled.Text, []error) {
+func (cb Highlighter) call(code string) (styled.Text, []error) {
 	if cb == nil {
 		return styled.Unstyled(code), nil
 	}
