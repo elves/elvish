@@ -8,12 +8,12 @@ import (
 
 // Mode is an editor mode; it handles keys and can affect the current UI.
 type Mode interface {
-	// ModeLine returns a Renderer for the modeline. It may return nil, in which
-	// case the modeline is hidden.
+	// Returns a Renderer for the modeline. If it returns nil, the modeline is
+	// hidden.
 	ModeLine() ui.Renderer
-	// ModeRenderFlag returns flags that can affect the UI.
+	// Returns a flag that can affect the UI.
 	ModeRenderFlag() ModeRenderFlag
-	// HandleKey handles a key event; its return value can affect the editor
+	// Handles a key event, and returns an action that can affect the editor
 	// lifecycle.
 	HandleKey(ui.Key, *State) HandlerAction
 }
