@@ -23,6 +23,7 @@ type editor struct {
 	core *core.Editor
 }
 
+// NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File) Editor {
 	ed := core.NewEditor(core.NewTTY(in, out), core.NewSignalSource())
 	ed.Config.Raw.Highlighter = highlight.Highlight
