@@ -27,14 +27,14 @@ func (c *Config) AfterReadline() []func(string) {
 	return c.Raw.AfterReadline
 }
 
-func (c *Config) triggerPrompts() {
+func (c *Config) triggerPrompts(force bool) {
 	c.Mutex.RLock()
 	defer c.Mutex.RUnlock()
 	if c.Raw.Prompt != nil {
-		c.Raw.Prompt.Trigger()
+		c.Raw.Prompt.Trigger(force)
 	}
 	if c.Raw.RPrompt != nil {
-		c.Raw.RPrompt.Trigger()
+		c.Raw.RPrompt.Trigger(force)
 	}
 }
 
@@ -100,9 +100,11 @@ func (cb Highlighter) call(code string) (styled.Text, []error) {
 
 // Prompt represents a prompt whose result can be delivered asynchronously.
 type Prompt interface {
-	// Trigger requests a re-computation of the prompt.
-	Trigger()
-	// Get returns the prompt.
+	// Trigger requests a re-computation of the prompt. The force flag is set
+	// when triggered for the first time during a ReadCode session or after a
+	// SIGINT that resets the editor.
+	Trigger(force bool)
+	// Get returns the current prompt.
 	Get() styled.Text
 	// LastUpdates returns a channel for delivering late updates.
 	LateUpdates() <-chan styled.Text
@@ -111,13 +113,13 @@ type Prompt interface {
 // A Prompt implementation that always return the same styled.Text.
 type constPrompt struct{ t styled.Text }
 
-func (constPrompt) Trigger()                        {}
+func (constPrompt) Trigger(force bool)              {}
 func (p constPrompt) Get() styled.Text              { return p.t }
 func (constPrompt) LateUpdates() <-chan styled.Text { return nil }
 
 // Wraps a function into a Prompt.
 type syncPrompt struct{ f func() styled.Text }
 
-func (syncPrompt) Trigger()                        {}
+func (syncPrompt) Trigger(force bool)              {}
 func (p syncPrompt) Get() styled.Text              { return p.f() }
 func (syncPrompt) LateUpdates() <-chan styled.Text { return nil }

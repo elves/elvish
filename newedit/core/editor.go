@@ -44,7 +44,7 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 			return "", true
 		case syscall.SIGINT:
 			ed.State.Reset()
-			ed.Config.triggerPrompts()
+			ed.Config.triggerPrompts(true)
 		case sys.SIGWINCH:
 			ed.Redraw(true)
 		}
@@ -58,7 +58,7 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 			case CommitCode:
 				return ed.State.Code(), true
 			}
-			ed.Config.triggerPrompts()
+			ed.Config.triggerPrompts(false)
 		}
 		return "", false
 	default:
@@ -128,6 +128,7 @@ func (ed *Editor) ReadCode() (string, error) {
 		}()
 	}
 
+	ed.Config.triggerPrompts(true)
 	// TODO: relay late prompt/rprompt updates.
 
 	// Reset state before returning.
