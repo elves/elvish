@@ -27,7 +27,7 @@ buildone() {
         "-X github.com/elves/elvish/buildinfo.Version=$VERSION \
          -X github.com/elves/elvish/buildinfo.GoRoot=`go env GOROOT` \
          -X github.com/elves/elvish/buildinfo.GoPath=`go env GOPATH` \
-         -extldflags -static"
+         -extldflags \"-static\""
 
     (
     cd $BIN_DIR
