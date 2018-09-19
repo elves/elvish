@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/newedit/core"
 	"github.com/elves/elvish/newedit/highlight"
 )
@@ -21,17 +22,27 @@ type Editor interface {
 
 type editor struct {
 	core *core.Editor
+	ns   eval.Ns
 }
 
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File) Editor {
 	ed := core.NewEditor(core.NewTTY(in, out), core.NewSignalSource())
 	ed.Config.Raw.Highlighter = highlight.Highlight
-	return &editor{ed}
+
+	ns := eval.NewNs().
+		Add("max-height", vars.FromPtrWithMutex(
+			&ed.Config.Raw.MaxHeight, &ed.Config.Mutex))
+
+	return &editor{ed, ns}
 }
 
 func (ed *editor) ReadLine() (string, error) {
 	return ed.core.ReadCode()
+}
+
+func (ed *editor) Ns() eval.Ns {
+	return ed.ns
 }
 
 func (ed *editor) Close() {}
