@@ -232,8 +232,8 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 		t.Errorf("did not get initial state")
 	}
 
-	ed.State.AddNote("note")
-	ed.Redraw(false)
+	ed.Notify("note")
+
 	wantNotesBuf := ui.NewBufferBuilder(80).WriteUnstyled("note").Buffer()
 	if !checkBuffer(wantNotesBuf, terminal.notesBufCh) {
 		t.Errorf("did not render notes")

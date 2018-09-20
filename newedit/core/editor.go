@@ -166,3 +166,9 @@ func (ed *Editor) readCodeAsync() (<-chan string, <-chan error) {
 func (ed *Editor) Redraw(full bool) {
 	ed.loop.Redraw(full)
 }
+
+// Notify adds a note and requests a redraw.
+func (ed *Editor) Notify(note string) {
+	ed.State.AddNote(note)
+	ed.Redraw(false)
+}
