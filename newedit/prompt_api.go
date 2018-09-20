@@ -77,7 +77,7 @@ func callForStyledText(ed *core.Editor, ev *eval.Evaler, fn eval.Callable, ports
 	add := func(v interface{}) {
 		resultMutex.Lock()
 		defer resultMutex.Unlock()
-		newResult, err := result.RConcat(v)
+		newResult, err := result.Concat(v)
 		if err != nil {
 			ed.Notify(fmt.Sprintf(
 				"invalid output type from prompt: %s", vals.Kind(v)))
@@ -99,7 +99,7 @@ func callForStyledText(ed *core.Editor, ev *eval.Evaler, fn eval.Callable, ports
 			ed.Notify(fmt.Sprintf("error reading prompt byte output: %v", err))
 		}
 		if len(allBytes) > 0 {
-			add(styled.Unstyled(string(allBytes)))
+			add(string(allBytes))
 		}
 	}
 
