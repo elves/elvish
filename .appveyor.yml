@@ -15,5 +15,5 @@ install:
   - go get github.com/mattn/goveralls
 build_script:
   - make test
-deploy_script:
-  - make coverage-appveyor
+# deploy_script:
+#  - make coverage-appveyor
