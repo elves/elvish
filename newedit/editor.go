@@ -38,12 +38,15 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	return &Editor{ed, ns}
 }
 
+// ReadLine reads input from the user.
 func (ed *Editor) ReadLine() (string, error) {
 	return ed.core.ReadCode()
 }
 
+// Ns returns a namespace for manipulating the editor from Elvish code.
 func (ed *Editor) Ns() eval.Ns {
 	return ed.ns
 }
 
+// Close is a no-op.
 func (ed *Editor) Close() {}

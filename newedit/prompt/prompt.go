@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
+// Prompt implements a prompt that is executed asynchronously.
 type Prompt struct {
 	config Config
 
@@ -77,18 +78,21 @@ func (p *Prompt) loop() {
 	}
 }
 
+// Trigger triggers an update to the prompt.
 func (p *Prompt) Trigger(force bool) {
 	if force || p.shouldUpdate() {
 		p.queueUpdate()
 	}
 }
 
+// Get returns the current content of the prompt.
 func (p *Prompt) Get() styled.Text {
 	p.lastMutex.RLock()
 	defer p.lastMutex.RUnlock()
 	return p.last
 }
 
+// LateUpdates returns a channel on which late updates are made available.
 func (p *Prompt) LateUpdates() <-chan styled.Text {
 	return p.ch
 }
