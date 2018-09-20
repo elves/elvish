@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-type prompt struct {
+type Prompt struct {
 	config Config
 
 	// Working directory when prompt was last updated.
@@ -30,8 +30,9 @@ func defaultStaleTransform(t styled.Text) styled.Text {
 	return styled.Transform(t, "inverse")
 }
 
-func makePrompt(fn func() styled.Text) *prompt {
-	p := &prompt{
+// New makes a new prompt.
+func New(fn func() styled.Text) *Prompt {
+	p := &Prompt{
 		Config{Raw: RawConfig{
 			fn, defaultStaleTransform, 2 * time.Millisecond, 5}},
 		"", make(chan struct{}, 1), make(chan styled.Text, 1),
@@ -41,7 +42,12 @@ func makePrompt(fn func() styled.Text) *prompt {
 	return p
 }
 
-func (p *prompt) loop() {
+// Config returns the config for the prompt.
+func (p *Prompt) Config() *Config {
+	return &p.config
+}
+
+func (p *Prompt) loop() {
 	content := unknownContent
 	ch := make(chan styled.Text)
 	for range p.updateReq {
@@ -71,37 +77,37 @@ func (p *prompt) loop() {
 	}
 }
 
-func (p *prompt) Trigger(force bool) {
+func (p *Prompt) Trigger(force bool) {
 	if force || p.shouldUpdate() {
 		p.queueUpdate()
 	}
 }
 
-func (p *prompt) Get() styled.Text {
+func (p *Prompt) Get() styled.Text {
 	p.lastMutex.RLock()
 	defer p.lastMutex.RUnlock()
 	return p.last
 }
 
-func (p *prompt) LateUpdates() <-chan styled.Text {
+func (p *Prompt) LateUpdates() <-chan styled.Text {
 	return p.ch
 }
 
-func (p *prompt) queueUpdate() {
+func (p *Prompt) queueUpdate() {
 	select {
 	case p.updateReq <- struct{}{}:
 	default:
 	}
 }
 
-func (p *prompt) send(content styled.Text) {
+func (p *Prompt) send(content styled.Text) {
 	p.lastMutex.Lock()
 	p.last = content
 	p.lastMutex.Unlock()
 	p.ch <- content
 }
 
-func (p *prompt) shouldUpdate() bool {
+func (p *Prompt) shouldUpdate() bool {
 	eagerness := p.config.Eagerness()
 	if eagerness >= 10 {
 		return true

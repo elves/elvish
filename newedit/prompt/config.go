@@ -28,7 +28,7 @@ func (c *Config) StaleTransform() func(styled.Text) styled.Text {
 	return c.Raw.StaleTransform
 }
 
-// StaleTransform returns c.Raw.StaleThreshold while r-locking the mutex.
+// StaleThreshold returns c.Raw.StaleThreshold while r-locking the mutex.
 func (c *Config) StaleThreshold() time.Duration {
 	c.Mutex.RLock()
 	defer c.Mutex.RUnlock()
