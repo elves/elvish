@@ -9,7 +9,7 @@ import (
 
 func TestNs(t *testing.T) {
 	ev := eval.NewEvaler()
-	ed := NewEditor(os.Stdin, os.Stdout).(*editor)
+	ed := NewEditor(os.Stdin, os.Stdout, ev).(*editor)
 	ev.Global.AddNs("edit", ed.Ns())
 
 	ev.EvalSource(eval.NewScriptSource("[t]", "[t]", "edit:max-height = 20"))

@@ -12,8 +12,9 @@ import (
 // Editor is the line editor for Elvish.
 //
 // This currently implements the same interface as *Editor in the old edit
-// package to ease transition. TODO: Rename ReadLine to ReadCode and remove
-// Close.
+// package to ease transition.
+//
+// TODO: Rename ReadLine to ReadCode and remove Close.
 type Editor interface {
 	ReadLine() (string, error)
 	Ns() eval.Ns
@@ -26,13 +27,19 @@ type editor struct {
 }
 
 // NewEditor creates a new editor from input and output terminal files.
-func NewEditor(in, out *os.File) Editor {
+func NewEditor(in, out *os.File, ev *eval.Evaler) Editor {
 	ed := core.NewEditor(core.NewTTY(in, out), core.NewSignalSource())
 	ed.Config.Raw.Highlighter = highlight.Highlight
 
 	ns := eval.NewNs().
 		Add("max-height", vars.FromPtrWithMutex(
 			&ed.Config.Raw.MaxHeight, &ed.Config.Mutex))
+
+	ed.Config.Raw = core.RawConfig{
+		Highlighter: highlight.Highlight,
+		Prompt:      makePrompt(ed, ev, ns, defaultPrompt, "prompt"),
+		RPrompt:     makePrompt(ed, ev, ns, defaultRPrompt, "rprompt"),
+	}
 
 	return &editor{ed, ns}
 }
