@@ -29,10 +29,10 @@ type fakeTTY struct {
 	// Channel returned from StartRead. Can be used to inject additional events.
 	eventCh chan tty.Event
 
-	// Channel for publishing buffer updates.
-	bufCh chan *ui.Buffer
-	// Records buffer history.
-	bufs []*ui.Buffer
+	// Channel for publishing updates of the main buffer and notes buffer.
+	bufCh, notesBufCh chan *ui.Buffer
+	// Records history of the main buffer and notes buffer.
+	bufs, notesBufs []*ui.Buffer
 }
 
 func newFakeTTY() *fakeTTY {
@@ -41,6 +41,7 @@ func newFakeTTY() *fakeTTY {
 		restoreFunc: func() {},
 		eventCh:     make(chan tty.Event, maxEvents),
 		bufCh:       make(chan *ui.Buffer, maxBufferUpdates),
+		notesBufCh:  make(chan *ui.Buffer, maxBufferUpdates),
 	}
 }
 
@@ -74,7 +75,8 @@ func (t *fakeTTY) Buffer() *ui.Buffer { return t.bufs[len(t.bufs)-1] }
 
 func (t *fakeTTY) ResetBuffer() { t.recordBuf(nil) }
 
-func (t *fakeTTY) UpdateBuffer(_, buf *ui.Buffer, _ bool) error {
+func (t *fakeTTY) UpdateBuffer(bufNotes, buf *ui.Buffer, _ bool) error {
+	t.recordNotesBuf(bufNotes)
 	t.recordBuf(buf)
 	return nil
 }
@@ -84,14 +86,19 @@ func (t *fakeTTY) recordBuf(buf *ui.Buffer) {
 	t.bufCh <- buf
 }
 
+func (t *fakeTTY) recordNotesBuf(buf *ui.Buffer) {
+	t.notesBufs = append(t.notesBufs, buf)
+	t.notesBufCh <- buf
+}
+
 var checkBufferTimeout = time.Second
 
 // Check that an expected buffer will eventually appear. Also useful for waiting
 // until the editor reaches a certain state.
-func (t *fakeTTY) checkBuffer(want *ui.Buffer) bool {
+func checkBuffer(want *ui.Buffer, ch <-chan *ui.Buffer) bool {
 	for {
 		select {
-		case buf := <-t.bufCh:
+		case buf := <-ch:
 			if reflect.DeepEqual(buf, want) {
 				return true
 			}

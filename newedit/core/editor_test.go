@@ -166,7 +166,7 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	wantBuf := ui.NewBufferBuilder(80).
 		WriteString("abc", "31" /* SGR for red foreground */).
 		SetDotToCursor().Buffer()
-	if !terminal.checkBuffer(wantBuf) {
+	if !checkBuffer(wantBuf, terminal.bufCh) {
 		t.Errorf("Did not see buffer containing highlighted code")
 	}
 
@@ -189,7 +189,7 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 	wantBuf := ui.NewBufferBuilder(80).
 		WriteUnstyled("> a").
 		SetDotToCursor().Buffer()
-	if !terminal.checkBuffer(wantBuf) {
+	if !checkBuffer(wantBuf, terminal.bufCh) {
 		t.Errorf("Did not see buffer containing prompt")
 	}
 
@@ -208,7 +208,7 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 
 	wantBuf := ui.NewBufferBuilder(4).
 		WriteUnstyled("a").SetDotToCursor().WriteUnstyled("  R").Buffer()
-	if !terminal.checkBuffer(wantBuf) {
+	if !checkBuffer(wantBuf, terminal.bufCh) {
 		t.Errorf("Did not see buffer containing rprompt")
 	}
 
@@ -218,6 +218,33 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 
 func TestReadCode_SupportsPersistentRPrompt(t *testing.T) {
 	// TODO
+}
+
+func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
+	terminal := newFakeTTY()
+	ed := NewEditor(terminal, nil)
+
+	codeCh, _ := ed.readCodeAsync()
+
+	// Sanity-check initial state.
+	initBuf := ui.NewBufferBuilder(80).Buffer()
+	if !checkBuffer(initBuf, terminal.bufCh) {
+		t.Errorf("did not get initial state")
+	}
+
+	ed.State.AddNote("note")
+	ed.Redraw(false)
+	wantNotesBuf := ui.NewBufferBuilder(80).WriteUnstyled("note").Buffer()
+	if !checkBuffer(wantNotesBuf, terminal.notesBufCh) {
+		t.Errorf("did not render notes")
+	}
+
+	if n := len(ed.State.Raw.Notes); n > 0 {
+		t.Errorf("State.Raw.Notes has %d elements after redrawing, want 0", n)
+	}
+
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	<-codeCh
 }
 
 func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
@@ -233,7 +260,7 @@ func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 	// Wait until a non-final state is drawn.
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("s").SetDotToCursor().
 		WriteUnstyled("ome code").Buffer()
-	if !terminal.checkBuffer(wantBuf) {
+	if !checkBuffer(wantBuf, terminal.bufCh) {
 		t.Errorf("did not get expected buffer before sending Enter")
 	}
 
@@ -258,7 +285,7 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
 		SetDotToCursor().Buffer()
-	if !terminal.checkBuffer(wantBuf) {
+	if !checkBuffer(wantBuf, terminal.bufCh) {
 		t.Errorf("did not get expected buffer before sending SIGHUP")
 	}
 
@@ -281,14 +308,14 @@ func TestReadCode_ResetsOnSIGHUP(t *testing.T) {
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
 		SetDotToCursor().Buffer()
-	if !terminal.checkBuffer(wantBuf) {
+	if !checkBuffer(wantBuf, terminal.bufCh) {
 		t.Errorf("did not get expected buffer before sending SIGINT")
 	}
 
 	sigs.ch <- syscall.SIGINT
 
 	wantBuf = ui.NewBufferBuilder(80).Buffer()
-	if !terminal.checkBuffer(wantBuf) {
+	if !checkBuffer(wantBuf, terminal.bufCh) {
 		t.Errorf("Terminal state is not reset after SIGINT")
 	}
 
@@ -307,7 +334,7 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	codeCh, _ := ed.readCodeAsync()
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("1234567890").
 		SetDotToCursor().Buffer()
-	if !terminal.checkBuffer(wantBuf) {
+	if !checkBuffer(wantBuf, terminal.bufCh) {
 		t.Errorf("did not get expected buffer before sending SIGWINCH")
 	}
 
@@ -316,7 +343,7 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 
 	wantBuf = ui.NewBufferBuilder(4).WriteUnstyled("1234567890").
 		SetDotToCursor().Buffer()
-	if !terminal.checkBuffer(wantBuf) {
+	if !checkBuffer(wantBuf, terminal.bufCh) {
 		t.Errorf("Terminal is not redrawn after SIGWINCH")
 	}
 

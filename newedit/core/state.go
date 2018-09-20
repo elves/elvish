@@ -11,9 +11,13 @@ type State struct {
 	Mutex sync.RWMutex
 }
 
-// CopyRaw returns a copy of the raw state.
-func (s *State) CopyRaw() *RawState {
+// Returns a copy of the raw state, and set s.Raw.Notes = nil. Used for
+// retrieving the state for rendering.
+func (s *State) popForRedraw() *RawState {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
 	raw := s.Raw
+	s.Raw.Notes = nil
 	return &raw
 }
 
@@ -21,7 +25,7 @@ func (s *State) CopyRaw() *RawState {
 func (s *State) finalize() *RawState {
 	s.Mutex.RLock()
 	defer s.Mutex.RUnlock()
-	return &RawState{Mode: basicMode{}, Code: s.Raw.Code, Dot: len(s.Raw.Code)}
+	return &RawState{basicMode{}, s.Raw.Code, len(s.Raw.Code), nil, s.Raw.Notes}
 }
 
 // Mode returns the current mode. If the internal mode value is nil, it returns
@@ -65,6 +69,13 @@ func (s *State) CodeAfterDot() string {
 	s.Mutex.RLock()
 	defer s.Mutex.RUnlock()
 	return s.Raw.Code[s.Raw.Dot:]
+}
+
+// AddNote adds a note.
+func (s *State) AddNote(note string) {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+	s.Raw.Notes = append(s.Raw.Notes, note)
 }
 
 // Reset resets the internal state to an empty value.

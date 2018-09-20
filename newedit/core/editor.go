@@ -72,7 +72,7 @@ func (ed *Editor) redraw(flag loop.RedrawFlag) {
 	if final {
 		rawState = ed.State.finalize()
 	} else {
-		rawState = ed.State.CopyRaw()
+		rawState = ed.State.popForRedraw()
 	}
 
 	height, width := ed.tty.Size()
