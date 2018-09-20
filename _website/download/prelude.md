@@ -254,3 +254,12 @@ brew install elvish
 # Or install HEAD:
 brew install --HEAD elvish
 ```
+
+## OpenBSD
+
+Elvish is available in the official OpenBSD package repository. It will
+install the latest release:
+
+```elvish
+doas pkg_add elvish
+```
