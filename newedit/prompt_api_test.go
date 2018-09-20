@@ -7,8 +7,27 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/newedit/prompt"
 	"github.com/elves/elvish/styled"
 )
+
+func TestMakePrompt_ElvishVariableLinksToPromptConfig(t *testing.T) {
+	ev := eval.NewEvaler()
+	// NewEditor calls makePrompt
+	ed := NewEditor(os.Stdin, os.Stdout, ev)
+	ev.Global.AddNs("ed", ed.Ns())
+	ev.EvalSource(eval.NewScriptSource(
+		"[t]", "[t]", "ed:prompt = { put 'CUSTOM PROMPT' }"))
+
+	// TODO: Use p.Get() and avoid type assertion
+	p := ed.core.Config.Raw.Prompt.(*prompt.Prompt)
+	content := p.Config().Raw.Compute()
+
+	want := styled.Unstyled("CUSTOM PROMPT")
+	if !reflect.DeepEqual(content, want) {
+		t.Errorf("got content %v, want %v", content, want)
+	}
+}
 
 func TestCallPrompt_ConvertsValueOutput(t *testing.T) {
 	testCallPrompt(t, "put PROMPT", styled.Unstyled("PROMPT"), false)
