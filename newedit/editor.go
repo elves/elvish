@@ -9,25 +9,19 @@ import (
 	"github.com/elves/elvish/newedit/highlight"
 )
 
-// Editor is the line editor for Elvish.
+// Editor is the interface line editor for Elvish.
 //
 // This currently implements the same interface as *Editor in the old edit
 // package to ease transition.
 //
 // TODO: Rename ReadLine to ReadCode and remove Close.
-type Editor interface {
-	ReadLine() (string, error)
-	Ns() eval.Ns
-	Close()
-}
-
-type editor struct {
+type Editor struct {
 	core *core.Editor
 	ns   eval.Ns
 }
 
 // NewEditor creates a new editor from input and output terminal files.
-func NewEditor(in, out *os.File, ev *eval.Evaler) Editor {
+func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	ed := core.NewEditor(core.NewTTY(in, out), core.NewSignalSource())
 	ed.Config.Raw.Highlighter = highlight.Highlight
 
@@ -41,15 +35,15 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) Editor {
 		RPrompt:     makePrompt(ed, ev, ns, defaultRPrompt, "rprompt"),
 	}
 
-	return &editor{ed, ns}
+	return &Editor{ed, ns}
 }
 
-func (ed *editor) ReadLine() (string, error) {
+func (ed *Editor) ReadLine() (string, error) {
 	return ed.core.ReadCode()
 }
 
-func (ed *editor) Ns() eval.Ns {
+func (ed *Editor) Ns() eval.Ns {
 	return ed.ns
 }
 
-func (ed *editor) Close() {}
+func (ed *Editor) Close() {}
