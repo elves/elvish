@@ -30,18 +30,8 @@ func init() {
 	user, userErr := user.Current()
 	isRoot := userErr == nil && user.Uid == "0"
 
-	// Compute defaultPrompt.
-	p := styled.Unstyled("> ")
-	if isRoot {
-		p = styled.Transform(styled.Unstyled("# "), "red")
-	}
-	defaultPrompt = eval.NewBuiltinFn("default prompt", func(fm *eval.Frame) {
-		out := fm.OutputChan()
-		out <- string(util.Getwd())
-		out <- p
-	})
+	defaultPrompt = getDefaultPrompt(isRoot)
 
-	// Compute defaultRPrompt
 	username := "???"
 	if userErr == nil {
 		username = user.Name
@@ -50,8 +40,25 @@ func init() {
 	if err != nil {
 		hostname = "???"
 	}
+
+	defaultRPrompt = getDefaultRPrompt(username, hostname)
+}
+
+func getDefaultPrompt(isRoot bool) eval.Callable {
+	p := styled.Unstyled("> ")
+	if isRoot {
+		p = styled.Transform(styled.Unstyled("# "), "red")
+	}
+	return eval.NewBuiltinFn("default prompt", func(fm *eval.Frame) {
+		out := fm.OutputChan()
+		out <- string(util.Getwd())
+		out <- p
+	})
+}
+
+func getDefaultRPrompt(username, hostname string) eval.Callable {
 	rp := styled.Transform(styled.Unstyled(username+"@"+hostname), "inverse")
-	defaultRPrompt = eval.NewBuiltinFn("default rprompt", func(fm *eval.Frame) {
+	return eval.NewBuiltinFn("default rprompt", func(fm *eval.Frame) {
 		fm.OutputChan() <- rp
 	})
 }

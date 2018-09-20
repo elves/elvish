@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/newedit/prompt"
 	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/util"
 )
 
 func TestMakePrompt_ElvishVariableLinksToPromptConfig(t *testing.T) {
@@ -26,6 +27,37 @@ func TestMakePrompt_ElvishVariableLinksToPromptConfig(t *testing.T) {
 	want := styled.Unstyled("CUSTOM PROMPT")
 	if !reflect.DeepEqual(content, want) {
 		t.Errorf("got content %v, want %v", content, want)
+	}
+}
+
+func TestDefaultPromptForNonRoot(t *testing.T) {
+	f := getDefaultPrompt(false)
+	wd := util.Getwd()
+	testCallPromptStatic(t, f, styled.Text{
+		styled.UnstyledSegment(wd), styled.UnstyledSegment("> ")})
+}
+
+func TestDefaultPromptForRoot(t *testing.T) {
+	f := getDefaultPrompt(true)
+	wd := util.Getwd()
+	testCallPromptStatic(t, f, styled.Text{
+		styled.UnstyledSegment(wd),
+		&styled.Segment{styled.Style{Foreground: "red"}, "# "}})
+}
+
+func TestDefaultRPrompt(t *testing.T) {
+	f := getDefaultRPrompt("elf", "endor")
+	testCallPromptStatic(t, f,
+		styled.Transform(styled.Unstyled("elf@endor"), "inverse"))
+}
+
+func testCallPromptStatic(t *testing.T, f eval.Callable, want styled.Text) {
+	ev := eval.NewEvaler()
+	ed := NewEditor(os.Stdin, os.Stdout, ev)
+
+	content := callPrompt(ed.core, ev, f)
+	if !reflect.DeepEqual(content, want) {
+		t.Errorf("get prompt result %v, want %v", content, want)
 	}
 }
 
