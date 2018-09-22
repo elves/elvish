@@ -9,6 +9,7 @@
 printf '' > $MANIFEST
 
 export GOOS GOARCH
+export CGO_ENABLED=0
 
 buildone() {
     GOOS=$1
