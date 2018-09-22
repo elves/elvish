@@ -7,6 +7,7 @@ import (
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/newedit/core"
 	"github.com/elves/elvish/newedit/highlight"
+	"github.com/elves/elvish/newedit/types"
 )
 
 // Editor is the interface line editor for Elvish.
@@ -29,7 +30,7 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 		Add("max-height", vars.FromPtrWithMutex(
 			&ed.Config.Raw.MaxHeight, &ed.Config.Mutex))
 
-	ed.Config.Raw = core.RawConfig{
+	ed.Config.Raw = types.RawConfig{
 		Highlighter: highlight.Highlight,
 		Prompt:      makePrompt(ed, ev, ns, defaultPrompt, "prompt"),
 		RPrompt:     makePrompt(ed, ev, ns, defaultRPrompt, "rprompt"),

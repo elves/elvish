@@ -1,4 +1,4 @@
-package core
+package types
 
 import (
 	"sync"
@@ -27,7 +27,7 @@ func (c *Config) AfterReadline() []func(string) {
 	return c.Raw.AfterReadline
 }
 
-func (c *Config) triggerPrompts(force bool) {
+func (c *Config) TriggerPrompts(force bool) {
 	c.Mutex.RLock()
 	defer c.Mutex.RUnlock()
 	if c.Raw.Prompt != nil {
@@ -60,42 +60,16 @@ type RawConfig struct {
 	RPromptPersistent bool
 }
 
-type renderSetup struct {
-	height int
-	width  int
-
-	prompt  styled.Text
-	rprompt styled.Text
-
-	highlighter Highlighter
-}
-
-func makeRenderSetup(c *Config, h, w int) *renderSetup {
-	c.Mutex.RLock()
-	defer c.Mutex.RUnlock()
-	if c.Raw.MaxHeight > 0 && c.Raw.MaxHeight < h {
-		h = c.Raw.MaxHeight
-	}
-	return &renderSetup{
-		h, w,
-		promptGet(c.Raw.Prompt), promptGet(c.Raw.RPrompt), c.Raw.Highlighter}
-}
-
-func promptGet(p Prompt) styled.Text {
-	if p == nil {
-		return nil
-	}
-	return p.Get()
-}
-
 // Highlighter is the type of callbacks for highlighting code.
 type Highlighter func(string) (styled.Text, []error)
 
-func (cb Highlighter) call(code string) (styled.Text, []error) {
-	if cb == nil {
+// Call calls the highlighter. If hl is nil, it returns the unstyled text and no
+// error.
+func (hl Highlighter) Call(code string) (styled.Text, []error) {
+	if hl == nil {
 		return styled.Unstyled(code), nil
 	}
-	return cb(code)
+	return hl(code)
 }
 
 // Prompt represents a prompt whose result can be delivered asynchronously.
@@ -109,17 +83,3 @@ type Prompt interface {
 	// LastUpdates returns a channel for delivering late updates.
 	LateUpdates() <-chan styled.Text
 }
-
-// A Prompt implementation that always return the same styled.Text.
-type constPrompt struct{ t styled.Text }
-
-func (constPrompt) Trigger(force bool)              {}
-func (p constPrompt) Get() styled.Text              { return p.t }
-func (constPrompt) LateUpdates() <-chan styled.Text { return nil }
-
-// Wraps a function into a Prompt.
-type syncPrompt struct{ f func() styled.Text }
-
-func (syncPrompt) Trigger(force bool)              {}
-func (p syncPrompt) Get() styled.Text              { return p.f() }
-func (syncPrompt) LateUpdates() <-chan styled.Text { return nil }

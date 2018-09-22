@@ -2,11 +2,33 @@ package core
 
 import (
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
 type renderCb func(*RawState, *renderSetup) (notes, main *ui.Buffer)
+
+type renderSetup struct {
+	height int
+	width  int
+
+	prompt  styled.Text
+	rprompt styled.Text
+
+	highlighter types.Highlighter
+}
+
+func makeRenderSetup(c *types.Config, h, w int) *renderSetup {
+	c.Mutex.RLock()
+	defer c.Mutex.RUnlock()
+	if c.Raw.MaxHeight > 0 && c.Raw.MaxHeight < h {
+		h = c.Raw.MaxHeight
+	}
+	return &renderSetup{
+		h, w,
+		promptGet(c.Raw.Prompt), promptGet(c.Raw.RPrompt), c.Raw.Highlighter}
+}
 
 // Renders the editor state.
 func render(st *RawState, r *renderSetup) (notes, main *ui.Buffer) {
@@ -33,7 +55,7 @@ func render(st *RawState, r *renderSetup) (notes, main *ui.Buffer) {
 
 var transformerForPending = "underline"
 
-func prepareCode(code string, dot int, pending *PendingCode, hl Highlighter) (
+func prepareCode(code string, dot int, pending *PendingCode, hl types.Highlighter) (
 	styledCode styled.Text, newDot int, errors []error) {
 
 	newDot = dot
@@ -45,7 +67,7 @@ func prepareCode(code string, dot int, pending *PendingCode, hl Highlighter) (
 			newDot = pending.Begin + len(pending.Text)
 		}
 	}
-	styledCode, errors = hl.call(code)
+	styledCode, errors = hl.Call(code)
 	// TODO: Apply transformerForPending to pending.Begin to pending.Begin +
 	// len(pending.Text)
 	return styledCode, newDot, errors

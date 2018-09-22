@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/loop"
+	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/sys"
 )
 
@@ -21,7 +22,7 @@ type Editor struct {
 	tty  TTY
 	sigs SignalSource
 
-	Config Config
+	Config types.Config
 	State  State
 }
 
@@ -44,7 +45,7 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 			return "", true
 		case syscall.SIGINT:
 			ed.State.Reset()
-			ed.Config.triggerPrompts(true)
+			ed.Config.TriggerPrompts(true)
 		case sys.SIGWINCH:
 			ed.Redraw(true)
 		}
@@ -58,7 +59,7 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 			case CommitCode:
 				return ed.State.Code(), true
 			}
-			ed.Config.triggerPrompts(false)
+			ed.Config.TriggerPrompts(false)
 		}
 		return "", false
 	default:
@@ -128,7 +129,7 @@ func (ed *Editor) ReadCode() (string, error) {
 		}()
 	}
 
-	ed.Config.triggerPrompts(true)
+	ed.Config.TriggerPrompts(true)
 	// TODO: relay late prompt/rprompt updates.
 
 	// Reset state before returning.
