@@ -3,18 +3,27 @@
 # Should be invoked from repo root.
 
 : ${VERSION:=unknown}
-: ${BIN_DIR:=./bin}
+: ${BIN_DIR:=./_bin}
 : ${MANIFEST:=/dev/null}
-
-printf '' > $MANIFEST
 
 export GOOS GOARCH
 export CGO_ENABLED=0
 
+# build $os $arch...
+build() {
+    local GOOS=$1
+    shift
+    for GOARCH in $@; do
+        DST_DIR=$BIN_DIR/$GOOS-$GOARCH
+        mkdir -p $DST_DIR
+        buildone
+    done
+}
+
+# buildone
+# Uses: $GOOS $GOARCH $DST_DIR
 buildone() {
-    GOOS=$1
-    GOARCH=$2
-    STEM=elvish-$GOOS-$GOARCH-$VERSION
+    STEM=elvish-$VERSION
     if test $GOOS = windows; then
         BIN=$STEM.exe
         ARCHIVE=$STEM.zip
@@ -23,31 +32,26 @@ buildone() {
         ARCHIVE=$STEM.tar.gz
     fi
 
-    echo "Going to build $BIN"
-    go build -o $BIN_DIR/$BIN -ldflags \
+    echo "Building for $GOOS-$GOARCH"
+    go build -o $DST_DIR/$BIN -ldflags \
         "-X github.com/elves/elvish/buildinfo.Version=$VERSION \
          -X github.com/elves/elvish/buildinfo.GoRoot=`go env GOROOT` \
-         -X github.com/elves/elvish/buildinfo.GoPath=`go env GOPATH`"
+         -X github.com/elves/elvish/buildinfo.GoPath=`go env GOPATH`" || {
+        echo "  -> Failed"
+        return
+    }
 
     (
-    cd $BIN_DIR
+    cd $DST_DIR
     if test $GOOS = windows; then
-        zip $ARCHIVE $BIN
+        zip -q $ARCHIVE $BIN
     else
         tar cfz $ARCHIVE $BIN
     fi
     )
 
-    echo "Built $BIN and archived $ARCHIVE"
-    echo $ARCHIVE >> $MANIFEST
-}
-
-build() {
-    local os=$1 arch=
-    shift
-    for arch in $@; do
-        buildone $os $arch
-    done
+    echo " -> Done"
+    echo $DST_DIR/$ARCHIVE >> $MANIFEST
 }
 
 build linux   amd64 386 arm64
