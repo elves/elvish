@@ -32,7 +32,7 @@ To build Elvish, you need
 
 *   Linux, {Free,Net,Open}BSD, macOS, or Windows (Windows support is experimental).
 
-*   Go >= 1.9.
+*   Go >= 1.10.
 
 Once you have a suitable environment, simply build Elvish with `go get`:
 
