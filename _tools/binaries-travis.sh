@@ -9,7 +9,7 @@ if [ "$TRAVIS_BRANCH" = master ]; then
 else
     export VERSION=$TRAVIS_BRANCH
 fi
-./_tools/buildall.sh
+MANIFEST=bin/manifest ./_tools/buildall.sh
 
 cd bin
 cat manifest | while read f; do
