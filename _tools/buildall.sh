@@ -23,7 +23,7 @@ buildone() {
     fi
 
     echo "Going to build $BIN"
-    go build -o $BIN_DIR/$BIN -ldflags \
+    go build -a -o $BIN_DIR/$BIN -ldflags \
         "-X github.com/elves/elvish/buildinfo.Version=$VERSION \
          -X github.com/elves/elvish/buildinfo.GoRoot=`go env GOROOT` \
          -X github.com/elves/elvish/buildinfo.GoPath=`go env GOPATH` \
