@@ -34,7 +34,7 @@ func TestPrompt_DeliversStaleLastPromptsOnLateUpdates(t *testing.T) {
 	prompt.Trigger(false)
 
 	update := <-prompt.LateUpdates()
-	staleUnknown := styled.Transform(unknownContent, "inverse")
+	staleUnknown := styled.Transform(initialContent, "inverse")
 	if !reflect.DeepEqual(update, staleUnknown) {
 		t.Errorf("want update %v, got %v", staleUnknown, update)
 	}
@@ -62,7 +62,7 @@ func TestPrompt_DeliversStaleCurrentPromptsOnLateUpdates(t *testing.T) {
 	prompt.Trigger(false)
 
 	update := <-prompt.LateUpdates()
-	staleUnknown := styled.Transform(unknownContent, "inverse")
+	staleUnknown := styled.Transform(initialContent, "inverse")
 	if !reflect.DeepEqual(update, staleUnknown) {
 		t.Errorf("want update %v, got %v", staleUnknown, update)
 	}

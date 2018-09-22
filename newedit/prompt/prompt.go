@@ -25,19 +25,23 @@ type Prompt struct {
 	lastMutex sync.RWMutex
 }
 
-var unknownContent = styled.Unstyled("???> ")
-
 func defaultStaleTransform(t styled.Text) styled.Text {
 	return styled.Transform(t, "inverse")
 }
+
+const defaultStaleThreshold = 200 * time.Millisecond
+
+const defaultEagerness = 5
+
+var initialContent = styled.Unstyled("???> ")
 
 // New makes a new prompt.
 func New(fn func() styled.Text) *Prompt {
 	p := &Prompt{
 		Config{Raw: RawConfig{
-			fn, defaultStaleTransform, 2 * time.Millisecond, 5}},
+			fn, defaultStaleTransform, defaultStaleThreshold, defaultEagerness}},
 		"", make(chan struct{}, 1), make(chan styled.Text, 1),
-		unknownContent, sync.RWMutex{}}
+		initialContent, sync.RWMutex{}}
 	// TODO: Don't keep a goroutine running.
 	go p.loop()
 	return p
@@ -49,7 +53,7 @@ func (p *Prompt) Config() *Config {
 }
 
 func (p *Prompt) loop() {
-	content := unknownContent
+	content := initialContent
 	ch := make(chan styled.Text)
 	for range p.updateReq {
 		go func() {
