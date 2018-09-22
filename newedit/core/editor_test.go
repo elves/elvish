@@ -15,10 +15,10 @@ import (
 )
 
 func TestReadCode_AbortsOnSetupError(t *testing.T) {
-	terminal := newFakeTTY()
+	ed, terminal, _ := setup()
+
 	terminal.setupErr = errors.New("a fake error")
 
-	ed := NewEditor(terminal, nil)
 	_, err := ed.ReadCode()
 
 	if err != terminal.setupErr {
@@ -27,12 +27,12 @@ func TestReadCode_AbortsOnSetupError(t *testing.T) {
 }
 
 func TestReadCode_CallsRestore(t *testing.T) {
+	ed, terminal, _ := setup()
+
 	restoreCalled := 0
-	terminal := newFakeTTY()
 	terminal.restoreFunc = func() { restoreCalled++ }
 	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
 
-	ed := NewEditor(terminal, nil)
 	ed.ReadCode()
 
 	if restoreCalled != 1 {
@@ -41,11 +41,11 @@ func TestReadCode_CallsRestore(t *testing.T) {
 }
 
 func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
-	terminal := newFakeTTY()
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	ed, terminal, _ := setup()
 
-	ed := NewEditor(terminal, nil)
+	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
 	ed.State.Raw.Code = "some code"
+
 	ed.ReadCode()
 
 	if code := ed.State.Raw.Code; code != "" {
@@ -54,11 +54,10 @@ func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 }
 
 func TestReadCode_PassesInputEventsToMode(t *testing.T) {
-	terminal := newFakeTTY()
-	ed := NewEditor(terminal, nil)
+	ed, terminal, _ := setup()
+
 	m := &fakeMode{maxKeys: 3}
 	ed.State.Raw.Mode = m
-
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
 	terminal.eventCh <- tty.KeyEvent{Rune: 'c'}
@@ -74,12 +73,10 @@ func TestReadCode_PassesInputEventsToMode(t *testing.T) {
 }
 
 func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
-	terminal := newFakeTTY()
-	ed := NewEditor(terminal, nil)
+	ed, terminal, _ := setup()
 
 	called := 0
 	ed.Config.Raw.BeforeReadline = []func(){func() { called++ }}
-
 	// Causes BasicMode to quit
 	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
 
@@ -91,8 +88,7 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 }
 
 func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
-	terminal := newFakeTTY()
-	ed := NewEditor(terminal, nil)
+	ed, terminal, _ := setup()
 
 	called := 0
 	code := ""
@@ -100,7 +96,6 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 		called++
 		code = s
 	}}
-
 	// Causes BasicMode to write state.Code and then quit
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
@@ -118,10 +113,9 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 }
 
 func TestReadCode_RespectsMaxHeight(t *testing.T) {
-	maxHeight := 5
+	ed, terminal, _ := setup()
 
-	terminal := newFakeTTY()
-	ed := NewEditor(terminal, nil)
+	maxHeight := 5
 	// Will fill more than maxHeight but less than terminal height
 	ed.State.Raw.Code = strings.Repeat("a", 80*10)
 	ed.State.Raw.Dot = len(ed.State.Raw.Code)
@@ -139,28 +133,28 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	ed.Config.Mutex.Unlock()
 
 	ed.Redraw(false)
+
 	buf2 := <-terminal.bufCh
 	if h := len(buf2.Lines); h > maxHeight {
 		t.Errorf("Buffer height is %d, should <= %d", h, maxHeight)
 	}
 
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
-	<-codeCh
+	cleanup(terminal, codeCh)
 }
 
 var bufChTimeout = 1 * time.Second
 
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
-	terminal := newFakeTTY()
-	ed := NewEditor(terminal, nil)
+	ed, terminal, _ := setup()
+
 	ed.Config.Raw.Highlighter = func(code string) (styled.Text, []error) {
 		return styled.Text{
 			&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 	}
-
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
 	terminal.eventCh <- tty.KeyEvent{Rune: 'c'}
+
 	codeCh, _ := ed.readCodeAsync()
 
 	wantBuf := ui.NewBufferBuilder(80).
@@ -170,8 +164,7 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 		t.Errorf("Did not see buffer containing highlighted code")
 	}
 
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
-	<-codeCh
+	cleanup(terminal, codeCh)
 }
 
 func TestReadCode_RendersErrorFromHighlighter(t *testing.T) {
@@ -179,11 +172,11 @@ func TestReadCode_RendersErrorFromHighlighter(t *testing.T) {
 }
 
 func TestReadCode_RendersPrompt(t *testing.T) {
-	terminal := newFakeTTY()
-	ed := NewEditor(terminal, nil)
-	ed.Config.Raw.Prompt = constPrompt{styled.Unstyled("> ")}
+	ed, terminal, _ := setup()
 
+	ed.Config.Raw.Prompt = constPrompt{styled.Unstyled("> ")}
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+
 	codeCh, _ := ed.readCodeAsync()
 
 	wantBuf := ui.NewBufferBuilder(80).
@@ -193,17 +186,16 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 		t.Errorf("Did not see buffer containing prompt")
 	}
 
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
-	<-codeCh
+	cleanup(terminal, codeCh)
 }
 
 func TestReadCode_RendersRPrompt(t *testing.T) {
-	terminal := newFakeTTY()
-	terminal.width = 4
-	ed := NewEditor(terminal, nil)
-	ed.Config.Raw.RPrompt = constPrompt{styled.Unstyled("R")}
+	ed, terminal, _ := setup()
 
+	terminal.width = 4
+	ed.Config.Raw.RPrompt = constPrompt{styled.Unstyled("R")}
 	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+
 	codeCh, _ := ed.readCodeAsync()
 
 	wantBuf := ui.NewBufferBuilder(4).
@@ -212,8 +204,7 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 		t.Errorf("Did not see buffer containing rprompt")
 	}
 
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
-	<-codeCh
+	cleanup(terminal, codeCh)
 }
 
 func TestReadCode_SupportsPersistentRPrompt(t *testing.T) {
@@ -221,8 +212,7 @@ func TestReadCode_SupportsPersistentRPrompt(t *testing.T) {
 }
 
 func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
-	terminal := newFakeTTY()
-	ed := NewEditor(terminal, nil)
+	ed, terminal, _ := setup()
 
 	codeCh, _ := ed.readCodeAsync()
 
@@ -243,20 +233,19 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 		t.Errorf("State.Raw.Notes has %d elements after redrawing, want 0", n)
 	}
 
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
-	<-codeCh
+	cleanup(terminal, codeCh)
 }
 
 func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
-	terminal := newFakeTTY()
+	ed, terminal, _ := setup()
 
-	ed := NewEditor(terminal, nil)
 	ed.State.Raw.Code = "some code"
 	// We use the dot as a signal for distinguishing non-final and final state.
 	// In the final state, the dot will be set to the length of the code (9).
 	ed.State.Raw.Dot = 1
 
 	codeCh, _ := ed.readCodeAsync()
+
 	// Wait until a non-final state is drawn.
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("s").SetDotToCursor().
 		WriteUnstyled("ome code").Buffer()
@@ -264,8 +253,7 @@ func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 		t.Errorf("did not get expected buffer before sending Enter")
 	}
 
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
-	<-codeCh
+	cleanup(terminal, codeCh)
 
 	// Last element in bufs is nil
 	finalBuf := terminal.bufs[len(terminal.bufs)-2]
@@ -277,12 +265,12 @@ func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 }
 
 func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
-	terminal := newFakeTTY()
-	sigs := newFakeSignalSource()
-	ed := NewEditor(terminal, sigs)
+	ed, terminal, sigs := setup()
+
+	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
-	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
 		SetDotToCursor().Buffer()
 	if !checkBuffer(wantBuf, terminal.bufCh) {
@@ -300,12 +288,11 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 }
 
 func TestReadCode_ResetsOnSIGHUP(t *testing.T) {
-	terminal := newFakeTTY()
-	sigs := newFakeSignalSource()
-	ed := NewEditor(terminal, sigs)
+	ed, terminal, sigs := setup()
+
+	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
-	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
 		SetDotToCursor().Buffer()
 	if !checkBuffer(wantBuf, terminal.bufCh) {
@@ -319,19 +306,17 @@ func TestReadCode_ResetsOnSIGHUP(t *testing.T) {
 		t.Errorf("Terminal state is not reset after SIGINT")
 	}
 
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
-	<-codeCh
+	cleanup(terminal, codeCh)
 }
 
 func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
-	terminal := newFakeTTY()
-	sigs := newFakeSignalSource()
-	ed := NewEditor(terminal, sigs)
+	ed, terminal, sigs := setup()
 
 	ed.State.Raw.Code = "1234567890"
 	ed.State.Raw.Dot = len(ed.State.Raw.Code)
 
 	codeCh, _ := ed.readCodeAsync()
+
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("1234567890").
 		SetDotToCursor().Buffer()
 	if !checkBuffer(wantBuf, terminal.bufCh) {
@@ -347,6 +332,19 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 		t.Errorf("Terminal is not redrawn after SIGWINCH")
 	}
 
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	cleanup(terminal, codeCh)
+}
+
+func setup() (*Editor, *fakeTTY, *fakeSignalSource) {
+	terminal := newFakeTTY()
+	sigsrc := newFakeSignalSource()
+	ed := NewEditor(terminal, sigsrc)
+	return ed, terminal, sigsrc
+}
+
+func cleanup(t *fakeTTY, codeCh <-chan string) {
+	// Causes BasicMode to quit
+	t.eventCh <- tty.KeyEvent{Rune: '\n'}
+	// Wait until ReadCode has finished execution
 	<-codeCh
 }
