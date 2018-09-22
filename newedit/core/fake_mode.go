@@ -3,31 +3,39 @@ package core
 import (
 	"fmt"
 
+	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/types"
 )
 
-// An implementation of Mode. Its HandleKey method returns CommitCode after a
-// certain number of key events and keeps the key event history, and its
-// ModeLine and ModeRenderFlag methods returns predefined values.
+// A Mode implementation useful in tests.
 type fakeMode struct {
 	maxKeys        int
 	modeLine       ui.Renderer
 	modeRenderFlag types.ModeRenderFlag
 
+	// History of all keys HandleEvent has seen.
 	keysHandled []ui.Key
 }
 
+// ModeLine returns the predefined value.
 func (m *fakeMode) ModeLine() ui.Renderer {
 	return m.modeLine
 }
 
-func (m *fakeMode) ModeRenderFlag() types.ModeRenderFlag { return m.modeRenderFlag }
+// ModeRenderFlag returns the predefined value.
+func (m *fakeMode) ModeRenderFlag() types.ModeRenderFlag {
+	return m.modeRenderFlag
+}
 
-func (m *fakeMode) HandleKey(k ui.Key, _ *types.State) types.HandlerAction {
-	m.keysHandled = append(m.keysHandled, k)
-	if len(m.keysHandled) == m.maxKeys {
-		return types.CommitCode
+// HandleEvent records all keys it has seen, and returns CommitCode after seeing
+// a predefined number of keys. It ignores other events.
+func (m *fakeMode) HandleEvent(e tty.Event, _ *types.State) types.HandlerAction {
+	if keyEvent, ok := e.(tty.KeyEvent); ok {
+		m.keysHandled = append(m.keysHandled, ui.Key(keyEvent))
+		if len(m.keysHandled) == m.maxKeys {
+			return types.CommitCode
+		}
 	}
 	return 0
 }

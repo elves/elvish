@@ -6,7 +6,6 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/edit/tty"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/loop"
 	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/sys"
@@ -51,16 +50,13 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 		}
 		return "", false
 	case tty.Event:
-		switch e := e.(type) {
-		case tty.KeyEvent:
-			action := getMode(ed.State.Mode()).HandleKey(ui.Key(e), &ed.State)
+		action := getMode(ed.State.Mode()).HandleEvent(e, &ed.State)
 
-			switch action {
-			case types.CommitCode:
-				return ed.State.Code(), true
-			}
-			ed.Config.TriggerPrompts(false)
+		switch action {
+		case types.CommitCode:
+			return ed.State.Code(), true
 		}
+		ed.Config.TriggerPrompts(false)
 		return "", false
 	default:
 		panic("unreachable")

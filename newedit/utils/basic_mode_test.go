@@ -1,13 +1,16 @@
 package utils
 
 import (
+	"fmt"
+	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/types"
 )
 
-var basicHandlerTests = []struct {
+var basicHandlerKeyEventsTests = []struct {
 	name     string
 	keys     []ui.Key
 	wantCode string
@@ -34,19 +37,37 @@ var basicHandlerTests = []struct {
 		"代码", 3},
 }
 
-func TestBasicHandler(t *testing.T) {
-	for _, test := range basicHandlerTests {
+func TestBasicHandler_KeyEvents(t *testing.T) {
+	for _, test := range basicHandlerKeyEventsTests {
 		t.Run(test.name, func(t *testing.T) {
 			st := types.State{}
 			for _, key := range test.keys {
-				BasicHandler(key, &st)
+				BasicHandler(tty.KeyEvent(key), &st)
 			}
 			code, dot := st.CodeAndDot()
 			if code != test.wantCode {
-				t.Errorf("Got code = %q, want %q", code, test.wantCode)
+				t.Errorf("got code = %q, want %q", code, test.wantCode)
 			}
 			if dot != test.wantDot {
-				t.Errorf("Got dot = %v, want %v", dot, test.wantDot)
+				t.Errorf("got dot = %v, want %v", dot, test.wantDot)
+			}
+		})
+	}
+}
+
+var otherEvents = []tty.Event{
+	tty.MouseEvent{}, tty.RawRune('a'),
+	tty.PasteSetting(false), tty.PasteSetting(true), tty.CursorPosition{},
+}
+
+func TestBasicHandler_IgnoresOtherEvents(t *testing.T) {
+	for _, event := range otherEvents {
+		t.Run(fmt.Sprintf("event type %T", event), func(t *testing.T) {
+			st := types.State{}
+			oldRaw := st.Raw
+			BasicHandler(event, &st)
+			if !reflect.DeepEqual(oldRaw, st.Raw) {
+				t.Errorf("state mutated from %v to %v", oldRaw, st.Raw)
 			}
 		})
 	}

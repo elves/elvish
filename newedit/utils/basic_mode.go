@@ -3,6 +3,7 @@ package utils
 import (
 	"unicode/utf8"
 
+	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/types"
 )
@@ -20,15 +21,21 @@ func (BasicMode) ModeRenderFlag() types.ModeRenderFlag {
 	return 0
 }
 
-// HandleKey uses BasicHandler to handle the key.
-func (BasicMode) HandleKey(k ui.Key, st *types.State) types.HandlerAction {
-	return BasicHandler(k, st)
+// HandleEvent uses BasicHandler to handle the event.
+func (BasicMode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
+	return BasicHandler(e, st)
 }
 
-// BasicHandler is a basic implementation of a key handler. It is used in
-// BasicMode.HandleKey, but can also be used in other modes as a fallback
+// BasicHandler is a basic implementation of an event handler. It is used in
+// BasicMode.HandleEvent, but can also be used in other modes as a fallback
 // handler.
-func BasicHandler(k ui.Key, st *types.State) types.HandlerAction {
+func BasicHandler(e tty.Event, st *types.State) types.HandlerAction {
+	keyEvent, ok := e.(tty.KeyEvent)
+	if !ok {
+		return types.NoAction
+	}
+	k := ui.Key(keyEvent)
+
 	st.Mutex.Lock()
 	defer st.Mutex.Unlock()
 

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 )
 
@@ -11,9 +12,9 @@ type Mode interface {
 	ModeLine() ui.Renderer
 	// Returns a flag that can affect the UI.
 	ModeRenderFlag() ModeRenderFlag
-	// Handles a key event, and returns an action that can affect the editor
+	// Handles a terminal event, and returns an action that can affect the editor
 	// lifecycle.
-	HandleKey(ui.Key, *State) HandlerAction
+	HandleEvent(tty.Event, *State) HandlerAction
 }
 
 // Lister is an optional interface that modes can implement. If a mode
@@ -35,8 +36,8 @@ const (
 	RedrawModeLineAfterList
 )
 
-// HandlerAction is used as the return code of Mode.HandleKey and can affect the
-// editor lifecycle.
+// HandlerAction is used as the return code of Mode.HandleEvent and can affect
+// the editor lifecycle.
 type HandlerAction int
 
 const (
@@ -60,6 +61,6 @@ func (dummyMode) ModeRenderFlag() ModeRenderFlag {
 	return 0
 }
 
-func (dummyMode) HandleKey(k ui.Key, st *State) HandlerAction {
+func (dummyMode) HandleEvent(_ tty.Event, _ *State) HandlerAction {
 	return NoAction
 }
