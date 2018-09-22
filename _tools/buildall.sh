@@ -4,7 +4,7 @@
 
 : ${VERSION:=unknown}
 : ${BIN_DIR:=./bin}
-: ${MANIFEST:=$BIN_DIR/manifest}
+: ${MANIFEST:=/dev/null}
 
 printf '' > $MANIFEST
 
