@@ -24,11 +24,10 @@ buildone() {
     fi
 
     echo "Going to build $BIN"
-    go build -a -o $BIN_DIR/$BIN -ldflags \
+    go build -o $BIN_DIR/$BIN -ldflags \
         "-X github.com/elves/elvish/buildinfo.Version=$VERSION \
          -X github.com/elves/elvish/buildinfo.GoRoot=`go env GOROOT` \
-         -X github.com/elves/elvish/buildinfo.GoPath=`go env GOPATH` \
-         -extldflags \"-static\""
+         -X github.com/elves/elvish/buildinfo.GoPath=`go env GOPATH`"
 
     (
     cd $BIN_DIR
@@ -51,6 +50,6 @@ build() {
     done
 }
 
-build darwin  amd64
-build windows amd64 386
 build linux   amd64 386 arm64
+build windows amd64 386
+build darwin  amd64
