@@ -23,7 +23,7 @@ type Editor struct {
 	sigs SignalSource
 
 	Config types.Config
-	State  State
+	State  types.State
 }
 
 // NewEditor creates a new editor from its two dependencies. The creation does
@@ -53,10 +53,10 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 	case tty.Event:
 		switch e := e.(type) {
 		case tty.KeyEvent:
-			action := ed.State.Mode().HandleKey(ui.Key(e), &ed.State)
+			action := getMode(ed.State.Mode()).HandleKey(ui.Key(e), &ed.State)
 
 			switch action {
-			case CommitCode:
+			case types.CommitCode:
 				return ed.State.Code(), true
 			}
 			ed.Config.TriggerPrompts(false)
@@ -68,12 +68,12 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 }
 
 func (ed *Editor) redraw(flag loop.RedrawFlag) {
-	var rawState *RawState
+	var rawState *types.RawState
 	final := flag&loop.FinalRedraw != 0
 	if final {
-		rawState = ed.State.finalize()
+		rawState = ed.State.Finalize()
 	} else {
-		rawState = ed.State.popForRedraw()
+		rawState = ed.State.PopForRedraw()
 	}
 
 	height, width := ed.tty.Size()

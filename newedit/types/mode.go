@@ -1,8 +1,6 @@
-package core
+package types
 
 import (
-	"unicode/utf8"
-
 	"github.com/elves/elvish/edit/ui"
 )
 
@@ -51,41 +49,17 @@ const (
 	// CommitEOF
 )
 
-type basicMode struct{}
+// A dummy Mode implementation.
+type dummyMode struct{}
 
-func (basicMode) ModeLine() ui.Renderer {
+func (dummyMode) ModeLine() ui.Renderer {
 	return nil
 }
 
-func (basicMode) ModeRenderFlag() ModeRenderFlag {
+func (dummyMode) ModeRenderFlag() ModeRenderFlag {
 	return 0
 }
 
-func (basicMode) HandleKey(k ui.Key, st *State) HandlerAction {
-	st.Mutex.Lock()
-	defer st.Mutex.Unlock()
-
-	switch k {
-	case ui.Key{Rune: '\n'}:
-		return CommitCode
-	case ui.Key{Rune: ui.Backspace}:
-		beforeDot := st.Raw.Code[:st.Raw.Dot]
-		afterDot := st.Raw.Code[st.Raw.Dot:]
-		_, chop := utf8.DecodeLastRuneInString(beforeDot)
-		st.Raw.Code = beforeDot[:len(beforeDot)-chop] + afterDot
-		st.Raw.Dot -= chop
-	case ui.Key{Rune: ui.Left}:
-		_, skip := utf8.DecodeLastRuneInString(st.Raw.Code[:st.Raw.Dot])
-		st.Raw.Dot -= skip
-	case ui.Key{Rune: ui.Right}:
-		_, skip := utf8.DecodeRuneInString(st.Raw.Code[st.Raw.Dot:])
-		st.Raw.Dot += skip
-	default:
-		if k.Mod == 0 {
-			s := string(k.Rune)
-			st.Raw.Code += s
-			st.Raw.Dot += len(s)
-		}
-	}
+func (dummyMode) HandleKey(k ui.Key, st *State) HandlerAction {
 	return NoAction
 }

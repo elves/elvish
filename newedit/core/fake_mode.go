@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/newedit/types"
 )
 
 // An implementation of Mode. Its HandleKey method returns CommitCode after a
@@ -12,7 +13,7 @@ import (
 type fakeMode struct {
 	maxKeys        int
 	modeLine       ui.Renderer
-	modeRenderFlag ModeRenderFlag
+	modeRenderFlag types.ModeRenderFlag
 
 	keysHandled []ui.Key
 }
@@ -21,12 +22,12 @@ func (m *fakeMode) ModeLine() ui.Renderer {
 	return m.modeLine
 }
 
-func (m *fakeMode) ModeRenderFlag() ModeRenderFlag { return m.modeRenderFlag }
+func (m *fakeMode) ModeRenderFlag() types.ModeRenderFlag { return m.modeRenderFlag }
 
-func (m *fakeMode) HandleKey(k ui.Key, _ *State) HandlerAction {
+func (m *fakeMode) HandleKey(k ui.Key, _ *types.State) types.HandlerAction {
 	m.keysHandled = append(m.keysHandled, k)
 	if len(m.keysHandled) == m.maxKeys {
-		return CommitCode
+		return types.CommitCode
 	}
 	return 0
 }

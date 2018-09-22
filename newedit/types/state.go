@@ -1,4 +1,4 @@
-package core
+package types
 
 import "sync"
 
@@ -13,7 +13,7 @@ type State struct {
 
 // Returns a copy of the raw state, and set s.Raw.Notes = nil. Used for
 // retrieving the state for rendering.
-func (s *State) popForRedraw() *RawState {
+func (s *State) PopForRedraw() *RawState {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
 	raw := s.Raw
@@ -22,25 +22,17 @@ func (s *State) popForRedraw() *RawState {
 }
 
 // Returns a finalized State, intended for use in the final redraw.
-func (s *State) finalize() *RawState {
+func (s *State) Finalize() *RawState {
 	s.Mutex.RLock()
 	defer s.Mutex.RUnlock()
-	return &RawState{basicMode{}, s.Raw.Code, len(s.Raw.Code), nil, s.Raw.Notes}
+	return &RawState{dummyMode{}, s.Raw.Code, len(s.Raw.Code), nil, s.Raw.Notes}
 }
 
-// Mode returns the current mode. If the internal mode value is nil, it returns
-// a default Mode implementation.
+// Mode returns the current mode.
 func (s *State) Mode() Mode {
 	s.Mutex.RLock()
 	defer s.Mutex.RUnlock()
-	return getMode(s.Raw.Mode)
-}
-
-func getMode(m Mode) Mode {
-	if m == nil {
-		return basicMode{}
-	}
-	return m
+	return s.Raw.Mode
 }
 
 // Code returns the code.

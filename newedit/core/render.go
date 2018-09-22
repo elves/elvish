@@ -7,7 +7,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-type renderCb func(*RawState, *renderSetup) (notes, main *ui.Buffer)
+type renderCb func(*types.RawState, *renderSetup) (notes, main *ui.Buffer)
 
 type renderSetup struct {
 	height int
@@ -31,7 +31,7 @@ func makeRenderSetup(c *types.Config, h, w int) *renderSetup {
 }
 
 // Renders the editor state.
-func render(st *RawState, r *renderSetup) (notes, main *ui.Buffer) {
+func render(st *types.RawState, r *renderSetup) (notes, main *ui.Buffer) {
 	var bufNotes *ui.Buffer
 	if len(st.Notes) > 0 {
 		bufNotes = ui.Render(&linesRenderer{st.Notes}, r.width)
@@ -55,7 +55,7 @@ func render(st *RawState, r *renderSetup) (notes, main *ui.Buffer) {
 
 var transformerForPending = "underline"
 
-func prepareCode(code string, dot int, pending *PendingCode, hl types.Highlighter) (
+func prepareCode(code string, dot int, pending *types.PendingCode, hl types.Highlighter) (
 	styledCode styled.Text, newDot int, errors []error) {
 
 	newDot = dot
@@ -79,7 +79,7 @@ func prepareCode(code string, dot int, pending *PendingCode, hl types.Highlighte
 type mainRenderer struct {
 	maxHeight int
 	bufCode   *ui.Buffer
-	mode      Mode
+	mode      types.Mode
 }
 
 func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
@@ -122,7 +122,7 @@ func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 	}
 
 	var bufListing *ui.Buffer
-	lister, isLister := mode.(Lister)
+	lister, isLister := mode.(types.Lister)
 	if hListing > 0 && isLister {
 		bufListing = ui.Render(lister.List(hListing), buf.Width)
 		// Re-render the mode line if the current mode implements
@@ -134,7 +134,7 @@ func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 		// bufMode, we may do this without recalculating the layout. We also do
 		// not need to trim bufMode because when hListing > 0, bufMode can
 		// always be shown in full.
-		if mode.ModeRenderFlag()&RedrawModeLineAfterList != 0 {
+		if mode.ModeRenderFlag()&types.RedrawModeLineAfterList != 0 {
 			bufMode = ui.Render(mode.ModeLine(), buf.Width)
 		}
 	}
@@ -142,7 +142,7 @@ func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 	// XXX The buffer contains one line in the beginning; we don't want that.
 	buf.Lines = nil
 	buf.Extend(bufCode, true)
-	buf.Extend(bufMode, mode.ModeRenderFlag()&CursorOnModeLine != 0)
+	buf.Extend(bufMode, mode.ModeRenderFlag()&types.CursorOnModeLine != 0)
 	buf.Extend(bufListing, false)
 }
 
