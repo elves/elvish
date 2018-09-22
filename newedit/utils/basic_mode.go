@@ -1,4 +1,4 @@
-package core
+package utils
 
 import (
 	"unicode/utf8"
@@ -7,17 +7,28 @@ import (
 	"github.com/elves/elvish/newedit/types"
 )
 
-type basicMode struct{}
+// BasicMode is a basic Mode implementation.
+type BasicMode struct{}
 
-func (basicMode) ModeLine() ui.Renderer {
+// ModeLine returns nil.
+func (BasicMode) ModeLine() ui.Renderer {
 	return nil
 }
 
-func (basicMode) ModeRenderFlag() types.ModeRenderFlag {
+// ModeRenderFlag returns 0.
+func (BasicMode) ModeRenderFlag() types.ModeRenderFlag {
 	return 0
 }
 
-func (basicMode) HandleKey(k ui.Key, st *types.State) types.HandlerAction {
+// HandleKey uses BasicHandler to handle the key.
+func (BasicMode) HandleKey(k ui.Key, st *types.State) types.HandlerAction {
+	return BasicHandler(k, st)
+}
+
+// BasicHandler is a basic implementation of a key handler. It is used in
+// BasicMode.HandleKey, but can also be used in other modes as a fallback
+// handler.
+func BasicHandler(k ui.Key, st *types.State) types.HandlerAction {
 	st.Mutex.Lock()
 	defer st.Mutex.Unlock()
 
@@ -44,11 +55,4 @@ func (basicMode) HandleKey(k ui.Key, st *types.State) types.HandlerAction {
 		}
 	}
 	return types.NoAction
-}
-
-func getMode(m types.Mode) types.Mode {
-	if m == nil {
-		return basicMode{}
-	}
-	return m
 }
