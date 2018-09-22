@@ -90,7 +90,7 @@ func TestUse(t *testing.T) {
 			That(`{ use lorem; { lorem:put-name } }`).Puts("lorem"),
 
 			// use of a nested module
-			That(`use a:b/c/d; put $d:name`).Puts("a/b/c/d"),
+			That(`use a/b/c/d; put $d:name`).Puts("a/b/c/d"),
 			// module is cached after first use
 			That(`use has-init; use has-init`).Puts("has-init"),
 			// overriding module
@@ -98,6 +98,9 @@ func TestUse(t *testing.T) {
 				"d", "a/b/c/d"),
 			// relative uses
 			That(`use a/b/c/x; put $x:d $x:lorem`).Puts("a/b/c/d", "lorem"),
+
+			// Renaming module
+			That(`use a/b/c/d mod; put $mod:name`).Puts("a/b/c/d"),
 
 			// Variables defined in the default global scope is invisible from
 			// modules

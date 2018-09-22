@@ -221,21 +221,32 @@ func (op fnWrap) Invoke(fm *Frame) error {
 
 // UseForm = 'use' StringPrimary
 func compileUse(cp *compiler, fn *parse.Form) OpBody {
-	if len(fn.Args) == 0 {
+	var name, path string
+
+	switch len(fn.Args) {
+	case 0:
 		end := fn.Head.End()
 		cp.errorpf(end, end, "lack module name")
-	} else if len(fn.Args) >= 2 {
-		cp.errorpf(fn.Args[1].Begin(), fn.Args[len(fn.Args)-1].End(), "superfluous argument(s)")
+	case 1:
+		path = mustString(cp, fn.Args[0],
+			"module path should be a literal string")
+		// Use the last path component as the name; for instance, if path =
+		// "a/b/c/d", name is "d". If path doesn't have slashes, name = path.
+		name = path[strings.LastIndexByte(path, '/')+1:]
+	case 2:
+		// TODO(xiaq): Allow using variable as module path
+		path = mustString(cp, fn.Args[0],
+			"module path should be a literal string")
+		name = mustString(cp, fn.Args[1],
+			"module name should be a literal string")
+	default: // > 2
+		cp.errorpf(fn.Args[2].Begin(), fn.Args[len(fn.Args)-1].End(),
+			"superfluous argument(s)")
 	}
 
-	spec := mustString(cp, fn.Args[0], "should be a literal string")
+	cp.thisScope().set(name + NsSuffix)
 
-	// When modspec = "a/b/c:d", modname is c:d, and modpath is a/b/c/d
-	modname := spec[strings.LastIndexByte(spec, '/')+1:]
-	modpath := strings.Replace(spec, ":", "/", -1)
-	cp.thisScope().set(modname + NsSuffix)
-
-	return useOp{modname, modpath}
+	return useOp{name, path}
 }
 
 type useOp struct{ modname, modpath string }
