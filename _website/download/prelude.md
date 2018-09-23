@@ -117,6 +117,8 @@ Old versions:
     <td>0.10 (<a href="/blog/0.10-release-notes.html">Release Note</a>)</td>
     <td>
       $dl amd64 linux-amd64/elvish-v0.10.tar.gz
+      $dl 386 linux-386/elvish-v0.10.tar.gz
+      $dl arm64 linux-arm64/elvish-v0.10.tar.gz
     </td>
     <td>
       $dl amd64 darwin-amd64/elvish-v0.10.tar.gz
