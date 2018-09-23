@@ -70,6 +70,8 @@ func (ctx *argComplContext) generate(env *complEnv, ch chan<- rawCandidate) erro
 	return completeArg(ctx.words, env.evaler, env.argCompleter, ch)
 }
 
+var quotedPathSeparator = parse.Quote(string(filepath.Separator))
+
 // TODO: getStyle does redundant stats.
 func complFilenameInner(head string, executableOnly bool, rawCands chan<- rawCandidate) error {
 	dir, fileprefix := filepath.Split(head)
@@ -103,12 +105,12 @@ func complFilenameInner(head string, executableOnly bool, rawCands chan<- rawCan
 
 		suffix := " "
 		if info.IsDir() {
-			suffix = string(filepath.Separator)
+			suffix = quotedPathSeparator
 		} else if info.Mode()&os.ModeSymlink != 0 {
 			stat, err := os.Stat(full)
 			if err == nil && stat.IsDir() {
 				// Symlink to directory.
-				suffix = string(filepath.Separator)
+				suffix = quotedPathSeparator
 			}
 		}
 
