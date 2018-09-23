@@ -171,7 +171,7 @@ maintain backward compatibility from version to version.
   </tr>
   <tr>
     <td colspan="4" class="notice">
-      Versions before 0.4 does not use vendoring
+      Versions before 0.4 do not use vendoring and cannot be reproduced
     </td>
   </tr>
   <tr>
