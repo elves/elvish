@@ -24,4 +24,5 @@ _testmain.go
 # Project specific
 /t/ # Small applications for manual testing go inside this directory
 /_cover/
+/_bin/
 /elvish
