@@ -39,26 +39,28 @@ func BasicHandler(e tty.Event, st *types.State) types.HandlerAction {
 	st.Mutex.Lock()
 	defer st.Mutex.Unlock()
 
+	raw := &st.Raw
+
 	switch k {
 	case ui.Key{Rune: '\n'}:
 		return types.CommitCode
 	case ui.Key{Rune: ui.Backspace}:
-		beforeDot := st.Raw.Code[:st.Raw.Dot]
-		afterDot := st.Raw.Code[st.Raw.Dot:]
+		beforeDot := raw.Code[:raw.Dot]
+		afterDot := raw.Code[raw.Dot:]
 		_, chop := utf8.DecodeLastRuneInString(beforeDot)
-		st.Raw.Code = beforeDot[:len(beforeDot)-chop] + afterDot
-		st.Raw.Dot -= chop
+		raw.Code = beforeDot[:len(beforeDot)-chop] + afterDot
+		raw.Dot -= chop
 	case ui.Key{Rune: ui.Left}:
-		_, skip := utf8.DecodeLastRuneInString(st.Raw.Code[:st.Raw.Dot])
-		st.Raw.Dot -= skip
+		_, skip := utf8.DecodeLastRuneInString(raw.Code[:raw.Dot])
+		raw.Dot -= skip
 	case ui.Key{Rune: ui.Right}:
-		_, skip := utf8.DecodeRuneInString(st.Raw.Code[st.Raw.Dot:])
-		st.Raw.Dot += skip
+		_, skip := utf8.DecodeRuneInString(raw.Code[raw.Dot:])
+		raw.Dot += skip
 	default:
 		if k.Mod == 0 {
 			s := string(k.Rune)
-			st.Raw.Code += s
-			st.Raw.Dot += len(s)
+			raw.Code = raw.Code[:raw.Dot] + s + raw.Code[raw.Dot:]
+			raw.Dot += len(s)
 		}
 	}
 	return types.NoAction

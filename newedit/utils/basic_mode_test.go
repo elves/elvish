@@ -21,7 +21,6 @@ var basicHandlerKeyEventsTests = []struct {
 	{"Unicode characters",
 		[]ui.Key{{Rune: '代'}, {Rune: '码'}},
 		"代码", 6},
-	// Backspace
 	{"Backspace",
 		[]ui.Key{{Rune: '代'}, {Rune: '码'}, {Rune: ui.Backspace}},
 		"代", 3},
@@ -35,6 +34,9 @@ var basicHandlerKeyEventsTests = []struct {
 		[]ui.Key{{Rune: '代'}, {Rune: '码'}, {Rune: ui.Left}, {Rune: ui.Left},
 			{Rune: ui.Right}},
 		"代码", 3},
+	{"Insert in the middle",
+		[]ui.Key{{Rune: '['}, {Rune: ']'}, {Rune: ui.Left}, {Rune: 'x'}},
+		"[x]", 2},
 }
 
 func TestBasicHandler_KeyEvents(t *testing.T) {
