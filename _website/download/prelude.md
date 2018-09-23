@@ -61,16 +61,16 @@ maintain backward compatibility from version to version.
       0.12 (<a href="/blog/0.12-release-notes.html">Release Note</a>)
     </td>
     <td>
-      $dl amd64 linux-amd64/elvish-0.12.tar.gz
-      $dl 386 linux-386/elvish-0.12.tar.gz
-      $dl arm64 linux-arm64/elvish-0.12.tar.gz
+      $dl amd64 linux-amd64/elvish-v0.12.tar.gz
+      $dl 386 linux-386/elvish-v0.12.tar.gz
+      $dl arm64 linux-arm64/elvish-v0.12.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.12.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.12.tar.gz
     </td>
     <td>
-      $dl amd64 windows-amd64/elvish-0.12.zip
-      $dl 386 windows-386/elvish-0.12.zip
+      $dl amd64 windows-amd64/elvish-v0.12.zip
+      $dl 386 windows-386/elvish-v0.12.zip
     </td>
   </tr>
 </table>
@@ -96,16 +96,16 @@ Old versions:
       0.11 (<a href="/blog/0.11-release-notes.html">Release Note</a>)
     </td>
     <td>
-      $dl amd64 linux-amd64/elvish-0.11.tar.gz
-      $dl 386 linux-386/elvish-0.11.tar.gz
-      $dl arm64 linux-arm64/elvish-0.11.tar.gz
+      $dl amd64 linux-amd64/elvish-v0.11.tar.gz
+      $dl 386 linux-386/elvish-v0.11.tar.gz
+      $dl arm64 linux-arm64/elvish-v0.11.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.11.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.11.tar.gz
     </td>
     <td>
-      $dl amd64 windows-amd64/elvish-0.11.zip
-      $dl 386 windows-386/elvish-0.11.zip
+      $dl amd64 windows-amd64/elvish-v0.11.zip
+      $dl 386 windows-386/elvish-v0.11.zip
     </td>
   </tr>
   <tr>
@@ -116,10 +116,10 @@ Old versions:
   <tr>
     <td>0.10 (<a href="/blog/0.10-release-notes.html">Release Note</a>)</td>
     <td>
-      $dl amd64 linux-amd64/elvish-0.10.tar.gz
+      $dl amd64 linux-amd64/elvish-v0.10.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.10.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.10.tar.gz
     </td>
     <td>N/A</td>
   </tr>
@@ -131,60 +131,60 @@ Old versions:
   <tr>
     <td>0.9 (<a href="/blog/0.9-release-notes.html">Release Note</a>)</td>
     <td>
-      $dl amd64 linux-amd64/elvish-0.9.tar.gz
+      $dl amd64 linux-amd64/elvish-v0.9.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.9.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.9.tar.gz
     </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.8 (<a href="https://github.com/elves/elvish/releases/tag/v0.8">Release Note</a>)</td>
     <td>
-      $dl amd64 linux-amd64/elvish-0.8.tar.gz
+      $dl amd64 linux-amd64/elvish-v0.8.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.8.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.8.tar.gz
     </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.7 (<a href="https://github.com/elves/elvish/releases/tag/v0.7">Release Note</a>)</td>
     <td>
-      $dl amd64 linux-amd64/elvish-0.7.tar.gz
+      $dl amd64 linux-amd64/elvish-v0.7.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.7.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.7.tar.gz
     </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.6 (<a href="https://github.com/elves/elvish/releases/tag/v0.6">Release Note</a>)</td>
     <td>
-      $dl amd64 linux-amd64/elvish-0.6.tar.gz
+      $dl amd64 linux-amd64/elvish-v0.6.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.6.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.6.tar.gz
     </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.5 (<a href="https://github.com/elves/elvish/releases/tag/v0.5">Release Note</a>)</td>
     <td>
-    $dl amd64 linux-amd64/elvish-0.5.tar.gz
+    $dl amd64 linux-amd64/elvish-v0.5.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.5.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.5.tar.gz
     </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.4</td>
     <td>
-      $dl amd64 linux-amd64/elvish-0.4.tar.gz
+      $dl amd64 linux-amd64/elvish-v0.4.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.4.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.4.tar.gz
     </td>
     <td>N/A</td>
   </tr>
@@ -196,30 +196,30 @@ Old versions:
   <tr>
     <td>0.3</td>
     <td>
-      $dl amd64 linux-amd64/elvish-0.3.tar.gz
+      $dl amd64 linux-amd64/elvish-v0.3.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.3.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.3.tar.gz
     </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.2</td>
     <td>
-      $dl amd64 linux-amd64/elvish-0.2.tar.gz
+      $dl amd64 linux-amd64/elvish-v0.2.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.2.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.2.tar.gz
     </td>
     <td>N/A</td>
   </tr>
   <tr>
     <td>0.1</td>
     <td>
-      $dl amd64 linux-amd64/elvish-0.1.tar.gz
+      $dl amd64 linux-amd64/elvish-v0.1.tar.gz
     </td>
     <td>
-      $dl amd64 darwin-amd64/elvish-0.1.tar.gz
+      $dl amd64 darwin-amd64/elvish-v0.1.tar.gz
     </td>
     <td>N/A</td>
   </tr>
