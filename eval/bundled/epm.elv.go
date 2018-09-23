@@ -278,7 +278,7 @@ fn query [pkg]{
 # List installed packages
 fn installed {
   put $-lib-dir/*[nomatch-ok] | each [dir]{
-    dom = (re:replace &literal $-lib-dir/ '' $dir)
+    dom = (replaces $-lib-dir/ '' $dir)
     cfg = (-domain-config $dom)
     # Only list domains for which we know the config, so that the user
     # can have his own non-package directories under ~/.elvish/lib
