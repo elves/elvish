@@ -187,11 +187,18 @@ func convertEvent(event sys.InputEvent) Event {
 				return KeyEvent(ui.Key{Rune: r})
 			}
 		}
-		r = convertRune(event.WVirtualKeyCode)
+		mod := convertMod(filteredMod)
+		if mod == 0 && event.WVirtualKeyCode == 0x1b {
+			// Special case: Normalize 0x1b to Ctrl-[.
+			//
+			// TODO(xiaq): This is Unix-centric. Maybe the normalized form
+			// should be Escape.
+			return KeyEvent(ui.Key{Rune: '[', Mod: ui.Ctrl})
+		}
+		r = convertRune(event.WVirtualKeyCode, mod)
 		if r == 0 {
 			return nil
 		}
-		mod := convertMod(filteredMod)
 		return KeyEvent(ui.Key{Rune: r, Mod: mod})
 	//case *sys.MouseEvent:
 	//case *sys.WindowBufferSizeEvent:
@@ -201,7 +208,7 @@ func convertEvent(event sys.InputEvent) Event {
 	}
 }
 
-func convertRune(keyCode uint16) rune {
+func convertRune(keyCode uint16, mod ui.Mod) rune {
 	r, ok := keyCodeToRune[keyCode]
 	if ok {
 		return r
@@ -210,6 +217,14 @@ func convertRune(keyCode uint16) rune {
 		return rune(keyCode)
 	}
 	if 'A' <= keyCode && keyCode <= 'Z' {
+		// If Ctrl is involved, emulate UNIX's convention and use upper case;
+		// otherwise use lower case.
+		//
+		// TODO(xiaq): This is quite Unix-centric. Maybe we should make the
+		// base rune case-insensitive when there are modifiers involved.
+		if mod&ui.Ctrl != 0 {
+			return rune(keyCode)
+		}
 		return rune(keyCode - 'A' + 'a')
 	}
 	return 0
