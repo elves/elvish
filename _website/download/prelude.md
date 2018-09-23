@@ -70,10 +70,76 @@ maintain backward compatibility from version to version.
       $dl Linux linux-arm64/elvish-v0.12.tar.gz
     </td>
   </tr>
+</table>
+
+
+# OS-Specific Packages
+
+## Fedora
+
+RPM packages are available from [the FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository):
+
+```elvish
+# Add FZUG repo
+dnf config-manager --add-repo=http://repo.fdzh.org/FZUG/FZUG.repo
+# Install Elvish
+dnf install elvish
+```
+
+## Debian / Ubuntu
+
+Elvish is packaged by [Debian](https://packages.debian.org/elvish) since
+buster and by [Ubuntu](http://packages.ubuntu.com/elvish) since 17.10.
+
+However, packages in official repositories are likely outdated. You can
+install the latest release from
+[PPA](https://launchpad.net/~zhsj/+archive/ubuntu/elvish):
+
+```elvish
+# Add Elvish PPA repo
+sudo wget -O /etc/apt/trusted.gpg.d/elvish \
+  'https://sks-keyservers.net/pks/lookup?search=0xE9EA75D542E35A20&options=mr&op=get'
+sudo gpg --dearmor /etc/apt/trusted.gpg.d/elvish
+sudo rm /etc/apt/trusted.gpg.d/elvish
+echo 'deb http://ppa.launchpad.net/zhsj/elvish/ubuntu xenial main' |
+  sudo tee /etc/apt/sources.list.d/elvish.list
+sudo apt-get update
+
+# Install Elvish
+sudo apt-get install elvish
+```
+
+## macOS (Homebrew)
+
+Elvish is packaged in Homebrew:
+
+```elvish
+# Install latest release
+brew install elvish
+# Or install HEAD:
+brew install --HEAD elvish
+```
+
+## OpenBSD
+
+Elvish is available in the official OpenBSD package repository. This will
+install the latest release:
+
+```elvish
+doas pkg_add elvish
+```
+
+# Old versions
+
+The following old versions are no longer supported. They are only listed
+here for historical interest.
+
+<table>
   <tr>
-    <td colspan="4" class="notice">
-      <b>Old versions below are unsupported</b>
-    </td>
+    <th>Version</th>
+    <th>x86-64</th>
+    <th>x86</th>
+    <th>ARMv8</th>
   </tr>
   <tr>
     <td>
@@ -202,60 +268,3 @@ maintain backward compatibility from version to version.
     <td>N/A</td>
   </tr>
 </table>
-
-
-# OS-Specific Packages
-
-## Fedora
-
-RPM packages are available from [the FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository):
-
-```elvish
-# Add FZUG repo
-dnf config-manager --add-repo=http://repo.fdzh.org/FZUG/FZUG.repo
-# Install Elvish
-dnf install elvish
-```
-
-## Debian / Ubuntu
-
-Elvish is packaged by [Debian](https://packages.debian.org/elvish) since
-buster and by [Ubuntu](http://packages.ubuntu.com/elvish) since 17.10.
-
-However, packages in official repositories are likely outdated. You can
-install the latest release from
-[PPA](https://launchpad.net/~zhsj/+archive/ubuntu/elvish):
-
-```elvish
-# Add Elvish PPA repo
-sudo wget -O /etc/apt/trusted.gpg.d/elvish \
-  'https://sks-keyservers.net/pks/lookup?search=0xE9EA75D542E35A20&options=mr&op=get'
-sudo gpg --dearmor /etc/apt/trusted.gpg.d/elvish
-sudo rm /etc/apt/trusted.gpg.d/elvish
-echo 'deb http://ppa.launchpad.net/zhsj/elvish/ubuntu xenial main' |
-  sudo tee /etc/apt/sources.list.d/elvish.list
-sudo apt-get update
-
-# Install Elvish
-sudo apt-get install elvish
-```
-
-## macOS (Homebrew)
-
-Elvish is packaged in Homebrew:
-
-```elvish
-# Install latest release
-brew install elvish
-# Or install HEAD:
-brew install --HEAD elvish
-```
-
-## OpenBSD
-
-Elvish is available in the official OpenBSD package repository. This will
-install the latest release:
-
-```elvish
-doas pkg_add elvish
-```
