@@ -275,7 +275,7 @@ brew install --HEAD elvish
 
 ## OpenBSD
 
-Elvish is available in the official OpenBSD package repository. It will
+Elvish is available in the official OpenBSD package repository. This will
 install the latest release:
 
 ```elvish
