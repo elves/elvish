@@ -11,9 +11,9 @@ export CGO_ENABLED=0
 
 # build $os $arch...
 build() {
-    local GOOS=$1
+    local GOARCH=$1
     shift
-    for GOARCH in $@; do
+    for GOOS in $@; do
         DST_DIR=$BIN_DIR/$GOOS-$GOARCH
         mkdir -p $DST_DIR
         buildone
@@ -54,6 +54,6 @@ buildone() {
     echo $DST_DIR/$ARCHIVE >> $MANIFEST
 }
 
-build linux   amd64 386 arm64
-build windows amd64 386
-build darwin  amd64
+build amd64 linux darwin freebsd openbsd netbsd windows
+build 386   linux windows
+build arm64 linux
