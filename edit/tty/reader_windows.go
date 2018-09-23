@@ -172,14 +172,14 @@ func convertEvent(event sys.InputEvent) Event {
 			return nil
 		}
 		r := rune(event.UChar[0]) + rune(event.UChar[1])<<8
-		mod := event.DwControlKeyState & (leftAlt | leftCtrl | rightAlt | rightCtrl | shift)
-		if mod == 0 {
+		filteredMod := event.DwControlKeyState & (leftAlt | leftCtrl | rightAlt | rightCtrl | shift)
+		if filteredMod == 0 {
 			// No modifier
 			// TODO: Deal with surrogate pairs
 			if 0x20 <= r && r != 0x7f {
 				return KeyEvent(ui.Key{Rune: r})
 			}
-		} else if mod == shift {
+		} else if filteredMod == shift {
 			// If only the shift is held down, we try and see if this is a
 			// non-functional key by looking if the rune generated is a
 			// printable ASCII character.
@@ -191,7 +191,7 @@ func convertEvent(event sys.InputEvent) Event {
 		if r == 0 {
 			return nil
 		}
-		mod := convertMod(event.DwControlKeyState)
+		mod := convertMod(filteredMod)
 		return KeyEvent(ui.Key{Rune: r, Mod: mod})
 	//case *sys.MouseEvent:
 	//case *sys.WindowBufferSizeEvent:
