@@ -13,20 +13,6 @@ type Config struct {
 	Mutex sync.RWMutex
 }
 
-// BeforeReadline returns c.Raw.BeforeReadline while r-locking c.Mutex.
-func (c *Config) BeforeReadline() []func() {
-	c.Mutex.RLock()
-	defer c.Mutex.RUnlock()
-	return c.Raw.BeforeReadline
-}
-
-// AfterReadline returns c.Raw.AfterReadline while r-locking c.Mutex.
-func (c *Config) AfterReadline() []func(string) {
-	c.Mutex.RLock()
-	defer c.Mutex.RUnlock()
-	return c.Raw.AfterReadline
-}
-
 func (c *Config) TriggerPrompts(force bool) {
 	c.Mutex.RLock()
 	defer c.Mutex.RUnlock()
@@ -40,12 +26,6 @@ func (c *Config) TriggerPrompts(force bool) {
 
 // RawConfig keeps configurations of the editor.
 type RawConfig struct {
-	// A list of functions called when ReadCode starts.
-	BeforeReadline []func()
-	// A list of functions called when ReadCode ends; the argument is the code
-	// that has been read.
-	AfterReadline []func(string)
-
 	// Maximum lines of the terminal the editor may use. If MaxHeight <= 0,
 	// there is no limit.
 	MaxHeight int

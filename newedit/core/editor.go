@@ -21,6 +21,12 @@ type Editor struct {
 
 	Config Config
 	State  types.State
+
+	// If not nil, will be called when ReadCode starts.
+	BeforeReadline func()
+	// If not nil, will be called when ReadCode ends; the argument is the code
+	// that has been read.
+	AfterReadline func(string)
 }
 
 // NewEditor creates a new editor from its two dependencies. The creation does
@@ -130,15 +136,14 @@ func (ed *Editor) ReadCode() (string, error) {
 	defer ed.State.Reset()
 
 	// BeforeReadline and AfterReadline hooks.
-	for _, f := range ed.Config.BeforeReadline() {
-		f()
+	if ed.BeforeReadline != nil {
+		ed.BeforeReadline()
 	}
-	defer func() {
-		code := ed.State.Code()
-		for _, f := range ed.Config.AfterReadline() {
-			f(code)
-		}
-	}()
+	if ed.AfterReadline != nil {
+		defer func() {
+			ed.AfterReadline(ed.State.Code())
+		}()
+	}
 
 	return ed.loop.Run()
 }
