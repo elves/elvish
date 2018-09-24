@@ -55,6 +55,7 @@ buildone() {
     )
 
     echo " -> Done"
+    echo $GOOS-$GOARCH/$BIN >> $MANIFEST
     echo $GOOS-$GOARCH/$ARCHIVE >> $MANIFEST
 }
 
