@@ -3,6 +3,10 @@
 # Should be invoked from repo root. Required environment variables:
 # $TRAVIS_BRANCH $BINTRAY_CREDENTIAL
 
+# Manipulate the GOROOT so that it does not contain the Go version number
+ln -s `go env GOROOT` $TRAVIS_HOME/goroot
+export GOROOT=$TRAVIS_HOME/goroot
+
 if [ "$TRAVIS_BRANCH" = master ]; then
     export VERSION=HEAD
 else
