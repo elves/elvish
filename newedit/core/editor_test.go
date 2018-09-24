@@ -17,12 +17,12 @@ import (
 func TestReadCode_AbortsOnSetupError(t *testing.T) {
 	ed, terminal, _ := setup()
 
-	terminal.setupErr = errors.New("a fake error")
+	terminal.SetupErr = errors.New("a fake error")
 
 	_, err := ed.ReadCode()
 
-	if err != terminal.setupErr {
-		t.Errorf("ReadCode returns error %v, want %v", err, terminal.setupErr)
+	if err != terminal.SetupErr {
+		t.Errorf("ReadCode returns error %v, want %v", err, terminal.SetupErr)
 	}
 }
 
@@ -30,8 +30,8 @@ func TestReadCode_CallsRestore(t *testing.T) {
 	ed, terminal, _ := setup()
 
 	restoreCalled := 0
-	terminal.restoreFunc = func() { restoreCalled++ }
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	terminal.RestoreFunc = func() { restoreCalled++ }
+	terminal.EventCh <- tty.KeyEvent{Rune: '\n'}
 
 	ed.ReadCode()
 
@@ -43,7 +43,7 @@ func TestReadCode_CallsRestore(t *testing.T) {
 func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 	ed, terminal, _ := setup()
 
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	terminal.EventCh <- tty.KeyEvent{Rune: '\n'}
 	ed.State.Raw.Code = "some code"
 
 	ed.ReadCode()
@@ -58,9 +58,9 @@ func TestReadCode_PassesInputEventsToMode(t *testing.T) {
 
 	m := &fakeMode{maxKeys: 3}
 	ed.State.Raw.Mode = m
-	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
-	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
-	terminal.eventCh <- tty.KeyEvent{Rune: 'c'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'b'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'c'}
 
 	ed.ReadCode()
 
@@ -78,7 +78,7 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 	called := 0
 	ed.Config.Raw.BeforeReadline = []func(){func() { called++ }}
 	// Causes BasicMode to quit
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	terminal.EventCh <- tty.KeyEvent{Rune: '\n'}
 
 	ed.ReadCode()
 
@@ -97,10 +97,10 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 		code = s
 	}}
 	// Causes BasicMode to write state.Code and then quit
-	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
-	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
-	terminal.eventCh <- tty.KeyEvent{Rune: 'c'}
-	terminal.eventCh <- tty.KeyEvent{Rune: '\n'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'b'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'c'}
+	terminal.EventCh <- tty.KeyEvent{Rune: '\n'}
 
 	ed.ReadCode()
 
@@ -122,7 +122,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 
 	codeCh, _ := ed.readCodeAsync()
 
-	buf1 := <-terminal.bufCh
+	buf1 := <-terminal.BufCh
 	// Make sure that normally the height does exceed maxHeight.
 	if h := len(buf1.Lines); h <= maxHeight {
 		t.Errorf("Buffer height is %d, should > %d", h, maxHeight)
@@ -134,7 +134,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 
 	ed.Redraw(false)
 
-	buf2 := <-terminal.bufCh
+	buf2 := <-terminal.BufCh
 	if h := len(buf2.Lines); h > maxHeight {
 		t.Errorf("Buffer height is %d, should <= %d", h, maxHeight)
 	}
@@ -151,16 +151,16 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 		return styled.Text{
 			&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 	}
-	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
-	terminal.eventCh <- tty.KeyEvent{Rune: 'b'}
-	terminal.eventCh <- tty.KeyEvent{Rune: 'c'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'b'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'c'}
 
 	codeCh, _ := ed.readCodeAsync()
 
 	wantBuf := ui.NewBufferBuilder(80).
 		WriteString("abc", "31" /* SGR for red foreground */).
 		SetDotToCursor().Buffer()
-	if !checkBuffer(wantBuf, terminal.bufCh) {
+	if !checkBuffer(wantBuf, terminal.BufCh) {
 		t.Errorf("Did not see buffer containing highlighted code")
 	}
 
@@ -175,14 +175,14 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 	ed, terminal, _ := setup()
 
 	ed.Config.Raw.Prompt = constPrompt{styled.Unstyled("> ")}
-	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
 
 	wantBuf := ui.NewBufferBuilder(80).
 		WriteUnstyled("> a").
 		SetDotToCursor().Buffer()
-	if !checkBuffer(wantBuf, terminal.bufCh) {
+	if !checkBuffer(wantBuf, terminal.BufCh) {
 		t.Errorf("Did not see buffer containing prompt")
 	}
 
@@ -194,13 +194,13 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 
 	terminal.width = 4
 	ed.Config.Raw.RPrompt = constPrompt{styled.Unstyled("R")}
-	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
 
 	wantBuf := ui.NewBufferBuilder(4).
 		WriteUnstyled("a").SetDotToCursor().WriteUnstyled("  R").Buffer()
-	if !checkBuffer(wantBuf, terminal.bufCh) {
+	if !checkBuffer(wantBuf, terminal.BufCh) {
 		t.Errorf("Did not see buffer containing rprompt")
 	}
 
@@ -218,14 +218,14 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 
 	// Sanity-check initial state.
 	initBuf := ui.NewBufferBuilder(80).Buffer()
-	if !checkBuffer(initBuf, terminal.bufCh) {
+	if !checkBuffer(initBuf, terminal.BufCh) {
 		t.Errorf("did not get initial state")
 	}
 
 	ed.Notify("note")
 
 	wantNotesBuf := ui.NewBufferBuilder(80).WriteUnstyled("note").Buffer()
-	if !checkBuffer(wantNotesBuf, terminal.notesBufCh) {
+	if !checkBuffer(wantNotesBuf, terminal.NotesBufCh) {
 		t.Errorf("did not render notes")
 	}
 
@@ -249,14 +249,14 @@ func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 	// Wait until a non-final state is drawn.
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("s").SetDotToCursor().
 		WriteUnstyled("ome code").Buffer()
-	if !checkBuffer(wantBuf, terminal.bufCh) {
+	if !checkBuffer(wantBuf, terminal.BufCh) {
 		t.Errorf("did not get expected buffer before sending Enter")
 	}
 
 	cleanup(terminal, codeCh)
 
 	// Last element in bufs is nil
-	finalBuf := terminal.bufs[len(terminal.bufs)-2]
+	finalBuf := terminal.Bufs[len(terminal.Bufs)-2]
 	wantFinalBuf := ui.NewBufferBuilder(80).WriteUnstyled("some code").
 		SetDotToCursor().Buffer()
 	if !reflect.DeepEqual(finalBuf, wantFinalBuf) {
@@ -267,17 +267,17 @@ func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 	ed, terminal, sigs := setup()
 
-	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
 
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
 		SetDotToCursor().Buffer()
-	if !checkBuffer(wantBuf, terminal.bufCh) {
+	if !checkBuffer(wantBuf, terminal.BufCh) {
 		t.Errorf("did not get expected buffer before sending SIGHUP")
 	}
 
-	sigs.ch <- syscall.SIGHUP
+	sigs.Ch <- syscall.SIGHUP
 
 	select {
 	case <-codeCh:
@@ -290,19 +290,19 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 func TestReadCode_ResetsOnSIGHUP(t *testing.T) {
 	ed, terminal, sigs := setup()
 
-	terminal.eventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
 		SetDotToCursor().Buffer()
-	if !checkBuffer(wantBuf, terminal.bufCh) {
+	if !checkBuffer(wantBuf, terminal.BufCh) {
 		t.Errorf("did not get expected buffer before sending SIGINT")
 	}
 
-	sigs.ch <- syscall.SIGINT
+	sigs.Ch <- syscall.SIGINT
 
 	wantBuf = ui.NewBufferBuilder(80).Buffer()
-	if !checkBuffer(wantBuf, terminal.bufCh) {
+	if !checkBuffer(wantBuf, terminal.BufCh) {
 		t.Errorf("Terminal state is not reset after SIGINT")
 	}
 
@@ -319,32 +319,32 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("1234567890").
 		SetDotToCursor().Buffer()
-	if !checkBuffer(wantBuf, terminal.bufCh) {
+	if !checkBuffer(wantBuf, terminal.BufCh) {
 		t.Errorf("did not get expected buffer before sending SIGWINCH")
 	}
 
-	terminal.setSize(24, 4)
-	sigs.ch <- sys.SIGWINCH
+	terminal.SetSize(24, 4)
+	sigs.Ch <- sys.SIGWINCH
 
 	wantBuf = ui.NewBufferBuilder(4).WriteUnstyled("1234567890").
 		SetDotToCursor().Buffer()
-	if !checkBuffer(wantBuf, terminal.bufCh) {
+	if !checkBuffer(wantBuf, terminal.BufCh) {
 		t.Errorf("Terminal is not redrawn after SIGWINCH")
 	}
 
 	cleanup(terminal, codeCh)
 }
 
-func setup() (*Editor, *fakeTTY, *fakeSignalSource) {
-	terminal := newFakeTTY()
-	sigsrc := newFakeSignalSource()
+func setup() (*Editor, *FakeTTY, *FakeSignalSource) {
+	terminal := NewFakeTTY()
+	sigsrc := NewFakeSignalSource()
 	ed := NewEditor(terminal, sigsrc)
 	return ed, terminal, sigsrc
 }
 
-func cleanup(t *fakeTTY, codeCh <-chan string) {
+func cleanup(t *FakeTTY, codeCh <-chan string) {
 	// Causes BasicMode to quit
-	t.eventCh <- tty.KeyEvent{Rune: '\n'}
+	t.EventCh <- tty.KeyEvent{Rune: '\n'}
 	// Wait until ReadCode has finished execution
 	<-codeCh
 }

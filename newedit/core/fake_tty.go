@@ -16,79 +16,92 @@ const (
 	maxEvents = 1024
 )
 
-// An implementation of the TTY interface.
-type fakeTTY struct {
+// FakeTTY is an implementation of the TTY interface that is useful in tests.
+type FakeTTY struct {
+	// Callback to be returned from Setup.
+	RestoreFunc func()
+	// Error to be returned from Setup.
+	SetupErr error
+
+	// Channel returned from StartRead. Can be used to inject additional events.
+	EventCh chan tty.Event
+
+	// Channel for publishing updates of the main buffer and notes buffer.
+	BufCh, NotesBufCh chan *ui.Buffer
+	// Records history of the main buffer and notes buffer.
+	Bufs, NotesBufs []*ui.Buffer
+
 	sizeMutex sync.RWMutex
 	// Predefined sizes.
 	height, width int
-	// Callback to be returned from Setup.
-	restoreFunc func()
-	// Error to be returned from Setup.
-	setupErr error
-
-	// Channel returned from StartRead. Can be used to inject additional events.
-	eventCh chan tty.Event
-
-	// Channel for publishing updates of the main buffer and notes buffer.
-	bufCh, notesBufCh chan *ui.Buffer
-	// Records history of the main buffer and notes buffer.
-	bufs, notesBufs []*ui.Buffer
 }
 
-func newFakeTTY() *fakeTTY {
-	return &fakeTTY{
-		height: 24, width: 80,
-		restoreFunc: func() {},
-		eventCh:     make(chan tty.Event, maxEvents),
-		bufCh:       make(chan *ui.Buffer, maxBufferUpdates),
-		notesBufCh:  make(chan *ui.Buffer, maxBufferUpdates),
+// NewFakeTTY creates a new FakeTTY.
+func NewFakeTTY() *FakeTTY {
+	return &FakeTTY{
+		RestoreFunc: func() {},
+		EventCh:     make(chan tty.Event, maxEvents),
+		BufCh:       make(chan *ui.Buffer, maxBufferUpdates),
+		NotesBufCh:  make(chan *ui.Buffer, maxBufferUpdates),
+		height:      24, width: 80,
 	}
 }
 
-func (t *fakeTTY) Setup() (func(), error) {
-	return t.restoreFunc, t.setupErr
+// Setup returns t.RestoreFunc and t.SetupErr.
+func (t *FakeTTY) Setup() (func(), error) {
+	return t.RestoreFunc, t.SetupErr
 }
 
-func (t *fakeTTY) Size() (h, w int) {
+// Size returns the size previously set by SetSize.
+func (t *FakeTTY) Size() (h, w int) {
 	t.sizeMutex.RLock()
 	defer t.sizeMutex.RUnlock()
 	return t.height, t.width
 }
 
-func (t *fakeTTY) setSize(h, w int) {
+// SetSize sets the size that will be returned by Size.
+func (t *FakeTTY) SetSize(h, w int) {
 	t.sizeMutex.Lock()
 	defer t.sizeMutex.Unlock()
 	t.height, t.width = h, w
 }
 
-func (t *fakeTTY) StartInput() <-chan tty.Event {
-	return t.eventCh
+// StartInput returns t.EventCh.
+func (t *FakeTTY) StartInput() <-chan tty.Event {
+	return t.EventCh
 }
 
-func (t *fakeTTY) SetRawInput(b bool) {}
+// SetRawInput does nothing.
+func (t *FakeTTY) SetRawInput(b bool) {}
 
-func (t *fakeTTY) StopInput() { close(t.eventCh) }
+// StopInput closes t.EventCh
+func (t *FakeTTY) StopInput() { close(t.EventCh) }
 
-func (t *fakeTTY) Newline() {}
+// Newline does nothing.
+func (t *FakeTTY) Newline() {}
 
-func (t *fakeTTY) Buffer() *ui.Buffer { return t.bufs[len(t.bufs)-1] }
+// Buffer returns the last recorded buffer.
+func (t *FakeTTY) Buffer() *ui.Buffer { return t.Bufs[len(t.Bufs)-1] }
 
-func (t *fakeTTY) ResetBuffer() { t.recordBuf(nil) }
+// ResetBuffer records a nil buffer.
+func (t *FakeTTY) ResetBuffer() { t.recordBuf(nil) }
 
-func (t *fakeTTY) UpdateBuffer(bufNotes, buf *ui.Buffer, _ bool) error {
+// UpdateBuffer records a new pair of buffers, i.e. sending them to their
+// respective channels and appending them to their respective slices.
+func (t *FakeTTY) UpdateBuffer(bufNotes, buf *ui.Buffer, _ bool) error {
 	t.recordNotesBuf(bufNotes)
 	t.recordBuf(buf)
 	return nil
 }
 
-func (t *fakeTTY) recordBuf(buf *ui.Buffer) {
-	t.bufs = append(t.bufs, buf)
-	t.bufCh <- buf
+func (t *FakeTTY) recordBuf(buf *ui.Buffer) {
+	t.Bufs = append(t.Bufs, buf)
+	t.BufCh <- buf
 }
 
-func (t *fakeTTY) recordNotesBuf(buf *ui.Buffer) {
-	t.notesBufs = append(t.notesBufs, buf)
-	t.notesBufCh <- buf
+func (t *FakeTTY) recordNotesBuf(buf *ui.Buffer) {
+	t.NotesBufs = append(t.NotesBufs, buf)
+	t.NotesBufCh <- buf
 }
 
 var checkBufferTimeout = time.Second
