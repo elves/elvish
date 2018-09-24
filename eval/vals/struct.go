@@ -91,7 +91,7 @@ func (s *Struct) Assoc(k, v interface{}) (interface{}, error) {
 	return &Struct{s.descriptor, fields}, nil
 }
 
-func (s *Struct) IterateKey(f func(interface{}) bool) {
+func (s *Struct) IterateKeys(f func(interface{}) bool) {
 	for _, field := range s.descriptor.fieldNames {
 		if !f(string(field)) {
 			break

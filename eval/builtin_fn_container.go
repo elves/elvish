@@ -161,10 +161,16 @@ func hasValue(container, value interface{}) (bool, error) {
 	}
 }
 
+type hasKeyer interface {
+	HasKey(interface{}) bool
+}
+
 func hasKey(container, key interface{}) (bool, error) {
 	switch container := container.(type) {
 	case hashmap.Map:
 		return hashmap.HasKey(container, key), nil
+	case hasKeyer:
+		return container.HasKey(key), nil
 	default:
 		if len := vals.Len(container); len >= 0 {
 			// XXX(xiaq): Not all types that implement Lener have numerical indices
