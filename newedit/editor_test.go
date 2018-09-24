@@ -7,9 +7,19 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
+var devNull *os.File
+
+func init() {
+	f, err := os.Open(os.DevNull)
+	if err != nil {
+		panic(err)
+	}
+	devNull = f
+}
+
 func TestNs(t *testing.T) {
 	ev := eval.NewEvaler()
-	ed := NewEditor(os.Stdin, os.Stdout, ev)
+	ed := NewEditor(devNull, devNull, ev)
 	ev.Global.AddNs("edit", ed.Ns())
 
 	ev.EvalSource(eval.NewScriptSource("[t]", "[t]", "edit:max-height = 20"))
