@@ -15,8 +15,6 @@ import (
 // time as well as its dependencies.
 type Editor struct {
 	loop *loop.Loop
-	// Internal dependencies
-	render renderCb
 	// External dependencies
 	tty  TTY
 	sigs SignalSource
@@ -30,7 +28,7 @@ type Editor struct {
 // immediately active.
 func NewEditor(t TTY, sigs SignalSource) *Editor {
 	lp := loop.New()
-	ed := &Editor{loop: lp, render: render, tty: t, sigs: sigs}
+	ed := &Editor{loop: lp, tty: t, sigs: sigs}
 	lp.HandleCb(ed.handle)
 	lp.RedrawCb(ed.redraw)
 	return ed
@@ -75,7 +73,7 @@ func (ed *Editor) redraw(flag loop.RedrawFlag) {
 	height, width := ed.tty.Size()
 	setup := makeRenderSetup(&ed.Config, height, width)
 
-	bufNotes, bufMain := ed.render(rawState, setup)
+	bufNotes, bufMain := render(rawState, setup)
 
 	ed.tty.UpdateBuffer(bufNotes, bufMain, flag&loop.FullRedraw != 0)
 	if final {
