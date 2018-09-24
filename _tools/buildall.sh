@@ -21,9 +21,13 @@ build() {
 }
 
 # buildone
-# Uses: $GOOS $GOARCH $DST_DIR
+# Uses: $GOOS $GOARCH $BIN_DIR $MANIFEST
 buildone() {
-    STEM=elvish-$VERSION
+    local DST_DIR=$BIN_DIR/$GOOS-$GOARCH
+    local STEM=elvish-$VERSION
+
+    mkdir -p $DST_DIR
+
     if test $GOOS = windows; then
         BIN=$STEM.exe
         ARCHIVE=$STEM.zip
@@ -51,7 +55,7 @@ buildone() {
     )
 
     echo " -> Done"
-    echo $DST_DIR/$ARCHIVE >> $MANIFEST
+    echo $GOOS-$GOARCH/$ARCHIVE >> $MANIFEST
 }
 
 build amd64 linux darwin freebsd openbsd netbsd windows

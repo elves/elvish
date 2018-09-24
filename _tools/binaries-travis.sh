@@ -11,7 +11,7 @@ fi
 MANIFEST=_bin/manifest ./_tools/buildall.sh
 
 cat _bin/manifest | while read f; do
-    echo Deploying $f
-    curl -T $f -u$BINTRAY_CREDENTIAL \
+    echo "Deploying $f"
+    curl -T _bin/$f -u$BINTRAY_CREDENTIAL \
         https://api.bintray.com/content/elves/elvish/elvish/$VERSION/$f'?publish=1&override=1'
 done
