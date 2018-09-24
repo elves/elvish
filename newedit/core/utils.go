@@ -5,9 +5,12 @@ import (
 	"github.com/elves/elvish/newedit/utils"
 )
 
-func getMode(m types.Mode) types.Mode {
-	if m == nil {
-		return utils.BasicMode{}
+// Returns the first non-nil value. If all are nil, return utils.BasicMode{}
+func getMode(modes ...types.Mode) types.Mode {
+	for _, mode := range modes {
+		if mode != nil {
+			return mode
+		}
 	}
-	return m
+	return utils.BasicMode{}
 }

@@ -34,6 +34,9 @@ type Editor struct {
 
 	// Left-hand and right-hand prompt.
 	Prompt, RPrompt Prompt
+
+	// Initial mode.
+	InitMode types.Mode
 }
 
 // NewEditor creates a new editor from its two dependencies. The creation does
@@ -61,7 +64,7 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 		}
 		return "", false
 	case tty.Event:
-		action := getMode(ed.State.Mode()).HandleEvent(e, &ed.State)
+		action := getMode(ed.State.Mode(), ed.InitMode).HandleEvent(e, &ed.State)
 
 		switch action {
 		case types.CommitCode:
@@ -98,7 +101,8 @@ func (ed *Editor) redraw(flag loop.RedrawFlag) {
 	}
 	setup := &renderSetup{
 		height, width,
-		promptGet(ed.Prompt), promptGet(ed.RPrompt), ed.Highlighter}
+		promptGet(ed.Prompt), promptGet(ed.RPrompt),
+		ed.Highlighter, ed.InitMode}
 
 	bufNotes, bufMain := render(rawState, setup)
 

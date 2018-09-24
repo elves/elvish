@@ -17,6 +17,8 @@ type renderSetup struct {
 	rprompt styled.Text
 
 	highlighter Highlighter
+
+	initMode types.Mode
 }
 
 // Renders the editor state.
@@ -37,7 +39,7 @@ func render(st *types.RawState, r *renderSetup) (notes, main *ui.Buffer) {
 	bufCode := bbCode.Buffer()
 
 	bbMain := ui.NewBufferBuilder(r.width)
-	(&mainRenderer{r.height, bufCode, st.Mode}).Render(bbMain)
+	(&mainRenderer{r.height, bufCode, getMode(st.Mode, r.initMode)}).Render(bbMain)
 
 	return bufNotes, bbMain.Buffer()
 }
