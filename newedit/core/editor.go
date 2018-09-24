@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/newedit/loop"
 	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
 
@@ -27,6 +28,12 @@ type Editor struct {
 	// If not nil, will be called when ReadCode ends; the argument is the code
 	// that has been read.
 	AfterReadline func(string)
+
+	// Callback for highlighting the code the user has typed.
+	Highlighter Highlighter
+
+	// Left-hand and right-hand prompt.
+	Prompt, RPrompt Prompt
 }
 
 // NewEditor creates a new editor from its two dependencies. The creation does
@@ -48,7 +55,7 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 			return "", true
 		case syscall.SIGINT:
 			ed.State.Reset()
-			ed.Config.TriggerPrompts(true)
+			ed.triggerPrompts(true)
 		case sys.SIGWINCH:
 			ed.Redraw(true)
 		}
@@ -60,10 +67,19 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 		case types.CommitCode:
 			return ed.State.Code(), true
 		}
-		ed.Config.TriggerPrompts(false)
+		ed.triggerPrompts(false)
 		return "", false
 	default:
 		panic("unreachable")
+	}
+}
+
+func (ed *Editor) triggerPrompts(force bool) {
+	if ed.Prompt != nil {
+		ed.Prompt.Trigger(force)
+	}
+	if ed.RPrompt != nil {
+		ed.RPrompt.Trigger(force)
 	}
 }
 
@@ -77,7 +93,12 @@ func (ed *Editor) redraw(flag loop.RedrawFlag) {
 	}
 
 	height, width := ed.tty.Size()
-	setup := makeRenderSetup(&ed.Config, height, width)
+	if maxHeight := ed.Config.MaxHeight(); maxHeight > 0 && maxHeight < height {
+		height = maxHeight
+	}
+	setup := &renderSetup{
+		height, width,
+		promptGet(ed.Prompt), promptGet(ed.RPrompt), ed.Highlighter}
 
 	bufNotes, bufMain := render(rawState, setup)
 
@@ -129,7 +150,7 @@ func (ed *Editor) ReadCode() (string, error) {
 		}()
 	}
 
-	ed.Config.TriggerPrompts(true)
+	ed.triggerPrompts(true)
 	// TODO: relay late prompt/rprompt updates.
 
 	// Reset state before returning.
@@ -171,4 +192,15 @@ func (ed *Editor) Redraw(full bool) {
 func (ed *Editor) Notify(note string) {
 	ed.State.AddNote(note)
 	ed.Redraw(false)
+}
+
+// Highlighter is the type of callbacks for highlighting code.
+type Highlighter func(string) (styled.Text, []error)
+
+// Calls the highlighter, falling back to no highlighting if hl is nil.
+func (hl Highlighter) call(code string) (styled.Text, []error) {
+	if hl == nil {
+		return styled.Unstyled(code), nil
+	}
+	return hl(code)
 }

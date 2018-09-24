@@ -19,17 +19,6 @@ type renderSetup struct {
 	highlighter Highlighter
 }
 
-func makeRenderSetup(c *Config, h, w int) *renderSetup {
-	c.Mutex.RLock()
-	defer c.Mutex.RUnlock()
-	if c.Raw.MaxHeight > 0 && c.Raw.MaxHeight < h {
-		h = c.Raw.MaxHeight
-	}
-	return &renderSetup{
-		h, w,
-		promptGet(c.Raw.Prompt), promptGet(c.Raw.RPrompt), c.Raw.Highlighter}
-}
-
 // Renders the editor state.
 func render(st *types.RawState, r *renderSetup) (notes, main *ui.Buffer) {
 	var bufNotes *ui.Buffer

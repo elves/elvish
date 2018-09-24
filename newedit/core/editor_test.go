@@ -147,7 +147,7 @@ var bufChTimeout = 1 * time.Second
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	ed, terminal, _ := setup()
 
-	ed.Config.Raw.Highlighter = func(code string) (styled.Text, []error) {
+	ed.Highlighter = func(code string) (styled.Text, []error) {
 		return styled.Text{
 			&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 	}
@@ -174,7 +174,7 @@ func TestReadCode_RendersErrorFromHighlighter(t *testing.T) {
 func TestReadCode_RendersPrompt(t *testing.T) {
 	ed, terminal, _ := setup()
 
-	ed.Config.Raw.Prompt = constPrompt{styled.Unstyled("> ")}
+	ed.Prompt = constPrompt{styled.Unstyled("> ")}
 	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
@@ -193,7 +193,7 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 	ed, terminal, _ := setup()
 
 	terminal.width = 4
-	ed.Config.Raw.RPrompt = constPrompt{styled.Unstyled("R")}
+	ed.RPrompt = constPrompt{styled.Unstyled("R")}
 	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()

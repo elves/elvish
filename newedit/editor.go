@@ -23,17 +23,14 @@ type Editor struct {
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	ed := core.NewEditor(core.NewTTY(in, out), core.NewSignalSource())
-	ed.Config.Raw.Highlighter = highlight.Highlight
+	ed.Highlighter = highlight.Highlight
 
 	ns := eval.NewNs().
 		Add("max-height", vars.FromPtrWithMutex(
 			&ed.Config.Raw.MaxHeight, &ed.Config.Mutex))
 
-	ed.Config.Raw = core.RawConfig{
-		Highlighter: highlight.Highlight,
-		Prompt:      makePrompt(ed, ev, ns, defaultPrompt, "prompt"),
-		RPrompt:     makePrompt(ed, ev, ns, defaultRPrompt, "rprompt"),
-	}
+	ed.Prompt = makePrompt(ed, ev, ns, defaultPrompt, "prompt")
+	ed.RPrompt = makePrompt(ed, ev, ns, defaultRPrompt, "rprompt")
 
 	return &Editor{ed, ns}
 }

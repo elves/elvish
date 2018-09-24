@@ -21,7 +21,7 @@ func TestMakePrompt_ElvishVariableLinksToPromptConfig(t *testing.T) {
 		"[t]", "[t]", "ed:prompt = { put 'CUSTOM PROMPT' }"))
 
 	// TODO: Use p.Get() and avoid type assertion
-	p := ed.core.Config.Raw.Prompt.(*prompt.Prompt)
+	p := ed.core.Prompt.(*prompt.Prompt)
 	content := p.Config().Raw.Compute()
 
 	want := styled.Unstyled("CUSTOM PROMPT")
