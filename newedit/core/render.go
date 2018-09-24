@@ -16,10 +16,10 @@ type renderSetup struct {
 	prompt  styled.Text
 	rprompt styled.Text
 
-	highlighter types.Highlighter
+	highlighter Highlighter
 }
 
-func makeRenderSetup(c *types.Config, h, w int) *renderSetup {
+func makeRenderSetup(c *Config, h, w int) *renderSetup {
 	c.Mutex.RLock()
 	defer c.Mutex.RUnlock()
 	if c.Raw.MaxHeight > 0 && c.Raw.MaxHeight < h {
@@ -55,7 +55,7 @@ func render(st *types.RawState, r *renderSetup) (notes, main *ui.Buffer) {
 
 var transformerForPending = "underline"
 
-func prepareCode(code string, dot int, pending *types.PendingCode, hl types.Highlighter) (
+func prepareCode(code string, dot int, pending *types.PendingCode, hl Highlighter) (
 	styledCode styled.Text, newDot int, errors []error) {
 
 	newDot = dot
@@ -67,7 +67,7 @@ func prepareCode(code string, dot int, pending *types.PendingCode, hl types.High
 			newDot = pending.Begin + len(pending.Text)
 		}
 	}
-	styledCode, errors = hl.Call(code)
+	styledCode, errors = hl.call(code)
 	// TODO: Apply transformerForPending to pending.Begin to pending.Begin +
 	// len(pending.Text)
 	return styledCode, newDot, errors

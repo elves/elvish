@@ -21,7 +21,7 @@ type Editor struct {
 	tty  TTY
 	sigs SignalSource
 
-	Config types.Config
+	Config Config
 	State  types.State
 }
 
