@@ -19,10 +19,6 @@ type BindingMap = eddefs.BindingMap
 
 var EmptyBindingMap = eddefs.EmptyBindingMap
 
-type notifier interface {
-	Notify(string)
-}
-
 func keyHandlerFromBinding(nt notifier, ev *eval.Evaler, m *BindingMap) func(ui.Key) types.HandlerAction {
 	return func(k ui.Key) types.HandlerAction {
 		f := m.GetOrDefault(k)
@@ -96,14 +92,3 @@ func makeNotifyPort(notify func(string)) (*eval.Port, func()) {
 	}
 	return port, cleanup
 }
-
-// A notifier implementation that does nothing. Useful in tests.
-type dummyNotifier struct{}
-
-func (dummyNotifier) Notify(_ string) {}
-
-// A notifier implementation that records all Notify calls it has seen. Useful
-// in tests.
-type fakeNotifier struct{ notes []string }
-
-func (n *fakeNotifier) Notify(note string) { n.notes = append(n.notes, note) }

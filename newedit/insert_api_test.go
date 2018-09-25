@@ -13,7 +13,7 @@ import (
 var abbrData = [][2]string{{"xx", "xx full"}, {"yy", "yy full"}}
 
 func TestInitInsert_Abbr(t *testing.T) {
-	m, ns := initInsert(dummyNotifier{}, eval.NewEvaler())
+	m, ns := initInsert(dummyEditor{}, eval.NewEvaler())
 
 	abbrValue := vals.EmptyMap
 	for _, pair := range abbrData {
@@ -32,7 +32,7 @@ func TestInitInsert_Abbr(t *testing.T) {
 }
 
 func TestInitInsert_Binding(t *testing.T) {
-	m, ns := initInsert(dummyNotifier{}, eval.NewEvaler())
+	m, ns := initInsert(dummyEditor{}, eval.NewEvaler())
 	called := 0
 	binding, err := EmptyBindingMap.Assoc("a",
 		eval.NewBuiltinFn("test binding", func() { called++ }))
@@ -49,11 +49,24 @@ func TestInitInsert_Binding(t *testing.T) {
 }
 
 func TestInitInsert_QuotePaste(t *testing.T) {
-	m, ns := initInsert(dummyNotifier{}, eval.NewEvaler())
+	m, ns := initInsert(dummyEditor{}, eval.NewEvaler())
 
 	ns["quote-paste"].Set(true)
 
 	if !m.Config.QuotePaste() {
 		t.Errorf("QuotePaste not set via namespae")
+	}
+}
+
+func TestInitInsert_Start(t *testing.T) {
+	ed := &fakeEditor{}
+	ev := eval.NewEvaler()
+	m, ns := initInsert(ed, ev)
+
+	fm := eval.NewTopFrame(ev, eval.NewInternalSource("[test]"), nil)
+	fm.Call(ns["start"+eval.FnSuffix].Get().(eval.Callable), nil, eval.NoOpts)
+
+	if ed.state.Mode() != m {
+		t.Errorf("state is not insert mode after calling start")
 	}
 }

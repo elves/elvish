@@ -9,20 +9,23 @@ import (
 )
 
 // Initializes states for the insert mode and its API.
-func initInsert(nt notifier, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
+func initInsert(ed editor, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
 	abbr := vals.EmptyMap
 	binding := EmptyBindingMap
 
 	m := &insert.Mode{
-		KeyHandler:  keyHandlerFromBinding(nt, ev, &binding),
+		KeyHandler:  keyHandlerFromBinding(ed, ev, &binding),
 		AbbrIterate: func(cb func(a, f string)) { abbrIterate(abbr, cb) },
 	}
 
-	ns := eval.NewNs().
-		Add("binding", vars.FromPtr(&binding)).
-		Add("abbr", vars.FromPtr(&abbr)).
-		Add("quote-paste",
-			vars.FromPtrWithMutex(&m.Config.Raw.QuotePaste, &m.Config.Mutex))
+	ns := eval.Ns{
+		"binding": vars.FromPtr(&binding),
+		"abbr":    vars.FromPtr(&abbr),
+		"quote-paste": vars.FromPtrWithMutex(
+			&m.Config.Raw.QuotePaste, &m.Config.Mutex),
+	}.AddBuiltinFns("[insert mode]", map[string]interface{}{
+		"start": func() { ed.State().SetMode(m) },
+	})
 
 	return m, ns
 }

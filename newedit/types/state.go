@@ -35,6 +35,13 @@ func (s *State) Mode() Mode {
 	return s.Raw.Mode
 }
 
+// SetMode sets the current mode.
+func (s *State) SetMode(mode Mode) {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+	s.Raw.Mode = mode
+}
+
 // Code returns the code.
 func (s *State) Code() string {
 	s.Mutex.RLock()
