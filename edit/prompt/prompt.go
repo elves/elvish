@@ -59,7 +59,7 @@ type prompt struct {
 	lastMutex *sync.RWMutex
 }
 
-var unknownContent = []*ui.Styled{&ui.Styled{"???> ", ui.Styles{}}}
+var unknownContent = []*ui.Styled{{"???> ", ui.Styles{}}}
 
 func makePrompt(ed eddefs.Editor, fn eval.Callable) *prompt {
 	p := &prompt{

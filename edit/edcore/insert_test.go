@@ -98,7 +98,7 @@ var (
 		tt.Args(moveTestBuffer, 33).Rets(37),
 		tt.Args(moveTestBuffer, 37).Rets(40),
 	}
-	
+
 	// alphanumeric boundaries: 0 5 16 20 23 33
 	moveDotLeftAlphanumericTests = tt.Table{
 		tt.Args(moveTestBuffer, 0).Rets(0),

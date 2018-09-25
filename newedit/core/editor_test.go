@@ -65,7 +65,7 @@ func TestReadCode_PassesInputEventsToMode(t *testing.T) {
 	ed.ReadCode()
 
 	wantKeysHandled := []ui.Key{
-		ui.Key{Rune: 'a'}, ui.Key{Rune: 'b'}, ui.Key{Rune: 'c'},
+		{Rune: 'a'}, {Rune: 'b'}, {Rune: 'c'},
 	}
 	if !reflect.DeepEqual(m.keysHandled, wantKeysHandled) {
 		t.Errorf("Mode gets keys %v, want %v", m.keysHandled, wantKeysHandled)

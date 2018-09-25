@@ -23,17 +23,17 @@ var partitionTests = tt.Table{
 	Args(text0).Rets([]Text{text0}),
 	Args(text1).Rets([]Text{text1}),
 	Args(text1, 0).Rets([]Text{text0, text1}),
-	Args(text1, 1).Rets([]Text{Text{red("l")}, Text{red("orem")}}),
+	Args(text1, 1).Rets([]Text{{red("l")}, {red("orem")}}),
 	Args(text1, 5).Rets([]Text{text1, text0}),
 	Args(text2).Rets([]Text{text2}),
 	Args(text2, 0).Rets([]Text{text0, text2}),
 	Args(text2, 1).Rets([]Text{
-		Text{red("l")}, Text{red("orem"), blue("foobar")}}),
+		{red("l")}, {red("orem"), blue("foobar")}}),
 	Args(text2, 2).Rets([]Text{
-		Text{red("lo")}, Text{red("rem"), blue("foobar")}}),
-	Args(text2, 5).Rets([]Text{Text{red("lorem")}, Text{blue("foobar")}}),
+		{red("lo")}, {red("rem"), blue("foobar")}}),
+	Args(text2, 5).Rets([]Text{{red("lorem")}, {blue("foobar")}}),
 	Args(text2, 6).Rets([]Text{
-		Text{red("lorem"), blue("f")}, Text{blue("oobar")}}),
+		{red("lorem"), blue("f")}, {blue("oobar")}}),
 	Args(text2, 11).Rets([]Text{text2, text0}),
 }
 
