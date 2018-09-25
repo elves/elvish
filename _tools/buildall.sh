@@ -57,6 +57,16 @@ buildone() {
     echo " -> Done"
     echo $GOOS-$GOARCH/$BIN >> $MANIFEST
     echo $GOOS-$GOARCH/$ARCHIVE >> $MANIFEST
+
+    if which sha256sum; then
+        (
+        cd $DST_DIR
+        sha256sum < $BIN > $BIN.sha256sum
+        sha256sum < $ARCHIVE > $ARCHIVE.sha256sum
+        )
+        echo $GOOS-$GOARCH/$BIN.sha256sum >> $MANIFEST
+        echo $GOOS-$GOARCH/$ARCHIVE.sha256sum >> $MANIFEST
+    fi
 }
 
 build amd64 linux darwin freebsd openbsd netbsd windows
