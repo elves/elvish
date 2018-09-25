@@ -111,7 +111,6 @@ func fromJSON(fm *Frame) error {
 		}
 		out <- FromJSONInterface(v)
 	}
-	return nil
 }
 
 func toLines(fm *Frame, inputs Inputs) {
