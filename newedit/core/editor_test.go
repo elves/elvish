@@ -44,11 +44,11 @@ func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 	ed, terminal, _ := setup()
 
 	terminal.EventCh <- tty.KeyEvent{Rune: '\n'}
-	ed.State.Raw.Code = "some code"
+	ed.state.Raw.Code = "some code"
 
 	ed.ReadCode()
 
-	if code := ed.State.Raw.Code; code != "" {
+	if code := ed.state.Raw.Code; code != "" {
 		t.Errorf("Editor state has code %q, want empty", code)
 	}
 }
@@ -57,7 +57,7 @@ func TestReadCode_PassesInputEventsToMode(t *testing.T) {
 	ed, terminal, _ := setup()
 
 	m := &fakeMode{maxKeys: 3}
-	ed.State.Raw.Mode = m
+	ed.state.Raw.Mode = m
 	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 	terminal.EventCh <- tty.KeyEvent{Rune: 'b'}
 	terminal.EventCh <- tty.KeyEvent{Rune: 'c'}
@@ -117,8 +117,8 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 
 	maxHeight := 5
 	// Will fill more than maxHeight but less than terminal height
-	ed.State.Raw.Code = strings.Repeat("a", 80*10)
-	ed.State.Raw.Dot = len(ed.State.Raw.Code)
+	ed.state.Raw.Code = strings.Repeat("a", 80*10)
+	ed.state.Raw.Dot = len(ed.state.Raw.Code)
 
 	codeCh, _ := ed.readCodeAsync()
 
@@ -229,7 +229,7 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 		t.Errorf("did not render notes")
 	}
 
-	if n := len(ed.State.Raw.Notes); n > 0 {
+	if n := len(ed.state.Raw.Notes); n > 0 {
 		t.Errorf("State.Raw.Notes has %d elements after redrawing, want 0", n)
 	}
 
@@ -239,10 +239,10 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 	ed, terminal, _ := setup()
 
-	ed.State.Raw.Code = "some code"
+	ed.state.Raw.Code = "some code"
 	// We use the dot as a signal for distinguishing non-final and final state.
 	// In the final state, the dot will be set to the length of the code (9).
-	ed.State.Raw.Dot = 1
+	ed.state.Raw.Dot = 1
 
 	codeCh, _ := ed.readCodeAsync()
 
@@ -312,8 +312,8 @@ func TestReadCode_ResetsOnSIGHUP(t *testing.T) {
 func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	ed, terminal, sigs := setup()
 
-	ed.State.Raw.Code = "1234567890"
-	ed.State.Raw.Dot = len(ed.State.Raw.Code)
+	ed.state.Raw.Code = "1234567890"
+	ed.state.Raw.Dot = len(ed.state.Raw.Code)
 
 	codeCh, _ := ed.readCodeAsync()
 

@@ -91,7 +91,7 @@ func testCallPrompt(t *testing.T, fsrc string, want styled.Text, wantErr bool) {
 		t.Errorf("get prompt result %v, want %v", content, want)
 	}
 
-	notes := ed.core.State.Raw.Notes
+	notes := ed.core.State().Raw.Notes
 	if wantErr {
 		if len(notes) == 0 {
 			t.Errorf("got no error, want errors")

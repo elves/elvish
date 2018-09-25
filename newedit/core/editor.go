@@ -20,8 +20,10 @@ type Editor struct {
 	tty  TTY
 	sigs SignalSource
 
+	state types.State
+
+	// Editor configuration that can be modified concurrently.
 	Config Config
-	State  types.State
 
 	// If not nil, will be called when ReadCode starts.
 	BeforeReadline func()
@@ -50,6 +52,11 @@ func NewEditor(t TTY, sigs SignalSource) *Editor {
 	return ed
 }
 
+// State returns the editor state.
+func (ed *Editor) State() *types.State {
+	return &ed.state
+}
+
 func (ed *Editor) handle(e loop.Event) (string, bool) {
 	switch e := e.(type) {
 	case os.Signal:
@@ -57,18 +64,18 @@ func (ed *Editor) handle(e loop.Event) (string, bool) {
 		case syscall.SIGHUP:
 			return "", true
 		case syscall.SIGINT:
-			ed.State.Reset()
+			ed.state.Reset()
 			ed.triggerPrompts(true)
 		case sys.SIGWINCH:
 			ed.Redraw(true)
 		}
 		return "", false
 	case tty.Event:
-		action := getMode(ed.State.Mode(), ed.InitMode).HandleEvent(e, &ed.State)
+		action := getMode(ed.state.Mode(), ed.InitMode).HandleEvent(e, &ed.state)
 
 		switch action {
 		case types.CommitCode:
-			return ed.State.Code(), true
+			return ed.state.Code(), true
 		}
 		ed.triggerPrompts(false)
 		return "", false
@@ -90,9 +97,9 @@ func (ed *Editor) redraw(flag loop.RedrawFlag) {
 	var rawState *types.RawState
 	final := flag&loop.FinalRedraw != 0
 	if final {
-		rawState = ed.State.Finalize()
+		rawState = ed.state.Finalize()
 	} else {
-		rawState = ed.State.PopForRedraw()
+		rawState = ed.state.PopForRedraw()
 	}
 
 	height, width := ed.tty.Size()
@@ -158,7 +165,7 @@ func (ed *Editor) ReadCode() (string, error) {
 	// TODO: relay late prompt/rprompt updates.
 
 	// Reset state before returning.
-	defer ed.State.Reset()
+	defer ed.state.Reset()
 
 	// BeforeReadline and AfterReadline hooks.
 	if ed.BeforeReadline != nil {
@@ -166,7 +173,7 @@ func (ed *Editor) ReadCode() (string, error) {
 	}
 	if ed.AfterReadline != nil {
 		defer func() {
-			ed.AfterReadline(ed.State.Code())
+			ed.AfterReadline(ed.state.Code())
 		}()
 	}
 
@@ -194,7 +201,7 @@ func (ed *Editor) Redraw(full bool) {
 
 // Notify adds a note and requests a redraw.
 func (ed *Editor) Notify(note string) {
-	ed.State.AddNote(note)
+	ed.state.AddNote(note)
 	ed.Redraw(false)
 }
 
