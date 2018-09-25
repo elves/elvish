@@ -1,6 +1,10 @@
 package types
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/elves/elvish/edit/ui"
+)
 
 // State wraps RawState, providing methods for concurrency-safe access. The
 // getter methods also paper over nil values to make the empty State value more
@@ -25,7 +29,8 @@ func (s *State) PopForRedraw() *RawState {
 func (s *State) Finalize() *RawState {
 	s.Mutex.RLock()
 	defer s.Mutex.RUnlock()
-	return &RawState{dummyMode{}, s.Raw.Code, len(s.Raw.Code), nil, s.Raw.Notes}
+	return &RawState{
+		dummyMode{}, s.Raw.Code, len(s.Raw.Code), nil, s.Raw.Notes, ui.Key{}, 0}
 }
 
 // Mode returns the current mode.
@@ -77,6 +82,34 @@ func (s *State) AddNote(note string) {
 	s.Raw.Notes = append(s.Raw.Notes, note)
 }
 
+// LastKey returns LastKey from the raw state.
+func (s *State) LastKey() ui.Key {
+	s.Mutex.RLock()
+	defer s.Mutex.RUnlock()
+	return s.Raw.LastKey
+}
+
+// SetLastKey sets LastKey of the raw state.
+func (s *State) SetLastKey(k ui.Key) {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+	s.Raw.LastKey = k
+}
+
+// NextAction returns NextAction from the raw state.
+func (s *State) NextAction() HandlerAction {
+	s.Mutex.RLock()
+	defer s.Mutex.RUnlock()
+	return s.Raw.NextAction
+}
+
+// SetNextAction sets NextAction of the raw state.
+func (s *State) SetNextAction(a HandlerAction) {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+	s.Raw.NextAction = a
+}
+
 // Reset resets the internal state to an empty value.
 func (s *State) Reset() {
 	s.Mutex.Lock()
@@ -96,6 +129,11 @@ type RawState struct {
 	Pending *PendingCode
 	// Notes that have been added since the last redraw.
 	Notes []string
+
+	// Last key that was pressed. Used in key handlers.
+	LastKey ui.Key
+	// The handler action to return. Used in key handlers.
+	NextAction HandlerAction
 }
 
 // PendingCode represents pending code, such as during completion.
