@@ -25,7 +25,14 @@ type notifier interface {
 
 func keyHandlerFromBinding(nt notifier, ev *eval.Evaler, m *BindingMap) func(ui.Key) types.HandlerAction {
 	return func(k ui.Key) types.HandlerAction {
-		return callBinding(nt, ev, m.GetOrDefault(k))
+		f := m.GetOrDefault(k)
+		// TODO: Make this fallback part of GetOrDefault after moving BindingMap
+		// into this package.
+		if f == nil {
+			nt.Notify("Unbound: " + k.String())
+			return types.NoAction
+		}
+		return callBinding(nt, ev, f)
 	}
 }
 

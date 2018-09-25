@@ -5,8 +5,54 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/newedit/types"
 )
+
+func TestKeyHandlerFromBinding(t *testing.T) {
+	called := 0
+	binding := buildBinding(
+		"a", eval.NewBuiltinFn("test binding", func() { called++ }))
+	handler := keyHandlerFromBinding(dummyNotifier{}, eval.NewEvaler(), &binding)
+
+	action := handler(ui.Key{Rune: 'a'})
+
+	if called != 1 {
+		t.Errorf("Binding called %d, want once", called)
+	}
+	if action != types.NoAction {
+		t.Errorf("Binding returned %v, want NoAction", action)
+	}
+}
+
+func TestKeyHandlerFromBinding_Fallback(t *testing.T) {
+	nt := &fakeNotifier{}
+	binding := EmptyBindingMap
+	handler := keyHandlerFromBinding(nt, eval.NewEvaler(), &binding)
+
+	action := handler(ui.Key{Rune: 'a'})
+
+	wantNotes := []string{"Unbound: a"}
+	if !reflect.DeepEqual(nt.notes, wantNotes) {
+		t.Errorf("Notes %v, want %v", nt.notes, wantNotes)
+	}
+	if action != types.NoAction {
+		t.Errorf("Fallback binding returned %v, want NoAction", action)
+	}
+}
+
+func buildBinding(data ...interface{}) BindingMap {
+	binding := EmptyBindingMap
+	for i := 0; i < len(data); i += 2 {
+		result, err := EmptyBindingMap.Assoc(data[i], data[i+1])
+		if err != nil {
+			panic(err)
+		}
+		binding = result.(BindingMap)
+	}
+	return binding
+}
 
 func TestCallBinding_CallsFunction(t *testing.T) {
 	ev := eval.NewEvaler()
