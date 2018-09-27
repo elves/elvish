@@ -86,18 +86,22 @@ func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
 	case strings.HasPrefix(modifier, "but:"):
 		gp.Buts = append(gp.Buts, modifier[len("but:"):])
 	case modifier == "match-hidden":
-		lastSeg := gp.mustGetLastWildSeg()
+		lastSeg, err := gp.lastWildSeg()
+		if err != nil {
+			return nil, err
+		}
 		gp.Segments[len(gp.Segments)-1] = glob.Wild{
 			lastSeg.Type, true, lastSeg.Matchers,
 		}
 	default:
-		if matcher, ok := runeMatchers[modifier]; ok {
-			gp.addMatcher(matcher)
+		var matcher func(rune) bool
+		if m, ok := runeMatchers[modifier]; ok {
+			matcher = m
 		} else if strings.HasPrefix(modifier, "set:") {
 			set := modifier[len("set:"):]
-			gp.addMatcher(func(r rune) bool {
+			matcher = func(r rune) bool {
 				return strings.ContainsRune(set, r)
-			})
+			}
 		} else if strings.HasPrefix(modifier, "range:") {
 			rangeExpr := modifier[len("range:"):]
 			badRangeExpr := fmt.Errorf("bad range modifier: %s", parse.Quote(rangeExpr))
@@ -108,19 +112,21 @@ func (gp GlobPattern) Index(k interface{}) (interface{}, error) {
 			from, sep, to := runes[0], runes[1], runes[2]
 			switch sep {
 			case '-':
-				gp.addMatcher(func(r rune) bool {
+				matcher = func(r rune) bool {
 					return from <= r && r <= to
-				})
+				}
 			case '~':
-				gp.addMatcher(func(r rune) bool {
+				matcher = func(r rune) bool {
 					return from <= r && r < to
-				})
+				}
 			default:
 				return nil, badRangeExpr
 			}
 		} else {
 			return nil, fmt.Errorf("unknown modifier %s", vals.Repr(modifierv, vals.NoPretty))
 		}
+		err := gp.addMatcher(matcher)
+		return gp, err
 	}
 	return gp, nil
 }
@@ -153,22 +159,26 @@ func (gp GlobPattern) RConcat(v interface{}) (interface{}, error) {
 	return nil, vals.ErrConcatNotImplemented
 }
 
-func (gp *GlobPattern) mustGetLastWildSeg() glob.Wild {
+func (gp *GlobPattern) lastWildSeg() (glob.Wild, error) {
 	if len(gp.Segments) == 0 {
-		throw(ErrBadGlobPattern)
+		return glob.Wild{}, ErrBadGlobPattern
 	}
 	if !glob.IsWild(gp.Segments[len(gp.Segments)-1]) {
-		throw(ErrMustFollowWildcard)
+		return glob.Wild{}, ErrMustFollowWildcard
 	}
-	return gp.Segments[len(gp.Segments)-1].(glob.Wild)
+	return gp.Segments[len(gp.Segments)-1].(glob.Wild), nil
 }
 
-func (gp *GlobPattern) addMatcher(matcher func(rune) bool) {
-	lastSeg := gp.mustGetLastWildSeg()
+func (gp *GlobPattern) addMatcher(matcher func(rune) bool) error {
+	lastSeg, err := gp.lastWildSeg()
+	if err != nil {
+		return err
+	}
 	gp.Segments[len(gp.Segments)-1] = glob.Wild{
 		lastSeg.Type, lastSeg.MatchHidden,
 		append(lastSeg.Matchers, matcher),
 	}
+	return nil
 }
 
 func (gp *GlobPattern) append(segs ...glob.Segment) {
