@@ -16,7 +16,10 @@ var _ vars.Var = PwdVariable{}
 
 func (PwdVariable) Get() interface{} {
 	pwd, err := os.Getwd()
-	maybeThrow(err)
+	// TODO: Deprecate the $pwd variable.
+	if err != nil {
+		return "/unknown/pwd"
+	}
 	return pwd
 }
 

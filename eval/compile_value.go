@@ -101,8 +101,11 @@ func (op compoundOp) Invoke(fm *Frame) ([]interface{}, error) {
 		newvs := make([]interface{}, 0, len(vs))
 		for _, v := range vs {
 			if gp, ok := v.(GlobPattern); ok {
-				// Logger.Printf("globbing %v", gp)
-				newvs = append(newvs, doGlob(gp, fm.Interrupts())...)
+				results, err := doGlob(gp, fm.Interrupts())
+				if err != nil {
+					return nil, err
+				}
+				newvs = append(newvs, results...)
 			} else {
 				newvs = append(newvs, v)
 			}

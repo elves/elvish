@@ -616,12 +616,15 @@ type tryOp struct {
 
 func (op *tryOp) Invoke(fm *Frame) error {
 	body := op.bodyOp.execlambdaOp(fm)
-	exceptVar := op.exceptVarOp.execMustOne(fm)
+	exceptVar, err := op.exceptVarOp.execMustOne(fm)
+	if err != nil {
+		return err
+	}
 	except := op.exceptOp.execlambdaOp(fm)
 	else_ := op.elseOp.execlambdaOp(fm)
 	finally := op.finallyOp.execlambdaOp(fm)
 
-	err := fm.fork("try body").Call(body, NoArgs, NoOpts)
+	err = fm.fork("try body").Call(body, NoArgs, NoOpts)
 	if err != nil {
 		if except != nil {
 			if exceptVar != nil {
@@ -662,17 +665,19 @@ func (op ValuesOp) execlambdaOp(fm *Frame) Callable {
 	return values[0].(Callable)
 }
 
-// execMustOne executes the LValuesOp and raises an exception if it does not
+// execMustOne executes the LValuesOp and returns an error if it does not
 // evaluate to exactly one Variable. If the given LValuesOp is empty, it returns
 // nil.
-func (op LValuesOp) execMustOne(fm *Frame) vars.Var {
+func (op LValuesOp) execMustOne(fm *Frame) (vars.Var, error) {
 	if op.Body == nil {
-		return nil
+		return nil, nil
 	}
 	variables, err := op.Exec(fm)
-	maybeThrow(err)
+	if err != nil {
+		return nil, err
+	}
 	if len(variables) != 1 {
 		fm.errorpf(op.Begin, op.End, "should be one variable")
 	}
-	return variables[0]
+	return variables[0], nil
 }

@@ -136,7 +136,9 @@ func (bac *builtinArgCompleter) Repr(int) string {
 }
 
 func (bac *builtinArgCompleter) Call(ec *eval.Frame, args []interface{}, opts map[string]interface{}) error {
-	eval.TakeNoOpt(opts)
+	if len(opts) > 0 {
+		return eval.ErrNoOptAccepted
+	}
 	words := make([]string, len(args))
 	for i, arg := range args {
 		s, ok := arg.(string)

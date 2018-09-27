@@ -126,14 +126,17 @@ func toLines(fm *Frame, inputs Inputs) {
 }
 
 // toJSON converts a stream of Value's to JSON data.
-func toJSON(fm *Frame, inputs Inputs) {
-	out := fm.ports[1].File
+func toJSON(fm *Frame, inputs Inputs) error {
+	encoder := json.NewEncoder(fm.OutputFile())
 
-	enc := json.NewEncoder(out)
+	var errEncode error
 	inputs(func(v interface{}) {
-		err := enc.Encode(v)
-		maybeThrow(err)
+		if errEncode != nil {
+			return
+		}
+		errEncode = encoder.Encode(v)
 	})
+	return errEncode
 }
 
 func fopen(fm *Frame, name string) (vals.File, error) {

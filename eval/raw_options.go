@@ -4,6 +4,7 @@ import (
 	"errors"
 	"reflect"
 
+	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -41,14 +42,11 @@ func (rawOpts RawOptions) Scan(ptr interface{}) {
 		if !ok {
 			throwf("unknown option %s", parse.Quote(k))
 		}
-		mustScanToGo(v, struc.Field(fieldIdx).Addr().Interface())
+		err := vals.ScanToGo(v, struc.Field(fieldIdx).Addr().Interface())
+		if err != nil {
+			throw(err)
+		}
 	}
 }
 
 var ErrNoOptAccepted = errors.New("no option accepted")
-
-func TakeNoOpt(opts map[string]interface{}) {
-	if len(opts) > 0 {
-		throw(ErrNoOptAccepted)
-	}
-}

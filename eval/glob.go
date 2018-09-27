@@ -209,7 +209,7 @@ func stringToSegments(s string) []glob.Segment {
 	return segs
 }
 
-func doGlob(gp GlobPattern, abort <-chan struct{}) []interface{} {
+func doGlob(gp GlobPattern, abort <-chan struct{}) ([]interface{}, error) {
 	but := make(map[string]struct{})
 	for _, s := range gp.Buts {
 		but[s] = struct{}{}
@@ -228,10 +228,10 @@ func doGlob(gp GlobPattern, abort <-chan struct{}) []interface{} {
 		}
 		return true
 	}) {
-		throw(ErrInterrupted)
+		return nil, ErrInterrupted
 	}
 	if len(vs) == 0 && !gp.Flags.Has(NoMatchOK) {
-		throw(ErrWildcardNoMatch)
+		return nil, ErrWildcardNoMatch
 	}
-	return vs
+	return vs, nil
 }

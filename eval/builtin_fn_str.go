@@ -55,10 +55,14 @@ func toString(fm *Frame, args ...interface{}) {
 }
 
 // joins joins all input strings with a delimiter.
-func joins(sep string, inputs Inputs) string {
+func joins(sep string, inputs Inputs) (string, error) {
 	var buf bytes.Buffer
+	var errJoin error
 	first := true
 	inputs(func(v interface{}) {
+		if errJoin != nil {
+			return
+		}
 		if s, ok := v.(string); ok {
 			if first {
 				first = false
@@ -67,10 +71,10 @@ func joins(sep string, inputs Inputs) string {
 			}
 			buf.WriteString(s)
 		} else {
-			throwf("join wants string input, got %s", vals.Kind(v))
+			errJoin = fmt.Errorf("join wants string input, got %s", vals.Kind(v))
 		}
 	})
-	return buf.String()
+	return buf.String(), errJoin
 }
 
 // splits splits an argument strings by a delimiter and writes all pieces.

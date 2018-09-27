@@ -42,7 +42,9 @@ func (ctx *Frame) Unwrap(desc string, begin, end int, vs []interface{}) ValuesUn
 // values.
 func (ctx *Frame) ExecAndUnwrap(desc string, op ValuesOp) ValuesUnwrapper {
 	values, err := op.Exec(ctx)
-	maybeThrow(err)
+	if err != nil {
+		throw(err)
+	}
 	return ctx.Unwrap(desc, op.Begin, op.End, values)
 }
 

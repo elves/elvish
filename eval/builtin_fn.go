@@ -175,7 +175,9 @@ func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface
 					f(v)
 					return true
 				})
-				maybeThrow(err)
+				if err != nil {
+					throw(err)
+				}
 			})
 		}
 		in = append(in, reflect.ValueOf(inputs))
