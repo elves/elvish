@@ -7,7 +7,6 @@ import (
 
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
-	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/vector"
 )
 
@@ -21,15 +20,18 @@ var fns = map[string]interface{}{
 	"split":   split,
 }
 
-func match(rawOpts eval.RawOptions, argPattern, source string) bool {
+func match(rawOpts eval.RawOptions, argPattern, source string) (bool, error) {
 	opts := struct{ Posix bool }{}
 	rawOpts.Scan(&opts)
 
-	pattern := makePattern(argPattern, opts.Posix, false)
-	return pattern.MatchString(source)
+	pattern, err := makePattern(argPattern, opts.Posix, false)
+	if err != nil {
+		return false, err
+	}
+	return pattern.MatchString(source), nil
 }
 
-func find(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) {
+func find(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) error {
 	out := fm.OutputChan()
 	opts := struct {
 		Posix   bool
@@ -38,7 +40,10 @@ func find(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) {
 	}{Max: -1}
 	rawOpts.Scan(&opts)
 
-	pattern := makePattern(argPattern, opts.Posix, opts.Longest)
+	pattern, err := makePattern(argPattern, opts.Posix, opts.Longest)
+	if err != nil {
+		return err
+	}
 	matches := pattern.FindAllSubmatchIndex([]byte(source), opts.Max)
 
 	for _, match := range matches {
@@ -56,6 +61,7 @@ func find(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) {
 		}
 		out <- newMatch(source[start:end], start, end, groups)
 	}
+	return nil
 }
 
 func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl interface{}, source string) (string, error) {
@@ -67,7 +73,10 @@ func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl
 	}{}
 	rawOpts.Scan(&opts)
 
-	pattern := makePattern(argPattern, opts.Posix, opts.Longest)
+	pattern, err := makePattern(argPattern, opts.Posix, opts.Longest)
+	if err != nil {
+		return "", err
+	}
 
 	if opts.Literal {
 		repl, ok := argRepl.(string)
@@ -82,20 +91,30 @@ func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl
 		case string:
 			return pattern.ReplaceAllString(source, repl), nil
 		case eval.Callable:
+			var errReplace error
 			replFunc := func(s string) string {
+				if errReplace != nil {
+					return ""
+				}
 				values, err := fm.CaptureOutput(repl, []interface{}{s}, eval.NoOpts)
-				maybeThrow(err)
+				if err != nil {
+					errReplace = err
+					return ""
+				}
 				if len(values) != 1 {
-					throwf("replacement function must output exactly one value, got %d", len(values))
+					errReplace = fmt.Errorf("replacement function must output exactly one value, got %d", len(values))
+					return ""
 				}
 				output, ok := values[0].(string)
 				if !ok {
-					throwf("replacement function must output one string, got %s",
+					errReplace = fmt.Errorf(
+						"replacement function must output one string, got %s",
 						vals.Kind(values[0]))
+					return ""
 				}
 				return output
 			}
-			return pattern.ReplaceAllStringFunc(source, replFunc), nil
+			return pattern.ReplaceAllStringFunc(source, replFunc), errReplace
 		default:
 			return "", fmt.Errorf(
 				"replacement must be string or function, got %s",
@@ -104,7 +123,7 @@ func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl
 	}
 }
 
-func split(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) {
+func split(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) error {
 	out := fm.OutputChan()
 	opts := struct {
 		Posix   bool
@@ -113,37 +132,32 @@ func split(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) {
 	}{Max: -1}
 	rawOpts.Scan(&opts)
 
-	pattern := makePattern(argPattern, opts.Posix, opts.Longest)
+	pattern, err := makePattern(argPattern, opts.Posix, opts.Longest)
+	if err != nil {
+		return err
+	}
 
 	pieces := pattern.Split(source, opts.Max)
 	for _, piece := range pieces {
 		out <- piece
 	}
+	return nil
 }
 
-func makePattern(argPattern string, optPOSIX, optLongest bool) *regexp.Regexp {
-	var (
-		pattern *regexp.Regexp
-		err     error
-	)
-	if optPOSIX {
-		pattern, err = regexp.CompilePOSIX(string(argPattern))
-	} else {
-		pattern, err = regexp.Compile(string(argPattern))
+func makePattern(p string, posix, longest bool) (*regexp.Regexp, error) {
+	pattern, err := compile(p, posix)
+	if err != nil {
+		return nil, err
 	}
-	maybeThrow(err)
-	if optLongest {
+	if longest {
 		pattern.Longest()
 	}
-	return pattern
+	return pattern, nil
 }
 
-func throwf(format string, args ...interface{}) {
-	util.Throw(fmt.Errorf(format, args...))
-}
-
-func maybeThrow(err error) {
-	if err != nil {
-		util.Throw(err)
+func compile(pattern string, posix bool) (*regexp.Regexp, error) {
+	if posix {
+		return regexp.CompilePOSIX(pattern)
 	}
+	return regexp.Compile(pattern)
 }
