@@ -1,7 +1,6 @@
 package eval
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/elves/elvish/parse"
@@ -10,10 +9,6 @@ import (
 
 func throw(e error) {
 	util.Throw(e)
-}
-
-func throwf(format string, args ...interface{}) {
-	util.Throw(fmt.Errorf(format, args...))
 }
 
 func mustGetHome(uname string) string {

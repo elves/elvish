@@ -529,7 +529,7 @@ func (op *mapPairsOp) Invoke(fm *Frame) ([]interface{}, error) {
 			return nil, err
 		}
 		if len(keys) != len(values) {
-			fm.errorpf(op.begins[i], op.ends[i],
+			return nil, fm.errorpf(op.begins[i], op.ends[i],
 				"%d keys but %d values", len(keys), len(values))
 		}
 		for j, key := range keys {

@@ -155,14 +155,14 @@ func (op *delElemOp) Invoke(fm *Frame) error {
 			return err
 		}
 		if len(indexValues) != 1 {
-			fm.errorpf(indexOp.Begin, indexOp.End, "index must evaluate to a single value in argument to del")
+			return fm.errorpf(indexOp.Begin, indexOp.End, "index must evaluate to a single value in argument to del")
 		}
 		indicies = append(indicies, indexValues[0])
 	}
 	err := vars.DelElement(fm.ResolveVar(op.ns, op.name), indicies)
 	if err != nil {
 		if level := vars.ElementErrorLevel(err); level >= 0 {
-			fm.errorpf(op.begin, op.ends[level], "%s", err.Error())
+			return fm.errorpf(op.begin, op.ends[level], "%s", err.Error())
 		}
 		return err
 	}
@@ -518,7 +518,7 @@ func (op *forOp) Invoke(fm *Frame) error {
 		return err
 	}
 	if len(variables) != 1 {
-		fm.errorpf(op.varOp.Begin, op.varOp.End, "only one variable allowed")
+		return fm.errorpf(op.varOp.Begin, op.varOp.End, "only one variable allowed")
 	}
 	variable := variables[0]
 	iterable := fm.ExecAndUnwrap("value being iterated", op.iterOp).One().Any()
@@ -677,7 +677,7 @@ func (op LValuesOp) execMustOne(fm *Frame) (vars.Var, error) {
 		return nil, err
 	}
 	if len(variables) != 1 {
-		fm.errorpf(op.Begin, op.End, "should be one variable")
+		return nil, fm.errorpf(op.Begin, op.End, "should be one variable")
 	}
 	return variables[0], nil
 }

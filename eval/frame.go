@@ -2,6 +2,7 @@ package eval
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -206,9 +207,9 @@ func (fm *Frame) addTraceback() *stackTrace {
 	}
 }
 
-// errorpf stops the ec.eval immediately by panicking with a diagnostic message.
-// The panic is supposed to be caught by ec.eval.
-func (fm *Frame) errorpf(begin, end int, format string, args ...interface{}) {
+// Amends the being and end of the current frame and returns the result of
+// fmt.Errorf.
+func (fm *Frame) errorpf(begin, end int, format string, args ...interface{}) error {
 	fm.begin, fm.end = begin, end
-	throwf(format, args...)
+	return fmt.Errorf(format, args...)
 }

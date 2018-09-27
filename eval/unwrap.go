@@ -26,8 +26,8 @@ type unwrapperInner struct {
 
 func (u *unwrapperInner) error(want, gotfmt string, gotargs ...interface{}) {
 	got := fmt.Sprintf(gotfmt, gotargs...)
-	u.ctx.errorpf(u.begin, u.end, "%s must be %s; got %s", u.description,
-		want, got)
+	throw(u.ctx.errorpf(u.begin, u.end, "%s must be %s; got %s", u.description,
+		want, got))
 }
 
 // ValuesUnwrapper unwraps []Value.
