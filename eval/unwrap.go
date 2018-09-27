@@ -11,7 +11,7 @@ import (
 // asserting certain properties of values and throwing exceptions when such
 // properties are not satisfied.
 
-type unwrapperInner struct {
+type unwrapper struct {
 	// ctx is the evaluation context.
 	ctx *Frame
 	// description describes what is being unwrapped. It is used in error
@@ -22,30 +22,27 @@ type unwrapperInner struct {
 	begin, end int
 	// values contain the Value's to unwrap.
 	values []interface{}
+	// Any errors during the unwrapping.
+	err error
 }
 
-func (u *unwrapperInner) error(want, gotfmt string, gotargs ...interface{}) {
+func (u *unwrapper) error(want, gotfmt string, gotargs ...interface{}) {
+	if u.err != nil {
+		return
+	}
 	got := fmt.Sprintf(gotfmt, gotargs...)
-	throw(u.ctx.errorpf(u.begin, u.end, "%s must be %s; got %s", u.description,
-		want, got))
+	u.err = u.ctx.errorpf(
+		u.begin, u.end, "%s must be %s; got %s", u.description, want, got)
 }
 
 // ValuesUnwrapper unwraps []Value.
-type ValuesUnwrapper struct{ *unwrapperInner }
-
-// Unwrap creates an Unwrapper.
-func (ctx *Frame) Unwrap(desc string, begin, end int, vs []interface{}) ValuesUnwrapper {
-	return ValuesUnwrapper{&unwrapperInner{ctx, desc, begin, end, vs}}
-}
+type ValuesUnwrapper struct{ *unwrapper }
 
 // ExecAndUnwrap executes a ValuesOp and creates an Unwrapper for the obtained
 // values.
 func (ctx *Frame) ExecAndUnwrap(desc string, op ValuesOp) ValuesUnwrapper {
 	values, err := op.Exec(ctx)
-	if err != nil {
-		throw(err)
-	}
-	return ctx.Unwrap(desc, op.Begin, op.End, values)
+	return ValuesUnwrapper{&unwrapper{ctx, desc, op.Begin, op.End, values, err}}
 }
 
 // One unwraps the value to be exactly one value.
@@ -53,53 +50,68 @@ func (u ValuesUnwrapper) One() ValueUnwrapper {
 	if len(u.values) != 1 {
 		u.error("a single value", "%d values", len(u.values))
 	}
-	return ValueUnwrapper{u.unwrapperInner}
+	return ValueUnwrapper{u.unwrapper}
 }
 
 // ValueUnwrapper unwraps one Value.
-type ValueUnwrapper struct{ *unwrapperInner }
+type ValueUnwrapper struct{ *unwrapper }
 
-func (u ValueUnwrapper) Any() interface{} {
-	return u.values[0]
+func (u ValueUnwrapper) Any() (interface{}, error) {
+	if u.err != nil {
+		return nil, u.err
+	}
+	return u.values[0], u.err
 }
 
-func (u ValueUnwrapper) String() string {
+func (u ValueUnwrapper) String() (string, error) {
+	if u.err != nil {
+		return "", u.err
+	}
 	s, ok := u.values[0].(string)
 	if !ok {
 		u.error("string", "%s", vals.Kind(u.values[0]))
 	}
-	return s
+	return s, u.err
 }
 
-func (u ValueUnwrapper) Int() int {
-	s := u.String()
+func (u ValueUnwrapper) Int() (int, error) {
+	s, err := u.String()
+	if err != nil {
+		return 0, u.err
+	}
 	i, err := strconv.Atoi(s)
 	if err != nil {
 		u.error("integer", "%s", s)
 	}
-	return i
+	return i, u.err
 }
 
-func (u ValueUnwrapper) NonNegativeInt() int {
-	i := u.Int()
+func (u ValueUnwrapper) NonNegativeInt() (int, error) {
+	i, err := u.Int()
+	if err != nil {
+		return 0, err
+	}
 	if i < 0 {
 		u.error("non-negative int", "%d", i)
 	}
-	return i
+	return i, u.err
 }
 
-func (u ValueUnwrapper) FdOrClose() int {
-	s := u.String()
-	if s == "-" {
-		return -1
+func (u ValueUnwrapper) FdOrClose() (int, error) {
+	s, err := u.String()
+	if err == nil && s == "-" {
+		return -1, nil
 	}
 	return u.NonNegativeInt()
 }
 
-func (u ValueUnwrapper) Callable() Callable {
+func (u ValueUnwrapper) Callable() (Callable, error) {
+	if u.err != nil {
+		return nil, u.err
+	}
 	c, ok := u.values[0].(Callable)
 	if !ok {
 		u.error("callable", "%s", vals.Kind(u.values[0]))
 	}
-	return c
+	return c, u.err
 }

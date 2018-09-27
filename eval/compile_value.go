@@ -481,10 +481,12 @@ func (op *lambdaOp) Invoke(fm *Frame) ([]interface{}, error) {
 	}
 	optDefaults := make([]interface{}, len(op.optDefaultOps))
 	for i, op := range op.optDefaultOps {
-		defaultValue := fm.ExecAndUnwrap("option default value", op).One().Any()
+		defaultValue, err := fm.ExecAndUnwrap("option default value", op).One().Any()
+		if err != nil {
+			return nil, err
+		}
 		optDefaults[i] = defaultValue
 	}
-	// XXX(xiaq): Capture uses.
 	return []interface{}{&Closure{op.argNames, op.restArgName, op.optNames, optDefaults, op.subop, evCapture, op.srcMeta, op.defBegin, op.defEnd}}, nil
 }
 

@@ -325,7 +325,10 @@ func (op *formOp) Invoke(fm *Frame) (errRet error) {
 	var args []interface{}
 	if op.headOp.Body != nil {
 		// head
-		headFn = fm.ExecAndUnwrap("head of command", op.headOp).One().Callable()
+		headFn, errRet = fm.ExecAndUnwrap("head of command", op.headOp).One().Callable()
+		if errRet != nil {
+			return errRet
+		}
 
 		// args
 		for _, argOp := range op.argOps {
@@ -499,11 +502,15 @@ func (op *redirOp) Invoke(fm *Frame) error {
 		case parse.Write, parse.ReadWrite, parse.Append:
 			dst = 1
 		default:
-			panic("bad RedirMode; parser bug")
+			return fmt.Errorf("bad RedirMode; parser bug")
 		}
 	} else {
+		var err error
 		// dst must be a valid fd
-		dst = fm.ExecAndUnwrap("Fd", op.dstOp).One().NonNegativeInt()
+		dst, err = fm.ExecAndUnwrap("Fd", op.dstOp).One().NonNegativeInt()
+		if err != nil {
+			return err
+		}
 	}
 
 	fm.growPorts(dst + 1)
@@ -512,7 +519,10 @@ func (op *redirOp) Invoke(fm *Frame) error {
 
 	srcUnwrap := fm.ExecAndUnwrap("redirection source", op.srcOp).One()
 	if op.srcIsFd {
-		src := srcUnwrap.FdOrClose()
+		src, err := srcUnwrap.FdOrClose()
+		if err != nil {
+			return err
+		}
 		if src == -1 {
 			// close
 			fm.ports[dst] = &Port{}
@@ -520,7 +530,11 @@ func (op *redirOp) Invoke(fm *Frame) error {
 			fm.ports[dst] = fm.ports[src].Fork()
 		}
 	} else {
-		switch src := srcUnwrap.Any().(type) {
+		src, err := srcUnwrap.Any()
+		if err != nil {
+			return err
+		}
+		switch src := src.(type) {
 		case string:
 			f, err := os.OpenFile(src, op.flag, defaultFileRedirPerm)
 			if err != nil {

@@ -521,7 +521,10 @@ func (op *forOp) Invoke(fm *Frame) error {
 		return fm.errorpf(op.varOp.Begin, op.varOp.End, "only one variable allowed")
 	}
 	variable := variables[0]
-	iterable := fm.ExecAndUnwrap("value being iterated", op.iterOp).One().Any()
+	iterable, err := fm.ExecAndUnwrap("value being iterated", op.iterOp).One().Any()
+	if err != nil {
+		return err
+	}
 
 	body := op.bodyOp.execlambdaOp(fm)
 	elseBody := op.elseOp.execlambdaOp(fm)
