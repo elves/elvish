@@ -76,7 +76,7 @@ var (
 	}
 )
 
-func matchPrefix(fm *eval.Frame, opts eval.RawOptions, pattern string, inputs eval.Inputs) {
+func matchPrefix(fm *eval.Frame, pattern string, inputs eval.Inputs) {
 	out := fm.OutputChan()
 	inputs(func(v interface{}) {
 		out <- vals.Bool(strings.HasPrefix(v.(string), pattern))

@@ -10,7 +10,10 @@ import (
 	"github.com/xiaq/persistent/hash"
 )
 
-var ErrArgs = errors.New("args error")
+var (
+	ErrArgs          = errors.New("args error")
+	ErrNoOptAccepted = errors.New("function does not accept any options")
+)
 
 // BuiltinFn uses reflection to wrap arbitrary Go functions into Elvish
 // functions.
@@ -170,7 +173,7 @@ func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface
 		ptrValue := reflect.New(b.options)
 		ptr := ptrValue.Interface()
 		ptr.(optionsPtr).SetDefaultOptions()
-		RawOptions(opts).Scan(ptr)
+		scanOptions(opts, ptr)
 		in = append(in, ptrValue.Elem())
 	}
 	for i, arg := range args {

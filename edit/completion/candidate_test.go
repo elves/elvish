@@ -9,14 +9,14 @@ import (
 
 func TestRawFilterCandidates(t *testing.T) {
 	passAll := eval.NewBuiltinFn("test:passAll",
-		func(fm *eval.Frame, opts eval.RawOptions, pattern string, inputs eval.Inputs) {
+		func(fm *eval.Frame, pattern string, inputs eval.Inputs) {
 			out := fm.OutputChan()
 			inputs(func(v interface{}) {
 				out <- vals.Bool(true)
 			})
 		})
 	blockAll := eval.NewBuiltinFn("test:blockAll",
-		func(fm *eval.Frame, opts eval.RawOptions, pattern string, inputs eval.Inputs) {
+		func(fm *eval.Frame, pattern string, inputs eval.Inputs) {
 			out := fm.OutputChan()
 			inputs(func(v interface{}) {
 				out <- vals.Bool(false)
