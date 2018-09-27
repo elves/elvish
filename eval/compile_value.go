@@ -86,7 +86,11 @@ func (op compoundOp) Invoke(fm *Frame) ([]interface{}, error) {
 	if op.tilde {
 		newvs := make([]interface{}, len(vs))
 		for i, v := range vs {
-			newvs[i] = doTilde(v)
+			tilded, err := doTilde(v)
+			if err != nil {
+				return nil, err
+			}
+			newvs[i] = tilded
 		}
 		vs = newvs
 	}
@@ -136,7 +140,7 @@ var (
 	ErrCannotDetermineUsername = errors.New("cannot determine user name from glob pattern")
 )
 
-func doTilde(v interface{}) interface{} {
+func doTilde(v interface{}) (interface{}, error) {
 	switch v := v.(type) {
 	case string:
 		s := v
@@ -149,10 +153,10 @@ func doTilde(v interface{}) interface{} {
 			rest = s[i+1:]
 		}
 		dir := mustGetHome(uname)
-		return path.Join(dir, rest)
+		return path.Join(dir, rest), nil
 	case GlobPattern:
 		if len(v.Segments) == 0 {
-			throw(ErrBadGlobPattern)
+			return nil, ErrBadGlobPattern
 		}
 		switch seg := v.Segments[0].(type) {
 		case glob.Literal:
@@ -160,7 +164,7 @@ func doTilde(v interface{}) interface{} {
 			// Find / in the first segment to determine the username.
 			i := strings.Index(s, "/")
 			if i == -1 {
-				throw(ErrCannotDetermineUsername)
+				return nil, ErrCannotDetermineUsername
 			}
 			uname := s[:i]
 			dir := mustGetHome(uname)
@@ -169,12 +173,11 @@ func doTilde(v interface{}) interface{} {
 		case glob.Slash:
 			v.DirOverride = mustGetHome("")
 		default:
-			throw(ErrCannotDetermineUsername)
+			return nil, ErrCannotDetermineUsername
 		}
-		return v
+		return v, nil
 	default:
-		throw(fmt.Errorf("tilde doesn't work on value of type %s", vals.Kind(v)))
-		panic("unreachable")
+		return nil, fmt.Errorf("tilde doesn't work on value of type %s", vals.Kind(v))
 	}
 }
 
