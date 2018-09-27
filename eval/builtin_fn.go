@@ -198,19 +198,20 @@ func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface
 	if b.inputs {
 		var inputs Inputs
 		if len(args) == len(b.normalArgs) {
-			inputs = Inputs(f.IterateInputs)
+			inputs = f.IterateInputs
 		} else {
 			// Wrap an iterable argument in Inputs.
 			iterable := args[len(args)-1]
-			inputs = Inputs(func(f func(interface{})) {
-				err := vals.Iterate(iterable, func(v interface{}) bool {
+			if !vals.CanIterate(iterable) {
+				return fmt.Errorf("%s cannot be iterated", vals.Kind(iterable))
+			}
+			inputs = func(f func(interface{})) {
+				// CanIterate(iterable) is true
+				_ = vals.Iterate(iterable, func(v interface{}) bool {
 					f(v)
 					return true
 				})
-				if err != nil {
-					throw(err)
-				}
-			})
+			}
 		}
 		in = append(in, reflect.ValueOf(inputs))
 	}

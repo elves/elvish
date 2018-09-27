@@ -152,7 +152,10 @@ func doTilde(v interface{}) (interface{}, error) {
 			uname = s[:i]
 			rest = s[i+1:]
 		}
-		dir := mustGetHome(uname)
+		dir, err := util.GetHome(uname)
+		if err != nil {
+			return nil, err
+		}
 		return path.Join(dir, rest), nil
 	case GlobPattern:
 		if len(v.Segments) == 0 {
@@ -167,11 +170,18 @@ func doTilde(v interface{}) (interface{}, error) {
 				return nil, ErrCannotDetermineUsername
 			}
 			uname := s[:i]
-			dir := mustGetHome(uname)
+			dir, err := util.GetHome(uname)
+			if err != nil {
+				return nil, err
+			}
 			// Replace ~uname in first segment with the found path.
 			v.Segments[0] = glob.Literal{dir + s[i:]}
 		case glob.Slash:
-			v.DirOverride = mustGetHome("")
+			dir, err := util.GetHome("")
+			if err != nil {
+				return nil, err
+			}
+			v.DirOverride = dir
 		default:
 			return nil, ErrCannotDetermineUsername
 		}

@@ -38,7 +38,11 @@ func cd(fm *Frame, args ...string) error {
 	var dir string
 	switch len(args) {
 	case 0:
-		dir = mustGetHome("")
+		var err error
+		dir, err = util.GetHome("")
+		if err != nil {
+			return err
+		}
 	case 1:
 		dir = args[0]
 	default:

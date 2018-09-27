@@ -13,6 +13,16 @@ type Iterator interface {
 	Iterate(func(v interface{}) bool)
 }
 
+// CanIterate returns whether the value can be iterated. If CanIterate(v) is
+// true, calling Iterate(v, f) will not result in an error.
+func CanIterate(v interface{}) bool {
+	switch v.(type) {
+	case Iterator, string, listIterable:
+		return true
+	}
+	return false
+}
+
 // Iterate iterates the supplied value, and calls the supplied function in each
 // of its elements. The function can return false to break the iteration. It is
 // implemented for the builtin type string, and types satisfying the
