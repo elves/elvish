@@ -19,33 +19,39 @@ var (
 	NoOpts = map[string]interface{}{}
 )
 
-// FromJSONInterface converts a interface{} that results from json.Unmarshal to
-// a Value.
-func FromJSONInterface(v interface{}) interface{} {
+// Converts a interface{} that results from json.Unmarshal to an Elvish value.
+func fromJSONInterface(v interface{}) (interface{}, error) {
 	if v == nil {
 		// TODO Use a more appropriate type
-		return ""
+		return "", nil
 	}
 	switch v := v.(type) {
 	case bool, string:
-		return v
+		return v, nil
 	case float64:
 		// TODO Use a numeric type for float64
-		return fmt.Sprint(v)
+		return fmt.Sprint(v), nil
 	case []interface{}:
-		vs := make([]interface{}, len(v))
-		for i, v := range v {
-			vs[i] = FromJSONInterface(v)
+		vec := vals.EmptyList
+		for _, elem := range v {
+			converted, err := fromJSONInterface(elem)
+			if err != nil {
+				return nil, err
+			}
+			vec = vec.Cons(converted)
 		}
-		return vals.MakeList(vs...)
+		return vec, nil
 	case map[string]interface{}:
 		m := vals.EmptyMap
 		for key, val := range v {
-			m = m.Assoc(key, FromJSONInterface(val))
+			convertedVal, err := fromJSONInterface(val)
+			if err != nil {
+				return nil, err
+			}
+			m = m.Assoc(key, convertedVal)
 		}
-		return m
+		return m, nil
 	default:
-		throw(fmt.Errorf("unexpected json type: %T", v))
-		return nil // not reached
+		return nil, fmt.Errorf("unexpected json type: %T", v)
 	}
 }

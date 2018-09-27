@@ -100,8 +100,8 @@ func fromJSON(fm *Frame) error {
 	out := fm.ports[1].Chan
 
 	dec := json.NewDecoder(in)
-	var v interface{}
 	for {
+		var v interface{}
 		err := dec.Decode(&v)
 		if err != nil {
 			if err == io.EOF {
@@ -109,7 +109,11 @@ func fromJSON(fm *Frame) error {
 			}
 			return err
 		}
-		out <- FromJSONInterface(v)
+		converted, err := fromJSONInterface(v)
+		if err != nil {
+			return err
+		}
+		out <- converted
 	}
 }
 
