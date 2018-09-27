@@ -9,7 +9,6 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
 	daemonp "github.com/elves/elvish/program/daemon"
-	"github.com/elves/elvish/util"
 )
 
 // errDontKnowHowToSpawnDaemon is thrown by daemon:spawn when the Evaler's
@@ -18,13 +17,9 @@ var errDontKnowHowToSpawnDaemon = errors.New("don't know how to spawn daemon")
 
 // Ns makes the daemon: namespace.
 func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
-	// Obtain process ID
-	getPid := func() interface{} {
+	getPid := func() (string, error) {
 		pid, err := daemon.Pid()
-		if err != nil {
-			util.Throw(err)
-		}
-		return string(strconv.Itoa(pid))
+		return string(strconv.Itoa(pid)), err
 	}
 
 	spawn := func() error {
@@ -34,8 +29,20 @@ func Ns(daemon *daemon.Client, spawner *daemonp.Daemon) eval.Ns {
 		return spawner.Spawn()
 	}
 
+	// TODO: Deprecate the variable in favor of the function.
+	getPidVar := func() interface{} {
+		pid, err := getPid()
+		if err != nil {
+			return "-1"
+		}
+		return pid
+	}
+
 	return eval.Ns{
-		"pid":  vars.FromGet(getPid),
+		"pid":  vars.FromGet(getPidVar),
 		"sock": vars.NewRo(string(daemon.SockPath())),
-	}.AddBuiltinFn("daemon:", "spawn", spawn)
+	}.AddBuiltinFns("daemon:", map[string]interface{}{
+		"pid":   getPid,
+		"spawn": spawn,
+	})
 }
