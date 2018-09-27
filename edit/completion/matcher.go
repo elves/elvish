@@ -39,24 +39,26 @@ func lookupMatcher(m hashmap.Map, name string) (eval.Callable, bool) {
 	return matcher, ok
 }
 
+type matcherOpts struct {
+	IgnoreCase bool
+	SmartCase  bool
+}
+
+func (*matcherOpts) SetDefaultOptions() {}
+
 func wrapMatcher(matcher func(s, p string) bool) interface{} {
 	return func(fm *eval.Frame,
-		opts eval.RawOptions, pattern string, inputs eval.Inputs) {
+		opts matcherOpts, pattern string, inputs eval.Inputs) {
 
-		var options struct {
-			IgnoreCase bool
-			SmartCase  bool
-		}
-		opts.Scan(&options)
 		switch {
-		case options.IgnoreCase && options.SmartCase:
+		case opts.IgnoreCase && opts.SmartCase:
 			throwf("-ignore-case and -smart-case cannot be used together")
-		case options.IgnoreCase:
+		case opts.IgnoreCase:
 			innerMatcher := matcher
 			matcher = func(s, p string) bool {
 				return innerMatcher(strings.ToLower(s), strings.ToLower(p))
 			}
-		case options.SmartCase:
+		case opts.SmartCase:
 			innerMatcher := matcher
 			matcher = func(s, p string) bool {
 				if p == strings.ToLower(p) {

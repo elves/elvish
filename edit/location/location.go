@@ -335,13 +335,14 @@ func (p *provider) Accept(i int, ed eddefs.Editor) {
 	ed.SetModeInsert()
 }
 
-func matchDirPattern(fm *eval.Frame, opts eval.RawOptions, pattern string, inputs eval.Inputs) {
-	var options struct {
-		IgnoreCase bool
-	}
-	opts.Scan(&options)
+type matchDirPatternOpts struct {
+	IgnoreCase bool
+}
 
-	p := makeLocationFilterPattern(pattern, options.IgnoreCase)
+func (*matchDirPatternOpts) SetDefaultOptions() {}
+
+func matchDirPattern(fm *eval.Frame, opts matchDirPatternOpts, pattern string, inputs eval.Inputs) {
+	p := makeLocationFilterPattern(pattern, opts.IgnoreCase)
 	out := fm.OutputChan()
 	inputs(func(v interface{}) {
 		s, ok := v.(string)

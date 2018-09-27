@@ -20,10 +20,11 @@ var fns = map[string]interface{}{
 	"split":   split,
 }
 
-func match(rawOpts eval.RawOptions, argPattern, source string) (bool, error) {
-	opts := struct{ Posix bool }{}
-	rawOpts.Scan(&opts)
+type matchOpts struct{ Posix bool }
 
+func (*matchOpts) SetDefaultOptions() {}
+
+func match(opts matchOpts, argPattern, source string) (bool, error) {
 	pattern, err := makePattern(argPattern, opts.Posix, false)
 	if err != nil {
 		return false, err
@@ -31,14 +32,17 @@ func match(rawOpts eval.RawOptions, argPattern, source string) (bool, error) {
 	return pattern.MatchString(source), nil
 }
 
-func find(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) error {
+// Struct for holding options to find. Also used by split.
+type findOpts struct {
+	Posix   bool
+	Longest bool
+	Max     int
+}
+
+func (o *findOpts) SetDefaultOptions() { o.Max = -1 }
+
+func find(fm *eval.Frame, opts findOpts, argPattern, source string) error {
 	out := fm.OutputChan()
-	opts := struct {
-		Posix   bool
-		Longest bool
-		Max     int
-	}{Max: -1}
-	rawOpts.Scan(&opts)
 
 	pattern, err := makePattern(argPattern, opts.Posix, opts.Longest)
 	if err != nil {
@@ -64,14 +68,15 @@ func find(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) er
 	return nil
 }
 
-func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl interface{}, source string) (string, error) {
+type replaceOpts struct {
+	Posix   bool
+	Longest bool
+	Literal bool
+}
 
-	opts := struct {
-		Posix   bool
-		Longest bool
-		Literal bool
-	}{}
-	rawOpts.Scan(&opts)
+func (*replaceOpts) SetDefaultOptions() {}
+
+func replace(fm *eval.Frame, opts replaceOpts, argPattern string, argRepl interface{}, source string) (string, error) {
 
 	pattern, err := makePattern(argPattern, opts.Posix, opts.Longest)
 	if err != nil {
@@ -123,14 +128,8 @@ func replace(fm *eval.Frame, rawOpts eval.RawOptions, argPattern string, argRepl
 	}
 }
 
-func split(fm *eval.Frame, rawOpts eval.RawOptions, argPattern, source string) error {
+func split(fm *eval.Frame, opts findOpts, argPattern, source string) error {
 	out := fm.OutputChan()
-	opts := struct {
-		Posix   bool
-		Longest bool
-		Max     int
-	}{Max: -1}
-	rawOpts.Scan(&opts)
 
 	pattern, err := makePattern(argPattern, opts.Posix, opts.Longest)
 	if err != nil {

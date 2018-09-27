@@ -340,6 +340,8 @@ type narrowOptions struct {
 	bindingMap map[ui.Key]eval.Callable
 }
 
+func (o *narrowOptions) SetDefaultOptions() { o.Bindings = vals.EmptyMap }
+
 type narrowItemString struct {
 	String string
 }
@@ -388,14 +390,10 @@ func (c *narrowItemComplex) FilterText() string {
 	return c.Content()
 }
 
-func (n *narrow) NarrowRead(fm *eval.Frame, opts eval.RawOptions, source, action eval.Callable) {
+func (n *narrow) NarrowRead(fm *eval.Frame, opts narrowOptions, source, action eval.Callable) {
 	l := &narrowState{
-		opts: narrowOptions{
-			Bindings: vals.EmptyMap,
-		},
+		opts: opts,
 	}
-
-	opts.Scan(&l.opts)
 
 	for it := l.opts.Bindings.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()

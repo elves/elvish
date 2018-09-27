@@ -51,10 +51,11 @@ func nsFn(m hashmap.Map) (Ns, error) {
 	return ns, nil
 }
 
-func rangeFn(fm *Frame, rawOpts RawOptions, args ...float64) error {
-	opts := struct{ Step float64 }{1}
-	rawOpts.Scan(&opts)
+type rangeOpts struct{ Step float64 }
 
+func (o *rangeOpts) SetDefaultOptions() { o.Step = 1 }
+
+func rangeFn(fm *Frame, opts rangeOpts, args ...float64) error {
 	var lower, upper float64
 
 	switch len(args) {
