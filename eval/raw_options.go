@@ -9,11 +9,13 @@ import (
 	"github.com/elves/elvish/util"
 )
 
+var ErrNoOptAccepted = errors.New("function does not accept any options")
+
 type RawOptions map[string]interface{}
 
-// Scan takes a pointer to a struct and scan options into it. A field
-// named FieldName corresponds to the option named field-name, unless the field
-// has a explicit "name" tag.
+// Scan takes a pointer to a struct and scan options into it. A field named
+// FieldName corresponds to the option named field-name, unless the field has a
+// explicit "name" tag. Fields typed ParsedOptions are ignored.
 func (rawOpts RawOptions) Scan(ptr interface{}) {
 	ptrValue := reflect.ValueOf(ptr)
 	if ptrValue.Kind() != reflect.Ptr || ptrValue.Elem().Kind() != reflect.Struct {
@@ -48,5 +50,3 @@ func (rawOpts RawOptions) Scan(ptr interface{}) {
 		}
 	}
 }
-
-var ErrNoOptAccepted = errors.New("no option accepted")

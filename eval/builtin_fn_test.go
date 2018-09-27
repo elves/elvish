@@ -7,6 +7,13 @@ import (
 	"github.com/elves/elvish/eval/vals"
 )
 
+type testOptions struct {
+	Foo string
+	Bar string
+}
+
+func (o *testOptions) SetDefaultOptions() { o.Bar = "default" }
+
 func TestReflectBuiltinFnCall(t *testing.T) {
 	theFrame := new(Frame)
 	theOptions := map[string]interface{}{}
@@ -33,21 +40,32 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	})
 	callGood(theFrame, nil, theOptions)
 
-	// Options parameter gets options.
+	// RawOptions parameter gets options.
 	f = NewBuiltinFn("f", func(opts RawOptions) {
 		if opts["foo"] != "bar" {
-			t.Errorf("Options parameter doesn't get options")
+			t.Errorf("RawOptions parameter doesn't get options")
 		}
 	})
 	callGood(theFrame, nil, RawOptions{"foo": "bar"})
 
-	// Combination of Frame and Options.
+	// ScanOptions parameters gets scanned options.
+	f = NewBuiltinFn("f", func(opts testOptions) {
+		if opts.Foo != "bar" {
+			t.Errorf("ScanOptions parameter doesn't get options")
+		}
+		if opts.Bar != "default" {
+			t.Errorf("ScanOptions parameter doesn't use default value")
+		}
+	})
+	callGood(theFrame, nil, RawOptions{"foo": "bar"})
+
+	// Combination of Frame and RawOptions.
 	f = NewBuiltinFn("f", func(f *Frame, opts RawOptions) {
 		if f != theFrame {
 			t.Errorf("*Frame parameter doesn't get current frame")
 		}
 		if opts["foo"] != "bar" {
-			t.Errorf("Options parameter doesn't get options")
+			t.Errorf("RawOptions parameter doesn't get options")
 		}
 	})
 	callGood(theFrame, nil, RawOptions{"foo": "bar"})

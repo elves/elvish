@@ -24,6 +24,11 @@ var ErrArgs = errors.New("args error")
 // RawOptions, it gets a map of options. If the function has not declared an
 // RawOptions parameter but is passed options, an error is thrown.
 //
+// Alternatively, a (non-pointer) struct argument whose type implements the
+// Options interface can also be declared, in which case options will be scanned
+// into it using RawOptions.Scan. If the pointer type of the struct implements a
+// SetDefault method, it will be called before scanning.
+//
 // 3. If the last parameter is non-variadic and has type Inputs, it represents
 // an optional parameter that contains the input to this function. If the
 // argument is not supplied, the input channel of the Frame will be used to
@@ -41,24 +46,34 @@ type BuiltinFn struct {
 
 	// Type information of impl.
 
-	frame   bool
-	options bool
-	inputs  bool
-	// Type of "normal" (non-Frame, non-Options, non-variadic) arguments.
+	// If true, pass the frame as a *Frame argument.
+	frame bool
+	// If true, pass options as a RawOptions argument.
+	rawOptions bool
+	// If not nil, type of the parameter that gets options via RawOptions.Scan.
+	options reflect.Type
+	// If not nil, pass the inputs as an Input-typed last argument.
+	inputs bool
+	// Type of "normal" (non-frame, non-options, non-variadic) arguments.
 	normalArgs []reflect.Type
-	// Type of variadic arguments, nil if function is non-variadic
+	// If not nil, type of variadic arguments.
 	variadicArg reflect.Type
 }
 
 var _ Callable = &BuiltinFn{}
 
-type (
-	Inputs func(func(interface{}))
-)
+// An interface to be implemented by pointers to structs that should hold
+// scanned options.
+type optionsPtr interface {
+	SetDefaultOptions()
+}
+
+type Inputs func(func(interface{}))
 
 var (
 	frameType      = reflect.TypeOf((*Frame)(nil))
 	rawOptionsType = reflect.TypeOf(RawOptions(nil))
+	optionsPtrType = reflect.TypeOf((*optionsPtr)(nil)).Elem()
 	inputsType     = reflect.TypeOf(Inputs(nil))
 )
 
@@ -73,7 +88,14 @@ func NewBuiltinFn(name string, impl interface{}) *BuiltinFn {
 		i++
 	}
 	if i < implType.NumIn() && implType.In(i) == rawOptionsType {
-		b.options = true
+		b.rawOptions = true
+		i++
+	}
+	if i < implType.NumIn() && reflect.PtrTo(implType.In(i)).Implements(optionsPtrType) {
+		if b.rawOptions {
+			panic("Function declares both RawOptions and Options parameters")
+		}
+		b.options = implType.In(i)
 		i++
 	}
 	for ; i < implType.NumIn(); i++ {
@@ -133,16 +155,23 @@ func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface
 	} else if len(args) != len(b.normalArgs) {
 		return fmt.Errorf("want %d arguments, got %d", len(b.normalArgs), len(args))
 	}
-	if !b.options && len(opts) > 0 {
-		return errNoOptions
+	if !b.rawOptions && b.options == nil && len(opts) > 0 {
+		return ErrNoOptAccepted
 	}
 
 	var in []reflect.Value
 	if b.frame {
 		in = append(in, reflect.ValueOf(f))
 	}
-	if b.options {
+	if b.rawOptions {
 		in = append(in, reflect.ValueOf(opts))
+	}
+	if b.options != nil {
+		ptrValue := reflect.New(b.options)
+		ptr := ptrValue.Interface()
+		ptr.(optionsPtr).SetDefaultOptions()
+		RawOptions(opts).Scan(ptr)
+		in = append(in, ptrValue.Elem())
 	}
 	for i, arg := range args {
 		var typ reflect.Type
