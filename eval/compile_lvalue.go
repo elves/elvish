@@ -9,27 +9,6 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-// LValuesOp is an operation on an Frame that produce Variable's.
-type LValuesOp struct {
-	Body       LValuesOpBody
-	Begin, End int
-}
-
-// LValuesOpBody is the body of an LValuesOp.
-type LValuesOpBody interface {
-	Invoke(*Frame) ([]vars.Var, error)
-}
-
-// Exec executes an LValuesOp, producing Variable's.
-func (op LValuesOp) Exec(fm *Frame) ([]vars.Var, error) {
-	// Empty value is considered to generate no lvalues.
-	if op.Body == nil {
-		return []vars.Var{}, nil
-	}
-	fm.begin, fm.end = op.Begin, op.End
-	return op.Body.Invoke(fm)
-}
-
 // lvaluesOp compiles lvalues, returning the fixed part and, optionally a rest
 // part.
 //
@@ -37,7 +16,7 @@ func (op LValuesOp) Exec(fm *Frame) ([]vars.Var, error) {
 // literal, or a braced list of such Indexing nodes. The last Indexing node may
 // be prefixed by @, in which case they become the rest part. For instance, in
 // {a[x],b,@c[z]}, "a[x],b" is the fixed part and "c[z]" is the rest part.
-func (cp *compiler) lvaluesOp(n *parse.Indexing) (LValuesOp, LValuesOp) {
+func (cp *compiler) lvaluesOp(n *parse.Indexing) (lvaluesOp, lvaluesOp) {
 	if n.Head.Type == parse.Braced {
 		// Braced list of variable specs, possibly with indicies.
 		if len(n.Indicies) > 0 {
@@ -46,17 +25,17 @@ func (cp *compiler) lvaluesOp(n *parse.Indexing) (LValuesOp, LValuesOp) {
 		return cp.lvaluesMulti(n.Head.Braced)
 	}
 	rest, opFunc := cp.lvalueBase(n, "must be an lvalue or a braced list of those")
-	op := LValuesOp{opFunc, n.Begin(), n.End()}
+	op := lvaluesOp{opFunc, n.Begin(), n.End()}
 	if rest {
-		return LValuesOp{}, op
+		return lvaluesOp{}, op
 	}
-	return op, LValuesOp{}
+	return op, lvaluesOp{}
 }
 
-func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp) {
-	opFuncs := make([]LValuesOpBody, len(nodes))
+func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (lvaluesOp, lvaluesOp) {
+	opFuncs := make([]lvaluesOpBody, len(nodes))
 	var restNode *parse.Indexing
-	var restOpFunc LValuesOpBody
+	var restOpFunc lvaluesOpBody
 
 	// Compile each spec inside the brace.
 	fixedEnd := 0
@@ -79,23 +58,23 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (LValuesOp, LValuesOp)
 		}
 	}
 
-	var restOp LValuesOp
+	var restOp lvaluesOp
 	// If there is a rest part, make LValuesOp for it and remove it from opFuncs.
 	if restOpFunc != nil {
-		restOp = LValuesOp{restOpFunc, restNode.Begin(), restNode.End()}
+		restOp = lvaluesOp{restOpFunc, restNode.Begin(), restNode.End()}
 		opFuncs = opFuncs[:len(opFuncs)-1]
 	}
 
-	var op LValuesOp
+	var op lvaluesOp
 	// If there is still anything left in opFuncs, make LValuesOp for the fixed part.
 	if len(opFuncs) > 0 {
-		op = LValuesOp{seqLValuesOpBody{opFuncs}, nodes[0].Begin(), fixedEnd}
+		op = lvaluesOp{seqLValuesOpBody{opFuncs}, nodes[0].Begin(), fixedEnd}
 	}
 
 	return op, restOp
 }
 
-func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, LValuesOpBody) {
+func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, lvaluesOpBody) {
 	qname := cp.literal(n.Head, msg)
 	explode, ns, name := ParseVariableRef(qname)
 	if len(n.Indicies) == 0 {
@@ -105,7 +84,7 @@ func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, LValuesOpBo
 	return explode, cp.lvalueElement(ns, name, n)
 }
 
-func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpBody {
+func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) lvaluesOpBody {
 	cp.registerVariableGet(ns, name)
 
 	begin, end := n.Begin(), n.End()
@@ -121,13 +100,13 @@ func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) LValuesOpB
 }
 
 type seqLValuesOpBody struct {
-	ops []LValuesOpBody
+	ops []lvaluesOpBody
 }
 
-func (op seqLValuesOpBody) Invoke(fm *Frame) ([]vars.Var, error) {
+func (op seqLValuesOpBody) invoke(fm *Frame) ([]vars.Var, error) {
 	var variables []vars.Var
 	for _, op := range op.ops {
-		moreVariables, err := op.Invoke(fm)
+		moreVariables, err := op.invoke(fm)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +119,7 @@ type varOp struct {
 	ns, name string
 }
 
-func (op varOp) Invoke(fm *Frame) ([]vars.Var, error) {
+func (op varOp) invoke(fm *Frame) ([]vars.Var, error) {
 	variable := fm.ResolveVar(op.ns, op.name)
 	if variable == nil {
 		if op.ns == "" || op.ns == "local" {
@@ -167,13 +146,13 @@ func (op varOp) Invoke(fm *Frame) ([]vars.Var, error) {
 type elemOp struct {
 	ns       string
 	name     string
-	indexOps []ValuesOp
+	indexOps []valuesOp
 	begin    int
 	end      int
 	ends     []int
 }
 
-func (op *elemOp) Invoke(fm *Frame) ([]vars.Var, error) {
+func (op *elemOp) invoke(fm *Frame) ([]vars.Var, error) {
 	variable := fm.ResolveVar(op.ns, op.name)
 	if variable == nil {
 		return nil, fmt.Errorf("variable $%s:%s does not exist, compiler bug", op.ns, op.name)
@@ -181,7 +160,7 @@ func (op *elemOp) Invoke(fm *Frame) ([]vars.Var, error) {
 
 	indicies := make([]interface{}, len(op.indexOps))
 	for i, op := range op.indexOps {
-		values, err := op.Exec(fm)
+		values, err := op.exec(fm)
 		if err != nil {
 			return nil, err
 		}

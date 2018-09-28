@@ -13,34 +13,17 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-// Op is an operation on an Frame.
-type Op struct {
-	Body       OpBody
-	Begin, End int
-}
-
-// OpBody is the body of an Op.
-type OpBody interface {
-	Invoke(*Frame) error
-}
-
-// Exec executes an Op.
-func (op Op) Exec(fm *Frame) error {
-	fm.begin, fm.end = op.Begin, op.End
-	return op.Body.Invoke(fm)
-}
-
-func (cp *compiler) chunk(n *parse.Chunk) OpBody {
+func (cp *compiler) chunk(n *parse.Chunk) opBody {
 	return chunkOp{cp.pipelineOps(n.Pipelines)}
 }
 
 type chunkOp struct {
-	subops []Op
+	subops []effectOp
 }
 
-func (op chunkOp) Invoke(fm *Frame) error {
+func (op chunkOp) invoke(fm *Frame) error {
 	for _, subop := range op.subops {
-		err := subop.Exec(fm)
+		err := subop.exec(fm)
 		if err != nil {
 			return err
 		}
@@ -54,19 +37,19 @@ func (op chunkOp) Invoke(fm *Frame) error {
 	return nil
 }
 
-func (cp *compiler) pipeline(n *parse.Pipeline) OpBody {
+func (cp *compiler) pipeline(n *parse.Pipeline) opBody {
 	return &pipelineOp{n.Background, n.SourceText(), cp.formOps(n.Forms)}
 }
 
 type pipelineOp struct {
 	bg     bool
 	source string
-	subops []Op
+	subops []effectOp
 }
 
 const pipelineChanBufferSize = 32
 
-func (op *pipelineOp) Invoke(fm *Frame) error {
+func (op *pipelineOp) invoke(fm *Frame) error {
 	if fm.IsInterrupted() {
 		return ErrInterrupted
 	}
@@ -157,9 +140,9 @@ func (op *pipelineOp) Invoke(fm *Frame) error {
 	}
 }
 
-func (cp *compiler) form(n *parse.Form) OpBody {
-	var saveVarsOps []LValuesOp
-	var assignmentOps []Op
+func (cp *compiler) form(n *parse.Form) opBody {
+	var saveVarsOps []lvaluesOp
+	var assignmentOps []effectOp
 	if len(n.Assignments) > 0 {
 		assignmentOps = cp.assignmentOps(n.Assignments)
 		if n.Head == nil && n.Vars == nil {
@@ -176,13 +159,13 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 	// Depending on the type of the form, exactly one of the three below will be
 	// set.
 	var (
-		specialOpFunc  OpBody
-		headOp         ValuesOp
-		spaceyAssignOp Op
+		specialOpFunc  opBody
+		headOp         valuesOp
+		spaceyAssignOp effectOp
 	)
 
 	// Forward declaration; needed when compiling assignment forms.
-	var argOps []ValuesOp
+	var argOps []valuesOp
 
 	if n.Head != nil {
 		headStr, ok := oneString(n.Head)
@@ -192,7 +175,7 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 				// Special form.
 				specialOpFunc = compileForm(cp, n)
 			} else {
-				var headOpFunc ValuesOpBody
+				var headOpFunc valuesOpBody
 				explode, ns, name := ParseVariableRef(headStr)
 				if !explode && cp.registerVariableGet(ns, name+FnSuffix) {
 					// $head~ resolves.
@@ -201,7 +184,7 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 					// Fall back to $e:head~.
 					headOpFunc = literalValues(ExternalCmd{headStr})
 				}
-				headOp = ValuesOp{headOpFunc, n.Head.Begin(), n.Head.End()}
+				headOp = valuesOp{headOpFunc, n.Head.Begin(), n.Head.End()}
 			}
 		} else {
 			// Head exists and is not a literal string. Evaluate as a normal
@@ -213,11 +196,11 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 		varsOp, restOp := cp.lvaluesMulti(n.Vars)
 		// This cannot be replaced with newSeqValuesOp as it depends on the fact
 		// that argOps will be changed later.
-		argsOp := ValuesOp{
+		argsOp := valuesOp{
 			funcValuesOp(func(fm *Frame) ([]interface{}, error) {
 				var values []interface{}
 				for _, op := range argOps {
-					moreValues, err := op.Exec(fm)
+					moreValues, err := op.exec(fm)
 					if err != nil {
 						return nil, err
 					}
@@ -226,12 +209,12 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 				return values, nil
 			}), -1, -1}
 		if len(argOps) > 0 {
-			argsOp.Begin = argOps[0].Begin
-			argsOp.End = argOps[len(argOps)-1].End
+			argsOp.begin = argOps[0].begin
+			argsOp.end = argOps[len(argOps)-1].end
 		}
-		spaceyAssignOp = Op{
+		spaceyAssignOp = effectOp{
 			&assignmentOp{varsOp, restOp, argsOp},
-			n.Begin(), argsOp.End,
+			n.Begin(), argsOp.end,
 		}
 	}
 
@@ -244,18 +227,18 @@ func (cp *compiler) form(n *parse.Form) OpBody {
 }
 
 type formOp struct {
-	saveVarsOps    []LValuesOp
-	assignmentOps  []Op
-	redirOps       []Op
-	specialOpBody  OpBody
-	headOp         ValuesOp
-	argOps         []ValuesOp
-	optsOp         ValuesOpBody
-	spaceyAssignOp Op
+	saveVarsOps    []lvaluesOp
+	assignmentOps  []effectOp
+	redirOps       []effectOp
+	specialOpBody  opBody
+	headOp         valuesOp
+	argOps         []valuesOp
+	optsOp         valuesOpBody
+	spaceyAssignOp effectOp
 	begin, end     int
 }
 
-func (op *formOp) Invoke(fm *Frame) (errRet error) {
+func (op *formOp) invoke(fm *Frame) (errRet error) {
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
 
@@ -266,7 +249,7 @@ func (op *formOp) Invoke(fm *Frame) (errRet error) {
 		var saveVars []vars.Var
 		var saveVals []interface{}
 		for _, op := range op.saveVarsOps {
-			moreSaveVars, err := op.Exec(fm)
+			moreSaveVars, err := op.exec(fm)
 			if err != nil {
 				return err
 			}
@@ -285,7 +268,7 @@ func (op *formOp) Invoke(fm *Frame) (errRet error) {
 		}
 		// Do assignment.
 		for _, subop := range op.assignmentOps {
-			err := subop.Exec(fm)
+			err := subop.exec(fm)
 			if err != nil {
 				return err
 			}
@@ -312,18 +295,18 @@ func (op *formOp) Invoke(fm *Frame) (errRet error) {
 
 	// redirs
 	for _, redirOp := range op.redirOps {
-		err := redirOp.Exec(fm)
+		err := redirOp.exec(fm)
 		if err != nil {
 			return err
 		}
 	}
 
 	if op.specialOpBody != nil {
-		return op.specialOpBody.Invoke(fm)
+		return op.specialOpBody.invoke(fm)
 	}
 	var headFn Callable
 	var args []interface{}
-	if op.headOp.Body != nil {
+	if op.headOp.body != nil {
 		// head
 		headFn, errRet = fm.ExecAndUnwrap("head of command", op.headOp).One().Callable()
 		if errRet != nil {
@@ -332,7 +315,7 @@ func (op *formOp) Invoke(fm *Frame) (errRet error) {
 
 		// args
 		for _, argOp := range op.argOps {
-			moreArgs, err := argOp.Exec(fm)
+			moreArgs, err := argOp.exec(fm)
 			if err != nil {
 				return err
 			}
@@ -342,7 +325,7 @@ func (op *formOp) Invoke(fm *Frame) (errRet error) {
 
 	// opts
 	// XXX This conversion should be avoided.
-	optValues, err := op.optsOp.Invoke(fm)
+	optValues, err := op.optsOp.invoke(fm)
 	if err != nil {
 		return err
 	}
@@ -362,7 +345,7 @@ func (op *formOp) Invoke(fm *Frame) (errRet error) {
 	if headFn != nil {
 		return headFn.Call(fm, args, convertedOpts)
 	} else {
-		return op.spaceyAssignOp.Exec(fm)
+		return op.spaceyAssignOp.exec(fm)
 	}
 }
 
@@ -375,7 +358,7 @@ func allTrue(vs []interface{}) bool {
 	return true
 }
 
-func (cp *compiler) assignment(n *parse.Assignment) OpBody {
+func (cp *compiler) assignment(n *parse.Assignment) opBody {
 	variablesOp, restOp := cp.lvaluesOp(n.Left)
 	valuesOp := cp.compoundOp(n.Right)
 	return &assignmentOp{variablesOp, restOp, valuesOp}
@@ -386,17 +369,17 @@ func (cp *compiler) assignment(n *parse.Assignment) OpBody {
 var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
 
 type assignmentOp struct {
-	variablesOp LValuesOp
-	restOp      LValuesOp
-	valuesOp    ValuesOp
+	variablesOp lvaluesOp
+	restOp      lvaluesOp
+	valuesOp    valuesOp
 }
 
-func (op *assignmentOp) Invoke(fm *Frame) (errRet error) {
-	variables, err := op.variablesOp.Exec(fm)
+func (op *assignmentOp) invoke(fm *Frame) (errRet error) {
+	variables, err := op.variablesOp.exec(fm)
 	if err != nil {
 		return err
 	}
-	rest, err := op.restOp.Exec(fm)
+	rest, err := op.restOp.exec(fm)
 	if err != nil {
 		return err
 	}
@@ -411,7 +394,7 @@ func (op *assignmentOp) Invoke(fm *Frame) (errRet error) {
 	defer fixNilVariables(variables, &errRet)
 	defer fixNilVariables(rest, &errRet)
 
-	values, err := op.valuesOp.Exec(fm)
+	values, err := op.valuesOp.exec(fm)
 	if err != nil {
 		return err
 	}
@@ -471,8 +454,8 @@ func (cp *compiler) literal(n *parse.Primary, msg string) string {
 const defaultFileRedirPerm = 0644
 
 // redir compiles a Redir into a op.
-func (cp *compiler) redir(n *parse.Redir) OpBody {
-	var dstOp ValuesOp
+func (cp *compiler) redir(n *parse.Redir) opBody {
+	var dstOp valuesOp
 	if n.Left != nil {
 		dstOp = cp.compoundOp(n.Left)
 	}
@@ -500,16 +483,16 @@ func makeFlag(m parse.RedirMode) int {
 }
 
 type redirOp struct {
-	dstOp   ValuesOp
-	srcOp   ValuesOp
+	dstOp   valuesOp
+	srcOp   valuesOp
 	srcIsFd bool
 	mode    parse.RedirMode
 	flag    int
 }
 
-func (op *redirOp) Invoke(fm *Frame) error {
+func (op *redirOp) invoke(fm *Frame) error {
 	var dst int
-	if op.dstOp.Body == nil {
+	if op.dstOp.body == nil {
 		// use default dst fd
 		switch op.mode {
 		case parse.Read:
@@ -585,11 +568,11 @@ func (op *redirOp) Invoke(fm *Frame) error {
 	return nil
 }
 
-type seqOp struct{ subops []Op }
+type seqOp struct{ subops []effectOp }
 
-func (op seqOp) Invoke(fm *Frame) error {
+func (op seqOp) invoke(fm *Frame) error {
 	for _, subop := range op.subops {
-		err := subop.Exec(fm)
+		err := subop.exec(fm)
 		if err != nil {
 			return err
 		}
@@ -599,6 +582,6 @@ func (op seqOp) Invoke(fm *Frame) error {
 
 type funcOp func(*Frame) error
 
-func (op funcOp) Invoke(fm *Frame) error {
+func (op funcOp) invoke(fm *Frame) error {
 	return op(fm)
 }

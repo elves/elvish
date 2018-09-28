@@ -22,7 +22,7 @@ type Closure struct {
 	RestArg     string
 	OptNames    []string
 	OptDefaults []interface{}
-	Op          Op
+	Op          effectOp
 	Captured    Ns
 	SrcMeta     *Source
 	DefBegint   int
@@ -61,7 +61,7 @@ func (c *Closure) Index(k interface{}) (interface{}, bool) {
 	case "opt-defaults":
 		return vals.MakeList(c.OptDefaults...), true
 	case "body":
-		return c.SrcMeta.code[c.Op.Begin:c.Op.End], true
+		return c.SrcMeta.code[c.Op.begin:c.Op.end], true
 	case "def":
 		return c.SrcMeta.code[c.DefBegint:c.DefEnd], true
 	case "src":
@@ -127,5 +127,5 @@ func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 	fm.traceback = fm.addTraceback()
 
 	fm.srcMeta = c.SrcMeta
-	return c.Op.Exec(fm)
+	return c.Op.exec(fm)
 }

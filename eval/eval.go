@@ -198,7 +198,7 @@ func (fm *Frame) growPorts(n int) {
 
 // EvalWithStdPorts sets up the Evaler with standard ports and evaluates an Op.
 // The supplied name and text are used in diagnostic messages.
-func (ev *Evaler) EvalWithStdPorts(op Op, src *Source) error {
+func (ev *Evaler) EvalWithStdPorts(op effectOp, src *Source) error {
 	stdPorts := newStdPorts(
 		os.Stdin, os.Stdout, os.Stderr, ev.state.getValuePrefix())
 	defer stdPorts.close()
@@ -207,7 +207,7 @@ func (ev *Evaler) EvalWithStdPorts(op Op, src *Source) error {
 
 // Eval sets up the Evaler with the given ports and evaluates an Op.
 // The supplied name and text are used in diagnostic messages.
-func (ev *Evaler) Eval(op Op, ports []*Port, src *Source) error {
+func (ev *Evaler) Eval(op effectOp, ports []*Port, src *Source) error {
 	// Ignore TTOU.
 	//
 	// When a subprocess in its own process group puts itself in the foreground,
@@ -266,14 +266,14 @@ func (ev *Evaler) Eval(op Op, ports []*Port, src *Source) error {
 
 // eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) eval(op Op, ports []*Port, src *Source) error {
+func (ev *Evaler) eval(op effectOp, ports []*Port, src *Source) error {
 	ec := NewTopFrame(ev, src, ports)
 	return ec.Eval(op)
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it
 // always has type CompilationError.
-func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (Op, error) {
+func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (effectOp, error) {
 	return compile(ev.Builtin.static(), ev.Global.static(), n, src)
 }
 

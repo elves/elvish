@@ -125,9 +125,9 @@ func (fm *Frame) fork(name string) *Frame {
 
 // Eval evaluates an op. It does so in a protected environment so that
 // exceptions thrown are wrapped in an Error.
-func (fm *Frame) Eval(op Op) (err error) {
+func (fm *Frame) Eval(op effectOp) (err error) {
 	defer catch(&err, fm)
-	e := op.Exec(fm)
+	e := op.exec(fm)
 	if e != nil {
 		if exc, ok := e.(*Exception); ok {
 			return exc
@@ -159,7 +159,7 @@ func (fm *Frame) CaptureOutput(fn Callable, args []interface{}, opts map[string]
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)
 	}
-	return pcaptureOutput(fm, Op{funcOp(opFunc), -1, -1})
+	return pcaptureOutput(fm, effectOp{funcOp(opFunc), -1, -1})
 }
 
 // CallWithOutputCallback calls a function with the given arguments and options,
@@ -170,7 +170,7 @@ func (fm *Frame) CallWithOutputCallback(fn Callable, args []interface{}, opts ma
 	opFunc := func(f *Frame) error {
 		return fn.Call(f, args, opts)
 	}
-	return pcaptureOutputInner(fm, Op{funcOp(opFunc), -1, -1}, valuesCb, bytesCb)
+	return pcaptureOutputInner(fm, effectOp{funcOp(opFunc), -1, -1}, valuesCb, bytesCb)
 }
 
 func catch(perr *error, fm *Frame) {

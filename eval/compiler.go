@@ -25,7 +25,7 @@ type compiler struct {
 	srcMeta *Source
 }
 
-func compile(b, g staticNs, n *parse.Chunk, src *Source) (op Op, err error) {
+func compile(b, g staticNs, n *parse.Chunk, src *Source) (op effectOp, err error) {
 	cp := &compiler{b, []staticNs{g}, make(staticNs), 0, 0, src}
 	defer util.Catch(&err)
 	return cp.chunkOp(n), nil

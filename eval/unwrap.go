@@ -40,9 +40,9 @@ type ValuesUnwrapper struct{ *unwrapper }
 
 // ExecAndUnwrap executes a ValuesOp and creates an Unwrapper for the obtained
 // values.
-func (ctx *Frame) ExecAndUnwrap(desc string, op ValuesOp) ValuesUnwrapper {
-	values, err := op.Exec(ctx)
-	return ValuesUnwrapper{&unwrapper{ctx, desc, op.Begin, op.End, values, err}}
+func (ctx *Frame) ExecAndUnwrap(desc string, op valuesOp) ValuesUnwrapper {
+	values, err := op.exec(ctx)
+	return ValuesUnwrapper{&unwrapper{ctx, desc, op.begin, op.end, values, err}}
 }
 
 // One unwraps the value to be exactly one value.

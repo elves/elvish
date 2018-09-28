@@ -42,12 +42,12 @@ func TestMultipleEval(t *testing.T) {
 }
 
 func BenchmarkOutputCaptureOverhead(b *testing.B) {
-	op := Op{funcOp(func(*Frame) error { return nil }), 0, 0}
+	op := effectOp{funcOp(func(*Frame) error { return nil }), 0, 0}
 	benchmarkOutputCapture(op, b.N)
 }
 
 func BenchmarkOutputCaptureValues(b *testing.B) {
-	op := Op{funcOp(func(fm *Frame) error {
+	op := effectOp{funcOp(func(fm *Frame) error {
 		fm.ports[1].Chan <- "test"
 		return nil
 	}), 0, 0}
@@ -56,7 +56,7 @@ func BenchmarkOutputCaptureValues(b *testing.B) {
 
 func BenchmarkOutputCaptureBytes(b *testing.B) {
 	bytesToWrite := []byte("test")
-	op := Op{funcOp(func(fm *Frame) error {
+	op := effectOp{funcOp(func(fm *Frame) error {
 		fm.ports[1].File.Write(bytesToWrite)
 		return nil
 	}), 0, 0}
@@ -65,7 +65,7 @@ func BenchmarkOutputCaptureBytes(b *testing.B) {
 
 func BenchmarkOutputCaptureMixed(b *testing.B) {
 	bytesToWrite := []byte("test")
-	op := Op{funcOp(func(fm *Frame) error {
+	op := effectOp{funcOp(func(fm *Frame) error {
 		fm.ports[1].Chan <- false
 		fm.ports[1].File.Write(bytesToWrite)
 		return nil
@@ -73,7 +73,7 @@ func BenchmarkOutputCaptureMixed(b *testing.B) {
 	benchmarkOutputCapture(op, b.N)
 }
 
-func benchmarkOutputCapture(op Op, n int) {
+func benchmarkOutputCapture(op effectOp, n int) {
 	ev := NewEvaler()
 	defer ev.Close()
 	ec := NewTopFrame(ev, NewInternalSource("[benchmark]"), []*Port{{}, {}, {}})
