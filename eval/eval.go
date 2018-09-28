@@ -208,23 +208,9 @@ func (ev *Evaler) EvalWithStdPorts(op effectOp, src *Source) error {
 // Eval sets up the Evaler with the given ports and evaluates an Op.
 // The supplied name and text are used in diagnostic messages.
 func (ev *Evaler) Eval(op effectOp, ports []*Port, src *Source) error {
-	// Ignore TTOU.
-	//
-	// When a subprocess in its own process group puts itself in the foreground,
-	// Elvish will be put in the background. When the code finishes execution,
-	// Elvish will attempt to move itself back to the foreground by calling
-	// tcsetpgrp. However, whenever a background process calls tcsetpgrp (or
-	// otherwise attempts to modify the terminal configuration), TTOU will be
-	// sent, whose default handler is to stop the process. Or, if the process
-	// lives in an orphaned process group (which is often the case for Elvish),
-	// the call will outright fail. Therefore, for Elvish to be able to move
-	// itself back to the foreground later, we need to ignore TTOU now.
-	ignoreTTOU()
-	defer unignoreTTOU()
-
+	// Set up intCh.
 	stopSigGoroutine := make(chan struct{})
 	sigGoRoutineDone := make(chan struct{})
-	// Set up intCh.
 	ev.intCh = make(chan struct{})
 	sigCh := make(chan os.Signal)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGQUIT)
