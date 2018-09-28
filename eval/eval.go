@@ -36,7 +36,6 @@ const (
 const (
 	defaultValuePrefix        = "▶ "
 	defaultNotifyBgJobSuccess = true
-	defaultNumBgJobs          = 0
 	initIndent                = vals.NoPretty
 )
 
@@ -44,13 +43,13 @@ const (
 // shared among all evalCtx instances.
 type Evaler struct {
 	evalerScopes
-	valuePrefix        string
-	notifyBgJobSuccess bool
-	numBgJobs          int
-	beforeChdir        []func(string)
-	afterChdir         []func(string)
-	DaemonClient       *daemon.Client
-	modules            map[string]Ns
+
+	state state
+
+	beforeChdir  []func(string)
+	afterChdir   []func(string)
+	DaemonClient *daemon.Client
+	modules      map[string]Ns
 	// bundled modules
 	bundled map[string]string
 	Editor  Editor
@@ -68,9 +67,11 @@ func NewEvaler() *Evaler {
 	builtin := builtinNs.Clone()
 
 	ev := &Evaler{
-		valuePrefix:        defaultValuePrefix,
-		notifyBgJobSuccess: defaultNotifyBgJobSuccess,
-		numBgJobs:          defaultNumBgJobs,
+		state: state{
+			valuePrefix:        defaultValuePrefix,
+			notifyBgJobSuccess: defaultNotifyBgJobSuccess,
+			numBgJobs:          0,
+		},
 		evalerScopes: evalerScopes{
 			Global:  make(Ns),
 			Builtin: builtin,
@@ -91,9 +92,13 @@ func NewEvaler() *Evaler {
 	builtin["before-chdir"] = vars.FromPtr(&beforeChdirElvish)
 	builtin["after-chdir"] = vars.FromPtr(&afterChdirElvish)
 
-	builtin["value-out-indicator"] = vars.FromPtr(&ev.valuePrefix)
-	builtin["notify-bg-job-success"] = vars.FromPtr(&ev.notifyBgJobSuccess)
-	builtin["num-bg-jobs"] = vars.FromPtr(&ev.numBgJobs)
+	builtin["value-out-indicator"] = vars.FromPtrWithMutex(
+		&ev.state.valuePrefix, &ev.state.mutex)
+	builtin["notify-bg-job-success"] = vars.FromPtrWithMutex(
+		&ev.state.notifyBgJobSuccess, &ev.state.mutex)
+	builtin["num-bg-jobs"] = vars.FromGet(func() interface{} {
+		return ev.state.getNumBgJobs()
+	})
 	builtin["pwd"] = PwdVariable{ev}
 
 	return ev
@@ -101,7 +106,8 @@ func NewEvaler() *Evaler {
 
 func adaptChdirHook(name string, ev *Evaler, pfns *vector.Vector) func(string) {
 	return func(path string) {
-		stdPorts := newStdPorts(os.Stdin, os.Stdout, os.Stderr, ev.valuePrefix)
+		stdPorts := newStdPorts(
+			os.Stdin, os.Stdout, os.Stderr, ev.state.getValuePrefix())
 		defer stdPorts.close()
 		for it := (*pfns).Iterator(); it.HasElem(); it.Next() {
 			fn, ok := it.Elem().(Callable)
@@ -184,7 +190,8 @@ func (fm *Frame) growPorts(n int) {
 // EvalWithStdPorts sets up the Evaler with standard ports and evaluates an Op.
 // The supplied name and text are used in diagnostic messages.
 func (ev *Evaler) EvalWithStdPorts(op Op, src *Source) error {
-	stdPorts := newStdPorts(os.Stdin, os.Stdout, os.Stderr, ev.valuePrefix)
+	stdPorts := newStdPorts(
+		os.Stdin, os.Stdout, os.Stderr, ev.state.getValuePrefix())
 	defer stdPorts.close()
 	return ev.Eval(op, stdPorts.ports[:], src)
 }
