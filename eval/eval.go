@@ -46,15 +46,23 @@ type Evaler struct {
 
 	state state
 
-	beforeChdir  []func(string)
-	afterChdir   []func(string)
-	DaemonClient *daemon.Client
-	modules      map[string]Ns
-	// bundled modules
-	bundled map[string]string
-	Editor  Editor
+	// Chdir hooks.
+	beforeChdir []func(string)
+	afterChdir  []func(string)
+
+	// Used to receive SIGINT.
+	intCh chan struct{}
+
+	// State of the module system.
 	libDir  string
-	intCh   chan struct{}
+	bundled map[string]string
+	modules map[string]Ns
+
+	// Dependencies.
+	//
+	// TODO: Remove these dependency by providing more general extension points.
+	DaemonClient *daemon.Client
+	Editor       Editor
 }
 
 type evalerScopes struct {
@@ -158,7 +166,8 @@ func (ev *Evaler) InstallBundled(name, src string) {
 	ev.bundled[name] = src
 }
 
-// SetArgs sets the $args builtin variable.
+// SetArgs replaces the $args builtin variable with a vector built from the
+// argument.
 func (ev *Evaler) SetArgs(args []string) {
 	v := vector.Empty
 	for _, arg := range args {
