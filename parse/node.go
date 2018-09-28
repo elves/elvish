@@ -1,11 +1,18 @@
 package parse
 
+// Ranger represents something with a queryable range.
+type Ranger interface {
+	// Begin returns the begin index of the range.
+	Begin() int
+	// End returns the end index of the range.
+	End() int
+}
+
 // Node represents a parse tree as well as an AST.
 type Node interface {
+	Ranger
 	n() *node
 	Parent() Node
-	Begin() int
-	End() int
 	SourceText() string
 	Children() []Node
 }
