@@ -12,9 +12,12 @@ import (
 
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/newedit"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
+	"github.com/xiaq/persistent/hashmap"
 )
 
 func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
@@ -95,8 +98,43 @@ func sourceRC(ev *eval.Evaler, dataDir string) error {
 		return fmt.Errorf("cannot get full path of rc.elv: %v", err)
 	}
 	code, err := readFileUTF8(absPath)
+	err = ev.EvalSource(eval.NewScriptSource("rc.elv", absPath, code))
+	if err != nil {
+		return err
+	}
+	extractExports(ev.Global, os.Stderr)
+	return nil
+}
 
-	return ev.SourceRC(eval.NewScriptSource("rc.elv", absPath, code))
+const exportsVarName = "-exports-"
+
+// If the namespace contains a variable named exportsVarName, extract its values
+// into the namespace itself.
+func extractExports(ns eval.Ns, stderr io.Writer) {
+	if !ns.HasName(exportsVarName) {
+		return
+	}
+	value := ns.PopName(exportsVarName).Get()
+	exports, ok := value.(hashmap.Map)
+	if !ok {
+		fmt.Fprintf(stderr, "$%s is not map, ignored\n", exportsVarName)
+		return
+	}
+	for it := exports.Iterator(); it.HasElem(); it.Next() {
+		k, v := it.Elem()
+		name, ok := k.(string)
+		if !ok {
+			fmt.Fprintf(stderr, "$%s[%s] is not string, ignored\n",
+				exportsVarName, vals.Repr(k, vals.NoPretty))
+			continue
+		}
+		if ns.HasName(name) {
+			fmt.Fprintf(stderr, "$%s already exists, ignored $%s[%s]\n",
+				name, exportsVarName, name)
+			continue
+		}
+		ns.Add(name, vars.NewAnyWithInit(v))
+	}
 }
 
 func basicReadLine() (string, error) {
