@@ -5,6 +5,7 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/eval/vars"
+	"github.com/xiaq/persistent/vector"
 )
 
 var builtinNs = Ns{
@@ -15,6 +16,7 @@ var builtinNs = Ns{
 	"false": vars.NewRo(false),
 	"paths": &EnvList{envName: "PATH"},
 	"pwd":   PwdVariable{},
+	"args":  vars.NewRo(vector.Empty),
 }
 
 func addBuiltinFns(fns map[string]interface{}) {
