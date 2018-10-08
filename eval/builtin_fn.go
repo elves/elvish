@@ -43,6 +43,8 @@ var (
 // converted using goToElv. If the last return value has type error and is not
 // nil, it is turned into an exception and no ouputting happens. If the last
 // return value is a nil error, it is ignored.
+//
+// TODO(xiaq): Rename this to NativeFn.
 type BuiltinFn struct {
 	name string
 	impl interface{}

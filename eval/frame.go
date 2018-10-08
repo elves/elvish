@@ -28,6 +28,8 @@ type Frame struct {
 }
 
 // NewTopFrame creates a top-level Frame.
+//
+// TODO(xiaq): This should be a method on the Evaler.
 func NewTopFrame(ev *Evaler, src *Source, ports []*Port) *Frame {
 	return &Frame{
 		ev, src,

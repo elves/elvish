@@ -197,6 +197,11 @@ func (fm *Frame) growPorts(n int) {
 
 // EvalWithStdPorts sets up the Evaler with standard ports and evaluates an Op.
 // The supplied name and text are used in diagnostic messages.
+//
+// TODO(xiaq): This function can only be used to evaluae an effectOp, and cannot
+// be used to call functions with stdPorts. Make the Evaler initialize a
+// stdPorts on construction, instead of in this function, so that NewTopFrame
+// does not require the caller to supply the ports.
 func (ev *Evaler) EvalWithStdPorts(op effectOp, src *Source) error {
 	stdPorts := newStdPorts(
 		os.Stdin, os.Stdout, os.Stderr, ev.state.getValuePrefix())
@@ -204,8 +209,12 @@ func (ev *Evaler) EvalWithStdPorts(op effectOp, src *Source) error {
 	return ev.Eval(op, stdPorts.ports[:], src)
 }
 
-// Eval sets up the Evaler with the given ports and evaluates an Op.
-// The supplied name and text are used in diagnostic messages.
+// Eval sets up the Evaler with the given ports and evaluates an Op. The
+// supplied name and text are used in diagnostic messages.
+//
+// TODO(xiaq): This method only differs from eval in that it sets up intCh for
+// relaying interrupts and puts Elvish in the foreground afterwards. Factor out
+// those logics.
 func (ev *Evaler) Eval(op effectOp, ports []*Port, src *Source) error {
 	// Set up intCh.
 	stopSigGoroutine := make(chan struct{})
@@ -258,6 +267,9 @@ func (ev *Evaler) eval(op effectOp, ports []*Port, src *Source) error {
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it
 // always has type CompilationError.
+//
+// TODO: Return a wrapper around effectOp that includes the Source passed in, so
+// that the Source struct does not need to be supplied again when calling Eval.
 func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (effectOp, error) {
 	return compile(ev.Builtin.static(), ev.Global.static(), n, src)
 }
