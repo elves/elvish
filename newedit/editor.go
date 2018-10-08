@@ -29,8 +29,13 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 		Add("max-height", vars.FromPtrWithMutex(
 			&ed.Config.Raw.MaxHeight, &ed.Config.Mutex))
 
+	ns["before-readline"], ed.BeforeReadline = initBeforeReadline(ev)
+	ns["after-readline"], ed.AfterReadline = initAfterReadline(ev)
+
 	ed.Prompt = makePrompt(ed, ev, ns, defaultPrompt, "prompt")
 	ed.RPrompt = makePrompt(ed, ev, ns, defaultRPrompt, "rprompt")
+
+	// TODO: Initialize insert mode
 
 	return &Editor{ed, ns}
 }
