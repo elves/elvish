@@ -31,12 +31,3 @@ Here are some simple steps of becoming a master Elf (all links go to the [offici
 4. Get familiar with how to write [Effective Elvish](https://elv.sh/learn/effective-elvish.html). This is a living document that evolves with the Elvish language itself.
 
 If you would like to contribute, just read [CONTRIBUTING.md](CONTRIBUTING.md)!
-
-
-## Name
-
-In [roguelikes](https://en.wikipedia.org/wiki/Roguelike), items made by the elves have a reputation of high quality. These are usually called *elven* items, but I chose "elvish" because it ends with "sh", a long tradition of Unix shells. It also rhymes with [fish](https://fishshell.com), one of the shells that influenced the philosophy of Elvish.
-
-The word "Elvish" should be capitalized like a proper noun. However, when referring to the `elvish` command, use it in lower case with fixed-width font.
-
-Whoever practices the Elvish way by either contributing to it or simply using it is called an **Elf**. (You might have guessed this from the name of the GitHub organization.) The official adjective for Elvish (as in "Pythonic" for Python, "Rubyesque" for Ruby) is **Elven**.

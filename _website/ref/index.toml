@@ -1,8 +1,4 @@
 [[articles]]
-name = "philosophy"
-title = "The Philosophy"
-
-[[articles]]
 name = "language"
 title = "The Language"
 
@@ -29,3 +25,11 @@ title = "The Elvish Store (store:)"
 [[articles]]
 name = "bundled"
 title = "Bundled Modules"
+
+[[articles]]
+name = "name"
+title = "The Name"
+
+[[articles]]
+name = "philosophy"
+title = "The Philosophy"
