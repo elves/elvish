@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -104,7 +105,7 @@ func NewEvaler() *Evaler {
 	builtin["notify-bg-job-success"] = vars.FromPtrWithMutex(
 		&ev.state.notifyBgJobSuccess, &ev.state.mutex)
 	builtin["num-bg-jobs"] = vars.FromGet(func() interface{} {
-		return ev.state.getNumBgJobs()
+		return strconv.Itoa(ev.state.getNumBgJobs())
 	})
 	builtin["pwd"] = PwdVariable{ev}
 

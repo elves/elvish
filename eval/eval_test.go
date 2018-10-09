@@ -17,6 +17,15 @@ func TestBuiltinPid(t *testing.T) {
 	}
 }
 
+func TestNumBgJobs(t *testing.T) {
+	Test(t,
+		That("put $num-bg-jobs").Puts("0"),
+		// TODO(xiaq): Test cases where $num-bg-jobs > 0. This cannot be done
+		// with { put $num-bg-jobs }& because the output channel may have
+		// already been closed when the closure is run.
+	)
+}
+
 func TestMiscEval(t *testing.T) {
 	Test(t,
 		// Pseudo-namespaces local: and up:
