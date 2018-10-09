@@ -29,6 +29,9 @@ Here are some simple steps of becoming a master Elf (all links go to the [offici
 
 4. Get familiar with how to write [Effective Elvish](https://elv.sh/learn/effective-elvish.html). This is a living document that evolves with the Elvish language itself.
 
+5. Last but not least, the [philosophy](https://elv.sh/ref/philosophy.html)
+   and the [name](https://elv.sh/ref/name.html) of Elvish should be studied.
+
 Regardless of whether you consider yourself a master Elf, feel free to
 contribute! Read [CONTRIBUTING.md](CONTRIBUTING.md) for some notes for
 contributors.
