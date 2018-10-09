@@ -1,6 +1,31 @@
 # Notes for Contributors
 
-## Code
+## Building Elvish
+
+To build Elvish, you need
+
+*   Linux, {Free,Net,Open}BSD, macOS, or Windows (Windows support is experimental).
+
+*   Go >= 1.10.
+
+If you have not done so, first set up your environment by following [How To Write Go Code](http://golang.org/doc/code.html).
+
+There are two ways to build Elvish. You can build it directly with `go get`:
+
+```sh
+go get github.com/elves/elvish
+```
+
+However, binaries built in this way lacks some build-time information; for instance, `elvish -version` will show `unknown`. To add such information, use `make`:
+
+```sh
+cd `go env GOPATH`/src/github.com/elves/elvish
+make get
+```
+
+In either cases, the binary is placed in `$GOPATH/bin`. Consider adding it to your `$PATH` if you want to run the Elvish binary you just built by just typing `elvish`.
+
+## Code Checklist
 
 1.  Always run unit tests before committing. `make` will take care of this.
 

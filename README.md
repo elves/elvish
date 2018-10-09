@@ -4,8 +4,6 @@
 
 Elvish is a friendly and expressive shell for Linux, BSDs, macOS and Windows. It is already suitable for most daily interactive use, but it is neither complete nor stablized. Contributions are more than welcome!
 
-This README documents the development aspect of Elvish. Announcements, guides and references can be found on the [website](https://elv.sh).
-
 [![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?logo=travis&label=linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
 [![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=windows)](https://ci.appveyor.com/project/xiaq/elvish)
 [![Build Status on VSTS](https://img.shields.io/vso/build/xiaq/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1.svg?logo=tfs&label=macOS)](https://xiaq.visualstudio.com/elvish/_build)
@@ -24,41 +22,9 @@ This README documents the development aspect of Elvish. Announcements, guides an
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
 
-## Building Elvish
-
-**Note**: If you are interested in running Elvish, it is easier to just [download](https://elv.sh/download) a prebuilt binary. You only need to build Elvish yourself if you have modified the source code, or if your platform does not have a prebuilt binary.
-
-### Prerequisite
-
-To build Elvish, you need
-
-*   Linux, {Free,Net,Open}BSD, macOS, or Windows (Windows support is experimental).
-
-*   Go >= 1.10.
-
-If you have not done so, first set up your environment by following [How To Write Go Code](http://golang.org/doc/code.html).
-
-### Instruction
-
-There are two ways to build Elvish. You can build it directly with `go get`:
-
-```sh
-go get github.com/elves/elvish
-```
-
-However, binaries built in this way lacks some build-time information; for instance, `elvish -version` will show `unknown`. To add such information, use `make`:
-
-```sh
-cd `go env GOPATH`/src/github.com/elves/elvish
-make get
-```
-
-In either cases, the binary is placed in `$GOPATH/bin`. Consider adding it to your `$PATH` if you want to run the Elvish binary you just built by just typing `elvish`.
-
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute to Elvish. See
+the [website](https://elv.sh) for everything else: downloads, announcements,
+guides, and so on.
 
 
 ## Name
