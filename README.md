@@ -2,11 +2,9 @@
 
 [![logo](https://elv.sh/assets/logo.svg)](https://elv.sh/)
 
-Elvish is a cross-platform shell, supporting Linux, BSDs and Windows. It features an expressive programming language, with features like namespacing and anonymous functions, and a fully programmable user interface with friendly defaults. It is suitable for both interactive use and scripting.
+Elvish is a friendly and expressive shell for Linux, BSDs, macOS and Windows. It is already suitable for most daily interactive use, but it is neither complete nor stablized. Contributions are more than welcome!
 
-... which is not 100% true yet. Elvish is already suitable for most daily interactive use, but it is neither complete nor stablized. Contributions are more than welcome!
-
-This README documents the development aspect of Elvish. Other information is to be found on the [website](https://elv.sh).
+This README documents the development aspect of Elvish. Announcements, guides and references can be found on the [website](https://elv.sh).
 
 [![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?logo=travis&label=linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
 [![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=windows)](https://ci.appveyor.com/project/xiaq/elvish)
@@ -28,28 +26,34 @@ This README documents the development aspect of Elvish. Other information is to 
 
 ## Building Elvish
 
+**Note**: If you are interested in running Elvish, it is easier to just [download](https://elv.sh/download) a prebuilt binary. You only need to build Elvish yourself if you have modified the source code, or if your platform does not have a prebuilt binary.
+
+### Prerequisite
+
 To build Elvish, you need
 
 *   Linux, {Free,Net,Open}BSD, macOS, or Windows (Windows support is experimental).
 
 *   Go >= 1.10.
 
-Once you have a suitable environment, simply build Elvish with `go get`:
+If you have not done so, first set up your environment by following [How To Write Go Code](http://golang.org/doc/code.html).
+
+### Instruction
+
+There are two ways to build Elvish. You can build it directly with `go get`:
 
 ```sh
 go get github.com/elves/elvish
 ```
 
-The binary will be placed in `$GOPATH/bin`. If you haven't configured a
-`GOPATH`, it defaults to `~/go`. Refer to [How To Write Go
-Code](http://golang.org/doc/code.html) on how to set up workspace for Go.
-
-
-Users of macOS can also build Elvish using [Homebrew](http://brew.sh):
+However, binaries built in this way lacks some build-time information; for instance, `elvish -version` will show `unknown`. To add such information, use `make`:
 
 ```sh
-brew install --HEAD elvish
+cd `go env GOPATH`/src/github.com/elves/elvish
+make get
 ```
+
+In either cases, the binary is placed in `$GOPATH/bin`. Consider adding it to your `$PATH` if you want to run the Elvish binary you just built by just typing `elvish`.
 
 
 ## Contributing
