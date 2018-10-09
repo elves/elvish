@@ -20,17 +20,17 @@ Elvish is a friendly and expressive shell for Linux, BSDs, macOS and Windows. De
 [![#elvish-dev on freenode](https://img.shields.io/badge/freenode-%23elvish--dev-000000.svg)](https://webchat.freenode.net/?channels=elvish-dev)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
-If you would like to contribute, just read [CONTRIBUTING.md](CONTRIBUTING.md)!
-
-The [website](https://elv.sh) has everything else: downloads, announcements, guides, etc.. Here are some simple steps of becoming a master Elf:
+Here are some simple steps of becoming a master Elf (all links go to the [official website](https://elv.sh)):
 
 1. [Download](https://elv.sh/download/) a binary for your platform.
 
-2. Get started with examples in the [cookbook](https://elv.sh/learn/cookbook.html).
+2. Get started with examples from the [cookbook](https://elv.sh/learn/cookbook.html).
 
 3. Read [the reference section](https://elv.sh/ref/) to understand Elvish as a programming language; in particular, read the [language reference](https://elv.sh/ref/language.html) and the [builtin module reference](https://elv.sh/ref/builtin.html).
 
 4. Get familiar with how to write [Effective Elvish](https://elv.sh/learn/effective-elvish.html). This is a living document that evolves with the Elvish language itself.
+
+If you would like to contribute, just read [CONTRIBUTING.md](CONTRIBUTING.md)!
 
 
 ## Name
