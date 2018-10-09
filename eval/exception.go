@@ -22,6 +22,15 @@ type Exception struct {
 	Traceback *stackTrace
 }
 
+// Cause returns the Cause field if err is an *Exception. Otherwise it returns
+// err itself.
+func Cause(err error) error {
+	if exc, ok := err.(*Exception); ok {
+		return exc.Cause
+	}
+	return err
+}
+
 // OK is a pointer to the zero value of Exception, representing the absence of
 // exception.
 var OK = &Exception{}

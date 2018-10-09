@@ -212,7 +212,7 @@ type fnWrap struct{ wrapped effectOp }
 
 func (op fnWrap) invoke(fm *Frame) error {
 	err := fm.Eval(op.wrapped)
-	if err != nil && err.(*Exception).Cause != Return {
+	if err != nil && Cause(err) != Return {
 		// rethrow
 		return err
 	}

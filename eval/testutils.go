@@ -223,7 +223,7 @@ func matchErr(want, got error) bool {
 	if got == nil {
 		return want == nil
 	}
-	return want == errAny || reflect.DeepEqual(got.(*Exception).Cause, want)
+	return want == errAny || reflect.DeepEqual(Cause(got), want)
 }
 
 // MustMkdirAll calls os.MkdirAll and panics if an error is returned. It is
