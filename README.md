@@ -1,6 +1,5 @@
 # Elvish: Friendly and Expressive Shell
 
-
 Elvish is a friendly and expressive shell for Linux, BSDs, macOS and Windows. Despite being pre-1.0 software, it is already suitable for most daily interactive use.
 
 [![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?logo=travis&label=linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
@@ -30,4 +29,6 @@ Here are some simple steps of becoming a master Elf (all links go to the [offici
 
 4. Get familiar with how to write [Effective Elvish](https://elv.sh/learn/effective-elvish.html). This is a living document that evolves with the Elvish language itself.
 
-If you would like to contribute, just read [CONTRIBUTING.md](CONTRIBUTING.md)!
+Regardless of whether you consider yourself a master Elf, feel free to
+contribute! Read [CONTRIBUTING.md](CONTRIBUTING.md) for some notes for
+contributors.
