@@ -28,6 +28,8 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	ns := eval.NewNs().
 		Add("max-height",
 			vars.FromPtrWithMutex(&ed.Config.Raw.MaxHeight, &ed.Config.Mutex)).
+		AddFn("binding-map",
+			eval.NewBuiltinFn("<edit>:binding-map", makeBindingMap)).
 		AddFn("exit-binding",
 			eval.NewBuiltinFn("<edit>:exit-binding", exitBinding)).
 		AddFn("commit-code",
