@@ -1,8 +1,7 @@
 # Elvish: Friendly and Expressive Shell
 
-[![logo](https://elv.sh/assets/logo.svg)](https://elv.sh/)
 
-Elvish is a friendly and expressive shell for Linux, BSDs, macOS and Windows. It is already suitable for most daily interactive use, but it is neither complete nor stablized. Contributions are more than welcome!
+Elvish is a friendly and expressive shell for Linux, BSDs, macOS and Windows. Despite being pre-1.0 software, it is already suitable for most daily interactive use. Contributions are more than welcome!
 
 [![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?logo=travis&label=linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
 [![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=windows)](https://ci.appveyor.com/project/xiaq/elvish)
@@ -13,18 +12,18 @@ Elvish is a friendly and expressive shell for Linux, BSDs, macOS and Windows. It
 [![GoDoc](https://img.shields.io/badge/godoc-api-blue.svg)](http://godoc.org/github.com/elves/elvish)
 [![License](https://img.shields.io/badge/BSD-2--clause-blue.svg)](https://github.com/elves/elvish/blob/master/LICENSE)
 
-[![Gitter](https://img.shields.io/badge/gitter-elvish--public-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish-public)
+[![Gitter](https://img.shields.io/badge/gitter-elves/elvish--public-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish-public)
 [![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg)](https://telegram.me/elvish)
 [![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-blue.svg)](https://webchat.freenode.net/?channels=elvish)
-[![Gitter for Developers](https://img.shields.io/badge/gitter-elvish--dev-000000.svg?logo=gitter-white)](https://gitter.im/elves/elvish-dev)
+[![Gitter for Developers](https://img.shields.io/badge/gitter-elves/elvish--dev-000000.svg?logo=gitter-white)](https://gitter.im/elves/elvish-dev)
 [![Telegram Group for Developers](https://img.shields.io/badge/telegram-@elvish__dev-000000.svg)](https://telegram.me/elvish_dev)
 [![#elvish-dev on freenode](https://img.shields.io/badge/freenode-%23elvish--dev-000000.svg)](https://webchat.freenode.net/?channels=elvish-dev)
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/RealElvishShell)
 
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute to Elvish. See
-the [website](https://elv.sh) for everything else: downloads, announcements,
-guides, and so on.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute to Elvish.
+
+See the [website](https://elv.sh) for everything else: downloads, announcements, guides, and so on.
 
 
 ## Name
