@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/utils"
 )
 
 func TestKeyHandlerFromBinding(t *testing.T) {
@@ -59,11 +60,23 @@ func TestCallBinding_CallsFunction(t *testing.T) {
 	nt := &fakeNotifier{}
 
 	called := 0
-	callBinding(nt, ev, eval.NewBuiltinFn("test binding", func(fm *eval.Frame) {
+	callBinding(nt, ev, eval.NewBuiltinFn("test binding", func() {
 		called++
 	}))
 	if called != 1 {
 		t.Errorf("binding called %v times, want once", called)
+	}
+}
+
+func TestCallBinding_CapturesAction(t *testing.T) {
+	ev := eval.NewEvaler()
+	nt := &fakeNotifier{}
+
+	action := callBinding(nt, ev, eval.NewBuiltinFn("test", func() error {
+		return utils.ActionError(types.CommitCode)
+	}))
+	if action != types.CommitCode {
+		t.Errorf("got ret = %v, want %v", action, types.CommitCode)
 	}
 }
 
