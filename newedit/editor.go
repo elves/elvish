@@ -26,8 +26,12 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	ed.Highlighter = highlight.Highlight
 
 	ns := eval.NewNs().
-		Add("max-height", vars.FromPtrWithMutex(
-			&ed.Config.Raw.MaxHeight, &ed.Config.Mutex))
+		Add("max-height",
+			vars.FromPtrWithMutex(&ed.Config.Raw.MaxHeight, &ed.Config.Mutex)).
+		AddFn("exit-binding",
+			eval.NewBuiltinFn("<edit>:exit-binding", exitBinding)).
+		AddFn("commit-code",
+			eval.NewBuiltinFn("<edit>:commit-code", commitCode))
 
 	ns["before-readline"], ed.BeforeReadline = initBeforeReadline(ev)
 	ns["after-readline"], ed.AfterReadline = initAfterReadline(ev)
