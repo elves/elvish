@@ -111,7 +111,7 @@ func (exc *Exception) Index(k interface{}) (interface{}, bool) {
 }
 
 func (exc *Exception) IterateKeys(f func(interface{}) bool) {
-	vals.Feed(f, "cause")
+	util.Feed(f, "cause")
 }
 
 // PipelineError represents the errors of pipelines, in which multiple commands

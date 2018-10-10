@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -71,7 +72,7 @@ func (c *Closure) Index(k interface{}) (interface{}, bool) {
 }
 
 func (c *Closure) IterateKeys(f func(interface{}) bool) {
-	vals.Feed(f, "arg-names", "rest-arg",
+	util.Feed(f, "arg-names", "rest-arg",
 		"opt-names", "opt-defaults", "body", "def", "src")
 }
 

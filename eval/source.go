@@ -6,6 +6,7 @@ import (
 
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -87,7 +88,7 @@ func (src *Source) Index(k interface{}) (interface{}, bool) {
 }
 
 func (src *Source) IterateKeys(f func(interface{}) bool) {
-	vals.Feed(f, "type", "name", "path", "code")
+	util.Feed(f, "type", "name", "path", "code")
 }
 
 // SrcType records the type of a piece of source code.

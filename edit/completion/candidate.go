@@ -9,6 +9,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
 )
 
@@ -82,7 +83,7 @@ func (c *complexCandidate) Index(k interface{}) (interface{}, bool) {
 }
 
 func (c *complexCandidate) IterateKeys(f func(interface{}) bool) {
-	vals.Feed(f, "stem", "code-suffix", "display-suffix", "style")
+	util.Feed(f, "stem", "code-suffix", "display-suffix", "style")
 }
 
 func (c *complexCandidate) Kind() string { return "map" }

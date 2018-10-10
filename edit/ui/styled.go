@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/hash"
 	"github.com/xiaq/persistent/vector"
 )
@@ -112,7 +112,7 @@ func (s *Styled) Index(k interface{}) (interface{}, bool) {
 }
 
 func (s *Styled) IterateKeys(f func(interface{}) bool) {
-	vals.Feed(f, "text", "styles")
+	util.Feed(f, "text", "styles")
 }
 
 type Styles []string
