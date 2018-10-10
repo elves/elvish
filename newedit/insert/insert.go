@@ -1,6 +1,6 @@
-// Package insert is the Elvish-agnostic core of the insert mode. It implements
-// abbreviation expansion, handling of bracketed paste and a default key
-// handler.
+// Package insert is the Elvish-agnostic core of the insert mode. The mode has
+// an event handler that handles brackted pasting and implements abbreviation
+// expansion.
 package insert
 
 import (
