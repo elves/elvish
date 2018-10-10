@@ -61,6 +61,8 @@ func BasicHandler(e tty.Event, st *types.State) types.HandlerAction {
 			s := string(k.Rune)
 			raw.Code = raw.Code[:raw.Dot] + s + raw.Code[raw.Dot:]
 			raw.Dot += len(s)
+		} else {
+			raw.Notes = append(raw.Notes, "Unbound: "+k.String())
 		}
 	}
 	return types.NoAction

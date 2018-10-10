@@ -57,6 +57,17 @@ func TestBasicHandler_KeyEvents(t *testing.T) {
 	}
 }
 
+func TestBasicHandler_NotifiesOnUnboundKeys(t *testing.T) {
+	st := types.State{}
+
+	BasicHandler(tty.KeyEvent{Mod: ui.Ctrl, Rune: 'X'}, &st)
+
+	wantNotes := []string{"Unbound: Ctrl-X"}
+	if notes := st.Raw.Notes; !reflect.DeepEqual(notes, wantNotes) {
+		t.Errorf("Notes is %q, want %q", notes, wantNotes)
+	}
+}
+
 var otherEvents = []tty.Event{
 	tty.MouseEvent{}, tty.RawRune('a'),
 	tty.PasteSetting(false), tty.PasteSetting(true), tty.CursorPosition{},
