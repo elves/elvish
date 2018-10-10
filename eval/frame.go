@@ -125,7 +125,18 @@ func (fm *Frame) fork(name string) *Frame {
 	}
 }
 
-// Eval evaluates an op. It does so in a protected environment so that
+// EvalOp evaluates an Op. It is like Eval except that it sets fm.srcMeta
+// temporarily to op.src during the evaluation.
+func (fm *Frame) EvalOp(op Op) error {
+	oldSrc := fm.srcMeta
+	fm.srcMeta = op.src
+	defer func() {
+		fm.srcMeta = oldSrc
+	}()
+	return fm.Eval(op.inner)
+}
+
+// Eval evaluates an effectOp. It does so in a protected environment so that
 // exceptions thrown are wrapped in an Error.
 func (fm *Frame) Eval(op effectOp) (err error) {
 	defer catch(&err, fm)

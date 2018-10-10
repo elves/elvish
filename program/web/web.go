@@ -117,7 +117,7 @@ func evalAndCollect(ev *eval.Evaler, code string) (
 		{File: outFile, Chan: outChan},
 		{File: errFile, Chan: eval.BlackholeChan},
 	}
-	err = ev.Eval(op, ports, src)
+	err = ev.Eval(op, ports)
 
 	outFile.Close()
 	close(outChan)

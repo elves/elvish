@@ -2,7 +2,14 @@ package eval
 
 import "github.com/elves/elvish/eval/vars"
 
-// An operation on an Frame that produces a side effect.
+// Op represents an operation on a Frame. It is the result of compiling a piece
+// of source.
+type Op struct {
+	inner effectOp
+	src   *Source
+}
+
+// An operation on a Frame that produces a side effect.
 type effectOp struct {
 	body       opBody
 	begin, end int
@@ -36,7 +43,7 @@ func (op valuesOp) exec(fm *Frame) ([]interface{}, error) {
 	return op.body.invoke(fm)
 }
 
-// An operation on an Frame that produce Variable's.
+// An operation on a Frame that produce Variable's.
 type lvaluesOp struct {
 	body       lvaluesOpBody
 	begin, end int

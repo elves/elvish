@@ -314,7 +314,7 @@ func loadModule(fm *Frame, name string) (Ns, error) {
 	// Load the namespace before executing. This prevent circular "use"es from
 	// resulting in an infinite recursion.
 	fm.Evaler.modules[name] = modGlobal
-	err = newFm.Eval(op)
+	err = newFm.EvalOp(op)
 	if err != nil {
 		// Unload the namespace.
 		delete(fm.modules, name)

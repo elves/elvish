@@ -203,11 +203,11 @@ func (fm *Frame) growPorts(n int) {
 // be used to call functions with stdPorts. Make the Evaler initialize a
 // stdPorts on construction, instead of in this function, so that NewTopFrame
 // does not require the caller to supply the ports.
-func (ev *Evaler) EvalWithStdPorts(op effectOp, src *Source) error {
+func (ev *Evaler) EvalWithStdPorts(op Op) error {
 	stdPorts := newStdPorts(
 		os.Stdin, os.Stdout, os.Stderr, ev.state.getValuePrefix())
 	defer stdPorts.close()
-	return ev.Eval(op, stdPorts.ports[:], src)
+	return ev.Eval(op, stdPorts.ports[:])
 }
 
 // Eval sets up the Evaler with the given ports and evaluates an Op. The
@@ -216,7 +216,7 @@ func (ev *Evaler) EvalWithStdPorts(op effectOp, src *Source) error {
 // TODO(xiaq): This method only differs from eval in that it sets up intCh for
 // relaying interrupts and puts Elvish in the foreground afterwards. Factor out
 // those logics.
-func (ev *Evaler) Eval(op effectOp, ports []*Port, src *Source) error {
+func (ev *Evaler) Eval(op Op, ports []*Port) error {
 	// Set up intCh.
 	stopSigGoroutine := make(chan struct{})
 	sigGoRoutineDone := make(chan struct{})
@@ -242,7 +242,7 @@ func (ev *Evaler) Eval(op effectOp, ports []*Port, src *Source) error {
 		close(sigGoRoutineDone)
 	}()
 
-	err := ev.eval(op, ports, src)
+	err := ev.eval(op, ports)
 
 	close(stopSigGoroutine)
 	<-sigGoRoutineDone
@@ -261,17 +261,14 @@ func (ev *Evaler) Eval(op effectOp, ports []*Port, src *Source) error {
 
 // eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
-func (ev *Evaler) eval(op effectOp, ports []*Port, src *Source) error {
-	ec := NewTopFrame(ev, src, ports)
-	return ec.Eval(op)
+func (ev *Evaler) eval(op Op, ports []*Port) error {
+	ec := NewTopFrame(ev, op.src, ports)
+	return ec.Eval(op.inner)
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it
 // always has type CompilationError.
-//
-// TODO: Return a wrapper around effectOp that includes the Source passed in, so
-// that the Source struct does not need to be supplied again when calling Eval.
-func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (effectOp, error) {
+func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (Op, error) {
 	return compile(ev.Builtin.static(), ev.Global.static(), n, src)
 }
 
@@ -285,5 +282,5 @@ func (ev *Evaler) EvalSource(src *Source) error {
 	if err != nil {
 		return err
 	}
-	return ev.EvalWithStdPorts(op, src)
+	return ev.EvalWithStdPorts(op)
 }

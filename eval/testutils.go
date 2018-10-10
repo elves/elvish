@@ -180,7 +180,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]int
 			{File: os.Stderr, Chan: BlackholeChan},
 		}
 
-		ex = ev.eval(op, ports, src)
+		ex = ev.eval(op, ports)
 		close(outCh)
 		<-outDone
 	}
@@ -192,7 +192,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]int
 	return outs, bytesOut, ex
 }
 
-func mustParseAndCompile(t *testing.T, ev *Evaler, src *Source) effectOp {
+func mustParseAndCompile(t *testing.T, ev *Evaler, src *Source) Op {
 	n, err := parse.Parse(src.name, src.code)
 	if err != nil {
 		t.Fatalf("Parse(%q) error: %s", src.code, err)
