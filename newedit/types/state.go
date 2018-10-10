@@ -82,18 +82,18 @@ func (s *State) AddNote(note string) {
 	s.Raw.Notes = append(s.Raw.Notes, note)
 }
 
-// LastKey returns LastKey from the raw state.
-func (s *State) LastKey() ui.Key {
+// BindingKey returns BindingKey from the raw state.
+func (s *State) BindingKey() ui.Key {
 	s.Mutex.RLock()
 	defer s.Mutex.RUnlock()
-	return s.Raw.LastKey
+	return s.Raw.BindingKey
 }
 
-// SetLastKey sets LastKey of the raw state.
-func (s *State) SetLastKey(k ui.Key) {
+// SetBindingKey sets BindingKey of the raw state.
+func (s *State) SetBindingKey(k ui.Key) {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
-	s.Raw.LastKey = k
+	s.Raw.BindingKey = k
 }
 
 // Reset resets the internal state to an empty value.
@@ -116,8 +116,8 @@ type RawState struct {
 	// Notes that have been added since the last redraw.
 	Notes []string
 
-	// Last key that was pressed. Used in key handlers.
-	LastKey ui.Key
+	// In bindings, the key that the binding is handling.
+	BindingKey ui.Key
 }
 
 // PendingCode represents pending code, such as during completion.
