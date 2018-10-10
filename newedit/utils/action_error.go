@@ -21,10 +21,12 @@ func (ae ActionError) Error() string {
 	return actionNames[ae]
 }
 
+// Repr returns an Elvish representation of ae.
 func (ae ActionError) Repr(int) string {
 	return "?(edit:" + ae.Error() + ")"
 }
 
+// Pprint pretty-prints ae to the terminal.
 func (ae ActionError) Pprint(string) string {
 	return "\033[33;1m" + ae.Error() + "\033[m"
 }
