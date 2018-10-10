@@ -30,7 +30,7 @@ func (s *State) Finalize() *RawState {
 	s.Mutex.RLock()
 	defer s.Mutex.RUnlock()
 	return &RawState{
-		dummyMode{}, s.Raw.Code, len(s.Raw.Code), nil, s.Raw.Notes, ui.Key{}, 0}
+		dummyMode{}, s.Raw.Code, len(s.Raw.Code), nil, s.Raw.Notes, ui.Key{}}
 }
 
 // Mode returns the current mode.
@@ -96,20 +96,6 @@ func (s *State) SetLastKey(k ui.Key) {
 	s.Raw.LastKey = k
 }
 
-// NextAction returns NextAction from the raw state.
-func (s *State) NextAction() HandlerAction {
-	s.Mutex.RLock()
-	defer s.Mutex.RUnlock()
-	return s.Raw.NextAction
-}
-
-// SetNextAction sets NextAction of the raw state.
-func (s *State) SetNextAction(a HandlerAction) {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
-	s.Raw.NextAction = a
-}
-
 // Reset resets the internal state to an empty value.
 func (s *State) Reset() {
 	s.Mutex.Lock()
@@ -132,8 +118,6 @@ type RawState struct {
 
 	// Last key that was pressed. Used in key handlers.
 	LastKey ui.Key
-	// The handler action to return. Used in key handlers.
-	NextAction HandlerAction
 }
 
 // PendingCode represents pending code, such as during completion.
