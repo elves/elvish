@@ -39,6 +39,11 @@ func NewTopFrame(ev *Evaler, src *Source, ports []*Port) *Frame {
 	}
 }
 
+// SetLocal changes the local scope of the Frame.
+func (fm *Frame) SetLocal(ns Ns) {
+	fm.local = ns
+}
+
 // Close releases resources allocated for this frame. It always returns a nil
 // error. It may be called only once.
 func (fm *Frame) Close() error {
@@ -129,11 +134,11 @@ func (fm *Frame) fork(name string) *Frame {
 // temporarily to op.src during the evaluation.
 func (fm *Frame) EvalOp(op Op) error {
 	oldSrc := fm.srcMeta
-	fm.srcMeta = op.src
+	fm.srcMeta = op.Src
 	defer func() {
 		fm.srcMeta = oldSrc
 	}()
-	return fm.Eval(op.inner)
+	return fm.Eval(op.Inner)
 }
 
 // Eval evaluates an effectOp. It does so in a protected environment so that

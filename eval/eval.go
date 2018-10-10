@@ -262,14 +262,24 @@ func (ev *Evaler) Eval(op Op, ports []*Port) error {
 // eval evaluates a chunk node n. The supplied name and text are used in
 // diagnostic messages.
 func (ev *Evaler) eval(op Op, ports []*Port) error {
-	ec := NewTopFrame(ev, op.src, ports)
-	return ec.Eval(op.inner)
+	ec := NewTopFrame(ev, op.Src, ports)
+	return ec.Eval(op.Inner)
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it
 // always has type CompilationError.
 func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (Op, error) {
-	return compile(ev.Builtin.static(), ev.Global.static(), n, src)
+	return ev.CompileWithGlobal(n, src, ev.Global)
+}
+
+// CompileWithGlobal compiles Elvish code in an alternative global scope. If the
+// error is not nil, it always has type CompilationError.
+//
+// TODO(xiaq): To use the Op created, the caller must create a Frame and mutate
+// its local scope manually. Consider restructuring the API to make that
+// unnecessary.
+func (ev *Evaler) CompileWithGlobal(n *parse.Chunk, src *Source, g Ns) (Op, error) {
+	return compile(ev.Builtin.static(), g.static(), n, src)
 }
 
 // EvalSource evaluates a chunk of Elvish source.

@@ -5,8 +5,8 @@ import "github.com/elves/elvish/eval/vars"
 // Op represents an operation on a Frame. It is the result of compiling a piece
 // of source.
 type Op struct {
-	inner effectOp
-	src   *Source
+	Inner effectOp
+	Src   *Source
 }
 
 // An operation on a Frame that produces a side effect.
