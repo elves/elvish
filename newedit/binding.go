@@ -20,16 +20,17 @@ type BindingMap = eddefs.BindingMap
 
 var EmptyBindingMap = eddefs.EmptyBindingMap
 
-func keyHandlerFromBinding(nt notifier, ev *eval.Evaler, m *BindingMap) func(ui.Key) types.HandlerAction {
+func keyHandlerFromBinding(ed editor, ev *eval.Evaler, m *BindingMap) func(ui.Key) types.HandlerAction {
 	return func(k ui.Key) types.HandlerAction {
 		f := m.GetOrDefault(k)
 		// TODO: Make this fallback part of GetOrDefault after moving BindingMap
 		// into this package.
 		if f == nil {
-			nt.Notify("Unbound: " + k.String())
+			ed.Notify("Unbound: " + k.String())
 			return types.NoAction
 		}
-		return callBinding(nt, ev, f)
+		ed.State().SetBindingKey(k)
+		return callBinding(ed, ev, f)
 	}
 }
 

@@ -11,11 +11,11 @@ import (
 	"github.com/elves/elvish/newedit/utils"
 )
 
-func TestKeyHandlerFromBinding(t *testing.T) {
+func TestKeyHandlerFromBinding_CallsBinding(t *testing.T) {
 	called := 0
 	binding := buildBinding(
-		"a", eval.NewBuiltinFn("test binding", func() { called++ }))
-	handler := keyHandlerFromBinding(dummyNotifier{}, eval.NewEvaler(), &binding)
+		"a", eval.NewBuiltinFn("[test]", func() { called++ }))
+	handler := keyHandlerFromBinding(dummyEditor{}, eval.NewEvaler(), &binding)
 
 	action := handler(ui.Key{Rune: 'a'})
 
@@ -27,16 +27,31 @@ func TestKeyHandlerFromBinding(t *testing.T) {
 	}
 }
 
-func TestKeyHandlerFromBinding_Fallback(t *testing.T) {
-	nt := &fakeNotifier{}
+func TestKeyHandlerFromBinding_SetsBindingKey(t *testing.T) {
+	ed := &fakeEditor{}
+	var gotKey ui.Key
+	binding := buildBinding(
+		"a", eval.NewBuiltinFn("[test]", func() { gotKey = ed.State().BindingKey() }))
+	handler := keyHandlerFromBinding(ed, eval.NewEvaler(), &binding)
+
+	key := ui.Key{Rune: 'a'}
+	_ = handler(key)
+
+	if gotKey != key {
+		t.Errorf("Got key %v, want %v", gotKey, key)
+	}
+}
+
+func TestKeyHandlerFromBinding_Unbound(t *testing.T) {
+	ed := &fakeEditor{}
 	binding := EmptyBindingMap
-	handler := keyHandlerFromBinding(nt, eval.NewEvaler(), &binding)
+	handler := keyHandlerFromBinding(ed, eval.NewEvaler(), &binding)
 
 	action := handler(ui.Key{Rune: 'a'})
 
 	wantNotes := []string{"Unbound: a"}
-	if !reflect.DeepEqual(nt.notes, wantNotes) {
-		t.Errorf("Notes %v, want %v", nt.notes, wantNotes)
+	if !reflect.DeepEqual(ed.fakeNotifier.notes, wantNotes) {
+		t.Errorf("Notes %v, want %v", ed.fakeNotifier.notes, wantNotes)
 	}
 	if action != types.NoAction {
 		t.Errorf("Fallback binding returned %v, want NoAction", action)
