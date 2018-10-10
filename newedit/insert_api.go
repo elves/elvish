@@ -6,12 +6,14 @@ import (
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/newedit/insert"
+	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/newedit/utils"
 	"github.com/xiaq/persistent/hashmap"
 )
 
 // Initializes states for the insert mode and its API.
 func initInsert(ed editor, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
+	// Underlying abbreviation map and binding map.
 	abbr := vals.EmptyMap
 	binding := EmptyBindingMap
 
@@ -20,16 +22,21 @@ func initInsert(ed editor, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
 		AbbrIterate: func(cb func(a, f string)) { abbrIterate(abbr, cb) },
 	}
 
+	st := ed.State()
+
 	ns := eval.Ns{
 		"binding": vars.FromPtr(&binding),
 		"abbr":    vars.FromPtr(&abbr),
 		"quote-paste": vars.FromPtrWithMutex(
 			&m.Config.Raw.QuotePaste, &m.Config.Mutex),
-	}.AddBuiltinFns("[insert mode]", map[string]interface{}{
-		"start": func() { ed.State().SetMode(m) },
-		"default": func() error {
-			return utils.ActionError(utils.BasicHandler(
-				tty.KeyEvent(ed.State().BindingKey()), ed.State()))
+	}.AddBuiltinFns("<edit:insert>:", map[string]interface{}{
+		"start": func() { st.SetMode(m) },
+		"default-handler": func() error {
+			action := utils.BasicHandler(tty.KeyEvent(st.BindingKey()), st)
+			if action != types.NoAction {
+				return utils.ActionError(action)
+			}
+			return nil
 		},
 	})
 

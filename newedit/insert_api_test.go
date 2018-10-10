@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/newedit/types"
@@ -64,9 +65,31 @@ func TestInitInsert_Start(t *testing.T) {
 	m, ns := initInsert(ed, ev)
 
 	fm := eval.NewTopFrame(ev, eval.NewInternalSource("[test]"), nil)
-	fm.Call(ns["start"+eval.FnSuffix].Get().(eval.Callable), nil, eval.NoOpts)
+	fm.Call(getFn(ns, "start"), nil, eval.NoOpts)
 
 	if ed.state.Mode() != m {
 		t.Errorf("state is not insert mode after calling start")
 	}
+}
+
+func TestInitInsert_DefaultHandler(t *testing.T) {
+	ed := &fakeEditor{}
+	ev := eval.NewEvaler()
+	_, ns := initInsert(ed, ev)
+
+	// Pretend that we are executing a binding for "a".
+	ed.state.SetBindingKey(ui.Key{Rune: 'a'})
+
+	// Call <edit:insert>:default-binding.
+	fm := eval.NewTopFrame(ev, eval.NewInternalSource("[test]"), nil)
+	fm.Call(getFn(ns, "default-handler"), nil, eval.NoOpts)
+
+	// Verify that the default handler has executed, inserting "a".
+	if ed.state.Raw.Code != "a" {
+		t.Errorf("state.Raw.Code = %q, want %q", ed.state.Raw.Code, "a")
+	}
+}
+
+func getFn(ns eval.Ns, name string) eval.Callable {
+	return ns[name+eval.FnSuffix].Get().(eval.Callable)
 }
