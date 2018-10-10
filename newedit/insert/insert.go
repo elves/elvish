@@ -1,4 +1,6 @@
-// Package insert implements the insert mode for Elvish's editor.
+// Package insert is the Elvish-agnostic core of the insert mode. It implements
+// abbreviation expansion, handling of bracketed paste and a default key
+// handler.
 package insert
 
 import (
@@ -12,7 +14,7 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-// Mode represents the insert mode.
+// Mode represents the insert mode, implementing the types.Mode interface.
 type Mode struct {
 	// Function to handle keys.
 	KeyHandler func(ui.Key) types.HandlerAction
@@ -35,17 +37,20 @@ const (
 	literalPaste
 )
 
+// Config keeps configurations that can be changed concurrently.
 type Config struct {
 	Raw   RawConfig
 	Mutex sync.RWMutex
 }
 
+// QuotePaste returns c.Raw.QuotePaste while r-locking c.Mutex.
 func (c *Config) QuotePaste() bool {
 	c.Mutex.RLock()
 	defer c.Mutex.RUnlock()
 	return c.Raw.QuotePaste
 }
 
+// RawConfig keeps raw configurations.
 type RawConfig struct {
 	// Whether to quote the bracketed-pasted text.
 	QuotePaste bool
@@ -56,6 +61,7 @@ var (
 	literalPasteModeLine = ui.NewModeLineRenderer(" INSERT (pasting, literal) ", "")
 )
 
+// ModeLine returns the modeline.
 func (m *Mode) ModeLine() ui.Renderer {
 	switch {
 	case m.paste == quotePaste:
@@ -67,10 +73,13 @@ func (m *Mode) ModeLine() ui.Renderer {
 	}
 }
 
+// ModeRenderFlag always returns 0.
 func (m *Mode) ModeRenderFlag() types.ModeRenderFlag {
 	return 0
 }
 
+// HandleEvent handles a terminal event. It handles tty.PasteSetting and
+// tty.KeyEvent and ignores others.
 func (m *Mode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
 	switch e := e.(type) {
 	case tty.PasteSetting:
