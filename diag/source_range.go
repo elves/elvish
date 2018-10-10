@@ -1,9 +1,11 @@
-package util
+package diag
 
 import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	"github.com/elves/elvish/util"
 )
 
 // SourceRange is a range of text in a source code. It can point to another
@@ -91,7 +93,7 @@ func (sr *SourceRange) PprintCompact(sourceIndent string) string {
 	}
 	desc := sr.Name + ", " + sr.lineRange() + " "
 	// Extra indent so that following lines line up with the first line.
-	descIndent := strings.Repeat(" ", Wcswidth(desc))
+	descIndent := strings.Repeat(" ", util.Wcswidth(desc))
 	return desc + sr.relevantSource(sourceIndent+descIndent)
 }
 

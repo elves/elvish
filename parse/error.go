@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/elves/elvish/util"
+	"github.com/elves/elvish/diag"
 )
 
 // ErrorEntry represents one parse error.
 type ErrorEntry struct {
 	Message string
-	Context util.SourceRange
+	Context diag.SourceRange
 }
 
 // Error stores multiple ErrorEntry's and can pretty print them.
@@ -18,7 +18,7 @@ type Error struct {
 	Entries []*ErrorEntry
 }
 
-func (pe *Error) Add(msg string, ctx *util.SourceRange) {
+func (pe *Error) Add(msg string, ctx *diag.SourceRange) {
 	pe.Entries = append(pe.Entries, &ErrorEntry{msg, *ctx})
 }
 

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
-	"github.com/elves/elvish/util"
 )
 
 func initBeforeReadline(ev *eval.Evaler) (vars.Var, func()) {
@@ -21,7 +21,7 @@ func initBeforeReadline(ev *eval.Evaler) (vars.Var, func()) {
 			if !ok {
 				// TODO(xiaq): This is not testable as it depends on stderr.
 				// Make it testable.
-				util.Complainf("%s not function", name)
+				diag.Complainf("%s not function", name)
 				continue
 			}
 			// TODO(xiaq): This should use stdPorts, but stdPorts is currently
@@ -45,7 +45,7 @@ func initAfterReadline(ev *eval.Evaler) (vars.Var, func(string)) {
 			if !ok {
 				// TODO(xiaq): This is not testable as it depends on stderr.
 				// Make it testable.
-				util.Complainf("%s not function", name)
+				diag.Complainf("%s not function", name)
 				continue
 			}
 			// TODO(xiaq): This should use stdPorts, but stdPorts is currently

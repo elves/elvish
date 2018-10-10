@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/util"
 )
 
@@ -217,7 +218,7 @@ func (fm *Frame) makeException(e error) *Exception {
 
 func (fm *Frame) addTraceback() *stackTrace {
 	return &stackTrace{
-		entry: &util.SourceRange{
+		entry: &diag.SourceRange{
 			Name: fm.srcMeta.describePath(), Source: fm.srcMeta.code,
 			Begin: fm.begin, End: fm.end,
 		},

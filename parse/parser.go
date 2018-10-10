@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/util"
+	"github.com/elves/elvish/diag"
 )
 
 // Parser maintains some mutable states of parsing.
@@ -83,7 +83,7 @@ func (ps *Parser) backup() {
 }
 
 func (ps *Parser) errorp(begin, end int, e error) {
-	ps.errors.Add(e.Error(), util.NewSourceRange(ps.srcName, ps.src, begin, end))
+	ps.errors.Add(e.Error(), diag.NewSourceRange(ps.srcName, ps.src, begin, end))
 }
 
 func (ps *Parser) error(e error) {

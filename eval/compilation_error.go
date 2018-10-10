@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/elves/elvish/util"
+	"github.com/elves/elvish/diag"
 )
 
 // CompilationError represents a compilation error and can pretty print it.
 type CompilationError struct {
 	Message string
-	Context util.SourceRange
+	Context diag.SourceRange
 }
 
 func (ce *CompilationError) Error() string {

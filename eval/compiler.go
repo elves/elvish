@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
@@ -37,7 +38,7 @@ func (cp *compiler) compiling(n parse.Node) {
 
 func (cp *compiler) errorpf(begin, end int, format string, args ...interface{}) {
 	util.Throw(&CompilationError{fmt.Sprintf(format, args...),
-		*util.NewSourceRange(cp.srcMeta.describePath(), cp.srcMeta.code, begin, end)})
+		*diag.NewSourceRange(cp.srcMeta.describePath(), cp.srcMeta.code, begin, end)})
 }
 
 func (cp *compiler) errorf(format string, args ...interface{}) {

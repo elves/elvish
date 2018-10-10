@@ -1,9 +1,11 @@
-package util
+package diag
 
 import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/elves/elvish/util"
 )
 
 // Can be changed for testing.
@@ -12,7 +14,7 @@ var stderr io.Writer = os.Stderr
 // PprintError pretty-prints an error. It uses the Pprint method if the error
 // implements Pprinter, and uses Complain to print the error message otherwise.
 func PprintError(err error) {
-	if pprinter, ok := err.(Pprinter); ok {
+	if pprinter, ok := err.(util.Pprinter); ok {
 		fmt.Fprintln(stderr, pprinter.Pprint(""))
 	} else {
 		Complain(err.Error())

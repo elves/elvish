@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/runtime"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
@@ -42,7 +43,7 @@ func (sh *Shell) Main(args []string) int {
 	if len(args) > 0 {
 		err := script(ev, args, sh.Cmd, sh.CompileOnly)
 		if err != nil {
-			util.PprintError(err)
+			diag.PprintError(err)
 			return 2
 		}
 	} else {
