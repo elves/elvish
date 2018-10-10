@@ -7,6 +7,7 @@ import (
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/newedit/core"
 	"github.com/elves/elvish/newedit/highlight"
+	"github.com/elves/elvish/parse"
 )
 
 // Editor is the interface line editor for Elvish.
@@ -28,20 +29,45 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	ns := eval.NewNs().
 		Add("max-height",
 			vars.FromPtrWithMutex(&ed.Config.Raw.MaxHeight, &ed.Config.Mutex)).
-		AddFn("binding-map",
-			eval.NewBuiltinFn("<edit>:binding-map", makeBindingMap)).
-		AddFn("exit-binding",
-			eval.NewBuiltinFn("<edit>:exit-binding", exitBinding)).
-		AddFn("commit-code",
-			eval.NewBuiltinFn("<edit>:commit-code", commitCode))
+		AddBuiltinFns("<edit>", map[string]interface{}{
+			"binding-map":  makeBindingMap,
+			"exit-binding": exitBinding,
+			"commit-code":  commitCode,
+		})
 
+	// Hooks
 	ns["before-readline"], ed.BeforeReadline = initBeforeReadline(ev)
 	ns["after-readline"], ed.AfterReadline = initAfterReadline(ev)
 
+	// Prompts
 	ed.Prompt = makePrompt(ed, ev, ns, defaultPrompt, "prompt")
 	ed.RPrompt = makePrompt(ed, ev, ns, defaultRPrompt, "rprompt")
 
-	// TODO: Initialize insert mode
+	// Insert mode
+	insertMode, insertNs := initInsert(ed, ev)
+	ed.InitMode = insertMode
+	ns.AddNs("insert", insertNs)
+
+	// Evaluate default bindings.
+	n, err := parse.Parse("[default bindings]", defaultBindingsElv)
+	if err != nil {
+		panic(err)
+	}
+	src := eval.NewScriptSource(
+		"[default bindings]", "[default bindings]", defaultBindingsElv)
+	op, err := ev.CompileWithGlobal(n, src, ns)
+	if err != nil {
+		panic(err)
+	}
+	// TODO(xiaq): Use stdPorts when it is possible to do so.
+	fm := eval.NewTopFrame(ev, src, []*eval.Port{
+		{File: os.Stdin}, {File: os.Stdout}, {File: os.Stderr},
+	})
+	fm.SetLocal(ns)
+	err = fm.Eval(op.Inner)
+	if err != nil {
+		panic(err)
+	}
 
 	return &Editor{ed, ns}
 }

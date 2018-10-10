@@ -27,3 +27,11 @@ func TestNs(t *testing.T) {
 		t.Errorf("Failed to set MaxHeight to 20 via binding")
 	}
 }
+
+func TestInsertMode(t *testing.T) {
+	// TODO
+}
+
+func TestDefaultBinding(t *testing.T) {
+	// TODO
+}

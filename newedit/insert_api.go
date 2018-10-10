@@ -1,10 +1,12 @@
 package newedit
 
 import (
+	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/newedit/insert"
+	"github.com/elves/elvish/newedit/utils"
 	"github.com/xiaq/persistent/hashmap"
 )
 
@@ -25,6 +27,10 @@ func initInsert(ed editor, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
 			&m.Config.Raw.QuotePaste, &m.Config.Mutex),
 	}.AddBuiltinFns("[insert mode]", map[string]interface{}{
 		"start": func() { ed.State().SetMode(m) },
+		"default": func() error {
+			return utils.ActionError(utils.BasicHandler(
+				tty.KeyEvent(ed.State().BindingKey()), ed.State()))
+		},
 	})
 
 	return m, ns
