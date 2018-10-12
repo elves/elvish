@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/elves/elvish/tt"
@@ -25,7 +26,11 @@ var pprintASTTests = tt.Table{
 }
 
 func TestPPrintAST(t *testing.T) {
-	tt.Test(t, tt.Fn("PPrintAST", PPrintAST), pprintASTTests)
+	tt.Test(t, tt.Fn("PPrintAST (to string)", func(n Node) string {
+		var b strings.Builder
+		PPrintAST(n, &b)
+		return b.String()
+	}), pprintASTTests)
 }
 
 var pprintParseTreeTests = tt.Table{
@@ -51,7 +56,11 @@ var pprintParseTreeTests = tt.Table{
 }
 
 func TestPprintParseTree(t *testing.T) {
-	tt.Test(t, tt.Fn("PPrintParseTree", PPrintParseTree), pprintParseTreeTests)
+	tt.Test(t, tt.Fn("PPrintParseTree (to string)", func(n Node) string {
+		var b strings.Builder
+		PPrintParseTree(n, &b)
+		return b.String()
+	}), pprintParseTreeTests)
 }
 
 func mustParse(src string) Node {

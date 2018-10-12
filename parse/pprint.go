@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"reflect"
@@ -14,16 +13,9 @@ const (
 	indentInc     = 2
 )
 
-// PPrintAST pretty-prints the AST part of a Node.
-func PPrintAST(n Node) string {
-	var b bytes.Buffer
-	PPrintASTTo(n, &b)
-	return b.String()
-}
-
-// PPrintASTTo pretty-prints the AST part of a Node to a Writer.
-func PPrintASTTo(n Node, wr io.Writer) {
-	pprintAST(n, wr, 0, "")
+// PPrintAST pretty-prints the AST part of a Node to a Writer.
+func PPrintAST(n Node, w io.Writer) {
+	pprintAST(n, w, 0, "")
 }
 
 type field struct {
@@ -114,16 +106,9 @@ func pprintAST(n Node, wr io.Writer, indent int, leading string) {
 	}
 }
 
-// PPrintParseTree pretty-prints the parse tree part of a Node.
-func PPrintParseTree(n Node) string {
-	var b bytes.Buffer
-	PPrintParseTreeTo(n, &b)
-	return b.String()
-}
-
-// PPrintParseTreeTo pretty-prints the parse tree part of a Node to a Writer.
-func PPrintParseTreeTo(n Node, wr io.Writer) {
-	pprintParseTree(n, wr, 0)
+// PPrintParseTree pretty-prints the parse tree part of a Node to a Writer.
+func PPrintParseTree(n Node, w io.Writer) {
+	pprintParseTree(n, w, 0)
 }
 
 func pprintParseTree(n Node, wr io.Writer, indent int) {
