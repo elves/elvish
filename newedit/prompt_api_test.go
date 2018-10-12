@@ -17,7 +17,7 @@ func TestMakePrompt_ElvishVariableLinksToPromptConfig(t *testing.T) {
 	// NewEditor calls makePrompt
 	ed := NewEditor(os.Stdin, os.Stdout, ev)
 	ev.Global.AddNs("ed", ed.Ns())
-	ev.EvalSource(eval.NewScriptSource(
+	ev.EvalSourceInTTY(eval.NewScriptSource(
 		"[t]", "[t]", "ed:prompt = { put 'CUSTOM PROMPT' }"))
 
 	// TODO: Use p.Get() and avoid type assertion
@@ -81,7 +81,7 @@ func TestCallPrompt_ConvertsBytesOutput(t *testing.T) {
 
 func testCallPrompt(t *testing.T, fsrc string, want styled.Text, wantErr bool) {
 	ev := eval.NewEvaler()
-	ev.EvalSource(eval.NewScriptSource(
+	ev.EvalSourceInTTY(eval.NewScriptSource(
 		"[t]", "[t]", fmt.Sprintf("f = { %s }", fsrc)))
 	f := ev.Global["f"].Get().(eval.Callable)
 	ed := NewEditor(os.Stdin, os.Stdout, ev)

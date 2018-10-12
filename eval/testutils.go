@@ -180,7 +180,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]int
 			{File: os.Stderr, Chan: BlackholeChan},
 		}
 
-		ex = ev.eval(op, ports)
+		ex = ev.Eval(op, ports)
 		close(outCh)
 		<-outDone
 	}

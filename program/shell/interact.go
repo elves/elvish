@@ -82,7 +82,7 @@ func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
 		// No error; reset cooldown.
 		cooldown = time.Second
 
-		err = ev.EvalSource(eval.NewInteractiveSource(line))
+		err = ev.EvalSourceInTTY(eval.NewInteractiveSource(line))
 		if err != nil {
 			diag.PprintError(err)
 		}
@@ -98,7 +98,7 @@ func sourceRC(ev *eval.Evaler, dataDir string) error {
 		return fmt.Errorf("cannot get full path of rc.elv: %v", err)
 	}
 	code, err := readFileUTF8(absPath)
-	err = ev.EvalSource(eval.NewScriptSource("rc.elv", absPath, code))
+	err = ev.EvalSourceInTTY(eval.NewScriptSource("rc.elv", absPath, code))
 	if err != nil {
 		return err
 	}

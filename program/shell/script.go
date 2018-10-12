@@ -49,7 +49,7 @@ func script(ev *eval.Evaler, args []string, cmd, compileOnly bool) error {
 		return nil
 	}
 
-	return ev.EvalWithStdPorts(op)
+	return ev.EvalInTTY(op)
 }
 
 var errSourceNotUTF8 = errors.New("source is not UTF-8")

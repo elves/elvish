@@ -5,17 +5,14 @@ package eval
 import (
 	"fmt"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/eval/bundled"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
-	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
 	"github.com/xiaq/persistent/vector"
 )
@@ -196,74 +193,51 @@ func (fm *Frame) growPorts(n int) {
 	copy(fm.ports, ports)
 }
 
-// EvalWithStdPorts sets up the Evaler with standard ports and evaluates an Op.
-// The supplied name and text are used in diagnostic messages.
+// Eval evaluates an Op using the specified ports.
+func (ev *Evaler) Eval(op Op, ports []*Port) error {
+	ec := NewTopFrame(ev, op.Src, ports)
+	return ec.Eval(op.Inner)
+}
+
+// EvalSourceInTTY evaluates Elvish source code in the current terminal.
+func (ev *Evaler) EvalSourceInTTY(src *Source) error {
+	n, err := parse.Parse(src.name, src.code)
+	if err != nil {
+		return err
+	}
+	op, err := ev.Compile(n, src)
+	if err != nil {
+		return err
+	}
+	return ev.EvalInTTY(op)
+}
+
+// EvalInTTY evaluates an Op in the current terminal. It uses the stdin, stdout
+// and stderr to build the ports, relays SIGINT from the terminal to ev.intCh,
+// and puts Elvish in the foreground after evaluation finishes.
 //
-// TODO(xiaq): This function can only be used to evaluae an effectOp, and cannot
-// be used to call functions with stdPorts. Make the Evaler initialize a
-// stdPorts on construction, instead of in this function, so that NewTopFrame
-// does not require the caller to supply the ports.
-func (ev *Evaler) EvalWithStdPorts(op Op) error {
+// TODO(xiaq): This function can only be used to evaluate an Op, and cannot be
+// used to call functions with stdPorts. Make the Evaler initialize a stdPorts
+// on construction, instead of in this function, so that NewTopFrame does not
+// require the caller to supply the ports.
+func (ev *Evaler) EvalInTTY(op Op) error {
 	stdPorts := newStdPorts(
 		os.Stdin, os.Stdout, os.Stderr, ev.state.getValuePrefix())
 	defer stdPorts.close()
-	return ev.Eval(op, stdPorts.ports[:])
-}
 
-// Eval sets up the Evaler with the given ports and evaluates an Op. The
-// supplied name and text are used in diagnostic messages.
-//
-// TODO(xiaq): This method only differs from eval in that it sets up intCh for
-// relaying interrupts and puts Elvish in the foreground afterwards. Factor out
-// those logics.
-func (ev *Evaler) Eval(op Op, ports []*Port) error {
-	// Set up intCh.
-	stopSigGoroutine := make(chan struct{})
-	sigGoRoutineDone := make(chan struct{})
-	ev.intCh = make(chan struct{})
-	sigCh := make(chan os.Signal)
-	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGQUIT)
-	go func() {
-		closedIntCh := false
-	loop:
-		for {
-			select {
-			case <-sigCh:
-				if !closedIntCh {
-					close(ev.intCh)
-					closedIntCh = true
-				}
-			case <-stopSigGoroutine:
-				break loop
-			}
-		}
+	intCh, cleanupInt := listenInterrupts()
+	ev.intCh = intCh
+	defer func() {
+		cleanupInt()
 		ev.intCh = nil
-		signal.Stop(sigCh)
-		close(sigGoRoutineDone)
-	}()
-
-	err := ev.eval(op, ports)
-
-	close(stopSigGoroutine)
-	<-sigGoRoutineDone
-
-	// Put myself in foreground, in case some command has put me in background.
-	// XXX Should probably use fd of /dev/tty instead of 0.
-	if sys.IsATTY(os.Stdin) {
+		// Put myself in foreground, in case some command has put me in background.
 		err := putSelfInFg()
 		if err != nil {
 			fmt.Println("failed to put myself in foreground:", err)
 		}
-	}
+	}()
 
-	return err
-}
-
-// eval evaluates a chunk node n. The supplied name and text are used in
-// diagnostic messages.
-func (ev *Evaler) eval(op Op, ports []*Port) error {
-	ec := NewTopFrame(ev, op.Src, ports)
-	return ec.Eval(op.Inner)
+	return ev.Eval(op, stdPorts.ports[:])
 }
 
 // Compile compiles Elvish code in the global scope. If the error is not nil, it
@@ -280,17 +254,4 @@ func (ev *Evaler) Compile(n *parse.Chunk, src *Source) (Op, error) {
 // unnecessary.
 func (ev *Evaler) CompileWithGlobal(n *parse.Chunk, src *Source, g Ns) (Op, error) {
 	return compile(ev.Builtin.static(), g.static(), n, src)
-}
-
-// EvalSource evaluates a chunk of Elvish source.
-func (ev *Evaler) EvalSource(src *Source) error {
-	n, err := parse.Parse(src.name, src.code)
-	if err != nil {
-		return err
-	}
-	op, err := ev.Compile(n, src)
-	if err != nil {
-		return err
-	}
-	return ev.EvalWithStdPorts(op)
 }
