@@ -98,7 +98,7 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 		thisOp := op
 		thisError := &errors[i]
 		go func() {
-			err := newFm.Eval(thisOp)
+			err := newFm.eval(thisOp)
 			newFm.Close()
 			if err != nil {
 				*thisError = err.(*Exception)

@@ -196,7 +196,7 @@ func (fm *Frame) growPorts(n int) {
 // Eval evaluates an Op using the specified ports.
 func (ev *Evaler) Eval(op Op, ports []*Port) error {
 	ec := NewTopFrame(ev, op.Src, ports)
-	return ec.Eval(op.Inner)
+	return ec.eval(op.Inner)
 }
 
 // EvalSourceInTTY evaluates Elvish source code in the current terminal.

@@ -64,7 +64,7 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 		{File: os.Stdin}, {File: os.Stdout}, {File: os.Stderr},
 	})
 	fm.SetLocal(ns)
-	err = fm.Eval(op.Inner)
+	err = fm.Eval(op)
 	if err != nil {
 		panic(err)
 	}

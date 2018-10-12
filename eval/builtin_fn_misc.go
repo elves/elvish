@@ -101,7 +101,7 @@ func source(fm *Frame, fname string) error {
 	if err != nil {
 		return err
 	}
-	return fm.EvalOp(op)
+	return fm.Eval(op)
 }
 
 func readFileUTF8(fname string) (string, error) {

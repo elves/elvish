@@ -211,7 +211,7 @@ func wrapFn(op effectOp) effectOp {
 type fnWrap struct{ wrapped effectOp }
 
 func (op fnWrap) invoke(fm *Frame) error {
-	err := fm.Eval(op.wrapped)
+	err := fm.eval(op.wrapped)
 	if err != nil && Cause(err) != Return {
 		// rethrow
 		return err
@@ -314,7 +314,7 @@ func loadModule(fm *Frame, name string) (Ns, error) {
 	// Load the namespace before executing. This prevent circular "use"es from
 	// resulting in an infinite recursion.
 	fm.Evaler.modules[name] = modGlobal
-	err = newFm.EvalOp(op)
+	err = newFm.Eval(op)
 	if err != nil {
 		// Unload the namespace.
 		delete(fm.modules, name)
