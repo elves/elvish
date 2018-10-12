@@ -63,50 +63,51 @@ func TestBuiltinSpecial(t *testing.T) {
 var useTests = []TestCase{}
 
 func TestUse(t *testing.T) {
-	util.InTempDir(func(libdir string) {
-		MustMkdirAll(filepath.Join("a", "b", "c"), 0700)
+	libdir, cleanup := util.InTestDir()
+	defer cleanup()
 
-		writeMod := func(name, content string) {
-			fname := filepath.Join(strings.Split(name, "/")...) + ".elv"
-			MustWriteFile(fname, []byte(content), 0600)
-		}
-		writeMod("has-init", "put has-init")
-		writeMod("put-x", "put $x")
-		writeMod("lorem", "name = lorem; fn put-name { put $name }")
-		writeMod("d", "name = d")
-		writeMod("a/b/c/d", "name = a/b/c/d")
-		writeMod("a/b/c/x",
-			"use ./d; d = $d:name; use ../../../lorem; lorem = $lorem:name")
+	MustMkdirAll(filepath.Join("a", "b", "c"), 0700)
 
-		TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
-			That(`use lorem; put $lorem:name`).Puts("lorem"),
-			// imports are lexically scoped
-			// TODO: Support testing for compilation error
-			// That(`{ use lorem }; put $lorem:name`).ErrorsAny(),
+	writeMod := func(name, content string) {
+		fname := filepath.Join(strings.Split(name, "/")...) + ".elv"
+		MustWriteFile(fname, []byte(content), 0600)
+	}
+	writeMod("has-init", "put has-init")
+	writeMod("put-x", "put $x")
+	writeMod("lorem", "name = lorem; fn put-name { put $name }")
+	writeMod("d", "name = d")
+	writeMod("a/b/c/d", "name = a/b/c/d")
+	writeMod("a/b/c/x",
+		"use ./d; d = $d:name; use ../../../lorem; lorem = $lorem:name")
 
-			// use of imported variable is captured in upvalue
-			That(`({ use lorem; put { { put $lorem:name } } })`).Puts("lorem"),
-			// use of imported function is also captured in upvalue
-			That(`{ use lorem; { lorem:put-name } }`).Puts("lorem"),
+	TestWithSetup(t, func(ev *Evaler) { ev.SetLibDir(libdir) },
+		That(`use lorem; put $lorem:name`).Puts("lorem"),
+		// imports are lexically scoped
+		// TODO: Support testing for compilation error
+		// That(`{ use lorem }; put $lorem:name`).ErrorsAny(),
 
-			// use of a nested module
-			That(`use a/b/c/d; put $d:name`).Puts("a/b/c/d"),
-			// module is cached after first use
-			That(`use has-init; use has-init`).Puts("has-init"),
-			// overriding module
-			That(`use d; put $d:name; use a/b/c/d; put $d:name`).Puts(
-				"d", "a/b/c/d"),
-			// relative uses
-			That(`use a/b/c/x; put $x:d $x:lorem`).Puts("a/b/c/d", "lorem"),
+		// use of imported variable is captured in upvalue
+		That(`({ use lorem; put { { put $lorem:name } } })`).Puts("lorem"),
+		// use of imported function is also captured in upvalue
+		That(`{ use lorem; { lorem:put-name } }`).Puts("lorem"),
 
-			// Renaming module
-			That(`use a/b/c/d mod; put $mod:name`).Puts("a/b/c/d"),
+		// use of a nested module
+		That(`use a/b/c/d; put $d:name`).Puts("a/b/c/d"),
+		// module is cached after first use
+		That(`use has-init; use has-init`).Puts("has-init"),
+		// overriding module
+		That(`use d; put $d:name; use a/b/c/d; put $d:name`).Puts(
+			"d", "a/b/c/d"),
+		// relative uses
+		That(`use a/b/c/x; put $x:d $x:lorem`).Puts("a/b/c/d", "lorem"),
 
-			// Variables defined in the default global scope is invisible from
-			// modules
-			That("x = foo; use put-x").Errors(),
+		// Renaming module
+		That(`use a/b/c/d mod; put $mod:name`).Puts("a/b/c/d"),
 
-			// TODO: Test module namespace
-		)
-	})
+		// Variables defined in the default global scope is invisible from
+		// modules
+		That("x = foo; use put-x").Errors(),
+
+		// TODO: Test module namespace
+	)
 }

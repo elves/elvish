@@ -8,18 +8,18 @@ import (
 )
 
 func TestBuiltinFnFS(t *testing.T) {
-	pathSep := string(filepath.Separator)
-	InTempHome(func(tmpHome string) {
-		MustMkdirAll("dir", 0700)
-		MustCreateEmpty("file")
+	tmpHome, cleanup := InTempHome()
+	defer cleanup()
 
-		Test(t,
-			That(`path-base a/b/c.png`).Puts("c.png"),
-			That("tilde-abbr "+parse.Quote(filepath.Join(tmpHome, "foobar"))).
-				Puts("~"+pathSep+"foobar"),
+	MustMkdirAll("dir", 0700)
+	MustCreateEmpty("file")
 
-			That(`-is-dir ~/dir`).Puts(true),
-			That(`-is-dir ~/file`).Puts(false),
-		)
-	})
+	Test(t,
+		That(`path-base a/b/c.png`).Puts("c.png"),
+		That("tilde-abbr "+parse.Quote(filepath.Join(tmpHome, "foobar"))).
+			Puts(filepath.Join("~", "foobar")),
+
+		That(`-is-dir ~/dir`).Puts(true),
+		That(`-is-dir ~/file`).Puts(false),
+	)
 }

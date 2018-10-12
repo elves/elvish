@@ -8,31 +8,32 @@ import (
 )
 
 func TestDaemon(t *testing.T) {
-	util.InTempDir(func(string) {
-		serverDone := make(chan struct{})
-		go func() {
-			Serve("sock", "db")
-			close(serverDone)
-		}()
+	_, cleanup := util.InTestDir()
+	defer cleanup()
 
-		client := NewClient("sock")
-		for i := 0; i < 100; i++ {
-			client.ResetConn()
-			_, err := client.Version()
-			if err == nil {
-				break
-			} else if i == 99 {
-				t.Fatal("Failed to connect after 1s")
-			}
-			time.Sleep(10 * time.Millisecond)
-		}
+	serverDone := make(chan struct{})
+	go func() {
+		Serve("sock", "db")
+		close(serverDone)
+	}()
 
-		_, err := client.AddCmd("test cmd")
-		if err != nil {
-			t.Errorf("client.AddCmd -> error %v", err)
+	client := NewClient("sock")
+	for i := 0; i < 100; i++ {
+		client.ResetConn()
+		_, err := client.Version()
+		if err == nil {
+			break
+		} else if i == 99 {
+			t.Fatal("Failed to connect after 1s")
 		}
-		client.Close()
-		// Wait for server to quit before returning
-		<-serverDone
-	})
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	_, err := client.AddCmd("test cmd")
+	if err != nil {
+		t.Errorf("client.AddCmd -> error %v", err)
+	}
+	client.Close()
+	// Wait for server to quit before returning
+	<-serverDone
 }

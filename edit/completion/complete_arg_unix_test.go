@@ -47,44 +47,45 @@ var complFilenameInnerTests = []struct {
 
 func TestComplFilenameInner(t *testing.T) {
 	os.Setenv("LS_COLORS", "rs=1:ex=2:di=4")
-	util.InTempDir(func(string) {
-		create("foo", 0600)
-		create(".vimrc", 0600)
-		create("bar", 0600)
+	_, cleanup := util.InTestDir()
+	defer cleanup()
 
-		create("elvish", 0700)
+	create("foo", 0600)
+	create(".vimrc", 0600)
+	create("bar", 0600)
 
-		mkdir("Documents", 0700)
-		mkdir(".elvish", 0700)
+	create("elvish", 0700)
 
-		for _, test := range complFilenameInnerTests {
-			var (
-				err   error
-				cands rawCandidates
-				gets  = make(chan rawCandidate)
-			)
-			go func() {
-				defer close(gets)
-				err = complFilenameInner(test.head, test.executableOnly, gets)
-			}()
-			for v := range gets {
-				cands = append(cands, v)
-			}
-			if err != nil {
-				t.Errorf("complFilenameInner(%v, %v) returns error %v, want nil",
-					test.head, test.executableOnly, err)
-			}
-			sort.Sort(cands)
-			if !reflect.DeepEqual(cands, test.wantCandidates) {
-				t.Errorf("complFilenameInner(%v, %v) returns %v, want %v",
-					test.head, test.executableOnly, cands, test.wantCandidates)
-				t.Log("returned candidates are:")
-				for _, cand := range cands {
-					t.Logf("%#v", cand)
-				}
+	mkdir("Documents", 0700)
+	mkdir(".elvish", 0700)
+
+	for _, test := range complFilenameInnerTests {
+		var (
+			err   error
+			cands rawCandidates
+			gets  = make(chan rawCandidate)
+		)
+		go func() {
+			defer close(gets)
+			err = complFilenameInner(test.head, test.executableOnly, gets)
+		}()
+		for v := range gets {
+			cands = append(cands, v)
+		}
+		if err != nil {
+			t.Errorf("complFilenameInner(%v, %v) returns error %v, want nil",
+				test.head, test.executableOnly, err)
+		}
+		sort.Sort(cands)
+		if !reflect.DeepEqual(cands, test.wantCandidates) {
+			t.Errorf("complFilenameInner(%v, %v) returns %v, want %v",
+				test.head, test.executableOnly, cands, test.wantCandidates)
+			t.Log("returned candidates are:")
+			for _, cand := range cands {
+				t.Logf("%#v", cand)
 			}
 		}
-	})
+	}
 }
 
 func mkdir(dirname string, perm os.FileMode) {

@@ -69,31 +69,32 @@ func init() {
 }
 
 func TestGlob(t *testing.T) {
-	util.InTempDir(func(string) {
-		for _, dir := range append(mkdirs, mkdirDots...) {
-			err := os.Mkdir(dir, 0755)
-			if err != nil {
-				panic(err)
-			}
+	_, cleanup := util.InTestDir()
+	defer cleanup()
+
+	for _, dir := range append(mkdirs, mkdirDots...) {
+		err := os.Mkdir(dir, 0755)
+		if err != nil {
+			panic(err)
 		}
-		for _, file := range append(creates, createDots...) {
-			f, err := os.Create(file)
-			if err != nil {
-				panic(err)
-			}
-			f.Close()
+	}
+	for _, file := range append(creates, createDots...) {
+		f, err := os.Create(file)
+		if err != nil {
+			panic(err)
 		}
-		for _, tc := range globCases {
-			names := []string{}
-			Glob(tc.pattern, func(name string) bool {
-				names = append(names, name)
-				return true
-			})
-			sort.Strings(names)
-			sort.Strings(tc.want)
-			if !reflect.DeepEqual(names, tc.want) {
-				t.Errorf(`Glob(%q, "") => %v, want %v`, tc.pattern, names, tc.want)
-			}
+		f.Close()
+	}
+	for _, tc := range globCases {
+		names := []string{}
+		Glob(tc.pattern, func(name string) bool {
+			names = append(names, name)
+			return true
+		})
+		sort.Strings(names)
+		sort.Strings(tc.want)
+		if !reflect.DeepEqual(names, tc.want) {
+			t.Errorf(`Glob(%q, "") => %v, want %v`, tc.pattern, names, tc.want)
 		}
-	})
+	}
 }

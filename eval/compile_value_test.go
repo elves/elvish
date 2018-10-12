@@ -135,27 +135,28 @@ func getFilesBut(excludes ...string) []string {
 }
 
 func TestWildcard(t *testing.T) {
-	util.InTempDir(func(string) {
-		for _, filename := range filesToCreate {
-			MustCreateEmpty(filename)
-		}
-		for _, dirname := range dirsToCreate {
-			MustMkdirAll(dirname, 0700)
-		}
+	_, cleanup := util.InTestDir()
+	defer cleanup()
 
-		Test(t,
-			That("put *").PutsStrings(fileListing),
-			That("put a/b/nonexistent*").ErrorsWith(ErrWildcardNoMatch),
-			That("put a/b/nonexistent*[nomatch-ok]").DoesNothing(),
+	for _, filename := range filesToCreate {
+		MustCreateEmpty(filename)
+	}
+	for _, dirname := range dirsToCreate {
+		MustMkdirAll(dirname, 0700)
+	}
 
-			// Character set and range
-			That("put ?[set:ab]*").PutsStrings(getFilesWithPrefix("a", "b")),
-			That("put ?[range:a-c]*").PutsStrings(getFilesWithPrefix("a", "b", "c")),
-			That("put ?[range:a~c]*").PutsStrings(getFilesWithPrefix("a", "b")),
-			That("put *[range:a-z]").Puts("bar", "dir", "foo", "ipsum", "lorem"),
+	Test(t,
+		That("put *").PutsStrings(fileListing),
+		That("put a/b/nonexistent*").ErrorsWith(ErrWildcardNoMatch),
+		That("put a/b/nonexistent*[nomatch-ok]").DoesNothing(),
 
-			// Exclusion
-			That("put *[but:foo][but:lorem]").PutsStrings(getFilesBut("foo", "lorem")),
-		)
-	})
+		// Character set and range
+		That("put ?[set:ab]*").PutsStrings(getFilesWithPrefix("a", "b")),
+		That("put ?[range:a-c]*").PutsStrings(getFilesWithPrefix("a", "b", "c")),
+		That("put ?[range:a~c]*").PutsStrings(getFilesWithPrefix("a", "b")),
+		That("put *[range:a-z]").Puts("bar", "dir", "foo", "ipsum", "lorem"),
+
+		// Exclusion
+		That("put *[but:foo][but:lorem]").PutsStrings(getFilesBut("foo", "lorem")),
+	)
 }

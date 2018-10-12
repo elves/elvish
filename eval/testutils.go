@@ -254,13 +254,15 @@ func MustWriteFile(filename string, data []byte, perm os.FileMode) {
 	}
 }
 
-// InTempHome is like util.InTempDir, but it also sets HOME to the temporary
-// directory when f is called.
-func InTempHome(f func(string)) {
-	util.InTempDir(func(tmpHome string) {
-		oldHome := os.Getenv("HOME")
-		os.Setenv("HOME", tmpHome)
-		f(tmpHome)
+// InTempHome is like util.InTestDir, but it also sets HOME to the temporary
+// directory and restores the original HOME in cleanup.
+func InTempHome() (string, func()) {
+	oldHome := os.Getenv("HOME")
+	tmpHome, cleanup := util.InTestDir()
+	os.Setenv("HOME", tmpHome)
+
+	return tmpHome, func() {
 		os.Setenv("HOME", oldHome)
-	})
+		cleanup()
+	}
 }

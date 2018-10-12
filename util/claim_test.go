@@ -14,21 +14,22 @@ var claimFileTests = []struct {
 }
 
 func TestClaimFile(t *testing.T) {
-	InTempDir(func(tmpdir string) {
-		touch("a0.log")
-		touch("a1.log")
-		touch("a8.log")
+	_, cleanup := InTestDir()
+	defer cleanup()
 
-		for _, test := range claimFileTests {
-			f, err := ClaimFile(".", test.pattern)
-			if err != nil {
-				t.Errorf("ClaimFile errors: %v", err)
-			}
-			if f.Name() != test.wantFileName {
-				t.Errorf("ClaimFile claims %s, want %s", f.Name(), test.wantFileName)
-			}
+	touch("a0.log")
+	touch("a1.log")
+	touch("a8.log")
+
+	for _, test := range claimFileTests {
+		f, err := ClaimFile(".", test.pattern)
+		if err != nil {
+			t.Errorf("ClaimFile errors: %v", err)
 		}
-	})
+		if f.Name() != test.wantFileName {
+			t.Errorf("ClaimFile claims %s, want %s", f.Name(), test.wantFileName)
+		}
+	}
 }
 
 func touch(fname string) {
