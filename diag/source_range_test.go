@@ -39,8 +39,8 @@ echo <^>x`[1:],
 }
 
 func TestSourceRange(t *testing.T) {
-	CulpritLineBegin = "<"
-	CulpritLineEnd = ">"
+	culpritLineBegin = "<"
+	culpritLineEnd = ">"
 	for i, test := range sourceRangeTests {
 		gotPprint := test.SourceRange.Pprint(test.indent)
 		if gotPprint != test.wantPprint {
