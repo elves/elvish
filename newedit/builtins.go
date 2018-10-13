@@ -2,8 +2,8 @@ package newedit
 
 import (
 	"github.com/elves/elvish/edit/eddefs"
+	"github.com/elves/elvish/newedit/editutil"
 	"github.com/elves/elvish/newedit/types"
-	"github.com/elves/elvish/newedit/utils"
 )
 
 //elvish:doc-fn binding-map
@@ -18,7 +18,7 @@ var makeBindingMap = eddefs.MakeBindingMap
 // special exception.
 
 func exitBinding() error {
-	return utils.ActionError(types.NoAction)
+	return editutil.ActionError(types.NoAction)
 }
 
 //elvish:doc-fn commit-code
@@ -27,5 +27,5 @@ func exitBinding() error {
 // being edited. Internally, this works by raising a special exception.
 
 func commitCode() error {
-	return utils.ActionError(types.CommitCode)
+	return editutil.ActionError(types.CommitCode)
 }

@@ -7,8 +7,8 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/newedit/editutil"
 	"github.com/elves/elvish/newedit/types"
-	"github.com/elves/elvish/newedit/utils"
 )
 
 func TestKeyHandlerFromBinding_CallsBinding(t *testing.T) {
@@ -88,7 +88,7 @@ func TestCallBinding_CapturesAction(t *testing.T) {
 	nt := &fakeNotifier{}
 
 	action := callBinding(nt, ev, eval.NewBuiltinFn("test", func() error {
-		return utils.ActionError(types.CommitCode)
+		return editutil.ActionError(types.CommitCode)
 	}))
 	if action != types.CommitCode {
 		t.Errorf("got ret = %v, want %v", action, types.CommitCode)

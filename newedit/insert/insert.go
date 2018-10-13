@@ -9,8 +9,8 @@ import (
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/newedit/editutil"
 	"github.com/elves/elvish/newedit/types"
-	"github.com/elves/elvish/newedit/utils"
 	"github.com/elves/elvish/parse"
 )
 
@@ -132,7 +132,7 @@ func (m *Mode) handleKey(k ui.Key, st *types.State) types.HandlerAction {
 	if m.KeyHandler != nil {
 		action = m.KeyHandler(k)
 	} else {
-		action = utils.BasicHandler(tty.KeyEvent(k), st)
+		action = editutil.BasicHandler(tty.KeyEvent(k), st)
 	}
 	if k.Mod != 0 || k.Rune < 0 {
 		m.inserts = ""

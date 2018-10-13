@@ -1,4 +1,4 @@
-package utils
+package editutil
 
 import (
 	"unicode/utf8"

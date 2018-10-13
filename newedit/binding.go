@@ -10,8 +10,8 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/newedit/editutil"
 	"github.com/elves/elvish/newedit/types"
-	"github.com/elves/elvish/newedit/utils"
 )
 
 // TODO(xiaq): Move the implementation into this package.
@@ -51,7 +51,7 @@ func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable) types.HandlerAct
 	err := frame.Call(f, nil, eval.NoOpts)
 
 	if err != nil {
-		if action, ok := eval.Cause(err).(utils.ActionError); ok {
+		if action, ok := eval.Cause(err).(editutil.ActionError); ok {
 			return types.HandlerAction(action)
 		}
 		// TODO(xiaq): Make the stack trace available.
