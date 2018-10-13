@@ -11,25 +11,13 @@ import (
 
 // TTY is the type the terminal dependency of the editor needs to satisfy.
 type TTY interface {
-	Setuper
-	Input
-	Output
-}
-
-// Setuper encapsulates the setup that is needed before and after
-// Editor.ReadCode.
-type Setuper interface {
 	// Configures the terminal at the beginning of Editor.ReadCode. It returns a
 	// restore function to be called at the end of Editor.ReadCode and any
 	// error. Errors are always considered fatal and will make ReadCode abort;
 	// non-fatal errors should be handled by Setup itself (e.g. by showing a
 	// warning message) instead of being returned.
 	Setup() (restore func(), err error)
-}
 
-// Input represents the input source aspect of the terminal. It is used for
-// obtaining events.
-type Input interface {
 	// Starts the delivery of terminal events and returns a channel on which
 	// events are made available.
 	StartInput() <-chan tty.Event
@@ -43,11 +31,7 @@ type Input interface {
 	// channel previously returned by StartInput should no longer deliver
 	// events.
 	StopInput()
-}
 
-// Output represents the output sink aspect of the terminal. It is used for
-// drawing the editor onto the terminal.
-type Output interface {
 	// Returns the height and width of the terminal.
 	Size() (h, w int)
 	// Outputs a newline.
