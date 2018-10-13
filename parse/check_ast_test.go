@@ -93,8 +93,6 @@ func checkAST(n Node, want ast) error {
 	return nil
 }
 
-var nodeType = reflect.TypeOf((*Node)(nil)).Elem()
-
 // checkField checks a field against a field specification.
 func checkField(got interface{}, want interface{}, ctx string) error {
 	// Want nil.

@@ -13,15 +13,15 @@ var pprintASTTests = tt.Table{
 	tt.Args(n).Rets(
 		`Chunk
   Pipeline/Form
-    Compound/Indexing/Primary Type=Bareword Value="ls"
-    Compound
-      Indexing
-        Primary Type=Variable Value="x"
-        Array/Compound/Indexing/Primary Type=Bareword Value="0"
-      Indexing
-        Primary Type=Variable Value="y"
-        Array/Compound/Indexing/Primary Type=Bareword Value="1"
-  Pipeline/Form/Compound/Indexing/Primary Type=Bareword Value="echo"
+    Compound/Indexing/Primary ExprCtx=CmdExpr Type=Bareword Value="ls"
+    Compound ExprCtx=NormalExpr
+      Indexing ExprCtx=NormalExpr
+        Primary ExprCtx=NormalExpr Type=Variable Value="x"
+        Array/Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword Value="0"
+      Indexing ExprCtx=NormalExpr
+        Primary ExprCtx=NormalExpr Type=Variable Value="y"
+        Array/Compound/Indexing/Primary ExprCtx=NormalExpr Type=Bareword Value="1"
+  Pipeline/Form/Compound/Indexing/Primary ExprCtx=CmdExpr Type=Bareword Value="echo"
 `),
 }
 

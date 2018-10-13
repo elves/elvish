@@ -36,8 +36,10 @@ var emitAllTests = []emitTests{
 
 func TestEmitAll(t *testing.T) {
 	test(t, "form", emitAllTests,
-		func(e *Emitter, ps *parse.Parser) {
-			e.EmitAll(parse.ParseChunk(ps))
+		func(e *Emitter, src string) {
+			n := &parse.Chunk{}
+			parse.ParseAs("<test>", src, n)
+			e.EmitAll(n)
 		})
 }
 
@@ -100,8 +102,10 @@ var formTests = []emitTests{
 
 func TestForm(t *testing.T) {
 	test(t, "form", formTests,
-		func(e *Emitter, ps *parse.Parser) {
-			e.form(parse.ParseForm(ps))
+		func(e *Emitter, src string) {
+			n := &parse.Form{}
+			parse.ParseAs("<test>", src, n)
+			e.form(n)
 		})
 }
 
@@ -114,8 +118,10 @@ var primaryTests = []emitTests{
 
 func TestPrimary(t *testing.T) {
 	test(t, "primary", primaryTests,
-		func(e *Emitter, ps *parse.Parser) {
-			e.primary(parse.ParsePrimary(ps, parse.NormalExpr))
+		func(e *Emitter, src string) {
+			n := &parse.Primary{}
+			parse.ParseAs("<test>", src, n)
+			e.primary(n)
 		})
 }
 
@@ -126,23 +132,20 @@ var sepTests = []emitTests{
 
 func TestSep(t *testing.T) {
 	test(t, "sep", sepTests,
-		func(e *Emitter, ps *parse.Parser) {
-			src := ps.Source()
+		func(e *Emitter, src string) {
 			e.sep(parse.NewSep(src, 0, len(src)))
 		})
 }
 
-func test(t *testing.T, what string,
-	tests []emitTests, f func(*Emitter, *parse.Parser)) {
+func test(t *testing.T, what string, tests []emitTests, f func(*Emitter, string)) {
 
 	for _, test := range tests {
 		var stylings []styling
 		e := &Emitter{goodFormHead, func(b, e int, s string) {
 			stylings = append(stylings, styling{b, e, s})
 		}}
-		ps := parse.NewParser("<test>", test.source)
 
-		f(e, ps)
+		f(e, test.source)
 
 		if !reflect.DeepEqual(stylings, test.wantStylings) {
 			t.Errorf("%s %q gets stylings %v, want %v", what, test.source,

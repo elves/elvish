@@ -4,11 +4,16 @@ import "github.com/elves/elvish/diag"
 
 // Node represents a parse tree as well as an AST.
 type Node interface {
-	n() *node
 	diag.Ranger
 	Parent() Node
 	SourceText() string
 	Children() []Node
+
+	n() *node
+	parse(*Parser)
+	setBegin(int)
+	setEnd(int)
+	setSourceText(string)
 }
 
 type node struct {
@@ -20,6 +25,18 @@ type node struct {
 
 func (n *node) n() *node {
 	return n
+}
+
+func (n *node) setBegin(begin int) {
+	n.begin = begin
+}
+
+func (n *node) setEnd(end int) {
+	n.end = end
+}
+
+func (n *node) setSourceText(source string) {
+	n.sourceText = source
 }
 
 // Parent returns the parent node. If the node is the root of the syntax tree,

@@ -14,20 +14,6 @@ func GetChunk(n Node) *Chunk {
 	return nil
 }
 
-func (n *Chunk) addToPipelines(ch *Pipeline) {
-	n.Pipelines = append(n.Pipelines, ch)
-	addChild(n, ch)
-}
-
-// ParseChunk parses a node of type *Chunk.
-func ParseChunk(ps *Parser) *Chunk {
-	n := &Chunk{node: node{begin: ps.pos}}
-	n.parse(ps)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
-}
-
 // IsPipeline reports whether the node has type *Pipeline.
 func IsPipeline(n Node) bool {
 	_, ok := n.(*Pipeline)
@@ -40,20 +26,6 @@ func GetPipeline(n Node) *Pipeline {
 		return nn
 	}
 	return nil
-}
-
-func (n *Pipeline) addToForms(ch *Form) {
-	n.Forms = append(n.Forms, ch)
-	addChild(n, ch)
-}
-
-// ParsePipeline parses a node of type *Pipeline.
-func ParsePipeline(ps *Parser) *Pipeline {
-	n := &Pipeline{node: node{begin: ps.pos}}
-	n.parse(ps)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
 }
 
 // IsForm reports whether the node has type *Form.
@@ -70,50 +42,6 @@ func GetForm(n Node) *Form {
 	return nil
 }
 
-func (n *Form) addToAssignments(ch *Assignment) {
-	n.Assignments = append(n.Assignments, ch)
-	addChild(n, ch)
-}
-
-func (n *Form) setHead(ch *Compound) {
-	n.Head = ch
-	addChild(n, ch)
-}
-
-func (n *Form) addToVars(ch *Compound) {
-	n.Vars = append(n.Vars, ch)
-	addChild(n, ch)
-}
-
-func (n *Form) addToArgs(ch *Compound) {
-	n.Args = append(n.Args, ch)
-	addChild(n, ch)
-}
-
-func (n *Form) addToOpts(ch *MapPair) {
-	n.Opts = append(n.Opts, ch)
-	addChild(n, ch)
-}
-
-func (n *Form) addToRedirs(ch *Redir) {
-	n.Redirs = append(n.Redirs, ch)
-	addChild(n, ch)
-}
-
-func (n *Form) setExitusRedir(ch *ExitusRedir) {
-	n.ExitusRedir = ch
-	addChild(n, ch)
-}
-
-// ParseForm parses a node of type *Form.
-func ParseForm(ps *Parser) *Form {
-	n := &Form{node: node{begin: ps.pos}}
-	n.parse(ps)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
-}
-
 // IsAssignment reports whether the node has type *Assignment.
 func IsAssignment(n Node) bool {
 	_, ok := n.(*Assignment)
@@ -126,25 +54,6 @@ func GetAssignment(n Node) *Assignment {
 		return nn
 	}
 	return nil
-}
-
-func (n *Assignment) setLeft(ch *Indexing) {
-	n.Left = ch
-	addChild(n, ch)
-}
-
-func (n *Assignment) setRight(ch *Compound) {
-	n.Right = ch
-	addChild(n, ch)
-}
-
-// ParseAssignment parses a node of type *Assignment.
-func ParseAssignment(ps *Parser) *Assignment {
-	n := &Assignment{node: node{begin: ps.pos}}
-	n.parse(ps)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
 }
 
 // IsExitusRedir reports whether the node has type *ExitusRedir.
@@ -161,20 +70,6 @@ func GetExitusRedir(n Node) *ExitusRedir {
 	return nil
 }
 
-func (n *ExitusRedir) setDest(ch *Compound) {
-	n.Dest = ch
-	addChild(n, ch)
-}
-
-// ParseExitusRedir parses a node of type *ExitusRedir.
-func ParseExitusRedir(ps *Parser) *ExitusRedir {
-	n := &ExitusRedir{node: node{begin: ps.pos}}
-	n.parse(ps)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
-}
-
 // IsRedir reports whether the node has type *Redir.
 func IsRedir(n Node) bool {
 	_, ok := n.(*Redir)
@@ -187,25 +82,6 @@ func GetRedir(n Node) *Redir {
 		return nn
 	}
 	return nil
-}
-
-func (n *Redir) setLeft(ch *Compound) {
-	n.Left = ch
-	addChild(n, ch)
-}
-
-func (n *Redir) setRight(ch *Compound) {
-	n.Right = ch
-	addChild(n, ch)
-}
-
-// ParseRedir parses a node of type *Redir.
-func ParseRedir(ps *Parser, dest *Compound) *Redir {
-	n := &Redir{node: node{begin: ps.pos}}
-	n.parse(ps, dest)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
 }
 
 // IsCompound reports whether the node has type *Compound.
@@ -222,20 +98,6 @@ func GetCompound(n Node) *Compound {
 	return nil
 }
 
-func (n *Compound) addToIndexings(ch *Indexing) {
-	n.Indexings = append(n.Indexings, ch)
-	addChild(n, ch)
-}
-
-// ParseCompound parses a node of type *Compound.
-func ParseCompound(ps *Parser, ctx ExprCtx) *Compound {
-	n := &Compound{node: node{begin: ps.pos}}
-	n.parse(ps, ctx)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
-}
-
 // IsIndexing reports whether the node has type *Indexing.
 func IsIndexing(n Node) bool {
 	_, ok := n.(*Indexing)
@@ -248,25 +110,6 @@ func GetIndexing(n Node) *Indexing {
 		return nn
 	}
 	return nil
-}
-
-func (n *Indexing) setHead(ch *Primary) {
-	n.Head = ch
-	addChild(n, ch)
-}
-
-func (n *Indexing) addToIndicies(ch *Array) {
-	n.Indicies = append(n.Indicies, ch)
-	addChild(n, ch)
-}
-
-// ParseIndexing parses a node of type *Indexing.
-func ParseIndexing(ps *Parser, ctx ExprCtx) *Indexing {
-	n := &Indexing{node: node{begin: ps.pos}}
-	n.parse(ps, ctx)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
 }
 
 // IsArray reports whether the node has type *Array.
@@ -283,20 +126,6 @@ func GetArray(n Node) *Array {
 	return nil
 }
 
-func (n *Array) addToCompounds(ch *Compound) {
-	n.Compounds = append(n.Compounds, ch)
-	addChild(n, ch)
-}
-
-// ParseArray parses a node of type *Array.
-func ParseArray(ps *Parser, allowSemicolon bool) *Array {
-	n := &Array{node: node{begin: ps.pos}}
-	n.parse(ps, allowSemicolon)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
-}
-
 // IsPrimary reports whether the node has type *Primary.
 func IsPrimary(n Node) bool {
 	_, ok := n.(*Primary)
@@ -311,35 +140,6 @@ func GetPrimary(n Node) *Primary {
 	return nil
 }
 
-func (n *Primary) addToElements(ch *Compound) {
-	n.Elements = append(n.Elements, ch)
-	addChild(n, ch)
-}
-
-func (n *Primary) setChunk(ch *Chunk) {
-	n.Chunk = ch
-	addChild(n, ch)
-}
-
-func (n *Primary) addToMapPairs(ch *MapPair) {
-	n.MapPairs = append(n.MapPairs, ch)
-	addChild(n, ch)
-}
-
-func (n *Primary) addToBraced(ch *Compound) {
-	n.Braced = append(n.Braced, ch)
-	addChild(n, ch)
-}
-
-// ParsePrimary parses a node of type *Primary.
-func ParsePrimary(ps *Parser, ctx ExprCtx) *Primary {
-	n := &Primary{node: node{begin: ps.pos}}
-	n.parse(ps, ctx)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
-}
-
 // IsMapPair reports whether the node has type *MapPair.
 func IsMapPair(n Node) bool {
 	_, ok := n.(*MapPair)
@@ -352,25 +152,6 @@ func GetMapPair(n Node) *MapPair {
 		return nn
 	}
 	return nil
-}
-
-func (n *MapPair) setKey(ch *Compound) {
-	n.Key = ch
-	addChild(n, ch)
-}
-
-func (n *MapPair) setValue(ch *Compound) {
-	n.Value = ch
-	addChild(n, ch)
-}
-
-// ParseMapPair parses a node of type *MapPair.
-func ParseMapPair(ps *Parser) *MapPair {
-	n := &MapPair{node: node{begin: ps.pos}}
-	n.parse(ps)
-	n.end = ps.pos
-	n.sourceText = ps.src[n.begin:n.end]
-	return n
 }
 
 // IsSep reports whether the node has type *Sep.

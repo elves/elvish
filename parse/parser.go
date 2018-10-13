@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"unicode/utf8"
 
@@ -25,6 +26,33 @@ type Parser struct {
 // NewParser creates a new parser from a piece of source text and its name.
 func NewParser(srcname, src string) *Parser {
 	return &Parser{srcname, src, 0, 0, []map[rune]int{{}}, Error{}}
+}
+
+func (ps *Parser) parse(n Node) parsed {
+	begin := ps.pos
+	n.setBegin(begin)
+	n.parse(ps)
+	n.setEnd(ps.pos)
+	n.setSourceText(ps.src[begin:ps.pos])
+	return parsed{n}
+}
+
+var nodeType = reflect.TypeOf((*Node)(nil)).Elem()
+
+type parsed struct {
+	n Node
+}
+
+func (p parsed) addAs(ptr interface{}, parent Node) {
+	dst := reflect.ValueOf(ptr).Elem()
+	dst.Set(reflect.ValueOf(p.n)) // *ptr = p.n
+	addChild(parent, p.n)
+}
+
+func (p parsed) addTo(ptr interface{}, parent Node) {
+	dst := reflect.ValueOf(ptr).Elem()
+	dst.Set(reflect.Append(dst, reflect.ValueOf(p.n))) // *ptr = append(*ptr, n)
+	addChild(parent, p.n)
 }
 
 // Tells the parser that parsing is done.
