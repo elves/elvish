@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	out io.Writer = ioutil.Discard
+	out = ioutil.Discard
 	// If out is set by SetOutputFile, outFile is set and keeps the same value
 	// as out. Otherwise, outFile is nil.
 	outFile *os.File

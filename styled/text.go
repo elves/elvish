@@ -16,7 +16,8 @@ func Unstyled(s string) Text {
 	return Text{UnstyledSegment(s)}
 }
 
-func (t Text) Kind() string { return "styled-text" }
+// Kind returns "styled-text".
+func (Text) Kind() string { return "styled-text" }
 
 // Repr returns the representation of the current Text. It is just a wrapper
 // around the containing Segments.
@@ -28,6 +29,7 @@ func (t Text) Repr(indent int) string {
 	return fmt.Sprintf("(styled %s)", buf.String())
 }
 
+// IterateKeys feeds the function with all valid indicies of the styled-text.
 func (t Text) IterateKeys(fn func(interface{}) bool) {
 	for i := 0; i < len(t); i++ {
 		if !fn(strconv.Itoa(i)) {
@@ -36,7 +38,7 @@ func (t Text) IterateKeys(fn func(interface{}) bool) {
 	}
 }
 
-// Index provides access to the underlying Segments.
+// Index provides access to the underlying styled-segment.
 func (t Text) Index(k interface{}) (interface{}, error) {
 	index, err := vals.ConvertListIndex(k, len(t))
 	if err != nil {

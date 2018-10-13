@@ -1,4 +1,4 @@
-// Package re implements the re: module for using regular expressions.
+// Package re implements a regular expression module.
 package re
 
 import (
@@ -10,6 +10,7 @@ import (
 	"github.com/xiaq/persistent/vector"
 )
 
+// Ns is the namespace for the re: module.
 var Ns = eval.NewNs().AddBuiltinFns("re:", fns)
 
 var fns = map[string]interface{}{
@@ -91,40 +92,39 @@ func replace(fm *eval.Frame, opts replaceOpts, argPattern string, argRepl interf
 				vals.Kind(argRepl))
 		}
 		return pattern.ReplaceAllLiteralString(source, repl), nil
-	} else {
-		switch repl := argRepl.(type) {
-		case string:
-			return pattern.ReplaceAllString(source, repl), nil
-		case eval.Callable:
-			var errReplace error
-			replFunc := func(s string) string {
-				if errReplace != nil {
-					return ""
-				}
-				values, err := fm.CaptureOutput(repl, []interface{}{s}, eval.NoOpts)
-				if err != nil {
-					errReplace = err
-					return ""
-				}
-				if len(values) != 1 {
-					errReplace = fmt.Errorf("replacement function must output exactly one value, got %d", len(values))
-					return ""
-				}
-				output, ok := values[0].(string)
-				if !ok {
-					errReplace = fmt.Errorf(
-						"replacement function must output one string, got %s",
-						vals.Kind(values[0]))
-					return ""
-				}
-				return output
+	}
+	switch repl := argRepl.(type) {
+	case string:
+		return pattern.ReplaceAllString(source, repl), nil
+	case eval.Callable:
+		var errReplace error
+		replFunc := func(s string) string {
+			if errReplace != nil {
+				return ""
 			}
-			return pattern.ReplaceAllStringFunc(source, replFunc), errReplace
-		default:
-			return "", fmt.Errorf(
-				"replacement must be string or function, got %s",
-				vals.Kind(argRepl))
+			values, err := fm.CaptureOutput(repl, []interface{}{s}, eval.NoOpts)
+			if err != nil {
+				errReplace = err
+				return ""
+			}
+			if len(values) != 1 {
+				errReplace = fmt.Errorf("replacement function must output exactly one value, got %d", len(values))
+				return ""
+			}
+			output, ok := values[0].(string)
+			if !ok {
+				errReplace = fmt.Errorf(
+					"replacement function must output one string, got %s",
+					vals.Kind(values[0]))
+				return ""
+			}
+			return output
 		}
+		return pattern.ReplaceAllStringFunc(source, replFunc), errReplace
+	default:
+		return "", fmt.Errorf(
+			"replacement must be string or function, got %s",
+			vals.Kind(argRepl))
 	}
 }
 

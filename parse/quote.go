@@ -5,16 +5,17 @@ import (
 	"unicode"
 )
 
-// Quote returns a representation of s in elvish syntax. Bareword is tried
-// first, then single quoted string and finally double quoted string.
+// Quote returns a valid Elvish expression that evaluates to the given string.
+// If s is a valid bareword, it is returned as is; otherwise it is quoted,
+// preferring the use of single quotes.
 func Quote(s string) string {
 	s, _ = QuoteAs(s, Bareword)
 	return s
 }
 
-// QuoteAs returns a representation of s in elvish syntax, using the syntax
-// specified by q, which must be one of Bareword, SingleQuoted, or
-// DoubleQuoted. It returns the quoted string and the actual quoting.
+// QuoteAs returns a representation of s in elvish syntax, preferring the syntax
+// specified by q, which must be one of Bareword, SingleQuoted, or DoubleQuoted.
+// It returns the quoted string and the actual quoting.
 func QuoteAs(s string, q PrimaryType) (string, PrimaryType) {
 	if q == DoubleQuoted {
 		// Everything can be quoted using double quotes, return directly.

@@ -16,8 +16,11 @@ import (
 
 // TODO(xiaq): Move the implementation into this package.
 
+// BindingMap is a specialized map type for key bindings.
 type BindingMap = eddefs.BindingMap
 
+// EmptyBindingMap is an empty binding map. It is useful for building binding
+// maps.
 var EmptyBindingMap = eddefs.EmptyBindingMap
 
 func keyHandlerFromBinding(ed editor, ev *eval.Evaler, m *BindingMap) func(ui.Key) types.HandlerAction {

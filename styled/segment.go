@@ -15,10 +15,12 @@ type Segment struct {
 	Text string
 }
 
+// UnstyledSegment returns an Segment containing the given text with no style.
 func UnstyledSegment(s string) *Segment {
 	return &Segment{Text: s}
 }
 
+// Kind returns "styled-segment".
 func (*Segment) Kind() string { return "styled-segment" }
 
 // Repr returns the representation of this Segment. The string can be used to
@@ -48,11 +50,12 @@ func (s *Segment) Repr(indent int) string {
 	return fmt.Sprintf("(styled-segment %s %s)", s.Text, strings.TrimSpace(buf.String()))
 }
 
+// IterateKeys feeds the function with all valid attributes of styled-segment.
 func (*Segment) IterateKeys(fn func(v interface{}) bool) {
 	util.Feed(fn, "text", "fg-color", "bg-color", "bold", "dim", "italic", "underlined", "blink", "inverse")
 }
 
-// Index provides access to the attributes of the Segment.
+// Index provides access to the attributes of a styled-segment.
 func (s *Segment) Index(k interface{}) (v interface{}, ok bool) {
 	switch k {
 	case "text":

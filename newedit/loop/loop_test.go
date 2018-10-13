@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestRead_returnsReturnValueOfHandleCb(t *testing.T) {
+func TestRead_ReturnsReturnValueOfHandleCb(t *testing.T) {
 	handleCbRet := "lorem ipsum"
 	ed := New()
 	ed.HandleCb(quitOn("^D", handleCbRet))
@@ -16,7 +16,7 @@ func TestRead_returnsReturnValueOfHandleCb(t *testing.T) {
 	}
 }
 
-func TestRead_passInputEventsToHandler(t *testing.T) {
+func TestRead_PassesInputEventsToHandler(t *testing.T) {
 	inputPassedEvents := []Event{"foo", "bar", "lorem", "ipsum", "^D"}
 	var handlerGotEvents []Event
 	handler := func(e Event) (string, bool) {
@@ -35,12 +35,12 @@ func TestRead_passInputEventsToHandler(t *testing.T) {
 	}
 }
 
-func TestRead_callsDrawWhenRedrawRequestedBeforeRead(t *testing.T) {
-	testRead_callsDrawWhenRedrawRequestedBeforeRead(t, true, FullRedraw)
-	testRead_callsDrawWhenRedrawRequestedBeforeRead(t, false, 0)
+func TestRead_CallsDrawWhenRedrawRequestedBeforeRead(t *testing.T) {
+	testReadCallsDrawWhenRedrawRequestedBeforeRead(t, true, FullRedraw)
+	testReadCallsDrawWhenRedrawRequestedBeforeRead(t, false, 0)
 }
 
-func testRead_callsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wantRedrawFlag RedrawFlag) {
+func testReadCallsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wantRedrawFlag RedrawFlag) {
 	t.Helper()
 
 	var gotRedrawFlag RedrawFlag
@@ -69,11 +69,11 @@ func testRead_callsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wa
 }
 
 func TestRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T) {
-	testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t, true, FullRedraw)
-	testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t, false, 0)
+	testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t, true, FullRedraw)
+	testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t, false, 0)
 }
 
-func testRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool, wantRedrawFlag RedrawFlag) {
+func testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool, wantRedrawFlag RedrawFlag) {
 	t.Helper()
 
 	var gotRedrawFlag RedrawFlag

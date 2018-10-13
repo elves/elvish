@@ -5,6 +5,7 @@
 // "go get".
 package buildinfo
 
+// Build information.
 var (
 	Version = "unknown"
 	GoPath  = "unknown"

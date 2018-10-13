@@ -15,8 +15,8 @@ type State struct {
 	Mutex sync.RWMutex
 }
 
-// Returns a copy of the raw state, and set s.Raw.Notes = nil. Used for
-// retrieving the state for rendering.
+// PopForRedraw returns a copy of the raw state, and set s.Raw.Notes = nil. Used
+// for retrieving the state for rendering.
 func (s *State) PopForRedraw() *RawState {
 	s.Mutex.Lock()
 	defer s.Mutex.Unlock()
@@ -25,7 +25,7 @@ func (s *State) PopForRedraw() *RawState {
 	return &raw
 }
 
-// Returns a finalized State, intended for use in the final redraw.
+// Finalize returns a finalized State, intended for use in the final redraw.
 func (s *State) Finalize() *RawState {
 	s.Mutex.RLock()
 	defer s.Mutex.RUnlock()

@@ -48,9 +48,9 @@ func initInsert(ed editor, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
 func abbrIterate(abbr hashmap.Map, cb func(a, f string)) {
 	for it := abbr.Iterator(); it.HasElem(); it.Next() {
 		k, v := it.Elem()
-		abbr, kOk := k.(string)
-		full, vOk := v.(string)
-		if !kOk || !vOk {
+		abbr, kok := k.(string)
+		full, vok := v.(string)
+		if !kok || !vok {
 			continue
 		}
 		cb(abbr, full)
