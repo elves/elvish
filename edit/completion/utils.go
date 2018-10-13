@@ -2,11 +2,35 @@ package completion
 
 import (
 	"fmt"
+	"reflect"
 	"unicode"
 
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
+
+// Reports whether a and b have the same dynamic type. Useful as a more succinct
+// alternative to type assertions.
+func is(a, b parse.Node) bool {
+	return reflect.TypeOf(a) == reflect.TypeOf(b)
+}
+
+// Useful as arguments to is.
+var (
+	aChunk    = &parse.Chunk{}
+	aPipeline = &parse.Pipeline{}
+	aForm     = &parse.Form{}
+	aArray    = &parse.Array{}
+	aIndexing = &parse.Indexing{}
+	aPrimary  = &parse.Primary{}
+	aSep      = &parse.Sep{}
+)
+
+func isSep(n parse.Node) bool {
+	_, ok := n.(*parse.Sep)
+	return ok
+}
 
 func throw(e error) {
 	util.Throw(e)

@@ -23,17 +23,17 @@ func findCommandComplContext(n parse.Node, ev pureEvaler) complContext {
 	// 2. Just after a newline or semicolon: the leaf is a Sep and its parent is
 	//    a Chunk.
 	// 3. Just after a pipe: the leaf is a Sep and its parent is a Pipeline.
-	if parse.IsChunk(n) {
+	if is(n, aChunk) {
 		return &commandComplContext{
 			complContextCommon{"", parse.Bareword, n.Range().To, n.Range().To}}
 	}
-	if parse.IsSep(n) {
+	if is(n, aSep) {
 		parent := n.Parent()
 		switch {
-		case parse.IsChunk(parent), parse.IsPipeline(parent):
+		case is(parent, aChunk), is(parent, aPipeline):
 			return &commandComplContext{
 				complContextCommon{"", quotingForEmptySeed, n.Range().To, n.Range().To}}
-		case parse.IsPrimary(parent):
+		case is(parent, aPrimary):
 			ptype := parent.(*parse.Primary).Type
 			if ptype == parse.OutputCapture || ptype == parse.ExceptionCapture {
 				return &commandComplContext{

@@ -17,10 +17,10 @@ func (*indexComplContext) name() string { return "index" }
 // Right now we only support cases where there is only one level of indexing,
 // e.g. $a[<Tab> is supported but $a[x][<Tab> is not.
 func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
-	if parse.IsSep(n) {
-		if parse.IsIndexing(n.Parent()) {
+	if is(n, aSep) {
+		if is(n.Parent(), aIndexing) {
 			// We are just after an opening bracket.
-			indexing := parse.GetIndexing(n.Parent())
+			indexing := n.Parent().(*parse.Indexing)
 			if len(indexing.Indicies) == 1 {
 				if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 					return &indexComplContext{
@@ -31,11 +31,11 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 				}
 			}
 		}
-		if parse.IsArray(n.Parent()) {
+		if is(n.Parent(), aArray) {
 			array := n.Parent()
-			if parse.IsIndexing(array.Parent()) {
+			if is(array.Parent(), aIndexing) {
 				// We are after an existing index and spaces.
-				indexing := parse.GetIndexing(array.Parent())
+				indexing := array.Parent().(*parse.Indexing)
 				if len(indexing.Indicies) == 1 {
 					if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 						return &indexComplContext{
@@ -49,15 +49,15 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 		}
 	}
 
-	if parse.IsPrimary(n) {
-		primary := parse.GetPrimary(n)
+	if is(n, aPrimary) {
+		primary := n.(*parse.Primary)
 		compound, seed := primaryInSimpleCompound(primary, ev)
 		if compound != nil {
-			if parse.IsArray(compound.Parent()) {
+			if is(compound.Parent(), aArray) {
 				array := compound.Parent()
-				if parse.IsIndexing(array.Parent()) {
+				if is(array.Parent(), aIndexing) {
 					// We are just after an incomplete index.
-					indexing := parse.GetIndexing(array.Parent())
+					indexing := array.Parent().(*parse.Indexing)
 					if len(indexing.Indicies) == 1 {
 						if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 							return &indexComplContext{

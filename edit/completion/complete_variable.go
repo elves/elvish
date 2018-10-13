@@ -15,8 +15,8 @@ type variableComplContext struct {
 func (*variableComplContext) name() string { return "variable" }
 
 func findVariableComplContext(n parse.Node, _ pureEvaler) complContext {
-	primary := parse.GetPrimary(n)
-	if primary != nil && primary.Type == parse.Variable {
+	primary, ok := n.(*parse.Primary)
+	if ok && primary.Type == parse.Variable {
 		explode, nsPart, nameSeed := eval.SplitIncompleteVariableRef(primary.Value)
 		// Move past "$", "@" and "<ns>:".
 		begin := primary.Range().From + 1 + len(explode) + len(nsPart)

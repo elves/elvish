@@ -7,7 +7,6 @@
 // is embodied in the children of each *Node type.
 package parse
 
-//go:generate ./boilerplate.py
 //go:generate stringer -type=PrimaryType,RedirMode,ExprCtx -output=string.go
 
 import (

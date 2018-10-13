@@ -30,7 +30,7 @@ func Wordify(src string) []string {
 }
 
 func wordifyInner(n parse.Node, words []string) []string {
-	if len(n.Children()) == 0 || parse.IsCompound(n) {
+	if len(n.Children()) == 0 || isCompound(n) {
 		text := n.SourceText()
 		if strings.TrimFunc(text, parse.IsSpaceOrNewline) != "" {
 			return append(words, text)
@@ -41,4 +41,9 @@ func wordifyInner(n parse.Node, words []string) []string {
 		words = wordifyInner(ch, words)
 	}
 	return words
+}
+
+func isCompound(n parse.Node) bool {
+	_, ok := n.(*parse.Compound)
+	return ok
 }
