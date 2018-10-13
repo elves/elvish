@@ -25,7 +25,7 @@ func (cp *compiler) lvaluesOp(n *parse.Indexing) (lvaluesOp, lvaluesOp) {
 		return cp.lvaluesMulti(n.Head.Braced)
 	}
 	rest, opFunc := cp.lvalueBase(n, "must be an lvalue or a braced list of those")
-	op := lvaluesOp{opFunc, n.Begin(), n.End()}
+	op := lvaluesOp{opFunc, n.Range().From, n.Range().To}
 	if rest {
 		return lvaluesOp{}, op
 	}
@@ -41,7 +41,7 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (lvaluesOp, lvaluesOp)
 	fixedEnd := 0
 	for i, cn := range nodes {
 		if len(cn.Indexings) != 1 {
-			cp.errorpf(cn.Begin(), cn.End(), "must be an lvalue")
+			cp.errorpf(cn.Range().From, cn.Range().To, "must be an lvalue")
 		}
 		var rest bool
 		rest, opFuncs[i] = cp.lvalueBase(cn.Indexings[0], "must be an lvalue ")
@@ -51,24 +51,24 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (lvaluesOp, lvaluesOp)
 				restNode = cn.Indexings[0]
 				restOpFunc = opFuncs[i]
 			} else {
-				cp.errorpf(cn.Begin(), cn.End(), "only the last lvalue may have @")
+				cp.errorpf(cn.Range().From, cn.Range().To, "only the last lvalue may have @")
 			}
 		} else {
-			fixedEnd = cn.End()
+			fixedEnd = cn.Range().To
 		}
 	}
 
 	var restOp lvaluesOp
 	// If there is a rest part, make LValuesOp for it and remove it from opFuncs.
 	if restOpFunc != nil {
-		restOp = lvaluesOp{restOpFunc, restNode.Begin(), restNode.End()}
+		restOp = lvaluesOp{restOpFunc, restNode.Range().From, restNode.Range().To}
 		opFuncs = opFuncs[:len(opFuncs)-1]
 	}
 
 	var op lvaluesOp
 	// If there is still anything left in opFuncs, make LValuesOp for the fixed part.
 	if len(opFuncs) > 0 {
-		op = lvaluesOp{seqLValuesOpBody{opFuncs}, nodes[0].Begin(), fixedEnd}
+		op = lvaluesOp{seqLValuesOpBody{opFuncs}, nodes[0].Range().From, fixedEnd}
 	}
 
 	return op, restOp
@@ -87,11 +87,11 @@ func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, lvaluesOpBo
 func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) lvaluesOpBody {
 	cp.registerVariableGet(ns, name)
 
-	begin, end := n.Begin(), n.End()
+	begin, end := n.Range().From, n.Range().To
 	ends := make([]int, len(n.Indicies)+1)
-	ends[0] = n.Head.End()
+	ends[0] = n.Head.Range().To
 	for i, idx := range n.Indicies {
-		ends[i+1] = idx.End()
+		ends[i+1] = idx.Range().To
 	}
 
 	indexOps := cp.arrayOps(n.Indicies)

@@ -23,7 +23,7 @@ func (aw *argsWalker) more() bool {
 
 func (aw *argsWalker) peek() *parse.Compound {
 	if !aw.more() {
-		aw.cp.errorpf(aw.form.End(), aw.form.End(), "need more arguments")
+		aw.cp.errorpf(aw.form.Range().To, aw.form.Range().To, "need more arguments")
 	}
 	return aw.form.Args[aw.idx]
 }
@@ -49,14 +49,14 @@ func (aw *argsWalker) nextIs(text string) bool {
 func (aw *argsWalker) nextMustLambda() *parse.Primary {
 	n := aw.next()
 	if len(n.Indexings) != 1 {
-		aw.cp.errorpf(n.Begin(), n.End(), "must be lambda")
+		aw.cp.errorpf(n.Range().From, n.Range().To, "must be lambda")
 	}
 	if len(n.Indexings[0].Indicies) != 0 {
-		aw.cp.errorpf(n.Begin(), n.End(), "must be lambda")
+		aw.cp.errorpf(n.Range().From, n.Range().To, "must be lambda")
 	}
 	pn := n.Indexings[0].Head
 	if pn.Type != parse.Lambda {
-		aw.cp.errorpf(n.Begin(), n.End(), "must be lambda")
+		aw.cp.errorpf(n.Range().From, n.Range().To, "must be lambda")
 	}
 	return pn
 }
@@ -70,6 +70,6 @@ func (aw *argsWalker) nextMustLambdaIfAfter(leader string) *parse.Primary {
 
 func (aw *argsWalker) mustEnd() {
 	if aw.more() {
-		aw.cp.errorpf(aw.form.Args[aw.idx].Begin(), aw.form.End(), "too many arguments")
+		aw.cp.errorpf(aw.form.Args[aw.idx].Range().From, aw.form.Range().To, "too many arguments")
 	}
 }

@@ -110,9 +110,9 @@ func compileDel(cp *compiler, fn *parse.Form) opBody {
 				cp.errorf("no variable $%s", head.Value)
 				continue
 			}
-			f = newDelElementOp(ns, name, head.Begin(), head.End(), cp.arrayOps(indicies))
+			f = newDelElementOp(ns, name, head.Range().From, head.Range().To, cp.arrayOps(indicies))
 		}
-		ops = append(ops, effectOp{f, cn.Begin(), cn.End()})
+		ops = append(ops, effectOp{f, cn.Range().From, cn.Range().To})
 	}
 	return seqOp{ops}
 }
@@ -225,7 +225,7 @@ func compileUse(cp *compiler, fn *parse.Form) opBody {
 
 	switch len(fn.Args) {
 	case 0:
-		end := fn.Head.End()
+		end := fn.Head.Range().To
 		cp.errorpf(end, end, "lack module name")
 	case 1:
 		path = mustString(cp, fn.Args[0],
@@ -240,7 +240,7 @@ func compileUse(cp *compiler, fn *parse.Form) opBody {
 		name = mustString(cp, fn.Args[1],
 			"module name should be a literal string")
 	default: // > 2
-		cp.errorpf(fn.Args[2].Begin(), fn.Args[len(fn.Args)-1].End(),
+		cp.errorpf(fn.Args[2].Range().From, fn.Args[len(fn.Args)-1].Range().To,
 			"superfluous argument(s)")
 	}
 

@@ -33,7 +33,7 @@ func compile(b, g staticNs, n *parse.Chunk, src *Source) (op Op, err error) {
 }
 
 func (cp *compiler) compiling(n parse.Node) {
-	cp.begin, cp.end = n.Begin(), n.End()
+	cp.begin, cp.end = n.Range().From, n.Range().To
 }
 
 func (cp *compiler) errorpf(begin, end int, format string, args ...interface{}) {

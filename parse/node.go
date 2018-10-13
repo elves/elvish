@@ -6,8 +6,6 @@ import "github.com/elves/elvish/diag"
 type Node interface {
 	n() *node
 	diag.Ranger
-	Begin() int
-	End() int
 	Parent() Node
 	SourceText() string
 	Children() []Node
@@ -28,14 +26,6 @@ func (n *node) n() *node {
 // the parent is nil.
 func (n *node) Parent() Node {
 	return n.parent
-}
-
-func (n *node) Begin() int {
-	return n.begin
-}
-
-func (n *node) End() int {
-	return n.end
 }
 
 // Range returns the range within the original (full) source text that parses

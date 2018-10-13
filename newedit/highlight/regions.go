@@ -59,7 +59,7 @@ const (
 func getRegions(n parse.Node) []region {
 	var regions []region
 	emitRegions(n, func(n parse.Node, kind regionKind, typ string) {
-		regions = append(regions, region{n.Begin(), n.End(), kind, typ})
+		regions = append(regions, region{n.Range().From, n.Range().To, kind, typ})
 	})
 	// Sort the regions by the begin position, putting semantic regions before
 	// lexical regions.

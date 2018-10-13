@@ -24,8 +24,8 @@ func findArgComplContext(n parse.Node, ev pureEvaler) complContext {
 		if form, ok := sep.Parent().(*parse.Form); ok && form.Head != nil {
 			return &argComplContext{
 				complContextCommon{
-					"", quotingForEmptySeed, n.End(), n.End()},
-				evalFormPure(form, "", n.End(), ev),
+					"", quotingForEmptySeed, n.Range().To, n.Range().To},
+				evalFormPure(form, "", n.Range().To, ev),
 			}
 		}
 	}
@@ -35,8 +35,8 @@ func findArgComplContext(n parse.Node, ev pureEvaler) complContext {
 				if form.Head != nil && form.Head != compound {
 					return &argComplContext{
 						complContextCommon{
-							seed, primary.Type, compound.Begin(), compound.End()},
-						evalFormPure(form, seed, compound.Begin(), ev),
+							seed, primary.Type, compound.Range().From, compound.Range().To},
+						evalFormPure(form, seed, compound.Range().From, ev),
 					}
 				}
 			}
@@ -51,7 +51,7 @@ func evalFormPure(form *parse.Form, seed string, seedBegin int, ev pureEvaler) [
 	head, _ := ev.PurelyEvalPartialCompound(form.Head, nil)
 	words := []string{head}
 	for _, compound := range form.Args {
-		if compound.Begin() >= seedBegin {
+		if compound.Range().From >= seedBegin {
 			break
 		}
 		if arg, err := ev.PurelyEvalCompound(compound); err == nil {

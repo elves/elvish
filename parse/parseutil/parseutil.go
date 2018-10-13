@@ -13,7 +13,7 @@ func FindLeafNode(n parse.Node, p int) parse.Node {
 descend:
 	for len(n.Children()) > 0 {
 		for _, ch := range n.Children() {
-			if ch.Begin() <= p && p <= ch.End() {
+			if ch.Range().From <= p && p <= ch.Range().To {
 				n = ch
 				continue descend
 			}

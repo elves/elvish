@@ -25,19 +25,19 @@ func findCommandComplContext(n parse.Node, ev pureEvaler) complContext {
 	// 3. Just after a pipe: the leaf is a Sep and its parent is a Pipeline.
 	if parse.IsChunk(n) {
 		return &commandComplContext{
-			complContextCommon{"", parse.Bareword, n.End(), n.End()}}
+			complContextCommon{"", parse.Bareword, n.Range().To, n.Range().To}}
 	}
 	if parse.IsSep(n) {
 		parent := n.Parent()
 		switch {
 		case parse.IsChunk(parent), parse.IsPipeline(parent):
 			return &commandComplContext{
-				complContextCommon{"", quotingForEmptySeed, n.End(), n.End()}}
+				complContextCommon{"", quotingForEmptySeed, n.Range().To, n.Range().To}}
 		case parse.IsPrimary(parent):
 			ptype := parent.(*parse.Primary).Type
 			if ptype == parse.OutputCapture || ptype == parse.ExceptionCapture {
 				return &commandComplContext{
-					complContextCommon{"", quotingForEmptySeed, n.End(), n.End()}}
+					complContextCommon{"", quotingForEmptySeed, n.Range().To, n.Range().To}}
 			}
 		}
 	}
@@ -47,7 +47,7 @@ func findCommandComplContext(n parse.Node, ev pureEvaler) complContext {
 			if form, ok := compound.Parent().(*parse.Form); ok {
 				if form.Head == compound {
 					return &commandComplContext{
-						complContextCommon{seed, primary.Type, compound.Begin(), compound.End()}}
+						complContextCommon{seed, primary.Type, compound.Range().From, compound.Range().To}}
 				}
 			}
 		}

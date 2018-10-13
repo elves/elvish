@@ -25,7 +25,7 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 				if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 					return &indexComplContext{
 						complContextCommon{
-							"", quotingForEmptySeed, n.End(), n.End()},
+							"", quotingForEmptySeed, n.Range().To, n.Range().To},
 						indexee,
 					}
 				}
@@ -40,7 +40,7 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 					if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 						return &indexComplContext{
 							complContextCommon{
-								"", quotingForEmptySeed, n.End(), n.End()},
+								"", quotingForEmptySeed, n.Range().To, n.Range().To},
 							indexee,
 						}
 					}
@@ -62,7 +62,7 @@ func findIndexComplContext(n parse.Node, ev pureEvaler) complContext {
 						if indexee := ev.PurelyEvalPrimary(indexing.Head); indexee != nil {
 							return &indexComplContext{
 								complContextCommon{
-									seed, primary.Type, compound.Begin(), compound.End()},
+									seed, primary.Type, compound.Range().From, compound.Range().To},
 								indexee,
 							}
 						}

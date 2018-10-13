@@ -231,7 +231,7 @@ func (c *completion) start(ed eddefs.Editor, acceptSingleton bool) {
 		ed.AddTip("unsupported completion :(")
 		logger.Println("path to current leaf, leaf first")
 		for n := node; n != nil; n = n.Parent() {
-			logger.Printf("%T (%d-%d)", n, n.Begin(), n.End())
+			logger.Printf("%T (%d-%d)", n, n.Range().From, n.Range().To)
 		}
 	} else if len(complSpec.candidates) == 0 {
 		ed.AddTip("no candidate for %s", completer)

@@ -264,7 +264,7 @@ func (an *Assignment) parse(ps *Parser) {
 	an.setLeft(ParseIndexing(ps, LHSExpr))
 	head := an.Left.Head
 	if !checkVariableInAssignment(head, ps) {
-		ps.errorp(head.Begin(), head.End(), errShouldBeVariableName)
+		ps.errorp(head.Range().From, head.Range().To, errShouldBeVariableName)
 	}
 
 	if !parseSep(an, ps, '=') {
@@ -918,9 +918,9 @@ func addSep(n Node, ps *Parser) {
 	var begin int
 	ch := n.Children()
 	if len(ch) > 0 {
-		begin = ch[len(ch)-1].End()
+		begin = ch[len(ch)-1].Range().To
 	} else {
-		begin = n.Begin()
+		begin = n.Range().From
 	}
 	if begin < ps.pos {
 		addChild(n, NewSep(ps.src, begin, ps.pos))

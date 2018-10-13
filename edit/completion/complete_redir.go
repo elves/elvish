@@ -14,14 +14,14 @@ func findRedirComplContext(n parse.Node, ev pureEvaler) complContext {
 	if parse.IsSep(n) {
 		if parse.IsRedir(n.Parent()) {
 			return &redirComplContext{complContextCommon{
-				"", quotingForEmptySeed, n.End(), n.End()}}
+				"", quotingForEmptySeed, n.Range().To, n.Range().To}}
 		}
 	}
 	if primary, ok := n.(*parse.Primary); ok {
 		if compound, seed := primaryInSimpleCompound(primary, ev); compound != nil {
 			if parse.IsRedir(compound.Parent()) {
 				return &redirComplContext{complContextCommon{
-					seed, primary.Type, compound.Begin(), compound.End()}}
+					seed, primary.Type, compound.Range().From, compound.Range().To}}
 			}
 		}
 	}

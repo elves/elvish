@@ -184,7 +184,7 @@ func (cp *compiler) form(n *parse.Form) opBody {
 					// Fall back to $e:head~.
 					headOpFunc = literalValues(ExternalCmd{headStr})
 				}
-				headOp = valuesOp{headOpFunc, n.Head.Begin(), n.Head.End()}
+				headOp = valuesOp{headOpFunc, n.Head.Range().From, n.Head.Range().To}
 			}
 		} else {
 			// Head exists and is not a literal string. Evaluate as a normal
@@ -214,7 +214,7 @@ func (cp *compiler) form(n *parse.Form) opBody {
 		}
 		spaceyAssignOp = effectOp{
 			&assignmentOp{varsOp, restOp, argsOp},
-			n.Begin(), argsOp.end,
+			n.Range().From, argsOp.end,
 		}
 	}
 
@@ -223,7 +223,7 @@ func (cp *compiler) form(n *parse.Form) opBody {
 	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir
 
-	return &formOp{saveVarsOps, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp, n.Begin(), n.End()}
+	return &formOp{saveVarsOps, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp, n.Range().From, n.Range().To}
 }
 
 type formOp struct {

@@ -125,7 +125,7 @@ func pprintParseTree(n Node, wr io.Writer, indent int) {
 
 func summary(n Node) string {
 	return fmt.Sprintf("%s %s %d-%d", reflect.TypeOf(n).Elem().Name(),
-		compactQuote(n.SourceText()), n.Begin(), n.End())
+		compactQuote(n.SourceText()), n.Range().From, n.Range().To)
 }
 
 func compactQuote(text string) string {

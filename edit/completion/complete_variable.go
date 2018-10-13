@@ -19,13 +19,13 @@ func findVariableComplContext(n parse.Node, _ pureEvaler) complContext {
 	if primary != nil && primary.Type == parse.Variable {
 		explode, nsPart, nameSeed := eval.SplitIncompleteVariableRef(primary.Value)
 		// Move past "$", "@" and "<ns>:".
-		begin := primary.Begin() + 1 + len(explode) + len(nsPart)
+		begin := primary.Range().From + 1 + len(explode) + len(nsPart)
 		ns := nsPart
 		if len(ns) > 0 {
 			ns = ns[:len(ns)-1]
 		}
 		return &variableComplContext{
-			complContextCommon{nameSeed, parse.Bareword, begin, primary.End()},
+			complContextCommon{nameSeed, parse.Bareword, begin, primary.Range().To},
 			ns, nsPart,
 		}
 	}

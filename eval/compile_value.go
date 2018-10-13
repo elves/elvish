@@ -393,14 +393,14 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 			qname := mustString(cp, arg, "argument name must be literal string")
 			explode, ns, name := ParseVariableRef(qname)
 			if ns != "" {
-				cp.errorpf(arg.Begin(), arg.End(), "argument name must be unqualified")
+				cp.errorpf(arg.Range().From, arg.Range().To, "argument name must be unqualified")
 			}
 			if name == "" {
-				cp.errorpf(arg.Begin(), arg.End(), "argument name must not be empty")
+				cp.errorpf(arg.Range().From, arg.Range().To, "argument name must not be empty")
 			}
 			if explode {
 				if i != len(n.Elements)-1 {
-					cp.errorpf(arg.Begin(), arg.End(), "only the last argument may have @")
+					cp.errorpf(arg.Range().From, arg.Range().To, "only the last argument may have @")
 				}
 				restArgName = name
 				argNames = argNames[:i]
@@ -416,14 +416,14 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 			qname := mustString(cp, opt.Key, "option name must be literal string")
 			_, ns, name := ParseVariableRef(qname)
 			if ns != "" {
-				cp.errorpf(opt.Key.Begin(), opt.Key.End(), "option name must be unqualified")
+				cp.errorpf(opt.Key.Range().From, opt.Key.Range().To, "option name must be unqualified")
 			}
 			if name == "" {
-				cp.errorpf(opt.Key.Begin(), opt.Key.End(), "option name must not be empty")
+				cp.errorpf(opt.Key.Range().From, opt.Key.Range().To, "option name must not be empty")
 			}
 			optNames[i] = name
 			if opt.Value == nil {
-				cp.errorpf(opt.End(), opt.End(), "option must have default value")
+				cp.errorpf(opt.Range().To, opt.Range().To, "option must have default value")
 			} else {
 				optDefaultOps[i] = cp.compoundOp(opt.Value)
 			}
@@ -452,7 +452,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 		cp.registerVariableGetQname(name)
 	}
 
-	return &lambdaOp{argNames, restArgName, optNames, optDefaultOps, capture, subop, cp.srcMeta, n.Begin(), n.End()}
+	return &lambdaOp{argNames, restArgName, optNames, optDefaultOps, capture, subop, cp.srcMeta, n.Range().From, n.Range().To}
 }
 
 type lambdaOp struct {
@@ -495,12 +495,12 @@ func (cp *compiler) mapPairs(pairs []*parse.MapPair) valuesOpBody {
 	for i, pair := range pairs {
 		keysOps[i] = cp.compoundOp(pair.Key)
 		if pair.Value == nil {
-			p := pair.End()
+			p := pair.Range().To
 			valuesOps[i] = valuesOp{literalValues(true), p, p}
 		} else {
 			valuesOps[i] = cp.compoundOp(pairs[i].Value)
 		}
-		begins[i], ends[i] = pair.Begin(), pair.End()
+		begins[i], ends[i] = pair.Range().From, pair.Range().To
 	}
 	return &mapPairsOp{keysOps, valuesOps, begins, ends}
 }
