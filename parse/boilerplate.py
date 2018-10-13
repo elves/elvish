@@ -30,11 +30,13 @@ type X struct {
 
 The following boilerplate is generated:
 
+// IsX reports whether the node has type *X.
 func IsX(n Node) bool {
     _, ok := n.(*X)
     return ok
 }
 
+// GetX returns the node cast to *X if the node has that type, or nil otherwise.
 func GetX(n Node) *X {
     if nn, ok := n.(*X); ok {
         return nn
@@ -52,6 +54,7 @@ func (n *X) addToG(ch *Z) {
     addChild(n, ch)
 }
 
+// ParseX parses a node of type *X.
 func ParseX(ps *Parser) *X {
     n := &X{node: node{begin: ps.pos}}
     n.parse(ps)
@@ -66,6 +69,7 @@ import os
 
 def put_is(out, typename):
     print >>out, '''
+// Is{typename} reports whether the node has type *{typename}.
 func Is{typename}(n Node) bool {{
     _, ok := n.(*{typename})
     return ok
@@ -75,6 +79,7 @@ func Is{typename}(n Node) bool {{
 
 def put_get(out, typename):
     print >>out, '''
+// Get{typename} returns the node cast to *{typename} if the node has that type, or nil otherwise.
 func Get{typename}(n Node) *{typename} {{
     if nn, ok := n.(*{typename}); ok {{
         return nn
@@ -103,6 +108,7 @@ func (n *{parent}) addTo{field}(ch *{child}) {{
 def put_parse(out, typename, extraargs):
     extranames = ', '.join(a.split(' ')[0] for a in extraargs.split(', ')) if extraargs else ''
     print >>out, '''
+// Parse{typename} parses a node of type *{typename}.
 func Parse{typename}(ps *Parser{extraargs}) *{typename} {{
     n := &{typename}{{node: node{{begin: ps.pos}}}}
     n.parse(ps{extranames})
