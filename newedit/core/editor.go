@@ -30,8 +30,9 @@ type Editor struct {
 	// that has been read.
 	AfterReadline func(string)
 
-	// Callback for highlighting the code the user has typed.
-	Highlighter Highlighter
+	// Callback for computing the highlight and errors of the code the user has
+	// typed.
+	Highlighter func(string) (styled.Text, []error)
 
 	// Left-hand and right-hand prompt.
 	Prompt, RPrompt Prompt
@@ -204,11 +205,11 @@ func (ed *Editor) Notify(note string) {
 	ed.Redraw(false)
 }
 
-// Highlighter is the type of callbacks for highlighting code.
-type Highlighter func(string) (styled.Text, []error)
+// Callbacks for highlighting code.
+type highlighter func(string) (styled.Text, []error)
 
 // Calls the highlighter, falling back to no highlighting if hl is nil.
-func (hl Highlighter) call(code string) (styled.Text, []error) {
+func (hl highlighter) call(code string) (styled.Text, []error) {
 	if hl == nil {
 		return styled.Unstyled(code), nil
 	}

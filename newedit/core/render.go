@@ -16,7 +16,7 @@ type renderSetup struct {
 	prompt  styled.Text
 	rprompt styled.Text
 
-	highlighter Highlighter
+	highlighter highlighter
 
 	initMode types.Mode
 }
@@ -46,7 +46,7 @@ func render(st *types.RawState, r *renderSetup) (notes, main *ui.Buffer) {
 
 var transformerForPending = "underline"
 
-func prepareCode(code string, dot int, pending *types.PendingCode, hl Highlighter) (
+func prepareCode(code string, dot int, pending *types.PendingCode, hl highlighter) (
 	styledCode styled.Text, newDot int, errors []error) {
 
 	newDot = dot
