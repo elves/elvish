@@ -8,8 +8,9 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// SourceRange is a range of text in a source code. It can point to another
-// SourceRange, thus forming a linked list. It is used for tracebacks.
+// SourceRange is a range of text in a source code. It is typically used for
+// errors that can be associated with a part of the source code, like parse
+// errors and a traceback entry.
 type SourceRange struct {
 	Name   string
 	Source string
@@ -24,8 +25,7 @@ func NewSourceRange(name, source string, begin, end int) *SourceRange {
 	return &SourceRange{name, source, begin, end, nil}
 }
 
-// rangePprintInfo is information about the source range that are needed for
-// pretty-printing.
+// Information about the source range that are needed for pretty-printing.
 type rangePprintInfo struct {
 	// Head is the piece of text immediately before Culprit, extending to, but
 	// not including the closest line boundary. If Culprit already starts after
@@ -45,9 +45,9 @@ type rangePprintInfo struct {
 
 // Variables controlling the style of the culprit.
 var (
-	CulpritLineBegin   = "\033[1;4m"
-	CulpritLineEnd     = "\033[m"
-	CulpritPlaceHolder = "^"
+	culpritLineBegin   = "\033[1;4m"
+	culpritLineEnd     = "\033[m"
+	culpritPlaceHolder = "^"
 )
 
 func (sr *SourceRange) pprintInfo() *rangePprintInfo {
@@ -123,7 +123,7 @@ func (sr *SourceRange) relevantSource(sourceIndent string) string {
 
 	culprit := info.Culprit
 	if culprit == "" {
-		culprit = CulpritPlaceHolder
+		culprit = culpritPlaceHolder
 	}
 
 	for i, line := range strings.Split(culprit, "\n") {
@@ -131,9 +131,9 @@ func (sr *SourceRange) relevantSource(sourceIndent string) string {
 			buf.WriteByte('\n')
 			buf.WriteString(sourceIndent)
 		}
-		buf.WriteString(CulpritLineBegin)
+		buf.WriteString(culpritLineBegin)
 		buf.WriteString(line)
-		buf.WriteString(CulpritLineEnd)
+		buf.WriteString(culpritLineEnd)
 	}
 
 	buf.WriteString(info.Tail)
