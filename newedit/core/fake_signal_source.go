@@ -4,25 +4,24 @@ import "os"
 
 const maxFakeSignals = 1024
 
-// FakeSignalSource is an implementation of SignalSource that is useful in
-// tests.
-type FakeSignalSource struct {
+// An implementation of SignalSource that is useful in tests.
+type fakeSignalSource struct {
 	// A channel on which fake signals can be injected.
 	Ch chan os.Signal
 }
 
-// NewFakeSignalSource creates a new FakeSignalSource.
-func NewFakeSignalSource() *FakeSignalSource {
-	return &FakeSignalSource{make(chan os.Signal, maxFakeSignals)}
+// Creates a new FakeSignalSource.
+func newFakeSignalSource() *fakeSignalSource {
+	return &fakeSignalSource{make(chan os.Signal, maxFakeSignals)}
 }
 
 // NotifySignals returns sigs.Ch.
-func (sigs *FakeSignalSource) NotifySignals() <-chan os.Signal {
+func (sigs *fakeSignalSource) NotifySignals() <-chan os.Signal {
 	return sigs.Ch
 }
 
 // StopSignals closes sig.Ch and set it to nil.
-func (sigs *FakeSignalSource) StopSignals() {
+func (sigs *fakeSignalSource) StopSignals() {
 	close(sigs.Ch)
 	sigs.Ch = nil
 }

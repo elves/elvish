@@ -335,14 +335,14 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	cleanup(terminal, codeCh)
 }
 
-func setup() (*Editor, *FakeTTY, *FakeSignalSource) {
-	terminal := NewFakeTTY()
-	sigsrc := NewFakeSignalSource()
+func setup() (*Editor, *fakeTTY, *fakeSignalSource) {
+	terminal := newFakeTTY()
+	sigsrc := newFakeSignalSource()
 	ed := NewEditor(terminal, sigsrc)
 	return ed, terminal, sigsrc
 }
 
-func cleanup(t *FakeTTY, codeCh <-chan string) {
+func cleanup(t *fakeTTY, codeCh <-chan string) {
 	// Causes BasicMode to quit
 	t.EventCh <- tty.KeyEvent{Rune: '\n'}
 	// Wait until ReadCode has finished execution
