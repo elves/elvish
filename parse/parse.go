@@ -1,4 +1,10 @@
 // Package parse implements the elvish parser.
+//
+// The parser builds a hybrid of AST (abstract syntax tree) and parse tree
+// (a.k.a. concrete syntax tree). The AST part only includes parts that are
+// semantically important, and is embodied in the fields of each *Node type. The
+// parse tree part corresponds to all the text in the original source text, and
+// is embodied in the children of each *Node type.
 package parse
 
 //go:generate ./boilerplate.py
