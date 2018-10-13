@@ -55,7 +55,7 @@ var pprintParseTreeTests = tt.Table{
 `),
 }
 
-func TestPprintParseTree(t *testing.T) {
+func TestPPrintParseTree(t *testing.T) {
 	tt.Test(t, tt.Fn("PPrintParseTree (to string)", func(n Node) string {
 		var b strings.Builder
 		PPrintParseTree(n, &b)

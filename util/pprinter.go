@@ -1,7 +1,7 @@
 package util
 
-// Pprinter wraps the Pprint function.
-type Pprinter interface {
-	// Pprint takes an indentation string and pretty-prints.
-	Pprint(indent string) string
+// PPrinter wraps the PPrint function.
+type PPrinter interface {
+	// PPrint takes an indentation string and pretty-prints.
+	PPrint(indent string) string
 }

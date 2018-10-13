@@ -42,7 +42,7 @@ func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
 	if !norc && dataDir != "" {
 		err := sourceRC(ev, dataDir)
 		if err != nil {
-			diag.PprintError(err)
+			diag.PPrintError(err)
 		}
 	}
 
@@ -84,7 +84,7 @@ func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
 
 		err = ev.EvalSourceInTTY(eval.NewInteractiveSource(line))
 		if err != nil {
-			diag.PprintError(err)
+			diag.PPrintError(err)
 		}
 	}
 }

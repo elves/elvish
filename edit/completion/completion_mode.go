@@ -223,9 +223,9 @@ func (c *completion) start(ed eddefs.Editor, acceptSingleton bool) {
 		ed.AddTip("%v", err)
 		// We don't show the full stack trace. To make debugging still possible,
 		// we log it.
-		if pprinter, ok := err.(util.Pprinter); ok {
+		if pprinter, ok := err.(util.PPrinter); ok {
 			logger.Println("matcher error:")
-			logger.Println(pprinter.Pprint(""))
+			logger.Println(pprinter.PPrint(""))
 		}
 	} else if completer == "" {
 		ed.AddTip("unsupported completion :(")

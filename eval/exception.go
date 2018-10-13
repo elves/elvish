@@ -39,24 +39,24 @@ func (exc *Exception) Error() string {
 	return exc.Cause.Error()
 }
 
-func (exc *Exception) Pprint(indent string) string {
+func (exc *Exception) PPrint(indent string) string {
 	buf := new(bytes.Buffer)
 
 	var causeDescription string
-	if pprinter, ok := exc.Cause.(util.Pprinter); ok {
-		causeDescription = pprinter.Pprint(indent)
+	if pprinter, ok := exc.Cause.(util.PPrinter); ok {
+		causeDescription = pprinter.PPrint(indent)
 	} else {
 		causeDescription = "\033[31;1m" + exc.Cause.Error() + "\033[m"
 	}
 	fmt.Fprintf(buf, "Exception: %s\n", causeDescription)
 
 	if exc.Traceback.next == nil {
-		buf.WriteString(exc.Traceback.entry.PprintCompact(indent))
+		buf.WriteString(exc.Traceback.entry.PPrintCompact(indent))
 	} else {
 		buf.WriteString(indent + "Traceback:")
 		for tb := exc.Traceback; tb != nil; tb = tb.next {
 			buf.WriteString("\n" + indent + "  ")
-			buf.WriteString(tb.entry.Pprint(indent + "    "))
+			buf.WriteString(tb.entry.PPrint(indent + "    "))
 		}
 	}
 
@@ -66,7 +66,7 @@ func (exc *Exception) Pprint(indent string) string {
 			if e == OK {
 				continue
 			}
-			buf.WriteString("\n" + indent + "  " + e.Pprint(indent+"  "))
+			buf.WriteString("\n" + indent + "  " + e.PPrint(indent+"  "))
 		}
 	}
 
@@ -208,7 +208,7 @@ func (f Flow) Error() string {
 	return flowNames[f]
 }
 
-func (f Flow) Pprint(string) string {
+func (f Flow) PPrint(string) string {
 	return "\033[33;1m" + f.Error() + "\033[m"
 }
 

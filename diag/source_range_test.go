@@ -8,8 +8,8 @@ import (
 var sourceRangeTests = []struct {
 	*SourceRange
 	indent            string
-	wantPprint        string
-	wantPprintCompact string
+	wantPPrint        string
+	wantPPrintCompact string
 }{
 	// Single-line culprit
 	{parseSourceRange("echo (bad)", "(", ")", true), "_",
@@ -42,15 +42,15 @@ func TestSourceRange(t *testing.T) {
 	culpritLineBegin = "<"
 	culpritLineEnd = ">"
 	for i, test := range sourceRangeTests {
-		gotPprint := test.SourceRange.Pprint(test.indent)
-		if gotPprint != test.wantPprint {
-			t.Errorf("test%d.Pprint(%q) = %q, want %q",
-				i, test.indent, gotPprint, test.wantPprint)
+		gotPPrint := test.SourceRange.PPrint(test.indent)
+		if gotPPrint != test.wantPPrint {
+			t.Errorf("test%d.PPrint(%q) = %q, want %q",
+				i, test.indent, gotPPrint, test.wantPPrint)
 		}
-		gotPprintCompact := test.SourceRange.PprintCompact(test.indent)
-		if gotPprintCompact != test.wantPprintCompact {
-			t.Errorf("test%d.PprintCompact(%q) = %q, want %q",
-				i, test.indent, gotPprintCompact, test.wantPprintCompact)
+		gotPPrintCompact := test.SourceRange.PPrintCompact(test.indent)
+		if gotPPrintCompact != test.wantPPrintCompact {
+			t.Errorf("test%d.PPrintCompact(%q) = %q, want %q",
+				i, test.indent, gotPPrintCompact, test.wantPPrintCompact)
 		}
 	}
 }

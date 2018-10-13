@@ -17,7 +17,7 @@ type SourceRange struct {
 	Begin  int
 	End    int
 
-	savedPprintInfo *rangePprintInfo
+	savedPPrintInfo *rangePPrintInfo
 }
 
 // NewSourceRange creates a new SourceRange.
@@ -26,7 +26,7 @@ func NewSourceRange(name, source string, begin, end int) *SourceRange {
 }
 
 // Information about the source range that are needed for pretty-printing.
-type rangePprintInfo struct {
+type rangePPrintInfo struct {
 	// Head is the piece of text immediately before Culprit, extending to, but
 	// not including the closest line boundary. If Culprit already starts after
 	// a line boundary, Head is an empty string.
@@ -50,9 +50,9 @@ var (
 	culpritPlaceHolder = "^"
 )
 
-func (sr *SourceRange) pprintInfo() *rangePprintInfo {
-	if sr.savedPprintInfo != nil {
-		return sr.savedPprintInfo
+func (sr *SourceRange) pprintInfo() *rangePPrintInfo {
+	if sr.savedPPrintInfo != nil {
+		return sr.savedPPrintInfo
 	}
 
 	before := sr.Source[:sr.Begin]
@@ -72,12 +72,12 @@ func (sr *SourceRange) pprintInfo() *rangePprintInfo {
 
 	endLine := beginLine + strings.Count(culprit, "\n")
 
-	sr.savedPprintInfo = &rangePprintInfo{head, culprit, tail, beginLine, endLine}
-	return sr.savedPprintInfo
+	sr.savedPPrintInfo = &rangePPrintInfo{head, culprit, tail, beginLine, endLine}
+	return sr.savedPPrintInfo
 }
 
-// Pprint pretty-prints a SourceContext.
-func (sr *SourceRange) Pprint(sourceIndent string) string {
+// PPrint pretty-prints a SourceContext.
+func (sr *SourceRange) PPrint(sourceIndent string) string {
 	if err := sr.checkPosition(); err != nil {
 		return err.Error()
 	}
@@ -85,9 +85,9 @@ func (sr *SourceRange) Pprint(sourceIndent string) string {
 		"\n" + sourceIndent + sr.relevantSource(sourceIndent))
 }
 
-// PprintCompact pretty-prints a SourceContext, with no line break between the
+// PPrintCompact pretty-prints a SourceContext, with no line break between the
 // source position range description and relevant source excerpt.
-func (sr *SourceRange) PprintCompact(sourceIndent string) string {
+func (sr *SourceRange) PPrintCompact(sourceIndent string) string {
 	if err := sr.checkPosition(); err != nil {
 		return err.Error()
 	}

@@ -18,12 +18,12 @@ func (ce *CompilationError) Error() string {
 		ce.Context.Begin, ce.Context.End, ce.Context.Name, ce.Message)
 }
 
-// Pprint pretty-prints a compilation error.
-func (ce *CompilationError) Pprint(indent string) string {
+// PPrint pretty-prints a compilation error.
+func (ce *CompilationError) PPrint(indent string) string {
 	var buf bytes.Buffer
 
 	fmt.Fprintf(&buf, "Compilation error: \033[31;1m%s\033[m\n", ce.Message)
-	buf.WriteString(ce.Context.PprintCompact(indent + "  "))
+	buf.WriteString(ce.Context.PPrintCompact(indent + "  "))
 
 	return buf.String()
 }

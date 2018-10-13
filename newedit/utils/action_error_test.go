@@ -23,8 +23,8 @@ func TestActionError_Repr(t *testing.T) {
 	})
 }
 
-func TestActionError_Pprint(t *testing.T) {
-	tt.Test(t, tt.Fn("ActionError.Pprint", ActionError.Pprint), tt.Table{
+func TestActionError_PPrint(t *testing.T) {
+	tt.Test(t, tt.Fn("ActionError.PPrint", ActionError.PPrint), tt.Table{
 		Args(ActionError(types.CommitCode), "").
 			Rets("\033[33;1mcommit-code\033[m"),
 	})

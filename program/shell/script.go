@@ -12,7 +12,7 @@ import (
 )
 
 // script evaluates a script. The returned error contains enough context and can
-// be printed as-is (with diag.PprintError).
+// be printed as-is (with diag.PPrintError).
 func script(ev *eval.Evaler, args []string, cmd, compileOnly bool) error {
 	arg0 := args[0]
 	ev.SetArgs(args[1:])

@@ -26,7 +26,7 @@ func (ae ActionError) Repr(int) string {
 	return "?(edit:" + ae.Error() + ")"
 }
 
-// Pprint pretty-prints ae to the terminal.
-func (ae ActionError) Pprint(string) string {
+// PPrint pretty-prints ae to the terminal.
+func (ae ActionError) PPrint(string) string {
 	return "\033[33;1m" + ae.Error() + "\033[m"
 }

@@ -11,11 +11,11 @@ import (
 // Can be changed for testing.
 var stderr io.Writer = os.Stderr
 
-// PprintError pretty-prints an error. It uses the Pprint method if the error
-// implements Pprinter, and uses Complain to print the error message otherwise.
-func PprintError(err error) {
-	if pprinter, ok := err.(util.Pprinter); ok {
-		fmt.Fprintln(stderr, pprinter.Pprint(""))
+// PPrintError pretty-prints an error. It uses the PPrint method if the error
+// implements PPrinter, and uses Complain to print the error message otherwise.
+func PPrintError(err error) {
+	if pprinter, ok := err.(util.PPrinter); ok {
+		fmt.Fprintln(stderr, pprinter.PPrint(""))
 	} else {
 		Complain(err.Error())
 	}

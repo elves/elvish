@@ -43,7 +43,7 @@ func (sh *Shell) Main(args []string) int {
 	if len(args) > 0 {
 		err := script(ev, args, sh.Cmd, sh.CompileOnly)
 		if err != nil {
-			diag.PprintError(err)
+			diag.PPrintError(err)
 			return 2
 		}
 	} else {
