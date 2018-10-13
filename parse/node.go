@@ -1,17 +1,13 @@
 package parse
 
-// Ranger represents something with a queryable range.
-type Ranger interface {
-	// Begin returns the begin index of the range.
-	Begin() int
-	// End returns the end index of the range.
-	End() int
-}
+import "github.com/elves/elvish/diag"
 
 // Node represents a parse tree as well as an AST.
 type Node interface {
-	Ranger
 	n() *node
+	diag.Ranger
+	Begin() int
+	End() int
 	Parent() Node
 	SourceText() string
 	Children() []Node
@@ -38,6 +34,12 @@ func (n *node) Begin() int {
 
 func (n *node) End() int {
 	return n.end
+}
+
+// Range returns the range within the original (full) source text that parses
+// into the node.
+func (n *node) Range() diag.Ranging {
+	return diag.Ranging{n.begin, n.end}
 }
 
 func (n *node) SourceText() string {
