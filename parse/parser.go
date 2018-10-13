@@ -27,17 +27,16 @@ func NewParser(srcname, src string) *Parser {
 	return &Parser{srcname, src, 0, 0, []map[rune]int{{}}, Error{}}
 }
 
-// Done tells the parser that parsing has completed.
-func (ps *Parser) Done() {
+// Tells the parser that parsing is done.
+func (ps *Parser) done() {
 	if ps.pos != len(ps.src) {
 		r, _ := utf8.DecodeRuneInString(ps.src[ps.pos:])
 		ps.error(fmt.Errorf("unexpected rune %q", r))
 	}
 }
 
-// Errors gets the parsing errors after calling one of the parse* functions. If
-// the return value is not nil, it is always of type Error.
-func (ps *Parser) Errors() error {
+// Assembles all parsing errors as one, or returns nil if there were no errors.
+func (ps *Parser) assembleError() error {
 	if len(ps.errors.Entries) > 0 {
 		return &ps.errors
 	}

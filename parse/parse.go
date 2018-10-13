@@ -22,8 +22,8 @@ import (
 func Parse(srcname, src string) (*Chunk, error) {
 	ps := NewParser(srcname, src)
 	n := ParseChunk(ps)
-	ps.Done()
-	return n, ps.Errors()
+	ps.done()
+	return n, ps.assembleError()
 }
 
 // Errors.
