@@ -93,7 +93,7 @@ func (bn *Chunk) parseSeps(ps *Parser) int {
 			// parse as a Sep
 			parseSep(bn, ps, r)
 			nseps++
-		} else if IsSpace(r) {
+		} else if IsInlineWhitespace(r) {
 			// parse a run of spaces as a Sep
 			parseSpaces(bn, ps)
 		} else if r == '#' {
@@ -260,7 +260,7 @@ func (fn *Form) tryAssignment(ps *Parser) bool {
 }
 
 func startsForm(r rune) bool {
-	return IsSpace(r) || startsCompound(r, CmdExpr)
+	return IsInlineWhitespace(r) || startsCompound(r, CmdExpr)
 }
 
 // Assignment = Indexing '=' Compound
@@ -484,12 +484,8 @@ func (sn *Array) parse(ps *Parser) {
 	}
 }
 
-func IsSpace(r rune) bool {
-	return r == ' ' || r == '\t'
-}
-
 func startsArray(r rune) bool {
-	return IsSpaceOrNewline(r) || startsIndexing(r, NormalExpr)
+	return IsWhitespace(r) || startsIndexing(r, NormalExpr)
 }
 
 // Primary is the smallest expression unit.
@@ -822,7 +818,7 @@ func (pn *Primary) lambda(ps *Parser) {
 func (pn *Primary) lbrace(ps *Parser) {
 	parseSep(pn, ps, '{')
 
-	if r := ps.peek(); r == ';' || r == '\n' || IsSpace(r) {
+	if r := ps.peek(); r == ';' || r == '\n' || IsInlineWhitespace(r) {
 		pn.lambda(ps)
 		return
 	}
@@ -847,7 +843,7 @@ func (pn *Primary) lbrace(ps *Parser) {
 }
 
 func isBracedSep(r rune) bool {
-	return r == ',' || IsSpaceOrNewline(r)
+	return r == ',' || IsWhitespace(r)
 }
 
 func (pn *Primary) bareword(ps *Parser) {
@@ -914,6 +910,7 @@ type Sep struct {
 	node
 }
 
+// NewSep makes a new Sep.
 func NewSep(src string, begin, end int) *Sep {
 	return &Sep{node{diag.Ranging{begin, end}, src[begin:end], nil, nil}}
 }
@@ -945,11 +942,11 @@ func parseSep(n Node, ps *Parser, sep rune) bool {
 }
 
 func parseSpaces(n Node, ps *Parser) {
-	parseSpacesInner(n, ps, IsSpace)
+	parseSpacesInner(n, ps, IsInlineWhitespace)
 }
 
 func parseSpacesAndNewlines(n Node, ps *Parser) {
-	parseSpacesInner(n, ps, IsSpaceOrNewline)
+	parseSpacesInner(n, ps, IsWhitespace)
 }
 
 func parseSpacesInner(n Node, ps *Parser, isSpace func(rune) bool) {
@@ -977,8 +974,16 @@ spaces:
 	addSep(n, ps)
 }
 
-func IsSpaceOrNewline(r rune) bool {
-	return IsSpace(r) || r == '\n'
+// IsInlineWhitespace reports whether r is an inline whitespace character.
+// Currently this includes space (Unicode 0x20) and tab (Unicode 0x9).
+func IsInlineWhitespace(r rune) bool {
+	return r == ' ' || r == '\t'
+}
+
+// IsWhitespace reports whether r is a whitespace. Currently this includes
+// inline whitespace characters and newline (Unicode 0xa).
+func IsWhitespace(r rune) bool {
+	return IsInlineWhitespace(r) || r == '\n'
 }
 
 func addChild(p Node, ch Node) {

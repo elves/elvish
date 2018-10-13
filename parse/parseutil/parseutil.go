@@ -32,7 +32,7 @@ func Wordify(src string) []string {
 func wordifyInner(n parse.Node, words []string) []string {
 	if len(n.Children()) == 0 || isCompound(n) {
 		text := n.SourceText()
-		if strings.TrimFunc(text, parse.IsSpaceOrNewline) != "" {
+		if strings.TrimFunc(text, parse.IsWhitespace) != "" {
 			return append(words, text)
 		}
 		return words

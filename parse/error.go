@@ -18,10 +18,11 @@ type Error struct {
 	Entries []*ErrorEntry
 }
 
-func (pe *Error) Add(msg string, ctx *diag.SourceRange) {
+func (pe *Error) add(msg string, ctx *diag.SourceRange) {
 	pe.Entries = append(pe.Entries, &ErrorEntry{msg, *ctx})
 }
 
+// Error returns a string representation of the error.
 func (pe *Error) Error() string {
 	switch len(pe.Entries) {
 	case 0:
@@ -44,6 +45,7 @@ func (pe *Error) Error() string {
 	}
 }
 
+// PPrint pretty-prints the error.
 func (pe *Error) PPrint(indent string) string {
 	buf := new(bytes.Buffer)
 
