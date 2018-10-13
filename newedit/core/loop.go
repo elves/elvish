@@ -1,5 +1,4 @@
-// Package loop provides a generic main loop for an editor.
-package loop
+package core
 
 import "sync"
 
@@ -7,49 +6,48 @@ import "sync"
 // reason.
 const inputChSize = 128
 
-// Loop implements a generic main loop for an editor.
-type Loop struct {
-	inputCh  chan Event
-	handleCb HandleCb
+// A generic main loop manager.
+type loop struct {
+	inputCh  chan event
+	handleCb handleCb
 
-	redrawCb RedrawCb
+	redrawCb redrawCb
 
 	redrawCh    chan struct{}
 	redrawFull  bool
 	redrawMutex *sync.Mutex
 }
 
-// Event is a placeholder type for terminal events. Should Go support generic
-// typing, this will be a type parameter on EditLoop.
-type Event interface{}
+// A placeholder type for events.
+type event interface{}
 
-// RedrawCb is a callback for redrawing the editor UI to the terminal.
-type RedrawCb func(flag RedrawFlag)
+// Callback for redrawing the editor UI to the terminal.
+type redrawCb func(flag redrawFlag)
 
-func dummyRedrawCb(RedrawFlag) {}
+func dummyRedrawCb(redrawFlag) {}
 
-// RedrawFlag carries bit flags for RedrawCb.
-type RedrawFlag uint
+// Flag to redrawCb.
+type redrawFlag uint
 
-// Bit flags for RedrawFlag.
+// Bit flags for redrawFlag.
 const (
-	// FullRedraw signals a "full redraw". This is set on the first RedrawCb
+	// fullRedraw signals a "full redraw". This is set on the first RedrawCb
 	// call or when Redraw has been called with full = true.
-	FullRedraw RedrawFlag = 1 << iota
-	// FinalRedraw signals that this is the final redraw in the event loop.
-	FinalRedraw
+	fullRedraw redrawFlag = 1 << iota
+	// finalRedraw signals that this is the final redraw in the event loop.
+	finalRedraw
 )
 
-// HandleCb is a callback for handling a terminal event. If quit is true, Read
-// returns with buffer.
-type HandleCb func(event Event) (buffer string, quit bool)
+// Callback for handling a terminal event. If quit is true, Read returns with
+// buffer.
+type handleCb func(event) (buffer string, quit bool)
 
-func dummyHandleCb(Event) (string, bool) { return "", false }
+func dummyHandleCb(event) (string, bool) { return "", false }
 
-// New creates a new Loop instance.
-func New() *Loop {
-	return &Loop{
-		inputCh:  make(chan Event, inputChSize),
+// newLoop creates a new Loop instance.
+func newLoop() *loop {
+	return &loop{
+		inputCh:  make(chan event, inputChSize),
 		handleCb: dummyHandleCb,
 		redrawCb: dummyRedrawCb,
 
@@ -60,18 +58,18 @@ func New() *Loop {
 }
 
 // HandleCb sets the handle callback. It must be called before any Read call.
-func (ed *Loop) HandleCb(cb HandleCb) {
+func (ed *loop) HandleCb(cb handleCb) {
 	ed.handleCb = cb
 }
 
 // RedrawCb sets the redraw callback. It must be called before any Read call.
-func (ed *Loop) RedrawCb(cb RedrawCb) {
+func (ed *loop) RedrawCb(cb redrawCb) {
 	ed.redrawCb = cb
 }
 
 // Redraw requests a redraw. If full is true, a full redraw is requested. It
 // never blocks.
-func (ed *Loop) Redraw(full bool) {
+func (ed *loop) Redraw(full bool) {
 	ed.redrawMutex.Lock()
 	defer ed.redrawMutex.Unlock()
 	if full {
@@ -85,8 +83,8 @@ func (ed *Loop) Redraw(full bool) {
 
 // Input provides an input event. It may block if the internal event buffer is
 // full.
-func (ed *Loop) Input(event Event) {
-	ed.inputCh <- event
+func (ed *loop) Input(ev event) {
+	ed.inputCh <- ev
 }
 
 // Run runs the event loop, until an event causes HandleCb to return quit =
@@ -94,13 +92,13 @@ func (ed *Loop) Input(event Event) {
 // serial: it does not spawn any goroutines and never calls two callbacks in
 // parallel, so the callbacks may manipulate shared states without
 // synchronization.
-func (ed *Loop) Run() (buffer string, err error) {
+func (ed *loop) Run() (buffer string, err error) {
 	for {
-		var redrawFlag RedrawFlag
+		var flag redrawFlag
 		if ed.extractRedrawFull() {
-			redrawFlag |= FullRedraw
+			flag |= fullRedraw
 		}
-		ed.redrawCb(redrawFlag)
+		ed.redrawCb(flag)
 		select {
 		case event := <-ed.inputCh:
 			// Consume all events in the channel to minimize redraws.
@@ -108,7 +106,7 @@ func (ed *Loop) Run() (buffer string, err error) {
 			for {
 				buffer, quit := ed.handleCb(event)
 				if quit {
-					ed.redrawCb(FinalRedraw)
+					ed.redrawCb(finalRedraw)
 					return buffer, nil
 				}
 				select {
@@ -123,7 +121,7 @@ func (ed *Loop) Run() (buffer string, err error) {
 	}
 }
 
-func (ed *Loop) extractRedrawFull() bool {
+func (ed *loop) extractRedrawFull() bool {
 	ed.redrawMutex.Lock()
 	defer ed.redrawMutex.Unlock()
 

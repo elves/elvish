@@ -1,30 +1,30 @@
-package loop
+package core
 
 import "fmt"
 
-func Example() {
+func ExampleLoop() {
 	buffer := ""
 	firstDrawerCall := true
-	drawer := func(flag RedrawFlag) {
+	drawer := func(flag redrawFlag) {
 		// Because the consumption of events is batched, calls to the drawer is
 		// nondeterministic except for the first and final calls.
 		switch {
 		case firstDrawerCall:
 			fmt.Printf("initial buffer is %q\n", buffer)
 			firstDrawerCall = false
-		case flag&FinalRedraw != 0:
+		case flag&finalRedraw != 0:
 			fmt.Printf("final buffer is %q\n", buffer)
 		}
 	}
-	handler := func(event Event) (string, bool) {
-		if event == '\n' {
+	handler := func(ev event) (string, bool) {
+		if ev == '\n' {
 			return buffer, true
 		}
-		buffer += string(event.(rune))
+		buffer += string(ev.(rune))
 		return "", false
 	}
 
-	ed := New()
+	ed := newLoop()
 	ed.HandleCb(handler)
 	go func() {
 		for _, event := range "echo\n" {

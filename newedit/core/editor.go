@@ -6,7 +6,6 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/edit/tty"
-	"github.com/elves/elvish/newedit/loop"
 	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
@@ -15,7 +14,7 @@ import (
 // Editor keeps all the state of an interactive line editor throughout its life
 // time as well as its dependencies.
 type Editor struct {
-	loop *loop.Loop
+	loop *loop
 	// External dependencies
 	tty  TTY
 	sigs SignalSource
@@ -45,7 +44,7 @@ type Editor struct {
 // not have any observable side effect; a newly created editor is not
 // immediately active.
 func NewEditor(t TTY, sigs SignalSource) *Editor {
-	lp := loop.New()
+	lp := newLoop()
 	ed := &Editor{loop: lp, tty: t, sigs: sigs}
 	lp.HandleCb(ed.handle)
 	lp.RedrawCb(ed.redraw)
@@ -57,7 +56,7 @@ func (ed *Editor) State() *types.State {
 	return &ed.state
 }
 
-func (ed *Editor) handle(e loop.Event) (string, bool) {
+func (ed *Editor) handle(e event) (string, bool) {
 	switch e := e.(type) {
 	case os.Signal:
 		switch e {
@@ -93,9 +92,9 @@ func (ed *Editor) triggerPrompts(force bool) {
 	}
 }
 
-func (ed *Editor) redraw(flag loop.RedrawFlag) {
+func (ed *Editor) redraw(flag redrawFlag) {
 	var rawState *types.RawState
-	final := flag&loop.FinalRedraw != 0
+	final := flag&finalRedraw != 0
 	if final {
 		rawState = ed.state.Finalize()
 	} else {
@@ -113,7 +112,7 @@ func (ed *Editor) redraw(flag loop.RedrawFlag) {
 
 	bufNotes, bufMain := render(rawState, setup)
 
-	ed.tty.UpdateBuffer(bufNotes, bufMain, flag&loop.FullRedraw != 0)
+	ed.tty.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 	if final {
 		ed.tty.Newline()
 		ed.tty.ResetBuffer()

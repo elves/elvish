@@ -1,4 +1,4 @@
-package loop
+package core
 
 import (
 	"reflect"
@@ -7,7 +7,7 @@ import (
 
 func TestRead_ReturnsReturnValueOfHandleCb(t *testing.T) {
 	handleCbRet := "lorem ipsum"
-	ed := New()
+	ed := newLoop()
 	ed.HandleCb(quitOn("^D", handleCbRet))
 	go supplyInputs(ed, "^D")
 	buf, _ := ed.Run()
@@ -17,14 +17,14 @@ func TestRead_ReturnsReturnValueOfHandleCb(t *testing.T) {
 }
 
 func TestRead_PassesInputEventsToHandler(t *testing.T) {
-	inputPassedEvents := []Event{"foo", "bar", "lorem", "ipsum", "^D"}
-	var handlerGotEvents []Event
-	handler := func(e Event) (string, bool) {
+	inputPassedEvents := []event{"foo", "bar", "lorem", "ipsum", "^D"}
+	var handlerGotEvents []event
+	handler := func(e event) (string, bool) {
 		handlerGotEvents = append(handlerGotEvents, e)
 		return "", e == "^D"
 	}
 
-	ed := New()
+	ed := newLoop()
 	ed.HandleCb(handler)
 	go supplyInputs(ed, inputPassedEvents...)
 
@@ -36,17 +36,17 @@ func TestRead_PassesInputEventsToHandler(t *testing.T) {
 }
 
 func TestRead_CallsDrawWhenRedrawRequestedBeforeRead(t *testing.T) {
-	testReadCallsDrawWhenRedrawRequestedBeforeRead(t, true, FullRedraw)
+	testReadCallsDrawWhenRedrawRequestedBeforeRead(t, true, fullRedraw)
 	testReadCallsDrawWhenRedrawRequestedBeforeRead(t, false, 0)
 }
 
-func testReadCallsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wantRedrawFlag RedrawFlag) {
+func testReadCallsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wantRedrawFlag redrawFlag) {
 	t.Helper()
 
-	var gotRedrawFlag RedrawFlag
+	var gotRedrawFlag redrawFlag
 	drawSeq := 0
 	doneCh := make(chan struct{})
-	drawer := func(full RedrawFlag) {
+	drawer := func(full redrawFlag) {
 		if drawSeq == 0 {
 			gotRedrawFlag = full
 			close(doneCh)
@@ -54,7 +54,7 @@ func testReadCallsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wan
 		drawSeq++
 	}
 
-	ed := New()
+	ed := newLoop()
 	ed.HandleCb(quitOn("^D", ""))
 	go func() {
 		<-doneCh
@@ -69,18 +69,18 @@ func testReadCallsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wan
 }
 
 func TestRead_callsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T) {
-	testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t, true, FullRedraw)
+	testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t, true, fullRedraw)
 	testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t, false, 0)
 }
 
-func testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool, wantRedrawFlag RedrawFlag) {
+func testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool, wantRedrawFlag redrawFlag) {
 	t.Helper()
 
-	var gotRedrawFlag RedrawFlag
+	var gotRedrawFlag redrawFlag
 	drawSeq := 0
 	firstDrawCalledCh := make(chan struct{})
 	doneCh := make(chan struct{})
-	drawer := func(flag RedrawFlag) {
+	drawer := func(flag redrawFlag) {
 		if drawSeq == 0 {
 			close(firstDrawCalledCh)
 		} else if drawSeq == 1 {
@@ -90,7 +90,7 @@ func testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool,
 		drawSeq++
 	}
 
-	ed := New()
+	ed := newLoop()
 	ed.HandleCb(quitOn("^D", ""))
 	go func() {
 		<-doneCh
@@ -109,15 +109,15 @@ func testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool,
 
 // Helpers.
 
-func supplyInputs(ed *Loop, events ...Event) {
+func supplyInputs(ed *loop, events ...event) {
 	for _, event := range events {
 		ed.Input(event)
 	}
 }
 
 // Returns a HandleCb that quits on a trigger event.
-func quitOn(retTrigger Event, ret string) HandleCb {
-	return func(e Event) (string, bool) {
+func quitOn(retTrigger event, ret string) handleCb {
+	return func(e event) (string, bool) {
 		return ret, e == retTrigger
 	}
 }
