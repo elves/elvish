@@ -13,5 +13,5 @@ type Ranging struct {
 	To   int
 }
 
-// Ranging returns itself.
+// Range returns the Ranging itself.
 func (r Ranging) Range() Ranging { return r }
