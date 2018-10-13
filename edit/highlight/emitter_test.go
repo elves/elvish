@@ -38,7 +38,7 @@ func TestEmitAll(t *testing.T) {
 	test(t, "form", emitAllTests,
 		func(e *Emitter, src string) {
 			n := &parse.Chunk{}
-			parse.ParseAs("<test>", src, n)
+			parse.As("<test>", src, n)
 			e.EmitAll(n)
 		})
 }
@@ -104,7 +104,7 @@ func TestForm(t *testing.T) {
 	test(t, "form", formTests,
 		func(e *Emitter, src string) {
 			n := &parse.Form{}
-			parse.ParseAs("<test>", src, n)
+			parse.As("<test>", src, n)
 			e.form(n)
 		})
 }
@@ -120,7 +120,7 @@ func TestPrimary(t *testing.T) {
 	test(t, "primary", primaryTests,
 		func(e *Emitter, src string) {
 			n := &parse.Primary{}
-			parse.ParseAs("<test>", src, n)
+			parse.As("<test>", src, n)
 			e.primary(n)
 		})
 }

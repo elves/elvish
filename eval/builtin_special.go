@@ -291,7 +291,7 @@ func loadModule(fm *Frame, name string) (Ns, error) {
 		return nil, err
 	}
 
-	n, err := parse.Parse(name, src.code)
+	n, err := parse.AsChunk(name, src.code)
 	if err != nil {
 		return nil, err
 	}

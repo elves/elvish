@@ -4,7 +4,7 @@ import "github.com/elves/elvish/diag"
 
 // Node represents a parse tree as well as an AST.
 type Node interface {
-	parse(*Parser)
+	parse(*parser)
 
 	diag.Ranger
 	SourceText() string

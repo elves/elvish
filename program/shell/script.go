@@ -35,7 +35,7 @@ func script(ev *eval.Evaler, args []string, cmd, compileOnly bool) error {
 		}
 	}
 
-	n, err := parse.Parse(name, code)
+	n, err := parse.AsChunk(name, code)
 	if err != nil {
 		return err
 	}

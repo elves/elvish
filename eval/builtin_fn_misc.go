@@ -88,7 +88,7 @@ func source(fm *Frame, fname string) error {
 	if err != nil {
 		return err
 	}
-	n, err := parse.Parse(fname, code)
+	n, err := parse.AsChunk(fname, code)
 	if err != nil {
 		return err
 	}

@@ -10,7 +10,7 @@ import (
 func Highlight(code string) (styled.Text, []error) {
 	var errors []error
 
-	n, errParse := parse.Parse("[interactive]", code)
+	n, errParse := parse.AsChunk("[interactive]", code)
 	if errParse != nil {
 		errors = append(errors, errParse)
 	}

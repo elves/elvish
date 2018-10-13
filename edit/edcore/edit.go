@@ -236,7 +236,7 @@ func (ed *editor) LastKey() ui.Key {
 func (ed *editor) refresh(fullRefresh bool, addErrorsToTips bool) error {
 	src := ed.buffer
 	// Parse the current line
-	n, err := parse.Parse("[interactive]", src)
+	n, err := parse.AsChunk("[interactive]", src)
 	ed.chunk = n
 
 	ed.parseErrorAtEnd = err != nil && atEnd(err, len(src))

@@ -64,7 +64,7 @@ func TestPPrintParseTree(t *testing.T) {
 }
 
 func mustParse(src string) Node {
-	n, err := Parse("[test]", src)
+	n, err := AsChunk("[test]", src)
 	if err != nil {
 		panic(err)
 	}

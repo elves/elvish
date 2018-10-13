@@ -49,7 +49,7 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	ns.AddNs("insert", insertNs)
 
 	// Evaluate default bindings.
-	n, err := parse.Parse("[default bindings]", defaultBindingsElv)
+	n, err := parse.AsChunk("[default bindings]", defaultBindingsElv)
 	if err != nil {
 		panic(err)
 	}

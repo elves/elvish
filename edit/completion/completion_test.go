@@ -18,7 +18,7 @@ func testComplContextFinder(t *testing.T, name string, finder complContextFinder
 	ev := eval.NewEvaler()
 	defer ev.Close()
 	for _, test := range tests {
-		n, err := parse.Parse("[test]", test.src)
+		n, err := parse.AsChunk("[test]", test.src)
 		// Ignore error as long is n is non-nil
 		if n == nil {
 			panic(err)

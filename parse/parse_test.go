@@ -237,7 +237,7 @@ var goodCases = []struct {
 
 func TestParse(t *testing.T) {
 	for _, tc := range goodCases {
-		bn, err := Parse("[test]", tc.src)
+		bn, err := AsChunk("[test]", tc.src)
 		if err != nil {
 			t.Errorf("Parse(%q) returns error: %v", tc.src, err)
 		}
@@ -272,7 +272,7 @@ var badCases = []struct {
 
 func TestParseError(t *testing.T) {
 	for _, tc := range badCases {
-		_, err := Parse("[test]", tc.src)
+		_, err := AsChunk("[test]", tc.src)
 		if err == nil {
 			t.Errorf("Parse(%q) returns no error", tc.src)
 			continue

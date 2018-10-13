@@ -25,7 +25,7 @@ descend:
 
 // Wordify turns a piece of source code into words.
 func Wordify(src string) []string {
-	n, _ := parse.Parse("[wordify]", src)
+	n, _ := parse.AsChunk("[wordify]", src)
 	return wordifyInner(n, nil)
 }
 

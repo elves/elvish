@@ -11,24 +11,23 @@ import (
 	"github.com/elves/elvish/diag"
 )
 
-// Parser maintains some mutable states of parsing.
+// parser maintains some mutable states of parsing.
 //
 // NOTE: The str member is assumed to be valid UF-8.
-type Parser struct {
+type parser struct {
 	srcName string
 	src     string
 	pos     int
 	overEOF int
-	cutsets []map[rune]int
 	errors  Error
 }
 
-// NewParser creates a new parser from a piece of source text and its name.
-func NewParser(srcname, src string) *Parser {
-	return &Parser{srcname, src, 0, 0, []map[rune]int{{}}, Error{}}
+// newParser creates a new parser from a piece of source text and its name.
+func newParser(srcname, src string) *parser {
+	return &parser{srcname, src, 0, 0, Error{}}
 }
 
-func (ps *Parser) parse(n Node) parsed {
+func (ps *parser) parse(n Node) parsed {
 	begin := ps.pos
 	n.setFrom(begin)
 	n.parse(ps)
@@ -56,7 +55,7 @@ func (p parsed) addTo(ptr interface{}, parent Node) {
 }
 
 // Tells the parser that parsing is done.
-func (ps *Parser) done() {
+func (ps *parser) done() {
 	if ps.pos != len(ps.src) {
 		r, _ := utf8.DecodeRuneInString(ps.src[ps.pos:])
 		ps.error(fmt.Errorf("unexpected rune %q", r))
@@ -64,21 +63,16 @@ func (ps *Parser) done() {
 }
 
 // Assembles all parsing errors as one, or returns nil if there were no errors.
-func (ps *Parser) assembleError() error {
+func (ps *parser) assembleError() error {
 	if len(ps.errors.Entries) > 0 {
 		return &ps.errors
 	}
 	return nil
 }
 
-// Source returns the source code that is being parsed.
-func (ps *Parser) Source() string {
-	return ps.src
-}
-
 const eof rune = -1
 
-func (ps *Parser) peek() rune {
+func (ps *parser) peek() rune {
 	if ps.pos == len(ps.src) {
 		return eof
 	}
@@ -86,11 +80,11 @@ func (ps *Parser) peek() rune {
 	return r
 }
 
-func (ps *Parser) hasPrefix(prefix string) bool {
+func (ps *parser) hasPrefix(prefix string) bool {
 	return strings.HasPrefix(ps.src[ps.pos:], prefix)
 }
 
-func (ps *Parser) next() rune {
+func (ps *parser) next() rune {
 	if ps.pos == len(ps.src) {
 		ps.overEOF++
 		return eof
@@ -100,7 +94,7 @@ func (ps *Parser) next() rune {
 	return r
 }
 
-func (ps *Parser) backup() {
+func (ps *parser) backup() {
 	if ps.overEOF > 0 {
 		ps.overEOF--
 		return
@@ -109,11 +103,11 @@ func (ps *Parser) backup() {
 	ps.pos -= s
 }
 
-func (ps *Parser) errorp(begin, end int, e error) {
+func (ps *parser) errorp(begin, end int, e error) {
 	ps.errors.add(e.Error(), diag.NewSourceRange(ps.srcName, ps.src, begin, end))
 }
 
-func (ps *Parser) error(e error) {
+func (ps *parser) error(e error) {
 	end := ps.pos
 	if end < len(ps.src) {
 		end++

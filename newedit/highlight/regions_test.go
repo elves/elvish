@@ -154,6 +154,6 @@ func TestGetRegions(t *testing.T) {
 
 func getRegionsFromString(code string) []region {
 	// Ignore error.
-	n, _ := parse.Parse("[test]", code)
+	n, _ := parse.AsChunk("[test]", code)
 	return getRegions(n)
 }

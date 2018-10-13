@@ -98,7 +98,7 @@ const (
 func evalAndCollect(ev *eval.Evaler, code string) (
 	outBytes []byte, outValues []interface{}, errBytes []byte, err error) {
 
-	node, err := parse.Parse("[web]", code)
+	node, err := parse.AsChunk("[web]", code)
 	if err != nil {
 		return
 	}

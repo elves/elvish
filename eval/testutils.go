@@ -193,7 +193,7 @@ func evalAndCollect(t *testing.T, ev *Evaler, texts []string, chsize int) ([]int
 }
 
 func mustParseAndCompile(t *testing.T, ev *Evaler, src *Source) Op {
-	n, err := parse.Parse(src.name, src.code)
+	n, err := parse.AsChunk(src.name, src.code)
 	if err != nil {
 		t.Fatalf("Parse(%q) error: %s", src.code, err)
 	}
