@@ -17,9 +17,9 @@ type Node interface {
 }
 
 type node struct {
-	parent     Node
-	begin, end int
+	diag.Ranging
 	sourceText string
+	parent     Node
 	children   []Node
 }
 
@@ -28,11 +28,11 @@ func (n *node) n() *node {
 }
 
 func (n *node) setBegin(begin int) {
-	n.begin = begin
+	n.From = begin
 }
 
 func (n *node) setEnd(end int) {
-	n.end = end
+	n.To = end
 }
 
 func (n *node) setSourceText(source string) {
@@ -48,7 +48,7 @@ func (n *node) Parent() Node {
 // Range returns the range within the original (full) source text that parses
 // to the node.
 func (n *node) Range() diag.Ranging {
-	return diag.Ranging{n.begin, n.end}
+	return diag.Ranging{n.From, n.To}
 }
 
 // SourceText returns the part of the source text that parses to the node.

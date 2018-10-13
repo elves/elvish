@@ -14,6 +14,8 @@ import (
 	"errors"
 	"fmt"
 	"unicode"
+
+	"github.com/elves/elvish/diag"
 )
 
 // Parse parses the given source as a Chunk. If the error is not nil, it always
@@ -205,13 +207,13 @@ func (fn *Form) parse(ps *Parser) {
 			} else if cn.sourceText == "=" {
 				// Spacey assignment.
 				// Turn the equal sign into a Sep.
-				addChild(fn, NewSep(ps.src, cn.begin, cn.end))
+				addChild(fn, NewSep(ps.src, cn.From, cn.To))
 				// Turn the head and preceding arguments into LHSs.
 				addLHS := func(cn *Compound) {
 					if len(cn.Indexings) == 1 && checkVariableInAssignment(cn.Indexings[0].Head, ps) {
 						fn.Vars = append(fn.Vars, cn)
 					} else {
-						ps.errorp(cn.begin, cn.end, errBadLHS)
+						ps.errorp(cn.From, cn.To, errBadLHS)
 					}
 				}
 				if fn.Head != nil {
@@ -328,7 +330,7 @@ func (rn *Redir) parse(ps *Parser) {
 	// The parsing of the Left part is done in Form.parse.
 	if rn.Left != nil {
 		addChild(rn, rn.Left)
-		rn.begin = rn.Left.begin
+		rn.From = rn.Left.From
 	}
 
 	begin := ps.pos
@@ -422,7 +424,7 @@ func (cn *Compound) parse(ps *Parser) {
 func (cn *Compound) tilde(ps *Parser) {
 	if ps.peek() == '~' {
 		ps.next()
-		base := node{nil, ps.pos - 1, ps.pos, "~", nil}
+		base := node{diag.Ranging{ps.pos - 1, ps.pos}, "~", nil, nil}
 		pn := &Primary{node: base, Type: Tilde, Value: "~"}
 		in := &Indexing{node: base}
 		parsed{pn}.addAs(&in.Head, in)
@@ -694,7 +696,7 @@ func hexToDigit(r rune) (rune, bool) {
 
 func (pn *Primary) variable(ps *Parser) {
 	pn.Type = Variable
-	defer func() { pn.Value = ps.src[pn.begin+1 : ps.pos] }()
+	defer func() { pn.Value = ps.src[pn.From+1 : ps.pos] }()
 	ps.next()
 	// The character of the variable name can be anything.
 	if ps.next() == eof {
@@ -724,7 +726,7 @@ func (pn *Primary) wildcard(ps *Parser) {
 	for isWildcard(ps.peek()) {
 		ps.next()
 	}
-	pn.Value = ps.src[pn.begin:ps.pos]
+	pn.Value = ps.src[pn.From:ps.pos]
 }
 
 func isWildcard(r rune) bool {
@@ -850,7 +852,7 @@ func isBracedSep(r rune) bool {
 
 func (pn *Primary) bareword(ps *Parser) {
 	pn.Type = Bareword
-	defer func() { pn.Value = ps.src[pn.begin:ps.pos] }()
+	defer func() { pn.Value = ps.src[pn.From:ps.pos] }()
 	for allowedInBareword(ps.peek(), pn.ExprCtx) {
 		ps.next()
 	}
@@ -913,7 +915,7 @@ type Sep struct {
 }
 
 func NewSep(src string, begin, end int) *Sep {
-	return &Sep{node{nil, begin, end, src[begin:end], nil}}
+	return &Sep{node{diag.Ranging{begin, end}, src[begin:end], nil, nil}}
 }
 
 func (*Sep) parse(*Parser) {
