@@ -30,9 +30,9 @@ func NewParser(srcname, src string) *Parser {
 
 func (ps *Parser) parse(n Node) parsed {
 	begin := ps.pos
-	n.setBegin(begin)
+	n.setFrom(begin)
 	n.parse(ps)
-	n.setEnd(ps.pos)
+	n.setTo(ps.pos)
 	n.setSourceText(ps.src[begin:ps.pos])
 	return parsed{n}
 }

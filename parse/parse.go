@@ -982,6 +982,6 @@ func IsSpaceOrNewline(r rune) bool {
 }
 
 func addChild(p Node, ch Node) {
-	p.n().children = append(p.n().children, ch)
-	ch.n().parent = p
+	p.addChild(ch)
+	ch.setParent(p)
 }
