@@ -20,15 +20,33 @@ func convertStringIndex(rawIndex interface{}, s string) (int, int, error) {
 	if err != nil {
 		return 0, 0, err
 	}
+	if index.Slice {
+		lower, upper := index.Lower, index.Upper
+		if startsWithRuneBoundary(s[lower:]) && endsWithRuneBoundary(s[:upper]) {
+			return lower, upper, nil
+		}
+		return 0, 0, errIndexNotAtRuneBoundary
+	}
+	// Not slice
 	r, size := utf8.DecodeRuneInString(s[index.Lower:])
 	if r == utf8.RuneError {
 		return 0, 0, errIndexNotAtRuneBoundary
 	}
-	if index.Slice {
-		if r, _ := utf8.DecodeLastRuneInString(s[:index.Upper]); r == utf8.RuneError {
-			return 0, 0, errIndexNotAtRuneBoundary
-		}
-		return index.Lower, index.Upper, nil
-	}
 	return index.Lower, index.Lower + size, nil
+}
+
+func startsWithRuneBoundary(s string) bool {
+	if s == "" {
+		return true
+	}
+	r, _ := utf8.DecodeRuneInString(s)
+	return r != utf8.RuneError
+}
+
+func endsWithRuneBoundary(s string) bool {
+	if s == "" {
+		return true
+	}
+	r, _ := utf8.DecodeLastRuneInString(s)
+	return r != utf8.RuneError
 }

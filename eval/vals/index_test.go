@@ -13,6 +13,17 @@ var (
 )
 
 var indexTests = tt.Table{
+	// String indicies
+	Args("abc", "0").Rets("a", nil),
+	Args("你好", "0").Rets("你", nil),
+	Args("你好", "3").Rets("好", nil),
+	Args("你好", "2").Rets(any, errIndexNotAtRuneBoundary),
+	Args("abc", "1:2").Rets("b", nil),
+	Args("abc", "1:").Rets("bc", nil),
+	Args("abc", ":").Rets("abc", nil),
+	Args("abc", ":0").Rets("", nil), // i == j == 0 is allowed
+	Args("abc", "3:").Rets("", nil), // i == j == n is allowed
+
 	// List indices
 	// ============
 
@@ -32,7 +43,8 @@ var indexTests = tt.Table{
 	// Slice indicies: 0 <= i <= j <= n.
 	Args(li4, "1:3").Rets(eq(MakeList("bar", "lorem")), nil),
 	Args(li4, "3:4").Rets(eq(MakeList("ipsum")), nil),
-	Args(li4, "4:4").Rets(eq(EmptyList), nil), // i == j == n is allowed.
+	Args(li4, "0:0").Rets(eq(EmptyList), nil), // i == j == 0 is allowed
+	Args(li4, "4:4").Rets(eq(EmptyList), nil), // i == j == n is allowed
 	// i defaults to 0
 	Args(li4, ":2").Rets(eq(MakeList("foo", "bar")), nil),
 	Args(li4, ":-1").Rets(eq(MakeList("foo", "bar", "lorem")), nil),
@@ -48,6 +60,8 @@ var indexTests = tt.Table{
 	Args(li4, "1:3:2").Rets(any, anyError),
 
 	// Map indicies
+	// ============
+
 	Args(m, "foo").Rets("bar", nil),
 	Args(m, "bad").Rets(any, anyError),
 }
