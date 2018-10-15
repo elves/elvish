@@ -99,7 +99,7 @@ func convertTranscript(transcript string) string {
 }
 
 func convert(text string, bad bool) string {
-	n, err := parse.Parse("highlight", text)
+	n, err := parse.AsChunk("highlight", text)
 	if err != nil && !bad {
 		log.Printf("parsing %q: %v", text, err)
 	}
