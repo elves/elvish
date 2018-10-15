@@ -7,8 +7,7 @@ RUN make -C /go/src/github.com/elves/elvish get
 FROM alpine
 COPY --from=builder /go/bin/elvish /bin/elvish
 RUN adduser -D elf
-RUN apk update && apk add sudo && \
-    echo 'elf ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+RUN apk update && apk add sudo tmux
 USER elf
 WORKDIR /home/elf
 CMD ["/bin/elvish"]
