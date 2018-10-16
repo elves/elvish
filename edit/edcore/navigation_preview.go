@@ -87,5 +87,14 @@ func makeNavFilePreview(fname string) navPreview {
 		return newErrNavColumn(errNotValidUTF8)
 	}
 
-	return newNavFilePreview(strings.Split(string(content), "\n"))
+	// Issue #699: content could contains control characters, we should hide them for not break the preview.
+	var data strings.Builder
+	for _, v := range content {
+		if v < 0x20 || v == 0x7f {
+			continue
+		}
+		data.WriteByte(v)
+	}
+
+	return newNavFilePreview(strings.Split(data.String(), "\n"))
 }
