@@ -1,11 +1,6 @@
 **Elvish** is a friendly and expressive shell for Linux, BSDs, macOS and
 Windows.
 
-<!--
-<pre id="demo-debug">
-</pre>
--->
-
 <ul id="demo-switcher">
   <li id="demo-js-warning">
     Enable JavaScript for the option of showing demos as slides.
@@ -104,68 +99,59 @@ Windows.
   </div> </div>
 </div> </div>
 
-<link href="/assets/home-demos.css" rel="stylesheet">
+<div id="columns">
+
+<div class="column">
+
+# <i class="fas fa-running"></i> Run Elvish
+
+*   [Download](/download/) a binary
+
+*   [Source code](https://github.com/elves/elvish) on GitHub
+
+*   [Try Elvish](https://try.elv.sh) directly from the browser (coming soon!)
+
+# <i class="fas fa-comments"></i> Join the Community
+
+Join any of the following channels -- they are all all bridged together thanks
+to [matterbridge](https://github.com/42wim/matterbridge)!
+
+*   IRC: [#elvish](https://webchat.freenode.net/?channels=elvish) on Freenode
+
+*   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
+
+*   Telegram: [@elvish](https://telegram.me/elvish)
+
+</div>
+
+<div class="column">
+
+# <i class="fas fa-sitemap"></i> Use this Site
+
+Start your Elvish journey in this very website!
+
+1.  Learn fundamentals and study topics in the [learn](/learn/) section;
+
+2.  When you are comfortable with the basics, use the definitive
+    [reference](/ref/) documents to learn the details;
+
+3.  Read news, tips, and developers' musings from the [blog](/blog/);
+
+4.  Keep updated by subscribing to the [feed](/feed.atom).
+
+# <i class="fas fa-external-link-alt"></i> More Resources
+
+*   [Awesome Elvish](https://github.com/elves/awesome-elvish): Official list
+    of unofficial Elvish modules
+
+*   [@RealElvishShell](https://twitter.com/realelvishshell) on Twitter
+
+</div>
+
+</div>
+
+<link href="/assets/home.css" rel="stylesheet">
 <script src="/assets/home-demos.js"></script>
 
-# Getting Elvish
-
-Elvish is still in development, but has enough features and stability for
-daily use.
-
-*   [Download](/download/) prebuilt binaries if you are running Linux or macOS on
-    an x86-64 CPU.
-
-*   Source code is available on the [GitHub repository](https://github.com/elves/elvish).
-
-# Speaking Elvish
-
-*   [Learn](/learn/) to speak Elvish by following tutorials.
-
-    If you are not experienced with any shell, start with the
-    [fundamentals](/learn/fundamentals.html). (This tutorial is still a work in
-    progress, though.)
-
-    If you come from other shells, read the [cookbook](/learn/cookbook.html)
-    to get started quickly, and learn about Elvish's [unique
-    semantics](learn/unique-semantics.html).
-
-*   [Reference](/ref/) documents describe Elvish in a more formal and complete
-    way.
-
-    Read about the [philosophy](/ref/philosophy.html), the
-    [language](/ref/language.html), the [builtin module](/ref/builtin.html), and
-    more.
-
-*   [The blog](/blog/) contains news on Elvish.
-
-    It is the place for release notes, notes on the internals of Elvish, and
-    other announcements or musings from the developers.
-
-*   [The feed](/feed.atom) contains updates to all sections of the website (not
-    just the blog).
-
-*   [Follow](https://twitter.com/RealElvishShell/) Elvish on Twitter.
-
-# Meeting Other Elves
-
-*   Join [#elvish](https://webchat.freenode.net/?channels=elvish) on Freenode,
-    [elves/elvish-public](https://gitter.im/elves/elvish-public) on Gitter, or
-    [@elvish](https://telegram.me/elvish) on Telegram.
-
-    The wonderful [fishroom](https://github.com/tuna/fishroom) service
-    connects all of them together. So just join whichever channel suits you
-    best, and you won't miss discussions happening in other channels.
-
-*   If you are interested in contributing to Elvish, you can also discuss at
-    [#elvish-dev](http://webchat.freenode.net/?channels=elvish-dev) on
-    freenode, [elves/elvish-dev](https://gitter.im/elves/elvish-dev) on Gitter
-    or [@elvish_dev](https://telegram.me/elvish_dev) on Telegram.
-
-*   Chinese speakers are also welcome in
-    [#elvish-zh](https://webchat.freenode.net/?channels=elvish-zh) (Freenode)
-    and [@elvish_zh](https://telegram.me/elvish_zh) (Telegram). There are
-    also [#elvish-dev-zh](https://webchat.freenode.net/?channels=elvish-dev-zh)
-    (Freenode) and [@elvish_dev_zh](https://telegram.me/elvish_dev_zh) (Telegram).
-
-*   The [issue tracker](https://github.com/elves/elvish/issues) is the place
-    for bug reports and feature requests.
+<script defer src="https://use.fontawesome.com/releases/v5.4.1/js/solid.js" integrity="sha384-agDKwSYPuGlC0wD14lKXXwb94jlUkbkoSugquwmKRKWv/nDXe1kApDS/gqUlRQmZ" crossorigin="anonymous"></script>
+<script defer src="https://use.fontawesome.com/releases/v5.4.1/js/fontawesome.js" integrity="sha384-ISRc+776vRkDOTSbmnyoZFmwHy7hw2UR3KJpb4YtcfOyqUqhLGou8j5YmYnvQQJ4" crossorigin="anonymous"></script>

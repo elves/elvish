@@ -109,3 +109,29 @@ ul#demo-switcher > li > a:hover {
   background-color: #ccc;
   cursor: pointer;
 }
+
+/* Styles for the layout */
+
+@media screen and (min-width: 800px) {
+  #columns {
+    display: flex;
+  }
+  .column {
+    flex: 1;
+  }
+  .column:first-child {
+    margin-right: 24px;
+  }
+}
+
+/* Overriding default styles */
+
+.article h1 {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.article li > p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
