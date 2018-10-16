@@ -75,6 +75,20 @@ maintain backward compatibility from version to version.
 
 # OS-Specific Packages
 
+## Arch Linux
+
+Elvish PKGBUILDs are available in AUR. Install [`elvish`](https://aur.archlinux.org/packages/elvish/) (latest version) or [`elvish-git`](https://aur.archlinux.org/packages/elvish-git/) (HEAD) using your favorite AUR helper.
+
+Alternatively, prebuilt packages can be obtained from [Arch Linux CN repository](https://www.archlinuxcn.org/archlinux-cn-repo-and-mirror/):
+
+```elvish
+# Add archlinuxcn repository
+printf "[archlinuxcn]\nServer = http://repo.archlinuxcn.org/$arch" | sudo tee -a /etc/pacman.conf
+# Install keyring
+pacman -Sy archlinuxcn-keyring
+pacman -S elvish
+```
+
 ## Fedora
 
 RPM packages are available from [the FZUG Repo](https://github.com/FZUG/repo/wiki/Add-FZUG-Repository):
