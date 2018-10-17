@@ -13,13 +13,13 @@ name = "download"
 title = "Download"
 
 [[categories]]
-name = "blog"
-title = "Blog"
-
-[[categories]]
 name = "learn"
 title = "Learn"
 
 [[categories]]
 name = "ref"
 title = "Reference"
+
+[[categories]]
+name = "blog"
+title = "Blog"

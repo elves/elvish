@@ -111,6 +111,22 @@ Windows.
 
 *   [Try Elvish](https://try.elv.sh) directly from the browser (coming soon!)
 
+# <i class="fas fa-sitemap"></i> Use this Site
+
+Start your Elvish journey in this very website!
+
+*   [Learn](/learn/) the fundamentals and interesting topics
+
+*   Peruse the definitive [reference](/ref/) documents
+
+*   Read the [blog](/blog/) for news, tips, and developers' musings
+
+*   Subscribe to the [feed](/feed.atom) to keep updated
+
+</div>
+
+<div class="column">
+
 # <i class="fas fa-comments"></i> Join the Community
 
 Join any of the following channels -- they are all all bridged together thanks
@@ -121,23 +137,6 @@ to [matterbridge](https://github.com/42wim/matterbridge)!
 *   Gitter: [elves/elvish](https://gitter.im/elves/elvish)
 
 *   Telegram: [@elvish](https://telegram.me/elvish)
-
-</div>
-
-<div class="column">
-
-# <i class="fas fa-sitemap"></i> Use this Site
-
-Start your Elvish journey in this very website!
-
-1.  Learn fundamentals and study topics in the [learn](/learn/) section;
-
-2.  When you are comfortable with the basics, use the definitive
-    [reference](/ref/) documents to learn the details;
-
-3.  Read news, tips, and developers' musings from the [blog](/blog/);
-
-4.  Keep updated by subscribing to the [feed](/feed.atom).
 
 # <i class="fas fa-external-link-alt"></i> More Resources
 
