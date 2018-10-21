@@ -45,7 +45,7 @@ The development of Elvish is driven by a set of ideas, a **design philosophy**.
 
     *   When a useful feature has no prior art in other shells, borrow from
         other programs. For instance, the [navigation
-        mode](/learn/cookbook.html#navigation-mode), summoned by Ctrl-N,
+        mode](../learn/cookbook.html#navigation-mode), summoned by Ctrl-N,
         mimics [Ranger](http://ranger.nongnu.org); while the "location mode"
         used for quickly changing location, mimics location bars in GUI
         browsers (and is summoned by the same key combination Ctrl-L).

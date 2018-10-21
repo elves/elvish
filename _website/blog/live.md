@@ -3,15 +3,15 @@ live. It is (still) not complete yet, but in the spirit of "release early",
 here it is :)
 
 This website will be the entry point of all Elvish information. It will host
-documents (including both [learning materials](/learn) and
-[references](/ref)), as well as release notes or other announcements.  The
+documents (including both [learning materials](../learn/) and
+[references](../ref/)), as well as release notes or other announcements.  The
 [GitHub repository](https://github.com/elves/elvish) continues to host code
 and issues, of course.
 
 The website has no comment facilities: commenting is outsourced to [Hacker
 News](https://news.ycombinator.com) and [r/elv](https://www.reddit.com/r/elv/).
 
-The [homepage](/) introduces each section, and highlights some key features of
+The [homepage](../) introduces each section, and highlights some key features of
 Elvish with "ttyshots". Please start there to explore this website!
 
 

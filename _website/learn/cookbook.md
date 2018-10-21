@@ -241,7 +241,7 @@ If you come from other shells, hopefully the following recipes will get you star
     between values are preserved. This allows us to manipulate structured data
     in the shell.
 
-    Read [unique semantics](/learn/unique-semantics.html) for details.
+    Read [unique semantics](unique-semantics.html) for details.
 
 *   When calling Elvish commands, options use the special `&option=value`
     syntax. For instance, the `echo` builtin command supports a `sep` option

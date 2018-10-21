@@ -105,7 +105,7 @@ Windows.
 
 # <i class="fas fa-running"></i> Run Elvish
 
-*   [Download](/download/) a binary
+*   [Download](download/) a binary
 
 *   [Source code](https://github.com/elves/elvish) on GitHub
 
@@ -115,13 +115,13 @@ Windows.
 
 Start your Elvish journey in this very website!
 
-*   [Learn](/learn/) the fundamentals and interesting topics
+*   [Learn](learn/) the fundamentals and interesting topics
 
-*   Peruse the definitive [reference](/ref/) documents
+*   Peruse the definitive [reference](ref/) documents
 
-*   Read the [blog](/blog/) for news, tips, and developers' musings
+*   Read the [blog](blog/) for news, tips, and developers' musings
 
-*   Subscribe to the [feed](/feed.atom) to keep updated
+*   Subscribe to the [feed](feed.atom) to keep updated
 
 </div>
 
@@ -149,8 +149,8 @@ to [matterbridge](https://github.com/42wim/matterbridge)!
 
 </div>
 
-<link href="/assets/home.css" rel="stylesheet">
-<script src="/assets/home-demos.js"></script>
+<link href="assets/home.css" rel="stylesheet">
+<script src="assets/home-demos.js"></script>
 
 <script defer src="https://use.fontawesome.com/releases/v5.4.1/js/solid.js" integrity="sha384-agDKwSYPuGlC0wD14lKXXwb94jlUkbkoSugquwmKRKWv/nDXe1kApDS/gqUlRQmZ" crossorigin="anonymous"></script>
 <script defer src="https://use.fontawesome.com/releases/v5.4.1/js/fontawesome.js" integrity="sha384-ISRc+776vRkDOTSbmnyoZFmwHy7hw2UR3KJpb4YtcfOyqUqhLGou8j5YmYnvQQJ4" crossorigin="anonymous"></script>

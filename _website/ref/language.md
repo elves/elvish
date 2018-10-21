@@ -9,13 +9,13 @@ specification, and more readable tutorials will be created.
 
 Examples for one construct might use constructs that have not yet been
 introduced, so some familiarity with the language is assumed. If you are new
-to Elvish, start with the [learning materials](/learn).
+to Elvish, start with the [learning materials](../learn/).
 
 **Note to the reader**. Like Elvish itself, this document is a work in
 progress. Some materials are missing, and some are documented sparingly. If
 you have found something that should be improved -- even if there is already a
 "TODO" for it -- please feel free to ask on any of the chat channels
-advertised on the [homepage](/). Some developer will explain to you, and then
+advertised on the [homepage](..). Some developer will explain to you, and then
 update the document. Question-driven documentation :)
 
 
@@ -252,7 +252,7 @@ to get all its element values. This is called **exploding** the variable:
 ▶ bar
 ```
 
-(This notation is restricted to exploding variables. To explode arbitrary values, use the builtin [explode](/ref/builtin.html#explode) command.)
+(This notation is restricted to exploding variables. To explode arbitrary values, use the builtin [explode](builtin.html#explode) command.)
 
 When assigning variables, if you prefix the name of the last variable with
 `@`, it gets assigned a list containing all remaining values. That variable is
@@ -726,7 +726,7 @@ preserved; `(echo "a\n")` evaluates to two values, `"a"` and `""`.
 **Note 2**. One consequence of this mechanism is that you can not distinguish
 outputs that lack a trailing newline from outputs that have one; `(echo what)`
 evaluates to the same value as `(print what)`. If such a distinction is
-needed, use [`slurp`](/ref/builtin.html#slurp) to preserve the original
+needed, use [`slurp`](builtin.html#slurp) to preserve the original
 bytes output.
 
 If the chunk outputs both values and bytes, the values of output capture will
@@ -1422,8 +1422,8 @@ during the compilation phase, using the following order:
     the external command exists.
 
 The entire resolution procedure can be emulated with the
-[resolve](/ref/builtin.html#resolve) command. Searching of external commands
-can be emulated with the [search-external](/ref/builtin.html#search-builtin)
+[resolve](builtin.html#resolve) command. Searching of external commands
+can be emulated with the [search-external](builtin.html#search-builtin)
 command.
 
 
@@ -1486,7 +1486,7 @@ exception.
 # Exception and Flow Commands
 
 Exceptions have similar semantics to those in Python or Java. They can be
-thrown with the [fail](/ref/builtin.html#fail) command and caught with either
+thrown with the [fail](builtin.html#fail) command and caught with either
 exception capture `?()` or the `try` special command.
 
 If an external command exits with a non-zero status, Elvish treats that as an
@@ -1584,10 +1584,10 @@ following modules:
 *   `edit:` for accessing the Elvish editor. This module is available in
     interactive mode.
 
-    See [reference](/ref/edit.html).
+    See [reference](edit.html).
 
 *   `re:` for regular expression facilities.
-    This module is always available. See [reference](/ref/re.html).
+    This module is always available. See [reference](re.html).
 
 *   `daemon:` for manipulating the daemon. This module is always available.
 

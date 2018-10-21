@@ -24,7 +24,7 @@ types (strings, lists, maps). Persistent data structures are immutable, and
 thus have a simpler semantics and are automatically concurrency-safe. This
 does have an interesting impact on the semantics of assignments, which is now
 documented in a new section on the [unique
-semantics](/learn/unique-semantics.html) page.
+semantics](../learn/unique-semantics.html) page.
 
 For a complete list of changes, see the [release notes](0.10-release-notes.html).
 

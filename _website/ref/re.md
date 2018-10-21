@@ -9,7 +9,7 @@ expressions and replacement patterns.
 # Functions
 
 Function usages notations follow the same convention as the [builtin module
-doc](/ref/builtin.html).
+doc](builtin.html).
 
 The following options are supported by multiple functions in this module:
 

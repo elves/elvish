@@ -63,7 +63,7 @@ special symbols other than period (`.`), dash (`-`) or underscore (`_`).
 
 All command invocations in shell have the same basic structure: name of
 command, followed by arguments. Elvish provides a lot of useful [builtin
-commands](/ref/builtin.html), and `echo` is just one of them. As another
+commands](../ref/builtin.html), and `echo` is just one of them. As another
 example, there is one for generating random numbers, which you can use as a
 digital dice:
 

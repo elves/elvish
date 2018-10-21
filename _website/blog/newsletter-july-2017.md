@@ -14,7 +14,7 @@ and future plans.
     merged 3 pull reqeusts from @bengesoff, @zhsj and @silvasur. Many kudos!
 
 *   The [website](https://elvish.io) was [officially
-    live](/blog/live.html) on 3 July. Although the initial
+    live](../blog/live.html) on 3 July. Although the initial
     [submission](https://news.ycombinator.com/item?id=14691639) to HN was a
     failure, Elvish gained
     [quite](https://www.reddit.com/r/programming/comments/6l38nd/elvish_friendly_and_expressive_shell/)

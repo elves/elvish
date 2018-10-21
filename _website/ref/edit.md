@@ -3,7 +3,7 @@
 The `edit:` module is the interface to the Elvish editor.
 
 Function usages are given in the same format as in the [reference for the
-builtin module](/ref/builtin.html).
+builtin module](builtin.html).
 
 *This document is incomplete.*
 
@@ -400,7 +400,7 @@ release.
 ## edit:-dump-buf
 
 Dump the content of onscreen buffer as HTML. This command is used to generate
-"ttyshots" on [the homepage](/).
+"ttyshots" on [the homepage](../).
 
 Example:
 

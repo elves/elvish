@@ -1325,7 +1325,7 @@ resolve $command
 ```
 
 Resolve `$command`. Command resolution is described in the [language
-reference](/ref/language.html). (TODO: actually describe it there.)
+reference](language.html). (TODO: actually describe it there.)
 
 Example:
 
@@ -1791,7 +1791,7 @@ Compilation error: variable $foo not found
 This is because the reading of the file is done in the evaluation phase, while
 the check for variables happens at the compilation phase (before evaluation).
 So the compiler has no evidence showing that `$foo` is actually valid, and
-will complain. (See [here](/learn/unique-semantics.html#execution-phases) for
+will complain. (See [here](../learn/unique-semantics.html#execution-phases) for
 a more detailed description of execution phases.)
 
 To work around this, you can add a forward declaration for `$foo`:
