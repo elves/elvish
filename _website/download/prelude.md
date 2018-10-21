@@ -143,6 +143,15 @@ install the latest release:
 doas pkg_add elvish
 ```
 
+## NixOS (nix)
+
+Elvish is packaged in [nixpkgs](https://github.com/NixOS/nixpkgs/blob/master/pkgs/shells/elvish/default.nix):
+
+```elvish
+# Install latest release
+nix-env -i elvish
+```
+
 # Old versions
 
 The following old versions are no longer supported. They are only listed
