@@ -25,7 +25,7 @@ directories as file lists instead of using the `index.html` file, so if you
 click e.g. "Learn" in the nav bar, you will need to manually click the
 `index.html` within it.
 
-# History
+# Commit History
 
 These files used to live in a [separate
 repository](https://github.com/elves/elvish.io). However, because @xiaq did
