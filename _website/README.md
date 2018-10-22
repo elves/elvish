@@ -1,8 +1,8 @@
 This directory contains source for Elvish's official website.
 
 The documents are written in GitHub-flavored markdown sprinkled with some HTML
-and custom macros. Most of them can be viewed directly in GitHub, notably
-exceptions being the homepage (`home.md`) and the download page
+and custom macros. Most of them can be viewed directly in GitHub; notable
+exceptions are the homepage (`home.md`) and the download page
 (`download/prelude.md`).
 
 # Building
@@ -12,7 +12,7 @@ the following dependencies:
 
 *   GNU Make (any "reasonably modern" version should do).
 
-*   pandoc 2.2.1 (other versions in the 2.x series might also work).
+*   Pandoc 2.2.1 (other versions in the 2.x series might also work).
 
 *   A Go toolchain, for building [genblog](https://github.com/xiaq/genblog)
     and some custom preprocessors in the `tools` directory.
