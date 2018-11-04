@@ -6,20 +6,19 @@ rootURL = "https://elv.sh"
 
 [index]
 name = "home"
-title = "home"
 
 [[categories]]
-name = "download"
-title = "get"
+name = "get"
+title = "Get Elvish"
 
 [[categories]]
 name = "learn"
-title = "learn"
+title = "Learn Elvish"
 
 [[categories]]
 name = "ref"
-title = "ref"
+title = "Elvish Reference"
 
 [[categories]]
 name = "blog"
-title = "blog"
+title = "Elvish Blog"
