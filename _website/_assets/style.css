@@ -423,4 +423,55 @@ pre.ttyshot, pre.ttyshot code {
     background-color: gray;
 }
 
+/**
+ * Dark theme.
+ */
+
+.dark {
+    color: #eee;
+    background: black;
+}
+
+.dark a {
+    color: #6da2fa;
+}
+
+.dark a:visited {
+    color: #7e72ff;
+}
+
+.dark .article-link, .dark .article-link:visited {
+    color: #eee;
+    border-color: white;
+}
+
+.dark .article-list > li:hover {
+    background-color: #333;
+}
+
+.dark .article code, .dark .article pre {
+    background-color: #181818;
+}
+
+.dark .toc {
+    background-color: #181818;
+}
+
+.dark hr {
+    border-color: #eee;
+}
+
+.dark hr:after {
+    color: #eee;
+    background-color: black;
+}
+
+.dark pre.ttyshot, .dark pre.ttyshot code {
+    background: black;
+}
+.dark .sgr-7 {
+    color: black;
+    background-color: #eee;
+}
+
 /* vi: se ts=4 sts=4 sw=4: */

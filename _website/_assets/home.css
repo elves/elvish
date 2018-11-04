@@ -100,7 +100,7 @@ ul#demo-switcher > li > a {
   padding: 4px 14px;
 }
 
-ul#demo-switcher > li > a.current , ul#demo-switcher > li > a.current:hover {
+ul#demo-switcher > li > a.current, ul#demo-switcher > li > a.current:hover {
   color: white;
   background-color: black;
 }
@@ -134,4 +134,24 @@ ul#demo-switcher > li > a:hover {
 .article li > p {
   margin-top: 0.5em;
   margin-bottom: 0.5em;
+}
+
+/**
+ * Dark theme.
+ */
+.dark #demo-window {
+    background-color: #101818;
+}
+
+.dark ul#demo-switcher > li > a {
+    color: #eee;
+}
+
+.dark ul#demo-switcher > li > a.current, .dark ul#demo-switcher > li > a.current:hover {
+  color: black;
+  background-color: #eee;
+}
+
+.dark ul#demo-switcher > li > a:hover {
+  background-color: #444;
 }

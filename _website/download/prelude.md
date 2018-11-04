@@ -26,6 +26,13 @@ maintain backward compatibility from version to version.
   .notice {
     text-align: center;
   }
+
+  .dark td, .dark th {
+    border-color: #444;
+  }
+  .dark tr:nth-child(even) {
+    background-color: #333;
+  }
 </style>
 
 <table>
