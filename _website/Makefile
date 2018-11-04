@@ -26,10 +26,9 @@ gen: $(HTMLS) maybe-genblog
 maybe-genblog:
 	which genblog || $(MAKE) genblog
 
-# Installs latest genblog and synchronize the default CSS.
+# Installs latest genblog.
 genblog:
 	go get -u github.com/xiaq/genblog
-	genblog -print-default-css > _assets/genblog.css
 
 # Copies the generated website into $(PUBLISH_DIR).
 publish: gen

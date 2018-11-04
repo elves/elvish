@@ -1,0 +1,426 @@
+/**
+ * HTML5 reset, from: http://code.google.com/p/html5resetcss/
+ **/
+
+/*
+html5doctor.com Reset Stylesheet
+v1.6.1
+Last Updated: 2010-09-17
+Author: Richard Clark - http: //richclarkdesign.com
+Twitter: @rich_clark
+*/
+html, body, div, span, object, iframe, h1, h2, h3, h4, h5, h6, p,
+blockquote, pre, abbr, address, cite, code, del, dfn, em, img, ins,
+kbd, q, samp, small, strong, sub, sup, var, b, i, dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, figcaption, figure, footer, header, hgroup,
+menu, nav, section, summary, time, mark, audio,
+video { margin: 0; padding: 0; border: 0; outline: 0;
+            font-size: 100%; vertical-align: baseline; background: transparent; }
+body { line-height: 1; }
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav,
+section { display: block; }
+nav ul { list-style: none; }
+blockquote, q { quotes: none; }
+blockquote:before, blockquote:after, q:before, q:after { content: ''; content: none; }
+a { margin: 0; padding: 0; font-size: 100%; vertical-align: baseline; background: transparent; }
+ins { background-color: #ff9; color: #000; text-decoration: none; }
+mark { background-color: #ff9; color: #000; font-style: italic; font-weight: bold; }
+del { text-decoration: line-through; }
+abbr[title], dfn[title] { border-bottom: 1px dotted; cursor: help; }
+table { border-collapse: collapse; border-spacing: 0; }
+hr { display: block; height: 1px; border: 0; border-top: 1px solid #cccccc; margin: 1em 0; padding: 0; }
+input, select { vertical-align: middle; }
+
+/**
+ * End of HTML5 reset
+ **/
+
+/**
+ * Global styling.
+ **/
+
+html {
+    /* Prevent font scaling in landscape while allowing user zoom */
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: "Source Serif Pro", serif;
+    font-size: 17px;
+    line-height: 1.4em;
+}
+
+img {
+    max-width: 100%;
+}
+
+a {
+    text-decoration: none;
+}
+
+a {
+    color: #0645ad;
+}
+
+a:visited {
+    color: #0b0080;
+}
+
+/**
+ * Top-level elements.
+ *
+ * There are two main elements: #navbar and #content. Both have a maximum
+ * width, and is centered when the viewport is wider than that.
+ *
+ * #navbar is wrapped by #navbar-container, a black stripe that always span
+ * the entire viewport.
+ **/
+
+#navbar-container {
+    width: 100%;
+    color: white;
+    background-color: #1a1a1a;
+    padding: 8px 0;
+}
+
+#content, #navbar {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 0 4%;
+}
+
+/**
+ * Elements in the navbar.
+ *
+ * There is #blog-title and ul#nav-list. The latter contains li which
+ * contains a .nav-link.
+ */
+
+#blog-title, #nav-list {
+    display: inline-block;
+    /* Add spacing between lines when the navbar cannot fit in one line. */
+    line-height: 1.4em;
+}
+
+#blog-title {
+    font-size: 1.2em;
+    margin-right: 0.6em;
+    /* Move the title upward 1px so that it looks more aligned with the
+     * category list. */
+    position: relative;
+    top: 1px;
+}
+
+#blog-title a {
+    color: #5b5;
+}
+
+#nav-list > li {
+    list-style: none;
+    display: inline-block;
+}
+
+#nav-list > li > .nav-link {
+    color: white;
+    padding: 0px 0.6em;
+}
+
+#nav-list > li > .nav-link:hover {
+    background-color: #444;
+}
+
+#nav-list > li.current > .nav-link {
+    color: black;
+    background-color: white;
+}
+
+/**
+ * Article header.
+ **/
+
+.timestamp {
+    margin-bottom: 0.6em;
+}
+
+.article-title {
+    padding: 16px 0;
+    border-bottom: solid 1px #667;
+}
+
+/* Extra level needed to be more specific than .article h1 */
+.article .article-title h1 {
+    font-size: 1.5em;
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+/**
+ * Article content.
+ **/
+
+.article-content {
+    padding-top: 32px;
+}
+
+.article p, .article ul, .article pre {
+    margin-bottom: 16px;
+}
+
+.article li {
+    margin: 0.5em 0;
+}
+
+.article li > p {
+    margin: 1em 0;
+}
+
+/* Block code. */
+.article pre {
+    padding: 1em;
+    overflow: auto;
+}
+
+/* Inline code. */
+.article p code {
+    padding: 0.1em 0;
+}
+
+.article p code::before, .article p code::after {
+    letter-spacing: -0.2em;
+    content: "\00a0";
+}
+
+code, pre {
+    font-family: 'Fira Mono', monospace;
+}
+
+.article code, .article pre {
+    background-color: #f0f0f0;
+    border-radius: 3px;
+}
+
+/* This doesn't have p, so that it also applies to ttyshots. */
+.article code {
+    font-size: 85%;
+}
+
+/* We only use h1 and h2. */
+
+.article h1, .article h2 {
+    line-height: 1.25;
+}
+
+.article h1, .article h2 {
+    margin-top: 24px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.article h1 {
+    font-size: 1.3em;
+    padding-bottom: 0.4em;
+    border-bottom: 1px solid #aaa;
+}
+
+.article h2 {
+    font-size: 1.2em;
+}
+
+.article ul, .article ol {
+    margin-left: 1em;
+}
+
+/**
+ * Table of content.
+ */
+
+.toc {
+    background-color: #f0f0f0;
+    padding: 1em;
+    margin: 0 16px 16px 0;
+    border-radius: 6px;
+    line-height: 1;
+}
+
+/* The first <h1> clears the TOC */
+.article-content h1 {
+    clear: both;
+}
+
+#toc-list {
+    margin-left: -0.6em;
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+    #toc-list {
+        column-count: 2;
+    }
+}
+
+@media (min-width: 900px) {
+    #toc-list {
+        column-count: 3;
+    }
+}
+
+#toc-list li {
+    list-style: none;
+    /* Keep first-level ToC within one column */
+    break-inside: avoid;
+}
+
+/**
+ * Category content.
+ **/
+
+.category-prelude {
+    padding-top: 4%;
+    margin-bottom: -20px;
+}
+
+.article-list {
+    padding: 4% 0;
+}
+
+.article-list > li {
+    list-style: square inside;
+    padding: 3px;
+}
+
+.article-list > li:hover {
+    background-color: #c0c0c0;
+}
+
+.article-link, .article-link:visited {
+    color: black;
+    display: inline;
+    line-height: 1.4em;
+    border-bottom: 1px solid black;
+}
+
+.article-timestamp {
+    float: right;
+    display: inline-block;
+    margin-left: 1em;
+}
+
+/**
+ * Layout utilities.
+ **/
+
+.clear {
+    clear: both;
+}
+
+.no-display {
+    display: none !important;
+}
+
+/**
+ * Miscellous elements.
+ **/
+
+hr {
+    clear: both;
+    border-color: #aaa;
+    text-align: center;
+}
+
+hr:after {
+    content: "❧";
+    text-shadow: 0px 0px 2px #667;
+    display: inline-block;
+    position: relative;
+    top: -0.5em;
+    padding: 0 0.25em;
+    font-size: 1.1em;
+    color: black;
+    background-color: white;
+}
+
+.key {
+    display: inline-block;
+    border: 1px solid black;
+    border-radius: 3px;
+    padding: 0 2px;
+    margin: 1px;
+    font-size: 85%;
+}
+
+/**
+ * TTY shots.
+ */
+
+pre.ttyshot {
+    font-size: 12pt;
+    line-height: 1 !important;
+    border: 1px solid black;
+    display: inline-block;
+    margin-bottom: 0 !important;
+}
+
+pre.ttyshot, pre.ttyshot code {
+    background-color: white;
+}
+
+@media screen and (max-width: 600px) {
+    pre.ttyshot {
+        font-size: 2.6vw;
+    }
+}
+
+/* SGR classes, used in ttyshots. */
+.sgr-1 {
+    font-weight: bold;
+}
+.sgr-7 {
+    color: white;
+    background-color: black;
+}
+.sgr-31 {
+    color: darkred; /* red in tty */
+}
+.sgr-41 {
+    background-color: darkred; /* red in tty */
+}
+.sgr-32 {
+    color: green; /* green in tty */
+}
+.sgr-42, .sgr-7.sgr-32 {
+    background-color: green; /* green in tty */
+}
+.sgr-33 {
+    color: goldenrod; /* yellow in tty */
+}
+.sgr-43, .sgr-7.sgr-33 {
+    background-color: goldenrod; /* yellow in tty */
+}
+.sgr-34 {
+    color: blue;
+}
+.sgr-44, .sgr-7.sgr-34 {
+    color: white; /* Hacky hacky, just to make the nav ttyshot work */
+    background-color: blue;
+}
+.sgr-35 {
+    color: darkorchid; /* magenta in tty */
+}
+.sgr-45, .sgr-7.sgr-35 {
+    background-color: darkorchid; /* magenta in tty */
+}
+.sgr-36 {
+    color: darkcyan; /* cyan in tty */
+}
+.sgr-46, .sgr-7.sgr-36 {
+    background-color: darkcyan; /* cyan in tty */
+}
+.sgr-37 {
+    color: lightgray;
+}
+.sgr-47, .sgr-7.sgr-37 {
+    background-color: gray;
+}
+
+/* vi: se ts=4 sts=4 sw=4: */

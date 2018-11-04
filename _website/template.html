@@ -26,30 +26,29 @@
   <link rel="mask-icon" href="{{ rootURL }}/safari-pinned-tab.svg" color="#55bb55">
   <meta name="theme-color" content="#ffffff">
 
-  <link href="{{ rootURL }}/assets/genblog.css" rel="stylesheet">
-  <link href="{{ rootURL }}/assets/elvish.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Fira+Mono|Source+Serif+Pro:400,700" rel="stylesheet">
+  <link href="{{ rootURL }}/assets/style.css" rel="stylesheet">
 </head>
 
 <body>
   <div id="navbar-container"> <div id="navbar">
     <div id="blog-title">
       <code>
-        <a href="{{ rootURL }}/">~&gt;</a>
-        <a href="{{ rootURL }}/download" class="command">elvish</a>
+        <a href="{{ rootURL }}">
+          elvish
+        </a>
       </code>
     </div>
-    <ul id="category-list">
+    <ul id="nav-list">
       {{ $homepageTitle := .HomepageTitle }}
       {{ $curcat := .Category }}
-      <li class="{{ if eq $curcat "homepage" }}current{{ end }}">
-        <a href="{{ rootURL }}" class="nav-link">
-          {{ $homepageTitle }}
-        </a>
-      </li>
-      {{ range $info := .Categories }}
+      {{ range $i, $info := .Categories }}
+        {{ if $i }} | {{ end }}
         <li class="{{ if eq $curcat $info.Name}}current{{ end }}">
           <a href="{{ rootURL }}/{{ $info.Name }}/" class="nav-link">
-            {{ $info.Title }}
+            <code>
+              {{ $info.Title }}
+            </code>
           </a>
         </li>
       {{ end }}
@@ -73,15 +72,14 @@
 </html>
 
 {{ define "article-content" }}
-  <div class="card">
+  <div id="content">
     <article class="article">
       {{ if not .IsHomepage }}
-        <div class="article-header">
+        <div class="article-title">
           <div class="timestamp"> {{ .Timestamp }} </div>
           <h1> {{ .Title }} </h1>
           <div class="clear"></div>
         </div>
-        <div class="card-splitter"></div>
       {{ end }}
       <div class="article-content">
         {{ .Content }}
@@ -93,7 +91,7 @@
 
 {{ define "category-content" }}
   {{ $category := .Category }}
-  <div class="card">
+  <div id="content">
     {{ if ne .Prelude "" }}
       <div class="category-prelude article">
         <article class="article">
@@ -105,7 +103,7 @@
       {{ range $article := .Articles }}
         <li>
           <a href="{{ rootURL }}/{{ $category }}/{{ $article.Name }}.html"
-             class="nav-link">{{ $article.Title }}</a>
+             class="article-link">{{ $article.Title }}</a>
           <span class="article-timestamp">
             {{ $article.Timestamp }}
           </span>
