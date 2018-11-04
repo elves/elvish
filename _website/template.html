@@ -31,8 +31,7 @@
 
   <script>
     // If the domain starts with "dark.", trigger dark mode.
-    var hostname = location.href.hostname;
-    if (hostname && hostname.startsWith('dark.')) {
+    if (location.hostname.startsWith('dark.')) {
       document.body.classList.add('dark');
     }
 
