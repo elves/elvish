@@ -35,7 +35,7 @@
   <div id="navbar-container"> <div id="navbar">
     <div id="blog-title">
       <code>
-        <a href="{{ rootURL }}">
+        <a href="{{ rootURL }}"/>
           elvish
         </a>
       </code>
@@ -82,6 +82,18 @@
         document.body.classList.toggle('dark');
       }
     });
+
+    // If viewing locally, append index.html to relative paths that point to
+    // directories
+    if (location.protocol === 'file:') {
+      var links = document.getElementsByTagName('a');
+      for (var i = 0; i < links.length; i++) {
+        var href = links[i].getAttribute('href');
+        if (href && !href.match(/^https?:/) && href.endsWith('/')) {
+          links[i].href = href + 'index.html';
+        }
+      }
+    }
   </script>
 </body>
 </html>

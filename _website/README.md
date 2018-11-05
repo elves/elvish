@@ -18,12 +18,14 @@ the following dependencies:
     and some custom preprocessors in the `tools` directory.
 
 To build the website, just run `make`. The built website is in the `_dst`
-directory; to preview, run an HTTP server within it.
+directory. You can then open `_dst/index.html` or run an HTTP server within
+`_dst` to preview.
 
-Opening `_dst/index.html` almost works, except that browsers will show the
-directories as file lists instead of using the `index.html` file, so if you
-click e.g. "Learn" in the nav bar, you will need to manually click the
-`index.html` within it.
+**NOTE**: Although the website degrades gracefully when JavaScript is
+disabled, local viewing works best with JavaScript enabled. This is because
+relative paths like `./download` will cause the browser to open the
+corresponding directory, instead of the `index.html` file under it, and we use
+JavaScript to patch such URLs dynamically.
 
 # Commit History
 
