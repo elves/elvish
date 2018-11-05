@@ -103,7 +103,7 @@ Windows.
 
 <div class="column">
 
-# <i class="fas fa-running"></i> Run Elvish
+# <i class="icon-rocket"></i> Run Elvish
 
 *   [Download](download/) a binary
 
@@ -111,7 +111,7 @@ Windows.
 
 *   [Try Elvish](https://try.elv.sh) directly from the browser (coming soon!)
 
-# <i class="fas fa-sitemap"></i> Use this Site
+# <i class="icon-sitemap"></i> Use this Site
 
 Start your Elvish journey in this very website!
 
@@ -127,7 +127,7 @@ Start your Elvish journey in this very website!
 
 <div class="column">
 
-# <i class="fas fa-comments"></i> Join the Community
+# <i class="icon-chat"></i> Join the Community
 
 Join any of the following channels -- they are all all bridged together thanks
 to [matterbridge](https://github.com/42wim/matterbridge)!
@@ -138,7 +138,7 @@ to [matterbridge](https://github.com/42wim/matterbridge)!
 
 *   Telegram: [@elvish](https://telegram.me/elvish)
 
-# <i class="fas fa-external-link-alt"></i> More Resources
+# <i class="icon-link-ext"></i> More Resources
 
 *   [Awesome Elvish](https://github.com/elves/awesome-elvish): Official list
     of unofficial Elvish modules
@@ -150,7 +150,5 @@ to [matterbridge](https://github.com/42wim/matterbridge)!
 </div>
 
 <link href="assets/home.css" rel="stylesheet">
+<link href="assets/fa-elv-sh.css" rel="stylesheet">
 <script src="assets/home-demos.js"></script>
-
-<script defer src="https://use.fontawesome.com/releases/v5.4.1/js/solid.js" integrity="sha384-agDKwSYPuGlC0wD14lKXXwb94jlUkbkoSugquwmKRKWv/nDXe1kApDS/gqUlRQmZ" crossorigin="anonymous"></script>
-<script defer src="https://use.fontawesome.com/releases/v5.4.1/js/fontawesome.js" integrity="sha384-ISRc+776vRkDOTSbmnyoZFmwHy7hw2UR3KJpb4YtcfOyqUqhLGou8j5YmYnvQQJ4" crossorigin="anonymous"></script>
