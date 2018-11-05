@@ -16,7 +16,6 @@ already suitable for most daily interactive use.
 Most of the resources for Elvish can be found on the [official website](https://elv.sh).
 
 User groups (all connected thanks to [matterbridge](https://github.com/42wim/matterbridge/)):
-
 [![Gitter](https://img.shields.io/badge/gitter-elves/elvish-blue.svg?logo=gitter-white)](https://gitter.im/elves/elvish)
 [![Telegram Group](https://img.shields.io/badge/telegram-@elvish-blue.svg)](https://telegram.me/elvish)
 [![#elvish on freenode](https://img.shields.io/badge/freenode-%23elvish-blue.svg)](https://webchat.freenode.net/?channels=elvish)
@@ -49,8 +48,6 @@ In either cases, the binary is placed in `$GOPATH/bin`. Consider adding it to yo
 See [CONTRIBUTING.md](CONTRIBUTING.md) for more notes for contributors.
 You can also join one of the developer groups (also connected together by
 matterbridge):
-
 [![Gitter for Developers](https://img.shields.io/badge/gitter-elves/elvish--dev-000000.svg?logo=gitter-white)](https://gitter.im/elves/elvish-dev)
 [![Telegram Group for Developers](https://img.shields.io/badge/telegram-@elvish__dev-000000.svg)](https://telegram.me/elvish_dev)
 [![#elvish-dev on freenode](https://img.shields.io/badge/freenode-%23elvish--dev-000000.svg)](https://webchat.freenode.net/?channels=elvish-dev)
-
