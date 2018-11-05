@@ -1,5 +1,4 @@
-**Elvish** is a friendly and expressive shell for Linux, BSDs, macOS and
-Windows.
+**Elvish** is a friendly interactive shell and an expressive programming language. It runs on Linux, BSDs, macOS and Windows.
 
 <ul id="demo-switcher">
   <li id="demo-js-warning">
