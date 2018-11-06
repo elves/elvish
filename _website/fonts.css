@@ -56,6 +56,7 @@
 /** Fira mono */
 
 @font-face{
+    font-display: swap;
     font-family: 'Fira Mono';
     src: url('https://assets.elv.sh/fira/eot/FiraMono-Regular.eot');
     src: local('Fira Mono'),
@@ -67,6 +68,7 @@
 }
 
 @font-face{
+    font-display: swap;
     font-family: 'Fira Mono';
     src: url('https://assets.elv.sh/fira/eot/FiraMono-Bold.eot');
     src: local('Fira Mono Bold'),
