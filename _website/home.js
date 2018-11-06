@@ -1,4 +1,4 @@
-window.onload = function() {
+document.addEventListener('DOMContentLoaded', function() {
   var current = 0,
       expanded = true;
       expander = document.getElementById('demo-expander'),
@@ -16,7 +16,7 @@ window.onload = function() {
     if (current != null) {
       switcherLinks[current].className = "";
     }
-    var translate = -demoWrappers[0].offsetWidth * to; 
+    var translate = -demoWrappers[0].offsetWidth * to;
     demoContainer.className = instant ? "" : "animated-transition";
     demoContainer.style.transform = "translateX(" + translate + "px)";
     switcherLinks[to].className = "current";
@@ -181,4 +181,4 @@ window.onload = function() {
       }
     }
   });
-};
+});
