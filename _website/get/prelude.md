@@ -9,32 +9,6 @@ faster.
 Note that Elvish is **pre-release software**. It can be unstable, and does not
 maintain backward compatibility from version to version.
 
-<style>
-  table {
-    border-collapse: collpase;
-    width: 100%;
-    margin-bottom: 16px;
-  }
-  td, th {
-    border: 1px solid #aaa;
-    text-align: left;
-    padding: 0.4em;
-  }
-  tr:nth-child(even) {
-    background-color: #ddd;
-  }
-  .notice {
-    text-align: center;
-  }
-
-  .dark td, .dark th {
-    border-color: #444;
-  }
-  .dark tr:nth-child(even) {
-    background-color: #333;
-  }
-</style>
-
 <table>
   <tr>
     <th>Version</th>

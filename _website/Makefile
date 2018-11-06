@@ -19,7 +19,6 @@ default: gen
 # Generates the website into the dst directory.
 gen: $(HTMLS) maybe-genblog
 	genblog . $(DST_DIR)
-	rm -f $(DST_DIR)/assets && ln -sf `pwd`/_assets $(DST_DIR)/assets
 	ln -sf `pwd`/_favicons/* $(DST_DIR)/
 
 # Installs genblog only if not found.

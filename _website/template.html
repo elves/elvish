@@ -27,15 +27,23 @@
   <meta name="msapplication-TileColor" content="#da532c">
   <meta name="theme-color" content="#ffffff">
 
+  <style>
+    {{ .BaseCSS }}
+    {{ .ExtraCSS }}
+  </style>
+
+  <script>
+    {{ .ExtraJS }}
+  </script>
+
   <link href="https://fonts.googleapis.com/css?family=Fira+Mono|Source+Serif+Pro:400,700" rel="stylesheet">
-  <link href="{{ rootURL }}/assets/style.css" rel="stylesheet">
 </head>
 
 <body>
   <div id="navbar-container"> <div id="navbar">
     <div id="blog-title">
       <code>
-        <a href="{{ rootURL }}"/>
+        <a href="{{ rootURL }}/">
           elvish
         </a>
       </code>

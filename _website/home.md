@@ -147,7 +147,3 @@ to [matterbridge](https://github.com/42wim/matterbridge)!
 </div>
 
 </div>
-
-<link href="assets/home.css" rel="stylesheet">
-<link href="assets/fa-elv-sh.css" rel="stylesheet">
-<script src="assets/home-demos.js"></script>

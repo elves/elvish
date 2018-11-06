@@ -1,4 +1,4 @@
-(function() {
+window.onload = function() {
   var current = 0,
       expanded = true;
       expander = document.getElementById('demo-expander'),
@@ -181,4 +181,4 @@
       }
     }
   });
-})();
+};
