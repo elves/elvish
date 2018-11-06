@@ -1,0 +1,78 @@
+/** Source Serif Pro */
+
+@font-face{
+    font-display: swap;
+    font-family: 'Source Serif Pro';
+    font-weight: 400;
+    font-style: normal;
+    font-stretch: normal;
+    src: url('https://assets.elv.sh/source-serif-pro/EOT/SourceSerifPro-Regular.eot') format('embedded-opentype'),
+         url('https://assets.elv.sh/source-serif-pro/WOFF/OTF/SourceSerifPro-Regular.otf.woff') format('woff'),
+         url('https://assets.elv.sh/source-serif-pro/WOFF2/OTF/SourceSerifPro-Regular.otf.woff2') format('woff2'),
+         url('https://assets.elv.sh/source-serif-pro/OTF/SourceSerifPro-Regular.otf') format('opentype'),
+         url('https://assets.elv.sh/source-serif-pro/TTF/SourceSerifPro-Regular.ttf') format('truetype');
+}
+
+@font-face{
+    font-display: swap;
+    font-family: 'Source Serif Pro';
+    font-weight: 400;
+    font-style: italic;
+    font-stretch: normal;
+    src: url('https://assets.elv.sh/source-serif-pro/EOT/SourceSerifPro-It.eot') format('embedded-opentype'),
+         url('https://assets.elv.sh/source-serif-pro/WOFF/OTF/SourceSerifPro-It.otf.woff') format('woff'),
+         url('https://assets.elv.sh/source-serif-pro/WOFF2/OTF/SourceSerifPro-It.otf.woff2') format('woff2'),
+         url('https://assets.elv.sh/source-serif-pro/OTF/SourceSerifPro-It.otf') format('opentype'),
+         url('https://assets.elv.sh/source-serif-pro/TTF/SourceSerifPro-It.ttf') format('truetype');
+}
+
+@font-face{
+    font-display: swap;
+    font-family: 'Source Serif Pro';
+    font-weight: 600;
+    font-style: normal;
+    font-stretch: normal;
+    src: url('https://assets.elv.sh/source-serif-pro/EOT/SourceSerifPro-Semibold.eot') format('embedded-opentype'),
+         url('https://assets.elv.sh/source-serif-pro/WOFF/OTF/SourceSerifPro-Semibold.otf.woff') format('woff'),
+         url('https://assets.elv.sh/source-serif-pro/WOFF2/OTF/SourceSerifPro-Semibold.otf.woff2') format('woff2'),
+         url('https://assets.elv.sh/source-serif-pro/OTF/SourceSerifPro-Semibold.otf') format('opentype'),
+         url('https://assets.elv.sh/source-serif-pro/TTF/SourceSerifPro-Semibold.ttf') format('truetype');
+}
+
+@font-face{
+    font-display: swap;
+    font-family: 'Source Serif Pro';
+    font-weight: 600;
+    font-style: italic;
+    font-stretch: normal;
+    src: url('https://assets.elv.sh/source-serif-pro/EOT/SourceSerifPro-SemiboldIt.eot') format('embedded-opentype'),
+         url('https://assets.elv.sh/source-serif-pro/WOFF/OTF/SourceSerifPro-SemiboldIt.otf.woff') format('woff'),
+         url('https://assets.elv.sh/source-serif-pro/WOFF2/OTF/SourceSerifPro-SemiboldIt.otf.woff2') format('woff2'),
+         url('https://assets.elv.sh/source-serif-pro/OTF/SourceSerifPro-SemiboldIt.otf') format('opentype'),
+         url('https://assets.elv.sh/source-serif-pro/TTF/SourceSerifPro-SemiboldIt.ttf') format('truetype');
+}
+
+
+/** Fira mono */
+
+@font-face{
+    font-family: 'Fira Mono';
+    src: url('https://assets.elv.sh/fira/eot/FiraMono-Regular.eot');
+    src: local('Fira Mono'),
+         url('https://assets.elv.sh/fira/eot/FiraMono-Regular.eot') format('embedded-opentype'),
+         url('https://assets.elv.sh/fira/woff/FiraMono-Regular.woff') format('woff'),
+         url('https://assets.elv.sh/fira/ttf/FiraMono-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face{
+    font-family: 'Fira Mono';
+    src: url('https://assets.elv.sh/fira/eot/FiraMono-Bold.eot');
+    src: local('Fira Mono Bold'),
+         url('https://assets.elv.sh/fira/eot/FiraMono-Bold.eot') format('embedded-opentype'),
+         url('https://assets.elv.sh/fira/woff/FiraMono-Bold.woff') format('woff'),
+         url('https://assets.elv.sh/fira/ttf/FiraMono-Bold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}

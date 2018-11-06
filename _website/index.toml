@@ -2,7 +2,7 @@ title = "Elvish Shell"
 author = "Qi Xiao"
 feedPosts = 10
 template = "template.html"
-baseCSS = ["style.css"]
+baseCSS = ["style.css", "fonts.css"]
 rootURL = "https://elv.sh"
 
 [index]
