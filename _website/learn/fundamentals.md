@@ -1,80 +1,77 @@
-<!-- toc -->
+<!-- toc number-sections -->
 
-**This tutorial is quite incomplete, and it is being constantly expanded.**
+**Work in progress.**
 
 This tutorial introduces the fundamentals of shell programming with Elvish.
-It does not assume familiarity with other shells, but some understanding of
-basic programming concepts is required.
-
-This tutorial evolves around a "hello" program. But if your primary interest
-in shell programming is not saying hello (which, by the way, is a shame), the
-tutorial also contains some hints and examples on how to apply to knowledge to
-non-hello applications.
-
-**Note**: Elvish is very similar to other shell languages in many aspects, but
-also very different in others. When transferring your knowledge of Elvish to
-another shell, it is worthwhile to first check how things work there.
+Familiarity with other shells or programming languages is useful but not
+required.
 
 
-# Hello, world!
+# Commands
 
-Let's begin with the most traditional "hello world" program. In Elvish,
-you invoke the `echo` **command** to print something on the terminal:
-
-```elvish-transcript
-~> echo "Hello, world!"
-Hello, world!
-```
-
-In Elvish, as in other shells, command invocations follow a simple structure: you
-write the command name, followed by arguments, all separated by spaces (or
-tabs). No parentheses or commas are needed.
-
-We enclose our text here in double quotes, making it a **string literal**.
-Compared to other languages, shell languages are a bit sloppy in that they
-allow you to write strings *without* quotes. The following also works:
+Let's begin with the traditional "hello world" program:
 
 ```elvish-transcript
 ~> echo Hello, world!
 Hello, world!
 ```
 
-However, the way it works has a subtle difference: here `Hello,` and `world!`
-are two arguments (remember that spaces separate arguments), and `echo` joins
-them together with a space. This is apparent if you put multiple spaces
-between them:
+Here, we call the `echo` **command** with two **arguments**: `Hello,` and
+`world!`. The `echo` command prints them both, inserting a space in between
+and adding a newline at the end, and voilà, we get back the message `Hello,
+world!`.
+
+## Quoting the argument
+
+We used a single space between the two arguments. Using more also works:
 
 ```elvish-transcript
-~> echo Hello,      world!
+~> echo Hello,  world!
 Hello, world!
-~> echo "Hello,     world!"
-Hello,     world!
 ```
 
-When you write your message without quotes, no matter how many spaces there
-are, it is always the same two arguments `Hello,` and `world!`. If you quote
-your message, the spaces are part of the string and thus preserved.
+The output still only has one space, because `echo` did't know how many spaces
+were used to separate the two arguments; all it sees is the two arguments,
+`Hello,` and `world!`. However, you can preserve the two spaces by **quoting**
+the entire text:
 
-It is a good idea to always quote your string when it contains spaces or any
-special symbols other than period (`.`), dash (`-`) or underscore (`_`).
+```elvish-transcript
+~> echo "Hello,  world!"
+Hello,  world!
+```
+
+In this version, `echo` only sees one argument containing
+<code>Hello,&nbsp;&nbsp;world</code> (with two spaces). A pair of **double
+quotes** tells Elvish that the text inside it is a single argument; they are
+not part of the argument.
+
+On contrary, the `Hello,` and `world!` arguments are implicitly delimited by
+spaces (instead of explicitly by quotes); as such, they are known as
+**barewords**. Some special characters also delimit barewords, which we will
+see later. Barewords are useful to write command names, filenames and
+command-line switches, which usually do not contain spaces or special
+characters.
 
 
-## It Doesn't Have to be Hello
+## Editing the command line
 
-All command invocations in shell have the same basic structure: name of
-command, followed by arguments. Elvish provides a lot of useful [builtin
-commands](../ref/builtin.html), and `echo` is just one of them. As another
-example, there is one for generating random numbers, which you can use as a
+TODO
+
+## Builtin and external commands
+
+We demonstrated the basic command structure using `echo`, a very simple
+command. The same structure applies to all the commands. For instance, Elvish
+comes with a `randint` command that takes two arguments `a` and `b` and
+generates a random integer in the range a...b-1. You can use the command as a
 digital dice:
 
 ```elvish-transcript
-~> # randint a b generates an integer from range a...b-1
-   randint 1 7
+~> randint 1 7
 ▶ 3
 ```
 
-Arithmetic operations are also commands. Since they also follow the same order
-of command name first, the syntax deviates a bit from usual mathematical
+Arithmetic operations are also commands. Like other commands, the command
+names comes first, making the syntax a bit different from common mathematical
 notations:
 
 ```elvish-transcript
@@ -84,31 +81,122 @@ notations:
 ▶ 1024
 ```
 
-The commands introduced above -- `echo`, `randint`, `*` and `^` -- are all
-**builtin** commands, commands that Elvish provides for you.
+The commands above all come with Elvish; they are **builtin commands**. There
+are [many more](../ref/builtin.html) of them.
 
-As a shell language, however, Elvish also makes it trivial to use **external**
-commands, commands implemented as separate programs. Chances are you have
-already used some of them like `ls` or `cat`. Here we show you how to obtain
-Elvish entirely from the command line: you can use `wget` to download files,
-`shasum` to verify its checksum, and `tar` to uncompress them, all of which
-are external commands:
+Another kind of commands is **external commands**. They are separate programs
+from Elvish, and either come with the operating system or are installed by you
+manually. Chances are you have already used some of them, like `ls` for
+listing files, or `cat` for showing files.
+
+There are really a myriad of external commands; to start with, you can manage
+code repositories with [git](https://git-scm.com), convert documents with
+[pandoc](http://pandoc.org), process images with
+[ImageImagick](https://www.imagemagick.org/script/index.php), transcode videos
+with [ffmpeg](http://ffmpeg.org), test the security of websites with
+[nmap](https://nmap.org) and analyze network traffic with
+[tcpdump](http://www.tcpdump.org). Many free and open-source software come
+with a command-line interface.
+
+Here we show you how to obtain the latest version of Elvish entirely from the
+command line: we use `curl` to download the binary and its checksum, `shasum`
+to check the checksum, and `chmod` to make it executable (assuming that you are
+running macOS on x86-64):
 
 ```elvish-transcript
-~> wget https://dl.elv.sh/elvish-linux-amd64-HEAD.tar.gz
-... omit ...
-elvish-linux.tar.gz  100%[======================>]   4.91M  10.9MB/s    in 0.4s
-~> shasum -a 256 elvish-linux.tar.gz
-0fc3c145a81345a1c49576b86ef12156d4eba1829e1bb20e9c39d115991a9c7b elvish-linux.tar.gz
-~> tar xvf elvish-linux.tar.gz
-x elvish
+~> curl -s -o elvish https://dl.elv.sh/darwin-amd64/elvish-HEAD
+~> curl -s https://dl.elv.sh/darwin-amd64/elvish-HEAD.sha256sum
+8b3db8cf5a614d24bf3f2ecf907af6618c6f4e57b1752e5f0e2cf4ec02bface0  elvish-HEAD
+~> shasum -a 256 elvish
+8b3db8cf5a614d24bf3f2ecf907af6618c6f4e57b1752e5f0e2cf4ec02bface0  elvish
+~> chmod +x elvish
+~> ./elvish
 ```
 
-With the most basic knowledge of how to invoke commands, there is already a
-myriad of functionalities at your fingertip.
+## History and scripting
+
+Some commands are useful to rerun; for instance, you may want to roll the
+digital dice several times in a roll, or for another occasion. Of course, you
+can just retype the command:
+
+```elvish-transcript
+~> randint 1 7
+▶ 1
+```
+
+The command is short, but still, it can become a chore if you want to run it
+repeatedly. Fortunately, Elvish remembers all the commands you have typed;
+you can just ask Elvish to recall it by pressing <span class="key">Up</span>:
+
+TODO: ttyshot
+
+This will give you the last command you have run. However, it may have been a
+while when you have last run the `randint` command, and this will not give you
+what you need. You can either continue pressing <span class="key">Up</span>
+until you find the command, or you you can give Elvish a hint by typing some
+characters from the command line you want, e.g. `ra`, before pressing <span
+class="key">Up</span>:
+
+TODO: ttyshot
+
+Another way to rerun commands is saving them in a **script**, which is simply
+a text file containing the commands you want to run. Using your favorite text
+editor, save the command to `dice.elv` under your home directory.
+Alternatively, you can use `cat` to write the script:
+
+```elvish-transcript
+~> cat > dice.elv
+# Type the following in the terminal
+randint 1 7
+# Now press Enter followed by Ctrl-D
+```
+
+After saving the script, you can run it with:
+
+```elvish-transcript
+~> elvish dice.elv
+▶ 4
+```
+
+Since the above command runs `elvish` explicitly, it works in other shells as
+well, not just from Elvish itself.
 
 
-# Hello, {insert user name}!
+# Variables
+
+To change what a command does, we now need to change the commands themselves.
+For instance, instead of saying "Hello, world!", we might want our command to
+say "Hello, John!":
+
+```elvish-transcript
+~> echo Hello, John!
+Hello, John!
+```
+
+Which works until you want a different message. One way to solve this is using
+**variables**:
+
+```elvish-transcript
+~> name = John
+~> echo Hello, $name!
+Hello, John!
+```
+
+The command `echo Hello, $name!` uses the `$name` variable you just assigned
+in the previous command. To greet a different person, you can just change the
+value of the variable, and the command doesn't need to change:
+
+```elvish-transcript
+~> name = Jane
+~> echo Hello, $name!
+Hello, Jane!
+```
+
+**To be continued...**
+
+<!--
+
+# Output capture
 
 The "hello world" program is a classic, but the fact that it always prints the
 same simple message does make it a little bit boring.
