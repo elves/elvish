@@ -30,7 +30,7 @@ We used a single space between the two arguments. Using more also works:
 Hello, world!
 ```
 
-The output still only has one space, because `echo` did't know how many spaces
+The output still only has one space, because `echo` didn't know how many spaces
 were used to separate the two arguments; all it sees is the two arguments,
 `Hello,` and `world!`. However, you can preserve the two spaces by **quoting**
 the entire text:
