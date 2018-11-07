@@ -48,8 +48,8 @@ a {
 /**
  * Elements in the navbar.
  *
- * There is #blog-title and ul#nav-list. The latter contains li which
- * contains a .nav-link.
+ * The navbar is made up of two elements, #blog-title and ul#nav-list. The
+ * latter contains li.nav-item which contains an a.nav-link.
  */
 
 #blog-title, #nav-list {
@@ -71,23 +71,30 @@ a {
     color: #5b5;
 }
 
-#nav-list > li {
+.nav-item {
     list-style: none;
     display: inline-block;
 }
 
-#nav-list > li > .nav-link {
+.nav-link {
     color: white;
+}
+
+.nav-link > code {
     padding: 0px 0.6em;
 }
 
-#nav-list > li > .nav-link:hover {
+.nav-link:hover {
     background-color: #444;
 }
 
-#nav-list > li.current > .nav-link {
+.nav-link.current {
     color: black;
     background-color: white;
+}
+
+.nav-item + .nav-item::before {
+    content: "|";
 }
 
 /**
