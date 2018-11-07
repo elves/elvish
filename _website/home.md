@@ -12,10 +12,7 @@
 
 <div id="demo-window"> <div id="demo-container" class="expanded">
   <div class="demo-wrapper"> <div class="demo">
-    <div class="demo-col left"><div class="demo-ttyshot">
-      $ttyshot pipelines
-    </div></div>
-    <div class="demo-col right"> <div class="demo-description">
+    <div class="demo-col demo-description">
       <h2>Powerful Pipelines</h2>
       <p>
         Text pipelines are intuitive and powerful. However, if your data have
@@ -26,14 +23,14 @@
         Pipelines in Elvish can carry structured data, not just text. You can
         stream lists, maps and even functions through the pipeline.
       </p>
-    </div> </div>
+    </div>
+    <div class="demo-col demo-ttyshot">
+      $ttyshot pipelines
+    </div>
   </div> </div>
 
   <div class="demo-wrapper"> <div class="demo">
-    <div class="demo-col left"><div class="demo-ttyshot">
-      $ttyshot control-structures
-    </div></div>
-    <div class="demo-col right"> <div class="demo-description">
+    <div class="demo-col demo-description">
       <h2>Intuitive Control Structures</h2>
       <p>
         If you know programming, you probably already know how
@@ -42,14 +39,14 @@
       <p>
         Control structures in Elvish have an intuitive C-like syntax.
       </p>
-    </div> </div>
+    </div>
+    <div class="demo-col demo-ttyshot">
+      $ttyshot control-structures
+    </div>
   </div> </div>
 
   <div class="demo-wrapper"> <div class="demo">
-    <div class="demo-col left"><div class="demo-ttyshot">
-      $ttyshot location-mode
-    </div></div>
-    <div class="demo-col right"> <div class="demo-description">
+    <div class="demo-col demo-description">
       <h2>Directory History</h2>
       <p>
         Is <code>cd /a/long/nested/directory</code> the first thing you
@@ -60,14 +57,14 @@
         Elvish remembers where you have been. Press Ctrl-L and search, like in a
         browser.
       </p>
-    </div> </div>
+    </div>
+    <div class="demo-col demo-ttyshot">
+      $ttyshot location-mode
+    </div>
   </div> </div>
 
   <div class="demo-wrapper"> <div class="demo">
-    <div class="demo-col left"><div class="demo-ttyshot">
-      $ttyshot histlist-mode
-    </div></div>
-    <div class="demo-col right"> <div class="demo-description">
+    <div class="demo-col demo-description">
       <h2>Command History</h2>
       <p>
         Want to find the magical <code>ffmpeg</code> command that you used to
@@ -81,14 +78,14 @@
         (To be fair, you can do this in bash with <code>history | grep
         ffmpeg</code>, but it's far fewer keystrokes in Elvish :)
       </p>
-    </div> </div>
+    </div>
+    <div class="demo-col demo-ttyshot">
+      $ttyshot histlist-mode
+    </div>
   </div> </div>
 
   <div class="demo-wrapper"> <div class="demo">
-    <div class="demo-col left"><div class="demo-ttyshot">
-      $ttyshot navigation-mode
-    </div></div>
-    <div class="demo-col right"> <div class="demo-description">
+    <div class="demo-col demo-description">
       <h2>Built-in File Manager</h2>
       <p>
         Power of the shell or convenience of a file manager?
@@ -97,7 +94,10 @@
         Choose both. Press Ctrl-N to quickly navigate directories and preview
         files, with full shell power.
       </p>
-    </div> </div>
+    </div>
+    <div class="demo-col demo-ttyshot">
+      $ttyshot navigation-mode
+    </div>
   </div> </div>
 </div> </div>
 

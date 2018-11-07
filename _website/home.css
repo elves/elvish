@@ -26,6 +26,7 @@
 }
 
 /* Expanded view. */
+
 #demo-container.expanded {
   width: 100%;
 }
@@ -44,32 +45,34 @@
 }
 
 .demo-col {
+  box-sizing: border-box;
   width: 100%;
   height: 100%;
   float: left;
 }
 
-.demo-col .demo-ttyshot {
+.demo-ttyshot {
   text-align: center;
 }
 
-.demo-col .demo-ttyshot .ttyshot {
+.demo-ttyshot .ttyshot {
   text-align: left;
 }
 
 .demo-description {
-  margin: 16px 5% 0;
+  padding: 16px 16px 0;
+}
+
+.demo-ttyshot {
+  padding-top: 16px;
 }
 
 @media screen and (min-width: 1024px) {
-  .demo-col.left {
+  .demo-ttyshot {
     width: 60%;
   }
-  .demo-col.right {
-    width: 40%;
-  }
   .demo-description {
-    margin: 0 5%;
+    width: 40%;
   }
   .animated-transition {
     transition-duration: 400ms;
@@ -110,7 +113,7 @@ ul#demo-switcher > li > a:hover {
   cursor: pointer;
 }
 
-/* Styles for the layout */
+/* Styles for the body layout */
 
 @media screen and (min-width: 800px) {
   #columns {
