@@ -1,10 +1,13 @@
 **Elvish** is a friendly interactive shell and an expressive programming language. It runs on Linux, BSDs, macOS and Windows.
 
+<div id="no-js">
+  <h1>Demos</h1>
+  <p>
+    Enable JavaScript to see demos as slides.
+  </p>
+</div>
+
 <ul id="demo-switcher">
-  <li id="demo-js-warning">
-    Enable JavaScript for the option of showing demos as slides.
-  </li>
-  <li id="demo-expander-li" class="no-display"><a id="demo-expander">↧</a></li>
 </ul>
 
 <div id="demo-window"> <div id="demo-container" class="expanded">
@@ -13,7 +16,7 @@
       $ttyshot pipelines
     </div></div>
     <div class="demo-col right"> <div class="demo-description">
-      <div class="demo-title">Powerful Pipelines</div>
+      <h2>Powerful Pipelines</h2>
       <p>
         Text pipelines are intuitive and powerful. However, if your data have
         inherently complex structures, passing them through the pipeline
@@ -31,7 +34,7 @@
       $ttyshot control-structures
     </div></div>
     <div class="demo-col right"> <div class="demo-description">
-      <div class="demo-title">Intuitive Control Structures</div>
+      <h2>Intuitive Control Structures</h2>
       <p>
         If you know programming, you probably already know how
         <code>if</code> looks in C. So why learn another syntax?
@@ -47,7 +50,7 @@
       $ttyshot location-mode
     </div></div>
     <div class="demo-col right"> <div class="demo-description">
-      <div class="demo-title">Directory History</div>
+      <h2>Directory History</h2>
       <p>
         Is <code>cd /a/long/nested/directory</code> the first thing you
         do every day? Struggling to remember where your logs and
@@ -65,7 +68,7 @@
       $ttyshot histlist-mode
     </div></div>
     <div class="demo-col right"> <div class="demo-description">
-      <div class="demo-title">Command History</div>
+      <h2>Command History</h2>
       <p>
         Want to find the magical <code>ffmpeg</code> command that you used to
         transcode a video file two months ago?
@@ -86,7 +89,7 @@
       $ttyshot navigation-mode
     </div></div>
     <div class="demo-col right"> <div class="demo-description">
-      <div class="demo-title">Built-in File Manager</div>
+      <h2>Built-in File Manager</h2>
       <p>
         Power of the shell or convenience of a file manager?
       </p>

@@ -1,13 +1,14 @@
 document.addEventListener('DOMContentLoaded', function() {
   var current = 0,
       expanded = true;
-      expander = document.getElementById('demo-expander'),
       demoWindow = document.getElementById("demo-window"),
       demoContainer = document.getElementById("demo-container"),
       demoSwitcher = document.getElementById("demo-switcher"),
       demoWrappers = document.getElementsByClassName("demo-wrapper"),
       nDemos = demoWrappers.length,
       switcherLinks = [];
+
+  /* Functions for scrolling to a certain demo. */
 
   var scrollTo = function(to, instant) {
     if (expanded) {
@@ -32,6 +33,14 @@ document.addEventListener('DOMContentLoaded', function() {
     scrollTo(current);
   }
 
+  /* Build the expander. */
+
+  var li = document.createElement("li"),
+      expander = document.createElement("a");
+  expander.textContent = "↧";
+  li.appendChild(expander);
+  demoSwitcher.appendChild(li);
+
   function expand() {
     expanded = true;
     expander.className = "current";
@@ -46,7 +55,8 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   expander.onclick = expand;
 
-  /* Build demo switcher. */
+  /* Build demo switchers. */
+
   for (var i = 0; i < nDemos; i++) {
     var li = document.createElement("li"),
         link = document.createElement("a");
@@ -68,8 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   /* Switcher built. Hide the warning text, show the expand button, unexpand
    * and hide scrollbar. */
-  document.getElementById('demo-js-warning').className = "no-display";
-  document.getElementById('demo-expander-li').className = "";
+  document.getElementById('no-js').className = "no-display";
   demoContainer.className = "";
   demoWindow.className = "overflow-hidden";
   expanded = false;

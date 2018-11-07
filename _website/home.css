@@ -76,8 +76,8 @@
   }
 }
 
-.demo-title {
-  font-size: 1.3em;
+.demo-description h2 {
+  margin-top: 0;
 }
 
 .demo-col p {
