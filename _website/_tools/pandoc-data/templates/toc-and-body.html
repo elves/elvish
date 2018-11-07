@@ -1,13 +1,17 @@
 <div class="toc">
-  <p>Table of Content: <a id="toc-toggle" href="">[Hide]</a></p>
+  <p>Table of Content: <span id="toc-toggle-wrapper"></span></p>
   <div id="toc-list">
     $toc$
   </div>
   <script>
   (function() {
     var shown = true,
-        tocToggle = document.getElementById('toc-toggle'),
+        tocToggleWrapper = document.getElementById('toc-toggle-wrapper'),
         tocList = document.getElementById('toc-list');
+    var tocToggle = document.createElement('a');
+    tocToggle.innerText = "[Hide]";
+    tocToggle.href = "";
+    tocToggleWrapper.appendChild(tocToggle);
     tocToggle.onclick = function(ev) {
       shown = !shown;
       if (shown) {
