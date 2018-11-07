@@ -50,7 +50,6 @@
       {{ $homepageTitle := .HomepageTitle }}
       {{ $curcat := .Category }}
       {{ range $i, $info := .Categories }}
-        {{ if $i }} | {{ end }}
         <li class="{{ if eq $curcat $info.Name}}current{{ end }}">
           <a href="{{ rootURL }}/{{ $info.Name }}/" class="nav-link">
             <code>

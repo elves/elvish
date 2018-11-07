@@ -135,6 +135,10 @@ a:visited {
     background-color: white;
 }
 
+#nav-list > li + li:before {
+    content: "|";
+}
+
 /**
  * Article header.
  **/
