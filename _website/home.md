@@ -16,7 +16,7 @@
       <h2>Powerful Pipelines</h2>
       <p>
         Text pipelines are intuitive and powerful. However, if your data have
-        inherently complex structures, passing them through the pipeline
+        inherently complex structures, processing them with the pipeline
         often requires a lot of ad-hoc, hard-to-maintain text processing code.
       </p>
       <p>
@@ -37,7 +37,10 @@
         <code>if</code> looks in C. So why learn another syntax?
       </p>
       <p>
-        Control structures in Elvish have an intuitive C-like syntax.
+        Elvish comes with a standard set of control structures: conditional
+        control with <code>if</code>, loops with <code>for</code> and
+        <code>while</code>, and exception handling with <code>try</code>. All
+        of them have a familiar C-like syntax.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
@@ -49,13 +52,14 @@
     <div class="demo-col demo-description">
       <h2>Directory History</h2>
       <p>
-        Is <code>cd /a/long/nested/directory</code> the first thing you
-        do every day? Struggling to remember where your logs and
-        configurations?
+        Do you type far too many <code>cd</code> commands? Do you struggle to
+        remember which <code>deeply/nested/directory</code> your source codes,
+        logs and configuration files are?
       </p>
       <p>
-        Elvish remembers where you have been. Press Ctrl-L and search, like in a
-        browser.
+        Backed by a real database, Elvish remembers all the directories you
+        have been to, all the time. Just press <span class="key">Ctrl-L</span>
+        and search, as you do in a browser.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
@@ -68,15 +72,13 @@
       <h2>Command History</h2>
       <p>
         Want to find the magical <code>ffmpeg</code> command that you used to
-        transcode a video file two months ago?
+        transcode a video file two months ago, but it is burried under a
+        million other commands?
       </p>
       <p>
-        Just dig through your command history with Ctrl-R. Same key, more
-        useful.
-      </p>
-      <p>
-        (To be fair, you can do this in bash with <code>history | grep
-        ffmpeg</code>, but it's far fewer keystrokes in Elvish :)
+        No more cycling through history one command at a time.
+        Press <span class="key">Ctrl-R</span> and start searching your entire
+        command history.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
@@ -88,11 +90,14 @@
     <div class="demo-col demo-description">
       <h2>Built-in File Manager</h2>
       <p>
-        Power of the shell or convenience of a file manager?
+        Want the convenience of a file manager, but can't give up the power of
+        a shell?
       </p>
       <p>
-        Choose both. Press Ctrl-N to quickly navigate directories and preview
-        files, with full shell power.
+        You no longer have to make a choice. Press <span
+        class="key">Ctrl-N</span> to start exploring directories and
+        preview files, with the full power of a shell still under your
+        fingertip.
       </p>
     </div>
     <div class="demo-col demo-ttyshot">
