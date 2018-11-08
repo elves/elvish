@@ -2,18 +2,14 @@
   background-color: #f0ede2;
   margin-bottom: 16px;
   border-radius: 5px;
-  /* Graceful degrading: the demo window starts with a scrollbar, which gets
-   * hiden only when the JavaScript code finishes adding demo switchers. */
-  overflow: scroll;
-}
-
-.overflow-hidden {
-  overflow: hidden !important;
+  overflow: hidden;
 }
 
 .animated-transition {
   transition: all 300ms cubic-bezier(0.165, 0.84, 0.44, 1);
 }
+
+/* Slide view. */
 
 #demo-container {
   transform: translateX(0);
@@ -30,9 +26,12 @@
 #demo-container.expanded {
   width: 100%;
 }
+
 #demo-container.expanded .demo-wrapper {
   width: 100%;
 }
+
+/* Styles for the demos. */
 
 .demo:after {
   content: "";
@@ -113,7 +112,7 @@ ul#demo-switcher > li > a:hover {
   cursor: pointer;
 }
 
-/* Styles for the body layout */
+/* Styles for the body layout. */
 
 @media screen and (min-width: 800px) {
   #columns {

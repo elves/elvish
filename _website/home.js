@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', function() {
    * and hide scrollbar. */
   document.getElementById('no-js').className = "no-display";
   demoContainer.className = "";
-  demoWindow.className = "overflow-hidden";
   expanded = false;
 
   /* Resizing breaks sliding, fix it. */
