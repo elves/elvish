@@ -112,7 +112,7 @@
 
 # <i class="icon-rocket"></i> Run Elvish
 
-*   [Download](download/) a binary
+*   [Download](get/) a binary
 
 *   [Source code](https://github.com/elves/elvish) on GitHub
 

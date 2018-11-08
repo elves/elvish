@@ -3,7 +3,7 @@ This directory contains source for Elvish's official website.
 The documents are written in GitHub-flavored markdown sprinkled with some HTML
 and custom macros. Most of them can be viewed directly in GitHub; notable
 exceptions are the homepage (`home.md`) and the download page
-(`download/prelude.md`).
+(`get/prelude.md`).
 
 # Building
 
@@ -23,9 +23,9 @@ directory. You can then open `_dst/index.html` or run an HTTP server within
 
 **NOTE**: Although the website degrades gracefully when JavaScript is
 disabled, local viewing works best with JavaScript enabled. This is because
-relative paths like `./download` will cause the browser to open the
-corresponding directory, instead of the `index.html` file under it, and we use
-JavaScript to patch such URLs dynamically.
+relative paths like `./get` will cause the browser to open the corresponding
+directory, instead of the `index.html` file under it, and we use JavaScript to
+patch such URLs dynamically.
 
 # Commit History
 
