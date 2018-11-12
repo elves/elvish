@@ -7,7 +7,7 @@ Familiarity with other shells or programming languages is useful but not
 required.
 
 
-# Commands
+# Commands and strings
 
 Let's begin with the traditional "hello world" program:
 
@@ -162,7 +162,7 @@ Since the above command runs `elvish` explicitly, it works in other shells as
 well, not just from Elvish itself.
 
 
-# Variables
+# Variables and lists
 
 To change what a command does, we now need to change the commands themselves.
 For instance, instead of saying "Hello, world!", we might want our command to
@@ -192,86 +192,111 @@ value of the variable, and the command doesn't need to change:
 Hello, Jane!
 ```
 
-**To be continued...**
-
-<!--
-
-# Output capture
-
-The "hello world" program is a classic, but the fact that it always prints the
-same simple message does make it a little bit boring.
-
-One way to make programs more useful is to teach them to do different things
-depending on the context. In the case of our "hello world" program, why not
-teach it to greet whoever is running the program?
+Using variables has another advantage: after defining a variable, you can use
+it as many times as you want:
 
 ```elvish-transcript
-~> echo "Hello, world! Hello, "$E:USER"!"
-Hello, world! Hello, xiaq!
+~> name = Jane
+~> echo Hello, $name!
+Hello, Jane!
+~> echo Bye, $name!
+Bye, Jane!
 ```
 
-There are several things happening here. First, `$E:USER` represents the `USER`
-**environment variable** ("E" being mnemonic for "environment"). In UNIX
-environments, it is usually set to the name of the current user. Second, we
-are running several strings and a variable all together: in this case, Elvish
-will concatenate them for you. Hence the result we see.
+Now, if you change the value of `$name`, the output of both commands will
+change.
 
-Depending on your taste, you might feel that it's nicer to greet the world and
-the user on separate lines. To do this, we can insert `\n`, an **escape
-sequence** representing a newline in our string:
+
+## Environment variables
+
+In the examples above, we have assigned value of `$name` ourselves. We can
+also make the `$name` variable automatically take the name of the current
+user, which is usually kept in an **environment variable** called `USER`. In
+Elvish, environment variables are used like other variables, except that they
+have an `E:` at the front of the name:
 
 ```elvish-transcript
-~> echo "Hello, world!\nHello, "$E:USER"!"
-Hello, world!
-Hello, xiaq!
+~> echo Hello, $E:USER!
+Hello, elf!
+~> echo Bye, $E:USER!
+Bye, elf!
 ```
 
-There are many such sequences starting with a backslash, including `\\` which
-represents the backslash itself. Beware that such escape sequences only work
-within double quotes.
+The outputs will likely differ on your machine.
+
+## Lists and command-line arguments
+
+The values we have stored in variables so far are all strings. It is possible
+to store a **list** of values in one variable; a list can be written by
+surrounding some values with `[` and `]`. For example:
+
+```elvish-transcript
+~> list = [linux bsd macos windows]
+~> echo $list
+[linux bsd macos windows]
+```
+
+Each element of this list has an **index**, starting from 0. In the list
+above, the index of `linux` is 0, that of `bsd` is 1, and so on. We can
+retrieve an element by writing its index after the list, also surrounded by
+`[` and `]`:
+
+```elvish-transcript
+~> echo $list[0] is at index 0
+linux is at index 0
+```
+
+# Output capture and multiple values
 
 Environment variables are not the only way to learn about a computer system;
-we can also gain more information by invoking commands. For instance, the
-`uname` command tells you which operation system the computer is running:
+we can also gain more information by invoking commands. The `uname` command
+tells you which operation system the computer is running; for instance, if you
+are running Linux, it prints `Linux` (unsurprisingly):
 
 ```elvish-transcript
 ~> uname
-Darwin
+Linux
 ```
 
-([Darwin](https://en.wikipedia.org/wiki/Darwin_(operating_system)), by the
-way, is the open-source core of macOS and iOS.)
+(If you are running macOS, `uname` will print `Darwin`, the [open-source
+core](https://en.wikipedia.org/wiki/Darwin_(operating_system)) of macOS.)
 
-To incorporate the output of `uname` into our hello message, we can first
-**capture** its output using parentheses and keep it in a variable using the
-assignment form `variable = value`:
+Let's try to integrate this information into our "hello" message. The Elvish
+command-line allows us to run multiple commands in a batch, as long as they
+are separated by semicolons. We can build the message by running multiple
+commands, using `uname` for the OS part:
+
+```elvish-transcript
+~> echo Hello, $E:USER, ; uname ; echo user!
+Hello, xiaq,
+Linux
+user!
+```
+
+This has the undesirable effect that "Linux" appears on its own line. Instead
+of running this command directly, we can first **capture** its output in a
+variable:
 
 ```elvish-transcript
 ~> os = (uname)
-~> # Variable "os" now contains "Darwin"
+~> echo Hello, $E:USER, $os user!
+Hello, elf, Linux user!
 ```
 
-We can then use this variable, in a similar way to how we used the environment
-variable, just without the `E:` namespace:
+You can also use the output capture construct directly as an argument to
+`echo`, without storing the result in a variable first:
 
 ```elvish-transcript
-~> echo "Hello, "$os" user!"
-Hello, Darwin user!
+~> echo Hello, $E:USER, (uname) user!
+Hello, elf, Linux user!
 ```
 
-I used a variable for demonstration, but it's also possible to forego the
-variable and use the captured output directly:
+## More command captures
 
-```elvish-transcript
-~> echo "Hello, "(uname)" user!"
-Hello, Darwin user!
-```
+## More arithmetics
 
-## It Doesn't Have to be Hello
-
-Output captures can get you quite far in combining commands. For instance, you
-can use output captures to construct do complex arithmetic involving more than
-one operation:
+You can use output captures to construct do complex arithmetic involving more
+than one operation:
 
 ```elvish-transcript
 ~> # compute the answer to life, universe and everything
