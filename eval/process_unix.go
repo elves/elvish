@@ -3,6 +3,7 @@
 package eval
 
 import (
+	"os"
 	"os/signal"
 	"syscall"
 
@@ -12,6 +13,9 @@ import (
 // Process control functions in Unix.
 
 func putSelfInFg() error {
+	if !sys.IsATTY(os.Stdin) {
+		return nil
+	}
 	// If Elvish is in the background, the tcsetpgrp call below will either fail
 	// (if the process is in an orphaned process group) or stop the process.
 	// Ignoring TTOU fixes that.
