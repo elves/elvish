@@ -90,10 +90,14 @@ func makeNavFilePreview(fname string) navPreview {
 	// Issue #699: content could contains control characters, we should hide them for not break the preview.
 	var data strings.Builder
 	for _, v := range content {
-		if (v < 0x20 && v != '\n') || v == 0x7f {
+		if (v < 0x20 && v != '\n' && v != '\t') || v == 0x7f {
 			continue
 		}
-		data.WriteByte(v)
+		if v == '\t' {
+			data.WriteString("    ")
+		} else {
+			data.WriteByte(v)
+		}
 	}
 
 	return newNavFilePreview(strings.Split(data.String(), "\n"))
