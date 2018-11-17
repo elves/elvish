@@ -16,11 +16,11 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func makePrompt(ed *core.Editor, ev *eval.Evaler, ns eval.Ns, computeInit eval.Callable, name string) core.Prompt {
+func makePrompt(nt notifier, ev *eval.Evaler, ns eval.Ns, computeInit eval.Callable, name string) core.Prompt {
 	compute := computeInit
 	ns[name] = vars.FromPtr(&compute)
 	return prompt.New(func() styled.Text {
-		return callPrompt(ed, ev, compute)
+		return callPrompt(nt, ev, compute)
 	})
 }
 
@@ -65,17 +65,17 @@ func getDefaultRPrompt(username, hostname string) eval.Callable {
 
 // callPrompt calls a function with no arguments and closed input, and converts
 // its outputs to styled objects. Used to call prompt callbacks.
-func callPrompt(ed *core.Editor, ev *eval.Evaler, fn eval.Callable) styled.Text {
+func callPrompt(nt notifier, ev *eval.Evaler, fn eval.Callable) styled.Text {
 	ports := []*eval.Port{
 		eval.DevNullClosedChan,
 		{}, // Will be replaced when capturing output
 		{File: os.Stderr},
 	}
 
-	return callForStyledText(ed, ev, fn, ports)
+	return callForStyledText(nt, ev, fn, ports)
 }
 
-func callForStyledText(ed *core.Editor, ev *eval.Evaler, fn eval.Callable, ports []*eval.Port) styled.Text {
+func callForStyledText(nt notifier, ev *eval.Evaler, fn eval.Callable, ports []*eval.Port) styled.Text {
 
 	var (
 		result      styled.Text
@@ -86,7 +86,7 @@ func callForStyledText(ed *core.Editor, ev *eval.Evaler, fn eval.Callable, ports
 		defer resultMutex.Unlock()
 		newResult, err := result.Concat(v)
 		if err != nil {
-			ed.Notify(fmt.Sprintf(
+			nt.Notify(fmt.Sprintf(
 				"invalid output type from prompt: %s", vals.Kind(v)))
 		} else {
 			result = newResult.(styled.Text)
@@ -103,7 +103,7 @@ func callForStyledText(ed *core.Editor, ev *eval.Evaler, fn eval.Callable, ports
 	bytesCb := func(r *os.File) {
 		allBytes, err := ioutil.ReadAll(r)
 		if err != nil {
-			ed.Notify(fmt.Sprintf("error reading prompt byte output: %v", err))
+			nt.Notify(fmt.Sprintf("error reading prompt byte output: %v", err))
 		}
 		if len(allBytes) > 0 {
 			add(string(allBytes))
@@ -115,7 +115,7 @@ func callForStyledText(ed *core.Editor, ev *eval.Evaler, fn eval.Callable, ports
 	err := fm.CallWithOutputCallback(fn, nil, eval.NoOpts, valuesCb, bytesCb)
 
 	if err != nil {
-		ed.Notify(fmt.Sprintf("prompt function error: %v", err))
+		nt.Notify(fmt.Sprintf("prompt function error: %v", err))
 		return nil
 	}
 

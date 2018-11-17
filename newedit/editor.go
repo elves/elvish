@@ -49,6 +49,15 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	ns.AddNs("insert", insertNs)
 
 	// Evaluate default bindings.
+	evalDefaultBinding(ev, ns)
+
+	return &Editor{ed, ns}
+}
+
+func evalDefaultBinding(ev *eval.Evaler, ns eval.Ns) {
+	// TODO(xiaq): The evaler API should accodomate the use case of evaluating a
+	// piece of code in an alternative global namespace.
+
 	n, err := parse.AsChunk("[default bindings]", defaultBindingsElv)
 	if err != nil {
 		panic(err)
@@ -68,8 +77,6 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	if err != nil {
 		panic(err)
 	}
-
-	return &Editor{ed, ns}
 }
 
 // ReadLine reads input from the user.

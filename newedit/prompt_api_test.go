@@ -52,10 +52,7 @@ func TestDefaultRPrompt(t *testing.T) {
 }
 
 func testCallPromptStatic(t *testing.T, f eval.Callable, want styled.Text) {
-	ev := eval.NewEvaler()
-	ed := NewEditor(os.Stdin, os.Stdout, ev)
-
-	content := callPrompt(ed.core, ev, f)
+	content := callPrompt(&dummyNotifier{}, eval.NewEvaler(), f)
 	if !reflect.DeepEqual(content, want) {
 		t.Errorf("get prompt result %v, want %v", content, want)
 	}
@@ -84,21 +81,20 @@ func testCallPrompt(t *testing.T, fsrc string, want styled.Text, wantErr bool) {
 	ev.EvalSourceInTTY(eval.NewScriptSource(
 		"[t]", "[t]", fmt.Sprintf("f = { %s }", fsrc)))
 	f := ev.Global["f"].Get().(eval.Callable)
-	ed := NewEditor(os.Stdin, os.Stdout, ev)
+	nt := &fakeNotifier{}
 
-	content := callPrompt(ed.core, ev, f)
+	content := callPrompt(nt, ev, f)
 	if !reflect.DeepEqual(content, want) {
 		t.Errorf("get prompt result %v, want %v", content, want)
 	}
 
-	notes := ed.core.State().Raw.Notes
 	if wantErr {
-		if len(notes) == 0 {
+		if len(nt.notes) == 0 {
 			t.Errorf("got no error, want errors")
 		}
 	} else {
-		if len(notes) > 0 {
-			t.Errorf("got errors %v, want none", notes)
+		if len(nt.notes) > 0 {
+			t.Errorf("got errors %v, want none", nt.notes)
 		}
 	}
 }
