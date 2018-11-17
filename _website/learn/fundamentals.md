@@ -42,8 +42,8 @@ Hello,  world!
 
 In this version, `echo` only sees one argument containing
 <code>Hello,&nbsp;&nbsp;world</code> (with two spaces). A pair of **double
-quotes** tells Elvish that the text inside it is a single argument; they are
-not part of the argument.
+quotes** tells Elvish that the text inside it is a single argument; the quotes
+themselves are not part of the argument.
 
 On contrary, the `Hello,` and `world!` arguments are implicitly delimited by
 spaces (instead of explicitly by quotes); as such, they are known as
@@ -128,7 +128,7 @@ The command is short, but still, it can become a chore if you want to run it
 repeatedly. Fortunately, Elvish remembers all the commands you have typed;
 you can just ask Elvish to recall it by pressing <span class="key">Up</span>:
 
-TODO: ttyshot
+$ttyshot fundamentals/history-1
 
 This will give you the last command you have run. However, it may have been a
 while when you have last run the `randint` command, and this will not give you
@@ -137,18 +137,15 @@ until you find the command, or you you can give Elvish a hint by typing some
 characters from the command line you want, e.g. `ra`, before pressing <span
 class="key">Up</span>:
 
-TODO: ttyshot
+$ttyshot fundamentals/history-2
 
 Another way to rerun commands is saving them in a **script**, which is simply
 a text file containing the commands you want to run. Using your favorite text
-editor, save the command to `dice.elv` under your home directory.
-Alternatively, you can use `cat` to write the script:
+editor, save the command to `dice.elv` under your home directory:
 
-```elvish-transcript
-~> cat > dice.elv
-# Type the following in the terminal
+```elvish
+# dice.elv
 randint 1 7
-# Now press Enter followed by Ctrl-D
 ```
 
 After saving the script, you can run it with:
@@ -224,7 +221,7 @@ Bye, elf!
 
 The outputs will likely differ on your machine.
 
-## Lists and command-line arguments
+## Lists and indexing
 
 The values we have stored in variables so far are all strings. It is possible
 to store a **list** of values in one variable; a list can be written by
@@ -244,6 +241,82 @@ retrieve an element by writing its index after the list, also surrounded by
 ```elvish-transcript
 ~> echo $list[0] is at index 0
 linux is at index 0
+```
+
+We can even do:
+
+```elvish-transcript
+~> echo [linux bsd macos windows][0] is at index 0
+linux is at index 0
+```
+
+Note that in this example, the two pairs of `[]` have different meanings: the
+first pair denotes lists, while the second pair denotes an indexing operation.
+
+## Script arguments
+
+Recall the `dice.elv` script above:
+
+```elvish
+# dice.elv
+randint 1 7
+```
+
+And how we ran it:
+
+```elvish-transcript
+~> elvish dice.elv
+▶ 4
+```
+
+We were using `elvish` itself as a command, with the sole argument `dice.elv`.
+We can also supply additional arguments:
+
+```elvish-transcript
+~> elvish dice.elv a b c
+▶ 4
+```
+
+But this hasn't made any difference, because well, our `dice.elv` script
+doesn't make use of the arguments.
+
+The arguments are kept in a `$args` variable, as a list. Let's try put this
+into a `echo-args.elv` file in your home directory:
+
+```elvish
+echo $args
+```
+
+And we can run it:
+
+```elvish-transcript
+~> elvish show-args.elv
+[]
+~> elvish show-args.elv foo
+[foo]
+~> elvish show-args.elv foo bar
+[foo bar]
+```
+
+Since `$args` is a list, we can retrieve the individual elements with
+`$args[0]`, `$args[1]`, etc.. Let's rewrite our greet-and-bye script, taking
+the name as an argument. Put this in `greet-and-bye.elv`:
+
+```
+name = $args[0]
+echo Hello, $name!
+echo Bye, $name!
+```
+
+We can run it like this:
+
+```elvish-transcript
+~> elvish greet-and-byte.elv Jane
+Hello, Jane!
+Bye, Jane!
+~> elvish greet-and-byte.elv John
+Hello, John!
+Bye, John!
 ```
 
 # Output capture and multiple values
@@ -290,8 +363,6 @@ You can also use the output capture construct directly as an argument to
 ~> echo Hello, $E:USER, (uname) user!
 Hello, elf, Linux user!
 ```
-
-## More command captures
 
 ## More arithmetics
 

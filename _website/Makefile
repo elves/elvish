@@ -2,7 +2,7 @@ TOOLS_DIR := ./_tools
 DST_DIR = ./_dst
 PUBLISH_DIR := ./_publish
 
-MDS := home.md $(wildcard */*.md)
+MDS := home.md $(wildcard [^_]*/*.md)
 HTMLS := $(MDS:.md=.html)
 
 TOOL_SOURCES := $(wildcard $(TOOLS_DIR)/*.go)

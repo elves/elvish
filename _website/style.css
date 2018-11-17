@@ -343,6 +343,9 @@ pre.ttyshot, pre.ttyshot code {
 .sgr-1 {
     font-weight: bold;
 }
+.sgr-4 {
+    text-decoration: underline;
+}
 .sgr-7 {
     color: white;
     background-color: black;
