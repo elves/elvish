@@ -10,28 +10,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
   /* Functions for scrolling to a certain demo. */
 
-  var scrollTo = function(to, instant) {
+  function scrollTo(to, instant) {
     if (expanded) {
       return;
     }
-    if (current != null) {
-      switcherLinks[current].className = "";
-    }
+    switcherLinks[current].className = "";
+    switcherLinks[to].className = "current";
+
     var translate = -demoWrappers[0].offsetWidth * to;
     demoContainer.className = instant ? "" : "animated-transition";
     demoContainer.style.transform = "translateX(" + translate + "px)";
-    switcherLinks[to].className = "current";
+
     current = to;
   };
-  var scrollToNext = function() {
+  function scrollToNext() {
     scrollTo(current < nDemos - 1 ? current + 1 : current);
   };
-  var scrollToPrev = function() {
+  function scrollToPrev() {
     scrollTo(current > 0 ? current - 1 : current);
   };
-  function scrollToCurrent() {
-    scrollTo(current);
-  }
 
   /* Build the expander. */
 
@@ -47,13 +44,25 @@ document.addEventListener('DOMContentLoaded', function() {
     switcherLinks[current].className = "";
     demoContainer.className = "expanded";
     demoContainer.style.transform = "";
+    expander.textContent = "↥";
   }
   function collapse() {
     switcherLinks[current].className = "current";
     expander.className = "";
     demoContainer.className = "";
+    expander.textContent = "↧";
   }
-  expander.onclick = expand;
+  function toggleExpand() {
+    expanded = !expanded;
+    if (expanded) {
+      expand();
+    } else {
+      collapse();
+      scrollTo(current, true);
+    }
+  }
+
+  expander.onclick = toggleExpand;
 
   /* Build demo switchers. */
 
@@ -65,8 +74,10 @@ document.addEventListener('DOMContentLoaded', function() {
       if (expanded) {
         expanded = false;
         collapse();
+        scrollTo(to, true);
+      } else {
+        scrollTo(to);
       }
-      scrollTo(to);
     }; })(i);
     if (i == 0) {
       link.className = "current";
@@ -120,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
       } else if (offsetX > threshold) {
         scrollToPrev();
       } else {
-        scrollToCurrent();
+        scrollTo(current);
       }
     }
     offsetX = offsetY = baseOffset = 0;
@@ -171,13 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } else if (char == 'l') {
       scrollToNext();
     } else if (char == 'o') {
-      expanded = !expanded;
-      if (expanded) {
-        expand();
-      } else {
-        collapse();
-        scrollToCurrent();
-      }
+      toggleExpand();
     } else {
       var i = parseInt(char);
       if (1 <= i && i <= nDemos) {
