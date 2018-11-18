@@ -19,9 +19,9 @@ func TestRead_ReturnsReturnValueOfHandleCb(t *testing.T) {
 func TestRead_PassesInputEventsToHandler(t *testing.T) {
 	inputPassedEvents := []event{"foo", "bar", "lorem", "ipsum", "^D"}
 	var handlerGotEvents []event
-	handler := func(e event) (string, bool) {
+	handler := func(e event) handleResult {
 		handlerGotEvents = append(handlerGotEvents, e)
-		return "", e == "^D"
+		return handleResult{quit: e == "^D"}
 	}
 
 	ed := newLoop()
@@ -117,7 +117,7 @@ func supplyInputs(ed *loop, events ...event) {
 
 // Returns a HandleCb that quits on a trigger event.
 func quitOn(retTrigger event, ret string) handleCb {
-	return func(e event) (string, bool) {
-		return ret, e == retTrigger
+	return func(e event) handleResult {
+		return handleResult{quit: e == retTrigger, buffer: ret}
 	}
 }

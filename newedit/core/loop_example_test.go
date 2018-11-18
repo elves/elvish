@@ -16,12 +16,12 @@ func ExampleLoop() {
 			fmt.Printf("final buffer is %q\n", buffer)
 		}
 	}
-	handler := func(ev event) (string, bool) {
+	handler := func(ev event) handleResult {
 		if ev == '\n' {
-			return buffer, true
+			return handleResult{quit: true, buffer: buffer}
 		}
 		buffer += string(ev.(rune))
-		return "", false
+		return handleResult{}
 	}
 
 	ed := newLoop()

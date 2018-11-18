@@ -40,9 +40,15 @@ const (
 
 // Callback for handling a terminal event. If quit is true, Read returns with
 // buffer.
-type handleCb func(event) (buffer string, quit bool)
+type handleCb func(event) handleResult
 
-func dummyHandleCb(event) (string, bool) { return "", false }
+func dummyHandleCb(event) handleResult { return handleResult{} }
+
+type handleResult struct {
+	quit   bool
+	err    error
+	buffer string
+}
 
 // newLoop creates a new Loop instance.
 func newLoop() *loop {
@@ -104,10 +110,10 @@ func (ed *loop) Run() (buffer string, err error) {
 			// Consume all events in the channel to minimize redraws.
 		consumeAllEvents:
 			for {
-				buffer, quit := ed.handleCb(event)
-				if quit {
+				result := ed.handleCb(event)
+				if result.quit {
 					ed.redrawCb(finalRedraw)
-					return buffer, nil
+					return result.buffer, result.err
 				}
 				select {
 				case event = <-ed.inputCh:

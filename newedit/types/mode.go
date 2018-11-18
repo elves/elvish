@@ -47,7 +47,9 @@ const (
 	// CommitCode will cause the editor's ReadCode function to return with the
 	// current code.
 	CommitCode
-	// CommitEOF
+	// CommitEOF will cause the editor's ReadCode function to return with
+	// io.EOF.
+	CommitEOF
 )
 
 // A dummy Mode implementation.

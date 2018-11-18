@@ -1,6 +1,7 @@
 package core
 
 import (
+	"io"
 	"os"
 	"sync"
 	"syscall"
@@ -57,28 +58,30 @@ func (ed *Editor) State() *types.State {
 	return &ed.state
 }
 
-func (ed *Editor) handle(e event) (string, bool) {
+func (ed *Editor) handle(e event) handleResult {
 	switch e := e.(type) {
 	case os.Signal:
 		switch e {
 		case syscall.SIGHUP:
-			return "", true
+			return handleResult{quit: true, err: io.EOF}
 		case syscall.SIGINT:
 			ed.state.Reset()
 			ed.triggerPrompts(true)
 		case sys.SIGWINCH:
 			ed.Redraw(true)
 		}
-		return "", false
+		return handleResult{}
 	case tty.Event:
 		action := getMode(ed.state.Mode(), ed.InitMode).HandleEvent(e, &ed.state)
 
 		switch action {
 		case types.CommitCode:
-			return ed.state.Code(), true
+			return handleResult{quit: true, buffer: ed.state.Code()}
+		case types.CommitEOF:
+			return handleResult{quit: true, err: io.EOF}
 		}
 		ed.triggerPrompts(false)
-		return "", false
+		return handleResult{}
 	default:
 		panic("unreachable")
 	}
