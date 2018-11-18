@@ -88,12 +88,12 @@ func (fm *Frame) ResolveVar(n, name string) vars.Var {
 	switch segs[0] {
 	case "e:":
 		if len(segs) == 2 && strings.HasSuffix(segs[1], FnSuffix) {
-			return vars.NewRo(ExternalCmd{Name: segs[1][:len(segs[1])-len(FnSuffix)]})
+			return vars.NewReadOnly(ExternalCmd{Name: segs[1][:len(segs[1])-len(FnSuffix)]})
 		}
 		return nil
 	case "E:":
 		if len(segs) == 2 {
-			return vars.NewEnv(segs[1])
+			return vars.FromEnv(segs[1])
 		}
 		return nil
 	case "local:":

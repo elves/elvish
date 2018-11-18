@@ -67,7 +67,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 
 	// Exposing arg completers.
 	for _, v := range argCompletersData {
-		ns[v.name+eval.FnSuffix] = vars.NewRo(
+		ns[v.name+eval.FnSuffix] = vars.NewReadOnly(
 			&builtinArgCompleter{v.name, v.impl, c.argCompleter})
 	}
 

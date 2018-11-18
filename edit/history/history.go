@@ -47,7 +47,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 
 	historyNs := eval.Ns{
 		"binding": vars.FromPtr(&hist.binding),
-		"list":    vars.NewRo(List{&hist.mutex, ed.Daemon()}),
+		"list":    vars.NewReadOnly(List{&hist.mutex, ed.Daemon()}),
 	}
 	historyNs.AddBuiltinFns("edit:history:", map[string]interface{}{
 		"start":        hist.start,

@@ -7,7 +7,6 @@ import (
 
 var errEnvMustBeString = errors.New("environment variable can only be set string values")
 
-// envVariable represents an environment variable.
 type envVariable struct {
 	name string
 }
@@ -24,7 +23,7 @@ func (ev envVariable) Get() interface{} {
 	return string(os.Getenv(ev.name))
 }
 
-// NewEnv returns an environment variable.
-func NewEnv(name string) Var {
+// FromEnv returns a Var corresponding to the named environment variable.
+func FromEnv(name string) Var {
 	return envVariable{name}
 }

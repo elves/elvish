@@ -10,13 +10,13 @@ import (
 
 var builtinNs = Ns{
 	"_":     vars.NewBlackhole(),
-	"pid":   vars.NewRo(strconv.Itoa(syscall.Getpid())),
-	"ok":    vars.NewRo(OK),
-	"true":  vars.NewRo(true),
-	"false": vars.NewRo(false),
+	"pid":   vars.NewReadOnly(strconv.Itoa(syscall.Getpid())),
+	"ok":    vars.NewReadOnly(OK),
+	"true":  vars.NewReadOnly(true),
+	"false": vars.NewReadOnly(false),
 	"paths": &EnvList{envName: "PATH"},
 	"pwd":   PwdVariable{},
-	"args":  vars.NewRo(vector.Empty),
+	"args":  vars.NewReadOnly(vector.Empty),
 }
 
 func addBuiltinFns(fns map[string]interface{}) {

@@ -11,7 +11,7 @@ import (
 
 func TestExtractExports(t *testing.T) {
 	ns := eval.Ns{
-		exportsVarName: vars.NewRo(vals.EmptyMap.Assoc("a", "lorem")),
+		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc("a", "lorem")),
 	}
 	extractExports(ns, &bytes.Buffer{})
 	if ns.HasName(exportsVarName) {
@@ -24,7 +24,7 @@ func TestExtractExports(t *testing.T) {
 
 func TestExtractExports_IgnoreNonMapExports(t *testing.T) {
 	ns := eval.Ns{
-		exportsVarName: vars.NewRo("x"),
+		exportsVarName: vars.NewReadOnly("x"),
 	}
 	var errBuf bytes.Buffer
 	extractExports(ns, &errBuf)
@@ -35,7 +35,7 @@ func TestExtractExports_IgnoreNonMapExports(t *testing.T) {
 
 func TestExtractExports_IgnoreNonStringKeys(t *testing.T) {
 	ns := eval.Ns{
-		exportsVarName: vars.NewRo(vals.EmptyMap.Assoc(vals.EmptyList, "lorem")),
+		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc(vals.EmptyList, "lorem")),
 	}
 	var errBuf bytes.Buffer
 	extractExports(ns, &errBuf)
@@ -46,8 +46,8 @@ func TestExtractExports_IgnoreNonStringKeys(t *testing.T) {
 
 func TestExtractExports_DoesNotOverwrite(t *testing.T) {
 	ns := eval.Ns{
-		"a":            vars.NewRo("lorem"),
-		exportsVarName: vars.NewRo(vals.EmptyMap.Assoc("a", "ipsum")),
+		"a":            vars.NewReadOnly("lorem"),
+		exportsVarName: vars.NewReadOnly(vals.EmptyMap.Assoc("a", "ipsum")),
 	}
 	var errBuf bytes.Buffer
 	extractExports(ns, &errBuf)

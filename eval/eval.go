@@ -170,7 +170,7 @@ func (ev *Evaler) SetArgs(args []string) {
 	for _, arg := range args {
 		v = v.Cons(arg)
 	}
-	ev.Builtin["args"] = vars.NewRo(v)
+	ev.Builtin["args"] = vars.NewReadOnly(v)
 }
 
 // SetLibDir sets the library directory, in which external modules are to be
