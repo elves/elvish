@@ -207,6 +207,49 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 	cleanup(terminal, codeCh)
 }
 
+func TestReadCode_TriggersPrompt(t *testing.T) {
+	ed, terminal, _ := setup()
+
+	called := 0
+	ed.Prompt = fakePrompt{trigger: func(bool) { called++ }}
+
+	codeCh, _ := ed.readCodeAsync()
+	cleanup(terminal, codeCh)
+
+	if called != 1 {
+		t.Errorf("Prompt.Trigger called %d times, want once", called)
+	}
+}
+
+func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
+	ed, terminal, _ := setup()
+
+	promptContent := "old"
+	prompt := fakePrompt{
+		get:         func() styled.Text { return styled.Unstyled(promptContent) },
+		lateUpdates: make(chan styled.Text),
+	}
+	ed.Prompt = prompt
+
+	codeCh, _ := ed.readCodeAsync()
+	bufOldPrompt := ui.NewBufferBuilder(80).
+		WriteUnstyled("old").SetDotToCursor().Buffer()
+	// Wait until old prompt is rendered
+	if !checkBuffer(bufOldPrompt, terminal.BufCh) {
+		t.Errorf("Did not see buffer containing old prompt")
+	}
+
+	promptContent = "new"
+	prompt.lateUpdates <- nil
+	bufNewPrompt := ui.NewBufferBuilder(80).
+		WriteUnstyled("new").SetDotToCursor().Buffer()
+	if !checkBuffer(bufNewPrompt, terminal.BufCh) {
+		t.Errorf("Did not see buffer containing new prompt")
+	}
+
+	cleanup(terminal, codeCh)
+}
+
 func TestReadCode_SupportsPersistentRPrompt(t *testing.T) {
 	// TODO
 }

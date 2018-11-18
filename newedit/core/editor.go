@@ -58,8 +58,15 @@ func (ed *Editor) State() *types.State {
 	return &ed.state
 }
 
+// A special event type signalling something has seen a late update and a
+// refresh is needed. This is currently only used for refreshing prompts.
+type lateUpdate struct{}
+
 func (ed *Editor) handle(e event) handleResult {
 	switch e := e.(type) {
+	case lateUpdate:
+		ed.Redraw(false)
+		return handleResult{}
 	case os.Signal:
 		switch e {
 		case syscall.SIGHUP:
@@ -164,8 +171,31 @@ func (ed *Editor) ReadCode() (string, error) {
 		}()
 	}
 
+	// Relay late prompt/rprompt updates.
+	stopRelayLateUpdates := make(chan struct{})
+	defer close(stopRelayLateUpdates)
+	relayLateUpdates := func(p Prompt) {
+		if p == nil {
+			return
+		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-p.LateUpdates():
+					ed.loop.Input(lateUpdate{})
+				case <-stopRelayLateUpdates:
+					return
+				}
+			}
+		}()
+	}
+	relayLateUpdates(ed.Prompt)
+	relayLateUpdates(ed.RPrompt)
+
+	// Trigger an initial prompt update.
 	ed.triggerPrompts(true)
-	// TODO: relay late prompt/rprompt updates.
 
 	// Reset state before returning.
 	defer ed.state.Reset()

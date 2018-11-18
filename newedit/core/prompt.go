@@ -28,9 +28,26 @@ func (constPrompt) Trigger(force bool)              {}
 func (p constPrompt) Get() styled.Text              { return p.t }
 func (constPrompt) LateUpdates() <-chan styled.Text { return nil }
 
-// Wraps a function into a Prompt.
-type syncPrompt struct{ f func() styled.Text }
+// A Prompt implementation useful for testing.
+type fakePrompt struct {
+	trigger     func(force bool)
+	get         func() styled.Text
+	lateUpdates chan styled.Text
+}
 
-func (syncPrompt) Trigger(force bool)              {}
-func (p syncPrompt) Get() styled.Text              { return p.f() }
-func (syncPrompt) LateUpdates() <-chan styled.Text { return nil }
+func (p fakePrompt) Trigger(force bool) {
+	if p.trigger != nil {
+		p.trigger(force)
+	}
+}
+
+func (p fakePrompt) Get() styled.Text {
+	if p.get != nil {
+		return p.get()
+	}
+	return nil
+}
+
+func (p fakePrompt) LateUpdates() <-chan styled.Text {
+	return p.lateUpdates
+}
