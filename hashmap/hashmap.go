@@ -317,6 +317,9 @@ func (n *bitmapNode) unpack(shift, idx uint32, newChild node, h Hash, eq Equal) 
 }
 
 func (n *bitmapNode) withoutEntry(bit, idx uint32) *bitmapNode {
+	if n.bitmap == bit {
+		return emptyBitmapNode
+	}
 	return &bitmapNode{n.bitmap ^ bit, withoutEntry(n.entries, idx)}
 }
 
@@ -387,11 +390,7 @@ func (n *bitmapNode) without(shift, hash uint32, k interface{}, eq Equal) (node,
 		if newChild == child {
 			return n, false
 		}
-		if newChild == nil {
-			// Sole element in subtree deleted
-			if n.bitmap == bit {
-				return emptyBitmapNode, true
-			}
+		if newChild == emptyBitmapNode {
 			return n.withoutEntry(bit, idx), true
 		}
 		return n.withReplacedEntry(idx, mapEntry{nil, newChild}), deleted
@@ -494,7 +493,7 @@ func (n *collisionNode) without(shift, hash uint32, k interface{}, eq Equal) (no
 		return n, false
 	}
 	if len(n.entries) == 1 {
-		return nil, true
+		return emptyBitmapNode, true
 	}
 	return &collisionNode{n.hash, withoutEntry(n.entries, uint32(idx))}, true
 }
