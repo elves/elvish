@@ -222,7 +222,8 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 	}
 
 	// Effective ones.
-	for i := len(refEntries) - 1; i >= 0; i-- {
+	for x := 0; x < len(refEntries); x++ {
+		i := rand.Intn(len(refEntries))
 		k := refEntries[i].k
 		delete(ref, k)
 		m = m.Dissoc(k)
@@ -236,6 +237,7 @@ func testHashMapWithRefEntries(t *testing.T, refEntries []refEntry) {
 		// Checking all elements is expensive. Only do this 1% of the time.
 		if rand.Float64() < 0.01 {
 			testMapContent(t, m, ref)
+			testIterator(t, m, ref)
 		}
 	}
 }
