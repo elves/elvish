@@ -33,6 +33,7 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 			"binding-map":  makeBindingMap,
 			"exit-binding": exitBinding,
 			"commit-code":  commitCode,
+			"commit-eof":   commitEOF,
 		})
 
 	// Hooks

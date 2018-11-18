@@ -23,9 +23,18 @@ func exitBinding() error {
 
 //elvish:doc-fn commit-code
 //
-// Causes the current editor session to terminate, committing the code that is
-// being edited. Internally, this works by raising a special exception.
+// Causes the Elvish REPL to end the current read iteration and evaluate the
+// code it just read. Internally, this works by raising a special exception.
 
 func commitCode() error {
 	return editutil.ActionError(types.CommitCode)
+}
+
+//elvish:doc-fn commit-eof
+//
+// Causes the Elvish REPL to terminate. Internally, this works by raising a
+// special exception.
+
+func commitEOF() error {
+	return editutil.ActionError(types.CommitEOF)
 }
