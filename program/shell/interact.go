@@ -133,7 +133,7 @@ func extractExports(ns eval.Ns, stderr io.Writer) {
 				name, exportsVarName, name)
 			continue
 		}
-		ns.Add(name, vars.NewAnyWithInit(v))
+		ns.Add(name, vars.FromInit(v))
 	}
 }
 

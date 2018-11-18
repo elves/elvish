@@ -2,7 +2,7 @@ package vars
 
 import "testing"
 
-func TestPtrVariable(t *testing.T) {
+func TestFromPtr_UsesUnderlyingValue(t *testing.T) {
 	i := 10
 	variable := FromPtr(&i)
 	if g := variable.Get(); g != "10" {
@@ -18,5 +18,13 @@ func TestPtrVariable(t *testing.T) {
 	err = variable.Set("x")
 	if err == nil {
 		t.Errorf("Setting ptrVariable with incompatible value returns no error")
+	}
+}
+
+func TestFromInit_AllowsAnyType(t *testing.T) {
+	variable := FromInit(10)
+	err := variable.Set("x")
+	if err != nil {
+		t.Errorf("Failed to set variable created with FromInit: %v", err)
 	}
 }

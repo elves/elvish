@@ -46,7 +46,7 @@ func nsFn(m hashmap.Map) (Ns, error) {
 		if !ok {
 			return nil, errKeyMustBeString
 		}
-		ns[kstring] = vars.NewAnyWithInit(v)
+		ns[kstring] = vars.FromInit(v)
 	}
 	return ns, nil
 }

@@ -103,10 +103,10 @@ func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 	// options.
 	fm.local = make(Ns)
 	for i, name := range c.ArgNames {
-		fm.local[name] = vars.NewAnyWithInit(args[i])
+		fm.local[name] = vars.FromInit(args[i])
 	}
 	if c.RestArg != "" {
-		fm.local[c.RestArg] = vars.NewAnyWithInit(vals.MakeList(args[len(c.ArgNames):]...))
+		fm.local[c.RestArg] = vars.FromInit(vals.MakeList(args[len(c.ArgNames):]...))
 	}
 	optUsed := make(map[string]struct{})
 	for i, name := range c.OptNames {
@@ -116,7 +116,7 @@ func (c *Closure) Call(fm *Frame, args []interface{}, opts map[string]interface{
 		} else {
 			v = c.OptDefaults[i]
 		}
-		fm.local[name] = vars.NewAnyWithInit(v)
+		fm.local[name] = vars.FromInit(v)
 	}
 	for name := range opts {
 		_, used := optUsed[name]

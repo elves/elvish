@@ -194,7 +194,7 @@ func (op fnOp) invoke(fm *Frame) error {
 	// Initialize the function variable with the builtin nop function. This step
 	// allows the definition of recursive functions; the actual function will
 	// never be called.
-	fm.local[op.varName] = vars.NewAnyWithInit(NewBuiltinFn("<shouldn't be called>", nop))
+	fm.local[op.varName] = vars.FromInit(NewBuiltinFn("<shouldn't be called>", nop))
 	values, err := op.lambdaOp.invoke(fm)
 	if err != nil {
 		return err

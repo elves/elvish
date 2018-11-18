@@ -133,7 +133,7 @@ func (op varOp) invoke(fm *Frame) ([]vars.Var, error) {
 				val := Ns(nil)
 				variable = vars.FromPtr(&val)
 			} else {
-				variable = vars.NewAnyWithInit(nil)
+				variable = vars.FromInit(nil)
 			}
 			fm.local[op.name] = variable
 		} else {
