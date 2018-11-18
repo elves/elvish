@@ -34,7 +34,7 @@ func init() {
 
 	username := "???"
 	if userErr == nil {
-		username = user.Name
+		username = user.Username
 	}
 	hostname, err := os.Hostname()
 	if err != nil {
