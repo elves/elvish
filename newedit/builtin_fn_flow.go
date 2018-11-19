@@ -1,16 +1,9 @@
 package newedit
 
 import (
-	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/newedit/editutil"
 	"github.com/elves/elvish/newedit/types"
 )
-
-//elvish:doc-fn binding-map
-//
-// Converts a normal map into a binding map.
-
-var makeBindingMap = eddefs.MakeBindingMap
 
 //elvish:doc-fn exit-binding
 //
