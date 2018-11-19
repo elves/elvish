@@ -277,7 +277,7 @@ func TestParseError(t *testing.T) {
 			t.Errorf("Parse(%q) returns no error", tc.src)
 			continue
 		}
-		posErr0 := err.(*Error).Entries[0]
+		posErr0 := err.(MultiError).Entries[0]
 		if posErr0.Context.Begin != tc.pos {
 			t.Errorf("Parse(%q) first error begins at %d, want %d. Errors are:%s\n", tc.src, posErr0.Context.Begin, tc.pos, err)
 		}

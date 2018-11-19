@@ -19,12 +19,12 @@ type parser struct {
 	src     string
 	pos     int
 	overEOF int
-	errors  Error
+	errors  MultiError
 }
 
 // newParser creates a new parser from a piece of source text and its name.
 func newParser(srcname, src string) *parser {
-	return &parser{srcname, src, 0, 0, Error{}}
+	return &parser{srcname, src, 0, 0, MultiError{}}
 }
 
 func (ps *parser) parse(n Node) parsed {
@@ -65,7 +65,7 @@ func (ps *parser) done() {
 // Assembles all parsing errors as one, or returns nil if there were no errors.
 func (ps *parser) assembleError() error {
 	if len(ps.errors.Entries) > 0 {
-		return &ps.errors
+		return ps.errors
 	}
 	return nil
 }

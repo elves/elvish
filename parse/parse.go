@@ -20,7 +20,7 @@ import (
 )
 
 // AsChunk parses the given source as a Chunk. If the error is not nil, it
-// always has type ParseError.
+// always has type MultiError.
 func AsChunk(srcname, src string) (*Chunk, error) {
 	n := &Chunk{}
 	err := As(srcname, src, n)
@@ -28,7 +28,7 @@ func AsChunk(srcname, src string) (*Chunk, error) {
 }
 
 // As parses the given source as a node, depending on the dynamic type of n. If
-// the error is not nil, it always has type *Error.
+// the error is not nil, it always has type MultiError.
 func As(srcname, src string, n Node) error {
 	ps := newParser(srcname, src)
 	ps.parse(n)

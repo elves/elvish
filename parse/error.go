@@ -1,70 +1,76 @@
 package parse
 
 import (
-	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/elves/elvish/diag"
 )
 
-// ErrorEntry represents one parse error.
-type ErrorEntry struct {
+// MultiError stores multiple Error's and can pretty print them.
+type MultiError struct {
+	Entries []*Error
+}
+
+// Error represents one parse error.
+type Error struct {
 	Message string
 	Context diag.SourceRange
 }
 
-// Error stores multiple ErrorEntry's and can pretty print them.
-type Error struct {
-	Entries []*ErrorEntry
-}
-
-func (pe *Error) add(msg string, ctx *diag.SourceRange) {
-	pe.Entries = append(pe.Entries, &ErrorEntry{msg, *ctx})
+func (me *MultiError) add(msg string, ctx *diag.SourceRange) {
+	me.Entries = append(me.Entries, &Error{msg, *ctx})
 }
 
 // Error returns a string representation of the error.
-func (pe *Error) Error() string {
-	switch len(pe.Entries) {
+func (me MultiError) Error() string {
+	switch len(me.Entries) {
 	case 0:
 		return "no parse error"
 	case 1:
-		e := pe.Entries[0]
-		return fmt.Sprintf("parse error: %d-%d in %s: %s",
-			e.Context.Begin, e.Context.End, e.Context.Name, e.Message)
+		return me.Entries[0].Error()
 	default:
-		buf := new(bytes.Buffer)
+		sb := new(strings.Builder)
 		// Contexts of parse error entries all have the same name
-		fmt.Fprintf(buf, "multiple parse errors in %s: ", pe.Entries[0].Context.Name)
-		for i, e := range pe.Entries {
+		fmt.Fprintf(sb, "multiple parse errors in %s: ", me.Entries[0].Context.Name)
+		for i, e := range me.Entries {
 			if i > 0 {
-				fmt.Fprint(buf, "; ")
+				fmt.Fprint(sb, "; ")
 			}
-			fmt.Fprintf(buf, "%d-%d: %s", e.Context.Begin, e.Context.End, e.Message)
+			fmt.Fprintf(sb, "%d-%d: %s", e.Context.Begin, e.Context.End, e.Message)
 		}
-		return buf.String()
+		return sb.String()
 	}
 }
 
 // PPrint pretty-prints the error.
-func (pe *Error) PPrint(indent string) string {
-	buf := new(bytes.Buffer)
-
-	switch len(pe.Entries) {
+func (me MultiError) PPrint(indent string) string {
+	switch len(me.Entries) {
 	case 0:
 		return "no parse error"
 	case 1:
-		e := pe.Entries[0]
-		fmt.Fprintf(buf, "Parse error: \033[31;1m%s\033[m\n", e.Message)
-		buf.WriteString(e.Context.PPrintCompact(indent + "  "))
+		return me.Entries[0].PPrint(indent)
 	default:
-		fmt.Fprint(buf, "Multiple parse errors:")
-		for _, e := range pe.Entries {
-			buf.WriteString("\n" + indent + "  ")
-			fmt.Fprintf(buf, "\033[31;1m%s\033[m\n", e.Message)
-			buf.WriteString(indent + "    ")
-			buf.WriteString(e.Context.PPrint(indent + "      "))
+		sb := new(strings.Builder)
+		fmt.Fprint(sb, "Multiple parse errors:")
+		for _, e := range me.Entries {
+			sb.WriteString("\n" + indent + "  ")
+			fmt.Fprintf(sb, "\033[31;1m%s\033[m\n", e.Message)
+			sb.WriteString(indent + "    ")
+			sb.WriteString(e.Context.PPrint(indent + "      "))
 		}
+		return sb.String()
 	}
+}
 
-	return buf.String()
+func (e *Error) Error() string {
+	return fmt.Sprintf("parse error: %d-%d in %s: %s",
+		e.Context.Begin, e.Context.End, e.Context.Name, e.Message)
+}
+
+func (e *Error) PPrint(indent string) string {
+	sb := new(strings.Builder)
+	fmt.Fprintf(sb, "Parse error: \033[31;1m%s\033[m\n", e.Message)
+	sb.WriteString(e.Context.PPrintCompact(indent + "  "))
+	return sb.String()
 }
