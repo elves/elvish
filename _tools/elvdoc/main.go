@@ -2,33 +2,88 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
 
 func main() {
-	args := os.Args[1:]
-	if len(args) == 0 {
-		extract(os.Stdin, os.Stdout)
+	run(os.Args[1:], os.Stdin, os.Stdout)
+}
+
+var (
+	recursive = flag.Bool("R", false, "recursively read from all .go files")
+)
+
+func run(args []string, in io.Reader, out io.Writer) {
+	flag.CommandLine.Parse(args)
+	args = flag.Args()
+	if *recursive {
+		var paths []string
+		for _, dir := range args {
+			morePaths := getAllGoFiles(dir)
+			paths = append(paths, morePaths...)
+		}
+		extractFromFiles(paths, out)
 	} else {
-		for _, arg := range args {
-			extractFile(arg, os.Stdout)
+		if len(args) == 0 {
+			extract(in, out)
+		} else {
+			extractFromFiles(args, out)
 		}
 	}
 }
 
-func extractFile(name string, w io.Writer) {
-	f, err := os.Open(name)
+func extractFromFiles(paths []string, out io.Writer) {
+	reader, cleanup, err := multiFile(paths)
 	if err != nil {
-		log.Printf("open %v: %v", name, err)
-		return
+		log.Fatal(err)
 	}
-	defer f.Close()
-	extract(f, w)
+	defer cleanup()
+	extract(reader, out)
+}
+
+func getAllGoFiles(dir string) []string {
+	var paths []string
+	err := filepath.Walk(dir, func(path string, _ os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if filepath.Ext(path) == ".go" {
+			paths = append(paths, path)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatalf("walk %v: %v", dir, err)
+	}
+	return paths
+}
+
+func multiFile(names []string) (io.Reader, func(), error) {
+	readers := make([]io.Reader, len(names))
+	closers := make([]io.Closer, len(names))
+	for i, name := range names {
+		file, err := os.Open(name)
+		if err != nil {
+			for j := 0; j < i; j++ {
+				closers[j].Close()
+			}
+			return nil, nil, err
+		}
+		readers[i] = file
+		closers[i] = file
+	}
+	return io.MultiReader(readers...), func() {
+		for _, closer := range closers {
+			closer.Close()
+		}
+	}, nil
 }
 
 func extract(r io.Reader, w io.Writer) {
@@ -85,7 +140,7 @@ func extract(r io.Reader, w io.Writer) {
 
 		if err != nil {
 			if err != io.EOF {
-				log.Printf("read: %v", err)
+				log.Fatalf("read: %v", err)
 			}
 			break
 		}
