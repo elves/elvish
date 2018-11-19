@@ -16,7 +16,7 @@ var extractTests = []struct {
 	{"Source with doc-fn",
 		`package x
 
-//elvish:doc-fn cd
+//elvdoc:fn cd
 //
 // Changes directory.
 `,
@@ -30,13 +30,13 @@ Changes directory.
 	{"Source with multiple doc-fn",
 		`package x
 
-//elvish:doc-fn b
+//elvdoc:fn b
 // B.
 
-//elvish:doc-fn a
+//elvdoc:fn a
 // A.
 
-//elvish:doc-fn c
+//elvdoc:fn c
 // C.
 `,
 		`# Functions
@@ -55,10 +55,10 @@ C.
 	{"Source with both doc-fn and var-fn",
 		`package x
 
-//elvish:doc-fn a
+//elvdoc:fn a
 // A.
 
-//elvish:doc-var $b
+//elvdoc:var $b
 // B.
 `,
 		`# Variables
@@ -77,7 +77,7 @@ A.
 	{"Source without trailing newline",
 		`package x
 
-//elvish:doc-fn a
+//elvdoc:fn a
 // A.`, `# Functions
 
 ## a

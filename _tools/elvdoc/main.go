@@ -68,8 +68,8 @@ func extract(r io.Reader, w io.Writer) {
 		line, err := bufr.ReadString('\n')
 
 		const (
-			varDocPrefix = "//elvish:doc-var "
-			fnDocPrefix  = "//elvish:doc-fn "
+			varDocPrefix = "//elvdoc:var "
+			fnDocPrefix  = "//elvdoc:fn "
 		)
 
 		if err == nil {
