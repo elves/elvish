@@ -70,23 +70,64 @@ func makeKill(s *types.State, m pureMover) func() {
 
 // Implementation of pure movers.
 
+//elvish:doc-fn move-dot-left
+//
+// Moves the dot left one rune. Does nothing if the dot is at the beginning of
+// the buffer.
+
+//elvish:doc-fn kill-dot-left
+//
+// Kills one rune left of the dot. Does nothing if the dot is at the beginning of
+// the buffer.
+
 func moveDotLeft(buffer string, dot int) int {
 	_, w := utf8.DecodeLastRuneInString(buffer[:dot])
 	return dot - w
 }
+
+//elvish:doc-fn move-dot-right
+//
+// Moves the dot right one rune. Does nothing if the dot is at the end of the
+// buffer.
+
+//elvish:doc-fn kill-dot-left
+//
+// Kills one rune right of the dot. Does nothing if the dot is at the end of the
+// buffer.
 
 func moveDotRight(buffer string, dot int) int {
 	_, w := utf8.DecodeRuneInString(buffer[dot:])
 	return dot + w
 }
 
+//elvish:doc-fn move-dot-sol
+//
+// Moves the dot to the start of the current line.
+
+//elvish:doc-fn kill-dot-sol
+//
+// Deletes the text between the dot and the start of the current line.
+
 func moveDotSOL(buffer string, dot int) int {
 	return util.FindLastSOL(buffer[:dot])
 }
 
+//elvish:doc-fn move-dot-eol
+//
+// Moves the dot to the end of the current line.
+
+//elvish:doc-fn kill-dot-eol
+//
+// Deletes the text between the dot and the end of the current line.
+
 func moveDotEOL(buffer string, dot int) int {
 	return util.FindFirstEOL(buffer[dot:]) + dot
 }
+
+//elvish:doc-fn move-dot-up
+//
+// Moves the dot up one line, trying to preserve the visual horizontal position.
+// Does nothing if dot is already on the first line of the buffer.
 
 func moveDotUp(buffer string, dot int) int {
 	sol := util.FindLastSOL(buffer[:dot])
@@ -99,6 +140,11 @@ func moveDotUp(buffer string, dot int) int {
 	width := util.Wcswidth(buffer[sol:dot])
 	return prevSOL + len(util.TrimWcwidth(buffer[prevSOL:prevEOL], width))
 }
+
+//elvish:doc-fn move-dot-down
+//
+// Moves the dot down one line, trying to preserve the visual horizontal
+// position. Does nothing if dot is already on the last line of the buffer.
 
 func moveDotDown(buffer string, dot int) int {
 	eol := util.FindFirstEOL(buffer[dot:]) + dot
@@ -113,9 +159,27 @@ func moveDotDown(buffer string, dot int) int {
 	return nextSOL + len(util.TrimWcwidth(buffer[nextSOL:nextEOL], width))
 }
 
+// TODO(xiaq): Document the concepts of words, small words and alnum words.
+
+//elvish:doc-fn move-dot-left-word
+//
+// Moves the dot to the beginning of the last word to the left of the dot.
+
+//elvish:doc-fn kill-dot-left-word
+//
+// Deletes the the last word to the left of the dot.
+
 func moveDotLeftWord(buffer string, dot int) int {
 	return moveDotLeftGeneralWord(categorizeWord, buffer, dot)
 }
+
+//elvish:doc-fn move-dot-right-word
+//
+// Moves the dot to the beginning of the first word to the right of the dot.
+
+//elvish:doc-fn kill-dot-right-word
+//
+// Deletes the the first word to the right of the dot.
 
 func moveDotRightWord(buffer string, dot int) int {
 	return moveDotRightGeneralWord(categorizeWord, buffer, dot)
@@ -130,9 +194,25 @@ func categorizeWord(r rune) int {
 	}
 }
 
+//elvish:doc-fn move-dot-left-small-word
+//
+// Moves the dot to the beginning of the last small word to the left of the dot.
+
+//elvish:doc-fn kill-dot-left-small-word
+//
+// Deletes the the last small word to the left of the dot.
+
 func moveDotLeftSmallWord(buffer string, dot int) int {
 	return moveDotLeftGeneralWord(categorizeSmallWord, buffer, dot)
 }
+
+//elvish:doc-fn move-dot-right-small-word
+//
+// Moves the dot to the beginning of the first small word to the right of the dot.
+
+//elvish:doc-fn kill-dot-right-small-word
+//
+// Deletes the the first small word to the right of the dot.
 
 func moveDotRightSmallWord(buffer string, dot int) int {
 	return moveDotRightGeneralWord(categorizeSmallWord, buffer, dot)
@@ -149,9 +229,25 @@ func categorizeSmallWord(r rune) int {
 	}
 }
 
+//elvish:doc-fn move-dot-left-alnum-word
+//
+// Moves the dot to the beginning of the last alnum word to the left of the dot.
+
+//elvish:doc-fn kill-dot-left-alnum-word
+//
+// Deletes the the last alnum word to the left of the dot.
+
 func moveDotLeftAlnumWord(buffer string, dot int) int {
 	return moveDotLeftGeneralWord(categorizeAlnum, buffer, dot)
 }
+
+//elvish:doc-fn move-dot-right-alnum-word
+//
+// Moves the dot to the beginning of the first alnum word to the right of the dot.
+
+//elvish:doc-fn kill-dot-right-alnum-word
+//
+// Deletes the the first alnum word to the right of the dot.
 
 func moveDotRightAlnumWord(buffer string, dot int) int {
 	return moveDotRightGeneralWord(categorizeAlnum, buffer, dot)
