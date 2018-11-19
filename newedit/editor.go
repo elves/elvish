@@ -34,7 +34,8 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 			"exit-binding": exitBinding,
 			"commit-code":  commitCode,
 			"commit-eof":   commitEOF,
-		})
+		}).
+		AddBuiltinFns("<edit>", bufferBuiltins(ed.State()))
 
 	// Hooks
 	ns["before-readline"], ed.BeforeReadline = initBeforeReadline(ev)
