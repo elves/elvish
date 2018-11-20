@@ -12,7 +12,11 @@ func Highlight(code string) (styled.Text, []error) {
 
 	n, errParse := parse.AsChunk("[interactive]", code)
 	if errParse != nil {
-		errors = append(errors, errParse)
+		for _, err := range errParse.(parse.MultiError).Entries {
+			if err.Context.Begin != len(code) {
+				errors = append(errors, err)
+			}
+		}
 	}
 	// TODO: Add compilation errors.
 	var text styled.Text
