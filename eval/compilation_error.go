@@ -18,6 +18,11 @@ func (ce *CompilationError) Error() string {
 		ce.Context.Begin, ce.Context.End, ce.Context.Name, ce.Message)
 }
 
+// Range returns the range of the compilation error.
+func (ce *CompilationError) Range() diag.Ranging {
+	return ce.Context.Range()
+}
+
 // PPrint pretty-prints a compilation error.
 func (ce *CompilationError) PPrint(indent string) string {
 	var buf bytes.Buffer

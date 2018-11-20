@@ -25,6 +25,11 @@ func NewSourceRange(name, source string, begin, end int) *SourceRange {
 	return &SourceRange{name, source, begin, end, nil}
 }
 
+// Range returns the range of the SourceRange.
+func (sr *SourceRange) Range() Ranging {
+	return Ranging{sr.Begin, sr.End}
+}
+
 // Information about the source range that are needed for pretty-printing.
 type rangePPrintInfo struct {
 	// Head is the piece of text immediately before Culprit, extending to, but
