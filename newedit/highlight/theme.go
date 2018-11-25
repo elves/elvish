@@ -27,3 +27,8 @@ var transformerFor = map[string]string{
 	commandRegion: "green",
 	keywordRegion: "yellow",
 }
+
+var (
+	transformerForGoodCommand = "green"
+	transformerForBadCommand  = "red"
+)

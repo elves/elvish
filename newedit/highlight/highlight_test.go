@@ -1,12 +1,16 @@
 package highlight
 
 import (
+	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
 )
+
+var noErrors []error
 
 type errorsMatcher struct{ matchers []tt.Matcher }
 
@@ -37,10 +41,11 @@ type anyMatcher struct{}
 func (anyMatcher) Match(tt.RetValue) bool { return true }
 
 func TestHighlight(t *testing.T) {
-	var noErrors []error
 	any := anyMatcher{}
 
-	tt.Test(t, tt.Fn("Highlight", Highlight), tt.Table{
+	hl := Highlighter{}
+
+	tt.Test(t, tt.Fn("Highlight", hl.Highlight), tt.Table{
 		Args("ls").Rets(styled.Text{
 			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
 		}, noErrors),
@@ -56,5 +61,51 @@ func TestHighlight(t *testing.T) {
 		Args("ls [").Rets(any, noErrors),
 
 		// TODO: Test for multiple parse errors
+	})
+}
+
+type fakeCheckError struct {
+	from, to int
+}
+
+func (e fakeCheckError) Range() diag.Ranging {
+	return diag.Ranging{e.from, e.to}
+}
+
+func (fakeCheckError) Error() string {
+	return "fake check error"
+}
+
+func TestHighlight_Check(t *testing.T) {
+	var checkError error
+	hl := Highlighter{Check: func(n *parse.Chunk) error {
+		return checkError
+	}}
+
+	checkError = fakeCheckError{0, 2}
+	_, errors := hl.Highlight("code")
+	if !reflect.DeepEqual(errors, []error{checkError}) {
+		t.Errorf("Got errors %v, want %v", errors, []error{checkError})
+	}
+
+	// Errors at the end
+	checkError = fakeCheckError{4, 4}
+	_, errors = hl.Highlight("code")
+	if len(errors) != 0 {
+		t.Errorf("Got errors %v, want 0 error", errors)
+	}
+}
+
+func TestHighlight_HasCommand(t *testing.T) {
+	hl := Highlighter{HasCommand: func(cmd string) bool {
+		return cmd == "ls"
+	}}
+	tt.Test(t, tt.Fn("Highlight", hl.Highlight), tt.Table{
+		Args("ls").Rets(styled.Text{
+			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
+		}, noErrors),
+		Args("echo").Rets(styled.Text{
+			&styled.Segment{styled.Style{Foreground: "red"}, "echo"},
+		}, noErrors),
 	})
 }
