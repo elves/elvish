@@ -147,9 +147,11 @@ var bufChTimeout = 1 * time.Second
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	ed, terminal, _ := setup()
 
-	ed.Highlighter = func(code string) (styled.Text, []error) {
-		return styled.Text{
-			&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
+	ed.Highlighter = fakeHighlighter{
+		get: func(code string) (styled.Text, []error) {
+			return styled.Text{
+				&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
+		},
 	}
 	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 	terminal.EventCh <- tty.KeyEvent{Rune: 'b'}
@@ -168,6 +170,10 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 }
 
 func TestReadCode_RendersErrorFromHighlighter(t *testing.T) {
+	// TODO
+}
+
+func TestReadCode_RedrawsOnHighlighterLateUpdate(t *testing.T) {
 	// TODO
 }
 

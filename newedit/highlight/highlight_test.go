@@ -43,22 +43,22 @@ func (anyMatcher) Match(tt.RetValue) bool { return true }
 func TestHighlight(t *testing.T) {
 	any := anyMatcher{}
 
-	hl := Highlighter{}
+	dep := hlDep{}
 
-	tt.Test(t, tt.Fn("Highlight", hl.Highlight), tt.Table{
-		Args("ls").Rets(styled.Text{
+	tt.Test(t, tt.Fn("highlight", highlight), tt.Table{
+		Args("ls", dep).Rets(styled.Text{
 			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
 		}, noErrors),
-		Args(" ls\n").Rets(styled.Text{
+		Args(" ls\n", dep).Rets(styled.Text{
 			styled.UnstyledSegment(" "),
 			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
 			styled.UnstyledSegment("\n"),
 		}, noErrors),
 		// Parse error
-		Args("ls ]").Rets(any, matchErrors(parseErrorMatcher{3, 4})),
+		Args("ls ]", dep).Rets(any, matchErrors(parseErrorMatcher{3, 4})),
 		// Errors at the end are elided
-		Args("ls $").Rets(any, noErrors),
-		Args("ls [").Rets(any, noErrors),
+		Args("ls $", dep).Rets(any, noErrors),
+		Args("ls [", dep).Rets(any, noErrors),
 
 		// TODO: Test for multiple parse errors
 	})
@@ -78,33 +78,37 @@ func (fakeCheckError) Error() string {
 
 func TestHighlight_Check(t *testing.T) {
 	var checkError error
-	hl := Highlighter{Check: func(n *parse.Chunk) error {
-		return checkError
-	}}
+	dep := hlDep{
+		Check: func(n *parse.Chunk) error {
+			return checkError
+		},
+	}
 
 	checkError = fakeCheckError{0, 2}
-	_, errors := hl.Highlight("code")
+	_, errors := highlight("code", dep)
 	if !reflect.DeepEqual(errors, []error{checkError}) {
 		t.Errorf("Got errors %v, want %v", errors, []error{checkError})
 	}
 
 	// Errors at the end
 	checkError = fakeCheckError{4, 4}
-	_, errors = hl.Highlight("code")
+	_, errors = highlight("code", dep)
 	if len(errors) != 0 {
 		t.Errorf("Got errors %v, want 0 error", errors)
 	}
 }
 
 func TestHighlight_HasCommand(t *testing.T) {
-	hl := Highlighter{HasCommand: func(cmd string) bool {
-		return cmd == "ls"
-	}}
-	tt.Test(t, tt.Fn("Highlight", hl.Highlight), tt.Table{
-		Args("ls").Rets(styled.Text{
+	dep := hlDep{
+		HasCommand: func(cmd string) bool {
+			return cmd == "ls"
+		},
+	}
+	tt.Test(t, tt.Fn("highlight", highlight), tt.Table{
+		Args("ls", dep).Rets(styled.Text{
 			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
 		}, noErrors),
-		Args("echo").Rets(styled.Text{
+		Args("echo", dep).Rets(styled.Text{
 			&styled.Segment{styled.Style{Foreground: "red"}, "echo"},
 		}, noErrors),
 	})

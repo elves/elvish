@@ -7,14 +7,14 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-// Highlighter keeps dependencies for highlighting code.
-type Highlighter struct {
+// Dependencies for highlighting code.
+type hlDep struct {
 	Check      func(n *parse.Chunk) error
 	HasCommand func(name string) bool
 }
 
-// Highlight highlights a piece of Elvish code.
-func (hl Highlighter) Highlight(code string) (styled.Text, []error) {
+// Highlights a piece of Elvish code.
+func highlight(code string, hl hlDep) (styled.Text, []error) {
 	var errors []error
 
 	n, errParse := parse.AsChunk("[interactive]", code)

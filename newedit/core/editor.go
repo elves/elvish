@@ -8,7 +8,6 @@ import (
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/newedit/types"
-	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
 
@@ -31,9 +30,8 @@ type Editor struct {
 	// that has been read.
 	AfterReadline func(string)
 
-	// Callback for computing the highlight and errors of the code the user has
-	// typed.
-	Highlighter func(string) (styled.Text, []error)
+	// Code highlighter.
+	Highlighter Highlighter
 
 	// Left-hand and right-hand prompt.
 	Prompt, RPrompt Prompt
@@ -103,7 +101,10 @@ func (ed *Editor) triggerPrompts(force bool) {
 	}
 }
 
+var transformerForPending = "underline"
+
 func (ed *Editor) redraw(flag redrawFlag) {
+	// Get the state, depending on whether this is the final redraw.
 	var rawState *types.RawState
 	final := flag&finalRedraw != 0
 	if final {
@@ -112,22 +113,47 @@ func (ed *Editor) redraw(flag redrawFlag) {
 		rawState = ed.state.PopForRedraw()
 	}
 
+	// Get the dimensions available.
 	height, width := ed.tty.Size()
 	if maxHeight := ed.Config.MaxHeight(); maxHeight > 0 && maxHeight < height {
 		height = maxHeight
 	}
+
+	// Prepare the code: applying pending, and highlight.
+	code, dot := applyPending(rawState)
+	styledCode, errors := highlighterGet(ed.Highlighter, code)
+	// TODO: Apply transformerForPending to pending code.
+
+	// Render onto buffers.
 	setup := &renderSetup{
 		height, width,
 		promptGet(ed.Prompt), promptGet(ed.RPrompt),
-		ed.Highlighter, ed.InitMode}
+		styledCode, dot, errors,
+		rawState.Notes,
+		getMode(rawState.Mode, ed.InitMode)}
 
-	bufNotes, bufMain := render(rawState, setup)
+	bufNotes, bufMain := render(setup)
 
+	// Apply buffers.
 	ed.tty.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
+
 	if final {
 		ed.tty.Newline()
 		ed.tty.ResetBuffer()
 	}
+}
+
+func applyPending(st *types.RawState) (code string, dot int) {
+	code, dot, pending := st.Code, st.Dot, st.Pending
+	if pending != nil {
+		code = code[:pending.Begin] + pending.Text + code[pending.End:]
+		if dot >= pending.End {
+			dot = pending.Begin + len(pending.Text) + (dot - pending.End)
+		} else if dot >= pending.Begin {
+			dot = pending.Begin + len(pending.Text)
+		}
+	}
+	return code, dot
 }
 
 // ReadCode requests the Editor to read code from the terminal. It causes the
@@ -194,6 +220,8 @@ func (ed *Editor) ReadCode() (string, error) {
 	relayLateUpdates(ed.Prompt)
 	relayLateUpdates(ed.RPrompt)
 
+	// TODO: Relay highlighter late updates.
+
 	// Trigger an initial prompt update.
 	ed.triggerPrompts(true)
 
@@ -236,15 +264,4 @@ func (ed *Editor) Redraw(full bool) {
 func (ed *Editor) Notify(note string) {
 	ed.state.AddNote(note)
 	ed.Redraw(false)
-}
-
-// Callbacks for highlighting code.
-type highlighter func(string) (styled.Text, []error)
-
-// Calls the highlighter, falling back to no highlighting if hl is nil.
-func (hl highlighter) call(code string) (styled.Text, []error) {
-	if hl == nil {
-		return styled.Unstyled(code), nil
-	}
-	return hl(code)
 }

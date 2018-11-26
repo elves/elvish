@@ -16,52 +16,34 @@ type renderSetup struct {
 	prompt  styled.Text
 	rprompt styled.Text
 
-	highlighter highlighter
+	code   styled.Text
+	dot    int
+	errors []error
 
-	initMode types.Mode
+	notes []string
+
+	mode types.Mode
 }
 
 // Renders the editor state.
-func render(st *types.RawState, r *renderSetup) (notes, main *ui.Buffer) {
+func render(r *renderSetup) (notes, main *ui.Buffer) {
 	var bufNotes *ui.Buffer
-	if len(st.Notes) > 0 {
-		bufNotes = ui.Render(&linesRenderer{st.Notes}, r.width)
+	if len(r.notes) > 0 {
+		bufNotes = ui.Render(&linesRenderer{r.notes}, r.width)
 	}
 
-	code, dot, errors := prepareCode(
-		st.Code, st.Dot, st.Pending, r.highlighter)
 	bbCode := ui.NewBufferBuilder(r.width)
-	(&codeContentRenderer{code, dot, r.prompt, r.rprompt}).Render(bbCode)
-	if len(errors) > 0 {
-		bufCodeErrors := ui.Render(&codeErrorsRenderer{errors}, r.width)
+	(&codeContentRenderer{r.code, r.dot, r.prompt, r.rprompt}).Render(bbCode)
+	if len(r.errors) > 0 {
+		bufCodeErrors := ui.Render(&codeErrorsRenderer{r.errors}, r.width)
 		bbCode.Extend(bufCodeErrors, false)
 	}
 	bufCode := bbCode.Buffer()
 
 	bbMain := ui.NewBufferBuilder(r.width)
-	(&mainRenderer{r.height, bufCode, getMode(st.Mode, r.initMode)}).Render(bbMain)
+	(&mainRenderer{r.height, bufCode, r.mode}).Render(bbMain)
 
 	return bufNotes, bbMain.Buffer()
-}
-
-var transformerForPending = "underline"
-
-func prepareCode(code string, dot int, pending *types.PendingCode, hl highlighter) (
-	styledCode styled.Text, newDot int, errors []error) {
-
-	newDot = dot
-	if pending != nil {
-		code = code[:pending.Begin] + pending.Text + code[pending.End:]
-		if dot >= pending.End {
-			newDot = pending.Begin + len(pending.Text) + (dot - pending.End)
-		} else if dot >= pending.Begin {
-			newDot = pending.Begin + len(pending.Text)
-		}
-	}
-	styledCode, errors = hl.call(code)
-	// TODO: Apply transformerForPending to pending.Begin to pending.Begin +
-	// len(pending.Text)
-	return styledCode, newDot, errors
 }
 
 // Renderer of the entire editor. The code area and the status area needs to be
