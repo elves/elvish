@@ -43,22 +43,24 @@ func (anyMatcher) Match(tt.RetValue) bool { return true }
 func TestHighlight(t *testing.T) {
 	any := anyMatcher{}
 
-	dep := Dep{}
+	hl := func(code string) (styled.Text, []error) {
+		return highlight(code, Dep{}, nopLateCb)
+	}
 
-	tt.Test(t, tt.Fn("highlight", highlight), tt.Table{
-		Args("ls", dep).Rets(styled.Text{
+	tt.Test(t, tt.Fn("highlight", hl), tt.Table{
+		Args("ls").Rets(styled.Text{
 			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
 		}, noErrors),
-		Args(" ls\n", dep).Rets(styled.Text{
+		Args(" ls\n").Rets(styled.Text{
 			styled.UnstyledSegment(" "),
 			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
 			styled.UnstyledSegment("\n"),
 		}, noErrors),
 		// Parse error
-		Args("ls ]", dep).Rets(any, matchErrors(parseErrorMatcher{3, 4})),
+		Args("ls ]").Rets(any, matchErrors(parseErrorMatcher{3, 4})),
 		// Errors at the end are elided
-		Args("ls $", dep).Rets(any, noErrors),
-		Args("ls [", dep).Rets(any, noErrors),
+		Args("ls $").Rets(any, noErrors),
+		Args("ls [").Rets(any, noErrors),
 
 		// TODO: Test for multiple parse errors
 	})
@@ -85,31 +87,33 @@ func TestHighlight_Check(t *testing.T) {
 	}
 
 	checkError = fakeCheckError{0, 2}
-	_, errors := highlight("code", dep)
+	_, errors := highlight("code", dep, nopLateCb)
 	if !reflect.DeepEqual(errors, []error{checkError}) {
 		t.Errorf("Got errors %v, want %v", errors, []error{checkError})
 	}
 
 	// Errors at the end
 	checkError = fakeCheckError{4, 4}
-	_, errors = highlight("code", dep)
+	_, errors = highlight("code", dep, nopLateCb)
 	if len(errors) != 0 {
 		t.Errorf("Got errors %v, want 0 error", errors)
 	}
 }
 
 func TestHighlight_HasCommand(t *testing.T) {
-	dep := Dep{
-		HasCommand: func(cmd string) bool {
-			return cmd == "ls"
-		},
+	hasCommand := func(cmd string) bool { return cmd == "ls" }
+	hl := func(code string) (styled.Text, []error) {
+		return highlight(code, Dep{HasCommand: hasCommand}, nopLateCb)
 	}
-	tt.Test(t, tt.Fn("highlight", highlight), tt.Table{
-		Args("ls", dep).Rets(styled.Text{
+
+	tt.Test(t, tt.Fn("highlight", hl), tt.Table{
+		Args("ls").Rets(styled.Text{
 			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
 		}, noErrors),
-		Args("echo", dep).Rets(styled.Text{
+		Args("echo").Rets(styled.Text{
 			&styled.Segment{styled.Style{Foreground: "red"}, "echo"},
 		}, noErrors),
 	})
 }
+
+func nopLateCb(styled.Text) {}

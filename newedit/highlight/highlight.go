@@ -14,7 +14,7 @@ type Dep struct {
 }
 
 // Highlights a piece of Elvish code.
-func highlight(code string, dep Dep) (styled.Text, []error) {
+func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []error) {
 	var errors []error
 
 	n, errParse := parse.AsChunk("[interactive]", code)

@@ -57,7 +57,8 @@ func (ed *Editor) State() *types.State {
 }
 
 // A special event type signalling something has seen a late update and a
-// refresh is needed. This is currently only used for refreshing prompts.
+// refresh is needed. This is currently used for refreshing prompts and
+// highlighting.
 type lateUpdate struct{}
 
 func (ed *Editor) handle(e event) handleResult {
@@ -197,9 +198,10 @@ func (ed *Editor) ReadCode() (string, error) {
 		}()
 	}
 
-	// Relay late prompt/rprompt updates.
 	stopRelayLateUpdates := make(chan struct{})
 	defer close(stopRelayLateUpdates)
+
+	// Relay late prompt/rprompt updates.
 	relayLateUpdates := func(p Prompt) {
 		if p == nil {
 			return
@@ -220,7 +222,21 @@ func (ed *Editor) ReadCode() (string, error) {
 	relayLateUpdates(ed.Prompt)
 	relayLateUpdates(ed.RPrompt)
 
-	// TODO: Relay highlighter late updates.
+	// Relay highlighter late updates.
+	if ed.Highlighter != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-ed.Highlighter.LateUpdates():
+					ed.loop.Input(lateUpdate{})
+				case <-stopRelayLateUpdates:
+					return
+				}
+			}
+		}()
+	}
 
 	// Trigger an initial prompt update.
 	ed.triggerPrompts(true)
