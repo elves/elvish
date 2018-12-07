@@ -43,7 +43,7 @@ func (anyMatcher) Match(tt.RetValue) bool { return true }
 func TestHighlight(t *testing.T) {
 	any := anyMatcher{}
 
-	dep := hlDep{}
+	dep := Dep{}
 
 	tt.Test(t, tt.Fn("highlight", highlight), tt.Table{
 		Args("ls", dep).Rets(styled.Text{
@@ -78,7 +78,7 @@ func (fakeCheckError) Error() string {
 
 func TestHighlight_Check(t *testing.T) {
 	var checkError error
-	dep := hlDep{
+	dep := Dep{
 		Check: func(n *parse.Chunk) error {
 			return checkError
 		},
@@ -99,7 +99,7 @@ func TestHighlight_Check(t *testing.T) {
 }
 
 func TestHighlight_HasCommand(t *testing.T) {
-	dep := hlDep{
+	dep := Dep{
 		HasCommand: func(cmd string) bool {
 			return cmd == "ls"
 		},

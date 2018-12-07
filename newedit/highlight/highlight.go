@@ -7,14 +7,14 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-// Dependencies for highlighting code.
-type hlDep struct {
+// Dep keeps dependencies for highlighting code.
+type Dep struct {
 	Check      func(n *parse.Chunk) error
 	HasCommand func(name string) bool
 }
 
 // Highlights a piece of Elvish code.
-func highlight(code string, hl hlDep) (styled.Text, []error) {
+func highlight(code string, dep Dep) (styled.Text, []error) {
 	var errors []error
 
 	n, errParse := parse.AsChunk("[interactive]", code)
@@ -26,8 +26,8 @@ func highlight(code string, hl hlDep) (styled.Text, []error) {
 		}
 	}
 
-	if hl.Check != nil {
-		err := hl.Check(n)
+	if dep.Check != nil {
+		err := dep.Check(n)
 		if err != nil && err.(diag.Ranger).Range().From != len(code) {
 			errors = append(errors, err)
 			// TODO: Highlight the region with errors.
@@ -45,10 +45,10 @@ func highlight(code string, hl hlDep) (styled.Text, []error) {
 
 		regionCode := code[r.begin:r.end]
 		transformer := ""
-		if hl.HasCommand != nil && r.typ == commandRegion {
+		if dep.HasCommand != nil && r.typ == commandRegion {
 			// Commands are highlighted differently depending on whether they
 			// are valid.
-			if hl.HasCommand(regionCode) {
+			if dep.HasCommand(regionCode) {
 				transformer = transformerForGoodCommand
 			} else {
 				transformer = transformerForBadCommand

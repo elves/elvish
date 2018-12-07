@@ -13,7 +13,7 @@ type Highlighter struct {
 
 // Get returns the highlighted code and static errors found in the code.
 func (hl Highlighter) Get(code string) (styled.Text, []error) {
-	return highlight(code, hlDep{hl.Check, hl.HasCommand})
+	return highlight(code, Dep{hl.Check, hl.HasCommand})
 }
 
 // LateUpdates returns a channel for notifying late updates.
