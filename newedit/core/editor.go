@@ -8,6 +8,7 @@ import (
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
 
@@ -198,20 +199,16 @@ func (ed *Editor) ReadCode() (string, error) {
 		}()
 	}
 
+	// Relay late updates from prompt, rprompt and highlighter.
 	stopRelayLateUpdates := make(chan struct{})
 	defer close(stopRelayLateUpdates)
-
-	// Relay late prompt/rprompt updates.
-	relayLateUpdates := func(p Prompt) {
-		if p == nil {
-			return
-		}
+	relayLateUpdates := func(ch <-chan styled.Text) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for {
 				select {
-				case <-p.LateUpdates():
+				case <-ch:
 					ed.loop.Input(lateUpdate{})
 				case <-stopRelayLateUpdates:
 					return
@@ -219,23 +216,14 @@ func (ed *Editor) ReadCode() (string, error) {
 			}
 		}()
 	}
-	relayLateUpdates(ed.Prompt)
-	relayLateUpdates(ed.RPrompt)
-
-	// Relay highlighter late updates.
+	if ed.Prompt != nil {
+		relayLateUpdates(ed.Prompt.LateUpdates())
+	}
+	if ed.RPrompt != nil {
+		relayLateUpdates(ed.RPrompt.LateUpdates())
+	}
 	if ed.Highlighter != nil {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for {
-				select {
-				case <-ed.Highlighter.LateUpdates():
-					ed.loop.Input(lateUpdate{})
-				case <-stopRelayLateUpdates:
-					return
-				}
-			}
-		}()
+		relayLateUpdates(ed.Highlighter.LateUpdates())
 	}
 
 	// Trigger an initial prompt update.

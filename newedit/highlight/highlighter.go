@@ -12,7 +12,7 @@ const latesBufferSize = 128
 type Highlighter struct {
 	dep   Dep
 	state state
-	lates chan struct{}
+	lates chan styled.Text
 }
 
 type state struct {
@@ -23,7 +23,7 @@ type state struct {
 }
 
 func NewHighlighter(dep Dep) *Highlighter {
-	return &Highlighter{dep, state{}, make(chan struct{}, latesBufferSize)}
+	return &Highlighter{dep, state{}, make(chan styled.Text, latesBufferSize)}
 }
 
 // Get returns the highlighted code and static errors found in the code.
@@ -39,12 +39,12 @@ func (hl *Highlighter) Get(code string) (styled.Text, []error) {
 		hl.state.Lock()
 		hl.state.styledCode = styledCode
 		hl.state.Unlock()
-		hl.lates <- struct{}{}
+		hl.lates <- styledCode
 	}
 	return highlight(code, hl.dep, lateCb)
 }
 
 // LateUpdates returns a channel for notifying late updates.
-func (hl *Highlighter) LateUpdates() <-chan struct{} {
+func (hl *Highlighter) LateUpdates() <-chan styled.Text {
 	return hl.lates
 }
