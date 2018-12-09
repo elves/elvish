@@ -107,6 +107,61 @@ func TestHighlighter_HasCommand_LateResult(t *testing.T) {
 			&styled.Segment{styled.Style{Foreground: "red"}, "echo"}})
 }
 
+const (
+	// The delay to deliver the result for the first highlight after the second
+	// highlight has been requested.
+	hlDelay = 10 * time.Millisecond
+	// The duration to wait to make sure that the first highlight has completed
+	// and there is nothing delivered on LateUpdates. The test will wait this
+	// long to make sure that the late update is dropped, so it shouldn't be too
+	// large.
+	hlWait = 50 * time.Millisecond
+)
+
+func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
+	// When late results are delivered out of order, the ones that do not match
+	// the current code are dropped. In this test, hl.Get is called with "l"
+	// first and then "ls". The late result for "l" is delivered after that of
+	// "ls" and is dropped.
+
+	hlSecond := make(chan struct{})
+	hl := NewHighlighter(Dep{
+		HasCommand: func(cmd string) bool {
+			if cmd == "l" {
+				// Make sure that the second highlight has been requested before
+				// returning.
+				<-hlSecond
+				time.Sleep(hlDelay)
+				return false
+			}
+			close(hlSecond)
+			return cmd == "ls"
+		}})
+
+	hl.Get("l")
+
+	initial, _ := hl.Get("ls")
+	late := <-hl.LateUpdates()
+
+	wantInitial := styled.Unstyled("ls")
+	wantLate := styled.Text{
+		&styled.Segment{styled.Style{Foreground: "green"}, "ls"}}
+	if !reflect.DeepEqual(wantInitial, initial) {
+		t.Errorf("want %v from initial Get, got %v", wantInitial, initial)
+	}
+	if !reflect.DeepEqual(wantLate, late) {
+		t.Errorf("want %v from late Get, got %v", wantLate, late)
+	}
+
+	// Make sure that no more late updates are delivered.
+	select {
+	case late := <-hl.LateUpdates():
+		t.Errorf("want nothing from LateUpdates, got %v", late)
+	case <-time.After(hlWait):
+		// No late updates; test passed.
+	}
+}
+
 // Matchers.
 
 type anyMatcher struct{}
