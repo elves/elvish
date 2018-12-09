@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"io"
 	"reflect"
 	"strings"
 	"syscall"
@@ -318,7 +319,7 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 
 	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 
-	codeCh, _ := ed.readCodeAsync()
+	codeCh, errCh := ed.readCodeAsync()
 
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
 		SetDotToCursor().Buffer()
@@ -330,13 +331,16 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 
 	select {
 	case <-codeCh:
-		// TODO: Test that ReadCode returns with io.EOF
+		err := <-errCh
+		if err != io.EOF {
+			t.Errorf("want ReadCode to return io.EOF on SIGHUP, got %v", err)
+		}
 	case <-time.After(time.Second):
 		t.Errorf("SIGHUP did not cause ReadCode to return")
 	}
 }
 
-func TestReadCode_ResetsOnSIGHUP(t *testing.T) {
+func TestReadCode_ResetsOnSIGINT(t *testing.T) {
 	ed, terminal, sigs := setup()
 
 	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
