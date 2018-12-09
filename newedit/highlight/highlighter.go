@@ -37,11 +37,26 @@ func (hl *Highlighter) Get(code string) (styled.Text, []error) {
 
 	lateCb := func(styledCode styled.Text) {
 		hl.state.Lock()
+		if hl.state.code != code {
+			// Late result was delivered after code has changed. Unlock and
+			// return.
+			hl.state.Unlock()
+			return
+		}
 		hl.state.styledCode = styledCode
+		// The channel send below might block, so unlock the state first.
 		hl.state.Unlock()
 		hl.lates <- styledCode
 	}
-	return highlight(code, hl.dep, lateCb)
+
+	styledCode, errors := highlight(code, hl.dep, lateCb)
+
+	hl.state.Lock()
+	defer hl.state.Unlock()
+	hl.state.code = code
+	hl.state.styledCode = styledCode
+	hl.state.errors = errors
+	return styledCode, errors
 }
 
 // LateUpdates returns a channel for notifying late updates.

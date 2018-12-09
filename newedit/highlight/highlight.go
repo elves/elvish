@@ -13,6 +13,13 @@ type Dep struct {
 	HasCommand func(name string) bool
 }
 
+// Information collected about a command region, used for asynchronou
+// highlighting.
+type cmdRegion struct {
+	seg int
+	cmd string
+}
+
 // Highlights a piece of Elvish code.
 func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []error) {
 	var errors []error
@@ -37,6 +44,8 @@ func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []e
 	var text styled.Text
 	regions := getRegions(n)
 	lastEnd := 0
+	var cmdRegions []cmdRegion
+
 	for _, r := range regions {
 		if r.begin > lastEnd {
 			// Add inter-region text.
@@ -45,13 +54,14 @@ func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []e
 
 		regionCode := code[r.begin:r.end]
 		transformer := ""
-		if dep.HasCommand != nil && r.typ == commandRegion {
-			// Commands are highlighted differently depending on whether they
-			// are valid.
-			if dep.HasCommand(regionCode) {
-				transformer = transformerForGoodCommand
+		if r.typ == commandRegion {
+			if dep.HasCommand != nil {
+				// Do not highlight now, but collect the index of the region and the
+				// segment.
+				cmdRegions = append(cmdRegions, cmdRegion{len(text), regionCode})
 			} else {
-				transformer = transformerForBadCommand
+				// Treat all commands as good commands.
+				transformer = transformerForGoodCommand
 			}
 		} else {
 			transformer = transformerFor[r.typ]
@@ -68,5 +78,23 @@ func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []e
 		// Add text after the last region as unstyled.
 		text = append(text, styled.UnstyledSegment(code[lastEnd:]))
 	}
+
+	// Style command regions asynchronously, and call lateCb with the results.
+	if dep.HasCommand != nil && len(cmdRegions) > 0 {
+		go func() {
+			newText := text.Clone()
+			for _, cmdRegion := range cmdRegions {
+				transformer := ""
+				if dep.HasCommand(cmdRegion.cmd) {
+					transformer = transformerForGoodCommand
+				} else {
+					transformer = transformerForBadCommand
+				}
+				styled.FindTransformer(transformer)(newText[cmdRegion.seg])
+			}
+			lateCb(newText)
+		}()
+	}
+
 	return text, errors
 }
