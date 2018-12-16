@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/elves/elvish/eval"
@@ -38,6 +39,8 @@ func TestMakeCheck(t *testing.T) {
 	})
 }
 
+const colonInFilenameOk = runtime.GOOS != "windows"
+
 func TestMakeHasCommand(t *testing.T) {
 	ev := eval.NewEvaler()
 	hasCommand := makeHasCommand(ev)
@@ -61,7 +64,9 @@ func TestMakeHasCommand(t *testing.T) {
 	mustMkdirAll("bin")
 	mustMkExecutable("bin/external")
 	mustMkExecutable("bin/@external")
-	mustMkExecutable("bin/ex:tern:al")
+	if colonInFilenameOk {
+		mustMkExecutable("bin/ex:tern:al")
+	}
 
 	// Set up a directory not in PATH.
 	mustMkdirAll("a/b/c")
@@ -86,7 +91,7 @@ func TestMakeHasCommand(t *testing.T) {
 		// External in PATH
 		tt.Args("external").Rets(true),
 		tt.Args("@external").Rets(true),
-		tt.Args("ex:tern:al").Rets(true),
+		tt.Args("ex:tern:al").Rets(colonInFilenameOk),
 
 		// Non-existent
 		tt.Args("bad").Rets(false),
