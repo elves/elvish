@@ -23,6 +23,15 @@ func init() {
 		"pprint": pprint,
 		"repr":   repr,
 
+		// Only bytes or values
+		//
+		// These are now implemented as commands forwarding one part of input to
+		// output and discarding the other. A future optimization the evaler can
+		// do is to connect the relevant parts directly together without any
+		// kind of forwarding.
+		"only-bytes":  onlyBytes,
+		"only-values": onlyValues,
+
 		// Bytes to value
 		"slurp":      slurp,
 		"from-lines": fromLines,
@@ -84,6 +93,62 @@ func repr(fm *Frame, args ...interface{}) {
 		out.WriteString(vals.Repr(arg, vals.NoPretty))
 	}
 	out.WriteString("\n")
+}
+
+const bytesReadBufferSize = 512
+
+func onlyBytes(fm *Frame) error {
+	// Discard values in a goroutine.
+	valuesDone := make(chan struct{})
+	go func() {
+		for range fm.InputChan() {
+		}
+		close(valuesDone)
+	}()
+	// Make sure the goroutine has finished before returning.
+	defer func() { <-valuesDone }()
+
+	// Forward bytes.
+	buf := make([]byte, bytesReadBufferSize)
+	for {
+		nr, errRead := fm.InputFile().Read(buf[:])
+		if nr > 0 {
+			// Even when there are write errors, we will continue reading. So we
+			// ignore the error.
+			fm.OutputFile().Write(buf[:nr])
+		}
+		if errRead != nil {
+			if errRead == io.EOF {
+				return nil
+			}
+			return errRead
+		}
+	}
+}
+
+func onlyValues(fm *Frame) error {
+	// Forward values in a goroutine.
+	valuesDone := make(chan struct{})
+	go func() {
+		for v := range fm.InputChan() {
+			fm.OutputChan() <- v
+		}
+		close(valuesDone)
+	}()
+	// Make sure the goroutine has finished before returning.
+	defer func() { <-valuesDone }()
+
+	// Discard bytes.
+	buf := make([]byte, bytesReadBufferSize)
+	for {
+		_, errRead := fm.InputFile().Read(buf[:])
+		if errRead != nil {
+			if errRead == io.EOF {
+				return nil
+			}
+			return errRead
+		}
+	}
 }
 
 func slurp(fm *Frame) (string, error) {

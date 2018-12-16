@@ -16,6 +16,11 @@ func TestBuiltinFnIO(t *testing.T) {
 		That(`pprint [foo bar]`).Prints("[\n foo\n bar\n]\n"),
 		That(`repr foo bar ['foo bar']`).Prints("foo bar ['foo bar']\n"),
 
+		// Baseline for only-{bytes,values}
+		That(`{ print bytes; put values }`).Prints("bytes").Puts("values"),
+		That(`{ print bytes; put values } | only-bytes`).Prints("bytes").Puts(),
+		That(`{ print bytes; put values } | only-values`).Prints("").Puts("values"),
+
 		That(`print "a\nb" | slurp`).Puts("a\nb"),
 		That(`print "a\nb" | from-lines`).Puts("a", "b"),
 		That(`print "a\nb\n" | from-lines`).Puts("a", "b"),
