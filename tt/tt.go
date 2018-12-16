@@ -63,11 +63,13 @@ func (fn *FnToTest) RetsFmt(s string) *FnToTest {
 
 // T is the interface for accessing testing.T.
 type T interface {
+	Helper()
 	Errorf(format string, args ...interface{})
 }
 
 // Test tests a function against test cases.
 func Test(t T, fn *FnToTest, tests Table) {
+	t.Helper()
 	for _, test := range tests {
 		rets := call(fn.body, test.args)
 		for _, retsMatcher := range test.retsMatchers {

@@ -9,6 +9,8 @@ import (
 // interaction with T.
 type testT []string
 
+func (t *testT) Helper() {}
+
 func (t *testT) Errorf(format string, args ...interface{}) {
 	*t = append(*t, fmt.Sprintf(format, args...))
 }
