@@ -24,7 +24,9 @@ type Editor struct {
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	ed := core.NewEditor(core.NewTTY(in, out), core.NewSignalSource())
-	ed.Highlighter = highlight.NewHighlighter(highlight.Dep{})
+
+	ed.Highlighter = highlight.NewHighlighter(
+		highlight.Dep{Check: makeCheck(ev), HasCommand: makeHasCommand(ev)})
 
 	ns := eval.NewNs().
 		Add("max-height",
