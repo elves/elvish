@@ -58,6 +58,12 @@ func TestMakeHasCommand(t *testing.T) {
 	defer cleanup()
 	oldPath := os.Getenv("PATH")
 	defer os.Setenv("PATH", oldPath)
+	if runtime.GOOS == "windows" {
+		oldPathExt := os.Getenv("PATHEXT")
+		defer os.Setenv("PATHEXT", oldPathExt)
+		// Forces default value
+		os.Setenv("PATHEXT", "")
+	}
 
 	// Set up a directory in PATH.
 	os.Setenv("PATH", filepath.Join(testDir, "bin"))
@@ -118,6 +124,9 @@ func mustMkdirAll(path string) {
 }
 
 func mustMkExecutable(path string) {
+	if runtime.GOOS == "windows" {
+		path = path + ".exe"
+	}
 	err := ioutil.WriteFile(path, nil, 0700)
 	if err != nil {
 		panic(err)

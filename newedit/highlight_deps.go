@@ -29,7 +29,7 @@ func hasCommand(ev *eval.Evaler, cmd string) bool {
 		return true
 	}
 	if util.DontSearch(cmd) {
-		return isDirOrExecutable(cmd)
+		return isDirOrExecutable(cmd) || hasExternalCommand(cmd)
 	}
 
 	explode, ns, name := eval.ParseVariableRef(cmd)
