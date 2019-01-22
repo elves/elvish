@@ -281,7 +281,7 @@ But this hasn't made any difference, because well, our `dice.elv` script
 doesn't make use of the arguments.
 
 The arguments are kept in a `$args` variable, as a list. Let's try put this
-into a `echo-args.elv` file in your home directory:
+into a `show-args.elv` file in your home directory:
 
 ```elvish
 echo $args
