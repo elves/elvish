@@ -1,5 +1,9 @@
 package ui
 
+import (
+	"github.com/elves/elvish/util"
+)
+
 // Renderer wraps the Render method.
 type Renderer interface {
 	// Render renders onto a Buffer.
@@ -15,6 +19,19 @@ func Render(r Renderer, width int) *Buffer {
 	bb := NewBufferBuilder(width)
 	r.Render(bb)
 	return bb.Buffer()
+}
+
+// NewStringRenderer returns a Renderer that shows the given string.
+func NewStringRenderer(s string) Renderer {
+	return stringRenderer{s}
+}
+
+type stringRenderer struct {
+	s string
+}
+
+func (r stringRenderer) Render(bb *BufferBuilder) {
+	bb.WriteString(util.TrimWcwidth(r.s, bb.Width), "")
 }
 
 // NewModeLineRenderer returns a Renderer for a mode line.
@@ -34,6 +51,10 @@ func (ml modeLineRenderer) Render(bb *BufferBuilder) {
 	bb.Dot = bb.Cursor()
 }
 
+// NewModeLineWithScrollBarRenderer returns a Renderer for a mode line with a
+// horizontal scroll bar. The base argument should be a Renderer built with
+// NewModeLineRenderer; the arguments n, low and high describes the range of the
+// scroll bar.
 func NewModeLineWithScrollBarRenderer(base Renderer, n, low, high int) Renderer {
 	return &modeLineWithScrollBarRenderer{base, n, low, high}
 }
