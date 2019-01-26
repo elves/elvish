@@ -142,18 +142,28 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.Callable, seed string, ch
 	matcherInput := make(chan interface{})
 	stopCollector := make(chan struct{})
 	var collected []rawCandidate
+	seen := make(map[string]bool)
+	// Get all values from from chanRawCandidate, remove duplicates, collect
+	// them and forward them to the input channel of the matcher.
 	go func() {
 		defer close(matcherInput)
 		for rc := range chanRawCandidate {
+			text := rc.text()
+			if seen[text] {
+				continue
+			}
+			seen[text] = true
 			collected = append(collected, rc)
 			select {
-			case matcherInput <- rc.text():
+			case matcherInput <- text:
 			case <-stopCollector:
 				return
 			}
 		}
 	}()
 	defer close(stopCollector)
+
+	// Run the matcher.
 
 	ports := []*eval.Port{
 		{Chan: matcherInput, File: eval.DevNull}, {File: os.Stdout}, {File: os.Stderr}}
@@ -167,6 +177,7 @@ func filterRawCandidates(ev *eval.Evaler, matcher eval.Callable, seed string, ch
 		return nil, errIncorrectNumOfResults
 	}
 
+	// Use the matcher results to filter the collected raw candidates.
 	var filtered []rawCandidate
 	for i, value := range values {
 		if vals.Bool(value) {
