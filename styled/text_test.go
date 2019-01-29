@@ -40,3 +40,54 @@ var partitionTests = tt.Table{
 func TestPartition(t *testing.T) {
 	tt.Test(t, tt.Fn("Text.Parition", Text.Partition), partitionTests)
 }
+
+func TestCountRune(t *testing.T) {
+	text := Text{red("lorem"), blue("ipsum")}
+	tt.Test(t, tt.Fn("Text.CountRune", Text.CountRune), tt.Table{
+		Args(text, 'l').Rets(1),
+		Args(text, 'i').Rets(1),
+		Args(text, 'm').Rets(2),
+		Args(text, '\n').Rets(0),
+	})
+}
+
+func TestCountLines(t *testing.T) {
+	tt.Test(t, tt.Fn("Text.CountLines", Text.CountLines), tt.Table{
+		Args(Text{red("lorem")}).Rets(1),
+		Args(Text{red("lorem"), blue("ipsum")}).Rets(1),
+		Args(Text{red("lor\nem"), blue("ipsum")}).Rets(2),
+		Args(Text{red("lor\nem"), blue("ip\nsum")}).Rets(3),
+	})
+}
+
+func TestSplitByRune(t *testing.T) {
+	tt.Test(t, tt.Fn("Text.SplitByRune", Text.SplitByRune), tt.Table{
+		Args(Text{}, '\n').Rets([]Text(nil)),
+		Args(Text{red("lorem")}, '\n').Rets([]Text{Text{red("lorem")}}),
+		Args(Text{red("lorem"), blue("ipsum"), red("dolar")}, '\n').Rets(
+			[]Text{
+				Text{red("lorem"), blue("ipsum"), red("dolar")},
+			}),
+		Args(Text{red("lo\nrem")}, '\n').Rets([]Text{
+			Text{red("lo")}, Text{red("rem")},
+		}),
+		Args(Text{red("lo\nrem"), blue("ipsum")}, '\n').Rets(
+			[]Text{
+				Text{red("lo")},
+				Text{red("rem"), blue("ipsum")},
+			}),
+		Args(Text{red("lo\nrem"), blue("ip\nsum")}, '\n').Rets(
+			[]Text{
+				Text{red("lo")},
+				Text{red("rem"), blue("ip")},
+				Text{blue("sum")},
+			}),
+		Args(Text{red("lo\nrem"), blue("ip\ns\num"), red("dolar")}, '\n').Rets(
+			[]Text{
+				Text{red("lo")},
+				Text{red("rem"), blue("ip")},
+				Text{blue("s")},
+				Text{blue("um"), red("dolar")},
+			}),
+	})
+}

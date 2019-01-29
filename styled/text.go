@@ -115,3 +115,52 @@ func (t Text) Clone() Text {
 	}
 	return newt
 }
+
+// CountRune counts the number of times a rune occurs in a Text.
+func (t Text) CountRune(r rune) int {
+	n := 0
+	for _, seg := range t {
+		n += seg.CountRune(r)
+	}
+	return n
+}
+
+// CountLines counts the number of lines in a Text. It is equal to
+// t.CountRune('\n') + 1.
+func (t Text) CountLines() int {
+	return t.CountRune('\n') + 1
+}
+
+// SplitByRune splits a Text by the given rune.
+func (t Text) SplitByRune(r rune) []Text {
+	// Call SplitByRune for each constituent Segment, and "paste" the pairs of
+	// subsegments across the segment border. For instance, if Text has 3
+	// Segments a, b, c that results in a1, a2, a3, b1, b2, c1, then a3 and b1
+	// as well as b2 and c1 are pasted together, and the return value is [a1],
+	// [a2], [a3, b1], [b2, c1]. Pasting can happen coalesce: for instance, if
+	// Text has 3 Segments a, b, c that results in a1, a2, b1, c1, the return
+	// value will be [a1], [a2, b1, c1].
+	var result []Text
+	var paste Text
+	for _, seg := range t {
+		subSegs := seg.SplitByRune(r)
+		if len(subSegs) == 1 {
+			// Only one subsegment. Just paste.
+			paste = append(paste, subSegs[0])
+			continue
+		}
+		// Paste the previous trailing segments with the first subsegment, and
+		// add it as a Text.
+		result = append(result, append(paste, subSegs[0]))
+		// For the subsegments in the middle, just add then as is.
+		for i := 1; i < len(subSegs)-1; i++ {
+			result = append(result, Text{subSegs[i]})
+		}
+		// The last segment becomes the new paste.
+		paste = Text{subSegs[len(subSegs)-1]}
+	}
+	if len(paste) > 0 {
+		result = append(result, paste)
+	}
+	return result
+}
