@@ -10,7 +10,9 @@ import (
 	"github.com/xiaq/persistent/vector"
 )
 
-// Styled is a piece of text with style.
+// Styled is a piece of text with style. This type is deprecated in favor of
+// styled.Segment and styled.Text, and existing code that still uses it should
+// eventually be migrated to use the newer types.
 type Styled struct {
 	Text   string
 	Styles Styles
