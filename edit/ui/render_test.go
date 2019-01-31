@@ -22,6 +22,15 @@ func TestRender(t *testing.T) {
 		Args(NewStringRenderer("string"), 3).
 			Rets(NewBufferBuilder(3).WriteString("str", "").Buffer()),
 
+		Args(NewLinesRenderer("line 1", "line 2"), 10).
+			Rets(
+				NewBufferBuilder(10).WriteString("line 1", "").Newline().
+					WriteString("line 2", "").Buffer()),
+		Args(NewLinesRenderer("line 1", "line 2"), 3).
+			Rets(
+				NewBufferBuilder(3).WriteString("lin", "").Newline().
+					WriteString("lin", "").Buffer()),
+
 		Args(NewModeLineRenderer("M", "f"), 10).
 			Rets(
 				NewBufferBuilder(10).
@@ -42,6 +51,19 @@ func TestRender(t *testing.T) {
 					WriteSpaces(1, "").
 					Write(' ', styleForScrollBarThumb.String()).
 					WriteString("━━━━", styleForScrollBarArea.String()).
+					Buffer()),
+
+		Args(NewRendererWithVerticalScrollbar(NewLinesRenderer("1", "2", "3"), 3, 0, 1), 5).
+			Rets(
+				NewBufferBuilder(5).
+					WriteString("1   ", "").
+					Write(' ', styleForScrollBarThumb.String()).
+					Newline().
+					WriteString("2   ", "").
+					Write('│', styleForScrollBarArea.String()).
+					Newline().
+					WriteString("3   ", "").
+					Write('│', styleForScrollBarArea.String()).
 					Buffer()),
 	})
 }

@@ -21,16 +21,27 @@ func Render(r Renderer, width int) *Buffer {
 	return bb.Buffer()
 }
 
-// NewStringRenderer returns a Renderer that shows the given string unstyled,
-// possibly trimmed to fit whatever width is available.
+// NewStringRenderer returns a Renderer that shows the given strings unstyled,
+// trimmed to fit whatever width is available.
 func NewStringRenderer(s string) Renderer {
-	return stringRenderer{s}
+	return NewLinesRenderer(s)
 }
 
-type stringRenderer struct{ s string }
+// NewLinesRenderer returns a Renderer that shows the given lines unstyled,
+// each trimmed to fit whatever width is available.
+func NewLinesRenderer(lines ...string) Renderer {
+	return linesRenderer{lines}
+}
 
-func (r stringRenderer) Render(bb *BufferBuilder) {
-	bb.WriteString(util.TrimWcwidth(r.s, bb.Width), "")
+type linesRenderer struct{ lines []string }
+
+func (r linesRenderer) Render(bb *BufferBuilder) {
+	for i, line := range r.lines {
+		if i > 0 {
+			bb.Newline()
+		}
+		bb.WriteString(util.TrimWcwidth(line, bb.Width), "")
+	}
 }
 
 // NewModeLineRenderer returns a Renderer for a mode line.
@@ -47,7 +58,7 @@ func (ml modeLineRenderer) Render(bb *BufferBuilder) {
 	bb.WriteString(ml.title, styleForMode.String())
 	bb.WriteSpaces(1, "")
 	bb.WriteString(ml.filter, styleForFilter.String())
-	bb.Dot = bb.Cursor()
+	bb.SetDotToCursor()
 }
 
 // NewModeLineWithScrollBarRenderer returns a Renderer for a mode line with a
@@ -71,4 +82,22 @@ func (ml modeLineWithScrollBarRenderer) Render(bb *BufferBuilder) {
 		bb.WriteSpaces(1, "")
 		writeHorizontalScrollbar(bb, ml.n, ml.low, ml.high, scrollbarWidth)
 	}
+}
+
+// NewRendererWithVerticalScrollbar returns a Renderer that renders the given
+// base plus a vertical scrollbar at the right-hand side.
+func NewRendererWithVerticalScrollbar(base Renderer, n, low, high int) Renderer {
+	return rendererWithVerticalScrollbar{base, n, low, high}
+}
+
+type rendererWithVerticalScrollbar struct {
+	base         Renderer
+	n, low, high int
+}
+
+func (r rendererWithVerticalScrollbar) Render(bb *BufferBuilder) {
+	bufBase := Render(r.base, bb.Width-1)
+	bb.ExtendRight(bufBase, 0)
+	bufScrollbar := renderVerticalScrollbar(r.n, r.low, r.high, len(bufBase.Lines))
+	bb.ExtendRight(bufScrollbar, bb.Width-1)
 }
