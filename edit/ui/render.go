@@ -21,14 +21,13 @@ func Render(r Renderer, width int) *Buffer {
 	return bb.Buffer()
 }
 
-// NewStringRenderer returns a Renderer that shows the given string.
+// NewStringRenderer returns a Renderer that shows the given string unstyled,
+// possibly trimmed to fit whatever width is available.
 func NewStringRenderer(s string) Renderer {
 	return stringRenderer{s}
 }
 
-type stringRenderer struct {
-	s string
-}
+type stringRenderer struct{ s string }
 
 func (r stringRenderer) Render(bb *BufferBuilder) {
 	bb.WriteString(util.TrimWcwidth(r.s, bb.Width), "")
