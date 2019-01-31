@@ -1,20 +1,47 @@
 package ui
 
-import "testing"
+import (
+	"testing"
 
-type dummyRenderer struct {
-}
+	"github.com/elves/elvish/tt"
+)
 
-func (dummyRenderer) Render(bb *BufferBuilder) {
-	bb.WriteString("xy", "1")
-}
+type dummyRenderer struct{}
+
+func (dummyRenderer) Render(bb *BufferBuilder) { bb.WriteString("dummy", "1") }
+
+var Args = tt.Args
 
 func TestRender(t *testing.T) {
-	b := Render(dummyRenderer{}, 10)
-	if b.Width != 10 {
-		t.Errorf("Rendered Buffer has Width %d, want %d", b.Width, 10)
-	}
-	if eq, _ := CompareCells(b.Lines[0], []Cell{{"x", 1, "1"}, {"y", 1, "1"}}); !eq {
-		t.Errorf("Rendered Buffer has unexpected content")
-	}
+	tt.Test(t, tt.Fn("Render", Render), tt.Table{
+		Args(dummyRenderer{}, 10).
+			Rets(NewBufferBuilder(10).WriteString("dummy", "1").Buffer()),
+
+		Args(NewStringRenderer("string"), 10).
+			Rets(NewBufferBuilder(10).WriteString("string", "").Buffer()),
+		Args(NewStringRenderer("string"), 3).
+			Rets(NewBufferBuilder(3).WriteString("str", "").Buffer()),
+
+		Args(NewModeLineRenderer("M", "f"), 10).
+			Rets(
+				NewBufferBuilder(10).
+					WriteString("M", styleForMode.String()).
+					WriteSpaces(1, "").
+					WriteString("f", styleForFilter.String()).
+					SetDotToCursor().
+					Buffer()),
+
+		// Width left for scrollbar is 5
+		Args(NewModeLineWithScrollBarRenderer(NewModeLineRenderer("M", "f"), 5, 0, 1), 10).
+			Rets(
+				NewBufferBuilder(10).
+					WriteString("M", styleForMode.String()).
+					WriteSpaces(1, "").
+					WriteString("f", styleForFilter.String()).
+					SetDotToCursor().
+					WriteSpaces(1, "").
+					Write(' ', styleForScrollBarThumb.String()).
+					WriteString("━━━━", styleForScrollBarArea.String()).
+					Buffer()),
+	})
 }
