@@ -91,3 +91,15 @@ func TestSplitByRune(t *testing.T) {
 			}),
 	})
 }
+
+func TestTrimWcwidth(t *testing.T) {
+	tt.Test(t, tt.Fn("Text.TrimWcwidth", Text.TrimWcwidth), tt.Table{
+		Args(Text{}, 1).Rets(Text(nil)),
+		Args(Text{red("lorem")}, 3).Rets(Text{red("lor")}),
+		Args(Text{red("lorem"), blue("ipsum")}, 6).Rets(
+			Text{red("lorem"), blue("i")}),
+		Args(Text{red("你好")}, 3).Rets(Text{red("你")}),
+		Args(Text{red("你好"), blue("精灵语"), red("x")}, 7).Rets(
+			Text{red("你好"), blue("精")}),
+	})
+}
