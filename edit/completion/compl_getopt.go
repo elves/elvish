@@ -20,6 +20,7 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 	)
 	desc := make(map[*getopt.Option]string)
 	argdesc := make(map[*getopt.Option]string)
+	optCompleters := make(map[*getopt.Option]eval.Callable)
 	// Convert arguments.
 	err := vals.Iterate(elemsv, func(v interface{}) bool {
 		elem, ok := v.(string)
@@ -49,6 +50,29 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 			throwf("%s should be string, got %s", k, vals.Kind(v))
 			panic("unreachable")
 		}
+		getCallableField := func(k string) (eval.Callable, bool) {
+			v, ok := m.Index(k)
+			if !ok {
+				return nil, false
+			}
+			if vb, ok := v.(eval.Callable); ok {
+				return vb, true
+			}
+			throwf("%s should be fn, got %s", k, vals.Kind(v))
+			panic("unreachable")
+		}
+		getBoolField := func(k string) (bool, bool) {
+			v, ok := m.Index(k)
+			if !ok {
+				return false, false
+			}
+			if vb, ok := v.(bool); ok {
+				return vb, true
+			}
+			throwf("%s should be bool, got %s", k, vals.Kind(v))
+			panic("unreachable")
+		}
+
 		if s, ok := getStringField("short"); ok {
 			r, size := utf8.DecodeRuneInString(s)
 			if r == utf8.RuneError || size != len(s) {
@@ -63,17 +87,6 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 			throwf("opt should have at least one of short and long forms")
 		}
 
-		getBoolField := func(k string) (bool, bool) {
-			v, ok := m.Index(k)
-			if !ok {
-				return false, false
-			}
-			if vb, ok := v.(bool); ok {
-				return vb, true
-			}
-			throwf("%s should be bool, got %s", k, vals.Kind(v))
-			panic("unreachable")
-		}
 		argRequired, _ := getBoolField("arg-required")
 		argOptional, _ := getBoolField("arg-optional")
 		switch {
@@ -91,6 +104,10 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 		if s, ok := getStringField("arg-desc"); ok {
 			argdesc[opt] = s
 		}
+		if f, ok := getCallableField("completer"); ok {
+			optCompleters[opt] = f
+		}
+
 		opts = append(opts, opt)
 		return true
 	})
@@ -141,6 +158,18 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 		out <- c
 	}
 
+	callCompleter := func(fn eval.Callable, args []string) {
+		rawCands := make(chan rawCandidate)
+		defer close(rawCands)
+		go func() {
+			for rc := range rawCands {
+				out <- rc
+			}
+		}()
+		err := callArgCompleter(fn, fm.Evaler, args, rawCands)
+		maybeThrow(err)
+	}
+
 	switch ctx.Type {
 	case getopt.NewOptionOrArgument, getopt.Argument:
 		// Find argument completer
@@ -151,15 +180,7 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 			argCompl = args[len(args)-1]
 		}
 		if argCompl != nil {
-			rawCands := make(chan rawCandidate)
-			defer close(rawCands)
-			go func() {
-				for rc := range rawCands {
-					out <- rc
-				}
-			}()
-			err := callArgCompleter(argCompl, fm.Evaler, []string{ctx.Text}, rawCands)
-			maybeThrow(err)
+			callCompleter(argCompl, []string{ctx.Text})
 		}
 		// TODO Notify that there is no suitable argument completer
 	case getopt.NewOption:
@@ -191,5 +212,9 @@ func complGetopt(fm *eval.Frame, elemsv, optsv, argsv interface{}) {
 			}
 		}
 	case getopt.OptionArgument:
+		optComp := optCompleters[ctx.Option.Option]
+		if optComp != nil {
+			callCompleter(optComp, []string{ctx.Option.Argument})
+		}
 	}
 }
