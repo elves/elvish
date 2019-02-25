@@ -206,7 +206,7 @@ If you come from other shells, hopefully the following recipes will get you star
     newline; while in bash or zsh, it creates a file whose name contains a
     backslash followed by `n`.
 
-*   Elementary floating-point arithmetics as well as comparisons are builtin,
+*   Elementary floating-point arithmetic as well as comparisons are builtin,
     with a prefix syntax:
 
     ```elvish-transcript

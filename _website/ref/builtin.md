@@ -144,7 +144,7 @@ sections. Their known problem is also discussed.
 / $dividend $divisor...
 ```
 
-Basic arithmetic operations of adding, substraction, multiplication and
+Basic arithmetic operations of adding, subtraction, multiplication and
 division respectively.
 
 All of them can take multiple arguments:
@@ -308,7 +308,7 @@ bar
 assoc $container $k $v
 ```
 
-Output a slighly modified version of `$container`, such that its value at `$k`
+Output a slightly modified version of `$container`, such that its value at `$k`
 is `$v`. Applies to both lists and to maps.
 
 When `$container` is a list, `$k` may be a negative index. However, slice is
@@ -1066,8 +1066,8 @@ Example (your output will differ):
 ▶ 14
 ```
 
-This command is intended for homogenous processing of possibly unbound data.
-If you need to do a fixed number of heterogenous things in parallel, use
+This command is intended for homogeneous processing of possibly unbound data.
+If you need to do a fixed number of heterogeneous things in parallel, use
 `run-parallel`.
 
 $cf each run-parallel
@@ -1374,8 +1374,8 @@ run-parallel {
 }
 ```
 
-This command is intended for doing a fixed number of heterogenous things in
-parallel. If you need homogenous parallel processing of possibly unbound data,
+This command is intended for doing a fixed number of heterogeneous things in
+parallel. If you need homogeneous parallel processing of possibly unbound data,
 use `peach` instead.
 
 $cf peach

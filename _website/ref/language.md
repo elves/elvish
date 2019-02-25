@@ -1595,7 +1595,7 @@ following modules:
 
 ## User-Defined Modules
 
-You can define your own modules with Elvishscript but putting them under
+You can define your own modules with Elvishscript by putting them under
 `~/.elvish/lib` and giving them a `.elv` extension. For instance, to define a
 module named `a`, store it in `~/.elvish/lib/a.elv`:
 
@@ -1619,7 +1619,7 @@ f from mod a
 The argument to `use` is called the **usespec** and will be explained in more
 details below. In the simplest case, it is simply the module name.
 
-Modules are evaluated in a seprate scope. That means that functions and
+Modules are evaluated in a separate scope. That means that functions and
 variables defined in the module does not pollute the default namespace, and
 vice versa. For instance, if you define `ls` as a wrapper function in
 `rc.elv`:
