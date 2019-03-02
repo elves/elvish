@@ -52,6 +52,12 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	ed.InitMode = insertMode
 	ns.AddNs("insert", insertNs)
 
+	// Listing modes.
+	lsMode, lsNs := initListing(ed, ev)
+	ns.AddNs("listing", lsNs)
+	lastcmdNs := initLastcmd(ed, ev, lsMode)
+	ns.AddNs("lastcmd", lastcmdNs)
+
 	// Evaluate default bindings.
 	evalDefaultBinding(ev, ns)
 

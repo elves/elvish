@@ -22,6 +22,8 @@ insert:binding = (binding-map [
   &Ctrl-U=    $kill-sol~
   &Ctrl-K=    $kill-eol~
 
+  &Alt-,= $lastcmd:start~
+
   &Ctrl-D=  $commit-eof~
   &Default= $insert:default-handler~
 ])
