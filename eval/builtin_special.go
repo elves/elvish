@@ -28,7 +28,7 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-type compileBuiltin func(*compiler, *parse.Form) opBody
+type compileBuiltin func(*compiler, *parse.Form) effectOpBody
 
 var (
 	// ErrRelativeUseNotFromMod is thrown by "use" when relative use is used
@@ -66,7 +66,7 @@ func init() {
 const delArgMsg = "arguments to del must be variable or variable elements"
 
 // DelForm = 'del' { VariablePrimary }
-func compileDel(cp *compiler, fn *parse.Form) opBody {
+func compileDel(cp *compiler, fn *parse.Form) effectOpBody {
 	var ops []effectOp
 	for _, cn := range fn.Args {
 		cp.compiling(cn)
@@ -89,7 +89,7 @@ func compileDel(cp *compiler, fn *parse.Form) opBody {
 			cp.errorf("arguments to del may be have a leading @")
 			continue
 		}
-		var f opBody
+		var f effectOpBody
 		if len(indicies) == 0 {
 			switch ns {
 			case "", "local":
@@ -130,7 +130,7 @@ func (op delEnvVarOp) invoke(*Frame) error {
 	return os.Unsetenv(op.name)
 }
 
-func newDelElementOp(ns, name string, begin, headEnd int, indexOps []valuesOp) opBody {
+func newDelElementOp(ns, name string, begin, headEnd int, indexOps []valuesOp) effectOpBody {
 	ends := make([]int, len(indexOps)+1)
 	ends[0] = headEnd
 	for i, op := range indexOps {
@@ -172,7 +172,7 @@ func (op *delElemOp) invoke(fm *Frame) error {
 // FnForm = 'fn' StringPrimary LambdaPrimary
 //
 // fn f []{foobar} is a shorthand for set '&'f = []{foobar}.
-func compileFn(cp *compiler, fn *parse.Form) opBody {
+func compileFn(cp *compiler, fn *parse.Form) effectOpBody {
 	args := cp.walkArgs(fn)
 	nameNode := args.next()
 	varName := mustString(cp, nameNode, "must be a literal string") + FnSuffix
@@ -220,7 +220,7 @@ func (op fnWrap) invoke(fm *Frame) error {
 }
 
 // UseForm = 'use' StringPrimary
-func compileUse(cp *compiler, fn *parse.Form) opBody {
+func compileUse(cp *compiler, fn *parse.Form) effectOpBody {
 	var name, path string
 
 	switch len(fn.Args) {
@@ -353,7 +353,7 @@ func getModuleSource(ev *Evaler, name string) (*Source, error) {
 // and outputs it; the remaining arguments are not evaluated. If there are no
 // false-ish values, the last value is output. If there are no arguments, it
 // outputs $true, as if there is a hidden $true before actual arguments.
-func compileAnd(cp *compiler, fn *parse.Form) opBody {
+func compileAnd(cp *compiler, fn *parse.Form) effectOpBody {
 	return &andOrOp{cp.compoundOps(fn.Args), true, false}
 }
 
@@ -363,7 +363,7 @@ func compileAnd(cp *compiler, fn *parse.Form) opBody {
 // outputs it; the remaining arguments are not evaluated. If there are no
 // true-ish values, the last value is output. If there are no arguments, it
 // outputs $false, as if there is a hidden $false before actual arguments.
-func compileOr(cp *compiler, fn *parse.Form) opBody {
+func compileOr(cp *compiler, fn *parse.Form) effectOpBody {
 	return &andOrOp{cp.compoundOps(fn.Args), false, true}
 }
 
@@ -392,7 +392,7 @@ func (op *andOrOp) invoke(fm *Frame) error {
 	return nil
 }
 
-func compileIf(cp *compiler, fn *parse.Form) opBody {
+func compileIf(cp *compiler, fn *parse.Form) effectOpBody {
 	args := cp.walkArgs(fn)
 	var condNodes []*parse.Compound
 	var bodyNodes []*parse.Primary
@@ -443,7 +443,7 @@ func (op *ifOp) invoke(fm *Frame) error {
 	return nil
 }
 
-func compileWhile(cp *compiler, fn *parse.Form) opBody {
+func compileWhile(cp *compiler, fn *parse.Form) effectOpBody {
 	args := cp.walkArgs(fn)
 	condNode := args.next()
 	bodyNode := args.nextMustLambda()
@@ -482,7 +482,7 @@ func (op *whileOp) invoke(fm *Frame) error {
 	return nil
 }
 
-func compileFor(cp *compiler, fn *parse.Form) opBody {
+func compileFor(cp *compiler, fn *parse.Form) effectOpBody {
 	args := cp.walkArgs(fn)
 	varNode := args.next()
 	iterNode := args.next()
@@ -565,7 +565,7 @@ func (op *forOp) invoke(fm *Frame) error {
 	return nil
 }
 
-func compileTry(cp *compiler, fn *parse.Form) opBody {
+func compileTry(cp *compiler, fn *parse.Form) effectOpBody {
 	logger.Println("compiling try")
 	args := cp.walkArgs(fn)
 	bodyNode := args.nextMustLambda()

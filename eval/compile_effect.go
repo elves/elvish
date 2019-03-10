@@ -13,7 +13,7 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func (cp *compiler) chunk(n *parse.Chunk) opBody {
+func (cp *compiler) chunk(n *parse.Chunk) effectOpBody {
 	return chunkOp{cp.pipelineOps(n.Pipelines)}
 }
 
@@ -37,7 +37,7 @@ func (op chunkOp) invoke(fm *Frame) error {
 	return nil
 }
 
-func (cp *compiler) pipeline(n *parse.Pipeline) opBody {
+func (cp *compiler) pipeline(n *parse.Pipeline) effectOpBody {
 	return &pipelineOp{n.Background, n.SourceText(), cp.formOps(n.Forms)}
 }
 
@@ -140,7 +140,7 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 	}
 }
 
-func (cp *compiler) form(n *parse.Form) opBody {
+func (cp *compiler) form(n *parse.Form) effectOpBody {
 	var saveVarsOps []lvaluesOp
 	var assignmentOps []effectOp
 	if len(n.Assignments) > 0 {
@@ -159,7 +159,7 @@ func (cp *compiler) form(n *parse.Form) opBody {
 	// Depending on the type of the form, exactly one of the three below will be
 	// set.
 	var (
-		specialOpFunc  opBody
+		specialOpFunc  effectOpBody
 		headOp         valuesOp
 		spaceyAssignOp effectOp
 	)
@@ -230,7 +230,7 @@ type formOp struct {
 	saveVarsOps    []lvaluesOp
 	assignmentOps  []effectOp
 	redirOps       []effectOp
-	specialOpBody  opBody
+	specialOpBody  effectOpBody
 	headOp         valuesOp
 	argOps         []valuesOp
 	optsOp         valuesOpBody
@@ -358,7 +358,7 @@ func allTrue(vs []interface{}) bool {
 	return true
 }
 
-func (cp *compiler) assignment(n *parse.Assignment) opBody {
+func (cp *compiler) assignment(n *parse.Assignment) effectOpBody {
 	variablesOp, restOp := cp.lvaluesOp(n.Left)
 	valuesOp := cp.compoundOp(n.Right)
 	return &assignmentOp{variablesOp, restOp, valuesOp}
@@ -454,7 +454,7 @@ func (cp *compiler) literal(n *parse.Primary, msg string) string {
 const defaultFileRedirPerm = 0644
 
 // redir compiles a Redir into a op.
-func (cp *compiler) redir(n *parse.Redir) opBody {
+func (cp *compiler) redir(n *parse.Redir) effectOpBody {
 	var dstOp valuesOp
 	if n.Left != nil {
 		dstOp = cp.compoundOp(n.Left)

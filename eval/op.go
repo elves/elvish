@@ -11,12 +11,12 @@ type Op struct {
 
 // An operation on a Frame that produces a side effect.
 type effectOp struct {
-	body       opBody
+	body       effectOpBody
 	begin, end int
 }
 
-// The body of an Op.
-type opBody interface {
+// The body of an effectOp.
+type effectOpBody interface {
 	invoke(*Frame) error
 }
 
