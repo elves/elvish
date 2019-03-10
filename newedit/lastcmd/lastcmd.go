@@ -9,7 +9,24 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-func StartConfig(line string, words []string) listing.StartConfig {
+// Mode represents the lastcmd mode. It implements the types.Mode interface by
+// embedding a *listing.Mode.
+type Mode struct {
+	*listing.Mode
+}
+
+// Start starts the lastcmd mode.
+func (m *Mode) Start(line string, words []string) {
+	m.Mode.Start(listing.StartConfig{
+		Name:        "LASTCMD",
+		ItemsGetter: itemsGetter(line, words),
+		// TODO: Uncomment
+		// AutoAccept: true,
+		// StartFiltering: true,
+	})
+}
+
+func itemsGetter(line string, words []string) func(string) listing.Items {
 	// Build the list of all entries from the line and words. Entries have
 	// positive and negative indicies, except for the first entry, which
 	// represents the entire line and has no indicies.
@@ -23,14 +40,8 @@ func StartConfig(line string, words []string) listing.StartConfig {
 		}
 	}
 
-	return listing.StartConfig{
-		Name: "LASTCMD",
-		ItemsGetter: func(p string) listing.Items {
-			return filter(entries, p)
-		},
-		// TODO: Uncomment
-		// AutoAccept: true,
-		// StartFiltering: true,
+	return func(p string) listing.Items {
+		return filter(entries, p)
 	}
 }
 

@@ -11,9 +11,9 @@ import (
 var Args = tt.Args
 
 func TestLastCmdItemsGetter_ShowAll(t *testing.T) {
-	cfg := StartConfig("put hello elvish", []string{"put", "hello", "elvish"})
+	g := itemsGetter("put hello elvish", []string{"put", "hello", "elvish"})
 
-	tt.Test(t, tt.Fn("cfg.ItemsGetter", cfg.ItemsGetter), tt.Table{
+	tt.Test(t, tt.Fn("itemsGetter", g), tt.Table{
 		// Empty filter; show everything
 		Args("").Rets(listing.MatchItems(
 			styled.Unstyled("    put hello elvish"),
@@ -31,10 +31,10 @@ func TestLastCmdItemsGetter_ShowAll(t *testing.T) {
 }
 
 func TestLastCmdItemsGetter_PrefixMatchIndex(t *testing.T) {
-	cfg := StartConfig("put 1 2 3 4 5 6 7 8 9 10 11 12", []string{
+	g := itemsGetter("put 1 2 3 4 5 6 7 8 9 10 11 12", []string{
 		"put", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"})
 
-	tt.Test(t, tt.Fn("cfg.ItemsGetter", cfg.ItemsGetter), tt.Table{
+	tt.Test(t, tt.Fn("itemsGetter", g), tt.Table{
 		Args("1").Rets(listing.MatchItems(
 			styled.Unstyled("  1 1"),
 			styled.Unstyled(" 10 10"),
