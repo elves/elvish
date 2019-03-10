@@ -14,6 +14,8 @@
 package listing
 
 import (
+	"sync"
+
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/types"
@@ -23,7 +25,8 @@ import (
 // Mode represents a listing mode, implementing the types.Mode interface.
 type Mode struct {
 	StartConfig
-	states
+	state      State
+	stateMutex sync.Mutex
 }
 
 // StartConfig is the configuration for starting the listing mode.
@@ -35,14 +38,6 @@ type StartConfig struct {
 	// AcceptItem func(i int)
 	// AutoAccept  bool
 	// StartFiltering bool
-}
-
-type states struct {
-	filtering bool
-	filter    string
-	items     Items
-	first     int
-	selected  int
 }
 
 // Items is an interface for accessing items to show in the listing mode.
@@ -75,11 +70,14 @@ func (m *Mode) ModeRenderFlag() types.ModeRenderFlag {
 	return 0
 }
 
+// HandleEvent handles key events and ignores other types of events.
 func (m *Mode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
 	switch e := e.(type) {
 	case tty.KeyEvent:
 		if m.KeyHandler == nil {
-			return defaultHandler(ui.Key(e), st)
+			m.stateMutex.Lock()
+			defer m.stateMutex.Unlock()
+			return defaultHandler(ui.Key(e), st, &m.state)
 		}
 		return m.KeyHandler(ui.Key(e))
 	default:
@@ -87,13 +85,29 @@ func (m *Mode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
 	}
 }
 
-func defaultHandler(k ui.Key, st *types.State) types.HandlerAction {
+func defaultHandler(k ui.Key, st *types.State, mst *State) types.HandlerAction {
 	switch k {
-	case ui.Key{'[', ui.Ctrl}:
+	case ui.K('[', ui.Ctrl):
 		// TODO(xiaq): Go back to previous mode instead of the initial mode.
 		st.SetMode(nil)
+	case ui.K(ui.Down):
+		mst.Down()
+	case ui.K(ui.Up):
+		mst.Up()
+	case ui.K(ui.Tab):
+		mst.DownCycle()
+	case ui.K(ui.Tab, ui.Shift):
+		mst.UpCycle()
 	}
 	return 0
+}
+
+// MutateStates mutates the states using the given function, guarding the
+// mutation with the mutex.
+func (m *Mode) MutateStates(f func(*State)) {
+	m.stateMutex.Lock()
+	defer m.stateMutex.Unlock()
+	f(&m.state)
 }
 
 // The number of lines the listing mode keeps between the current selected item
@@ -106,29 +120,34 @@ var (
 	styleForLastLine = "underlined"
 )
 
+// List renders the listing.
 func (m *Mode) List(maxHeight int) ui.Renderer {
-	if m.items == nil {
+	m.stateMutex.Lock()
+	defer m.stateMutex.Unlock()
+	st := &m.state
+
+	if st.items == nil {
 		// This is the first time List is called, get initial items.
-		m.items = m.ItemsGetter(m.filter)
+		st.items = m.ItemsGetter(st.filter)
 	}
-	n := m.items.Len()
+	n := st.items.Len()
 	if n == 0 {
 		// No result.
 		return ui.NewStringRenderer("(no result)")
 	}
 
-	newFirst, firstCrop := findWindow(m.items, m.first, m.selected, maxHeight)
-	m.first = newFirst
+	newFirst, firstCrop := findWindow(st.items, st.first, st.selected, maxHeight)
+	st.first = newFirst
 
 	var allLines []styled.Text
 	upper := n
 	lastCropped := false
-	for i := m.first; i < n; i++ {
-		lines := m.items.Show(i).SplitByRune('\n')
-		if i == m.first && firstCrop > 0 {
+	for i := st.first; i < n; i++ {
+		lines := st.items.Show(i).SplitByRune('\n')
+		if i == st.first && firstCrop > 0 {
 			lines = lines[firstCrop:]
 		}
-		if i == m.selected {
+		if i == st.selected {
 			for i := range lines {
 				lines[i] = styled.Transform(lines[i], styleForSelected)
 			}
@@ -147,8 +166,8 @@ func (m *Mode) List(maxHeight int) ui.Renderer {
 	}
 
 	rd := NewStyledTextsRenderer(allLines)
-	if m.first > 0 || firstCrop > 0 || upper < n || lastCropped {
-		rd = ui.NewRendererWithVerticalScrollbar(rd, n, m.first, upper)
+	if st.first > 0 || firstCrop > 0 || upper < n || lastCropped {
+		rd = ui.NewRendererWithVerticalScrollbar(rd, n, st.first, upper)
 	}
 	return rd
 }

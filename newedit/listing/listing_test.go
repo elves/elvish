@@ -75,8 +75,8 @@ func TestList_Normal(t *testing.T) {
 	m := Mode{}
 	m.Start(StartConfig{ItemsGetter: func(string) Items { return fakeItems{10} }})
 
-	m.selected = 3
-	m.first = 1
+	m.state.selected = 3
+	m.state.first = 1
 
 	renderer := m.List(6)
 
@@ -114,7 +114,7 @@ func TestList_Crop(t *testing.T) {
 			styled.Unstyled("1a\n1b"), styled.Unstyled("2a\n2b"))
 	}})
 
-	m.selected = 1
+	m.state.selected = 1
 	renderer := m.List(4)
 
 	wantBase := NewStyledTextsRenderer([]styled.Text{
