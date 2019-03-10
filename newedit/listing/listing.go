@@ -16,7 +16,6 @@ package listing
 import (
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/editutil"
 	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/styled"
 )
@@ -91,8 +90,8 @@ func (m *Mode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
 func defaultHandler(k ui.Key, st *types.State) types.HandlerAction {
 	switch k {
 	case ui.Key{'[', ui.Ctrl}:
-		// TODO(xiaq): Go back to previous mode instead of using BasicMode.
-		st.SetMode(editutil.BasicMode{})
+		// TODO(xiaq): Go back to previous mode instead of the initial mode.
+		st.SetMode(nil)
 	}
 	return 0
 }

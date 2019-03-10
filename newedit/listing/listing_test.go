@@ -7,7 +7,6 @@ import (
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/editutil"
 	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
@@ -51,8 +50,8 @@ func TestHandleEvent_DefaultHandler(t *testing.T) {
 	st := types.State{}
 	st.SetMode(&m)
 	m.HandleEvent(tty.KeyEvent{'[', ui.Ctrl}, &st)
-	if st.Mode() != (editutil.BasicMode{}) {
-		t.Errorf("C-[ of the default handler did not set mode to BasicMode")
+	if st.Mode() != nil {
+		t.Errorf("C-[ of the default handler did not set mode to nil")
 	}
 }
 
