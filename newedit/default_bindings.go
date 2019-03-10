@@ -27,6 +27,14 @@ insert:binding = (binding-map [
   &Ctrl-D=  $commit-eof~
   &Default= $insert:default-handler~
 ])
+
+listing:binding = (binding-map [
+  &Ctrl-'['=  $reset-mode~
+  &Up=        $listing:up~
+  &Down=      $listing:down~
+  &Tab=       $listing:down-cycle~
+  &Shift-Tab= $listing:up-cycle~
+])
 `
 
 // vi: set et:

@@ -15,7 +15,7 @@ func TestKeyHandlerFromBinding_CallsBinding(t *testing.T) {
 	called := 0
 	binding := buildBinding(
 		"a", eval.NewBuiltinFn("[test]", func() { called++ }))
-	handler := keyHandlerFromBinding(dummyEditor{}, eval.NewEvaler(), &binding)
+	handler := keyHandlerFromBindings(dummyEditor{}, eval.NewEvaler(), &binding)
 
 	action := handler(ui.Key{Rune: 'a'})
 
@@ -32,7 +32,7 @@ func TestKeyHandlerFromBinding_SetsBindingKey(t *testing.T) {
 	var gotKey ui.Key
 	binding := buildBinding(
 		"a", eval.NewBuiltinFn("[test]", func() { gotKey = ed.State().BindingKey() }))
-	handler := keyHandlerFromBinding(ed, eval.NewEvaler(), &binding)
+	handler := keyHandlerFromBindings(ed, eval.NewEvaler(), &binding)
 
 	key := ui.Key{Rune: 'a'}
 	_ = handler(key)
@@ -45,7 +45,7 @@ func TestKeyHandlerFromBinding_SetsBindingKey(t *testing.T) {
 func TestKeyHandlerFromBinding_Unbound(t *testing.T) {
 	ed := &fakeEditor{}
 	binding := EmptyBindingMap
-	handler := keyHandlerFromBinding(ed, eval.NewEvaler(), &binding)
+	handler := keyHandlerFromBindings(ed, eval.NewEvaler(), &binding)
 
 	action := handler(ui.Key{Rune: 'a'})
 
@@ -55,6 +55,68 @@ func TestKeyHandlerFromBinding_Unbound(t *testing.T) {
 	}
 	if action != types.NoAction {
 		t.Errorf("Fallback binding returned %v, want NoAction", action)
+	}
+}
+
+func TestIndexLayeredBindings(t *testing.T) {
+	// In a two-layer binding, there are 4 different cases:
+	// 1. Key is bound in upper layer
+	// 2. Key is bound not in upper layer but in lower layer
+	// 3. Key
+	called := 0
+	binding1 := buildBinding(
+		"a", eval.NewBuiltinFn("[a1]", func() { called = 1 }))
+	binding2 := buildBinding(
+		"a", eval.NewBuiltinFn("[a2]", func() { called = 2 }),
+		"b", eval.NewBuiltinFn("[b2]", func() { called = 2 }))
+
+	handler := keyHandlerFromBindings(&fakeEditor{}, eval.NewEvaler(),
+		&binding1, &binding2)
+
+	// Prefer upper layer when present in both
+	_ = handler(ui.K('a'))
+	if called != 1 {
+		t.Errorf("want a1 to be called, got %d", called)
+	}
+
+	// Use lower layer when absent in upper layer
+	called = 0
+	_ = handler(ui.K('b'))
+	if called != 2 {
+		t.Errorf("want b2 to be called, got %d", called)
+	}
+
+	// Use lower layer default when upper layer does not have default
+	b, _ := binding2.Assoc(
+		ui.Default, eval.NewBuiltinFn("[d2]", func() { called = 2 }))
+	binding2 = b.(BindingMap)
+
+	called = 0
+	_ = handler(ui.K('d'))
+	if called != 2 {
+		t.Errorf("want d2 to be called, got %d", called)
+	}
+
+	// Prefer upper layer default
+	b, _ = binding1.Assoc(
+		ui.Default, eval.NewBuiltinFn("[d1]", func() { called = 1 }))
+	binding1 = b.(BindingMap)
+
+	called = 0
+	_ = handler(ui.K('d'))
+	if called != 1 {
+		t.Errorf("want d1 to be called, got %d", called)
+	}
+
+	// Exact matches in all layers are tried before falling back to default
+	b, _ = binding2.Assoc(
+		"c", eval.NewBuiltinFn("[c2]", func() { called = 2 }))
+	binding2 = b.(BindingMap)
+
+	called = 0
+	_ = handler(ui.K('c'))
+	if called != 2 {
+		t.Errorf("want c2 to be called, got %d", called)
 	}
 }
 

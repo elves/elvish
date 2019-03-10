@@ -23,9 +23,9 @@ type BindingMap = eddefs.BindingMap
 // maps.
 var EmptyBindingMap = eddefs.EmptyBindingMap
 
-func keyHandlerFromBinding(ed editor, ev *eval.Evaler, m *BindingMap) func(ui.Key) types.HandlerAction {
+func keyHandlerFromBindings(ed editor, ev *eval.Evaler, bs ...*BindingMap) func(ui.Key) types.HandlerAction {
 	return func(k ui.Key) types.HandlerAction {
-		f := m.GetOrDefault(k)
+		f := indexLayeredBindings(k, bs...)
 		// TODO: Make this fallback part of GetOrDefault after moving BindingMap
 		// into this package.
 		if f == nil {
@@ -35,6 +35,22 @@ func keyHandlerFromBinding(ed editor, ev *eval.Evaler, m *BindingMap) func(ui.Ke
 		ed.State().SetBindingKey(k)
 		return callBinding(ed, ev, f)
 	}
+}
+
+// Indexes a series of layered bindings. Returns nil if none of the bindings
+// have the required key or a default.
+func indexLayeredBindings(k ui.Key, bindings ...*BindingMap) eval.Callable {
+	for _, binding := range bindings {
+		if binding.HasKey(k) {
+			return binding.GetKey(k)
+		}
+	}
+	for _, binding := range bindings {
+		if binding.HasKey(ui.Default) {
+			return binding.GetKey(ui.Default)
+		}
+	}
+	return nil
 }
 
 var bindingSource = eval.NewInternalSource("[editor binding]")

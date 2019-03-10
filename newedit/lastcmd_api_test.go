@@ -14,8 +14,9 @@ func TestInitLastCmd_Start(t *testing.T) {
 	ed := &fakeEditor{}
 	ev := eval.NewEvaler()
 	lsMode := listing.Mode{}
+	lsBinding := EmptyBindingMap
 
-	ns := initLastcmd(ed, ev, &lsMode)
+	ns := initLastcmd(ed, ev, &lsMode, &lsBinding)
 
 	// Call <edit:listing>:start.
 	fm := eval.NewTopFrame(ev, eval.NewInternalSource("[test]"), nil)

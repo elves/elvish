@@ -36,6 +36,7 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 			"exit-binding": exitBinding,
 			"commit-code":  commitCode,
 			"commit-eof":   commitEOF,
+			"reset-mode":   makeResetMode(ed.State()),
 		}).
 		AddBuiltinFns("<edit>", bufferBuiltins(ed.State()))
 
@@ -53,9 +54,9 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	ns.AddNs("insert", insertNs)
 
 	// Listing modes.
-	lsMode, lsNs := initListing(ed, ev)
+	lsMode, lsBinding, lsNs := initListing()
 	ns.AddNs("listing", lsNs)
-	lastcmdNs := initLastcmd(ed, ev, lsMode)
+	lastcmdNs := initLastcmd(ed, ev, lsMode, lsBinding)
 	ns.AddNs("lastcmd", lastcmdNs)
 
 	// Evaluate default bindings.

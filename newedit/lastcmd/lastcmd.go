@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/listing"
+	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/styled"
 )
 
@@ -13,12 +15,14 @@ import (
 // embedding a *listing.Mode.
 type Mode struct {
 	*listing.Mode
+	KeyHandler func(ui.Key) types.HandlerAction
 }
 
 // Start starts the lastcmd mode.
 func (m *Mode) Start(line string, words []string) {
 	m.Mode.Start(listing.StartConfig{
 		Name:        "LASTCMD",
+		KeyHandler:  m.KeyHandler,
 		ItemsGetter: itemsGetter(line, words),
 		// TODO: Uncomment
 		// AutoAccept: true,

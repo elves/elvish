@@ -18,7 +18,7 @@ func initInsert(ed editor, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
 	binding := EmptyBindingMap
 
 	m := &insert.Mode{
-		KeyHandler:  keyHandlerFromBinding(ed, ev, &binding),
+		KeyHandler:  keyHandlerFromBindings(ed, ev, &binding),
 		AbbrIterate: func(cb func(a, f string)) { abbrIterate(abbr, cb) },
 	}
 
