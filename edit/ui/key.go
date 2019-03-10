@@ -20,6 +20,15 @@ type Key struct {
 	Mod  Mod
 }
 
+// K constructs a new Key.
+func K(r rune, mods ...Mod) Key {
+	var mod Mod
+	for _, m := range mods {
+		mod |= m
+	}
+	return Key{r, mod}
+}
+
 // Default is used in the key binding table to indicate default binding.
 var Default = Key{DefaultBindingRune, 0}
 
