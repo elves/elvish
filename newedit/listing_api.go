@@ -6,7 +6,7 @@ import (
 	"github.com/elves/elvish/newedit/listing"
 )
 
-func initListing() (*listing.Mode, *BindingMap, eval.Ns) {
+func initListing(ed editor) (*listing.Mode, *BindingMap, eval.Ns) {
 	mode := &listing.Mode{}
 	binding := EmptyBindingMap
 	ns := eval.Ns{
@@ -16,6 +16,9 @@ func initListing() (*listing.Mode, *BindingMap, eval.Ns) {
 		"down":       func() { mode.MutateStates((*listing.State).Down) },
 		"up-cycle":   func() { mode.MutateStates((*listing.State).UpCycle) },
 		"down-cycle": func() { mode.MutateStates((*listing.State).DownCycle) },
+
+		"accept":       func() { mode.AcceptItem(ed.State()) },
+		"accept-close": func() { mode.AcceptItemAndClose(ed.State()) },
 	})
 	return mode, &binding, ns
 }

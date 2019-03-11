@@ -75,6 +75,15 @@ func (s *State) CodeAfterDot() string {
 	return s.Raw.Code[s.Raw.Dot:]
 }
 
+// InsertAtDot inserts the given text at the dot.
+func (s *State) InsertAtDot(text string) {
+	s.Mutex.Lock()
+	defer s.Mutex.Unlock()
+	raw := &s.Raw
+	raw.Code = raw.Code[:raw.Dot] + text + raw.Code[raw.Dot:]
+	raw.Dot += len(text)
+}
+
 // AddNote adds a note.
 func (s *State) AddNote(note string) {
 	s.Mutex.Lock()

@@ -35,7 +35,6 @@ type StartConfig struct {
 	KeyHandler  func(ui.Key) types.HandlerAction
 	ItemsGetter func(filter string) Items
 	// TODO(xiaq): Support the following config options.
-	// AcceptItem func(i int)
 	// AutoAccept  bool
 	// StartFiltering bool
 }
@@ -44,6 +43,7 @@ type StartConfig struct {
 type Items interface {
 	Len() int
 	Show(int) styled.Text
+	Accept(int, *types.State)
 }
 
 // SliceItems returns an Items consisting of the given texts.
@@ -51,13 +51,19 @@ func SliceItems(texts ...styled.Text) Items { return sliceItems{texts} }
 
 type sliceItems struct{ texts []styled.Text }
 
-func (it sliceItems) Len() int               { return len(it.texts) }
-func (it sliceItems) Show(i int) styled.Text { return it.texts[i] }
+func (it sliceItems) Len() int                 { return len(it.texts) }
+func (it sliceItems) Show(i int) styled.Text   { return it.texts[i] }
+func (it sliceItems) Accept(int, *types.State) {}
 
 // Start starts the listing mode, using the given config and resetting all
 // states.
 func (m *Mode) Start(cfg StartConfig) {
 	*m = Mode{StartConfig: cfg}
+	if cfg.ItemsGetter != nil {
+		m.state.items = cfg.ItemsGetter("")
+	} else {
+		m.state.items = sliceItems{}
+	}
 }
 
 // ModeLine returns a modeline showing the specified name of the mode.
@@ -110,6 +116,22 @@ func (m *Mode) MutateStates(f func(*State)) {
 	f(&m.state)
 }
 
+// AcceptItem accepts the currently selected item.
+func (m *Mode) AcceptItem(st *types.State) {
+	m.stateMutex.Lock()
+	defer m.stateMutex.Unlock()
+	m.state.items.Accept(m.state.selected, st)
+}
+
+// AcceptItemAndClose accepts the currently selected item and closes the listing
+// mode.
+func (m *Mode) AcceptItemAndClose(st *types.State) {
+	m.stateMutex.Lock()
+	defer m.stateMutex.Unlock()
+	m.state.items.Accept(m.state.selected, st)
+	st.SetMode(nil)
+}
+
 // The number of lines the listing mode keeps between the current selected item
 // and the top and bottom edges of the window, unless the available height is
 // too small or if the selected item is near the top or bottom of the list.
@@ -126,10 +148,6 @@ func (m *Mode) List(maxHeight int) ui.Renderer {
 	defer m.stateMutex.Unlock()
 	st := &m.state
 
-	if st.items == nil {
-		// This is the first time List is called, get initial items.
-		st.items = m.ItemsGetter(st.filter)
-	}
 	n := st.items.Len()
 	if n == 0 {
 		// No result.

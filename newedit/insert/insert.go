@@ -113,7 +113,7 @@ func (m *Mode) handlePasteEnd(st *types.State) {
 	if m.paste == quotePaste {
 		text = parse.Quote(text)
 	}
-	insert(st, text)
+	st.InsertAtDot(text)
 	m.pastes = nil
 	m.paste = noPaste
 }
@@ -164,12 +164,4 @@ func (m *Mode) handleKey(k ui.Key, st *types.State) types.HandlerAction {
 		}
 	}
 	return action
-}
-
-func insert(st *types.State, text string) {
-	st.Mutex.Lock()
-	defer st.Mutex.Unlock()
-	raw := &st.Raw
-	raw.Code = raw.Code[:raw.Dot] + text + raw.Code[raw.Dot:]
-	raw.Dot += len(text)
 }

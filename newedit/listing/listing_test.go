@@ -12,6 +12,30 @@ import (
 	"github.com/elves/elvish/tt"
 )
 
+// Implementation of Items that emulates a list of numbers from 0 to n-1.
+type fakeItems struct{ n int }
+
+func (it fakeItems) Len() int { return it.n }
+
+func (it fakeItems) Show(i int) styled.Text {
+	return styled.Unstyled(strconv.Itoa(i))
+}
+
+func (it fakeItems) Accept(int, *types.State) {}
+
+// Implementation of Items that emulate 10 empty texts, but can be accepted.
+type fakeAcceptableItems struct{ accept func(int, *types.State) }
+
+func (it fakeAcceptableItems) Len() int { return 10 }
+
+func (it fakeAcceptableItems) Show(int) styled.Text {
+	return styled.Unstyled("")
+}
+
+func (it fakeAcceptableItems) Accept(i int, st *types.State) {
+	it.accept(i, st)
+}
+
 func TestModeLine(t *testing.T) {
 	m := Mode{}
 	m.Start(StartConfig{Name: "LISTING"})
@@ -47,11 +71,50 @@ func TestHandleEvent_CallsKeyHandler(t *testing.T) {
 
 func TestHandleEvent_DefaultHandler(t *testing.T) {
 	m := Mode{}
+	m.Start(StartConfig{ItemsGetter: func(string) Items {
+		return fakeItems{10}
+	}})
 	st := types.State{}
 	st.SetMode(&m)
+
+	m.HandleEvent(tty.KeyEvent{ui.Down, 0}, &st)
+	if m.state.selected != 1 {
+		t.Errorf("Down did not move selection down")
+	}
+
+	m.HandleEvent(tty.KeyEvent{ui.Up, 0}, &st)
+	if m.state.selected != 0 {
+		t.Errorf("Up did not move selection up")
+	}
+
+	m.HandleEvent(tty.KeyEvent{ui.Up, 0}, &st)
+	if m.state.selected != 0 {
+		t.Errorf("Up did not stop at first item")
+	}
+
+	m.HandleEvent(tty.KeyEvent{ui.Tab, ui.Shift}, &st)
+	if m.state.selected != 9 {
+		t.Errorf("Shift-Tab did not wrap to last item")
+	}
+
+	m.HandleEvent(tty.KeyEvent{ui.Tab, 0}, &st)
+	if m.state.selected != 0 {
+		t.Errorf("Tab did not wrap to first item")
+	}
+
+	m.HandleEvent(tty.KeyEvent{ui.Tab, 0}, &st)
+	if m.state.selected != 1 {
+		t.Errorf("Tab did not move selection down")
+	}
+
+	m.HandleEvent(tty.KeyEvent{ui.Tab, ui.Shift}, &st)
+	if m.state.selected != 0 {
+		t.Errorf("Shift-Tab did not move selection up")
+	}
+
 	m.HandleEvent(tty.KeyEvent{'[', ui.Ctrl}, &st)
 	if st.Mode() != nil {
-		t.Errorf("C-[ of the default handler did not set mode to nil")
+		t.Errorf("Ctrl-[ did not set mode to nil")
 	}
 }
 
@@ -63,12 +126,45 @@ func TestHandleEvent_NonKeyEvent(t *testing.T) {
 	}
 }
 
-type fakeItems struct{ n int }
+func TestMutateState(t *testing.T) {
+	m := Mode{}
+	m.MutateStates(func(st *State) {
+		st.selected = 10
+	})
+	if m.state.selected != 10 {
+		t.Errorf("state not mutated")
+	}
+}
 
-func (it fakeItems) Len() int { return it.n }
+func TestAcceptItem(t *testing.T) {
+	m := Mode{}
+	accepted := -1
+	m.Start(StartConfig{ItemsGetter: func(string) Items {
+		return fakeAcceptableItems{func(i int, st *types.State) { accepted = i }}
+	}})
+	m.state.selected = 7
+	m.AcceptItem(&types.State{})
+	if accepted != 7 {
+		t.Errorf("accept called with %v, want 7", accepted)
+	}
+}
 
-func (it fakeItems) Show(i int) styled.Text {
-	return styled.Unstyled(strconv.Itoa(i))
+func TestAcceptItemAndClose(t *testing.T) {
+	m := Mode{}
+	accepted := -1
+	m.Start(StartConfig{ItemsGetter: func(string) Items {
+		return fakeAcceptableItems{func(i int, st *types.State) { accepted = i }}
+	}})
+	m.state.selected = 7
+	st := &types.State{}
+	st.SetMode(&m)
+	m.AcceptItemAndClose(st)
+	if accepted != 7 {
+		t.Errorf("accept called with %v, want 7", accepted)
+	}
+	if st.Raw.Mode != nil {
+		t.Errorf("mode not reset")
+	}
 }
 
 func TestList_Normal(t *testing.T) {

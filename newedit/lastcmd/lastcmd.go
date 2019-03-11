@@ -94,3 +94,7 @@ func (it items) Show(i int) styled.Text {
 	}
 	return styled.Unstyled(fmt.Sprintf("%3s %s", index, entry.content))
 }
+
+func (it items) Accept(i int, st *types.State) {
+	st.InsertAtDot(it.entries[i].content)
+}

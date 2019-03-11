@@ -34,6 +34,8 @@ listing:binding = (binding-map [
   &Down=      $listing:down~
   &Tab=       $listing:down-cycle~
   &Shift-Tab= $listing:up-cycle~
+  &Enter=     $listing:accept-close~
+  &Alt-Enter= $listing:accept~
 ])
 `
 
