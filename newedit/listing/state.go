@@ -42,3 +42,8 @@ func (st *State) DownCycle() {
 		st.selected = 0
 	}
 }
+
+// ToggleFiltering toggles the filtering status of the state.
+func (st *State) ToggleFiltering() {
+	st.filtering = !st.filtering
+}

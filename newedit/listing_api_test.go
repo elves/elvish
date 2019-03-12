@@ -13,4 +13,6 @@ func TestInitListing_Binding(t *testing.T) {
 	}
 }
 
-// TODO: Test the builtin functions
+// TODO: Test the builtin functions. As a prerequisite, we need to make listing
+// mode's state observable, and expose fakeItems and fakeAcceptableItems of the
+// listing package.

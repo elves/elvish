@@ -17,8 +17,12 @@ func initListing(ed editor) (*listing.Mode, *BindingMap, eval.Ns) {
 		"up-cycle":   func() { mode.MutateStates((*listing.State).UpCycle) },
 		"down-cycle": func() { mode.MutateStates((*listing.State).DownCycle) },
 
+		"toggle-filtering": func() { mode.MutateStates((*listing.State).ToggleFiltering) },
+
 		"accept":       func() { mode.AcceptItem(ed.State()) },
 		"accept-close": func() { mode.AcceptItemAndClose(ed.State()) },
+
+		"default": func() { mode.DefaultHandler(ed.State()) },
 	})
 	return mode, &binding, ns
 }

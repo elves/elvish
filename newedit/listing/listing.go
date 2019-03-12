@@ -15,6 +15,8 @@ package listing
 
 import (
 	"sync"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
@@ -34,9 +36,9 @@ type StartConfig struct {
 	Name        string
 	KeyHandler  func(ui.Key) types.HandlerAction
 	ItemsGetter func(filter string) Items
+	StartFilter bool
 	// TODO(xiaq): Support the following config options.
 	// AutoAccept  bool
-	// StartFiltering bool
 }
 
 // Items is an interface for accessing items to show in the listing mode.
@@ -64,15 +66,21 @@ func (m *Mode) Start(cfg StartConfig) {
 	} else {
 		m.state.items = sliceItems{}
 	}
+	m.state.filtering = cfg.StartFilter
 }
 
 // ModeLine returns a modeline showing the specified name of the mode.
 func (m *Mode) ModeLine() ui.Renderer {
-	return ui.NewModeLineRenderer(" "+m.Name+" ", "")
+	m.stateMutex.Lock()
+	defer m.stateMutex.Unlock()
+	return ui.NewModeLineRenderer(" "+m.Name+" ", m.state.filter)
 }
 
-// ModeRenderFlag always returns 0.
+// ModeRenderFlag returns CursorOnModeLine if filtering, or 0 otherwise.
 func (m *Mode) ModeRenderFlag() types.ModeRenderFlag {
+	if m.state.filtering {
+		return types.CursorOnModeLine
+	}
 	return 0
 }
 
@@ -83,7 +91,7 @@ func (m *Mode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
 		if m.KeyHandler == nil {
 			m.stateMutex.Lock()
 			defer m.stateMutex.Unlock()
-			return defaultHandler(ui.Key(e), st, &m.state)
+			return defaultBinding(ui.Key(e), st, &m.state)
 		}
 		return m.KeyHandler(ui.Key(e))
 	default:
@@ -91,7 +99,14 @@ func (m *Mode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
 	}
 }
 
-func defaultHandler(k ui.Key, st *types.State, mst *State) types.HandlerAction {
+// DefaultHandler handles keys when filtering, and resets the mode when not.
+func (m *Mode) DefaultHandler(st *types.State) {
+	m.stateMutex.Lock()
+	defer m.stateMutex.Unlock()
+	defaultHandler(st.BindingKey(), st, &m.state)
+}
+
+func defaultBinding(k ui.Key, st *types.State, mst *State) types.HandlerAction {
 	switch k {
 	case ui.K('[', ui.Ctrl):
 		// TODO(xiaq): Go back to previous mode instead of the initial mode.
@@ -104,8 +119,36 @@ func defaultHandler(k ui.Key, st *types.State, mst *State) types.HandlerAction {
 		mst.DownCycle()
 	case ui.K(ui.Tab, ui.Shift):
 		mst.UpCycle()
+	case ui.K('F', ui.Ctrl):
+		mst.ToggleFiltering()
+	default:
+		return defaultHandler(k, st, mst)
 	}
 	return 0
+}
+
+func defaultHandler(k ui.Key, st *types.State, mst *State) types.HandlerAction {
+	if mst.filtering {
+		filter := mst.filter
+		if k == ui.K(ui.Backspace) {
+			_, size := utf8.DecodeLastRuneInString(filter)
+			if size > 0 {
+				mst.filter = filter[:len(filter)-size]
+			}
+		} else if likeChar(k) {
+			mst.filter += string(k.Rune)
+		} else {
+			st.AddNote("Unbound: " + k.String())
+		}
+		return 0
+	}
+	st.SetMode(nil)
+	// TODO: Return ReprocessEvent
+	return 0
+}
+
+func likeChar(k ui.Key) bool {
+	return k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune)
 }
 
 // MutateStates mutates the states using the given function, guarding the

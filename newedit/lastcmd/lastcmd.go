@@ -24,9 +24,9 @@ func (m *Mode) Start(line string, words []string) {
 		Name:        "LASTCMD",
 		KeyHandler:  m.KeyHandler,
 		ItemsGetter: itemsGetter(line, words),
+		StartFilter: true,
 		// TODO: Uncomment
 		// AutoAccept: true,
-		// StartFiltering: true,
 	})
 }
 

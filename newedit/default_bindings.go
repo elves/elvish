@@ -29,13 +29,18 @@ insert:binding = (binding-map [
 ])
 
 listing:binding = (binding-map [
-  &Ctrl-'['=  $reset-mode~
   &Up=        $listing:up~
   &Down=      $listing:down~
   &Tab=       $listing:down-cycle~
   &Shift-Tab= $listing:up-cycle~
-  &Enter=     $listing:accept-close~
+
+  &Ctrl-F=    $listing:toggle-filtering~
+
   &Alt-Enter= $listing:accept~
+  &Enter=     $listing:accept-close~
+  &Ctrl-'['=  $reset-mode~
+
+  &Default=   $listing:default~
 ])
 `
 

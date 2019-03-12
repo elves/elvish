@@ -39,7 +39,8 @@ func (it fakeAcceptableItems) Accept(i int, st *types.State) {
 func TestModeLine(t *testing.T) {
 	m := Mode{}
 	m.Start(StartConfig{Name: "LISTING"})
-	wantRenderer := ui.NewModeLineRenderer(" LISTING ", "")
+	m.state.filter = "filter"
+	wantRenderer := ui.NewModeLineRenderer(" LISTING ", "filter")
 	if renderer := m.ModeLine(); !reflect.DeepEqual(renderer, wantRenderer) {
 		t.Errorf("m.ModeLine() = %v, want %v", renderer, wantRenderer)
 	}
@@ -69,7 +70,7 @@ func TestHandleEvent_CallsKeyHandler(t *testing.T) {
 	}
 }
 
-func TestHandleEvent_DefaultHandler(t *testing.T) {
+func TestHandleEvent_DefaultBinding(t *testing.T) {
 	m := Mode{}
 	m.Start(StartConfig{ItemsGetter: func(string) Items {
 		return fakeItems{10}
@@ -112,9 +113,59 @@ func TestHandleEvent_DefaultHandler(t *testing.T) {
 		t.Errorf("Shift-Tab did not move selection up")
 	}
 
+	m.HandleEvent(tty.KeyEvent{'F', ui.Ctrl}, &st)
+	if !m.state.filtering {
+		t.Errorf("Ctrl-F does not enable filtering")
+	}
+
 	m.HandleEvent(tty.KeyEvent{'[', ui.Ctrl}, &st)
 	if st.Mode() != nil {
 		t.Errorf("Ctrl-[ did not set mode to nil")
+	}
+}
+
+func TestDefaultHandler_Filtering(t *testing.T) {
+	m := Mode{}
+	m.Start(StartConfig{ItemsGetter: func(f string) Items {
+		return fakeItems{10}
+	}})
+	m.state.filtering = true
+	st := types.State{}
+	st.SetMode(&m)
+
+	st.SetBindingKey(ui.K('a'))
+	m.DefaultHandler(&st)
+	if m.state.filter != "a" {
+		t.Errorf("Printable key did not append to filter")
+	}
+
+	m.state.filter = "hello world"
+	st.SetBindingKey(ui.K(ui.Backspace))
+	m.DefaultHandler(&st)
+	if m.state.filter != "hello worl" {
+		t.Errorf("Backspace did not remove last char of filter")
+	}
+
+	st.SetBindingKey(ui.K('A', ui.Ctrl))
+	m.DefaultHandler(&st)
+	wantNotes := []string{"Unbound: Ctrl-A"}
+	if !reflect.DeepEqual(st.Raw.Notes, wantNotes) {
+		t.Errorf("Unbound key made notes %v, want %v", st.Raw.Notes, wantNotes)
+	}
+}
+
+func TestDefaultHandler_NotFiltering(t *testing.T) {
+	m := Mode{}
+	m.Start(StartConfig{ItemsGetter: func(f string) Items {
+		return fakeItems{10}
+	}})
+	st := types.State{}
+	st.SetMode(&m)
+
+	st.SetBindingKey(ui.K('a'))
+	m.DefaultHandler(&st)
+	if st.Mode() != nil {
+		t.Errorf("Mode not reset")
 	}
 }
 
