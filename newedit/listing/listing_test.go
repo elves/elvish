@@ -126,7 +126,9 @@ func TestHandleEvent_DefaultBinding(t *testing.T) {
 
 func TestDefaultHandler_Filtering(t *testing.T) {
 	m := Mode{}
+	filter := ""
 	m.Start(StartConfig{ItemsGetter: func(f string) Items {
+		filter = f
 		return fakeItems{10}
 	}})
 	m.state.filtering = true
@@ -138,12 +140,18 @@ func TestDefaultHandler_Filtering(t *testing.T) {
 	if m.state.filter != "a" {
 		t.Errorf("Printable key did not append to filter")
 	}
+	if filter != "a" {
+		t.Errorf("Filter in state is %q, not updated", filter)
+	}
 
 	m.state.filter = "hello world"
 	st.SetBindingKey(ui.K(ui.Backspace))
 	m.DefaultHandler(&st)
 	if m.state.filter != "hello worl" {
 		t.Errorf("Backspace did not remove last char of filter")
+	}
+	if filter != "hello worl" {
+		t.Errorf("Filter in state is %q, not updated", filter)
 	}
 
 	st.SetBindingKey(ui.K('A', ui.Ctrl))

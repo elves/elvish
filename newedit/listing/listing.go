@@ -60,13 +60,12 @@ func (it sliceItems) Accept(int, *types.State) {}
 // Start starts the listing mode, using the given config and resetting all
 // states.
 func (m *Mode) Start(cfg StartConfig) {
-	*m = Mode{StartConfig: cfg}
-	if cfg.ItemsGetter != nil {
-		m.state.items = cfg.ItemsGetter("")
-	} else {
-		m.state.items = sliceItems{}
+	*m = Mode{
+		StartConfig: cfg,
+		state: State{
+			filtering: cfg.StartFilter, itemsGetter: cfg.ItemsGetter},
 	}
-	m.state.filtering = cfg.StartFilter
+	m.state.refilter("")
 }
 
 // ModeLine returns a modeline showing the specified name of the mode.
@@ -133,10 +132,10 @@ func defaultHandler(k ui.Key, st *types.State, mst *State) types.HandlerAction {
 		if k == ui.K(ui.Backspace) {
 			_, size := utf8.DecodeLastRuneInString(filter)
 			if size > 0 {
-				mst.filter = filter[:len(filter)-size]
+				mst.refilter(filter[:len(filter)-size])
 			}
 		} else if likeChar(k) {
-			mst.filter += string(k.Rune)
+			mst.refilter(mst.filter + string(k.Rune))
 		} else {
 			st.AddNote("Unbound: " + k.String())
 		}

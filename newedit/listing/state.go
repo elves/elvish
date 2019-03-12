@@ -2,11 +2,21 @@ package listing
 
 // State keeps the state of the listing mode.
 type State struct {
-	filtering bool
-	filter    string
-	items     Items
-	first     int
-	selected  int
+	itemsGetter func(string) Items
+	filtering   bool
+	filter      string
+	items       Items
+	first       int
+	selected    int
+}
+
+func (st *State) refilter(f string) {
+	st.filter = f
+	if st.itemsGetter == nil {
+		st.items = sliceItems{}
+	} else {
+		st.items = st.itemsGetter(f)
+	}
 }
 
 // Up moves the selection up.
