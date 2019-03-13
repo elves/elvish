@@ -38,6 +38,7 @@ listing:binding = (binding-map [
 
   &Alt-Enter= $listing:accept~
   &Enter=     $listing:accept-close~
+  &Alt-,=     $listing:accept-close~
   &Ctrl-'['=  $reset-mode~
 
   &Default=   $listing:default~

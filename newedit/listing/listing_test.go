@@ -177,6 +177,35 @@ func TestDefaultHandler_NotFiltering(t *testing.T) {
 	}
 }
 
+func TestDefaultHandler_AutoAccept(t *testing.T) {
+	m := Mode{}
+	m.Start(StartConfig{
+		ItemsGetter: func(f string) Items {
+			if f == "xy" {
+				return fakeItems{1}
+			}
+			return fakeItems{10}
+		},
+		StartFilter: true,
+		AutoAccept:  true,
+	})
+
+	st := types.State{}
+	st.SetMode(&m)
+
+	st.SetBindingKey(ui.K('x'))
+	m.DefaultHandler(&st)
+	if st.Mode() == nil {
+		t.Errorf("Auto-accepted too early")
+	}
+
+	st.SetBindingKey(ui.K('y'))
+	m.DefaultHandler(&st)
+	if st.Mode() != nil {
+		t.Errorf("Did not auto-accept when there is only one item")
+	}
+}
+
 func TestHandleEvent_NonKeyEvent(t *testing.T) {
 	m := Mode{}
 	a := m.HandleEvent(tty.MouseEvent{}, &types.State{})

@@ -25,8 +25,7 @@ func (m *Mode) Start(line string, words []string) {
 		KeyHandler:  m.KeyHandler,
 		ItemsGetter: itemsGetter(line, words),
 		StartFilter: true,
-		// TODO: Uncomment
-		// AutoAccept: true,
+		AutoAccept:  true,
 	})
 }
 

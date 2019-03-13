@@ -37,8 +37,7 @@ type StartConfig struct {
 	KeyHandler  func(ui.Key) types.HandlerAction
 	ItemsGetter func(filter string) Items
 	StartFilter bool
-	// TODO(xiaq): Support the following config options.
-	// AutoAccept  bool
+	AutoAccept  bool
 }
 
 // Items is an interface for accessing items to show in the listing mode.
@@ -103,6 +102,10 @@ func (m *Mode) DefaultHandler(st *types.State) {
 	m.stateMutex.Lock()
 	defer m.stateMutex.Unlock()
 	defaultHandler(st.BindingKey(), st, &m.state)
+	if m.AutoAccept && m.state.items.Len() == 1 {
+		m.state.items.Accept(0, st)
+		st.SetMode(nil)
+	}
 }
 
 func defaultBinding(k ui.Key, st *types.State, mst *State) types.HandlerAction {
