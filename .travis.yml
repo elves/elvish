@@ -4,9 +4,11 @@ os:
   - osx
 sudo: false
 go:
-  - "1.11.x"
-  - "1.10.x"
-env: CGO_ENABLED=0
+  - 1.11.x
+  - 1.12.x
+env:
+  - CGO_ENABLED=0
+  - CGO_ENABLED=0 GO111MODULE=on
 jobs:
   include:
     # NOTE: Coverages are not enabled for pull requests yet
