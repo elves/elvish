@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/diag"
+	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/runtime"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
@@ -34,6 +35,9 @@ func New(binpath, sockpath, dbpath string, cmd, compileonly, norc, newEdit bool)
 // quits, and returns the exit code.
 func (sh *Shell) Main(args []string) int {
 	defer rescue()
+
+	restoreTTY := tty.SetupGlobal()
+	defer restoreTTY()
 
 	ev, dataDir := runtime.InitRuntime(sh.BinPath, sh.SockPath, sh.DbPath)
 	defer runtime.CleanupRuntime(ev)

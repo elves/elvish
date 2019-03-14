@@ -58,3 +58,7 @@ func setup(in, out *os.File) (func() error, error) {
 
 	return restore, util.Errors(errFlushInput, errSetupVT)
 }
+
+func setupGlobal() func() {
+	return func() {}
+}

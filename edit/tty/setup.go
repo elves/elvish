@@ -15,6 +15,11 @@ func Setup(in, out *os.File) (func() error, error) {
 	return setup(in, out)
 }
 
+// SetupGlobal sets up the terminal for the entire Elvish session.
+func SetupGlobal() func() {
+	return setupGlobal()
+}
+
 const (
 	lackEOLRune    = '\u23ce'
 	lackEOL        = "\033[7m" + string(lackEOLRune) + "\033[m"
