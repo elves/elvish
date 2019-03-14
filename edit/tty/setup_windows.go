@@ -34,8 +34,8 @@ func setup(in, out *os.File) (func() error, error) {
 
 	return func() error {
 		return util.Errors(
-			windows.SetConsoleMode(hIn, oldInMode),
+			restoreVT(out),
 			windows.SetConsoleMode(hOut, oldOutMode),
-			restoreVT(out))
+			windows.SetConsoleMode(hIn, oldInMode))
 	}, util.Errors(errSetIn, errSetOut, errVT)
 }
