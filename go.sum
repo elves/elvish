@@ -1,0 +1,9 @@
+github.com/boltdb/bolt v1.3.1 h1:JQmyP4ZBrce+ZQu0dY660FMfatumYDLun9hBCUVIkF4=
+github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
+github.com/kr/pty v1.1.1 h1:VkoXIwSboBpnk99O/KFauAEILuNHv5DVFKZMBN/gUgw=
+github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
+github.com/mattn/go-isatty v0.0.3/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
+github.com/xiaq/persistent v0.0.0-20181118145548-6bf9d6baeece h1:pz/DaNKsHnK0KYeynD5A8Y6+1u5pssl3ZXyQArmGz1g=
+github.com/xiaq/persistent v0.0.0-20181118145548-6bf9d6baeece/go.mod h1:cHcGpeiwhhhUL83UhUpQU2gKkVjZJ/XOoRxj43gtdXA=
+golang.org/x/sys v0.0.0-20180126165840-ff2a66f350ce h1:rL/NvE76zNX12KMlXYCdjlfOp+kjh5sYTnm5QjtNbrU=
+golang.org/x/sys v0.0.0-20180126165840-ff2a66f350ce/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
