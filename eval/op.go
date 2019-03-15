@@ -26,7 +26,7 @@ func (op effectOp) exec(fm *Frame) error {
 	return op.body.invoke(fm)
 }
 
-// An operation on an Frame that produce Value's.
+// An operation on an Frame that produce Values.
 type valuesOp struct {
 	body       valuesOpBody
 	begin, end int
@@ -43,7 +43,7 @@ func (op valuesOp) exec(fm *Frame) ([]interface{}, error) {
 	return op.body.invoke(fm)
 }
 
-// An operation on a Frame that produce Variable's.
+// An operation on a Frame that produce Variables.
 type lvaluesOp struct {
 	body       lvaluesOpBody
 	begin, end int

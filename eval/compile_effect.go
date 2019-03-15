@@ -141,20 +141,17 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 }
 
 func (cp *compiler) form(n *parse.Form) effectOpBody {
-	var saveVarsOps []lvaluesOp
 	var assignmentOps []effectOp
+
 	if len(n.Assignments) > 0 {
-		assignmentOps = cp.assignmentOps(n.Assignments)
 		if n.Head == nil && n.Vars == nil {
 			// Permanent assignment.
-			return seqOp{assignmentOps}
+			return seqOp{cp.assignmentOps(n.Assignments, false)}
 		}
-		for _, a := range n.Assignments {
-			v, r := cp.lvaluesOp(a.Left)
-			saveVarsOps = append(saveVarsOps, v, r)
-		}
-		logger.Println("temporary assignment of", len(n.Assignments), "pairs")
 	}
+
+	assignmentOps = cp.assignmentOps(n.Assignments, true)
+	logger.Println("temporary assignment of", len(n.Assignments), "pairs")
 
 	// Depending on the type of the form, exactly one of the three below will be
 	// set.
@@ -213,7 +210,7 @@ func (cp *compiler) form(n *parse.Form) effectOpBody {
 			argsOp.end = argOps[len(argOps)-1].end
 		}
 		spaceyAssignOp = effectOp{
-			&assignmentOp{varsOp, restOp, argsOp},
+			&assignmentOp{varsOp, restOp, argsOp, false, false, nil, nil},
 			n.Range().From, argsOp.end,
 		}
 	}
@@ -223,12 +220,15 @@ func (cp *compiler) form(n *parse.Form) effectOpBody {
 	redirOps := cp.redirOps(n.Redirs)
 	// TODO: n.ErrorRedir
 
-	return &formOp{saveVarsOps, assignmentOps, redirOps, specialOpFunc, headOp, argOps, optsOp, spaceyAssignOp, n.Range().From, n.Range().To}
+	// Set restoreOps on temporary assignment. The assignmentOp is a
+	// multi purpose operation, can do variable restoration as well.
+	return &formOp{assignmentOps, assignmentOps, redirOps, specialOpFunc,
+		headOp, argOps, optsOp, spaceyAssignOp, n.Range().From, n.Range().To}
 }
 
 type formOp struct {
-	saveVarsOps    []lvaluesOp
 	assignmentOps  []effectOp
+	restoreOps     []effectOp
 	redirOps       []effectOp
 	specialOpBody  effectOpBody
 	headOp         valuesOp
@@ -242,53 +242,23 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 	// ec here is always a subevaler created in compiler.pipeline, so it can
 	// be safely modified.
 
-	// Temporary assignment.
-	if len(op.saveVarsOps) > 0 {
-		// There is a temporary assignment.
-		// Save variables.
-		var saveVars []vars.Var
-		var saveVals []interface{}
-		for _, op := range op.saveVarsOps {
-			moreSaveVars, err := op.exec(fm)
-			if err != nil {
-				return err
-			}
-			saveVars = append(saveVars, moreSaveVars...)
+	// Do assignment.
+	for _, subop := range op.assignmentOps {
+		err := subop.exec(fm)
+		if err != nil {
+			return err
 		}
-		for i, v := range saveVars {
-			// XXX(xiaq): If the variable to save is a elemVariable, save
-			// the outermost variable instead.
-			if u := vars.HeadOfElement(v); u != nil {
-				v = u
-				saveVars[i] = v
-			}
-			val := v.Get()
-			saveVals = append(saveVals, val)
-			logger.Printf("saved %s = %s", v, val)
-		}
-		// Do assignment.
-		for _, subop := range op.assignmentOps {
-			err := subop.exec(fm)
-			if err != nil {
-				return err
-			}
-		}
-		// Defer variable restoration. Will be executed even if an error
-		// occurs when evaling other part of the form.
+	}
+
+	// Defer variable restoration. Will be executed even if an error
+	// occurs when evaling other part of the form.
+	if op.restoreOps != nil {
 		defer func() {
-			for i, v := range saveVars {
-				val := saveVals[i]
-				if val == nil {
-					// XXX Old value is nonexistent. We should delete the
-					// variable. However, since the compiler now doesn't delete
-					// it, we don't delete it in the evaler either.
-					val = ""
-				}
-				err := v.Set(val)
+			for _, subop := range op.restoreOps {
+				err := subop.exec(fm)
 				if err != nil {
 					errRet = err
 				}
-				logger.Printf("restored %s = %s", v, val)
 			}
 		}()
 	}
@@ -358,23 +328,35 @@ func allTrue(vs []interface{}) bool {
 	return true
 }
 
-func (cp *compiler) assignment(n *parse.Assignment) effectOpBody {
+func (cp *compiler) assignment(n *parse.Assignment, temporary bool) effectOpBody {
 	variablesOp, restOp := cp.lvaluesOp(n.Left)
 	valuesOp := cp.compoundOp(n.Right)
-	return &assignmentOp{variablesOp, restOp, valuesOp}
+	return &assignmentOp{variablesOp, restOp, valuesOp, temporary, false, nil, nil}
 }
 
 // ErrMoreThanOneRest is returned when the LHS of an assignment contains more
 // than one rest variables.
 var ErrMoreThanOneRest = errors.New("more than one @ lvalue")
 
+// assignmentOp assign values to variables. If the assignment is
+// temporary, calling it again will restore original values.
 type assignmentOp struct {
 	variablesOp lvaluesOp
 	restOp      lvaluesOp
 	valuesOp    valuesOp
+	temporary   bool
+	assigned    bool
+	origVars    []vars.Var
+	origVals    []interface{}
 }
 
 func (op *assignmentOp) invoke(fm *Frame) (errRet error) {
+	if op.temporary && op.assigned {
+		return op.restore(fm)
+	}
+
+	op.assigned = true
+
 	variables, err := op.variablesOp.exec(fm)
 	if err != nil {
 		return err
@@ -412,19 +394,64 @@ func (op *assignmentOp) invoke(fm *Frame) (errRet error) {
 		}
 	}
 
-	for i, variable := range variables {
-		err := variable.Set(values[i])
+	for i, v := range variables {
+		err := op.assign(v, values[i])
 		if err != nil {
 			return err
 		}
 	}
 
 	if len(rest) == 1 {
-		err := rest[0].Set(vals.MakeList(values[len(variables):]...))
+		err := op.assign(rest[0], vals.MakeList(values[len(variables):]...))
 		if err != nil {
 			return err
 		}
 	}
+	return nil
+}
+
+func (op *assignmentOp) assign(v vars.Var, val interface{}) error {
+	if !op.temporary {
+		logger.Printf("assigning permanent var: %v %v", v, val)
+		return v.Set(val)
+	}
+
+	ov := v
+	// XXX(xiaq): If the variable to save is a elemVariable, save
+	// the outermost variable instead.
+	if u := vars.HeadOfElement(v); u != nil {
+		ov = u
+	}
+	oval := ov.Get()
+	if err := v.Set(val); err != nil {
+		return err
+	}
+
+	op.origVars = append(op.origVars, ov)
+	op.origVals = append(op.origVals, oval)
+	logger.Printf("saved temporary var: %v = %v", ov, oval)
+	return nil
+}
+
+func (op *assignmentOp) restore(fm *Frame) error {
+	for i := range op.origVars {
+		logger.Printf("restore %v", op.origVars[i])
+		v := op.origVals[i]
+		if v == nil {
+			if op, ok := op.variablesOp.body.(varOp); ok {
+				fm.local.Del(op.name)
+				continue
+			}
+			v = ""
+		}
+
+		if err := op.origVars[i].Set(v); err != nil {
+			return err
+		}
+	}
+
+	op.origVars = nil
+	op.origVals = nil
 	return nil
 }
 

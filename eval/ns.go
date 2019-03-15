@@ -107,6 +107,10 @@ func (ns Ns) AddBuiltinFns(nsName string, fns map[string]interface{}) Ns {
 	return ns
 }
 
+func (ns Ns) Del(name string) {
+	delete(ns, name)
+}
+
 func addrOf(a interface{}) uintptr {
 	return reflect.ValueOf(a).Pointer()
 }

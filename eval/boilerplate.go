@@ -41,15 +41,15 @@ func (cp *compiler) formOps(ns []*parse.Form) []effectOp {
 	return ops
 }
 
-func (cp *compiler) assignmentOp(n *parse.Assignment) effectOp {
+func (cp *compiler) assignmentOp(n *parse.Assignment, temporary bool) effectOp {
 	cp.compiling(n)
-	return effectOp{cp.assignment(n), n.Range().From, n.Range().To}
+	return effectOp{cp.assignment(n, temporary), n.Range().From, n.Range().To}
 }
 
-func (cp *compiler) assignmentOps(ns []*parse.Assignment) []effectOp {
+func (cp *compiler) assignmentOps(ns []*parse.Assignment, temporary bool) []effectOp {
 	ops := make([]effectOp, len(ns))
 	for i, n := range ns {
-		ops[i] = cp.assignmentOp(n)
+		ops[i] = cp.assignmentOp(n, temporary)
 	}
 	return ops
 }
