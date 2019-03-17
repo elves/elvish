@@ -52,7 +52,7 @@ func TestDefaultRPrompt(t *testing.T) {
 }
 
 func testCallPromptStatic(t *testing.T, f eval.Callable, want styled.Text) {
-	content := callPrompt(&dummyNotifier{}, eval.NewEvaler(), f)
+	content := callPrompt(&fakeNotifier{}, eval.NewEvaler(), f)
 	if !reflect.DeepEqual(content, want) {
 		t.Errorf("get prompt result %v, want %v", content, want)
 	}

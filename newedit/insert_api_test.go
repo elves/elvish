@@ -14,7 +14,7 @@ import (
 var abbrData = [][2]string{{"xx", "xx full"}, {"yy", "yy full"}}
 
 func TestInitInsert_Abbr(t *testing.T) {
-	m, ns := initInsert(dummyEditor{}, eval.NewEvaler())
+	m, ns := initInsert(&fakeEditor{}, eval.NewEvaler())
 
 	abbrValue := vals.EmptyMap
 	for _, pair := range abbrData {
@@ -33,7 +33,7 @@ func TestInitInsert_Abbr(t *testing.T) {
 }
 
 func TestInitInsert_Binding(t *testing.T) {
-	m, ns := initInsert(dummyEditor{}, eval.NewEvaler())
+	m, ns := initInsert(&fakeEditor{}, eval.NewEvaler())
 	called := 0
 	binding, err := EmptyBindingMap.Assoc("a",
 		eval.NewBuiltinFn("test binding", func() { called++ }))
@@ -50,7 +50,7 @@ func TestInitInsert_Binding(t *testing.T) {
 }
 
 func TestInitInsert_QuotePaste(t *testing.T) {
-	m, ns := initInsert(dummyEditor{}, eval.NewEvaler())
+	m, ns := initInsert(&fakeEditor{}, eval.NewEvaler())
 
 	ns["quote-paste"].Set(true)
 

@@ -15,7 +15,7 @@ func TestKeyHandlerFromBinding_CallsBinding(t *testing.T) {
 	called := 0
 	binding := buildBinding(
 		"a", eval.NewBuiltinFn("[test]", func() { called++ }))
-	handler := keyHandlerFromBindings(dummyEditor{}, eval.NewEvaler(), &binding)
+	handler := keyHandlerFromBindings(&fakeEditor{}, eval.NewEvaler(), &binding)
 
 	action := handler(ui.Key{Rune: 'a'})
 
