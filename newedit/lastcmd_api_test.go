@@ -16,7 +16,7 @@ func TestInitLastCmd_Start(t *testing.T) {
 	lsMode := listing.Mode{}
 	lsBinding := EmptyBindingMap
 
-	ns := initLastcmd(ed, ev, &lsMode, &lsBinding)
+	ns := initLastcmd(ed, ev, testStore, &lsMode, &lsBinding)
 
 	// Call <edit:listing>:start.
 	fm := eval.NewTopFrame(ev, eval.NewInternalSource("[test]"), nil)

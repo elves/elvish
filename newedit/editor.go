@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/newedit/core"
 	"github.com/elves/elvish/newedit/highlight"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/store/storedefs"
 )
 
 // Editor is the interface line editor for Elvish.
@@ -22,7 +23,7 @@ type Editor struct {
 }
 
 // NewEditor creates a new editor from input and output terminal files.
-func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
+func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ed := core.NewEditor(core.NewTTY(in, out), core.NewSignalSource())
 
 	ed.Highlighter = highlight.NewHighlighter(
@@ -56,7 +57,7 @@ func NewEditor(in, out *os.File, ev *eval.Evaler) *Editor {
 	// Listing modes.
 	lsMode, lsBinding, lsNs := initListing(ed)
 	ns.AddNs("listing", lsNs)
-	lastcmdNs := initLastcmd(ed, ev, lsMode, lsBinding)
+	lastcmdNs := initLastcmd(ed, ev, st, lsMode, lsBinding)
 	ns.AddNs("lastcmd", lastcmdNs)
 
 	// Evaluate default bindings.

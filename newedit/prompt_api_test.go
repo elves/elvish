@@ -2,7 +2,6 @@ package newedit
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 
@@ -15,7 +14,7 @@ import (
 func TestMakePrompt_ElvishVariableLinksToPromptConfig(t *testing.T) {
 	ev := eval.NewEvaler()
 	// NewEditor calls makePrompt
-	ed := NewEditor(os.Stdin, os.Stdout, ev)
+	ed := NewEditor(devNull, devNull, ev, testStore)
 	ev.Global.AddNs("ed", ed.Ns())
 	ev.EvalSourceInTTY(eval.NewScriptSource(
 		"[t]", "[t]", "ed:prompt = { put 'CUSTOM PROMPT' }"))
