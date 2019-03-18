@@ -1,28 +1,18 @@
 package store
 
-// This file also sets up the test fixture.
-
 import (
-	"fmt"
-	"io/ioutil"
 	"os"
+	"testing"
 )
+
+// This file sets up the test fixture.
 
 var tStore *Store
 
-func init() {
-	f, err := ioutil.TempFile("", "elvish.test")
-	if err != nil {
-		panic(fmt.Sprintf("Failed to open temp file: %v", err))
-	}
-	db, err := DefaultDB(f.Name())
-	if err != nil {
-		panic(fmt.Sprintf("Failed to create Store instance: %v", err))
-	}
-	os.Remove(f.Name())
-
-	tStore, err = NewStoreDB(db)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to create Store instance: %v", err))
-	}
+func TestMain(m *testing.M) {
+	st, cleanup := MustGetTempStore()
+	tStore = st
+	exitCode := m.Run()
+	cleanup()
+	os.Exit(exitCode)
 }
