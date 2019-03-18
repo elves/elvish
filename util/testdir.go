@@ -25,7 +25,7 @@ func TestDir() (string, func()) {
 	return dir, func() {
 		err := os.RemoveAll(dir)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Warning: failed to remove temp dir", dir)
+			fmt.Fprintf(os.Stderr, "failed to remove temp dir %s: %v\n", dir, err)
 		}
 	}
 }

@@ -15,7 +15,7 @@ func (t testAddDirer) AddDir(dir string, weight float64) error {
 }
 
 func TestChdir(t *testing.T) {
-	_, dst, cleanup := inWithTestDir()
+	dst, cleanup := util.TestDir()
 	defer cleanup()
 
 	ev := NewEvaler()
@@ -23,6 +23,9 @@ func TestChdir(t *testing.T) {
 	argDirInBefore, argDirInAfter := "", ""
 	ev.AddBeforeChdir(func(dir string) { argDirInBefore = dir })
 	ev.AddAfterChdir(func(dir string) { argDirInAfter = dir })
+
+	back := saveWd()
+	defer back()
 
 	err := ev.Chdir(dst)
 
@@ -44,8 +47,11 @@ func TestChdir(t *testing.T) {
 }
 
 func TestChdirElvishHooks(t *testing.T) {
-	_, dst, cleanup := inWithTestDir()
+	dst, cleanup := util.TestDir()
 	defer cleanup()
+
+	back := saveWd()
+	defer back()
 
 	Test(t,
 		That(`
@@ -69,13 +75,17 @@ func TestChdirError(t *testing.T) {
 	}
 }
 
-// Creates two test directories, changing into the first one. Returns those two
-// directories and a function to restore the original state.
-func inWithTestDir() (pwd, other string, cleanup func()) {
-	pwd, cleanup1 := util.InTestDir()
-	other, cleanup2 := util.TestDir()
-	return pwd, other, func() {
-		cleanup2()
-		cleanup1()
+// Saves the current working directory, and returns a function for returning to
+// it.
+func saveWd() func() {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	return func() {
+		err := os.Chdir(wd)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
