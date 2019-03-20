@@ -59,7 +59,7 @@ func InitRuntime(binpath, sockpath, dbpath string) (*eval.Evaler, string) {
 		fmt.Fprintln(os.Stderr, "warning: cannot create data directory ~/.elvish")
 	} else {
 		if dbpath == "" {
-			dbpath = filepath.Join(dataDir, "db")
+			dbpath = filepath.Join(dataDir, fmt.Sprintf("%d-db",os.Getuid()))
 		}
 	}
 
