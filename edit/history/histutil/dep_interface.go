@@ -1,4 +1,4 @@
-package history
+package histutil
 
 // Store is the interface of the storage backend.
 type Store interface {

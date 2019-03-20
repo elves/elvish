@@ -1,9 +1,8 @@
-package history
+package histutil
 
 import "strings"
 
-// mockStore is an implementation of the Store interface that can be used for
-// testing.
+// An implementation of the Store interface that can be used for testing.
 type mockStore struct {
 	cmds []string
 

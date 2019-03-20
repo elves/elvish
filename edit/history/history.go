@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/elves/elvish/edit/eddefs"
+	"github.com/elves/elvish/edit/history/histutil"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
@@ -22,18 +23,18 @@ var logger = util.GetLogger("[edit/history] ")
 type hist struct {
 	ed      eddefs.Editor
 	mutex   sync.RWMutex
-	fuser   *Fuser
+	fuser   *histutil.Fuser
 	binding eddefs.BindingMap
 
 	// Non-persistent state.
-	walker    *Walker
+	walker    *histutil.Walker
 	bufferLen int
 }
 
 func Init(ed eddefs.Editor, ns eval.Ns) {
 	hist := &hist{ed: ed, binding: eddefs.EmptyBindingMap}
 	if ed.Daemon() != nil {
-		fuser, err := NewFuser(ed.Daemon())
+		fuser, err := histutil.NewFuser(ed.Daemon())
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Failed to initialize command history; disabled.")
 		} else {

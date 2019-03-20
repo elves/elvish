@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/edit/eddefs"
+	"github.com/elves/elvish/edit/history/histutil"
 	"github.com/elves/elvish/edit/ui"
 )
 
@@ -99,7 +100,7 @@ func (hl *histlist) Accept(i int, ed eddefs.Editor) {
 	ed.InsertAtDot(line)
 }
 
-func (hl *histlist) start(ed eddefs.Editor, fuser *Fuser, binding eddefs.BindingMap) {
+func (hl *histlist) start(ed eddefs.Editor, fuser *histutil.Fuser, binding eddefs.BindingMap) {
 	cmds, err := getCmds(fuser)
 	if err != nil {
 		ed.Notify("%v", err)
@@ -111,7 +112,7 @@ func (hl *histlist) start(ed eddefs.Editor, fuser *Fuser, binding eddefs.Binding
 	ed.SetModeListing(binding, hl)
 }
 
-func getCmds(fuser *Fuser) ([]string, error) {
+func getCmds(fuser *histutil.Fuser) ([]string, error) {
 	if fuser == nil {
 		return nil, errStoreOffline
 	}
