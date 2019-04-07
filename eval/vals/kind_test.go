@@ -11,6 +11,7 @@ type xtype int
 
 func TestKind(t *testing.T) {
 	tt.Test(t, tt.Fn("Kind", Kind), tt.Table{
+		Args(nil).Rets("nil"),
 		Args(true).Rets("bool"),
 		Args("").Rets("string"),
 		Args(EmptyList).Rets("list"),

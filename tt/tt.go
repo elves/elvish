@@ -144,7 +144,18 @@ func sprintCommaDelimited(args ...interface{}) string {
 func call(fn interface{}, args []interface{}) []interface{} {
 	argsReflect := make([]reflect.Value, len(args))
 	for i, arg := range args {
-		argsReflect[i] = reflect.ValueOf(arg)
+		if arg == nil {
+			// reflect.ValueOf(nil) returns a zero Value, but this is not what
+			// we want. Work around this by taking the ValueOf a pointer to nil
+			// and then get the Elem.
+			// TODO(xiaq): This is now always using a nil value with type
+			// interface{}. For more usability, inspect the type of fn to see
+			// which type of nil this argument should be.
+			var v interface{}
+			argsReflect[i] = reflect.ValueOf(&v).Elem()
+		} else {
+			argsReflect[i] = reflect.ValueOf(arg)
+		}
 	}
 	retsReflect := reflect.ValueOf(fn).Call(argsReflect)
 	rets := make([]interface{}, len(retsReflect))

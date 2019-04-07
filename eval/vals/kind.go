@@ -20,6 +20,8 @@ func Kind(v interface{}) string {
 	switch v := v.(type) {
 	case Kinder:
 		return v.Kind()
+	case nil:
+		return "nil"
 	case bool:
 		return "bool"
 	case string:

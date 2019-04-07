@@ -25,6 +25,8 @@ func Equal(x, y interface{}) bool {
 		return x == y
 	case string:
 		return x == y
+	case nil:
+		return x == y
 	case listEqualable:
 		if yy, ok := y.(listEqualable); ok {
 			return equalList(x, yy)

@@ -34,6 +34,8 @@ func Repr(v interface{}, indent int) string {
 	switch v := v.(type) {
 	case Reprer:
 		return v.Repr(indent)
+	case nil:
+		return "$nil"
 	case bool:
 		if v {
 			return "$true"

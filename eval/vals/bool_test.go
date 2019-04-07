@@ -13,6 +13,8 @@ func (b customBooler) Bool() bool { return b.b }
 type customNonBooler struct{}
 
 var boolTests = tt.Table{
+	Args(nil).Rets(false),
+
 	Args(true).Rets(true),
 	Args(false).Rets(false),
 

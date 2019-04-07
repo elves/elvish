@@ -15,6 +15,8 @@ func Bool(v interface{}) bool {
 		return v.Bool()
 	case bool:
 		return v
+	case nil:
+		return false
 	}
 	return true
 }

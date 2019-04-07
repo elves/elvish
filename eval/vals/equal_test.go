@@ -15,6 +15,8 @@ type customStruct struct{ a, b string }
 var equalTests = tt.Table{
 	Args(customEqualer{true}, 2).Rets(true),
 	Args(customEqualer{false}, 2).Rets(false),
+	Args(nil, nil).Rets(true),
+	Args(nil, "").Rets(false),
 	Args(true, true).Rets(true),
 	Args(true, false).Rets(false),
 	Args("lorem", "lorem").Rets(true),

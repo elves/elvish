@@ -12,6 +12,7 @@ var builtinNs = Ns{
 	"_":     vars.NewBlackhole(),
 	"pid":   vars.NewReadOnly(strconv.Itoa(syscall.Getpid())),
 	"ok":    vars.NewReadOnly(OK),
+	"nil":   vars.NewReadOnly(nil),
 	"true":  vars.NewReadOnly(true),
 	"false": vars.NewReadOnly(false),
 	"paths": &EnvList{envName: "PATH"},
