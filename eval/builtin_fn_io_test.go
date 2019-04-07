@@ -29,6 +29,8 @@ func TestBuiltinFnIO(t *testing.T) {
 				"k": "v",
 				"a": vals.MakeList("1", "2")}),
 				"foo"),
+		That(`echo '[null, "foo"]' | from-json`).Puts(
+			vals.MakeList(nil, "foo")),
 		That(`echo 'invalid' | from-json`).Errors(),
 
 		That(`put "l\norem" ipsum | to-lines`).Prints("l\norem\nipsum\n"),
@@ -36,5 +38,6 @@ func TestBuiltinFnIO(t *testing.T) {
 			Prints(`{"a":["1","2"],"k":"v"}
 "foo"
 `),
+		That(`put [$nil foo] | to-json`).Prints("[null,\"foo\"]\n"),
 	)
 }

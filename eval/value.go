@@ -21,12 +21,8 @@ var (
 
 // Converts a interface{} that results from json.Unmarshal to an Elvish value.
 func fromJSONInterface(v interface{}) (interface{}, error) {
-	if v == nil {
-		// TODO Use a more appropriate type
-		return "", nil
-	}
 	switch v := v.(type) {
-	case bool, string:
+	case nil, bool, string:
 		return v, nil
 	case float64:
 		// TODO Use a numeric type for float64
