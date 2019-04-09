@@ -384,16 +384,6 @@ func (op *assignmentOp) invoke(fm *Frame) (errRet error) {
 		return err
 	}
 
-	// If any LHS ends up being nil, assign an empty string to all of them.
-	//
-	// This is to fix #176, which only happens in the top level of REPL; in
-	// other cases, a failure in the evaluation of the RHS causes this
-	// level to fail, making the variables unaccessible.
-	//
-	// XXX(xiaq): Should think about how to get rid of this.
-	defer fixNilVariables(variables, &errRet)
-	defer fixNilVariables(rest, &errRet)
-
 	values, err := op.valuesOp.exec(fm)
 	if err != nil {
 		return err
