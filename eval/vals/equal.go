@@ -27,6 +27,8 @@ func Equal(x, y interface{}) bool {
 		return x == y
 	case nil:
 		return x == y
+	case float64:
+		return x == y
 	case listEqualable:
 		if yy, ok := y.(listEqualable); ok {
 			return equalList(x, yy)

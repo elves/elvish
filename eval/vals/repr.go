@@ -43,6 +43,8 @@ func Repr(v interface{}, indent int) string {
 		return "$false"
 	case string:
 		return parse.Quote(v)
+	case float64:
+		return fmt.Sprintf("(float64 %g)", v)
 	case listReprable:
 		b := ListReprBuilder{Indent: indent}
 		for it := v.Iterator(); it.HasElem(); it.Next() {

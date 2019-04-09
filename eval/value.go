@@ -25,8 +25,7 @@ func fromJSONInterface(v interface{}) (interface{}, error) {
 	case nil, bool, string:
 		return v, nil
 	case float64:
-		// TODO Use a numeric type for float64
-		return fmt.Sprint(v), nil
+		return v, nil
 	case []interface{}:
 		vec := vals.EmptyList
 		for _, elem := range v {

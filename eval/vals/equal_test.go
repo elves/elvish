@@ -19,6 +19,7 @@ var equalTests = tt.Table{
 	Args(nil, "").Rets(false),
 	Args(true, true).Rets(true),
 	Args(true, false).Rets(false),
+	Args(1.0, 1.0).Rets(true),
 	Args("lorem", "lorem").Rets(true),
 	Args("lorem", "ipsum").Rets(false),
 	Args(MakeList("a", "b"), MakeList("a", "b")).Rets(true),
