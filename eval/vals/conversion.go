@@ -53,16 +53,16 @@ func ScanToGo(src interface{}, ptr interface{}) error {
 		return ptr.ScanElvish(src)
 	default:
 		// Do a generic `*ptr = src` via reflection
-		ptrType := reflect.TypeOf(ptr)
+		ptrType := TypeOf(ptr)
 		if ptrType.Kind() != reflect.Ptr {
 			return fmt.Errorf("need pointer to scan into, got %T", ptr)
 		}
 		dstType := ptrType.Elem()
-		if !reflect.TypeOf(src).AssignableTo(dstType) {
+		if !TypeOf(src).AssignableTo(dstType) {
 			return fmt.Errorf("need %s, got %s",
 				Kind(reflect.Zero(dstType).Interface()), Kind(src))
 		}
-		reflect.ValueOf(ptr).Elem().Set(reflect.ValueOf(src))
+		ValueOf(ptr).Elem().Set(ValueOf(src))
 		return nil
 	}
 }

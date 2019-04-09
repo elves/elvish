@@ -9,6 +9,7 @@ import (
 func TestBuiltinFnIO(t *testing.T) {
 	Test(t,
 		That(`put foo bar`).Puts("foo", "bar"),
+		That(`put $nil`).Puts(nil),
 
 		That(`print [foo bar]`).Prints("[foo bar]"),
 		That(`print foo bar &sep=,`).Prints("foo,bar"),
