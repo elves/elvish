@@ -1,0 +1,13 @@
+# github.com/boltdb/bolt v1.3.1
+github.com/boltdb/bolt
+# github.com/kr/pty v1.1.4
+github.com/kr/pty
+# github.com/mattn/go-isatty v0.0.7
+github.com/mattn/go-isatty
+# github.com/xiaq/persistent v0.0.0-20190312105637-a1d9ac4077fc
+github.com/xiaq/persistent/hash
+github.com/xiaq/persistent/hashmap
+github.com/xiaq/persistent/vector
+# golang.org/x/sys v0.0.0-20190412213103-97732733099d => golang.org/x/sys v0.0.0-20180126165840-ff2a66f350ce
+golang.org/x/sys/windows
+golang.org/x/sys/unix
