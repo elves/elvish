@@ -12,6 +12,7 @@ func (fm *Frame) Interrupts() <-chan struct{} {
 	return fm.intCh
 }
 
+// ErrInterrupted is thrown when the execution is interrupted by a signal.
 var ErrInterrupted = errors.New("interrupted")
 
 // IsInterrupted reports whether there has been an interrupt.

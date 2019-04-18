@@ -11,7 +11,13 @@ import (
 )
 
 var (
-	ErrArgs          = errors.New("args error")
+	// ErrArgs is thrown when a builtin function gets erroneous arguments.
+	//
+	// TODO(xiaq): Replace this single error type with multiple types that carry
+	// richer error information.
+	ErrArgs = errors.New("args error")
+	// ErrNoOptAccepted is thrown when a builtin function that does not accept
+	// any options gets passed options.
 	ErrNoOptAccepted = errors.New("function does not accept any options")
 )
 
@@ -73,6 +79,9 @@ type optionsPtr interface {
 	SetDefaultOptions()
 }
 
+// Inputs is the type that the last parameter of a builtin function can take.
+// When that is the case, it is a callback to get inputs. See the doc of
+// BuiltinFn for details.
 type Inputs func(func(interface{}))
 
 var (

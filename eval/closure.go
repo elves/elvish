@@ -16,7 +16,8 @@ import (
 // supplies does not match with what is required.
 var ErrArityMismatch = errors.New("arity mismatch")
 
-// Closure is a closure defined in elvish script.
+// Closure is a closure defined in Elvish script. Each closure has its unique
+// identity.
 type Closure struct {
 	ArgNames []string
 	// The name for the rest argument. If empty, the function has fixed arity.
@@ -37,11 +38,12 @@ func (*Closure) Kind() string {
 	return "fn"
 }
 
-// Equal compares by identity.
+// Equal compares by address.
 func (c *Closure) Equal(rhs interface{}) bool {
 	return c == rhs
 }
 
+// Hash returns the hash of the address of the closure.
 func (c *Closure) Hash() uint32 {
 	return hash.Pointer(unsafe.Pointer(c))
 }
@@ -51,6 +53,9 @@ func (c *Closure) Repr(int) string {
 	return fmt.Sprintf("<closure %p>", c)
 }
 
+// Index supports the introspection of the closure. Supported keys are
+// "arg-names", "rest-arg", "opt-names", "opt-defaults", "body", "def" and
+// "src".
 func (c *Closure) Index(k interface{}) (interface{}, bool) {
 	switch k {
 	case "arg-names":
@@ -71,6 +76,7 @@ func (c *Closure) Index(k interface{}) (interface{}, bool) {
 	return nil, false
 }
 
+// IterateKeys calls f with all the valid keys that can be used for Index.
 func (c *Closure) IterateKeys(f func(interface{}) bool) {
 	util.Feed(f, "arg-names", "rest-arg",
 		"opt-names", "opt-defaults", "body", "def", "src")

@@ -15,7 +15,8 @@ import (
 
 // String operations.
 
-var ErrInput = errors.New("input error")
+// ErrInputOfEawkMustBeString is thrown when eawk gets a non-string input.
+var ErrInputOfEawkMustBeString = errors.New("input of eawk must be string")
 
 func init() {
 	addBuiltinFns(map[string]interface{}{
@@ -145,7 +146,7 @@ func eawk(fm *Frame, f Callable, inputs Inputs) error {
 		line, ok := v.(string)
 		if !ok {
 			broken = true
-			err = ErrInput
+			err = ErrInputOfEawkMustBeString
 			return
 		}
 		args := []interface{}{line}

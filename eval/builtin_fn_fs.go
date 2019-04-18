@@ -12,6 +12,7 @@ import (
 
 // Filesystem.
 
+// ErrStoreNotConnected is thrown by dir-history when the store is not connected.
 var ErrStoreNotConnected = errors.New("store not connected")
 
 func init() {

@@ -14,8 +14,13 @@ import (
 )
 
 var (
+	// ErrExternalCmdOpts is thrown when an external command is passed Elvish
+	// options.
+	//
+	// TODO: Catch this kind of errors at compilation time.
 	ErrExternalCmdOpts = errors.New("external commands don't accept elvish options")
-	ErrCdNoArg         = errors.New("implicit cd accepts no arguments")
+	// ErrImplicitCdNoArg is thrown when an implicit cd form is passed arguments.
+	ErrImplicitCdNoArg = errors.New("implicit cd accepts no arguments")
 )
 
 // ExternalCmd is an external command.
@@ -49,7 +54,7 @@ func (e ExternalCmd) Call(fm *Frame, argVals []interface{}, opts map[string]inte
 		if err == nil && stat.IsDir() {
 			// implicit cd
 			if len(argVals) > 0 {
-				return ErrCdNoArg
+				return ErrImplicitCdNoArg
 			}
 			return fm.Chdir(e.Name)
 		}

@@ -9,8 +9,6 @@ import (
 
 // Command and process control.
 
-var ErrNotInSameGroup = errors.New("not in the same process group")
-
 func init() {
 	addBuiltinFns(map[string]interface{}{
 		// Command resolution

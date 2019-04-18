@@ -134,10 +134,9 @@ func (op *pipelineOp) invoke(fm *Frame) error {
 			}
 		}()
 		return nil
-	} else {
-		wg.Wait()
-		return ComposeExceptionsFromPipeline(errors)
 	}
+	wg.Wait()
+	return ComposeExceptionsFromPipeline(errors)
 }
 
 func (cp *compiler) form(n *parse.Form) effectOpBody {
@@ -344,9 +343,8 @@ func (op *formOp) invoke(fm *Frame) (errRet error) {
 
 	if headFn != nil {
 		return headFn.Call(fm, args, convertedOpts)
-	} else {
-		return op.spaceyAssignOp.exec(fm)
 	}
+	return op.spaceyAssignOp.exec(fm)
 }
 
 func allTrue(vs []interface{}) bool {

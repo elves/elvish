@@ -38,7 +38,7 @@ var (
 	BlackholeChan = make(chan interface{})
 	// DevNull is /dev/null.
 	DevNull *os.File
-	// DevNullClosedInput is a port made up from DevNull and ClosedChan,
+	// DevNullClosedChan is a port made up from DevNull and ClosedChan,
 	// suitable as placeholder input port.
 	DevNullClosedChan *Port
 )

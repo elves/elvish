@@ -3,6 +3,7 @@
 package eval
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"strconv"
@@ -11,6 +12,10 @@ import (
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/sys"
 )
+
+// ErrNotInSameProcessGroup is thrown when the process IDs passed to fg are not
+// in the same process group.
+var ErrNotInSameProcessGroup = errors.New("not in the same process group")
 
 func execFn(fm *Frame, args ...interface{}) error {
 	var argstrings []string
@@ -47,7 +52,7 @@ func fg(pids ...int) error {
 		if i == 0 {
 			thepgid = pgid
 		} else if pgid != thepgid {
-			return ErrNotInSameGroup
+			return ErrNotInSameProcessGroup
 		}
 	}
 

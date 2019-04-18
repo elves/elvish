@@ -35,10 +35,12 @@ func Cause(err error) error {
 // exception.
 var OK = &Exception{}
 
+// Error returns the message of the cause of the exception.
 func (exc *Exception) Error() string {
 	return exc.Cause.Error()
 }
 
+// PPrint pretty-prints the exception.
 func (exc *Exception) PPrint(indent string) string {
 	buf := new(bytes.Buffer)
 
@@ -73,10 +75,13 @@ func (exc *Exception) PPrint(indent string) string {
 	return buf.String()
 }
 
+// Kind returns "exception".
 func (exc *Exception) Kind() string {
 	return "exception"
 }
 
+// Repr returns a representation of the exception. It is lossy in that it does
+// not preserve the stacktrace.
 func (exc *Exception) Repr(indent int) string {
 	if exc.Cause == nil {
 		return "$ok"
@@ -87,19 +92,23 @@ func (exc *Exception) Repr(indent int) string {
 	return "?(fail " + parse.Quote(exc.Cause.Error()) + ")"
 }
 
-// Equal compares by identity.
+// Equal compares by address.
 func (exc *Exception) Equal(rhs interface{}) bool {
 	return exc == rhs
 }
 
+// Hash returns the hash of the address.
 func (exc *Exception) Hash() uint32 {
 	return hash.Pointer(unsafe.Pointer(exc))
 }
 
+// Bool returns whether this exception has a nil cause; that is, it is $ok.
 func (exc *Exception) Bool() bool {
 	return exc.Cause == nil
 }
 
+// Index supports introspection of the exception. Currently the only supported
+// key is "cause".
 func (exc *Exception) Index(k interface{}) (interface{}, bool) {
 	// TODO: Access to Traceback
 	switch k {
@@ -110,6 +119,7 @@ func (exc *Exception) Index(k interface{}) (interface{}, bool) {
 	}
 }
 
+// IterateKeys calls f with all the valid keys that can be used in Index.
 func (exc *Exception) IterateKeys(f func(interface{}) bool) {
 	util.Feed(f, "cause")
 }
@@ -120,6 +130,7 @@ type PipelineError struct {
 	Errors []*Exception
 }
 
+// Repr returns a representation of the pipeline error, using the multi-error builtin.
 func (pe PipelineError) Repr(indent int) string {
 	// TODO Make a more generalized ListReprBuilder and use it here.
 	b := new(bytes.Buffer)
@@ -137,6 +148,7 @@ func (pe PipelineError) Repr(indent int) string {
 	return b.String()
 }
 
+// Error returns a plain text representation of the pipeline error.
 func (pe PipelineError) Error() string {
 	b := new(bytes.Buffer)
 	b.WriteString("(")
@@ -197,6 +209,7 @@ var flowNames = [...]string{
 	"return", "break", "continue",
 }
 
+// Repr returns a representation of the flow "error".
 func (f Flow) Repr(int) string {
 	return "?(" + f.Error() + ")"
 }
@@ -208,6 +221,7 @@ func (f Flow) Error() string {
 	return flowNames[f]
 }
 
+// PPrint pretty-prints the flow "error".
 func (f Flow) PPrint(string) string {
 	return "\033[33;1m" + f.Error() + "\033[m"
 }
@@ -221,6 +235,8 @@ type ExternalCmdExit struct {
 	Pid     int
 }
 
+// NewExternalCmdExit constructs an error for representing a non-zero exit from
+// an external command.
 func NewExternalCmdExit(name string, ws syscall.WaitStatus, pid int) error {
 	if ws.Exited() && ws.ExitStatus() == 0 {
 		return nil

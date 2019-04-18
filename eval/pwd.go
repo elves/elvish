@@ -14,6 +14,8 @@ type PwdVariable struct {
 
 var _ vars.Var = PwdVariable{}
 
+// Get returns the current working directory. It returns /unknown/pwd when it
+// cannot be determined.
 func (PwdVariable) Get() interface{} {
 	pwd, err := os.Getwd()
 	// TODO: Deprecate the $pwd variable.
@@ -23,6 +25,7 @@ func (PwdVariable) Get() interface{} {
 	return pwd
 }
 
+// Set changes the current working directory.
 func (pwd PwdVariable) Set(v interface{}) error {
 	path, ok := v.(string)
 	if !ok {

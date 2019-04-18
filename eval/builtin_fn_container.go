@@ -177,17 +177,16 @@ func hasKey(container, key interface{}) (bool, error) {
 			// XXX(xiaq): Not all types that implement Lener have numerical indices
 			_, err := vals.ConvertListIndex(key, len)
 			return err == nil, nil
-		} else {
-			var found bool
-			err := vals.IterateKeys(container, func(k interface{}) bool {
-				if key == k {
-					found = true
-				}
-				return !found
-			})
-			if err == nil {
-				return found, nil
+		}
+		var found bool
+		err := vals.IterateKeys(container, func(k interface{}) bool {
+			if key == k {
+				found = true
 			}
+			return !found
+		})
+		if err == nil {
+			return found, nil
 		}
 		return false, fmt.Errorf("couldn't get key or index of type '%s'", vals.Kind(container))
 	}

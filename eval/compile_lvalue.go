@@ -175,9 +175,8 @@ func (op *elemOp) invoke(fm *Frame) ([]vars.Var, error) {
 		level := vars.ElementErrorLevel(err)
 		if level < 0 {
 			return nil, fm.errorpf(op.begin, op.end, "%s", err)
-		} else {
-			return nil, fm.errorpf(op.begin, op.ends[level], "%s", err)
 		}
+		return nil, fm.errorpf(op.begin, op.ends[level], "%s", err)
 	}
 	return []vars.Var{elemVar}, nil
 }

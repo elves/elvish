@@ -9,6 +9,8 @@ import (
 	"github.com/elves/elvish/util"
 )
 
+// RawOptions is the type of an argument a builtin function can take to declare
+// that it wants to parse options itself. See the doc of BuiltinFn for details.
 type RawOptions map[string]interface{}
 
 // Takes a raw option map and a pointer to a struct, and populate the struct

@@ -69,14 +69,12 @@ func resolve(fm *Frame, head string) string {
 	_, special := builtinSpecials[head]
 	if special {
 		return "special"
-	} else {
-		explode, ns, name := ParseVariableRef(head)
-		if !explode && fm.ResolveVar(ns, name+FnSuffix) != nil {
-			return "$" + head + FnSuffix
-		} else {
-			return "(external " + parse.Quote(head) + ")"
-		}
 	}
+	explode, ns, name := ParseVariableRef(head)
+	if !explode && fm.ResolveVar(ns, name+FnSuffix) != nil {
+		return "$" + head + FnSuffix
+	}
+	return "(external " + parse.Quote(head) + ")"
 }
 
 func source(fm *Frame, fname string) error {

@@ -208,7 +208,7 @@ func toJSON(fm *Frame, inputs Inputs) error {
 func fopen(fm *Frame, name string) (vals.File, error) {
 	// TODO support opening files for writing etc as well.
 	f, err := os.Open(name)
-	return vals.File{f}, err
+	return vals.NewFile(f), err
 }
 
 func fclose(f vals.File) error {
@@ -217,7 +217,7 @@ func fclose(f vals.File) error {
 
 func pipe() (vals.Pipe, error) {
 	r, w, err := os.Pipe()
-	return vals.Pipe{r, w}, err
+	return vals.NewPipe(r, w), err
 }
 
 func prclose(p vals.Pipe) error {

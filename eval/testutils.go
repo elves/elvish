@@ -69,8 +69,8 @@ func (t TestCase) Puts(vs ...interface{}) TestCase {
 	return t
 }
 
-// Puts returns an altered Test that requires the source code to produce the
-// specified strings in the value channel when evaluated.
+// PutsStrings returns an altered Test that requires the source code to produce
+// the specified strings in the value channel when evaluated.
 func (t TestCase) PutsStrings(ss []string) TestCase {
 	t.want.out = make([]interface{}, len(ss))
 	for i, s := range ss {
@@ -105,8 +105,8 @@ func Test(t *testing.T, tests ...TestCase) {
 	TestWithSetup(t, func(*Evaler) {}, tests...)
 }
 
-// Test runs test cases. For each test case, a new Evaler is created with
-// NewEvaler and passed to the setup function.
+// TestWithSetup runs test cases. For each test case, a new Evaler is created
+// with NewEvaler and passed to the setup function.
 func TestWithSetup(t *testing.T, setup func(*Evaler), tests ...TestCase) {
 	for _, tt := range tests {
 		ev := NewEvaler()

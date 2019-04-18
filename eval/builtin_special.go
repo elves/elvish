@@ -427,7 +427,7 @@ func (op *ifOp) invoke(fm *Frame) error {
 	for i, bodyOp := range op.bodyOps {
 		bodies[i] = bodyOp.execlambdaOp(fm)
 	}
-	else_ := op.elseOp.execlambdaOp(fm)
+	elseFn := op.elseOp.execlambdaOp(fm)
 	for i, condOp := range op.condOps {
 		condValues, err := condOp.exec(fm.fork("if cond"))
 		if err != nil {
@@ -438,7 +438,7 @@ func (op *ifOp) invoke(fm *Frame) error {
 		}
 	}
 	if op.elseOp.body != nil {
-		return else_.Call(fm.fork("if else"), NoArgs, NoOpts)
+		return elseFn.Call(fm.fork("if else"), NoArgs, NoOpts)
 	}
 	return nil
 }
@@ -624,7 +624,7 @@ func (op *tryOp) invoke(fm *Frame) error {
 		return err
 	}
 	except := op.exceptOp.execlambdaOp(fm)
-	else_ := op.elseOp.execlambdaOp(fm)
+	elseFn := op.elseOp.execlambdaOp(fm)
 	finally := op.finallyOp.execlambdaOp(fm)
 
 	err = fm.fork("try body").Call(body, NoArgs, NoOpts)
@@ -639,8 +639,8 @@ func (op *tryOp) invoke(fm *Frame) error {
 			err = fm.fork("try except").Call(except, NoArgs, NoOpts)
 		}
 	} else {
-		if else_ != nil {
-			err = fm.fork("try else").Call(else_, NoArgs, NoOpts)
+		if elseFn != nil {
+			err = fm.fork("try else").Call(elseFn, NoArgs, NoOpts)
 		}
 	}
 	if finally != nil {
