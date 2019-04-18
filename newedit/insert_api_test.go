@@ -36,7 +36,7 @@ func TestInitInsert_Binding(t *testing.T) {
 	m, ns := initInsert(&fakeEditor{}, eval.NewEvaler())
 	called := 0
 	binding, err := EmptyBindingMap.Assoc("a",
-		eval.NewBuiltinFn("test binding", func() { called++ }))
+		eval.NewGoFn("test binding", func() { called++ }))
 	if err != nil {
 		panic(err)
 	}

@@ -17,11 +17,11 @@ var (
 )
 
 var (
-	matchPrefix = eval.NewBuiltinFn(
+	matchPrefix = eval.NewGoFn(
 		"edit:match-prefix", wrapMatcher(strings.HasPrefix))
-	matchSubstr = eval.NewBuiltinFn(
+	matchSubstr = eval.NewGoFn(
 		"edit:match-substr", wrapMatcher(strings.Contains))
-	matchSubseq = eval.NewBuiltinFn(
+	matchSubseq = eval.NewGoFn(
 		"edit:match-subseq", wrapMatcher(util.HasSubseq))
 )
 

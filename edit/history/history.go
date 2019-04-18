@@ -50,7 +50,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 		"binding": vars.FromPtr(&hist.binding),
 		"list":    vars.NewReadOnly(List{&hist.mutex, ed.Daemon()}),
 	}
-	historyNs.AddBuiltinFns("edit:history:", map[string]interface{}{
+	historyNs.AddGoFns("edit:history:", map[string]interface{}{
 		"start":        hist.start,
 		"up":           hist.up,
 		"down":         hist.down,
@@ -63,7 +63,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 	histlistNs := eval.Ns{
 		"binding": vars.FromPtr(&histlistBinding),
 	}
-	histlistNs.AddBuiltinFns("edit:histlist:", map[string]interface{}{
+	histlistNs.AddGoFns("edit:histlist:", map[string]interface{}{
 		"start": func() {
 			hl.start(ed, hist.fuser, histlistBinding)
 		},
@@ -74,7 +74,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 	ns.AddNs("history", historyNs)
 	ns.AddNs("histlist", histlistNs)
 	// TODO(xiaq): Rename and put in edit:history
-	ns.AddBuiltinFn("edit:", "command-history", hist.commandHistory)
+	ns.AddGoFn("edit:", "command-history", hist.commandHistory)
 }
 
 func (h *hist) Teardown() {

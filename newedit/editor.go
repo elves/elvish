@@ -32,14 +32,14 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs().
 		Add("max-height",
 			vars.FromPtrWithMutex(&ed.Config.Raw.MaxHeight, &ed.Config.Mutex)).
-		AddBuiltinFns("<edit>", map[string]interface{}{
+		AddGoFns("<edit>", map[string]interface{}{
 			"binding-map":  makeBindingMap,
 			"exit-binding": exitBinding,
 			"commit-code":  commitCode,
 			"commit-eof":   commitEOF,
 			"reset-mode":   makeResetMode(ed.State()),
 		}).
-		AddBuiltinFns("<edit>", bufferBuiltins(ed.State()))
+		AddGoFns("<edit>", bufferBuiltins(ed.State()))
 
 	// Hooks
 	ns["before-readline"], ed.BeforeReadline = initBeforeReadline(ev)

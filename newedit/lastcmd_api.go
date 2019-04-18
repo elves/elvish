@@ -16,7 +16,7 @@ func initLastcmd(ed editor, ev *eval.Evaler, st storedefs.Store, lsMode *listing
 		KeyHandler: keyHandlerFromBindings(ed, ev, &binding, lsBinding),
 	}
 	ns := eval.Ns{}.
-		AddBuiltinFn("<edit:lastcmd>:", "start", func() {
+		AddGoFn("<edit:lastcmd>:", "start", func() {
 			startLastcmd(ed, st, &mode)
 		})
 	return ns

@@ -14,7 +14,7 @@ import (
 func TestKeyHandlerFromBinding_CallsBinding(t *testing.T) {
 	called := 0
 	binding := buildBinding(
-		"a", eval.NewBuiltinFn("[test]", func() { called++ }))
+		"a", eval.NewGoFn("[test]", func() { called++ }))
 	handler := keyHandlerFromBindings(&fakeEditor{}, eval.NewEvaler(), &binding)
 
 	action := handler(ui.Key{Rune: 'a'})
@@ -31,7 +31,7 @@ func TestKeyHandlerFromBinding_SetsBindingKey(t *testing.T) {
 	ed := &fakeEditor{}
 	var gotKey ui.Key
 	binding := buildBinding(
-		"a", eval.NewBuiltinFn("[test]", func() { gotKey = ed.State().BindingKey() }))
+		"a", eval.NewGoFn("[test]", func() { gotKey = ed.State().BindingKey() }))
 	handler := keyHandlerFromBindings(ed, eval.NewEvaler(), &binding)
 
 	key := ui.Key{Rune: 'a'}
@@ -65,10 +65,10 @@ func TestIndexLayeredBindings(t *testing.T) {
 	// 3. Key
 	called := 0
 	binding1 := buildBinding(
-		"a", eval.NewBuiltinFn("[a1]", func() { called = 1 }))
+		"a", eval.NewGoFn("[a1]", func() { called = 1 }))
 	binding2 := buildBinding(
-		"a", eval.NewBuiltinFn("[a2]", func() { called = 2 }),
-		"b", eval.NewBuiltinFn("[b2]", func() { called = 2 }))
+		"a", eval.NewGoFn("[a2]", func() { called = 2 }),
+		"b", eval.NewGoFn("[b2]", func() { called = 2 }))
 
 	handler := keyHandlerFromBindings(&fakeEditor{}, eval.NewEvaler(),
 		&binding1, &binding2)
@@ -88,7 +88,7 @@ func TestIndexLayeredBindings(t *testing.T) {
 
 	// Use lower layer default when upper layer does not have default
 	b, _ := binding2.Assoc(
-		ui.Default, eval.NewBuiltinFn("[d2]", func() { called = 2 }))
+		ui.Default, eval.NewGoFn("[d2]", func() { called = 2 }))
 	binding2 = b.(BindingMap)
 
 	called = 0
@@ -99,7 +99,7 @@ func TestIndexLayeredBindings(t *testing.T) {
 
 	// Prefer upper layer default
 	b, _ = binding1.Assoc(
-		ui.Default, eval.NewBuiltinFn("[d1]", func() { called = 1 }))
+		ui.Default, eval.NewGoFn("[d1]", func() { called = 1 }))
 	binding1 = b.(BindingMap)
 
 	called = 0
@@ -110,7 +110,7 @@ func TestIndexLayeredBindings(t *testing.T) {
 
 	// Exact matches in all layers are tried before falling back to default
 	b, _ = binding2.Assoc(
-		"c", eval.NewBuiltinFn("[c2]", func() { called = 2 }))
+		"c", eval.NewGoFn("[c2]", func() { called = 2 }))
 	binding2 = b.(BindingMap)
 
 	called = 0
@@ -137,7 +137,7 @@ func TestCallBinding_CallsFunction(t *testing.T) {
 	nt := &fakeNotifier{}
 
 	called := 0
-	callBinding(nt, ev, eval.NewBuiltinFn("test binding", func() {
+	callBinding(nt, ev, eval.NewGoFn("test binding", func() {
 		called++
 	}))
 	if called != 1 {
@@ -149,7 +149,7 @@ func TestCallBinding_CapturesAction(t *testing.T) {
 	ev := eval.NewEvaler()
 	nt := &fakeNotifier{}
 
-	action := callBinding(nt, ev, eval.NewBuiltinFn("test", func() error {
+	action := callBinding(nt, ev, eval.NewGoFn("test", func() error {
 		return editutil.ActionError(types.CommitCode)
 	}))
 	if action != types.CommitCode {
@@ -161,7 +161,7 @@ func TestCallBinding_NotifyOnValueOutput(t *testing.T) {
 	ev := eval.NewEvaler()
 	nt := &fakeNotifier{}
 
-	callBinding(nt, ev, eval.NewBuiltinFn("test binding", func(fm *eval.Frame) {
+	callBinding(nt, ev, eval.NewGoFn("test binding", func(fm *eval.Frame) {
 		fm.OutputChan() <- "VALUE"
 	}))
 	wantNotes := []string{"[value out] VALUE"}
@@ -174,7 +174,7 @@ func TestCallBinding_NotifyOnByteOutput(t *testing.T) {
 	ev := eval.NewEvaler()
 	nt := &fakeNotifier{}
 
-	callBinding(nt, ev, eval.NewBuiltinFn("test binding", func(fm *eval.Frame) {
+	callBinding(nt, ev, eval.NewGoFn("test binding", func(fm *eval.Frame) {
 		fm.OutputFile().WriteString("BYTES")
 	}))
 	wantNotes := []string{"[bytes out] BYTES"}
@@ -187,7 +187,7 @@ func TestCallBinding_StripsNewlinesFromByteOutput(t *testing.T) {
 	ev := eval.NewEvaler()
 	nt := &fakeNotifier{}
 
-	callBinding(nt, ev, eval.NewBuiltinFn("test binding", func(fm *eval.Frame) {
+	callBinding(nt, ev, eval.NewGoFn("test binding", func(fm *eval.Frame) {
 		fm.OutputFile().WriteString("line 1\nline 2\n")
 	}))
 	wantNotes := []string{"[bytes out] line 1", "[bytes out] line 2"}
@@ -200,7 +200,7 @@ func TestCallBinding_NotifyOnError(t *testing.T) {
 	ev := eval.NewEvaler()
 	nt := &fakeNotifier{}
 
-	callBinding(nt, ev, eval.NewBuiltinFn("test binding", func() error {
+	callBinding(nt, ev, eval.NewGoFn("test binding", func() error {
 		return errors.New("ERROR")
 	}))
 	wantNotes := []string{"[binding error] ERROR"}

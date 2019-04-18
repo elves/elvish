@@ -11,7 +11,7 @@ func initListing(ed editor) (*listing.Mode, *BindingMap, eval.Ns) {
 	binding := EmptyBindingMap
 	ns := eval.Ns{
 		"binding": vars.FromPtr(&binding),
-	}.AddBuiltinFns("<edit:listing>:", map[string]interface{}{
+	}.AddGoFns("<edit:listing>:", map[string]interface{}{
 		"up":         func() { mode.MutateStates((*listing.State).Up) },
 		"down":       func() { mode.MutateStates((*listing.State).Down) },
 		"up-cycle":   func() { mode.MutateStates((*listing.State).UpCycle) },

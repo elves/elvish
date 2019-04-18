@@ -46,7 +46,7 @@ func TestMakeHasCommand(t *testing.T) {
 	hasCommand := makeHasCommand(ev)
 
 	// Set up global functions and modules in the evaler.
-	goodFn := eval.NewBuiltinFn("good", func() {})
+	goodFn := eval.NewGoFn("good", func() {})
 	ev.Global.AddFn("good", goodFn)
 	aNs := eval.Ns{}.AddFn("good", goodFn)
 	bNs := eval.Ns{}.AddFn("good", goodFn)

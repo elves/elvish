@@ -29,7 +29,7 @@ func initInsert(ed editor, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
 		"abbr":    vars.FromPtr(&abbr),
 		"quote-paste": vars.FromPtrWithMutex(
 			&m.Config.Raw.QuotePaste, &m.Config.Mutex),
-	}.AddBuiltinFns("<edit:insert>:", map[string]interface{}{
+	}.AddGoFns("<edit:insert>:", map[string]interface{}{
 		"start": func() { st.SetMode(m) },
 		"default-handler": func() error {
 			action := editutil.BasicHandler(tty.KeyEvent(st.BindingKey()), st)

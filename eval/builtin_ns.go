@@ -21,5 +21,5 @@ var builtinNs = Ns{
 }
 
 func addBuiltinFns(fns map[string]interface{}) {
-	builtinNs.AddBuiltinFns("", fns)
+	builtinNs.AddGoFns("", fns)
 }

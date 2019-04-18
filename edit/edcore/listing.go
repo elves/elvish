@@ -38,7 +38,7 @@ func initListing(ed *editor, ns eval.Ns) {
 	subns := eval.Ns{
 		"binding": vars.FromPtr(&l.commonBinding),
 	}
-	subns.AddBuiltinFns("edit:listing:", map[string]interface{}{
+	subns.AddGoFns("edit:listing:", map[string]interface{}{
 		"up":         func() { l.up(false) },
 		"up-cycle":   func() { l.up(true) },
 		"page-up":    func() { l.pageUp() },

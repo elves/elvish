@@ -51,7 +51,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 			"binding":       vars.FromPtr(&c.binding),
 			"matcher":       vars.FromPtr(&c.matcher),
 			"arg-completer": vars.FromPtr(&c.argCompleter),
-		}.AddBuiltinFns("edit:completion:", map[string]interface{}{
+		}.AddGoFns("edit:completion:", map[string]interface{}{
 			"start":          func() { c.start(ed, false) },
 			"smart-start":    func() { c.start(ed, true) },
 			"up":             func() { c.prev(false) },
@@ -77,7 +77,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 	ns.AddFn("match-subseq", matchSubseq)
 
 	// Other functions.
-	ns.AddBuiltinFns("edit:", map[string]interface{}{
+	ns.AddGoFns("edit:", map[string]interface{}{
 		"complete-getopt":   complGetopt,
 		"complex-candidate": makeComplexCandidate,
 	})

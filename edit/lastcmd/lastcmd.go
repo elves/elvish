@@ -32,7 +32,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 	subns := eval.Ns{
 		"binding": vars.FromPtr(&binding),
 	}
-	subns.AddBuiltinFns("edit:lastcmd:", map[string]interface{}{
+	subns.AddGoFns("edit:lastcmd:", map[string]interface{}{
 		"start":       func() { lc.start(ed, binding) },
 		"accept-line": func() { lc.acceptLine(ed) },
 	})

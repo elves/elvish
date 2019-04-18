@@ -28,7 +28,7 @@ func initNarrow(ed *editor, ns eval.Ns) {
 	subns := eval.Ns{
 		"binding": vars.FromPtr(&n.binding),
 	}
-	subns.AddBuiltinFns("edit:narrow:", map[string]interface{}{
+	subns.AddGoFns("edit:narrow:", map[string]interface{}{
 		"up":         func() { n.up(false) },
 		"up-cycle":   func() { n.up(true) },
 		"page-up":    func() { n.pageUp() },
@@ -52,7 +52,7 @@ func initNarrow(ed *editor, ns eval.Ns) {
 		"default": func() { n.defaultBinding(ed) },
 	})
 	ns.AddNs("narrow", subns)
-	ns.AddBuiltinFn("edit:", "-narrow-read", n.NarrowRead)
+	ns.AddGoFn("edit:", "-narrow-read", n.NarrowRead)
 }
 
 type narrowState struct {

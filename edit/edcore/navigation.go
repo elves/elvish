@@ -48,7 +48,7 @@ func initNavigation(ed *editor, ns eval.Ns) {
 	subns := eval.Ns{
 		"binding": vars.FromPtr(&n.binding),
 	}
-	subns.AddBuiltinFns("edit:navigation:", map[string]interface{}{
+	subns.AddGoFns("edit:navigation:", map[string]interface{}{
 		"start":                    func() { n.start(ed) },
 		"up":                       n.prev,
 		"down":                     n.next,

@@ -22,7 +22,7 @@ func init() {
 }
 
 func initCoreFns(ed *editor, ns eval.Ns) {
-	ns.AddBuiltinFns("edit:", map[string]interface{}{
+	ns.AddGoFns("edit:", map[string]interface{}{
 		"kill-line-left":        ed.applyKill(moveDotSOL),
 		"kill-line-right":       ed.applyKill(moveDotEOL),
 		"kill-word-left":        ed.applyKill(moveDotLeftWord),
@@ -80,7 +80,7 @@ func initInsert(ed *editor, ns eval.Ns) {
 	insertNs := eval.Ns{
 		"binding": vars.FromPtr(&insert.binding),
 	}
-	insertNs.AddBuiltinFns("edit:insert:", map[string]interface{}{
+	insertNs.AddGoFns("edit:insert:", map[string]interface{}{
 		"start":   ed.SetModeInsert,
 		"default": ed.insertDefault,
 	})
@@ -115,7 +115,7 @@ func initCommand(ed *editor, ns eval.Ns) {
 	commandNs := eval.Ns{
 		"binding": vars.FromPtr(&command.binding),
 	}
-	commandNs.AddBuiltinFns("edit:command:", map[string]interface{}{
+	commandNs.AddGoFns("edit:command:", map[string]interface{}{
 		"start":   ed.commandStart,
 		"default": ed.commandDefault,
 	})

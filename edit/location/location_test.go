@@ -59,7 +59,7 @@ var (
 		"/home",
 		nil,
 		eval.NewEvaler(),
-		eval.NewBuiltinFn("edit:location:test:match-prefix", matchPrefix))
+		eval.NewGoFn("edit:location:test:match-prefix", matchPrefix))
 
 	locationWithPrefixMatcherTests = []eddefs.ListingProviderFilterTest{
 		{"", []eddefs.ListingShown{

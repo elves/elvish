@@ -49,7 +49,7 @@ func getDefaultPrompt(isRoot bool) eval.Callable {
 	if isRoot {
 		p = styled.Transform(styled.Unstyled("# "), "red")
 	}
-	return eval.NewBuiltinFn("default prompt", func(fm *eval.Frame) {
+	return eval.NewGoFn("default prompt", func(fm *eval.Frame) {
 		out := fm.OutputChan()
 		out <- string(util.Getwd())
 		out <- p
@@ -58,7 +58,7 @@ func getDefaultPrompt(isRoot bool) eval.Callable {
 
 func getDefaultRPrompt(username, hostname string) eval.Callable {
 	rp := styled.Transform(styled.Unstyled(username+"@"+hostname), "inverse")
-	return eval.NewBuiltinFn("default rprompt", func(fm *eval.Frame) {
+	return eval.NewGoFn("default rprompt", func(fm *eval.Frame) {
 		fm.OutputChan() <- rp
 	})
 }

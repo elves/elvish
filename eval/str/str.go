@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-var Ns = eval.NewNs().AddBuiltinFns("str:", fns)
+var Ns = eval.NewNs().AddGoFns("str:", fns)
 
 var fns = map[string]interface{}{
 	"compare":      strings.Compare,

@@ -98,7 +98,7 @@ func makeNs(ed *editor) eval.Ns {
 		"wordify":       wordifyBuiltin,
 		"-dump-buf":     ed.dumpBuf,
 	}
-	ns.AddBuiltinFns("edit:", fns)
+	ns.AddGoFns("edit:", fns)
 
 	return ns
 }

@@ -37,7 +37,7 @@ type mode struct {
 	matcher    eval.Callable
 }
 
-var matchDirPatternBuiltin = eval.NewBuiltinFn("edit:location:match-dir-pattern", matchDirPattern)
+var matchDirPatternBuiltin = eval.NewGoFn("edit:location:match-dir-pattern", matchDirPattern)
 
 // Init initializes the location mode for an Editor.
 func Init(ed eddefs.Editor, ns eval.Ns) {
@@ -51,7 +51,7 @@ func Init(ed eddefs.Editor, ns eval.Ns) {
 			"pinned":     vars.FromPtr(&m.pinned),
 			"matcher":    vars.FromPtr(&m.matcher),
 			"workspaces": vars.FromPtr(&m.workspaces),
-		}.AddBuiltinFn("edit:location:", "start", m.start).
+		}.AddGoFn("edit:location:", "start", m.start).
 			AddFn("match-dir-pattern", matchDirPatternBuiltin))
 
 	ed.Evaler().AddAfterChdir(func(string) {

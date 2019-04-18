@@ -1,6 +1,6 @@
 package eval
 
-// Builtin functions.
+// Misc builtin functions.
 
 import (
 	"fmt"
@@ -51,7 +51,7 @@ func kindOf(fm *Frame, args ...interface{}) {
 
 func constantly(args ...interface{}) Callable {
 	// XXX Repr of this fn is not right
-	return NewBuiltinFn(
+	return NewGoFn(
 		"created by constantly",
 		func(fm *Frame) {
 			out := fm.ports[1].Chan

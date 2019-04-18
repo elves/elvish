@@ -14,7 +14,7 @@ type testOptions struct {
 
 func (o *testOptions) SetDefaultOptions() { o.Bar = "default" }
 
-func TestReflectBuiltinFnCall(t *testing.T) {
+func TestGoFnCall(t *testing.T) {
 	theFrame := new(Frame)
 	theOptions := map[string]interface{}{}
 
@@ -33,7 +33,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	}
 
 	// *Frame parameter gets the Frame.
-	f = NewBuiltinFn("f", func(f *Frame) {
+	f = NewGoFn("f", func(f *Frame) {
 		if f != theFrame {
 			t.Errorf("*Frame parameter doesn't get current frame")
 		}
@@ -41,7 +41,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	callGood(theFrame, nil, theOptions)
 
 	// RawOptions parameter gets options.
-	f = NewBuiltinFn("f", func(opts RawOptions) {
+	f = NewGoFn("f", func(opts RawOptions) {
 		if opts["foo"] != "bar" {
 			t.Errorf("RawOptions parameter doesn't get options")
 		}
@@ -49,7 +49,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	callGood(theFrame, nil, RawOptions{"foo": "bar"})
 
 	// ScanOptions parameters gets scanned options.
-	f = NewBuiltinFn("f", func(opts testOptions) {
+	f = NewGoFn("f", func(opts testOptions) {
 		if opts.Foo != "bar" {
 			t.Errorf("ScanOptions parameter doesn't get options")
 		}
@@ -60,7 +60,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	callGood(theFrame, nil, RawOptions{"foo": "bar"})
 
 	// Combination of Frame and RawOptions.
-	f = NewBuiltinFn("f", func(f *Frame, opts RawOptions) {
+	f = NewGoFn("f", func(f *Frame, opts RawOptions) {
 		if f != theFrame {
 			t.Errorf("*Frame parameter doesn't get current frame")
 		}
@@ -71,7 +71,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	callGood(theFrame, nil, RawOptions{"foo": "bar"})
 
 	// Argument passing.
-	f = NewBuiltinFn("f", func(x, y string) {
+	f = NewGoFn("f", func(x, y string) {
 		if x != "lorem" {
 			t.Errorf("Argument x not passed")
 		}
@@ -82,7 +82,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	callGood(theFrame, []interface{}{"lorem", "ipsum"}, theOptions)
 
 	// Variadic arguments.
-	f = NewBuiltinFn("f", func(x ...string) {
+	f = NewGoFn("f", func(x ...string) {
 		if len(x) != 2 || x[0] != "lorem" || x[1] != "ipsum" {
 			t.Errorf("Variadic argument not passed")
 		}
@@ -90,7 +90,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	callGood(theFrame, []interface{}{"lorem", "ipsum"}, theOptions)
 
 	// Conversion into int and float64.
-	f = NewBuiltinFn("f", func(i int, f float64) {
+	f = NewGoFn("f", func(i int, f float64) {
 		if i != 314 {
 			t.Errorf("Integer argument i not passed")
 		}
@@ -101,7 +101,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	callGood(theFrame, []interface{}{"314", "1.25"}, theOptions)
 
 	// Conversion of supplied inputs.
-	f = NewBuiltinFn("f", func(i Inputs) {
+	f = NewGoFn("f", func(i Inputs) {
 		var values []interface{}
 		i(func(x interface{}) {
 			values = append(values, x)
@@ -119,7 +119,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	ch <- "bar"
 	close(ch)
 	inFrame.ports[0] = &Port{Chan: ch}
-	f = NewBuiltinFn("f", func(i Inputs) {
+	f = NewGoFn("f", func(i Inputs) {
 		var values []interface{}
 		i(func(x interface{}) {
 			values = append(values, x)
@@ -134,7 +134,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	outFrame := &Frame{ports: make([]*Port, 3)}
 	ch = make(chan interface{}, 10)
 	outFrame.ports[1] = &Port{Chan: ch}
-	f = NewBuiltinFn("f", func() string { return "ret" })
+	f = NewGoFn("f", func() string { return "ret" })
 	callGood(outFrame, nil, theOptions)
 	select {
 	case ret := <-ch:
@@ -146,7 +146,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	}
 
 	// Conversion of return values.
-	f = NewBuiltinFn("f", func() int { return 314 })
+	f = NewGoFn("f", func() int { return 314 })
 	callGood(outFrame, nil, theOptions)
 	select {
 	case ret := <-ch:
@@ -159,7 +159,7 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 
 	// Passing of error return value.
 	theError := errors.New("the error")
-	f = NewBuiltinFn("f", func() (string, error) {
+	f = NewGoFn("f", func() (string, error) {
 		return "x", theError
 	})
 	if f.Call(outFrame, nil, theOptions) != theError {
@@ -172,41 +172,41 @@ func TestReflectBuiltinFnCall(t *testing.T) {
 	}
 
 	// Too many arguments.
-	f = NewBuiltinFn("f", func() {
+	f = NewGoFn("f", func() {
 		t.Errorf("Function called when there are too many arguments")
 	})
 	callBad(theFrame, []interface{}{"x"}, theOptions)
 
 	// Too few arguments.
-	f = NewBuiltinFn("f", func(x string) {
+	f = NewGoFn("f", func(x string) {
 		t.Errorf("Function called when there are too few arguments")
 	})
 	callBad(theFrame, nil, theOptions)
-	f = NewBuiltinFn("f", func(x string, y ...string) {
+	f = NewGoFn("f", func(x string, y ...string) {
 		t.Errorf("Function called when there are too few arguments")
 	})
 	callBad(theFrame, nil, theOptions)
 
 	// Options when the function does not accept options.
-	f = NewBuiltinFn("f", func() {
+	f = NewGoFn("f", func() {
 		t.Errorf("Function called when there are extra options")
 	})
 	callBad(theFrame, nil, RawOptions{"foo": "bar"})
 
 	// Wrong argument type.
-	f = NewBuiltinFn("f", func(x string) {
+	f = NewGoFn("f", func(x string) {
 		t.Errorf("Function called when arguments have wrong type")
 	})
 	callBad(theFrame, []interface{}{1}, theOptions)
 
 	// Wrong argument type: cannot convert to int.
-	f = NewBuiltinFn("f", func(x int) {
+	f = NewGoFn("f", func(x int) {
 		t.Errorf("Function called when arguments have wrong type")
 	})
 	callBad(theFrame, []interface{}{"x"}, theOptions)
 
 	// Wrong argument type: cannot convert to float64.
-	f = NewBuiltinFn("f", func(x float64) {
+	f = NewGoFn("f", func(x float64) {
 		t.Errorf("Function called when arguments have wrong type")
 	})
 	callBad(theFrame, []interface{}{"x"}, theOptions)

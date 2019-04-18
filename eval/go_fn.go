@@ -11,18 +11,17 @@ import (
 )
 
 var (
-	// ErrArgs is thrown when a builtin function gets erroneous arguments.
+	// ErrArgs is thrown when a Go function gets erroneous arguments.
 	//
 	// TODO(xiaq): Replace this single error type with multiple types that carry
 	// richer error information.
 	ErrArgs = errors.New("args error")
-	// ErrNoOptAccepted is thrown when a builtin function that does not accept
-	// any options gets passed options.
+	// ErrNoOptAccepted is thrown when a Go function that does not accept any
+	// options gets passed options.
 	ErrNoOptAccepted = errors.New("function does not accept any options")
 )
 
-// BuiltinFn uses reflection to wrap arbitrary Go functions into Elvish
-// functions.
+// GoFn uses reflection to wrap arbitrary Go functions into Elvish functions.
 //
 // Parameters are passed following these rules:
 //
@@ -49,9 +48,7 @@ var (
 // converted using goToElv. If the last return value has type error and is not
 // nil, it is turned into an exception and no ouputting happens. If the last
 // return value is a nil error, it is ignored.
-//
-// TODO(xiaq): Rename this to NativeFn.
-type BuiltinFn struct {
+type GoFn struct {
 	name string
 	impl interface{}
 
@@ -71,7 +68,7 @@ type BuiltinFn struct {
 	variadicArg reflect.Type
 }
 
-var _ Callable = &BuiltinFn{}
+var _ Callable = &GoFn{}
 
 // An interface to be implemented by pointers to structs that should hold
 // scanned options.
@@ -79,9 +76,9 @@ type optionsPtr interface {
 	SetDefaultOptions()
 }
 
-// Inputs is the type that the last parameter of a builtin function can take.
-// When that is the case, it is a callback to get inputs. See the doc of
-// BuiltinFn for details.
+// Inputs is the type that the last parameter of a Go-native function can take.
+// When that is the case, it is a callback to get inputs. See the doc of GoFn
+// for details.
 type Inputs func(func(interface{}))
 
 var (
@@ -91,10 +88,10 @@ var (
 	inputsType     = reflect.TypeOf(Inputs(nil))
 )
 
-// NewBuiltinFn creates a new ReflectBuiltinFn instance.
-func NewBuiltinFn(name string, impl interface{}) *BuiltinFn {
+// NewGoFn creates a new GoFn instance.
+func NewGoFn(name string, impl interface{}) *GoFn {
 	implType := reflect.TypeOf(impl)
-	b := &BuiltinFn{name: name, impl: impl}
+	b := &GoFn{name: name, impl: impl}
 
 	i := 0
 	if i < implType.NumIn() && implType.In(i) == frameType {
@@ -129,22 +126,22 @@ func NewBuiltinFn(name string, impl interface{}) *BuiltinFn {
 }
 
 // Kind returns "fn".
-func (*BuiltinFn) Kind() string {
+func (*GoFn) Kind() string {
 	return "fn"
 }
 
 // Equal compares identity.
-func (b *BuiltinFn) Equal(rhs interface{}) bool {
+func (b *GoFn) Equal(rhs interface{}) bool {
 	return b == rhs
 }
 
 // Hash hashes the address.
-func (b *BuiltinFn) Hash() uint32 {
+func (b *GoFn) Hash() uint32 {
 	return hash.Pointer(unsafe.Pointer(b))
 }
 
 // Repr returns an opaque representation "<builtin $name>".
-func (b *BuiltinFn) Repr(int) string {
+func (b *GoFn) Repr(int) string {
 	return "<builtin " + b.name + ">"
 }
 
@@ -155,7 +152,7 @@ var errorType = reflect.TypeOf((*error)(nil)).Elem()
 var errNoOptions = errors.New("function does not accept any options")
 
 // Call calls the implementation using reflection.
-func (b *BuiltinFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
+func (b *GoFn) Call(f *Frame, args []interface{}, opts map[string]interface{}) error {
 	if b.variadicArg != nil {
 		if len(args) < len(b.normalArgs) {
 			return fmt.Errorf("want %d or more arguments, got %d",

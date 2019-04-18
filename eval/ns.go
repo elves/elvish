@@ -92,17 +92,15 @@ func (ns Ns) AddNs(name string, v Ns) Ns {
 	return ns.Add(name+NsSuffix, vars.FromPtr(&v))
 }
 
-// AddBuiltinFn adds a builtin function to a namespace. It returns the namespace
-// itself.
-func (ns Ns) AddBuiltinFn(nsName, name string, impl interface{}) Ns {
-	return ns.AddFn(name, NewBuiltinFn(nsName+name, impl))
+// AddGoFn adds a Go function to a namespace. It returns the namespace itself.
+func (ns Ns) AddGoFn(nsName, name string, impl interface{}) Ns {
+	return ns.AddFn(name, NewGoFn(nsName+name, impl))
 }
 
-// AddBuiltinFns adds builtin functions to a namespace. It returns the namespace
-// itself.
-func (ns Ns) AddBuiltinFns(nsName string, fns map[string]interface{}) Ns {
+// AddGoFns adds Go functions to a namespace. It returns the namespace itself.
+func (ns Ns) AddGoFns(nsName string, fns map[string]interface{}) Ns {
 	for name, impl := range fns {
-		ns.AddBuiltinFn(nsName, name, impl)
+		ns.AddGoFn(nsName, name, impl)
 	}
 	return ns
 }

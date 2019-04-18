@@ -8,14 +8,14 @@ import (
 )
 
 func TestRawFilterCandidates(t *testing.T) {
-	passAll := eval.NewBuiltinFn("test:passAll",
+	passAll := eval.NewGoFn("test:passAll",
 		func(fm *eval.Frame, pattern string, inputs eval.Inputs) {
 			out := fm.OutputChan()
 			inputs(func(v interface{}) {
 				out <- vals.Bool(true)
 			})
 		})
-	blockAll := eval.NewBuiltinFn("test:blockAll",
+	blockAll := eval.NewGoFn("test:blockAll",
 		func(fm *eval.Frame, pattern string, inputs eval.Inputs) {
 			out := fm.OutputChan()
 			inputs(func(v interface{}) {
@@ -43,7 +43,7 @@ func TestRawFilterCandidates(t *testing.T) {
 
 func TestComplexCandidate(t *testing.T) {
 	setup := func(ev *eval.Evaler) {
-		ev.Builtin.AddNs("edit", eval.NewNs().AddBuiltinFn(
+		ev.Builtin.AddNs("edit", eval.NewNs().AddGoFn(
 			"edit:", "complex-candidate", makeComplexCandidate))
 	}
 	That := eval.That

@@ -10,7 +10,7 @@ import (
 func TestInitBeforeReadline(t *testing.T) {
 	variable, cb := initBeforeReadline(eval.NewEvaler())
 	called := 0
-	variable.Set(vals.EmptyList.Cons(eval.NewBuiltinFn("[test]", func() {
+	variable.Set(vals.EmptyList.Cons(eval.NewGoFn("[test]", func() {
 		called++
 	})))
 	cb()
@@ -24,7 +24,7 @@ func TestInitAfterReadline(t *testing.T) {
 	variable, cb := initAfterReadline(eval.NewEvaler())
 	called := 0
 	calledWith := ""
-	variable.Set(vals.EmptyList.Cons(eval.NewBuiltinFn("[test]", func(s string) {
+	variable.Set(vals.EmptyList.Cons(eval.NewGoFn("[test]", func(s string) {
 		called++
 		calledWith = s
 	})))

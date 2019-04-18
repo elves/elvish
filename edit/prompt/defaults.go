@@ -24,7 +24,7 @@ func init() {
 			out <- &ui.Styled{"> ", ui.Styles{}}
 		}
 	}
-	defaultPrompt = eval.NewBuiltinFn("default prompt", prompt)
+	defaultPrompt = eval.NewGoFn("default prompt", prompt)
 }
 
 func init() {
@@ -42,7 +42,7 @@ func init() {
 		out := fm.OutputChan()
 		out <- &ui.Styled{rpromptStr, ui.Styles{"inverse"}}
 	}
-	defaultRPrompt = eval.NewBuiltinFn("default rprompt", rprompt)
+	defaultRPrompt = eval.NewGoFn("default rprompt", rprompt)
 }
 
 func init() {
@@ -53,5 +53,5 @@ func init() {
 			out <- &ui.Styled{s.Text, ui.Styles{"inverse"}}
 		})
 	}
-	defaultStaleTransform = eval.NewBuiltinFn("default stale transform", staleTransform)
+	defaultStaleTransform = eval.NewGoFn("default stale transform", staleTransform)
 }
