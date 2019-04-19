@@ -9,7 +9,7 @@ import (
 var (
 	li0 = EmptyList
 	li4 = MakeList("foo", "bar", "lorem", "ipsum")
-	m   = MakeMapFromKV("foo", "bar", "lorem", "ipsum")
+	m   = MakeMap("foo", "bar", "lorem", "ipsum")
 )
 
 var indexTests = tt.Table{

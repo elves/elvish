@@ -42,7 +42,7 @@ type completionState struct {
 func Init(ed eddefs.Editor, ns eval.Ns) {
 	c := &completion{
 		binding:      eddefs.EmptyBindingMap,
-		matcher:      vals.MakeMapFromKV("", matchPrefix),
+		matcher:      vals.MakeMap("", matchPrefix),
 		argCompleter: makeArgCompleter(),
 	}
 

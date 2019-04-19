@@ -32,9 +32,9 @@ var equalTests = tt.Table{
 	Args(MakeList("a", "b"), MakeList("a")).Rets(false),
 	Args(MakeList("a", "b"), MakeList("a", "c")).Rets(false),
 
-	Args(MakeMapFromKV("k", "v"), MakeMapFromKV("k", "v")).Rets(true),
-	Args(MakeMapFromKV("k", "v"), MakeMapFromKV("k2", "v")).Rets(false),
-	Args(MakeMapFromKV("k", "v", "k2", "v2"), MakeMapFromKV("k", "v")).Rets(false),
+	Args(MakeMap("k", "v"), MakeMap("k", "v")).Rets(true),
+	Args(MakeMap("k", "v"), MakeMap("k2", "v")).Rets(false),
+	Args(MakeMap("k", "v", "k2", "v2"), MakeMap("k", "v")).Rets(false),
 
 	Args(testStructMap{}, testStructMap{}).Rets(true),
 	Args(testStructMap{"a", 1.0}, testStructMap{"a", 1.0}).Rets(true),

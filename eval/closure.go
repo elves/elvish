@@ -59,11 +59,11 @@ func (c *Closure) Repr(int) string {
 func (c *Closure) Index(k interface{}) (interface{}, bool) {
 	switch k {
 	case "arg-names":
-		return vals.MakeStringList(c.ArgNames...), true
+		return listOfStrings(c.ArgNames), true
 	case "rest-arg":
 		return c.RestArg, true
 	case "opt-names":
-		return vals.MakeStringList(c.OptNames...), true
+		return listOfStrings(c.OptNames), true
 	case "opt-defaults":
 		return vals.MakeList(c.OptDefaults...), true
 	case "body":
@@ -74,6 +74,14 @@ func (c *Closure) Index(k interface{}) (interface{}, bool) {
 		return c.SrcMeta, true
 	}
 	return nil, false
+}
+
+func listOfStrings(ss []string) vals.List {
+	list := vals.EmptyList
+	for _, s := range ss {
+		list = list.Cons(s)
+	}
+	return list
 }
 
 // IterateKeys calls f with all the valid keys that can be used for Index.

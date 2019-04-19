@@ -29,10 +29,10 @@ var assocTests = tt.Table{
 	Args(MakeList("0", "1", "2", "3"), "1:3", MakeList("foo")).Rets(
 		nil, errAssocWithSlice),
 
-	Args(MakeMapFromKV("k", "v", "k2", "v2"), "k", "newv").Rets(
-		eq(MakeMapFromKV("k", "newv", "k2", "v2")), nil),
-	Args(MakeMapFromKV("k", "v"), "k2", "v2").Rets(
-		eq(MakeMapFromKV("k", "v", "k2", "v2")), nil),
+	Args(MakeMap("k", "v", "k2", "v2"), "k", "newv").Rets(
+		eq(MakeMap("k", "newv", "k2", "v2")), nil),
+	Args(MakeMap("k", "v"), "k2", "v2").Rets(
+		eq(MakeMap("k", "v", "k2", "v2")), nil),
 
 	Args(testStructMap{"foo", 1.0}, "name", "bar").
 		Rets(testStructMap{"bar", 1.0}, nil),

@@ -197,7 +197,7 @@ func (hist *hist) commandHistory(fm *eval.Frame, args ...int) {
 	}
 
 	for i := start; i < end; i++ {
-		out <- vals.MakeMapFromKV(
+		out <- vals.MakeMap(
 			"id", strconv.Itoa(i),
 			"cmd", cmds[i],
 		)

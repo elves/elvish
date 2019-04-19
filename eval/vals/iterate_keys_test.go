@@ -30,7 +30,7 @@ type nonKeysIterator struct{}
 
 func TestIterateKeys(t *testing.T) {
 	tt.Test(t, tt.Fn("iterateKeys", iterateKeys), tt.Table{
-		Args(MakeMapFromKV("k1", "v1", "k2", "v2")).Rets(vs("k1", "k2"), nil),
+		Args(MakeMap("k1", "v1", "k2", "v2")).Rets(vs("k1", "k2"), nil),
 		Args(testStructMap{}).Rets(vs("name", "score-number")),
 		Args(keysIterator{vs("lorem", "ipsum")}).Rets(vs("lorem", "ipsum")),
 		Args(nonKeysIterator{}).Rets(any,

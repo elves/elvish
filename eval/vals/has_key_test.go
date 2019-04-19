@@ -13,8 +13,8 @@ func (h hasKeyer) HasKey(k interface{}) bool { return k == h.key }
 func TestHasKey(t *testing.T) {
 	tt.Test(t, tt.Fn("HasKey", HasKey), tt.Table{
 		// Map
-		Args(MakeMapFromKV("k", "v"), "k").Rets(true),
-		Args(MakeMapFromKV("k", "v"), "bad").Rets(false),
+		Args(MakeMap("k", "v"), "k").Rets(true),
+		Args(MakeMap("k", "v"), "bad").Rets(false),
 		// StructMap
 		Args(testStructMap{}, "name").Rets(true),
 		Args(testStructMap{}, "bad").Rets(false),

@@ -27,8 +27,8 @@ var reprTests = []struct {
 	{&Exception{Return, nil}, "?(return)"},
 	{vals.EmptyList, "[]"},
 	{vals.MakeList("bash", false), "[bash $false]"},
-	{vals.MakeMap(map[interface{}]interface{}{}), "[&]"},
-	{vals.MakeMap(map[interface{}]interface{}{&Exception{nil, nil}: "elvish"}), "[&$ok=elvish]"},
+	{vals.EmptyMap, "[&]"},
+	{vals.MakeMap(&Exception{nil, nil}, "elvish"), "[&$ok=elvish]"},
 	// TODO: test maps of more elements
 }
 

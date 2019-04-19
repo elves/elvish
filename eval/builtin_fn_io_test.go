@@ -26,9 +26,7 @@ func TestBuiltinFnIO(t *testing.T) {
 		That(`print "a\nb" | from-lines`).Puts("a", "b"),
 		That(`print "a\nb\n" | from-lines`).Puts("a", "b"),
 		That(`echo '{"k": "v", "a": [1, 2]}' '"foo"' | from-json`).
-			Puts(vals.MakeMap(map[interface{}]interface{}{
-				"k": "v",
-				"a": vals.MakeList(1.0, 2.0)}),
+			Puts(vals.MakeMap("k", "v", "a", vals.MakeList(1.0, 2.0)),
 				"foo"),
 		That(`echo '[null, "foo"]' | from-json`).Puts(
 			vals.MakeList(nil, "foo")),

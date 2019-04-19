@@ -23,7 +23,7 @@ func TestHash(t *testing.T) {
 		Args("foo").Rets(hash.String("foo")),
 		Args(os.Stdin).Rets(hash.UIntPtr(os.Stdin.Fd())),
 		Args(MakeList("foo", "bar")).Rets(hash.DJB(Hash("foo"), Hash("bar"))),
-		Args(MakeMapFromKV("foo", "bar")).
+		Args(MakeMap("foo", "bar")).
 			Rets(hash.DJB(Hash("foo"), Hash("bar"))),
 		Args(testStructMap{"name", 1.0}).
 			Rets(hash.DJB(Hash("name"), Hash(1.0))),
