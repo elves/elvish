@@ -1,26 +1,22 @@
 package re
 
 import (
-	"strconv"
-
 	"github.com/elves/elvish/eval/vals"
-	"github.com/xiaq/persistent/vector"
 )
 
-var (
-	matchDescriptor    = vals.NewStructDescriptor("text", "start", "end", "groups")
-	submatchDescriptor = vals.NewStructDescriptor("text", "start", "end")
-)
-
-func newMatch(text string, start, end int, groups vector.Vector) *vals.Struct {
-	return vals.NewStruct(matchDescriptor, []interface{}{
-		text, strconv.Itoa(start), strconv.Itoa(end), groups,
-	})
+type matchStruct struct {
+	Text   string    `json:"text"`
+	Start  int       `json:"start"`
+	End    int       `json:"end"`
+	Groups vals.List `json:"groups"`
 }
 
-func newSubmatch(text string, start, end int) *vals.Struct {
-	return vals.NewStruct(submatchDescriptor, []interface{}{
-		string(text),
-		string(strconv.Itoa(start)),
-		string(strconv.Itoa(end))})
+func (matchStruct) IsStructMap(vals.StructMapMarker) {}
+
+type submatchStruct struct {
+	Text  string `json:"text"`
+	Start int    `json:"start"`
+	End   int    `json:"end"`
 }
+
+func (submatchStruct) IsStructMap(vals.StructMapMarker) {}

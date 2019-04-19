@@ -62,9 +62,9 @@ func find(fm *eval.Frame, opts findOpts, argPattern, source string) error {
 			if start >= 0 && end >= 0 {
 				text = source[start:end]
 			}
-			groups = groups.Cons(newSubmatch(text, start, end))
+			groups = groups.Cons(submatchStruct{text, start, end})
 		}
-		out <- newMatch(source[start:end], start, end, groups)
+		out <- matchStruct{source[start:end], start, end, groups}
 	}
 	return nil
 }

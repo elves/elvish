@@ -53,12 +53,12 @@ func cd(fm *Frame, args ...string) error {
 	return fm.Chdir(dir)
 }
 
-var dirDescriptor = vals.NewStructDescriptor("path", "score")
-
-func newDirStruct(path string, score float64) *vals.Struct {
-	return vals.NewStruct(dirDescriptor,
-		[]interface{}{path, vals.FromGo(score)})
+type dirHistoryEntry struct {
+	Path  string  `json:"path"`
+	Score float64 `json:"score"`
 }
+
+func (dirHistoryEntry) IsStructMap(vals.StructMapMarker) {}
 
 func dirs(fm *Frame) error {
 	if fm.DaemonClient == nil {
@@ -70,7 +70,7 @@ func dirs(fm *Frame) error {
 	}
 	out := fm.ports[1].Chan
 	for _, dir := range dirs {
-		out <- newDirStruct(dir.Path, dir.Score)
+		out <- dirHistoryEntry{dir.Path, dir.Score}
 	}
 	return nil
 }

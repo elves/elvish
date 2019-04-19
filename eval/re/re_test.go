@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/eval"
-	"github.com/xiaq/persistent/vector"
+	"github.com/elves/elvish/eval/vals"
 )
 
 func TestRe(t *testing.T) {
@@ -19,15 +19,19 @@ func TestRe(t *testing.T) {
 		That("re:match '(' x").Errors(),
 
 		That("re:find . ab").Puts(
-			newMatch("a", 0, 1, vector.Empty.Cons(newSubmatch("a", 0, 1))),
-			newMatch("b", 1, 2, vector.Empty.Cons(newSubmatch("b", 1, 2))),
+			matchStruct{"a", 0, 1, vals.MakeList(submatchStruct{"a", 0, 1})},
+			matchStruct{"b", 1, 2, vals.MakeList(submatchStruct{"b", 1, 2})},
 		),
 		That("re:find '[A-Z]([0-9])' 'A1 B2'").Puts(
-			newMatch("A1", 0, 2,
-				vector.Empty.Cons(newSubmatch("A1", 0, 2)).Cons(newSubmatch("1", 1, 2))),
-			newMatch("B2", 3, 5,
-				vector.Empty.Cons(newSubmatch("B2", 3, 5)).Cons(newSubmatch("2", 4, 5))),
+			matchStruct{"A1", 0, 2, vals.MakeList(
+				submatchStruct{"A1", 0, 2}, submatchStruct{"1", 1, 2})},
+			matchStruct{"B2", 3, 5, vals.MakeList(
+				submatchStruct{"B2", 3, 5}, submatchStruct{"2", 4, 5})},
 		),
+
+		// Access to fields in the match StructMap
+		That("put (re:find . a)[text start end groups]").
+			Puts("a", "0", "1", vals.MakeList(submatchStruct{"a", 0, 1})),
 
 		// Invalid pattern in re:find
 		That("re:find '(' x").Errors(),
