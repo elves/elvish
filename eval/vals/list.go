@@ -7,6 +7,9 @@ import (
 	"github.com/xiaq/persistent/vector"
 )
 
+// List is an alias for the underlying type used for lists in Elvish.
+type List = vector.Vector
+
 // EmptyList is an empty list.
 var EmptyList = vector.Empty
 

@@ -9,11 +9,11 @@ type Dissocer interface {
 
 // Dissoc takes a container and a key, and returns a modified version of the
 // container, with the given key dissociated with any value. It is implemented
-// for types satisfying the mapDissocable or Dissocer interface. For other
+// for the Map type and types satisfying the Dissocer interface. For other
 // types, it returns nil.
 func Dissoc(a, k interface{}) interface{} {
 	switch a := a.(type) {
-	case mapDissocable:
+	case Map:
 		return a.Dissoc(k)
 	case Dissocer:
 		return a.Dissoc(k)

@@ -11,7 +11,7 @@ type Hasher interface {
 }
 
 // Hash returns the 32-bit hash of a value. It is implemented for the builtin
-// types bool and string, and types satisfying the listIterable, mapIterable or
+// types bool and string, the List and Map types, and types satisfying the
 // Hasher interface. For other values, it returns 0 (which is OK in terms of
 // correctness).
 func Hash(v interface{}) uint32 {
@@ -23,13 +23,13 @@ func Hash(v interface{}) uint32 {
 		return 0
 	case string:
 		return hash.String(v)
-	case listIterable:
+	case List:
 		h := hash.DJBInit
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			h = hash.DJBCombine(h, Hash(it.Elem()))
 		}
 		return h
-	case mapIterable:
+	case Map:
 		h := hash.DJBInit
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			k, v := it.Elem()

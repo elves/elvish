@@ -4,8 +4,6 @@ import (
 	"errors"
 	"strconv"
 	"strings"
-
-	"github.com/xiaq/persistent/vector"
 )
 
 var (
@@ -14,15 +12,7 @@ var (
 	errIndexOutOfRange   = errors.New("index out of range")
 )
 
-type listIndexable interface {
-	Lener
-	Index(int) (interface{}, bool)
-	SubVector(int, int) vector.Vector
-}
-
-var _ listIndexable = vector.Vector(nil)
-
-func indexList(l listIndexable, rawIndex interface{}) (interface{}, error) {
+func indexList(l List, rawIndex interface{}) (interface{}, error) {
 	index, err := ConvertListIndex(rawIndex, l.Len())
 	if err != nil {
 		return nil, err

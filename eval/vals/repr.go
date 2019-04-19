@@ -27,8 +27,8 @@ type Reprer interface {
 // Repr returns the representation for a value, a string that is preferably (but
 // not necessarily) an Elvish expression that evaluates to the argument. If
 // indent >= 0, the representation is pretty-printed. It is implemented for the
-// builtin types nil, bool and string, and types satisfying the listReprable,
-// mapReprable or Reprer interface. For other types, it uses fmt.Sprint with the
+// builtin types nil, bool and string, the List and Map and types, and types
+// satisfying the Reprer interface. For other types, it uses fmt.Sprint with the
 // format "<unknown %v>".
 func Repr(v interface{}, indent int) string {
 	switch v := v.(type) {
@@ -43,13 +43,13 @@ func Repr(v interface{}, indent int) string {
 		return parse.Quote(v)
 	case float64:
 		return fmt.Sprintf("(float64 %g)", v)
-	case listReprable:
+	case List:
 		b := ListReprBuilder{Indent: indent}
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			b.WriteElem(Repr(it.Elem(), indent+1))
 		}
 		return b.String()
-	case mapReprable:
+	case Map:
 		builder := MapReprBuilder{}
 		builder.Indent = indent
 		for it := v.Iterator(); it.HasElem(); it.Next() {
@@ -63,6 +63,3 @@ func Repr(v interface{}, indent int) string {
 		return fmt.Sprintf("<unknown %v>", v)
 	}
 }
-
-type listReprable listIterable
-type mapReprable mapIterable

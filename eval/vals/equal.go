@@ -2,8 +2,6 @@ package vals
 
 import (
 	"reflect"
-
-	"github.com/xiaq/persistent/hashmap"
 )
 
 // Equaler wraps the Equal method.
@@ -14,9 +12,9 @@ type Equaler interface {
 }
 
 // Equal returns whether two values are equal. It is implemented for the builtin
-// types bool and string, and types satisfying the listEqualable, mapEqualable
-// or Equaler interface. For other types, it uses reflect.DeepEqual to compare
-// the two values.
+// types bool and string, the List and Map types, and types implementing the
+// Equaler interface. For other types, it uses reflect.DeepEqual to compare the
+// two values.
 func Equal(x, y interface{}) bool {
 	switch x := x.(type) {
 	case nil:
@@ -27,13 +25,13 @@ func Equal(x, y interface{}) bool {
 		return x == y
 	case string:
 		return x == y
-	case listEqualable:
-		if yy, ok := y.(listEqualable); ok {
+	case List:
+		if yy, ok := y.(List); ok {
 			return equalList(x, yy)
 		}
 		return false
-	case mapEqualable:
-		if yy, ok := y.(mapEqualable); ok {
+	case Map:
+		if yy, ok := y.(Map); ok {
 			return equalMap(x, yy)
 		}
 		return false
@@ -44,12 +42,7 @@ func Equal(x, y interface{}) bool {
 	}
 }
 
-type listEqualable interface {
-	Lener
-	listIterable
-}
-
-func equalList(x, y listEqualable) bool {
+func equalList(x, y List) bool {
 	if x.Len() != y.Len() {
 		return false
 	}
@@ -65,15 +58,7 @@ func equalList(x, y listEqualable) bool {
 	return true
 }
 
-type mapEqualable interface {
-	Lener
-	Index(interface{}) (interface{}, bool)
-	Iterator() hashmap.Iterator
-}
-
-var _ mapEqualable = hashmap.Map(nil)
-
-func equalMap(x, y mapEqualable) bool {
+func equalMap(x, y Map) bool {
 	if x.Len() != y.Len() {
 		return false
 	}

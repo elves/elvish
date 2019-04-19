@@ -34,13 +34,14 @@ func (err noSuchKeyError) Error() string {
 }
 
 // Index indexes a value with the given key. It is implemented for the builtin
-// string type, and types satisfying the listIndexable, ErrIndexer or Indexer
-// interface. For other types, it returns a nil value and a non-nil error.
+// string type, the List type, and types satisfying the ErrIndexer or Indexer
+// interface (the Map type implements Indexer). For other types, it returns a
+// nil value and a non-nil error.
 func Index(a, k interface{}) (interface{}, error) {
 	switch a := a.(type) {
 	case string:
 		return indexString(a, k)
-	case listIndexable:
+	case List:
 		return indexList(a, k)
 	case ErrIndexer:
 		return a.Index(k)

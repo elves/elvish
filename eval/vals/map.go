@@ -4,22 +4,8 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-type mapIterable interface {
-	Iterator() hashmap.Iterator
-}
-type mapAssocable interface {
-	Assoc(k, v interface{}) hashmap.Map
-}
-type mapDissocable interface {
-	Dissoc(interface{}) hashmap.Map
-}
-
-var (
-	_ mapIterable   = hashmap.Map(nil)
-	_ Indexer       = hashmap.Map(nil)
-	_ mapAssocable  = hashmap.Map(nil)
-	_ mapDissocable = hashmap.Map(nil)
-)
+// Map is an alias for the underlying type used for maps in Elvish.
+type Map = hashmap.Map
 
 // EmptyMap is an empty map.
 var EmptyMap = hashmap.New(Equal, Hash)

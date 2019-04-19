@@ -2,8 +2,6 @@ package vals
 
 import (
 	"errors"
-
-	"github.com/xiaq/persistent/vector"
 )
 
 // Assocer wraps the Assoc method.
@@ -21,15 +19,15 @@ var (
 
 // Assoc takes a container, a key and value, and returns a modified version of
 // the container, in which the key associated with the value. It is implemented
-// for the builtin type string, and types satisfying the listAssocable,
-// mapAssocable or Assocer interface. For other types, it returns an error.
+// for the builtin type string, and List and Map types, and types satisfying the
+// Assocer interface. For other types, it returns an error.
 func Assoc(a, k, v interface{}) (interface{}, error) {
 	switch a := a.(type) {
 	case string:
 		return assocString(a, k, v)
-	case listAssocable:
+	case List:
 		return assocList(a, k, v)
-	case mapAssocable:
+	case Map:
 		return a.Assoc(k, v), nil
 	case Assocer:
 		return a.Assoc(k, v)
@@ -49,14 +47,7 @@ func assocString(s string, k, v interface{}) (interface{}, error) {
 	return s[:i] + repl + s[j:], nil
 }
 
-type listAssocable interface {
-	Lener
-	Assoc(int, interface{}) vector.Vector
-}
-
-var _ listAssocable = vector.Vector(nil)
-
-func assocList(l listAssocable, k, v interface{}) (interface{}, error) {
+func assocList(l List, k, v interface{}) (interface{}, error) {
 	kstring, ok := k.(string)
 	if !ok {
 		return nil, errIndexMustBeString

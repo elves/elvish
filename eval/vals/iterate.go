@@ -2,8 +2,6 @@ package vals
 
 import (
 	"errors"
-
-	"github.com/xiaq/persistent/vector"
 )
 
 // Iterator wraps the Iterate method.
@@ -17,7 +15,7 @@ type Iterator interface {
 // true, calling Iterate(v, f) will not result in an error.
 func CanIterate(v interface{}) bool {
 	switch v.(type) {
-	case Iterator, string, listIterable:
+	case Iterator, string, List:
 		return true
 	}
 	return false
@@ -25,9 +23,9 @@ func CanIterate(v interface{}) bool {
 
 // Iterate iterates the supplied value, and calls the supplied function in each
 // of its elements. The function can return false to break the iteration. It is
-// implemented for the builtin type string, and types satisfying the
-// listIterable or Iterator interface. For these types, it always returns a nil
-// error. For other types, it doesn't do anything and returns an error.
+// implemented for the builtin type string, the List type, and types satisfying
+// the Iterator interface. For these types, it always returns a nil error. For
+// other types, it doesn't do anything and returns an error.
 func Iterate(v interface{}, f func(interface{}) bool) error {
 	switch v := v.(type) {
 	case string:
@@ -37,7 +35,7 @@ func Iterate(v interface{}, f func(interface{}) bool) error {
 				break
 			}
 		}
-	case listIterable:
+	case List:
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			if !f(it.Elem()) {
 				break
@@ -50,12 +48,6 @@ func Iterate(v interface{}, f func(interface{}) bool) error {
 	}
 	return nil
 }
-
-type listIterable interface {
-	Iterator() vector.Iterator
-}
-
-var _ listIterable = vector.Vector(nil)
 
 // Collect collects all elements of an iterable value into a slice.
 func Collect(it interface{}) ([]interface{}, error) {
