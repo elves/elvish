@@ -13,9 +13,9 @@ type Dissocer interface {
 // types, it returns nil.
 func Dissoc(a, k interface{}) interface{} {
 	switch a := a.(type) {
-	case Dissocer:
-		return a.Dissoc(k)
 	case mapDissocable:
+		return a.Dissoc(k)
+	case Dissocer:
 		return a.Dissoc(k)
 	default:
 		return nil

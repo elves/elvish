@@ -9,10 +9,10 @@ import (
 
 type customAssocer struct{}
 
-var customAssocError = errors.New("custom assoc error")
+var errCustomAssoc = errors.New("custom assoc error")
 
 func (a customAssocer) Assoc(k, v interface{}) (interface{}, error) {
-	return "custom result", customAssocError
+	return "custom result", errCustomAssoc
 }
 
 var assocTests = tt.Table{
@@ -34,7 +34,7 @@ var assocTests = tt.Table{
 	Args(MakeMapFromKV("k", "v"), "k2", "v2").Rets(
 		eq(MakeMapFromKV("k", "v", "k2", "v2")), nil),
 
-	Args(customAssocer{}, "x", "y").Rets("custom result", customAssocError),
+	Args(customAssocer{}, "x", "y").Rets("custom result", errCustomAssoc),
 
 	Args(struct{}{}, "x", "y").Rets(nil, errAssocUnsupported),
 }

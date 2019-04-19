@@ -19,7 +19,7 @@ func MakeList(vs ...interface{}) vector.Vector {
 	return vec
 }
 
-// MakeList creates a new List from strings.
+// MakeStringList creates a new List from strings.
 func MakeStringList(vs ...string) vector.Vector {
 	vec := vector.Empty
 	for _, v := range vs {

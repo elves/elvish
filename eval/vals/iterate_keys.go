@@ -20,8 +20,6 @@ type KeysIterator interface {
 // other types, it doesn't do anything and returns an error.
 func IterateKeys(v interface{}, f func(interface{}) bool) error {
 	switch v := v.(type) {
-	case KeysIterator:
-		v.IterateKeys(f)
 	case mapKeysIterable:
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			k, _ := it.Elem()
@@ -29,6 +27,8 @@ func IterateKeys(v interface{}, f func(interface{}) bool) error {
 				break
 			}
 		}
+	case KeysIterator:
+		v.IterateKeys(f)
 	default:
 		return errors.New(Kind(v) + " cannot have its keys iterated")
 	}

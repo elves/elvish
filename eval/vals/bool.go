@@ -6,17 +6,17 @@ type Booler interface {
 	Bool() bool
 }
 
-// Bool converts a value to bool. It is implemented for the builtin bool type
-// and types implementing the Booler interface. For all other values, it returns
-// true.
+// Bool converts a value to bool. It is implemented for nil, the builtin bool
+// type, and types implementing the Booler interface. For all other values, it
+// returns true.
 func Bool(v interface{}) bool {
 	switch v := v.(type) {
-	case Booler:
-		return v.Bool()
-	case bool:
-		return v
 	case nil:
 		return false
+	case bool:
+		return v
+	case Booler:
+		return v.Bool()
 	}
 	return true
 }

@@ -19,15 +19,13 @@ type Equaler interface {
 // the two values.
 func Equal(x, y interface{}) bool {
 	switch x := x.(type) {
-	case Equaler:
-		return x.Equal(y)
-	case bool:
-		return x == y
-	case string:
-		return x == y
 	case nil:
 		return x == y
+	case bool:
+		return x == y
 	case float64:
+		return x == y
+	case string:
 		return x == y
 	case listEqualable:
 		if yy, ok := y.(listEqualable); ok {
@@ -39,8 +37,11 @@ func Equal(x, y interface{}) bool {
 			return equalMap(x, yy)
 		}
 		return false
+	case Equaler:
+		return x.Equal(y)
+	default:
+		return reflect.DeepEqual(x, y)
 	}
-	return reflect.DeepEqual(x, y)
 }
 
 type listEqualable interface {

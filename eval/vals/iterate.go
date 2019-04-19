@@ -30,8 +30,6 @@ func CanIterate(v interface{}) bool {
 // error. For other types, it doesn't do anything and returns an error.
 func Iterate(v interface{}, f func(interface{}) bool) error {
 	switch v := v.(type) {
-	case Iterator:
-		v.Iterate(f)
 	case string:
 		for _, r := range v {
 			b := f(string(r))
@@ -45,6 +43,8 @@ func Iterate(v interface{}, f func(interface{}) bool) error {
 				break
 			}
 		}
+	case Iterator:
+		v.Iterate(f)
 	default:
 		return errors.New(Kind(v) + " cannot be iterated")
 	}

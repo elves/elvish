@@ -25,14 +25,14 @@ var (
 // mapAssocable or Assocer interface. For other types, it returns an error.
 func Assoc(a, k, v interface{}) (interface{}, error) {
 	switch a := a.(type) {
-	case Assocer:
-		return a.Assoc(k, v)
 	case string:
 		return assocString(a, k, v)
 	case listAssocable:
 		return assocList(a, k, v)
 	case mapAssocable:
 		return a.Assoc(k, v), nil
+	case Assocer:
+		return a.Assoc(k, v)
 	}
 	return nil, errAssocUnsupported
 }

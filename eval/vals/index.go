@@ -33,12 +33,15 @@ func (err noSuchKeyError) Error() string {
 	return "no such key: " + Repr(err.key, NoPretty)
 }
 
-// Index indexes a value with the given key. It is implemented for types
-// satisfying the ErrIndexer or Indexer interface, types satisfying the
-// listIndexable interface (which covers Vector), and the builtin string type.
-// For other types, it returns a nil value and a non-nil error.
+// Index indexes a value with the given key. It is implemented for the builtin
+// string type, and types satisfying the listIndexable, ErrIndexer or Indexer
+// interface. For other types, it returns a nil value and a non-nil error.
 func Index(a, k interface{}) (interface{}, error) {
 	switch a := a.(type) {
+	case string:
+		return indexString(a, k)
+	case listIndexable:
+		return indexList(a, k)
 	case ErrIndexer:
 		return a.Index(k)
 	case Indexer:
@@ -47,10 +50,6 @@ func Index(a, k interface{}) (interface{}, error) {
 			return nil, NoSuchKey(k)
 		}
 		return v, nil
-	case listIndexable:
-		return indexList(a, k)
-	case string:
-		return indexString(a, k)
 	default:
 		return nil, errNotIndexable
 	}
