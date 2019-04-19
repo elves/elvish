@@ -8,6 +8,7 @@ import (
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/tt"
 )
 
 var basicHandlerKeyEventsTests = []struct {
@@ -84,4 +85,13 @@ func TestBasicHandler_IgnoresOtherEvents(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestIsChar(t *testing.T) {
+	tt.Test(t, tt.Fn("IsChar", IsChar), tt.Table{
+		Args(ui.K(ui.Up)).Rets(false),
+		Args(ui.K('A', ui.Ctrl)).Rets(false),
+		Args(ui.K('a')).Rets(true),
+		Args(ui.K('好')).Rets(true),
+	})
 }

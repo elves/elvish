@@ -1,6 +1,7 @@
 package editutil
 
 import (
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/elves/elvish/edit/tty"
@@ -57,7 +58,7 @@ func BasicHandler(e tty.Event, st *types.State) types.HandlerAction {
 		_, skip := utf8.DecodeRuneInString(raw.Code[raw.Dot:])
 		raw.Dot += skip
 	default:
-		if k.Mod == 0 {
+		if IsChar(k) {
 			s := string(k.Rune)
 			raw.Code = raw.Code[:raw.Dot] + s + raw.Code[raw.Dot:]
 			raw.Dot += len(s)
@@ -66,4 +67,9 @@ func BasicHandler(e tty.Event, st *types.State) types.HandlerAction {
 		}
 	}
 	return types.NoAction
+}
+
+// IsChar returns whether the given key is not a character insertion.
+func IsChar(k ui.Key) bool {
+	return k.Mod == 0 && k.Rune > 0 && unicode.IsGraphic(k.Rune)
 }
