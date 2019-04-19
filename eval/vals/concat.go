@@ -20,7 +20,7 @@ type RConcatter interface {
 
 // ErrConcatNotImplemented is a special error value used to signal that
 // concatenation is not implemented. See Concat for how it is used.
-var ErrConcatNotImplemented = errors.New("cat not implemented")
+var ErrConcatNotImplemented = errors.New("concat not implemented")
 
 // Concat concatenates two values. If both operands are strings, it returns lhs
 // + rhs, nil. If the left operand implements Concatter, it calls
