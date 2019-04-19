@@ -60,8 +60,7 @@ func (s *Struct) Hash() uint32 {
 }
 
 func (s *Struct) Repr(indent int) string {
-	var builder MapReprBuilder
-	builder.Indent = indent
+	builder := NewMapReprBuilder(indent)
 	for i, name := range s.descriptor.fieldNames {
 		builder.WritePair(parse.Quote(name), indent+2, Repr(s.fields[i], indent+2))
 	}

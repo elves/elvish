@@ -46,14 +46,13 @@ func Repr(v interface{}, indent int) string {
 	case File:
 		return fmt.Sprintf("<file{%s %d}>", parse.Quote(v.Name()), v.Fd())
 	case List:
-		b := ListReprBuilder{Indent: indent}
+		b := NewListReprBuilder(indent)
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			b.WriteElem(Repr(it.Elem(), indent+1))
 		}
 		return b.String()
 	case Map:
-		builder := MapReprBuilder{}
-		builder.Indent = indent
+		builder := NewMapReprBuilder(indent)
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			k, v := it.Elem()
 			builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))

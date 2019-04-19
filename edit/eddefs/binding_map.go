@@ -24,15 +24,14 @@ var EmptyBindingMap = BindingMap{vals.EmptyMap}
 // Repr returns the representation of the binding table as if it were an
 // ordinary map keyed by strings.
 func (bt BindingMap) Repr(indent int) string {
-	var builder vals.MapReprBuilder
-	builder.Indent = indent
-
 	var keys ui.Keys
 	for it := bt.Map.Iterator(); it.HasElem(); it.Next() {
 		k, _ := it.Elem()
 		keys = append(keys, k.(ui.Key))
 	}
 	sort.Sort(keys)
+
+	builder := vals.NewMapReprBuilder(indent)
 
 	for _, k := range keys {
 		v, _ := bt.Map.Index(k)

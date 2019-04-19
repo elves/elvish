@@ -1,8 +1,38 @@
 package vals
 
 import (
+	"os"
+
 	"github.com/xiaq/persistent/hashmap"
+	"github.com/xiaq/persistent/vector"
 )
+
+// File is an alias for *os.File.
+type File = *os.File
+
+// List is an alias for the underlying type used for lists in Elvish.
+type List = vector.Vector
+
+// EmptyList is an empty list.
+var EmptyList = vector.Empty
+
+// MakeList creates a new List from values.
+func MakeList(vs ...interface{}) vector.Vector {
+	vec := vector.Empty
+	for _, v := range vs {
+		vec = vec.Cons(v)
+	}
+	return vec
+}
+
+// MakeStringList creates a new List from strings.
+func MakeStringList(vs ...string) vector.Vector {
+	vec := vector.Empty
+	for _, v := range vs {
+		vec = vec.Cons(v)
+	}
+	return vec
+}
 
 // Map is an alias for the underlying type used for maps in Elvish.
 type Map = hashmap.Map
@@ -30,27 +60,4 @@ func MakeMapFromKV(a ...interface{}) hashmap.Map {
 		m = m.Assoc(a[i], a[i+1])
 	}
 	return m
-}
-
-// MapReprBuilder helps building the Repr of a Map. It is also useful for
-// implementing other Map-like values. The zero value of a MapReprBuilder is
-// ready to use.
-type MapReprBuilder struct {
-	ListReprBuilder
-}
-
-func (b *MapReprBuilder) WritePair(k string, indent int, v string) {
-	if indent > 0 {
-		b.WriteElem("&" + k + "=\t" + v)
-	} else {
-		b.WriteElem("&" + k + "=" + v)
-	}
-}
-
-func (b *MapReprBuilder) String() string {
-	s := b.ListReprBuilder.String()
-	if s == "[]" {
-		s = "[&]"
-	}
-	return s
 }
