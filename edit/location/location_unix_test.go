@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/tt"
 )
 
-var workspaces = vals.MakeMapFromKV(
+var workspaces = vals.MakeMap(
 	// Pattern is always anchored at beginning; this won't match anything
 	"bad", "bad",
 	// This is a normal pattern.
