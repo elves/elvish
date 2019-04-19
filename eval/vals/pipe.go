@@ -20,21 +20,27 @@ func NewPipe(r, w *os.File) Pipe {
 	return Pipe{r, w}
 }
 
+// Kind returns "pipe".
 func (Pipe) Kind() string {
 	return "pipe"
 }
 
+// Equal compares based on the equality of the two consistuent files.
 func (p Pipe) Equal(rhs interface{}) bool {
-	return p == rhs
+	q, ok := rhs.(Pipe)
+	if !ok {
+		return false
+	}
+	return Equal(p.ReadEnd, q.ReadEnd) && Equal(p.WriteEnd, q.WriteEnd)
 }
 
+// Hash calculates the hash based on the two consituent files.
 func (p Pipe) Hash() uint32 {
-	h := hash.DJBInit
-	h = hash.DJBCombine(h, hash.UIntPtr(p.ReadEnd.Fd()))
-	h = hash.DJBCombine(h, hash.UIntPtr(p.WriteEnd.Fd()))
-	return h
+	return hash.DJB(Hash(p.ReadEnd), Hash(p.WriteEnd))
 }
 
+// Repr writes an opaque representation containing the FDs of the two
+// constituent files.
 func (p Pipe) Repr(int) string {
 	return fmt.Sprintf("<pipe{%v %v}>", p.ReadEnd.Fd(), p.WriteEnd.Fd())
 }
