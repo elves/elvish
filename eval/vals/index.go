@@ -67,7 +67,7 @@ func indexStructMap(a StructMap, k string) (interface{}, error) {
 	info := getStructMapInfo(reflect.TypeOf(a))
 	for i, fieldName := range info.fieldNames {
 		if k == fieldName {
-			return reflect.ValueOf(a).Field(i).Interface(), nil
+			return FromGo(reflect.ValueOf(a).Field(i).Interface()), nil
 		}
 	}
 	return nil, NoSuchKey(k)
