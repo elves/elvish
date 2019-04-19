@@ -64,6 +64,10 @@ var indexTests = tt.Table{
 
 	Args(m, "foo").Rets("bar", nil),
 	Args(m, "bad").Rets(any, anyError),
+
+	// StructMap indicies
+	Args(testStructMap{"foo", 1.0}, "name").Rets("foo", nil),
+	Args(testStructMap{"foo", 1.0}, "bad").Rets(nil, NoSuchKey("bad")),
 }
 
 func TestIndex(t *testing.T) {

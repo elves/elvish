@@ -162,34 +162,8 @@ func hasValue(container, value interface{}) (bool, error) {
 	}
 }
 
-type hasKeyer interface {
-	HasKey(interface{}) bool
-}
-
-func hasKey(container, key interface{}) (bool, error) {
-	switch container := container.(type) {
-	case hashmap.Map:
-		return hashmap.HasKey(container, key), nil
-	case hasKeyer:
-		return container.HasKey(key), nil
-	default:
-		if len := vals.Len(container); len >= 0 {
-			// XXX(xiaq): Not all types that implement Lener have numerical indices
-			_, err := vals.ConvertListIndex(key, len)
-			return err == nil, nil
-		}
-		var found bool
-		err := vals.IterateKeys(container, func(k interface{}) bool {
-			if key == k {
-				found = true
-			}
-			return !found
-		})
-		if err == nil {
-			return found, nil
-		}
-		return false, fmt.Errorf("couldn't get key or index of type '%s'", vals.Kind(container))
-	}
+func hasKey(container, key interface{}) bool {
+	return vals.HasKey(container, key)
 }
 
 func count(fm *Frame, args ...interface{}) (int, error) {

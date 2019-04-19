@@ -34,6 +34,13 @@ var assocTests = tt.Table{
 	Args(MakeMapFromKV("k", "v"), "k2", "v2").Rets(
 		eq(MakeMapFromKV("k", "v", "k2", "v2")), nil),
 
+	Args(testStructMap{"foo", 1.0}, "name", "bar").
+		Rets(testStructMap{"bar", 1.0}, nil),
+	Args(testStructMap{"foo", 1.0}, "score-number", "2.0").
+		Rets(testStructMap{"foo", 2.0}, nil),
+	Args(testStructMap{"foo", 1.0}, "score-number", "bad number").
+		Rets(nil, anyError),
+
 	Args(customAssocer{}, "x", "y").Rets("custom result", errCustomAssoc),
 
 	Args(struct{}{}, "x", "y").Rets(nil, errAssocUnsupported),

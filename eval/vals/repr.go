@@ -2,6 +2,7 @@ package vals
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
@@ -27,9 +28,9 @@ type Reprer interface {
 // Repr returns the representation for a value, a string that is preferably (but
 // not necessarily) an Elvish expression that evaluates to the argument. If
 // indent >= 0, the representation is pretty-printed. It is implemented for the
-// builtin types nil, bool and string, the File, List and Map and types, and
-// types satisfying the Reprer interface. For other types, it uses fmt.Sprint
-// with the format "<unknown %v>".
+// builtin types nil, bool and string, the File, List and Map types, StructMap
+// types, and types satisfying the Reprer interface. For other types, it uses
+// fmt.Sprint with the format "<unknown %v>".
 func Repr(v interface{}, indent int) string {
 	switch v := v.(type) {
 	case nil:
@@ -56,6 +57,16 @@ func Repr(v interface{}, indent int) string {
 		for it := v.Iterator(); it.HasElem(); it.Next() {
 			k, v := it.Elem()
 			builder.WritePair(Repr(k, indent+1), indent+2, Repr(v, indent+2))
+		}
+		return builder.String()
+	case StructMap:
+		info := getStructMapInfo(reflect.TypeOf(v))
+		vv := reflect.ValueOf(v)
+		n := vv.NumField()
+		builder := NewMapReprBuilder(indent)
+		for i := 0; i < n; i++ {
+			builder.WritePair(Repr(info.fieldNames[i], indent+1),
+				indent+2, Repr(vv.Field(i).Interface(), indent+2))
 		}
 		return builder.String()
 	case Reprer:

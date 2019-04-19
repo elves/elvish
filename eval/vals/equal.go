@@ -12,9 +12,9 @@ type Equaler interface {
 }
 
 // Equal returns whether two values are equal. It is implemented for the builtin
-// types bool and string, the File, List and Map types, and types implementing
-// the Equaler interface. For other types, it uses reflect.DeepEqual to compare
-// the two values.
+// types bool and string, the File, List, Map types, StructMap types, and types
+// satisfying the Equaler interface. For other types, it uses reflect.DeepEqual
+// to compare the two values.
 func Equal(x, y interface{}) bool {
 	switch x := x.(type) {
 	case nil:
@@ -38,6 +38,11 @@ func Equal(x, y interface{}) bool {
 	case Map:
 		if yy, ok := y.(Map); ok {
 			return equalMap(x, yy)
+		}
+		return false
+	case StructMap:
+		if yy, ok := y.(StructMap); ok {
+			return equalStructMap(x, yy)
 		}
 		return false
 	case Equaler:
@@ -71,6 +76,21 @@ func equalMap(x, y Map) bool {
 		k, vx := it.Elem()
 		vy, ok := y.Index(k)
 		if !ok || !Equal(vx, vy) {
+			return false
+		}
+	}
+	return true
+}
+
+func equalStructMap(x, y StructMap) bool {
+	if reflect.TypeOf(x) != reflect.TypeOf(y) {
+		return false
+	}
+	xv := reflect.ValueOf(x)
+	yv := reflect.ValueOf(y)
+	n := xv.NumField()
+	for i := 0; i < n; i++ {
+		if !Equal(xv.Field(i).Interface(), yv.Field(i).Interface()) {
 			return false
 		}
 	}
