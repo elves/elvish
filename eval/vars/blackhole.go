@@ -7,8 +7,7 @@ func (blackhole) Set(interface{}) error {
 }
 
 func (blackhole) Get() interface{} {
-	// TODO: Return a special placeholder value.
-	return ""
+	return nil
 }
 
 // NewBlackhole returns a blackhole variable. Assignments to a blackhole

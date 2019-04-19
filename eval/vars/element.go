@@ -35,11 +35,6 @@ func (ev *elem) Get() interface{} {
 	return ev.setValue
 }
 
-// NewElement returns an ephemeral variable used for assigning variable element.
-func NewElement(v Var, a []interface{}, i []interface{}) Var {
-	return &elem{v, a, i, ""}
-}
-
 // MakeElement returns a variable, that when set, simulates the mutation of an
 // element.
 func MakeElement(v Var, indicies []interface{}) (Var, error) {
@@ -70,7 +65,7 @@ func MakeElement(v Var, indicies []interface{}) (Var, error) {
 		}
 		assocers[i+1] = v
 	}
-	return NewElement(v, assocers, indicies), nil
+	return &elem{v, assocers, indicies, nil}, nil
 }
 
 // DelElement deletes an element. It uses a similar process to MakeElement,

@@ -12,16 +12,16 @@ type ptrVariable struct {
 	mutex *sync.RWMutex
 }
 
-// FromPtr creates a variable from a pointer. The variable is kept in sync
-// with the value the pointer points to, using elvToGo and goToElv conversions
-// when Get and Set. Its access is guarded by the supplied mutex.
+// FromPtrWithMutex creates a variable from a pointer. The variable is kept in
+// sync with the value the pointer points to, converting with vals.ScanToGo and
+// vals.FromGo when Get and Set. Its access is guarded by the supplied mutex.
 func FromPtrWithMutex(p interface{}, m *sync.RWMutex) Var {
 	return ptrVariable{p, m}
 }
 
-// FromPtr creates a variable from a pointer. The variable is kept in sync
-// with the value the pointer points to, using elvToGo and goToElv conversions
-// when Get and Set. Its access is guarded by a new mutex.
+// FromPtr creates a variable from a pointer. The variable is kept in sync with
+// the value the pointer points to, converting with vals.ScanToGo and
+// vals.FromGo when Get and Set. Its access is guarded by a new mutex.
 func FromPtr(p interface{}) Var {
 	return FromPtrWithMutex(p, new(sync.RWMutex))
 }

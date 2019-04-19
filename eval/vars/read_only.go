@@ -10,6 +10,8 @@ type readOnly struct {
 	value interface{}
 }
 
+// NewReadOnly creates a variable that is read-only and always returns an error
+// on Set.
 func NewReadOnly(v interface{}) Var {
 	return readOnly{v}
 }
