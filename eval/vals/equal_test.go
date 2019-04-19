@@ -1,6 +1,7 @@
 package vals
 
 import (
+	"os"
 	"testing"
 
 	"github.com/elves/elvish/tt"
@@ -23,6 +24,9 @@ var equalTests = tt.Table{
 
 	Args("lorem", "lorem").Rets(true),
 	Args("lorem", "ipsum").Rets(false),
+
+	Args(os.Stdin, os.Stdin).Rets(true),
+	Args(os.Stdin, os.Stderr).Rets(false),
 
 	Args(MakeList("a", "b"), MakeList("a", "b")).Rets(true),
 	Args(MakeList("a", "b"), MakeList("a")).Rets(false),

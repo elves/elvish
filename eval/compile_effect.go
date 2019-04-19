@@ -532,7 +532,7 @@ func (op *redirOp) invoke(fm *Frame) error {
 			}
 		case vals.File:
 			fm.ports[dst] = &Port{
-				File: src.Inner, Chan: BlackholeChan,
+				File: src, Chan: BlackholeChan,
 				CloseFile: false,
 			}
 		case vals.Pipe:

@@ -11,7 +11,7 @@ type Hasher interface {
 }
 
 // Hash returns the 32-bit hash of a value. It is implemented for the builtin
-// types bool and string, the List and Map types, and types satisfying the
+// types bool and string, the File, List and Map types, and types satisfying the
 // Hasher interface. For other values, it returns 0 (which is OK in terms of
 // correctness).
 func Hash(v interface{}) uint32 {
@@ -23,6 +23,8 @@ func Hash(v interface{}) uint32 {
 		return 0
 	case string:
 		return hash.String(v)
+	case File:
+		return hash.UIntPtr(v.Fd())
 	case List:
 		h := hash.DJBInit
 		for it := v.Iterator(); it.HasElem(); it.Next() {

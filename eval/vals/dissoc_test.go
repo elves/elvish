@@ -6,14 +6,15 @@ import (
 	"github.com/elves/elvish/tt"
 )
 
-type customDissocer struct{}
+type dissocer struct{}
 
-func (customDissocer) Dissoc(interface{}) interface{} { return "custom ret" }
+func (dissocer) Dissoc(interface{}) interface{} { return "custom ret" }
 
 var dissocTests = tt.Table{
 	Args(MakeMapFromKV("k1", "v1", "k2", "v2"), "k1").Rets(
 		eq(MakeMapFromKV("k2", "v2"))),
-	Args(customDissocer{}, "x").Rets("custom ret"),
+	Args(dissocer{}, "x").Rets("custom ret"),
+	Args("", "x").Rets(nil),
 }
 
 func TestDissoc(t *testing.T) {

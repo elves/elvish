@@ -12,9 +12,9 @@ type Equaler interface {
 }
 
 // Equal returns whether two values are equal. It is implemented for the builtin
-// types bool and string, the List and Map types, and types implementing the
-// Equaler interface. For other types, it uses reflect.DeepEqual to compare the
-// two values.
+// types bool and string, the File, List and Map types, and types implementing
+// the Equaler interface. For other types, it uses reflect.DeepEqual to compare
+// the two values.
 func Equal(x, y interface{}) bool {
 	switch x := x.(type) {
 	case nil:
@@ -25,6 +25,11 @@ func Equal(x, y interface{}) bool {
 		return x == y
 	case string:
 		return x == y
+	case File:
+		if yy, ok := y.(File); ok {
+			return x.Fd() == yy.Fd()
+		}
+		return false
 	case List:
 		if yy, ok := y.(List); ok {
 			return equalList(x, yy)
