@@ -55,7 +55,7 @@ func TestModeRenderFlag(t *testing.T) {
 
 func TestHandleEvent_CallsKeyHandler(t *testing.T) {
 	m := Mode{}
-	key := ui.Key{'a', 0}
+	key := ui.K('a')
 	var calledKey ui.Key
 	m.Start(StartConfig{KeyHandler: func(k ui.Key) types.HandlerAction {
 		calledKey = k
@@ -78,47 +78,47 @@ func TestHandleEvent_DefaultBinding(t *testing.T) {
 	st := types.State{}
 	st.SetMode(&m)
 
-	m.HandleEvent(tty.KeyEvent{ui.Down, 0}, &st)
+	m.HandleEvent(tty.K(ui.Down), &st)
 	if m.state.selected != 1 {
 		t.Errorf("Down did not move selection down")
 	}
 
-	m.HandleEvent(tty.KeyEvent{ui.Up, 0}, &st)
+	m.HandleEvent(tty.K(ui.Up), &st)
 	if m.state.selected != 0 {
 		t.Errorf("Up did not move selection up")
 	}
 
-	m.HandleEvent(tty.KeyEvent{ui.Up, 0}, &st)
+	m.HandleEvent(tty.K(ui.Up), &st)
 	if m.state.selected != 0 {
 		t.Errorf("Up did not stop at first item")
 	}
 
-	m.HandleEvent(tty.KeyEvent{ui.Tab, ui.Shift}, &st)
+	m.HandleEvent(tty.K(ui.Tab, ui.Shift), &st)
 	if m.state.selected != 9 {
 		t.Errorf("Shift-Tab did not wrap to last item")
 	}
 
-	m.HandleEvent(tty.KeyEvent{ui.Tab, 0}, &st)
+	m.HandleEvent(tty.K(ui.Tab), &st)
 	if m.state.selected != 0 {
 		t.Errorf("Tab did not wrap to first item")
 	}
 
-	m.HandleEvent(tty.KeyEvent{ui.Tab, 0}, &st)
+	m.HandleEvent(tty.K(ui.Tab), &st)
 	if m.state.selected != 1 {
 		t.Errorf("Tab did not move selection down")
 	}
 
-	m.HandleEvent(tty.KeyEvent{ui.Tab, ui.Shift}, &st)
+	m.HandleEvent(tty.K(ui.Tab, ui.Shift), &st)
 	if m.state.selected != 0 {
 		t.Errorf("Shift-Tab did not move selection up")
 	}
 
-	m.HandleEvent(tty.KeyEvent{'F', ui.Ctrl}, &st)
+	m.HandleEvent(tty.K('F', ui.Ctrl), &st)
 	if !m.state.filtering {
 		t.Errorf("Ctrl-F does not enable filtering")
 	}
 
-	m.HandleEvent(tty.KeyEvent{'[', ui.Ctrl}, &st)
+	m.HandleEvent(tty.K('[', ui.Ctrl), &st)
 	if st.Mode() != nil {
 		t.Errorf("Ctrl-[ did not set mode to nil")
 	}

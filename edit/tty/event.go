@@ -10,6 +10,11 @@ type Event interface {
 // KeyEvent represents a key press.
 type KeyEvent ui.Key
 
+// K constructs a new KeyEvent.
+func K(r rune, mods ...ui.Mod) KeyEvent {
+	return KeyEvent(ui.K(r, mods...))
+}
+
 // MouseEvent represents a mouse event (either pressing or releasing).
 type MouseEvent struct {
 	Pos
