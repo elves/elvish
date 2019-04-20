@@ -25,11 +25,11 @@ type Editor struct {
 	// Editor configuration that can be modified concurrently.
 	Config Config
 
-	// If not nil, will be called when ReadCode starts.
-	BeforeReadline func()
-	// If not nil, will be called when ReadCode ends; the argument is the code
-	// that has been read.
-	AfterReadline func(string)
+	// Functions called when ReadCode starts.
+	BeforeReadline []func()
+	// Functions called when ReadCode ends; the argument is the code that has
+	// just been read.
+	AfterReadline []func(string)
 
 	// Code highlighter.
 	Highlighter Highlighter
@@ -233,12 +233,14 @@ func (ed *Editor) ReadCode() (string, error) {
 	defer ed.state.Reset()
 
 	// BeforeReadline and AfterReadline hooks.
-	if ed.BeforeReadline != nil {
-		ed.BeforeReadline()
+	for _, f := range ed.BeforeReadline {
+		f()
 	}
-	if ed.AfterReadline != nil {
+	if len(ed.AfterReadline) > 0 {
 		defer func() {
-			ed.AfterReadline(ed.state.Code())
+			for _, f := range ed.AfterReadline {
+				f(ed.state.Code())
+			}
 		}()
 	}
 
@@ -268,4 +270,14 @@ func (ed *Editor) Redraw(full bool) {
 func (ed *Editor) Notify(note string) {
 	ed.state.AddNote(note)
 	ed.Redraw(false)
+}
+
+// AddBeforeReadline adds a new before-readline hook function.
+func (ed *Editor) AddBeforeReadline(f func()) {
+	ed.BeforeReadline = append(ed.BeforeReadline, f)
+}
+
+// AddAfterReadline adds a new after-readline hook function.
+func (ed *Editor) AddAfterReadline(f func(string)) {
+	ed.AfterReadline = append(ed.AfterReadline, f)
 }

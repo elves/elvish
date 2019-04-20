@@ -41,9 +41,19 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 		}).
 		AddGoFns("<edit>", bufferBuiltins(ed.State()))
 
-	// Hooks
-	ns["before-readline"], ed.BeforeReadline = initBeforeReadline(ev)
-	ns["after-readline"], ed.AfterReadline = initAfterReadline(ev)
+	// Add the builtin hook of appending history in after-readline.
+	ed.AddAfterReadline(func(code string) {
+		st.AddCmd(code)
+		// TODO: Log errors
+	})
+
+	// Elvish hook APIs
+	var beforeReadline func()
+	ns["before-readline"], beforeReadline = initBeforeReadline(ev)
+	ed.AddBeforeReadline(beforeReadline)
+	var afterReadline func(string)
+	ns["after-readline"], afterReadline = initAfterReadline(ev)
+	ed.AddAfterReadline(afterReadline)
 
 	// Prompts
 	ed.Prompt = makePrompt(ed, ev, ns, defaultPrompt, "prompt")

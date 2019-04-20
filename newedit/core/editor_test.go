@@ -77,7 +77,7 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 	ed, terminal, _ := setup()
 
 	called := 0
-	ed.BeforeReadline = func() { called++ }
+	ed.AddBeforeReadline(func() { called++ })
 	// Causes BasicMode to quit
 	terminal.EventCh <- tty.KeyEvent{Rune: '\n'}
 
@@ -93,10 +93,10 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 
 	called := 0
 	code := ""
-	ed.AfterReadline = func(s string) {
+	ed.AddAfterReadline(func(s string) {
 		called++
 		code = s
-	}
+	})
 	// Causes BasicMode to write state.Code and then quit
 	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 	terminal.EventCh <- tty.KeyEvent{Rune: 'b'}

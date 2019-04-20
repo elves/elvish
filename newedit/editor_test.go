@@ -17,6 +17,10 @@ func TestNs(t *testing.T) {
 	}
 }
 
+func TestAddCmdAfterReadline(t *testing.T) {
+	// TODO
+}
+
 func TestInsertMode(t *testing.T) {
 	// TODO
 }
