@@ -16,14 +16,13 @@ import (
 
 // TODO(xiaq): Move the implementation into this package.
 
-// BindingMap is a specialized map type for key bindings.
-type BindingMap = eddefs.BindingMap
+// A specialized map type for key bindings.
+type bindingMap = eddefs.BindingMap
 
-// EmptyBindingMap is an empty binding map. It is useful for building binding
-// maps.
-var EmptyBindingMap = eddefs.EmptyBindingMap
+// An empty binding map. It is useful for building binding maps.
+var emptyBindingMap = eddefs.EmptyBindingMap
 
-func keyHandlerFromBindings(ed editor, ev *eval.Evaler, bs ...*BindingMap) func(ui.Key) types.HandlerAction {
+func keyHandlerFromBindings(ed editor, ev *eval.Evaler, bs ...*bindingMap) func(ui.Key) types.HandlerAction {
 	return func(k ui.Key) types.HandlerAction {
 		f := indexLayeredBindings(k, bs...)
 		// TODO: Make this fallback part of GetOrDefault after moving BindingMap
@@ -39,7 +38,7 @@ func keyHandlerFromBindings(ed editor, ev *eval.Evaler, bs ...*BindingMap) func(
 
 // Indexes a series of layered bindings. Returns nil if none of the bindings
 // have the required key or a default.
-func indexLayeredBindings(k ui.Key, bindings ...*BindingMap) eval.Callable {
+func indexLayeredBindings(k ui.Key, bindings ...*bindingMap) eval.Callable {
 	for _, binding := range bindings {
 		if binding.HasKey(k) {
 			return binding.GetKey(k)

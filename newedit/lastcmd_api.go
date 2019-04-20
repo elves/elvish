@@ -9,8 +9,8 @@ import (
 )
 
 // Initializes states for the lastcmd mode and its API.
-func initLastcmd(ed editor, ev *eval.Evaler, st storedefs.Store, lsMode *listing.Mode, lsBinding *BindingMap) eval.Ns {
-	binding := EmptyBindingMap
+func initLastcmd(ed editor, ev *eval.Evaler, st storedefs.Store, lsMode *listing.Mode, lsBinding *bindingMap) eval.Ns {
+	binding := emptyBindingMap
 	mode := lastcmd.Mode{
 		Mode:       lsMode,
 		KeyHandler: keyHandlerFromBindings(ed, ev, &binding, lsBinding),

@@ -15,7 +15,7 @@ import (
 func initInsert(ed editor, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
 	// Underlying abbreviation map and binding map.
 	abbr := vals.EmptyMap
-	binding := EmptyBindingMap
+	binding := emptyBindingMap
 
 	m := &insert.Mode{
 		KeyHandler:  keyHandlerFromBindings(ed, ev, &binding),

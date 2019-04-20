@@ -44,7 +44,7 @@ func TestKeyHandlerFromBinding_SetsBindingKey(t *testing.T) {
 
 func TestKeyHandlerFromBinding_Unbound(t *testing.T) {
 	ed := &fakeEditor{}
-	binding := EmptyBindingMap
+	binding := emptyBindingMap
 	handler := keyHandlerFromBindings(ed, eval.NewEvaler(), &binding)
 
 	action := handler(ui.Key{Rune: 'a'})
@@ -89,7 +89,7 @@ func TestIndexLayeredBindings(t *testing.T) {
 	// Use lower layer default when upper layer does not have default
 	b, _ := binding2.Assoc(
 		ui.Default, eval.NewGoFn("[d2]", func() { called = 2 }))
-	binding2 = b.(BindingMap)
+	binding2 = b.(bindingMap)
 
 	called = 0
 	_ = handler(ui.K('d'))
@@ -100,7 +100,7 @@ func TestIndexLayeredBindings(t *testing.T) {
 	// Prefer upper layer default
 	b, _ = binding1.Assoc(
 		ui.Default, eval.NewGoFn("[d1]", func() { called = 1 }))
-	binding1 = b.(BindingMap)
+	binding1 = b.(bindingMap)
 
 	called = 0
 	_ = handler(ui.K('d'))
@@ -111,7 +111,7 @@ func TestIndexLayeredBindings(t *testing.T) {
 	// Exact matches in all layers are tried before falling back to default
 	b, _ = binding2.Assoc(
 		"c", eval.NewGoFn("[c2]", func() { called = 2 }))
-	binding2 = b.(BindingMap)
+	binding2 = b.(bindingMap)
 
 	called = 0
 	_ = handler(ui.K('c'))
@@ -120,14 +120,14 @@ func TestIndexLayeredBindings(t *testing.T) {
 	}
 }
 
-func buildBinding(data ...interface{}) BindingMap {
-	binding := EmptyBindingMap
+func buildBinding(data ...interface{}) bindingMap {
+	binding := emptyBindingMap
 	for i := 0; i < len(data); i += 2 {
-		result, err := EmptyBindingMap.Assoc(data[i], data[i+1])
+		result, err := emptyBindingMap.Assoc(data[i], data[i+1])
 		if err != nil {
 			panic(err)
 		}
-		binding = result.(BindingMap)
+		binding = result.(bindingMap)
 	}
 	return binding
 }

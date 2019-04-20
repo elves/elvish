@@ -7,8 +7,6 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-type renderCb func(*types.RawState, *renderSetup) (notes, main *ui.Buffer)
-
 type renderSetup struct {
 	height int
 	width  int

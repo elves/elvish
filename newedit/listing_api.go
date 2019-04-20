@@ -6,9 +6,9 @@ import (
 	"github.com/elves/elvish/newedit/listing"
 )
 
-func initListing(ed editor) (*listing.Mode, *BindingMap, eval.Ns) {
+func initListing(ed editor) (*listing.Mode, *bindingMap, eval.Ns) {
 	mode := &listing.Mode{}
-	binding := EmptyBindingMap
+	binding := emptyBindingMap
 	ns := eval.Ns{
 		"binding": vars.FromPtr(&binding),
 	}.AddGoFns("<edit:listing>:", map[string]interface{}{
