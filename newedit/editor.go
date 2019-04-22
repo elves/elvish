@@ -1,8 +1,10 @@
 package newedit
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/elves/elvish/edit/history/histutil"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/newedit/core"
@@ -41,11 +43,18 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 		}).
 		AddGoFns("<edit>", bufferBuiltins(ed.State()))
 
-	// Add the builtin hook of appending history in after-readline.
-	ed.AddAfterReadline(func(code string) {
-		st.AddCmd(code)
-		// TODO: Log errors
-	})
+	histFuser, err := histutil.NewFuser(st)
+	if err == nil {
+		// Add the builtin hook of appending history in after-readline.
+		ed.AddAfterReadline(func(code string) {
+			err := histFuser.AddCmd(code)
+			if err != nil {
+				fmt.Fprintln(out, "failed to add command to history")
+			}
+		})
+	} else {
+		fmt.Fprintln(out, "failed to initialize history facilities")
+	}
 
 	// Elvish hook APIs
 	var beforeReadline func()
@@ -67,8 +76,12 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	// Listing modes.
 	lsMode, lsBinding, lsNs := initListing(ed)
 	ns.AddNs("listing", lsNs)
+
 	lastcmdNs := initLastcmd(ed, ev, st, lsMode, lsBinding)
 	ns.AddNs("lastcmd", lastcmdNs)
+
+	histlistNs := initHistlist(ed, ev, histFuser.AllCmds, lsMode, lsBinding)
+	ns.AddNs("histlist", histlistNs)
 
 	// Evaluate default bindings.
 	evalDefaultBinding(ev, ns)

@@ -38,6 +38,7 @@ type StartConfig struct {
 	ItemsGetter func(filter string) Items
 	StartFilter bool
 	AutoAccept  bool
+	SelectLast  bool
 }
 
 // Items is an interface for accessing items to show in the listing mode.
@@ -62,7 +63,8 @@ func (m *Mode) Start(cfg StartConfig) {
 	*m = Mode{
 		StartConfig: cfg,
 		state: State{
-			filtering: cfg.StartFilter, itemsGetter: cfg.ItemsGetter},
+			itemsGetter: cfg.ItemsGetter, selectLast: cfg.SelectLast,
+			filtering: cfg.StartFilter},
 	}
 	m.state.refilter("")
 }

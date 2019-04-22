@@ -53,6 +53,16 @@ func TestModeRenderFlag(t *testing.T) {
 	}
 }
 
+func TestStart_SelectLast(t *testing.T) {
+	m := Mode{}
+	m.Start(StartConfig{ItemsGetter: func(string) Items {
+		return fakeItems{10}
+	}, SelectLast: true})
+	if m.state.selected != 9 {
+		t.Errorf("SelectLast did not cause the last item to be selected")
+	}
+}
+
 func TestHandleEvent_CallsKeyHandler(t *testing.T) {
 	m := Mode{}
 	key := ui.K('a')

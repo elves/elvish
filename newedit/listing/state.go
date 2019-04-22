@@ -3,11 +3,13 @@ package listing
 // State keeps the state of the listing mode.
 type State struct {
 	itemsGetter func(string) Items
-	filtering   bool
-	filter      string
-	items       Items
-	first       int
-	selected    int
+	selectLast  bool
+
+	filtering bool
+	filter    string
+	items     Items
+	first     int
+	selected  int
 }
 
 func (st *State) refilter(f string) {
@@ -16,6 +18,11 @@ func (st *State) refilter(f string) {
 		st.items = sliceItems{}
 	} else {
 		st.items = st.itemsGetter(f)
+	}
+	if st.selectLast {
+		st.selected = st.items.Len() - 1
+	} else {
+		st.selected = 0
 	}
 }
 
