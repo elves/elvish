@@ -1228,7 +1228,7 @@ executed.
 The condition part is an expression, not a command like in other shells.
 Example:
 
-```elvish-transcript
+```elvish
 fn tell-language [fname]{
     if (has-suffix $fname .go) {
         echo $fname" is a Go file!"
@@ -1237,12 +1237,13 @@ fn tell-language [fname]{
     } else {
         echo $fname" is a mysterious file!"
     }
+}
 ```
 
 The condition part must be syntactically a single expression, but it can
 evaluate to multiple values, in which case they are and'ed:
 
-```elvish-transcript
+```elvish
 if (put $true $false) {
     echo "will not be executed"
 }
@@ -1253,7 +1254,7 @@ how `and` works.
 
 Tip: a combination of `if` and `?()` gives you a semantics close to other shells:
 
-```elvish-transcript
+```elvish
 if ?(test -d .git) {
     # do something
 }
