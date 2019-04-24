@@ -11,8 +11,6 @@ import (
 
 var Args = tt.Args
 
-var testCmds = []string{}
-
 func TestGetEntries(t *testing.T) {
 	cmds := []string{
 		"put 1",
@@ -21,7 +19,7 @@ func TestGetEntries(t *testing.T) {
 		"repr 4",
 	}
 
-	tt.Test(t, tt.Fn("getEntries", getEntries), tt.Table{
+	tt.Test(t, tt.Fn("getEntries", getItems), tt.Table{
 		// Show all commands.
 		Args(cmds, "").Rets(listing.MatchItems(
 			styled.Unstyled("   1 put 1"),
@@ -42,7 +40,7 @@ func TestAccept(t *testing.T) {
 		"put 1",
 		"echo 2",
 	}
-	entries := getEntries(cmds, "")
+	entries := getItems(cmds, "")
 	st := types.State{}
 
 	entries.Accept(0, &st)

@@ -23,14 +23,14 @@ func (m *Mode) Start(cmds []string) {
 		Name:       "HISTLIST",
 		KeyHandler: m.KeyHandler,
 		ItemsGetter: func(p string) listing.Items {
-			return getEntries(cmds, p)
+			return getItems(cmds, p)
 		},
 		StartFilter: true,
 	})
 }
 
 // Given all commands, and a pattern, returning all matching entries.
-func getEntries(cmds []string, p string) items {
+func getItems(cmds []string, p string) items {
 	// TODO: Show the real in-storage IDs of cmds, not their in-memory indicies.
 	var entries []entry
 	for i, line := range cmds {
