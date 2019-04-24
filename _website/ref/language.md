@@ -1226,6 +1226,30 @@ none of conditions are booleanly true and an else body is supplied, it is
 executed.
 
 The condition part is an expression, not a command like in other shells.
+Example:
+
+```elvish-transcript
+fn tell-language [fname]{
+    if (has-suffix $fname .go) {
+        echo $fname" is a Go file!"
+    } else if (has-suffix $fname .c) {
+        echo $fname" is a C file!"
+    } else {
+        echo $fname" is a mysterious file!"
+    }
+```
+
+The condition part must be syntactically a single expression, but it can
+evaluate to multiple values, in which case they are and'ed:
+
+```elvish-transcript
+if (put $true $false) {
+    echo "will not be executed"
+}
+```
+
+If the expression evaluates to 0 values, it is considered true, consistent with
+how `and` works.
 
 Tip: a combination of `if` and `?()` gives you a semantics close to other shells:
 
@@ -1236,8 +1260,6 @@ if ?(test -d .git) {
 ```
 
 However, for Elvish's builtin predicates that output values instead of throw exceptions, the output capture construct `()` should be used.
-
-**TODO**: add more examples.
 
 ## Conditional Loop: `while`
 
