@@ -11,7 +11,7 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/newedit/clitypes"
-	"github.com/elves/elvish/newedit/editutil"
+	"github.com/elves/elvish/newedit/cliutil"
 )
 
 // TODO(xiaq): Move the implementation into this package.
@@ -66,7 +66,7 @@ func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable) clitypes.Handler
 	err := frame.Call(f, nil, eval.NoOpts)
 
 	if err != nil {
-		if action, ok := eval.Cause(err).(editutil.ActionError); ok {
+		if action, ok := eval.Cause(err).(cliutil.ActionError); ok {
 			return clitypes.HandlerAction(action)
 		}
 		// TODO(xiaq): Make the stack trace available.

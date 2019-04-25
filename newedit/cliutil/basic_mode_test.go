@@ -1,4 +1,4 @@
-package editutil
+package cliutil
 
 import (
 	"fmt"

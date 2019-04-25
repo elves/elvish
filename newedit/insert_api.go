@@ -6,7 +6,7 @@ import (
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/newedit/clitypes"
-	"github.com/elves/elvish/newedit/editutil"
+	"github.com/elves/elvish/newedit/cliutil"
 	"github.com/elves/elvish/newedit/insert"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -32,9 +32,9 @@ func initInsert(ed editor, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
 	}.AddGoFns("<edit:insert>:", map[string]interface{}{
 		"start": func() { st.SetMode(m) },
 		"default-handler": func() error {
-			action := editutil.BasicHandler(tty.KeyEvent(st.BindingKey()), st)
+			action := cliutil.BasicHandler(tty.KeyEvent(st.BindingKey()), st)
 			if action != clitypes.NoAction {
-				return editutil.ActionError(action)
+				return cliutil.ActionError(action)
 			}
 			return nil
 		},

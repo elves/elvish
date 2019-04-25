@@ -2,7 +2,7 @@ package clicore
 
 import (
 	"github.com/elves/elvish/newedit/clitypes"
-	"github.com/elves/elvish/newedit/editutil"
+	"github.com/elves/elvish/newedit/cliutil"
 )
 
 // Returns the first non-nil value. If all are nil, return utils.BasicMode{}
@@ -12,5 +12,5 @@ func getMode(modes ...clitypes.Mode) clitypes.Mode {
 			return mode
 		}
 	}
-	return editutil.BasicMode{}
+	return cliutil.BasicMode{}
 }
