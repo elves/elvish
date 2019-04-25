@@ -2,7 +2,7 @@ package clicore
 
 import (
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
@@ -20,7 +20,7 @@ type renderSetup struct {
 
 	notes []string
 
-	mode types.Mode
+	mode clitypes.Mode
 }
 
 // Renders the editor state.
@@ -50,7 +50,7 @@ func render(r *renderSetup) (notes, main *ui.Buffer) {
 type mainRenderer struct {
 	maxHeight int
 	bufCode   *ui.Buffer
-	mode      types.Mode
+	mode      clitypes.Mode
 }
 
 func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
@@ -93,7 +93,7 @@ func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 	}
 
 	var bufListing *ui.Buffer
-	lister, isLister := mode.(types.Lister)
+	lister, isLister := mode.(clitypes.Lister)
 	if hListing > 0 && isLister {
 		bufListing = ui.Render(lister.List(hListing), buf.Width)
 		// Re-render the mode line if the current mode implements
@@ -105,7 +105,7 @@ func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 		// bufMode, we may do this without recalculating the layout. We also do
 		// not need to trim bufMode because when hListing > 0, bufMode can
 		// always be shown in full.
-		if mode.ModeRenderFlag()&types.RedrawModeLineAfterList != 0 {
+		if mode.ModeRenderFlag()&clitypes.RedrawModeLineAfterList != 0 {
 			bufMode = ui.Render(mode.ModeLine(), buf.Width)
 		}
 	}
@@ -113,7 +113,7 @@ func (r *mainRenderer) Render(buf *ui.BufferBuilder) {
 	// XXX The buffer contains one line in the beginning; we don't want that.
 	buf.Lines = nil
 	buf.Extend(bufCode, true)
-	buf.Extend(bufMode, mode.ModeRenderFlag()&types.CursorOnModeLine != 0)
+	buf.Extend(bufMode, mode.ModeRenderFlag()&clitypes.CursorOnModeLine != 0)
 	buf.Extend(bufListing, false)
 }
 

@@ -5,14 +5,14 @@ import (
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 )
 
 // A Mode implementation useful in tests.
 type fakeMode struct {
 	maxKeys        int
 	modeLine       ui.Renderer
-	modeRenderFlag types.ModeRenderFlag
+	modeRenderFlag clitypes.ModeRenderFlag
 
 	// History of all keys HandleEvent has seen.
 	keysHandled []ui.Key
@@ -24,17 +24,17 @@ func (m *fakeMode) ModeLine() ui.Renderer {
 }
 
 // ModeRenderFlag returns the predefined value.
-func (m *fakeMode) ModeRenderFlag() types.ModeRenderFlag {
+func (m *fakeMode) ModeRenderFlag() clitypes.ModeRenderFlag {
 	return m.modeRenderFlag
 }
 
 // HandleEvent records all keys it has seen, and returns CommitCode after seeing
 // a predefined number of keys. It ignores other events.
-func (m *fakeMode) HandleEvent(e tty.Event, _ *types.State) types.HandlerAction {
+func (m *fakeMode) HandleEvent(e tty.Event, _ *clitypes.State) clitypes.HandlerAction {
 	if keyEvent, ok := e.(tty.KeyEvent); ok {
 		m.keysHandled = append(m.keysHandled, ui.Key(keyEvent))
 		if len(m.keysHandled) == m.maxKeys {
-			return types.CommitCode
+			return clitypes.CommitCode
 		}
 	}
 	return 0

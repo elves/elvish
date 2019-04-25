@@ -8,8 +8,8 @@ import (
 
 	"github.com/elves/elvish/edit/history/histutil"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/newedit/listing"
-	"github.com/elves/elvish/newedit/types"
 )
 
 func TestHistlist_Start(t *testing.T) {
@@ -30,7 +30,7 @@ func TestHistlist_Start(t *testing.T) {
 	fm.Call(getFn(ns, "start"), eval.NoArgs, eval.NoOpts)
 
 	// Verify that the current mode supports listing.
-	lister, ok := ed.state.Mode().(types.Lister)
+	lister, ok := ed.state.Mode().(clitypes.Lister)
 	if !ok {
 		t.Errorf("Mode is not Lister after <edit:histlist>:start")
 	}

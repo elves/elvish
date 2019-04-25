@@ -3,8 +3,8 @@ package histlist
 import (
 	"testing"
 
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/newedit/listing"
-	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
 )
@@ -41,7 +41,7 @@ func TestAccept(t *testing.T) {
 		"echo 2",
 	}
 	entries := getItems(cmds, "")
-	st := types.State{}
+	st := clitypes.State{}
 
 	entries.Accept(0, &st)
 	if st.Code() != "put 1" {

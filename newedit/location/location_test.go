@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/newedit/listing"
-	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
@@ -40,7 +40,7 @@ func TestAccept_OK(t *testing.T) {
 		calledDir = dir
 		return nil
 	}
-	getItems(dirs, "", cd).Accept(0, &types.State{})
+	getItems(dirs, "", cd).Accept(0, &clitypes.State{})
 	if calledDir != "/home/elf" {
 		t.Errorf("Accept did not call cd")
 	}
@@ -52,7 +52,7 @@ func TestAccept_Error(t *testing.T) {
 		{Path: "/usr/bin", Score: 10},
 	}
 	cd := func(string) error { return errors.New("cannot cd") }
-	state := types.State{}
+	state := clitypes.State{}
 
 	getItems(dirs, "", cd).Accept(0, &state)
 

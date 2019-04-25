@@ -3,12 +3,12 @@ package editutil
 import (
 	"fmt"
 
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 )
 
 // ActionError is like HandlerAction with an Error method. It is useful as a
 // control flow exception to exit early from a handler.
-type ActionError types.HandlerAction
+type ActionError clitypes.HandlerAction
 
 var actionNames = [...]string{
 	"no-action", "commit-code",

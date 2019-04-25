@@ -5,11 +5,11 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/util"
 )
 
-func bufferBuiltins(s *types.State) map[string]interface{} {
+func bufferBuiltins(s *clitypes.State) map[string]interface{} {
 	return map[string]interface{}{
 		"move-left":             makeMove(s, moveDotLeft),
 		"move-right":            makeMove(s, moveDotRight),
@@ -43,7 +43,7 @@ func bufferBuiltins(s *types.State) map[string]interface{} {
 // the editor state.
 type pureMover func(buffer string, dot int) int
 
-func makeMove(s *types.State, m pureMover) func() {
+func makeMove(s *clitypes.State, m pureMover) func() {
 	return func() {
 		s.Mutex.Lock()
 		defer s.Mutex.Unlock()
@@ -51,7 +51,7 @@ func makeMove(s *types.State, m pureMover) func() {
 	}
 }
 
-func makeKill(s *types.State, m pureMover) func() {
+func makeKill(s *clitypes.State, m pureMover) func() {
 	return func() {
 		s.Mutex.Lock()
 		defer s.Mutex.Unlock()

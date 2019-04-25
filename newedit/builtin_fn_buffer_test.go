@@ -3,12 +3,12 @@ package newedit
 import (
 	"testing"
 
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/tt"
 )
 
 func TestMakeMove(t *testing.T) {
-	state := types.State{Raw: types.RawState{Code: "ab", Dot: 1}}
+	state := clitypes.State{Raw: clitypes.RawState{Code: "ab", Dot: 1}}
 	moveFn := makeMove(&state, moveDotLeft)
 
 	moveFn()
@@ -19,7 +19,7 @@ func TestMakeMove(t *testing.T) {
 }
 
 func TestMakeKill_Left(t *testing.T) {
-	state := types.State{Raw: types.RawState{Code: "ab", Dot: 1}}
+	state := clitypes.State{Raw: clitypes.RawState{Code: "ab", Dot: 1}}
 	killFn := makeKill(&state, moveDotLeft)
 
 	killFn()
@@ -33,7 +33,7 @@ func TestMakeKill_Left(t *testing.T) {
 }
 
 func TestMakeKill_Right(t *testing.T) {
-	state := types.State{Raw: types.RawState{Code: "ab", Dot: 1}}
+	state := clitypes.State{Raw: clitypes.RawState{Code: "ab", Dot: 1}}
 	killFn := makeKill(&state, moveDotRight)
 
 	killFn()

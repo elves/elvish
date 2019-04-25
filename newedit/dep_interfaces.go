@@ -1,6 +1,6 @@
 package newedit
 
-import "github.com/elves/elvish/newedit/types"
+import "github.com/elves/elvish/newedit/clitypes"
 
 // The editor's dependencies are not concrete implementations, but interfaces.
 // This file defines the interfaces for those dependencies as well as fake
@@ -9,7 +9,7 @@ import "github.com/elves/elvish/newedit/types"
 // Interface for the clicore.Editor dependency.
 type editor interface {
 	notifier
-	State() *types.State
+	State() *clitypes.State
 }
 
 // An interface that wraps Notify. It is part of, and smaller than the full
@@ -23,10 +23,10 @@ type notifier interface {
 // state is just a field. Useful in tests.
 type fakeEditor struct {
 	fakeNotifier
-	state types.State
+	state clitypes.State
 }
 
-func (ed *fakeEditor) State() *types.State { return &ed.state }
+func (ed *fakeEditor) State() *clitypes.State { return &ed.state }
 
 // A notifier implementation that records all Notify calls it has seen. Useful
 // in tests.

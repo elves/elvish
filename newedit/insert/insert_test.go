@@ -6,7 +6,7 @@ import (
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/parse"
 )
 
@@ -19,7 +19,7 @@ func TestModeLine_Default(t *testing.T) {
 
 func TestModeLine_LiteralPaste(t *testing.T) {
 	m := &Mode{}
-	st := &types.State{}
+	st := &clitypes.State{}
 
 	m.HandleEvent(tty.PasteSetting(true), st)
 	if m.ModeLine() != literalPasteModeLine {
@@ -35,7 +35,7 @@ func TestModeLine_LiteralPaste(t *testing.T) {
 func TestModeLine_QuotePaste(t *testing.T) {
 	m := &Mode{}
 	m.Config.Raw.QuotePaste = true
-	st := &types.State{}
+	st := &clitypes.State{}
 
 	m.HandleEvent(tty.PasteSetting(true), st)
 
@@ -55,7 +55,7 @@ func TestHandleEvent_QuotePaste(t *testing.T) {
 }
 
 func testPaste(t *testing.T, m *Mode, input, want string) {
-	st := &types.State{}
+	st := &clitypes.State{}
 	st.Raw.Code = "[]"
 	st.Raw.Dot = 1
 
@@ -83,12 +83,12 @@ var (
 
 func TestHandleEvent_CallsKeyHandler(t *testing.T) {
 	var keys []ui.Key
-	keyHandler := func(k ui.Key) types.HandlerAction {
+	keyHandler := func(k ui.Key) clitypes.HandlerAction {
 		keys = append(keys, k)
-		return types.NoAction
+		return clitypes.NoAction
 	}
 	m := &Mode{KeyHandler: keyHandler}
-	st := &types.State{}
+	st := &clitypes.State{}
 
 	for _, event := range events {
 		m.HandleEvent(event, st)
@@ -128,7 +128,7 @@ func TestHandleEvent_ExpandsAbbr(t *testing.T) {
 	}
 	for _, test := range abbrTests {
 		t.Run(test.name, func(t *testing.T) {
-			st := &types.State{}
+			st := &clitypes.State{}
 			for _, k := range test.keys {
 				m.HandleEvent(k, st)
 			}

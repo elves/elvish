@@ -6,16 +6,16 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/newedit/listing"
-	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/styled"
 )
 
-// Mode represents the lastcmd mode. It implements the types.Mode interface by
+// Mode represents the lastcmd mode. It implements the clitypes.Mode interface by
 // embedding a *listing.Mode.
 type Mode struct {
 	*listing.Mode
-	KeyHandler func(ui.Key) types.HandlerAction
+	KeyHandler func(ui.Key) clitypes.HandlerAction
 }
 
 // Start starts the lastcmd mode.
@@ -94,6 +94,6 @@ func (it items) Show(i int) styled.Text {
 	return styled.Unstyled(fmt.Sprintf("%3s %s", index, entry.content))
 }
 
-func (it items) Accept(i int, st *types.State) {
+func (it items) Accept(i int, st *clitypes.State) {
 	st.InsertAtDot(it.entries[i].content)
 }

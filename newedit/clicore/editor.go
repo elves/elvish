@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	"github.com/elves/elvish/edit/tty"
-	"github.com/elves/elvish/newedit/types"
+	clitypes "github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
@@ -20,7 +20,7 @@ type Editor struct {
 	tty  TTY
 	sigs SignalSource
 
-	state types.State
+	state clitypes.State
 
 	// Editor configuration that can be modified concurrently.
 	Config Config
@@ -38,7 +38,7 @@ type Editor struct {
 	Prompt, RPrompt Prompt
 
 	// Initial mode.
-	InitMode types.Mode
+	InitMode clitypes.Mode
 }
 
 // NewEditor creates a new editor from its two dependencies. The creation does
@@ -53,7 +53,7 @@ func NewEditor(t TTY, sigs SignalSource) *Editor {
 }
 
 // State returns the editor state.
-func (ed *Editor) State() *types.State {
+func (ed *Editor) State() *clitypes.State {
 	return &ed.state
 }
 
@@ -82,9 +82,9 @@ func (ed *Editor) handle(e event) handleResult {
 		action := getMode(ed.state.Mode(), ed.InitMode).HandleEvent(e, &ed.state)
 
 		switch action {
-		case types.CommitCode:
+		case clitypes.CommitCode:
 			return handleResult{quit: true, buffer: ed.state.Code()}
-		case types.CommitEOF:
+		case clitypes.CommitEOF:
 			return handleResult{quit: true, err: io.EOF}
 		}
 		ed.triggerPrompts(false)
@@ -107,7 +107,7 @@ var transformerForPending = "underline"
 
 func (ed *Editor) redraw(flag redrawFlag) {
 	// Get the state, depending on whether this is the final redraw.
-	var rawState *types.RawState
+	var rawState *clitypes.RawState
 	final := flag&finalRedraw != 0
 	if final {
 		rawState = ed.state.Finalize()
@@ -145,7 +145,7 @@ func (ed *Editor) redraw(flag redrawFlag) {
 	}
 }
 
-func applyPending(st *types.RawState) (code string, dot int) {
+func applyPending(st *clitypes.RawState) (code string, dot int) {
 	code, dot, pending := st.Code, st.Dot, st.Pending
 	if pending != nil {
 		code = code[:pending.Begin] + pending.Text + code[pending.End:]

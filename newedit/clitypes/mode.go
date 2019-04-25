@@ -1,4 +1,4 @@
-package types
+package clitypes
 
 import (
 	"github.com/elves/elvish/edit/tty"

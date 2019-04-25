@@ -10,8 +10,8 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/newedit/editutil"
-	"github.com/elves/elvish/newedit/types"
 )
 
 // TODO(xiaq): Move the implementation into this package.
@@ -22,14 +22,14 @@ type bindingMap = eddefs.BindingMap
 // An empty binding map. It is useful for building binding maps.
 var emptyBindingMap = eddefs.EmptyBindingMap
 
-func keyHandlerFromBindings(ed editor, ev *eval.Evaler, bs ...*bindingMap) func(ui.Key) types.HandlerAction {
-	return func(k ui.Key) types.HandlerAction {
+func keyHandlerFromBindings(ed editor, ev *eval.Evaler, bs ...*bindingMap) func(ui.Key) clitypes.HandlerAction {
+	return func(k ui.Key) clitypes.HandlerAction {
 		f := indexLayeredBindings(k, bs...)
 		// TODO: Make this fallback part of GetOrDefault after moving BindingMap
 		// into this package.
 		if f == nil {
 			ed.Notify("Unbound: " + k.String())
-			return types.NoAction
+			return clitypes.NoAction
 		}
 		ed.State().SetBindingKey(k)
 		return callBinding(ed, ev, f)
@@ -54,7 +54,7 @@ func indexLayeredBindings(k ui.Key, bindings ...*bindingMap) eval.Callable {
 
 var bindingSource = eval.NewInternalSource("[editor binding]")
 
-func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable) types.HandlerAction {
+func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable) clitypes.HandlerAction {
 
 	// TODO(xiaq): Use CallWithOutputCallback when it supports redirecting the
 	// stderr port.
@@ -67,12 +67,12 @@ func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable) types.HandlerAct
 
 	if err != nil {
 		if action, ok := eval.Cause(err).(editutil.ActionError); ok {
-			return types.HandlerAction(action)
+			return clitypes.HandlerAction(action)
 		}
 		// TODO(xiaq): Make the stack trace available.
 		nt.Notify("[binding error] " + err.Error())
 	}
-	return types.NoAction
+	return clitypes.NoAction
 }
 
 func makeNotifyPort(notify func(string)) (*eval.Port, func()) {

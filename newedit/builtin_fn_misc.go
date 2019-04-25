@@ -2,7 +2,7 @@ package newedit
 
 import (
 	"github.com/elves/elvish/edit/eddefs"
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 )
 
 //elvdoc:fn binding-map
@@ -15,6 +15,6 @@ var makeBindingMap = eddefs.MakeBindingMap
 //
 // Resets the mode to the default mode.
 
-func makeResetMode(st *types.State) func() {
+func makeResetMode(st *clitypes.State) func() {
 	return func() { st.SetMode(nil) }
 }

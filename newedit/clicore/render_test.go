@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
 )
@@ -235,7 +235,7 @@ func TestRenderers(t *testing.T) {
 				WriteUnstyled("some code").SetDotToCursor().Buffer(),
 			mode: &fakeMode{
 				modeLine:       &linesRenderer{[]string{"MODE"}},
-				modeRenderFlag: types.CursorOnModeLine,
+				modeRenderFlag: clitypes.CursorOnModeLine,
 			},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).
@@ -259,7 +259,7 @@ func TestRenderers(t *testing.T) {
 			bufCode: ui.NewBufferBuilder(7).
 				WriteUnstyled("some code").SetDotToCursor().Buffer(),
 			mode: &fakeListingModeWithModeline{
-				fakeMode: fakeMode{modeRenderFlag: types.RedrawModeLineAfterList},
+				fakeMode: fakeMode{modeRenderFlag: clitypes.RedrawModeLineAfterList},
 			},
 		}, 7).
 			Rets(ui.NewBufferBuilder(7).

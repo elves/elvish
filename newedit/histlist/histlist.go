@@ -5,16 +5,16 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/newedit/listing"
-	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/styled"
 )
 
-// Mode represents the histlist mode. It implements the types.Mode interface by
+// Mode represents the histlist mode. It implements the clitypes.Mode interface by
 // embedding a *listing.Mode.
 type Mode struct {
 	*listing.Mode
-	KeyHandler func(ui.Key) types.HandlerAction
+	KeyHandler func(ui.Key) clitypes.HandlerAction
 }
 
 // Start starts the histlist mode.
@@ -59,7 +59,7 @@ func (it items) Show(i int) styled.Text {
 	return styled.Unstyled(fmt.Sprintf("%4d %s", it[i].index+1, it[i].content))
 }
 
-func (it items) Accept(i int, st *types.State) {
+func (it items) Accept(i int, st *clitypes.State) {
 	st.Mutex.Lock()
 	defer st.Mutex.Unlock()
 	raw := &st.Raw
@@ -73,8 +73,8 @@ func (it items) Accept(i int, st *types.State) {
 	}
 }
 
-func insertAtDot(raw *types.RawState, text string) {
-	// NOTE: This is an duplicate with (*types.State).InsertAtDot, without any
+func insertAtDot(raw *clitypes.RawState, text string) {
+	// NOTE: This is an duplicate with (*clitypes.State).InsertAtDot, without any
 	// locks because we accept RawState.
 	raw.Code = raw.Code[:raw.Dot] + text + raw.Code[raw.Dot:]
 	raw.Dot += len(text)

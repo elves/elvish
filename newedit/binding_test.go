@@ -7,8 +7,8 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/newedit/editutil"
-	"github.com/elves/elvish/newedit/types"
 )
 
 func TestKeyHandlerFromBinding_CallsBinding(t *testing.T) {
@@ -22,7 +22,7 @@ func TestKeyHandlerFromBinding_CallsBinding(t *testing.T) {
 	if called != 1 {
 		t.Errorf("Binding called %d, want once", called)
 	}
-	if action != types.NoAction {
+	if action != clitypes.NoAction {
 		t.Errorf("Binding returned %v, want NoAction", action)
 	}
 }
@@ -53,7 +53,7 @@ func TestKeyHandlerFromBinding_Unbound(t *testing.T) {
 	if !reflect.DeepEqual(ed.fakeNotifier.notes, wantNotes) {
 		t.Errorf("Notes %v, want %v", ed.fakeNotifier.notes, wantNotes)
 	}
-	if action != types.NoAction {
+	if action != clitypes.NoAction {
 		t.Errorf("Fallback binding returned %v, want NoAction", action)
 	}
 }
@@ -150,10 +150,10 @@ func TestCallBinding_CapturesAction(t *testing.T) {
 	nt := &fakeNotifier{}
 
 	action := callBinding(nt, ev, eval.NewGoFn("test", func() error {
-		return editutil.ActionError(types.CommitCode)
+		return editutil.ActionError(clitypes.CommitCode)
 	}))
-	if action != types.CommitCode {
-		t.Errorf("got ret = %v, want %v", action, types.CommitCode)
+	if action != clitypes.CommitCode {
+		t.Errorf("got ret = %v, want %v", action, clitypes.CommitCode)
 	}
 }
 

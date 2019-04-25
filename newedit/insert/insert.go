@@ -9,15 +9,15 @@ import (
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/newedit/editutil"
-	"github.com/elves/elvish/newedit/types"
 	"github.com/elves/elvish/parse"
 )
 
-// Mode represents the insert mode, implementing the types.Mode interface.
+// Mode represents the insert mode, implementing the clitypes.Mode interface.
 type Mode struct {
 	// Function to handle keys.
-	KeyHandler func(ui.Key) types.HandlerAction
+	KeyHandler func(ui.Key) clitypes.HandlerAction
 	// Function that feeds all abbreviation pairs to the callback.
 	AbbrIterate func(func(abbr, full string))
 	// Configuration that can be modified concurrently.
@@ -74,13 +74,13 @@ func (m *Mode) ModeLine() ui.Renderer {
 }
 
 // ModeRenderFlag always returns 0.
-func (m *Mode) ModeRenderFlag() types.ModeRenderFlag {
+func (m *Mode) ModeRenderFlag() clitypes.ModeRenderFlag {
 	return 0
 }
 
 // HandleEvent handles a terminal event. It handles tty.PasteSetting and
 // tty.KeyEvent and ignores others.
-func (m *Mode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
+func (m *Mode) HandleEvent(e tty.Event, st *clitypes.State) clitypes.HandlerAction {
 	switch e := e.(type) {
 	case tty.PasteSetting:
 		if e {
@@ -92,11 +92,11 @@ func (m *Mode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
 		k := ui.Key(e)
 		if m.paste != noPaste {
 			m.handleKeyInPaste(k)
-			return types.NoAction
+			return clitypes.NoAction
 		}
 		return m.handleKey(k, st)
 	}
-	return types.NoAction
+	return clitypes.NoAction
 }
 
 func (m *Mode) handlePasteStart() {
@@ -108,7 +108,7 @@ func (m *Mode) handlePasteStart() {
 	}
 }
 
-func (m *Mode) handlePasteEnd(st *types.State) {
+func (m *Mode) handlePasteEnd(st *clitypes.State) {
 	text := string(m.pastes)
 	if m.paste == quotePaste {
 		text = parse.Quote(text)
@@ -127,8 +127,8 @@ func (m *Mode) handleKeyInPaste(k ui.Key) {
 	}
 }
 
-func (m *Mode) handleKey(k ui.Key, st *types.State) types.HandlerAction {
-	var action types.HandlerAction
+func (m *Mode) handleKey(k ui.Key, st *clitypes.State) clitypes.HandlerAction {
+	var action clitypes.HandlerAction
 	if m.KeyHandler != nil {
 		action = m.KeyHandler(k)
 	} else {

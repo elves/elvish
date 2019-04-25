@@ -7,7 +7,7 @@ import (
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/tt"
 )
 
@@ -43,7 +43,7 @@ var basicHandlerKeyEventsTests = []struct {
 func TestBasicHandler_KeyEvents(t *testing.T) {
 	for _, test := range basicHandlerKeyEventsTests {
 		t.Run(test.name, func(t *testing.T) {
-			st := types.State{}
+			st := clitypes.State{}
 			for _, key := range test.keys {
 				BasicHandler(tty.KeyEvent(key), &st)
 			}
@@ -59,7 +59,7 @@ func TestBasicHandler_KeyEvents(t *testing.T) {
 }
 
 func TestBasicHandler_NotifiesOnUnboundKeys(t *testing.T) {
-	st := types.State{}
+	st := clitypes.State{}
 
 	BasicHandler(tty.KeyEvent{Mod: ui.Ctrl, Rune: 'X'}, &st)
 
@@ -77,7 +77,7 @@ var otherEvents = []tty.Event{
 func TestBasicHandler_IgnoresOtherEvents(t *testing.T) {
 	for _, event := range otherEvents {
 		t.Run(fmt.Sprintf("event type %T", event), func(t *testing.T) {
-			st := types.State{}
+			st := clitypes.State{}
 			oldRaw := st.Raw
 			BasicHandler(event, &st)
 			if !reflect.DeepEqual(oldRaw, st.Raw) {

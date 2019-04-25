@@ -7,7 +7,7 @@ import (
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
 )
@@ -21,10 +21,10 @@ func (it fakeItems) Show(i int) styled.Text {
 	return styled.Unstyled(strconv.Itoa(i))
 }
 
-func (it fakeItems) Accept(int, *types.State) {}
+func (it fakeItems) Accept(int, *clitypes.State) {}
 
 // Implementation of Items that emulate 10 empty texts, but can be accepted.
-type fakeAcceptableItems struct{ accept func(int, *types.State) }
+type fakeAcceptableItems struct{ accept func(int, *clitypes.State) }
 
 func (it fakeAcceptableItems) Len() int { return 10 }
 
@@ -32,7 +32,7 @@ func (it fakeAcceptableItems) Show(int) styled.Text {
 	return styled.Unstyled("")
 }
 
-func (it fakeAcceptableItems) Accept(i int, st *types.State) {
+func (it fakeAcceptableItems) Accept(i int, st *clitypes.State) {
 	it.accept(i, st)
 }
 
@@ -67,15 +67,15 @@ func TestHandleEvent_CallsKeyHandler(t *testing.T) {
 	m := Mode{}
 	key := ui.K('a')
 	var calledKey ui.Key
-	m.Start(StartConfig{KeyHandler: func(k ui.Key) types.HandlerAction {
+	m.Start(StartConfig{KeyHandler: func(k ui.Key) clitypes.HandlerAction {
 		calledKey = k
-		return types.CommitCode
+		return clitypes.CommitCode
 	}})
-	a := m.HandleEvent(tty.KeyEvent(key), &types.State{})
+	a := m.HandleEvent(tty.KeyEvent(key), &clitypes.State{})
 	if calledKey != key {
 		t.Errorf("KeyHandler called with %v, want %v", calledKey, key)
 	}
-	if a != types.CommitCode {
+	if a != clitypes.CommitCode {
 		t.Errorf("m.HandleEvent returns %v, want CommitCode", a)
 	}
 }
@@ -85,7 +85,7 @@ func TestHandleEvent_DefaultBinding(t *testing.T) {
 	m.Start(StartConfig{ItemsGetter: func(string) Items {
 		return fakeItems{10}
 	}})
-	st := types.State{}
+	st := clitypes.State{}
 	st.SetMode(&m)
 
 	m.HandleEvent(tty.K(ui.Down), &st)
@@ -142,7 +142,7 @@ func TestDefaultHandler_Filtering(t *testing.T) {
 		return fakeItems{10}
 	}})
 	m.state.filtering = true
-	st := types.State{}
+	st := clitypes.State{}
 	st.SetMode(&m)
 
 	st.SetBindingKey(ui.K('a'))
@@ -177,7 +177,7 @@ func TestDefaultHandler_NotFiltering(t *testing.T) {
 	m.Start(StartConfig{ItemsGetter: func(f string) Items {
 		return fakeItems{10}
 	}})
-	st := types.State{}
+	st := clitypes.State{}
 	st.SetMode(&m)
 
 	st.SetBindingKey(ui.K('a'))
@@ -200,7 +200,7 @@ func TestDefaultHandler_AutoAccept(t *testing.T) {
 		AutoAccept:  true,
 	})
 
-	st := types.State{}
+	st := clitypes.State{}
 	st.SetMode(&m)
 
 	st.SetBindingKey(ui.K('x'))
@@ -218,8 +218,8 @@ func TestDefaultHandler_AutoAccept(t *testing.T) {
 
 func TestHandleEvent_NonKeyEvent(t *testing.T) {
 	m := Mode{}
-	a := m.HandleEvent(tty.MouseEvent{}, &types.State{})
-	if a != types.NoAction {
+	a := m.HandleEvent(tty.MouseEvent{}, &clitypes.State{})
+	if a != clitypes.NoAction {
 		t.Errorf("m.HandleEvent returns %v, want NoAction", a)
 	}
 }
@@ -238,10 +238,10 @@ func TestAcceptItem(t *testing.T) {
 	m := Mode{}
 	accepted := -1
 	m.Start(StartConfig{ItemsGetter: func(string) Items {
-		return fakeAcceptableItems{func(i int, st *types.State) { accepted = i }}
+		return fakeAcceptableItems{func(i int, st *clitypes.State) { accepted = i }}
 	}})
 	m.state.selected = 7
-	m.AcceptItem(&types.State{})
+	m.AcceptItem(&clitypes.State{})
 	if accepted != 7 {
 		t.Errorf("accept called with %v, want 7", accepted)
 	}
@@ -251,10 +251,10 @@ func TestAcceptItemAndClose(t *testing.T) {
 	m := Mode{}
 	accepted := -1
 	m.Start(StartConfig{ItemsGetter: func(string) Items {
-		return fakeAcceptableItems{func(i int, st *types.State) { accepted = i }}
+		return fakeAcceptableItems{func(i int, st *clitypes.State) { accepted = i }}
 	}})
 	m.state.selected = 7
-	st := &types.State{}
+	st := &clitypes.State{}
 	st.SetMode(&m)
 	m.AcceptItemAndClose(st)
 	if accepted != 7 {

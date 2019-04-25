@@ -20,11 +20,11 @@ import (
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/styled"
 )
 
-// Mode represents a listing mode, implementing the types.Mode interface.
+// Mode represents a listing mode, implementing the clitypes.Mode interface.
 type Mode struct {
 	StartConfig
 	state      State
@@ -34,7 +34,7 @@ type Mode struct {
 // StartConfig is the configuration for starting the listing mode.
 type StartConfig struct {
 	Name        string
-	KeyHandler  func(ui.Key) types.HandlerAction
+	KeyHandler  func(ui.Key) clitypes.HandlerAction
 	ItemsGetter func(filter string) Items
 	StartFilter bool
 	AutoAccept  bool
@@ -45,7 +45,7 @@ type StartConfig struct {
 type Items interface {
 	Len() int
 	Show(int) styled.Text
-	Accept(int, *types.State)
+	Accept(int, *clitypes.State)
 }
 
 // SliceItems returns an Items consisting of the given texts.
@@ -53,9 +53,9 @@ func SliceItems(texts ...styled.Text) Items { return sliceItems{texts} }
 
 type sliceItems struct{ texts []styled.Text }
 
-func (it sliceItems) Len() int                 { return len(it.texts) }
-func (it sliceItems) Show(i int) styled.Text   { return it.texts[i] }
-func (it sliceItems) Accept(int, *types.State) {}
+func (it sliceItems) Len() int                    { return len(it.texts) }
+func (it sliceItems) Show(i int) styled.Text      { return it.texts[i] }
+func (it sliceItems) Accept(int, *clitypes.State) {}
 
 // Start starts the listing mode, using the given config and resetting all
 // states.
@@ -77,15 +77,15 @@ func (m *Mode) ModeLine() ui.Renderer {
 }
 
 // ModeRenderFlag returns CursorOnModeLine if filtering, or 0 otherwise.
-func (m *Mode) ModeRenderFlag() types.ModeRenderFlag {
+func (m *Mode) ModeRenderFlag() clitypes.ModeRenderFlag {
 	if m.state.filtering {
-		return types.CursorOnModeLine
+		return clitypes.CursorOnModeLine
 	}
 	return 0
 }
 
 // HandleEvent handles key events and ignores other types of events.
-func (m *Mode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
+func (m *Mode) HandleEvent(e tty.Event, st *clitypes.State) clitypes.HandlerAction {
 	switch e := e.(type) {
 	case tty.KeyEvent:
 		if m.KeyHandler == nil {
@@ -95,12 +95,12 @@ func (m *Mode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
 		}
 		return m.KeyHandler(ui.Key(e))
 	default:
-		return types.NoAction
+		return clitypes.NoAction
 	}
 }
 
 // DefaultHandler handles keys when filtering, and resets the mode when not.
-func (m *Mode) DefaultHandler(st *types.State) {
+func (m *Mode) DefaultHandler(st *clitypes.State) {
 	m.stateMutex.Lock()
 	defer m.stateMutex.Unlock()
 	defaultHandler(st.BindingKey(), st, &m.state)
@@ -110,7 +110,7 @@ func (m *Mode) DefaultHandler(st *types.State) {
 	}
 }
 
-func defaultBinding(k ui.Key, st *types.State, mst *State) types.HandlerAction {
+func defaultBinding(k ui.Key, st *clitypes.State, mst *State) clitypes.HandlerAction {
 	switch k {
 	case ui.K('[', ui.Ctrl):
 		// TODO(xiaq): Go back to previous mode instead of the initial mode.
@@ -131,7 +131,7 @@ func defaultBinding(k ui.Key, st *types.State, mst *State) types.HandlerAction {
 	return 0
 }
 
-func defaultHandler(k ui.Key, st *types.State, mst *State) types.HandlerAction {
+func defaultHandler(k ui.Key, st *clitypes.State, mst *State) clitypes.HandlerAction {
 	if mst.filtering {
 		filter := mst.filter
 		if k == ui.K(ui.Backspace) {
@@ -164,7 +164,7 @@ func (m *Mode) MutateStates(f func(*State)) {
 }
 
 // AcceptItem accepts the currently selected item.
-func (m *Mode) AcceptItem(st *types.State) {
+func (m *Mode) AcceptItem(st *clitypes.State) {
 	m.stateMutex.Lock()
 	defer m.stateMutex.Unlock()
 	m.state.items.Accept(m.state.selected, st)
@@ -172,7 +172,7 @@ func (m *Mode) AcceptItem(st *types.State) {
 
 // AcceptItemAndClose accepts the currently selected item and closes the listing
 // mode.
-func (m *Mode) AcceptItemAndClose(st *types.State) {
+func (m *Mode) AcceptItemAndClose(st *clitypes.State) {
 	m.stateMutex.Lock()
 	defer m.stateMutex.Unlock()
 	m.state.items.Accept(m.state.selected, st)

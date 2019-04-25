@@ -6,7 +6,7 @@ import (
 
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/types"
+	"github.com/elves/elvish/newedit/clitypes"
 )
 
 // BasicMode is a basic Mode implementation.
@@ -18,22 +18,22 @@ func (BasicMode) ModeLine() ui.Renderer {
 }
 
 // ModeRenderFlag returns 0.
-func (BasicMode) ModeRenderFlag() types.ModeRenderFlag {
+func (BasicMode) ModeRenderFlag() clitypes.ModeRenderFlag {
 	return 0
 }
 
 // HandleEvent uses BasicHandler to handle the event.
-func (BasicMode) HandleEvent(e tty.Event, st *types.State) types.HandlerAction {
+func (BasicMode) HandleEvent(e tty.Event, st *clitypes.State) clitypes.HandlerAction {
 	return BasicHandler(e, st)
 }
 
 // BasicHandler is a basic implementation of an event handler. It is used in
 // BasicMode.HandleEvent, but can also be used in other modes as a fallback
 // handler.
-func BasicHandler(e tty.Event, st *types.State) types.HandlerAction {
+func BasicHandler(e tty.Event, st *clitypes.State) clitypes.HandlerAction {
 	keyEvent, ok := e.(tty.KeyEvent)
 	if !ok {
-		return types.NoAction
+		return clitypes.NoAction
 	}
 	k := ui.Key(keyEvent)
 
@@ -44,7 +44,7 @@ func BasicHandler(e tty.Event, st *types.State) types.HandlerAction {
 
 	switch k {
 	case ui.Key{Rune: '\n'}:
-		return types.CommitCode
+		return clitypes.CommitCode
 	case ui.Key{Rune: ui.Backspace}:
 		beforeDot := raw.Code[:raw.Dot]
 		afterDot := raw.Code[raw.Dot:]
@@ -66,7 +66,7 @@ func BasicHandler(e tty.Event, st *types.State) types.HandlerAction {
 			raw.Notes = append(raw.Notes, "Unbound: "+k.String())
 		}
 	}
-	return types.NoAction
+	return clitypes.NoAction
 }
 
 // IsChar returns whether the given key is not a character insertion.

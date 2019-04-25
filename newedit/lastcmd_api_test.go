@@ -6,8 +6,8 @@ import (
 
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/newedit/listing"
-	"github.com/elves/elvish/newedit/types"
 )
 
 func TestInitLastCmd_Start(t *testing.T) {
@@ -23,7 +23,7 @@ func TestInitLastCmd_Start(t *testing.T) {
 	fm.Call(getFn(ns, "start"), nil, eval.NoOpts)
 
 	// Verify that the current mode supports listing.
-	lister, ok := ed.state.Mode().(types.Lister)
+	lister, ok := ed.state.Mode().(clitypes.Lister)
 	if !ok {
 		t.Errorf("Mode is not Lister after <edit:lastcmd>:start")
 	}
