@@ -7,10 +7,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/cliutil"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/clitypes"
-	"github.com/elves/elvish/newedit/cliutil"
 	"github.com/elves/elvish/parse"
 )
 

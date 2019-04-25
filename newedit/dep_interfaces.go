@@ -1,6 +1,6 @@
 package newedit
 
-import "github.com/elves/elvish/newedit/clitypes"
+import "github.com/elves/elvish/cli/clitypes"
 
 // The editor's dependencies are not concrete implementations, but interfaces.
 // This file defines the interfaces for those dependencies as well as fake

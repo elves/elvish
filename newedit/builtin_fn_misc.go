@@ -1,8 +1,8 @@
 package newedit
 
 import (
+	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/edit/eddefs"
-	"github.com/elves/elvish/newedit/clitypes"
 )
 
 //elvdoc:fn binding-map

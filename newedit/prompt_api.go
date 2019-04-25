@@ -7,10 +7,10 @@ import (
 	"os/user"
 	"sync"
 
+	"github.com/elves/elvish/cli/clicore"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
-	"github.com/elves/elvish/newedit/clicore"
 	"github.com/elves/elvish/newedit/prompt"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"

@@ -5,7 +5,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/newedit/clitypes"
+	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/util"
 )
 

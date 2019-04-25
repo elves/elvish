@@ -3,9 +3,9 @@ package clicore
 import (
 	"fmt"
 
+	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/clitypes"
 )
 
 // A Mode implementation useful in tests.

@@ -3,7 +3,7 @@ package cliutil
 import (
 	"fmt"
 
-	"github.com/elves/elvish/newedit/clitypes"
+	"github.com/elves/elvish/cli/clitypes"
 )
 
 // ActionError is like HandlerAction with an Error method. It is useful as a

@@ -5,10 +5,10 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/cliutil"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/newedit/clitypes"
-	"github.com/elves/elvish/newedit/cliutil"
 )
 
 func TestKeyHandlerFromBinding_CallsBinding(t *testing.T) {

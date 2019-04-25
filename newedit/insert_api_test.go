@@ -4,11 +4,11 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
-	"github.com/elves/elvish/newedit/clitypes"
 )
 
 var abbrData = [][2]string{{"xx", "xx full"}, {"yy", "yy full"}}

@@ -1,8 +1,8 @@
 package clicore
 
 import (
-	"github.com/elves/elvish/newedit/clitypes"
-	"github.com/elves/elvish/newedit/cliutil"
+	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/cliutil"
 )
 
 // Returns the first non-nil value. If all are nil, return utils.BasicMode{}

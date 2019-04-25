@@ -1,8 +1,8 @@
 package newedit
 
 import (
-	"github.com/elves/elvish/newedit/clitypes"
-	"github.com/elves/elvish/newedit/cliutil"
+	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/cliutil"
 )
 
 //elvdoc:fn exit-binding

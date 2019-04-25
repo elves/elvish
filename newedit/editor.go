@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/elves/elvish/cli/clicore"
 	"github.com/elves/elvish/edit/history/histutil"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
-	"github.com/elves/elvish/newedit/clicore"
 	"github.com/elves/elvish/newedit/highlight"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"

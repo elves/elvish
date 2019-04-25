@@ -6,8 +6,8 @@ import (
 	"sync"
 	"syscall"
 
+	clitypes "github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/edit/tty"
-	clitypes "github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )

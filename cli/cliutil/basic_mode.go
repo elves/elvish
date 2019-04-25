@@ -4,9 +4,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/clitypes"
 )
 
 // BasicMode is a basic Mode implementation.

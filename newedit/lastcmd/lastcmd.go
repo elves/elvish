@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/clitypes"
 	"github.com/elves/elvish/newedit/listing"
 	"github.com/elves/elvish/styled"
 )

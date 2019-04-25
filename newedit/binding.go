@@ -6,12 +6,12 @@ import (
 	"os"
 	"sync"
 
+	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/cliutil"
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
-	"github.com/elves/elvish/newedit/clitypes"
-	"github.com/elves/elvish/newedit/cliutil"
 )
 
 // TODO(xiaq): Move the implementation into this package.

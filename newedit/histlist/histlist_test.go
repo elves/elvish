@@ -3,7 +3,7 @@ package histlist
 import (
 	"testing"
 
-	"github.com/elves/elvish/newedit/clitypes"
+	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/newedit/listing"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
