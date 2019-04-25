@@ -12,17 +12,17 @@ import (
 )
 
 // Initializes states for the insert mode and its API.
-func initInsert(ed editor, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
+func initInsert(a app, ev *eval.Evaler) (*insert.Mode, eval.Ns) {
 	// Underlying abbreviation map and binding map.
 	abbr := vals.EmptyMap
 	binding := emptyBindingMap
 
 	m := &insert.Mode{
-		KeyHandler:  keyHandlerFromBindings(ed, ev, &binding),
+		KeyHandler:  keyHandlerFromBindings(a, ev, &binding),
 		AbbrIterate: func(cb func(a, f string)) { abbrIterate(abbr, cb) },
 	}
 
-	st := ed.State()
+	st := a.State()
 
 	ns := eval.Ns{
 		"binding": vars.FromPtr(&binding),

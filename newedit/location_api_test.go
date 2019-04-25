@@ -13,7 +13,7 @@ import (
 )
 
 func TestLocation_Start(t *testing.T) {
-	ed := &fakeEditor{}
+	ed := &fakeApp{}
 	ev := eval.NewEvaler()
 	lsMode := listing.Mode{}
 	lsBinding := emptyBindingMap

@@ -12,9 +12,9 @@ import (
 	"github.com/elves/elvish/sys"
 )
 
-// Editor keeps all the state of an interactive line editor throughout its life
-// time as well as its dependencies.
-type Editor struct {
+// App keeps all the state of an CLI throughout its life time as well as its
+// dependencies.
+type App struct {
 	loop *loop
 	// External dependencies
 	tty  TTY
@@ -22,7 +22,7 @@ type Editor struct {
 
 	state clitypes.State
 
-	// Editor configuration that can be modified concurrently.
+	// Configuration that can be modified concurrently.
 	Config Config
 
 	// Functions called when ReadCode starts.
@@ -41,20 +41,20 @@ type Editor struct {
 	InitMode clitypes.Mode
 }
 
-// NewEditor creates a new editor from its two dependencies. The creation does
-// not have any observable side effect; a newly created editor is not
-// immediately active.
-func NewEditor(t TTY, sigs SignalSource) *Editor {
+// NewApp creates a new App from its two dependencies. The creation does not
+// have any observable side effect; a newly created App is not immediately
+// active.
+func NewApp(t TTY, sigs SignalSource) *App {
 	lp := newLoop()
-	ed := &Editor{loop: lp, tty: t, sigs: sigs}
-	lp.HandleCb(ed.handle)
-	lp.RedrawCb(ed.redraw)
-	return ed
+	app := &App{loop: lp, tty: t, sigs: sigs}
+	lp.HandleCb(app.handle)
+	lp.RedrawCb(app.redraw)
+	return app
 }
 
-// State returns the editor state.
-func (ed *Editor) State() *clitypes.State {
-	return &ed.state
+// State returns the App's state.
+func (app *App) State() *clitypes.State {
+	return &app.state
 }
 
 // A special event type signalling something has seen a late update and a
@@ -62,86 +62,86 @@ func (ed *Editor) State() *clitypes.State {
 // highlighting.
 type lateUpdate struct{}
 
-func (ed *Editor) handle(e event) handleResult {
+func (app *App) handle(e event) handleResult {
 	switch e := e.(type) {
 	case lateUpdate:
-		ed.Redraw(false)
+		app.Redraw(false)
 		return handleResult{}
 	case os.Signal:
 		switch e {
 		case syscall.SIGHUP:
 			return handleResult{quit: true, err: io.EOF}
 		case syscall.SIGINT:
-			ed.state.Reset()
-			ed.triggerPrompts(true)
+			app.state.Reset()
+			app.triggerPrompts(true)
 		case sys.SIGWINCH:
-			ed.Redraw(true)
+			app.Redraw(true)
 		}
 		return handleResult{}
 	case tty.Event:
-		action := getMode(ed.state.Mode(), ed.InitMode).HandleEvent(e, &ed.state)
+		action := getMode(app.state.Mode(), app.InitMode).HandleEvent(e, &app.state)
 
 		switch action {
 		case clitypes.CommitCode:
-			return handleResult{quit: true, buffer: ed.state.Code()}
+			return handleResult{quit: true, buffer: app.state.Code()}
 		case clitypes.CommitEOF:
 			return handleResult{quit: true, err: io.EOF}
 		}
-		ed.triggerPrompts(false)
+		app.triggerPrompts(false)
 		return handleResult{}
 	default:
 		panic("unreachable")
 	}
 }
 
-func (ed *Editor) triggerPrompts(force bool) {
-	if ed.Prompt != nil {
-		ed.Prompt.Trigger(force)
+func (app *App) triggerPrompts(force bool) {
+	if app.Prompt != nil {
+		app.Prompt.Trigger(force)
 	}
-	if ed.RPrompt != nil {
-		ed.RPrompt.Trigger(force)
+	if app.RPrompt != nil {
+		app.RPrompt.Trigger(force)
 	}
 }
 
 var transformerForPending = "underline"
 
-func (ed *Editor) redraw(flag redrawFlag) {
+func (app *App) redraw(flag redrawFlag) {
 	// Get the state, depending on whether this is the final redraw.
 	var rawState *clitypes.RawState
 	final := flag&finalRedraw != 0
 	if final {
-		rawState = ed.state.Finalize()
+		rawState = app.state.Finalize()
 	} else {
-		rawState = ed.state.PopForRedraw()
+		rawState = app.state.PopForRedraw()
 	}
 
 	// Get the dimensions available.
-	height, width := ed.tty.Size()
-	if maxHeight := ed.Config.MaxHeight(); maxHeight > 0 && maxHeight < height {
+	height, width := app.tty.Size()
+	if maxHeight := app.Config.MaxHeight(); maxHeight > 0 && maxHeight < height {
 		height = maxHeight
 	}
 
 	// Prepare the code: applying pending, and highlight.
 	code, dot := applyPending(rawState)
-	styledCode, errors := highlighterGet(ed.Highlighter, code)
+	styledCode, errors := highlighterGet(app.Highlighter, code)
 	// TODO: Apply transformerForPending to pending code.
 
 	// Render onto buffers.
 	setup := &renderSetup{
 		height, width,
-		promptGet(ed.Prompt), promptGet(ed.RPrompt),
+		promptGet(app.Prompt), promptGet(app.RPrompt),
 		styledCode, dot, errors,
 		rawState.Notes,
-		getMode(rawState.Mode, ed.InitMode)}
+		getMode(rawState.Mode, app.InitMode)}
 
 	bufNotes, bufMain := render(setup)
 
 	// Apply buffers.
-	ed.tty.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
+	app.tty.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 
 	if final {
-		ed.tty.Newline()
-		ed.tty.ResetBuffer()
+		app.tty.Newline()
+		app.tty.ResetBuffer()
 	}
 }
 
@@ -158,15 +158,15 @@ func applyPending(st *clitypes.RawState) (code string, dot int) {
 	return code, dot
 }
 
-// ReadCode requests the Editor to read code from the terminal. It causes the
-// Editor to read events from the terminal and signal source supplied at
-// creation, redraws the editor to the terminal on such events, and eventually
-// return when an event triggers the current mode to request an exit.
+// ReadCode requests the App to read code from the terminal. It causes the App
+// to read events from the terminal and signal source supplied at creation,
+// redraws to the terminal on such events, and eventually return when an event
+// triggers the current mode to request an exit.
 //
-// This function is not re-entrant; when it is being executed, the editor is
-// said to be active.
-func (ed *Editor) ReadCode() (string, error) {
-	restore, err := ed.tty.Setup()
+// This function is not re-entrant; when it is being executed, the App is said
+// to be active.
+func (app *App) ReadCode() (string, error) {
+	restore, err := app.tty.Setup()
 	if err != nil {
 		return "", err
 	}
@@ -176,24 +176,24 @@ func (ed *Editor) ReadCode() (string, error) {
 	defer wg.Wait()
 
 	// Relay input events.
-	eventCh := ed.tty.StartInput()
-	defer ed.tty.StopInput()
+	eventCh := app.tty.StartInput()
+	defer app.tty.StopInput()
 	wg.Add(1)
 	go func() {
 		for event := range eventCh {
-			ed.loop.Input(event)
+			app.loop.Input(event)
 		}
 		wg.Done()
 	}()
 
-	if ed.sigs != nil {
+	if app.sigs != nil {
 		// Relay signals.
-		sigCh := ed.sigs.NotifySignals()
-		defer ed.sigs.StopSignals()
+		sigCh := app.sigs.NotifySignals()
+		defer app.sigs.StopSignals()
 		wg.Add(1)
 		go func() {
 			for sig := range sigCh {
-				ed.loop.Input(sig)
+				app.loop.Input(sig)
 			}
 			wg.Done()
 		}()
@@ -209,51 +209,51 @@ func (ed *Editor) ReadCode() (string, error) {
 			for {
 				select {
 				case <-ch:
-					ed.loop.Input(lateUpdate{})
+					app.loop.Input(lateUpdate{})
 				case <-stopRelayLateUpdates:
 					return
 				}
 			}
 		}()
 	}
-	if ed.Prompt != nil {
-		relayLateUpdates(ed.Prompt.LateUpdates())
+	if app.Prompt != nil {
+		relayLateUpdates(app.Prompt.LateUpdates())
 	}
-	if ed.RPrompt != nil {
-		relayLateUpdates(ed.RPrompt.LateUpdates())
+	if app.RPrompt != nil {
+		relayLateUpdates(app.RPrompt.LateUpdates())
 	}
-	if ed.Highlighter != nil {
-		relayLateUpdates(ed.Highlighter.LateUpdates())
+	if app.Highlighter != nil {
+		relayLateUpdates(app.Highlighter.LateUpdates())
 	}
 
 	// Trigger an initial prompt update.
-	ed.triggerPrompts(true)
+	app.triggerPrompts(true)
 
 	// Reset state before returning.
-	defer ed.state.Reset()
+	defer app.state.Reset()
 
 	// BeforeReadline and AfterReadline hooks.
-	for _, f := range ed.BeforeReadline {
+	for _, f := range app.BeforeReadline {
 		f()
 	}
-	if len(ed.AfterReadline) > 0 {
+	if len(app.AfterReadline) > 0 {
 		defer func() {
-			for _, f := range ed.AfterReadline {
-				f(ed.state.Code())
+			for _, f := range app.AfterReadline {
+				f(app.state.Code())
 			}
 		}()
 	}
 
-	return ed.loop.Run()
+	return app.loop.Run()
 }
 
 // Like ReadCode, but returns immediately with two channels that will get the
 // return values of ReadCode. Useful in tests.
-func (ed *Editor) readCodeAsync() (<-chan string, <-chan error) {
+func (app *App) readCodeAsync() (<-chan string, <-chan error) {
 	codeCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {
-		code, err := ed.ReadCode()
+		code, err := app.ReadCode()
 		codeCh <- code
 		errCh <- err
 	}()
@@ -261,23 +261,23 @@ func (ed *Editor) readCodeAsync() (<-chan string, <-chan error) {
 }
 
 // Redraw requests a redraw. It never blocks and can be called regardless of
-// whether the editor is active or not.
-func (ed *Editor) Redraw(full bool) {
-	ed.loop.Redraw(full)
+// whether the App is active or not.
+func (app *App) Redraw(full bool) {
+	app.loop.Redraw(full)
 }
 
 // Notify adds a note and requests a redraw.
-func (ed *Editor) Notify(note string) {
-	ed.state.AddNote(note)
-	ed.Redraw(false)
+func (app *App) Notify(note string) {
+	app.state.AddNote(note)
+	app.Redraw(false)
 }
 
 // AddBeforeReadline adds a new before-readline hook function.
-func (ed *Editor) AddBeforeReadline(f func()) {
-	ed.BeforeReadline = append(ed.BeforeReadline, f)
+func (app *App) AddBeforeReadline(f func()) {
+	app.BeforeReadline = append(app.BeforeReadline, f)
 }
 
 // AddAfterReadline adds a new after-readline hook function.
-func (ed *Editor) AddAfterReadline(f func(string)) {
-	ed.AfterReadline = append(ed.AfterReadline, f)
+func (app *App) AddAfterReadline(f func(string)) {
+	app.AfterReadline = append(app.AfterReadline, f)
 }

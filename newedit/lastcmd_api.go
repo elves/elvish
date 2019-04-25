@@ -9,25 +9,25 @@ import (
 )
 
 // Initializes states for the lastcmd mode and its API.
-func initLastcmd(ed editor, ev *eval.Evaler, st storedefs.Store, lsMode *listing.Mode, lsBinding *bindingMap) eval.Ns {
+func initLastcmd(a app, ev *eval.Evaler, st storedefs.Store, lsMode *listing.Mode, lsBinding *bindingMap) eval.Ns {
 	binding := emptyBindingMap
 	mode := lastcmd.Mode{
 		Mode:       lsMode,
-		KeyHandler: keyHandlerFromBindings(ed, ev, &binding, lsBinding),
+		KeyHandler: keyHandlerFromBindings(a, ev, &binding, lsBinding),
 	}
 	ns := eval.Ns{}.
 		AddGoFn("<edit:lastcmd>:", "start", func() {
-			startLastcmd(ed, st, &mode)
+			startLastcmd(a, st, &mode)
 		})
 	return ns
 }
 
-func startLastcmd(ed editor, st storedefs.Store, mode *lastcmd.Mode) {
+func startLastcmd(a app, st storedefs.Store, mode *lastcmd.Mode) {
 	_, cmd, err := st.PrevCmd(-1, "")
 	if err != nil {
-		ed.Notify("db error: " + err.Error())
+		a.Notify("db error: " + err.Error())
 		return
 	}
 	mode.Start(cmd, parseutil.Wordify(cmd))
-	ed.State().SetMode(mode)
+	a.State().SetMode(mode)
 }

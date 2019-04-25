@@ -14,7 +14,7 @@ import (
 var abbrData = [][2]string{{"xx", "xx full"}, {"yy", "yy full"}}
 
 func TestInitInsert_Abbr(t *testing.T) {
-	m, ns := initInsert(&fakeEditor{}, eval.NewEvaler())
+	m, ns := initInsert(&fakeApp{}, eval.NewEvaler())
 
 	abbrValue := vals.EmptyMap
 	for _, pair := range abbrData {
@@ -33,7 +33,7 @@ func TestInitInsert_Abbr(t *testing.T) {
 }
 
 func TestInitInsert_Binding(t *testing.T) {
-	m, ns := initInsert(&fakeEditor{}, eval.NewEvaler())
+	m, ns := initInsert(&fakeApp{}, eval.NewEvaler())
 	called := 0
 	binding, err := emptyBindingMap.Assoc("a",
 		eval.NewGoFn("test binding", func() { called++ }))
@@ -50,7 +50,7 @@ func TestInitInsert_Binding(t *testing.T) {
 }
 
 func TestInitInsert_QuotePaste(t *testing.T) {
-	m, ns := initInsert(&fakeEditor{}, eval.NewEvaler())
+	m, ns := initInsert(&fakeApp{}, eval.NewEvaler())
 
 	ns["quote-paste"].Set(true)
 
@@ -60,7 +60,7 @@ func TestInitInsert_QuotePaste(t *testing.T) {
 }
 
 func TestInitInsert_Start(t *testing.T) {
-	ed := &fakeEditor{}
+	ed := &fakeApp{}
 	ev := eval.NewEvaler()
 	m, ns := initInsert(ed, ev)
 
@@ -73,7 +73,7 @@ func TestInitInsert_Start(t *testing.T) {
 }
 
 func TestInitInsert_DefaultHandler(t *testing.T) {
-	ed := &fakeEditor{}
+	ed := &fakeApp{}
 	ev := eval.NewEvaler()
 	_, ns := initInsert(ed, ev)
 

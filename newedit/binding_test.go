@@ -15,7 +15,7 @@ func TestKeyHandlerFromBinding_CallsBinding(t *testing.T) {
 	called := 0
 	binding := buildBinding(
 		"a", eval.NewGoFn("[test]", func() { called++ }))
-	handler := keyHandlerFromBindings(&fakeEditor{}, eval.NewEvaler(), &binding)
+	handler := keyHandlerFromBindings(&fakeApp{}, eval.NewEvaler(), &binding)
 
 	action := handler(ui.Key{Rune: 'a'})
 
@@ -28,7 +28,7 @@ func TestKeyHandlerFromBinding_CallsBinding(t *testing.T) {
 }
 
 func TestKeyHandlerFromBinding_SetsBindingKey(t *testing.T) {
-	ed := &fakeEditor{}
+	ed := &fakeApp{}
 	var gotKey ui.Key
 	binding := buildBinding(
 		"a", eval.NewGoFn("[test]", func() { gotKey = ed.State().BindingKey() }))
@@ -43,7 +43,7 @@ func TestKeyHandlerFromBinding_SetsBindingKey(t *testing.T) {
 }
 
 func TestKeyHandlerFromBinding_Unbound(t *testing.T) {
-	ed := &fakeEditor{}
+	ed := &fakeApp{}
 	binding := emptyBindingMap
 	handler := keyHandlerFromBindings(ed, eval.NewEvaler(), &binding)
 
@@ -70,7 +70,7 @@ func TestIndexLayeredBindings(t *testing.T) {
 		"a", eval.NewGoFn("[a2]", func() { called = 2 }),
 		"b", eval.NewGoFn("[b2]", func() { called = 2 }))
 
-	handler := keyHandlerFromBindings(&fakeEditor{}, eval.NewEvaler(),
+	handler := keyHandlerFromBindings(&fakeApp{}, eval.NewEvaler(),
 		&binding1, &binding2)
 
 	// Prefer upper layer when present in both

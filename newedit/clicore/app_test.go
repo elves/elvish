@@ -388,10 +388,10 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	cleanup(terminal, codeCh)
 }
 
-func setup() (*Editor, *fakeTTY, *fakeSignalSource) {
+func setup() (*App, *fakeTTY, *fakeSignalSource) {
 	terminal := newFakeTTY()
 	sigsrc := newFakeSignalSource()
-	ed := NewEditor(terminal, sigsrc)
+	ed := NewApp(terminal, sigsrc)
 	return ed, terminal, sigsrc
 }
 

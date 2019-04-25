@@ -7,24 +7,24 @@ import (
 )
 
 // Initializes states for the histlist mode and its API.
-func initHistlist(ed editor, ev *eval.Evaler, getCmds func() ([]string, error), lsMode *listing.Mode, lsBinding *bindingMap) eval.Ns {
+func initHistlist(a app, ev *eval.Evaler, getCmds func() ([]string, error), lsMode *listing.Mode, lsBinding *bindingMap) eval.Ns {
 	binding := emptyBindingMap
 	mode := histlist.Mode{
 		Mode:       lsMode,
-		KeyHandler: keyHandlerFromBindings(ed, ev, &binding, lsBinding),
+		KeyHandler: keyHandlerFromBindings(a, ev, &binding, lsBinding),
 	}
 	ns := eval.Ns{}.
 		AddGoFn("<edit:histlist>", "start", func() {
-			startHistlist(ed, getCmds, &mode)
+			startHistlist(a, getCmds, &mode)
 		})
 	return ns
 }
 
-func startHistlist(ed editor, getCmds func() ([]string, error), mode *histlist.Mode) {
+func startHistlist(a app, getCmds func() ([]string, error), mode *histlist.Mode) {
 	cmds, err := getCmds()
 	if err != nil {
-		ed.Notify("db error: " + err.Error())
+		a.Notify("db error: " + err.Error())
 	}
 	mode.Start(cmds)
-	ed.State().SetMode(mode)
+	a.State().SetMode(mode)
 }

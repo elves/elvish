@@ -7,7 +7,7 @@ import (
 func TestInitListing_Binding(t *testing.T) {
 	// Test that the binding variable in the returned namespace indeed refers to
 	// the BindingMap returned.
-	_, binding, ns := initListing(&fakeEditor{})
+	_, binding, ns := initListing(&fakeApp{})
 	if ns["binding"].Get() != *binding {
 		t.Errorf("The binding var in the ns is not the same as the BindingMap")
 	}

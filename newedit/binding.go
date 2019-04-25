@@ -22,17 +22,17 @@ type bindingMap = eddefs.BindingMap
 // An empty binding map. It is useful for building binding maps.
 var emptyBindingMap = eddefs.EmptyBindingMap
 
-func keyHandlerFromBindings(ed editor, ev *eval.Evaler, bs ...*bindingMap) func(ui.Key) clitypes.HandlerAction {
+func keyHandlerFromBindings(a app, ev *eval.Evaler, bs ...*bindingMap) func(ui.Key) clitypes.HandlerAction {
 	return func(k ui.Key) clitypes.HandlerAction {
 		f := indexLayeredBindings(k, bs...)
 		// TODO: Make this fallback part of GetOrDefault after moving BindingMap
 		// into this package.
 		if f == nil {
-			ed.Notify("Unbound: " + k.String())
+			a.Notify("Unbound: " + k.String())
 			return clitypes.NoAction
 		}
-		ed.State().SetBindingKey(k)
-		return callBinding(ed, ev, f)
+		a.State().SetBindingKey(k)
+		return callBinding(a, ev, f)
 	}
 }
 

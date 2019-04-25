@@ -6,7 +6,7 @@ import (
 	"github.com/elves/elvish/newedit/listing"
 )
 
-func initListing(ed editor) (*listing.Mode, *bindingMap, eval.Ns) {
+func initListing(a app) (*listing.Mode, *bindingMap, eval.Ns) {
 	mode := &listing.Mode{}
 	binding := emptyBindingMap
 	ns := eval.Ns{
@@ -19,10 +19,10 @@ func initListing(ed editor) (*listing.Mode, *bindingMap, eval.Ns) {
 
 		"toggle-filtering": func() { mode.MutateStates((*listing.State).ToggleFiltering) },
 
-		"accept":       func() { mode.AcceptItem(ed.State()) },
-		"accept-close": func() { mode.AcceptItemAndClose(ed.State()) },
+		"accept":       func() { mode.AcceptItem(a.State()) },
+		"accept-close": func() { mode.AcceptItemAndClose(a.State()) },
 
-		"default": func() { mode.DefaultHandler(ed.State()) },
+		"default": func() { mode.DefaultHandler(a.State()) },
 	})
 	return mode, &binding, ns
 }
