@@ -1,4 +1,4 @@
-package core
+package clicore
 
 import (
 	"github.com/elves/elvish/newedit/editutil"

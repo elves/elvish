@@ -7,7 +7,7 @@ import (
 	"github.com/elves/elvish/edit/history/histutil"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
-	"github.com/elves/elvish/newedit/core"
+	"github.com/elves/elvish/newedit/clicore"
 	"github.com/elves/elvish/newedit/highlight"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
@@ -20,13 +20,13 @@ import (
 //
 // TODO: Rename ReadLine to ReadCode and remove Close.
 type Editor struct {
-	core *core.Editor
+	core *clicore.Editor
 	ns   eval.Ns
 }
 
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
-	ed := core.NewEditor(core.NewTTY(in, out), core.NewSignalSource())
+	ed := clicore.NewEditor(clicore.NewTTY(in, out), clicore.NewSignalSource())
 
 	ed.Highlighter = highlight.NewHighlighter(
 		highlight.Dep{Check: makeCheck(ev), HasCommand: makeHasCommand(ev)})

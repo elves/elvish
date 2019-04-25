@@ -6,7 +6,7 @@ import "github.com/elves/elvish/newedit/types"
 // This file defines the interfaces for those dependencies as well as fake
 // implementations that are useful in tests.
 
-// Interface for the core.Editor dependency.
+// Interface for the clicore.Editor dependency.
 type editor interface {
 	notifier
 	State() *types.State

@@ -10,13 +10,13 @@ import (
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
-	"github.com/elves/elvish/newedit/core"
+	"github.com/elves/elvish/newedit/clicore"
 	"github.com/elves/elvish/newedit/prompt"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
-func makePrompt(nt notifier, ev *eval.Evaler, ns eval.Ns, computeInit eval.Callable, name string) core.Prompt {
+func makePrompt(nt notifier, ev *eval.Evaler, ns eval.Ns, computeInit eval.Callable, name string) clicore.Prompt {
 	compute := computeInit
 	ns[name] = vars.FromPtr(&compute)
 	return prompt.New(func() styled.Text {
