@@ -41,15 +41,28 @@ type App struct {
 	InitMode clitypes.Mode
 }
 
-// NewApp creates a new App from its two dependencies. The creation does not
-// have any observable side effect; a newly created App is not immediately
-// active.
+// NewApp creates a new App from two abstract dependencies. The creation does
+// not have any observable side effect; a newly created App is not immediately
+// active. This is the most general way to create an App.
 func NewApp(t TTY, sigs SignalSource) *App {
 	lp := newLoop()
 	app := &App{loop: lp, tty: t, sigs: sigs}
 	lp.HandleCb(app.handle)
 	lp.RedrawCb(app.redraw)
 	return app
+}
+
+// NewAppFromFiles creates a new App from two files, describing the input and
+// output handles for the terminal. This uses NewTTY and NewSignalSource under
+// the hood to build the TTY and SignalSource dependencies.
+func NewAppFromFiles(in, out *os.File) *App {
+	return NewApp(NewTTY(in, out), NewSignalSource())
+}
+
+// NewAppFromStdIO creates a new App that reads from os.Stdin and writes to
+// os.Stderr.
+func NewAppFromStdIO() *App {
+	return NewAppFromFiles(os.Stdin, os.Stderr)
 }
 
 // State returns the App's state.

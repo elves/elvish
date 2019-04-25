@@ -26,7 +26,7 @@ type Editor struct {
 
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
-	app := clicore.NewApp(clicore.NewTTY(in, out), clicore.NewSignalSource())
+	app := clicore.NewAppFromFiles(in, out)
 
 	app.Highlighter = highlight.NewHighlighter(
 		highlight.Dep{Check: makeCheck(ev), HasCommand: makeHasCommand(ev)})
