@@ -22,11 +22,11 @@ func TestGetEntries(t *testing.T) {
 	dummyCd := func(string) error { return nil }
 	tt.Test(t, tt.Fn("getItems", getItems), tt.Table{
 		Args(dirs, "", dummyCd).Rets(listing.MatchItems(
-			styled.Unstyled(" 20 /home/elf"),
-			styled.Unstyled(" 10 /usr/bin"),
+			styled.Plain(" 20 /home/elf"),
+			styled.Plain(" 10 /usr/bin"),
 		)),
 		Args(dirs, "/usr", dummyCd).Rets(listing.MatchItems(
-			styled.Unstyled(" 10 /usr/bin"),
+			styled.Plain(" 10 /usr/bin"),
 		))})
 }
 

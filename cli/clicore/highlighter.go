@@ -13,7 +13,7 @@ type Highlighter interface {
 
 func highlighterGet(hl Highlighter, code string) (styled.Text, []error) {
 	if hl == nil {
-		return styled.Unstyled(code), nil
+		return styled.Plain(code), nil
 	}
 	return hl.Get(code)
 }

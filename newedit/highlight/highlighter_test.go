@@ -22,15 +22,15 @@ func TestHighlighter_HighlightRegions(t *testing.T) {
 			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
 		}, noErrors),
 		Args(" ls\n").Rets(styled.Text{
-			styled.UnstyledSegment(" "),
+			styled.PlainSegment(" "),
 			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
-			styled.UnstyledSegment("\n"),
+			styled.PlainSegment("\n"),
 		}, noErrors),
 		Args("ls $x 'y'").Rets(styled.Text{
 			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
-			styled.UnstyledSegment(" "),
+			styled.PlainSegment(" "),
 			&styled.Segment{styled.Style{Foreground: "magenta"}, "$x"},
-			styled.UnstyledSegment(" "),
+			styled.PlainSegment(" "),
 			&styled.Segment{styled.Style{Foreground: "yellow"}, "'y'"},
 		}, noErrors),
 	})
@@ -98,11 +98,11 @@ func TestHighlighter_HasCommand_LateResult(t *testing.T) {
 	}
 
 	test("ls",
-		styled.Unstyled("ls"),
+		styled.Plain("ls"),
 		styled.Text{
 			&styled.Segment{styled.Style{Foreground: "green"}, "ls"}})
 	test("echo",
-		styled.Unstyled("echo"),
+		styled.Plain("echo"),
 		styled.Text{
 			&styled.Segment{styled.Style{Foreground: "red"}, "echo"}})
 }
@@ -143,7 +143,7 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	initial, _ := hl.Get("ls")
 	late := <-hl.LateUpdates()
 
-	wantInitial := styled.Unstyled("ls")
+	wantInitial := styled.Plain("ls")
 	wantLate := styled.Text{
 		&styled.Segment{styled.Style{Foreground: "green"}, "ls"}}
 	if !reflect.DeepEqual(wantInitial, initial) {

@@ -18,7 +18,7 @@ type fakeItems struct{ n int }
 func (it fakeItems) Len() int { return it.n }
 
 func (it fakeItems) Show(i int) styled.Text {
-	return styled.Unstyled(strconv.Itoa(i))
+	return styled.Plain(strconv.Itoa(i))
 }
 
 func (it fakeItems) Accept(int, *clitypes.State) {}
@@ -29,7 +29,7 @@ type fakeAcceptableItems struct{ accept func(int, *clitypes.State) }
 func (it fakeAcceptableItems) Len() int { return 10 }
 
 func (it fakeAcceptableItems) Show(int) styled.Text {
-	return styled.Unstyled("")
+	return styled.Plain("")
 }
 
 func (it fakeAcceptableItems) Accept(i int, st *clitypes.State) {
@@ -275,12 +275,12 @@ func TestList_Normal(t *testing.T) {
 	renderer := m.List(6)
 
 	wantBase := NewStyledTextsRenderer([]styled.Text{
-		styled.Unstyled("1"),
-		styled.Unstyled("2"),
-		styled.Transform(styled.Unstyled("3"), "inverse"),
-		styled.Unstyled("4"),
-		styled.Unstyled("5"),
-		styled.Unstyled("6"),
+		styled.Plain("1"),
+		styled.Plain("2"),
+		styled.Transform(styled.Plain("3"), "inverse"),
+		styled.Plain("4"),
+		styled.Plain("5"),
+		styled.Plain("6"),
 	})
 	wantRenderer := ui.NewRendererWithVerticalScrollbar(wantBase, 10, 1, 7)
 
@@ -304,18 +304,18 @@ func TestList_NoResult(t *testing.T) {
 func TestList_Crop(t *testing.T) {
 	m := Mode{}
 	m.Start(StartConfig{ItemsGetter: func(string) Items {
-		return SliceItems(styled.Unstyled("0a\n0b"),
-			styled.Unstyled("1a\n1b"), styled.Unstyled("2a\n2b"))
+		return SliceItems(styled.Plain("0a\n0b"),
+			styled.Plain("1a\n1b"), styled.Plain("2a\n2b"))
 	}})
 
 	m.state.selected = 1
 	renderer := m.List(4)
 
 	wantBase := NewStyledTextsRenderer([]styled.Text{
-		styled.Unstyled("0b"),
-		styled.Transform(styled.Unstyled("1a"), "inverse"),
-		styled.Transform(styled.Unstyled("1b"), "inverse"),
-		styled.Unstyled("2a"),
+		styled.Plain("0b"),
+		styled.Transform(styled.Plain("1a"), "inverse"),
+		styled.Transform(styled.Plain("1b"), "inverse"),
+		styled.Plain("2a"),
 	})
 	wantRenderer := ui.NewRendererWithVerticalScrollbar(wantBase, 3, 0, 3)
 

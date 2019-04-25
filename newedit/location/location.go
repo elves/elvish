@@ -53,7 +53,7 @@ func (it items) Len() int {
 }
 
 func (it items) Show(i int) styled.Text {
-	return styled.Unstyled(
+	return styled.Plain(
 		fmt.Sprintf("%3.0f %s", it.entries[i].Score, it.entries[i].Path))
 }
 

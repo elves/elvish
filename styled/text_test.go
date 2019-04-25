@@ -10,6 +10,23 @@ import (
 
 var Args = tt.Args
 
+func TestPlain(t *testing.T) {
+	tt.Test(t, tt.Fn("Plain", Plain), tt.Table{
+		Args("test").Rets(Text{&Segment{Text: "test"}}),
+		Args("").Rets(Text{&Segment{}}),
+	})
+}
+
+func TestMakeText(t *testing.T) {
+	tt.Test(t, tt.Fn("MakeText", MakeText), tt.Table{
+		Args("test").Rets(Text{&Segment{Text: "test"}}),
+		Args("test red", "red").Rets(Text{&Segment{
+			Text: "test red", Style: Style{Foreground: "red"}}}),
+		Args("test red", "red", "bold").Rets(Text{&Segment{
+			Text: "test red", Style: Style{Foreground: "red", Bold: true}}}),
+	})
+}
+
 var (
 	text0 = Text{}
 	text1 = Text{red("lorem")}

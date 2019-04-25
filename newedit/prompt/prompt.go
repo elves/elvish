@@ -33,7 +33,7 @@ const defaultStaleThreshold = 200 * time.Millisecond
 
 const defaultEagerness = 5
 
-var initialContent = styled.Unstyled("???> ")
+var initialContent = styled.Plain("???> ")
 
 // New makes a new prompt.
 func New(fn func() styled.Text) *Prompt {

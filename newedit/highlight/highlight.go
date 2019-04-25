@@ -49,7 +49,7 @@ func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []e
 	for _, r := range regions {
 		if r.begin > lastEnd {
 			// Add inter-region text.
-			text = append(text, styled.UnstyledSegment(code[lastEnd:r.begin]))
+			text = append(text, styled.PlainSegment(code[lastEnd:r.begin]))
 		}
 
 		regionCode := code[r.begin:r.end]
@@ -66,7 +66,7 @@ func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []e
 		} else {
 			transformer = transformerFor[r.typ]
 		}
-		seg := styled.UnstyledSegment(regionCode)
+		seg := styled.PlainSegment(regionCode)
 		if transformer != "" {
 			styled.FindTransformer(transformer)(seg)
 		}
@@ -76,7 +76,7 @@ func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []e
 	}
 	if len(code) > lastEnd {
 		// Add text after the last region as unstyled.
-		text = append(text, styled.UnstyledSegment(code[lastEnd:]))
+		text = append(text, styled.PlainSegment(code[lastEnd:]))
 	}
 
 	// Style command regions asynchronously, and call lateCb with the results.

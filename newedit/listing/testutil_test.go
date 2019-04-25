@@ -8,9 +8,9 @@ import (
 )
 
 func TestMatchItems(t *testing.T) {
-	a := styled.Unstyled("a")
-	b := styled.Unstyled("b")
-	c := styled.Unstyled("c")
+	a := styled.Plain("a")
+	b := styled.Plain("b")
+	c := styled.Plain("c")
 	matcher := MatchItems(a, b)
 	tt.Test(t, tt.Fn("matcher.Match", matcher.Match), tt.Table{
 		Args(tt.RetValue(SliceItems(a, b))).Rets(true),

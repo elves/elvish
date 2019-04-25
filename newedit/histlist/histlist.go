@@ -56,7 +56,7 @@ func (it items) Len() int {
 
 func (it items) Show(i int) styled.Text {
 	// TODO: The alignment of the index works up to 10000 entries.
-	return styled.Unstyled(fmt.Sprintf("%4d %s", it[i].index+1, it[i].content))
+	return styled.Plain(fmt.Sprintf("%4d %s", it[i].index+1, it[i].content))
 }
 
 func (it items) Accept(i int, st *clitypes.State) {

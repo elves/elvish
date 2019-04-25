@@ -91,7 +91,7 @@ func (it items) Show(i int) styled.Text {
 	} else {
 		index = entry.posIndex
 	}
-	return styled.Unstyled(fmt.Sprintf("%3s %s", index, entry.content))
+	return styled.Plain(fmt.Sprintf("%3s %s", index, entry.content))
 }
 
 func (it items) Accept(i int, st *clitypes.State) {

@@ -10,7 +10,7 @@ import (
 )
 
 func TestPrompt_DeliversResultOnLateUpdates(t *testing.T) {
-	content := styled.Unstyled("prompt> ")
+	content := styled.Plain("prompt> ")
 	prompt := New(func() styled.Text { return content })
 	prompt.Trigger(false)
 	update := <-prompt.LateUpdates()
@@ -26,7 +26,7 @@ func TestPrompt_DeliversResultOnLateUpdates(t *testing.T) {
 
 func TestPrompt_DeliversStaleLastPromptsOnLateUpdates(t *testing.T) {
 	unblockPrompt := make(chan struct{})
-	content := styled.Unstyled("prompt> ")
+	content := styled.Plain("prompt> ")
 	prompt := New(func() styled.Text {
 		<-unblockPrompt
 		return content
@@ -54,7 +54,7 @@ func TestPrompt_DeliversStaleLastPromptsOnLateUpdates(t *testing.T) {
 
 func TestPrompt_DeliversStaleCurrentPromptsOnLateUpdates(t *testing.T) {
 	unblockPrompt := make(chan struct{})
-	content := styled.Unstyled("prompt> ")
+	content := styled.Plain("prompt> ")
 	prompt := New(func() styled.Text {
 		<-unblockPrompt
 		return content
@@ -88,13 +88,13 @@ func TestPrompt_DoesNotRecomputeWhenInSameDir(t *testing.T) {
 	i := 0
 	prompt := New(func() styled.Text {
 		i++
-		return styled.Unstyled(strconv.Itoa(i))
+		return styled.Plain(strconv.Itoa(i))
 	})
 
 	prompt.Trigger(false)
 
 	update := <-prompt.LateUpdates()
-	wantPrompt := styled.Unstyled("1")
+	wantPrompt := styled.Plain("1")
 	if !reflect.DeepEqual(update, wantPrompt) {
 		t.Errorf("want update %v, got %v", wantPrompt, update)
 	}

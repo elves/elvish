@@ -181,7 +181,7 @@ func TestReadCode_RedrawsOnHighlighterLateUpdate(t *testing.T) {
 func TestReadCode_RendersPrompt(t *testing.T) {
 	ed, terminal, _ := setup()
 
-	ed.Prompt = constPrompt{styled.Unstyled("> ")}
+	ed.Prompt = constPrompt{styled.Plain("> ")}
 	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
@@ -200,7 +200,7 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 	ed, terminal, _ := setup()
 
 	terminal.width = 4
-	ed.RPrompt = constPrompt{styled.Unstyled("R")}
+	ed.RPrompt = constPrompt{styled.Plain("R")}
 	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
@@ -233,7 +233,7 @@ func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
 
 	promptContent := "old"
 	prompt := fakePrompt{
-		get:         func() styled.Text { return styled.Unstyled(promptContent) },
+		get:         func() styled.Text { return styled.Plain(promptContent) },
 		lateUpdates: make(chan styled.Text),
 	}
 	ed.Prompt = prompt

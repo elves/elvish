@@ -10,8 +10,8 @@ import (
 
 func TestStyledLinesRenderer(t *testing.T) {
 	renderer := NewStyledTextsRenderer([]styled.Text{
-		styled.Unstyled("a"),
-		styled.Unstyled("b\nc"),
+		styled.Plain("a"),
+		styled.Plain("b\nc"),
 	})
 
 	wantBuf := ui.NewBufferBuilder(10).WriteString("a", "").Newline().

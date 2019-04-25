@@ -15,8 +15,8 @@ type Segment struct {
 	Text string
 }
 
-// UnstyledSegment returns an Segment containing the given text with no style.
-func UnstyledSegment(s string) *Segment {
+// PlainSegment returns an Segment containing the given text with no style.
+func PlainSegment(s string) *Segment {
 	return &Segment{Text: s}
 }
 

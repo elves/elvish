@@ -22,15 +22,15 @@ func TestGetEntries(t *testing.T) {
 	tt.Test(t, tt.Fn("getEntries", getItems), tt.Table{
 		// Show all commands.
 		Args(cmds, "").Rets(listing.MatchItems(
-			styled.Unstyled("   1 put 1"),
-			styled.Unstyled("   2 echo 2"),
-			styled.Unstyled("   3 print 3"),
-			styled.Unstyled("   4 repr 4"),
+			styled.Plain("   1 put 1"),
+			styled.Plain("   2 echo 2"),
+			styled.Plain("   3 print 3"),
+			styled.Plain("   4 repr 4"),
 		)),
 		// Filter.
 		Args(cmds, "pr").Rets(listing.MatchItems(
-			styled.Unstyled("   3 print 3"),
-			styled.Unstyled("   4 repr 4"),
+			styled.Plain("   3 print 3"),
+			styled.Plain("   4 repr 4"),
 		)),
 	})
 }

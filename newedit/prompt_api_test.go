@@ -23,7 +23,7 @@ func TestMakePrompt_ElvishVariableLinksToPromptConfig(t *testing.T) {
 	p := ed.app.Prompt.(*prompt.Prompt)
 	content := p.Config().Raw.Compute()
 
-	want := styled.Unstyled("CUSTOM PROMPT")
+	want := styled.Plain("CUSTOM PROMPT")
 	if !reflect.DeepEqual(content, want) {
 		t.Errorf("got content %v, want %v", content, want)
 	}
@@ -33,21 +33,21 @@ func TestDefaultPromptForNonRoot(t *testing.T) {
 	f := getDefaultPrompt(false)
 	wd := util.Getwd()
 	testCallPromptStatic(t, f, styled.Text{
-		styled.UnstyledSegment(wd), styled.UnstyledSegment("> ")})
+		styled.PlainSegment(wd), styled.PlainSegment("> ")})
 }
 
 func TestDefaultPromptForRoot(t *testing.T) {
 	f := getDefaultPrompt(true)
 	wd := util.Getwd()
 	testCallPromptStatic(t, f, styled.Text{
-		styled.UnstyledSegment(wd),
+		styled.PlainSegment(wd),
 		&styled.Segment{styled.Style{Foreground: "red"}, "# "}})
 }
 
 func TestDefaultRPrompt(t *testing.T) {
 	f := getDefaultRPrompt("elf", "endor")
 	testCallPromptStatic(t, f,
-		styled.Transform(styled.Unstyled("elf@endor"), "inverse"))
+		styled.Transform(styled.Plain("elf@endor"), "inverse"))
 }
 
 func testCallPromptStatic(t *testing.T, f eval.Callable, want styled.Text) {
@@ -58,13 +58,13 @@ func testCallPromptStatic(t *testing.T, f eval.Callable, want styled.Text) {
 }
 
 func TestCallPrompt_ConvertsValueOutput(t *testing.T) {
-	testCallPrompt(t, "put PROMPT", styled.Unstyled("PROMPT"), false)
+	testCallPrompt(t, "put PROMPT", styled.Plain("PROMPT"), false)
 	testCallPrompt(t, "styled PROMPT red",
-		styled.Transform(styled.Unstyled("PROMPT"), "red"), false)
+		styled.Transform(styled.Plain("PROMPT"), "red"), false)
 }
 
 func TestCallPrompt_ErrorsOnInvalidValueOutput(t *testing.T) {
-	testCallPrompt(t, "put good; put [bad]", styled.Unstyled("good"), true)
+	testCallPrompt(t, "put good; put [bad]", styled.Plain("good"), true)
 }
 
 func TestCallPrompt_ErrorsOnException(t *testing.T) {
@@ -72,7 +72,7 @@ func TestCallPrompt_ErrorsOnException(t *testing.T) {
 }
 
 func TestCallPrompt_ConvertsBytesOutput(t *testing.T) {
-	testCallPrompt(t, "print PROMPT", styled.Unstyled("PROMPT"), false)
+	testCallPrompt(t, "print PROMPT", styled.Plain("PROMPT"), false)
 }
 
 func testCallPrompt(t *testing.T, fsrc string, want styled.Text, wantErr bool) {

@@ -16,16 +16,16 @@ func TestLastCmdItemsGetter_ShowAll(t *testing.T) {
 	tt.Test(t, tt.Fn("itemsGetter", g), tt.Table{
 		// Empty filter; show everything
 		Args("").Rets(listing.MatchItems(
-			styled.Unstyled("    put hello elvish"),
-			styled.Unstyled("  0 put"),
-			styled.Unstyled("  1 hello"),
-			styled.Unstyled("  2 elvish"),
+			styled.Plain("    put hello elvish"),
+			styled.Plain("  0 put"),
+			styled.Plain("  1 hello"),
+			styled.Plain("  2 elvish"),
 		)),
 		// Filter = "-", show the individual words with their negative indicies
 		Args("-").Rets(listing.MatchItems(
-			styled.Unstyled(" -3 put"),
-			styled.Unstyled(" -2 hello"),
-			styled.Unstyled(" -1 elvish"),
+			styled.Plain(" -3 put"),
+			styled.Plain(" -2 hello"),
+			styled.Plain(" -1 elvish"),
 		)),
 	})
 }
@@ -36,21 +36,21 @@ func TestLastCmdItemsGetter_PrefixMatchIndex(t *testing.T) {
 
 	tt.Test(t, tt.Fn("itemsGetter", g), tt.Table{
 		Args("1").Rets(listing.MatchItems(
-			styled.Unstyled("  1 1"),
-			styled.Unstyled(" 10 10"),
-			styled.Unstyled(" 11 11"),
-			styled.Unstyled(" 12 12"),
+			styled.Plain("  1 1"),
+			styled.Plain(" 10 10"),
+			styled.Plain(" 11 11"),
+			styled.Plain(" 12 12"),
 		)),
 		Args("-1").Rets(listing.MatchItems(
-			styled.Unstyled("-13 put"),
-			styled.Unstyled("-12 1"),
-			styled.Unstyled("-11 2"),
-			styled.Unstyled("-10 3"),
-			styled.Unstyled(" -1 12"),
+			styled.Plain("-13 put"),
+			styled.Plain("-12 1"),
+			styled.Plain("-11 2"),
+			styled.Plain("-10 3"),
+			styled.Plain(" -1 12"),
 		)),
 		// Only match prefix; 10 should be missing
 		Args("0").Rets(listing.MatchItems(
-			styled.Unstyled("  0 put"),
+			styled.Plain("  0 put"),
 		)),
 	})
 }

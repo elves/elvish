@@ -14,7 +14,7 @@ var Args = tt.Args
 var nilBuffer *ui.Buffer
 
 func TestRender(t *testing.T) {
-	unstyled := styled.Unstyled
+	unstyled := styled.Plain
 
 	tt.Test(t, tt.Fn("render", render), tt.Table{
 		// Notes
