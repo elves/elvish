@@ -46,7 +46,7 @@ func TestScanToGo(t *testing.T) {
 
 var fromGoTests = tt.Table{
 	tt.Args(12).Rets("12"),
-	tt.Args(1.5).Rets("1.5"),
+	tt.Args(1.5).Rets(1.5),
 	tt.Args('x').Rets("x"),
 	tt.Args(nil).Rets(nil),
 	tt.Args(someType{"foo"}).Rets(someType{"foo"}),

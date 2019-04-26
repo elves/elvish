@@ -4,9 +4,10 @@ import "testing"
 
 func TestBuiltinFnContainer(t *testing.T) {
 	Test(t,
-		That(`range 3`).Puts("0", "1", "2"),
-		That(`range 1 3`).Puts("1", "2"),
-		That(`range 0 10 &step=3`).Puts("0", "3", "6", "9"),
+		That(`range 3`).Puts(0.0, 1.0, 2.0),
+		That(`range 1 3`).Puts(1.0, 2.0),
+		That(`range 0 10 &step=3`).Puts(0.0, 3.0, 6.0, 9.0),
+
 		That(`repeat 4 foo`).Puts("foo", "foo", "foo", "foo"),
 		That(`explode [foo bar]`).Puts("foo", "bar"),
 
@@ -19,8 +20,9 @@ func TestBuiltinFnContainer(t *testing.T) {
 		That(`echo foobar | all`).Prints("foobar\n"),
 		That(`{ put foo bar; echo foobar } | all`).Puts(
 			"foo", "bar").Prints("foobar\n"),
-		That(`range 100 | take 2`).Puts("0", "1"),
-		That(`range 100 | drop 98`).Puts("98", "99"),
+
+		That(`range 100 | take 2`).Puts(0.0, 1.0),
+		That(`range 100 | drop 98`).Puts(98.0, 99.0),
 
 		That(`has-key [foo bar] 0`).Puts(true),
 		That(`has-key [foo bar] 0:1`).Puts(true),

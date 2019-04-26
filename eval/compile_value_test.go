@@ -9,7 +9,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func TestValue(t *testing.T) {
+func TestCompileValue(t *testing.T) {
 	Test(t,
 		// Compounding
 		// -----------
@@ -72,7 +72,7 @@ func TestValue(t *testing.T) {
 		// Closure captures new local variables every time
 		That(`fn f []{ x=0; put []{x=(+ $x 1)} []{put $x} }
 		  {inc1,put1}=(f); $put1; $inc1; $put1
-		  {inc2,put2}=(f); $put2; $inc2; $put2`).Puts("0", "1", "0", "1"),
+		  {inc2,put2}=(f); $put2; $inc2; $put2`).Puts("0", 1.0, "0", 1.0),
 
 		// Rest argument.
 		That("[x @xs]{ put $x $xs } a b c").Puts("a", vals.MakeList("b", "c")),

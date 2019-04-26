@@ -79,8 +79,6 @@ func FromGo(a interface{}) interface{} {
 	switch a := a.(type) {
 	case int:
 		return strconv.Itoa(a)
-	case float64:
-		return strconv.FormatFloat(a, 'g', -1, 64)
 	case rune:
 		return string(a)
 	default:

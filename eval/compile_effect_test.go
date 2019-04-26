@@ -2,7 +2,7 @@ package eval
 
 import "testing"
 
-func TestOp(t *testing.T) {
+func TestCompileEffect(t *testing.T) {
 	Test(t,
 		// Chunks
 		// ------
@@ -21,7 +21,7 @@ func TestOp(t *testing.T) {
 		That(`echo "Albert\nAllan\nAlbraham\nBerlin" | sed s/l/1/g | grep e`).
 			Prints("A1bert\nBer1in\n"),
 		// Pure channel pipeline
-		That(`put 233 42 19 | each [x]{+ $x 10}`).Puts("243", "52", "29"),
+		That(`put 233 42 19 | each [x]{+ $x 10}`).Puts(243.0, 52.0, 29.0),
 		// Pipeline draining.
 		That(`range 100 | put x`).Puts("x"),
 		// TODO: Add a useful hybrid pipeline sample
@@ -55,7 +55,7 @@ func TestOp(t *testing.T) {
 		// Spacey assignment.
 		That("a @b = 2 3 foo; put $a $b[1]").Puts("2", "foo"),
 		// Spacey assignment with temporary assignment
-		That("x = 1; x=2 y = (+ 1 $x); put $x $y").Puts("1", "3"),
+		That("x = 1; x=2 y = (+ 1 $x); put $x $y").Puts("1", 3.0),
 
 		// Redirections
 		// ------------
