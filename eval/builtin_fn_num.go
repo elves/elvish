@@ -11,6 +11,9 @@ import (
 
 func init() {
 	addBuiltinFns(map[string]interface{}{
+		// Constructor
+		"float64": toFloat64,
+
 		// Comparison
 		"<":  lt,
 		"<=": le,
@@ -31,6 +34,10 @@ func init() {
 		"rand":    rand.Float64,
 		"randint": randint,
 	})
+}
+
+func toFloat64(f float64) float64 {
+	return f
 }
 
 func lt(nums ...float64) bool {
