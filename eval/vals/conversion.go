@@ -89,19 +89,22 @@ func FromGo(a interface{}) interface{} {
 }
 
 func elvToFloat(arg interface{}) (float64, error) {
-	if _, ok := arg.(string); !ok {
-		return 0, fmt.Errorf("must be string")
-	}
-	s := arg.(string)
-	num, err := strconv.ParseFloat(s, 64)
-	if err != nil {
-		num, err2 := strconv.ParseInt(s, 0, 64)
-		if err2 != nil {
-			return 0, err
+	switch arg := arg.(type) {
+	case float64:
+		return arg, nil
+	case string:
+		f, err := strconv.ParseFloat(arg, 64)
+		if err == nil {
+			return f, nil
 		}
-		return float64(num), nil
+		i, err := strconv.ParseInt(arg, 0, 64)
+		if err == nil {
+			return float64(i), err
+		}
+		return 0, err
+	default:
+		return 0, fmt.Errorf("must be float64 or string")
 	}
-	return num, nil
 }
 
 func elvToInt(arg interface{}) (int, error) {
