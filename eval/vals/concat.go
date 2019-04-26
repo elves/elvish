@@ -51,9 +51,10 @@ func Concat(lhs, rhs interface{}) (interface{}, error) {
 
 func tryConcatBuiltins(lhs, rhs interface{}) (interface{}, bool) {
 	switch lhs := lhs.(type) {
-	case string:
-		if rhs, ok := rhs.(string); ok {
-			return lhs + rhs, true
+	case string, float64:
+		switch rhs := rhs.(type) {
+		case string, float64:
+			return ToString(lhs) + ToString(rhs), true
 		}
 	}
 
