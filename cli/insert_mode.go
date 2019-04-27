@@ -38,9 +38,9 @@ func makeAbbrIterate(sp StringPairs) func(func(abbr, full string)) {
 }
 
 // Initializes an insert mode.
-func newInsertMode(cfg *InsertModeConfig, st *clitypes.State) clitypes.Mode {
+func newInsertMode(cfg *InsertModeConfig, app *App) clitypes.Mode {
 	return &insert.Mode{
-		KeyHandler:  adaptBinding(cfg.Binding, st),
+		KeyHandler:  adaptBinding(cfg.Binding, app),
 		AbbrIterate: makeAbbrIterate(cfg.Abbrs),
 		Config: insert.Config{
 			Raw: insert.RawConfig{

@@ -25,11 +25,13 @@ func highlight(code string) styled.Text {
 
 func main() {
 	app := cli.NewApp(&cli.AppConfig{
-		Prompt:      cli.ConstPlainPrompt("> "),
-		Highlighter: cli.FuncHighlighterNoError(highlight),
+		Prompt:       cli.ConstPlainPrompt("> "),
+		Highlighter:  cli.FuncHighlighterNoError(highlight),
+		HistoryStore: cli.MemoryHistoryStore(),
 		InsertConfig: cli.InsertModeConfig{
 			Binding: cli.MapBinding(map[ui.Key]cli.KeyHandler{
 				ui.K('D', ui.Ctrl): cli.CommitEOF,
+				ui.K('R', ui.Ctrl): cli.StartHistlist,
 				ui.Default:         cli.DefaultInsert,
 			}),
 		},

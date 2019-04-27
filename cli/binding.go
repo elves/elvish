@@ -21,6 +21,8 @@ type KeyEvent interface {
 	Key() ui.Key
 	// State returns the State of the app.
 	State() *clitypes.State
+	// App returns the App.
+	App() *App
 
 	// CommitEOF specifies that the app should return from ReadCode with io.EOF
 	// after the key handler returns.
@@ -33,13 +35,14 @@ type KeyEvent interface {
 // Internal implementation of KeyHandler interface.
 type keyEvent struct {
 	key        ui.Key
-	state      *clitypes.State
+	app        *App
 	commitEOF  bool
 	commitLine bool
 }
 
 func (ev *keyEvent) Key() ui.Key            { return ev.key }
-func (ev *keyEvent) State() *clitypes.State { return ev.state }
+func (ev *keyEvent) App() *App              { return ev.app }
+func (ev *keyEvent) State() *clitypes.State { return ev.app.core.State() }
 func (ev *keyEvent) CommitEOF()             { ev.commitEOF = true }
 func (ev *keyEvent) CommitCode()            { ev.commitLine = true }
 
@@ -59,12 +62,12 @@ func (b mapBinding) KeyHandler(k ui.Key) KeyHandler {
 	return b[ui.Default]
 }
 
-func adaptBinding(b Binding, st *clitypes.State) func(ui.Key) clitypes.HandlerAction {
+func adaptBinding(b Binding, app *App) func(ui.Key) clitypes.HandlerAction {
 	if b == nil {
 		return nil
 	}
 	return func(k ui.Key) clitypes.HandlerAction {
-		ev := &keyEvent{k, st, false, false}
+		ev := &keyEvent{k, app, false, false}
 		handler := b.KeyHandler(k)
 		if handler == nil {
 			return clitypes.NoAction
