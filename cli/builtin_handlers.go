@@ -7,10 +7,10 @@ import (
 )
 
 // CommitEOF is an EventHandler that calls CommitEOF.
-var CommitEOF = KeyEvent.CommitEOF
+func CommitEOF(ev KeyEvent) { ev.CommitEOF() }
 
 // CommitCode is an EventHandler that calls CommitCode.
-var CommitCode = KeyEvent.CommitCode
+func CommitCode(ev KeyEvent) { ev.CommitCode() }
 
 // DefaultInsert is an EventHandler that is suitable as the default EventHandler
 // of insert mode.
