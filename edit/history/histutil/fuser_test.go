@@ -66,8 +66,11 @@ func TestFuser(t *testing.T) {
 
 	// Walker should return a walker that walks through all commands
 	w := f.Walker("")
-	wantCmd(t, w.Prev, 4, "session 2")
-	wantCmd(t, w.Prev, 1, "session 1")
-	wantCmd(t, w.Prev, 0, "store 1")
-	wantErr(t, w.Prev, ErrEndOfHistory)
+	w.Prev()
+	checkWalkerCurrent(t, w, 4, "session 2")
+	w.Prev()
+	checkWalkerCurrent(t, w, 1, "session 1")
+	w.Prev()
+	checkWalkerCurrent(t, w, 0, "store 1")
+	checkError(t, w.Prev(), ErrEndOfHistory)
 }

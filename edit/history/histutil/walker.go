@@ -11,7 +11,15 @@ var ErrEndOfHistory = errors.New("end of history")
 
 // Walker is used for walking through history entries with a given (possibly
 // empty) prefix, skipping duplicates entries.
-type Walker struct {
+type Walker interface {
+	Prefix() string
+	CurrentSeq() int
+	CurrentCmd() string
+	Prev() error
+	Next() error
+}
+
+type walker struct {
 	store       Store
 	storeUpper  int
 	sessionCmds []string
@@ -30,18 +38,18 @@ type Walker struct {
 	inStack map[string]bool
 }
 
-func NewWalker(store Store, upper int, cmds []string, seqs []int, prefix string) *Walker {
-	return &Walker{store, upper, cmds, seqs, prefix,
+func NewWalker(store Store, upper int, cmds []string, seqs []int, prefix string) Walker {
+	return &walker{store, upper, cmds, seqs, prefix,
 		len(cmds) - 1, 0, nil, nil, map[string]bool{}}
 }
 
 // Prefix returns the prefix of the commands that the walker walks through.
-func (w *Walker) Prefix() string {
+func (w *walker) Prefix() string {
 	return w.prefix
 }
 
 // CurrentSeq returns the sequence number of the current entry.
-func (w *Walker) CurrentSeq() int {
+func (w *walker) CurrentSeq() int {
 	if len(w.seq) > 0 && w.top <= len(w.seq) && w.top > 0 {
 		return w.seq[w.top-1]
 	}
@@ -49,7 +57,7 @@ func (w *Walker) CurrentSeq() int {
 }
 
 // CurrentSeq returns the content of the current entry.
-func (w *Walker) CurrentCmd() string {
+func (w *walker) CurrentCmd() string {
 	if len(w.stack) > 0 && w.top <= len(w.stack) && w.top > 0 {
 		return w.stack[w.top-1]
 	}
@@ -57,12 +65,11 @@ func (w *Walker) CurrentCmd() string {
 }
 
 // Prev walks to the previous matching history entry, skipping all duplicates.
-func (w *Walker) Prev() (int, string, error) {
+func (w *walker) Prev() error {
 	// Entry comes from the stack.
 	if w.top < len(w.stack) {
-		i := w.top
 		w.top++
-		return w.seq[i], w.stack[i], nil
+		return nil
 	}
 
 	// Find the entry in the session part.
@@ -72,7 +79,7 @@ func (w *Walker) Prev() (int, string, error) {
 		if strings.HasPrefix(cmd, w.prefix) && !w.inStack[cmd] {
 			w.push(cmd, seq)
 			w.sessionIdx = i - 1
-			return seq, cmd, nil
+			return nil
 		}
 	}
 	// Not found in the session part.
@@ -92,16 +99,16 @@ func (w *Walker) Prev() (int, string, error) {
 			if err.Error() == storedefs.ErrNoMatchingCmd.Error() {
 				err = ErrEndOfHistory
 			}
-			return -1, "", err
+			return err
 		}
 		if !w.inStack[cmd] {
 			w.push(cmd, seq)
-			return seq, cmd, nil
+			return nil
 		}
 	}
 }
 
-func (w *Walker) push(cmd string, seq int) {
+func (w *walker) push(cmd string, seq int) {
 	w.inStack[cmd] = true
 	w.stack = append(w.stack, cmd)
 	w.seq = append(w.seq, seq)
@@ -109,13 +116,13 @@ func (w *Walker) push(cmd string, seq int) {
 }
 
 // Next reverses Prev.
-func (w *Walker) Next() (int, string, error) {
+func (w *walker) Next() error {
 	if w.top <= 0 {
-		return -1, "", ErrEndOfHistory
+		return ErrEndOfHistory
 	}
 	w.top--
 	if w.top == 0 {
-		return -1, "", ErrEndOfHistory
+		return ErrEndOfHistory
 	}
-	return w.seq[w.top-1], w.stack[w.top-1], nil
+	return nil
 }

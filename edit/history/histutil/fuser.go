@@ -69,7 +69,7 @@ func (f *Fuser) SessionCmds() []string {
 	return f.cmds
 }
 
-func (f *Fuser) Walker(prefix string) *Walker {
+func (f *Fuser) Walker(prefix string) Walker {
 	f.RLock()
 	defer f.RUnlock()
 	return NewWalker(f.store, f.storeUpper, f.cmds, f.seqs, prefix)

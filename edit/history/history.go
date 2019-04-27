@@ -27,7 +27,7 @@ type hist struct {
 	binding eddefs.BindingMap
 
 	// Non-persistent state.
-	walker    *histutil.Walker
+	walker    histutil.Walker
 	bufferLen int
 }
 
@@ -106,7 +106,7 @@ func (hist *hist) start() {
 	buffer, dot := ed.Buffer()
 	prefix := buffer[:dot]
 	walker := hist.fuser.Walker(prefix)
-	_, _, err := walker.Prev()
+	err := walker.Prev()
 
 	if err == nil {
 		hist.walker = walker
@@ -118,21 +118,21 @@ func (hist *hist) start() {
 }
 
 func (hist *hist) up() {
-	_, _, err := hist.walker.Prev()
+	err := hist.walker.Prev()
 	if err != nil {
 		hist.ed.Notify("%s", err)
 	}
 }
 
 func (hist *hist) down() {
-	_, _, err := hist.walker.Next()
+	err := hist.walker.Next()
 	if err != nil {
 		hist.ed.Notify("%s", err)
 	}
 }
 
 func (hist *hist) downOrQuit() {
-	_, _, err := hist.walker.Next()
+	err := hist.walker.Next()
 	if err != nil {
 		hist.ed.SetModeInsert()
 	}
