@@ -10,14 +10,14 @@ import (
 )
 
 const (
-	// Maximum number of buffer updates fakeTTY expect to see.
+	// Maximum number of buffer updates FakeTTY expect to see.
 	maxBufferUpdates = 1024
-	// Maximum number of events fakeTTY produces.
+	// Maximum number of events FakeTTY produces.
 	maxEvents = 1024
 )
 
-// An implementation of the TTY interface that is useful in tests.
-type fakeTTY struct {
+// FakeTTY is an implementation of the TTY interface that is useful in tests.
+type FakeTTY struct {
 	// Callback to be returned from Setup.
 	RestoreFunc func()
 	// Error to be returned from Setup.
@@ -36,9 +36,9 @@ type fakeTTY struct {
 	height, width int
 }
 
-// Creates a new FakeTTY.
-func newFakeTTY() *fakeTTY {
-	return &fakeTTY{
+// NewFakeTTY creates a new FakeTTY.
+func NewFakeTTY() *FakeTTY {
+	return &FakeTTY{
 		RestoreFunc: func() {},
 		EventCh:     make(chan tty.Event, maxEvents),
 		BufCh:       make(chan *ui.Buffer, maxBufferUpdates),
@@ -48,74 +48,84 @@ func newFakeTTY() *fakeTTY {
 }
 
 // Setup returns t.RestoreFunc and t.SetupErr.
-func (t *fakeTTY) Setup() (func(), error) {
+func (t *FakeTTY) Setup() (func(), error) {
 	return t.RestoreFunc, t.SetupErr
 }
 
 // Size returns the size previously set by SetSize.
-func (t *fakeTTY) Size() (h, w int) {
+func (t *FakeTTY) Size() (h, w int) {
 	t.sizeMutex.RLock()
 	defer t.sizeMutex.RUnlock()
 	return t.height, t.width
 }
 
 // SetSize sets the size that will be returned by Size.
-func (t *fakeTTY) SetSize(h, w int) {
+func (t *FakeTTY) SetSize(h, w int) {
 	t.sizeMutex.Lock()
 	defer t.sizeMutex.Unlock()
 	t.height, t.width = h, w
 }
 
 // StartInput returns t.EventCh.
-func (t *fakeTTY) StartInput() <-chan tty.Event {
+func (t *FakeTTY) StartInput() <-chan tty.Event {
 	return t.EventCh
 }
 
 // SetRawInput does nothing.
-func (t *fakeTTY) SetRawInput(b bool) {}
+func (t *FakeTTY) SetRawInput(b bool) {}
 
 // StopInput closes t.EventCh
-func (t *fakeTTY) StopInput() { close(t.EventCh) }
+func (t *FakeTTY) StopInput() { close(t.EventCh) }
 
 // Newline does nothing.
-func (t *fakeTTY) Newline() {}
+func (t *FakeTTY) Newline() {}
 
 // Buffer returns the last recorded buffer.
-func (t *fakeTTY) Buffer() *ui.Buffer { return t.Bufs[len(t.Bufs)-1] }
+func (t *FakeTTY) Buffer() *ui.Buffer { return t.Bufs[len(t.Bufs)-1] }
 
 // ResetBuffer records a nil buffer.
-func (t *fakeTTY) ResetBuffer() { t.recordBuf(nil) }
+func (t *FakeTTY) ResetBuffer() { t.recordBuf(nil) }
 
 // UpdateBuffer records a new pair of buffers, i.e. sending them to their
 // respective channels and appending them to their respective slices.
-func (t *fakeTTY) UpdateBuffer(bufNotes, buf *ui.Buffer, _ bool) error {
+func (t *FakeTTY) UpdateBuffer(bufNotes, buf *ui.Buffer, _ bool) error {
 	t.recordNotesBuf(bufNotes)
 	t.recordBuf(buf)
 	return nil
 }
 
-func (t *fakeTTY) recordBuf(buf *ui.Buffer) {
+func (t *FakeTTY) recordBuf(buf *ui.Buffer) {
 	t.Bufs = append(t.Bufs, buf)
 	t.BufCh <- buf
 }
 
-func (t *fakeTTY) recordNotesBuf(buf *ui.Buffer) {
+func (t *FakeTTY) recordNotesBuf(buf *ui.Buffer) {
 	t.NotesBufs = append(t.NotesBufs, buf)
 	t.NotesBufCh <- buf
 }
 
-var checkBufferTimeout = time.Second
+// VerifyBuffer verifies that a buffer will appear within one second.
+func (t *FakeTTY) VerifyBuffer(b *ui.Buffer) bool {
+	return verifyBuffer(b, t.BufCh)
+}
+
+// VerifyNotesBuffer verifies that a notes buffer will appear within one second.
+func (t *FakeTTY) VerifyNotesBuffer(b *ui.Buffer) bool {
+	return verifyBuffer(b, t.NotesBufCh)
+}
+
+var verifyBufferTimeout = time.Second
 
 // Check that an expected buffer will eventually appear. Also useful for waiting
 // until the editor reaches a certain state.
-func checkBuffer(want *ui.Buffer, ch <-chan *ui.Buffer) bool {
+func verifyBuffer(want *ui.Buffer, ch <-chan *ui.Buffer) bool {
 	for {
 		select {
 		case buf := <-ch:
 			if reflect.DeepEqual(buf, want) {
 				return true
 			}
-		case <-time.After(checkBufferTimeout):
+		case <-time.After(verifyBufferTimeout):
 			return false
 		}
 	}
