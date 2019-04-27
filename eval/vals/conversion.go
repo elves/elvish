@@ -1,6 +1,7 @@
 package vals
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -105,16 +106,25 @@ func elvToFloat(arg interface{}) (float64, error) {
 	}
 }
 
+var errMustBeInteger = errors.New("must be integer")
+
 func elvToInt(arg interface{}) (int, error) {
-	arg, ok := arg.(string)
-	if !ok {
-		return 0, fmt.Errorf("must be string")
+	switch arg := arg.(type) {
+	case float64:
+		i := int(arg)
+		if float64(i) != arg {
+			return 0, errMustBeInteger
+		}
+		return i, nil
+	case string:
+		num, err := strconv.ParseInt(arg, 0, 0)
+		if err != nil {
+			return 0, err
+		}
+		return int(num), nil
+	default:
+		return 0, errMustBeInteger
 	}
-	num, err := strconv.ParseInt(arg.(string), 0, 0)
-	if err != nil {
-		return 0, err
-	}
-	return int(num), nil
 }
 
 func elvToRune(arg interface{}) (rune, error) {
