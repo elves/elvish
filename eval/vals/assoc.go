@@ -52,11 +52,7 @@ func assocString(s string, k, v interface{}) (interface{}, error) {
 }
 
 func assocList(l List, k, v interface{}) (interface{}, error) {
-	kstring, ok := k.(string)
-	if !ok {
-		return nil, errIndexMustBeString
-	}
-	index, err := ConvertListIndex(kstring, l.Len())
+	index, err := ConvertListIndex(k, l.Len())
 	if err != nil {
 		return nil, err
 	}

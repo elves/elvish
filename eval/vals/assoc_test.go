@@ -19,11 +19,13 @@ var assocTests = tt.Table{
 	Args("0123", "0", "foo").Rets("foo123", nil),
 	Args("0123", "1:3", "bar").Rets("0bar3", nil),
 	Args("0123", "1:3", 12).Rets(nil, errReplacementMustBeString),
-	Args("0123", "x", "y").Rets(nil, errIndexMustBeNumber),
+	Args("0123", "x", "y").Rets(nil, errIndexMustBeInteger),
 
 	Args(MakeList("0", "1", "2", "3"), "0", "foo").Rets(
 		eq(MakeList("foo", "1", "2", "3")), nil),
-	Args(MakeList("0"), MakeList("0"), "1").Rets(nil, errIndexMustBeString),
+	Args(MakeList("0", "1", "2", "3"), 0.0, "foo").Rets(
+		eq(MakeList("foo", "1", "2", "3")), nil),
+	Args(MakeList("0"), MakeList("0"), "1").Rets(nil, errIndexMustBeInteger),
 	Args(MakeList("0"), "1", "x").Rets(nil, errIndexOutOfRange),
 	// TODO: Support list assoc with slice
 	Args(MakeList("0", "1", "2", "3"), "1:3", MakeList("foo")).Rets(

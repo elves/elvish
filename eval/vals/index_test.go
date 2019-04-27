@@ -15,6 +15,7 @@ var (
 var indexTests = tt.Table{
 	// String indicies
 	Args("abc", "0").Rets("a", nil),
+	Args("abc", 0.0).Rets("a", nil),
 	Args("你好", "0").Rets("你", nil),
 	Args("你好", "3").Rets("好", nil),
 	Args("你好", "2").Rets(any, errIndexNotAtRuneBoundary),
@@ -39,6 +40,12 @@ var indexTests = tt.Table{
 	Args(li4, "-5").Rets(any, anyError), // Too negative.
 	// Decimal indicies are not allowed even if the value is an integer.
 	Args(li4, "0.0").Rets(any, anyError),
+
+	// Float64 indicies are allowed as long as they are integers.
+	Args(li4, 0.0).Rets("foo", nil),
+	Args(li4, 3.0).Rets("ipsum", nil),
+	Args(li4, -1.0).Rets("ipsum", nil),
+	Args(li4, 0.5).Rets(any, anyError),
 
 	// Slice indicies: 0 <= i <= j <= n.
 	Args(li4, "1:3").Rets(eq(MakeList("bar", "lorem")), nil),
