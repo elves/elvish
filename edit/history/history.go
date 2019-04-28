@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/edit/eddefs"
-	"github.com/elves/elvish/edit/history/histutil"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"

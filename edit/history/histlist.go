@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/edit/eddefs"
-	"github.com/elves/elvish/edit/history/histutil"
 	"github.com/elves/elvish/edit/ui"
 )
 
