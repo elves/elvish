@@ -3,23 +3,23 @@ package histutil
 import "strings"
 
 // An implementation of the Store interface that can be used for testing.
-type mockStore struct {
+type testDB struct {
 	cmds []string
 
 	oneOffError error
 }
 
-func (s *mockStore) error() error {
+func (s *testDB) error() error {
 	err := s.oneOffError
 	s.oneOffError = nil
 	return err
 }
 
-func (s *mockStore) NextCmdSeq() (int, error) {
+func (s *testDB) NextCmdSeq() (int, error) {
 	return len(s.cmds), s.error()
 }
 
-func (s *mockStore) AddCmd(cmd string) (int, error) {
+func (s *testDB) AddCmd(cmd string) (int, error) {
 	if s.oneOffError != nil {
 		return -1, s.error()
 	}
@@ -27,11 +27,11 @@ func (s *mockStore) AddCmd(cmd string) (int, error) {
 	return len(s.cmds) - 1, nil
 }
 
-func (s *mockStore) Cmds(from, upto int) ([]string, error) {
+func (s *testDB) Cmds(from, upto int) ([]string, error) {
 	return s.cmds[from:upto], s.error()
 }
 
-func (s *mockStore) PrevCmd(upto int, prefix string) (int, string, error) {
+func (s *testDB) PrevCmd(upto int, prefix string) (int, string, error) {
 	if s.oneOffError != nil {
 		return -1, "", s.error()
 	}

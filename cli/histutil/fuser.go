@@ -7,7 +7,7 @@ import (
 // Fuser provides a unified view into a shared storage-backed command history
 // and per-session history.
 type Fuser struct {
-	store      Store
+	store      DB
 	storeUpper int
 
 	*sync.RWMutex
@@ -17,7 +17,7 @@ type Fuser struct {
 	seqs []int
 }
 
-func NewFuser(store Store) (*Fuser, error) {
+func NewFuser(store DB) (*Fuser, error) {
 	upper, err := store.NextCmdSeq()
 	if err != nil {
 		return nil, err

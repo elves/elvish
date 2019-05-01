@@ -8,13 +8,13 @@ import (
 
 func TestNewFuser(t *testing.T) {
 	mockError := errors.New("mock error")
-	_, err := NewFuser(&mockStore{oneOffError: mockError})
+	_, err := NewFuser(&testDB{oneOffError: mockError})
 	if err != mockError {
 		t.Errorf("NewFuser -> error %v, want %v", err, mockError)
 	}
 }
 
-var fuserStore = &mockStore{cmds: []string{"store 1"}}
+var fuserStore = &testDB{cmds: []string{"store 1"}}
 
 func TestFuser(t *testing.T) {
 	f, err := NewFuser(fuserStore)

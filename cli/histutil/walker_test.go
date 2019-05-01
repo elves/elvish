@@ -9,7 +9,7 @@ import (
 
 func TestWalker(t *testing.T) {
 	mockError := errors.New("mock error")
-	walkerStore := &mockStore{
+	walkerStore := &testDB{
 		//              0       1        2         3        4         5
 		cmds: []string{"echo", "ls -l", "echo a", "ls -a", "echo a", "ls a"},
 	}

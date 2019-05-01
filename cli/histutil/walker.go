@@ -20,7 +20,7 @@ type Walker interface {
 }
 
 type walker struct {
-	store       Store
+	store       DB
 	storeUpper  int
 	sessionCmds []string
 	sessionSeqs []int
@@ -38,7 +38,7 @@ type walker struct {
 	inStack map[string]bool
 }
 
-func NewWalker(store Store, upper int, cmds []string, seqs []int, prefix string) Walker {
+func NewWalker(store DB, upper int, cmds []string, seqs []int, prefix string) Walker {
 	return &walker{store, upper, cmds, seqs, prefix,
 		len(cmds) - 1, 0, nil, nil, map[string]bool{}}
 }

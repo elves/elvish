@@ -1,7 +1,7 @@
 package histutil
 
-// Store is the interface of the storage backend.
-type Store interface {
+// DB is the interface of the storage database.
+type DB interface {
 	NextCmdSeq() (int, error)
 	AddCmd(cmd string) (int, error)
 	Cmds(from, upto int) ([]string, error)
