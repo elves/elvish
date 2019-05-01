@@ -1,13 +1,19 @@
 package histutil
 
+import "errors"
+
+var errStoreIsEmpty = errors.New("store is empty")
+
 // Store is an abstract interface for history store.
 type Store interface {
 	// AddCmd adds a new command history entry and returns its sequence number.
 	// Depending on the implementation, the Store might respect cmd.Seq and
 	// return it as is, or allocate another sequence number.
 	AddCmd(cmd Entry) (int, error)
-	// AllCmds returns a commands kept in the store.
+	// AllCmds returns all commands kept in the store.
 	AllCmds() ([]Entry, error)
+	// LastCmd returns the last command in the store.
+	LastCmd() (Entry, error)
 }
 
 // Entry represents a command history item.
@@ -30,6 +36,13 @@ func (s *memoryStore) AllCmds() ([]Entry, error) {
 func (s *memoryStore) AddCmd(cmd Entry) (int, error) {
 	s.cmds = append(s.cmds, cmd)
 	return cmd.Seq, nil
+}
+
+func (s *memoryStore) LastCmd() (Entry, error) {
+	if len(s.cmds) == 0 {
+		return Entry{}, errStoreIsEmpty
+	}
+	return s.cmds[len(s.cmds)-1], nil
 }
 
 // NewDBStore returns a Store backed by a database.
@@ -68,4 +81,9 @@ func (s dbStore) AllCmds() ([]Entry, error) {
 
 func (s dbStore) AddCmd(cmd Entry) (int, error) {
 	return s.db.AddCmd(cmd.Text)
+}
+
+func (s dbStore) LastCmd() (Entry, error) {
+	seq, text, err := s.db.PrevCmd(s.upper, "")
+	return Entry{text, seq}, err
 }

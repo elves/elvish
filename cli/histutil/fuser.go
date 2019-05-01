@@ -74,9 +74,17 @@ func (f *Fuser) AllCmds() ([]Entry, error) {
 	return append(sharedCmds, sessionCmds...), nil
 }
 
+// LastCmd returns the last command within the fused view.
+func (f *Fuser) LastCmd() (Entry, error) {
+	cmd, err := f.session.LastCmd()
+	if err != errStoreIsEmpty {
+		return cmd, err
+	}
+	return f.shared.LastCmd()
+}
+
 // SessionCmds returns the per-session history.
 func (f *Fuser) SessionCmds() []Entry {
-	f.session.AllCmds()
 	cmds, _ := f.session.AllCmds()
 	return cmds
 }
