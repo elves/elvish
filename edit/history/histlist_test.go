@@ -3,12 +3,14 @@ package history
 import (
 	"testing"
 
+	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 )
 
 var (
-	theHistList = newHistlist([]string{"ls", "echo lalala", "ls"})
+	theHistList = newHistlist(
+		[]histutil.Entry{{"ls", 1}, {"echo lalala", 2}, {"ls", 3}})
 
 	histlistDedupFilterTests = []eddefs.ListingProviderFilterTest{
 		{"", []eddefs.ListingShown{

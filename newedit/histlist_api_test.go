@@ -37,7 +37,7 @@ func TestHistlist_Start(t *testing.T) {
 	// Verify the actual listing.
 	buf := ui.Render(lister.List(10), 30)
 	wantBuf := ui.NewBufferBuilder(30).
-		WriteString("   1 echo hello world", "7").Buffer()
+		WriteString("   0 echo hello world", "7").Buffer()
 	if !reflect.DeepEqual(buf, wantBuf) {
 		t.Errorf("Rendered listing is %v, want %v", buf, wantBuf)
 	}

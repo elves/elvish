@@ -20,7 +20,7 @@ func TestWalker(t *testing.T) {
 	wantOK := func(e error) { t.Helper(); checkError(t, e, nil) }
 
 	// Going back and forth.
-	w = NewWalker(walkerStore, -1, nil, nil, "")
+	w = NewWalker(walkerStore, -1, nil, "")
 	wantCurrent(-1, "")
 	wantOK(w.Prev())
 	wantCurrent(5, "ls a")
@@ -45,7 +45,7 @@ func TestWalker(t *testing.T) {
 	wantErr(w.Prev(), ErrEndOfHistory)
 
 	// With an upper bound on the storage.
-	w = NewWalker(walkerStore, 2, nil, nil, "")
+	w = NewWalker(walkerStore, 2, nil, "")
 	wantOK(w.Prev())
 	wantCurrent(1, "ls -l")
 	wantOK(w.Prev())
@@ -53,7 +53,7 @@ func TestWalker(t *testing.T) {
 	wantErr(w.Prev(), ErrEndOfHistory)
 
 	// Prefix matching 1.
-	w = NewWalker(walkerStore, -1, nil, nil, "echo")
+	w = NewWalker(walkerStore, -1, nil, "echo")
 	if w.Prefix() != "echo" {
 		t.Errorf("got prefix %q, want %q", w.Prefix(), "echo")
 	}
@@ -64,7 +64,7 @@ func TestWalker(t *testing.T) {
 	wantErr(w.Prev(), ErrEndOfHistory)
 
 	// Prefix matching 2.
-	w = NewWalker(walkerStore, -1, nil, nil, "ls")
+	w = NewWalker(walkerStore, -1, nil, "ls")
 	wantOK(w.Prev())
 	wantCurrent(5, "ls a")
 	wantOK(w.Prev())
@@ -75,7 +75,7 @@ func TestWalker(t *testing.T) {
 
 	// Walker with session history.
 	w = NewWalker(walkerStore, -1,
-		[]string{"ls -l", "ls -v", "echo haha"}, []int{7, 10, 12}, "ls")
+		[]Entry{{"ls -l", 7}, {"ls -v", 10}, {"echo haha", 12}}, "ls")
 	wantOK(w.Prev())
 	wantCurrent(10, "ls -v")
 
@@ -98,7 +98,7 @@ func TestWalker(t *testing.T) {
 	wantErr(w.Prev(), ErrEndOfHistory)
 
 	// Backend error.
-	w = NewWalker(walkerStore, -1, nil, nil, "")
+	w = NewWalker(walkerStore, -1, nil, "")
 	wantOK(w.Prev())
 	wantCurrent(5, "ls a")
 	wantOK(w.Prev())
@@ -107,7 +107,7 @@ func TestWalker(t *testing.T) {
 	wantErr(w.Prev(), mockError)
 
 	// storedefs.ErrNoMatchingCmd is turned into ErrEndOfHistory.
-	w = NewWalker(walkerStore, -1, nil, nil, "")
+	w = NewWalker(walkerStore, -1, nil, "")
 	walkerStore.oneOffError = storedefs.ErrNoMatchingCmd
 	wantErr(w.Prev(), ErrEndOfHistory)
 }

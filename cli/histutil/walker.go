@@ -22,8 +22,7 @@ type Walker interface {
 type walker struct {
 	store       DB
 	storeUpper  int
-	sessionCmds []string
-	sessionSeqs []int
+	sessionCmds []Entry
 	prefix      string
 
 	// The next element to fetch from the session history. If equal to -1, the
@@ -38,8 +37,8 @@ type walker struct {
 	inStack map[string]bool
 }
 
-func NewWalker(store DB, upper int, cmds []string, seqs []int, prefix string) Walker {
-	return &walker{store, upper, cmds, seqs, prefix,
+func NewWalker(store DB, upper int, cmds []Entry, prefix string) Walker {
+	return &walker{store, upper, cmds, prefix,
 		len(cmds) - 1, 0, nil, nil, map[string]bool{}}
 }
 
@@ -74,10 +73,9 @@ func (w *walker) Prev() error {
 
 	// Find the entry in the session part.
 	for i := w.sessionIdx; i >= 0; i-- {
-		seq := w.sessionSeqs[i]
 		cmd := w.sessionCmds[i]
-		if strings.HasPrefix(cmd, w.prefix) && !w.inStack[cmd] {
-			w.push(cmd, seq)
+		if strings.HasPrefix(cmd.Text, w.prefix) && !w.inStack[cmd.Text] {
+			w.push(cmd.Text, cmd.Seq)
 			w.sessionIdx = i - 1
 			return nil
 		}

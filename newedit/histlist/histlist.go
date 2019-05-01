@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/newedit/listing"
 	"github.com/elves/elvish/styled"
@@ -18,7 +19,7 @@ type Mode struct {
 }
 
 // Start starts the histlist mode.
-func (m *Mode) Start(cmds []string) {
+func (m *Mode) Start(cmds []histutil.Entry) {
 	m.Mode.Start(listing.StartConfig{
 		Name:       "HISTLIST",
 		KeyHandler: m.KeyHandler,
@@ -30,25 +31,18 @@ func (m *Mode) Start(cmds []string) {
 }
 
 // Given all commands, and a pattern, returning all matching entries.
-func getItems(cmds []string, p string) items {
-	// TODO: Show the real in-storage IDs of cmds, not their in-memory indicies.
-	var entries []entry
-	for i, line := range cmds {
-		if strings.Contains(line, p) {
-			entries = append(entries, entry{line, i})
+func getItems(cmds []histutil.Entry, p string) items {
+	var entries []histutil.Entry
+	for _, entry := range cmds {
+		if strings.Contains(entry.Text, p) {
+			entries = append(entries, entry)
 		}
 	}
 	return entries
 }
 
 // A slice of entries, implementing the listing.Items interface.
-type items []entry
-
-// An entry to show, which is just a line plus its index.
-type entry struct {
-	content string
-	index   int
-}
+type items []histutil.Entry
 
 func (it items) Len() int {
 	return len(it)
@@ -56,7 +50,7 @@ func (it items) Len() int {
 
 func (it items) Show(i int) styled.Text {
 	// TODO: The alignment of the index works up to 10000 entries.
-	return styled.Plain(fmt.Sprintf("%4d %s", it[i].index+1, it[i].content))
+	return styled.Plain(fmt.Sprintf("%4d %s", it[i].Seq, it[i].Text))
 }
 
 func (it items) Accept(i int, st *clitypes.State) {
@@ -65,11 +59,11 @@ func (it items) Accept(i int, st *clitypes.State) {
 	raw := &st.Raw
 
 	if raw.Code == "" {
-		insertAtDot(raw, it[i].content)
+		insertAtDot(raw, it[i].Text)
 	} else {
 		// TODO: This works well when the cursor is at the end, but can be
 		// unexpected when the cursor is in the middle.
-		insertAtDot(raw, "\n"+it[i].content)
+		insertAtDot(raw, "\n"+it[i].Text)
 	}
 }
 

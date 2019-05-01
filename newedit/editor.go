@@ -47,7 +47,7 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	if err == nil {
 		// Add the builtin hook of appending history in after-readline.
 		app.AddAfterReadline(func(code string) {
-			err := histFuser.AddCmd(code)
+			_, err := histFuser.AddCmd(code)
 			if err != nil {
 				fmt.Fprintln(out, "failed to add command to history")
 			}

@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/newedit/histlist"
 	"github.com/elves/elvish/newedit/listing"
 )
@@ -26,7 +27,7 @@ type AppConfig struct {
 	Prompt, RPrompt   Prompt
 	RPromptPersistent bool
 
-	HistoryStore HistoryStore
+	HistoryStore histutil.Store
 
 	InsertConfig InsertModeConfig
 }
@@ -57,7 +58,7 @@ func NewApp(cfg *AppConfig, t clicore.TTY, sigs clicore.SignalSource) *App {
 		if cfg.HistoryStore == nil {
 			return
 		}
-		err := cfg.HistoryStore.AddCmd(code)
+		_, err := cfg.HistoryStore.AddCmd(histutil.Entry{Text: code})
 		if err != nil {
 			coreApp.Notify("db error: " + err.Error())
 		}

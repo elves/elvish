@@ -155,7 +155,7 @@ func (hist *hist) appendHistory(line string) {
 	if hist.fuser != nil {
 		hist.mutex.Lock()
 		go func() {
-			err := hist.fuser.AddCmd(line)
+			_, err := hist.fuser.AddCmd(line)
 			hist.mutex.Unlock()
 			if err != nil {
 				logger.Printf("Failed to AddCmd %q: %v", line, err)

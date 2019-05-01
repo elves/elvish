@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/newedit/listing"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
@@ -12,11 +13,11 @@ import (
 var Args = tt.Args
 
 func TestGetEntries(t *testing.T) {
-	cmds := []string{
-		"put 1",
-		"echo 2",
-		"print 3",
-		"repr 4",
+	cmds := []histutil.Entry{
+		{Text: "put 1", Seq: 1},
+		{Text: "echo 2", Seq: 2},
+		{Text: "print 3", Seq: 3},
+		{Text: "repr 4", Seq: 4},
 	}
 
 	tt.Test(t, tt.Fn("getEntries", getItems), tt.Table{
@@ -36,9 +37,9 @@ func TestGetEntries(t *testing.T) {
 }
 
 func TestAccept(t *testing.T) {
-	cmds := []string{
-		"put 1",
-		"echo 2",
+	cmds := []histutil.Entry{
+		{Text: "put 1", Seq: 1},
+		{Text: "echo 2", Seq: 2},
 	}
 	entries := getItems(cmds, "")
 	st := clitypes.State{}

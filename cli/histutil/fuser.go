@@ -4,73 +4,89 @@ import (
 	"sync"
 )
 
-// Fuser provides a unified view into a shared storage-backed command history
-// and per-session history.
+// Fuser provides a view of command history that is fused from the shared
+// storage-backed command history and per-session history.
 type Fuser struct {
-	store      DB
-	storeUpper int
+	mutex sync.RWMutex
 
-	*sync.RWMutex
+	shared  Store
+	session Store
 
-	// Per-session history.
-	cmds []string
-	seqs []int
+	// Only used in FastForward.
+	db DB
 }
 
-func NewFuser(store DB) (*Fuser, error) {
-	upper, err := store.NextCmdSeq()
+// NewFuser returns a new Fuser from a database.
+func NewFuser(db DB) (*Fuser, error) {
+	shared, session, err := initStores(db)
 	if err != nil {
 		return nil, err
 	}
-	return &Fuser{
-		store:      store,
-		storeUpper: upper,
-		RWMutex:    &sync.RWMutex{},
-	}, nil
+	return &Fuser{shared: shared, session: session, db: db}, nil
 }
 
+func initStores(db DB) (shared, session Store, err error) {
+	shared, err = NewDBStoreFrozen(db)
+	if err != nil {
+		return nil, nil, err
+	}
+	return shared, NewMemoryStore(), nil
+}
+
+// FastForward fast-forwards the view of command history, so that commands added
+// by other sessions since the start of the current session are available.
 func (f *Fuser) FastForward() error {
-	f.Lock()
-	defer f.Unlock()
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
 
-	upper, err := f.store.NextCmdSeq()
+	shared, session, err := initStores(f.db)
 	if err != nil {
 		return err
 	}
-	f.storeUpper = upper
-	f.cmds = nil
-	f.seqs = nil
+	f.shared, f.session = shared, session
 	return nil
 }
 
-func (f *Fuser) AddCmd(cmd string) error {
-	f.Lock()
-	defer f.Unlock()
-	seq, err := f.store.AddCmd(cmd)
+// AddCmd adds a command to both the database and the per-session history.
+func (f *Fuser) AddCmd(cmd string) (int, error) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+
+	seq, err := f.shared.AddCmd(Entry{Text: cmd})
 	if err != nil {
-		return err
+		return -1, err
 	}
-	f.cmds = append(f.cmds, cmd)
-	f.seqs = append(f.seqs, seq)
-	return nil
+	f.session.AddCmd(Entry{Text: cmd, Seq: seq})
+	return seq, nil
 }
 
-func (f *Fuser) AllCmds() ([]string, error) {
-	f.RLock()
-	defer f.RUnlock()
-	cmds, err := f.store.Cmds(0, f.storeUpper)
+// AllCmds returns all visible commands, consisting of commands that were
+// already in the database at startup, plus the per-session history.
+func (f *Fuser) AllCmds() ([]Entry, error) {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	sharedCmds, err := f.shared.AllCmds()
 	if err != nil {
 		return nil, err
 	}
-	return append(cmds, f.cmds...), nil
+	sessionCmds, _ := f.session.AllCmds()
+	return append(sharedCmds, sessionCmds...), nil
 }
 
-func (f *Fuser) SessionCmds() []string {
-	return f.cmds
+// SessionCmds returns the per-session history.
+func (f *Fuser) SessionCmds() []Entry {
+	f.session.AllCmds()
+	cmds, _ := f.session.AllCmds()
+	return cmds
 }
 
+// Walker returns a walker for the fused command history.
 func (f *Fuser) Walker(prefix string) Walker {
-	f.RLock()
-	defer f.RUnlock()
-	return NewWalker(f.store, f.storeUpper, f.cmds, f.seqs, prefix)
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+
+	sessionCmds, _ := f.session.AllCmds()
+	// TODO: Avoid the type cast.
+	return NewWalker(f.db, f.shared.(dbStore).upper, sessionCmds, prefix)
 }

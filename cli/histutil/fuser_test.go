@@ -26,11 +26,11 @@ func TestFuser(t *testing.T) {
 	// adding the command.
 	mockError := errors.New("mock error")
 	fuserStore.oneOffError = mockError
-	err = f.AddCmd("haha")
+	_, err = f.AddCmd("haha")
 	if err != mockError {
 		t.Errorf("AddCmd doesn't forward backend error")
 	}
-	if len(f.cmds) != 0 {
+	if len(f.SessionCmds()) != 0 {
 		t.Errorf("AddCmd adds command to session history when backend errors")
 	}
 
@@ -39,7 +39,7 @@ func TestFuser(t *testing.T) {
 	if !reflect.DeepEqual(fuserStore.cmds, []string{"store 1", "session 1"}) {
 		t.Errorf("AddCmd doesn't add command to backend storage")
 	}
-	if !reflect.DeepEqual(f.SessionCmds(), []string{"session 1"}) {
+	if !reflect.DeepEqual(f.SessionCmds(), []Entry{{"session 1", 1}}) {
 		t.Errorf("AddCmd doesn't add command to session history")
 	}
 
@@ -52,7 +52,8 @@ func TestFuser(t *testing.T) {
 	if err != nil {
 		t.Errorf("AllCmds returns error")
 	}
-	if !reflect.DeepEqual(cmds, []string{"store 1", "session 1", "session 2"}) {
+	if !reflect.DeepEqual(cmds, []Entry{
+		{"store 1", 0}, {"session 1", 1}, {"session 2", 4}}) {
 		t.Errorf("AllCmds doesn't return all commands")
 	}
 
