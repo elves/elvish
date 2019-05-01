@@ -29,7 +29,7 @@ func main() {
 		Prompt:       cli.ConstPlainPrompt("> "),
 		Highlighter:  cli.FuncHighlighterNoError(highlight),
 		HistoryStore: histutil.NewMemoryStore(),
-		InsertConfig: cli.InsertModeConfig{
+		InsertModeConfig: cli.InsertModeConfig{
 			Binding: cli.MapBinding(map[ui.Key]cli.KeyHandler{
 				ui.K('D', ui.Ctrl): cli.CommitEOF,
 				ui.K('R', ui.Ctrl): cli.StartHistlist,

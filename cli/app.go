@@ -29,7 +29,7 @@ type AppConfig struct {
 
 	HistoryStore histutil.Store
 
-	InsertConfig InsertModeConfig
+	InsertModeConfig InsertModeConfig
 }
 
 // NewAppFromStdIO creates a new App that reads from stdin and writes to stderr.
@@ -69,7 +69,7 @@ func NewApp(cfg *AppConfig, t clicore.TTY, sigs clicore.SignalSource) *App {
 	coreApp.Prompt = cfg.Prompt
 	coreApp.RPrompt = cfg.RPrompt
 
-	insertMode := newInsertMode(&cfg.InsertConfig, app)
+	insertMode := newInsertMode(&cfg.InsertModeConfig, app)
 	coreApp.InitMode = insertMode
 
 	lsMode := &listing.Mode{}
