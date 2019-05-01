@@ -29,7 +29,8 @@ type AppConfig struct {
 
 	HistoryStore histutil.Store
 
-	InsertModeConfig InsertModeConfig
+	InsertModeConfig   InsertModeConfig
+	HistlistModeConfig HistlistModeConfig
 }
 
 // NewAppFromStdIO creates a new App that reads from stdin and writes to stderr.
@@ -73,7 +74,10 @@ func NewApp(cfg *AppConfig, t clicore.TTY, sigs clicore.SignalSource) *App {
 	coreApp.InitMode = insertMode
 
 	lsMode := &listing.Mode{}
-	app.histlist = &histlist.Mode{Mode: lsMode}
+	app.histlist = &histlist.Mode{
+		Mode:       lsMode,
+		KeyHandler: adaptBinding(cfg.HistlistModeConfig.Binding, app),
+	}
 
 	return app
 }
