@@ -1,8 +1,8 @@
 package newedit
 
 import (
+	"github.com/elves/elvish/cli/listing"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/newedit/listing"
 	"github.com/elves/elvish/newedit/location"
 	"github.com/elves/elvish/store/storedefs"
 )

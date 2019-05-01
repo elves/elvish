@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/listing"
 	"github.com/elves/elvish/edit/ui"
-	"github.com/elves/elvish/newedit/listing"
 	"github.com/elves/elvish/styled"
 )
 

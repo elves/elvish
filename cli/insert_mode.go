@@ -2,7 +2,7 @@ package cli
 
 import (
 	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/newedit/insert"
+	"github.com/elves/elvish/cli/insert"
 )
 
 // InsertModeConfig is a struct containing configuration for the insert mode.

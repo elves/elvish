@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli/histlist"
 	"github.com/elves/elvish/cli/histutil"
-	"github.com/elves/elvish/newedit/histlist"
-	"github.com/elves/elvish/newedit/listing"
+	"github.com/elves/elvish/cli/listing"
 )
 
 // App represents a CLI app.

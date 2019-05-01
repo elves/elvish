@@ -1,10 +1,10 @@
 package newedit
 
 import (
+	"github.com/elves/elvish/cli/histlist"
 	"github.com/elves/elvish/cli/histutil"
+	"github.com/elves/elvish/cli/listing"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/newedit/histlist"
-	"github.com/elves/elvish/newedit/listing"
 )
 
 // Initializes states for the histlist mode and its API.

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/newedit/listing"
+	"github.com/elves/elvish/cli/listing"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"

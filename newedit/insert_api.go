@@ -3,11 +3,11 @@ package newedit
 import (
 	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/cliutil"
+	"github.com/elves/elvish/cli/insert"
 	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
-	"github.com/elves/elvish/newedit/insert"
 	"github.com/xiaq/persistent/hashmap"
 )
 
