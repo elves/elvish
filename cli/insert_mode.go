@@ -17,8 +17,8 @@ type StringPairs interface {
 	IterateStringPairs(func(a, b string))
 }
 
-// StringsPairsFromSlice builds a StringPairs from a slice.
-func StringsPairsFromSlice(s [][2]string) StringPairs {
+// NewSliceStringPairs builds a StringPairs from a slice.
+func NewSliceStringPairs(s [][2]string) StringPairs {
 	return sliceStringPairs(s)
 }
 
