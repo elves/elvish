@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/cli/prompt"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/newedit/prompt"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )

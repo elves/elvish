@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli/prompt"
 	"github.com/elves/elvish/styled"
 )
 
@@ -26,6 +27,16 @@ func FuncPrompt(f func() styled.Text) Prompt {
 // FuncPlainPrompt builds a plain Prompt from a function.
 func FuncPlainPrompt(f func() string) Prompt {
 	return funcPrompt{func() styled.Text { return styled.Plain(f()) }}
+}
+
+// AsyncPromptConfig keeps configuration for async prompts.
+type AsyncPromptConfig = prompt.RawConfig
+
+// NewAsyncPrompt creates a Prompt that is updated asynchronously.
+func NewAsyncPrompt(cfg *AsyncPromptConfig) Prompt {
+	p := prompt.New(cfg.Compute)
+	p.Config().Raw = *cfg
+	return p
 }
 
 // A Prompt implementation that always return the same styled.Text.
