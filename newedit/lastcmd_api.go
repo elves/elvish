@@ -1,9 +1,9 @@
 package newedit
 
 import (
+	"github.com/elves/elvish/cli/lastcmd"
 	"github.com/elves/elvish/cli/listing"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/newedit/lastcmd"
 	"github.com/elves/elvish/parse/parseutil"
 	"github.com/elves/elvish/store/storedefs"
 )

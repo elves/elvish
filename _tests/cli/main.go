@@ -33,6 +33,7 @@ func main() {
 			Binding: cli.MapBinding(map[ui.Key]cli.KeyHandler{
 				ui.K('D', ui.Ctrl): cli.CommitEOF,
 				ui.K('R', ui.Ctrl): cli.StartHistlist,
+				ui.K(',', ui.Alt):  cli.StartLastcmd,
 				ui.Default:         cli.DefaultInsert,
 			}),
 		},
