@@ -8,15 +8,15 @@ import (
 // Highlighter represents a highlighter.
 type Highlighter = clicore.Highlighter
 
-// FuncHighlighter builds a Highlighter from a function that takes the code and
-// returns styled text and a slice of errors.
-func FuncHighlighter(f func(string) (styled.Text, []error)) Highlighter {
+// NewFuncHighlighter builds a Highlighter from a function that takes the code
+// and returns styled text and a slice of errors.
+func NewFuncHighlighter(f func(string) (styled.Text, []error)) Highlighter {
 	return funcHighlighter{f}
 }
 
-// FuncHighlighterNoError builds a Highlighter from a function that takes the
+// NewFuncHighlighterNoError builds a Highlighter from a function that takes the
 // code and returns styled text.
-func FuncHighlighterNoError(f func(string) styled.Text) Highlighter {
+func NewFuncHighlighterNoError(f func(string) styled.Text) Highlighter {
 	return funcHighlighter{func(code string) (styled.Text, []error) {
 		return f(code), nil
 	}}

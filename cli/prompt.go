@@ -9,23 +9,23 @@ import (
 // Prompt represents a prompt.
 type Prompt = clicore.Prompt
 
-// ConstPrompt builds a styled Prompt that does not change.
-func ConstPrompt(t styled.Text) Prompt {
+// NewConstPrompt builds a styled Prompt that does not change.
+func NewConstPrompt(t styled.Text) Prompt {
 	return constPrompt{t}
 }
 
-// ConstPlainPrompt builds a plain Prompt that does not change.
-func ConstPlainPrompt(s string) Prompt {
+// NewConstPlainPrompt builds a plain Prompt that does not change.
+func NewConstPlainPrompt(s string) Prompt {
 	return constPrompt{styled.Plain(s)}
 }
 
-// FuncPrompt builds a styled Prompt from a function.
-func FuncPrompt(f func() styled.Text) Prompt {
+// NewFuncPrompt builds a styled Prompt from a function.
+func NewFuncPrompt(f func() styled.Text) Prompt {
 	return funcPrompt{f}
 }
 
-// FuncPlainPrompt builds a plain Prompt from a function.
-func FuncPlainPrompt(f func() string) Prompt {
+// NewFuncPlainPrompt builds a plain Prompt from a function.
+func NewFuncPlainPrompt(f func() string) Prompt {
 	return funcPrompt{func() styled.Text { return styled.Plain(f()) }}
 }
 

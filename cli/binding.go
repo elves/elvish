@@ -46,9 +46,9 @@ func (ev *keyEvent) State() *clitypes.State { return ev.app.core.State() }
 func (ev *keyEvent) CommitEOF()             { ev.commitEOF = true }
 func (ev *keyEvent) CommitCode()            { ev.commitLine = true }
 
-// MapBinding builds a Binding from a map. The map may contain the special
+// NewMapBinding builds a Binding from a map. The map may contain the special
 // key ui.Default for a default KeyHandler.
-func MapBinding(m map[ui.Key]KeyHandler) Binding {
+func NewMapBinding(m map[ui.Key]KeyHandler) Binding {
 	return mapBinding(m)
 }
 

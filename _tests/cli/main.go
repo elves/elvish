@@ -26,11 +26,11 @@ func highlight(code string) styled.Text {
 
 func main() {
 	app := cli.NewAppFromStdIO(&cli.AppConfig{
-		Prompt:       cli.ConstPlainPrompt("> "),
-		Highlighter:  cli.FuncHighlighterNoError(highlight),
+		Prompt:       cli.NewConstPlainPrompt("> "),
+		Highlighter:  cli.NewFuncHighlighterNoError(highlight),
 		HistoryStore: histutil.NewMemoryStore(),
 		InsertModeConfig: cli.InsertModeConfig{
-			Binding: cli.MapBinding(map[ui.Key]cli.KeyHandler{
+			Binding: cli.NewMapBinding(map[ui.Key]cli.KeyHandler{
 				ui.K('D', ui.Ctrl): cli.CommitEOF,
 				ui.K('R', ui.Ctrl): cli.StartHistlist,
 				ui.K(',', ui.Alt):  cli.StartLastcmd,
