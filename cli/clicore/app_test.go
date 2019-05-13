@@ -319,7 +319,7 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 		t.Errorf("did not get expected buffer before sending SIGHUP")
 	}
 
-	sigs.Ch <- syscall.SIGHUP
+	sigs.Inject(syscall.SIGHUP)
 
 	select {
 	case <-codeCh:
@@ -344,7 +344,7 @@ func TestReadCode_ResetsOnSIGINT(t *testing.T) {
 		t.Errorf("did not get expected buffer before sending SIGINT")
 	}
 
-	sigs.Ch <- syscall.SIGINT
+	sigs.Inject(syscall.SIGINT)
 
 	wantBuf = ui.NewBufferBuilder(80).Buffer()
 	if !tty.VerifyBuffer(wantBuf) {
@@ -369,7 +369,7 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	}
 
 	tty.SetSize(24, 4)
-	sigs.Ch <- sys.SIGWINCH
+	sigs.Inject(sys.SIGWINCH)
 
 	wantBuf = ui.NewBufferBuilder(4).WriteUnstyled("1234567890").
 		SetDotToCursor().Buffer()
@@ -380,11 +380,11 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	cleanup(tty, codeCh)
 }
 
-func setup() (*App, TTYCtrl, *FakeSignalSource) {
+func setup() (*App, TTYCtrl, SignalSourceCtrl) {
 	tty, ttyControl := NewFakeTTY()
-	sigsrc := NewFakeSignalSource()
-	ed := NewApp(tty, sigsrc)
-	return ed, ttyControl, sigsrc
+	sigs, sigsCtrl := NewFakeSignalSource()
+	ed := NewApp(tty, sigs)
+	return ed, ttyControl, sigsCtrl
 }
 
 func cleanup(t TTYCtrl, codeCh <-chan string) {
