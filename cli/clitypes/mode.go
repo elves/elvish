@@ -1,7 +1,7 @@
 package clitypes
 
 import (
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 )
 
@@ -14,7 +14,7 @@ type Mode interface {
 	ModeRenderFlag() ModeRenderFlag
 	// Handles a terminal event, and returns an action that can affect the editor
 	// lifecycle.
-	HandleEvent(tty.Event, *State) HandlerAction
+	HandleEvent(term.Event, *State) HandlerAction
 }
 
 // Lister is an optional interface that modes can implement. If a mode
@@ -63,6 +63,6 @@ func (dummyMode) ModeRenderFlag() ModeRenderFlag {
 	return 0
 }
 
-func (dummyMode) HandleEvent(_ tty.Event, _ *State) HandlerAction {
+func (dummyMode) HandleEvent(_ term.Event, _ *State) HandlerAction {
 	return NoAction
 }

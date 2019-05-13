@@ -9,7 +9,7 @@ import (
 
 	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/cliutil"
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/parse"
 )
@@ -80,15 +80,15 @@ func (m *Mode) ModeRenderFlag() clitypes.ModeRenderFlag {
 
 // HandleEvent handles a terminal event. It handles tty.PasteSetting and
 // tty.KeyEvent and ignores others.
-func (m *Mode) HandleEvent(e tty.Event, st *clitypes.State) clitypes.HandlerAction {
+func (m *Mode) HandleEvent(e term.Event, st *clitypes.State) clitypes.HandlerAction {
 	switch e := e.(type) {
-	case tty.PasteSetting:
+	case term.PasteSetting:
 		if e {
 			m.handlePasteStart()
 		} else {
 			m.handlePasteEnd(st)
 		}
-	case tty.KeyEvent:
+	case term.KeyEvent:
 		k := ui.Key(e)
 		if m.paste != noPaste {
 			m.handleKeyInPaste(k)
@@ -132,7 +132,7 @@ func (m *Mode) handleKey(k ui.Key, st *clitypes.State) clitypes.HandlerAction {
 	if m.KeyHandler != nil {
 		action = m.KeyHandler(k)
 	} else {
-		action = cliutil.BasicHandler(tty.KeyEvent(k), st)
+		action = cliutil.BasicHandler(term.KeyEvent(k), st)
 	}
 	if k.Mod != 0 || k.Rune < 0 {
 		m.inserts = ""

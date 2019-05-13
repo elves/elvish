@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/diag"
-	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/runtime"
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
@@ -36,7 +36,7 @@ func New(binpath, sockpath, dbpath string, cmd, compileonly, norc, newEdit bool)
 func (sh *Shell) Main(args []string) int {
 	defer rescue()
 
-	restoreTTY := tty.SetupGlobal()
+	restoreTTY := term.SetupGlobal()
 	defer restoreTTY()
 
 	ev, dataDir := runtime.InitRuntime(sh.BinPath, sh.SockPath, sh.DbPath)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 )
 
@@ -30,8 +30,8 @@ func (m *fakeMode) ModeRenderFlag() clitypes.ModeRenderFlag {
 
 // HandleEvent records all keys it has seen, and returns CommitCode after seeing
 // a predefined number of keys. It ignores other events.
-func (m *fakeMode) HandleEvent(e tty.Event, _ *clitypes.State) clitypes.HandlerAction {
-	if keyEvent, ok := e.(tty.KeyEvent); ok {
+func (m *fakeMode) HandleEvent(e term.Event, _ *clitypes.State) clitypes.HandlerAction {
+	if keyEvent, ok := e.(term.KeyEvent); ok {
 		m.keysHandled = append(m.keysHandled, ui.Key(keyEvent))
 		if len(m.keysHandled) == m.maxKeys {
 			return clitypes.CommitCode

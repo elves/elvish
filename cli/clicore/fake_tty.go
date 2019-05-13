@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 )
 
@@ -24,7 +24,7 @@ type FakeTTY struct {
 	SetupErr error
 
 	// Channel returned from StartRead. Can be used to inject additional events.
-	EventCh chan tty.Event
+	EventCh chan term.Event
 
 	// Channel for publishing updates of the main buffer and notes buffer.
 	BufCh, NotesBufCh chan *ui.Buffer
@@ -40,7 +40,7 @@ type FakeTTY struct {
 func NewFakeTTY() *FakeTTY {
 	return &FakeTTY{
 		RestoreFunc: func() {},
-		EventCh:     make(chan tty.Event, maxEvents),
+		EventCh:     make(chan term.Event, maxEvents),
 		BufCh:       make(chan *ui.Buffer, maxBufferUpdates),
 		NotesBufCh:  make(chan *ui.Buffer, maxBufferUpdates),
 		height:      24, width: 80,
@@ -67,7 +67,7 @@ func (t *FakeTTY) SetSize(h, w int) {
 }
 
 // StartInput returns t.EventCh.
-func (t *FakeTTY) StartInput() <-chan tty.Event {
+func (t *FakeTTY) StartInput() <-chan term.Event {
 	return t.EventCh
 }
 

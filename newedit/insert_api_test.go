@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
@@ -42,7 +42,7 @@ func TestInitInsert_Binding(t *testing.T) {
 	}
 	ns["binding"].Set(binding)
 
-	m.HandleEvent(tty.KeyEvent{Rune: 'a'}, &clitypes.State{})
+	m.HandleEvent(term.KeyEvent{Rune: 'a'}, &clitypes.State{})
 
 	if called != 1 {
 		t.Errorf("Handler called %d times, want once", called)

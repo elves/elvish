@@ -5,7 +5,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 )
 
@@ -23,15 +23,15 @@ func (BasicMode) ModeRenderFlag() clitypes.ModeRenderFlag {
 }
 
 // HandleEvent uses BasicHandler to handle the event.
-func (BasicMode) HandleEvent(e tty.Event, st *clitypes.State) clitypes.HandlerAction {
+func (BasicMode) HandleEvent(e term.Event, st *clitypes.State) clitypes.HandlerAction {
 	return BasicHandler(e, st)
 }
 
 // BasicHandler is a basic implementation of an event handler. It is used in
 // BasicMode.HandleEvent, but can also be used in other modes as a fallback
 // handler.
-func BasicHandler(e tty.Event, st *clitypes.State) clitypes.HandlerAction {
-	keyEvent, ok := e.(tty.KeyEvent)
+func BasicHandler(e term.Event, st *clitypes.State) clitypes.HandlerAction {
+	keyEvent, ok := e.(term.KeyEvent)
 	if !ok {
 		return clitypes.NoAction
 	}

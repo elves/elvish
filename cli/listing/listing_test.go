@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
@@ -71,7 +71,7 @@ func TestHandleEvent_CallsKeyHandler(t *testing.T) {
 		calledKey = k
 		return clitypes.CommitCode
 	}})
-	a := m.HandleEvent(tty.KeyEvent(key), &clitypes.State{})
+	a := m.HandleEvent(term.KeyEvent(key), &clitypes.State{})
 	if calledKey != key {
 		t.Errorf("KeyHandler called with %v, want %v", calledKey, key)
 	}
@@ -88,47 +88,47 @@ func TestHandleEvent_DefaultBinding(t *testing.T) {
 	st := clitypes.State{}
 	st.SetMode(&m)
 
-	m.HandleEvent(tty.K(ui.Down), &st)
+	m.HandleEvent(term.K(ui.Down), &st)
 	if m.state.selected != 1 {
 		t.Errorf("Down did not move selection down")
 	}
 
-	m.HandleEvent(tty.K(ui.Up), &st)
+	m.HandleEvent(term.K(ui.Up), &st)
 	if m.state.selected != 0 {
 		t.Errorf("Up did not move selection up")
 	}
 
-	m.HandleEvent(tty.K(ui.Up), &st)
+	m.HandleEvent(term.K(ui.Up), &st)
 	if m.state.selected != 0 {
 		t.Errorf("Up did not stop at first item")
 	}
 
-	m.HandleEvent(tty.K(ui.Tab, ui.Shift), &st)
+	m.HandleEvent(term.K(ui.Tab, ui.Shift), &st)
 	if m.state.selected != 9 {
 		t.Errorf("Shift-Tab did not wrap to last item")
 	}
 
-	m.HandleEvent(tty.K(ui.Tab), &st)
+	m.HandleEvent(term.K(ui.Tab), &st)
 	if m.state.selected != 0 {
 		t.Errorf("Tab did not wrap to first item")
 	}
 
-	m.HandleEvent(tty.K(ui.Tab), &st)
+	m.HandleEvent(term.K(ui.Tab), &st)
 	if m.state.selected != 1 {
 		t.Errorf("Tab did not move selection down")
 	}
 
-	m.HandleEvent(tty.K(ui.Tab, ui.Shift), &st)
+	m.HandleEvent(term.K(ui.Tab, ui.Shift), &st)
 	if m.state.selected != 0 {
 		t.Errorf("Shift-Tab did not move selection up")
 	}
 
-	m.HandleEvent(tty.K('F', ui.Ctrl), &st)
+	m.HandleEvent(term.K('F', ui.Ctrl), &st)
 	if !m.state.filtering {
 		t.Errorf("Ctrl-F does not enable filtering")
 	}
 
-	m.HandleEvent(tty.K('[', ui.Ctrl), &st)
+	m.HandleEvent(term.K('[', ui.Ctrl), &st)
 	if st.Mode() != nil {
 		t.Errorf("Ctrl-[ did not set mode to nil")
 	}
@@ -218,7 +218,7 @@ func TestDefaultHandler_AutoAccept(t *testing.T) {
 
 func TestHandleEvent_NonKeyEvent(t *testing.T) {
 	m := Mode{}
-	a := m.HandleEvent(tty.MouseEvent{}, &clitypes.State{})
+	a := m.HandleEvent(term.MouseEvent{}, &clitypes.State{})
 	if a != clitypes.NoAction {
 		t.Errorf("m.HandleEvent returns %v, want NoAction", a)
 	}

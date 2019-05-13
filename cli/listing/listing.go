@@ -19,7 +19,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
@@ -85,9 +85,9 @@ func (m *Mode) ModeRenderFlag() clitypes.ModeRenderFlag {
 }
 
 // HandleEvent handles key events and ignores other types of events.
-func (m *Mode) HandleEvent(e tty.Event, st *clitypes.State) clitypes.HandlerAction {
+func (m *Mode) HandleEvent(e term.Event, st *clitypes.State) clitypes.HandlerAction {
 	switch e := e.(type) {
-	case tty.KeyEvent:
+	case term.KeyEvent:
 		if m.KeyHandler == nil {
 			m.stateMutex.Lock()
 			defer m.stateMutex.Unlock()

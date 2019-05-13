@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
@@ -32,7 +32,7 @@ func TestReadCode_CallsRestore(t *testing.T) {
 
 	restoreCalled := 0
 	terminal.RestoreFunc = func() { restoreCalled++ }
-	terminal.EventCh <- tty.KeyEvent{Rune: '\n'}
+	terminal.EventCh <- term.KeyEvent{Rune: '\n'}
 
 	ed.ReadCode()
 
@@ -44,7 +44,7 @@ func TestReadCode_CallsRestore(t *testing.T) {
 func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 	ed, terminal, _ := setup()
 
-	terminal.EventCh <- tty.KeyEvent{Rune: '\n'}
+	terminal.EventCh <- term.KeyEvent{Rune: '\n'}
 	ed.state.Raw.Code = "some code"
 
 	ed.ReadCode()
@@ -59,9 +59,9 @@ func TestReadCode_PassesInputEventsToMode(t *testing.T) {
 
 	m := &fakeMode{maxKeys: 3}
 	ed.state.Raw.Mode = m
-	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
-	terminal.EventCh <- tty.KeyEvent{Rune: 'b'}
-	terminal.EventCh <- tty.KeyEvent{Rune: 'c'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'b'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'c'}
 
 	ed.ReadCode()
 
@@ -79,7 +79,7 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 	called := 0
 	ed.AddBeforeReadline(func() { called++ })
 	// Causes BasicMode to quit
-	terminal.EventCh <- tty.KeyEvent{Rune: '\n'}
+	terminal.EventCh <- term.KeyEvent{Rune: '\n'}
 
 	ed.ReadCode()
 
@@ -98,10 +98,10 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 		code = s
 	})
 	// Causes BasicMode to write state.Code and then quit
-	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
-	terminal.EventCh <- tty.KeyEvent{Rune: 'b'}
-	terminal.EventCh <- tty.KeyEvent{Rune: 'c'}
-	terminal.EventCh <- tty.KeyEvent{Rune: '\n'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'b'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'c'}
+	terminal.EventCh <- term.KeyEvent{Rune: '\n'}
 
 	ed.ReadCode()
 
@@ -154,9 +154,9 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 				&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 		},
 	}
-	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
-	terminal.EventCh <- tty.KeyEvent{Rune: 'b'}
-	terminal.EventCh <- tty.KeyEvent{Rune: 'c'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'b'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'c'}
 
 	codeCh, _ := ed.readCodeAsync()
 
@@ -182,7 +182,7 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 	ed, terminal, _ := setup()
 
 	ed.Prompt = constPrompt{styled.Plain("> ")}
-	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
 
@@ -201,7 +201,7 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 
 	terminal.width = 4
 	ed.RPrompt = constPrompt{styled.Plain("R")}
-	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
 
@@ -317,7 +317,7 @@ func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 	ed, terminal, sigs := setup()
 
-	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'a'}
 
 	codeCh, errCh := ed.readCodeAsync()
 
@@ -343,7 +343,7 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 func TestReadCode_ResetsOnSIGINT(t *testing.T) {
 	ed, terminal, sigs := setup()
 
-	terminal.EventCh <- tty.KeyEvent{Rune: 'a'}
+	terminal.EventCh <- term.KeyEvent{Rune: 'a'}
 
 	codeCh, _ := ed.readCodeAsync()
 	wantBuf := ui.NewBufferBuilder(80).WriteUnstyled("a").
@@ -397,7 +397,7 @@ func setup() (*App, *FakeTTY, *FakeSignalSource) {
 
 func cleanup(t *FakeTTY, codeCh <-chan string) {
 	// Causes BasicMode to quit
-	t.EventCh <- tty.KeyEvent{Rune: '\n'}
+	t.EventCh <- term.KeyEvent{Rune: '\n'}
 	// Wait until ReadCode has finished execution
 	<-codeCh
 }

@@ -1,4 +1,4 @@
-package tty
+package term
 
 // Pos is the position in a terminal.
 type Pos struct {

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/tt"
 )
@@ -45,7 +45,7 @@ func TestBasicHandler_KeyEvents(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			st := clitypes.State{}
 			for _, key := range test.keys {
-				BasicHandler(tty.KeyEvent(key), &st)
+				BasicHandler(term.KeyEvent(key), &st)
 			}
 			code, dot := st.CodeAndDot()
 			if code != test.wantCode {
@@ -61,7 +61,7 @@ func TestBasicHandler_KeyEvents(t *testing.T) {
 func TestBasicHandler_NotifiesOnUnboundKeys(t *testing.T) {
 	st := clitypes.State{}
 
-	BasicHandler(tty.KeyEvent{Mod: ui.Ctrl, Rune: 'X'}, &st)
+	BasicHandler(term.KeyEvent{Mod: ui.Ctrl, Rune: 'X'}, &st)
 
 	wantNotes := []string{"Unbound: Ctrl-X"}
 	if notes := st.Raw.Notes; !reflect.DeepEqual(notes, wantNotes) {
@@ -69,9 +69,9 @@ func TestBasicHandler_NotifiesOnUnboundKeys(t *testing.T) {
 	}
 }
 
-var otherEvents = []tty.Event{
-	tty.MouseEvent{}, tty.RawRune('a'),
-	tty.PasteSetting(false), tty.PasteSetting(true), tty.CursorPosition{},
+var otherEvents = []term.Event{
+	term.MouseEvent{}, term.RawRune('a'),
+	term.PasteSetting(false), term.PasteSetting(true), term.CursorPosition{},
 }
 
 func TestBasicHandler_IgnoresOtherEvents(t *testing.T) {

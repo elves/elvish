@@ -1,4 +1,4 @@
-package tty
+package term
 
 import "github.com/elves/elvish/edit/ui"
 

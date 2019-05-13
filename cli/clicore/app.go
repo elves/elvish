@@ -7,7 +7,7 @@ import (
 	"syscall"
 
 	clitypes "github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
@@ -91,7 +91,7 @@ func (app *App) handle(e event) handleResult {
 			app.Redraw(true)
 		}
 		return handleResult{}
-	case tty.Event:
+	case term.Event:
 		action := getMode(app.state.Mode(), app.InitMode).HandleEvent(e, &app.state)
 
 		switch action {

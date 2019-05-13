@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/sys"
 )
@@ -20,7 +20,7 @@ type TTY interface {
 
 	// Starts the delivery of terminal events and returns a channel on which
 	// events are made available.
-	StartInput() <-chan tty.Event
+	StartInput() <-chan term.Event
 	// Sets the "raw input" mode of the terminal. The raw input mode is
 	// applicable when terminal events are delivered as escape sequences; the
 	// raw input mode will cause those escape sequences to be interpreted as
@@ -47,17 +47,17 @@ type TTY interface {
 
 type aTTY struct {
 	in, out *os.File
-	r       tty.Reader
-	w       tty.Writer
+	r       term.Reader
+	w       term.Writer
 }
 
 // NewTTY returns a new TTY from input and output terminal files.
 func NewTTY(in, out *os.File) TTY {
-	return &aTTY{in, out, nil, tty.NewWriter(out)}
+	return &aTTY{in, out, nil, term.NewWriter(out)}
 }
 
 func (t *aTTY) Setup() (func(), error) {
-	restore, err := tty.Setup(t.in, t.out)
+	restore, err := term.Setup(t.in, t.out)
 	return func() {
 		err := restore()
 		if err != nil {
@@ -70,8 +70,8 @@ func (t *aTTY) Size() (h, w int) {
 	return sys.GetWinsize(t.out)
 }
 
-func (t *aTTY) StartInput() <-chan tty.Event {
-	t.r = tty.NewReader(t.in)
+func (t *aTTY) StartInput() <-chan term.Event {
+	t.r = term.NewReader(t.in)
 	t.r.Start()
 	return t.r.EventChan()
 }

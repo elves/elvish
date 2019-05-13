@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/edit/tty"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/parse"
 )
@@ -21,12 +21,12 @@ func TestModeLine_LiteralPaste(t *testing.T) {
 	m := &Mode{}
 	st := &clitypes.State{}
 
-	m.HandleEvent(tty.PasteSetting(true), st)
+	m.HandleEvent(term.PasteSetting(true), st)
 	if m.ModeLine() != literalPasteModeLine {
 		t.Errorf("modeline != literalPasteModeLine during pasting")
 	}
 
-	m.HandleEvent(tty.PasteSetting(false), st)
+	m.HandleEvent(term.PasteSetting(false), st)
 	if m.ModeLine() != nil {
 		t.Errorf("modeline != nil after pasting")
 	}
@@ -37,7 +37,7 @@ func TestModeLine_QuotePaste(t *testing.T) {
 	m.Config.Raw.QuotePaste = true
 	st := &clitypes.State{}
 
-	m.HandleEvent(tty.PasteSetting(true), st)
+	m.HandleEvent(term.PasteSetting(true), st)
 
 	if m.ModeLine() != quotePasteModeLine {
 		t.Errorf("modeline != quotePasteModeLine during pasting with quote")
@@ -59,11 +59,11 @@ func testPaste(t *testing.T, m *Mode, input, want string) {
 	st.Raw.Code = "[]"
 	st.Raw.Dot = 1
 
-	m.HandleEvent(tty.PasteSetting(true), st)
+	m.HandleEvent(term.PasteSetting(true), st)
 	for _, r := range input {
-		m.HandleEvent(tty.KeyEvent{Rune: r}, st)
+		m.HandleEvent(term.KeyEvent{Rune: r}, st)
 	}
-	m.HandleEvent(tty.PasteSetting(false), st)
+	m.HandleEvent(term.PasteSetting(false), st)
 
 	wantCode := "[" + want + "]"
 	if st.Raw.Code != wantCode {
@@ -75,9 +75,9 @@ func testPaste(t *testing.T, m *Mode, input, want string) {
 }
 
 var (
-	events = []tty.Event{
-		tty.KeyEvent{Rune: 'a'}, tty.KeyEvent{Rune: 'b'}, tty.MouseEvent{},
-		tty.KeyEvent{Rune: 'c'}, tty.RawRune('d')}
+	events = []term.Event{
+		term.KeyEvent{Rune: 'a'}, term.KeyEvent{Rune: 'b'}, term.MouseEvent{},
+		term.KeyEvent{Rune: 'c'}, term.RawRune('d')}
 	keyEvents = []ui.Key{{Rune: 'a'}, {Rune: 'b'}, {Rune: 'c'}}
 )
 
@@ -100,22 +100,22 @@ func TestHandleEvent_CallsKeyHandler(t *testing.T) {
 
 var abbrTests = []struct {
 	name     string
-	keys     []tty.KeyEvent
+	keys     []term.KeyEvent
 	wantCode string
 }{
 	{"simple",
-		[]tty.KeyEvent{{Rune: 'x'}, {Rune: 'x'}},
+		[]term.KeyEvent{{Rune: 'x'}, {Rune: 'x'}},
 		"> /dev/null"},
 	{"suffix",
-		[]tty.KeyEvent{
+		[]term.KeyEvent{
 			{Rune: 'l'}, {Rune: ' '}, {Rune: 'x'}, {Rune: 'x'}},
 		"l > /dev/null"},
 	{"longest suffix",
-		[]tty.KeyEvent{
+		[]term.KeyEvent{
 			{Rune: 'l'}, {Rune: ' '}, {Rune: '2'}, {Rune: 'x'}, {Rune: 'x'}},
 		"l > &2"},
 	{"function key interrupts abbreviation",
-		[]tty.KeyEvent{
+		[]term.KeyEvent{
 			{Rune: 'x'}, {Rune: ui.Left}, {Rune: ui.Right}, {Rune: 'x'}},
 		"xx"},
 }

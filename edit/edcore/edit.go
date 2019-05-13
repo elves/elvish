@@ -11,10 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/daemon"
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/highlight"
-	"github.com/elves/elvish/edit/tty"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
@@ -30,8 +30,8 @@ var logger = util.GetLogger("[edit] ")
 type editor struct {
 	in     *os.File
 	out    *os.File
-	writer tty.Writer
-	reader tty.Reader
+	writer term.Writer
+	reader term.Reader
 	sigs   <-chan os.Signal
 	daemon *daemon.Client
 	evaler *eval.Evaler
@@ -99,8 +99,8 @@ func NewEditor(in *os.File, out *os.File, sigs <-chan os.Signal, ev *eval.Evaler
 	ed := &editor{
 		in:     in,
 		out:    out,
-		writer: tty.NewWriter(out),
-		reader: tty.NewReader(in),
+		writer: term.NewWriter(out),
+		reader: term.NewReader(in),
 		sigs:   sigs,
 		daemon: daemon,
 		evaler: ev,
@@ -306,7 +306,7 @@ func (ed *editor) startReadLine() error {
 	defer ed.activeMutex.Unlock()
 	ed.active = true
 
-	restoreTerminal, err := tty.Setup(ed.in, ed.out)
+	restoreTerminal, err := term.Setup(ed.in, ed.out)
 	if err != nil {
 		if restoreTerminal != nil {
 			restoreTerminal()
@@ -437,21 +437,21 @@ MainLoop:
 			}
 		case event := <-ed.reader.EventChan():
 			switch event := event.(type) {
-			case tty.NonfatalErrorEvent:
+			case term.NonfatalErrorEvent:
 				ed.Notify("error when reading terminal: %v", event.Err)
-			case tty.FatalErrorEvent:
+			case term.FatalErrorEvent:
 				ed.Notify("fatal error when reading terminal: %v", event.Err)
 				return "", event.Err
-			case tty.MouseEvent:
+			case term.MouseEvent:
 				ed.AddTip("mouse: %+v", event)
-			case tty.CursorPosition:
+			case term.CursorPosition:
 				// Ignore CPR
-			case tty.PasteSetting:
+			case term.PasteSetting:
 				if !event {
 					continue
 				}
 				var buf bytes.Buffer
-				timer := time.NewTimer(tty.DefaultSeqTimeout)
+				timer := time.NewTimer(term.DefaultSeqTimeout)
 			paste:
 				for {
 					// XXX Should also select on other chans. However those chans
@@ -460,15 +460,15 @@ MainLoop:
 					select {
 					case event := <-ed.reader.EventChan():
 						switch event := event.(type) {
-						case tty.KeyEvent:
+						case term.KeyEvent:
 							k := ui.Key(event)
 							if k.Mod != 0 {
 								ed.Notify("function key within paste, aborting")
 								break paste
 							}
 							buf.WriteRune(k.Rune)
-							timer.Reset(tty.DefaultSeqTimeout)
-						case tty.PasteSetting:
+							timer.Reset(term.DefaultSeqTimeout)
+						case term.PasteSetting:
 							if !event {
 								break paste
 							}
@@ -484,9 +484,9 @@ MainLoop:
 					topaste = parse.Quote(topaste)
 				}
 				ed.InsertAtDot(topaste)
-			case tty.RawRune:
+			case term.RawRune:
 				insertRaw(ed, rune(event))
-			case tty.KeyEvent:
+			case term.KeyEvent:
 				k := ui.Key(event)
 			lookupKey:
 				fn := ed.mode.Binding(k)
