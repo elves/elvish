@@ -16,102 +16,141 @@ const (
 	maxEvents = 1024
 )
 
-// FakeTTY is an implementation of the TTY interface that is useful in tests.
-type FakeTTY struct {
-	// Callback to be returned from Setup.
-	RestoreFunc func()
-	// Error to be returned from Setup.
-	SetupErr error
+// TTYCtrl is an interface for controlling the fake terminal.
+type TTYCtrl interface {
+	// SetSetup changes the return values of the setup function.
+	SetSetup(restore func(), err error)
+	// SetSize sets the size of the fake terminal.
+	SetSize(h, w int)
+	// Inject injects an event to the fake terminal.
+	Inject(e term.Event)
+	// VerifyBuffer verifies that a buffer will appear within the timeout of 1
+	// second.
+	VerifyBuffer(b *ui.Buffer) bool
+	// VerifyNotesBuffer verifies the a notes buffer will appear within the
+	// timeout of 1 second.
+	VerifyNotesBuffer(b *ui.Buffer) bool
+	// BufferHistory returns a slice of all buffers that have appeared.
+	BufferHistory() []*ui.Buffer
+	// NotesBufferHistory returns a slice of all notes buffers that have
+	// appeared.
+	NotesBufferHistory() []*ui.Buffer
+}
 
-	// Channel returned from StartRead. Can be used to inject additional events.
-	EventCh chan term.Event
-
+// An implementation of the TTY interface that is useful in tests.
+type fakeTTY struct {
+	setup func() (func(), error)
+	// Channel that StartRead returns. Can be used to inject additional events.
+	eventCh chan term.Event
 	// Channel for publishing updates of the main buffer and notes buffer.
-	BufCh, NotesBufCh chan *ui.Buffer
+	bufCh, notesBufCh chan *ui.Buffer
 	// Records history of the main buffer and notes buffer.
-	Bufs, NotesBufs []*ui.Buffer
+	bufs, notesBufs []*ui.Buffer
 
 	sizeMutex sync.RWMutex
 	// Predefined sizes.
 	height, width int
 }
 
-// NewFakeTTY creates a new FakeTTY.
-func NewFakeTTY() *FakeTTY {
-	return &FakeTTY{
-		RestoreFunc: func() {},
-		EventCh:     make(chan term.Event, maxEvents),
-		BufCh:       make(chan *ui.Buffer, maxBufferUpdates),
-		NotesBufCh:  make(chan *ui.Buffer, maxBufferUpdates),
-		height:      24, width: 80,
+// NewFakeTTY creates a new FakeTTY and a handle for controlling it.
+func NewFakeTTY() (TTY, TTYCtrl) {
+	tty := &fakeTTY{
+		eventCh:    make(chan term.Event, maxEvents),
+		bufCh:      make(chan *ui.Buffer, maxBufferUpdates),
+		notesBufCh: make(chan *ui.Buffer, maxBufferUpdates),
+		height:     24, width: 80,
 	}
+	return tty, ttyCtrl{tty}
 }
 
-// Setup returns t.RestoreFunc and t.SetupErr.
-func (t *FakeTTY) Setup() (func(), error) {
-	return t.RestoreFunc, t.SetupErr
+// Delegates to the setup function specified using the SetSetup method of
+// ttyCtrl, or return a nop function and a nil error.
+func (t *fakeTTY) Setup() (func(), error) {
+	if t.setup == nil {
+		return func() {}, nil
+	}
+	return t.setup()
 }
 
-// Size returns the size previously set by SetSize.
-func (t *FakeTTY) Size() (h, w int) {
+// Returns the size specified by using the SetSize method of ttyCtrl.
+func (t *fakeTTY) Size() (h, w int) {
 	t.sizeMutex.RLock()
 	defer t.sizeMutex.RUnlock()
 	return t.height, t.width
 }
 
-// SetSize sets the size that will be returned by Size.
-func (t *FakeTTY) SetSize(h, w int) {
-	t.sizeMutex.Lock()
-	defer t.sizeMutex.Unlock()
-	t.height, t.width = h, w
+// Returns t.eventCh. Events may be injected onto the channel by using the
+// ttyCtrl.
+func (t *fakeTTY) StartInput() <-chan term.Event {
+	return t.eventCh
 }
 
-// StartInput returns t.EventCh.
-func (t *FakeTTY) StartInput() <-chan term.Event {
-	return t.EventCh
-}
+// Nop.
+func (t *fakeTTY) SetRawInput(b bool) {}
 
-// SetRawInput does nothing.
-func (t *FakeTTY) SetRawInput(b bool) {}
+// Nop.
+func (t *fakeTTY) StopInput() { close(t.eventCh) }
 
-// StopInput closes t.EventCh
-func (t *FakeTTY) StopInput() { close(t.EventCh) }
+// Nop.
+func (t *fakeTTY) Newline() {}
 
-// Newline does nothing.
-func (t *FakeTTY) Newline() {}
+// Returns the last recorded buffer.
+func (t *fakeTTY) Buffer() *ui.Buffer { return t.bufs[len(t.bufs)-1] }
 
-// Buffer returns the last recorded buffer.
-func (t *FakeTTY) Buffer() *ui.Buffer { return t.Bufs[len(t.Bufs)-1] }
-
-// ResetBuffer records a nil buffer.
-func (t *FakeTTY) ResetBuffer() { t.recordBuf(nil) }
+// Records a nil buffer.
+func (t *fakeTTY) ResetBuffer() { t.recordBuf(nil) }
 
 // UpdateBuffer records a new pair of buffers, i.e. sending them to their
 // respective channels and appending them to their respective slices.
-func (t *FakeTTY) UpdateBuffer(bufNotes, buf *ui.Buffer, _ bool) error {
+func (t *fakeTTY) UpdateBuffer(bufNotes, buf *ui.Buffer, _ bool) error {
 	t.recordNotesBuf(bufNotes)
 	t.recordBuf(buf)
 	return nil
 }
 
-func (t *FakeTTY) recordBuf(buf *ui.Buffer) {
-	t.Bufs = append(t.Bufs, buf)
-	t.BufCh <- buf
+func (t *fakeTTY) recordBuf(buf *ui.Buffer) {
+	t.bufs = append(t.bufs, buf)
+	t.bufCh <- buf
 }
 
-func (t *FakeTTY) recordNotesBuf(buf *ui.Buffer) {
-	t.NotesBufs = append(t.NotesBufs, buf)
-	t.NotesBufCh <- buf
+func (t *fakeTTY) recordNotesBuf(buf *ui.Buffer) {
+	t.notesBufs = append(t.notesBufs, buf)
+	t.notesBufCh <- buf
 }
 
-// VerifyBuffer verifies that a buffer will appear within one second.
-func (t *FakeTTY) VerifyBuffer(b *ui.Buffer) bool {
-	return verifyBuffer(b, t.BufCh)
+// Implements the TTYCtrl interface for fakeTTY.
+type ttyCtrl struct{ *fakeTTY }
+
+func (t ttyCtrl) SetSetup(restore func(), err error) {
+	t.setup = func() (func(), error) {
+		return restore, err
+	}
 }
 
-// VerifyNotesBuffer verifies that a notes buffer will appear within one second.
-func (t *FakeTTY) VerifyNotesBuffer(b *ui.Buffer) bool {
-	return verifyBuffer(b, t.NotesBufCh)
+func (t ttyCtrl) SetSize(h, w int) {
+	t.sizeMutex.Lock()
+	defer t.sizeMutex.Unlock()
+	t.height, t.width = h, w
+}
+
+func (t ttyCtrl) Inject(e term.Event) {
+	t.eventCh <- e
+}
+
+func (t ttyCtrl) VerifyBuffer(b *ui.Buffer) bool {
+	return verifyBuffer(b, t.bufCh)
+}
+
+func (t ttyCtrl) VerifyNotesBuffer(b *ui.Buffer) bool {
+	return verifyBuffer(b, t.notesBufCh)
+}
+
+func (t ttyCtrl) BufferHistory() []*ui.Buffer {
+	return t.bufs
+}
+
+func (t ttyCtrl) NotesBufferHistory() []*ui.Buffer {
+	return t.notesBufs
 }
 
 var verifyBufferTimeout = time.Second
