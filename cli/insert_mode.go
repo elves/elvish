@@ -49,3 +49,8 @@ func newInsertMode(cfg *InsertModeConfig, app *App) clitypes.Mode {
 		},
 	}
 }
+
+// StartInsert starts the insert mode.
+func StartInsert(ev KeyEvent) {
+	ev.State().SetMode(ev.App().Insert)
+}

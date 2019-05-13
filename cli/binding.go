@@ -62,6 +62,8 @@ func (b mapBinding) KeyHandler(k ui.Key) KeyHandler {
 	return b[ui.Default]
 }
 
+var AdaptBinding = adaptBinding
+
 func adaptBinding(b Binding, app *App) func(ui.Key) clitypes.HandlerAction {
 	if b == nil {
 		return nil

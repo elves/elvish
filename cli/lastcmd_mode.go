@@ -20,6 +20,6 @@ func StartLastcmd(ev KeyEvent) {
 		wordifier = strings.Fields
 	}
 	words := wordifier(cmd.Text)
-	app.lastcmd.Start(cmd.Text, words)
-	ev.State().SetMode(app.lastcmd)
+	app.Lastcmd.Start(cmd.Text, words)
+	ev.State().SetMode(app.Lastcmd)
 }

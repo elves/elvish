@@ -18,7 +18,7 @@ func StartHistlist(ev KeyEvent) {
 		ev.State().AddNote("db error: " + err.Error())
 		return
 	}
-	mode := ev.App().histlist
+	mode := ev.App().Histlist
 	mode.Start(cmds)
 	ev.State().SetMode(mode)
 }

@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/histlist"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/lastcmd"
@@ -15,8 +16,10 @@ type App struct {
 	core *clicore.App
 	cfg  *AppConfig
 
-	histlist *histlist.Mode
-	lastcmd  *lastcmd.Mode
+	Insert   clitypes.Mode
+	Listing  *listing.Mode
+	Histlist *histlist.Mode
+	Lastcmd  *lastcmd.Mode
 }
 
 // AppConfig is a struct containing configurations for initializing an App.
@@ -81,14 +84,16 @@ func NewApp(cfg *AppConfig, t clicore.TTY, sigs clicore.SignalSource) *App {
 	coreApp.RPrompt = cfg.RPrompt
 
 	insertMode := newInsertMode(&cfg.InsertModeConfig, app)
+	app.Insert = insertMode
 	coreApp.InitMode = insertMode
 
 	lsMode := &listing.Mode{}
-	app.histlist = &histlist.Mode{
+	app.Listing = lsMode
+	app.Histlist = &histlist.Mode{
 		Mode:       lsMode,
 		KeyHandler: adaptBinding(cfg.HistlistModeConfig.Binding, app),
 	}
-	app.lastcmd = &lastcmd.Mode{
+	app.Lastcmd = &lastcmd.Mode{
 		Mode:       lsMode,
 		KeyHandler: adaptBinding(cfg.LastcmdModeConfig.Binding, app),
 	}
@@ -99,4 +104,14 @@ func NewApp(cfg *AppConfig, t clicore.TTY, sigs clicore.SignalSource) *App {
 // ReadCode causes the App to read from terminal.
 func (app *App) ReadCode() (string, error) {
 	return app.core.ReadCode()
+}
+
+// Notify adds a note and requests a redraw.
+func (app *App) Notify(note string) {
+	app.core.Notify(note)
+}
+
+// State returns the state of the App.
+func (app *App) State() *clitypes.State {
+	return app.core.State()
 }

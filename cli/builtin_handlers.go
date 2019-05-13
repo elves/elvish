@@ -23,3 +23,8 @@ func DefaultInsert(ev KeyEvent) {
 		ev.CommitEOF()
 	}
 }
+
+// ResetMode is an EventHandler that resets the App to its default mode.
+func ResetMode(ev KeyEvent) {
+	ev.State().SetMode(nil)
+}
