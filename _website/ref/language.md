@@ -1232,7 +1232,7 @@ Example:
 fn tell-language [fname]{
     if (has-suffix $fname .go) {
         echo $fname" is a Go file!"
-    } else if (has-suffix $fname .c) {
+    } elif (has-suffix $fname .c) {
         echo $fname" is a C file!"
     } else {
         echo $fname" is a mysterious file!"
