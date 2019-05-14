@@ -106,6 +106,19 @@ func (app *App) ReadCode() (string, error) {
 	return app.core.ReadCode()
 }
 
+// ReadCodeAsync is like ReadCode, but returns immediately with two channels
+// that will get the return values of ReadCode. Useful in tests.
+func (app *App) ReadCodeAsync() (<-chan string, <-chan error) {
+	codeCh := make(chan string, 1)
+	errCh := make(chan error, 1)
+	go func() {
+		code, err := app.ReadCode()
+		codeCh <- code
+		errCh <- err
+	}()
+	return codeCh, errCh
+}
+
 // Notify adds a note and requests a redraw.
 func (app *App) Notify(note string) {
 	app.core.Notify(note)
