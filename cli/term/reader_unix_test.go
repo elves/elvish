@@ -1,6 +1,6 @@
 // +build !windows,!plan9
 
-package tty
+package term
 
 import (
 	"os"
