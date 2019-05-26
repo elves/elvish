@@ -54,7 +54,7 @@ If you come from other shells, hopefully the following recipes will get you star
 *   You can make completion case-insensitive with the following code:
 
     ```elvish
-    edit:-matcher[''] = [p]{ edit:match-prefix &ignore-case $p }
+    edit:completion:matcher[''] = [p]{ edit:match-prefix &ignore-case $p }
     ```
 
     You can also make the completion use "smart case" by changing
