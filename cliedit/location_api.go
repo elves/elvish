@@ -4,8 +4,8 @@ import (
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/listing"
+	"github.com/elves/elvish/cliedit/location"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/newedit/location"
 	"github.com/elves/elvish/store/storedefs"
 )
 

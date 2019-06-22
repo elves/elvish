@@ -6,9 +6,9 @@ import (
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/histutil"
+	"github.com/elves/elvish/cliedit/highlight"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
-	"github.com/elves/elvish/newedit/highlight"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
 )
