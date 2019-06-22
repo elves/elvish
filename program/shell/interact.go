@@ -10,12 +10,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/elves/elvish/cliedit"
 	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/edit"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
-	"github.com/elves/elvish/newedit"
 	"github.com/elves/elvish/sys"
 	"github.com/xiaq/persistent/hashmap"
 )
@@ -25,7 +25,7 @@ func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
 	var ed editor
 	if sys.IsATTY(os.Stdin) {
 		if newEdit {
-			newed := newedit.NewEditor(os.Stdin, os.Stderr, ev, ev.DaemonClient)
+			newed := cliedit.NewEditor(os.Stdin, os.Stderr, ev, ev.DaemonClient)
 			ev.Global.AddNs("edit", newed.Ns())
 			ed = newed
 		} else {
