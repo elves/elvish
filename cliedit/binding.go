@@ -40,7 +40,7 @@ func (b mapBinding) KeyHandler(k ui.Key) cli.KeyHandler {
 		return unbound
 	}
 	return func(ev cli.KeyEvent) {
-		callBinding(ev.App(), b.ev, f)
+		callBinding(ev.App(), b.ev, f, ev)
 	}
 }
 
@@ -68,7 +68,7 @@ var bindingSource = eval.NewInternalSource("[editor binding]")
 
 // TODO: callBinding should pass KeyEvent to the function being called.
 
-func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable) clitypes.HandlerAction {
+func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable, event cli.KeyEvent) clitypes.HandlerAction {
 
 	// TODO(xiaq): Use CallWithOutputCallback when it supports redirecting the
 	// stderr port.
@@ -77,7 +77,7 @@ func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable) clitypes.Handler
 	ports := []*eval.Port{eval.DevNullClosedChan, notifyPort, notifyPort}
 	frame := eval.NewTopFrame(ev, bindingSource, ports)
 
-	err := frame.Call(f, nil, eval.NoOpts)
+	err := frame.Call(f, []interface{}{event}, eval.NoOpts)
 
 	if err != nil {
 		if action, ok := eval.Cause(err).(cliutil.ActionError); ok {

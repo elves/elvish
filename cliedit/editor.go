@@ -24,11 +24,24 @@ type Editor struct {
 	ns  eval.Ns
 }
 
+// Wraps the histutil.Fuser interface to implement histutil.Store. This is a
+// bandaid as we cannot change the implementation of Fuser without breaking its
+// other users. Eventually Fuser should implement Store directly.
+type fuserWrapper struct {
+	*histutil.Fuser
+}
+
+func (f fuserWrapper) AddCmd(cmd histutil.Entry) (int, error) {
+	return f.Fuser.AddCmd(cmd.Text)
+}
+
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
 	cfg := &cli.AppConfig{}
-	app := cli.NewAppFromFiles(cfg, in, out)
+	// TODO: Remove the forward declaration. Currently this is needed by
+	// makePrompt only.
+	var app *cli.App
 
 	cfg.Highlighter = highlight.NewHighlighter(
 		highlight.Dep{Check: makeCheck(ev), HasCommand: makeHasCommand(ev)})
@@ -36,10 +49,7 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	histFuser, err := histutil.NewFuser(st)
 	if err == nil {
 		_ = histFuser
-		// TODO: histFuser.AddCmd should accept Cmd instead of string
-		/*
-			cfg.HistoryStore = histFuser
-		*/
+		cfg.HistoryStore = fuserWrapper{histFuser}
 	} else {
 		fmt.Fprintln(out, "failed to initialize history facilities")
 	}
@@ -83,6 +93,7 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	// Evaluate default bindings.
 	evalDefaultBinding(ev, ns)
 
+	app = cli.NewAppFromFiles(cfg, in, out)
 	return &Editor{app, ns}
 }
 
