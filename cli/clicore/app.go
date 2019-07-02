@@ -41,6 +41,12 @@ type App struct {
 	InitMode clitypes.Mode
 }
 
+// Config is the configuration for an App.
+type Config interface {
+	MaxHeight() int
+	RPromptPersistent() bool
+}
+
 // NewApp creates a new App from two abstract dependencies. The creation does
 // not have any observable side effect; a newly created App is not immediately
 // active. This is the most general way to create an App.
@@ -130,8 +136,11 @@ func (app *App) redraw(flag redrawFlag) {
 
 	// Get the dimensions available.
 	height, width := app.tty.Size()
-	if maxHeight := app.Config.MaxHeight(); maxHeight > 0 && maxHeight < height {
-		height = maxHeight
+	if app.Config != nil {
+		maxHeight := app.Config.MaxHeight()
+		if maxHeight > 0 && maxHeight < height {
+			height = maxHeight
+		}
 	}
 
 	// Prepare the code: applying pending, and highlight.

@@ -63,9 +63,9 @@ func NewApp(cfg *AppConfig, t clicore.TTY, sigs clicore.SignalSource) *App {
 		core: coreApp,
 		cfg:  cfg,
 	}
-	coreApp.Config.Raw = clicore.RawConfig{
-		MaxHeight:         cfg.MaxHeight,
-		RPromptPersistent: cfg.RPromptPersistent,
+	coreApp.Config = &coreConfig{
+		maxHeight:         cfg.MaxHeight,
+		rpromptPersistent: cfg.RPromptPersistent,
 	}
 	coreApp.BeforeReadline = cfg.BeforeReadline
 	recordCmd := func(code string) {

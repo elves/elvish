@@ -114,10 +114,18 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 	}
 }
 
+type testConfig struct {
+	maxHeight         int
+	rpromptPersistent bool
+}
+
+func (tc testConfig) MaxHeight() int          { return tc.maxHeight }
+func (tc testConfig) RPromptPersistent() bool { return tc.rpromptPersistent }
+
 func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	ed, tty, _ := setup()
 
-	ed.Config.Raw.MaxHeight = 2
+	ed.Config = &testConfig{maxHeight: 2}
 	tty.SetSize(10, 5) // Width = 5 to make it easy to test
 
 	// The code needs 3 lines to completely show.
