@@ -22,29 +22,8 @@ type App struct {
 
 	state clitypes.State
 
-	// Configuration that can be modified concurrently.
+	// Configuration.
 	Config Config
-
-	// Functions called when ReadCode starts.
-	BeforeReadline []func()
-	// Functions called when ReadCode ends; the argument is the code that has
-	// just been read.
-	AfterReadline []func(string)
-
-	// Code highlighter.
-	Highlighter Highlighter
-
-	// Left-hand and right-hand prompt.
-	Prompt, RPrompt Prompt
-
-	// Initial mode.
-	InitMode clitypes.Mode
-}
-
-// Config is the configuration for an App.
-type Config interface {
-	MaxHeight() int
-	RPromptPersistent() bool
 }
 
 // NewApp creates a new App from two abstract dependencies. The creation does
@@ -52,7 +31,7 @@ type Config interface {
 // active. This is the most general way to create an App.
 func NewApp(t TTY, sigs SignalSource) *App {
 	lp := newLoop()
-	app := &App{loop: lp, tty: t, sigs: sigs}
+	app := &App{loop: lp, tty: t, sigs: sigs, Config: DefaultConfig{}}
 	lp.HandleCb(app.handle)
 	lp.RedrawCb(app.redraw)
 	return app
@@ -98,7 +77,7 @@ func (app *App) handle(e event) handleResult {
 		}
 		return handleResult{}
 	case term.Event:
-		action := getMode(app.state.Mode(), app.InitMode).HandleEvent(e, &app.state)
+		action := getMode(app.state.Mode(), app.Config.InitMode()).HandleEvent(e, &app.state)
 
 		switch action {
 		case clitypes.CommitCode:
@@ -114,11 +93,13 @@ func (app *App) handle(e event) handleResult {
 }
 
 func (app *App) triggerPrompts(force bool) {
-	if app.Prompt != nil {
-		app.Prompt.Trigger(force)
+	prompt := app.Config.Prompt()
+	rprompt := app.Config.RPrompt()
+	if prompt != nil {
+		prompt.Trigger(force)
 	}
-	if app.RPrompt != nil {
-		app.RPrompt.Trigger(force)
+	if rprompt != nil {
+		rprompt.Trigger(force)
 	}
 }
 
@@ -145,16 +126,16 @@ func (app *App) redraw(flag redrawFlag) {
 
 	// Prepare the code: applying pending, and highlight.
 	code, dot := applyPending(rawState)
-	styledCode, errors := highlighterGet(app.Highlighter, code)
+	styledCode, errors := highlighterGet(app.Config.Highlighter(), code)
 	// TODO: Apply transformerForPending to pending code.
 
 	// Render onto buffers.
 	setup := &renderSetup{
 		height, width,
-		promptGet(app.Prompt), promptGet(app.RPrompt),
+		promptGet(app.Config.Prompt()), promptGet(app.Config.RPrompt()),
 		styledCode, dot, errors,
 		rawState.Notes,
-		getMode(rawState.Mode, app.InitMode)}
+		getMode(rawState.Mode, app.Config.InitMode())}
 
 	bufNotes, bufMain := render(setup)
 
@@ -238,14 +219,17 @@ func (app *App) ReadCode() (string, error) {
 			}
 		}()
 	}
-	if app.Prompt != nil {
-		relayLateUpdates(app.Prompt.LateUpdates())
+	prompt := app.Config.Prompt()
+	if prompt != nil {
+		relayLateUpdates(prompt.LateUpdates())
 	}
-	if app.RPrompt != nil {
-		relayLateUpdates(app.RPrompt.LateUpdates())
+	rprompt := app.Config.RPrompt()
+	if rprompt != nil {
+		relayLateUpdates(rprompt.LateUpdates())
 	}
-	if app.Highlighter != nil {
-		relayLateUpdates(app.Highlighter.LateUpdates())
+	highlighter := app.Config.Highlighter()
+	if highlighter != nil {
+		relayLateUpdates(highlighter.LateUpdates())
 	}
 
 	// Trigger an initial prompt update.
@@ -255,16 +239,10 @@ func (app *App) ReadCode() (string, error) {
 	defer app.state.Reset()
 
 	// BeforeReadline and AfterReadline hooks.
-	for _, f := range app.BeforeReadline {
-		f()
-	}
-	if len(app.AfterReadline) > 0 {
-		defer func() {
-			for _, f := range app.AfterReadline {
-				f(app.state.Code())
-			}
-		}()
-	}
+	app.Config.BeforeReadline()
+	defer func() {
+		app.Config.AfterReadline(app.state.Code())
+	}()
 
 	return app.loop.Run()
 }
@@ -292,14 +270,4 @@ func (app *App) Redraw(full bool) {
 func (app *App) Notify(note string) {
 	app.state.AddNote(note)
 	app.Redraw(false)
-}
-
-// AddBeforeReadline adds a new before-readline hook function.
-func (app *App) AddBeforeReadline(f func()) {
-	app.BeforeReadline = append(app.BeforeReadline, f)
-}
-
-// AddAfterReadline adds a new after-readline hook function.
-func (app *App) AddAfterReadline(f func(string)) {
-	app.AfterReadline = append(app.AfterReadline, f)
 }

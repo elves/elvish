@@ -2,6 +2,7 @@ package cli
 
 import (
 	"os"
+	"sync"
 
 	"github.com/elves/elvish/cli/clicore"
 	"github.com/elves/elvish/cli/clitypes"
@@ -22,8 +23,11 @@ type App struct {
 	Lastcmd  *lastcmd.Mode
 }
 
-// AppConfig is a struct containing configurations for initializing an App.
+// AppConfig is a struct containing configurations for initializing an App. It
+// must not be copied once used.
 type AppConfig struct {
+	Mutex sync.Mutex
+
 	MaxHeight int
 
 	BeforeReadline []func()
@@ -63,30 +67,9 @@ func NewApp(cfg *AppConfig, t clicore.TTY, sigs clicore.SignalSource) *App {
 		core: coreApp,
 		cfg:  cfg,
 	}
-	coreApp.Config = &coreConfig{
-		maxHeight:         cfg.MaxHeight,
-		rpromptPersistent: cfg.RPromptPersistent,
-	}
-	coreApp.BeforeReadline = cfg.BeforeReadline
-	recordCmd := func(code string) {
-		if cfg.HistoryStore == nil {
-			return
-		}
-		_, err := cfg.HistoryStore.AddCmd(histutil.Entry{Text: code})
-		if err != nil {
-			coreApp.Notify("db error: " + err.Error())
-		}
-	}
-	afterReadline := append([]func(string){recordCmd}, cfg.AfterReadline...)
-	coreApp.AfterReadline = afterReadline
-	coreApp.Highlighter = cfg.Highlighter
-	coreApp.Prompt = cfg.Prompt
-	coreApp.RPrompt = cfg.RPrompt
+	coreApp.Config = coreConfig{app}
 
-	insertMode := newInsertMode(&cfg.InsertModeConfig, app)
-	app.Insert = insertMode
-	coreApp.InitMode = insertMode
-
+	app.Insert = newInsertMode(&cfg.InsertModeConfig, app)
 	lsMode := &listing.Mode{}
 	app.Listing = lsMode
 	app.Histlist = &histlist.Mode{

@@ -9,11 +9,41 @@ import (
 	"testing"
 	"time"
 
+	clitypes "github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
+
+type testConfig struct {
+	maxHeight         int
+	rpromptPersistent bool
+	beforeReadline    func()
+	afterReadline     func(string)
+	highlighter       Highlighter
+	prompt            Prompt
+	rprompt           Prompt
+}
+
+func (tc testConfig) MaxHeight() int           { return tc.maxHeight }
+func (tc testConfig) RPromptPersistent() bool  { return tc.rpromptPersistent }
+func (tc testConfig) Highlighter() Highlighter { return tc.highlighter }
+func (tc testConfig) Prompt() Prompt           { return tc.prompt }
+func (tc testConfig) RPrompt() Prompt          { return tc.rprompt }
+func (tc testConfig) InitMode() clitypes.Mode  { return nil }
+
+func (tc testConfig) BeforeReadline() {
+	if tc.beforeReadline != nil {
+		tc.beforeReadline()
+	}
+}
+
+func (tc testConfig) AfterReadline(s string) {
+	if tc.afterReadline != nil {
+		tc.afterReadline(s)
+	}
+}
 
 func TestReadCode_AbortsOnSetupError(t *testing.T) {
 	ed, tty, _ := setup()
@@ -78,7 +108,7 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 	ed, tty, _ := setup()
 
 	called := 0
-	ed.AddBeforeReadline(func() { called++ })
+	ed.Config = testConfig{beforeReadline: func() { called++ }}
 	// Causes BasicMode to quit
 	tty.Inject(term.KeyEvent{Rune: '\n'})
 
@@ -94,10 +124,10 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 
 	called := 0
 	code := ""
-	ed.AddAfterReadline(func(s string) {
+	ed.Config = testConfig{afterReadline: func(s string) {
 		called++
 		code = s
-	})
+	}}
 	// Causes BasicMode to write state.Code and then quit
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 	tty.Inject(term.KeyEvent{Rune: 'b'})
@@ -114,18 +144,10 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 	}
 }
 
-type testConfig struct {
-	maxHeight         int
-	rpromptPersistent bool
-}
-
-func (tc testConfig) MaxHeight() int          { return tc.maxHeight }
-func (tc testConfig) RPromptPersistent() bool { return tc.rpromptPersistent }
-
 func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	ed, tty, _ := setup()
 
-	ed.Config = &testConfig{maxHeight: 2}
+	ed.Config = testConfig{maxHeight: 2}
 	tty.SetSize(10, 5) // Width = 5 to make it easy to test
 
 	// The code needs 3 lines to completely show.
@@ -147,12 +169,12 @@ var bufChTimeout = 1 * time.Second
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	ed, tty, _ := setup()
 
-	ed.Highlighter = fakeHighlighter{
+	ed.Config = testConfig{highlighter: fakeHighlighter{
 		get: func(code string) (styled.Text, []error) {
 			return styled.Text{
 				&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
 		},
-	}
+	}}
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 	tty.Inject(term.KeyEvent{Rune: 'b'})
 	tty.Inject(term.KeyEvent{Rune: 'c'})
@@ -180,7 +202,7 @@ func TestReadCode_RedrawsOnHighlighterLateUpdate(t *testing.T) {
 func TestReadCode_RendersPrompt(t *testing.T) {
 	ed, tty, _ := setup()
 
-	ed.Prompt = constPrompt{styled.Plain("> ")}
+	ed.Config = testConfig{prompt: constPrompt{styled.Plain("> ")}}
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 
 	codeCh, _ := ed.readCodeAsync()
@@ -199,7 +221,7 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 	ed, tty, _ := setup()
 	tty.SetSize(80, 4) // Set a width of 4 for easier testing.
 
-	ed.RPrompt = constPrompt{styled.Plain("R")}
+	ed.Config = testConfig{rprompt: constPrompt{styled.Plain("R")}}
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 
 	codeCh, _ := ed.readCodeAsync()
@@ -217,7 +239,7 @@ func TestReadCode_TriggersPrompt(t *testing.T) {
 	ed, tty, _ := setup()
 
 	called := 0
-	ed.Prompt = fakePrompt{trigger: func(bool) { called++ }}
+	ed.Config = testConfig{prompt: fakePrompt{trigger: func(bool) { called++ }}}
 
 	codeCh, _ := ed.readCodeAsync()
 	cleanup(tty, codeCh)
@@ -235,7 +257,7 @@ func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
 		get:         func() styled.Text { return styled.Plain(promptContent) },
 		lateUpdates: make(chan styled.Text),
 	}
-	ed.Prompt = prompt
+	ed.Config = testConfig{prompt: prompt}
 
 	codeCh, _ := ed.readCodeAsync()
 	bufOldPrompt := ui.NewBufferBuilder(80).
