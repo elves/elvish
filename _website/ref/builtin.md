@@ -826,6 +826,54 @@ might differ):
 $cf external search-external
 
 
+## has-key
+
+```elvish
+has-key $container $key
+```
+
+Determine whether `$key` is a key in `$container`. A key could be a map key or an index on a list or string. This 
+includes a range of indexes.
+ 
+Examples, maps:
+
+```elvish-transcript
+~> has-key [&k1=v1 &k2=v2] k1
+▶ $true
+~> has-key [&k1=v1 &k2=v2] v1
+▶ $false
+```
+
+Examples, lists:
+
+```elvish-transcript
+~> has-key [v1 v2] 0
+▶ $true
+~> has-key [v1 v2] 1
+▶ $true
+~> has-key [v1 v2] 2
+▶ $false
+~> has-key [v1 v2] 0:2
+▶ $true
+~> has-key [v1 v2] 0:3
+▶ $false
+```
+
+Examples, strings:
+
+```elvish-transcript
+~> has-key ab 0
+▶ $true
+~> has-key ab 1
+▶ $true
+~> has-key ab 2
+▶ $false
+~> has-key ab 0:2
+▶ $true
+~> has-key ab 0:3
+▶ $false
+```
+
 ## has-prefix
 
 ```elvish
@@ -856,6 +904,40 @@ Determine whether `$suffix` is a suffix of `$string`. Examples:
 ▶ $true
 ```
 
+## has-value
+
+```elvish
+has-value $container $value
+```
+
+Determine whether `$value` is a value in `$container`. 
+
+Examples, maps:
+
+```elvish-transcript
+~> has-value [&k1=v1 &k2=v2] v1
+▶ $true
+~> has-value [&k1=v1 &k2=v2] k1
+▶ $false
+```
+
+Examples, lists:
+
+```elvish-transcript
+~> has-value [v1 v2] v1
+▶ $true
+~> has-value [v1 v2] k1
+▶ $false
+```
+
+Examples, strings:
+
+```elvish-transcript
+~> has-value ab b
+▶ $true
+~> has-value ab c
+▶ $false
+```
 
 ## is
 
