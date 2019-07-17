@@ -2,6 +2,8 @@ package cli
 
 import (
 	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/cliutil"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 )
 
@@ -83,5 +85,25 @@ func adaptBinding(b Binding, app *App) func(ui.Key) clitypes.HandlerAction {
 		default:
 			return clitypes.NoAction
 		}
+	}
+}
+
+func handleKey(b Binding, app *App, k ui.Key) clitypes.HandlerAction {
+	if b == nil {
+		return cliutil.BasicHandler(term.KeyEvent(k), app.core.State())
+	}
+	ev := &keyEvent{k, app, false, false}
+	handler := b.KeyHandler(k)
+	if handler == nil {
+		return clitypes.NoAction
+	}
+	handler(ev)
+	switch {
+	case ev.commitEOF:
+		return clitypes.CommitEOF
+	case ev.commitLine:
+		return clitypes.CommitCode
+	default:
+		return clitypes.NoAction
 	}
 }

@@ -5,10 +5,8 @@ package insert
 
 import (
 	"strings"
-	"sync"
 
 	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/cli/cliutil"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/parse"
@@ -16,10 +14,6 @@ import (
 
 // Mode represents the insert mode, implementing the clitypes.Mode interface.
 type Mode struct {
-	// Function to handle keys.
-	KeyHandler func(ui.Key) clitypes.HandlerAction
-	// Function that feeds all abbreviation pairs to the callback.
-	AbbrIterate func(func(abbr, full string))
 	// Configuration that can be modified concurrently.
 	Config Config
 
@@ -37,29 +31,16 @@ const (
 	literalPaste
 )
 
-// Config keeps configurations that can be changed concurrently.
-type Config struct {
-	Raw   RawConfig
-	Mutex sync.RWMutex
-}
-
-// QuotePaste returns c.Raw.QuotePaste while r-locking c.Mutex.
-func (c *Config) QuotePaste() bool {
-	c.Mutex.RLock()
-	defer c.Mutex.RUnlock()
-	return c.Raw.QuotePaste
-}
-
-// RawConfig keeps raw configurations.
-type RawConfig struct {
-	// Whether to quote the bracketed-pasted text.
-	QuotePaste bool
-}
-
 var (
 	quotePasteModeLine   = ui.NewModeLineRenderer(" INSERT (pasting, quoted) ", "")
 	literalPasteModeLine = ui.NewModeLineRenderer(" INSERT (pasting, literal) ", "")
 )
+
+func (m *Mode) initConfig() {
+	if m.Config == nil {
+		m.Config = DefaultConfig{}
+	}
+}
 
 // ModeLine returns the modeline.
 func (m *Mode) ModeLine() ui.Renderer {
@@ -81,6 +62,8 @@ func (m *Mode) ModeRenderFlag() clitypes.ModeRenderFlag {
 // HandleEvent handles a terminal event. It handles tty.PasteSetting and
 // tty.KeyEvent and ignores others.
 func (m *Mode) HandleEvent(e term.Event, st *clitypes.State) clitypes.HandlerAction {
+	m.initConfig()
+
 	switch e := e.(type) {
 	case term.PasteSetting:
 		if e {
@@ -128,12 +111,7 @@ func (m *Mode) handleKeyInPaste(k ui.Key) {
 }
 
 func (m *Mode) handleKey(k ui.Key, st *clitypes.State) clitypes.HandlerAction {
-	var action clitypes.HandlerAction
-	if m.KeyHandler != nil {
-		action = m.KeyHandler(k)
-	} else {
-		action = cliutil.BasicHandler(term.KeyEvent(k), st)
-	}
+	action := m.Config.HandleKey(k, st)
 	if k.Mod != 0 || k.Rune < 0 {
 		m.inserts = ""
 		return action
@@ -144,13 +122,11 @@ func (m *Mode) handleKey(k ui.Key, st *clitypes.State) clitypes.HandlerAction {
 	// inserting the key itself, the behavior can be confusing.
 	m.inserts += string(k.Rune)
 	var abbr, full string
-	if m.AbbrIterate != nil {
-		m.AbbrIterate(func(a, f string) {
-			if strings.HasSuffix(m.inserts, a) && len(a) > len(abbr) {
-				abbr, full = a, f
-			}
-		})
-	}
+	m.Config.IterateAbbr(func(a, f string) {
+		if strings.HasSuffix(m.inserts, a) && len(a) > len(abbr) {
+			abbr, full = a, f
+		}
+	})
 	if len(abbr) > 0 {
 		st.Mutex.Lock()
 		defer st.Mutex.Unlock()

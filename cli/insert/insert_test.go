@@ -4,11 +4,34 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/cli/cliutil"
+
 	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/parse"
 )
+
+type testConfig struct {
+	handleKey   func(ui.Key, *clitypes.State) clitypes.HandlerAction
+	iterateAbbr func(func(abbr, full string))
+	quotePaste  bool
+}
+
+func (tc testConfig) HandleKey(k ui.Key, st *clitypes.State) clitypes.HandlerAction {
+	if tc.handleKey != nil {
+		return tc.handleKey(k, st)
+	}
+	return cliutil.BasicHandler(term.KeyEvent(k), st)
+}
+
+func (tc testConfig) IterateAbbr(f func(abbr, full string)) {
+	if tc.iterateAbbr != nil {
+		tc.iterateAbbr(f)
+	}
+}
+
+func (tc testConfig) QuotePaste() bool { return tc.quotePaste }
 
 func TestModeLine_Default(t *testing.T) {
 	m := &Mode{}
@@ -33,8 +56,7 @@ func TestModeLine_LiteralPaste(t *testing.T) {
 }
 
 func TestModeLine_QuotePaste(t *testing.T) {
-	m := &Mode{}
-	m.Config.Raw.QuotePaste = true
+	m := &Mode{Config: testConfig{quotePaste: true}}
 	st := &clitypes.State{}
 
 	m.HandleEvent(term.PasteSetting(true), st)
@@ -49,8 +71,7 @@ func TestHandleEvent_LiteralPaste(t *testing.T) {
 }
 
 func TestHandleEvent_QuotePaste(t *testing.T) {
-	m := &Mode{}
-	m.Config.Raw.QuotePaste = true
+	m := &Mode{Config: testConfig{quotePaste: true}}
 	testPaste(t, m, "$100", parse.Quote("$100"))
 }
 
@@ -83,11 +104,11 @@ var (
 
 func TestHandleEvent_CallsKeyHandler(t *testing.T) {
 	var keys []ui.Key
-	keyHandler := func(k ui.Key) clitypes.HandlerAction {
+	handleKey := func(k ui.Key, st *clitypes.State) clitypes.HandlerAction {
 		keys = append(keys, k)
 		return clitypes.NoAction
 	}
-	m := &Mode{KeyHandler: keyHandler}
+	m := &Mode{Config: testConfig{handleKey: handleKey}}
 	st := &clitypes.State{}
 
 	for _, event := range events {
@@ -121,11 +142,11 @@ var abbrTests = []struct {
 }
 
 func TestHandleEvent_ExpandsAbbr(t *testing.T) {
-	m := &Mode{}
-	m.AbbrIterate = func(f func(abbr, full string)) {
-		f("xx", "> /dev/null")
-		f("2xx", "> &2")
-	}
+	m := &Mode{Config: testConfig{
+		iterateAbbr: func(f func(abbr, full string)) {
+			f("xx", "> /dev/null")
+			f("2xx", "> &2")
+		}}}
 	for _, test := range abbrTests {
 		t.Run(test.name, func(t *testing.T) {
 			st := &clitypes.State{}

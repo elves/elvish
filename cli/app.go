@@ -26,7 +26,7 @@ type App struct {
 // AppConfig is a struct containing configurations for initializing an App. It
 // must not be copied once used.
 type AppConfig struct {
-	Mutex sync.Mutex
+	Mutex sync.RWMutex
 
 	MaxHeight int
 
@@ -69,7 +69,7 @@ func NewApp(cfg *AppConfig, t clicore.TTY, sigs clicore.SignalSource) *App {
 	}
 	coreApp.Config = coreConfig{app}
 
-	app.Insert = newInsertMode(&cfg.InsertModeConfig, app)
+	app.Insert = newInsertMode(app)
 	lsMode := &listing.Mode{}
 	app.Listing = lsMode
 	app.Histlist = &histlist.Mode{
