@@ -139,7 +139,8 @@ func (s *Store) PrevCmd(upto int, prefix string) (int, string, error) {
 		c := b.Cursor()
 		p := []byte(prefix)
 
-		k, v := c.Seek(marshalSeq(uint64(upto)))
+		var v []byte
+		k, _ := c.Seek(marshalSeq(uint64(upto)))
 		if k == nil { // upto > LAST
 			k, v = c.Last()
 			if k == nil {
