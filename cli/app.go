@@ -11,6 +11,7 @@ import (
 	"github.com/elves/elvish/cli/lastcmd"
 	"github.com/elves/elvish/cli/listing"
 	"github.com/elves/elvish/cli/location"
+	"github.com/elves/elvish/store/storedefs"
 )
 
 // App represents a CLI app.
@@ -41,6 +42,7 @@ type AppConfig struct {
 	RPromptPersistent bool
 
 	HistoryStore histutil.Store
+	DirStore     DirStore
 
 	Wordifier Wordifier
 
@@ -48,6 +50,12 @@ type AppConfig struct {
 	HistlistModeConfig HistlistModeConfig
 	LastcmdModeConfig  LastcmdModeConfig
 	LocationModeConfig LocationModeConfig
+}
+
+// DirStore defines the interface for interacting with the directory history.
+type DirStore interface {
+	Dirs() ([]storedefs.Dir, error)
+	Chdir(dir string) error
 }
 
 // Wordifier is the type of a function that turns code into words.
@@ -76,6 +84,7 @@ func NewApp(cfg *AppConfig, t clicore.TTY, sigs clicore.SignalSource) *App {
 	app.Listing = &listing.Mode{}
 	app.Histlist = newHistlist(app)
 	app.Lastcmd = newLastcmd(app)
+	app.Location = newLocation(app)
 
 	return app
 }

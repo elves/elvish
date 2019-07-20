@@ -35,6 +35,19 @@ func (f fuserWrapper) AddCmd(cmd histutil.Entry) (int, error) {
 	return f.Fuser.AddCmd(cmd.Text)
 }
 
+// Wraps an Evaler to implement the cli.DirStore interface.
+type dirStore struct {
+	ev *eval.Evaler
+}
+
+func (d dirStore) Chdir(path string) error {
+	return d.ev.Chdir(path)
+}
+
+func (d dirStore) Dirs() ([]storedefs.Dir, error) {
+	return d.ev.DaemonClient.Dirs(map[string]struct{}{})
+}
+
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
@@ -45,6 +58,8 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 
 	cfg.Highlighter = highlight.NewHighlighter(
 		highlight.Dep{Check: makeCheck(ev), HasCommand: makeHasCommand(ev)})
+
+	cfg.DirStore = dirStore{ev}
 
 	histFuser, err := histutil.NewFuser(st)
 	if err == nil {
@@ -89,6 +104,9 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 
 	histlistNs := initHistlist(ev, lsBinding, &cfg.HistlistModeConfig)
 	ns.AddNs("histlist", histlistNs)
+
+	locationNs := initLocation(ev, lsBinding, &cfg.LocationModeConfig)
+	ns.AddNs("location", locationNs)
 
 	// Evaluate default bindings.
 	evalDefaultBinding(ev, ns)

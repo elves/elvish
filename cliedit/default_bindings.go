@@ -24,6 +24,7 @@ insert:binding = (binding-map [
 
   &Alt-,=  $lastcmd:start~
   &Ctrl-R= $histlist:start~
+  &Ctrl-L= $location:start~
 
   &Ctrl-D=  $commit-eof~
   &Default= $insert:default-handler~
