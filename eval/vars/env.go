@@ -13,14 +13,14 @@ type envVariable struct {
 
 func (ev envVariable) Set(val interface{}) error {
 	if s, ok := val.(string); ok {
-		os.Setenv(ev.name, string(s))
+		os.Setenv(ev.name, s)
 		return nil
 	}
 	return errEnvMustBeString
 }
 
 func (ev envVariable) Get() interface{} {
-	return string(os.Getenv(ev.name))
+	return os.Getenv(ev.name)
 }
 
 // FromEnv returns a Var corresponding to the named environment variable.

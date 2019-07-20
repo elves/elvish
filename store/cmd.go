@@ -169,7 +169,7 @@ func (s *Store) PrevCmd(upto int, prefix string) (int, string, error) {
 
 func marshalSeq(seq uint64) []byte {
 	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, uint64(seq))
+	binary.BigEndian.PutUint64(b, seq)
 	return b
 }
 
