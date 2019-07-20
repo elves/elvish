@@ -87,7 +87,7 @@ fn -tilde-expand [p]{
 # Known method handlers. Each entry is indexed by method name (the
 # value of the "method" key in the domain configs), and must contain
 # two keys: install and upgrade, each one must be a closure that
-# received two arguments: package name and the domain config entry
+# receives two arguments: package name and the domain config entry
 #
 # - Method 'git' requires the key 'protocol' in the domain config,
 #   which has to be 'http' or 'https'
