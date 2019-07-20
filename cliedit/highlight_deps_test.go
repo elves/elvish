@@ -125,7 +125,7 @@ func mustMkdirAll(path string) {
 
 func mustMkExecutable(path string) {
 	if runtime.GOOS == "windows" {
-		path = path + ".exe"
+		path += ".exe"
 	}
 	err := ioutil.WriteFile(path, nil, 0700)
 	if err != nil {

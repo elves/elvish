@@ -49,7 +49,7 @@ func (s *Store) AddDir(d string, incFactor float64) error {
 		if v := b.Get(k); v != nil {
 			score = unmarshalScore(v)
 		}
-		score = score + scoreIncrement*incFactor
+		score += scoreIncrement * incFactor
 		return b.Put(k, marshalScore(score))
 	})
 }

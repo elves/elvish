@@ -47,9 +47,7 @@ func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
 	}
 
 	// Build readLine function.
-	readLine := func() (string, error) {
-		return ed.ReadLine()
-	}
+	readLine := ed.ReadLine
 
 	cooldown := time.Second
 	usingBasic := false
