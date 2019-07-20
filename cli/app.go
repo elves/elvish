@@ -10,6 +10,7 @@ import (
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/lastcmd"
 	"github.com/elves/elvish/cli/listing"
+	"github.com/elves/elvish/cli/location"
 )
 
 // App represents a CLI app.
@@ -21,6 +22,7 @@ type App struct {
 	Listing  *listing.Mode
 	Histlist *histlist.Mode
 	Lastcmd  *lastcmd.Mode
+	Location *location.Mode
 }
 
 // AppConfig is a struct containing configurations for initializing an App. It
@@ -45,6 +47,7 @@ type AppConfig struct {
 	InsertModeConfig   InsertModeConfig
 	HistlistModeConfig HistlistModeConfig
 	LastcmdModeConfig  LastcmdModeConfig
+	LocationModeConfig LocationModeConfig
 }
 
 // Wordifier is the type of a function that turns code into words.
@@ -70,16 +73,9 @@ func NewApp(cfg *AppConfig, t clicore.TTY, sigs clicore.SignalSource) *App {
 	coreApp.Config = coreConfig{app}
 
 	app.Insert = newInsertMode(app)
-	lsMode := &listing.Mode{}
-	app.Listing = lsMode
-	app.Histlist = &histlist.Mode{
-		Mode:       lsMode,
-		KeyHandler: adaptBinding(cfg.HistlistModeConfig.Binding, app),
-	}
-	app.Lastcmd = &lastcmd.Mode{
-		Mode:       lsMode,
-		KeyHandler: adaptBinding(cfg.LastcmdModeConfig.Binding, app),
-	}
+	app.Listing = &listing.Mode{}
+	app.Histlist = newHistlist(app)
+	app.Lastcmd = newLastcmd(app)
 
 	return app
 }

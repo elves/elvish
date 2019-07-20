@@ -1,10 +1,25 @@
 package cli
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/lastcmd"
+	"github.com/elves/elvish/edit/ui"
+)
 
 // LastcmdModeConfig is a struct containing configuration for the lastcmd mode.
 type LastcmdModeConfig struct {
 	Binding Binding
+}
+
+func newLastcmd(app *App) *lastcmd.Mode {
+	return &lastcmd.Mode{
+		Mode: app.Listing,
+		KeyHandler: func(k ui.Key) clitypes.HandlerAction {
+			return handleKey(app.cfg.LastcmdModeConfig.Binding, app, k)
+		},
+	}
 }
 
 // StartLastcmd starts the lastcmd mode.
