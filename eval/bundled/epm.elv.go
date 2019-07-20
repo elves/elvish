@@ -166,8 +166,8 @@ fn -write-domain-config [dom]{
   }
 }
 
-# Returns the domain config for a given domain, as a JSON data
-# structure. If the file does not exist but we have a built-in
+# Returns the domain config for a given domain parsed from JSON.
+# If the file does not exist but we have a built-in
 # definition, then we return the default. Otherwise we return $false,
 # so the result can always be checked with 'if'.
 fn -domain-config [dom]{
