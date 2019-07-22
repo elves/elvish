@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 
+	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/util"
 )
 
@@ -125,8 +126,8 @@ func (bb *BufferBuilder) WriteString(text, style string) *BufferBuilder {
 	return bb
 }
 
-// WriteUnstyled writes unstyled string.
-func (bb *BufferBuilder) WriteUnstyled(text string) *BufferBuilder {
+// WritePlain writes unstyled plain string.
+func (bb *BufferBuilder) WritePlain(text string) *BufferBuilder {
 	return bb.WriteString(text, "")
 }
 
@@ -135,8 +136,13 @@ func (bb *BufferBuilder) WriteSpaces(w int, style string) *BufferBuilder {
 	return bb.WriteString(strings.Repeat(" ", w), style)
 }
 
-// WriteStyleds writes a slice of styled structs.
-func (bb *BufferBuilder) WriteStyleds(ss []*Styled) *BufferBuilder {
+// WriteLegacyStyleds writes a styled text.
+func (bb *BufferBuilder) WriteStyled(t styled.Text) *BufferBuilder {
+	return bb.WriteLegacyStyled(t.ToLegacyType())
+}
+
+// WriteLegacyStyleds writes a slice of (legacy) styled structs.
+func (bb *BufferBuilder) WriteLegacyStyleds(ss []*Styled) *BufferBuilder {
 	for _, s := range ss {
 		bb.WriteString(s.Text, s.Styles.String())
 	}

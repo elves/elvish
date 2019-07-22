@@ -139,15 +139,15 @@ type codeContentRenderer struct {
 func (r *codeContentRenderer) Render(buf *ui.BufferBuilder) {
 	buf.EagerWrap = true
 
-	buf.WriteStyleds(r.prompt.ToLegacyType())
+	buf.WriteLegacyStyleds(r.prompt.ToLegacyType())
 	if len(buf.Lines) == 1 && buf.Col*2 < buf.Width {
 		buf.Indent = buf.Col
 	}
 
 	parts := r.code.Partition(r.dot)
-	buf.WriteStyleds(parts[0].ToLegacyType())
+	buf.WriteLegacyStyleds(parts[0].ToLegacyType())
 	buf.Dot = buf.Cursor()
-	buf.WriteStyleds(parts[1].ToLegacyType())
+	buf.WriteLegacyStyleds(parts[1].ToLegacyType())
 
 	buf.EagerWrap = false
 
@@ -155,7 +155,7 @@ func (r *codeContentRenderer) Render(buf *ui.BufferBuilder) {
 		padding := buf.Width - buf.Col - rpromptWidth
 		if padding >= 1 {
 			buf.WriteSpaces(padding, "")
-			buf.WriteStyleds(r.rprompt.ToLegacyType())
+			buf.WriteLegacyStyleds(r.rprompt.ToLegacyType())
 		}
 	}
 }

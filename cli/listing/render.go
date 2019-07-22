@@ -23,6 +23,6 @@ func (r styledTextsRenderer) Render(bb *ui.BufferBuilder) {
 		if i > 0 {
 			bb.Newline()
 		}
-		bb.WriteStyleds(line.TrimWcwidth(bb.Width).ToLegacyType())
+		bb.WriteLegacyStyleds(line.TrimWcwidth(bb.Width).ToLegacyType())
 	}
 }

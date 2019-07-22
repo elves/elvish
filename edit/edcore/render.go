@@ -106,7 +106,7 @@ func (clr *cmdlineRenderer) setRepl(bb, e int, t string) {
 func (clr *cmdlineRenderer) Render(bb *ui.BufferBuilder) {
 	bb.EagerWrap = true
 
-	bb.WriteStyleds(clr.prompt)
+	bb.WriteLegacyStyleds(clr.prompt)
 
 	// If the prompt takes less than half of a line, set the indent.
 	if len(bb.Lines) == 1 && bb.Col*2 < bb.Width {
@@ -153,7 +153,7 @@ func (clr *cmdlineRenderer) Render(bb *ui.BufferBuilder) {
 		if padding >= 1 {
 			bb.EagerWrap = false
 			bb.WriteSpaces(padding, "")
-			bb.WriteStyleds(clr.rprompt)
+			bb.WriteLegacyStyleds(clr.rprompt)
 		}
 	}
 }
