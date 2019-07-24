@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-// Widget supports code-editing functions. It implements the clibase.Widget
+// Widget supports code-editing functions. It implements the clitypes.Widget
 // interface. An empty Widget is directly usable.
 type Widget struct {
 	// Publically accessible state.
