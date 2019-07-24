@@ -85,12 +85,12 @@ func (w *Widget) Render(bb *ui.BufferBuilder) {
 	s := w.State
 	s.Mutex.RLock()
 	styledCode, errors := w.Highlighter(s.CodeBuffer.Content)
-	r := renderer{
+	v := &view{
 		s.Prompt, s.RPrompt, styledCode, s.CodeBuffer.Dot, errors,
 	}
 	s.Mutex.RUnlock()
 
-	r.Render(bb)
+	render(v, bb)
 }
 
 // Handle handles KeyEvent's of non-function keys, as well as PasteSetting

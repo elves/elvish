@@ -6,7 +6,8 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-type renderer struct {
+// View model, calculated from State and used for rendering.
+type view struct {
 	prompt  styled.Text
 	rprompt styled.Text
 	code    styled.Text
@@ -14,15 +15,15 @@ type renderer struct {
 	errors  []error
 }
 
-func (r *renderer) Render(buf *ui.BufferBuilder) {
+func render(v *view, buf *ui.BufferBuilder) {
 	buf.EagerWrap = true
 
-	buf.WriteLegacyStyleds(r.prompt.ToLegacyType())
+	buf.WriteLegacyStyleds(v.prompt.ToLegacyType())
 	if len(buf.Lines) == 1 && buf.Col*2 < buf.Width {
 		buf.Indent = buf.Col
 	}
 
-	parts := r.code.Partition(r.dot)
+	parts := v.code.Partition(v.dot)
 	buf.WriteLegacyStyleds(parts[0].ToLegacyType())
 	buf.Dot = buf.Cursor()
 	buf.WriteLegacyStyleds(parts[1].ToLegacyType())
@@ -30,16 +31,16 @@ func (r *renderer) Render(buf *ui.BufferBuilder) {
 	buf.EagerWrap = false
 
 	// Handle rprompts with newlines.
-	if rpromptWidth := styledWcswidth(r.rprompt); rpromptWidth > 0 {
+	if rpromptWidth := styledWcswidth(v.rprompt); rpromptWidth > 0 {
 		padding := buf.Width - buf.Col - rpromptWidth
 		if padding >= 1 {
 			buf.WriteSpaces(padding, "")
-			buf.WriteLegacyStyleds(r.rprompt.ToLegacyType())
+			buf.WriteLegacyStyleds(v.rprompt.ToLegacyType())
 		}
 	}
 
-	if len(r.errors) > 0 {
-		for _, err := range r.errors {
+	if len(v.errors) > 0 {
+		for _, err := range v.errors {
 			buf.Newline()
 			buf.WritePlain(err.Error())
 		}
