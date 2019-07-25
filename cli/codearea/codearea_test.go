@@ -97,6 +97,43 @@ var renderTests = []struct {
 		bb(10).WritePlain("code").SetDotToCursor().
 			Newline().WritePlain("static error"),
 	},
+	{
+		"pending code inserting at the dot",
+		&Widget{State: State{
+			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
+			PendingCode: PendingCode{From: 4, To: 4, Content: "x"},
+		}},
+		10,
+		bb(10).WritePlain("code").WriteString("x", "4").SetDotToCursor(),
+	},
+	{
+		"pending code replacing at the dot",
+		&Widget{State: State{
+			CodeBuffer:  CodeBuffer{Content: "code", Dot: 2},
+			PendingCode: PendingCode{From: 2, To: 4, Content: "x"},
+		}},
+		10,
+		bb(10).WritePlain("co").WriteString("x", "4").SetDotToCursor(),
+	},
+	{
+		"pending code to the left of the dot",
+		&Widget{State: State{
+			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
+			PendingCode: PendingCode{From: 1, To: 3, Content: "x"},
+		}},
+		10,
+		bb(10).WritePlain("c").WriteString("x", "4").WritePlain("e").SetDotToCursor(),
+	},
+	{
+		"pending code to the right of the cursor",
+		&Widget{State: State{
+			CodeBuffer:  CodeBuffer{Content: "code", Dot: 1},
+			PendingCode: PendingCode{From: 2, To: 3, Content: "x"},
+		}},
+		10,
+		bb(10).WritePlain("c").SetDotToCursor().WritePlain("o").
+			WriteString("x", "4").WritePlain("e"),
+	},
 }
 
 func TestRender(t *testing.T) {

@@ -29,12 +29,12 @@ type CodeBuffer struct {
 type PendingCode struct {
 	// Beginning index of the text area that the pending code replaces, as a
 	// byte index into RawState.Code.
-	Begin int
+	From int
 	// End index of the text area that the pending code replaces, as a byte
 	// index into RawState.Code.
-	End int
+	To int
 	// The content of the pending code.
-	Text string
+	Content string
 }
 
 func (s *State) MutateCodeBuffer(f func(*CodeBuffer)) {

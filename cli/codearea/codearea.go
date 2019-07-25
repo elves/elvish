@@ -82,15 +82,8 @@ func (w *Widget) Submit() {
 // the cursor, and compilation errors in the code content.
 func (w *Widget) Render(bb *ui.BufferBuilder) {
 	w.init()
-	s := w.State
-	s.Mutex.RLock()
-	styledCode, errors := w.Highlighter(s.CodeBuffer.Content)
-	v := &view{
-		s.Prompt, s.RPrompt, styledCode, s.CodeBuffer.Dot, errors,
-	}
-	s.Mutex.RUnlock()
-
-	render(v, bb)
+	view := getView(&w.State, w.Highlighter)
+	renderView(view, bb)
 }
 
 // Handle handles KeyEvent's of non-function keys, as well as PasteSetting
