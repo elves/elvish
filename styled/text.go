@@ -64,14 +64,24 @@ func (t Text) Index(k interface{}) (interface{}, error) {
 func (t Text) Concat(v interface{}) (interface{}, error) {
 	switch rhs := v.(type) {
 	case string:
-		return Text(append(t, &Segment{Text: rhs})), nil
+		return t.ConcatSegments(&Segment{Text: rhs}), nil
 	case *Segment:
-		return Text(append(t, rhs)), nil
+		return t.ConcatSegments(rhs), nil
 	case Text:
-		return Text(append(t, rhs...)), nil
+		return t.ConcatSegments(rhs...), nil
 	}
 
 	return nil, vals.ErrConcatNotImplemented
+}
+
+// ConcatSegments returns a new Text with the new Text added to the end.
+func (t Text) ConcatText(t2 Text) Text {
+	return t.ConcatSegments(t2...)
+}
+
+// ConcatSegments returns a new Text with the new Segment's added to the end.
+func (t Text) ConcatSegments(segs ...*Segment) Text {
+	return Text(append(append(Text(nil), t...), segs...))
 }
 
 // RConcat implements string+Text.
