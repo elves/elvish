@@ -97,33 +97,28 @@ func (t Text) RConcat(v interface{}) (interface{}, error) {
 // Partition partitions the Text at n indicies into n+1 Text values.
 func (t Text) Partition(indicies ...int) []Text {
 	out := make([]Text, len(indicies)+1)
-	segs := t
-	consumedSegsLen := 0
-	seg0Consumed := 0
+	segs := t.Clone()
 	for i, idx := range indicies {
-		text := make(Text, 0)
-		for len(segs) > 0 && idx >= consumedSegsLen+len(segs[0].Text) {
-			text = append(text, &Segment{
-				segs[0].Style, segs[0].Text[seg0Consumed:]})
-			consumedSegsLen += len(segs[0].Text)
-			seg0Consumed = 0
-			segs = segs[1:]
+		toConsume := idx
+		if i > 0 {
+			toConsume -= indicies[i-1]
 		}
-		if len(segs) > 0 && idx > consumedSegsLen {
-			text = append(text, &Segment{
-				segs[0].Style, segs[0].Text[:idx-consumedSegsLen]})
-			seg0Consumed = idx - consumedSegsLen
+		for len(segs) > 0 && toConsume > 0 {
+			if len(segs[0].Text) <= toConsume {
+				out[i] = append(out[i], segs[0])
+				toConsume -= len(segs[0].Text)
+				segs = segs[1:]
+			} else {
+				out[i] = append(out[i], &Segment{segs[0].Style, segs[0].Text[:toConsume]})
+				segs[0] = &Segment{segs[0].Style, segs[0].Text[toConsume:]}
+				toConsume = 0
+			}
 		}
-		out[i] = text
 	}
-	trailing := make(Text, 0)
-	for len(segs) > 0 {
-		trailing = append(trailing, &Segment{
-			segs[0].Style, segs[0].Text[seg0Consumed:]})
-		seg0Consumed = 0
-		segs = segs[1:]
+	if len(segs) > 0 {
+		// Don't use segs directly to avoid memory leak
+		out[len(indicies)] = append(Text(nil), segs...)
 	}
-	out[len(indicies)] = trailing
 	return out
 }
 
