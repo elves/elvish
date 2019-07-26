@@ -15,13 +15,13 @@ jobs:
     - stage: deploy
       name: Generate and upload Linux coverage profiles
       script: make coverage-travis
-      if: type = push
+      if: type = push AND branch = master
       os: linux
     - name: Generate and upload macOS coverage profiles
       script: make coverage-travis
-      if: type = push
+      if: type = push AND branch = master
       os: osx
     - name: Build and upload binaries to bintray
       script: make binaries-travis
-      if: type = push
+      if: type = push AND branch = master
 script: make test
