@@ -6,6 +6,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/parse"
@@ -43,6 +44,8 @@ type Widget struct {
 	pasteBuffer bytes.Buffer
 }
 
+var _ = clitypes.Widget(&Widget{})
+
 func dummyHighlighter(code string) (styled.Text, []error) {
 	return styled.Plain(code), nil
 }
@@ -78,12 +81,16 @@ func (w *Widget) Submit() {
 	w.OnSubmit(w.State.CodeBuffer.Content)
 }
 
-// Show shows the code area, including the prompt and rprompt, highlighted code,
-// the cursor, and compilation errors in the code content.
-func (w *Widget) Render(bb *ui.BufferBuilder) {
+// Render renders the code area, including the prompt and rprompt, highlighted
+// code, the cursor, and compilation errors in the code content.
+func (w *Widget) Render(width, height int) *ui.Buffer {
 	w.init()
 	view := getView(&w.State, w.Highlighter)
+	bb := ui.NewBufferBuilder(width)
 	renderView(view, bb)
+	b := bb.Buffer()
+	truncateToHeight(b, height)
+	return b
 }
 
 // Handle handles KeyEvent's of non-function keys, as well as PasteSetting

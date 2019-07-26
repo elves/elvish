@@ -16,41 +16,42 @@ var renderTests = []struct {
 	name    string
 	widget  *Widget
 	width   int
+	height  int
 	wantBuf *ui.BufferBuilder
 }{
 	{
 		"prompt only",
 		&Widget{State: State{
 			Prompt: styled.MakeText("~>", "bold")}},
-		10,
+		10, 24,
 		bb(10).WriteString("~>", "1").SetDotToCursor(),
 	},
 	{
 		"rprompt only",
 		&Widget{State: State{
 			RPrompt: styled.MakeText("RP", "inverse")}},
-		10,
+		10, 24,
 		bb(10).SetDotToCursor().WriteSpaces(8, "").WriteString("RP", "7"),
 	},
 	{
 		"code only with dot at beginning",
 		&Widget{State: State{
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 0}}},
-		10,
+		10, 24,
 		bb(10).SetDotToCursor().WritePlain("code"),
 	},
 	{
 		"code only with dot at middle",
 		&Widget{State: State{
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 2}}},
-		10,
+		10, 24,
 		bb(10).WritePlain("co").SetDotToCursor().WritePlain("de"),
 	},
 	{
 		"code only with dot at end",
 		&Widget{State: State{
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}},
-		10,
+		10, 24,
 		bb(10).WritePlain("code").SetDotToCursor(),
 	},
 	{
@@ -60,7 +61,7 @@ var renderTests = []struct {
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 4},
 			RPrompt:    styled.Plain("RP"),
 		}},
-		10,
+		10, 24,
 		bb(10).WritePlain("~>code").SetDotToCursor().WritePlain("  RP"),
 	},
 	{
@@ -70,7 +71,7 @@ var renderTests = []struct {
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 4},
 			RPrompt:    styled.Plain("1234"),
 		}},
-		10,
+		10, 24,
 		bb(10).WritePlain("~>code").SetDotToCursor(),
 	},
 	{
@@ -81,7 +82,7 @@ var renderTests = []struct {
 				return styled.MakeText(code, "bold"), nil
 			},
 		},
-		10,
+		10, 24,
 		bb(10).WriteString("code", "1").SetDotToCursor(),
 	},
 	{
@@ -93,7 +94,7 @@ var renderTests = []struct {
 				return styled.Plain(code), []error{err}
 			},
 		},
-		10,
+		10, 24,
 		bb(10).WritePlain("code").SetDotToCursor().
 			Newline().WritePlain("static error"),
 	},
@@ -103,7 +104,7 @@ var renderTests = []struct {
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
 			PendingCode: PendingCode{From: 4, To: 4, Content: "x"},
 		}},
-		10,
+		10, 24,
 		bb(10).WritePlain("code").WriteString("x", "4").SetDotToCursor(),
 	},
 	{
@@ -112,7 +113,7 @@ var renderTests = []struct {
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 2},
 			PendingCode: PendingCode{From: 2, To: 4, Content: "x"},
 		}},
-		10,
+		10, 24,
 		bb(10).WritePlain("co").WriteString("x", "4").SetDotToCursor(),
 	},
 	{
@@ -121,7 +122,7 @@ var renderTests = []struct {
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
 			PendingCode: PendingCode{From: 1, To: 3, Content: "x"},
 		}},
-		10,
+		10, 24,
 		bb(10).WritePlain("c").WriteString("x", "4").WritePlain("e").SetDotToCursor(),
 	},
 	{
@@ -130,16 +131,50 @@ var renderTests = []struct {
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 1},
 			PendingCode: PendingCode{From: 2, To: 3, Content: "x"},
 		}},
-		10,
+		10, 24,
 		bb(10).WritePlain("c").SetDotToCursor().WritePlain("o").
 			WriteString("x", "4").WritePlain("e"),
+	},
+	{
+		"ignore invalid pending code",
+		&Widget{State: State{
+			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
+			PendingCode: PendingCode{From: 2, To: 1, Content: "x"},
+		}},
+		10, 24,
+		bb(10).WritePlain("code").SetDotToCursor(),
+	},
+	{
+		"prioritize lines before the cursor with small height",
+		&Widget{State: State{
+			CodeBuffer: CodeBuffer{Content: "a\nb\nc\nd", Dot: 3},
+		}},
+		10, 2,
+		bb(10).WritePlain("a").Newline().WritePlain("b").SetDotToCursor(),
+	},
+	{
+		"show only the cursor line when height is 1",
+		&Widget{State: State{
+			CodeBuffer: CodeBuffer{Content: "a\nb\nc\nd", Dot: 3},
+		}},
+		10, 1,
+		bb(10).WritePlain("b").SetDotToCursor(),
+	},
+	{
+		"show lines after the cursor when all lines before the cursor are shown",
+		&Widget{State: State{
+			CodeBuffer: CodeBuffer{Content: "a\nb\nc\nd", Dot: 3},
+		}},
+		10, 3,
+		bb(10).WritePlain("a").Newline().WritePlain("b").SetDotToCursor().
+			Newline().WritePlain("c"),
 	},
 }
 
 func TestRender(t *testing.T) {
 	for _, test := range renderTests {
 		t.Run(test.name, func(t *testing.T) {
-			buf := ui.Render(test.widget, test.width)
+			buf := test.widget.Render(test.width, test.height)
 			wantBuf := test.wantBuf.Buffer()
 			if !reflect.DeepEqual(buf, wantBuf) {
 				t.Errorf("got buf %v, want %v", buf, wantBuf)

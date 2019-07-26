@@ -8,8 +8,14 @@ import (
 // Widget is the basic component of UI; it knows how to handle events and how to
 // render itself.
 type Widget interface {
-	ui.Renderer
+	Renderer
 	Handler
+}
+
+// Renderer wraps the Render method.
+type Renderer interface {
+	// Render onto a region of bound width and height.
+	Render(width, height int) *ui.Buffer
 }
 
 // Handler wraps the Handle method.
@@ -30,8 +36,8 @@ type widgetWithOverlayHandler struct {
 	overlay Handler
 }
 
-func (w widgetWithOverlayHandler) Render(bb *ui.BufferBuilder) {
-	w.base.Render(bb)
+func (w widgetWithOverlayHandler) Render(width, height int) *ui.Buffer {
+	return w.base.Render(width, height)
 }
 
 func (w widgetWithOverlayHandler) Handle(event term.Event) bool {

@@ -89,6 +89,20 @@ func renderView(v *view, buf *ui.BufferBuilder) {
 	}
 }
 
+func truncateToHeight(b *ui.Buffer, maxHeight int) {
+	switch {
+	case len(b.Lines) <= maxHeight:
+		// We can show all line; do nothing.
+	case b.Dot.Line < maxHeight:
+		// We can show all lines before the cursor, and as many lines after the
+		// cursor as we can, adding up to maxHeight.
+		b.TrimToLines(0, maxHeight)
+	default:
+		// We can show maxHeight lines before and including the cursor line.
+		b.TrimToLines(b.Dot.Line-maxHeight+1, b.Dot.Line+1)
+	}
+}
+
 func styledWcswidth(t styled.Text) int {
 	w := 0
 	for _, seg := range t {
