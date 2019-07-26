@@ -354,3 +354,10 @@ func TestHandle_EnterEmitsSubmit(t *testing.T) {
 		t.Errorf("code not submitted")
 	}
 }
+
+func TestHandle_DefaultNoopSubmit(t *testing.T) {
+	w := &Widget{State: State{
+		CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}}
+	w.Handle(term.K('\n'))
+	// No panic, we are good
+}
