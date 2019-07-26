@@ -1,3 +1,4 @@
+// Package codearea implements a widget for showing and editing code in CLI.
 package codearea
 
 import (
