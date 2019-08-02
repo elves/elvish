@@ -238,6 +238,22 @@ func (m *Mode) List(maxHeight int) ui.Renderer {
 }
 
 // Determines the index of the first item to show in listing.
+//
+// This function does not return the full window, but just the first item to
+// show, and how many initial lines to crop. The window determined by this
+// algorithm has the following properties:
+//
+// * It always includes the selected item.
+//
+// * The combined height of all the entries in the window is equal to
+//   min(maxHeight, combined height of all entries).
+//
+// * There are at least respectDistance rows above the first row of the selected
+//   item, as well as that many rows below the last row of the selected item,
+//   unless the height is too small.
+//
+// * Among all values satisfying the above conditions, the value of first is
+//   the one closest to oldFirst.
 func findWindow(items Items, oldFirst, selected, maxHeight int) (first, crop int) {
 	n := items.Len()
 	selectedHeight := items.Show(selected).CountLines()
@@ -248,24 +264,21 @@ func findWindow(items Items, oldFirst, selected, maxHeight int) (first, crop int
 		return selected, 0
 	}
 
-	// Determine the initial budgets for expanding on both directions.
+	// Determine the minimum amount of space required for the downward direction.
 	budget := maxHeight - selectedHeight
-	budgetUp := 0
+	var needDown int
 	if budget >= 2*respectDistance {
-		// If the height is big enough to maintain the respect distances on
-		// both sides, we start with a budget that leaves just enough
-		// respect distance for the downward side.
-		budgetUp = budget - respectDistance
+		// If we can afford maintaining the respect distance on both sides, then
+		// the minimum amount of space required is the respect distance.
+		needDown = respectDistance
 	} else {
-		// Otherwise we split the budgets for the two directions in half.
-		budgetUp = budget / 2
+		// Otherwise we split the available space by half. The downward (no pun
+		// intended) rounding here is an arbitrary choice.
+		needDown = budget / 2
 	}
-
-	budgetDown := budget - budgetUp
-	// Calculate the most amount of the budget we can consume by expanding
-	// downwards. The result will be used for two purposes, 1) determining
-	// whether to reallocate some of budgetDown to budgetUp, and 2) determining
-	// when to stop expanding upwards.
+	// Calculate how much of the budget the downward direction can use. This is
+	// used to 1) potentially shrink needDown 2) decide how much to expand
+	// upward later.
 	useDown := 0
 	for i := selected + 1; i < n; i++ {
 		useDown += items.Show(i).CountLines()
@@ -273,19 +286,27 @@ func findWindow(items Items, oldFirst, selected, maxHeight int) (first, crop int
 			break
 		}
 	}
-	if budgetDown > useDown {
-		// We reached item n-1 without using up budgetDown. Reallocate the extra
-		// budget towards budgetUp.
-		budgetUp += budgetDown - useDown
+	if needDown > useDown {
+		// We reached the last item without using all of needDown. That means we
+		// don't need so much in the downward direction.
+		needDown = useDown
 	}
 
+	// The maximum amount of space we can use in the upward direction is the
+	// entire budget minus the minimum amount of space we need in the downward
+	// direction.
+	budgetUp := budget - needDown
+
 	useUp := 0
-	// Extend upwards until any of the following:
+	// Extend upwards until any of the following becomes true:
+	//
 	// * We have exhausted budgetUp;
-	// * We have reached oldFirst, achieved the upward respect distance, and
-	//   will be able to use up the entire budget when expanding downwards
-	//   later;
-	// * We have reached item 0.
+	//
+	// * We have reached item 0;
+	//
+	// * We have reached or passed oldFirst, satisfied the upward respect
+	//   distance, and will be able to use up the entire budget when expanding
+	//   downwards later.
 	for i := selected - 1; i >= 0; i-- {
 		useUp += items.Show(i).CountLines()
 		if useUp >= budgetUp {
