@@ -55,3 +55,5 @@ func setupGlobal() func() {
 	}
 	return func() { windows.SetConsoleMode(hOut, oldOutMode) }
 }
+
+func sanitize(in, out *os.File) {}

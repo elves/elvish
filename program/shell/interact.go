@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/cliedit"
 	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/edit"
@@ -46,6 +47,8 @@ func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
 		}
 	}
 
+	term.Sanitize(os.Stdin, os.Stderr)
+
 	// Build readLine function.
 	readLine := ed.ReadLine
 
@@ -81,6 +84,7 @@ func interact(ev *eval.Evaler, dataDir string, norc, newEdit bool) {
 		cooldown = time.Second
 
 		err = ev.EvalSourceInTTY(eval.NewInteractiveSource(line))
+		term.Sanitize(os.Stdin, os.Stderr)
 		if err != nil {
 			diag.PPrintError(err)
 		}
