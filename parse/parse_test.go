@@ -103,9 +103,11 @@ var goodCases = []struct {
 			"Value": "b\x1b\x1b\u548c\U0002CE23\123\n\t\\",
 		}})},
 	// Wildcard
-	{"a * ?", a(
+	{"a * ? ** ??", a(
 		ast{"Compound/Indexing/Primary", fs{"Type": Wildcard, "Value": "*"}},
 		ast{"Compound/Indexing/Primary", fs{"Type": Wildcard, "Value": "?"}},
+		ast{"Compound/Indexing/Primary", fs{"Type": Wildcard, "Value": "**"}},
+		ast{"Compound", fs{"Indexings": []string{"?", "?"}}},
 	)},
 	// Variable
 	{"a $x $&f", a(
