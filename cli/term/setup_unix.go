@@ -8,6 +8,7 @@ import (
 
 	"github.com/elves/elvish/sys"
 	"github.com/elves/elvish/util"
+	"golang.org/x/sys/unix"
 )
 
 const flushInputDuringSetup = false
@@ -61,4 +62,12 @@ func setup(in, out *os.File) (func() error, error) {
 
 func setupGlobal() func() {
 	return func() {}
+}
+
+func sanitize(in, out *os.File) {
+	// Some programs use non-blocking IO but do not correctly clear the
+	// non-blocking flags after exiting, so we always clear the flag. See #822
+	// for an example.
+	unix.SetNonblock(int(in.Fd()), false)
+	unix.SetNonblock(int(out.Fd()), false)
 }
