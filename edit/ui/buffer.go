@@ -84,6 +84,12 @@ func BuffersHeight(bufs ...*Buffer) (l int) {
 
 // TrimToLines trims a buffer to the lines [low, high).
 func (b *Buffer) TrimToLines(low, high int) {
+	if low < 0 {
+		low = 0
+	}
+	if high > len(b.Lines) {
+		high = len(b.Lines)
+	}
 	for i := 0; i < low; i++ {
 		b.Lines[i] = nil
 	}

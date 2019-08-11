@@ -50,11 +50,16 @@ type Itemer interface {
 
 var _ = clitypes.Widget(&Widget{})
 
-func (w *Widget) init() {}
+func (w *Widget) init() {
+	if w.OnAccept == nil {
+		w.OnAccept = func(i int) {}
+	}
+}
 
 var styleForSelected = "inverse"
 
 func (w *Widget) Render(width, height int) *ui.Buffer {
+	w.init()
 	s := &w.State
 	s.Mutex.Lock()
 	itemer, n, selected, lastFirst := s.Itemer, s.NItems, s.Selected, s.LastFirst
@@ -104,6 +109,7 @@ func (w *Widget) Render(width, height int) *ui.Buffer {
 }
 
 func (w *Widget) Handle(event term.Event) bool {
+	w.init()
 	switch event {
 	case term.K(ui.Up):
 		w.State.Mutate(func(s *State) {
