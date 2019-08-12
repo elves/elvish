@@ -44,7 +44,7 @@ func CompareCells(r1, r2 []Cell) (bool, int) {
 // exactly match the terminal's idea of the width of characters (wcwidth) and
 // where to insert soft carriage returns, so there could be bugs.
 type Buffer struct {
-	Width, Col int
+	Width int
 	// Lines the content of the buffer.
 	Lines [][]Cell
 	// Dot is what the user perceives as the cursor.
@@ -58,7 +58,6 @@ func NewBuffer(width int) *Buffer {
 
 func (b *Buffer) SetLines(lines ...[]Cell) *Buffer {
 	b.Lines = lines
-	b.Col = CellsWidth(lines[len(lines)-1])
 	return b
 }
 
@@ -67,9 +66,14 @@ func (b *Buffer) SetDot(dot Pos) *Buffer {
 	return b
 }
 
+// Col returns the column the cursor is in.
+func (b *Buffer) Col() int {
+	return CellsWidth(b.Lines[len(b.Lines)-1])
+}
+
 // Cursor returns the current position of the cursor.
 func (b *Buffer) Cursor() Pos {
-	return Pos{len(b.Lines) - 1, b.Col}
+	return Pos{len(b.Lines) - 1, b.Col()}
 }
 
 // BuffersHeight computes the combined height of a number of buffers.

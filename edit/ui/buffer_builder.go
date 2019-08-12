@@ -164,7 +164,7 @@ func (bb *BufferBuilder) Extend(b2 *Buffer, moveDot bool) *BufferBuilder {
 			bb.Dot.Col = b2.Dot.Col
 		}
 		bb.Lines = append(bb.Lines, b2.Lines...)
-		bb.Col = b2.Col
+		bb.Col = b2.Col()
 	}
 	return bb
 }
