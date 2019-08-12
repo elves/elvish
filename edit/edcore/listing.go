@@ -220,9 +220,9 @@ func renderScrollbar(n, low, high, height int) *ui.Buffer {
 			bb.Newline()
 		}
 		if slow <= i && i < shigh {
-			bb.Write(' ', styleForScrollBarThumb.String())
+			bb.WriteRuneSGR(' ', styleForScrollBarThumb.String())
 		} else {
-			bb.Write('│', styleForScrollBarArea.String())
+			bb.WriteRuneSGR('│', styleForScrollBarArea.String())
 		}
 	}
 	return bb.Buffer()

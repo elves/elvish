@@ -154,7 +154,7 @@ func (r *codeContentRenderer) Render(buf *ui.BufferBuilder) {
 	if rpromptWidth := styledWcswidth(r.rprompt); rpromptWidth > 0 {
 		padding := buf.Width - buf.Col - rpromptWidth
 		if padding >= 1 {
-			buf.WriteSpaces(padding, "")
+			buf.WriteSpacesSGR(padding, "")
 			buf.WriteLegacyStyleds(r.rprompt.ToLegacyType())
 		}
 	}
@@ -177,7 +177,7 @@ func (r *linesRenderer) Render(buf *ui.BufferBuilder) {
 		if i > 0 {
 			buf.Newline()
 		}
-		buf.WriteString(note, "")
+		buf.WriteStringSGR(note, "")
 	}
 }
 
@@ -190,6 +190,6 @@ func (r *codeErrorsRenderer) Render(buf *ui.BufferBuilder) {
 		if i > 0 {
 			buf.Newline()
 		}
-		buf.WriteString(err.Error(), "")
+		buf.WriteStringSGR(err.Error(), "")
 	}
 }

@@ -182,7 +182,7 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	codeCh, _ := ed.readCodeAsync()
 
 	wantBuf := ui.NewBufferBuilder(80).
-		WriteString("abc", "31" /* SGR for red foreground */).
+		WriteStringSGR("abc", "31" /* SGR for red foreground */).
 		SetDotToCursor().Buffer()
 	if !tty.VerifyBuffer(wantBuf) {
 		t.Errorf("Did not see buffer containing highlighted code")

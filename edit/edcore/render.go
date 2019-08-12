@@ -12,7 +12,7 @@ import (
 type placeholderRenderer string
 
 func (lp placeholderRenderer) Render(bb *ui.BufferBuilder) {
-	bb.WriteString(util.TrimWcwidth(string(lp), bb.Width), "")
+	bb.WriteStringSGR(util.TrimWcwidth(string(lp), bb.Width), "")
 }
 
 type listingRenderer struct {
@@ -24,7 +24,7 @@ func (ls listingRenderer) Render(bb *ui.BufferBuilder) {
 		if i > 0 {
 			bb.Newline()
 		}
-		bb.WriteString(util.ForceWcwidth(line.Text, bb.Width), line.Styles.String())
+		bb.WriteStringSGR(util.ForceWcwidth(line.Text, bb.Width), line.Styles.String())
 	}
 }
 
@@ -76,7 +76,7 @@ type linesRenderer struct {
 }
 
 func (nr linesRenderer) Render(bb *ui.BufferBuilder) {
-	bb.WriteString(strings.Join(nr.lines, "\n"), "")
+	bb.WriteStringSGR(strings.Join(nr.lines, "\n"), "")
 }
 
 // cmdlineRenderer renders the command line, including the prompt, the user's
@@ -125,7 +125,7 @@ func (clr *cmdlineRenderer) Render(bb *ui.BufferBuilder) {
 		// replacement starts right at the dot, the cursor is correctly placed
 		// after the replacement.
 		if clr.hasRepl && i == clr.replBegin {
-			bb.WriteString(clr.replText, styleForReplacement.String())
+			bb.WriteStringSGR(clr.replText, styleForReplacement.String())
 		}
 		if i == clr.dot {
 			bb.Dot = bb.Cursor()
@@ -137,7 +137,7 @@ func (clr *cmdlineRenderer) Render(bb *ui.BufferBuilder) {
 		if clr.hasRepl && clr.replBegin <= i && i < clr.replEnd {
 			// Do nothing. This part is replaced by the replacement.
 		} else {
-			bb.Write(r, applier.Get())
+			bb.WriteRuneSGR(r, applier.Get())
 		}
 		i += utf8.RuneLen(r)
 
@@ -152,7 +152,7 @@ func (clr *cmdlineRenderer) Render(bb *ui.BufferBuilder) {
 		}
 		if padding >= 1 {
 			bb.EagerWrap = false
-			bb.WriteSpaces(padding, "")
+			bb.WriteSpacesSGR(padding, "")
 			bb.WriteLegacyStyleds(clr.rprompt)
 		}
 	}

@@ -85,10 +85,11 @@ func (bb *BufferBuilder) Newline() *BufferBuilder {
 
 var styleForControlChar = Styles{"inverse"}
 
-// Write writes a single rune to a buffer, wrapping the line when needed. If the
-// rune is a control character, it will be written using the caret notation
-// (like ^X) and gets the additional style of styleForControlChar.
-func (bb *BufferBuilder) Write(r rune, style string) *BufferBuilder {
+// WriteRuneSGR writes a single rune to a buffer with an SGR style, wrapping the
+// line when needed. If the rune is a control character, it will be written
+// using the caret notation (like ^X) and gets the additional style of
+// styleForControlChar.
+func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 	if r == '\n' {
 		bb.Newline()
 		return bb
@@ -117,22 +118,22 @@ func (bb *BufferBuilder) Write(r rune, style string) *BufferBuilder {
 	return bb
 }
 
-// WriteString writes a string to a buffer, with one style.
-func (bb *BufferBuilder) WriteString(text, style string) *BufferBuilder {
+// WriteStringSGR writes a string to a buffer with a SGR style.
+func (bb *BufferBuilder) WriteStringSGR(text, style string) *BufferBuilder {
 	for _, r := range text {
-		bb.Write(r, style)
+		bb.WriteRuneSGR(r, style)
 	}
 	return bb
 }
 
 // WritePlain writes unstyled plain string.
 func (bb *BufferBuilder) WritePlain(text string) *BufferBuilder {
-	return bb.WriteString(text, "")
+	return bb.WriteStringSGR(text, "")
 }
 
-// WriteSpaces writes w spaces.
-func (bb *BufferBuilder) WriteSpaces(w int, style string) *BufferBuilder {
-	return bb.WriteString(strings.Repeat(" ", w), style)
+// WriteSpacesSGR writes w spaces with an SGR style.
+func (bb *BufferBuilder) WriteSpacesSGR(w int, style string) *BufferBuilder {
+	return bb.WriteStringSGR(strings.Repeat(" ", w), style)
 }
 
 // StyledText is an interface satisfied by styled.Text. This package cannot
@@ -149,7 +150,7 @@ func (bb *BufferBuilder) WriteStyled(t StyledText) *BufferBuilder {
 // WriteLegacyStyleds writes a slice of (legacy) styled structs.
 func (bb *BufferBuilder) WriteLegacyStyleds(ss []*Styled) *BufferBuilder {
 	for _, s := range ss {
-		bb.WriteString(s.Text, s.Styles.String())
+		bb.WriteStringSGR(s.Text, s.Styles.String())
 	}
 	return bb
 }

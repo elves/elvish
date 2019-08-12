@@ -14,8 +14,8 @@ func TestStyledLinesRenderer(t *testing.T) {
 		styled.Plain("b\nc"),
 	})
 
-	wantBuf := ui.NewBufferBuilder(10).WriteString("a", "").Newline().
-		WriteString("b", "").Newline().WriteString("c", "").Buffer()
+	wantBuf := ui.NewBufferBuilder(10).WriteStringSGR("a", "").Newline().
+		WriteStringSGR("b", "").Newline().WriteStringSGR("c", "").Buffer()
 	if buf := ui.Render(renderer, 10); !reflect.DeepEqual(buf, wantBuf) {
 		t.Errorf("Render(renderer, 10) = %v, want %v", buf, wantBuf)
 	}

@@ -24,14 +24,14 @@ var renderTests = []struct {
 		&Widget{State: State{
 			Prompt: styled.MakeText("~>", "bold")}},
 		10, 24,
-		bb(10).WriteString("~>", "1").SetDotToCursor(),
+		bb(10).WriteStringSGR("~>", "1").SetDotToCursor(),
 	},
 	{
 		"rprompt only",
 		&Widget{State: State{
 			RPrompt: styled.MakeText("RP", "inverse")}},
 		10, 24,
-		bb(10).SetDotToCursor().WriteSpaces(8, "").WriteString("RP", "7"),
+		bb(10).SetDotToCursor().WriteSpacesSGR(8, "").WriteStringSGR("RP", "7"),
 	},
 	{
 		"code only with dot at beginning",
@@ -83,7 +83,7 @@ var renderTests = []struct {
 			},
 		},
 		10, 24,
-		bb(10).WriteString("code", "1").SetDotToCursor(),
+		bb(10).WriteStringSGR("code", "1").SetDotToCursor(),
 	},
 	{
 		"static errors in code",
@@ -105,7 +105,7 @@ var renderTests = []struct {
 			PendingCode: PendingCode{From: 4, To: 4, Content: "x"},
 		}},
 		10, 24,
-		bb(10).WritePlain("code").WriteString("x", "4").SetDotToCursor(),
+		bb(10).WritePlain("code").WriteStringSGR("x", "4").SetDotToCursor(),
 	},
 	{
 		"pending code replacing at the dot",
@@ -114,7 +114,7 @@ var renderTests = []struct {
 			PendingCode: PendingCode{From: 2, To: 4, Content: "x"},
 		}},
 		10, 24,
-		bb(10).WritePlain("co").WriteString("x", "4").SetDotToCursor(),
+		bb(10).WritePlain("co").WriteStringSGR("x", "4").SetDotToCursor(),
 	},
 	{
 		"pending code to the left of the dot",
@@ -123,7 +123,7 @@ var renderTests = []struct {
 			PendingCode: PendingCode{From: 1, To: 3, Content: "x"},
 		}},
 		10, 24,
-		bb(10).WritePlain("c").WriteString("x", "4").WritePlain("e").SetDotToCursor(),
+		bb(10).WritePlain("c").WriteStringSGR("x", "4").WritePlain("e").SetDotToCursor(),
 	},
 	{
 		"pending code to the right of the cursor",
@@ -133,7 +133,7 @@ var renderTests = []struct {
 		}},
 		10, 24,
 		bb(10).WritePlain("c").SetDotToCursor().WritePlain("o").
-			WriteString("x", "4").WritePlain("e"),
+			WriteStringSGR("x", "4").WritePlain("e"),
 	},
 	{
 		"ignore invalid pending code",

@@ -40,7 +40,7 @@ func (r linesRenderer) Render(bb *BufferBuilder) {
 		if i > 0 {
 			bb.Newline()
 		}
-		bb.WriteString(util.TrimWcwidth(line, bb.Width), "")
+		bb.WriteStringSGR(util.TrimWcwidth(line, bb.Width), "")
 	}
 }
 
@@ -55,9 +55,9 @@ type modeLineRenderer struct {
 }
 
 func (ml modeLineRenderer) Render(bb *BufferBuilder) {
-	bb.WriteString(ml.title, styleForMode.String())
-	bb.WriteSpaces(1, "")
-	bb.WriteString(ml.filter, styleForFilter.String())
+	bb.WriteStringSGR(ml.title, styleForMode.String())
+	bb.WriteSpacesSGR(1, "")
+	bb.WriteStringSGR(ml.filter, styleForFilter.String())
 	bb.SetDotToCursor()
 }
 
@@ -79,7 +79,7 @@ func (ml modeLineWithScrollBarRenderer) Render(bb *BufferBuilder) {
 
 	scrollbarWidth := bb.Width - CellsWidth(bb.Lines[len(bb.Lines)-1]) - 2
 	if scrollbarWidth >= 3 {
-		bb.WriteSpaces(1, "")
+		bb.WriteSpacesSGR(1, "")
 		writeHorizontalScrollbar(bb, ml.n, ml.low, ml.high, scrollbarWidth)
 	}
 }

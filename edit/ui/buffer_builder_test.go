@@ -65,7 +65,7 @@ var bufferBuilderWritesTests = []struct {
 func TestBufferBuilderWrites(t *testing.T) {
 	for _, test := range bufferBuilderWritesTests {
 		bb := test.bb
-		bb.WriteString(test.text, test.style)
+		bb.WriteStringSGR(test.text, test.style)
 		buf := bb.Buffer()
 		if !reflect.DeepEqual(buf, test.want) {
 			t.Errorf("buf.writes(%q, %q) makes it %v, want %v",

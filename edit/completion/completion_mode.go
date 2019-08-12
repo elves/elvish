@@ -296,11 +296,11 @@ func (c *completion) ListRender(width, maxHeight int) *ui.Buffer {
 	bb := ui.NewBufferBuilder(width)
 	cands := c.filtered
 	if len(cands) == 0 {
-		bb.WriteString(util.TrimWcwidth("(no result)", width), "")
+		bb.WriteStringSGR(util.TrimWcwidth("(no result)", width), "")
 		return bb.Buffer()
 	}
 	if maxHeight <= 1 || width <= 2 {
-		bb.WriteString(util.TrimWcwidth("(terminal too small)", width), "")
+		bb.WriteStringSGR(util.TrimWcwidth("(terminal too small)", width), "")
 		return bb.Buffer()
 	}
 
@@ -358,15 +358,15 @@ func (c *completion) ListRender(width, maxHeight int) *ui.Buffer {
 			}
 			if j >= len(cands) {
 				// Write padding to make the listing a rectangle.
-				col.WriteSpaces(totalColWidth, styleForCompletion.String())
+				col.WriteSpacesSGR(totalColWidth, styleForCompletion.String())
 			} else {
-				col.WriteSpaces(completionColMarginLeft, styleForCompletion.String())
+				col.WriteSpacesSGR(completionColMarginLeft, styleForCompletion.String())
 				s := ui.JoinStyles(styleForCompletion, cands[j].menu.Styles)
 				if j == c.selected {
 					s = append(s, styleForSelectedCompletion.String())
 				}
-				col.WriteString(util.ForceWcwidth(cands[j].menu.Text, colWidth), s.String())
-				col.WriteSpaces(completionColMarginRight, styleForCompletion.String())
+				col.WriteStringSGR(util.ForceWcwidth(cands[j].menu.Text, colWidth), s.String())
+				col.WriteSpacesSGR(completionColMarginRight, styleForCompletion.String())
 				if !trimmed {
 					c.lastShownInFull = j
 				}
@@ -386,7 +386,7 @@ func (c *completion) ListRender(width, maxHeight int) *ui.Buffer {
 			if i > 0 {
 				col.Newline()
 			}
-			col.WriteSpaces(remainedWidth, styleForCompletion.String())
+			col.WriteSpacesSGR(remainedWidth, styleForCompletion.String())
 		}
 		bb.ExtendRight(col.Buffer(), 0)
 		remainedWidth = 0

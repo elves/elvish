@@ -4,9 +4,9 @@ func writeHorizontalScrollbar(bb *BufferBuilder, n, low, high, width int) {
 	slow, shigh := findScrollInterval(n, low, high, width)
 	for i := 0; i < width; i++ {
 		if slow <= i && i < shigh {
-			bb.Write(' ', styleForScrollBarThumb.String())
+			bb.WriteRuneSGR(' ', styleForScrollBarThumb.String())
 		} else {
-			bb.Write('━', styleForScrollBarArea.String())
+			bb.WriteRuneSGR('━', styleForScrollBarArea.String())
 		}
 	}
 }
@@ -19,9 +19,9 @@ func renderVerticalScrollbar(n, low, high, height int) *Buffer {
 			bb.Newline()
 		}
 		if slow <= i && i < shigh {
-			bb.Write(' ', styleForScrollBarThumb.String())
+			bb.WriteRuneSGR(' ', styleForScrollBarThumb.String())
 		} else {
-			bb.Write('│', styleForScrollBarArea.String())
+			bb.WriteRuneSGR('│', styleForScrollBarArea.String())
 		}
 	}
 	return bb.Buffer()

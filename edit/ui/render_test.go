@@ -8,35 +8,35 @@ import (
 
 type dummyRenderer struct{}
 
-func (dummyRenderer) Render(bb *BufferBuilder) { bb.WriteString("dummy", "1") }
+func (dummyRenderer) Render(bb *BufferBuilder) { bb.WriteStringSGR("dummy", "1") }
 
 var Args = tt.Args
 
 func TestRender(t *testing.T) {
 	tt.Test(t, tt.Fn("Render", Render), tt.Table{
 		Args(dummyRenderer{}, 10).
-			Rets(NewBufferBuilder(10).WriteString("dummy", "1").Buffer()),
+			Rets(NewBufferBuilder(10).WriteStringSGR("dummy", "1").Buffer()),
 
 		Args(NewStringRenderer("string"), 10).
-			Rets(NewBufferBuilder(10).WriteString("string", "").Buffer()),
+			Rets(NewBufferBuilder(10).WriteStringSGR("string", "").Buffer()),
 		Args(NewStringRenderer("string"), 3).
-			Rets(NewBufferBuilder(3).WriteString("str", "").Buffer()),
+			Rets(NewBufferBuilder(3).WriteStringSGR("str", "").Buffer()),
 
 		Args(NewLinesRenderer("line 1", "line 2"), 10).
 			Rets(
-				NewBufferBuilder(10).WriteString("line 1", "").Newline().
-					WriteString("line 2", "").Buffer()),
+				NewBufferBuilder(10).WriteStringSGR("line 1", "").Newline().
+					WriteStringSGR("line 2", "").Buffer()),
 		Args(NewLinesRenderer("line 1", "line 2"), 3).
 			Rets(
-				NewBufferBuilder(3).WriteString("lin", "").Newline().
-					WriteString("lin", "").Buffer()),
+				NewBufferBuilder(3).WriteStringSGR("lin", "").Newline().
+					WriteStringSGR("lin", "").Buffer()),
 
 		Args(NewModeLineRenderer("M", "f"), 10).
 			Rets(
 				NewBufferBuilder(10).
-					WriteString("M", styleForMode.String()).
-					WriteSpaces(1, "").
-					WriteString("f", styleForFilter.String()).
+					WriteStringSGR("M", styleForMode.String()).
+					WriteSpacesSGR(1, "").
+					WriteStringSGR("f", styleForFilter.String()).
 					SetDotToCursor().
 					Buffer()),
 
@@ -44,26 +44,26 @@ func TestRender(t *testing.T) {
 		Args(NewModeLineWithScrollBarRenderer(NewModeLineRenderer("M", "f"), 5, 0, 1), 10).
 			Rets(
 				NewBufferBuilder(10).
-					WriteString("M", styleForMode.String()).
-					WriteSpaces(1, "").
-					WriteString("f", styleForFilter.String()).
+					WriteStringSGR("M", styleForMode.String()).
+					WriteSpacesSGR(1, "").
+					WriteStringSGR("f", styleForFilter.String()).
 					SetDotToCursor().
-					WriteSpaces(1, "").
-					Write(' ', styleForScrollBarThumb.String()).
-					WriteString("━━━━", styleForScrollBarArea.String()).
+					WriteSpacesSGR(1, "").
+					WriteRuneSGR(' ', styleForScrollBarThumb.String()).
+					WriteStringSGR("━━━━", styleForScrollBarArea.String()).
 					Buffer()),
 
 		Args(NewRendererWithVerticalScrollbar(NewLinesRenderer("1", "2", "3"), 3, 0, 1), 5).
 			Rets(
 				NewBufferBuilder(5).
-					WriteString("1   ", "").
-					Write(' ', styleForScrollBarThumb.String()).
+					WriteStringSGR("1   ", "").
+					WriteRuneSGR(' ', styleForScrollBarThumb.String()).
 					Newline().
-					WriteString("2   ", "").
-					Write('│', styleForScrollBarArea.String()).
+					WriteStringSGR("2   ", "").
+					WriteRuneSGR('│', styleForScrollBarArea.String()).
 					Newline().
-					WriteString("3   ", "").
-					Write('│', styleForScrollBarArea.String()).
+					WriteStringSGR("3   ", "").
+					WriteRuneSGR('│', styleForScrollBarArea.String()).
 					Buffer()),
 	})
 }
