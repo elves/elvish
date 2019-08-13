@@ -19,10 +19,47 @@ var renderTests = []struct {
 	wantBuf  *ui.BufferBuilder
 }{
 	{
-		"Label",
+		"Label showing all",
 		Label{styled.Plain("label")},
 		10, 24,
 		ui.NewBufferBuilder(10).WritePlain("label"),
+	},
+	{
+		"Label cropping",
+		Label{styled.Plain("label")},
+		4, 1,
+		ui.NewBufferBuilder(4).WritePlain("labe"),
+	},
+	{
+		"CroppedLines showing all",
+		CroppedLines{Lines: []styled.Text{
+			styled.Plain("line 1"),
+			styled.Plain("line 2"),
+		}},
+		10, 24,
+		ui.NewBufferBuilder(10).WritePlain("line 1").
+			Newline().WritePlain("line 2"),
+	},
+	{
+		"CroppedLines cropping horizontally",
+		CroppedLines{Lines: []styled.Text{
+			styled.Plain("line 1"),
+			styled.Plain("line 2"),
+		}},
+		4, 24,
+		ui.NewBufferBuilder(4).WritePlain("line").
+			Newline().WritePlain("line"),
+	},
+	{
+		"CroppedLines cropping vertically",
+		CroppedLines{Lines: []styled.Text{
+			styled.Plain("line 1"),
+			styled.Plain("line 2"),
+			styled.Plain("line 3"),
+		}},
+		10, 2,
+		ui.NewBufferBuilder(10).WritePlain("line 1").
+			Newline().WritePlain("line 2"),
 	},
 }
 
