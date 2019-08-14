@@ -56,7 +56,7 @@ func findScrollInterval(n, low, high, height int) (int, int) {
 	}
 	scrollLow, scrollHigh := f(low), f(high)
 	if scrollLow == scrollHigh {
-		if scrollHigh == high {
+		if scrollHigh == height {
 			scrollLow--
 		} else {
 			scrollHigh++

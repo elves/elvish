@@ -22,13 +22,13 @@ var renderTests = []struct {
 		"Label showing all",
 		Label{styled.Plain("label")},
 		10, 24,
-		ui.NewBufferBuilder(10).WritePlain("label"),
+		bb(10).WritePlain("label"),
 	},
 	{
 		"Label cropping",
 		Label{styled.Plain("label")},
 		4, 1,
-		ui.NewBufferBuilder(4).WritePlain("labe"),
+		bb(4).WritePlain("labe"),
 	},
 	{
 		"CroppedLines showing all",
@@ -37,8 +37,7 @@ var renderTests = []struct {
 			styled.Plain("line 2"),
 		}},
 		10, 24,
-		ui.NewBufferBuilder(10).WritePlain("line 1").
-			Newline().WritePlain("line 2"),
+		bb(10).WritePlain("line 1").Newline().WritePlain("line 2"),
 	},
 	{
 		"CroppedLines cropping horizontally",
@@ -47,8 +46,7 @@ var renderTests = []struct {
 			styled.Plain("line 2"),
 		}},
 		4, 24,
-		ui.NewBufferBuilder(4).WritePlain("line").
-			Newline().WritePlain("line"),
+		bb(4).WritePlain("line").Newline().WritePlain("line"),
 	},
 	{
 		"CroppedLines cropping vertically",
@@ -58,8 +56,39 @@ var renderTests = []struct {
 			styled.Plain("line 3"),
 		}},
 		10, 2,
-		ui.NewBufferBuilder(10).WritePlain("line 1").
-			Newline().WritePlain("line 2"),
+		bb(10).WritePlain("line 1").Newline().WritePlain("line 2"),
+	},
+	{
+		"VScrollbar showing full thumb",
+		VScrollbar{4, 0, 3},
+		10, 2,
+		bb(1).WriteStyled(scrollbarThumb).WriteStyled(scrollbarThumb),
+	},
+	{
+		"VScrollbar showing thumb in first half",
+		VScrollbar{4, 0, 1},
+		10, 2,
+		bb(1).WriteStyled(scrollbarThumb).WriteStyled(scrollbarTrough),
+	},
+	{
+		"VScrollbar showing a minimal 1-size thumb at beginning",
+		VScrollbar{4, 0, 0},
+		10, 2,
+		bb(1).WriteStyled(scrollbarThumb).WriteStyled(scrollbarTrough),
+	},
+	{
+		"VScrollbar showing a minimal 1-size thumb at end",
+		VScrollbar{4, 3, 3},
+		10, 2,
+		bb(1).WriteStyled(scrollbarTrough).WriteStyled(scrollbarThumb),
+	},
+	{
+		"VScrollbarContainer",
+		VScrollbarContainer{Label{styled.Plain("abcd1234")},
+			VScrollbar{4, 0, 1}},
+		5, 2,
+		bb(5).WritePlain("abcd").WriteStyled(scrollbarThumb).
+			Newline().WritePlain("1234").WriteStyled(scrollbarTrough),
 	},
 }
 
