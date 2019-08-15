@@ -17,29 +17,14 @@ import (
 // functions. It implements the clitypes.Widget interface. An empty Widget is
 // directly usable.
 type Widget struct {
+	// Mutex for synchronizing access to the state.
+	StateMutex sync.RWMutex
 	// Publically accessible state.
 	State State
 	// A placeholder to show when there are no items.
 	Placeholder styled.Text
 	// A function called on the accept event.
 	OnAccept func(i int)
-}
-
-// State keeps the state of the widget. Its access must be synchronized through
-// the mutex.
-type State struct {
-	Mutex     sync.RWMutex
-	Itemer    Itemer
-	NItems    int
-	Selected  int
-	LastFirst int
-}
-
-// Mutate calls the given function while locking the mutex.
-func (s *State) Mutate(f func(*State)) {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
-	f(s)
 }
 
 // Itemer wraps the Item method.
@@ -60,19 +45,19 @@ var styleForSelected = "inverse"
 
 func (w *Widget) Render(width, height int) *ui.Buffer {
 	w.init()
+	w.StateMutex.Lock()
 	s := &w.State
-	s.Mutex.Lock()
 	itemer, n, selected, lastFirst := s.Itemer, s.NItems, s.Selected, s.LastFirst
 
 	if itemer == nil || n == 0 {
 		s.LastFirst = -1
-		s.Mutex.Unlock()
+		w.StateMutex.Unlock()
 		return layout.Label{w.Placeholder}.Render(width, height)
 	}
 
 	first, firstCrop := findWindow(itemer, n, selected, lastFirst, height)
 	s.LastFirst = first
-	s.Mutex.Unlock()
+	w.StateMutex.Unlock()
 
 	allLines := []styled.Text{}
 	hasCropped := firstCrop > 0
@@ -112,7 +97,7 @@ func (w *Widget) Handle(event term.Event) bool {
 	w.init()
 	switch event {
 	case term.K(ui.Up):
-		w.State.Mutate(func(s *State) {
+		w.MutateListboxState(func(s *State) {
 			switch {
 			case s.Selected >= s.NItems:
 				s.Selected = s.NItems - 1
@@ -123,7 +108,7 @@ func (w *Widget) Handle(event term.Event) bool {
 			}
 		})
 	case term.K(ui.Down):
-		w.State.Mutate(func(s *State) {
+		w.MutateListboxState(func(s *State) {
 			switch {
 			case s.Selected >= s.NItems-1:
 				s.Selected = s.NItems - 1
@@ -134,10 +119,17 @@ func (w *Widget) Handle(event term.Event) bool {
 			}
 		})
 	case term.K(ui.Enter):
-		w.State.Mutex.RLock()
+		w.StateMutex.RLock()
 		selected := w.State.Selected
-		w.State.Mutex.RUnlock()
+		w.StateMutex.RUnlock()
 		w.OnAccept(selected)
 	}
 	return false
+}
+
+// MutateListboxState calls the given function while locking StateMutex.
+func (w *Widget) MutateListboxState(f func(*State)) {
+	w.StateMutex.Lock()
+	defer w.StateMutex.Unlock()
+	f(&w.State)
 }
