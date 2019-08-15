@@ -335,7 +335,7 @@ func TestHandle_AbbreviationExpansionInterruptedByExternalMutation(t *testing.T)
 		},
 	}
 	w.Handle(term.K('d'))
-	w.State.MutateCodeBuffer(func(c *CodeBuffer) { c.InsertAtDot("d") })
+	w.MutateCodeAreaState(func(s *State) { s.CodeBuffer.InsertAtDot("d") })
 	w.Handle(term.K('n'))
 	wantState := State{CodeBuffer: CodeBuffer{Content: "ddn", Dot: 3}}
 	if !reflect.DeepEqual(w.State, wantState) {

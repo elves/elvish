@@ -18,9 +18,6 @@ type view struct {
 const pendingStyle = "underlined"
 
 func getView(s *State, hl func(string) (styled.Text, []error)) *view {
-	s.Mutex.RLock()
-	defer s.Mutex.RUnlock()
-
 	code, pFrom, pTo := patchPendingCode(s.CodeBuffer, s.PendingCode)
 	styledCode, errors := hl(code.Content)
 	if pFrom < pTo {

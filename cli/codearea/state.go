@@ -1,15 +1,12 @@
 package codearea
 
 import (
-	"sync"
-
 	"github.com/elves/elvish/styled"
 )
 
 // State keeps the state of the widget. Its access must be synchronized through
 // the mutex.
 type State struct {
-	Mutex       sync.RWMutex
 	CodeBuffer  CodeBuffer
 	PendingCode PendingCode
 	Prompt      styled.Text
@@ -35,12 +32,6 @@ type PendingCode struct {
 	To int
 	// The content of the pending code.
 	Content string
-}
-
-func (s *State) MutateCodeBuffer(f func(*CodeBuffer)) {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
-	f(&s.CodeBuffer)
 }
 
 func (c *CodeBuffer) InsertAtDot(text string) {
