@@ -1,6 +1,9 @@
 package clitypes
 
 import (
+	"reflect"
+	"testing"
+
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 )
@@ -42,4 +45,26 @@ func (w widgetWithOverlayHandler) Render(width, height int) *ui.Buffer {
 
 func (w widgetWithOverlayHandler) Handle(event term.Event) bool {
 	return w.overlay.Handle(event) || w.base.Handle(event)
+}
+
+// RendererTest is a test case to be used in TestRenderer.
+type RendererTest struct {
+	Name     string
+	Renderer Renderer
+	Width    int
+	Height   int
+	Want     interface{ Buffer() *ui.Buffer }
+}
+
+// TestRenderer runs the given Renderer tests.
+func TestRenderer(t *testing.T, tests []RendererTest) {
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			buf := test.Renderer.Render(test.Width, test.Height)
+			wantBuf := test.Want.Buffer()
+			if !reflect.DeepEqual(buf, wantBuf) {
+				t.Errorf("got buf %v, want %v", buf, wantBuf)
+			}
+		})
+	}
 }
