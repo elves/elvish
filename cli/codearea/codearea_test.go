@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -12,175 +13,161 @@ import (
 
 var bb = ui.NewBufferBuilder
 
-var renderTests = []struct {
-	name    string
-	widget  *Widget
-	width   int
-	height  int
-	wantBuf *ui.BufferBuilder
-}{
+var renderTests = []clitypes.RenderTest{
 	{
-		"prompt only",
-		&Widget{State: State{
+		Name: "prompt only",
+		Given: &Widget{State: State{
 			Prompt: styled.MakeText("~>", "bold")}},
-		10, 24,
-		bb(10).WriteStringSGR("~>", "1").SetDotToCursor(),
+		Width: 10, Height: 24,
+		Want: bb(10).WriteStringSGR("~>", "1").SetDotToCursor(),
 	},
 	{
-		"rprompt only",
-		&Widget{State: State{
+		Name: "rprompt only",
+		Given: &Widget{State: State{
 			RPrompt: styled.MakeText("RP", "inverse")}},
-		10, 24,
-		bb(10).SetDotToCursor().WriteSpacesSGR(8, "").WriteStringSGR("RP", "7"),
+		Width: 10, Height: 24,
+		Want: bb(10).SetDotToCursor().WriteSpacesSGR(8, "").WriteStringSGR("RP", "7"),
 	},
 	{
-		"code only with dot at beginning",
-		&Widget{State: State{
+		Name: "code only with dot at beginning",
+		Given: &Widget{State: State{
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 0}}},
-		10, 24,
-		bb(10).SetDotToCursor().WritePlain("code"),
+		Width: 10, Height: 24,
+		Want: bb(10).SetDotToCursor().WritePlain("code"),
 	},
 	{
-		"code only with dot at middle",
-		&Widget{State: State{
+		Name: "code only with dot at middle",
+		Given: &Widget{State: State{
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 2}}},
-		10, 24,
-		bb(10).WritePlain("co").SetDotToCursor().WritePlain("de"),
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("co").SetDotToCursor().WritePlain("de"),
 	},
 	{
-		"code only with dot at end",
-		&Widget{State: State{
+		Name: "code only with dot at end",
+		Given: &Widget{State: State{
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}},
-		10, 24,
-		bb(10).WritePlain("code").SetDotToCursor(),
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("code").SetDotToCursor(),
 	},
 	{
-		"prompt, code and rprompt",
-		&Widget{State: State{
+		Name: "prompt, code and rprompt",
+		Given: &Widget{State: State{
 			Prompt:     styled.Plain("~>"),
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 4},
 			RPrompt:    styled.Plain("RP"),
 		}},
-		10, 24,
-		bb(10).WritePlain("~>code").SetDotToCursor().WritePlain("  RP"),
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("~>code").SetDotToCursor().WritePlain("  RP"),
 	},
 	{
-		"rprompt too long",
-		&Widget{State: State{
+		Name: "rprompt too long",
+		Given: &Widget{State: State{
 			Prompt:     styled.Plain("~>"),
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 4},
 			RPrompt:    styled.Plain("1234"),
 		}},
-		10, 24,
-		bb(10).WritePlain("~>code").SetDotToCursor(),
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("~>code").SetDotToCursor(),
 	},
 	{
-		"highlighted code",
-		&Widget{
+		Name: "highlighted code",
+		Given: &Widget{
 			State: State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}},
 			Highlighter: func(code string) (styled.Text, []error) {
 				return styled.MakeText(code, "bold"), nil
 			},
 		},
-		10, 24,
-		bb(10).WriteStringSGR("code", "1").SetDotToCursor(),
+		Width: 10, Height: 24,
+		Want: bb(10).WriteStringSGR("code", "1").SetDotToCursor(),
 	},
 	{
-		"static errors in code",
-		&Widget{
+		Name: "static errors in code",
+		Given: &Widget{
 			State: State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}},
 			Highlighter: func(code string) (styled.Text, []error) {
 				err := errors.New("static error")
 				return styled.Plain(code), []error{err}
 			},
 		},
-		10, 24,
-		bb(10).WritePlain("code").SetDotToCursor().
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("code").SetDotToCursor().
 			Newline().WritePlain("static error"),
 	},
 	{
-		"pending code inserting at the dot",
-		&Widget{State: State{
+		Name: "pending code inserting at the dot",
+		Given: &Widget{State: State{
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
 			PendingCode: PendingCode{From: 4, To: 4, Content: "x"},
 		}},
-		10, 24,
-		bb(10).WritePlain("code").WriteStringSGR("x", "4").SetDotToCursor(),
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("code").WriteStringSGR("x", "4").SetDotToCursor(),
 	},
 	{
-		"pending code replacing at the dot",
-		&Widget{State: State{
+		Name: "pending code replacing at the dot",
+		Given: &Widget{State: State{
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 2},
 			PendingCode: PendingCode{From: 2, To: 4, Content: "x"},
 		}},
-		10, 24,
-		bb(10).WritePlain("co").WriteStringSGR("x", "4").SetDotToCursor(),
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("co").WriteStringSGR("x", "4").SetDotToCursor(),
 	},
 	{
-		"pending code to the left of the dot",
-		&Widget{State: State{
+		Name: "pending code to the left of the dot",
+		Given: &Widget{State: State{
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
 			PendingCode: PendingCode{From: 1, To: 3, Content: "x"},
 		}},
-		10, 24,
-		bb(10).WritePlain("c").WriteStringSGR("x", "4").WritePlain("e").SetDotToCursor(),
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("c").WriteStringSGR("x", "4").WritePlain("e").SetDotToCursor(),
 	},
 	{
-		"pending code to the right of the cursor",
-		&Widget{State: State{
+		Name: "pending code to the right of the cursor",
+		Given: &Widget{State: State{
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 1},
 			PendingCode: PendingCode{From: 2, To: 3, Content: "x"},
 		}},
-		10, 24,
-		bb(10).WritePlain("c").SetDotToCursor().WritePlain("o").
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("c").SetDotToCursor().WritePlain("o").
 			WriteStringSGR("x", "4").WritePlain("e"),
 	},
 	{
-		"ignore invalid pending code",
-		&Widget{State: State{
+		Name: "ignore invalid pending code",
+		Given: &Widget{State: State{
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
 			PendingCode: PendingCode{From: 2, To: 1, Content: "x"},
 		}},
-		10, 24,
-		bb(10).WritePlain("code").SetDotToCursor(),
+		Width: 10, Height: 24,
+		Want: bb(10).WritePlain("code").SetDotToCursor(),
 	},
 	{
-		"prioritize lines before the cursor with small height",
-		&Widget{State: State{
+		Name: "prioritize lines before the cursor with small height",
+		Given: &Widget{State: State{
 			CodeBuffer: CodeBuffer{Content: "a\nb\nc\nd", Dot: 3},
 		}},
-		10, 2,
-		bb(10).WritePlain("a").Newline().WritePlain("b").SetDotToCursor(),
+		Width: 10, Height: 2,
+		Want: bb(10).WritePlain("a").Newline().WritePlain("b").SetDotToCursor(),
 	},
 	{
-		"show only the cursor line when height is 1",
-		&Widget{State: State{
+		Name: "show only the cursor line when height is 1",
+		Given: &Widget{State: State{
 			CodeBuffer: CodeBuffer{Content: "a\nb\nc\nd", Dot: 3},
 		}},
-		10, 1,
-		bb(10).WritePlain("b").SetDotToCursor(),
+		Width: 10, Height: 1,
+		Want: bb(10).WritePlain("b").SetDotToCursor(),
 	},
 	{
-		"show lines after the cursor when all lines before the cursor are shown",
-		&Widget{State: State{
+		Name: "show lines after the cursor when all lines before the cursor are shown",
+		Given: &Widget{State: State{
 			CodeBuffer: CodeBuffer{Content: "a\nb\nc\nd", Dot: 3},
 		}},
-		10, 3,
-		bb(10).WritePlain("a").Newline().WritePlain("b").SetDotToCursor().
+		Width: 10, Height: 3,
+		Want: bb(10).WritePlain("a").Newline().WritePlain("b").SetDotToCursor().
 			Newline().WritePlain("c"),
 	},
 }
 
 func TestRender(t *testing.T) {
-	for _, test := range renderTests {
-		t.Run(test.name, func(t *testing.T) {
-			buf := test.widget.Render(test.width, test.height)
-			wantBuf := test.wantBuf.Buffer()
-			if !reflect.DeepEqual(buf, wantBuf) {
-				t.Errorf("got buf %v, want %v", buf, wantBuf)
-			}
-		})
-	}
+	clitypes.TestRender(t, renderTests)
 }
 
 var handleTests = []struct {

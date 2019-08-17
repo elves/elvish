@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -22,59 +23,53 @@ func (it itemer) Item(i int) styled.Text {
 	return styled.Plain(fmt.Sprintf("%s%d", prefix, i))
 }
 
-var renderTests = []struct {
-	name    string
-	widget  *Widget
-	width   int
-	height  int
-	wantBuf *ui.BufferBuilder
-}{
+var renderTests = []clitypes.RenderTest{
 	{
-		"placeholder when Itemer is nil",
-		&Widget{Placeholder: styled.Plain("nothing")},
-		10, 3,
-		bb(10).WritePlain("nothing"),
+		Name:  "placeholder when Itemer is nil",
+		Given: &Widget{Placeholder: styled.Plain("nothing")},
+		Width: 10, Height: 3,
+		Want: bb(10).WritePlain("nothing"),
 	},
 	{
-		"placeholder when NItems is 0",
-		&Widget{
+		Name: "placeholder when NItems is 0",
+		Given: &Widget{
 			Placeholder: styled.Plain("nothing"),
 			State:       State{Itemer: itemer{}},
 		},
-		10, 3,
-		bb(10).WritePlain("nothing"),
+		Width: 10, Height: 3,
+		Want: bb(10).WritePlain("nothing"),
 	},
 	{
-		"all items when there is enough height",
-		&Widget{State: State{Itemer: itemer{}, NItems: 2, Selected: 0}},
-		10, 3,
-		bb(10).
+		Name:  "all items when there is enough height",
+		Given: &Widget{State: State{Itemer: itemer{}, NItems: 2, Selected: 0}},
+		Width: 10, Height: 3,
+		Want: bb(10).
 			WriteStyled(styled.MakeText("item 0    ", "inverse")).
 			Newline().WritePlain("item 1"),
 	},
 	{
-		"long lines cropped",
-		&Widget{State: State{Itemer: itemer{}, NItems: 2, Selected: 0}},
-		4, 3,
-		bb(4).
+		Name:  "long lines cropped",
+		Given: &Widget{State: State{Itemer: itemer{}, NItems: 2, Selected: 0}},
+		Width: 4, Height: 3,
+		Want: bb(4).
 			WriteStyled(styled.MakeText("item", "inverse")).
 			Newline().WritePlain("item"),
 	},
 	{
-		"scrollbar when not showing all items",
-		&Widget{State: State{Itemer: itemer{}, NItems: 4, Selected: 0}},
-		10, 2,
-		bb(10).
+		Name:  "scrollbar when not showing all items",
+		Given: &Widget{State: State{Itemer: itemer{}, NItems: 4, Selected: 0}},
+		Width: 10, Height: 2,
+		Want: bb(10).
 			WriteStyled(styled.MakeText("item 0   ", "inverse")).
 			WriteStyled(styled.MakeText(" ", "inverse", "magenta")).
 			Newline().WritePlain("item 1   ").
 			WriteStyled(styled.MakeText("│", "magenta")),
 	},
 	{
-		"scrollbar when not showing last item in full",
-		&Widget{State: State{Itemer: itemer{"item\n"}, NItems: 2, Selected: 0}},
-		10, 3,
-		bb(10).
+		Name:  "scrollbar when not showing last item in full",
+		Given: &Widget{State: State{Itemer: itemer{"item\n"}, NItems: 2, Selected: 0}},
+		Width: 10, Height: 3,
+		Want: bb(10).
 			WriteStyled(styled.MakeText("item     ", "inverse")).
 			WriteStyled(styled.MakeText(" ", "inverse", "magenta")).
 			Newline().WriteStyled(styled.MakeText("0        ", "inverse")).
@@ -83,25 +78,17 @@ var renderTests = []struct {
 			WriteStyled(styled.MakeText(" ", "inverse", "magenta")),
 	},
 	{
-		"scrollbar when not showing only item in full",
-		&Widget{State: State{Itemer: itemer{"item\n"}, NItems: 1, Selected: 0}},
-		10, 1,
-		bb(10).
+		Name:  "scrollbar when not showing only item in full",
+		Given: &Widget{State: State{Itemer: itemer{"item\n"}, NItems: 1, Selected: 0}},
+		Width: 10, Height: 1,
+		Want: bb(10).
 			WriteStyled(styled.MakeText("item     ", "inverse")).
 			WriteStyled(styled.MakeText(" ", "inverse", "magenta")),
 	},
 }
 
 func TestRender(t *testing.T) {
-	for _, test := range renderTests {
-		t.Run(test.name, func(t *testing.T) {
-			buf := test.widget.Render(test.width, test.height)
-			wantBuf := test.wantBuf.Buffer()
-			if !reflect.DeepEqual(buf, wantBuf) {
-				t.Errorf("got buf %v, want %v", buf, wantBuf)
-			}
-		})
-	}
+	clitypes.TestRender(t, renderTests)
 }
 
 var handleTests = []struct {
