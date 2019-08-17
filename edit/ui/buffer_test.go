@@ -164,3 +164,107 @@ func TestBufferTrimToLines(t *testing.T) {
 		}
 	}
 }
+
+var bufferExtendTests = []struct {
+	buf     *Buffer
+	buf2    *Buffer
+	moveDot bool
+	want    *Buffer
+}{
+	{
+		&Buffer{Width: 10, Lines: Lines{
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}}},
+		&Buffer{Width: 11, Lines: Lines{
+			Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
+		false,
+		&Buffer{Width: 10, Lines: Lines{
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}},
+			Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
+	},
+	// Moving dot.
+	{
+		&Buffer{Width: 10, Lines: Lines{
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}}},
+		&Buffer{
+			Width: 11,
+			Lines: Lines{Line{Cell{"c", ""}}, Line{Cell{"d", ""}}},
+			Dot:   Pos{1, 1},
+		},
+		true,
+		&Buffer{
+			Width: 10,
+			Lines: Lines{
+				Line{Cell{"a", ""}}, Line{Cell{"b", ""}},
+				Line{Cell{"c", ""}}, Line{Cell{"d", ""}}},
+			Dot: Pos{3, 1},
+		},
+	},
+}
+
+func TestBufferExtend(t *testing.T) {
+	for _, test := range bufferExtendTests {
+		buf := test.buf
+		buf.Extend(test.buf2, test.moveDot)
+		if !reflect.DeepEqual(buf, test.want) {
+			t.Errorf("buf.extend(%v, %v) makes it %v, want %v",
+				test.buf2, test.moveDot, buf, test.want)
+		}
+	}
+}
+
+var bufferExtendRightTests = []struct {
+	buf  *Buffer
+	buf2 *Buffer
+	want *Buffer
+}{
+	// No padding, equal height.
+	{
+		&Buffer{Width: 1, Lines: Lines{Line{Cell{"a", ""}}, Line{Cell{"b", ""}}}},
+		&Buffer{Width: 1, Lines: Lines{Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
+		&Buffer{Width: 2, Lines: Lines{
+			Line{Cell{"a", ""}, Cell{"c", ""}},
+			Line{Cell{"b", ""}, Cell{"d", ""}}}},
+	},
+	// With padding, equal height.
+	{
+		&Buffer{Width: 2, Lines: Lines{Line{Cell{"a", ""}}, Line{Cell{"b", ""}}}},
+		&Buffer{Width: 1, Lines: Lines{Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
+		&Buffer{Width: 3, Lines: Lines{
+			Line{Cell{"a", ""}, Cell{" ", ""}, Cell{"c", ""}},
+			Line{Cell{"b", ""}, Cell{" ", ""}, Cell{"d", ""}}}},
+	},
+	// buf is higher.
+	{
+		&Buffer{Width: 1, Lines: Lines{
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}, Line{Cell{"x", ""}}}},
+		&Buffer{Width: 1, Lines: Lines{
+			Line{Cell{"c", ""}}, Line{Cell{"d", ""}},
+		}},
+		&Buffer{Width: 2, Lines: Lines{
+			Line{Cell{"a", ""}, Cell{"c", ""}},
+			Line{Cell{"b", ""}, Cell{"d", ""}},
+			Line{Cell{"x", ""}}}},
+	},
+	// buf2 is higher.
+	{
+		&Buffer{Width: 1, Lines: Lines{Line{Cell{"a", ""}}, Line{Cell{"b", ""}}}},
+		&Buffer{Width: 1, Lines: Lines{
+			Line{Cell{"c", ""}}, Line{Cell{"d", ""}}, Line{Cell{"e", ""}},
+		}},
+		&Buffer{Width: 2, Lines: Lines{
+			Line{Cell{"a", ""}, Cell{"c", ""}},
+			Line{Cell{"b", ""}, Cell{"d", ""}},
+			Line{Cell{" ", ""}, Cell{"e", ""}}}},
+	},
+}
+
+func TestBufferExtendRight(t *testing.T) {
+	for _, test := range bufferExtendRightTests {
+		buf := test.buf
+		buf.ExtendRight(test.buf2)
+		if !reflect.DeepEqual(buf, test.want) {
+			t.Errorf("buf.extendRight(%v) makes it %v, want %v",
+				test.buf2, buf, test.want)
+		}
+	}
+}

@@ -103,3 +103,34 @@ func (b *Buffer) TrimToLines(low, high int) {
 		b.Dot.Line = 0
 	}
 }
+
+// Extend adds all lines from b2 to the bottom of this buffer. If moveDot is
+// true, the dot is updated to match the dot of b2.
+func (b *Buffer) Extend(b2 *Buffer, moveDot bool) {
+	if b2 != nil && b2.Lines != nil {
+		if moveDot {
+			b.Dot.Line = b2.Dot.Line + len(b.Lines)
+			b.Dot.Col = b2.Dot.Col
+		}
+		b.Lines = append(b.Lines, b2.Lines...)
+	}
+}
+
+// ExtendRight extends bb to the right. It pads each line in b to be b.Width and
+// appends the corresponding line in b2 to it, making new lines when b2 has more
+// lines than bb.
+func (b *Buffer) ExtendRight(b2 *Buffer) {
+	i := 0
+	w := b.Width
+	b.Width += b2.Width
+	for ; i < len(b.Lines) && i < len(b2.Lines); i++ {
+		if w0 := CellsWidth(b.Lines[i]); w0 < w {
+			b.Lines[i] = append(b.Lines[i], makeSpacing(w-w0)...)
+		}
+		b.Lines[i] = append(b.Lines[i], b2.Lines[i]...)
+	}
+	for ; i < len(b2.Lines); i++ {
+		row := append(makeSpacing(w), b2.Lines[i]...)
+		b.Lines = append(b.Lines, row)
+	}
+}

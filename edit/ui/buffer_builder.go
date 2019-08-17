@@ -155,6 +155,8 @@ func (bb *BufferBuilder) WriteLegacyStyleds(ss []*Styled) *BufferBuilder {
 
 // Extend adds all lines from b2 to the bottom of this buffer. If moveDot is
 // true, the dot is updated to match the dot of b2.
+//
+// TODO(xiaq): Remove this method.
 func (bb *BufferBuilder) Extend(b2 *Buffer, moveDot bool) *BufferBuilder {
 	if b2 != nil && b2.Lines != nil {
 		if moveDot {
@@ -172,6 +174,8 @@ func (bb *BufferBuilder) Extend(b2 *Buffer, moveDot bool) *BufferBuilder {
 // when b2 has more lines than bb.
 // BUG(xiaq): after calling ExtendRight, the widths of some lines can exceed
 // bb.width.
+//
+// TODO(xiaq): Remove this method.
 func (bb *BufferBuilder) ExtendRight(b2 *Buffer, w int) *BufferBuilder {
 	i := 0
 	for ; i < len(bb.Lines) && i < len(b2.Lines); i++ {
