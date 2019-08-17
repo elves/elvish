@@ -1,11 +1,18 @@
 package ui
 
+import "github.com/elves/elvish/util"
+
 // Cell is an indivisible unit on the screen. It is not necessarily 1 column
 // wide.
 type Cell struct {
 	Text  string
 	Width byte
 	Style string
+}
+
+// C constructs a Cell.
+func C(text, style string) Cell {
+	return Cell{text, byte(util.Wcswidth(text)), style}
 }
 
 // Pos is the position within a buffer.
@@ -46,24 +53,20 @@ func CompareCells(r1, r2 []Cell) (bool, int) {
 type Buffer struct {
 	Width int
 	// Lines the content of the buffer.
-	Lines [][]Cell
+	Lines Lines
 	// Dot is what the user perceives as the cursor.
 	Dot Pos
 }
 
+// Lines stores multiple lines.
+type Lines [][]Cell
+
+// Line stores a single line.
+type Line []Cell
+
 // NewBuffer builds a new buffer, with one empty line.
 func NewBuffer(width int) *Buffer {
 	return &Buffer{Width: width, Lines: [][]Cell{make([]Cell, 0, width)}}
-}
-
-func (b *Buffer) SetLines(lines ...[]Cell) *Buffer {
-	b.Lines = lines
-	return b
-}
-
-func (b *Buffer) SetDot(dot Pos) *Buffer {
-	b.Dot = dot
-	return b
 }
 
 // Col returns the column the cursor is in.

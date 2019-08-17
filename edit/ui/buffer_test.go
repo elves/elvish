@@ -74,9 +74,14 @@ var bufferCursorTests = []struct {
 	buf  *Buffer
 	want Pos
 }{
-	{NewBuffer(10), Pos{0, 0}},
-	{NewBuffer(10).SetLines([]Cell{{"a", 1, ""}}, []Cell{{"好", 2, ""}}),
-		Pos{1, 2}},
+	{
+		&Buffer{Width: 10, Lines: Lines{Line{}}},
+		Pos{0, 0},
+	},
+	{
+		&Buffer{Width: 10, Lines: Lines{Line{C("a", "")}, Line{C("好", "")}}},
+		Pos{1, 2},
+	},
 }
 
 func TestBufferCursor(t *testing.T) {
@@ -93,11 +98,14 @@ var buffersHeighTests = []struct {
 }{
 	{nil, 0},
 	{[]*Buffer{NewBuffer(10)}, 1},
-	{[]*Buffer{
-		NewBuffer(10).SetLines([]Cell{}, []Cell{}),
-		NewBuffer(10),
-		NewBuffer(10).SetLines([]Cell{}, []Cell{})},
-		5},
+	{
+		[]*Buffer{
+			&Buffer{Width: 10, Lines: Lines{Line{}, Line{}}},
+			&Buffer{Width: 10, Lines: Lines{Line{}}},
+			&Buffer{Width: 10, Lines: Lines{Line{}, Line{}}},
+		},
+		5,
+	},
 }
 
 func TestBuffersHeight(t *testing.T) {
@@ -116,33 +124,33 @@ var bufferTrimToLinesTests = []struct {
 	want *Buffer
 }{
 	{
-		NewBuffer(10).SetLines(
-			[]Cell{{"a", 1, ""}}, []Cell{{"b", 1, ""}},
-			[]Cell{{"c", 1, ""}}, []Cell{{"d", 1, ""}},
-		), 0, 2,
-		NewBuffer(10).SetLines(
-			[]Cell{{"a", 1, ""}}, []Cell{{"b", 1, ""}},
-		),
+		&Buffer{Width: 10, Lines: Lines{
+			Line{C("a", "")}, Line{C("b", "")}, Line{C("c", "")}, Line{C("d", "")},
+		}},
+		0, 2,
+		&Buffer{Width: 10, Lines: Lines{
+			Line{C("a", "")}, Line{C("b", "")},
+		}},
 	},
 	// With dot.
 	{
-		NewBuffer(10).SetLines(
-			[]Cell{{"a", 1, ""}}, []Cell{{"b", 1, ""}},
-			[]Cell{{"c", 1, ""}}, []Cell{{"d", 1, ""}},
-		).SetDot(Pos{1, 1}), 1, 3,
-		NewBuffer(10).SetLines(
-			[]Cell{{"b", 1, ""}}, []Cell{{"c", 1, ""}},
-		).SetDot(Pos{0, 1}),
+		&Buffer{Width: 10, Lines: Lines{
+			Line{C("a", "")}, Line{C("b", "")}, Line{C("c", "")}, Line{C("d", "")},
+		}, Dot: Pos{1, 1}},
+		1, 3,
+		&Buffer{Width: 10, Lines: Lines{
+			Line{C("b", "")}, Line{C("c", "")},
+		}, Dot: Pos{0, 1}},
 	},
 	// With dot that is going to be trimmed away.
 	{
-		NewBuffer(10).SetLines(
-			[]Cell{{"a", 1, ""}}, []Cell{{"b", 1, ""}},
-			[]Cell{{"c", 1, ""}}, []Cell{{"d", 1, ""}},
-		).SetDot(Pos{0, 1}), 1, 3,
-		NewBuffer(10).SetLines(
-			[]Cell{{"b", 1, ""}}, []Cell{{"c", 1, ""}},
-		).SetDot(Pos{0, 1}),
+		&Buffer{Width: 10, Lines: Lines{
+			Line{C("a", "")}, Line{C("b", "")}, Line{C("c", "")}, Line{C("d", "")},
+		}, Dot: Pos{0, 1}},
+		1, 3,
+		&Buffer{Width: 10, Lines: Lines{
+			Line{C("b", "")}, Line{C("c", "")},
+		}, Dot: Pos{0, 1}},
 	},
 }
 

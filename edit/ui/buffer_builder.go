@@ -31,7 +31,7 @@ func (bb *BufferBuilder) Cursor() Pos {
 
 // Buffer returns a Buffer built by the BufferBuilder.
 func (bb *BufferBuilder) Buffer() *Buffer {
-	return NewBuffer(bb.Width).SetLines(bb.Lines...).SetDot(bb.Dot)
+	return &Buffer{bb.Width, bb.Lines, bb.Dot}
 }
 
 func (bb *BufferBuilder) SetIndent(indent int) *BufferBuilder {
