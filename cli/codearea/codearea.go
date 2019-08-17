@@ -119,7 +119,13 @@ func (w *Widget) MutateCodeAreaState(f func(*State)) {
 	w.StateMutex.Lock()
 	defer w.StateMutex.Unlock()
 	f(&w.State)
+}
 
+// CopyState returns a copy of the state.
+func (w *Widget) CopyState() State {
+	w.StateMutex.RLock()
+	defer w.StateMutex.RUnlock()
+	return w.State
 }
 
 func (w *Widget) resetInserts() {

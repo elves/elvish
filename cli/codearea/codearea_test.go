@@ -361,3 +361,11 @@ func TestHandle_DefaultNoopSubmit(t *testing.T) {
 	w.Handle(term.K('\n'))
 	// No panic, we are good
 }
+
+func TestState(t *testing.T) {
+	w := &Widget{}
+	w.MutateCodeAreaState(func(s *State) { s.CodeBuffer.Content = "code" })
+	if w.CopyState().CodeBuffer.Content != "code" {
+		t.Errorf("state not mutated")
+	}
+}
