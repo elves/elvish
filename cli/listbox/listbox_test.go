@@ -1,7 +1,6 @@
 package listbox
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -12,16 +11,6 @@ import (
 )
 
 var bb = ui.NewBufferBuilder
-
-type itemer struct{ prefix string }
-
-func (it itemer) Item(i int) styled.Text {
-	prefix := it.prefix
-	if prefix == "" {
-		prefix = "item "
-	}
-	return styled.Plain(fmt.Sprintf("%s%d", prefix, i))
-}
 
 var renderTests = []clitypes.RenderTest{
 	{
@@ -34,14 +23,14 @@ var renderTests = []clitypes.RenderTest{
 		Name: "placeholder when NItems is 0",
 		Given: &Widget{
 			Placeholder: styled.Plain("nothing"),
-			State:       State{Itemer: itemer{}},
+			State:       State{Itemer: TestItemer{}},
 		},
 		Width: 10, Height: 3,
 		Want: bb(10).WritePlain("nothing"),
 	},
 	{
 		Name:  "all items when there is enough height",
-		Given: &Widget{State: State{Itemer: itemer{}, NItems: 2, Selected: 0}},
+		Given: &Widget{State: State{Itemer: TestItemer{}, NItems: 2, Selected: 0}},
 		Width: 10, Height: 3,
 		Want: bb(10).
 			WriteStyled(styled.MakeText("item 0    ", "inverse")).
@@ -49,7 +38,7 @@ var renderTests = []clitypes.RenderTest{
 	},
 	{
 		Name:  "long lines cropped",
-		Given: &Widget{State: State{Itemer: itemer{}, NItems: 2, Selected: 0}},
+		Given: &Widget{State: State{Itemer: TestItemer{}, NItems: 2, Selected: 0}},
 		Width: 4, Height: 3,
 		Want: bb(4).
 			WriteStyled(styled.MakeText("item", "inverse")).
@@ -57,7 +46,7 @@ var renderTests = []clitypes.RenderTest{
 	},
 	{
 		Name:  "scrollbar when not showing all items",
-		Given: &Widget{State: State{Itemer: itemer{}, NItems: 4, Selected: 0}},
+		Given: &Widget{State: State{Itemer: TestItemer{}, NItems: 4, Selected: 0}},
 		Width: 10, Height: 2,
 		Want: bb(10).
 			WriteStyled(styled.MakeText("item 0   ", "inverse")).
@@ -67,7 +56,7 @@ var renderTests = []clitypes.RenderTest{
 	},
 	{
 		Name:  "scrollbar when not showing last item in full",
-		Given: &Widget{State: State{Itemer: itemer{"item\n"}, NItems: 2, Selected: 0}},
+		Given: &Widget{State: State{Itemer: TestItemer{"item\n"}, NItems: 2, Selected: 0}},
 		Width: 10, Height: 3,
 		Want: bb(10).
 			WriteStyled(styled.MakeText("item     ", "inverse")).
@@ -79,7 +68,7 @@ var renderTests = []clitypes.RenderTest{
 	},
 	{
 		Name:  "scrollbar when not showing only item in full",
-		Given: &Widget{State: State{Itemer: itemer{"item\n"}, NItems: 1, Selected: 0}},
+		Given: &Widget{State: State{Itemer: TestItemer{"item\n"}, NItems: 1, Selected: 0}},
 		Width: 10, Height: 1,
 		Want: bb(10).
 			WriteStyled(styled.MakeText("item     ", "inverse")).
@@ -99,45 +88,45 @@ var handleTests = []struct {
 }{
 	{
 		"up moving selection up",
-		&Widget{State: State{Itemer: itemer{}, NItems: 10, Selected: 1}},
+		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 1}},
 		[]term.Event{term.K(ui.Up)},
-		State{Itemer: itemer{}, NItems: 10, Selected: 0},
+		State{Itemer: TestItemer{}, NItems: 10, Selected: 0},
 	},
 	{
 		"up stopping at 0",
-		&Widget{State: State{Itemer: itemer{}, NItems: 10, Selected: 0}},
+		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 0}},
 		[]term.Event{term.K(ui.Up)},
-		State{Itemer: itemer{}, NItems: 10, Selected: 0},
+		State{Itemer: TestItemer{}, NItems: 10, Selected: 0},
 	},
 	{
 		"up moving to last item when selecting after boundary",
-		&Widget{State: State{Itemer: itemer{}, NItems: 10, Selected: 11}},
+		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 11}},
 		[]term.Event{term.K(ui.Up)},
-		State{Itemer: itemer{}, NItems: 10, Selected: 9},
+		State{Itemer: TestItemer{}, NItems: 10, Selected: 9},
 	},
 	{
 		"down moving selection down",
-		&Widget{State: State{Itemer: itemer{}, NItems: 10, Selected: 1}},
+		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 1}},
 		[]term.Event{term.K(ui.Down)},
-		State{Itemer: itemer{}, NItems: 10, Selected: 2},
+		State{Itemer: TestItemer{}, NItems: 10, Selected: 2},
 	},
 	{
 		"down stopping at n-1",
-		&Widget{State: State{Itemer: itemer{}, NItems: 10, Selected: 9}},
+		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 9}},
 		[]term.Event{term.K(ui.Down)},
-		State{Itemer: itemer{}, NItems: 10, Selected: 9},
+		State{Itemer: TestItemer{}, NItems: 10, Selected: 9},
 	},
 	{
 		"down moving to first item when selecting before boundary",
-		&Widget{State: State{Itemer: itemer{}, NItems: 10, Selected: -2}},
+		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: -2}},
 		[]term.Event{term.K(ui.Down)},
-		State{Itemer: itemer{}, NItems: 10, Selected: 0},
+		State{Itemer: TestItemer{}, NItems: 10, Selected: 0},
 	},
 	{
 		"default no-op accept",
-		&Widget{State: State{Itemer: itemer{}, NItems: 10, Selected: 5}},
+		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 5}},
 		[]term.Event{term.K(ui.Enter)},
-		State{Itemer: itemer{}, NItems: 10, Selected: 5},
+		State{Itemer: TestItemer{}, NItems: 10, Selected: 5},
 	},
 }
 
@@ -158,7 +147,7 @@ func TestHandle(t *testing.T) {
 func TestHandle_EnterEmitsAccept(t *testing.T) {
 	var accepted int
 	w := &Widget{
-		State:    State{Itemer: itemer{}, NItems: 10, Selected: 5},
+		State:    State{Itemer: TestItemer{}, NItems: 10, Selected: 5},
 		OnAccept: func(i int) { accepted = i },
 	}
 	w.Handle(term.K(ui.Enter))

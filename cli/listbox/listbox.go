@@ -3,6 +3,7 @@
 package listbox
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -31,6 +32,19 @@ type Widget struct {
 type Itemer interface {
 	// Item returns the item at the given zero-based index.
 	Item(i int) styled.Text
+}
+
+// TestItemer is an implementation of Itemer useful for testing.
+type TestItemer struct{ Prefix string }
+
+// Itemer returns a plain text consisting of the prefix and i. If the prefix is
+// empty, it defaults to "item ".
+func (it TestItemer) Item(i int) styled.Text {
+	prefix := it.Prefix
+	if prefix == "" {
+		prefix = "item "
+	}
+	return styled.Plain(fmt.Sprintf("%s%d", prefix, i))
 }
 
 var _ = clitypes.Widget(&Widget{})
