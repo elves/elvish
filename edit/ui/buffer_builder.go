@@ -67,7 +67,7 @@ func (bb *BufferBuilder) appendLine() {
 func (bb *BufferBuilder) appendCell(c Cell) {
 	n := len(bb.Lines)
 	bb.Lines[n-1] = append(bb.Lines[n-1], c)
-	bb.Col += int(c.Width)
+	bb.Col += util.Wcswidth(c.Text)
 }
 
 // Newline starts a newline.
@@ -76,7 +76,7 @@ func (bb *BufferBuilder) Newline() *BufferBuilder {
 
 	if bb.Indent > 0 {
 		for i := 0; i < bb.Indent; i++ {
-			bb.appendCell(Cell{Text: " ", Width: 1})
+			bb.appendCell(Cell{Text: " "})
 		}
 	}
 
@@ -94,19 +94,17 @@ func (bb *BufferBuilder) WriteRuneSGR(r rune, style string) *BufferBuilder {
 		bb.Newline()
 		return bb
 	}
-	wd := util.Wcwidth(r)
-	c := Cell{string(r), byte(wd), style}
+	c := Cell{string(r), style}
 	if r < 0x20 || r == 0x7f {
-		wd = 2
 		if style != "" {
 			style = style + ";" + styleForControlChar.String()
 		} else {
 			style = styleForControlChar.String()
 		}
-		c = Cell{"^" + string(r^0x40), 2, style}
+		c = Cell{"^" + string(r^0x40), style}
 	}
 
-	if bb.Col+wd > bb.Width {
+	if bb.Col+util.Wcswidth(c.Text) > bb.Width {
 		bb.Newline()
 		bb.appendCell(c)
 	} else {
@@ -194,7 +192,6 @@ func makeSpacing(n int) []Cell {
 	s := make([]Cell, n)
 	for i := 0; i < n; i++ {
 		s[i].Text = " "
-		s[i].Width = 1
 	}
 	return s
 }

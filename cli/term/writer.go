@@ -100,9 +100,7 @@ func (w *writer) CommitBuffer(bufNoti, buf *ui.Buffer, fullRefresh bool) error {
 
 	writeCells := func(cs []ui.Cell) {
 		for _, c := range cs {
-			if c.Width > 0 {
-				switchStyle(c.Style)
-			}
+			switchStyle(c.Style)
 			bytesBuf.WriteString(c.Text)
 		}
 	}

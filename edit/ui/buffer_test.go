@@ -10,7 +10,7 @@ var cellsWidthTests = []struct {
 	wantWidth int
 }{
 	{[]Cell{}, 0},
-	{[]Cell{{"a", 1, ""}, {"好", 2, ""}}, 3},
+	{[]Cell{{"a", ""}, {"好", ""}}, 3},
 }
 
 func TestCellsWidth(t *testing.T) {
@@ -27,8 +27,8 @@ var makeSpacingTests = []struct {
 	want []Cell
 }{
 	{0, []Cell{}},
-	{1, []Cell{{" ", 1, ""}}},
-	{4, []Cell{{" ", 1, ""}, {" ", 1, ""}, {" ", 1, ""}, {" ", 1, ""}}},
+	{1, []Cell{{" ", ""}}},
+	{4, []Cell{{" ", ""}, {" ", ""}, {" ", ""}, {" ", ""}}},
 }
 
 func TestMakeSpacing(t *testing.T) {
@@ -46,15 +46,15 @@ var compareCellsTests = []struct {
 	wantIndex int
 }{
 	{[]Cell{}, []Cell{}, true, 0},
-	{[]Cell{}, []Cell{{"a", 1, ""}}, false, 0},
+	{[]Cell{}, []Cell{{"a", ""}}, false, 0},
 	{
-		[]Cell{{"a", 1, ""}, {"好", 2, ""}, {"b", 1, ""}},
-		[]Cell{{"a", 1, ""}, {"好", 2, ""}, {"c", 1, ""}},
+		[]Cell{{"a", ""}, {"好", ""}, {"b", ""}},
+		[]Cell{{"a", ""}, {"好", ""}, {"c", ""}},
 		false, 2,
 	},
 	{
-		[]Cell{{"a", 1, ""}, {"好", 2, ""}, {"b", 1, ""}},
-		[]Cell{{"a", 1, ""}, {"好", 2, "1"}, {"c", 1, ""}},
+		[]Cell{{"a", ""}, {"好", ""}, {"b", ""}},
+		[]Cell{{"a", ""}, {"好", "1"}, {"c", ""}},
 		false, 1,
 	},
 }
@@ -79,7 +79,7 @@ var bufferCursorTests = []struct {
 		Pos{0, 0},
 	},
 	{
-		&Buffer{Width: 10, Lines: Lines{Line{C("a", "")}, Line{C("好", "")}}},
+		&Buffer{Width: 10, Lines: Lines{Line{Cell{"a", ""}}, Line{Cell{"好", ""}}}},
 		Pos{1, 2},
 	},
 }
@@ -100,9 +100,9 @@ var buffersHeighTests = []struct {
 	{[]*Buffer{NewBuffer(10)}, 1},
 	{
 		[]*Buffer{
-			&Buffer{Width: 10, Lines: Lines{Line{}, Line{}}},
-			&Buffer{Width: 10, Lines: Lines{Line{}}},
-			&Buffer{Width: 10, Lines: Lines{Line{}, Line{}}},
+			{Width: 10, Lines: Lines{Line{}, Line{}}},
+			{Width: 10, Lines: Lines{Line{}}},
+			{Width: 10, Lines: Lines{Line{}, Line{}}},
 		},
 		5,
 	},
@@ -125,31 +125,31 @@ var bufferTrimToLinesTests = []struct {
 }{
 	{
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("a", "")}, Line{C("b", "")}, Line{C("c", "")}, Line{C("d", "")},
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}, Line{Cell{"c", ""}}, Line{Cell{"d", ""}},
 		}},
 		0, 2,
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("a", "")}, Line{C("b", "")},
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}},
 		}},
 	},
 	// With dot.
 	{
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("a", "")}, Line{C("b", "")}, Line{C("c", "")}, Line{C("d", "")},
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}, Line{Cell{"c", ""}}, Line{Cell{"d", ""}},
 		}, Dot: Pos{1, 1}},
 		1, 3,
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("b", "")}, Line{C("c", "")},
+			Line{Cell{"b", ""}}, Line{Cell{"c", ""}},
 		}, Dot: Pos{0, 1}},
 	},
 	// With dot that is going to be trimmed away.
 	{
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("a", "")}, Line{C("b", "")}, Line{C("c", "")}, Line{C("d", "")},
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}, Line{Cell{"c", ""}}, Line{Cell{"d", ""}},
 		}, Dot: Pos{0, 1}},
 		1, 3,
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("b", "")}, Line{C("c", "")},
+			Line{Cell{"b", ""}}, Line{Cell{"c", ""}},
 		}, Dot: Pos{0, 1}},
 	},
 }

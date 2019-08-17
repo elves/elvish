@@ -15,42 +15,42 @@ var bufferBuilderWritesTests = []struct {
 	{NewBufferBuilder(10), "", "", &Buffer{Width: 10, Lines: Lines{Line{}}}},
 	// Writing a single rune.
 	{NewBufferBuilder(10), "a", "1",
-		&Buffer{Width: 10, Lines: Lines{Line{C("a", "1")}}}},
+		&Buffer{Width: 10, Lines: Lines{Line{Cell{"a", "1"}}}}},
 	// Writing control character.
 	{NewBufferBuilder(10), "\033", "",
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("^[", styleForControlChar.String())}}}},
+			Line{Cell{"^[", styleForControlChar.String()}}}}},
 	// Writing styled control character.
 	{NewBufferBuilder(10), "a\033b", "1",
 		&Buffer{Width: 10, Lines: Lines{Line{
-			C("a", "1"),
-			C("^[", "1;"+styleForControlChar.String()),
-			C("b", "1")}}}},
+			Cell{"a", "1"},
+			Cell{"^[", "1;" + styleForControlChar.String()},
+			Cell{"b", "1"}}}}},
 	// Writing text containing a newline.
 	{NewBufferBuilder(10), "a\nb", "1",
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("a", "1")}, Line{C("b", "1")}}}},
+			Line{Cell{"a", "1"}}, Line{Cell{"b", "1"}}}}},
 	// Writing text containing a newline when there is indent.
 	{NewBufferBuilder(10).SetIndent(2), "a\nb", "1",
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("a", "1")},
-			Line{C(" ", ""), C(" ", ""), C("b", "1")},
+			Line{Cell{"a", "1"}},
+			Line{Cell{" ", ""}, Cell{" ", ""}, Cell{"b", "1"}},
 		}}},
 	// Writing long text that triggers wrapping.
 	{NewBufferBuilder(4), "aaaab", "1",
 		&Buffer{Width: 4, Lines: Lines{
-			Line{C("a", "1"), C("a", "1"), C("a", "1"), C("a", "1")},
-			Line{C("b", "1")}}}},
+			Line{Cell{"a", "1"}, Cell{"a", "1"}, Cell{"a", "1"}, Cell{"a", "1"}},
+			Line{Cell{"b", "1"}}}}},
 	// Writing long text that triggers wrapping when there is indent.
 	{NewBufferBuilder(4).SetIndent(2), "aaaab", "1",
 		&Buffer{Width: 4, Lines: Lines{
-			Line{C("a", "1"), C("a", "1"), C("a", "1"), C("a", "1")},
-			Line{C(" ", ""), C(" ", ""), C("b", "1")}}}},
+			Line{Cell{"a", "1"}, Cell{"a", "1"}, Cell{"a", "1"}, Cell{"a", "1"}},
+			Line{Cell{" ", ""}, Cell{" ", ""}, Cell{"b", "1"}}}}},
 	// Writing long text that triggers eager wrapping.
 	{NewBufferBuilder(4).SetIndent(2).SetEagerWrap(true), "aaaa", "1",
 		&Buffer{Width: 4, Lines: Lines{
-			Line{C("a", "1"), C("a", "1"), C("a", "1"), C("a", "1")},
-			Line{C(" ", ""), C(" ", "")}}}},
+			Line{Cell{"a", "1"}, Cell{"a", "1"}, Cell{"a", "1"}, Cell{"a", "1"}},
+			Line{Cell{" ", ""}, Cell{" ", ""}}}}},
 }
 
 // TestBufferWrites tests BufferBuilder.Writes by calling Writes on a
@@ -74,27 +74,27 @@ var bufferBuilderExtendTests = []struct {
 	want    *Buffer
 }{
 	{
-		NewBufferBuilder(10).SetLines(Line{C("a", "")}, Line{C("b", "")}),
-		&Buffer{Width: 11, Lines: Lines{Line{C("c", "")}, Line{C("d", "")}}},
+		NewBufferBuilder(10).SetLines(Line{Cell{"a", ""}}, Line{Cell{"b", ""}}),
+		&Buffer{Width: 11, Lines: Lines{Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
 		false,
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("a", "")}, Line{C("b", "")},
-			Line{C("c", "")}, Line{C("d", "")}}},
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}},
+			Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
 	},
 	// Moving dot.
 	{
-		NewBufferBuilder(10).SetLines(Line{C("a", "")}, Line{C("b", "")}),
+		NewBufferBuilder(10).SetLines(Line{Cell{"a", ""}}, Line{Cell{"b", ""}}),
 		&Buffer{
 			Width: 11,
-			Lines: Lines{Line{C("c", "")}, Line{C("d", "")}},
+			Lines: Lines{Line{Cell{"c", ""}}, Line{Cell{"d", ""}}},
 			Dot:   Pos{1, 1},
 		},
 		true,
 		&Buffer{
 			Width: 10,
 			Lines: Lines{
-				Line{C("a", "")}, Line{C("b", "")},
-				Line{C("c", "")}, Line{C("d", "")}},
+				Line{Cell{"a", ""}}, Line{Cell{"b", ""}},
+				Line{Cell{"c", ""}}, Line{Cell{"d", ""}}},
 			Dot: Pos{3, 1},
 		},
 	},
@@ -120,46 +120,46 @@ var bufferBuilderExtendRightTests = []struct {
 }{
 	// No padding, equal height.
 	{
-		NewBufferBuilder(10).SetLines(Line{C("a", "")}, Line{}),
-		&Buffer{Width: 11, Lines: Lines{Line{C("c", "")}, Line{C("d", "")}}},
+		NewBufferBuilder(10).SetLines(Line{Cell{"a", ""}}, Line{}),
+		&Buffer{Width: 11, Lines: Lines{Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
 		0,
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("a", ""), C("c", "")}, Line{C("d", "")}}},
+			Line{Cell{"a", ""}, Cell{"c", ""}}, Line{Cell{"d", ""}}}},
 	},
 	// With padding.
 	{
-		NewBufferBuilder(10).SetLines(Line{C("a", "")}, Line{C("b", "")}),
-		&Buffer{Width: 11, Lines: Lines{Line{C("c", "")}, Line{C("d", "")}}},
+		NewBufferBuilder(10).SetLines(Line{Cell{"a", ""}}, Line{Cell{"b", ""}}),
+		&Buffer{Width: 11, Lines: Lines{Line{Cell{"c", ""}}, Line{Cell{"d", ""}}}},
 		2,
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("a", ""), C(" ", ""), C("c", "")},
-			Line{C("b", ""), C(" ", ""), C("d", "")}}},
+			Line{Cell{"a", ""}, Cell{" ", ""}, Cell{"c", ""}},
+			Line{Cell{"b", ""}, Cell{" ", ""}, Cell{"d", ""}}}},
 	},
 	// buf is higher.
 	{
 		NewBufferBuilder(10).SetLines(
-			Line{C("a", "")}, Line{C("b", "")}, Line{C("x", "")}),
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}, Line{Cell{"x", ""}}),
 		&Buffer{Width: 11, Lines: Lines{
-			Line{C("c", "")}, Line{C("d", "")},
+			Line{Cell{"c", ""}}, Line{Cell{"d", ""}},
 		}},
 		1,
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("a", ""), C("c", "")},
-			Line{C("b", ""), C("d", "")},
-			Line{C("x", "")}}},
+			Line{Cell{"a", ""}, Cell{"c", ""}},
+			Line{Cell{"b", ""}, Cell{"d", ""}},
+			Line{Cell{"x", ""}}}},
 	},
 	// buf2 is higher.
 	{
 		NewBufferBuilder(10).SetLines(
-			Line{C("a", "")}, Line{C("b", "")}),
+			Line{Cell{"a", ""}}, Line{Cell{"b", ""}}),
 		&Buffer{Width: 11, Lines: Lines{
-			Line{C("c", "")}, Line{C("d", "")}, Line{C("e", "")},
+			Line{Cell{"c", ""}}, Line{Cell{"d", ""}}, Line{Cell{"e", ""}},
 		}},
 		1,
 		&Buffer{Width: 10, Lines: Lines{
-			Line{C("a", ""), C("c", "")},
-			Line{C("b", ""), C("d", "")},
-			Line{C(" ", ""), C("e", "")}}},
+			Line{Cell{"a", ""}, Cell{"c", ""}},
+			Line{Cell{"b", ""}, Cell{"d", ""}},
+			Line{Cell{" ", ""}, Cell{"e", ""}}}},
 	},
 }
 

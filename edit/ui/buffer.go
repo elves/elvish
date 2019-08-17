@@ -6,13 +6,7 @@ import "github.com/elves/elvish/util"
 // wide.
 type Cell struct {
 	Text  string
-	Width byte
 	Style string
-}
-
-// C constructs a Cell.
-func C(text, style string) Cell {
-	return Cell{text, byte(util.Wcswidth(text)), style}
 }
 
 // Pos is the position within a buffer.
@@ -24,7 +18,7 @@ type Pos struct {
 func CellsWidth(cs []Cell) int {
 	w := 0
 	for _, c := range cs {
-		w += int(c.Width)
+		w += util.Wcswidth(c.Text)
 	}
 	return w
 }
