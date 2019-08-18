@@ -72,7 +72,7 @@
       <h2>Command History</h2>
       <p>
         Want to find the magical <code>ffmpeg</code> command that you used to
-        transcode a video file two months ago, but it is burried under a
+        transcode a video file two months ago, but it's buried under a
         million other commands?
       </p>
       <p>
