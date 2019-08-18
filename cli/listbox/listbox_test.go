@@ -81,51 +81,66 @@ func TestRender(t *testing.T) {
 }
 
 var handleTests = []struct {
-	name      string
-	widget    *Widget
-	events    []term.Event
-	wantState State
+	name        string
+	widget      *Widget
+	event       term.Event
+	wantHandled bool
+	wantState   State
 }{
 	{
 		"up moving selection up",
 		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 1}},
-		[]term.Event{term.K(ui.Up)},
+		term.K(ui.Up),
+		true,
 		State{Itemer: TestItemer{}, NItems: 10, Selected: 0},
 	},
 	{
 		"up stopping at 0",
 		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 0}},
-		[]term.Event{term.K(ui.Up)},
+		term.K(ui.Up),
+		true,
 		State{Itemer: TestItemer{}, NItems: 10, Selected: 0},
 	},
 	{
 		"up moving to last item when selecting after boundary",
 		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 11}},
-		[]term.Event{term.K(ui.Up)},
+		term.K(ui.Up),
+		true,
 		State{Itemer: TestItemer{}, NItems: 10, Selected: 9},
 	},
 	{
 		"down moving selection down",
 		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 1}},
-		[]term.Event{term.K(ui.Down)},
+		term.K(ui.Down),
+		true,
 		State{Itemer: TestItemer{}, NItems: 10, Selected: 2},
 	},
 	{
 		"down stopping at n-1",
 		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 9}},
-		[]term.Event{term.K(ui.Down)},
+		term.K(ui.Down),
+		true,
 		State{Itemer: TestItemer{}, NItems: 10, Selected: 9},
 	},
 	{
 		"down moving to first item when selecting before boundary",
 		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: -2}},
-		[]term.Event{term.K(ui.Down)},
+		term.K(ui.Down),
+		true,
 		State{Itemer: TestItemer{}, NItems: 10, Selected: 0},
 	},
 	{
-		"default no-op accept",
+		"enter triggering default no-op accept",
 		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 5}},
-		[]term.Event{term.K(ui.Enter)},
+		term.K(ui.Enter),
+		true,
+		State{Itemer: TestItemer{}, NItems: 10, Selected: 5},
+	},
+	{
+		"other keys not handled",
+		&Widget{State: State{Itemer: TestItemer{}, NItems: 10, Selected: 5}},
+		term.K('a'),
+		false,
 		State{Itemer: TestItemer{}, NItems: 10, Selected: 5},
 	},
 }
@@ -134,8 +149,9 @@ func TestHandle(t *testing.T) {
 	for _, test := range handleTests {
 		t.Run(test.name, func(t *testing.T) {
 			w := test.widget
-			for _, event := range test.events {
-				w.Handle(event)
+			handled := w.Handle(test.event)
+			if handled != test.wantHandled {
+				t.Errorf("got handled %v, want %v", handled, test.wantHandled)
 			}
 			if !reflect.DeepEqual(w.State, test.wantState) {
 				t.Errorf("got state %v, want %v", w.State, test.wantState)

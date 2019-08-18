@@ -121,6 +121,7 @@ func (w *Widget) Handle(event term.Event) bool {
 				s.Selected--
 			}
 		})
+		return true
 	case term.K(ui.Down):
 		w.MutateListboxState(func(s *State) {
 			switch {
@@ -132,11 +133,13 @@ func (w *Widget) Handle(event term.Event) bool {
 				s.Selected++
 			}
 		})
+		return true
 	case term.K(ui.Enter):
 		w.StateMutex.RLock()
 		selected := w.State.Selected
 		w.StateMutex.RUnlock()
 		w.OnAccept(selected)
+		return true
 	}
 	return false
 }
