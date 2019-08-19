@@ -22,6 +22,8 @@ type Widget struct {
 	StateMutex sync.RWMutex
 	// Publically accessible state.
 	State State
+	// An Handler that takes precedence over the default handling of events.
+	OverlayHandler clitypes.Handler
 	// A placeholder to show when there are no items.
 	Placeholder styled.Text
 	// A function called on the accept event.
@@ -49,7 +51,18 @@ func (it TestItemer) Item(i int) styled.Text {
 
 var _ = clitypes.Widget(&Widget{})
 
+// AddOverlay sets the OverlayHandler of w using the return value of the
+// function. It returns w itself and is mainly useful for building a Widget
+// instance in a single expression.
+func (w *Widget) AddOverlay(overlay func(*Widget) clitypes.Handler) *Widget {
+	w.OverlayHandler = overlay(w)
+	return w
+}
+
 func (w *Widget) init() {
+	if w.OverlayHandler == nil {
+		w.OverlayHandler = clitypes.DummyHandler{}
+	}
 	if w.OnAccept == nil {
 		w.OnAccept = func(i int) {}
 	}
@@ -109,6 +122,11 @@ func (w *Widget) Render(width, height int) *ui.Buffer {
 
 func (w *Widget) Handle(event term.Event) bool {
 	w.init()
+
+	if w.OverlayHandler.Handle(event) {
+		return true
+	}
+
 	switch event {
 	case term.K(ui.Up):
 		w.MutateListboxState(func(s *State) {

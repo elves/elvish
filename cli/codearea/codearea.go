@@ -23,6 +23,8 @@ type Widget struct {
 	// Public state. Access that may be concurrent to either of Widget's method
 	// must be synchronized using the StateMutex.
 	State State
+	// A Handler that takes precedence over the default handling of events.
+	OverlayHandler clitypes.Handler
 	// A function that highlights the given code and returns any errors it has
 	// found when highlighting. If this function is not given, the Widget does
 	// not highlight the code nor show any errors.
@@ -51,6 +53,14 @@ type Widget struct {
 
 var _ = clitypes.Widget(&Widget{})
 
+// AddOverlay sets the OverlayHandler of w using the return value of the
+// function. It returns w itself and is mainly useful for building a Widget
+// instance in a single expression.
+func (w *Widget) AddOverlay(overlay func(*Widget) clitypes.Handler) *Widget {
+	w.OverlayHandler = overlay(w)
+	return w
+}
+
 func dummyHighlighter(code string) (styled.Text, []error) {
 	return styled.Plain(code), nil
 }
@@ -62,8 +72,11 @@ func dummyQuotePaste() bool { return false }
 func dummyOnSubmit(string) {}
 
 // Initializes nil members to sensible default values. This method is called
-// at the beginning of all public methods.
+// at the beginning of most public methods.
 func (w *Widget) init() {
+	if w.OverlayHandler == nil {
+		w.OverlayHandler = clitypes.DummyHandler{}
+	}
 	if w.Highlighter == nil {
 		w.Highlighter = dummyHighlighter
 	}
@@ -104,6 +117,10 @@ func (w *Widget) Render(width, height int) *ui.Buffer {
 // events.
 func (w *Widget) Handle(event term.Event) bool {
 	w.init()
+
+	if w.OverlayHandler.Handle(event) {
+		return true
+	}
 
 	switch event := event.(type) {
 	case term.PasteSetting:

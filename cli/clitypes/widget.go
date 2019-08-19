@@ -28,23 +28,23 @@ type Handler interface {
 	Handle(event term.Event) bool
 }
 
-// AddOverlayHandler returns a Widget the same as the given Widget, except that
-// it always tries to handle events with the given Handler first.
-func AddOverlayHandler(w Widget, h Handler) Widget {
-	return widgetWithOverlayHandler{w, h}
-}
+// DummyHandler is a trivial implementation of Handler.
+type DummyHandler struct{}
 
-type widgetWithOverlayHandler struct {
-	base    Widget
-	overlay Handler
-}
+// Handle always returns false.
+func (DummyHandler) Handle(term.Event) bool { return false }
 
-func (w widgetWithOverlayHandler) Render(width, height int) *ui.Buffer {
-	return w.base.Render(width, height)
-}
+// MapHandler is a map-backed implementation of Handler.
+type MapHandler map[term.Event]func()
 
-func (w widgetWithOverlayHandler) Handle(event term.Event) bool {
-	return w.overlay.Handle(event) || w.base.Handle(event)
+// Handle handles the event by calling the function corresponding to the event
+// in the map. If there is no corresponding function, it returns false.
+func (m MapHandler) Handle(event term.Event) bool {
+	fn, ok := m[event]
+	if ok {
+		fn()
+	}
+	return ok
 }
 
 // RenderTest is a test case to be used in TestRenderer.

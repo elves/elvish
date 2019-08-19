@@ -281,6 +281,16 @@ var handleTests = []struct {
 		[]term.Event{term.K('d'), term.K(ui.F1), term.K('n')},
 		State{CodeBuffer: CodeBuffer{Content: "dn", Dot: 2}},
 	},
+	{
+		"overlay handler",
+		(&Widget{}).AddOverlay(func(w *Widget) clitypes.Handler {
+			return clitypes.MapHandler{
+				term.K('a'): func() { w.State.CodeBuffer.InsertAtDot("b") },
+			}
+		}),
+		[]term.Event{term.K('a')},
+		State{CodeBuffer: CodeBuffer{Content: "b", Dot: 1}},
+	},
 }
 
 func TestHandle(t *testing.T) {

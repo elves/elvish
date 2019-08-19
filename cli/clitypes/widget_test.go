@@ -1,7 +1,6 @@
 package clitypes
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/elves/elvish/cli/term"
@@ -34,30 +33,27 @@ func (w *testWidget) Handle(e term.Event) bool {
 	return false
 }
 
-func TestAddOverlayHandler(t *testing.T) {
-	base := testWidget{
-		text:     styled.Plain("base"),
-		accepted: []term.Event{term.K('a'), term.K('b')},
+func TestDummyHandler(t *testing.T) {
+	h := DummyHandler{}
+	for _, event := range []term.Event{term.K('a'), term.PasteSetting(true)} {
+		if h.Handle(event) {
+			t.Errorf("should not handle")
+		}
 	}
-	overlay := testWidget{
-		text:     styled.Plain("overlay"),
-		accepted: []term.Event{term.K(ui.Up), term.K(ui.Down)},
-	}
-	w := AddOverlayHandler(&base, &overlay)
+}
 
-	buf := w.Render(10, 10)
-	wantBuf := ui.NewBufferBuilder(10).WritePlain("base").Buffer()
-	if !reflect.DeepEqual(buf, wantBuf) {
-		t.Errorf("should render like base")
+func TestMapHandler(t *testing.T) {
+	var aCalled bool
+	h := MapHandler{term.K('a'): func() { aCalled = true }}
+	handled := h.Handle(term.K('a'))
+	if !handled {
+		t.Errorf("should handle")
 	}
-
-	if !w.Handle(term.K('a')) || base.handled[0] != term.K('a') {
-		t.Errorf("base did not handle")
+	if !aCalled {
+		t.Errorf("should call callback")
 	}
-	if !w.Handle(term.K(ui.Up)) || overlay.handled[0] != term.K(ui.Up) {
-		t.Errorf("overlay did not handle")
-	}
-	if w.Handle(term.K(ui.PageUp)) {
+	handled = h.Handle(term.K('b'))
+	if handled {
 		t.Errorf("should not handle")
 	}
 }
