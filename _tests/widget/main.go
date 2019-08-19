@@ -8,6 +8,7 @@ import (
 
 	"github.com/elves/elvish/cli/clicore"
 	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/combobox"
 	"github.com/elves/elvish/cli/listbox"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
@@ -15,11 +16,24 @@ import (
 )
 
 // Change this value to test another widget.
-var widget clitypes.Widget = &listbox.Widget{
-	State: listbox.State{
-		Itemer: itemer{},
-		NItems: 20,
-	},
+var widget clitypes.Widget = makeCombobox()
+
+func makeCombobox() clitypes.Widget {
+	w := &combobox.Widget{
+		ListBox: listbox.Widget{State: listbox.State{Itemer: itemer{}}},
+	}
+	w.OnFilter = func(filter string) {
+		n, err := strconv.Atoi(filter)
+		if filter == "" {
+			n, err = 100, nil
+		}
+		if err == nil {
+			w.ListBox.MutateListboxState(func(s *listbox.State) {
+				s.NItems = n
+			})
+		}
+	}
+	return w
 }
 
 var maxHeight = 10
