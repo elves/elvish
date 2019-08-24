@@ -1,3 +1,2 @@
-// Package layout contains layout utilities as implementations of the
-// clitypes.Renderer interface.
+// Package layout contains layout utilities.
 package layout

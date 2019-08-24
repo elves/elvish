@@ -1,13 +1,16 @@
 package clicore
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"sync"
 	"syscall"
 
-	clitypes "github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/codearea"
 	"github.com/elves/elvish/cli/term"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
@@ -20,10 +23,38 @@ type App struct {
 	tty  TTY
 	sigs SignalSource
 
-	state clitypes.State
+	StateMutex sync.RWMutex
+	State      State
+
+	CodeArea codearea.Widget
 
 	// Configuration.
 	Config Config
+}
+
+// State represents mutable state of an App.
+type State struct {
+	// Notes that have been added since the last redraw.
+	Notes []string
+	// A widget to show under the codearea widget.
+	Listing clitypes.Widget
+}
+
+// Note appends a new note.
+func (s *State) Note(note string) {
+	s.Notes = append(s.Notes, note)
+}
+
+// Notef is equivalent to calling Note with fmt.Sprintf(format, a...).
+func (s *State) Notef(format string, a ...interface{}) {
+	s.Note(fmt.Sprintf(format, a...))
+}
+
+// PopNotes returns s.Notes and resets s.Notes to an empty slice.
+func (s *State) PopNotes() []string {
+	notes := s.Notes
+	s.Notes = nil
+	return notes
 }
 
 // NewApp creates a new App from two abstract dependencies. The creation does
@@ -31,28 +62,30 @@ type App struct {
 // active. This is the most general way to create an App.
 func NewApp(t TTY, sigs SignalSource) *App {
 	lp := newLoop()
-	app := &App{loop: lp, tty: t, sigs: sigs, Config: DefaultConfig{}}
+	app := &App{loop: lp, tty: t, sigs: sigs}
 	lp.HandleCb(app.handle)
 	lp.RedrawCb(app.redraw)
 	return app
 }
 
-// NewAppFromFiles creates a new App from two files, describing the input and
-// output handles for the terminal. This uses NewTTY and NewSignalSource under
-// the hood to build the TTY and SignalSource dependencies.
-func NewAppFromFiles(in, out *os.File) *App {
-	return NewApp(NewTTY(in, out), NewSignalSource())
+// MutateAppState calls the given function while locking the state mutex.
+func (app *App) MutateAppState(f func(*State)) {
+	app.StateMutex.Lock()
+	defer app.StateMutex.Unlock()
+	f(&app.State)
 }
 
-// NewAppFromStdIO creates a new App that reads from os.Stdin and writes to
-// os.Stderr.
-func NewAppFromStdIO() *App {
-	return NewAppFromFiles(os.Stdin, os.Stderr)
+// CopyAppState returns a copy of the app state.
+func (app *App) CopyAppState() State {
+	app.StateMutex.RLock()
+	defer app.StateMutex.RUnlock()
+	return app.State
 }
 
-// State returns the App's state.
-func (app *App) State() *clitypes.State {
-	return &app.state
+func (app *App) resetAllStates() {
+	app.MutateAppState(func(s *State) { *s = State{} })
+	app.CodeArea.MutateCodeAreaState(
+		func(s *codearea.State) { *s = codearea.State{} })
 }
 
 // A special event type signalling something has seen a late update and a
@@ -70,21 +103,29 @@ func (app *App) handle(e event) handleResult {
 		case syscall.SIGHUP:
 			return handleResult{quit: true, err: io.EOF}
 		case syscall.SIGINT:
-			app.state.Reset()
+			app.resetAllStates()
 			app.triggerPrompts(true)
 		case sys.SIGWINCH:
 			app.Redraw(true)
 		}
 		return handleResult{}
 	case term.Event:
-		action := getMode(app.state.Mode(), app.Config.InitMode()).HandleEvent(e, &app.state)
+		if listing := app.CopyAppState().Listing; listing != nil {
+			listing.Handle(e)
+		} else {
+			app.CodeArea.Handle(e)
+		}
 
-		switch action {
-		case clitypes.CommitCode:
-			return handleResult{quit: true, buffer: app.state.Code()}
-		case clitypes.CommitEOF:
+		// TODO(xiaq): Use some kind of return value from the handler instead of
+		// hardcoding event.
+		switch e {
+		case term.K(ui.Enter): // commit code
+			buffer := app.CodeArea.CopyState().CodeBuffer.Content
+			return handleResult{quit: true, buffer: buffer}
+		case term.K('D', ui.Ctrl):
 			return handleResult{quit: true, err: io.EOF}
 		}
+
 		app.triggerPrompts(false)
 		return handleResult{}
 	default:
@@ -93,8 +134,8 @@ func (app *App) handle(e event) handleResult {
 }
 
 func (app *App) triggerPrompts(force bool) {
-	prompt := app.Config.Prompt()
-	rprompt := app.Config.RPrompt()
+	prompt := app.Config.Prompt
+	rprompt := app.Config.RPrompt
 	if prompt != nil {
 		prompt.Trigger(force)
 	}
@@ -106,59 +147,37 @@ func (app *App) triggerPrompts(force bool) {
 var transformerForPending = "underline"
 
 func (app *App) redraw(flag redrawFlag) {
-	// Get the state, depending on whether this is the final redraw.
-	var rawState *clitypes.RawState
-	final := flag&finalRedraw != 0
-	if final {
-		rawState = app.state.Finalize()
-	} else {
-		rawState = app.state.PopForRedraw()
-	}
-
+	app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+		if prompt := app.Config.Prompt; prompt != nil {
+			s.Prompt = prompt.Get()
+		}
+		if rprompt := app.Config.RPrompt; rprompt != nil {
+			s.RPrompt = rprompt.Get()
+		}
+	})
 	// Get the dimensions available.
 	height, width := app.tty.Size()
-	if app.Config != nil {
-		maxHeight := app.Config.MaxHeight()
-		if maxHeight > 0 && maxHeight < height {
-			height = maxHeight
-		}
+	if maxHeight := app.Config.maxHeight(); maxHeight > 0 && maxHeight < height {
+		height = maxHeight
 	}
 
-	// Prepare the code: applying pending, and highlight.
-	code, dot := applyPending(rawState)
-	styledCode, errors := highlighterGet(app.Config.Highlighter(), code)
-	// TODO: Apply transformerForPending to pending code.
+	var notes []string
+	var listing clitypes.Renderer
+	app.MutateAppState(func(s *State) {
+		notes = s.PopNotes()
+		listing = s.Listing
+	})
 
-	// Render onto buffers.
-	setup := &renderSetup{
-		height, width,
-		promptGet(app.Config.Prompt()), promptGet(app.Config.RPrompt()),
-		styledCode, dot, errors,
-		rawState.Notes,
-		getMode(rawState.Mode, app.Config.InitMode())}
-
-	bufNotes, bufMain := render(setup)
+	bufNotes := renderNotes(notes, width)
+	bufMain := mainRenderer{&app.CodeArea, listing}.Render(width, height)
 
 	// Apply buffers.
 	app.tty.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 
-	if final {
+	if flag&finalRedraw != 0 {
 		app.tty.Newline()
 		app.tty.ResetBuffer()
 	}
-}
-
-func applyPending(st *clitypes.RawState) (code string, dot int) {
-	code, dot, pending := st.Code, st.Dot, st.Pending
-	if pending != nil {
-		code = code[:pending.Begin] + pending.Text + code[pending.End:]
-		if dot >= pending.End {
-			dot = pending.Begin + len(pending.Text) + (dot - pending.End)
-		} else if dot >= pending.Begin {
-			dot = pending.Begin + len(pending.Text)
-		}
-	}
-	return code, dot
 }
 
 // ReadCode requests the App to read code from the terminal. It causes the App
@@ -219,16 +238,14 @@ func (app *App) ReadCode() (string, error) {
 			}
 		}()
 	}
-	prompt := app.Config.Prompt()
-	if prompt != nil {
+	if prompt := app.Config.Prompt; prompt != nil {
 		relayLateUpdates(prompt.LateUpdates())
 	}
-	rprompt := app.Config.RPrompt()
-	if rprompt != nil {
+	if rprompt := app.Config.RPrompt; rprompt != nil {
 		relayLateUpdates(rprompt.LateUpdates())
 	}
-	highlighter := app.Config.Highlighter()
-	if highlighter != nil {
+	if highlighter := app.Config.Highlighter; highlighter != nil {
+		app.CodeArea.Highlighter = highlighter.Get
 		relayLateUpdates(highlighter.LateUpdates())
 	}
 
@@ -236,20 +253,21 @@ func (app *App) ReadCode() (string, error) {
 	app.triggerPrompts(true)
 
 	// Reset state before returning.
-	defer app.state.Reset()
+	defer app.resetAllStates()
 
 	// BeforeReadline and AfterReadline hooks.
-	app.Config.BeforeReadline()
+	app.Config.beforeReadline()
 	defer func() {
-		app.Config.AfterReadline(app.state.Code())
+		app.Config.afterReadline(app.CodeArea.CopyState().CodeBuffer.Content)
 	}()
 
 	return app.loop.Run()
 }
 
-// Like ReadCode, but returns immediately with two channels that will get the
-// return values of ReadCode. Useful in tests.
-func (app *App) readCodeAsync() (<-chan string, <-chan error) {
+// ReadCodeAsync is an asynchronous version of ReadCode. It returns immediately
+// with two channels that will get the return values of ReadCode. Mainly useful
+// in tests.
+func (app *App) ReadCodeAsync() (<-chan string, <-chan error) {
 	codeCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {
@@ -266,8 +284,18 @@ func (app *App) Redraw(full bool) {
 	app.loop.Redraw(full)
 }
 
+// CommitEOF causes the main loop to exit with EOF.
+func (app *App) CommitEOF() {
+	// TODO: Implement.
+}
+
+// CommitCode causes the main loop to exit with the current code content.
+func (app *App) CommitCode() {
+	// TODO: Implement.
+}
+
 // Notify adds a note and requests a redraw.
 func (app *App) Notify(note string) {
-	app.state.AddNote(note)
+	app.MutateAppState(func(s *State) { s.Note(note) })
 	app.Redraw(false)
 }

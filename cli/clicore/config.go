@@ -1,44 +1,38 @@
 package clicore
 
-import clitypes "github.com/elves/elvish/cli/clitypes"
-
 // Config is the configuration for an App.
-type Config interface {
-	MaxHeight() int
-	RPromptPersistent() bool
-	BeforeReadline()
-	AfterReadline(string)
-	Highlighter() Highlighter
-	Prompt() Prompt
-	RPrompt() Prompt
-	InitMode() clitypes.Mode
+type Config struct {
+	MaxHeight         func() int
+	RPromptPersistent func() bool
+	BeforeReadline    func()
+	AfterReadline     func(string)
+	Highlighter       Highlighter
+	Prompt            Prompt
+	RPrompt           Prompt
 }
 
-// DefaultConfig implements the Config interface, providing sensible default
-// behavior. Other implementations of Config cam embed this struct and only
-// implement the methods that it needs.
-type DefaultConfig struct{}
+func (cfg *Config) maxHeight() int {
+	if cfg.MaxHeight != nil {
+		return cfg.MaxHeight()
+	}
+	return -1
+}
 
-// MaxHeight returns -1.
-func (DefaultConfig) MaxHeight() int { return -1 }
+func (cfg *Config) rpromptPersistent() bool {
+	if cfg.RPromptPersistent != nil {
+		return cfg.RPromptPersistent()
+	}
+	return false
+}
 
-// RPromptPersistent returns false.
-func (DefaultConfig) RPromptPersistent() bool { return false }
+func (cfg *Config) beforeReadline() {
+	if cfg.BeforeReadline != nil {
+		cfg.BeforeReadline()
+	}
+}
 
-// BeforeReadline does nothing.
-func (DefaultConfig) BeforeReadline() {}
-
-// AfterReadline does nothing.
-func (DefaultConfig) AfterReadline(string) {}
-
-// Highlighter returns nil.
-func (DefaultConfig) Highlighter() Highlighter { return nil }
-
-// Prompt returns nil.
-func (DefaultConfig) Prompt() Prompt { return nil }
-
-// RPrompt returns nil.
-func (DefaultConfig) RPrompt() Prompt { return nil }
-
-// InitMode returns nil.
-func (DefaultConfig) InitMode() clitypes.Mode { return nil }
+func (cfg *Config) afterReadline(content string) {
+	if cfg.AfterReadline != nil {
+		cfg.AfterReadline(content)
+	}
+}

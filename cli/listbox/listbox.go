@@ -168,3 +168,10 @@ func (w *Widget) MutateListboxState(f func(*State)) {
 	defer w.StateMutex.Unlock()
 	f(&w.State)
 }
+
+// CopyListboxState returns a copy of the state.
+func (w *Widget) CopyListboxState() State {
+	w.StateMutex.RLock()
+	defer w.StateMutex.RUnlock()
+	return w.State
+}

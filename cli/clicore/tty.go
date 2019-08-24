@@ -56,6 +56,11 @@ func NewTTY(in, out *os.File) TTY {
 	return &aTTY{in, out, nil, term.NewWriter(out)}
 }
 
+// NewStdIOTTY returns a new TTY from stdin and stderr.
+func NewStdTTY() TTY {
+	return NewTTY(os.Stdin, os.Stderr)
+}
+
 func (t *aTTY) Setup() (func(), error) {
 	restore, err := term.Setup(t.in, t.out)
 	return func() {
