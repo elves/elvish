@@ -1,15 +1,20 @@
 package cliedit
 
 import (
-	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/addons/histlist"
+	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/eval"
+	"github.com/elves/elvish/eval/vars"
 )
 
 // Initializes states for the histlist mode and its API.
-func initHistlist(ev *eval.Evaler, lsBinding *bindingMap, cfg *cli.HistlistModeConfig) eval.Ns {
-	binding := emptyBindingMap
-	cfg.Binding = newMapBinding(ev, &binding, lsBinding)
-	ns := eval.Ns{}.
-		AddGoFn("<edit:histlist>", "start", cli.StartHistlist)
-	return ns
+func initHistlist(app *clicore.App, ev *eval.Evaler, lsBinding *bindingMap, store histutil.Store) eval.Ns {
+	m := emptyBindingMap
+	binding := newMapBinding(app, ev, &m, lsBinding)
+	return eval.Ns{
+		"binding": vars.FromPtr(&m),
+	}.AddGoFn("<edit:histlist>", "start", func() {
+		histlist.Start(app, histlist.Config{binding, store})
+	})
 }

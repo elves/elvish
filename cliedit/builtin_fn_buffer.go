@@ -5,11 +5,12 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli/codearea"
 	"github.com/elves/elvish/util"
 )
 
-var bufferBuiltins = map[string]interface{}{
+var bufferBuiltinsData = map[string]func(*clicore.App){
 	"move-left":             makeMove(moveDotLeft),
 	"move-right":            makeMove(moveDotRight),
 	"move-left-word":        makeMove(moveDotLeftWord),
@@ -36,35 +37,43 @@ var bufferBuiltins = map[string]interface{}{
 	"kill-eol":              makeKill(moveDotEOL),
 }
 
+func bufferBuiltins(app *clicore.App) map[string]interface{} {
+	m := make(map[string]interface{})
+	for name, fn := range bufferBuiltinsData {
+		m[name] = func() { fn(app) }
+	}
+	return m
+}
+
 // A pure function that takes the current buffer and dot, and returns a new
 // value for the dot. Used to derive move- and kill- functions that operate on
 // the editor state.
 type pureMover func(buffer string, dot int) int
 
-func makeMove(m pureMover) cli.KeyHandler {
-	return func(ev cli.KeyEvent) {
-		s := ev.State()
-		s.Mutex.Lock()
-		defer s.Mutex.Unlock()
-		s.Raw.Dot = m(s.Raw.Code, s.Raw.Dot)
+func makeMove(m pureMover) func(*clicore.App) {
+	return func(app *clicore.App) {
+		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+			buf := &s.CodeBuffer
+			buf.Dot = m(buf.Content, buf.Dot)
+		})
 	}
 }
 
-func makeKill(m pureMover) cli.KeyHandler {
-	return func(ev cli.KeyEvent) {
-		s := ev.State()
-		s.Mutex.Lock()
-		defer s.Mutex.Unlock()
-		newDot := m(s.Raw.Code, s.Raw.Dot)
-		if newDot < s.Raw.Dot {
-			// Dot moved to the left: remove text between new dot and old dot,
-			// and move the dot itself
-			s.Raw.Code = s.Raw.Code[:newDot] + s.Raw.Code[s.Raw.Dot:]
-			s.Raw.Dot = newDot
-		} else if newDot > s.Raw.Dot {
-			// Dot moved to the right: remove text between old dot and new dot.
-			s.Raw.Code = s.Raw.Code[:s.Raw.Dot] + s.Raw.Code[newDot:]
-		}
+func makeKill(m pureMover) func(*clicore.App) {
+	return func(app *clicore.App) {
+		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+			buf := &s.CodeBuffer
+			newDot := m(buf.Content, buf.Dot)
+			if newDot < buf.Dot {
+				// Dot moved to the left: remove text between new dot and old dot,
+				// and move the dot itself
+				buf.Content = buf.Content[:newDot] + buf.Content[buf.Dot:]
+				buf.Dot = newDot
+			} else if newDot > buf.Dot {
+				// Dot moved to the right: remove text between old dot and new dot.
+				buf.Content = buf.Content[:buf.Dot] + buf.Content[newDot:]
+			}
+		})
 	}
 }
 

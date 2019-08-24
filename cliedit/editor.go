@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/clicore"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cliedit/highlight"
 	"github.com/elves/elvish/eval"
@@ -20,7 +20,7 @@ import (
 //
 // TODO: Rename ReadLine to ReadCode and remove Close.
 type Editor struct {
-	app *cli.App
+	app *clicore.App
 	ns  eval.Ns
 }
 
@@ -51,67 +51,66 @@ func (d dirStore) Dirs() ([]storedefs.Dir, error) {
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
-	cfg := &cli.AppConfig{}
-	// TODO: Remove the forward declaration. Currently this is needed by
-	// makePrompt only.
-	var app *cli.App
+	app := clicore.NewApp(clicore.NewTTY(in, out), clicore.NewSignalSource())
 
-	cfg.Highlighter = highlight.NewHighlighter(
+	app.Config.Highlighter = highlight.NewHighlighter(
 		highlight.Dep{Check: makeCheck(ev), HasCommand: makeHasCommand(ev)})
 
-	cfg.DirStore = dirStore{ev}
-
-	histFuser, err := histutil.NewFuser(st)
-	if err == nil {
-		_ = histFuser
-		cfg.HistoryStore = fuserWrapper{histFuser}
-	} else {
-		fmt.Fprintln(out, "failed to initialize history facilities")
-	}
-
-	ns.Add("max-height", vars.FromPtr(&cfg.MaxHeight))
+	maxHeight := -1
+	maxHeightVar := vars.FromPtr(&maxHeight)
+	app.Config.MaxHeight = func() int { return maxHeightVar.Get().(int) }
+	ns.Add("max-height", maxHeightVar)
 
 	// TODO: BindingMap should pass event context to event handlers
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"binding-map": makeBindingMap,
-		"commit-code": cli.CommitCode,
-		"commit-eof":  cli.CommitEOF,
-		"reset-mode":  cli.ResetMode,
-	}).AddGoFns("<edit>", bufferBuiltins)
+		"commit-code": app.CommitCode,
+		"commit-eof":  app.CommitEOF,
+		// "reset-mode":  cli.ResetMode,
+	}).AddGoFns("<edit>", bufferBuiltins(app))
 
 	// Elvish hook APIs
 	var beforeReadline func()
 	ns["before-readline"], beforeReadline = initBeforeReadline(ev)
 	var afterReadline func(string)
 	ns["after-readline"], afterReadline = initAfterReadline(ev)
-	cfg.BeforeReadline = []func(){beforeReadline}
-	cfg.AfterReadline = []func(string){afterReadline}
+	app.Config.BeforeReadline = beforeReadline
+	app.Config.AfterReadline = afterReadline
 
 	// Prompts
-	cfg.Prompt = makePrompt(app, ev, ns, defaultPrompt, "prompt")
-	cfg.RPrompt = makePrompt(app, ev, ns, defaultRPrompt, "rprompt")
+	app.Config.Prompt = makePrompt(app, ev, ns, defaultPrompt, "prompt")
+	app.Config.RPrompt = makePrompt(app, ev, ns, defaultRPrompt, "rprompt")
 
 	// Insert mode
-	insertNs := initInsert(ev, &cfg.InsertModeConfig)
+	insertNs := initInsert(ev, app)
 	ns.AddNs("insert", insertNs)
 
 	// Listing modes.
 	lsBinding, lsNs := initListing()
 	ns.AddNs("listing", lsNs)
 
-	lastcmdNs := initLastcmd(ev, lsBinding, &cfg.LastcmdModeConfig)
-	ns.AddNs("lastcmd", lastcmdNs)
+	var histStore histutil.Store
+	histFuser, err := histutil.NewFuser(st)
+	if err == nil {
+		histStore = fuserWrapper{histFuser}
+	} else {
+		fmt.Fprintln(out, "failed to initialize history facilities")
+	}
 
-	histlistNs := initHistlist(ev, lsBinding, &cfg.HistlistModeConfig)
+	histlistNs := initHistlist(app, ev, lsBinding, histStore)
 	ns.AddNs("histlist", histlistNs)
 
-	locationNs := initLocation(ev, lsBinding, &cfg.LocationModeConfig)
+	lastcmdNs := initLastcmd(app, ev, lsBinding, histStore)
+	ns.AddNs("lastcmd", lastcmdNs)
+
+	dirStore := dirStore{ev}
+
+	locationNs := initLocation(app, ev, lsBinding, dirStore)
 	ns.AddNs("location", locationNs)
 
 	// Evaluate default bindings.
 	evalDefaultBinding(ev, ns)
 
-	app = cli.NewAppFromFiles(cfg, in, out)
 	return &Editor{app, ns}
 }
 

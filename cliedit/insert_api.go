@@ -1,47 +1,41 @@
 package cliedit
 
 import (
-	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/clicore"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func initInsert(ev *eval.Evaler, cfg *cli.InsertModeConfig) eval.Ns {
-	// Underlying abbreviation map and binding map.
+func initInsert(ev *eval.Evaler, app *clicore.App) eval.Ns {
 	abbr := vals.EmptyMap
+	app.CodeArea.Abbreviations = makeMapIterator(&abbr)
+
 	binding := emptyBindingMap
+	app.CodeArea.OverlayHandler = newMapBinding(app, ev, &binding)
 
-	cfg.Binding = newMapBinding(ev, &binding)
-	cfg.Abbrs = newMapStringPairs(&abbr)
+	quotePaste := false
+	quotePasteVar := vars.FromPtr(&quotePaste)
+	app.CodeArea.QuotePaste = func() bool { return quotePasteVar.Get().(bool) }
 
-	ns := eval.Ns{
-		"binding":     vars.FromPtr(&binding),
+	return eval.Ns{
 		"abbr":        vars.FromPtr(&abbr),
-		"quote-paste": vars.FromPtr(&cfg.QuotePaste),
-	}.AddGoFns("<edit:insert>:", map[string]interface{}{
-		"start":           cli.StartInsert,
-		"default-handler": cli.DefaultInsert,
-	})
-
-	return ns
+		"binding":     vars.FromPtr(&binding),
+		"quote-paste": quotePasteVar,
+	}
 }
 
-func newMapStringPairs(m *hashmap.Map) cli.StringPairs {
-	return mapStringPairs{m}
-}
-
-type mapStringPairs struct{ m *hashmap.Map }
-
-func (s mapStringPairs) IterateStringPairs(f func(a, b string)) {
-	for it := (*s.m).Iterator(); it.HasElem(); it.Next() {
-		k, v := it.Elem()
-		ks, kok := k.(string)
-		vs, vok := v.(string)
-		if !kok || !vok {
-			continue
+func makeMapIterator(m *hashmap.Map) func(func(a, b string)) {
+	return func(f func(a, b string)) {
+		for it := (*m).Iterator(); it.HasElem(); it.Next() {
+			k, v := it.Elem()
+			ks, kok := k.(string)
+			vs, vok := v.(string)
+			if !kok || !vok {
+				continue
+			}
+			f(ks, vs)
 		}
-		f(ks, vs)
 	}
 }

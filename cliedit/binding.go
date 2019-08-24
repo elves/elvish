@@ -6,9 +6,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/cli/cliutil"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
@@ -24,28 +23,26 @@ type bindingMap = eddefs.BindingMap
 var emptyBindingMap = eddefs.EmptyBindingMap
 
 type mapBinding struct {
+	nt   notifier
 	ev   *eval.Evaler
 	maps []*bindingMap
 }
 
-func newMapBinding(ev *eval.Evaler, maps ...*bindingMap) cli.Binding {
-	return mapBinding{ev, maps}
+func newMapBinding(nt notifier, ev *eval.Evaler, maps ...*bindingMap) clitypes.Handler {
+	return mapBinding{nt, ev, maps}
 }
 
-func (b mapBinding) KeyHandler(k ui.Key) cli.KeyHandler {
-	f := indexLayeredBindings(k, b.maps...)
-	// TODO: Make this fallback part of GetOrDefault after moving BindingMap
-	// into this package.
+func (b mapBinding) Handle(e term.Event) bool {
+	k, ok := e.(term.KeyEvent)
+	if !ok {
+		return false
+	}
+	f := indexLayeredBindings(ui.Key(k), b.maps...)
 	if f == nil {
-		return unbound
+		return false
 	}
-	return func(ev cli.KeyEvent) {
-		callBinding(ev.App(), b.ev, f, ev)
-	}
-}
-
-func unbound(ev cli.KeyEvent) {
-	ev.State().AddNote("Unbound: " + ev.Key().String())
+	callBinding(b.nt, b.ev, f)
+	return true
 }
 
 // Indexes a series of layered bindings. Returns nil if none of the bindings
@@ -66,10 +63,7 @@ func indexLayeredBindings(k ui.Key, bindings ...*bindingMap) eval.Callable {
 
 var bindingSource = eval.NewInternalSource("[editor binding]")
 
-// TODO: callBinding should pass KeyEvent to the function being called.
-
-func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable, event cli.KeyEvent) clitypes.HandlerAction {
-
+func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable) {
 	// TODO(xiaq): Use CallWithOutputCallback when it supports redirecting the
 	// stderr port.
 	notifyPort, cleanup := makeNotifyPort(nt.Notify)
@@ -77,16 +71,11 @@ func callBinding(nt notifier, ev *eval.Evaler, f eval.Callable, event cli.KeyEve
 	ports := []*eval.Port{eval.DevNullClosedChan, notifyPort, notifyPort}
 	frame := eval.NewTopFrame(ev, bindingSource, ports)
 
-	err := frame.Call(f, []interface{}{event}, eval.NoOpts)
-
+	err := frame.Call(f, nil, eval.NoOpts)
 	if err != nil {
-		if action, ok := eval.Cause(err).(cliutil.ActionError); ok {
-			return clitypes.HandlerAction(action)
-		}
 		// TODO(xiaq): Make the stack trace available.
 		nt.Notify("[binding error] " + err.Error())
 	}
-	return clitypes.NoAction
 }
 
 func makeNotifyPort(notify func(string)) (*eval.Port, func()) {

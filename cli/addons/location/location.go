@@ -15,11 +15,11 @@ import (
 
 type Config struct {
 	Binding clitypes.Handler
-	Store   DirStore
+	Store   Store
 }
 
-// DirStore defines the interface for interacting with the directory history.
-type DirStore interface {
+// Store defines the interface for interacting with the directory history.
+type Store interface {
 	Dirs() ([]storedefs.Dir, error)
 	Chdir(dir string) error
 }
