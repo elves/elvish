@@ -44,11 +44,10 @@ func testMain(m *testing.M) int {
 	return m.Run()
 }
 
-func setup() (*clicore.App, clicore.TTYCtrl, clicore.SignalSourceCtrl) {
+func setup() (*clicore.App, clicore.TTYCtrl) {
 	tty, ttyControl := clicore.NewFakeTTY()
-	sigs, sigsCtrl := clicore.NewFakeSignalSource()
-	app := clicore.NewApp(tty, sigs)
-	return app, ttyControl, sigsCtrl
+	app := clicore.NewApp(tty)
+	return app, ttyControl
 }
 
 func cleanup(tty clicore.TTYCtrl, codeCh <-chan string) {

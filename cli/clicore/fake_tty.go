@@ -1,6 +1,7 @@
 package clicore
 
 import (
+	"os"
 	"reflect"
 	"sync"
 	"time"
@@ -14,6 +15,8 @@ const (
 	maxBufferUpdates = 1024
 	// Maximum number of events FakeTTY produces.
 	maxEvents = 1024
+	// Maximum number of signals FakeTTY produces.
+	maxSignals = 1024
 )
 
 // TTYCtrl is an interface for controlling the fake terminal.
@@ -35,6 +38,8 @@ type TTYCtrl interface {
 	// NotesBufferHistory returns a slice of all notes buffers that have
 	// appeared.
 	NotesBufferHistory() []*ui.Buffer
+	// InjectSignal injects a signal.
+	InjectSignal(sig os.Signal)
 }
 
 // An implementation of the TTY interface that is useful in tests.
@@ -46,6 +51,8 @@ type fakeTTY struct {
 	bufCh, notesBufCh chan *ui.Buffer
 	// Records history of the main buffer and notes buffer.
 	bufs, notesBufs []*ui.Buffer
+	// Channel that NotifySignals returns. Can be used to inject signals.
+	sigCh chan os.Signal
 
 	sizeMutex sync.RWMutex
 	// Predefined sizes.
@@ -56,6 +63,7 @@ type fakeTTY struct {
 func NewFakeTTY() (TTY, TTYCtrl) {
 	tty := &fakeTTY{
 		eventCh:    make(chan term.Event, maxEvents),
+		sigCh:      make(chan os.Signal, maxSignals),
 		bufCh:      make(chan *ui.Buffer, maxBufferUpdates),
 		notesBufCh: make(chan *ui.Buffer, maxBufferUpdates),
 		height:     24, width: 80,
@@ -108,6 +116,10 @@ func (t *fakeTTY) UpdateBuffer(bufNotes, buf *ui.Buffer, _ bool) error {
 	return nil
 }
 
+func (t *fakeTTY) NotifySignals() <-chan os.Signal { return t.sigCh }
+
+func (t *fakeTTY) StopSignals() { close(t.sigCh) }
+
 func (t *fakeTTY) recordBuf(buf *ui.Buffer) {
 	t.bufs = append(t.bufs, buf)
 	t.bufCh <- buf
@@ -133,9 +145,7 @@ func (t ttyCtrl) SetSize(h, w int) {
 	t.height, t.width = h, w
 }
 
-func (t ttyCtrl) Inject(e term.Event) {
-	t.eventCh <- e
-}
+func (t ttyCtrl) Inject(e term.Event) { t.eventCh <- e }
 
 func (t ttyCtrl) VerifyBuffer(b *ui.Buffer) bool {
 	return verifyBuffer(b, t.bufCh)
@@ -145,13 +155,11 @@ func (t ttyCtrl) VerifyNotesBuffer(b *ui.Buffer) bool {
 	return verifyBuffer(b, t.notesBufCh)
 }
 
-func (t ttyCtrl) BufferHistory() []*ui.Buffer {
-	return t.bufs
-}
+func (t ttyCtrl) BufferHistory() []*ui.Buffer { return t.bufs }
 
-func (t ttyCtrl) NotesBufferHistory() []*ui.Buffer {
-	return t.notesBufs
-}
+func (t ttyCtrl) NotesBufferHistory() []*ui.Buffer { return t.notesBufs }
+
+func (t ttyCtrl) InjectSignal(sig os.Signal) { t.sigCh <- sig }
 
 var verifyBufferTimeout = time.Second
 

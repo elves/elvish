@@ -50,7 +50,7 @@ func (d dirStore) Dirs() ([]storedefs.Dir, error) {
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
-	app := clicore.NewApp(clicore.NewTTY(in, out), clicore.NewSignalSource())
+	app := clicore.NewApp(clicore.NewTTY(in, out))
 
 	app.Config.Highlighter = makeHighlighter(ev)
 

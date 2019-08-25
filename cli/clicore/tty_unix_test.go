@@ -8,9 +8,9 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func TestSignalSource(t *testing.T) {
-	sigs := NewSignalSource(unix.SIGUSR1)
-	sigch := sigs.NotifySignals()
+func TestTTYSignal(t *testing.T) {
+	tty := NewStdTTY()
+	sigch := tty.NotifySignals()
 
 	err := unix.Kill(unix.Getpid(), unix.SIGUSR1)
 	if err != nil {
@@ -21,7 +21,7 @@ func TestSignalSource(t *testing.T) {
 		t.Errorf("Got signal %v, want SIGUSR1", sig)
 	}
 
-	sigs.StopSignals()
+	tty.StopSignals()
 
 	err = unix.Kill(unix.Getpid(), unix.SIGUSR2)
 	if err != nil {

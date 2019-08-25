@@ -19,9 +19,7 @@ import (
 // dependencies.
 type App struct {
 	loop *loop
-	// External dependencies
 	tty  TTY
-	sigs SignalSource
 
 	StateMutex sync.RWMutex
 	State      State
@@ -60,9 +58,9 @@ func (s *State) PopNotes() []string {
 // NewApp creates a new App from two abstract dependencies. The creation does
 // not have any observable side effect; a newly created App is not immediately
 // active. This is the most general way to create an App.
-func NewApp(t TTY, sigs SignalSource) *App {
+func NewApp(t TTY) *App {
 	lp := newLoop()
-	app := &App{loop: lp, tty: t, sigs: sigs}
+	app := &App{loop: lp, tty: t}
 	lp.HandleCb(app.handle)
 	lp.RedrawCb(app.redraw)
 	return app
@@ -200,18 +198,16 @@ func (app *App) ReadCode() (string, error) {
 		wg.Done()
 	}()
 
-	if app.sigs != nil {
-		// Relay signals.
-		sigCh := app.sigs.NotifySignals()
-		defer app.sigs.StopSignals()
-		wg.Add(1)
-		go func() {
-			for sig := range sigCh {
-				app.loop.Input(sig)
-			}
-			wg.Done()
-		}()
-	}
+	// Relay signals.
+	sigCh := app.tty.NotifySignals()
+	defer app.tty.StopSignals()
+	wg.Add(1)
+	go func() {
+		for sig := range sigCh {
+			app.loop.Input(sig)
+		}
+		wg.Done()
+	}()
 
 	// Relay late updates from prompt, rprompt and highlighter.
 	stopRelayLateUpdates := make(chan struct{})

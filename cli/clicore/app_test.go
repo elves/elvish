@@ -16,7 +16,7 @@ import (
 )
 
 func TestReadCode_AbortsOnSetupError(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 
 	setupErr := errors.New("a fake error")
 	tty.SetSetup(func() {}, setupErr)
@@ -29,7 +29,7 @@ func TestReadCode_AbortsOnSetupError(t *testing.T) {
 }
 
 func TestReadCode_CallsRestore(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 
 	restoreCalled := 0
 	tty.SetSetup(func() { restoreCalled++ }, nil)
@@ -43,7 +43,7 @@ func TestReadCode_CallsRestore(t *testing.T) {
 }
 
 func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 
 	tty.Inject(term.KeyEvent{Rune: '\n'})
 	ed.CodeArea.State.CodeBuffer.Content = "some code"
@@ -57,7 +57,7 @@ func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 
 func TestReadCode_PassesInputEventsToPopup(t *testing.T) {
 	/*
-		ed, tty, _ := setup()
+		ed, tty := setup()
 
 		m := &fakeMode{maxKeys: 3}
 		ed.state.Raw.Mode = m
@@ -80,7 +80,7 @@ func TestReadCode_PassesInputEventsToCodeArea(t *testing.T) {
 }
 
 func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 
 	called := 0
 	ed.Config.BeforeReadline = func() { called++ }
@@ -95,7 +95,7 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 }
 
 func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 
 	called := 0
 	code := ""
@@ -120,7 +120,7 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 }
 
 func TestReadCode_RespectsMaxHeight(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 
 	ed.Config.MaxHeight = func() int { return 2 }
 	tty.SetSize(10, 5) // Width = 5 to make it easy to test
@@ -142,7 +142,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 var bufChTimeout = 1 * time.Second
 
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 
 	ed.Config.Highlighter = fakeHighlighter{
 		get: func(code string) (styled.Text, []error) {
@@ -175,7 +175,7 @@ func TestReadCode_RedrawsOnHighlighterLateUpdate(t *testing.T) {
 }
 
 func TestReadCode_RendersPrompt(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 
 	ed.Config.Prompt = constPrompt{styled.Plain("> ")}
 	tty.Inject(term.KeyEvent{Rune: 'a'})
@@ -193,7 +193,7 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 }
 
 func TestReadCode_RendersRPrompt(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 	tty.SetSize(80, 4) // Set a width of 4 for easier testing.
 
 	ed.Config.RPrompt = constPrompt{styled.Plain("R")}
@@ -211,7 +211,7 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 }
 
 func TestReadCode_TriggersPrompt(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 
 	called := 0
 	ed.Config.Prompt = fakePrompt{trigger: func(bool) { called++ }}
@@ -225,7 +225,7 @@ func TestReadCode_TriggersPrompt(t *testing.T) {
 }
 
 func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 
 	promptContent := "old"
 	prompt := fakePrompt{
@@ -258,7 +258,7 @@ func TestReadCode_SupportsPersistentRPrompt(t *testing.T) {
 }
 
 func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
-	ed, tty, _ := setup()
+	ed, tty := setup()
 
 	codeCh, _ := ed.ReadCodeAsync()
 
@@ -284,7 +284,7 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 
 func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 	/*
-		ed, tty, _ := setup()
+		ed, tty := setup()
 
 		ed.state.Raw.Code = "some code"
 		// We use the dot as a signal for distinguishing non-final and final state.
@@ -314,7 +314,7 @@ func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 }
 
 func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
-	ed, tty, sigs := setup()
+	ed, tty := setup()
 
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 
@@ -326,7 +326,7 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 		t.Errorf("did not get expected buffer before sending SIGHUP")
 	}
 
-	sigs.Inject(syscall.SIGHUP)
+	tty.InjectSignal(syscall.SIGHUP)
 
 	select {
 	case <-codeCh:
@@ -340,7 +340,7 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 }
 
 func TestReadCode_ResetsOnSIGINT(t *testing.T) {
-	ed, tty, sigs := setup()
+	ed, tty := setup()
 
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 
@@ -351,7 +351,7 @@ func TestReadCode_ResetsOnSIGINT(t *testing.T) {
 		t.Errorf("did not get expected buffer before sending SIGINT")
 	}
 
-	sigs.Inject(syscall.SIGINT)
+	tty.InjectSignal(syscall.SIGINT)
 
 	wantBuf = ui.NewBufferBuilder(80).Buffer()
 	if !tty.VerifyBuffer(wantBuf) {
@@ -362,7 +362,7 @@ func TestReadCode_ResetsOnSIGINT(t *testing.T) {
 }
 
 func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
-	ed, tty, sigs := setup()
+	ed, tty := setup()
 
 	content := "1234567890"
 	ed.CodeArea.State.CodeBuffer = codearea.CodeBuffer{
@@ -378,7 +378,7 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	}
 
 	tty.SetSize(24, 4)
-	sigs.Inject(sys.SIGWINCH)
+	tty.InjectSignal(sys.SIGWINCH)
 
 	wantBuf = ui.NewBufferBuilder(4).WritePlain("1234567890").
 		SetDotToCursor().Buffer()
@@ -389,11 +389,10 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	cleanup(tty, codeCh)
 }
 
-func setup() (*App, TTYCtrl, SignalSourceCtrl) {
+func setup() (*App, TTYCtrl) {
 	tty, ttyControl := NewFakeTTY()
-	sigs, sigsCtrl := NewFakeSignalSource()
-	ed := NewApp(tty, sigs)
-	return ed, ttyControl, sigsCtrl
+	ed := NewApp(tty)
+	return ed, ttyControl
 }
 
 func cleanup(t TTYCtrl, codeCh <-chan string) {

@@ -3,6 +3,7 @@ package clicore
 import (
 	"fmt"
 	"os"
+	"os/signal"
 
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
@@ -34,6 +35,7 @@ type TTY interface {
 
 	// Returns the height and width of the terminal.
 	Size() (h, w int)
+
 	// Outputs a newline.
 	Newline()
 	// Returns the current buffer. The initial value of the current buffer is
@@ -43,17 +45,27 @@ type TTY interface {
 	ResetBuffer()
 	// Updates the current buffer and draw it to the terminal.
 	UpdateBuffer(bufNotes, bufMain *ui.Buffer, full bool) error
+
+	// Start relaying signals and returns a channel on which signals are
+	// delivered.
+	NotifySignals() <-chan os.Signal
+	// Stops the relaying of signals. After this function returns, the
+	// channel returned by NotifySignals will not deliver any more values.
+	StopSignals()
 }
 
 type aTTY struct {
 	in, out *os.File
 	r       term.Reader
 	w       term.Writer
+	sigCh   chan os.Signal
 }
+
+const sigsChanBufferSize = 256
 
 // NewTTY returns a new TTY from input and output terminal files.
 func NewTTY(in, out *os.File) TTY {
-	return &aTTY{in, out, nil, term.NewWriter(out)}
+	return &aTTY{in, out, nil, term.NewWriter(out), nil}
 }
 
 // NewStdIOTTY returns a new TTY from stdin and stderr.
@@ -105,4 +117,16 @@ func (t *aTTY) ResetBuffer() {
 
 func (t *aTTY) UpdateBuffer(bufNotes, bufMain *ui.Buffer, full bool) error {
 	return t.w.CommitBuffer(bufNotes, bufMain, full)
+}
+
+func (t *aTTY) NotifySignals() <-chan os.Signal {
+	t.sigCh = make(chan os.Signal, sigsChanBufferSize)
+	signal.Notify(t.sigCh)
+	return t.sigCh
+}
+
+func (t *aTTY) StopSignals() {
+	signal.Stop(t.sigCh)
+	close(t.sigCh)
+	t.sigCh = nil
 }
