@@ -5,23 +5,24 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cliedit/highlight"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/util"
 )
 
-func makeCheck(ev *eval.Evaler) func(n *parse.Chunk) error {
-	return func(n *parse.Chunk) error { return check(ev, n) }
+func makeHighlighter(ev *eval.Evaler) clicore.Highlighter {
+	return highlight.NewHighlighter(highlight.Dep{
+		Check:      func(n *parse.Chunk) error { return check(ev, n) },
+		HasCommand: func(cmd string) bool { return hasCommand(ev, cmd) },
+	})
 }
 
 func check(ev *eval.Evaler, n *parse.Chunk) error {
 	src := eval.NewInteractiveSource(n.SourceText())
 	_, err := ev.Compile(n, src)
 	return err
-}
-
-func makeHasCommand(ev *eval.Evaler) func(cmd string) bool {
-	return func(cmd string) bool { return hasCommand(ev, cmd) }
 }
 
 func hasCommand(ev *eval.Evaler, cmd string) bool {

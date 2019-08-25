@@ -6,7 +6,6 @@ import (
 
 	"github.com/elves/elvish/cli/clicore"
 	"github.com/elves/elvish/cli/histutil"
-	"github.com/elves/elvish/cliedit/highlight"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
@@ -53,8 +52,7 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
 	app := clicore.NewApp(clicore.NewTTY(in, out), clicore.NewSignalSource())
 
-	app.Config.Highlighter = highlight.NewHighlighter(
-		highlight.Dep{Check: makeCheck(ev), HasCommand: makeHasCommand(ev)})
+	app.Config.Highlighter = makeHighlighter(ev)
 
 	maxHeight := -1
 	maxHeightVar := vars.FromPtr(&maxHeight)

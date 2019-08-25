@@ -1,5 +1,9 @@
 package cliedit
 
+// The editor's dependencies are not concrete implementations, but interfaces.
+// This file defines the interfaces for those dependencies as well as fake
+// implementations that are useful in tests.
+
 // An interface that wraps Notify. It is part of, and smaller than the full app
 // interface. Internal functions that do not need to access the app state can
 // use this interface to make it easier to test.

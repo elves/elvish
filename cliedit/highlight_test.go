@@ -26,16 +26,15 @@ var (
 	anyError anyErrorMatcher
 )
 
-func TestMakeCheck(t *testing.T) {
+func TestCheck(t *testing.T) {
 	ev := eval.NewEvaler()
 	ev.Global.Add("good", vars.FromInit(0))
-	check := makeCheck(ev)
 
 	tt.Test(t, tt.Fn("check", check), tt.Table{
-		tt.Args(mustParse("")).Rets(noError),
-		tt.Args(mustParse("echo $good")).Rets(noError),
+		tt.Args(ev, mustParse("")).Rets(noError),
+		tt.Args(ev, mustParse("echo $good")).Rets(noError),
 		// TODO: Check the range of the returned error
-		tt.Args(mustParse("echo $bad")).Rets(anyError),
+		tt.Args(ev, mustParse("echo $bad")).Rets(anyError),
 	})
 }
 
@@ -43,7 +42,6 @@ const colonInFilenameOk = runtime.GOOS != "windows"
 
 func TestMakeHasCommand(t *testing.T) {
 	ev := eval.NewEvaler()
-	hasCommand := makeHasCommand(ev)
 
 	// Set up global functions and modules in the evaler.
 	goodFn := eval.NewGoFn("good", func() {})
@@ -80,31 +78,31 @@ func TestMakeHasCommand(t *testing.T) {
 
 	tt.Test(t, tt.Fn("hasCommand", hasCommand), tt.Table{
 		// Builtin special form
-		tt.Args("if").Rets(true),
+		tt.Args(ev, "if").Rets(true),
 		// Builtin function
-		tt.Args("put").Rets(true),
+		tt.Args(ev, "put").Rets(true),
 		// User-defined function
-		tt.Args("good").Rets(true),
+		tt.Args(ev, "good").Rets(true),
 		// Function in modules
-		tt.Args("a:good").Rets(true),
-		tt.Args("a:b:good").Rets(true),
+		tt.Args(ev, "a:good").Rets(true),
+		tt.Args(ev, "a:b:good").Rets(true),
 
 		// Non-searching directory and external
-		tt.Args("./a").Rets(true),
-		tt.Args("a/b").Rets(true),
-		tt.Args("a/b/c/executable").Rets(true),
+		tt.Args(ev, "./a").Rets(true),
+		tt.Args(ev, "a/b").Rets(true),
+		tt.Args(ev, "a/b/c/executable").Rets(true),
 
 		// External in PATH
-		tt.Args("external").Rets(true),
-		tt.Args("@external").Rets(true),
-		tt.Args("ex:tern:al").Rets(colonInFilenameOk),
+		tt.Args(ev, "external").Rets(true),
+		tt.Args(ev, "@external").Rets(true),
+		tt.Args(ev, "ex:tern:al").Rets(colonInFilenameOk),
 
 		// Non-existent
-		tt.Args("bad").Rets(false),
-		tt.Args("a:bad").Rets(false),
-		tt.Args("a:b:bad").Rets(false),
-		tt.Args("./bad").Rets(false),
-		tt.Args("a/bad").Rets(false),
+		tt.Args(ev, "bad").Rets(false),
+		tt.Args(ev, "a:bad").Rets(false),
+		tt.Args(ev, "a:b:bad").Rets(false),
+		tt.Args(ev, "./bad").Rets(false),
+		tt.Args(ev, "a/bad").Rets(false),
 	})
 }
 
