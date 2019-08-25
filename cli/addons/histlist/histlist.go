@@ -34,13 +34,12 @@ func Start(app *clicore.App, cfg Config) {
 	w.ListBox.OverlayHandler = cfg.Binding
 	w.OnFilter = func(p string) {
 		w.ListBox.MutateListboxState(func(s *listbox.State) {
-			itemer, n := filter(cmds, p)
-			*s = listbox.MakeState(itemer, n, true)
+			*s = listbox.MakeState(filter(cmds, p), true)
 		})
 	}
 	w.ListBox.OnAccept = func(i int) {
-		itemer := w.ListBox.CopyListboxState().Itemer.(itemer)
-		text := itemer[i].Text
+		items := w.ListBox.CopyListboxState().Items.(items)
+		text := items[i].Text
 		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
 			buf := &s.CodeBuffer
 			if buf.Content == "" {
@@ -53,19 +52,21 @@ func Start(app *clicore.App, cfg Config) {
 	app.MutateAppState(func(s *clicore.State) { s.Listing = &w })
 }
 
-type itemer []histutil.Entry
+type items []histutil.Entry
 
-func filter(allEntries []histutil.Entry, p string) (itemer, int) {
+func filter(allEntries []histutil.Entry, p string) items {
 	var entries []histutil.Entry
 	for _, entry := range allEntries {
 		if strings.Contains(entry.Text, p) {
 			entries = append(entries, entry)
 		}
 	}
-	return entries, len(entries)
+	return entries
 }
 
-func (it itemer) Item(i int) styled.Text {
+func (it items) Show(i int) styled.Text {
 	// TODO: The alignment of the index works up to 10000 entries.
 	return styled.Plain(fmt.Sprintf("%4d %s", it[i].Seq, it[i].Text))
 }
+
+func (it items) Len() int { return len(it) }

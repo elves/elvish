@@ -22,8 +22,9 @@ var respectDistance = 2
 //
 // * Among all values satisfying the above conditions, the value of first is
 //   the one closest to lastFirst.
-func findWindow(itemer Itemer, n, selected, lastFirst, height int) (first, crop int) {
-	selectedHeight := itemer.Item(selected).CountLines()
+func findWindow(items Items, selected, lastFirst, height int) (first, crop int) {
+	n := items.Len()
+	selectedHeight := items.Show(selected).CountLines()
 
 	if height <= selectedHeight {
 		// The height is not big enough (or just big enough) to fit the selected
@@ -48,7 +49,7 @@ func findWindow(itemer Itemer, n, selected, lastFirst, height int) (first, crop 
 	// upward later.
 	useDown := 0
 	for i := selected + 1; i < n; i++ {
-		useDown += itemer.Item(i).CountLines()
+		useDown += items.Show(i).CountLines()
 		if useDown >= budget {
 			break
 		}
@@ -75,7 +76,7 @@ func findWindow(itemer Itemer, n, selected, lastFirst, height int) (first, crop 
 	//   distance, and will be able to use up the entire budget when expanding
 	//   downwards later.
 	for i := selected - 1; i >= 0; i-- {
-		useUp += itemer.Item(i).CountLines()
+		useUp += items.Show(i).CountLines()
 		if useUp >= budgetUp {
 			return i, useUp - budgetUp
 		}

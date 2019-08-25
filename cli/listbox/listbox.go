@@ -3,7 +3,6 @@
 package listbox
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -28,25 +27,6 @@ type Widget struct {
 	Placeholder styled.Text
 	// A function called on the accept event.
 	OnAccept func(i int)
-}
-
-// Itemer wraps the Item method.
-type Itemer interface {
-	// Item returns the item at the given zero-based index.
-	Item(i int) styled.Text
-}
-
-// TestItemer is an implementation of Itemer useful for testing.
-type TestItemer struct{ Prefix string }
-
-// Itemer returns a plain text consisting of the prefix and i. If the prefix is
-// empty, it defaults to "item ".
-func (it TestItemer) Item(i int) styled.Text {
-	prefix := it.Prefix
-	if prefix == "" {
-		prefix = "item "
-	}
-	return styled.Plain(fmt.Sprintf("%s%d", prefix, i))
 }
 
 var _ = clitypes.Widget(&Widget{})
@@ -74,15 +54,16 @@ func (w *Widget) Render(width, height int) *ui.Buffer {
 	w.init()
 	w.StateMutex.Lock()
 	s := &w.State
-	itemer, n, selected, lastFirst := s.Itemer, s.NItems, s.Selected, s.LastFirst
+	items, selected, lastFirst := s.Items, s.Selected, s.LastFirst
 
-	if itemer == nil || n == 0 {
+	if items == nil || items.Len() == 0 {
 		s.LastFirst = -1
 		w.StateMutex.Unlock()
 		return layout.Label{w.Placeholder}.Render(width, height)
 	}
 
-	first, firstCrop := findWindow(itemer, n, selected, lastFirst, height)
+	n := items.Len()
+	first, firstCrop := findWindow(items, selected, lastFirst, height)
 	s.LastFirst = first
 	w.StateMutex.Unlock()
 
@@ -91,7 +72,7 @@ func (w *Widget) Render(width, height int) *ui.Buffer {
 
 	var i int
 	for i = first; i < n && len(allLines) < height; i++ {
-		item := itemer.Item(i)
+		item := items.Show(i)
 		lines := item.SplitByRune('\n')
 		if i == first {
 			lines = lines[firstCrop:]
@@ -131,8 +112,8 @@ func (w *Widget) Handle(event term.Event) bool {
 	case term.K(ui.Up):
 		w.MutateListboxState(func(s *State) {
 			switch {
-			case s.Selected >= s.NItems:
-				s.Selected = s.NItems - 1
+			case s.Selected >= s.Items.Len():
+				s.Selected = s.Items.Len() - 1
 			case s.Selected <= 0:
 				s.Selected = 0
 			default:
@@ -143,8 +124,8 @@ func (w *Widget) Handle(event term.Event) bool {
 	case term.K(ui.Down):
 		w.MutateListboxState(func(s *State) {
 			switch {
-			case s.Selected >= s.NItems-1:
-				s.Selected = s.NItems - 1
+			case s.Selected >= s.Items.Len()-1:
+				s.Selected = s.Items.Len() - 1
 			case s.Selected < 0:
 				s.Selected = 0
 			default:

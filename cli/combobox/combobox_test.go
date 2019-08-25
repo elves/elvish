@@ -19,7 +19,7 @@ var renderTests = []clitypes.RenderTest{
 				CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6},
 			}},
 			ListBox: listbox.Widget{State: listbox.State{
-				Itemer: listbox.TestItemer{}, NItems: 2,
+				Items: listbox.TestItems{NItems: 2},
 			}},
 		},
 		Width: 10, Height: 24,
@@ -46,7 +46,7 @@ var renderTests = []clitypes.RenderTest{
 func installOnFilter(w *Widget) *Widget {
 	w.OnFilter = func(string) {
 		w.ListBox.MutateListboxState(func(s *listbox.State) {
-			*s = listbox.State{Itemer: listbox.TestItemer{}, NItems: 2}
+			*s = listbox.State{Items: listbox.TestItems{NItems: 2}}
 		})
 	}
 	return w
@@ -61,7 +61,7 @@ func TestHandle(t *testing.T) {
 	var lastFilter string
 	w := &Widget{
 		ListBox: listbox.Widget{State: listbox.State{
-			Itemer: listbox.TestItemer{}, NItems: 2,
+			Items: listbox.TestItems{NItems: 2},
 		}},
 		OnFilter: func(filter string) {
 			onFilterCalled = true

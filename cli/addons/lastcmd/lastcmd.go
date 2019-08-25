@@ -47,13 +47,12 @@ func Start(app *clicore.App, cfg Config) {
 	w.ListBox.OverlayHandler = cfg.Binding
 	w.OnFilter = func(p string) {
 		w.ListBox.MutateListboxState(func(s *listbox.State) {
-			itemer, n := filter(entries, p)
-			*s = listbox.MakeState(itemer, n, false)
+			*s = listbox.MakeState(filter(entries, p), false)
 		})
 	}
 	w.ListBox.OnAccept = func(i int) {
-		itemer := w.ListBox.CopyListboxState().Itemer.(itemer)
-		text := itemer.entries[i].content
+		items := w.ListBox.CopyListboxState().Items.(items)
+		text := items.entries[i].content
 		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
 			s.CodeBuffer.InsertAtDot(text)
 		})
@@ -61,7 +60,7 @@ func Start(app *clicore.App, cfg Config) {
 	app.MutateAppState(func(s *clicore.State) { s.Listing = &w })
 }
 
-type itemer struct {
+type items struct {
 	negFilter bool
 	entries   []entry
 }
@@ -72,7 +71,7 @@ type entry struct {
 	content  string
 }
 
-func filter(allEntries []entry, p string) (itemer, int) {
+func filter(allEntries []entry, p string) items {
 	var entries []entry
 	negFilter := strings.HasPrefix(p, "-")
 	for _, entry := range allEntries {
@@ -81,10 +80,10 @@ func filter(allEntries []entry, p string) (itemer, int) {
 			entries = append(entries, entry)
 		}
 	}
-	return itemer{negFilter, entries}, len(entries)
+	return items{negFilter, entries}
 }
 
-func (it itemer) Item(i int) styled.Text {
+func (it items) Show(i int) styled.Text {
 	index := ""
 	entry := it.entries[i]
 	if it.negFilter {
@@ -97,3 +96,5 @@ func (it itemer) Item(i int) styled.Text {
 	// 100 words (when filter is negative).
 	return styled.Plain(fmt.Sprintf("%3s %s", index, entry.content))
 }
+
+func (it items) Len() int { return len(it.entries) }

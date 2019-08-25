@@ -40,13 +40,12 @@ func Start(app *clicore.App, cfg Config) {
 	w.ListBox.OverlayHandler = cfg.Binding
 	w.OnFilter = func(p string) {
 		w.ListBox.MutateListboxState(func(s *listbox.State) {
-			itemer, n := filter(dirs, p)
-			*s = listbox.MakeState(itemer, n, false)
+			*s = listbox.MakeState(filter(dirs, p), false)
 		})
 	}
 	w.ListBox.OnAccept = func(i int) {
-		itemer := w.ListBox.CopyListboxState().Itemer.(itemer)
-		err := cfg.Store.Chdir(itemer[i].Path)
+		items := w.ListBox.CopyListboxState().Items.(items)
+		err := cfg.Store.Chdir(items[i].Path)
 		if err != nil {
 			app.Notify(err.Error())
 		}
@@ -54,18 +53,20 @@ func Start(app *clicore.App, cfg Config) {
 	app.MutateAppState(func(s *clicore.State) { s.Listing = &w })
 }
 
-func filter(dirs []storedefs.Dir, p string) (itemer, int) {
+func filter(dirs []storedefs.Dir, p string) items {
 	var entries []storedefs.Dir
 	for _, dir := range dirs {
 		if strings.Contains(dir.Path, p) {
 			entries = append(entries, dir)
 		}
 	}
-	return itemer(entries), len(entries)
+	return items(entries)
 }
 
-type itemer []storedefs.Dir
+type items []storedefs.Dir
 
-func (it itemer) Item(i int) styled.Text {
+func (it items) Show(i int) styled.Text {
 	return styled.Plain(fmt.Sprintf("%3.0f %s", it[i].Score, it[i].Path))
 }
+
+func (it items) Len() int { return len(it) }
