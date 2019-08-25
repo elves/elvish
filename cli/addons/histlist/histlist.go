@@ -30,7 +30,7 @@ func Start(app *clicore.App, cfg Config) {
 	}
 
 	w := combobox.Widget{}
-	w.CodeArea.State.Prompt = layout.ModePrompt("HISTLIST", true)
+	w.CodeArea.Prompt = layout.ModePrompt("HISTLIST", true)
 	w.ListBox.OverlayHandler = cfg.Binding
 	w.OnFilter = func(p string) {
 		w.ListBox.MutateListboxState(func(s *listbox.State) {

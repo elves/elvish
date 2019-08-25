@@ -16,15 +16,15 @@ var bb = ui.NewBufferBuilder
 var renderTests = []clitypes.RenderTest{
 	{
 		Name: "prompt only",
-		Given: &Widget{State: State{
-			Prompt: styled.MakeText("~>", "bold")}},
+		Given: &Widget{
+			Prompt: ConstPrompt(styled.MakeText("~>", "bold"))},
 		Width: 10, Height: 24,
 		Want: bb(10).WriteStringSGR("~>", "1").SetDotToCursor(),
 	},
 	{
 		Name: "rprompt only",
-		Given: &Widget{State: State{
-			RPrompt: styled.MakeText("RP", "inverse")}},
+		Given: &Widget{
+			RPrompt: ConstPrompt(styled.MakeText("RP", "inverse"))},
 		Width: 10, Height: 24,
 		Want: bb(10).SetDotToCursor().WriteSpacesSGR(8, "").WriteStringSGR("RP", "7"),
 	},
@@ -51,21 +51,21 @@ var renderTests = []clitypes.RenderTest{
 	},
 	{
 		Name: "prompt, code and rprompt",
-		Given: &Widget{State: State{
-			Prompt:     styled.Plain("~>"),
-			CodeBuffer: CodeBuffer{Content: "code", Dot: 4},
-			RPrompt:    styled.Plain("RP"),
-		}},
+		Given: &Widget{
+			Prompt:  ConstPrompt(styled.Plain("~>")),
+			RPrompt: ConstPrompt(styled.Plain("RP")),
+			State:   State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}},
+		},
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("~>code").SetDotToCursor().WritePlain("  RP"),
 	},
 	{
 		Name: "rprompt too long",
-		Given: &Widget{State: State{
-			Prompt:     styled.Plain("~>"),
-			CodeBuffer: CodeBuffer{Content: "code", Dot: 4},
-			RPrompt:    styled.Plain("1234"),
-		}},
+		Given: &Widget{
+			Prompt:  ConstPrompt(styled.Plain("~>")),
+			RPrompt: ConstPrompt(styled.Plain("1234")),
+			State:   State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}},
+		},
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("~>code").SetDotToCursor(),
 	},
@@ -283,7 +283,7 @@ var handleTests = []struct {
 	},
 	{
 		"overlay handler",
-		(&Widget{}).AddOverlay(func(w *Widget) clitypes.Handler {
+		addOverlay(&Widget{}, func(w *Widget) clitypes.Handler {
 			return clitypes.MapHandler{
 				term.K('a'): func() { w.State.CodeBuffer.InsertAtDot("b") },
 			}
@@ -291,6 +291,13 @@ var handleTests = []struct {
 		[]term.Event{term.K('a')},
 		State{CodeBuffer: CodeBuffer{Content: "b", Dot: 1}},
 	},
+}
+
+// A utility for building a Widget with an OverlayHandler as a single
+// expression.
+func addOverlay(w *Widget, overlay func(*Widget) clitypes.Handler) *Widget {
+	w.OverlayHandler = overlay(w)
+	return w
 }
 
 func TestHandle(t *testing.T) {

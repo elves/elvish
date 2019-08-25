@@ -23,12 +23,17 @@ type Widget struct {
 	// Public state. Access that may be concurrent to either of Widget's method
 	// must be synchronized using the StateMutex.
 	State State
+
 	// A Handler that takes precedence over the default handling of events.
 	OverlayHandler clitypes.Handler
 	// A function that highlights the given code and returns any errors it has
 	// found when highlighting. If this function is not given, the Widget does
 	// not highlight the code nor show any errors.
 	Highlighter func(code string) (styled.Text, []error)
+	// Prompt callback.
+	Prompt func() styled.Text
+	// Right-prompt callback.
+	RPrompt func() styled.Text
 	// A function that calls the callback with string pairs for abbreviations
 	// and their expansions. If this function is not given, the Widget does not
 	// expand any abbreviations.
@@ -53,17 +58,17 @@ type Widget struct {
 
 var _ = clitypes.Widget(&Widget{})
 
-// AddOverlay sets the OverlayHandler of w using the return value of the
-// function. It returns w itself and is mainly useful for building a Widget
-// instance in a single expression.
-func (w *Widget) AddOverlay(overlay func(*Widget) clitypes.Handler) *Widget {
-	w.OverlayHandler = overlay(w)
-	return w
+// ConstPrompt returns a prompt callback that always writes the same styled
+// text.
+func ConstPrompt(content styled.Text) func() styled.Text {
+	return func() styled.Text { return content }
 }
 
 func dummyHighlighter(code string) (styled.Text, []error) {
 	return styled.Plain(code), nil
 }
+
+func dummyPrompt() styled.Text { return nil }
 
 func dummyAbbreviations(func(a, f string)) {}
 
@@ -79,6 +84,12 @@ func (w *Widget) init() {
 	}
 	if w.Highlighter == nil {
 		w.Highlighter = dummyHighlighter
+	}
+	if w.Prompt == nil {
+		w.Prompt = dummyPrompt
+	}
+	if w.RPrompt == nil {
+		w.RPrompt = dummyPrompt
 	}
 	if w.Abbreviations == nil {
 		w.Abbreviations = dummyAbbreviations
@@ -103,9 +114,7 @@ func (w *Widget) Submit() {
 // code, the cursor, and compilation errors in the code content.
 func (w *Widget) Render(width, height int) *ui.Buffer {
 	w.init()
-	w.StateMutex.RLock()
-	view := getView(&w.State, w.Highlighter)
-	w.StateMutex.RUnlock()
+	view := getView(w)
 	bb := ui.NewBufferBuilder(width)
 	renderView(view, bb)
 	b := bb.Buffer()

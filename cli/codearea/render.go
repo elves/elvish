@@ -17,9 +17,10 @@ type view struct {
 
 const pendingStyle = "underlined"
 
-func getView(s *State, hl func(string) (styled.Text, []error)) *view {
+func getView(w *Widget) *view {
+	s := w.CopyState()
 	code, pFrom, pTo := patchPendingCode(s.CodeBuffer, s.PendingCode)
-	styledCode, errors := hl(code.Content)
+	styledCode, errors := w.Highlighter(code.Content)
 	if pFrom < pTo {
 		// Apply pendingStyle to [pFrom, pTo)
 		parts := styledCode.Partition(pFrom, pTo)
@@ -27,7 +28,7 @@ func getView(s *State, hl func(string) (styled.Text, []error)) *view {
 		styledCode = parts[0].ConcatText(pending).ConcatText(parts[2])
 	}
 
-	return &view{s.Prompt, s.RPrompt, styledCode, code.Dot, errors}
+	return &view{w.Prompt(), w.RPrompt(), styledCode, code.Dot, errors}
 }
 
 func patchPendingCode(c CodeBuffer, p PendingCode) (CodeBuffer, int, int) {

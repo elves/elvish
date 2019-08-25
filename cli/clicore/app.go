@@ -147,14 +147,6 @@ func (app *App) triggerPrompts(force bool) {
 var transformerForPending = "underline"
 
 func (app *App) redraw(flag redrawFlag) {
-	app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
-		if prompt := app.Config.Prompt; prompt != nil {
-			s.Prompt = prompt.Get()
-		}
-		if rprompt := app.Config.RPrompt; rprompt != nil {
-			s.RPrompt = rprompt.Get()
-		}
-	})
 	// Get the dimensions available.
 	height, width := app.tty.Size()
 	if maxHeight := app.Config.maxHeight(); maxHeight > 0 && maxHeight < height {
@@ -239,9 +231,11 @@ func (app *App) ReadCode() (string, error) {
 		}()
 	}
 	if prompt := app.Config.Prompt; prompt != nil {
+		app.CodeArea.Prompt = prompt.Get
 		relayLateUpdates(prompt.LateUpdates())
 	}
 	if rprompt := app.Config.RPrompt; rprompt != nil {
+		app.CodeArea.RPrompt = rprompt.Get
 		relayLateUpdates(rprompt.LateUpdates())
 	}
 	if highlighter := app.Config.Highlighter; highlighter != nil {

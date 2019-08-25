@@ -1,16 +1,10 @@
 package codearea
 
-import (
-	"github.com/elves/elvish/styled"
-)
-
 // State keeps the state of the widget. Its access must be synchronized through
 // the mutex.
 type State struct {
 	CodeBuffer  CodeBuffer
 	PendingCode PendingCode
-	Prompt      styled.Text
-	RPrompt     styled.Text
 }
 
 // CodeBuffer represents the state of the buffer.
