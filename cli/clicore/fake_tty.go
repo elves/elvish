@@ -19,29 +19,6 @@ const (
 	maxSignals = 1024
 )
 
-// TTYCtrl is an interface for controlling the fake terminal.
-type TTYCtrl interface {
-	// SetSetup changes the return values of the setup function.
-	SetSetup(restore func(), err error)
-	// SetSize sets the size of the fake terminal.
-	SetSize(h, w int)
-	// Inject injects an event to the fake terminal.
-	Inject(e term.Event)
-	// VerifyBuffer verifies that a buffer will appear within the timeout of 1
-	// second.
-	VerifyBuffer(b *ui.Buffer) bool
-	// VerifyNotesBuffer verifies the a notes buffer will appear within the
-	// timeout of 1 second.
-	VerifyNotesBuffer(b *ui.Buffer) bool
-	// BufferHistory returns a slice of all buffers that have appeared.
-	BufferHistory() []*ui.Buffer
-	// NotesBufferHistory returns a slice of all notes buffers that have
-	// appeared.
-	NotesBufferHistory() []*ui.Buffer
-	// InjectSignal injects a signal.
-	InjectSignal(sig os.Signal)
-}
-
 // An implementation of the TTY interface that is useful in tests.
 type fakeTTY struct {
 	setup func() (func(), error)
@@ -68,11 +45,11 @@ func NewFakeTTY() (TTY, TTYCtrl) {
 		notesBufCh: make(chan *ui.Buffer, maxBufferUpdates),
 		height:     24, width: 80,
 	}
-	return tty, ttyCtrl{tty}
+	return tty, TTYCtrl{tty}
 }
 
 // Delegates to the setup function specified using the SetSetup method of
-// ttyCtrl, or return a nop function and a nil error.
+// TTYCtrl, or return a nop function and a nil error.
 func (t *fakeTTY) Setup() (func(), error) {
 	if t.setup == nil {
 		return func() {}, nil
@@ -80,7 +57,7 @@ func (t *fakeTTY) Setup() (func(), error) {
 	return t.setup()
 }
 
-// Returns the size specified by using the SetSize method of ttyCtrl.
+// Returns the size specified by using the SetSize method of TTYCtrl.
 func (t *fakeTTY) Size() (h, w int) {
 	t.sizeMutex.RLock()
 	defer t.sizeMutex.RUnlock()
@@ -88,7 +65,7 @@ func (t *fakeTTY) Size() (h, w int) {
 }
 
 // Returns t.eventCh. Events may be injected onto the channel by using the
-// ttyCtrl.
+// TTYCtrl.
 func (t *fakeTTY) StartInput() <-chan term.Event {
 	return t.eventCh
 }
@@ -130,36 +107,46 @@ func (t *fakeTTY) recordNotesBuf(buf *ui.Buffer) {
 	t.notesBufCh <- buf
 }
 
-// Implements the TTYCtrl interface for fakeTTY.
-type ttyCtrl struct{ *fakeTTY }
+// TTYCtrl is an interface for controlling a fake terminal.
+type TTYCtrl struct{ *fakeTTY }
 
-func (t ttyCtrl) SetSetup(restore func(), err error) {
+// SetSetup changes the return values of the Setup method of the fake terminal.
+func (t TTYCtrl) SetSetup(restore func(), err error) {
 	t.setup = func() (func(), error) {
 		return restore, err
 	}
 }
 
-func (t ttyCtrl) SetSize(h, w int) {
+// SetSize sets the size of the fake terminal.
+func (t TTYCtrl) SetSize(h, w int) {
 	t.sizeMutex.Lock()
 	defer t.sizeMutex.Unlock()
 	t.height, t.width = h, w
 }
 
-func (t ttyCtrl) Inject(e term.Event) { t.eventCh <- e }
+// Inject injects an event to the fake terminal.
+func (t TTYCtrl) Inject(e term.Event) { t.eventCh <- e }
 
-func (t ttyCtrl) VerifyBuffer(b *ui.Buffer) bool {
+// VerifyBuffer verifies that a buffer will appear within the timeout of 1
+// second.
+func (t TTYCtrl) VerifyBuffer(b *ui.Buffer) bool {
 	return verifyBuffer(b, t.bufCh)
 }
 
-func (t ttyCtrl) VerifyNotesBuffer(b *ui.Buffer) bool {
+// VerifyNotesBuffer verifies the a notes buffer will appear within the timeout
+// of 1 second.
+func (t TTYCtrl) VerifyNotesBuffer(b *ui.Buffer) bool {
 	return verifyBuffer(b, t.notesBufCh)
 }
 
-func (t ttyCtrl) BufferHistory() []*ui.Buffer { return t.bufs }
+// BufferHistory returns a slice of all buffers that have appeared.
+func (t TTYCtrl) BufferHistory() []*ui.Buffer { return t.bufs }
 
-func (t ttyCtrl) NotesBufferHistory() []*ui.Buffer { return t.notesBufs }
+// NotesBufferHistory returns a slice of all notes buffers that have appeared.
+func (t TTYCtrl) NotesBufferHistory() []*ui.Buffer { return t.notesBufs }
 
-func (t ttyCtrl) InjectSignal(sig os.Signal) { t.sigCh <- sig }
+// InjectSignal injects a signal.
+func (t TTYCtrl) InjectSignal(sig os.Signal) { t.sigCh <- sig }
 
 var verifyBufferTimeout = time.Second
 
