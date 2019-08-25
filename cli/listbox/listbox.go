@@ -31,14 +31,6 @@ type Widget struct {
 
 var _ = clitypes.Widget(&Widget{})
 
-// AddOverlay sets the OverlayHandler of w using the return value of the
-// function. It returns w itself and is mainly useful for building a Widget
-// instance in a single expression.
-func (w *Widget) AddOverlay(overlay func(*Widget) clitypes.Handler) *Widget {
-	w.OverlayHandler = overlay(w)
-	return w
-}
-
 func (w *Widget) init() {
 	if w.OverlayHandler == nil {
 		w.OverlayHandler = clitypes.DummyHandler{}

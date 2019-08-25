@@ -145,8 +145,9 @@ var handleTests = []struct {
 	},
 	{
 		"overlay handler",
-		(&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 5}}).
-			AddOverlay(func(w *Widget) clitypes.Handler {
+		addOverlay(
+			&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 5}},
+			func(w *Widget) clitypes.Handler {
 				return clitypes.MapHandler{
 					term.K('a'): func() { w.State.Selected = 0 },
 				}
@@ -155,6 +156,11 @@ var handleTests = []struct {
 		true,
 		State{Items: TestItems{NItems: 10}, Selected: 0},
 	},
+}
+
+func addOverlay(w *Widget, overlay func(*Widget) clitypes.Handler) *Widget {
+	w.OverlayHandler = overlay(w)
+	return w
 }
 
 func TestHandle(t *testing.T) {
