@@ -6,66 +6,160 @@ import (
 	"testing"
 )
 
-func TestNewFuser(t *testing.T) {
-	mockError := errors.New("mock error")
+var mockError = errors.New("mock error")
+
+func TestNewFuser_Error(t *testing.T) {
 	_, err := NewFuser(&testDB{oneOffError: mockError})
 	if err != mockError {
 		t.Errorf("NewFuser -> error %v, want %v", err, mockError)
 	}
 }
 
-var fuserStore = &testDB{cmds: []string{"store 1"}}
+func TestFusuer_AddCmd(t *testing.T) {
+	db := &testDB{cmds: []string{"store 1"}}
+	f := mustNewFuser(db)
+	f.AddCmd("session 1")
 
-func TestFuser(t *testing.T) {
-	f, err := NewFuser(fuserStore)
-	if err != nil {
-		t.Errorf("NewFuser -> error %v, want nil", err)
+	wantDBCmds := []string{"store 1", "session 1"}
+	wantSessionCmds := []Entry{{"session 1", 1}}
+	if !reflect.DeepEqual(db.cmds, wantDBCmds) {
+		t.Errorf("DB commands = %v, want %v", db.cmds, wantDBCmds)
 	}
+	sessionCmds := f.SessionCmds()
+	if !reflect.DeepEqual(sessionCmds, wantSessionCmds) {
+		t.Errorf("Session commands = %v, want %v", sessionCmds, wantSessionCmds)
+	}
+}
 
-	// AddCmd should not add command to session history if backend has an error
-	// adding the command.
-	mockError := errors.New("mock error")
-	fuserStore.oneOffError = mockError
-	_, err = f.AddCmd("haha")
+func TestFuser_AddCmd_Error(t *testing.T) {
+	db := &testDB{}
+	f := mustNewFuser(db)
+	db.oneOffError = mockError
+
+	_, err := f.AddCmd("haha")
+
 	if err != mockError {
-		t.Errorf("AddCmd doesn't forward backend error")
+		t.Errorf("AddCmd -> error %v, want %v", err, mockError)
 	}
 	if len(f.SessionCmds()) != 0 {
-		t.Errorf("AddCmd adds command to session history when backend errors")
+		t.Errorf("AddCmd adds to session commands when erroring")
 	}
+	if len(f.SessionCmds()) != 0 {
+		t.Errorf("AddCmd adds to all commands when erroring")
+	}
+}
 
-	// AddCmd should add command to both storage and session
+func TestFuser_AllCmds(t *testing.T) {
+	db := &testDB{cmds: []string{"store 1"}}
+	f := mustNewFuser(db)
+
+	// Simulate adding commands from both the current session and other sessions.
 	f.AddCmd("session 1")
-	if !reflect.DeepEqual(fuserStore.cmds, []string{"store 1", "session 1"}) {
-		t.Errorf("AddCmd doesn't add command to backend storage")
-	}
-	if !reflect.DeepEqual(f.SessionCmds(), []Entry{{"session 1", 1}}) {
-		t.Errorf("AddCmd doesn't add command to session history")
-	}
+	db.AddCmd("other session 1")
+	db.AddCmd("other session 2")
+	f.AddCmd("session 2")
+	db.AddCmd("other session 3")
 
 	// AllCmds should return all commands from the storage when the Fuser was
-	// created followed by session commands
-	fuserStore.AddCmd("other session 1")
-	fuserStore.AddCmd("other session 2")
-	f.AddCmd("session 2")
+	// created, plus session commands. The session commands should have sequence
+	// numbers consistent with the DB.
 	cmds, err := f.AllCmds()
 	if err != nil {
-		t.Errorf("AllCmds returns error")
+		t.Errorf("AllCmds -> error %v, want nil", err)
 	}
-	if !reflect.DeepEqual(cmds, []Entry{
-		{"store 1", 0}, {"session 1", 1}, {"session 2", 4}}) {
-		t.Errorf("AllCmds doesn't return all commands")
+	wantCmds := []Entry{
+		{"store 1", 0}, {"session 1", 1}, {"session 2", 4}}
+	if !reflect.DeepEqual(cmds, wantCmds) {
+		t.Errorf("AllCmds -> %v, want %v", cmds, wantCmds)
 	}
+}
 
-	// AllCmds should forward backend storage error
-	mockError = errors.New("another mock error")
-	fuserStore.oneOffError = mockError
-	_, err = f.AllCmds()
+func TestFuser_AllCmds_Error(t *testing.T) {
+	db := &testDB{}
+	f := mustNewFuser(db)
+	db.oneOffError = mockError
+
+	_, err := f.AllCmds()
+
 	if err != mockError {
-		t.Errorf("AllCmds doesn't forward backend error")
+		t.Errorf("AllCmds -> error %v, want %v", err, mockError)
 	}
+}
 
-	// Walker should return a walker that walks through all commands
+func TestFuser_LastCmd_FromDB(t *testing.T) {
+	f := mustNewFuser(&testDB{cmds: []string{"store 1"}})
+
+	cmd, _ := f.LastCmd()
+
+	wantCmd := Entry{"store 1", 0}
+	if cmd != wantCmd {
+		t.Errorf("LastCmd -> %v, want %v", cmd, wantCmd)
+	}
+}
+
+func TestFuser_LastCmd_FromDB_Error(t *testing.T) {
+	db := &testDB{cmds: []string{"store 1"}}
+	f := mustNewFuser(db)
+
+	db.oneOffError = mockError
+	_, err := f.LastCmd()
+
+	if err != mockError {
+		t.Errorf("LastCmd -> error %v, want %v", err, mockError)
+	}
+}
+
+func TestFuser_LastCmd_FromSession(t *testing.T) {
+	db := &testDB{cmds: []string{"store 1"}}
+	f := mustNewFuser(db)
+	f.AddCmd("session 1")
+
+	// LastCmd does not use DB when there are any session commands.
+	db.oneOffError = mockError
+	cmd, _ := f.LastCmd()
+
+	wantCmd := Entry{"session 1", 1}
+	if cmd != wantCmd {
+		t.Errorf("LastCmd -> %v, want %v", cmd, wantCmd)
+	}
+}
+
+func TestFuser_FastForward(t *testing.T) {
+	db := &testDB{cmds: []string{"store 1"}}
+	f := mustNewFuser(db)
+
+	// Simulate adding commands from both the current session and other sessions.
+	f.AddCmd("session 1")
+	db.AddCmd("other session 1")
+	db.AddCmd("other session 2")
+	f.AddCmd("session 2")
+	db.AddCmd("other session 3")
+
+	f.FastForward()
+	db.AddCmd("other session 4")
+
+	wantCmds := []Entry{
+		{"store 1", 0}, {"session 1", 1}, {"other session 1", 2},
+		{"other session 2", 3}, {"session 2", 4}, {"other session 3", 5}}
+	cmds, _ := f.AllCmds()
+	if !reflect.DeepEqual(cmds, wantCmds) {
+		t.Errorf("AllCmds -> %v, want %v", cmds, wantCmds)
+	}
+}
+
+func TestFuser_Walker(t *testing.T) {
+	db := &testDB{cmds: []string{"store 1"}}
+	f := mustNewFuser(db)
+
+	// Simulate adding commands from both the current session and other sessions.
+	f.AddCmd("session 1")
+	db.AddCmd("other session 1")
+	db.AddCmd("other session 2")
+	f.AddCmd("session 2")
+	db.AddCmd("other session 3")
+
+	// Walker should return a walker that walks through shared and session
+	// commands.
 	w := f.Walker("")
 	w.Prev()
 	checkWalkerCurrent(t, w, 4, "session 2")
@@ -74,4 +168,12 @@ func TestFuser(t *testing.T) {
 	w.Prev()
 	checkWalkerCurrent(t, w, 0, "store 1")
 	checkError(t, w.Prev(), ErrEndOfHistory)
+}
+
+func mustNewFuser(db DB) *Fuser {
+	f, err := NewFuser(db)
+	if err != nil {
+		panic(err)
+	}
+	return f
 }
