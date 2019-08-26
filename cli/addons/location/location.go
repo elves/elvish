@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/combobox"
 	"github.com/elves/elvish/cli/layout"
@@ -24,7 +24,7 @@ type Store interface {
 	Chdir(dir string) error
 }
 
-func Start(app *clicore.App, cfg Config) {
+func Start(app *cli.App, cfg Config) {
 	if cfg.Store == nil {
 		app.Notify("no dir history store")
 		return
@@ -49,7 +49,7 @@ func Start(app *clicore.App, cfg Config) {
 			app.Notify(err.Error())
 		}
 	}
-	app.MutateAppState(func(s *clicore.State) { s.Listing = &w })
+	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
 }
 
 func filter(dirs []storedefs.Dir, p string) items {

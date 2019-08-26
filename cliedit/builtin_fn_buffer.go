@@ -5,12 +5,12 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/codearea"
 	"github.com/elves/elvish/util"
 )
 
-var bufferBuiltinsData = map[string]func(*clicore.App){
+var bufferBuiltinsData = map[string]func(*cli.App){
 	"move-left":             makeMove(moveDotLeft),
 	"move-right":            makeMove(moveDotRight),
 	"move-left-word":        makeMove(moveDotLeftWord),
@@ -37,7 +37,7 @@ var bufferBuiltinsData = map[string]func(*clicore.App){
 	"kill-eol":              makeKill(moveDotEOL),
 }
 
-func bufferBuiltins(app *clicore.App) map[string]interface{} {
+func bufferBuiltins(app *cli.App) map[string]interface{} {
 	m := make(map[string]interface{})
 	for name, fn := range bufferBuiltinsData {
 		m[name] = func() { fn(app) }
@@ -50,8 +50,8 @@ func bufferBuiltins(app *clicore.App) map[string]interface{} {
 // the editor state.
 type pureMover func(buffer string, dot int) int
 
-func makeMove(m pureMover) func(*clicore.App) {
-	return func(app *clicore.App) {
+func makeMove(m pureMover) func(*cli.App) {
+	return func(app *cli.App) {
 		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
 			buf := &s.CodeBuffer
 			buf.Dot = m(buf.Content, buf.Dot)
@@ -59,8 +59,8 @@ func makeMove(m pureMover) func(*clicore.App) {
 	}
 }
 
-func makeKill(m pureMover) func(*clicore.App) {
-	return func(app *clicore.App) {
+func makeKill(m pureMover) func(*cli.App) {
+	return func(app *cli.App) {
 		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
 			buf := &s.CodeBuffer
 			newDot := m(buf.Content, buf.Dot)

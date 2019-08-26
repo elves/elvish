@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
@@ -19,7 +19,7 @@ import (
 //
 // TODO: Rename ReadLine to ReadCode and remove Close.
 type Editor struct {
-	app *clicore.App
+	app *cli.App
 	ns  eval.Ns
 }
 
@@ -50,7 +50,7 @@ func (d dirStore) Dirs() ([]storedefs.Dir, error) {
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
-	app := clicore.NewApp(clicore.NewTTY(in, out))
+	app := cli.NewApp(cli.NewTTY(in, out))
 
 	app.Config.Highlighter = makeHighlighter(ev)
 

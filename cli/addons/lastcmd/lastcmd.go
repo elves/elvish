@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/codearea"
 	"github.com/elves/elvish/cli/combobox"
@@ -21,7 +21,7 @@ type Config struct {
 	Wordifier func(string) []string
 }
 
-func Start(app *clicore.App, cfg Config) {
+func Start(app *cli.App, cfg Config) {
 	if cfg.Store == nil {
 		app.Notify("no history store")
 		return
@@ -56,7 +56,7 @@ func Start(app *clicore.App, cfg Config) {
 			s.CodeBuffer.InsertAtDot(text)
 		})
 	}
-	app.MutateAppState(func(s *clicore.State) { s.Listing = &w })
+	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
 }
 
 type items struct {

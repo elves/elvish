@@ -1,14 +1,14 @@
 package cliedit
 
 import (
-	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func initInsert(ev *eval.Evaler, app *clicore.App) eval.Ns {
+func initInsert(ev *eval.Evaler, app *cli.App) eval.Ns {
 	abbr := vals.EmptyMap
 	app.CodeArea.Abbreviations = makeMapIterator(&abbr)
 

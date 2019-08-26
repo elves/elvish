@@ -7,7 +7,7 @@ import (
 	"os/user"
 	"sync"
 
-	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/prompt"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
@@ -16,7 +16,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func makePrompt(nt notifier, ev *eval.Evaler, ns eval.Ns, computeInit eval.Callable, name string) clicore.Prompt {
+func makePrompt(nt notifier, ev *eval.Evaler, ns eval.Ns, computeInit eval.Callable, name string) cli.Prompt {
 	compute := computeInit
 	ns[name] = vars.FromPtr(&compute)
 	return prompt.New(func() styled.Text {

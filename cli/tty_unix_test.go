@@ -1,6 +1,6 @@
 // +build !windows,!plan9
 
-package clicore
+package cli
 
 import (
 	"testing"

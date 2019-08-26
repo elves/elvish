@@ -1,4 +1,4 @@
-// Package prompt provides an implementation of the clicore.Prompt interface.
+// Package prompt provides an implementation of the cli.Prompt interface.
 package prompt
 
 import (

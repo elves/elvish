@@ -1,4 +1,4 @@
-package clicore
+package cli
 
 import "github.com/elves/elvish/styled"
 

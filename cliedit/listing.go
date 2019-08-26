@@ -4,7 +4,7 @@ import (
 	"github.com/elves/elvish/cli/addons/histlist"
 	"github.com/elves/elvish/cli/addons/lastcmd"
 	"github.com/elves/elvish/cli/addons/location"
-	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
@@ -30,7 +30,7 @@ func initListing() (*bindingMap, eval.Ns) {
 }
 
 // Initializes states for the histlist mode and its API.
-func initHistlist(app *clicore.App, ev *eval.Evaler, lsBinding *bindingMap, store histutil.Store) eval.Ns {
+func initHistlist(app *cli.App, ev *eval.Evaler, lsBinding *bindingMap, store histutil.Store) eval.Ns {
 	m := emptyBindingMap
 	binding := newMapBinding(app, ev, &m, lsBinding)
 	return eval.Ns{
@@ -41,7 +41,7 @@ func initHistlist(app *clicore.App, ev *eval.Evaler, lsBinding *bindingMap, stor
 }
 
 // Initializes states for the lastcmd mode and its API.
-func initLastcmd(app *clicore.App, ev *eval.Evaler, lsBinding *bindingMap, store histutil.Store) eval.Ns {
+func initLastcmd(app *cli.App, ev *eval.Evaler, lsBinding *bindingMap, store histutil.Store) eval.Ns {
 	m := emptyBindingMap
 	binding := newMapBinding(app, ev, &m, lsBinding)
 	return eval.Ns{
@@ -52,7 +52,7 @@ func initLastcmd(app *clicore.App, ev *eval.Evaler, lsBinding *bindingMap, store
 	})
 }
 
-func initLocation(app *clicore.App, ev *eval.Evaler, lsBinding *bindingMap, store location.Store) eval.Ns {
+func initLocation(app *cli.App, ev *eval.Evaler, lsBinding *bindingMap, store location.Store) eval.Ns {
 	m := emptyBindingMap
 	binding := newMapBinding(app, ev, &m, lsBinding)
 	return eval.Ns{
