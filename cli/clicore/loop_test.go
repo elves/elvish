@@ -2,37 +2,39 @@ package clicore
 
 import (
 	"fmt"
+	"io"
 	"reflect"
 	"testing"
 )
 
-func TestRead_ReturnsReturnValueOfHandleCb(t *testing.T) {
-	handleCbRet := "lorem ipsum"
-	ed := newLoop()
-	ed.HandleCb(quitOn("^D", handleCbRet))
-	go supplyInputs(ed, "^D")
-	buf, _ := ed.Run()
-	if buf != handleCbRet {
-		t.Errorf("Read returns %v, want %v", buf, handleCbRet)
-	}
-}
-
 func TestRead_PassesInputEventsToHandler(t *testing.T) {
-	inputPassedEvents := []event{"foo", "bar", "lorem", "ipsum", "^D"}
 	var handlerGotEvents []event
-	handler := func(e event) handleResult {
-		handlerGotEvents = append(handlerGotEvents, e)
-		return handleResult{quit: e == "^D"}
-	}
 
 	ed := newLoop()
-	ed.HandleCb(handler)
-	go supplyInputs(ed, inputPassedEvents...)
+	ed.HandleCb(func(e event) {
+		handlerGotEvents = append(handlerGotEvents, e)
+		if e == "^D" {
+			ed.Return("", nil)
+		}
+	})
+
+	inputPassedEvents := []event{"foo", "bar", "lorem", "ipsum", "^D"}
+	supplyInputs(ed, inputPassedEvents...)
 
 	_, _ = ed.Run()
 	if !reflect.DeepEqual(handlerGotEvents, inputPassedEvents) {
 		t.Errorf("Handler got events %v, expect same as events passed to input (%v)",
 			handlerGotEvents, inputPassedEvents)
+	}
+}
+
+func TestLoop_RunReturnsAfterReturnCalled(t *testing.T) {
+	lp := newLoop()
+	lp.HandleCb(func(event) { lp.Return("buffer", io.EOF) })
+	supplyInputs(lp, "x")
+	buf, err := lp.Run()
+	if buf != "buffer" || err != io.EOF {
+		fmt.Printf("Run -> (%v, %v), want (%v, %v)", buf, err, "buffer", io.EOF)
 	}
 }
 
@@ -56,7 +58,7 @@ func testReadCallsDrawWhenRedrawRequestedBeforeRead(t *testing.T, full bool, wan
 	}
 
 	ed := newLoop()
-	ed.HandleCb(quitOn("^D", ""))
+	ed.HandleCb(quitOn(ed, "^D", "", nil))
 	go func() {
 		<-doneCh
 		ed.Input("^D")
@@ -91,18 +93,18 @@ func testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool,
 		drawSeq++
 	}
 
-	ed := newLoop()
-	ed.HandleCb(quitOn("^D", ""))
+	lp := newLoop()
+	lp.HandleCb(quitOn(lp, "^D", "", nil))
 	go func() {
 		<-doneCh
-		ed.Input("^D")
+		lp.Input("^D")
 	}()
-	ed.RedrawCb(drawer)
+	lp.RedrawCb(drawer)
 	go func() {
 		<-firstDrawCalledCh
-		ed.Redraw(full)
+		lp.Redraw(full)
 	}()
-	_, _ = ed.Run()
+	_, _ = lp.Run()
 	if gotRedrawFlag != wantRedrawFlag {
 		t.Errorf("Drawer got flag %v, want %v", gotRedrawFlag, wantRedrawFlag)
 	}
@@ -110,16 +112,18 @@ func testReadCallsDrawWhenRedrawRequestedAfterFirstDraw(t *testing.T, full bool,
 
 // Helpers.
 
-func supplyInputs(ed *loop, events ...event) {
+func supplyInputs(lp *loop, events ...event) {
 	for _, event := range events {
-		ed.Input(event)
+		lp.Input(event)
 	}
 }
 
 // Returns a HandleCb that quits on a trigger event.
-func quitOn(retTrigger event, ret string) handleCb {
-	return func(e event) handleResult {
-		return handleResult{quit: e == retTrigger, buffer: ret}
+func quitOn(lp *loop, retTrigger event, ret string, err error) handleCb {
+	return func(e event) {
+		if e == retTrigger {
+			lp.Return(ret, err)
+		}
 	}
 }
 
@@ -137,23 +141,22 @@ func ExampleLoop() {
 			fmt.Printf("final buffer is %q\n", buffer)
 		}
 	}
-	handler := func(ev event) handleResult {
-		if ev == '\n' {
-			return handleResult{quit: true, buffer: buffer}
-		}
-		buffer += string(ev.(rune))
-		return handleResult{}
-	}
 
-	ed := newLoop()
-	ed.HandleCb(handler)
+	lp := newLoop()
+	lp.HandleCb(func(e event) {
+		if e == '\n' {
+			lp.Return(buffer, nil)
+			return
+		}
+		buffer += string(e.(rune))
+	})
 	go func() {
 		for _, event := range "echo\n" {
-			ed.Input(event)
+			lp.Input(event)
 		}
 	}()
-	ed.RedrawCb(drawer)
-	buf, err := ed.Run()
+	lp.RedrawCb(drawer)
+	buf, err := lp.Run()
 	fmt.Printf("returned buffer is %q\n", buf)
 	fmt.Printf("returned error is %v\n", err)
 	// Output:

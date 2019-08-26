@@ -10,7 +10,6 @@ import (
 	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/codearea"
 	"github.com/elves/elvish/cli/term"
-	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
@@ -86,38 +85,27 @@ func (app *App) resetAllStates() {
 		func(s *codearea.State) { *s = codearea.State{} })
 }
 
-func (app *App) handle(e event) handleResult {
+func (app *App) handle(e event) {
 	switch e := e.(type) {
 	case os.Signal:
 		switch e {
 		case syscall.SIGHUP:
-			return handleResult{quit: true, err: io.EOF}
+			app.loop.Return("", io.EOF)
 		case syscall.SIGINT:
 			app.resetAllStates()
 			app.triggerPrompts(true)
 		case sys.SIGWINCH:
 			app.Redraw(true)
 		}
-		return handleResult{}
 	case term.Event:
 		if listing := app.CopyAppState().Listing; listing != nil {
 			listing.Handle(e)
 		} else {
 			app.CodeArea.Handle(e)
 		}
-
-		// TODO(xiaq): Use some kind of return value from the handler instead of
-		// hardcoding event.
-		switch e {
-		case term.K(ui.Enter): // commit code
-			buffer := app.CodeArea.CopyState().CodeBuffer.Content
-			return handleResult{quit: true, buffer: buffer}
-		case term.K('D', ui.Ctrl):
-			return handleResult{quit: true, err: io.EOF}
+		if !app.loop.HasReturned() {
+			app.triggerPrompts(false)
 		}
-
-		app.triggerPrompts(false)
-		return handleResult{}
 	default:
 		panic("unreachable")
 	}
@@ -230,6 +218,7 @@ func (app *App) ReadCode() (string, error) {
 		app.CodeArea.Highlighter = highlighter.Get
 		relayLateUpdates(highlighter.LateUpdates())
 	}
+	app.CodeArea.OnSubmit = app.CommitCode
 
 	// Trigger an initial prompt update.
 	app.triggerPrompts(true)
@@ -266,14 +255,17 @@ func (app *App) Redraw(full bool) {
 	app.loop.Redraw(full)
 }
 
-// CommitEOF causes the main loop to exit with EOF.
+// CommitEOF causes the main loop to exit with EOF. If this method is called when
+// an event is being handled, the main loop will exit after the handler returns.
 func (app *App) CommitEOF() {
-	// TODO: Implement.
+	app.loop.Return("", io.EOF)
 }
 
-// CommitCode causes the main loop to exit with the current code content.
-func (app *App) CommitCode() {
-	// TODO: Implement.
+// CommitCode causes the main loop to exit with the current code content. If this
+// method is called when an event is being handled, the main loop will exit after
+// the handler returns.
+func (app *App) CommitCode(code string) {
+	app.loop.Return(code, nil)
 }
 
 // Notify adds a note and requests a redraw.

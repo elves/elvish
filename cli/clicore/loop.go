@@ -16,6 +16,13 @@ type loop struct {
 	redrawCh    chan struct{}
 	redrawFull  bool
 	redrawMutex *sync.Mutex
+
+	returnCh chan loopReturn
+}
+
+type loopReturn struct {
+	buffer string
+	err    error
 }
 
 // A placeholder type for events.
@@ -38,17 +45,10 @@ const (
 	finalRedraw
 )
 
-// Callback for handling a terminal event. If quit is true, Read returns with
-// buffer.
-type handleCb func(event) handleResult
+// Callback for handling a terminal event.
+type handleCb func(event)
 
-func dummyHandleCb(event) handleResult { return handleResult{} }
-
-type handleResult struct {
-	quit   bool
-	err    error
-	buffer string
-}
+func dummyHandleCb(event) {}
 
 // newLoop creates a new Loop instance.
 func newLoop() *loop {
@@ -60,6 +60,8 @@ func newLoop() *loop {
 		redrawCh:    make(chan struct{}, 1),
 		redrawFull:  false,
 		redrawMutex: new(sync.Mutex),
+
+		returnCh: make(chan loopReturn, 1),
 	}
 }
 
@@ -93,6 +95,20 @@ func (ed *loop) Input(ev event) {
 	ed.inputCh <- ev
 }
 
+// Return requests the main loop to return. It never blocks. If Return has been
+// called before during this loop before, it has no effect.
+func (ed *loop) Return(buffer string, err error) {
+	select {
+	case ed.returnCh <- loopReturn{buffer, err}:
+	default:
+	}
+}
+
+// HasReturned returns whether Return has been called during this loop.
+func (ed *loop) HasReturned() bool {
+	return len(ed.returnCh) == 1
+}
+
 // Run runs the event loop, until an event causes HandleCb to return quit =
 // true. It is generic and delegates all concrete work to callbacks. It is fully
 // serial: it does not spawn any goroutines and never calls two callbacks in
@@ -110,10 +126,12 @@ func (ed *loop) Run() (buffer string, err error) {
 			// Consume all events in the channel to minimize redraws.
 		consumeAllEvents:
 			for {
-				result := ed.handleCb(event)
-				if result.quit {
+				ed.handleCb(event)
+				select {
+				case ret := <-ed.returnCh:
 					ed.redrawCb(finalRedraw)
-					return result.buffer, result.err
+					return ret.buffer, ret.err
+				default:
 				}
 				select {
 				case event = <-ed.inputCh:
@@ -122,6 +140,9 @@ func (ed *loop) Run() (buffer string, err error) {
 					break consumeAllEvents
 				}
 			}
+		case ret := <-ed.returnCh:
+			ed.redrawCb(finalRedraw)
+			return ret.buffer, ret.err
 		case <-ed.redrawCh:
 		}
 	}
