@@ -43,9 +43,8 @@ func Start(app *clicore.App, cfg Config) {
 			*s = listbox.MakeState(filter(dirs, p), false)
 		})
 	}
-	w.ListBox.OnAccept = func(i int) {
-		items := w.ListBox.CopyListboxState().Items.(items)
-		err := cfg.Store.Chdir(items[i].Path)
+	w.ListBox.OnAccept = func(it listbox.Items, i int) {
+		err := cfg.Store.Chdir(it.(items)[i].Path)
 		if err != nil {
 			app.Notify(err.Error())
 		}

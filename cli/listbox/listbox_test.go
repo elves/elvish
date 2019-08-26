@@ -179,21 +179,21 @@ func TestHandle(t *testing.T) {
 }
 
 func TestHandle_EnterEmitsAccept(t *testing.T) {
-	var accepted int
+	var acceptedItems Items
+	var acceptedIndex int
 	w := &Widget{
-		State:    State{Items: TestItems{NItems: 10}, Selected: 5},
-		OnAccept: func(i int) { accepted = i },
+		State: State{Items: TestItems{NItems: 10}, Selected: 5},
+		OnAccept: func(it Items, i int) {
+			acceptedItems = it
+			acceptedIndex = i
+		},
 	}
 	w.Handle(term.K(ui.Enter))
-	if accepted != 5 {
-		t.Errorf("item 5 not accepted")
-	}
-}
 
-func TestCopyListboxState(t *testing.T) {
-	state := State{Items: TestItems{NItems: 10}, Selected: 5}
-	w := &Widget{State: state}
-	if w.CopyListboxState() != state {
-		t.Errorf("CopyListboxState returns a different state")
+	if acceptedItems != (TestItems{NItems: 10}) {
+		t.Errorf("OnAccept not passed current Items")
+	}
+	if acceptedIndex != 5 {
+		t.Errorf("OnAccept not passed current selected index")
 	}
 }

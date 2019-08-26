@@ -26,7 +26,7 @@ type Widget struct {
 	// A placeholder to show when there are no items.
 	Placeholder styled.Text
 	// A function called on the accept event.
-	OnAccept func(i int)
+	OnAccept func(it Items, i int)
 }
 
 var _ = clitypes.Widget(&Widget{})
@@ -36,7 +36,7 @@ func (w *Widget) init() {
 		w.OverlayHandler = clitypes.DummyHandler{}
 	}
 	if w.OnAccept == nil {
-		w.OnAccept = func(i int) {}
+		w.OnAccept = func(Items, int) {}
 	}
 }
 
@@ -126,10 +126,8 @@ func (w *Widget) Handle(event term.Event) bool {
 		})
 		return true
 	case term.K(ui.Enter):
-		w.StateMutex.RLock()
-		selected := w.State.Selected
-		w.StateMutex.RUnlock()
-		w.OnAccept(selected)
+		state := w.CopyListboxState()
+		w.OnAccept(state.Items, state.Selected)
 		return true
 	}
 	return false

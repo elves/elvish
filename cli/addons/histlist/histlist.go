@@ -37,9 +37,8 @@ func Start(app *clicore.App, cfg Config) {
 			*s = listbox.MakeState(filter(cmds, p), true)
 		})
 	}
-	w.ListBox.OnAccept = func(i int) {
-		items := w.ListBox.CopyListboxState().Items.(items)
-		text := items[i].Text
+	w.ListBox.OnAccept = func(it listbox.Items, i int) {
+		text := it.(items)[i].Text
 		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
 			buf := &s.CodeBuffer
 			if buf.Content == "" {
