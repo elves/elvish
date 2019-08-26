@@ -18,7 +18,7 @@ func setupTest() (r, w *os.File, rd Reader) {
 	return r, w, NewReader(r)
 }
 
-var keyTests = []struct {
+var eventTests = []struct {
 	input string
 	want  Event
 }{
@@ -30,6 +30,11 @@ var keyTests = []struct {
 	// Ctrl key.
 	{"\001", K('A', ui.Ctrl)},
 	{"\033", K('[', ui.Ctrl)},
+
+	// Special Ctrl keys that do not obey the usual 0x40 rule.
+	{"\000", K('`', ui.Ctrl)},
+	{"\x1e", K('6', ui.Ctrl)},
+	{"\x1f", K('/', ui.Ctrl)},
 
 	// Ambiguous Ctrl keys; the reader uses the non-Ctrl form as canonical.
 	{"\n", K('\n')},
@@ -45,6 +50,12 @@ var keyTests = []struct {
 	{"\033OH", K(ui.Home)},
 
 	// G3-style key with leading Escape.
+	{"\033\033OA", K(ui.Up, ui.Alt)},
+	{"\033\033OH", K(ui.Home, ui.Alt)},
+
+	// Alt-O. This is handled as a special case because it looks like a G3-style
+	// key.
+	{"\033O", K('O', ui.Alt)},
 
 	// CSI-sequence key identified by the ending rune.
 	{"\033[A", K(ui.Up)},
@@ -68,9 +79,17 @@ var keyTests = []struct {
 	{"\033[1;15A", K(ui.Up, ui.Alt, ui.Ctrl)},
 	{"\033[1;16A", K(ui.Up, ui.Shift, ui.Alt, ui.Ctrl)},
 
-	// CSI-sequence key with one argument, always ending in '~'.
+	// CSI-sequence key with one argument, ending in '~'.
 	{"\033[1~", K(ui.Home)},
 	{"\033[11~", K(ui.F1)},
+	// Modified.
+	{"\033[1;2~", K(ui.Home, ui.Shift)},
+	// Urxvt-flavor modifier, shifting the '~' to reflect the modifier
+	{"\033[1$", K(ui.Home, ui.Shift)},
+	{"\033[1^", K(ui.Home, ui.Ctrl)},
+	{"\033[1@", K(ui.Home, ui.Shift, ui.Ctrl)},
+	// With a leading Escape.
+	{"\033\033[1~", K(ui.Home, ui.Alt)},
 
 	// CSI-sequence key with three arguments and ending in '~'. The first
 	// argument is always 27, the second identifies the modifier and the last
@@ -78,7 +97,7 @@ var keyTests = []struct {
 	{"\033[27;4;63~", K(';', ui.Shift, ui.Alt)},
 }
 
-func TestReader_ReadKeys(t *testing.T) {
+func TestReader_ReadEvents(t *testing.T) {
 	r, w, reader := setupTest()
 	defer r.Close()
 	defer w.Close()
@@ -86,7 +105,7 @@ func TestReader_ReadKeys(t *testing.T) {
 	defer reader.Close()
 	defer reader.Stop()
 
-	for _, test := range keyTests {
+	for _, test := range eventTests {
 		w.WriteString(test.input)
 		select {
 		case event := <-reader.EventChan():

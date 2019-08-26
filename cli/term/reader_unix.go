@@ -270,8 +270,8 @@ func (rd *reader) readOne(r rune) (event Event, seqError, ioError error) {
 			// An 'O' follows. G3 style function key sequence: read one rune.
 			r = readRune()
 			if r == runeEndOfSeq {
-				// Nothing follows after 'O'. Taken as Alt-o.
-				event = KeyEvent{'o', ui.Alt}
+				// Nothing follows after 'O'. Taken as Alt-O.
+				event = KeyEvent{'O', ui.Alt}
 				return
 			}
 			k, ok := g3Seq[r]
@@ -300,21 +300,23 @@ func (rd *reader) readOne(r rune) (event Event, seqError, ioError error) {
 // returns the ui.Key the rune represents.
 func ctrlModify(r rune) ui.Key {
 	switch r {
+	// TODO(xiaq): Are the following special cases universal?
 	case 0x0:
-		return ui.Key{'`', ui.Ctrl} // ^@
+		return ui.K('`', ui.Ctrl) // ^@
 	case 0x1e:
-		return ui.Key{'6', ui.Ctrl} // ^^
+		return ui.K('6', ui.Ctrl) // ^^
 	case 0x1f:
-		return ui.Key{'/', ui.Ctrl} // ^_
+		return ui.K('/', ui.Ctrl) // ^_
 	case ui.Tab, ui.Enter, ui.Backspace: // ^I ^J ^?
-		return ui.Key{r, 0}
+		// Ambiguous Ctrl keys; prefer the non-Ctrl form as they are more likely.
+		return ui.K(r)
 	default:
 		// Regular ui.Ctrl sequences.
 		if 0x1 <= r && r <= 0x1d {
-			return ui.Key{r + 0x40, ui.Ctrl}
+			return ui.K(r+0x40, ui.Ctrl)
 		}
 	}
-	return ui.Key{r, 0}
+	return ui.K(r)
 }
 
 // Tables for key sequences. Comments document which terminal emulators are
@@ -357,7 +359,7 @@ var g3Seq = map[rune]ui.Key{
 
 // CSI-style key sequences identified by the last rune. For instance, \e[A is
 // Up. When modified, two numerical arguments are added, the first always beging
-// 1 and the second identifying the modifier. For instance, \e1;5A is Ctrl-Up.
+// 1 and the second identifying the modifier. For instance, \e[1;5A is Ctrl-Up.
 var csiSeqByLast = map[rune]ui.Key{
 	// xterm, urxvt, tmux
 	'A': {ui.Up, 0}, 'B': {ui.Down, 0}, 'C': {ui.Right, 0}, 'D': {ui.Left, 0},
@@ -370,9 +372,10 @@ var csiSeqByLast = map[rune]ui.Key{
 	'Z': {ui.Tab, ui.Shift},
 }
 
-// CSI-style key sequences ending with '~' and identified by one numerical
-// argument. For instance, \e[3~ is Delete. When modified, an additional
-// argument identifies the modifier; for instance, \e[3;5~ is Ctrl-Delete.
+// CSI-style key sequences ending with '~' with by one or two numerical
+// arguments. The first argument identifies the key, and the optional second
+// argument identifies the modifier. For instance, \e[3~ is Delete, and \e[3;5~
+// is Ctrl-Delete.
 //
 // An alternative encoding of the modifier key, only known to be used by urxvt
 // (or for that matter, likely also rxvt) is to change the last rune: '$' for
