@@ -144,7 +144,7 @@ var bufChTimeout = 1 * time.Second
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	ed, tty := setup()
 
-	ed.Config.Highlighter = fakeHighlighter{
+	ed.Config.Highlighter = testHighlighter{
 		get: func(code string) (styled.Text, []error) {
 			return styled.Text{
 				&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
@@ -214,7 +214,7 @@ func TestReadCode_TriggersPrompt(t *testing.T) {
 	ed, tty := setup()
 
 	called := 0
-	ed.Config.Prompt = fakePrompt{trigger: func(bool) { called++ }}
+	ed.Config.Prompt = testPrompt{trigger: func(bool) { called++ }}
 
 	codeCh, _ := ed.ReadCodeAsync()
 	cleanup(tty, codeCh)
@@ -228,7 +228,7 @@ func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
 	ed, tty := setup()
 
 	promptContent := "old"
-	prompt := fakePrompt{
+	prompt := testPrompt{
 		get:         func() styled.Text { return styled.Plain(promptContent) },
 		lateUpdates: make(chan styled.Text),
 	}

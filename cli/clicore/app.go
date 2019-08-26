@@ -10,6 +10,7 @@ import (
 	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/codearea"
 	"github.com/elves/elvish/cli/term"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/sys"
 )
@@ -139,7 +140,7 @@ func (app *App) redraw(flag redrawFlag) {
 	})
 
 	bufNotes := renderNotes(notes, width)
-	bufMain := mainRenderer{&app.CodeArea, listing}.Render(width, height)
+	bufMain := renderApp(&app.CodeArea, listing, width, height)
 
 	// Apply buffers.
 	app.tty.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
@@ -148,6 +149,29 @@ func (app *App) redraw(flag redrawFlag) {
 		app.tty.Newline()
 		app.tty.ResetBuffer()
 	}
+}
+
+// Renders notes. This does not respect height so that overflow notes end up in
+// the scrollback buffer.
+func renderNotes(notes []string, width int) *ui.Buffer {
+	bb := ui.NewBufferBuilder(width)
+	for i, note := range notes {
+		if i > 0 {
+			bb.Newline()
+		}
+		bb.WritePlain(note)
+	}
+	return bb.Buffer()
+}
+
+// Renders the codearea, and uses the rest of the height for the listing.
+func renderApp(codeArea, listing clitypes.Renderer, width, height int) *ui.Buffer {
+	buf := codeArea.Render(width, height)
+	if listing != nil && len(buf.Lines) < height {
+		bufListing := listing.Render(width, height-len(buf.Lines))
+		buf.Extend(bufListing, true)
+	}
+	return buf
 }
 
 // ReadCode requests the App to read code from the terminal. It causes the App
