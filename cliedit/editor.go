@@ -7,7 +7,6 @@ import (
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
 )
@@ -52,12 +51,8 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
 	app := cli.NewApp(cli.NewTTY(in, out))
 
+	initAPI(app, ev, ns)
 	app.Config.Highlighter = makeHighlighter(ev)
-
-	maxHeight := -1
-	maxHeightVar := vars.FromPtr(&maxHeight)
-	app.Config.MaxHeight = func() int { return maxHeightVar.Get().(int) }
-	ns.Add("max-height", maxHeightVar)
 
 	// TODO: BindingMap should pass event context to event handlers
 	ns.AddGoFns("<edit>", map[string]interface{}{
@@ -67,21 +62,9 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 		// "reset-mode":  cli.ResetMode,
 	}).AddGoFns("<edit>", bufferBuiltins(app))
 
-	// Elvish hook APIs
-	var beforeReadline func()
-	ns["before-readline"], beforeReadline = initBeforeReadline(ev)
-	var afterReadline func(string)
-	ns["after-readline"], afterReadline = initAfterReadline(ev)
-	app.Config.BeforeReadline = beforeReadline
-	app.Config.AfterReadline = afterReadline
-
 	// Prompts
 	app.Config.Prompt = makePrompt(app, ev, ns, defaultPrompt, "prompt")
 	app.Config.RPrompt = makePrompt(app, ev, ns, defaultRPrompt, "rprompt")
-
-	// Insert mode
-	insertNs := initInsert(ev, app)
-	ns.AddNs("insert", insertNs)
 
 	// Listing modes.
 	lsBinding, lsNs := initListing()
