@@ -86,16 +86,8 @@ func (app *App) resetAllStates() {
 		func(s *codearea.State) { *s = codearea.State{} })
 }
 
-// A special event type signalling something has seen a late update and a
-// refresh is needed. This is currently used for refreshing prompts and
-// highlighting.
-type lateUpdate struct{}
-
 func (app *App) handle(e event) handleResult {
 	switch e := e.(type) {
-	case lateUpdate:
-		app.Redraw(false)
-		return handleResult{}
 	case os.Signal:
 		switch e {
 		case syscall.SIGHUP:
@@ -219,7 +211,7 @@ func (app *App) ReadCode() (string, error) {
 			for {
 				select {
 				case <-ch:
-					app.loop.Input(lateUpdate{})
+					app.Redraw(false)
 				case <-stopRelayLateUpdates:
 					return
 				}
