@@ -3,49 +3,54 @@ package cliedit
 import (
 	"testing"
 
+	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/codearea"
 	"github.com/elves/elvish/tt"
 )
 
-/*
-func TestMakeMove(t *testing.T) {
-	state := clitypes.State{Raw: clitypes.RawState{Code: "ab", Dot: 1}}
-	moveFn := makeMove(&state, moveDotLeft)
-
-	moveFn()
-
-	if state.Raw.Dot != 0 {
-		t.Errorf("Dot = %d after move, want 0", state.Raw.Dot)
-	}
+var bufferBuiltinsTests = []struct {
+	name      string
+	bufBefore codearea.CodeBuffer
+	bufAfter  codearea.CodeBuffer
+}{
+	{
+		"move-left",
+		codearea.CodeBuffer{Content: "ab", Dot: 1},
+		codearea.CodeBuffer{Content: "ab", Dot: 0},
+	},
+	{
+		"move-right",
+		codearea.CodeBuffer{Content: "ab", Dot: 1},
+		codearea.CodeBuffer{Content: "ab", Dot: 2},
+	},
+	{
+		"kill-left",
+		codearea.CodeBuffer{Content: "ab", Dot: 1},
+		codearea.CodeBuffer{Content: "b", Dot: 0},
+	},
+	{
+		"kill-right",
+		codearea.CodeBuffer{Content: "ab", Dot: 1},
+		codearea.CodeBuffer{Content: "a", Dot: 1},
+	},
 }
 
-func TestMakeKill_Left(t *testing.T) {
-	state := clitypes.State{Raw: clitypes.RawState{Code: "ab", Dot: 1}}
-	killFn := makeKill(&state, moveDotLeft)
+func TestBufferBuiltins(t *testing.T) {
+	for _, test := range bufferBuiltinsTests {
+		t.Run(test.name, func(t *testing.T) {
+			app := &cli.App{}
+			buf := &app.CodeArea.State.CodeBuffer
+			*buf = test.bufBefore
 
-	killFn()
+			fn := bufferBuiltins(app)[test.name].(func())
+			fn()
 
-	if state.Raw.Code != "b" {
-		t.Errorf(`Code = %q after move, want "b"`, state.Raw.Code)
-	}
-	if state.Raw.Dot != 0 {
-		t.Errorf("Dot = %d after move, want 0", state.Raw.Dot)
-	}
-}
-
-func TestMakeKill_Right(t *testing.T) {
-	state := clitypes.State{Raw: clitypes.RawState{Code: "ab", Dot: 1}}
-	killFn := makeKill(&state, moveDotRight)
-
-	killFn()
-
-	if state.Raw.Code != "a" {
-		t.Errorf(`Code = %q after move, want "a"`, state.Raw.Code)
-	}
-	if state.Raw.Dot != 1 {
-		t.Errorf("Dot = %d after move, want 1", state.Raw.Dot)
+			if *buf != test.bufAfter {
+				t.Errorf("got buf %v, want %v", *buf, test.bufAfter)
+			}
+		})
 	}
 }
-*/
 
 // Tests for pure movers.
 

@@ -10,7 +10,7 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var bufferBuiltinsData = map[string]func(*cli.App){
+var bufferBuiltinsData = map[string]func(*codearea.CodeBuffer){
 	"move-left":             makeMove(moveDotLeft),
 	"move-right":            makeMove(moveDotRight),
 	"move-left-word":        makeMove(moveDotLeftWord),
@@ -40,7 +40,13 @@ var bufferBuiltinsData = map[string]func(*cli.App){
 func bufferBuiltins(app *cli.App) map[string]interface{} {
 	m := make(map[string]interface{})
 	for name, fn := range bufferBuiltinsData {
-		m[name] = func() { fn(app) }
+		// Make a lexically scoped copy of fn.
+		fn2 := fn
+		m[name] = func() {
+			app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+				fn2(&s.CodeBuffer)
+			})
+		}
 	}
 	return m
 }
@@ -50,30 +56,24 @@ func bufferBuiltins(app *cli.App) map[string]interface{} {
 // the editor state.
 type pureMover func(buffer string, dot int) int
 
-func makeMove(m pureMover) func(*cli.App) {
-	return func(app *cli.App) {
-		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
-			buf := &s.CodeBuffer
-			buf.Dot = m(buf.Content, buf.Dot)
-		})
+func makeMove(m pureMover) func(*codearea.CodeBuffer) {
+	return func(buf *codearea.CodeBuffer) {
+		buf.Dot = m(buf.Content, buf.Dot)
 	}
 }
 
-func makeKill(m pureMover) func(*cli.App) {
-	return func(app *cli.App) {
-		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
-			buf := &s.CodeBuffer
-			newDot := m(buf.Content, buf.Dot)
-			if newDot < buf.Dot {
-				// Dot moved to the left: remove text between new dot and old dot,
-				// and move the dot itself
-				buf.Content = buf.Content[:newDot] + buf.Content[buf.Dot:]
-				buf.Dot = newDot
-			} else if newDot > buf.Dot {
-				// Dot moved to the right: remove text between old dot and new dot.
-				buf.Content = buf.Content[:buf.Dot] + buf.Content[newDot:]
-			}
-		})
+func makeKill(m pureMover) func(*codearea.CodeBuffer) {
+	return func(buf *codearea.CodeBuffer) {
+		newDot := m(buf.Content, buf.Dot)
+		if newDot < buf.Dot {
+			// Dot moved to the left: remove text between new dot and old dot,
+			// and move the dot itself
+			buf.Content = buf.Content[:newDot] + buf.Content[buf.Dot:]
+			buf.Dot = newDot
+		} else if newDot > buf.Dot {
+			// Dot moved to the right: remove text between old dot and new dot.
+			buf.Content = buf.Content[:buf.Dot] + buf.Content[newDot:]
+		}
 	}
 }
 
