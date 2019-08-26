@@ -16,21 +16,23 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func makePrompt(nt notifier, ev *eval.Evaler, ns eval.Ns, computeInit eval.Callable, name string) cli.Prompt {
-	compute := computeInit
-	ns[name] = vars.FromPtr(&compute)
-	return prompt.New(func() styled.Text {
-		return callPrompt(nt, ev, compute)
+func initPrompts(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
+	promptVal, rpromptVal := getDefaultPromptVals()
+	promptVar := vars.FromPtr(&promptVal)
+	rpromptVar := vars.FromPtr(&rpromptVal)
+	ns["prompt"] = promptVar
+	ns["rprompt"] = rpromptVar
+	app.Config.Prompt = prompt.New(func() styled.Text {
+		return callPrompt(app, ev, promptVar.Get().(eval.Callable))
+	})
+	app.Config.RPrompt = prompt.New(func() styled.Text {
+		return callPrompt(app, ev, rpromptVar.Get().(eval.Callable))
 	})
 }
 
-var defaultPrompt, defaultRPrompt eval.Callable
-
-func init() {
+func getDefaultPromptVals() (prompt, rprompt eval.Callable) {
 	user, userErr := user.Current()
 	isRoot := userErr == nil && user.Uid == "0"
-
-	defaultPrompt = getDefaultPrompt(isRoot)
 
 	username := "???"
 	if userErr == nil {
@@ -41,7 +43,7 @@ func init() {
 		hostname = "???"
 	}
 
-	defaultRPrompt = getDefaultRPrompt(username, hostname)
+	return getDefaultPrompt(isRoot), getDefaultRPrompt(username, hostname)
 }
 
 func getDefaultPrompt(isRoot bool) eval.Callable {

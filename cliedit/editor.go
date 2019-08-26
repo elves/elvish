@@ -52,13 +52,8 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	app := cli.NewApp(cli.NewTTY(in, out))
 
 	initAPI(app, ev, ns)
-	initMiscBuiltins(app, ns)
-	initBufferBuiltins(app, ns)
+	initPrompts(app, ev, ns)
 	app.Config.Highlighter = makeHighlighter(ev)
-
-	// Prompts
-	app.Config.Prompt = makePrompt(app, ev, ns, defaultPrompt, "prompt")
-	app.Config.RPrompt = makePrompt(app, ev, ns, defaultRPrompt, "rprompt")
 
 	// Listing modes.
 	lsBinding, lsNs := initListing()
