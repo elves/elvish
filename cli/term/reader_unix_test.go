@@ -10,35 +10,12 @@ import (
 	"github.com/elves/elvish/edit/ui"
 )
 
-// timeout is the longest time the tests wait between writing something on
-// the writer and reading it from the reader before declaring that the
-// reader has a bug.
-const timeoutInterval = 100 * time.Millisecond
-
-func timeout() <-chan time.Time {
-	return time.After(timeoutInterval)
-}
-
-var (
-	theWriter   *os.File
-	innerReader *os.File
-	theReader   *reader
-)
-
-func TestMain(m *testing.M) {
+func setupTest() (r, w *os.File, rd Reader) {
 	r, w, err := os.Pipe()
 	if err != nil {
-		panic("os.Pipe returned error, something is seriously wrong")
+		panic(err)
 	}
-	defer r.Close()
-	defer w.Close()
-	theWriter = w
-	innerReader = r
-	theReader = newReader(r)
-	theReader.Start()
-	defer theReader.Stop()
-
-	os.Exit(m.Run())
+	return r, w, NewReader(r)
 }
 
 var keyTests = []struct {
@@ -99,63 +76,77 @@ var keyTests = []struct {
 	{"\033[27;4;63~", KeyEvent{';', ui.Shift | ui.Alt}},
 }
 
-func TestKey(t *testing.T) {
+func TestReader_ReadKeys(t *testing.T) {
+	r, w, reader := setupTest()
+	defer r.Close()
+	defer w.Close()
+	reader.Start()
+	defer reader.Close()
+	defer reader.Stop()
+
 	for _, test := range keyTests {
-		theWriter.WriteString(test.input)
+		w.WriteString(test.input)
 		select {
-		case event := <-theReader.EventChan():
+		case event := <-reader.EventChan():
 			if event != test.want {
 				t.Errorf("Reader reads event %v, want %v", event, test.want)
 			}
-		case <-timeout():
+		case <-time.After(time.Second):
 			t.Errorf("Reader timed out")
 		}
 	}
 }
 
-// TestStopMakesUnderlyingFileAvailable tests that after calling Stop, the
-// Reader no longer attempts to read from the underlying file, so it is
-// available for use by others.
-func TestStopMakesUnderlyingFileAvailable(t *testing.T) {
-	theReader.Stop()
-	defer theReader.Start()
+func TestReader_StopMakesUnderlyingFileAvailable(t *testing.T) {
+	r, w, reader := setupTest()
+	defer r.Close()
+	defer w.Close()
+	reader.Start()
+	defer reader.Close()
 
-	s := "lorem ipsum"
-	theWriter.WriteString(s)
-	gotChan := make(chan string)
-	go func() {
-		var buf [32]byte
-		nr, err := innerReader.Read(buf[:])
-		if err != nil {
-			t.Errorf("inner.Read returns error: %v", err)
-		}
-		gotChan <- string(buf[:nr])
-	}()
-	select {
-	case got := <-gotChan:
-		if got != s {
-			t.Errorf("got %q, want %q", got, s)
-		}
-	case <-time.After(time.Second):
-		t.Error("inner.Read times out")
+	// tests that after calling Stop, the
+	// Reader no longer attempts to read from the underlying file, so it is
+	// available for use by others.
+	reader.Stop()
+
+	// Verify that the reader has indeed stopped: write something via w,
+	// and get it back via r.
+	written := "lorem ipsum"
+	w.WriteString(written)
+	var buf [32]byte
+	nr, err := r.Read(buf[:])
+	if err != nil {
+		panic(err)
+	}
+	got := string(buf[:nr])
+	if got != written {
+		t.Errorf("got %q, want %q", got, written)
 	}
 }
 
-// TestStartAfterStopIndeedStarts tests that calling Start very shortly after
-// Stop puts the Reader the correct started state.
-func TestStartAfterStopIndeedStarts(t *testing.T) {
-	for i := 0; i < 100; i++ {
-		theReader.Stop()
-		theReader.Start()
+func TestReader_StartAfterStopIndeedStarts(t *testing.T) {
+	r, w, reader := setupTest()
+	defer r.Close()
+	defer w.Close()
+	reader.Start()
+	defer reader.Close()
+	defer reader.Stop()
 
-		theWriter.WriteString("a")
+	for i := 0; i < 100; i++ {
+		// Test that calling Start very shortly after Stop puts the Reader
+		// in the correct started state. This test is for ensuring that the
+		// operations do not have race conditions.
+		reader.Stop()
+		reader.Start()
+
+		w.WriteString("a")
 		select {
-		case event := <-theReader.EventChan():
-			wantEvent := KeyEvent(ui.Key{'a', 0})
+		case event := <-reader.EventChan():
+			wantEvent := K('a')
 			if event != wantEvent {
 				t.Errorf("After Stop and Start, Reader reads %v, want %v", event, wantEvent)
 			}
-		case <-timeout():
+		case <-time.After(time.Second):
 			t.Errorf("After Stop and Start, Reader timed out")
 		}
 	}
