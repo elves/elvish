@@ -189,3 +189,11 @@ func TestHandle_EnterEmitsAccept(t *testing.T) {
 		t.Errorf("item 5 not accepted")
 	}
 }
+
+func TestCopyListboxState(t *testing.T) {
+	state := State{Items: TestItems{NItems: 10}, Selected: 5}
+	w := &Widget{State: state}
+	if w.CopyListboxState() != state {
+		t.Errorf("CopyListboxState returns a different state")
+	}
+}
