@@ -1,11 +1,9 @@
 package cliedit
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
@@ -22,63 +20,15 @@ type Editor struct {
 	ns  eval.Ns
 }
 
-// Wraps the histutil.Fuser interface to implement histutil.Store. This is a
-// bandaid as we cannot change the implementation of Fuser without breaking its
-// other users. Eventually Fuser should implement Store directly.
-type fuserWrapper struct {
-	*histutil.Fuser
-}
-
-func (f fuserWrapper) AddCmd(cmd histutil.Entry) (int, error) {
-	return f.Fuser.AddCmd(cmd.Text)
-}
-
-// Wraps an Evaler to implement the cli.DirStore interface.
-type dirStore struct {
-	ev *eval.Evaler
-}
-
-func (d dirStore) Chdir(path string) error {
-	return d.ev.Chdir(path)
-}
-
-func (d dirStore) Dirs() ([]storedefs.Dir, error) {
-	return d.ev.DaemonClient.Dirs(map[string]struct{}{})
-}
-
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
 	app := cli.NewApp(cli.NewTTY(in, out))
 
+	initHighlighter(app, ev)
 	initAPI(app, ev, ns)
 	initPrompts(app, ev, ns)
-	app.Config.Highlighter = makeHighlighter(ev)
-
-	// Listing modes.
-	lsBinding, lsNs := initListing()
-	ns.AddNs("listing", lsNs)
-
-	var histStore histutil.Store
-	histFuser, err := histutil.NewFuser(st)
-	if err == nil {
-		histStore = fuserWrapper{histFuser}
-	} else {
-		fmt.Fprintln(out, "failed to initialize history facilities")
-	}
-
-	histlistNs := initHistlist(app, ev, lsBinding, histStore)
-	ns.AddNs("histlist", histlistNs)
-
-	lastcmdNs := initLastcmd(app, ev, lsBinding, histStore)
-	ns.AddNs("lastcmd", lastcmdNs)
-
-	dirStore := dirStore{ev}
-
-	locationNs := initLocation(app, ev, lsBinding, dirStore)
-	ns.AddNs("location", locationNs)
-
-	// Evaluate default bindings.
+	initListings(app, ev, ns, st)
 	evalDefaultBinding(ev, ns)
 
 	return &Editor{app, ns}

@@ -12,8 +12,8 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func makeHighlighter(ev *eval.Evaler) cli.Highlighter {
-	return highlight.NewHighlighter(highlight.Dep{
+func initHighlighter(app *cli.App, ev *eval.Evaler) {
+	app.Config.Highlighter = highlight.NewHighlighter(highlight.Dep{
 		Check:      func(n *parse.Chunk) error { return check(ev, n) },
 		HasCommand: func(cmd string) bool { return hasCommand(ev, cmd) },
 	})
