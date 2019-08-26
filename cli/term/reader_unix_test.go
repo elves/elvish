@@ -95,6 +95,35 @@ var eventTests = []struct {
 	// argument is always 27, the second identifies the modifier and the last
 	// identifies the key.
 	{"\033[27;4;63~", K(';', ui.Shift, ui.Alt)},
+
+	// Cursor Position Report.
+	{"\033[3;4R", CursorPosition{3, 4}},
+
+	// Paste setting.
+	{"\033[200~", PasteSetting(true)},
+	{"\033[201~", PasteSetting(false)},
+
+	// Mouse event.
+	{"\033[M\x00\x23\x24", MouseEvent{Pos{4, 3}, true, 0, 0}},
+	// Other buttons.
+	{"\033[M\x01\x23\x24", MouseEvent{Pos{4, 3}, true, 1, 0}},
+	// Button up.
+	{"\033[M\x03\x23\x24", MouseEvent{Pos{4, 3}, false, -1, 0}},
+	// Modified.
+	{"\033[M\x04\x23\x24", MouseEvent{Pos{4, 3}, true, 0, ui.Shift}},
+	{"\033[M\x08\x23\x24", MouseEvent{Pos{4, 3}, true, 0, ui.Alt}},
+	{"\033[M\x10\x23\x24", MouseEvent{Pos{4, 3}, true, 0, ui.Ctrl}},
+	{"\033[M\x14\x23\x24", MouseEvent{Pos{4, 3}, true, 0, ui.Shift | ui.Ctrl}},
+
+	// SGR-style mouse event.
+	{"\033[<0;3;4M", MouseEvent{Pos{4, 3}, true, 0, 0}},
+	// Other buttons.
+	{"\033[<1;3;4M", MouseEvent{Pos{4, 3}, true, 1, 0}},
+	// Button up.
+	{"\033[<0;3;4m", MouseEvent{Pos{4, 3}, false, 0, 0}},
+	// Modified.
+	{"\033[<4;3;4M", MouseEvent{Pos{4, 3}, true, 0, ui.Shift}},
+	{"\033[<16;3;4M", MouseEvent{Pos{4, 3}, true, 0, ui.Ctrl}},
 }
 
 func TestReader_ReadEvents(t *testing.T) {
