@@ -36,15 +36,15 @@ var bufferBuiltinsTests = []struct {
 }
 
 func TestBufferBuiltins(t *testing.T) {
+	app := &cli.App{}
+	builtins := bufferBuiltins(app)
+	buf := &app.CodeArea.State.CodeBuffer
+
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
-			app := &cli.App{}
-			buf := &app.CodeArea.State.CodeBuffer
 			*buf = test.bufBefore
-
-			fn := bufferBuiltins(app)[test.name].(func())
+			fn := builtins[test.name].(func())
 			fn()
-
 			if *buf != test.bufAfter {
 				t.Errorf("got buf %v, want %v", *buf, test.bufAfter)
 			}

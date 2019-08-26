@@ -17,6 +17,9 @@ func initAPI(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	initBeforeReadline(app, ev, ns)
 	initAfterReadline(app, ev, ns)
 	initInsert(app, ev, ns)
+
+	initMiscBuiltins(app, ns)
+	initBufferBuiltins(app, ns)
 }
 
 func initMaxHeight(app *cli.App, ns eval.Ns) {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/codearea"
+	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"
 )
 
@@ -35,6 +36,10 @@ var bufferBuiltinsData = map[string]func(*codearea.CodeBuffer){
 	"kill-right-alnum-word": makeKill(moveDotRightAlnumWord),
 	"kill-sol":              makeKill(moveDotSOL),
 	"kill-eol":              makeKill(moveDotEOL),
+}
+
+func initBufferBuiltins(app *cli.App, ns eval.Ns) {
+	ns.AddGoFns("<edit>", bufferBuiltins(app))
 }
 
 func bufferBuiltins(app *cli.App) map[string]interface{} {

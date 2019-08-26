@@ -52,15 +52,9 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	app := cli.NewApp(cli.NewTTY(in, out))
 
 	initAPI(app, ev, ns)
+	initMiscBuiltins(app, ns)
+	initBufferBuiltins(app, ns)
 	app.Config.Highlighter = makeHighlighter(ev)
-
-	// TODO: BindingMap should pass event context to event handlers
-	ns.AddGoFns("<edit>", map[string]interface{}{
-		"binding-map": makeBindingMap,
-		"commit-code": app.CommitCode,
-		"commit-eof":  app.CommitEOF,
-		// "reset-mode":  cli.ResetMode,
-	}).AddGoFns("<edit>", bufferBuiltins(app))
 
 	// Prompts
 	app.Config.Prompt = makePrompt(app, ev, ns, defaultPrompt, "prompt")
