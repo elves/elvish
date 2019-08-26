@@ -23,57 +23,59 @@ var keyTests = []struct {
 	want  Event
 }{
 	// Simple graphical key.
-	{"x", KeyEvent{'x', 0}},
-	{"X", KeyEvent{'X', 0}},
-	{" ", KeyEvent{' ', 0}},
+	{"x", K('x')},
+	{"X", K('X')},
+	{" ", K(' ')},
 
 	// Ctrl key.
-	{"\001", KeyEvent{'A', ui.Ctrl}},
-	{"\033", KeyEvent{'[', ui.Ctrl}},
+	{"\001", K('A', ui.Ctrl)},
+	{"\033", K('[', ui.Ctrl)},
 
-	// Ctrl-ish keys, but not thought as Ctrl keys by our reader.
-	{"\n", KeyEvent{'\n', 0}},
-	{"\t", KeyEvent{'\t', 0}},
-	{"\x7f", KeyEvent{'\x7f', 0}}, // backspace
+	// Ambiguous Ctrl keys; the reader uses the non-Ctrl form as canonical.
+	{"\n", K('\n')},
+	{"\t", K('\t')},
+	{"\x7f", K('\x7f')}, // backspace
 
 	// Alt plus simple graphical key.
-	{"\033a", KeyEvent{'a', ui.Alt}},
-	{"\033[", KeyEvent{'[', ui.Alt}},
+	{"\033a", K('a', ui.Alt)},
+	{"\033[", K('[', ui.Alt)},
 
 	// G3-style key.
-	{"\033OA", KeyEvent{ui.Up, 0}},
-	{"\033OH", KeyEvent{ui.Home, 0}},
+	{"\033OA", K(ui.Up)},
+	{"\033OH", K(ui.Home)},
+
+	// G3-style key with leading Escape.
 
 	// CSI-sequence key identified by the ending rune.
-	{"\033[A", KeyEvent{ui.Up, 0}},
-	{"\033[H", KeyEvent{ui.Home, 0}},
+	{"\033[A", K(ui.Up)},
+	{"\033[H", K(ui.Home)},
 	// Modifiers.
-	{"\033[1;1A", KeyEvent{ui.Up, 0}},
-	{"\033[1;2A", KeyEvent{ui.Up, ui.Shift}},
-	{"\033[1;3A", KeyEvent{ui.Up, ui.Alt}},
-	{"\033[1;4A", KeyEvent{ui.Up, ui.Shift | ui.Alt}},
-	{"\033[1;5A", KeyEvent{ui.Up, ui.Ctrl}},
-	{"\033[1;6A", KeyEvent{ui.Up, ui.Shift | ui.Ctrl}},
-	{"\033[1;7A", KeyEvent{ui.Up, ui.Alt | ui.Ctrl}},
-	{"\033[1;8A", KeyEvent{ui.Up, ui.Shift | ui.Alt | ui.Ctrl}},
+	{"\033[1;1A", K(ui.Up)},
+	{"\033[1;2A", K(ui.Up, ui.Shift)},
+	{"\033[1;3A", K(ui.Up, ui.Alt)},
+	{"\033[1;4A", K(ui.Up, ui.Shift, ui.Alt)},
+	{"\033[1;5A", K(ui.Up, ui.Ctrl)},
+	{"\033[1;6A", K(ui.Up, ui.Shift, ui.Ctrl)},
+	{"\033[1;7A", K(ui.Up, ui.Alt, ui.Ctrl)},
+	{"\033[1;8A", K(ui.Up, ui.Shift, ui.Alt, ui.Ctrl)},
 	// The modifiers below should be for Meta, but we conflate Alt and Meta.
-	{"\033[1;9A", KeyEvent{ui.Up, ui.Alt}},
-	{"\033[1;10A", KeyEvent{ui.Up, ui.Shift | ui.Alt}},
-	{"\033[1;11A", KeyEvent{ui.Up, ui.Alt}},
-	{"\033[1;12A", KeyEvent{ui.Up, ui.Shift | ui.Alt}},
-	{"\033[1;13A", KeyEvent{ui.Up, ui.Alt | ui.Ctrl}},
-	{"\033[1;14A", KeyEvent{ui.Up, ui.Shift | ui.Alt | ui.Ctrl}},
-	{"\033[1;15A", KeyEvent{ui.Up, ui.Alt | ui.Ctrl}},
-	{"\033[1;16A", KeyEvent{ui.Up, ui.Shift | ui.Alt | ui.Ctrl}},
+	{"\033[1;9A", K(ui.Up, ui.Alt)},
+	{"\033[1;10A", K(ui.Up, ui.Shift, ui.Alt)},
+	{"\033[1;11A", K(ui.Up, ui.Alt)},
+	{"\033[1;12A", K(ui.Up, ui.Shift, ui.Alt)},
+	{"\033[1;13A", K(ui.Up, ui.Alt, ui.Ctrl)},
+	{"\033[1;14A", K(ui.Up, ui.Shift, ui.Alt, ui.Ctrl)},
+	{"\033[1;15A", K(ui.Up, ui.Alt, ui.Ctrl)},
+	{"\033[1;16A", K(ui.Up, ui.Shift, ui.Alt, ui.Ctrl)},
 
 	// CSI-sequence key with one argument, always ending in '~'.
-	{"\033[1~", KeyEvent{ui.Home, 0}},
-	{"\033[11~", KeyEvent{ui.F1, 0}},
+	{"\033[1~", K(ui.Home)},
+	{"\033[11~", K(ui.F1)},
 
 	// CSI-sequence key with three arguments and ending in '~'. The first
 	// argument is always 27, the second identifies the modifier and the last
 	// identifies the key.
-	{"\033[27;4;63~", KeyEvent{';', ui.Shift | ui.Alt}},
+	{"\033[27;4;63~", K(';', ui.Shift, ui.Alt)},
 }
 
 func TestReader_ReadKeys(t *testing.T) {
