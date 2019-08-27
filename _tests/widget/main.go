@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/elves/elvish/cli/clicore"
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/clitypes"
 	"github.com/elves/elvish/cli/combobox"
 	"github.com/elves/elvish/cli/listbox"
@@ -19,18 +19,15 @@ import (
 var widget clitypes.Widget = makeCombobox()
 
 func makeCombobox() clitypes.Widget {
+	it := items{}
 	w := &combobox.Widget{
-		ListBox: listbox.Widget{State: listbox.State{Itemer: itemer{}}},
+		ListBox: listbox.Widget{State: listbox.State{Items: &it}},
 	}
 	w.OnFilter = func(filter string) {
-		n, err := strconv.Atoi(filter)
 		if filter == "" {
-			n, err = 100, nil
-		}
-		if err == nil {
-			w.ListBox.MutateListboxState(func(s *listbox.State) {
-				s.NItems = n
-			})
+			it.n = 100
+		} else if n, err := strconv.Atoi(filter); err == nil {
+			it.n = n
 		}
 	}
 	return w
@@ -38,12 +35,13 @@ func makeCombobox() clitypes.Widget {
 
 var maxHeight = 10
 
-type itemer struct{}
+type items struct{ n int }
 
-func (it itemer) Item(i int) styled.Text { return styled.Plain(strconv.Itoa(i)) }
+func (it items) Show(i int) styled.Text { return styled.Plain(strconv.Itoa(i)) }
+func (it items) Len() int               { return it.n }
 
 func main() {
-	tty := clicore.NewTTY(os.Stdin, os.Stderr)
+	tty := cli.NewTTY(os.Stdin, os.Stderr)
 	restore, err := tty.Setup()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
