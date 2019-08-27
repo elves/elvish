@@ -44,21 +44,25 @@ var styleForSelected = "inverse"
 
 func (w *Widget) Render(width, height int) *ui.Buffer {
 	w.init()
-	w.StateMutex.Lock()
-	s := &w.State
-	items, selected, lastFirst := s.Items, s.Selected, s.LastFirst
 
-	if items == nil || items.Len() == 0 {
-		s.LastFirst = -1
-		w.StateMutex.Unlock()
-		return layout.Label{w.Placeholder}.Render(width, height)
+	var items Items
+	var selected, first, firstCrop int
+	w.MutateListboxState(func(s *State) {
+		if s.Items == nil || s.Items.Len() == 0 {
+			s.LastFirst = -1
+			return
+		}
+
+		items, selected = s.Items, s.Selected
+		first, firstCrop = findWindow(s.Items, s.Selected, s.LastFirst, height)
+		s.LastFirst = first
+	})
+
+	if items == nil {
+		return layout.Label{Content: w.Placeholder}.Render(width, height)
 	}
 
 	n := items.Len()
-	first, firstCrop := findWindow(items, selected, lastFirst, height)
-	s.LastFirst = first
-	w.StateMutex.Unlock()
-
 	allLines := []styled.Text{}
 	hasCropped := firstCrop > 0
 
@@ -86,9 +90,12 @@ func (w *Widget) Render(width, height int) *ui.Buffer {
 		allLines = append(allLines, lines...)
 	}
 
-	var rd clitypes.Renderer = layout.CroppedLines{allLines}
+	var rd clitypes.Renderer = layout.CroppedLines{Lines: allLines}
 	if first > 0 || i < n || hasCropped {
-		rd = layout.VScrollbarContainer{rd, layout.VScrollbar{n, first, i}}
+		rd = layout.VScrollbarContainer{
+			Content:   rd,
+			Scrollbar: layout.VScrollbar{Total: n, Low: first, High: i},
+		}
 	}
 	return rd.Render(width, height)
 }
