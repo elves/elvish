@@ -27,24 +27,24 @@ insert:binding = (binding-map [
   &Ctrl-L= $location:start~
 
   &Ctrl-D=  $commit-eof~
-  &Default= $insert:default-handler~
 ])
 
 listing:binding = (binding-map [
-  &Up=        $listing:up~
-  &Down=      $listing:down~
-  &Tab=       $listing:down-cycle~
-  &Shift-Tab= $listing:up-cycle~
-
-  &Ctrl-F=    $listing:toggle-filtering~
-
-  &Alt-Enter= $listing:accept~
-  &Enter=     $listing:accept-close~
-  &Alt-,=     $listing:accept-close~
-  &Ctrl-'['=  $reset-mode~
-
-  &Default=   $listing:default~
+  &Ctrl-'['= $listing:close~
 ])
+#  &Up=        $listing:up~
+#  &Down=      $listing:down~
+#  &Tab=       $listing:down-cycle~
+#  &Shift-Tab= $listing:up-cycle~
+#
+#  &Ctrl-F=    $listing:toggle-filtering~
+#
+#  &Alt-Enter= $listing:accept~
+#  &Enter=     $listing:accept-close~
+#  &Alt-,=     $listing:accept-close~
+#  &Ctrl-'['=  $reset-mode~
+#
+#  &Default=   $listing:default~
 `
 
 // vi: set et:
