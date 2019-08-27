@@ -12,6 +12,7 @@ import (
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
+	"github.com/elves/elvish/eval/vars"
 )
 
 // TODO(xiaq): Move the implementation into this package.
@@ -23,13 +24,13 @@ type bindingMap = eddefs.BindingMap
 var emptyBindingMap = eddefs.EmptyBindingMap
 
 type mapBinding struct {
-	nt   notifier
-	ev   *eval.Evaler
-	maps []*bindingMap
+	nt      notifier
+	ev      *eval.Evaler
+	mapVars []vars.PtrVar
 }
 
-func newMapBinding(nt notifier, ev *eval.Evaler, maps ...*bindingMap) clitypes.Handler {
-	return mapBinding{nt, ev, maps}
+func newMapBinding(nt notifier, ev *eval.Evaler, mapVars ...vars.PtrVar) clitypes.Handler {
+	return mapBinding{nt, ev, mapVars}
 }
 
 func (b mapBinding) Handle(e term.Event) bool {
@@ -37,7 +38,11 @@ func (b mapBinding) Handle(e term.Event) bool {
 	if !ok {
 		return false
 	}
-	f := indexLayeredBindings(ui.Key(k), b.maps...)
+	maps := make([]bindingMap, len(b.mapVars))
+	for i, v := range b.mapVars {
+		maps[i] = v.GetRaw().(bindingMap)
+	}
+	f := indexLayeredBindings(ui.Key(k), maps...)
 	if f == nil {
 		return false
 	}
@@ -47,7 +52,7 @@ func (b mapBinding) Handle(e term.Event) bool {
 
 // Indexes a series of layered bindings. Returns nil if none of the bindings
 // have the required key or a default.
-func indexLayeredBindings(k ui.Key, bindings ...*bindingMap) eval.Callable {
+func indexLayeredBindings(k ui.Key, bindings ...bindingMap) eval.Callable {
 	for _, binding := range bindings {
 		if binding.HasKey(k) {
 			return binding.GetKey(k)

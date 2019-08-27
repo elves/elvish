@@ -7,7 +7,6 @@ import (
 	"github.com/elves/elvish/cli/addons/location"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/eval"
-	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/store/storedefs"
 )
 
@@ -28,10 +27,10 @@ func initListings(app *cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store)
 	dirStore := dirStore{ev}
 
 	// Common binding and the listing: module.
-	lsMap := emptyBindingMap
+	lsMap := newBindingVar(emptyBindingMap)
 	ns.AddNs("listing",
 		eval.Ns{
-			"binding": vars.FromPtr(&lsMap),
+			"binding": lsMap,
 		}.AddGoFns("<edit:listing>:", map[string]interface{}{
 			"close": func() { closeListing(app) },
 			/*
@@ -46,30 +45,30 @@ func initListings(app *cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store)
 			*/
 		}))
 
-	histlistMap := emptyBindingMap
-	histlistBinding := newMapBinding(app, ev, &histlistMap, &lsMap)
+	histlistMap := newBindingVar(emptyBindingMap)
+	histlistBinding := newMapBinding(app, ev, histlistMap, lsMap)
 	ns.AddNs("histlist",
 		eval.Ns{
-			"binding": vars.FromPtr(&histlistMap),
+			"binding": histlistMap,
 		}.AddGoFn("<edit:histlist>", "start", func() {
 			histlist.Start(app, histlist.Config{histlistBinding, histStore})
 		}))
 
-	lastcmdMap := emptyBindingMap
-	lastcmdBinding := newMapBinding(app, ev, &lastcmdMap, &lsMap)
+	lastcmdMap := newBindingVar(emptyBindingMap)
+	lastcmdBinding := newMapBinding(app, ev, lastcmdMap, lsMap)
 	ns.AddNs("lastcmd",
 		eval.Ns{
-			"binding": vars.FromPtr(&lastcmdMap),
+			"binding": lastcmdMap,
 		}.AddGoFn("<edit:lastcmd>", "start", func() {
 			// TODO: Specify wordifier
 			lastcmd.Start(app, lastcmd.Config{lastcmdBinding, histStore, nil})
 		}))
 
-	locationMap := emptyBindingMap
-	locationBinding := newMapBinding(app, ev, &locationMap, &lsMap)
+	locationMap := newBindingVar(emptyBindingMap)
+	locationBinding := newMapBinding(app, ev, locationMap, lsMap)
 	ns.AddNs("location",
 		eval.Ns{
-			"binding": vars.FromPtr(&locationMap),
+			"binding": locationMap,
 		}.AddGoFn("<edit:location>", "start", func() {
 			location.Start(app, location.Config{locationBinding, dirStore})
 		}))

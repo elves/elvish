@@ -23,19 +23,17 @@ func initAPI(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 }
 
 func initMaxHeight(app *cli.App, ns eval.Ns) {
-	maxHeight := -1
-	maxHeightVar := vars.FromPtr(&maxHeight)
-	app.Config.MaxHeight = func() int { return maxHeightVar.GetRaw().(int) }
-	ns.Add("max-height", maxHeightVar)
+	maxHeight := newIntVar(-1)
+	app.Config.MaxHeight = func() int { return maxHeight.GetRaw().(int) }
+	ns.Add("max-height", maxHeight)
 }
 
 func initBeforeReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
-	hook := vals.EmptyList
-	hookVar := vars.FromPtr(&hook)
-	ns["before-readline"] = hookVar
+	hook := newListVar(vals.EmptyList)
+	ns["before-readline"] = hook
 	app.Config.BeforeReadline = func() {
 		i := -1
-		hook := hookVar.GetRaw().(vals.List)
+		hook := hook.GetRaw().(vals.List)
 		for it := hook.Iterator(); it.HasElem(); it.Next() {
 			i++
 			name := fmt.Sprintf("$before-readline[%d]", i)
@@ -57,12 +55,11 @@ func initBeforeReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 }
 
 func initAfterReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
-	hook := vals.EmptyList
-	hookVar := vars.FromPtr(&hook)
-	ns["after-readline"] = hookVar
+	hook := newListVar(vals.EmptyList)
+	ns["after-readline"] = hook
 	app.Config.AfterReadline = func(code string) {
 		i := -1
-		hook := hookVar.GetRaw().(vals.List)
+		hook := hook.GetRaw().(vals.List)
 		for it := hook.Iterator(); it.HasElem(); it.Next() {
 			i++
 			name := fmt.Sprintf("$after-readline[%d]", i)
@@ -88,19 +85,16 @@ func initInsert(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	abbrVar := vars.FromPtr(&abbr)
 	app.CodeArea.Abbreviations = makeMapIterator(abbrVar)
 
-	// TODO(xiaq): Synchronize properly.
-	binding := emptyBindingMap
-	bindingVar := vars.FromPtr(&binding)
-	app.CodeArea.OverlayHandler = newMapBinding(app, ev, &binding)
+	binding := newBindingVar(emptyBindingMap)
+	app.CodeArea.OverlayHandler = newMapBinding(app, ev, binding)
 
-	quotePaste := false
-	quotePasteVar := vars.FromPtr(&quotePaste)
-	app.CodeArea.QuotePaste = func() bool { return quotePasteVar.GetRaw().(bool) }
+	quotePaste := newBoolVar(false)
+	app.CodeArea.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
 
 	ns.AddNs("insert", eval.Ns{
 		"abbr":        abbrVar,
-		"binding":     bindingVar,
-		"quote-paste": quotePasteVar,
+		"binding":     binding,
+		"quote-paste": quotePaste,
 	})
 }
 
@@ -117,3 +111,8 @@ func makeMapIterator(mv vars.PtrVar) func(func(a, b string)) {
 		}
 	}
 }
+
+func newIntVar(i int) vars.PtrVar            { return vars.FromPtr(&i) }
+func newBoolVar(b bool) vars.PtrVar          { return vars.FromPtr(&b) }
+func newListVar(l vals.List) vars.PtrVar     { return vars.FromPtr(&l) }
+func newBindingVar(b bindingMap) vars.PtrVar { return vars.FromPtr(&b) }
