@@ -25,7 +25,7 @@ func initAPI(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 func initMaxHeight(app *cli.App, ns eval.Ns) {
 	maxHeight := -1
 	maxHeightVar := vars.FromPtr(&maxHeight)
-	app.Config.MaxHeight = func() int { return maxHeightVar.Get().(int) }
+	app.Config.MaxHeight = func() int { return maxHeightVar.GetRaw().(int) }
 	ns.Add("max-height", maxHeightVar)
 }
 
@@ -35,7 +35,7 @@ func initBeforeReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	ns["before-readline"] = hookVar
 	app.Config.BeforeReadline = func() {
 		i := -1
-		hook := hookVar.Get().(vals.List)
+		hook := hookVar.GetRaw().(vals.List)
 		for it := hook.Iterator(); it.HasElem(); it.Next() {
 			i++
 			name := fmt.Sprintf("$before-readline[%d]", i)
@@ -62,7 +62,7 @@ func initAfterReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	ns["after-readline"] = hookVar
 	app.Config.AfterReadline = func(code string) {
 		i := -1
-		hook := hookVar.Get().(vals.List)
+		hook := hookVar.GetRaw().(vals.List)
 		for it := hook.Iterator(); it.HasElem(); it.Next() {
 			i++
 			name := fmt.Sprintf("$after-readline[%d]", i)
@@ -95,7 +95,7 @@ func initInsert(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 
 	quotePaste := false
 	quotePasteVar := vars.FromPtr(&quotePaste)
-	app.CodeArea.QuotePaste = func() bool { return quotePasteVar.Get().(bool) }
+	app.CodeArea.QuotePaste = func() bool { return quotePasteVar.GetRaw().(bool) }
 
 	ns.AddNs("insert", eval.Ns{
 		"abbr":        abbrVar,
@@ -104,9 +104,9 @@ func initInsert(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	})
 }
 
-func makeMapIterator(mv vars.Var) func(func(a, b string)) {
+func makeMapIterator(mv vars.PtrVar) func(func(a, b string)) {
 	return func(f func(a, b string)) {
-		for it := mv.Get().(hashmap.Map).Iterator(); it.HasElem(); it.Next() {
+		for it := mv.GetRaw().(hashmap.Map).Iterator(); it.HasElem(); it.Next() {
 			k, v := it.Elem()
 			ks, kok := k.(string)
 			vs, vok := v.(string)
