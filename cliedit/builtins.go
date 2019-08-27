@@ -16,8 +16,6 @@ import (
 //
 // Converts a normal map into a binding map.
 
-var makeBindingMap = eddefs.MakeBindingMap
-
 //elvdoc:fn commit-code
 //
 // Causes the Elvish REPL to end the current read iteration and evaluate the
@@ -30,7 +28,7 @@ var makeBindingMap = eddefs.MakeBindingMap
 
 func initMiscBuiltins(app *cli.App, ns eval.Ns) {
 	ns.AddGoFns("<edit>", map[string]interface{}{
-		"binding-map": makeBindingMap,
+		"binding-map": eddefs.MakeBindingMap,
 		"commit-code": app.CommitCode,
 		"commit-eof":  app.CommitEOF,
 	})
