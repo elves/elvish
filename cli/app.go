@@ -154,6 +154,9 @@ func (app *App) redraw(flag redrawFlag) {
 // Renders notes. This does not respect height so that overflow notes end up in
 // the scrollback buffer.
 func renderNotes(notes []string, width int) *ui.Buffer {
+	if len(notes) == 0 {
+		return nil
+	}
 	bb := ui.NewBufferBuilder(width)
 	for i, note := range notes {
 		if i > 0 {
