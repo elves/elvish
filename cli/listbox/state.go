@@ -11,7 +11,7 @@ import (
 type State struct {
 	Items     Items
 	Selected  int
-	LastFirst int
+	First int
 }
 
 // MakeState makes a new State.

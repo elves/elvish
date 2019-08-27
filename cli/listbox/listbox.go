@@ -21,7 +21,7 @@ type Widget struct {
 	StateMutex sync.RWMutex
 	// Publically accessible state.
 	State State
-	// An Handler that takes precedence over the default handling of events.
+	// A Handler that takes precedence over the default handling of events.
 	OverlayHandler clitypes.Handler
 	// A placeholder to show when there are no items.
 	Placeholder styled.Text
@@ -45,23 +45,22 @@ var styleForSelected = "inverse"
 func (w *Widget) Render(width, height int) *ui.Buffer {
 	w.init()
 
-	var items Items
-	var selected, first, firstCrop int
+	var state State
+	var firstCrop int
 	w.MutateListboxState(func(s *State) {
 		if s.Items == nil || s.Items.Len() == 0 {
-			s.LastFirst = -1
-			return
+			s.First = 0
+		} else {
+			s.First, firstCrop = findWindow(s.Items, s.Selected, s.First, height)
 		}
-
-		items, selected = s.Items, s.Selected
-		first, firstCrop = findWindow(s.Items, s.Selected, s.LastFirst, height)
-		s.LastFirst = first
+		state = *s
 	})
 
-	if items == nil {
+	if state.Items == nil || state.Items.Len() == 0 {
 		return layout.Label{Content: w.Placeholder}.Render(width, height)
 	}
 
+	items, selected, first := state.Items, state.Selected, state.First
 	n := items.Len()
 	allLines := []styled.Text{}
 	hasCropped := firstCrop > 0
