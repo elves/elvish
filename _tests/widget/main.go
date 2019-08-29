@@ -2,12 +2,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/codearea"
 	"github.com/elves/elvish/cli/combobox"
 	"github.com/elves/elvish/cli/listbox"
 	"github.com/elves/elvish/cli/term"
@@ -15,32 +17,37 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-// Change this value to test another widget.
-var widget clitypes.Widget = makeCombobox()
+var (
+	maxHeight  = flag.Int("max-height", 10, "maximum height")
+	horizontal = flag.Bool("horizontal", false, "use horizontal listbox layout")
+)
 
-func makeCombobox() clitypes.Widget {
-	it := items{}
+func makeWidget() clitypes.Widget {
+	items := listbox.TestItems{Prefix: "list item "}
 	w := &combobox.Widget{
-		ListBox: listbox.Widget{State: listbox.State{Items: &it}},
+		CodeArea: codearea.Widget{
+			Prompt: codearea.ConstPrompt(
+				styled.MakeText(" NUMBER ", "bold", "bg-magenta").
+					ConcatText(styled.Plain(" "))),
+		},
+		ListBox: listbox.Widget{
+			State:       listbox.MakeState(&items, false),
+			Placeholder: styled.Plain("(no items)"),
+			Horizontal:  *horizontal,
+		},
 	}
 	w.OnFilter = func(filter string) {
-		if filter == "" {
-			it.n = 100
-		} else if n, err := strconv.Atoi(filter); err == nil {
-			it.n = n
+		if n, err := strconv.Atoi(filter); err == nil {
+			items.NItems = n
 		}
 	}
 	return w
 }
 
-var maxHeight = 10
-
-type items struct{ n int }
-
-func (it items) Show(i int) styled.Text { return styled.Plain(strconv.Itoa(i)) }
-func (it items) Len() int               { return it.n }
-
 func main() {
+	flag.Parse()
+	widget := makeWidget()
+
 	tty := cli.NewTTY(os.Stdin, os.Stderr)
 	restore, err := tty.Setup()
 	if err != nil {
@@ -52,8 +59,8 @@ func main() {
 	defer tty.StopInput()
 	for {
 		h, w := tty.Size()
-		if h > maxHeight {
-			h = maxHeight
+		if h > *maxHeight {
+			h = *maxHeight
 		}
 		tty.UpdateBuffer(nil, widget.Render(w, h), false)
 		event := <-events
