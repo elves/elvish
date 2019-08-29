@@ -1,11 +1,13 @@
 package listbox
 
+import "github.com/elves/elvish/util"
+
 // The number of lines the listing mode keeps between the current selected item
 // and the top and bottom edges of the window, unless the available height is
 // too small or if the selected item is near the top or bottom of the list.
 var respectDistance = 2
 
-// Determines the index of the first item to show in listing.
+// Determines the index of the first item to show in vertical layout.
 //
 // This function does not return the full window, but just the first item to
 // show, and how many initial lines to crop. The window determined by this
@@ -22,7 +24,8 @@ var respectDistance = 2
 //
 // * Among all values satisfying the above conditions, the value of first is
 //   the one closest to lastFirst.
-func findWindow(items Items, selected, lastFirst, height int) (first, crop int) {
+func getVertialWindow(state State, height int) (first, crop int) {
+	items, selected, lastFirst := state.Items, state.Selected, state.First
 	n := items.Len()
 	selectedHeight := items.Show(selected).CountLines()
 
@@ -85,4 +88,55 @@ func findWindow(items Items, selected, lastFirst, height int) (first, crop int) 
 		}
 	}
 	return 0, 0
+}
+
+// Determines the window to show in horizontal layout. It returns the first item
+// to show, and whether all items can fit in the window.
+func getHorizontalWindow(state State, width, height int) (int, bool) {
+	items := state.Items
+	n := items.Len()
+	if n <= height {
+		// All items can fit.
+		return 0, true
+	}
+	// Lower bound of number of items that can fit in a row.
+	perRow := (width + colGap) / (maxWidth(items, 0, n) + colGap)
+	if perRow == 0 {
+		// We trim items that are too wide, so there is at least one item per row.
+		perRow = 1
+	}
+	if height*perRow >= n {
+		// All items can fit.
+		return 0, true
+	}
+	// Reduce the amount of available height by one because the last row will be
+	// reserved for the scrollbar.
+	height--
+	selected, lastFirst := state.Selected, state.First
+	// Start with the column containing the selected item, move left until
+	// either the width is exhausted, or lastFirst has been reached.
+	first := selected / height * height
+	usedWidth := maxWidth(items, first, first+height)
+	for ; first > lastFirst; first -= height {
+		usedWidth += maxWidth(items, first-height, first) + colGap
+		if usedWidth > width {
+			break
+		}
+	}
+	return first, false
+}
+
+func maxWidth(items Items, low, high int) int {
+	n := items.Len()
+	width := 0
+	for i := low; i < high && i < n; i++ {
+		w := 0
+		for _, seg := range items.Show(i) {
+			w += util.Wcswidth(seg.Text)
+		}
+		if width < w {
+			width = w
+		}
+	}
+	return width
 }

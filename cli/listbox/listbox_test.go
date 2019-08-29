@@ -12,7 +12,7 @@ import (
 
 var bb = ui.NewBufferBuilder
 
-var renderTests = []clitypes.RenderTest{
+var renderVerticalTests = []clitypes.RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
 		Given: &Widget{Placeholder: styled.Plain("nothing")},
@@ -76,8 +76,84 @@ var renderTests = []clitypes.RenderTest{
 	},
 }
 
-func TestRender(t *testing.T) {
-	clitypes.TestRender(t, renderTests)
+func TestRenderVertical(t *testing.T) {
+	clitypes.TestRender(t, renderVerticalTests)
+}
+
+var renderHorizontalTests = []clitypes.RenderTest{
+	{
+		Name:  "placeholder when Items is nil",
+		Given: &Widget{Horizontal: true, Placeholder: styled.Plain("nothing")},
+		Width: 10, Height: 3,
+		Want: bb(10).WritePlain("nothing"),
+	},
+	{
+		Name: "placeholder when NItems is 0",
+		Given: &Widget{
+			Horizontal:  true,
+			Placeholder: styled.Plain("nothing"),
+			State:       State{Items: TestItems{}},
+		},
+		Width: 10, Height: 3,
+		Want: bb(10).WritePlain("nothing"),
+	},
+	{
+		Name: "all items when there is enough space",
+		Given: &Widget{
+			Horizontal: true,
+			State:      State{Items: TestItems{NItems: 4}, Selected: 0},
+		},
+		Width: 14, Height: 3,
+		Want: bb(14).
+			WriteStyled(styled.MakeText("item 0", "inverse")).
+			WritePlain("  ").
+			WritePlain("item 3").
+			Newline().WritePlain("item 1").
+			Newline().WritePlain("item 2"),
+	},
+	{
+		Name: "long lines cropped, with full scrollbar",
+		Given: &Widget{
+			Horizontal: true,
+			State:      State{Items: TestItems{NItems: 2}, Selected: 0},
+		},
+		Width: 4, Height: 3,
+		Want: bb(4).
+			WriteStyled(styled.MakeText("item", "inverse")).
+			Newline().WritePlain("item").
+			Newline().WriteStyled(styled.MakeText("    ", "magenta", "inverse")),
+	},
+	{
+		Name: "scrollbar when not showing all items",
+		Given: &Widget{
+			Horizontal: true,
+			State:      State{Items: TestItems{NItems: 4}, Selected: 0},
+		},
+		Width: 6, Height: 3,
+		Want: bb(6).
+			WriteStyled(styled.MakeText("item 0", "inverse")).
+			Newline().WritePlain("item 1").
+			Newline().
+			WriteStyled(styled.MakeText("   ", "inverse", "magenta")).
+			WriteStyled(styled.MakeText("━━━", "magenta")),
+	},
+	{
+		Name: "scrollbar when not showing all items",
+		Given: &Widget{
+			Horizontal: true,
+			State:      State{Items: TestItems{NItems: 4}, Selected: 0},
+		},
+		Width: 10, Height: 3,
+		Want: bb(10).
+			WriteStyled(styled.MakeText("item 0", "inverse")).WritePlain("  it").
+			Newline().WritePlain("item 1  it").
+			Newline().
+			WriteStyled(styled.MakeText("          ", "inverse", "magenta")),
+	},
+}
+
+func TestRenderHorizontal(t *testing.T) {
+	clitypes.TestRender(t, renderHorizontalTests)
 }
 
 var handleTests = []struct {
