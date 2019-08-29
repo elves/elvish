@@ -62,33 +62,57 @@ var renderTests = []struct {
 		"VScrollbar showing full thumb",
 		VScrollbar{4, 0, 3},
 		10, 2,
-		bb(1).WriteStyled(scrollbarThumb).WriteStyled(scrollbarThumb),
+		bb(1).WriteStyled(vscrollbarThumb).WriteStyled(vscrollbarThumb),
 	},
 	{
 		"VScrollbar showing thumb in first half",
 		VScrollbar{4, 0, 1},
 		10, 2,
-		bb(1).WriteStyled(scrollbarThumb).WriteStyled(scrollbarTrough),
+		bb(1).WriteStyled(vscrollbarThumb).WriteStyled(vscrollbarTrough),
 	},
 	{
 		"VScrollbar showing a minimal 1-size thumb at beginning",
 		VScrollbar{4, 0, 0},
 		10, 2,
-		bb(1).WriteStyled(scrollbarThumb).WriteStyled(scrollbarTrough),
+		bb(1).WriteStyled(vscrollbarThumb).WriteStyled(vscrollbarTrough),
 	},
 	{
 		"VScrollbar showing a minimal 1-size thumb at end",
 		VScrollbar{4, 3, 3},
 		10, 2,
-		bb(1).WriteStyled(scrollbarTrough).WriteStyled(scrollbarThumb),
+		bb(1).WriteStyled(vscrollbarTrough).WriteStyled(vscrollbarThumb),
 	},
 	{
 		"VScrollbarContainer",
 		VScrollbarContainer{Label{styled.Plain("abcd1234")},
 			VScrollbar{4, 0, 1}},
 		5, 2,
-		bb(5).WritePlain("abcd").WriteStyled(scrollbarThumb).
-			Newline().WritePlain("1234").WriteStyled(scrollbarTrough),
+		bb(5).WritePlain("abcd").WriteStyled(vscrollbarThumb).
+			Newline().WritePlain("1234").WriteStyled(vscrollbarTrough),
+	},
+	{
+		"HScrollbar showing full thumb",
+		HScrollbar{4, 0, 3},
+		2, 10,
+		bb(2).WriteStyled(hscrollbarThumb).WriteStyled(hscrollbarThumb),
+	},
+	{
+		"HScrollbar showing thumb in first half",
+		HScrollbar{4, 0, 1},
+		2, 10,
+		bb(2).WriteStyled(hscrollbarThumb).WriteStyled(hscrollbarTrough),
+	},
+	{
+		"HScrollbar showing a minimal 1-size thumb at beginning",
+		HScrollbar{4, 0, 0},
+		2, 10,
+		bb(2).WriteStyled(hscrollbarThumb).WriteStyled(hscrollbarTrough),
+	},
+	{
+		"HScrollbar showing a minimal 1-size thumb at end",
+		HScrollbar{4, 3, 3},
+		2, 10,
+		bb(2).WriteStyled(hscrollbarTrough).WriteStyled(hscrollbarThumb),
 	},
 }
 

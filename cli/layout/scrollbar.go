@@ -27,8 +27,8 @@ type VScrollbar struct {
 }
 
 var (
-	scrollbarThumb  = styled.MakeText(" ", "magenta", "inverse")
-	scrollbarTrough = styled.MakeText("│", "magenta")
+	vscrollbarThumb  = styled.MakeText(" ", "magenta", "inverse")
+	vscrollbarTrough = styled.MakeText("│", "magenta")
 )
 
 func (v VScrollbar) Render(width, height int) *ui.Buffer {
@@ -39,9 +39,34 @@ func (v VScrollbar) Render(width, height int) *ui.Buffer {
 			bb.Newline()
 		}
 		if posLow <= i && i < posHigh {
-			bb.WriteStyled(scrollbarThumb)
+			bb.WriteStyled(vscrollbarThumb)
 		} else {
-			bb.WriteStyled(scrollbarTrough)
+			bb.WriteStyled(vscrollbarTrough)
+		}
+	}
+	return bb.Buffer()
+}
+
+// HScrollbar is a Renderer for a horizontal scrollbar.
+type HScrollbar struct {
+	Total int
+	Low   int
+	High  int
+}
+
+var (
+	hscrollbarThumb  = styled.MakeText(" ", "magenta", "inverse")
+	hscrollbarTrough = styled.MakeText("━", "magenta")
+)
+
+func (h HScrollbar) Render(width, height int) *ui.Buffer {
+	posLow, posHigh := findScrollInterval(h.Total, h.Low, h.High, width)
+	bb := ui.NewBufferBuilder(width)
+	for i := 0; i < width; i++ {
+		if posLow <= i && i < posHigh {
+			bb.WriteStyled(hscrollbarThumb)
+		} else {
+			bb.WriteStyled(hscrollbarTrough)
 		}
 	}
 	return bb.Buffer()
