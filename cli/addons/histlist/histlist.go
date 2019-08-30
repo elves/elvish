@@ -1,3 +1,4 @@
+// Package histlist implements the history listing addon.
 package histlist
 
 import (
@@ -14,11 +15,22 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
+// Config contains configurations to start history listing.
 type Config struct {
+	// Binding provides key binding.
 	Binding clitypes.Handler
-	Store   histutil.Store
+	// Store provides the source of all commands.
+	Store Store
 }
 
+// Store wraps the AllCmds method. It is a subset of histutil.Store.
+type Store interface {
+	AllCmds() ([]histutil.Entry, error)
+}
+
+var _ = Store(histutil.Store(nil))
+
+// Start starts history listing.
 func Start(app *cli.App, cfg Config) {
 	if cfg.Store == nil {
 		app.Notify("no history store")
@@ -47,6 +59,7 @@ func Start(app *cli.App, cfg Config) {
 				buf.InsertAtDot("\n" + text)
 			}
 		})
+		app.MutateAppState(func(s *cli.State) { s.Listing = nil })
 	}
 	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
 }
@@ -54,6 +67,9 @@ func Start(app *cli.App, cfg Config) {
 type items []histutil.Entry
 
 func filter(allEntries []histutil.Entry, p string) items {
+	if p == "" {
+		return allEntries
+	}
 	var entries []histutil.Entry
 	for _, entry := range allEntries {
 		if strings.Contains(entry.Text, p) {
