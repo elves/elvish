@@ -268,3 +268,43 @@ func TestBufferExtendRight(t *testing.T) {
 		}
 	}
 }
+
+var bufferTTYStringTests = []struct {
+	buf  *Buffer
+	want string
+}{
+	{
+		NewBufferBuilder(4).
+			WritePlain("ABCD").
+			Newline().
+			WritePlain("XY").
+			Buffer(),
+		"Width = 4, Dot = (0, 0)\n" +
+			"┌────┐\n" +
+			"│ABCD│\n" +
+			"│XY$ │\n" +
+			"└────┘\n",
+	},
+	{
+		NewBufferBuilder(4).
+			WritePlain("AB").SetDotToCursor().
+			WriteStringSGR("CD", "1").
+			Newline().
+			WriteStringSGR("XY", "7").
+			Buffer(),
+		"Width = 4, Dot = (0, 2)\n" +
+			"┌────┐\n" +
+			"│AB\033[1mCD\033[m│\n" +
+			"│\033[7mXY\033[m$ │\n" +
+			"└────┘\n",
+	},
+}
+
+func TestBufferTTYString(t *testing.T) {
+	for _, test := range bufferTTYStringTests {
+		ttyString := test.buf.TTYString()
+		if ttyString != test.want {
+			t.Errorf("TTYString -> %q, want %q", ttyString, test.want)
+		}
+	}
+}

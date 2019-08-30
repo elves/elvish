@@ -1,6 +1,11 @@
 package ui
 
-import "github.com/elves/elvish/util"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/elves/elvish/util"
+)
 
 // Cell is an indivisible unit on the screen. It is not necessarily 1 column
 // wide.
@@ -133,4 +138,38 @@ func (b *Buffer) ExtendRight(b2 *Buffer) {
 		row := append(makeSpacing(w), b2.Lines[i]...)
 		b.Lines = append(b.Lines, row)
 	}
+}
+
+// TTYString returns a string for representing the buffer on the terminal.
+func (b *Buffer) TTYString() string {
+	sb := new(strings.Builder)
+	fmt.Fprintf(sb, "Width = %d, Dot = (%d, %d)\n", b.Width, b.Dot.Line, b.Dot.Col)
+	// Top border
+	sb.WriteString("┌" + strings.Repeat("─", b.Width) + "┐\n")
+	for _, line := range b.Lines {
+		// Left border
+		sb.WriteRune('│')
+		// Content
+		lastStyle := ""
+		usedWidth := 0
+		for _, cell := range line {
+			if cell.Style != lastStyle {
+				sb.WriteString("\033[" + cell.Style + "m")
+				lastStyle = cell.Style
+			}
+			sb.WriteString(cell.Text)
+			usedWidth += util.Wcswidth(cell.Text)
+		}
+		if lastStyle != "" {
+			sb.WriteString("\033[m")
+		}
+		if usedWidth < b.Width {
+			sb.WriteString("$" + strings.Repeat(" ", b.Width-usedWidth-1))
+		}
+		// Right border and newline
+		sb.WriteString("│\n")
+	}
+	// Bottom border
+	sb.WriteString("└" + strings.Repeat("─", b.Width) + "┘\n")
+	return sb.String()
 }
