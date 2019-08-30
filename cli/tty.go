@@ -248,8 +248,19 @@ func (t TTYCtrl) SetSize(h, w int) {
 	t.height, t.width = h, w
 }
 
-// Inject injects an event to the fake terminal.
-func (t TTYCtrl) Inject(e term.Event) { t.eventCh <- e }
+// Inject injects events to the fake terminal.
+func (t TTYCtrl) Inject(events ...term.Event) {
+	for _, event := range events {
+		t.eventCh <- event
+	}
+}
+
+// InjectSignal injects signals.
+func (t TTYCtrl) InjectSignal(sigs ...os.Signal) {
+	for _, sig := range sigs {
+		t.sigCh <- sig
+	}
+}
 
 // VerifyBuffer verifies that a buffer will appear within the timeout of 1
 // second.
@@ -283,9 +294,6 @@ func (t TTYCtrl) LastNotesBuffer() *ui.Buffer {
 	}
 	return t.notesBufs[len(t.notesBufs)-1]
 }
-
-// InjectSignal injects a signal.
-func (t TTYCtrl) InjectSignal(sig os.Signal) { t.sigCh <- sig }
 
 var verifyBufferTimeout = time.Second
 

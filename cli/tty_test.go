@@ -36,20 +36,28 @@ func TestFakeTTY_Size(t *testing.T) {
 func TestFakeTTY_Events(t *testing.T) {
 	tty, ttyCtrl := NewFakeTTY()
 	events := tty.StartInput()
-	ttyCtrl.Inject(term.K('a'))
+	ttyCtrl.Inject(term.K('a'), term.K('b'))
 	event := <-events
 	if event != term.K('a') {
 		t.Errorf("Got event %v, want K('a')", event)
+	}
+	event = <-events
+	if event != term.K('b') {
+		t.Errorf("Got event %v, want K('b')", event)
 	}
 }
 
 func TestFakeTTY_Signals(t *testing.T) {
 	tty, ttyCtrl := NewFakeTTY()
 	signals := tty.NotifySignals()
-	ttyCtrl.InjectSignal(os.Interrupt)
+	ttyCtrl.InjectSignal(os.Interrupt, os.Kill)
 	signal := <-signals
 	if signal != os.Interrupt {
 		t.Errorf("Got signal %v, want %v", signal, os.Interrupt)
+	}
+	signal = <-signals
+	if signal != os.Kill {
+		t.Errorf("Got signal %v, want %v", signal, os.Kill)
 	}
 }
 
