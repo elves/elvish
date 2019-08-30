@@ -1,3 +1,5 @@
+// Package lastcmd implements an addon that supports inserting the last command
+// or words from it.
 package lastcmd
 
 import (
@@ -15,12 +17,24 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
+// Config is the configuration for starting lastcmd.
 type Config struct {
-	Binding   clitypes.Handler
-	Store     histutil.Store
+	// Binding provides key binding.
+	Binding clitypes.Handler
+	// Store provides the source for the last command.
+	Store Store
+	// Wordifier breaks a command into words.
 	Wordifier func(string) []string
 }
 
+// Store wraps the LastCmd method. It is a subset of histutil.Store.
+type Store interface {
+	LastCmd() (histutil.Entry, error)
+}
+
+var _ = Store(histutil.Store(nil))
+
+// Start starts lastcmd function.
 func Start(app *cli.App, cfg Config) {
 	if cfg.Store == nil {
 		app.Notify("no history store")
@@ -29,6 +43,7 @@ func Start(app *cli.App, cfg Config) {
 	cmd, err := cfg.Store.LastCmd()
 	if err != nil {
 		app.Notify("db error: " + err.Error())
+		return
 	}
 	wordifier := cfg.Wordifier
 	if wordifier == nil {
@@ -43,18 +58,26 @@ func Start(app *cli.App, cfg Config) {
 	}
 
 	w := combobox.Widget{}
-	w.CodeArea.Prompt = layout.ModePrompt("LASTCMD", true)
-	w.ListBox.OverlayHandler = cfg.Binding
-	w.OnFilter = func(p string) {
-		w.ListBox.MutateListboxState(func(s *listbox.State) {
-			*s = listbox.MakeState(filter(entries, p), false)
-		})
-	}
-	w.ListBox.OnAccept = func(it listbox.Items, i int) {
-		text := it.(items).entries[i].content
+	accept := func(text string) {
 		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
 			s.CodeBuffer.InsertAtDot(text)
 		})
+		app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+	}
+	w.CodeArea.Prompt = layout.ModePrompt("LASTCMD", true)
+	w.ListBox.OverlayHandler = cfg.Binding
+	w.OnFilter = func(p string) {
+		items := filter(entries, p)
+		if len(items.entries) == 1 {
+			accept(items.entries[0].content)
+		} else {
+			w.ListBox.MutateListboxState(func(s *listbox.State) {
+				*s = listbox.MakeState(items, false)
+			})
+		}
+	}
+	w.ListBox.OnAccept = func(it listbox.Items, i int) {
+		accept(it.(items).entries[i].content)
 	}
 	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
 }
@@ -71,6 +94,9 @@ type entry struct {
 }
 
 func filter(allEntries []entry, p string) items {
+	if p == "" {
+		return items{false, allEntries}
+	}
 	var entries []entry
 	negFilter := strings.HasPrefix(p, "-")
 	for _, entry := range allEntries {
