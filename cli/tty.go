@@ -266,8 +266,23 @@ func (t TTYCtrl) VerifyNotesBuffer(b *ui.Buffer) bool {
 // BufferHistory returns a slice of all buffers that have appeared.
 func (t TTYCtrl) BufferHistory() []*ui.Buffer { return t.bufs }
 
+// LastBuffer returns the last buffer that has appeared.
+func (t TTYCtrl) LastBuffer() *ui.Buffer {
+	if len(t.bufs) == 0 {
+		return nil
+	}
+	return t.bufs[len(t.bufs)-1]
+}
+
 // NotesBufferHistory returns a slice of all notes buffers that have appeared.
 func (t TTYCtrl) NotesBufferHistory() []*ui.Buffer { return t.notesBufs }
+
+func (t TTYCtrl) LastNotesBuffer() *ui.Buffer {
+	if len(t.notesBufs) == 0 {
+		return nil
+	}
+	return t.notesBufs[len(t.notesBufs)-1]
+}
 
 // InjectSignal injects a signal.
 func (t TTYCtrl) InjectSignal(sig os.Signal) { t.sigCh <- sig }
