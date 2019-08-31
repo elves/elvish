@@ -142,6 +142,9 @@ func (b *Buffer) ExtendRight(b2 *Buffer) {
 
 // TTYString returns a string for representing the buffer on the terminal.
 func (b *Buffer) TTYString() string {
+	if b == nil {
+		return "nil"
+	}
 	sb := new(strings.Builder)
 	fmt.Fprintf(sb, "Width = %d, Dot = (%d, %d)\n", b.Width, b.Dot.Line, b.Dot.Col)
 	// Top border
