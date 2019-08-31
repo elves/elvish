@@ -58,12 +58,16 @@ type RenderTest struct {
 
 // TestRender runs the given Renderer tests.
 func TestRender(t *testing.T, tests []RenderTest) {
+	t.Helper()
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
+			t.Helper()
 			buf := test.Given.Render(test.Width, test.Height)
 			wantBuf := test.Want.Buffer()
 			if !reflect.DeepEqual(buf, wantBuf) {
-				t.Errorf("got buf %v, want %v", buf, wantBuf)
+				t.Errorf("Buffer mismatch")
+				t.Logf("Got: %s", buf.TTYString())
+				t.Logf("Want: %s", wantBuf.TTYString())
 			}
 		})
 	}
