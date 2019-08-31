@@ -1,3 +1,5 @@
+// Package location implements an addon that supports viewing location history
+// and changing to a selected directory.
 package location
 
 import (
@@ -13,9 +15,12 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
+// Config is the configuration to start the location history feature.
 type Config struct {
+	// Binding is the key binding.
 	Binding clitypes.Handler
-	Store   Store
+	// Store provides the directory history and the function to change directory.
+	Store Store
 }
 
 // Store defines the interface for interacting with the directory history.
@@ -24,6 +29,7 @@ type Store interface {
 	Chdir(dir string) error
 }
 
+// Start starts the directory history feature.
 func Start(app *cli.App, cfg Config) {
 	if cfg.Store == nil {
 		app.Notify("no dir history store")
@@ -48,11 +54,15 @@ func Start(app *cli.App, cfg Config) {
 		if err != nil {
 			app.Notify(err.Error())
 		}
+		app.MutateAppState(func(s *cli.State) { s.Listing = nil })
 	}
 	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
 }
 
 func filter(dirs []storedefs.Dir, p string) items {
+	if p == "" {
+		return dirs
+	}
 	var entries []storedefs.Dir
 	for _, dir := range dirs {
 		if strings.Contains(dir.Path, p) {
