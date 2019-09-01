@@ -7,10 +7,10 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/cli/combobox"
-	"github.com/elves/elvish/cli/layout"
-	"github.com/elves/elvish/cli/listbox"
+	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/combobox"
+	"github.com/elves/elvish/cli/el/layout"
+	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/styled"
 )
@@ -18,7 +18,7 @@ import (
 // Config is the configuration to start the location history feature.
 type Config struct {
 	// Binding is the key binding.
-	Binding clitypes.Handler
+	Binding el.Handler
 	// Store provides the directory history and the function to change directory.
 	Store Store
 }

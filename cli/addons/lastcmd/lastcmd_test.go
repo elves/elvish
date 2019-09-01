@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/codearea"
+	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"

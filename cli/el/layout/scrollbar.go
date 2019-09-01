@@ -1,7 +1,7 @@
 package layout
 
 import (
-	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
@@ -9,7 +9,7 @@ import (
 // VScrollbarContainer is a Renderer consisting of content and a vertical
 // scrollbar on the right.
 type VScrollbarContainer struct {
-	Content   clitypes.Renderer
+	Content   el.Renderer
 	Scrollbar VScrollbar
 }
 

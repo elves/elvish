@@ -9,9 +9,9 @@ import (
 // State keeps the state of the widget. Its access must be synchronized through
 // the mutex.
 type State struct {
-	Items     Items
-	Selected  int
-	First int
+	Items    Items
+	Selected int
+	First    int
 }
 
 // MakeState makes a new State.

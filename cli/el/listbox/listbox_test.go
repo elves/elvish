@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -12,7 +12,7 @@ import (
 
 var bb = ui.NewBufferBuilder
 
-var renderVerticalTests = []clitypes.RenderTest{
+var renderVerticalTests = []el.RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
 		Given: &Widget{Placeholder: styled.Plain("nothing")},
@@ -77,10 +77,10 @@ var renderVerticalTests = []clitypes.RenderTest{
 }
 
 func TestRenderVertical(t *testing.T) {
-	clitypes.TestRender(t, renderVerticalTests)
+	el.TestRender(t, renderVerticalTests)
 }
 
-var renderHorizontalTests = []clitypes.RenderTest{
+var renderHorizontalTests = []el.RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
 		Given: &Widget{Horizontal: true, Placeholder: styled.Plain("nothing")},
@@ -153,7 +153,7 @@ var renderHorizontalTests = []clitypes.RenderTest{
 }
 
 func TestRenderHorizontal(t *testing.T) {
-	clitypes.TestRender(t, renderHorizontalTests)
+	el.TestRender(t, renderHorizontalTests)
 }
 
 var handleTests = []struct {
@@ -223,8 +223,8 @@ var handleTests = []struct {
 		"overlay handler",
 		addOverlay(
 			&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 5}},
-			func(w *Widget) clitypes.Handler {
-				return clitypes.MapHandler{
+			func(w *Widget) el.Handler {
+				return el.MapHandler{
 					term.K('a'): func() { w.State.Selected = 0 },
 				}
 			}),
@@ -234,7 +234,7 @@ var handleTests = []struct {
 	},
 }
 
-func addOverlay(w *Widget, overlay func(*Widget) clitypes.Handler) *Widget {
+func addOverlay(w *Widget, overlay func(*Widget) el.Handler) *Widget {
 	w.OverlayHandler = overlay(w)
 	return w
 }

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/elves/elvish/cli/codearea"
+	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"

@@ -8,7 +8,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/parse"
@@ -25,7 +25,7 @@ type Widget struct {
 	State State
 
 	// A Handler that takes precedence over the default handling of events.
-	OverlayHandler clitypes.Handler
+	OverlayHandler el.Handler
 	// A function that highlights the given code and returns any errors it has
 	// found when highlighting. If this function is not given, the Widget does
 	// not highlight the code nor show any errors.
@@ -56,7 +56,7 @@ type Widget struct {
 	pasteBuffer bytes.Buffer
 }
 
-var _ = clitypes.Widget(&Widget{})
+var _ = el.Widget(&Widget{})
 
 // ConstPrompt returns a prompt callback that always writes the same styled
 // text.
@@ -80,7 +80,7 @@ func dummyOnSubmit(string) {}
 // at the beginning of most public methods.
 func (w *Widget) init() {
 	if w.OverlayHandler == nil {
-		w.OverlayHandler = clitypes.DummyHandler{}
+		w.OverlayHandler = el.DummyHandler{}
 	}
 	if w.Highlighter == nil {
 		w.Highlighter = dummyHighlighter

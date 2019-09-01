@@ -4,7 +4,7 @@ package colview
 import (
 	"sync"
 
-	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 )
@@ -18,18 +18,18 @@ type Widget struct {
 	State State
 
 	// An overlay handler.
-	OverlayHandler clitypes.Handler
+	OverlayHandler el.Handler
 	// A function that takes the number of columns and return weights for the
 	// widths of the columns. The returned slice must have a size of n. If this
 	// function is nil, all the columns will have the same weight.
 	Weights func(n int) []int
 }
 
-var _ = clitypes.Widget(&Widget{})
+var _ = el.Widget(&Widget{})
 
 // State keeps the state of the colview widget.
 type State struct {
-	Columns     []clitypes.Widget
+	Columns     []el.Widget
 	FocusColumn int
 }
 
@@ -45,7 +45,7 @@ func equalWeights(n int) []int {
 // the beginning of most public methods.
 func (w *Widget) init() {
 	if w.OverlayHandler == nil {
-		w.OverlayHandler = clitypes.DummyHandler{}
+		w.OverlayHandler = el.DummyHandler{}
 	}
 	if w.Weights == nil {
 		w.Weights = equalWeights

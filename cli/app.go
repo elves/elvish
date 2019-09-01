@@ -7,8 +7,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/cli/codearea"
+	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -35,7 +35,7 @@ type State struct {
 	// Notes that have been added since the last redraw.
 	Notes []string
 	// A widget to show under the codearea widget.
-	Listing clitypes.Widget
+	Listing el.Widget
 }
 
 // Note appends a new note.
@@ -133,7 +133,7 @@ func (app *App) redraw(flag redrawFlag) {
 	}
 
 	var notes []string
-	var listing clitypes.Renderer
+	var listing el.Renderer
 	app.MutateAppState(func(s *State) {
 		notes = s.PopNotes()
 		listing = s.Listing
@@ -168,7 +168,7 @@ func renderNotes(notes []string, width int) *ui.Buffer {
 }
 
 // Renders the codearea, and uses the rest of the height for the listing.
-func renderApp(codeArea, listing clitypes.Renderer, width, height int) *ui.Buffer {
+func renderApp(codeArea, listing el.Renderer, width, height int) *ui.Buffer {
 	buf := codeArea.Render(width, height)
 	if listing != nil && len(buf.Lines) < height {
 		bufListing := listing.Render(width, height-len(buf.Lines))

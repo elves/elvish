@@ -3,15 +3,15 @@ package combobox
 import (
 	"testing"
 
-	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/cli/codearea"
-	"github.com/elves/elvish/cli/listbox"
+	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
 
-var renderTests = []clitypes.RenderTest{
+var renderTests = []el.RenderTest{
 	{
 		Name: "rendering codearea and listbox",
 		Given: &Widget{
@@ -53,7 +53,7 @@ func installOnFilter(w *Widget) *Widget {
 }
 
 func TestRender(t *testing.T) {
-	clitypes.TestRender(t, renderTests)
+	el.TestRender(t, renderTests)
 }
 
 func TestHandle(t *testing.T) {

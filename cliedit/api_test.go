@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vals"
@@ -80,7 +80,7 @@ func TestInitAPI_Insert_QuotePaste(t *testing.T) {
 	}
 }
 
-func testKeyBinding(t *testing.T, v vars.Var, h clitypes.Handler) {
+func testKeyBinding(t *testing.T, v vars.Var, h el.Handler) {
 	t.Helper()
 
 	var called int

@@ -3,9 +3,9 @@
 package combobox
 
 import (
-	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/cli/codearea"
-	"github.com/elves/elvish/cli/listbox"
+	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 )
@@ -22,7 +22,7 @@ type Widget struct {
 	lastFilter string
 }
 
-var _ = clitypes.Widget(&Widget{})
+var _ = el.Widget(&Widget{})
 
 func (w *Widget) init() {
 	if w.OnFilter == nil {

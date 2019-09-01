@@ -1,4 +1,5 @@
-package clitypes
+// Package el defines interfaces for CLI UI elements and related utilities.
+package el
 
 import (
 	"reflect"

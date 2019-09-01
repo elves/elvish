@@ -3,15 +3,15 @@ package colview
 import (
 	"testing"
 
-	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/cli/listbox"
+	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
 )
 
-var renderTests = []clitypes.RenderTest{
+var renderTests = []el.RenderTest{
 	{
 		Name:  "colview no column",
 		Given: &Widget{},
@@ -21,7 +21,7 @@ var renderTests = []clitypes.RenderTest{
 	{
 		Name: "colview width < number of columns",
 		Given: &Widget{State: State{
-			Columns: []clitypes.Widget{
+			Columns: []el.Widget{
 				makeListbox("x", 2, 0), makeListbox("y", 1, 0),
 				makeListbox("z", 3, 0), makeListbox("w", 1, 0),
 			},
@@ -32,7 +32,7 @@ var renderTests = []clitypes.RenderTest{
 	{
 		Name: "colview normal",
 		Given: &Widget{State: State{
-			Columns: []clitypes.Widget{
+			Columns: []el.Widget{
 				makeListbox("x", 2, 1),
 				makeListbox("y", 1, 0),
 				makeListbox("z", 3, -1),
@@ -52,7 +52,7 @@ var renderTests = []clitypes.RenderTest{
 	},
 }
 
-func makeListbox(prefix string, n, selected int) clitypes.Widget {
+func makeListbox(prefix string, n, selected int) el.Widget {
 	return &listbox.Widget{State: listbox.State{
 		Items:    listbox.TestItems{Prefix: prefix, NItems: n},
 		Selected: selected,
@@ -60,7 +60,7 @@ func makeListbox(prefix string, n, selected int) clitypes.Widget {
 }
 
 func TestRender(t *testing.T) {
-	clitypes.TestRender(t, renderTests)
+	el.TestRender(t, renderTests)
 }
 
 func TestHandle(t *testing.T) {
@@ -68,16 +68,16 @@ func TestHandle(t *testing.T) {
 	// itself, column index for column.
 	handledBy := make(chan int, 10)
 	w := &Widget{
-		OverlayHandler: clitypes.MapHandler{
+		OverlayHandler: el.MapHandler{
 			term.K('a'): func() { handledBy <- -1 },
 		},
 		State: State{
-			Columns: []clitypes.Widget{
-				&listbox.Widget{OverlayHandler: clitypes.MapHandler{
+			Columns: []el.Widget{
+				&listbox.Widget{OverlayHandler: el.MapHandler{
 					term.K('a'): func() { handledBy <- 0 },
 					term.K('b'): func() { handledBy <- 0 },
 				}},
-				&listbox.Widget{OverlayHandler: clitypes.MapHandler{
+				&listbox.Widget{OverlayHandler: el.MapHandler{
 					term.K('a'): func() { handledBy <- 1 },
 					term.K('b'): func() { handledBy <- 1 },
 				}},

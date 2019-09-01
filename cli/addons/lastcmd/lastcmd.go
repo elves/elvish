@@ -8,19 +8,19 @@ import (
 	"strings"
 
 	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/cli/codearea"
-	"github.com/elves/elvish/cli/combobox"
+	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli/el/combobox"
+	"github.com/elves/elvish/cli/el/layout"
+	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/histutil"
-	"github.com/elves/elvish/cli/layout"
-	"github.com/elves/elvish/cli/listbox"
 	"github.com/elves/elvish/styled"
 )
 
 // Config is the configuration for starting lastcmd.
 type Config struct {
 	// Binding provides key binding.
-	Binding clitypes.Handler
+	Binding el.Handler
 	// Store provides the source for the last command.
 	Store Store
 	// Wordifier breaks a command into words.

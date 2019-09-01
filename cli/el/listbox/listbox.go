@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/cli/layout"
+	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -22,7 +22,7 @@ type Widget struct {
 	// Publically accessible state.
 	State State
 	// A Handler that takes precedence over the default handling of events.
-	OverlayHandler clitypes.Handler
+	OverlayHandler el.Handler
 	// A placeholder to show when there are no items.
 	Placeholder styled.Text
 	// A function called on the accept event.
@@ -32,11 +32,11 @@ type Widget struct {
 	Horizontal bool
 }
 
-var _ = clitypes.Widget(&Widget{})
+var _ = el.Widget(&Widget{})
 
 func (w *Widget) init() {
 	if w.OverlayHandler == nil {
-		w.OverlayHandler = clitypes.DummyHandler{}
+		w.OverlayHandler = el.DummyHandler{}
 	}
 	if w.OnAccept == nil {
 		w.OnAccept = func(Items, int) {}
@@ -164,7 +164,7 @@ func (w *Widget) renderVertical(width, height int) *ui.Buffer {
 		allLines = append(allLines, lines...)
 	}
 
-	var rd clitypes.Renderer = layout.CroppedLines{Lines: allLines}
+	var rd el.Renderer = layout.CroppedLines{Lines: allLines}
 	if first > 0 || i < n || hasCropped {
 		rd = layout.VScrollbarContainer{
 			Content:   rd,

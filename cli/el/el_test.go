@@ -1,4 +1,4 @@
-package clitypes
+package el
 
 import (
 	"testing"

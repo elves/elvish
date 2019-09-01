@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -13,7 +13,7 @@ import (
 
 var bb = ui.NewBufferBuilder
 
-var renderTests = []clitypes.RenderTest{
+var renderTests = []el.RenderTest{
 	{
 		Name: "prompt only",
 		Given: &Widget{
@@ -167,7 +167,7 @@ var renderTests = []clitypes.RenderTest{
 }
 
 func TestRender(t *testing.T) {
-	clitypes.TestRender(t, renderTests)
+	el.TestRender(t, renderTests)
 }
 
 var handleTests = []struct {
@@ -283,8 +283,8 @@ var handleTests = []struct {
 	},
 	{
 		"overlay handler",
-		addOverlay(&Widget{}, func(w *Widget) clitypes.Handler {
-			return clitypes.MapHandler{
+		addOverlay(&Widget{}, func(w *Widget) el.Handler {
+			return el.MapHandler{
 				term.K('a'): func() { w.State.CodeBuffer.InsertAtDot("b") },
 			}
 		}),
@@ -295,7 +295,7 @@ var handleTests = []struct {
 
 // A utility for building a Widget with an OverlayHandler as a single
 // expression.
-func addOverlay(w *Widget, overlay func(*Widget) clitypes.Handler) *Widget {
+func addOverlay(w *Widget, overlay func(*Widget) el.Handler) *Widget {
 	w.OverlayHandler = overlay(w)
 	return w
 }

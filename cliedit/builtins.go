@@ -6,7 +6,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/codearea"
+	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/util"

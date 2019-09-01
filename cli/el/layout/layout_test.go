@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
@@ -13,7 +13,7 @@ var bb = ui.NewBufferBuilder
 
 var renderTests = []struct {
 	name     string
-	renderer clitypes.Renderer
+	renderer el.Renderer
 	width    int
 	height   int
 	wantBuf  *ui.BufferBuilder

@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/elves/elvish/cli/clitypes"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/eddefs"
 	"github.com/elves/elvish/edit/ui"
@@ -29,7 +29,7 @@ type mapBinding struct {
 	mapVars []vars.PtrVar
 }
 
-func newMapBinding(nt notifier, ev *eval.Evaler, mapVars ...vars.PtrVar) clitypes.Handler {
+func newMapBinding(nt notifier, ev *eval.Evaler, mapVars ...vars.PtrVar) el.Handler {
 	return mapBinding{nt, ev, mapVars}
 }
 
