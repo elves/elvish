@@ -269,6 +269,13 @@ func TestBufferExtendRight(t *testing.T) {
 	}
 }
 
+func TestBufferBuffer(t *testing.T) {
+	b := NewBufferBuilder(4).WritePlain("text").Buffer()
+	if b.Buffer() != b {
+		t.Errorf("Buffer did not return itself")
+	}
+}
+
 var bufferTTYStringTests = []struct {
 	buf  *Buffer
 	want string

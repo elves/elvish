@@ -140,6 +140,9 @@ func (b *Buffer) ExtendRight(b2 *Buffer) {
 	}
 }
 
+// Buffer returns itself.
+func (b *Buffer) Buffer() *Buffer { return b }
+
 // TTYString returns a string for representing the buffer on the terminal.
 func (b *Buffer) TTYString() string {
 	if b == nil {
