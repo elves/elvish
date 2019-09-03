@@ -8,10 +8,10 @@ import (
 	"strconv"
 
 	"github.com/elves/elvish/cli"
-	"github.com/elves/elvish/cli/clitypes"
-	"github.com/elves/elvish/cli/codearea"
-	"github.com/elves/elvish/cli/combobox"
-	"github.com/elves/elvish/cli/listbox"
+	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli/el/combobox"
+	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -22,7 +22,7 @@ var (
 	horizontal = flag.Bool("horizontal", false, "use horizontal listbox layout")
 )
 
-func makeWidget() clitypes.Widget {
+func makeWidget() el.Widget {
 	items := listbox.TestItems{Prefix: "list item "}
 	w := &combobox.Widget{
 		CodeArea: codearea.Widget{
