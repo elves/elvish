@@ -84,38 +84,42 @@ func TestHandle(t *testing.T) {
 			},
 			FocusColumn: 1,
 		},
+		OnLeft:  func() { handledBy <- 100 },
+		OnRight: func() { handledBy <- 101 },
+	}
+
+	expectHandled := func(event term.Event, wantBy int) {
+		t.Helper()
+		handled := w.Handle(event)
+		if !handled {
+			t.Errorf("Handle -> false, want true")
+		}
+		if by := <-handledBy; by != wantBy {
+			t.Errorf("Handled by %d, want %d", by, wantBy)
+		}
+	}
+
+	expectUnhandled := func(event term.Event) {
+		t.Helper()
+		handled := w.Handle(event)
+		if handled {
+			t.Errorf("Handle -> true, want false")
+		}
 	}
 
 	// Event handled by widget's overlay handler.
-	handled := w.Handle(term.K('a'))
-	if !handled {
-		t.Errorf("Handle -> false, want true")
-	}
-	if by := <-handledBy; by != -1 {
-		t.Errorf("Handled by %d, want -1", by)
-	}
-
+	expectHandled(term.K('a'), -1)
 	// Event handled by the focused column.
-	handled = w.Handle(term.K('b'))
-	if !handled {
-		t.Errorf("Handle -> false, want true")
-	}
-	if by := <-handledBy; by != 1 {
-		t.Errorf("Handled by %d, want 1", by)
-	}
-
-	// Event unhandled.
-	handled = w.Handle(term.K('c'))
-	if handled {
-		t.Errorf("Handle -> true, want false")
-	}
-
+	expectHandled(term.K('b'), 1)
+	// Fallback handler for Left
+	expectHandled(term.K(ui.Left), 100)
+	// Fallback handler for Left
+	expectHandled(term.K(ui.Right), 101)
+	// No one to handle the event.
+	expectUnhandled(term.K('c'))
 	// No focused column: event unhandled
 	w.MutateColViewState(func(s *State) { s.FocusColumn = -1 })
-	handled = w.Handle(term.K('b'))
-	if handled {
-		t.Errorf("Handle -> true, want false")
-	}
+	expectUnhandled(term.K('b'))
 }
 
 func TestDistribute(t *testing.T) {

@@ -23,6 +23,12 @@ type Widget struct {
 	// widths of the columns. The returned slice must have a size of n. If this
 	// function is nil, all the columns will have the same weight.
 	Weights func(n int) []int
+	// A function called when the Left method of Widget is called, or when Left
+	// is pressed and unhandled.
+	OnLeft func()
+	// A function called when the Right method of Widget is called, or when
+	// Right is pressed and unhandled.
+	OnRight func()
 }
 
 var _ = el.Widget(&Widget{})
@@ -49,6 +55,12 @@ func (w *Widget) init() {
 	}
 	if w.Weights == nil {
 		w.Weights = equalWeights
+	}
+	if w.OnLeft == nil {
+		w.OnLeft = func() {}
+	}
+	if w.OnRight == nil {
+		w.OnRight = func() {}
 	}
 }
 
@@ -106,9 +118,33 @@ func (w *Widget) Handle(event term.Event) bool {
 	}
 	state := w.CopyColViewState()
 	if 0 <= state.FocusColumn && state.FocusColumn < len(state.Columns) {
-		return state.Columns[state.FocusColumn].Handle(event)
+		if state.Columns[state.FocusColumn].Handle(event) {
+			return true
+		}
 	}
-	return false
+
+	switch event {
+	case term.K(ui.Left):
+		w.Left()
+		return true
+	case term.K(ui.Right):
+		w.Right()
+		return true
+	default:
+		return false
+	}
+}
+
+// Left triggers the OnLeft callback.
+func (w *Widget) Left() {
+	w.init()
+	w.OnLeft()
+}
+
+// Right triggers the OnRight callback.
+func (w *Widget) Right() {
+	w.init()
+	w.OnRight()
 }
 
 // Distributes fullWidth according to the weights, rounding to integers.
