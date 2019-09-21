@@ -25,6 +25,8 @@ type Widget struct {
 	OverlayHandler el.Handler
 	// A placeholder to show when there are no items.
 	Placeholder styled.Text
+	// A function to call when the selected item has changed.
+	OnSelect func(it Items, i int)
 	// A function called on the accept event.
 	OnAccept func(it Items, i int)
 	// Whether the listbox should be rendered in a horizontal layout. Note that
@@ -37,6 +39,9 @@ var _ = el.Widget(&Widget{})
 func (w *Widget) init() {
 	if w.OverlayHandler == nil {
 		w.OverlayHandler = el.DummyHandler{}
+	}
+	if w.OnSelect == nil {
+		w.OnSelect = func(Items, int) {}
 	}
 	if w.OnAccept == nil {
 		w.OnAccept = func(Items, int) {}
@@ -183,35 +188,92 @@ func (w *Widget) Handle(event term.Event) bool {
 
 	switch event {
 	case term.K(ui.Up):
-		w.MutateListboxState(func(s *State) {
-			switch {
-			case s.Selected >= s.Items.Len():
-				s.Selected = s.Items.Len() - 1
-			case s.Selected <= 0:
-				s.Selected = 0
-			default:
-				s.Selected--
-			}
-		})
+		w.Select(Prev)
 		return true
 	case term.K(ui.Down):
-		w.MutateListboxState(func(s *State) {
-			switch {
-			case s.Selected >= s.Items.Len()-1:
-				s.Selected = s.Items.Len() - 1
-			case s.Selected < 0:
-				s.Selected = 0
-			default:
-				s.Selected++
-			}
-		})
+		w.Select(Next)
 		return true
 	case term.K(ui.Enter):
-		state := w.CopyListboxState()
-		w.OnAccept(state.Items, state.Selected)
+		w.Accept()
 		return true
 	}
 	return false
+}
+
+// Select changes the selected item by calling the given callback with the index
+// of the current selected item and the total number of items and using the
+// return value as the index of the new selected item.
+func (w *Widget) Select(f func(selected, n int) int) {
+	w.init()
+	var it Items
+	var i int
+	w.MutateListboxState(func(s *State) {
+		s.Selected = f(s.Selected, s.Items.Len())
+		it, i = s.Items, s.Selected
+	})
+	w.OnSelect(it, i)
+}
+
+// Prev moves the selection to the previous item, or does nothing if the
+// first item is currently selected. It is a suitable as an argument to
+// ((*Widget).Select.
+func Prev(selected, n int) int {
+	switch {
+	case selected >= n:
+		return n - 1
+	case selected <= 0:
+		return 0
+	default:
+		return selected - 1
+	}
+}
+
+// PrevWrap moves the selection to the previous item, or to the last item if
+// the first item is currently selected. It is a suitable as an argument to
+// ((*Widget).Select.
+func PrevWrap(selected, n int) int {
+	switch {
+	case selected >= n:
+		return n - 1
+	case selected <= 0:
+		return n - 1
+	default:
+		return selected - 1
+	}
+}
+
+// Next moves the selection to the previous item, or does nothing if the
+// last item is currently selected. It is a suitable as an argument to
+// ((*Widget).Select.
+func Next(selected, n int) int {
+	switch {
+	case selected >= n-1:
+		return n - 1
+	case selected < 0:
+		return 0
+	default:
+		return selected + 1
+	}
+}
+
+// NextWrap moves the selection to the previous item, or to the first item
+// if the last item is currently selected. It is a suitable as an argument to
+// ((*Widget).Select.
+func NextWrap(selected, n int) int {
+	switch {
+	case selected >= n-1:
+		return 0
+	case selected < 0:
+		return 0
+	default:
+		return selected + 1
+	}
+}
+
+// Accept accepts the currently selected item.
+func (w *Widget) Accept() {
+	state := w.CopyListboxState()
+	w.OnAccept(state.Items, state.Selected)
 }
 
 // MutateListboxState calls the given function while locking StateMutex.

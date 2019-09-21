@@ -273,3 +273,65 @@ func TestHandle_EnterEmitsAccept(t *testing.T) {
 		t.Errorf("OnAccept not passed current selected index")
 	}
 }
+
+func TestSelect_ChangeState(t *testing.T) {
+	// number of items = 10
+	var tests = []struct {
+		name   string
+		before int
+		f      func(selected, n int) int
+		after  int
+	}{
+		{"Next from -1", -1, Next, 0},
+		{"Next from 0", 0, Next, 1},
+		{"Next from 9", 9, Next, 9},
+		{"Next from 10", 10, Next, 9},
+
+		{"NextWrap from -1", -1, NextWrap, 0},
+		{"NextWrap from 0", 0, NextWrap, 1},
+		{"NextWrap from 9", 9, NextWrap, 0},
+		{"NextWrap from 10", 10, NextWrap, 0},
+
+		{"Prev from -1", -1, Prev, 0},
+		{"Prev from 0", 0, Prev, 0},
+		{"Prev from 9", 9, Prev, 8},
+		{"Prev from 10", 10, Prev, 9},
+
+		{"PrevWrap from -1", -1, PrevWrap, 9},
+		{"PrevWrap from 0", 0, PrevWrap, 9},
+		{"PrevWrap from 9", 9, PrevWrap, 8},
+		{"PrevWrap from 10", 10, PrevWrap, 9},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			w := &Widget{
+				State: State{Items: TestItems{NItems: 10}, Selected: test.before},
+			}
+			w.Select(test.f)
+			if w.State.Selected != test.after {
+				t.Errorf("selected = %d, want %d", w.State.Selected, test.after)
+			}
+		})
+	}
+}
+
+func TestSelect_CallOnSelect(t *testing.T) {
+	it := TestItems{NItems: 10}
+	gotItemsCh := make(chan Items, 1)
+	gotSelectedCh := make(chan int, 1)
+	w := &Widget{
+		State: State{Items: it, Selected: 5},
+		OnSelect: func(it Items, i int) {
+			gotItemsCh <- it
+			gotSelectedCh <- i
+		},
+	}
+	w.Select(Next)
+	if gotItems := <-gotItemsCh; gotItems != it {
+		t.Errorf("Got it = %v, want %v", gotItems, it)
+	}
+	if gotSelected := <-gotSelectedCh; gotSelected != 6 {
+		t.Errorf("Got selected = %v, want 6", gotSelected)
+	}
+}
