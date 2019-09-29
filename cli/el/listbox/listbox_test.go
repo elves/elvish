@@ -74,6 +74,21 @@ var renderVerticalTests = []el.RenderTest{
 			WriteStyled(styled.MakeText("item     ", "inverse")).
 			WriteStyled(styled.MakeText(" ", "inverse", "magenta")),
 	},
+	{
+		Name: "padding",
+		Given: &Widget{
+			State: State{
+				Items: TestItems{Prefix: "item\n", NItems: 2}, Selected: 0},
+			Padding: 1,
+		},
+		Width: 4, Height: 4,
+
+		Want: bb(4).
+			WriteStyled(styled.MakeText(" it ", "inverse")).Newline().
+			WriteStyled(styled.MakeText(" 0  ", "inverse")).Newline().
+			WritePlain(" it").Newline().
+			WritePlain(" 1").Buffer(),
+	},
 }
 
 func TestRenderVertical(t *testing.T) {
@@ -111,6 +126,7 @@ var renderHorizontalTests = []el.RenderTest{
 			Newline().WritePlain("item 1").
 			Newline().WritePlain("item 2"),
 	},
+	// TODO(xiaq): Add test for padding.
 	{
 		Name: "long lines cropped, with full scrollbar",
 		Given: &Widget{

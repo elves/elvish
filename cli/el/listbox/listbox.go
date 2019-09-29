@@ -21,6 +21,7 @@ type Widget struct {
 	StateMutex sync.RWMutex
 	// Publically accessible state.
 	State State
+
 	// A Handler that takes precedence over the default handling of events.
 	OverlayHandler el.Handler
 	// A placeholder to show when there are no items.
@@ -32,6 +33,9 @@ type Widget struct {
 	// Whether the listbox should be rendered in a horizontal layout. Note that
 	// in the horizontal layout, items must have only one line.
 	Horizontal bool
+	// The minimal amount of space to reserve for left and right sides of each
+	// entry.
+	Padding int
 }
 
 var _ = el.Widget(&Widget{})
@@ -145,7 +149,7 @@ func (w *Widget) renderVertical(width, height int) *ui.Buffer {
 	allLines := []styled.Text{}
 	hasCropped := firstCrop > 0
 
-	var i int
+	var i, selectFrom, selectTo int
 	for i = first; i < n && len(allLines) < height; i++ {
 		item := items.Show(i)
 		lines := item.SplitByRune('\n')
@@ -153,6 +157,7 @@ func (w *Widget) renderVertical(width, height int) *ui.Buffer {
 			lines = lines[firstCrop:]
 		}
 		if i == selected {
+			selectFrom, selectTo = len(allLines), len(allLines)+len(lines)
 			for j := range lines {
 				lines[j] = styled.Transform(
 					lines[j].ConcatText(styled.Plain(strings.Repeat(" ", width))),
@@ -169,7 +174,9 @@ func (w *Widget) renderVertical(width, height int) *ui.Buffer {
 		allLines = append(allLines, lines...)
 	}
 
-	var rd el.Renderer = layout.CroppedLines{Lines: allLines}
+	var rd el.Renderer = croppedLines{
+		lines: allLines, padding: w.Padding,
+		selectFrom: selectFrom, selectTo: selectTo}
 	if first > 0 || i < n || hasCropped {
 		rd = layout.VScrollbarContainer{
 			Content:   rd,
@@ -177,6 +184,38 @@ func (w *Widget) renderVertical(width, height int) *ui.Buffer {
 		}
 	}
 	return rd.Render(width, height)
+}
+
+type croppedLines struct {
+	lines      []styled.Text
+	padding    int
+	selectFrom int
+	selectTo   int
+}
+
+func (c croppedLines) Render(width, height int) *ui.Buffer {
+	lines := c.lines
+	bb := ui.NewBufferBuilder(width)
+	padding := strings.Repeat(" ", c.padding)
+	selectedPadding := styled.MakeText(padding, styleForSelected)
+	for i, line := range lines {
+		if i > 0 {
+			bb.Newline()
+		}
+		if c.selectFrom <= i && i < c.selectTo {
+			bb.WriteStyled(selectedPadding)
+			bb.WriteStyled(
+				styled.Transform(line, styleForSelected).
+					ConcatText(styled.Plain(
+						strings.Repeat(" ", width-2*c.padding))).
+					TrimWcwidth(width - 2*c.padding))
+			bb.WriteStyled(selectedPadding)
+		} else {
+			bb.WritePlain(padding)
+			bb.WriteStyled(line.TrimWcwidth(width - 2*c.padding))
+		}
+	}
+	return bb.Buffer()
 }
 
 func (w *Widget) Handle(event term.Event) bool {
