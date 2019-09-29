@@ -70,81 +70,64 @@ func TestRender(t *testing.T) {
 	el.TestRender(t, renderTests)
 }
 
-var handleTests = []struct {
-	name        string
-	widget      *Widget
-	event       term.Event
-	wantHandled bool
-	wantState   State
-}{
+var handleTests = []el.HandleTest{
 	{
-		"up doing nothing when not scrollable",
-		&Widget{
+		Name: "up doing nothing when not scrollable",
+		Given: &Widget{
 			State: State{Lines: []string{"1", "2", "3", "4"}, First: 1}},
-		term.K(ui.Up),
-		false,
-		State{Lines: []string{"1", "2", "3", "4"}, First: 1},
+		Event: term.K(ui.Up),
+
+		WantUnhandled: true,
 	},
 	{
-		"up moving window up when scrollable",
-		&Widget{
+		Name: "up moving window up when scrollable",
+		Given: &Widget{
 			Scrollable: true,
 			State:      State{Lines: []string{"1", "2", "3", "4"}, First: 1}},
-		term.K(ui.Up),
-		true,
-		State{Lines: []string{"1", "2", "3", "4"}, First: 0},
+		Event: term.K(ui.Up),
+
+		WantNewState: State{Lines: []string{"1", "2", "3", "4"}, First: 0},
 	},
 	{
-		"up doing nothing when already at top",
-		&Widget{
+		Name: "up doing nothing when already at top",
+		Given: &Widget{
 			Scrollable: true,
 			State:      State{Lines: []string{"1", "2", "3", "4"}, First: 0}},
-		term.K(ui.Up),
-		true,
-		State{Lines: []string{"1", "2", "3", "4"}, First: 0},
+		Event: term.K(ui.Up),
+
+		WantNewState: State{Lines: []string{"1", "2", "3", "4"}, First: 0},
 	},
 	{
-		"down moving window down when scrollable",
-		&Widget{
+		Name: "down moving window down when scrollable",
+		Given: &Widget{
 			Scrollable: true,
 			State:      State{Lines: []string{"1", "2", "3", "4"}, First: 1}},
-		term.K(ui.Down),
-		true,
-		State{Lines: []string{"1", "2", "3", "4"}, First: 2},
+		Event: term.K(ui.Down),
+
+		WantNewState: State{Lines: []string{"1", "2", "3", "4"}, First: 2},
 	},
 	{
-		"down doing nothing when already at bottom",
-		&Widget{
+		Name: "down doing nothing when already at bottom",
+		Given: &Widget{
 			Scrollable: true,
 			State:      State{Lines: []string{"1", "2", "3", "4"}, First: 3}},
-		term.K(ui.Down),
-		true,
-		State{Lines: []string{"1", "2", "3", "4"}, First: 3},
+		Event: term.K(ui.Down),
+
+		WantNewState: State{Lines: []string{"1", "2", "3", "4"}, First: 3},
 	},
 	{
-		"overlay",
-		&Widget{
+		Name: "overlay",
+		Given: &Widget{
 			OverlayHandler: el.MapHandler{term.K('a'): func() {}},
 		},
-		term.K('a'),
-		true,
-		State{},
+		Event: term.K('a'),
+
+		WantNewState: State{},
 	},
 }
 
 func TestHandle(t *testing.T) {
-	for _, test := range handleTests {
-		t.Run(test.name, func(t *testing.T) {
-			w := test.widget
-			handled := w.Handle(test.event)
-			if handled != test.wantHandled {
-				t.Errorf("got handled %v, want %v", handled, test.wantHandled)
-			}
-			if !reflect.DeepEqual(w.State, test.wantState) {
-				t.Errorf("got state %v, want %v", w.State, test.wantState)
-			}
-		})
-	}
+	el.TestHandle(t, handleTests)
 }
 
 func TestCopyState(t *testing.T) {
