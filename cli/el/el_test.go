@@ -59,11 +59,52 @@ func TestMapHandler(t *testing.T) {
 }
 
 func TestTestRender(t *testing.T) {
-	TestRender(t, []RenderTest{{
-		"a", &testWidget{text: styled.Plain("test")},
-		10, 10,
-		ui.NewBufferBuilder(10).WritePlain("test"),
-	}})
+	TestRender(t, []RenderTest{
+		{
+			Name:  "test",
+			Given: &testWidget{text: styled.Plain("test")},
+			Width: 10, Height: 10,
+
+			Want: ui.NewBufferBuilder(10).WritePlain("test"),
+		},
+	})
 	// Unable to test the failure branch as that will make the test fail, and
 	// *testing.T cannot be constructed externally
+}
+
+type testHandlerWithState struct {
+	State testHandlerState
+}
+
+type testHandlerState struct {
+	last  term.Event
+	total int
+}
+
+func (h *testHandlerWithState) Handle(e term.Event) bool {
+	if e == term.K('x') {
+		return false
+	}
+	h.State.last = e
+	h.State.total++
+	return true
+}
+
+func TestTestHandle(t *testing.T) {
+	TestHandle(t, []HandleTest{
+		{
+			Name:  "WantNewState",
+			Given: &testHandlerWithState{},
+			Event: term.K('a'),
+
+			WantNewState: testHandlerState{last: term.K('a'), total: 1},
+		},
+		{
+			Name:  "WantUnhaneld",
+			Given: &testHandlerWithState{},
+			Event: term.K('x'),
+
+			WantUnhandled: true,
+		},
+	})
 }

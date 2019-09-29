@@ -73,3 +73,42 @@ func TestRender(t *testing.T, tests []RenderTest) {
 		})
 	}
 }
+
+// HandleTest is a test case to be used in TestHandle.
+type HandleTest struct {
+	Name  string
+	Given Handler
+	Event term.Event
+
+	WantNewState  interface{}
+	WantUnhandled bool
+}
+
+// TestHandle runs the given Handler tests.
+func TestHandle(t *testing.T, tests []HandleTest) {
+	t.Helper()
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			t.Helper()
+			handled := test.Given.Handle(test.Event)
+			if handled != !test.WantUnhandled {
+				t.Errorf("Got handled %v, want %v", handled, !test.WantUnhandled)
+			}
+			if test.WantNewState != nil {
+				state := getState(test.Given)
+				if !reflect.DeepEqual(state, test.WantNewState) {
+					t.Errorf("Got state %v, want %v", state, test.WantNewState)
+				}
+			}
+		})
+	}
+}
+
+func getState(v interface{}) interface{} {
+	rv := reflect.ValueOf(v)
+	if rv.Kind() == reflect.Ptr {
+		rv = reflect.Indirect(rv)
+	}
+	return rv.FieldByName("State").Interface()
+}
