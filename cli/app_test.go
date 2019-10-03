@@ -136,7 +136,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 		t.Errorf("Expected buffer of height 2 did not show up")
 	}
 
-	cleanup(tty, codeCh)
+	cleanup(ed, codeCh)
 }
 
 var bufChTimeout = 1 * time.Second
@@ -163,7 +163,7 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 		t.Errorf("Did not see buffer containing highlighted code")
 	}
 
-	cleanup(tty, codeCh)
+	cleanup(ed, codeCh)
 }
 
 func TestReadCode_RendersErrorFromHighlighter(t *testing.T) {
@@ -189,7 +189,7 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 		t.Errorf("Did not see buffer containing prompt")
 	}
 
-	cleanup(tty, codeCh)
+	cleanup(ed, codeCh)
 }
 
 func TestReadCode_RendersRPrompt(t *testing.T) {
@@ -207,17 +207,17 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 		t.Errorf("Did not see buffer containing rprompt")
 	}
 
-	cleanup(tty, codeCh)
+	cleanup(ed, codeCh)
 }
 
 func TestReadCode_TriggersPrompt(t *testing.T) {
-	ed, tty := setup()
+	ed, _ := setup()
 
 	called := 0
 	ed.Config.Prompt = testPrompt{trigger: func(bool) { called++ }}
 
 	codeCh, _ := ed.ReadCodeAsync()
-	cleanup(tty, codeCh)
+	cleanup(ed, codeCh)
 
 	if called != 1 {
 		t.Errorf("Prompt.Trigger called %d times, want once", called)
@@ -250,7 +250,7 @@ func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
 		t.Errorf("Did not see buffer containing new prompt")
 	}
 
-	cleanup(tty, codeCh)
+	cleanup(ed, codeCh)
 }
 
 func TestReadCode_SupportsPersistentRPrompt(t *testing.T) {
@@ -279,7 +279,7 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 		t.Errorf("State.Notes has %d elements after redrawing, want 0", n)
 	}
 
-	cleanup(tty, codeCh)
+	cleanup(ed, codeCh)
 }
 
 func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
@@ -300,7 +300,7 @@ func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
 			t.Errorf("did not get expected buffer before sending Enter")
 		}
 
-		cleanup(tty, codeCh)
+		cleanup(ed, codeCh)
 
 		bufs := tty.BufferHistory()
 		// Last element in bufs is nil
@@ -358,7 +358,7 @@ func TestReadCode_ResetsOnSIGINT(t *testing.T) {
 		t.Errorf("Terminal state is not reset after SIGINT")
 	}
 
-	cleanup(tty, codeCh)
+	cleanup(ed, codeCh)
 }
 
 func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
@@ -386,18 +386,17 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 		t.Errorf("Terminal is not redrawn after SIGWINCH")
 	}
 
-	cleanup(tty, codeCh)
+	cleanup(ed, codeCh)
 }
 
 func setup() (*App, TTYCtrl) {
 	tty, ttyControl := NewFakeTTY()
-	ed := NewApp(tty)
-	return ed, ttyControl
+	app := NewApp(tty)
+	return app, ttyControl
 }
 
-func cleanup(t TTYCtrl, codeCh <-chan string) {
-	// Causes BasicMode to quit
-	t.Inject(term.KeyEvent{Rune: '\n'})
-	// Wait until ReadCode has finished execution
+func cleanup(app *App, codeCh <-chan string) {
+	app.CommitEOF()
+	// Make sure that ReadCode has exited
 	<-codeCh
 }
