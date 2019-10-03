@@ -160,7 +160,11 @@ func (b *Buffer) TTYString() string {
 		usedWidth := 0
 		for _, cell := range line {
 			if cell.Style != lastStyle {
-				sb.WriteString("\033[" + cell.Style + "m")
+				if lastStyle == "" {
+					sb.WriteString("\033[" + cell.Style + "m")
+				} else {
+					sb.WriteString("\033[;" + cell.Style + "m")
+				}
 				lastStyle = cell.Style
 			}
 			sb.WriteString(cell.Text)

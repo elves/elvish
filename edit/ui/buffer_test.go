@@ -295,13 +295,14 @@ var bufferTTYStringTests = []struct {
 	{
 		NewBufferBuilder(4).
 			WritePlain("AB").SetDotToCursor().
-			WriteStringSGR("CD", "1").
+			WriteStringSGR("C", "1").
+			WriteStringSGR("D", "7").
 			Newline().
 			WriteStringSGR("XY", "7").
 			Buffer(),
 		"Width = 4, Dot = (0, 2)\n" +
 			"┌────┐\n" +
-			"│AB\033[1mCD\033[m│\n" +
+			"│AB\033[1mC\033[;7mD\033[m│\n" +
 			"│\033[7mXY\033[m$ │\n" +
 			"└────┘\n",
 	},
