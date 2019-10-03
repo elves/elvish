@@ -34,7 +34,7 @@ func TestStart(t *testing.T) {
 		WritePlain(" ").
 		SetDotToCursor().
 		Newline().WriteStyled(styled.MakeText("foo", "inverse")). // Selected entry
-		Newline().WritePlain("foo bar").
+		WritePlain("  foo bar").
 		Buffer()
 	if !ttyCtrl.VerifyBuffer(wantBuf) {
 		t.Errorf("Wanted buffer not shown")
