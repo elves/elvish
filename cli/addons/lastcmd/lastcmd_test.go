@@ -24,6 +24,7 @@ func setup() (*cli.App, cli.TTYCtrl, func()) {
 }
 
 func testBuf(t *testing.T, ttyCtrl cli.TTYCtrl, wantBuf *ui.Buffer) {
+	t.Helper()
 	if !ttyCtrl.VerifyBuffer(wantBuf) {
 		t.Errorf("Wanted buffer not shown")
 		t.Logf("Want: %s", wantBuf.TTYString())
@@ -32,6 +33,7 @@ func testBuf(t *testing.T, ttyCtrl cli.TTYCtrl, wantBuf *ui.Buffer) {
 }
 
 func testNotesBuf(t *testing.T, ttyCtrl cli.TTYCtrl, wantBuf *ui.Buffer) {
+	t.Helper()
 	if !ttyCtrl.VerifyNotesBuffer(wantBuf) {
 		t.Errorf("Wanted notes buffer not shown")
 		t.Logf("Want: %s", wantBuf.TTYString())
@@ -68,7 +70,6 @@ func TestStart_StoreError(t *testing.T) {
 
 func TestStart_OK(t *testing.T) {
 	app, ttyCtrl, cleanup := setup()
-	_ = ttyCtrl
 	defer cleanup()
 
 	store := histutil.NewMemoryStore()
@@ -145,7 +146,7 @@ func TestStart_OK(t *testing.T) {
 	})
 	store.AddCmd(histutil.Entry{Text: "foo bar baz", Seq: 1})
 	Start(app, Config{Store: store})
-	ttyCtrl.Inject(term.K('0'), term.K(ui.Enter))
+	ttyCtrl.Inject(term.K('0'))
 	wantBuf = ui.NewBufferBuilder(80).
 		WritePlain("foo").SetDotToCursor().Buffer()
 	testBuf(t, ttyCtrl, wantBuf)
