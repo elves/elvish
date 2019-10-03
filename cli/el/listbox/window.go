@@ -91,14 +91,10 @@ func getVertialWindow(state State, height int) (first, crop int) {
 }
 
 // Determines the window to show in horizontal layout. It returns the first item
-// to show, and whether all items can fit in the window.
-func getHorizontalWindow(state State, width, height int) (int, bool) {
+// to show and the amount of height required.
+func getHorizontalWindow(state State, width, height int) (int, int) {
 	items := state.Items
 	n := items.Len()
-	if n <= height {
-		// All items can fit.
-		return 0, true
-	}
 	// Lower bound of number of items that can fit in a row.
 	perRow := (width + colGap) / (maxWidth(items, 0, n) + colGap)
 	if perRow == 0 {
@@ -107,7 +103,7 @@ func getHorizontalWindow(state State, width, height int) (int, bool) {
 	}
 	if height*perRow >= n {
 		// All items can fit.
-		return 0, true
+		return 0, (n + perRow - 1) / perRow
 	}
 	// Reduce the amount of available height by one because the last row will be
 	// reserved for the scrollbar.
@@ -123,7 +119,7 @@ func getHorizontalWindow(state State, width, height int) (int, bool) {
 			break
 		}
 	}
-	return first, false
+	return first, height
 }
 
 func maxWidth(items Items, low, high int) int {

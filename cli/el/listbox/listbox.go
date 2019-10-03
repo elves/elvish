@@ -66,12 +66,13 @@ const colGap = 2
 
 func (w *Widget) renderHorizontal(width, height int) *ui.Buffer {
 	var state State
-	var allFit bool
 	w.MutateListboxState(func(s *State) {
 		if s.Items == nil || s.Items.Len() == 0 {
 			s.First = 0
 		} else {
-			s.First, allFit = getHorizontalWindow(*s, width, height)
+			// Override height to the height required; we don't need the
+			// original height later.
+			s.First, height = getHorizontalWindow(*s, width, height)
 		}
 		state = *s
 	})
@@ -87,10 +88,6 @@ func (w *Widget) renderHorizontal(width, height int) *ui.Buffer {
 	remainedWidth := width
 	hasCropped := false
 	last := first
-	if !allFit {
-		// Reserve one line for the scrollbar.
-		height--
-	}
 	for i := first; i < n; i += height {
 		// Render the column starting from i.
 		col := make([]styled.Text, 0, height)

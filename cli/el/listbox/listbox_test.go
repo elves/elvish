@@ -113,18 +113,18 @@ var renderHorizontalTests = []el.RenderTest{
 		Want: bb(10).WritePlain("nothing"),
 	},
 	{
-		Name: "all items when there is enough space",
+		Name: "all items when there is enough space, using minimal height",
 		Given: &Widget{
 			Horizontal: true,
 			State:      State{Items: TestItems{NItems: 4}, Selected: 0},
 		},
 		Width: 14, Height: 3,
+		// Available height is 3, but only need 2 lines.
 		Want: bb(14).
 			WriteStyled(styled.MakeText("item 0", "inverse")).
 			WritePlain("  ").
-			WritePlain("item 3").
-			Newline().WritePlain("item 1").
-			Newline().WritePlain("item 2"),
+			WritePlain("item 2").
+			Newline().WritePlain("item 1  item 3"),
 	},
 	// TODO(xiaq): Add test for padding.
 	{

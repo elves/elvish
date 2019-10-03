@@ -38,19 +38,25 @@ func TestGetVerticalWindow(t *testing.T) {
 
 func TestGetHorizontalWindow(t *testing.T) {
 	tt.Test(t, tt.Fn("getHorizontalWindow", getHorizontalWindow), tt.Table{
-		// All items fit in a single column.
-		Args(State{TestItems{NItems: 10}, 4, 0}, 6, 10).Rets(0, true),
-		// All items fit in multiple columns.
-		Args(State{TestItems{Prefix: "x", NItems: 10}, 4, 0}, 6, 5).Rets(0, true),
-		// All items cannot fit, selected = 0; show a window from 0.
-		Args(State{TestItems{Prefix: "x", NItems: 11}, 0, 0}, 6, 5).Rets(0, false),
+		// All items fit in a single column. Item width is 6 ("item 0").
+		Args(State{TestItems{NItems: 10}, 4, 0}, 6, 10).Rets(0, 10),
+		// All items fit in multiple columns. Item width is 2 ("x0").
+		Args(State{TestItems{Prefix: "x", NItems: 10}, 4, 0}, 6, 5).Rets(0, 5),
+		// All items cannot fit, selected = 0; show a window from 0. Height
+		// reduced to make room for scrollbar.
+		Args(State{TestItems{Prefix: "x", NItems: 11}, 0, 0}, 6, 5).Rets(0, 4),
 		// All items cannot fit. Columsn are 0-3, 4-7, 8-10 (height reduced from
-		// 5 to 4 for scrollbar). Selecting last item; show last two columns.
-		Args(State{TestItems{Prefix: "x", NItems: 11}, 10, 0}, 7, 5).Rets(4, false),
-		// Items are wider than terminal. Treat them as if they are trimmed.
-		// Columns are 0-4, 5-9.
+		// 5 to 4 for scrollbar). Selecting last item, and showing last two
+		// columns; height reduced to make room for scrollbar.
+		Args(State{TestItems{Prefix: "x", NItems: 11}, 10, 0}, 7, 5).Rets(4, 4),
+		// Items are wider than terminal, and there is a single column. Show
+		// them all.
 		Args(State{TestItems{Prefix: "long prefix", NItems: 10}, 9, 0},
-			6, 6).Rets(5, false),
+			6, 10).Rets(0, 10),
+		// Items are wider than terminal, and there are multiple columns. Treat
+		// them as if each column occupies a full width. Columns are 0-4, 5-9.
+		Args(State{TestItems{Prefix: "long prefix", NItems: 10}, 9, 0},
+			6, 6).Rets(5, 5),
 
 		// The following cases only differ in State.First and shows that the
 		// algorithm respects it. In alls cases, the columns are 0-4, 5-9,
@@ -58,16 +64,16 @@ func TestGetHorizontalWindow(t *testing.T) {
 
 		// First = 0. Try to reach as far as possible to that, ending up showing
 		// columns 5-9 and 10-14.
-		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 0}, 8, 6).Rets(5, false),
+		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 0}, 8, 6).Rets(5, 5),
 		// First = 2. Ditto.
-		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 2}, 8, 6).Rets(5, false),
+		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 2}, 8, 6).Rets(5, 5),
 		// First = 5. Show columns 5-9 and 10-14.
-		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 5}, 8, 6).Rets(5, false),
+		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 5}, 8, 6).Rets(5, 5),
 		// First = 7. Ditto.
-		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 7}, 8, 6).Rets(5, false),
+		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 7}, 8, 6).Rets(5, 5),
 		// First = 10. No need to any columns to the left.
-		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 10}, 8, 6).Rets(10, false),
+		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 10}, 8, 6).Rets(10, 5),
 		// First = 12. Ditto.
-		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 12}, 8, 6).Rets(10, false),
+		Args(State{TestItems{Prefix: "x", NItems: 20}, 10, 12}, 8, 6).Rets(10, 5),
 	})
 }
