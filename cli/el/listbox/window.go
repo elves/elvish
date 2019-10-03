@@ -92,11 +92,11 @@ func getVertialWindow(state State, height int) (first, crop int) {
 
 // Determines the window to show in horizontal layout. It returns the first item
 // to show and the amount of height required.
-func getHorizontalWindow(state State, width, height int) (int, int) {
+func getHorizontalWindow(state State, padding, width, height int) (int, int) {
 	items := state.Items
 	n := items.Len()
 	// Lower bound of number of items that can fit in a row.
-	perRow := (width + colGap) / (maxWidth(items, 0, n) + colGap)
+	perRow := (width + colGap) / (maxWidth(items, padding, 0, n) + colGap)
 	if perRow == 0 {
 		// We trim items that are too wide, so there is at least one item per row.
 		perRow = 1
@@ -112,9 +112,9 @@ func getHorizontalWindow(state State, width, height int) (int, int) {
 	// Start with the column containing the selected item, move left until
 	// either the width is exhausted, or lastFirst has been reached.
 	first := selected / height * height
-	usedWidth := maxWidth(items, first, first+height)
+	usedWidth := maxWidth(items, padding, first, first+height)
 	for ; first > lastFirst; first -= height {
-		usedWidth += maxWidth(items, first-height, first) + colGap
+		usedWidth += maxWidth(items, padding, first-height, first) + colGap
 		if usedWidth > width {
 			break
 		}
@@ -122,7 +122,7 @@ func getHorizontalWindow(state State, width, height int) (int, int) {
 	return first, height
 }
 
-func maxWidth(items Items, low, high int) int {
+func maxWidth(items Items, padding, low, high int) int {
 	n := items.Len()
 	width := 0
 	for i := low; i < high && i < n; i++ {
@@ -134,5 +134,5 @@ func maxWidth(items Items, low, high int) int {
 			width = w
 		}
 	}
-	return width
+	return width + 2*padding
 }

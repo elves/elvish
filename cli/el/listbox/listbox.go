@@ -72,7 +72,7 @@ func (w *Widget) renderHorizontal(width, height int) *ui.Buffer {
 		} else {
 			// Override height to the height required; we don't need the
 			// original height later.
-			s.First, height = getHorizontalWindow(*s, width, height)
+			s.First, height = getHorizontalWindow(*s, w.Padding, width, height)
 		}
 		state = *s
 	})
@@ -89,35 +89,37 @@ func (w *Widget) renderHorizontal(width, height int) *ui.Buffer {
 	hasCropped := false
 	last := first
 	for i := first; i < n; i += height {
+		selectedRow := -1
 		// Render the column starting from i.
 		col := make([]styled.Text, 0, height)
 		for j := i; j < i+height && j < n; j++ {
 			last = j
 			item := items.Show(j)
 			if j == selected {
-				item = styled.Transform(item, styleForSelected)
+				selectedRow = j - i
 			}
 			col = append(col, item)
 		}
 
-		colWidth := maxWidth(items, i, i+height)
+		colWidth := maxWidth(items, w.Padding, i, i+height)
 		if colWidth > remainedWidth {
 			colWidth = remainedWidth
 			hasCropped = true
 		}
 
-		colBuf := layout.CroppedLines{Lines: col}.Render(colWidth, height)
+		colBuf := croppedLines{
+			col, w.Padding, selectedRow, selectedRow + 1}.Render(colWidth, height)
 		buf.ExtendRight(colBuf)
 
 		remainedWidth -= colWidth
-		if remainedWidth > colGap {
-			remainedWidth -= colGap
-			buf.Width += colGap
-		} else {
-			buf.Width = width
+		if remainedWidth <= colGap {
 			break
 		}
+		remainedWidth -= colGap
+		buf.Width += colGap
 	}
+	// We may not have used all the width required; force buffer width.
+	buf.Width = width
 	if first != 0 || last != n-1 || hasCropped {
 		scrollbar := layout.HScrollbar{Total: n, Low: first, High: last + 1}
 		buf.Extend(scrollbar.Render(width, 1), false)

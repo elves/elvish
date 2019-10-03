@@ -38,34 +38,6 @@ var renderTests = []struct {
 		bb(4).WritePlain("labe"),
 	},
 	{
-		"CroppedLines showing all",
-		CroppedLines{Lines: []styled.Text{
-			styled.Plain("line 1"),
-			styled.Plain("line 2"),
-		}},
-		10, 24,
-		bb(10).WritePlain("line 1").Newline().WritePlain("line 2"),
-	},
-	{
-		"CroppedLines cropping horizontally",
-		CroppedLines{Lines: []styled.Text{
-			styled.Plain("line 1"),
-			styled.Plain("line 2"),
-		}},
-		4, 24,
-		bb(4).WritePlain("line").Newline().WritePlain("line"),
-	},
-	{
-		"CroppedLines cropping vertically",
-		CroppedLines{Lines: []styled.Text{
-			styled.Plain("line 1"),
-			styled.Plain("line 2"),
-			styled.Plain("line 3"),
-		}},
-		10, 2,
-		bb(10).WritePlain("line 1").Newline().WritePlain("line 2"),
-	},
-	{
 		"VScrollbar showing full thumb",
 		VScrollbar{4, 0, 3},
 		10, 2,

@@ -126,6 +126,20 @@ var renderHorizontalTests = []el.RenderTest{
 			WritePlain("item 2").
 			Newline().WritePlain("item 1  item 3"),
 	},
+	{
+		Name: "padding",
+		Given: &Widget{
+			Horizontal: true,
+			Padding:    1,
+			State:      State{Items: TestItems{NItems: 4, Prefix: "x"}, Selected: 0},
+		},
+		Width: 14, Height: 3,
+		Want: bb(14).
+			WriteStyled(styled.MakeText(" x0 ", "inverse")).
+			WritePlain("  ").
+			WritePlain(" x2").
+			Newline().WritePlain(" x1    x3"),
+	},
 	// TODO(xiaq): Add test for padding.
 	{
 		Name: "long lines cropped, with full scrollbar",
