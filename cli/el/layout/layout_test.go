@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
@@ -18,6 +19,12 @@ var renderTests = []struct {
 	height   int
 	wantBuf  *ui.BufferBuilder
 }{
+	{
+		"empty widget",
+		Empty{},
+		10, 24,
+		bb(10),
+	},
 	{
 		"Label showing all",
 		Label{styled.Plain("label")},
@@ -125,5 +132,18 @@ func TestRender(t *testing.T) {
 				t.Errorf("got buf %v, want %v", buf, wantBuf)
 			}
 		})
+	}
+}
+
+var nopHandlers = []el.Handler{
+	Empty{}, Label{styled.Plain("label")},
+}
+
+func TestHandle(t *testing.T) {
+	for _, handler := range nopHandlers {
+		handled := handler.Handle(term.K('a'))
+		if handled {
+			t.Errorf("%v handles event when it shouldn't", handler)
+		}
 	}
 }
