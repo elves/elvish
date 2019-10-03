@@ -289,7 +289,7 @@ func (t TTYCtrl) LastNotesBuffer() *ui.Buffer {
 	return t.notesBufs[len(t.notesBufs)-1]
 }
 
-var verifyBufferTimeout = time.Second
+var verifyBufferTimeout = 4 * time.Second
 
 // Check that an expected buffer will eventually appear. Also useful for waiting
 // until the editor reaches a certain state.
