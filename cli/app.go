@@ -9,6 +9,7 @@ import (
 
 	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -140,13 +141,19 @@ func (app *App) redraw(flag redrawFlag) {
 	})
 
 	bufNotes := renderNotes(notes, width)
+	isFinalRedraw := flag&finalRedraw != 0
+	if isFinalRedraw {
+		// This is a bit of hack to achieve two things desirable for the final
+		// redraw: put the cursor below the code area, and make sure it is on a
+		// new empty line.
+		listing = layout.Empty{}
+	}
 	bufMain := renderApp(&app.CodeArea, listing, width, height)
 
 	// Apply buffers.
 	app.tty.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 
-	if flag&finalRedraw != 0 {
-		app.tty.Newline()
+	if isFinalRedraw {
 		app.tty.ResetBuffer()
 	}
 }

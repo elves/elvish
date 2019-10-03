@@ -39,8 +39,6 @@ type TTY interface {
 	// Returns the height and width of the terminal.
 	Size() (h, w int)
 
-	// Outputs a newline.
-	Newline()
 	// Returns the current buffer. The initial value of the current buffer is
 	// nil.
 	Buffer() *ui.Buffer
@@ -104,10 +102,6 @@ func (t *aTTY) StopInput() {
 	t.r.Stop()
 	t.r.Close()
 	t.r = nil
-}
-
-func (t *aTTY) Newline() {
-	t.w.Newline()
 }
 
 func (t *aTTY) Buffer() *ui.Buffer {

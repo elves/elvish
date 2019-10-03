@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
@@ -282,35 +283,29 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 	cleanup(ed, codeCh)
 }
 
-func TestReadCode_UsesFinalStateInFinalRedraw(t *testing.T) {
-	/*
-		ed, tty := setup()
+func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
+	app, tty := setup()
+	app.CodeArea.State.CodeBuffer.Content = "some code"
+	app.State.Listing = layout.Label{Content: styled.Plain("listing")}
 
-		ed.state.Raw.Code = "some code"
-		// We use the dot as a signal for distinguishing non-final and final state.
-		// In the final state, the dot will be set to the length of the code (9).
-		ed.state.Raw.Dot = 1
+	codeCh, _ := app.ReadCodeAsync()
 
-		codeCh, _ := ed.ReadCodeAsync()
+	// Wait until the initial draw, to ensure that we are indeed observing a
+	// different state later.
+	wantBuf := ui.NewBufferBuilder(80).
+		WritePlain("some code").
+		Newline().SetDotToCursor().WritePlain("listing").Buffer()
+	if !tty.VerifyBuffer(wantBuf) {
+		t.Errorf("did not get expected buffer before quitting")
+	}
 
-		// Wait until a non-final state is drawn.
-		wantBuf := ui.NewBufferBuilder(80).WritePlain("s").SetDotToCursor().
-			WritePlain("ome code").Buffer()
-		if !tty.VerifyBuffer(wantBuf) {
-			t.Errorf("did not get expected buffer before sending Enter")
-		}
+	cleanup(app, codeCh)
 
-		cleanup(ed, codeCh)
-
-		bufs := tty.BufferHistory()
-		// Last element in bufs is nil
-		finalBuf := bufs[len(bufs)-2]
-		wantFinalBuf := ui.NewBufferBuilder(80).WritePlain("some code").
-			SetDotToCursor().Buffer()
-		if !reflect.DeepEqual(finalBuf, wantFinalBuf) {
-			t.Errorf("final buffer is %v, want %v", finalBuf, wantFinalBuf)
-		}
-	*/
+	wantFinalBuf := ui.NewBufferBuilder(80).
+		WritePlain("some code").Newline().SetDotToCursor().Buffer()
+	if !tty.VerifyBuffer(wantFinalBuf) {
+		t.Errorf("did not get expected final buffer")
+	}
 }
 
 func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
