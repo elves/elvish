@@ -36,6 +36,10 @@ type Widget struct {
 	// The minimal amount of space to reserve for left and right sides of each
 	// entry.
 	Padding int
+	// If true, the left padding of each item will be styled the same as the
+	// first segment of the item, and the right spacing and padding will be
+	// styled the same as the last segment of the item.
+	ExtendStyle bool
 }
 
 var _ = el.Widget(&Widget{})
@@ -108,7 +112,9 @@ func (w *Widget) renderHorizontal(width, height int) *ui.Buffer {
 		}
 
 		colBuf := croppedLines{
-			col, w.Padding, selectedRow, selectedRow + 1}.Render(colWidth, height)
+			lines: col, padding: w.Padding,
+			selectFrom: selectedRow, selectTo: selectedRow + 1,
+			extendStyle: w.ExtendStyle}.Render(colWidth, height)
 		buf.ExtendRight(colBuf)
 
 		remainedWidth -= colWidth
@@ -157,11 +163,6 @@ func (w *Widget) renderVertical(width, height int) *ui.Buffer {
 		}
 		if i == selected {
 			selectFrom, selectTo = len(allLines), len(allLines)+len(lines)
-			for j := range lines {
-				lines[j] = styled.Transform(
-					lines[j].ConcatText(styled.Plain(strings.Repeat(" ", width))),
-					styleForSelected)
-			}
 		}
 		// TODO: Optionally, add underlines to the last line as a visual
 		// separator between adjacent entries.
@@ -175,7 +176,7 @@ func (w *Widget) renderVertical(width, height int) *ui.Buffer {
 
 	var rd el.Renderer = croppedLines{
 		lines: allLines, padding: w.Padding,
-		selectFrom: selectFrom, selectTo: selectTo}
+		selectFrom: selectFrom, selectTo: selectTo, extendStyle: w.ExtendStyle}
 	if first > 0 || i < n || hasCropped {
 		rd = layout.VScrollbarContainer{
 			Content:   rd,
@@ -186,33 +187,43 @@ func (w *Widget) renderVertical(width, height int) *ui.Buffer {
 }
 
 type croppedLines struct {
-	lines      []styled.Text
-	padding    int
-	selectFrom int
-	selectTo   int
+	lines       []styled.Text
+	padding     int
+	selectFrom  int
+	selectTo    int
+	extendStyle bool
 }
 
 func (c croppedLines) Render(width, height int) *ui.Buffer {
-	lines := c.lines
 	bb := ui.NewBufferBuilder(width)
-	padding := strings.Repeat(" ", c.padding)
-	selectedPadding := styled.MakeText(padding, styleForSelected)
-	for i, line := range lines {
+	leftSpacing := styled.Plain(strings.Repeat(" ", c.padding))
+	rightSpacing := styled.Plain(strings.Repeat(" ", width-c.padding))
+	// selectedPadding := styled.Transform(padding, styleForSelected)
+	for i, line := range c.lines {
 		if i > 0 {
 			bb.Newline()
 		}
-		if c.selectFrom <= i && i < c.selectTo {
-			bb.WriteStyled(selectedPadding)
-			bb.WriteStyled(
-				styled.Transform(line, styleForSelected).
-					ConcatText(styled.Plain(
-						strings.Repeat(" ", width-2*c.padding))).
-					TrimWcwidth(width - 2*c.padding))
-			bb.WriteStyled(selectedPadding)
-		} else {
-			bb.WritePlain(padding)
-			bb.WriteStyled(line.TrimWcwidth(width - 2*c.padding))
+
+		selected := c.selectFrom <= i && i < c.selectTo
+		extendStyle := c.extendStyle && len(line) > 0
+
+		left := leftSpacing.Clone()
+		if extendStyle {
+			left[0].Style = line[0].Style
 		}
+		acc := left.ConcatText(line.TrimWcwidth(width - 2*c.padding))
+		if extendStyle || selected {
+			right := rightSpacing.Clone()
+			if extendStyle {
+				right[0].Style = line[len(line)-1].Style
+			}
+			acc = acc.ConcatText(right).TrimWcwidth(width)
+		}
+		if selected {
+			acc = styled.Transform(acc, styleForSelected)
+		}
+
+		bb.WriteStyled(acc)
 	}
 	return bb.Buffer()
 }

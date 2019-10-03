@@ -2,6 +2,7 @@ package listbox
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/elves/elvish/styled"
 )
@@ -34,6 +35,7 @@ type Items interface {
 // TestItems is an implementation of Items useful for testing.
 type TestItems struct {
 	Prefix string
+	Styles string
 	NItems int
 }
 
@@ -44,7 +46,8 @@ func (it TestItems) Show(i int) styled.Text {
 	if prefix == "" {
 		prefix = "item "
 	}
-	return styled.Plain(fmt.Sprintf("%s%d", prefix, i))
+	return styled.MakeText(
+		fmt.Sprintf("%s%d", prefix, i), strings.Split(it.Styles, " ")...)
 }
 
 // Len returns it.NItems.

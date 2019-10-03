@@ -89,6 +89,40 @@ var renderVerticalTests = []el.RenderTest{
 			WritePlain(" it").Newline().
 			WritePlain(" 1").Buffer(),
 	},
+	{
+		Name: "not extending style",
+		Given: &Widget{
+			State: State{Items: TestItems{
+				Prefix: "x", NItems: 2, Styles: "blue bg-green"}},
+			Padding: 1,
+		},
+		Width: 6, Height: 2,
+
+		Want: bb(6).
+			WriteStyled(styled.MakeText(" ", "inverse")).
+			WriteStyled(styled.MakeText("x0", "blue", "bg-green", "inverse")).
+			WriteStyled(styled.MakeText("   ", "inverse")).
+			Newline().
+			WritePlain(" ").
+			WriteStyled(styled.MakeText("x1", "blue", "bg-green")).
+			Buffer(),
+	},
+	{
+		Name: "extending style",
+		Given: &Widget{
+			State: State{Items: TestItems{
+				Prefix: "x", NItems: 2, Styles: "blue bg-green"}},
+			Padding:     1,
+			ExtendStyle: true,
+		},
+		Width: 6, Height: 2,
+
+		Want: bb(6).
+			WriteStyled(styled.MakeText(" x0   ", "blue", "bg-green", "inverse")).
+			Newline().
+			WriteStyled(styled.MakeText(" x1   ", "blue", "bg-green")).
+			Buffer(),
+	},
 }
 
 func TestRenderVertical(t *testing.T) {
@@ -140,7 +174,21 @@ var renderHorizontalTests = []el.RenderTest{
 			WritePlain(" x2").
 			Newline().WritePlain(" x1    x3"),
 	},
-	// TODO(xiaq): Add test for padding.
+	{
+		Name: "extending style",
+		Given: &Widget{
+			Horizontal:  true,
+			Padding:     1,
+			ExtendStyle: true,
+			State: State{Items: TestItems{
+				NItems: 2, Prefix: "x", Styles: "blue bg-green"}},
+		},
+		Width: 14, Height: 3,
+		Want: bb(14).
+			WriteStyled(styled.MakeText(" x0 ", "blue", "bg-green", "inverse")).
+			WritePlain("  ").
+			WriteStyled(styled.MakeText(" x1 ", "blue", "bg-green")),
+	},
 	{
 		Name: "long lines cropped, with full scrollbar",
 		Given: &Widget{
