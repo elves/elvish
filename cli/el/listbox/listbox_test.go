@@ -1,7 +1,6 @@
 package listbox
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/elves/elvish/cli/el"
@@ -234,81 +233,75 @@ func TestRenderHorizontal(t *testing.T) {
 	el.TestRender(t, renderHorizontalTests)
 }
 
-var handleTests = []struct {
-	name        string
-	widget      *Widget
-	event       term.Event
-	wantHandled bool
-	wantState   State
-}{
+var handleTests = []el.HandleTest{
 	{
-		"up moving selection up",
-		&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 1}},
-		term.K(ui.Up),
-		true,
-		State{Items: TestItems{NItems: 10}, Selected: 0},
+		Name:  "up moving selection up",
+		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 1}},
+		Event: term.K(ui.Up),
+
+		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 0},
 	},
 	{
-		"up stopping at 0",
-		&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 0}},
-		term.K(ui.Up),
-		true,
-		State{Items: TestItems{NItems: 10}, Selected: 0},
+		Name:  "up stopping at 0",
+		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 0}},
+		Event: term.K(ui.Up),
+
+		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 0},
 	},
 	{
-		"up moving to last item when selecting after boundary",
-		&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 11}},
-		term.K(ui.Up),
-		true,
-		State{Items: TestItems{NItems: 10}, Selected: 9},
+		Name:  "up moving to last item when selecting after boundary",
+		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 11}},
+		Event: term.K(ui.Up),
+
+		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 9},
 	},
 	{
-		"down moving selection down",
-		&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 1}},
-		term.K(ui.Down),
-		true,
-		State{Items: TestItems{NItems: 10}, Selected: 2},
+		Name:  "down moving selection down",
+		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 1}},
+		Event: term.K(ui.Down),
+
+		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 2},
 	},
 	{
-		"down stopping at n-1",
-		&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 9}},
-		term.K(ui.Down),
-		true,
-		State{Items: TestItems{NItems: 10}, Selected: 9},
+		Name:  "down stopping at n-1",
+		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 9}},
+		Event: term.K(ui.Down),
+
+		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 9},
 	},
 	{
-		"down moving to first item when selecting before boundary",
-		&Widget{State: State{Items: TestItems{NItems: 10}, Selected: -2}},
-		term.K(ui.Down),
-		true,
-		State{Items: TestItems{NItems: 10}, Selected: 0},
+		Name:  "down moving to first item when selecting before boundary",
+		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: -2}},
+		Event: term.K(ui.Down),
+
+		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 0},
 	},
 	{
-		"enter triggering default no-op accept",
-		&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 5}},
-		term.K(ui.Enter),
-		true,
-		State{Items: TestItems{NItems: 10}, Selected: 5},
+		Name:  "enter triggering default no-op accept",
+		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 5}},
+		Event: term.K(ui.Enter),
+
+		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 5},
 	},
 	{
-		"other keys not handled",
-		&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 5}},
-		term.K('a'),
-		false,
-		State{Items: TestItems{NItems: 10}, Selected: 5},
+		Name:  "other keys not handled",
+		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 5}},
+		Event: term.K('a'),
+
+		WantUnhandled: true,
 	},
 	{
-		"overlay handler",
-		addOverlay(
+		Name: "overlay handler",
+		Given: addOverlay(
 			&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 5}},
 			func(w *Widget) el.Handler {
 				return el.MapHandler{
 					term.K('a'): func() { w.State.Selected = 0 },
 				}
 			}),
-		term.K('a'),
-		true,
-		State{Items: TestItems{NItems: 10}, Selected: 0},
+		Event: term.K('a'),
+
+		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 0},
 	},
 }
 
@@ -318,18 +311,7 @@ func addOverlay(w *Widget, overlay func(*Widget) el.Handler) *Widget {
 }
 
 func TestHandle(t *testing.T) {
-	for _, test := range handleTests {
-		t.Run(test.name, func(t *testing.T) {
-			w := test.widget
-			handled := w.Handle(test.event)
-			if handled != test.wantHandled {
-				t.Errorf("got handled %v, want %v", handled, test.wantHandled)
-			}
-			if !reflect.DeepEqual(w.State, test.wantState) {
-				t.Errorf("got state %v, want %v", w.State, test.wantState)
-			}
-		})
-	}
+	el.TestHandle(t, handleTests)
 }
 
 func TestHandle_EnterEmitsAccept(t *testing.T) {

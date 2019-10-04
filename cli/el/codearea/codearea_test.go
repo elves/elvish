@@ -170,126 +170,121 @@ func TestRender(t *testing.T) {
 	el.TestRender(t, renderTests)
 }
 
-var handleTests = []struct {
-	name      string
-	widget    *Widget
-	events    []term.Event
-	wantState State
-}{
+var handleTests = []el.HandleTest{
 	{
-		"simple inserts",
-		&Widget{},
-		[]term.Event{term.K('c'), term.K('o'), term.K('d'), term.K('e')},
-		State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}},
+		Name:         "simple inserts",
+		Given:        &Widget{},
+		Events:       []term.Event{term.K('c'), term.K('o'), term.K('d'), term.K('e')},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}},
 	},
 	{
-		"unicode inserts",
-		&Widget{},
-		[]term.Event{term.K('你'), term.K('好')},
-		State{CodeBuffer: CodeBuffer{Content: "你好", Dot: 6}},
+		Name:         "unicode inserts",
+		Given:        &Widget{},
+		Events:       []term.Event{term.K('你'), term.K('好')},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "你好", Dot: 6}},
 	},
 	{
-		"unterminated paste",
-		&Widget{},
-		[]term.Event{term.PasteSetting(true), term.K('"'), term.K('x')},
-		State{},
+		Name:         "unterminated paste",
+		Given:        &Widget{},
+		Events:       []term.Event{term.PasteSetting(true), term.K('"'), term.K('x')},
+		WantNewState: State{},
 	},
 	{
-		"literal paste",
-		&Widget{},
-		[]term.Event{
+		Name:  "literal paste",
+		Given: &Widget{},
+		Events: []term.Event{
 			term.PasteSetting(true),
 			term.K('"'), term.K('x'),
 			term.PasteSetting(false)},
-		State{CodeBuffer: CodeBuffer{Content: "\"x", Dot: 2}},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "\"x", Dot: 2}},
 	},
 	{
-		"literal paste swallowing functional keys",
-		&Widget{},
-		[]term.Event{
+		Name:  "literal paste swallowing functional keys",
+		Given: &Widget{},
+		Events: []term.Event{
 			term.PasteSetting(true),
 			term.K('a'), term.K(ui.F1), term.K('b'),
 			term.PasteSetting(false)},
-		State{CodeBuffer: CodeBuffer{Content: "ab", Dot: 2}},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "ab", Dot: 2}},
 	},
 	{
-		"quoted paste",
-		&Widget{QuotePaste: func() bool { return true }},
-		[]term.Event{
+		Name:  "quoted paste",
+		Given: &Widget{QuotePaste: func() bool { return true }},
+		Events: []term.Event{
 			term.PasteSetting(true),
 			term.K('"'), term.K('x'),
 			term.PasteSetting(false)},
-		State{CodeBuffer: CodeBuffer{Content: "'\"x'", Dot: 4}},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "'\"x'", Dot: 4}},
 	},
 	{
-		"backspace at end of code",
-		&Widget{},
-		[]term.Event{
+		Name:  "backspace at end of code",
+		Given: &Widget{},
+		Events: []term.Event{
 			term.K('c'), term.K('o'), term.K('d'), term.K('e'),
 			term.K(ui.Backspace)},
-		State{CodeBuffer: CodeBuffer{Content: "cod", Dot: 3}},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "cod", Dot: 3}},
 	},
 	{
-		"backspace at middle of buffer",
-		&Widget{State: State{
+		Name: "backspace at middle of buffer",
+		Given: &Widget{State: State{
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 2}}},
-		[]term.Event{term.K(ui.Backspace)},
-		State{CodeBuffer: CodeBuffer{Content: "cde", Dot: 1}},
+		Events:       []term.Event{term.K(ui.Backspace)},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "cde", Dot: 1}},
 	},
 	{
-		"backspace at beginning of buffer",
-		&Widget{State: State{
+		Name: "backspace at beginning of buffer",
+		Given: &Widget{State: State{
 			CodeBuffer: CodeBuffer{Content: "code", Dot: 0}}},
-		[]term.Event{term.K(ui.Backspace)},
-		State{CodeBuffer: CodeBuffer{Content: "code", Dot: 0}},
+		Events:       []term.Event{term.K(ui.Backspace)},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "code", Dot: 0}},
 	},
 	{
-		"backspace deleting unicode character",
-		&Widget{},
-		[]term.Event{
+		Name:  "backspace deleting unicode character",
+		Given: &Widget{},
+		Events: []term.Event{
 			term.K('你'), term.K('好'), term.K(ui.Backspace)},
-		State{CodeBuffer: CodeBuffer{Content: "你", Dot: 3}},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "你", Dot: 3}},
 	},
 	{
-		"abbreviation expansion",
-		&Widget{
+		Name: "abbreviation expansion",
+		Given: &Widget{
 			Abbreviations: func(f func(abbr, full string)) {
 				f("dn", "/dev/null")
 			},
 		},
-		[]term.Event{term.K('d'), term.K('n')},
-		State{CodeBuffer: CodeBuffer{Content: "/dev/null", Dot: 9}},
+		Events:       []term.Event{term.K('d'), term.K('n')},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "/dev/null", Dot: 9}},
 	},
 	{
-		"abbreviation expansion preferring longest",
-		&Widget{
+		Name: "abbreviation expansion preferring longest",
+		Given: &Widget{
 			Abbreviations: func(f func(abbr, full string)) {
 				f("n", "none")
 				f("dn", "/dev/null")
 			},
 		},
-		[]term.Event{term.K('d'), term.K('n')},
-		State{CodeBuffer: CodeBuffer{Content: "/dev/null", Dot: 9}},
+		Events:       []term.Event{term.K('d'), term.K('n')},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "/dev/null", Dot: 9}},
 	},
 	{
-		"abbreviation expansion interrupted by function key",
-		&Widget{
+		Name: "abbreviation expansion interrupted by function key",
+		Given: &Widget{
 			Abbreviations: func(f func(abbr, full string)) {
 				f("dn", "/dev/null")
 			},
 		},
-		[]term.Event{term.K('d'), term.K(ui.F1), term.K('n')},
-		State{CodeBuffer: CodeBuffer{Content: "dn", Dot: 2}},
+		Events:       []term.Event{term.K('d'), term.K(ui.F1), term.K('n')},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "dn", Dot: 2}},
 	},
 	{
-		"overlay handler",
-		addOverlay(&Widget{}, func(w *Widget) el.Handler {
+		Name: "overlay handler",
+		Given: addOverlay(&Widget{}, func(w *Widget) el.Handler {
 			return el.MapHandler{
 				term.K('a'): func() { w.State.CodeBuffer.InsertAtDot("b") },
 			}
 		}),
-		[]term.Event{term.K('a')},
-		State{CodeBuffer: CodeBuffer{Content: "b", Dot: 1}},
+		Events:       []term.Event{term.K('a')},
+		WantNewState: State{CodeBuffer: CodeBuffer{Content: "b", Dot: 1}},
 	},
 }
 
@@ -301,17 +296,7 @@ func addOverlay(w *Widget, overlay func(*Widget) el.Handler) *Widget {
 }
 
 func TestHandle(t *testing.T) {
-	for _, test := range handleTests {
-		t.Run(test.name, func(t *testing.T) {
-			w := test.widget
-			for _, event := range test.events {
-				w.Handle(event)
-			}
-			if !reflect.DeepEqual(w.State, test.wantState) {
-				t.Errorf("got state %v, want %v", w.State, test.wantState)
-			}
-		})
-	}
+	el.TestHandle(t, handleTests)
 }
 
 var unhandledEvents = []term.Event{
