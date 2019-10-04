@@ -56,7 +56,6 @@ func TestStart_StoreError(t *testing.T) {
 
 func TestStart_OK(t *testing.T) {
 	app, ttyCtrl, cleanup := setup()
-	_ = ttyCtrl
 	defer cleanup()
 
 	store := histutil.NewMemoryStore()
