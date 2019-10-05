@@ -5,11 +5,24 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/store/storedefs"
 	"github.com/elves/elvish/styled"
 )
+
+func setup() (*cli.App, cli.TTYCtrl, func()) {
+	tty, ttyCtrl := cli.NewFakeTTY()
+	// Use a smaller TTY size to make diffs easier to see.
+	ttyCtrl.SetSize(20, 50)
+	app := cli.NewApp(tty)
+	codeCh, _ := app.ReadCodeAsync()
+	return app, ttyCtrl, func() {
+		app.CommitEOF()
+		<-codeCh
+	}
+}
 
 type testStore struct {
 	dirs  func() ([]storedefs.Dir, error)
@@ -38,7 +51,7 @@ func TestStart_NoStore(t *testing.T) {
 
 	wantNotesBuf := ui.NewBufferBuilder(50).
 		WritePlain("no dir history store").Buffer()
-	testNotesBuf(t, ttyCtrl, wantNotesBuf)
+	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
 func TestStart_StoreError(t *testing.T) {
@@ -52,7 +65,7 @@ func TestStart_StoreError(t *testing.T) {
 
 	wantNotesBuf := ui.NewBufferBuilder(50).
 		WritePlain("db error: mock error").Buffer()
-	testNotesBuf(t, ttyCtrl, wantNotesBuf)
+	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
 func TestStart_OK(t *testing.T) {
@@ -86,7 +99,7 @@ func TestStart_OK(t *testing.T) {
 		Newline().WritePlain("100 /home/elf").
 		Newline().WritePlain(" 50 /tmp").
 		Buffer()
-	testBuf(t, ttyCtrl, wantBuf)
+	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test filtering.
 	ttyCtrl.Inject(term.K('t'), term.K('m'), term.K('p'))
@@ -102,16 +115,16 @@ func TestStart_OK(t *testing.T) {
 		WriteStyled(styled.MakeText(
 			" 50 /tmp"+strings.Repeat(" ", 42), "inverse")).
 		Buffer()
-	testBuf(t, ttyCtrl, wantBuf)
+	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test accepting.
 	ttyCtrl.Inject(term.K(ui.Enter))
 	// There should be no change to codearea after accepting.
 	wantBuf = ui.NewBufferBuilder(50).Buffer()
-	testBuf(t, ttyCtrl, wantBuf)
+	ttyCtrl.TestBuffer(t, wantBuf)
 	// Error from Chdir should be sent to notes.
 	wantNotesBuf := ui.NewBufferBuilder(50).WritePlain("mock chdir error").Buffer()
-	testNotesBuf(t, ttyCtrl, wantNotesBuf)
+	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 	// Chdir should be called.
 	if got := <-chdirCh; got != "/tmp" {
 		t.Errorf("Chdir called with %s, want /tmp", got)

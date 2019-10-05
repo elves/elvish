@@ -23,24 +23,6 @@ func setup() (*cli.App, cli.TTYCtrl, func()) {
 	}
 }
 
-func testBuf(t *testing.T, ttyCtrl cli.TTYCtrl, wantBuf *ui.Buffer) {
-	t.Helper()
-	if !ttyCtrl.VerifyBuffer(wantBuf) {
-		t.Errorf("Wanted buffer not shown")
-		t.Logf("Want: %s", wantBuf.TTYString())
-		t.Logf("Last buffer: %s", ttyCtrl.LastBuffer().TTYString())
-	}
-}
-
-func testNotesBuf(t *testing.T, ttyCtrl cli.TTYCtrl, wantBuf *ui.Buffer) {
-	t.Helper()
-	if !ttyCtrl.VerifyNotesBuffer(wantBuf) {
-		t.Errorf("Wanted notes buffer not shown")
-		t.Logf("Want: %s", wantBuf.TTYString())
-		t.Logf("Last buffer: %s", ttyCtrl.LastNotesBuffer().TTYString())
-	}
-}
-
 type faultyStore struct{}
 
 var mockError = errors.New("mock error")
@@ -55,7 +37,7 @@ func TestStart_NoStore(t *testing.T) {
 
 	Start(app, Config{})
 	wantNotesBuf := ui.NewBufferBuilder(80).WritePlain("no history store").Buffer()
-	testNotesBuf(t, ttyCtrl, wantNotesBuf)
+	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
 func TestStart_StoreError(t *testing.T) {
@@ -65,7 +47,7 @@ func TestStart_StoreError(t *testing.T) {
 	Start(app, Config{Store: faultyStore{}})
 	wantNotesBuf := ui.NewBufferBuilder(80).
 		WritePlain("db error: mock error").Buffer()
-	testNotesBuf(t, ttyCtrl, wantNotesBuf)
+	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
 func TestStart_OK(t *testing.T) {
@@ -98,7 +80,7 @@ func TestStart_OK(t *testing.T) {
 		Newline().WritePlain("  1 bar").
 		Newline().WritePlain("  2 baz").
 		Buffer()
-	testBuf(t, ttyCtrl, wantBuf)
+	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test negative filtering.
 	ttyCtrl.Inject(term.K('-'))
@@ -117,13 +99,13 @@ func TestStart_OK(t *testing.T) {
 		Newline().WritePlain(" -2 bar").
 		Newline().WritePlain(" -1 baz").
 		Buffer()
-	testBuf(t, ttyCtrl, wantBuf)
+	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test automatic submission.
 	ttyCtrl.Inject(term.K('2')) // -2 bar
 	wantBuf = ui.NewBufferBuilder(80).
 		WritePlain("bar").SetDotToCursor().Buffer()
-	testBuf(t, ttyCtrl, wantBuf)
+	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test submission by Enter.
 	app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
@@ -138,7 +120,7 @@ func TestStart_OK(t *testing.T) {
 	ttyCtrl.Inject(term.K(ui.Enter))
 	wantBuf = ui.NewBufferBuilder(80).
 		WritePlain("foo,bar,baz").SetDotToCursor().Buffer()
-	testBuf(t, ttyCtrl, wantBuf)
+	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Default wordifier.
 	app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
@@ -149,5 +131,5 @@ func TestStart_OK(t *testing.T) {
 	ttyCtrl.Inject(term.K('0'))
 	wantBuf = ui.NewBufferBuilder(80).
 		WritePlain("foo").SetDotToCursor().Buffer()
-	testBuf(t, ttyCtrl, wantBuf)
+	ttyCtrl.TestBuffer(t, wantBuf)
 }

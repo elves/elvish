@@ -28,11 +28,7 @@ func TestStart_NoStore(t *testing.T) {
 
 	Start(app, Config{})
 	wantNotesBuf := ui.NewBufferBuilder(80).WritePlain("no history store").Buffer()
-	if !ttyCtrl.VerifyNotesBuffer(wantNotesBuf) {
-		t.Errorf("Wanted notes buffer not shown")
-		t.Logf("Want: %s", wantNotesBuf.TTYString())
-		t.Logf("Last: %s", ttyCtrl.LastNotesBuffer().TTYString())
-	}
+	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
 type faultyStore struct{}
@@ -47,11 +43,7 @@ func TestStart_StoreError(t *testing.T) {
 
 	Start(app, Config{Store: faultyStore{}})
 	wantNotesBuf := ui.NewBufferBuilder(80).WritePlain("db error: mock error").Buffer()
-	if !ttyCtrl.VerifyNotesBuffer(wantNotesBuf) {
-		t.Errorf("Wanted notes buffer not shown")
-		t.Logf("Want: %s", wantNotesBuf.TTYString())
-		t.Logf("Last: %s", ttyCtrl.LastNotesBuffer().TTYString())
-	}
+	ttyCtrl.TestNotesBuffer(t, wantNotesBuf)
 }
 
 func TestStart_OK(t *testing.T) {
@@ -80,11 +72,7 @@ func TestStart_OK(t *testing.T) {
 		Newline().WriteStyled(
 		styled.MakeText("   2 baz"+strings.Repeat(" ", 72), "inverse")).
 		Buffer()
-	if !ttyCtrl.VerifyBuffer(wantBuf) {
-		t.Errorf("Wanted buffer not shown")
-		t.Logf("Want: %s", wantBuf.TTYString())
-		t.Logf("Last buffer: %s", ttyCtrl.LastBuffer().TTYString())
-	}
+	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test filtering.
 	ttyCtrl.Inject(term.K('b'))
@@ -102,22 +90,14 @@ func TestStart_OK(t *testing.T) {
 		Newline().WriteStyled(
 		styled.MakeText("   2 baz"+strings.Repeat(" ", 72), "inverse")).
 		Buffer()
-	if !ttyCtrl.VerifyBuffer(wantBuf) {
-		t.Errorf("Wanted buffer not shown")
-		t.Logf("Want: %s", wantBuf.TTYString())
-		t.Logf("Last buffer: %s", ttyCtrl.LastBuffer().TTYString())
-	}
+	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test accepting.
 	ttyCtrl.Inject(term.K(ui.Enter))
 	wantBuf = ui.NewBufferBuilder(80).
 		// codearea now contains selected entry
 		WritePlain("baz").SetDotToCursor().Buffer()
-	if !ttyCtrl.VerifyBuffer(wantBuf) {
-		t.Errorf("Wanted buffer not shown")
-		t.Logf("Want: %s", wantBuf.TTYString())
-		t.Logf("Last buffer: %s", ttyCtrl.LastBuffer().TTYString())
-	}
+	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test accepting when there is already some text.
 	store.AddCmd(histutil.Entry{Text: "baz2"})
@@ -127,9 +107,5 @@ func TestStart_OK(t *testing.T) {
 		WritePlain("baz").
 		// codearea now contains newly inserted entry on a separate line
 		Newline().WritePlain("baz2").SetDotToCursor().Buffer()
-	if !ttyCtrl.VerifyBuffer(wantBuf) {
-		t.Errorf("Wanted buffer not shown")
-		t.Logf("Want: %s", wantBuf.TTYString())
-		t.Logf("Last buffer: %s", ttyCtrl.LastBuffer().TTYString())
-	}
+	ttyCtrl.TestBuffer(t, wantBuf)
 }

@@ -36,11 +36,7 @@ func TestStart(t *testing.T) {
 		Newline().WriteStyled(styled.MakeText("foo", "inverse")). // Selected entry
 		WritePlain("  foo bar").
 		Buffer()
-	if !ttyCtrl.VerifyBuffer(wantBuf) {
-		t.Errorf("Wanted buffer not shown")
-		t.Logf("Want: %s", wantBuf.TTYString())
-		t.Logf("Last buffer: %s", ttyCtrl.LastBuffer().TTYString())
-	}
+	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test the OnFilter handler.
 	ttyCtrl.Inject(term.K('b'), term.K('a'))
@@ -52,19 +48,11 @@ func TestStart(t *testing.T) {
 		SetDotToCursor().
 		Newline().WriteStyled(styled.MakeText("foo bar", "inverse")). // Selected entry
 		Buffer()
-	if !ttyCtrl.VerifyBuffer(wantBuf) {
-		t.Errorf("Wanted buffer not shown")
-		t.Logf("Want: %s", wantBuf.TTYString())
-		t.Logf("Last buffer: %s", ttyCtrl.LastBuffer().TTYString())
-	}
+	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test the OnAccept handler.
 	ttyCtrl.Inject(term.K(ui.Enter))
 	wantBuf = ui.NewBufferBuilder(80).
 		WritePlain("'foo bar'").SetDotToCursor().Buffer()
-	if !ttyCtrl.VerifyBuffer(wantBuf) {
-		t.Errorf("Wanted buffer not shown")
-		t.Logf("Want: %s", wantBuf.TTYString())
-		t.Logf("Last buffer: %s", ttyCtrl.LastBuffer().TTYString())
-	}
+	ttyCtrl.TestBuffer(t, wantBuf)
 }
