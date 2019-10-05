@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"reflect"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/elves/elvish/cli/term"
@@ -256,16 +257,28 @@ func (t TTYCtrl) InjectSignal(sigs ...os.Signal) {
 	}
 }
 
-// VerifyBuffer verifies that a buffer will appear within the timeout of 1
-// second.
+// VerifyBuffer verifies that a buffer will appear within the timeout of 4
+// seconds.
 func (t TTYCtrl) VerifyBuffer(b *ui.Buffer) bool {
 	return verifyBuffer(b, t.bufCh)
 }
 
+// TestBuffer verifies that a buffer will appear within the timeout of 4
+// seconds, and fails the test if it doesn't
+func (t TTYCtrl) TestBuffer(tt *testing.T, b *ui.Buffer) {
+	testBuffer(tt, b, t.bufCh, t.LastBuffer)
+}
+
 // VerifyNotesBuffer verifies the a notes buffer will appear within the timeout
-// of 1 second.
+// of 4 seconds.
 func (t TTYCtrl) VerifyNotesBuffer(b *ui.Buffer) bool {
 	return verifyBuffer(b, t.notesBufCh)
+}
+
+// TestNotesBuffer verifies that a notes buffer will appear within the timeout of 4
+// seconds, and fails the test if it doesn't
+func (t TTYCtrl) TestNotesBuffer(tt *testing.T, b *ui.Buffer) {
+	testBuffer(tt, b, t.notesBufCh, t.LastNotesBuffer)
 }
 
 // BufferHistory returns a slice of all buffers that have appeared.
@@ -304,4 +317,13 @@ func verifyBuffer(want *ui.Buffer, ch <-chan *ui.Buffer) bool {
 			return false
 		}
 	}
+}
+
+func testBuffer(t *testing.T, want *ui.Buffer, ch <-chan *ui.Buffer, last func() *ui.Buffer) {
+	if verifyBuffer(want, ch) {
+		return
+	}
+	t.Errorf("Wanted buffer not shown")
+	t.Logf("Want: %s", want.TTYString())
+	t.Logf("Last buffer: %s", last().TTYString())
 }

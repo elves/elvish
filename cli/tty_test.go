@@ -66,6 +66,9 @@ func TestFakeTTY_Buffer(t *testing.T) {
 	buf1 := ui.NewBufferBuilder(10).WritePlain("buf 1").Buffer()
 	bufNotes2 := ui.NewBufferBuilder(10).WritePlain("notes 2").Buffer()
 	buf2 := ui.NewBufferBuilder(10).WritePlain("buf 2").Buffer()
+	bufNotes3 := ui.NewBufferBuilder(10).WritePlain("notes 3").Buffer()
+	buf3 := ui.NewBufferBuilder(10).WritePlain("buf 3").Buffer()
+
 	tty, ttyCtrl := NewFakeTTY()
 
 	if ttyCtrl.LastNotesBuffer() != nil {
@@ -103,8 +106,14 @@ func TestFakeTTY_Buffer(t *testing.T) {
 		t.Errorf("VerifyBuffer(bufNotes2) -> false, want true")
 	}
 
-	wantBufs := []*ui.Buffer{buf1, buf2}
-	wantNotesBufs := []*ui.Buffer{bufNotes1, bufNotes2}
+	// Test Test{,Notes}Buffer
+	tty.UpdateBuffer(bufNotes3, buf3, true)
+	ttyCtrl.TestBuffer(t, buf3)
+	ttyCtrl.TestNotesBuffer(t, bufNotes3)
+	// Cannot test the failure branch as that will fail the test
+
+	wantBufs := []*ui.Buffer{buf1, buf2, buf3}
+	wantNotesBufs := []*ui.Buffer{bufNotes1, bufNotes2, bufNotes3}
 	if !reflect.DeepEqual(ttyCtrl.BufferHistory(), wantBufs) {
 		t.Errorf("BufferHistory did not return {buf1, buf2}")
 	}
