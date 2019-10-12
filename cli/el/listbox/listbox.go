@@ -260,7 +260,9 @@ func (w *Widget) Select(f func(selected, n int) int) {
 		s.Selected = f(s.Selected, s.Items.Len())
 		it, i = s.Items, s.Selected
 	})
-	w.OnSelect(it, i)
+	if 0 <= i && i < it.Len() {
+		w.OnSelect(it, i)
+	}
 }
 
 // Prev moves the selection to the previous item, or does nothing if the

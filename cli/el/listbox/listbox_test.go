@@ -378,8 +378,8 @@ func TestSelect_ChangeState(t *testing.T) {
 
 func TestSelect_CallOnSelect(t *testing.T) {
 	it := TestItems{NItems: 10}
-	gotItemsCh := make(chan Items, 1)
-	gotSelectedCh := make(chan int, 1)
+	gotItemsCh := make(chan Items, 10)
+	gotSelectedCh := make(chan int, 10)
 	w := &Widget{
 		State: State{Items: it, Selected: 5},
 		OnSelect: func(it Items, i int) {
@@ -387,11 +387,23 @@ func TestSelect_CallOnSelect(t *testing.T) {
 			gotSelectedCh <- i
 		},
 	}
+
+	// Test that OnSelect is called when index is valid.
 	w.Select(Next)
 	if gotItems := <-gotItemsCh; gotItems != it {
 		t.Errorf("Got it = %v, want %v", gotItems, it)
 	}
 	if gotSelected := <-gotSelectedCh; gotSelected != 6 {
 		t.Errorf("Got selected = %v, want 6", gotSelected)
+	}
+
+	// Test that OnSelect is not called when index is invalid. Instead of
+	// waiting a fixed time to make sure that nothing is sent in the channel, we
+	// immediately does another Select with a valid index, and verify that only
+	// the valid index is sent.
+	w.Select(func(selected, n int) int { return -1 })
+	w.Select(func(selected, n int) int { return 0 })
+	if gotSelected := <-gotSelectedCh; gotSelected != 0 {
+		t.Errorf("Got selected = %v, want 0", gotSelected)
 	}
 }
