@@ -266,6 +266,7 @@ func (t TTYCtrl) VerifyBuffer(b *ui.Buffer) bool {
 // TestBuffer verifies that a buffer will appear within the timeout of 4
 // seconds, and fails the test if it doesn't
 func (t TTYCtrl) TestBuffer(tt *testing.T, b *ui.Buffer) {
+	tt.Helper()
 	testBuffer(tt, b, t.bufCh, t.LastBuffer)
 }
 
@@ -278,6 +279,7 @@ func (t TTYCtrl) VerifyNotesBuffer(b *ui.Buffer) bool {
 // TestNotesBuffer verifies that a notes buffer will appear within the timeout of 4
 // seconds, and fails the test if it doesn't
 func (t TTYCtrl) TestNotesBuffer(tt *testing.T, b *ui.Buffer) {
+	tt.Helper()
 	testBuffer(tt, b, t.notesBufCh, t.LastNotesBuffer)
 }
 
@@ -302,7 +304,7 @@ func (t TTYCtrl) LastNotesBuffer() *ui.Buffer {
 	return t.notesBufs[len(t.notesBufs)-1]
 }
 
-var verifyBufferTimeout = 4 * time.Second
+var verifyBufferTimeout = 4000 * time.Millisecond
 
 // Check that an expected buffer will eventually appear. Also useful for waiting
 // until the editor reaches a certain state.
@@ -320,6 +322,7 @@ func verifyBuffer(want *ui.Buffer, ch <-chan *ui.Buffer) bool {
 }
 
 func testBuffer(t *testing.T, want *ui.Buffer, ch <-chan *ui.Buffer, last func() *ui.Buffer) {
+	t.Helper()
 	if verifyBuffer(want, ch) {
 		return
 	}
