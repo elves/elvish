@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -304,7 +305,8 @@ func (t TTYCtrl) LastNotesBuffer() *ui.Buffer {
 	return t.notesBufs[len(t.notesBufs)-1]
 }
 
-var verifyBufferTimeout = 4000 * time.Millisecond
+var uiTestTimeout = flag.Duration(
+	"ui-test-timeout", 4000*time.Millisecond, "timeout for UI tests")
 
 // Check that an expected buffer will eventually appear. Also useful for waiting
 // until the editor reaches a certain state.
@@ -315,7 +317,7 @@ func verifyBuffer(want *ui.Buffer, ch <-chan *ui.Buffer) bool {
 			if reflect.DeepEqual(buf, want) {
 				return true
 			}
-		case <-time.After(verifyBufferTimeout):
+		case <-time.After(*uiTestTimeout):
 			return false
 		}
 	}
