@@ -258,23 +258,11 @@ func (t TTYCtrl) InjectSignal(sigs ...os.Signal) {
 	}
 }
 
-// VerifyBuffer verifies that a buffer will appear within the timeout of 4
-// seconds.
-func (t TTYCtrl) VerifyBuffer(b *ui.Buffer) bool {
-	return verifyBuffer(b, t.bufCh)
-}
-
 // TestBuffer verifies that a buffer will appear within the timeout of 4
 // seconds, and fails the test if it doesn't
 func (t TTYCtrl) TestBuffer(tt *testing.T, b *ui.Buffer) {
 	tt.Helper()
 	testBuffer(tt, b, t.bufCh, t.LastBuffer)
-}
-
-// VerifyNotesBuffer verifies the a notes buffer will appear within the timeout
-// of 4 seconds.
-func (t TTYCtrl) VerifyNotesBuffer(b *ui.Buffer) bool {
-	return verifyBuffer(b, t.notesBufCh)
 }
 
 // TestNotesBuffer verifies that a notes buffer will appear within the timeout of 4
@@ -308,27 +296,23 @@ func (t TTYCtrl) LastNotesBuffer() *ui.Buffer {
 var uiTestTimeout = flag.Duration(
 	"ui-test-timeout", 4000*time.Millisecond, "timeout for UI tests")
 
-// Check that an expected buffer will eventually appear. Also useful for waiting
-// until the editor reaches a certain state.
-func verifyBuffer(want *ui.Buffer, ch <-chan *ui.Buffer) bool {
+// Tests that an expected buffer will appear within the timeout.
+func testBuffer(t *testing.T, want *ui.Buffer, ch <-chan *ui.Buffer, last func() *ui.Buffer) {
+	t.Helper()
+
+	timeout := time.After(*uiTestTimeout)
 	for {
 		select {
 		case buf := <-ch:
 			if reflect.DeepEqual(buf, want) {
-				return true
+				return
 			}
-		case <-time.After(*uiTestTimeout):
-			return false
+		case <-timeout:
+			t.Errorf("Wanted buffer not shown")
+			t.Logf("Want: %s", want.TTYString())
+			t.Logf("Last buffer: %s", last().TTYString())
+			return
 		}
 	}
-}
 
-func testBuffer(t *testing.T, want *ui.Buffer, ch <-chan *ui.Buffer, last func() *ui.Buffer) {
-	t.Helper()
-	if verifyBuffer(want, ch) {
-		return
-	}
-	t.Errorf("Wanted buffer not shown")
-	t.Logf("Want: %s", want.TTYString())
-	t.Logf("Last buffer: %s", last().TTYString())
 }

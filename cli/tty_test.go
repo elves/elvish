@@ -85,12 +85,8 @@ func TestFakeTTY_Buffer(t *testing.T) {
 	if ttyCtrl.LastBuffer() != buf1 {
 		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastBuffer(), buf1)
 	}
-	if !ttyCtrl.VerifyBuffer(buf1) {
-		t.Errorf("VerifyBuffer(buf1) -> false, want true")
-	}
-	if !ttyCtrl.VerifyNotesBuffer(bufNotes1) {
-		t.Errorf("VerifyBuffer(bufNotes1) -> false, want true")
-	}
+	ttyCtrl.TestBuffer(t, buf1)
+	ttyCtrl.TestNotesBuffer(t, bufNotes1)
 
 	tty.UpdateBuffer(bufNotes2, buf2, true)
 	if ttyCtrl.LastNotesBuffer() != bufNotes2 {
@@ -99,12 +95,8 @@ func TestFakeTTY_Buffer(t *testing.T) {
 	if ttyCtrl.LastBuffer() != buf2 {
 		t.Errorf("LastBuffer -> %v, want %v", ttyCtrl.LastBuffer(), buf2)
 	}
-	if !ttyCtrl.VerifyBuffer(buf2) {
-		t.Errorf("VerifyBuffer(buf2) -> false, want true")
-	}
-	if !ttyCtrl.VerifyNotesBuffer(bufNotes2) {
-		t.Errorf("VerifyBuffer(bufNotes2) -> false, want true")
-	}
+	ttyCtrl.TestBuffer(t, buf2)
+	ttyCtrl.TestNotesBuffer(t, bufNotes2)
 
 	// Test Test{,Notes}Buffer
 	tty.UpdateBuffer(bufNotes3, buf3, true)

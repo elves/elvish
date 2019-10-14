@@ -133,9 +133,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 
 	wantBuf := ui.NewBufferBuilder(5).
 		WritePlain(strings.Repeat("a", 10)).Buffer()
-	if !tty.VerifyBuffer(wantBuf) {
-		t.Errorf("Expected buffer of height 2 did not show up")
-	}
+	tty.TestBuffer(t, wantBuf)
 
 	cleanup(ed, codeCh)
 }
@@ -160,9 +158,7 @@ func TestReadCode_RendersHighlightedCode(t *testing.T) {
 	wantBuf := ui.NewBufferBuilder(80).
 		WriteStringSGR("abc", "31" /* SGR for red foreground */).
 		SetDotToCursor().Buffer()
-	if !tty.VerifyBuffer(wantBuf) {
-		t.Errorf("Did not see buffer containing highlighted code")
-	}
+	tty.TestBuffer(t, wantBuf)
 
 	cleanup(ed, codeCh)
 }
@@ -186,9 +182,7 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 	wantBuf := ui.NewBufferBuilder(80).
 		WritePlain("> a").
 		SetDotToCursor().Buffer()
-	if !tty.VerifyBuffer(wantBuf) {
-		t.Errorf("Did not see buffer containing prompt")
-	}
+	tty.TestBuffer(t, wantBuf)
 
 	cleanup(ed, codeCh)
 }
@@ -204,9 +198,7 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 
 	wantBuf := ui.NewBufferBuilder(4).
 		WritePlain("a").SetDotToCursor().WritePlain("  R").Buffer()
-	if !tty.VerifyBuffer(wantBuf) {
-		t.Errorf("Did not see buffer containing rprompt")
-	}
+	tty.TestBuffer(t, wantBuf)
 
 	cleanup(ed, codeCh)
 }
@@ -239,17 +231,13 @@ func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
 	bufOldPrompt := ui.NewBufferBuilder(80).
 		WritePlain("old").SetDotToCursor().Buffer()
 	// Wait until old prompt is rendered
-	if !tty.VerifyBuffer(bufOldPrompt) {
-		t.Errorf("Did not see buffer containing old prompt")
-	}
+	tty.TestBuffer(t, bufOldPrompt)
 
 	promptContent = "new"
 	prompt.lateUpdates <- nil
 	bufNewPrompt := ui.NewBufferBuilder(80).
 		WritePlain("new").SetDotToCursor().Buffer()
-	if !tty.VerifyBuffer(bufNewPrompt) {
-		t.Errorf("Did not see buffer containing new prompt")
-	}
+	tty.TestBuffer(t, bufNewPrompt)
 
 	cleanup(ed, codeCh)
 }
@@ -265,16 +253,12 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 
 	// Sanity-check initial state.
 	initBuf := ui.NewBufferBuilder(80).Buffer()
-	if !tty.VerifyBuffer(initBuf) {
-		t.Errorf("did not get initial state")
-	}
+	tty.TestBuffer(t, initBuf)
 
 	ed.Notify("note")
 
 	wantNotesBuf := ui.NewBufferBuilder(80).WritePlain("note").Buffer()
-	if !tty.VerifyNotesBuffer(wantNotesBuf) {
-		t.Errorf("did not render notes")
-	}
+	tty.TestNotesBuffer(t, wantNotesBuf)
 
 	if n := len(ed.State.Notes); n > 0 {
 		t.Errorf("State.Notes has %d elements after redrawing, want 0", n)
@@ -295,17 +279,13 @@ func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
 	wantBuf := ui.NewBufferBuilder(80).
 		WritePlain("some code").
 		Newline().SetDotToCursor().WritePlain("listing").Buffer()
-	if !tty.VerifyBuffer(wantBuf) {
-		t.Errorf("did not get expected buffer before quitting")
-	}
+	tty.TestBuffer(t, wantBuf)
 
 	cleanup(app, codeCh)
 
 	wantFinalBuf := ui.NewBufferBuilder(80).
 		WritePlain("some code").Newline().SetDotToCursor().Buffer()
-	if !tty.VerifyBuffer(wantFinalBuf) {
-		t.Errorf("did not get expected final buffer")
-	}
+	tty.TestBuffer(t, wantFinalBuf)
 }
 
 func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
@@ -317,9 +297,7 @@ func TestReadCode_QuitsOnSIGHUP(t *testing.T) {
 
 	wantBuf := ui.NewBufferBuilder(80).WritePlain("a").
 		SetDotToCursor().Buffer()
-	if !tty.VerifyBuffer(wantBuf) {
-		t.Errorf("did not get expected buffer before sending SIGHUP")
-	}
+	tty.TestBuffer(t, wantBuf)
 
 	tty.InjectSignal(syscall.SIGHUP)
 
@@ -342,16 +320,12 @@ func TestReadCode_ResetsOnSIGINT(t *testing.T) {
 	codeCh, _ := ed.ReadCodeAsync()
 	wantBuf := ui.NewBufferBuilder(80).WritePlain("a").
 		SetDotToCursor().Buffer()
-	if !tty.VerifyBuffer(wantBuf) {
-		t.Errorf("did not get expected buffer before sending SIGINT")
-	}
+	tty.TestBuffer(t, wantBuf)
 
 	tty.InjectSignal(syscall.SIGINT)
 
 	wantBuf = ui.NewBufferBuilder(80).Buffer()
-	if !tty.VerifyBuffer(wantBuf) {
-		t.Errorf("Terminal state is not reset after SIGINT")
-	}
+	tty.TestBuffer(t, wantBuf)
 
 	cleanup(ed, codeCh)
 }
@@ -368,18 +342,14 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 
 	wantBuf := ui.NewBufferBuilder(80).WritePlain("1234567890").
 		SetDotToCursor().Buffer()
-	if !tty.VerifyBuffer(wantBuf) {
-		t.Errorf("did not get expected buffer before sending SIGWINCH")
-	}
+	tty.TestBuffer(t, wantBuf)
 
 	tty.SetSize(24, 4)
 	tty.InjectSignal(sys.SIGWINCH)
 
 	wantBuf = ui.NewBufferBuilder(4).WritePlain("1234567890").
 		SetDotToCursor().Buffer()
-	if !tty.VerifyBuffer(wantBuf) {
-		t.Errorf("Terminal is not redrawn after SIGWINCH")
-	}
+	tty.TestBuffer(t, wantBuf)
 
 	cleanup(ed, codeCh)
 }
