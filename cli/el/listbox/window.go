@@ -24,9 +24,14 @@ var respectDistance = 2
 //
 // * Among all values satisfying the above conditions, the value of first is
 //   the one closest to lastFirst.
-func getVertialWindow(state State, height int) (first, crop int) {
+func getVerticalWindow(state State, height int) (first, crop int) {
 	items, selected, lastFirst := state.Items, state.Selected, state.First
 	n := items.Len()
+	if selected < 0 {
+		selected = 0
+	} else if selected >= n {
+		selected = n - 1
+	}
 	selectedHeight := items.Show(selected).CountLines()
 
 	if height <= selectedHeight {

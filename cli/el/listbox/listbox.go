@@ -140,7 +140,7 @@ func (w *Widget) renderVertical(width, height int) *ui.Buffer {
 		if s.Items == nil || s.Items.Len() == 0 {
 			s.First = 0
 		} else {
-			s.First, firstCrop = getVertialWindow(*s, height)
+			s.First, firstCrop = getVerticalWindow(*s, height)
 		}
 		state = *s
 	})

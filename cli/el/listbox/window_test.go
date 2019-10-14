@@ -9,15 +9,19 @@ import (
 var Args = tt.Args
 
 func TestGetVerticalWindow(t *testing.T) {
-	tt.Test(t, tt.Fn("getVerticalWindow", getVertialWindow), tt.Table{
+	tt.Test(t, tt.Fn("getVerticalWindow", getVerticalWindow), tt.Table{
 		// selected = 0: always show a widow starting from 0, regardless of
 		// the value of oldFirst
 		Args(State{TestItems{NItems: 10}, 0, 0}, 6).Rets(0, 0),
 		Args(State{TestItems{NItems: 10}, 0, 1}, 6).Rets(0, 0),
+		// selected < 0 is treated as if = 0.
+		Args(State{TestItems{NItems: 10}, -1, 0}, 6).Rets(0, 0),
 		// selected = n-1: always show a window ending at n-1, regardless of the
 		// value of oldFirst
 		Args(State{TestItems{NItems: 10}, 9, 0}, 6).Rets(4, 0),
 		Args(State{TestItems{NItems: 10}, 9, 8}, 6).Rets(4, 0),
+		// selected >= n is treated as if = n-1.
+		Args(State{TestItems{NItems: 10}, 10, 0}, 6).Rets(4, 0),
 		// selected = 3, oldFirst = 2 (likely because previous selected = 4).
 		// Adjust first -> 1 to satisfy the upward respect distance of 2.
 		Args(State{TestItems{NItems: 10}, 3, 2}, 6).Rets(1, 0),
