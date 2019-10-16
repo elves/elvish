@@ -40,7 +40,7 @@ func errorToJSON(err error) []byte {
 	}
 	jsonError, errMarshal := json.Marshal(e)
 	if errMarshal != nil {
-		return []byte(`[{"message":"Unable to convert the errors to JSON format"}]`)
+		return []byte(`[{"message":"Unable to convert the errors to JSON"}]`)
 	}
 	return jsonError
 }
