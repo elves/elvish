@@ -49,7 +49,7 @@ func (sh *Shell) Main(args []string) int {
 		err := script(ev, args, sh.Cmd, sh.CompileOnly)
 		if err != nil {
 			if sh.CompileOnly && sh.JSON {
-				fmt.Println(ErrorToJSON(err))
+				fmt.Printf("%s\n", ErrorToJSON(err))
 			} else {
 				diag.PPrintError(err)
 			}

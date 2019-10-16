@@ -7,41 +7,40 @@ import (
 	"github.com/elves/elvish/parse"
 )
 
-// ErrorInJSON is the data structure for self-defined error
-type ErrorInJSON struct {
+// An auxiliary struct for converting errors with diagnostics information to JSON.
+type errorInJSON struct {
 	FileName string `json:"fileName"`
 	Start    int    `json:"start"`
 	End      int    `json:"end"`
 	Message  string `json:"message"`
 }
 
-// SimplifiedErrorInJSON is the data structure for errors which contain limited info
-type SimplifiedErrorInJSON struct {
+// An auxiliary struct for converting errors with only a message to JSON.
+type simpleErrorInJSON struct {
 	Message string `json:"message"`
 }
 
-// ErrorToJSON converts the error into JSON format
-func ErrorToJSON(err error) string {
+// ErrorToJSON converts the error into JSON format.
+func ErrorToJSON(err error) []byte {
 	var e interface{}
 	switch err := err.(type) {
 	case *eval.CompilationError:
-		e = []interface{}{ErrorInJSON{err.Context.Name, err.Context.Begin, err.Context.End, err.Message}}
+		e = []interface{}{
+			errorInJSON{err.Context.Name, err.Context.Begin, err.Context.End, err.Message},
+		}
 	case *parse.MultiError:
-		e = processMultiError(err)
+		var errArr []errorInJSON
+		for _, v := range err.Entries {
+			errArr = append(errArr,
+				errorInJSON{v.Context.Name, v.Context.Begin, v.Context.End, v.Message})
+		}
+		e = errArr
 	default:
-		e = []interface{}{SimplifiedErrorInJSON{err.Error()}}
+		e = []interface{}{simpleErrorInJSON{err.Error()}}
 	}
 	jsonError, er := json.Marshal(e)
 	if er != nil {
-		return `[{"message":"Unable to convert the errors to JSON format"}]`
+		return []byte(`[{"message":"Unable to convert the errors to JSON format"}]`)
 	}
-	return string(jsonError)
-}
-
-func processMultiError(e *parse.MultiError) []ErrorInJSON {
-	var errArr []ErrorInJSON
-	for _, v := range e.Entries {
-		errArr = append(errArr, ErrorInJSON{v.Context.Name, v.Context.Begin, v.Context.End, v.Message})
-	}
-	return errArr
+	return jsonError
 }
