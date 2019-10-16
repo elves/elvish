@@ -20,8 +20,8 @@ type simpleErrorInJSON struct {
 	Message string `json:"message"`
 }
 
-// ErrorToJSON converts the error into JSON format.
-func ErrorToJSON(err error) []byte {
+// Converts the error into JSON.
+func errorToJSON(err error) []byte {
 	var e interface{}
 	switch err := err.(type) {
 	case *eval.CompilationError:
@@ -38,8 +38,8 @@ func ErrorToJSON(err error) []byte {
 	default:
 		e = []interface{}{simpleErrorInJSON{err.Error()}}
 	}
-	jsonError, er := json.Marshal(e)
-	if er != nil {
+	jsonError, errMarshal := json.Marshal(e)
+	if errMarshal != nil {
 		return []byte(`[{"message":"Unable to convert the errors to JSON format"}]`)
 	}
 	return jsonError

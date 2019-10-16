@@ -11,7 +11,7 @@ import (
 )
 
 func TestErrorsToJSON(t *testing.T) {
-	tt.Test(t, tt.Fn("ErrorToJSON", ErrorToJSON), tt.Table{
+	tt.Test(t, tt.Fn("errorToJSON", errorToJSON), tt.Table{
 		tt.Args(&eval.CompilationError{
 			Message: "ERR",
 			Context: diag.SourceRange{Name: "file", Begin: 5, End: 7}},
