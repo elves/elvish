@@ -159,6 +159,6 @@ func FindProgram(flag *flagSet) Program {
 		}
 		return web.New(flag.Bin, flag.Sock, flag.DB, flag.Port)
 	default:
-		return shell.New(flag.Bin, flag.Sock, flag.DB, flag.CodeInArg, flag.CompileOnly, flag.NoRc, flag.NewEdit)
+		return shell.New(flag.Bin, flag.Sock, flag.DB, flag.CodeInArg, flag.CompileOnly, flag.NoRc, flag.NewEdit, flag.JSON)
 	}
 }

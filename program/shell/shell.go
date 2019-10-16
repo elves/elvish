@@ -25,10 +25,11 @@ type Shell struct {
 	CompileOnly bool
 	NoRc        bool
 	NewEdit     bool
+	JSON        bool
 }
 
-func New(binpath, sockpath, dbpath string, cmd, compileonly, norc, newEdit bool) *Shell {
-	return &Shell{binpath, sockpath, dbpath, cmd, compileonly, norc, newEdit}
+func New(binpath, sockpath, dbpath string, cmd, compileonly, norc, newEdit, json bool) *Shell {
+	return &Shell{binpath, sockpath, dbpath, cmd, compileonly, norc, newEdit, json}
 }
 
 // Main runs Elvish using the default terminal interface. It blocks until Elvish
@@ -47,7 +48,11 @@ func (sh *Shell) Main(args []string) int {
 	if len(args) > 0 {
 		err := script(ev, args, sh.Cmd, sh.CompileOnly)
 		if err != nil {
-			diag.PPrintError(err)
+			if sh.CompileOnly && sh.JSON {
+				fmt.Println(ErrorToJSON(err))
+			} else {
+				diag.PPrintError(err)
+			}
 			return 2
 		}
 	} else {
