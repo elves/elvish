@@ -13,12 +13,28 @@ var errorsJSONTests = []struct {
 	in   error
 	want string
 }{
-	{&eval.CompilationError{Message: "This is a test error", Context: diag.SourceRange{Name: "CompileError", Source: "compile", Begin: 5, End: 7}}, `[{"fileName":"CompileError","start":5,"end":7,"message":"This is a test error"}]`},
-	{&parse.MultiError{Entries: []*parse.Error{
-		{Message: "This is a test error", Context: diag.SourceRange{Name: "ParseError", Source: "parse", Begin: 5, End: 7}},
-		{Message: "This is a test error", Context: diag.SourceRange{Name: "ParseError", Source: "parse", Begin: 15, End: 16}},
-	}}, `[{"fileName":"ParseError","start":5,"end":7,"message":"This is a test error"},{"fileName":"ParseError","start":15,"end":16,"message":"This is a test error"}]`},
-	{errors.New("This is a test error"), `[{"message":"This is a test error"}]`},
+	{
+		&eval.CompilationError{
+			Message: "ERR",
+			Context: diag.SourceRange{Name: "file", Begin: 5, End: 7}},
+		`[{"fileName":"file","start":5,"end":7,"message":"ERR"}]`,
+	},
+	{
+		&parse.MultiError{Entries: []*parse.Error{
+			{
+				Message: "ERR1",
+				Context: diag.SourceRange{Name: "file1", Begin: 5, End: 7}},
+			{
+				Message: "ERR2",
+				Context: diag.SourceRange{Name: "file2", Begin: 15, End: 16}},
+		}},
+		`[{"fileName":"file1","start":5,"end":7,"message":"ERR1"},` +
+			`{"fileName":"file2","start":15,"end":16,"message":"ERR2"}]`,
+	},
+	{
+		errors.New("ERR"),
+		`[{"message":"ERR"}]`,
+	},
 }
 
 func TestErrorsToJSON(t *testing.T) {
