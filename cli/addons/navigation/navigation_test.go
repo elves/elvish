@@ -2,8 +2,6 @@ package navigation
 
 import (
 	"errors"
-	"io/ioutil"
-	"os"
 	"testing"
 
 	"github.com/elves/elvish/cli"
@@ -20,17 +18,15 @@ var styles = map[rune]string{
 	'x': "red",
 }
 
-type dir map[string]interface{}
-
-var testDir = dir{
+var testDir = util.Dir{
 	"a": "",
-	"d": dir{
+	"d": util.Dir{
 		"d1": "content\td1",
-		"d2": dir{
+		"d2": util.Dir{
 			"d21": "content d21",
 			"d22": "content d22",
 		},
-		"d3": dir{},
+		"d3": util.Dir{},
 	},
 	"f": "",
 }
@@ -41,7 +37,7 @@ func TestNavigation_FakeFS(t *testing.T) {
 }
 
 func TestNavigation_RealFS(t *testing.T) {
-	cleanupFs := setupRealFS()
+	cleanupFs := util.SetupTestDir(testDir, "d")
 	defer cleanupFs()
 	testNavigation(t, nil)
 }
@@ -215,33 +211,4 @@ func setupApp() (*cli.App, cli.TTYCtrl, func()) {
 
 func getTestCursor() *testCursor {
 	return &testCursor{root: testDir, pwd: []string{"d"}}
-}
-
-func setupRealFS() func() {
-	_, cleanup := util.InTestDir()
-	applyDirToRealFS(testDir)
-	must(os.Chdir("d"))
-	return cleanup
-}
-
-func applyDirToRealFS(d dir) {
-	for name, file := range d {
-		switch file := file.(type) {
-		case string:
-			must(ioutil.WriteFile(name, []byte(file), 0644))
-		case dir:
-			must(os.Mkdir(name, 0755))
-			must(os.Chdir(name))
-			applyDirToRealFS(file)
-			must(os.Chdir(".."))
-		default:
-			panic("file not string or dir")
-		}
-	}
-}
-
-func must(err error) {
-	if err != nil {
-		panic(err)
-	}
 }
