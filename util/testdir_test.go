@@ -92,6 +92,16 @@ func TestSetupTestDir_CreatesFiles(t *testing.T) {
 	testFileContent(t, "b", "b content")
 }
 
+func TestSetupTestDir_CreatesFileWithPerm(t *testing.T) {
+	cleanup := SetupTestDir(Dir{
+		"a": File{0755, "a content"},
+	}, "")
+	defer cleanup()
+
+	testFileContent(t, "a", "a content")
+	testFilePerm(t, "a", 0755)
+}
+
 func TestSetupTestDir_CreatesDirectories(t *testing.T) {
 	cleanup := SetupTestDir(Dir{
 		"d": Dir{
@@ -141,5 +151,17 @@ func testFileContent(t *testing.T, filename string, wantContent string) {
 	}
 	if string(content) != wantContent {
 		t.Errorf("File %v is %q, want %q", filename, content, wantContent)
+	}
+}
+
+func testFilePerm(t *testing.T, filename string, wantPerm os.FileMode) {
+	t.Helper()
+	info, err := os.Stat(filename)
+	if err != nil {
+		t.Errorf("Could not stat %v: %v", filename, err)
+		return
+	}
+	if perm := info.Mode().Perm(); perm != wantPerm {
+		t.Errorf("File %v has perm %o, want %o", filename, perm, wantPerm)
 	}
 }

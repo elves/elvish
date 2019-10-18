@@ -48,10 +48,16 @@ func InTestDir() (string, func()) {
 	}
 }
 
-// Dir describes the layout of a directory. The keys are filenames, and the
-// values are either a string for the content of a regular file, or another Dir
-// for the layout of a subdirectory.
+// Dir describes the layout of a directory. The keys of the map represent
+// filenames. Each value is either a string (for the content of a regular file
+// with permission 0644), a File, or a Dir.
 type Dir map[string]interface{}
+
+// File describes a file to create.
+type File struct {
+	Perm    os.FileMode
+	Content string
+}
 
 // SetupTestDir sets up a temporary directory using the given layout. If wd is
 // not empty, it also changes into the given subdirectory. It returns a cleanup
@@ -73,6 +79,8 @@ func applyDir(dir Dir, prefix string) {
 		switch file := file.(type) {
 		case string:
 			mustOK(ioutil.WriteFile(path, []byte(file), 0644))
+		case File:
+			mustOK(ioutil.WriteFile(path, []byte(file.Content), file.Perm))
 		case Dir:
 			mustOK(os.Mkdir(path, 0755))
 			applyDir(file, path)
