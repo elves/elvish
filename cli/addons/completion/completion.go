@@ -1,4 +1,5 @@
-// Package completion implements the logic to show completion candidates.
+// Package completion implements the UI for showing, filtering and inserting
+// completion candidates.
 package completion
 
 import (
@@ -13,20 +14,22 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-// Candidate represents a completion candidate.
-type Candidate struct {
+// Item represents a completion item, also known as a candidate.
+type Item struct {
 	// Used in the UI and for filtering.
 	ToShow string
 	// Used when inserting a candidate.
 	ToInsert string
 }
 
+// Config keeps the configuration for the completion UI.
 type Config struct {
-	Binding    el.Handler
-	Type       string
-	Candidates []Candidate
+	Binding el.Handler
+	Type    string
+	Items   []Item
 }
 
+// Start starts the completion UI.
 func Start(app *cli.App, cfg Config) {
 	w := combobox.Widget{}
 	w.CodeArea.Prompt = layout.ModePrompt("COMPLETING "+cfg.Type, true)
@@ -34,7 +37,7 @@ func Start(app *cli.App, cfg Config) {
 	w.ListBox.OverlayHandler = cfg.Binding
 	w.OnFilter = func(p string) {
 		w.ListBox.MutateListboxState(func(s *listbox.State) {
-			*s = listbox.MakeState(filter(cfg.Candidates, p), false)
+			*s = listbox.MakeState(filter(cfg.Items, p), false)
 		})
 	}
 	w.ListBox.OnAccept = func(it listbox.Items, i int) {
@@ -47,10 +50,10 @@ func Start(app *cli.App, cfg Config) {
 	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
 }
 
-type items []Candidate
+type items []Item
 
-func filter(all []Candidate, p string) items {
-	var filtered []Candidate
+func filter(all []Item, p string) items {
+	var filtered []Item
 	for _, candidate := range all {
 		if strings.Contains(candidate.ToShow, p) {
 			filtered = append(filtered, candidate)

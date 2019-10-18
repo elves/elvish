@@ -20,7 +20,7 @@ func TestStart(t *testing.T) {
 
 	Start(app, Config{
 		Type: "WORD",
-		Candidates: []Candidate{
+		Items: []Item{
 			{ToShow: "foo", ToInsert: "foo"},
 			{ToShow: "foo bar", ToInsert: "'foo bar'"},
 		},
