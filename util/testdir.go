@@ -48,6 +48,40 @@ func InTestDir() (string, func()) {
 	}
 }
 
+// Dir describes the layout of a directory. The keys are filenames, and the
+// values are either a string for the content of a regular file, or another Dir
+// for the layout of a subdirectory.
+type Dir map[string]interface{}
+
+// SetupTestDir sets up a temporary directory using the given layout. If wd is
+// not empty, it also changes into the given subdirectory. It returns a cleanup
+// function to remove the temporary directory and restore the working directory.
+//
+// It panics if there are any errors.
+func SetupTestDir(dir Dir, wd string) func() {
+	_, cleanup := InTestDir()
+	applyDir(dir, "")
+	if wd != "" {
+		mustChdir(wd)
+	}
+	return cleanup
+}
+
+func applyDir(dir Dir, prefix string) {
+	for name, file := range dir {
+		path := filepath.Join(prefix, name)
+		switch file := file.(type) {
+		case string:
+			mustOK(ioutil.WriteFile(path, []byte(file), 0644))
+		case Dir:
+			mustOK(os.Mkdir(path, 0755))
+			applyDir(file, path)
+		default:
+			panic(fmt.Sprintf("file is neither string nor Dir: %v", file))
+		}
+	}
+}
+
 func mustChdir(dir string) {
 	err := os.Chdir(dir)
 	if err != nil {
