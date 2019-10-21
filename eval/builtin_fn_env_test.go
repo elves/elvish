@@ -15,9 +15,14 @@ func TestBuiltinFnEnv(t *testing.T) {
 		That(`set-env var test1`),
 		That(`get-env var`).Puts("test1"),
 		That(`put $E:var`).Puts("test1"),
+
 		That(`set-env var test2`),
 		That(`get-env var`).Puts("test2"),
 		That(`put $E:var`).Puts("test2"),
+
+		That(`has-env var`).Puts(true),
+		That(`unset-env var`),
+		That(`has-env var`).Puts(false),
 
 		That(`set-env PATH /test-path`),
 		That(`put $paths`).Puts(vals.MakeList("/test-path")),
