@@ -11,13 +11,13 @@ import (
 func TestFindVariableComplContext(t *testing.T) {
 	testComplContextFinder(t, "findVariableComplContext", findVariableComplContext, []complContextFinderTest{
 		{"$", &variableComplContext{
-			complContextCommon{"", parse.Bareword, 1, 1}, "", ""}},
+			complContextCommon{"", parse.Bareword, 1, 1}, ""}},
 		{"$a", &variableComplContext{
-			complContextCommon{"a", parse.Bareword, 1, 2}, "", ""}},
+			complContextCommon{"a", parse.Bareword, 1, 2}, ""}},
 		{"$a:", &variableComplContext{
-			complContextCommon{"", parse.Bareword, 3, 3}, "a", "a:"}},
+			complContextCommon{"", parse.Bareword, 3, 3}, "a:"}},
 		{"$a:b", &variableComplContext{
-			complContextCommon{"b", parse.Bareword, 3, 4}, "a", "a:"}},
+			complContextCommon{"b", parse.Bareword, 3, 4}, "a:"}},
 		// Wrong contexts
 		{"", nil},
 		{"echo", nil},
@@ -27,9 +27,9 @@ func TestFindVariableComplContext(t *testing.T) {
 type testEvalerScopes struct{}
 
 var testScopes = map[string]map[string]int{
-	"":        {"veni": 0, "vidi": 0, "vici": 0},
-	"foo":     {"lorem": 0, "ipsum": 0},
-	"foo:bar": {"lorem": 0, "dolor": 0},
+	"":         {"veni": 0, "vidi": 0, "vici": 0},
+	"foo:":     {"lorem": 0, "ipsum": 0},
+	"foo:bar:": {"lorem": 0, "dolor": 0},
 }
 
 func (testEvalerScopes) EachNsInTop(f func(string)) {
@@ -47,38 +47,37 @@ func (testEvalerScopes) EachVariableInTop(ns string, f func(string)) {
 }
 
 var complVariableTests = []struct {
-	ns     string
-	nsPart string
-	want   []rawCandidate
+	ns   string
+	want []rawCandidate
 }{
 	// No namespace: complete variables and namespaces
-	{"", "", []rawCandidate{
+	{"", []rawCandidate{
 		noQuoteCandidate("foo:"), noQuoteCandidate("foo:bar:"),
 		noQuoteCandidate("veni"), noQuoteCandidate("vici"), noQuoteCandidate("vidi"),
 	}},
 	// Nonempty namespace: complete variables in namespace and subnamespaces
 	// (but not variables in subnamespaces)
-	{"foo", "foo:", []rawCandidate{
+	{"foo:", []rawCandidate{
 		noQuoteCandidate("bar:"),
 		noQuoteCandidate("ipsum"), noQuoteCandidate("lorem"),
 	}},
 	// Bad namespace
-	{"bad", "bad:", nil},
+	{"bad:", nil},
 }
 
 func TestComplVariable(t *testing.T) {
 	for _, test := range complVariableTests {
-		got := collectComplVariable(test.ns, test.nsPart, testEvalerScopes{})
+		got := collectComplVariable(test.ns, testEvalerScopes{})
 		if !reflect.DeepEqual(got, test.want) {
-			t.Errorf("complVariable(%q, %q, ...) => %v, want %v", test.ns, test.nsPart, got, test.want)
+			t.Errorf("complVariable(%q, ...) => %v, want %v", test.ns, got, test.want)
 		}
 	}
 }
 
-func collectComplVariable(ns, nsPart string, ev evalerScopes) []rawCandidate {
+func collectComplVariable(ns string, ev evalerScopes) []rawCandidate {
 	ch := make(chan rawCandidate)
 	go func() {
-		complVariable(ns, nsPart, ev, ch)
+		complVariable(ns, ev, ch)
 		close(ch)
 	}()
 	var results []rawCandidate

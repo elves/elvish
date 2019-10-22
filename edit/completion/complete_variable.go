@@ -9,7 +9,7 @@ import (
 
 type variableComplContext struct {
 	complContextCommon
-	ns, nsPart string
+	ns string
 }
 
 func (*variableComplContext) name() string { return "variable" }
@@ -17,16 +17,14 @@ func (*variableComplContext) name() string { return "variable" }
 func findVariableComplContext(n parse.Node, _ pureEvaler) complContext {
 	primary, ok := n.(*parse.Primary)
 	if ok && primary.Type == parse.Variable {
-		explode, nsPart, nameSeed := eval.SplitIncompleteVariableRef(primary.Value)
+		sigil, qname := eval.SplitVariableRef(primary.Value)
+		ns, nameSeed := eval.SplitQNameNsIncomplete(qname)
+
 		// Move past "$", "@" and "<ns>:".
-		begin := primary.Range().From + 1 + len(explode) + len(nsPart)
-		ns := nsPart
-		if len(ns) > 0 {
-			ns = ns[:len(ns)-1]
-		}
+		begin := primary.Range().From + 1 + len(sigil) + len(ns)
 		return &variableComplContext{
 			complContextCommon{nameSeed, parse.Bareword, begin, primary.Range().To},
-			ns, nsPart,
+			ns,
 		}
 	}
 	return nil
@@ -38,21 +36,20 @@ type evalerScopes interface {
 }
 
 func (ctx *variableComplContext) generate(env *complEnv, ch chan<- rawCandidate) error {
-	complVariable(ctx.ns, ctx.nsPart, env.evaler, ch)
+	complVariable(ctx.ns, env.evaler, ch)
 	return nil
 }
 
-func complVariable(ctxNs, ctxNsPart string, ev evalerScopes, ch chan<- rawCandidate) {
+func complVariable(ctxNs string, ev evalerScopes, ch chan<- rawCandidate) {
 	ev.EachVariableInTop(ctxNs, func(varname string) {
 		ch <- noQuoteCandidate(varname)
 	})
 
 	ev.EachNsInTop(func(ns string) {
-		nsPart := ns + ":"
 		// This is to match namespaces that are "nested" under the current
 		// namespace.
-		if hasProperPrefix(nsPart, ctxNsPart) {
-			ch <- noQuoteCandidate(nsPart[len(ctxNsPart):])
+		if hasProperPrefix(ns, ctxNs) {
+			ch <- noQuoteCandidate(ns[len(ctxNs):])
 		}
 	})
 }
