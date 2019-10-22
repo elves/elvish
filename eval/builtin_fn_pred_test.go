@@ -27,10 +27,16 @@ func TestBool(t *testing.T) {
 		That(`is a b`).Puts(false),
 		That(`is [] []`).Puts(true),
 		That(`is [1] [1]`).Puts(false),
+
 		That(`eq 1 1`).Puts(true),
 		That(`eq a b`).Puts(false),
 		That(`eq [] []`).Puts(true),
 		That(`eq [1] [1]`).Puts(true),
+		That(`eq 1 1 2`).Puts(false),
+
 		That(`not-eq a b`).Puts(true),
+		That(`not-eq a a`).Puts(false),
+		// not-eq is true as long as each adjancent pair is not equal.
+		That(`not-eq 1 2 1`).Puts(true),
 	)
 }

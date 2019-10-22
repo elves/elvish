@@ -3,7 +3,6 @@ package cliedit
 import (
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cliedit/highlight"
@@ -33,23 +32,24 @@ func hasCommand(ev *eval.Evaler, cmd string) bool {
 		return isDirOrExecutable(cmd) || hasExternalCommand(cmd)
 	}
 
-	explode, ns, name := eval.ParseVariableRef(cmd)
-	if explode {
+	sigil, qname := eval.SplitVariableRef(cmd)
+	if sigil != "" {
 		// The @ sign is only valid when referring to external commands.
 		return hasExternalCommand(cmd)
 	}
 
-	switch ns {
-	case "e":
-		return hasExternalCommand(name)
+	firstNs, rest := eval.SplitIncompleteQNameFirstNs(qname)
+	switch firstNs {
+	case "e:":
+		return hasExternalCommand(rest)
 	case "":
 		// Unqualified name; try builtin and global.
-		if hasFn(ev.Builtin, name) || hasFn(ev.Global, name) {
+		if hasFn(ev.Builtin, rest) || hasFn(ev.Global, rest) {
 			return true
 		}
 	default:
 		// Qualified name. Find the top-level module first.
-		if hasQualifiedFn(ev, strings.Split(ns, ":"), name) {
+		if hasQualifiedFn(ev, firstNs, rest) {
 			return true
 		}
 	}
@@ -58,10 +58,10 @@ func hasCommand(ev *eval.Evaler, cmd string) bool {
 	return hasExternalCommand(cmd)
 }
 
-func hasQualifiedFn(ev *eval.Evaler, nsParts []string, name string) bool {
-	modVar := ev.Global[nsParts[0]+eval.NsSuffix]
+func hasQualifiedFn(ev *eval.Evaler, firstNs string, rest string) bool {
+	modVar := ev.Global[firstNs]
 	if modVar == nil {
-		modVar = ev.Builtin[nsParts[0]+eval.NsSuffix]
+		modVar = ev.Builtin[firstNs]
 		if modVar == nil {
 			return false
 		}
@@ -70,8 +70,9 @@ func hasQualifiedFn(ev *eval.Evaler, nsParts []string, name string) bool {
 	if !ok {
 		return false
 	}
-	for _, nsPart := range nsParts[1:] {
-		modVar = mod[nsPart+eval.NsSuffix]
+	segs := eval.SplitQNameNsSegs(rest)
+	for _, seg := range segs[:len(segs)-1] {
+		modVar = mod[seg]
 		if modVar == nil {
 			return false
 		}
@@ -80,7 +81,7 @@ func hasQualifiedFn(ev *eval.Evaler, nsParts []string, name string) bool {
 			return false
 		}
 	}
-	return hasFn(mod, name)
+	return hasFn(mod, segs[len(segs)-1])
 }
 
 func hasFn(ns eval.Ns, name string) bool {

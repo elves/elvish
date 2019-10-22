@@ -75,17 +75,19 @@ func (cp *compiler) lvaluesMulti(nodes []*parse.Compound) (lvaluesOp, lvaluesOp)
 }
 
 func (cp *compiler) lvalueBase(n *parse.Indexing, msg string) (bool, lvaluesOpBody) {
-	qname := cp.literal(n.Head, msg)
-	explode, ns, name := ParseVariableRef(qname)
+	ref := cp.literal(n.Head, msg)
+	sigil, qname := SplitVariableRef(ref)
+	// TODO: Deal with other sigils too
+	explode := sigil != ""
 	if len(n.Indicies) == 0 {
-		cp.registerVariableSet(ns, name)
-		return explode, varOp{ns, name}
+		cp.registerVariableSet(qname)
+		return explode, varOp{qname}
 	}
-	return explode, cp.lvalueElement(ns, name, n)
+	return explode, cp.lvalueElement(qname, n)
 }
 
-func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) lvaluesOpBody {
-	cp.registerVariableGet(ns, name)
+func (cp *compiler) lvalueElement(qname string, n *parse.Indexing) lvaluesOpBody {
+	cp.registerVariableGet(qname)
 
 	begin, end := n.Range().From, n.Range().To
 	ends := make([]int, len(n.Indicies)+1)
@@ -96,7 +98,7 @@ func (cp *compiler) lvalueElement(ns, name string, n *parse.Indexing) lvaluesOpB
 
 	indexOps := cp.arrayOps(n.Indicies)
 
-	return &elemOp{ns, name, indexOps, begin, end, ends}
+	return &elemOp{qname, indexOps, begin, end, ends}
 }
 
 type seqLValuesOpBody struct {
@@ -116,26 +118,27 @@ func (op seqLValuesOpBody) invoke(fm *Frame) ([]vars.Var, error) {
 }
 
 type varOp struct {
-	ns, name string
+	qname string
 }
 
 func (op varOp) invoke(fm *Frame) ([]vars.Var, error) {
-	variable := fm.ResolveVar(op.ns, op.name)
+	variable := fm.ResolveVar(op.qname)
 	if variable == nil {
-		if op.ns == "" || op.ns == "local" {
+		ns, name := SplitQNameNs(op.qname)
+		if ns == "" || ns == ":" || ns == "local:" {
 			// New variable.
 			// XXX We depend on the fact that this variable will
 			// immeidately be set.
-			if strings.HasSuffix(op.name, FnSuffix) {
+			if strings.HasSuffix(name, FnSuffix) {
 				val := Callable(nil)
 				variable = vars.FromPtr(&val)
-			} else if strings.HasSuffix(op.name, NsSuffix) {
+			} else if strings.HasSuffix(name, NsSuffix) {
 				val := Ns(nil)
 				variable = vars.FromPtr(&val)
 			} else {
 				variable = vars.FromInit(nil)
 			}
-			fm.local[op.name] = variable
+			fm.local[name] = variable
 		} else {
 			return nil, fmt.Errorf("new variables can only be created in local scope")
 		}
@@ -144,8 +147,7 @@ func (op varOp) invoke(fm *Frame) ([]vars.Var, error) {
 }
 
 type elemOp struct {
-	ns       string
-	name     string
+	qname    string
 	indexOps []valuesOp
 	begin    int
 	end      int
@@ -153,9 +155,9 @@ type elemOp struct {
 }
 
 func (op *elemOp) invoke(fm *Frame) ([]vars.Var, error) {
-	variable := fm.ResolveVar(op.ns, op.name)
+	variable := fm.ResolveVar(op.qname)
 	if variable == nil {
-		return nil, fmt.Errorf("variable $%s:%s does not exist, compiler bug", op.ns, op.name)
+		return nil, fmt.Errorf("variable $%s does not exist, compiler bug", op.qname)
 	}
 
 	indicies := make([]interface{}, len(op.indexOps))

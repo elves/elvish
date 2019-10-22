@@ -84,33 +84,34 @@ func compileDel(cp *compiler, fn *parse.Form) effectOpBody {
 			continue
 		}
 
-		explode, ns, name := ParseVariableRef(head.Value)
-		if explode {
-			cp.errorf("arguments to del may be have a leading @")
+		sigil, qname := SplitVariableRef(head.Value)
+		if sigil != "" {
+			cp.errorf("arguments to del may not have a sigils, got %q", sigil)
 			continue
 		}
 		var f effectOpBody
 		if len(indicies) == 0 {
+			ns, name := SplitQNameNsFirst(qname)
 			switch ns {
-			case "", "local":
+			case "", ":", "local:":
 				if !cp.thisScope().has(name) {
 					cp.errorf("no variable $%s in local scope", name)
 					continue
 				}
 				cp.thisScope().del(name)
 				f = delLocalVarOp{name}
-			case "E":
+			case "E:":
 				f = delEnvVarOp{name}
 			default:
 				cp.errorf("only variables in local: or E: can be deleted")
 				continue
 			}
 		} else {
-			if !cp.registerVariableGet(ns, name) {
+			if !cp.registerVariableGet(qname) {
 				cp.errorf("no variable $%s", head.Value)
 				continue
 			}
-			f = newDelElementOp(ns, name, head.Range().From, head.Range().To, cp.arrayOps(indicies))
+			f = newDelElementOp(qname, head.Range().From, head.Range().To, cp.arrayOps(indicies))
 		}
 		ops = append(ops, effectOp{f, cn.Range().From, cn.Range().To})
 	}
@@ -130,18 +131,17 @@ func (op delEnvVarOp) invoke(*Frame) error {
 	return os.Unsetenv(op.name)
 }
 
-func newDelElementOp(ns, name string, begin, headEnd int, indexOps []valuesOp) effectOpBody {
+func newDelElementOp(qname string, begin, headEnd int, indexOps []valuesOp) effectOpBody {
 	ends := make([]int, len(indexOps)+1)
 	ends[0] = headEnd
 	for i, op := range indexOps {
 		ends[i+1] = op.end
 	}
-	return &delElemOp{ns, name, indexOps, begin, ends}
+	return &delElemOp{qname, indexOps, begin, ends}
 }
 
 type delElemOp struct {
-	ns       string
-	name     string
+	qname    string
 	indexOps []valuesOp
 	begin    int
 	ends     []int
@@ -159,7 +159,7 @@ func (op *delElemOp) invoke(fm *Frame) error {
 		}
 		indicies = append(indicies, indexValues[0])
 	}
-	err := vars.DelElement(fm.ResolveVar(op.ns, op.name), indicies)
+	err := vars.DelElement(fm.ResolveVar(op.qname), indicies)
 	if err != nil {
 		if level := vars.ElementErrorLevel(err); level >= 0 {
 			return fm.errorpf(op.begin, op.ends[level], "%s", err.Error())
@@ -179,7 +179,7 @@ func compileFn(cp *compiler, fn *parse.Form) effectOpBody {
 	bodyNode := args.nextMustLambda()
 	args.mustEnd()
 
-	cp.registerVariableSetQname(":" + varName)
+	cp.registerVariableSet(":" + varName)
 	op := cp.lambda(bodyNode)
 
 	return fnOp{varName, op}

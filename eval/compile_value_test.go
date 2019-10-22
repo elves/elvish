@@ -49,6 +49,51 @@ func TestCompileValue(t *testing.T) {
 		// Splicing
 		That("x=[elvish rules]; put $@x").Puts("elvish", "rules"),
 
+		// Variable namespace
+		// ------------------
+
+		// Pseudo-namespace local: accesses the local scope.
+		That("x = outer; { local:x = inner; put $local:x }").Puts("inner"),
+		// Pseudo-namespace up: accesses upvalues.
+		That("x = outer; { local:x = inner; put $up:x }").Puts("outer"),
+		// Pseudo-namespace builtin: accesses builtins.
+		That("put $builtin:true").Puts(true),
+		// Unqualified name prefers local: to up:.
+		That("x = outer; { local:x = inner; put $x }").Puts("inner"),
+		// Unqualified name resolves to upvalue if no local name exists.
+		That("x = outer; { put $x }").Puts("outer"),
+		// Unqualified name resolves to builtin if no local name or upvalue
+		// exists.
+		That("put $true").Puts(true),
+		// A name can be explicitly unqualified by having a leading colon.
+		That("x = val; put $:x").Puts("val"),
+		That("put $:true").Puts(true),
+
+		// Pseudo-namespace E: provides read-write access to environment
+		// variables. Colons inside the name are supported.
+		That("set-env a:b VAL; put $E:a:b").Puts("VAL"),
+		That("E:a:b = VAL2; get-env a:b").Puts("VAL2"),
+
+		// Pseudo-namespace e: provides readonly access to external commands.
+		// Only names ending in ~ are resolved, and resolution always succeeds
+		// regardless of whether the command actually exists. Colons inside the
+		// name are supported.
+		That("put $e:a:b~").Puts(ExternalCmd{Name: "a:b"}),
+
+		// A "normal" namespace access indexes the namespace as a variable.
+		That("ns: = (ns [&a= val]); put $ns:a").Puts("val"),
+		// Multi-level namespace access is supported.
+		That("ns: = (ns [&a:= (ns [&b= val])]); put $ns:a:b").Puts("val"),
+		// Multi-level namespace access can have a leading colon to signal that
+		// the first component is unqualified.
+		That("ns: = (ns [&a:= (ns [&b= val])]); put $:ns:a:b").Puts("val"),
+		// Multi-level namespace access can be combined with the local:
+		// pseudo-namespaces.
+		That("ns: = (ns [&a:= (ns [&b= val])]); put $local:ns:a:b").Puts("val"),
+		// Multi-level namespace access can be combined with the up:
+		// pseudo-namespaces.
+		That("ns: = (ns [&a:= (ns [&b= val])]); { put $up:ns:a:b }").Puts("val"),
+
 		// Tilde
 		// -----
 		That("h=$E:HOME; E:HOME=/foo; put ~ ~/src; E:HOME=$h").Puts("/foo", "/foo/src"),

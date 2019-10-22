@@ -1,8 +1,8 @@
 # Elvish: Friendly Interactive Shell and Expressive Programming Language
 
 [![Build Status on Travis](https://img.shields.io/travis/elves/elvish.svg?logo=travis&label=linux%20%26%20macOS)](https://travis-ci.org/elves/elvish)
-[![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=windows)](https://ci.appveyor.com/project/xiaq/elvish) <!-- [![Build Status on VSTS](https://img.shields.io/vso/build/xiaq/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1.svg?logo=tfs&label=macOS)](https://xiaq.visualstudio.com/elvish/_build)
-[![Code Coverage on codecov.io](https://img.shields.io/codecov/c/github/elves/elvish.svg?label=codecov)](https://codecov.io/gh/elves/elvish) -->
+[![Build status on AppVeyor](https://img.shields.io/appveyor/ci/xiaq/elvish.svg?logo=appveyor&label=windows)](https://ci.appveyor.com/project/xiaq/elvish) <!-- [![Build Status on VSTS](https://img.shields.io/vso/build/xiaq/13c48a6c-b2dc-472e-af6c-169bf448f8e6/1.svg?logo=tfs&label=macOS)](https://xiaq.visualstudio.com/elvish/_build) -->
+[![Code Coverage on codecov.io](https://img.shields.io/codecov/c/github/elves/elvish.svg?label=codecov)](https://codecov.io/gh/elves/elvish)
 [![Code Coverage on coveralls.io](https://img.shields.io/coveralls/github/elves/elvish.svg?label=coveralls)](https://coveralls.io/github/elves/elvish)
 [![Go Report Card](https://goreportcard.com/badge/github.com/elves/elvish)](https://goreportcard.com/report/github.com/elves/elvish)
 [![GoDoc](https://img.shields.io/badge/godoc-api-blue.svg)](https://godoc.elv.sh)
@@ -26,7 +26,7 @@ To build Elvish, you need
 
 *   Linux, {Free,Net,Open}BSD, macOS, or Windows (Windows support is experimental).
 
-*   Go >= 1.11.
+*   Go >= 1.12.
 
 If you have not done so, first set up your environment by following [How To Write Go Code](http://golang.org/doc/code.html).
 

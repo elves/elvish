@@ -70,9 +70,9 @@ func resolve(fm *Frame, head string) string {
 	if special {
 		return "special"
 	}
-	explode, ns, name := ParseVariableRef(head)
-	if !explode && fm.ResolveVar(ns, name+FnSuffix) != nil {
-		return "$" + head + FnSuffix
+	sigil, qname := SplitVariableRef(head)
+	if sigil == "" && fm.ResolveVar(qname+FnSuffix) != nil {
+		return "$" + qname + FnSuffix
 	}
 	return "(external " + parse.Quote(head) + ")"
 }

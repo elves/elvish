@@ -4,10 +4,10 @@ os:
   - osx
 sudo: false
 go:
-  - 1.11.x
   - 1.12.x
+  - 1.13.x
 env:
-  - CGO_ENABLED=0
+  - CGO_ENABLED=0 GO111MODULE=off
   - CGO_ENABLED=0 GO111MODULE=on
 jobs:
   include:

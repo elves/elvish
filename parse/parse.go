@@ -545,12 +545,12 @@ func (pn *Primary) parse(ps *parser) {
 	case '$':
 		pn.variable(ps)
 	case '*':
-		pn.wildcard(ps)
+		pn.starWildcard(ps)
 	case '?':
 		if ps.hasPrefix("?(") {
 			pn.exitusCapture(ps)
 		} else {
-			pn.wildcard(ps)
+			pn.questionWildcard(ps)
 		}
 	case '(':
 		pn.outputCapture(ps)
@@ -718,16 +718,20 @@ func allowedInVariableName(r rune) bool {
 		r == '-' || r == '_' || r == ':' || r == '~'
 }
 
-func (pn *Primary) wildcard(ps *parser) {
+func (pn *Primary) starWildcard(ps *parser) {
 	pn.Type = Wildcard
-	for isWildcard(ps.peek()) {
+	for ps.peek() == '*' {
 		ps.next()
 	}
 	pn.Value = ps.src[pn.From:ps.pos]
 }
 
-func isWildcard(r rune) bool {
-	return r == '*' || r == '?'
+func (pn *Primary) questionWildcard(ps *parser) {
+	pn.Type = Wildcard
+	if ps.peek() == '?' {
+		ps.next()
+	}
+	pn.Value = ps.src[pn.From:ps.pos]
 }
 
 func (pn *Primary) exitusCapture(ps *parser) {

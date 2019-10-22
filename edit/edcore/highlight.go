@@ -25,10 +25,11 @@ func goodFormHead(head string, ed *editor) bool {
 		return util.IsExecutable(head) || isDir(head)
 	} else {
 		ev := ed.evaler
-		explode, ns, name := eval.ParseVariableRef(head)
-		if !explode {
+		sigil, qname := eval.SplitVariableRef(head)
+		ns, name := eval.SplitIncompleteQNameFirstNs(qname)
+		if sigil == "" {
 			switch ns {
-			case "":
+			case "", ":":
 				if ev.Builtin[name+eval.FnSuffix] != nil || ev.Global[name+eval.FnSuffix] != nil {
 					return true
 				}

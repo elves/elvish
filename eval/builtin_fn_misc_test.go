@@ -8,6 +8,8 @@ import (
 
 func TestBuiltinFnMisc(t *testing.T) {
 	Test(t,
+		That(`f = (constantly foo); $f; $f`).Puts("foo", "foo"),
+
 		That(`f = (mktemp elvXXXXXX); echo 'put x' > $f
 		      -source $f; rm $f`).Puts("x"),
 		That(`f = (mktemp elvXXXXXX); echo 'put $x' > $f
