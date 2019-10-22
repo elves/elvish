@@ -60,56 +60,18 @@ func (cp *compiler) popScope() {
 	cp.scopes = cp.scopes[:len(cp.scopes)-1]
 }
 
-func (cp *compiler) registerVariableGetQname(qname string) bool {
-	_, ns, name := ParseVariableRef(qname)
-	return cp.registerVariableGet(ns, name)
+func (cp *compiler) registerVariableSet(qname string) bool {
+	return cp.registerVariableAccess(qname, true)
 }
 
-func (cp *compiler) registerVariableGet(ns, name string) bool {
-	switch ns {
-	case "", "local", "up":
-		// Handled below
-	case "e", "E":
-		return true
-	default:
-		return cp.registerModAccess(ns)
-	}
-	// Find in local scope
-	if ns == "" || ns == "local" {
-		if cp.thisScope().has(name) {
-			return true
-		}
-	}
-	// Find in upper scopes
-	if ns == "" || ns == "up" {
-		for i := len(cp.scopes) - 2; i >= 0; i-- {
-			if cp.scopes[i].has(name) {
-				// Existing name: record capture and return.
-				cp.capture.set(name)
-				return true
-			}
-		}
-	}
-	// Find in builtin scope
-	if ns == "" || ns == "builtin" {
-		if cp.builtin.has(name) {
-			return true
-		}
-	}
-	return false
+func (cp *compiler) registerVariableGet(qname string) bool {
+	return cp.registerVariableAccess(qname, false)
 }
 
-func (cp *compiler) registerVariableSetQname(qname string) bool {
-	_, ns, name := ParseVariableRef(qname)
-	return cp.registerVariableSet(ns, name)
-}
+func (cp *compiler) registerVariableAccess(qname string, set bool) bool {
+	readLocal := func(name string) bool { return cp.thisScope().has(name) }
 
-func (cp *compiler) registerVariableSet(ns, name string) bool {
-	switch ns {
-	case "local":
-		cp.thisScope().set(name)
-		return true
-	case "up":
+	readUpvalue := func(name string) bool {
 		for i := len(cp.scopes) - 2; i >= 0; i-- {
 			if cp.scopes[i].has(name) {
 				// Existing name: record capture and return.
@@ -118,36 +80,43 @@ func (cp *compiler) registerVariableSet(ns, name string) bool {
 			}
 		}
 		return false
-	case "builtin":
-		cp.errorf("cannot set builtin variable")
-		return false
-	case "":
-		if cp.thisScope().has(name) {
-			// A name on current scope. Do nothing.
+	}
+
+	readBuiltin := func(name string) bool { return cp.builtin.has(name) }
+
+	readNonPseudo := func(name string) bool {
+		return readLocal(name) || readUpvalue(name) || readBuiltin(name)
+	}
+
+	createLocal := func(name string) bool {
+		if set && name != "" && !strings.ContainsRune(name[:len(name)-1], ':') {
+			cp.thisScope().set(name)
 			return true
 		}
-		// Walk up the upper scopes
-		for i := len(cp.scopes) - 2; i >= 0; i-- {
-			if cp.scopes[i].has(name) {
-				// Existing name. Do nothing
-				cp.capture.set(name)
-				return true
-			}
-		}
-		// New name. Register on this scope!
-		cp.thisScope().set(name)
-		return true
-	case "e", "E":
-		// Special namespaces, do nothing
-		return true
-	default:
-		return cp.registerModAccess(ns)
+		return false
 	}
-}
 
-func (cp *compiler) registerModAccess(name string) bool {
-	if strings.ContainsRune(name, ':') {
-		name = name[:strings.IndexByte(name, ':')]
+	ns, name := SplitQNameNsFirst(qname) // ns = "", name = "ns:"
+	name1 := name                        // name1 = "ns:"
+	if name != "" && strings.ContainsRune(name[:len(name)-1], ':') {
+		name1, _ = SplitQNameNsFirst(name)
 	}
-	return cp.registerVariableGet("", name+NsSuffix)
+
+	// This switch mirrors the structure of that from (*Frame).ResoleVar.
+	switch ns {
+	case "E:":
+		return true
+	case "e:":
+		return !set && strings.HasSuffix(name, FnSuffix)
+	case "local:":
+		return readLocal(name1) || createLocal(name)
+	case "up:":
+		return readUpvalue(name1)
+	case "builtin:":
+		return readBuiltin(name1)
+	case "", ":":
+		return readNonPseudo(name1) || createLocal(name)
+	default:
+		return readNonPseudo(ns)
+	}
 }

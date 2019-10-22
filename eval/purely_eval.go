@@ -72,12 +72,12 @@ func (ev *Evaler) PurelyEvalPrimary(pn *parse.Primary) interface{} {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return pn.Value
 	case parse.Variable:
-		explode, ns, name := ParseVariableRef(pn.Value)
-		if explode {
+		sigil, qname := SplitVariableRef(pn.Value)
+		if sigil != "" {
 			return nil
 		}
 		ec := NewTopFrame(ev, NewInternalSource("[purely eval]"), nil)
-		variable := ec.ResolveVar(ns, name)
+		variable := ec.ResolveVar(qname)
 		if variable != nil {
 			return variable.Get()
 		}

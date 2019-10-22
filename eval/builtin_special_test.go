@@ -87,6 +87,8 @@ func TestUse(t *testing.T) {
 		// That(`{ use lorem }; put $lorem:name`).ErrorsAny(),
 
 		// use of imported variable is captured in upvalue
+		That(`use lorem; { put $lorem:name }`).Puts("lorem"),
+		That(`{ use lorem; { put $lorem:name } }`).Puts("lorem"),
 		That(`({ use lorem; put { { put $lorem:name } } })`).Puts("lorem"),
 		// use of imported function is also captured in upvalue
 		That(`{ use lorem; { lorem:put-name } }`).Puts("lorem"),

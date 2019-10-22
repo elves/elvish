@@ -175,10 +175,10 @@ func (cp *compiler) form(n *parse.Form) effectOpBody {
 				specialOpFunc = compileForm(cp, n)
 			} else {
 				var headOpFunc valuesOpBody
-				explode, ns, name := ParseVariableRef(headStr)
-				if !explode && cp.registerVariableGet(ns, name+FnSuffix) {
+				sigil, qname := SplitVariableRef(headStr)
+				if sigil == "" && cp.registerVariableGet(qname+FnSuffix) {
 					// $head~ resolves.
-					headOpFunc = variableOp{false, ns, name + FnSuffix}
+					headOpFunc = variableOp{false, qname + FnSuffix}
 				} else {
 					// Fall back to $e:head~.
 					headOpFunc = literalValues(ExternalCmd{headStr})

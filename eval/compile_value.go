@@ -221,11 +221,11 @@ func (cp *compiler) primary(n *parse.Primary) valuesOpBody {
 	case parse.Bareword, parse.SingleQuoted, parse.DoubleQuoted:
 		return literalStr(n.Value)
 	case parse.Variable:
-		explode, ns, name := ParseVariableRef(n.Value)
-		if !cp.registerVariableGet(ns, name) {
-			cp.errorf("variable $%s not found", n.Value)
+		sigil, qname := SplitVariableRef(n.Value)
+		if !cp.registerVariableGet(qname) {
+			cp.errorf("variable $%s not found", qname)
 		}
-		return &variableOp{explode, ns, name}
+		return &variableOp{sigil != "", qname}
 	case parse.Wildcard:
 		seg, err := wildcardToSegment(n.SourceText())
 		if err != nil {
@@ -257,14 +257,13 @@ func (cp *compiler) primary(n *parse.Primary) valuesOpBody {
 
 type variableOp struct {
 	explode bool
-	ns      string
-	name    string
+	qname   string
 }
 
 func (op variableOp) invoke(fm *Frame) ([]interface{}, error) {
-	variable := fm.ResolveVar(op.ns, op.name)
+	variable := fm.ResolveVar(op.qname)
 	if variable == nil {
-		return nil, fmt.Errorf("variable $%s:%s not found", op.ns, op.name)
+		return nil, fmt.Errorf("variable $%s not found", op.qname)
 	}
 	value := variable.Get()
 	if op.explode {
@@ -390,8 +389,10 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 		// Argument list.
 		argNames = make([]string, len(n.Elements))
 		for i, arg := range n.Elements {
-			qname := mustString(cp, arg, "argument name must be literal string")
-			explode, ns, name := ParseVariableRef(qname)
+			ref := mustString(cp, arg, "argument name must be literal string")
+			sigil, qname := SplitVariableRef(ref)
+			explode := sigil != ""
+			ns, name := SplitQNameNs(qname)
 			if ns != "" {
 				cp.errorpf(arg.Range().From, arg.Range().To, "argument name must be unqualified")
 			}
@@ -414,7 +415,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 		optDefaultOps = make([]valuesOp, len(n.MapPairs))
 		for i, opt := range n.MapPairs {
 			qname := mustString(cp, opt.Key, "option name must be literal string")
-			_, ns, name := ParseVariableRef(qname)
+			ns, name := SplitQNameNs(qname)
 			if ns != "" {
 				cp.errorpf(opt.Key.Range().From, opt.Key.Range().To, "option name must be unqualified")
 			}
@@ -449,7 +450,7 @@ func (cp *compiler) lambda(n *parse.Primary) valuesOpBody {
 	cp.popScope()
 
 	for name := range capture {
-		cp.registerVariableGetQname(name)
+		cp.registerVariableGet(name)
 	}
 
 	return &lambdaOp{argNames, restArgName, optNames, optDefaultOps, capture, subop, cp.srcMeta, n.Range().From, n.Range().To}
@@ -470,7 +471,7 @@ type lambdaOp struct {
 func (op *lambdaOp) invoke(fm *Frame) ([]interface{}, error) {
 	evCapture := make(Ns)
 	for name := range op.capture {
-		evCapture[name] = fm.ResolveVar("", name)
+		evCapture[name] = fm.ResolveVar(":" + name)
 	}
 	optDefaults := make([]interface{}, len(op.optDefaultOps))
 	for i, op := range op.optDefaultOps {
