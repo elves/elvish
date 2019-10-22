@@ -115,6 +115,24 @@ brew install elvish
 brew install --HEAD elvish
 ```
 
+## FreeBSD
+
+Elvish is available in the FreeBSD ports tree and as a prebuilt package. Both
+methods will install the latest release:
+
+### Install With pkg:
+
+```elvish
+pkg install elvish
+```
+
+### Build From Ports:
+
+```elvish
+cd /usr/ports/shells/elvish
+make install
+```
+
 ## OpenBSD
 
 Elvish is available in the official OpenBSD package repository. This will
