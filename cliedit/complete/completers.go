@@ -189,13 +189,10 @@ func completeVariable(n parse.Node, cfg Config) (*context, []RawItem, error) {
 	if !ok || primary.Type != parse.Variable {
 		return nil, nil, errNoCompletion
 	}
-	explode, nsPart, nameSeed := eval.SplitIncompleteVariableRef(primary.Value)
+	sigil, qname := eval.SplitVariableRef(primary.Value)
+	ns, nameSeed := eval.SplitQNameNsIncomplete(qname)
 	// Move past "$", "@" and "<ns>:".
-	begin := primary.Range().From + 1 + len(explode) + len(nsPart)
-	ns := nsPart
-	if len(ns) > 0 {
-		ns = ns[:len(ns)-1]
-	}
+	begin := primary.Range().From + 1 + len(sigil) + len(ns)
 
 	ctx := &context{
 		"variable", nameSeed, parse.Bareword,
@@ -206,11 +203,11 @@ func completeVariable(n parse.Node, cfg Config) (*context, []RawItem, error) {
 		items = append(items, noQuoteItem(varname))
 	})
 
-	ev.EachNs(func(ns string) {
+	ev.EachNs(func(thisNs string) {
 		// This is to match namespaces that are "nested" under the current
 		// namespace.
-		if thisNsPart := ns + ":"; hasProperPrefix(thisNsPart, nsPart) {
-			items = append(items, noQuoteItem(thisNsPart[len(nsPart):]))
+		if hasProperPrefix(thisNs, ns) {
+			items = append(items, noQuoteItem(thisNs[len(ns):]))
 		}
 	})
 

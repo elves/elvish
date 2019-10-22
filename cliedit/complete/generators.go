@@ -37,18 +37,19 @@ func generateCommands(seed string, ev PureEvaler) ([]RawItem, error) {
 	// Generate all external commands (without the e: prefix).
 	ev.EachExternal(addPlainItem)
 
-	explode, ns, _ := eval.ParseIncompleteVariableRef(seed)
-	if !explode {
+	sigil, qname := eval.SplitVariableRef(seed)
+	ns, _ := eval.SplitQNameNsIncomplete(qname)
+	if sigil == "" {
 		// Generate functions, namespaces, and variable assignments.
 		ev.EachVariableInNs(ns, func(varname string) {
 			switch {
 			case strings.HasSuffix(varname, eval.FnSuffix):
-				addPlainItem(eval.MakeVariableRef(
-					false, ns, varname[:len(varname)-len(eval.FnSuffix)]))
+				addPlainItem(
+					ns + varname[:len(varname)-len(eval.FnSuffix)])
 			case strings.HasSuffix(varname, eval.NsSuffix):
-				addPlainItem(eval.MakeVariableRef(false, ns, varname))
+				addPlainItem(ns + varname)
 			default:
-				name := eval.MakeVariableRef(false, ns, varname)
+				name := ns + varname
 				cands = append(cands, &complexItem{name, " = ", " = "})
 			}
 		})
