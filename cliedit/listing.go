@@ -10,14 +10,6 @@ import (
 	"github.com/elves/elvish/store/storedefs"
 )
 
-//elvdoc:fn listing:close
-//
-// Closes the listing.
-
-func closeListing(app *cli.App) {
-	app.MutateAppState(func(s *cli.State) { s.Listing = nil })
-}
-
 func initListings(app *cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store) {
 	var histStore histutil.Store
 	histFuser, err := histutil.NewFuser(st)

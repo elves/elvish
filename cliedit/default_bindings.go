@@ -25,13 +25,19 @@ insert:binding = (binding-map [
   &Alt-,=  $lastcmd:start~
   &Ctrl-R= $histlist:start~
   &Ctrl-L= $location:start~
+  &Ctrl-N= $navigation:start~
 
   &Ctrl-D=  $commit-eof~
 ])
 
 listing:binding = (binding-map [
-  &Ctrl-'['= $listing:close~
+  &Ctrl-'['= $close-listing~
 ])
+
+navigation:binding = (binding-map [
+  &Ctrl-'['= $close-listing~
+])
+
 #  &Up=        $listing:up~
 #  &Down=      $listing:down~
 #  &Tab=       $listing:down-cycle~

@@ -26,11 +26,20 @@ import (
 // Causes the Elvish REPL to terminate. Internally, this works by raising a
 // special exception.
 
+//elvdoc:fn close-listing
+//
+// Closes any active listing.
+
+func closeListing(app *cli.App) {
+	app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+}
+
 func initMiscBuiltins(app *cli.App, ns eval.Ns) {
 	ns.AddGoFns("<edit>", map[string]interface{}{
-		"binding-map": eddefs.MakeBindingMap,
-		"commit-code": app.CommitCode,
-		"commit-eof":  app.CommitEOF,
+		"binding-map":   eddefs.MakeBindingMap,
+		"commit-code":   app.CommitCode,
+		"commit-eof":    app.CommitEOF,
+		"close-listing": func() { closeListing(app) },
 	})
 }
 
