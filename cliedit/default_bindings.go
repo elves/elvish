@@ -26,6 +26,7 @@ insert:binding = (binding-map [
   &Ctrl-R= $histlist:start~
   &Ctrl-L= $location:start~
   &Ctrl-N= $navigation:start~
+  &Tab=    $completion:start~
 
   &Ctrl-D=  $commit-eof~
 ])
@@ -35,6 +36,10 @@ listing:binding = (binding-map [
 ])
 
 navigation:binding = (binding-map [
+  &Ctrl-'['= $close-listing~
+])
+
+completion:binding = (binding-map [
   &Ctrl-'['= $close-listing~
 ])
 

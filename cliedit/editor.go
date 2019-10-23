@@ -30,6 +30,7 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	initPrompts(app, ev, ns)
 	initListings(app, ev, ns, st)
 	initNavigation(app, ev, ns)
+	initCompletion(app, ev, ns)
 	evalDefaultBinding(ev, ns)
 
 	return &Editor{app, ns}
