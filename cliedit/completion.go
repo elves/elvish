@@ -26,7 +26,10 @@ func initCompletion(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 			buf := app.CodeArea.CopyState().CodeBuffer
 			name, items, err := complete.Complete(
 				complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot},
-				complete.Config{PureEvaler: pureEvaler{ev}})
+				complete.Config{
+					Filter:     complete.PrefixFilter,
+					PureEvaler: pureEvaler{ev},
+				})
 			if err != nil {
 				app.Notify(err.Error())
 				return
