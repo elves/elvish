@@ -1,7 +1,4 @@
 language: go
-arch:
-  - amd64
-  - arm64
 os:
   - linux
   - osx
