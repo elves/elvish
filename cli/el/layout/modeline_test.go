@@ -1,26 +1,27 @@
 package layout
 
 import (
-	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/elves/elvish/styled"
+	"github.com/elves/elvish/tt"
 )
 
-func TestModePromptNoSpace(t *testing.T) {
-	prompt := ModePrompt("TEST", false)()
-	wantPrompt := styled.MakeText("TEST", "bold", "lightgray", "bg-magenta")
-	if !reflect.DeepEqual(prompt, wantPrompt) {
-		fmt.Printf("got prompt %v, want %v", prompt, wantPrompt)
-	}
+func TestModeLine(t *testing.T) {
+	testModeLine(t, tt.Fn("ModeLine", ModeLine))
 }
 
-func TestModePromptWithSpace(t *testing.T) {
-	prompt := ModePrompt("TEST", true)()
-	wantPrompt := styled.MakeText("TEST", "bold", "lightgray", "bg-magenta").
-		ConcatText(styled.Plain(" "))
-	if !reflect.DeepEqual(prompt, wantPrompt) {
-		fmt.Printf("got prompt %v, want %v", prompt, wantPrompt)
-	}
+func TestModePrompt(t *testing.T) {
+	testModeLine(t, tt.Fn("ModePrompt",
+		func(s string, b bool) styled.Text { return ModePrompt(s, b)() }))
+}
+
+func testModeLine(t *testing.T, fn *tt.FnToTest) {
+	tt.Test(t, fn, tt.Table{
+		tt.Args("TEST", false).Rets(
+			styled.MakeText("TEST", "bold", "lightgray", "bg-magenta")),
+		tt.Args("TEST", true).Rets(
+			styled.MakeText("TEST", "bold", "lightgray", "bg-magenta").
+				ConcatText(styled.Plain(" "))),
+	})
 }
