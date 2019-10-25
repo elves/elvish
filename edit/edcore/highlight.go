@@ -38,9 +38,9 @@ func goodFormHead(head string, ed *editor) bool {
 					return true
 				}
 			default:
-				mod := ev.Global[ns+eval.NsSuffix]
+				mod := ev.Global[ns]
 				if mod == nil {
-					mod = ev.Builtin[ns+eval.NsSuffix]
+					mod = ev.Builtin[ns]
 				}
 				if mod != nil && mod.Get().(eval.Ns)[name+eval.FnSuffix] != nil {
 					return true
