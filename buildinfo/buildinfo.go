@@ -7,5 +7,6 @@ package buildinfo
 
 // Build information.
 var (
-	Version = "unknown"
+	Version      = "unknown"
+	Reproducible = "false"
 )
