@@ -8,8 +8,8 @@ GOVERALLS := github.com/mattn/goveralls
 
 default: test get
 
+# TODO(xiaq): Add -trimpath when we require Go >= 1.13.
 get:
-	# TODO(xiaq): Add -trimpath when we require Go >= 1.13.
 	go get -ldflags "-X github.com/elves/elvish/buildinfo.Version=$(VERSION)" .
 
 buildall:
