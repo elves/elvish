@@ -1,6 +1,7 @@
 #!/bin/sh -e
 
 # Should be invoked from repo root.
+# Requires Go >= 1.13 (for the -trimpath flag).
 
 : ${VERSION:=unknown}
 : ${BIN_DIR:=./_bin}
@@ -36,12 +37,12 @@ buildone() {
         ARCHIVE=$STEM.tar.gz
     fi
 
-    echo "Building for $GOOS-$GOARCH"
-    go build -o $DST_DIR/$BIN -ldflags \
+    echo -n "Building for $GOOS-$GOARCH... "
+    go build -o $DST_DIR/$BIN -trimpath -ldflags \
         "-X github.com/elves/elvish/buildinfo.Version=$VERSION \
          -X github.com/elves/elvish/buildinfo.GoRoot=`go env GOROOT` \
          -X github.com/elves/elvish/buildinfo.GoPath=`go env GOPATH`" || {
-        echo "  -> Failed"
+        echo "Failed"
         return
     }
 
@@ -54,11 +55,11 @@ buildone() {
     fi
     )
 
-    echo " -> Done"
+    echo "Done"
     echo $GOOS-$GOARCH/$BIN >> $MANIFEST
     echo $GOOS-$GOARCH/$ARCHIVE >> $MANIFEST
 
-    if which sha256sum; then
+    if which sha256sum > /dev/null; then
         (
         cd $DST_DIR
         sha256sum $BIN > $BIN.sha256sum
