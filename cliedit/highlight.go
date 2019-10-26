@@ -59,6 +59,9 @@ func hasCommand(ev *eval.Evaler, cmd string) bool {
 }
 
 func hasQualifiedFn(ev *eval.Evaler, firstNs string, rest string) bool {
+	if rest == "" {
+		return false
+	}
 	modVar := ev.Global[firstNs]
 	if modVar == nil {
 		modVar = ev.Builtin[firstNs]

@@ -99,6 +99,7 @@ func TestMakeHasCommand(t *testing.T) {
 
 		// Non-existent
 		tt.Args(ev, "bad").Rets(false),
+		tt.Args(ev, "a:").Rets(false),
 		tt.Args(ev, "a:bad").Rets(false),
 		tt.Args(ev, "a:b:bad").Rets(false),
 		tt.Args(ev, "./bad").Rets(false),
