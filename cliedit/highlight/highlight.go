@@ -7,13 +7,13 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-// Dep keeps dependencies for highlighting code.
-type Dep struct {
+// Config keeps configuration for highlighting code.
+type Config struct {
 	Check      func(n *parse.Chunk) error
 	HasCommand func(name string) bool
 }
 
-// Information collected about a command region, used for asynchronou
+// Information collected about a command region, used for asynchronous
 // highlighting.
 type cmdRegion struct {
 	seg int
@@ -21,7 +21,7 @@ type cmdRegion struct {
 }
 
 // Highlights a piece of Elvish code.
-func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []error) {
+func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, []error) {
 	var errors []error
 
 	n, errParse := parse.AsChunk("[interactive]", code)
@@ -33,8 +33,8 @@ func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []e
 		}
 	}
 
-	if dep.Check != nil {
-		err := dep.Check(n)
+	if cfg.Check != nil {
+		err := cfg.Check(n)
 		if err != nil && err.(diag.Ranger).Range().From != len(code) {
 			errors = append(errors, err)
 			// TODO: Highlight the region with errors.
@@ -55,7 +55,7 @@ func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []e
 		regionCode := code[r.begin:r.end]
 		transformer := ""
 		if r.typ == commandRegion {
-			if dep.HasCommand != nil {
+			if cfg.HasCommand != nil {
 				// Do not highlight now, but collect the index of the region and the
 				// segment.
 				cmdRegions = append(cmdRegions, cmdRegion{len(text), regionCode})
@@ -80,12 +80,12 @@ func highlight(code string, dep Dep, lateCb func(styled.Text)) (styled.Text, []e
 	}
 
 	// Style command regions asynchronously, and call lateCb with the results.
-	if dep.HasCommand != nil && len(cmdRegions) > 0 {
+	if cfg.HasCommand != nil && len(cmdRegions) > 0 {
 		go func() {
 			newText := text.Clone()
 			for _, cmdRegion := range cmdRegions {
 				transformer := ""
-				if dep.HasCommand(cmdRegion.cmd) {
+				if cfg.HasCommand(cmdRegion.cmd) {
 					transformer = transformerForGoodCommand
 				} else {
 					transformer = transformerForBadCommand

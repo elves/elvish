@@ -15,7 +15,7 @@ var any = anyMatcher{}
 var noErrors []error
 
 func TestHighlighter_HighlightRegions(t *testing.T) {
-	hl := NewHighlighter(Dep{})
+	hl := NewHighlighter(Config{})
 
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
 		Args("ls").Rets(styled.Text{
@@ -37,7 +37,7 @@ func TestHighlighter_HighlightRegions(t *testing.T) {
 }
 
 func TestHighlighter_ParseErrors(t *testing.T) {
-	hl := NewHighlighter(Dep{})
+	hl := NewHighlighter(Config{})
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
 		// Parse error
 		Args("ls ]").Rets(any, matchErrors(parseErrorMatcher{3, 4})),
@@ -53,7 +53,7 @@ func TestHighlighter_ParseErrors(t *testing.T) {
 func TestHighlighter_Check(t *testing.T) {
 	var checkError error
 	// Make a highlighter whose Check callback returns checkError.
-	hl := NewHighlighter(Dep{
+	hl := NewHighlighter(Config{
 		Check: func(*parse.Chunk) error { return checkError }})
 
 	checkError = fakeCheckError{0, 2}
@@ -74,7 +74,7 @@ const lateTimeout = 100 * time.Millisecond
 
 func TestHighlighter_HasCommand_LateResult(t *testing.T) {
 	// Make a highlighter whose HasCommand callback only recognizes "ls".
-	hl := NewHighlighter(Dep{
+	hl := NewHighlighter(Config{
 		HasCommand: func(cmd string) bool { return cmd == "ls" }})
 
 	test := func(code string, wantInitial, wantLate styled.Text) {
@@ -125,7 +125,7 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	// "ls" and is dropped.
 
 	hlSecond := make(chan struct{})
-	hl := NewHighlighter(Dep{
+	hl := NewHighlighter(Config{
 		HasCommand: func(cmd string) bool {
 			if cmd == "l" {
 				// Make sure that the second highlight has been requested before

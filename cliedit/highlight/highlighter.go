@@ -10,7 +10,7 @@ const latesBufferSize = 128
 
 // Highlighter is a code highlighter that can deliver results asynchronously.
 type Highlighter struct {
-	dep   Dep
+	cfg   Config
 	state state
 	lates chan styled.Text
 }
@@ -22,8 +22,8 @@ type state struct {
 	errors     []error
 }
 
-func NewHighlighter(dep Dep) *Highlighter {
-	return &Highlighter{dep, state{}, make(chan styled.Text, latesBufferSize)}
+func NewHighlighter(cfg Config) *Highlighter {
+	return &Highlighter{cfg, state{}, make(chan styled.Text, latesBufferSize)}
 }
 
 // Get returns the highlighted code and static errors found in the code.
@@ -49,7 +49,7 @@ func (hl *Highlighter) Get(code string) (styled.Text, []error) {
 		hl.lates <- styledCode
 	}
 
-	styledCode, errors := highlight(code, hl.dep, lateCb)
+	styledCode, errors := highlight(code, hl.cfg, lateCb)
 
 	hl.state.Lock()
 	defer hl.state.Unlock()
