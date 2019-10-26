@@ -9,21 +9,21 @@ import (
 var mockError = errors.New("mock error")
 
 func TestNewFuser_Error(t *testing.T) {
-	_, err := NewFuser(&testDB{oneOffError: mockError})
+	_, err := NewFuser(&TestDB{OneOffError: mockError})
 	if err != mockError {
 		t.Errorf("NewFuser -> error %v, want %v", err, mockError)
 	}
 }
 
 func TestFusuer_AddCmd(t *testing.T) {
-	db := &testDB{cmds: []string{"store 1"}}
+	db := &TestDB{AllCmds: []string{"store 1"}}
 	f := mustNewFuser(db)
 	f.AddCmd("session 1")
 
 	wantDBCmds := []string{"store 1", "session 1"}
 	wantSessionCmds := []Entry{{"session 1", 1}}
-	if !reflect.DeepEqual(db.cmds, wantDBCmds) {
-		t.Errorf("DB commands = %v, want %v", db.cmds, wantDBCmds)
+	if !reflect.DeepEqual(db.AllCmds, wantDBCmds) {
+		t.Errorf("DB commands = %v, want %v", db.AllCmds, wantDBCmds)
 	}
 	sessionCmds := f.SessionCmds()
 	if !reflect.DeepEqual(sessionCmds, wantSessionCmds) {
@@ -32,9 +32,9 @@ func TestFusuer_AddCmd(t *testing.T) {
 }
 
 func TestFuser_AddCmd_Error(t *testing.T) {
-	db := &testDB{}
+	db := &TestDB{}
 	f := mustNewFuser(db)
-	db.oneOffError = mockError
+	db.OneOffError = mockError
 
 	_, err := f.AddCmd("haha")
 
@@ -50,7 +50,7 @@ func TestFuser_AddCmd_Error(t *testing.T) {
 }
 
 func TestFuser_AllCmds(t *testing.T) {
-	db := &testDB{cmds: []string{"store 1"}}
+	db := &TestDB{AllCmds: []string{"store 1"}}
 	f := mustNewFuser(db)
 
 	// Simulate adding commands from both the current session and other sessions.
@@ -75,9 +75,9 @@ func TestFuser_AllCmds(t *testing.T) {
 }
 
 func TestFuser_AllCmds_Error(t *testing.T) {
-	db := &testDB{}
+	db := &TestDB{}
 	f := mustNewFuser(db)
-	db.oneOffError = mockError
+	db.OneOffError = mockError
 
 	_, err := f.AllCmds()
 
@@ -87,7 +87,7 @@ func TestFuser_AllCmds_Error(t *testing.T) {
 }
 
 func TestFuser_LastCmd_FromDB(t *testing.T) {
-	f := mustNewFuser(&testDB{cmds: []string{"store 1"}})
+	f := mustNewFuser(&TestDB{AllCmds: []string{"store 1"}})
 
 	cmd, _ := f.LastCmd()
 
@@ -98,10 +98,10 @@ func TestFuser_LastCmd_FromDB(t *testing.T) {
 }
 
 func TestFuser_LastCmd_FromDB_Error(t *testing.T) {
-	db := &testDB{cmds: []string{"store 1"}}
+	db := &TestDB{AllCmds: []string{"store 1"}}
 	f := mustNewFuser(db)
 
-	db.oneOffError = mockError
+	db.OneOffError = mockError
 	_, err := f.LastCmd()
 
 	if err != mockError {
@@ -110,12 +110,12 @@ func TestFuser_LastCmd_FromDB_Error(t *testing.T) {
 }
 
 func TestFuser_LastCmd_FromSession(t *testing.T) {
-	db := &testDB{cmds: []string{"store 1"}}
+	db := &TestDB{AllCmds: []string{"store 1"}}
 	f := mustNewFuser(db)
 	f.AddCmd("session 1")
 
 	// LastCmd does not use DB when there are any session commands.
-	db.oneOffError = mockError
+	db.OneOffError = mockError
 	cmd, _ := f.LastCmd()
 
 	wantCmd := Entry{"session 1", 1}
@@ -125,7 +125,7 @@ func TestFuser_LastCmd_FromSession(t *testing.T) {
 }
 
 func TestFuser_FastForward(t *testing.T) {
-	db := &testDB{cmds: []string{"store 1"}}
+	db := &TestDB{AllCmds: []string{"store 1"}}
 	f := mustNewFuser(db)
 
 	// Simulate adding commands from both the current session and other sessions.
@@ -148,7 +148,7 @@ func TestFuser_FastForward(t *testing.T) {
 }
 
 func TestFuser_Walker(t *testing.T) {
-	db := &testDB{cmds: []string{"store 1"}}
+	db := &TestDB{AllCmds: []string{"store 1"}}
 	f := mustNewFuser(db)
 
 	// Simulate adding commands from both the current session and other sessions.

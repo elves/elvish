@@ -9,9 +9,9 @@ import (
 
 func TestWalker(t *testing.T) {
 	mockError := errors.New("mock error")
-	walkerStore := &testDB{
+	walkerStore := &TestDB{
 		//              0       1        2         3        4         5
-		cmds: []string{"echo", "ls -l", "echo a", "ls -a", "echo a", "ls a"},
+		AllCmds: []string{"echo", "ls -l", "echo a", "ls -a", "echo a", "ls a"},
 	}
 
 	var w Walker
@@ -103,12 +103,12 @@ func TestWalker(t *testing.T) {
 	wantCurrent(5, "ls a")
 	wantOK(w.Prev())
 	wantCurrent(4, "echo a")
-	walkerStore.oneOffError = mockError
+	walkerStore.OneOffError = mockError
 	wantErr(w.Prev(), mockError)
 
 	// storedefs.ErrNoMatchingCmd is turned into ErrEndOfHistory.
 	w = NewWalker(walkerStore, -1, nil, "")
-	walkerStore.oneOffError = storedefs.ErrNoMatchingCmd
+	walkerStore.OneOffError = storedefs.ErrNoMatchingCmd
 	wantErr(w.Prev(), ErrEndOfHistory)
 }
 
