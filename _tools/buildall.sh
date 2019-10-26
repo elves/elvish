@@ -39,9 +39,7 @@ buildone() {
 
     echo -n "Building for $GOOS-$GOARCH... "
     go build -o $DST_DIR/$BIN -trimpath -ldflags \
-        "-X github.com/elves/elvish/buildinfo.Version=$VERSION \
-         -X github.com/elves/elvish/buildinfo.GoRoot=`go env GOROOT` \
-         -X github.com/elves/elvish/buildinfo.GoPath=`go env GOPATH`" || {
+        "-X github.com/elves/elvish/buildinfo.Version=$VERSION" || {
         echo "Failed"
         return
     }
