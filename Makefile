@@ -9,9 +9,8 @@ GOVERALLS := github.com/mattn/goveralls
 default: test get
 
 get:
-	go get -ldflags "-X github.com/elves/elvish/buildinfo.Version=$(VERSION) \
-		-X github.com/elves/elvish/buildinfo.GoRoot=$(shell go env GOROOT) \
-		-X github.com/elves/elvish/buildinfo.GoPath=$(shell go env GOPATH)" .
+	# TODO(xiaq): Add -trimpath when we require Go >= 1.13.
+	go get -ldflags "-X github.com/elves/elvish/buildinfo.Version=$(VERSION)" .
 
 buildall:
 	./_tools/buildall.sh
