@@ -447,17 +447,27 @@ func compileWhile(cp *compiler, fn *parse.Form) effectOpBody {
 	args := cp.walkArgs(fn)
 	condNode := args.next()
 	bodyNode := args.nextMustLambda()
-	args.mustEnd()
+	elseNode := args.nextMustLambdaIfAfter("else")
+	args.mustEnd();
 
-	return &whileOp{cp.compoundOp(condNode), cp.primaryOp(bodyNode)}
+	condOp := cp.compoundOp(condNode)
+	bodyOp := cp.primaryOp(bodyNode)
+	var elseOp valuesOp
+	if elseNode != nil {
+		elseOp = cp.primaryOp(elseNode)
+	}
+
+	return &whileOp{condOp, bodyOp, elseOp}
 }
 
 type whileOp struct {
-	condOp, bodyOp valuesOp
+	condOp, bodyOp, elseOp valuesOp
 }
 
 func (op *whileOp) invoke(fm *Frame) error {
 	body := op.bodyOp.execlambdaOp(fm)
+	elseFn := op.elseOp.execlambdaOp(fm)
+	isFirstLoop := true
 
 	for {
 		condValues, err := op.condOp.exec(fm.fork("while cond"))
@@ -465,9 +475,13 @@ func (op *whileOp) invoke(fm *Frame) error {
 			return err
 		}
 		if !allTrue(condValues) {
+			if(op.elseOp.body != nil && isFirstLoop) {
+				elseFn.Call(fm.fork("while else"), NoArgs, NoOpts)
+			}
 			break
 		}
 		err = fm.fork("while").Call(body, NoArgs, NoOpts)
+		isFirstLoop = false
 		if err != nil {
 			exc := err.(*Exception)
 			if exc.Cause == Continue {
