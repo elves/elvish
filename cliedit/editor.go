@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/store/storedefs"
@@ -25,12 +26,18 @@ func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
 	app := cli.NewApp(cli.NewTTY(in, out))
 
+	fuser, err := histutil.NewFuser(st)
+	if err != nil {
+		// TODO(xiaq): Report the error.
+	}
+
 	initHighlighter(app, ev)
 	initAPI(app, ev, ns)
 	initPrompts(app, ev, ns)
-	initListings(app, ev, ns, st)
+	initListings(app, ev, ns, st, fuser)
 	initNavigation(app, ev, ns)
 	initCompletion(app, ev, ns)
+	initHistWalk(app, ev, ns, fuser)
 	evalDefaultBinding(ev, ns)
 
 	return &Editor{app, ns}

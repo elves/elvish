@@ -10,11 +10,10 @@ import (
 	"github.com/elves/elvish/store/storedefs"
 )
 
-func initListings(app *cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store) {
+func initListings(app *cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, fuser *histutil.Fuser) {
 	var histStore histutil.Store
-	histFuser, err := histutil.NewFuser(st)
-	if err == nil {
-		histStore = fuserWrapper{histFuser}
+	if fuser != nil {
+		histStore = fuserWrapper{fuser}
 	}
 	dirStore := dirStore{ev}
 
