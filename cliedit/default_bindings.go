@@ -33,7 +33,11 @@ insert:binding = (binding-map [
 ])
 
 listing:binding = (binding-map [
-  &Ctrl-'['= $close-listing~
+  &Up=        $listing:up~
+  &Down=      $listing:down~
+  &Tab=       $listing:down-cycle~
+  &Shift-Tab= $listing:up-cycle~
+  &Ctrl-'['=  $close-listing~
 ])
 
 navigation:binding = (binding-map [

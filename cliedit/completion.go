@@ -22,7 +22,7 @@ func initCompletion(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	ns.AddNs("completion",
 		eval.Ns{
 			"binding": bindingVar,
-		}.AddGoFn("<edit:completion", "start", func() {
+		}.AddGoFn("<edit:completion>", "start", func() {
 			buf := app.CodeArea.CopyState().CodeBuffer
 			name, items, err := complete.Complete(
 				complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot},

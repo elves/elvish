@@ -5,6 +5,8 @@ import (
 	"github.com/elves/elvish/cli/addons/histlist"
 	"github.com/elves/elvish/cli/addons/lastcmd"
 	"github.com/elves/elvish/cli/addons/location"
+	"github.com/elves/elvish/cli/el/combobox"
+	"github.com/elves/elvish/cli/el/listbox"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/store/storedefs"
@@ -23,16 +25,15 @@ func initListings(app *cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store,
 		eval.Ns{
 			"binding": lsMap,
 		}.AddGoFns("<edit:listing>:", map[string]interface{}{
-			"close": func() { closeListing(app) },
+			"close":      func() { closeListing(app) },
+			"up":         func() { listingUp(app) },
+			"down":       func() { listingDown(app) },
+			"up-cycle":   func() { listingUpCycle(app) },
+			"down-cycle": func() { listingDownCycle(app) },
 			/*
-				"up":               cli.ListingUp,
-				"down":             cli.ListingDown,
-				"up-cycle":         cli.ListingUpCycle,
-				"down-cycle":       cli.ListingDownCycle,
 				"toggle-filtering": cli.ListingToggleFiltering,
 				"accept":           cli.ListingAccept,
 				"accept-close":     cli.ListingAcceptClose,
-				"default":          cli.ListingDefault,
 			*/
 		}))
 
@@ -63,6 +64,37 @@ func initListings(app *cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store,
 		}.AddGoFn("<edit:location>", "start", func() {
 			location.Start(app, location.Config{locationBinding, dirStore})
 		}))
+}
+
+//elvdoc:fn listing:up
+//
+// Moves the cursor up in listing mode.
+
+//elvdoc:fn listing:down
+//
+// Moves the cursor down in listing mode.
+
+//elvdoc:fn listing:up-cycle
+//
+// Moves the cursor up in listing mode, or to the last item if the first item is
+// currently selected.
+
+//elvdoc:fn listing:down-cycle
+//
+// Moves the cursor down in listing mode, or to the first item if the last item is
+// currently selected.
+
+func listingUp(app *cli.App)        { listingSelect(app, listbox.Prev) }
+func listingDown(app *cli.App)      { listingSelect(app, listbox.Next) }
+func listingUpCycle(app *cli.App)   { listingSelect(app, listbox.PrevWrap) }
+func listingDownCycle(app *cli.App) { listingSelect(app, listbox.NextWrap) }
+
+func listingSelect(app *cli.App, f func(selected, n, h int) int) {
+	w, ok := app.CopyAppState().Listing.(*combobox.Widget)
+	if !ok {
+		return
+	}
+	w.ListBox.Select(f)
 }
 
 // Wraps the histutil.Fuser interface to implement histutil.Store. This is a
