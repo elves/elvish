@@ -54,14 +54,26 @@ const (
 	commandRegion = "command"
 	// A region for keywords in special forms, like "else" in an "if" form.
 	keywordRegion = "keyword"
+	// A region of parse or compilation error.
+	errorRegion = "error"
 )
 
 func getRegions(n parse.Node) []region {
+	regions := getRegionsInner(n)
+	regions = fixRegions(regions)
+	return regions
+}
+
+func getRegionsInner(n parse.Node) []region {
 	var regions []region
 	emitRegions(n, func(n parse.Node, kind regionKind, typ string) {
 		regions = append(regions, region{n.Range().From, n.Range().To, kind, typ})
 	})
-	// Sort the regions by the begin position, putting semantic regions before
+	return regions
+}
+
+func fixRegions(regions []region) []region {
+	// Sort regions by the begin position, putting semantic regions before
 	// lexical regions.
 	sort.Slice(regions, func(i, j int) bool {
 		if regions[i].begin < regions[j].begin {

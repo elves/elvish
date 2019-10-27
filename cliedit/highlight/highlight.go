@@ -23,26 +23,35 @@ type cmdRegion struct {
 // Highlights a piece of Elvish code.
 func highlight(code string, cfg Config, lateCb func(styled.Text)) (styled.Text, []error) {
 	var errors []error
+	var errorRegions []region
 
 	n, errParse := parse.AsChunk("[interactive]", code)
 	if errParse != nil {
 		for _, err := range errParse.(parse.MultiError).Entries {
 			if err.Context.Begin != len(code) {
 				errors = append(errors, err)
+				errorRegions = append(errorRegions,
+					region{
+						err.Context.Begin, err.Context.End,
+						semanticRegion, errorRegion})
 			}
 		}
 	}
 
 	if cfg.Check != nil {
 		err := cfg.Check(n)
-		if err != nil && err.(diag.Ranger).Range().From != len(code) {
+		if r, ok := err.(diag.Ranger); ok && r.Range().From != len(code) {
 			errors = append(errors, err)
-			// TODO: Highlight the region with errors.
+			errorRegions = append(errorRegions,
+				region{
+					r.Range().From, r.Range().To, semanticRegion, errorRegion})
 		}
 	}
 
 	var text styled.Text
-	regions := getRegions(n)
+	regions := getRegionsInner(n)
+	regions = append(regions, errorRegions...)
+	regions = fixRegions(regions)
 	lastEnd := 0
 	var cmdRegions []cmdRegion
 

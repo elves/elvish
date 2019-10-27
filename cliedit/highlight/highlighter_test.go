@@ -14,60 +14,73 @@ import (
 var any = anyMatcher{}
 var noErrors []error
 
+var styles = map[rune]string{
+	'x': "bg-red",
+	'v': "magenta",
+	'q': "yellow",
+	'G': "green",
+	'B': "red",
+}
+
 func TestHighlighter_HighlightRegions(t *testing.T) {
 	hl := NewHighlighter(Config{})
 
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
-		Args("ls").Rets(styled.Text{
-			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
-		}, noErrors),
-		Args(" ls\n").Rets(styled.Text{
-			styled.PlainSegment(" "),
-			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
-			styled.PlainSegment("\n"),
-		}, noErrors),
-		Args("ls $x 'y'").Rets(styled.Text{
-			&styled.Segment{styled.Style{Foreground: "green"}, "ls"},
-			styled.PlainSegment(" "),
-			&styled.Segment{styled.Style{Foreground: "magenta"}, "$x"},
-			styled.PlainSegment(" "),
-			&styled.Segment{styled.Style{Foreground: "yellow"}, "'y'"},
-		}, noErrors),
+		Args("ls").Rets(
+			styled.MarkLines(
+				"ls", styles,
+				"GG",
+			),
+			noErrors),
+		Args(" ls\n").Rets(
+			styled.MarkLines(
+				" ls\n", styles,
+				" GG"),
+			noErrors),
+		Args("ls $x 'y'").Rets(
+			styled.MarkLines(
+				"ls $x 'y'", styles,
+				"GG vv qqq"),
+			noErrors),
 	})
 }
 
 func TestHighlighter_ParseErrors(t *testing.T) {
 	hl := NewHighlighter(Config{})
 	tt.Test(t, tt.Fn("hl.Get", hl.Get), tt.Table{
-		// Parse error
-		Args("ls ]").Rets(any, matchErrors(parseErrorMatcher{3, 4})),
-		// Errors at the end are elided
+		// Parse error is highlighted and returned
+		Args("ls ]").Rets(
+			styled.MarkLines(
+				"ls ]", styles,
+				"GG x"),
+			matchErrors(parseErrorMatcher{3, 4})),
+		// Errors at the end are ignored
 		Args("ls $").Rets(any, noErrors),
 		Args("ls [").Rets(any, noErrors),
-
-		// TODO: Test for highlighting errored regions
-		// TODO: Test for multiple parse errors
 	})
 }
 
-func TestHighlighter_Check(t *testing.T) {
+func TestHighlighter_CheckErrors(t *testing.T) {
 	var checkError error
 	// Make a highlighter whose Check callback returns checkError.
 	hl := NewHighlighter(Config{
 		Check: func(*parse.Chunk) error { return checkError }})
-
-	checkError = fakeCheckError{0, 2}
-	_, errors := hl.Get("code")
-	if !reflect.DeepEqual(errors, []error{checkError}) {
-		t.Errorf("Got errors %v, want %v", errors, []error{checkError})
+	getWithCheckError := func(code string, err error) (styled.Text, []error) {
+		checkError = err
+		return hl.Get(code)
 	}
 
-	// Errors at the end are elided
-	checkError = fakeCheckError{6, 6}
-	_, errors = hl.Get("code 2")
-	if len(errors) != 0 {
-		t.Errorf("Got errors %v, want 0 error", errors)
-	}
+	tt.Test(t, tt.Fn("getWithCheckError", getWithCheckError), tt.Table{
+		// Check error is highlighted and returned
+		Args("code 1", fakeCheckError{5, 6}).Rets(
+			styled.MarkLines(
+				"code 1", styles,
+				"GGGG x"),
+			[]error{fakeCheckError{5, 6}}),
+		// Check errors at the end are ignored
+		Args("code 2", fakeCheckError{6, 6}).
+			Rets(any, noErrors),
+	})
 }
 
 const lateTimeout = 100 * time.Millisecond
@@ -99,12 +112,10 @@ func TestHighlighter_HasCommand_LateResult(t *testing.T) {
 
 	test("ls",
 		styled.Plain("ls"),
-		styled.Text{
-			&styled.Segment{styled.Style{Foreground: "green"}, "ls"}})
+		styled.MakeText("ls", "green"))
 	test("echo",
 		styled.Plain("echo"),
-		styled.Text{
-			&styled.Segment{styled.Style{Foreground: "red"}, "echo"}})
+		styled.MakeText("echo", "red"))
 }
 
 const (
@@ -144,8 +155,7 @@ func TestHighlighter_HasCommand_LateResultOutOfOrder(t *testing.T) {
 	late := <-hl.LateUpdates()
 
 	wantInitial := styled.Plain("ls")
-	wantLate := styled.Text{
-		&styled.Segment{styled.Style{Foreground: "green"}, "ls"}}
+	wantLate := styled.MakeText("ls", "green")
 	if !reflect.DeepEqual(wantInitial, initial) {
 		t.Errorf("want %v from initial Get, got %v", wantInitial, initial)
 	}

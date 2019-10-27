@@ -26,6 +26,7 @@ var transformerFor = map[string]string{
 
 	commandRegion: "green",
 	keywordRegion: "yellow",
+	errorRegion:   "bg-red",
 }
 
 var (
