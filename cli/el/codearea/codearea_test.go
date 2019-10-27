@@ -83,14 +83,15 @@ var renderTests = []el.RenderTest{
 	{
 		Name: "static errors in code",
 		Given: &Widget{
-			State: State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}},
+			Prompt: ConstPrompt(styled.Plain("> ")),
+			State:  State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}},
 			Highlighter: func(code string) (styled.Text, []error) {
 				err := errors.New("static error")
 				return styled.Plain(code), []error{err}
 			},
 		},
 		Width: 10, Height: 24,
-		Want: bb(10).WritePlain("code").SetDotToCursor().
+		Want: bb(10).WritePlain("> code").SetDotToCursor().
 			Newline().WritePlain("static error"),
 	},
 	{

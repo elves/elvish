@@ -58,24 +58,26 @@ func patchPendingCode(c CodeBuffer, p PendingCode) (CodeBuffer, int, int) {
 func renderView(v *view, buf *ui.BufferBuilder) {
 	buf.EagerWrap = true
 
-	buf.WriteLegacyStyleds(v.prompt.ToLegacyType())
+	buf.WriteStyled(v.prompt)
 	if len(buf.Lines) == 1 && buf.Col*2 < buf.Width {
 		buf.Indent = buf.Col
 	}
 
 	parts := v.code.Partition(v.dot)
-	buf.WriteLegacyStyleds(parts[0].ToLegacyType())
-	buf.Dot = buf.Cursor()
-	buf.WriteLegacyStyleds(parts[1].ToLegacyType())
+	buf.
+		WriteStyled(parts[0]).
+		SetDotToCursor().
+		WriteStyled(parts[1])
 
 	buf.EagerWrap = false
+	buf.Indent = 0
 
 	// Handle rprompts with newlines.
 	if rpromptWidth := styledWcswidth(v.rprompt); rpromptWidth > 0 {
 		padding := buf.Width - buf.Col - rpromptWidth
 		if padding >= 1 {
 			buf.WriteSpacesSGR(padding, "")
-			buf.WriteLegacyStyleds(v.rprompt.ToLegacyType())
+			buf.WriteStyled(v.rprompt)
 		}
 	}
 
