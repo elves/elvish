@@ -74,9 +74,10 @@ func (w *Widget) renderHorizontal(width, height int) *ui.Buffer {
 		if s.Items == nil || s.Items.Len() == 0 {
 			s.First = 0
 		} else {
+			s.First, s.Height = getHorizontalWindow(*s, w.Padding, width, height)
 			// Override height to the height required; we don't need the
 			// original height later.
-			s.First, height = getHorizontalWindow(*s, w.Padding, width, height)
+			height = s.Height
 		}
 		state = *s
 	})
@@ -249,15 +250,15 @@ func (w *Widget) Handle(event term.Event) bool {
 	return false
 }
 
-// Select changes the selected item by calling the given callback with the index
-// of the current selected item and the total number of items and using the
-// return value as the index of the new selected item.
-func (w *Widget) Select(f func(selected, n int) int) {
+// Select calls the given function with the index of the current selected item,
+// the total number of items and the height (non-zero in horizontal layout), and
+// selects the item specified by the return value of the function.
+func (w *Widget) Select(f func(selected, n, h int) int) {
 	w.init()
 	var it Items
 	var i int
 	w.MutateListboxState(func(s *State) {
-		s.Selected = f(s.Selected, s.Items.Len())
+		s.Selected = f(s.Selected, s.Items.Len(), s.Height)
 		it, i = s.Items, s.Selected
 	})
 	if 0 <= i && i < it.Len() {
@@ -267,50 +268,36 @@ func (w *Widget) Select(f func(selected, n int) int) {
 
 // Prev moves the selection to the previous item, or does nothing if the
 // first item is currently selected. It is a suitable as an argument to
-// ((*Widget).Select.
-func Prev(selected, n int) int {
-	switch {
-	case selected >= n:
-		return n - 1
-	case selected <= 0:
-		return 0
-	default:
-		return selected - 1
-	}
-}
-
-// PrevWrap moves the selection to the previous item, or to the last item if
-// the first item is currently selected. It is a suitable as an argument to
-// ((*Widget).Select.
-func PrevWrap(selected, n int) int {
-	switch {
-	case selected >= n:
-		return n - 1
-	case selected <= 0:
-		return n - 1
-	default:
-		return selected - 1
-	}
+// (*Widget).Select.
+func Prev(selected, n, _ int) int {
+	return fixIndex(selected-1, n)
 }
 
 // Next moves the selection to the previous item, or does nothing if the
 // last item is currently selected. It is a suitable as an argument to
-// ((*Widget).Select.
-func Next(selected, n int) int {
+// (*Widget).Select.
+func Next(selected, n, _ int) int {
+	return fixIndex(selected+1, n)
+}
+
+// PrevWrap moves the selection to the previous item, or to the last item if
+// the first item is currently selected. It is a suitable as an argument to
+// (*Widget).Select.
+func PrevWrap(selected, n, _ int) int {
 	switch {
-	case selected >= n-1:
+	case selected >= n:
 		return n - 1
-	case selected < 0:
-		return 0
+	case selected <= 0:
+		return n - 1
 	default:
-		return selected + 1
+		return selected - 1
 	}
 }
 
 // NextWrap moves the selection to the previous item, or to the first item
 // if the last item is currently selected. It is a suitable as an argument to
-// ((*Widget).Select.
-func NextWrap(selected, n int) int {
+// (*Widget).Select.
+func NextWrap(selected, n, _ int) int {
 	switch {
 	case selected >= n-1:
 		return 0
@@ -318,6 +305,38 @@ func NextWrap(selected, n int) int {
 		return 0
 	default:
 		return selected + 1
+	}
+}
+
+// Left moves the selection to the item to the left. It is only meaningful in
+// horizontal layout and suitable as an argument to (*Widget).Select.
+func Left(selected, n, h int) int {
+	return horizontal(selected, n, -h)
+}
+
+// Right moves the selection to the item to the right. It is only meaningful in
+// horizontal layout and suitable as an argument to (*Widget).Select.
+func Right(selected, n, h int) int {
+	return horizontal(selected, n, h)
+}
+
+func horizontal(selected, n, d int) int {
+	selected = fixIndex(selected, n)
+	newSelected := selected + d
+	if newSelected < 0 || newSelected >= n {
+		return selected
+	}
+	return newSelected
+}
+
+func fixIndex(i, n int) int {
+	switch {
+	case i < 0:
+		return 0
+	case i >= n:
+		return n - 1
+	default:
+		return i
 	}
 }
 

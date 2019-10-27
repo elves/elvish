@@ -124,8 +124,19 @@ var renderVerticalTests = []el.RenderTest{
 	},
 }
 
-func TestRenderVertical(t *testing.T) {
+func TestRender_Vertical(t *testing.T) {
 	el.TestRender(t, renderVerticalTests)
+}
+
+func TestRender_Vertical_MutatesState(t *testing.T) {
+	// Calling Render alters the First field to reflect the first item rendered.
+	w := &Widget{State: State{
+		Items: TestItems{NItems: 10}, Selected: 4, First: 0}}
+	// Items shown will be 3, 4, 5
+	w.Render(10, 3)
+	if first := w.State.First; first != 3 {
+		t.Errorf("State.First = %d, want 3", first)
+	}
 }
 
 var renderHorizontalTests = []el.RenderTest{
@@ -229,8 +240,24 @@ var renderHorizontalTests = []el.RenderTest{
 	},
 }
 
-func TestRenderHorizontal(t *testing.T) {
+func TestRender_Horizontal(t *testing.T) {
 	el.TestRender(t, renderHorizontalTests)
+}
+
+func TestRender_Horizontal_MutatesState(t *testing.T) {
+	// Calling Render alters the First field to reflect the first item rendered.
+	w := &Widget{
+		Horizontal: true,
+		State: State{
+			Items: TestItems{Prefix: "x", NItems: 10}, Selected: 4, First: 0}}
+	// Only a single column of 3 items shown: x3-x5
+	w.Render(2, 4)
+	if first := w.State.First; first != 3 {
+		t.Errorf("State.First = %d, want 3", first)
+	}
+	if height := w.State.Height; height != 3 {
+		t.Errorf("State.Height = %d, want 3", height)
+	}
 }
 
 var handleTests = []el.HandleTest{
@@ -335,11 +362,11 @@ func TestHandle_EnterEmitsAccept(t *testing.T) {
 }
 
 func TestSelect_ChangeState(t *testing.T) {
-	// number of items = 10
+	// number of items = 10, height = 3
 	var tests = []struct {
 		name   string
 		before int
-		f      func(selected, n int) int
+		f      func(selected, n, h int) int
 		after  int
 	}{
 		{"Next from -1", -1, Next, 0},
@@ -361,13 +388,24 @@ func TestSelect_ChangeState(t *testing.T) {
 		{"PrevWrap from 0", 0, PrevWrap, 9},
 		{"PrevWrap from 9", 9, PrevWrap, 8},
 		{"PrevWrap from 10", 10, PrevWrap, 9},
+
+		{"Left from -1", -1, Left, 0},
+		{"Left from 0", 0, Left, 0},
+		{"Left from 9", 9, Left, 6},
+		{"Left from 10", 10, Left, 6},
+
+		{"Right from -1", -1, Right, 3},
+		{"Right from 0", 0, Right, 3},
+		{"Right from 9", 9, Right, 9},
+		{"Right from 10", 10, Right, 9},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			w := &Widget{
-				State: State{Items: TestItems{NItems: 10}, Selected: test.before},
-			}
+				State: State{
+					Items: TestItems{NItems: 10}, Height: 3,
+					Selected: test.before}}
 			w.Select(test.f)
 			if w.State.Selected != test.after {
 				t.Errorf("selected = %d, want %d", w.State.Selected, test.after)
@@ -401,8 +439,8 @@ func TestSelect_CallOnSelect(t *testing.T) {
 	// waiting a fixed time to make sure that nothing is sent in the channel, we
 	// immediately does another Select with a valid index, and verify that only
 	// the valid index is sent.
-	w.Select(func(selected, n int) int { return -1 })
-	w.Select(func(selected, n int) int { return 0 })
+	w.Select(func(_, _, _ int) int { return -1 })
+	w.Select(func(_, _, _ int) int { return 0 })
 	if gotSelected := <-gotSelectedCh; gotSelected != 0 {
 		t.Errorf("Got selected = %v, want 0", gotSelected)
 	}

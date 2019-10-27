@@ -13,6 +13,7 @@ type State struct {
 	Items    Items
 	Selected int
 	First    int
+	Height   int
 }
 
 // MakeState makes a new State.
@@ -21,7 +22,7 @@ func MakeState(it Items, selectLast bool) State {
 	if selectLast {
 		selected = it.Len() - 1
 	}
-	return State{it, selected, 0}
+	return State{Items: it, Selected: selected}
 }
 
 // Items is an interface for accessing multiple items.
