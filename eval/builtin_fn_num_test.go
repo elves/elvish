@@ -32,5 +32,6 @@ func TestBuiltinFnNum(t *testing.T) {
 		That("/ 1 0").Puts(math.Inf(1)),
 		That("^ 16 2").Puts(256.0),
 		That("% 23 7").Puts("2"),
+		That("% 1 0").Errors(),
 	)
 }
