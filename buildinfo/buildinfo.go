@@ -7,7 +7,6 @@ package buildinfo
 
 // Build information.
 var (
-	Version = "unknown"
-	GoPath  = "unknown"
-	GoRoot  = "unknown"
+	Version      = "unknown"
+	Reproducible = "false"
 )
