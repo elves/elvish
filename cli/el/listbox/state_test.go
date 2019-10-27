@@ -8,7 +8,9 @@ import (
 
 func TestMakeState(t *testing.T) {
 	tt.Test(t, tt.Fn("MakeState", MakeState), tt.Table{
-		tt.Args(TestItems{NItems: 10}, false).Rets(State{TestItems{NItems: 10}, 0, 0}),
-		tt.Args(TestItems{NItems: 10}, true).Rets(State{TestItems{NItems: 10}, 9, 0}),
+		tt.Args(TestItems{NItems: 10}, false).
+			Rets(State{Items: TestItems{NItems: 10}, Selected: 0, First: 0}),
+		tt.Args(TestItems{NItems: 10}, true).
+			Rets(State{Items: TestItems{NItems: 10}, Selected: 9, First: 0}),
 	})
 }
