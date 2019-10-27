@@ -448,7 +448,7 @@ func compileWhile(cp *compiler, fn *parse.Form) effectOpBody {
 	condNode := args.next()
 	bodyNode := args.nextMustLambda()
 	elseNode := args.nextMustLambdaIfAfter("else")
-	args.mustEnd();
+	args.mustEnd()
 
 	condOp := cp.compoundOp(condNode)
 	bodyOp := cp.primaryOp(bodyNode)
@@ -475,7 +475,7 @@ func (op *whileOp) invoke(fm *Frame) error {
 			return err
 		}
 		if !allTrue(condValues) {
-			if(op.elseOp.body != nil && isFirstLoop) {
+			if op.elseOp.body != nil && isFirstLoop {
 				elseFn.Call(fm.fork("while else"), NoArgs, NoOpts)
 			}
 			break
