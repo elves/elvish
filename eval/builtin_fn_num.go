@@ -28,7 +28,7 @@ func init() {
 		"*": times,
 		"/": slash,
 		"^": math.Pow,
-		"%": func(a, b int) int { return a % b },
+		"%": mod,
 
 		// Random
 		"rand":    rand.Float64,
@@ -137,6 +137,13 @@ func divide(fm *Frame, prod float64, nums ...float64) {
 		prod /= f
 	}
 	out <- vals.FromGo(prod)
+}
+
+func mod(a, b int) (int, error) {
+	if b == 0 {
+		return 0, ErrArgs
+	}
+	return a % b, nil
 }
 
 func randint(low, high int) (int, error) {
