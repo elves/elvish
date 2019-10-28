@@ -5,6 +5,7 @@ import (
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/term"
+	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/styled"
 )
@@ -19,7 +20,8 @@ func TestStart(t *testing.T) {
 	}()
 
 	Start(app, Config{
-		Type: "WORD",
+		Name:    "WORD",
+		Replace: diag.Ranging{From: 0, To: 0},
 		Items: []Item{
 			{ToShow: "foo", ToInsert: "foo"},
 			{ToShow: "foo bar", ToInsert: "'foo bar'"},

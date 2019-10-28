@@ -40,8 +40,9 @@ func completionStart(app *cli.App, ev *eval.Evaler, binding el.Handler) {
 		app.Notify(err.Error())
 		return
 	}
-	completion.Start(app,
-		completion.Config{Binding: binding, Type: result.Name, Items: result.Items})
+	completion.Start(app, completion.Config{
+		Name: result.Name, Replace: result.Replace, Items: result.Items,
+		Binding: binding})
 }
 
 type pureEvaler struct{ ev *eval.Evaler }

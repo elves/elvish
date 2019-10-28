@@ -11,6 +11,7 @@ import (
 	"github.com/elves/elvish/cli/el/combobox"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/el/listbox"
+	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/styled"
 )
 
@@ -25,14 +26,15 @@ type Item struct {
 // Config keeps the configuration for the completion UI.
 type Config struct {
 	Binding el.Handler
-	Type    string
+	Name    string
+	Replace diag.Ranging
 	Items   []Item
 }
 
 // Start starts the completion UI.
 func Start(app *cli.App, cfg Config) {
 	w := combobox.Widget{}
-	w.CodeArea.Prompt = layout.ModePrompt("COMPLETING "+cfg.Type, true)
+	w.CodeArea.Prompt = layout.ModePrompt("COMPLETING "+cfg.Name, true)
 	w.ListBox.Horizontal = true
 	w.ListBox.OverlayHandler = cfg.Binding
 	w.OnFilter = func(p string) {
@@ -43,10 +45,12 @@ func Start(app *cli.App, cfg Config) {
 	w.ListBox.OnAccept = func(it listbox.Items, i int) {
 		text := it.(items)[i].ToInsert
 		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+			// TODO(xiaq): This is not correct when cfg.Replace has non-zero width.
 			s.CodeBuffer.InsertAtDot(text)
 		})
 		app.MutateAppState(func(s *cli.State) { s.Listing = nil })
 	}
+	// TODO(xiaq): Maintain PendingCode of the code area widget.
 	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
 }
 
