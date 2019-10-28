@@ -7,8 +7,12 @@ go:
   - 1.12.x
   - 1.13.x
 env:
-  - CGO_ENABLED=0 GO111MODULE=off
-  - CGO_ENABLED=0 GO111MODULE=on
+  global:
+    - CGO_ENABLED=0
+    - ELVISH_TEST_UI_TIMEOUT=10s
+  jobs:
+    - GO111MODULE=off
+    - GO111MODULE=on
 jobs:
   include:
     # NOTE: Coverages are not enabled for pull requests yet

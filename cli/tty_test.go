@@ -4,6 +4,7 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/elves/elvish/cli/term"
 	"github.com/elves/elvish/edit/ui"
@@ -111,5 +112,22 @@ func TestFakeTTY_Buffer(t *testing.T) {
 	}
 	if !reflect.DeepEqual(ttyCtrl.NotesBufferHistory(), wantNotesBufs) {
 		t.Errorf("NotesBufferHistory did not return {bufNotes1, bufNotes2}")
+	}
+}
+
+func TestGetUITestTimeout(t *testing.T) {
+	original := os.Getenv(uiTimeoutEnvName)
+	defer os.Setenv(uiTimeoutEnvName, original)
+
+	os.Unsetenv(uiTimeoutEnvName)
+	timeout := getUITestTimeout()
+	if timeout != uiTimeoutDefault {
+		t.Errorf("Not default when env not set")
+	}
+
+	os.Setenv(uiTimeoutEnvName, "10s")
+	timeout = getUITestTimeout()
+	if timeout != 10*time.Second {
+		t.Errorf("Not set from environment variable")
 	}
 }

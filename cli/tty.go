@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -293,14 +292,11 @@ func (t TTYCtrl) LastNotesBuffer() *ui.Buffer {
 	return t.notesBufs[len(t.notesBufs)-1]
 }
 
-var uiTestTimeout = flag.Duration(
-	"ui-test-timeout", 4000*time.Millisecond, "timeout for UI tests")
-
 // Tests that an expected buffer will appear within the timeout.
 func testBuffer(t *testing.T, want *ui.Buffer, ch <-chan *ui.Buffer, last func() *ui.Buffer) {
 	t.Helper()
 
-	timeout := time.After(*uiTestTimeout)
+	timeout := time.After(getUITestTimeout())
 	for {
 		select {
 		case buf := <-ch:
@@ -314,5 +310,15 @@ func testBuffer(t *testing.T, want *ui.Buffer, ch <-chan *ui.Buffer, last func()
 			return
 		}
 	}
+}
 
+const uiTimeoutEnvName = "ELVISH_TEST_UI_TIMEOUT"
+
+var uiTimeoutDefault = 100 * time.Millisecond
+
+func getUITestTimeout() time.Duration {
+	if d, err := time.ParseDuration(os.Getenv(uiTimeoutEnvName)); err == nil {
+		return d
+	}
+	return uiTimeoutDefault
 }
