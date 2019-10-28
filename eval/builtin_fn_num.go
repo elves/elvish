@@ -139,7 +139,7 @@ func divide(fm *Frame, prod float64, nums ...float64) {
 	out <- vals.FromGo(prod)
 }
 
-func mod(fm *Frame, a, b int) (int, error) {
+func mod(a, b int) (int, error) {
 	if b == 0 {
 		return 0, ErrArgs
 	}
