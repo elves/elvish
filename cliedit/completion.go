@@ -3,6 +3,7 @@ package cliedit
 import (
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/addons/completion"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cliedit/complete"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/parse"
@@ -22,21 +23,25 @@ func initCompletion(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	ns.AddNs("completion",
 		eval.Ns{
 			"binding": bindingVar,
-		}.AddGoFn("<edit:completion>", "start", func() {
-			buf := app.CodeArea.CopyState().CodeBuffer
-			name, items, err := complete.Complete(
-				complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot},
-				complete.Config{
-					Filter:     complete.PrefixFilter,
-					PureEvaler: pureEvaler{ev},
-				})
-			if err != nil {
-				app.Notify(err.Error())
-				return
-			}
-			completion.Start(app,
-				completion.Config{Binding: binding, Type: name, Items: items})
+		}.AddGoFns("<edit:completion>", map[string]interface{}{
+			"start": func() { completionStart(app, ev, binding) },
 		}))
+}
+
+func completionStart(app *cli.App, ev *eval.Evaler, binding el.Handler) {
+	buf := app.CodeArea.CopyState().CodeBuffer
+	result, err := complete.Complete(
+		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot},
+		complete.Config{
+			Filter:     complete.PrefixFilter,
+			PureEvaler: pureEvaler{ev},
+		})
+	if err != nil {
+		app.Notify(err.Error())
+		return
+	}
+	completion.Start(app,
+		completion.Config{Binding: binding, Type: result.Name, Items: result.Items})
 }
 
 type pureEvaler struct{ ev *eval.Evaler }

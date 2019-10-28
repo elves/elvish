@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/elves/elvish/cli/addons/completion"
+	"github.com/elves/elvish/diag"
 	"github.com/elves/elvish/parse"
 	"github.com/elves/elvish/parse/parseutil"
 )
@@ -22,6 +23,12 @@ type Config struct {
 	CompleteArg func(args []string) ([]RawItem, error)
 	// An interface to access the runtime. Must not be nil.
 	PureEvaler PureEvaler
+}
+
+type Result struct {
+	Name    string
+	Replace diag.Ranging
+	Items   []completion.Item
 }
 
 // RawItem represents completion items before the quoting pass.
@@ -49,7 +56,7 @@ type CodeBuffer struct {
 
 // Complete runs the code completion algorithm in the given context, and returns
 // the completion type, items and any error encountered.
-func Complete(code CodeBuffer, cfg Config) (string, []completion.Item, error) {
+func Complete(code CodeBuffer, cfg Config) (*Result, error) {
 	// Ignore the error; the function always returns a valid *ChunkNode.
 	chunk, _ := parse.AsChunk("[interactive]", code.Content)
 	leaf := parseutil.FindLeafNode(chunk, code.Dot)
@@ -68,7 +75,7 @@ func Complete(code CodeBuffer, cfg Config) (string, []completion.Item, error) {
 		sort.Slice(items, func(i, j int) bool {
 			return items[i].ToShow < items[j].ToShow
 		})
-		return ctx.name, items, nil
+		return &Result{Name: ctx.name, Items: items, Replace: ctx.interval}, nil
 	}
-	return "", nil, errNoCompletion
+	return nil, errNoCompletion
 }

@@ -22,7 +22,7 @@ type context struct {
 	name     string
 	seed     string
 	quote    parse.PrimaryType
-	interval diag.Ranger
+	interval diag.Ranging
 }
 
 func completeArg(n parse.Node, cfg Config) (*context, []RawItem, error) {
@@ -214,7 +214,7 @@ func completeVariable(n parse.Node, cfg Config) (*context, []RawItem, error) {
 	return ctx, items, nil
 }
 
-func range0(pos int) diag.Ranger {
+func range0(pos int) diag.Ranging {
 	return diag.Ranging{From: pos, To: pos}
 }
 
