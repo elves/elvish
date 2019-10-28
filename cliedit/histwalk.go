@@ -3,6 +3,7 @@ package cliedit
 import (
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/addons/histwalk"
+	"github.com/elves/elvish/cli/el"
 	"github.com/elves/elvish/cli/histutil"
 	"github.com/elves/elvish/eval"
 )
@@ -14,13 +15,15 @@ func initHistWalk(app *cli.App, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fus
 		eval.Ns{
 			"binding": bindingVar,
 		}.AddGoFns("<edit:history>", map[string]interface{}{
-			"start": func() {
-				buf := app.CodeArea.CopyState().CodeBuffer
-				walker := fuser.Walker(buf.Content[:buf.Dot])
-				histwalk.Start(app, histwalk.Config{Binding: binding, Walker: walker})
-			},
-			"prev":  func() error { return histwalk.Prev(app) },
-			"next":  func() error { return histwalk.Next(app) },
+			"start": func() { histWalkStart(app, fuser, binding) },
+			"up":    func() error { return histwalk.Prev(app) },
+			"down":  func() error { return histwalk.Next(app) },
 			"close": func() { histwalk.Close(app) },
 		}))
+}
+
+func histWalkStart(app *cli.App, fuser *histutil.Fuser, binding el.Handler) {
+	buf := app.CodeArea.CopyState().CodeBuffer
+	walker := fuser.Walker(buf.Content[:buf.Dot])
+	histwalk.Start(app, histwalk.Config{Binding: binding, Walker: walker})
 }
