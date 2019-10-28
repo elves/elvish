@@ -49,8 +49,8 @@ completion:binding = (binding-map [
 ])
 
 history:binding = (binding-map [
-  &Up=       $history:prev~
-  &Down=     $history:next~
+  &Up=       $history:up~
+  &Down=     $history:down~
   &Ctrl-'['= $history:close~
 ])
 
