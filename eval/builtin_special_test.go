@@ -41,6 +41,9 @@ func TestBuiltinSpecial(t *testing.T) {
 			Puts("0", 1.0, 2.0, 3.0),
 		That("x = 0; while (< $x 4) { put $x; break }").Puts("0"),
 		That("x = 0; while (< $x 4) { fail haha }").Errors(),
+		That("x = 0; while (< $x 4) { put $x; x=(+ $x 1) } else { put bad }").
+			Puts("0", 1.0, 2.0, 3.0),
+		That("while $false { put bad } else { put good }").Puts("good"),
 
 		// for
 		That("for x [tempora mores] { put 'O '$x }").

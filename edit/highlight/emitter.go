@@ -51,6 +51,11 @@ func (e *Emitter) form(n *parse.Form) {
 					e.AddStyling(a.Range().From, a.Range().To, styleForSep[argText])
 				}
 			}
+		case "while":
+			if len(n.Args) >= 3 && n.Args[2].SourceText() == "else" {
+				a := n.Args[2]
+				e.AddStyling(a.Range().From, a.Range().To, styleForSep["else"])
+			}
 		case "for":
 			if len(n.Args) >= 1 && len(n.Args[0].Indexings) > 0 {
 				v := n.Args[0].Indexings[0].Head
