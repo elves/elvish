@@ -466,22 +466,19 @@ type whileOp struct {
 
 func (op *whileOp) invoke(fm *Frame) error {
 	body := op.bodyOp.execlambdaOp(fm)
-	elseFn := op.elseOp.execlambdaOp(fm)
-	isFirstLoop := true
+	elseBody := op.elseOp.execlambdaOp(fm)
 
+	iterated := false
 	for {
 		condValues, err := op.condOp.exec(fm.fork("while cond"))
 		if err != nil {
 			return err
 		}
 		if !allTrue(condValues) {
-			if op.elseOp.body != nil && isFirstLoop {
-				elseFn.Call(fm.fork("while else"), NoArgs, NoOpts)
-			}
 			break
 		}
+		iterated = true
 		err = fm.fork("while").Call(body, NoArgs, NoOpts)
-		isFirstLoop = false
 		if err != nil {
 			exc := err.(*Exception)
 			if exc.Cause == Continue {
@@ -492,6 +489,10 @@ func (op *whileOp) invoke(fm *Frame) error {
 				return err
 			}
 		}
+	}
+
+	if op.elseOp.body != nil && !iterated {
+		return elseBody.Call(fm.fork("while else"), NoArgs, NoOpts)
 	}
 	return nil
 }
