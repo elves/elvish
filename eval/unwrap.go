@@ -7,6 +7,12 @@ import (
 	"github.com/elves/elvish/eval/vals"
 )
 
+const (
+	STDIN  = "stdin"
+	STDOUT = "stdout"
+	STDERR = "stderr"
+)
+
 // Unwrappers are helper types for "unwrapping" values, the process for
 // asserting certain properties of values and throwing exceptions when such
 // properties are not satisfied.
@@ -102,7 +108,20 @@ func (u ValueUnwrapper) FdOrClose() (int, error) {
 	if err == nil && s == "-" {
 		return -1, nil
 	}
-	return u.NonNegativeInt()
+	switch s {
+	case STDIN:
+		return 0, nil
+	case STDOUT:
+		return 1, nil
+	case STDERR:
+		return 2, nil
+	default:
+		i, errInt := u.NonNegativeInt()
+		if errInt != nil {
+			return 0, fmt.Errorf("redirection source must be standard stream names or integer; got %s", s)
+		}
+		return i, nil
+	}
 }
 
 func (u ValueUnwrapper) Callable() (Callable, error) {
@@ -114,4 +133,25 @@ func (u ValueUnwrapper) Callable() (Callable, error) {
 		u.error("callable", "%s", vals.Kind(u.values[0]))
 	}
 	return c, u.err
+}
+
+func (u ValueUnwrapper) Fd() (int, error) {
+	s, err := u.String()
+	if err != nil {
+		return 0, err
+	}
+	switch s {
+	case STDIN:
+		return 0, nil
+	case STDOUT:
+		return 1, nil
+	case STDERR:
+		return 2, nil
+	default:
+		i, errInt := u.NonNegativeInt()
+		if errInt != nil {
+			return 0, fmt.Errorf("Fd must be standard stream names or integer; got %s", s)
+		}
+		return i, nil
+	}
 }
