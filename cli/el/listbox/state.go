@@ -16,15 +16,6 @@ type State struct {
 	Height   int
 }
 
-// MakeState makes a new State.
-func MakeState(it Items, selectLast bool) State {
-	selected := 0
-	if selectLast {
-		selected = it.Len() - 1
-	}
-	return State{Items: it, Selected: selected}
-}
-
 // Items is an interface for accessing multiple items.
 type Items interface {
 	// Show renders the item at the given zero-based index.

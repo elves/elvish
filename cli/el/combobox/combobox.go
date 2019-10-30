@@ -28,6 +28,9 @@ func (w *Widget) init() {
 	if w.OnFilter == nil {
 		w.OnFilter = func(string) {}
 	}
+	if w.ListBox == nil {
+		w.ListBox = listbox.New(listbox.Config{})
+	}
 	if !w.hasFiltered {
 		w.OnFilter("")
 		w.hasFiltered = true

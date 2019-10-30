@@ -65,19 +65,19 @@ func Start(app *cli.App, cfg Config) {
 		app.MutateAppState(func(s *cli.State) { s.Listing = nil })
 	}
 	w.CodeArea.Prompt = layout.ModePrompt("LASTCMD", true)
-	w.ListBox.OverlayHandler = cfg.Binding
+	w.ListBox = listbox.New(listbox.Config{
+		OverlayHandler: cfg.Binding,
+		OnAccept: func(it listbox.Items, i int) {
+			accept(it.(items).entries[i].content)
+		},
+	})
 	w.OnFilter = func(p string) {
 		items := filter(entries, p)
 		if len(items.entries) == 1 {
 			accept(items.entries[0].content)
 		} else {
-			w.ListBox.MutateListboxState(func(s *listbox.State) {
-				*s = listbox.MakeState(items, false)
-			})
+			w.ListBox.Reset(items, 0)
 		}
-	}
-	w.ListBox.OnAccept = func(it listbox.Items, i int) {
-		accept(it.(items).entries[i].content)
 	}
 	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
 }

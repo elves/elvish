@@ -18,9 +18,9 @@ var renderTests = []el.RenderTest{
 			CodeArea: codearea.Widget{State: codearea.State{
 				CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6},
 			}},
-			ListBox: listbox.Widget{State: listbox.State{
-				Items: listbox.TestItems{NItems: 2},
-			}},
+			ListBox: listbox.NewWithState(
+				listbox.Config{},
+				listbox.State{Items: listbox.TestItems{NItems: 2}}),
 		},
 		Width: 10, Height: 24,
 		Want: ui.NewBufferBuilder(10).
@@ -45,9 +45,7 @@ var renderTests = []el.RenderTest{
 
 func installOnFilter(w *Widget) *Widget {
 	w.OnFilter = func(string) {
-		w.ListBox.MutateListboxState(func(s *listbox.State) {
-			*s = listbox.State{Items: listbox.TestItems{NItems: 2}}
-		})
+		w.ListBox.Reset(listbox.TestItems{NItems: 2}, 0)
 	}
 	return w
 }
@@ -60,9 +58,9 @@ func TestHandle(t *testing.T) {
 	var onFilterCalled bool
 	var lastFilter string
 	w := &Widget{
-		ListBox: listbox.Widget{State: listbox.State{
-			Items: listbox.TestItems{NItems: 2},
-		}},
+		ListBox: listbox.NewWithState(
+			listbox.Config{},
+			listbox.State{Items: listbox.TestItems{NItems: 2}}),
 		OnFilter: func(filter string) {
 			onFilterCalled = true
 			lastFilter = filter
@@ -73,7 +71,7 @@ func TestHandle(t *testing.T) {
 	if !handled {
 		t.Errorf("listbox did not handle")
 	}
-	if w.ListBox.State.Selected != 1 {
+	if w.ListBox.CopyListboxState().Selected != 1 {
 		t.Errorf("listbox state not changed")
 	}
 

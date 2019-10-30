@@ -43,23 +43,24 @@ func Start(app *cli.App, cfg Config) {
 
 	w := combobox.Widget{}
 	w.CodeArea.Prompt = layout.ModePrompt("HISTLIST", true)
-	w.ListBox.OverlayHandler = cfg.Binding
+	w.ListBox = listbox.New(listbox.Config{
+		OverlayHandler: cfg.Binding,
+		OnAccept: func(it listbox.Items, i int) {
+			text := it.(items)[i].Text
+			app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+				buf := &s.CodeBuffer
+				if buf.Content == "" {
+					buf.InsertAtDot(text)
+				} else {
+					buf.InsertAtDot("\n" + text)
+				}
+			})
+			app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+		},
+	})
 	w.OnFilter = func(p string) {
-		w.ListBox.MutateListboxState(func(s *listbox.State) {
-			*s = listbox.MakeState(filter(cmds, p), true)
-		})
-	}
-	w.ListBox.OnAccept = func(it listbox.Items, i int) {
-		text := it.(items)[i].Text
-		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
-			buf := &s.CodeBuffer
-			if buf.Content == "" {
-				buf.InsertAtDot(text)
-			} else {
-				buf.InsertAtDot("\n" + text)
-			}
-		})
-		app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+		it := filter(cmds, p)
+		w.ListBox.Reset(it, it.Len()-1)
 	}
 	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
 }

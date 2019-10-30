@@ -49,7 +49,7 @@ func Start(app *cli.App, cfg Config) {
 		}
 	}
 	w.OnRight = func() {
-		currentCol, ok := w.CopyColViewState().Columns[1].(*listbox.Widget)
+		currentCol, ok := w.CopyColViewState().Columns[1].(listbox.Widget)
 		if !ok {
 			return
 		}
@@ -82,7 +82,15 @@ func Start(app *cli.App, cfg Config) {
 }
 
 func updateState(w *colview.Widget, cursor Cursor, selectName string) {
-	var parentCol, currentCol, previewCol el.Widget
+	var parentCol, currentCol el.Widget
+
+	w.MutateColViewState(func(s *colview.State) {
+		*s = colview.State{
+			Columns: []el.Widget{
+				layout.Empty{}, layout.Empty{}, layout.Empty{}},
+			FocusColumn: 1,
+		}
+	})
 
 	parent, err := cursor.Parent()
 	if err == nil {
@@ -93,7 +101,14 @@ func updateState(w *colview.Widget, cursor Cursor, selectName string) {
 
 	current, err := cursor.Current()
 	if err == nil {
-		currentCol = makeWidget(current)
+		currentCol = makeWidgetWithOnSelect(
+			current,
+			func(it listbox.Items, i int) {
+				previewCol := makeWidget(it.(fileItems)[i])
+				w.MutateColViewState(func(s *colview.State) {
+					s.Columns[2] = previewCol
+				})
+			})
 		tryToSelectName(parentCol, current.Name())
 		if selectName != "" {
 			tryToSelectName(currentCol, selectName)
@@ -103,61 +118,48 @@ func updateState(w *colview.Widget, cursor Cursor, selectName string) {
 		tryToSelectNothing(parentCol)
 	}
 
-	previewCol = layout.Empty{}
-	if list, ok := currentCol.(*listbox.Widget); ok {
-		// Build the preview column.
-		state := list.CopyListboxState()
-		if state.Items.Len() > 0 {
-			previewCol = makeWidget(state.Items.(fileItems)[state.Selected])
-		}
-		// Update the preview column whenever the selection changes.
-		list.OnSelect = func(it listbox.Items, i int) {
-			previewCol := makeWidget(it.(fileItems)[i])
-			w.MutateColViewState(func(s *colview.State) {
-				s.Columns[2] = previewCol
-			})
-		}
-	}
-
 	w.MutateColViewState(func(s *colview.State) {
-		*s = colview.State{
-			Columns:     []el.Widget{parentCol, currentCol, previewCol},
-			FocusColumn: 1,
-		}
+		s.Columns[0] = parentCol
+		s.Columns[1] = currentCol
 	})
 }
 
 // Selects nothing if the widget is a listbox.
 func tryToSelectNothing(w el.Widget) {
-	list, ok := w.(*listbox.Widget)
+	list, ok := w.(listbox.Widget)
 	if !ok {
 		return
 	}
-	list.MutateListboxState(func(s *listbox.State) { s.Selected = -1 })
+	list.Select(func(listbox.State) int { return -1 })
 }
 
 // Selects the item with the given name, if the widget is a listbox with
 // fileItems and has such an item.
 func tryToSelectName(w el.Widget, name string) {
-	list, ok := w.(*listbox.Widget)
+	list, ok := w.(listbox.Widget)
 	if !ok {
 		// Do nothing
 		return
 	}
-	list.MutateListboxState(func(state *listbox.State) {
+	list.Select(func(state listbox.State) int {
 		items, ok := state.Items.(fileItems)
 		if !ok {
-			return
+			return 0
 		}
 		for i, file := range items {
 			if file.Name() == name {
-				state.Selected = i
+				return i
 			}
 		}
+		return 0
 	})
 }
 
 func makeWidget(f File) el.Widget {
+	return makeWidgetWithOnSelect(f, nil)
+}
+
+func makeWidgetWithOnSelect(f File, onSelect func(listbox.Items, int)) el.Widget {
 	files, content, err := f.Read()
 	if err != nil {
 		return makeErrWidget(err)
@@ -167,11 +169,9 @@ func makeWidget(f File) el.Widget {
 		sort.Slice(files, func(i, j int) bool {
 			return files[i].Name() < files[j].Name()
 		})
-		return &listbox.Widget{
-			Padding:     1,
-			ExtendStyle: true,
-			State:       listbox.State{Items: fileItems(files)},
-		}
+		return listbox.NewWithState(
+			listbox.Config{Padding: 1, ExtendStyle: true, OnSelect: onSelect},
+			listbox.State{Items: fileItems(files)})
 	}
 
 	lines := strings.Split(sanitize(string(content)), "\n")

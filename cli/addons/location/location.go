@@ -43,18 +43,18 @@ func Start(app *cli.App, cfg Config) {
 
 	w := combobox.Widget{}
 	w.CodeArea.Prompt = layout.ModePrompt("LOCATION", true)
-	w.ListBox.OverlayHandler = cfg.Binding
+	w.ListBox = listbox.New(listbox.Config{
+		OverlayHandler: cfg.Binding,
+		OnAccept: func(it listbox.Items, i int) {
+			err := cfg.Store.Chdir(it.(items)[i].Path)
+			if err != nil {
+				app.Notify(err.Error())
+			}
+			app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+		},
+	})
 	w.OnFilter = func(p string) {
-		w.ListBox.MutateListboxState(func(s *listbox.State) {
-			*s = listbox.MakeState(filter(dirs, p), false)
-		})
-	}
-	w.ListBox.OnAccept = func(it listbox.Items, i int) {
-		err := cfg.Store.Chdir(it.(items)[i].Path)
-		if err != nil {
-			app.Notify(err.Error())
-		}
-		app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+		w.ListBox.Reset(filter(dirs, p), 0)
 	}
 	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
 }

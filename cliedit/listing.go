@@ -89,7 +89,7 @@ func listingDown(app *cli.App)      { listingSelect(app, listbox.Next) }
 func listingUpCycle(app *cli.App)   { listingSelect(app, listbox.PrevWrap) }
 func listingDownCycle(app *cli.App) { listingSelect(app, listbox.NextWrap) }
 
-func listingSelect(app *cli.App, f func(selected, n, h int) int) {
+func listingSelect(app *cli.App, f func(listbox.State) int) {
 	w, ok := app.CopyAppState().Listing.(*combobox.Widget)
 	if !ok {
 		return

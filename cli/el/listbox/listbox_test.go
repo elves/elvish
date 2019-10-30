@@ -14,38 +14,43 @@ var bb = ui.NewBufferBuilder
 var renderVerticalTests = []el.RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
-		Given: &Widget{Placeholder: styled.Plain("nothing")},
+		Given: New(Config{Placeholder: styled.Plain("nothing")}),
 		Width: 10, Height: 3,
 		Want: bb(10).WritePlain("nothing"),
 	},
 	{
 		Name: "placeholder when NItems is 0",
-		Given: &Widget{
-			Placeholder: styled.Plain("nothing"),
-			State:       State{Items: TestItems{}},
-		},
+		Given: NewWithState(
+			Config{Placeholder: styled.Plain("nothing")},
+			State{Items: TestItems{}}),
 		Width: 10, Height: 3,
 		Want: bb(10).WritePlain("nothing"),
 	},
 	{
-		Name:  "all items when there is enough height",
-		Given: &Widget{State: State{Items: TestItems{NItems: 2}, Selected: 0}},
+		Name: "all items when there is enough height",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{NItems: 2}, Selected: 0}),
 		Width: 10, Height: 3,
 		Want: bb(10).
 			WriteStyled(styled.MakeText("item 0    ", "inverse")).
 			Newline().WritePlain("item 1"),
 	},
 	{
-		Name:  "long lines cropped",
-		Given: &Widget{State: State{Items: TestItems{NItems: 2}, Selected: 0}},
+		Name: "long lines cropped",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{NItems: 2}, Selected: 0}),
 		Width: 4, Height: 3,
 		Want: bb(4).
 			WriteStyled(styled.MakeText("item", "inverse")).
 			Newline().WritePlain("item"),
 	},
 	{
-		Name:  "scrollbar when not showing all items",
-		Given: &Widget{State: State{Items: TestItems{NItems: 4}, Selected: 0}},
+		Name: "scrollbar when not showing all items",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{NItems: 4}, Selected: 0}),
 		Width: 10, Height: 2,
 		Want: bb(10).
 			WriteStyled(styled.MakeText("item 0   ", "inverse")).
@@ -54,8 +59,10 @@ var renderVerticalTests = []el.RenderTest{
 			WriteStyled(styled.MakeText("│", "magenta")),
 	},
 	{
-		Name:  "scrollbar when not showing last item in full",
-		Given: &Widget{State: State{Items: TestItems{Prefix: "item\n", NItems: 2}, Selected: 0}},
+		Name: "scrollbar when not showing last item in full",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{Prefix: "item\n", NItems: 2}, Selected: 0}),
 		Width: 10, Height: 3,
 		Want: bb(10).
 			WriteStyled(styled.MakeText("item     ", "inverse")).
@@ -66,8 +73,10 @@ var renderVerticalTests = []el.RenderTest{
 			WriteStyled(styled.MakeText(" ", "inverse", "magenta")),
 	},
 	{
-		Name:  "scrollbar when not showing only item in full",
-		Given: &Widget{State: State{Items: TestItems{Prefix: "item\n", NItems: 1}, Selected: 0}},
+		Name: "scrollbar when not showing only item in full",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{Prefix: "item\n", NItems: 1}, Selected: 0}),
 		Width: 10, Height: 1,
 		Want: bb(10).
 			WriteStyled(styled.MakeText("item     ", "inverse")).
@@ -75,11 +84,9 @@ var renderVerticalTests = []el.RenderTest{
 	},
 	{
 		Name: "padding",
-		Given: &Widget{
-			State: State{
-				Items: TestItems{Prefix: "item\n", NItems: 2}, Selected: 0},
-			Padding: 1,
-		},
+		Given: NewWithState(
+			Config{Padding: 1},
+			State{Items: TestItems{Prefix: "item\n", NItems: 2}, Selected: 0}),
 		Width: 4, Height: 4,
 
 		Want: bb(4).
@@ -90,11 +97,10 @@ var renderVerticalTests = []el.RenderTest{
 	},
 	{
 		Name: "not extending style",
-		Given: &Widget{
-			State: State{Items: TestItems{
-				Prefix: "x", NItems: 2, Styles: "blue bg-green"}},
-			Padding: 1,
-		},
+		Given: NewWithState(
+			Config{Padding: 1},
+			State{Items: TestItems{
+				Prefix: "x", NItems: 2, Styles: "blue bg-green"}}),
 		Width: 6, Height: 2,
 
 		Want: bb(6).
@@ -108,12 +114,10 @@ var renderVerticalTests = []el.RenderTest{
 	},
 	{
 		Name: "extending style",
-		Given: &Widget{
-			State: State{Items: TestItems{
-				Prefix: "x", NItems: 2, Styles: "blue bg-green"}},
-			Padding:     1,
-			ExtendStyle: true,
-		},
+		Given: NewWithState(
+			Config{Padding: 1, ExtendStyle: true},
+			State{Items: TestItems{
+				Prefix: "x", NItems: 2, Styles: "blue bg-green"}}),
 		Width: 6, Height: 2,
 
 		Want: bb(6).
@@ -130,11 +134,13 @@ func TestRender_Vertical(t *testing.T) {
 
 func TestRender_Vertical_MutatesState(t *testing.T) {
 	// Calling Render alters the First field to reflect the first item rendered.
-	w := &Widget{State: State{
-		Items: TestItems{NItems: 10}, Selected: 4, First: 0}}
+	w := NewWithState(
+		Config{},
+		State{Items: TestItems{NItems: 10}, Selected: 4, First: 0})
 	// Items shown will be 3, 4, 5
 	w.Render(10, 3)
-	if first := w.State.First; first != 3 {
+	state := w.CopyListboxState()
+	if first := state.First; first != 3 {
 		t.Errorf("State.First = %d, want 3", first)
 	}
 }
@@ -142,26 +148,23 @@ func TestRender_Vertical_MutatesState(t *testing.T) {
 var renderHorizontalTests = []el.RenderTest{
 	{
 		Name:  "placeholder when Items is nil",
-		Given: &Widget{Horizontal: true, Placeholder: styled.Plain("nothing")},
+		Given: New(Config{Horizontal: true, Placeholder: styled.Plain("nothing")}),
 		Width: 10, Height: 3,
 		Want: bb(10).WritePlain("nothing"),
 	},
 	{
 		Name: "placeholder when NItems is 0",
-		Given: &Widget{
-			Horizontal:  true,
-			Placeholder: styled.Plain("nothing"),
-			State:       State{Items: TestItems{}},
-		},
+		Given: NewWithState(
+			Config{Horizontal: true, Placeholder: styled.Plain("nothing")},
+			State{Items: TestItems{}}),
 		Width: 10, Height: 3,
 		Want: bb(10).WritePlain("nothing"),
 	},
 	{
 		Name: "all items when there is enough space, using minimal height",
-		Given: &Widget{
-			Horizontal: true,
-			State:      State{Items: TestItems{NItems: 4}, Selected: 0},
-		},
+		Given: NewWithState(
+			Config{Horizontal: true},
+			State{Items: TestItems{NItems: 4}, Selected: 0}),
 		Width: 14, Height: 3,
 		// Available height is 3, but only need 2 lines.
 		Want: bb(14).
@@ -172,11 +175,9 @@ var renderHorizontalTests = []el.RenderTest{
 	},
 	{
 		Name: "padding",
-		Given: &Widget{
-			Horizontal: true,
-			Padding:    1,
-			State:      State{Items: TestItems{NItems: 4, Prefix: "x"}, Selected: 0},
-		},
+		Given: NewWithState(
+			Config{Horizontal: true, Padding: 1},
+			State{Items: TestItems{NItems: 4, Prefix: "x"}, Selected: 0}),
 		Width: 14, Height: 3,
 		Want: bb(14).
 			WriteStyled(styled.MakeText(" x0 ", "inverse")).
@@ -186,13 +187,10 @@ var renderHorizontalTests = []el.RenderTest{
 	},
 	{
 		Name: "extending style",
-		Given: &Widget{
-			Horizontal:  true,
-			Padding:     1,
-			ExtendStyle: true,
-			State: State{Items: TestItems{
-				NItems: 2, Prefix: "x", Styles: "blue bg-green"}},
-		},
+		Given: NewWithState(
+			Config{Horizontal: true, Padding: 1, ExtendStyle: true},
+			State{Items: TestItems{
+				NItems: 2, Prefix: "x", Styles: "blue bg-green"}}),
 		Width: 14, Height: 3,
 		Want: bb(14).
 			WriteStyled(styled.MakeText(" x0 ", "blue", "bg-green", "inverse")).
@@ -201,10 +199,9 @@ var renderHorizontalTests = []el.RenderTest{
 	},
 	{
 		Name: "long lines cropped, with full scrollbar",
-		Given: &Widget{
-			Horizontal: true,
-			State:      State{Items: TestItems{NItems: 2}, Selected: 0},
-		},
+		Given: NewWithState(
+			Config{Horizontal: true},
+			State{Items: TestItems{NItems: 2}, Selected: 0}),
 		Width: 4, Height: 3,
 		Want: bb(4).
 			WriteStyled(styled.MakeText("item", "inverse")).
@@ -213,10 +210,9 @@ var renderHorizontalTests = []el.RenderTest{
 	},
 	{
 		Name: "scrollbar when not showing all items",
-		Given: &Widget{
-			Horizontal: true,
-			State:      State{Items: TestItems{NItems: 4}, Selected: 0},
-		},
+		Given: NewWithState(
+			Config{Horizontal: true},
+			State{Items: TestItems{NItems: 4}, Selected: 0}),
 		Width: 6, Height: 3,
 		Want: bb(6).
 			WriteStyled(styled.MakeText("item 0", "inverse")).
@@ -227,10 +223,9 @@ var renderHorizontalTests = []el.RenderTest{
 	},
 	{
 		Name: "scrollbar when not showing all items",
-		Given: &Widget{
-			Horizontal: true,
-			State:      State{Items: TestItems{NItems: 4}, Selected: 0},
-		},
+		Given: NewWithState(
+			Config{Horizontal: true},
+			State{Items: TestItems{NItems: 4}, Selected: 0}),
 		Width: 10, Height: 3,
 		Want: bb(10).
 			WriteStyled(styled.MakeText("item 0", "inverse")).WritePlain("  it").
@@ -246,73 +241,89 @@ func TestRender_Horizontal(t *testing.T) {
 
 func TestRender_Horizontal_MutatesState(t *testing.T) {
 	// Calling Render alters the First field to reflect the first item rendered.
-	w := &Widget{
-		Horizontal: true,
-		State: State{
-			Items: TestItems{Prefix: "x", NItems: 10}, Selected: 4, First: 0}}
+	w := NewWithState(
+		Config{Horizontal: true},
+		State{Items: TestItems{Prefix: "x", NItems: 10}, Selected: 4, First: 0})
 	// Only a single column of 3 items shown: x3-x5
 	w.Render(2, 4)
-	if first := w.State.First; first != 3 {
+	state := w.CopyListboxState()
+	if first := state.First; first != 3 {
 		t.Errorf("State.First = %d, want 3", first)
 	}
-	if height := w.State.Height; height != 3 {
+	if height := state.Height; height != 3 {
 		t.Errorf("State.Height = %d, want 3", height)
 	}
 }
 
 var handleTests = []el.HandleTest{
 	{
-		Name:  "up moving selection up",
-		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 1}},
+		Name: "up moving selection up",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{NItems: 10}, Selected: 1}),
 		Event: term.K(ui.Up),
 
 		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 0},
 	},
 	{
-		Name:  "up stopping at 0",
-		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 0}},
+		Name: "up stopping at 0",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{NItems: 10}, Selected: 0}),
 		Event: term.K(ui.Up),
 
 		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 0},
 	},
 	{
-		Name:  "up moving to last item when selecting after boundary",
-		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 11}},
+		Name: "up moving to last item when selecting after boundary",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{NItems: 10}, Selected: 11}),
 		Event: term.K(ui.Up),
 
 		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 9},
 	},
 	{
-		Name:  "down moving selection down",
-		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 1}},
+		Name: "down moving selection down",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{NItems: 10}, Selected: 1}),
 		Event: term.K(ui.Down),
 
 		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 2},
 	},
 	{
-		Name:  "down stopping at n-1",
-		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 9}},
+		Name: "down stopping at n-1",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{NItems: 10}, Selected: 9}),
 		Event: term.K(ui.Down),
 
 		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 9},
 	},
 	{
-		Name:  "down moving to first item when selecting before boundary",
-		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: -2}},
+		Name: "down moving to first item when selecting before boundary",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{NItems: 10}, Selected: -2}),
 		Event: term.K(ui.Down),
 
 		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 0},
 	},
 	{
-		Name:  "enter triggering default no-op accept",
-		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 5}},
+		Name: "enter triggering default no-op accept",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{NItems: 10}, Selected: 5}),
 		Event: term.K(ui.Enter),
 
 		WantNewState: State{Items: TestItems{NItems: 10}, Selected: 5},
 	},
 	{
-		Name:  "other keys not handled",
-		Given: &Widget{State: State{Items: TestItems{NItems: 10}, Selected: 5}},
+		Name: "other keys not handled",
+		Given: NewWithState(
+			Config{},
+			State{Items: TestItems{NItems: 10}, Selected: 5}),
 		Event: term.K('a'),
 
 		WantUnhandled: true,
@@ -320,8 +331,10 @@ var handleTests = []el.HandleTest{
 	{
 		Name: "overlay handler",
 		Given: addOverlay(
-			&Widget{State: State{Items: TestItems{NItems: 10}, Selected: 5}},
-			func(w *Widget) el.Handler {
+			NewWithState(
+				Config{},
+				State{Items: TestItems{NItems: 10}, Selected: 5}),
+			func(w *widget) el.Handler {
 				return el.MapHandler{
 					term.K('a'): func() { w.State.Selected = 0 },
 				}
@@ -332,9 +345,10 @@ var handleTests = []el.HandleTest{
 	},
 }
 
-func addOverlay(w *Widget, overlay func(*Widget) el.Handler) *Widget {
-	w.OverlayHandler = overlay(w)
-	return w
+func addOverlay(w Widget, overlay func(*widget) el.Handler) *widget {
+	ww := w.(*widget)
+	ww.OverlayHandler = overlay(ww)
+	return ww
 }
 
 func TestHandle(t *testing.T) {
@@ -344,13 +358,14 @@ func TestHandle(t *testing.T) {
 func TestHandle_EnterEmitsAccept(t *testing.T) {
 	var acceptedItems Items
 	var acceptedIndex int
-	w := &Widget{
-		State: State{Items: TestItems{NItems: 10}, Selected: 5},
-		OnAccept: func(it Items, i int) {
-			acceptedItems = it
-			acceptedIndex = i
+	w := NewWithState(
+		Config{
+			OnAccept: func(it Items, i int) {
+				acceptedItems = it
+				acceptedIndex = i
+			},
 		},
-	}
+		State{Items: TestItems{NItems: 10}, Selected: 5})
 	w.Handle(term.K(ui.Enter))
 
 	if acceptedItems != (TestItems{NItems: 10}) {
@@ -366,7 +381,7 @@ func TestSelect_ChangeState(t *testing.T) {
 	var tests = []struct {
 		name   string
 		before int
-		f      func(selected, n, h int) int
+		f      func(State) int
 		after  int
 	}{
 		{"Next from -1", -1, Next, 0},
@@ -402,13 +417,14 @@ func TestSelect_ChangeState(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			w := &Widget{
-				State: State{
+			w := NewWithState(
+				Config{},
+				State{
 					Items: TestItems{NItems: 10}, Height: 3,
-					Selected: test.before}}
+					Selected: test.before})
 			w.Select(test.f)
-			if w.State.Selected != test.after {
-				t.Errorf("selected = %d, want %d", w.State.Selected, test.after)
+			if selected := w.CopyListboxState().Selected; selected != test.after {
+				t.Errorf("selected = %d, want %d", selected, test.after)
 			}
 		})
 	}
@@ -418,30 +434,34 @@ func TestSelect_CallOnSelect(t *testing.T) {
 	it := TestItems{NItems: 10}
 	gotItemsCh := make(chan Items, 10)
 	gotSelectedCh := make(chan int, 10)
-	w := &Widget{
-		State: State{Items: it, Selected: 5},
-		OnSelect: func(it Items, i int) {
-			gotItemsCh <- it
-			gotSelectedCh <- i
+	w := NewWithState(
+		Config{
+			OnSelect: func(it Items, i int) {
+				gotItemsCh <- it
+				gotSelectedCh <- i
+			},
 		},
+		State{Items: it, Selected: 5})
+
+	verifyOnSelect := func(wantSelected int) {
+		if gotItems := <-gotItemsCh; gotItems != it {
+			t.Errorf("Got it = %v, want %v", gotItems, it)
+		}
+		if gotSelected := <-gotSelectedCh; gotSelected != wantSelected {
+			t.Errorf("Got selected = %v, want %v", gotSelected, wantSelected)
+		}
 	}
 
-	// Test that OnSelect is called when index is valid.
+	// Test that OnSelect is called during initialization.
+	verifyOnSelect(5)
+	// Test that OnSelect is called when changing selection.
 	w.Select(Next)
-	if gotItems := <-gotItemsCh; gotItems != it {
-		t.Errorf("Got it = %v, want %v", gotItems, it)
-	}
-	if gotSelected := <-gotSelectedCh; gotSelected != 6 {
-		t.Errorf("Got selected = %v, want 6", gotSelected)
-	}
-
+	verifyOnSelect(6)
 	// Test that OnSelect is not called when index is invalid. Instead of
 	// waiting a fixed time to make sure that nothing is sent in the channel, we
 	// immediately does another Select with a valid index, and verify that only
 	// the valid index is sent.
-	w.Select(func(_, _, _ int) int { return -1 })
-	w.Select(func(_, _, _ int) int { return 0 })
-	if gotSelected := <-gotSelectedCh; gotSelected != 0 {
-		t.Errorf("Got selected = %v, want 0", gotSelected)
-	}
+	w.Select(func(State) int { return -1 })
+	w.Select(func(State) int { return 0 })
+	verifyOnSelect(0)
 }
