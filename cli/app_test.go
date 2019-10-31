@@ -86,7 +86,7 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 	ed, tty := setup()
 
 	called := 0
-	ed.Config.BeforeReadline = func() { called++ }
+	ed.AppSpec.BeforeReadline = func() { called++ }
 	// Causes BasicMode to quit
 	tty.Inject(term.KeyEvent{Rune: '\n'})
 
@@ -102,7 +102,7 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 
 	called := 0
 	code := ""
-	ed.Config.AfterReadline = func(s string) {
+	ed.AppSpec.AfterReadline = func(s string) {
 		called++
 		code = s
 	}
@@ -125,7 +125,7 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	ed, tty := setup()
 
-	ed.Config.MaxHeight = func() int { return 2 }
+	ed.AppSpec.MaxHeight = func() int { return 2 }
 	tty.SetSize(10, 5) // Width = 5 to make it easy to test
 
 	// The code needs 3 lines to completely show.
@@ -145,7 +145,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 var bufChTimeout = 1 * time.Second
 
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
-	ed, tty := setupWithConfig(Config{
+	ed, tty := setupWithConfig(AppSpec{
 		Highlighter: testHighlighter{
 			get: func(code string) (styled.Text, []error) {
 				return styled.MakeText(code, "red"), nil
@@ -175,7 +175,7 @@ func TestReadCode_RedrawsOnHighlighterLateUpdate(t *testing.T) {
 }
 
 func TestReadCode_RendersPrompt(t *testing.T) {
-	ed, tty := setupWithConfig(Config{
+	ed, tty := setupWithConfig(AppSpec{
 		Prompt: constPrompt{styled.Plain("> ")}})
 
 	tty.Inject(term.KeyEvent{Rune: 'a'})
@@ -191,7 +191,7 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 }
 
 func TestReadCode_RendersRPrompt(t *testing.T) {
-	ed, tty := setupWithConfig(Config{
+	ed, tty := setupWithConfig(AppSpec{
 		RPrompt: constPrompt{styled.Plain("R")}})
 	tty.SetSize(80, 4) // Set a width of 4 for easier testing.
 
@@ -208,7 +208,7 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 
 func TestReadCode_TriggersPrompt(t *testing.T) {
 	called := 0
-	ed, _ := setupWithConfig(Config{
+	ed, _ := setupWithConfig(AppSpec{
 		Prompt: testPrompt{trigger: func(bool) { called++ }}})
 
 	codeCh, _ := ed.ReadCodeAsync()
@@ -226,7 +226,7 @@ func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
 		lateUpdates: make(chan styled.Text),
 	}
 
-	ed, tty := setupWithConfig(Config{Prompt: prompt})
+	ed, tty := setupWithConfig(AppSpec{Prompt: prompt})
 
 	codeCh, _ := ed.ReadCodeAsync()
 	bufOldPrompt := ui.NewBufferBuilder(80).
@@ -360,12 +360,13 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 }
 
 func setup() (*App, TTYCtrl) {
-	return setupWithConfig(Config{})
+	return setupWithConfig(AppSpec{})
 }
 
-func setupWithConfig(cfg Config) (*App, TTYCtrl) {
+func setupWithConfig(spec AppSpec) (*App, TTYCtrl) {
 	tty, ttyControl := NewFakeTTY()
-	app := NewAppWithConfig(tty, cfg)
+	spec.TTY = tty
+	app := NewApp(spec)
 	return app, ttyControl
 }
 

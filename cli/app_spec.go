@@ -5,8 +5,9 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-// Config is the configuration for an App.
-type Config struct {
+// AppSpec specifies the configuration and initial state for an App.
+type AppSpec struct {
+	TTY               TTY
 	MaxHeight         func() int
 	RPromptPersistent func() bool
 	BeforeReadline    func()
@@ -15,31 +16,40 @@ type Config struct {
 	Prompt            Prompt
 	RPrompt           Prompt
 	CodeArea          codearea.Spec
+
+	State State
 }
 
-func (cfg *Config) maxHeight() int {
-	if cfg.MaxHeight != nil {
-		return cfg.MaxHeight()
+func fixSpec(spec *AppSpec) {
+	if spec.TTY == nil {
+		spec.TTY, _ = NewFakeTTY()
 	}
-	return -1
-}
-
-func (cfg *Config) rpromptPersistent() bool {
-	if cfg.RPromptPersistent != nil {
-		return cfg.RPromptPersistent()
+	if spec.MaxHeight == nil {
+		spec.MaxHeight = func() int { return -1 }
 	}
-	return false
-}
-
-func (cfg *Config) beforeReadline() {
-	if cfg.BeforeReadline != nil {
-		cfg.BeforeReadline()
+	if spec.RPromptPersistent == nil {
+		spec.RPromptPersistent = func() bool { return false }
 	}
-}
-
-func (cfg *Config) afterReadline(content string) {
-	if cfg.AfterReadline != nil {
-		cfg.AfterReadline(content)
+	if spec.BeforeReadline == nil {
+		spec.BeforeReadline = func() {}
+	}
+	if spec.AfterReadline == nil {
+		spec.AfterReadline = func(string) {}
+	}
+	if spec.Highlighter == nil {
+		spec.Highlighter = dummyHighlighter{}
+	} else {
+		spec.CodeArea.Highlighter = spec.Highlighter.Get
+	}
+	if spec.Prompt == nil {
+		spec.Prompt = constPrompt{}
+	} else {
+		spec.CodeArea.Prompt = spec.Prompt.Get
+	}
+	if spec.RPrompt == nil {
+		spec.RPrompt = constPrompt{}
+	} else {
+		spec.CodeArea.RPrompt = spec.RPrompt.Get
 	}
 }
 
@@ -51,6 +61,15 @@ type Highlighter interface {
 	// LateUpdates returns a channel for delivering late updates.
 	LateUpdates() <-chan styled.Text
 }
+
+// A Highlighter implementation that always returns plain text.
+type dummyHighlighter struct{}
+
+func (dummyHighlighter) Get(code string) (styled.Text, []error) {
+	return styled.Plain(code), nil
+}
+
+func (dummyHighlighter) LateUpdates() <-chan styled.Text { return nil }
 
 // A Highlighter implementation useful for testing.
 type testHighlighter struct {

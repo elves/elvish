@@ -12,7 +12,7 @@ import (
 )
 
 func initHighlighter(app *cli.App, ev *eval.Evaler) {
-	app.Config.Highlighter = highlight.NewHighlighter(highlight.Config{
+	app.AppSpec.Highlighter = highlight.NewHighlighter(highlight.Config{
 		Check:      func(n *parse.Chunk) error { return check(ev, n) },
 		HasCommand: func(cmd string) bool { return hasCommand(ev, cmd) },
 	})

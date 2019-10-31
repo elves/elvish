@@ -12,7 +12,7 @@ import (
 )
 
 func setupAPI() (*cli.App, *eval.Evaler, eval.Ns) {
-	app := cli.NewApp(cli.NewStdTTY())
+	app := cli.NewApp(cli.AppSpec{TTY: cli.NewStdTTY()})
 	ev := eval.NewEvaler()
 	ns := eval.Ns{}
 	initAPI(app, ev, ns)
@@ -26,7 +26,7 @@ func TestInitAPI_BeforeReadline(t *testing.T) {
 	ns["before-readline"].Set(vals.MakeList(eval.NewGoFn("[test]", func() {
 		called++
 	})))
-	app.Config.BeforeReadline()
+	app.AppSpec.BeforeReadline()
 	if called != 1 {
 		t.Errorf("before-readline called %d times, want once", called)
 	}
@@ -41,7 +41,7 @@ func TestInitAPI_AfterReadline(t *testing.T) {
 		called++
 		calledWith = s
 	})))
-	app.Config.AfterReadline("code")
+	app.AppSpec.AfterReadline("code")
 	if called != 1 {
 		t.Errorf("after-readline called %d times, want once", called)
 	}

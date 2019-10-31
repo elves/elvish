@@ -12,7 +12,7 @@ import (
 
 func TestStart(t *testing.T) {
 	tty, ttyCtrl := cli.NewFakeTTY()
-	app := cli.NewApp(tty)
+	app := cli.NewApp(cli.AppSpec{TTY: tty})
 	codeCh, _ := app.ReadCodeAsync()
 	defer func() {
 		app.CommitEOF()

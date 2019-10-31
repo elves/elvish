@@ -20,15 +20,10 @@ import (
 // dependencies.
 type App struct {
 	loop *loop
-	tty  TTY
 
 	StateMutex sync.RWMutex
-	State      State
-
+	AppSpec
 	CodeArea codearea.Widget
-
-	// Configuration.
-	Config Config
 }
 
 // State represents mutable state of an App.
@@ -56,29 +51,16 @@ func (s *State) PopNotes() []string {
 	return notes
 }
 
-// NewApp creates a new App for the given TTY.
-func NewApp(t TTY) *App {
-	return NewAppWithConfig(t, Config{})
-}
-
-// NewApp creates a new App for the given TTY and config.
-func NewAppWithConfig(t TTY, cfg Config) *App {
+// NewApp creates a new App from the given specification.
+func NewApp(spec AppSpec) *App {
+	var app App
+	fixSpec(&spec)
+	spec.CodeArea.OnSubmit = app.CommitCode
 	lp := newLoop()
-	app := &App{loop: lp, tty: t, Config: cfg}
+	app = App{loop: lp, AppSpec: spec, CodeArea: codearea.New(spec.CodeArea)}
 	lp.HandleCb(app.handle)
 	lp.RedrawCb(app.redraw)
-	if cfg.Prompt != nil {
-		cfg.CodeArea.Prompt = cfg.Prompt.Get
-	}
-	if cfg.RPrompt != nil {
-		cfg.CodeArea.RPrompt = cfg.RPrompt.Get
-	}
-	if cfg.Highlighter != nil {
-		cfg.CodeArea.Highlighter = cfg.Highlighter.Get
-	}
-	cfg.CodeArea.OnSubmit = app.CommitCode
-	app.CodeArea = codearea.New(cfg.CodeArea)
-	return app
+	return &app
 }
 
 // MutateAppState calls the given function while locking the state mutex.
@@ -128,8 +110,8 @@ func (app *App) handle(e event) {
 }
 
 func (app *App) triggerPrompts(force bool) {
-	prompt := app.Config.Prompt
-	rprompt := app.Config.RPrompt
+	prompt := app.AppSpec.Prompt
+	rprompt := app.AppSpec.RPrompt
 	if prompt != nil {
 		prompt.Trigger(force)
 	}
@@ -142,8 +124,8 @@ var transformerForPending = "underline"
 
 func (app *App) redraw(flag redrawFlag) {
 	// Get the dimensions available.
-	height, width := app.tty.Size()
-	if maxHeight := app.Config.maxHeight(); maxHeight > 0 && maxHeight < height {
+	height, width := app.TTY.Size()
+	if maxHeight := app.AppSpec.MaxHeight(); maxHeight > 0 && maxHeight < height {
 		height = maxHeight
 	}
 
@@ -165,10 +147,10 @@ func (app *App) redraw(flag redrawFlag) {
 	bufMain := renderApp(app.CodeArea, listing, width, height)
 
 	// Apply buffers.
-	app.tty.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
+	app.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 
 	if isFinalRedraw {
-		app.tty.ResetBuffer()
+		app.TTY.ResetBuffer()
 	}
 }
 
@@ -206,7 +188,7 @@ func renderApp(codeArea, listing el.Renderer, width, height int) *ui.Buffer {
 // This function is not re-entrant; when it is being executed, the App is said
 // to be active.
 func (app *App) ReadCode() (string, error) {
-	restore, err := app.tty.Setup()
+	restore, err := app.TTY.Setup()
 	if err != nil {
 		return "", err
 	}
@@ -216,8 +198,8 @@ func (app *App) ReadCode() (string, error) {
 	defer wg.Wait()
 
 	// Relay input events.
-	eventCh := app.tty.StartInput()
-	defer app.tty.StopInput()
+	eventCh := app.TTY.StartInput()
+	defer app.TTY.StopInput()
 	wg.Add(1)
 	go func() {
 		for event := range eventCh {
@@ -227,8 +209,8 @@ func (app *App) ReadCode() (string, error) {
 	}()
 
 	// Relay signals.
-	sigCh := app.tty.NotifySignals()
-	defer app.tty.StopSignals()
+	sigCh := app.TTY.NotifySignals()
+	defer app.TTY.StopSignals()
 	wg.Add(1)
 	go func() {
 		for sig := range sigCh {
@@ -241,6 +223,9 @@ func (app *App) ReadCode() (string, error) {
 	stopRelayLateUpdates := make(chan struct{})
 	defer close(stopRelayLateUpdates)
 	relayLateUpdates := func(ch <-chan styled.Text) {
+		if ch == nil {
+			return
+		}
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -255,15 +240,9 @@ func (app *App) ReadCode() (string, error) {
 		}()
 	}
 
-	if prompt := app.Config.Prompt; prompt != nil {
-		relayLateUpdates(prompt.LateUpdates())
-	}
-	if rprompt := app.Config.RPrompt; rprompt != nil {
-		relayLateUpdates(rprompt.LateUpdates())
-	}
-	if highlighter := app.Config.Highlighter; highlighter != nil {
-		relayLateUpdates(highlighter.LateUpdates())
-	}
+	relayLateUpdates(app.Prompt.LateUpdates())
+	relayLateUpdates(app.RPrompt.LateUpdates())
+	relayLateUpdates(app.Highlighter.LateUpdates())
 
 	// Trigger an initial prompt update.
 	app.triggerPrompts(true)
@@ -272,9 +251,9 @@ func (app *App) ReadCode() (string, error) {
 	defer app.resetAllStates()
 
 	// BeforeReadline and AfterReadline hooks.
-	app.Config.beforeReadline()
+	app.BeforeReadline()
 	defer func() {
-		app.Config.afterReadline(app.CodeArea.CopyState().CodeBuffer.Content)
+		app.AfterReadline(app.CodeArea.CopyState().CodeBuffer.Content)
 	}()
 
 	return app.loop.Run()

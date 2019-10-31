@@ -79,7 +79,7 @@ func makeBuf(codeArea styled.Text, modeline string) *ui.Buffer {
 func setup() (*cli.App, cli.TTYCtrl, func()) {
 	tty, ttyCtrl := cli.NewFakeTTY()
 	ttyCtrl.SetSize(24, 40)
-	app := cli.NewApp(tty)
+	app := cli.NewApp(cli.AppSpec{TTY: tty})
 	codeCh, _ := app.ReadCodeAsync()
 	return app, ttyCtrl, func() {
 		app.CommitEOF()

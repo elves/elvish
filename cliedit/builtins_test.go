@@ -36,8 +36,7 @@ var bufferBuiltinsTests = []struct {
 }
 
 func TestBufferBuiltins(t *testing.T) {
-	tty, _ := cli.NewFakeTTY()
-	app := cli.NewApp(tty)
+	app := cli.NewApp(cli.AppSpec{})
 	builtins := bufferBuiltins(app)
 
 	for _, test := range bufferBuiltinsTests {

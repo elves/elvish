@@ -24,14 +24,14 @@ func initAPI(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 
 func initMaxHeight(app *cli.App, ns eval.Ns) {
 	maxHeight := newIntVar(-1)
-	app.Config.MaxHeight = func() int { return maxHeight.GetRaw().(int) }
+	app.AppSpec.MaxHeight = func() int { return maxHeight.GetRaw().(int) }
 	ns.Add("max-height", maxHeight)
 }
 
 func initBeforeReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
 	ns["before-readline"] = hook
-	app.Config.BeforeReadline = func() {
+	app.AppSpec.BeforeReadline = func() {
 		i := -1
 		hook := hook.GetRaw().(vals.List)
 		for it := hook.Iterator(); it.HasElem(); it.Next() {
@@ -57,7 +57,7 @@ func initBeforeReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 func initAfterReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
 	ns["after-readline"] = hook
-	app.Config.AfterReadline = func(code string) {
+	app.AppSpec.AfterReadline = func(code string) {
 		i := -1
 		hook := hook.GetRaw().(vals.List)
 		for it := hook.Iterator(); it.HasElem(); it.Next() {

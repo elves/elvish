@@ -16,7 +16,7 @@ func setup() (*cli.App, cli.TTYCtrl, func()) {
 	tty, ttyCtrl := cli.NewFakeTTY()
 	// Use a smaller TTY size to make diffs easier to see.
 	ttyCtrl.SetSize(20, 50)
-	app := cli.NewApp(tty)
+	app := cli.NewApp(cli.AppSpec{TTY: tty})
 	codeCh, _ := app.ReadCodeAsync()
 	return app, ttyCtrl, func() {
 		app.CommitEOF()

@@ -24,7 +24,7 @@ type Editor struct {
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
-	app := cli.NewApp(cli.NewTTY(in, out))
+	app := cli.NewApp(cli.AppSpec{TTY: cli.NewTTY(in, out)})
 
 	fuser, err := histutil.NewFuser(st)
 	if err != nil {

@@ -22,10 +22,10 @@ func initPrompts(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	rpromptVar := vars.FromPtr(&rpromptVal)
 	ns["prompt"] = promptVar
 	ns["rprompt"] = rpromptVar
-	app.Config.Prompt = prompt.New(func() styled.Text {
+	app.AppSpec.Prompt = prompt.New(func() styled.Text {
 		return callPrompt(app, ev, promptVar.Get().(eval.Callable))
 	})
-	app.Config.RPrompt = prompt.New(func() styled.Text {
+	app.AppSpec.RPrompt = prompt.New(func() styled.Text {
 		return callPrompt(app, ev, rpromptVar.Get().(eval.Callable))
 	})
 }

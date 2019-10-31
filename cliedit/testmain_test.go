@@ -46,7 +46,7 @@ func testMain(m *testing.M) int {
 
 func setup() (*cli.App, cli.TTYCtrl) {
 	tty, ttyControl := cli.NewFakeTTY()
-	app := cli.NewApp(tty)
+	app := cli.NewApp(cli.AppSpec{TTY: tty})
 	return app, ttyControl
 }
 
