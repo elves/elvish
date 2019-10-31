@@ -29,11 +29,8 @@ func Start(app *cli.App, cfg Config) {
 	if cursor == nil {
 		cursor = NewOSCursor()
 	}
-	w := colview.Widget{
-		OverlayHandler: cfg.Binding,
-		Weights:        func(n int) []int { return []int{1, 3, 4} },
-	}
-	w.OnLeft = func() {
+
+	onLeft := func(w colview.Widget) {
 		// Remember the name of the current directory before ascending.
 		currentName := ""
 		current, err := cursor.Current()
@@ -45,10 +42,10 @@ func Start(app *cli.App, cfg Config) {
 		if err != nil {
 			app.Notify(err.Error())
 		} else {
-			updateState(&w, cursor, currentName)
+			updateState(w, cursor, currentName)
 		}
 	}
-	w.OnRight = func() {
+	onRight := func(w colview.Widget) {
 		currentCol, ok := w.CopyColViewState().Columns[1].(listbox.Widget)
 		if !ok {
 			return
@@ -73,15 +70,21 @@ func Start(app *cli.App, cfg Config) {
 		if err != nil {
 			app.Notify(err.Error())
 		} else {
-			updateState(&w, cursor, "")
+			updateState(w, cursor, "")
 		}
 	}
-	updateState(&w, cursor, "")
-	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
+	w := colview.New(colview.Spec{
+		OverlayHandler: cfg.Binding,
+		Weights:        func(n int) []int { return []int{1, 3, 4} },
+		OnLeft:         onLeft,
+		OnRight:        onRight,
+	})
+	updateState(w, cursor, "")
+	app.MutateAppState(func(s *cli.State) { s.Listing = w })
 	app.Redraw(false)
 }
 
-func updateState(w *colview.Widget, cursor Cursor, selectName string) {
+func updateState(w colview.Widget, cursor Cursor, selectName string) {
 	var parentCol, currentCol el.Widget
 
 	w.MutateColViewState(func(s *colview.State) {

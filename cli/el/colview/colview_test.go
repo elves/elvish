@@ -14,30 +14,30 @@ import (
 var renderTests = []el.RenderTest{
 	{
 		Name:  "colview no column",
-		Given: &Widget{},
+		Given: New(Spec{}),
 		Width: 10, Height: 24,
 		Want: &ui.Buffer{Width: 10},
 	},
 	{
 		Name: "colview width < number of columns",
-		Given: &Widget{State: State{
+		Given: New(Spec{State: State{
 			Columns: []el.Widget{
 				makeListbox("x", 2, 0), makeListbox("y", 1, 0),
 				makeListbox("z", 3, 0), makeListbox("w", 1, 0),
 			},
-		}},
+		}}),
 		Width: 3, Height: 24,
 		Want: &ui.Buffer{Width: 3},
 	},
 	{
 		Name: "colview normal",
-		Given: &Widget{State: State{
+		Given: New(Spec{State: State{
 			Columns: []el.Widget{
 				makeListbox("x", 2, 1),
 				makeListbox("y", 1, 0),
 				makeListbox("z", 3, -1),
 			},
-		}},
+		}}),
 		Width: 11, Height: 24,
 		Want: ui.NewBufferBuilder(11).
 			// first line
@@ -68,7 +68,7 @@ func TestHandle(t *testing.T) {
 	// Channel for recording the place an event was handled. -1 for the widget
 	// itself, column index for column.
 	handledBy := make(chan int, 10)
-	w := &Widget{
+	w := New(Spec{
 		OverlayHandler: el.MapHandler{
 			term.K('a'): func() { handledBy <- -1 },
 		},
@@ -87,9 +87,9 @@ func TestHandle(t *testing.T) {
 			},
 			FocusColumn: 1,
 		},
-		OnLeft:  func() { handledBy <- 100 },
-		OnRight: func() { handledBy <- 101 },
-	}
+		OnLeft:  func(Widget) { handledBy <- 100 },
+		OnRight: func(Widget) { handledBy <- 101 },
+	})
 
 	expectHandled := func(event term.Event, wantBy int) {
 		t.Helper()
