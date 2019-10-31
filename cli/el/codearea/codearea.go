@@ -17,13 +17,16 @@ import (
 
 // Widget supports code-editing functions. It implements the clitypes.Widget
 // interface. An empty Widget is directly usable.
-type Widget struct {
-	// Mutex for synchronizing access to State.
-	StateMutex sync.RWMutex
-	// Public state. Access that may be concurrent to either of Widget's method
-	// must be synchronized using the StateMutex.
-	State State
+type Widget interface {
+	el.Widget
+	// CopyState returns a copy of the state.
+	CopyState() State
+	// MutateCodeAreaState calls the given the function while locking StateMutex.
+	MutateCodeAreaState(f func(*State))
+}
 
+// Config keeps the configuration for Widget.
+type Config struct {
 	// A Handler that takes precedence over the default handling of events.
 	OverlayHandler el.Handler
 	// A function that highlights the given code and returns any errors it has
@@ -44,6 +47,16 @@ type Widget struct {
 	QuotePaste func() bool
 	// A function that is called on the submit event.
 	OnSubmit func(code string)
+}
+
+type widget struct {
+	// Mutex for synchronizing access to State.
+	StateMutex sync.RWMutex
+	// Public state. Access that may be concurrent to either of Widget's method
+	// must be synchronized using the StateMutex.
+	State State
+	// Configuration
+	Config
 
 	// Consecutively inserted text. Used for expanding abbreviations.
 	inserts string
@@ -56,7 +69,15 @@ type Widget struct {
 	pasteBuffer bytes.Buffer
 }
 
-var _ = el.Widget(&Widget{})
+// New creates a new codearea widget from the given config.
+func New(cfg Config) Widget {
+	return &widget{Config: cfg}
+}
+
+// New creates a new codearea widget from the given config and initial state.
+func NewWithState(cfg Config, state State) Widget {
+	return &widget{Config: cfg, State: state}
+}
 
 // ConstPrompt returns a prompt callback that always writes the same styled
 // text.
@@ -78,7 +99,7 @@ func dummyOnSubmit(string) {}
 
 // Initializes nil members to sensible default values. This method is called
 // at the beginning of most public methods.
-func (w *Widget) init() {
+func (w *widget) init() {
 	if w.OverlayHandler == nil {
 		w.OverlayHandler = el.DummyHandler{}
 	}
@@ -103,7 +124,7 @@ func (w *Widget) init() {
 }
 
 // Submit emits a submit event with the current code content.
-func (w *Widget) Submit() {
+func (w *widget) Submit() {
 	w.init()
 	w.StateMutex.RLock()
 	defer w.StateMutex.RUnlock()
@@ -112,7 +133,7 @@ func (w *Widget) Submit() {
 
 // Render renders the code area, including the prompt and rprompt, highlighted
 // code, the cursor, and compilation errors in the code content.
-func (w *Widget) Render(width, height int) *ui.Buffer {
+func (w *widget) Render(width, height int) *ui.Buffer {
 	w.init()
 	view := getView(w)
 	bb := ui.NewBufferBuilder(width)
@@ -124,7 +145,7 @@ func (w *Widget) Render(width, height int) *ui.Buffer {
 
 // Handle handles KeyEvent's of non-function keys, as well as PasteSetting
 // events.
-func (w *Widget) Handle(event term.Event) bool {
+func (w *widget) Handle(event term.Event) bool {
 	w.init()
 
 	if w.OverlayHandler.Handle(event) {
@@ -140,26 +161,24 @@ func (w *Widget) Handle(event term.Event) bool {
 	return false
 }
 
-// MutateCodeAreaState calls the given the function while locking StateMutex.
-func (w *Widget) MutateCodeAreaState(f func(*State)) {
+func (w *widget) MutateCodeAreaState(f func(*State)) {
 	w.StateMutex.Lock()
 	defer w.StateMutex.Unlock()
 	f(&w.State)
 }
 
-// CopyState returns a copy of the state.
-func (w *Widget) CopyState() State {
+func (w *widget) CopyState() State {
 	w.StateMutex.RLock()
 	defer w.StateMutex.RUnlock()
 	return w.State
 }
 
-func (w *Widget) resetInserts() {
+func (w *widget) resetInserts() {
 	w.inserts = ""
 	w.lastCodeBuffer = CodeBuffer{}
 }
 
-func (w *Widget) handlePasteSetting(start bool) bool {
+func (w *widget) handlePasteSetting(start bool) bool {
 	w.resetInserts()
 	if start {
 		w.pasting = true
@@ -176,7 +195,7 @@ func (w *Widget) handlePasteSetting(start bool) bool {
 	return true
 }
 
-func (w *Widget) handleKeyEvent(key ui.Key) bool {
+func (w *widget) handleKeyEvent(key ui.Key) bool {
 	isFuncKey := key.Mod != 0 || key.Rune < 0
 	if w.pasting {
 		if isFuncKey {

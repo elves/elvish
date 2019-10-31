@@ -11,10 +11,29 @@ import (
 )
 
 // Widget represents a combobox widget.
-type Widget struct {
-	CodeArea codearea.Widget
-	ListBox  listbox.Widget
-	OnFilter func(string)
+type Widget interface {
+	el.Widget
+	CodeArea() codearea.Widget
+	ListBox() listbox.Widget
+}
+
+// Config keeps the configuration for Widget.
+type Config struct {
+	CodeArea codearea.Config
+	ListBox  listbox.Config
+	OnFilter func(Widget, string)
+}
+
+// InitState keeps the initial state of Widget.
+type InitState struct {
+	CodeArea codearea.State
+	ListBox  listbox.State
+}
+
+type widget struct {
+	codeArea codearea.Widget
+	listBox  listbox.Widget
+	OnFilter func(Widget, string)
 
 	// Whether filtering has ever been done.
 	hasFiltered bool
@@ -22,26 +41,29 @@ type Widget struct {
 	lastFilter string
 }
 
-var _ = el.Widget(&Widget{})
+// New creates a Widget with the given config.
+func New(cfg Config) Widget {
+	return NewWithState(cfg, InitState{})
+}
 
-func (w *Widget) init() {
-	if w.OnFilter == nil {
-		w.OnFilter = func(string) {}
+// NewWithState creates a Widget with the given config and initial state.
+func NewWithState(cfg Config, state InitState) Widget {
+	if cfg.OnFilter == nil {
+		cfg.OnFilter = func(Widget, string) {}
 	}
-	if w.ListBox == nil {
-		w.ListBox = listbox.New(listbox.Config{})
+	w := &widget{
+		codeArea: codearea.NewWithState(cfg.CodeArea, state.CodeArea),
+		listBox:  listbox.NewWithState(cfg.ListBox, state.ListBox),
+		OnFilter: cfg.OnFilter,
 	}
-	if !w.hasFiltered {
-		w.OnFilter("")
-		w.hasFiltered = true
-	}
+	w.OnFilter(w, "")
+	return w
 }
 
 // Render renders the codearea and the listbox below it.
-func (w *Widget) Render(width, height int) *ui.Buffer {
-	w.init()
-	buf := w.CodeArea.Render(width, height)
-	bufListBox := w.ListBox.Render(width, height-len(buf.Lines))
+func (w *widget) Render(width, height int) *ui.Buffer {
+	buf := w.codeArea.Render(width, height)
+	bufListBox := w.listBox.Render(width, height-len(buf.Lines))
 	buf.Extend(bufListBox, false)
 	return buf
 }
@@ -49,18 +71,20 @@ func (w *Widget) Render(width, height int) *ui.Buffer {
 // Handle first lets the listbox handle the event, and if it is unhandled, lets
 // the codearea handle it. If the codearea has handled the event and the code
 // content has changed, it calls OnFilter with the new content.
-func (w *Widget) Handle(event term.Event) bool {
-	w.init()
-	if w.ListBox.Handle(event) {
+func (w *widget) Handle(event term.Event) bool {
+	if w.listBox.Handle(event) {
 		return true
 	}
-	if w.CodeArea.Handle(event) {
-		filter := w.CodeArea.CopyState().CodeBuffer.Content
+	if w.codeArea.Handle(event) {
+		filter := w.codeArea.CopyState().CodeBuffer.Content
 		if filter != w.lastFilter {
-			w.OnFilter(filter)
+			w.OnFilter(w, filter)
 			w.lastFilter = filter
 		}
 		return true
 	}
 	return false
 }
+
+func (w *widget) CodeArea() codearea.Widget { return w.codeArea }
+func (w *widget) ListBox() listbox.Widget   { return w.listBox }

@@ -33,26 +33,29 @@ type Config struct {
 
 // Start starts the completion UI.
 func Start(app *cli.App, cfg Config) {
-	w := combobox.Widget{}
-	w.CodeArea.Prompt = layout.ModePrompt("COMPLETING "+cfg.Name, true)
-	w.ListBox = listbox.New(listbox.Config{
-		Horizontal:     true,
-		OverlayHandler: cfg.Binding,
-		OnAccept: func(it listbox.Items, i int) {
-			text := it.(items)[i].ToInsert
-			app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
-				// TODO(xiaq): This is not correct when cfg.Replace has non-zero
-				// width.
-				s.CodeBuffer.InsertAtDot(text)
-			})
-			app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+	w := combobox.New(combobox.Config{
+		CodeArea: codearea.Config{
+			Prompt: layout.ModePrompt("COMPLETING "+cfg.Name, true),
+		},
+		ListBox: listbox.Config{
+			Horizontal:     true,
+			OverlayHandler: cfg.Binding,
+			OnAccept: func(it listbox.Items, i int) {
+				text := it.(items)[i].ToInsert
+				app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+					// TODO(xiaq): This is not correct when cfg.Replace has non-zero
+					// width.
+					s.CodeBuffer.InsertAtDot(text)
+				})
+				app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+			},
+		},
+		OnFilter: func(w combobox.Widget, p string) {
+			w.ListBox().Reset(filter(cfg.Items, p), 0)
 		},
 	})
-	w.OnFilter = func(p string) {
-		w.ListBox.Reset(filter(cfg.Items, p), 0)
-	}
 	// TODO(xiaq): Maintain PendingCode of the code area widget.
-	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
+	app.MutateAppState(func(s *cli.State) { s.Listing = w })
 }
 
 type items []Item

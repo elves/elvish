@@ -36,17 +36,19 @@ var bufferBuiltinsTests = []struct {
 }
 
 func TestBufferBuiltins(t *testing.T) {
-	app := &cli.App{}
+	tty, _ := cli.NewFakeTTY()
+	app := cli.NewApp(tty)
 	builtins := bufferBuiltins(app)
-	buf := &app.CodeArea.State.CodeBuffer
 
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
-			*buf = test.bufBefore
+			app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+				s.CodeBuffer = test.bufBefore
+			})
 			fn := builtins[test.name].(func())
 			fn()
-			if *buf != test.bufAfter {
-				t.Errorf("got buf %v, want %v", *buf, test.bufAfter)
+			if buf := app.CodeArea.CopyState().CodeBuffer; buf != test.bufAfter {
+				t.Errorf("got buf %v, want %v", buf, test.bufAfter)
 			}
 		})
 	}

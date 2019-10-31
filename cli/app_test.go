@@ -47,11 +47,13 @@ func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 	ed, tty := setup()
 
 	tty.Inject(term.KeyEvent{Rune: '\n'})
-	ed.CodeArea.State.CodeBuffer.Content = "some code"
+	ed.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+		s.CodeBuffer.Content = "some code"
+	})
 
 	ed.ReadCode()
 
-	if code := ed.CodeArea.State.CodeBuffer.Content; code != "" {
+	if code := ed.CodeArea.CopyState().CodeBuffer.Content; code != "" {
 		t.Errorf("Editor state has code %q, want empty", code)
 	}
 }
@@ -127,7 +129,9 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	tty.SetSize(10, 5) // Width = 5 to make it easy to test
 
 	// The code needs 3 lines to completely show.
-	ed.CodeArea.State.CodeBuffer.Content = strings.Repeat("a", 15)
+	ed.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+		s.CodeBuffer.Content = strings.Repeat("a", 15)
+	})
 
 	codeCh, _ := ed.ReadCodeAsync()
 
@@ -141,14 +145,13 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 var bufChTimeout = 1 * time.Second
 
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
-	ed, tty := setup()
+	ed, tty := setupWithConfig(Config{
+		Highlighter: testHighlighter{
+			get: func(code string) (styled.Text, []error) {
+				return styled.MakeText(code, "red"), nil
+			},
+		}})
 
-	ed.Config.Highlighter = testHighlighter{
-		get: func(code string) (styled.Text, []error) {
-			return styled.Text{
-				&styled.Segment{styled.Style{Foreground: "red"}, code}}, nil
-		},
-	}
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 	tty.Inject(term.KeyEvent{Rune: 'b'})
 	tty.Inject(term.KeyEvent{Rune: 'c'})
@@ -172,9 +175,9 @@ func TestReadCode_RedrawsOnHighlighterLateUpdate(t *testing.T) {
 }
 
 func TestReadCode_RendersPrompt(t *testing.T) {
-	ed, tty := setup()
+	ed, tty := setupWithConfig(Config{
+		Prompt: constPrompt{styled.Plain("> ")}})
 
-	ed.Config.Prompt = constPrompt{styled.Plain("> ")}
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 
 	codeCh, _ := ed.ReadCodeAsync()
@@ -188,10 +191,10 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 }
 
 func TestReadCode_RendersRPrompt(t *testing.T) {
-	ed, tty := setup()
+	ed, tty := setupWithConfig(Config{
+		RPrompt: constPrompt{styled.Plain("R")}})
 	tty.SetSize(80, 4) // Set a width of 4 for easier testing.
 
-	ed.Config.RPrompt = constPrompt{styled.Plain("R")}
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 
 	codeCh, _ := ed.ReadCodeAsync()
@@ -204,10 +207,9 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 }
 
 func TestReadCode_TriggersPrompt(t *testing.T) {
-	ed, _ := setup()
-
 	called := 0
-	ed.Config.Prompt = testPrompt{trigger: func(bool) { called++ }}
+	ed, _ := setupWithConfig(Config{
+		Prompt: testPrompt{trigger: func(bool) { called++ }}})
 
 	codeCh, _ := ed.ReadCodeAsync()
 	cleanup(ed, codeCh)
@@ -218,14 +220,13 @@ func TestReadCode_TriggersPrompt(t *testing.T) {
 }
 
 func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
-	ed, tty := setup()
-
 	promptContent := "old"
 	prompt := testPrompt{
 		get:         func() styled.Text { return styled.Plain(promptContent) },
 		lateUpdates: make(chan styled.Text),
 	}
-	ed.Config.Prompt = prompt
+
+	ed, tty := setupWithConfig(Config{Prompt: prompt})
 
 	codeCh, _ := ed.ReadCodeAsync()
 	bufOldPrompt := ui.NewBufferBuilder(80).
@@ -269,7 +270,9 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 
 func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
 	app, tty := setup()
-	app.CodeArea.State.CodeBuffer.Content = "some code"
+	app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+		s.CodeBuffer.Content = "some code"
+	})
 	app.State.Listing = layout.Label{Content: styled.Plain("listing")}
 
 	codeCh, _ := app.ReadCodeAsync()
@@ -334,9 +337,11 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	ed, tty := setup()
 
 	content := "1234567890"
-	ed.CodeArea.State.CodeBuffer = codearea.CodeBuffer{
-		Content: content, Dot: len(content),
-	}
+	ed.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+		s.CodeBuffer = codearea.CodeBuffer{
+			Content: content, Dot: len(content),
+		}
+	})
 
 	codeCh, _ := ed.ReadCodeAsync()
 
@@ -355,8 +360,12 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 }
 
 func setup() (*App, TTYCtrl) {
+	return setupWithConfig(Config{})
+}
+
+func setupWithConfig(cfg Config) (*App, TTYCtrl) {
 	tty, ttyControl := NewFakeTTY()
-	app := NewApp(tty)
+	app := NewAppWithConfig(tty, cfg)
 	return app, ttyControl
 }
 

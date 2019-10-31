@@ -14,14 +14,12 @@ import (
 var renderTests = []el.RenderTest{
 	{
 		Name: "rendering codearea and listbox",
-		Given: &Widget{
-			CodeArea: codearea.Widget{State: codearea.State{
-				CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6},
-			}},
-			ListBox: listbox.NewWithState(
-				listbox.Config{},
-				listbox.State{Items: listbox.TestItems{NItems: 2}}),
-		},
+		Given: NewWithState(
+			Config{},
+			InitState{
+				CodeArea: codearea.State{
+					CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6}},
+				ListBox: listbox.State{Items: listbox.TestItems{NItems: 2}}}),
 		Width: 10, Height: 24,
 		Want: ui.NewBufferBuilder(10).
 			WritePlain("filter").SetDotToCursor().
@@ -29,25 +27,21 @@ var renderTests = []el.RenderTest{
 			Newline().WritePlain("item 1"),
 	},
 	{
-		Name: "calling filter when rendering",
-		Given: installOnFilter(&Widget{
-			CodeArea: codearea.Widget{State: codearea.State{
-				CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6},
-			}},
-		}),
+		Name: "calling filter before rendering",
+		Given: NewWithState(
+			Config{
+				OnFilter: func(w Widget, filter string) {
+					w.ListBox().Reset(listbox.TestItems{NItems: 2}, 0)
+				},
+			},
+			InitState{CodeArea: codearea.State{
+				CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6}}}),
 		Width: 10, Height: 24,
 		Want: ui.NewBufferBuilder(10).
 			WritePlain("filter").SetDotToCursor().
 			Newline().WriteStyled(styled.MakeText("item 0    ", "inverse")).
 			Newline().WritePlain("item 1"),
 	},
-}
-
-func installOnFilter(w *Widget) *Widget {
-	w.OnFilter = func(string) {
-		w.ListBox.Reset(listbox.TestItems{NItems: 2}, 0)
-	}
-	return w
 }
 
 func TestRender(t *testing.T) {
@@ -57,21 +51,21 @@ func TestRender(t *testing.T) {
 func TestHandle(t *testing.T) {
 	var onFilterCalled bool
 	var lastFilter string
-	w := &Widget{
-		ListBox: listbox.NewWithState(
-			listbox.Config{},
-			listbox.State{Items: listbox.TestItems{NItems: 2}}),
-		OnFilter: func(filter string) {
-			onFilterCalled = true
-			lastFilter = filter
+	w := NewWithState(
+		Config{
+			OnFilter: func(w Widget, filter string) {
+				onFilterCalled = true
+				lastFilter = filter
+			},
 		},
-	}
+		InitState{ListBox: listbox.State{Items: listbox.TestItems{NItems: 2}}},
+	)
 
 	handled := w.Handle(term.K(ui.Down))
 	if !handled {
 		t.Errorf("listbox did not handle")
 	}
-	if w.ListBox.CopyListboxState().Selected != 1 {
+	if w.ListBox().CopyListboxState().Selected != 1 {
 		t.Errorf("listbox state not changed")
 	}
 
@@ -79,7 +73,7 @@ func TestHandle(t *testing.T) {
 	if !handled {
 		t.Errorf("codearea did not handle letter key")
 	}
-	if w.CodeArea.State.CodeBuffer.Content != "a" {
+	if w.CodeArea().CopyState().CodeBuffer.Content != "a" {
 		t.Errorf("codearea state not changed")
 	}
 	if lastFilter != "a" {

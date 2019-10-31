@@ -1,6 +1,9 @@
 package cli
 
-import "github.com/elves/elvish/styled"
+import (
+	"github.com/elves/elvish/cli/el/codearea"
+	"github.com/elves/elvish/styled"
+)
 
 // Config is the configuration for an App.
 type Config struct {
@@ -11,6 +14,7 @@ type Config struct {
 	Highlighter       Highlighter
 	Prompt            Prompt
 	RPrompt           Prompt
+	CodeArea          codearea.Config
 }
 
 func (cfg *Config) maxHeight() int {

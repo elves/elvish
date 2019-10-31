@@ -56,14 +56,28 @@ func (s *State) PopNotes() []string {
 	return notes
 }
 
-// NewApp creates a new App from two abstract dependencies. The creation does
-// not have any observable side effect; a newly created App is not immediately
-// active. This is the most general way to create an App.
+// NewApp creates a new App for the given TTY.
 func NewApp(t TTY) *App {
+	return NewAppWithConfig(t, Config{})
+}
+
+// NewApp creates a new App for the given TTY and config.
+func NewAppWithConfig(t TTY, cfg Config) *App {
 	lp := newLoop()
-	app := &App{loop: lp, tty: t}
+	app := &App{loop: lp, tty: t, Config: cfg}
 	lp.HandleCb(app.handle)
 	lp.RedrawCb(app.redraw)
+	if cfg.Prompt != nil {
+		cfg.CodeArea.Prompt = cfg.Prompt.Get
+	}
+	if cfg.RPrompt != nil {
+		cfg.CodeArea.RPrompt = cfg.RPrompt.Get
+	}
+	if cfg.Highlighter != nil {
+		cfg.CodeArea.Highlighter = cfg.Highlighter.Get
+	}
+	cfg.CodeArea.OnSubmit = app.CommitCode
+	app.CodeArea = codearea.New(cfg.CodeArea)
 	return app
 }
 
@@ -148,7 +162,7 @@ func (app *App) redraw(flag redrawFlag) {
 		// new empty line.
 		listing = layout.Empty{}
 	}
-	bufMain := renderApp(&app.CodeArea, listing, width, height)
+	bufMain := renderApp(app.CodeArea, listing, width, height)
 
 	// Apply buffers.
 	app.tty.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
@@ -240,19 +254,16 @@ func (app *App) ReadCode() (string, error) {
 			}
 		}()
 	}
+
 	if prompt := app.Config.Prompt; prompt != nil {
-		app.CodeArea.Prompt = prompt.Get
 		relayLateUpdates(prompt.LateUpdates())
 	}
 	if rprompt := app.Config.RPrompt; rprompt != nil {
-		app.CodeArea.RPrompt = rprompt.Get
 		relayLateUpdates(rprompt.LateUpdates())
 	}
 	if highlighter := app.Config.Highlighter; highlighter != nil {
-		app.CodeArea.Highlighter = highlighter.Get
 		relayLateUpdates(highlighter.LateUpdates())
 	}
-	app.CodeArea.OnSubmit = app.CommitCode
 
 	// Trigger an initial prompt update.
 	app.triggerPrompts(true)

@@ -17,7 +17,7 @@ type view struct {
 
 const pendingStyle = "underlined"
 
-func getView(w *Widget) *view {
+func getView(w *widget) *view {
 	s := w.CopyState()
 	code, pFrom, pTo := patchPendingCode(s.CodeBuffer, s.PendingCode)
 	styledCode, errors := w.Highlighter(code.Content)

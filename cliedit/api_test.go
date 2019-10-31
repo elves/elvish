@@ -50,6 +50,7 @@ func TestInitAPI_AfterReadline(t *testing.T) {
 	}
 }
 
+/*
 func TestInitAPI_Insert_Abbr(t *testing.T) {
 	app, _, ns := setupAPI()
 	m := vals.MakeMap("xx", "xx full", "yy", "yy full")
@@ -79,6 +80,7 @@ func TestInitAPI_Insert_QuotePaste(t *testing.T) {
 		}
 	}
 }
+*/
 
 func testKeyBinding(t *testing.T, v vars.Var, h el.Handler) {
 	t.Helper()

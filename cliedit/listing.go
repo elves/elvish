@@ -90,11 +90,11 @@ func listingUpCycle(app *cli.App)   { listingSelect(app, listbox.PrevWrap) }
 func listingDownCycle(app *cli.App) { listingSelect(app, listbox.NextWrap) }
 
 func listingSelect(app *cli.App, f func(listbox.State) int) {
-	w, ok := app.CopyAppState().Listing.(*combobox.Widget)
+	w, ok := app.CopyAppState().Listing.(combobox.Widget)
 	if !ok {
 		return
 	}
-	w.ListBox.Select(f)
+	w.ListBox().Select(f)
 }
 
 // Wraps the histutil.Fuser interface to implement histutil.Store. This is a

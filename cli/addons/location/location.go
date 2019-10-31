@@ -8,6 +8,7 @@ import (
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el"
+	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/combobox"
 	"github.com/elves/elvish/cli/el/layout"
 	"github.com/elves/elvish/cli/el/listbox"
@@ -41,22 +42,25 @@ func Start(app *cli.App, cfg Config) {
 		return
 	}
 
-	w := combobox.Widget{}
-	w.CodeArea.Prompt = layout.ModePrompt("LOCATION", true)
-	w.ListBox = listbox.New(listbox.Config{
-		OverlayHandler: cfg.Binding,
-		OnAccept: func(it listbox.Items, i int) {
-			err := cfg.Store.Chdir(it.(items)[i].Path)
-			if err != nil {
-				app.Notify(err.Error())
-			}
-			app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+	w := combobox.New(combobox.Config{
+		CodeArea: codearea.Config{
+			Prompt: layout.ModePrompt("LOCATION", true),
+		},
+		ListBox: listbox.Config{
+			OverlayHandler: cfg.Binding,
+			OnAccept: func(it listbox.Items, i int) {
+				err := cfg.Store.Chdir(it.(items)[i].Path)
+				if err != nil {
+					app.Notify(err.Error())
+				}
+				app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+			},
+		},
+		OnFilter: func(w combobox.Widget, p string) {
+			w.ListBox().Reset(filter(dirs, p), 0)
 		},
 	})
-	w.OnFilter = func(p string) {
-		w.ListBox.Reset(filter(dirs, p), 0)
-	}
-	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
+	app.MutateAppState(func(s *cli.State) { s.Listing = w })
 }
 
 func filter(dirs []storedefs.Dir, p string) items {

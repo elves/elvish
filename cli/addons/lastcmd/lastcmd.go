@@ -57,29 +57,30 @@ func Start(app *cli.App, cfg Config) {
 		entries[i+1] = entry{strconv.Itoa(i), strconv.Itoa(i - len(words)), word}
 	}
 
-	w := combobox.Widget{}
 	accept := func(text string) {
 		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
 			s.CodeBuffer.InsertAtDot(text)
 		})
 		app.MutateAppState(func(s *cli.State) { s.Listing = nil })
 	}
-	w.CodeArea.Prompt = layout.ModePrompt("LASTCMD", true)
-	w.ListBox = listbox.New(listbox.Config{
-		OverlayHandler: cfg.Binding,
-		OnAccept: func(it listbox.Items, i int) {
-			accept(it.(items).entries[i].content)
+	w := combobox.New(combobox.Config{
+		CodeArea: codearea.Config{Prompt: layout.ModePrompt("LASTCMD", true)},
+		ListBox: listbox.Config{
+			OverlayHandler: cfg.Binding,
+			OnAccept: func(it listbox.Items, i int) {
+				accept(it.(items).entries[i].content)
+			},
+		},
+		OnFilter: func(w combobox.Widget, p string) {
+			items := filter(entries, p)
+			if len(items.entries) == 1 {
+				accept(items.entries[0].content)
+			} else {
+				w.ListBox().Reset(items, 0)
+			}
 		},
 	})
-	w.OnFilter = func(p string) {
-		items := filter(entries, p)
-		if len(items.entries) == 1 {
-			accept(items.entries[0].content)
-		} else {
-			w.ListBox.Reset(items, 0)
-		}
-	}
-	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
+	app.MutateAppState(func(s *cli.State) { s.Listing = w })
 }
 
 type items struct {

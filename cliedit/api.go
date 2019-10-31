@@ -81,21 +81,23 @@ func initAfterReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 }
 
 func initInsert(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
-	abbr := vals.EmptyMap
-	abbrVar := vars.FromPtr(&abbr)
-	app.CodeArea.Abbreviations = makeMapIterator(abbrVar)
+	/*
+		abbr := vals.EmptyMap
+		abbrVar := vars.FromPtr(&abbr)
+		app.CodeArea.Abbreviations = makeMapIterator(abbrVar)
 
-	binding := newBindingVar(emptyBindingMap)
-	app.CodeArea.OverlayHandler = newMapBinding(app, ev, binding)
+		binding := newBindingVar(emptyBindingMap)
+		app.CodeArea.OverlayHandler = newMapBinding(app, ev, binding)
 
-	quotePaste := newBoolVar(false)
-	app.CodeArea.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
+		quotePaste := newBoolVar(false)
+		app.CodeArea.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
 
-	ns.AddNs("insert", eval.Ns{
-		"abbr":        abbrVar,
-		"binding":     binding,
-		"quote-paste": quotePaste,
-	})
+		ns.AddNs("insert", eval.Ns{
+			"abbr":        abbrVar,
+			"binding":     binding,
+			"quote-paste": quotePaste,
+		})
+	*/
 }
 
 func makeMapIterator(mv vars.PtrVar) func(func(a, b string)) {
