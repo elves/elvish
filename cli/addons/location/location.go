@@ -42,11 +42,11 @@ func Start(app *cli.App, cfg Config) {
 		return
 	}
 
-	w := combobox.New(combobox.Config{
-		CodeArea: codearea.Config{
+	w := combobox.New(combobox.Spec{
+		CodeArea: codearea.Spec{
 			Prompt: layout.ModePrompt("LOCATION", true),
 		},
-		ListBox: listbox.Config{
+		ListBox: listbox.Spec{
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
 				err := cfg.Store.Chdir(it.(items)[i].Path)

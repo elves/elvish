@@ -25,8 +25,8 @@ type Widget interface {
 	MutateCodeAreaState(f func(*State))
 }
 
-// Config keeps the configuration for Widget.
-type Config struct {
+// Spec specifies the configuration and initial state for Widget.
+type Spec struct {
 	// A Handler that takes precedence over the default handling of events.
 	OverlayHandler el.Handler
 	// A function that highlights the given code and returns any errors it has
@@ -47,16 +47,16 @@ type Config struct {
 	QuotePaste func() bool
 	// A function that is called on the submit event.
 	OnSubmit func(code string)
+
+	// State. When used in New, this field specifies the initial state.
+	State State
 }
 
 type widget struct {
 	// Mutex for synchronizing access to State.
 	StateMutex sync.RWMutex
-	// Public state. Access that may be concurrent to either of Widget's method
-	// must be synchronized using the StateMutex.
-	State State
-	// Configuration
-	Config
+	// Configuration and state.
+	Spec
 
 	// Consecutively inserted text. Used for expanding abbreviations.
 	inserts string
@@ -69,14 +69,9 @@ type widget struct {
 	pasteBuffer bytes.Buffer
 }
 
-// New creates a new codearea widget from the given config.
-func New(cfg Config) Widget {
-	return &widget{Config: cfg}
-}
-
-// New creates a new codearea widget from the given config and initial state.
-func NewWithState(cfg Config, state State) Widget {
-	return &widget{Config: cfg, State: state}
+// New creates a new codearea widget from the given Spec.
+func New(cfg Spec) Widget {
+	return &widget{Spec: cfg}
 }
 
 // ConstPrompt returns a prompt callback that always writes the same styled

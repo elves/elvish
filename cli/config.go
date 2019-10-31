@@ -14,7 +14,7 @@ type Config struct {
 	Highlighter       Highlighter
 	Prompt            Prompt
 	RPrompt           Prompt
-	CodeArea          codearea.Config
+	CodeArea          codearea.Spec
 }
 
 func (cfg *Config) maxHeight() int {

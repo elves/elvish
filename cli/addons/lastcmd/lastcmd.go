@@ -63,9 +63,9 @@ func Start(app *cli.App, cfg Config) {
 		})
 		app.MutateAppState(func(s *cli.State) { s.Listing = nil })
 	}
-	w := combobox.New(combobox.Config{
-		CodeArea: codearea.Config{Prompt: layout.ModePrompt("LASTCMD", true)},
-		ListBox: listbox.Config{
+	w := combobox.New(combobox.Spec{
+		CodeArea: codearea.Spec{Prompt: layout.ModePrompt("LASTCMD", true)},
+		ListBox: listbox.Spec{
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
 				accept(it.(items).entries[i].content)

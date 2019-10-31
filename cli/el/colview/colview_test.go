@@ -53,12 +53,11 @@ var renderTests = []el.RenderTest{
 }
 
 func makeListbox(prefix string, n, selected int) el.Widget {
-	return listbox.NewWithState(
-		listbox.Config{},
-		listbox.State{
+	return listbox.New(listbox.Spec{
+		State: listbox.State{
 			Items:    listbox.TestItems{Prefix: prefix, NItems: n},
 			Selected: selected,
-		})
+		}})
 }
 
 func TestRender(t *testing.T) {
@@ -75,12 +74,12 @@ func TestHandle(t *testing.T) {
 		},
 		State: State{
 			Columns: []el.Widget{
-				listbox.New(listbox.Config{
+				listbox.New(listbox.Spec{
 					OverlayHandler: el.MapHandler{
 						term.K('a'): func() { handledBy <- 0 },
 						term.K('b'): func() { handledBy <- 0 },
 					}}),
-				listbox.New(listbox.Config{
+				listbox.New(listbox.Spec{
 					OverlayHandler: el.MapHandler{
 						term.K('a'): func() { handledBy <- 1 },
 						term.K('b'): func() { handledBy <- 1 },

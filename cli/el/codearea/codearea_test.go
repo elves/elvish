@@ -16,149 +16,147 @@ var bb = ui.NewBufferBuilder
 var renderTests = []el.RenderTest{
 	{
 		Name: "prompt only",
-		Given: New(Config{
+		Given: New(Spec{
 			Prompt: ConstPrompt(styled.MakeText("~>", "bold"))}),
 		Width: 10, Height: 24,
 		Want: bb(10).WriteStringSGR("~>", "1").SetDotToCursor(),
 	},
 	{
 		Name: "rprompt only",
-		Given: New(Config{
+		Given: New(Spec{
 			RPrompt: ConstPrompt(styled.MakeText("RP", "inverse"))}),
 		Width: 10, Height: 24,
 		Want: bb(10).SetDotToCursor().WriteSpacesSGR(8, "").WriteStringSGR("RP", "7"),
 	},
 	{
 		Name: "code only with dot at beginning",
-		Given: NewWithState(Config{}, State{
-			CodeBuffer: CodeBuffer{Content: "code", Dot: 0}}),
+		Given: New(Spec{State: State{
+			CodeBuffer: CodeBuffer{Content: "code", Dot: 0}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).SetDotToCursor().WritePlain("code"),
 	},
 	{
 		Name: "code only with dot at middle",
-		Given: NewWithState(Config{}, State{
-			CodeBuffer: CodeBuffer{Content: "code", Dot: 2}}),
+		Given: New(Spec{State: State{
+			CodeBuffer: CodeBuffer{Content: "code", Dot: 2}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("co").SetDotToCursor().WritePlain("de"),
 	},
 	{
 		Name: "code only with dot at end",
-		Given: NewWithState(Config{}, State{
-			CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}),
+		Given: New(Spec{State: State{
+			CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("code").SetDotToCursor(),
 	},
 	{
 		Name: "prompt, code and rprompt",
-		Given: NewWithState(Config{
+		Given: New(Spec{
 			Prompt:  ConstPrompt(styled.Plain("~>")),
 			RPrompt: ConstPrompt(styled.Plain("RP")),
-		}, State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}),
+			State:   State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("~>code").SetDotToCursor().WritePlain("  RP"),
 	},
 	{
 		Name: "rprompt too long",
-		Given: NewWithState(Config{
+		Given: New(Spec{
 			Prompt:  ConstPrompt(styled.Plain("~>")),
 			RPrompt: ConstPrompt(styled.Plain("1234")),
-		}, State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}),
+			State:   State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("~>code").SetDotToCursor(),
 	},
 	{
 		Name: "highlighted code",
-		Given: NewWithState(Config{
-
+		Given: New(Spec{
 			Highlighter: func(code string) (styled.Text, []error) {
 				return styled.MakeText(code, "bold"), nil
 			},
-		}, State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}),
+			State: State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WriteStringSGR("code", "1").SetDotToCursor(),
 	},
 	{
 		Name: "static errors in code",
-		Given: NewWithState(Config{
+		Given: New(Spec{
 			Prompt: ConstPrompt(styled.Plain("> ")),
-
 			Highlighter: func(code string) (styled.Text, []error) {
 				err := errors.New("static error")
 				return styled.Plain(code), []error{err}
 			},
-		}, State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}),
+			State: State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("> code").SetDotToCursor().
 			Newline().WritePlain("static error"),
 	},
 	{
 		Name: "pending code inserting at the dot",
-		Given: NewWithState(Config{}, State{
+		Given: New(Spec{State: State{
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
 			PendingCode: PendingCode{From: 4, To: 4, Content: "x"},
-		}),
+		}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("code").WriteStringSGR("x", "4").SetDotToCursor(),
 	},
 	{
 		Name: "pending code replacing at the dot",
-		Given: NewWithState(Config{}, State{
+		Given: New(Spec{State: State{
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 2},
 			PendingCode: PendingCode{From: 2, To: 4, Content: "x"},
-		}),
+		}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("co").WriteStringSGR("x", "4").SetDotToCursor(),
 	},
 	{
 		Name: "pending code to the left of the dot",
-		Given: NewWithState(Config{}, State{
+		Given: New(Spec{State: State{
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
 			PendingCode: PendingCode{From: 1, To: 3, Content: "x"},
-		}),
+		}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("c").WriteStringSGR("x", "4").WritePlain("e").SetDotToCursor(),
 	},
 	{
 		Name: "pending code to the right of the cursor",
-		Given: NewWithState(Config{}, State{
+		Given: New(Spec{State: State{
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 1},
 			PendingCode: PendingCode{From: 2, To: 3, Content: "x"},
-		}),
+		}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("c").SetDotToCursor().WritePlain("o").
 			WriteStringSGR("x", "4").WritePlain("e"),
 	},
 	{
 		Name: "ignore invalid pending code",
-		Given: NewWithState(Config{}, State{
+		Given: New(Spec{State: State{
 			CodeBuffer:  CodeBuffer{Content: "code", Dot: 4},
 			PendingCode: PendingCode{From: 2, To: 1, Content: "x"},
-		}),
+		}}),
 		Width: 10, Height: 24,
 		Want: bb(10).WritePlain("code").SetDotToCursor(),
 	},
 	{
 		Name: "prioritize lines before the cursor with small height",
-		Given: NewWithState(Config{}, State{
+		Given: New(Spec{State: State{
 			CodeBuffer: CodeBuffer{Content: "a\nb\nc\nd", Dot: 3},
-		}),
+		}}),
 		Width: 10, Height: 2,
 		Want: bb(10).WritePlain("a").Newline().WritePlain("b").SetDotToCursor(),
 	},
 	{
 		Name: "show only the cursor line when height is 1",
-		Given: NewWithState(Config{}, State{
+		Given: New(Spec{State: State{
 			CodeBuffer: CodeBuffer{Content: "a\nb\nc\nd", Dot: 3},
-		}),
+		}}),
 		Width: 10, Height: 1,
 		Want: bb(10).WritePlain("b").SetDotToCursor(),
 	},
 	{
 		Name: "show lines after the cursor when all lines before the cursor are shown",
-		Given: NewWithState(Config{}, State{
+		Given: New(Spec{State: State{
 			CodeBuffer: CodeBuffer{Content: "a\nb\nc\nd", Dot: 3},
-		}),
+		}}),
 		Width: 10, Height: 3,
 		Want: bb(10).WritePlain("a").Newline().WritePlain("b").SetDotToCursor().
 			Newline().WritePlain("c"),
@@ -172,25 +170,25 @@ func TestRender(t *testing.T) {
 var handleTests = []el.HandleTest{
 	{
 		Name:         "simple inserts",
-		Given:        New(Config{}),
+		Given:        New(Spec{}),
 		Events:       []term.Event{term.K('c'), term.K('o'), term.K('d'), term.K('e')},
 		WantNewState: State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}},
 	},
 	{
 		Name:         "unicode inserts",
-		Given:        New(Config{}),
+		Given:        New(Spec{}),
 		Events:       []term.Event{term.K('你'), term.K('好')},
 		WantNewState: State{CodeBuffer: CodeBuffer{Content: "你好", Dot: 6}},
 	},
 	{
 		Name:         "unterminated paste",
-		Given:        New(Config{}),
+		Given:        New(Spec{}),
 		Events:       []term.Event{term.PasteSetting(true), term.K('"'), term.K('x')},
 		WantNewState: State{},
 	},
 	{
 		Name:  "literal paste",
-		Given: New(Config{}),
+		Given: New(Spec{}),
 		Events: []term.Event{
 			term.PasteSetting(true),
 			term.K('"'), term.K('x'),
@@ -199,7 +197,7 @@ var handleTests = []el.HandleTest{
 	},
 	{
 		Name:  "literal paste swallowing functional keys",
-		Given: New(Config{}),
+		Given: New(Spec{}),
 		Events: []term.Event{
 			term.PasteSetting(true),
 			term.K('a'), term.K(ui.F1), term.K('b'),
@@ -208,7 +206,7 @@ var handleTests = []el.HandleTest{
 	},
 	{
 		Name:  "quoted paste",
-		Given: New(Config{QuotePaste: func() bool { return true }}),
+		Given: New(Spec{QuotePaste: func() bool { return true }}),
 		Events: []term.Event{
 			term.PasteSetting(true),
 			term.K('"'), term.K('x'),
@@ -217,7 +215,7 @@ var handleTests = []el.HandleTest{
 	},
 	{
 		Name:  "backspace at end of code",
-		Given: New(Config{}),
+		Given: New(Spec{}),
 		Events: []term.Event{
 			term.K('c'), term.K('o'), term.K('d'), term.K('e'),
 			term.K(ui.Backspace)},
@@ -225,28 +223,28 @@ var handleTests = []el.HandleTest{
 	},
 	{
 		Name: "backspace at middle of buffer",
-		Given: NewWithState(Config{}, State{
-			CodeBuffer: CodeBuffer{Content: "code", Dot: 2}}),
+		Given: New(Spec{State: State{
+			CodeBuffer: CodeBuffer{Content: "code", Dot: 2}}}),
 		Events:       []term.Event{term.K(ui.Backspace)},
 		WantNewState: State{CodeBuffer: CodeBuffer{Content: "cde", Dot: 1}},
 	},
 	{
 		Name: "backspace at beginning of buffer",
-		Given: NewWithState(Config{}, State{
-			CodeBuffer: CodeBuffer{Content: "code", Dot: 0}}),
+		Given: New(Spec{State: State{
+			CodeBuffer: CodeBuffer{Content: "code", Dot: 0}}}),
 		Events:       []term.Event{term.K(ui.Backspace)},
 		WantNewState: State{CodeBuffer: CodeBuffer{Content: "code", Dot: 0}},
 	},
 	{
 		Name:  "backspace deleting unicode character",
-		Given: New(Config{}),
+		Given: New(Spec{}),
 		Events: []term.Event{
 			term.K('你'), term.K('好'), term.K(ui.Backspace)},
 		WantNewState: State{CodeBuffer: CodeBuffer{Content: "你", Dot: 3}},
 	},
 	{
 		Name: "abbreviation expansion",
-		Given: New(Config{
+		Given: New(Spec{
 			Abbreviations: func(f func(abbr, full string)) {
 				f("dn", "/dev/null")
 			},
@@ -256,7 +254,7 @@ var handleTests = []el.HandleTest{
 	},
 	{
 		Name: "abbreviation expansion preferring longest",
-		Given: New(Config{
+		Given: New(Spec{
 			Abbreviations: func(f func(abbr, full string)) {
 				f("n", "none")
 				f("dn", "/dev/null")
@@ -267,7 +265,7 @@ var handleTests = []el.HandleTest{
 	},
 	{
 		Name: "abbreviation expansion interrupted by function key",
-		Given: New(Config{
+		Given: New(Spec{
 			Abbreviations: func(f func(abbr, full string)) {
 				f("dn", "/dev/null")
 			},
@@ -277,7 +275,7 @@ var handleTests = []el.HandleTest{
 	},
 	{
 		Name: "overlay handler",
-		Given: addOverlay(New(Config{}), func(w *widget) el.Handler {
+		Given: addOverlay(New(Spec{}), func(w *widget) el.Handler {
 			return el.MapHandler{
 				term.K('a'): func() { w.State.CodeBuffer.InsertAtDot("b") },
 			}
@@ -308,7 +306,7 @@ var unhandledEvents = []term.Event{
 }
 
 func TestHandle_UnhandledEvents(t *testing.T) {
-	w := New(Config{})
+	w := New(Spec{})
 	for _, event := range unhandledEvents {
 		handled := w.Handle(event)
 		if handled {
@@ -318,7 +316,7 @@ func TestHandle_UnhandledEvents(t *testing.T) {
 }
 
 func TestHandle_AbbreviationExpansionInterruptedByExternalMutation(t *testing.T) {
-	w := New(Config{
+	w := New(Spec{
 		Abbreviations: func(f func(abbr, full string)) {
 			f("dn", "/dev/null")
 		},
@@ -334,10 +332,9 @@ func TestHandle_AbbreviationExpansionInterruptedByExternalMutation(t *testing.T)
 
 func TestHandle_EnterEmitsSubmit(t *testing.T) {
 	var submitted string
-	w := NewWithState(Config{
-
+	w := New(Spec{
 		OnSubmit: func(code string) { submitted = code },
-	}, State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}})
+		State:    State{CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}})
 	w.Handle(term.K('\n'))
 	if submitted != "code" {
 		t.Errorf("code not submitted")
@@ -345,14 +342,14 @@ func TestHandle_EnterEmitsSubmit(t *testing.T) {
 }
 
 func TestHandle_DefaultNoopSubmit(t *testing.T) {
-	w := NewWithState(Config{}, State{
-		CodeBuffer: CodeBuffer{Content: "code", Dot: 4}})
+	w := New(Spec{State: State{
+		CodeBuffer: CodeBuffer{Content: "code", Dot: 4}}})
 	w.Handle(term.K('\n'))
 	// No panic, we are good
 }
 
 func TestState(t *testing.T) {
-	w := New(Config{})
+	w := New(Spec{})
 	w.MutateCodeAreaState(func(s *State) { s.CodeBuffer.Content = "code" })
 	if w.CopyState().CodeBuffer.Content != "code" {
 		t.Errorf("state not mutated")

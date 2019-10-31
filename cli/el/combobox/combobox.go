@@ -17,17 +17,11 @@ type Widget interface {
 	ListBox() listbox.Widget
 }
 
-// Config keeps the configuration for Widget.
-type Config struct {
-	CodeArea codearea.Config
-	ListBox  listbox.Config
+// Spec specifies the configuration and initial state for Widget.
+type Spec struct {
+	CodeArea codearea.Spec
+	ListBox  listbox.Spec
 	OnFilter func(Widget, string)
-}
-
-// InitState keeps the initial state of Widget.
-type InitState struct {
-	CodeArea codearea.State
-	ListBox  listbox.State
 }
 
 type widget struct {
@@ -41,20 +35,15 @@ type widget struct {
 	lastFilter string
 }
 
-// New creates a Widget with the given config.
-func New(cfg Config) Widget {
-	return NewWithState(cfg, InitState{})
-}
-
-// NewWithState creates a Widget with the given config and initial state.
-func NewWithState(cfg Config, state InitState) Widget {
-	if cfg.OnFilter == nil {
-		cfg.OnFilter = func(Widget, string) {}
+// New creates a Widget with the given specification.
+func New(spec Spec) Widget {
+	if spec.OnFilter == nil {
+		spec.OnFilter = func(Widget, string) {}
 	}
 	w := &widget{
-		codeArea: codearea.NewWithState(cfg.CodeArea, state.CodeArea),
-		listBox:  listbox.NewWithState(cfg.ListBox, state.ListBox),
-		OnFilter: cfg.OnFilter,
+		codeArea: codearea.New(spec.CodeArea),
+		listBox:  listbox.New(spec.ListBox),
+		OnFilter: spec.OnFilter,
 	}
 	w.OnFilter(w, "")
 	return w

@@ -169,9 +169,10 @@ func makeWidgetWithOnSelect(f File, onSelect func(listbox.Items, int)) el.Widget
 		sort.Slice(files, func(i, j int) bool {
 			return files[i].Name() < files[j].Name()
 		})
-		return listbox.NewWithState(
-			listbox.Config{Padding: 1, ExtendStyle: true, OnSelect: onSelect},
-			listbox.State{Items: fileItems(files)})
+		return listbox.New(listbox.Spec{
+			Padding: 1, ExtendStyle: true, OnSelect: onSelect,
+			State: listbox.State{Items: fileItems(files)},
+		})
 	}
 
 	lines := strings.Split(sanitize(string(content)), "\n")

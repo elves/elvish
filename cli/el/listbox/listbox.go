@@ -32,8 +32,8 @@ type Widget interface {
 	Accept()
 }
 
-// Config keeps the configuration for Widget.
-type Config struct {
+// Spec specifies the configuration and initial state for Widget.
+type Spec struct {
 	// A Handler that takes precedence over the default handling of events.
 	OverlayHandler el.Handler
 	// A placeholder to show when there are no items.
@@ -52,39 +52,35 @@ type Config struct {
 	// first segment of the item, and the right spacing and padding will be
 	// styled the same as the last segment of the item.
 	ExtendStyle bool
+
+	// State. When used in New, this field specifies the initial state.
+	State State
 }
 
 type widget struct {
 	// Mutex for synchronizing access to the state.
 	StateMutex sync.RWMutex
-	// Publically accessible state.
-	State State
-	// Configuration.
-	Config
+	// Configuration and state.
+	Spec
 }
 
-// New creates a new listbox widget from the given config.
-func New(cfg Config) Widget {
-	return NewWithState(cfg, State{})
-}
-
-// New creates a new listbox widget from the given config and state.
-func NewWithState(cfg Config, state State) Widget {
-	if cfg.OverlayHandler == nil {
-		cfg.OverlayHandler = el.DummyHandler{}
+// New creates a new listbox widget from the given specification.
+func New(spec Spec) Widget {
+	if spec.OverlayHandler == nil {
+		spec.OverlayHandler = el.DummyHandler{}
 	}
-	if cfg.OnAccept == nil {
-		cfg.OnAccept = func(Items, int) {}
+	if spec.OnAccept == nil {
+		spec.OnAccept = func(Items, int) {}
 	}
-	if cfg.OnSelect == nil {
-		cfg.OnSelect = func(Items, int) {}
+	if spec.OnSelect == nil {
+		spec.OnSelect = func(Items, int) {}
 	} else {
-		s := state
+		s := spec.State
 		if s.Items != nil && 0 <= s.Selected && s.Selected < s.Items.Len() {
-			cfg.OnSelect(s.Items, s.Selected)
+			spec.OnSelect(s.Items, s.Selected)
 		}
 	}
-	return &widget{Config: cfg, State: state}
+	return &widget{Spec: spec}
 }
 
 var styleForSelected = "inverse"

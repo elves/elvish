@@ -14,12 +14,12 @@ import (
 var renderTests = []el.RenderTest{
 	{
 		Name: "rendering codearea and listbox",
-		Given: NewWithState(
-			Config{},
-			InitState{
-				CodeArea: codearea.State{
-					CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6}},
-				ListBox: listbox.State{Items: listbox.TestItems{NItems: 2}}}),
+		Given: New(Spec{
+			CodeArea: codearea.Spec{
+				State: codearea.State{
+					CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6}}},
+			ListBox: listbox.Spec{
+				State: listbox.State{Items: listbox.TestItems{NItems: 2}}}}),
 		Width: 10, Height: 24,
 		Want: ui.NewBufferBuilder(10).
 			WritePlain("filter").SetDotToCursor().
@@ -28,14 +28,13 @@ var renderTests = []el.RenderTest{
 	},
 	{
 		Name: "calling filter before rendering",
-		Given: NewWithState(
-			Config{
-				OnFilter: func(w Widget, filter string) {
-					w.ListBox().Reset(listbox.TestItems{NItems: 2}, 0)
-				},
-			},
-			InitState{CodeArea: codearea.State{
-				CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6}}}),
+		Given: New(Spec{
+			CodeArea: codearea.Spec{
+				State: codearea.State{
+					CodeBuffer: codearea.CodeBuffer{Content: "filter", Dot: 6}}},
+			OnFilter: func(w Widget, filter string) {
+				w.ListBox().Reset(listbox.TestItems{NItems: 2}, 0)
+			}}),
 		Width: 10, Height: 24,
 		Want: ui.NewBufferBuilder(10).
 			WritePlain("filter").SetDotToCursor().
@@ -51,15 +50,13 @@ func TestRender(t *testing.T) {
 func TestHandle(t *testing.T) {
 	var onFilterCalled bool
 	var lastFilter string
-	w := NewWithState(
-		Config{
-			OnFilter: func(w Widget, filter string) {
-				onFilterCalled = true
-				lastFilter = filter
-			},
+	w := New(Spec{
+		OnFilter: func(w Widget, filter string) {
+			onFilterCalled = true
+			lastFilter = filter
 		},
-		InitState{ListBox: listbox.State{Items: listbox.TestItems{NItems: 2}}},
-	)
+		ListBox: listbox.Spec{
+			State: listbox.State{Items: listbox.TestItems{NItems: 2}}}})
 
 	handled := w.Handle(term.K(ui.Down))
 	if !handled {

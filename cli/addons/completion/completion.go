@@ -33,11 +33,11 @@ type Config struct {
 
 // Start starts the completion UI.
 func Start(app *cli.App, cfg Config) {
-	w := combobox.New(combobox.Config{
-		CodeArea: codearea.Config{
+	w := combobox.New(combobox.Spec{
+		CodeArea: codearea.Spec{
 			Prompt: layout.ModePrompt("COMPLETING "+cfg.Name, true),
 		},
-		ListBox: listbox.Config{
+		ListBox: listbox.Spec{
 			Horizontal:     true,
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {

@@ -41,9 +41,9 @@ func Start(app *cli.App, cfg Config) {
 		app.Notify("db error: " + err.Error())
 	}
 
-	w := combobox.New(combobox.Config{
-		CodeArea: codearea.Config{Prompt: layout.ModePrompt("HISTLIST", true)},
-		ListBox: listbox.Config{
+	w := combobox.New(combobox.Spec{
+		CodeArea: codearea.Spec{Prompt: layout.ModePrompt("HISTLIST", true)},
+		ListBox: listbox.Spec{
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
 				text := it.(items)[i].Text
