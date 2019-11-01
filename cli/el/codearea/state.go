@@ -28,6 +28,12 @@ type PendingCode struct {
 	Content string
 }
 
+// ApplyPending applies pending code to the code buffer, and resets pending code.
+func (s *State) ApplyPending() {
+	s.CodeBuffer, _, _ = patchPendingCode(s.CodeBuffer, s.PendingCode)
+	s.PendingCode = PendingCode{}
+}
+
 func (c *CodeBuffer) InsertAtDot(text string) {
 	*c = CodeBuffer{
 		Content: c.Content[:c.Dot] + text + c.Content[c.Dot:],
