@@ -70,8 +70,29 @@ type widget struct {
 }
 
 // New creates a new codearea widget from the given Spec.
-func New(cfg Spec) Widget {
-	return &widget{Spec: cfg}
+func New(spec Spec) Widget {
+	if spec.OverlayHandler == nil {
+		spec.OverlayHandler = el.DummyHandler{}
+	}
+	if spec.Highlighter == nil {
+		spec.Highlighter = dummyHighlighter
+	}
+	if spec.Prompt == nil {
+		spec.Prompt = dummyPrompt
+	}
+	if spec.RPrompt == nil {
+		spec.RPrompt = dummyPrompt
+	}
+	if spec.Abbreviations == nil {
+		spec.Abbreviations = dummyAbbreviations
+	}
+	if spec.QuotePaste == nil {
+		spec.QuotePaste = dummyQuotePaste
+	}
+	if spec.OnSubmit == nil {
+		spec.OnSubmit = dummyOnSubmit
+	}
+	return &widget{Spec: spec}
 }
 
 // ConstPrompt returns a prompt callback that always writes the same styled
@@ -92,35 +113,8 @@ func dummyQuotePaste() bool { return false }
 
 func dummyOnSubmit(string) {}
 
-// Initializes nil members to sensible default values. This method is called
-// at the beginning of most public methods.
-func (w *widget) init() {
-	if w.OverlayHandler == nil {
-		w.OverlayHandler = el.DummyHandler{}
-	}
-	if w.Highlighter == nil {
-		w.Highlighter = dummyHighlighter
-	}
-	if w.Prompt == nil {
-		w.Prompt = dummyPrompt
-	}
-	if w.RPrompt == nil {
-		w.RPrompt = dummyPrompt
-	}
-	if w.Abbreviations == nil {
-		w.Abbreviations = dummyAbbreviations
-	}
-	if w.QuotePaste == nil {
-		w.QuotePaste = dummyQuotePaste
-	}
-	if w.OnSubmit == nil {
-		w.OnSubmit = dummyOnSubmit
-	}
-}
-
 // Submit emits a submit event with the current code content.
 func (w *widget) Submit() {
-	w.init()
 	w.StateMutex.RLock()
 	defer w.StateMutex.RUnlock()
 	w.OnSubmit(w.State.CodeBuffer.Content)
@@ -129,7 +123,6 @@ func (w *widget) Submit() {
 // Render renders the code area, including the prompt and rprompt, highlighted
 // code, the cursor, and compilation errors in the code content.
 func (w *widget) Render(width, height int) *ui.Buffer {
-	w.init()
 	view := getView(w)
 	bb := ui.NewBufferBuilder(width)
 	renderView(view, bb)
@@ -141,8 +134,6 @@ func (w *widget) Render(width, height int) *ui.Buffer {
 // Handle handles KeyEvent's of non-function keys, as well as PasteSetting
 // events.
 func (w *widget) Handle(event term.Event) bool {
-	w.init()
-
 	if w.OverlayHandler.Handle(event) {
 		return true
 	}
