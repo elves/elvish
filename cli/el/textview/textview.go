@@ -1,4 +1,5 @@
-// Package textview implements a widget for displaying text.
+// Package textview implements a widget for displaying text with vertical
+// scrolling.
 package textview
 
 import (
@@ -11,21 +12,30 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-// Widget supports displaying text, and scrolling vertically.
+// Widget represents a textview widget.
 //
 // NOTE: This widget now always crops long lines. In future it should support
 // wrapping and horizontal scrolling.
-type Widget struct {
-	// Mutex for synchronizing access to the state.
-	StateMutex sync.RWMutex
-	// Publically accessible state.
-	State State
+type Widget interface {
+	el.Widget
+	// ScrollBy scrolls the widget by the given delta. Positive values scroll
+	// down, and negative values scroll up.
+	ScrollBy(delta int)
+	// MutateState mutates the state.
+	MutateState(f func(*State))
+	// CopyState returns a copy of the State.
+	CopyState() State
+}
 
+// Spec specifies the configuration and initial state for a Widget.
+type Spec struct {
 	// A Handler that takes precedence over the default handling of events.
 	OverlayHandler el.Handler
 	// If true, a vertical scrollbar will be shown when there are more lines
 	// that can be displayed, and the widget responds to Up and Down keys.
 	Scrollable bool
+	// State. Specifies the initial state if used in New.
+	State State
 }
 
 // State keeps publically accessible state of the Widget.
@@ -34,15 +44,21 @@ type State struct {
 	First int
 }
 
-func (w *Widget) init() {
-	if w.OverlayHandler == nil {
-		w.OverlayHandler = el.DummyHandler{}
-	}
+type widget struct {
+	// Mutex for synchronizing access to the state.
+	StateMutex sync.RWMutex
+	Spec
 }
 
-func (w *Widget) Render(width, height int) *ui.Buffer {
-	w.init()
+// New builds a Widget from the given specification.
+func New(spec Spec) Widget {
+	if spec.OverlayHandler == nil {
+		spec.OverlayHandler = el.DummyHandler{}
+	}
+	return &widget{Spec: spec}
+}
 
+func (w *widget) Render(width, height int) *ui.Buffer {
 	lines, first := w.getStateForRender(height)
 	needScrollbar := w.Scrollable && (first > 0 || first+height < len(lines))
 	textWidth := width
@@ -67,7 +83,7 @@ func (w *Widget) Render(width, height int) *ui.Buffer {
 	return buf
 }
 
-func (w *Widget) getStateForRender(height int) (lines []string, first int) {
+func (w *widget) getStateForRender(height int) (lines []string, first int) {
 	w.MutateState(func(s *State) {
 		if s.First > len(s.Lines)-height && len(s.Lines)-height >= 0 {
 			s.First = len(s.Lines) - height
@@ -77,9 +93,7 @@ func (w *Widget) getStateForRender(height int) (lines []string, first int) {
 	return
 }
 
-func (w *Widget) Handle(event term.Event) bool {
-	w.init()
-
+func (w *widget) Handle(event term.Event) bool {
 	if w.OverlayHandler.Handle(event) {
 		return true
 	}
@@ -97,9 +111,7 @@ func (w *Widget) Handle(event term.Event) bool {
 	return false
 }
 
-// ScrollBy scrolls the widget by the given delta. Positive values scroll down,
-// and negative values scroll up.
-func (w *Widget) ScrollBy(delta int) {
+func (w *widget) ScrollBy(delta int) {
 	w.MutateState(func(s *State) {
 		s.First += delta
 		if s.First < 0 {
@@ -111,15 +123,14 @@ func (w *Widget) ScrollBy(delta int) {
 	})
 }
 
-// MutateState calls the given function while locking the StateMutex.
-func (w *Widget) MutateState(f func(*State)) {
+func (w *widget) MutateState(f func(*State)) {
 	w.StateMutex.Lock()
 	defer w.StateMutex.Unlock()
 	f(&w.State)
 }
 
 // CopyState returns a copy of the State while r-locking the StateMutex.
-func (w *Widget) CopyState() State {
+func (w *widget) CopyState() State {
 	w.StateMutex.RLock()
 	defer w.StateMutex.RUnlock()
 	return w.State

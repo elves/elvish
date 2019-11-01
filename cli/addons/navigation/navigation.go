@@ -179,10 +179,10 @@ func makeWidgetWithOnSelect(f File, onSelect func(listbox.Items, int)) el.Widget
 	}
 
 	lines := strings.Split(sanitize(string(content)), "\n")
-	return &textview.Widget{
+	return textview.New(textview.Spec{
 		State:      textview.State{Lines: lines},
 		Scrollable: true,
-	}
+	})
 }
 
 func makeErrWidget(err error) el.Widget {
