@@ -14,7 +14,7 @@ import (
 //
 // Start the navigation mode.
 
-func initNavigation(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
+func initNavigation(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar)
 	ns.AddNs("navigation",

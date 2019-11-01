@@ -35,7 +35,7 @@ type Store interface {
 var _ = Store(histutil.Store(nil))
 
 // Start starts lastcmd function.
-func Start(app *cli.App, cfg Config) {
+func Start(app cli.App, cfg Config) {
 	if cfg.Store == nil {
 		app.Notify("no history store")
 		return
@@ -58,7 +58,7 @@ func Start(app *cli.App, cfg Config) {
 	}
 
 	accept := func(text string) {
-		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+		app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 			s.CodeBuffer.InsertAtDot(text)
 		})
 		app.MutateAppState(func(s *cli.State) { s.Listing = nil })

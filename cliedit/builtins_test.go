@@ -41,12 +41,12 @@ func TestBufferBuiltins(t *testing.T) {
 
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
-			app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+			app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 				s.CodeBuffer = test.bufBefore
 			})
 			fn := builtins[test.name].(func())
 			fn()
-			if buf := app.CodeArea.CopyState().CodeBuffer; buf != test.bufAfter {
+			if buf := app.CodeArea().CopyState().CodeBuffer; buf != test.bufAfter {
 				t.Errorf("got buf %v, want %v", buf, test.bufAfter)
 			}
 		})

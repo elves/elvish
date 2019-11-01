@@ -27,7 +27,7 @@ func TestHistWalk(t *testing.T) {
 	}
 	walker := histutil.NewWalker(db, -1, nil, "ls")
 
-	app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+	app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 		s.CodeBuffer = codearea.CodeBuffer{Content: "ls", Dot: 2}
 	})
 
@@ -76,7 +76,7 @@ func makeBuf(codeArea styled.Text, modeline string) *ui.Buffer {
 		Buffer()
 }
 
-func setup() (*cli.App, cli.TTYCtrl, func()) {
+func setup() (cli.App, cli.TTYCtrl, func()) {
 	tty, ttyCtrl := cli.NewFakeTTY()
 	ttyCtrl.SetSize(24, 40)
 	app := cli.NewApp(cli.AppSpec{TTY: tty})

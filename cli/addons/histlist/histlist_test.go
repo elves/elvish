@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-func setup() (*cli.App, cli.TTYCtrl, func()) {
+func setup() (cli.App, cli.TTYCtrl, func()) {
 	tty, ttyCtrl := cli.NewFakeTTY()
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
 	codeCh, _ := app.ReadCodeAsync()

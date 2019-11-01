@@ -17,29 +17,34 @@ import (
 //
 // TODO: Rename ReadLine to ReadCode and remove Close.
 type Editor struct {
-	app *cli.App
+	app cli.App
 	ns  eval.Ns
 }
 
 // NewEditor creates a new editor from input and output terminal files.
 func NewEditor(in, out *os.File, ev *eval.Evaler, st storedefs.Store) *Editor {
 	ns := eval.NewNs()
-	app := cli.NewApp(cli.AppSpec{TTY: cli.NewTTY(in, out)})
+	appSpec := cli.AppSpec{TTY: cli.NewTTY(in, out)}
 
 	fuser, err := histutil.NewFuser(st)
 	if err != nil {
 		// TODO(xiaq): Report the error.
 	}
 
-	initHighlighter(app, ev)
-	initAPI(app, ev, ns)
-	initPrompts(app, ev, ns)
+	// Make a variable for the app first. This is to work around the
+	// bootstrapping of initPrompts, which expects a notifier.
+	var app cli.App
+	initHighlighter(&appSpec, ev)
+	initConfigAPI(&appSpec, ev, ns)
+	initPrompts(&appSpec, appNotifier{&app}, ev, ns)
+	evalDefaultBinding(ev, ns)
+	app = cli.NewApp(appSpec)
+
 	initListings(app, ev, ns, st, fuser)
 	initNavigation(app, ev, ns)
 	initCompletion(app, ev, ns)
 	initHistWalk(app, ev, ns, fuser)
-	evalDefaultBinding(ev, ns)
-
+	initBuiltins(app, ns)
 	return &Editor{app, ns}
 }
 

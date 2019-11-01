@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-func setup() (*cli.App, cli.TTYCtrl, func()) {
+func setup() (cli.App, cli.TTYCtrl, func()) {
 	tty, ttyCtrl := cli.NewFakeTTY()
 	// Use a smaller TTY size to make diffs easier to see.
 	ttyCtrl.SetSize(20, 50)

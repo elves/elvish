@@ -8,7 +8,7 @@ import (
 	"github.com/elves/elvish/eval"
 )
 
-func initHistWalk(app *cli.App, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fuser) {
+func initHistWalk(app cli.App, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fuser) {
 	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar)
 	ns.AddNs("history",
@@ -22,8 +22,8 @@ func initHistWalk(app *cli.App, ev *eval.Evaler, ns eval.Ns, fuser *histutil.Fus
 		}))
 }
 
-func histWalkStart(app *cli.App, fuser *histutil.Fuser, binding el.Handler) {
-	buf := app.CodeArea.CopyState().CodeBuffer
+func histWalkStart(app cli.App, fuser *histutil.Fuser, binding el.Handler) {
+	buf := app.CodeArea().CopyState().CodeBuffer
 	walker := fuser.Walker(buf.Content[:buf.Dot])
 	histwalk.Start(app, histwalk.Config{Binding: binding, Walker: walker})
 }

@@ -31,7 +31,7 @@ type Store interface {
 }
 
 // Start starts the directory history feature.
-func Start(app *cli.App, cfg Config) {
+func Start(app cli.App, cfg Config) {
 	if cfg.Store == nil {
 		app.Notify("no dir history store")
 		return

@@ -54,7 +54,7 @@ func (w *widget) Handle(event term.Event) bool {
 }
 
 // Start starts the histwalk addon.
-func Start(app *cli.App, cfg Config) {
+func Start(app cli.App, cfg Config) {
 	if cfg.Walker == nil {
 		app.Notify("no history walker")
 		return
@@ -64,7 +64,7 @@ func Start(app *cli.App, cfg Config) {
 	walker.Prev()
 	w := widget{binding: cfg.Binding, walker: walker}
 	w.onWalk = func() {
-		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+		app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 			s.PendingCode = codearea.PendingCode{
 				From: len(prefix), To: len(s.CodeBuffer.Content),
 				Content: walker.CurrentCmd()[len(prefix):],
@@ -79,31 +79,31 @@ func Start(app *cli.App, cfg Config) {
 
 // Prev walks to the previous entry in history. It returns ErrHistWalkInactive
 // if the histwalk addon is not active.
-func Prev(app *cli.App) error {
+func Prev(app cli.App) error {
 	return walk(app, func(w *widget) error { return w.walker.Prev() })
 }
 
 // Next walks to the next entry in history. It returns ErrHistWalkInactive if
 // the histwalk addon is not active.
-func Next(app *cli.App) error {
+func Next(app cli.App) error {
 	return walk(app, func(w *widget) error { return w.walker.Next() })
 }
 
 // Close closes the histwalk addon. It does nothing if the histwalk addon is not
 // active.
-func Close(app *cli.App) {
+func Close(app cli.App) {
 	app.MutateAppState(func(s *cli.State) {
 		if _, ok := s.Listing.(*widget); !ok {
 			return
 		}
 		s.Listing = nil
-		app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+		app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 			s.PendingCode = codearea.PendingCode{}
 		})
 	})
 }
 
-func walk(app *cli.App, f func(*widget) error) error {
+func walk(app cli.App, f func(*widget) error) error {
 	w, ok := getWidget(app)
 	if !ok {
 		return ErrHistWalkInactive
@@ -115,7 +115,7 @@ func walk(app *cli.App, f func(*widget) error) error {
 	return err
 }
 
-func getWidget(app *cli.App) (*widget, bool) {
+func getWidget(app cli.App) (*widget, bool) {
 	w, ok := app.CopyAppState().Listing.(*widget)
 	return w, ok
 }

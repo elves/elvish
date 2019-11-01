@@ -12,6 +12,11 @@ import (
 	"github.com/elves/elvish/util"
 )
 
+func initBuiltins(app cli.App, ns eval.Ns) {
+	initMiscBuiltins(app, ns)
+	initBufferBuiltins(app, ns)
+}
+
 //elvdoc:fn binding-map
 //
 // Converts a normal map into a binding map.
@@ -30,11 +35,11 @@ import (
 //
 // Closes any active listing.
 
-func closeListing(app *cli.App) {
+func closeListing(app cli.App) {
 	app.MutateAppState(func(s *cli.State) { s.Listing = nil })
 }
 
-func initMiscBuiltins(app *cli.App, ns eval.Ns) {
+func initMiscBuiltins(app cli.App, ns eval.Ns) {
 	ns.AddGoFns("<edit>", map[string]interface{}{
 		"binding-map":   eddefs.MakeBindingMap,
 		"commit-code":   app.CommitCode,
@@ -70,17 +75,17 @@ var bufferBuiltinsData = map[string]func(*codearea.CodeBuffer){
 	"kill-eol":              makeKill(moveDotEOL),
 }
 
-func initBufferBuiltins(app *cli.App, ns eval.Ns) {
+func initBufferBuiltins(app cli.App, ns eval.Ns) {
 	ns.AddGoFns("<edit>", bufferBuiltins(app))
 }
 
-func bufferBuiltins(app *cli.App) map[string]interface{} {
+func bufferBuiltins(app cli.App) map[string]interface{} {
 	m := make(map[string]interface{})
 	for name, fn := range bufferBuiltinsData {
 		// Make a lexically scoped copy of fn.
 		fn2 := fn
 		m[name] = func() {
-			app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+			app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 				fn2(&s.CodeBuffer)
 			})
 		}

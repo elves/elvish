@@ -17,7 +17,7 @@ import (
 //
 // Start the completion mode
 
-func initCompletion(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
+func initCompletion(app cli.App, ev *eval.Evaler, ns eval.Ns) {
 	bindingVar := newBindingVar(emptyBindingMap)
 	binding := newMapBinding(app, ev, bindingVar)
 	ns.AddNs("completion",
@@ -28,8 +28,8 @@ func initCompletion(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 		}))
 }
 
-func completionStart(app *cli.App, ev *eval.Evaler, binding el.Handler) {
-	buf := app.CodeArea.CopyState().CodeBuffer
+func completionStart(app cli.App, ev *eval.Evaler, binding el.Handler) {
+	buf := app.CodeArea().CopyState().CodeBuffer
 	result, err := complete.Complete(
 		complete.CodeBuffer{Content: buf.Content, Dot: buf.Dot},
 		complete.Config{

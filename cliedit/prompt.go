@@ -16,17 +16,17 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-func initPrompts(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
+func initPrompts(appSpec *cli.AppSpec, nt notifier, ev *eval.Evaler, ns eval.Ns) {
 	promptVal, rpromptVal := getDefaultPromptVals()
 	promptVar := vars.FromPtr(&promptVal)
 	rpromptVar := vars.FromPtr(&rpromptVal)
 	ns["prompt"] = promptVar
 	ns["rprompt"] = rpromptVar
-	app.AppSpec.Prompt = prompt.New(func() styled.Text {
-		return callPrompt(app, ev, promptVar.Get().(eval.Callable))
+	appSpec.Prompt = prompt.New(func() styled.Text {
+		return callPrompt(nt, ev, promptVar.Get().(eval.Callable))
 	})
-	app.AppSpec.RPrompt = prompt.New(func() styled.Text {
-		return callPrompt(app, ev, rpromptVar.Get().(eval.Callable))
+	appSpec.RPrompt = prompt.New(func() styled.Text {
+		return callPrompt(nt, ev, rpromptVar.Get().(eval.Callable))
 	})
 }
 

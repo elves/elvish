@@ -12,26 +12,23 @@ import (
 	"github.com/xiaq/persistent/hashmap"
 )
 
-func initAPI(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
-	initMaxHeight(app, ns)
-	initBeforeReadline(app, ev, ns)
-	initAfterReadline(app, ev, ns)
-	initInsert(app, ev, ns)
-
-	initMiscBuiltins(app, ns)
-	initBufferBuiltins(app, ns)
+func initConfigAPI(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
+	initMaxHeight(appSpec, ns)
+	initBeforeReadline(appSpec, ev, ns)
+	initAfterReadline(appSpec, ev, ns)
+	initCodeAreaConfigs(appSpec, ev, ns)
 }
 
-func initMaxHeight(app *cli.App, ns eval.Ns) {
+func initMaxHeight(appSpec *cli.AppSpec, ns eval.Ns) {
 	maxHeight := newIntVar(-1)
-	app.AppSpec.MaxHeight = func() int { return maxHeight.GetRaw().(int) }
+	appSpec.MaxHeight = func() int { return maxHeight.GetRaw().(int) }
 	ns.Add("max-height", maxHeight)
 }
 
-func initBeforeReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
+func initBeforeReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
 	ns["before-readline"] = hook
-	app.AppSpec.BeforeReadline = func() {
+	appSpec.BeforeReadline = func() {
 		i := -1
 		hook := hook.GetRaw().(vals.List)
 		for it := hook.Iterator(); it.HasElem(); it.Next() {
@@ -54,10 +51,10 @@ func initBeforeReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	}
 }
 
-func initAfterReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
+func initAfterReadline(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
 	hook := newListVar(vals.EmptyList)
 	ns["after-readline"] = hook
-	app.AppSpec.AfterReadline = func(code string) {
+	appSpec.AfterReadline = func(code string) {
 		i := -1
 		hook := hook.GetRaw().(vals.List)
 		for it := hook.Iterator(); it.HasElem(); it.Next() {
@@ -80,24 +77,24 @@ func initAfterReadline(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
 	}
 }
 
-func initInsert(app *cli.App, ev *eval.Evaler, ns eval.Ns) {
+func initCodeAreaConfigs(appSpec *cli.AppSpec, ev *eval.Evaler, ns eval.Ns) {
+	abbr := vals.EmptyMap
+	abbrVar := vars.FromPtr(&abbr)
+	appSpec.CodeArea.Abbreviations = makeMapIterator(abbrVar)
+
+	binding := newBindingVar(emptyBindingMap)
 	/*
-		abbr := vals.EmptyMap
-		abbrVar := vars.FromPtr(&abbr)
-		app.CodeArea.Abbreviations = makeMapIterator(abbrVar)
-
-		binding := newBindingVar(emptyBindingMap)
-		app.CodeArea.OverlayHandler = newMapBinding(app, ev, binding)
-
-		quotePaste := newBoolVar(false)
-		app.CodeArea.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
-
-		ns.AddNs("insert", eval.Ns{
-			"abbr":        abbrVar,
-			"binding":     binding,
-			"quote-paste": quotePaste,
-		})
+		appSpec.CodeArea.OverlayHandler = newMapBinding(app, ev, binding)
 	*/
+
+	quotePaste := newBoolVar(false)
+	appSpec.CodeArea.QuotePaste = func() bool { return quotePaste.GetRaw().(bool) }
+
+	ns.AddNs("insert", eval.Ns{
+		"abbr":        abbrVar,
+		"binding":     binding,
+		"quote-paste": quotePaste,
+	})
 }
 
 func makeMapIterator(mv vars.PtrVar) func(func(a, b string)) {

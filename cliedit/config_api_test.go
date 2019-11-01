@@ -11,29 +11,29 @@ import (
 	"github.com/elves/elvish/eval/vars"
 )
 
-func setupAPI() (*cli.App, *eval.Evaler, eval.Ns) {
-	app := cli.NewApp(cli.AppSpec{TTY: cli.NewStdTTY()})
+func setupConfigAPI() (cli.AppSpec, *eval.Evaler, eval.Ns) {
+	appSpec := cli.AppSpec{}
 	ev := eval.NewEvaler()
 	ns := eval.Ns{}
-	initAPI(app, ev, ns)
-	return app, ev, ns
+	initConfigAPI(&appSpec, ev, ns)
+	return appSpec, ev, ns
 }
 
 func TestInitAPI_BeforeReadline(t *testing.T) {
-	app, _, ns := setupAPI()
+	appSpec, _, ns := setupConfigAPI()
 
 	var called int
 	ns["before-readline"].Set(vals.MakeList(eval.NewGoFn("[test]", func() {
 		called++
 	})))
-	app.AppSpec.BeforeReadline()
+	appSpec.BeforeReadline()
 	if called != 1 {
 		t.Errorf("before-readline called %d times, want once", called)
 	}
 }
 
 func TestInitAPI_AfterReadline(t *testing.T) {
-	app, _, ns := setupAPI()
+	appSpec, _, ns := setupConfigAPI()
 
 	var called int
 	var calledWith string
@@ -41,7 +41,7 @@ func TestInitAPI_AfterReadline(t *testing.T) {
 		called++
 		calledWith = s
 	})))
-	app.AppSpec.AfterReadline("code")
+	appSpec.AfterReadline("code")
 	if called != 1 {
 		t.Errorf("after-readline called %d times, want once", called)
 	}

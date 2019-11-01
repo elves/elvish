@@ -16,14 +16,42 @@ import (
 	"github.com/elves/elvish/sys"
 )
 
-// App keeps all the state of an CLI throughout its life time as well as its
-// dependencies.
-type App struct {
+// App represents a CLI app.
+type App interface {
+	// MutateAppState mutates the state of the app.
+	MutateAppState(f func(*State))
+	// CopyAppState returns a copy of the a state.
+	CopyAppState() State
+	// CodeArea returns the codearea widget of the app.
+	CodeArea() codearea.Widget
+	// ReadCode requests the App to read code from the terminal by running an
+	// event loop. This function is not re-entrant.
+	ReadCode() (string, error)
+	// ReadCodeAsync is an asynchronous version of ReadCode. It returns
+	// immediately with two channels that will get the return values of
+	// ReadCode. Mainly useful in tests.
+	ReadCodeAsync() (<-chan string, <-chan error)
+	// Redraw requests a redraw. It never blocks and can be called regardless of
+	// whether the App is active or not.
+	Redraw(full bool)
+	// CommitEOF causes the main loop to exit with EOF. If this method is called
+	// when an event is being handled, the main loop will exit after the handler
+	// returns.
+	CommitEOF()
+	// CommitCode causes the main loop to exit with the given code content. If
+	// this method is called when an event is being handled, the main loop will
+	// exit after the handler returns.
+	CommitCode(code string)
+	// Notify adds a note and requests a redraw.
+	Notify(note string)
+}
+
+type app struct {
 	loop *loop
 
 	StateMutex sync.RWMutex
 	AppSpec
-	CodeArea codearea.Widget
+	codeArea codearea.Widget
 }
 
 // State represents mutable state of an App.
@@ -52,66 +80,68 @@ func (s *State) PopNotes() []string {
 }
 
 // NewApp creates a new App from the given specification.
-func NewApp(spec AppSpec) *App {
-	var app App
+func NewApp(spec AppSpec) App {
+	var a app
 	fixSpec(&spec)
-	spec.CodeArea.OnSubmit = app.CommitCode
+	spec.CodeArea.OnSubmit = a.CommitCode
 	lp := newLoop()
-	app = App{loop: lp, AppSpec: spec, CodeArea: codearea.New(spec.CodeArea)}
-	lp.HandleCb(app.handle)
-	lp.RedrawCb(app.redraw)
-	return &app
+	a = app{loop: lp, AppSpec: spec, codeArea: codearea.New(spec.CodeArea)}
+	lp.HandleCb(a.handle)
+	lp.RedrawCb(a.redraw)
+	return &a
 }
 
-// MutateAppState calls the given function while locking the state mutex.
-func (app *App) MutateAppState(f func(*State)) {
-	app.StateMutex.Lock()
-	defer app.StateMutex.Unlock()
-	f(&app.State)
+func (a *app) MutateAppState(f func(*State)) {
+	a.StateMutex.Lock()
+	defer a.StateMutex.Unlock()
+	f(&a.State)
 }
 
-// CopyAppState returns a copy of the app state.
-func (app *App) CopyAppState() State {
-	app.StateMutex.RLock()
-	defer app.StateMutex.RUnlock()
-	return app.State
+func (a *app) CopyAppState() State {
+	a.StateMutex.RLock()
+	defer a.StateMutex.RUnlock()
+	return a.State
 }
 
-func (app *App) resetAllStates() {
-	app.MutateAppState(func(s *State) { *s = State{} })
-	app.CodeArea.MutateCodeAreaState(
+func (a *app) CodeArea() codearea.Widget {
+	return a.codeArea
+}
+
+func (a *app) resetAllStates() {
+	a.MutateAppState(func(s *State) { *s = State{} })
+	a.codeArea.MutateCodeAreaState(
 		func(s *codearea.State) { *s = codearea.State{} })
 }
 
-func (app *App) handle(e event) {
+func (a *app) handle(e event) {
 	switch e := e.(type) {
 	case os.Signal:
 		switch e {
 		case syscall.SIGHUP:
-			app.loop.Return("", io.EOF)
+			a.loop.Return("", io.EOF)
 		case syscall.SIGINT:
-			app.resetAllStates()
-			app.triggerPrompts(true)
+			a.resetAllStates()
+			a.triggerPrompts(true)
 		case sys.SIGWINCH:
-			app.Redraw(true)
+			a.Redraw(true)
 		}
 	case term.Event:
-		if listing := app.CopyAppState().Listing; listing != nil {
+		if listing := a.CopyAppState().Listing; listing != nil {
 			listing.Handle(e)
 		} else {
-			app.CodeArea.Handle(e)
+			a.codeArea.Handle(e)
 		}
-		if !app.loop.HasReturned() {
-			app.triggerPrompts(false)
+		if !a.loop.HasReturned() {
+			a.triggerPrompts(false)
 		}
 	default:
 		panic("unreachable")
 	}
 }
 
-func (app *App) triggerPrompts(force bool) {
-	prompt := app.AppSpec.Prompt
-	rprompt := app.AppSpec.RPrompt
+func (a *app) triggerPrompts(force bool) {
+	prompt := a.AppSpec.Prompt
+	rprompt := a.AppSpec.RPrompt
 	if prompt != nil {
 		prompt.Trigger(force)
 	}
@@ -122,16 +152,16 @@ func (app *App) triggerPrompts(force bool) {
 
 var transformerForPending = "underline"
 
-func (app *App) redraw(flag redrawFlag) {
+func (a *app) redraw(flag redrawFlag) {
 	// Get the dimensions available.
-	height, width := app.TTY.Size()
-	if maxHeight := app.AppSpec.MaxHeight(); maxHeight > 0 && maxHeight < height {
+	height, width := a.TTY.Size()
+	if maxHeight := a.AppSpec.MaxHeight(); maxHeight > 0 && maxHeight < height {
 		height = maxHeight
 	}
 
 	var notes []string
 	var listing el.Renderer
-	app.MutateAppState(func(s *State) {
+	a.MutateAppState(func(s *State) {
 		notes = s.PopNotes()
 		listing = s.Listing
 	})
@@ -144,13 +174,13 @@ func (app *App) redraw(flag redrawFlag) {
 		// new empty line.
 		listing = layout.Empty{}
 	}
-	bufMain := renderApp(app.CodeArea, listing, width, height)
+	bufMain := renderApp(a.codeArea, listing, width, height)
 
 	// Apply buffers.
-	app.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
+	a.TTY.UpdateBuffer(bufNotes, bufMain, flag&fullRedraw != 0)
 
 	if isFinalRedraw {
-		app.TTY.ResetBuffer()
+		a.TTY.ResetBuffer()
 	}
 }
 
@@ -180,15 +210,8 @@ func renderApp(codeArea, listing el.Renderer, width, height int) *ui.Buffer {
 	return buf
 }
 
-// ReadCode requests the App to read code from the terminal. It causes the App
-// to read events from the terminal and signal source supplied at creation,
-// redraws to the terminal on such events, and eventually return when an event
-// triggers the current mode to request an exit.
-//
-// This function is not re-entrant; when it is being executed, the App is said
-// to be active.
-func (app *App) ReadCode() (string, error) {
-	restore, err := app.TTY.Setup()
+func (a *app) ReadCode() (string, error) {
+	restore, err := a.TTY.Setup()
 	if err != nil {
 		return "", err
 	}
@@ -198,23 +221,23 @@ func (app *App) ReadCode() (string, error) {
 	defer wg.Wait()
 
 	// Relay input events.
-	eventCh := app.TTY.StartInput()
-	defer app.TTY.StopInput()
+	eventCh := a.TTY.StartInput()
+	defer a.TTY.StopInput()
 	wg.Add(1)
 	go func() {
 		for event := range eventCh {
-			app.loop.Input(event)
+			a.loop.Input(event)
 		}
 		wg.Done()
 	}()
 
 	// Relay signals.
-	sigCh := app.TTY.NotifySignals()
-	defer app.TTY.StopSignals()
+	sigCh := a.TTY.NotifySignals()
+	defer a.TTY.StopSignals()
 	wg.Add(1)
 	go func() {
 		for sig := range sigCh {
-			app.loop.Input(sig)
+			a.loop.Input(sig)
 		}
 		wg.Done()
 	}()
@@ -232,7 +255,7 @@ func (app *App) ReadCode() (string, error) {
 			for {
 				select {
 				case <-ch:
-					app.Redraw(false)
+					a.Redraw(false)
 				case <-stopRelayLateUpdates:
 					return
 				}
@@ -240,60 +263,49 @@ func (app *App) ReadCode() (string, error) {
 		}()
 	}
 
-	relayLateUpdates(app.Prompt.LateUpdates())
-	relayLateUpdates(app.RPrompt.LateUpdates())
-	relayLateUpdates(app.Highlighter.LateUpdates())
+	relayLateUpdates(a.Prompt.LateUpdates())
+	relayLateUpdates(a.RPrompt.LateUpdates())
+	relayLateUpdates(a.Highlighter.LateUpdates())
 
 	// Trigger an initial prompt update.
-	app.triggerPrompts(true)
+	a.triggerPrompts(true)
 
 	// Reset state before returning.
-	defer app.resetAllStates()
+	defer a.resetAllStates()
 
 	// BeforeReadline and AfterReadline hooks.
-	app.BeforeReadline()
+	a.BeforeReadline()
 	defer func() {
-		app.AfterReadline(app.CodeArea.CopyState().CodeBuffer.Content)
+		a.AfterReadline(a.codeArea.CopyState().CodeBuffer.Content)
 	}()
 
-	return app.loop.Run()
+	return a.loop.Run()
 }
 
-// ReadCodeAsync is an asynchronous version of ReadCode. It returns immediately
-// with two channels that will get the return values of ReadCode. Mainly useful
-// in tests.
-func (app *App) ReadCodeAsync() (<-chan string, <-chan error) {
+func (a *app) ReadCodeAsync() (<-chan string, <-chan error) {
 	codeCh := make(chan string, 1)
 	errCh := make(chan error, 1)
 	go func() {
-		code, err := app.ReadCode()
+		code, err := a.ReadCode()
 		codeCh <- code
 		errCh <- err
 	}()
 	return codeCh, errCh
 }
 
-// Redraw requests a redraw. It never blocks and can be called regardless of
-// whether the App is active or not.
-func (app *App) Redraw(full bool) {
-	app.loop.Redraw(full)
+func (a *app) Redraw(full bool) {
+	a.loop.Redraw(full)
 }
 
-// CommitEOF causes the main loop to exit with EOF. If this method is called when
-// an event is being handled, the main loop will exit after the handler returns.
-func (app *App) CommitEOF() {
-	app.loop.Return("", io.EOF)
+func (a *app) CommitEOF() {
+	a.loop.Return("", io.EOF)
 }
 
-// CommitCode causes the main loop to exit with the current code content. If this
-// method is called when an event is being handled, the main loop will exit after
-// the handler returns.
-func (app *App) CommitCode(code string) {
-	app.loop.Return(code, nil)
+func (a *app) CommitCode(code string) {
+	a.loop.Return(code, nil)
 }
 
-// Notify adds a note and requests a redraw.
-func (app *App) Notify(note string) {
-	app.MutateAppState(func(s *State) { s.Note(note) })
-	app.Redraw(false)
+func (a *app) Notify(note string) {
+	a.MutateAppState(func(s *State) { s.Note(note) })
+	a.Redraw(false)
 }

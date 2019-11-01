@@ -12,7 +12,7 @@ import (
 	"github.com/elves/elvish/store/storedefs"
 )
 
-func initListings(app *cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, fuser *histutil.Fuser) {
+func initListings(app cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store, fuser *histutil.Fuser) {
 	var histStore histutil.Store
 	if fuser != nil {
 		histStore = fuserWrapper{fuser}
@@ -84,12 +84,12 @@ func initListings(app *cli.App, ev *eval.Evaler, ns eval.Ns, st storedefs.Store,
 // Moves the cursor down in listing mode, or to the first item if the last item is
 // currently selected.
 
-func listingUp(app *cli.App)        { listingSelect(app, listbox.Prev) }
-func listingDown(app *cli.App)      { listingSelect(app, listbox.Next) }
-func listingUpCycle(app *cli.App)   { listingSelect(app, listbox.PrevWrap) }
-func listingDownCycle(app *cli.App) { listingSelect(app, listbox.NextWrap) }
+func listingUp(app cli.App)        { listingSelect(app, listbox.Prev) }
+func listingDown(app cli.App)      { listingSelect(app, listbox.Next) }
+func listingUpCycle(app cli.App)   { listingSelect(app, listbox.PrevWrap) }
+func listingDownCycle(app cli.App) { listingSelect(app, listbox.NextWrap) }
 
-func listingSelect(app *cli.App, f func(listbox.State) int) {
+func listingSelect(app cli.App, f func(listbox.State) int) {
 	w, ok := app.CopyAppState().Listing.(combobox.Widget)
 	if !ok {
 		return

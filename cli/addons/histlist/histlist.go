@@ -31,7 +31,7 @@ type Store interface {
 var _ = Store(histutil.Store(nil))
 
 // Start starts history listing.
-func Start(app *cli.App, cfg Config) {
+func Start(app cli.App, cfg Config) {
 	if cfg.Store == nil {
 		app.Notify("no history store")
 		return
@@ -47,7 +47,7 @@ func Start(app *cli.App, cfg Config) {
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
 				text := it.(items)[i].Text
-				app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+				app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 					buf := &s.CodeBuffer
 					if buf.Content == "" {
 						buf.InsertAtDot(text)

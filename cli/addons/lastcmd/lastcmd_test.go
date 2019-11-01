@@ -13,7 +13,7 @@ import (
 	"github.com/elves/elvish/styled"
 )
 
-func setup() (*cli.App, cli.TTYCtrl, func()) {
+func setup() (cli.App, cli.TTYCtrl, func()) {
 	tty, ttyCtrl := cli.NewFakeTTY()
 	app := cli.NewApp(cli.AppSpec{TTY: tty})
 	codeCh, _ := app.ReadCodeAsync()
@@ -108,7 +108,7 @@ func TestStart_OK(t *testing.T) {
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test submission by Enter.
-	app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+	app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 		*s = codearea.State{}
 	})
 	Start(app, Config{
@@ -123,7 +123,7 @@ func TestStart_OK(t *testing.T) {
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Default wordifier.
-	app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+	app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 		*s = codearea.State{}
 	})
 	store.AddCmd(histutil.Entry{Text: "foo bar baz", Seq: 1})

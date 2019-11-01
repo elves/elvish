@@ -1,5 +1,7 @@
 package cliedit
 
+import "github.com/elves/elvish/cli"
+
 // The editor's dependencies are not concrete implementations, but interfaces.
 // This file defines the interfaces for those dependencies as well as fake
 // implementations that are useful in tests.
@@ -10,6 +12,12 @@ package cliedit
 type notifier interface {
 	Notify(string)
 }
+
+// A notifier implementation the wraps an *App. This has to be a pointer to work
+// around bootstrapping issues.
+type appNotifier struct{ p *cli.App }
+
+func (n appNotifier) Notify(note string) { (*n.p).Notify(note) }
 
 // A notifier implementation that records all Notify calls it has seen. Useful
 // in tests.

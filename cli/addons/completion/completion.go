@@ -32,7 +32,7 @@ type Config struct {
 }
 
 // Start starts the completion UI.
-func Start(app *cli.App, cfg Config) {
+func Start(app cli.App, cfg Config) {
 	w := combobox.New(combobox.Spec{
 		CodeArea: codearea.Spec{
 			Prompt: layout.ModePrompt("COMPLETING "+cfg.Name, true),
@@ -42,7 +42,7 @@ func Start(app *cli.App, cfg Config) {
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
 				text := it.(items)[i].ToInsert
-				app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+				app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 					// TODO(xiaq): This is not correct when cfg.Replace has non-zero
 					// width.
 					s.CodeBuffer.InsertAtDot(text)

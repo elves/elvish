@@ -24,7 +24,7 @@ type Config struct {
 }
 
 // Start starts the navigation function.
-func Start(app *cli.App, cfg Config) {
+func Start(app cli.App, cfg Config) {
 	cursor := cfg.Cursor
 	if cursor == nil {
 		cursor = NewOSCursor()

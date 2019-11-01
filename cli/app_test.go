@@ -47,13 +47,13 @@ func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 	ed, tty := setup()
 
 	tty.Inject(term.KeyEvent{Rune: '\n'})
-	ed.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+	ed.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 		s.CodeBuffer.Content = "some code"
 	})
 
 	ed.ReadCode()
 
-	if code := ed.CodeArea.CopyState().CodeBuffer.Content; code != "" {
+	if code := ed.CodeArea().CopyState().CodeBuffer.Content; code != "" {
 		t.Errorf("Editor state has code %q, want empty", code)
 	}
 }
@@ -83,10 +83,9 @@ func TestReadCode_PassesInputEventsToCodeArea(t *testing.T) {
 }
 
 func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
-	ed, tty := setup()
-
 	called := 0
-	ed.AppSpec.BeforeReadline = func() { called++ }
+	ed, tty := setupWithSpec(AppSpec{BeforeReadline: func() { called++ }})
+
 	// Causes BasicMode to quit
 	tty.Inject(term.KeyEvent{Rune: '\n'})
 
@@ -98,14 +97,14 @@ func TestReadCode_CallsBeforeReadlineOnce(t *testing.T) {
 }
 
 func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
-	ed, tty := setup()
-
 	called := 0
 	code := ""
-	ed.AppSpec.AfterReadline = func(s string) {
-		called++
-		code = s
-	}
+	ed, tty := setupWithSpec(AppSpec{
+		AfterReadline: func(s string) {
+			called++
+			code = s
+		}})
+
 	// Causes BasicMode to write state.Code and then quit
 	tty.Inject(term.KeyEvent{Rune: 'a'})
 	tty.Inject(term.KeyEvent{Rune: 'b'})
@@ -123,13 +122,12 @@ func TestReadCode_CallsAfterReadlineOnceWithCode(t *testing.T) {
 }
 
 func TestReadCode_RespectsMaxHeight(t *testing.T) {
-	ed, tty := setup()
+	ed, tty := setupWithSpec(AppSpec{MaxHeight: func() int { return 2 }})
 
-	ed.AppSpec.MaxHeight = func() int { return 2 }
 	tty.SetSize(10, 5) // Width = 5 to make it easy to test
 
 	// The code needs 3 lines to completely show.
-	ed.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+	ed.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 		s.CodeBuffer.Content = strings.Repeat("a", 15)
 	})
 
@@ -145,7 +143,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 var bufChTimeout = 1 * time.Second
 
 func TestReadCode_RendersHighlightedCode(t *testing.T) {
-	ed, tty := setupWithConfig(AppSpec{
+	ed, tty := setupWithSpec(AppSpec{
 		Highlighter: testHighlighter{
 			get: func(code string) (styled.Text, []error) {
 				return styled.MakeText(code, "red"), nil
@@ -175,7 +173,7 @@ func TestReadCode_RedrawsOnHighlighterLateUpdate(t *testing.T) {
 }
 
 func TestReadCode_RendersPrompt(t *testing.T) {
-	ed, tty := setupWithConfig(AppSpec{
+	ed, tty := setupWithSpec(AppSpec{
 		Prompt: constPrompt{styled.Plain("> ")}})
 
 	tty.Inject(term.KeyEvent{Rune: 'a'})
@@ -191,7 +189,7 @@ func TestReadCode_RendersPrompt(t *testing.T) {
 }
 
 func TestReadCode_RendersRPrompt(t *testing.T) {
-	ed, tty := setupWithConfig(AppSpec{
+	ed, tty := setupWithSpec(AppSpec{
 		RPrompt: constPrompt{styled.Plain("R")}})
 	tty.SetSize(80, 4) // Set a width of 4 for easier testing.
 
@@ -208,7 +206,7 @@ func TestReadCode_RendersRPrompt(t *testing.T) {
 
 func TestReadCode_TriggersPrompt(t *testing.T) {
 	called := 0
-	ed, _ := setupWithConfig(AppSpec{
+	ed, _ := setupWithSpec(AppSpec{
 		Prompt: testPrompt{trigger: func(bool) { called++ }}})
 
 	codeCh, _ := ed.ReadCodeAsync()
@@ -226,7 +224,7 @@ func TestReadCode_RedrawsOnPromptLateUpdate(t *testing.T) {
 		lateUpdates: make(chan styled.Text),
 	}
 
-	ed, tty := setupWithConfig(AppSpec{Prompt: prompt})
+	ed, tty := setupWithSpec(AppSpec{Prompt: prompt})
 
 	codeCh, _ := ed.ReadCodeAsync()
 	bufOldPrompt := ui.NewBufferBuilder(80).
@@ -261,7 +259,7 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 	wantNotesBuf := ui.NewBufferBuilder(80).WritePlain("note").Buffer()
 	tty.TestNotesBuffer(t, wantNotesBuf)
 
-	if n := len(ed.State.Notes); n > 0 {
+	if n := len(ed.CopyAppState().Notes); n > 0 {
 		t.Errorf("State.Notes has %d elements after redrawing, want 0", n)
 	}
 
@@ -269,13 +267,15 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 }
 
 func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
-	app, tty := setup()
-	app.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+	a, tty := setup()
+	a.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 		s.CodeBuffer.Content = "some code"
 	})
-	app.State.Listing = layout.Label{Content: styled.Plain("listing")}
+	a.MutateAppState(func(s *State) {
+		s.Listing = layout.Label{Content: styled.Plain("listing")}
+	})
 
-	codeCh, _ := app.ReadCodeAsync()
+	codeCh, _ := a.ReadCodeAsync()
 
 	// Wait until the initial draw, to ensure that we are indeed observing a
 	// different state later.
@@ -284,7 +284,7 @@ func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
 		Newline().SetDotToCursor().WritePlain("listing").Buffer()
 	tty.TestBuffer(t, wantBuf)
 
-	cleanup(app, codeCh)
+	cleanup(a, codeCh)
 
 	wantFinalBuf := ui.NewBufferBuilder(80).
 		WritePlain("some code").Newline().SetDotToCursor().Buffer()
@@ -337,7 +337,7 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	ed, tty := setup()
 
 	content := "1234567890"
-	ed.CodeArea.MutateCodeAreaState(func(s *codearea.State) {
+	ed.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
 		s.CodeBuffer = codearea.CodeBuffer{
 			Content: content, Dot: len(content),
 		}
@@ -359,19 +359,19 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	cleanup(ed, codeCh)
 }
 
-func setup() (*App, TTYCtrl) {
-	return setupWithConfig(AppSpec{})
+func setup() (App, TTYCtrl) {
+	return setupWithSpec(AppSpec{})
 }
 
-func setupWithConfig(spec AppSpec) (*App, TTYCtrl) {
+func setupWithSpec(spec AppSpec) (App, TTYCtrl) {
 	tty, ttyControl := NewFakeTTY()
 	spec.TTY = tty
-	app := NewApp(spec)
-	return app, ttyControl
+	a := NewApp(spec)
+	return a, ttyControl
 }
 
-func cleanup(app *App, codeCh <-chan string) {
-	app.CommitEOF()
+func cleanup(a App, codeCh <-chan string) {
+	a.CommitEOF()
 	// Make sure that ReadCode has exited
 	<-codeCh
 }
