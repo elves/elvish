@@ -66,11 +66,17 @@ type File struct {
 // It panics if there are any errors.
 func SetupTestDir(dir Dir, wd string) func() {
 	_, cleanup := InTestDir()
-	applyDir(dir, "")
+	ApplyDir(dir)
 	if wd != "" {
 		mustChdir(wd)
 	}
 	return cleanup
+}
+
+// ApplyDir creates the given files specified by ta directory layout to the
+// current directory.
+func ApplyDir(dir Dir) {
+	applyDir(dir, "")
 }
 
 func applyDir(dir Dir, prefix string) {
