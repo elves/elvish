@@ -18,10 +18,10 @@ import (
 
 // App represents a CLI app.
 type App interface {
-	// MutateAppState mutates the state of the app.
-	MutateAppState(f func(*State))
-	// CopyAppState returns a copy of the a state.
-	CopyAppState() State
+	// MutateState mutates the state of the app.
+	MutateState(f func(*State))
+	// CopyState returns a copy of the a state.
+	CopyState() State
 	// CodeArea returns the codearea widget of the app.
 	CodeArea() codearea.Widget
 	// ReadCode requests the App to read code from the terminal by running an
@@ -91,13 +91,13 @@ func NewApp(spec AppSpec) App {
 	return &a
 }
 
-func (a *app) MutateAppState(f func(*State)) {
+func (a *app) MutateState(f func(*State)) {
 	a.StateMutex.Lock()
 	defer a.StateMutex.Unlock()
 	f(&a.State)
 }
 
-func (a *app) CopyAppState() State {
+func (a *app) CopyState() State {
 	a.StateMutex.RLock()
 	defer a.StateMutex.RUnlock()
 	return a.State
@@ -108,8 +108,8 @@ func (a *app) CodeArea() codearea.Widget {
 }
 
 func (a *app) resetAllStates() {
-	a.MutateAppState(func(s *State) { *s = State{} })
-	a.codeArea.MutateCodeAreaState(
+	a.MutateState(func(s *State) { *s = State{} })
+	a.codeArea.MutateState(
 		func(s *codearea.State) { *s = codearea.State{} })
 }
 
@@ -126,7 +126,7 @@ func (a *app) handle(e event) {
 			a.RedrawFull()
 		}
 	case term.Event:
-		if listing := a.CopyAppState().Listing; listing != nil {
+		if listing := a.CopyState().Listing; listing != nil {
 			listing.Handle(e)
 		} else {
 			a.codeArea.Handle(e)
@@ -161,7 +161,7 @@ func (a *app) redraw(flag redrawFlag) {
 
 	var notes []string
 	var listing el.Renderer
-	a.MutateAppState(func(s *State) {
+	a.MutateState(func(s *State) {
 		notes = s.PopNotes()
 		listing = s.Listing
 	})
@@ -311,6 +311,6 @@ func (a *app) CommitCode(code string) {
 }
 
 func (a *app) Notify(note string) {
-	a.MutateAppState(func(s *State) { s.Note(note) })
+	a.MutateState(func(s *State) { s.Note(note) })
 	a.Redraw()
 }

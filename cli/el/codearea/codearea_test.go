@@ -331,7 +331,7 @@ func TestHandle_AbbreviationExpansionInterruptedByExternalMutation(t *testing.T)
 		},
 	})
 	w.Handle(term.K('d'))
-	w.MutateCodeAreaState(func(s *State) { s.CodeBuffer.InsertAtDot("d") })
+	w.MutateState(func(s *State) { s.CodeBuffer.InsertAtDot("d") })
 	w.Handle(term.K('n'))
 	wantState := State{CodeBuffer: CodeBuffer{Content: "ddn", Dot: 3}}
 	if state := w.CopyState(); !reflect.DeepEqual(state, wantState) {
@@ -359,7 +359,7 @@ func TestHandle_DefaultNoopSubmit(t *testing.T) {
 
 func TestState(t *testing.T) {
 	w := New(Spec{})
-	w.MutateCodeAreaState(func(s *State) { s.CodeBuffer.Content = "code" })
+	w.MutateState(func(s *State) { s.CodeBuffer.Content = "code" })
 	if w.CopyState().CodeBuffer.Content != "code" {
 		t.Errorf("state not mutated")
 	}

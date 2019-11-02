@@ -42,31 +42,31 @@ func Start(app cli.App, cfg Config) {
 			OverlayHandler: cfg.Binding,
 			OnSelect: func(it listbox.Items, i int) {
 				text := it.(items)[i].ToInsert
-				app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+				app.CodeArea().MutateState(func(s *codearea.State) {
 					s.PendingCode = codearea.PendingCode{
 						From: cfg.Replace.From, To: cfg.Replace.To, Content: text}
 				})
 			},
 			OnAccept: func(it listbox.Items, i int) {
-				app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+				app.CodeArea().MutateState(func(s *codearea.State) {
 					s.ApplyPending()
 				})
-				app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+				app.MutateState(func(s *cli.State) { s.Listing = nil })
 			},
 		},
 		OnFilter: func(w combobox.Widget, p string) {
 			w.ListBox().Reset(filter(cfg.Items, p), 0)
 		},
 	})
-	app.MutateAppState(func(s *cli.State) { s.Listing = w })
+	app.MutateState(func(s *cli.State) { s.Listing = w })
 	app.Redraw()
 }
 
 // Close closes the completion UI.
 func Close(app cli.App) {
-	app.CodeArea().MutateCodeAreaState(
+	app.CodeArea().MutateState(
 		func(s *codearea.State) { s.PendingCode = codearea.PendingCode{} })
-	app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+	app.MutateState(func(s *cli.State) { s.Listing = nil })
 	app.Redraw()
 }
 

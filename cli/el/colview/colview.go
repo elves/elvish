@@ -12,10 +12,10 @@ import (
 // Widget is a colview widget.
 type Widget interface {
 	el.Widget
-	// MutateColViewState mutates the state.
-	MutateColViewState(f func(*State))
-	// CopyColViewState returns a copy of the state.
-	CopyColViewState() State
+	// MutateState mutates the state.
+	MutateState(f func(*State))
+	// CopyState returns a copy of the state.
+	CopyState() State
 	// Left triggers the OnLeft callback.
 	Left()
 	// Right triggers the OnRight callback.
@@ -78,13 +78,13 @@ func equalWeights(n int) []int {
 	return weights
 }
 
-func (w *widget) MutateColViewState(f func(*State)) {
+func (w *widget) MutateState(f func(*State)) {
 	w.StateMutex.Lock()
 	defer w.StateMutex.Unlock()
 	f(&w.State)
 }
 
-func (w *widget) CopyColViewState() State {
+func (w *widget) CopyState() State {
 	w.StateMutex.RLock()
 	defer w.StateMutex.RUnlock()
 	return w.State
@@ -95,7 +95,7 @@ const colGap = 1
 // Render renders all the columns side by side, putting the dot in the focused
 // column.
 func (w *widget) Render(width, height int) *ui.Buffer {
-	state := w.CopyColViewState()
+	state := w.CopyState()
 	ncols := len(state.Columns)
 	if ncols == 0 {
 		// No column.
@@ -123,7 +123,7 @@ func (w *widget) Handle(event term.Event) bool {
 	if w.OverlayHandler.Handle(event) {
 		return true
 	}
-	state := w.CopyColViewState()
+	state := w.CopyState()
 	if 0 <= state.FocusColumn && state.FocusColumn < len(state.Columns) {
 		if state.Columns[state.FocusColumn].Handle(event) {
 			return true

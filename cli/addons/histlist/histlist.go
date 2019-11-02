@@ -47,7 +47,7 @@ func Start(app cli.App, cfg Config) {
 			OverlayHandler: cfg.Binding,
 			OnAccept: func(it listbox.Items, i int) {
 				text := it.(items)[i].Text
-				app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+				app.CodeArea().MutateState(func(s *codearea.State) {
 					buf := &s.CodeBuffer
 					if buf.Content == "" {
 						buf.InsertAtDot(text)
@@ -55,7 +55,7 @@ func Start(app cli.App, cfg Config) {
 						buf.InsertAtDot("\n" + text)
 					}
 				})
-				app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+				app.MutateState(func(s *cli.State) { s.Listing = nil })
 			},
 		},
 		OnFilter: func(w combobox.Widget, p string) {
@@ -64,7 +64,7 @@ func Start(app cli.App, cfg Config) {
 		},
 	})
 
-	app.MutateAppState(func(s *cli.State) { s.Listing = w })
+	app.MutateState(func(s *cli.State) { s.Listing = w })
 }
 
 type items []histutil.Entry

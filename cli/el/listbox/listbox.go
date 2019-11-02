@@ -18,8 +18,8 @@ import (
 // directly usable.
 type Widget interface {
 	el.Widget
-	// CopyListboxState returns a copy of the state.
-	CopyListboxState() State
+	// CopyState returns a copy of the state.
+	CopyState() State
 	// Reset resets the state of the widget with the given items and index of
 	// the selected item. It triggers the OnSelect callback if the index is
 	// valid.
@@ -274,7 +274,7 @@ func (w *widget) Handle(event term.Event) bool {
 	return false
 }
 
-func (w *widget) CopyListboxState() State {
+func (w *widget) CopyState() State {
 	w.StateMutex.RLock()
 	defer w.StateMutex.RUnlock()
 	return w.State
@@ -377,7 +377,7 @@ func fixIndex(i, n int) int {
 }
 
 func (w *widget) Accept() {
-	state := w.CopyListboxState()
+	state := w.CopyState()
 	w.OnAccept(state.Items, state.Selected)
 }
 

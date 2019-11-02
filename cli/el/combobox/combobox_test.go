@@ -62,7 +62,7 @@ func TestHandle(t *testing.T) {
 	if !handled {
 		t.Errorf("listbox did not handle")
 	}
-	if w.ListBox().CopyListboxState().Selected != 1 {
+	if w.ListBox().CopyState().Selected != 1 {
 		t.Errorf("listbox state not changed")
 	}
 

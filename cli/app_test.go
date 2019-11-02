@@ -47,7 +47,7 @@ func TestReadCode_ResetsStateBeforeReturn(t *testing.T) {
 	ed, tty := setup()
 
 	tty.Inject(term.KeyEvent{Rune: '\n'})
-	ed.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+	ed.CodeArea().MutateState(func(s *codearea.State) {
 		s.CodeBuffer.Content = "some code"
 	})
 
@@ -127,7 +127,7 @@ func TestReadCode_RespectsMaxHeight(t *testing.T) {
 	tty.SetSize(10, 5) // Width = 5 to make it easy to test
 
 	// The code needs 3 lines to completely show.
-	ed.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+	ed.CodeArea().MutateState(func(s *codearea.State) {
 		s.CodeBuffer.Content = strings.Repeat("a", 15)
 	})
 
@@ -259,7 +259,7 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 	wantNotesBuf := ui.NewBufferBuilder(80).WritePlain("note").Buffer()
 	tty.TestNotesBuffer(t, wantNotesBuf)
 
-	if n := len(ed.CopyAppState().Notes); n > 0 {
+	if n := len(ed.CopyState().Notes); n > 0 {
 		t.Errorf("State.Notes has %d elements after redrawing, want 0", n)
 	}
 
@@ -268,10 +268,10 @@ func TestReadCode_DrawsAndFlushesNotes(t *testing.T) {
 
 func TestReadCode_PutCursorBelowCodeAreaInFinalRedraw(t *testing.T) {
 	a, tty := setup()
-	a.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+	a.CodeArea().MutateState(func(s *codearea.State) {
 		s.CodeBuffer.Content = "some code"
 	})
-	a.MutateAppState(func(s *State) {
+	a.MutateState(func(s *State) {
 		s.Listing = layout.Label{Content: styled.Plain("listing")}
 	})
 
@@ -337,7 +337,7 @@ func TestReadCode_RedrawsOnSIGWINCH(t *testing.T) {
 	ed, tty := setup()
 
 	content := "1234567890"
-	ed.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+	ed.CodeArea().MutateState(func(s *codearea.State) {
 		s.CodeBuffer = codearea.CodeBuffer{
 			Content: content, Dot: len(content),
 		}

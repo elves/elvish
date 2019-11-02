@@ -46,11 +46,11 @@ func Start(app cli.App, cfg Config) {
 		}
 	}
 	onRight := func(w colview.Widget) {
-		currentCol, ok := w.CopyColViewState().Columns[1].(listbox.Widget)
+		currentCol, ok := w.CopyState().Columns[1].(listbox.Widget)
 		if !ok {
 			return
 		}
-		state := currentCol.CopyListboxState()
+		state := currentCol.CopyState()
 		if state.Items.Len() == 0 {
 			return
 		}
@@ -80,14 +80,14 @@ func Start(app cli.App, cfg Config) {
 		OnRight:        onRight,
 	})
 	updateState(w, cursor, "")
-	app.MutateAppState(func(s *cli.State) { s.Listing = w })
+	app.MutateState(func(s *cli.State) { s.Listing = w })
 	app.Redraw()
 }
 
 func updateState(w colview.Widget, cursor Cursor, selectName string) {
 	var parentCol, currentCol el.Widget
 
-	w.MutateColViewState(func(s *colview.State) {
+	w.MutateState(func(s *colview.State) {
 		*s = colview.State{
 			Columns: []el.Widget{
 				layout.Empty{}, layout.Empty{}, layout.Empty{}},
@@ -108,7 +108,7 @@ func updateState(w colview.Widget, cursor Cursor, selectName string) {
 			current,
 			func(it listbox.Items, i int) {
 				previewCol := makeWidget(it.(fileItems)[i])
-				w.MutateColViewState(func(s *colview.State) {
+				w.MutateState(func(s *colview.State) {
 					s.Columns[2] = previewCol
 				})
 			})
@@ -121,7 +121,7 @@ func updateState(w colview.Widget, cursor Cursor, selectName string) {
 		tryToSelectNothing(parentCol)
 	}
 
-	w.MutateColViewState(func(s *colview.State) {
+	w.MutateState(func(s *colview.State) {
 		s.Columns[0] = parentCol
 		s.Columns[1] = currentCol
 	})

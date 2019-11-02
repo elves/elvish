@@ -21,8 +21,8 @@ type Widget interface {
 	el.Widget
 	// CopyState returns a copy of the state.
 	CopyState() State
-	// MutateCodeAreaState calls the given the function while locking StateMutex.
-	MutateCodeAreaState(f func(*State))
+	// MutateState calls the given the function while locking StateMutex.
+	MutateState(f func(*State))
 }
 
 // Spec specifies the configuration and initial state for Widget.
@@ -147,7 +147,7 @@ func (w *widget) Handle(event term.Event) bool {
 	return false
 }
 
-func (w *widget) MutateCodeAreaState(f func(*State)) {
+func (w *widget) MutateState(f func(*State)) {
 	w.StateMutex.Lock()
 	defer w.StateMutex.Unlock()
 	f(&w.State)
@@ -173,7 +173,7 @@ func (w *widget) handlePasteSetting(start bool) bool {
 		if w.QuotePaste() {
 			text = parse.Quote(text)
 		}
-		w.MutateCodeAreaState(func(s *State) { s.CodeBuffer.InsertAtDot(text) })
+		w.MutateState(func(s *State) { s.CodeBuffer.InsertAtDot(text) })
 
 		w.pasting = false
 		w.pasteBuffer = bytes.Buffer{}
@@ -201,7 +201,7 @@ func (w *widget) handleKeyEvent(key ui.Key) bool {
 		return true
 	case ui.K(ui.Backspace):
 		w.resetInserts()
-		w.MutateCodeAreaState(func(s *State) {
+		w.MutateState(func(s *State) {
 			c := &s.CodeBuffer
 			// Remove the last rune.
 			_, chop := utf8.DecodeLastRuneInString(c.Content[:c.Dot])

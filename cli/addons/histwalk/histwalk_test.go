@@ -27,7 +27,7 @@ func TestHistWalk(t *testing.T) {
 	}
 	walker := histutil.NewWalker(db, -1, nil, "ls")
 
-	app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+	app.CodeArea().MutateState(func(s *codearea.State) {
 		s.CodeBuffer = codearea.CodeBuffer{Content: "ls", Dot: 2}
 	})
 

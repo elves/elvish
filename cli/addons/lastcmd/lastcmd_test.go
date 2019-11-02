@@ -108,7 +108,7 @@ func TestStart_OK(t *testing.T) {
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Test submission by Enter.
-	app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+	app.CodeArea().MutateState(func(s *codearea.State) {
 		*s = codearea.State{}
 	})
 	Start(app, Config{
@@ -123,7 +123,7 @@ func TestStart_OK(t *testing.T) {
 	ttyCtrl.TestBuffer(t, wantBuf)
 
 	// Default wordifier.
-	app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+	app.CodeArea().MutateState(func(s *codearea.State) {
 		*s = codearea.State{}
 	})
 	store.AddCmd(histutil.Entry{Text: "foo bar baz", Seq: 1})

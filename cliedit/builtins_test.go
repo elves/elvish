@@ -41,7 +41,7 @@ func TestBufferBuiltins(t *testing.T) {
 
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
-			app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+			app.CodeArea().MutateState(func(s *codearea.State) {
 				s.CodeBuffer = test.bufBefore
 			})
 			fn := builtins[test.name].(func())

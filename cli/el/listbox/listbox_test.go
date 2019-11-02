@@ -134,7 +134,7 @@ func TestRender_Vertical_MutatesState(t *testing.T) {
 		State: State{Items: TestItems{NItems: 10}, Selected: 4, First: 0}})
 	// Items shown will be 3, 4, 5
 	w.Render(10, 3)
-	state := w.CopyListboxState()
+	state := w.CopyState()
 	if first := state.First; first != 3 {
 		t.Errorf("State.First = %d, want 3", first)
 	}
@@ -242,7 +242,7 @@ func TestRender_Horizontal_MutatesState(t *testing.T) {
 			Items: TestItems{Prefix: "x", NItems: 10}, Selected: 4, First: 0}})
 	// Only a single column of 3 items shown: x3-x5
 	w.Render(2, 4)
-	state := w.CopyListboxState()
+	state := w.CopyState()
 	if first := state.First; first != 3 {
 		t.Errorf("State.First = %d, want 3", first)
 	}
@@ -398,7 +398,7 @@ func TestSelect_ChangeState(t *testing.T) {
 					Items: TestItems{NItems: 10}, Height: 3,
 					Selected: test.before}})
 			w.Select(test.f)
-			if selected := w.CopyListboxState().Selected; selected != test.after {
+			if selected := w.CopyState().Selected; selected != test.after {
 				t.Errorf("selected = %d, want %d", selected, test.after)
 			}
 		})

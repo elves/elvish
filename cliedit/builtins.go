@@ -36,7 +36,7 @@ func initBuiltins(app cli.App, ns eval.Ns) {
 // Closes any active listing.
 
 func closeListing(app cli.App) {
-	app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+	app.MutateState(func(s *cli.State) { s.Listing = nil })
 }
 
 func initMiscBuiltins(app cli.App, ns eval.Ns) {
@@ -85,7 +85,7 @@ func bufferBuiltins(app cli.App) map[string]interface{} {
 		// Make a lexically scoped copy of fn.
 		fn2 := fn
 		m[name] = func() {
-			app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+			app.CodeArea().MutateState(func(s *codearea.State) {
 				fn2(&s.CodeBuffer)
 			})
 		}

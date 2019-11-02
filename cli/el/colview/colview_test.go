@@ -121,7 +121,7 @@ func TestHandle(t *testing.T) {
 	// No one to handle the event.
 	expectUnhandled(term.K('c'))
 	// No focused column: event unhandled
-	w.MutateColViewState(func(s *State) { s.FocusColumn = -1 })
+	w.MutateState(func(s *State) { s.FocusColumn = -1 })
 	expectUnhandled(term.K('b'))
 }
 

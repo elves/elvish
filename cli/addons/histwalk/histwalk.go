@@ -64,7 +64,7 @@ func Start(app cli.App, cfg Config) {
 	walker.Prev()
 	w := widget{binding: cfg.Binding, walker: walker}
 	w.onWalk = func() {
-		app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+		app.CodeArea().MutateState(func(s *codearea.State) {
 			s.PendingCode = codearea.PendingCode{
 				From: len(prefix), To: len(s.CodeBuffer.Content),
 				Content: walker.CurrentCmd()[len(prefix):],
@@ -73,7 +73,7 @@ func Start(app cli.App, cfg Config) {
 	}
 	w.init()
 	w.onWalk()
-	app.MutateAppState(func(s *cli.State) { s.Listing = &w })
+	app.MutateState(func(s *cli.State) { s.Listing = &w })
 	app.Redraw()
 }
 
@@ -92,12 +92,12 @@ func Next(app cli.App) error {
 // Close closes the histwalk addon. It does nothing if the histwalk addon is not
 // active.
 func Close(app cli.App) {
-	app.MutateAppState(func(s *cli.State) {
+	app.MutateState(func(s *cli.State) {
 		if _, ok := s.Listing.(*widget); !ok {
 			return
 		}
 		s.Listing = nil
-		app.CodeArea().MutateCodeAreaState(func(s *codearea.State) {
+		app.CodeArea().MutateState(func(s *codearea.State) {
 			s.PendingCode = codearea.PendingCode{}
 		})
 	})
@@ -116,6 +116,6 @@ func walk(app cli.App, f func(*widget) error) error {
 }
 
 func getWidget(app cli.App) (*widget, bool) {
-	w, ok := app.CopyAppState().Listing.(*widget)
+	w, ok := app.CopyState().Listing.(*widget)
 	return w, ok
 }

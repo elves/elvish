@@ -53,14 +53,14 @@ func Start(app cli.App, cfg Config) {
 				if err != nil {
 					app.Notify(err.Error())
 				}
-				app.MutateAppState(func(s *cli.State) { s.Listing = nil })
+				app.MutateState(func(s *cli.State) { s.Listing = nil })
 			},
 		},
 		OnFilter: func(w combobox.Widget, p string) {
 			w.ListBox().Reset(filter(dirs, p), 0)
 		},
 	})
-	app.MutateAppState(func(s *cli.State) { s.Listing = w })
+	app.MutateState(func(s *cli.State) { s.Listing = w })
 }
 
 func filter(dirs []storedefs.Dir, p string) items {

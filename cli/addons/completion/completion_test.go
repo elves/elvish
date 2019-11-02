@@ -60,7 +60,7 @@ func TestStart(t *testing.T) {
 	ttyCtrl.TestBuffer(t, wantBufAccepted)
 
 	// Test Close first we need to start over.
-	app.CodeArea().MutateCodeAreaState(
+	app.CodeArea().MutateState(
 		func(s *codearea.State) { *s = codearea.State{} })
 	Start(app, cfg)
 	ttyCtrl.TestBuffer(t, wantBufStarted)
