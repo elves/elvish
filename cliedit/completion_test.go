@@ -9,12 +9,6 @@ import (
 	"github.com/elves/elvish/util"
 )
 
-var styles = map[rune]string{
-	'-': "underlined",
-	'm': "bold lightgray bg-magenta",
-	'#': "inverse",
-}
-
 func TestCompletion(t *testing.T) {
 	cleanupFs := util.SetupTestDir(util.Dir{"a": "", "b": ""}, "")
 	defer cleanupFs()

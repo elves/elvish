@@ -4,18 +4,45 @@ import (
 	"fmt"
 
 	"github.com/elves/elvish/cli"
+	"github.com/elves/elvish/edit/ui"
 	"github.com/elves/elvish/eval"
 )
 
+var styles = map[rune]string{
+	'-': "underlined",
+	'm': "bold lightgray bg-magenta", // mode line
+	'#': "inverse",
+	'g': "green",   // good
+	'b': "red",     // bad
+	'v': "magenta", // variables
+	'e': "bg-red",  // error
+}
+
+const (
+	testTTYWidth  = 40
+	testTTYHeight = 24
+)
+
+func bb() *ui.BufferBuilder { return ui.NewBufferBuilder(testTTYWidth) }
+
 func prepare() (cli.App, cli.TTYCtrl, eval.Ns, *eval.Evaler) {
+	appSpec, ns, ev := preparePreApp()
+	app, ttyCtrl := prepareApp(appSpec, ns, ev)
+	return app, ttyCtrl, ns, ev
+}
+
+func preparePreApp() (cli.AppSpec, eval.Ns, *eval.Evaler) {
+	return cli.AppSpec{}, eval.Ns{}, eval.NewEvaler()
+}
+
+func prepareApp(spec cli.AppSpec, ns eval.Ns, ev *eval.Evaler) (cli.App, cli.TTYCtrl) {
 	tty, ttyCtrl := cli.NewFakeTTY()
 	ttyCtrl.SetSize(24, 40)
-	app := cli.NewApp(cli.AppSpec{TTY: tty})
-	ns := eval.Ns{}
-	ev := eval.NewEvaler()
+	spec.TTY = tty
+	app := cli.NewApp(spec)
 	ev.InstallModule("edit", ns)
 	evalf(ev, "use edit")
-	return app, ttyCtrl, ns, ev
+	return app, ttyCtrl
 }
 
 func run(app cli.App) func() {

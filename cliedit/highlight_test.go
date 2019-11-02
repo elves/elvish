@@ -7,24 +7,55 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/eval/vars"
 	"github.com/elves/elvish/parse"
+	"github.com/elves/elvish/styled"
 	"github.com/elves/elvish/tt"
 	"github.com/elves/elvish/util"
 )
 
-type anyErrorMatcher struct{}
+// High-level sanity test.
 
-func (anyErrorMatcher) Match(ret tt.RetValue) bool {
-	err, _ := ret.(error)
-	return err != nil
+func TestHighlighter(t *testing.T) {
+	spec, ns, ev := preparePreApp()
+	initHighlighter(&spec, ev)
+	app, ttyCtrl := prepareApp(spec, ns, ev)
+
+	stop := run(app)
+	defer stop()
+
+	app.CodeArea().MutateState(func(s *codearea.State) {
+		s.CodeBuffer.InsertAtDot("put $true")
+	})
+	app.Redraw()
+	wantBuf1 := bb().
+		WriteStyled(styled.MarkLines(
+			"put $true", styles,
+			"ggg vvvvv",
+		)).
+		SetDotToCursor().
+		Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf1)
+
+	app.CodeArea().MutateState(func(s *codearea.State) {
+		s.CodeBuffer.InsertAtDot("x")
+	})
+	app.Redraw()
+	wantBuf2 := bb().
+		WriteStyled(styled.MarkLines(
+			"put $truex", styles,
+			"ggg eeeeee",
+		)).
+		SetDotToCursor().
+		Newline().
+		WritePlain("compilation error: 4-10 in [tty]: variable $truex not found").
+		Buffer()
+	ttyCtrl.TestBuffer(t, wantBuf2)
 }
 
-var (
-	noError  error
-	anyError anyErrorMatcher
-)
+// Fine-grained tests against the highlighter.
 
 func TestCheck(t *testing.T) {
 	ev := eval.NewEvaler()
@@ -37,6 +68,18 @@ func TestCheck(t *testing.T) {
 		tt.Args(ev, mustParse("echo $bad")).Rets(anyError),
 	})
 }
+
+type anyErrorMatcher struct{}
+
+func (anyErrorMatcher) Match(ret tt.RetValue) bool {
+	err, _ := ret.(error)
+	return err != nil
+}
+
+var (
+	noError  = error(nil)
+	anyError anyErrorMatcher
+)
 
 const colonInFilenameOk = runtime.GOOS != "windows"
 
