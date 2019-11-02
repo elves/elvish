@@ -1,23 +1,21 @@
 package cliedit
 
 import (
-	"fmt"
 	"io"
 	"testing"
 
 	"github.com/elves/elvish/cli"
 	"github.com/elves/elvish/cli/el/codearea"
 	"github.com/elves/elvish/cli/el/layout"
-	"github.com/elves/elvish/eval"
 	"github.com/elves/elvish/tt"
 )
 
 func TestBindingMap(t *testing.T) {
-	// TODO
+	// TODO: Add test when it is easier to check outputs of code evaluation.
 }
 
 func TestCommitCode(t *testing.T) {
-	app, ns, ev := setupForBuiltins()
+	app, _, ns, ev := prepare()
 	initMiscBuiltins(app, ns)
 	codeCh, errCh := cli.ReadCodeAsync(app)
 
@@ -31,7 +29,7 @@ func TestCommitCode(t *testing.T) {
 }
 
 func TestCommitEOF(t *testing.T) {
-	app, ns, ev := setupForBuiltins()
+	app, _, ns, ev := prepare()
 	initMiscBuiltins(app, ns)
 	_, errCh := cli.ReadCodeAsync(app)
 
@@ -42,13 +40,10 @@ func TestCommitEOF(t *testing.T) {
 }
 
 func TestCloseListing(t *testing.T) {
-	app, ns, ev := setupForBuiltins()
+	app, _, ns, ev := prepare()
 	initMiscBuiltins(app, ns)
-	codeCh, _ := cli.ReadCodeAsync(app)
-	defer func() {
-		app.CommitEOF()
-		<-codeCh
-	}()
+	stop := run(app)
+	defer stop()
 	app.MutateState(func(s *cli.State) { s.Listing = layout.Empty{} })
 
 	evalf(ev, `edit:close-listing`)
@@ -85,8 +80,10 @@ var bufferBuiltinsTests = []struct {
 }
 
 func TestBufferBuiltins(t *testing.T) {
-	app, ns, ev := setupForBuiltins()
+	app, _, ns, ev := prepare()
 	initBufferBuiltins(app, ns)
+	stop := run(app)
+	defer stop()
 
 	for _, test := range bufferBuiltinsTests {
 		t.Run(test.name, func(t *testing.T) {
@@ -98,24 +95,6 @@ func TestBufferBuiltins(t *testing.T) {
 				t.Errorf("got buf %v, want %v", buf, test.bufAfter)
 			}
 		})
-	}
-}
-
-func setupForBuiltins() (cli.App, eval.Ns, *eval.Evaler) {
-	app := cli.NewApp(cli.AppSpec{})
-	ns := eval.Ns{}
-	ev := eval.NewEvaler()
-	ev.InstallModule("edit", ns)
-	evalf(ev, "use edit")
-	return app, ns, ev
-}
-
-func evalf(ev *eval.Evaler, format string, args ...interface{}) {
-	code := fmt.Sprintf(format, args...)
-	// TODO: Should use a difference source type
-	err := ev.EvalSourceInTTY(eval.NewInteractiveSource(code))
-	if err != nil {
-		panic(err)
 	}
 }
 
